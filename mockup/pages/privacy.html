@@ -11,25 +11,439 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-09 — Bảo vệ dữ liệu (Privacy).</strong>
+  Minh họa các màn <span class="tag-ph">UI-09-01</span> phân loại nhạy cảm,
+  <span class="tag-ph">UI-09-02</span> ẩn danh / k-anonymity,
+  <span class="tag-ph">UI-09-03</span> rủi ro tái định danh,
+  <span class="tag-ph">UI-09-04</span> miền &amp; khóa giả danh,
+  <span class="tag-ph">UI-09-05</span> nhật ký khôi phục,
+  <span class="tag-ph">UI-09-06</span> báo cáo tuân thủ — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-09-privacy.md">SRS PH-09</a>.
+  Thực thể CDM liên quan xem <a href="mdm.html">Dữ liệu chủ</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Bảo vệ dữ liệu</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-09</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Phân loại PII · che / giả danh · ẩn danh k-anonymity · Vault khóa · tuân thủ CMP-32</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Xuất báo cáo tuân thủ quý">⤒ Xuất báo cáo</button>
+    <button class="btn btn--primary" data-demo="Chạy đánh giá rủi ro tập mới">Đánh giá rủi ro</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-09</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-09 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="privacy" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="classify">Phân loại <span class="tab__count">3</span></button>
+    <button class="tab" data-tab="anon">Ẩn danh</button>
+    <button class="tab" data-tab="risk">Rủi ro</button>
+    <button class="tab" data-tab="keys">Khóa</button>
+    <button class="tab" data-tab="audit">Nhật ký</button>
+    <button class="tab" data-tab="report">Báo cáo</button>
+  </div>
+
+  <!-- ===== UI-09-01: Phân loại ===== -->
+  <div data-panel="classify" data-panel-group="privacy">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm trường CDM…" data-filter="pii-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Thực thể: CongDan">Công dân</button>
+        <button class="btn btn--sm" data-demo="Thực thể: HoSoTTHC">Hồ sơ TTHC</button>
+        <button class="btn btn--sm" data-demo="Thực thể: CanBo">Cán bộ</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <a class="btn btn--sm" href="mdm.html">Mở MDM</a>
+    </div>
+    <div class="alert alert--err mb-0" style="margin:0 var(--sp-5) var(--sp-4)">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">3 trường chưa phân loại</div>
+        <div class="t-small">Đang áp dụng mức bảo vệ cao nhất (fail-safe). Cần phân loại trước khi phát hành.</div>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="pii-table">
+        <thead>
+          <tr>
+            <th>Trường</th><th>Mức nhạy cảm</th><th>Loại định danh</th>
+            <th>Dữ liệu CN</th><th>Căn cứ</th><th>Người duyệt</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">soDinhDanh</td>
+            <td><span class="badge badge--err">Nhạy cảm</span></td>
+            <td><span class="badge badge--muted badge--plain">DIRECT</span></td>
+            <td>Có</td>
+            <td class="t-small">Luật BVDLCN · Điều 3</td>
+            <td class="t-small">le.van.c</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa phân loại soDinhDanh">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">hoVaTen</td>
+            <td><span class="badge badge--warn">Nội bộ</span></td>
+            <td><span class="badge badge--muted badge--plain">DIRECT</span></td>
+            <td>Có</td>
+            <td class="t-small">Chính sách nội bộ LGSP</td>
+            <td class="t-small">le.van.c</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa phân loại hoVaTen">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">ngaySinh</td>
+            <td><span class="badge badge--warn">Nội bộ</span></td>
+            <td><span class="badge badge--info badge--plain">QUASI</span></td>
+            <td>Có</td>
+            <td class="t-small">Bán định danh · k-anonymity</td>
+            <td class="t-small">le.van.c</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa phân loại ngaySinh">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">maXa</td>
+            <td><span class="badge badge--muted">Công khai</span></td>
+            <td><span class="badge badge--info badge--plain">QUASI</span></td>
+            <td>Không</td>
+            <td class="t-small">Danh mục hành chính</td>
+            <td class="t-small">le.van.c</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa phân loại maXa">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">tinhTrangSucKhoe</td>
+            <td><span class="badge badge--err">Nhạy cảm</span></td>
+            <td><span class="badge badge--err badge--plain">SENSITIVE</span></td>
+            <td>Có</td>
+            <td class="t-small">Luật BVDLCN · DL đặc biệt</td>
+            <td class="t-small">pham.d</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa phân loại tinhTrangSucKhoe">Sửa</button></td>
+          </tr>
+          <tr style="background:var(--c-err-50,transparent)">
+            <td class="t-mono">ghiChuNoiBo</td>
+            <td><span class="badge badge--err">Chưa phân loại</span></td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Phân loại ghiChuNoiBo">Phân loại</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Thực thể <strong>CongDan</strong> · 42 trường · 3 chưa phân loại</span>
+      <span class="header__spacer"></span>
+      <span class="t-small">Nhãn: Công khai · Nội bộ · Nhạy cảm · <span style="color:var(--c-err-700)">Mật</span> (chặn tuyệt đối)</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-09-02: Ẩn danh ===== -->
+  <div class="card__body hidden" data-panel="anon" data-panel-group="privacy">
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Cấu hình ẩn danh hóa</div>
+        <div class="field">
+          <label class="field__label">Tập dữ liệu nguồn</label>
+          <select class="select">
+            <option>cong-dan-thong-ke-2026Q2</option>
+            <option>ho-so-tthc-mo-2026Q2</option>
+            <option>tap-huan-luyen-AI-v3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label">Ngưỡng k-anonymity</label>
+          <input class="input" type="number" value="5" min="5">
+          <div class="field__hint">k ≥ 5 nội bộ · k ≥ 10 dữ liệu mở (GD-05)</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Quy tắc tổng quát hóa</label>
+          <label class="check"><input type="checkbox" checked> <span>ngàySinh → nhóm tuổi (10 năm)</span></label>
+          <label class="check"><input type="checkbox" checked> <span>mãXã → cấp huyện</span></label>
+          <label class="check"><input type="checkbox" checked> <span>nghềNghiệp → nhóm ngành</span></label>
+          <label class="check"><input type="checkbox" checked> <span>Suppression nhóm &lt; k</span></label>
+        </div>
+        <div class="field">
+          <label class="field__label">Xử lý định danh trực tiếp</label>
+          <select class="select">
+            <option>Loại bỏ hoàn toàn (khuyến nghị)</option>
+            <option>Thay bằng mã ngẫu nhiên (không đảo ngược)</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="alert alert--info" style="margin:0">
+          <span class="alert__icon">ℹ</span>
+          <div class="t-small">Xem trước: <span class="t-mono">079203001234</span> → loại bỏ · <span class="t-mono">1990-04-12</span> → <span class="t-mono">1990–1999</span> · <span class="t-mono">maXa</span> → huyện. Ẩn danh <strong>không đảo ngược</strong> (NFR-09-010).</div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Chạy ẩn danh hóa lô">Chạy ẩn danh</button>
+      <button class="btn" data-demo="Lưu cấu hình ẩn danh">Lưu cấu hình</button>
+      <span class="t-small t-muted" style="margin-left:auto">Ước tính: 1,2M bản ghi · ~4 phút</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-09-03: Rủi ro ===== -->
+  <div class="card__body hidden" data-panel="risk" data-panel-group="privacy">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">k đạt được</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">4</div>
+        <div class="t-small t-muted mt-2">Yêu cầu k = 5</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ nhóm nhỏ</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">12,4%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Bản ghi còn lại</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">68%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Mức rủi ro</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)"><span class="badge badge--err">Cao</span></div>
+      </div>
+    </div>
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Không thể phát hành — rủi ro tái định danh cao</div>
+        <div class="t-small">k đạt 4 &lt; ngưỡng 5. Nút Phát hành bị vô hiệu cho đến khi điều chỉnh quy tắc hoặc được phê duyệt đặc biệt.</div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Trường đóng góp rủi ro</div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Trường</th><th class="table__num">Giá trị duy nhất</th><th>Đóng góp</th><th>Khuyến nghị</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">maXa</td>
+            <td class="table__num">842</td>
+            <td><span class="badge badge--err">Cao</span></td>
+            <td class="t-small">Tổng quát lên cấp huyện</td>
+          </tr>
+          <tr>
+            <td class="t-mono">ngaySinh</td>
+            <td class="table__num">12.410</td>
+            <td><span class="badge badge--warn">TB</span></td>
+            <td class="t-small">Nhóm tuổi 10 năm (đang 5 năm)</td>
+          </tr>
+          <tr>
+            <td class="t-mono">gioiTinh</td>
+            <td class="table__num">2</td>
+            <td><span class="badge badge--ok">Thấp</span></td>
+            <td class="t-small">Giữ nguyên</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Phân bố nhóm bán định danh</div>
+    <div class="col mb-4" style="gap:var(--sp-2)">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Size 1–4 (dưới k)</span><span class="t-mono t-small" style="color:var(--c-err-700)">12,4%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:12%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Size ≥ 5</span><span class="t-mono t-small">87,6%</span></div>
+        <div class="bar"><div class="bar__fill" style="width:88%"></div></div>
+      </div>
+    </div>
+    <div class="row" style="gap:var(--sp-2)">
+      <button class="btn" data-demo="Điều chỉnh quy tắc & chạy lại">Điều chỉnh &amp; chạy lại</button>
+      <button class="btn" disabled title="Rủi ro cao — không phát hành">Phát hành (vô hiệu)</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-09-04: Khóa / Vault ===== -->
+  <div class="card__body hidden" data-panel="keys" data-panel-group="privacy">
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Miền giả danh</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">6</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Vault</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)"><span class="badge badge--ok">UP</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ trúng đệm khóa</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">94%</div>
+      </div>
+    </div>
+    <div class="row mb-4" style="gap:var(--sp-2)">
+      <button class="btn btn--primary" data-demo="Tạo miền giả danh mới">＋ Tạo miền</button>
+      <button class="btn" data-demo="Xoay vòng khóa (giữ khóa cũ)">↻ Xoay khóa</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Miền</th><th>Phiên bản khóa</th><th>Ngày tạo</th><th>Hết hạn</th>
+            <th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">cong-dan</td>
+            <td class="t-mono">v3</td>
+            <td class="t-small">01/08/2025</td>
+            <td class="t-small">01/08/2026</td>
+            <td><span class="badge badge--ok">Đang dùng</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chi tiết miền cong-dan">Xem</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">cong-dan</td>
+            <td class="t-mono">v2</td>
+            <td class="t-small">01/08/2024</td>
+            <td class="t-small">01/08/2025</td>
+            <td><span class="badge badge--muted">Giữ để khôi phục</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Không xóa — còn dữ liệu PSN v2">Thu hồi…</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">ho-so-tthc</td>
+            <td class="t-mono">v1</td>
+            <td class="t-small">15/03/2026</td>
+            <td class="t-small">15/03/2027</td>
+            <td><span class="badge badge--ok">Đang dùng</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chi tiết miền ho-so-tthc">Xem</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">can-bo</td>
+            <td class="t-mono">v1</td>
+            <td class="t-small">20/01/2026</td>
+            <td class="t-small">20/01/2027</td>
+            <td><span class="badge badge--warn">Sắp hết hạn</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Xoay khóa miền can-bo">Xoay khóa</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="t-small t-muted mt-3">Khóa không rời Vault (RB-05). Xóa khóa cũ bị chặn nếu còn dữ liệu giả danh bằng khóa đó.</p>
+  </div>
+
+  <!-- ===== UI-09-05: Nhật ký ===== -->
+  <div class="card__body hidden" data-panel="audit" data-panel-group="privacy">
+    <div class="toolbar" style="padding-left:0;padding-right:0">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Người thực hiện hoặc mục đích…">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: 7 ngày">7 ngày</button>
+        <button class="btn btn--sm" data-demo="Lọc: 30 ngày">30 ngày</button>
+        <button class="btn btn--sm" data-demo="Lọc: hàng loạt">Hàng loạt</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Xuất nhật ký thanh tra">⤒ Xuất thanh tra</button>
+    </div>
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div class="t-small">Nhật ký <strong>chỉ đọc</strong> — không sửa/xóa. Khôi phục hàng loạt hoặc ngoài giờ được tô sáng.</div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Người thực hiện</th><th>Miền</th>
+            <th class="table__num">Số lượng</th><th>Mục đích</th><th>Căn cứ</th><th>Phê duyệt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 10:12</td>
+            <td>nguyen.van.a</td>
+            <td class="t-mono">cong-dan</td>
+            <td class="table__num">1</td>
+            <td class="t-small">Khiếu nại công dân</td>
+            <td class="t-small">Quyết định 12/QĐ</td>
+            <td class="t-small">le.van.c</td>
+          </tr>
+          <tr style="background:var(--c-warn-50,transparent)">
+            <td class="t-mono t-small">02/08 22:45</td>
+            <td>tran.thi.b</td>
+            <td class="t-mono">cong-dan</td>
+            <td class="table__num" style="color:var(--c-warn-700);font-weight:600">500</td>
+            <td class="t-small">Đối soát định kỳ</td>
+            <td class="t-small">KH-AT-08</td>
+            <td><span class="badge badge--ok">pham.d</span></td>
+          </tr>
+          <tr style="background:var(--c-err-50,transparent)">
+            <td class="t-mono t-small">01/08 19:02</td>
+            <td>do.van.e</td>
+            <td class="t-mono">ho-so-tthc</td>
+            <td class="table__num" style="color:var(--c-err-700);font-weight:600">120</td>
+            <td class="t-small">— thiếu —</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">Không có</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-09-06: Báo cáo ===== -->
+  <div class="card__body hidden" data-panel="report" data-panel-group="privacy">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Trường đã phân loại</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">96%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tập đạt k-anonymity</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">8/10</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Lượt khôi phục / tháng</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">47</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">CMP-32</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)"><span class="badge badge--warn">Một phần</span></div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Báo cáo tuân thủ bảo vệ dữ liệu</div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Báo cáo</th><th>Kỳ</th><th>Trạng thái</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-primary">Tóm tắt phân loại PII theo thực thể CDM</td>
+            <td>2026-Q2</td>
+            <td><span class="badge badge--ok">Sẵn sàng</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tải PDF phân loại PII">Tải PDF</button></td>
+          </tr>
+          <tr>
+            <td class="t-primary">Ẩn danh &amp; đánh giá rủi ro phát hành</td>
+            <td>2026-Q2</td>
+            <td><span class="badge badge--warn">Có cảnh báo</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tải báo cáo ẩn danh">Tải</button></td>
+          </tr>
+          <tr>
+            <td class="t-primary">Nhật ký khôi phục danh tính (thanh tra)</td>
+            <td>2026-07</td>
+            <td><span class="badge badge--ok">Sẵn sàng</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tải CSV nhật ký">Tải CSV</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Liên kết thực thể CDM / golden record: <a href="mdm.html">Dữ liệu chủ (MDM)</a>. Phân loại trường phải khớp schema MDM trước khi xuất báo cáo lãnh đạo.</div>
     </div>
   </div>
 </div>
