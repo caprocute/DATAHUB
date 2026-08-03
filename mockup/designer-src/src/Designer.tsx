@@ -20,11 +20,13 @@ import {
   nextId,
   ROUTE_ID,
   stageFromPalette,
+  type FieldMapping,
   type SeqEdge,
   type StageData,
   type StageNode,
 } from './flow/model';
 import { StatusContext } from './flow/StatusContext';
+import { useFlowHistory } from './flow/useFlowHistory';
 import { FindingsPanel } from './panels/Findings';
 import { Palette } from './panels/Palette';
 import { PropertiesPanel } from './panels/Properties';
@@ -51,63 +53,73 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
   const [insertAt, setInsertAt] = useState<{ edgeId: string; at: XYPosition } | null>(null);
   const [branchEdgeId, setBranchEdgeId] = useState<string | null>(null);
   const { fitView } = useReactFlow();
-  // Lấy `message` qua context để hộp thông báo đổi màu theo chế độ sáng/tối.
   const { message } = AntApp.useApp();
+  const history = useFlowHistory(nodes, edges, setNodes, setEdges);
+  const { commit, undo: undoHist, redo: redoHist, canUndo, canRedo } = history;
 
-  // Việc gỡ chặng cần biết các cạnh trước khi React Flow bỏ chúng đi, để nối lại
-  // chặng trước với chặng sau.
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
   const findings = useMemo(() => validate(nodes, edges), [nodes, edges]);
   const status = useMemo(() => statusByNode(findings), [findings]);
-  const yaml = useMemo(() => emitRouteYaml(nodes, edges, { routeId: ROUTE_ID, errorHandler: true }), [nodes, edges]);
+  const yaml = useMemo(
+    () => emitRouteYaml(nodes, edges, { routeId: ROUTE_ID, errorHandler: true }),
+    [nodes, edges],
+  );
 
   const selected = nodes.find((n) => n.selected);
   const hasFrom = nodes.some((n) => n.data.role === 'from');
   const errorCount = findings.filter((f) => f.level === 'error').length;
 
-  // Nút “Gửi duyệt” nằm ở đầu trang nên số lỗi phải báo ngược lên đó.
+  /** Phiên sửa thuộc tính: chỉ chụp lịch sử một lần khi bắt đầu sửa chặng đang chọn. */
+  const editSession = useRef(false);
+  useEffect(() => {
+    editSession.current = false;
+  }, [selected?.id]);
+
+  const markDirty = useCallback(() => {
+    commit();
+    onDirty();
+  }, [commit, onDirty]);
+
   useEffect(() => {
     onStatus({ errors: errorCount, warns: findings.length - errorCount });
   }, [errorCount, findings.length, onStatus]);
 
-  /* ---------- Sửa dữ liệu chặng ---------- */
-
   const patchSelected = useCallback(
     (patch: (d: StageData) => StageData) => {
+      if (!editSession.current) {
+        commit();
+        editSession.current = true;
+      }
       setNodes((ns) => ns.map((n) => (n.selected ? { ...n, data: patch(n.data) } : n)));
       onDirty();
     },
-    [setNodes, onDirty],
+    [setNodes, commit, onDirty],
   );
-
-  /* ---------- Nối và đổi đường ---------- */
 
   const onConnect = useCallback(
     (c: Connection) => {
+      markDirty();
       setEdges((es) => {
         const source = nodes.find((n) => n.id === c.source);
         const branching = source ? BRANCHING.has(source.data.ref) : false;
-        // Chặng thường chỉ đi tiếp một đường, nên nối lại là thay đường cũ chứ không
-        // sinh nhánh — nhánh chỉ có nghĩa ở chặng định tuyến.
         const kept = branching ? es : es.filter((e) => e.source !== c.source);
         return addEdge({ ...c, type: 'seq' }, kept);
       });
-      onDirty();
     },
-    [nodes, setEdges, onDirty],
+    [nodes, setEdges, markDirty],
   );
 
   const onReconnect = useCallback(
     (oldEdge: SeqEdge, c: Connection) => {
-      setEdges((es) => addEdge({ ...c, type: 'seq', data: oldEdge.data }, es.filter((e) => e.id !== oldEdge.id)));
-      onDirty();
+      markDirty();
+      setEdges((es) =>
+        addEdge({ ...c, type: 'seq', data: oldEdge.data }, es.filter((e) => e.id !== oldEdge.id)),
+      );
     },
-    [setEdges, onDirty],
+    [setEdges, markDirty],
   );
-
-  /* ---------- Thêm chặng ---------- */
 
   const addStage = useCallback(
     (item: PaletteItem, pos: XYPosition) => {
@@ -120,11 +132,10 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
         selected: true,
       };
 
-      // Nối tiếp vào đuôi luồng nếu chỉ có một chặng đang hở đường ra — đây là ý muốn
-      // thường gặp khi thả một thành phần vào chỗ trống.
       const tails = nodes.filter((n) => !edges.some((e) => e.source === n.id));
       const tail = role === 'step' && tails.length === 1 ? tails[0] : null;
 
+      markDirty();
       setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), node]);
       if (tail) {
         setEdges((es) => [...es, { id: nextId('e'), source: tail.id, target: node.id, type: 'seq' }]);
@@ -132,9 +143,8 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       } else {
         message.info(`Đã thêm “${item.label}” — hãy nối vào luồng bằng điểm nối trên nút`);
       }
-      onDirty();
     },
-    [nodes, edges, hasFrom, setNodes, setEdges, onDirty, message],
+    [nodes, edges, hasFrom, setNodes, setEdges, markDirty, message],
   );
 
   const insertOnEdge = useCallback(
@@ -155,9 +165,8 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       };
       const shift = NODE_H + 44;
 
+      markDirty();
       setNodes((ns) => [
-        // Đẩy phần dưới xuống để chỗ chèn có khoảng trống, thay vì sắp xếp lại cả sơ đồ
-        // và làm mất cách bố trí người dùng đã kéo.
         ...ns.map((n) => ({
           ...n,
           selected: false,
@@ -167,17 +176,13 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       ]);
       setEdges((es) => [
         ...es.filter((e) => e.id !== edgeId),
-        // Cạnh đầu giữ điều kiện nhánh của cạnh cũ, cạnh sau là nối tiếp bình thường.
         { id: nextId('e'), source: edge.source, target: node.id, type: 'seq', data: edge.data },
         { id: nextId('e'), source: node.id, target: edge.target, type: 'seq' },
       ]);
       setInsertAt(null);
-      onDirty();
     },
-    [nodes, edges, setNodes, setEdges, onDirty],
+    [nodes, edges, setNodes, setEdges, markDirty],
   );
-
-  /* ---------- Gỡ chặng ---------- */
 
   const onBeforeDelete = useCallback<OnBeforeDelete<StageNode, SeqEdge>>(
     async ({ nodes: toDelete, edges: edgesToDelete }) => {
@@ -203,7 +208,6 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       for (const n of deleted) {
         const ins = before.filter((e) => e.target === n.id);
         const outs = before.filter((e) => e.source === n.id);
-        // Nối chặng trước với chặng sau để luồng không bị đứt khi gỡ một chặng ở giữa.
         for (const i of ins) {
           for (const o of outs) {
             if (deleted.some((d) => d.id === i.source || d.id === o.target)) continue;
@@ -224,17 +228,17 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       message.warning(`Chặng “${n.data.label}” là chặng bắt buộc của khung chuẩn, không gỡ được`);
       return;
     }
+    markDirty();
     onNodesDelete([n]);
     setNodes((ns) => ns.filter((x) => x.id !== n.id));
     setEdges((es) => es.filter((e) => e.source !== n.id && e.target !== n.id));
-  }, [nodes, onNodesDelete, setNodes, setEdges, message]);
-
-  /* ---------- Thao tác trên sơ đồ ---------- */
+  }, [nodes, onNodesDelete, setNodes, setEdges, message, markDirty]);
 
   const relayout = useCallback(() => {
+    markDirty();
     setNodes((ns) => autoLayout(ns, edgesRef.current));
     window.setTimeout(() => fitView({ padding: 0.18, maxZoom: 1, duration: 300 }), 30);
-  }, [setNodes, fitView]);
+  }, [setNodes, fitView, markDirty]);
 
   const selectNode = useCallback(
     (id: string) => {
@@ -253,8 +257,6 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
     [insertOnEdge],
   );
 
-  /* ---------- Sửa điều kiện nhánh ---------- */
-
   const branchEdge = edges.find((e) => e.id === branchEdgeId);
   const [draftWhen, setDraftWhen] = useState('');
   const [draftOtherwise, setDraftOtherwise] = useState(false);
@@ -267,6 +269,7 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
   }, [branchEdgeId, branchEdge]);
 
   const saveBranch = () => {
+    markDirty();
     setEdges((es) =>
       es.map((e) =>
         e.id === branchEdgeId
@@ -275,7 +278,21 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       ),
     );
     setBranchEdgeId(null);
-    onDirty();
+  };
+
+  const undo = () => {
+    if (undoHist()) {
+      editSession.current = false;
+      onDirty();
+      message.info('Đã hoàn tác');
+    }
+  };
+  const redo = () => {
+    if (redoHist()) {
+      editSession.current = false;
+      onDirty();
+      message.info('Đã làm lại');
+    }
   };
 
   return (
@@ -299,6 +316,12 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
                 {nodes.length} chặng · Camel {CAMEL_VERSION}
               </span>
               <div style={{ marginLeft: 'auto' }} className="row">
+                <Button size="small" onClick={undo} disabled={!canUndo || view !== 'so-do'} title="⌘Z / Ctrl+Z">
+                  ↶ Hoàn tác
+                </Button>
+                <Button size="small" onClick={redo} disabled={!canRedo || view !== 'so-do'} title="⇧⌘Z / Ctrl+Y">
+                  ↷ Làm lại
+                </Button>
                 <Button size="small" onClick={relayout} disabled={view !== 'so-do'}>
                   Tự sắp xếp
                 </Button>
@@ -320,10 +343,17 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
                 nodes={nodes}
                 edges={edges}
                 onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
+                onEdgesChange={(c) => {
+                  if (c.some((x) => x.type === 'remove')) markDirty();
+                  onEdgesChange(c);
+                }}
                 onConnect={onConnect}
                 onReconnect={onReconnect}
-                onBeforeDelete={onBeforeDelete}
+                onBeforeDelete={async (args) => {
+                  const allowed = await onBeforeDelete(args);
+                  if (allowed) markDirty();
+                  return allowed;
+                }}
                 onNodesDelete={onNodesDelete}
                 onDropItem={addStage}
                 colorMode={mode}
@@ -347,6 +377,7 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
                 return { ...d, props };
               })
             }
+            onMappings={(m: FieldMapping[]) => patchSelected((d) => ({ ...d, mappings: m }))}
             onDelete={deleteSelected}
           />
         </div>
@@ -360,7 +391,8 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
           Danh mục thành phần trong bản minh họa gồm {CATALOG_SIZE.components} thành phần Camel và{' '}
           {CATALOG_SIZE.patterns} mẫu EIP, trích từ catalog chính thức của Camel {CAMEL_VERSION}. Bản đầy đủ có hơn 400
           thành phần, nạp từ máy chủ theo phiên bản Camel đang chạy.
-          {errorCount > 0 && ' Còn lỗi nên nút gửi duyệt đang bị chặn.'}
+          {errorCount > 0 && ' Còn lỗi nên nút gửi duyệt đang bị chặn.'} Hoàn tác / làm lại: ⌘Z · ⇧⌘Z (hoặc Ctrl+Z ·
+          Ctrl+Y).
         </p>
 
         {insertAt && (

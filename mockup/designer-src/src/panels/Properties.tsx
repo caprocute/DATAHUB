@@ -1,7 +1,8 @@
 import { Button, Collapse, Input, InputNumber, Select, Switch, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import { groupOf, lookup, type SchemaProp } from '../catalog/catalog';
-import type { StageNode } from '../flow/model';
+import type { FieldMapping, StageNode } from '../flow/model';
+import { DataMapperPanel } from './DataMapper';
 
 type PropValue = string | number | boolean;
 
@@ -10,6 +11,7 @@ interface Props {
   onLabel: (v: string) => void;
   onUri: (v: string) => void;
   onProp: (key: string, v: PropValue | undefined) => void;
+  onMappings: (m: FieldMapping[]) => void;
   onDelete: () => void;
 }
 
@@ -103,7 +105,7 @@ function Field({
   );
 }
 
-export function PropertiesPanel({ node, onLabel, onUri, onProp, onDelete }: Props) {
+export function PropertiesPanel({ node, onLabel, onUri, onProp, onMappings, onDelete }: Props) {
   const entry = node ? lookup(node.data.ref) : undefined;
 
   const { basic, advanced } = useMemo(() => {
@@ -179,6 +181,17 @@ export function PropertiesPanel({ node, onLabel, onUri, onProp, onDelete }: Prop
             onChange={(val) => onProp(k, val)}
           />
         ))}
+
+        {(node.data.ref === 'transform' || node.data.mappings) && (
+          <>
+            <div className="divider" />
+            <DataMapperPanel
+              mappings={node.data.mappings ?? []}
+              onChange={onMappings}
+              locked={false}
+            />
+          </>
+        )}
 
         {advanced.length > 0 && (
           <Collapse

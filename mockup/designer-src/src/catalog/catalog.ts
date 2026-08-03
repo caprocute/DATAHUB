@@ -133,6 +133,12 @@ export const PALETTE: PaletteGroup[] = [
     label: 'Chuẩn hóa & chuyển đổi',
     items: [
       { ref: 'transform', label: 'Chuẩn hóa CDM', icon: '◇' },
+      {
+        ref: 'transform',
+        label: 'Ánh xạ trường (DataMapper)',
+        icon: '⧉',
+        preset: { expression: 'datamapper' },
+      },
       { ref: 'xslt', label: 'XSLT', icon: '⇄', uri: 'xslt:transforms/chuyen-doi.xsl' },
       { ref: 'marshal', label: 'Đóng gói dữ liệu', icon: '⇉' },
       { ref: 'unmarshal', label: 'Mở gói dữ liệu', icon: '⇇' },

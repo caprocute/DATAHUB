@@ -251,6 +251,38 @@
   outline-offset: -2px;
 }
 
+/* ---------- DataMapper ---------- */
+
+.mapper {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  background: var(--c-surface-2);
+}
+.mapper__head { margin-bottom: var(--sp-3); }
+.mapper__title { font-weight: 600; font-size: var(--fs-md); margin-bottom: 2px; }
+.mapper__cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr 28px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.mapper__col-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: var(--c-text-3);
+}
+.mapper__rows { display: flex; flex-direction: column; gap: var(--sp-2); }
+.mapper__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr 28px;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.mapper__arrow { color: var(--c-text-3); font-weight: 600; }
+
 /* ---------- Màn hình hẹp ---------- */
 
 @media (max-width: 1180px) {

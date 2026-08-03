@@ -111,8 +111,21 @@ function stepFor(d: StageData): Val {
       return { setHeader: { name: p.name as string, expression: { simple: String(p.expression ?? '') } } };
     case 'setBody':
       return { setBody: { expression: { simple: String(p.expression ?? '') } } };
-    case 'transform':
+    case 'transform': {
+      if (d.mappings?.length) {
+        return {
+          transform: {
+            expression: {
+              // Minh họa: sản phẩm thật có thể dùng jq / DataSonnet / bean ánh xạ.
+              simple: d.mappings.map((m) => `${m.to} ← ${m.from}`).join('; '),
+            },
+            // Giữ danh sách ánh xạ dạng chú thích cấu trúc để dễ đọc khi so diff.
+            id: 'datamapper',
+          },
+        };
+      }
       return { transform: { expression: { simple: String(p.expression ?? '') } } };
+    }
     case 'filter':
       return { filter: { expression: { simple: String(p.expression ?? '') } } };
     case 'enrich':

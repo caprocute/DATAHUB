@@ -24,8 +24,10 @@ const NAV = [
   {
     label: 'Dữ liệu',
     items: [
-      { id: 'mdm',     icon: '◉', text: 'Dữ liệu chủ',        href: 'pages/mdm.html',     ph: 'PH-06', badge: 12 },
-      { id: 'privacy', icon: '⊘', text: 'Bảo vệ dữ liệu',     href: 'pages/privacy.html', ph: 'PH-09' },
+      { id: 'mdm',       icon: '◉', text: 'Dữ liệu chủ',      href: 'pages/mdm.html',       ph: 'PH-06', badge: 12 },
+      { id: 'reference', icon: '📖', text: 'Danh mục dùng chung', href: 'pages/reference.html', ph: 'PH-07' },
+      { id: 'privacy',   icon: '⊘', text: 'Bảo vệ dữ liệu',   href: 'pages/privacy.html',   ph: 'PH-09' },
+      { id: 'national',  icon: '🌐', text: 'Kết nối quốc gia', href: 'pages/national.html',  ph: 'PH-14' },
     ],
   },
   {

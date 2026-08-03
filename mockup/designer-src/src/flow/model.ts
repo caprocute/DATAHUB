@@ -2,6 +2,13 @@ import type { Edge, Node } from '@xyflow/react';
 import { lookup, type PaletteItem } from '../catalog/catalog';
 
 /** Dữ liệu gắn vào một nút của sơ đồ — tương ứng một chặng của luồng tích hợp. */
+export interface FieldMapping {
+  /** Đường dẫn JSONPath / Simple của trường nguồn. */
+  from: string;
+  /** Đường dẫn trường đích trên lược đồ ra. */
+  to: string;
+}
+
 export interface StageData extends Record<string, unknown> {
   /** Tên mục trong catalog Camel, ví dụ `rest`, `choice`. */
   ref: string;
@@ -13,6 +20,8 @@ export interface StageData extends Record<string, unknown> {
   /** URI Camel, chỉ có ở chặng dựng trên thành phần. */
   uri?: string;
   props: Record<string, string | number | boolean>;
+  /** Ánh xạ trường DataMapper — dùng với chặng `transform` / ánh xạ. */
+  mappings?: FieldMapping[];
   /** Chặng bắt buộc theo khung xương chuẩn — không gỡ được. */
   locked: boolean;
 }
@@ -39,6 +48,7 @@ export function nextId(prefix = 'n'): string {
 export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'step'): StageData {
   const entry = lookup(item.ref);
   const props: Record<string, string | number | boolean> = { ...(item.preset ?? {}) };
+  const isMapper = item.label.includes('DataMapper') || props.expression === 'datamapper';
   return {
     ref: item.ref,
     label: item.label,
@@ -46,6 +56,7 @@ export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'ste
     role,
     uri: item.uri,
     props,
+    mappings: isMapper ? [] : undefined,
     locked: false,
     // Giữ lại mô tả gốc của Camel để hiện trong bảng thuộc tính.
     catalogTitle: entry?.title ?? item.ref,
@@ -54,6 +65,7 @@ export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'ste
 
 /** Mô tả phụ hiện dưới tên chặng trên sơ đồ. */
 export function stageSubtitle(d: StageData): string {
+  if (d.mappings?.length) return `${d.mappings.length} ánh xạ trường`;
   if (d.uri) return d.uri;
   const first = Object.entries(d.props).find(([, v]) => v !== '' && v !== undefined);
   if (first) return `${first[0]}: ${first[1]}`;
@@ -73,7 +85,7 @@ function stage(
   icon: string,
   label: string,
   props: Record<string, string | number | boolean>,
-  opts: { role?: 'from' | 'step'; uri?: string; locked?: boolean } = {},
+  opts: { role?: 'from' | 'step'; uri?: string; locked?: boolean; mappings?: FieldMapping[] } = {},
 ): StageNode {
   return {
     id,
@@ -86,6 +98,7 @@ function stage(
       role: opts.role ?? 'step',
       uri: opts.uri,
       props,
+      mappings: opts.mappings,
       locked: opts.locked ?? false,
       catalogTitle: lookup(ref)?.title ?? ref,
     },
@@ -106,7 +119,22 @@ export const INITIAL_NODES: StageNode[] = [
     uri: 'http://opa.lgsp.svc:8181/v1/data/lgsp/authz/thuadat.read',
     locked: true,
   }),
-  stage('s4', 'transform', '◇', 'Chuẩn hóa CDM', { expression: 'ThuaDat v2' }, {}),
+  stage(
+    's4',
+    'transform',
+    '◇',
+    'Chuẩn hóa CDM',
+    { expression: 'ThuaDat v2' },
+    {
+      mappings: [
+        { from: '$.soThuTu', to: '$.ThuaDat.SoThuTu' },
+        { from: '$.chuSoHuu.hoTen', to: '$.ThuaDat.ChuSoHuu.HoTen' },
+        { from: '$.chuSoHuu.soDinhDanh', to: '$.ThuaDat.ChuSoHuu.SoDinhDanh' },
+        { from: '$.viTri.maDonViHanhChinh', to: '$.ThuaDat.ViTri.MaDonViHanhChinh' },
+        { from: '$.dienTich', to: '$.ThuaDat.DienTich' },
+      ],
+    },
+  ),
   // Hạn chờ 4500 ms sát ngưỡng 5000 ms — sinh cảnh báo ở bảng phát hiện.
   stage('s5', 'enrich', '◉', 'Làm giàu', {
     expression: 'direct:tra-cuu-danh-muc-dvhc',
