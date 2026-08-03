@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 16/33 hạng mục · 110/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 17/33 hạng mục · 120/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -307,20 +307,22 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] M9 Tuân thủ CMP
 - [x] M10 Kiểm thử chấp nhận (`AT-15-001…035`)
 
-### [ ] 4.4 — SRS **PH-18** Vận hành & Xử lý bản tin lỗi · **M**
+### [x] 4.4 — SRS **PH-18** Vận hành & Xử lý bản tin lỗi · **M** · _2026-08-03_
 
+→ [SRS-PH-18-ops.md](SRS-PH-18-ops.md) · 20 FR · 6 thực thể · 24 NFR · 15 BR · 32 AT
 *Nội dung trọng tâm*: DLQ · phân loại lỗi · phát lại đơn/hàng loạt · idempotent · luồng [F-10](../03-flows/README.md#f-10--xử-lý-lỗi-và-phát-lại-bản-tin)
+*Ánh xạ*: CMP-10, CMP-15, CMP-16, CMP-28
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-18-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-18-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-18-nn`)
-- [ ] M7 Phi chức năng (`NFR-18-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-18-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-18-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-18-001…020`)
+- [x] M4 Mô hình dữ liệu (`EN-18-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-18-01…06`)
+- [x] M7 Phi chức năng (`NFR-18-001…024`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-18-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-18-001…032`)
 
 ---
 
@@ -421,8 +423,8 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-15 Portal | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-16 NAS/KPI | | | | | | | | | | | 0/10 |
 | PH-17 AI | | | | | | | | | | | 0/10 |
-| PH-18 Vận hành | | | | | | | | | | | 0/10 |
-| **Tổng** | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | **110/180** |
+| PH-18 Vận hành | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
+| **Tổng** | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | **120/180** |
 
 ---
 
@@ -444,3 +446,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 4.1 | **SRS PH-08** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 32 AT. Sáu chiều DQ, F-11, CMP-22 |
 | 2026-08-03 | 4.2 | **SRS PH-11** đủ 10 mục — 16 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Flowable BPMN, Saga, F-07, CMP-09 |
 | 2026-08-03 | 4.3 | **SRS PH-15** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 35 AT. Backstage, OpenAPI, try-it, TechDocs, CMP-02 |
+| 2026-08-03 | 4.1–4.4 | **Hoàn tất Giai đoạn 4** — SRS PH-08 (DQ), PH-11 (BPM), PH-15 (Portal), PH-18 (Ops/DLQ). Nhóm hoàn thiện: 68 FR · 24 thực thể · 100 NFR · 60 BR · 131 AT |
