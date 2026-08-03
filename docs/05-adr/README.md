@@ -501,6 +501,8 @@ Chế độ sáng/tối cài bằng thuộc tính `data-theme` trên thẻ gốc
 
 **Quyết định.** Dùng **XYFlow (`@xyflow/react`)** làm động cơ sơ đồ trong màn thiết kế luồng của PH-04. Catalog thành phần và ngữ nghĩa YAML bám [ADR-015](#adr-015). Giao diện xung quanh (palette, thuộc tính, thanh công cụ) dùng Ant Design ([ADR-016](#adr-016)).
 
+**Mẫu tương tác UX.** Ngoài Kaoto (catalog/YAML), console học các điểm hay về **tương tác cấu hình** của [n8n](https://n8n.io/) — canvas trái→phải, thẻ node theo nhóm màu, panel một nút, expression editor, connection picker, pin data, highlight chạy thử — được chốt yêu cầu tại `FR-04-031…040` và `UI-04-07` / `UI-04-10` của [SRS PH-04](../07-srs/SRS-PH-04-integration-core.md). **Không** nhúng runtime n8n và **không** lưu secret trên node.
+
 **Năng lực bắt buộc trên canvas:**
 
 | Năng lực | Cách hiện thực |
@@ -508,17 +510,18 @@ Chế độ sáng/tối cài bằng thuộc tính `data-theme` trên thẻ gốc
 | Kéo thành phần từ palette thả lên sơ đồ | HTML5 drag-and-drop → tạo nút tại toạ độ flow |
 | Chèn chặng vào giữa hai chặng | Nút ＋ trên cạnh → menu chọn thành phần |
 | Nối / đổi đường | `onConnect` / `onReconnect`; chặng thường một đường ra, EIP định tuyến được nhiều nhánh |
-| Nhánh `choice` / điều kiện | Dữ liệu cạnh (`when` / `otherwise`) |
+| Nhánh `choice` / điều kiện | Dữ liệu cạnh (`when` / `otherwise`); UI thân thiện FR-04-038 |
 | Kéo dịch nút, phóng to thu nhỏ, minimap | Có sẵn của XYFlow |
-| Tự sắp xếp | dagre (layout trên xuống) |
+| Tự sắp xếp | dagre (**trái → phải**, kiểu n8n) |
 | Kiểm tra hợp lệ + YAML sống | `validate` + `emitRouteYaml` đồng bộ với sơ đồ |
+| Panel cấu hình một nút | UI-04-10 + FR-04-031/032/037 |
 
 **Hiện thực tham chiếu.** Nguồn: `mockup/designer-src/` (Vite + React + antd + `@xyflow/react`). Bản build một tệp: `mockup/pages/designer/index.html`. Chạy thử: `cd mockup/designer-src && npm run dev`.
 
 **Hệ quả tích cực:**
-- UX kéo thả cùng họ với Kaoto playground, nhưng nằm trong shell Ant Design của LGSP.
+- UX kéo thả cùng họ Kaoto (mô hình) + n8n (tương tác), nằm trong shell Ant Design của LGSP.
 - YAML sinh ra vẫn là Camel YAML DSL — đường GitOps không đổi.
-- Có thể mở rộng nút/cạnh tùy loại EIP mà không phụ thuộc lộ trình UI của Kaoto.
+- Có thể mở rộng nút/cạnh tùy loại EIP mà không phụ thuộc lộ trình UI của Kaoto hay n8n.
 
 **Hệ quả tiêu cực:**
 - Phải bảo trì catalog subset và biểu mẫu thuộc tính; bản đầy đủ nạp catalog từ máy chủ theo phiên bản Camel đang chạy.

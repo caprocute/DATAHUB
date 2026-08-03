@@ -1,6 +1,7 @@
 import {
   Background,
   BackgroundVariant,
+  ConnectionLineType,
   Controls,
   MiniMap,
   ReactFlow,
@@ -79,18 +80,36 @@ export function FlowCanvas({
         onBeforeDelete={onBeforeDelete}
         onNodesDelete={onNodesDelete}
         defaultEdgeOptions={{ type: 'seq' }}
+        defaultMarkerColor="var(--c-border-2)"
+        connectionLineType={ConnectionLineType.Bezier}
         colorMode={colorMode}
         fitView
-        fitViewOptions={{ padding: 0.18, maxZoom: 1 }}
-        minZoom={0.3}
+        fitViewOptions={{ padding: 0.22, maxZoom: 1 }}
+        minZoom={0.25}
         maxZoom={1.6}
         proOptions={{ hideAttribution: false }}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Meta', 'Control']}
+        nodesConnectable
+        elevateEdgesOnSelect
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-        <Controls showInteractive={false} />
-        <MiniMap pannable zoomable nodeStrokeWidth={2} />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1.2} />
+        <Controls showInteractive={false} position="bottom-left" />
+        <MiniMap
+          pannable
+          zoomable
+          nodeStrokeWidth={2}
+          position="bottom-right"
+          nodeColor={(n) => {
+            const t = (n.data as { tone?: string } | undefined)?.tone;
+            if (t === 'trigger') return 'var(--c-ok-500)';
+            if (t === 'auth') return 'var(--c-warn-500)';
+            if (t === 'eip') return 'var(--c-brand-500)';
+            if (t === 'transform') return '#0d9488';
+            if (t === 'enrich') return '#7c3aed';
+            return 'var(--c-text-3)';
+          }}
+        />
       </ReactFlow>
     </div>
   );

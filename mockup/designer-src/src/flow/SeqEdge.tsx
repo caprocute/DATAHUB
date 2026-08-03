@@ -1,14 +1,12 @@
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { useState } from 'react';
 import { readDraggedItem, useInteraction } from './interaction';
 import type { SeqEdge as TSeqEdge } from './model';
 
 /**
- * Cạnh nối hai chặng.
+ * Cạnh cong kiểu n8N giữa hai chặng.
  *
- * Trên cạnh có một chốt `＋`: bấm để mở danh sách thành phần, hoặc kéo thẳng một mục
- * từ bảng thành phần rồi thả lên chốt để chèn chặng vào giữa. Đây là cách thêm chặng
- * vào giữa luồng mà không phải nối lại cạnh bằng tay.
+ * Chốt `＋` giữa cạnh: bấm mở menu hoặc thả thành phần từ palette để chèn vào giữa.
  */
 export function SeqEdgeView({
   id,
@@ -21,14 +19,14 @@ export function SeqEdgeView({
   data,
   selected,
 }: EdgeProps<TSeqEdge>) {
-  const [path, labelX, labelY] = getSmoothStepPath({
+  const [path, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
-    borderRadius: 8,
+    curvature: 0.25,
   });
   const { openInsertMenu, insertOnEdge, editBranch } = useInteraction();
   const [over, setOver] = useState(false);

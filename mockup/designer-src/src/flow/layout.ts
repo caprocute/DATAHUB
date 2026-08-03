@@ -1,19 +1,19 @@
 import dagre from 'dagre';
 import type { SeqEdge, StageNode } from './model';
 
-export const NODE_W = 264;
-export const NODE_H = 60;
+/** Kích thước node kiểu n8N (thẻ ngang, icon trái). */
+export const NODE_W = 220;
+export const NODE_H = 68;
 
 /**
- * Sắp xếp sơ đồ theo chiều dọc.
+ * Sắp xếp sơ đồ trái → phải (giống n8N).
  *
- * Luồng tích hợp đọc từ trên xuống nên dùng `TB`; nhánh của `choice` tự tách sang hai
- * bên rồi hợp lại tại chặng có nhiều cạnh vào.
+ * Nhánh `choice` tự tách theo chiều dọc rồi hợp lại tại chặng có nhiều cạnh vào.
  */
 export function autoLayout(nodes: StageNode[], edges: SeqEdge[]): StageNode[] {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'TB', nodesep: 28, ranksep: 44, marginx: 24, marginy: 24 });
+  g.setGraph({ rankdir: 'LR', nodesep: 36, ranksep: 72, marginx: 40, marginy: 40 });
 
   for (const n of nodes) g.setNode(n.id, { width: NODE_W, height: NODE_H });
   for (const e of edges) g.setEdge(e.source, e.target);

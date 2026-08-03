@@ -33,6 +33,7 @@ export function InsertMenu({ at, onPick, onClose }: Props) {
     const needle = q.trim().toLowerCase();
     return PALETTE.map((g) => ({
       label: g.label,
+      tone: g.tone,
       // Chặng tiếp nhận là đầu luồng, không chèn được vào giữa.
       items: g.items.filter(
         (it) => !it.consumerOnly && (!needle || it.label.toLowerCase().includes(needle) || it.ref.includes(needle)),
@@ -62,11 +63,16 @@ export function InsertMenu({ at, onPick, onClose }: Props) {
             {g.items.map((it) => (
               <button
                 type="button"
-                className="palette__item palette__item--btn"
+                className="palette__tile palette__tile--btn"
                 key={`${g.label}-${it.ref}-${it.label}`}
-                onClick={() => onPick(it)}
+                onClick={() => onPick({ ...it, tone: it.tone ?? g.tone })}
               >
-                <span>{it.icon}</span> {it.label}
+                <span className={`palette__tile-icon palette__tile-icon--${it.tone ?? g.tone}`} aria-hidden="true">
+                  {it.icon}
+                </span>
+                <span className="palette__tile-text">
+                  <span className="palette__tile-name">{it.label}</span>
+                </span>
               </button>
             ))}
           </div>

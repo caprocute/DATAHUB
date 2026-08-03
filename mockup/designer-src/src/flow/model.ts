@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
-import { lookup, type PaletteItem } from '../catalog/catalog';
+import { lookup, toneOf, type NodeTone, type PaletteItem } from '../catalog/catalog';
 
 /** Dữ liệu gắn vào một nút của sơ đồ — tương ứng một chặng của luồng tích hợp. */
 export interface FieldMapping {
@@ -24,6 +24,8 @@ export interface StageData extends Record<string, unknown> {
   mappings?: FieldMapping[];
   /** Chặng bắt buộc theo khung xương chuẩn — không gỡ được. */
   locked: boolean;
+  /** Nhóm màu kiểu n8N trên canvas. */
+  tone: NodeTone;
 }
 
 export type StageNode = Node<StageData, 'stage'>;
@@ -58,6 +60,7 @@ export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'ste
     props,
     mappings: isMapper ? [] : undefined,
     locked: false,
+    tone: item.tone ?? toneOf(item.ref, role),
     // Giữ lại mô tả gốc của Camel để hiện trong bảng thuộc tính.
     catalogTitle: entry?.title ?? item.ref,
   };
@@ -85,8 +88,9 @@ function stage(
   icon: string,
   label: string,
   props: Record<string, string | number | boolean>,
-  opts: { role?: 'from' | 'step'; uri?: string; locked?: boolean; mappings?: FieldMapping[] } = {},
+  opts: { role?: 'from' | 'step'; uri?: string; locked?: boolean; mappings?: FieldMapping[]; tone?: NodeTone } = {},
 ): StageNode {
+  const role = opts.role ?? 'step';
   return {
     id,
     type: 'stage',
@@ -95,11 +99,12 @@ function stage(
       ref,
       icon,
       label,
-      role: opts.role ?? 'step',
+      role,
       uri: opts.uri,
       props,
       mappings: opts.mappings,
       locked: opts.locked ?? false,
+      tone: opts.tone ?? toneOf(ref, role),
       catalogTitle: lookup(ref)?.title ?? ref,
     },
   };

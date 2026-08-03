@@ -13,7 +13,7 @@ import { CAMEL_VERSION, CATALOG_SIZE, type PaletteItem } from './catalog/catalog
 import { FlowCanvas } from './flow/FlowCanvas';
 import { InsertMenu } from './flow/InsertMenu';
 import { InteractionContext, type Interaction } from './flow/interaction';
-import { autoLayout, NODE_H } from './flow/layout';
+import { autoLayout, NODE_W } from './flow/layout';
 import {
   INITIAL_EDGES,
   INITIAL_NODES,
@@ -155,22 +155,24 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
       const tgt = nodes.find((n) => n.id === edge.target);
       if (!src || !tgt) return;
 
+      const midX = (src.position.x + tgt.position.x) / 2;
       const midY = (src.position.y + tgt.position.y) / 2;
       const node: StageNode = {
         id: nextId('n'),
         type: 'stage',
-        position: { x: (src.position.x + tgt.position.x) / 2, y: midY },
+        position: { x: midX, y: midY },
         data: stageFromPalette(item, 'step'),
         selected: true,
       };
-      const shift = NODE_H + 44;
+      // Canvas trái→phải: đẩy các chặng bên phải sang phải để chừa chỗ chèn.
+      const shift = NODE_W + 56;
 
       markDirty();
       setNodes((ns) => [
         ...ns.map((n) => ({
           ...n,
           selected: false,
-          position: n.position.y > midY ? { ...n.position, y: n.position.y + shift } : n.position,
+          position: n.position.x > midX ? { ...n.position, x: n.position.x + shift } : n.position,
         })),
         node,
       ]);

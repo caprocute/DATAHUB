@@ -1,5 +1,5 @@
 import { useMemo, useState, type DragEvent } from 'react';
-import { PALETTE, type PaletteItem } from '../catalog/catalog';
+import { PALETTE, type NodeTone, type PaletteItem } from '../catalog/catalog';
 import { DRAG_MIME } from '../flow/interaction';
 
 interface Props {
@@ -14,20 +14,20 @@ export function Palette({ hasFrom }: Props) {
     const needle = q.trim().toLowerCase();
     if (!needle) return PALETTE;
     return PALETTE.map((g) => ({
-      label: g.label,
+      ...g,
       items: g.items.filter(
         (it) => it.label.toLowerCase().includes(needle) || it.ref.toLowerCase().includes(needle),
       ),
     })).filter((g) => g.items.length > 0);
   }, [q]);
 
-  const onDragStart = (e: DragEvent<HTMLDivElement>, item: PaletteItem) => {
-    e.dataTransfer.setData(DRAG_MIME, JSON.stringify(item));
+  const onDragStart = (e: DragEvent<HTMLDivElement>, item: PaletteItem, tone: NodeTone) => {
+    e.dataTransfer.setData(DRAG_MIME, JSON.stringify({ ...item, tone: item.tone ?? tone }));
     e.dataTransfer.effectAllowed = 'copy';
   };
 
   return (
-    <div className="panel">
+    <div className="panel panel--palette">
       <div className="panel__head">Thành phần</div>
       <div className="panel__body" style={{ padding: 'var(--sp-3) var(--sp-3) 0' }}>
         <div className="search" style={{ minWidth: 0 }}>
@@ -41,7 +41,7 @@ export function Palette({ hasFrom }: Props) {
           />
         </div>
         <p className="t-small t-muted" style={{ margin: 'var(--sp-2) 0 0' }}>
-          Kéo một mục vào sơ đồ, hoặc thả lên chốt <strong>＋</strong> trên cạnh để chèn vào giữa.
+          Kéo vào canvas (trái → phải). Thả lên chốt <strong>＋</strong> giữa cạnh để chèn.
         </p>
       </div>
       <div className="panel__body panel__body--flush">
@@ -50,19 +50,26 @@ export function Palette({ hasFrom }: Props) {
             <div className="palette__label">{g.label}</div>
             {g.items.map((it) => {
               const disabled = Boolean(it.consumerOnly && hasFrom);
+              const tone = it.tone ?? g.tone;
               return (
                 <div
                   key={`${g.label}-${it.ref}-${it.label}`}
-                  className={disabled ? 'palette__item is-disabled' : 'palette__item'}
+                  className={disabled ? 'palette__tile is-disabled' : 'palette__tile'}
                   draggable={!disabled}
-                  onDragStart={(e) => !disabled && onDragStart(e, it)}
+                  onDragStart={(e) => !disabled && onDragStart(e, it, tone)}
                   title={
                     disabled
                       ? 'Luồng đã có chặng tiếp nhận — mỗi luồng chỉ có một đầu vào'
-                      : `Kéo vào sơ đồ · thành phần Camel: ${it.ref}`
+                      : `Kéo vào sơ đồ · Camel: ${it.ref}`
                   }
                 >
-                  <span>{it.icon}</span> {it.label}
+                  <span className={`palette__tile-icon palette__tile-icon--${tone}`} aria-hidden="true">
+                    {it.icon}
+                  </span>
+                  <span className="palette__tile-text">
+                    <span className="palette__tile-name">{it.label}</span>
+                    <span className="palette__tile-ref t-mono">{it.ref}</span>
+                  </span>
                 </div>
               );
             })}

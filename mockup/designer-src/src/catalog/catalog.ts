@@ -76,6 +76,9 @@ export function groupOf(prop: SchemaProp): { group: string; advanced: boolean } 
 
 /* ---------- Bảng thành phần theo cách gọi nghiệp vụ của LGSP ---------- */
 
+/** Nhóm màu kiểu n8N — dùng tô ô icon trên node và palette. */
+export type NodeTone = 'trigger' | 'auth' | 'eip' | 'transform' | 'enrich' | 'dest';
+
 export interface PaletteItem {
   /** Tên mục trong catalog Camel. */
   ref: string;
@@ -88,16 +91,32 @@ export interface PaletteItem {
   preset?: Record<string, string | number | boolean>;
   /** URI Camel gợi ý sẵn, chỉ áp cho thành phần. */
   uri?: string;
+  /** Ghi đè tone nhóm nếu mục lệch với nhóm cha. */
+  tone?: NodeTone;
 }
 
 export interface PaletteGroup {
   label: string;
+  tone: NodeTone;
   items: PaletteItem[];
+}
+
+/** Suy ra tone khi dựng chặng từ catalog / luồng mẫu. */
+export function toneOf(ref: string, role: 'from' | 'step' = 'step'): NodeTone {
+  if (role === 'from') return 'trigger';
+  if (['json-validator', 'validator'].includes(ref)) return 'auth';
+  if (['choice', 'filter', 'split', 'aggregate', 'multicast', 'wireTap', 'idempotentConsumer', 'circuitBreaker', 'throttle', 'delay'].includes(ref))
+    return 'eip';
+  if (['transform', 'xslt', 'marshal', 'unmarshal', 'setHeader', 'setBody', 'process'].includes(ref)) return 'transform';
+  if (['enrich', 'pollEnrich', 'bean'].includes(ref)) return 'enrich';
+  if (['rest', 'timer', 'file', 'sftp'].includes(ref)) return 'trigger';
+  return 'dest';
 }
 
 export const PALETTE: PaletteGroup[] = [
   {
     label: 'Điểm tiếp nhận',
+    tone: 'trigger',
     items: [
       { ref: 'rest', label: 'REST endpoint', icon: '⇥', consumerOnly: true, uri: 'rest:get:/api/v1/tai-nguyen' },
       { ref: 'kafka', label: 'Kafka consumer', icon: '≋', consumerOnly: true, uri: 'kafka:chu-de-vao' },
@@ -108,14 +127,16 @@ export const PALETTE: PaletteGroup[] = [
   },
   {
     label: 'Kiểm tra & ủy quyền',
+    tone: 'auth',
     items: [
       { ref: 'json-validator', label: 'Kiểm tra JSON Schema', icon: '✓', uri: 'json-validator:schema/tai-nguyen.json' },
       { ref: 'validator', label: 'Kiểm tra XML Schema', icon: '✓', uri: 'validator:schema/tai-nguyen.xsd' },
-      { ref: 'http', label: 'Gọi OPA ủy quyền', icon: '⊙', uri: 'http://opa.lgsp.svc:8181/v1/data/lgsp/authz' },
+      { ref: 'http', label: 'Gọi OPA ủy quyền', icon: '⊙', uri: 'http://opa.lgsp.svc:8181/v1/data/lgsp/authz', tone: 'auth' },
     ],
   },
   {
     label: 'Mẫu EIP',
+    tone: 'eip',
     items: [
       { ref: 'choice', label: 'Định tuyến nội dung', icon: '⑂' },
       { ref: 'filter', label: 'Lọc bản tin', icon: '⌦' },
@@ -131,6 +152,7 @@ export const PALETTE: PaletteGroup[] = [
   },
   {
     label: 'Chuẩn hóa & chuyển đổi',
+    tone: 'transform',
     items: [
       { ref: 'transform', label: 'Chuẩn hóa CDM', icon: '◇' },
       {
@@ -149,6 +171,7 @@ export const PALETTE: PaletteGroup[] = [
   },
   {
     label: 'Làm giàu',
+    tone: 'enrich',
     items: [
       { ref: 'enrich', label: 'Tra cứu MDM', icon: '◉' },
       { ref: 'pollEnrich', label: 'Tra cứu danh mục', icon: '☰' },
@@ -157,6 +180,7 @@ export const PALETTE: PaletteGroup[] = [
   },
   {
     label: 'Điểm đến',
+    tone: 'dest',
     items: [
       { ref: 'to', label: 'Gửi tới đích', icon: '⇥' },
       { ref: 'http', label: 'Adapter hệ thống', icon: '⊞', uri: 'http://adapter.lgsp.svc:8080/api' },

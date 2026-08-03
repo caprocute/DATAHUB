@@ -83,20 +83,20 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 
 ### [x] 1.2 — SRS **PH-04** Lõi Tích hợp & Điều phối (Camel) · **M** · ⭐ *quan trọng nhất* · _2026-08-03_
 
-→ [SRS-PH-04-integration-core.md](SRS-PH-04-integration-core.md) · 30 FR · 11 thực thể · 41 NFR · 20 BR · 35 AT
+→ [SRS-PH-04-integration-core.md](SRS-PH-04-integration-core.md) · 40 FR · 11 thực thể · 46 NFR · 24 BR · 42 AT
 *Ánh xạ*: CMP-04, CMP-11, CMP-12, CMP-16, CMP-15, CMP-13, CMP-23, CMP-28, CMP-10, CMP-30, CMP-32, CMP-01
-*Bao gồm*: thiết kế luồng bằng giao diện (`FR-04-026…030`) theo [ADR-015](../05-adr/README.md#adr-015) — Kaoto
+*Bao gồm*: thiết kế luồng (`FR-04-026…040`) — Kaoto catalog/YAML ([ADR-015](../05-adr/README.md#adr-015)); XYFlow ([ADR-017](../05-adr/README.md#adr-017)); UX cấu hình kiểu n8n (`UI-04-07`, `UI-04-10`)
 
 - [x] M1 Giới thiệu
 - [x] M2 Mô tả tổng quan
-- [x] M3 Yêu cầu chức năng (`FR-04-001…025`)
+- [x] M3 Yêu cầu chức năng (`FR-04-001…040`)
 - [x] M4 Mô hình dữ liệu (`EN-04-01…08`)
 - [x] M5 Giao diện API
-- [x] M6 Giao diện người dùng (`UI-04-01…06`)
-- [x] M7 Phi chức năng (`NFR-04-001…034`)
-- [x] M8 Quy tắc nghiệp vụ (`BR-04-001…015`)
+- [x] M6 Giao diện người dùng (`UI-04-01…10`)
+- [x] M7 Phi chức năng (`NFR-04-001…046`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-04-001…024`)
 - [x] M9 Tuân thủ CMP
-- [x] M10 Kiểm thử chấp nhận (`AT-04-001…028`)
+- [x] M10 Kiểm thử chấp nhận (`AT-04-001…042`)
 
 ### [x] 1.3 — SRS **PH-03** Cổng tiếp nhận & Bảo vệ (APISIX) · **M** · _2026-08-03_
 
@@ -390,7 +390,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] **6.4** — `pages/routes.html` — Danh sách & giám sát luồng tích hợp (PH-04) · **M** · _2026-08-03_
   - Danh sách route (UI-04-01) · Sơ đồ luồng (UI-04-02) · Cấu hình xử lý lỗi (UI-04-03) · Thống kê (UI-04-04)
 - [x] **6.11** — `pages/designer.html` + `pages/designer/index.html` — Thiết kế luồng bằng giao diện (PH-04) · **M** · _2026-08-03_
-  - Trình thiết kế kéo thả XYFlow (UI-04-07) · DataMapper · hoàn tác/làm lại · Chạy thử (UI-04-08) · Duyệt (UI-04-09) · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
+  - Trình thiết kế XYFlow kiểu n8n (UI-04-07/10) · DataMapper · hoàn tác/làm lại · Chạy thử · Duyệt · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
 - [x] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M** · _2026-08-03_
   - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · So sánh hợp nhất · Ưu tiên nguồn · Đồng bộ (UI-06-01…06)
 - [x] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M** · _2026-08-03_
@@ -470,3 +470,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 5.1–5.2 | **Hoàn tất Giai đoạn 5** — SRS PH-16 (NAS/KPI), PH-17 (Cổng AI). Nhóm tuân thủ & AI: 39 FR · 12 thực thể · 50 NFR · 32 BR · 67 AT |
 | 2026-08-03 | 6.2–6.10 | **Hoàn tất Giai đoạn 6** — mockup onboarding, catalog, mdm, monitoring, dlq, kpi, privacy, ai (cùng 6.1/6.4/6.11 đã có). Monitoring tạm theo checklist vì SRS PH-13 chưa xong |
 | 2026-08-03 | 0.4 | **SRS-19** Ma trận phân quyền toàn hệ thống — 9 FR, ma trận PH-01…18, 14 vai trò chuẩn (`INTEGRATION_REVIEWER`). Tài liệu xuyên suốt; PH-12 thực thi |
+| 2026-08-03 | 1.2 | Bổ sung **UX n8n** vào SRS PH-04: `FR-04-031…040`, `UI-04-10`, nguyên tắc §3.6.1; ADR-017 ghi nhận n8n là mẫu tương tác (không runtime) |

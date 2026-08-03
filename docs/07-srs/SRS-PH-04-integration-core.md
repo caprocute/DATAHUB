@@ -60,7 +60,8 @@ Tài liệu này đặc tả đầy đủ yêu cầu chức năng, dữ liệu, 
 | [KT] | [Kiến trúc hệ thống — mục 5 Kiến trúc tích hợp](../02-architecture/README.md#5-kiến-trúc-tích-hợp--lõi-apache-camel) |
 | [LT] | [Luồng nghiệp vụ F-03, F-04, F-05, F-06, F-10](../03-flows/README.md) |
 | [PL] | [Cơ sở pháp lý và ma trận CMP](../01-legal/README.md) |
-| [ADR] | [ADR-001 Camel](../05-adr/README.md#adr-001), [ADR-002 Quarkus](../05-adr/README.md#adr-002), [ADR-010 GitOps](../05-adr/README.md#adr-010), [ADR-013 CDM](../05-adr/README.md#adr-013), [ADR-015 Kaoto](../05-adr/README.md#adr-015) |
+| [ADR] | [ADR-001 Camel](../05-adr/README.md#adr-001), [ADR-002 Quarkus](../05-adr/README.md#adr-002), [ADR-010 GitOps](../05-adr/README.md#adr-010), [ADR-013 CDM](../05-adr/README.md#adr-013), [ADR-015 Kaoto](../05-adr/README.md#adr-015), [ADR-017 XYFlow](../05-adr/README.md#adr-017) |
+| [UX] | Mẫu tương tác cấu hình kiểu [n8n](https://n8n.io/) — xem §3.6.1 và UI-04-07 / UI-04-10; **không** nhúng engine n8n |
 | [TT] | [Tác động TTQGS](../06-impact/README.md) |
 | [CV631] | Công văn 631/THH-THHT ngày 21/5/2020 — yêu cầu chức năng LGSP |
 
@@ -492,7 +493,7 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 | **Tác nhân** | Cán bộ phát triển tích hợp |
 | **Tiền điều kiện** | Người dùng có vai trò `INTEGRATION_DEV`; đã chọn mẫu luồng hoặc tạo luồng trống |
 | **Đầu vào** | Thao tác trên trình thiết kế: chọn điểm tiếp nhận, thêm/xóa/sắp xếp các chặng xử lý, chọn mẫu EIP, cấu hình tham số từng chặng, khai báo bộ chuyển đổi và điểm đến · hoặc dán sẵn một định nghĩa YAML để mở lại bằng đồ họa |
-| **Xử lý** | 1. Nạp danh mục thành phần khả dụng: component, Kamelet, mẫu EIP, bộ chuyển đổi đã đăng ký, danh sách đích hợp lệ qua PH-05/PH-14<br>2. Dựng sơ đồ theo khung chín bước chuẩn tại [KT]; chặng bắt buộc (kiểm tra lược đồ, ủy quyền, ghi vết) hiển thị sẵn và **không cho gỡ**<br>3. Sinh Camel YAML DSL sau mỗi thay đổi, hiển thị song song với sơ đồ<br>4. Kiểm tra hợp lệ tức thời (FR-04-027)<br>5. Lưu thành phiên bản `DRAFT` kèm `nguon_tao = DESIGNER`<br>6. Ghi sự kiện thay đổi cấu hình cho PH-13 |
+| **Xử lý** | 1. Nạp danh mục thành phần khả dụng: component, Kamelet, mẫu EIP, bộ chuyển đổi đã đăng ký, danh sách đích hợp lệ qua PH-05/PH-14<br>2. Dựng sơ đồ theo khung chín bước chuẩn tại [KT]; chặng bắt buộc (kiểm tra lược đồ, ủy quyền, ghi vết) hiển thị sẵn và **không cho gỡ**<br>3. Canvas và panel cấu hình tuân thủ nguyên tắc UX §3.6.1 (học n8n): trái→phải, cấu hình một nút, không secret trên node (FR-04-031…037)<br>4. Sinh Camel YAML DSL sau mỗi thay đổi, hiển thị song song với sơ đồ<br>5. Kiểm tra hợp lệ tức thời (FR-04-027)<br>6. Lưu thành phiên bản `DRAFT` kèm `nguon_tao = DESIGNER`<br>7. Ghi sự kiện thay đổi cấu hình cho PH-13 |
 | **Đầu ra** | Phiên bản route ở trạng thái `DRAFT` với `dinh_nghia_dsl` là Camel YAML DSL hợp lệ |
 | **Ngoại lệ** | E1: Định nghĩa dán vào không phải Camel YAML hợp lệ → báo lỗi kèm vị trí dòng, giữ nguyên bản đang soạn<br>E2: Định nghĩa dùng cấu trúc trình thiết kế chưa hiển thị được → mở ở chế độ soạn văn bản, cảnh báo rõ thay vì hiển thị sai<br>E3: Mất kết nối khi đang soạn → giữ bản nháp cục bộ, khôi phục khi vào lại<br>E4: Hai người sửa cùng một phiên bản `DRAFT` → người lưu sau bị từ chối, được xem khác biệt và tự quyết định gộp |
 
@@ -551,6 +552,127 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 | **Ngoại lệ** | E1: Thiếu tham số bắt buộc → chặn sinh, chỉ rõ tham số còn thiếu<br>E2: Mẫu tham chiếu thành phần đã ngừng dùng → cảnh báo và gợi ý mẫu thay thế |
 
 **Ghi chú.** Bộ mẫu là cách rẻ nhất để giữ chất lượng thiết kế khi mở quyền dựng luồng cho nhiều người: thay vì trông chờ mọi người nhớ khung chín bước, khung đó nằm sẵn trong mẫu. Đây cũng là biện pháp giảm thiểu đã nêu tại [ADR-015](../05-adr/README.md#adr-015).
+
+### 3.6.1. Nguyên tắc UX học từ n8n (áp cho trình thiết kế)
+
+> **Phân vai mẫu tham chiếu.** [Kaoto](https://kaoto.io/) ([ADR-015](../05-adr/README.md#adr-015)) = catalog Camel + ngữ nghĩa YAML DSL. [n8n](https://n8n.io/) = mẫu **tương tác cấu hình** (canvas và panel một nút) — thuận tiện cho người không phải chuyên gia Camel. Động cơ sơ đồ = XYFlow ([ADR-017](../05-adr/README.md#adr-017)). **Không** chạy workflow bằng runtime n8n; **không** lưu secret trong trình thiết kế (Vault / PH-05).
+
+| Điểm hay của n8n | Áp vào LGSP | Yêu cầu |
+|---|---|---|
+| Canvas trái→phải, node thẻ có màu theo nhóm, cạnh cong, chèn giữa cạnh bằng `＋` | Sơ đồ PH-04 | UI-04-07 |
+| Palette tìm kiếm + kéo thả | Bảng thành phần | UI-04-07 |
+| Panel cấu hình một nút: nhóm trường, bắt buộc rõ, mặc định hợp lý | Panel thuộc tính chặng | UI-04-10, FR-04-037 |
+| Expression editor + xem trước trên dữ liệu mẫu | Camel Simple / JSONPath / XPath | FR-04-031 |
+| Credential / connection picker — không dán secret vào node | Chọn adapter PH-05, đích PH-14, tham chiếu Vault | FR-04-032 |
+| Pin data — gắn payload mẫu vào node để thử | Pin bản tin mẫu theo chặng | FR-04-033 |
+| Badge “chưa cấu hình đủ” trên node | Required / incomplete | FR-04-034 |
+| Highlight đường chạy / kết quả từng node sau execute | Sau chạy thử FR-04-028 | FR-04-035 |
+| Biến môi trường `$env` | Biến theo môi trường DEV/UAT/PROD | FR-04-036 |
+| IF/Switch thân thiện (thêm nhánh, mặc định) | UI cho `choice` | FR-04-038 |
+| Sticky notes trên canvas | Ghi chú nghiệp vụ khi duyệt | FR-04-039 |
+| Sub-workflow | Gọi luồng con / `direct:` | FR-04-040 |
+
+#### FR-04-031 — Trình soạn biểu thức với gợi ý và xem trước · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Mọi trường cấu hình dạng biểu thức (Camel Simple, JSONPath, XPath, header/property) được soạn trong editor có gợi ý và xem trước kết quả trên dữ liệu mẫu — thay vì chỉ ô text thuần |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Đầu vào** | Trường biểu thức · ngữ cảnh chặng · bản tin mẫu đã pin (FR-04-033) hoặc mẫu chạy thử |
+| **Xử lý** | 1. Gợi ý tự động: header đã biết, thuộc tính Exchange, đường dẫn JSON từ lược đồ/CDM đã gắn<br>2. Kiểm tra cú pháp biểu thức tức thời<br>3. Nút **Xem trước**: đánh giá biểu thức trên bản tin mẫu, hiện kết quả hoặc lỗi<br>4. Lưu giá trị đã chuẩn hóa vào định nghĩa YAML |
+| **Đầu ra** | Biểu thức hợp lệ gắn vào tham số chặng; bản xem trước (không lưu vào Git trừ khi người dùng chọn) |
+| **Ngoại lệ** | E1: Không có dữ liệu mẫu → vẫn cho sửa biểu thức, tắt xem trước kèm gợi ý pin dữ liệu<br>E2: Biểu thức lỗi → `WARNING` trên chặng, chặn gửi duyệt nếu trường đó `required` |
+
+#### FR-04-032 — Chọn kết nối / credential thay vì nhập secret · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Các tham số “đích”, “adapter”, “broker”, “HTTP auth” được chọn từ danh mục kết nối đã đăng ký — không dán `clientSecret`, mật khẩu hay chuỗi kết nối thô vào node |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Tiền điều kiện** | Kết nối đã tồn tại ở PH-05 / cấu hình đích PH-14 / tham chiếu Vault theo quyền người dùng |
+| **Đầu vào** | Loại kết nối cần · bộ lọc theo miền / môi trường |
+| **Xử lý** | 1. Liệt kê kết nối người dùng được dùng (theo SRS-19 / PH-12)<br>2. Người dùng chọn một kết nối; hệ thống ghi **tham chiếu** (`connectionRef` / `secretRef`) vào YAML<br>3. Runtime PH-04 resolve tham chiếu khi chạy — không materialize secret lên UI sau lần chọn<br>4. Cho phép “chỉ URI nội bộ đã whitelist” (ví dụ `direct:`, `seda:`) không cần connection |
+| **Đầu ra** | Tham số chặng chứa ref, không chứa secret |
+| **Ngoại lệ** | E1: Không có kết nối phù hợp → hướng dẫn tạo/đăng ký ở PH-05, không cho bypass bằng ô secret tự do<br>E2: Kết nối bị thu hồi sau khi thiết kế → FR-04-027 đánh `ERROR` tham chiếu |
+
+#### FR-04-033 — Gắn dữ liệu mẫu (pin) theo chặng · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Mỗi chặng có thể gắn một bản tin mẫu (pin) dùng cho xem trước biểu thức và chạy thử từng bước — tương tự pin data của n8n |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Đầu vào** | JSON/XML mẫu · hoặc lấy từ kết quả chạy thử trước · hoặc từ `traceId` đã giả danh hóa (FR-04-028 E3) |
+| **Xử lý** | 1. Lưu pin gắn `versionId` + `stageId` (không lẫn vào DSL production trừ khi đánh dấu “dùng làm mẫu chạy thử mặc định”)<br>2. Pin hiển thị badge trên node<br>3. FR-04-031 và FR-04-035 ưu tiên dùng pin của chặng; nếu thiếu thì dùng pin chặng trước đó trên đường đi |
+| **Đầu ra** | Pin theo chặng; tùy chọn đặt làm payload mặc định cho lần chạy thử |
+| **Ngoại lệ** | E1: Pin chứa dữ liệu cá nhân thật → bắt buộc giả danh hóa qua PH-09 trước khi lưu<br>E2: Pin vượt kích thước cho phép → từ chối, gợi ý rút gọn |
+
+#### FR-04-034 — Báo hiệu chặng cấu hình chưa đủ · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Node trên canvas thể hiện rõ trạng thái cấu hình: đủ / thiếu trường bắt buộc / lỗi tham chiếu — để người dùng sửa trước khi chạy thử hoặc gửi duyệt |
+| **Tác nhân** | Hệ thống (tự động) · Cán bộ phát triển tích hợp |
+| **Xử lý** | 1. Với mỗi chặng, đối chiếu lược đồ tham số (`required`) + FR-04-027<br>2. Badge trên node: thiếu bắt buộc · lỗi · cảnh báo<br>3. Panel thuộc tính cuộn tới trường lỗi đầu tiên khi mở chặng<br>4. Tổng số chặng “chưa sẵn sàng” hiện trên thanh trạng thái |
+| **Đầu ra** | Trạng thái cấu hình từng chặng đồng bộ với bảng phát hiện |
+| **Ngoại lệ** | E1: Schema catalog thiếu `required` → chỉ báo lỗi tham chiếu/cú pháp, không bịa trường bắt buộc |
+
+#### FR-04-035 — Làm nổi kết quả chạy thử trên sơ đồ · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Sau FR-04-028, sơ đồ tô trạng thái từng chặng (thành công / lỗi / bỏ qua) và cho xem nhanh input/output — giống highlight execution path của n8n |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Tiền điều kiện** | Có bản ghi chạy thử (EN-04-10) |
+| **Xử lý** | 1. Map kết quả từng chặng lên node tương ứng<br>2. Tô cạnh đã đi qua; nhánh `choice` không chọn làm mờ<br>3. Click node → panel hiện body vào/ra, thời gian, lỗi<br>4. Nút “Xóa highlight” để trở lại chế độ thiết kế |
+| **Đầu ra** | Lớp phủ kết quả trên UI-04-07 / UI-04-08 |
+| **Ngoại lệ** | E1: Định nghĩa đã đổi sau lần chạy → cảnh báo “kết quả có thể lệch sơ đồ hiện tại” |
+
+#### FR-04-036 — Biến cấu hình theo môi trường · **S**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cho phép tham chiếu biến môi trường / cấu hình triển khai trong tham số chặng (ví dụ host UAT vs PROD) thay vì hard-code |
+| **Tác nhân** | Cán bộ phát triển tích hợp · Quản trị viên nền tảng (khai báo biến) |
+| **Xử lý** | 1. Catalog biến theo môi trường (DEV/UAT/PROD), giá trị thật chỉ resolve lúc triển khai<br>2. Cú pháp thống nhất trong YAML (ví dụ placeholder được runtime/GitOps thay)<br>3. Editor gợi ý tên biến; xem trước chỉ hiện ở môi trường đang chọn trên UI |
+| **Đầu ra** | Định nghĩa dùng biến; không chứa secret |
+| **Ngoại lệ** | E1: Biến chưa khai báo cho môi trường đích → `ERROR` khi gửi duyệt triển khai môi trường đó |
+
+#### FR-04-037 — Panel cấu hình một chặng theo chuẩn tương tác n8n · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Khi chọn một node, panel phải cấu hình được nhanh: nhóm trường, ẩn nâng cao, mô tả ngắn, mặc định an toàn, liên kết tài liệu thành phần |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Xử lý** | 1. Nhóm trường theo schema (`common` mở, `advanced` gập)<br>2. Trường bắt buộc đánh dấu; validate inline<br>3. Trường kiểu biểu thức → FR-04-031; kiểu kết nối → FR-04-032<br>4. Hỗ trợ DataMapper khi chặng là ánh xạ (đã có)<br>5. Không bao giờ hiện lại secret đã lưu<br>6. Đổi tham số cập nhật YAML sống và badge FR-04-034 |
+| **Đầu ra** | Cấu hình chặng đồng bộ sơ đồ + DSL |
+| **Ngoại lệ** | E1: Schema không render được → fallback JSON thô kèm cảnh báo |
+
+#### FR-04-038 — Giao diện định tuyến `choice` thân thiện · **S**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cấu hình nhánh `when` / `otherwise` bằng thao tác UI (thêm nhánh, đặt mặc định, sửa điều kiện bằng FR-04-031) thay vì chỉ sửa cạnh thủ công |
+| **Xử lý** | 1. Trên node `choice`: danh sách nhánh kéo sắp xếp được<br>2. Nút thêm nhánh / đặt một nhánh là mặc định (đúng một `otherwise` — BR-04-014)<br>3. Đồng bộ cạnh trên canvas |
+| **Đầu ra** | Các cạnh `choice` đủ điều kiện hoặc có nhánh mặc định |
+| **Ngoại lệ** | E1: Hai nhánh mặc định → chặn lưu |
+
+#### FR-04-039 — Ghi chú dán trên sơ đồ (sticky note) · **C**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cho phép gắn ghi chú nghiệp vụ trên canvas (không ảnh hưởng runtime) để hỗ trợ duyệt và bảo trì |
+| **Xử lý** | Lưu note trong metadata phiên bản (ngoài DSL Camel hoặc trong extension được bỏ qua khi nạp runtime) |
+| **Đầu ra** | Note hiển thị trên UI-04-07 / UI-04-09 |
+| **Ngoại lệ** | E1: Note chứa dữ liệu cá nhân → cảnh báo khi lưu |
+
+#### FR-04-040 — Luồng con / tái sử dụng đoạn xử lý · **S**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cho phép một chặng gọi lại một luồng/đoạn đã chuẩn hóa (map Camel `direct:` / route phụ) thay vì copy-paste nhiều chặng |
+| **Xử lý** | 1. Catalog “luồng con” được phép gọi<br>2. Chọn luồng con + ánh xạ tham số<br>3. Sinh bước gọi tương ứng trong YAML; kiểm tra vòng gọi (cấm chu trình) |
+| **Đầu ra** | Tham chiếu luồng con trong định nghĩa |
+| **Ngoại lệ** | E1: Phát hiện chu trình gọi → `ERROR`<br>E2: Luồng con chưa `ACTIVE`/`APPROVED` → cảnh báo hoặc chặn theo chính sách môi trường |
 
 ### 3.7. Nhóm G — Ghi vết và telemetry
 
@@ -615,11 +737,21 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 | F | FR-04-028 | Chạy thử luồng trên môi trường thử nghiệm | M |
 | F | FR-04-029 | Duyệt luồng trước khi triển khai | M |
 | F | FR-04-030 | Thư viện mẫu luồng dùng lại | S |
+| F | FR-04-031 | Trình soạn biểu thức + xem trước (UX n8n) | M |
+| F | FR-04-032 | Chọn kết nối / credential (không dán secret) | M |
+| F | FR-04-033 | Pin dữ liệu mẫu theo chặng | M |
+| F | FR-04-034 | Badge cấu hình chưa đủ trên node | M |
+| F | FR-04-035 | Highlight kết quả chạy thử trên sơ đồ | M |
+| F | FR-04-036 | Biến cấu hình theo môi trường | S |
+| F | FR-04-037 | Panel cấu hình một chặng kiểu n8n | M |
+| F | FR-04-038 | UI định tuyến `choice` thân thiện | S |
+| F | FR-04-039 | Sticky note trên sơ đồ | C |
+| F | FR-04-040 | Luồng con / tái sử dụng đoạn xử lý | S |
 | G | FR-04-023 | Sinh và lan truyền traceId | M |
 | G | FR-04-024 | Ghi vết truy cập bất đồng bộ | M |
 | G | FR-04-025 | Phát chỉ số vận hành | M |
 
-**Tổng: 30 yêu cầu chức năng** — 25 bắt buộc (M), 5 cần có (S).
+**Tổng: 40 yêu cầu chức năng** — 31 bắt buộc (M), 8 cần có (S), 1 nên có (C).
 
 ---
 
@@ -1295,9 +1427,10 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **UI-04-04** | Thống kê vận hành luồng | Vận hành | [`routes.html`](../../mockup/pages/routes.html) (tab Thống kê) |
 | **UI-04-05** | Truy vết bản tin theo traceId | Vận hành | [`monitoring.html`](../../mockup/pages/monitoring.html) |
 | **UI-04-06** | Trạng thái ngắt mạch | Vận hành | [`monitoring.html`](../../mockup/pages/monitoring.html) |
-| **UI-04-07** | Trình thiết kế luồng trực quan | Cán bộ phát triển | [`designer.html`](../../mockup/pages/designer.html) |
-| **UI-04-08** | Chạy thử luồng | Cán bộ phát triển | [`designer.html`](../../mockup/pages/designer.html) (tab Chạy thử) |
-| **UI-04-09** | Hàng đợi duyệt luồng | Người duyệt luồng tích hợp | [`designer.html`](../../mockup/pages/designer.html) (tab Duyệt) |
+| **UI-04-07** | Trình thiết kế luồng trực quan | Cán bộ phát triển | [`designer/index.html`](../../mockup/pages/designer/index.html) |
+| **UI-04-08** | Chạy thử luồng | Cán bộ phát triển | [`designer/index.html`](../../mockup/pages/designer/index.html)#test |
+| **UI-04-09** | Hàng đợi duyệt luồng | Người duyệt luồng tích hợp | [`designer/index.html`](../../mockup/pages/designer/index.html)#review |
+| **UI-04-10** | Panel cấu hình một chặng (kiểu n8n) | Cán bộ phát triển | Cột phải của trình thiết kế (UI-04-07) |
 
 ### 6.2. UI-04-01 — Danh sách luồng tích hợp
 
@@ -1366,34 +1499,65 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 
 ### 6.6. UI-04-07 — Trình thiết kế luồng trực quan
 
-**Mục đích.** Dựng và sửa luồng tích hợp bằng thao tác đồ họa, sinh ra Camel YAML DSL mà không bắt buộc gõ tay (FR-04-026).
+**Mục đích.** Dựng và sửa luồng tích hợp bằng thao tác đồ họa, sinh ra Camel YAML DSL mà không bắt buộc gõ tay (FR-04-026). **UX canvas và cấu hình chặng bám các điểm hay của n8n** (trái→phải, thẻ node, panel một nút) trong khi catalog/YAML bám Kaoto ([ADR-015](../05-adr/README.md#adr-015), [ADR-017](../05-adr/README.md#adr-017)).
 
 **Thành phần:**
 
 | Thành phần | Mô tả |
 |---|---|
-| Bảng thành phần (trái) | Danh mục có tìm kiếm: điểm tiếp nhận, mẫu EIP, bộ chuyển đổi, nguồn làm giàu, điểm đến hợp lệ. Nhóm theo loại, mỗi mục có mô tả ngắn |
-| Vùng sơ đồ (giữa) | Các chặng xếp theo khung chín bước; kéo thả để thêm, xóa, đổi thứ tự; nhánh lỗi hiển thị tách bên dưới |
-| Chặng bắt buộc | Kiểm tra lược đồ, ủy quyền, ghi vết — hiển thị có ổ khóa, **không cho gỡ** (BR-04-001) |
-| Bảng thuộc tính (phải) | Biểu mẫu cấu hình của chặng đang chọn, sinh theo lược đồ tham số của thành phần |
-| Khung DSL | Camel YAML sinh ra, cập nhật theo từng thay đổi; **cho phép sửa trực tiếp** và đồng bộ ngược lại sơ đồ |
-| Bảng phát hiện (dưới) | Kết quả kiểm tra hợp lệ, tách hai nhóm Lỗi và Cảnh báo; mỗi mục nhấn được để nhảy tới chặng liên quan |
-| Thanh trạng thái | Tên luồng · số phiên bản · nhãn `DRAFT` · thời điểm lưu gần nhất · người đang sửa |
-| Nút chính | Lưu bản nháp · Chạy thử · Gửi duyệt |
+| Bảng thành phần (trái) | Tìm kiếm + ô kéo theo nhóm màu (Trigger / Auth / Logic / Transform / Enrich / Action). Kéo vào canvas hoặc thả lên chốt `＋` giữa cạnh |
+| Vùng sơ đồ (giữa) | **Trái → phải**; node dạng thẻ có ô icon màu; cạnh cong; chèn giữa cạnh; minimap; tự sắp xếp; sticky note (FR-04-039) |
+| Chặng bắt buộc | Kiểm tra lược đồ, ủy quyền, ghi vết — ổ khóa, **không cho gỡ** (BR-04-001) |
+| Badge trạng thái node | Thiếu cấu hình / lỗi / cảnh báo / đã pin dữ liệu (FR-04-033, FR-04-034) |
+| Bảng thuộc tính (phải) | **UI-04-10** — cấu hình một chặng kiểu n8n |
+| Lớp highlight chạy thử | Sau FR-04-028/035: tô node/cạnh theo kết quả |
+| Khung DSL | Camel YAML sống; sửa trực tiếp và đồng bộ ngược khi cấu trúc hỗ trợ |
+| Bảng phát hiện | Lỗi / cảnh báo; click nhảy tới chặng |
+| Thanh trạng thái | Tên · phiên bản · `DRAFT` · số chặng chưa sẵn sàng · lưu gần nhất |
+| Nút chính | Lưu nháp · Hoàn tác/Làm lại · Chạy thử · Gửi duyệt |
 
 **Quy tắc tương tác:**
 
 | # | Quy tắc |
 |---|---|
-| 1 | Kiểm tra hợp lệ chạy lại sau mỗi thay đổi; chặng có lỗi viền đỏ, có cảnh báo viền vàng |
-| 2 | Nút "Gửi duyệt" bị vô hiệu khi còn phát hiện mức **Lỗi**, hoặc khi chưa có lần chạy thử nào đạt |
-| 3 | Sơ đồ và khung DSL đồng bộ hai chiều; sửa ở đâu bên kia cập nhật theo |
-| 4 | Định nghĩa có cấu trúc mà sơ đồ chưa hiển thị được → chuyển sang chế độ soạn văn bản kèm thông báo rõ, **không** vẽ sơ đồ thiếu (FR-04-026 E2) |
-| 5 | Tự lưu bản nháp cục bộ mỗi 30 giây; khôi phục khi mở lại sau mất kết nối |
-| 6 | Người khác đang sửa cùng phiên bản → hiện cảnh báo ngay khi mở, nêu tên người đó |
-| 7 | Phiên bản không ở `DRAFT` → mở ở chế độ chỉ đọc kèm nút "Tạo phiên bản mới để sửa" |
+| 1 | Kiểm tra hợp lệ sau mỗi thay đổi; viền/badge đỏ-vàng trên node (FR-04-027, FR-04-034) |
+| 2 | "Gửi duyệt" vô hiệu khi còn **Lỗi** hoặc chưa có chạy thử đạt |
+| 3 | Sơ đồ ↔ DSL đồng bộ hai chiều trong phạm vi cấu trúc hỗ trợ |
+| 4 | Cấu trúc chưa vẽ được → chế độ văn bản, **không** vẽ thiếu (FR-04-026 E2) |
+| 5 | Tự lưu nháp cục bộ mỗi 30 giây |
+| 6 | Xung đột chỉnh sửa: cảnh báo tên người đang sửa |
+| 7 | Không phải `DRAFT` → chỉ đọc + "Tạo phiên bản mới" |
+| 8 | Không có ô nhập secret tự do trên canvas/panel — chỉ connection picker (FR-04-032, BR-04-021) |
+| 9 | Empty state: CTA “Thêm bước đầu / chọn mẫu” khi canvas trống |
 
-**Trạng thái màn hình:** Đang tải danh mục · Soạn thảo · Chỉ đọc · Chế độ văn bản · Có xung đột chỉnh sửa · Mất kết nối (còn sửa được, chờ đồng bộ).
+**Trạng thái màn hình:** Đang tải danh mục · Soạn thảo · Highlight chạy thử · Chỉ đọc · Chế độ văn bản · Xung đột · Mất kết nối.
+
+### 6.6.1. UI-04-10 — Panel cấu hình một chặng (học n8n)
+
+**Mục đích.** Khi chọn một node, cấu hình xong nhanh mà không cần hiểu hết Camel (FR-04-037).
+
+**Thành phần:**
+
+| Thành phần | Mô tả |
+|---|---|
+| Tiêu đề chặng | Tên hiển thị · mã thành phần Camel · loại (Trigger/…) · nút đổi tên |
+| Tab / nhóm | Tham số chính (mở) · Nâng cao (gập) · Dữ liệu mẫu (pin) · Tài liệu |
+| Trường thường | Input, select, số, boolean — nhãn tiếng Việt + mô tả ngắn từ schema |
+| Trường biểu thức | Mở FR-04-031 (gợi ý + xem trước) |
+| Trường kết nối | Mở FR-04-032 (picker), không hiện secret |
+| DataMapper | Khi chặng ánh xạ trường |
+| Nhánh `choice` | UI FR-04-038 khi `ref = choice` |
+| Chân panel | “Đánh dấu đã kiểm tra” · liên kết mở tài liệu thành phần / TechDocs |
+
+**Quy tắc tương tác:**
+
+| # | Quy tắc |
+|---|---|
+| 1 | Mở panel = chọn node; đổi node = đổi form, không mất nháp đang gõ (xác nhận nếu chưa blur) |
+| 2 | Trường `required` trống → inline error + badge node |
+| 3 | Advanced mặc định thu gọn |
+| 4 | Xem trước biểu thức dùng pin của chặng hoặc chặng trước |
+| 5 | Không có nút “dán client secret”; mật khẩu để trống / chỉ “xoay secret” qua PH-05/PH-12 |
 
 ### 6.7. UI-04-08 — Chạy thử luồng
 
@@ -1416,10 +1580,12 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | # | Quy tắc |
 |---|---|
 | 1 | Chọn nguồn "lấy từ `traceId`" luôn bật sẵn giả danh hóa và **không cho tắt** (FR-04-028 E3) |
-| 2 | Nhấn một chặng trong kết quả → đồng thời tô sáng chặng tương ứng trên sơ đồ UI-04-07 |
-| 3 | Chặng lỗi tự mở rộng chi tiết; chặng cảnh báo hiện biểu tượng nhưng không tự mở |
-| 4 | Chạy thử quá hạn chờ → dừng và chỉ rõ chặng đang treo, không để màn hình chờ vô hạn |
-| 5 | Kết quả `PASSED` mới bật được nút "Gửi duyệt" |
+| 2 | Nhấn một chặng trong kết quả → tô sáng chặng trên sơ đồ (FR-04-035); hiện input/output nhanh |
+| 3 | Chặng lỗi tự mở rộng; nhánh `choice` không đi qua được làm mờ |
+| 4 | Chạy thử quá hạn chờ → dừng và chỉ rõ chặng đang treo |
+| 5 | Kết quả `PASSED` mới bật "Gửi duyệt" |
+| 6 | Nút “Gắn làm pin chặng” từ kết quả từng bước (FR-04-033) |
+| 7 | Có thể chọn “Chạy từ chặng đang chọn” khi đã có pin đủ phía trước (S) |
 
 ### 6.8. UI-04-09 — Hàng đợi duyệt luồng
 
@@ -1524,6 +1690,11 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **NFR-04-037** | Định nghĩa YAML sinh ra chạy được nguyên trạng trên Camel runtime, không cần hậu xử lý | 100% | Nạp trực tiếp định nghĩa sinh ra vào runtime |
 | **NFR-04-038** | Chuyển đổi hai chiều không mất mát: mở một YAML viết tay bằng trình thiết kế rồi lưu lại không làm đổi ngữ nghĩa | 100% với cấu trúc mà trình thiết kế hiển thị được | So sánh ngữ nghĩa trước và sau, không so sánh chuỗi ký tự |
 | **NFR-04-039** | Môi trường chạy thử cách ly khỏi cụm phục vụ: ngữ cảnh Camel riêng, không ghi vào CSDL nghiệp vụ thật, không phát sự kiện ra chủ đề Kafka thật | Tuyệt đối | Rà soát cấu hình; kiểm thử thử nghiệm không để lại dấu vết trên môi trường chạy |
+| **NFR-04-042** | Mở panel cấu hình một chặng sau khi chọn node | ≤ 200ms với schema ≤ 80 thuộc tính | UI-04-10 |
+| **NFR-04-043** | Xem trước biểu thức trên pin ≤ 100KB | P95 ≤ 1s | FR-04-031 |
+| **NFR-04-044** | Connection picker tải ≤ 200 kết nối | P95 ≤ 500ms | FR-04-032 |
+| **NFR-04-045** | Highlight kết quả chạy thử lên sơ đồ ≤ 30 chặng | ≤ 300ms sau khi có EN-04-10 | FR-04-035 |
+| **NFR-04-046** | Trình thiết kế **không** gọi API chứa secret dạng rõ sau lần bàn giao ban đầu | 0 lần lộ secret trên UI cấu hình node | BR-04-021 |
 | **NFR-04-040** | Thời gian hoàn tất một lần chạy thử ở chế độ giả lập | ≤ 5 giây | Đo từ lúc gửi đến khi có kết quả |
 | **NFR-04-041** | Thời gian dựng một luồng tra cứu đơn giản từ mẫu đến lúc gửi duyệt | ≤ 15 phút với người đã qua đào tạo | Thử nghiệm với ít nhất 5 người dùng thật |
 
@@ -1554,6 +1725,10 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **BR-04-017** | Không phiên bản nào được triển khai khi chưa qua duyệt và chưa có commit trong kho Git | Bảo đảm mọi thứ đang chạy đều truy nguyên được và quay lui được | Kiểm tra trạng thái `APPROVED` + `git_commit_ref` trước khi nạp | Từ chối nạp route |
 | **BR-04-018** | Trình thiết kế không được ghi cấu hình trực tiếp vào cụm đang phục vụ | Giữ một đường triển khai duy nhất, tránh lệch giữa Git và trạng thái thật (RB-10) | Không cấp quyền ghi cụm cho trình thiết kế; chính sách mạng | Lỗi thiết kế — chặn khi rà soát kiến trúc |
 | **BR-04-019** | Bản tin thật dùng làm dữ liệu chạy thử phải qua giả danh hóa | Môi trường thử nghiệm có kiểm soát lỏng hơn, không được chứa dữ liệu cá nhân thật (CMP-32) | Bắt buộc tại FR-04-028 E3, không cho tắt trên giao diện | Chặn tạo lần chạy thử |
+| **BR-04-021** | Không nhập/lưu secret hay chuỗi kết nối thô trên node trình thiết kế | Giảm lộ credential; thống nhất Vault/PH-05 | FR-04-032; UI-04-10 | Từ chối lưu; cảnh báo bảo mật |
+| **BR-04-022** | Pin dữ liệu mẫu không được chứa dữ liệu cá nhân chưa giả danh | CMP-32 | FR-04-033 E1 | Chặn lưu pin |
+| **BR-04-023** | Mỗi `choice` có tối đa một nhánh mặc định | Trùng BR-04-014, làm rõ ở UI | FR-04-038 | Chặn lưu |
+| **BR-04-024** | Cấm chu trình gọi luồng con | Tránh vòng lặp vô hạn | FR-04-040 | `ERROR` |
 | **BR-04-020** | Luồng duyệt theo diện khẩn cấp phải được rà soát bổ sung trong 24 giờ | Lối tắt cần thiết khi sự cố, nhưng không được biến thành thói quen | Nhãn `EMERGENCY` sinh nhiệm vụ rà soát, báo cáo định kỳ số lần dùng | Cảnh báo cho quản trị viên nền tảng |
 
 ---
@@ -1623,6 +1798,13 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **AT-04-033** | Chuyển đổi hai chiều không mất mát | Mở 20 luồng viết tay bằng trình thiết kế rồi lưu lại | Ngữ nghĩa và chú thích được giữ nguyên | 20/20 luồng cho kết quả xử lý y hệt trước và sau (NFR-04-038) |
 | **AT-04-034** | Giả danh hóa dữ liệu chạy thử | Lấy bản tin thử từ một `traceId` có chứa dữ liệu cá nhân | Bản tin thử đã được giả danh hóa, không thể tắt tùy chọn này | Không tìm thấy dữ liệu cá nhân thật trong bản ghi chạy thử (BR-04-019) |
 | **AT-04-035** | Cách ly môi trường chạy thử | Chạy thử một luồng có bước ghi dữ liệu và phát sự kiện | Không tác động tới CSDL nghiệp vụ và chủ đề Kafka thật | 0 bản ghi và 0 sự kiện phát sinh trên môi trường chạy (NFR-04-039) |
+| **AT-04-036** | Expression editor xem trước | Pin JSON có `$.ma`; biểu thức `${body[ma]}` | Panel hiện đúng giá trị xem trước | FR-04-031 |
+| **AT-04-037** | Không dán secret vào node | Thử nhập `clientSecret` vào ô URI/header | Bị từ chối; chỉ chọn được connectionRef | BR-04-021, FR-04-032 |
+| **AT-04-038** | Badge thiếu cấu hình | Node HTTP thiếu connection bắt buộc | Badge “thiếu” + gửi duyệt vô hiệu | FR-04-034 |
+| **AT-04-039** | Highlight sau chạy thử | Chạy thử có 1 chặng lỗi giữa luồng | Node lỗi đỏ; các node sau không tô thành công giả | FR-04-035 |
+| **AT-04-040** | Pin từ trace đã giả danh | Lấy pin từ traceId có PII | Pin lưu dạng đã giả danh; không tắt được bước PH-09 | BR-04-022 |
+| **AT-04-041** | UI `choice` một mặc định | Thêm 2 nhánh, đặt cả hai là mặc định | Chặn lưu | FR-04-038, BR-04-023 |
+| **AT-04-042** | Canvas trái→phải kiểu n8n | Mở luồng mẫu trên UI-04-07 | Node xếp LR; palette kéo được; chốt ＋ chèn giữa cạnh | UI-04-07 |
 
 ### 10.2. Kiểm thử phi chức năng
 
