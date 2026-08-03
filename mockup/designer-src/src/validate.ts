@@ -147,7 +147,7 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
           nodeId: n.id,
           title: 'Luật định tuyến không vét cạn',
           detail: `Chặng “${d.label}” có ${branches.length} luật nhưng thiếu nhánh mặc định. Bản tin không khớp luật nào sẽ bị bỏ qua.`,
-          hint: 'Đánh dấu một nhánh là “mặc định” trong bảng thuộc tính của cạnh.',
+          hint: 'Đánh dấu một nhánh là “mặc định” trên cạnh (nhấp nhãn điều kiện).',
         });
       }
       for (const e of branches) {

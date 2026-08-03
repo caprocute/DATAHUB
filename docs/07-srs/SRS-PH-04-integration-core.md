@@ -561,7 +561,7 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 |---|---|---|
 | Canvas trái→phải, node thẻ có màu theo nhóm, cạnh cong, chèn giữa cạnh bằng `＋` | Sơ đồ PH-04 | UI-04-07 |
 | Palette tìm kiếm + kéo thả | Bảng thành phần | UI-04-07 |
-| Panel cấu hình một nút: nhóm trường, bắt buộc rõ, mặc định hợp lý | Panel thuộc tính chặng | UI-04-10, FR-04-037 |
+| Popup cấu hình một nút (không sidebar): nhóm trường, bắt buộc rõ, mặc định hợp lý | Overlay UI-04-10 | UI-04-10, FR-04-037 |
 | Expression editor + xem trước trên dữ liệu mẫu | Camel Simple / JSONPath / XPath | FR-04-031 |
 | Credential / connection picker — không dán secret vào node | Chọn adapter PH-05, đích PH-14, tham chiếu Vault | FR-04-032 |
 | Pin data — gắn payload mẫu vào node để thử | Pin bản tin mẫu theo chặng | FR-04-033 |
@@ -637,13 +637,13 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 | **Đầu ra** | Định nghĩa dùng biến; không chứa secret |
 | **Ngoại lệ** | E1: Biến chưa khai báo cho môi trường đích → `ERROR` khi gửi duyệt triển khai môi trường đó |
 
-#### FR-04-037 — Panel cấu hình một chặng theo chuẩn tương tác n8n · **M**
+#### FR-04-037 — Popup cấu hình một chặng theo chuẩn tương tác n8n · **M**
 
 | Mục | Nội dung |
 |---|---|
-| **Mô tả** | Khi chọn một node, panel phải cấu hình được nhanh: nhóm trường, ẩn nâng cao, mô tả ngắn, mặc định an toàn, liên kết tài liệu thành phần |
+| **Mô tả** | Cấu hình một node trên **popup/overlay** (không sidebar cố định): nhóm trường, ẩn nâng cao, mô tả ngắn, mặc định an toàn, liên kết tài liệu thành phần |
 | **Tác nhân** | Cán bộ phát triển tích hợp |
-| **Xử lý** | 1. Nhóm trường theo schema (`common` mở, `advanced` gập)<br>2. Trường bắt buộc đánh dấu; validate inline<br>3. Trường kiểu biểu thức → FR-04-031; kiểu kết nối → FR-04-032<br>4. Hỗ trợ DataMapper khi chặng là ánh xạ (đã có)<br>5. Không bao giờ hiện lại secret đã lưu<br>6. Đổi tham số cập nhật YAML sống và badge FR-04-034 |
+| **Xử lý** | 1. Mở bằng nhấp đúp node (hoặc nút «Cấu hình»)<br>2. Nhóm trường theo schema (`common` mở, `advanced` gập) trong tab Tham số<br>3. Trường bắt buộc đánh dấu; validate inline<br>4. Trường kiểu biểu thức → FR-04-031; kiểu kết nối → FR-04-032<br>5. Hỗ trợ DataMapper khi chặng là ánh xạ (đã có)<br>6. Không bao giờ hiện lại secret đã lưu<br>7. Đổi tham số cập nhật YAML sống và badge FR-04-034; đóng popup không mất thay đổi đã áp |
 | **Đầu ra** | Cấu hình chặng đồng bộ sơ đồ + DSL |
 | **Ngoại lệ** | E1: Schema không render được → fallback JSON thô kèm cảnh báo |
 
@@ -743,7 +743,7 @@ FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy 
 | F | FR-04-034 | Badge cấu hình chưa đủ trên node | M |
 | F | FR-04-035 | Highlight kết quả chạy thử trên sơ đồ | M |
 | F | FR-04-036 | Biến cấu hình theo môi trường | S |
-| F | FR-04-037 | Panel cấu hình một chặng kiểu n8n | M |
+| F | FR-04-037 | Popup cấu hình một chặng kiểu n8n | M |
 | F | FR-04-038 | UI định tuyến `choice` thân thiện | S |
 | F | FR-04-039 | Sticky note trên sơ đồ | C |
 | F | FR-04-040 | Luồng con / tái sử dụng đoạn xử lý | S |
@@ -1430,7 +1430,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **UI-04-07** | Trình thiết kế luồng trực quan | Cán bộ phát triển | [`designer/index.html`](../../mockup/pages/designer/index.html) |
 | **UI-04-08** | Chạy thử luồng | Cán bộ phát triển | [`designer/index.html`](../../mockup/pages/designer/index.html)#test |
 | **UI-04-09** | Hàng đợi duyệt luồng | Người duyệt luồng tích hợp | [`designer/index.html`](../../mockup/pages/designer/index.html)#review |
-| **UI-04-10** | Panel cấu hình một chặng (kiểu n8n) | Cán bộ phát triển | Cột phải của trình thiết kế (UI-04-07) |
+| **UI-04-10** | Popup cấu hình một chặng (kiểu n8n) | Cán bộ phát triển | Overlay trên canvas UI-04-07 (không sidebar) |
 
 ### 6.2. UI-04-01 — Danh sách luồng tích hợp
 
@@ -1509,7 +1509,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | Vùng sơ đồ (giữa) | **Trái → phải**; node dạng thẻ có ô icon màu; cạnh cong; chèn giữa cạnh; minimap; tự sắp xếp; sticky note (FR-04-039) |
 | Chặng bắt buộc | Kiểm tra lược đồ, ủy quyền, ghi vết — ổ khóa, **không cho gỡ** (BR-04-001) |
 | Badge trạng thái node | Thiếu cấu hình / lỗi / cảnh báo / đã pin dữ liệu (FR-04-033, FR-04-034) |
-| Bảng thuộc tính (phải) | **UI-04-10** — cấu hình một chặng kiểu n8n |
+| Popup cấu hình chặng | **UI-04-10** — overlay kiểu n8n (không cột phải cố định) |
 | Lớp highlight chạy thử | Sau FR-04-028/035: tô node/cạnh theo kết quả |
 | Khung DSL | Camel YAML sống; sửa trực tiếp và đồng bộ ngược khi cấu trúc hỗ trợ |
 | Bảng phát hiện | Lỗi / cảnh báo; click nhảy tới chặng |
@@ -1529,35 +1529,38 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | 7 | Không phải `DRAFT` → chỉ đọc + "Tạo phiên bản mới" |
 | 8 | Không có ô nhập secret tự do trên canvas/panel — chỉ connection picker (FR-04-032, BR-04-021) |
 | 9 | Empty state: CTA “Thêm bước đầu / chọn mẫu” khi canvas trống |
+| 10 | Cấu hình chặng mở bằng **nhấp đúp** node (hoặc nút «Cấu hình») → popup UI-04-10; **không** bố trí form cố định ở cột phải |
 
 **Trạng thái màn hình:** Đang tải danh mục · Soạn thảo · Highlight chạy thử · Chỉ đọc · Chế độ văn bản · Xung đột · Mất kết nối.
 
-### 6.6.1. UI-04-10 — Panel cấu hình một chặng (học n8n)
+### 6.6.1. UI-04-10 — Popup cấu hình một chặng (học n8n)
 
-**Mục đích.** Khi chọn một node, cấu hình xong nhanh mà không cần hiểu hết Camel (FR-04-037).
+**Mục đích.** Khi mở một node, cấu hình xong nhanh trên overlay giữa màn hình — giống modal node của n8n — mà không chiếm cột phải của canvas (FR-04-037).
 
 **Thành phần:**
 
 | Thành phần | Mô tả |
 |---|---|
-| Tiêu đề chặng | Tên hiển thị · mã thành phần Camel · loại (Trigger/…) · nút đổi tên |
-| Tab / nhóm | Tham số chính (mở) · Nâng cao (gập) · Dữ liệu mẫu (pin) · Tài liệu |
-| Trường thường | Input, select, số, boolean — nhãn tiếng Việt + mô tả ngắn từ schema |
+| Overlay / modal (NDV) | Khung **kích thước cố định** lớn (kiểu Node Detail View n8n: INPUT \| Tham số \| OUTPUT); không co giãn theo số trường; đóng bằng Esc, X, hoặc «Xong» |
+| Tiêu đề chặng | Icon · tên hiển thị · mã thành phần Camel · loại (Trigger/…) |
+| Tab / nhóm | Tham số · Cài đặt · Dữ liệu mẫu (pin) · Tài liệu |
+| Trường thường | Input, select, số, boolean — nhãn tiếng Việt + mô tả ngắn từ schema; nâng cao gập trong tab Tham số |
 | Trường biểu thức | Mở FR-04-031 (gợi ý + xem trước) |
 | Trường kết nối | Mở FR-04-032 (picker), không hiện secret |
 | DataMapper | Khi chặng ánh xạ trường |
 | Nhánh `choice` | UI FR-04-038 khi `ref = choice` |
-| Chân panel | “Đánh dấu đã kiểm tra” · liên kết mở tài liệu thành phần / TechDocs |
+| Chân popup | Gợi ý phím tắt · «Xong» · liên kết tài liệu thành phần / TechDocs |
 
 **Quy tắc tương tác:**
 
 | # | Quy tắc |
 |---|---|
-| 1 | Mở panel = chọn node; đổi node = đổi form, không mất nháp đang gõ (xác nhận nếu chưa blur) |
-| 2 | Trường `required` trống → inline error + badge node |
-| 3 | Advanced mặc định thu gọn |
-| 4 | Xem trước biểu thức dùng pin của chặng hoặc chặng trước |
-| 5 | Không có nút “dán client secret”; mật khẩu để trống / chỉ “xoay secret” qua PH-05/PH-12 |
+| 1 | Mở popup = nhấp đúp node (hoặc nút «Cấu hình» / chọn từ bảng phát hiện); nhấp đơn chỉ chọn node trên canvas |
+| 2 | Đổi node đang cấu hình (từ bảng phát hiện) = đổi form trong cùng popup; xác nhận nếu còn nháp chưa blur |
+| 3 | Trường `required` trống → inline error + badge node |
+| 4 | Advanced mặc định thu gọn |
+| 5 | Xem trước biểu thức dùng pin của chặng hoặc chặng trước |
+| 6 | Không có nút “dán client secret”; mật khẩu để trống / chỉ “xoay secret” qua PH-05/PH-12 |
 
 ### 6.7. UI-04-08 — Chạy thử luồng
 
@@ -1690,7 +1693,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **NFR-04-037** | Định nghĩa YAML sinh ra chạy được nguyên trạng trên Camel runtime, không cần hậu xử lý | 100% | Nạp trực tiếp định nghĩa sinh ra vào runtime |
 | **NFR-04-038** | Chuyển đổi hai chiều không mất mát: mở một YAML viết tay bằng trình thiết kế rồi lưu lại không làm đổi ngữ nghĩa | 100% với cấu trúc mà trình thiết kế hiển thị được | So sánh ngữ nghĩa trước và sau, không so sánh chuỗi ký tự |
 | **NFR-04-039** | Môi trường chạy thử cách ly khỏi cụm phục vụ: ngữ cảnh Camel riêng, không ghi vào CSDL nghiệp vụ thật, không phát sự kiện ra chủ đề Kafka thật | Tuyệt đối | Rà soát cấu hình; kiểm thử thử nghiệm không để lại dấu vết trên môi trường chạy |
-| **NFR-04-042** | Mở panel cấu hình một chặng sau khi chọn node | ≤ 200ms với schema ≤ 80 thuộc tính | UI-04-10 |
+| **NFR-04-042** | Mở popup cấu hình một chặng sau nhấp đúp / «Cấu hình» | ≤ 200ms với schema ≤ 80 thuộc tính | UI-04-10 |
 | **NFR-04-043** | Xem trước biểu thức trên pin ≤ 100KB | P95 ≤ 1s | FR-04-031 |
 | **NFR-04-044** | Connection picker tải ≤ 200 kết nối | P95 ≤ 500ms | FR-04-032 |
 | **NFR-04-045** | Highlight kết quả chạy thử lên sơ đồ ≤ 30 chặng | ≤ 300ms sau khi có EN-04-10 | FR-04-035 |

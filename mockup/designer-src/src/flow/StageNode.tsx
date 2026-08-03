@@ -29,7 +29,7 @@ function StageNodeInner({ id, data, selected }: NodeProps<TStageNode>) {
     .join(' ');
 
   return (
-    <div className={cls}>
+    <div className={cls} title="Nhấp đúp để cấu hình chặng">
       {data.role !== 'from' && (
         <Handle type="target" position={Position.Left} className="n8n-node__port" />
       )}

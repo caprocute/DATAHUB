@@ -1,4 +1,4 @@
-import { Button, Collapse, Input, InputNumber, Select, Switch, Tooltip } from 'antd';
+import { Button, Collapse, Input, InputNumber, Modal, Select, Switch, Tabs, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import { groupOf, lookup, type SchemaProp } from '../catalog/catalog';
 import type { FieldMapping, StageNode } from '../flow/model';
@@ -7,7 +7,9 @@ import { DataMapperPanel } from './DataMapper';
 type PropValue = string | number | boolean;
 
 interface Props {
+  open: boolean;
   node: StageNode | undefined;
+  onClose: () => void;
   onLabel: (v: string) => void;
   onUri: (v: string) => void;
   onProp: (key: string, v: PropValue | undefined) => void;
@@ -105,7 +107,20 @@ function Field({
   );
 }
 
-export function PropertiesPanel({ node, onLabel, onUri, onProp, onMappings, onDelete }: Props) {
+/**
+ * Popup cấu hình một chặng — kiểu n8n (overlay giữa màn hình, không sidebar).
+ * Mở bằng nhấp đúp node hoặc nút «Cấu hình» trên thanh công cụ.
+ */
+export function NodeConfigModal({
+  open,
+  node,
+  onClose,
+  onLabel,
+  onUri,
+  onProp,
+  onMappings,
+  onDelete,
+}: Props) {
   const entry = node ? lookup(node.data.ref) : undefined;
 
   const { basic, advanced } = useMemo(() => {
@@ -113,120 +128,193 @@ export function PropertiesPanel({ node, onLabel, onUri, onProp, onMappings, onDe
     const b: [string, SchemaProp][] = [];
     const a: [string, SchemaProp][] = [];
     for (const [k, v] of all) {
-      // `id`, `description`, `disabled` là siêu dữ liệu của mọi mẫu EIP, không phải
-      // tham số nghiệp vụ, nên dồn xuống phần nâng cao cho gọn bảng.
       const meta = k === 'id' || k === 'description' || k === 'disabled' || k === 'note';
       (groupOf(v).advanced || meta ? a : b).push([k, v]);
     }
     return { basic: b, advanced: a };
   }, [entry]);
 
-  if (!node) {
-    return (
-      <div className="panel">
-        <div className="panel__head">Thuộc tính</div>
-        <div className="panel__body">
-          <p className="t-small t-muted" style={{ margin: 0 }}>
-            Chọn một chặng trên sơ đồ để xem và sửa thuộc tính. Biểu mẫu bên dưới sinh ra từ lược đồ JSON Schema của
-            chính thành phần Camel đó.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (!node) return null;
 
   const required = new Set(entry?.propertiesSchema.required ?? []);
   const isComponent = entry?.kind === 'component' || node.data.uri !== undefined;
+  const kindLabel = entry?.kind === 'pattern' ? 'EIP' : 'Thành phần Camel';
+
+  const paramsTab = (
+    <div className="n8n-cfg__body">
+      <div className="field">
+        <label className="field__label">Tên chặng</label>
+        <Input size="small" value={node.data.label} onChange={(e) => onLabel(e.target.value)} />
+        <div className="field__hint">
+          {entry?.title ?? node.data.ref} — <span className="t-mono">{node.data.ref}</span>
+        </div>
+      </div>
+
+      {isComponent && (
+        <div className="field">
+          <label className="field__label">
+            URI Camel<span className="field__req"> *</span>
+          </label>
+          <Input.TextArea
+            size="small"
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            className="t-mono"
+            value={node.data.uri ?? ''}
+            onChange={(e) => onUri(e.target.value)}
+          />
+          {entry?.syntax && <div className="field__hint t-mono">cú pháp: {entry.syntax}</div>}
+        </div>
+      )}
+
+      {basic.map(([k, v]) => (
+        <Field
+          key={k}
+          name={k}
+          schema={v}
+          required={required.has(k)}
+          value={node.data.props[k] as PropValue | undefined}
+          onChange={(val) => onProp(k, val)}
+        />
+      ))}
+
+      {(node.data.ref === 'transform' || node.data.mappings) && (
+        <>
+          <div className="divider" />
+          <DataMapperPanel mappings={node.data.mappings ?? []} onChange={onMappings} locked={false} />
+        </>
+      )}
+
+      {advanced.length > 0 && (
+        <Collapse
+          size="small"
+          ghost
+          items={[
+            {
+              key: 'adv',
+              label: <span className="t-small">Thuộc tính nâng cao ({advanced.length})</span>,
+              children: advanced.map(([k, v]) => (
+                <Field
+                  key={k}
+                  name={k}
+                  schema={v}
+                  required={required.has(k)}
+                  value={node.data.props[k] as PropValue | undefined}
+                  onChange={(val) => onProp(k, val)}
+                />
+              )),
+            },
+          ]}
+        />
+      )}
+    </div>
+  );
+
+  const settingsTab = (
+    <div className="n8n-cfg__body">
+      <p className="t-small t-muted" style={{ marginTop: 0 }}>
+        Cài đặt chặng — không lưu secret trên node. Kết nối và credential chọn qua picker (Vault / PH-05).
+      </p>
+      {node.data.locked ? (
+        <p className="t-small t-muted" style={{ margin: 0 }}>
+          🔒 Chặng bắt buộc của khung chuẩn — sửa được thuộc tính nhưng không gỡ khỏi luồng.
+        </p>
+      ) : (
+        <Button
+          danger
+          size="small"
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+        >
+          Gỡ chặng khỏi luồng
+        </Button>
+      )}
+    </div>
+  );
+
+  const docsTab = (
+    <div className="n8n-cfg__body">
+      <p className="t-small" style={{ marginTop: 0 }}>
+        <strong>{entry?.title ?? node.data.ref}</strong>
+      </p>
+      <p className="t-small t-muted">
+        {entry?.description ??
+          'Mô tả đầy đủ lấy từ catalog Camel khi triển khai. Bản mockup chỉ hiển thị mã thành phần và cú pháp URI.'}
+      </p>
+      {entry?.syntax && (
+        <p className="t-small t-mono" style={{ marginBottom: 0 }}>
+          {entry.syntax}
+        </p>
+      )}
+    </div>
+  );
 
   return (
-    <div className="panel">
-      <div className="panel__head">
-        Thuộc tính — {node.data.label}
-        <span className="badge badge--muted badge--plain" style={{ marginLeft: 'auto' }}>
-          {entry?.kind === 'pattern' ? 'EIP' : 'thành phần'}
-        </span>
-      </div>
-      <div className="panel__body">
-        <div className="field">
-          <label className="field__label">Tên chặng</label>
-          <Input size="small" value={node.data.label} onChange={(e) => onLabel(e.target.value)} />
-          <div className="field__hint">
-            {entry?.title ?? node.data.ref} — <span className="t-mono">{node.data.ref}</span>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      width={980}
+      destroyOnHidden
+      centered
+      maskClosable
+      keyboard
+      className="n8n-cfg-modal"
+      styles={{
+        header: { margin: 0, padding: '16px 20px', borderBottom: '1px solid var(--c-border)' },
+        body: { padding: 0, overflow: 'hidden' },
+      }}
+      title={
+        <div className="n8n-cfg__title">
+          <span className="n8n-cfg__icon" aria-hidden="true">
+            {node.data.icon}
+          </span>
+          <div className="n8n-cfg__title-text">
+            <div className="n8n-cfg__name">{node.data.label}</div>
+            <div className="n8n-cfg__meta">
+              <span className="badge badge--muted badge--plain">{kindLabel}</span>
+              <span className="t-mono t-muted">{node.data.ref}</span>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="n8n-cfg">
+        <aside className="n8n-cfg__side n8n-cfg__side--in" aria-label="Dữ liệu vào">
+          <div className="n8n-cfg__side-label">INPUT</div>
+          <p className="t-small t-muted" style={{ margin: 0 }}>
+            Pin bản tin mẫu (FR-04-033) — dùng xem trước biểu thức và chạy thử từng bước.
+          </p>
+          <pre className="n8n-cfg__side-code t-mono">{`{\n  "loaiHoSo": "CAP_MOI",\n  "chuSoHuu": { "hoTen": "…" }\n}`}</pre>
+        </aside>
+
+        <div className="n8n-cfg__main">
+          <Tabs
+            size="small"
+            className="n8n-cfg__tabs"
+            items={[
+              { key: 'params', label: 'Tham số', children: paramsTab },
+              { key: 'settings', label: 'Cài đặt', children: settingsTab },
+              { key: 'docs', label: 'Tài liệu', children: docsTab },
+            ]}
+          />
+          <div className="n8n-cfg__foot">
+            <span className="t-small t-muted">Khung cố định kiểu n8n NDV · Esc đóng</span>
+            <Button type="primary" size="small" onClick={onClose}>
+              Xong
+            </Button>
           </div>
         </div>
 
-        {isComponent && (
-          <div className="field">
-            <label className="field__label">
-              URI Camel<span className="field__req"> *</span>
-            </label>
-            <Input.TextArea
-              size="small"
-              autoSize={{ minRows: 2, maxRows: 4 }}
-              className="t-mono"
-              value={node.data.uri ?? ''}
-              onChange={(e) => onUri(e.target.value)}
-            />
-            {entry?.syntax && <div className="field__hint t-mono">cú pháp: {entry.syntax}</div>}
-          </div>
-        )}
-
-        {basic.map(([k, v]) => (
-          <Field
-            key={k}
-            name={k}
-            schema={v}
-            required={required.has(k)}
-            value={node.data.props[k] as PropValue | undefined}
-            onChange={(val) => onProp(k, val)}
-          />
-        ))}
-
-        {(node.data.ref === 'transform' || node.data.mappings) && (
-          <>
-            <div className="divider" />
-            <DataMapperPanel
-              mappings={node.data.mappings ?? []}
-              onChange={onMappings}
-              locked={false}
-            />
-          </>
-        )}
-
-        {advanced.length > 0 && (
-          <Collapse
-            size="small"
-            ghost
-            items={[
-              {
-                key: 'adv',
-                label: <span className="t-small">Thuộc tính nâng cao ({advanced.length})</span>,
-                children: advanced.map(([k, v]) => (
-                  <Field
-                    key={k}
-                    name={k}
-                    schema={v}
-                    required={required.has(k)}
-                    value={node.data.props[k] as PropValue | undefined}
-                    onChange={(val) => onProp(k, val)}
-                  />
-                )),
-              },
-            ]}
-          />
-        )}
-
-        <div className="divider" />
-        {node.data.locked ? (
+        <aside className="n8n-cfg__side n8n-cfg__side--out" aria-label="Dữ liệu ra">
+          <div className="n8n-cfg__side-label">OUTPUT</div>
           <p className="t-small t-muted" style={{ margin: 0 }}>
-            🔒 Chặng bắt buộc của khung chuẩn — sửa được thuộc tính nhưng không gỡ khỏi luồng.
+            Kết quả chặng sau chạy thử (FR-04-035) hiện ở đây.
           </p>
-        ) : (
-          <Button danger size="small" block onClick={onDelete}>
-            Gỡ chặng khỏi luồng
-          </Button>
-        )}
+          <div className="n8n-cfg__side-empty t-small t-muted">Chưa có lần chạy thử</div>
+        </aside>
       </div>
-    </div>
+    </Modal>
   );
 }

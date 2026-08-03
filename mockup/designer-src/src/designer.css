@@ -7,22 +7,177 @@
    Cơ sở lựa chọn: docs/05-adr/README.md#adr-016 và #adr-017
    ================================================================ */
 
-/* ---------- Bố cục ba cột ---------- */
+/* ---------- Bố cục hai cột: palette + canvas (cấu hình = popup kiểu n8n) ---------- */
 
-/* Vùng sơ đồ cần nhiều chỗ hơn danh sách chặng dạng văn bản trước đây. */
-.designer--rf { grid-template-columns: 232px minmax(0, 1fr) 316px; }
+.designer--rf { grid-template-columns: 232px minmax(0, 1fr); }
 
 .designer--rf > .panel { max-height: none; }
 
 .panel--canvas { display: flex; flex-direction: column; overflow: hidden; }
 .panel--canvas > .panel__head { flex: none; gap: var(--sp-3); }
 
-/* Bảng thành phần và bảng thuộc tính dài hơn khung sơ đồ thì tự cuộn trong bảng,
-   để ba cột luôn thẳng đầu nhau. */
-.designer--rf > .panel:first-child,
-.designer--rf > .panel:last-child {
+/* Palette dài hơn khung sơ đồ thì tự cuộn trong bảng. */
+.designer--rf > .panel:first-child {
   max-height: clamp(520px, 68vh, 820px);
   overflow-y: auto;
+}
+
+/* ---------- Popup cấu hình chặng — NDV cố định kiểu n8n (UI-04-10) ----------
+   Ant Design 6: className gắn trên `.ant-modal` (không còn `.ant-modal-content`).
+   Khung cố định 980×720 (hoặc 88vh): không co theo số trường / đổi tab.
+   Trong khung: INPUT | Parameters | OUTPUT; chỉ vùng giữa cuộn. */
+
+.n8n-cfg-modal.ant-modal {
+  width: 980px !important;
+  max-width: calc(100vw - 32px) !important;
+  padding-bottom: 0;
+}
+.n8n-cfg-modal .ant-modal-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: min(720px, 88vh);
+  max-height: 88vh;
+  overflow: hidden;
+  border-radius: var(--r-lg, 12px);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-lg, 0 16px 48px rgba(0, 0, 0, 0.18));
+  resize: none;
+}
+.n8n-cfg-modal .ant-modal-header {
+  flex: none;
+  margin: 0;
+}
+.n8n-cfg-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.n8n-cfg__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.n8n-cfg__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  background: color-mix(in srgb, var(--c-brand-500) 14%, var(--c-surface));
+  flex: none;
+}
+.n8n-cfg__title-text { min-width: 0; }
+.n8n-cfg__name {
+  font-weight: 650;
+  font-size: var(--fs-md);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.n8n-cfg__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+}
+
+.n8n-cfg {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  height: 100%;
+  min-height: 0;
+  background: var(--c-surface);
+}
+
+.n8n-cfg__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  min-height: 0;
+  overflow: auto;
+  background: color-mix(in srgb, var(--c-bg) 70%, var(--c-surface));
+}
+.n8n-cfg__side--in { border-right: 1px solid var(--c-border); }
+.n8n-cfg__side--out { border-left: 1px solid var(--c-border); }
+.n8n-cfg__side-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--c-text-3);
+}
+.n8n-cfg__side-code {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md, 8px);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.n8n-cfg__side-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--r-md, 8px);
+  padding: var(--sp-4);
+  text-align: center;
+}
+
+.n8n-cfg__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.n8n-cfg__tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 0;
+}
+.n8n-cfg__tabs .ant-tabs-nav { flex: none; margin-bottom: 8px; }
+.n8n-cfg__tabs .ant-tabs-content-holder {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.n8n-cfg__tabs .ant-tabs-content,
+.n8n-cfg__tabs .ant-tabs-tabpane {
+  height: 100%;
+}
+.n8n-cfg__body {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 4px;
+  padding-bottom: var(--sp-3);
+}
+.n8n-cfg__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 12px 16px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+@media (max-width: 780px) {
+  .n8n-cfg { grid-template-columns: minmax(0, 1fr); }
+  .n8n-cfg__side { display: none; }
 }
 
 /* ---------- Khung React Flow ---------- */
@@ -423,12 +578,6 @@
 .mapper__arrow { color: var(--c-text-3); font-weight: 600; }
 
 /* ---------- Màn hình hẹp ---------- */
-
-@media (max-width: 1180px) {
-  .designer--rf { grid-template-columns: 208px minmax(0, 1fr); }
-  /* Bảng thuộc tính xuống dưới, trải hết hai cột. */
-  .designer--rf > .panel:last-child { grid-column: 1 / -1; max-height: none; }
-}
 
 @media (max-width: 860px) {
   .designer--rf { grid-template-columns: minmax(0, 1fr); }

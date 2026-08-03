@@ -7,7 +7,7 @@
 | Mã | Quyết định | Trạng thái |
 |---|---|---|
 | [ADR-001](#adr-001) | Apache Camel làm lõi tích hợp | Đã chốt |
-| [ADR-002](#adr-002) | Quarkus native làm runtime | Đã chốt |
+| [ADR-002](#adr-002) | Camel Quarkus native cho Data Plane (PH-04) — phạm vi đã làm rõ | Đã chốt |
 | [ADR-003](#adr-003) | Apache APISIX làm API Gateway | Đã chốt |
 | [ADR-004](#adr-004) | Keycloak + OPA cho định danh và ủy quyền | Đã chốt |
 | [ADR-005](#adr-005) | Kafka + Apicurio + Debezium cho luồng bất đồng bộ | Đã chốt |
@@ -23,6 +23,8 @@
 | [ADR-015](#adr-015) | Kaoto làm mẫu tham chiếu cho thiết kế luồng và Camel YAML DSL | Đã chốt |
 | [ADR-016](#adr-016) | Ant Design v6 làm bộ thành phần giao diện, tinh chỉnh theo phong cách shadcn | Đã chốt |
 | [ADR-017](#adr-017) | XYFlow (React Flow) làm động cơ sơ đồ kéo thả trong console PH-04 | Đã chốt |
+| [ADR-018](#adr-018) | Mô hình phát triển: DU hybrid, production-first (biên bắt buộc tách ngay) | Đã chốt |
+| [ADR-019](#adr-019) | Spring Boot 4 + Spring Modulith cho DU ứng dụng; Camel giữ Quarkus (ADR-002) | Đã chốt |
 
 ---
 
@@ -54,13 +56,15 @@
 ---
 
 ## ADR-002
-### Quarkus native làm runtime
+### Camel Quarkus native cho Data Plane (PH-04)
 
-**Bối cảnh.** Camel chạy được trên nhiều runtime: Spring Boot, Quarkus, Camel Main. Lựa chọn runtime ảnh hưởng trực tiếp tới thời gian khởi động, tiêu thụ bộ nhớ và khả năng mở rộng phản ứng trên K8s.
+**Bối cảnh.** Camel chạy được trên nhiều runtime: Spring Boot, Quarkus, Camel Main. Lựa chọn runtime ảnh hưởng trực tiếp tới thời gian khởi động, tiêu thụ bộ nhớ và khả năng mở rộng phản ứng trên K8s — **đặc biệt với hàng trăm route và scale theo miền**.
 
-**Phương án cân nhắc:**
+**Phạm vi (làm rõ 2026-08-03).** ADR này áp cho **runtime Camel / PH-04** (`lgsp-camel-<mien>`). Các DU ứng dụng (Control Plane, dữ liệu, BPM quản trị…) chọn runtime tại [ADR-019](#adr-019) — **không** bắt buộc Quarkus toàn bộ backend.
 
-| Tiêu chí | Quarkus native | Quarkus JVM | Spring Boot |
+**Phương án cân nhắc (cho Camel):**
+
+| Tiêu chí | Quarkus native | Quarkus JVM | Spring Boot + Camel |
 |---|---|---|---|
 | Thời gian khởi động | ~50ms | ~1s | ~5s |
 | Bộ nhớ thường trú | ~50MB | ~150MB | ~300MB |
@@ -68,7 +72,7 @@
 | Hệ sinh thái | Tốt | Tốt | Rất tốt |
 | Gỡ lỗi | Khó hơn | Dễ | Dễ |
 
-**Quyết định.** Dùng **Camel Quarkus biên dịch native (GraalVM)** cho môi trường PROD; dùng chế độ JVM cho môi trường DEV để rút ngắn vòng lặp phát triển.
+**Quyết định.** Dùng **Camel Quarkus biên dịch native (GraalVM)** cho môi trường PROD của các deployment PH-04; dùng chế độ JVM cho DEV để rút ngắn vòng lặp phát triển.
 
 **Hệ quả tích cực:**
 - Khởi động dưới 50ms cho phép mở rộng phản ứng thực sự — pod mới phục vụ được gần như tức thì khi tải tăng đột ngột. Với hệ thống hành chính công có đỉnh tải theo giờ làm việc, đặc tính này chuyển hóa trực tiếp thành tiết kiệm tài nguyên.
@@ -79,6 +83,7 @@
 - Biên dịch native chậm (vài phút) — chấp nhận được vì chỉ chạy trên CI, không ảnh hưởng vòng lặp phát triển cục bộ.
 - Một số thư viện dùng reflection cần cấu hình bổ sung cho native. Giảm thiểu bằng cách chỉ dùng các Camel component đã được Quarkus hỗ trợ chính thức.
 - Khác biệt giữa DEV (JVM) và PROD (native) có thể che giấu lỗi — bù lại bằng kiểm thử trên bản native ở môi trường TEST.
+- Đội phải nắm **hai** runtime Java (Camel Quarkus + Spring Boot DU — ADR-019); giảm thiểu bằng khuôn mẫu monorepo và CI chung.
 
 ---
 
@@ -530,8 +535,81 @@ Chế độ sáng/tối cài bằng thuộc tính `data-theme` trên thẻ gốc
 
 ---
 
+## ADR-018
+### Mô hình phát triển: DU hybrid, production-first
+
+| Mục | Nội dung |
+|---|---|
+| **Trạng thái** | Chấp nhận |
+| **Ngày** | 2026-08-03 |
+| **Bối cảnh** | Chốt tổ chức mã/deploy cho 18 PH hướng production và chuẩn hóa biên — không tối đa hóa số microservice, cũng không monolith một khối. |
+
+**Các phương án**
+
+| Phương án | Ưu | Nhược |
+|---|---|---|
+| A. Modular monolith một BE cho mọi PH | Đơn giản ngày 1 | Trái ADR-014 và scale Camel |
+| B. Microservice 1 PH = 1 service ngay | Khớp chữ PR-04 | Nhân bản boilerplate; lệch chuẩn giữa service; không tự = chuẩn hóa |
+| C. **Hybrid DU production-first** — tách ngay mọi biên đã cứng; gom PH cùng vòng đời vào DU modular | Chuẩn hóa đúng chỗ; khớp kiến trúc | Cần ArchUnit / Modulith + bản đồ PH↔DU |
+
+**Quyết định.** Chọn **C**, với nguyên tắc **production-first**:
+
+| Tách ngay từ đầu (bắt buộc) | Gom trong DU modular (chuẩn hóa logic) |
+|---|---|
+| COTS: APISIX, Keycloak, OPA, Kafka, Vault, LGTM, Backstage | `lgsp-control` (PH-01, 02, 16) |
+| Control Plane ≠ Data Plane (ADR-014) | `lgsp-data` (PH-06…09) |
+| Camel **theo miền** `lgsp-camel-<mien>` | `lgsp-process` (PH-11, 18), `lgsp-adapter-mgr` (PH-05, 14) |
+| Console FE / Portal | Module PH trong DU: schema + `api/` riêng như microservice logic |
+
+Chi tiết → [IP-01](../08-implementation/01-mo-hinh-phat-trien.md). Runtime DU ứng dụng → [ADR-019](#adr-019).
+
+**Hệ quả:**
+- Chuẩn hóa = biên cứng + khuôn mẫu giống nhau, không = 18 process custom ngày 1.
+- SRS-19 không phải service riêng.
+- Tách thêm PH → DU khi đủ tiêu chí IP-01 §4.3.
+
+---
+
+## ADR-019
+### Spring Boot 4 + Spring Modulith cho DU ứng dụng
+
+| Mục | Nội dung |
+|---|---|
+| **Trạng thái** | Chấp nhận |
+| **Ngày** | 2026-08-03 |
+| **Bối cảnh** | ADR-002 chọn Camel Quarkus cho Data Plane. DU ứng dụng (control/data/process…) cần module hóa chặt, hệ sinh thái CRUD/JPA/security quen thuộc — tham chiếu GiaPhaHub (Spring Boot 4 + Modulith). Hỏi: có được dùng Spring Boot 4 thay Quarkus cho các DU này không? |
+
+**Phương án**
+
+| Phương án | Ưu | Nhược |
+|---|---|---|
+| A. Quarkus cho mọi DU + Camel | Một runtime | Modulith/tooling kém “Spring-native”; lệch GiaPhaHub |
+| B. Spring Boot 4 cho mọi thứ kể cả Camel | Một stack app | Mất lợi thế native scale của ADR-002 trên PH-04 |
+| C. **Hai runtime có chủ đích** — Spring Boot 4 + Modulith cho DU ứng dụng; Camel Quarkus cho PH-04 | Đúng việc đúng tool; học được Modulith | Đội nắm hai stack (chấp nhận, phạm vi Camel hẹp) |
+
+**Quyết định.** Chọn **C**.
+
+| Lớp | Runtime |
+|---|---|
+| `lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai` (Java) | **Spring Boot 4.x** + **Spring Modulith 2.x** + Java 21 |
+| `lgsp-camel-<mien>` (PH-04) | **Camel Quarkus native** (ADR-002) — không đổi |
+| Console | React / Vite (ADR-016/017) |
+
+**Hệ quả tích cực:**
+- Ranh giới module cưỡng chế bằng Modulith verify / ArchUnit (học GiaPhaHub).
+- Stack CRUD, Security, Liquibase/Flyway, test slice quen thuộc cho Control/Data Plane.
+- Giữ scale & cold-start cho đường dữ liệu Camel.
+
+**Hệ quả tiêu cực:**
+- CI phải build hai kiểu artifact (Boot jar + Quarkus native).
+- Không dùng Spring Cloud Gateway thay APISIX; không đưa logic tích hợp nặng vào Boot thay Camel.
+- Thư viện dùng chung giữa Boot và Camel phải Java thuần / API ổn định — tránh kéo Quarkus API vào Boot và ngược lại.
+
+---
+
 ## Liên kết
 
 - Kiến trúc tổng thể → [02-architecture](../02-architecture/README.md)
 - Yêu cầu pháp lý → [01-legal](../01-legal/README.md)
 - Kế hoạch triển khai → [04-deployment](../04-deployment/README.md)
+- Hướng dẫn lập trình → [08-implementation](../08-implementation/README.md)

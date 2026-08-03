@@ -29,7 +29,7 @@ import { StatusContext } from './flow/StatusContext';
 import { useFlowHistory } from './flow/useFlowHistory';
 import { FindingsPanel } from './panels/Findings';
 import { Palette } from './panels/Palette';
-import { PropertiesPanel } from './panels/Properties';
+import { NodeConfigModal } from './panels/Properties';
 import { YamlPanel } from './panels/YamlPanel';
 import type { Mode } from './theme/tokens';
 import { statusByNode, validate } from './validate';
@@ -50,6 +50,7 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState<StageNode>(LAID_OUT);
   const [edges, setEdges, onEdgesChange] = useEdgesState<SeqEdge>(INITIAL_EDGES);
   const [view, setView] = useState<'so-do' | 'van-ban'>('so-do');
+  const [configOpen, setConfigOpen] = useState(false);
   const [insertAt, setInsertAt] = useState<{ edgeId: string; at: XYPosition } | null>(null);
   const [branchEdgeId, setBranchEdgeId] = useState<string | null>(null);
   const { fitView } = useReactFlow();
@@ -246,9 +247,24 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
     (id: string) => {
       setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })));
       setView('so-do');
+      setConfigOpen(true);
     },
     [setNodes],
   );
+
+  const openConfig = useCallback(
+    (id: string) => {
+      setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })));
+      setConfigOpen(true);
+      setView('so-do');
+    },
+    [setNodes],
+  );
+
+  const closeConfig = useCallback(() => {
+    setConfigOpen(false);
+    editSession.current = false;
+  }, []);
 
   const interaction = useMemo<Interaction>(
     () => ({
@@ -334,6 +350,16 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
                 >
                   Vừa khung
                 </Button>
+                <Button
+                  size="small"
+                  type="primary"
+                  ghost
+                  onClick={() => selected && openConfig(selected.id)}
+                  disabled={!selected || view !== 'so-do'}
+                  title="Nhấp đúp node cũng mở được"
+                >
+                  Cấu hình
+                </Button>
                 <Button size="small" danger onClick={deleteSelected} disabled={!selected || view !== 'so-do'}>
                   Gỡ chặng
                 </Button>
@@ -358,6 +384,7 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
                 }}
                 onNodesDelete={onNodesDelete}
                 onDropItem={addStage}
+                onNodeDoubleClick={openConfig}
                 colorMode={mode}
               />
             ) : (
@@ -366,23 +393,25 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
               </div>
             )}
           </div>
-
-          <PropertiesPanel
-            node={selected}
-            onLabel={(v) => patchSelected((d) => ({ ...d, label: v }))}
-            onUri={(v) => patchSelected((d) => ({ ...d, uri: v }))}
-            onProp={(k, v) =>
-              patchSelected((d) => {
-                const props = { ...d.props };
-                if (v === undefined) delete props[k];
-                else props[k] = v;
-                return { ...d, props };
-              })
-            }
-            onMappings={(m: FieldMapping[]) => patchSelected((d) => ({ ...d, mappings: m }))}
-            onDelete={deleteSelected}
-          />
         </div>
+
+        <NodeConfigModal
+          open={configOpen && Boolean(selected)}
+          node={selected}
+          onClose={closeConfig}
+          onLabel={(v) => patchSelected((d) => ({ ...d, label: v }))}
+          onUri={(v) => patchSelected((d) => ({ ...d, uri: v }))}
+          onProp={(k, v) =>
+            patchSelected((d) => {
+              const props = { ...d.props };
+              if (v === undefined) delete props[k];
+              else props[k] = v;
+              return { ...d, props };
+            })
+          }
+          onMappings={(m: FieldMapping[]) => patchSelected((d) => ({ ...d, mappings: m }))}
+          onDelete={deleteSelected}
+        />
 
         <div className="grid grid--2 mb-5">
           <FindingsPanel findings={findings} onSelect={selectNode} />
@@ -393,8 +422,8 @@ export function Designer({ mode, onDirty, onStatus }: Props) {
           Danh mục thành phần trong bản minh họa gồm {CATALOG_SIZE.components} thành phần Camel và{' '}
           {CATALOG_SIZE.patterns} mẫu EIP, trích từ catalog chính thức của Camel {CAMEL_VERSION}. Bản đầy đủ có hơn 400
           thành phần, nạp từ máy chủ theo phiên bản Camel đang chạy.
-          {errorCount > 0 && ' Còn lỗi nên nút gửi duyệt đang bị chặn.'} Hoàn tác / làm lại: ⌘Z · ⇧⌘Z (hoặc Ctrl+Z ·
-          Ctrl+Y).
+          {errorCount > 0 && ' Còn lỗi nên nút gửi duyệt đang bị chặn.'} Nhấp đúp chặng (hoặc nút «Cấu hình») để mở
+          popup thuộc tính kiểu n8n. Hoàn tác / làm lại: ⌘Z · ⇧⌘Z (hoặc Ctrl+Z · Ctrl+Y).
         </p>
 
         {insertAt && (

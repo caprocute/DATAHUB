@@ -29,6 +29,7 @@ interface Props {
   onBeforeDelete: OnBeforeDelete<StageNode, SeqEdge>;
   onNodesDelete: (deleted: StageNode[]) => void;
   onDropItem: (item: PaletteItem, pos: XYPosition) => void;
+  onNodeDoubleClick: (id: string) => void;
   colorMode: 'light' | 'dark';
 }
 
@@ -42,6 +43,7 @@ export function FlowCanvas({
   onBeforeDelete,
   onNodesDelete,
   onDropItem,
+  onNodeDoubleClick,
   colorMode,
 }: Props) {
   const nodeTypes = useMemo(() => ({ stage: StageNodeView }), []);
@@ -79,6 +81,7 @@ export function FlowCanvas({
         onReconnect={onReconnect}
         onBeforeDelete={onBeforeDelete}
         onNodesDelete={onNodesDelete}
+        onNodeDoubleClick={(_, n) => onNodeDoubleClick(n.id)}
         defaultEdgeOptions={{ type: 'seq' }}
         defaultMarkerColor="var(--c-border-2)"
         connectionLineType={ConnectionLineType.Bezier}

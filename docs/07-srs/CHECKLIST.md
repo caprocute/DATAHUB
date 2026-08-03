@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 28/34 hạng mục · 150/190 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 32/39 hạng mục · 190/190 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -134,68 +134,69 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 
 ## GIAI ĐOẠN 2 — SRS nhóm kết nạp & quan sát (Đợt 2)
 
-### [ ] 2.1 — SRS **PH-01** Quản trị Kết nạp & Định danh hệ thống · **M**
+### [x] 2.1 — SRS **PH-01** Quản trị Kết nạp & Định danh hệ thống · **M** · _2026-08-03_
 
-*Nội dung trọng tâm*: quy trình đăng ký · thẩm định · cấp/thu hồi credential · luồng [F-01](../03-flows/README.md#f-01--đăng-ký-và-kết-nạp-httt-thành-viên)
-*Ánh xạ*: CMP-01
+→ [SRS-PH-01-onboarding.md](SRS-PH-01-onboarding.md) · 15 FR · 6 thực thể · 22 NFR · 16 BR · 32 AT
+*Ánh xạ*: CMP-01, CMP-23, CMP-28 + nghĩa vụ đầu mối & căn cứ pháp lý (NĐ 47)
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-01-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-01-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-01-nn`)
-- [ ] M7 Phi chức năng (`NFR-01-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-01-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-01-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-01-001…015`)
+- [x] M4 Mô hình dữ liệu (`EN-01-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-01-01…07`)
+- [x] M7 Phi chức năng (`NFR-01-001…022`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-01-001…016`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-01-001…032`)
 
-### [ ] 2.2 — SRS **PH-02** Quản lý API & Danh mục dịch vụ · **M**
+### [x] 2.2 — SRS **PH-02** Quản lý API & Danh mục dịch vụ · **M** · _2026-08-03_
 
-*Nội dung trọng tâm*: vòng đời API (DRAFT→RETIRED) · OpenAPI 3.1 · đồng bộ Bộ TT&TT · luồng [F-02](../03-flows/README.md#f-02--công-bố-và-đăng-ký-dịch-vụ-chia-sẻ-dữ-liệu)
-*Ánh xạ*: CMP-02, CMP-03, CMP-05
+→ [SRS-PH-02-api-catalog.md](SRS-PH-02-api-catalog.md) · 14 FR · 6 thực thể · 22 NFR · 15 BR · 32 AT
+*Ánh xạ*: CMP-02, CMP-03, CMP-05, CMP-23, CMP-34
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-02-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-02-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-02-nn`)
-- [ ] M7 Phi chức năng (`NFR-02-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-02-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-02-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-02-001…014`)
+- [x] M4 Mô hình dữ liệu (`EN-02-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-02-01…08`)
+- [x] M7 Phi chức năng (`NFR-02-001…022`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-02-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-02-001…032`)
 
-### [ ] 2.3 — SRS **PH-10** Truyền thông sự kiện & Đồng bộ · **M**
+### [x] 2.3 — SRS **PH-10** Truyền thông sự kiện & Đồng bộ · **M** · _2026-08-03_
 
-*Nội dung trọng tâm*: Kafka topic · Schema Registry · CDC · idempotent · khóa phân vùng · luồng [F-05](../03-flows/README.md#f-05--đồng-bộ-dữ-liệu-bất-đồng-bộ-theo-sự-kiện)
+→ [SRS-PH-10-event.md](SRS-PH-10-event.md) · 15 FR · 5 thực thể · 31 NFR · 16 BR · 32 AT
+*Ánh xạ*: CMP-10, CMP-11, CMP-15, CMP-24, CMP-28
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-10-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-10-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-10-nn`)
-- [ ] M7 Phi chức năng (`NFR-10-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-10-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-10-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-10-001…015`)
+- [x] M4 Mô hình dữ liệu (`EN-10-01…05`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-10-01…06`)
+- [x] M7 Phi chức năng (`NFR-10-001…031`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-10-001…016`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-10-001…032`)
 
-### [ ] 2.4 — SRS **PH-13** Giám sát, Ghi vết & Cảnh báo · **M**
+### [x] 2.4 — SRS **PH-13** Giám sát, Ghi vết & Cảnh báo · **M** · _2026-08-03_
 
-*Nội dung trọng tâm*: OTel · traceId · 4 nhóm dashboard · audit WORM · runbook · luồng [F-12](../03-flows/README.md#f-12--giám-sát-và-cảnh-báo-vận-hành)
-*Ánh xạ*: CMP-10, CMP-28
+→ [SRS-PH-13-observability.md](SRS-PH-13-observability.md) · 16 FR · 5 thực thể · 28 NFR · 16 BR · 34 AT
+*Ánh xạ*: CMP-10, CMP-15, CMP-24, CMP-28, CMP-34
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-13-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-13-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-13-nn`)
-- [ ] M7 Phi chức năng (`NFR-13-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-13-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-13-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-13-001…016`)
+- [x] M4 Mô hình dữ liệu (`EN-13-01…05`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-13-01…07`)
+- [x] M7 Phi chức năng (`NFR-13-001…028`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-13-001…016`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-13-001…034`)
 
 ---
 
@@ -390,7 +391,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] **6.4** — `pages/routes.html` — Danh sách & giám sát luồng tích hợp (PH-04) · **M** · _2026-08-03_
   - Danh sách route (UI-04-01) · Sơ đồ luồng (UI-04-02) · Cấu hình xử lý lỗi (UI-04-03) · Thống kê (UI-04-04)
 - [x] **6.11** — `pages/designer.html` + `pages/designer/index.html` — Thiết kế luồng bằng giao diện (PH-04) · **M** · _2026-08-03_
-  - Trình thiết kế XYFlow kiểu n8n (UI-04-07/10) · DataMapper · hoàn tác/làm lại · Chạy thử · Duyệt · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
+  - Trình thiết kế XYFlow kiểu n8n (UI-04-07) · popup cấu hình chặng (UI-04-10, không sidebar) · DataMapper · hoàn tác/làm lại · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
 - [x] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M** · _2026-08-03_
   - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · So sánh hợp nhất · Ưu tiên nguồn · Đồng bộ (UI-06-01…06)
 - [x] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M** · _2026-08-03_
@@ -424,8 +425,8 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 
 | SRS | M1 | M2 | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | Xong |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| PH-01 Kết nạp | | | | | | | | | | | 0/10 |
-| PH-02 API & Catalog | | | | | | | | | | | 0/10 |
+| PH-01 Kết nạp | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
+| PH-02 API & Catalog | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-03 Gateway | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-04 Lõi tích hợp ⭐ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-05 Adapter | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
@@ -433,17 +434,17 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-07 RDM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-08 Chất lượng DL | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-09 Privacy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| PH-10 Sự kiện | | | | | | | | | | | 0/10 |
+| PH-10 Sự kiện | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-11 BPM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-12 IAM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| PH-13 Giám sát | | | | | | | | | | | 0/10 |
+| PH-13 Giám sát | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-14 Quốc gia | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-15 Portal | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-16 NAS/KPI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-17 AI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-18 Vận hành | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | SRS-19 Ma trận RBAC | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| **Tổng** | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | **150/190** |
+| **Tổng** | 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19 | 19 | **190/190** |
 
 ---
 
@@ -457,6 +458,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 1.2 | **SRS PH-04** đủ 10 mục — 25 FR, 8 thực thể, 34 NFR, 15 BR, 28 AT. Làm chuẩn mẫu cho 17 SRS còn lại |
 | 2026-08-03 | 6.1, 6.4 | Mockup `index.html` + `routes.html` (4 màn UI-04-01…04). Đã kiểm chứng trên trình duyệt: điều hướng, chuyển tab, bảng cuộn ngang |
 | 2026-08-03 | 1.2, 6.11 | Bổ sung năng lực **thiết kế luồng bằng giao diện**: [ADR-015](../05-adr/README.md#adr-015) chọn Kaoto thay Camel Karavan (Karavan tự triển khai K8s, xung đột GitOps tại ADR-010). SRS PH-04 thêm `FR-04-026…030`, `EN-04-09…11`, `UI-04-07…09`, `NFR-04-035…041`, `BR-04-016…020`, `AT-04-029…035`. Mockup `designer.html` |
+| 2026-08-03 | 2.1–2.4 | **Hoàn tất Giai đoạn 2** — SRS PH-01 (Kết nạp), PH-02 (API & Danh mục), PH-10 (Truyền thông sự kiện), PH-13 (Giám sát & ghi vết). Nhóm này: 60 FR · 22 thực thể · 103 NFR · 63 BR · 130 AT. **Toàn bộ 18 SRS phân hệ + SRS-19 đã hoàn tất.** |
 | 2026-08-03 | 3.1–3.4 | **Hoàn tất Giai đoạn 3** — SRS PH-07 (Danh mục & ánh xạ từ điển), PH-06 (MDM), PH-09 (Bảo vệ dữ liệu), PH-14 (Kết nối quốc gia). Nhóm dữ liệu: 54 FR · 23 thực thể · 98 NFR · 63 BR · 124 AT |
 | 2026-08-03 | 1.1, 1.3, 1.4 | **Hoàn tất Giai đoạn 1** — SRS PH-12 (IAM), PH-03 (Gateway), PH-05 (Adapter), mỗi SRS đủ 10 mục. Cả nhóm lõi: 79 FR · 25 thực thể · 118 NFR · 59 BR · 125 AT |
 | 2026-08-03 | 0.2 | Chốt ngăn xếp giao diện tại [ADR-016](../05-adr/README.md#adr-016): **Ant Design v6** + phong cách shadcn + chế độ sáng/tối. Viết lại `app.css` trên token trích trực tiếp từ gói `antd@6.5.3`, thêm `theme.js`. Đã đo tương phản tự động 3.142 phần tử ở cả hai chế độ, sửa 9 vi phạm WCAG AA bằng cách đổi sắc độ trong chính bảng màu antd |
@@ -471,3 +473,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 6.2–6.10 | **Hoàn tất Giai đoạn 6** — mockup onboarding, catalog, mdm, monitoring, dlq, kpi, privacy, ai (cùng 6.1/6.4/6.11 đã có). Monitoring tạm theo checklist vì SRS PH-13 chưa xong |
 | 2026-08-03 | 0.4 | **SRS-19** Ma trận phân quyền toàn hệ thống — 9 FR, ma trận PH-01…18, 14 vai trò chuẩn (`INTEGRATION_REVIEWER`). Tài liệu xuyên suốt; PH-12 thực thi |
 | 2026-08-03 | 1.2 | Bổ sung **UX n8n** vào SRS PH-04: `FR-04-031…040`, `UI-04-10`, nguyên tắc §3.6.1; ADR-017 ghi nhận n8n là mẫu tương tác (không runtime) |
+| 2026-08-03 | — | **docs/08-implementation** + **ADR-018/019**: DU production-first; Spring Boot 4 + Modulith cho DU ứng dụng; ADR-002 làm rõ chỉ áp Camel Quarkus |

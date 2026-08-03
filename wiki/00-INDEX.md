@@ -18,6 +18,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | 05 | [ADR](../docs/05-adr/README.md) | Quyết định kiến trúc & lý do chọn công nghệ | Khi cần biết "vì sao chọn X" |
 | 06 | [Tác động TTQGS & nâng cấp](../docs/06-impact/README.md) | Phân tích Khung Kiến trúc tổng thể quốc gia số → 6 năng lực bổ sung, 13 bước nâng cấp | Khi rà soát tuân thủ khung mới |
 | 07 | [Danh mục phân hệ & SRS](../docs/07-srs/README.md) · [**CHECKLIST**](../docs/07-srs/CHECKLIST.md) · [**SRS-19 Ma trận RBAC**](../docs/07-srs/SRS-19-rbac-matrix.md) | 18 phân hệ runtime + SRS-19 (ma trận Role×Permission×PH); checklist SRS + mockup | **Đọc CHECKLIST đầu mỗi phiên làm SRS**; phân quyền → SRS-19 |
+| 08 | [**Triển khai lập trình**](../docs/08-implementation/README.md) · [IP-01 mô hình DU](../docs/08-implementation/01-mo-hinh-phat-trien.md) · [IP-02 chuẩn mã](../docs/08-implementation/02-huong-dan-lap-trinh.md) | Microservice vs modular monolith → **DU hybrid**; monorepo, gates, học GiaPhaHub | **Trước khi mở pha viết mã** · ADR-018 |
 
 ## 3. Tra cứu nhanh — Quyết định cốt lõi
 
@@ -25,7 +26,8 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 |---|---|---|
 | Integration engine | Apache Camel (Camel Quarkus) | ADR-001 |
 | Trình thiết kế luồng | Kaoto làm mẫu catalog/YAML; canvas XYFlow trong console PH-04 | ADR-015, ADR-017 |
-| Runtime | Quarkus native trên K8s | ADR-002 |
+| Runtime Camel (PH-04) | Camel Quarkus native trên K8s | ADR-002 |
+| Runtime DU ứng dụng | Spring Boot 4 + Spring Modulith | ADR-019 |
 | API Gateway | Apache APISIX | ADR-003 |
 | IAM / SSO | Keycloak (OIDC, SAML2, OAuth2) + OPA; ma trận quyền toàn hệ thống | ADR-004 · [SRS-19](../docs/07-srs/SRS-19-rbac-matrix.md) |
 | Messaging | Apache Kafka (Strimzi) | ADR-005 |
@@ -37,6 +39,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | Service mesh | Istio (mTLS nội bộ) | ADR-011 |
 | Secrets | HashiCorp Vault + External Secrets | ADR-012 |
 | Bộ thành phần giao diện | Ant Design v6, tinh chỉnh token theo phong cách shadcn, có chế độ sáng/tối | ADR-016 |
+| Mô hình phát triển mã | Hybrid DU production-first (tách biên cứng ngay); Boot 4 + Modulith; Camel Quarkus | ADR-018 · ADR-019 · [08-implementation](../docs/08-implementation/README.md) |
 
 ## 4. Thuật ngữ
 
