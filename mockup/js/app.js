@@ -15,6 +15,7 @@ const NAV = [
     items: [
       { id: 'onboarding', icon: '⊕', text: 'Kết nạp hệ thống', href: 'pages/onboarding.html', ph: 'PH-01', badge: 3 },
       { id: 'catalog',    icon: '☰', text: 'Danh mục dịch vụ', href: 'pages/catalog.html',    ph: 'PH-02' },
+      { id: 'portal',     icon: '◫', text: 'Cổng nhà phát triển', href: 'pages/portal.html',  ph: 'PH-15' },
       { id: 'routes',     icon: '⇄', text: 'Luồng tích hợp',   href: 'pages/routes.html',     ph: 'PH-04' },
       { id: 'designer',   icon: '✎', text: 'Thiết kế luồng',   href: 'pages/designer/index.html', ph: 'PH-04' },
       { id: 'adapters',   icon: '🔌', text: 'Adapter kết nối',  href: 'pages/adapters.html',   ph: 'PH-05' },
@@ -37,6 +38,7 @@ const NAV = [
       { id: 'monitoring', icon: '◎', text: 'Giám sát & truy vết', href: 'pages/monitoring.html', ph: 'PH-13' },
       { id: 'dlq',        icon: '⚠', text: 'Bản tin lỗi',         href: 'pages/dlq.html',        ph: 'PH-18', badge: 47 },
       { id: 'events',     icon: '📡', text: 'Truyền thông sự kiện', href: 'pages/events.html',    ph: 'PH-10' },
+      { id: 'bpm',        icon: '⑃', text: 'Quy trình nghiệp vụ', href: 'pages/bpm.html',        ph: 'PH-11', badge: 8 },
     ],
   },
   {

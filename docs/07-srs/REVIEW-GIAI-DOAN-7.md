@@ -10,8 +10,8 @@
 |---|---|---|
 | 7.1 — FR ↔ thành phần kiến trúc | ✅ Đạt | [§1](#1-rà-soát-chéo-fr--thành-phần-kiến-trúc-71) |
 | 7.2 — Phủ CMP-01…40 | ⚠️ Đạt có điều kiện | [§2](#2-phủ-tuân-thủ-cmp-0140-72) — 4 mục phủ ngoài SRS |
-| 7.3 — Liên kết nội bộ | ✅ Đạt | [§3](#3-kiểm-chứng-liên-kết-nội-bộ-73) — 0 liên kết hỏng |
-| 7.4 — UI ↔ mockup | ⚠️ Đạt có điều kiện | [§4](#4-rà-soát-ui--mockup-74) — 61/124 màn đã dựng |
+| 7.3 — Liên kết nội bộ | ✅ Đạt | [§3](#3-kiểm-chứng-liên-kết-nội-bộ-73) — 0 liên kết hỏng; 3 lỗi điều hướng phát hiện thủ công, **đã sửa** |
+| 7.4 — UI ↔ mockup | ⚠️ **Chưa đạt** | [§4](#4-rà-soát-ui--mockup-74) — 61/124 màn; Giai đoạn 6 hạ về `[~]`, chia 11 gói dựng nốt |
 | 7.5 — Cập nhật wiki & memory | ✅ Đạt | [§5](#5-cập-nhật-wiki--memory-75) |
 
 ---
@@ -100,6 +100,18 @@ Bộ quét báo 12 mục nghi vấn, đã kiểm tra thủ công từng mục v�
 | `mockup/pages/designer/index.html` | 5 | Chuỗi mẫu trong JS đã nén (`` `+Et(e)+` ``) bị bắt nhầm thành `href` | Không phải liên kết |
 | `mockup/designer-src/index.html` | 1 | `/src/main.tsx` — điểm vào Vite, chỉ tồn tại khi chạy dev server | Đúng thiết kế; bản build tại `pages/designer/` |
 
+### 3.1. Ba lỗi điều hướng bộ quét KHÔNG phát hiện được — đã sửa
+
+Kiểm "tệp đích có tồn tại không" là chưa đủ: một liên kết trỏ đúng tệp vẫn có thể sai về mặt điều hướng. Rà soát thủ công thêm phát hiện:
+
+| Lỗi | Biểu hiện | Đã sửa |
+|---|---|---|
+| **Trùng phiên bản trình thiết kế** | `pages/designer.html` là stub chỉ `location.replace()` sang `pages/designer/index.html`. Bộ quét thấy cả hai tệp đều tồn tại nên báo sạch | Xóa stub; `routes.html` trỏ thẳng `designer/index.html#test` và `#review` |
+| **Mô tả liên kết sai** | `routes.html` viết "màn chạy thử và duyệt luồng ở *tab kế bên*" nhưng liên kết lại trỏ về stub redirect — người đọc hiểu nhầm có trang thứ hai | Sửa câu chữ: nêu rõ đây là hai tab **trong cùng** trình thiết kế |
+| **Trang tồn tại nhưng không tới được** | `pages/bpm.html` (PH-11) và `pages/portal.html` (PH-15) không có mục nào trong `NAV` của `js/app.js` → chỉ tới được bằng cách gõ URL | Thêm hai mục sidebar; đã kiểm chứng trên trình duyệt |
+
+**Bài học cho lần rà soát sau.** Kiểm liên kết tự động chỉ trả lời "tệp có tồn tại không". Cần kiểm thêm hai chiều: (a) mọi trang có ít nhất một đường tới từ điều hướng, (b) không có hai tệp cùng phục vụ một mục đích.
+
 **Ghi chú.** Liên kết ngoài (văn bản pháp luật trên cổng chính phủ) không nằm trong phạm vi kiểm này — chúng có thể thay đổi ngoài tầm kiểm soát của dự án.
 
 ---
@@ -146,17 +158,27 @@ Chín phân hệ có trang giữ chỗ nêu rõ "màn hình chưa dựng" và d�
 
 Cộng thêm: PH-01 còn 1 màn, PH-04 còn 2, PH-13 còn 4, và SRS-19 còn 4 (`UI-19-01…04`, chưa có trang). **Tổng 63 màn.**
 
-### 4.3. Lý do chưa dựng và mức ưu tiên
+### 4.3. Đánh giá lại và kế hoạch dựng nốt
 
-Giai đoạn 6 của checklist chỉ cam kết dựng **các màn quan trọng có liên kết điều hướng thực tế**, không cam kết dựng đủ 124 màn. Mục tiêu của mockup là chứng minh luồng điều hướng và ngôn ngữ thiết kế — mục tiêu đó **đã đạt**. Thứ tự ưu tiên khi dựng tiếp:
+**Đánh giá ban đầu của báo cáo này là quá dễ dãi.** Lập luận "Giai đoạn 6 chỉ cam kết các màn quan trọng" đúng về mặt câu chữ checklist, nhưng bỏ qua một thực tế: **9/18 phân hệ chỉ có trang giữ chỗ**. Bộ mockup ở trạng thái đó chứng minh được ngôn ngữ thiết kế, nhưng chưa đủ để nghiệm thu hay để đối chiếu với đặc tả M6. Giai đoạn 6 đã được hạ về `[~]` và T-2 nâng từ **S** lên **M**.
 
-| Ưu tiên | Màn | Lý do |
-|---|---|---|
-| **Cao** | `UI-19-01…04` ma trận phân quyền | Là màn quản trị được nhiều vai trò dùng nhất; chưa có bất kỳ trang nào |
-| **Cao** | PH-12 (7 màn) | Quản trị danh tính — chạm mọi phân hệ |
-| **Trung bình** | PH-15 (9 màn) | Backstage cung cấp giao diện sẵn; mockup chỉ cần phần tùy biến |
-| **Trung bình** | PH-03, PH-10, PH-14 | Màn vận hành, người dùng hẹp |
-| **Thấp** | PH-05, PH-07, PH-08, PH-11 | Màn cấu hình, tần suất dùng thấp |
+**Kế hoạch**: chia 11 gói độc lập, mỗi gói đúng một tệp HTML để chạy song song không xung đột. Chi tiết đầy đủ (quy tắc chung, bộ khung HTML, danh sách lớp CSS, tiêu chí hoàn thành) → [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md).
+
+| Gói | Tệp | Phân hệ | Số màn |
+|:-:|---|---|:-:|
+| 1 | `pages/gateway.html` | PH-03 | 5 |
+| 2 | `pages/adapters.html` | PH-05 | 6 |
+| 3 | `pages/reference.html` | PH-07 | 6 |
+| 4 | `pages/dq.html` | PH-08 | 7 |
+| 5 | `pages/events.html` | PH-10 | 6 |
+| 6 | `pages/bpm.html` | PH-11 | 6 |
+| 7 | `pages/iam.html` | PH-12 + SRS-19 | 10 |
+| 8 | `pages/national.html` | PH-14 | 6 |
+| 9 | `pages/portal.html` | PH-15 | 9 |
+| 10 | `pages/monitoring.html` | PH-13 + PH-04 | 5 |
+| 11 | `pages/handover.html` | PH-01 | 1 |
+
+**Phát hiện quan trọng khi lập kế hoạch**: SRS-19 (`UI-19-01…04`) **không cần trang riêng** — M6 của nó đã chỉ định bốn màn là các tab trong `iam.html`. Tương tự `UI-12-01` (đăng nhập) đã có sẵn tại `login.html`. Báo cáo trước đó xếp SRS-19 là "chưa có bất kỳ trang nào" là hiểu sai cấu trúc đặc tả.
 
 ---
 
@@ -178,7 +200,7 @@ Ba nhóm việc chuyển sang giai đoạn sau. Không nhóm nào chặn việc 
 | Mã | Việc | Mức | Ghi chú |
 |---|---|:-:|---|
 | **T-1** | Ghi 4 mục CMP-17, 18, 26, 40 vào hồ sơ nghiệm thu tuân thủ, kèm nơi phủ thực tế | **M** | Tránh người thẩm định hiểu nhầm là bỏ sót; nội dung lấy nguyên từ [§2](#2-phủ-tuân-thủ-cmp-0140-72) |
-| **T-2** | Dựng 63 màn mockup còn lại theo thứ tự ưu tiên tại [§4.3](#43-lý-do-chưa-dựng-và-mức-ưu-tiên) | **S** | Bắt đầu từ `UI-19-01…04` và PH-12 |
+| **T-2** | Dựng 63 màn mockup còn lại | **M** | **Đã lên kế hoạch chi tiết**: 11 gói chạy song song tại [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md); checklist chính thêm mục 6.12–6.23. Nâng từ **S** lên **M** sau phản hồi của người dùng — 9 phân hệ chỉ có trang giữ chỗ thì bộ mockup chưa dùng được để nghiệm thu |
 | **T-3** | Tách nhóm `FR-04-026…040` (trình thiết kế) thành đơn vị triển khai riêng khỏi runtime Camel | **M** | Xem lý do tại [§1.3](#13-điểm-cần-chú-ý); quyết định khi lập kế hoạch triển khai |
 
 ---

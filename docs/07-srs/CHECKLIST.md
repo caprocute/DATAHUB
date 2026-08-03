@@ -4,8 +4,9 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: **39/39 hạng mục · 190/190 mục SRS · HOÀN TẤT** · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 39/51 hạng mục · **SRS 190/190 hoàn tất** · **Mockup 61/124 màn — đang làm dở** · Cập nhật: 2026-08-03
 Kết quả rà soát Giai đoạn 7 → [REVIEW-GIAI-DOAN-7.md](REVIEW-GIAI-DOAN-7.md) · Từ điển dữ liệu → [SRS-00](SRS-00-data-dictionary.md)
+Kế hoạch dựng nốt mockup (11 gói song song) → [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md)
 
 ---
 
@@ -386,9 +387,14 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 > Yêu cầu: các màn quan trọng, **có liên kết điều hướng thực tế** giữa các trang.
 > Mỗi mockup phải hiện thực đúng các màn `UI-{PH}-{nn}` đã đặc tả tại **M6** của SRS tương ứng.
 
+> **Trạng thái: `[~]` đang làm dở — 61/124 màn.** Chín phân hệ mới có trang giữ chỗ.
+> Kế hoạch dựng nốt chia 11 gói song song → [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md).
+> Đã sửa xong phần liên kết: xóa stub `designer.html` trùng phiên bản, thêm PH-11 và PH-15 vào sidebar (trước đó có trang nhưng không tới được).
+
 - [x] **6.1** — `index.html` — Trang chủ / Bảng điều khiển tổng quan · **M** · _2026-08-03_
-- [x] **6.2** — `pages/onboarding.html` — Kết nạp hệ thống thành viên (PH-01) · **M** · _2026-08-03_
+- [~] **6.2** — `pages/onboarding.html` — Kết nạp hệ thống thành viên (PH-01) · **M** · _2026-08-03_
   - Danh sách hồ sơ · Biểu mẫu đăng ký · Màn thẩm định/phê duyệt (UI-01-01…06)
+  - Còn thiếu: UI-01-07 bàn giao (trang riêng `handover.html`) → gói 11
 - [x] **6.3** — `pages/catalog.html` — Danh mục dịch vụ & Quản lý API (PH-02) · **M** · _2026-08-03_
   - Danh sách API · Chi tiết API + OpenAPI · Vòng đời trạng thái (UI-02-01…08)
 - [x] **6.4** — `pages/routes.html` — Danh sách & giám sát luồng tích hợp (PH-04) · **M** · _2026-08-03_
@@ -397,8 +403,9 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
   - Trình thiết kế XYFlow kiểu n8n (UI-04-07) · popup cấu hình chặng (UI-04-10, không sidebar) · DataMapper · hoàn tác/làm lại · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
 - [x] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M** · _2026-08-03_
   - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · So sánh hợp nhất · Ưu tiên nguồn · Đồng bộ (UI-06-01…06)
-- [x] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M** · _2026-08-03_
-  - Dashboard sức khỏe · Tra cứu theo traceId · Danh sách cảnh báo *(tạm theo checklist — SRS PH-13 chưa xong)*
+- [~] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M** · _2026-08-03_
+  - Đã có: Dashboard sức khỏe (UI-13-01) · Tra cứu theo traceId (UI-13-02) · Cảnh báo (UI-13-03)
+  - Còn thiếu: UI-13-04…07 + UI-04-06 → gói 10 của [CHECKLIST-MOCKUP](../../mockup/CHECKLIST-MOCKUP.md)
 - [x] **6.7** — `pages/dlq.html` — Xử lý bản tin lỗi (PH-18) · **M** · _2026-08-03_
   - Danh sách DLQ · Chi tiết lỗi + ngữ cảnh · Phát lại đơn/loạt · Bỏ qua · Thống kê (UI-18-01…06)
 - [x] **6.8** — `pages/kpi.html` — Báo cáo KPI tuân thủ (PH-16) · **M** · _2026-08-03_
@@ -407,6 +414,24 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
   - Phân loại · Ẩn danh · Rủi ro · Khóa · Nhật ký · Báo cáo (UI-09-01…06)
 - [x] **6.10** — `pages/ai.html` — Quản trị AI & Human-in-the-loop (PH-17) · **S** · _2026-08-03_
   - Mô hình · Gateway · Quyết định · HITL · Dữ liệu train · Drift (UI-17-01…06)
+
+### Đợt hoàn thiện — 11 gói chạy song song
+
+> Chi tiết từng gói (quy tắc chung, danh sách màn, ranh giới tệp) → [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md).
+> Mỗi gói chỉ sửa **một tệp HTML**, không đụng `app.js`/`app.css` → chạy song song không xung đột.
+
+- [ ] **6.12** — Gói 1 · `pages/gateway.html` — PH-03 Cổng tiếp nhận (UI-03-01…05) · **M**
+- [ ] **6.13** — Gói 2 · `pages/adapters.html` — PH-05 Adapter (UI-05-01…06) · **M**
+- [ ] **6.14** — Gói 3 · `pages/reference.html` — PH-07 Danh mục dùng chung (UI-07-01…06) · **M**
+- [ ] **6.15** — Gói 4 · `pages/dq.html` — PH-08 Chất lượng dữ liệu (UI-08-01…07) · **M**
+- [ ] **6.16** — Gói 5 · `pages/events.html` — PH-10 Truyền thông sự kiện (UI-10-01…06) · **M**
+- [ ] **6.17** — Gói 6 · `pages/bpm.html` — PH-11 Quy trình nghiệp vụ (UI-11-01…06) · **M**
+- [ ] **6.18** — Gói 7 · `pages/iam.html` — PH-12 + SRS-19 (UI-12-02…07, UI-19-01…04) · **M** · ⭐ *gói lớn nhất, 10 màn*
+- [ ] **6.19** — Gói 8 · `pages/national.html` — PH-14 Kết nối quốc gia (UI-14-01…06) · **M**
+- [ ] **6.20** — Gói 9 · `pages/portal.html` — PH-15 Cổng nhà phát triển (UI-15-01…09) · **M**
+- [ ] **6.21** — Gói 10 · `pages/monitoring.html` — PH-13 bổ sung (UI-13-04…07 + UI-04-06) · **M**
+- [ ] **6.22** — Gói 11 · `pages/handover.html` — PH-01 màn bàn giao (UI-01-07) · **S**
+- [ ] **6.23** — Việc chung sau khi 11 gói xong: gộp CSS cục bộ, liên kết `onboarding.html` → `handover.html`, cập nhật `index.html`, kiểm liên kết toàn kho · **M**
 
 ---
 
@@ -492,4 +517,5 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 1.2 | Bổ sung **UX n8n** vào SRS PH-04: `FR-04-031…040`, `UI-04-10`, nguyên tắc §3.6.1; ADR-017 ghi nhận n8n là mẫu tương tác (không runtime) |
 | 2026-08-03 | — | **docs/08-implementation** + **ADR-018/019**: DU production-first; Spring Boot 4 + Modulith cho DU ứng dụng; ADR-002 làm rõ chỉ áp Camel Quarkus |
 | 2026-08-03 | 0.3 | **SRS-00 Từ điển dữ liệu dùng chung** — 12 kiểu chuẩn (`T-*`), 11 trường ngữ cảnh bắt buộc, 12 thực thể chia sẻ `DD-01…12`, bảng chủ quản↔tiêu thụ, quy ước đặt tên, bảng mã trạng thái, chính sách lưu giữ |
-| 2026-08-03 | 7.1–7.6 | **Hoàn tất Giai đoạn 7** — rà soát chéo 324 FR ↔ kiến trúc (100%), phủ CMP 36/40 (4 mục là nghĩa vụ hạ tầng/hồ sơ), 0 liên kết hỏng, UI 61/124 màn đã dựng. Ba tồn đọng T-1…T-3. **Toàn bộ checklist 39/39 hoàn tất.** |
+| 2026-08-03 | 7.1–7.6 | **Hoàn tất Giai đoạn 7** — rà soát chéo 324 FR ↔ kiến trúc (100%), phủ CMP 36/40 (4 mục là nghĩa vụ hạ tầng/hồ sơ), 0 liên kết hỏng, UI 61/124 màn đã dựng. Ba tồn đọng T-1…T-3 |
+| 2026-08-03 | 6.x | **Mở lại Giai đoạn 6** — người dùng chỉ ra mockup chưa đủ và liên kết còn trùng phiên bản. Sửa: xóa stub `pages/designer.html` (redirect thừa, `routes.html` mô tả sai là "tab kế bên"), thêm PH-11 + PH-15 vào sidebar (có trang nhưng không tới được), trỏ thẳng `designer/index.html#test` và `#review`. Hạ 6.2/6.6 về `[~]`; thêm 6.12–6.23 chia **11 gói song song** theo [`mockup/CHECKLIST-MOCKUP.md`](../../mockup/CHECKLIST-MOCKUP.md) |

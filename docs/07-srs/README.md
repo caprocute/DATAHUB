@@ -269,7 +269,7 @@ Bộ mockup HTML minh họa các màn hình quan trọng, có liên kết điề
 | Kết nạp hệ thống thành viên | PH-01 | [`mockup/pages/onboarding.html`](../../mockup/pages/onboarding.html) |
 | Danh mục dịch vụ & Quản lý API | PH-02 | [`mockup/pages/catalog.html`](../../mockup/pages/catalog.html) |
 | Danh sách và giám sát luồng tích hợp | PH-04 | [`mockup/pages/routes.html`](../../mockup/pages/routes.html) |
-| Thiết kế, chạy thử và duyệt luồng | PH-04 | [`mockup/pages/designer/index.html`](../../mockup/pages/designer/index.html) (kéo thả XYFlow) · [`designer.html`](../../mockup/pages/designer.html) (chạy thử / duyệt) |
+| Thiết kế, chạy thử và duyệt luồng | PH-04 | [`mockup/pages/designer/index.html`](../../mockup/pages/designer/index.html) — một app React duy nhất, ba tab qua neo URL: `#design` kéo thả XYFlow · `#test` chạy thử · `#review` duyệt |
 | Quản lý dữ liệu chủ | PH-06 | [`mockup/pages/mdm.html`](../../mockup/pages/mdm.html) |
 | Giám sát & Truy vết | PH-13 | [`mockup/pages/monitoring.html`](../../mockup/pages/monitoring.html) |
 | Xử lý bản tin lỗi (DLQ) | PH-18 | [`mockup/pages/dlq.html`](../../mockup/pages/dlq.html) |
