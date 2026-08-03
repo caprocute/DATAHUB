@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 19/33 hạng mục · 140/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 27/33 hạng mục · 140/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -370,24 +370,26 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 > Mỗi mockup phải hiện thực đúng các màn `UI-{PH}-{nn}` đã đặc tả tại **M6** của SRS tương ứng.
 
 - [x] **6.1** — `index.html` — Trang chủ / Bảng điều khiển tổng quan · **M** · _2026-08-03_
-- [ ] **6.2** — `pages/onboarding.html` — Kết nạp hệ thống thành viên (PH-01) · **M**
-  - Danh sách hồ sơ · Biểu mẫu đăng ký · Màn thẩm định/phê duyệt
-- [ ] **6.3** — `pages/catalog.html` — Danh mục dịch vụ & Quản lý API (PH-02) · **M**
-  - Danh sách API · Chi tiết API + OpenAPI · Vòng đời trạng thái
+- [x] **6.2** — `pages/onboarding.html` — Kết nạp hệ thống thành viên (PH-01) · **M** · _2026-08-03_
+  - Danh sách hồ sơ · Biểu mẫu đăng ký · Màn thẩm định/phê duyệt (UI-01-01…06)
+- [x] **6.3** — `pages/catalog.html` — Danh mục dịch vụ & Quản lý API (PH-02) · **M** · _2026-08-03_
+  - Danh sách API · Chi tiết API + OpenAPI · Vòng đời trạng thái (UI-02-01…08)
 - [x] **6.4** — `pages/routes.html` — Danh sách & giám sát luồng tích hợp (PH-04) · **M** · _2026-08-03_
   - Danh sách route (UI-04-01) · Sơ đồ luồng (UI-04-02) · Cấu hình xử lý lỗi (UI-04-03) · Thống kê (UI-04-04)
 - [x] **6.11** — `pages/designer.html` + `pages/designer/index.html` — Thiết kế luồng bằng giao diện (PH-04) · **M** · _2026-08-03_
   - Trình thiết kế kéo thả XYFlow (UI-04-07) · DataMapper · hoàn tác/làm lại · Chạy thử (UI-04-08) · Duyệt (UI-04-09) · nguồn `mockup/designer-src/` ([ADR-017](../05-adr/README.md#adr-017))
-- [ ] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M**
-  - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · Lịch sử phiên bản
-- [ ] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M**
-  - Dashboard sức khỏe · Tra cứu theo traceId · Danh sách cảnh báo
-- [ ] **6.7** — `pages/dlq.html` — Xử lý bản tin lỗi (PH-18) · **M**
-  - Danh sách DLQ · Chi tiết lỗi + ngữ cảnh · Phát lại hàng loạt
-- [ ] **6.8** — `pages/kpi.html` — Báo cáo KPI tuân thủ (PH-16) · **M**
-  - 5 nhóm KPI · Mức độ tuân thủ CMP · Xuất báo cáo
-- [ ] **6.9** — `pages/privacy.html` — Bảo vệ dữ liệu & quyền riêng tư (PH-09) · **S**
-- [ ] **6.10** — `pages/ai.html` — Quản trị AI & Human-in-the-loop (PH-17) · **S**
+- [x] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M** · _2026-08-03_
+  - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · So sánh hợp nhất · Ưu tiên nguồn · Đồng bộ (UI-06-01…06)
+- [x] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M** · _2026-08-03_
+  - Dashboard sức khỏe · Tra cứu theo traceId · Danh sách cảnh báo *(tạm theo checklist — SRS PH-13 chưa xong)*
+- [x] **6.7** — `pages/dlq.html` — Xử lý bản tin lỗi (PH-18) · **M** · _2026-08-03_
+  - Danh sách DLQ · Chi tiết lỗi + ngữ cảnh · Phát lại đơn/loạt · Bỏ qua · Thống kê (UI-18-01…06)
+- [x] **6.8** — `pages/kpi.html` — Báo cáo KPI tuân thủ (PH-16) · **M** · _2026-08-03_
+  - Registry · NAS · 5 nhóm KPI · Cấu hình xuất · Phê duyệt · Đối soát (UI-16-01…06)
+- [x] **6.9** — `pages/privacy.html` — Bảo vệ dữ liệu & quyền riêng tư (PH-09) · **S** · _2026-08-03_
+  - Phân loại · Ẩn danh · Rủi ro · Khóa · Nhật ký · Báo cáo (UI-09-01…06)
+- [x] **6.10** — `pages/ai.html` — Quản trị AI & Human-in-the-loop (PH-17) · **S** · _2026-08-03_
+  - Mô hình · Gateway · Quyết định · HITL · Dữ liệu train · Drift (UI-17-01…06)
 
 ---
 
@@ -451,3 +453,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 4.1–4.4 | **Hoàn tất Giai đoạn 4** — SRS PH-08 (DQ), PH-11 (BPM), PH-15 (Portal), PH-18 (Ops/DLQ). Nhóm hoàn thiện: 68 FR · 24 thực thể · 100 NFR · 60 BR · 131 AT |
 | 2026-08-03 | 5.1 | **SRS PH-16** đủ 10 mục — 22 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Architecture Registry, NAS Connector, KPI 5 nhóm, CMP-33/34 |
 | 2026-08-03 | 5.1–5.2 | **Hoàn tất Giai đoạn 5** — SRS PH-16 (NAS/KPI), PH-17 (Cổng AI). Nhóm tuân thủ & AI: 39 FR · 12 thực thể · 50 NFR · 32 BR · 67 AT |
+| 2026-08-03 | 6.2–6.10 | **Hoàn tất Giai đoạn 6** — mockup onboarding, catalog, mdm, monitoring, dlq, kpi, privacy, ai (cùng 6.1/6.4/6.11 đã có). Monitoring tạm theo checklist vì SRS PH-13 chưa xong |
