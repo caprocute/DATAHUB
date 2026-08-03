@@ -3,33 +3,480 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quản trị AI — LGSP</title>
+<title>Cổng AI &amp; Quản trị AI — LGSP</title>
 <link rel="stylesheet" href="../css/app.css">
 <script src="../js/theme.js"></script>
-<script>window.LGSP_PAGE = { id: 'ai', title: 'Quản trị AI', crumbs: [
-  { text: 'Trang chủ', href: 'index.html' }, { text: 'Quản trị AI' }] };</script>
+<script>window.LGSP_PAGE = { id: 'ai', title: 'Cổng AI & Quản trị AI', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' }, { text: 'Cổng AI & Quản trị AI' }] };</script>
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-17 — Cổng AI &amp; Quản trị AI.</strong>
+  Minh họa các màn <span class="tag-ph">UI-17-01</span> danh mục mô hình,
+  <span class="tag-ph">UI-17-02</span> Gateway,
+  <span class="tag-ph">UI-17-03</span> nhật ký quyết định,
+  <span class="tag-ph">UI-17-04</span> hàng đợi HITL,
+  <span class="tag-ph">UI-17-05</span> dữ liệu train,
+  <span class="tag-ph">UI-17-06</span> drift — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-17-ai.md">SRS PH-17</a>.
+  Dữ liệu huấn luyện bắt buộc qua <a href="privacy.html">PH-09</a>;
+  cảnh báo drift / HITL quá hạn báo sang <a href="monitoring.html">PH-13</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Quản trị AI</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-17</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Cổng AI &amp; Quản trị AI</h1>
+    <p class="page-desc">MLflow · APISIX ai-proxy · Evidently · HITL bắt buộc (CMP-37) — 6 mô hình, 3 phiếu chờ duyệt</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Xuất bằng chứng thanh tra (decision + HITL + dataset)">⤒ Xuất bằng chứng</button>
+    <button class="btn btn--primary" data-demo="Mở form đăng ký mô hình MLflow">＋ Đăng ký mô hình</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-17</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-17 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="ai" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="models">Mô hình <span class="tab__count">6</span></button>
+    <button class="tab" data-tab="gateway">Gateway</button>
+    <button class="tab" data-tab="decisions">Quyết định <span class="tab__count">1.284</span></button>
+    <button class="tab" data-tab="hitl">HITL <span class="badge badge--warn" style="margin-left:4px">3</span></button>
+    <button class="tab" data-tab="train">Dữ liệu train</button>
+    <button class="tab" data-tab="drift">Drift</button>
+  </div>
+
+  <!-- ===== UI-17-01: Danh mục mô hình ===== -->
+  <div class="card__body" data-panel="models" data-panel-group="ai" style="padding:0">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm theo mã hoặc tên mô hình…" data-filter="models-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: tất cả giai đoạn">Tất cả</button>
+        <button class="btn btn--sm" data-demo="Lọc: Staging">Staging</button>
+        <button class="btn btn--sm" data-demo="Lọc: Production">Production</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Registry: MLflow</span>
+    </div>
+
+    <div class="alert alert--err" style="margin:0 var(--sp-5) var(--sp-4)">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Thiếu liên kết dataset (CMP-38)</div>
+        <div class="t-small"><span class="t-mono">phan-loai-ho-so</span> v4 Production chưa gắn dataset đã qua PH-09 — chặn thăng tiếp / cảnh báo thanh tra.</div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="models-table">
+        <thead>
+          <tr>
+            <th>Mã mô hình</th><th>Tên</th><th>Rủi ro</th><th>HITL</th>
+            <th>Phiên bản</th><th>Giai đoạn</th><th>Đích</th>
+            <th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">goi-y-ho-so</td>
+            <td class="t-primary">Gợi ý phân loại hồ sơ TTHC</td>
+            <td><span class="badge badge--warn">Cao</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td class="t-mono">v7</td>
+            <td><span class="badge badge--ok">Production</span></td>
+            <td class="t-small">QG dùng chung</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem timeline Staging→Production v7">Phiên bản</button>
+              <button class="btn btn--sm" data-demo="Hạ Staging — goi-y-ho-so v7">Hạ Staging</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">phan-loai-ho-so</td>
+            <td class="t-primary">Phân loại hồ sơ thiếu giấy tờ</td>
+            <td><span class="badge badge--warn">Cao</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td class="t-mono">v4</td>
+            <td><span class="badge badge--ok">Production</span></td>
+            <td class="t-small">QG dùng chung</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem phiên bản phan-loai-ho-so">Phiên bản</button>
+              <a class="btn btn--sm" href="#train-panel" data-demo="Chuyển tab Dữ liệu train">Gắn dataset</a>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">trich-xuat-vb</td>
+            <td class="t-primary">Trích xuất trường văn bản điện tử</td>
+            <td><span class="badge badge--info">Trung bình</span></td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td class="t-mono">v12</td>
+            <td><span class="badge badge--info">Staging</span></td>
+            <td class="t-small">QG dùng chung</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--primary" data-demo="Kiểm tra điều kiện thăng Production (dataset, baseline, duyệt)">Thăng Production</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">tom-tat-van-ban</td>
+            <td class="t-primary">Tóm tắt văn bản nội bộ</td>
+            <td><span class="badge badge--muted">Thấp</span></td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td class="t-mono">v2</td>
+            <td><span class="badge badge--info">Staging</span></td>
+            <td class="t-small">KServe cục bộ <span class="badge badge--plain badge--warn">CMP-39</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem thuyết minh CMP-39 KServe">Thuyết minh</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">cham-diem-rui-ro</td>
+            <td class="t-primary">Chấm điểm rủi ro hồ sơ</td>
+            <td><span class="badge badge--err">Rất cao</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td class="t-mono">v1</td>
+            <td><span class="badge badge--muted">Registered</span></td>
+            <td class="t-small">—</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Bổ sung hồ sơ rủi ro trước Staging">Bổ sung hồ sơ</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">dich-thuong-mai</td>
+            <td class="t-primary">Dịch mô tả thủ tục (thí nghiệm)</td>
+            <td><span class="badge badge--muted">Thấp</span></td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td class="t-mono">v3</td>
+            <td><span class="badge badge--muted">Archived</span></td>
+            <td class="t-small">QG dùng chung</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Khôi phục từ Archived → Staging">Khôi phục</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Hiển thị 6 / 6 mô hình · Timeline: Registered → Staging → Production → Archived</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-17-02: AI Gateway ===== -->
+  <div class="card__body hidden" data-panel="gateway" data-panel-group="ai">
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Upstream APISIX <span class="t-mono">ai-proxy</span></div>
+        <div class="t-small">Mọi lời gọi AI đi qua PH-03 plugin ai-proxy — ACL mô hình, rate limit, audit bắt buộc. Không nhúng API key nhà cung cấp vào route YAML.</div>
+      </div>
+    </div>
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">ACL mô hình</div>
+        <div class="field">
+          <label class="field__label">Phạm vi JWT (PH-12)</label>
+          <input class="input input--mono" value="ai.invoke, ai.manage, ai.approve">
+          <div class="field__hint">Fail-closed — thiếu scope → 403</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Client được phép gọi Production</label>
+          <select class="select" multiple size="3">
+            <option selected>svc-camel-ph04</option>
+            <option selected>svc-bpm-ph11</option>
+            <option>portal-cong-chuc (chỉ Staging)</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" checked> <span>Cấm URI mô hình trực tiếp trong route Production</span></label>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Giới hạn tần suất</div>
+        <div class="field">
+          <label class="field__label">RPS / client (Production)</label>
+          <input class="input" type="number" value="50">
+        </div>
+        <div class="field">
+          <label class="field__label">Burst</label>
+          <input class="input" type="number" value="100">
+        </div>
+        <div class="field">
+          <label class="field__label">Upstream mặc định</label>
+          <input class="input input--mono" value="https://ai-qg.example.gov.vn/v1">
+          <div class="field__hint">Ưu tiên nền tảng AI dùng chung QG (CMP-39)</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Route ai-proxy</label>
+          <input class="input input--mono" value="/ai/v1/* → apisix-ai-proxy">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Lưu cấu hình AI Gateway (GitOps)">Lưu cấu hình</button>
+      <button class="btn" data-demo="Xem audit lời gọi AI 24h">Xem audit 24h</button>
+      <span class="t-small t-muted" style="margin-left:auto">NFR-17-001: overhead Gateway P99 ≤ 20ms</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-17-03: Nhật ký quyết định ===== -->
+  <div class="card__body hidden" data-panel="decisions" data-panel-group="ai" style="padding:0">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="decisionId hoặc traceId…" data-filter="decisions-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: 24 giờ">24h</button>
+        <button class="btn btn--sm" data-demo="Lọc: có HITL">Có HITL</button>
+        <button class="btn btn--sm" data-demo="Lọc: theo mô hình">Theo mô hình</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Chỉ đọc · WORM</span>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="decisions-table">
+        <thead>
+          <tr>
+            <th>decisionId</th><th>traceId</th><th>Input tóm tắt</th>
+            <th>Mô hình</th><th class="table__num">Confidence</th>
+            <th>HITL</th><th>Kết quả người</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">dec-a91f2c</td>
+            <td class="t-mono t-small"><a href="monitoring.html#trace">7f3a9c2e1b…</a></td>
+            <td class="t-small">Hồ sơ TTHC ****4521 · loại cấp lại CCCD</td>
+            <td class="t-mono t-small">goi-y-ho-so@v7</td>
+            <td class="table__num">0,94</td>
+            <td><span class="badge badge--warn">PENDING</span></td>
+            <td class="t-muted">—</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dec-b02e88</td>
+            <td class="t-mono t-small"><a href="monitoring.html#trace">c4d8e01a9f…</a></td>
+            <td class="t-small">Hồ sơ ****8890 · đăng ký kinh doanh</td>
+            <td class="t-mono t-small">goi-y-ho-so@v7</td>
+            <td class="table__num">0,87</td>
+            <td><span class="badge badge--ok">APPROVED</span></td>
+            <td class="t-small">Đồng ý nguyên văn</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dec-c11d44</td>
+            <td class="t-mono t-small"><a href="monitoring.html#trace">91be5520aa…</a></td>
+            <td class="t-small">Văn bản nội bộ · trích 4 trường địa chỉ</td>
+            <td class="t-mono t-small">trich-xuat-vb@v12</td>
+            <td class="table__num">0,91</td>
+            <td><span class="badge badge--muted">N/A</span></td>
+            <td class="t-muted">Chỉ gợi ý</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dec-d55aa1</td>
+            <td class="t-mono t-small"><a href="monitoring.html#trace">e2f7bb901c…</a></td>
+            <td class="t-small">Hồ sơ ****1203 · thiếu giấy tờ?</td>
+            <td class="t-mono t-small">phan-loai-ho-so@v4</td>
+            <td class="table__num">0,72</td>
+            <td><span class="badge badge--err">REJECTED</span></td>
+            <td class="t-small">Từ chối · lý do: thiếu căn cứ</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Input đã che theo quyền · click traceId → <a href="monitoring.html">PH-13</a></span>
+    </div>
+  </div>
+
+  <!-- ===== UI-17-04: Hàng đợi HITL ===== -->
+  <div class="card__body hidden" data-panel="hitl" data-panel-group="ai">
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">GỢI Ý — KHÔNG PHẢI QUYẾT ĐỊNH (CMP-37)</div>
+        <div class="t-small">Không có nút bỏ qua duyệt / chấp nhận tự động. Confidence cao không đổi thành “tự ban hành”. Người duyệt phải là tài khoản người thật.</div>
+      </div>
+    </div>
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Phiếu đang chờ</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Phiếu</th><th>Mô hình</th><th>Conf.</th><th>Hạn</th></tr>
+            </thead>
+            <tbody>
+              <tr class="is-selected">
+                <td class="t-mono t-small">hitl-901</td>
+                <td class="t-small">goi-y-ho-so@v7</td>
+                <td class="table__num">0,94</td>
+                <td class="t-small" style="color:var(--c-warn-700)">Còn 1h12</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">hitl-902</td>
+                <td class="t-small">phan-loai-ho-so@v4</td>
+                <td class="table__num">0,81</td>
+                <td class="t-small">Còn 4h</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">hitl-903</td>
+                <td class="t-small">goi-y-ho-so@v7</td>
+                <td class="table__num">0,69</td>
+                <td class="t-small">Còn 8h</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Chi tiết phiếu <span class="t-mono">hitl-901</span></div>
+        <div class="card mb-3" style="background:var(--c-surface-2);box-shadow:none">
+          <div class="card__body" style="padding:var(--sp-3)">
+            <div class="t-small t-muted mb-2">Gợi ý AI (chỉ hỗ trợ)</div>
+            <div class="t-small mb-2">Phân loại: <strong>Cấp lại CCCD — đủ điều kiện tiếp nhận</strong></div>
+            <div class="row" style="gap:var(--sp-2)">
+              <span class="badge badge--info">confidence 0,94</span>
+              <span class="t-mono t-small">dec-a91f2c</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label">Quyết định của người có thẩm quyền</label>
+          <select class="select">
+            <option>Đồng ý nguyên văn gợi ý</option>
+            <option>Từ chối</option>
+            <option>Điều chỉnh rồi ban hành</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label">Lý do (bắt buộc khi từ chối / điều chỉnh)</label>
+          <textarea class="input" rows="2" placeholder="Nhập lý do…"></textarea>
+        </div>
+        <div class="row">
+          <button class="btn btn--primary" data-demo="Xác nhận phê duyệt HITL hitl-901 — ghi audit WORM">Phê duyệt</button>
+          <button class="btn btn--danger" data-demo="Xác nhận từ chối HITL — lý do bắt buộc">Từ chối</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-17-05: Dữ liệu train ===== -->
+  <div class="card__body hidden" data-panel="train" data-panel-group="ai" id="train-panel" style="padding:0">
+    <div class="toolbar">
+      <span class="t-small">Liên kết model ↔ dataset (CMP-38) · ẩn danh bắt buộc qua <a href="privacy.html">PH-09 / FR-09-009</a></span>
+      <div class="toolbar__spacer"></div>
+      <a class="btn btn--sm btn--primary" href="privacy.html">Chuẩn bị qua PH-09</a>
+    </div>
+    <div class="alert alert--warn" style="margin:0 var(--sp-5) var(--sp-4)">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Version sắp Production thiếu link</div>
+        <div class="t-small"><span class="t-mono">phan-loai-ho-so@v4</span> — orphan dataset link. BR-17-006 chặn nếu chưa gắn.</div>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Model / version</th><th>datasetId</th><th>Mức ẩn danh</th>
+            <th>Hash</th><th>Người chịu trách nhiệm</th><th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">goi-y-ho-so@v7</td>
+            <td class="t-mono t-small">ds-anon-2026-07-12</td>
+            <td><span class="badge badge--ok">Giả danh hóa</span></td>
+            <td class="t-mono t-small">sha256:a3f1…9c</td>
+            <td class="t-small">Nguyễn V. A (ATTT)</td>
+            <td><span class="badge badge--ok">Đã gắn</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">trich-xuat-vb@v12</td>
+            <td class="t-mono t-small">ds-anon-2026-07-28</td>
+            <td><span class="badge badge--info">Ẩn danh</span></td>
+            <td class="t-mono t-small">sha256:b8e2…1d</td>
+            <td class="t-small">Trần T. B (KHDL)</td>
+            <td><span class="badge badge--ok">Đã gắn</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">phan-loai-ho-so@v4</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">Thiếu link</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>PH-17 không tự ẩn danh — chỉ ghi nhận liên kết sau khi <a href="privacy.html">PH-09</a> xử lý</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-17-06: Drift Evidently ===== -->
+  <div class="card__body hidden" data-panel="drift" data-panel-group="ai">
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Báo cáo 7 ngày</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">12</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Cảnh báo</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">2</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Nghiêm trọng</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">1</div>
+      </div>
+    </div>
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Drift nghiêm trọng — Evidently</div>
+        <div class="t-small"><span class="t-mono">goi-y-ho-so@v7</span>: PSI đầu vào 0,28 &gt; ngưỡng 0,20. Đề xuất hạn chế traffic / hạ Staging. Đã thông báo <a href="monitoring.html">PH-13</a>.</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Model</th><th>Baseline</th><th>PSI / KS</th><th>Mức độ</th>
+            <th>Chạy lúc</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">goi-y-ho-so@v7</td>
+            <td class="t-mono t-small">bl-2026-06</td>
+            <td class="table__num" style="color:var(--c-err-700);font-weight:600">0,28</td>
+            <td><span class="badge badge--err">Nghiêm trọng</span></td>
+            <td class="t-small">03/08 14:20</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem báo cáo Evidently đầy đủ">Báo cáo</button>
+              <button class="btn btn--sm" data-demo="Đề xuất hạ Staging + alert PH-13">Hạn chế</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">phan-loai-ho-so@v4</td>
+            <td class="t-mono t-small">bl-2026-05</td>
+            <td class="table__num" style="color:var(--c-warn-700);font-weight:600">0,17</td>
+            <td><span class="badge badge--warn">Cảnh báo</span></td>
+            <td class="t-small">03/08 08:00</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem báo cáo Evidently">Báo cáo</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">trich-xuat-vb@v12</td>
+            <td class="t-mono t-small">bl-2026-07</td>
+            <td class="table__num">0,04</td>
+            <td><span class="badge badge--ok">Bình thường</span></td>
+            <td class="t-small">02/08 22:00</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem báo cáo Evidently">Báo cáo</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
