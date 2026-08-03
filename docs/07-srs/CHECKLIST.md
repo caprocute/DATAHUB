@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 15/33 hạng mục · 100/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 16/33 hạng mục · 110/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -290,21 +290,22 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] M9 Tuân thủ CMP
 - [x] M10 Kiểm thử chấp nhận (`AT-11-001…032`)
 
-### [ ] 4.3 — SRS **PH-15** Cổng Nhà phát triển & Tài liệu · **M**
+### [x] 4.3 — SRS **PH-15** Cổng Nhà phát triển & Tài liệu · **M** · _2026-08-03_
 
+→ [SRS-PH-15-portal.md](SRS-PH-15-portal.md) · 16 FR · 6 thực thể · 26 NFR · 15 BR · 35 AT
 *Nội dung trọng tâm*: Backstage · tài liệu OpenAPI tự sinh · thử API · TechDocs
 *Ánh xạ*: CMP-02
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-15-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-15-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-15-nn`)
-- [ ] M7 Phi chức năng (`NFR-15-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-15-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-15-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-15-001…016`)
+- [x] M4 Mô hình dữ liệu (`EN-15-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-15-01…09`)
+- [x] M7 Phi chức năng (`NFR-15-001…026`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-15-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-15-001…035`)
 
 ### [ ] 4.4 — SRS **PH-18** Vận hành & Xử lý bản tin lỗi · **M**
 
@@ -417,11 +418,11 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-12 IAM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-13 Giám sát | | | | | | | | | | | 0/10 |
 | PH-14 Quốc gia | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| PH-15 Portal | | | | | | | | | | | 0/10 |
+| PH-15 Portal | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-16 NAS/KPI | | | | | | | | | | | 0/10 |
 | PH-17 AI | | | | | | | | | | | 0/10 |
 | PH-18 Vận hành | | | | | | | | | | | 0/10 |
-| **Tổng** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | **100/180** |
+| **Tổng** | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | 11 | **110/180** |
 
 ---
 
@@ -442,3 +443,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 6.11 | Bổ sung **DataMapper**, **hoàn tác/làm lại**, gộp tab Chạy thử + Duyệt vào cùng app React (`#test` / `#review`). `designer.html` chuyển hướng sang bản React |
 | 2026-08-03 | 4.1 | **SRS PH-08** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 32 AT. Sáu chiều DQ, F-11, CMP-22 |
 | 2026-08-03 | 4.2 | **SRS PH-11** đủ 10 mục — 16 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Flowable BPMN, Saga, F-07, CMP-09 |
+| 2026-08-03 | 4.3 | **SRS PH-15** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 35 AT. Backstage, OpenAPI, try-it, TechDocs, CMP-02 |
