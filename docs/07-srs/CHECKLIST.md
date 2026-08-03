@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 13/33 hạng mục · 80/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 14/33 hạng mục · 90/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -256,21 +256,22 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 
 ## GIAI ĐOẠN 4 — SRS nhóm hoàn thiện (Đợt 4)
 
-### [ ] 4.1 — SRS **PH-08** Chất lượng dữ liệu · **M**
+### [x] 4.1 — SRS **PH-08** Chất lượng dữ liệu · **M** · _2026-08-03_
 
+→ [SRS-PH-08-dq.md](SRS-PH-08-dq.md) · 16 FR · 6 thực thể · 26 NFR · 15 BR · 32 AT
 *Nội dung trọng tâm*: 6 chiều chất lượng · luật kiểm tra · chấm điểm có trọng số · báo cáo định kỳ · luồng [F-11](../03-flows/README.md#f-11--đánh-giá-chất-lượng-dữ-liệu-định-kỳ)
 *Ánh xạ*: CMP-22
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-08-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-08-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-08-nn`)
-- [ ] M7 Phi chức năng (`NFR-08-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-08-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-08-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-08-001…016`)
+- [x] M4 Mô hình dữ liệu (`EN-08-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-08-01…07`)
+- [x] M7 Phi chức năng (`NFR-08-001…026`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-08-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-08-001…032`)
 
 ### [ ] 4.2 — SRS **PH-11** Điều phối quy trình nghiệp vụ (BPM) · **M**
 
@@ -408,7 +409,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-05 Adapter | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-06 MDM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-07 RDM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| PH-08 Chất lượng DL | | | | | | | | | | | 0/10 |
+| PH-08 Chất lượng DL | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-09 Privacy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-10 Sự kiện | | | | | | | | | | | 0/10 |
 | PH-11 BPM | | | | | | | | | | | 0/10 |
@@ -419,7 +420,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-16 NAS/KPI | | | | | | | | | | | 0/10 |
 | PH-17 AI | | | | | | | | | | | 0/10 |
 | PH-18 Vận hành | | | | | | | | | | | 0/10 |
-| **Tổng** | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | 8 | **80/180** |
+| **Tổng** | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | **90/180** |
 
 ---
 
@@ -438,3 +439,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 0.2 | Chốt ngăn xếp giao diện tại [ADR-016](../05-adr/README.md#adr-016): **Ant Design v6** + phong cách shadcn + chế độ sáng/tối. Viết lại `app.css` trên token trích trực tiếp từ gói `antd@6.5.3`, thêm `theme.js`. Đã đo tương phản tự động 3.142 phần tử ở cả hai chế độ, sửa 9 vi phạm WCAG AA bằng cách đổi sắc độ trong chính bảng màu antd |
 | 2026-08-03 | 6.11, ADR-017 | Màn thiết kế kéo thả bằng **XYFlow** (`@xyflow/react`): nguồn `mockup/designer-src/`, bản build `mockup/pages/designer/index.html`. [ADR-015](../05-adr/README.md#adr-015) làm rõ Kaoto là mẫu catalog/YAML; [ADR-017](../05-adr/README.md#adr-017) chốt động cơ sơ đồ |
 | 2026-08-03 | 6.11 | Bổ sung **DataMapper**, **hoàn tác/làm lại**, gộp tab Chạy thử + Duyệt vào cùng app React (`#test` / `#review`). `designer.html` chuyển hướng sang bản React |
+| 2026-08-03 | 4.1 | **SRS PH-08** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 32 AT. Sáu chiều DQ, F-11, CMP-22 |
