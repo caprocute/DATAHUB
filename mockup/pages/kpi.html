@@ -3,33 +3,434 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Báo cáo KPI — LGSP</title>
+<title>Quản trị kiến trúc &amp; KPI — LGSP</title>
 <link rel="stylesheet" href="../css/app.css">
 <script src="../js/theme.js"></script>
-<script>window.LGSP_PAGE = { id: 'kpi', title: 'Báo cáo KPI', crumbs: [
-  { text: 'Trang chủ', href: 'index.html' }, { text: 'Báo cáo KPI' }] };</script>
+<script>window.LGSP_PAGE = { id: 'kpi', title: 'Quản trị kiến trúc & KPI', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' }, { text: 'Kiến trúc & KPI' }] };</script>
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-16 — Quản trị Kiến trúc &amp; Báo cáo KPI.</strong>
+  Minh họa các màn <span class="tag-ph">UI-16-01</span> Registry,
+  <span class="tag-ph">UI-16-02</span> đồng bộ NAS,
+  <span class="tag-ph">UI-16-03</span> dashboard 5 nhóm,
+  <span class="tag-ph">UI-16-04</span> cấu hình xuất,
+  <span class="tag-ph">UI-16-05</span> phê duyệt OFFICIAL,
+  <span class="tag-ph">UI-16-06</span> đối soát — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-16-nas-kpi.md">SRS PH-16</a>.
+  Nguồn feed realtime xem <a href="monitoring.html">Giám sát</a>;
+  catalog API tại <a href="catalog.html">Danh mục dịch vụ</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Báo cáo KPI</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-16</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Quản trị kiến trúc &amp; KPI</h1>
+    <p class="page-desc">Sổ đăng ký kiến trúc · đồng bộ NAS (CMP-33) · báo cáo KPI 5 nhóm (CMP-34)</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Xuất snapshot DRAFT kỳ 2026-07">⤒ Xuất DRAFT</button>
+    <button class="btn btn--primary" data-demo="Tổng hợp KPI kỳ tháng hiện tại">↻ Tổng hợp KPI</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-16</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-16 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="kpi" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="registry">Registry <span class="tab__count">48</span></button>
+    <button class="tab" data-tab="nas">NAS</button>
+    <button class="tab" data-tab="kpi-dash">KPI</button>
+    <button class="tab" data-tab="config">Cấu hình</button>
+    <button class="tab" data-tab="approve">Phê duyệt <span class="tab__count">1</span></button>
+    <button class="tab" data-tab="reconcile">Đối soát</button>
+  </div>
+
+  <!-- ===== UI-16-01: Registry ===== -->
+  <div data-panel="registry" data-panel-group="kpi">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm mã hoặc tên thành phần…" data-filter="reg-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: tất cả lớp">Tất cả</button>
+        <button class="btn btn--sm" data-demo="Lọc: Control Plane">Control</button>
+        <button class="btn btn--sm" data-demo="Lọc: Data Plane">Data</button>
+        <button class="btn btn--sm" data-demo="Lọc: Integration">Integration</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Đánh giá tuân thủ hàng loạt">Đánh giá tuân thủ</button>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="reg-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Tên thành phần</th><th>Lớp</th><th>Phiên bản</th>
+            <th>Trạng thái</th><th>Mức tuân thủ</th><th>Sync NAS</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">PH-04</td>
+            <td class="t-primary">Lõi tích hợp &amp; điều phối</td>
+            <td><span class="badge badge--info badge--plain">Data Plane</span></td>
+            <td class="t-mono">3.2.1</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td><span class="badge badge--ok">Đã đồng bộ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Chi tiết PH-04">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-02</td>
+            <td class="t-primary">Danh mục dịch vụ API</td>
+            <td><span class="badge badge--muted badge--plain">Control</span></td>
+            <td class="t-mono">2.8.0</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td><span class="badge badge--ok">Đã đồng bộ</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="catalog.html">Catalog</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-13</td>
+            <td class="t-primary">Giám sát &amp; truy vết</td>
+            <td><span class="badge badge--muted badge--plain">Control</span></td>
+            <td class="t-mono">1.4.2</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td><span class="badge badge--warn">Một phần</span></td>
+            <td><span class="badge badge--warn">Drift</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="monitoring.html">Giám sát</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-09</td>
+            <td class="t-primary">Bảo vệ dữ liệu</td>
+            <td><span class="badge badge--info badge--plain">Data Plane</span></td>
+            <td class="t-mono">1.1.0</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td><span class="badge badge--err">Chưa đánh giá</span></td>
+            <td><span class="badge badge--muted">Chờ sync</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="privacy.html">Privacy</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-14</td>
+            <td class="t-primary">Kết nối quốc gia (NDXP)</td>
+            <td><span class="badge badge--info badge--plain">Integration</span></td>
+            <td class="t-mono">2.0.3</td>
+            <td><span class="badge badge--warn">Suy giảm</span></td>
+            <td><span class="badge badge--warn">Một phần</span></td>
+            <td><span class="badge badge--err">Thất bại</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Chi tiết PH-14">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Hiển thị 5 / 48 thành phần</span>
+      <span class="header__spacer"></span>
+      <span class="t-small t-muted">Drift = true → tô sáng · NOT_ASSESSED quá hạn → badge cảnh báo</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-16-02: NAS ===== -->
+  <div class="card__body hidden" data-panel="nas" data-panel-group="kpi">
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Connector NAS</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)"><span class="badge badge--ok">UP</span></div>
+        <div class="t-small t-muted mt-2">Schema ánh xạ v1.3 · stub môi trường DEV</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Outbox chờ gửi</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">7</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Đồng bộ thành công 7 ngày</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">41</div>
+      </div>
+    </div>
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Đang dùng stub NAS</div>
+        <div class="t-small">Endpoint thật chưa cấu hình — outbox ghi PENDING; log vẫn phục vụ kiểm chứng CMP-33.</div>
+      </div>
+    </div>
+    <div class="row mb-4" style="gap:var(--sp-2)">
+      <button class="btn btn--primary" data-demo="Đồng bộ PENDING_ONLY ngay">↻ Đồng bộ ngay</button>
+      <button class="btn" data-demo="Dry-run: xem payload trước khi gửi">Dry-run</button>
+      <button class="btn" data-demo="Đồng bộ FULL — yêu cầu lý do + quyền nâng cao">FULL sync…</button>
+      <button class="btn" data-demo="Thử lại các lô FAILED">Thử lại FAILED</button>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký đồng bộ CMP-33</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Lô</th><th class="table__num">OK</th><th class="table__num">Lỗi</th>
+            <th>Trace ID</th><th>Biên nhận</th><th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 14:22</td>
+            <td class="t-mono">BATCH-20260803-1422</td>
+            <td class="table__num">12</td><td class="table__num">0</td>
+            <td class="t-mono t-small">a8f3c1…</td>
+            <td class="t-mono t-small">ACK-99201</td>
+            <td><span class="badge badge--ok">Thành công</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 08:05</td>
+            <td class="t-mono">BATCH-20260803-0805</td>
+            <td class="table__num">9</td><td class="table__num">2</td>
+            <td class="t-mono t-small">b21e90…</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">Một phần lỗi</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">02/08 22:00</td>
+            <td class="t-mono">BATCH-20260802-2200</td>
+            <td class="table__num">0</td><td class="table__num">48</td>
+            <td class="t-mono t-small">c44d12…</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--warn">PENDING (stub)</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="t-small t-muted mt-3">Log chỉ đọc — bằng chứng kiểm chứng CMP-33.</p>
+  </div>
+
+  <!-- ===== UI-16-03: Dashboard KPI ===== -->
+  <div class="card__body hidden" data-panel="kpi-dash" data-panel-group="kpi">
+    <div class="row row--between mb-4">
+      <div>
+        <span class="t-small t-muted">Kỳ báo cáo</span>
+        <strong style="margin-left:var(--sp-2)">2026-07</strong>
+        <span class="badge badge--warn" style="margin-left:var(--sp-2)">PARTIAL</span>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Xuất theo template cấu hình">Xuất báo cáo</button>
+        <button class="btn btn--sm" data-demo="Drill-down nguồn feed">Nguồn feed</button>
+      </div>
+    </div>
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Snapshot PARTIAL — thiếu nguồn cứng</div>
+        <div class="t-small">Thiếu feed PH-08 (điểm DQ) và độ phủ từ điển PH-07. CMP-34: đã có báo cáo tự sinh DRAFT · CMP-33: log sync có.</div>
+      </div>
+    </div>
+    <div class="grid mb-5" style="grid-template-columns:repeat(5,1fr)">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">1 · Tuân thủ KT</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">86</div>
+        <div class="t-small mt-2"><span class="badge badge--ok">Đạt</span> <span class="t-muted">+2</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">2 · Liên thông</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">72</div>
+        <div class="t-small mt-2"><span class="badge badge--warn">Cảnh báo</span> <span class="t-muted">−4</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">3 · Quản trị &amp; VH</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">91</div>
+        <div class="t-small mt-2"><span class="badge badge--ok">Đạt</span> <span class="t-muted">+1</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">4 · Kỹ thuật &amp; ATTT</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">78</div>
+        <div class="t-small mt-2"><span class="badge badge--warn">Cảnh báo</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">5 · Kết quả triển khai</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">84</div>
+        <div class="t-small mt-2"><span class="badge badge--ok">Đạt</span> <span class="t-muted">+3</span></div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Xu hướng điểm tổng (6 kỳ)</div>
+    <div class="col" style="gap:var(--sp-3)">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">2026-07 (hiện tại)</span><span class="t-mono t-small">82,2</span></div>
+        <div class="bar"><div class="bar__fill" style="width:82%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">2026-06</span><span class="t-mono t-small">81,0</span></div>
+        <div class="bar"><div class="bar__fill" style="width:81%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">2026-05</span><span class="t-mono t-small">79,4</span></div>
+        <div class="bar"><div class="bar__fill" style="width:79%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-16-04: Cấu hình ===== -->
+  <div class="card__body hidden" data-panel="config" data-panel-group="kpi">
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Công thức &amp; trọng số (cấu hình ngoài)</div>
+        <div class="field">
+          <label class="field__label">Phiên bản cấu hình</label>
+          <select class="select">
+            <option>kpi-formula-v3.yaml (đang dùng)</option>
+            <option>kpi-formula-v2.yaml</option>
+            <option>kpi-formula-v1.yaml</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label">Ánh xạ nguồn</label>
+          <label class="check"><input type="checkbox" checked> <span>PH-02 Catalog + Camel metrics</span></label>
+          <label class="check"><input type="checkbox" checked> <span>PH-07 độ phủ từ điển</span></label>
+          <label class="check"><input type="checkbox"> <span>PH-08 điểm DQ (STALE)</span></label>
+          <label class="check"><input type="checkbox" checked> <span>PH-13 Prometheus / Audit</span></label>
+          <label class="check"><input type="checkbox" checked> <span>Architecture Registry</span></label>
+        </div>
+        <div class="alert alert--warn" style="margin:0">
+          <span class="alert__icon">⚠</span>
+          <div class="t-small">Đổi trọng số giữa kỳ đang mở sẽ ảnh hưởng so sánh delta — cần phê duyệt xuất bản.</div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch xuất &amp; template</div>
+        <div class="field">
+          <label class="field__label">Lịch xuất</label>
+          <select class="select">
+            <option>Cron: 0 6 1 * * (ngày 1 hàng tháng)</option>
+            <option>onOfficial — sau phê duyệt</option>
+            <option>Thủ công</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label">Template xuất</label>
+          <select class="select">
+            <option>NAS-KPI-BUNDLE-v0.9 (tạm)</option>
+            <option>INTERNAL-DASHBOARD-JSON</option>
+            <option>CSV-5-GROUPS</option>
+          </select>
+          <div class="field__hint">Chưa hard-code chuẩn QG — chờ ban hành (RB-04)</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Xem trước YAML</label>
+<pre class="code" style="max-height:140px;overflow:auto"><span class="k">groups:</span>
+  <span class="k">- id:</span> <span class="s">arch_compliance</span>
+    <span class="k">weight:</span> <span class="n">0.20</span>
+  <span class="k">- id:</span> <span class="s">interoperability</span>
+    <span class="k">weight:</span> <span class="n">0.25</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Gửi cấu hình chờ phê duyệt xuất bản">Lưu &amp; gửi duyệt</button>
+      <button class="btn" data-demo="Validate schema cấu hình">Kiểm tra schema</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-16-05: Phê duyệt ===== -->
+  <div class="card__body hidden" data-panel="approve" data-panel-group="kpi">
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Báo cáo OFFICIAL chờ duyệt — kỳ 2026-07</div>
+        <div class="t-small">Người lập: nguyen.van.a · Completeness: 3/5 nguồn cứng · Điểm tổng DRAFT: 82,2</div>
+      </div>
+    </div>
+    <div class="grid mb-5" style="grid-template-columns:repeat(5,1fr)">
+      <div class="card" style="box-shadow:none;padding:var(--sp-3)"><div class="t-small t-muted">Tuân thủ KT</div><div class="t-mono" style="font-size:var(--fs-xl)">86</div></div>
+      <div class="card" style="box-shadow:none;padding:var(--sp-3)"><div class="t-small t-muted">Liên thông</div><div class="t-mono" style="font-size:var(--fs-xl)">72</div></div>
+      <div class="card" style="box-shadow:none;padding:var(--sp-3)"><div class="t-small t-muted">Quản trị &amp; VH</div><div class="t-mono" style="font-size:var(--fs-xl)">91</div></div>
+      <div class="card" style="box-shadow:none;padding:var(--sp-3)"><div class="t-small t-muted">Kỹ thuật &amp; ATTT</div><div class="t-mono" style="font-size:var(--fs-xl)">78</div></div>
+      <div class="card" style="box-shadow:none;padding:var(--sp-3)"><div class="t-small t-muted">Kết quả TK</div><div class="t-mono" style="font-size:var(--fs-xl)">84</div></div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Blocker — nguồn cứng thiếu</div>
+    <ul class="t-small mb-4" style="margin:0;padding-left:1.2rem">
+      <li>PH-08 DQ feed — <span class="badge badge--err">STALE</span> &gt; 7 ngày</li>
+      <li>PH-07 mapping_coverage_ratio — <span class="badge badge--err">MISSING</span></li>
+    </ul>
+    <div class="field">
+      <label class="field__label">Ghi chú phê duyệt</label>
+      <input class="input" type="text" placeholder="Nhập lý do chấp nhận / từ chối…">
+    </div>
+    <div class="row" style="gap:var(--sp-2)">
+      <button class="btn btn--primary" data-demo="Phê duyệt OFFICIAL (yêu cầu MFA)">✓ Phê duyệt OFFICIAL</button>
+      <button class="btn" data-demo="Từ chối — trả về DRAFT">Từ chối</button>
+    </div>
+    <div class="divider"></div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử phê duyệt (append-only)</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Thời điểm</th><th>Kỳ</th><th>Người duyệt</th><th>Kết quả</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">01/07 09:15</td><td>2026-06</td><td>tran.thi.b</td>
+            <td><span class="badge badge--ok">OFFICIAL</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">02/06 10:40</td><td>2026-05</td><td>tran.thi.b</td>
+            <td><span class="badge badge--ok">OFFICIAL</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-16-06: Đối soát ===== -->
+  <div class="card__body hidden" data-panel="reconcile" data-panel-group="kpi">
+    <p class="t-small t-muted mb-4">Đối soát ba nguồn sự thật: Architecture Registry ↔ NAS payload ↔ Feed KPI (PH-02/07/08/13).</p>
+    <div class="toolbar" style="padding-left:0;padding-right:0">
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: lệch">Chỉ lệch</button>
+        <button class="btn btn--sm" data-demo="Lọc: khớp">Khớp</button>
+        <button class="btn btn--sm" data-demo="Lọc: tất cả">Tất cả</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Chạy đối soát lại">↻ Chạy đối soát</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thành phần / chỉ số</th><th>Registry</th><th>NAS</th><th>Feed</th><th>Kết luận</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">PH-04 @ 3.2.1</td>
+            <td><span class="badge badge--ok">3.2.1</span></td>
+            <td><span class="badge badge--ok">3.2.1</span></td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--ok">Khớp</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-13 @ 1.4.2</td>
+            <td><span class="badge badge--ok">1.4.2</span></td>
+            <td><span class="badge badge--warn">1.4.0</span></td>
+            <td class="t-small"><a href="monitoring.html">Prometheus OK</a></td>
+            <td><span class="badge badge--err">Drift phiên bản</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">KPI-G2 · DQ score</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">STALE</span></td>
+            <td><span class="badge badge--err">Thiếu feed</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-02 · API published</td>
+            <td><span class="badge badge--ok">134</span></td>
+            <td><span class="badge badge--ok">134</span></td>
+            <td class="t-small"><a href="catalog.html">134</a></td>
+            <td><span class="badge badge--ok">Khớp</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">PH-14 @ 2.0.3</td>
+            <td><span class="badge badge--ok">2.0.3</span></td>
+            <td><span class="badge badge--err">FAILED</span></td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">NAS chưa nhận</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
