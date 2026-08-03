@@ -142,7 +142,7 @@ graph TB
         PORTAL["API Developer Portal<br/>(Backstage)"]
         ADMIN["Console quản trị<br/>nền tảng"]
         DASH["Dashboard giám sát<br/>(Grafana)"]
-        DESIGNER["Trình thiết kế luồng<br/>(Camel Karavan)"]
+        DESIGNER["Trình thiết kế luồng<br/>(XYFlow · mẫu Kaoto)"]
     end
 
     subgraph L5["LỚP 5 — TIẾP NHẬN & BẢO VỆ (Edge)"]
@@ -545,6 +545,39 @@ Cơ chế ngắt mạch trực tiếp hiện thực nguyên tắc NT-08 — khi 
 ```
 
 **Thuyết minh ví dụ.** Route này thể hiện đồng thời nhiều yêu cầu tuân thủ trong một đơn vị mã khai báo: kiểm tra quyền tập trung (CMP-08), chữ ký số theo TT 13/2017 (CMP-25), TLS tới NDXP (CMP-13), ghi vết bất biến (CMP-28), chống lỗi lan truyền (NT-08). Đáng chú ý là `wireTap` — ghi vết chạy **bất đồng bộ**, không làm chậm đường phản hồi chính, giúp giữ P99 trong ngưỡng.
+
+### 5.5. Thiết kế luồng bằng giao diện
+
+Đoạn YAML ở mục 5.4 là **kết quả**, không nhất thiết là thứ phải gõ bằng tay. Nền tảng cung cấp trình thiết kế trực quan trong console PH-04 — sơ đồ kéo thả bằng **XYFlow** ([ADR-017](../05-adr/README.md#adr-017)), catalog và ngữ nghĩa YAML theo mẫu **Kaoto** ([ADR-015](../05-adr/README.md#adr-015)) — để dựng luồng trên khung xương chín bước ở mục 5.2, rồi sinh định nghĩa Camel YAML DSL tương đương.
+
+```mermaid
+graph LR
+    DESIGN["<b>1. Thiết kế</b><br/>Console PH-04 · XYFlow<br/>─────────<br/>Kéo thả component,<br/>EIP (mẫu Kaoto)"]
+    VALID["<b>2. Kiểm tra</b><br/>─────────<br/>Cú pháp, tham chiếu,<br/>mẫu chuẩn bắt buộc"]
+    TRY["<b>3. Chạy thử</b><br/>Môi trường thử nghiệm<br/>─────────<br/>Dữ liệu mẫu,<br/>đích giả lập"]
+    REVIEW["<b>4. Duyệt</b><br/>PH-04<br/>─────────<br/>Người duyệt khác<br/>người thiết kế"]
+    GIT[("<b>5. Kho Git</b><br/>─────────<br/>YAML đã duyệt<br/>+ lịch sử thay đổi")]
+    ARGO["<b>6. Triển khai</b><br/>Argo CD<br/>─────────<br/>Đồng bộ ra cụm"]
+    RUN["<b>7. Vận hành</b><br/>Camel Runtime<br/>─────────<br/>Giám sát qua PH-13"]
+
+    DESIGN --> VALID --> TRY --> REVIEW --> GIT --> ARGO --> RUN
+    VALID -.->|"không đạt"| DESIGN
+    TRY -.->|"sai kết quả"| DESIGN
+    REVIEW -.->|"trả lại"| DESIGN
+
+    classDef d fill:#f3e8fd,stroke:#7627bb,stroke-width:2px,color:#000
+    classDef g fill:#e8f0fe,stroke:#1967d2,stroke-width:2px,color:#000
+    classDef r fill:#fef7e0,stroke:#ea8600,stroke-width:2px,color:#000
+    class DESIGN,VALID,TRY d
+    class REVIEW,GIT,ARGO g
+    class RUN r
+```
+
+**Vì sao trình thiết kế không được phép triển khai thẳng.** Điểm dễ sai nhất khi đưa công cụ đồ họa vào là để nó tự đẩy cấu hình xuống cụm — khi đó tồn tại hai đường triển khai song song, và trạng thái thật của hệ thống không còn khớp với kho Git. Ở đây canvas chỉ sinh ra YAML; mọi thứ sau đó đi qua đúng một đường GitOps đã chốt tại [ADR-010](../05-adr/README.md#adr-010). Hệ quả là một luồng do cán bộ dựng bằng giao diện và một luồng do lập trình viên viết tay chịu **cùng một quy trình duyệt, cùng một lịch sử thay đổi và cùng một cách quay lui**.
+
+**Hai cách làm sống chung.** Trình thiết kế đọc được YAML viết tay và ngược lại (cùng Camel YAML DSL), nên không có sự chia rẽ giữa "luồng đồ họa" và "luồng mã nguồn". Thực tế các luồng phổ thông — tra cứu, đồng bộ một chiều, chuyển tiếp có lọc — dựng bằng giao diện là đủ; các luồng cần logic đặc thù vẫn viết tay rồi mở lại trên sơ đồ để xem.
+
+Đặc tả chi tiết chức năng thiết kế, chạy thử và duyệt luồng nằm ở [SRS PH-04](../07-srs/SRS-PH-04-integration-core.md#36-nhóm-f--thiết-kế-và-quản-lý-vòng-đời-route) (`FR-04-026…030`).
 
 ---
 
@@ -1108,7 +1141,8 @@ Mục tiêu thiết kế đặt thấp hơn nhiều so với trần quy định 
 | **Secrets** | HashiCorp Vault + External Secrets | BUSL / Apache-2.0 | Bí mật động, ký số trong ranh giới bảo mật | [ADR-012](../05-adr/README.md#adr-012) |
 | **Policy** | Open Policy Agent | Apache-2.0 | Chính sách khai báo, tách khỏi mã ứng dụng | [ADR-004](../05-adr/README.md#adr-004) |
 | **WAF** | Coraza + OWASP CRS | Apache-2.0 | Tương thích ModSecurity, nhúng vào APISIX | [ADR-003](../05-adr/README.md#adr-003) |
-| **Trình thiết kế luồng** | Apache Camel Karavan | Apache-2.0 | Thiết kế route trực quan, giảm rào cản kỹ năng | [ADR-001](../05-adr/README.md#adr-001) |
+| **Trình thiết kế luồng** | Kaoto (mẫu) + XYFlow | Apache-2.0 / MIT | UX và catalog theo Kaoto; sơ đồ kéo thả bằng `@xyflow/react` trong console PH-04; sinh Camel YAML DSL đưa vào GitOps | [ADR-015](../05-adr/README.md#adr-015), [ADR-017](../05-adr/README.md#adr-017) |
+| **Bộ thành phần giao diện** | Ant Design v6 | MIT | Bảng dữ liệu và biểu mẫu cấp quản trị; token tinh chỉnh theo phong cách shadcn, có chế độ sáng/tối | [ADR-016](../05-adr/README.md#adr-016) |
 | **Autoscaling** | KEDA | Apache-2.0 | Mở rộng theo chỉ số nghiệp vụ, không chỉ CPU | [ADR-002](../05-adr/README.md#adr-002) |
 
 **Lưu ý về giấy phép.** Hai thành phần cần cân nhắc: MinIO dùng AGPL-3.0 (chấp nhận được vì triển khai nội bộ, không phân phối phần mềm) và Vault dùng BUSL từ v1.15 (nếu tổ chức yêu cầu giấy phép mở tuyệt đối, thay bằng **OpenBao** — nhánh cộng đồng dưới MPL-2.0, tương thích API). Toàn bộ phần còn lại là Apache-2.0 hoặc BSD, không có ràng buộc thương mại.

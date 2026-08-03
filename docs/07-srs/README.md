@@ -232,6 +232,7 @@ Mọi phân hệ tuân theo lựa chọn tại [05-adr](../05-adr/README.md). B�
 |---|---|---|
 | Ngôn ngữ & runtime | Java 21 + Quarkus (native) | PH-01…PH-18 (dịch vụ backend) |
 | Engine tích hợp | Apache Camel 4.x | PH-04, PH-05, PH-14 |
+| Trình thiết kế luồng | Kaoto làm mẫu ([ADR-015](../05-adr/README.md#adr-015)); canvas XYFlow / React Flow ([ADR-017](../05-adr/README.md#adr-017)) | PH-04 |
 | Gateway | Apache APISIX | PH-03, PH-17 |
 | IAM | Keycloak + OPA | PH-12 |
 | Sự kiện | Kafka (Strimzi) + Apicurio | PH-10 |
@@ -239,7 +240,7 @@ Mọi phân hệ tuân theo lựa chọn tại [05-adr](../05-adr/README.md). B�
 | CSDL | PostgreSQL (CloudNativePG) | PH-01, 02, 06, 07, 08, 11, 16 |
 | Object storage | MinIO | PH-13 (audit WORM), PH-06 |
 | Cache | Valkey | PH-03, PH-04, PH-07 |
-| Giao diện | React 18 + TypeScript + Vite | PH-15 và các console quản trị |
+| Giao diện | React 18 + TypeScript + Vite; Ant Design v6 tinh chỉnh theo phong cách shadcn, có chế độ sáng/tối ([ADR-016](../05-adr/README.md#adr-016)) | PH-15 và các console quản trị |
 | Quan sát | OpenTelemetry + Prometheus + Loki + Tempo + Grafana | PH-13 |
 | AI | MLflow + Evidently + camel-langchain4j | PH-17 |
 
@@ -254,13 +255,16 @@ Bộ mockup HTML minh họa các màn hình quan trọng, có liên kết điề
 | Trang chủ / Bảng điều khiển | Tổng quan | [`mockup/index.html`](../../mockup/index.html) |
 | Kết nạp hệ thống thành viên | PH-01 | [`mockup/pages/onboarding.html`](../../mockup/pages/onboarding.html) |
 | Danh mục dịch vụ & Quản lý API | PH-02 | [`mockup/pages/catalog.html`](../../mockup/pages/catalog.html) |
-| Thiết kế luồng tích hợp | PH-04 | [`mockup/pages/routes.html`](../../mockup/pages/routes.html) |
+| Danh sách và giám sát luồng tích hợp | PH-04 | [`mockup/pages/routes.html`](../../mockup/pages/routes.html) |
+| Thiết kế, chạy thử và duyệt luồng | PH-04 | [`mockup/pages/designer/index.html`](../../mockup/pages/designer/index.html) (kéo thả XYFlow) · [`designer.html`](../../mockup/pages/designer.html) (chạy thử / duyệt) |
 | Quản lý dữ liệu chủ | PH-06 | [`mockup/pages/mdm.html`](../../mockup/pages/mdm.html) |
 | Giám sát & Truy vết | PH-13 | [`mockup/pages/monitoring.html`](../../mockup/pages/monitoring.html) |
 | Xử lý bản tin lỗi (DLQ) | PH-18 | [`mockup/pages/dlq.html`](../../mockup/pages/dlq.html) |
 | Báo cáo KPI tuân thủ | PH-16 | [`mockup/pages/kpi.html`](../../mockup/pages/kpi.html) |
 
 Chi tiết đặc tả màn hình nằm trong mục 6 của từng SRS.
+
+Hệ thống thiết kế dùng chung nằm ở [`mockup/css/app.css`](../../mockup/css/app.css): ba lớp token — token gốc trích từ gói `antd@6.5.3`, thang trung tính và hình khối theo phong cách shadcn, rồi lớp vai trò ngữ nghĩa. Nút chuyển **sáng/tối** nằm trên thanh đỉnh mọi trang, lựa chọn được ghi nhớ và mặc định bám theo thiết lập hệ điều hành ([`mockup/js/theme.js`](../../mockup/js/theme.js)). Cơ sở của lựa chọn này và các ngoại lệ tương phản đã áp: [ADR-016](../05-adr/README.md#adr-016).
 
 ---
 

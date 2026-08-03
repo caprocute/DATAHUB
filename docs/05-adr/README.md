@@ -20,6 +20,9 @@
 | [ADR-012](#adr-012) | Vault/OpenBao cho quản lý bí mật | Đã chốt |
 | [ADR-013](#adr-013) | Canonical Data Model làm trung gian chuyển đổi | Đã chốt |
 | [ADR-014](#adr-014) | Tách Control Plane khỏi Data Plane | Đã chốt |
+| [ADR-015](#adr-015) | Kaoto làm mẫu tham chiếu cho thiết kế luồng và Camel YAML DSL | Đã chốt |
+| [ADR-016](#adr-016) | Ant Design v6 làm bộ thành phần giao diện, tinh chỉnh theo phong cách shadcn | Đã chốt |
+| [ADR-017](#adr-017) | XYFlow (React Flow) làm động cơ sơ đồ kéo thả trong console PH-04 | Đã chốt |
 
 ---
 
@@ -37,13 +40,12 @@
 | Apache NiFi | Giao diện trực quan mạnh | Nặng, thiên về luồng dữ liệu lớn hơn là API mediation |
 | Tự phát triển | Kiểm soát hoàn toàn | Chi phí khổng lồ, tái phát minh bánh xe |
 
-**Quyết định.** Dùng **Apache Camel 4.x** làm engine tích hợp duy nhất, kèm **Camel Karavan** làm trình thiết kế trực quan.
+**Quyết định.** Dùng **Apache Camel 4.x** làm engine tích hợp duy nhất. Việc chọn trình thiết kế luồng trực quan đi kèm được tách thành quyết định riêng — xem [ADR-015](#adr-015).
 
 **Hệ quả tích cực:**
 - Toàn bộ giao thức bắt buộc theo CV 631 có sẵn component — không phải viết mã kết nối (CMP-11, CMP-12).
 - EIP chuẩn hóa cách giải quyết các bài toán tích hợp; đội mới vào dễ đọc hiểu.
-- Route mô tả khai báo bằng YAML — cấu hình hơn lập trình (NT-02).
-- Karavan hạ rào cản kỹ năng: cán bộ không chuyên Java vẫn thiết kế được luồng.
+- Route mô tả khai báo bằng YAML — cấu hình hơn lập trình (NT-02). Đây cũng là điều kiện để một trình thiết kế đồ họa sinh và đọc lại được định nghĩa luồng.
 
 **Hệ quả tiêu cực:**
 - Đội cần đào tạo về Camel DSL và tư duy EIP — đưa vào bước 16 của kế hoạch triển khai.
@@ -386,6 +388,142 @@ Dùng sai công cụ gây hậu quả cụ thể: Camel cho quy trình dài sẽ
 **Hệ quả tiêu cực:**
 - Cần cơ chế đồng bộ cấu hình từ Control Plane xuống Data Plane, kèm xử lý tình huống mất đồng bộ. Giải quyết bằng etcd làm kho cấu hình chung và cơ chế theo dõi thay đổi (watch) của APISIX.
 - Thay đổi cấu hình có độ trễ lan truyền vài giây — chấp nhận được, và đây là đánh đổi có chủ đích để lấy tính sẵn sàng.
+
+---
+
+## ADR-015
+### Kaoto làm mẫu tham chiếu cho thiết kế luồng và Camel YAML DSL
+
+**Bối cảnh.** Lõi tích hợp phải cho phép **tạo và quản lý luồng tích hợp bằng giao diện**, không bắt buộc viết Camel DSL bằng tay. Đây là điều kiện để cán bộ tích hợp không chuyên Java tự xây luồng, và để số luồng mở rộng theo diện kết nối ở bước 18 mà không phụ thuộc vào một nhóm nhỏ biết viết DSL.
+
+Ràng buộc quan trọng: [ADR-010](#adr-010) đã chốt **Argo CD + Kustomize** là cơ chế triển khai duy nhất; [ADR-016](#adr-016) đã chốt Ant Design cho console quản trị; PH-04 tự quản lý vòng đời luồng (`FR-04-020…030`, `UI-04-01…09`). Do đó cần một **mô hình thiết kế** (catalog, YAML DSL, thao tác kéo thả kiểu [Kaoto](https://kaoto.io/)) gắn vào console LGSP — không phải một nền tảng thiết kế/triển khai riêng.
+
+**Phương án cân nhắc:**
+
+| Phương án | Phạm vi | Ưu điểm | Nhược điểm |
+|---|---|---|---|
+| **Kaoto làm mẫu tham chiếu** | Catalog Camel + UX kéo thả + YAML DSL | Sinh/đọc Camel YAML DSL chuẩn; catalog 300+ component, EIP, Kamelet; UX đã được cộng đồng Camel chấp nhận; giấy phép Apache-2.0 | Bản UI đầy đủ của Kaoto dùng PatternFly, lệch với [ADR-016](#adr-016) nếu nhúng nguyên khối |
+| Nhúng nguyên Kaoto vào console | Trình thiết kế bên thứ ba | Ít mã tự viết | Xung đột thiết kế hệ thống (PatternFly ↔ Ant Design); khó gắn quy trình duyệt/GitOps của PH-04 |
+| Camel Karavan | Nền tảng trọn gói | Có build/triển khai K8s | Xung đột [ADR-010](#adr-010); trùng PH-04 |
+| Viết DSL thủ công | Không có công cụ | Không thêm phụ thuộc | Không đáp ứng yêu cầu tạo luồng bằng giao diện |
+
+**Quyết định.** Lấy **Kaoto làm mẫu tham chiếu** cho năng lực thiết kế luồng: catalog thành phần Camel, thao tác kéo thả kiểu sơ đồ, và định dạng đầu ra **Camel YAML DSL**. Định nghĩa YAML được đẩy vào kho Git và triển khai bằng Argo CD ([ADR-010](#adr-010)). Động cơ vẽ sơ đồ trong console PH-04 được chọn riêng tại [ADR-017](#adr-017) — **không nhúng nguyên khối giao diện Kaoto**.
+
+**Ranh giới trách nhiệm:**
+
+| Việc | Do ai đảm nhiệm |
+|---|---|
+| Mẫu UX, catalog Camel, ngữ nghĩa YAML DSL | Kaoto (tham chiếu) |
+| Sơ đồ kéo thả trong console, kiểm tra hợp lệ, sinh YAML | PH-04 trên XYFlow ([ADR-017](#adr-017), `FR-04-026…030`, `UI-04-07`) |
+| Lưu bản nháp, phiên bản hóa, duyệt, nạp và điều khiển route | PH-04 |
+| Triển khai định nghĩa đã duyệt ra môi trường | Argo CD ([ADR-010](#adr-010)) |
+| Giám sát luồng đang chạy | PH-13 |
+
+**Hệ quả tích cực:**
+- Định nghĩa luồng vẫn là YAML nằm trong Git — một đường triển khai duy nhất.
+- Không có công cụ thứ hai ghi thẳng vào cụm Kubernetes.
+- Hạ rào cản kỹ năng; YAML viết tay và sơ đồ đồ họa sống chung được vì cùng một DSL.
+- Console LGSP giữ đúng Ant Design ([ADR-016](#adr-016)) thay vì mang theo PatternFly của Kaoto.
+
+**Hệ quả tiêu cực:**
+- Phải tự dựng canvas và biểu mẫu thuộc tính trong PH-04 thay vì dùng sẵn UI Kaoto — chi phí phát triển cao hơn; giảm thiểu bằng cách tái sử dụng catalog/schema Camel mà Kaoto cũng dùng.
+- Catalog gắn phiên bản Camel cụ thể; nâng cấp Camel phải đồng bộ catalog.
+- Giao diện đồ họa dễ tạo luồng chạy được nhưng thiết kế kém — giảm thiểu bằng mẫu chuẩn và duyệt bắt buộc (`BR-04-016`).
+
+---
+
+## ADR-016
+### Ant Design v6 làm bộ thành phần giao diện, tinh chỉnh theo phong cách shadcn
+
+**Bối cảnh.** Nền tảng có nhiều console quản trị (PH-02, PH-04, PH-06, PH-07, PH-09, PH-13, PH-16, PH-17) và cổng dành cho lập trình viên (PH-15). Các màn hình này nặng về **bảng dữ liệu dày đặc, biểu mẫu nhiều trường, trạng thái vận hành theo thời gian thực** — đúng loại giao diện mà một bộ thành phần chín sẵn giải quyết tốt hơn là tự dựng.
+
+Cán bộ vận hành trực ca theo dõi màn hình giám sát nhiều giờ liên tục, nên **chế độ tối là yêu cầu thực dụng**, không phải trang trí.
+
+**Phương án cân nhắc:**
+
+| Phương án | Ưu điểm | Nhược điểm |
+|---|---|---|
+| **Ant Design v6** | Bộ thành phần quản trị đầy đủ nhất trong hệ sinh thái React (Table với lọc/sắp xếp/phân trang, Form, DatePicker, Transfer, Tree); hệ token thiết kế mở, đổi được toàn bộ diện mạo mà không sửa CSS thành phần; v6 phát ra **CSS variables** nên chuyển chế độ sáng/tối không phải dựng lại cây style; sẵn tiếng Việt; MIT | Diện mạo mặc định đặc trưng, dễ bị nhận ra là "giao diện Ant"; một vài tổ hợp màu mặc định chưa đạt ngưỡng tương phản WCAG AA |
+| shadcn/ui thuần | Diện mạo hiện đại, mã nguồn thuộc về dự án; sẵn chế độ tối | Không có Table cấp quản trị, DatePicker, Transfer, Tree — phải tự dựng hoặc ghép Radix, chi phí lớn với số màn hình của LGSP |
+| MUI | Đầy đủ, cộng đồng lớn | Ngôn ngữ thị giác Material lệch với thẩm mỹ hệ thống hành chính; bảng dữ liệu mạnh nằm ở gói thương mại |
+| Tự dựng thư viện | Khớp hoàn toàn | Không khả thi trong phạm vi dự án |
+
+**Quyết định.** Dùng **Ant Design v6** làm bộ thành phần, và **áp phong cách shadcn bằng cách tinh chỉnh token** chứ không viết lại CSS thành phần. Cụ thể:
+
+| Nhóm thuộc tính | Nguồn |
+|---|---|
+| Màu thương hiệu, màu trạng thái | Token Ant Design v6 (`colorPrimary`, `colorSuccess`, `colorWarning`, `colorError` và bảng sắc độ preset) |
+| Thang màu trung tính, bo góc, viền, đổ bóng, vòng lấy nét, hình khối thành phần | Quy ước shadcn (thang xám zinc, viền mảnh, bóng rất nhẹ, ring 2px khi lấy nét) |
+| Khoảng cách, cỡ chữ, chiều cao điều khiển | Thang Ant Design v6 |
+
+Chế độ sáng/tối cài bằng thuộc tính `data-theme` trên thẻ gốc, ghi nhớ lựa chọn của người dùng và mặc định bám theo thiết lập hệ điều hành.
+
+**Ngoại lệ có chủ đích về tương phản.** Một số màu mặc định của antd không đạt ngưỡng WCAG AA khi dùng làm chữ hoặc nền đặc. Dự án lùi sang **sắc độ khác trong chính bảng màu antd**, không tự pha màu mới:
+
+| Vị trí | Mặc định antd | Đã đổi thành | Lý do |
+|---|---|---|---|
+| Nền đặc nút chính (chữ trắng) | `colorPrimary` — 4,1:1 | `colorPrimaryActive` (blue-7) — 6,2:1 | Dưới ngưỡng 4,5:1 cho chữ thường |
+| Nền đặc nút xóa (chữ trắng) | `colorError` — 3,3:1 | red-7 (sáng) / red-4 (tối) — trên 5:1 | Dưới ngưỡng; sắc đỏ sẫm ở chế độ tối trùng với `destructive` của shadcn |
+| Chữ trên nhãn trạng thái xanh, vàng | green-6, gold-6/7 — 2,8…3,4:1 | green-8, gold-9 | Dưới ngưỡng |
+| Chấm chỉ dấu mang thông tin | green-6, gold-6 — 1,9…2,3:1 | green-7, gold-8 | Ngưỡng phần tử đồ họa là 3:1 |
+
+**Hệ quả tích cực:**
+- Giữ được bộ thành phần quản trị mạnh mà không mang theo diện mạo mặc định của antd.
+- Lớp token là **hợp đồng duy nhất** giữa mockup và ứng dụng thật: mockup HTML tĩnh khai báo token bằng CSS variables, ứng dụng React nạp đúng các giá trị đó qua `ConfigProvider`, nên hai bên không lệch nhau.
+- Chế độ tối không phải bảng màu thứ hai duy trì song song: bảng màu tối của antd đảo chiều sắc độ, nên phần lớn token dẫn xuất tự đúng chiều khi đổi bảng.
+- Toàn bộ mockup đã đo tương phản tự động ở cả hai chế độ và không còn vi phạm ngưỡng WCAG AA.
+
+**Hệ quả tiêu cực:**
+- Nâng phiên bản antd có thể làm trôi giá trị token; phải đối chiếu lại bảng token khi nâng cấp. Giảm thiểu bằng cách trích token từ chính gói antd thay vì chép tay.
+- Bốn ngoại lệ tương phản ở trên khiến diện mạo lệch nhẹ so với ảnh chụp trong tài liệu antd; cần nêu trong hướng dẫn cho lập trình viên để không ai "sửa lại cho giống antd".
+- Phong cách shadcn áp bằng token chỉ đi được đến mức diện mạo; một vài hình khối thành phần (ví dụ Tabs dạng phân đoạn) vẫn là của antd. Đây là đánh đổi có chủ đích để không phải bảo trì CSS ghi đè.
+
+**Hiện thực tham chiếu.** `mockup/css/app.css` (ba lớp token: gốc antd → trung tính shadcn → vai trò ngữ nghĩa) và `mockup/js/theme.js` (chuyển chế độ, chống nhấp nháy khi tải).
+
+---
+
+## ADR-017
+### XYFlow (React Flow) làm động cơ sơ đồ kéo thả trong console PH-04
+
+**Bối cảnh.** [ADR-015](#adr-015) đã chốt mô hình thiết kế luồng kiểu [Kaoto](https://kaoto.io/): kéo thả thành phần Camel trên sơ đồ, chỉnh thuộc tính, sinh Camel YAML DSL. [ADR-016](#adr-016) đã chốt Ant Design cho toàn bộ console. Cần chọn **thư viện vẽ đồ thị** để hiện thực `UI-04-07` bên trong console LGSP — không nhúng nguyên UI Kaoto (PatternFly Topology).
+
+“XYFlow” là tên tổ chức/gói hiện tại của thư viện từng gọi là **React Flow**; gói npm chính thức là [`@xyflow/react`](https://reactflow.dev/).
+
+**Phương án cân nhắc:**
+
+| Phương án | Ưu điểm | Nhược điểm |
+|---|---|---|
+| **XYFlow (`@xyflow/react`)** | Kéo thả nút/cạnh sẵn; nút và cạnh tùy biến bằng React; MiniMap, Controls, Background; hỗ trợ sáng/tối; MIT; cộng đồng lớn; bản thân Kaoto cũng từng dùng React Flow và đang thử lại XYFlow thay Topology | Phải tự dựng nút theo EIP Camel, layout, sinh YAML |
+| Nhúng UI Kaoto (PatternFly Topology) | UX gần bản playground Kaoto nhất | Xung đột Ant Design ([ADR-016](#adr-016)); khó gắn duyệt/GitOps PH-04 |
+| PatternFly React Topology thuần | Cùng họ với Kaoto hiện tại | Cùng vấn đề thiết kế hệ thống |
+| JointJS / GoJS | Canvas mạnh | GoJS thương mại; JointJS ít React-native hơn |
+| SVG/Canvas tự viết | Kiểm soát tuyệt đối | Chi phí và rủi ro cao |
+
+**Quyết định.** Dùng **XYFlow (`@xyflow/react`)** làm động cơ sơ đồ trong màn thiết kế luồng của PH-04. Catalog thành phần và ngữ nghĩa YAML bám [ADR-015](#adr-015). Giao diện xung quanh (palette, thuộc tính, thanh công cụ) dùng Ant Design ([ADR-016](#adr-016)).
+
+**Năng lực bắt buộc trên canvas:**
+
+| Năng lực | Cách hiện thực |
+|---|---|
+| Kéo thành phần từ palette thả lên sơ đồ | HTML5 drag-and-drop → tạo nút tại toạ độ flow |
+| Chèn chặng vào giữa hai chặng | Nút ＋ trên cạnh → menu chọn thành phần |
+| Nối / đổi đường | `onConnect` / `onReconnect`; chặng thường một đường ra, EIP định tuyến được nhiều nhánh |
+| Nhánh `choice` / điều kiện | Dữ liệu cạnh (`when` / `otherwise`) |
+| Kéo dịch nút, phóng to thu nhỏ, minimap | Có sẵn của XYFlow |
+| Tự sắp xếp | dagre (layout trên xuống) |
+| Kiểm tra hợp lệ + YAML sống | `validate` + `emitRouteYaml` đồng bộ với sơ đồ |
+
+**Hiện thực tham chiếu.** Nguồn: `mockup/designer-src/` (Vite + React + antd + `@xyflow/react`). Bản build một tệp: `mockup/pages/designer/index.html`. Chạy thử: `cd mockup/designer-src && npm run dev`.
+
+**Hệ quả tích cực:**
+- UX kéo thả cùng họ với Kaoto playground, nhưng nằm trong shell Ant Design của LGSP.
+- YAML sinh ra vẫn là Camel YAML DSL — đường GitOps không đổi.
+- Có thể mở rộng nút/cạnh tùy loại EIP mà không phụ thuộc lộ trình UI của Kaoto.
+
+**Hệ quả tiêu cực:**
+- Phải bảo trì catalog subset và biểu mẫu thuộc tính; bản đầy đủ nạp catalog từ máy chủ theo phiên bản Camel đang chạy.
+- Layout dagre đơn giản hơn layout chuyên biệt của Kaoto với nhóm lồng nhau sâu — chấp nhận ở mockup; sản phẩm có thể nâng lên ELK nếu cần.
+- Attribution “React Flow” hiện trên canvas (gói miễn phí); bản Pro ẩn được nếu sau này mua giấy phép.
 
 ---
 

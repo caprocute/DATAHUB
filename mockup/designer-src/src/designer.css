@@ -1,0 +1,266 @@
+/* ================================================================
+   Trình thiết kế luồng — lớp riêng cho vùng sơ đồ React Flow
+
+   Mọi màu, khoảng cách, bo góc ở đây đều lấy từ token của
+   `mockup/css/app.css`. Không đặt giá trị màu trực tiếp, để trang này
+   đổi theo chế độ sáng/tối cùng lúc với các trang HTML tĩnh.
+   Cơ sở lựa chọn: docs/05-adr/README.md#adr-016 và #adr-017
+   ================================================================ */
+
+/* ---------- Bố cục ba cột ---------- */
+
+/* Vùng sơ đồ cần nhiều chỗ hơn danh sách chặng dạng văn bản trước đây. */
+.designer--rf { grid-template-columns: 232px minmax(0, 1fr) 316px; }
+
+.designer--rf > .panel { max-height: none; }
+
+.panel--canvas { display: flex; flex-direction: column; overflow: hidden; }
+.panel--canvas > .panel__head { flex: none; gap: var(--sp-3); }
+
+/* Bảng thành phần và bảng thuộc tính dài hơn khung sơ đồ thì tự cuộn trong bảng,
+   để ba cột luôn thẳng đầu nhau. */
+.designer--rf > .panel:first-child,
+.designer--rf > .panel:last-child {
+  max-height: clamp(520px, 68vh, 820px);
+  overflow-y: auto;
+}
+
+/* ---------- Khung React Flow ---------- */
+
+.canvas-rf {
+  height: clamp(520px, 68vh, 820px);
+  background: var(--c-bg);
+  position: relative;
+}
+
+.canvas-rf .react-flow {
+  --xy-background-color: var(--c-bg);
+  --xy-background-pattern-color: var(--c-border-2);
+  --xy-background-pattern-dots-color: var(--c-border-2);
+
+  --xy-edge-stroke: var(--c-border-2);
+  --xy-edge-stroke-width: 1.5;
+  --xy-edge-stroke-selected: var(--c-brand-500);
+  --xy-connectionline-stroke: var(--c-brand-500);
+  --xy-connectionline-stroke-width: 2;
+
+  --xy-handle-background-color: var(--c-surface);
+  --xy-handle-border-color: var(--c-border-2);
+
+  --xy-controls-button-background-color: var(--c-surface);
+  --xy-controls-button-background-color-hover: var(--c-surface-2);
+  --xy-controls-button-color: var(--c-text-2);
+  --xy-controls-button-color-hover: var(--c-text);
+  --xy-controls-button-border-color: var(--c-border);
+
+  --xy-minimap-background-color: var(--c-surface);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--c-bg) 72%, transparent);
+
+  --xy-attribution-background-color: transparent;
+  --xy-selection-background-color: var(--c-ring);
+}
+
+.canvas-rf .react-flow__controls { box-shadow: var(--sh-sm); border-radius: var(--r-md); overflow: hidden; }
+.canvas-rf .react-flow__controls-button { border-bottom-color: var(--c-border); }
+.canvas-rf .react-flow__minimap {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-sm);
+}
+.canvas-rf .react-flow__attribution a { color: var(--c-text-3); font-size: var(--fs-xs); }
+
+/* ---------- Chặng trên sơ đồ ---------- */
+
+/* Cùng hình khối với lớp `.stage` của mockup: viền trái dày làm chỉ dấu trạng thái. */
+.stage-node {
+  width: 264px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-border-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-sm);
+  transition: border-color var(--ant-motion-fast) var(--ant-motion-ease),
+              box-shadow var(--ant-motion-fast) var(--ant-motion-ease);
+}
+
+.stage-node:hover { border-color: var(--c-brand-500); }
+
+.stage-node__icon { font-size: var(--fs-lg); width: 22px; text-align: center; flex: none; }
+.stage-node__main { flex: 1; min-width: 0; }
+.stage-node__name {
+  font-weight: 600;
+  font-size: var(--fs-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stage-node__sub {
+  color: var(--c-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stage-node__tail { flex: none; display: flex; align-items: center; gap: var(--sp-2); }
+.stage-node__lock { color: var(--c-text-2); font-size: var(--fs-md); }
+
+.stage-node--from     { border-left-color: var(--c-ok-500); }
+.stage-node--locked   { border-left-color: var(--c-text-3); background: var(--c-surface-2); }
+.stage-node--warn     { border-color: var(--c-warn-500); border-left-color: var(--c-warn-500); }
+.stage-node--error    { border-color: var(--c-err-500);  border-left-color: var(--c-err-500); }
+.stage-node--selected {
+  border-color: var(--c-brand-500);
+  border-left-color: var(--c-brand-500);
+  box-shadow: 0 0 0 var(--ant-control-outline-w) var(--c-ring);
+}
+
+/* Điểm nối: nhỏ khi nghỉ, to lên khi trỏ vào nút để dễ bắt chuột. */
+.stage-node__port {
+  width: 9px;
+  height: 9px;
+  border-width: 1.5px;
+  transition: width var(--ant-motion-fast), height var(--ant-motion-fast), background-color var(--ant-motion-fast);
+}
+.stage-node:hover .stage-node__port { width: 13px; height: 13px; background: var(--c-brand-500); }
+
+/* ---------- Cạnh ---------- */
+
+.seq-edge__tools {
+  position: absolute;
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+}
+
+.seq-edge__add {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--c-text-3);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-2);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--ant-motion-fast), color var(--ant-motion-fast),
+              border-color var(--ant-motion-fast), transform var(--ant-motion-fast);
+}
+
+/* Chốt chèn chỉ hiện khi cần: trỏ vào vùng sơ đồ, hoặc đang kéo thành phần tới. */
+.canvas-rf:hover .seq-edge__add { opacity: 1; }
+.seq-edge__add:hover,
+.seq-edge__add:focus-visible {
+  color: var(--c-brand-700);
+  border-color: var(--c-brand-500);
+  outline: none;
+  transform: scale(1.15);
+}
+.seq-edge__add.is-over {
+  opacity: 1;
+  color: var(--c-brand-700);
+  background: var(--c-brand-50);
+  border-color: var(--c-brand-500);
+  transform: scale(1.35);
+}
+
+.seq-edge__cond {
+  max-width: 220px;
+  padding: 2px var(--sp-2);
+  color: var(--c-text-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seq-edge__cond:hover { color: var(--c-brand-700); border-color: var(--c-brand-500); }
+
+/* ---------- Danh sách chèn nhanh ---------- */
+
+.insert-menu {
+  position: fixed;
+  z-index: 50;
+  width: 244px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  overflow: hidden;
+}
+.insert-menu__head { padding: var(--sp-3); border-bottom: 1px solid var(--c-border); }
+.insert-menu__list { max-height: 300px; overflow-y: auto; }
+.insert-menu__group { padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--c-border); }
+.insert-menu__group:last-child { border-bottom: 0; }
+.insert-menu__empty { padding: var(--sp-4); }
+
+.input--sm { height: var(--ant-control-h-sm); padding: 0 var(--sp-2); font-size: var(--fs-sm); }
+
+/* ---------- Bảng thành phần ---------- */
+
+.palette__item { cursor: grab; }
+.palette__item:active { cursor: grabbing; }
+
+.palette__item--btn {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  background: var(--c-surface);
+}
+
+.palette__item.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.palette__item.is-disabled:hover { background: transparent; border-color: var(--c-border); }
+
+/* ---------- Bảng thuộc tính ---------- */
+
+.field__info { color: var(--c-text-3); cursor: help; }
+.field:last-of-type { margin-bottom: 0; }
+
+/* ---------- Khối YAML ---------- */
+
+.yaml-note { padding: var(--sp-3) var(--sp-4) 0; margin: 0; }
+
+.code--yaml {
+  margin: var(--sp-3) 0 0;
+  border-radius: 0;
+  max-height: 340px;
+  overflow: auto;
+}
+.code--tall { max-height: clamp(480px, 64vh, 780px); margin-top: 0; }
+
+/* ---------- Kết quả kiểm tra ---------- */
+
+.finding--clickable { cursor: pointer; }
+.finding--clickable:focus-visible {
+  outline: var(--ant-control-outline-w) solid var(--c-brand-500);
+  outline-offset: -2px;
+}
+
+/* ---------- Màn hình hẹp ---------- */
+
+@media (max-width: 1180px) {
+  .designer--rf { grid-template-columns: 208px minmax(0, 1fr); }
+  /* Bảng thuộc tính xuống dưới, trải hết hai cột. */
+  .designer--rf > .panel:last-child { grid-column: 1 / -1; max-height: none; }
+}
+
+@media (max-width: 860px) {
+  .designer--rf { grid-template-columns: minmax(0, 1fr); }
+  .designer--rf > .panel:first-child { max-height: 280px; }
+  .canvas-rf { height: 460px; }
+}

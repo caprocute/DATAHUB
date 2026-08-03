@@ -16,6 +16,9 @@ const NAV = [
       { id: 'onboarding', icon: '⊕', text: 'Kết nạp hệ thống', href: 'pages/onboarding.html', ph: 'PH-01', badge: 3 },
       { id: 'catalog',    icon: '☰', text: 'Danh mục dịch vụ', href: 'pages/catalog.html',    ph: 'PH-02' },
       { id: 'routes',     icon: '⇄', text: 'Luồng tích hợp',   href: 'pages/routes.html',     ph: 'PH-04' },
+      { id: 'designer',   icon: '✎', text: 'Thiết kế luồng',   href: 'pages/designer/index.html', ph: 'PH-04' },
+      { id: 'adapters',   icon: '🔌', text: 'Adapter kết nối',  href: 'pages/adapters.html',   ph: 'PH-05' },
+      { id: 'gateway',    icon: '🛡', text: 'Cổng tiếp nhận',   href: 'pages/gateway.html',    ph: 'PH-03' },
     ],
   },
   {
@@ -37,6 +40,12 @@ const NAV = [
     items: [
       { id: 'kpi', icon: '◱', text: 'Báo cáo KPI',   href: 'pages/kpi.html', ph: 'PH-16' },
       { id: 'ai',  icon: '✦', text: 'Quản trị AI',   href: 'pages/ai.html',  ph: 'PH-17' },
+    ],
+  },
+  {
+    label: 'Định danh',
+    items: [
+      { id: 'iam', icon: '🔐', text: 'Người dùng & quyền', href: 'pages/iam.html', ph: 'PH-12' },
     ],
   },
 ];
@@ -90,6 +99,11 @@ function renderHeader(page) {
     <div class="header__title">${page.title}</div>
     <div class="header__spacer"></div>
     <div class="crumb" style="margin:0">${crumbs}</div>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Chuyển chế độ sáng tối"
+            title="Chuyển chế độ sáng / tối">
+      <span class="theme-toggle__moon" aria-hidden="true">☾</span>
+      <span class="theme-toggle__sun" aria-hidden="true">☀</span>
+    </button>
     <div class="header__user">
       <div class="avatar">NV</div>
       <div>
@@ -140,6 +154,14 @@ function initTabs() {
   });
 }
 
+/** Mở sẵn một tab theo mảnh neo, ví dụ `designer.html#review` */
+function initTabHash() {
+  const target = window.location.hash.slice(1);
+  if (!target) return;
+  const btn = document.querySelector(`[data-tab="${target}"]`);
+  if (btn) btn.click();
+}
+
 /** Lọc bảng theo ô tìm kiếm: data-filter trỏ tới id của bảng */
 function initFilters() {
   document.querySelectorAll('[data-filter]').forEach(input => {
@@ -164,9 +186,17 @@ function initDemoActions() {
   });
 }
 
+/** Nút chuyển sáng/tối — phải gắn sau renderShell vì thanh đỉnh được dựng lại */
+function initThemeToggle() {
+  const btn = document.getElementById('theme-toggle');
+  if (btn && window.LGSP_THEME) btn.addEventListener('click', () => window.LGSP_THEME.toggle());
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderShell();
   initTabs();
+  initTabHash();
   initFilters();
   initDemoActions();
+  initThemeToggle();
 });

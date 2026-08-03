@@ -24,6 +24,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | Hạng mục | Lựa chọn | ADR |
 |---|---|---|
 | Integration engine | Apache Camel (Camel Quarkus) | ADR-001 |
+| Trình thiết kế luồng | Kaoto làm mẫu catalog/YAML; canvas XYFlow trong console PH-04 | ADR-015, ADR-017 |
 | Runtime | Quarkus native trên K8s | ADR-002 |
 | API Gateway | Apache APISIX | ADR-003 |
 | IAM / SSO | Keycloak (OIDC, SAML2, OAuth2) | ADR-004 |
@@ -35,6 +36,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | GitOps | Argo CD + Kustomize | ADR-010 |
 | Service mesh | Istio (mTLS nội bộ) | ADR-011 |
 | Secrets | HashiCorp Vault + External Secrets | ADR-012 |
+| Bộ thành phần giao diện | Ant Design v6, tinh chỉnh token theo phong cách shadcn, có chế độ sáng/tối | ADR-016 |
 
 ## 4. Thuật ngữ
 

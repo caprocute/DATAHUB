@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thiết kế luồng — LGSP</title>
+<link rel="stylesheet" href="../css/app.css">
+<script src="../js/theme.js"></script>
+<script>window.LGSP_PAGE = { id: 'designer', title: 'Thiết kế luồng', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' },
+  { text: 'Luồng tích hợp', href: 'pages/routes.html' },
+  { text: 'Thiết kế luồng' }] };</script>
+</head>
+<body>
+
+<div class="mock-note">
+  <strong>PH-04 — Thiết kế luồng bằng giao diện.</strong>
+  Minh họa các màn <span class="tag-ph">UI-04-08</span> chạy thử và
+  <span class="tag-ph">UI-04-09</span> hàng đợi duyệt — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-04-integration-core.md">SRS PH-04</a>.
+  Màn <span class="tag-ph">UI-04-07</span> trình thiết kế trực quan là bản chạy thật, kéo thả được,
+  nằm ở <a href="designer/index.html">tab Thiết kế</a>.
+  Định nghĩa sinh ra đi vào kho Git rồi triển khai bằng Argo CD.
+</div>
+
+<div class="page-head">
+  <div class="page-head__main">
+    <h1 class="page-title">tra-cuu-thua-dat</h1>
+    <p class="page-desc">
+      Tra cứu thông tin thửa đất · phiên bản 4
+      <span class="badge badge--muted">DRAFT</span>
+      <span class="t-small t-muted">— lưu lúc 15:04, người sửa: Nguyễn Văn Quản</span>
+    </p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="routes.html">← Danh sách luồng</a>
+    <button class="btn" data-demo="Lưu bản nháp phiên bản 4">Lưu bản nháp</button>
+    <button class="btn" data-demo="Chạy thử luồng tra-cuu-thua-dat">▷ Chạy thử</button>
+    <button class="btn btn--primary" disabled title="Còn 1 lỗi cần xử lý"
+            style="opacity:.5;cursor:not-allowed">Gửi duyệt</button>
+  </div>
+</div>
+
+<div class="tabs" data-tabs-group="dsg">
+  <a class="tab" href="designer/index.html">Thiết kế</a>
+  <button class="tab is-active" data-tab="test">Chạy thử</button>
+  <button class="tab" data-tab="review">Duyệt <span class="tab__count">4</span></button>
+</div>
+
+<!-- ==================== UI-04-08: Chạy thử luồng ==================== -->
+<div data-panel="test" data-panel-group="dsg">
+
+  <div class="grid grid--2 mb-5">
+
+    <div class="panel">
+      <div class="panel__head">Bản tin thử</div>
+      <div class="panel__body">
+
+        <div class="field">
+          <label class="field__label">Nguồn bản tin</label>
+          <div class="btn-group">
+            <button class="btn btn--sm" data-demo="Nguồn: nhập tay">Nhập tay</button>
+            <button class="btn btn--sm" data-demo="Nguồn: bộ mẫu">Bộ mẫu</button>
+            <button class="btn btn--sm is-active" data-demo="Nguồn: lấy từ traceId">Từ traceId</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Mã truy vết</label>
+          <div class="input-group">
+            <input class="input input--mono" value="4bf92f3577b34da6a3ce929d0e0e4736">
+            <button class="btn" data-demo="Nạp bản tin từ traceId">Nạp</button>
+          </div>
+        </div>
+
+        <div class="alert alert--warn mb-4">
+          <span class="alert__icon">⊘</span>
+          <div>
+            <div class="alert__title">Giả danh hóa bắt buộc</div>
+            Bản tin lấy từ dữ liệu thật luôn đi qua PH-09 trước khi dùng làm dữ liệu thử.
+            Tùy chọn này không tắt được (BR-04-019).
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Nội dung bản tin</label>
+<pre class="code" style="max-height:180px">{
+  <span class="k">"soThuTu"</span>: <span class="s">"AB-2026-014735"</span>,
+  <span class="k">"chuSoHuu"</span>: {
+    <span class="k">"hoTen"</span>: <span class="s">"N.V.A"</span>,
+    <span class="k">"soDinhDanh"</span>: <span class="s">"0011****1234"</span>
+  },
+  <span class="k">"viTri"</span>: {
+    <span class="k">"maTinh"</span>: <span class="s">"01"</span>,
+    <span class="k">"maDonViHanhChinh"</span>: <span class="s">"00091"</span>
+  },
+  <span class="k">"dienTich"</span>: <span class="n">128.5</span>
+}</pre>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Chế độ đích</label>
+          <select class="select">
+            <option>Giả lập — thay mọi lời gọi ra ngoài bằng phản hồi mẫu</option>
+            <option>Hệ thống thử nghiệm thật</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Phản hồi giả lập</label>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Đích</th><th>Mã</th><th>Thân phản hồi</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="t-mono">rdm://don-vi-hanh-chinh</td>
+                  <td>200</td>
+                  <td class="t-mono t-small">{"tenDayDu":"P. Cửa Nam, Q. Hoàn Kiếm, TP Hà Nội"}</td>
+                </tr>
+                <tr>
+                  <td class="t-mono">adapter://CSDL-DATDAI</td>
+                  <td>200</td>
+                  <td class="t-mono t-small">{"ketQua":"OK","maHoSo":"HS-99120"}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <button class="btn btn--primary btn--block" data-demo="Chạy thử luồng với bản tin mẫu">▷ Chạy thử</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        Kết quả lần chạy
+        <span class="badge badge--ok" style="margin-left:var(--sp-2)">PASSED</span>
+        <span class="t-small t-muted" style="font-weight:400;margin-left:auto">187ms · 15:02:41</span>
+      </div>
+      <div class="panel__body">
+
+        <div class="wf mb-5">
+          <div class="wf__name">Tiếp nhận</div>
+          <div class="wf__track"><div class="wf__bar" style="left:0;width:2%"></div></div>
+          <div class="wf__ms">4ms</div>
+
+          <div class="wf__name">Kiểm tra lược đồ</div>
+          <div class="wf__track"><div class="wf__bar" style="left:2%;width:4%"></div></div>
+          <div class="wf__ms">8ms</div>
+
+          <div class="wf__name">Ủy quyền</div>
+          <div class="wf__track"><div class="wf__bar" style="left:6%;width:11%"></div></div>
+          <div class="wf__ms">21ms</div>
+
+          <div class="wf__name">Chuẩn hóa CDM</div>
+          <div class="wf__track"><div class="wf__bar" style="left:17%;width:6%"></div></div>
+          <div class="wf__ms">12ms</div>
+
+          <div class="wf__name">Làm giàu</div>
+          <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:23%;width:24%"></div></div>
+          <div class="wf__ms">45ms</div>
+
+          <div class="wf__name">Định tuyến</div>
+          <div class="wf__track"><div class="wf__bar" style="left:47%;width:2%"></div></div>
+          <div class="wf__ms">3ms</div>
+
+          <div class="wf__name">Chuyển đổi</div>
+          <div class="wf__track"><div class="wf__bar" style="left:49%;width:17%"></div></div>
+          <div class="wf__ms">31ms</div>
+
+          <div class="wf__name">Gửi tới đích</div>
+          <div class="wf__track"><div class="wf__bar" style="left:66%;width:33%"></div></div>
+          <div class="wf__ms">62ms</div>
+
+          <div class="wf__name">Ghi vết</div>
+          <div class="wf__track"><div class="wf__bar" style="left:99%;width:1%"></div></div>
+          <div class="wf__ms">5ms</div>
+        </div>
+
+        <div class="alert alert--warn mb-4">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Chặng Làm giàu trả cảnh báo</div>
+            Danh mục trả kết quả sau 45ms nhưng không khớp mã <span class="t-mono">00091</span>;
+            bản tin đi tiếp với <span class="t-mono">enriched=false</span> đúng như cấu hình.
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Bản tin đầu ra</label>
+<pre class="code" style="max-height:150px">&lt;<span class="k">ThuaDatRequest</span> <span class="k">xmlns</span>=<span class="s">"http://datdai.gov.vn/v3"</span>&gt;
+  &lt;<span class="k">SoThuTu</span>&gt;AB-2026-014735&lt;/<span class="k">SoThuTu</span>&gt;
+  &lt;<span class="k">MaDonViHanhChinh</span>&gt;00091&lt;/<span class="k">MaDonViHanhChinh</span>&gt;
+  &lt;<span class="k">DienTich</span>&gt;128.5&lt;/<span class="k">DienTich</span>&gt;
+&lt;/<span class="k">ThuaDatRequest</span>&gt;</pre>
+        </div>
+
+        <button class="btn btn--sm" data-demo="So sánh với lần chạy trước">So sánh với lần chạy trước</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <div>
+        <div class="card__title">Lịch sử chạy thử — phiên bản 4</div>
+        <div class="card__sub">Giữ 30 ngày; bản ghi được một lần duyệt tham chiếu thì chỉ giữ phần tóm tắt</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Thời điểm</th><th>Người chạy</th><th>Chế độ đích</th><th>Nguồn bản tin</th>
+              <th class="table__num">Thời gian</th><th>Kết quả</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/8 15:02:41</td>
+            <td>Nguyễn Văn Quản</td>
+            <td><span class="badge badge--muted badge--plain">MOCK</span></td>
+            <td class="t-small t-muted">Từ traceId · đã giả danh hóa</td>
+            <td class="table__num">187ms</td>
+            <td><span class="badge badge--ok">PASSED</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết lần chạy 15:02:41">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/8 14:47:12</td>
+            <td>Nguyễn Văn Quản</td>
+            <td><span class="badge badge--muted badge--plain">MOCK</span></td>
+            <td class="t-small t-muted">Nhập tay</td>
+            <td class="table__num">204ms</td>
+            <td><span class="badge badge--err">FAILED</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết lần chạy 14:47:12">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/8 14:31:55</td>
+            <td>Nguyễn Văn Quản</td>
+            <td><span class="badge badge--info badge--plain">TEST_SYSTEM</span></td>
+            <td class="t-small t-muted">Bộ mẫu · thua-dat-co-ban</td>
+            <td class="table__num">—</td>
+            <td><span class="badge badge--warn">TIMEOUT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết lần chạy 14:31:55">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== UI-04-09: Hàng đợi duyệt ==================== -->
+<div data-panel="review" data-panel-group="dsg" class="hidden">
+
+  <div class="alert alert--info mb-5">
+    <span class="alert__icon">ℹ</span>
+    <div>
+      <div class="alert__title">Nguyên tắc bốn mắt</div>
+      Luồng do chính bạn gửi lên không hiển thị trong hàng đợi này. Người duyệt phải khác
+      người tạo phiên bản (BR-04-016).
+    </div>
+  </div>
+
+  <div class="card mb-5">
+    <div class="card__head">
+      <div>
+        <div class="card__title">Chờ duyệt</div>
+        <div class="card__sub">4 luồng — 1 quá hạn 3 ngày làm việc</div>
+      </div>
+      <div class="card__actions">
+        <div class="search">
+          <span class="search__icon">⌕</span>
+          <input class="input" type="text" placeholder="Tìm luồng…" data-filter="review-table">
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table" id="review-table">
+        <thead>
+          <tr><th>Mã luồng</th><th>Phiên bản</th><th>Người gửi</th><th>Thời điểm gửi</th>
+              <th>Thời gian chờ</th><th>Nhãn</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--c-brand-50)">
+            <td class="t-mono">tra-cuu-thua-dat</td>
+            <td class="t-mono">v4</td>
+            <td>Nguyễn Văn Quản</td>
+            <td class="t-small t-muted">03/8 15:10</td>
+            <td class="t-small">12 phút</td>
+            <td><span class="badge badge--info">đang xem</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở luồng tra-cuu-thua-dat v4">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">dong-bo-ho-so-tthc</td>
+            <td class="t-mono">v9</td>
+            <td>Lê Minh Đức</td>
+            <td class="t-small t-muted">03/8 09:22</td>
+            <td class="t-small">6 giờ</td>
+            <td><span class="badge badge--err">KHẨN CẤP</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở luồng dong-bo-ho-so-tthc v9">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">lien-thong-van-ban</td>
+            <td class="t-mono">v3</td>
+            <td>Phạm Thu Hà</td>
+            <td class="t-small t-muted">31/7 16:40</td>
+            <td class="t-small" style="color:var(--c-err-700);font-weight:600">3 ngày</td>
+            <td><span class="badge badge--warn">quá hạn</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở luồng lien-thong-van-ban v3">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">tra-cuu-bhxh</td>
+            <td class="t-mono">v2</td>
+            <td>Lê Minh Đức</td>
+            <td class="t-small t-muted">02/8 11:05</td>
+            <td class="t-small">1 ngày</td>
+            <td></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở luồng tra-cuu-bhxh v2">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-5">
+    <div class="card__head">
+      <div>
+        <div class="card__title"><span class="t-mono">tra-cuu-thua-dat</span> — phiên bản 4</div>
+        <div class="card__sub">Gửi bởi Nguyễn Văn Quản lúc 03/8 15:10</div>
+      </div>
+      <div class="card__actions">
+        <span class="badge badge--muted">PENDING_REVIEW</span>
+      </div>
+    </div>
+    <div class="card__body">
+
+      <div class="field">
+        <label class="field__label">Thuyết minh thay đổi</label>
+        <p class="t-muted">
+          Bổ sung chặng làm giàu tên đơn vị hành chính đầy đủ để hệ thống đất đai không phải tự tra cứu.
+          Nâng bộ chuyển đổi lên v3 theo lược đồ mới bên CSDL-DATDAI công bố ngày 28/7.
+        </p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label class="field__label">So sánh với phiên bản đang chạy (v3)</label>
+        <div class="diff">
+          <div>
+            <div class="diff__col-label">v3 — đang chạy</div>
+<pre class="code" style="max-height:230px">- <span class="k">to</span>: <span class="s">"direct:normalize"</span>
+<span class="del">- to: "xslt:cdm-to-datdai-v2.xsl"</span>
+- <span class="k">to</span>: <span class="s">"adapter://CSDL-DATDAI"</span>
+- <span class="k">wireTap</span>:
+    <span class="k">uri</span>: <span class="s">"kafka:audit-log-topic"</span></pre>
+          </div>
+          <div>
+            <div class="diff__col-label">v4 — chờ duyệt</div>
+<pre class="code" style="max-height:230px">- <span class="k">to</span>: <span class="s">"direct:normalize"</span>
+<span class="add">- enrich:
+    expression:
+      simple: "rdm://don-vi-hanh-chinh/..."
+    timeout: 200</span>
+<span class="add">- to: "xslt:cdm-to-datdai-v3.xsl"</span>
+- <span class="k">to</span>: <span class="s">"adapter://CSDL-DATDAI"</span>
+- <span class="k">wireTap</span>:
+    <span class="k">uri</span>: <span class="s">"kafka:audit-log-topic"</span></pre>
+          </div>
+        </div>
+        <div class="field__hint">
+          Xem song song cả sơ đồ và DSL —
+          <a href="#" data-demo="Chuyển sang so sánh dạng sơ đồ">chuyển sang dạng sơ đồ</a>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid grid--2">
+        <div>
+          <div class="field__label mb-2">Cảnh báo còn tồn tại</div>
+          <div class="alert alert--warn" style="margin-bottom:var(--sp-2)">
+            <span class="alert__icon">⚠</span>
+            <div>Luật định tuyến không vét cạn — bản tin của tỉnh ngoài <span class="t-mono">01</span>,
+              <span class="t-mono">79</span> sẽ rơi vào nhánh lỗi.</div>
+          </div>
+          <div class="alert alert--warn" style="margin:0">
+            <span class="alert__icon">⚠</span>
+            <div>Hạn chờ làm giàu 200ms sát P99 thực tế 180ms của PH-07.</div>
+          </div>
+        </div>
+        <div>
+          <div class="field__label mb-2">Bằng chứng chạy thử</div>
+          <dl class="dl">
+            <dt>Kết quả</dt><dd><span class="badge badge--ok">PASSED</span></dd>
+            <dt>Thời điểm</dt><dd class="t-mono t-small">03/8 15:02:41</dd>
+            <dt>Chế độ đích</dt><dd>Giả lập</dd>
+            <dt>Dữ liệu thử</dt><dd class="t-small">Từ traceId, đã giả danh hóa</dd>
+            <dt>Tổng thời gian</dt><dd class="t-mono">187ms</dd>
+          </dl>
+          <button class="btn btn--sm mt-3" data-demo="Mở chi tiết lần chạy thử">Xem chi tiết lần chạy</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label class="field__label">Nhận xét</label>
+        <textarea class="textarea" placeholder="Bắt buộc nhập lý do khi trả lại luồng…"></textarea>
+      </div>
+
+      <div class="row row--between">
+        <div class="t-small t-muted">
+          Sau khi phê duyệt: sinh commit vào kho Git, Argo CD đồng bộ ở chu kỳ kế tiếp.
+        </div>
+        <div class="row">
+          <button class="btn btn--danger" data-demo="Trả lại luồng tra-cuu-thua-dat v4">Trả lại</button>
+          <button class="btn btn--primary" data-demo="Phê duyệt luồng tra-cuu-thua-dat v4">Phê duyệt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card__head">
+      <div>
+        <div class="card__title">Lịch sử duyệt gần đây</div>
+        <div class="card__sub">Bản ghi duyệt được giữ vĩnh viễn phục vụ kiểm định</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Luồng</th><th>Phiên bản</th><th>Người gửi</th><th>Người duyệt</th>
+              <th>Quyết định</th><th>Commit</th><th>Thời điểm</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">tra-cuu-cong-dan</td><td class="t-mono">v7</td>
+            <td>Phạm Thu Hà</td><td>Trần Thị Hoa</td>
+            <td><span class="badge badge--ok">Phê duyệt</span></td>
+            <td class="t-mono t-small">9d4c7a1</td>
+            <td class="t-small t-muted">02/8 10:14</td>
+          </tr>
+          <tr>
+            <td class="t-mono">tra-cuu-thua-dat</td><td class="t-mono">v3</td>
+            <td>Nguyễn Văn Quản</td><td>Trần Thị Hoa</td>
+            <td><span class="badge badge--err">Trả lại</span></td>
+            <td class="t-small t-muted">—</td>
+            <td class="t-small t-muted">01/8 16:32</td>
+          </tr>
+          <tr>
+            <td class="t-mono">dong-bo-ho-so-tthc</td><td class="t-mono">v8</td>
+            <td>Lê Minh Đức</td><td>Nguyễn Văn Quản</td>
+            <td><span class="badge badge--ok">Phê duyệt</span> <span class="badge badge--err">KHẨN CẤP</span></td>
+            <td class="t-mono t-small">3f81b02</td>
+            <td class="t-small t-muted">31/7 22:07</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

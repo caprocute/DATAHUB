@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Luồng tích hợp — LGSP</title>
 <link rel="stylesheet" href="../css/app.css">
+<script src="../js/theme.js"></script>
 <script>window.LGSP_PAGE = { id: 'routes', title: 'Luồng tích hợp', crumbs: [
   { text: 'Trang chủ', href: 'index.html' }, { text: 'Luồng tích hợp' }] };</script>
 </head>
@@ -17,6 +18,8 @@
   <span class="tag-ph">UI-04-03</span> cấu hình xử lý lỗi,
   <span class="tag-ph">UI-04-04</span> thống kê — đặc tả tại mục M6 của
   <a href="../../docs/07-srs/SRS-PH-04-integration-core.md">SRS PH-04</a>.
+  Trình thiết kế kéo thả nằm ở <a href="designer/index.html">Thiết kế luồng</a>;
+  màn chạy thử và duyệt luồng ở <a href="designer.html">tab kế bên</a>.
 </div>
 
 <div class="page-head">
@@ -26,7 +29,7 @@
   </div>
   <div class="page-head__actions">
     <button class="btn" data-demo="Nhập luồng từ tệp YAML">⤒ Nhập YAML</button>
-    <button class="btn btn--primary" data-demo="Tạo luồng tích hợp mới">＋ Tạo luồng mới</button>
+    <a class="btn btn--primary" href="designer/index.html">＋ Tạo luồng mới</a>
   </div>
 </div>
 
@@ -68,7 +71,7 @@
       </thead>
       <tbody>
         <tr>
-          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td><span style="color:var(--c-ok-mark);font-size:16px">●</span></td>
           <td class="t-mono">tra-cuu-cong-dan</td>
           <td class="t-primary">Tra cứu thông tin công dân</td>
           <td><span class="badge badge--info badge--plain">SYNC</span></td>
@@ -83,7 +86,7 @@
           </td>
         </tr>
         <tr>
-          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td><span style="color:var(--c-ok-mark);font-size:16px">●</span></td>
           <td class="t-mono">dong-bo-ho-so-tthc</td>
           <td class="t-primary">Đồng bộ trạng thái hồ sơ TTHC</td>
           <td><span class="badge badge--muted badge--plain">EVENT</span></td>
@@ -98,7 +101,7 @@
           </td>
         </tr>
         <tr>
-          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td><span style="color:var(--c-ok-mark);font-size:16px">●</span></td>
           <td class="t-mono">lien-thong-van-ban</td>
           <td class="t-primary">Liên thông văn bản điện tử</td>
           <td><span class="badge badge--muted badge--plain">EVENT</span></td>
@@ -113,7 +116,7 @@
           </td>
         </tr>
         <tr>
-          <td><span style="color:var(--c-warn-500);font-size:16px">●</span></td>
+          <td><span style="color:var(--c-warn-mark);font-size:16px">●</span></td>
           <td class="t-mono">tra-cuu-thua-dat</td>
           <td class="t-primary">Tra cứu thông tin thửa đất</td>
           <td><span class="badge badge--info badge--plain">SYNC</span></td>
@@ -128,7 +131,7 @@
           </td>
         </tr>
         <tr>
-          <td><span style="color:var(--c-err-500);font-size:16px">●</span></td>
+          <td><span style="color:var(--c-err-mark);font-size:16px">●</span></td>
           <td class="t-mono">dong-bo-can-bo</td>
           <td class="t-primary">Đồng bộ hồ sơ cán bộ, công chức</td>
           <td><span class="badge badge--muted badge--plain">SCHEDULED</span></td>
@@ -163,9 +166,9 @@
   <div class="card__foot">
     <span>Hiển thị 6 / 134 luồng</span>
     <span class="header__spacer"></span>
-    <span class="t-small">Chấm màu: <span style="color:var(--c-ok-500)">●</span> lỗi &lt;1% ·
-      <span style="color:var(--c-warn-500)">●</span> 1–5% ·
-      <span style="color:var(--c-err-500)">●</span> &gt;5%</span>
+    <span class="t-small">Chấm màu: <span style="color:var(--c-ok-mark)">●</span> lỗi &lt;1% ·
+      <span style="color:var(--c-warn-mark)">●</span> 1–5% ·
+      <span style="color:var(--c-err-mark)">●</span> &gt;5%</span>
   </div>
 </div>
 

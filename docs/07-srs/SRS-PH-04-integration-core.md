@@ -8,7 +8,7 @@
 | **Mức bắt buộc** | M — Bắt buộc |
 | **Phiên bản** | 1.0 |
 | **Ngày** | 03/8/2026 |
-| **Công nghệ chủ đạo** | Apache Camel 4.x trên Quarkus (native) |
+| **Công nghệ chủ đạo** | Apache Camel 4.x trên Quarkus (native); trình thiết kế luồng Kaoto ([ADR-015](../05-adr/README.md#adr-015)) |
 
 ---
 
@@ -36,6 +36,8 @@ Tài liệu này đặc tả đầy đủ yêu cầu chức năng, dữ liệu, 
 | 8 | Thực thi chiến lược xử lý lỗi ba tầng và đẩy bản tin lỗi vào DLQ |
 | 9 | Phát sinh dữ liệu ghi vết và telemetry cho mỗi bản tin |
 | 10 | Quản lý vòng đời route: nạp, kích hoạt, tạm dừng, gỡ bỏ |
+| 11 | Cung cấp năng lực **thiết kế luồng bằng giao diện trực quan**, không bắt buộc viết Camel DSL bằng tay |
+| 12 | Chạy thử luồng trên môi trường thử nghiệm và điều hành quy trình duyệt trước khi triển khai |
 
 **PH-04 KHÔNG chịu trách nhiệm:**
 
@@ -49,6 +51,7 @@ Tài liệu này đặc tả đầy đủ yêu cầu chức năng, dữ liệu, 
 | 6 | Lưu trữ và hiển thị nhật ký, chỉ số | PH-13 |
 | 7 | Giao diện xử lý bản tin lỗi | PH-18 |
 | 8 | Điều phối quy trình nghiệp vụ dài hạn có tác vụ người dùng | PH-11 |
+| 9 | Đưa định nghĩa luồng đã duyệt ra môi trường chạy | Argo CD ([ADR-010](../05-adr/README.md#adr-010)) |
 
 ### 1.3. Tài liệu tham chiếu
 
@@ -57,7 +60,7 @@ Tài liệu này đặc tả đầy đủ yêu cầu chức năng, dữ liệu, 
 | [KT] | [Kiến trúc hệ thống — mục 5 Kiến trúc tích hợp](../02-architecture/README.md#5-kiến-trúc-tích-hợp--lõi-apache-camel) |
 | [LT] | [Luồng nghiệp vụ F-03, F-04, F-05, F-06, F-10](../03-flows/README.md) |
 | [PL] | [Cơ sở pháp lý và ma trận CMP](../01-legal/README.md) |
-| [ADR] | [ADR-001 Camel](../05-adr/README.md#adr-001), [ADR-002 Quarkus](../05-adr/README.md#adr-002), [ADR-013 CDM](../05-adr/README.md#adr-013) |
+| [ADR] | [ADR-001 Camel](../05-adr/README.md#adr-001), [ADR-002 Quarkus](../05-adr/README.md#adr-002), [ADR-010 GitOps](../05-adr/README.md#adr-010), [ADR-013 CDM](../05-adr/README.md#adr-013), [ADR-015 Kaoto](../05-adr/README.md#adr-015) |
 | [TT] | [Tác động TTQGS](../06-impact/README.md) |
 | [CV631] | Công văn 631/THH-THHT ngày 21/5/2020 — yêu cầu chức năng LGSP |
 
@@ -141,7 +144,8 @@ graph TB
 | Tác nhân | Loại | Tương tác với PH-04 |
 |---|---|---|
 | Hệ thống thông tin thành viên | Hệ thống | Gửi yêu cầu qua PH-03; nhận yêu cầu từ PH-04 |
-| Cán bộ phát triển tích hợp | Người | Thiết kế, triển khai, sửa route |
+| Cán bộ phát triển tích hợp | Người | Dựng luồng bằng trình thiết kế trực quan hoặc viết DSL, chạy thử, gửi duyệt |
+| Người duyệt luồng tích hợp | Người | Rà soát và phê duyệt hoặc trả lại luồng trước khi triển khai; **không được** là người thiết kế ra luồng đó |
 | Quản trị viên nền tảng | Người | Kích hoạt/tạm dừng route, xem tình trạng |
 | Cán bộ vận hành | Người | Theo dõi, xử lý sự cố route |
 | PH-03 Gateway | Hệ thống | Chuyển tiếp yêu cầu đã xác thực |
@@ -174,6 +178,8 @@ graph TB
 | RB-07 | Toàn bộ công nghệ phải là mã nguồn mở | Yêu cầu dự án |
 | RB-08 | Triển khai trên Kubernetes, mở rộng ngang | Cloud First — TTQGS |
 | RB-09 | Không được lưu trữ dữ liệu nghiệp vụ lâu dài | Nguyên tắc kiến trúc |
+| RB-10 | Định nghĩa luồng chỉ ra môi trường chạy qua kho Git và Argo CD; trình thiết kế **không** được ghi thẳng vào cụm | [ADR-010](../05-adr/README.md#adr-010), [ADR-015](../05-adr/README.md#adr-015) |
+| RB-11 | Định nghĩa luồng do trình thiết kế sinh ra phải là Camel YAML DSL chuẩn, đọc và sửa lại được bằng tay | [ADR-015](../05-adr/README.md#adr-015) |
 
 ### 2.5. Phụ thuộc phân hệ
 
@@ -434,7 +440,17 @@ stateDiagram-v2
 | **Đầu ra** | Phản hồi dự phòng |
 | **Ngoại lệ** | E1: Không cấu hình dự phòng → trả `503` chuẩn |
 
-### 3.6. Nhóm F — Quản lý vòng đời route
+### 3.6. Nhóm F — Thiết kế và quản lý vòng đời route
+
+Nhóm này bao trùm toàn bộ đời của một luồng, từ lúc được dựng ra đến lúc ngừng dùng. Mã yêu cầu được cấp theo thứ tự bổ sung tài liệu, **không** theo thứ tự thực hiện. Trình tự nghiệp vụ thực tế là:
+
+```
+FR-04-026 thiết kế → FR-04-027 kiểm tra hợp lệ → FR-04-028 chạy thử
+→ FR-04-029 duyệt → FR-04-020 nạp và kích hoạt → FR-04-022 chuyển lưu lượng
+→ FR-04-021 tạm dừng / gỡ bỏ
+```
+
+`FR-04-030` (thư viện mẫu luồng) là đầu vào tùy chọn cho bước thiết kế.
 
 #### FR-04-020 — Nạp và kích hoạt route · **M**
 
@@ -467,6 +483,74 @@ stateDiagram-v2
 | **Xử lý** | 1. Nạp phiên bản mới song song phiên bản hiện tại<br>2. Chia lưu lượng theo tỷ lệ khai báo<br>3. Theo dõi tỷ lệ lỗi phiên bản mới<br>4. Tự động quay lui nếu tỷ lệ lỗi phiên bản mới > 2 lần phiên bản cũ |
 | **Đầu ra** | Lưu lượng phân chia theo tỷ lệ |
 | **Ngoại lệ** | E1: Phiên bản mới lỗi vượt ngưỡng → quay lui tự động, cảnh báo |
+
+#### FR-04-026 — Thiết kế luồng bằng giao diện trực quan · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Dựng và sửa định nghĩa luồng bằng thao tác đồ họa, không bắt buộc gõ Camel DSL. Hệ thống sinh ra Camel YAML DSL tương đương |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Tiền điều kiện** | Người dùng có vai trò `INTEGRATION_DEV`; đã chọn mẫu luồng hoặc tạo luồng trống |
+| **Đầu vào** | Thao tác trên trình thiết kế: chọn điểm tiếp nhận, thêm/xóa/sắp xếp các chặng xử lý, chọn mẫu EIP, cấu hình tham số từng chặng, khai báo bộ chuyển đổi và điểm đến · hoặc dán sẵn một định nghĩa YAML để mở lại bằng đồ họa |
+| **Xử lý** | 1. Nạp danh mục thành phần khả dụng: component, Kamelet, mẫu EIP, bộ chuyển đổi đã đăng ký, danh sách đích hợp lệ qua PH-05/PH-14<br>2. Dựng sơ đồ theo khung chín bước chuẩn tại [KT]; chặng bắt buộc (kiểm tra lược đồ, ủy quyền, ghi vết) hiển thị sẵn và **không cho gỡ**<br>3. Sinh Camel YAML DSL sau mỗi thay đổi, hiển thị song song với sơ đồ<br>4. Kiểm tra hợp lệ tức thời (FR-04-027)<br>5. Lưu thành phiên bản `DRAFT` kèm `nguon_tao = DESIGNER`<br>6. Ghi sự kiện thay đổi cấu hình cho PH-13 |
+| **Đầu ra** | Phiên bản route ở trạng thái `DRAFT` với `dinh_nghia_dsl` là Camel YAML DSL hợp lệ |
+| **Ngoại lệ** | E1: Định nghĩa dán vào không phải Camel YAML hợp lệ → báo lỗi kèm vị trí dòng, giữ nguyên bản đang soạn<br>E2: Định nghĩa dùng cấu trúc trình thiết kế chưa hiển thị được → mở ở chế độ soạn văn bản, cảnh báo rõ thay vì hiển thị sai<br>E3: Mất kết nối khi đang soạn → giữ bản nháp cục bộ, khôi phục khi vào lại<br>E4: Hai người sửa cùng một phiên bản `DRAFT` → người lưu sau bị từ chối, được xem khác biệt và tự quyết định gộp |
+
+**Ghi chú về E2.** Trình thiết kế đồ họa không bao giờ phủ hết được mọi cấu trúc Camel. Nguyên tắc ở đây là **thà từ chối hiển thị còn hơn hiển thị sai**: một sơ đồ vẽ thiếu một nhánh xử lý sẽ khiến người dùng tin rằng nhánh đó không tồn tại, và họ sẽ lưu đè mất nó. Đây là hiện thực RB-11.
+
+#### FR-04-027 — Kiểm tra hợp lệ luồng khi thiết kế · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Phát hiện lỗi ngay trong lúc soạn thảo, trước khi luồng được gửi chạy thử hoặc gửi duyệt |
+| **Tác nhân** | Cán bộ phát triển tích hợp (tự động kích hoạt) |
+| **Đầu vào** | Định nghĩa luồng đang soạn |
+| **Xử lý** | Kiểm tra bốn tầng, gắn kết quả vào đúng chặng trên sơ đồ:<br>· **Cú pháp** — định nghĩa là Camel YAML DSL đúng dạng<br>· **Tham chiếu** — lược đồ, bộ chuyển đổi, danh mục, đích đến đều tồn tại và người dùng có quyền dùng<br>· **Quy tắc nghiệp vụ** — đủ chặng bắt buộc (BR-04-001); không gọi thẳng hệ thống ngoài (BR-04-002); `timeout_ms ≤ 30.000` (BR-04-003); tổng thời gian thử lại không vượt hạn chờ (BR-04-004); tối đa một luật định tuyến mặc định (BR-04-014)<br>· **Cảnh báo chất lượng** — chặng không bao giờ đạt tới, luật định tuyến không vét cạn, thiếu chính sách lỗi, đặt tên không theo quy ước |
+| **Đầu ra** | Danh sách phát hiện, mỗi mục gồm mức độ (`ERROR`/`WARNING`), chặng liên quan, mô tả và gợi ý sửa |
+| **Ngoại lệ** | E1: Không tra được danh mục tham chiếu → hạ cấp xuống kiểm tra cú pháp và quy tắc, nêu rõ phần chưa kiểm được<br>E2: Định nghĩa quá lớn khiến kiểm tra vượt hạn chờ → chỉ kiểm tra phần vừa thay đổi, kiểm tra đầy đủ khi lưu |
+
+**Phân biệt `ERROR` và `WARNING`.** `ERROR` chặn gửi duyệt, `WARNING` thì không. Ranh giới là: vi phạm quy tắc nghiệp vụ hoặc tham chiếu sai luôn là `ERROR` vì chúng chắc chắn gây lỗi khi chạy; các vấn đề về chất lượng thiết kế là `WARNING` vì người thiết kế có thể có lý do chính đáng, và người duyệt sẽ là chốt cuối.
+
+#### FR-04-028 — Chạy thử luồng trên môi trường thử nghiệm · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cho luồng chạy với dữ liệu mẫu trên môi trường tách biệt để kiểm chứng kết quả trước khi gửi duyệt |
+| **Tác nhân** | Cán bộ phát triển tích hợp |
+| **Tiền điều kiện** | Phiên bản `DRAFT` không còn phát hiện mức `ERROR` |
+| **Đầu vào** | `routeId` · số phiên bản · bản tin mẫu (nhập tay, chọn từ bộ mẫu, hoặc lấy từ một `traceId` đã xảy ra) · chế độ đích: giả lập hoặc hệ thống thử nghiệm thật |
+| **Xử lý** | 1. Nạp phiên bản vào ngữ cảnh Camel **tách biệt**, không thuộc cụm phục vụ<br>2. Chuyển route sang trạng thái `TESTING`<br>3. Chạy bản tin mẫu qua đủ các chặng<br>4. Ghi lại đầu vào và đầu ra **của từng chặng**, thời gian mỗi chặng, nhánh định tuyến đã chọn<br>5. Với chế độ giả lập: thay mọi lời gọi ra ngoài bằng phản hồi mẫu đã khai báo<br>6. Lưu kết quả thành bản ghi chạy thử (EN-04-10), giữ 30 ngày<br>7. Gỡ ngữ cảnh thử nghiệm sau khi chạy xong |
+| **Đầu ra** | Bản ghi chạy thử: kết quả từng chặng, bản tin đầu ra cuối cùng, thời gian, lỗi nếu có |
+| **Ngoại lệ** | E1: Luồng vượt hạn chờ khi chạy thử → dừng, ghi chặng đang treo<br>E2: Chế độ đích thật nhưng hệ thống thử nghiệm không khả dụng → báo lỗi, gợi ý chuyển sang giả lập<br>E3: Bản tin mẫu lấy từ `traceId` có chứa dữ liệu cá nhân → **bắt buộc** đi qua PH-09 để giả danh hóa trước khi dùng làm dữ liệu thử |
+
+**Ghi chú về E3.** Lấy lại bản tin thật từ nhật ký là cách thử hiệu quả nhất vì nó phản ánh đúng dữ liệu ngoài đời, nhưng cũng là con đường ngắn nhất để dữ liệu cá nhân rò rỉ vào môi trường thử nghiệm vốn có kiểm soát lỏng hơn. Giả danh hóa bắt buộc là điều kiện để giữ được cách thử này mà không vi phạm CMP-32.
+
+#### FR-04-029 — Duyệt luồng trước khi triển khai · **M**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Chốt kiểm soát bắt buộc: luồng chỉ được triển khai sau khi một người khác người thiết kế phê duyệt |
+| **Tác nhân** | Cán bộ phát triển tích hợp (gửi duyệt) · Người duyệt luồng tích hợp (quyết định) |
+| **Tiền điều kiện** | Phiên bản `DRAFT` không còn phát hiện mức `ERROR`; đã có ít nhất một lần chạy thử đạt |
+| **Đầu vào** | `routeId` · số phiên bản · thuyết minh thay đổi · kết quả chạy thử tham chiếu |
+| **Xử lý** | 1. Chuyển phiên bản sang `PENDING_REVIEW`, khóa không cho sửa tiếp<br>2. Xác định người duyệt hợp lệ: có vai trò `INTEGRATION_REVIEWER` và **khác** người tạo phiên bản (BR-04-016)<br>3. Trình cho người duyệt: sơ đồ luồng, khác biệt so với phiên bản đang chạy, danh sách cảnh báo còn tồn, kết quả chạy thử<br>4. Người duyệt chọn **phê duyệt** hoặc **trả lại** kèm lý do bắt buộc<br>5. Nếu phê duyệt: sinh commit định nghĩa vào kho Git, chuyển phiên bản sang `APPROVED`, chờ Argo CD đồng bộ (RB-10)<br>6. Nếu trả lại: quay về `DRAFT`, mở khóa sửa<br>7. Ghi bản ghi duyệt (EN-04-09) và sự kiện kiểm toán cho PH-13, giữ vĩnh viễn |
+| **Đầu ra** | Phiên bản ở `APPROVED` kèm mã commit, hoặc quay về `DRAFT` kèm lý do trả lại |
+| **Ngoại lệ** | E1: Người gửi duyệt tự duyệt luồng của mình → từ chối, ghi cảnh báo an ninh<br>E2: Không sinh được commit vào Git → giữ nguyên `PENDING_REVIEW`, cảnh báo quản trị viên; **không** chuyển sang `APPROVED`<br>E3: Phiên bản đang chạy đã đổi kể từ lúc gửi duyệt → cảnh báo người duyệt về khác biệt mới, yêu cầu xác nhận lại<br>E4: Cần triển khai khẩn cấp ngoài giờ → cho phép quy trình rút gọn với người duyệt trực, nhưng ghi nhãn `EMERGENCY` và bắt buộc rà soát bổ sung trong 24 giờ |
+
+**Vì sao chốt duyệt nằm ở PH-04 chứ không ở công cụ thiết kế.** Giao diện đồ họa làm việc dựng luồng trở nên dễ, và cái dễ thứ hai đi kèm là dựng ra luồng sai rồi đẩy thẳng lên chạy. Đặt chốt duyệt trong phân hệ — chứ không trong công cụ — bảo đảm luồng dựng bằng giao diện và luồng viết tay chịu **cùng một mức kiểm soát**, kể cả khi sau này thay công cụ thiết kế khác.
+
+#### FR-04-030 — Thư viện mẫu luồng dùng lại · **S**
+
+| Mục | Nội dung |
+|---|---|
+| **Mô tả** | Cung cấp bộ mẫu luồng đã chuẩn hóa để dựng luồng mới từ điểm xuất phát đúng thay vì từ trang trắng |
+| **Tác nhân** | Cán bộ phát triển tích hợp · Quản trị viên nền tảng (quản lý bộ mẫu) |
+| **Đầu vào** | Chọn mẫu · giá trị cho các tham số mà mẫu khai báo (hệ thống nguồn, hệ thống đích, thực thể CDM, lược đồ) |
+| **Xử lý** | 1. Liệt kê mẫu theo nhóm: tra cứu đồng bộ, đồng bộ theo sự kiện, chuyển tiếp có lọc, gọi lên cấp quốc gia, xử lý theo lô<br>2. Sinh định nghĩa luồng từ mẫu với tham số đã điền<br>3. Đánh dấu luồng sinh ra là dẫn xuất của mẫu và ghi phiên bản mẫu đã dùng<br>4. Cho phép quản trị viên tạo mẫu mới từ một luồng đang chạy tốt |
+| **Đầu ra** | Phiên bản `DRAFT` sinh từ mẫu, sẵn sàng tinh chỉnh |
+| **Ngoại lệ** | E1: Thiếu tham số bắt buộc → chặn sinh, chỉ rõ tham số còn thiếu<br>E2: Mẫu tham chiếu thành phần đã ngừng dùng → cảnh báo và gợi ý mẫu thay thế |
+
+**Ghi chú.** Bộ mẫu là cách rẻ nhất để giữ chất lượng thiết kế khi mở quyền dựng luồng cho nhiều người: thay vì trông chờ mọi người nhớ khung chín bước, khung đó nằm sẵn trong mẫu. Đây cũng là biện pháp giảm thiểu đã nêu tại [ADR-015](../05-adr/README.md#adr-015).
 
 ### 3.7. Nhóm G — Ghi vết và telemetry
 
@@ -526,11 +610,16 @@ stateDiagram-v2
 | F | FR-04-020 | Nạp và kích hoạt route | M |
 | F | FR-04-021 | Tạm dừng, tiếp tục, gỡ bỏ route | M |
 | F | FR-04-022 | Triển khai route theo phiên bản | S |
+| F | FR-04-026 | Thiết kế luồng bằng giao diện trực quan | M |
+| F | FR-04-027 | Kiểm tra hợp lệ luồng khi thiết kế | M |
+| F | FR-04-028 | Chạy thử luồng trên môi trường thử nghiệm | M |
+| F | FR-04-029 | Duyệt luồng trước khi triển khai | M |
+| F | FR-04-030 | Thư viện mẫu luồng dùng lại | S |
 | G | FR-04-023 | Sinh và lan truyền traceId | M |
 | G | FR-04-024 | Ghi vết truy cập bất đồng bộ | M |
 | G | FR-04-025 | Phát chỉ số vận hành | M |
 
-**Tổng: 25 yêu cầu chức năng** — 21 bắt buộc (M), 4 cần có (S).
+**Tổng: 30 yêu cầu chức năng** — 25 bắt buộc (M), 5 cần có (S).
 
 ---
 
@@ -546,6 +635,9 @@ erDiagram
     ROUTE ||--|| ERROR_POLICY : "có chính sách lỗi"
     ROUTE ||--o{ ROUTE_ENDPOINT : "có điểm cuối"
     ROUTE_VERSION ||--o{ TRANSFORM_REF : "dùng bộ chuyển đổi"
+    ROUTE_VERSION ||--o{ ROUTE_TEST_RUN : "có lần chạy thử"
+    ROUTE_VERSION ||--o{ ROUTE_REVIEW : "trải qua lần duyệt"
+    ROUTE_TEMPLATE ||--o{ ROUTE_VERSION : "sinh ra từ mẫu"
     ROUTE ||--o{ MESSAGE_TRACE : "sinh vết"
     MESSAGE_TRACE ||--o{ STAGE_TRACE : "gồm các chặng"
     ROUTE ||--o{ IDEMPOTENCY_KEY : "ghi khóa chống trùng"
@@ -571,12 +663,50 @@ erDiagram
         uuid route_id FK
         int so_phien_ban
         text dinh_nghia_dsl
+        string nguon_tao
+        uuid template_id FK
+        string git_commit_ref
         string input_schema_ref
         string output_schema_ref
         string trang_thai
         int traffic_percent
         timestamptz deployed_at
         string deployed_by
+    }
+    ROUTE_TEST_RUN {
+        uuid run_id PK
+        uuid version_id FK
+        string che_do_dich
+        text ban_tin_mau
+        jsonb ket_qua_tung_chang
+        text ban_tin_dau_ra
+        string ket_qua
+        int duration_ms
+        timestamptz run_at
+        string run_by
+    }
+    ROUTE_REVIEW {
+        uuid review_id PK
+        uuid version_id FK
+        string nguoi_gui
+        string nguoi_duyet
+        string quyet_dinh
+        text thuyet_minh
+        text ly_do_tra_lai
+        uuid test_run_ref FK
+        boolean la_khan_cap
+        timestamptz submitted_at
+        timestamptz decided_at
+    }
+    ROUTE_TEMPLATE {
+        uuid template_id PK
+        string template_code UK
+        string ten_mau
+        string nhom_mau
+        text dinh_nghia_khung
+        jsonb tham_so
+        int so_phien_ban
+        string trang_thai
     }
     ROUTING_RULE {
         uuid rule_id PK
@@ -694,14 +824,25 @@ erDiagram
 | `route_id` | UUID | ✓ | FK | |
 | `so_phien_ban` | INTEGER | ✓ | UNIQUE cùng `route_id` | Tăng dần từ 1 |
 | `dinh_nghia_dsl` | TEXT | ✓ | | Camel YAML DSL |
+| `nguon_tao` | VARCHAR(20) | ✓ | ∈ {`DESIGNER`,`DSL`,`TEMPLATE`,`IMPORT`} | Cách phiên bản được tạo ra (FR-04-026, 030) |
+| `template_id` | UUID | | FK → ROUTE_TEMPLATE | Mẫu gốc nếu sinh từ mẫu |
+| `git_commit_ref` | VARCHAR(64) | | | Mã commit chứa định nghĩa đã duyệt (RB-10) |
 | `input_schema_ref` | VARCHAR(200) | | | Tham chiếu lược đồ đầu vào |
 | `output_schema_ref` | VARCHAR(200) | | | Tham chiếu lược đồ đầu ra |
-| `trang_thai` | VARCHAR(20) | ✓ | ∈ {`DRAFT`,`CANARY`,`ACTIVE`,`ROLLED_BACK`,`ARCHIVED`} | |
+| `trang_thai` | VARCHAR(20) | ✓ | ∈ {`DRAFT`,`TESTING`,`PENDING_REVIEW`,`APPROVED`,`CANARY`,`ACTIVE`,`ROLLED_BACK`,`ARCHIVED`} | |
 | `traffic_percent` | SMALLINT | ✓ | 0–100, mặc định 100 | Tỷ lệ lưu lượng (FR-04-022) |
 | `deployed_at` | TIMESTAMPTZ | | | |
 | `deployed_by` | VARCHAR(100) | | | |
 
-**Ràng buộc:** tổng `traffic_percent` của các phiên bản `ACTIVE`/`CANARY` cùng route phải bằng 100.
+**Ràng buộc:** tổng `traffic_percent` của các phiên bản `ACTIVE`/`CANARY` cùng route phải bằng 100; phiên bản ở `APPROVED` trở đi bắt buộc có `git_commit_ref` (RB-10); chỉ phiên bản ở `DRAFT` mới cho sửa `dinh_nghia_dsl`.
+
+**Vòng đời phiên bản:**
+
+```
+DRAFT ⇄ TESTING → PENDING_REVIEW → APPROVED → CANARY → ACTIVE → ARCHIVED
+  ↑                      │                                 │
+  └── trả lại ───────────┘                    ROLLED_BACK ─┘
+```
 
 #### EN-04-03 — ROUTING_RULE (Luật định tuyến)
 
@@ -785,11 +926,64 @@ erDiagram
 
 **Ghi chú.** Lưu trên Valkey để mọi replica cùng nhìn thấy một trạng thái — nếu mỗi pod giữ trạng thái riêng thì mạch sẽ mở không đồng bộ và bảo vệ kém hiệu quả.
 
+#### EN-04-09 — ROUTE_REVIEW (Bản ghi duyệt luồng)
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
+|---|---|:-:|---|---|
+| `review_id` | UUID | ✓ | PK | |
+| `version_id` | UUID | ✓ | FK → ROUTE_VERSION | Phiên bản được duyệt |
+| `nguoi_gui` | VARCHAR(100) | ✓ | | Người gửi duyệt |
+| `nguoi_duyet` | VARCHAR(100) | | | Người ra quyết định |
+| `quyet_dinh` | VARCHAR(20) | ✓ | ∈ {`PENDING`,`APPROVED`,`REJECTED`} | |
+| `thuyet_minh` | TEXT | ✓ | | Người gửi mô tả thay đổi và lý do |
+| `ly_do_tra_lai` | TEXT | | | Bắt buộc khi `quyet_dinh = REJECTED` |
+| `test_run_ref` | UUID | ✓ | FK → ROUTE_TEST_RUN | Lần chạy thử làm bằng chứng |
+| `la_khan_cap` | BOOLEAN | ✓ | mặc định false | Đánh dấu quy trình rút gọn (FR-04-029 E4) |
+| `submitted_at` | TIMESTAMPTZ | ✓ | | |
+| `decided_at` | TIMESTAMPTZ | | | |
+
+**Ràng buộc bảng:** `nguoi_duyet ≠ nguoi_gui` (BR-04-016); `quyet_dinh = REJECTED` bắt buộc có `ly_do_tra_lai`; mỗi `version_id` có tối đa một bản ghi `PENDING` tại một thời điểm.
+
+**Chính sách lưu giữ.** Giữ **vĩnh viễn**. Đây là bằng chứng ai cho phép luồng nào chạy — cần cho kiểm định an toàn thông tin và cho việc truy nguyên khi sự cố xảy ra nhiều tháng sau.
+
+#### EN-04-10 — ROUTE_TEST_RUN (Lần chạy thử luồng)
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
+|---|---|:-:|---|---|
+| `run_id` | UUID | ✓ | PK | |
+| `version_id` | UUID | ✓ | FK → ROUTE_VERSION | |
+| `che_do_dich` | VARCHAR(20) | ✓ | ∈ {`MOCK`,`TEST_SYSTEM`} | Đích giả lập hay hệ thống thử nghiệm thật |
+| `ban_tin_mau` | TEXT | ✓ | | Đầu vào dùng để thử, **đã qua giả danh hóa** nếu lấy từ dữ liệu thật |
+| `ket_qua_tung_chang` | JSONB | ✓ | | Đầu vào, đầu ra, thời gian và kết quả của mỗi chặng |
+| `ban_tin_dau_ra` | TEXT | | | Kết quả cuối cùng |
+| `ket_qua` | VARCHAR(20) | ✓ | ∈ {`PASSED`,`FAILED`,`TIMEOUT`} | |
+| `duration_ms` | INTEGER | ✓ | | Tổng thời gian |
+| `run_at` | TIMESTAMPTZ | ✓ | | |
+| `run_by` | VARCHAR(100) | ✓ | | |
+
+**Chính sách lưu giữ.** Giữ **30 ngày** rồi xóa. Bản ghi chạy thử chứa nội dung bản tin nên không giữ lâu; riêng bản ghi được một lần duyệt tham chiếu tới thì giữ cùng thời hạn với bản ghi duyệt, nhưng **chỉ giữ phần tóm tắt kết quả**, xóa nội dung bản tin.
+
+#### EN-04-11 — ROUTE_TEMPLATE (Mẫu luồng)
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Mô tả |
+|---|---|:-:|---|---|
+| `template_id` | UUID | ✓ | PK | |
+| `template_code` | VARCHAR(80) | ✓ | UNIQUE | Mã mẫu |
+| `ten_mau` | VARCHAR(255) | ✓ | | Tên hiển thị tiếng Việt |
+| `nhom_mau` | VARCHAR(40) | ✓ | ∈ {`TRA_CUU`,`SU_KIEN`,`CHUYEN_TIEP`,`QUOC_GIA`,`THEO_LO`} | Nhóm phân loại |
+| `dinh_nghia_khung` | TEXT | ✓ | | Camel YAML DSL có chỗ trống cho tham số |
+| `tham_so` | JSONB | ✓ | | Danh sách tham số: tên, kiểu, bắt buộc, mô tả, giá trị mặc định |
+| `so_phien_ban` | INTEGER | ✓ | | Phiên bản mẫu, tăng dần |
+| `trang_thai` | VARCHAR(20) | ✓ | ∈ {`ACTIVE`,`DEPRECATED`} | Mẫu ngừng dùng vẫn giữ để truy nguyên luồng đã sinh ra từ nó |
+
 ### 4.3. Chính sách lưu giữ dữ liệu
 
 | Thực thể | Thời hạn | Sau khi hết hạn |
 |---|---|---|
 | ROUTE, ROUTE_VERSION | Vĩnh viễn | — (giữ lịch sử cấu hình) |
+| ROUTE_REVIEW | Vĩnh viễn | — (bằng chứng phê duyệt, phục vụ kiểm định) |
+| ROUTE_TEMPLATE | Vĩnh viễn | — (truy nguyên luồng sinh từ mẫu) |
+| ROUTE_TEST_RUN | 30 ngày | Xóa; giữ lại phần tóm tắt nếu được bản ghi duyệt tham chiếu |
 | MESSAGE_TRACE, STAGE_TRACE | 90 ngày | Chuyển MinIO, nén |
 | IDEMPOTENCY_KEY | 7 ngày | Xóa tự động |
 | CIRCUIT_STATE | Không lưu lâu dài | Chỉ tồn tại trong Valkey |
@@ -841,7 +1035,17 @@ erDiagram
 | `POST` | `/api/admin/v1/routes/{routeCode}/suspend` | Tạm dừng route | FR-04-021 |
 | `POST` | `/api/admin/v1/routes/{routeCode}/resume` | Tiếp tục route | FR-04-021 |
 | `DELETE` | `/api/admin/v1/routes/{routeCode}` | Gỡ bỏ route | FR-04-021 |
-| `POST` | `/api/admin/v1/routes/validate` | Kiểm tra định nghĩa DSL không triển khai | FR-04-020 |
+| `POST` | `/api/admin/v1/routes/validate` | Kiểm tra định nghĩa DSL không triển khai | FR-04-020, 027 |
+| `GET` | `/api/admin/v1/designer/catalog` | Danh mục thành phần khả dụng cho trình thiết kế: component, Kamelet, mẫu EIP, bộ chuyển đổi, đích hợp lệ | FR-04-026 |
+| `PUT` | `/api/admin/v1/routes/{routeCode}/versions/{v}/definition` | Lưu định nghĩa đang soạn vào phiên bản `DRAFT` | FR-04-026 |
+| `POST` | `/api/admin/v1/routes/{routeCode}/versions/{v}/test-runs` | Chạy thử phiên bản với bản tin mẫu | FR-04-028 |
+| `GET` | `/api/admin/v1/routes/{routeCode}/versions/{v}/test-runs` | Danh sách lần chạy thử của phiên bản | FR-04-028 |
+| `GET` | `/api/admin/v1/test-runs/{runId}` | Kết quả chi tiết một lần chạy thử | FR-04-028 |
+| `POST` | `/api/admin/v1/routes/{routeCode}/versions/{v}/submit` | Gửi phiên bản đi duyệt | FR-04-029 |
+| `POST` | `/api/admin/v1/routes/{routeCode}/versions/{v}/review` | Phê duyệt hoặc trả lại phiên bản | FR-04-029 |
+| `GET` | `/api/admin/v1/reviews` | Hàng đợi luồng chờ duyệt của người dùng hiện tại | FR-04-029 |
+| `GET` | `/api/admin/v1/route-templates` | Danh sách mẫu luồng | FR-04-030 |
+| `POST` | `/api/admin/v1/route-templates/{code}/instantiate` | Sinh phiên bản `DRAFT` từ mẫu | FR-04-030 |
 | `GET` | `/api/admin/v1/routes/{routeCode}/stats` | Thống kê vận hành route | FR-04-025 |
 | `GET` | `/api/admin/v1/traces/{traceId}` | Truy vết đầy đủ một bản tin | FR-04-023 |
 | `GET` | `/api/admin/v1/circuits` | Trạng thái ngắt mạch mọi đích | FR-04-017 |
@@ -985,6 +1189,84 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 
 **Ghi chú.** Phân rã theo chặng cho thấy ngay điểm nghẽn — ở ví dụ trên, 1280ms trên tổng 1360ms là chờ hệ thống đích, nghĩa là LGSP chỉ tốn 80ms. Đây là dữ liệu cần thiết để phân định trách nhiệm khi có khiếu nại về hiệu năng.
 
+#### 5.4.4. `POST /api/admin/v1/routes/{routeCode}/versions/{v}/test-runs` — Chạy thử luồng
+
+**Yêu cầu:**
+
+```json
+{
+  "cheDoDich": "MOCK",
+  "banTinMau": {
+    "nguon": "TU_TRACE",
+    "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+    "giaDanhHoa": true
+  },
+  "mockResponses": [
+    { "dichDen": "ndxp://dan-cu/tra-cuu", "maTrangThai": 200, "than": { "hoTen": "N.V.A", "namSinh": 1990 } }
+  ]
+}
+```
+
+**Phản hồi `200 OK`:**
+
+```json
+{
+  "runId": "c3d9a1e4-7b25-4f80-9e11-2a6d84f0b537",
+  "ketQua": "PASSED",
+  "durationMs": 187,
+  "chang": [
+    { "ten": "validate",  "ketQua": "OK",      "durationMs": 8,  "ghiChu": "Đúng lược đồ cong-dan/v1" },
+    { "ten": "authorize", "ketQua": "OK",      "durationMs": 21, "ghiChu": "OPA cho phép" },
+    { "ten": "normalize", "ketQua": "OK",      "durationMs": 12 },
+    { "ten": "enrich",    "ketQua": "WARNING", "durationMs": 45, "ghiChu": "RDM không trả kết quả, gắn enriched=false" },
+    { "ten": "route",     "ketQua": "OK",      "durationMs": 3,  "ghiChu": "Khớp luật ưu tiên 1" },
+    { "ten": "transform", "ketQua": "OK",      "durationMs": 31 },
+    { "ten": "send",      "ketQua": "OK",      "durationMs": 62, "ghiChu": "Đích giả lập trả 200" },
+    { "ten": "audit",     "ketQua": "OK",      "durationMs": 5 }
+  ],
+  "banTinDauRa": { "soDinhDanh": "***", "hoTen": "N.V.A" }
+}
+```
+
+**Mã lỗi:** `403` không có vai trò `INTEGRATION_DEV` · `404` route hoặc phiên bản không tồn tại · `409` phiên bản không ở trạng thái `DRAFT` hoặc `TESTING` · `422` định nghĩa còn phát hiện mức `ERROR` · `424` chế độ `TEST_SYSTEM` nhưng hệ thống thử nghiệm không khả dụng.
+
+#### 5.4.5. `POST /api/admin/v1/routes/{routeCode}/versions/{v}/review` — Duyệt luồng
+
+**Yêu cầu:**
+
+```json
+{
+  "quyetDinh": "APPROVED",
+  "nhanXet": "Đã kiểm tra ánh xạ từ điển và chính sách lỗi, đồng ý triển khai"
+}
+```
+
+**Phản hồi `200 OK`:**
+
+```json
+{
+  "reviewId": "5a7f2c19-3e64-4b8a-b0d2-9c1e73f45a86",
+  "versionNumber": 4,
+  "quyetDinh": "APPROVED",
+  "nguoiGui": "nguyen.van.quan",
+  "nguoiDuyet": "tran.thi.hoa",
+  "decidedAt": "2026-08-03T15:12:44+07:00",
+  "gitCommitRef": "9d4c7a1",
+  "trangThaiPhienBan": "APPROVED",
+  "ghiChu": "Định nghĩa đã đưa vào kho Git, Argo CD sẽ đồng bộ ở chu kỳ kế tiếp"
+}
+```
+
+**Mã lỗi:**
+
+| Mã | Điều kiện |
+|---|---|
+| `403` | Không có vai trò `INTEGRATION_REVIEWER`, **hoặc** người duyệt trùng người gửi (BR-04-016) |
+| `404` | Route hoặc phiên bản không tồn tại |
+| `409` | Phiên bản không ở trạng thái `PENDING_REVIEW`; hoặc phiên bản đang chạy đã đổi kể từ lúc gửi duyệt |
+| `422` | `quyetDinh = REJECTED` nhưng thiếu lý do trả lại |
+| `502` | Không ghi được commit vào kho Git — phiên bản giữ nguyên `PENDING_REVIEW` |
+
 ### 5.5. Giao diện tiêu thụ (PH-04 gọi phân hệ khác)
 
 | Phân hệ đích | Điểm cuối | Mục đích | Hạn chờ |
@@ -1013,6 +1295,9 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **UI-04-04** | Thống kê vận hành luồng | Vận hành | [`routes.html`](../../mockup/pages/routes.html) (tab Thống kê) |
 | **UI-04-05** | Truy vết bản tin theo traceId | Vận hành | [`monitoring.html`](../../mockup/pages/monitoring.html) |
 | **UI-04-06** | Trạng thái ngắt mạch | Vận hành | [`monitoring.html`](../../mockup/pages/monitoring.html) |
+| **UI-04-07** | Trình thiết kế luồng trực quan | Cán bộ phát triển | [`designer.html`](../../mockup/pages/designer.html) |
+| **UI-04-08** | Chạy thử luồng | Cán bộ phát triển | [`designer.html`](../../mockup/pages/designer.html) (tab Chạy thử) |
+| **UI-04-09** | Hàng đợi duyệt luồng | Người duyệt luồng tích hợp | [`designer.html`](../../mockup/pages/designer.html) (tab Duyệt) |
 
 ### 6.2. UI-04-01 — Danh sách luồng tích hợp
 
@@ -1039,6 +1324,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | 3 | Route `DRAFT` không có nút Tạm dừng |
 | 4 | Người dùng vai trò `VIEWER` chỉ thấy nút Xem |
 | 5 | Bảng tự làm mới mỗi 30 giây; có thể tắt tự làm mới |
+| 6 | Nút "Tạo luồng mới" → mở hộp chọn điểm xuất phát (luồng trống hoặc một mẫu tại `FR-04-030`) rồi vào UI-04-07 |
 
 **Trạng thái màn hình:** Đang tải (khung xương) · Có dữ liệu · Rỗng (kèm hướng dẫn tạo route đầu tiên) · Lỗi tải (kèm nút thử lại).
 
@@ -1077,6 +1363,89 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 **Thành phần:** ô nhập `traceId` · dòng thời gian các chặng dạng thác nước (chiều dài tỷ lệ thời gian) · bảng thuộc tính bản tin · khung nhật ký liên quan · liên kết sang bản ghi kiểm toán.
 
 **Quy tắc tương tác:** dán `traceId` và nhấn Enter để tra cứu; chặng lỗi tô đỏ và tự mở rộng chi tiết; có nút sao chép `traceId` để chia sẻ cho đơn vị liên quan.
+
+### 6.6. UI-04-07 — Trình thiết kế luồng trực quan
+
+**Mục đích.** Dựng và sửa luồng tích hợp bằng thao tác đồ họa, sinh ra Camel YAML DSL mà không bắt buộc gõ tay (FR-04-026).
+
+**Thành phần:**
+
+| Thành phần | Mô tả |
+|---|---|
+| Bảng thành phần (trái) | Danh mục có tìm kiếm: điểm tiếp nhận, mẫu EIP, bộ chuyển đổi, nguồn làm giàu, điểm đến hợp lệ. Nhóm theo loại, mỗi mục có mô tả ngắn |
+| Vùng sơ đồ (giữa) | Các chặng xếp theo khung chín bước; kéo thả để thêm, xóa, đổi thứ tự; nhánh lỗi hiển thị tách bên dưới |
+| Chặng bắt buộc | Kiểm tra lược đồ, ủy quyền, ghi vết — hiển thị có ổ khóa, **không cho gỡ** (BR-04-001) |
+| Bảng thuộc tính (phải) | Biểu mẫu cấu hình của chặng đang chọn, sinh theo lược đồ tham số của thành phần |
+| Khung DSL | Camel YAML sinh ra, cập nhật theo từng thay đổi; **cho phép sửa trực tiếp** và đồng bộ ngược lại sơ đồ |
+| Bảng phát hiện (dưới) | Kết quả kiểm tra hợp lệ, tách hai nhóm Lỗi và Cảnh báo; mỗi mục nhấn được để nhảy tới chặng liên quan |
+| Thanh trạng thái | Tên luồng · số phiên bản · nhãn `DRAFT` · thời điểm lưu gần nhất · người đang sửa |
+| Nút chính | Lưu bản nháp · Chạy thử · Gửi duyệt |
+
+**Quy tắc tương tác:**
+
+| # | Quy tắc |
+|---|---|
+| 1 | Kiểm tra hợp lệ chạy lại sau mỗi thay đổi; chặng có lỗi viền đỏ, có cảnh báo viền vàng |
+| 2 | Nút "Gửi duyệt" bị vô hiệu khi còn phát hiện mức **Lỗi**, hoặc khi chưa có lần chạy thử nào đạt |
+| 3 | Sơ đồ và khung DSL đồng bộ hai chiều; sửa ở đâu bên kia cập nhật theo |
+| 4 | Định nghĩa có cấu trúc mà sơ đồ chưa hiển thị được → chuyển sang chế độ soạn văn bản kèm thông báo rõ, **không** vẽ sơ đồ thiếu (FR-04-026 E2) |
+| 5 | Tự lưu bản nháp cục bộ mỗi 30 giây; khôi phục khi mở lại sau mất kết nối |
+| 6 | Người khác đang sửa cùng phiên bản → hiện cảnh báo ngay khi mở, nêu tên người đó |
+| 7 | Phiên bản không ở `DRAFT` → mở ở chế độ chỉ đọc kèm nút "Tạo phiên bản mới để sửa" |
+
+**Trạng thái màn hình:** Đang tải danh mục · Soạn thảo · Chỉ đọc · Chế độ văn bản · Có xung đột chỉnh sửa · Mất kết nối (còn sửa được, chờ đồng bộ).
+
+### 6.7. UI-04-08 — Chạy thử luồng
+
+**Mục đích.** Kiểm chứng luồng với dữ liệu mẫu và xem kết quả từng chặng trước khi gửi duyệt (FR-04-028).
+
+**Thành phần:**
+
+| Thành phần | Mô tả |
+|---|---|
+| Chọn nguồn bản tin mẫu | Ba lựa chọn: nhập tay · chọn từ bộ mẫu có sẵn · lấy từ một `traceId` đã xảy ra |
+| Khung soạn bản tin | Trình soạn JSON/XML có tô màu và kiểm tra cú pháp |
+| Chọn chế độ đích | Giả lập (khai báo phản hồi mẫu cho từng đích) hoặc hệ thống thử nghiệm thật |
+| Bảng phản hồi giả lập | Mỗi dòng: đích · mã trạng thái · thân phản hồi |
+| Kết quả theo chặng | Dạng thác nước, mỗi chặng hiện thời gian, kết quả, và mở ra được để xem bản tin vào/ra của chặng đó |
+| Khung bản tin đầu ra | Kết quả cuối cùng, có nút so sánh với kết quả lần chạy trước |
+| Lịch sử chạy thử | Danh sách các lần chạy của phiên bản: thời điểm, người chạy, kết quả, thời gian |
+
+**Quy tắc tương tác:**
+
+| # | Quy tắc |
+|---|---|
+| 1 | Chọn nguồn "lấy từ `traceId`" luôn bật sẵn giả danh hóa và **không cho tắt** (FR-04-028 E3) |
+| 2 | Nhấn một chặng trong kết quả → đồng thời tô sáng chặng tương ứng trên sơ đồ UI-04-07 |
+| 3 | Chặng lỗi tự mở rộng chi tiết; chặng cảnh báo hiện biểu tượng nhưng không tự mở |
+| 4 | Chạy thử quá hạn chờ → dừng và chỉ rõ chặng đang treo, không để màn hình chờ vô hạn |
+| 5 | Kết quả `PASSED` mới bật được nút "Gửi duyệt" |
+
+### 6.8. UI-04-09 — Hàng đợi duyệt luồng
+
+**Mục đích.** Nơi người duyệt xem xét và quyết định với các luồng đang chờ (FR-04-029).
+
+**Thành phần:**
+
+| Thành phần | Mô tả |
+|---|---|
+| Danh sách chờ duyệt | Cột: Mã luồng · Phiên bản · Người gửi · Thời điểm gửi · Thời gian chờ · Nhãn khẩn cấp |
+| Khung thuyết minh | Mô tả thay đổi do người gửi viết |
+| So sánh phiên bản | Khác biệt giữa phiên bản chờ duyệt và phiên bản đang chạy, hiển thị song song cả **sơ đồ** và **DSL** |
+| Tóm tắt kiểm tra | Danh sách cảnh báo còn tồn tại mà người gửi chấp nhận |
+| Tóm tắt chạy thử | Kết quả lần chạy thử được tham chiếu, có liên kết mở chi tiết |
+| Khối quyết định | Nút Phê duyệt · nút Trả lại · ô nhập nhận xét |
+
+**Quy tắc tương tác:**
+
+| # | Quy tắc |
+|---|---|
+| 1 | Luồng do chính người đang đăng nhập gửi lên **không hiện** trong hàng đợi của người đó (BR-04-016) |
+| 2 | Nút "Trả lại" chỉ bật khi đã nhập lý do |
+| 3 | Phiên bản đang chạy đổi kể từ lúc gửi duyệt → hiện cảnh báo ngay đầu màn, buộc xác nhận đã xem khác biệt mới |
+| 4 | Sau khi phê duyệt, hiển thị mã commit và trạng thái đồng bộ của Argo CD |
+| 5 | Không ghi được commit → giữ luồng trong hàng đợi, hiện lỗi và nút thử lại (FR-04-029 E2) |
+| 6 | Luồng chờ quá 3 ngày làm việc → tô nổi và gửi nhắc cho người duyệt |
 
 ---
 
@@ -1146,6 +1515,20 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **NFR-04-033** | Độ phủ kiểm thử đơn vị ≥ 80% cho mã xử lý lõi |
 | **NFR-04-034** | Mọi route đều dùng template chuẩn; sai lệch phải có thuyết minh |
 
+### 7.7. Trải nghiệm thiết kế luồng
+
+| Mã | Yêu cầu | Chỉ tiêu | Cách đo |
+|---|---|---|---|
+| **NFR-04-035** | Thời gian mở trình thiết kế với luồng có ≤ 30 chặng | ≤ 2 giây | Từ lúc nhấn mở đến khi sơ đồ tương tác được |
+| **NFR-04-036** | Độ trễ kiểm tra hợp lệ sau mỗi thay đổi | ≤ 500ms với luồng ≤ 30 chặng | Đo tại điểm cuối kiểm tra |
+| **NFR-04-037** | Định nghĩa YAML sinh ra chạy được nguyên trạng trên Camel runtime, không cần hậu xử lý | 100% | Nạp trực tiếp định nghĩa sinh ra vào runtime |
+| **NFR-04-038** | Chuyển đổi hai chiều không mất mát: mở một YAML viết tay bằng trình thiết kế rồi lưu lại không làm đổi ngữ nghĩa | 100% với cấu trúc mà trình thiết kế hiển thị được | So sánh ngữ nghĩa trước và sau, không so sánh chuỗi ký tự |
+| **NFR-04-039** | Môi trường chạy thử cách ly khỏi cụm phục vụ: ngữ cảnh Camel riêng, không ghi vào CSDL nghiệp vụ thật, không phát sự kiện ra chủ đề Kafka thật | Tuyệt đối | Rà soát cấu hình; kiểm thử thử nghiệm không để lại dấu vết trên môi trường chạy |
+| **NFR-04-040** | Thời gian hoàn tất một lần chạy thử ở chế độ giả lập | ≤ 5 giây | Đo từ lúc gửi đến khi có kết quả |
+| **NFR-04-041** | Thời gian dựng một luồng tra cứu đơn giản từ mẫu đến lúc gửi duyệt | ≤ 15 phút với người đã qua đào tạo | Thử nghiệm với ít nhất 5 người dùng thật |
+
+**Vì sao NFR-04-038 đo ngữ nghĩa chứ không đo chuỗi.** Trình thiết kế gần như chắc chắn sẽ sắp lại thứ tự khóa, đổi cách thụt lề hoặc bỏ chú thích khi lưu. Yêu cầu giữ nguyên từng ký tự là bất khả thi và cũng không cần thiết; điều thực sự phải giữ là luồng chạy ra kết quả y hệt. Ngược lại, mất chú thích trong YAML là thiệt hại có thật với người bảo trì — vì vậy chú thích được coi là một phần ngữ nghĩa cần bảo toàn.
+
 ---
 
 ## M8. Quy tắc nghiệp vụ
@@ -1167,6 +1550,11 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **BR-04-013** | PH-04 không lưu dữ liệu nghiệp vụ quá vòng đời một Exchange | LGSP là trục truyền dẫn, không phải kho | Rà soát thiết kế; kiểm thử | Lỗi thiết kế |
 | **BR-04-014** | Mỗi route có đúng một luật định tuyến mặc định hoặc không có | Tránh nhập nhằng khi không luật nào khớp | Ràng buộc CSDL | Từ chối lưu |
 | **BR-04-015** | Route ở trạng thái `ACTIVE` bắt buộc có phiên bản đang phục vụ | Tránh route "sống" nhưng không có định nghĩa | Ràng buộc CSDL | Từ chối chuyển trạng thái |
+| **BR-04-016** | Người duyệt luồng phải khác người tạo phiên bản đó | Nguyên tắc bốn mắt — người dựng luồng khó tự thấy sai sót của mình | Kiểm tra tại FR-04-029; ràng buộc CSDL trên EN-04-09 | Từ chối `403`, ghi cảnh báo an ninh |
+| **BR-04-017** | Không phiên bản nào được triển khai khi chưa qua duyệt và chưa có commit trong kho Git | Bảo đảm mọi thứ đang chạy đều truy nguyên được và quay lui được | Kiểm tra trạng thái `APPROVED` + `git_commit_ref` trước khi nạp | Từ chối nạp route |
+| **BR-04-018** | Trình thiết kế không được ghi cấu hình trực tiếp vào cụm đang phục vụ | Giữ một đường triển khai duy nhất, tránh lệch giữa Git và trạng thái thật (RB-10) | Không cấp quyền ghi cụm cho trình thiết kế; chính sách mạng | Lỗi thiết kế — chặn khi rà soát kiến trúc |
+| **BR-04-019** | Bản tin thật dùng làm dữ liệu chạy thử phải qua giả danh hóa | Môi trường thử nghiệm có kiểm soát lỏng hơn, không được chứa dữ liệu cá nhân thật (CMP-32) | Bắt buộc tại FR-04-028 E3, không cho tắt trên giao diện | Chặn tạo lần chạy thử |
+| **BR-04-020** | Luồng duyệt theo diện khẩn cấp phải được rà soát bổ sung trong 24 giờ | Lối tắt cần thiết khi sự cố, nhưng không được biến thành thói quen | Nhãn `EMERGENCY` sinh nhiệm vụ rà soát, báo cáo định kỳ số lần dùng | Cảnh báo cho quản trị viên nền tảng |
 
 ---
 
@@ -1176,7 +1564,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 
 | Mã CMP | Yêu cầu | FR/NFR đáp ứng | Cách kiểm chứng |
 |---|---|---|---|
-| **CMP-04** | ESB: định tuyến, chuyển đổi, mediation | FR-04-006, 010, 011, 012, 013 | Kiểm thử EIP: định tuyến theo nội dung, tách/gộp, chuyển đổi 3 định dạng |
+| **CMP-04** | ESB: định tuyến, chuyển đổi, mediation | FR-04-006, 010, 011, 012, 013; FR-04-026, 030 (công cụ dựng luồng) | Kiểm thử EIP: định tuyến theo nội dung, tách/gộp, chuyển đổi 3 định dạng; dựng trọn một luồng chỉ bằng giao diện |
 | **CMP-11** | Đa giao thức HTTP/S, WS, JMS, AMQP, MQTT, SMTP/POP/IMAP | FR-04-001, 002; RB-01 | Kiểm thử từng component với hệ thống giả lập |
 | **CMP-12** | Định dạng JSON, XML, SOAP | FR-04-006, 010; RB-02 | Kiểm thử marshal/unmarshal ba định dạng |
 | **CMP-16** | Thời gian phản hồi ≤ 30 giây | NFR-04-002; BR-04-003, 004 | Kiểm thử tải đo P99; kiểm thử ràng buộc cấu hình |
@@ -1186,7 +1574,7 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **CMP-28** | Ghi vết truy cập dữ liệu | FR-04-024 | Đối chiếu số bản ghi kiểm toán với số giao dịch |
 | **CMP-10** | Giám sát thời gian thực | FR-04-025; NFR-04-029 | Đo độ trễ chỉ số lên dashboard |
 | **CMP-30** | Ánh xạ Từ điển dữ liệu quốc gia | FR-04-007; BR-04-012 | Kiểm tra độ phủ ánh xạ = 100% trường bắt buộc |
-| **CMP-32** | Ẩn danh hóa, giả danh hóa | FR-04-009 | Kiểm thử ba chế độ bảo vệ dữ liệu |
+| **CMP-32** | Ẩn danh hóa, giả danh hóa | FR-04-009; FR-04-028 E3, BR-04-019 (dữ liệu chạy thử) | Kiểm thử ba chế độ bảo vệ dữ liệu; kiểm tra bản tin thật dùng làm dữ liệu thử đều đã giả danh hóa |
 | **CMP-01** | Không kết nối điểm-điểm | BR-04-002 | Chính sách mạng; rà soát nhật ký kết nối |
 
 ### 9.2. Ánh xạ nguyên tắc TTQGS
@@ -1197,7 +1585,8 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **Security by Design** | Ủy quyền fail-closed, mTLS, không bí mật trong ảnh, chạy không phải root |
 | **Privacy by Design** | FR-04-009 áp dụng che/giả danh/ẩn danh theo mục đích sử dụng |
 | **Data-Centric** | Chuẩn hóa CDM bắt buộc; ánh xạ từ điển quốc gia |
-| **Modular Design** | Route độc lập, đóng gói lại thành Kamelet, triển khai theo nhóm miền |
+| **Modular Design** | Route độc lập, đóng gói lại thành Kamelet, triển khai theo nhóm miền; thư viện mẫu luồng tái sử dụng (FR-04-030) |
+| **Quản trị theo vòng đời** | Mọi luồng đi qua chuỗi thiết kế → chạy thử → duyệt bốn mắt → GitOps, có bằng chứng phê duyệt lưu vĩnh viễn (FR-04-026…029) |
 | **Cloud First** | Quarkus native trên K8s, mở rộng ngang tự động |
 | **Open Standard** | Camel, OpenTelemetry, JSON Schema, W3C Trace Context — toàn bộ chuẩn mở |
 
@@ -1227,6 +1616,13 @@ X-Trace-Id: 4bf92f3577b34da6a3ce929d0e0e4736
 | **AT-04-016** | Nạp route không gián đoạn | Nạp route mới khi đang có tải | Route mới hoạt động; các route khác không gián đoạn | 0 yêu cầu lỗi trong lúc nạp |
 | **AT-04-017** | Triển khai canary tự quay lui | Phiên bản mới lỗi 30%, cũ 5% | Tự quay lui về phiên bản cũ | Quay lui trong ≤ 60 giây |
 | **AT-04-018** | Tạm dừng route an toàn | Tạm dừng khi có 50 bản tin đang xử lý | Hoàn tất cả 50 rồi mới dừng | 0 bản tin bị mất |
+| **AT-04-029** | Dựng luồng hoàn chỉnh **chỉ bằng giao diện** | Người dùng chưa từng viết Camel DSL, dựng luồng tra cứu từ mẫu | Sinh ra Camel YAML hợp lệ, chạy thử đạt, qua duyệt và được triển khai | Không gõ một dòng DSL nào; luồng chạy đúng trên môi trường thật |
+| **AT-04-030** | Chặn gửi duyệt khi còn lỗi | Luồng thiếu chặng ủy quyền và có `timeoutMs = 45000` | Nút gửi duyệt vô hiệu, liệt kê 2 lỗi kèm chặng liên quan | Phát hiện đủ cả hai vi phạm BR-04-001 và BR-04-003 |
+| **AT-04-031** | Không cho tự duyệt | Người thiết kế gửi duyệt rồi tự bấm phê duyệt | `403`, luồng vẫn ở `PENDING_REVIEW` | Có cảnh báo an ninh; luồng không hiện trong hàng đợi của chính người gửi (BR-04-016) |
+| **AT-04-032** | Không triển khai được luồng chưa duyệt | Gọi thẳng điểm cuối triển khai với phiên bản `DRAFT` | Bị từ chối | Không phiên bản nào thiếu `git_commit_ref` mà chạy được (BR-04-017) |
+| **AT-04-033** | Chuyển đổi hai chiều không mất mát | Mở 20 luồng viết tay bằng trình thiết kế rồi lưu lại | Ngữ nghĩa và chú thích được giữ nguyên | 20/20 luồng cho kết quả xử lý y hệt trước và sau (NFR-04-038) |
+| **AT-04-034** | Giả danh hóa dữ liệu chạy thử | Lấy bản tin thử từ một `traceId` có chứa dữ liệu cá nhân | Bản tin thử đã được giả danh hóa, không thể tắt tùy chọn này | Không tìm thấy dữ liệu cá nhân thật trong bản ghi chạy thử (BR-04-019) |
+| **AT-04-035** | Cách ly môi trường chạy thử | Chạy thử một luồng có bước ghi dữ liệu và phát sự kiện | Không tác động tới CSDL nghiệp vụ và chủ đề Kafka thật | 0 bản ghi và 0 sự kiện phát sinh trên môi trường chạy (NFR-04-039) |
 
 ### 10.2. Kiểm thử phi chức năng
 
@@ -1249,13 +1645,15 @@ PH-04 được nghiệm thu khi thỏa mãn **đồng thời**:
 
 | # | Điều kiện |
 |---|---|
-| 1 | 21/21 yêu cầu mức **M** được cài đặt và kiểm chứng |
-| 2 | 28/28 kịch bản kiểm thử chấp nhận đạt |
+| 1 | 25/25 yêu cầu mức **M** được cài đặt và kiểm chứng |
+| 2 | 35/35 kịch bản kiểm thử chấp nhận đạt |
 | 3 | Toàn bộ chỉ tiêu phi chức năng đạt ngưỡng |
 | 4 | 12/12 mục CMP tại M9 có bằng chứng được chấp nhận |
 | 5 | Độ phủ kiểm thử đơn vị ≥ 80% |
 | 6 | Không còn lỗi mức Nghiêm trọng hoặc Cao trong hệ thống theo dõi lỗi |
 | 7 | Tài liệu vận hành và runbook đã bàn giao |
+| 8 | Ít nhất 5 cán bộ tích hợp dựng được luồng hoàn chỉnh chỉ bằng giao diện, không cần trợ giúp (AT-04-029, NFR-04-041) |
+| 9 | Bộ mẫu luồng phủ tối thiểu 5 nhóm tại `EN-04-11`, mỗi mẫu có ít nhất một luồng thật sinh ra từ nó |
 
 ---
 
@@ -1264,4 +1662,4 @@ PH-04 được nghiệm thu khi thỏa mãn **đồng thời**:
 - Danh mục phân hệ → [README.md](README.md)
 - Kiến trúc tích hợp → [02-architecture mục 5](../02-architecture/README.md#5-kiến-trúc-tích-hợp--lõi-apache-camel)
 - Luồng nghiệp vụ liên quan → [F-03](../03-flows/README.md#f-03--khai-thác-dữ-liệu-đồng-bộ-nội-bộ), [F-04](../03-flows/README.md#f-04--khai-thác-dữ-liệu-từ-csdl-quốc-gia-qua-ndxp), [F-05](../03-flows/README.md#f-05--đồng-bộ-dữ-liệu-bất-đồng-bộ-theo-sự-kiện), [F-10](../03-flows/README.md#f-10--xử-lý-lỗi-và-phát-lại-bản-tin)
-- Quyết định công nghệ → [ADR-001](../05-adr/README.md#adr-001), [ADR-002](../05-adr/README.md#adr-002), [ADR-013](../05-adr/README.md#adr-013)
+- Quyết định công nghệ → [ADR-001](../05-adr/README.md#adr-001), [ADR-002](../05-adr/README.md#adr-002), [ADR-010](../05-adr/README.md#adr-010), [ADR-013](../05-adr/README.md#adr-013), [ADR-015](../05-adr/README.md#adr-015)

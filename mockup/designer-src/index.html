@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thiết kế luồng — LGSP</title>
+<script>
+  /* Đặt chế độ sáng/tối trước khi vẽ khung đầu tiên để không bị nhấp nháy.
+     Dùng chung khóa lưu trữ với `mockup/js/theme.js` nên lựa chọn theo người dùng
+     đi xuyên giữa trang React này và các trang HTML tĩnh còn lại. */
+  (function () {
+    try {
+      var saved = localStorage.getItem('lgsp-theme');
+      var dark = saved ? saved === 'dark'
+        : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } catch (e) { /* chế độ riêng tư chặn localStorage — giữ mặc định sáng */ }
+  })();
+</script>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

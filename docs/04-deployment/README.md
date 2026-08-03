@@ -325,15 +325,21 @@ graph LR
 | 6.8 | Cấu hình HPA + KEDA | Mở rộng theo CPU và consumer lag |
 | 6.9 | Triển khai một route mẫu đầu-cuối | Chứng minh toàn bộ chuỗi hoạt động |
 | 6.10 | Cài Flowable (BPM) | CMP-09 |
-| 6.11 | Cài Camel Karavan | Trình thiết kế route trực quan |
+| 6.11 | Cài trình thiết kế luồng Kaoto | Nhúng vào console quản trị, đồng bộ catalog đúng phiên bản Camel đang chạy ([ADR-015](../05-adr/README.md#adr-015)) |
+| 6.12 | Nối trình thiết kế vào kho Git | Luồng đã duyệt sinh commit vào kho cấu hình, Argo CD triển khai — không cho công cụ ghi thẳng vào cụm |
+| 6.13 | Dựng môi trường chạy thử luồng | Không gian tách biệt, đích giả lập, dữ liệu mẫu để kiểm chứng luồng trước khi duyệt |
+| 6.14 | Cấu hình quy trình duyệt luồng | Tách vai trò người thiết kế và người duyệt, gắn với nhóm Keycloak |
 
 **Route mẫu ở bước 6.9 — vai trò then chốt.** Route này không phải nghiệp vụ thật mà là **chứng minh kiến trúc**: đi qua đủ gateway → xác thực → ủy quyền → chuyển đổi → gọi hệ thống giả lập → ghi vết → trả kết quả. Nếu route mẫu chạy trọn vẹn, mọi route nghiệp vụ về sau chỉ là biến thể. Đây là điểm kiểm chứng rẻ nhất để phát hiện lỗi kiến trúc trước khi nhân rộng.
+
+**Các bước 6.11–6.14 phải làm liền một mạch.** Cài trình thiết kế mà chưa nối vào Git và chưa có chốt duyệt sẽ tạo ra thói quen sửa luồng trực tiếp trên môi trường chạy — rất khó bỏ về sau. Trình tự đúng là dựng đủ đường đi *thiết kế → chạy thử → duyệt → Git → Argo CD* rồi mới mở quyền cho cán bộ tích hợp sử dụng.
 
 **Sản phẩm:**
 - Ứng dụng Camel Quarkus triển khai trên K8s.
 - Template route chuẩn.
 - Thư viện dùng chung (chuyển đổi, xử lý lỗi).
 - Route mẫu hoạt động đầu-cuối.
+- Trình thiết kế luồng đã nối vào kho Git và quy trình duyệt.
 
 **Tiêu chí ra:**
 - ✅ Route mẫu chạy thành công qua đủ chuỗi thành phần.
@@ -343,6 +349,8 @@ graph LR
 - ✅ Ngắt mạch hoạt động đúng khi hệ thống đích lỗi.
 - ✅ Thời gian khởi động pod < 5s; HPA tăng/giảm replica đúng theo tải.
 - ✅ Triển khai và chạy được một quy trình BPMN 2.0 mẫu (CMP-09).
+- ✅ Dựng trọn một luồng **chỉ bằng giao diện**, chạy thử đạt, qua duyệt, sinh commit và được Argo CD triển khai thành công.
+- ✅ Người thiết kế không tự duyệt được luồng của chính mình.
 
 ---
 
@@ -664,7 +672,7 @@ graph LR
 | Đối tượng | Nội dung | Kết quả cần đạt |
 |---|---|---|
 | **Quản trị viên nền tảng** | Kiến trúc, vận hành K8s, xử lý sự cố, quản lý cấu hình | Tự xử lý được sự cố mức 1 và 2 |
-| **Cán bộ phát triển tích hợp** | Camel DSL, Karavan, xây route mới, template chuẩn | Tự xây được route tích hợp mới |
+| **Cán bộ phát triển tích hợp** | Tư duy EIP, thiết kế luồng bằng Kaoto, template chuẩn, quy trình chạy thử và duyệt; Camel DSL cho ca phức tạp | Tự dựng được luồng tích hợp mới bằng giao diện và đưa qua duyệt |
 | **Cán bộ kỹ thuật đơn vị thành viên** | Quy trình kết nạp, gọi API, xử lý lỗi thường gặp | Tự kết nối HTTT của đơn vị |
 | **Cán bộ quản trị dữ liệu** | MDM, xử lý hàng đợi đối sánh, đọc báo cáo chất lượng | Tự xử lý vùng xám đối sánh |
 | **Cán bộ an toàn thông tin** | Giám sát an ninh, đọc nhật ký kiểm toán, ứng cứu | Tự điều tra sự cố an ninh |
