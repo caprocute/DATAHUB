@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 18/33 hạng mục · 130/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 19/33 hạng mục · 140/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -345,21 +345,22 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] M9 Tuân thủ CMP
 - [x] M10 Kiểm thử chấp nhận (`AT-16-001…032`)
 
-### [ ] 5.2 — SRS **PH-17** Cổng AI & Quản trị AI · **S**
+### [x] 5.2 — SRS **PH-17** Cổng AI & Quản trị AI · **S** · _2026-08-03_
 
+→ [SRS-PH-17-ai.md](SRS-PH-17-ai.md) · 17 FR · 6 thực thể · 26 NFR · 17 BR · 35 AT
 *Nội dung trọng tâm*: AI Gateway (APISIX ai-proxy) · MLflow · Evidently · Human-in-the-loop
 *Ánh xạ*: CMP-36, CMP-37, CMP-38
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-17-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-17-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-17-nn`)
-- [ ] M7 Phi chức năng (`NFR-17-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-17-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-17-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-17-001…017`)
+- [x] M4 Mô hình dữ liệu (`EN-17-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-17-01…06`)
+- [x] M7 Phi chức năng (`NFR-17-001…026`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-17-001…017`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-17-001…035`)
 
 ---
 
@@ -423,9 +424,9 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-14 Quốc gia | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-15 Portal | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-16 NAS/KPI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| PH-17 AI | | | | | | | | | | | 0/10 |
+| PH-17 AI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-18 Vận hành | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| **Tổng** | 13 | 13 | 13 | 13 | 13 | 13 | 13 | 13 | 13 | 13 | **130/180** |
+| **Tổng** | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | **140/180** |
 
 ---
 
@@ -449,3 +450,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 4.3 | **SRS PH-15** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 35 AT. Backstage, OpenAPI, try-it, TechDocs, CMP-02 |
 | 2026-08-03 | 4.1–4.4 | **Hoàn tất Giai đoạn 4** — SRS PH-08 (DQ), PH-11 (BPM), PH-15 (Portal), PH-18 (Ops/DLQ). Nhóm hoàn thiện: 68 FR · 24 thực thể · 100 NFR · 60 BR · 131 AT |
 | 2026-08-03 | 5.1 | **SRS PH-16** đủ 10 mục — 22 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Architecture Registry, NAS Connector, KPI 5 nhóm, CMP-33/34 |
+| 2026-08-03 | 5.1–5.2 | **Hoàn tất Giai đoạn 5** — SRS PH-16 (NAS/KPI), PH-17 (Cổng AI). Nhóm tuân thủ & AI: 39 FR · 12 thực thể · 50 NFR · 32 BR · 67 AT |
