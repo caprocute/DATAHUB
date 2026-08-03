@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Giám sát & truy vết — LGSP</title>
+<title>Giám sát &amp; Truy vết — LGSP</title>
 <link rel="stylesheet" href="../css/app.css">
 <script src="../js/theme.js"></script>
 <script>window.LGSP_PAGE = { id: 'monitoring', title: 'Giám sát & truy vết', crumbs: [
@@ -11,25 +11,317 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-13 — Giám sát, Ghi vết &amp; Cảnh báo.</strong>
+  <em>SRS PH-13 chưa hoàn tất — mockup tạm theo checklist 6.6</em>
+  (Dashboard sức khỏe · Tra cứu theo traceId · Danh sách cảnh báo).
+  Luồng tham chiếu <a href="../../docs/03-flows/README.md">F-12</a>.
+  Chi tiết luồng tích hợp: <a href="routes.html">routes.html</a> ·
+  bản tin lỗi: <a href="dlq.html">dlq.html</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Giám sát & truy vết</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-13</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Giám sát &amp; truy vết</h1>
+    <p class="page-desc">OTel · Tempo · Prometheus · Alertmanager — cửa sổ 24 giờ gần nhất</p>
+  </div>
+  <div class="page-head__actions">
+    <label class="check" style="margin:0">
+      <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
+    </label>
+    <button class="btn" data-demo="Mở Grafana dashboard sự cố">↗ Grafana</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-13</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-13 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<!-- Stats sức khỏe -->
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Tỷ lệ thành công</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">99,61%</div>
+    <div class="t-small t-muted">24h · mục tiêu ≥ 99,5%</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">P99 độ trễ</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">3,1s</div>
+    <div class="t-small t-muted">Đầu–cuối (gồm hệ thống đích)</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Lỗi 24h</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">2.418</div>
+    <div class="t-small t-muted">0,39% tổng yêu cầu</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Cảnh báo mở</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">7</div>
+    <div class="t-small"><a href="#alerts">Xem danh sách →</a></div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="mon" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="overview">Tổng quan</button>
+    <button class="tab" data-tab="trace">Tra cứu trace</button>
+    <button class="tab" data-tab="alerts">Cảnh báo <span class="tab__count">7</span></button>
+  </div>
+
+  <!-- Tab: Tổng quan -->
+  <div class="card__body" data-panel="overview" data-panel-group="mon">
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Sức khỏe theo chặng</div>
+        <div class="col" style="gap:var(--sp-3)">
+          <div>
+            <div class="row row--between mb-2"><span class="t-small">API Gateway (PH-03)</span><span class="t-mono t-small" style="color:var(--c-ok-700)">99,98%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:99%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small">Camel lõi (PH-04)</span><span class="t-mono t-small" style="color:var(--c-ok-700)">99,91%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:98%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small">Adapter (PH-05)</span><span class="t-mono t-small" style="color:var(--c-warn-700)">98,4%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--warn" style="width:88%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small">NDXP / hệ thống đích</span><span class="t-mono t-small" style="color:var(--c-warn-700)">97,2%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--warn" style="width:82%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Top luồng lỗi</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Luồng</th><th class="table__num">Lỗi</th><th class="table__num">Tỷ lệ</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">dong-bo-can-bo</td>
+                <td class="table__num" style="color:var(--c-err-700)">1.440</td>
+                <td class="table__num">100%</td>
+                <td><a class="btn btn--sm" href="routes.html#chi-tiet">Xem</a></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">tra-cuu-thua-dat</td>
+                <td class="table__num" style="color:var(--c-warn-700)">328</td>
+                <td class="table__num">3,42%</td>
+                <td><a class="btn btn--sm" href="routes.html">Xem</a></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">lien-thong-van-ban</td>
+                <td class="table__num">44</td>
+                <td class="table__num">0,31%</td>
+                <td><a class="btn btn--sm" href="routes.html">Xem</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert--info mt-4" style="margin-bottom:0">
+          <span class="alert__icon">ℹ</span>
+          <div>
+            <div class="alert__title">Nguyên tắc cảnh báo (F-12)</div>
+            <div class="t-small">Cảnh báo theo triệu chứng người dùng (tỷ lệ lỗi, P99), không theo CPU/RAM thuần túy.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Tra cứu trace -->
+  <div class="card__body hidden" data-panel="trace" data-panel-group="mon" id="trace">
+    <div class="row mb-4" style="gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="flex:1;min-width:280px;margin:0">
+        <label class="field__label">traceId</label>
+        <input class="input input--mono" id="trace-input" type="text" value="7f3a9c2e1b84d0f6a912c3e5b6789012" placeholder="Dán traceId…">
+        <div class="field__hint">Sợi chỉ xuyên suốt Gateway → Camel → Adapter → NDXP (F-12)</div>
+      </div>
+      <button class="btn btn--primary" data-demo="Tra cứu Tempo + Loki theo traceId">Tra cứu</button>
+      <button class="btn" data-demo="Dán traceId mẫu khác">Mẫu khác</button>
+    </div>
+
+    <div class="alert alert--ok mb-4">
+      <span class="alert__icon">✓</span>
+      <div>
+        <div class="alert__title">Tìm thấy 1 trace · 4 span · tổng 2.847ms</div>
+        <div class="t-small">Luồng <span class="t-mono">tra-cuu-cong-dan</span> · 03/08/2026 15:42:18 · HTTP 200</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Timeline span</div>
+    <div class="col mb-5" style="gap:var(--sp-3)">
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-ok-500)">
+        <div class="card__body" style="padding:var(--sp-3)">
+          <div class="row row--between mb-2">
+            <div>
+              <span class="badge badge--ok badge--plain">1</span>
+              <strong class="t-small">API Gateway (PH-03)</strong>
+              <span class="t-mono t-small t-muted"> · apisix</span>
+            </div>
+            <span class="t-mono t-small">12ms</span>
+          </div>
+          <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:1%"></div></div>
+          <div class="t-small t-muted">JWT hợp lệ · rate-limit OK · chuyển tiếp Camel</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-ok-500)">
+        <div class="card__body" style="padding:var(--sp-3)">
+          <div class="row row--between mb-2">
+            <div>
+              <span class="badge badge--ok badge--plain">2</span>
+              <strong class="t-small">Camel lõi (PH-04)</strong>
+              <span class="t-mono t-small t-muted"> · tra-cuu-cong-dan</span>
+            </div>
+            <span class="t-mono t-small">86ms</span>
+          </div>
+          <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:4%"></div></div>
+          <div class="t-small t-muted">Validate · OPA · cache miss · wire-tap audit</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-info-500, var(--c-ok-500))">
+        <div class="card__body" style="padding:var(--sp-3)">
+          <div class="row row--between mb-2">
+            <div>
+              <span class="badge badge--info badge--plain">3</span>
+              <strong class="t-small">Adapter (PH-05)</strong>
+              <span class="t-mono t-small t-muted"> · adp-ndxp-dancu</span>
+            </div>
+            <span class="t-mono t-small">41ms</span>
+          </div>
+          <div class="bar mb-2"><div class="bar__fill" style="width:2%"></div></div>
+          <div class="t-small t-muted">Map request · mTLS · timeout 8s</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-warn-500)">
+        <div class="card__body" style="padding:var(--sp-3)">
+          <div class="row row--between mb-2">
+            <div>
+              <span class="badge badge--warn badge--plain">4</span>
+              <strong class="t-small">NDXP / hệ thống đích</strong>
+              <span class="t-mono t-small t-muted"> · NDXP-DANCU</span>
+            </div>
+            <span class="t-mono t-small" style="color:var(--c-warn-700);font-weight:600">2.708ms</span>
+          </div>
+          <div class="bar mb-2"><div class="bar__fill bar__fill--warn" style="width:95%"></div></div>
+          <div class="t-small t-muted">95% thời gian chờ đích · HTTP 200 · payload 4,2 KB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="row">
+      <button class="btn btn--sm" data-demo="Mở logs Loki lọc theo traceId">Nhật ký Loki</button>
+      <button class="btn btn--sm" data-demo="Mở Tempo waterfall đầy đủ">Tempo waterfall</button>
+      <a class="btn btn--sm" href="routes.html">Chi tiết luồng</a>
+      <span class="t-small t-muted" style="margin-left:auto">Ba nguồn liên kết bằng cùng traceId</span>
+    </div>
+  </div>
+
+  <!-- Tab: Cảnh báo -->
+  <div class="card__body hidden" data-panel="alerts" data-panel-group="mon" id="alerts" style="padding:0">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm cảnh báo…" data-filter="alerts-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: đang mở">Đang mở</button>
+        <button class="btn btn--sm" data-demo="Lọc: critical">Critical</button>
+        <button class="btn btn--sm" data-demo="Lọc: warning">Warning</button>
+        <button class="btn btn--sm" data-demo="Lọc: đã tắt">Đã tắt</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Alertmanager</span>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="alerts-table">
+        <thead>
+          <tr>
+            <th>Mức</th><th>Cảnh báo</th><th>Nguồn</th><th>Thời gian</th>
+            <th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td class="t-primary">Ngắt mạch mở — dong-bo-can-bo</td>
+            <td class="t-small t-muted">PH-04 · circuit breaker</td>
+            <td class="t-small">03/08 14:02</td>
+            <td><span class="badge badge--err">Firing</span></td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="routes.html">Luồng</a>
+              <a class="btn btn--sm" href="dlq.html">DLQ</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td class="t-primary">DLQ vượt ngưỡng — tra-cuu-thua-dat</td>
+            <td class="t-small t-muted">PH-18 · Kafka DLQ</td>
+            <td class="t-small">03/08 13:48</td>
+            <td><span class="badge badge--err">Firing</span></td>
+            <td class="table__actions">
+              <a class="btn btn--sm btn--primary" href="dlq.html">Xử lý DLQ</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td class="t-primary">P99 &gt; 10s — tra-cuu-thua-dat</td>
+            <td class="t-small t-muted">PH-13 · Prometheus</td>
+            <td class="t-small">03/08 12:15</td>
+            <td><span class="badge badge--warn">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở dashboard P99 luồng">Dashboard</button>
+              <a class="btn btn--sm" href="routes.html">Luồng</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td class="t-primary">Tỷ lệ lỗi Adapter &gt; 2% — adp-ndxp-dancu</td>
+            <td class="t-small t-muted">PH-05 · adapter</td>
+            <td class="t-small">03/08 11:40</td>
+            <td><span class="badge badge--warn">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Lọc trace lỗi adapter">Trace</button>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td class="t-primary">Drift nghiêm trọng — goi-y-ho-so@v7</td>
+            <td class="t-small t-muted">PH-17 · Evidently</td>
+            <td class="t-small">03/08 14:20</td>
+            <td><span class="badge badge--warn">Firing</span></td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="ai.html">Quản trị AI</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--info">Info</span></td>
+            <td class="t-primary">HITL quá hạn SLA — hitl-901</td>
+            <td class="t-small t-muted">PH-17 · HITL queue</td>
+            <td class="t-small">03/08 15:10</td>
+            <td><span class="badge badge--info">Firing</span></td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="ai.html">Hàng đợi HITL</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--muted">Warning</span></td>
+            <td class="t-primary">Cache hit rate giảm &lt; 50% — cong-dan</td>
+            <td class="t-small t-muted">PH-04 · caffeine</td>
+            <td class="t-small">03/08 09:05</td>
+            <td><span class="badge badge--muted">Acked</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xác nhận đã xử lý cảnh báo">Tắt</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>7 cảnh báo · liên quan DLQ → <a href="dlq.html">dlq.html</a> · luồng → <a href="routes.html">routes.html</a></span>
+      <span class="header__spacer"></span>
+      <button class="btn btn--sm" data-demo="Tắt tiếng nhóm cảnh báo 1 giờ">Tắt tiếng 1h</button>
     </div>
   </div>
 </div>
