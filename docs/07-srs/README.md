@@ -45,7 +45,15 @@ Việc chia phân hệ **không theo lớp kiến trúc** mà theo **ranh giới
 | **PH-17** | Cổng AI & Quản trị AI | AI | Cao | 4 | [SRS-PH-17](SRS-PH-17-ai.md) |
 | **PH-18** | Vận hành & Xử lý bản tin lỗi | Vận hành | Bắt buộc | 3 | [SRS-PH-18](SRS-PH-18-ops.md) |
 
-**Tổng: 18 phân hệ.** Trong đó 17 bắt buộc, 1 mức ưu tiên cao (PH-17 — theo định hướng AI First của TTQGS).
+**Tổng: 18 phân hệ runtime.** Trong đó 17 bắt buộc, 1 mức ưu tiên cao (PH-17 — theo định hướng AI First của TTQGS).
+
+### 2.1.1. Tài liệu xuyên suốt (không phải phân hệ runtime)
+
+| Mã | Tên | Nhóm | Mức | SRS |
+|---|---|---|---|---|
+| **SRS-19** | Ma trận phân quyền toàn hệ thống (Role × Permission × PH) | Xuyên suốt | Bắt buộc | [SRS-19-rbac-matrix](SRS-19-rbac-matrix.md) |
+
+> **SRS-19** là nguồn sự thật định nghĩa vai trò chuẩn và ma trận quyền cho PH-01…18. **Không** triển khai microservice riêng. [PH-12](SRS-PH-12-iam.md) thực thi (Keycloak + OPA); các phân hệ khác là PEP. Mã vai trò chuẩn dùng `INTEGRATION_REVIEWER` (alias tương thích: `INTEGRATION_APPROVER`).
 
 ### 2.2. Sơ đồ quan hệ phân hệ
 
@@ -234,7 +242,7 @@ Mọi phân hệ tuân theo lựa chọn tại [05-adr](../05-adr/README.md). B�
 | Engine tích hợp | Apache Camel 4.x | PH-04, PH-05, PH-14 |
 | Trình thiết kế luồng | Kaoto làm mẫu ([ADR-015](../05-adr/README.md#adr-015)); canvas XYFlow / React Flow ([ADR-017](../05-adr/README.md#adr-017)) | PH-04 |
 | Gateway | Apache APISIX | PH-03, PH-17 |
-| IAM | Keycloak + OPA | PH-12 |
+| IAM | Keycloak + OPA | PH-12 (thực thi); ma trận quyền → [SRS-19](SRS-19-rbac-matrix.md) |
 | Sự kiện | Kafka (Strimzi) + Apicurio | PH-10 |
 | BPM | Flowable | PH-11 |
 | CSDL | PostgreSQL (CloudNativePG) | PH-01, 02, 06, 07, 08, 11, 16 |
@@ -274,3 +282,4 @@ Hệ thống thiết kế dùng chung nằm ở [`mockup/css/app.css`](../../moc
 - Luồng nghiệp vụ → [03-flows](../03-flows/README.md)
 - Quyết định công nghệ → [05-adr](../05-adr/README.md)
 - Tác động TTQGS → [06-impact](../06-impact/README.md)
+- Ma trận phân quyền toàn hệ thống → [SRS-19](SRS-19-rbac-matrix.md)

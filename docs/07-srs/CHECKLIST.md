@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 27/33 hạng mục · 140/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 28/34 hạng mục · 150/190 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -45,6 +45,19 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] **0.2** — Bộ khung dùng chung cho mockup: CSS design system, layout, thanh điều hướng, JS điều hướng · **M** · _2026-08-03_ → [`mockup/css/app.css`](../../mockup/css/app.css), [`mockup/js/app.js`](../../mockup/js/app.js), [`mockup/js/theme.js`](../../mockup/js/theme.js)
   - Nền token **Ant Design v6.5.3** + phong cách shadcn, chế độ sáng/tối ([ADR-016](../05-adr/README.md#adr-016))
 - [ ] **0.3** — Từ điển dữ liệu dùng chung toàn hệ thống (thực thể chia sẻ giữa các phân hệ) · **S**
+- [x] **0.4** — SRS-19 Ma trận phân quyền toàn hệ thống (Role × Permission × PH) · **M** · _2026-08-03_
+  → [SRS-19-rbac-matrix.md](SRS-19-rbac-matrix.md) · 9 FR · 5 thực thể · 21 NFR · 13 BR · 30 AT
+  *Xuyên suốt — không phải phân hệ runtime; PH-12 thực thi. Mã chuẩn `INTEGRATION_REVIEWER` (alias `INTEGRATION_APPROVER`).*
+  - [x] M1 Giới thiệu
+  - [x] M2 Mô tả tổng quan
+  - [x] M3 Yêu cầu chức năng + ma trận PH-01…18 (`FR-19-001…009`)
+  - [x] M4 Mô hình dữ liệu (`EN-19-01…05`)
+  - [x] M5 Giao diện API
+  - [x] M6 Giao diện người dùng (`UI-19-01…04`)
+  - [x] M7 Phi chức năng (`NFR-19-001…021`)
+  - [x] M8 Quy tắc nghiệp vụ (`BR-19-001…013`)
+  - [x] M9 Tuân thủ CMP
+  - [x] M10 Kiểm thử chấp nhận (`AT-19-001…030`)
 
 ---
 
@@ -407,6 +420,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 ## Bảng theo dõi mức hoàn thành 10 mục
 
 > Cập nhật song song với checkbox ở trên. Dùng để nhìn nhanh SRS nào còn thiếu mục gì.
+> Hàng **SRS-19** là tài liệu xuyên suốt (không đếm vào 18 phân hệ runtime); mẫu số mục SRS = 19×10 = 190.
 
 | SRS | M1 | M2 | M3 | M4 | M5 | M6 | M7 | M8 | M9 | M10 | Xong |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -428,7 +442,8 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-16 NAS/KPI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-17 AI | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-18 Vận hành | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
-| **Tổng** | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | 14 | **140/180** |
+| SRS-19 Ma trận RBAC | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
+| **Tổng** | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | 15 | **150/190** |
 
 ---
 
@@ -454,3 +469,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 5.1 | **SRS PH-16** đủ 10 mục — 22 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Architecture Registry, NAS Connector, KPI 5 nhóm, CMP-33/34 |
 | 2026-08-03 | 5.1–5.2 | **Hoàn tất Giai đoạn 5** — SRS PH-16 (NAS/KPI), PH-17 (Cổng AI). Nhóm tuân thủ & AI: 39 FR · 12 thực thể · 50 NFR · 32 BR · 67 AT |
 | 2026-08-03 | 6.2–6.10 | **Hoàn tất Giai đoạn 6** — mockup onboarding, catalog, mdm, monitoring, dlq, kpi, privacy, ai (cùng 6.1/6.4/6.11 đã có). Monitoring tạm theo checklist vì SRS PH-13 chưa xong |
+| 2026-08-03 | 0.4 | **SRS-19** Ma trận phân quyền toàn hệ thống — 9 FR, ma trận PH-01…18, 14 vai trò chuẩn (`INTEGRATION_REVIEWER`). Tài liệu xuyên suốt; PH-12 thực thi |

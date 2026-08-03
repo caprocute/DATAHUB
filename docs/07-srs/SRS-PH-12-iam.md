@@ -36,7 +36,7 @@ PH-12 trả lời hai câu hỏi khác nhau về bản chất cho toàn bộ n�
 | 3 | Xác thực đa yếu tố (MFA) theo mức nhạy cảm của thao tác |
 | 4 | Liên kết định danh với nền tảng quốc gia VNeID |
 | 5 | Cấp, làm mới, thu hồi token; công bố khóa công khai qua JWKS |
-| 6 | Quản lý vai trò, nhóm, phạm vi quyền (scope) |
+| 6 | Quản lý vai trò, nhóm, phạm vi quyền (scope) — **catalog Role × Permission lấy từ [SRS-19](SRS-19-rbac-matrix.md)** |
 | 7 | Đánh giá chính sách truy cập và trả quyết định `allow`/`deny` |
 | 8 | Trả kèm mặt nạ trường (`fieldMask`) và chế độ bảo vệ dữ liệu (`privacyMode`) |
 | 9 | Quản lý vòng đời chính sách: soạn thảo, kiểm thử, phát hành, thu hồi |
@@ -65,6 +65,7 @@ PH-12 trả lời hai câu hỏi khác nhau về bản chất cho toàn bộ n�
 | [ADR] | [ADR-004 Keycloak + OPA](../05-adr/README.md#adr-004), [ADR-012 Vault](../05-adr/README.md#adr-012) |
 | [CV631] | Công văn 631/THH-THHT — SSO, MFA, XACML 2.0/3.0 |
 | [QD1729] | QĐ 1729/QĐ-BTTTT — nền tảng định danh và xác thực điện tử |
+| [SRS-19] | [Ma trận phân quyền toàn hệ thống](SRS-19-rbac-matrix.md) — nguồn sự thật Role × Permission × PH; PH-12 đồng bộ và thực thi |
 
 ---
 
@@ -244,7 +245,7 @@ Nếu gộp toàn bộ logic phân quyền vào Keycloak thì mỗi lần đổi
 | **Đầu ra** | Vai trò/nhóm đã tạo |
 | **Ngoại lệ** | E1: Phát hiện vòng lặp kế thừa → `422` kèm đường đi vòng lặp<br>E2: Vai trò đang được gán cho người dùng → không cho xóa, `409` |
 
-**Bộ vai trò chuẩn của nền tảng:**
+**Bộ vai trò chuẩn của nền tảng** (nguồn sự thật đầy đủ + ma trận theo PH → [SRS-19](SRS-19-rbac-matrix.md)):
 
 | Mã vai trò | Mô tả | Phạm vi quyền tiêu biểu |
 |---|---|---|
@@ -252,10 +253,18 @@ Nếu gộp toàn bộ logic phân quyền vào Keycloak thì mỗi lần đổi
 | `IAM_ADMIN` | Quản trị định danh | Quản lý người dùng, vai trò, client |
 | `SECURITY_OFFICER` | Cán bộ an toàn thông tin | Duyệt chính sách, xem nhật ký an ninh |
 | `INTEGRATION_DEV` | Cán bộ phát triển tích hợp | Tạo/sửa luồng, xem nhật ký kỹ thuật |
-| `INTEGRATION_APPROVER` | Người duyệt luồng tích hợp | Duyệt phát hành luồng |
+| `INTEGRATION_REVIEWER` | Người duyệt luồng tích hợp | Duyệt phát hành luồng (bốn mắt với người tạo) |
 | `DATA_STEWARD` | Cán bộ quản trị dữ liệu | Xử lý đối sánh MDM, danh mục |
 | `OPERATOR` | Cán bộ vận hành | Xem giám sát, xử lý DLQ |
 | `VIEWER` | Chỉ xem | Xem dashboard, danh mục dịch vụ |
+| `LEGAL_REVIEWER` | Cán bộ pháp chế | Thẩm định hồ sơ kết nạp |
+| `DATA_OWNER` | Chủ quản CSDL | Công bố / phê duyệt dịch vụ dữ liệu |
+| `DQ_ANALYST` | Cán bộ chất lượng dữ liệu | Luật DQ, quét, báo cáo |
+| `ARCHITECT` | Cán bộ kiến trúc | Registry, NAS, cấu hình KPI |
+| `AI_GOVERNOR` | Cán bộ quản trị AI | Model, gateway AI, drift |
+| `LEADERSHIP` | Lãnh đạo | Phê duyệt OFFICIAL / HITL quyền lợi |
+
+> **Alias tương thích.** Tài liệu cũ có thể ghi `INTEGRATION_APPROVER` — Keycloak map sang `INTEGRATION_REVIEWER` (BR-19-003). PH-04 dùng mã `INTEGRATION_REVIEWER`.
 
 #### FR-12-004 — Đồng bộ thuộc tính người dùng từ danh mục · **S**
 
