@@ -17,6 +17,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | 04 | [Kế hoạch triển khai](../docs/04-deployment/README.md) | Các bước tiến hành (không phải timeline) | Khi thực thi dự án |
 | 05 | [ADR](../docs/05-adr/README.md) | Quyết định kiến trúc & lý do chọn công nghệ | Khi cần biết "vì sao chọn X" |
 | 06 | [Tác động TTQGS & nâng cấp](../docs/06-impact/README.md) | Phân tích Khung Kiến trúc tổng thể quốc gia số → 6 năng lực bổ sung, 13 bước nâng cấp | Khi rà soát tuân thủ khung mới |
+| 07 | [Danh mục phân hệ & SRS](../docs/07-srs/README.md) · [**CHECKLIST**](../docs/07-srs/CHECKLIST.md) | 18 phân hệ, quan hệ phụ thuộc, ma trận phân hệ↔luồng; checklist 32 hạng mục SRS + mockup | **Đọc CHECKLIST đầu mỗi phiên làm SRS** |
 
 ## 3. Tra cứu nhanh — Quyết định cốt lõi
 
