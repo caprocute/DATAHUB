@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 14/33 hạng mục · 90/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 15/33 hạng mục · 100/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -273,21 +273,22 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] M9 Tuân thủ CMP
 - [x] M10 Kiểm thử chấp nhận (`AT-08-001…032`)
 
-### [ ] 4.2 — SRS **PH-11** Điều phối quy trình nghiệp vụ (BPM) · **M**
+### [x] 4.2 — SRS **PH-11** Điều phối quy trình nghiệp vụ (BPM) · **M** · _2026-08-03_
 
+→ [SRS-PH-11-bpm.md](SRS-PH-11-bpm.md) · 16 FR · 6 thực thể · 24 NFR · 15 BR · 32 AT
 *Nội dung trọng tâm*: BPMN 2.0 Flowable · tác vụ người dùng · Saga bù trừ · luồng [F-07](../03-flows/README.md#f-07--giải-quyết-thủ-tục-hành-chính-liên-thông)
 *Ánh xạ*: CMP-09
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-11-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-11-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-11-nn`)
-- [ ] M7 Phi chức năng (`NFR-11-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-11-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-11-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-11-001…016`)
+- [x] M4 Mô hình dữ liệu (`EN-11-01…06`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-11-01…06`)
+- [x] M7 Phi chức năng (`NFR-11-001…024`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-11-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-11-001…032`)
 
 ### [ ] 4.3 — SRS **PH-15** Cổng Nhà phát triển & Tài liệu · **M**
 
@@ -412,7 +413,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-08 Chất lượng DL | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-09 Privacy | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-10 Sự kiện | | | | | | | | | | | 0/10 |
-| PH-11 BPM | | | | | | | | | | | 0/10 |
+| PH-11 BPM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-12 IAM | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-13 Giám sát | | | | | | | | | | | 0/10 |
 | PH-14 Quốc gia | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
@@ -420,7 +421,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-16 NAS/KPI | | | | | | | | | | | 0/10 |
 | PH-17 AI | | | | | | | | | | | 0/10 |
 | PH-18 Vận hành | | | | | | | | | | | 0/10 |
-| **Tổng** | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | 9 | **90/180** |
+| **Tổng** | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 | **100/180** |
 
 ---
 
@@ -440,3 +441,4 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 6.11, ADR-017 | Màn thiết kế kéo thả bằng **XYFlow** (`@xyflow/react`): nguồn `mockup/designer-src/`, bản build `mockup/pages/designer/index.html`. [ADR-015](../05-adr/README.md#adr-015) làm rõ Kaoto là mẫu catalog/YAML; [ADR-017](../05-adr/README.md#adr-017) chốt động cơ sơ đồ |
 | 2026-08-03 | 6.11 | Bổ sung **DataMapper**, **hoàn tác/làm lại**, gộp tab Chạy thử + Duyệt vào cùng app React (`#test` / `#review`). `designer.html` chuyển hướng sang bản React |
 | 2026-08-03 | 4.1 | **SRS PH-08** đủ 10 mục — 16 FR, 6 thực thể, 26 NFR, 15 BR, 32 AT. Sáu chiều DQ, F-11, CMP-22 |
+| 2026-08-03 | 4.2 | **SRS PH-11** đủ 10 mục — 16 FR, 6 thực thể, 24 NFR, 15 BR, 32 AT. Flowable BPMN, Saga, F-07, CMP-09 |
