@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luồng tích hợp — LGSP</title>
+<link rel="stylesheet" href="../css/app.css">
+<script>window.LGSP_PAGE = { id: 'routes', title: 'Luồng tích hợp', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' }, { text: 'Luồng tích hợp' }] };</script>
+</head>
+<body>
+
+<div class="mock-note">
+  <strong>PH-04 — Lõi Tích hợp &amp; Điều phối.</strong>
+  Minh họa các màn <span class="tag-ph">UI-04-01</span> danh sách luồng,
+  <span class="tag-ph">UI-04-02</span> sơ đồ xử lý,
+  <span class="tag-ph">UI-04-03</span> cấu hình xử lý lỗi,
+  <span class="tag-ph">UI-04-04</span> thống kê — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-04-integration-core.md">SRS PH-04</a>.
+</div>
+
+<div class="page-head">
+  <div class="page-head__main">
+    <h1 class="page-title">Luồng tích hợp</h1>
+    <p class="page-desc">Quản lý các route xử lý bản tin trên trục — 134 luồng, 128 đang hoạt động</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Nhập luồng từ tệp YAML">⤒ Nhập YAML</button>
+    <button class="btn btn--primary" data-demo="Tạo luồng tích hợp mới">＋ Tạo luồng mới</button>
+  </div>
+</div>
+
+<!-- ===== UI-04-01: Danh sách luồng tích hợp ===== -->
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="list" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="all">Tất cả <span class="tab__count">134</span></button>
+    <button class="tab" data-tab="active">Đang chạy <span class="tab__count">128</span></button>
+    <button class="tab" data-tab="suspended">Tạm dừng <span class="tab__count">3</span></button>
+    <button class="tab" data-tab="draft">Bản nháp <span class="tab__count">3</span></button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <span class="search__icon">⌕</span>
+      <input class="input" type="text" placeholder="Tìm theo mã hoặc tên luồng…" data-filter="routes-table">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn--sm is-active" data-demo="Lọc: tất cả loại">Tất cả</button>
+      <button class="btn btn--sm" data-demo="Lọc: SYNC">SYNC</button>
+      <button class="btn btn--sm" data-demo="Lọc: EVENT">EVENT</button>
+      <button class="btn btn--sm" data-demo="Lọc: SCHEDULED">SCHEDULED</button>
+    </div>
+    <div class="toolbar__spacer"></div>
+    <label class="check" style="margin:0">
+      <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
+    </label>
+  </div>
+
+  <div class="table-wrap table-wrap--wide">
+    <table class="table" id="routes-table">
+      <thead>
+        <tr>
+          <th style="width:34px"></th>
+          <th>Mã luồng</th><th>Tên</th><th>Loại</th><th>Nguồn → Đích</th>
+          <th class="table__num">Lượt gọi 24h</th><th class="table__num">Tỷ lệ lỗi</th>
+          <th class="table__num">P99</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td class="t-mono">tra-cuu-cong-dan</td>
+          <td class="t-primary">Tra cứu thông tin công dân</td>
+          <td><span class="badge badge--info badge--plain">SYNC</span></td>
+          <td class="t-small t-muted">CONG-DVC → NDXP-DANCU</td>
+          <td class="table__num">642.100</td>
+          <td class="table__num">0,18%</td>
+          <td class="table__num">2,8s</td>
+          <td><span class="badge badge--ok">Đang chạy</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm" data-demo="Tạm dừng luồng tra-cuu-cong-dan">Tạm dừng</button>
+          </td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td class="t-mono">dong-bo-ho-so-tthc</td>
+          <td class="t-primary">Đồng bộ trạng thái hồ sơ TTHC</td>
+          <td><span class="badge badge--muted badge--plain">EVENT</span></td>
+          <td class="t-small t-muted">HT-MOTCUA → CONG-DVC</td>
+          <td class="table__num">318.470</td>
+          <td class="table__num">0,04%</td>
+          <td class="table__num">0,9s</td>
+          <td><span class="badge badge--ok">Đang chạy</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm" data-demo="Tạm dừng luồng dong-bo-ho-so-tthc">Tạm dừng</button>
+          </td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-ok-500);font-size:16px">●</span></td>
+          <td class="t-mono">lien-thong-van-ban</td>
+          <td class="t-primary">Liên thông văn bản điện tử</td>
+          <td><span class="badge badge--muted badge--plain">EVENT</span></td>
+          <td class="t-small t-muted">QLVB → QLVB-TINH</td>
+          <td class="table__num">142.885</td>
+          <td class="table__num">0,31%</td>
+          <td class="table__num">1,4s</td>
+          <td><span class="badge badge--ok">Đang chạy</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm" data-demo="Tạm dừng luồng lien-thong-van-ban">Tạm dừng</button>
+          </td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-warn-500);font-size:16px">●</span></td>
+          <td class="t-mono">tra-cuu-thua-dat</td>
+          <td class="t-primary">Tra cứu thông tin thửa đất</td>
+          <td><span class="badge badge--info badge--plain">SYNC</span></td>
+          <td class="t-small t-muted">CONG-DVC → CSDL-DATDAI</td>
+          <td class="table__num">96.220</td>
+          <td class="table__num" style="color:var(--c-warn-700);font-weight:600">3,42%</td>
+          <td class="table__num" style="color:var(--c-warn-700);font-weight:600">11,2s</td>
+          <td><span class="badge badge--warn">Suy giảm</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm" data-demo="Tạm dừng luồng tra-cuu-thua-dat">Tạm dừng</button>
+          </td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-err-500);font-size:16px">●</span></td>
+          <td class="t-mono">dong-bo-can-bo</td>
+          <td class="t-primary">Đồng bộ hồ sơ cán bộ, công chức</td>
+          <td><span class="badge badge--muted badge--plain">SCHEDULED</span></td>
+          <td class="t-small t-muted">HT-CANBO → KHO-DULIEU</td>
+          <td class="table__num">1.440</td>
+          <td class="table__num" style="color:var(--c-err-700);font-weight:600">100%</td>
+          <td class="table__num">—</td>
+          <td><span class="badge badge--err">Ngắt mạch</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm" data-demo="Đặt lại ngắt mạch cho dong-bo-can-bo">Reset mạch</button>
+          </td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-text-3);font-size:16px">●</span></td>
+          <td class="t-mono">tra-cuu-bhxh</td>
+          <td class="t-primary">Tra cứu quá trình đóng BHXH</td>
+          <td><span class="badge badge--info badge--plain">SYNC</span></td>
+          <td class="t-small t-muted">CONG-DVC → NDXP-BHXH</td>
+          <td class="table__num">—</td>
+          <td class="table__num">—</td>
+          <td class="table__num">—</td>
+          <td><span class="badge badge--muted">Bản nháp</span></td>
+          <td class="table__actions">
+            <a class="btn btn--sm" href="#chi-tiet">Xem</a>
+            <button class="btn btn--sm btn--primary" data-demo="Triển khai luồng tra-cuu-bhxh">Triển khai</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card__foot">
+    <span>Hiển thị 6 / 134 luồng</span>
+    <span class="header__spacer"></span>
+    <span class="t-small">Chấm màu: <span style="color:var(--c-ok-500)">●</span> lỗi &lt;1% ·
+      <span style="color:var(--c-warn-500)">●</span> 1–5% ·
+      <span style="color:var(--c-err-500)">●</span> &gt;5%</span>
+  </div>
+</div>
+
+<!-- ===== UI-04-02: Chi tiết luồng ===== -->
+<h2 class="page-title mb-2" id="chi-tiet" style="font-size:var(--fs-xl)">Chi tiết luồng: <span class="t-mono" style="font-size:var(--fs-lg)">tra-cuu-cong-dan</span></h2>
+<p class="page-desc mb-4">Tra cứu thông tin công dân từ CSDLQG Dân cư · phiên bản 3 · <span class="badge badge--ok">Đang chạy</span></p>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="detail" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="flow">Sơ đồ xử lý</button>
+    <button class="tab" data-tab="dsl">Định nghĩa DSL</button>
+    <button class="tab" data-tab="error">Xử lý lỗi</button>
+    <button class="tab" data-tab="stats">Thống kê</button>
+  </div>
+
+  <!-- Tab: Sơ đồ -->
+  <div class="card__body" data-panel="flow" data-panel-group="detail">
+    <p class="t-small t-muted mb-4">
+      Chuỗi 9 chặng theo template chuẩn (BR-04-001). Mỗi nút hiển thị thời gian trung bình và tỷ lệ lỗi của chặng.
+    </p>
+    <div class="flow mb-5">
+      <div class="flow__node flow__node--start">
+        <span class="flow__node-icon">⬇</span>
+        <span class="flow__node-label">Tiếp nhận</span>
+        <span class="flow__node-sub">4ms · 0%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">✓</span>
+        <span class="flow__node-label">Kiểm tra</span>
+        <span class="flow__node-sub">12ms · 0,1%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">🔒</span>
+        <span class="flow__node-label">Ủy quyền</span>
+        <span class="flow__node-sub">8ms · 0,05%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">⚡</span>
+        <span class="flow__node-label">Cache</span>
+        <span class="flow__node-sub">3ms · 72% hit</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="border-color:var(--c-warn-500)">
+        <span class="flow__node-icon">↗</span>
+        <span class="flow__node-label">Gọi NDXP</span>
+        <span class="flow__node-sub">1.280ms · 0,2%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">⇌</span>
+        <span class="flow__node-label">Chuẩn hóa</span>
+        <span class="flow__node-sub">22ms · 0%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">＋</span>
+        <span class="flow__node-label">Làm giàu</span>
+        <span class="flow__node-sub">18ms · 0%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">◐</span>
+        <span class="flow__node-label">Che dữ liệu</span>
+        <span class="flow__node-sub">9ms · 0%</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--end">
+        <span class="flow__node-icon">⬆</span>
+        <span class="flow__node-label">Phản hồi</span>
+        <span class="flow__node-sub">4ms</span>
+      </div>
+    </div>
+
+    <div class="alert alert--info">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Ghi vết chạy song song (Wire Tap)</div>
+        <div class="t-small">Bản ghi kiểm toán được sao chép sang nhánh bất đồng bộ, không tính vào độ trễ phản hồi (FR-04-024).</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="t-small t-muted mb-3"><strong>Nhánh xử lý lỗi</strong></div>
+    <div class="flow">
+      <div class="flow__node flow__node--err">
+        <span class="flow__node-icon">✕</span>
+        <span class="flow__node-label">Lỗi</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-label">Phân loại</span>
+        <span class="flow__node-sub">FR-04-015</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-label">Thử lại</span>
+        <span class="flow__node-sub">3 lần · 1s→2s→4s</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-label">Ngắt mạch</span>
+        <span class="flow__node-sub">50% / 20 lời gọi</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--err">
+        <span class="flow__node-icon">📥</span>
+        <span class="flow__node-label">DLQ</span>
+        <span class="flow__node-sub"><a href="dlq.html">Xem hàng đợi</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: DSL -->
+  <div class="card__body hidden" data-panel="dsl" data-panel-group="detail">
+    <div class="row row--between mb-3">
+      <span class="t-small t-muted">Camel YAML DSL — phiên bản 3 · chỉ đọc</span>
+      <button class="btn btn--sm" data-demo="Tạo phiên bản mới từ định nghĩa này">Tạo phiên bản mới</button>
+    </div>
+<pre class="code"><span class="c">// Route: Tra cứu thông tin công dân từ CSDLQG Dân cư</span>
+<span class="k">- route:</span>
+    <span class="k">id:</span> tra-cuu-cong-dan
+    <span class="k">from:</span>
+      <span class="k">uri:</span> <span class="s">"platform-http:/api/v1/cong-dan/{soDinhDanh}"</span>
+      <span class="k">steps:</span>
+        <span class="c"># 1. Kiểm tra lược đồ đầu vào (FR-04-003)</span>
+        <span class="k">- to:</span> <span class="s">"json-validator:schemas/cong-dan-request-v1.json"</span>
+
+        <span class="c"># 2. Ủy quyền tập trung — fail-closed (FR-04-005)</span>
+        <span class="k">- to:</span> <span class="s">"http:opa-service/v1/data/lgsp/authz?timeout=200"</span>
+        <span class="k">- choice:</span>
+            <span class="k">when:</span>
+              <span class="k">- simple:</span> <span class="s">"${body[result][allow]} == false"</span>
+                <span class="k">steps:</span>
+                  <span class="k">- throwException:</span>
+                      <span class="k">exceptionType:</span> java.lang.SecurityException
+
+        <span class="c"># 3. Tra đệm trước khi gọi ra ngoài (NFR-04-006)</span>
+        <span class="k">- to:</span> <span class="s">"caffeine-cache://congDan?action=GET&amp;key=${header.soDinhDanh}"</span>
+        <span class="k">- choice:</span>
+            <span class="k">when:</span>
+              <span class="k">- simple:</span> <span class="s">"${body} == null"</span>
+                <span class="k">steps:</span>
+                  <span class="c"># 4. Gọi NDXP qua PH-14 (BR-04-002)</span>
+                  <span class="k">- circuitBreaker:</span>
+                      <span class="k">resilience4jConfiguration:</span>
+                        <span class="k">failureRateThreshold:</span> <span class="n">50</span>
+                        <span class="k">minimumNumberOfCalls:</span> <span class="n">20</span>
+                        <span class="k">waitDurationInOpenState:</span> <span class="n">30000</span>
+                      <span class="k">steps:</span>
+                        <span class="k">- to:</span> <span class="s">"direct:ph14-ndxp-dancu"</span>
+                      <span class="k">onFallback:</span>
+                        <span class="k">steps:</span>
+                          <span class="k">- to:</span> <span class="s">"caffeine-cache://congDan?action=GET&amp;stale=true"</span>
+
+                  <span class="c"># 5. Chuẩn hóa về CDM (FR-04-006)</span>
+                  <span class="k">- to:</span> <span class="s">"xslt:transforms/ndxp-to-cdm.xsl"</span>
+                  <span class="k">- to:</span> <span class="s">"caffeine-cache://congDan?action=PUT&amp;ttl=900"</span>
+
+        <span class="c"># 6. Làm giàu từ danh mục dùng chung (FR-04-008)</span>
+        <span class="k">- enrich:</span>
+            <span class="k">uri:</span> <span class="s">"direct:ph07-tra-danh-muc?timeout=200"</span>
+            <span class="k">aggregationStrategy:</span> <span class="s">"#mergeEnrichment"</span>
+
+        <span class="c"># 7. Che dữ liệu theo quyền (FR-04-009)</span>
+        <span class="k">- to:</span> <span class="s">"direct:ph09-apply-privacy"</span>
+
+        <span class="c"># 8. Ghi vết bất đồng bộ — không chặn phản hồi (FR-04-024)</span>
+        <span class="k">- wireTap:</span>
+            <span class="k">uri:</span> <span class="s">"kafka:lgsp.audit"</span>
+
+    <span class="c"># Chính sách lỗi ba tầng (FR-04-015..018)</span>
+    <span class="k">onException:</span>
+      <span class="k">- exception:</span> java.io.IOException
+        <span class="k">redeliveryPolicy:</span>
+          <span class="k">maximumRedeliveries:</span> <span class="n">3</span>
+          <span class="k">redeliveryDelay:</span> <span class="n">1000</span>
+          <span class="k">backOffMultiplier:</span> <span class="n">2</span>
+        <span class="k">handled:</span> true
+        <span class="k">steps:</span>
+          <span class="k">- to:</span> <span class="s">"kafka:lgsp.dlq.tra-cuu-cong-dan"</span></pre>
+  </div>
+
+  <!-- Tab: Xử lý lỗi (UI-04-03) -->
+  <div class="card__body hidden" data-panel="error" data-panel-group="detail">
+    <div class="grid grid--3">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Thử lại</div>
+        <div class="field">
+          <label class="field__label">Số lần thử lại tối đa</label>
+          <input class="input" type="number" value="3" min="0" max="10">
+        </div>
+        <div class="field">
+          <label class="field__label">Khoảng chờ ban đầu (ms)</label>
+          <input class="input" type="number" value="1000">
+        </div>
+        <div class="field">
+          <label class="field__label">Hệ số nhân</label>
+          <input class="input" type="number" value="2.0" step="0.1">
+        </div>
+        <div class="alert alert--info" style="margin:0">
+          <span class="alert__icon">⏱</span>
+          <div>
+            <div class="alert__title">Xem trước chuỗi chờ</div>
+            <div class="t-small">1s → 2s → 4s · tổng <strong>7 giây</strong><br>
+            Ngân sách route: 10s → còn dư 3s. Hợp lệ (BR-04-004).</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Ngắt mạch</div>
+        <div class="field">
+          <label class="field__label">Ngưỡng tỷ lệ lỗi (%)</label>
+          <input class="input" type="number" value="50">
+        </div>
+        <div class="field">
+          <label class="field__label">Số lời gọi tối thiểu</label>
+          <input class="input" type="number" value="20">
+        </div>
+        <div class="field">
+          <label class="field__label">Thời gian giữ mạch mở (ms)</label>
+          <input class="input" type="number" value="30000">
+        </div>
+        <div class="card" style="background:var(--c-surface-2)">
+          <div class="card__body" style="padding:var(--sp-3)">
+            <div class="t-small mb-2"><strong>Trạng thái hiện tại</strong></div>
+            <div class="row" style="gap:var(--sp-2)">
+              <span class="badge badge--ok">ĐÓNG</span>
+              <span class="t-small t-muted">2 lỗi / 1.842 lời gọi (0,1%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Dự phòng</div>
+        <div class="field">
+          <label class="field__label">Chiến lược</label>
+          <select class="select">
+            <option>STALE_CACHE — trả dữ liệu đệm đã hết hạn</option>
+            <option>DEFAULT_VALUE — trả giá trị mặc định</option>
+            <option>ERROR — trả lỗi có cấu trúc</option>
+            <option>NONE — không dự phòng</option>
+          </select>
+          <div class="field__hint">Áp dụng khi mạch mở hoặc hết lượt thử lại</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Chủ đề DLQ</label>
+          <input class="input input--mono" value="lgsp.dlq.tra-cuu-cong-dan">
+        </div>
+        <div class="field">
+          <label class="field__label">Phân loại lỗi không thử lại</label>
+          <label class="check"><input type="checkbox" checked> <span>Lỗi nghiệp vụ (400, 404, 422)</span></label>
+          <label class="check"><input type="checkbox" checked> <span>Lỗi bảo mật (401, 403)</span></label>
+          <div class="field__hint">Theo BR-04-005 — thử lại lỗi nghiệp vụ là vô ích</div>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Lưu cấu hình xử lý lỗi (có hiệu lực ngay)">Lưu cấu hình</button>
+      <button class="btn" data-demo="Khôi phục giá trị mặc định">Khôi phục mặc định</button>
+      <span class="t-small t-muted" style="margin-left:auto">Thay đổi có hiệu lực ngay, không cần triển khai lại route</span>
+    </div>
+  </div>
+
+  <!-- Tab: Thống kê (UI-04-04) -->
+  <div class="card__body hidden" data-panel="stats" data-panel-group="detail">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Lượt gọi 24h</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">642.100</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ thành công</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">99,82%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">P99</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">2,8s</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ trúng đệm</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">72%</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Phân bổ thời gian theo chặng</div>
+    <div class="col" style="gap:var(--sp-3)">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Gọi NDXP (hệ thống đích)</span><span class="t-mono t-small">1.280ms · 94,1%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:94%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Chuẩn hóa CDM</span><span class="t-mono t-small">22ms · 1,6%</span></div>
+        <div class="bar"><div class="bar__fill" style="width:2%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Làm giàu dữ liệu</span><span class="t-mono t-small">18ms · 1,3%</span></div>
+        <div class="bar"><div class="bar__fill" style="width:2%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Kiểm tra lược đồ</span><span class="t-mono t-small">12ms · 0,9%</span></div>
+        <div class="bar"><div class="bar__fill" style="width:1%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Các chặng còn lại</span><span class="t-mono t-small">28ms · 2,1%</span></div>
+        <div class="bar"><div class="bar__fill" style="width:2%"></div></div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn mt-5" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">94% thời gian là chờ hệ thống đích</div>
+        <div class="t-small">Độ trễ nội tại của LGSP chỉ 80ms, đạt chỉ tiêu NFR-04-001 (P99 ≤ 120ms).
+        Để cải thiện đầu-cuối cần làm việc với đơn vị vận hành NDXP hoặc tăng thời hạn đệm.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

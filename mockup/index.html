@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng điều khiển — LGSP</title>
+<link rel="stylesheet" href="css/app.css">
+<script>window.LGSP_PAGE = { id: 'home', title: 'Bảng điều khiển', crumbs: [{ text: 'Trang chủ' }] };</script>
+</head>
+<body>
+
+<div class="mock-note">
+  <strong>Bản mockup minh họa giao diện LGSP.</strong>
+  Dữ liệu là ví dụ, các thao tác chưa nối hệ thống thật. Menu bên trái điều hướng được giữa các màn hình.
+  Đặc tả chi tiết từng màn nằm ở mục <em>M6 — Giao diện người dùng</em> của SRS tương ứng.
+</div>
+
+<div class="page-head">
+  <div class="page-head__main">
+    <h1 class="page-title">Bảng điều khiển nền tảng</h1>
+    <p class="page-desc">Tổng quan tình trạng vận hành trục tích hợp — cập nhật lúc 14:32, 03/8/2026</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Xuất báo cáo tổng hợp">⤓ Xuất báo cáo</button>
+    <a class="btn btn--primary" href="pages/onboarding.html">⊕ Kết nạp hệ thống mới</a>
+  </div>
+</div>
+
+<!-- Chỉ số chính -->
+<div class="grid grid--4 mb-5">
+  <div class="card stat">
+    <div class="stat__label">Giao dịch hôm nay</div>
+    <div class="stat__value">1.284.507</div>
+    <div class="stat__meta">
+      <span class="stat__delta stat__delta--up">▲ 12,4%</span>
+      <span class="t-muted">so với hôm qua</span>
+    </div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Tỷ lệ thành công</div>
+    <div class="stat__value">99,82%</div>
+    <div class="stat__meta">
+      <span class="badge badge--ok">Đạt SLA</span>
+      <span class="t-muted">mục tiêu ≥ 99,5%</span>
+    </div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Độ trễ P99</div>
+    <div class="stat__value">2,1<span style="font-size:16px;font-weight:600">s</span></div>
+    <div class="stat__meta">
+      <span class="stat__delta stat__delta--up">▼ 0,3s</span>
+      <span class="t-muted">trần quy định 30s</span>
+    </div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Bản tin lỗi chờ xử lý</div>
+    <div class="stat__value" style="color:var(--c-err-700)">47</div>
+    <div class="stat__meta">
+      <a href="pages/dlq.html">Xem hàng đợi DLQ →</a>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid--sidebar">
+  <!-- Cột trái -->
+  <div class="col">
+
+    <!-- Hệ thống thành viên -->
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title">Hệ thống thông tin thành viên</div>
+          <div class="card__sub">42 hệ thống đã kết nối trên tổng số 48 hệ thống trong danh mục</div>
+        </div>
+        <div class="card__actions">
+          <a class="btn btn--sm" href="pages/onboarding.html">Quản lý</a>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Hệ thống</th><th>Đơn vị chủ quản</th><th>Nhóm</th>
+              <th class="table__num">Lượt gọi/giờ</th><th>Tình trạng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="t-primary">Cổng Dịch vụ công</td>
+              <td class="t-muted">Văn phòng UBND tỉnh</td>
+              <td><span class="badge badge--info badge--plain">Nhóm 1</span></td>
+              <td class="table__num">184.320</td>
+              <td><span class="badge badge--ok">Hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="t-primary">Quản lý văn bản &amp; điều hành</td>
+              <td class="t-muted">Văn phòng UBND tỉnh</td>
+              <td><span class="badge badge--info badge--plain">Nhóm 1</span></td>
+              <td class="table__num">42.108</td>
+              <td><span class="badge badge--ok">Hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="t-primary">CSDL Đất đai</td>
+              <td class="t-muted">Sở Nông nghiệp &amp; Môi trường</td>
+              <td><span class="badge badge--muted badge--plain">Nhóm 3</span></td>
+              <td class="table__num">8.945</td>
+              <td><span class="badge badge--warn">Suy giảm</span></td>
+            </tr>
+            <tr>
+              <td class="t-primary">Hồ sơ sức khỏe điện tử</td>
+              <td class="t-muted">Sở Y tế</td>
+              <td><span class="badge badge--info badge--plain">Nhóm 2</span></td>
+              <td class="table__num">27.630</td>
+              <td><span class="badge badge--ok">Hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="t-primary">Quản lý cán bộ, công chức</td>
+              <td class="t-muted">Sở Nội vụ</td>
+              <td><span class="badge badge--muted badge--plain">Nhóm 3</span></td>
+              <td class="table__num">3.204</td>
+              <td><span class="badge badge--err">Mất kết nối</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card__foot">
+        <span>Hiển thị 5 / 42 hệ thống</span>
+        <span class="header__spacer"></span>
+        <a href="pages/onboarding.html">Xem tất cả →</a>
+      </div>
+    </div>
+
+    <!-- Luồng tích hợp -->
+    <div class="card">
+      <div class="card__head">
+        <div>
+          <div class="card__title">Luồng tích hợp có lưu lượng cao nhất</div>
+          <div class="card__sub">Xếp theo số lượt gọi trong 24 giờ qua</div>
+        </div>
+        <div class="card__actions">
+          <a class="btn btn--sm" href="pages/routes.html">Xem luồng</a>
+        </div>
+      </div>
+      <div class="card__body">
+        <div class="col" style="gap:var(--sp-4)">
+          <div>
+            <div class="row row--between mb-2">
+              <span class="t-primary">Tra cứu thông tin công dân (CSDLQG Dân cư)</span>
+              <span class="t-mono t-muted">642.100 · P99 2,8s</span>
+            </div>
+            <div class="bar"><div class="bar__fill" style="width:92%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2">
+              <span class="t-primary">Đồng bộ trạng thái hồ sơ TTHC</span>
+              <span class="t-mono t-muted">318.470 · P99 0,9s</span>
+            </div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:64%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2">
+              <span class="t-primary">Liên thông văn bản điện tử</span>
+              <span class="t-mono t-muted">142.885 · P99 1,4s</span>
+            </div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:38%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2">
+              <span class="t-primary">Tra cứu thông tin thửa đất</span>
+              <span class="t-mono t-muted">96.220 · P99 <span style="color:var(--c-warn-700);font-weight:600">11,2s</span></span>
+            </div>
+            <div class="bar"><div class="bar__fill bar__fill--warn" style="width:24%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Cột phải -->
+  <div class="col">
+
+    <!-- Cảnh báo -->
+    <div class="card">
+      <div class="card__head">
+        <div class="card__title">Cảnh báo đang mở</div>
+        <div class="card__actions"><span class="badge badge--err">3</span></div>
+      </div>
+      <div class="card__body">
+        <div class="alert alert--err mb-3">
+          <span class="alert__icon">⛔</span>
+          <div>
+            <div class="alert__title">Mất kết nối hệ thống Quản lý cán bộ</div>
+            <div class="t-small">Ngắt mạch kích hoạt lúc 13:47. Đã thử lại 3 lần không thành công.</div>
+          </div>
+        </div>
+        <div class="alert alert--warn mb-3">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Độ trễ CSDL Đất đai vượt ngưỡng</div>
+            <div class="t-small">P99 đạt 11,2s trong 15 phút liên tục (ngưỡng cảnh báo 10s).</div>
+          </div>
+        </div>
+        <div class="alert alert--warn" style="margin-bottom:0">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">47 bản tin trong hàng đợi lỗi</div>
+            <div class="t-small">Phần lớn từ luồng đồng bộ hộ tịch — nghi do sai định dạng ngày.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card__foot">
+        <a href="pages/monitoring.html">Mở trang giám sát →</a>
+      </div>
+    </div>
+
+    <!-- Kết nối quốc gia -->
+    <div class="card">
+      <div class="card__head">
+        <div class="card__title">Kết nối cấp quốc gia</div>
+      </div>
+      <div class="card__body">
+        <div class="col" style="gap:var(--sp-3)">
+          <div class="row row--between">
+            <div>
+              <div class="t-primary">NDXP</div>
+              <div class="t-small t-muted">Trục tích hợp quốc gia</div>
+            </div>
+            <span class="badge badge--ok">Thông suốt</span>
+          </div>
+          <div class="divider" style="margin:0"></div>
+          <div class="row row--between">
+            <div>
+              <div class="t-primary">NDOP</div>
+              <div class="t-small t-muted">Điều phối dữ liệu — TTDLQG</div>
+            </div>
+            <span class="badge badge--warn">Đang đăng ký</span>
+          </div>
+          <div class="divider" style="margin:0"></div>
+          <div class="row row--between">
+            <div>
+              <div class="t-primary">VNeID</div>
+              <div class="t-small t-muted">Định danh, xác thực điện tử</div>
+            </div>
+            <span class="badge badge--ok">Thông suốt</span>
+          </div>
+          <div class="divider" style="margin:0"></div>
+          <div class="row row--between">
+            <div>
+              <div class="t-primary">Hệ thống Bộ KH&amp;CN</div>
+              <div class="t-small t-muted">Đồng bộ danh mục dịch vụ</div>
+            </div>
+            <span class="badge badge--ok">Đã đồng bộ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tuân thủ -->
+    <div class="card">
+      <div class="card__head">
+        <div class="card__title">Mức độ tuân thủ</div>
+        <div class="card__actions"><a class="btn btn--sm" href="pages/kpi.html">Chi tiết</a></div>
+      </div>
+      <div class="card__body">
+        <div class="row row--between mb-2">
+          <span class="t-small">Ma trận CMP-01…40</span>
+          <span class="t-primary">34 / 40</span>
+        </div>
+        <div class="bar mb-4"><div class="bar__fill bar__fill--ok" style="width:85%"></div></div>
+
+        <div class="row row--between mb-2">
+          <span class="t-small">Dịch vụ có tài liệu OpenAPI</span>
+          <span class="t-primary">128 / 134</span>
+        </div>
+        <div class="bar mb-4"><div class="bar__fill bar__fill--ok" style="width:95%"></div></div>
+
+        <div class="row row--between mb-2">
+          <span class="t-small">Ánh xạ Từ điển dữ liệu quốc gia</span>
+          <span class="t-primary" style="color:var(--c-warn-700)">61%</span>
+        </div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:61%"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

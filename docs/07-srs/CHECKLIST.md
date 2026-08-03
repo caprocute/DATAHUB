@@ -4,7 +4,7 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 1/32 hạng mục · 0/180 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: 5/32 hạng mục · 10/180 mục SRS · Cập nhật: 2026-08-03
 
 ---
 
@@ -42,7 +42,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 ## GIAI ĐOẠN 0 — Nền tảng chung
 
 - [x] **0.1** — Danh mục 18 phân hệ, sơ đồ quan hệ, ma trận phân hệ ↔ luồng, quy ước SRS · **M** · _2026-08-03_ → [README.md](README.md)
-- [ ] **0.2** — Bộ khung dùng chung cho mockup: CSS design system, layout, thanh điều hướng, JS điều hướng · **M**
+- [x] **0.2** — Bộ khung dùng chung cho mockup: CSS design system, layout, thanh điều hướng, JS điều hướng · **M** · _2026-08-03_ → [`mockup/css/app.css`](../../mockup/css/app.css), [`mockup/js/app.js`](../../mockup/js/app.js)
 - [ ] **0.3** — Từ điển dữ liệu dùng chung toàn hệ thống (thực thể chia sẻ giữa các phân hệ) · **S**
 
 ---
@@ -67,21 +67,21 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [ ] M9 Tuân thủ CMP
 - [ ] M10 Kiểm thử chấp nhận (`AT-12-nnn`)
 
-### [ ] 1.2 — SRS **PH-04** Lõi Tích hợp & Điều phối (Camel) · **M** · ⭐ *quan trọng nhất*
+### [x] 1.2 — SRS **PH-04** Lõi Tích hợp & Điều phối (Camel) · **M** · ⭐ *quan trọng nhất* · _2026-08-03_
 
-*Nội dung trọng tâm*: template route 9 bước · EIP · CDM · xử lý lỗi 3 tầng · circuit breaker · DLQ
-*Ánh xạ*: CMP-04, CMP-11, CMP-12, CMP-16
+→ [SRS-PH-04-integration-core.md](SRS-PH-04-integration-core.md) · 25 FR · 8 thực thể · 34 NFR · 15 BR · 28 AT
+*Ánh xạ*: CMP-04, CMP-11, CMP-12, CMP-16, CMP-15, CMP-13, CMP-23, CMP-28, CMP-10, CMP-30, CMP-32, CMP-01
 
-- [ ] M1 Giới thiệu
-- [ ] M2 Mô tả tổng quan
-- [ ] M3 Yêu cầu chức năng (`FR-04-nnn`)
-- [ ] M4 Mô hình dữ liệu (`EN-04-nn`)
-- [ ] M5 Giao diện API
-- [ ] M6 Giao diện người dùng (`UI-04-nn`)
-- [ ] M7 Phi chức năng (`NFR-04-nnn`)
-- [ ] M8 Quy tắc nghiệp vụ (`BR-04-nnn`)
-- [ ] M9 Tuân thủ CMP
-- [ ] M10 Kiểm thử chấp nhận (`AT-04-nnn`)
+- [x] M1 Giới thiệu
+- [x] M2 Mô tả tổng quan
+- [x] M3 Yêu cầu chức năng (`FR-04-001…025`)
+- [x] M4 Mô hình dữ liệu (`EN-04-01…08`)
+- [x] M5 Giao diện API
+- [x] M6 Giao diện người dùng (`UI-04-01…06`)
+- [x] M7 Phi chức năng (`NFR-04-001…034`)
+- [x] M8 Quy tắc nghiệp vụ (`BR-04-001…015`)
+- [x] M9 Tuân thủ CMP
+- [x] M10 Kiểm thử chấp nhận (`AT-04-001…028`)
 
 ### [ ] 1.3 — SRS **PH-03** Cổng tiếp nhận & Bảo vệ (APISIX) · **M**
 
@@ -360,13 +360,13 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 > Yêu cầu: các màn quan trọng, **có liên kết điều hướng thực tế** giữa các trang.
 > Mỗi mockup phải hiện thực đúng các màn `UI-{PH}-{nn}` đã đặc tả tại **M6** của SRS tương ứng.
 
-- [ ] **6.1** — `index.html` — Trang chủ / Bảng điều khiển tổng quan · **M**
+- [x] **6.1** — `index.html` — Trang chủ / Bảng điều khiển tổng quan · **M** · _2026-08-03_
 - [ ] **6.2** — `pages/onboarding.html` — Kết nạp hệ thống thành viên (PH-01) · **M**
   - Danh sách hồ sơ · Biểu mẫu đăng ký · Màn thẩm định/phê duyệt
 - [ ] **6.3** — `pages/catalog.html` — Danh mục dịch vụ & Quản lý API (PH-02) · **M**
   - Danh sách API · Chi tiết API + OpenAPI · Vòng đời trạng thái
-- [ ] **6.4** — `pages/routes.html` — Thiết kế & giám sát luồng tích hợp (PH-04) · **M**
-  - Danh sách route · Sơ đồ luồng · Cấu hình xử lý lỗi
+- [x] **6.4** — `pages/routes.html` — Thiết kế & giám sát luồng tích hợp (PH-04) · **M** · _2026-08-03_
+  - Danh sách route (UI-04-01) · Sơ đồ luồng (UI-04-02) · Cấu hình xử lý lỗi (UI-04-03) · Thống kê (UI-04-04)
 - [ ] **6.5** — `pages/mdm.html` — Quản lý dữ liệu chủ (PH-06) · **M**
   - Tra cứu bản ghi vàng · Hàng đợi đối sánh thủ công · Lịch sử phiên bản
 - [ ] **6.6** — `pages/monitoring.html` — Giám sát & Truy vết (PH-13) · **M**
@@ -400,7 +400,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-01 Kết nạp | | | | | | | | | | | 0/10 |
 | PH-02 API & Catalog | | | | | | | | | | | 0/10 |
 | PH-03 Gateway | | | | | | | | | | | 0/10 |
-| PH-04 Lõi tích hợp ⭐ | | | | | | | | | | | 0/10 |
+| PH-04 Lõi tích hợp ⭐ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | **10/10** |
 | PH-05 Adapter | | | | | | | | | | | 0/10 |
 | PH-06 MDM | | | | | | | | | | | 0/10 |
 | PH-07 RDM | | | | | | | | | | | 0/10 |
@@ -415,7 +415,7 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | PH-16 NAS/KPI | | | | | | | | | | | 0/10 |
 | PH-17 AI | | | | | | | | | | | 0/10 |
 | PH-18 Vận hành | | | | | | | | | | | 0/10 |
-| **Tổng** | | | | | | | | | | | **0/180** |
+| **Tổng** | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | **10/180** |
 
 ---
 
@@ -425,3 +425,6 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 |---|---|---|
 | 2026-08-03 | 0.1 | Hoàn thành danh mục 18 phân hệ + quy ước SRS |
 | 2026-08-03 | — | Bổ sung 10 mục bắt buộc thành checkbox con cho từng SRS + bảng theo dõi 180 mục |
+| 2026-08-03 | 0.2 | Khung mockup: `app.css` (design system 18 nhóm) + `app.js` (sidebar, tab, lọc bảng) |
+| 2026-08-03 | 1.2 | **SRS PH-04** đủ 10 mục — 25 FR, 8 thực thể, 34 NFR, 15 BR, 28 AT. Làm chuẩn mẫu cho 17 SRS còn lại |
+| 2026-08-03 | 6.1, 6.4 | Mockup `index.html` + `routes.html` (4 màn UI-04-01…04). Đã kiểm chứng trên trình duyệt: điều hướng, chuyển tab, bảng cuộn ngang |
