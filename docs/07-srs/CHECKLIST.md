@@ -4,7 +4,8 @@
 > Đánh dấu `[x]` + ghi ngày khi xong. Bắt đầu phiên mới bằng cách đọc file này.
 > Danh mục phân hệ và quy ước → [README.md](README.md).
 
-**Trạng thái tổng thể**: 32/39 hạng mục · 190/190 mục SRS · Cập nhật: 2026-08-03
+**Trạng thái tổng thể**: **39/39 hạng mục · 190/190 mục SRS · HOÀN TẤT** · Cập nhật: 2026-08-03
+Kết quả rà soát Giai đoạn 7 → [REVIEW-GIAI-DOAN-7.md](REVIEW-GIAI-DOAN-7.md) · Từ điển dữ liệu → [SRS-00](SRS-00-data-dictionary.md)
 
 ---
 
@@ -44,7 +45,9 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 - [x] **0.1** — Danh mục 18 phân hệ, sơ đồ quan hệ, ma trận phân hệ ↔ luồng, quy ước SRS · **M** · _2026-08-03_ → [README.md](README.md)
 - [x] **0.2** — Bộ khung dùng chung cho mockup: CSS design system, layout, thanh điều hướng, JS điều hướng · **M** · _2026-08-03_ → [`mockup/css/app.css`](../../mockup/css/app.css), [`mockup/js/app.js`](../../mockup/js/app.js), [`mockup/js/theme.js`](../../mockup/js/theme.js)
   - Nền token **Ant Design v6.5.3** + phong cách shadcn, chế độ sáng/tối ([ADR-016](../05-adr/README.md#adr-016))
-- [ ] **0.3** — Từ điển dữ liệu dùng chung toàn hệ thống (thực thể chia sẻ giữa các phân hệ) · **S**
+- [x] **0.3** — Từ điển dữ liệu dùng chung toàn hệ thống (thực thể chia sẻ giữa các phân hệ) · **S** · _2026-08-03_
+  → [SRS-00-data-dictionary.md](SRS-00-data-dictionary.md) · 12 kiểu chuẩn · 11 trường ngữ cảnh · 12 thực thể chia sẻ `DD-01…12` · bảng chủ quản↔tiêu thụ · quy ước đặt tên · chính sách lưu giữ
+  *Nguyên tắc "một khái niệm — một chủ quản": mỗi thực thể chia sẻ có đúng một PH được ghi, các PH khác chỉ đọc.*
 - [x] **0.4** — SRS-19 Ma trận phân quyền toàn hệ thống (Role × Permission × PH) · **M** · _2026-08-03_
   → [SRS-19-rbac-matrix.md](SRS-19-rbac-matrix.md) · 9 FR · 5 thực thể · 21 NFR · 13 BR · 30 AT
   *Xuyên suốt — không phải phân hệ runtime; PH-12 thực thi. Mã chuẩn `INTEGRATION_REVIEWER` (alias `INTEGRATION_APPROVER`).*
@@ -409,12 +412,26 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 
 ## GIAI ĐOẠN 7 — Rà soát & tích hợp
 
-- [ ] **7.1** — Rà soát chéo: mọi FR trong SRS có ánh xạ tới thành phần kiến trúc · **M**
-- [ ] **7.2** — Rà soát: mọi CMP-01…40 được ít nhất một SRS phủ · **M**
-- [ ] **7.3** — Kiểm chứng liên kết: mọi đường dẫn nội bộ trong tài liệu và mockup hoạt động · **M**
-- [ ] **7.4** — Rà soát: mọi `UI-{PH}-{nn}` tại M6 có mockup tương ứng (hoặc ghi rõ lý do chưa dựng) · **M**
-- [ ] **7.5** — Cập nhật [wiki/00-INDEX.md](../../wiki/00-INDEX.md) và memory · **M**
-- [ ] **7.6** — Commit và tổng kết · **M**
+> Kết quả đầy đủ → [REVIEW-GIAI-DOAN-7.md](REVIEW-GIAI-DOAN-7.md). Không có lỗi chặn; 3 tồn đọng T-1…T-3.
+
+- [x] **7.1** — Rà soát chéo: mọi FR trong SRS có ánh xạ tới thành phần kiến trúc · **M** · _2026-08-03_
+  → **324 FR / 19 tài liệu, 100% neo được vào thành phần kiến trúc**. Chiều ngược cũng đủ: Metadata Repository do SRS-00 + PH-15 phủ, Saga Coordinator nằm trong PH-11.
+- [x] **7.2** — Rà soát: mọi CMP-01…40 được ít nhất một SRS phủ · **M** · _2026-08-03_
+  → **36/40 phủ bởi SRS**. Bốn mục CMP-17 (sao lưu), CMP-18 (cấp độ an toàn), CMP-26 (danh mục tiêu chuẩn), CMP-40 (thẩm định) là nghĩa vụ hạ tầng/hồ sơ — phủ tại 04-deployment, ADR, hồ sơ dự án. **Không bổ sung FR giả tạo.** → tồn đọng T-1.
+- [x] **7.3** — Kiểm chứng liên kết: mọi đường dẫn nội bộ trong tài liệu và mockup hoạt động · **M** · _2026-08-03_
+  → **0 liên kết hỏng**. 12 mục nghi vấn đã kiểm thủ công, đều là dương tính giả (chuỗi truy vấn `?traceId=`, chuỗi mẫu trong JS nén, điểm vào Vite dev).
+- [x] **7.4** — Rà soát: mọi `UI-{PH}-{nn}` tại M6 có mockup tương ứng (hoặc ghi rõ lý do chưa dựng) · **M** · _2026-08-03_
+  → **124 màn đặc tả · 61 đã dựng (49%) · 63 chưa dựng**, tất cả có trang giữ chỗ dẫn về SRS. Thứ tự ưu tiên dựng tiếp ghi tại §4.3 báo cáo → tồn đọng T-2.
+- [x] **7.5** — Cập nhật [wiki/00-INDEX.md](../../wiki/00-INDEX.md) và memory · **M** · _2026-08-03_
+- [x] **7.6** — Commit và tổng kết · **M** · _2026-08-03_
+
+### Tồn đọng chuyển giai đoạn sau
+
+| Mã | Việc | Mức |
+|---|---|:-:|
+| **T-1** | Ghi 4 mục CMP-17/18/26/40 vào hồ sơ nghiệm thu tuân thủ kèm nơi phủ thực tế | **M** |
+| **T-2** | Dựng 63 màn mockup còn lại — bắt đầu từ `UI-19-01…04` và PH-12 | **S** |
+| **T-3** | Tách `FR-04-026…040` (trình thiết kế) thành đơn vị triển khai riêng khỏi runtime Camel | **M** |
 
 ---
 
@@ -474,3 +491,5 @@ Tham chiếu [quy ước cấu trúc SRS](README.md#31-cấu-trúc-tài-liệu-s
 | 2026-08-03 | 0.4 | **SRS-19** Ma trận phân quyền toàn hệ thống — 9 FR, ma trận PH-01…18, 14 vai trò chuẩn (`INTEGRATION_REVIEWER`). Tài liệu xuyên suốt; PH-12 thực thi |
 | 2026-08-03 | 1.2 | Bổ sung **UX n8n** vào SRS PH-04: `FR-04-031…040`, `UI-04-10`, nguyên tắc §3.6.1; ADR-017 ghi nhận n8n là mẫu tương tác (không runtime) |
 | 2026-08-03 | — | **docs/08-implementation** + **ADR-018/019**: DU production-first; Spring Boot 4 + Modulith cho DU ứng dụng; ADR-002 làm rõ chỉ áp Camel Quarkus |
+| 2026-08-03 | 0.3 | **SRS-00 Từ điển dữ liệu dùng chung** — 12 kiểu chuẩn (`T-*`), 11 trường ngữ cảnh bắt buộc, 12 thực thể chia sẻ `DD-01…12`, bảng chủ quản↔tiêu thụ, quy ước đặt tên, bảng mã trạng thái, chính sách lưu giữ |
+| 2026-08-03 | 7.1–7.6 | **Hoàn tất Giai đoạn 7** — rà soát chéo 324 FR ↔ kiến trúc (100%), phủ CMP 36/40 (4 mục là nghĩa vụ hạ tầng/hồ sơ), 0 liên kết hỏng, UI 61/124 màn đã dựng. Ba tồn đọng T-1…T-3. **Toàn bộ checklist 39/39 hoàn tất.** |

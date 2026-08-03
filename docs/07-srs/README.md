@@ -51,7 +51,10 @@ Việc chia phân hệ **không theo lớp kiến trúc** mà theo **ranh giới
 
 | Mã | Tên | Nhóm | Mức | SRS |
 |---|---|---|---|---|
+| **SRS-00** | Từ điển dữ liệu dùng chung toàn hệ thống | Xuyên suốt | Cần có | [SRS-00-data-dictionary](SRS-00-data-dictionary.md) |
 | **SRS-19** | Ma trận phân quyền toàn hệ thống (Role × Permission × PH) | Xuyên suốt | Bắt buộc | [SRS-19-rbac-matrix](SRS-19-rbac-matrix.md) |
+
+> **SRS-00** là nguồn sự thật cho **thực thể chia sẻ giữa các phân hệ** (`DD-01…12`), kiểu dữ liệu chuẩn, trường ngữ cảnh bắt buộc và quy ước đặt tên. Nguyên tắc: *một khái niệm — một chủ quản*; phân hệ tiêu thụ tham chiếu bằng định danh chứ không sao chép nội dung. Đọc trước khi định nghĩa bất kỳ `EN-{PH}-{nn}` mới nào.
 
 > **SRS-19** là nguồn sự thật định nghĩa vai trò chuẩn và ma trận quyền cho PH-01…18. **Không** triển khai microservice riêng. [PH-12](SRS-PH-12-iam.md) thực thi (Keycloak + OPA); các phân hệ khác là PEP. Mã vai trò chuẩn dùng `INTEGRATION_REVIEWER` (alias tương thích: `INTEGRATION_APPROVER`).
 
@@ -221,6 +224,8 @@ Mọi SRS trong bộ này tuân theo cấu trúc thống nhất (dựa trên IEE
 | Yêu cầu phi chức năng | `NFR-{PH}-{nnn}` | `NFR-04-003` |
 | Quy tắc nghiệp vụ | `BR-{PH}-{nnn}` | `BR-06-005` |
 | Thực thể dữ liệu | `EN-{PH}-{nn}` | `EN-06-01` |
+| Thực thể **chia sẻ** giữa các PH | `DD-{nn}` → [SRS-00](SRS-00-data-dictionary.md) | `DD-01` |
+| Kiểu dữ liệu chuẩn | `T-{TÊN}` → [SRS-00 §2](SRS-00-data-dictionary.md#2-kiểu-dữ-liệu-chuẩn) | `T-TRACE` |
 | Màn hình | `UI-{PH}-{nn}` | `UI-01-03` |
 | Kiểm thử chấp nhận | `AT-{PH}-{nnn}` | `AT-04-007` |
 

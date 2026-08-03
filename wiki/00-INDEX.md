@@ -17,8 +17,8 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | 04 | [Kế hoạch triển khai](../docs/04-deployment/README.md) | Các bước tiến hành (không phải timeline) | Khi thực thi dự án |
 | 05 | [ADR](../docs/05-adr/README.md) | Quyết định kiến trúc & lý do chọn công nghệ | Khi cần biết "vì sao chọn X" |
 | 06 | [Tác động TTQGS & nâng cấp](../docs/06-impact/README.md) | Phân tích Khung Kiến trúc tổng thể quốc gia số → 6 năng lực bổ sung, 13 bước nâng cấp | Khi rà soát tuân thủ khung mới |
-| 07 | [Danh mục phân hệ & SRS](../docs/07-srs/README.md) · [**CHECKLIST**](../docs/07-srs/CHECKLIST.md) · [**SRS-19 Ma trận RBAC**](../docs/07-srs/SRS-19-rbac-matrix.md) | 18 phân hệ runtime + SRS-19 (ma trận Role×Permission×PH); checklist SRS + mockup | **Đọc CHECKLIST đầu mỗi phiên làm SRS**; phân quyền → SRS-19 |
-| 08 | [**Triển khai lập trình**](../docs/08-implementation/README.md) · [IP-01 mô hình DU](../docs/08-implementation/01-mo-hinh-phat-trien.md) · [IP-02 chuẩn mã](../docs/08-implementation/02-huong-dan-lap-trinh.md) | Microservice vs modular monolith → **DU hybrid**; monorepo, gates, học GiaPhaHub | **Trước khi mở pha viết mã** · ADR-018 |
+| 07 | [Danh mục phân hệ & SRS](../docs/07-srs/README.md) · [**CHECKLIST**](../docs/07-srs/CHECKLIST.md) · [**SRS-00 Từ điển dữ liệu**](../docs/07-srs/SRS-00-data-dictionary.md) · [**SRS-19 Ma trận RBAC**](../docs/07-srs/SRS-19-rbac-matrix.md) · [Rà soát GĐ7](../docs/07-srs/REVIEW-GIAI-DOAN-7.md) | 18 phân hệ runtime + SRS-00 (thực thể chia sẻ `DD-01…12`, kiểu chuẩn, quy ước đặt tên) + SRS-19 (ma trận Role×Permission×PH) | **Trước khi định nghĩa bất kỳ thực thể/trường nào → SRS-00**; phân quyền → SRS-19; tiến độ → CHECKLIST |
+| 08 | [**Triển khai lập trình**](../docs/08-implementation/README.md) · [**IP-04 Kế hoạch**](../docs/08-implementation/04-ke-hoach-phat-trien.md) · [IP-03 Stack](../docs/08-implementation/03-stack-cong-nghe.md) · [IP-01](../docs/08-implementation/01-mo-hinh-phat-trien.md) · [IP-02](../docs/08-implementation/02-huong-dan-lap-trinh.md) | Kế hoạch W0–W6 đa agent · stack · DU | **IP-04 khi giao agent** · IP-03 khi chọn lib |
 
 ## 3. Tra cứu nhanh — Quyết định cốt lõi
 
