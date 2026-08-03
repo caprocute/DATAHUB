@@ -11,25 +11,516 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-02 — Danh mục dịch vụ &amp; Quản lý API.</strong>
+  Minh họa <span class="tag-ph">UI-02-01</span>…<span class="tag-ph">UI-02-08</span>
+  — danh mục, chi tiết OpenAPI, công bố, lint đặc tả, phiên bản, phê duyệt, SLA, đồng bộ Bộ —
+  đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-02-api-catalog.md">SRS PH-02</a>.
+  Liên quan: <a href="onboarding.html">Kết nạp (PH-01)</a> ·
+  <a href="routes.html">Luồng tích hợp (PH-04)</a> ·
+  cổng công khai / PH-15 (portal).
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Danh mục dịch vụ</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-02</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Quản lý API chia sẻ dữ liệu · 86 dịch vụ · 72 PUBLISHED · nghĩa vụ NĐ 47 Điều 25</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Tải mẫu OpenAPI 3.1">⤓ Mẫu OpenAPI</button>
+    <button class="btn btn--primary" data-demo="Mở tab Công bố dịch vụ mới">＋ Công bố dịch vụ</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-02</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-02 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="main" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="danh-muc">Danh mục</button>
+    <button class="tab" data-tab="chi-tiet">Chi tiết + OpenAPI</button>
+    <button class="tab" data-tab="cong-bo">Công bố</button>
+    <button class="tab" data-tab="kiem-tra">Kiểm tra</button>
+    <button class="tab" data-tab="phien-ban">Phiên bản</button>
+    <button class="tab" data-tab="phe-duyet">Phê duyệt <span class="tab__count">2</span></button>
+    <button class="tab" data-tab="sla">SLA</button>
+    <button class="tab" data-tab="dong-bo">Đồng bộ Bộ</button>
+  </div>
+
+  <!-- ===== UI-02-01: Danh mục ===== -->
+  <div class="card__body" data-panel="danh-muc" data-panel-group="main">
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm theo tên, mô tả, loại dữ liệu…" data-filter="api-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: tất cả">Tất cả</button>
+        <button class="btn btn--sm" data-demo="Lọc DRAFT">DRAFT</button>
+        <button class="btn btn--sm" data-demo="Lọc REVIEW">REVIEW</button>
+        <button class="btn btn--sm" data-demo="Lọc PUBLISHED">PUBLISHED</button>
+        <button class="btn btn--sm" data-demo="Lọc DEPRECATED">DEPRECATED</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <select class="select" style="width:auto">
+        <option>Mọi chủ quản</option>
+        <option>Sở TT&amp;TT</option>
+        <option>Cục CSDLQG</option>
+      </select>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="api-table">
+        <thead>
+          <tr>
+            <th>Mã dịch vụ</th><th>Tên</th><th>Chủ quản</th><th>Phiên bản</th>
+            <th>Vòng đời</th><th>SLA</th><th class="table__num">Bên khai thác</th>
+            <th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">api.cong-dan.tra-cuu</td>
+            <td class="t-primary">Tra cứu thông tin công dân</td>
+            <td class="t-small">Cục CSDLQG</td>
+            <td class="t-mono">2.1.0</td>
+            <td><span class="badge badge--ok">PUBLISHED</span></td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td class="table__num">28</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết api.cong-dan.tra-cuu">Chi tiết</button>
+              <button class="btn btn--sm" data-demo="Tải OpenAPI">Tải đặc tả</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.hoso.dong-bo</td>
+            <td class="t-primary">Đồng bộ trạng thái hồ sơ TTHC</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="t-mono">1.4.2</td>
+            <td><span class="badge badge--ok">PUBLISHED</span></td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td class="table__num">14</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết">Chi tiết</button>
+              <button class="btn btn--sm" data-demo="Đăng ký sử dụng (hệ thống đã kết nạp)">Đăng ký dùng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.datdai.tra-cuu</td>
+            <td class="t-primary">Tra cứu thông tin thửa đất</td>
+            <td class="t-small">Sở TN&amp;MT</td>
+            <td class="t-mono">1.2.0</td>
+            <td><span class="badge badge--warn">DEPRECATED</span></td>
+            <td><span class="badge badge--err">Không đạt</span></td>
+            <td class="table__num">9</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem hạn chuyển đổi → 2.0.0">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.bhxh.qua-trinh</td>
+            <td class="t-primary">Tra cứu quá trình đóng BHXH</td>
+            <td class="t-small">BHXH tỉnh</td>
+            <td class="t-mono">1.0.0-rc</td>
+            <td><span class="badge badge--info">REVIEW</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td class="table__num">0</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem hàng đợi phê duyệt">Phê duyệt</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.canbo.dong-bo</td>
+            <td class="t-primary">Đồng bộ hồ sơ cán bộ CC</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td class="t-mono">0.9.0</td>
+            <td><span class="badge badge--muted">DRAFT</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td class="table__num">0</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tiếp tục công bố">Sửa nháp</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot" style="margin:var(--sp-4) calc(var(--sp-5)*-1) calc(var(--sp-4)*-1);padding:var(--sp-3) var(--sp-5)">
+      <span class="t-small">DEPRECATED: hiện hạn chuyển đổi và phiên bản thay thế · không đạt SLA 3 kỳ → nhãn cảnh báo</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-02-02: Chi tiết + OpenAPI ===== -->
+  <div class="card__body hidden" data-panel="chi-tiet" data-panel-group="main">
+    <div class="row row--between mb-3">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">api.cong-dan.tra-cuu <span class="tag-ph">UI-02-02</span></div>
+        <p class="t-small t-muted mb-0">Tra cứu thông tin công dân từ CSDLQG Dân cư · v2.1.0 ·
+          <span class="badge badge--ok">PUBLISHED</span> · phạm vi <span class="t-mono">cong-dan:read</span></p>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Tải OpenAPI YAML">Tải đặc tả</button>
+        <a class="btn btn--sm" href="routes.html">Luồng liên quan</a>
+      </div>
+    </div>
+    <p class="mb-4">Cung cấp tra cứu đồng bộ theo số định danh cá nhân. Dữ liệu trả về đã che theo quyền (PH-09). SLA cam kết P99 ≤ 3s, sẵn sàng 99,5%.</p>
+    <div class="t-small t-muted mb-2">Đặc tả OpenAPI 3.1 (rút gọn)</div>
+<pre class="code"><span class="k">openapi:</span> <span class="s">"3.1.0"</span>
+<span class="k">info:</span>
+  <span class="k">title:</span> Tra cứu thông tin công dân
+  <span class="k">version:</span> <span class="s">"2.1.0"</span>
+  <span class="k">description:</span> Tra cứu CSDLQG Dân cư qua trục LGSP
+<span class="k">paths:</span>
+  <span class="k">/api/v1/cong-dan/{soDinhDanh}:</span>
+    <span class="k">get:</span>
+      <span class="k">operationId:</span> traCuuCongDan
+      <span class="k">parameters:</span>
+        <span class="k">- name:</span> soDinhDanh
+          <span class="k">in:</span> path
+          <span class="k">required:</span> <span class="n">true</span>
+          <span class="k">schema:</span> { <span class="k">type:</span> string, <span class="k">pattern:</span> <span class="s">"^[0-9]{12}$"</span> }
+      <span class="k">responses:</span>
+        <span class="s">"200":</span>
+          <span class="k">description:</span> Thông tin công dân (đã che theo quyền)
+          <span class="k">content:</span>
+            <span class="k">application/json:</span>
+              <span class="k">schema:</span>
+                <span class="k">$ref:</span> <span class="s">"#/components/schemas/CongDan"</span>
+        <span class="s">"404":</span>
+          <span class="k">description:</span> Không tìm thấy</pre>
+  </div>
+
+  <!-- ===== UI-02-03: Công bố ===== -->
+  <div class="card__body hidden" data-panel="cong-bo" data-panel-group="main">
+    <div class="card__title mb-2" style="font-size:var(--fs-md)">Công bố dịch vụ mới <span class="tag-ph">UI-02-03</span></div>
+    <p class="t-small t-muted mb-4">3 bước: Thông tin dịch vụ → Đặc tả OpenAPI → Cam kết SLA</p>
+    <div class="row mb-4" style="gap:var(--sp-2)">
+      <span class="badge badge--ok">1. Thông tin</span>
+      <span class="badge badge--muted">2. Đặc tả</span>
+      <span class="badge badge--muted">3. SLA</span>
+    </div>
+    <div class="grid grid--2 mb-4">
+      <div class="field">
+        <label class="field__label">Mã dịch vụ</label>
+        <input class="input input--mono" value="api.bhxh.qua-trinh">
+      </div>
+      <div class="field">
+        <label class="field__label">Tên dịch vụ</label>
+        <input class="input" value="Tra cứu quá trình đóng BHXH">
+      </div>
+      <div class="field">
+        <label class="field__label">Loại dữ liệu</label>
+        <select class="select"><option>Bảo hiểm xã hội</option><option>Dân cư</option><option>Đất đai</option></select>
+      </div>
+      <div class="field">
+        <label class="field__label">Phân loại mật</label>
+        <select class="select">
+          <option selected>Công khai / hạn chế</option>
+          <option>MẬT</option>
+        </select>
+        <div class="field__hint">Phân loại MẬT → không thể phát hành PUBLISHED</div>
+      </div>
+    </div>
+    <div class="field mb-4">
+      <label class="field__label">Mô tả</label>
+      <textarea class="input" rows="2">Cho phép hệ thống đã kết nạp tra cứu quá trình đóng BHXH theo số sổ.</textarea>
+    </div>
+    <div class="field mb-4">
+      <label class="field__label">Đặc tả OpenAPI</label>
+      <div class="btn-group mb-2">
+        <button class="btn btn--sm is-active" data-demo="Tải tệp YAML/JSON">Tải tệp</button>
+        <button class="btn btn--sm" data-demo="Nhập URL đặc tả">URL</button>
+        <button class="btn btn--sm" data-demo="Dán nội dung OpenAPI">Dán nội dung</button>
+      </div>
+      <textarea class="input input--mono" rows="4" placeholder="openapi: 3.1.0&#10;info: …"></textarea>
+    </div>
+    <div class="grid grid--3 mb-4">
+      <div class="field">
+        <label class="field__label">P99 cam kết (ms)</label>
+        <input class="input" type="number" value="3000">
+      </div>
+      <div class="field">
+        <label class="field__label">Sẵn sàng (%)</label>
+        <input class="input" type="number" value="99.5" step="0.1">
+      </div>
+      <div class="field">
+        <label class="field__label">Hạn mức / phút</label>
+        <input class="input" type="number" value="600">
+      </div>
+    </div>
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Hệ thống cung cấp phải ACTIVE</div>
+        <div class="t-small">Chỉ hệ thống đã kết nạp (<a href="onboarding.html">PH-01</a>) mới được công bố dịch vụ. Cổng công khai (PH-15) sẽ hiển thị sau khi PUBLISHED.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" data-demo="Chạy kiểm tra đặc tả hai lớp">Kiểm tra đặc tả</button>
+      <button class="btn btn--primary" data-demo="Lưu nháp DRAFT và gửi REVIEW">Lưu &amp; gửi duyệt</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-02-04: Kiểm tra / lint ===== -->
+  <div class="card__body hidden" data-panel="kiem-tra" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Kết quả kiểm tra đặc tả <span class="tag-ph">UI-02-04</span></div>
+    <div class="grid grid--3 mb-4">
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Lỗi (ERROR)</div><div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">2</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Cảnh báo</div><div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">3</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Đã khắc phục</div><div class="stat__value" style="font-size:var(--fs-2xl)">1 / 5</div></div>
+    </div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Mức</th><th>Mã</th><th>Vị trí</th><th>Mô tả</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge--err">ERROR</span></td>
+            <td class="t-mono">SPEC-E-012</td>
+            <td class="t-mono t-small">paths./api/v1…/get</td>
+            <td class="t-small">Thiếu responses.401 theo quy ước bảo mật LGSP</td>
+            <td><button class="btn btn--sm" data-demo="Xem hướng dẫn SPEC-E-012">Hướng dẫn</button></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--err">ERROR</span></td>
+            <td class="t-mono">SPEC-E-041</td>
+            <td class="t-mono t-small">components.examples</td>
+            <td class="t-small">Phát hiện chuỗi giống token trong ví dụ (NFR-02-017)</td>
+            <td><button class="btn btn--sm" data-demo="Nhảy tới dòng lỗi">Nhảy tới</button></td>
+          </tr>
+          <tr style="opacity:.55">
+            <td><span class="badge badge--muted">OK</span></td>
+            <td class="t-mono">SPEC-W-003</td>
+            <td class="t-mono t-small">info.contact</td>
+            <td class="t-small">Đã bổ sung contact — đã khắc phục</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">WARN</span></td>
+            <td class="t-mono">SPEC-W-018</td>
+            <td class="t-mono t-small">servers[0]</td>
+            <td class="t-small">URL môi trường prod trùng staging</td>
+            <td><button class="btn btn--sm" data-demo="Xem hướng dẫn">Hướng dẫn</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Không chuyển bước khi còn ERROR</div>
+        <div class="t-small">WARNING cho phép tiếp tục kèm nhắc nhở. Sửa xong bấm Kiểm tra lại.</div>
+      </div>
+    </div>
+    <button class="btn btn--primary" data-demo="Chạy lại kiểm tra đặc tả">Kiểm tra lại</button>
+  </div>
+
+  <!-- ===== UI-02-05: So sánh phiên bản ===== -->
+  <div class="card__body hidden" data-panel="phien-ban" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">So sánh phiên bản <span class="tag-ph">UI-02-05</span></div>
+    <div class="row mb-4" style="gap:var(--sp-4)">
+      <div class="field" style="margin:0;min-width:160px">
+        <label class="field__label">Phiên bản A</label>
+        <select class="select"><option>1.2.0 (DEPRECATED)</option><option selected>2.0.0</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:160px">
+        <label class="field__label">Phiên bản B</label>
+        <select class="select"><option selected>2.1.0 (PUBLISHED)</option><option>2.0.0</option></select>
+      </div>
+    </div>
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Có thay đổi phá vỡ tương thích</div>
+        <div class="t-small">Bắt buộc tăng phiên bản chính nếu phát hành từ 1.x. <strong>9 bên khai thác</strong> bị ảnh hưởng · lộ trình ngừng dùng tối thiểu 6 tháng.</div>
+      </div>
+    </div>
+    <div class="grid grid--2 mb-4">
+      <div>
+        <div class="t-small mb-2" style="color:var(--c-err-700)"><strong>Phá vỡ tương thích</strong></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Loại</th><th>Vị trí</th><th>Tác động</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="t-small">Xóa field</td>
+                <td class="t-mono t-small">CongDan.cmnd</td>
+                <td class="t-small">Client cũ parse lỗi</td>
+              </tr>
+              <tr>
+                <td class="t-small">Đổi kiểu</td>
+                <td class="t-mono t-small">ngaySinh</td>
+                <td class="t-small">string → date</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="t-small mb-2" style="color:var(--c-ok-700)"><strong>Tương thích ngược</strong></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Loại</th><th>Vị trí</th><th>Tác động</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="t-small">Thêm field</td>
+                <td class="t-mono t-small">queQuan</td>
+                <td class="t-small">Tùy chọn</td>
+              </tr>
+              <tr>
+                <td class="t-small">Thêm response</td>
+                <td class="t-mono t-small">429</td>
+                <td class="t-small">Rate limit rõ hơn</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Tạo lộ trình ngừng dùng 6 tháng">Tạo lộ trình DEPRECATED</button>
+      <button class="btn" data-demo="Xem đặc tả song song hai cột">Xem song song</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-02-06: Phê duyệt ===== -->
+  <div class="card__body hidden" data-panel="phe-duyet" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Hàng đợi phê duyệt phát hành <span class="tag-ph">UI-02-06</span></div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Mã</th><th>Phiên bản</th><th>Chủ quản</th><th>Lint</th><th>Ngày gửi</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-primary">api.bhxh.qua-trinh</td>
+            <td class="t-mono">1.0.0</td>
+            <td class="t-small">BHXH tỉnh</td>
+            <td><span class="badge badge--ok">0 ERROR</span></td>
+            <td class="t-small">02/08/2026</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--primary" data-demo="Phê duyệt → PUBLISHED, đẩy PH-03">Phê duyệt</button>
+              <button class="btn btn--sm" data-demo="Từ chối kèm ý kiến">Từ chối</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-primary">api.datdai.tra-cuu</td>
+            <td class="t-mono">2.0.0</td>
+            <td class="t-small">Sở TN&amp;MT</td>
+            <td><span class="badge badge--warn">2 WARN</span></td>
+            <td class="t-small">01/08/2026</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--primary" data-demo="Phê duyệt phiên bản kế nhiệm">Phê duyệt</button>
+              <button class="btn btn--sm" data-demo="Yêu cầu sửa WARN">Yêu cầu sửa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--info">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Tách vai trò công bố / phê duyệt</div>
+        <div class="t-small">Sau phê duyệt: cấu hình đẩy xuống PH-03 ≤ 30s; danh mục portal (PH-15) cập nhật. Liên kết luồng: <a href="routes.html">routes.html</a>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-02-07: SLA ===== -->
+  <div class="card__body hidden" data-panel="sla" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Tuân thủ SLA <span class="tag-ph">UI-02-07</span></div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Dịch vụ</th><th>Cam kết P99</th><th>Thực tế kỳ này</th>
+            <th>Sẵn sàng</th><th>Kết quả</th><th>Xu hướng</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">api.cong-dan.tra-cuu</td>
+            <td class="table__num">3,0s</td>
+            <td class="table__num">2,8s</td>
+            <td class="table__num">99,82%</td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td class="t-small t-muted">ổn định</td>
+            <td><a class="btn btn--sm" href="routes.html">Giám sát</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.hoso.dong-bo</td>
+            <td class="table__num">1,5s</td>
+            <td class="table__num">0,9s</td>
+            <td class="table__num">99,96%</td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td class="t-small t-muted">tốt hơn</td>
+            <td><button class="btn btn--sm" data-demo="Chi tiết SLA">Chi tiết</button></td>
+          </tr>
+          <tr style="background:var(--c-err-50)">
+            <td class="t-mono">api.datdai.tra-cuu</td>
+            <td class="table__num">2,0s</td>
+            <td class="table__num" style="color:var(--c-err-700);font-weight:600">11,2s</td>
+            <td class="table__num">97,1%</td>
+            <td><span class="badge badge--err">Không đạt ×3</span></td>
+            <td class="t-small" style="color:var(--c-err-700)">xấu đi</td>
+            <td><button class="btn btn--sm" data-demo="Gợi ý: điều chỉnh cam kết hoặc cải thiện hệ thống">Hành động</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="t-small t-muted mb-2">Độ trễ theo tháng (cam kết 3,0s) — api.cong-dan.tra-cuu</div>
+    <div class="col" style="gap:var(--sp-3);max-width:480px">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">T5</span><span class="t-mono t-small">2,4s</span></div>
+        <div class="bar"><div class="bar__fill" style="width:80%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">T6</span><span class="t-mono t-small">2,6s</span></div>
+        <div class="bar"><div class="bar__fill" style="width:87%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">T7</span><span class="t-mono t-small">2,8s</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:93%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-02-08: Đồng bộ Bộ ===== -->
+  <div class="card__body hidden" data-panel="dong-bo" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Đồng bộ danh mục lên Bộ TT&amp;TT <span class="tag-ph">UI-02-08</span></div>
+    <div class="grid grid--3 mb-4">
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Đã đồng bộ</div><div class="stat__value" style="font-size:var(--fs-2xl)">71</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Chờ đẩy</div><div class="stat__value" style="font-size:var(--fs-2xl)">1</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Lần đồng bộ gần nhất</div><div class="stat__value" style="font-size:var(--fs-lg)">03/08 14:20</div></div>
+    </div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Dịch vụ</th><th>Trạng thái địa phương</th><th>Trạng thái Bộ</th><th>Đồng bộ</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">api.cong-dan.tra-cuu</td>
+            <td><span class="badge badge--ok">PUBLISHED</span></td>
+            <td><span class="badge badge--ok">Đã đăng ký</span></td>
+            <td class="t-small t-muted">03/08 14:20</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Đồng bộ lại lên Bộ">Đồng bộ lại</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.bhxh.qua-trinh</td>
+            <td><span class="badge badge--info">REVIEW</span></td>
+            <td><span class="badge badge--muted">Chưa đẩy</span></td>
+            <td class="t-small t-muted">—</td>
+            <td class="table__actions"><span class="t-small t-muted">Chờ PUBLISHED</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">api.datdai.tra-cuu</td>
+            <td><span class="badge badge--warn">DEPRECATED</span></td>
+            <td><span class="badge badge--warn">Đã cập nhật ngừng</span></td>
+            <td class="t-small t-muted">01/08 09:10</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem biên bản đồng bộ">Biên bản</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Đẩy toàn bộ dịch vụ PUBLISHED chưa đồng bộ lên Bộ">Đồng bộ hàng loạt</button>
+      <a class="btn" href="onboarding.html">Hệ thống thành viên</a>
+      <span class="t-small t-muted" style="margin-left:auto">Portal công khai: PH-15</span>
     </div>
   </div>
 </div>
