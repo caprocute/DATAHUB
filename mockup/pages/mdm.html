@@ -11,25 +11,429 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-06 — Quản lý dữ liệu chủ (MDM).</strong>
+  Minh họa các màn <span class="tag-ph">UI-06-01</span> tra cứu vàng,
+  <span class="tag-ph">UI-06-02</span> hàng đợi,
+  <span class="tag-ph">UI-06-03</span> so sánh hợp nhất,
+  <span class="tag-ph">UI-06-04</span> nguồn gốc,
+  <span class="tag-ph">UI-06-05</span> ưu tiên nguồn,
+  <span class="tag-ph">UI-06-06</span> đồng bộ quốc gia — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-06-mdm.md">SRS PH-06</a>.
+  Liên kết <a href="privacy.html">bảo vệ dữ liệu</a> và
+  <a href="national.html">kết nối quốc gia</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Dữ liệu chủ</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-06</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Bản ghi vàng công dân, tổ chức, cán bộ, thửa đất — 12 mục chờ đối sánh thủ công</p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="privacy.html">Chính sách che PH-09</a>
+    <a class="btn" href="national.html">NDXP / quốc gia</a>
+    <button class="btn btn--primary" data-demo="Xuất báo cáo chất lượng MDM tuần">Xuất báo cáo</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-06</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-06 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="mdm" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="lookup">Tra cứu vàng</button>
+    <button class="tab" data-tab="queue">Hàng đợi <span class="tab__count">12</span></button>
+    <button class="tab" data-tab="lineage">Nguồn gốc</button>
+    <button class="tab" data-tab="priority">Ưu tiên nguồn</button>
+    <button class="tab" data-tab="sync">Đồng bộ</button>
+  </div>
+
+  <!-- ===== UI-06-01: Tra cứu bản ghi vàng ===== -->
+  <div class="card__body" id="lookup" data-panel="lookup" data-panel-group="mdm">
+    <div class="alert alert--info mb-5">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Mọi lượt tra cứu đều ghi vết</div>
+        <div class="t-small">Cán bộ chỉ tra cứu khi có nhu cầu nghiệp vụ. Dữ liệu nhạy cảm áp dụng che theo <a href="privacy.html">PH-09</a>.</div>
+      </div>
+    </div>
+    <div class="grid grid--4 mb-5">
+      <div class="field" style="margin:0">
+        <label class="field__label">Loại thực thể</label>
+        <select class="select">
+          <option>Công dân</option>
+          <option>Tổ chức</option>
+          <option>Cán bộ</option>
+          <option>Thửa đất</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field__label">Số định danh / CCCD</label>
+        <input class="input input--mono" value="034085001234" placeholder="12 số CCCD…">
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field__label">Họ và tên</label>
+        <input class="input" placeholder="Họ tên (tuỳ chọn)…">
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field__label">&nbsp;</label>
+        <button class="btn btn--primary" style="width:100%" data-demo="Tra cứu bản ghi vàng theo CCCD">Tra cứu</button>
+      </div>
+    </div>
+
+    <div class="row row--between mb-3">
+      <div class="card__title" style="font-size:var(--fs-md)">Kết quả — 1 bản ghi vàng</div>
+      <span class="badge badge--ok">Độ tin cậy 0,96</span>
+    </div>
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Định danh</th><th>Họ tên</th><th>Ngày sinh</th>
+            <th>Nguồn đóng góp</th><th>Độ tin cậy</th><th>Cập nhật cuối</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">034085001234</td>
+            <td class="t-primary">Nguyễn Văn An</td>
+            <td>12/03/1985</td>
+            <td class="t-small">NDXP-DANCU · HT-MOTCUA · BHXH</td>
+            <td><span class="badge badge--ok">0,96 cao</span></td>
+            <td class="t-small">02/08/2026 09:14</td>
+            <td><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi vàng">Chi tiết</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Thuộc tính bản ghi vàng</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Thuộc tính</th><th>Giá trị</th><th>Nguồn</th><th>Độ tin cậy</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Họ và tên</td><td>Nguyễn Văn An</td>
+            <td><a href="#lineage">NDXP-DANCU</a></td>
+            <td><span class="badge badge--ok">0,99</span></td>
+          </tr>
+          <tr>
+            <td>Ngày sinh</td><td>12/03/1985</td>
+            <td><a href="#lineage">NDXP-DANCU</a></td>
+            <td><span class="badge badge--ok">0,99</span></td>
+          </tr>
+          <tr>
+            <td>Địa chỉ thường trú</td>
+            <td>12 Nguyễn Thái Học, phường Trúc Bạch, Hà Nội</td>
+            <td><a href="#lineage">HT-MOTCUA</a></td>
+            <td><span class="badge badge--warn">0,78 TB</span></td>
+          </tr>
+          <tr>
+            <td>Số điện thoại</td>
+            <td><span class="t-mono">09••••5678</span> <span class="badge badge--muted badge--plain">đã che</span></td>
+            <td><a href="#lineage">BHXH</a> · <a href="privacy.html">PH-09</a></td>
+            <td><span class="badge badge--err">0,62 thấp</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-06-02 + UI-06-03: Hàng đợi & so sánh ===== -->
+  <div class="card__body hidden" id="queue" data-panel="queue" data-panel-group="mdm">
+    <div class="toolbar" style="padding-top:0">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm theo tên hoặc CCCD…" data-filter="queue-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: tất cả">Tất cả</button>
+        <button class="btn btn--sm" data-demo="Lọc: điểm khớp cao">Khớp cao</button>
+        <button class="btn btn--sm" data-demo="Lọc: định danh khác">Định danh khác</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Còn 12 mục · mục đang mở #Q-0847</span>
+    </div>
+
+    <div class="table-wrap mb-5">
+      <table class="table" id="queue-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Ứng viên A</th><th>Ứng viên B</th>
+            <th class="table__num">Điểm khớp</th><th>Lý do vào hàng đợi</th><th>Tuổi</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--c-info-50)">
+            <td class="t-mono">Q-0847</td>
+            <td>Nguyễn Văn An · 034085001234</td>
+            <td>Nguyễn V. An · 034085001234</td>
+            <td class="table__num"><strong>0,87</strong></td>
+            <td class="t-small">Xác suất — địa chỉ lệch</td>
+            <td>1h 20m</td>
+            <td><span class="badge badge--info">Đang xem</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">Q-0849</td>
+            <td>Lê Hoàng Nam · 079090112233</td>
+            <td>Lê Hoàng Nam · 079090112244</td>
+            <td class="table__num">0,71</td>
+            <td class="t-small">CCCD khác — khóa hợp nhất</td>
+            <td>5h 40m</td>
+            <td><button class="btn btn--sm" data-demo="Mở so sánh Q-0849">Mở</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">So sánh &amp; quyết định — Q-0847</div>
+        <p class="t-small t-muted" style="margin:4px 0 0">Điểm khớp tổng <strong style="color:var(--c-warn-700)">0,87</strong> · ngưỡng tự động 0,92 · cần quyết định thủ công</p>
+      </div>
+      <div class="bar" style="width:180px;align-self:center"><div class="bar__fill bar__fill--warn" style="width:87%"></div></div>
+    </div>
+
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thuộc tính</th>
+            <th>Bản ghi A — HT-MOTCUA</th>
+            <th>Bản ghi B — NDXP-DANCU</th>
+            <th class="table__num">Điểm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--c-ok-50)">
+            <td>Số CCCD</td>
+            <td class="t-mono">034085001234</td>
+            <td class="t-mono">034085001234</td>
+            <td class="table__num">1,00</td>
+          </tr>
+          <tr style="background:var(--c-ok-50)">
+            <td>Họ và tên</td>
+            <td>Nguyễn Văn An</td>
+            <td>Nguyễn V. An</td>
+            <td class="table__num">0,94</td>
+          </tr>
+          <tr style="background:var(--c-ok-50)">
+            <td>Ngày sinh</td>
+            <td>12/03/1985</td>
+            <td>12/03/1985</td>
+            <td class="table__num">1,00</td>
+          </tr>
+          <tr style="background:var(--c-err-50)">
+            <td>Địa chỉ thường trú</td>
+            <td>12 Nguyễn Thái Học, Trúc Bạch</td>
+            <td>Số 12 Nguyễn Thái Học, Ba Đình</td>
+            <td class="table__num">0,61</td>
+          </tr>
+          <tr style="background:var(--c-err-50)">
+            <td>Số điện thoại</td>
+            <td class="t-mono">0912••••78</td>
+            <td class="t-mono">0987••••21</td>
+            <td class="table__num">0,20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="field">
+      <label class="field__label">Lý do quyết định <span class="field__req">*</span></label>
+      <textarea class="input" rows="2" placeholder="Bắt buộc trước khi quyết định (BR-06-008)…">Cùng CCCD; địa chỉ chỉ khác cách ghi phường/quận — hợp nhất về survivor NDXP.</textarea>
+    </div>
+    <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+      <button class="btn btn--primary" data-demo="Hợp nhất — chuyển survivor, còn 11 mục">Hợp nhất</button>
+      <button class="btn" data-demo="Đánh dấu là hai người khác nhau">Là hai người khác nhau</button>
+      <button class="btn" data-demo="Hoãn — cần thêm thông tin">Hoãn — cần thêm thông tin</button>
+      <span class="t-small t-muted" style="margin-left:auto">Có thể sửa quyết định trong 24 giờ</span>
+    </div>
+    <div class="alert alert--warn mt-4" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div class="t-small"><strong>Q-0849:</strong> CCCD khác nhau → Hợp nhất bị khóa (BR-06-006).</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-06-04: Nguồn gốc thuộc tính ===== -->
+  <div class="card__body hidden" id="lineage" data-panel="lineage" data-panel-group="mdm">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Truy vết nguồn gốc — địa chỉ thường trú</div>
+        <p class="t-small t-muted" style="margin:4px 0 0">Bản ghi vàng <span class="t-mono">034085001234</span> · Nguyễn Văn An</p>
+      </div>
+      <a class="btn btn--sm" href="#lookup">← Về bản ghi vàng</a>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Hệ thống nguồn</th><th>Giá trị ghi nhận</th>
+            <th>Ưu tiên</th><th>Được chọn?</th><th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">02/08 09:14</td>
+            <td>HT-MOTCUA</td>
+            <td>12 Nguyễn Thái Học, phường Trúc Bạch, Hà Nội</td>
+            <td class="table__num">2</td>
+            <td><span class="badge badge--ok">Survivor</span></td>
+            <td class="t-small">Mới hơn NDXP 14 ngày</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">19/07 11:02</td>
+            <td><a href="national.html">NDXP-DANCU</a></td>
+            <td>Số 12 Nguyễn Thái Học, Ba Đình, Hà Nội</td>
+            <td class="table__num">1</td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td class="t-small">Ưu tiên cao hơn nhưng cũ hơn — xem cấu hình</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-06-05: Ưu tiên nguồn ===== -->
+  <div class="card__body hidden" id="priority" data-panel="priority" data-panel-group="mdm">
+    <div class="alert alert--info mb-5">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small"><strong>BR-06-004:</strong> thay đổi thứ tự cần căn cứ phê duyệt (số/ngày văn bản). Kéo thả để sắp xếp (mock).</div>
+    </div>
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:48px">#</th>
+            <th>Nguồn</th><th>Loại thực thể</th><th>Thuộc tính</th>
+            <th class="table__num">Mức ưu tiên</th><th>Căn cứ phê duyệt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-muted">⋮⋮</td>
+            <td>NDXP-DANCU</td>
+            <td>Công dân</td>
+            <td>Tất cả</td>
+            <td class="table__num"><strong>1</strong></td>
+            <td class="t-small">QĐ 12/QĐ-UBND ngày 15/01/2026</td>
+          </tr>
+          <tr>
+            <td class="t-muted">⋮⋮</td>
+            <td>HT-MOTCUA</td>
+            <td>Công dân</td>
+            <td>địa chỉ, điện thoại</td>
+            <td class="table__num"><strong>2</strong></td>
+            <td class="t-small">QĐ 12/QĐ-UBND ngày 15/01/2026</td>
+          </tr>
+          <tr>
+            <td class="t-muted">⋮⋮</td>
+            <td>BHXH</td>
+            <td>Công dân</td>
+            <td>quá trình đóng, SĐT</td>
+            <td class="table__num"><strong>3</strong></td>
+            <td class="t-small">CV 884/STTTT-CNTT ngày 03/03/2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid grid--2">
+      <div class="field" style="margin:0">
+        <label class="field__label">Căn cứ phê duyệt thay đổi <span class="field__req">*</span></label>
+        <input class="input" placeholder="Số và ngày văn bản…">
+      </div>
+      <div class="field" style="margin:0">
+        <label class="field__label">Xem trước tác động</label>
+        <div class="t-small mb-2">Ước tính <strong>1.842</strong> bản ghi vàng sẽ đổi giá trị địa chỉ nếu đưa HT-MOTCUA lên mức 1.</div>
+        <div class="row" style="gap:var(--sp-2)">
+          <button class="btn" data-demo="Chạy xem trước tác động">Xem trước</button>
+          <button class="btn btn--primary" disabled data-demo="Cần căn cứ phê duyệt trước khi áp dụng">Áp dụng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-06-06: Đồng bộ quốc gia ===== -->
+  <div class="card__body hidden" id="sync" data-panel="sync" data-panel-group="mdm">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Lần đồng bộ cuối</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">03/08 15:30</div>
+        <div class="stat__meta"><span class="badge badge--ok">Kết nối OK</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Bản ghi đồng bộ</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">18.420</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Số lệch</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">642</div>
+        <div class="stat__meta">tỷ lệ 3,5%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Ngưỡng cảnh báo</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">5%</div>
+        <div class="stat__meta"><a href="national.html">Kênh NDXP</a></div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div class="t-small"><strong>Lệch 3,5%</strong> — dưới ngưỡng 5%. Vượt ngưỡng → tạm dừng đồng bộ tự động (FR-06-011 E2).</div>
+    </div>
+
+    <div class="toolbar" style="padding-top:0">
+      <select class="select" style="width:auto">
+        <option>Tất cả thuộc tính</option>
+        <option>Địa chỉ thường trú</option>
+        <option>Họ và tên</option>
+        <option>Tình trạng cư trú</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi mức nghiêm trọng</option>
+        <option>Cao</option>
+        <option>Trung bình</option>
+      </select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm btn--primary" data-demo="Áp dụng giá trị quốc gia cho 2 lệch đã chọn">Áp dụng giá trị quốc gia</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:34px"><input type="checkbox" aria-label="Chọn tất cả"></th>
+            <th>Định danh</th><th>Thuộc tính</th>
+            <th>Giá trị địa phương</th><th>Giá trị quốc gia</th>
+            <th>Đề xuất</th><th>Mức</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono">034085001234</td>
+            <td>Địa chỉ thường trú</td>
+            <td class="t-small">12 Nguyễn Thái Học, Trúc Bạch</td>
+            <td class="t-small">Số 12 Nguyễn Thái Học, Ba Đình</td>
+            <td class="t-small">Ưu tiên quốc gia</td>
+            <td><span class="badge badge--warn">TB</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono">001188009901</td>
+            <td>Họ và tên</td>
+            <td>Trần Thị Bình</td>
+            <td>Trần Thị Binh</td>
+            <td class="t-small">Điều tra thủ công</td>
+            <td><span class="badge badge--err">Cao</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Đã chọn 2 / 642 lệch</span>
+      <span class="header__spacer"></span>
+      <span class="t-small"><a href="national.html">Mở cấu hình kết nối quốc gia (PH-14)</a></span>
     </div>
   </div>
 </div>
