@@ -11,25 +11,510 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-01 — Kết nạp hệ thống thành viên.</strong>
+  Minh họa <span class="tag-ph">UI-01-01</span> biểu mẫu đăng ký,
+  <span class="tag-ph">UI-01-02</span> tiến độ hồ sơ,
+  <span class="tag-ph">UI-01-03</span> hàng đợi thẩm định,
+  <span class="tag-ph">UI-01-04</span> thẩm định pháp lý,
+  <span class="tag-ph">UI-01-05</span> danh sách thành viên,
+  <span class="tag-ph">UI-01-06</span> rà soát quyền — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-01-onboarding.md">SRS PH-01</a>.
+  Sau kết nạp: <a href="catalog.html">Danh mục dịch vụ</a> · <a href="iam.html">IAM / danh tính</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Kết nạp hệ thống</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-01</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Quản lý hồ sơ kết nạp HTTT · 18 hồ sơ đang xử lý · 42 thành viên ACTIVE</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Tải mẫu văn bản đề nghị kết nạp">⤓ Mẫu đề nghị</button>
+    <button class="btn btn--primary" data-demo="Cuộn tới biểu mẫu đăng ký kết nạp">＋ Đăng ký kết nạp</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-01</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-01 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="main" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="ho-so">Hồ sơ / Đăng ký</button>
+    <button class="tab" data-tab="tien-do">Tiến độ</button>
+    <button class="tab" data-tab="hang-doi">Hàng đợi thẩm định <span class="tab__count">3</span></button>
+    <button class="tab" data-tab="tham-dinh">Thẩm định</button>
+    <button class="tab" data-tab="thanh-vien">Thành viên</button>
+    <button class="tab" data-tab="ra-soat">Rà soát quyền</button>
+  </div>
+
+  <!-- ===== UI-01-01: Danh sách hồ sơ + Biểu mẫu đăng ký ===== -->
+  <div class="card__body" data-panel="ho-so" data-panel-group="main">
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm mã hồ sơ, tên HTTT…" data-filter="hoso-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: tất cả">Tất cả</button>
+        <button class="btn btn--sm" data-demo="Lọc: DRAFT">Nháp</button>
+        <button class="btn btn--sm" data-demo="Lọc: LEGAL_REVIEW">Thẩm định</button>
+        <button class="btn btn--sm" data-demo="Lọc: RETURNED">Trả bổ sung</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Hiển thị 5 / 18 hồ sơ</span>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table" id="hoso-table">
+        <thead>
+          <tr>
+            <th>Mã hồ sơ</th><th>Hệ thống</th><th>Đơn vị chủ quản</th><th>Nhóm</th>
+            <th>Trạng thái</th><th>Cập nhật</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0042</td>
+            <td class="t-primary">Cổng DVC tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td><span class="badge badge--info badge--plain">Nhóm 2</span></td>
+            <td><span class="badge badge--warn">LEGAL_REVIEW</span></td>
+            <td class="t-small t-muted">02/08/2026</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở thẩm định HS-KN-2026-0042">Thẩm định</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0038</td>
+            <td class="t-primary">QLVB liên thông</td>
+            <td class="t-small">VP UBND tỉnh</td>
+            <td><span class="badge badge--info badge--plain">Nhóm 1</span></td>
+            <td><span class="badge badge--err">RETURNED</span></td>
+            <td class="t-small t-muted">28/07/2026</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Bổ sung hồ sơ HS-KN-2026-0038">Bổ sung</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0031</td>
+            <td class="t-primary">HT Một cửa điện tử</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--muted badge--plain">Nhóm 3</span></td>
+            <td><span class="badge badge--muted">DRAFT</span></td>
+            <td class="t-small t-muted">01/08/2026</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tiếp tục điền HS-KN-2026-0031">Tiếp tục</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0027</td>
+            <td class="t-primary">CSDL cán bộ CC</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--info badge--plain">Nhóm 2</span></td>
+            <td><span class="badge badge--ok">APPROVED</span></td>
+            <td class="t-small t-muted">15/07/2026</td>
+            <td class="table__actions"><a class="btn btn--sm" href="iam.html">Bàn giao</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0019</td>
+            <td class="t-primary">Kho dữ liệu tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td><span class="badge badge--info badge--plain">Nhóm 1</span></td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="t-small t-muted">10/06/2026</td>
+            <td class="table__actions"><a class="btn btn--sm" href="catalog.html">Danh mục</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+    <div class="card__title mb-2" style="font-size:var(--fs-md)">Biểu mẫu đăng ký kết nạp <span class="tag-ph">UI-01-01</span></div>
+    <p class="t-small t-muted mb-4">4 bước: Thông tin chung → Năng lực kỹ thuật → Dữ liệu đề nghị → Xác nhận · tự lưu nháp mỗi 30 giây</p>
+
+    <div class="row mb-4" style="gap:var(--sp-2)">
+      <span class="badge badge--ok">1. Thông tin chung</span>
+      <span class="badge badge--muted">2. Năng lực KT</span>
+      <span class="badge badge--muted">3. Dữ liệu đề nghị</span>
+      <span class="badge badge--muted">4. Xác nhận</span>
+    </div>
+
+    <div class="grid grid--2 mb-4">
+      <div class="field">
+        <label class="field__label">Tên hệ thống thông tin</label>
+        <input class="input" value="Cổng dịch vụ công tỉnh">
+      </div>
+      <div class="field">
+        <label class="field__label">Mã đề xuất</label>
+        <input class="input input--mono" value="CONG-DVC">
+        <div class="field__hint">Dùng làm mã hệ thống khi phê duyệt</div>
+      </div>
+      <div class="field">
+        <label class="field__label">Đơn vị chủ quản</label>
+        <select class="select">
+          <option selected>Sở Thông tin và Truyền thông</option>
+          <option>Sở Nội vụ</option>
+          <option>Văn phòng UBND tỉnh</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label">Người đầu mối kỹ thuật</label>
+        <input class="input" value="Nguyễn Văn A · kythuat@sotttt.gov.vn">
+      </div>
+      <div class="field">
+        <label class="field__label">Nhóm hệ thống (đề xuất)</label>
+        <select class="select">
+          <option>Nhóm 1 — Hệ thống nền tảng</option>
+          <option selected>Nhóm 2 — Hệ thống chuyên ngành</option>
+          <option>Nhóm 3 — Hệ thống hỗ trợ</option>
+          <option>Nhóm 4 — Sắp thay thế</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label">Endpoint kiểm thử</label>
+        <input class="input input--mono" value="https://dvc-test.tinh.gov.vn/api">
+      </div>
+    </div>
+
+    <div class="field mb-4">
+      <label class="field__label">Mô tả nghiệp vụ</label>
+      <textarea class="input" rows="2">Cổng tiếp nhận và trả kết quả TTHC điện tử; cần tra cứu CSDLQG Dân cư và đồng bộ trạng thái hồ sơ.</textarea>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Dữ liệu đề nghị khai thác</div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Loại dữ liệu</th><th>Phạm vi</th><th>Căn cứ pháp lý</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Thông tin công dân</td>
+            <td class="t-small">Họ tên, số ĐD, ngày sinh</td>
+            <td class="t-small">NĐ 137/2015/NĐ-CP</td>
+            <td><button class="btn btn--sm" data-demo="Xóa dòng dữ liệu">Xóa</button></td>
+          </tr>
+          <tr style="background:var(--c-err-50)">
+            <td>Thông tin thửa đất</td>
+            <td class="t-small">Toàn bộ thuộc tỉnh</td>
+            <td class="t-small" style="color:var(--c-err-700)">— thiếu căn cứ —</td>
+            <td><button class="btn btn--sm" data-demo="Xóa dòng dữ liệu">Xóa</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn--sm mb-4" data-demo="Thêm dòng dữ liệu đề nghị">＋ Thêm dòng</button>
+
+    <div class="field mb-4">
+      <label class="field__label">Tài liệu đính kèm</label>
+      <div class="card" style="background:var(--c-surface-2);border-style:dashed">
+        <div class="card__body" style="padding:var(--sp-4);text-align:center">
+          <div class="t-small t-muted mb-2">Kéo thả văn bản đề nghị (PDF, DOCX · tối đa 20MB)</div>
+          <button class="btn btn--sm" data-demo="Chọn tệp đính kèm">Chọn tệp</button>
+          <div class="t-small mt-2">📎 Congvan-de-nghi-ket-nap.pdf · 1,2 MB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Chưa đủ điều kiện nộp</div>
+        <div class="t-small">Dòng «Thông tin thửa đất» thiếu căn cứ pháp lý (quy tắc UI-01-01 #1). Nút Nộp sẽ bật sau khi kiểm tra hợp lệ đạt.</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn" data-demo="Kiểm tra hợp lệ hồ sơ (chưa nộp)">Kiểm tra hợp lệ</button>
+      <button class="btn" data-demo="Lưu nháp hồ sơ">Lưu tạm</button>
+      <button class="btn btn--primary" disabled title="Chỉ bật khi kiểm tra hợp lệ đạt">Nộp hồ sơ</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-01-02: Tiến độ ===== -->
+  <div class="card__body hidden" data-panel="tien-do" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Theo dõi tiến độ · HS-KN-2026-0042 <span class="tag-ph">UI-01-02</span></div>
+    <div class="flow mb-5">
+      <div class="flow__node flow__node--start"><span class="flow__node-label">DRAFT</span><span class="flow__node-sub">15/07</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node"><span class="flow__node-label">SUBMITTED</span><span class="flow__node-sub">20/07</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="border-color:var(--c-warn-500)"><span class="flow__node-label">LEGAL_REVIEW</span><span class="flow__node-sub">đang chờ</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="opacity:.45"><span class="flow__node-label">TECH_REVIEW</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="opacity:.45"><span class="flow__node-label">APPROVED</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--end" style="opacity:.45"><span class="flow__node-label">ACTIVE</span></div>
+    </div>
+    <div class="alert alert--info">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Đang ở bước thẩm định pháp lý</div>
+        <div class="t-small">Cán bộ pháp chế đánh giá từng mục dữ liệu. Thời hạn mặc định 10 ngày làm việc. Liên hệ: phapche@tinh.gov.vn</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-01-03: Hàng đợi thẩm định ===== -->
+  <div class="card__body hidden" data-panel="hang-doi" data-panel-group="main">
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Hàng đợi thẩm định pháp lý <span class="tag-ph">UI-01-03</span> · badge 3</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Mã</th><th>Hệ thống</th><th>Đơn vị</th><th>Số mục dữ liệu</th><th>Ngày nộp</th><th class="table__actions">Thao tác</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0042</td>
+            <td class="t-primary">Cổng DVC tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="table__num">4</td>
+            <td class="t-small">20/07/2026</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở màn thẩm định">Mở thẩm định</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0045</td>
+            <td class="t-primary">HT Địa chính số</td>
+            <td class="t-small">Sở TN&amp;MT</td>
+            <td class="table__num">6</td>
+            <td class="t-small">01/08/2026</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở màn thẩm định">Mở thẩm định</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">HS-KN-2026-0048</td>
+            <td class="t-primary">Cổng BHXH tỉnh</td>
+            <td class="t-small">BHXH tỉnh</td>
+            <td class="table__num">3</td>
+            <td class="t-small">02/08/2026</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở màn thẩm định">Mở thẩm định</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-01-04: Thẩm định pháp lý ===== -->
+  <div class="card__body hidden" data-panel="tham-dinh" data-panel-group="main">
+    <div class="row row--between mb-3">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Thẩm định pháp lý · HS-KN-2026-0042 <span class="tag-ph">UI-01-04</span></div>
+        <p class="t-small t-muted mb-0">Cổng DVC tỉnh · Sở TT&amp;TT · đã đánh giá 2 / 4 mục</p>
+      </div>
+      <button class="btn btn--sm" data-demo="Xem Congvan-de-nghi-ket-nap.pdf">📄 Xem tài liệu</button>
+    </div>
+
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Loại dữ liệu</th><th>Phạm vi đề nghị</th><th>Căn cứ</th><th>Kết luận</th><th>Ý kiến</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Thông tin công dân</td>
+            <td class="t-small">Họ tên, số ĐD, ngày sinh</td>
+            <td class="t-small">NĐ 137/2015</td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn--sm is-active" data-demo="Chấp thuận mục">Chấp thuận</button>
+                <button class="btn btn--sm" data-demo="Thu hẹp phạm vi">Thu hẹp</button>
+                <button class="btn btn--sm" data-demo="Từ chối mục">Từ chối</button>
+              </div>
+            </td>
+            <td class="t-small t-muted">—</td>
+          </tr>
+          <tr>
+            <td>Trạng thái hồ sơ TTHC</td>
+            <td class="t-small">Toàn tỉnh</td>
+            <td class="t-small">NĐ 61/2018</td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn--sm" data-demo="Chấp thuận mục">Chấp thuận</button>
+                <button class="btn btn--sm is-active" data-demo="Thu hẹp phạm vi">Thu hẹp</button>
+                <button class="btn btn--sm" data-demo="Từ chối mục">Từ chối</button>
+              </div>
+            </td>
+            <td><input class="input" style="min-width:160px" value="Chỉ hồ sơ đã tiếp nhận"></td>
+          </tr>
+          <tr>
+            <td>Thông tin thửa đất</td>
+            <td class="t-small">Toàn bộ thuộc tỉnh</td>
+            <td class="t-small">—</td>
+            <td><span class="badge badge--muted">Chưa đánh giá</span></td>
+            <td class="t-small t-muted">—</td>
+          </tr>
+          <tr>
+            <td style="color:var(--c-err-700)">Dữ liệu mức mật</td>
+            <td class="t-small">Hồ sơ mật</td>
+            <td class="t-small">Luật Bảo vệ bí mật NN</td>
+            <td>
+              <button class="btn btn--sm" disabled title="Dữ liệu mức mật — không chấp thuận qua kết nạp thường">Chấp thuận</button>
+              <button class="btn btn--sm" data-demo="Từ chối mục mật">Từ chối</button>
+            </td>
+            <td class="t-small t-muted">Nút Chấp thuận bị vô hiệu</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="field mb-4">
+      <label class="field__label">Kết luận tổng hợp / lý do (đạt hoặc không đạt)</label>
+      <textarea class="input" rows="2" placeholder="Nhập lý do khi Thu hẹp / Từ chối / Trả bổ sung…"></textarea>
+      <div class="field__hint"><a href="#">Tra cứu văn bản pháp luật</a> để kiểm chứng căn cứ</div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn--primary" disabled title="Còn mục chưa đánh giá">Hoàn tất thẩm định</button>
+      <button class="btn" data-demo="Trả bổ sung — nêu rõ cần gì">Trả bổ sung</button>
+      <span class="t-small t-muted" style="margin-left:auto">Quy tắc: không hoàn tất khi còn mục chưa đánh giá</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-01-05: Thành viên ACTIVE ===== -->
+  <div class="card__body hidden" data-panel="thanh-vien" data-panel-group="main">
+    <div class="grid grid--4 mb-4">
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">Tổng thành viên</div><div class="stat__value" style="font-size:var(--fs-2xl)">48</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">ACTIVE</div><div class="stat__value" style="font-size:var(--fs-2xl)">42</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">TESTING</div><div class="stat__value" style="font-size:var(--fs-2xl)">4</div></div>
+      <div class="card stat" style="box-shadow:none"><div class="stat__label">SUSPENDED</div><div class="stat__value" style="font-size:var(--fs-2xl)">2</div></div>
+    </div>
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm mã hoặc tên hệ thống…" data-filter="tv-table">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc ACTIVE">ACTIVE</button>
+        <button class="btn btn--sm" data-demo="Lọc cần rà soát">Cần rà soát</button>
+        <button class="btn btn--sm" data-demo="Lọc theo nhóm">Theo nhóm</button>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="tv-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Tên</th><th>Đơn vị</th><th>Nhóm</th><th>Trạng thái</th>
+            <th>Phạm vi quyền</th><th class="table__num">Lượt gọi 30 ngày</th><th>Rà soát</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">CONG-DVC</td>
+            <td class="t-primary">Cổng DVC tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td>2</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="t-small t-mono">cong-dan:read</td>
+            <td class="table__num">642.100</td>
+            <td class="t-small">01/2026</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem hồ sơ CONG-DVC">Xem</button>
+              <a class="btn btn--sm" href="iam.html">Xoay bí mật</a>
+            </td>
+          </tr>
+          <tr style="background:var(--c-warn-50)">
+            <td class="t-mono">QLVB</td>
+            <td class="t-primary">QLVB liên thông</td>
+            <td class="t-small">VP UBND</td>
+            <td>1</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="t-small t-mono">vb:write</td>
+            <td class="table__num">12</td>
+            <td class="t-small" style="color:var(--c-warn-700)">10/2025 · quá hạn</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Tạm ngừng QLVB — yêu cầu lý do">Tạm ngừng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">HT-MOTCUA</td>
+            <td class="t-primary">Một cửa điện tử</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td>2</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="t-small t-mono">hoso:sync</td>
+            <td class="table__num">318.470</td>
+            <td class="t-small">03/2026</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem HT-MOTCUA">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">KHO-DL</td>
+            <td class="t-primary">Kho dữ liệu tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td>1</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="t-small t-mono">catalog:pub</td>
+            <td class="table__num">89.220</td>
+            <td class="t-small">06/2026</td>
+            <td class="table__actions"><a class="btn btn--sm" href="catalog.html">Dịch vụ</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-01-06: Rà soát quyền ===== -->
+  <div class="card__body hidden" data-panel="ra-soat" data-panel-group="main">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Rà soát quyền định kỳ <span class="tag-ph">UI-01-06</span></div>
+        <p class="t-small t-muted mb-0">Kỳ Q2/2026 · phát hiện quyền không dùng hoặc hết căn cứ</p>
+      </div>
+      <div class="field" style="margin:0;min-width:200px">
+        <select class="select">
+          <option selected>Kỳ Q2/2026</option>
+          <option>Kỳ Q1/2026</option>
+          <option>Kỳ Q4/2025</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:34px"><input type="checkbox"></th>
+            <th>Hệ thống</th><th>Phạm vi</th><th class="table__num">Lượt dùng kỳ</th>
+            <th>Căn cứ</th><th>Hiệu lực</th><th>Đề xuất</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono">QLVB</td>
+            <td class="t-mono t-small">vb:archive</td>
+            <td class="table__num">0</td>
+            <td class="t-small">QĐ nội bộ 12/2024</td>
+            <td class="t-small">Còn</td>
+            <td><span class="badge badge--warn">Không dùng trong kỳ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Thu hồi vb:archive — ghi lý do">Thu hồi</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono">CONG-DVC</td>
+            <td class="t-mono t-small">datdai:read</td>
+            <td class="table__num">0</td>
+            <td class="t-small" style="color:var(--c-err-700)">NĐ cũ — hết HL</td>
+            <td class="t-small" style="color:var(--c-err-700)">Hết</td>
+            <td><span class="badge badge--err">Căn cứ hết hiệu lực</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Tạm ngừng ngay datdai:read">Tạm ngừng</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono">HT-MOTCUA</td>
+            <td class="t-mono t-small">hoso:sync</td>
+            <td class="table__num">318.470</td>
+            <td class="t-small">NĐ 61/2018</td>
+            <td class="t-small">Còn</td>
+            <td><span class="badge badge--ok">Giữ</span></td>
+            <td class="table__actions"><span class="t-small t-muted">—</span></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono">BHXH-TINH</td>
+            <td class="t-mono t-small">bhxh:read</td>
+            <td class="table__num">1.200</td>
+            <td class="t-small">TT liên tịch</td>
+            <td class="t-small">Còn</td>
+            <td><span class="badge badge--warn">Đơn vị chưa phản hồi</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Nhắc đơn vị xác nhận">Nhắc</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="row">
+      <button class="btn btn--primary" data-demo="Thu hồi hàng loạt 2 phạm vi đã chọn">Thu hồi đã chọn</button>
+      <button class="btn" data-demo="Gửi danh sách xác nhận cho đơn vị chủ quản">Gửi xác nhận đơn vị</button>
+      <a class="btn" href="iam.html">Mở IAM</a>
     </div>
   </div>
 </div>
