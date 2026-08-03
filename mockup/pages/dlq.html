@@ -11,25 +11,413 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-18 — Vận hành &amp; DLQ.</strong>
+  Minh họa các màn <span class="tag-ph">UI-18-01</span> danh sách,
+  <span class="tag-ph">UI-18-02</span> chi tiết,
+  <span class="tag-ph">UI-18-03</span> phát lại đơn,
+  <span class="tag-ph">UI-18-04</span> phát lại loạt,
+  <span class="tag-ph">UI-18-05</span> bỏ qua,
+  <span class="tag-ph">UI-18-06</span> thống kê — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-18-ops.md">SRS PH-18</a>.
+  Liên kết <a href="routes.html">luồng tích hợp</a> và
+  <a href="monitoring.html">giám sát &amp; truy vết</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Bản tin lỗi</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-18</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Bản tin lỗi (DLQ)</h1>
+    <p class="page-desc">Hàng đợi bản tin thất bại sau hết lượt thử lại — 47 chờ xử lý · ngưỡng cảnh báo 50</p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="monitoring.html">Giám sát PH-13</a>
+    <a class="btn" href="routes.html">Luồng tích hợp</a>
+    <button class="btn btn--primary" data-demo="Làm mới danh sách DLQ">Làm mới</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-18</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình sẽ có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-18 tương ứng.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Chờ xử lý</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">47</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--up">+9 / 1h</span> · gần ngưỡng 50</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Đang phát lại</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">6</div>
+    <div class="stat__meta"><span class="badge badge--info">Job #R-2841</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Bỏ qua 24h</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">11</div>
+    <div class="stat__meta"><span class="t-muted">giữ payload, không xóa</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Độ sâu P95</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">3,4h</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--down">−0,6h</span> so với hôm qua</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="dlq" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="list">Danh sách <span class="tab__count">47</span></button>
+    <button class="tab" data-tab="detail">Chi tiết</button>
+    <button class="tab" data-tab="replay">Phát lại đơn</button>
+    <button class="tab" data-tab="batch">Phát lại loạt</button>
+    <button class="tab" data-tab="skip">Bỏ qua</button>
+    <button class="tab" data-tab="stats">Thống kê</button>
+  </div>
+
+  <!-- ===== UI-18-01: Danh sách ===== -->
+  <div id="list" data-panel="list" data-panel-group="dlq">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="traceId, mã lỗi, route…" data-filter="dlq-table">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Tất cả loại lỗi</option>
+        <option>Tạm thời</option>
+        <option>Đích hỏng</option>
+        <option>Nghiệp vụ</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Tất cả route</option>
+        <option>tra-cuu-cong-dan</option>
+        <option>tra-cuu-thua-dat</option>
+        <option>dong-bo-can-bo</option>
+      </select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm btn--primary" data-demo="Phát lại 3 bản tin đã chọn">Phát lại loạt</button>
+      <button class="btn btn--sm" data-demo="Bỏ qua 3 bản tin đã chọn — cần lý do">Bỏ qua loạt</button>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="dlq-table">
+        <thead>
+          <tr>
+            <th style="width:34px"><input type="checkbox" aria-label="Chọn tất cả"></th>
+            <th>Thời điểm</th><th>Route</th><th>Loại lỗi</th><th>Đích</th>
+            <th class="table__num">Thử</th><th>Tuổi thọ</th><th>traceId</th>
+            <th>Replayable</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">03/08 14:22</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-thua-dat</a></td>
+            <td><span class="badge badge--warn">Đích hỏng</span></td>
+            <td class="t-small t-muted">CSDL-DATDAI</td>
+            <td class="table__num">3/3</td>
+            <td>3h 12m</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=7a3c9f2e">7a3c9f2e</a></td>
+            <td><span class="badge badge--ok badge--plain">Có</span></td>
+            <td><span class="badge badge--warn">Chờ xử lý</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#detail">Xem</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">03/08 13:58</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">dong-bo-can-bo</a></td>
+            <td><span class="badge badge--err">Đích hỏng</span></td>
+            <td class="t-small t-muted">KHO-DULIEU</td>
+            <td class="table__num">3/3</td>
+            <td>3h 36m</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=b91e04aa">b91e04aa</a></td>
+            <td><span class="badge badge--ok badge--plain">Có</span></td>
+            <td><span class="badge badge--warn">Chờ xử lý</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#detail">Xem</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">03/08 12:41</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-cong-dan</a></td>
+            <td><span class="badge badge--info">Tạm thời</span></td>
+            <td class="t-small t-muted">NDXP-DANCU</td>
+            <td class="table__num">3/3</td>
+            <td>4h 53m</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=c0e11d77">c0e11d77</a></td>
+            <td><span class="badge badge--ok badge--plain">Có</span></td>
+            <td><span class="badge badge--info">Đang triage</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#detail">Xem</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">03/08 11:05</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">lien-thong-van-ban</a></td>
+            <td><span class="badge badge--muted">Nghiệp vụ</span></td>
+            <td class="t-small t-muted">QLVB-TINH</td>
+            <td class="table__num">0/0</td>
+            <td>6h 29m</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=f55a82bc">f55a82bc</a></td>
+            <td><span class="badge badge--muted badge--plain">Không</span></td>
+            <td><span class="badge badge--warn">Chờ xử lý</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#detail">Xem</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">02/08 22:18</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">dong-bo-ho-so-tthc</a></td>
+            <td><span class="badge badge--info">Tạm thời</span></td>
+            <td class="t-small t-muted">CONG-DVC</td>
+            <td class="table__num">3/3</td>
+            <td>19h 16m</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=19d4e901">19d4e901</a></td>
+            <td><span class="badge badge--ok badge--plain">Có</span></td>
+            <td><span class="badge badge--ok">Đã phát lại</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#detail">Xem</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>Đã chọn 3 / hiển thị 5 · tổng 47 bản tin</span>
+      <span class="header__spacer"></span>
+      <span class="t-small t-muted">Lỗi nghiệp vụ không phát lại (BR-04-005)</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-18-02: Chi tiết ===== -->
+  <div class="card__body hidden" id="detail" data-panel="detail" data-panel-group="dlq">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">dlq-20260803-142215-0042</div>
+        <p class="t-small t-muted" style="margin:4px 0 0">Route <a class="t-mono" href="routes.html#chi-tiet">tra-cuu-thua-dat</a> ·
+          CONG-DVC → CSDL-DATDAI · attempt 3/3</p>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <a class="btn btn--sm" href="monitoring.html?traceId=7a3c9f2e">Xem trace 7a3c9f2e</a>
+        <a class="btn btn--sm btn--primary" href="#replay">Phát lại</a>
+        <a class="btn btn--sm" href="#skip">Bỏ qua</a>
+      </div>
+    </div>
+
+    <div class="grid grid--3 mb-5">
+      <div>
+        <div class="t-small t-muted mb-2">Metadata</div>
+        <div class="t-small"><strong>traceId:</strong> <span class="t-mono">7a3c9f2e-91ab-4c2d</span></div>
+        <div class="t-small"><strong>errorCategory:</strong> DESTINATION_DOWN</div>
+        <div class="t-small"><strong>HTTP:</strong> 503 Service Unavailable</div>
+        <div class="t-small"><strong>Nhận vào DLQ:</strong> 03/08/2026 14:22:15</div>
+        <div class="t-small"><strong>idempotencyKey:</strong> <span class="t-mono">idemp-thua-dat-88421</span></div>
+      </div>
+      <div>
+        <div class="t-small t-muted mb-2">Khối lỗi</div>
+        <pre class="code" style="margin:0;max-height:140px;overflow:auto">Connection refused: csdl-datdai.internal:8443
+CircuitBreaker OPEN after 50% / 20 calls
+lastCause: java.net.ConnectException</pre>
+      </div>
+      <div>
+        <div class="t-small t-muted mb-2">Gợi ý hành động</div>
+        <div class="alert alert--info" style="margin:0">
+          <span class="alert__icon">ℹ</span>
+          <div>
+            <div class="alert__title">Đích đang phục hồi</div>
+            <div class="t-small">CSDL Đất đai phản hồi 200 từ 15:40. Nên phát lại với payload CURRENT sau khi xác nhận CB đã đóng trên <a href="routes.html#chi-tiet">route</a>.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" data-tabs-group="payload" style="margin:0 0 var(--sp-4);padding:0">
+      <button class="tab is-active" data-tab="orig">Payload gốc</button>
+      <button class="tab" data-tab="curr">Payload hiện tại</button>
+      <button class="tab" data-tab="audit">Audit rút gọn</button>
+    </div>
+    <div data-panel="orig" data-panel-group="payload">
+<pre class="code"><span class="k">{</span>
+  <span class="s">"soTo"</span>: <span class="s">"42"</span>,
+  <span class="s">"soThua"</span>: <span class="s">"187"</span>,
+  <span class="s">"maXa"</span>: <span class="s">"00103"</span>,
+  <span class="s">"maHoSo"</span>: <span class="s">"HS-2026-084421"</span>
+<span class="k">}</span></pre>
+    </div>
+    <div class="hidden" data-panel="curr" data-panel-group="payload">
+<pre class="code"><span class="k">{</span>
+  <span class="s">"soTo"</span>: <span class="s">"42"</span>,
+  <span class="s">"soThua"</span>: <span class="s">"187"</span>,
+  <span class="s">"maXa"</span>: <span class="s">"00103"</span>,
+  <span class="s">"maHoSo"</span>: <span class="s">"HS-2026-084421"</span>,
+  <span class="s">"_enrich"</span>: <span class="k">{</span> <span class="s">"tenXa"</span>: <span class="s">"Phường Trúc Bạch"</span> <span class="k">}</span>
+<span class="k">}</span></pre>
+    </div>
+    <div class="hidden" data-panel="audit" data-panel-group="payload">
+      <div class="t-small">14:22 — ingest DLQ · 14:25 — gán triage (ops.dlq.triage) · chưa có replay/skip</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-18-03: Phát lại đơn ===== -->
+  <div class="card__body hidden" id="replay" data-panel="replay" data-panel-group="dlq">
+    <div class="card" style="max-width:560px;box-shadow:none;border:1px solid var(--c-border)">
+      <div class="card__body">
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Xác nhận phát lại đơn</div>
+        <p class="t-small t-muted mb-4">dlq-20260803-142215-0042 · route <span class="t-mono">tra-cuu-thua-dat</span></p>
+        <div class="field">
+          <label class="field__label">Lý do phát lại <span class="field__req">*</span></label>
+          <textarea class="input" rows="3" placeholder="Tối thiểu 20 ký tự…">CSDL Đất đai đã phục hồi lúc 15:40; CB đóng; phát lại sau kiểm tra health.</textarea>
+          <div class="field__hint">Bắt buộc ≥ 20 ký tự — ghi vào audit</div>
+        </div>
+        <div class="field">
+          <label class="field__label">Phiên bản payload</label>
+          <label class="check"><input type="radio" name="payloadVer" checked> <span>ORIGINAL — payload lúc vào DLQ</span></label>
+          <label class="check"><input type="radio" name="payloadVer"> <span>CURRENT — payload đã làm giàu / chuẩn hóa</span></label>
+        </div>
+        <div class="field">
+          <label class="field__label">idempotencyKey</label>
+          <input class="input input--mono" readonly value="idemp-thua-dat-88421">
+          <div class="field__hint">Giữ nguyên để đích chống trùng (FR-18-009)</div>
+        </div>
+        <div class="row">
+          <button class="btn btn--primary" data-demo="Gửi lệnh phát lại — HTTP 202">Xác nhận phát lại</button>
+          <a class="btn" href="#detail">Hủy</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-18-04: Phát lại hàng loạt ===== -->
+  <div class="card__body hidden" id="batch" data-panel="batch" data-panel-group="dlq">
+    <div class="steps mb-5">
+      <div class="step is-done"><div class="step__bar"></div><div class="step__num">1</div><div class="step__label">Chọn tập</div></div>
+      <div class="step is-done"><div class="step__bar"></div><div class="step__num">2</div><div class="step__label">Giới hạn tốc độ</div></div>
+      <div class="step is-active"><div class="step__bar"></div><div class="step__num">3</div><div class="step__label">Lý do &amp; xác nhận</div></div>
+      <div class="step"><div class="step__bar"></div><div class="step__num">4</div><div class="step__label">Tiến độ job</div></div>
+    </div>
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="field">
+          <label class="field__label">Tập đã chọn</label>
+          <div class="t-small">18 bản tin · lọc <span class="badge badge--warn">Đích hỏng</span> · route <span class="t-mono">tra-cuu-thua-dat</span></div>
+        </div>
+        <div class="field">
+          <label class="field__label">rateLimit (bản tin/phút)</label>
+          <input class="input" type="number" value="30">
+        </div>
+        <div class="field">
+          <label class="field__label">Lý do loạt <span class="field__req">*</span></label>
+          <textarea class="input" rows="2">Phục hồi CSDL Đất đai — phát lại loạt sau xác nhận CB đóng trên 3 pod.</textarea>
+        </div>
+        <div class="alert alert--warn mb-4">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Xác nhận hai bước</div>
+            <div class="t-small">Sắp phát lại <strong>18</strong> bản tin. Kiểm tra ngắt mạch trên <a href="routes.html">routes</a> trước khi chạy.</div>
+          </div>
+        </div>
+        <button class="btn btn--primary" data-demo="Tạo job phát lại loạt #R-2842">Tạo job phát lại</button>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Job đang chạy #R-2841</div>
+        <div class="row row--between mb-2">
+          <span class="badge badge--info">Running</span>
+          <span class="t-mono t-small">12 / 18 hoàn tất</span>
+        </div>
+        <div class="bar mb-4"><div class="bar__fill bar__fill--ok" style="width:67%"></div></div>
+        <div class="t-small t-muted mb-3">Thành công 11 · thất bại 1 · còn lại 6 · ETA ~2 phút</div>
+        <button class="btn btn--danger btn--sm" data-demo="Dừng job #R-2841 — trạng thái Aborted">Dừng job</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-18-05: Bỏ qua ===== -->
+  <div class="card__body hidden" id="skip" data-panel="skip" data-panel-group="dlq">
+    <div class="card" style="max-width:520px;box-shadow:none;border:1px solid var(--c-border)">
+      <div class="card__body">
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Bỏ qua có lý do</div>
+        <p class="t-small t-muted mb-4">dlq-20260803-110512-0019 · lỗi nghiệp vụ — không replayable</p>
+        <div class="field">
+          <label class="field__label">Mã lý do <span class="field__req">*</span></label>
+          <select class="select">
+            <option>DUPLICATE — trùng bản tin đã xử lý</option>
+            <option>BUSINESS_INVALID — dữ liệu nghiệp vụ không hợp lệ</option>
+            <option>OBSOLETE — hồ sơ đã hủy / hết hiệu lực</option>
+            <option>OTHER — lý do khác (bắt buộc mô tả)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field__label">Mô tả</label>
+          <textarea class="input" rows="3" placeholder="Với OTHER: bắt buộc mô tả chi tiết…">Mã hồ sơ HS-2025-99102 đã bị hủy theo QĐ 184/QĐ-UBND; không cần đồng bộ trạng thái.</textarea>
+        </div>
+        <div class="alert alert--warn mb-4">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Không xóa payload</div>
+            <div class="t-small">Bỏ qua chỉ đóng trạng thái xử lý; payload và audit vẫn giữ để kiểm tra sau.</div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn btn--danger" data-demo="Bỏ qua bản tin — ghi audit ngay">Xác nhận bỏ qua</button>
+          <a class="btn" href="#list">Hủy</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-18-06: Thống kê ===== -->
+  <div class="card__body hidden" id="stats" data-panel="stats" data-panel-group="dlq">
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ phát lại thành công 7 ngày</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">91,4%</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tuổi thọ P95</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">3,4h</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Cảnh báo gần đây</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">2</div>
+        <div class="stat__meta"><a href="monitoring.html">Mở PH-13</a></div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Độ sâu theo route</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Route</th><th class="table__num">Độ sâu</th><th class="table__num">24h vào</th>
+            <th class="table__num">Phát lại</th><th class="table__num">Bỏ qua</th><th>P95 tuổi thọ</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono"><a href="routes.html#chi-tiet">tra-cuu-thua-dat</a></td>
+            <td class="table__num" style="color:var(--c-warn-700);font-weight:600">28</td>
+            <td class="table__num">41</td><td class="table__num">9</td><td class="table__num">2</td>
+            <td>4,1h</td>
+            <td><a class="btn btn--sm" href="#list" data-demo="Lọc danh sách theo tra-cuu-thua-dat">Lọc</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono"><a href="routes.html#chi-tiet">dong-bo-can-bo</a></td>
+            <td class="table__num" style="color:var(--c-err-700);font-weight:600">12</td>
+            <td class="table__num">12</td><td class="table__num">0</td><td class="table__num">0</td>
+            <td>18h</td>
+            <td><a class="btn btn--sm" href="#list" data-demo="Lọc danh sách theo dong-bo-can-bo">Lọc</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono"><a href="routes.html#chi-tiet">tra-cuu-cong-dan</a></td>
+            <td class="table__num">5</td>
+            <td class="table__num">8</td><td class="table__num">6</td><td class="table__num">1</td>
+            <td>1,2h</td>
+            <td><a class="btn btn--sm" href="#list" data-demo="Lọc danh sách theo tra-cuu-cong-dan">Lọc</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono"><a href="routes.html#chi-tiet">lien-thong-van-ban</a></td>
+            <td class="table__num">2</td>
+            <td class="table__num">3</td><td class="table__num">0</td><td class="table__num">8</td>
+            <td>0,8h</td>
+            <td><a class="btn btn--sm" href="#list" data-demo="Lọc danh sách theo lien-thong-van-ban">Lọc</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--err mt-5" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Độ sâu toàn cục 47 — gần ngưỡng 50</div>
+        <div class="t-small">Cảnh báo từ PH-13 lúc 16:02. Ưu tiên xử lý <span class="t-mono">tra-cuu-thua-dat</span> và <span class="t-mono">dong-bo-can-bo</span>.</div>
+      </div>
     </div>
   </div>
 </div>
