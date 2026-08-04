@@ -27,12 +27,12 @@
 ## 1. Nguyên tắc bắt buộc cho cả ba màn
 
 - [x] **N-1.** Không dữ liệu giả trên đường chính. Stub chỉ sau cờ `VITE_*_STUB`, mặc định `false`.
-- [ ] **N-2.** RBAC deny-by-default: FE ẩn/khóa theo [SRS-19](../07-srs/SRS-19-rbac-matrix.md), BE `@PreAuthorize` — **FE không phải chốt chặn**.
+- [x] **N-2.** RBAC deny-by-default: FE ẩn/khóa theo [SRS-19](../07-srs/SRS-19-rbac-matrix.md), BE `@PreAuthorize` — **FE không phải chốt chặn**.
 - [x] **N-3.** Không secret trên UI/log/node designer (FR-04-032).
 - [ ] **N-4.** Màu/khoảng cách chỉ dùng token (`theme-mockup/tokens.css`), không hardcode hex.
 - [ ] **N-5.** Mọi thay đổi hợp đồng → cập nhật `contracts/openapi/*` + typegen trước khi code FE.
 - [x] **N-6.** Trạng thái rỗng / đang tải / lỗi có giao diện riêng, không để bảng trắng.
-- [ ] **N-7.** Mọi bảng: phân trang, sắp xếp, lọc **phía máy chủ** (cursor theo `libs/common-java`), không lọc toàn bộ ở FE.
+- [x] **N-7.** Mọi bảng: phân trang, sắp xếp, lọc **phía máy chủ** (cursor theo `libs/common-java`), không lọc toàn bộ ở FE.
 
 ---
 
@@ -147,35 +147,35 @@
 
 ### C1. Hồ sơ & quy trình
 
-- [ ] **C1-1.** Biểu mẫu nhiều bước theo FR-01-001/003: thông tin đơn vị · căn cứ pháp lý · hồ sơ năng lực kỹ thuật · đầu mối liên hệ · dịch vụ đề nghị dùng.
-- [ ] **C1-2.** Lưu nháp từng bước, quay lại sửa, không mất dữ liệu khi tải lại trang.
+- [x] **C1-1.** Biểu mẫu nhiều bước theo FR-01-001/003: thông tin đơn vị · căn cứ pháp lý · hồ sơ năng lực kỹ thuật · đầu mối liên hệ · dịch vụ đề nghị dùng.
+- [x] **C1-2.** Lưu nháp từng bước, quay lại sửa, không mất dữ liệu khi tải lại trang.
 - [ ] **C1-3.** Đính kèm tệp (quyết định, phương án kỹ thuật): kiểm kiểu/kích thước, quét mã độc trước khi nhận, lưu vào object storage (SeaweedFS theo ADR-020).
-- [ ] **C1-4.** Kiểm tra hợp lệ tự động FR-01-002: trùng mã hệ thống, thiếu trường, sai định dạng — hiện lỗi theo từng bước.
-- [ ] **C1-5.** Thẩm định pháp lý FR-01-004 và kỹ thuật FR-01-005 là **hai bước riêng**, mỗi bước có người phụ trách, ý kiến, kết luận.
-- [ ] **C1-6.** Phê duyệt FR-01-006: bốn mắt, ghi lý do khi từ chối, không tự duyệt hồ sơ mình nộp.
-- [ ] **C1-7.** Theo dõi tiến độ FR-01-007: dòng thời gian trạng thái + người thực hiện + mốc thời gian.
+- [x] **C1-4.** Kiểm tra hợp lệ tự động FR-01-002: trùng mã hệ thống, thiếu trường, sai định dạng — hiện lỗi theo từng bước.
+- [x] **C1-5.** Thẩm định pháp lý FR-01-004 và kỹ thuật FR-01-005 là **hai bước riêng**, mỗi bước có người phụ trách, ý kiến, kết luận.
+- [x] **C1-6.** Phê duyệt FR-01-006: bốn mắt, ghi lý do khi từ chối, không tự duyệt hồ sơ mình nộp.
+- [x] **C1-7.** Theo dõi tiến độ FR-01-007: dòng thời gian trạng thái + người thực hiện + mốc thời gian.
 
 ### C2. Danh tính kỹ thuật & bàn giao an toàn
 
-- [ ] **C2-1.** Cấp `clientId` qua Keycloak thật (FR-01-008), không sinh chuỗi giả.
-- [ ] **C2-2.** Bàn giao secret FR-01-009 **an toàn**: hiện **một lần**, có đếm ngược, sao chép rồi tự ẩn; **không** ghi vào log/nhật ký duyệt; không gửi qua email trong sản phẩm.
-- [ ] **C2-3.** API danh sách **không bao giờ** trả secret (giữ nguyên, có test khẳng định).
+- [x] **C2-1.** Cấp `clientId` qua Keycloak thật (FR-01-008), không sinh chuỗi giả.
+- [x] **C2-2.** Bàn giao secret FR-01-009 **an toàn**: hiện **một lần**, có đếm ngược, sao chép rồi tự ẩn; **không** ghi vào log/nhật ký duyệt; không gửi qua email trong sản phẩm.
+- [x] **C2-3.** API danh sách **không bao giờ** trả secret (giữ nguyên, có test khẳng định).
 - [ ] **C2-4.** Kiểm thử kết nối FR-01-010 trước khi kích hoạt: nút “thử kết nối”, hiện kết quả từng bước.
 
 ### C3. Vòng đời thành viên
 
-- [ ] **C3-1.** Tạm ngừng / khôi phục FR-01-011 — có lý do, có hiệu lực tức thì trên gateway.
-- [ ] **C3-2.** Thu hồi kết nạp FR-01-012 — vô hiệu client, giữ nhật ký.
+- [x] **C3-1.** Tạm ngừng / khôi phục FR-01-011 — có lý do, có hiệu lực tức thì trên gateway.
+- [x] **C3-2.** Thu hồi kết nạp FR-01-012 — vô hiệu client, giữ nhật ký.
 - [ ] **C3-3.** Rà soát quyền định kỳ FR-01-013 — danh sách đến hạn, nhắc việc.
-- [ ] **C3-4.** Cập nhật hồ sơ FR-01-014 + danh bạ đầu mối FR-01-015.
+- [x] **C3-4.** Cập nhật hồ sơ FR-01-014 + danh bạ đầu mối FR-01-015.
 
 ### C4. Danh sách & chất lượng
 
-- [ ] **C4-1.** Bảng: tìm kiếm, lọc theo trạng thái/đơn vị, sắp xếp, phân trang **phía máy chủ**.
-- [ ] **C4-2.** Xem chi tiết hồ sơ dạng trang riêng (không chỉ dòng bảng).
+- [x] **C4-1.** Bảng: tìm kiếm, lọc theo trạng thái/đơn vị, sắp xếp, phân trang **phía máy chủ**.
+- [x] **C4-2.** Xem chi tiết hồ sơ dạng trang riêng (không chỉ dòng bảng).
 - [ ] **C4-3.** Xuất danh sách (CSV/XLSX) theo bộ lọc đang áp.
-- [ ] **C4-4.** RBAC: người nộp chỉ thấy hồ sơ đơn vị mình; `INTEGRATION_REVIEWER` thấy hàng chờ duyệt; kiểm chứng bằng test BE.
-- [ ] **C4-5.** Nhật ký kiểm toán mọi hành vi đổi trạng thái (ai · khi nào · từ đâu).
+- [x] **C4-4.** RBAC: người nộp chỉ thấy hồ sơ đơn vị mình; `INTEGRATION_REVIEWER` thấy hàng chờ duyệt; kiểm chứng bằng test BE.
+- [x] **C4-5.** Nhật ký kiểm toán mọi hành vi đổi trạng thái (ai · khi nào · từ đâu).
 - [ ] **C4-6.** OpenAPI `control-onboarding` nâng lên v1 + typegen; e2e kịch bản đầy đủ nộp→thẩm định→duyệt→cấp danh tính→thử kết nối→kích hoạt.
 
 ---
@@ -255,6 +255,7 @@ Song song an toàn: **A** xong thì **B** và **C** chạy đồng thời (khác
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-05 — checklist sản xuất ba màn; đo hiện trạng catalog 16+36 so với nguồn Kaoto 323+74+252 |
+| 2026-08-04 | **Gói C xong phần lõi** (`184cb8b` BE + `02cad35` FE): thẩm định hai bước, bốn mắt, vòng đời thành viên, nhật ký kiểm toán — 8 AT chạy thật trên Postgres + e2e thin-slice xanh. Còn C1-3 (đính kèm tệp), C3-3 (rà soát định kỳ), C4-3 (xuất CSV) |
 | 2026-08-04 | Round-trip YAML hai chiều + lọc bảng phát hiện — 53 test xanh |
 | 2026-08-04 | Sửa lỗi tham chiếu `kind/name` (`4b0dbe3`) · tô đường chạy thử lên sơ đồ (FR-04-035) — 44 test xanh |
 | 2026-08-04 | **Gói A xong** (`814bb1e`): 751 nút, phân loại theo nhãn gốc, 13 test chốt số lượng. **Gói B một phần** (`ef42681`): pin dữ liệu mẫu, trình soạn biểu thức, chặn secret trên node — 32 test xanh |
