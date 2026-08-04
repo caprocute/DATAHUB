@@ -69,14 +69,14 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       `choice` không vét cạn, tham chiếu bộ chuyển đổi.
 - [x] **G1-5.** `expression.ts`: Camel Simple / JSONPath, xem trước trên mẫu, gợi ý token.
 - [x] **G1-6.** `diff.ts`: so sánh YAML theo dãy con chung dài nhất.
-- [x] **G1-7.** Test lõi ≥ 70 ca, gồm **bốn ca chặn lỗi cũ ở §0**.
+- [ ] **G1-7.** Test lõi ≥ 70 ca, gồm **bốn ca chặn lỗi cũ ở §0**.
 
 ## 4. G2 — D-01 Danh sách luồng
 
-- [x] **G2-1.** Bảng: lọc/tìm/sắp xếp/phân trang **phía máy chủ**.
-- [x] **G2-2.** Cột: mã · tên · trạng thái · phiên bản hiện hành/nháp · `git_commit_ref` ·
+- [ ] **G2-1.** Bảng: lọc/tìm/sắp xếp/phân trang **phía máy chủ**.
+- [ ] **G2-2.** Cột: mã · tên · trạng thái · phiên bản hiện hành/nháp · `git_commit_ref` ·
       nguồn→đích · người sửa cuối · thời điểm.
-- [x] **G2-3.** Thao tác từng dòng: Thiết kế · Chạy thử · Nhật ký · Nhân bản · Đổi tên ·
+- [ ] **G2-3.** Thao tác từng dòng: Thiết kế · Chạy thử · Nhật ký · Nhân bản · Đổi tên ·
       Tạm dừng/Kích hoạt · Xóa nháp (FR-D-002).
 - [x] **G2-4.** Tạo luồng mới: chọn luồng trống hoặc mẫu, kiểm tra trùng mã ngay (FR-D-003).
 - [ ] **G2-5.** Lịch sử phiên bản + so sánh hai phiên bản (FR-D-004).
@@ -90,11 +90,11 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       <1024 hai panel thành ngăn kéo · không cuộn ngang ở khung ngoài.
 - [x] **G3-3.** Bảng thành phần: tab theo loại, lọc nhãn có số đếm, tìm kiếm < 50 ms,
       **ảo hóa danh sách**, huy hiệu mức hỗ trợ, mô tả khi di chuột (FR-D-011).
-- [x] **G3-4.** Canvas: kéo–thả, chèn giữa cạnh, chọn vùng, nhân bản, hoàn tác ≥50 bước,
+- [ ] **G3-4.** Canvas: kéo–thả, chèn giữa cạnh, chọn vùng, nhân bản, hoàn tác ≥50 bước,
       tự sắp xếp, minimap, chặng khóa (FR-D-012).
-- [x] **G3-5.** Trạng thái lưu rõ ràng + tự lưu 30 giây + cảnh báo rời trang + chống ghi
+- [ ] **G3-5.** Trạng thái lưu rõ ràng + tự lưu 30 giây + cảnh báo rời trang + chống ghi
       đè khi hai người cùng sửa (FR-D-013).
-- [x] **G3-6.** Panel kiểm tra và panel YAML thu gọn được, nhớ trạng thái thu gọn.
+- [ ] **G3-6.** Panel kiểm tra và panel YAML thu gọn được, nhớ trạng thái thu gọn.
 
 ## 6. G4 — D-03 Cửa sổ cấu hình chặng
 
@@ -104,20 +104,20 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       ẩn tab rỗng, hiện số trường đã đặt/tổng (FR-D-021).
 - [x] **G4-4.** Mặc định chỉ hiện trường bắt buộc + đã đặt; nút «Hiện tất cả (N)».
 - [x] **G4-5.** **Ô tìm trong trường**, lọc xuyên mọi tab.
-- [x] **G4-6.** Sinh điều khiển theo kiểu thật: `enum`→Select (876 trường), boolean→công tắc,
+- [ ] **G4-6.** Sinh điều khiển theo kiểu thật: `enum`→Select (876 trường), boolean→công tắc,
       số→ô số có biên, duration→số+đơn vị, biểu thức→trình soạn, bí mật→chọn kết nối,
       object/array→bảng khóa–giá trị (FR-D-022).
 - [x] **G4-7.** Mỗi trường hiện tiêu đề + mô tả gốc + mặc định + tên tham số Camel +
       dấu bắt buộc + cảnh báo `deprecated`.
-- [x] **G4-8.** Kiểm tra tại chỗ, tổng lỗi ở chân cửa sổ, huy hiệu đỏ trên node (FR-D-023).
-- [x] **G4-9.** Bản tin mẫu + kế thừa từ chặng trước + xem trước biểu thức (FR-D-024).
+- [ ] **G4-8.** Kiểm tra tại chỗ, tổng lỗi ở chân cửa sổ, huy hiệu đỏ trên node (FR-D-023).
+- [ ] **G4-9.** Bản tin mẫu + kế thừa từ chặng trước + xem trước biểu thức (FR-D-024).
 
 ## 7. G5 — D-04 Chạy thử và D-05 Nhật ký chạy
 
 - [x] **G5-1.** Màn chạy thử riêng: chọn phiên bản, chế độ, bản tin vào, biến môi trường.
 - [ ] **G5-2.** Chặn chạy khi còn lỗi kiểm tra.
 - [x] **G5-3.** Waterfall theo chặng, bấm chặng xem vào/ra (FR-D-030).
-- [x] **G5-4.** Tô đường chạy lên sơ đồ khi quay lại D-02 (FR-D-031).
+- [ ] **G5-4.** Tô đường chạy lên sơ đồ khi quay lại D-02 (FR-D-031).
 - [ ] **G5-5.** So sánh hai lần chạy (FR-D-032).
 - [ ] **G5-6.** **Bảng CSDL mới** `ph04.route_test_run` + `route_test_run_stage`
       (lane L-CTRL) — lưu lịch sử chạy, `traceId`, kết quả từng chặng.
