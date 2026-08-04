@@ -38,19 +38,35 @@ import { emitRouteYaml } from './yaml/emit';
 /** Chặng có nhiều đường ra hợp lệ. Chặng khác chỉ có một đường ra: nối lại là thay đường. */
 const BRANCHING = new Set(['choice', 'multicast', 'loadBalance', 'recipientList']);
 
-const LAID_OUT = autoLayout(INITIAL_NODES, INITIAL_EDGES);
+const DEFAULT_LAID_OUT = autoLayout(INITIAL_NODES, INITIAL_EDGES);
 
 interface Props {
   mode: Mode;
   onDirty: () => void;
   onStatus: (counts: { errors: number; warns: number }) => void;
-  /** WP-24 — đồng bộ YAML DSL ra ngoài để lưu nháp / validate server */
+  /** WP-24 — đồng bộ YAML DSL + graph ra ngoài để lưu nháp / validate server */
   onYamlChange?: (yaml: string) => void;
+  onGraphChange?: (graph: { nodes: StageNode[]; edges: SeqEdge[] }) => void;
+  /** Canvas đã lưu (round-trip); thiếu thì dùng mẫu khung 9 bước */
+  initialNodes?: StageNode[];
+  initialEdges?: SeqEdge[];
+  routeId?: string;
 }
 
-export function Designer({ mode, onDirty, onStatus, onYamlChange }: Props) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<StageNode>(LAID_OUT);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<SeqEdge>(INITIAL_EDGES);
+export function Designer({
+  mode,
+  onDirty,
+  onStatus,
+  onYamlChange,
+  onGraphChange,
+  initialNodes,
+  initialEdges,
+  routeId = ROUTE_ID,
+}: Props) {
+  const startNodes = initialNodes?.length ? initialNodes : DEFAULT_LAID_OUT;
+  const startEdges = initialEdges?.length ? initialEdges : INITIAL_EDGES;
+  const [nodes, setNodes, onNodesChange] = useNodesState<StageNode>(startNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<SeqEdge>(startEdges);
   const [view, setView] = useState<'so-do' | 'van-ban'>('so-do');
   const [configOpen, setConfigOpen] = useState(false);
   const [insertAt, setInsertAt] = useState<{ edgeId: string; at: XYPosition } | null>(null);
@@ -66,8 +82,8 @@ export function Designer({ mode, onDirty, onStatus, onYamlChange }: Props) {
   const findings = useMemo(() => validate(nodes, edges), [nodes, edges]);
   const status = useMemo(() => statusByNode(findings), [findings]);
   const yaml = useMemo(
-    () => emitRouteYaml(nodes, edges, { routeId: ROUTE_ID, errorHandler: true }),
-    [nodes, edges],
+    () => emitRouteYaml(nodes, edges, { routeId, errorHandler: true }),
+    [nodes, edges, routeId],
   );
 
   const selected = nodes.find((n) => n.selected);
@@ -91,7 +107,8 @@ export function Designer({ mode, onDirty, onStatus, onYamlChange }: Props) {
 
   useEffect(() => {
     onYamlChange?.(yaml);
-  }, [yaml, onYamlChange]);
+    onGraphChange?.({ nodes, edges });
+  }, [yaml, nodes, edges, onYamlChange, onGraphChange]);
 
   const patchSelected = useCallback(
     (patch: (d: StageData) => StageData) => {
@@ -421,7 +438,7 @@ export function Designer({ mode, onDirty, onStatus, onYamlChange }: Props) {
 
         <div className="grid grid--2 mb-5">
           <FindingsPanel findings={findings} onSelect={selectNode} />
-          <YamlPanel yaml={yaml} routeId={ROUTE_ID} />
+          <YamlPanel yaml={yaml} routeId={routeId} />
         </div>
 
         <p className="t-small t-muted">

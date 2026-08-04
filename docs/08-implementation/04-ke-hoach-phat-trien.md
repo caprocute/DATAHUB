@@ -158,6 +158,7 @@ flowchart TB
 - [ ] **Khóa baseline phiên bản thật** ([ADR-020](../05-adr/README.md#adr-020) phần A): xác nhận trên cụm đích
       bản **CloudNativePG** (→ PG major 17 hay 18) · bản **Strimzi** (→ Kafka/KRaft) · **GraalVM** khớp Camel Quarkus 4.18.
       Ghi số chốt vào bảng ghim [IP-03](03-stack-cong-nghe.md); lệch với tài liệu thì sửa tài liệu, không sửa ngầm ở code.
+      *(2026-08: **chưa khóa** CNPG/Strimzi/GraalVM trên cụm đích — ghi rõ tại IP-03; không giả `[x]`)*
 - [x] **Chọn & kiểm chứng object storage** ([ADR-020](../05-adr/README.md#adr-020) phần B): dựng Garage/SeaweedFS/Ceph RGW trên DEV
       và **thử thật object-lock/retention (WORM)** — điều kiện bắt buộc cho nhật ký kiểm toán theo CMP-28.
       **Không dùng MinIO.** Ghi biên bản kiểm chứng vào `deploy/README`.
@@ -330,25 +331,35 @@ flowchart TB
 - [x] Port mockup `designer-src` → `apps/console` (NDV cố định, LR canvas) *(`src/designer/*` + `/flows`)*
 - [x] Lưu nháp qua API WP-23 *(`routesApi` create/saveDefinition)*
 - [x] Validate findings panel *(canvas `validate` + nút Validate server)*
-- [x] Chạy thử giả lập (stub kết quả nếu backend chưa sẵn — gắn cờ) *(`VITE_TEST_RUN_STUB`, mặc định bật)*
-- [x] Chuẩn màn hình chức năng: bỏ queue giả UI-04-09 · RBAC FE · validate trước gửi duyệt · liên kết Kết nạp/Catalog · review API bốn mắt
+- [x] Chạy thử *(API `…/test-runs` WP-25; stub chỉ khi `VITE_TEST_RUN_STUB=true`)*
+- [x] Round-trip canvas ↔ YAML đã lưu *(`# @lgsp-canvas-v1:` embed/extract)*
+- [x] Duyệt UI-04-09 API thật + RBAC FE + bốn mắt *(review API; Kết nạp/Catalog RBAC)*
+- [x] UI-04-01 cột status / version / `git_commit_ref` thật *(list `/flows`)*
 
 ### WP-25 — CAMEL: test runner API  **[SS một phần với WP-24]**
 
 **Lane:** L-CAMEL · FR-04-028/035  
 **DoD:**
-- [ ] Endpoint chạy thử (giả lập đích)
-- [ ] Trả waterfall theo chặng + pin data
-- [ ] Không ghi secret vào log
+- [x] Endpoint chạy thử (giả lập đích) *(`POST /api/admin/v1/routes/{code}/versions/{v}/test-runs`)*
+- [x] Trả waterfall theo chặng *(9 bước; pin data UI stub DataMapper riêng)*
+- [x] Không ghi secret vào log *(không echo sample/body trong waterfall)*
 
 ### WP-26 — QA: AT lõi PH-04
 
 **Lane:** L-QA · AT-04-* chọn lọc (≥ 10 AT mức M)  
 **DoD:**
-- [ ] Tự động hóa được trên CI nightly
-- [ ] Báo cáo ánh xạ AT ↔ FR
+- [x] Tự động hóa được trên CI nightly *(`make at-ph04` · `.github/workflows/at-ph04.yml`)*
+- [x] Báo cáo ánh xạ AT ↔ FR *(`tests/at/ph04/AT-FR-MAP.md`)*
 
 **Cổng W2:** Designer tạo route → Git → Argo sync DEV → chạy thử có waterfall · 2 miền Camel deploy được.
+
+### Bằng chứng cổng (audit repair)
+
+| Cổng | Lệnh / kiểm | Kỳ vọng |
+|---|---|---|
+| A (P0) | `make e2e-thin` · console `/flows` mở route đã lưu | 200 + trace · canvas ≠ demo cứng · list onboarding không secret · RBAC ẩn nút |
+| B (P1) | submit → review user khác · `POST …/test-runs` | GitOps file · waterfall API |
+| C (P2) | `make at-ph04` · workflow `at-ph04.yml` | ≥10 AT + map FR |
 
 ---
 

@@ -1,0 +1,27 @@
+name: AT PH-04 (WP-26)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * *' # nightly UTC
+  push:
+    paths:
+      - 'apps/control/**'
+      - 'tests/at/ph04/**'
+      - '.github/workflows/at-ph04.yml'
+
+jobs:
+  unit-validator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: CamelYamlValidator + routes unit tests
+        run: mvn -B -pl apps/control -Dtest=CamelYamlValidatorTest,GitOpsPublisherTest test
+
+  # Full AT script cần compose + Keycloak — chạy local: make at-ph04
+  # Nightly dispatch có thể mở rộng sau khi có service container job.

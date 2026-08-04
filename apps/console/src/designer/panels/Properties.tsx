@@ -240,7 +240,7 @@ export function NodeConfigModal({
       </p>
       <p className="t-small t-muted">
         {entry?.description ??
-          'Mô tả đầy đủ lấy từ catalog Camel khi triển khai. Bản mockup chỉ hiển thị mã thành phần và cú pháp URI.'}
+          'Mô tả lấy từ catalog Camel subset trong console; URI/tham số theo schema thành phần.'}
       </p>
       {entry?.syntax && (
         <p className="t-small t-mono" style={{ marginBottom: 0 }}>

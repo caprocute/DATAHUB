@@ -1,6 +1,7 @@
 import { Button, Form, Input, Space, Table, Typography, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../api/client'
+import { useRoles } from '../auth/useRoles'
 
 type Application = {
   id: string
@@ -9,11 +10,14 @@ type Application = {
   ownerOrg: string
   status: string
   clientId?: string | null
+  clientSecretSealed?: string | null
 }
 
 export function OnboardingPage() {
+  const { canReview } = useRoles()
   const [items, setItems] = useState<Application[]>([])
   const [loading, setLoading] = useState(false)
+  const [lastSecret, setLastSecret] = useState<string | null>(null)
 
   async function refresh() {
     setLoading(true)
@@ -35,8 +39,14 @@ export function OnboardingPage() {
     <div className="page-card">
       <Typography.Title level={3}>Kết nạp hệ thống</Typography.Title>
       <Typography.Paragraph type="secondary">
-        PH-01 thin-slice — nộp hồ sơ và phê duyệt (role INTEGRATION_REVIEWER).
+        PH-01 — nộp hồ sơ; duyệt cần <code>INTEGRATION_REVIEWER</code>. List API không trả secret.
       </Typography.Paragraph>
+
+      {lastSecret && (
+        <Typography.Paragraph type="warning">
+          Secret one-shot (chỉ hiện sau duyệt lần này): <Typography.Text code>{lastSecret}</Typography.Text>
+        </Typography.Paragraph>
+      )}
 
       <Form
         layout="vertical"
@@ -78,13 +88,16 @@ export function OnboardingPage() {
           {
             title: 'Thao tác',
             render: (_, row) =>
-              row.status === 'SUBMITTED' ? (
+              row.status === 'SUBMITTED' && canReview ? (
                 <Space>
                   <Button
                     size="small"
                     onClick={async () => {
                       try {
-                        await apiPost(`/onboarding/applications/${row.id}/approve`)
+                        const approved = await apiPost<Application>(
+                          `/onboarding/applications/${row.id}/approve`,
+                        )
+                        setLastSecret(approved.clientSecretSealed ?? null)
                         message.success('Đã duyệt')
                         await refresh()
                       } catch (e) {
@@ -95,6 +108,8 @@ export function OnboardingPage() {
                     Duyệt
                   </Button>
                 </Space>
+              ) : row.status === 'SUBMITTED' && !canReview ? (
+                <Typography.Text type="secondary">Cần REVIEWER</Typography.Text>
               ) : null,
           },
         ]}

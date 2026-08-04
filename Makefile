@@ -1,4 +1,4 @@
-.PHONY: help up-dev down-dev ps logs build-java test-java build-camel test-camel run-control run-adapter run-camel run-camel-datdai console-dev typegen test-opa e2e-thin ci-local
+.PHONY: help up-dev down-dev ps logs build-java test-java build-camel test-camel run-control run-adapter run-camel run-camel-datdai console-dev typegen test-opa e2e-thin at-ph04 ci-local
 
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 COMPOSE := docker compose --env-file $(ROOT)/.env -f $(ROOT)/deploy/compose/docker-compose.yml
@@ -21,6 +21,7 @@ help:
 	@echo "  make console-dev  - Vite console"
 	@echo "  make typegen      - OpenAPI → TS types"
 	@echo "  make e2e-thin     - WP-16 thin-slice script"
+	@echo "  make at-ph04      - WP-26 AT lõi PH-04 (≥10)"
 	@echo "  make test-opa     - opa test (nếu có opa CLI)"
 	@echo "  make ci-local     - Gate A tối thiểu"
 
@@ -72,6 +73,9 @@ run-camel-datdai:
 
 e2e-thin:
 	bash $(ROOT)/tests/e2e/thin-slice.sh
+
+at-ph04:
+	bash $(ROOT)/tests/at/ph04/run.sh
 
 console-dev:
 	cd $(ROOT)/apps/console && npm install && npm run dev

@@ -36,9 +36,10 @@ mockup/tools/.limit-state
 coverage/
 *.log
 
-# Artifact DEV sinh bởi E2E / smoke (không commit)
-apps/control/deploy/apisix/routes/tra-cuu-E2E_*.yaml
+# Artifact DEV sinh bởi E2E / smoke / AT (không commit)
+deploy/apisix/routes/tra-cuu-E2E_*.yaml
 routes/demo-wp23-*/
+routes/at-*/
 
 # OS / IDE
 .project

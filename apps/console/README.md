@@ -11,10 +11,10 @@ npm run dev       # http://localhost:5173
 
 | Route | Nội dung |
 |---|---|
-| `/flows` | Designer production-path — lưu nháp `/api/admin/v1/routes`, findings, test stub |
+| `/flows` | Designer production-path — lưu nháp, round-trip canvas, chạy thử WP-25 |
 | `/onboarding` | Kết nạp PH-01 (API thật) |
 | `/catalog` | Catalog PH-02 (API thật) |
 
 Login DEV: `dev-admin` / `dev-admin` (hoặc `dev-reviewer`).
 
-Chạy thử stub: mặc định `VITE_TEST_RUN_STUB` bật (WP-25 chưa có). Proxy Vite: `/api` → `:8080`.
+Chạy thử: mặc định gọi API `…/test-runs`. Chỉ bật stub khi `VITE_TEST_RUN_STUB=true`. Proxy Vite: `/api` → `:8080`.

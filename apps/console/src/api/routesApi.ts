@@ -10,6 +10,17 @@ export type RouteSummary = {
   targetSystem?: string | null
   currentVersionId?: string | null
   draftVersionNo?: number | null
+  currentVersionNo?: number | null
+  gitCommitRef?: string | null
+}
+
+export type TestRunResult = {
+  routeCode: string
+  versionNo: number
+  mode: string
+  outcome: string
+  durationMs: number
+  waterfall: { stage: string; status: string; durationMs: number; offsetMs: number }[]
 }
 
 export type RouteVersion = {
@@ -63,6 +74,10 @@ export async function getRoute(routeCode: string) {
   return apiAdminGet<RouteSummary>(`/routes/${routeCode}`)
 }
 
+export async function getVersion(routeCode: string, versionNo: number) {
+  return apiAdminGet<RouteVersion>(`/routes/${routeCode}/versions/${versionNo}`)
+}
+
 export async function listPendingReview() {
   return apiAdminGet<{ items: RouteVersion[] }>('/routes/pending-review')
 }
@@ -76,5 +91,12 @@ export async function reviewVersion(
   return apiAdminPost<RouteVersion>(`/routes/${routeCode}/versions/${versionNo}/review`, {
     decision,
     comment,
+  })
+}
+
+export async function runTest(routeCode: string, versionNo: number, mode = 'MOCK') {
+  return apiAdminPost<TestRunResult>(`/routes/${routeCode}/versions/${versionNo}/test-runs`, {
+    mode,
+    sample: { ping: true },
   })
 }

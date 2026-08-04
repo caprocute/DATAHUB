@@ -16,7 +16,8 @@ import vn.lgsp.control.onboarding.api.OnboardingApi;
 @Service
 class OnboardingService implements OnboardingApi {
 
-  private static final RowMapper<ApplicationDto> MAPPER =
+  /** Chi tiết / sau approve — có sealed (one-shot). */
+  private static final RowMapper<ApplicationDto> FULL_MAPPER =
       (rs, i) ->
           new ApplicationDto(
               rs.getObject("id", UUID.class),
@@ -26,6 +27,18 @@ class OnboardingService implements OnboardingApi {
               rs.getString("status"),
               rs.getString("client_id"),
               rs.getString("client_secret_sealed"));
+
+  /** List — không trả secret (ATTT). */
+  private static final RowMapper<ApplicationDto> LIST_MAPPER =
+      (rs, i) ->
+          new ApplicationDto(
+              rs.getObject("id", UUID.class),
+              rs.getString("system_code"),
+              rs.getString("system_name"),
+              rs.getString("owner_org"),
+              rs.getString("status"),
+              rs.getString("client_id"),
+              null);
 
   private final JdbcTemplate jdbc;
   private final OutboxWriter outbox;
@@ -108,7 +121,7 @@ class OnboardingService implements OnboardingApi {
               SELECT id, system_code, system_name, owner_org, status, client_id, client_secret_sealed
               FROM ph01.application WHERE id = ?
               """,
-              MAPPER,
+              FULL_MAPPER,
               id));
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();
@@ -119,10 +132,10 @@ class OnboardingService implements OnboardingApi {
   public List<ApplicationDto> list(int limit) {
     return jdbc.query(
         """
-        SELECT id, system_code, system_name, owner_org, status, client_id, client_secret_sealed
+        SELECT id, system_code, system_name, owner_org, status, client_id
         FROM ph01.application ORDER BY created_at DESC LIMIT ?
         """,
-        MAPPER,
+        LIST_MAPPER,
         Math.min(Math.max(limit, 1), 100));
   }
 

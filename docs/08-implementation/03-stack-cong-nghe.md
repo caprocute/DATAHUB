@@ -205,11 +205,11 @@ Các số dưới đây là **baseline** khi mở pha lập trình; nâng cấp 
 
 **Kiểm chứng trước khi khóa.** Ba số dưới đây phụ thuộc cụm đích, **phải đối chiếu thực tế** chứ không lấy từ tài liệu này:
 
-| Cần xác nhận | Vì sao |
-|---|---|
-| Phiên bản **CloudNativePG** có trên cụm | Quyết định PG major nào dùng được (17 hay 18) |
-| Phiên bản **Strimzi** trên registry nội bộ | Quyết định Kafka major và chế độ KRaft |
-| Bản **GraalVM** khớp Camel Quarkus 4.18 | Build native PROD (ADR-002) |
+| Cần xác nhận | Vì sao | Trạng thái (2026-08) |
+|---|---|---|
+| Phiên bản **CloudNativePG** có trên cụm | Quyết định PG major nào dùng được (17 hay 18) | **Chưa khóa** — DEV dùng Postgres container, chưa CNPG trên cụm đích |
+| Phiên bản **Strimzi** trên registry nội bộ | Quyết định Kafka major và chế độ KRaft | **Chưa khóa** — Kafka optional W0; chưa Strimzi production |
+| Bản **GraalVM** khớp Camel Quarkus 4.18 | Build native PROD (ADR-002) | **Chưa khóa** — DEV/CI chạy JVM; native workflow tách riêng |
 
 ---
 

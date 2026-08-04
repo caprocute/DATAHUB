@@ -11,4 +11,6 @@ public record RouteSummaryDto(
     String sourceSystem,
     String targetSystem,
     UUID currentVersionId,
-    Integer draftVersionNo) {}
+    Integer draftVersionNo,
+    Integer currentVersionNo,
+    String gitCommitRef) {}

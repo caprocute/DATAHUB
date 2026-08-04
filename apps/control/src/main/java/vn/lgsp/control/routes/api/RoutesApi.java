@@ -28,5 +28,8 @@ public interface RoutesApi {
    */
   RouteVersionDto review(String routeCode, int versionNo, RouteReviewRequest request, String actor);
 
+  /** WP-25 — chạy thử giả lập đích; không log secret. */
+  TestRunResultDto testRun(String routeCode, int versionNo, TestRunRequest request);
+
   String moduleStatus();
 }

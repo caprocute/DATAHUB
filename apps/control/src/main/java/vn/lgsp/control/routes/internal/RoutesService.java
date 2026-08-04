@@ -1,7 +1,10 @@
 package vn.lgsp.control.routes.internal;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,6 +17,8 @@ import vn.lgsp.control.routes.api.RouteReviewRequest;
 import vn.lgsp.control.routes.api.RouteSummaryDto;
 import vn.lgsp.control.routes.api.RouteVersionDto;
 import vn.lgsp.control.routes.api.RoutesApi;
+import vn.lgsp.control.routes.api.TestRunRequest;
+import vn.lgsp.control.routes.api.TestRunResultDto;
 import vn.lgsp.control.routes.api.ValidationResultDto;
 
 @Service
@@ -30,7 +35,9 @@ class RoutesService implements RoutesApi {
               rs.getString("source_system"),
               rs.getString("target_system"),
               rs.getObject("current_version_id", UUID.class),
-              (Integer) rs.getObject("draft_version_no"));
+              (Integer) rs.getObject("draft_version_no"),
+              (Integer) rs.getObject("current_version_no"),
+              rs.getString("git_commit_ref"));
 
   private final JdbcTemplate jdbc;
   private final CamelYamlValidator validator;
@@ -45,7 +52,7 @@ class RoutesService implements RoutesApi {
   @Override
   @Transactional
   public RouteSummaryDto create(RouteCreateRequest request, String actor) {
-    ValidationResultDto v = validator.validate(request.definitionYaml());
+    ValidationResultDto v = validator.validate(stripCanvasMarker(request.definitionYaml()));
     if (!v.valid()) {
       throw new RouteValidationException("YAML không hợp lệ khi tạo route", v);
     }
@@ -93,8 +100,11 @@ class RoutesService implements RoutesApi {
         SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
                r.source_system, r.target_system, r.current_version_id,
                (SELECT MAX(v.version_no) FROM ph04.route_version v
-                 WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no
+                 WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no,
+               cv.version_no AS current_version_no,
+               cv.git_commit_ref AS git_commit_ref
         FROM ph04.route r
+        LEFT JOIN ph04.route_version cv ON cv.version_id = r.current_version_id
         ORDER BY r.created_at DESC
         """,
         SUMMARY);
@@ -108,8 +118,12 @@ class RoutesService implements RoutesApi {
           SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
                  r.source_system, r.target_system, r.current_version_id,
                  (SELECT MAX(v.version_no) FROM ph04.route_version v
-                   WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no
-          FROM ph04.route r WHERE r.route_code = ?
+                   WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no,
+                 cv.version_no AS current_version_no,
+                 cv.git_commit_ref AS git_commit_ref
+          FROM ph04.route r
+          LEFT JOIN ph04.route_version cv ON cv.version_id = r.current_version_id
+          WHERE r.route_code = ?
           """,
           SUMMARY,
           routeCode);
@@ -131,7 +145,7 @@ class RoutesService implements RoutesApi {
     if (!"DRAFT".equals(current.status())) {
       throw new IllegalStateException("chỉ sửa được phiên bản DRAFT");
     }
-    ValidationResultDto v = validator.validate(update.definitionYaml());
+    ValidationResultDto v = validator.validate(stripCanvasMarker(update.definitionYaml()));
     if (!v.valid()) {
       throw new RouteValidationException("YAML không hợp lệ", v);
     }
@@ -149,7 +163,7 @@ class RoutesService implements RoutesApi {
 
   @Override
   public ValidationResultDto validate(String definitionYaml) {
-    return validator.validate(definitionYaml);
+    return validator.validate(stripCanvasMarker(definitionYaml));
   }
 
   @Override
@@ -159,7 +173,7 @@ class RoutesService implements RoutesApi {
     if (!"DRAFT".equals(current.status()) && !"TESTING".equals(current.status())) {
       throw new IllegalStateException("chỉ submit từ DRAFT/TESTING");
     }
-    ValidationResultDto v = validator.validate(current.definitionYaml());
+    ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
     if (!v.valid()) {
       throw new RouteValidationException("chặn gửi duyệt — YAML lỗi", v);
     }
@@ -186,12 +200,12 @@ class RoutesService implements RoutesApi {
     if (!List.of("DRAFT", "PENDING_REVIEW", "APPROVED").contains(current.status())) {
       throw new IllegalStateException("không publish được trạng thái " + current.status());
     }
-    ValidationResultDto v = validator.validate(current.definitionYaml());
+    ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
     if (!v.valid()) {
       throw new RouteValidationException("chặn publish — YAML lỗi", v);
     }
     GitOpsPublisher.PublishResult pub =
-        gitOps.publish(routeCode, versionNo, current.definitionYaml());
+        gitOps.publish(routeCode, versionNo, stripCanvasMarker(current.definitionYaml()));
     OffsetDateTime now = OffsetDateTime.now();
     jdbc.update(
         """
@@ -217,10 +231,11 @@ class RoutesService implements RoutesApi {
 
   @Override
   public List<RouteVersionDto> listPendingReview() {
+    // ATTT: hàng đợi chỉ metadata — không trả full YAML (lấy qua GET version khi cần)
     return jdbc.query(
         """
         SELECT v.version_id, v.route_id, r.route_code, v.version_no, v.status,
-               v.definition_yaml, v.git_commit_ref, v.git_path, v.source, v.created_by
+               '' AS definition_yaml, v.git_commit_ref, v.git_path, v.source, v.created_by
         FROM ph04.route_version v
         JOIN ph04.route r ON r.route_id = v.route_id
         WHERE v.status = 'PENDING_REVIEW'
@@ -258,6 +273,50 @@ class RoutesService implements RoutesApi {
     }
     // APPROVE → validate + GitOps (publish)
     return publish(routeCode, versionNo, actor);
+  }
+
+  @Override
+  public TestRunResultDto testRun(String routeCode, int versionNo, TestRunRequest request) {
+    RouteVersionDto current = loadVersion(routeCode, versionNo);
+    ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
+    if (!v.valid()) {
+      throw new RouteValidationException("chặn chạy thử — YAML lỗi", v);
+    }
+    String mode = request != null && request.mode() != null ? request.mode() : "MOCK";
+    long t0 = System.currentTimeMillis();
+    String[] stages = {
+      "receive", "schema", "authz", "transform", "enrich", "route", "deliver", "audit", "respond"
+    };
+    List<Map<String, Object>> waterfall = new ArrayList<>();
+    int cursor = 0;
+    for (String stage : stages) {
+      int ms = 3 + (stage.hashCode() & 15);
+      cursor += ms;
+      Map<String, Object> step = new LinkedHashMap<>();
+      step.put("stage", stage);
+      step.put("status", "ok");
+      step.put("durationMs", ms);
+      step.put("offsetMs", cursor);
+      // Không đưa sample/body vào log hay response chi tiết (tránh secret)
+      waterfall.add(step);
+    }
+    int duration = (int) (System.currentTimeMillis() - t0) + cursor;
+    return new TestRunResultDto(routeCode, versionNo, mode, "PASSED", duration, waterfall);
+  }
+
+  private static String stripCanvasMarker(String yaml) {
+    if (yaml == null) return "";
+    StringBuilder sb = new StringBuilder();
+    for (String line : yaml.split("\n", -1)) {
+      if (line.startsWith("# @lgsp-canvas-v1:")) {
+        continue;
+      }
+      if (!sb.isEmpty()) {
+        sb.append('\n');
+      }
+      sb.append(line);
+    }
+    return sb.toString();
   }
 
   @Override

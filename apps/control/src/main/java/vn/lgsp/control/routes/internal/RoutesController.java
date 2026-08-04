@@ -21,6 +21,8 @@ import vn.lgsp.control.routes.api.RouteReviewRequest;
 import vn.lgsp.control.routes.api.RouteSummaryDto;
 import vn.lgsp.control.routes.api.RouteVersionDto;
 import vn.lgsp.control.routes.api.RoutesApi;
+import vn.lgsp.control.routes.api.TestRunRequest;
+import vn.lgsp.control.routes.api.TestRunResultDto;
 import vn.lgsp.control.routes.api.ValidateRequest;
 import vn.lgsp.control.routes.api.ValidationResultDto;
 
@@ -128,6 +130,19 @@ class RoutesController {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     } catch (IllegalStateException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+    }
+  }
+
+  @PostMapping("/{routeCode}/versions/{versionNo}/test-runs")
+  @PreAuthorize("hasAnyRole('INTEGRATION_DEVELOPER','INTEGRATION_ADMIN','PLATFORM_ADMIN','INTEGRATION_REVIEWER')")
+  TestRunResultDto testRun(
+      @PathVariable("routeCode") String routeCode,
+      @PathVariable("versionNo") int versionNo,
+      @RequestBody(required = false) TestRunRequest body) {
+    try {
+      return routesApi.testRun(routeCode, versionNo, body != null ? body : new TestRunRequest("MOCK", null));
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     }
   }
 

@@ -1,7 +1,7 @@
 import { Button, Input, Select } from 'antd';
 import type { FieldMapping } from '../flow/model';
 
-/** Trường mẫu của bản tin vào (CDM thô sau tiếp nhận) — minh họa DataMapper. */
+/** Trường mẫu CDM — stub UI (chưa nối engine ánh xạ thật). */
 export const SOURCE_FIELDS = [
   '$.soThuTu',
   '$.chuSoHuu.hoTen',
@@ -30,8 +30,8 @@ interface Props {
 }
 
 /**
- * Bảng ánh xạ trường kiểu Kaoto DataMapper — minh họa.
- * Không chạy engine chuyển đổi thật; chỉ ghi `mappings` vào chặng để sinh YAML.
+ * Bảng ánh xạ trường kiểu Kaoto DataMapper — STUB.
+ * Chỉ ghi `mappings` vào chặng để sinh YAML; chưa nối engine CDM.
  */
 export function DataMapperPanel({ mappings, onChange, locked }: Props) {
   const add = () => {
@@ -52,7 +52,9 @@ export function DataMapperPanel({ mappings, onChange, locked }: Props) {
     <div className="mapper">
       <div className="mapper__head">
         <div className="mapper__title">Ánh xạ trường (DataMapper)</div>
-        <div className="t-small t-muted">Kéo cặp nguồn → đích như Kaoto DataMapper. Minh họa — chưa chạy engine thật.</div>
+        <div className="t-small t-muted">
+          STUB — UI ánh xạ trường; runtime CDM chưa nối. Không dùng làm bằng chứng chạy thử.
+        </div>
       </div>
 
       <div className="mapper__cols">
