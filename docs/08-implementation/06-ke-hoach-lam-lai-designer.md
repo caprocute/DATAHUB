@@ -69,7 +69,9 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       `choice` không vét cạn, tham chiếu bộ chuyển đổi.
 - [x] **G1-5.** `expression.ts`: Camel Simple / JSONPath, xem trước trên mẫu, gợi ý token.
 - [x] **G1-6.** `diff.ts`: so sánh YAML theo dãy con chung dài nhất.
-- [ ] **G1-7.** Test lõi ≥ 70 ca, gồm **bốn ca chặn lỗi cũ ở §0**.
+- [x] **G1-7.** Test lõi ≥ 70 ca, gồm **bốn ca chặn lỗi cũ ở §0**. *(122 ca xanh; bộ test
+      bắt được lỗi thật: `choice` một nhánh rơi xuống lối tuần tự làm **mất điều kiện
+      định tuyến** — đã sửa và nghiệm thu lại bằng Camel thật.)*
 
 ## 4. G2 — D-01 Danh sách luồng
 
@@ -150,4 +152,5 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-06 theo quyết định làm lại toàn bộ `src/designer/` |
+| 2026-08-04 | **G1-7 xong**: 122 ca lõi xanh. Bộ test bắt lỗi bộ sinh: chặng rẽ nhánh chỉ có một cạnh ra không sinh khối `choice` nên điều kiện trên cạnh biến mất không báo lỗi — luật định tuyến thành chặng chạy vô điều kiện. Sửa: xét theo `BRANCHING` thay vì đếm cạnh. Nghiệm thu: `Started nghiem-thu-choice-mot-nhanh (direct://mot-nhanh)` trên Camel thật |
 | 2026-08-04 | Xong G0–G6. **Nghiệm thu N-2 đạt**: Camel thật khởi động route do bộ sinh mới tạo (`Started nghiem-thu-br-d-04` · BUILD SUCCESS). **N-3/N-4 đo được**: gõ tìm kiếm 13,3 ms (ngưỡng 50) · ảo hóa 297 mục lọc chỉ dựng 18 phần tử DOM · canvas 68% ở 1920px (ngưỡng 60) · không cuộn ngang ở 1024/1280/1440/1920. **N-5**: cửa sổ cấu hình đúng 75% (960px), chia tab theo nhóm gốc. Bốn lỗi sửa dọc đường: `useBlocker` ngoài data router làm trắng trang · thiếu `@xyflow/react/dist/style.css` · thiếu `AntApp` ở gốc khiến `message.success` ném lỗi · thiếu bảng token nên nền node trong suốt |

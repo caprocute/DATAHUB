@@ -1,5 +1,5 @@
 import { lookupNode, peekSchema, refName } from './catalog';
-import type { SeqEdge, StageData, StageNode } from './model';
+import { BRANCHING, type SeqEdge, type StageData, type StageNode } from './model';
 
 /* ---------- Bộ ghi YAML tối giản ---------- */
 
@@ -212,7 +212,10 @@ function walk(g: Graph, startId: string | null, seen: Set<string>): WalkResult {
 
     const outs = g.outs.get(cur) ?? [];
 
-    if (outs.length > 1) {
+    // Chặng rẽ nhánh phải sinh khối `choice` **kể cả khi mới có một nhánh**: xét theo
+    // số cạnh thì `choice` một nhánh rơi xuống lối tuần tự bên dưới và điều kiện trên
+    // cạnh **biến mất không báo lỗi** — luật định tuyến thành chặng chạy vô điều kiện.
+    if (outs.length > 1 || (BRANCHING.has(refName(node.data.ref)) && outs.length > 0)) {
       const branches = outs.map((e) => ({ edge: e, res: walk(g, e.target, new Set(seen)) }));
       const whens: Val[] = [];
       let otherwise: Val | null = null;
