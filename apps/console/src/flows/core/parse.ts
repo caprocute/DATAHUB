@@ -12,8 +12,8 @@
  * nên một bộ đọc nhỏ đủ dùng và không thêm phụ thuộc vào bundle.
  */
 
-import { lookupNode, toneOfNode } from '../catalog/catalog';
-import { nextId, type SeqEdge, type StageData, type StageNode } from '../flow/model';
+import { lookupNode, toneOfNode } from './catalog';
+import { NODE_H, NODE_W, nextId, type SeqEdge, type StageData, type StageNode } from './model';
 
 /* ---------- Bộ đọc YAML tối giản ---------- */
 
@@ -201,6 +201,9 @@ function buildSteps(steps: YList, ctx: Ctx): { head?: string; tail?: string } {
         id,
         type: 'stage',
         position: { x: 0, y: 0 },
+        width: NODE_W,
+        height: NODE_H,
+        measured: { width: NODE_W, height: NODE_H },
         data: makeStage('choice', 'Định tuyến theo nội dung', {}),
       });
       connect(id);
@@ -257,6 +260,9 @@ function buildSteps(steps: YList, ctx: Ctx): { head?: string; tail?: string } {
       id,
       type: 'stage',
       position: { x: 0, y: 0 },
+      width: NODE_W,
+      height: NODE_H,
+      measured: { width: NODE_W, height: NODE_H },
       data: makeStage(key === 'to' && uri ? guessRef(uri) : key, label, merged, uri),
     });
 
@@ -306,6 +312,9 @@ export function graphFromYaml(src: string): ParsedGraph {
     id: fromId,
     type: 'stage',
     position: { x: 0, y: 0 },
+    width: NODE_W,
+    height: NODE_H,
+    measured: { width: NODE_W, height: NODE_H },
     data: makeStage(entry?.name ?? 'rest', entry?.title ?? 'Tiếp nhận', isMap(from.parameters) ? from.parameters : {}, uri, 'from'),
   });
 

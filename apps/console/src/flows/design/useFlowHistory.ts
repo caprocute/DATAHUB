@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SeqEdge, StageNode } from './model';
+import type { SeqEdge, StageNode } from '../core/model';
 
 interface Snapshot {
   nodes: StageNode[];

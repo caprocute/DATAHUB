@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { memo } from 'react';
-import type { NodeTone } from '../catalog/catalog';
-import { stageSubtitle, type StageNode as TStageNode } from './model';
+import type { NodeTone } from '../core/catalog';
+import { stageSubtitle, type StageNode as TStageNode } from '../core/model';
 import { useStageRun } from './RunContext';
 import { useNodeStatus } from './StatusContext';
 

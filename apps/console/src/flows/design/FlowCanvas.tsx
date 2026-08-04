@@ -1,3 +1,4 @@
+import type { DraggedNode } from './interaction';
 import {
   Background,
   BackgroundVariant,
@@ -13,9 +14,8 @@ import {
   type XYPosition,
 } from '@xyflow/react';
 import { useCallback, useMemo, useRef, type DragEvent } from 'react';
-import type { PaletteItem } from '../catalog/catalog';
 import { readDraggedItem } from './interaction';
-import type { SeqEdge, StageNode } from './model';
+import type { SeqEdge, StageNode } from '../core/model';
 import { SeqEdgeView } from './SeqEdge';
 import { StageNodeView } from './StageNode';
 
@@ -25,12 +25,13 @@ interface Props {
   onNodesChange: (c: NodeChange<StageNode>[]) => void;
   onEdgesChange: (c: EdgeChange<SeqEdge>[]) => void;
   onConnect: (c: Connection) => void;
-  onReconnect: (oldEdge: SeqEdge, c: Connection) => void;
-  onBeforeDelete: OnBeforeDelete<StageNode, SeqEdge>;
-  onNodesDelete: (deleted: StageNode[]) => void;
-  onDropItem: (item: PaletteItem, pos: XYPosition) => void;
+  onReconnect?: (oldEdge: SeqEdge, c: Connection) => void;
+  onBeforeDelete?: OnBeforeDelete<StageNode, SeqEdge>;
+  onNodesDelete?: (deleted: StageNode[]) => void;
+  /** Thả một mục từ bảng thành phần vào sơ đồ. */
+  onDropStage: (item: DraggedNode, pos: XYPosition) => void;
   onNodeDoubleClick: (id: string) => void;
-  colorMode: 'light' | 'dark';
+  colorMode?: 'light' | 'dark';
 }
 
 export function FlowCanvas({
@@ -42,9 +43,9 @@ export function FlowCanvas({
   onReconnect,
   onBeforeDelete,
   onNodesDelete,
-  onDropItem,
+  onDropStage,
   onNodeDoubleClick,
-  colorMode,
+  colorMode = 'light',
 }: Props) {
   const nodeTypes = useMemo(() => ({ stage: StageNodeView }), []);
   const edgeTypes = useMemo(() => ({ seq: SeqEdgeView }), []);
@@ -63,9 +64,9 @@ export function FlowCanvas({
       if (!item) return;
       // Quy đổi toạ độ con trỏ sang hệ toạ độ sơ đồ để chặng rơi đúng chỗ thả,
       // kể cả khi người dùng đã kéo hoặc phóng khung nhìn.
-      onDropItem(item, screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+      onDropStage(item, screenToFlowPosition({ x: e.clientX, y: e.clientY }));
     },
-    [onDropItem, screenToFlowPosition],
+    [onDropStage, screenToFlowPosition],
   );
 
   return (

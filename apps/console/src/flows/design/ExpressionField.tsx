@@ -6,7 +6,7 @@ import {
   evaluate,
   suggestTokens,
   type EvalContext,
-} from '../expression';
+} from '../core/expression';
 
 interface Props {
   value: string;

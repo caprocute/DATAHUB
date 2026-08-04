@@ -3,7 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { AppShell } from './shell/AppShell'
 import { CatalogPage } from './pages/CatalogPage'
-import { FlowsPage } from './pages/FlowsPage'
+import { DesignerPage } from './flows/design/DesignerPage'
+import { FlowListPage } from './flows/list/FlowListPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { LoginPage } from './pages/LoginPage'
 
@@ -43,6 +44,14 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
+            path="/flows/:code/design"
+            element={
+              <Protected>
+                <DesignerPage />
+              </Protected>
+            }
+          />
+          <Route
             path="/"
             element={
               <Protected>
@@ -51,7 +60,7 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="/flows" replace />} />
-            <Route path="flows" element={<FlowsPage />} />
+            <Route path="flows" element={<FlowListPage />} />
             <Route path="onboarding" element={<OnboardingPage />} />
             <Route path="catalog" element={<CatalogPage />} />
           </Route>

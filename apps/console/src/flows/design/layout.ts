@@ -1,5 +1,5 @@
 import dagre from 'dagre';
-import type { SeqEdge, StageNode } from './model';
+import type { SeqEdge, StageNode } from '../core/model';
 
 /** Kích thước node kiểu n8N (thẻ ngang, icon trái). */
 export const NODE_W = 220;

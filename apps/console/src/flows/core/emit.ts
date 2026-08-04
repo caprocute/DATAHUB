@@ -1,5 +1,5 @@
-import { lookup, refName } from '../catalog/catalog';
-import type { SeqEdge, StageData, StageNode } from '../flow/model';
+import { lookupNode, peekSchema, refName } from './catalog';
+import type { SeqEdge, StageData, StageNode } from './model';
 
 /* ---------- Bộ ghi YAML tối giản ---------- */
 
@@ -11,8 +11,7 @@ const NEEDS_QUOTE = /[:#{}[\],&*!|>%@`"']|^\s|\s$|^$/;
 function scalar(v: Scalar): string {
   if (v === null) return 'null';
   if (typeof v === 'boolean' || typeof v === 'number') return String(v);
-  // URI của Camel và biểu thức `${...}` đầy ký tự có nghĩa trong YAML, nên nháy đơn
-  // cho chắc thay vì dò từng trường hợp.
+  // URI Camel và biểu thức `${...}` đầy ký tự có nghĩa trong YAML — nháy đơn cho chắc.
   return NEEDS_QUOTE.test(v) ? `'${v.replace(/'/g, "''")}'` : v;
 }
 
@@ -21,11 +20,10 @@ function isRecord(v: Val): v is { [k: string]: Val } {
 }
 
 /**
- * Bỏ giá trị trống để bản YAML sinh ra không lẫn khóa vô nghĩa.
+ * Bỏ giá trị trống để YAML không lẫn khóa vô nghĩa.
  *
- * Cố tình giữ lại đối tượng rỗng: một chặng vừa thả vào sơ đồ chưa có thuộc tính nào
- * vẫn phải hiện thành `tênMẫu: {}`. Bỏ luôn thì chặng biến mất khỏi định nghĩa dù
- * vẫn nằm trên sơ đồ, và người dùng không hiểu vì sao.
+ * Giữ lại đối tượng rỗng: chặng vừa thả vào chưa có thuộc tính nào vẫn phải hiện
+ * `tênMẫu: {}`, nếu bỏ luôn thì chặng biến mất khỏi định nghĩa dù còn trên sơ đồ.
  */
 function prune(v: Val): Val {
   if (Array.isArray(v)) return v.map(prune);
@@ -69,6 +67,36 @@ function write(v: Val, indent: number): string {
   return `${pad}${scalar(v as Scalar)}`;
 }
 
+/* ---------- Lọc thuộc tính theo lược đồ gốc ---------- */
+
+/**
+ * Chỉ giữ thuộc tính **có thật** trong lược đồ của mẫu EIP.
+ *
+ * Bản trước tự thêm `timeout` cho `enrich`; lược đồ Camel không có thuộc tính đó nên
+ * khi nạp route Camel báo `Field: timeout has already been configured as an expression`
+ * và **từ chối khởi động**. Lọc theo lược đồ chặn cả lớp lỗi này, không riêng `enrich`.
+ *
+ * Chưa nạp được lược đồ (chặng lạ, lược đồ đang tải) thì giữ nguyên thuộc tính —
+ * thà sinh dư còn hơn nuốt mất cấu hình người dùng đã đặt.
+ */
+function schemaProps(
+  ref: string,
+  props: Record<string, string | number | boolean>,
+  omit: string[] = [],
+): { [k: string]: Val } {
+  const node = lookupNode(ref);
+  const schema = node ? peekSchema(node) : undefined;
+  const allowed = schema?.properties ? new Set(Object.keys(schema.properties)) : null;
+
+  const out: { [k: string]: Val } = {};
+  for (const [k, v] of Object.entries(props)) {
+    if (omit.includes(k)) continue;
+    if (allowed && !allowed.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
 /* ---------- Sơ đồ sang Camel YAML DSL ---------- */
 
 interface Graph {
@@ -90,8 +118,7 @@ function buildGraph(nodes: StageNode[], edges: SeqEdge[]): Graph {
     outs.get(e.source)!.push(e);
     inDeg.set(e.target, (inDeg.get(e.target) ?? 0) + 1);
   }
-  // Nhánh xếp từ trái sang phải theo vị trí trên sơ đồ, để YAML sinh ra ổn định
-  // chứ không đổi thứ tự sau mỗi lần vẽ lại.
+  // Nhánh xếp trái→phải theo vị trí để YAML ổn định giữa các lần vẽ.
   for (const list of outs.values()) {
     list.sort((a, b) => (byId.get(a.target)?.position.x ?? 0) - (byId.get(b.target)?.position.x ?? 0));
   }
@@ -100,48 +127,40 @@ function buildGraph(nodes: StageNode[], edges: SeqEdge[]): Graph {
 
 /** Một chặng thành một phần tử trong danh sách `steps` của Camel. */
 function stepFor(d: StageData): Val {
-  const entry = lookup(d.ref);
+  const entry = lookupNode(d.ref);
   const p = d.props;
-  // Chặng có thể mang `kind/name` (kéo từ danh mục đầy đủ) — Camel DSL chỉ biết tên trần.
+  // Chặng có thể mang `kind/name`; Camel DSL chỉ biết tên trần.
   const name = refName(d.ref);
+  const expr = String(p.expression ?? '');
 
   switch (name) {
     case 'choice':
-      // `choice` được dựng riêng ở walk() vì còn phải gắn các nhánh.
+      // `choice` dựng riêng ở walk() vì còn phải gắn các nhánh.
       return { choice: {} };
     case 'setHeader':
-      return { setHeader: { name: p.name as string, expression: { simple: String(p.expression ?? '') } } };
+      return { setHeader: { name: String(p.name ?? ''), expression: { simple: expr } } };
     case 'setBody':
-      return { setBody: { expression: { simple: String(p.expression ?? '') } } };
+      return { setBody: { expression: { simple: expr } } };
     case 'transform': {
       if (d.mappings?.length) {
         return {
           transform: {
-            expression: {
-              // Minh họa: sản phẩm thật có thể dùng jq / DataSonnet / bean ánh xạ.
-              simple: d.mappings.map((m) => `${m.to} ← ${m.from}`).join('; '),
-            },
-            // Giữ danh sách ánh xạ dạng chú thích cấu trúc để dễ đọc khi so diff.
+            expression: { simple: d.mappings.map((m) => `${m.to} ← ${m.from}`).join('; ') },
             id: 'datamapper',
           },
         };
       }
-      return { transform: { expression: { simple: String(p.expression ?? '') } } };
+      return { transform: { expression: { simple: expr } } };
     }
     case 'filter':
-      return { filter: { expression: { simple: String(p.expression ?? '') } } };
+      return { filter: { expression: { simple: expr } } };
     case 'enrich':
-      // `enrich` không có thuộc tính `timeout` trong lược đồ Camel; đặt kèm
-      // `expression` sẽ bị từ chối lúc nạp ("has already been configured as an
-      // expression"). Hạn chờ thuộc về endpoint được gọi, khai trong URI.
-      return { enrich: { expression: { constant: String(p.expression ?? '') } } };
+      // Lược đồ `enrich` **không có** `timeout` — xem ghi chú ở `schemaProps`.
+      return { enrich: { expression: { constant: expr }, ...schemaProps(d.ref, p, ['expression']) } };
     case 'pollEnrich':
+      // `pollEnrich` thì có `timeout` thật (thời gian chờ lấy bản tin).
       return {
-        pollEnrich: {
-          expression: { constant: String(p.expression ?? '') },
-          // `pollEnrich` có `timeout` thật trong lược đồ (thời gian chờ lấy bản tin).
-          timeout: p.timeout as number,
-        },
+        pollEnrich: { expression: { constant: expr }, ...schemaProps(d.ref, p, ['expression']) },
       };
     case 'wireTap':
       return { wireTap: { uri: String(p.uri ?? d.uri ?? '') } };
@@ -153,12 +172,14 @@ function stepFor(d: StageData): Val {
       break;
   }
 
-  // Thành phần Camel luôn đi vào luồng qua `to`; mẫu EIP thì lấy chính tên mẫu làm khóa.
-  if (entry?.kind === 'component' || d.uri) {
-    const hasParams = Object.keys(p).length > 0;
-    return { to: { uri: d.uri ?? '', ...(hasParams ? { parameters: p as { [k: string]: Val } } : {}) } };
+  // Thành phần Camel luôn vào luồng qua `to`; mẫu EIP lấy chính tên mẫu làm khóa.
+  if (entry?.kind === 'component' || entry?.kind === 'kamelet' || d.uri) {
+    const params = schemaProps(d.ref, p);
+    return {
+      to: { uri: d.uri ?? '', ...(Object.keys(params).length ? { parameters: params } : {}) },
+    };
   }
-  return { [name]: p as { [k: string]: Val } };
+  return { [name]: schemaProps(d.ref, p) };
 }
 
 interface WalkResult {
@@ -169,16 +190,13 @@ interface WalkResult {
 /**
  * Đi theo cạnh, dựng danh sách `steps`.
  *
- * Gặp chặng có nhiều cạnh vào thì dừng lại và trả về mã chặng đó: đây là điểm các
- * nhánh của `choice` hợp lại, và luồng chính tiếp tục từ đấy. Camel YAML không diễn
- * đạt được việc nhánh nối ngang, nên hợp nhánh phải quy về một điểm chung.
+ * Gặp chặng có nhiều cạnh vào thì dừng và trả mã chặng đó: đấy là điểm các nhánh
+ * `choice` hợp lại, luồng chính tiếp tục từ đó. Camel YAML không diễn đạt được
+ * nhánh nối ngang nên hợp nhánh phải quy về một điểm chung.
  */
 function walk(g: Graph, startId: string | null, seen: Set<string>): WalkResult {
   const steps: Val[] = [];
   let cur = startId;
-  // Chặng mà lượt đi này chủ ý tiếp tục từ đó sau khi đã dựng xong khối `choice`.
-  // Không có dấu này thì phép kiểm tra bên dưới sẽ dừng ngay tại điểm hợp nhánh và
-  // bỏ mất toàn bộ phần luồng phía sau.
   let resumeAt: string | null = null;
 
   while (cur) {
@@ -203,10 +221,7 @@ function walk(g: Graph, startId: string | null, seen: Set<string>): WalkResult {
         if (b.edge.data?.otherwise) {
           otherwise = { steps: b.res.steps };
         } else {
-          whens.push({
-            expression: { simple: String(b.edge.data?.when ?? '') },
-            steps: b.res.steps,
-          });
+          whens.push({ expression: { simple: String(b.edge.data?.when ?? '') }, steps: b.res.steps });
         }
       }
 
@@ -215,7 +230,6 @@ function walk(g: Graph, startId: string | null, seen: Set<string>): WalkResult {
       if (otherwise) choice.otherwise = otherwise;
       steps.push({ choice });
 
-      // Các nhánh chỉ tiếp tục được nếu cùng hợp về một chặng.
       const joins = branches.map((b) => b.res.joinAt);
       const common = joins.every((j) => j && j === joins[0]) ? joins[0] : null;
       if (common) branches.forEach((b) => b.res.steps.length && seen.add(b.edge.target));
@@ -242,25 +256,27 @@ export function emitRouteYaml(nodes: StageNode[], edges: SeqEdge[], opts: EmitOp
   const fromNode = nodes.find((n) => n.data.role === 'from');
 
   if (!fromNode) {
-    return '# Luồng chưa có chặng tiếp nhận — hãy kéo một thành phần ở nhóm "Điểm tiếp nhận" vào sơ đồ.';
+    return '# Luồng chưa có chặng tiếp nhận — hãy kéo một thành phần ở nhóm "Điểm tiếp nhận" vào sơ đồ.\n';
   }
 
   const seen = new Set<string>([fromNode.id]);
   const firstEdge = (g.outs.get(fromNode.id) ?? [])[0];
   const { steps } = walk(g, firstEdge?.target ?? null, seen);
 
-  const route: { [k: string]: Val } = {
-    route: {
-      id: opts.routeId,
-      from: {
-        uri: fromNode.data.uri ?? '',
-        parameters: fromNode.data.props as { [k: string]: Val },
-        steps,
+  const fromParams = schemaProps(fromNode.data.ref, fromNode.data.props);
+
+  const doc: Val[] = [
+    {
+      route: {
+        id: opts.routeId,
+        from: {
+          uri: fromNode.data.uri ?? '',
+          ...(Object.keys(fromParams).length ? { parameters: fromParams } : {}),
+          steps,
+        },
       },
     },
-  };
-
-  const doc: Val[] = [route];
+  ];
 
   if (opts.errorHandler) {
     doc.push({
@@ -273,8 +289,8 @@ export function emitRouteYaml(nodes: StageNode[], edges: SeqEdge[], opts: EmitOp
   }
 
   const header = [
-    `# Sinh từ trình thiết kế luồng LGSP — Camel YAML DSL`,
-    `# Định nghĩa này đi vào kho Git rồi Argo CD triển khai, không sửa trực tiếp trên môi trường.`,
+    '# Sinh từ trình thiết kế luồng LGSP — Camel YAML DSL',
+    '# Định nghĩa này đi vào kho Git rồi Argo CD triển khai, không sửa trực tiếp trên môi trường.',
     '',
   ].join('\n');
 

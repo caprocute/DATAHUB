@@ -1,6 +1,6 @@
-import { loadSchema, lookup, peekSchema, refName } from './catalog/catalog';
-import { MANDATORY_STAGES, REGISTERED_CONVERTERS, type SeqEdge, type StageNode } from './flow/model';
-import type { NodeStatus } from './flow/StatusContext';
+import { loadSchema, lookupNode as lookup, peekSchema, refName } from './catalog';
+import { MANDATORY_STAGES, REGISTERED_CONVERTERS, type SeqEdge, type StageNode } from './model';
+export type NodeStatus = 'error' | 'warn';
 
 export interface Finding {
   id: string;

@@ -1,7 +1,7 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { useState } from 'react';
 import { readDraggedItem, useInteraction } from './interaction';
-import type { SeqEdge as TSeqEdge } from './model';
+import type { SeqEdge as TSeqEdge } from '../core/model';
 
 /**
  * Cạnh cong kiểu n8N giữa hai chặng.
