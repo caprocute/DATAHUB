@@ -12,18 +12,27 @@ import {
   Steps,
   Table,
   Tabs,
+  Upload,
   Tag,
   Timeline,
   Typography,
 } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  ACCEPT_TYPES,
   ACTION_VI,
+  MAX_ATTACHMENT_BYTES,
   STATUS_COLOR,
   STATUS_VI,
   activateApplication,
   approveApplication,
+  downloadAttachment,
+  exportApplications,
   getAudit,
+  humanSize,
+  listAttachments,
+  listDueAccessReview,
+  recordAccessReview,
   rejectApplication,
   resumeApplication,
   revokeApplication,
@@ -32,8 +41,10 @@ import {
   searchApplications,
   submitApplication,
   suspendApplication,
+  uploadAttachment,
   type Application,
   type ApplicationStatus,
+  type Attachment,
   type AuditEntry,
   type Review,
   type SubmitBody,
@@ -89,6 +100,12 @@ export function OnboardingPage() {
 
   const [detail, setDetail] = useState<Application | null>(null)
   const [audit, setAudit] = useState<AuditEntry[]>([])
+  const [files, setFiles] = useState<Attachment[]>([])
+  const [uploading, setUploading] = useState(false)
+  /** Chỉ hiện hồ sơ tới hạn rà soát quyền (FR-01-013). */
+  const [dueOnly, setDueOnly] = useState(false)
+  const dueRef = useRef(false)
+  dueRef.current = dueOnly
   const [secret, setSecret] = useState<{ code: string; value: string } | null>(null)
 
   const [formOpen, setFormOpen] = useState(false)
@@ -99,6 +116,13 @@ export function OnboardingPage() {
     setLoading(true)
     setError(null)
     try {
+      if (dueRef.current) {
+        // Danh sách nhắc việc là tập nhỏ, máy chủ trả hết một lần.
+        const due = await listDueAccessReview()
+        setItems(due.items)
+        setTotal(due.items.length)
+        return
+      }
       const data = await searchApplications({ q, status, page, size: PAGE_SIZE })
       setItems(data.items)
       setTotal(data.total)
@@ -107,7 +131,7 @@ export function OnboardingPage() {
     } finally {
       setLoading(false)
     }
-  }, [q, status, page])
+  }, [q, status, page, dueOnly])
 
   useEffect(() => {
     void refresh()
@@ -138,10 +162,20 @@ export function OnboardingPage() {
     }
   }
 
+  async function loadFiles(id: string) {
+    try {
+      setFiles((await listAttachments(id)).items)
+    } catch {
+      setFiles([])
+    }
+  }
+
   async function openDetail(row: Application) {
     setDetail(row)
     setAudit([])
+    setFiles([])
     void loadAudit(row.id)
+    void loadFiles(row.id)
   }
 
   /** Hỏi lý do trước các hành vi cần ghi vết (từ chối, tạm ngừng, thu hồi). */
@@ -241,6 +275,31 @@ export function OnboardingPage() {
             Nộp hồ sơ mới
           </Button>
         )}
+        {canAdmin && (
+          <Button
+            type={dueOnly ? 'primary' : 'default'}
+            onClick={() => {
+              setPage(0)
+              setDueOnly((v) => !v)
+            }}
+          >
+            {dueOnly ? 'Đang xem: tới hạn rà soát' : 'Tới hạn rà soát quyền'}
+          </Button>
+        )}
+        {canReview && (
+          <Button
+            onClick={async () => {
+              try {
+                await exportApplications({ q, status })
+                message.success('Đã xuất danh sách theo bộ lọc đang áp')
+              } catch (e) {
+                message.error(String(e instanceof Error ? e.message : e))
+              }
+            }}
+          >
+            Xuất CSV
+          </Button>
+        )}
       </Space>
 
       {error && (
@@ -266,16 +325,18 @@ export function OnboardingPage() {
           emptyText: (
             <Empty
               description={
-                q || status
-                  ? 'Không có hồ sơ nào khớp bộ lọc'
-                  : 'Chưa có hồ sơ kết nạp nào. Bấm «Nộp hồ sơ mới» để bắt đầu.'
+                dueOnly
+                  ? 'Không có hồ sơ nào tới hạn rà soát quyền.'
+                  : q || status
+                    ? 'Không có hồ sơ nào khớp bộ lọc'
+                    : 'Chưa có hồ sơ kết nạp nào. Bấm «Nộp hồ sơ mới» để bắt đầu.'
               }
             />
           ),
         }}
         pagination={{
           current: page + 1,
-          pageSize: PAGE_SIZE,
+          pageSize: dueOnly ? Math.max(total, 1) : PAGE_SIZE,
           total,
           showSizeChanger: false,
           showTotal: (t) => `${t} hồ sơ`,
@@ -483,6 +544,20 @@ export function OnboardingPage() {
                             Khôi phục
                           </Button>
                         )}
+                        {['ACTIVE', 'SUSPENDED'].includes(detail.status) && (
+                          <Button
+                            onClick={() =>
+                              askReason('Ghi nhận rà soát quyền định kỳ', async (r) => {
+                                await run(
+                                  () => recordAccessReview(detail.id, r),
+                                  'Đã ghi nhận rà soát, hẹn lại sau 12 tháng',
+                                )
+                              })
+                            }
+                          >
+                            Rà soát quyền
+                          </Button>
+                        )}
                         {canRevoke && ['APPROVED', 'ACTIVE', 'SUSPENDED'].includes(detail.status) && (
                           <Button
                             danger
@@ -496,6 +571,83 @@ export function OnboardingPage() {
                           </Button>
                         )}
                       </Space>
+                    )}
+                  </Space>
+                ),
+              },
+              {
+                key: 'files',
+                label: `Tệp đính kèm${files.length ? ` (${files.length})` : ''}`,
+                children: (
+                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {canDesign && ['SUBMITTED', 'REVIEWED'].includes(detail.status) && (
+                      <Upload
+                        accept={ACCEPT_TYPES}
+                        showUploadList={false}
+                        maxCount={1}
+                        // Chặn tại chỗ để không gửi tệp quá cỡ lên máy chủ rồi mới bị từ chối.
+                        beforeUpload={(file) => {
+                          if (file.size > MAX_ATTACHMENT_BYTES) {
+                            message.error('Tệp vượt 20 MB')
+                            return Upload.LIST_IGNORE
+                          }
+                          setUploading(true)
+                          uploadAttachment(detail.id, file)
+                            .then(async () => {
+                              message.success('Đã tải tệp lên')
+                              await loadFiles(detail.id)
+                              void loadAudit(detail.id)
+                            })
+                            .catch((e: unknown) =>
+                              message.error(String(e instanceof Error ? e.message : e)),
+                            )
+                            .finally(() => setUploading(false))
+                          return Upload.LIST_IGNORE
+                        }}
+                      >
+                        <Button loading={uploading}>Tải tệp lên</Button>
+                      </Upload>
+                    )}
+                    {!['SUBMITTED', 'REVIEWED'].includes(detail.status) && (
+                      <Typography.Text type="secondary" className="t-small">
+                        Hồ sơ đã chốt — không nhận thêm tệp để giữ nguyên bản đã duyệt.
+                      </Typography.Text>
+                    )}
+                    {files.length ? (
+                      <Table<Attachment>
+                        rowKey="id"
+                        size="small"
+                        pagination={false}
+                        dataSource={files}
+                        columns={[
+                          { title: 'Tên tệp', dataIndex: 'fileName' },
+                          {
+                            title: 'Cỡ',
+                            dataIndex: 'sizeBytes',
+                            width: 100,
+                            render: (b: number) => humanSize(b),
+                          },
+                          { title: 'Người tải', dataIndex: 'uploadedBy', width: 140 },
+                          {
+                            title: '',
+                            width: 90,
+                            render: (_, f) => (
+                              <Button
+                                size="small"
+                                onClick={() =>
+                                  void downloadAttachment(detail.id, f).catch((e: unknown) =>
+                                    message.error(String(e instanceof Error ? e.message : e)),
+                                  )
+                                }
+                              >
+                                Tải về
+                              </Button>
+                            ),
+                          },
+                        ]}
+                      />
+                    ) : (
+                      <Empty description="Chưa có tệp đính kèm" />
                     )}
                   </Space>
                 ),

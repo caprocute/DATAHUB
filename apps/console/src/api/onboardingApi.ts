@@ -1,4 +1,5 @@
 import { apiGet, apiPost } from './client'
+import { userManager } from '../auth/oidc'
 
 /** Trạng thái hồ sơ theo máy trạng thái của PH-01. */
 export type ApplicationStatus =
@@ -96,6 +97,8 @@ export const ACTION_VI: Record<string, string> = {
   SUSPEND: 'Tạm ngừng',
   RESUME: 'Khôi phục',
   REVOKE: 'Thu hồi',
+  ATTACH: 'Đính kèm tệp',
+  ACCESS_REVIEW: 'Rà soát quyền định kỳ',
 }
 
 export async function searchApplications(params: {
@@ -154,4 +157,105 @@ export async function resumeApplication(id: string) {
 
 export async function revokeApplication(id: string, reason: string) {
   return apiPost<Application>(`/onboarding/applications/${id}/revoke`, { reason })
+}
+
+/* ---------- Tệp đính kèm (FR-01-003) ---------- */
+
+export type Attachment = {
+  id: string
+  fileName: string
+  contentType: string
+  sizeBytes: number
+  sha256: string
+  uploadedBy: string
+  createdAt: string
+}
+
+/** Định dạng máy chủ nhận — dùng cho thuộc tính `accept` của ô chọn tệp. */
+export const ACCEPT_TYPES =
+  '.pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,application/pdf,image/png,image/jpeg'
+
+export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
+
+async function bearer(): Promise<string> {
+  const user = await userManager.getUser()
+  if (!user?.access_token) throw new Error('Chưa đăng nhập')
+  return `Bearer ${user.access_token}`
+}
+
+export async function listAttachments(id: string) {
+  return apiGet<{ items: Attachment[] }>(`/onboarding/applications/${id}/attachments`)
+}
+
+/** Tải tệp lên bằng multipart — không dùng `apiPost` vì phải để trình duyệt tự đặt boundary. */
+export async function uploadAttachment(id: string, file: File): Promise<Attachment> {
+  const body = new FormData()
+  body.append('file', file)
+  const res = await fetch(`/api/v1/onboarding/applications/${id}/attachments`, {
+    method: 'POST',
+    headers: { Authorization: await bearer() },
+    body,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    try {
+      const j = JSON.parse(text) as { error?: string }
+      throw new Error(j.error ?? text)
+    } catch (e) {
+      throw e instanceof Error ? e : new Error(text)
+    }
+  }
+  return (await res.json()) as Attachment
+}
+
+/** Tải tệp về qua blob để giữ được header Authorization. */
+export async function downloadAttachment(id: string, att: Attachment) {
+  const res = await fetch(`/api/v1/onboarding/applications/${id}/attachments/${att.id}`, {
+    headers: { Authorization: await bearer() },
+  })
+  if (!res.ok) throw new Error('Không tải được tệp')
+  saveBlob(await res.blob(), att.fileName)
+}
+
+/* ---------- Rà soát quyền định kỳ (FR-01-013) ---------- */
+
+export async function listDueAccessReview() {
+  return apiGet<{ items: Application[] }>('/onboarding/applications/due-access-review')
+}
+
+export async function recordAccessReview(id: string, note: string, nextInMonths = 12) {
+  return apiPost<Application>(`/onboarding/applications/${id}/access-review`, {
+    note,
+    nextInMonths,
+  })
+}
+
+/* ---------- Xuất danh sách (C4-3) ---------- */
+
+export async function exportApplications(params: { q?: string; status?: string }) {
+  const qs = new URLSearchParams()
+  if (params.q) qs.set('q', params.q)
+  if (params.status) qs.set('status', params.status)
+  const res = await fetch(`/api/v1/onboarding/applications/export?${qs}`, {
+    headers: { Authorization: await bearer() },
+  })
+  if (!res.ok) throw new Error('Không xuất được danh sách')
+  saveBlob(await res.blob(), 'ho-so-ket-nap.csv')
+}
+
+/** Kích hoạt tải tệp về máy từ một blob đã nhận. */
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Cỡ tệp cho người đọc. */
+export function humanSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
