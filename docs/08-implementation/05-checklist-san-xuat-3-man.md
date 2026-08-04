@@ -31,7 +31,7 @@
 - [x] **N-3.** Không secret trên UI/log/node designer (FR-04-032).
 - [ ] **N-4.** Màu/khoảng cách chỉ dùng token (`theme-mockup/tokens.css`), không hardcode hex.
 - [ ] **N-5.** Mọi thay đổi hợp đồng → cập nhật `contracts/openapi/*` + typegen trước khi code FE.
-- [ ] **N-6.** Trạng thái rỗng / đang tải / lỗi có giao diện riêng, không để bảng trắng.
+- [x] **N-6.** Trạng thái rỗng / đang tải / lỗi có giao diện riêng, không để bảng trắng.
 - [ ] **N-7.** Mọi bảng: phân trang, sắp xếp, lọc **phía máy chủ** (cursor theo `libs/common-java`), không lọc toàn bộ ở FE.
 
 ---
@@ -113,13 +113,13 @@
 
 - [ ] **B5-1.** Validate tức thời phía FE: thiếu `required`, node mồ côi, thiếu nhánh mặc định, chặng bắt buộc bị gỡ.
 - [ ] **B5-2.** Validate phía máy chủ (`POST /routes/validate`) khi lưu/gửi duyệt — **chặn publish khi lỗi** (đã có, phải giữ).
-- [ ] **B5-3.** Panel phát hiện: lọc theo mức (lỗi/cảnh báo/gợi ý), bấm vào → chọn đúng node + cuộn tới trường lỗi.
+- [x] **B5-3.** Panel phát hiện: lọc theo mức (lỗi/cảnh báo/gợi ý), bấm vào → chọn đúng node + cuộn tới trường lỗi.
 - [ ] **B5-4.** Kiểm tra tham chiếu: bộ chuyển đổi/kết nối/adapter đã đăng ký chưa (E2 của FR-04-032).
 
 ### B6. YAML hai chiều
 
-- [ ] **B6-1.** Sinh Camel YAML DSL sau mỗi thay đổi, hiện song song (FR-04-026 bước 4).
-- [ ] **B6-2.** Sửa YAML tay → dựng lại canvas (round-trip thật, không chỉ `# @lgsp-canvas-v1` embed).
+- [x] **B6-1.** Sinh Camel YAML DSL sau mỗi thay đổi, hiện song song (FR-04-026 bước 4).
+- [x] **B6-2.** Sửa YAML tay → dựng lại canvas (round-trip thật, không chỉ `# @lgsp-canvas-v1` embed).
 - [ ] **B6-3.** YAML sinh ra **nạp được bằng Camel thật** — test: `camel/dancu` load route sinh từ designer, không lỗi.
 - [ ] **B6-4.** Khác biệt YAML giữa hai phiên bản hiển thị dạng diff khi duyệt.
 
@@ -255,5 +255,6 @@ Song song an toàn: **A** xong thì **B** và **C** chạy đồng thời (khác
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-05 — checklist sản xuất ba màn; đo hiện trạng catalog 16+36 so với nguồn Kaoto 323+74+252 |
+| 2026-08-04 | Round-trip YAML hai chiều + lọc bảng phát hiện — 53 test xanh |
 | 2026-08-04 | Sửa lỗi tham chiếu `kind/name` (`4b0dbe3`) · tô đường chạy thử lên sơ đồ (FR-04-035) — 44 test xanh |
 | 2026-08-04 | **Gói A xong** (`814bb1e`): 751 nút, phân loại theo nhãn gốc, 13 test chốt số lượng. **Gói B một phần** (`ef42681`): pin dữ liệu mẫu, trình soạn biểu thức, chặn secret trên node — 32 test xanh |
