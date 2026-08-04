@@ -10,6 +10,7 @@ import {
 } from '../catalog/catalog';
 import type { FieldMapping, StageNode } from '../flow/model';
 import { DataMapperPanel } from './DataMapper';
+import { ExpressionField } from './ExpressionField';
 
 type PropValue = string | number | boolean;
 
@@ -22,6 +23,15 @@ interface Props {
   onProp: (key: string, v: PropValue | undefined) => void;
   onMappings: (m: FieldMapping[]) => void;
   onDelete: () => void;
+  /** Bản tin mẫu hiệu lực của chặng (pin của chính nó hoặc kế thừa chặng trước). */
+  sample?: { sample: string; inherited: boolean };
+  /** Gắn / gỡ pin bản tin mẫu cho chặng đang mở (FR-04-033). */
+  onPin: (v: string | undefined) => void;
+  /** Ghi chú nghiệp vụ của chặng (FR-04-039). */
+  onNote: (v: string) => void;
+  /** Kết quả chặng sau lần chạy thử gần nhất (FR-04-035). */
+  runOutput?: { status: string; durationMs: number; detail?: string };
+  env?: Record<string, string>;
 }
 
 /** Một ô nhập, kiểu điều khiển suy ra từ `type` trong lược đồ gốc của Camel. */
@@ -82,19 +92,41 @@ function Control({
   );
 }
 
+/** Trường mang bí mật — không bao giờ nhập thẳng trên node (FR-04-032). */
+const SECRET_HINT = /password|secret|token|credential|accesskey|privatekey|passphrase|apikey/i;
+
+function isSecretField(name: string, schema: SchemaProp): boolean {
+  return SECRET_HINT.test(name) || SECRET_HINT.test(schema.title ?? '') || schema.format === 'password';
+}
+
+/** Trường nhận biểu thức — cho dùng trình soạn có xem trước (FR-04-031). */
+function isExpressionField(name: string, schema: SchemaProp): boolean {
+  if (schema.enum?.length || schema.type === 'boolean') return false;
+  return /expression|predicate|simple|language|correlationExpression|completionPredicate/i.test(
+    `${name} ${schema.title ?? ''}`,
+  );
+}
+
 function Field({
   name,
   schema,
   required,
   value,
   onChange,
+  sample,
+  env,
 }: {
   name: string;
   schema: SchemaProp;
   required: boolean;
   value: PropValue | undefined;
   onChange: (v: PropValue | undefined) => void;
+  sample?: { sample: string; inherited: boolean };
+  env?: Record<string, string>;
 }) {
+  const secret = isSecretField(name, schema);
+  const expression = !secret && isExpressionField(name, schema);
+
   return (
     <div className="field">
       <label className="field__label">
@@ -108,7 +140,34 @@ function Field({
           </Tooltip>
         )}
       </label>
-      <Control name={name} schema={schema} value={value} onChange={onChange} />
+
+      {secret ? (
+        // Không có ô nhập tự do: bí mật chỉ tham chiếu qua kết nối đã đăng ký.
+        <div className="field__secret">
+          <Input
+            size="small"
+            readOnly
+            value={value === undefined ? '' : String(value)}
+            placeholder="Tham chiếu kết nối, ví dụ {{vault:lgsp/adapter#matKhau}}"
+          />
+          <p className="t-small t-muted" style={{ margin: '4px 0 0' }}>
+            Trường bí mật — chọn kết nối đã đăng ký ở PH-05 hoặc tham chiếu Vault. Không dán giá trị
+            thật lên node.
+          </p>
+        </div>
+      ) : expression ? (
+        <ExpressionField
+          value={value === undefined ? '' : String(value)}
+          onChange={(v) => onChange(v === '' ? undefined : v)}
+          sample={sample?.sample}
+          inherited={sample?.inherited}
+          env={env}
+          rows={1}
+        />
+      ) : (
+        <Control name={name} schema={schema} value={value} onChange={onChange} />
+      )}
+
       <div className="field__hint t-mono">{name}</div>
     </div>
   );
@@ -127,6 +186,11 @@ export function NodeConfigModal({
   onProp,
   onMappings,
   onDelete,
+  sample,
+  onPin,
+  onNote,
+  runOutput,
+  env,
 }: Props) {
   const entry = node ? lookup(node.data.ref) : undefined;
   // Lược đồ tham số nặng nên nạp lười theo từng nút, chỉ khi popup thật sự mở.
@@ -157,6 +221,18 @@ export function NodeConfigModal({
     }
     return { basic: b, advanced: a };
   }, [schema]);
+
+  // Mẫu dán vào có thể là XML; chỉ báo lỗi khi trông như JSON mà phân tích hỏng.
+  const pinError = useMemo(() => {
+    const raw = node?.data.pinnedSample?.trim();
+    if (!raw || !/^[[{]/.test(raw)) return undefined;
+    try {
+      JSON.parse(raw);
+      return undefined;
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+  }, [node?.data.pinnedSample]);
 
   if (!node) return null;
 
@@ -198,6 +274,8 @@ export function NodeConfigModal({
           required={required.has(k)}
           value={node.data.props[k] as PropValue | undefined}
           onChange={(val) => onProp(k, val)}
+          sample={sample}
+          env={env}
         />
       ))}
 
@@ -224,12 +302,63 @@ export function NodeConfigModal({
                   required={required.has(k)}
                   value={node.data.props[k] as PropValue | undefined}
                   onChange={(val) => onProp(k, val)}
+                  sample={sample}
+                  env={env}
                 />
               )),
             },
           ]}
         />
       )}
+    </div>
+  );
+
+  const pinTab = (
+    <div className="n8n-cfg__body">
+      <p className="t-small t-muted" style={{ marginTop: 0 }}>
+        Bản tin mẫu gắn theo chặng (FR-04-033) — dùng để xem trước biểu thức và chạy thử. Mẫu
+        <strong> không </strong> đi vào định nghĩa luồng khi triển khai; đừng dán dữ liệu thật có
+        chứa thông tin cá nhân.
+      </p>
+      <Input.TextArea
+        className="t-mono"
+        autoSize={{ minRows: 8, maxRows: 18 }}
+        placeholder={'{\n  "loaiHoSo": "CAP_MOI"\n}'}
+        value={node.data.pinnedSample ?? ''}
+        onChange={(e) => onPin(e.target.value === '' ? undefined : e.target.value)}
+      />
+      <div className="n8n-cfg__pin-foot">
+        {pinError ? (
+          <span className="t-small" style={{ color: 'var(--c-err-600, #dc2626)' }}>
+            JSON chưa hợp lệ: {pinError}
+          </span>
+        ) : node.data.pinnedSample ? (
+          <span className="t-small t-muted">Mẫu hợp lệ.</span>
+        ) : sample?.inherited ? (
+          <span className="t-small t-muted">Đang dùng mẫu kế thừa từ chặng trước.</span>
+        ) : (
+          <span className="t-small t-muted">Chưa có mẫu cho chặng này.</span>
+        )}
+        {node.data.pinnedSample && (
+          <Button size="small" onClick={() => onPin(undefined)}>
+            Gỡ mẫu
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  const noteTab = (
+    <div className="n8n-cfg__body">
+      <p className="t-small t-muted" style={{ marginTop: 0 }}>
+        Ghi chú nghiệp vụ của chặng (FR-04-039) — hiện cho người duyệt đọc khi thẩm định luồng.
+      </p>
+      <Input.TextArea
+        autoSize={{ minRows: 4, maxRows: 12 }}
+        placeholder="Vì sao chặng này tồn tại, ràng buộc nghiệp vụ, đầu mối liên hệ…"
+        value={node.data.note ?? ''}
+        onChange={(e) => onNote(e.target.value)}
+      />
     </div>
   );
 
@@ -306,11 +435,21 @@ export function NodeConfigModal({
     >
       <div className="n8n-cfg">
         <aside className="n8n-cfg__side n8n-cfg__side--in" aria-label="Dữ liệu vào">
-          <div className="n8n-cfg__side-label">INPUT</div>
-          <p className="t-small t-muted" style={{ margin: 0 }}>
-            Pin bản tin mẫu (FR-04-033) — dùng xem trước biểu thức và chạy thử từng bước.
-          </p>
-          <pre className="n8n-cfg__side-code t-mono">{`{\n  "loaiHoSo": "CAP_MOI",\n  "chuSoHuu": { "hoTen": "…" }\n}`}</pre>
+          <div className="n8n-cfg__side-label">
+            INPUT
+            {sample?.inherited && (
+              <span className="badge badge--muted badge--plain" style={{ marginLeft: 6 }}>
+                kế thừa
+              </span>
+            )}
+          </div>
+          {sample ? (
+            <pre className="n8n-cfg__side-code t-mono">{sample.sample}</pre>
+          ) : (
+            <div className="n8n-cfg__side-empty t-small t-muted">
+              Chưa gắn bản tin mẫu. Mở tab «Dữ liệu mẫu» để dán mẫu — cần cho xem trước biểu thức.
+            </div>
+          )}
         </aside>
 
         <div className="n8n-cfg__main">
@@ -319,6 +458,8 @@ export function NodeConfigModal({
             className="n8n-cfg__tabs"
             items={[
               { key: 'params', label: 'Tham số', children: paramsTab },
+              { key: 'pin', label: 'Dữ liệu mẫu', children: pinTab },
+              { key: 'note', label: 'Ghi chú', children: noteTab },
               { key: 'settings', label: 'Cài đặt', children: settingsTab },
               { key: 'docs', label: 'Tài liệu', children: docsTab },
             ]}
@@ -333,10 +474,20 @@ export function NodeConfigModal({
 
         <aside className="n8n-cfg__side n8n-cfg__side--out" aria-label="Dữ liệu ra">
           <div className="n8n-cfg__side-label">OUTPUT</div>
-          <p className="t-small t-muted" style={{ margin: 0 }}>
-            Kết quả chặng sau chạy thử (FR-04-035) hiện ở đây.
-          </p>
-          <div className="n8n-cfg__side-empty t-small t-muted">Chưa có lần chạy thử</div>
+          {runOutput ? (
+            <>
+              <div className={`badge badge--${runOutput.status === 'OK' ? 'ok' : 'err'}`}>
+                {runOutput.status} · {runOutput.durationMs} ms
+              </div>
+              {runOutput.detail && (
+                <pre className="n8n-cfg__side-code t-mono">{runOutput.detail}</pre>
+              )}
+            </>
+          ) : (
+            <div className="n8n-cfg__side-empty t-small t-muted">
+              Chưa có lần chạy thử. Bấm «Chạy thử» trên thanh công cụ để lấy kết quả từng chặng.
+            </div>
+          )}
         </aside>
       </div>
     </Modal>

@@ -15,6 +15,7 @@ import { InsertMenu } from './flow/InsertMenu';
 import { InteractionContext, type Interaction } from './flow/interaction';
 import { autoLayout, NODE_W } from './flow/layout';
 import {
+  effectiveSample,
   INITIAL_EDGES,
   INITIAL_NODES,
   nextId,
@@ -34,6 +35,15 @@ import { YamlPanel } from './panels/YamlPanel';
 import type { Mode } from './theme/tokens';
 import { prefetchSchemas, statusByNode, validate } from './validate';
 import { emitRouteYaml } from './yaml/emit';
+
+/**
+ * Biến cấu hình theo môi trường (FR-04-036). Giá trị thật do nền tảng bơm lúc triển khai;
+ * trình thiết kế chỉ cần biết tên biến để gợi ý và xem trước biểu thức.
+ */
+const ENV_VARS: Record<string, string> = {
+  LGSP_MOI_TRUONG: import.meta.env.MODE === 'production' ? 'PROD' : 'DEV',
+  LGSP_MIEN: 'lgsp.svc',
+};
 
 /** Chặng có nhiều đường ra hợp lệ. Chặng khác chỉ có một đường ra: nối lại là thay đường. */
 const BRANCHING = new Set(['choice', 'multicast', 'loadBalance', 'recipientList']);
@@ -100,6 +110,11 @@ export function Designer({
   );
 
   const selected = nodes.find((n) => n.selected);
+  // Mẫu hiệu lực của chặng đang chọn: pin của chính nó, hoặc kế thừa chặng trước (FR-04-033).
+  const selectedSample = useMemo(
+    () => (selected ? effectiveSample(selected.id, nodes, edges) : undefined),
+    [selected, nodes, edges],
+  );
   const hasFrom = nodes.some((n) => n.data.role === 'from');
   const errorCount = findings.filter((f) => f.level === 'error').length;
 
@@ -447,6 +462,10 @@ export function Designer({
           }
           onMappings={(m: FieldMapping[]) => patchSelected((d) => ({ ...d, mappings: m }))}
           onDelete={deleteSelected}
+          sample={selectedSample}
+          onPin={(v) => patchSelected((d) => ({ ...d, pinnedSample: v }))}
+          onNote={(v) => patchSelected((d) => ({ ...d, note: v }))}
+          env={ENV_VARS}
         />
 
         <div className="grid grid--2 mb-5">

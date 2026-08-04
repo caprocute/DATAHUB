@@ -4,14 +4,20 @@ const MARKER = '# @lgsp-canvas-v1: '
 
 export type CanvasGraph = { nodes: StageNode[]; edges: SeqEdge[] }
 
-/** Nhúng graph XYFlow vào comment YAML để round-trip (không phụ thuộc parse Camel đầy đủ). */
+/**
+ * Nhúng graph XYFlow vào comment YAML để round-trip (không phụ thuộc parse Camel đầy đủ).
+ *
+ * Bản tin mẫu đã pin **không** được nhúng: theo FR-04-033 mẫu chỉ phục vụ lúc thiết kế,
+ * còn định nghĩa luồng thì đi vào Git và triển khai ra môi trường thật — mẫu có thể chứa
+ * dữ liệu cá nhân nên không để lọt vào đó.
+ */
 export function embedCanvas(yaml: string, graph: CanvasGraph): string {
   const json = JSON.stringify({
     nodes: graph.nodes.map((n) => ({
       id: n.id,
       type: n.type,
       position: n.position,
-      data: n.data,
+      data: { ...n.data, pinnedSample: undefined },
     })),
     edges: graph.edges.map((e) => ({
       id: e.id,

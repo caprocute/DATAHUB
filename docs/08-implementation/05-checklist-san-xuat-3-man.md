@@ -42,25 +42,25 @@
 
 ### A1. Sinh dữ liệu catalog từ nguồn nhà sản xuất
 
-- [ ] **A1-1.** Script `apps/console/scripts/build-catalog.mjs`: tải `@kaoto/camel-catalog@0.7.0`, đọc nhánh **`camel-quarkus/3.35.0`** (khớp ADR-002/020 — Camel Quarkus, Camel 4.20.0), không đọc nhánh `camel-main`.
-- [ ] **A1-2.** Trích **đủ** 7 loại: `components` (323), `patterns` (74), `kamelets` (252), `dataformats` (48), `languages` (26), `entities` (21), `loadbalancers` (7).
-- [ ] **A1-3.** Giữ nguyên trường gốc: `title`, `description`, `label`, `syntax`, `scheme`, `consumerOnly`, `producerOnly`, `supportLevel`, `deprecated`, `propertiesSchema` (JSON Schema draft-07, nhóm ở `$comment: group:xxx (advanced)`).
-- [ ] **A1-4.** Ghi `camelVersion`, `runtime`, `source`, `license` (Apache-2.0) + `generatedAt` vào đầu tệp; **không sửa tay** tệp sinh ra.
-- [ ] **A1-5.** Tách 2 tầng để không phình bundle:
+- [x] **A1-1.** Script `apps/console/scripts/build-catalog.mjs`: tải `@kaoto/camel-catalog@0.7.0`, đọc nhánh **`camel-quarkus/3.35.0`** (khớp ADR-002/020 — Camel Quarkus, Camel 4.20.0), không đọc nhánh `camel-main`.
+- [x] **A1-2.** Trích **đủ** 7 loại: `components` (323), `patterns` (74), `kamelets` (252), `dataformats` (48), `languages` (26), `entities` (21), `loadbalancers` (7).
+- [x] **A1-3.** Giữ nguyên trường gốc: `title`, `description`, `label`, `syntax`, `scheme`, `consumerOnly`, `producerOnly`, `supportLevel`, `deprecated`, `propertiesSchema` (JSON Schema draft-07, nhóm ở `$comment: group:xxx (advanced)`).
+- [x] **A1-4.** Ghi `camelVersion`, `runtime`, `source`, `license` (Apache-2.0) + `generatedAt` vào đầu tệp; **không sửa tay** tệp sinh ra.
+- [x] **A1-5.** Tách 2 tầng để không phình bundle:
       - `catalog-index.json` — chỉ metadata cho palette/tìm kiếm (name, title, description ngắn, label, kind, scheme, syntax, tags) — nạp đồng bộ;
       - `catalog-schemas/<kind>/<name>.json` — `propertiesSchema` đầy đủ, **nạp lười** khi mở popup cấu hình (FR-04-037).
-- [ ] **A1-6.** Kiểm chứng số lượng: test tự động `catalog.count.test.ts` khẳng định `components ≥ 320 && patterns ≥ 70 && kamelets ≥ 250` và **tổng node khả dụng ≥ 400**; sai số → CI đỏ.
-- [ ] **A1-7.** Ghi nguồn + giấy phép vào `contracts/camel-catalog/README.md` (Apache-2.0, không tái phân phối sai điều khoản).
+- [x] **A1-6.** Kiểm chứng số lượng: test tự động `catalog.count.test.ts` khẳng định `components ≥ 320 && patterns ≥ 70 && kamelets ≥ 250` và **tổng node khả dụng ≥ 400**; sai số → CI đỏ.
+- [x] **A1-7.** Ghi nguồn + giấy phép vào `contracts/camel-catalog/README.md` (Apache-2.0, không tái phân phối sai điều khoản).
 
 ### A2. Phân loại học theo Kaoto
 
-- [ ] **A2-1.** Nhóm palette sinh **từ `label` gốc của catalog**, không bịa nhóm: `cloud`(94) `messaging`(45) `database`(35) `transformation`(30) `clustering`(29) `core`(27) `container`(26) `file`(24) `cache`(24) `ai`(19) `api`(19) `management`(15) `iot`(14) `monitoring`(12) … — nhãn tiếng Việt map 1–1 trong bảng `LABEL_VI`, mã nhóm giữ tiếng Anh gốc.
-- [ ] **A2-2.** Tab palette theo **kind** kiểu Kaoto: *Thành phần · Mẫu EIP · Kamelet · Định dạng dữ liệu · Ngôn ngữ biểu thức*.
-- [ ] **A2-3.** Lọc theo vai trò như Kaoto: chặng `from` chỉ hiện mục **không** `producerOnly`; chặng `to`/step chỉ hiện mục **không** `consumerOnly`.
-- [ ] **A2-4.** Huy hiệu `supportLevel` (Stable/Preview) và `deprecated` (gạch ngang + cảnh báo khi chọn).
-- [ ] **A2-5.** Tìm kiếm mờ trên `name + title + description + label`, có bàn phím (↑↓ Enter), **≤ 50 ms** với 400+ mục (đo bằng test hiệu năng).
-- [ ] **A2-6.** Nhóm nghiệp vụ LGSP (`PALETTE` hiện tại) giữ lại thành tab **“Dùng nhiều”** đặt trước các tab gốc — không thay thế phân loại gốc.
-- [ ] **A2-7.** `toneOf()` suy màu theo `label` gốc thay vì danh sách tên cứng.
+- [x] **A2-1.** Nhóm palette sinh **từ `label` gốc của catalog**, không bịa nhóm: `cloud`(94) `messaging`(45) `database`(35) `transformation`(30) `clustering`(29) `core`(27) `container`(26) `file`(24) `cache`(24) `ai`(19) `api`(19) `management`(15) `iot`(14) `monitoring`(12) … — nhãn tiếng Việt map 1–1 trong bảng `LABEL_VI`, mã nhóm giữ tiếng Anh gốc.
+- [x] **A2-2.** Tab palette theo **kind** kiểu Kaoto: *Thành phần · Mẫu EIP · Kamelet · Định dạng dữ liệu · Ngôn ngữ biểu thức*.
+- [x] **A2-3.** Lọc theo vai trò như Kaoto: chặng `from` chỉ hiện mục **không** `producerOnly`; chặng `to`/step chỉ hiện mục **không** `consumerOnly`.
+- [x] **A2-4.** Huy hiệu `supportLevel` (Stable/Preview) và `deprecated` (gạch ngang + cảnh báo khi chọn).
+- [x] **A2-5.** Tìm kiếm mờ trên `name + title + description + label`, có bàn phím (↑↓ Enter), **≤ 50 ms** với 400+ mục (đo bằng test hiệu năng).
+- [x] **A2-6.** Nhóm nghiệp vụ LGSP (`PALETTE` hiện tại) giữ lại thành tab **“Dùng nhiều”** đặt trước các tab gốc — không thay thế phân loại gốc.
+- [x] **A2-7.** `toneOf()` suy màu theo `label` gốc thay vì danh sách tên cứng.
 
 ### A3. Máy chủ phục vụ catalog (production-path)
 

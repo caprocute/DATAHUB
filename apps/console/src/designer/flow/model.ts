@@ -24,6 +24,13 @@ export interface StageData extends Record<string, unknown> {
   mappings?: FieldMapping[];
   /** Chặng bắt buộc theo khung xương chuẩn — không gỡ được. */
   locked: boolean;
+  /**
+   * Bản tin mẫu gắn vào chặng (FR-04-033), dạng JSON/XML thô do người thiết kế dán vào
+   * hoặc lấy từ lần chạy thử trước. Không đi vào DSL production.
+   */
+  pinnedSample?: string;
+  /** Ghi chú nghiệp vụ hiện khi duyệt (FR-04-039). */
+  note?: string;
   /** Nhóm màu kiểu n8N trên canvas. */
   tone: NodeTone;
 }
@@ -64,6 +71,33 @@ export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'ste
     // Giữ lại mô tả gốc của Camel để hiện trong bảng thuộc tính.
     catalogTitle: entry?.title ?? item.ref,
   };
+}
+
+/**
+ * Bản tin mẫu hiệu lực của một chặng (FR-04-033).
+ *
+ * Ưu tiên pin của chính chặng; thiếu thì lần ngược theo cạnh vào lấy pin của chặng
+ * trước đó trên đường đi. Không có pin nào thì trả `undefined` — giao diện hiện
+ * trạng thái rỗng, **không** bịa dữ liệu mẫu.
+ */
+export function effectiveSample(
+  nodeId: string,
+  nodes: StageNode[],
+  edges: SeqEdge[],
+): { sample: string; fromNodeId: string; inherited: boolean } | undefined {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const seen = new Set<string>();
+  let cursor: string | undefined = nodeId;
+
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    const data = byId.get(cursor)?.data;
+    if (data?.pinnedSample?.trim()) {
+      return { sample: data.pinnedSample, fromNodeId: cursor, inherited: cursor !== nodeId };
+    }
+    cursor = edges.find((e) => e.target === cursor)?.source;
+  }
+  return undefined;
 }
 
 /** Mô tả phụ hiện dưới tên chặng trên sơ đồ. */
