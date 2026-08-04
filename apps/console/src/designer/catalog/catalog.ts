@@ -1,86 +1,71 @@
-import raw from './camel-catalog.subset.json';
-
 /**
- * Danh mục thành phần Camel.
+ * Lớp tương thích + bảng thành phần theo cách gọi nghiệp vụ của LGSP.
  *
- * Dữ liệu trong `camel-catalog.subset.json` được trích từ gói `@kaoto/camel-catalog`
- * (Apache-2.0), nhánh Camel Main 4.20.0. Giữ nguyên `title`, `description`, `label`,
- * `syntax` và `propertiesSchema` của bản gốc, nên biểu mẫu thuộc tính trong nguyên mẫu
- * sinh ra từ đúng lược đồ mà sản phẩm thật sẽ dùng.
- *
- * Bản đầy đủ nặng 446 MB (401 thành phần, 74 mẫu EIP, đủ mọi phiên bản Camel) nên
- * không đóng vào mockup. Sản phẩm thật nạp catalog từ máy chủ theo phiên bản Camel
- * đang chạy; nguyên mẫu chỉ cần tập con phục vụ khung xương chín chặng.
+ * Dữ liệu danh mục thật nằm ở `./index` (751 nút sinh từ `@kaoto/camel-catalog`,
+ * nhánh `camel-quarkus`). Tệp này chỉ giữ hai việc:
+ *  1. tái xuất các hàm tra cứu để mã cũ không phải đổi đường dẫn nhập;
+ *  2. định nghĩa nhóm «Dùng nhiều» — các mục hay dùng của LGSP, đặt trước
+ *     các tab phân loại gốc trong bảng thành phần.
  */
 
-export type PropType = 'string' | 'boolean' | 'integer' | 'number' | 'enum' | 'object' | 'array';
+import {
+  CATALOG_COUNTS,
+  CATALOG_RUNTIME,
+  lookupNode,
+  toneOf,
+  type CatalogNode,
+  type NodeTone,
+} from './index';
 
-export interface SchemaProp {
-  title?: string;
-  description?: string;
-  type?: PropType | string;
-  default?: unknown;
-  enum?: string[];
-  format?: string;
-  deprecated?: boolean;
-  /** Bản gốc ghi nhóm thuộc tính ở đây, dạng `group:consumer (advanced)`. */
-  $comment?: string;
-}
+export {
+  CATALOG_COUNTS,
+  CATALOG_LABELS,
+  CATALOG_LICENSE,
+  CATALOG_NODES,
+  CATALOG_RUNTIME,
+  CATALOG_SOURCE,
+  CATALOG_TOTAL,
+  KIND_VI,
+  LABEL_VI,
+  fitsRole,
+  groupOf,
+  labelVi,
+  labelsOfKind,
+  loadSchema,
+  lookupNode,
+  peekSchema,
+  searchNodes,
+  toneOf,
+  toneOfNode,
+} from './index';
+export type {
+  CatalogNode,
+  NodeKind,
+  NodeTone,
+  PropType,
+  PropertiesSchema,
+  SchemaProp,
+  SearchOptions,
+} from './index';
 
-export interface PropertiesSchema {
-  required?: string[];
-  properties?: Record<string, SchemaProp>;
-}
+/** Phiên bản Camel của danh mục đang nạp — hiện trên thanh trạng thái của trình thiết kế. */
+export const CAMEL_VERSION = CATALOG_RUNTIME;
+export const CATALOG_SIZE = {
+  components: CATALOG_COUNTS.component ?? 0,
+  patterns: CATALOG_COUNTS.pattern ?? 0,
+  kamelets: CATALOG_COUNTS.kamelet ?? 0,
+  total: Object.values(CATALOG_COUNTS).reduce((a, b) => a + b, 0),
+};
 
-export interface CatalogEntry {
-  name: string;
-  title: string;
-  description: string;
-  label: string;
-  kind: 'component' | 'pattern';
-  scheme?: string;
-  syntax?: string;
-  consumerOnly?: boolean;
-  producerOnly?: boolean;
-  propertiesSchema: PropertiesSchema;
-}
-
-interface RawShape {
-  camelVersion: string;
-  runtime: string;
-  source: string;
-  components: Omit<CatalogEntry, 'kind'>[];
-  patterns: Omit<CatalogEntry, 'kind'>[];
-}
-
-const data = raw as unknown as RawShape;
-
-export const CAMEL_VERSION = data.camelVersion;
-export const CATALOG_SOURCE = data.source;
-
-const byName = new Map<string, CatalogEntry>();
-for (const c of data.components) byName.set(c.name, { ...c, kind: 'component' });
-for (const p of data.patterns) if (!byName.has(p.name)) byName.set(p.name, { ...p, kind: 'pattern' });
-
-export function lookup(name: string): CatalogEntry | undefined {
-  return byName.get(name);
-}
-
-export const CATALOG_SIZE = { components: data.components.length, patterns: data.patterns.length };
-
-/** Nhóm thuộc tính, đọc từ `$comment` của bản gốc. `advanced` bị gập lại trong biểu mẫu. */
-export function groupOf(prop: SchemaProp): { group: string; advanced: boolean } {
-  const m = /^group:([^(]+)(\(advanced\))?/.exec(prop.$comment ?? '');
-  return { group: (m?.[1] ?? 'common').trim(), advanced: Boolean(m?.[2]) };
+/** Tên gọi cũ của `lookupNode`, giữ cho mã đã có. */
+export function lookup(name: string): CatalogNode | undefined {
+  return lookupNode(name);
 }
 
 /* ---------- Bảng thành phần theo cách gọi nghiệp vụ của LGSP ---------- */
 
-/** Nhóm màu kiểu n8N — dùng tô ô icon trên node và palette. */
-export type NodeTone = 'trigger' | 'auth' | 'eip' | 'transform' | 'enrich' | 'dest';
-
 export interface PaletteItem {
-  /** Tên mục trong catalog Camel. */
+  /** Tên mục trong catalog Camel, dạng `kind/name` hoặc tên trần. */
   ref: string;
   /** Nhãn tiếng Việt hiện trên bảng thành phần và trên nút của sơ đồ. */
   label: string;
@@ -101,18 +86,29 @@ export interface PaletteGroup {
   items: PaletteItem[];
 }
 
-/** Suy ra tone khi dựng chặng từ catalog / luồng mẫu. */
-export function toneOf(ref: string, role: 'from' | 'step' = 'step'): NodeTone {
-  if (role === 'from') return 'trigger';
-  if (['json-validator', 'validator'].includes(ref)) return 'auth';
-  if (['choice', 'filter', 'split', 'aggregate', 'multicast', 'wireTap', 'idempotentConsumer', 'circuitBreaker', 'throttle', 'delay'].includes(ref))
-    return 'eip';
-  if (['transform', 'xslt', 'marshal', 'unmarshal', 'setHeader', 'setBody', 'process'].includes(ref)) return 'transform';
-  if (['enrich', 'pollEnrich', 'bean'].includes(ref)) return 'enrich';
-  if (['rest', 'timer', 'file', 'sftp'].includes(ref)) return 'trigger';
-  return 'dest';
+/** Dựng mục palette từ một nút bất kỳ của danh mục đầy đủ. */
+export function paletteItemOf(node: CatalogNode, role: 'from' | 'step' = 'step'): PaletteItem {
+  return {
+    ref: `${node.kind}/${node.name}`,
+    label: node.title,
+    icon: ICON_BY_TONE[toneOf(`${node.kind}/${node.name}`, role)],
+    consumerOnly: node.consumerOnly,
+    uri: node.syntax && node.scheme ? node.syntax : undefined,
+    tone: toneOf(`${node.kind}/${node.name}`, role),
+  };
 }
 
+/** Biểu tượng mặc định theo nhóm màu, dùng cho nút dựng từ danh mục đầy đủ. */
+export const ICON_BY_TONE: Record<NodeTone, string> = {
+  trigger: '\u21e5',
+  auth: '\u2713',
+  eip: '\u2442',
+  transform: '\u25c7',
+  enrich: '\u25c9',
+  dest: '\u229e',
+};
+
+/** Nhóm «Dùng nhiều» — không thay thế phân loại gốc, chỉ đặt trước cho tiện. */
 export const PALETTE: PaletteGroup[] = [
   {
     label: 'Điểm tiếp nhận',

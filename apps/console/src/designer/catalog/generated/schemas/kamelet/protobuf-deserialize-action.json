@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":[],"properties":{"schema":{"title":"Schema","description":"The Protobuf schema to use during serialization (as single-line)","type":"string","example":"message Person { required string first = 1; required string last = 2; }"}}}

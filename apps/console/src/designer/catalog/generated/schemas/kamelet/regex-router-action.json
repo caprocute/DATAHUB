@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["regex","replacement"],"properties":{"regex":{"title":"Regex","description":"Regular Expression for destination","type":"string"},"replacement":{"title":"Replacement","description":"Replacement when matching","type":"string"}}}

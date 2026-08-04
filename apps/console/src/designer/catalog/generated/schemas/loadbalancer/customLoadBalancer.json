@@ -1,0 +1,1 @@
+{"type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"},"ref":{"type":"string","title":"Ref","description":"Refers to the custom load balancer to lookup from the registry"}},"title":"Custom Load Balancer","description":"To use a custom load balancer implementation.","required":["ref"]}

@@ -1,4 +1,4 @@
-import { lookup } from './catalog/catalog';
+import { loadSchema, lookup, peekSchema } from './catalog/catalog';
 import { MANDATORY_STAGES, REGISTERED_CONVERTERS, type SeqEdge, type StageNode } from './flow/model';
 import type { NodeStatus } from './flow/StatusContext';
 
@@ -89,10 +89,13 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
         });
       }
     } else {
-      for (const key of entry?.propertiesSchema.required ?? []) {
+      // Lược đồ nạp lười; chặng chưa có lược đồ trong bộ nhớ đệm thì bỏ qua vòng này,
+      // `prefetchSchemas` sẽ nạp rồi trình thiết kế chạy lại kiểm tra.
+      const schema = entry ? peekSchema(entry) : undefined;
+      for (const key of schema?.required ?? []) {
         const v = d.props[key];
         if (v === undefined || v === '') {
-          const title = entry?.propertiesSchema.properties?.[key]?.title ?? key;
+          const title = schema?.properties?.[key]?.title ?? key;
           push({
             level: 'error',
             nodeId: n.id,
@@ -165,6 +168,28 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
   }
 
   return out;
+}
+
+/**
+ * Nạp trước lược đồ của mọi chặng đang có trên sơ đồ.
+ *
+ * `validate` chạy đồng bộ trong lúc vẽ nên không tự `await` được. Trình thiết kế
+ * gọi hàm này mỗi khi tập chặng đổi; nạp xong thì chạy lại `validate` để phần
+ * kiểm tra thuộc tính bắt buộc có dữ liệu.
+ * Trả `true` nếu có lược đồ mới được nạp (tức là nên kiểm tra lại).
+ */
+export async function prefetchSchemas(nodes: StageNode[]): Promise<boolean> {
+  const refs = new Set(nodes.map((n) => n.data.ref));
+  let loaded = false;
+  await Promise.all(
+    [...refs].map(async (ref) => {
+      const entry = lookup(ref);
+      if (!entry || peekSchema(entry)) return;
+      await loadSchema(entry);
+      loaded = true;
+    }),
+  );
+  return loaded;
 }
 
 /** Gộp phát hiện theo chặng, lỗi lấn cảnh báo. */

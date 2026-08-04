@@ -1,0 +1,1 @@
+{"title":"Topic Load Balancer","description":"Topic which sends to all destinations.","type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"}},"required":[]}

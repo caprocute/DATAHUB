@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["field"],"properties":{"field":{"title":"Field","description":"The name of the field that will contain the event.","type":"string"}}}

@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["milliseconds"],"properties":{"milliseconds":{"title":"Milliseconds","description":"The number of milliseconds of delay","type":"integer","example":1000}}}

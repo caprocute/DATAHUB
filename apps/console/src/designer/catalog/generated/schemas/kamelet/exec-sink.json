@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["executable"],"properties":{"executable":{"title":"Executable Command","description":"The command to execute","type":"string"}}}

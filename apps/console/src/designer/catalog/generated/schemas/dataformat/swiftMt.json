@@ -1,0 +1,1 @@
+{"type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"},"writeInJson":{"type":"boolean","title":"Write In Json","description":"The flag indicating that messages must be marshalled in a JSON format.","default":false}},"title":"SWIFT MT","description":"Encode and decode SWIFT MT messages.","required":[]}

@@ -32,7 +32,7 @@ import { Palette } from './panels/Palette';
 import { NodeConfigModal } from './panels/Properties';
 import { YamlPanel } from './panels/YamlPanel';
 import type { Mode } from './theme/tokens';
-import { statusByNode, validate } from './validate';
+import { prefetchSchemas, statusByNode, validate } from './validate';
 import { emitRouteYaml } from './yaml/emit';
 
 /** Chặng có nhiều đường ra hợp lệ. Chặng khác chỉ có một đường ra: nối lại là thay đường. */
@@ -79,7 +79,20 @@ export function Designer({
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
-  const findings = useMemo(() => validate(nodes, edges), [nodes, edges]);
+  // Lược đồ tham số nạp lười nên lần kiểm tra đầu có thể thiếu dữ liệu; nạp xong
+  // thì tăng `schemaEpoch` để chạy lại `validate` với lược đồ đã có.
+  const [schemaEpoch, setSchemaEpoch] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    void prefetchSchemas(nodes).then((loaded) => {
+      if (alive && loaded) setSchemaEpoch((e) => e + 1);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [nodes]);
+
+  const findings = useMemo(() => validate(nodes, edges), [nodes, edges, schemaEpoch]);
   const status = useMemo(() => statusByNode(findings), [findings]);
   const yaml = useMemo(
     () => emitRouteYaml(nodes, edges, { routeId, errorHandler: true }),

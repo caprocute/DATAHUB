@@ -1,0 +1,1 @@
+{"title":"GZip Deflater","description":"Compress and decompress messages using java.util.zip.GZIPStream.","type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"}},"required":[]}

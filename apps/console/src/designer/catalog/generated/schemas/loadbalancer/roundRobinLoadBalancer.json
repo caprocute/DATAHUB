@@ -1,0 +1,1 @@
+{"title":"Round Robin Load Balancer","description":"The destination endpoints are selected in a round-robin fashion. This is a well-known and classic policy, which spreads the load evenly.","type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"}},"required":[]}

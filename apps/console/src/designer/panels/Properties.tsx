@@ -1,6 +1,13 @@
 import { Button, Collapse, Input, InputNumber, Modal, Select, Switch, Tabs, Tooltip } from 'antd';
-import { useMemo } from 'react';
-import { groupOf, lookup, type SchemaProp } from '../catalog/catalog';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  groupOf,
+  loadSchema,
+  lookup,
+  peekSchema,
+  type PropertiesSchema,
+  type SchemaProp,
+} from '../catalog/catalog';
 import type { FieldMapping, StageNode } from '../flow/model';
 import { DataMapperPanel } from './DataMapper';
 
@@ -122,9 +129,26 @@ export function NodeConfigModal({
   onDelete,
 }: Props) {
   const entry = node ? lookup(node.data.ref) : undefined;
+  // Lược đồ tham số nặng nên nạp lười theo từng nút, chỉ khi popup thật sự mở.
+  const [schema, setSchema] = useState<PropertiesSchema>({});
+
+  useEffect(() => {
+    if (!open || !entry) {
+      setSchema({});
+      return;
+    }
+    let alive = true;
+    setSchema(peekSchema(entry) ?? {});
+    void loadSchema(entry).then((s) => {
+      if (alive) setSchema(s);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [open, entry]);
 
   const { basic, advanced } = useMemo(() => {
-    const all = Object.entries(entry?.propertiesSchema.properties ?? {});
+    const all = Object.entries(schema.properties ?? {});
     const b: [string, SchemaProp][] = [];
     const a: [string, SchemaProp][] = [];
     for (const [k, v] of all) {
@@ -132,11 +156,11 @@ export function NodeConfigModal({
       (groupOf(v).advanced || meta ? a : b).push([k, v]);
     }
     return { basic: b, advanced: a };
-  }, [entry]);
+  }, [schema]);
 
   if (!node) return null;
 
-  const required = new Set(entry?.propertiesSchema.required ?? []);
+  const required = new Set(schema.required ?? []);
   const isComponent = entry?.kind === 'component' || node.data.uri !== undefined;
   const kindLabel = entry?.kind === 'pattern' ? 'EIP' : 'Thành phần Camel';
 

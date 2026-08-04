@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["authorizationToken"],"properties":{"authorizationToken":{"title":"Token","description":"The token to access your bot on Telegram. You can obtain it from the Telegram @botfather.","type":"string","format":"password","x-descriptors":["urn:camel:group:credentials"]}}}

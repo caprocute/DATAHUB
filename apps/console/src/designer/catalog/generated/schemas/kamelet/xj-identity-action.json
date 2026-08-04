@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["direction"],"properties":{"direction":{"title":"Direction","description":"The transform direction.","type":"string","enum":["XML2JSON","JSON2XML"]}}}

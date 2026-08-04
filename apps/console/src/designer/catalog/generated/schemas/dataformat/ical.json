@@ -1,0 +1,1 @@
+{"title":"iCal","description":"Marshal and unmarshal iCal (.ics) documents to/from model objects.","type":"object","additionalProperties":false,"properties":{"id":{"type":"string","title":"Id","description":"The id of this node"},"validating":{"type":"boolean","title":"Validating","description":"Whether to validate.","default":false}},"required":[]}

@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["fields","replacement"],"properties":{"fields":{"title":"Fields","description":"Comma separated list of fields to mask","type":"string"},"replacement":{"title":"Replacement","description":"Replacement for the fields to be masked","type":"string"}}}

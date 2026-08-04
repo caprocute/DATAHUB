@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["template"],"properties":{"template":{"title":"Template","description":"The inline template","type":"string","example":"file:////template.tm","pattern":"^(http|https|file|classpath|ref|bean)://.*"}}}

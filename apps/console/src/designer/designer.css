@@ -436,6 +436,74 @@
 
 .input--sm { height: var(--ant-control-h-sm); padding: 0 var(--sp-2); font-size: var(--fs-sm); }
 
+/* ---------- Bảng thành phần: tab phân loại gốc của catalog ---------- */
+
+.palette__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--sp-2);
+}
+.palette__tab {
+  padding: 3px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: border-color var(--ant-motion-fast), background var(--ant-motion-fast);
+}
+.palette__tab:hover { border-color: var(--c-brand-500); }
+.palette__tab.is-active {
+  background: var(--c-brand-600, #2563eb);
+  border-color: var(--c-brand-600, #2563eb);
+  color: #fff;
+}
+
+.palette__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--sp-2);
+  max-height: 96px;
+  overflow-y: auto;
+}
+.palette__chip {
+  padding: 2px 7px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: 11px;
+  cursor: pointer;
+}
+.palette__chip:hover { border-color: var(--c-brand-500); }
+.palette__chip.is-active {
+  border-color: var(--c-brand-600, #2563eb);
+  color: var(--c-brand-600, #2563eb);
+  font-weight: 600;
+}
+.palette__chip-n { color: var(--c-text-3); font-size: 10px; }
+
+.palette__badge {
+  margin-left: 5px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+  font-size: 9px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.palette__badge--warn { color: var(--c-warn-600, #d97706); }
+
+.palette__foot {
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
 /* ---------- Bảng thành phần (ô kéo kiểu n8N) ---------- */
 
 .palette__tile {

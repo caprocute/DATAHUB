@@ -1,0 +1,1 @@
+{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","required":["value"],"properties":{"value":{"title":"Value","description":"The value to set as new body","type":"string"}}}
