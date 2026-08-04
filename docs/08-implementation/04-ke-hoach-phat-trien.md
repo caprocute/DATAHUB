@@ -331,6 +331,7 @@ flowchart TB
 - [x] Lưu nháp qua API WP-23 *(`routesApi` create/saveDefinition)*
 - [x] Validate findings panel *(canvas `validate` + nút Validate server)*
 - [x] Chạy thử giả lập (stub kết quả nếu backend chưa sẵn — gắn cờ) *(`VITE_TEST_RUN_STUB`, mặc định bật)*
+- [x] Chuẩn màn hình chức năng: bỏ queue giả UI-04-09 · RBAC FE · validate trước gửi duyệt · liên kết Kết nạp/Catalog · review API bốn mắt
 
 ### WP-25 — CAMEL: test runner API  **[SS một phần với WP-24]**
 

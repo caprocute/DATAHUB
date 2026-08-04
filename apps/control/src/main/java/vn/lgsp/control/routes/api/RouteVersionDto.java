@@ -11,4 +11,5 @@ public record RouteVersionDto(
     String definitionYaml,
     String gitCommitRef,
     String gitPath,
-    String source) {}
+    String source,
+    String createdBy) {}

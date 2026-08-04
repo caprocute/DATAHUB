@@ -425,11 +425,10 @@ export function Designer({ mode, onDirty, onStatus, onYamlChange }: Props) {
         </div>
 
         <p className="t-small t-muted">
-          Danh mục thành phần trong bản minh họa gồm {CATALOG_SIZE.components} thành phần Camel và{' '}
-          {CATALOG_SIZE.patterns} mẫu EIP, trích từ catalog chính thức của Camel {CAMEL_VERSION}. Bản đầy đủ có hơn 400
-          thành phần, nạp từ máy chủ theo phiên bản Camel đang chạy.
-          {errorCount > 0 && ' Còn lỗi nên nút gửi duyệt đang bị chặn.'} Nhấp đúp chặng (hoặc nút «Cấu hình») để mở
-          popup thuộc tính kiểu n8n. Hoàn tác / làm lại: ⌘Z · ⇧⌘Z (hoặc Ctrl+Z · Ctrl+Y).
+          Catalog DEV: {CATALOG_SIZE.components} component / {CATALOG_SIZE.patterns} EIP (Camel{' '}
+          {CAMEL_VERSION}). Không nhập secret trên canvas — dùng connection picker (PH-05).{' '}
+          {errorCount > 0 && 'Còn lỗi: gửi duyệt bị chặn. '}
+          Nhấp đúp chặng → NDV (UI-04-10). ⌘Z / ⇧⌘Z hoàn tác.
         </p>
 
         {insertAt && (

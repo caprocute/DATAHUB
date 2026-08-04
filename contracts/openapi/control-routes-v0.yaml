@@ -151,6 +151,52 @@ paths:
                 $ref: "#/components/schemas/RouteVersion"
         "422":
           description: Chặn khi validate lỗi
+  /routes/pending-review:
+    get:
+      operationId: listPendingReview
+      summary: Hàng đợi PENDING_REVIEW (UI-04-09)
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RouteVersion"
+  /routes/{routeCode}/versions/{versionNo}/review:
+    post:
+      operationId: reviewRouteVersion
+      summary: Phê duyệt / trả lại (bốn mắt; APPROVE → GitOps)
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+        - $ref: "#/components/parameters/versionNo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [APPROVE, REJECT] }
+                comment: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteVersion"
+        "409":
+          description: Conflict (sai trạng thái / tự duyệt)
   /routes/status:
     get:
       operationId: routesModuleStatus
@@ -221,6 +267,7 @@ components:
         gitCommitRef: { type: string }
         gitPath: { type: string }
         source: { type: string }
+        createdBy: { type: string }
     ValidationFinding:
       type: object
       properties:

@@ -22,6 +22,7 @@ export type RouteVersion = {
   gitCommitRef?: string | null
   gitPath?: string | null
   source: string
+  createdBy?: string | null
 }
 
 export type ValidationResult = {
@@ -60,4 +61,20 @@ export async function submitVersion(routeCode: string, versionNo: number) {
 
 export async function getRoute(routeCode: string) {
   return apiAdminGet<RouteSummary>(`/routes/${routeCode}`)
+}
+
+export async function listPendingReview() {
+  return apiAdminGet<{ items: RouteVersion[] }>('/routes/pending-review')
+}
+
+export async function reviewVersion(
+  routeCode: string,
+  versionNo: number,
+  decision: 'APPROVE' | 'REJECT',
+  comment?: string,
+) {
+  return apiAdminPost<RouteVersion>(`/routes/${routeCode}/versions/${versionNo}/review`, {
+    decision,
+    comment,
+  })
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import vn.lgsp.control.routes.api.RouteCreateRequest;
 import vn.lgsp.control.routes.api.RouteDefinitionUpdate;
+import vn.lgsp.control.routes.api.RouteReviewRequest;
 import vn.lgsp.control.routes.api.RouteSummaryDto;
 import vn.lgsp.control.routes.api.RouteVersionDto;
 import vn.lgsp.control.routes.api.RoutesApi;
@@ -49,6 +50,19 @@ class RoutesController {
   @PreAuthorize("hasAnyRole('INTEGRATION_DEVELOPER','INTEGRATION_ADMIN','PLATFORM_ADMIN')")
   RouteSummaryDto create(@Valid @RequestBody RouteCreateRequest body, Authentication auth) {
     return routesApi.create(body, actor(auth));
+  }
+
+  /** Literal path trước `/{routeCode}` — tránh nuốt thành mã route. */
+  @GetMapping("/pending-review")
+  @PreAuthorize("hasAnyRole('INTEGRATION_REVIEWER','INTEGRATION_ADMIN','PLATFORM_ADMIN')")
+  Map<String, Object> pendingReview() {
+    return Map.of("items", routesApi.listPendingReview());
+  }
+
+  @PostMapping("/validate")
+  @PreAuthorize("isAuthenticated()")
+  ValidationResultDto validate(@Valid @RequestBody ValidateRequest body) {
+    return routesApi.validate(body.definitionYaml());
   }
 
   @GetMapping("/{routeCode}")
@@ -87,12 +101,6 @@ class RoutesController {
     }
   }
 
-  @PostMapping("/validate")
-  @PreAuthorize("isAuthenticated()")
-  ValidationResultDto validate(@Valid @RequestBody ValidateRequest body) {
-    return routesApi.validate(body.definitionYaml());
-  }
-
   @PostMapping("/{routeCode}/versions/{versionNo}/submit")
   @PreAuthorize("hasAnyRole('INTEGRATION_DEVELOPER','INTEGRATION_ADMIN','PLATFORM_ADMIN')")
   RouteVersionDto submit(
@@ -116,6 +124,22 @@ class RoutesController {
       Authentication auth) {
     try {
       return routesApi.publish(routeCode, versionNo, actor(auth));
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+    } catch (IllegalStateException e) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+    }
+  }
+
+  @PostMapping("/{routeCode}/versions/{versionNo}/review")
+  @PreAuthorize("hasAnyRole('INTEGRATION_REVIEWER','INTEGRATION_ADMIN','PLATFORM_ADMIN')")
+  RouteVersionDto review(
+      @PathVariable("routeCode") String routeCode,
+      @PathVariable("versionNo") int versionNo,
+      @Valid @RequestBody RouteReviewRequest body,
+      Authentication auth) {
+    try {
+      return routesApi.review(routeCode, versionNo, body, actor(auth));
     } catch (IllegalArgumentException e) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     } catch (IllegalStateException e) {

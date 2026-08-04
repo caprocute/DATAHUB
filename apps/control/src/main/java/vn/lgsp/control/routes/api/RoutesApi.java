@@ -20,5 +20,13 @@ public interface RoutesApi {
 
   RouteVersionDto publish(String routeCode, int versionNo, String actor);
 
+  /** Hàng đợi phiên bản PENDING_REVIEW (UI-04-09). */
+  List<RouteVersionDto> listPendingReview();
+
+  /**
+   * Phê duyệt / trả lại. Bốn mắt: reviewer ≠ người tạo phiên bản. APPROVE → GitOps publish.
+   */
+  RouteVersionDto review(String routeCode, int versionNo, RouteReviewRequest request, String actor);
+
   String moduleStatus();
 }

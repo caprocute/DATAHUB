@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lgsp.control.routes.api.RouteCreateRequest;
 import vn.lgsp.control.routes.api.RouteDefinitionUpdate;
+import vn.lgsp.control.routes.api.RouteReviewRequest;
 import vn.lgsp.control.routes.api.RouteSummaryDto;
 import vn.lgsp.control.routes.api.RouteVersionDto;
 import vn.lgsp.control.routes.api.RoutesApi;
@@ -215,31 +216,80 @@ class RoutesService implements RoutesApi {
   }
 
   @Override
+  public List<RouteVersionDto> listPendingReview() {
+    return jdbc.query(
+        """
+        SELECT v.version_id, v.route_id, r.route_code, v.version_no, v.status,
+               v.definition_yaml, v.git_commit_ref, v.git_path, v.source, v.created_by
+        FROM ph04.route_version v
+        JOIN ph04.route r ON r.route_id = v.route_id
+        WHERE v.status = 'PENDING_REVIEW'
+        ORDER BY v.updated_at ASC
+        """,
+        VERSION_MAPPER);
+  }
+
+  @Override
+  @Transactional
+  public RouteVersionDto review(
+      String routeCode, int versionNo, RouteReviewRequest request, String actor) {
+    RouteVersionDto current = loadVersion(routeCode, versionNo);
+    if (!"PENDING_REVIEW".equals(current.status())) {
+      throw new IllegalStateException("chỉ duyệt phiên bản PENDING_REVIEW");
+    }
+    if (actor != null && actor.equalsIgnoreCase(current.createdBy())) {
+      throw new IllegalStateException("bốn mắt: người duyệt phải khác người tạo phiên bản");
+    }
+    if ("REJECT".equals(request.decision())) {
+      jdbc.update(
+          """
+          UPDATE ph04.route_version SET status = 'DRAFT', updated_at = ?
+          WHERE version_id = ?
+          """,
+          OffsetDateTime.now(),
+          current.versionId());
+      jdbc.update(
+          """
+          UPDATE ph04.route SET status = 'DRAFT', updated_at = ? WHERE route_id = ?
+          """,
+          OffsetDateTime.now(),
+          current.routeId());
+      return loadVersion(routeCode, versionNo);
+    }
+    // APPROVE → validate + GitOps (publish)
+    return publish(routeCode, versionNo, actor);
+  }
+
+  @Override
   public String moduleStatus() {
     return "ok";
   }
+
+  private static final RowMapper<RouteVersionDto> VERSION_MAPPER =
+      (rs, i) ->
+          new RouteVersionDto(
+              rs.getObject("version_id", UUID.class),
+              rs.getObject("route_id", UUID.class),
+              rs.getString("route_code"),
+              rs.getInt("version_no"),
+              rs.getString("status"),
+              rs.getString("definition_yaml"),
+              rs.getString("git_commit_ref"),
+              rs.getString("git_path"),
+              rs.getString("source"),
+              rs.getString("created_by"));
 
   private RouteVersionDto loadVersion(String routeCode, int versionNo) {
     try {
       return jdbc.queryForObject(
           """
           SELECT v.version_id, v.route_id, r.route_code, v.version_no, v.status,
-                 v.definition_yaml, v.git_commit_ref, v.git_path, v.source
+                 v.definition_yaml, v.git_commit_ref, v.git_path, v.source, v.created_by
           FROM ph04.route_version v
           JOIN ph04.route r ON r.route_id = v.route_id
           WHERE r.route_code = ? AND v.version_no = ?
           """,
-          (rs, i) ->
-              new RouteVersionDto(
-                  rs.getObject("version_id", UUID.class),
-                  rs.getObject("route_id", UUID.class),
-                  rs.getString("route_code"),
-                  rs.getInt("version_no"),
-                  rs.getString("status"),
-                  rs.getString("definition_yaml"),
-                  rs.getString("git_commit_ref"),
-                  rs.getString("git_path"),
-                  rs.getString("source")),
+          VERSION_MAPPER,
           routeCode,
           versionNo);
     } catch (EmptyResultDataAccessException e) {
