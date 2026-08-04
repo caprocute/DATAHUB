@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   getRoute,
+  getTestRun,
   getVersion,
+  listTestRuns,
   saveDefinition,
   submitVersion,
   type RouteSummary,
@@ -32,7 +34,7 @@ import { InteractionContext, type DraggedNode, type Interaction } from './intera
 import { autoLayout } from './layout'
 import { NodeConfig } from './NodeConfig'
 import { Palette } from './Palette'
-import { RunContext, type StageRun } from './RunContext'
+import { mapWaterfall, RunContext, type StageRun } from './RunContext'
 import { StatusContext } from './StatusContext'
 import { useFlowHistory } from './useFlowHistory'
 import '@xyflow/react/dist/style.css'
@@ -129,6 +131,38 @@ function DesignerInner() {
 
   const findings = useMemo(() => validate(nodes, edges), [nodes, edges, schemaEpoch])
   const status = useMemo(() => statusByNode(findings), [findings])
+
+  /* ---------- Tô đường chạy của lần chạy thử gần nhất (FR-D-031, G5-4) ---------- */
+
+  const [runStages, setRunStages] = useState<Record<string, StageRun>>(EMPTY_RUN)
+  const [runInfo, setRunInfo] = useState<{ at: string; outcome: string } | null>(null)
+  const [showRun, setShowRun] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    if (!code || nodes.length === 0) return
+    void listTestRuns(code, undefined, 1)
+      .then(async (r) => {
+        const latest = r.items[0]
+        if (!alive || !latest) return
+        const detail = await getTestRun(code, latest.runId)
+        if (!alive) return
+        // `mapWaterfall` bỏ qua chặng không ghép được thay vì gán bừa cho nút gần nhất.
+        setRunStages(mapWaterfall(detail.stages, nodes))
+        setRunInfo({ at: latest.runAt, outcome: latest.outcome })
+      })
+      .catch(() => {
+        // Chưa chạy lần nào, hoặc không đọc được nhật ký — sơ đồ vẫn dùng bình thường.
+      })
+    return () => {
+      alive = false
+    }
+    // Chỉ phụ thuộc số chặng: `nodes` đổi mỗi lần kéo thả, tải lại nhật ký theo từng
+    // cú kéo là gọi máy chủ vô ích.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, nodes.length])
+
+  const runOverlay = showRun ? runStages : EMPTY_RUN
   const yaml = useMemo(
     () => emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true }),
     [nodes, edges, code],
@@ -361,6 +395,18 @@ function DesignerInner() {
             {nodes.length} chặng · {CATALOG_RUNTIME}
             {errorCount > 0 && ` · ${errorCount} lỗi`}
           </Typography.Text>
+          {/* Tô đường chạy của lần chạy gần nhất (FR-D-031). Tắt được vì khi đang
+              sửa sơ đồ, màu của lần chạy cũ dễ gây hiểu nhầm là trạng thái hiện tại. */}
+          {runInfo && (
+            <Button
+              size="small"
+              type={showRun ? 'primary' : 'default'}
+              onClick={() => setShowRun((v) => !v)}
+              title={`Lần chạy ${runInfo.at.slice(0, 19).replace('T', ' ')} · ${runInfo.outcome}`}
+            >
+              {showRun ? 'Đang tô đường chạy' : 'Tô đường chạy'}
+            </Button>
+          )}
         </span>
 
         <div className="dsg__bar-actions">
@@ -416,7 +462,7 @@ function DesignerInner() {
 
           <div className="dsg__canvas">
             <StatusContext.Provider value={status}>
-              <RunContext.Provider value={EMPTY_RUN}>
+              <RunContext.Provider value={runOverlay}>
                 <InteractionContext.Provider value={interaction}>
                   <FlowCanvas
                     nodes={nodes}

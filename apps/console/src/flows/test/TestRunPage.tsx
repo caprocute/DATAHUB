@@ -1,8 +1,16 @@
-import { App as AntApp, Button, Empty, Input, Select, Space, Table, Tag, Typography } from 'antd'
+import { Alert, App as AntApp, Button, Empty, Input, Select, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../design/designer.css'
-import { getRoute, runTest, type RouteSummary, type TestRunResult } from '../../api/routesApi'
+import {
+  getRoute,
+  getVersion,
+  runTest,
+  validateYaml,
+  type RouteSummary,
+  type TestRunResult,
+  type ValidationResult,
+} from '../../api/routesApi'
 
 /** Nhãn tiếng Việt cho trạng thái từng chặng trong waterfall. */
 const STAGE_VI: Record<string, { label: string; color: string }> = {
@@ -31,6 +39,9 @@ export function TestRunPage() {
   const [result, setResult] = useState<TestRunResult | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /** Kết quả kiểm tra định nghĩa; có lỗi chặn thì không cho chạy (G5-2). */
+  const [findings, setFindings] = useState<ValidationResult['findings']>([])
+  const [checking, setChecking] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -46,14 +57,38 @@ export function TestRunPage() {
     }
   }, [code])
 
+  /**
+   * Kiểm tra định nghĩa trước khi cho chạy (FR-D-030, G5-2).
+   *
+   * Máy chủ vẫn là chốt chặn thật (`testRun` từ chối YAML lỗi), nhưng để người dùng bấm
+   * rồi mới báo lỗi là phí một vòng chờ — kiểm trước và **khóa nút** cho biết ngay.
+   */
+  useEffect(() => {
+    let alive = true
+    if (!versionNo) return
+    setChecking(true)
+    void getVersion(code, versionNo)
+      .then((v) => validateYaml(v.definitionYaml ?? ''))
+      .then((r) => alive && setFindings(r.valid ? [] : r.findings))
+      .catch(() => {
+        // Không kiểm được thì **không** chặn: để máy chủ quyết khi bấm chạy, chặn
+        // dựa trên một lần gọi hỏng sẽ khóa oan luồng vốn hợp lệ.
+        if (alive) setFindings([])
+      })
+      .finally(() => alive && setChecking(false))
+    return () => {
+      alive = false
+    }
+  }, [code, versionNo])
+
+  const blocking = findings.filter((f) => f.severity?.toUpperCase() === 'ERROR')
+
   const run = useCallback(async () => {
     setRunning(true)
     setError(null)
     try {
       const r = await runTest(code, versionNo, mode)
       setResult(r)
-      // Lưu lại để màn nhật ký đọc được ngay cả khi máy chủ chưa có API lịch sử.
-      rememberRun(code, r)
       message.success(`${r.outcome} · ${r.durationMs} ms`)
     } catch (e) {
       setError(String(e instanceof Error ? e.message : e))
@@ -112,11 +147,38 @@ export function TestRunPage() {
         </div>
         <div>
           <div className="t-small t-muted">&nbsp;</div>
-          <Button type="primary" loading={running} onClick={() => void run()}>
+          <Button
+            type="primary"
+            loading={running || checking}
+            disabled={blocking.length > 0}
+            title={blocking.length > 0 ? 'Còn lỗi kiểm tra — sửa ở trình thiết kế trước' : undefined}
+            onClick={() => void run()}
+          >
             Chạy thử
           </Button>
         </div>
       </Space>
+
+      {blocking.length > 0 && (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={`Chặn chạy thử — còn ${blocking.length} lỗi trong định nghĩa`}
+          description={
+            <>
+              <ul style={{ margin: '4px 0 8px', paddingLeft: 18 }}>
+                {blocking.slice(0, 5).map((f, i) => (
+                  <li key={i}>{f.message}</li>
+                ))}
+              </ul>
+              <Button size="small" onClick={() => navigate(`/flows/${code}/design`)}>
+                Mở trình thiết kế để sửa
+              </Button>
+            </>
+          }
+        />
+      )}
 
       <div className="tst__grid">
         <section>
@@ -194,37 +256,3 @@ export function TestRunPage() {
   )
 }
 
-/* ---------- Nhật ký chạy phía trình duyệt ---------- */
-
-export interface StoredRun extends TestRunResult {
-  at: string
-}
-
-const RUNS_KEY = 'lgsp.flow-runs'
-/** Giữ tối đa 50 lần chạy gần nhất mỗi luồng. */
-const MAX_RUNS = 50
-
-/**
- * Ghi lại lần chạy.
- *
- * Máy chủ **chưa có** bảng lịch sử chạy (IP-06 G5-6 thuộc lane L-CTRL), nên tạm lưu
- * ở trình duyệt để màn nhật ký dùng được ngay. Đây là chỗ chứa tạm, không phải
- * nguồn sự thật — khi API có thì đọc từ máy chủ.
- */
-export function rememberRun(code: string, result: TestRunResult): void {
-  try {
-    const all = loadRuns()
-    const list = [{ ...result, at: new Date().toISOString() }, ...(all[code] ?? [])].slice(0, MAX_RUNS)
-    localStorage.setItem(RUNS_KEY, JSON.stringify({ ...all, [code]: list }))
-  } catch {
-    // Hết chỗ lưu hoặc trình duyệt chặn — không chặn luồng chính vì việc này.
-  }
-}
-
-export function loadRuns(): Record<string, StoredRun[]> {
-  try {
-    return JSON.parse(localStorage.getItem(RUNS_KEY) ?? '{}') as Record<string, StoredRun[]>
-  } catch {
-    return {}
-  }
-}

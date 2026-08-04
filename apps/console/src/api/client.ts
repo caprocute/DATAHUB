@@ -75,3 +75,17 @@ export async function apiAdminPut<T>(path: string, body?: unknown): Promise<T> {
   if (!res.ok) throw new Error(await parseError(res))
   return res.json() as Promise<T>
 }
+
+/**
+ * Gọi DELETE.
+ *
+ * Không trả dữ liệu: máy chủ đáp 204 không thân, gọi `res.json()` sẽ ném lỗi phân tích
+ * ngay cả khi xóa đã thành công.
+ */
+export async function apiAdminDelete(path: string): Promise<void> {
+  const res = await fetch(`${API_ADMIN_BASE}${path}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+}
