@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/003-w2-routes.yaml
   - include:
       file: db/changelog/changes/004-c-onboarding-lifecycle.yaml
+  - include:
+      file: db/changelog/changes/005-c-attachment-review.yaml

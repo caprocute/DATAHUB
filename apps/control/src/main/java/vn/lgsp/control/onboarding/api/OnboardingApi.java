@@ -50,10 +50,32 @@ public interface OnboardingApi {
   /** Thu hồi kết nạp (FR-01-012). */
   ApplicationDto revoke(UUID id, String reason, String actor);
 
+  /** Ghi nhận rà soát quyền định kỳ và đặt hạn rà soát kế tiếp (FR-01-013). */
+  ApplicationDto recordAccessReview(UUID id, AccessReviewRequest request, String actor);
+
+  /** Hồ sơ tới hạn rà soát quyền — dùng cho danh sách nhắc việc (FR-01-013). */
+  List<ApplicationDto> dueForAccessReview();
+
+  /* ---------- Tệp đính kèm (FR-01-003) ---------- */
+
+  AttachmentDto attach(
+      UUID id, String fileName, String contentType, byte[] content, String uploadedBy);
+
+  List<AttachmentDto> attachments(UUID id);
+
+  /** Nội dung tệp để tải về; rỗng nếu không có hoặc không thuộc hồ sơ. */
+  Optional<DownloadedFile> download(UUID applicationId, UUID attachmentId);
+
+  /** Tệp đã tải cùng siêu dữ liệu cần cho header HTTP. */
+  record DownloadedFile(String fileName, String contentType, byte[] content) {}
+
   Optional<ApplicationDto> findById(UUID id);
 
   /** Trang danh sách có lọc và tìm kiếm phía máy chủ (C4-1). */
   PageDto<ApplicationDto> search(String query, String status, int page, int size);
+
+  /** Toàn bộ hồ sơ khớp bộ lọc, không phân trang — dùng để xuất tệp (C4-3). */
+  List<ApplicationDto> exportAll(String query, String status);
 
   /** Nhật ký kiểm toán của một hồ sơ (C4-5). */
   List<AuditEntryDto> auditTrail(UUID id);

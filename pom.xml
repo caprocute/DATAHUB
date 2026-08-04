@@ -23,6 +23,7 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spring-boot.version>4.0.2</spring-boot.version>
+    <aws-sdk.version>2.31.7</aws-sdk.version>
     <spring-modulith.version>2.0.1</spring-modulith.version>
   </properties>
 
@@ -46,6 +47,14 @@
         <groupId>vn.lgsp</groupId>
         <artifactId>common-java</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <!-- SDK S3 cho tệp đính kèm hồ sơ (SeaweedFS ở DEV — ADR-020, không dùng MinIO). -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws-sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

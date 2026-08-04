@@ -1,5 +1,7 @@
 package vn.lgsp.control.onboarding.internal;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +14,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.lgsp.control.onboarding.api.AccessReviewRequest;
 import vn.lgsp.control.onboarding.api.ApplicationDto;
 import vn.lgsp.control.onboarding.api.ApplicationSubmitRequest;
+import vn.lgsp.control.onboarding.api.AttachmentDto;
 import vn.lgsp.control.onboarding.api.AuditEntryDto;
 import vn.lgsp.control.onboarding.api.OnboardingApi;
 import vn.lgsp.control.onboarding.api.PageDto;
@@ -91,12 +95,25 @@ class OnboardingService implements OnboardingApi {
           "REJECTED", Set.of(),
           "REVOKED", Set.of());
 
+  private static final RowMapper<AttachmentDto> ATTACHMENT_MAPPER =
+      (rs, i) ->
+          new AttachmentDto(
+              rs.getObject("id", UUID.class),
+              rs.getString("file_name"),
+              rs.getString("content_type"),
+              rs.getLong("size_bytes"),
+              rs.getString("sha256"),
+              rs.getString("uploaded_by"),
+              rs.getObject("created_at", OffsetDateTime.class));
+
   private final JdbcTemplate jdbc;
   private final OutboxWriter outbox;
+  private final AttachmentStorage storage;
 
-  OnboardingService(JdbcTemplate jdbc, OutboxWriter outbox) {
+  OnboardingService(JdbcTemplate jdbc, OutboxWriter outbox, AttachmentStorage storage) {
     this.jdbc = jdbc;
     this.outbox = outbox;
+    this.storage = storage;
   }
 
   @Override
@@ -338,8 +355,7 @@ class OnboardingService implements OnboardingApi {
   }
 
   private ApplicationDto load(UUID id) {
-    return findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("không có hồ sơ: " + id));
+    return findById(id).orElseThrow(() -> new ApplicationNotFoundException(id));
   }
 
   private static String escape(String value) {
@@ -357,15 +373,12 @@ class OnboardingService implements OnboardingApi {
     }
   }
 
-  @Override
-  public PageDto<ApplicationDto> search(String query, String status, int page, int size) {
-    int p = Math.max(page, 0);
-    int s = Math.min(Math.max(size, 1), 100);
-
+  /** Vị từ lọc dùng chung cho danh sách và xuất tệp — giữ một chỗ để không lệch nhau. */
+  private static String whereClause(String query, String status, List<Object> args) {
     StringBuilder where = new StringBuilder(" WHERE 1 = 1");
-    List<Object> args = new ArrayList<>();
     if (query != null && !query.isBlank()) {
-      where.append(" AND (LOWER(system_code) LIKE ? OR LOWER(system_name) LIKE ? OR LOWER(owner_org) LIKE ?)");
+      where.append(
+          " AND (LOWER(system_code) LIKE ? OR LOWER(system_name) LIKE ? OR LOWER(owner_org) LIKE ?)");
       String like = "%" + query.trim().toLowerCase() + "%";
       args.add(like);
       args.add(like);
@@ -375,6 +388,16 @@ class OnboardingService implements OnboardingApi {
       where.append(" AND status = ?");
       args.add(status.trim().toUpperCase());
     }
+    return where.toString();
+  }
+
+  @Override
+  public PageDto<ApplicationDto> search(String query, String status, int page, int size) {
+    int p = Math.max(page, 0);
+    int s = Math.min(Math.max(size, 1), 100);
+
+    List<Object> args = new ArrayList<>();
+    String where = whereClause(query, status, args);
 
     Long total =
         jdbc.queryForObject(
@@ -394,7 +417,164 @@ class OnboardingService implements OnboardingApi {
   }
 
   @Override
+  public List<ApplicationDto> exportAll(String query, String status) {
+    List<Object> args = new ArrayList<>();
+    String where = whereClause(query, status, args);
+    // Trần 10 000 dòng: xuất báo cáo, không phải kênh trích xuất toàn bộ CSDL.
+    return jdbc.query(
+        "SELECT %s FROM ph01.application%s ORDER BY created_at DESC LIMIT 10000"
+            .formatted(COLUMNS, where),
+        MAPPER,
+        args.toArray());
+  }
+
+  /* ---------- Rà soát quyền định kỳ (FR-01-013) ---------- */
+
+  @Override
+  @Transactional
+  public ApplicationDto recordAccessReview(UUID id, AccessReviewRequest request, String actor) {
+    ApplicationDto current = load(id);
+    if (!Set.of("ACTIVE", "SUSPENDED").contains(current.status())) {
+      throw new IllegalStateException(
+          "chỉ rà soát quyền của thành viên đang hoạt động hoặc tạm ngừng, hiện: "
+              + current.status());
+    }
+    OffsetDateTime now = OffsetDateTime.now();
+    OffsetDateTime next = now.plusMonths(request.nextInMonthsOrDefault());
+    jdbc.update(
+        """
+        UPDATE ph01.application
+        SET last_access_review_at = ?, last_access_review_by = ?, next_access_review_at = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        now,
+        actor,
+        next,
+        now,
+        id);
+    audit(id, "ACCESS_REVIEW", current.status(), current.status(), actor, request.note());
+    return load(id);
+  }
+
+  @Override
+  public List<ApplicationDto> dueForAccessReview() {
+    // Chưa rà soát lần nào cũng coi là tới hạn — không để hồ sơ cũ trôi khỏi tầm ngắm.
+    return jdbc.query(
+        """
+        SELECT %s FROM ph01.application
+        WHERE status IN ('ACTIVE', 'SUSPENDED')
+          AND (next_access_review_at IS NULL OR next_access_review_at <= now())
+        ORDER BY next_access_review_at NULLS FIRST, created_at
+        """
+            .formatted(COLUMNS),
+        MAPPER);
+  }
+
+  /* ---------- Tệp đính kèm (FR-01-003) ---------- */
+
+  @Override
+  @Transactional
+  public AttachmentDto attach(
+      UUID id, String fileName, String contentType, byte[] content, String uploadedBy) {
+    ApplicationDto app = load(id);
+    // Hồ sơ đã chốt thì không nhận thêm tệp: hồ sơ đã duyệt phải bất biến để truy vết.
+    if (!Set.of("SUBMITTED", "REVIEWED").contains(app.status())) {
+      throw new IllegalStateException(
+          "chỉ đính kèm khi hồ sơ chưa duyệt xong, hiện: " + app.status());
+    }
+    if (content == null || content.length == 0) {
+      throw new IllegalArgumentException("tệp rỗng");
+    }
+    if (content.length > AttachmentStorage.MAX_BYTES) {
+      throw new IllegalArgumentException(
+          "tệp vượt %d MB".formatted(AttachmentStorage.MAX_BYTES / (1024 * 1024)));
+    }
+    if (contentType == null || !AttachmentStorage.ALLOWED_TYPES.contains(contentType)) {
+      throw new IllegalArgumentException("định dạng không được phép: " + contentType);
+    }
+
+    UUID attachmentId = UUID.randomUUID();
+    String safeName = sanitize(fileName);
+    String objectKey = "onboarding/%s/%s-%s".formatted(id, attachmentId, safeName);
+    storage.put(objectKey, content, contentType);
+
+    OffsetDateTime now = OffsetDateTime.now();
+    jdbc.update(
+        """
+        INSERT INTO ph01.application_attachment
+          (id, application_id, file_name, content_type, size_bytes, object_key, sha256, uploaded_by, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        attachmentId,
+        id,
+        safeName,
+        contentType,
+        (long) content.length,
+        objectKey,
+        sha256(content),
+        uploadedBy,
+        now);
+    audit(id, "ATTACH", app.status(), app.status(), uploadedBy, safeName);
+
+    return new AttachmentDto(
+        attachmentId, safeName, contentType, content.length, sha256(content), uploadedBy, now);
+  }
+
+  @Override
+  public List<AttachmentDto> attachments(UUID id) {
+    load(id);
+    return jdbc.query(
+        """
+        SELECT id, file_name, content_type, size_bytes, sha256, uploaded_by, created_at
+        FROM ph01.application_attachment WHERE application_id = ? ORDER BY created_at
+        """,
+        ATTACHMENT_MAPPER,
+        id);
+  }
+
+  @Override
+  public Optional<DownloadedFile> download(UUID applicationId, UUID attachmentId) {
+    try {
+      // Ràng cả `application_id`: không cho đoán id tệp của hồ sơ khác.
+      Map<String, Object> row =
+          jdbc.queryForMap(
+              """
+              SELECT file_name, content_type, object_key
+              FROM ph01.application_attachment WHERE id = ? AND application_id = ?
+              """,
+              attachmentId,
+              applicationId);
+      byte[] content = storage.get((String) row.get("object_key"));
+      return Optional.of(
+          new DownloadedFile(
+              (String) row.get("file_name"), (String) row.get("content_type"), content));
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
+    }
+  }
+
+  /** Bỏ đường dẫn và ký tự lạ khỏi tên tệp do người dùng đặt. */
+  private static String sanitize(String fileName) {
+    String base = fileName == null ? "tep" : fileName.replaceAll(".*[/\\\\]", "");
+    String cleaned = base.replaceAll("[^\\p{L}\\p{N}._-]", "_");
+    return cleaned.isBlank() ? "tep" : cleaned.substring(0, Math.min(cleaned.length(), 200));
+  }
+
+  private static String sha256(byte[] content) {
+    try {
+      byte[] digest = MessageDigest.getInstance("SHA-256").digest(content);
+      StringBuilder sb = new StringBuilder(digest.length * 2);
+      for (byte b : digest) sb.append("%02x".formatted(b));
+      return sb.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("JVM thiếu SHA-256", e);
+    }
+  }
+
+  @Override
   public List<AuditEntryDto> auditTrail(UUID id) {
+    // Xác nhận hồ sơ tồn tại: hồ sơ lạ phải là 404, không phải danh sách rỗng.
+    load(id);
     return jdbc.query(
         """
         SELECT id, action, from_status, to_status, actor, note, created_at

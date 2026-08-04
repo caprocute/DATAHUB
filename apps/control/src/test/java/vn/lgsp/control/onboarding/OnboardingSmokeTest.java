@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import vn.lgsp.control.onboarding.api.AccessReviewRequest;
 import vn.lgsp.control.onboarding.api.ApplicationDto;
 import vn.lgsp.control.onboarding.api.ApplicationSubmitRequest;
 import vn.lgsp.control.onboarding.api.OnboardingApi;
@@ -137,6 +138,79 @@ class OnboardingSmokeTest {
     assertThat(onboardingApi.auditTrail(app.id()))
         .extracting("action")
         .contains("SUBMIT", "REVIEW_LEGAL", "REVIEW_TECH", "REVIEWED", "APPROVE");
+  }
+
+  @Test
+  void dinhKemTepHopLeVaTaiVeDuocNguyenVen() {
+    ApplicationDto app = submitNew();
+    byte[] noiDung = "%PDF-1.4 hồ sơ năng lực".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    var att =
+        onboardingApi.attach(app.id(), "ho so/nang luc.pdf", "application/pdf", noiDung, NOP_VIEN);
+    // Tên tệp bị lọc bỏ đường dẫn để không ghi ra ngoài thư mục dự kiến.
+    assertThat(att.fileName()).doesNotContain("/");
+    assertThat(att.sizeBytes()).isEqualTo(noiDung.length);
+
+    assertThat(onboardingApi.attachments(app.id())).hasSize(1);
+
+    var tai = onboardingApi.download(app.id(), att.id()).orElseThrow();
+    assertThat(tai.content()).isEqualTo(noiDung);
+  }
+
+  @Test
+  void chanTepSaiDinhDangHoacQuaLon() {
+    ApplicationDto app = submitNew();
+
+    assertThatThrownBy(
+            () -> onboardingApi.attach(app.id(), "x.exe", "application/x-msdownload", new byte[] {1}, NOP_VIEN))
+        .hasMessageContaining("định dạng");
+
+    assertThatThrownBy(
+            () -> onboardingApi.attach(app.id(), "x.pdf", "application/pdf", new byte[0], NOP_VIEN))
+        .hasMessageContaining("rỗng");
+  }
+
+  @Test
+  void khongTaiDuocTepCuaHoSoKhac() {
+    ApplicationDto a = submitNew();
+    ApplicationDto b = submitNew();
+    var att = onboardingApi.attach(a.id(), "a.pdf", "application/pdf", new byte[] {1, 2}, NOP_VIEN);
+
+    // Đoán đúng id tệp nhưng sai hồ sơ thì vẫn không lấy được.
+    assertThat(onboardingApi.download(b.id(), att.id())).isEmpty();
+  }
+
+  @Test
+  void hoSoDaDuyetKhongNhanThemTep() {
+    ApplicationDto app = passBothReviews(submitNew());
+    onboardingApi.approve(app.id(), THAM_DINH);
+
+    assertThatThrownBy(
+            () -> onboardingApi.attach(app.id(), "x.pdf", "application/pdf", new byte[] {1}, NOP_VIEN))
+        .hasMessageContaining("chưa duyệt xong");
+  }
+
+  @Test
+  void raSoatQuyenDinhKyDatHanKeTiep() {
+    ApplicationDto app = passBothReviews(submitNew());
+    onboardingApi.approve(app.id(), THAM_DINH);
+    onboardingApi.activate(app.id(), "quantri");
+
+    // Chưa rà soát lần nào thì phải nằm trong danh sách tới hạn.
+    assertThat(onboardingApi.dueForAccessReview()).extracting("id").contains(app.id());
+
+    onboardingApi.recordAccessReview(app.id(), new AccessReviewRequest("đã rà", 12), "quantri");
+    assertThat(onboardingApi.dueForAccessReview()).extracting("id").doesNotContain(app.id());
+    assertThat(onboardingApi.auditTrail(app.id())).extracting("action").contains("ACCESS_REVIEW");
+  }
+
+  @Test
+  void xuatDanhSachTheoDungBoLocDangAp() {
+    ApplicationDto created = submitNew();
+    var rows = onboardingApi.exportAll(created.systemCode(), null);
+    assertThat(rows).extracting("systemCode").containsExactly(created.systemCode());
+    // Xuất cũng không kèm bí mật.
+    assertThat(rows).allSatisfy(a -> assertThat(a.clientSecretSealed()).isNull());
   }
 
   @Test

@@ -1,0 +1,41 @@
+databaseChangeLog:
+  # Tệp đính kèm hồ sơ kết nạp (FR-01-003). Nội dung tệp nằm ở object storage;
+  # bảng này chỉ giữ siêu dữ liệu + khóa đối tượng, không giữ nhị phân trong CSDL.
+  - changeSet:
+      id: 005-application-attachment
+      author: lgsp-c
+      changes:
+        - createTable:
+            schemaName: ph01
+            tableName: application_attachment
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: application_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: file_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: content_type, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: size_bytes, type: BIGINT, constraints: { nullable: false } }
+              # Khóa đối tượng trong bucket; không lộ ra API, chỉ dùng để tải về.
+              - column: { name: object_key, type: VARCHAR(512), constraints: { nullable: false } }
+              # SHA-256 để đối chiếu toàn vẹn khi tải lại.
+              - column: { name: sha256, type: VARCHAR(64), constraints: { nullable: false } }
+              - column: { name: uploaded_by, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+        - createIndex:
+            schemaName: ph01
+            tableName: application_attachment
+            indexName: idx_application_attachment_app
+            columns:
+              - column: { name: application_id }
+
+  # Rà soát quyền định kỳ (FR-01-013): mốc rà soát gần nhất và hạn kế tiếp.
+  - changeSet:
+      id: 005-application-access-review
+      author: lgsp-c
+      changes:
+        - addColumn:
+            schemaName: ph01
+            tableName: application
+            columns:
+              - column: { name: last_access_review_at, type: TIMESTAMPTZ }
+              - column: { name: last_access_review_by, type: VARCHAR(128) }
+              - column: { name: next_access_review_at, type: TIMESTAMPTZ }
