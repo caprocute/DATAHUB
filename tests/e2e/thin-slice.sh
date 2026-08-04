@@ -8,25 +8,47 @@ CTRL="${CONTROL_URL:-http://localhost:8080}"
 GW="${APISIX_URL:-http://localhost:9080}"
 CODE="E2E_$(date +%s)"
 
-echo "==> Token reviewer"
-TOKEN=$(curl -sf -X POST "$KC/realms/lgsp/protocol/openid-connect/token" \
-  -d client_id=lgsp-console \
-  -d grant_type=password \
-  -d username=dev-reviewer \
-  -d password=dev-reviewer | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+token_for() {
+  curl -sf -X POST "$KC/realms/lgsp/protocol/openid-connect/token" \
+    -d client_id=lgsp-console \
+    -d grant_type=password \
+    -d username="$1" \
+    -d password="$1" | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])'
+}
+
+# Luật bốn mắt (FR-01-006): người nộp hồ sơ không được tự thẩm định / tự duyệt,
+# nên kịch bản cần hai tài khoản khác nhau.
+echo "==> Token dev-admin (nộp) + dev-reviewer (thẩm định, duyệt)"
+SUBMITTER=$(token_for dev-admin)
+TOKEN=$(token_for dev-reviewer)
 
 echo "==> Nộp hồ sơ $CODE"
 APP=$(curl -sf -X POST "$CTRL/api/v1/onboarding/applications" \
-  -H "Authorization: Bearer $TOKEN" \
+  -H "Authorization: Bearer $SUBMITTER" \
   -H "Content-Type: application/json" \
-  -d "{\"systemCode\":\"$CODE\",\"systemName\":\"E2E Demo\",\"ownerOrg\":\"Sở Demo\"}")
+  -d "{\"systemCode\":\"$CODE\",\"systemName\":\"E2E Demo\",\"ownerOrg\":\"Sở Demo\",\"legalBasis\":\"Quyết định E2E\",\"techProfile\":\"Hồ sơ năng lực E2E\",\"contactName\":\"Cán bộ E2E\",\"contactEmail\":\"e2e@example.gov.vn\"}")
 APP_ID=$(echo "$APP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
 echo "    applicationId=$APP_ID"
 
-echo "==> Duyệt hồ sơ"
+echo "==> Thẩm định pháp lý (FR-01-004) + kỹ thuật (FR-01-005)"
+curl -sf -X POST "$CTRL/api/v1/onboarding/applications/$APP_ID/review/legal" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"decision":"PASS","note":"đủ căn cứ"}' > /dev/null
+REVIEWED=$(curl -sf -X POST "$CTRL/api/v1/onboarding/applications/$APP_ID/review/technical" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"decision":"PASS","note":"đạt"}')
+echo "$REVIEWED" | python3 -c 'import sys,json;d=json.load(sys.stdin);assert d["status"]=="REVIEWED",d;print("    đã thẩm định đủ hai bước")'
+
+echo "==> Duyệt hồ sơ (bốn mắt: người duyệt khác người nộp)"
 APPROVED=$(curl -sf -X POST "$CTRL/api/v1/onboarding/applications/$APP_ID/approve" \
   -H "Authorization: Bearer $TOKEN")
-echo "$APPROVED" | python3 -c 'import sys,json;d=json.load(sys.stdin);assert d["status"]=="APPROVED",d;print("    clientId=",d["clientId"])'
+echo "$APPROVED" | python3 -c 'import sys,json;d=json.load(sys.stdin);assert d["status"]=="APPROVED",d;assert d["clientSecretSealed"],"phải trả bí mật một lần";print("    clientId=",d["clientId"])'
+
+echo "==> Bí mật không rò ở lối đọc khác (FR-01-009)"
+curl -sf "$CTRL/api/v1/onboarding/applications/$APP_ID" -H "Authorization: Bearer $TOKEN" \
+  | python3 -c 'import sys,json;d=json.load(sys.stdin);assert d["clientSecretSealed"] is None,"secret bị rò khi đọc lại";print("    đọc lại: secret = null")'
+curl -sf "$CTRL/api/v1/onboarding/applications?size=50" -H "Authorization: Bearer $TOKEN" \
+  | python3 -c 'import sys,json;d=json.load(sys.stdin);assert all(i["clientSecretSealed"] is None for i in d["items"]),"secret bị rò ở danh sách";print("    danh sách: không có secret")'
 
 echo "==> Đăng ký + publish catalog"
 SVC=$(curl -sf -X POST "$CTRL/api/v1/catalog/services" \

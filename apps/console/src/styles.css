@@ -37,3 +37,19 @@ body {
 .designer-page .flow-shell {
   min-height: 560px;
 }
+
+/* ---------- Thẻ kết quả thẩm định (màn Kết nạp PH-01) ---------- */
+
+.review-card {
+  padding: 12px;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--c-surface, #fff);
+}
+.review-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}

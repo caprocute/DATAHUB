@@ -15,11 +15,19 @@ async function authHeaders(): Promise<HeadersInit> {
 async function parseError(res: Response): Promise<string> {
   const text = await res.text()
   try {
-    const j = JSON.parse(text) as { title?: string; findings?: { message: string }[] }
+    const j = JSON.parse(text) as {
+      title?: string
+      error?: string
+      message?: string
+      findings?: { message: string }[]
+    }
     if (j.findings?.length) {
       return `${j.title ?? 'Lỗi'}: ${j.findings.map((f) => f.message).join('; ')}`
     }
+    // Lỗi nghiệp vụ của control trả `{"error": "..."}`; dùng nguyên văn cho người dùng đọc.
+    if (j.error) return j.error
     if (j.title) return j.title
+    if (j.message) return j.message
   } catch {
     /* plain text */
   }

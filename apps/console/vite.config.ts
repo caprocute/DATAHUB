@@ -9,10 +9,12 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
   },
   server: {
+    host: '127.0.0.1',
     port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.VITE_PROXY_TARGET ?? 'http://localhost:8080',
         changeOrigin: true,
       },
     },
