@@ -1,11 +1,15 @@
 import { Button, Typography } from 'antd'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 export function LoginPage() {
   const { user, loading, login } = useAuth()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
+
   if (loading) return null
-  if (user) return <Navigate to="/flows" replace />
+  // Đã có phiên rồi thì vào thẳng, không bắt bấm lại nút đăng nhập.
+  if (user) return <Navigate to={from && from !== '/login' ? from : '/flows'} replace />
 
   return (
     <div
@@ -23,7 +27,7 @@ export function LoginPage() {
         <Typography.Paragraph type="secondary">
           Console quản trị — đăng nhập Keycloak DEV (realm <code>lgsp</code>).
         </Typography.Paragraph>
-        <Button type="primary" size="large" block onClick={() => void login()}>
+        <Button type="primary" size="large" block onClick={() => void login(from)}>
           Đăng nhập OIDC
         </Button>
       </div>
