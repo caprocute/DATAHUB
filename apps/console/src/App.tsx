@@ -5,6 +5,8 @@ import { AppShell } from './shell/AppShell'
 import { CatalogPage } from './pages/CatalogPage'
 import { DesignerPage } from './flows/design/DesignerPage'
 import { FlowListPage } from './flows/list/FlowListPage'
+import { RunLogPage } from './flows/runs/RunLogPage'
+import { TestRunPage } from './flows/test/TestRunPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { LoginPage } from './pages/LoginPage'
 
@@ -61,6 +63,8 @@ export default function App() {
           >
             <Route index element={<Navigate to="/flows" replace />} />
             <Route path="flows" element={<FlowListPage />} />
+            <Route path="flows/:code/test" element={<TestRunPage />} />
+            <Route path="flows/:code/runs" element={<RunLogPage />} />
             <Route path="onboarding" element={<OnboardingPage />} />
             <Route path="catalog" element={<CatalogPage />} />
           </Route>
