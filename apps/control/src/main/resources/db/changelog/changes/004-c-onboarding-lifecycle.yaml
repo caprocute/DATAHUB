@@ -1,0 +1,56 @@
+databaseChangeLog:
+  # Vòng đời kết nạp đầy đủ theo SRS PH-01: thẩm định pháp lý + kỹ thuật là hai bước
+  # riêng (FR-01-004 / FR-01-005), duyệt bốn mắt (FR-01-006), tạm ngừng / thu hồi
+  # (FR-01-011 / FR-01-012), đầu mối liên hệ (FR-01-015).
+  - changeSet:
+      id: 004-application-lifecycle-columns
+      author: lgsp-c
+      changes:
+        - addColumn:
+            schemaName: ph01
+            tableName: application
+            columns:
+              # Ai nộp — cần cho luật bốn mắt: người nộp không được tự duyệt.
+              - column: { name: submitted_by, type: VARCHAR(128) }
+              - column: { name: approved_by, type: VARCHAR(128) }
+              # Căn cứ pháp lý và hồ sơ năng lực kỹ thuật (FR-01-003).
+              - column: { name: legal_basis, type: TEXT }
+              - column: { name: tech_profile, type: TEXT }
+              - column: { name: contact_name, type: VARCHAR(255) }
+              - column: { name: contact_email, type: VARCHAR(255) }
+              - column: { name: contact_phone, type: VARCHAR(64) }
+              # Kết quả hai bước thẩm định, mỗi bước có người và thời điểm riêng.
+              - column: { name: legal_review_status, type: VARCHAR(32) }
+              - column: { name: legal_review_by, type: VARCHAR(128) }
+              - column: { name: legal_review_note, type: TEXT }
+              - column: { name: legal_review_at, type: TIMESTAMPTZ }
+              - column: { name: tech_review_status, type: VARCHAR(32) }
+              - column: { name: tech_review_by, type: VARCHAR(128) }
+              - column: { name: tech_review_note, type: TEXT }
+              - column: { name: tech_review_at, type: TIMESTAMPTZ }
+              # Lý do từ chối / tạm ngừng / thu hồi — bắt buộc ghi để truy vết.
+              - column: { name: status_reason, type: TEXT }
+
+  # Nhật ký kiểm toán mọi lần đổi trạng thái (C4-5). Chỉ ghi thêm, không sửa/xóa.
+  - changeSet:
+      id: 004-application-audit
+      author: lgsp-c
+      changes:
+        - createTable:
+            schemaName: ph01
+            tableName: application_audit
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: application_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: action, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: from_status, type: VARCHAR(32) }
+              - column: { name: to_status, type: VARCHAR(32) }
+              - column: { name: actor, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: note, type: TEXT }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+        - createIndex:
+            schemaName: ph01
+            tableName: application_audit
+            indexName: idx_application_audit_app
+            columns:
+              - column: { name: application_id }

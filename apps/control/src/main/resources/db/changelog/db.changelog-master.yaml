@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-w1-onboarding-catalog.yaml
   - include:
       file: db/changelog/changes/003-w2-routes.yaml
+  - include:
+      file: db/changelog/changes/004-c-onboarding-lifecycle.yaml
