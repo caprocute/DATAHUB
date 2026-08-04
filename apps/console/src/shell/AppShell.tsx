@@ -28,7 +28,7 @@ export function AppShell() {
           selectedKeys={[selected]}
           onClick={({ key }) => navigate(`/${key}`)}
           items={[
-            { key: 'flows', icon: <ApartmentOutlined />, label: 'Luồng' },
+            { key: 'flows', icon: <ApartmentOutlined />, label: 'Thiết kế luồng' },
             { key: 'onboarding', icon: <FormOutlined />, label: 'Kết nạp' },
             { key: 'catalog', icon: <ApiOutlined />, label: 'Catalog' },
           ]}

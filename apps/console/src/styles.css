@@ -28,3 +28,12 @@ body {
   border-radius: 10px;
   padding: 1.25rem 1.5rem;
 }
+
+.designer-page {
+  min-height: calc(100vh - 120px);
+}
+
+/* Canvas designer chiếm chiều cao làm việc */
+.designer-page .flow-shell {
+  min-height: 560px;
+}

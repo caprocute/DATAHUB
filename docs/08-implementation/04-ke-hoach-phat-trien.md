@@ -327,10 +327,10 @@ flowchart TB
 
 **Lane:** L-FE · UI-04-07/10 · FR-04-026…037  
 **DoD:**
-- [ ] Port mockup `designer-src` → `apps/console` (NDV cố định, LR canvas)
-- [ ] Lưu nháp qua API WP-23
-- [ ] Validate findings panel
-- [ ] Chạy thử giả lập (stub kết quả nếu backend chưa sẵn — gắn cờ)
+- [x] Port mockup `designer-src` → `apps/console` (NDV cố định, LR canvas) *(`src/designer/*` + `/flows`)*
+- [x] Lưu nháp qua API WP-23 *(`routesApi` create/saveDefinition)*
+- [x] Validate findings panel *(canvas `validate` + nút Validate server)*
+- [x] Chạy thử giả lập (stub kết quả nếu backend chưa sẵn — gắn cờ) *(`VITE_TEST_RUN_STUB`, mặc định bật)*
 
 ### WP-25 — CAMEL: test runner API  **[SS một phần với WP-24]**
 

@@ -1,12 +1,20 @@
-# LGSP Console (W0 shell)
+# LGSP Console
 
-React 19 · Vite · Ant Design 6 · OIDC Keycloak (`lgsp-console`).
+React 19 · Vite · Ant Design 6 · OIDC Keycloak (`lgsp-console`) · XYFlow designer (WP-24).
 
 ```bash
-# cần Keycloak: make up-dev
+# cần Keycloak + control: make up-dev && make run-control
 npm install
-npm run typegen   # fail-soft nếu stub OpenAPI thiếu path
+npm run typegen   # optional OpenAPI → TS
 npm run dev       # http://localhost:5173
 ```
 
-Trang placeholder: **Luồng** · **Kết nạp** · **Catalog**. Login qua Keycloak DEV.
+| Route | Nội dung |
+|---|---|
+| `/flows` | Designer production-path — lưu nháp `/api/admin/v1/routes`, findings, test stub |
+| `/onboarding` | Kết nạp PH-01 (API thật) |
+| `/catalog` | Catalog PH-02 (API thật) |
+
+Login DEV: `dev-admin` / `dev-admin` (hoặc `dev-reviewer`).
+
+Chạy thử stub: mặc định `VITE_TEST_RUN_STUB` bật (WP-25 chưa có). Proxy Vite: `/api` → `:8080`.
