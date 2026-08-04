@@ -77,22 +77,22 @@
 
 ### B1. Canvas & mô hình
 
-- [x] **B1-1.** Canvas trái→phải, node thẻ màu theo nhóm, cạnh cong, chèn giữa cạnh bằng `＋` (UI-04-07).
-- [x] **B1-2.** Kéo–thả từ palette vào canvas **và** thả đúng vào giữa một cạnh (không chỉ nối cuối).
-- [x] **B1-3.** Bốn chặng bắt buộc (`Tiếp nhận · Kiểm tra lược đồ · Ủy quyền · Ghi vết`) khóa, không xóa/không kéo ra khỏi thứ tự hợp lệ (BR-04-001).
+- [ ] **B1-1.** Canvas trái→phải, node thẻ màu theo nhóm, cạnh cong, chèn giữa cạnh bằng `＋` (UI-04-07).
+- [ ] **B1-2.** Kéo–thả từ palette vào canvas **và** thả đúng vào giữa một cạnh (không chỉ nối cuối).
+- [ ] **B1-3.** Bốn chặng bắt buộc (`Tiếp nhận · Kiểm tra lược đồ · Ủy quyền · Ghi vết`) khóa, không xóa/không kéo ra khỏi thứ tự hợp lệ (BR-04-001).
 - [x] **B1-4.** Undo/redo ≥ 50 bước, gộp thao tác liên tiếp; phím tắt chuẩn.
 - [x] **B1-5.** Sao chép / dán / nhân bản nhánh; xóa nhiều node bằng chọn vùng.
-- [x] **B1-6.** Tự bố cục (dagre) + nút “sắp xếp lại”, giữ vị trí thủ công nếu người dùng đã kéo.
-- [x] **B1-7.** Thu phóng, thu nhỏ toàn cảnh, minimap khi > 20 node.
+- [ ] **B1-6.** Tự bố cục (dagre) + nút “sắp xếp lại”, giữ vị trí thủ công nếu người dùng đã kéo.
+- [ ] **B1-7.** Thu phóng, thu nhỏ toàn cảnh, minimap khi > 20 node.
 - [ ] **B1-8.** Hiệu năng: 200 node vẫn mượt (đo FPS kéo thả), không dựng lại toàn canvas mỗi phím gõ.
 
 ### B2. Cấu hình một chặng (FR-04-037)
 
-- [x] **B2-1.** Popup mở bằng nhấp đúp; **không** dùng sidebar cố định.
-- [x] **B2-2.** Sinh biểu mẫu **từ `propertiesSchema` thật** của node đang chọn (nạp lười theo A1-5) — mọi kiểu: string/boolean/integer/number/enum/object/array/duration/bean-ref.
-- [x] **B2-3.** Nhóm trường theo `$comment: group:` — `common` mở sẵn, `(advanced)` gập.
+- [ ] **B2-1.** Popup mở bằng nhấp đúp; **không** dùng sidebar cố định.
+- [ ] **B2-2.** Sinh biểu mẫu **từ `propertiesSchema` thật** của node đang chọn (nạp lười theo A1-5) — mọi kiểu: string/boolean/integer/number/enum/object/array/duration/bean-ref.
+- [ ] **B2-3.** Nhóm trường theo `$comment: group:` — `common` mở sẵn, `(advanced)` gập.
 - [ ] **B2-4.** Trường `required` đánh dấu, validate inline, chặn đóng khi lỗi cứng (hoặc cảnh báo rõ khi thoát).
-- [x] **B2-5.** Tab: *Tham số · Biểu thức · Ánh xạ (khi là mapper) · Dữ liệu mẫu · Ghi chú*.
+- [ ] **B2-5.** Tab: *Tham số · Biểu thức · Ánh xạ (khi là mapper) · Dữ liệu mẫu · Ghi chú*.
 - [x] **B2-6.** Không hiện lại secret đã lưu; trường credential → **chọn kết nối PH-05**, không có ô nhập tự do (FR-04-032).
 - [ ] **B2-7.** Đổi tham số cập nhật YAML **sống** và badge chưa-đủ-cấu-hình (FR-04-034); đóng popup không mất thay đổi.
 
@@ -105,23 +105,23 @@
 
 ### B4. `choice`, ghi chú, luồng con
 
-- [x] **B4-1.** UI `choice`: thêm/xóa/sắp thứ tự nhánh `when`, đặt `otherwise` mặc định (FR-04-038); cảnh báo khi không vét cạn.
+- [ ] **B4-1.** UI `choice`: thêm/xóa/sắp thứ tự nhánh `when`, đặt `otherwise` mặc định (FR-04-038); cảnh báo khi không vét cạn.
 - [x] **B4-2.** Sticky note trên canvas, hiện khi duyệt (FR-04-039).
-- [x] **B4-3.** Luồng con `direct:`/`to` tới route khác — có điều hướng “mở luồng con” (FR-04-040).
+- [ ] **B4-3.** Luồng con `direct:`/`to` tới route khác — có điều hướng “mở luồng con” (FR-04-040).
 
 ### B5. Kiểm tra hợp lệ (FR-04-027)
 
-- [x] **B5-1.** Validate tức thời phía FE: thiếu `required`, node mồ côi, thiếu nhánh mặc định, chặng bắt buộc bị gỡ.
-- [x] **B5-2.** Validate phía máy chủ (`POST /routes/validate`) khi lưu/gửi duyệt — **chặn publish khi lỗi** (đã có, phải giữ).
+- [ ] **B5-1.** Validate tức thời phía FE: thiếu `required`, node mồ côi, thiếu nhánh mặc định, chặng bắt buộc bị gỡ.
+- [ ] **B5-2.** Validate phía máy chủ (`POST /routes/validate`) khi lưu/gửi duyệt — **chặn publish khi lỗi** (đã có, phải giữ).
 - [x] **B5-3.** Panel phát hiện: lọc theo mức (lỗi/cảnh báo/gợi ý), bấm vào → chọn đúng node + cuộn tới trường lỗi.
-- [x] **B5-4.** Kiểm tra tham chiếu: bộ chuyển đổi/kết nối/adapter đã đăng ký chưa (E2 của FR-04-032).
+- [ ] **B5-4.** Kiểm tra tham chiếu: bộ chuyển đổi/kết nối/adapter đã đăng ký chưa (E2 của FR-04-032).
 
 ### B6. YAML hai chiều
 
 - [x] **B6-1.** Sinh Camel YAML DSL sau mỗi thay đổi, hiện song song (FR-04-026 bước 4).
 - [x] **B6-2.** Sửa YAML tay → dựng lại canvas (round-trip thật, không chỉ `# @lgsp-canvas-v1` embed).
-- [x] **B6-3.** YAML sinh ra **nạp được bằng Camel thật** — test: `camel/dancu` load route sinh từ designer, không lỗi.
-- [x] **B6-4.** Khác biệt YAML giữa hai phiên bản hiển thị dạng diff khi duyệt.
+- [ ] **B6-3.** YAML sinh ra **nạp được bằng Camel thật** — test: `camel/dancu` load route sinh từ designer, không lỗi.
+- [ ] **B6-4.** Khác biệt YAML giữa hai phiên bản hiển thị dạng diff khi duyệt.
 
 ### B7. Chạy thử & duyệt
 
@@ -130,7 +130,7 @@
 - [x] **B7-3.** Tô đường chạy trên sơ đồ sau khi chạy thử: thành công/lỗi/bỏ qua (FR-04-035).
 - [x] **B7-4.** Gửi duyệt → **bốn mắt** (người gửi ≠ người duyệt, chặn ở BE) → publish tạo commit `routes/` (FR-04-029, WP-23).
 - [x] **B7-5.** Màn duyệt UI-04-09: diff YAML + ghi chú + lịch sử quyết định.
-- [x] **B7-6.** Danh sách luồng UI-04-01: cột `status`, `version`, `git_commit_ref` **thật**, lọc/tìm/phân trang phía máy chủ.
+- [ ] **B7-6.** Danh sách luồng UI-04-01: cột `status`, `version`, `git_commit_ref` **thật**, lọc/tìm/phân trang phía máy chủ.
 
 ### B8. Chất lượng
 
