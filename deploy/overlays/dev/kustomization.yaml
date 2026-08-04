@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: lgsp-dev
+resources:
+  - ../../base
+  - namespace.yaml
+images:
+  - name: lgsp/control
+    newTag: dev
+  - name: lgsp/camel-dancu
+    newTag: dev

@@ -14,8 +14,12 @@
 | **IP-00** | [README.md](README.md) (file này) | Mục tiêu, quyết định tóm tắt, liên kết |
 | **IP-01** | [01-mo-hinh-phat-trien.md](01-mo-hinh-phat-trien.md) | Production-first · microservice vs DU · bản đồ tách ngay |
 | **IP-02** | [02-huong-dan-lap-trinh.md](02-huong-dan-lap-trinh.md) | Monorepo, Spring Modulith, Camel Quarkus, gates CI |
+| **IP-03** | [**03-stack-cong-nghe.md**](03-stack-cong-nghe.md) | **Bản chốt stack theo tầng L1–L9 (production)** |
+| **IP-04** | [**04-ke-hoach-phat-trien.md**](04-ke-hoach-phat-trien.md) | **Kế hoạch W0–W6 · WP · lane đa agent** |
 
 **ADR:** [ADR-018](../05-adr/README.md#adr-018) (mô hình DU) · [ADR-019](../05-adr/README.md#adr-019) (Spring Boot 4) · [ADR-002](../05-adr/README.md#adr-002) (Camel Quarkus — chỉ PH-04).
+
+**Stack → [IP-03](03-stack-cong-nghe.md). Bắt đầu code → [IP-04](04-ke-hoach-phat-trien.md).**
 
 ---
 
@@ -64,3 +68,6 @@ Chi tiết → [IP-01](01-mo-hinh-phat-trien.md).
 |---|---|
 | 2026-08-03 | Khởi tạo IP-00…02, ADR-018 |
 | 2026-08-03 | Production-first; ADR-019 Spring Boot 4; ADR-002 làm rõ phạm vi Camel |
+| 2026-08-03 | **IP-03** bản chốt stack công nghệ đủ tầng L1–L9 |
+| 2026-08-03 | **IP-04** kế hoạch phát triển W0–W6, chia lane/WP đa agent |
+| 2026-08-04 | **ADR-020** — rà soát vòng đời phiên bản: Camel 4.18 LTS (4.20 đã EOL) · PostgreSQL 17/18 · bỏ MinIO (đã archive) · giữ Java 21 có lý do |

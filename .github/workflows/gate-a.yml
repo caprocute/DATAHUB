@@ -1,0 +1,23 @@
+name: Gate A
+
+on:
+  push:
+    branches: [main, 'w0/**', 'feat/**']
+  pull_request:
+
+jobs:
+  compile-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compile & unit test (libs + control)
+        run: mvn -B -f pom.xml test
+      - name: Camel dancu JVM test
+        run: mvn -B -f camel/dancu/pom.xml test
+      - name: Camel datdai JVM test
+        run: mvn -B -f camel/datdai/pom.xml test

@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-application
+      author: lgsp-w1
+      changes:
+        - createTable:
+            schemaName: ph01
+            tableName: application
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: system_code, type: VARCHAR(64), constraints: { nullable: false, unique: true } }
+              - column: { name: system_name, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: owner_org, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: client_id, type: VARCHAR(128) }
+              - column: { name: client_secret_sealed, type: VARCHAR(512) }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+  - changeSet:
+      id: 002-outbox
+      author: lgsp-w1
+      changes:
+        - createTable:
+            schemaName: ph01
+            tableName: outbox_event
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: topic, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: payload_json, type: TEXT, constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+              - column: { name: published_at, type: TIMESTAMPTZ }
+  - changeSet:
+      id: 002-catalog-service
+      author: lgsp-w1
+      changes:
+        - createTable:
+            schemaName: ph02
+            tableName: api_service
+            columns:
+              - column: { name: id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: service_code, type: VARCHAR(64), constraints: { nullable: false, unique: true } }
+              - column: { name: title, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: openapi_yaml, type: TEXT, constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: public_path, type: VARCHAR(255) }
+              - column: { name: upstream_url, type: VARCHAR(512) }
+              - column: { name: route_file, type: VARCHAR(512) }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMPTZ, constraints: { nullable: false } }

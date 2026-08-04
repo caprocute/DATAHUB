@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - control-deployment.yaml
+  - control-service.yaml
+  - camel-dancu-deployment.yaml
+  - camel-dancu-service.yaml
+  - camel-datdai-deployment.yaml
+  - camel-datdai-service.yaml
+  - external-secret-dev.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: lgsp

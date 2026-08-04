@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lgsp-camel-datdai
+  annotations:
+    # HPA/KEDA mẫu — scale theo HTTP (WP-21)
+    autoscaling.keda.sh/paused: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lgsp-camel-datdai
+  template:
+    metadata:
+      labels:
+        app: lgsp-camel-datdai
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /q/metrics
+        prometheus.io/port: "8087"
+        # KEDA ScaledObject tham chiếu (overlay STAGING bật)
+        keda.sh/scaler: http-add-on
+        keda.sh/http-scaledobject: lgsp-camel-datdai
+    spec:
+      containers:
+        - name: camel
+          image: lgsp/camel-datdai:0.1.0-SNAPSHOT
+          ports:
+            - containerPort: 8087
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8087
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lgsp-camel-datdai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lgsp-camel-datdai
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

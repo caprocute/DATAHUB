@@ -1,0 +1,9 @@
+- route:
+    id: ping-health
+    from:
+      uri: direct:health
+      steps:
+        - setBody:
+            constant: "lgsp-camel-datdai:ok"
+        - log:
+            message: "ping ${body}"

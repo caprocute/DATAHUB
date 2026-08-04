@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-ph04-schema
+      author: lgsp-w2
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph04
+  - changeSet:
+      id: 003-route
+      author: lgsp-w2
+      changes:
+        - createTable:
+            schemaName: ph04
+            tableName: route
+            columns:
+              - column: { name: route_id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: route_code, type: VARCHAR(80), constraints: { nullable: false, unique: true } }
+              - column: { name: title, type: VARCHAR(255), constraints: { nullable: false } }
+              - column: { name: route_type, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: source_system, type: VARCHAR(80), constraints: { nullable: false } }
+              - column: { name: target_system, type: VARCHAR(80) }
+              - column: { name: current_version_id, type: UUID }
+              - column: { name: created_by, type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+  - changeSet:
+      id: 003-route-version
+      author: lgsp-w2
+      changes:
+        - createTable:
+            schemaName: ph04
+            tableName: route_version
+            columns:
+              - column: { name: version_id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: route_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: version_no, type: INT, constraints: { nullable: false } }
+              - column: { name: definition_yaml, type: TEXT, constraints: { nullable: false } }
+              - column: { name: source, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: git_commit_ref, type: VARCHAR(64) }
+              - column: { name: git_path, type: VARCHAR(512) }
+              - column: { name: created_by, type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: ph04
+            baseTableName: route_version
+            baseColumnNames: route_id
+            referencedTableSchemaName: ph04
+            referencedTableName: route
+            referencedColumnNames: route_id
+            constraintName: fk_route_version_route
+        - addUniqueConstraint:
+            schemaName: ph04
+            tableName: route_version
+            columnNames: route_id, version_no
+            constraintName: uq_route_version_no

@@ -1,0 +1,66 @@
+# APISIX standalone — W1 thin-slice + Coraza DEV (paranoia thấp)
+
+routes:
+  - id: demo-tra-cuu
+    name: demo-tra-cuu
+    uri: /demo/tra-cuu
+    methods: [GET, OPTIONS]
+    upstream:
+      type: roundrobin
+      scheme: http
+      nodes:
+        "host.docker.internal:8088": 1
+    plugins:
+      coraza-filter:
+        conf:
+          directives_map:
+            # DEV: DetectionOnly + CRS paranoia 1 — không chặn false-positive thin-slice
+            # Bật "On" khi harden STAGING. Probe chặn thật: /demo/waf-probe
+            lgsp-dev:
+              - SecDebugLogLevel 3
+              - SecRuleEngine DetectionOnly
+              - SecAction "id:900000,phase:1,pass,nolog,setvar:tx.blocking_paranoia_level=1"
+              - Include @crs-setup-conf
+              - Include @owasp_crs/*.conf
+          default_directives: lgsp-dev
+      cors:
+        allow_origins: "*"
+        allow_methods: "GET,OPTIONS"
+        allow_headers: "*"
+      limit-count:
+        count: 100
+        time_window: 60
+        rejected_code: 429
+      openid-connect:
+        client_id: lgsp-control
+        client_secret: control-dev-secret-change-me
+        discovery: http://host.docker.internal:8081/realms/lgsp/.well-known/openid-configuration
+        token_signing_alg_values_expected: RS256
+        use_jwks: true
+        ssl_verify: false
+        bearer_only: true
+        realm: lgsp
+        introspection_endpoint_auth_method: client_secret_post
+        unauth_action: deny
+        set_access_token_header: true
+        access_token_in_authorization_header: true
+
+  # Probe chứng minh WAF chặn — không dùng mocking (priority cao hơn Coraza → nuốt 403)
+  - id: demo-waf-probe
+    name: demo-waf-probe
+    uri: /demo/waf-probe*
+    methods: [GET]
+    plugins:
+      coraza-filter:
+        conf:
+          directives_map:
+            block-probe:
+              - SecRuleEngine On
+              - SecRule REQUEST_URI "@contains waf-probe" "id:1001,phase:1,deny,status:403,msg:'lgsp-waf-probe'"
+          default_directives: block-probe
+    upstream:
+      type: roundrobin
+      nodes:
+        "127.0.0.1:1": 1
+
+#END

@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #d7e8f8 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #e8f2ec 0%, transparent 50%),
+    #f5f7fa;
+  color: #142033;
+}
+
+.shell-logo {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 1.05rem;
+}
+
+.page-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(20, 32, 51, 0.08);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}

@@ -1,0 +1,42 @@
+server:
+  port: ${CONTROL_PORT:8080}
+
+spring:
+  application:
+    name: lgsp-control
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:lgsp}
+    username: ${POSTGRES_USER:lgsp}
+    password: ${POSTGRES_PASSWORD:lgsp_dev_change_me}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8081/realms/lgsp}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    org.springframework.modulith: INFO
+
+lgsp:
+  outbox:
+    poll-ms: 2000
+  apisix:
+    routes-dir: ${LGSP_APISIX_ROUTES_DIR:deploy/apisix/routes}
+  gitops:
+    # DEV: ghi file routes/<code>/route.camel.yaml (+ git commit nếu bật)
+    routes-dir: ${LGSP_GITOPS_ROUTES_DIR:routes}
+    commit-enabled: ${LGSP_GITOPS_COMMIT:false}
+    author-name: ${LGSP_GITOPS_AUTHOR_NAME:lgsp-bot}
+    author-email: ${LGSP_GITOPS_AUTHOR_EMAIL:lgsp-bot@local.dev}

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lgsp-camel-dancu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lgsp-camel-dancu
+  template:
+    metadata:
+      labels:
+        app: lgsp-camel-dancu
+    spec:
+      containers:
+        - name: camel
+          image: lgsp/camel-dancu:0.1.0-SNAPSHOT
+          ports:
+            - containerPort: 8088
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8088
+            initialDelaySeconds: 15
+            periodSeconds: 10

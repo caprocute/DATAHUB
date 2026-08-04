@@ -33,7 +33,7 @@ Xây dựng **LGSP** (Local Government Service Platform) — nền tảng tích 
 | Messaging | Apache Kafka (Strimzi) | ADR-005 |
 | API Portal / Catalog | Backstage + OpenAPI registry | ADR-006 |
 | Observability | OpenTelemetry + Prometheus + Loki + Tempo + Grafana | ADR-007 |
-| Data store | PostgreSQL (CloudNativePG) + MinIO | ADR-008 |
+| Data store | PostgreSQL 17/18 (CloudNativePG) + lưu trữ đối tượng S3 (Garage/SeaweedFS) | ADR-008, ADR-020 |
 | Workflow/BPM | Camunda 8 hoặc Flowable (BPMN 2.0) | ADR-009 |
 | GitOps | Argo CD + Kustomize | ADR-010 |
 | Service mesh | Istio (mTLS nội bộ) | ADR-011 |

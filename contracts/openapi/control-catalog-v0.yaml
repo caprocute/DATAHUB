@@ -1,0 +1,104 @@
+openapi: 3.1.0
+info:
+  title: LGSP Control — PH-02 API Catalog
+  version: 0.1.0
+  description: Thin-slice W1 — đăng ký / publish dịch vụ → sinh route APISIX declarative.
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /catalog/services:
+    get:
+      operationId: listServices
+      summary: Danh sách dịch vụ API
+      tags: [Catalog]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ServiceSummary"
+    post:
+      operationId: registerService
+      summary: Đăng ký dịch vụ (OpenAPI đính kèm)
+      tags: [Catalog]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceRegister"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceSummary"
+  /catalog/services/{id}/publish:
+    post:
+      operationId: publishService
+      summary: PUBLISHED + ghi route APISIX declarative vào Git path
+      tags: [Catalog]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceSummary"
+  /catalog/status:
+    get:
+      operationId: catalogModuleStatus
+      summary: Health module (DEV)
+      tags: [Catalog]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ServiceRegister:
+      type: object
+      required: [serviceCode, title, openapiYaml]
+      properties:
+        serviceCode: { type: string, example: tra-cuu-thua-dat }
+        title: { type: string }
+        openapiYaml: { type: string }
+        publicPath:
+          type: string
+          description: Path APISIX công khai
+          example: /demo/tra-cuu
+        upstreamUrl:
+          type: string
+          description: Upstream Camel (DEV)
+          example: http://host.docker.internal:8088
+    ServiceSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        serviceCode: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, DEPRECATED]
+        publicPath: { type: string, nullable: true }
+        routeFile: { type: string, nullable: true, description: "Đường dẫn file declarative đã ghi" }

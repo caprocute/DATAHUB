@@ -244,7 +244,7 @@ graph LR
 | 4.5 | Tạo namespace + NetworkPolicy | Năm namespace theo thiết kế, chính sách mặc định từ chối |
 | 4.6 | Cài Argo CD | Kết nối kho Git, cấu hình đồng bộ tự động |
 | 4.7 | Cài PostgreSQL qua CloudNativePG | 1 primary + 2 replica; bật sao lưu hằng ngày + WAL (CMP-17) |
-| 4.8 | Cài MinIO | Bật chế độ WORM cho bucket nhật ký kiểm toán |
+| 4.8 | Cài lưu trữ đối tượng S3 (**Garage** / SeaweedFS / Ceph RGW — **không dùng MinIO**, xem [ADR-020](../05-adr/README.md#adr-020)) | Bật Object Lock/WORM cho bucket nhật ký kiểm toán; **kiểm chứng thật** khả năng chống sửa/xóa trước khi dùng cho chứng cứ (CMP-28) |
 | 4.9 | Cài Kafka qua Strimzi | 3 broker, chế độ KRaft, hệ số nhân bản 3 |
 | 4.10 | Cài Valkey | Chế độ cụm cho cache |
 | 4.11 | Kiểm chứng khôi phục dữ liệu | **Diễn tập restore thực tế** từ bản sao lưu |

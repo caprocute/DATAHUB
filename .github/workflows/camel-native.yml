@@ -1,0 +1,25 @@
+name: Camel native (WP-20)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'camel/dancu/**'
+      - '.github/workflows/camel-native.yml'
+
+jobs:
+  dancu-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Native package (container-build)
+        run: >
+          mvn -B -f camel/dancu/pom.xml package -Pnative -DskipTests
+          -Dquarkus.native.container-build=true

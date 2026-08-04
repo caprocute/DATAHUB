@@ -1,0 +1,18 @@
+server:
+  port: ${ADAPTER_MGR_PORT:8082}
+
+spring:
+  application:
+    name: lgsp-adapter-mgr
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:lgsp}
+    username: ${POSTGRES_USER:lgsp}
+    password: ${POSTGRES_PASSWORD:lgsp_dev_change_me}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

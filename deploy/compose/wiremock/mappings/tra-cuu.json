@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/tra-cuu.*"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "maHoSo": "HS-DEMO-001",
+      "trangThai": "DANG_XU_LY",
+      "nguon": "wiremock-httt-gia"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-ph01-schema
+      author: lgsp-w0
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph01
+  - changeSet:
+      id: 001-ph02-schema
+      author: lgsp-w0
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph02
+  - changeSet:
+      id: 001-ph01-marker
+      author: lgsp-w0
+      changes:
+        - createTable:
+            schemaName: ph01
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)
+  - changeSet:
+      id: 001-ph02-marker
+      author: lgsp-w0
+      changes:
+        - createTable:
+            schemaName: ph02
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)

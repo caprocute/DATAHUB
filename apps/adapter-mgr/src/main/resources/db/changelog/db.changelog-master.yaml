@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-ph05-schema
+      author: lgsp-w1
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph05
+  - changeSet:
+      id: 001-adapter
+      author: lgsp-w1
+      changes:
+        - createTable:
+            schemaName: ph05
+            tableName: adapter
+            columns:
+              - column: { name: id, type: VARCHAR(64), constraints: { primaryKey: true, nullable: false } }
+              - column: { name: name, type: VARCHAR(128), constraints: { nullable: false } }
+              - column: { name: type, type: VARCHAR(32), constraints: { nullable: false } }
+              - column: { name: endpoint_url, type: VARCHAR(512), constraints: { nullable: false } }
+              - column: { name: vault_path, type: VARCHAR(255) }
+              - column: { name: created_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+  - changeSet:
+      id: 001-seed-http-mock
+      author: lgsp-w1
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO ph05.adapter (id, name, type, endpoint_url, vault_path, created_at)
+              VALUES (
+                'http-mock-tra-cuu',
+                'HTTP mock tra cứu',
+                'HTTP_MOCK',
+                'http://localhost:8089/tra-cuu',
+                'secret/data/lgsp/dev/adapters/http-mock-tra-cuu',
+                NOW()
+              )
+              ON CONFLICT (id) DO NOTHING

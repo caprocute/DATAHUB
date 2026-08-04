@@ -1,0 +1,78 @@
+{
+  "realm": "lgsp",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "PLATFORM_ADMIN", "description": "SRS-19" },
+      { "name": "INTEGRATION_ADMIN", "description": "SRS-19" },
+      { "name": "INTEGRATION_REVIEWER", "description": "SRS-19 chuẩn (không dùng alias APPROVER)" },
+      { "name": "INTEGRATION_DEVELOPER", "description": "SRS-19" },
+      { "name": "OPERATOR", "description": "SRS-19" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "lgsp-console",
+      "name": "LGSP Console",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://127.0.0.1:5173/*"
+      ],
+      "webOrigins": ["http://localhost:5173", "http://127.0.0.1:5173", "+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "lgsp-control",
+      "name": "LGSP Control API",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "control-dev-secret-change-me",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "bearerOnly": false,
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["+"],
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "dev-reviewer",
+      "enabled": true,
+      "email": "reviewer@lgsp.local",
+      "emailVerified": true,
+      "firstName": "Nguyễn",
+      "lastName": "Thẩm Định",
+      "credentials": [
+        { "type": "password", "value": "dev-reviewer", "temporary": false }
+      ],
+      "realmRoles": ["INTEGRATION_REVIEWER", "INTEGRATION_DEVELOPER"]
+    },
+    {
+      "username": "dev-admin",
+      "enabled": true,
+      "email": "admin@lgsp.local",
+      "emailVerified": true,
+      "firstName": "Trần",
+      "lastName": "Quản Trị",
+      "credentials": [
+        { "type": "password", "value": "dev-admin", "temporary": false }
+      ],
+      "realmRoles": ["PLATFORM_ADMIN", "INTEGRATION_ADMIN"]
+    }
+  ]
+}

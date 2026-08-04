@@ -1133,7 +1133,7 @@ Mục tiêu thiết kế đặt thấp hơn nhiều so với trần quy định 
 | **API Portal** | Backstage | Apache-2.0 | Danh mục dịch vụ + tài liệu cho lập trình viên | [ADR-006](../05-adr/README.md#adr-006) |
 | **Observability** | OpenTelemetry, Prometheus, Loki, Tempo, Grafana | Apache-2.0 | Chuẩn mở, không khóa nhà cung cấp | [ADR-007](../05-adr/README.md#adr-007) |
 | **CSDL quan hệ** | PostgreSQL + CloudNativePG | PostgreSQL / Apache-2.0 | HA, sao lưu tự động, khôi phục theo thời điểm | [ADR-008](../05-adr/README.md#adr-008) |
-| **Object storage** | MinIO | AGPL-3.0 | Tương thích S3, hỗ trợ WORM cho nhật ký kiểm toán | [ADR-008](../05-adr/README.md#adr-008) |
+| **Object storage** | **Garage** *(ưu tiên)* / SeaweedFS / Ceph RGW — **không dùng MinIO** | AGPL-3.0 / Apache-2.0 / LGPL | Tương thích S3, hỗ trợ WORM cho nhật ký kiểm toán | [ADR-020](../05-adr/README.md#adr-020) |
 | **Cache** | Valkey | BSD-3 | Nhánh cộng đồng của Redis, giấy phép mở thực sự | [ADR-008](../05-adr/README.md#adr-008) |
 | **BPM** | Flowable | Apache-2.0 | BPMN 2.0 đầy đủ, nhẹ, nhúng được | [ADR-009](../05-adr/README.md#adr-009) |
 | **GitOps** | Argo CD + Kustomize | Apache-2.0 | Triển khai khai báo, tự sửa sai lệch | [ADR-010](../05-adr/README.md#adr-010) |
@@ -1145,7 +1145,9 @@ Mục tiêu thiết kế đặt thấp hơn nhiều so với trần quy định 
 | **Bộ thành phần giao diện** | Ant Design v6 | MIT | Bảng dữ liệu và biểu mẫu cấp quản trị; token tinh chỉnh theo phong cách shadcn, có chế độ sáng/tối | [ADR-016](../05-adr/README.md#adr-016) |
 | **Autoscaling** | KEDA | Apache-2.0 | Mở rộng theo chỉ số nghiệp vụ, không chỉ CPU | [ADR-002](../05-adr/README.md#adr-002) |
 
-**Lưu ý về giấy phép.** Hai thành phần cần cân nhắc: MinIO dùng AGPL-3.0 (chấp nhận được vì triển khai nội bộ, không phân phối phần mềm) và Vault dùng BUSL từ v1.15 (nếu tổ chức yêu cầu giấy phép mở tuyệt đối, thay bằng **OpenBao** — nhánh cộng đồng dưới MPL-2.0, tương thích API). Toàn bộ phần còn lại là Apache-2.0 hoặc BSD, không có ràng buộc thương mại.
+**Lưu ý về giấy phép.** Vault dùng BUSL từ v1.15 (nếu tổ chức yêu cầu giấy phép mở tuyệt đối, thay bằng **OpenBao** — nhánh cộng đồng dưới MPL-2.0, tương thích API). Nếu chọn Garage cho lưu trữ đối tượng thì đó là AGPL-3.0 — chấp nhận được vì triển khai nội bộ, không phân phối phần mềm; muốn giấy phép thoáng hơn thì dùng SeaweedFS (Apache-2.0). Toàn bộ phần còn lại là Apache-2.0 hoặc BSD, không có ràng buộc thương mại.
+
+> **Quy ước đọc tài liệu — "MinIO" trong các tài liệu SRS.** Nhiều tài liệu SRS và luồng nghiệp vụ viết trước 2026-08-04 còn nhắc tên **MinIO** khi nói về lưu trữ đối tượng (Claim Check, WORM kiểm toán, kho lạnh). Kể từ [ADR-020](../05-adr/README.md#adr-020), **hãy đọc "MinIO" ở các tài liệu đó là "lưu trữ đối tượng tương thích S3"** — mọi yêu cầu chức năng (S3 API, Object Lock/WORM, mã hóa lúc nghỉ) **giữ nguyên hiệu lực**, chỉ sản phẩm hiện thực là thay. Không cần sửa từng SRS; khi nào sửa vì lý do khác thì đổi tên luôn.
 
 ---
 

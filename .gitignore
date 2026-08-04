@@ -1,3 +1,47 @@
 .DS_Store
 *.tmp
+*.swp
+*~
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/application-local.yml
+**/application-local.yaml
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+hs_err_pid*
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+
+# Node
 node_modules/
+dist/
+*.local
+.npm
+.pnpm-store/
+
+# Tooling
+mockup/tools/.limit-state
+.coverage/
+coverage/
+*.log
+
+# Artifact DEV sinh bởi E2E / smoke (không commit)
+apps/control/deploy/apisix/routes/tra-cuu-E2E_*.yaml
+routes/demo-wp23-*/
+
+# OS / IDE
+.project
+.classpath
+.settings/
+.factorypath

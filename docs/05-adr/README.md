@@ -13,7 +13,7 @@
 | [ADR-005](#adr-005) | Kafka + Apicurio + Debezium cho luồng bất đồng bộ | Đã chốt |
 | [ADR-006](#adr-006) | Backstage làm Developer Portal | Đã chốt |
 | [ADR-007](#adr-007) | OpenTelemetry + LGTM stack cho quan sát | Đã chốt |
-| [ADR-008](#adr-008) | PostgreSQL + MinIO + Valkey cho lưu trữ | Đã chốt |
+| [ADR-008](#adr-008) | PostgreSQL + MinIO + Valkey cho lưu trữ | ⚠ Phần MinIO **đã thay** bởi [ADR-020](#adr-020) |
 | [ADR-009](#adr-009) | Flowable cho BPM | Đã chốt |
 | [ADR-010](#adr-010) | Argo CD + Kustomize cho GitOps | Đã chốt |
 | [ADR-011](#adr-011) | Istio ambient mesh cho mTLS | Đã chốt |
@@ -25,6 +25,7 @@
 | [ADR-017](#adr-017) | XYFlow (React Flow) làm động cơ sơ đồ kéo thả trong console PH-04 | Đã chốt |
 | [ADR-018](#adr-018) | Mô hình phát triển: DU hybrid, production-first (biên bắt buộc tách ngay) | Đã chốt |
 | [ADR-019](#adr-019) | Spring Boot 4 + Spring Modulith cho DU ứng dụng; Camel giữ Quarkus (ADR-002) | Đã chốt |
+| [ADR-020](#adr-020) | Chính sách vòng đời phiên bản; thay MinIO cho lưu trữ đối tượng; giữ Java 21 | Đã chốt |
 
 ---
 
@@ -218,6 +219,10 @@ Khả năng **phát lại** là yếu tố quyết định: khi một HTTT mới
 
 ## ADR-008
 ### PostgreSQL + MinIO + Valkey cho lưu trữ
+
+> ⚠ **Phần MinIO đã bị thay thế bởi [ADR-020](#adr-020)** (2026-08-04): kho mã cộng đồng MinIO bị archive
+> ngày 25/04/2026 — không còn bản vá. Phần PostgreSQL và Valkey **vẫn còn hiệu lực**.
+> Lập luận WORM/CMP-28 bên dưới giữ nguyên giá trị và được ADR-020 kế thừa làm điều kiện bắt buộc.
 
 **Bối cảnh.** Cần lưu trữ cho ba nhóm nhu cầu khác nhau: dữ liệu quan hệ có cấu trúc (dữ liệu chủ, danh mục, trạng thái quy trình), tệp lớn (đính kèm văn bản, nhật ký kiểm toán), và cache tốc độ cao.
 
@@ -607,9 +612,83 @@ Chi tiết → [IP-01](../08-implementation/01-mo-hinh-phat-trien.md). Runtime D
 
 ---
 
+## ADR-020
+### Chính sách vòng đời phiên bản; thay MinIO cho lưu trữ đối tượng
+
+| Mục | Nội dung |
+|---|---|
+| **Trạng thái** | Chấp nhận |
+| **Ngày** | 2026-08-04 |
+| **Thay thế một phần** | [ADR-008](#adr-008) (phần MinIO) |
+
+**Bối cảnh.** Rà soát bảng phiên bản ghim của [IP-03](../08-implementation/03-stack-cong-nghe.md) ngày 2026-08-04 phát hiện ba vấn đề: (1) Camel ghim 4.20.x — **đã hết vòng đời 26/06/2026**; (2) MinIO chốt tại ADR-008 — kho mã cộng đồng **đã bị archive 25/04/2026**; (3) PostgreSQL ghim 16.x trong khi PG 18 đã GA. Nguyên nhân gốc không phải ba con số sai, mà là **thiếu chính sách vòng đời**: tài liệu ghim phiên bản nhưng không ràng buộc phải còn được hỗ trợ.
+
+---
+
+#### Phần A — Chính sách vòng đời phiên bản (áp cho mọi thành phần)
+
+| # | Quy tắc |
+|---|---|
+| 1 | Chỉ ghim bản **còn trong vòng đời hỗ trợ** tại thời điểm khóa; ưu tiên dòng **LTS** |
+| 2 | Với Apache Camel: **chỉ dùng dòng LTS** (4.18, 4.14…), không dùng bản giữa kỳ (4.19–4.21) — vòng đời chỉ vài tháng |
+| 3 | Rà soát lại ngày EOL trước mỗi lần: mở pha lập trình · nâng cấp major · nộp hồ sơ cấp độ ATTT |
+| 4 | Số phiên bản chỉ tồn tại ở **một nơi** — bảng ghim của IP-03; nơi khác tham chiếu, không lặp lại |
+| 5 | Thành phần bị **archive / ngừng bảo trì** phải thay, kể cả khi giấy phép vẫn hợp lệ |
+
+**Vì sao quy tắc 5 tách riêng khỏi tiêu chí giấy phép.** ADR-008 loại trừ MinIO theo trục AGPL và kết luận "chấp nhận được vì triển khai nội bộ". Kết luận đó vẫn đúng về giấy phép, nhưng bỏ sót trục quan trọng hơn: **ai còn vá lỗ hổng**. Một thành phần Apache-2.0 bị bỏ hoang rủi ro hơn một thành phần AGPL đang được bảo trì tích cực.
+
+---
+
+#### Phần B — Thay MinIO cho lưu trữ đối tượng
+
+**Bối cảnh cụ thể.** Diễn biến MinIO: 06/2025 gỡ giao diện quản trị khỏi bản cộng đồng → 12/2025 chuyển sang chế độ bảo trì → **25/04/2026 archive kho mã, chỉ đọc**. Không còn release, không còn duyệt vá, không còn bản dựng chính thức.
+
+**Phương án**
+
+| Phương án | Ưu | Nhược |
+|---|---|---|
+| Giữ MinIO community | Không phải đổi | Không ai vá; tự gánh mọi lỗ hổng trên mã đóng băng |
+| Mua MinIO AIStor thương mại | Có hỗ trợ | Trái yêu cầu open-source của dự án; ràng buộc nhà cung cấp |
+| **Garage (AGPL-3.0)** | Đang bảo trì tích cực; thiết kế cho tự vận hành nhiều nút; S3-compatible | Cộng đồng nhỏ hơn; cần kiểm chứng WORM cho CMP-28 |
+| **SeaweedFS (Apache-2.0)** | Giấy phép thoáng nhất; trưởng thành | Vận hành phức tạp hơn |
+| **Ceph RGW** | Rất trưởng thành; đã phổ biến trong khu vực công | Nặng, tốn tài nguyên vận hành |
+
+**Quyết định.** Bỏ MinIO. Ưu tiên **Garage**; nếu chính sách tổ chức cấm AGPL thì dùng **SeaweedFS**; nếu cụm đã có nền tảng Ceph thì dùng **Ceph RGW**.
+
+**Điều kiện bắt buộc trước khi khóa lựa chọn.** Nhật ký kiểm toán cần **WORM** làm chứng cứ theo CMP-28 (xem [ADR-008](#adr-008)). Phải **kiểm chứng thực tế** khả năng object-lock / retention của bản được chọn trước khi đưa vào PROD — đây là điều kiện ra của WP-01, không phải giả định.
+
+**Hệ quả tiêu cực:**
+- Phát sinh việc kiểm chứng WORM + đo hiệu năng trên cụm đích (thuộc W0).
+- Nếu chọn Garage: vẫn AGPL — chấp nhận được vì triển khai nội bộ, không phân phối (lập luận cũ của ADR-008 giữ nguyên).
+- Tài liệu và runbook nhắc MinIO phải cập nhật.
+
+**Quy ước đọc tài liệu cũ.** Khoảng 60 chỗ trong SRS và tài liệu luồng (PH-01, PH-04, PH-12, PH-13, PH-15, PH-18, SRS-00, 03-flows) viết trước ngày này còn nhắc tên **MinIO**. **Đọc là "lưu trữ đối tượng tương thích S3"** — mọi yêu cầu chức năng (S3 API, Object Lock/WORM, mã hóa lúc nghỉ, Claim Check) **giữ nguyên hiệu lực**, chỉ sản phẩm hiện thực thay đổi. Không mở đợt sửa hàng loạt: rủi ro chạm nhầm nội dung đặc tả lớn hơn lợi ích; đổi tên khi sửa các tài liệu đó vì lý do khác.
+
+---
+
+#### Phần C — Java 21 thay vì Java 25 LTS
+
+**Bối cảnh.** Java 25 LTS phát hành 09/2025. Dự án ghim Java 21 — cần ghi rõ đây là lựa chọn có chủ đích.
+
+**Quyết định.** Giữ **Java 21 LTS** cho lần khóa này.
+
+| Lý do | Chi tiết |
+|---|---|
+| Camel 4.18 LTS | Dòng LTS đang dùng chưa lấy JDK 25 làm nền chính (hỗ trợ JDK 25 xuất hiện từ 4.20 — bản đã EOL) |
+| GraalVM native | Chuỗi công cụ native cho Camel Quarkus ổn định nhất trên 21 (ADR-002) |
+| Spring Boot 4 | Chỉ yêu cầu tối thiểu Java 17 — 21 nằm giữa vùng an toàn |
+| Vòng đời | Java 21 được hỗ trợ tới ~2029, đủ dài cho chu kỳ đầu của LGSP |
+
+**Điều kiện xét lại.** Nâng lên Java 25 khi dòng **Camel LTS kế tiếp** lấy JDK 25 làm nền và chuỗi native tương ứng ổn định. Ghi vào changelog ADR khi đổi.
+
+**Hệ quả tiêu cực:** không dùng được tính năng ngôn ngữ mới của 22–25; chấp nhận vì đổi lại là chuỗi native ổn định.
+
+---
+
 ## Liên kết
 
 - Kiến trúc tổng thể → [02-architecture](../02-architecture/README.md)
 - Yêu cầu pháp lý → [01-legal](../01-legal/README.md)
 - Kế hoạch triển khai → [04-deployment](../04-deployment/README.md)
 - Hướng dẫn lập trình → [08-implementation](../08-implementation/README.md)
+- **Stack chốt theo tầng (production)** → [IP-03](../08-implementation/03-stack-cong-nghe.md)

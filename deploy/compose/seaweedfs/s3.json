@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "lgsp-audit",
+      "credentials": [
+        {
+          "accessKey": "lgsp_audit_dev",
+          "secretKey": "lgsp_audit_dev_secret_change_me"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# Tham chiếu YAML — runtime W1 dùng TraCuuRoute.java (resolve adapter động)
+- route:
+    id: demo-tra-cuu-example
+    from:
+      uri: platform-http:/demo/tra-cuu
+      steps:
+        - setHeader:
+            name: CamelHttpMethod
+            constant: GET
+        - to:
+            uri: http://localhost:8089/tra-cuu
+        - log:
+            message: "tra-cuu response ${body}"

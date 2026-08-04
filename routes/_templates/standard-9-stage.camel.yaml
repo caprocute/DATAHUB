@@ -1,0 +1,20 @@
+# Template khung 9 bước PH-04 (WP-20) — tham chiếu GitOps / designer
+# Runtime: StandardPipelineRoute.java + TraCuuRoute.java
+#
+# Chặng bắt buộc (metadata X-Lgsp-Stages):
+#   receive → schema → authz → transform → enrich → route → deliver → audit → respond
+#
+- route:
+    id: template-standard-9-stage
+    from:
+      uri: direct:template-unused
+      steps:
+        - log: { message: "receive" }
+        - log: { message: "schema" }
+        - log: { message: "authz" }
+        - log: { message: "transform" }
+        - log: { message: "enrich" }
+        - log: { message: "route" }
+        - log: { message: "deliver" }
+        - log: { message: "audit" }
+        - log: { message: "respond" }

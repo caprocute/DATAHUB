@@ -1,0 +1,237 @@
+openapi: 3.1.0
+info:
+  title: LGSP Control — PH-04 Routes (GitOps)
+  version: 0.1.0
+  description: |
+    WP-23 thin-slice — DRAFT Camel YAML, validate, submit/publish → `routes/<code>/route.camel.yaml`.
+servers:
+  - url: http://localhost:8080/api/admin/v1
+paths:
+  /routes:
+    get:
+      operationId: listRoutes
+      summary: Danh sách route
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RouteSummary"
+    post:
+      operationId: createRoute
+      summary: Tạo route + phiên bản DRAFT
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteSummary"
+        "422":
+          description: YAML không hợp lệ
+  /routes/validate:
+    post:
+      operationId: validateRouteYaml
+      summary: Validate Camel YAML không triển khai
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+  /routes/{routeCode}:
+    get:
+      operationId: getRoute
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteSummary"
+  /routes/{routeCode}/versions/{versionNo}:
+    get:
+      operationId: getRouteVersion
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+        - $ref: "#/components/parameters/versionNo"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteVersion"
+  /routes/{routeCode}/versions/{versionNo}/definition:
+    put:
+      operationId: saveRouteDefinition
+      summary: Lưu YAML vào phiên bản DRAFT
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+        - $ref: "#/components/parameters/versionNo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefinitionUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteVersion"
+  /routes/{routeCode}/versions/{versionNo}/submit:
+    post:
+      operationId: submitRouteVersion
+      summary: Gửi duyệt (PENDING_REVIEW)
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+        - $ref: "#/components/parameters/versionNo"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteVersion"
+        "422":
+          description: Chặn khi validate lỗi
+  /routes/{routeCode}/versions/{versionNo}/publish:
+    post:
+      operationId: publishRouteVersion
+      summary: Publish → ghi GitOps routes/ (+ commit nếu bật)
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/routeCode"
+        - $ref: "#/components/parameters/versionNo"
+      responses:
+        "200":
+          description: Published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteVersion"
+        "422":
+          description: Chặn khi validate lỗi
+  /routes/status:
+    get:
+      operationId: routesModuleStatus
+      tags: [Routes]
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    routeCode:
+      name: routeCode
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z0-9-]+$" }
+    versionNo:
+      name: versionNo
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+  schemas:
+    RouteCreate:
+      type: object
+      required: [routeCode, title, sourceSystem, definitionYaml]
+      properties:
+        routeCode: { type: string, example: demo-designer-ping }
+        title: { type: string }
+        routeType: { type: string, enum: [SYNC, EVENT, SCHEDULED, BATCH], default: SYNC }
+        sourceSystem: { type: string }
+        targetSystem: { type: string }
+        definitionYaml: { type: string }
+    DefinitionUpdate:
+      type: object
+      required: [definitionYaml]
+      properties:
+        definitionYaml: { type: string }
+    ValidateRequest:
+      type: object
+      required: [definitionYaml]
+      properties:
+        definitionYaml: { type: string }
+    RouteSummary:
+      type: object
+      properties:
+        routeId: { type: string, format: uuid }
+        routeCode: { type: string }
+        title: { type: string }
+        routeType: { type: string }
+        status: { type: string }
+        sourceSystem: { type: string }
+        targetSystem: { type: string }
+        currentVersionId: { type: string, format: uuid }
+        draftVersionNo: { type: integer }
+    RouteVersion:
+      type: object
+      properties:
+        versionId: { type: string, format: uuid }
+        routeId: { type: string, format: uuid }
+        routeCode: { type: string }
+        versionNo: { type: integer }
+        status: { type: string }
+        definitionYaml: { type: string }
+        gitCommitRef: { type: string }
+        gitPath: { type: string }
+        source: { type: string }
+    ValidationFinding:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        severity: { type: string, enum: [ERROR, WARN] }
+    ValidationResult:
+      type: object
+      properties:
+        valid: { type: boolean }
+        findings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationFinding"

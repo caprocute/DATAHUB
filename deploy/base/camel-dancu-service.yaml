@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lgsp-camel-dancu
+spec:
+  selector:
+    app: lgsp-camel-dancu
+  ports:
+    - name: http
+      port: 8088
+      targetPort: 8088

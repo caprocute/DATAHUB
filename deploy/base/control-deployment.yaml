@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lgsp-control
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lgsp-control
+  template:
+    metadata:
+      labels:
+        app: lgsp-control
+    spec:
+      containers:
+        - name: control
+          image: lgsp/control:0.1.0-SNAPSHOT
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: OIDC_ISSUER_URI
+              value: http://keycloak:8080/realms/lgsp
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10

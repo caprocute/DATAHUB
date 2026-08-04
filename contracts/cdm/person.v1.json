@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lgsp.local/cdm/person.v1.json",
+  "title": "CDM Person v1",
+  "type": "object",
+  "required": ["personId", "fullName"],
+  "properties": {
+    "personId": { "type": "string", "description": "Định danh canonical" },
+    "fullName": { "type": "string" },
+    "dateOfBirth": { "type": "string", "format": "date" },
+    "nationalId": { "type": "string" }
+  },
+  "additionalProperties": false
+}
