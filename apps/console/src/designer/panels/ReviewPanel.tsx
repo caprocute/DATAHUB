@@ -1,7 +1,9 @@
-import { App as AntApp, Button, Empty, Space, Table, Tag, Typography } from 'antd'
+import { Alert, App as AntApp, Button, Drawer, Empty, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { listPendingReview, reviewVersion, type RouteVersion } from '../../api/routesApi'
+import { getVersion, listPendingReview, reviewVersion, type RouteVersion } from '../../api/routesApi'
 import { useRoles } from '../../auth/useRoles'
+import { stripCanvas } from '../canvasCodec'
+import { YamlDiff } from './YamlDiff'
 
 /** UI-04-09 — hàng đợi duyệt thật từ API (không dữ liệu giả). */
 export function ReviewPanel() {
@@ -9,6 +11,10 @@ export function ReviewPanel() {
   const { canReview, subject, username } = useRoles()
   const [items, setItems] = useState<RouteVersion[]>([])
   const [loading, setLoading] = useState(false)
+  /** Phiên bản đang xem diff trước khi quyết định (B7-5). */
+  const [viewing, setViewing] = useState<RouteVersion | null>(null)
+  const [baseYaml, setBaseYaml] = useState('')
+  const [diffLoading, setDiffLoading] = useState(false)
 
   const refresh = useCallback(async () => {
     if (!canReview) {
@@ -39,6 +45,23 @@ export function ReviewPanel() {
     )
   }
 
+  /** Mở ngăn so sánh: lấy bản trước đó làm mốc, không có thì coi như luồng mới. */
+  async function openDiff(row: RouteVersion) {
+    setViewing(row)
+    setBaseYaml('')
+    if (row.versionNo <= 1) return
+    setDiffLoading(true)
+    try {
+      const prev = await getVersion(row.routeCode, row.versionNo - 1)
+      setBaseYaml(stripCanvas(prev.definitionYaml ?? ''))
+    } catch {
+      // Không đọc được bản trước thì vẫn cho duyệt, chỉ là diff hiện toàn bộ là thêm mới.
+      setBaseYaml('')
+    } finally {
+      setDiffLoading(false)
+    }
+  }
+
   async function decide(row: RouteVersion, decision: 'APPROVE' | 'REJECT') {
     if (row.createdBy && subject && row.createdBy === subject) {
       message.error('Bốn mắt: không tự duyệt phiên bản do chính mình tạo')
@@ -54,6 +77,7 @@ export function ReviewPanel() {
         try {
           await reviewVersion(row.routeCode, row.versionNo, decision)
           message.success(decision === 'APPROVE' ? 'Đã phê duyệt + publish' : 'Đã trả lại DRAFT')
+          setViewing(null)
           await refresh()
         } catch (e) {
           message.error(String(e))
@@ -86,9 +110,12 @@ export function ReviewPanel() {
           },
           {
             title: 'Thao tác',
-            width: 220,
+            width: 320,
             render: (_, row) => (
               <Space>
+                <Button size="small" onClick={() => void openDiff(row)}>
+                  Xem thay đổi
+                </Button>
                 <Button type="primary" size="small" onClick={() => void decide(row, 'APPROVE')}>
                   Phê duyệt
                 </Button>
@@ -103,6 +130,51 @@ export function ReviewPanel() {
       <Button style={{ marginTop: 12 }} onClick={() => void refresh()}>
         Làm mới
       </Button>
+
+      <Drawer
+        open={Boolean(viewing)}
+        onClose={() => setViewing(null)}
+        width={860}
+        title={viewing ? `${viewing.routeCode} · phiên bản ${viewing.versionNo}` : ''}
+        extra={
+          viewing && (
+            <Space>
+              <Button danger onClick={() => void decide(viewing, 'REJECT')}>
+                Trả lại
+              </Button>
+              <Button type="primary" onClick={() => void decide(viewing, 'APPROVE')}>
+                Phê duyệt
+              </Button>
+            </Space>
+          )
+        }
+      >
+        {viewing && (
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {viewing.createdBy && subject && viewing.createdBy === subject && (
+              <Alert
+                type="warning"
+                showIcon
+                message="Bạn là người tạo phiên bản này"
+                description="Luật bốn mắt: phải để người khác duyệt."
+              />
+            )}
+            <Typography.Text type="secondary" className="t-small">
+              {viewing.versionNo <= 1
+                ? 'Luồng mới — so với bản rỗng.'
+                : `So với phiên bản ${viewing.versionNo - 1}.`}
+            </Typography.Text>
+            {diffLoading ? (
+              <Typography.Text type="secondary">Đang tải bản trước…</Typography.Text>
+            ) : (
+              <YamlDiff
+                oldYaml={baseYaml}
+                newYaml={stripCanvas(viewing.definitionYaml ?? '')}
+              />
+            )}
+          </Space>
+        )}
+      </Drawer>
     </div>
   )
 }

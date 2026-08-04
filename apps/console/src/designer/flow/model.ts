@@ -48,9 +48,27 @@ export interface SeqEdgeData extends Record<string, unknown> {
 export type SeqEdge = Edge<SeqEdgeData>;
 
 let seq = 0;
+
+/**
+ * Sinh mã chặng/cạnh mới.
+ *
+ * Bộ đếm nằm ở phạm vi mô-đun nên dùng lại trong cùng phiên trình duyệt: mở luồng
+ * khác, dựng lại sơ đồ từ YAML rồi nhân bản chặng đều rút từ một dãy. Nếu chỉ tăng
+ * dần từ 0 thì `n1` sinh ra sau sẽ trùng `n1` mà bộ đọc YAML đã đặt, và React Flow
+ * bỏ nút trùng mã — nút mới hiện ra rỗng. `bumpSeq` cho phép đẩy bộ đếm qua khỏi
+ * mọi mã đang có trước khi sinh tiếp.
+ */
 export function nextId(prefix = 'n'): string {
   seq += 1;
   return `${prefix}${seq}`;
+}
+
+/** Đẩy bộ đếm vượt qua các mã đang dùng để lần sinh sau không trùng. */
+export function bumpSeq(ids: Iterable<string>): void {
+  for (const id of ids) {
+    const m = /(\d+)$/.exec(id);
+    if (m) seq = Math.max(seq, Number(m[1]));
+  }
 }
 
 /** Dựng dữ liệu chặng từ một mục trên bảng thành phần. */

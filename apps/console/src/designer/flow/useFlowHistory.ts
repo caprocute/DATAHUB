@@ -8,10 +8,26 @@ interface Snapshot {
 
 const LIMIT = 60;
 
+/**
+ * Chụp trạng thái sơ đồ.
+ *
+ * Sao thủ công thay vì `structuredClone`: nút của React Flow có thể mang giá trị
+ * không sao chép được (hàm, phần tử DOM đo đạc), khi đó `structuredClone` ném
+ * `DataCloneError` và cả lịch sử hỏng theo. Chỉ cần tách các mức mà thao tác sửa
+ * chạm tới là đủ để hoàn tác đúng.
+ */
 function clone(nodes: StageNode[], edges: SeqEdge[]): Snapshot {
   return {
-    nodes: structuredClone(nodes),
-    edges: structuredClone(edges),
+    nodes: nodes.map((n) => ({
+      ...n,
+      position: { ...n.position },
+      data: {
+        ...n.data,
+        props: { ...n.data.props },
+        mappings: n.data.mappings?.map((m) => ({ ...m })),
+      },
+    })),
+    edges: edges.map((e) => ({ ...e, data: e.data ? { ...e.data } : undefined })),
   };
 }
 

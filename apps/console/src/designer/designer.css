@@ -760,3 +760,48 @@
   background: var(--c-surface-2);
   color: var(--c-text-2);
 }
+
+/* ---------- So sánh YAML khi duyệt (B7-5) ---------- */
+
+.ydiff { border: 1px solid var(--c-border); border-radius: var(--r-md, 8px); overflow: hidden; }
+.ydiff__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface-2);
+}
+.ydiff__stat { font-weight: 700; }
+.ydiff__stat--add { color: var(--c-ok-600, #16a34a); }
+.ydiff__stat--del { color: var(--c-err-600, #dc2626); }
+
+.ydiff__body {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--c-surface);
+}
+.ydiff__line { display: block; padding-right: var(--sp-3); white-space: pre; }
+.ydiff__line--add { background: color-mix(in srgb, var(--c-ok-500, #22c55e) 12%, transparent); }
+.ydiff__line--remove { background: color-mix(in srgb, var(--c-err-500, #ef4444) 12%, transparent); }
+
+.ydiff__no {
+  display: inline-block;
+  width: 40px;
+  padding-right: 8px;
+  text-align: right;
+  color: var(--c-text-3);
+  user-select: none;
+}
+.ydiff__sign { display: inline-block; width: 16px; text-align: center; user-select: none; }
+.ydiff__gap {
+  display: block;
+  padding: 2px 0 2px 96px;
+  color: var(--c-text-3);
+  background: var(--c-surface-2);
+  user-select: none;
+}

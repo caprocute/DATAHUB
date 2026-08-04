@@ -15,6 +15,7 @@ import { InsertMenu } from './flow/InsertMenu';
 import { InteractionContext, type Interaction } from './flow/interaction';
 import { autoLayout, NODE_W } from './flow/layout';
 import {
+  bumpSeq,
   effectiveSample,
   INITIAL_EDGES,
   INITIAL_NODES,
@@ -83,6 +84,8 @@ export function Designer({
 }: Props) {
   const startNodes = initialNodes?.length ? initialNodes : DEFAULT_LAID_OUT;
   const startEdges = initialEdges?.length ? initialEdges : INITIAL_EDGES;
+  // Mã sinh sau phải vượt mọi mã đang có, nếu không React Flow bỏ nút trùng mã.
+  bumpSeq([...startNodes.map((n) => n.id), ...startEdges.map((e) => e.id)]);
   const [nodes, setNodes, onNodesChange] = useNodesState<StageNode>(startNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<SeqEdge>(startEdges);
   const [view, setView] = useState<'so-do' | 'van-ban'>('so-do');
@@ -296,6 +299,65 @@ export function Designer({
     setEdges((es) => es.filter((e) => e.source !== n.id && e.target !== n.id));
   }, [nodes, onNodesDelete, setNodes, setEdges, message, markDirty]);
 
+  /**
+   * Nhân bản chặng đang chọn (B1-5).
+   *
+   * Bản sao nối tiếp ngay sau chặng gốc và **không** khóa dù bản gốc là chặng bắt
+   * buộc: khung chuẩn chỉ cần đúng một chặng mỗi loại, bản sao là chặng thường.
+   */
+  const duplicateSelected = useCallback(() => {
+    if (!nodes.some((x) => x.selected)) return;
+    markDirty();
+
+    const copyId = nextId('n');
+    let sourceId: string | null = null;
+    let sourceLabel = '';
+
+    // Dựng bản sao **bên trong** hàm cập nhật: `nodes` bắt được trong closure có thể
+    // đã cũ sau các lần cập nhật trước, dẫn tới sao chép dữ liệu rỗng.
+    setNodes((ns) => {
+      const n = ns.find((x) => x.selected);
+      if (!n) return ns;
+      sourceId = n.id;
+      sourceLabel = n.data.label;
+      const copy: StageNode = {
+        id: copyId,
+        type: 'stage',
+        position: { x: n.position.x + NODE_W + 40, y: n.position.y + 40 },
+        data: {
+          // Sao nông rồi tách riêng các trường có thể thay đổi tại chỗ.
+          ...n.data,
+          props: { ...n.data.props },
+          mappings: n.data.mappings ? n.data.mappings.map((m) => ({ ...m })) : undefined,
+          label: `${n.data.label} (bản sao)`,
+          role: 'step',
+          locked: false,
+          // Mẫu dữ liệu là của chặng gốc, không nhân bản theo.
+          pinnedSample: undefined,
+        },
+        selected: true,
+      };
+      return [...ns.map((x) => ({ ...x, selected: false })), copy];
+    });
+
+    if (!sourceId) return;
+    setEdges((es) => [...es, { id: nextId('e'), source: sourceId!, target: copyId, type: 'seq' }]);
+    message.info(`Đã nhân bản “${sourceLabel}”`);
+  }, [nodes, setNodes, setEdges, markDirty, message]);
+
+  // Phím tắt nhân bản (⌘D / Ctrl+D) — không cướp phím khi đang gõ trong ô nhập.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'd') return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      e.preventDefault();
+      duplicateSelected();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [duplicateSelected]);
+
   const relayout = useCallback(() => {
     markDirty();
     setNodes((ns) => autoLayout(ns, edgesRef.current));
@@ -309,6 +371,7 @@ export function Designer({
   const applyGraph = useCallback(
     (g: ParsedGraph) => {
       markDirty();
+      bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)]);
       const laid = autoLayout(g.nodes, g.edges);
       setNodes(laid);
       setEdges(g.edges);
@@ -434,6 +497,14 @@ export function Designer({
                   title="Nhấp đúp node cũng mở được"
                 >
                   Cấu hình
+                </Button>
+                <Button
+                  size="small"
+                  onClick={duplicateSelected}
+                  disabled={!selected || view !== 'so-do'}
+                  title="Nhân bản chặng đang chọn (⌘D / Ctrl+D)"
+                >
+                  Nhân bản
                 </Button>
                 <Button size="small" danger onClick={deleteSelected} disabled={!selected || view !== 'so-do'}>
                   Gỡ chặng
