@@ -36,6 +36,7 @@ import { YamlPanel } from './panels/YamlPanel';
 import type { Mode } from './theme/tokens';
 import { prefetchSchemas, statusByNode, validate } from './validate';
 import { emitRouteYaml } from './yaml/emit';
+import type { ParsedGraph } from './yaml/parse';
 
 /**
  * Biến cấu hình theo môi trường (FR-04-036). Giá trị thật do nền tảng bơm lúc triển khai;
@@ -301,6 +302,21 @@ export function Designer({
     window.setTimeout(() => fitView({ padding: 0.18, maxZoom: 1, duration: 300 }), 30);
   }, [setNodes, fitView, markDirty]);
 
+  /**
+   * Áp sơ đồ dựng lại từ YAML người dùng sửa tay (FR-04-026 round-trip).
+   * Bố cục lại vì YAML không mang tọa độ.
+   */
+  const applyGraph = useCallback(
+    (g: ParsedGraph) => {
+      markDirty();
+      const laid = autoLayout(g.nodes, g.edges);
+      setNodes(laid);
+      setEdges(g.edges);
+      window.setTimeout(() => fitView({ duration: 200 }), 0);
+    },
+    [setNodes, setEdges, markDirty, fitView],
+  );
+
   const selectNode = useCallback(
     (id: string) => {
       setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === id })));
@@ -478,7 +494,7 @@ export function Designer({
 
         <div className="grid grid--2 mb-5">
           <FindingsPanel findings={findings} onSelect={selectNode} />
-          <YamlPanel yaml={yaml} routeId={routeId} />
+          <YamlPanel yaml={yaml} routeId={routeId} onApplyGraph={applyGraph} />
         </div>
 
         <p className="t-small t-muted">

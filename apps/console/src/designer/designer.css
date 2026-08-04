@@ -743,3 +743,20 @@
 .n8n-node__run--ok { background: var(--c-ok-600, #16a34a); }
 .n8n-node__run--error { background: var(--c-err-600, #dc2626); }
 .n8n-node__run--skipped { background: var(--c-text-3); }
+
+.finding__filters {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.yaml-error {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--c-err-500, #ef4444);
+  border-radius: 6px;
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+}
