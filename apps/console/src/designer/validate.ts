@@ -1,4 +1,4 @@
-import { loadSchema, lookup, peekSchema } from './catalog/catalog';
+import { loadSchema, lookup, peekSchema, refName } from './catalog/catalog';
 import { MANDATORY_STAGES, REGISTERED_CONVERTERS, type SeqEdge, type StageNode } from './flow/model';
 import type { NodeStatus } from './flow/StatusContext';
 
@@ -76,6 +76,7 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
   for (const n of nodes) {
     const d = n.data;
     const entry = lookup(d.ref);
+    const name = refName(d.ref);
 
     // Với chặng dựng trên thành phần Camel, URI là bắt buộc; với mẫu EIP thì xét
     // danh sách `required` của lược đồ gốc.
@@ -120,7 +121,7 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
       }
     }
 
-    if ((d.ref === 'enrich' || d.ref === 'pollEnrich') && typeof d.props.timeout === 'number') {
+    if ((name === 'enrich' || name === 'pollEnrich') && typeof d.props.timeout === 'number') {
       if (d.props.timeout >= ENRICH_TIMEOUT_WARN) {
         push({
           level: 'warn',
@@ -134,7 +135,7 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
 
     /* --- Nhánh của choice --- */
 
-    if (d.ref === 'choice') {
+    if (name === 'choice') {
       const branches = edges.filter((e) => e.source === n.id);
       if (branches.length === 0) {
         push({

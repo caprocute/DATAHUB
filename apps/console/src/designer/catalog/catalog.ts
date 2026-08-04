@@ -34,6 +34,7 @@ export {
   loadSchema,
   lookupNode,
   peekSchema,
+  refName,
   searchNodes,
   toneOf,
   toneOfNode,

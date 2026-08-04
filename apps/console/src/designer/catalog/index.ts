@@ -81,6 +81,18 @@ export function lookupNode(ref: string): CatalogNode | undefined {
   return byKey.get(ref) ?? byName.get(ref);
 }
 
+/**
+ * Tên Camel trần của một tham chiếu chặng.
+ *
+ * Chặng kéo từ bảng thành phần đầy đủ mang `kind/name` (ví dụ `pattern/choice`),
+ * còn luồng lưu trước đây và nhóm «Dùng nhiều» dùng tên trần (`choice`). Camel DSL
+ * chỉ biết tên trần, nên mọi chỗ so khớp tên mẫu phải đi qua hàm này.
+ */
+export function refName(ref: string): string {
+  const slash = ref.indexOf('/');
+  return slash === -1 ? ref : ref.slice(slash + 1);
+}
+
 /* ---------- Lược đồ tham số: nạp lười ---------- */
 
 export type PropType = 'string' | 'boolean' | 'integer' | 'number' | 'enum' | 'object' | 'array';

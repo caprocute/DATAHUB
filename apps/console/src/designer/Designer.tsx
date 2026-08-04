@@ -9,7 +9,7 @@ import {
 } from '@xyflow/react';
 import { App as AntApp, Button, Checkbox, Input, Modal, Segmented } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CAMEL_VERSION, CATALOG_SIZE, type PaletteItem } from './catalog/catalog';
+import { CAMEL_VERSION, CATALOG_SIZE, refName, type PaletteItem } from './catalog/catalog';
 import { FlowCanvas } from './flow/FlowCanvas';
 import { InsertMenu } from './flow/InsertMenu';
 import { InteractionContext, type Interaction } from './flow/interaction';
@@ -155,7 +155,7 @@ export function Designer({
       markDirty();
       setEdges((es) => {
         const source = nodes.find((n) => n.id === c.source);
-        const branching = source ? BRANCHING.has(source.data.ref) : false;
+        const branching = source ? BRANCHING.has(refName(source.data.ref)) : false;
         const kept = branching ? es : es.filter((e) => e.source !== c.source);
         return addEdge({ ...c, type: 'seq' }, kept);
       });

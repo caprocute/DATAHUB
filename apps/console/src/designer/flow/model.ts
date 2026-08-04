@@ -1,5 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
-import { lookup, toneOf, type NodeTone, type PaletteItem } from '../catalog/catalog';
+import { lookup, refName, toneOf, type NodeTone, type PaletteItem } from '../catalog/catalog';
 
 /** Dữ liệu gắn vào một nút của sơ đồ — tương ứng một chặng của luồng tích hợp. */
 export interface FieldMapping {
@@ -57,7 +57,10 @@ export function nextId(prefix = 'n'): string {
 export function stageFromPalette(item: PaletteItem, role: 'from' | 'step' = 'step'): StageData {
   const entry = lookup(item.ref);
   const props: Record<string, string | number | boolean> = { ...(item.preset ?? {}) };
-  const isMapper = item.label.includes('DataMapper') || props.expression === 'datamapper';
+  const isMapper =
+    item.label.includes('DataMapper') ||
+    props.expression === 'datamapper' ||
+    refName(item.ref) === 'transform';
   return {
     ref: item.ref,
     label: item.label,

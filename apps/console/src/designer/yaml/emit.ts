@@ -1,4 +1,4 @@
-import { lookup } from '../catalog/catalog';
+import { lookup, refName } from '../catalog/catalog';
 import type { SeqEdge, StageData, StageNode } from '../flow/model';
 
 /* ---------- Bộ ghi YAML tối giản ---------- */
@@ -102,8 +102,10 @@ function buildGraph(nodes: StageNode[], edges: SeqEdge[]): Graph {
 function stepFor(d: StageData): Val {
   const entry = lookup(d.ref);
   const p = d.props;
+  // Chặng có thể mang `kind/name` (kéo từ danh mục đầy đủ) — Camel DSL chỉ biết tên trần.
+  const name = refName(d.ref);
 
-  switch (d.ref) {
+  switch (name) {
     case 'choice':
       // `choice` được dựng riêng ở walk() vì còn phải gắn các nhánh.
       return { choice: {} };
@@ -157,7 +159,7 @@ function stepFor(d: StageData): Val {
     const hasParams = Object.keys(p).length > 0;
     return { to: { uri: d.uri ?? '', ...(hasParams ? { parameters: p as { [k: string]: Val } } : {}) } };
   }
-  return { [d.ref]: p as { [k: string]: Val } };
+  return { [name]: p as { [k: string]: Val } };
 }
 
 interface WalkResult {

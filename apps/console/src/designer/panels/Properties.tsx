@@ -5,6 +5,7 @@ import {
   loadSchema,
   lookup,
   peekSchema,
+  refName,
   type PropertiesSchema,
   type SchemaProp,
 } from '../catalog/catalog';
@@ -279,7 +280,7 @@ export function NodeConfigModal({
         />
       ))}
 
-      {(node.data.ref === 'transform' || node.data.mappings) && (
+      {(refName(node.data.ref) === 'transform' || node.data.mappings) && (
         <>
           <div className="divider" />
           <DataMapperPanel mappings={node.data.mappings ?? []} onChange={onMappings} locked={false} />
