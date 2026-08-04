@@ -13,7 +13,7 @@ import { CAMEL_VERSION, CATALOG_SIZE, refName, type PaletteItem } from './catalo
 import { FlowCanvas } from './flow/FlowCanvas';
 import { InsertMenu } from './flow/InsertMenu';
 import { InteractionContext, type Interaction } from './flow/interaction';
-import { autoLayout, NODE_W } from './flow/layout';
+import { autoLayout, NODE_H, NODE_W } from './flow/layout';
 import {
   bumpSeq,
   effectiveSample,
@@ -191,6 +191,9 @@ export function Designer({
         id: nextId('n'),
         type: 'stage',
         position: pos,
+        width: NODE_W,
+        height: NODE_H,
+        measured: { width: NODE_W, height: NODE_H },
         data: stageFromPalette(item, role),
         selected: true,
       };
@@ -223,6 +226,9 @@ export function Designer({
       const node: StageNode = {
         id: nextId('n'),
         type: 'stage',
+        width: NODE_W,
+        height: NODE_H,
+        measured: { width: NODE_W, height: NODE_H },
         position: { x: midX, y: midY },
         data: stageFromPalette(item, 'step'),
         selected: true,
@@ -306,43 +312,52 @@ export function Designer({
    * buộc: khung chuẩn chỉ cần đúng một chặng mỗi loại, bản sao là chặng thường.
    */
   const duplicateSelected = useCallback(() => {
-    if (!nodes.some((x) => x.selected)) return;
+    const source = nodes.find((x) => x.selected);
+    if (!source) return;
     markDirty();
 
     const copyId = nextId('n');
-    let sourceId: string | null = null;
-    let sourceLabel = '';
+    const edgeId = nextId('e');
 
-    // Dựng bản sao **bên trong** hàm cập nhật: `nodes` bắt được trong closure có thể
-    // đã cũ sau các lần cập nhật trước, dẫn tới sao chép dữ liệu rỗng.
-    setNodes((ns) => {
-      const n = ns.find((x) => x.selected);
-      if (!n) return ns;
-      sourceId = n.id;
-      sourceLabel = n.data.label;
-      const copy: StageNode = {
-        id: copyId,
-        type: 'stage',
-        position: { x: n.position.x + NODE_W + 40, y: n.position.y + 40 },
-        data: {
-          // Sao nông rồi tách riêng các trường có thể thay đổi tại chỗ.
-          ...n.data,
-          props: { ...n.data.props },
-          mappings: n.data.mappings ? n.data.mappings.map((m) => ({ ...m })) : undefined,
-          label: `${n.data.label} (bản sao)`,
-          role: 'step',
-          locked: false,
-          // Mẫu dữ liệu là của chặng gốc, không nhân bản theo.
-          pinnedSample: undefined,
-        },
-        selected: true,
-      };
-      return [...ns.map((x) => ({ ...x, selected: false })), copy];
-    });
+    // Dựng bản sao **ngoài** hàm cập nhật, và hàm cập nhật phải thuần: StrictMode
+    // gọi nó hai lần: lượt hai sẽ thấy chính bản sao đang `selected` và nhân bản
+    // tiếp nếu ta đi tìm nút được chọn ở bên trong.
+    const copy: StageNode = {
+      id: copyId,
+      type: 'stage',
+      position: { x: source.position.x + NODE_W + 40, y: source.position.y + 40 },
+      // React Flow v12 giữ nút ở `visibility: hidden` cho tới khi đo xong. Nút thêm
+      // bằng mã không phải lúc nào cũng kích hoạt được vòng đo, nên khai sẵn kích
+      // thước đã biết (thẻ có bề rộng cố định) để nút hiện ngay.
+      width: NODE_W,
+      height: NODE_H,
+      measured: { width: NODE_W, height: NODE_H },
+      data: {
+        // Sao nông rồi tách riêng các trường có thể thay đổi tại chỗ.
+        ...source.data,
+        props: { ...source.data.props },
+        mappings: source.data.mappings ? source.data.mappings.map((m) => ({ ...m })) : undefined,
+        label: `${source.data.label} (bản sao)`,
+        role: 'step',
+        locked: false,
+        // Mẫu dữ liệu là của chặng gốc, không nhân bản theo.
+        pinnedSample: undefined,
+      },
+      selected: true,
+    };
 
-    if (!sourceId) return;
-    setEdges((es) => [...es, { id: nextId('e'), source: sourceId!, target: copyId, type: 'seq' }]);
-    message.info(`Đã nhân bản “${sourceLabel}”`);
+    setNodes((ns) =>
+      // Gọi lại lần hai (StrictMode) thì bản sao đã có — không thêm nữa.
+      ns.some((x) => x.id === copyId)
+        ? ns
+        : [...ns.map((x) => ({ ...x, selected: false })), copy],
+    );
+    setEdges((es) =>
+      es.some((e) => e.id === edgeId)
+        ? es
+        : [...es, { id: edgeId, source: source.id, target: copyId, type: 'seq' }],
+    );
+    message.info(`Đã nhân bản “${source.data.label}”`);
   }, [nodes, setNodes, setEdges, markDirty, message]);
 
   // Phím tắt nhân bản (⌘D / Ctrl+D) — không cướp phím khi đang gõ trong ô nhập.

@@ -131,16 +131,15 @@ function stepFor(d: StageData): Val {
     case 'filter':
       return { filter: { expression: { simple: String(p.expression ?? '') } } };
     case 'enrich':
-      return {
-        enrich: {
-          expression: { constant: String(p.expression ?? '') },
-          timeout: p.timeout as number,
-        },
-      };
+      // `enrich` không có thuộc tính `timeout` trong lược đồ Camel; đặt kèm
+      // `expression` sẽ bị từ chối lúc nạp ("has already been configured as an
+      // expression"). Hạn chờ thuộc về endpoint được gọi, khai trong URI.
+      return { enrich: { expression: { constant: String(p.expression ?? '') } } };
     case 'pollEnrich':
       return {
         pollEnrich: {
           expression: { constant: String(p.expression ?? '') },
+          // `pollEnrich` có `timeout` thật trong lược đồ (thời gian chờ lấy bản tin).
           timeout: p.timeout as number,
         },
       };

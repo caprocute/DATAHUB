@@ -83,6 +83,29 @@ describe('sinh Camel YAML từ sơ đồ', () => {
     });
   });
 
+  /**
+   * Camel từ chối nạp route nếu `enrich` có `timeout` cạnh `expression`
+   * ("Field: timeout has already been configured as an expression").
+   * Lược đồ gốc của `enrich` không có `timeout`; chỉ `pollEnrich` mới có.
+   */
+  it('enrich không sinh `timeout` — Camel sẽ từ chối nạp', () => {
+    const from = node('component/rest', { role: 'from', uri: 'rest:get:/x' });
+    const en = node('pattern/enrich', {
+      props: { expression: 'direct:tra-cuu', timeout: 4500 },
+    });
+    const yaml = emitRouteYaml([from, en], [link(from, en)], { routeId: 'r' });
+
+    expect(yaml).toContain('enrich:');
+    expect(yaml).not.toMatch(/enrich:[\s\S]*?timeout/);
+  });
+
+  it('pollEnrich vẫn giữ `timeout` vì lược đồ có thuộc tính này', () => {
+    const from = node('component/rest', { role: 'from', uri: 'rest:get:/x' });
+    const pe = node('pattern/pollEnrich', { props: { expression: 'file:in', timeout: 3000 } });
+    const yaml = emitRouteYaml([from, pe], [link(from, pe)], { routeId: 'r' });
+    expect(yaml).toMatch(/pollEnrich:[\s\S]*?timeout: 3000/);
+  });
+
   it('gắn nhánh xử lý lỗi khi được bật', () => {
     const from = node('component/rest', { role: 'from', uri: 'rest:get:/x' });
     const yaml = emitRouteYaml([from], [], { routeId: 'r', errorHandler: true });
