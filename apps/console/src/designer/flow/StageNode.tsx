@@ -2,6 +2,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { memo } from 'react';
 import type { NodeTone } from '../catalog/catalog';
 import { stageSubtitle, type StageNode as TStageNode } from './model';
+import { useStageRun } from './RunContext';
 import { useNodeStatus } from './StatusContext';
 
 const TONE_LABEL: Record<NodeTone, string> = {
@@ -16,6 +17,7 @@ const TONE_LABEL: Record<NodeTone, string> = {
 /** Node kiểu n8N: thẻ ngang, ô icon màu theo nhóm, cổng trái/phải. */
 function StageNodeInner({ id, data, selected }: NodeProps<TStageNode>) {
   const status = useNodeStatus(id);
+  const run = useStageRun(id);
   const tone = (data.tone as NodeTone | undefined) ?? 'dest';
   const cls = [
     'n8n-node',
@@ -23,6 +25,8 @@ function StageNodeInner({ id, data, selected }: NodeProps<TStageNode>) {
     data.role === 'from' ? 'n8n-node--from' : '',
     data.locked ? 'n8n-node--locked' : '',
     status ? `n8n-node--${status}` : '',
+    // Lớp phủ kết quả chạy thử (FR-04-035) — vẽ đè lên trạng thái kiểm tra.
+    run ? `n8n-node--run-${run.status}` : '',
     selected ? 'n8n-node--selected' : '',
   ]
     .filter(Boolean)
@@ -43,6 +47,20 @@ function StageNodeInner({ id, data, selected }: NodeProps<TStageNode>) {
         <div className="n8n-node__sub t-mono">{stageSubtitle(data)}</div>
       </div>
       <div className="n8n-node__meta">
+        {run && (
+          <span
+            className={`n8n-node__run n8n-node__run--${run.status}`}
+            title={
+              run.status === 'ok'
+                ? `Chạy thử: thành công · ${run.durationMs} ms`
+                : run.status === 'skipped'
+                  ? 'Chạy thử: bỏ qua chặng này'
+                  : `Chạy thử: lỗi · ${run.durationMs} ms`
+            }
+          >
+            {run.status === 'ok' ? run.order : run.status === 'skipped' ? '–' : '!'}
+          </span>
+        )}
         {data.locked && (
           <span className="n8n-node__lock" title="Chặng bắt buộc — không gỡ được">
             🔒

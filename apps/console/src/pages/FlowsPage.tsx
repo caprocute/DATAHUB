@@ -37,6 +37,7 @@ import {
 import { Designer } from '../designer/Designer'
 import type { SeqEdge, StageNode } from '../designer/flow/model'
 import { ReviewPanel } from '../designer/panels/ReviewPanel'
+import { mapWaterfall, type StageRun } from '../designer/flow/RunContext'
 import { antdThemeFor } from '../designer/theme/tokens'
 import { useTheme } from '../designer/theme/useTheme'
 import '../theme-mockup/tokens.css'
@@ -73,6 +74,8 @@ export function FlowsPage() {
   const [testResult, setTestResult] = useState<TestRunResult | null>(null)
   const yamlRef = useRef('')
   const graphRef = useRef<CanvasGraph | null>(null)
+  /** Kết quả chạy thử quy về từng chặng để tô lên sơ đồ (FR-04-035). */
+  const [runByNode, setRunByNode] = useState<Record<string, StageRun>>({})
 
   const onDirty = useCallback(() => {
     setDirty(true)
@@ -257,9 +260,12 @@ export function FlowsPage() {
     }
     setSaving(true)
     setTestResult(null)
+    setRunByNode({})
     try {
       const result = await runTest(routeCode, versionNo, 'MOCK')
       setTestResult(result)
+      // Quy kết quả về từng chặng để sơ đồ tô được đường chạy.
+      setRunByNode(mapWaterfall(result.waterfall ?? [], graphRef.current?.nodes ?? []))
       message.success(`${result.outcome} · ${result.durationMs}ms`)
     } catch (e) {
       message.error(String(e))
@@ -435,6 +441,7 @@ export function FlowsPage() {
                   onStatus={setCounts}
                   onYamlChange={onYamlChange}
                   onGraphChange={onGraphChange}
+                  runByNode={runByNode}
                 />
               </ReactFlowProvider>
             </>

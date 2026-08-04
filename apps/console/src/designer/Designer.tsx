@@ -26,6 +26,7 @@ import {
   type StageData,
   type StageNode,
 } from './flow/model';
+import { RunContext, type StageRun } from './flow/RunContext';
 import { StatusContext } from './flow/StatusContext';
 import { useFlowHistory } from './flow/useFlowHistory';
 import { FindingsPanel } from './panels/Findings';
@@ -50,6 +51,9 @@ const BRANCHING = new Set(['choice', 'multicast', 'loadBalance', 'recipientList'
 
 const DEFAULT_LAID_OUT = autoLayout(INITIAL_NODES, INITIAL_EDGES);
 
+/** Tham chiếu ổn định để không dựng lại context khi chưa chạy thử lần nào. */
+const EMPTY_RUN: Record<string, StageRun> = {};
+
 interface Props {
   mode: Mode;
   onDirty: () => void;
@@ -61,6 +65,8 @@ interface Props {
   initialNodes?: StageNode[];
   initialEdges?: SeqEdge[];
   routeId?: string;
+  /** Kết quả chạy thử theo chặng — tô đường chạy lên sơ đồ (FR-04-035). */
+  runByNode?: Record<string, StageRun>;
 }
 
 export function Designer({
@@ -72,6 +78,7 @@ export function Designer({
   initialNodes,
   initialEdges,
   routeId = ROUTE_ID,
+  runByNode,
 }: Props) {
   const startNodes = initialNodes?.length ? initialNodes : DEFAULT_LAID_OUT;
   const startEdges = initialEdges?.length ? initialEdges : INITIAL_EDGES;
@@ -367,6 +374,7 @@ export function Designer({
   return (
     <InteractionContext.Provider value={interaction}>
       <StatusContext.Provider value={status}>
+        <RunContext.Provider value={runByNode ?? EMPTY_RUN}>
         <div className="designer designer--rf mb-5">
           <Palette hasFrom={hasFrom} />
 
@@ -515,6 +523,7 @@ export function Designer({
             Đặt làm nhánh mặc định — nhận mọi bản tin không khớp luật nào
           </Checkbox>
         </Modal>
+        </RunContext.Provider>
       </StatusContext.Provider>
     </InteractionContext.Provider>
   );

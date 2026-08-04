@@ -716,3 +716,30 @@
   gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
+
+/* ---------- Lớp phủ kết quả chạy thử trên sơ đồ (FR-04-035) ---------- */
+
+.n8n-node--run-ok { border-color: var(--c-ok-500, #22c55e); }
+.n8n-node--run-error {
+  border-color: var(--c-err-500, #ef4444);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-err-500, #ef4444) 18%, transparent);
+}
+/* Chặng không đi qua trong lần chạy: làm mờ để đường chạy nổi lên. */
+.n8n-node--run-skipped { opacity: 0.5; }
+
+.n8n-node__run {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--c-text-3);
+}
+.n8n-node__run--ok { background: var(--c-ok-600, #16a34a); }
+.n8n-node__run--error { background: var(--c-err-600, #dc2626); }
+.n8n-node__run--skipped { background: var(--c-text-3); }
