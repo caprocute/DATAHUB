@@ -28,7 +28,7 @@
 
 - [ ] **N-1.** Không dữ liệu giả trên đường chính. Stub chỉ sau cờ `VITE_*_STUB`, mặc định `false`.
 - [ ] **N-2.** RBAC deny-by-default: FE ẩn/khóa theo [SRS-19](../07-srs/SRS-19-rbac-matrix.md), BE `@PreAuthorize` — **FE không phải chốt chặn**.
-- [ ] **N-3.** Không secret trên UI/log/node designer (FR-04-032).
+- [x] **N-3.** Không secret trên UI/log/node designer (FR-04-032).
 - [ ] **N-4.** Màu/khoảng cách chỉ dùng token (`theme-mockup/tokens.css`), không hardcode hex.
 - [ ] **N-5.** Mọi thay đổi hợp đồng → cập nhật `contracts/openapi/*` + typegen trước khi code FE.
 - [ ] **N-6.** Trạng thái rỗng / đang tải / lỗi có giao diện riêng, không để bảng trắng.
@@ -93,20 +93,20 @@
 - [ ] **B2-3.** Nhóm trường theo `$comment: group:` — `common` mở sẵn, `(advanced)` gập.
 - [ ] **B2-4.** Trường `required` đánh dấu, validate inline, chặn đóng khi lỗi cứng (hoặc cảnh báo rõ khi thoát).
 - [ ] **B2-5.** Tab: *Tham số · Biểu thức · Ánh xạ (khi là mapper) · Dữ liệu mẫu · Ghi chú*.
-- [ ] **B2-6.** Không hiện lại secret đã lưu; trường credential → **chọn kết nối PH-05**, không có ô nhập tự do (FR-04-032).
+- [x] **B2-6.** Không hiện lại secret đã lưu; trường credential → **chọn kết nối PH-05**, không có ô nhập tự do (FR-04-032).
 - [ ] **B2-7.** Đổi tham số cập nhật YAML **sống** và badge chưa-đủ-cấu-hình (FR-04-034); đóng popup không mất thay đổi.
 
 ### B3. Biểu thức, dữ liệu mẫu, môi trường
 
-- [ ] **B3-1.** Trình soạn biểu thức Camel Simple / JSONPath / XPath: tô cú pháp, gợi ý `${header.*}`, `${body}`, `${exchangeProperty.*}` (FR-04-031).
-- [ ] **B3-2.** Xem trước kết quả biểu thức trên dữ liệu mẫu đã pin — hiện lỗi cú pháp tại chỗ.
-- [ ] **B3-3.** Pin dữ liệu mẫu theo chặng, lưu kèm `versionId + stageId`, badge trên node (FR-04-033); **không** lẫn vào DSL production.
-- [ ] **B3-4.** Biến môi trường `$env` theo DEV/UAT/PROD, hiện giá trị hiệu lực (FR-04-036) — không lộ giá trị nhạy cảm.
+- [x] **B3-1.** Trình soạn biểu thức Camel Simple / JSONPath / XPath: tô cú pháp, gợi ý `${header.*}`, `${body}`, `${exchangeProperty.*}` (FR-04-031).
+- [x] **B3-2.** Xem trước kết quả biểu thức trên dữ liệu mẫu đã pin — hiện lỗi cú pháp tại chỗ.
+- [x] **B3-3.** Pin dữ liệu mẫu theo chặng, lưu kèm `versionId + stageId`, badge trên node (FR-04-033); **không** lẫn vào DSL production.
+- [x] **B3-4.** Biến môi trường `$env` theo DEV/UAT/PROD, hiện giá trị hiệu lực (FR-04-036) — không lộ giá trị nhạy cảm.
 
 ### B4. `choice`, ghi chú, luồng con
 
 - [ ] **B4-1.** UI `choice`: thêm/xóa/sắp thứ tự nhánh `when`, đặt `otherwise` mặc định (FR-04-038); cảnh báo khi không vét cạn.
-- [ ] **B4-2.** Sticky note trên canvas, hiện khi duyệt (FR-04-039).
+- [x] **B4-2.** Sticky note trên canvas, hiện khi duyệt (FR-04-039).
 - [ ] **B4-3.** Luồng con `direct:`/`to` tới route khác — có điều hướng “mở luồng con” (FR-04-040).
 
 ### B5. Kiểm tra hợp lệ (FR-04-027)
@@ -255,3 +255,4 @@ Song song an toàn: **A** xong thì **B** và **C** chạy đồng thời (khác
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-05 — checklist sản xuất ba màn; đo hiện trạng catalog 16+36 so với nguồn Kaoto 323+74+252 |
+| 2026-08-04 | **Gói A xong** (`814bb1e`): 751 nút, phân loại theo nhãn gốc, 13 test chốt số lượng. **Gói B một phần** (`ef42681`): pin dữ liệu mẫu, trình soạn biểu thức, chặn secret trên node — 32 test xanh |
