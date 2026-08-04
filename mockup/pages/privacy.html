@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-09 — Bảo vệ dữ liệu (Privacy).</strong>
   Minh họa các màn <span class="tag-ph">UI-09-01</span> phân loại nhạy cảm,
   <span class="tag-ph">UI-09-02</span> ẩn danh / k-anonymity,
@@ -66,8 +68,31 @@
         <div class="t-small">Đang áp dụng mức bảo vệ cao nhất (fail-safe). Cần phân loại trước khi phát hành.</div>
       </div>
     </div>
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table" id="pii-table">
+      <table class="table table--sticky" id="pii-table" data-crud-total="36" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Trường</th><th>Mức nhạy cảm</th><th>Loại định danh</th>
@@ -132,6 +157,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
     <div class="card__foot">
       <span>Thực thể <strong>CongDan</strong> · 42 trường · 3 chưa phân loại</span>
       <span class="header__spacer"></span>
@@ -217,7 +249,7 @@
     </div>
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Trường đóng góp rủi ro</div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="privacy-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Trường</th><th class="table__num">Giá trị duy nhất</th><th>Đóng góp</th><th>Khuyến nghị</th></tr>
         </thead>
@@ -281,7 +313,7 @@
       <button class="btn" data-demo="Xoay vòng khóa (giữ khóa cũ)">↻ Xoay khóa</button>
     </div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="privacy-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Miền</th><th>Phiên bản khóa</th><th>Ngày tạo</th><th>Hết hạn</th>
@@ -353,7 +385,7 @@
       <div class="t-small">Nhật ký <strong>chỉ đọc</strong> — không sửa/xóa. Khôi phục hàng loạt hoặc ngoài giờ được tô sáng.</div>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="privacy-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Người thực hiện</th><th>Miền</th>
@@ -415,7 +447,7 @@
     </div>
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Báo cáo tuân thủ bảo vệ dữ liệu</div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="privacy-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Báo cáo</th><th>Kỳ</th><th>Trạng thái</th><th class="table__actions">Thao tác</th></tr>
         </thead>

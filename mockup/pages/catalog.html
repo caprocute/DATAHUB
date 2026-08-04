@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-02 — Danh mục dịch vụ &amp; Quản lý API.</strong>
   Minh họa <span class="tag-ph">UI-02-01</span>…<span class="tag-ph">UI-02-08</span>
   — danh mục, chi tiết OpenAPI, công bố, lint đặc tả, phiên bản, phê duyệt, SLA, đồng bộ Bộ —
@@ -67,8 +69,31 @@
       </select>
     </div>
 
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table" id="api-table">
+      <table class="table table--sticky" id="api-table" data-crud-total="86" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã dịch vụ</th><th>Tên</th><th>Chủ quản</th><th>Phiên bản</th>
@@ -138,6 +163,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
     <div class="card__foot" style="margin:var(--sp-4) calc(var(--sp-5)*-1) calc(var(--sp-4)*-1);padding:var(--sp-3) var(--sp-5)">
       <span class="t-small">DEPRECATED: hiện hạn chuyển đổi và phiên bản thay thế · không đạt SLA 3 kỳ → nhãn cảnh báo</span>
     </div>
@@ -263,7 +295,7 @@
       <div class="card stat" style="box-shadow:none"><div class="stat__label">Đã khắc phục</div><div class="stat__value" style="font-size:var(--fs-2xl)">1 / 5</div></div>
     </div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="catalog-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Mức</th><th>Mã</th><th>Vị trí</th><th>Mô tả</th><th></th></tr>
         </thead>
@@ -333,7 +365,7 @@
       <div>
         <div class="t-small mb-2" style="color:var(--c-err-700)"><strong>Phá vỡ tương thích</strong></div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="catalog-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Loại</th><th>Vị trí</th><th>Tác động</th></tr></thead>
             <tbody>
               <tr>
@@ -353,7 +385,7 @@
       <div>
         <div class="t-small mb-2" style="color:var(--c-ok-700)"><strong>Tương thích ngược</strong></div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="catalog-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Loại</th><th>Vị trí</th><th>Tác động</th></tr></thead>
             <tbody>
               <tr>
@@ -381,7 +413,7 @@
   <div class="card__body hidden" data-panel="phe-duyet" data-panel-group="main">
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Hàng đợi phê duyệt phát hành <span class="tag-ph">UI-02-06</span></div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="catalog-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Mã</th><th>Phiên bản</th><th>Chủ quản</th><th>Lint</th><th>Ngày gửi</th><th class="table__actions">Thao tác</th></tr>
         </thead>
@@ -424,7 +456,7 @@
   <div class="card__body hidden" data-panel="sla" data-panel-group="main">
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Tuân thủ SLA <span class="tag-ph">UI-02-07</span></div>
     <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="catalog-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Dịch vụ</th><th>Cam kết P99</th><th>Thực tế kỳ này</th>
@@ -488,7 +520,7 @@
       <div class="card stat" style="box-shadow:none"><div class="stat__label">Lần đồng bộ gần nhất</div><div class="stat__value" style="font-size:var(--fs-lg)">03/08 14:20</div></div>
     </div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="catalog-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Dịch vụ</th><th>Trạng thái địa phương</th><th>Trạng thái Bộ</th><th>Đồng bộ</th><th class="table__actions">Thao tác</th></tr>
         </thead>

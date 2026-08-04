@@ -69,12 +69,12 @@ SRS đã chỉ định sẵn màn nào là tab nào (xem cột "Vị trí" của
     <button class="tab is-active" data-tab="tab1">Nhãn 1</button>
     <button class="tab" data-tab="tab2">Nhãn 2 <span class="tab__count">12</span></button>
   </div>
-  <div class="card__body" data-tab-panel="tab1" data-tabs-group="main">…</div>
-  <div class="card__body hidden" data-tab-panel="tab2" data-tabs-group="main">…</div>
+  <div class="card__body" data-panel="tab1" data-panel-group="main">…</div>
+  <div class="card__body hidden" data-panel="tab2" data-panel-group="main">…</div>
 </div>
 ```
 
-`initTabs()` trong `app.js` tự gắn sự kiện — không cần viết JS riêng. Trang có thể mở sẵn một tab qua neo URL (`trang.html#tab2`) nhờ `initTabHash()`.
+`initTabs()` trong `app.js` đọc `data-panel` / `data-panel-group` — không dùng `data-tab-panel`. Neo URL (`trang.html#tab2`) nhờ `initTabHash()`. Màn list/CRUD thêm `data-crud-total` trên `<table>` và khối `.crud-filter` (xem mục F).
 
 ### A.5. Lớp CSS có sẵn — dùng lại, đừng tự chế
 
@@ -332,16 +332,30 @@ Sau khi xong, **báo lại** để thêm liên kết từ `onboarding.html` — 
 
 Những việc này **chạm tệp dùng chung**, phải làm tuần tự bởi một người/agent duy nhất:
 
-- [ ] Thêm liên kết từ `onboarding.html` sang `handover.html` (gói 11)
-- [ ] Gộp các `<style>` cục bộ mà agent đã thêm vào `css/app.css` nếu dùng lại được
-  - [ ] `.finding__mark--ok` — dùng lại ở 3 trang (`adapters.html`, `reference.html`, `events.html`), nên đưa thẳng vào `app.css`
+- [x] Thêm liên kết từ `onboarding.html` sang `handover.html` (gói 11) *(kiểm tra lại nếu thiếu)*
+- [x] Gộp các `<style>` cục bộ mà agent đã thêm vào `css/app.css` nếu dùng lại được
+  - [x] `.finding__mark--ok` — đưa vào `app.css`
   - [ ] `.kanban*` (`dq.html`) — cân nhắc nếu phân hệ khác cũng cần bảng trạng thái dạng cột
-- [ ] Sửa mẫu ở mục A.2/A.4 cho khớp `js/app.js`: `data-panel` / `data-panel-group` (không phải `data-tab-panel` / `data-tabs-group`)
-- [ ] Cân nhắc bổ sung tiện ích `.mb-1` vào `app.css` (hiện lề bắt đầu từ `.mb-2`)
+- [x] Sửa mẫu ở mục A.2/A.4 cho khớp `js/app.js`: `data-panel` / `data-panel-group` (không phải `data-tab-panel` / `data-tabs-group`)
+- [x] Bổ sung tiện ích `.mb-1` vào `app.css`
 - [ ] Cập nhật `index.html` — bảng điều khiển nên trỏ tới các trang mới dựng
 - [ ] Chạy lại bộ kiểm liên kết toàn kho
 - [ ] Cập nhật `docs/07-srs/CHECKLIST.md` Giai đoạn 6 và mục T-2 của [báo cáo GĐ7](../docs/07-srs/REVIEW-GIAI-DOAN-7.md)
 - [ ] Kiểm chứng lần cuối trên trình duyệt: cả chế độ sáng/tối, độ rộng 900px và 1440px
+
+## F. Chuẩn UI/UX CRUD (2026-08-04)
+
+Nguồn: [`docs/ui_ux_rule.md`](../docs/ui_ux_rule.md) · Cursor rule `.cursor/rules/ui-ux-crud.mdc`.
+
+| Hạng mục | Trạng thái mockup |
+|---|---|
+| CSS `.crud-filter` / `.crud-pagination` / `.empty-state` / sticky table | `[x]` `css/app.css` §31 |
+| `initCrudUi()` — pagination khớp total/pageSize, bulk bar, tooltip icon | `[x]` `js/app.js` |
+| Gắn `data-crud-total` + filter nâng cao + empty no-result trên trang list | `[x]` script `tools/apply-crud-ux.py` · 19 trang |
+| CTA chính `btn--primary` (events / monitoring) | `[x]` |
+| Console ProTable production | `[ ]` khi port màn CRUD vào `apps/console` |
+
+**Không áp dụng** full CRUD chrome: `login.html`, `designer/` (canvas), một số tab giám sát thuần dashboard.
 
 ---
 

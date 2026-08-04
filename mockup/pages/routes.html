@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-04 — Lõi Tích hợp &amp; Điều phối.</strong>
   Minh họa các màn <span class="tag-ph">UI-04-01</span> danh sách luồng,
   <span class="tag-ph">UI-04-02</span> sơ đồ xử lý,
@@ -60,8 +62,31 @@
     </label>
   </div>
 
-  <div class="table-wrap table-wrap--wide">
-    <table class="table" id="routes-table">
+  
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap table-wrap--wide">
+    <table class="table table--sticky" id="routes-table" data-crud-total="134" data-crud-page-size="10" data-crud-page="1">
       <thead>
         <tr>
           <th style="width:34px"></th>
@@ -164,6 +189,13 @@
       </tbody>
     </table>
   </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
   <div class="card__foot">
     <span>Hiển thị 6 / 134 luồng</span>
     <span class="header__spacer"></span>

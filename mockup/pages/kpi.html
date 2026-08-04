@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-16 — Quản trị Kiến trúc &amp; Báo cáo KPI.</strong>
   Minh họa các màn <span class="tag-ph">UI-16-01</span> Registry,
   <span class="tag-ph">UI-16-02</span> đồng bộ NAS,
@@ -61,8 +63,31 @@
       <div class="toolbar__spacer"></div>
       <button class="btn btn--sm" data-demo="Đánh giá tuân thủ hàng loạt">Đánh giá tuân thủ</button>
     </div>
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table" id="reg-table">
+      <table class="table table--sticky" id="reg-table" data-crud-total="48" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã</th><th>Tên thành phần</th><th>Lớp</th><th>Phiên bản</th>
@@ -123,6 +148,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
     <div class="card__foot">
       <span>Hiển thị 5 / 48 thành phần</span>
       <span class="header__spacer"></span>
@@ -162,7 +194,7 @@
     </div>
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký đồng bộ CMP-33</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="kpi-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Lô</th><th class="table__num">OK</th><th class="table__num">Lỗi</th>
@@ -358,7 +390,7 @@
     <div class="divider"></div>
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử phê duyệt (append-only)</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="kpi-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead><tr><th>Thời điểm</th><th>Kỳ</th><th>Người duyệt</th><th>Kết quả</th></tr></thead>
         <tbody>
           <tr>
@@ -387,7 +419,7 @@
       <button class="btn btn--sm" data-demo="Chạy đối soát lại">↻ Chạy đối soát</button>
     </div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="kpi-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thành phần / chỉ số</th><th>Registry</th><th>NAS</th><th>Feed</th><th>Kết luận</th>

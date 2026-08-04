@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-03 — Cổng tiếp nhận (API Gateway).</strong>
   Minh họa các màn <span class="tag-ph">UI-03-01</span> Tổng quan lưu lượng,
   <span class="tag-ph">UI-03-02</span> Cấu hình route,
@@ -149,8 +151,31 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Top bên gọi theo lưu lượng</div>
         <div class="card__sub mb-3">Nhấn một dòng để lọc toàn bộ biểu đồ theo client đó</div>
-        <div class="table-wrap">
-          <table class="table">
+        
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap">
+          <table class="table table--sticky" id="gateway-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Bên gọi (clientId)</th><th class="table__num">Yêu cầu 24h</th><th style="width:150px">Mức dùng / hạn mức</th></tr>
             </thead>
@@ -213,6 +238,13 @@
             </tbody>
           </table>
         </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
       </div>
 
       <!-- Xếp hạng route -->
@@ -220,7 +252,7 @@
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Top route theo lưu lượng và độ trễ</div>
         <div class="card__sub mb-3">Độ trễ đo đầu–cuối, gồm cả thời gian hệ thống hạ nguồn</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="gateway-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Route</th><th class="table__num">Yêu cầu</th><th class="table__num">P99</th><th class="table__num">Lỗi</th></tr>
             </thead>
@@ -297,7 +329,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="gateway-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Đường dẫn</th><th>Phương thức</th><th>Dịch vụ hạ nguồn</th>
@@ -450,7 +482,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng hạn mức đang áp dụng</div>
         <div class="table-wrap table-wrap--wide">
-          <table class="table">
+          <table class="table table--sticky" id="gateway-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr>
                 <th>Bên gọi</th><th>Route</th><th class="table__num">Giới hạn</th>
@@ -616,7 +648,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký chặn (1.284 lượt / 24 giờ)</div>
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="gateway-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Địa chỉ nguồn</th><th>Route</th>
@@ -682,7 +714,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Ngoại lệ đang có hiệu lực</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="gateway-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Route</th><th>Mã luật</th><th>Lý do</th><th>Người duyệt</th><th>Ngày hết hạn</th><th></th></tr>
             </thead>
@@ -800,7 +832,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="gateway-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Dịch vụ hạ nguồn</th><th>Đơn vị chủ quản</th><th>Thực thể khỏe</th>

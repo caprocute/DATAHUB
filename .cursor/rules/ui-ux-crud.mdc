@@ -1,0 +1,49 @@
+---
+description: Chuẩn UI/UX CRUD mặc định (Ant Design ProTable + docs/ui_ux_rule.md)
+globs: mockup/**/*.{html,css,js},apps/console/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# UI/UX CRUD — yêu cầu mặc định LGSP
+
+Nguồn đầy đủ: [docs/ui_ux_rule.md](docs/ui_ux_rule.md). Mọi màn list/CRUD (mockup + `apps/console`) phải bám các mã dưới đây.
+
+## Công nghệ
+
+- Màn CRUD production (`apps/console`): dùng **Ant Design ProTable** (full) cho danh sách.
+- Mockup HTML: mô phỏng ProTable bằng lớp `.crud-*` trong `mockup/css/app.css` + `initCrudUi()` — không tự chế layout lệch chuẩn.
+
+## Cấu trúc màn (CRUD-UI-*)
+
+- Breadcrumb đầy đủ (`LGSP_PAGE.crumbs` / Ant Breadcrumb).
+- Tiêu đề = tên nghiệp vụ; CTA chính (**Thêm mới** / tương đương) góc phải, `btn--primary`.
+- Tối thiểu: tiêu đề · bộ lọc · bảng · phân trang.
+- Icon-only / ít dùng → bắt buộc `title` hoặc tooltip.
+
+## Bộ lọc (CRUD-FLT-*)
+
+- Cơ bản mặc định; nâng cao thu gọn (`.crud-filter__advanced`).
+- Enter + nút Tìm kiếm; Đặt lại về trang 1; giữ filter khi quay lại list.
+- Phân trang / lọc **phía máy chủ** (mockup: ghi rõ total/pageSize khớp nhau).
+
+## Bảng (CRUD-TBL-*)
+
+- Badge trạng thái = màu **và** chữ; ngày `DD/MM/YYYY`; ellipsis + tooltip.
+- Sticky thead; cột thao tác sticky phải (`table--sticky` / ProTable `scroll`).
+- Empty / no-result / error / loading bắt buộc (không để bảng trắng).
+- STT theo toàn tập; sort mặc định ngày tạo giảm dần khi có cột ngày.
+
+## CRUD thao tác
+
+- Create: `*`, loading khóa nút, chống double-submit.
+- Read: click tên hoặc Xem → chi tiết; field trống = `—`.
+- Update: chỉ hiện khi được phép; cảnh báo dirty; optimistic lock.
+- Delete: confirm + nút nguy hiểm; soft/hard rõ ràng.
+
+## Phân trang (CRUD-PAG-*)
+
+`totalElements`, `pageSize`, `totalPages` **luôn khớp** (`ceil(total/size)`). Page size 10/20/50/100.
+
+## Nghiệm thu tối thiểu
+
+Xem mục 12 của `docs/ui_ux_rule.md`. Không đánh `[x]` checklist nếu thiếu empty/error/loading hoặc lệch tổng trang.

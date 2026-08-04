@@ -17,6 +17,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-05 — Adapter kết nối hệ thống.</strong>
   Minh họa các màn <span class="tag-ph">UI-05-01</span> Danh sách adapter và sức khỏe,
   <span class="tag-ph">UI-05-02</span> Đăng ký và cấu hình,
@@ -108,8 +110,31 @@
       </div>
     </div>
 
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="adapters-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã adapter</th><th>Hệ thống · Đơn vị chủ quản</th><th>Nhóm</th><th>Giao thức</th>
@@ -233,6 +258,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
 
     <div class="alert alert--info mt-4" style="margin-bottom:0">
       <span class="alert__icon">ℹ</span>
@@ -458,7 +490,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử kiểm thử</div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="adapters-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Thời điểm</th><th>Người chạy</th><th>Kết quả</th><th>Bước dừng</th><th class="table__num">Thời gian</th></tr>
         </thead>
@@ -587,7 +619,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng quy tắc ánh xạ</div>
     <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="adapters-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Trường nguồn</th><th>Trường CDM</th><th>Kiểu dữ liệu</th><th>Bắt buộc</th><th>Giá trị mặc định</th><th>Quy tắc chuẩn hóa</th><th></th></tr>
         </thead>
@@ -716,7 +748,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Thay đổi lược đồ chưa xử lý</div>
     <div class="table-wrap mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="adapters-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Thời điểm</th><th>Bảng</th><th>Loại thay đổi</th><th>Chi tiết</th><th>Mức ảnh hưởng</th><th></th></tr>
         </thead>
@@ -759,7 +791,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng đang theo dõi</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="adapters-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Bảng</th><th class="table__num">Sự kiện 24h</th><th>Sự kiện gần nhất</th><th>Trạng thái</th></tr>
             </thead>

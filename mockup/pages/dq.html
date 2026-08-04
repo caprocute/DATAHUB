@@ -27,6 +27,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-08 — Quản lý chất lượng dữ liệu.</strong>
   Minh họa các màn <span class="tag-ph">UI-08-01</span> Tổng quan theo miền,
   <span class="tag-ph">UI-08-02</span> Quản lý luật kiểm tra,
@@ -200,8 +202,31 @@
 
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Điểm theo miền và xu hướng</div>
-        <div class="table-wrap">
-          <table class="table">
+        
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap">
+          <table class="table table--sticky" id="dq-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Miền</th><th class="table__num">Điểm</th><th>Kết luận</th><th>Δ so kỳ</th><th>Xu hướng</th></tr>
             </thead>
@@ -244,6 +269,13 @@
             </tbody>
           </table>
         </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
         <div class="t-small t-muted mt-3">Nhấn một dòng để mở tab <strong>Lỗi</strong> đã lọc sẵn theo miền đó.</div>
       </div>
     </div>
@@ -288,7 +320,7 @@
 
     <div class="grid grid--main">
       <div class="table-wrap table-wrap--wide">
-        <table class="table">
+        <table class="table table--sticky" id="dq-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
           <thead>
             <tr><th>Mã luật</th><th>Chiều</th><th>Trường</th><th>Toán tử</th><th>Mức</th><th>Inline</th><th></th></tr>
           </thead>
@@ -411,7 +443,7 @@
 
     <div class="grid grid--main">
       <div class="table-wrap">
-        <table class="table">
+        <table class="table table--sticky" id="dq-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
           <thead>
             <tr><th>Chiều chất lượng</th><th class="table__num">Trọng số</th><th class="table__num">Ngưỡng đạt</th><th class="table__num">Điểm hiện tại</th><th>Kết luận</th><th></th></tr>
           </thead>
@@ -542,7 +574,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử job quét</div>
     <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="dq-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Mã job</th><th>Miền</th><th>Loại quét</th><th>Bắt đầu</th><th class="table__num">Bản ghi</th><th class="table__num">Lỗi</th><th>Trạng thái</th><th></th></tr>
         </thead>
@@ -660,8 +692,14 @@
       </div>
     </div>
 
-    <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+    
+    <div class="crud-bulk" data-crud-bulk="dq-table-5">
+      <span>Bạn đã chọn <span class="crud-bulk__count" data-crud-bulk-count>0</span> bản ghi</span>
+      <button type="button" class="btn btn--sm btn--primary" data-demo="Thao tác hàng loạt" title="Thao tác hàng loạt">Thao tác hàng loạt</button>
+      <button type="button" class="btn btn--sm btn--danger" data-demo="Xóa hàng loạt — cần xác nhận" title="Xóa hàng loạt">Xóa đã chọn</button>
+    </div>
+<div class="table-wrap table-wrap--wide mb-4">
+      <table class="table table--sticky" id="dq-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th style="width:36px"><input type="checkbox"></th>
@@ -791,7 +829,7 @@
         <div class="panel__head">Khối điểm — kỳ tháng 7/2026 so tháng 6/2026</div>
         <div class="panel__body">
           <div class="table-wrap">
-            <table class="table">
+            <table class="table table--sticky" id="dq-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
               <thead><tr><th>Chỉ tiêu</th><th class="table__num">T7/2026</th><th class="table__num">T6/2026</th><th class="table__num">Δ</th></tr></thead>
               <tbody>
                 <tr>

@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-15 — Cổng nhà phát triển &amp; Tài liệu.</strong>
   Minh họa <span class="tag-ph">UI-15-01</span>…<span class="tag-ph">UI-15-09</span>
   — góc nhìn <em>người dùng</em> (tra cứu, docs, try-it, F-01/F-02) — đặc tả tại mục M6 của
@@ -193,8 +195,31 @@
       <label class="check t-small"><input type="checkbox" checked> Cho phép try-it</label>
     </div>
 
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide mb-6">
-      <table class="table" id="portal-catalog-table">
+      <table class="table table--sticky" id="portal-catalog-table" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã dịch vụ</th><th>Tên</th><th>Chủ quản</th><th>Phiên bản</th>
@@ -241,6 +266,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
 
     <!-- ===== UI-15-03: Chi tiết dịch vụ + OpenAPI ===== -->
     <div id="chi-tiet" style="border-top:1px solid var(--c-border);padding-top:var(--sp-5)">
@@ -430,7 +462,7 @@ X-Request-Id: portal-try-20260803-001</textarea>
     </div>
 
     <div class="table-wrap mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="portal-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã hồ sơ</th><th>Dịch vụ</th><th>Phiên bản</th><th>Lint</th><th>Trạng thái</th><th>Cập nhật</th><th class="table__actions">Thao tác</th>
@@ -516,7 +548,7 @@ X-Request-Id: portal-try-20260803-001</textarea>
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-sm)">Hồ sơ của tôi</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="portal-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Mã</th><th>Loại</th><th>Trạng thái</th></tr></thead>
             <tbody>
               <tr>

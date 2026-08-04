@@ -1,24 +1,8 @@
-## 1. Phân tích cấu trúc giao diện hiện tại
+> **Áp dụng mặc định.** Cursor rule: [`.cursor/rules/ui-ux-crud.mdc`](../.cursor/rules/ui-ux-crud.mdc) · mockup dùng lớp `.crud-*` + `initCrudUi()` trong `mockup/js/app.js`. Console production dùng Ant Design ProTable.
 
-Giao diện đang thể hiện một màn hình **quản lý danh sách phiên bản**, gồm đầy đủ các thành phần nền tảng của màn hình CRUD:
+## 1. Yêu cầu về công nghệ
 
-| Khu vực             | Thành phần                                                     |
-| ------------------- | -------------------------------------------------------------- |
-| Điều hướng          | Breadcrumb, tab chức năng, nút quay lại                        |
-| Tiêu đề             | “Danh sách phiên bản”                                          |
-| Thao tác chính      | Thêm mới                                                       |
-| Tìm kiếm            | Tên phiên bản, nội dung, trạng thái thông báo, khoảng ngày tạo |
-| Điều khiển tìm kiếm | Tìm kiếm, đặt lại, ẩn/hiện bộ lọc                              |
-| Danh sách           | Bảng dữ liệu có checkbox chọn dòng                             |
-| Thao tác bản ghi    | Sửa, xóa, gửi thông báo                                        |
-| Thao tác hàng loạt  | Xóa các bản ghi đã chọn                                        |
-| Hiển thị trạng thái | Chip “Mới/Cũ”, “Đã thông báo/Chưa thông báo”                   |
-| Cá nhân hóa bảng    | Sắp xếp, cấu hình cột                                          |
-| Phân trang          | Tổng số bản ghi, số dòng/trang, chọn trang, đi đến trang       |
-
-Về bố cục, đây là khung khá chuẩn cho màn hình CRUD dạng danh sách. Tuy nhiên, để dùng làm **chuẩn chung cho toàn hệ thống**, cần đặc tả rõ hành vi, trạng thái, phân quyền và quy tắc nghiệp vụ; không chỉ mô tả phần nhìn.
-
----
+Với các màn CRUD, yêu cầu sử dụng component **Ant Design ProTable** bản full để trình bày tính năng.
 
 # 2. Chuẩn yêu cầu chung cho một màn hình CRUD
 

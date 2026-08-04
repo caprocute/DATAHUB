@@ -17,6 +17,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-10 — Truyền thông sự kiện (Kafka).</strong>
   Minh họa các màn <span class="tag-ph">UI-10-01</span> Tổng quan cụm sự kiện,
   <span class="tag-ph">UI-10-02</span> Quản lý chủ đề,
@@ -36,6 +38,7 @@
     <p class="page-desc">Apache Kafka · 5 broker · 42 chủ đề · 318 phân vùng</p>
   </div>
   <div class="page-head__actions">
+    <button class="btn btn--primary" data-demo="Đăng ký chủ đề Kafka" title="＋ Đăng ký chủ đề">＋ Đăng ký chủ đề</button>
     <label class="check" style="margin:0">
       <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
     </label>
@@ -150,8 +153,31 @@
         </div>
 
         <div class="card__title mb-3 mt-5" style="font-size:var(--fs-md)">Chủ đề nóng theo dung lượng</div>
-        <div class="table-wrap">
-          <table class="table">
+        
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap">
+          <table class="table table--sticky" id="events-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Chủ đề</th><th class="table__num">Dung lượng</th><th class="table__num">Phân vùng</th></tr>
             </thead>
@@ -163,6 +189,13 @@
             </tbody>
           </table>
         </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
       </div>
     </div>
 
@@ -206,7 +239,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="events-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Chủ đề</th><th class="table__num">Phân vùng</th><th class="table__num">Bản sao</th>
@@ -308,7 +341,7 @@
         <div class="panel__head">Chi tiết phân vùng — <span class="t-mono">ho-tich.khai-sinh.v1</span></div>
         <div class="panel__body">
           <div class="table-wrap">
-            <table class="table">
+            <table class="table table--sticky" id="events-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
               <thead><tr><th>Phân vùng</th><th>Leader</th><th>ISR</th><th class="table__num">Offset cuối</th><th>Trạng thái</th></tr></thead>
               <tbody>
                 <tr>
@@ -388,7 +421,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="events-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Nhóm tiêu thụ</th><th>Chủ đề</th><th>Hệ thống</th>
@@ -493,7 +526,7 @@
         <div class="panel__head">Độ trễ từng phân vùng — <span class="t-mono">grp-mdm-cong-dan</span></div>
         <div class="panel__body">
           <div class="table-wrap">
-            <table class="table">
+            <table class="table table--sticky" id="events-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
               <thead><tr><th>Phân vùng</th><th>Instance xử lý</th><th class="table__num">Độ trễ</th><th>Trạng thái</th></tr></thead>
               <tbody>
                 <tr><td class="t-mono t-small">P0–P11</td><td class="t-mono t-small">consumer-1</td><td class="table__num" style="color:var(--c-err-700)">482.104</td><td><span class="badge badge--err">Quá tải</span></td></tr>
@@ -529,7 +562,7 @@
     </div>
 
     <div class="table-wrap mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="events-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Lược đồ</th><th>Chủ đề</th><th>Loại</th><th>Chế độ tương thích</th><th>Phiên bản hiện tại</th><th></th></tr>
         </thead>
@@ -630,7 +663,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Bên tiêu thụ theo phiên bản lược đồ</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="events-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Nhóm tiêu thụ</th><th>Hệ thống</th><th>Phiên bản đang dùng</th><th>Trạng thái</th></tr>
         </thead>
@@ -697,7 +730,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="events-table-8" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Luồng CDC</th><th>Hệ thống nguồn</th><th>Chủ đề đích</th>

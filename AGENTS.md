@@ -45,6 +45,7 @@ PR sửa ngoài lane → reject (trừ `contracts/` đã thỏa thuận).
 - Deny-by-default: endpoint mới gắn permission SRS-19.
 - Không commit secret; dùng `.env.example` + Vault/ESO.
 - Không dán secret trên designer / mockup.
+- UI/UX CRUD mặc định: [`docs/ui_ux_rule.md`](docs/ui_ux_rule.md) + rule [`.cursor/rules/ui-ux-crud.mdc`](.cursor/rules/ui-ux-crud.mdc) (ProTable / mockup `.crud-*`).
 
 ## 6. Definition of Done (mọi PR)
 

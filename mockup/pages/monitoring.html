@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-13 — Giám sát, Ghi vết &amp; Cảnh báo.</strong>
   Minh họa các màn <span class="tag-ph">UI-13-01</span> Dashboard sức khỏe,
   <span class="tag-ph">UI-13-02</span> tra cứu trace,
@@ -34,6 +36,7 @@
     <p class="page-desc">OTel · Tempo · Prometheus · Alertmanager — cửa sổ 24 giờ gần nhất</p>
   </div>
   <div class="page-head__actions">
+    <button class="btn btn--primary" data-demo="Tạo luật cảnh báo" title="＋ Tạo luật cảnh báo">＋ Tạo luật cảnh báo</button>
     <label class="check" style="margin:0">
       <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
     </label>
@@ -102,8 +105,31 @@
       </div>
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Top luồng lỗi</div>
-        <div class="table-wrap">
-          <table class="table">
+        
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap">
+          <table class="table table--sticky" id="monitoring-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Luồng</th><th class="table__num">Lỗi</th><th class="table__num">Tỷ lệ</th><th></th></tr>
             </thead>
@@ -129,6 +155,13 @@
             </tbody>
           </table>
         </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
         <div class="alert alert--info mt-4" style="margin-bottom:0">
           <span class="alert__icon">ℹ</span>
           <div>
@@ -146,7 +179,7 @@
       <span class="t-small t-muted">PH-04 · Valkey đồng bộ · <code class="t-mono">lgsp_circuit_breaker_state</code></span>
     </div>
     <div class="table-wrap mb-3">
-      <table class="table">
+      <table class="table table--sticky" id="monitoring-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Đích (target_id)</th><th>Trạng thái</th>
@@ -319,7 +352,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide">
-      <table class="table" id="alerts-table">
+      <table class="table table--sticky" id="alerts-table" data-crud-total="32" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mức</th><th>Cảnh báo</th><th>Nguồn</th><th>Thời gian</th>
@@ -437,7 +470,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Giao dịch theo đơn vị (top 8)</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="monitoring-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Đơn vị</th><th class="table__num">Giao dịch</th><th class="table__num">Tỷ lệ</th><th>Xu hướng</th></tr>
             </thead>
@@ -485,7 +518,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Dịch vụ theo nhu cầu</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="monitoring-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Dịch vụ</th><th class="table__num">Lượt gọi</th><th class="table__num">SLA</th></tr>
             </thead>
@@ -601,7 +634,7 @@
       <button class="btn" data-demo="Xuất bằng chứng đã ký số (FR-13-008)">⤒ Xuất bằng chứng</button>
     </div>
     <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="monitoring-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>actor</th><th>action</th><th>resource</th>
@@ -696,7 +729,7 @@
       <span class="t-small t-muted">Anomaly Detector · FR-13-014</span>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="monitoring-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mức</th><th>Cảnh báo</th><th>Mẫu phát hiện</th><th>Chủ thể</th>
@@ -784,7 +817,7 @@
       <button class="btn btn--primary" data-demo="Tạo luật cảnh báo mới (FR-13-012)">+ Luật mới</button>
     </div>
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="monitoring-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã</th><th>Tên luật</th><th>Mức</th><th>Trạng thái</th>

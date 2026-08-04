@@ -17,6 +17,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-07 — Quản lý danh mục dùng chung (RDM).</strong>
   Minh họa các màn <span class="tag-ph">UI-07-01</span> Danh sách danh mục,
   <span class="tag-ph">UI-07-02</span> Quản lý mục và phiên bản,
@@ -105,8 +107,31 @@
       <button class="btn" data-demo="Áp dụng bộ lọc danh mục">Lọc</button>
     </div>
 
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã danh mục</th><th>Tên</th><th>Đơn vị chủ quản</th><th>Nguồn gốc</th>
@@ -229,6 +254,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
 
     <div class="alert alert--info mt-4" style="margin-bottom:0">
       <span class="alert__icon">🔒</span>
@@ -264,7 +296,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Mã mục</th><th>Tên mục</th><th>Mã cha</th><th>Thứ tự</th><th>Hiệu lực từ</th><th>Trạng thái</th><th>Thay đổi ở v3.3</th><th></th></tr>
         </thead>
@@ -441,7 +473,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng khác biệt chi tiết</div>
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Nhóm</th><th>Mã mục</th><th>Nội dung thay đổi</th><th>Mã thay thế</th><th class="table__num">Bản ghi đang dùng</th></tr>
         </thead>
@@ -492,7 +524,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Đánh giá tác động — hệ thống đang dùng danh mục này</div>
     <div class="table-wrap mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Hệ thống</th><th>Đơn vị chủ quản</th><th class="table__num">Lượt tra cứu 30 ngày</th><th>Mã bị ảnh hưởng</th><th>Mức tác động</th></tr>
         </thead>
@@ -600,7 +632,7 @@
 
         <div class="card__title mb-2" style="font-size:var(--fs-md)">Hệ thống bị ảnh hưởng</div>
         <div class="table-wrap mb-4">
-          <table class="table">
+          <table class="table table--sticky" id="reference-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Hệ thống</th><th>Đơn vị chủ quản</th><th class="table__num">Bản ghi đang dùng mã cũ</th></tr></thead>
             <tbody>
               <tr><td class="t-mono t-small">HE_THONG_MOT_CUA</td><td class="t-small">Văn phòng UBND tỉnh</td><td class="table__num" style="color:var(--c-err-700)">18.406</td></tr>
@@ -643,7 +675,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký đồng bộ</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Thời điểm</th><th>Danh mục</th><th>Kết quả</th><th class="table__num">Thay đổi</th><th>Ghi chú</th><th></th></tr>
         </thead>
@@ -780,7 +812,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng quy tắc chuyển đổi</div>
     <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Trường CDM</th><th>Trường Từ điển QG</th><th>Quy tắc chuyển giá trị</th><th>Ánh xạ mã</th><th>Trạng thái</th><th></th></tr>
         </thead>
@@ -943,7 +975,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="reference-table-8" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thực thể CDM</th><th class="table__num">Tổng trường</th><th class="table__num">Đã ánh xạ</th>
@@ -1038,7 +1070,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Ánh xạ tạm thời cần rà soát</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="reference-table-9" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Trường</th><th>Lý do</th><th>Ngày tạo</th></tr></thead>
             <tbody>
               <tr>

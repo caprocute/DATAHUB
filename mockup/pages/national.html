@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-14 — Kết nối quốc gia (NDXP/NDOP).</strong>
   Minh họa các màn <span class="tag-ph">UI-14-01</span> tổng quan,
   <span class="tag-ph">UI-14-02</span> định tuyến,
@@ -166,8 +168,31 @@
     </div>
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Dịch vụ quốc gia</div>
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Dịch vụ</th><th>Nền tảng</th><th>CSDL đích</th>
@@ -229,6 +254,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
   </div>
 
   <!-- ===== UI-14-02: Cấu hình định tuyến NDXP/NDOP ===== -->
@@ -258,7 +290,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Loại dữ liệu</th><th>CSDL đích</th><th>Thao tác</th>
@@ -410,7 +442,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Đóng góp theo hệ thống nội bộ</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Hệ thống</th><th>Đơn vị</th><th class="table__num">Lượt gọi</th>
@@ -465,7 +497,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Chứng thư của bộ/tỉnh (Vault)</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="national-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr>
                 <th>Mã / Sê-ri</th><th>Chủ thể</th><th>Mục đích</th>
@@ -533,7 +565,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Chứng thư tin cậy (trung ương)</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="national-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Chủ thể</th><th>Tổ chức cấp</th><th>Cập nhật</th><th>Trạng thái</th></tr>
             </thead>
@@ -564,7 +596,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký lỗi xác minh chữ ký</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="national-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr><th>Thời điểm</th><th>Mã giao dịch</th><th>Nguyên nhân</th><th>Mức</th></tr>
             </thead>
@@ -619,7 +651,7 @@
     </div>
 
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã giao dịch</th><th>Thời điểm</th><th>Dịch vụ</th>
@@ -765,7 +797,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử đồng bộ</div>
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-8" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Đích</th><th class="table__num">Gửi</th>
@@ -816,7 +848,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Đồng bộ danh mục quốc gia (PH-07 ↔ trung ương)</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="national-table-9" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Danh mục</th><th>Nguồn QG</th><th>Phiên bản local</th>

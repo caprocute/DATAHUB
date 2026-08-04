@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-01 — Kết nạp hệ thống thành viên.</strong>
   Minh họa <span class="tag-ph">UI-01-01</span> biểu mẫu đăng ký,
   <span class="tag-ph">UI-01-02</span> tiến độ hồ sơ,
@@ -20,7 +22,8 @@
   <span class="tag-ph">UI-01-05</span> danh sách thành viên,
   <span class="tag-ph">UI-01-06</span> rà soát quyền — đặc tả tại mục M6 của
   <a href="../../docs/07-srs/SRS-PH-01-onboarding.md">SRS PH-01</a>.
-  Sau kết nạp: <a href="catalog.html">Danh mục dịch vụ</a> · <a href="iam.html">IAM / danh tính</a>.
+  Sau kết nạp: <a href="catalog.html">Danh mục dịch vụ</a> · <a href="iam.html">IAM / danh tính</a> ·
+  <a href="handover.html">Bàn giao kết nối (UI-01-07)</a>.
 </div>
 
 <div class="page-head">
@@ -61,8 +64,31 @@
       <span class="t-small t-muted">Hiển thị 5 / 18 hồ sơ</span>
     </div>
 
+    
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
     <div class="table-wrap table-wrap--wide mb-5">
-      <table class="table" id="hoso-table">
+      <table class="table table--sticky" id="hoso-table" data-crud-total="18" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã hồ sơ</th><th>Hệ thống</th><th>Đơn vị chủ quản</th><th>Nhóm</th>
@@ -104,7 +130,7 @@
             <td><span class="badge badge--info badge--plain">Nhóm 2</span></td>
             <td><span class="badge badge--ok">APPROVED</span></td>
             <td class="t-small t-muted">15/07/2026</td>
-            <td class="table__actions"><a class="btn btn--sm" href="iam.html">Bàn giao</a></td>
+            <td class="table__actions"><a class="btn btn--sm" href="handover.html" title="Bàn giao thông tin kết nối">Bàn giao</a></td>
           </tr>
           <tr>
             <td class="t-mono">HS-KN-2026-0019</td>
@@ -118,6 +144,13 @@
         </tbody>
       </table>
     </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
 
     <div class="divider"></div>
     <div class="card__title mb-2" style="font-size:var(--fs-md)">Biểu mẫu đăng ký kết nạp <span class="tag-ph">UI-01-01</span></div>
@@ -174,7 +207,7 @@
 
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Dữ liệu đề nghị khai thác</div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="onboarding-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Loại dữ liệu</th><th>Phạm vi</th><th>Căn cứ pháp lý</th><th></th></tr>
         </thead>
@@ -251,7 +284,7 @@
   <div class="card__body hidden" data-panel="hang-doi" data-panel-group="main">
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Hàng đợi thẩm định pháp lý <span class="tag-ph">UI-01-03</span> · badge 3</div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="onboarding-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Mã</th><th>Hệ thống</th><th>Đơn vị</th><th>Số mục dữ liệu</th><th>Ngày nộp</th><th class="table__actions">Thao tác</th></tr>
         </thead>
@@ -296,7 +329,7 @@
     </div>
 
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="onboarding-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr><th>Loại dữ liệu</th><th>Phạm vi đề nghị</th><th>Căn cứ</th><th>Kết luận</th><th>Ý kiến</th></tr>
         </thead>
@@ -381,7 +414,7 @@
       </div>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table" id="tv-table">
+      <table class="table table--sticky" id="tv-table" data-crud-total="42" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã</th><th>Tên</th><th>Đơn vị</th><th>Nhóm</th><th>Trạng thái</th>
@@ -458,8 +491,14 @@
         </select>
       </div>
     </div>
-    <div class="table-wrap table-wrap--wide mb-4">
-      <table class="table">
+    
+    <div class="crud-bulk" data-crud-bulk="onboarding-table-4">
+      <span>Bạn đã chọn <span class="crud-bulk__count" data-crud-bulk-count>0</span> bản ghi</span>
+      <button type="button" class="btn btn--sm btn--primary" data-demo="Thao tác hàng loạt" title="Thao tác hàng loạt">Thao tác hàng loạt</button>
+      <button type="button" class="btn btn--sm btn--danger" data-demo="Xóa hàng loạt — cần xác nhận" title="Xóa hàng loạt">Xóa đã chọn</button>
+    </div>
+<div class="table-wrap table-wrap--wide mb-4">
+      <table class="table table--sticky" id="onboarding-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th style="width:34px"><input type="checkbox"></th>

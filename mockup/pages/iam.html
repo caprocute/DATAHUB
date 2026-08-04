@@ -12,6 +12,8 @@
 <body>
 
 <div class="mock-note">
+  <strong>UI/UX:</strong> bám <a href="../../docs/ui_ux_rule.md">chuẩn CRUD</a>.
+
   <strong>PH-12 + SRS-19 — Định danh &amp; phân quyền.</strong>
   Minh họa <span class="tag-ph">UI-12-02</span>…<span class="tag-ph">UI-12-07</span>,
   <span class="tag-ph">UI-19-01</span>…<span class="tag-ph">UI-19-04</span> — đặc tả tại
@@ -87,8 +89,31 @@
           <div class="toolbar__spacer"></div>
           <button class="btn btn--sm btn--primary" data-demo="Tạo người dùng mới — PENDING_ACTIVATION">＋ Tạo người dùng</button>
         </div>
-        <div class="table-wrap">
-          <table class="table" id="user-table">
+        
+      <div class="crud-filter" data-crud-filter>
+        <div class="crud-filter__row">
+          <button type="button" class="btn btn--sm" data-crud-filter-toggle title="Hiện bộ lọc nâng cao">Bộ lọc nâng cao</button>
+          <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">↺ Đặt lại</button>
+          <button type="button" class="btn btn--sm btn--primary" data-demo="Tìm kiếm phía máy chủ (CRUD-FLT-04)" title="Tìm kiếm">Tìm kiếm</button>
+        </div>
+        <div class="crud-filter__advanced hidden">
+          <div class="field mb-0">
+            <label class="field__label">Từ ngày</label>
+            <input class="input" type="date" title="Ngày tạo từ">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Đến ngày</label>
+            <input class="input" type="date" title="Ngày tạo đến">
+          </div>
+          <div class="field mb-0">
+            <label class="field__label">Trạng thái</label>
+            <select class="select" title="Lọc trạng thái"><option>Tất cả</option><option>Đang hoạt động</option><option>Nháp</option></select>
+          </div>
+        </div>
+      </div>
+
+    <div class="table-wrap">
+          <table class="table table--sticky" id="user-table" data-crud-total="56" data-crud-page-size="10" data-crud-page="1">
             <thead>
               <tr>
                 <th>Họ tên</th><th>Tên đăng nhập</th><th>Đơn vị</th><th>Vai trò</th>
@@ -159,6 +184,13 @@
             </tbody>
           </table>
         </div>
+    <div class="empty-state hidden" data-crud-no-result>
+      <div class="empty-state__icon">⌕</div>
+      <div class="empty-state__title">Không tìm thấy dữ liệu phù hợp</div>
+      <div class="empty-state__desc">Thử đổi từ khóa hoặc đặt lại bộ lọc.</div>
+      <button type="button" class="btn btn--sm" data-crud-reset title="Đặt lại bộ lọc">Đặt lại bộ lọc</button>
+    </div>
+
       </div>
       <div class="col" style="max-width:320px">
         <div class="panel">
@@ -207,7 +239,7 @@
       <div class="t-small">Bí mật client lưu trong Vault — <strong>không hiển thị</strong> trên màn hình. Client sau kết nạp PH-01: <a href="onboarding.html">theo dõi hồ sơ</a>.</div>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-1" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>clientId</th><th>Tên hệ thống</th><th>Đơn vị chủ quản</th><th>Phạm vi quyền</th>
@@ -293,7 +325,7 @@
       <button class="btn btn--sm btn--primary" data-demo="Tạo vai trò mới trong realm">＋ Vai trò</button>
     </div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-2" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mã vai trò</th><th>Tên hiển thị</th><th>Phạm vi quyền</th>
@@ -388,7 +420,7 @@
       <div>
         <div class="card__title mb-3" style="font-size:var(--fs-md)">Danh sách chính sách</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="iam-table-3" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Mã</th><th>Tên</th><th>Phiên bản</th><th>Trạng thái</th></tr></thead>
             <tbody>
               <tr>
@@ -447,7 +479,7 @@ allow <span class="k">{</span>
         </div>
         <div class="card__title mb-2" style="font-size:var(--fs-sm)">Ca kiểm thử</div>
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--sticky" id="iam-table-4" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
             <thead><tr><th>Ca</th><th>Kết quả mong đợi</th><th>Thực tế</th></tr></thead>
             <tbody>
               <tr><td class="t-small">OP lúc 22h</td><td><span class="badge badge--err">deny</span></td><td><span class="badge badge--ok">deny</span></td></tr>
@@ -460,7 +492,7 @@ allow <span class="k">{</span>
     </div>
     <div class="card__title mb-3" style="font-size:var(--fs-md)">Khác biệt chạy khô (24h gần nhất)</div>
     <div class="table-wrap mb-4">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-5" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead><tr><th>Tài nguyên</th><th>Trước</th><th>Sau</th><th class="table__num">Số lượng</th></tr></thead>
         <tbody>
           <tr><td class="t-mono t-small">route:tra-cuu-cong-dan</td><td><span class="badge badge--ok">allow</span></td><td><span class="badge badge--err">deny</span></td><td class="table__num">842</td></tr>
@@ -519,7 +551,7 @@ allow <span class="k">{</span>
       <div class="wf__name">18h</div><div class="wf__track"><div class="wf__bar wf__bar--err" style="width:42%"></div></div><div class="wf__ms">6,2%</div>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-6" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Bên gọi</th><th>Tài nguyên</th><th>Hành động</th>
@@ -603,7 +635,7 @@ allow <span class="k">{</span>
       <button class="btn btn--sm" data-demo="Tinh chỉnh ngưỡng phát hiện FR-12-019">Cấu hình ngưỡng</button>
     </div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-7" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Thời điểm</th><th>Loại</th><th>Mô tả</th><th>Đối tượng</th><th>Mức</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
@@ -685,7 +717,7 @@ allow <span class="k">{</span>
       <span>Ký hiệu: C tạo · R đọc · U sửa · D xóa · X thực thi · A duyệt</span>
     </div>
     <div class="table-wrap table-wrap--wide">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-8" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Permission</th><th>PH</th><th>Sensitivity</th>
@@ -807,7 +839,7 @@ allow <span class="k">{</span>
       <label class="check"><input type="checkbox" checked> Chỉ CRITICAL</label>
     </div>
     <div class="table-wrap">
-      <table class="table">
+      <table class="table table--sticky" id="iam-table-9" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
         <thead>
           <tr>
             <th>Mức</th><th>Permission / Role</th><th>SRS (v2.4.1)</th><th>Runtime</th><th>PH</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
@@ -869,7 +901,7 @@ allow <span class="k">{</span>
         <button class="btn btn--sm btn--primary" data-demo="Tạo vai trò catalog mới">＋ Vai trò</button>
       </div>
       <div class="table-wrap">
-        <table class="table">
+        <table class="table table--sticky" id="iam-table-10" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
           <thead><tr><th>roleCode</th><th>Tên hiển thị</th><th>Alias</th><th>Trạng thái</th><th class="table__actions">Thao tác</th></tr></thead>
           <tbody>
             <tr>
@@ -913,7 +945,7 @@ allow <span class="k">{</span>
         <button class="btn btn--sm btn--primary" data-demo="Tạo permission mới">＋ Permission</button>
       </div>
       <div class="table-wrap table-wrap--wide">
-        <table class="table">
+        <table class="table table--sticky" id="iam-table-11" data-crud-total="20" data-crud-page-size="10" data-crud-page="1">
           <thead>
             <tr><th>permissionCode</th><th>PH</th><th>Sensitivity</th><th>Bốn mắt</th><th>MFA</th><th>Trạng thái</th></tr>
           </thead>
