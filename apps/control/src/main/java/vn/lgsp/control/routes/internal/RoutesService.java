@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -13,12 +14,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.lgsp.control.routes.api.RouteCreateRequest;
 import vn.lgsp.control.routes.api.RouteDefinitionUpdate;
+import vn.lgsp.control.routes.api.RouteDuplicateRequest;
+import vn.lgsp.control.routes.api.RoutePageDto;
+import vn.lgsp.control.routes.api.RouteQuery;
+import vn.lgsp.control.routes.api.RouteRenameRequest;
 import vn.lgsp.control.routes.api.RouteReviewRequest;
 import vn.lgsp.control.routes.api.RouteSummaryDto;
 import vn.lgsp.control.routes.api.RouteVersionDto;
 import vn.lgsp.control.routes.api.RoutesApi;
+import vn.lgsp.control.routes.api.TestRunDetailDto;
 import vn.lgsp.control.routes.api.TestRunRequest;
 import vn.lgsp.control.routes.api.TestRunResultDto;
+import vn.lgsp.control.routes.api.TestRunSummaryDto;
 import vn.lgsp.control.routes.api.ValidationResultDto;
 
 @Service
@@ -37,7 +44,23 @@ class RoutesService implements RoutesApi {
               rs.getObject("current_version_id", UUID.class),
               (Integer) rs.getObject("draft_version_no"),
               (Integer) rs.getObject("current_version_no"),
-              rs.getString("git_commit_ref"));
+              rs.getString("git_commit_ref"),
+              rs.getString("updated_by"),
+              rs.getObject("updated_at", OffsetDateTime.class));
+
+  /** Phần `SELECT` dùng chung cho danh sách và chi tiết — giữ một chỗ để khỏi lệch cột. */
+  private static final String SUMMARY_SELECT =
+      """
+      SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
+             r.source_system, r.target_system, r.current_version_id,
+             r.updated_by, r.updated_at,
+             (SELECT MAX(v.version_no) FROM ph04.route_version v
+               WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no,
+             cv.version_no AS current_version_no,
+             cv.git_commit_ref AS git_commit_ref
+      FROM ph04.route r
+      LEFT JOIN ph04.route_version cv ON cv.version_id = r.current_version_id
+      """;
 
   private final JdbcTemplate jdbc;
   private final CamelYamlValidator validator;
@@ -65,8 +88,8 @@ class RoutesService implements RoutesApi {
         """
         INSERT INTO ph04.route
           (route_id, route_code, title, route_type, status, source_system, target_system,
-           current_version_id, created_by, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?)
+           current_version_id, created_by, created_at, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
         """,
         routeId,
         request.routeCode(),
@@ -76,7 +99,8 @@ class RoutesService implements RoutesApi {
         request.targetSystem(),
         actor,
         now,
-        now);
+        now,
+        actor);
     jdbc.update(
         """
         INSERT INTO ph04.route_version
@@ -95,38 +119,50 @@ class RoutesService implements RoutesApi {
 
   @Override
   public List<RouteSummaryDto> list() {
-    return jdbc.query(
-        """
-        SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
-               r.source_system, r.target_system, r.current_version_id,
-               (SELECT MAX(v.version_no) FROM ph04.route_version v
-                 WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no,
-               cv.version_no AS current_version_no,
-               cv.git_commit_ref AS git_commit_ref
-        FROM ph04.route r
-        LEFT JOIN ph04.route_version cv ON cv.version_id = r.current_version_id
-        ORDER BY r.created_at DESC
-        """,
-        SUMMARY);
+    return jdbc.query(SUMMARY_SELECT + " ORDER BY r.created_at DESC", SUMMARY);
+  }
+
+  @Override
+  public RoutePageDto search(RouteQuery query) {
+    // Điều kiện dựng động nhưng **giá trị luôn tham số hóa**; chỉ `ORDER BY` là ghép
+    // chuỗi, và cột đó đã qua danh sách trắng trong `RouteQuery`.
+    StringBuilder where = new StringBuilder(" WHERE 1 = 1");
+    List<Object> args = new ArrayList<>();
+
+    if (query.status() != null) {
+      where.append(" AND r.status = ?");
+      args.add(query.status());
+    }
+    if (query.q() != null) {
+      where.append(
+          " AND (LOWER(r.route_code) LIKE ? OR LOWER(r.title) LIKE ?"
+              + " OR LOWER(r.source_system) LIKE ?)");
+      String needle = "%" + query.q().toLowerCase(Locale.ROOT) + "%";
+      args.add(needle);
+      args.add(needle);
+      args.add(needle);
+    }
+
+    Long total =
+        jdbc.queryForObject(
+            "SELECT COUNT(*) FROM ph04.route r" + where, Long.class, args.toArray());
+
+    List<Object> pageArgs = new ArrayList<>(args);
+    pageArgs.add(query.size());
+    pageArgs.add(query.offset());
+    List<RouteSummaryDto> items =
+        jdbc.query(
+            SUMMARY_SELECT + where + " ORDER BY " + query.orderBy() + " LIMIT ? OFFSET ?",
+            SUMMARY,
+            pageArgs.toArray());
+
+    return new RoutePageDto(items, total == null ? 0 : total, query.page(), query.size());
   }
 
   @Override
   public RouteSummaryDto get(String routeCode) {
     try {
-      return jdbc.queryForObject(
-          """
-          SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
-                 r.source_system, r.target_system, r.current_version_id,
-                 (SELECT MAX(v.version_no) FROM ph04.route_version v
-                   WHERE v.route_id = r.route_id AND v.status = 'DRAFT') AS draft_version_no,
-                 cv.version_no AS current_version_no,
-                 cv.git_commit_ref AS git_commit_ref
-          FROM ph04.route r
-          LEFT JOIN ph04.route_version cv ON cv.version_id = r.current_version_id
-          WHERE r.route_code = ?
-          """,
-          SUMMARY,
-          routeCode);
+      return jdbc.queryForObject(SUMMARY_SELECT + " WHERE r.route_code = ?", SUMMARY, routeCode);
     } catch (EmptyResultDataAccessException e) {
       throw new IllegalArgumentException("route not found: " + routeCode);
     }
@@ -140,7 +176,7 @@ class RoutesService implements RoutesApi {
   @Override
   @Transactional
   public RouteVersionDto saveDefinition(
-      String routeCode, int versionNo, RouteDefinitionUpdate update) {
+      String routeCode, int versionNo, RouteDefinitionUpdate update, String actor) {
     RouteVersionDto current = loadVersion(routeCode, versionNo);
     if (!"DRAFT".equals(current.status())) {
       throw new IllegalStateException("chỉ sửa được phiên bản DRAFT");
@@ -158,8 +194,25 @@ class RoutesService implements RoutesApi {
         update.definitionYaml(),
         OffsetDateTime.now(),
         current.versionId());
+    touchRoute(current.routeId(), actor);
     return loadVersion(routeCode, versionNo);
   }
+
+  /**
+   * Ghi nhận luồng vừa bị sửa (G2-2).
+   *
+   * Tách riêng để mọi lối sửa đều đi qua một chỗ — sửa định nghĩa, đổi tên, tạm dừng
+   * đều phải cập nhật "ai sửa gần nhất", nếu rải rác thì sẽ có lối quên.
+   */
+  private void touchRoute(UUID routeId, String actor) {
+    jdbc.update(
+        "UPDATE ph04.route SET updated_at = ?, updated_by = COALESCE(?, updated_by)"
+            + " WHERE route_id = ?",
+        OffsetDateTime.now(),
+        actor,
+        routeId);
+  }
+
 
   @Override
   public ValidationResultDto validate(String definitionYaml) {
@@ -276,7 +329,9 @@ class RoutesService implements RoutesApi {
   }
 
   @Override
-  public TestRunResultDto testRun(String routeCode, int versionNo, TestRunRequest request) {
+  @Transactional
+  public TestRunResultDto testRun(
+      String routeCode, int versionNo, TestRunRequest request, String actor) {
     RouteVersionDto current = loadVersion(routeCode, versionNo);
     ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
     if (!v.valid()) {
@@ -301,7 +356,12 @@ class RoutesService implements RoutesApi {
       waterfall.add(step);
     }
     int duration = (int) (System.currentTimeMillis() - t0) + cursor;
-    return new TestRunResultDto(routeCode, versionNo, mode, "PASSED", duration, waterfall);
+    TestRunResultDto result =
+        new TestRunResultDto(routeCode, versionNo, mode, "PASSED", duration, waterfall);
+    // Ghi vào nhật ký phía máy chủ (G5-6): trước đợt này kết quả chỉ nằm ở trình duyệt
+    // người chạy nên không ai tra lại được khi có sự cố.
+    recordTestRun(current.routeId(), routeCode, result, actor);
+    return result;
   }
 
   private static String stripCanvasMarker(String yaml) {
@@ -317,6 +377,253 @@ class RoutesService implements RoutesApi {
       sb.append(line);
     }
     return sb.toString();
+  }
+
+  /* ================= Thao tác trên một luồng (G2-3) ================= */
+
+  @Override
+  @Transactional
+  public RouteSummaryDto rename(String routeCode, RouteRenameRequest request, String actor) {
+    RouteSummaryDto route = get(routeCode);
+    jdbc.update(
+        "UPDATE ph04.route SET title = ?, updated_at = ?, updated_by = ? WHERE route_id = ?",
+        request.title(),
+        OffsetDateTime.now(),
+        actor,
+        route.routeId());
+    return get(routeCode);
+  }
+
+  @Override
+  @Transactional
+  public RouteSummaryDto duplicate(String routeCode, RouteDuplicateRequest request, String actor) {
+    RouteSummaryDto src = get(routeCode);
+    // Nhân bản định nghĩa đang chạy nếu có, không thì bản nháp mới nhất — người dùng
+    // muốn chép cái đang thật sự chạy, không phải bản nháp dang dở.
+    int copyFrom =
+        src.currentVersionNo() != null
+            ? src.currentVersionNo()
+            : src.draftVersionNo() != null ? src.draftVersionNo() : 1;
+    RouteVersionDto source = loadVersion(routeCode, copyFrom);
+
+    UUID routeId = UUID.randomUUID();
+    UUID versionId = UUID.randomUUID();
+    OffsetDateTime now = OffsetDateTime.now();
+    jdbc.update(
+        """
+        INSERT INTO ph04.route
+          (route_id, route_code, title, route_type, status, source_system, target_system,
+           current_version_id, created_by, created_at, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
+        """,
+        routeId,
+        request.routeCode(),
+        request.title(),
+        src.routeType(),
+        src.sourceSystem(),
+        src.targetSystem(),
+        actor,
+        now,
+        now,
+        actor);
+    // Bản sao bắt đầu lại từ v1, `git_commit_ref` để trống: nó chưa từng được publish.
+    jdbc.update(
+        """
+        INSERT INTO ph04.route_version
+          (version_id, route_id, version_no, definition_yaml, source, status,
+           git_commit_ref, git_path, created_by, created_at, updated_at)
+        VALUES (?, ?, 1, ?, 'DESIGNER', 'DRAFT', NULL, NULL, ?, ?, ?)
+        """,
+        versionId,
+        routeId,
+        source.definitionYaml(),
+        actor,
+        now,
+        now);
+    return get(request.routeCode());
+  }
+
+  @Override
+  @Transactional
+  public RouteSummaryDto setPaused(String routeCode, boolean paused, String actor) {
+    RouteSummaryDto route = get(routeCode);
+    // Chỉ luồng đang chạy mới tạm dừng được, và chỉ luồng đang tạm dừng mới bật lại
+    // được. Cho phép đổi từ trạng thái khác sẽ làm luồng nháp nhảy thẳng lên ACTIVE.
+    String want = paused ? "PAUSED" : "ACTIVE";
+    String need = paused ? "ACTIVE" : "PAUSED";
+    if (!need.equals(route.status())) {
+      throw new IllegalStateException(
+          "chỉ chuyển được " + need + " → " + want + "; luồng đang ở " + route.status());
+    }
+    jdbc.update(
+        "UPDATE ph04.route SET status = ?, updated_at = ?, updated_by = ? WHERE route_id = ?",
+        want,
+        OffsetDateTime.now(),
+        actor,
+        route.routeId());
+    return get(routeCode);
+  }
+
+  @Override
+  @Transactional
+  public void deleteDraft(String routeCode, int versionNo, String actor) {
+    RouteVersionDto v = loadVersion(routeCode, versionNo);
+    if (!"DRAFT".equals(v.status())) {
+      throw new IllegalStateException("chỉ xóa được phiên bản DRAFT, bản này đang " + v.status());
+    }
+    RouteSummaryDto route = get(routeCode);
+    // Không xóa phiên bản đang được luồng trỏ tới — sẽ để lại tham chiếu treo.
+    if (v.versionId().equals(route.currentVersionId())) {
+      throw new IllegalStateException("không xóa được phiên bản đang chạy");
+    }
+    jdbc.update("DELETE FROM ph04.route_version WHERE version_id = ?", v.versionId());
+    touchRoute(v.routeId(), actor);
+  }
+
+  @Override
+  public List<RouteVersionDto> listVersions(String routeCode) {
+    // Lịch sử để so sánh: trả cả `definition_yaml` vì màn so sánh cần nội dung.
+    return jdbc.query(
+        """
+        SELECT v.version_id, v.route_id, r.route_code, v.version_no, v.status,
+               v.definition_yaml, v.git_commit_ref, v.git_path, v.source, v.created_by
+        FROM ph04.route_version v
+        JOIN ph04.route r ON r.route_id = v.route_id
+        WHERE r.route_code = ?
+        ORDER BY v.version_no DESC
+        """,
+        VERSION_MAPPER,
+        routeCode);
+  }
+
+  /* ================= Nhật ký chạy thử (G5-6/G5-7/G5-9) ================= */
+
+  private static final RowMapper<TestRunSummaryDto> RUN_MAPPER =
+      (rs, i) ->
+          new TestRunSummaryDto(
+              rs.getObject("run_id", UUID.class),
+              rs.getString("route_code"),
+              rs.getInt("version_no"),
+              rs.getString("mode"),
+              rs.getString("outcome"),
+              rs.getInt("duration_ms"),
+              rs.getString("trace_id"),
+              rs.getString("run_by"),
+              rs.getObject("run_at", OffsetDateTime.class),
+              rs.getInt("stage_count"));
+
+  private static final String RUN_SELECT =
+      """
+      SELECT t.run_id, r.route_code, t.version_no, t.mode, t.outcome, t.duration_ms,
+             t.trace_id, t.run_by, t.run_at,
+             (SELECT COUNT(*) FROM ph04.route_test_run_stage s WHERE s.run_id = t.run_id)
+               AS stage_count
+      FROM ph04.route_test_run t
+      JOIN ph04.route r ON r.route_id = t.route_id
+      """;
+
+  @Override
+  public List<TestRunSummaryDto> listTestRuns(String routeCode, String outcome, int limit) {
+    int capped = limit <= 0 ? 50 : Math.min(limit, 500);
+    if (outcome == null || outcome.isBlank()) {
+      return jdbc.query(
+          RUN_SELECT + " WHERE r.route_code = ? ORDER BY t.run_at DESC LIMIT ?",
+          RUN_MAPPER,
+          routeCode,
+          capped);
+    }
+    return jdbc.query(
+        RUN_SELECT + " WHERE r.route_code = ? AND t.outcome = ? ORDER BY t.run_at DESC LIMIT ?",
+        RUN_MAPPER,
+        routeCode,
+        outcome.toUpperCase(Locale.ROOT),
+        capped);
+  }
+
+  @Override
+  public TestRunDetailDto getTestRun(String routeCode, UUID runId) {
+    TestRunSummaryDto run;
+    try {
+      run =
+          jdbc.queryForObject(
+              RUN_SELECT + " WHERE r.route_code = ? AND t.run_id = ?",
+              RUN_MAPPER,
+              routeCode,
+              runId);
+    } catch (EmptyResultDataAccessException e) {
+      throw new IllegalArgumentException("test run not found: " + runId);
+    }
+    List<TestRunDetailDto.TestRunStageDto> stages =
+        jdbc.query(
+            """
+            SELECT seq_no, stage, status, duration_ms, offset_ms, error_text
+            FROM ph04.route_test_run_stage
+            WHERE run_id = ?
+            ORDER BY seq_no ASC
+            """,
+            (rs, i) ->
+                new TestRunDetailDto.TestRunStageDto(
+                    rs.getInt("seq_no"),
+                    rs.getString("stage"),
+                    rs.getString("status"),
+                    rs.getInt("duration_ms"),
+                    rs.getInt("offset_ms"),
+                    rs.getString("error_text")),
+            runId);
+    return new TestRunDetailDto(run, stages);
+  }
+
+  @Override
+  @Transactional
+  public int purgeTestRuns(int retentionDays) {
+    // Chặn dưới 1 ngày: gọi nhầm với 0 sẽ xóa sạch nhật ký ngay lập tức.
+    int days = Math.max(retentionDays, 1);
+    // `route_test_run_stage` có `ON DELETE CASCADE` nên xóa bản ghi cha là đủ.
+    return jdbc.update(
+        "DELETE FROM ph04.route_test_run WHERE run_at < ?",
+        OffsetDateTime.now().minusDays(days));
+  }
+
+  /** Ghi một lần chạy thử vào nhật ký. Không lưu thân bản tin (ATTT — FR-D-041). */
+  private void recordTestRun(
+      UUID routeId, String routeCode, TestRunResultDto result, String actor) {
+    UUID runId = UUID.randomUUID();
+    jdbc.update(
+        """
+        INSERT INTO ph04.route_test_run
+          (run_id, route_id, version_no, mode, outcome, duration_ms, trace_id, run_by, run_at)
+        VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?)
+        """,
+        runId,
+        routeId,
+        result.versionNo(),
+        result.mode(),
+        result.outcome(),
+        result.durationMs(),
+        actor,
+        OffsetDateTime.now());
+
+    int seq = 0;
+    for (Map<String, Object> step : result.waterfall()) {
+      seq += 1;
+      jdbc.update(
+          """
+          INSERT INTO ph04.route_test_run_stage
+            (stage_id, run_id, seq_no, stage, status, duration_ms, offset_ms, error_text)
+          VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+          """,
+          UUID.randomUUID(),
+          runId,
+          seq,
+          String.valueOf(step.get("stage")),
+          String.valueOf(step.get("status")),
+          asInt(step.get("durationMs")),
+          asInt(step.get("offsetMs")));
+    }
+  }
+
+  private static int asInt(Object v) {
+    return v instanceof Number num ? num.intValue() : 0;
   }
 
   @Override

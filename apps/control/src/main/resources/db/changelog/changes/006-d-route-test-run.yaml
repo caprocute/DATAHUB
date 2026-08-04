@@ -1,0 +1,117 @@
+databaseChangeLog:
+  # IP-06 G5-6/G5-7 — lịch sử chạy thử luồng.
+  #
+  # Trước đợt này nhật ký chạy chỉ nằm ở `localStorage` của trình duyệt: không chia sẻ
+  # được giữa người dùng, mất khi xóa dữ liệu duyệt, và không tra được khi sự cố. Hai
+  # bảng dưới đưa nó về phía máy chủ.
+  #
+  # ATTT (FR-D-041): **không** lưu thân bản tin, tiêu đề, hay tham số kết nối — chỉ lưu
+  # tên chặng, trạng thái và thời gian. Bản tin chạy thử có thể chứa dữ liệu cá nhân
+  # thật; lưu lại là tạo thêm một kho PII không ai canh.
+  - changeSet:
+      id: 006-route-test-run
+      author: lgsp-ip06
+      changes:
+        - createTable:
+            schemaName: ph04
+            tableName: route_test_run
+            columns:
+              - column: { name: run_id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: route_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: version_no, type: INT, constraints: { nullable: false } }
+              - column: { name: mode, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: outcome, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: duration_ms, type: INT, constraints: { nullable: false } }
+              # Nối kết quả chạy thử với vết phân tán để lần được sang Tempo/Jaeger.
+              - column: { name: trace_id, type: VARCHAR(64) }
+              - column: { name: run_by, type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: run_at, type: TIMESTAMPTZ, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: ph04
+            baseTableName: route_test_run
+            baseColumnNames: route_id
+            referencedTableSchemaName: ph04
+            referencedTableName: route
+            referencedColumnNames: route_id
+            constraintName: fk_test_run_route
+            onDelete: CASCADE
+        # Truy vấn chính của màn nhật ký: theo luồng, mới nhất trước.
+        - createIndex:
+            schemaName: ph04
+            tableName: route_test_run
+            indexName: ix_test_run_route_at
+            columns:
+              - column: { name: route_id }
+              - column: { name: run_at, descending: true }
+        # Dùng cho việc dọn nhật ký quá hạn (G5-9).
+        - createIndex:
+            schemaName: ph04
+            tableName: route_test_run
+            indexName: ix_test_run_at
+            columns:
+              - column: { name: run_at }
+
+  - changeSet:
+      id: 006-route-test-run-stage
+      author: lgsp-ip06
+      changes:
+        - createTable:
+            schemaName: ph04
+            tableName: route_test_run_stage
+            columns:
+              - column: { name: stage_id, type: UUID, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: run_id, type: UUID, constraints: { nullable: false } }
+              # Thứ tự chặng trên đường chạy — waterfall phải dựng lại đúng thứ tự.
+              - column: { name: seq_no, type: INT, constraints: { nullable: false } }
+              - column: { name: stage, type: VARCHAR(120), constraints: { nullable: false } }
+              - column: { name: status, type: VARCHAR(20), constraints: { nullable: false } }
+              - column: { name: duration_ms, type: INT, constraints: { nullable: false } }
+              - column: { name: offset_ms, type: INT, constraints: { nullable: false } }
+              # Thông điệp lỗi đã cắt ngắn; KHÔNG chứa thân bản tin.
+              - column: { name: error_text, type: VARCHAR(500) }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: ph04
+            baseTableName: route_test_run_stage
+            baseColumnNames: run_id
+            referencedTableSchemaName: ph04
+            referencedTableName: route_test_run
+            referencedColumnNames: run_id
+            constraintName: fk_test_run_stage_run
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            schemaName: ph04
+            tableName: route_test_run_stage
+            columnNames: run_id, seq_no
+            constraintName: uq_test_run_stage_seq
+
+  # G2-2 — "ai sửa gần nhất". Bảng đã có `updated_at` nhưng thiếu người sửa.
+  # Cho phép NULL: các luồng tạo trước đợt này không truy ngược được người sửa,
+  # điền giá trị giả sẽ là bịa dữ liệu kiểm toán.
+  - changeSet:
+      id: 006-route-updated-by
+      author: lgsp-ip06
+      changes:
+        - addColumn:
+            schemaName: ph04
+            tableName: route
+            columns:
+              - column: { name: updated_by, type: VARCHAR(100) }
+
+  # G2-1/G2-2 — danh sách luồng lọc/sắp xếp phía máy chủ.
+  # Không có chỉ mục thì mỗi lần lọc là một lần quét toàn bảng.
+  - changeSet:
+      id: 006-route-list-indexes
+      author: lgsp-ip06
+      changes:
+        - createIndex:
+            schemaName: ph04
+            tableName: route
+            indexName: ix_route_status
+            columns:
+              - column: { name: status }
+        - createIndex:
+            schemaName: ph04
+            tableName: route
+            indexName: ix_route_updated_at
+            columns:
+              - column: { name: updated_at, descending: true }

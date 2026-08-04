@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/004-c-onboarding-lifecycle.yaml
   - include:
       file: db/changelog/changes/005-c-attachment-review.yaml
+  - include:
+      file: db/changelog/changes/006-d-route-test-run.yaml
