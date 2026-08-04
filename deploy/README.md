@@ -21,8 +21,11 @@ make -C .. up-dev
 | SeaweedFS S3 | 8333 | **Audit / WORM** (CMP-28) |
 | SeaweedFS Master | 9333 | |
 | Keycloak | 8081 | realm `lgsp` |
+| OPA | 8181 | PEP `contracts/opa` (WP-30) |
 | Mailpit SMTP / UI | 1025 / 8025 | |
 | Control (app local) | 8080 | ngoài compose |
+| Adapter-mgr (app local) | 8082 | ngoài compose |
+| Data `lgsp-data` (app local) | 8083 | ngoài compose · `make run-data` |
 | Camel dancu (app local) | 8088 | ngoài compose |
 | Console Vite | 5173 | ngoài compose |
 

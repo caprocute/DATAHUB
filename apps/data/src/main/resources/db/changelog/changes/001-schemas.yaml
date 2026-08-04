@@ -1,0 +1,141 @@
+databaseChangeLog:
+  - changeSet:
+      id: w3-001-ph06-schema
+      author: lgsp-w3
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph06
+  - changeSet:
+      id: w3-001-ph07-schema
+      author: lgsp-w3
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph07
+  - changeSet:
+      id: w3-001-ph08-schema
+      author: lgsp-w3
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph08
+  - changeSet:
+      id: w3-001-ph09-schema
+      author: lgsp-w3
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS ph09
+  - changeSet:
+      id: w3-001-ph06-marker
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph06
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: module
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)
+        - insert:
+            schemaName: ph06
+            tableName: schema_marker
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: module, value: mdm }
+              - column: { name: note, value: wp-30 }
+  - changeSet:
+      id: w3-001-ph07-marker
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph07
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: module
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)
+        - insert:
+            schemaName: ph07
+            tableName: schema_marker
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: module, value: rdm }
+              - column: { name: note, value: wp-30 }
+  - changeSet:
+      id: w3-001-ph08-marker
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph08
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: module
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)
+        - insert:
+            schemaName: ph08
+            tableName: schema_marker
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: module, value: dq }
+              - column: { name: note, value: wp-30 }
+  - changeSet:
+      id: w3-001-ph09-marker
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph09
+            tableName: schema_marker
+            columns:
+              - column:
+                  name: id
+                  type: INT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: module
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: VARCHAR(64)
+        - insert:
+            schemaName: ph09
+            tableName: schema_marker
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: module, value: privacy }
+              - column: { name: note, value: wp-30 }

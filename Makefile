@@ -1,4 +1,4 @@
-.PHONY: help up-dev down-dev ps logs build-java test-java build-camel test-camel run-control run-adapter run-camel run-camel-datdai console-dev typegen test-opa e2e-thin at-ph04 ci-local
+.PHONY: help up-dev down-dev ps logs build-java test-java build-camel test-camel run-control run-adapter run-data run-camel run-camel-datdai console-dev typegen test-opa e2e-thin at-ph04 ci-local
 
 ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 COMPOSE := docker compose --env-file $(ROOT)/.env -f $(ROOT)/deploy/compose/docker-compose.yml
@@ -16,6 +16,7 @@ help:
 	@echo "  make build-camel  - Camel Quarkus dancu + datdai (JVM)"
 	@echo "  make run-control  - spring-boot:run apps/control"
 	@echo "  make run-adapter  - spring-boot:run apps/adapter-mgr"
+	@echo "  make run-data     - spring-boot:run apps/data (:8083)"
 	@echo "  make run-camel    - quarkus:dev camel/dancu"
 	@echo "  make run-camel-datdai - quarkus:dev camel/datdai :8087"
 	@echo "  make console-dev  - Vite console"
@@ -29,6 +30,7 @@ up-dev:
 	@test -f $(ROOT)/.env || cp $(ROOT)/.env.example $(ROOT)/.env
 	$(COMPOSE) up -d
 	@echo "Keycloak   http://localhost:$${KEYCLOAK_PORT:-8081} (admin/admin_dev_change_me)"
+	@echo "OPA        http://localhost:$${OPA_PORT:-8181}"
 	@echo "Mailpit    http://localhost:$${MAILPIT_UI_PORT:-8025}"
 	@echo "Garage S3  http://localhost:$${GARAGE_S3_PORT:-3900}"
 	@echo "Seaweed S3 http://localhost:$${SEAWEED_S3_PORT:-8333} (WORM audit)"
@@ -64,6 +66,11 @@ run-control:
 
 run-adapter:
 	$(MVN) -pl apps/adapter-mgr spring-boot:run
+
+run-data:
+	OIDC_ISSUER_URI=http://localhost:8081/realms/lgsp \
+	LGSP_OPA_URL=http://localhost:8181 \
+	$(MVN) -pl apps/data spring-boot:run
 
 run-camel:
 	$(CAMEL_MVN) quarkus:dev

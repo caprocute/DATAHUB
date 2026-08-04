@@ -15,6 +15,7 @@
     <module>libs/common-java</module>
     <module>apps/control</module>
     <module>apps/adapter-mgr</module>
+    <module>apps/data</module>
   </modules>
 
   <properties>

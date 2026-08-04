@@ -371,9 +371,9 @@ flowchart TB
 
 **Lane:** L-DATA  
 **DoD:**
-- [ ] Modules `rdm`, `mdm`, `privacy`, `dq` + verify
-- [ ] Schema `ph06`…`ph09`
-- [ ] OIDC + OPA enforce
+- [x] Modules `rdm`, `mdm`, `privacy`, `dq` + verify *(`apps/data` Modulith · `ModulithArchitectureTest`)*
+- [x] Schema `ph06`…`ph09` *(Liquibase `w3-001-*` + `schema_marker`)*
+- [x] OIDC + OPA enforce *(JWT Keycloak · PEP `OpaAuthorizationFilter` · compose `opa:8181`)*
 
 ### WP-31 — PH-07 RDM
 

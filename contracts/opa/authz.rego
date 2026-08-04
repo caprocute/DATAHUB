@@ -39,3 +39,21 @@ allow if {
 	input.action == "catalog.read"
 	count(input.roles) > 0
 }
+
+# WP-30 — lgsp-data module status (authenticated realm role)
+data_status_actions := {
+	"data.rdm.status",
+	"data.mdm.status",
+	"data.privacy.status",
+	"data.dq.status",
+}
+
+allow if {
+	input.action in data_status_actions
+	count(input.roles) > 0
+}
+
+allow if {
+	input.action in data_status_actions
+	"PLATFORM_ADMIN" in input.roles
+}

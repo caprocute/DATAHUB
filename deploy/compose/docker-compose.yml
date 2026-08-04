@@ -111,6 +111,21 @@ services:
     depends_on:
       - keycloak
 
+  # WP-30 — PEP cho lgsp-data (và mở rộng sau)
+  opa:
+    image: openpolicyagent/opa:1.4.2
+    ports:
+      - "${OPA_PORT:-8181}:8181"
+    volumes:
+      - ../../contracts/opa:/policies:ro
+    command:
+      - run
+      - --server
+      - --addr=0.0.0.0:8181
+      - --log-level=info
+      - /policies
+
+
 volumes:
   pgdata:
   garage_meta:

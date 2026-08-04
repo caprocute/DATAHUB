@@ -26,3 +26,24 @@ test_submit_allowed_for_developer if {
 		"roles": ["INTEGRATION_DEVELOPER"],
 	}
 }
+
+test_data_rdm_status_authenticated if {
+	authz.allow with input as {
+		"action": "data.rdm.status",
+		"roles": ["INTEGRATION_DEVELOPER"],
+	}
+}
+
+test_data_status_denied_without_roles if {
+	not authz.allow with input as {
+		"action": "data.mdm.status",
+		"roles": [],
+	}
+}
+
+test_data_privacy_status_platform_admin if {
+	authz.allow with input as {
+		"action": "data.privacy.status",
+		"roles": ["PLATFORM_ADMIN"],
+	}
+}
