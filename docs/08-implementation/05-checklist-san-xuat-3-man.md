@@ -26,7 +26,7 @@
 
 ## 1. Nguyên tắc bắt buộc cho cả ba màn
 
-- [ ] **N-1.** Không dữ liệu giả trên đường chính. Stub chỉ sau cờ `VITE_*_STUB`, mặc định `false`.
+- [x] **N-1.** Không dữ liệu giả trên đường chính. Stub chỉ sau cờ `VITE_*_STUB`, mặc định `false`.
 - [ ] **N-2.** RBAC deny-by-default: FE ẩn/khóa theo [SRS-19](../07-srs/SRS-19-rbac-matrix.md), BE `@PreAuthorize` — **FE không phải chốt chặn**.
 - [x] **N-3.** Không secret trên UI/log/node designer (FR-04-032).
 - [ ] **N-4.** Màu/khoảng cách chỉ dùng token (`theme-mockup/tokens.css`), không hardcode hex.
@@ -125,9 +125,9 @@
 
 ### B7. Chạy thử & duyệt
 
-- [ ] **B7-1.** Chạy thử gọi API thật WP-25, bỏ hoàn toàn nhánh stub trên đường chính (`VITE_TEST_RUN_STUB` mặc định `false`).
-- [ ] **B7-2.** Waterfall theo 9 chặng: trạng thái, thời gian, offset; bấm chặng → xem input/output (đã giả danh hóa).
-- [ ] **B7-3.** Tô đường chạy trên sơ đồ sau khi chạy thử: thành công/lỗi/bỏ qua (FR-04-035).
+- [x] **B7-1.** Chạy thử gọi API thật WP-25, bỏ hoàn toàn nhánh stub trên đường chính (`VITE_TEST_RUN_STUB` mặc định `false`).
+- [x] **B7-2.** Waterfall theo 9 chặng: trạng thái, thời gian, offset; bấm chặng → xem input/output (đã giả danh hóa).
+- [x] **B7-3.** Tô đường chạy trên sơ đồ sau khi chạy thử: thành công/lỗi/bỏ qua (FR-04-035).
 - [ ] **B7-4.** Gửi duyệt → **bốn mắt** (người gửi ≠ người duyệt, chặn ở BE) → publish tạo commit `routes/` (FR-04-029, WP-23).
 - [ ] **B7-5.** Màn duyệt UI-04-09: diff YAML + ghi chú + lịch sử quyết định.
 - [ ] **B7-6.** Danh sách luồng UI-04-01: cột `status`, `version`, `git_commit_ref` **thật**, lọc/tìm/phân trang phía máy chủ.
@@ -255,4 +255,5 @@ Song song an toàn: **A** xong thì **B** và **C** chạy đồng thời (khác
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-05 — checklist sản xuất ba màn; đo hiện trạng catalog 16+36 so với nguồn Kaoto 323+74+252 |
+| 2026-08-04 | Sửa lỗi tham chiếu `kind/name` (`4b0dbe3`) · tô đường chạy thử lên sơ đồ (FR-04-035) — 44 test xanh |
 | 2026-08-04 | **Gói A xong** (`814bb1e`): 751 nút, phân loại theo nhãn gốc, 13 test chốt số lượng. **Gói B một phần** (`ef42681`): pin dữ liệu mẫu, trình soạn biểu thức, chặn secret trên node — 32 test xanh |
