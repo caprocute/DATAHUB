@@ -11,25 +11,861 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-14 — Kết nối quốc gia (NDXP/NDOP).</strong>
+  Minh họa các màn <span class="tag-ph">UI-14-01</span> tổng quan,
+  <span class="tag-ph">UI-14-02</span> định tuyến,
+  <span class="tag-ph">UI-14-03</span> hạn mức,
+  <span class="tag-ph">UI-14-04</span> chứng thư,
+  <span class="tag-ph">UI-14-05</span> giao dịch,
+  <span class="tag-ph">UI-14-06</span> đồng bộ — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-14-national.md">SRS PH-14</a>.
+  Liên kết chéo: <a href="reference.html">danh mục dùng chung (PH-07)</a>,
+  <a href="monitoring.html">giám sát &amp; truy vết (PH-13)</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Kết nối quốc gia</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-14</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Federation Router · NDXP · NDOP · CSDLQG — cửa sổ 24 giờ · Sở TT&amp;TT tỉnh</p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="reference.html">Danh mục PH-07</a>
+    <a class="btn" href="monitoring.html">Giám sát PH-13</a>
+    <button class="btn btn--primary" data-demo="Làm mới trạng thái kết nối quốc gia">Làm mới</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-14</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-14.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Lượt gọi 24h</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">48.726</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--up">+12,4%</span> so với hôm qua</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Tỷ lệ thành công</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">99,38%</div>
+    <div class="stat__meta"><span class="badge badge--ok badge--plain">HEALTHY</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">P99 độ trễ (PH-14)</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">72ms</div>
+    <div class="stat__meta"><span class="t-muted">không tính chờ NDXP</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Tỷ lệ trúng đệm</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">72%</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--flat">mục tiêu ≥ 60%</span></div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="national" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="tong-quan">Tổng quan</button>
+    <button class="tab" data-tab="dinh-tuyen">Định tuyến</button>
+    <button class="tab" data-tab="han-muc">Hạn mức <span class="tab__count">1</span></button>
+    <button class="tab" data-tab="chung-thu">Chứng thư <span class="tab__count">1</span></button>
+    <button class="tab" data-tab="giao-dich">Giao dịch</button>
+    <button class="tab" data-tab="dong-bo">Đồng bộ</button>
+  </div>
+
+  <!-- ===== UI-14-01: Tổng quan kết nối quốc gia ===== -->
+  <div class="card__body" data-panel="tong-quan" data-panel-group="national">
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Hạn mức DANCU_TRA_CUU đã dùng 77% · chứng thư ký số còn 25 ngày</div>
+        <div class="t-small">Dự báo cạn hạn mức trước 21:30 hôm nay nếu giữ nhịp hiện tại. Xem tab <a href="#han-muc">Hạn mức</a> và <a href="#chung-thu">Chứng thư</a>.</div>
+      </div>
+    </div>
+
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none;border:1px solid var(--c-border)">
+        <div class="row row--between mb-2">
+          <div class="stat__label">NDXP</div>
+          <span class="badge badge--ok">HEALTHY</span>
+        </div>
+        <div class="t-small t-muted mb-2">Bộ KH&amp;CN · SOAP · mTLS</div>
+        <div class="t-small"><strong>Độ trễ:</strong> 1,8s P99 · <strong>Thành công:</strong> 99,5%</div>
+        <div class="t-small mt-2">CSDLQG: Dân cư · ĐKKD · BHXH</div>
+      </div>
+      <div class="card stat" style="box-shadow:none;border:1px solid var(--c-border)">
+        <div class="row row--between mb-2">
+          <div class="stat__label">NDOP</div>
+          <span class="badge badge--warn">REGISTERING</span>
+        </div>
+        <div class="t-small t-muted mb-2">TTDLQG — Bộ Công an</div>
+        <div class="t-small"><span class="badge badge--warn badge--plain">Đặc tả tạm thời</span> · đang chờ hoàn tất thủ tục</div>
+        <div class="t-small mt-2">Adapter khung sẵn sàng · chưa có lưu lượng</div>
+      </div>
+      <div class="card stat" style="box-shadow:none;border:1px solid var(--c-border)">
+        <div class="row row--between mb-2">
+          <div class="stat__label">Hệ thống Bộ</div>
+          <span class="badge badge--ok">ACTIVE</span>
+        </div>
+        <div class="t-small t-muted mb-2">Đăng ký danh mục dịch vụ · NĐ 47 Đ.26</div>
+        <div class="t-small"><strong>Đồng bộ gần nhất:</strong> 03/08 02:15 · thành công</div>
+        <div class="t-small mt-2"><a href="#dong-bo">Xem trạng thái đồng bộ →</a></div>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Lưu lượng theo nền tảng (24h)</div>
+        <div class="col" style="gap:var(--sp-3)">
+          <div class="wf">
+            <div class="wf__name">NDXP · DANCU_TRA_CUU</div>
+            <div class="wf__track"><div class="wf__bar" style="width:78%"></div></div>
+            <div class="wf__ms">38.420</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">NDXP · DKKD_TRA_CUU</div>
+            <div class="wf__track"><div class="wf__bar" style="width:22%"></div></div>
+            <div class="wf__ms">4.120</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">NDXP · BHXH_TRA_CUU</div>
+            <div class="wf__track"><div class="wf__bar" style="width:12%"></div></div>
+            <div class="wf__ms">2.186</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">NDOP · (chưa kích hoạt)</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--warn" style="width:0%"></div></div>
+            <div class="wf__ms">0</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Cảnh báo nổi bật</div>
+        <div class="col" style="gap:var(--sp-3)">
+          <div class="finding">
+            <div class="finding__mark finding__mark--warn">!</div>
+            <div>
+              <div class="finding__title">Hạn mức DANCU sắp cạn</div>
+              <div class="finding__text">38.420 / 50.000 lượt/ngày (77%) · đặt lại 00:00 ngày 04/08</div>
+              <div class="finding__meta"><a href="#han-muc">Chi tiết hạn mức</a></div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--warn">!</div>
+            <div>
+              <div class="finding__title">Chứng thư ký số sắp hết hạn</div>
+              <div class="finding__text">CN=LGSP-TINH-SIGN-2024 · còn 25 ngày · cần khởi động gia hạn</div>
+              <div class="finding__meta"><a href="#chung-thu">Quản lý chứng thư</a></div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark">✓</div>
+            <div>
+              <div class="finding__title">Không có lỗi chữ ký 24h</div>
+              <div class="finding__text">0 sự kiện xác minh thất bại · national_signature_errors_total = 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Dịch vụ quốc gia</div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Dịch vụ</th><th>Nền tảng</th><th>CSDL đích</th>
+            <th class="table__num">Lượt gọi 24h</th><th class="table__num">Tỷ lệ lỗi</th>
+            <th class="table__num">P99</th><th>Hạn mức</th><th class="table__actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">DANCU_TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="t-small">CSDLQG Dân cư</td>
+            <td class="table__num">38.420</td>
+            <td class="table__num">0,42%</td>
+            <td class="table__num">1,9s</td>
+            <td><span class="badge badge--warn">77%</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#giao-dich" data-demo="Lọc giao dịch DANCU_TRA_CUU">Giao dịch</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DKKD_TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="t-small">CSDLQG ĐKKD</td>
+            <td class="table__num">4.120</td>
+            <td class="table__num">0,18%</td>
+            <td class="table__num">2,1s</td>
+            <td><span class="badge badge--ok">21%</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#giao-dich">Giao dịch</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">BHXH_TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="t-small">CSDL BHXH</td>
+            <td class="table__num">2.186</td>
+            <td class="table__num">0,31%</td>
+            <td class="table__num">2,4s</td>
+            <td><span class="badge badge--ok">44%</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#giao-dich">Giao dịch</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DANCU_DONG_BO</td>
+            <td><span class="badge badge--muted badge--plain">NDOP</span></td>
+            <td class="t-small">CSDL tổng hợp QG</td>
+            <td class="table__num">—</td>
+            <td class="table__num">—</td>
+            <td class="table__num">—</td>
+            <td><span class="badge badge--muted">Chưa kích hoạt</span></td>
+            <td class="table__actions"><span class="t-small t-muted">Chờ NDOP</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">CATALOG_SYNC</td>
+            <td><span class="badge badge--plain">HTBO</span></td>
+            <td class="t-small">Hệ thống Bộ</td>
+            <td class="table__num">1</td>
+            <td class="table__num">0%</td>
+            <td class="table__num">3,2s</td>
+            <td><span class="badge badge--muted">N/A</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#dong-bo">Đồng bộ</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-14-02: Cấu hình định tuyến NDXP/NDOP ===== -->
+  <div class="card__body hidden" id="dinh-tuyen" data-panel="dinh-tuyen" data-panel-group="national">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Bảng định tuyến Federation Router</div>
+        <p class="t-small t-muted mb-0">Quyết định bản tin đi NDXP hay NDOP theo (loại dữ liệu, CSDL đích, thao tác) — nạp nóng, không cần khởi động lại</p>
+      </div>
+      <button class="btn btn--primary btn--sm" data-demo="Thêm luật định tuyến mới">Thêm luật</button>
+    </div>
+
+    <div class="toolbar mb-4">
+      <select class="select" style="width:auto">
+        <option>Tất cả nền tảng</option>
+        <option>NDXP</option>
+        <option>NDOP</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Tất cả CSDL đích</option>
+        <option>DANCU</option>
+        <option>DKKD</option>
+        <option>BHXH</option>
+      </select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Xuất bảng định tuyến CSV">Xuất CSV</button>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Loại dữ liệu</th><th>CSDL đích</th><th>Thao tác</th>
+            <th>Nền tảng</th><th class="table__num">Ưu tiên</th>
+            <th>Dự phòng</th><th>Căn cứ</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">CONG_DAN</td>
+            <td class="t-mono t-small">DANCU</td>
+            <td>TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="table__num">1</td>
+            <td class="t-muted">—</td>
+            <td class="t-small t-muted">TT 13/2017 · chỉ NDXP</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật CONG_DAN/DANCU">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DOANH_NGHIEP</td>
+            <td class="t-mono t-small">DKKD</td>
+            <td>TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="table__num">1</td>
+            <td class="t-muted">—</td>
+            <td class="t-small t-muted">TT 13/2017</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DOANH_NGHIEP/DKKD">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">BHXH</td>
+            <td class="t-mono t-small">BHXH</td>
+            <td>TRA_CUU</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="table__num">1</td>
+            <td class="t-muted">—</td>
+            <td class="t-small t-muted">TT 13/2017</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật BHXH">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DU_LIEU_CHU</td>
+            <td class="t-mono t-small">CSDLTH</td>
+            <td>DONG_BO</td>
+            <td><span class="badge badge--warn badge--plain">NDOP</span></td>
+            <td class="table__num">1</td>
+            <td><span class="badge badge--info badge--plain">NDXP</span></td>
+            <td class="t-small t-muted">TTQGS · đặc tả tạm</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật đồng bộ dữ liệu chủ">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DANH_MUC_DV</td>
+            <td class="t-mono t-small">HTBO</td>
+            <td>DANG_KY</td>
+            <td><span class="badge badge--plain">HTBO</span></td>
+            <td class="table__num">1</td>
+            <td class="t-muted">—</td>
+            <td class="t-small t-muted">NĐ 47 Đ.26</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật đăng ký danh mục">Sửa</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--info mt-5" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Chuyển hướng dự phòng</div>
+        <div class="t-small">Chỉ áp dụng khi cùng dữ liệu khai thác được qua cả NDXP và NDOP. CSDL Dân cư chỉ có trên NDXP — không có dự phòng (FR-14-001).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-14-03: Theo dõi hạn mức truy vấn ===== -->
+  <div class="card__body hidden" id="han-muc" data-panel="han-muc" data-panel-group="national">
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Dự báo cạn hạn mức DANCU_TRA_CUU trước 21:30 hôm nay</div>
+        <div class="t-small">Nhịp hiện tại ~2.840 lượt/giờ · còn 11.580 lượt · khuyến nghị tăng thời hạn đệm hoặc đề nghị nâng hạn mức với Bộ KH&amp;CN.</div>
+      </div>
+    </div>
+
+    <div class="col mb-5" style="gap:var(--sp-4)">
+      <div>
+        <div class="row row--between mb-2">
+          <span class="t-small"><strong>NDXP · DANCU_TRA_CUU</strong> · CSDLQG Dân cư · ngày</span>
+          <span class="t-mono t-small" style="color:var(--c-warn-700);font-weight:600">38.420 / 50.000 (77%)</span>
+        </div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:77%"></div></div>
+        <div class="t-small t-muted mt-1">Đặt lại lúc 00:00 ngày 04/08/2026 · căn cứ CV 1842/BKHCN-CĐS ngày 15/01/2026</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2">
+          <span class="t-small"><strong>NDXP · DKKD_TRA_CUU</strong> · CSDLQG ĐKKD · ngày</span>
+          <span class="t-mono t-small">4.120 / 20.000 (21%)</span>
+        </div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:21%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2">
+          <span class="t-small"><strong>NDXP · BHXH_TRA_CUU</strong> · CSDL BHXH · ngày</span>
+          <span class="t-mono t-small">2.186 / 5.000 (44%)</span>
+        </div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:44%"></div></div>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Mức dùng theo giờ (DANCU)</div>
+        <div class="col" style="gap:var(--sp-2)">
+          <div class="wf">
+            <div class="wf__name">08:00–09:00</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--warn" style="width:92%"></div></div>
+            <div class="wf__ms">4.610</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">09:00–10:00</div>
+            <div class="wf__track"><div class="wf__bar" style="width:85%"></div></div>
+            <div class="wf__ms">4.252</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">10:00–11:00</div>
+            <div class="wf__track"><div class="wf__bar" style="width:68%"></div></div>
+            <div class="wf__ms">3.401</div>
+          </div>
+          <div class="wf">
+            <div class="wf__name">14:00–15:00</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--warn" style="width:88%"></div></div>
+            <div class="wf__ms">4.408</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Hiệu quả đệm &amp; tiết kiệm</div>
+        <div class="grid grid--2 mb-4">
+          <div class="card stat" style="box-shadow:none">
+            <div class="stat__label">Lượt tiết kiệm 24h</div>
+            <div class="stat__value" style="font-size:var(--fs-xl)">27.682</div>
+          </div>
+          <div class="card stat" style="box-shadow:none">
+            <div class="stat__label">Tỷ lệ trúng đệm</div>
+            <div class="stat__value" style="font-size:var(--fs-xl)">72%</div>
+          </div>
+        </div>
+        <button class="btn btn--sm btn--primary" data-demo="Tăng cache TTL DANCU từ 15 phút lên 30 phút — ước tính tiết kiệm thêm 18%">Tăng thời hạn đệm DANCU</button>
+        <div class="field__hint mt-2">Có hiệu lực ngay · ước tính giảm ~18% lượt gọi ra NDXP</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Đóng góp theo hệ thống nội bộ</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Hệ thống</th><th>Đơn vị</th><th class="table__num">Lượt gọi</th>
+            <th class="table__num">% hạn mức DANCU</th><th class="table__actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">HE_THONG_MOT_CUA</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td class="table__num">18.240</td>
+            <td class="table__num" style="color:var(--c-warn-700);font-weight:600">36,5%</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Liên hệ đầu mối Một cửa về hạn mức">Liên hệ</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">CONG_DVC_TINH</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="table__num">9.860</td>
+            <td class="table__num">19,7%</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết CONG_DVC_TINH">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">SO_TU_PHAP</td>
+            <td class="t-small">Sở Tư pháp</td>
+            <td class="table__num">5.420</td>
+            <td class="table__num">10,8%</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết Sở Tư pháp">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DONG_BO_DINH_KY</td>
+            <td class="t-small">PH-06 MDM</td>
+            <td class="table__num">4.900</td>
+            <td class="table__num">9,8%</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Hoãn job đồng bộ định kỳ khi đạt 95%">Hoãn job</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-14-04: Quản lý chứng thư số ===== -->
+  <div class="card__body hidden" id="chung-thu" data-panel="chung-thu" data-panel-group="national">
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Chứng thư ký số LGSP-TINH-SIGN-2024 sắp hết hạn — còn 25 ngày</div>
+        <div class="t-small">Cảnh báo theo FR-14-008: &lt; 30 ngày cần khởi động thủ tục gia hạn với Ban Cơ yếu Chính phủ. Hết hạn sẽ <strong>chặn toàn bộ</strong> kết nối quốc gia (BR-14-006).</div>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Chứng thư của bộ/tỉnh (Vault)</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Mã / Sê-ri</th><th>Chủ thể</th><th>Mục đích</th>
+                <th>Hết hạn</th><th>Còn lại</th><th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">LGSP-TINH-SIGN-2024</td>
+                <td class="t-small">UBND tỉnh — LGSP ký số</td>
+                <td><span class="badge badge--plain">SIGNING</span></td>
+                <td class="t-mono t-small">28/08/2026</td>
+                <td><span class="badge badge--warn">25 ngày</span></td>
+                <td><span class="badge badge--warn">EXPIRING</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">LGSP-TINH-TLS-2025</td>
+                <td class="t-small">UBND tỉnh — mTLS client</td>
+                <td><span class="badge badge--plain">TLS_CLIENT</span></td>
+                <td class="t-mono t-small">14/03/2027</td>
+                <td><span class="badge badge--ok">224 ngày</span></td>
+                <td><span class="badge badge--ok">ACTIVE</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">LGSP-TINH-SIGN-2023</td>
+                <td class="t-small">UBND tỉnh (đã thay thế)</td>
+                <td><span class="badge badge--plain">SIGNING</span></td>
+                <td class="t-mono t-small">12/08/2025</td>
+                <td class="t-muted">—</td>
+                <td><span class="badge badge--muted">EXPIRED</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="t-small t-muted mt-2">Tham chiếu Vault: <span class="t-mono">secret/national/sign/lgsp-tinh-2024</span> — khóa riêng không hiển thị (RB-06)</div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Nạp chứng thư mới</div>
+        <div class="card" style="box-shadow:none;border:1px solid var(--c-border)">
+          <div class="card__body">
+            <div class="field">
+              <label class="field__label">Tệp chứng thư (.p12 / .pem) <span class="field__req">*</span></label>
+              <input class="input" type="file" disabled>
+              <div class="field__hint">Yêu cầu vai trò SECURITY_OFFICER + MFA (UI-14-04)</div>
+            </div>
+            <div class="field">
+              <label class="field__label">Mục đích</label>
+              <select class="select">
+                <option>SIGNING — ký bản tin gửi quốc gia</option>
+                <option>TLS_CLIENT — mTLS hai chiều</option>
+                <option>BOTH</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Vault key ref</label>
+              <input class="input input--mono" placeholder="secret/national/sign/…" value="secret/national/sign/lgsp-tinh-2026">
+            </div>
+            <button class="btn btn--primary btn--sm" data-demo="Nạp chứng thư vào Vault — cần MFA">Nạp vào Vault</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Chứng thư tin cậy (trung ương)</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Chủ thể</th><th>Tổ chức cấp</th><th>Cập nhật</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-small">CN=NDXP-CA-2024</td>
+                <td class="t-small">Ban Cơ yếu CP</td>
+                <td class="t-mono t-small">01/08/2026</td>
+                <td><span class="badge badge--ok">Tin cậy</span></td>
+              </tr>
+              <tr>
+                <td class="t-small">CN=NDOP-CA-PROVISIONAL</td>
+                <td class="t-small">TTDLQG</td>
+                <td class="t-mono t-small">28/07/2026</td>
+                <td><span class="badge badge--warn">Tạm thời</span></td>
+              </tr>
+              <tr>
+                <td class="t-small">CN=BKHCN-ROOT-2023</td>
+                <td class="t-small">Ban Cơ yếu CP</td>
+                <td class="t-mono t-small">15/06/2026</td>
+                <td><span class="badge badge--ok">Tin cậy</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn--sm mt-3" data-demo="Đồng bộ danh sách CRL từ trung ương">Cập nhật CRL</button>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký lỗi xác minh chữ ký</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Thời điểm</th><th>Mã giao dịch</th><th>Nguyên nhân</th><th>Mức</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="4" class="t-muted text-center" style="padding:var(--sp-6)">Không có lỗi xác minh trong 30 ngày qua</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert--info mt-3" style="margin-bottom:0">
+          <span class="alert__icon">ℹ</span>
+          <div>
+            <div class="alert__title">Chữ ký sai = sự cố an ninh</div>
+            <div class="t-small">Mọi lỗi xác minh phản hồi được xử lý như cảnh báo ATTT, không dùng dữ liệu nhận được (BR-14-003).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-14-05: Tra cứu và đối soát giao dịch ===== -->
+  <div class="card__body hidden" id="giao-dich" data-panel="giao-dich" data-panel-group="national">
+    <div class="toolbar mb-4">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input input--mono" type="text" placeholder="Mã giao dịch LGSP-01-…" value="LGSP-01-20260803-0000184320">
+      </div>
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input input--mono" type="text" placeholder="traceId…" value="4bf92f3577b34da6">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Tất cả nền tảng</option>
+        <option>NDXP</option>
+        <option>NDOP</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Tất cả dịch vụ</option>
+        <option>DANCU_TRA_CUU</option>
+        <option>DKKD_TRA_CUU</option>
+        <option>BHXH_TRA_CUU</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Tất cả trạng thái</option>
+        <option>SUCCESS</option>
+        <option>FAILED</option>
+        <option>QUOTA_EXCEEDED</option>
+        <option>TIMEOUT</option>
+      </select>
+      <button class="btn btn--primary btn--sm" data-demo="Tra cứu giao dịch quốc gia">Tra cứu</button>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã giao dịch</th><th>Thời điểm</th><th>Dịch vụ</th>
+            <th>Chiều</th><th>Trạng thái</th><th class="table__num">Phản hồi</th>
+            <th>Đệm</th><th>traceId</th><th class="table__actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">LGSP-01-20260803-0000184320</td>
+            <td class="t-mono t-small">03/08 15:42</td>
+            <td class="t-mono t-small">DANCU_TRA_CUU</td>
+            <td><span class="badge badge--plain">OUTBOUND</span></td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="table__num">8ms</td>
+            <td><span class="badge badge--info badge--plain">Có</span></td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=4bf92f3577">4bf92f35</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết giao dịch 0000184320">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">LGSP-01-20260803-0000184318</td>
+            <td class="t-mono t-small">03/08 15:41</td>
+            <td class="t-mono t-small">DKKD_TRA_CUU</td>
+            <td><span class="badge badge--plain">OUTBOUND</span></td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="table__num">2.108ms</td>
+            <td><span class="badge badge--muted badge--plain">Không</span></td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=a1c8e902">a1c8e902</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết giao dịch 0000184318">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">LGSP-01-20260803-0000184291</td>
+            <td class="t-mono t-small">03/08 15:38</td>
+            <td class="t-mono t-small">BHXH_TRA_CUU</td>
+            <td><span class="badge badge--plain">OUTBOUND</span></td>
+            <td><span class="badge badge--warn">TIMEOUT</span></td>
+            <td class="table__num">15.000ms</td>
+            <td><span class="badge badge--muted badge--plain">Không</span></td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=d7f2aa10">d7f2aa10</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết giao dịch timeout">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">LGSP-01-20260803-0000184102</td>
+            <td class="t-mono t-small">03/08 15:12</td>
+            <td class="t-mono t-small">DANCU_TRA_CUU</td>
+            <td><span class="badge badge--plain">OUTBOUND</span></td>
+            <td><span class="badge badge--err">QUOTA_EXCEEDED</span></td>
+            <td class="table__num">—</td>
+            <td><span class="badge badge--info badge--plain">Có (stale)</span></td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=88bc014f">88bc014f</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết giao dịch quota">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">LGSP-IN-20260803-000000042</td>
+            <td class="t-mono t-small">03/08 14:05</td>
+            <td class="t-mono t-small">XAC_MINH_DIA_PHUONG</td>
+            <td><span class="badge badge--info badge--plain">INBOUND</span></td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="table__num">420ms</td>
+            <td><span class="badge badge--muted badge--plain">N/A</span></td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=inb-042">inb-042</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết giao dịch inbound">Chi tiết</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="box-shadow:none;border:1px solid var(--c-border)">
+      <div class="card__head">
+        <div class="card__title" style="font-size:var(--fs-md)">Chi tiết · LGSP-01-20260803-0000184320</div>
+        <button class="btn btn--sm" data-demo="Xuất hồ sơ đối soát có chữ ký LGSP">Xuất bằng chứng</button>
+      </div>
+      <div class="card__body">
+        <div class="grid grid--3 mb-4">
+          <div>
+            <div class="t-small t-muted mb-2">Metadata</div>
+            <div class="t-small"><strong>Nền tạng:</strong> NDXP</div>
+            <div class="t-small"><strong>Chứng thư ký:</strong> LGSP-TINH-SIGN-2024</div>
+            <div class="t-small"><strong>Mục đích:</strong> GIAI_QUYET_TTHC · HS-2026-08-001234</div>
+          </div>
+          <div>
+            <div class="t-small t-muted mb-2">Xác minh chữ ký phản hồi</div>
+            <div class="t-small"><span class="badge badge--ok">Chữ ký hợp lệ</span></div>
+            <div class="t-small"><span class="badge badge--ok">Chứng thư tin cậy</span></div>
+            <div class="t-small"><span class="badge badge--ok">Chưa thu hồi</span></div>
+          </div>
+          <div>
+            <div class="t-small t-muted mb-2">Đệm</div>
+            <div class="t-small"><strong>tuDem:</strong> true · tuoiDemGiay: 420</div>
+            <div class="t-small"><strong>thoiGianPhanHoiMs:</strong> 8 (PH-14 nội bộ)</div>
+          </div>
+        </div>
+        <div class="grid grid--2">
+          <div>
+            <div class="t-small t-muted mb-2">Bản tin gửi (đã che)</div>
+<pre class="code" style="margin:0;max-height:120px;overflow:auto"><span class="k">{</span>
+  <span class="s">"soDinhDanh"</span>: <span class="s">"001199******"</span>,
+  <span class="s">"mucDichSuDung"</span>: <span class="s">"GIAI_QUYET_TTHC"</span>,
+  <span class="s">"maHoSo"</span>: <span class="s">"HS-2026-08-001234"</span>
+<span class="k">}</span></pre>
+          </div>
+          <div>
+            <div class="t-small t-muted mb-2">Phản hồi (đã che)</div>
+<pre class="code" style="margin:0;max-height:120px;overflow:auto"><span class="k">{</span>
+  <span class="s">"hoTen"</span>: <span class="s">"Nguyễn V*** A"</span>,
+  <span class="s">"ngaySinh"</span>: <span class="s">"1990-01-15"</span>,
+  <span class="s">"chuKyDaXacMinh"</span>: <span class="k">true</span>
+<span class="k">}</span></pre>
+          </div>
+        </div>
+        <div class="t-small t-muted mt-3">Xem nội dung đầy đủ cần quyền riêng và ghi vết kiểm toán (UI-14-05)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-14-06: Trạng thái đồng bộ danh mục ===== -->
+  <div class="card__body hidden" id="dong-bo" data-panel="dong-bo" data-panel-group="national">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Đồng bộ danh mục dịch vụ lên Hệ thống Bộ</div>
+        <p class="t-small t-muted mb-0">Nghĩa vụ NĐ 47/2020 Điều 26 · nguồn từ PH-02 · liên quan <a href="reference.html">PH-07 danh mục dùng chung</a></p>
+      </div>
+      <button class="btn btn--primary btn--sm" data-demo="Chạy đồng bộ danh mục thủ công ngay">Đồng bộ ngay</button>
+    </div>
+
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Lần đồng bộ gần nhất</div>
+        <div class="stat__value" style="font-size:var(--fs-lg)">03/08 02:15</div>
+        <div class="stat__meta"><span class="badge badge--ok">Thành công</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Dịch vụ đã gửi</div>
+        <div class="stat__value" style="font-size:var(--fs-lg)">47</div>
+        <div class="stat__meta">45 chấp nhận · 2 từ chối</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Lịch tự động</div>
+        <div class="stat__value" style="font-size:var(--fs-lg)">Hằng ngày</div>
+        <div class="stat__meta">02:00 + khi phát hành mới</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử đồng bộ</div>
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Đích</th><th class="table__num">Gửi</th>
+            <th class="table__num">Chấp nhận</th><th class="table__num">Từ chối</th>
+            <th>Trạng thái</th><th>Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08/2026 02:15</td>
+            <td class="t-small">Hệ thống quản lý DV chia sẻ — Bộ</td>
+            <td class="table__num">47</td>
+            <td class="table__num">45</td>
+            <td class="table__num">2</td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="t-small t-muted">2 DV thiếu mô tả OpenAPI</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">02/08/2026 02:15</td>
+            <td class="t-small">Hệ thống quản lý DV chia sẻ — Bộ</td>
+            <td class="table__num">46</td>
+            <td class="table__num">46</td>
+            <td class="table__num">0</td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="t-small t-muted">—</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">01/08/2026 14:22</td>
+            <td class="t-small">Hệ thống quản lý DV chia sẻ — Bộ</td>
+            <td class="table__num">1</td>
+            <td class="table__num">1</td>
+            <td class="table__num">0</td>
+            <td><span class="badge badge--ok">SUCCESS</span></td>
+            <td class="t-small t-muted">Kích hoạt thủ công — DV mới tra-cuu-bhxh</td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">25/07/2026 02:15</td>
+            <td class="t-small">Hệ thống quản lý DV chia sẻ — Bộ</td>
+            <td class="table__num">45</td>
+            <td class="table__num">0</td>
+            <td class="table__num">0</td>
+            <td><span class="badge badge--err">FAILED</span></td>
+            <td class="t-small t-muted">Hệ thống Bộ không khả dụng · đã retry</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Đồng bộ danh mục quốc gia (PH-07 ↔ trung ương)</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Danh mục</th><th>Nguồn QG</th><th>Phiên bản local</th>
+            <th>Phiên bản QG</th><th>Đồng bộ lúc</th><th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-small">Đơn vị hành chính</td>
+            <td class="t-mono t-small">NDXP</td>
+            <td class="t-mono t-small">v2026.07.15</td>
+            <td class="t-mono t-small">v2026.07.15</td>
+            <td class="t-mono t-small">01/08 03:00</td>
+            <td><span class="badge badge--ok">Đồng bộ</span></td>
+          </tr>
+          <tr>
+            <td class="t-small">Dân tộc</td>
+            <td class="t-mono t-small">NDXP</td>
+            <td class="t-mono t-small">v2024.01.01</td>
+            <td class="t-mono t-small">v2025.06.01</td>
+            <td class="t-mono t-small">15/07 03:00</td>
+            <td><span class="badge badge--warn">Lệch phiên bản</span></td>
+          </tr>
+          <tr>
+            <td class="t-small">Tôn giáo</td>
+            <td class="t-mono t-small">NDXP</td>
+            <td class="t-mono t-small">v2023.12.01</td>
+            <td class="t-mono t-small">v2023.12.01</td>
+            <td class="t-mono t-small">01/08 03:00</td>
+            <td><span class="badge badge--ok">Đồng bộ</span></td>
+          </tr>
+          <tr>
+            <td class="t-small">Nghề nghiệp</td>
+            <td class="t-mono t-small">NDOP</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--muted">Chờ NDOP</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn mt-5" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Danh mục Dân tộc lệch phiên bản &gt; 7 ngày</div>
+        <div class="t-small">Cần đồng bộ từ NDXP hoặc rà soát ánh xạ tại <a href="reference.html">PH-07</a>. Quá 7 ngày không đồng bộ → cảnh báo tuân thủ CMP-30.</div>
+      </div>
     </div>
   </div>
 </div>

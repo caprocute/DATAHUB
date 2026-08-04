@@ -8,28 +8,900 @@
 <script src="../js/theme.js"></script>
 <script>window.LGSP_PAGE = { id: 'events', title: 'Truyền thông sự kiện', crumbs: [
   { text: 'Trang chủ', href: 'index.html' }, { text: 'Truyền thông sự kiện' }] };</script>
+<style>
+  /* Bổ sung cục bộ: app.css có .finding__mark--err và --warn, thiếu biến thể "đạt".
+     Dùng cho kết quả kiểm tra tương thích lược đồ ở UI-10-04. Nên gộp vào css/app.css. */
+  .finding__mark--ok { color: var(--c-ok-700); }
+</style>
 </head>
 <body>
+
+<div class="mock-note">
+  <strong>PH-10 — Truyền thông sự kiện (Kafka).</strong>
+  Minh họa các màn <span class="tag-ph">UI-10-01</span> Tổng quan cụm sự kiện,
+  <span class="tag-ph">UI-10-02</span> Quản lý chủ đề,
+  <span class="tag-ph">UI-10-03</span> Theo dõi độ trễ tiêu thụ,
+  <span class="tag-ph">UI-10-04</span> Quản lý lược đồ sự kiện,
+  <span class="tag-ph">UI-10-05</span> Giám sát CDC,
+  <span class="tag-ph">UI-10-06</span> Phát lại sự kiện — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-10-event.md">SRS PH-10</a>.
+  Chủ đề đặt theo quy ước <span class="t-mono">{miền}.{thực thể}.{phiên bản}</span> —
+  xem <a href="../../docs/07-srs/SRS-00-data-dictionary.md">SRS-00 §6</a>.
+  Liên kết chéo: <a href="dlq.html">Bản tin lỗi</a> · <a href="adapters.html">Adapter kết nối</a> (nguồn CDC).
+</div>
 
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Truyền thông sự kiện</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-10</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Apache Kafka · 5 broker · 42 chủ đề · 318 phân vùng</p>
+  </div>
+  <div class="page-head__actions">
+    <label class="check" style="margin:0">
+      <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
+    </label>
+    <button class="btn" data-demo="Mở Kafka UI để xem chi tiết cụm">↗ Kafka UI</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-10</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-10.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<!-- ===== UI-10-01: Tổng quan cụm sự kiện ===== -->
+<div class="alert alert--err mb-5">
+  <span class="alert__icon">✕</span>
+  <div>
+    <div class="alert__title">4 phân vùng thiếu bản sao (under-replicated) — nguy cơ mất dữ liệu</div>
+    <div class="t-small">
+      Broker <span class="t-mono">kafka-3</span> mất kết nối từ 14:52. Các phân vùng của chủ đề
+      <span class="t-mono">ho-tich.khai-sinh.v1</span> và <span class="t-mono">dat-dai.thua-dat.v2</span>
+      đang chạy dưới hệ số bản sao yêu cầu. Cảnh báo này không thể ẩn cho tới khi khôi phục xong.
+    </div>
+  </div>
+</div>
+
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Broker sống</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">4 / 5</div>
+    <div class="stat__meta"><span class="t-mono">kafka-3</span> mất kết nối 14:52</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Phân vùng thiếu bản sao</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">4</div>
+    <div class="stat__meta">Bình thường phải bằng 0</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Phân vùng không leader</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-ok-700)">0</div>
+    <div class="stat__meta">Mọi phân vùng vẫn có leader phục vụ</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Thông lượng</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">2.840/s</div>
+    <div class="stat__meta">Vào 2.840/s · ra 2.812/s</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="ev" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="overview">Tổng quan</button>
+    <button class="tab" data-tab="topics">Chủ đề <span class="tab__count">42</span></button>
+    <button class="tab" data-tab="lag">Độ trễ <span class="tab__count">2</span></button>
+    <button class="tab" data-tab="schema">Lược đồ</button>
+    <button class="tab" data-tab="cdc">CDC</button>
+    <button class="tab" data-tab="replay">Phát lại</button>
+  </div>
+
+  <!-- Tab: Tổng quan — UI-10-01 -->
+  <div class="card__body" data-panel="overview" data-panel-group="ev">
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Dung lượng theo broker</div>
+        <div class="col" style="gap:var(--sp-3)">
+          <div>
+            <div class="row row--between mb-2"><span class="t-small t-mono">kafka-1</span><span class="t-small t-muted">612 GB / 1 TB · 61%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:61%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small t-mono">kafka-2</span><span class="t-small" style="color:var(--c-warn-700)">842 GB / 1 TB · 84%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--warn" style="width:84%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small t-mono">kafka-3</span><span class="t-small" style="color:var(--c-err-700)">Mất kết nối</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--err" style="width:100%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small t-mono">kafka-4</span><span class="t-small" style="color:var(--c-err-700)">928 GB / 1 TB · 93%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--err" style="width:93%"></div></div>
+          </div>
+          <div>
+            <div class="row row--between mb-2"><span class="t-small t-mono">kafka-5</span><span class="t-small t-muted">584 GB / 1 TB · 58%</span></div>
+            <div class="bar"><div class="bar__fill bar__fill--ok" style="width:58%"></div></div>
+          </div>
+        </div>
+        <div class="alert alert--err mt-4" style="margin-bottom:0">
+          <span class="alert__icon">✕</span>
+          <div>
+            <div class="alert__title">Broker <span class="t-mono">kafka-4</span> vượt 90% dung lượng</div>
+            <div class="t-small">Cần mở rộng đĩa hoặc giảm thời gian lưu giữ của các chủ đề nóng trước khi đầy hoàn toàn.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Thông lượng theo chủ đề (24 giờ)</div>
+        <div class="wf">
+          <div class="wf__name">dan-cu.cong-dan.v2</div>
+          <div class="wf__track"><div class="wf__bar" style="left:0;width:100%"></div></div>
+          <div class="wf__ms">1.284/s</div>
+          <div class="wf__name">ho-tich.khai-sinh.v1</div>
+          <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:0;width:48%"></div></div>
+          <div class="wf__ms">618/s</div>
+          <div class="wf__name">dat-dai.thua-dat.v2</div>
+          <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:0;width:36%"></div></div>
+          <div class="wf__ms">462/s</div>
+          <div class="wf__name">van-ban.van-ban-den.v1</div>
+          <div class="wf__track"><div class="wf__bar" style="left:0;width:22%"></div></div>
+          <div class="wf__ms">284/s</div>
+          <div class="wf__name">catalog.service.v1</div>
+          <div class="wf__track"><div class="wf__bar" style="left:0;width:9%"></div></div>
+          <div class="wf__ms">118/s</div>
+          <div class="wf__name">bao-hiem.the-bhyt.v1</div>
+          <div class="wf__track"><div class="wf__bar" style="left:0;width:6%"></div></div>
+          <div class="wf__ms">74/s</div>
+        </div>
+
+        <div class="card__title mb-3 mt-5" style="font-size:var(--fs-md)">Chủ đề nóng theo dung lượng</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Chủ đề</th><th class="table__num">Dung lượng</th><th class="table__num">Phân vùng</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="t-mono t-small">dan-cu.cong-dan.v2</td><td class="table__num">846 GB</td><td class="table__num">24</td></tr>
+              <tr><td class="t-mono t-small">dat-dai.thua-dat.v2</td><td class="table__num">412 GB</td><td class="table__num">12</td></tr>
+              <tr><td class="t-mono t-small">ho-tich.khai-sinh.v1</td><td class="table__num">284 GB</td><td class="table__num">12</td></tr>
+              <tr><td class="t-mono t-small">van-ban.van-ban-den.v1</td><td class="table__num">118 GB</td><td class="table__num">6</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">2 nhóm tiêu thụ đang tụt hậu</div>
+        <div class="t-small">
+          <span class="t-mono">grp-mdm-cong-dan</span> và <span class="t-mono">grp-kho-dl-dat-dai</span> —
+          xem chi tiết ở tab <strong>Độ trễ</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-10-02: Quản lý chủ đề ===== -->
+  <div class="card__body hidden" data-panel="topics" data-panel-group="ev">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <div class="search" style="min-width:240px">
+          <input class="input" type="search" placeholder="Tìm chủ đề theo miền hoặc thực thể…">
+        </div>
+        <select class="select" style="width:auto">
+          <option>Mọi miền</option><option>dan-cu</option><option>ho-tich</option>
+          <option>dat-dai</option><option>van-ban</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" data-demo="Tạo chủ đề Kafka mới theo quy ước đặt tên">+ Tạo chủ đề</button>
+    </div>
+
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Quy ước đặt tên chủ đề</div>
+        <div class="t-small">
+          <span class="t-mono">{miền}.{thực thể}.{phiên bản}</span> — ví dụ
+          <span class="t-mono">catalog.service.v1</span>. Tên sai quy ước bị từ chối khi tạo.
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Chủ đề</th><th class="table__num">Phân vùng</th><th class="table__num">Bản sao</th>
+            <th>Lưu giữ</th><th class="table__num">Dung lượng</th><th class="table__num">Sự kiện/giây</th>
+            <th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">dan-cu.cong-dan.v2</td>
+            <td class="table__num">24</td>
+            <td class="table__num">3</td>
+            <td class="t-small">30 ngày</td>
+            <td class="table__num">846 GB</td>
+            <td class="table__num">1.284</td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ho-tich.khai-sinh.v1</td>
+            <td class="table__num">12</td>
+            <td class="table__num" style="color:var(--c-err-700)">2 / 3</td>
+            <td class="t-small">90 ngày</td>
+            <td class="table__num">284 GB</td>
+            <td class="table__num">618</td>
+            <td><span class="badge badge--err">Thiếu bản sao</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dat-dai.thua-dat.v2</td>
+            <td class="table__num">12</td>
+            <td class="table__num" style="color:var(--c-err-700)">2 / 3</td>
+            <td class="t-small">90 ngày</td>
+            <td class="table__num">412 GB</td>
+            <td class="table__num">462</td>
+            <td><span class="badge badge--err">Thiếu bản sao</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">van-ban.van-ban-den.v1</td>
+            <td class="table__num">6</td>
+            <td class="table__num">3</td>
+            <td class="t-small">30 ngày</td>
+            <td class="table__num">118 GB</td>
+            <td class="table__num">284</td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">catalog.service.v1</td>
+            <td class="table__num">3</td>
+            <td class="table__num">3</td>
+            <td class="t-small">7 ngày</td>
+            <td class="table__num">4,2 GB</td>
+            <td class="table__num">118</td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">bao-hiem.the-bhyt.v1</td>
+            <td class="table__num">6</td>
+            <td class="table__num">3</td>
+            <td class="t-small">30 ngày</td>
+            <td class="table__num">28 GB</td>
+            <td class="table__num">74</td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">y-te.ho-so-suc-khoe.v1</td>
+            <td class="table__num">6</td>
+            <td class="table__num">3</td>
+            <td class="t-small">30 ngày</td>
+            <td class="table__num t-muted">0 B</td>
+            <td class="table__num t-muted">0</td>
+            <td><span class="badge badge--muted">Chưa có sự kiện</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết phân vùng và nhóm tiêu thụ của chủ đề">Chi tiết</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Chi tiết phân vùng — <span class="t-mono">ho-tich.khai-sinh.v1</span></div>
+        <div class="panel__body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Phân vùng</th><th>Leader</th><th>ISR</th><th class="table__num">Offset cuối</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="t-mono t-small">P0</td><td class="t-mono t-small">kafka-1</td>
+                  <td class="t-mono t-small" style="color:var(--c-err-700)">[1, 5]</td>
+                  <td class="table__num">4.826.104</td>
+                  <td><span class="badge badge--err">Thiếu bản sao</span></td>
+                </tr>
+                <tr>
+                  <td class="t-mono t-small">P1</td><td class="t-mono t-small">kafka-2</td>
+                  <td class="t-mono t-small" style="color:var(--c-err-700)">[2, 5]</td>
+                  <td class="table__num">4.812.940</td>
+                  <td><span class="badge badge--err">Thiếu bản sao</span></td>
+                </tr>
+                <tr>
+                  <td class="t-mono t-small">P2</td><td class="t-mono t-small">kafka-5</td>
+                  <td class="t-mono t-small">[5, 1, 2]</td>
+                  <td class="table__num">4.834.218</td>
+                  <td><span class="badge badge--ok">Đủ bản sao</span></td>
+                </tr>
+                <tr>
+                  <td class="t-mono t-small">P3</td><td class="t-mono t-small">kafka-1</td>
+                  <td class="t-mono t-small">[1, 2, 5]</td>
+                  <td class="table__num">4.828.406</td>
+                  <td><span class="badge badge--ok">Đủ bản sao</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="t-small t-muted mt-3">Phân vùng P0 và P1 mất bản sao trên <span class="t-mono">kafka-3</span>. Vẫn phục vụ được nhưng không còn dự phòng.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Tạo chủ đề mới</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Tên chủ đề <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="HoTich_KhaiTu_V1">
+            <div class="field__err">Sai quy ước — phải theo <span class="t-mono">{miền}.{thực thể}.{phiên bản}</span>, ví dụ <span class="t-mono">ho-tich.khai-tu.v1</span>.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Số phân vùng <span class="field__req">*</span></label>
+            <input class="input" type="number" value="6">
+            <div class="field__hint">Nên ≥ số instance tiêu thụ dự kiến để tận dụng song song.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Hệ số bản sao <span class="field__req">*</span></label>
+            <input class="input" type="number" value="3">
+          </div>
+          <div class="field">
+            <label class="field__label">Thời gian lưu giữ</label>
+            <select class="select"><option>30 ngày</option><option>7 ngày</option><option>90 ngày</option></select>
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Hủy tạo chủ đề">Hủy</button>
+            <button class="btn btn--primary" disabled>Tạo chủ đề</button>
+          </div>
+          <div class="t-small t-muted mt-2">Bị chặn: tên chủ đề sai quy ước.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-10-03: Theo dõi độ trễ tiêu thụ ===== -->
+  <div class="card__body hidden" data-panel="lag" data-panel-group="ev">
+
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Nhóm <span class="t-mono">grp-mdm-cong-dan</span> ngừng tiến 12 phút</div>
+        <div class="t-small">
+          Offset không đổi từ 15:08 — bên tiêu thụ có thể đã treo hoặc mất kết nối.
+          Nhóm ngừng tiến quá 5 phút luôn được đưa lên đầu bảng.
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nhóm tiêu thụ</th><th>Chủ đề</th><th>Hệ thống</th>
+            <th class="table__num">Độ trễ (bản ghi)</th><th class="table__num">Độ trễ (giây)</th>
+            <th class="table__num">Instance</th><th>Xu hướng</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">grp-mdm-cong-dan</td>
+            <td class="t-mono t-small">dan-cu.cong-dan.v2</td>
+            <td class="t-small">Dữ liệu chủ (PH-06)</td>
+            <td class="table__num" style="color:var(--c-err-700)">924.618</td>
+            <td class="table__num" style="color:var(--c-err-700)">720s</td>
+            <td class="table__num" style="color:var(--c-warn-700)">2 / 24</td>
+            <td class="t-small" style="color:var(--c-err-700)">↑ Đang tăng</td>
+            <td><span class="badge badge--err">Ngừng tiến</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem độ trễ chi tiết từng phân vùng của nhóm grp-mdm-cong-dan">Phân vùng</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-kho-dl-dat-dai</td>
+            <td class="t-mono t-small">dat-dai.thua-dat.v2</td>
+            <td class="t-small">Kho dữ liệu tỉnh</td>
+            <td class="table__num" style="color:var(--c-warn-700)">184.062</td>
+            <td class="table__num" style="color:var(--c-warn-700)">398s</td>
+            <td class="table__num">4 / 12</td>
+            <td class="t-small" style="color:var(--c-warn-700)">↑ Đang tăng</td>
+            <td><span class="badge badge--warn">Tụt hậu</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem độ trễ chi tiết từng phân vùng của nhóm grp-kho-dl-dat-dai">Phân vùng</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-ho-tich-mdm</td>
+            <td class="t-mono t-small">ho-tich.khai-sinh.v1</td>
+            <td class="t-small">Dữ liệu chủ (PH-06)</td>
+            <td class="table__num">1.842</td>
+            <td class="table__num">3s</td>
+            <td class="table__num">12 / 12</td>
+            <td class="t-small" style="color:var(--c-ok-700)">↓ Đang giảm</td>
+            <td><span class="badge badge--ok">Bình thường</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem độ trễ chi tiết từng phân vùng của nhóm grp-ho-tich-mdm">Phân vùng</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-van-ban-lien-thong</td>
+            <td class="t-mono t-small">van-ban.van-ban-den.v1</td>
+            <td class="t-small">Quản lý văn bản</td>
+            <td class="table__num">204</td>
+            <td class="table__num">1s</td>
+            <td class="table__num">6 / 6</td>
+            <td class="t-small t-muted">→ Ổn định</td>
+            <td><span class="badge badge--ok">Bình thường</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem độ trễ chi tiết từng phân vùng của nhóm grp-van-ban-lien-thong">Phân vùng</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-bao-cao-kpi</td>
+            <td class="t-mono t-small">catalog.service.v1</td>
+            <td class="t-small">Báo cáo KPI (PH-16)</td>
+            <td class="table__num">18</td>
+            <td class="table__num">0s</td>
+            <td class="table__num">3 / 3</td>
+            <td class="t-small t-muted">→ Ổn định</td>
+            <td><span class="badge badge--ok">Bình thường</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem độ trễ chi tiết từng phân vùng của nhóm grp-bao-cao-kpi">Phân vùng</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Nhóm <span class="t-mono">grp-mdm-cong-dan</span> chỉ có 2 instance cho 24 phân vùng</div>
+        <div class="t-small">Số instance ít hơn nhiều so với số phân vùng — chưa tận dụng hết khả năng song song. Tăng số instance lên gần 24 sẽ giúp xử lý kịp.</div>
+      </div>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Độ trễ theo thời gian — <span class="t-mono">grp-mdm-cong-dan</span></div>
+        <div class="panel__body">
+          <div class="wf">
+            <div class="wf__name">14:00</div>
+            <div class="wf__track"><div class="wf__bar" style="left:0;width:2%"></div></div>
+            <div class="wf__ms">4.108</div>
+            <div class="wf__name">14:30</div>
+            <div class="wf__track"><div class="wf__bar" style="left:0;width:4%"></div></div>
+            <div class="wf__ms">18.402</div>
+            <div class="wf__name">15:00</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:0;width:22%"></div></div>
+            <div class="wf__ms">204.618</div>
+            <div class="wf__name">15:10</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:0;width:56%"></div></div>
+            <div class="wf__ms">518.204</div>
+            <div class="wf__name">15:20</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:0;width:100%"></div></div>
+            <div class="wf__ms">924.618</div>
+          </div>
+          <div class="t-small t-muted mt-3">Đường ngưỡng cảnh báo: 100.000 bản ghi — vượt từ 14:52, trùng thời điểm <span class="t-mono">kafka-3</span> mất kết nối.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Độ trễ từng phân vùng — <span class="t-mono">grp-mdm-cong-dan</span></div>
+        <div class="panel__body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Phân vùng</th><th>Instance xử lý</th><th class="table__num">Độ trễ</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                <tr><td class="t-mono t-small">P0–P11</td><td class="t-mono t-small">consumer-1</td><td class="table__num" style="color:var(--c-err-700)">482.104</td><td><span class="badge badge--err">Quá tải</span></td></tr>
+                <tr><td class="t-mono t-small">P12–P23</td><td class="t-mono t-small">consumer-2</td><td class="table__num" style="color:var(--c-err-700)">442.514</td><td><span class="badge badge--err">Quá tải</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="alert alert--info mt-4" style="margin-bottom:0">
+            <span class="alert__icon">ℹ</span>
+            <div class="t-small">Độ trễ phân bố khá đều giữa hai instance — không phải mất cân bằng phân vùng, mà là thiếu năng lực xử lý tổng thể.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-10-04: Quản lý lược đồ sự kiện ===== -->
+  <div class="card__body hidden" data-panel="schema" data-panel-group="ev">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div class="field" style="margin:0;min-width:280px">
+        <label class="field__label">Lược đồ</label>
+        <select class="select">
+          <option>dan-cu.cong-dan.v2-value (Avro)</option>
+          <option>ho-tich.khai-sinh.v1-value (Avro)</option>
+          <option>dat-dai.thua-dat.v2-value (Avro)</option>
+        </select>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Kiểm tra tương thích lược đồ trước khi đăng ký">▶ Kiểm tra tương thích</button>
+        <button class="btn btn--sm" data-demo="So sánh với phiên bản hiện tại">So sánh phiên bản</button>
+      </div>
+    </div>
+
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr><th>Lược đồ</th><th>Chủ đề</th><th>Loại</th><th>Chế độ tương thích</th><th>Phiên bản hiện tại</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">dan-cu.cong-dan.v2-value</td>
+            <td class="t-mono t-small">dan-cu.cong-dan.v2</td>
+            <td><span class="badge badge--plain">Avro</span></td>
+            <td class="t-small">BACKWARD</td>
+            <td class="t-mono t-small">v4</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử phiên bản lược đồ">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ho-tich.khai-sinh.v1-value</td>
+            <td class="t-mono t-small">ho-tich.khai-sinh.v1</td>
+            <td><span class="badge badge--plain">Avro</span></td>
+            <td class="t-small">BACKWARD</td>
+            <td class="t-mono t-small">v2</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử phiên bản lược đồ">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dat-dai.thua-dat.v2-value</td>
+            <td class="t-mono t-small">dat-dai.thua-dat.v2</td>
+            <td><span class="badge badge--plain">Avro</span></td>
+            <td class="t-small">FULL</td>
+            <td class="t-mono t-small">v3</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử phiên bản lược đồ">Lịch sử</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div class="panel">
+        <div class="panel__head">Trình soạn thảo — <span class="t-mono">dan-cu.cong-dan.v2-value</span> v5 (nháp)</div>
+        <div class="panel__body">
+          <pre class="code">{
+  <span class="k">"type"</span>: <span class="s">"record"</span>,
+  <span class="k">"name"</span>: <span class="s">"CongDan"</span>,
+  <span class="k">"fields"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"eventId"</span>,   <span class="k">"type"</span>: <span class="s">"string"</span> },
+    { <span class="k">"name"</span>: <span class="s">"eventTime"</span>, <span class="k">"type"</span>: <span class="s">"long"</span> },
+    { <span class="k">"name"</span>: <span class="s">"traceId"</span>,   <span class="k">"type"</span>: <span class="s">"string"</span> },
+    { <span class="k">"name"</span>: <span class="s">"hoTen"</span>,     <span class="k">"type"</span>: <span class="s">"string"</span> },
+<span class="del">    { "name": "ngaySinh",  "type": "string" },</span>
+<span class="add">    { "name": "ngaySinh",  "type": "int", "logicalType": "date" },</span>
+<span class="add">    { "name": "soCccd",    "type": "string" },</span>
+    { <span class="k">"name"</span>: <span class="s">"maDanToc"</span>,  <span class="k">"type"</span>: <span class="s">"string"</span> }
+  ]
+}</pre>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Kết quả kiểm tra tương thích</div>
+        <div class="panel__body">
+          <div class="alert alert--err mb-4">
+            <span class="alert__icon">✕</span>
+            <div>
+              <div class="alert__title">Vi phạm tương thích BACKWARD — chặn đăng ký</div>
+              <div class="t-small">
+                Trường <span class="t-mono">ngaySinh</span> đổi kiểu <span class="t-mono">string</span> →
+                <span class="t-mono">int/date</span>. Bên tiêu thụ dùng lược đồ cũ sẽ không đọc được dữ liệu mới.
+              </div>
+            </div>
+          </div>
+
+          <div class="finding">
+            <div class="finding__mark finding__mark--err">✕</div>
+            <div class="finding__text">
+              <div class="finding__title">Đổi kiểu dữ liệu trường bắt buộc</div>
+              <div class="finding__meta"><span class="t-mono">ngaySinh</span>: string → int (logicalType date)</div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--warn">⚠</div>
+            <div class="finding__text">
+              <div class="finding__title">Trường mới có vẻ chứa dữ liệu cá nhân</div>
+              <div class="finding__meta"><span class="t-mono">soCccd</span> — cần xác nhận đã đăng ký với <a href="privacy.html">PH-09</a> trước khi phát</div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--ok">✓</div>
+            <div class="finding__text">
+              <div class="finding__title">Đủ trường bắt buộc chung</div>
+              <div class="finding__meta"><span class="t-mono">eventId</span> · <span class="t-mono">eventTime</span> · <span class="t-mono">traceId</span></div>
+            </div>
+          </div>
+
+          <div class="card__actions mt-4">
+            <button class="btn" data-demo="Lưu lược đồ dưới dạng nháp">Lưu nháp</button>
+            <button class="btn btn--primary" disabled>Đăng ký lược đồ</button>
+          </div>
+          <div class="t-small t-muted mt-2">Bị chặn: còn 1 vi phạm tương thích.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Bên tiêu thụ theo phiên bản lược đồ</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Nhóm tiêu thụ</th><th>Hệ thống</th><th>Phiên bản đang dùng</th><th>Trạng thái</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">grp-mdm-cong-dan</td>
+            <td class="t-small">Dữ liệu chủ (PH-06)</td>
+            <td class="t-mono t-small">v4</td>
+            <td><span class="badge badge--ok">Mới nhất</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-bao-cao-dan-cu</td>
+            <td class="t-small">Báo cáo KPI (PH-16)</td>
+            <td class="t-mono t-small" style="color:var(--c-warn-700)">v2</td>
+            <td><span class="badge badge--warn">Còn dùng bản cũ</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">grp-cong-dvc-dan-cu</td>
+            <td class="t-small">Cổng dịch vụ công tỉnh</td>
+            <td class="t-mono t-small" style="color:var(--c-warn-700)">v3</td>
+            <td><span class="badge badge--warn">Còn dùng bản cũ</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="t-small t-muted mt-3">2 nhóm còn dùng phiên bản cũ — cần thông báo trước khi phát hành lược đồ mới.</div>
+  </div>
+
+  <!-- ===== UI-10-05: Giám sát CDC ===== -->
+  <div class="card__body hidden" data-panel="cdc" data-panel-group="ev">
+
+    <div class="alert alert--info mb-5">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Góc nhìn CDC từ phía Kafka</div>
+        <div class="t-small">
+          Màn này theo dõi luồng CDC <strong>đổ vào chủ đề Kafka</strong>. Cấu hình và xử lý
+          thay đổi lược đồ CSDL nguồn nằm ở <a href="adapters.html">Adapter kết nối (PH-05)</a>.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--4 mb-5">
+      <div class="card stat">
+        <div class="stat__label">Luồng CDC đang chạy</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-ok-700)">5</div>
+        <div class="stat__meta">Trên tổng 6 luồng đã cấu hình</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Luồng tạm dừng</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">1</div>
+        <div class="stat__meta"><span class="t-mono">ADP_HO_TICH_CDC</span></div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Sự kiện CDC / phút</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">2.418</div>
+        <div class="stat__meta">Đổ vào 4 chủ đề</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Độ trễ CDC lớn nhất</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">47.208s</div>
+        <div class="stat__meta">Ngưỡng cảnh báo 30 giây</div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Luồng CDC</th><th>Hệ thống nguồn</th><th>Chủ đề đích</th>
+            <th class="table__num">Sự kiện 24h</th><th class="table__num">Độ trễ</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">ADP_HO_TICH_CDC</td>
+            <td class="t-small">CSDL hộ tịch — Sở Tư pháp</td>
+            <td class="t-mono t-small">ho-tich.khai-sinh.v1</td>
+            <td class="table__num">0</td>
+            <td class="table__num" style="color:var(--c-err-700)">47.208s</td>
+            <td><span class="badge badge--err">Tạm dừng</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="adapters.html">Xử lý tại PH-05</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_DAN_CU_CDC</td>
+            <td class="t-small">CSDL dân cư — Công an tỉnh</td>
+            <td class="t-mono t-small">dan-cu.cong-dan.v2</td>
+            <td class="table__num">84.106</td>
+            <td class="table__num">1,8s</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết luồng CDC ADP_DAN_CU_CDC">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_DAT_DAI_CDC</td>
+            <td class="t-small">CSDL đất đai — Sở TN&amp;MT</td>
+            <td class="t-mono t-small">dat-dai.thua-dat.v2</td>
+            <td class="table__num">38.402</td>
+            <td class="table__num" style="color:var(--c-warn-700)">12,4s</td>
+            <td><span class="badge badge--warn">Chậm</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết luồng CDC ADP_DAT_DAI_CDC">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_VAN_BAN_CDC</td>
+            <td class="t-small">Quản lý văn bản — VP UBND tỉnh</td>
+            <td class="t-mono t-small">van-ban.van-ban-den.v1</td>
+            <td class="table__num">24.618</td>
+            <td class="table__num">2,1s</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết luồng CDC ADP_VAN_BAN_CDC">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_BAO_HIEM_CDC</td>
+            <td class="t-small">Bảo hiểm xã hội tỉnh</td>
+            <td class="t-mono t-small">bao-hiem.the-bhyt.v1</td>
+            <td class="table__num">6.404</td>
+            <td class="table__num">3,2s</td>
+            <td><span class="badge badge--ok">Đang chạy</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết luồng CDC ADP_BAO_HIEM_CDC">Chi tiết</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Luồng <span class="t-mono">ADP_DAT_DAI_CDC</span> chậm 12,4 giây</div>
+        <div class="t-small">
+          Vượt ngưỡng 5 giây theo cam kết nhưng chưa tới ngưỡng cảnh báo 30 giây.
+          Nguyên nhân nghi ngờ: broker <span class="t-mono">kafka-4</span> gần đầy đĩa làm chậm việc ghi.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-10-06: Phát lại sự kiện ===== -->
+  <div class="card__body hidden" data-panel="replay" data-panel-group="ev">
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Phát lại là thao tác mạnh và có rủi ro</div>
+        <div class="t-small">
+          Trước khi phát lại, hãy kiểm tra bên tiêu thụ có xử lý <strong>idempotent</strong> hay không —
+          nếu không, cùng một sự kiện xử lý hai lần có thể tạo dữ liệu trùng hoặc kích hoạt lại nghiệp vụ.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--main">
+      <div class="panel">
+        <div class="panel__head">Cấu hình phát lại</div>
+        <div class="panel__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label">Chủ đề <span class="field__req">*</span></label>
+              <select class="select">
+                <option>ho-tich.khai-sinh.v1</option>
+                <option>dan-cu.cong-dan.v2</option>
+                <option>dat-dai.thua-dat.v2</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label">Nhóm tiêu thụ <span class="field__req">*</span></label>
+              <select class="select">
+                <option>grp-ho-tich-mdm</option>
+                <option>grp-bao-cao-ho-tich</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Điểm bắt đầu <span class="field__req">*</span></label>
+            <div class="row mb-3" style="gap:var(--sp-4)">
+              <label class="check" style="margin:0"><input type="radio" name="tu" checked> <span class="t-small">Theo thời điểm</span></label>
+              <label class="check" style="margin:0"><input type="radio" name="tu"> <span class="t-small">Theo offset</span></label>
+            </div>
+            <input class="input" type="text" value="03/08/2026 02:00:00">
+            <div class="field__hint">Chọn theo thời điểm dễ dùng hơn — hệ thống tự quy đổi ra offset của từng phân vùng.</div>
+          </div>
+
+          <div class="alert alert--info">
+            <span class="alert__icon">ℹ</span>
+            <div>
+              <div class="alert__title">Ước tính sẽ phát lại 128.406 sự kiện</div>
+              <div class="t-small">Từ 03/08 02:00 tới hiện tại · 12 phân vùng · ước tính hoàn tất trong ≈ 4 phút.</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Chế độ phát lại <span class="field__req">*</span></label>
+            <label class="check"><input type="radio" name="mode" checked>
+              <span><strong>NEW_GROUP</strong> — tạo nhóm tiêu thụ mới
+                <span class="t-small t-muted">· An toàn: không ảnh hưởng nhóm hiện tại đang chạy.</span></span></label>
+            <label class="check"><input type="radio" name="mode">
+              <span><strong>TO_TOPIC</strong> — ghi sang chủ đề tạm
+                <span class="t-small t-muted">· Cho phép kiểm tra dữ liệu trước khi đưa vào xử lý thật.</span></span></label>
+            <label class="check"><input type="radio" name="mode">
+              <span><strong>RESET_OFFSET</strong> — đặt lại offset nhóm hiện tại
+                <span class="t-small" style="color:var(--c-err-700)">· Rủi ro cao: ảnh hưởng trực tiếp bên tiêu thụ đang chạy.</span></span></label>
+          </div>
+
+          <div class="alert alert--err">
+            <span class="alert__icon">✕</span>
+            <div>
+              <div class="alert__title">Nếu chọn RESET_OFFSET</div>
+              <div class="t-small">
+                Bắt buộc <strong>dừng nhóm tiêu thụ trước</strong>. Đặt lại offset khi nhóm đang chạy
+                gây tranh chấp offset và có thể bỏ sót sự kiện.
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Lý do phát lại <span class="field__req">*</span></label>
+            <textarea class="textarea" rows="3" placeholder="Nêu rõ sự cố dẫn tới việc phải phát lại…"></textarea>
+            <div class="field__hint">Bắt buộc — lý do được ghi vào nhật ký kiểm toán cùng người thực hiện.</div>
+          </div>
+
+          <label class="check"><input type="checkbox"> <span class="t-small">Tôi xác nhận đã kiểm tra bên tiêu thụ xử lý idempotent</span></label>
+
+          <div class="card__actions mt-4">
+            <button class="btn" data-demo="Hủy cấu hình phát lại">Hủy</button>
+            <button class="btn btn--primary" data-demo="Bắt đầu phát lại 128.406 sự kiện theo chế độ NEW_GROUP">▶ Bắt đầu phát lại</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel mb-4">
+          <div class="panel__head">Tiến độ phát lại đang chạy</div>
+          <div class="panel__body">
+            <div class="row row--between mb-2">
+              <span class="t-small t-mono">dat-dai.thua-dat.v2 → grp-replay-0803</span>
+              <span class="t-small t-mono">42%</span>
+            </div>
+            <div class="bar mb-3"><div class="bar__fill" style="width:42%"></div></div>
+            <dl class="dl t-small mb-4" style="grid-template-columns:120px 1fr">
+              <dt>Đã phát lại</dt><dd class="t-mono">38.406 / 91.204</dd>
+              <dt>Tốc độ</dt><dd class="t-mono">1.840 sự kiện/giây</dd>
+              <dt>Còn lại</dt><dd class="t-mono">≈ 29 giây</dd>
+              <dt>Chế độ</dt><dd><span class="badge badge--ok">NEW_GROUP</span></dd>
+              <dt>Người thực hiện</dt><dd>Nguyễn Văn Quản</dd>
+            </dl>
+            <button class="btn btn--sm btn--danger btn--block" data-demo="Dừng phát lại giữa chừng">■ Dừng phát lại</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">Lịch sử phát lại</div>
+          <div class="panel__body">
+            <div class="timeline">
+              <div class="tl-item tl-item--warn">
+                <div class="tl-time">03/08 15:18 · đang chạy</div>
+                <div class="tl-title">dat-dai.thua-dat.v2 · NEW_GROUP</div>
+                <div class="tl-desc">91.204 sự kiện · lý do: kho dữ liệu tỉnh mất dữ liệu do lỗi ETL ngày 02/08.</div>
+              </div>
+              <div class="tl-item tl-item--ok">
+                <div class="tl-time">28/07 09:42</div>
+                <div class="tl-title">van-ban.van-ban-den.v1 · TO_TOPIC</div>
+                <div class="tl-desc">18.402 sự kiện · kiểm tra dữ liệu trước khi nâng cấp bên tiêu thụ. Hoàn tất.</div>
+              </div>
+              <div class="tl-item tl-item--ok">
+                <div class="tl-time">14/07 16:20</div>
+                <div class="tl-title">ho-tich.khai-sinh.v1 · NEW_GROUP</div>
+                <div class="tl-desc">204.618 sự kiện · dựng lại chỉ mục tìm kiếm hộ tịch. Hoàn tất.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

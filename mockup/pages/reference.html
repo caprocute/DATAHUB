@@ -8,28 +8,1073 @@
 <script src="../js/theme.js"></script>
 <script>window.LGSP_PAGE = { id: 'reference', title: 'Danh mục dùng chung', crumbs: [
   { text: 'Trang chủ', href: 'index.html' }, { text: 'Danh mục dùng chung' }] };</script>
+<style>
+  /* Bổ sung cục bộ: app.css có .finding__mark--err/--warn, thiếu biến thể "đạt".
+     Dùng cho trường đã ánh xạ ở UI-07-05. Nên gộp vào css/app.css sau đợt này. */
+  .finding__mark--ok { color: var(--c-ok-700); }
+</style>
 </head>
 <body>
+
+<div class="mock-note">
+  <strong>PH-07 — Quản lý danh mục dùng chung (RDM).</strong>
+  Minh họa các màn <span class="tag-ph">UI-07-01</span> Danh sách danh mục,
+  <span class="tag-ph">UI-07-02</span> Quản lý mục và phiên bản,
+  <span class="tag-ph">UI-07-03</span> So sánh phiên bản và đánh giá tác động,
+  <span class="tag-ph">UI-07-04</span> Đồng bộ danh mục quốc gia,
+  <span class="tag-ph">UI-07-05</span> Trình ánh xạ từ điển quốc gia,
+  <span class="tag-ph">UI-07-06</span> Báo cáo độ phủ ánh xạ — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-07-rdm.md">SRS PH-07</a>.
+  Liên kết chéo: <a href="national.html">Kết nối quốc gia</a> (nguồn danh mục QG) ·
+  <a href="mdm.html">Dữ liệu chủ</a> (dữ liệu dùng danh mục).
+</div>
 
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Danh mục dùng chung</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-07</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Một nguồn sự thật cho mã danh mục toàn tỉnh — 38 danh mục, 24.816 mục dữ liệu</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Tải toàn bộ danh mục dạng JSON">↓ Xuất danh mục</button>
+    <button class="btn btn--primary" data-demo="Mở biểu mẫu tạo danh mục địa phương mới">+ Tạo danh mục</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-07</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-07.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="alert alert--err mb-6">
+  <span class="alert__icon">✕</span>
+  <div>
+    <div class="alert__title">Danh mục <span class="t-mono">DM_DON_VI_HANH_CHINH</span> chưa đồng bộ được 9 ngày</div>
+    <div class="t-small">
+      Lần đồng bộ gần nhất thành công 25/07/2026. Quá 7 ngày không đồng bộ được với nguồn quốc gia —
+      cần kiểm tra kết nối NDXP tại <a href="national.html">PH-14</a>.
+    </div>
+  </div>
+</div>
+
+<!-- ===== UI-07-01: Danh sách danh mục dùng chung ===== -->
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Tổng danh mục</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">38</div>
+    <div class="stat__meta">24.816 mục dữ liệu</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Nguồn quốc gia</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">21</div>
+    <div class="stat__meta">Khóa, chỉ đọc — đồng bộ tự động</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Nguồn địa phương</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">14</div>
+    <div class="stat__meta">Tỉnh tự ban hành và duy trì</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Chờ xác nhận</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">3</div>
+    <div class="stat__meta">Thay đổi phá vỡ cần cán bộ quyết định</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="rdm" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="list">Danh sách <span class="tab__count">38</span></button>
+    <button class="tab" data-tab="items">Mục</button>
+    <button class="tab" data-tab="diff">So sánh</button>
+    <button class="tab" data-tab="sync">Đồng bộ <span class="tab__count">3</span></button>
+    <button class="tab" data-tab="map">Ánh xạ</button>
+    <button class="tab" data-tab="coverage">Độ phủ</button>
+  </div>
+
+  <!-- Tab: Danh sách — UI-07-01 -->
+  <div class="card__body" data-panel="list" data-panel-group="rdm">
+
+    <div class="row mb-4" style="gap:var(--sp-2);flex-wrap:wrap;align-items:flex-end">
+      <div class="search" style="min-width:240px">
+        <input class="input" type="search" placeholder="Tìm theo mã hoặc tên danh mục…">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Mọi nguồn gốc</option><option>Quốc gia</option><option>Địa phương</option><option>Hỗn hợp</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi đơn vị chủ quản</option>
+        <option>Sở Nội vụ</option><option>Sở Tư pháp</option><option>Sở TT&amp;TT</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi trạng thái</option><option>Đang hiệu lực</option><option>Bản nháp</option><option>Ngừng dùng</option>
+      </select>
+      <button class="btn" data-demo="Áp dụng bộ lọc danh mục">Lọc</button>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã danh mục</th><th>Tên</th><th>Đơn vị chủ quản</th><th>Nguồn gốc</th>
+            <th class="table__num">Số mục</th><th>Phiên bản</th><th>Hiệu lực từ</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">DM_DON_VI_HANH_CHINH <span class="badge badge--warn">⚠ Chờ xác nhận</span></td>
+            <td class="t-small">Đơn vị hành chính</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--info">🔒 Quốc gia</span></td>
+            <td class="table__num">10.604</td>
+            <td class="t-mono t-small">v2026.2</td>
+            <td class="t-small">01/07/2026</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục đơn vị hành chính">Xem</button>
+              <button class="btn btn--sm" data-demo="Đồng bộ ngay với danh mục quốc gia">Đồng bộ</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_DAN_TOC</td>
+            <td class="t-small">Dân tộc</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--info">🔒 Quốc gia</span></td>
+            <td class="table__num">54</td>
+            <td class="t-mono t-small">v2024.1</td>
+            <td class="t-small">15/03/2024</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục dân tộc">Xem</button>
+              <button class="btn btn--sm" data-demo="Đồng bộ ngay với danh mục quốc gia">Đồng bộ</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_TON_GIAO</td>
+            <td class="t-small">Tôn giáo</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--info">🔒 Quốc gia</span></td>
+            <td class="table__num">16</td>
+            <td class="t-mono t-small">v2024.1</td>
+            <td class="t-small">15/03/2024</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục tôn giáo">Xem</button>
+              <button class="btn btn--sm" data-demo="Đồng bộ ngay với danh mục quốc gia">Đồng bộ</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_NGHE_NGHIEP <span class="badge badge--warn">⚠ Chờ xác nhận</span></td>
+            <td class="t-small">Nghề nghiệp</td>
+            <td class="t-small">Sở Lao động — Thương binh &amp; Xã hội</td>
+            <td><span class="badge badge--info">🔒 Quốc gia</span></td>
+            <td class="table__num">642</td>
+            <td class="t-mono t-small">v2026.1</td>
+            <td class="t-small">01/01/2026</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục nghề nghiệp">Xem</button>
+              <button class="btn btn--sm" data-demo="Đồng bộ ngay với danh mục quốc gia">Đồng bộ</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_TRINH_DO_HOC_VAN</td>
+            <td class="t-small">Trình độ học vấn</td>
+            <td class="t-small">Sở Giáo dục &amp; Đào tạo</td>
+            <td><span class="badge badge--plain">Hỗn hợp</span></td>
+            <td class="table__num">14</td>
+            <td class="t-mono t-small">v1.3</td>
+            <td class="t-small">10/05/2026</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục trình độ học vấn">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạo phiên bản mới cho danh mục trình độ học vấn">Tạo phiên bản</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_LOAI_HO_SO_TTHC</td>
+            <td class="t-small">Loại hồ sơ thủ tục hành chính</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td><span class="badge badge--plain">Địa phương</span></td>
+            <td class="table__num">1.842</td>
+            <td class="t-mono t-small">v3.2</td>
+            <td class="t-small">20/06/2026</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục loại hồ sơ">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạo phiên bản mới cho danh mục loại hồ sơ">Tạo phiên bản</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_CO_QUAN_TINH</td>
+            <td class="t-small">Cơ quan nhà nước cấp tỉnh</td>
+            <td class="t-small">Sở Nội vụ</td>
+            <td><span class="badge badge--plain">Địa phương</span></td>
+            <td class="table__num">96</td>
+            <td class="t-mono t-small">v2.1</td>
+            <td class="t-small">01/06/2026</td>
+            <td><span class="badge badge--ok">Đang hiệu lực</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục cơ quan">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạo phiên bản mới cho danh mục cơ quan">Tạo phiên bản</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DM_MUC_DICH_KHAI_THAC</td>
+            <td class="t-small">Mục đích khai thác dữ liệu</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td><span class="badge badge--plain">Địa phương</span></td>
+            <td class="table__num">18</td>
+            <td class="t-mono t-small">v1.0-nhap</td>
+            <td class="t-small t-muted">chưa phát hành</td>
+            <td><span class="badge badge--muted">Bản nháp</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết danh mục mục đích khai thác">Xem</button>
+              <button class="btn btn--sm" data-demo="Trình duyệt phát hành danh mục">Trình duyệt</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--info mt-4" style="margin-bottom:0">
+      <span class="alert__icon">🔒</span>
+      <div class="t-small">Danh mục nguồn quốc gia có biểu tượng khóa — chỉ đọc, không sửa được mục. Mọi thay đổi đến từ đồng bộ với nguồn quốc gia.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-07-02: Quản lý mục và phiên bản ===== -->
+  <div class="card__body hidden" data-panel="items" data-panel-group="rdm">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div class="field" style="margin:0;min-width:300px">
+        <label class="field__label">Danh mục</label>
+        <select class="select">
+          <option>DM_LOAI_HO_SO_TTHC — Loại hồ sơ thủ tục hành chính</option>
+          <option>DM_CO_QUAN_TINH — Cơ quan nhà nước cấp tỉnh</option>
+          <option>DM_DAN_TOC — Dân tộc (khóa)</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;min-width:180px">
+        <label class="field__label">Phiên bản</label>
+        <select class="select"><option>v3.3 (bản nháp)</option><option>v3.2 (đang hiệu lực)</option><option>v3.1</option></select>
+      </div>
+      <button class="btn btn--primary" data-demo="Thêm mục mới vào danh mục">+ Thêm mục</button>
+    </div>
+
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Đang xem bản nháp v3.3 — chưa phát hành</div>
+        <div class="t-small">Thay đổi trên bản nháp không ảnh hưởng hệ thống đang chạy. Sang tab <strong>So sánh</strong> để xem tác động trước khi phát hành.</div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr><th>Mã mục</th><th>Tên mục</th><th>Mã cha</th><th>Thứ tự</th><th>Hiệu lực từ</th><th>Trạng thái</th><th>Thay đổi ở v3.3</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">HS_DAT_DAI</td>
+            <td class="t-small">Hồ sơ đất đai</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__num">1</td>
+            <td class="t-small">01/01/2024</td>
+            <td><span class="badge badge--ok">Hiệu lực</span></td>
+            <td class="t-muted t-small">Không đổi</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa mục HS_DAT_DAI">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HS_DAT_DAI_CHUYEN_NHUONG</td>
+            <td class="t-small">Chuyển nhượng quyền sử dụng đất</td>
+            <td class="t-mono t-small">HS_DAT_DAI</td>
+            <td class="table__num">2</td>
+            <td class="t-small">01/01/2024</td>
+            <td><span class="badge badge--ok">Hiệu lực</span></td>
+            <td class="t-muted t-small">Không đổi</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa mục HS_DAT_DAI_CHUYEN_NHUONG">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HS_HO_TICH_KHAI_SINH</td>
+            <td class="t-small">Đăng ký khai sinh</td>
+            <td class="t-mono t-small">HS_HO_TICH</td>
+            <td class="table__num">5</td>
+            <td class="t-small">01/01/2024</td>
+            <td><span class="badge badge--ok">Hiệu lực</span></td>
+            <td class="t-small" style="color:var(--c-warn-700)">Sửa tên mục</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa mục HS_HO_TICH_KHAI_SINH">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HS_HO_TICH_KHAI_SINH_LAI</td>
+            <td class="t-small">Đăng ký khai sinh lại</td>
+            <td class="t-mono t-small">HS_HO_TICH</td>
+            <td class="table__num">6</td>
+            <td class="t-small">01/08/2026</td>
+            <td><span class="badge badge--info">Mới</span></td>
+            <td class="t-small" style="color:var(--c-ok-700)">Thêm mới ở v3.3</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa mục HS_HO_TICH_KHAI_SINH_LAI">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HS_KINH_DOANH_HO_CA_THE</td>
+            <td class="t-small">Đăng ký hộ kinh doanh cá thể</td>
+            <td class="t-mono t-small">HS_KINH_DOANH</td>
+            <td class="table__num">12</td>
+            <td class="t-small">01/01/2024</td>
+            <td><span class="badge badge--err">Ngừng dùng</span></td>
+            <td class="t-small" style="color:var(--c-err-700)">Ngừng ở v3.3 → thay bằng <span class="t-mono">HS_KINH_DOANH_HKD</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa mục HS_KINH_DOANH_HO_CA_THE">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HS_XAY_DUNG_GIAY_PHEP</td>
+            <td class="t-small">Cấp giấy phép xây dựng</td>
+            <td class="t-mono t-small">HS_XAY_DUNG</td>
+            <td class="table__num">18</td>
+            <td class="t-small">01/01/2024</td>
+            <td><span class="badge badge--err">Ngừng dùng</span></td>
+            <td class="t-small" style="color:var(--c-warn-700)">Ngừng ở v3.3 — <strong>chưa khai báo mã thay thế</strong></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Khai báo mã thay thế cho HS_XAY_DUNG_GIAY_PHEP">Khai thay thế</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Biểu mẫu mục</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Mã mục <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="HS_HO_TICH_KHAI_SINH_LAI">
+            <div class="field__hint">Mã đã phát hành không được đổi — chỉ ngừng dùng và khai mã thay thế.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Tên mục <span class="field__req">*</span></label>
+            <input class="input" type="text" value="Đăng ký khai sinh lại">
+          </div>
+          <div class="field">
+            <label class="field__label">Mã cha</label>
+            <select class="select"><option>HS_HO_TICH — Hồ sơ hộ tịch</option><option>(không có cha)</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label">Hiệu lực từ <span class="field__req">*</span></label>
+            <input class="input" type="text" value="01/08/2026">
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Hủy thay đổi mục">Hủy</button>
+            <button class="btn btn--primary" data-demo="Lưu mục vào bản nháp v3.3">Lưu vào bản nháp</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Lịch sử phiên bản — <span class="t-mono">DM_LOAI_HO_SO_TTHC</span></div>
+        <div class="panel__body">
+          <div class="timeline">
+            <div class="tl-item tl-item--warn">
+              <div class="tl-time">Đang soạn</div>
+              <div class="tl-title">v3.3 — bản nháp</div>
+              <div class="tl-desc">+1 thêm mới · 1 sửa đổi · 2 ngừng dùng. Chưa phát hành.</div>
+            </div>
+            <div class="tl-item tl-item--ok">
+              <div class="tl-time">20/06/2026</div>
+              <div class="tl-title">v3.2 — đang hiệu lực</div>
+              <div class="tl-desc">Phát hành bởi Trần Thị Mai · +34 mã mới theo QĐ 1204/QĐ-UBND.</div>
+            </div>
+            <div class="tl-item tl-item--ok">
+              <div class="tl-time">14/02/2026</div>
+              <div class="tl-title">v3.1</div>
+              <div class="tl-desc">Phát hành bởi Trần Thị Mai · sửa tên 8 mã theo góp ý Sở Tư pháp.</div>
+            </div>
+            <div class="tl-item tl-item--ok">
+              <div class="tl-time">01/01/2024</div>
+              <div class="tl-title">v3.0 — phiên bản gốc</div>
+              <div class="tl-desc">Khởi tạo 1.808 mã từ danh mục TTHC của tỉnh.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-07-03: So sánh phiên bản và đánh giá tác động ===== -->
+  <div class="card__body hidden" data-panel="diff" data-panel-group="rdm">
+
+    <div class="row mb-4" style="gap:var(--sp-3);flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="margin:0;min-width:200px">
+        <label class="field__label">Phiên bản gốc</label>
+        <select class="select"><option>v3.2 (đang hiệu lực)</option><option>v3.1</option><option>v3.0</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:200px">
+        <label class="field__label">Phiên bản so sánh</label>
+        <select class="select"><option>v3.3 (bản nháp)</option><option>v3.2 (đang hiệu lực)</option></select>
+      </div>
+      <button class="btn" data-demo="Chạy lại so sánh hai phiên bản">So sánh</button>
+      <button class="btn" data-demo="Xuất báo cáo khác biệt ra tệp để gửi các đơn vị">↓ Xuất báo cáo khác biệt</button>
+    </div>
+
+    <div class="grid grid--3 mb-5">
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-ok-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Thêm mới</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-ok-700)">1</div>
+          <div class="t-small t-muted">Mã mới, không ảnh hưởng hệ thống đang chạy</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-warn-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Sửa đổi</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-warn-700)">1</div>
+          <div class="t-small t-muted">Đổi tên hiển thị, giữ nguyên mã</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-err-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Ngừng dùng</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">2</div>
+          <div class="t-small t-muted">Cần mã thay thế và kế hoạch chuyển đổi</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert--ok mb-4">
+      <span class="alert__icon">✓</span>
+      <div>
+        <div class="alert__title">Mức thay đổi 0,22% — dưới ngưỡng 10%</div>
+        <div class="t-small">4/1.842 mã bị ảnh hưởng. Không cần phê duyệt lãnh đạo, cán bộ quản trị dữ liệu được phép phát hành.</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng khác biệt chi tiết</div>
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr><th>Nhóm</th><th>Mã mục</th><th>Nội dung thay đổi</th><th>Mã thay thế</th><th class="table__num">Bản ghi đang dùng</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge--ok">Thêm mới</span></td>
+            <td class="t-mono t-small">HS_HO_TICH_KHAI_SINH_LAI</td>
+            <td class="t-small">Thêm mã "Đăng ký khai sinh lại" dưới nhóm hộ tịch</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__num t-muted">0</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Sửa đổi</span></td>
+            <td class="t-mono t-small">HS_HO_TICH_KHAI_SINH</td>
+            <td class="t-small">Tên: "Khai sinh" → "Đăng ký khai sinh"</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__num">64.210</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--err">Ngừng dùng</span></td>
+            <td class="t-mono t-small">HS_KINH_DOANH_HO_CA_THE</td>
+            <td class="t-small">Ngừng dùng theo Luật Doanh nghiệp sửa đổi</td>
+            <td class="t-mono t-small" style="color:var(--c-ok-700)">HS_KINH_DOANH_HKD</td>
+            <td class="table__num" style="color:var(--c-warn-700)">3.418</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--err">Ngừng dùng</span></td>
+            <td class="t-mono t-small">HS_XAY_DUNG_GIAY_PHEP</td>
+            <td class="t-small">Gộp vào thủ tục cấp phép xây dựng liên thông</td>
+            <td class="t-small" style="color:var(--c-warn-700)"><strong>Chưa khai báo</strong></td>
+            <td class="table__num" style="color:var(--c-err-700)">12.804</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">1 mã ngừng dùng chưa khai báo mã thay thế</div>
+        <div class="t-small">
+          <span class="t-mono">HS_XAY_DUNG_GIAY_PHEP</span> đang có 12.804 bản ghi sử dụng.
+          Vẫn được phép phát hành, nhưng các hệ thống sẽ không biết chuyển sang mã nào —
+          nên khai báo mã thay thế trước.
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Đánh giá tác động — hệ thống đang dùng danh mục này</div>
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr><th>Hệ thống</th><th>Đơn vị chủ quản</th><th class="table__num">Lượt tra cứu 30 ngày</th><th>Mã bị ảnh hưởng</th><th>Mức tác động</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">HE_THONG_MOT_CUA</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td class="table__num">1.284.062</td>
+            <td class="t-small">Cả 4 mã</td>
+            <td><span class="badge badge--err">Cao</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">CONG_DVC_TINH</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="table__num">846.118</td>
+            <td class="t-small">3 mã (trừ mã mới)</td>
+            <td><span class="badge badge--err">Cao</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HE_THONG_HO_TICH</td>
+            <td class="t-small">Sở Tư pháp</td>
+            <td class="table__num">204.630</td>
+            <td class="t-small">2 mã hộ tịch</td>
+            <td><span class="badge badge--warn">Trung bình</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HE_THONG_XAY_DUNG</td>
+            <td class="t-small">Sở Xây dựng</td>
+            <td class="table__num">48.947</td>
+            <td class="t-mono t-small">HS_XAY_DUNG_GIAY_PHEP</td>
+            <td><span class="badge badge--err">Cao</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HE_THONG_KE_HOACH_DT</td>
+            <td class="t-small">Sở Kế hoạch &amp; Đầu tư</td>
+            <td class="table__num">12.408</td>
+            <td class="t-mono t-small">HS_KINH_DOANH_HO_CA_THE</td>
+            <td><span class="badge badge--warn">Trung bình</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--ok mb-4">
+      <span class="alert__icon">✓</span>
+      <div>
+        <div class="alert__title">Kiểm tra toàn vẹn đạt</div>
+        <div class="t-small">Không có mã cha thiếu, không có vòng lặp phân cấp — đủ điều kiện phát hành.</div>
+      </div>
+    </div>
+
+    <div class="card__actions">
+      <button class="btn" data-demo="Trình lãnh đạo duyệt phát hành phiên bản v3.3">Trình duyệt</button>
+      <button class="btn btn--primary" data-demo="Phát hành phiên bản v3.3 — thông báo tới 5 hệ thống bị ảnh hưởng">Phát hành v3.3</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-07-04: Đồng bộ danh mục quốc gia ===== -->
+  <div class="card__body hidden" data-panel="sync" data-panel-group="rdm">
+
+    <div class="grid grid--4 mb-5">
+      <div class="card stat">
+        <div class="stat__label">Lần đồng bộ cuối</div>
+        <div class="stat__value" style="font-size:var(--fs-lg);color:var(--c-err-700)">25/07/2026</div>
+        <div class="t-small t-muted">9 ngày trước — vượt ngưỡng 7 ngày</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Kết quả</div>
+        <div class="stat__value" style="font-size:var(--fs-lg);color:var(--c-err-700)">Thất bại</div>
+        <div class="t-small t-muted">Hết thời gian chờ NDXP</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Thay đổi phát hiện</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">47</div>
+        <div class="t-small t-muted">44 tự áp dụng · 3 chờ xác nhận</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Chờ cán bộ quyết định</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-warn-700)">3</div>
+        <div class="t-small t-muted">Đều là thay đổi phá vỡ</div>
+      </div>
+    </div>
+
+    <div class="row mb-5" style="gap:var(--sp-2)">
+      <button class="btn btn--primary" data-demo="Đồng bộ ngay với danh mục quốc gia qua NDXP">⟳ Đồng bộ ngay</button>
+      <a class="btn" href="national.html">Kiểm tra kết nối NDXP →</a>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Thay đổi phá vỡ đang chờ xác nhận</div>
+
+    <div class="panel mb-4">
+      <div class="panel__head">
+        <span class="badge badge--err">Phá vỡ</span>
+        <span class="t-mono t-small" style="margin-left:var(--sp-2)">DM_DON_VI_HANH_CHINH</span>
+      </div>
+      <div class="panel__body">
+        <dl class="dl mb-4">
+          <dt>Loại thay đổi</dt><dd>Sáp nhập đơn vị hành chính — ngừng 2 mã, thêm 1 mã</dd>
+          <dt>Mã bị ảnh hưởng</dt>
+          <dd class="t-mono t-small">
+            26533 (Phường Đông Hải) · 26536 (Phường Tây Hải) → 26540 (Phường Hải Châu)
+          </dd>
+          <dt>Căn cứ</dt><dd class="t-small">Nghị quyết của Ủy ban Thường vụ Quốc hội về sắp xếp đơn vị hành chính</dd>
+        </dl>
+
+        <div class="card__title mb-2" style="font-size:var(--fs-md)">Hệ thống bị ảnh hưởng</div>
+        <div class="table-wrap mb-4">
+          <table class="table">
+            <thead><tr><th>Hệ thống</th><th>Đơn vị chủ quản</th><th class="table__num">Bản ghi đang dùng mã cũ</th></tr></thead>
+            <tbody>
+              <tr><td class="t-mono t-small">HE_THONG_MOT_CUA</td><td class="t-small">Văn phòng UBND tỉnh</td><td class="table__num" style="color:var(--c-err-700)">18.406</td></tr>
+              <tr><td class="t-mono t-small">HE_THONG_HO_TICH</td><td class="t-small">Sở Tư pháp</td><td class="table__num" style="color:var(--c-err-700)">9.842</td></tr>
+              <tr><td class="t-mono t-small">HE_THONG_DAT_DAI</td><td class="t-small">Sở TN&amp;MT</td><td class="table__num">4.218</td></tr>
+              <tr><td class="t-mono t-small">HE_THONG_BAO_HIEM_XH</td><td class="t-small">Bảo hiểm xã hội tỉnh</td><td class="table__num">2.104</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="field">
+          <label class="field__label">Lý do quyết định <span class="field__req">*</span></label>
+          <textarea class="textarea" rows="2" placeholder="Nêu rõ căn cứ và kế hoạch chuyển đổi dữ liệu…"></textarea>
+        </div>
+        <label class="check"><input type="checkbox"> <span class="t-small">Tôi xác nhận đã đánh giá tác động với 4 hệ thống nêu trên và đã thông báo cho đơn vị chủ quản</span></label>
+
+        <div class="card__actions mt-4">
+          <button class="btn btn--danger" data-demo="Từ chối áp dụng thay đổi sáp nhập đơn vị hành chính">Từ chối</button>
+          <button class="btn btn--primary" data-demo="Xác nhận áp dụng thay đổi sáp nhập đơn vị hành chính">Xác nhận áp dụng</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel mb-5">
+      <div class="panel__head">
+        <span class="badge badge--err">Phá vỡ</span>
+        <span class="t-mono t-small" style="margin-left:var(--sp-2)">DM_NGHE_NGHIEP</span>
+      </div>
+      <div class="panel__body">
+        <dl class="dl mb-3">
+          <dt>Loại thay đổi</dt><dd>Ngừng 12 mã nghề nghiệp theo phân loại nghề mới</dd>
+          <dt>Mã bị ảnh hưởng</dt><dd class="t-mono t-small">2141, 2142, 2143 … (12 mã) → gộp vào nhóm 21</dd>
+          <dt>Bản ghi ảnh hưởng</dt><dd>6.842 bản ghi trên 3 hệ thống</dd>
+        </dl>
+        <div class="card__actions">
+          <button class="btn btn--sm" data-demo="Xem đầy đủ chi tiết thay đổi danh mục nghề nghiệp">Xem chi tiết</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký đồng bộ</div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Thời điểm</th><th>Danh mục</th><th>Kết quả</th><th class="table__num">Thay đổi</th><th>Ghi chú</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-small">03/08/2026 02:00</td>
+            <td class="t-mono t-small">DM_DON_VI_HANH_CHINH</td>
+            <td><span class="badge badge--err">Thất bại</span></td>
+            <td class="table__num">—</td>
+            <td class="t-small">Hết thời gian chờ NDXP sau 30 giây</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem nhật ký lỗi đồng bộ">Nhật ký</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">02/08/2026 02:00</td>
+            <td class="t-mono t-small">DM_DON_VI_HANH_CHINH</td>
+            <td><span class="badge badge--err">Thất bại</span></td>
+            <td class="table__num">—</td>
+            <td class="t-small">Hết thời gian chờ NDXP sau 30 giây</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem nhật ký lỗi đồng bộ">Nhật ký</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">25/07/2026 02:00</td>
+            <td class="t-mono t-small">DM_DON_VI_HANH_CHINH</td>
+            <td><span class="badge badge--warn">Có thay đổi phá vỡ</span></td>
+            <td class="table__num">47</td>
+            <td class="t-small">44 tự áp dụng · 3 chờ xác nhận</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lại báo cáo khác biệt lần đồng bộ 25/07">Báo cáo</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">18/07/2026 02:00</td>
+            <td class="t-mono t-small">DM_DAN_TOC</td>
+            <td><span class="badge badge--ok">Thành công</span></td>
+            <td class="table__num">0</td>
+            <td class="t-small">Không có thay đổi</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lại báo cáo khác biệt lần đồng bộ 18/07">Báo cáo</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">11/07/2026 02:00</td>
+            <td class="t-mono t-small">DM_NGHE_NGHIEP</td>
+            <td><span class="badge badge--ok">Thành công</span></td>
+            <td class="table__num">8</td>
+            <td class="t-small">8 thay đổi không phá vỡ — đã tự áp dụng</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lại báo cáo khác biệt lần đồng bộ 11/07">Báo cáo</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--info mt-4" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Thay đổi <strong>không phá vỡ</strong> (thêm mã mới, sửa tên hiển thị) được tự động áp dụng và chỉ hiển thị để biết. Chỉ thay đổi phá vỡ mới cần cán bộ quyết định.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-07-05: Trình ánh xạ từ điển quốc gia ===== -->
+  <div class="card__body hidden" data-panel="map" data-panel-group="rdm">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div class="field" style="margin:0;min-width:300px">
+        <label class="field__label">Thực thể CDM địa phương</label>
+        <select class="select">
+          <option>CongDan v2.1 — Công dân</option>
+          <option>DoanhNghiep v1.4 — Doanh nghiệp</option>
+          <option>ThuaDat v1.2 — Thửa đất</option>
+        </select>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Đánh dấu ánh xạ hiện tại là tạm thời — bắt buộc nhập lý do">⚑ Đánh dấu tạm thời</button>
+        <button class="btn btn--sm" data-demo="Xem trước bản tin mẫu chạy qua ánh xạ hiện tại">Xem trước</button>
+      </div>
+    </div>
+
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">1 trường bắt buộc chưa ánh xạ — không thể chuyển sang trạng thái ACTIVE</div>
+        <div class="t-small">Trường <span class="t-mono">soDinhDanhCaNhan</span> của Từ điển dữ liệu quốc gia chưa có nguồn từ CDM địa phương.</div>
+      </div>
+    </div>
+
+    <div class="diff mb-5">
+      <div>
+        <div class="diff__col-label">CDM địa phương — <span class="t-mono">CongDan v2.1</span></div>
+        <div class="panel">
+          <div class="panel__body" style="padding:var(--sp-2)">
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">hoTen</div>
+              <div class="finding__meta">string · bắt buộc</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">ngaySinh</div>
+              <div class="finding__meta">date</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">gioiTinh</div>
+              <div class="finding__meta">string · giá trị "Nam"/"Nữ"</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">maDanToc</div>
+              <div class="finding__meta">string · tra <span class="t-mono">DM_DAN_TOC</span></div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">noiThuongTru.maXa</div>
+              <div class="finding__meta">string · tra <span class="t-mono">DM_DON_VI_HANH_CHINH</span></div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">soCccd</div>
+              <div class="finding__meta">string · 12 chữ số</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="diff__col-label">Từ điển dữ liệu quốc gia — <span class="t-mono">CongDan</span></div>
+        <div class="panel">
+          <div class="panel__body" style="padding:var(--sp-2)">
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">hoVaTen</div>
+              <div class="finding__meta">string · bắt buộc · ← hoTen</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">ngaySinh</div>
+              <div class="finding__meta">date · ← ngaySinh</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--warn">⚠</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">gioiTinh</div>
+              <div class="finding__meta">enum <span class="t-mono">1|2|3</span> · ← gioiTinh <span style="color:var(--c-warn-700)">(cần ánh xạ giá trị)</span></div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">maDanToc</div>
+              <div class="finding__meta">string · ← maDanToc (cùng danh mục QG)</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--warn">⚑</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">maDonViHanhChinhCap3</div>
+              <div class="finding__meta" style="color:var(--c-warn-700)">← noiThuongTru.maXa · <strong>ánh xạ tạm thời</strong></div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--err">✕</div><div class="finding__text">
+              <div class="finding__title t-mono t-small" style="color:var(--c-err-700)">soDinhDanhCaNhan</div>
+              <div class="finding__meta" style="color:var(--c-err-700)">string · <strong>bắt buộc · chưa ánh xạ</strong></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng quy tắc chuyển đổi</div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Trường CDM</th><th>Trường Từ điển QG</th><th>Quy tắc chuyển giá trị</th><th>Ánh xạ mã</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">hoTen</td>
+            <td class="t-mono t-small">hoVaTen</td>
+            <td class="t-small">Sao chép nguyên, chuẩn hóa Unicode NFC</td>
+            <td class="t-muted t-small">—</td>
+            <td><span class="badge badge--ok">Chính thức</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc ánh xạ trường hoTen">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">gioiTinh</td>
+            <td class="t-mono t-small">gioiTinh</td>
+            <td class="t-small">Ánh xạ giá trị theo bảng bên</td>
+            <td class="t-mono t-small">Nam→1 · Nữ→2 · (khác)→3</td>
+            <td><span class="badge badge--ok">Chính thức</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa bảng ánh xạ giá trị giới tính">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">maDanToc</td>
+            <td class="t-mono t-small">maDanToc</td>
+            <td class="t-small">Sao chép nguyên</td>
+            <td class="t-small">Cùng <span class="t-mono">DM_DAN_TOC</span> nguồn quốc gia</td>
+            <td><span class="badge badge--ok">Chính thức</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc ánh xạ trường maDanToc">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">noiThuongTru.maXa</td>
+            <td class="t-mono t-small">maDonViHanhChinhCap3</td>
+            <td class="t-small">Sao chép nguyên</td>
+            <td class="t-small">Chờ danh mục QG cập nhật sau sáp nhập</td>
+            <td><span class="badge badge--warn">⚑ Tạm thời</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lý do đánh dấu ánh xạ tạm thời">Xem lý do</button></td>
+          </tr>
+          <tr>
+            <td class="t-muted t-small">(chưa có nguồn)</td>
+            <td class="t-mono t-small" style="color:var(--c-err-700)">soDinhDanhCaNhan</td>
+            <td class="t-small" style="color:var(--c-err-700)">Chưa khai báo</td>
+            <td class="t-muted t-small">—</td>
+            <td><span class="badge badge--err">Thiếu</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Tạo ánh xạ cho trường soDinhDanhCaNhan">Ánh xạ</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2 mb-4">
+      <div class="panel">
+        <div class="panel__head">Lý do ánh xạ tạm thời</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Trường</label>
+            <input class="input input--mono" type="text" value="maDonViHanhChinhCap3" readonly>
+          </div>
+          <div class="field">
+            <label class="field__label">Lý do <span class="field__req">*</span></label>
+            <textarea class="textarea" rows="3">Từ điển dữ liệu quốc gia chưa cập nhật mã xã mới sau sáp nhập đơn vị hành chính. Tạm ánh xạ theo mã cũ, rà soát lại khi bản danh mục quốc gia mới được ban hành.</textarea>
+            <div class="field__hint">Bắt buộc nhập lý do khi đánh dấu tạm thời (BR-07-009).</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Ngày tạo</label>
+            <input class="input" type="text" value="26/07/2026" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Xem trước bản tin mẫu</div>
+        <div class="panel__body">
+          <pre class="code"><span class="c">// CDM địa phương → Từ điển dữ liệu quốc gia</span>
+{
+  <span class="k">"hoVaTen"</span>: <span class="s">"Nguyễn Thị Lan"</span>,
+  <span class="k">"ngaySinh"</span>: <span class="s">"1988-11-04"</span>,
+  <span class="k">"gioiTinh"</span>: <span class="n">2</span>,          <span class="c">// "Nữ" → 2</span>
+  <span class="k">"maDanToc"</span>: <span class="s">"01"</span>,        <span class="c">// Kinh</span>
+  <span class="k">"maDonViHanhChinhCap3"</span>: <span class="s">"26533"</span>,
+  <span class="del">  "soDinhDanhCaNhan": null   // BẮT BUỘC — thiếu</span>
+}</pre>
+          <div class="alert alert--warn mt-3" style="margin-bottom:0">
+            <span class="alert__icon">⚠</span>
+            <div class="t-small">Bản tin này sẽ bị NDXP/NDOP từ chối vì thiếu trường bắt buộc.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__actions">
+      <button class="btn" data-demo="Lưu ánh xạ ở trạng thái nháp">Lưu nháp</button>
+      <button class="btn" disabled>Chuyển sang ACTIVE</button>
+      <span class="t-small t-muted">Bị chặn: còn 1 trường bắt buộc chưa ánh xạ.</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-07-06: Báo cáo độ phủ ánh xạ ===== -->
+  <div class="card__body hidden" data-panel="coverage" data-panel-group="rdm">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Độ phủ ánh xạ sang Từ điển dữ liệu quốc gia</div>
+        <div class="card__sub">Số liệu tính đến 03/08/2026 · phục vụ báo cáo KPI tuân thủ cho <a href="kpi.html">PH-16</a></div>
+      </div>
+      <button class="btn" data-demo="Xuất báo cáo độ phủ ánh xạ cho PH-16">↓ Xuất báo cáo</button>
+    </div>
+
+    <div class="grid grid--4 mb-5">
+      <div class="card stat">
+        <div class="stat__label">Độ phủ chung</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">78,4%</div>
+        <div class="stat__delta stat__delta--up">▲ 6,2 điểm so với quý trước</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Thực thể đầy đủ</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-ok-700)">4</div>
+        <div class="stat__meta">Gửi được lên NDXP/NDOP</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Thực thể còn thiếu</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">3</div>
+        <div class="stat__meta">Còn trường bắt buộc chưa ánh xạ</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Ánh xạ tạm thời</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">6</div>
+        <div class="stat__meta">Rà soát khi từ điển QG ban hành</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Độ phủ theo thực thể CDM</div>
+    <div class="col mb-5" style="gap:var(--sp-3)">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">CongDan v2.1</span><span class="t-small" style="color:var(--c-err-700)">83% · thiếu 1 trường bắt buộc</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:83%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">DoanhNghiep v1.4</span><span class="t-small" style="color:var(--c-ok-700)">100%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">ThuaDat v1.2</span><span class="t-small" style="color:var(--c-err-700)">64% · thiếu 3 trường bắt buộc</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:64%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">HoSoTTHC v2.0</span><span class="t-small" style="color:var(--c-ok-700)">100%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">KhaiSinh v1.1</span><span class="t-small" style="color:var(--c-ok-700)">100%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">VanBanDienTu v1.0</span><span class="t-small" style="color:var(--c-ok-700)">100%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small t-mono">HoSoSucKhoe v0.9</span><span class="t-small" style="color:var(--c-err-700)">41% · thiếu 6 trường bắt buộc</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:41%"></div></div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thực thể CDM</th><th class="table__num">Tổng trường</th><th class="table__num">Đã ánh xạ</th>
+            <th class="table__num">Bắt buộc chưa ánh xạ</th><th class="table__num">Tạm thời</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small" style="color:var(--c-err-700)">CongDan v2.1</td>
+            <td class="table__num">24</td><td class="table__num">20</td>
+            <td class="table__num" style="color:var(--c-err-700)">1</td><td class="table__num">2</td>
+            <td><span class="badge badge--err">Chưa gửi được lên NDXP/NDOP</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở trình ánh xạ tại đúng trường soDinhDanhCaNhan còn thiếu">Xử lý</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small" style="color:var(--c-err-700)">ThuaDat v1.2</td>
+            <td class="table__num">28</td><td class="table__num">18</td>
+            <td class="table__num" style="color:var(--c-err-700)">3</td><td class="table__num">3</td>
+            <td><span class="badge badge--err">Chưa gửi được lên NDXP/NDOP</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở trình ánh xạ tại trường còn thiếu của ThuaDat">Xử lý</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small" style="color:var(--c-err-700)">HoSoSucKhoe v0.9</td>
+            <td class="table__num">34</td><td class="table__num">14</td>
+            <td class="table__num" style="color:var(--c-err-700)">6</td><td class="table__num">1</td>
+            <td><span class="badge badge--err">Chưa gửi được lên NDXP/NDOP</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở trình ánh xạ tại trường còn thiếu của HoSoSucKhoe">Xử lý</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">DoanhNghiep v1.4</td>
+            <td class="table__num">18</td><td class="table__num">18</td>
+            <td class="table__num">0</td><td class="table__num">0</td>
+            <td><span class="badge badge--ok">Đầy đủ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết ánh xạ DoanhNghiep">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">HoSoTTHC v2.0</td>
+            <td class="table__num">22</td><td class="table__num">22</td>
+            <td class="table__num">0</td><td class="table__num">0</td>
+            <td><span class="badge badge--ok">Đầy đủ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết ánh xạ HoSoTTHC">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">KhaiSinh v1.1</td>
+            <td class="table__num">16</td><td class="table__num">16</td>
+            <td class="table__num">0</td><td class="table__num">0</td>
+            <td><span class="badge badge--ok">Đầy đủ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết ánh xạ KhaiSinh">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">VanBanDienTu v1.0</td>
+            <td class="table__num">12</td><td class="table__num">12</td>
+            <td class="table__num">0</td><td class="table__num">0</td>
+            <td><span class="badge badge--ok">Đầy đủ</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết ánh xạ VanBanDienTu">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Trường bắt buộc chưa ánh xạ — xếp theo mức ảnh hưởng</div>
+        <div class="panel">
+          <div class="panel__body" style="padding:0">
+            <div class="finding">
+              <div class="finding__mark finding__mark--err">✕</div>
+              <div class="finding__text">
+                <div class="finding__title t-mono t-small">HoSoSucKhoe.maCoSoKhamChuaBenh</div>
+                <div class="finding__meta">6 trường thiếu · ảnh hưởng 284.062 bản ghi · Sở Y tế</div>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="finding__mark finding__mark--err">✕</div>
+              <div class="finding__text">
+                <div class="finding__title t-mono t-small">CongDan.soDinhDanhCaNhan</div>
+                <div class="finding__meta">1 trường thiếu · ảnh hưởng 128.406 bản ghi · Sở TT&amp;TT</div>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="finding__mark finding__mark--err">✕</div>
+              <div class="finding__text">
+                <div class="finding__title t-mono t-small">ThuaDat.maDonViHanhChinh</div>
+                <div class="finding__meta">3 trường thiếu · ảnh hưởng 48.218 bản ghi · Sở TN&amp;MT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="t-small t-muted mt-3">Nhấn một dòng để mở thẳng trình ánh xạ tại đúng trường còn thiếu.</div>
+      </div>
+
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Ánh xạ tạm thời cần rà soát</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Trường</th><th>Lý do</th><th>Ngày tạo</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">CongDan.maDonViHanhChinhCap3</td>
+                <td class="t-small">Từ điển QG chưa cập nhật mã xã sau sáp nhập</td>
+                <td class="t-small">26/07/2026</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">CongDan.tinhTrangHonNhan</td>
+                <td class="t-small">Từ điển QG chưa có trường tương ứng</td>
+                <td class="t-small">14/06/2026</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">ThuaDat.loaiDatChiTiet</td>
+                <td class="t-small">Chờ hướng dẫn phân loại đất mới của Bộ TN&amp;MT</td>
+                <td class="t-small">02/05/2026</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">ThuaDat.hinhThucSuDung</td>
+                <td class="t-small">Chờ hướng dẫn phân loại đất mới của Bộ TN&amp;MT</td>
+                <td class="t-small">02/05/2026</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">ThuaDat.nguonGocSuDung</td>
+                <td class="t-small">Chờ hướng dẫn phân loại đất mới của Bộ TN&amp;MT</td>
+                <td class="t-small">02/05/2026</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HoSoSucKhoe.nhomMau</td>
+                <td class="t-small">Từ điển QG dùng mã khác, chờ đối chiếu</td>
+                <td class="t-small">18/03/2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>

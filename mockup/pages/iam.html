@@ -11,27 +11,985 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-12 + SRS-19 — Định danh &amp; phân quyền.</strong>
+  Minh họa <span class="tag-ph">UI-12-02</span>…<span class="tag-ph">UI-12-07</span>,
+  <span class="tag-ph">UI-19-01</span>…<span class="tag-ph">UI-19-04</span> — đặc tả tại
+  <a href="../../docs/07-srs/SRS-PH-12-iam.md">SRS PH-12 M6</a> và
+  <a href="../../docs/07-srs/SRS-19-rbac-matrix.md">SRS-19 §6.1–6.4</a>.
+  Đăng nhập: <a href="login.html">UI-12-01</a> ·
+  Liên kết: <a href="monitoring.html">Giám sát PH-13</a> ·
+  <a href="onboarding.html">Kết nạp PH-01</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Định danh & Ủy quyền</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-12</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Định danh &amp; Ủy quyền</h1>
+    <p class="page-desc">Keycloak + OPA · 1.247 người dùng · 84 client · ma trận v2.4.1 PUBLISHED</p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="login.html">UI-12-01 Đăng nhập</a>
+    <a class="btn" href="monitoring.html">Nhật ký PH-13</a>
+    <button class="btn btn--primary" data-demo="Đồng bộ realm Keycloak">Làm mới</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-12</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-12.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Người dùng ACTIVE</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">1.247</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--up">+12 / tuần</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Client hệ thống</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">84</div>
+    <div class="stat__meta"><span class="t-muted">3 chờ kích hoạt</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Chính sách OPA</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">47</div>
+    <div class="stat__meta"><span class="badge badge--warn">2 chờ duyệt</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Cảnh báo an ninh</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">7</div>
+    <div class="stat__meta"><a href="#canh-bao">Xem tab Cảnh báo</a></div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="iam" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="nguoi-dung">Người dùng</button>
+    <button class="tab" data-tab="he-thong">Hệ thống</button>
+    <button class="tab" data-tab="vai-tro">Vai trò</button>
+    <button class="tab" data-tab="chinh-sach">Chính sách <span class="tab__count">2</span></button>
+    <button class="tab" data-tab="nhat-ky">Nhật ký</button>
+    <button class="tab" data-tab="canh-bao">Cảnh báo <span class="tab__count">7</span></button>
+    <button class="tab" data-tab="ma-tran">Ma trận</button>
+    <button class="tab" data-tab="so-lech">So lệch <span class="tab__count">3</span></button>
+    <button class="tab" data-tab="catalog">Catalog RBAC</button>
+    <button class="tab" data-tab="phien-ban">Phiên bản ma trận</button>
+  </div>
+
+  <!-- ===== UI-12-02: Quản lý người dùng ===== -->
+  <div id="nguoi-dung" data-panel="nguoi-dung" data-panel-group="iam">
+    <div class="grid grid--sidebar">
+      <div class="col" style="min-width:0">
+        <div class="toolbar">
+          <div class="search">
+            <span class="search__icon">⌕</span>
+            <input class="input" type="text" placeholder="Tên, tên đăng nhập, email, đơn vị…" data-filter="user-table">
+          </div>
+          <select class="select" style="width:auto"><option>Tất cả trạng thái</option><option>ACTIVE</option><option>LOCKED</option><option>PENDING</option></select>
+          <select class="select" style="width:auto"><option>Mọi đơn vị</option><option>Sở TT&amp;TT</option><option>Văn phòng UBND tỉnh</option></select>
+          <select class="select" style="width:auto"><option>Mọi vai trò</option><option>IAM_ADMIN</option><option>SECURITY_OFFICER</option><option>INTEGRATION_REVIEWER</option></select>
+          <select class="select" style="width:auto"><option>MFA</option><option>Đã bật</option><option>Chưa bật</option></select>
+          <div class="toolbar__spacer"></div>
+          <button class="btn btn--sm btn--primary" data-demo="Tạo người dùng mới — PENDING_ACTIVATION">＋ Tạo người dùng</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="user-table">
+            <thead>
+              <tr>
+                <th>Họ tên</th><th>Tên đăng nhập</th><th>Đơn vị</th><th>Vai trò</th>
+                <th>MFA</th><th>Đăng nhập cuối</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Nguyễn Văn An</td>
+                <td class="t-mono t-small">nva.sotttt</td>
+                <td class="t-small">Sở TT&amp;TT</td>
+                <td class="t-small"><span class="badge badge--plain">IAM_ADMIN</span></td>
+                <td><span class="badge badge--ok">TOTP</span></td>
+                <td class="t-mono t-small">03/08 09:14</td>
+                <td><span class="badge badge--ok">ACTIVE</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết nva.sotttt">Chi tiết</button></td>
+              </tr>
+              <tr>
+                <td>Trần Thị Bích</td>
+                <td class="t-mono t-small">ttb.vpubnd</td>
+                <td class="t-small">Văn phòng UBND tỉnh</td>
+                <td class="t-small"><span class="badge badge--plain">SECURITY_OFFICER</span></td>
+                <td><span class="badge badge--ok">WebAuthn</span></td>
+                <td class="t-mono t-small">03/08 08:42</td>
+                <td><span class="badge badge--ok">ACTIVE</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết ttb.vpubnd">Chi tiết</button></td>
+              </tr>
+              <tr>
+                <td>Lê Minh Cường</td>
+                <td class="t-mono t-small">lmc.sotphap</td>
+                <td class="t-small">Sở Tư pháp</td>
+                <td class="t-small"><span class="badge badge--plain">INTEGRATION_DEV</span></td>
+                <td><span class="badge badge--ok">TOTP</span></td>
+                <td class="t-mono t-small">02/08 17:03</td>
+                <td><span class="badge badge--ok">ACTIVE</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết lmc.sotphap">Chi tiết</button></td>
+              </tr>
+              <tr>
+                <td>Phạm Hoài Dung</td>
+                <td class="t-mono t-small">phd.sotnmt</td>
+                <td class="t-small">Sở TN&amp;MT</td>
+                <td class="t-small"><span class="badge badge--plain">INTEGRATION_REVIEWER</span></td>
+                <td><span class="badge badge--ok">TOTP</span></td>
+                <td class="t-mono t-small">01/08 11:28</td>
+                <td><span class="badge badge--ok">ACTIVE</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết phd.sotnmt">Chi tiết</button></td>
+              </tr>
+              <tr style="background:var(--c-warn-50)">
+                <td>Hoàng Thị Em <span class="badge badge--warn badge--plain" title="Không đăng nhập &gt; 90 ngày">⚠ 94 ngày</span></td>
+                <td class="t-mono t-small">hte.soyte</td>
+                <td class="t-small">Sở Y tế</td>
+                <td class="t-small"><span class="badge badge--plain">VIEWER</span></td>
+                <td><span class="badge badge--muted">Chưa</span></td>
+                <td class="t-mono t-small">30/04 07:15</td>
+                <td><span class="badge badge--warn">ACTIVE</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--danger" data-demo="Thu hồi truy cập — yêu cầu lý do">Thu hồi</button></td>
+              </tr>
+              <tr>
+                <td>Vũ Đức Phong</td>
+                <td class="t-mono t-small">vdp.sotttt</td>
+                <td class="t-small">Sở TT&amp;TT</td>
+                <td class="t-small"><span class="badge badge--plain">OPERATOR</span></td>
+                <td><span class="badge badge--ok">TOTP</span></td>
+                <td class="t-mono t-small">—</td>
+                <td><span class="badge badge--info">PENDING</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Gửi lại liên kết kích hoạt">Kích hoạt</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col" style="max-width:320px">
+        <div class="panel">
+          <div class="panel__head"><strong>Chi tiết — nva.sotttt</strong></div>
+          <div class="panel__body">
+            <div class="t-small t-muted mb-2">Thông tin</div>
+            <div class="t-small mb-1"><strong>Email:</strong> nva@sotttt.gov.vn</div>
+            <div class="t-small mb-1"><strong>Đơn vị:</strong> Sở TT&amp;TT · mã 001.02.03</div>
+            <div class="t-small mb-3"><strong>VNeID:</strong> <span class="badge badge--ok">Đã liên kết</span></div>
+            <div class="t-small t-muted mb-2">Vai trò gán</div>
+            <div class="mb-3"><span class="badge badge--plain">IAM_ADMIN</span></div>
+            <div class="t-small t-muted mb-2">Yếu tố xác thực</div>
+            <div class="t-small mb-3">TOTP · WebAuthn (2 thiết bị)</div>
+            <div class="t-small t-muted mb-2">Phiên đang mở</div>
+            <div class="t-small mb-3">2 phiên · IP 10.12.4.88 · 03/08 09:14</div>
+            <div class="btn-group" style="flex-wrap:wrap">
+              <button class="btn btn--sm" data-demo="Khóa tài khoản nva.sotttt">Khóa</button>
+              <button class="btn btn--sm" data-demo="Đặt lại MFA">Đặt lại MFA</button>
+              <button class="btn btn--sm" data-demo="Buộc đăng xuất mọi phiên">Buộc ĐX</button>
+              <button class="btn btn--sm btn--danger" data-demo="Thu hồi truy cập — nhập lý do bắt buộc">Thu hồi</button>
+            </div>
+            <div class="alert alert--info mt-4" style="margin-bottom:0">
+              <span class="alert__icon">ℹ</span>
+              <div class="t-small">Thay đổi vai trò yêu cầu xác nhận MFA (thao tác nhạy cảm).</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- ===== UI-12-03: Quản lý danh tính hệ thống ===== -->
+  <div class="card__body hidden" id="he-thong" data-panel="he-thong" data-panel-group="iam">
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="clientId, tên hệ thống, đơn vị…">
+      </div>
+      <select class="select" style="width:auto"><option>Tất cả trạng thái</option><option>ACTIVE</option><option>PENDING</option><option>REVOKED</option></select>
+      <select class="select" style="width:auto"><option>Loại xác thực</option><option>client_credentials</option><option>mTLS bắt buộc</option></select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm btn--primary" data-demo="Tạo client OAuth2 mới">＋ Tạo client</button>
+    </div>
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Bí mật client lưu trong Vault — <strong>không hiển thị</strong> trên màn hình. Client sau kết nạp PH-01: <a href="onboarding.html">theo dõi hồ sơ</a>.</div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>clientId</th><th>Tên hệ thống</th><th>Đơn vị chủ quản</th><th>Phạm vi quyền</th>
+            <th>Xác thực</th><th>mTLS</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">HE_THONG_MOT_CUA</td>
+            <td>Cổng một cửa điện tử tỉnh</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td class="t-small t-mono">portal.catalog.read route.read … (+4)</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết client">Chi tiết</button>
+              <button class="btn btn--sm" data-demo="Xoay secret — tham chiếu Vault một lần">Xoay secret</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">CONG-DVC</td>
+            <td>Cổng DVC tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="t-small t-mono">route.invoke api.hoso.dong-bo … (+8)</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết CONG-DVC">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">CSDL-DATDAI</td>
+            <td>CSDL Đất đai tỉnh</td>
+            <td class="t-small">Sở TN&amp;MT</td>
+            <td class="t-small t-mono">api.datdai.tra-cuu route.read</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết CSDL-DATDAI">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">QLVB-TINH</td>
+            <td>Quản lý văn bản tỉnh</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td class="t-small t-mono">route.invoke event.topic.read</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết QLVB-TINH">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">KHO-DULIEU</td>
+            <td>Kho dữ liệu tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="t-small t-mono">mdm.read reference.read</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td><span class="badge badge--info">PENDING</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Kích hoạt client sau kết nạp">Kích hoạt</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">NDXP-PROXY</td>
+            <td>Proxy NDXP tỉnh</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="t-small t-mono">national.tx.read national.route.write</td>
+            <td><span class="badge badge--plain">client_credentials</span></td>
+            <td><span class="badge badge--ok">Bắt buộc</span></td>
+            <td><span class="badge badge--err">REVOKED</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lý do thu hồi">Lý do</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-12-04: Vai trò và phạm vi quyền ===== -->
+  <div class="card__body hidden" id="vai-tro" data-panel="vai-tro" data-panel-group="iam">
+    <div class="row row--between mb-4">
+      <div class="search" style="flex:1;max-width:360px">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Mã vai trò, tên hiển thị…">
+      </div>
+      <button class="btn btn--sm btn--primary" data-demo="Tạo vai trò mới trong realm">＋ Vai trò</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã vai trò</th><th>Tên hiển thị</th><th>Phạm vi quyền</th>
+            <th class="table__num">Người dùng</th><th>Kế thừa</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">PLATFORM_ADMIN</td>
+            <td>Quản trị viên nền tảng</td>
+            <td class="t-small">Toàn quyền kỹ thuật (trừ duyệt ATTT độc lập)</td>
+            <td class="table__num">4</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò PLATFORM_ADMIN">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">IAM_ADMIN</td>
+            <td>Quản trị định danh</td>
+            <td class="t-small">iam.user.manage · iam.client.manage · iam.role.manage</td>
+            <td class="table__num">6</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò IAM_ADMIN">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">SECURITY_OFFICER</td>
+            <td>Cán bộ an toàn thông tin</td>
+            <td class="t-small">iam.policy.approve · iam.alert.manage · rbac.matrix.manage</td>
+            <td class="table__num">3</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò SECURITY_OFFICER">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">INTEGRATION_DEV</td>
+            <td>Cán bộ phát triển tích hợp</td>
+            <td class="t-small">route.write · adapter.write · bpm.definition.write</td>
+            <td class="table__num">18</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò INTEGRATION_DEV">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">INTEGRATION_REVIEWER</td>
+            <td>Người duyệt luồng tích hợp</td>
+            <td class="t-small">route.deploy.approve · bpm.definition.write (A)</td>
+            <td class="table__num">7</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò INTEGRATION_REVIEWER">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-muted">INTEGRATION_APPROVER</td>
+            <td class="t-muted">Alias cũ → INTEGRATION_REVIEWER</td>
+            <td class="t-small t-muted">Map tự động (BR-19-003)</td>
+            <td class="table__num">0</td>
+            <td class="t-small"><span class="badge badge--warn">alias</span></td>
+            <td><span class="badge badge--warn">DEPRECATED</span></td>
+            <td class="table__actions"><span class="t-small t-muted">Chỉ đọc</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono">OPERATOR</td>
+            <td>Cán bộ vận hành</td>
+            <td class="t-small">ops.dlq.replay · obs.dashboard.read</td>
+            <td class="table__num">12</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò OPERATOR">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">VIEWER</td>
+            <td>Chỉ xem</td>
+            <td class="t-small">*.read (giới hạn dashboard, catalog)</td>
+            <td class="table__num">89</td>
+            <td class="t-small t-muted">—</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa vai trò VIEWER">Sửa</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--warn mt-4" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div class="t-small">Không xóa vai trò đang gán cho người dùng. Kiểm tra vòng lặp kế thừa nhóm trước khi lưu.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-12-05: Soạn thảo và duyệt chính sách ===== -->
+  <div class="card__body hidden" id="chinh-sach" data-panel="chinh-sach" data-panel-group="iam">
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Danh sách chính sách</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Mã</th><th>Tên</th><th>Phiên bản</th><th>Trạng thái</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">pol-route-deny</td>
+                <td class="t-small">Chặn route chưa phê duyệt</td>
+                <td class="t-mono t-small">v12</td>
+                <td><span class="badge badge--ok">PUBLISHED</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">pol-privacy-mask</td>
+                <td class="t-small">Mặt nạ trường nhạy cảm</td>
+                <td class="t-mono t-small">v8</td>
+                <td><span class="badge badge--ok">PUBLISHED</span></td>
+              </tr>
+              <tr style="background:var(--c-warn-50)">
+                <td class="t-mono t-small">pol-offhours</td>
+                <td class="t-small">Giới hạn truy cập ngoài giờ</td>
+                <td class="t-mono t-small">v3-draft</td>
+                <td><span class="badge badge--warn">DRAFT</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">pol-mtls-required</td>
+                <td class="t-small">Bắt buộc mTLS client nhạy cảm</td>
+                <td class="t-mono t-small">v2</td>
+                <td><span class="badge badge--info">PENDING_APPROVAL</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="steps mt-4">
+          <div class="step is-done"><div class="step__bar"></div><div class="step__num">1</div><div class="step__label">Soạn thảo</div></div>
+          <div class="step is-active"><div class="step__bar"></div><div class="step__num">2</div><div class="step__label">Kiểm thử</div></div>
+          <div class="step"><div class="step__bar"></div><div class="step__num">3</div><div class="step__label">Chờ duyệt</div></div>
+          <div class="step"><div class="step__bar"></div><div class="step__num">4</div><div class="step__label">Phát hành</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Trình soạn thảo Rego — pol-offhours</div>
+        <pre class="code" style="max-height:140px;overflow:auto;margin-bottom:var(--sp-3)"><span class="k">package</span> lgsp.offhours
+
+<span class="k">default</span> allow = <span class="k">false</span>
+
+allow <span class="k">{</span>
+  input.subject.role <span class="k">in</span> [<span class="s">"OPERATOR"</span>, <span class="s">"SECURITY_OFFICER"</span>]
+<span class="k">}</span>
+
+allow <span class="k">{</span>
+  hour := time.clock(input.timestamp)[<span class="n">0</span>]
+  hour >= <span class="n">7</span>; hour &lt; <span class="n">18</span>
+  input.resource.sensitivity != <span class="s">"CRITICAL"</span>
+<span class="k">}</span></pre>
+        <div class="row mb-3" style="gap:var(--sp-2)">
+          <button class="btn btn--sm" data-demo="Chạy 12 ca kiểm thử — 11/12 đạt">Chạy kiểm thử</button>
+          <button class="btn btn--sm" data-demo="Chạy khô 24h — +1.240 deny mới">Chạy khô</button>
+          <button class="btn btn--sm btn--primary" data-demo="Trình duyệt pol-offhours">Trình duyệt</button>
+        </div>
+        <div class="card__title mb-2" style="font-size:var(--fs-sm)">Ca kiểm thử</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Ca</th><th>Kết quả mong đợi</th><th>Thực tế</th></tr></thead>
+            <tbody>
+              <tr><td class="t-small">OP lúc 22h</td><td><span class="badge badge--err">deny</span></td><td><span class="badge badge--ok">deny</span></td></tr>
+              <tr><td class="t-small">SO lúc 22h</td><td><span class="badge badge--ok">allow</span></td><td><span class="badge badge--ok">allow</span></td></tr>
+              <tr style="background:var(--c-err-50)"><td class="t-small">VIEWER 10h CRITICAL</td><td><span class="badge badge--err">deny</span></td><td><span class="badge badge--warn">allow</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Khác biệt chạy khô (24h gần nhất)</div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead><tr><th>Tài nguyên</th><th>Trước</th><th>Sau</th><th class="table__num">Số lượng</th></tr></thead>
+        <tbody>
+          <tr><td class="t-mono t-small">route:tra-cuu-cong-dan</td><td><span class="badge badge--ok">allow</span></td><td><span class="badge badge--err">deny</span></td><td class="table__num">842</td></tr>
+          <tr><td class="t-mono t-small">client:CONG-DVC</td><td><span class="badge badge--ok">allow</span></td><td><span class="badge badge--err">deny</span></td><td class="table__num">398</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Thay đổi &gt; 20% quyết định (23,4%)</div>
+        <div class="t-small">Cần tích xác nhận trước phát hành. Nút Phê duyệt vô hiệu với người soạn (BR-12-008).</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn--primary" disabled data-demo="Phê duyệt — yêu cầu MFA + không phải người soạn">Phê duyệt &amp; phát hành</button>
+      <button class="btn" data-demo="So sánh với phiên bản đang chạy v11">So sánh v11</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-12-06: Tra cứu nhật ký quyết định ===== -->
+  <div class="card__body hidden" id="nhat-ky" data-panel="nhat-ky" data-panel-group="iam">
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <input class="input" type="date" style="width:auto" value="2026-08-03">
+      <span class="t-muted">→</span>
+      <input class="input" type="date" style="width:auto" value="2026-08-03">
+      <select class="select" style="width:auto"><option>Mọi bên gọi</option><option>CONG-DVC</option><option>HE_THONG_MOT_CUA</option></select>
+      <select class="select" style="width:auto"><option>Mọi kết quả</option><option>allow</option><option>deny</option></select>
+      <div class="search" style="width:200px">
+        <span class="search__icon">⌕</span>
+        <input class="input input--mono" type="text" placeholder="traceId…">
+      </div>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Xuất CSV nhật ký quyết định">Xuất CSV</button>
+    </div>
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Quyết định 24h</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">284.712</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ từ chối</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">2,8%</div>
+        <div class="stat__meta"><span class="stat__delta stat__delta--up">+0,4%</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">P95 đánh giá</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">11ms</div>
+      </div>
+    </div>
+    <div class="card__title mb-2" style="font-size:var(--fs-sm)">Tỷ lệ từ chối theo giờ (hôm nay)</div>
+    <div class="wf mb-5">
+      <div class="wf__name">00h</div><div class="wf__track"><div class="wf__bar" style="width:8%"></div></div><div class="wf__ms">1,2%</div>
+      <div class="wf__name">06h</div><div class="wf__track"><div class="wf__bar" style="width:12%"></div></div><div class="wf__ms">1,8%</div>
+      <div class="wf__name">12h</div><div class="wf__track"><div class="wf__bar wf__bar--warn" style="width:28%"></div></div><div class="wf__ms">4,1%</div>
+      <div class="wf__name">18h</div><div class="wf__track"><div class="wf__bar wf__bar--err" style="width:42%"></div></div><div class="wf__ms">6,2%</div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Bên gọi</th><th>Tài nguyên</th><th>Hành động</th>
+            <th>Kết quả</th><th>Chính sách</th><th class="table__num">ms</th><th>traceId</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 16:42:18</td>
+            <td class="t-mono t-small">CONG-DVC</td>
+            <td class="t-mono t-small">route:tra-cuu-cong-dan</td>
+            <td>invoke</td>
+            <td><span class="badge badge--ok">allow</span></td>
+            <td class="t-small">pol-route-deny/v12</td>
+            <td class="table__num">4</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=7a3c9f2e">7a3c9f2e</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 16:41:55</td>
+            <td class="t-mono t-small">KHO-DULIEU</td>
+            <td class="t-mono t-small">mdm:cong-dan</td>
+            <td>read</td>
+            <td><span class="badge badge--err">deny</span></td>
+            <td class="t-small">pol-privacy-mask/v8</td>
+            <td class="table__num">9</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=b91e04aa">b91e04aa</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 16:40:12</td>
+            <td class="t-mono t-small">lmc.sotphap</td>
+            <td class="t-mono t-small">route:dong-bo-ho-so</td>
+            <td>deploy</td>
+            <td><span class="badge badge--err">deny</span></td>
+            <td class="t-small">pol-four-eyes/v5</td>
+            <td class="table__num">6</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=c0e11d77">c0e11d77</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 16:38:44</td>
+            <td class="t-mono t-small">HE_THONG_MOT_CUA</td>
+            <td class="t-mono t-small">api:hoso.dong-bo</td>
+            <td>read</td>
+            <td><span class="badge badge--ok">allow</span></td>
+            <td class="t-small">pol-route-deny/v12</td>
+            <td class="table__num">3</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=f55a82bc">f55a82bc</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 16:35:01</td>
+            <td class="t-mono t-small">NDXP-PROXY</td>
+            <td class="t-mono t-small">national:tx</td>
+            <td>read</td>
+            <td><span class="badge badge--err">deny</span></td>
+            <td class="t-small">default-deny</td>
+            <td class="table__num">2</td>
+            <td class="t-mono t-small"><a href="monitoring.html?traceId=19d4e901">19d4e901</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel mt-4">
+      <div class="panel__head"><strong>Chi tiết quyết định — b91e04aa</strong></div>
+      <div class="panel__body">
+        <pre class="code" style="margin:0;max-height:100px;overflow:auto"><span class="k">{</span>
+  <span class="s">"subject"</span>: <span class="s">"client:KHO-DULIEU"</span>,
+  <span class="s">"resource"</span>: <span class="s">"mdm:cong-dan"</span>,
+  <span class="s">"action"</span>: <span class="s">"read"</span>,
+  <span class="s">"decision"</span>: <span class="s">"deny"</span>,
+  <span class="s">"reason"</span>: <span class="s">"client chưa được cấp scope mdm.read"</span>
+<span class="k">}</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-12-07: Cảnh báo an ninh ===== -->
+  <div class="card__body hidden" id="canh-bao" data-panel="canh-bao" data-panel-group="iam">
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <select class="select" style="width:auto"><option>Tất cả mức</option><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option></select>
+      <select class="select" style="width:auto"><option>Mọi trạng thái</option><option>Mở</option><option>Đang xử lý</option><option>Đã đóng</option></select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Tinh chỉnh ngưỡng phát hiện FR-12-019">Cấu hình ngưỡng</button>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Loại</th><th>Mô tả</th><th>Đối tượng</th><th>Mức</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 16:38</td>
+            <td>Brute-force IP</td>
+            <td class="t-small">&gt; 20 đăng nhập thất bại/phút</td>
+            <td class="t-mono t-small">203.162.4.88</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--warn">Mở</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Chặn IP tạm thời">Chặn IP</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 15:12</td>
+            <td>Đa vùng địa lý</td>
+            <td class="t-small">Tài khoản đăng nhập từ 3 vùng khác nhau &lt; 30 phút</td>
+            <td class="t-mono t-small">nva.sotttt</td>
+            <td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--info">Đang xử lý</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Buộc đăng xuất + MFA">Xử lý</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 14:55</td>
+            <td>Tỷ lệ deny tăng</td>
+            <td class="t-small">Client deny &gt; 5× mức thường (6,2% vs 1,2%)</td>
+            <td class="t-mono t-small">CONG-DVC</td>
+            <td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--warn">Mở</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="#nhat-ky">Xem nhật ký</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 02:18</td>
+            <td>Truy cập ngoài giờ</td>
+            <td class="t-small">Dữ liệu CRITICAL ngoài 07–18h</td>
+            <td class="t-mono t-small">hte.soyte</td>
+            <td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--warn">Mở</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--danger" data-demo="Thu hồi truy cập hte.soyte">Thu hồi</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">02/08 23:44</td>
+            <td>Refresh token reuse</td>
+            <td class="t-small">Token đã dùng bị dùng lại</td>
+            <td class="t-mono t-small">QLVB-TINH</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--ok">Đã đóng</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết xử lý">Chi tiết</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--info mt-4" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Cảnh báo đồng bộ sang <a href="monitoring.html">PH-13</a> trong ≤ 60 giây (NFR-12-030).</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-19-01: Ma trận phân quyền ===== -->
+  <div class="card__body hidden" id="ma-tran" data-panel="ma-tran" data-panel-group="iam">
+    <div class="row row--between row--wrap mb-4" style="gap:var(--sp-3)">
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <select class="select" style="width:auto"><option>PH-12 — IAM</option><option>PH-04 — Tích hợp</option><option>PH-18 — DLQ</option><option>Tất cả PH</option></select>
+        <select class="select" style="width:auto"><option>Mọi vai trò</option><option>PLATFORM_ADMIN</option><option>IAM_ADMIN</option><option>INTEGRATION_REVIEWER</option></select>
+        <select class="select" style="width:auto"><option>Mọi sensitivity</option><option>CRITICAL</option><option>HIGH</option><option>MED</option></select>
+        <span class="badge badge--ok">PUBLISHED v2.4.1</span>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Fork bản DRAFT từ v2.4.1">Fork DRAFT</button>
+        <button class="btn btn--sm btn--primary" disabled data-demo="Publish — bốn mắt + MFA">Publish</button>
+      </div>
+    </div>
+    <div class="row mb-3 t-small t-muted" style="gap:var(--sp-4)">
+      <span><span class="badge badge--ok badge--plain">C/R/U</span> có quyền</span>
+      <span><span class="badge badge--muted badge--plain">—</span> không</span>
+      <span><span class="badge badge--warn badge--plain">X/A</span> kế thừa / nguy hiểm</span>
+      <span>Ký hiệu: C tạo · R đọc · U sửa · D xóa · X thực thi · A duyệt</span>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Permission</th><th>PH</th><th>Sensitivity</th>
+            <th>PA</th><th>IAM</th><th>SO</th><th>ID</th><th>IR</th><th>OP</th><th>VW</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">iam.user.manage</td><td>PH-12</td><td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--ok">U</span></td>
+            <td><span class="badge badge--ok">CU</span></td>
+            <td><span class="badge badge--ok">R</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">iam.client.manage</td><td>PH-12</td><td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--ok">U</span></td>
+            <td><span class="badge badge--ok">CU</span></td>
+            <td><span class="badge badge--ok">R</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr style="background:var(--c-warn-50)">
+            <td class="t-mono t-small">iam.client.rotate-secret</td><td>PH-12</td><td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--ok">R</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">iam.role.manage</td><td>PH-12</td><td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--ok">U</span></td>
+            <td><span class="badge badge--ok">CU</span></td>
+            <td><span class="badge badge--warn">A</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">iam.policy.approve</td><td>PH-12</td><td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--warn">A</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">iam.access.revoke</td><td>PH-12</td><td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">route.deploy.approve</td><td>PH-04</td><td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--warn">A</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ops.dlq.replay</td><td>PH-18</td><td><span class="badge badge--warn">HIGH</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--warn">A</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--warn">X</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">rbac.matrix.manage</td><td>XT</td><td><span class="badge badge--err">CRITICAL</span></td>
+            <td><span class="badge badge--ok">R</span></td>
+            <td><span class="badge badge--warn">XA</span></td>
+            <td><span class="badge badge--warn">XA</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--muted">—</span></td>
+            <td><span class="badge badge--ok">R</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--info mt-4" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Click ô CRITICAL → hiện ràng buộc MFA/bốn mắt. Chế độ PUBLISHED: chỉ đọc; VW không thấy nút Sửa.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-19-02: So lệch SRS ↔ runtime ===== -->
+  <div class="card__body hidden" id="so-lech" data-panel="so-lech" data-panel-group="iam">
+    <div class="row row--between mb-4">
+      <div class="row" style="gap:var(--sp-2)">
+        <label class="t-small t-muted">Đối chiếu với:</label>
+        <select class="select" style="width:auto">
+          <option>Keycloak realm (live)</option>
+          <option>OPA bundle (live)</option>
+          <option>Cả hai</option>
+        </select>
+        <button class="btn btn--sm btn--primary" data-demo="Chạy diff against live">Chạy diff</button>
+      </div>
+      <label class="check"><input type="checkbox" checked> Chỉ CRITICAL</label>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mức</th><th>Permission / Role</th><th>SRS (v2.4.1)</th><th>Runtime</th><th>PH</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--c-err-50)">
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-mono t-small">INTEGRATION_APPROVER → role</td>
+            <td class="t-small">Alias DEPRECATED</td>
+            <td class="t-small">Realm vẫn có role độc lập</td>
+            <td>PH-12</td>
+            <td><span class="badge badge--warn">Mở</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Deep-link permission iam.role.manage">Xem</button>
+              <button class="btn btn--sm btn--primary" data-demo="Đánh dấu resolved — map alias">Đóng</button>
+            </td>
+          </tr>
+          <tr style="background:var(--c-err-50)">
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-mono t-small">iam.client.rotate-secret × PA</td>
+            <td class="t-small"><span class="badge badge--warn">X</span></td>
+            <td class="t-small"><span class="badge badge--ok">X+A</span> (thừa A)</td>
+            <td>PH-12</td>
+            <td><span class="badge badge--warn">Mở</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Đóng finding — lý do đồng bộ">Đóng</button></td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">HIGH</span></td>
+            <td class="t-mono t-small">ops.dlq.replay × OP</td>
+            <td class="t-small"><span class="badge badge--warn">X</span></td>
+            <td class="t-small"><span class="badge badge--muted">—</span></td>
+            <td>PH-18</td>
+            <td><span class="badge badge--ok">Đã đóng</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lý do resolved">Lý do</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card mt-4" style="box-shadow:none;border:1px dashed var(--c-border)">
+      <div class="card__body text-center" style="padding:var(--sp-6)">
+        <div class="t-muted t-small">Trạng thái rỗng — không lệch (ví dụ sau khi publish đồng bộ)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-19-03: Catalog RBAC ===== -->
+  <div class="card__body hidden" id="catalog" data-panel="catalog" data-panel-group="iam">
+    <div class="tabs" data-tabs-group="catalog-sub" style="margin:0 0 var(--sp-4);padding:0">
+      <button class="tab is-active" data-tab="roles">Vai trò (EN-19-01)</button>
+      <button class="tab" data-tab="perms">Permission (EN-19-02)</button>
+    </div>
+    <div data-panel="roles" data-panel-group="catalog-sub">
+      <div class="row row--between mb-3">
+        <div class="search" style="flex:1;max-width:320px">
+          <span class="search__icon">⌕</span>
+          <input class="input" type="text" placeholder="roleCode, tên…">
+        </div>
+        <button class="btn btn--sm btn--primary" data-demo="Tạo vai trò catalog mới">＋ Vai trò</button>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>roleCode</th><th>Tên hiển thị</th><th>Alias</th><th>Trạng thái</th><th class="table__actions">Thao tác</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="t-mono">INTEGRATION_REVIEWER</td>
+              <td>Người duyệt luồng tích hợp</td>
+              <td class="t-small t-muted">—</td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa INTEGRATION_REVIEWER">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-muted">INTEGRATION_APPROVER</td>
+              <td class="t-muted">Alias cũ</td>
+              <td class="t-small">→ INTEGRATION_REVIEWER</td>
+              <td><span class="badge badge--warn">DEPRECATED</span></td>
+              <td class="table__actions"><span class="t-small t-muted">Không xóa cứng</span></td>
+            </tr>
+            <tr>
+              <td class="t-mono">DATA_STEWARD</td>
+              <td>Cán bộ quản trị dữ liệu</td>
+              <td class="t-small t-muted">—</td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa DATA_STEWARD">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono">LEGAL_REVIEWER</td>
+              <td>Cán bộ pháp chế</td>
+              <td class="t-small t-muted">—</td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa LEGAL_REVIEWER">Sửa</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="hidden" data-panel="perms" data-panel-group="catalog-sub">
+      <div class="row row--between mb-3">
+        <div class="search" style="flex:1;max-width:320px">
+          <span class="search__icon">⌕</span>
+          <input class="input" type="text" placeholder="permissionCode…">
+        </div>
+        <button class="btn btn--sm btn--primary" data-demo="Tạo permission mới">＋ Permission</button>
+      </div>
+      <div class="table-wrap table-wrap--wide">
+        <table class="table">
+          <thead>
+            <tr><th>permissionCode</th><th>PH</th><th>Sensitivity</th><th>Bốn mắt</th><th>MFA</th><th>Trạng thái</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="t-mono t-small">iam.client.rotate-secret</td><td>PH-12</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td><td><span class="badge badge--ok">Có</span></td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">route.deploy.approve</td><td>PH-04</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td><td><span class="badge badge--ok">Có</span></td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">ops.dlq.replay</td><td>PH-18</td>
+              <td><span class="badge badge--warn">HIGH</span></td>
+              <td><span class="badge badge--muted">Không</span></td><td><span class="badge badge--ok">Có</span></td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">privacy.deanonymize</td><td>PH-09</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td><td><span class="badge badge--ok">Có</span></td>
+              <td><span class="badge badge--ok">ACTIVE</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-19-04: Lịch sử phiên bản ma trận ===== -->
+  <div class="card__body hidden" id="phien-ban" data-panel="phien-ban" data-panel-group="iam">
+    <div class="row row--between mb-4">
+      <div class="card__title" style="font-size:var(--fs-md);margin:0">Timeline phiên bản</div>
+      <button class="btn btn--sm" data-demo="Xuất báo cáo RBAC PDF">Xuất báo cáo</button>
+    </div>
+    <div class="timeline mb-5">
+      <div class="tl-item tl-item--ok">
+        <div class="tl-time">03/08/2026 10:22</div>
+        <div class="tl-title">v2.4.1 — PUBLISHED</div>
+        <div class="tl-desc">Phê duyệt: Trần Thị Bích (SO) · Soạn: Nguyễn Văn An (IAM) · Git tag <span class="t-mono">rbac/v2.4.1</span></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">28/07/2026 14:05</div>
+        <div class="tl-title">v2.4.0 — SUPERSEDED</div>
+        <div class="tl-desc">Thay INTEGRATION_APPROVER alias · 3 ô CRITICAL cập nhật</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">15/07/2026 09:18</div>
+        <div class="tl-title">v2.3.2 — SUPERSEDED</div>
+        <div class="tl-desc">Bổ sung PH-18 ops.dlq.* · Phê duyệt: ttb.vpubnd</div>
+      </div>
+    </div>
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Diff v2.4.0 → v2.4.1</div>
+    <div class="diff mb-4">
+      <div>
+        <div class="diff__col-label">v2.4.0 (cũ)</div>
+        <pre class="code" style="margin:0;font-size:var(--fs-xs)">INTEGRATION_APPROVER: route.deploy.approve = A
+iam.client.rotate-secret × PA = X+A</pre>
+      </div>
+      <div>
+        <div class="diff__col-label">v2.4.1 (mới)</div>
+        <pre class="code" style="margin:0;font-size:var(--fs-xs)">INTEGRATION_REVIEWER: route.deploy.approve = A
+iam.client.rotate-secret × PA = X</pre>
+      </div>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Chỉ IAM_ADMIN / SECURITY_OFFICER publish. PLATFORM_ADMIN và VIEWER chỉ đọc. Bản SUPERSEDED bất biến (NFR-19-014).</div>
+    </div>
+  </div>
+
 </div>
 
 <script src="../js/app.js"></script>

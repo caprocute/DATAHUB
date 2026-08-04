@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bàn giao — LGSP</title>
+<link rel="stylesheet" href="../css/app.css">
+<script src="../js/theme.js"></script>
+<script>window.LGSP_PAGE = { id: 'onboarding', title: 'Bàn giao', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' },
+  { text: 'Kết nạp', href: 'onboarding.html' },
+  { text: 'Bàn giao' }] };</script>
+</head>
+<body>
+
+<div class="mock-note">
+  <strong>PH-01 — Kết nạp hệ thống thành viên.</strong>
+  Minh họa <span class="tag-ph">UI-01-07</span> bàn giao thông tin kết nối — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-01-onboarding.md">SRS PH-01</a>.
+  Liên kết chéo: <a href="onboarding.html">Kết nạp hệ thống</a>.
+</div>
+
+<div class="page-head">
+  <div class="page-head__main">
+    <h1 class="page-title">Bàn giao thông tin kết nối</h1>
+    <p class="page-desc">Hồ sơ <span class="t-mono">HS-KN-2026-0027</span> · CSDL cán bộ CC · Sở Nội vụ · trạng thái <span class="badge badge--ok badge--plain">PROVISIONING</span></p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn btn--primary" data-demo="Tải hồ sơ bàn giao (PDF + chứng thư + hướng dẫn kết nối)">⤓ Tải hồ sơ bàn giao</button>
+  </div>
+</div>
+
+<!-- ===== UI-01-07: Bàn giao ===== -->
+<div class="grid grid--main">
+  <div class="col">
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Liên kết bàn giao dùng một lần · hiệu lực 24 giờ</div>
+        <div class="t-small">Sau khi xem xong, liên kết sẽ vô hiệu vĩnh viễn (BR-01-006). Client secret <strong>không</strong> được lưu trên hệ thống PH-01 và không gửi qua thư điện tử (BR-01-005, NFR-01-011). Nếu làm mất bí mật, dùng chức năng xoay bí mật trên màn quản trị — không sinh lại liên kết cũ.</div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card__head">
+        <div>
+          <div class="card__title">Thông tin kết nối đã cấp</div>
+          <div class="card__sub">Mã hệ thống <span class="t-mono">HE_THONG_CAN_BO_CC</span> · xác thực OAuth2 Client Credentials + mTLS</div>
+        </div>
+        <span class="badge badge--info">Nhóm 2</span>
+      </div>
+      <div class="card__body">
+        <dl class="dl mb-5">
+          <dt>Điểm cuối token</dt>
+          <dd><code class="code t-mono">https://lgsp.tinh.example.gov.vn/oauth2/token</code></dd>
+          <dt>Điểm cuối API (sản xuất)</dt>
+          <dd><code class="code t-mono">https://lgsp.tinh.example.gov.vn/api/v1</code></dd>
+          <dt>Điểm cuối kiểm thử</dt>
+          <dd><code class="code t-mono">https://lgsp-sandbox.tinh.example.gov.vn/api/v1</code></dd>
+          <dt>Client ID</dt>
+          <dd><span class="t-mono">lgsp-client-can-bo-cc-0027</span> <button class="btn btn--sm btn--ghost" data-demo="Sao chép clientId">Sao chép</button></dd>
+        </dl>
+
+        <div class="divider"></div>
+
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Client secret</div>
+        <div class="alert alert--info mb-4">
+          <span class="alert__icon">ℹ</span>
+          <div>
+            <div class="alert__title">Lấy secret qua kênh an toàn — không hiển thị trên màn hình</div>
+            <div class="t-small mb-3">Bí mật client được lưu tại Vault (PH-12). PH-01 chỉ giữ tham chiếu, không lưu giá trị thật (NFR-01-009).</div>
+            <ol class="t-small" style="margin:0;padding-left:var(--sp-5)">
+              <li>Nhấn nút bên dưới để mở liên kết Vault dùng một lần (hiệu lực 15 phút).</li>
+              <li>Xác thực bằng tài khoản công vụ của đầu mối kỹ thuật đã khai báo trong hồ sơ.</li>
+              <li>Sao chép secret ngay khi hiển thị — không thể xem lại sau khi đóng.</li>
+              <li>Lưu secret vào kho bí mật nội bộ của đơn vị; không gửi qua email hoặc chat.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="row row--wrap">
+          <button class="btn btn--primary" data-demo="Mở liên kết Vault một lần để lấy client secret">🔐 Lấy client secret qua kênh an toàn</button>
+          <span class="t-small t-muted">Liên kết hết hạn: 03/08/2026 23:15 · đã mở: chưa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card__head">
+        <div class="card__title">Chứng thư số (mTLS)</div>
+        <div class="card__sub">Cấp bởi CA nội bộ LGSP · serial <span class="t-mono">4A:7F:2C:91:B3</span></div>
+      </div>
+      <div class="card__body">
+        <dl class="dl mb-4">
+          <dt>Loại chứng thư</dt>
+          <dd>Client TLS · RSA 2048 · SHA-256</dd>
+          <dt>Chủ thể (CN)</dt>
+          <dd><span class="t-mono">HE_THONG_CAN_BO_CC</span></dd>
+          <dt>Hiệu lực</dt>
+          <dd>15/07/2026 — 15/07/2027 <span class="badge badge--ok badge--plain">Còn 347 ngày</span></dd>
+          <dt>CA phát hành</dt>
+          <dd>LGSP Internal CA · Tỉnh Example</dd>
+        </dl>
+        <div class="row row--wrap">
+          <button class="btn" data-demo="Tải chứng thư client (.pem)">⤓ Tải chứng thư client</button>
+          <button class="btn" data-demo="Tải khóa riêng (.key) qua kênh an toàn">🔐 Tải khóa riêng (kênh an toàn)</button>
+          <button class="btn btn--ghost" data-demo="Tải chuỗi CA tin cậy">⤓ Chuỗi CA tin cậy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__head">
+        <div class="card__title">Hạn mức truy cập</div>
+        <div class="card__sub">Cấu hình bởi PH-03 Gateway · nhóm hệ thống 2</div>
+      </div>
+      <div class="card__body">
+        <div class="grid grid--3 mb-4">
+          <div class="card stat" style="box-shadow:none">
+            <div class="stat__label">Tốc độ tối đa</div>
+            <div class="stat__value" style="font-size:var(--fs-2xl)">120</div>
+            <div class="t-small t-muted mt-2">yêu cầu / phút</div>
+          </div>
+          <div class="card stat" style="box-shadow:none">
+            <div class="stat__label">Burst</div>
+            <div class="stat__value" style="font-size:var(--fs-2xl)">30</div>
+            <div class="t-small t-muted mt-2">yêu cầu / 10 giây</div>
+          </div>
+          <div class="card stat" style="box-shadow:none">
+            <div class="stat__label">Đồng thời</div>
+            <div class="stat__value" style="font-size:var(--fs-2xl)">10</div>
+            <div class="t-small t-muted mt-2">kết nối tối đa</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Phạm vi quyền</th><th>Hạn mức riêng</th><th>Ghi chú</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono">canbo.read</td>
+                <td>80 req/phút</td>
+                <td class="t-small t-muted">Tra cứu thông tin cán bộ</td>
+              </tr>
+              <tr>
+                <td class="t-mono">canbo.sync</td>
+                <td>20 req/phút</td>
+                <td class="t-small t-muted">Đồng bộ danh sách cán bộ</td>
+              </tr>
+              <tr>
+                <td class="t-mono">dm.read</td>
+                <td>40 req/phút</td>
+                <td class="t-small t-muted">Danh mục dùng chung (PH-07)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col" style="max-width:340px">
+    <div class="card mb-5">
+      <div class="card__head">
+        <div class="card__title">Đầu mối hỗ trợ</div>
+      </div>
+      <div class="card__body">
+        <div class="mb-4">
+          <div class="t-small t-muted mb-1">Đầu mối kỹ thuật đơn vị</div>
+          <div class="t-primary">Nguyễn Văn Minh</div>
+          <div class="t-small">Phòng CNTT · Sở Nội vụ</div>
+          <div class="t-small t-mono mt-2">minh.nv@sonoivu.tinh.example.gov.vn</div>
+          <div class="t-small t-mono">0903 456 789</div>
+        </div>
+        <div class="divider"></div>
+        <div class="mb-4 mt-4">
+          <div class="t-small t-muted mb-1">Đầu mối nền tảng LGSP</div>
+          <div class="t-primary">Trần Thị Lan</div>
+          <div class="t-small">Trung tâm CNTT tỉnh · Sở TT&amp;TT</div>
+          <div class="t-small t-mono mt-2">lan.tt@stttt.tinh.example.gov.vn</div>
+          <div class="t-small t-mono">024 3856 1234 (ext. 204)</div>
+        </div>
+        <div class="divider"></div>
+        <div class="mt-4">
+          <div class="t-small t-muted mb-1">Hỗ trợ khẩn cấp (24/7)</div>
+          <div class="t-small">Hotline vận hành: <span class="t-mono">1900 6868</span></div>
+          <div class="t-small t-muted mt-1">Chỉ dùng khi sự cố kết nối nghiêm trọng</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-5">
+      <div class="card__head">
+        <div class="card__title">Hướng dẫn tiếp theo</div>
+      </div>
+      <div class="card__body">
+        <div class="steps">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__bar"></div>
+            <div class="step__label">Nhận thông tin kết nối</div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__bar"></div>
+            <div class="step__label">Cấu hình hệ thống nguồn</div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__bar"></div>
+            <div class="step__label">Kiểm thử trên sandbox</div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__label">Chuyển trạng thái ACTIVE</div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <a class="btn btn--block" href="portal.html" data-demo="Mở cổng nhà phát triển — tab Thử API">Thử API trên cổng nhà phát triển</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding">
+      <span class="finding__mark finding__mark--warn">!</span>
+      <div>
+        <div class="finding__title">Trạng thái lỗi: liên kết hết hạn</div>
+        <div class="finding__text t-small">Nếu liên kết bàn giao quá 24 giờ chưa mở, màn hình hiển thị <span class="t-mono">410 Gone</span> kèm nút yêu cầu sinh lại (FR-01-009 E1).</div>
+        <div class="finding__meta t-small t-muted">AT-01-011 · AT-01-013</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

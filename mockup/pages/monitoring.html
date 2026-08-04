@@ -13,11 +13,19 @@
 
 <div class="mock-note">
   <strong>PH-13 — Giám sát, Ghi vết &amp; Cảnh báo.</strong>
-  <em>SRS PH-13 chưa hoàn tất — mockup tạm theo checklist 6.6</em>
-  (Dashboard sức khỏe · Tra cứu theo traceId · Danh sách cảnh báo).
+  Minh họa các màn <span class="tag-ph">UI-13-01</span> Dashboard sức khỏe,
+  <span class="tag-ph">UI-13-02</span> tra cứu trace,
+  <span class="tag-ph">UI-13-03</span> danh sách cảnh báo,
+  <span class="tag-ph">UI-13-04</span> hoạt động nghiệp vụ,
+  <span class="tag-ph">UI-13-05</span> nhật ký kiểm toán,
+  <span class="tag-ph">UI-13-06</span> cảnh báo an ninh,
+  <span class="tag-ph">UI-13-07</span> luật cảnh báo &amp; runbook,
+  <span class="tag-ph">UI-04-06</span> trạng thái ngắt mạch (PH-04) — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-13-observability.md">SRS PH-13</a> và
+  <a href="../../docs/07-srs/SRS-PH-04-integration-core.md">SRS PH-04</a>.
   Luồng tham chiếu <a href="../../docs/03-flows/README.md">F-12</a>.
-  Chi tiết luồng tích hợp: <a href="routes.html">routes.html</a> ·
-  bản tin lỗi: <a href="dlq.html">dlq.html</a>.
+  Liên kết chéo: <a href="routes.html">Luồng tích hợp</a> ·
+  <a href="dlq.html">Bản tin lỗi</a> · <a href="iam.html">Định danh &amp; phân quyền</a>.
 </div>
 
 <div class="page-head">
@@ -62,9 +70,13 @@
     <button class="tab is-active" data-tab="overview">Tổng quan</button>
     <button class="tab" data-tab="trace">Tra cứu trace</button>
     <button class="tab" data-tab="alerts">Cảnh báo <span class="tab__count">7</span></button>
+    <button class="tab" data-tab="business">Nghiệp vụ</button>
+    <button class="tab" data-tab="audit">Kiểm toán</button>
+    <button class="tab" data-tab="security">An ninh <span class="tab__count">4</span></button>
+    <button class="tab" data-tab="rules">Luật</button>
   </div>
 
-  <!-- Tab: Tổng quan -->
+  <!-- ===== UI-13-01: Dashboard sức khỏe nền tảng ===== -->
   <div class="card__body" data-panel="overview" data-panel-group="mon">
     <div class="grid grid--2 mb-5">
       <div>
@@ -126,9 +138,81 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== UI-04-06: Trạng thái ngắt mạch (PH-04) ===== -->
+    <div class="divider mb-5"></div>
+    <div class="row row--between mb-3">
+      <div class="card__title" style="font-size:var(--fs-md);margin:0">Trạng thái ngắt mạch (circuit breaker)</div>
+      <span class="t-small t-muted">PH-04 · Valkey đồng bộ · <code class="t-mono">lgsp_circuit_breaker_state</code></span>
+    </div>
+    <div class="table-wrap mb-3">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Đích (target_id)</th><th>Trạng thái</th>
+            <th class="table__num">Lỗi</th><th class="table__num">Thành công</th>
+            <th>Đổi trạng thái</th><th>Thăm dò tiếp</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">NDXP-CANBO</td>
+            <td><span class="badge badge--err">OPEN</span></td>
+            <td class="table__num" style="color:var(--c-err-700)">58</td>
+            <td class="table__num">12</td>
+            <td class="t-mono t-small">03/08 14:02</td>
+            <td class="t-mono t-small">03/08 14:32</td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="routes.html#chi-tiet">Luồng</a>
+              <button class="btn btn--sm btn--primary" data-demo="POST /circuits/NDXP-CANBO/reset → CLOSED">Reset mạch</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">NDXP-DANCU</td>
+            <td><span class="badge badge--warn">HALF_OPEN</span></td>
+            <td class="table__num">3</td>
+            <td class="table__num" style="color:var(--c-ok-700)">7</td>
+            <td class="t-mono t-small">03/08 15:18</td>
+            <td class="t-mono t-small">—</td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="routes.html">Luồng</a>
+              <button class="btn btn--sm" disabled title="Chỉ reset khi OPEN">Reset mạch</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">NDXP-BHXH</td>
+            <td><span class="badge badge--ok">CLOSED</span></td>
+            <td class="table__num">2</td>
+            <td class="table__num">1.842</td>
+            <td class="t-mono t-small">03/08 08:00</td>
+            <td class="t-mono t-small">—</td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="routes.html">Luồng</a>
+              <button class="btn btn--sm" disabled title="Chỉ reset khi OPEN">Reset mạch</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">NDXP-THUADAT</td>
+            <td><span class="badge badge--ok">CLOSED</span></td>
+            <td class="table__num">8</td>
+            <td class="table__num">624</td>
+            <td class="t-mono t-small">02/08 22:10</td>
+            <td class="t-mono t-small">—</td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="routes.html">Luồng</a>
+              <button class="btn btn--sm" disabled title="Chỉ reset khi OPEN">Reset mạch</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert alert--warn" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div class="t-small"><strong>1 mạch OPEN</strong> — luồng <span class="t-mono">dong-bo-can-bo</span> đang đẩy thẳng vào DLQ. Phát lại từ <a href="dlq.html">dlq.html</a> chỉ khi mạch đóng.</div>
+    </div>
   </div>
 
-  <!-- Tab: Tra cứu trace -->
+  <!-- ===== UI-13-02: Truy vết bản tin theo traceId ===== -->
   <div class="card__body hidden" data-panel="trace" data-panel-group="mon" id="trace">
     <div class="row mb-4" style="gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
       <div class="field" style="flex:1;min-width:280px;margin:0">
@@ -217,7 +301,7 @@
     </div>
   </div>
 
-  <!-- Tab: Cảnh báo -->
+  <!-- ===== UI-13-03: Danh sách cảnh báo và xử lý ===== -->
   <div class="card__body hidden" data-panel="alerts" data-panel-group="mon" id="alerts" style="padding:0">
     <div class="toolbar">
       <div class="search">
@@ -322,6 +406,504 @@
       <span>7 cảnh báo · liên quan DLQ → <a href="dlq.html">dlq.html</a> · luồng → <a href="routes.html">routes.html</a></span>
       <span class="header__spacer"></span>
       <button class="btn btn--sm" data-demo="Tắt tiếng nhóm cảnh báo 1 giờ">Tắt tiếng 1h</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-13-04: Dashboard hoạt động nghiệp vụ ===== -->
+  <div class="card__body hidden" data-panel="business" data-panel-group="mon" id="business">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Giao dịch 24h</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">618.420</div>
+        <div class="stat__delta stat__delta--up">+12,4% so với hôm qua</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Đơn vị đang kết nối</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">34/41</div>
+        <div class="t-small t-muted">7 đơn vị chưa có lượt gọi</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Dịch vụ hoạt động</div>
+        <div class="stat__value" style="font-size:var(--fs-2xl)">28</div>
+        <div class="t-small t-muted">12 SYNC · 16 EVENT</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Đơn vị dùng nhiều nhất</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">Sở TT&amp;TT</div>
+        <div class="t-small t-muted">142.800 giao dịch/24h</div>
+      </div>
+    </div>
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Giao dịch theo đơn vị (top 8)</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Đơn vị</th><th class="table__num">Giao dịch</th><th class="table__num">Tỷ lệ</th><th>Xu hướng</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Sở Thông tin và Truyền thông</td>
+                <td class="table__num">142.800</td>
+                <td class="table__num">23,1%</td>
+                <td><span class="badge badge--ok badge--plain">↑ 8%</span></td>
+              </tr>
+              <tr>
+                <td>Văn phòng UBND tỉnh</td>
+                <td class="table__num">98.240</td>
+                <td class="table__num">15,9%</td>
+                <td><span class="badge badge--ok badge--plain">↑ 3%</span></td>
+              </tr>
+              <tr>
+                <td>Sở Tư pháp</td>
+                <td class="table__num">76.510</td>
+                <td class="table__num">12,4%</td>
+                <td><span class="badge badge--plain">→</span></td>
+              </tr>
+              <tr>
+                <td>Sở Tài nguyên &amp; Môi trường</td>
+                <td class="table__num">54.320</td>
+                <td class="table__num">8,8%</td>
+                <td><span class="badge badge--warn badge--plain">↓ 2%</span></td>
+              </tr>
+              <tr>
+                <td>Sở Lao động — Thương binh &amp; XH</td>
+                <td class="table__num">41.880</td>
+                <td class="table__num">6,8%</td>
+                <td><span class="badge badge--ok badge--plain">↑ 5%</span></td>
+              </tr>
+              <tr>
+                <td>Sở Y tế</td>
+                <td class="table__num">38.120</td>
+                <td class="table__num">6,2%</td>
+                <td><span class="badge badge--ok badge--plain">↑ 11%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Dịch vụ theo nhu cầu</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Dịch vụ</th><th class="table__num">Lượt gọi</th><th class="table__num">SLA</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">tra-cuu-cong-dan</td>
+                <td class="table__num">184.200</td>
+                <td class="table__num"><span class="badge badge--ok">Đạt</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">dong-bo-can-bo</td>
+                <td class="table__num">96.800</td>
+                <td class="table__num"><span class="badge badge--err">Vi phạm</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">tra-cuu-thua-dat</td>
+                <td class="table__num">72.440</td>
+                <td class="table__num"><span class="badge badge--warn">Cảnh báo</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">lien-thong-van-ban</td>
+                <td class="table__num">48.310</td>
+                <td class="table__num"><span class="badge badge--ok">Đạt</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">tra-cuu-bhxh</td>
+                <td class="table__num">31.560</td>
+                <td class="table__num"><span class="badge badge--ok">Đạt</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card__title mb-3 mt-5" style="font-size:var(--fs-md)">Đơn vị chưa kết nối</div>
+        <div class="col" style="gap:var(--sp-2)">
+          <div class="finding">
+            <span class="finding__mark finding__mark--warn">!</span>
+            <div>
+              <div class="finding__title">Sở Nội vụ</div>
+              <div class="finding__text t-small">Đã cấp clientId nhưng chưa có lượt gọi trong 30 ngày</div>
+            </div>
+          </div>
+          <div class="finding">
+            <span class="finding__mark finding__mark--warn">!</span>
+            <div>
+              <div class="finding__title">Sở Giáo dục &amp; Đào tạo</div>
+              <div class="finding__text t-small">Hồ sơ kết nạp đang chờ bàn giao endpoint</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="alert alert--info" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Dashboard nghiệp vụ trả lời câu hỏi quản lý (CV 631, CMP-10) — không thay thế chỉ số kỹ thuật ở tab Tổng quan. Feed KPI sang <a href="kpi.html">Kiến trúc &amp; KPI</a>.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-13-05: Tra cứu nhật ký kiểm toán ===== -->
+  <div class="card__body hidden" data-panel="audit" data-panel-group="mon" id="audit">
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Việc tra cứu này sẽ được ghi vết</div>
+        <div class="t-small">Mọi lượt truy vấn nhật ký kiểm toán đều tạo bản ghi kiểm toán mới (BR-13-006, FR-13-007).</div>
+      </div>
+    </div>
+    <div class="grid grid--2 mb-4">
+      <div class="field" style="margin:0">
+        <label class="field__label">Lý do truy vấn <span class="field__req">*</span></label>
+        <textarea class="textarea" rows="2" placeholder="Nhập căn cứ pháp lý hoặc mục đích điều tra…"></textarea>
+        <div class="field__hint">Bắt buộc trước khi tra — không nhập lý do thì không cho truy vấn (BR-13-007)</div>
+      </div>
+      <div>
+        <div class="card stat" style="box-shadow:none;height:100%">
+          <div class="stat__label">Chỉ báo toàn vẹn chuỗi băm</div>
+          <div class="stat__value" style="font-size:var(--fs-xl)"><span class="badge badge--ok">Hợp lệ</span></div>
+          <div class="t-small t-muted">Phạm vi 03/08 00:00–15:59 · 2.847.120 bản ghi · neo hằng ngày khớp</div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4" style="gap:var(--sp-3);align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="margin:0;min-width:140px">
+        <label class="field__label">Từ ngày</label>
+        <input class="input" type="date" value="2026-08-01">
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label class="field__label">Đến ngày</label>
+        <input class="input" type="date" value="2026-08-03">
+      </div>
+      <div class="field" style="margin:0;min-width:160px">
+        <label class="field__label">Chủ thể (actor)</label>
+        <input class="input input--mono" type="text" placeholder="client_id hoặc user_id">
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label class="field__label">Hành động</label>
+        <select class="select">
+          <option value="">Tất cả</option>
+          <option>READ</option>
+          <option>WRITE</option>
+          <option>EXPORT</option>
+          <option>APPROVE</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label class="field__label">Kết quả</label>
+        <select class="select">
+          <option value="">Tất cả</option>
+          <option>PERMIT</option>
+          <option>DENY</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" data-demo="Truy vấn nhật ký kiểm toán (FR-13-007)">Tra cứu</button>
+      <button class="btn" data-demo="Xuất bằng chứng đã ký số (FR-13-008)">⤒ Xuất bằng chứng</button>
+    </div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>actor</th><th>action</th><th>resource</th>
+            <th>subject_id</th><th>purpose</th><th>decision</th><th class="table__actions">Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 15:42:18</td>
+            <td class="t-mono t-small">HE_THONG_MOT_CUA</td>
+            <td><span class="badge badge--plain">READ</span></td>
+            <td class="t-mono t-small">cdm:CITIZEN/079098001234</td>
+            <td class="t-mono t-small">a3f8…c21d</td>
+            <td class="t-small">TRA_CUU_TTHC</td>
+            <td><span class="badge badge--ok">PERMIT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 15:38:02</td>
+            <td class="t-mono t-small">nguyen.van.a</td>
+            <td><span class="badge badge--plain">EXPORT</span></td>
+            <td class="t-mono t-small">audit:query</td>
+            <td class="t-muted">—</td>
+            <td class="t-small">THANH_TRA_NOI_BO</td>
+            <td><span class="badge badge--ok">PERMIT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 14:55:41</td>
+            <td class="t-mono t-small">HE_THONG_QL_DAT</td>
+            <td><span class="badge badge--plain">READ</span></td>
+            <td class="t-mono t-small">cdm:LAND/THUA-2024-88421</td>
+            <td class="t-mono t-small">7b2e…9f04</td>
+            <td class="t-small">CAP_GCN_QSDD</td>
+            <td><span class="badge badge--ok">PERMIT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+          <tr style="background:var(--c-err-50,transparent)">
+            <td class="t-mono t-small">03/08 14:12:08</td>
+            <td class="t-mono t-small">client-xyz-99</td>
+            <td><span class="badge badge--plain">READ</span></td>
+            <td class="t-mono t-small">cdm:CITIZEN/*</td>
+            <td class="t-muted">—</td>
+            <td class="t-small t-muted">— thiếu —</td>
+            <td><span class="badge badge--err">DENY</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 13:20:33</td>
+            <td class="t-mono t-small">tran.thi.b</td>
+            <td><span class="badge badge--plain">APPROVE</span></td>
+            <td class="t-mono t-small">route:dong-bo-can-bo/v12</td>
+            <td class="t-muted">—</td>
+            <td class="t-small">DUYET_LUONG</td>
+            <td><span class="badge badge--ok">PERMIT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 11:05:17</td>
+            <td class="t-mono t-small">HE_THONG_BHXH</td>
+            <td><span class="badge badge--plain">READ</span></td>
+            <td class="t-mono t-small">cdm:CITIZEN/001099012345</td>
+            <td class="t-mono t-small">e91c…4a88</td>
+            <td class="t-small">XAC_MINH_BHXH</td>
+            <td><span class="badge badge--ok">PERMIT</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết bản ghi DD-05">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="row">
+      <span class="t-small t-muted">6 bản ghi · <code class="t-mono">subject_id</code> hiển thị dạng băm (NFR-13-025) · schema <a href="../../docs/07-srs/SRS-00-data-dictionary.md#dd-05--ban_ghi_kiem_toan-bản-ghi-kiểm-toán">DD-05</a></span>
+      <span class="header__spacer"></span>
+      <a class="btn btn--sm" href="#trace">Liên kết trace</a>
+    </div>
+  </div>
+
+  <!-- ===== UI-13-06: Cảnh báo an ninh ===== -->
+  <div class="card__body hidden" data-panel="security" data-panel-group="mon" id="security" style="padding:0">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Tìm cảnh báo an ninh…">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: đang mở">Đang mở</button>
+        <button class="btn btn--sm" data-demo="Lọc: nghiêm trọng">Nghiêm trọng</button>
+        <button class="btn btn--sm" data-demo="Lọc: đăng nhập">Đăng nhập</button>
+        <button class="btn btn--sm" data-demo="Lọc: truy cập từ chối">Truy cập từ chối</button>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <span class="t-small t-muted">Anomaly Detector · FR-13-014</span>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mức</th><th>Cảnh báo</th><th>Mẫu phát hiện</th><th>Chủ thể</th>
+            <th>Thời gian</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td class="t-primary">Chuỗi băm kiểm toán gãy</td>
+            <td class="t-small t-muted">integrity_chain_break</td>
+            <td class="t-mono t-small">audit:2026-08-03T08:00</td>
+            <td class="t-small">03/08 08:12</td>
+            <td><span class="badge badge--err">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--primary" data-demo="Khoanh vùng phạm vi bị ảnh hưởng">Khoanh vùng</button>
+              <a class="btn btn--sm" href="#audit">Kiểm toán</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td class="t-primary">Tra cứu hàng loạt ngoài giờ</td>
+            <td class="t-small t-muted">bulk_sensitive_access</td>
+            <td class="t-mono t-small">do.van.e</td>
+            <td class="t-small">01/08 19:02</td>
+            <td><span class="badge badge--err">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Đề xuất tạm ngừng client">Tạm ngừng</button>
+              <a class="btn btn--sm" href="iam.html">IAM</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td class="t-primary">Đăng nhập thất bại liên tiếp</td>
+            <td class="t-small t-muted">failed_login_burst</td>
+            <td class="t-mono t-small">192.168.44.88</td>
+            <td class="t-small">03/08 06:30</td>
+            <td><span class="badge badge--warn">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem 12 lần thất bại trong 5 phút">Chi tiết</button>
+              <a class="btn btn--sm" href="iam.html">IAM</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td class="t-primary">Tỷ lệ DENY tăng đột biến</td>
+            <td class="t-small t-muted">deny_rate_spike</td>
+            <td class="t-mono t-small">client-xyz-99</td>
+            <td class="t-small">03/08 14:12</td>
+            <td><span class="badge badge--warn">Firing</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Lọc nhật ký DENY của client">Nhật ký</button>
+              <a class="btn btn--sm" href="privacy.html">Bảo vệ DL</a>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="badge badge--info">Info</span></td>
+            <td class="t-primary">Truy cập từ địa chỉ mạng lạ</td>
+            <td class="t-small t-muted">unknown_source_ip</td>
+            <td class="t-mono t-small">103.77.12.44</td>
+            <td class="t-small">02/08 23:18</td>
+            <td><span class="badge badge--muted">Acked</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xác nhận đã xử lý">Tắt</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span>4 cảnh báo an ninh mở · nguồn dữ liệu kiểm toán DD-05 + PH-12</span>
+      <span class="header__spacer"></span>
+      <a class="btn btn--sm" href="iam.html">Quản trị IAM</a>
+    </div>
+  </div>
+
+  <!-- ===== UI-13-07: Quản lý luật cảnh báo và runbook ===== -->
+  <div class="card__body hidden" data-panel="rules" data-panel-group="mon" id="rules">
+    <div class="row row--between mb-4">
+      <div class="btn-group">
+        <button class="btn btn--sm is-active" data-demo="Lọc: đang bật">Đang bật</button>
+        <button class="btn btn--sm" data-demo="Lọc: tắt">Tắt</button>
+        <button class="btn btn--sm" data-demo="Lọc: thiếu runbook">Thiếu runbook</button>
+      </div>
+      <button class="btn btn--primary" data-demo="Tạo luật cảnh báo mới (FR-13-012)">+ Luật mới</button>
+    </div>
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Tên luật</th><th>Mức</th><th>Trạng thái</th>
+            <th class="table__num">Phát 30 ngày</th><th class="table__num">Tỷ lệ giả</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">ALRT-ERR-RATE</td>
+            <td class="t-primary">Tỷ lệ lỗi API &gt; 5%</td>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td><span class="badge badge--ok">Bật</span></td>
+            <td class="table__num">12</td>
+            <td class="table__num">8%</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chỉnh sửa luật ALRT-ERR-RATE">Sửa</button>
+              <button class="btn btn--sm" data-demo="Chạy thử luật trên 7 ngày">Chạy thử</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ALRT-P99-SLOW</td>
+            <td class="t-primary">P99 độ trễ &gt; 10s</td>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td><span class="badge badge--ok">Bật</span></td>
+            <td class="table__num">28</td>
+            <td class="table__num" style="color:var(--c-warn-700)">54%</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chỉnh sửa luật ALRT-P99-SLOW">Sửa</button>
+              <button class="btn btn--sm" data-demo="Chạy thử luật trên 7 ngày">Chạy thử</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ALRT-CB-OPEN</td>
+            <td class="t-primary">Ngắt mạch chuyển OPEN</td>
+            <td><span class="badge badge--err">Critical</span></td>
+            <td><span class="badge badge--ok">Bật</span></td>
+            <td class="table__num">3</td>
+            <td class="table__num">0%</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chỉnh sửa luật ALRT-CB-OPEN">Sửa</button>
+              <button class="btn btn--sm" data-demo="Chạy thử luật trên 7 ngày">Chạy thử</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ALRT-DLQ-BACKLOG</td>
+            <td class="t-primary">DLQ vượt ngưỡng 500 bản</td>
+            <td><span class="badge badge--warn">Warning</span></td>
+            <td><span class="badge badge--ok">Bật</span></td>
+            <td class="table__num">6</td>
+            <td class="table__num">17%</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chỉnh sửa luật ALRT-DLQ-BACKLOG">Sửa</button>
+              <button class="btn btn--sm" data-demo="Chạy thử luật trên 7 ngày">Chạy thử</button>
+            </td>
+          </tr>
+          <tr style="background:var(--c-warn-50,transparent)">
+            <td class="t-mono t-small">ALRT-CPU-HIGH</td>
+            <td class="t-primary">CPU pod &gt; 90%</td>
+            <td><span class="badge badge--info">Info</span></td>
+            <td><span class="badge badge--muted">Tắt</span></td>
+            <td class="table__num">142</td>
+            <td class="table__num" style="color:var(--c-err-700)">89%</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem lại ngưỡng — tỷ lệ giả cao">Xem lại</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Trình soạn biểu thức PromQL</div>
+        <div class="field" style="margin:0">
+          <label class="field__label">Biểu thức (luật ALRT-ERR-RATE)</label>
+          <textarea class="textarea input--mono" rows="4">(
+  sum(rate(lgsp_messages_total{status=~"5.."}[5m])) by (route)
+  /
+  sum(rate(lgsp_messages_total[5m])) by (route)
+) &gt; 0.05</textarea>
+          <div class="field__hint">Kiểm tra cú pháp trước khi lưu · chạy thử trên dữ liệu 7 ngày qua</div>
+        </div>
+        <div class="row mt-3">
+          <button class="btn btn--sm" data-demo="Kiểm tra cú pháp PromQL">Kiểm tra cú pháp</button>
+          <button class="btn btn--sm btn--primary" data-demo="Chạy thử: sẽ phát 12 lần trong 7 ngày">Chạy thử</button>
+        </div>
+        <div class="alert alert--warn mt-4" style="margin-bottom:0">
+          <span class="alert__icon">⚠</span>
+          <div class="t-small">Luật ALRT-P99-SLOW có tỷ lệ cảnh báo giả 54% — gợi ý xem lại ngưỡng (FR-13-012 quy tắc 3).</div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Runbook (5 mục bắt buộc)</div>
+        <div class="col" style="gap:var(--sp-3)">
+          <div class="field" style="margin:0">
+            <label class="field__label">1. Mô tả triệu chứng</label>
+            <input class="input" type="text" value="Tỷ lệ lỗi HTTP 5xx của route vượt 5% trong 5 phút">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field__label">2. Kiểm tra đầu tiên</label>
+            <input class="input" type="text" value="Xem tab Tổng quan → trạng thái ngắt mạch và top luồng lỗi">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field__label">3. Hành động khắc phục</label>
+            <input class="input" type="text" value="Kiểm tra hạ nguồn NDXP; nếu CB OPEN → chờ half-open hoặc reset có kiểm soát">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field__label">4. Leo thang</label>
+            <input class="input" type="text" value="Nếu &gt; 15 phút chưa xử lý → gọi trực PH-04 + PH-14">
+          </div>
+          <div class="field" style="margin:0">
+            <label class="field__label">5. Liên hệ</label>
+            <input class="input" type="text" value="Đầu mối vận hành: Trung tâm IOC · hotline nội bộ">
+          </div>
+        </div>
+        <div class="row mt-4">
+          <button class="btn btn--sm btn--primary" data-demo="Lưu luật kèm runbook (FR-13-012)">Lưu luật</button>
+          <span class="t-small t-muted" style="margin-left:auto">Không có runbook → không lưu được (E1)</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>

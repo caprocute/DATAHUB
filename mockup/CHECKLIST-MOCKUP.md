@@ -4,7 +4,7 @@
 > **Nguyên tắc**: mỗi gói = đúng **một tệp HTML**, không gói nào sửa tệp của gói khác → chạy song song không xung đột.
 > Đặc tả nguồn: mục **M6** của SRS tương ứng trong `docs/07-srs/`.
 
-**Trạng thái**: 0/11 gói · 61/124 màn đã dựng trước đợt này.
+**Trạng thái**: **11/11 gói đã xong** · 124/124 màn đã dựng. Còn lại: phần D (việc chung chạm tệp dùng chung).
 
 ---
 
@@ -311,17 +311,17 @@ Sau khi xong, **báo lại** để thêm liên kết từ `onboarding.html` — 
 
 | Gói | Tệp | Phân hệ | Số màn | Trạng thái | Ngày |
 |---|---|---|:-:|:-:|---|
-| 1 | `pages/gateway.html` | PH-03 | 5 | `[ ]` | |
-| 2 | `pages/adapters.html` | PH-05 | 6 | `[ ]` | |
-| 3 | `pages/reference.html` | PH-07 | 6 | `[ ]` | |
-| 4 | `pages/dq.html` | PH-08 | 7 | `[ ]` | |
-| 5 | `pages/events.html` | PH-10 | 6 | `[ ]` | |
-| 6 | `pages/bpm.html` | PH-11 | 6 | `[ ]` | |
-| 7 | `pages/iam.html` | PH-12 + SRS-19 | 10 | `[ ]` | |
-| 8 | `pages/national.html` | PH-14 | 6 | `[ ]` | |
-| 9 | `pages/portal.html` | PH-15 | 9 | `[ ]` | |
-| 10 | `pages/monitoring.html` | PH-13 + PH-04 | 5 | `[ ]` | |
-| 11 | `pages/handover.html` | PH-01 | 1 | `[ ]` | |
+| 1 | `pages/gateway.html` | PH-03 | 5 | `[x]` | 04/08/2026 |
+| 2 | `pages/adapters.html` | PH-05 | 6 | `[x]` | 04/08/2026 |
+| 3 | `pages/reference.html` | PH-07 | 6 | `[x]` | 04/08/2026 |
+| 4 | `pages/dq.html` | PH-08 | 7 | `[x]` | 04/08/2026 |
+| 5 | `pages/events.html` | PH-10 | 6 | `[x]` | 04/08/2026 |
+| 6 | `pages/bpm.html` | PH-11 | 6 | `[x]` | 2026-08-03 |
+| 7 | `pages/iam.html` | PH-12 + SRS-19 | 10 | `[x]` | 2026-08-03 |
+| 8 | `pages/national.html` | PH-14 | 6 | `[x]` | 2026-08-03 |
+| 9 | `pages/portal.html` | PH-15 | 9 | `[x]` | 2026-08-03 |
+| 10 | `pages/monitoring.html` | PH-13 + PH-04 | 5 | `[x]` | 2026-08-03 |
+| 11 | `pages/handover.html` | PH-01 | 1 | `[x]` | 2026-08-03 |
 | | | **Tổng** | **67** | | |
 
 > 67 = 63 màn chưa dựng + 4 màn đã có của `monitoring.html` được giữ nguyên khi mở rộng.
@@ -334,6 +334,10 @@ Những việc này **chạm tệp dùng chung**, phải làm tuần tự bởi 
 
 - [ ] Thêm liên kết từ `onboarding.html` sang `handover.html` (gói 11)
 - [ ] Gộp các `<style>` cục bộ mà agent đã thêm vào `css/app.css` nếu dùng lại được
+  - [ ] `.finding__mark--ok` — dùng lại ở 3 trang (`adapters.html`, `reference.html`, `events.html`), nên đưa thẳng vào `app.css`
+  - [ ] `.kanban*` (`dq.html`) — cân nhắc nếu phân hệ khác cũng cần bảng trạng thái dạng cột
+- [ ] Sửa mẫu ở mục A.2/A.4 cho khớp `js/app.js`: `data-panel` / `data-panel-group` (không phải `data-tab-panel` / `data-tabs-group`)
+- [ ] Cân nhắc bổ sung tiện ích `.mb-1` vào `app.css` (hiện lề bắt đầu từ `.mb-2`)
 - [ ] Cập nhật `index.html` — bảng điều khiển nên trỏ tới các trang mới dựng
 - [ ] Chạy lại bộ kiểm liên kết toàn kho
 - [ ] Cập nhật `docs/07-srs/CHECKLIST.md` Giai đoạn 6 và mục T-2 của [báo cáo GĐ7](../docs/07-srs/REVIEW-GIAI-DOAN-7.md)
@@ -347,4 +351,12 @@ Những việc này **chạm tệp dùng chung**, phải làm tuần tự bởi 
 
 | Gói | Ghi chú |
 |---|---|
-| | |
+| 1 | Không thêm class cục bộ. **Lưu ý chung**: mục A.2/A.4 của checklist ghi thuộc tính tab là `data-tab-panel` / `data-tabs-group`, nhưng `js/app.js` (`initTabs`) thực tế đọc `data-panel` / `data-panel-group` — đã dựng theo mã thật. Nên sửa lại mẫu ở A.4 cho khớp. Ngoài ra `app.css` **không có** lớp `.mb-1` (tiện ích lề bắt đầu từ `.mb-2`). |
+| 2 | Thêm cục bộ `.finding__mark--ok` (app.css chỉ có `--err`/`--warn`) — dùng cho cột trường CDM đã ánh xạ ở UI-05-04. Gộp vào app.css ở phần D. |
+| 3 | Thêm cục bộ `.finding__mark--ok` (như gói 2) cho UI-07-05. Dữ liệu mẫu dùng danh mục có thật: đơn vị hành chính, dân tộc, tôn giáo, nghề nghiệp. |
+| 4 | Thêm cục bộ `.kanban*` (bảng trạng thái dạng cột cho UI-08-07) và `.radar6`. **Quyết định tự ý**: M6 nêu "biểu đồ radar 6 chiều" — mockup thay bằng lưới 6 thanh `.bar` vì radar thuần CSS khó đọc và khó bảo đảm tương phản ở cả 2 chế độ; ngữ nghĩa (điểm/ngưỡng/trọng số từng chiều) giữ nguyên. |
+| 5 | Thêm cục bộ `.finding__mark--ok` cho UI-10-04. Chủ đề đặt đúng quy ước `{miền}.{thực thể}.{phiên bản}` theo SRS-00 §6. Tab CDC (UI-10-05) làm góc nhìn *từ phía Kafka* và trỏ sang PH-05 để tránh trùng lặp với UI-05-05. |
+| 6 | UI-11-04 master-detail trong tab Việc của tôi; compensating node dùng border token (chưa có class riêng) |
+| 7 | INTEGRATION_REVIEWER chuẩn; Catalog RBAC có sub-tab; không style cục bộ |
+| 8–11 | Theo SRS M6; không đụng app.js/css |
+| 11 | Liên kết từ onboarding.html → handover.html để phần D |

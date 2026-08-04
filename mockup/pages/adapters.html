@@ -3,33 +3,968 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quản lý Adapter — LGSP</title>
+<title>Adapter kết nối — LGSP</title>
 <link rel="stylesheet" href="../css/app.css">
 <script src="../js/theme.js"></script>
-<script>window.LGSP_PAGE = { id: 'adapters', title: 'Quản lý Adapter', crumbs: [
-  { text: 'Trang chủ', href: 'index.html' }, { text: 'Quản lý Adapter' }] };</script>
+<script>window.LGSP_PAGE = { id: 'adapters', title: 'Adapter kết nối', crumbs: [
+  { text: 'Trang chủ', href: 'index.html' }, { text: 'Adapter kết nối' }] };</script>
+<style>
+  /* Bổ sung cục bộ: app.css mới có .finding__mark--err và --warn, thiếu biến thể "đạt".
+     Dùng cho cột trường CDM đã ánh xạ ở UI-05-04. Nên gộp vào css/app.css sau đợt này. */
+  .finding__mark--ok { color: var(--c-ok-700); }
+</style>
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-05 — Adapter kết nối hệ thống.</strong>
+  Minh họa các màn <span class="tag-ph">UI-05-01</span> Danh sách adapter và sức khỏe,
+  <span class="tag-ph">UI-05-02</span> Đăng ký và cấu hình,
+  <span class="tag-ph">UI-05-03</span> Kiểm thử kết nối,
+  <span class="tag-ph">UI-05-04</span> Trình ánh xạ trường,
+  <span class="tag-ph">UI-05-05</span> Giám sát CDC,
+  <span class="tag-ph">UI-05-06</span> Thư viện Kamelet — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-05-adapter.md">SRS PH-05</a>.
+  Liên kết chéo: <a href="routes.html">Luồng tích hợp</a> (luồng dùng adapter) ·
+  <a href="events.html">Truyền thông sự kiện</a> (CDC đẩy vào Kafka).
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
-    <h1 class="page-title">Quản lý Adapter</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-05</span> — màn hình đang được xây dựng</p>
+    <h1 class="page-title">Adapter kết nối</h1>
+    <p class="page-desc">Apache Camel Kamelet · 46 adapter trên cụm — mọi kết nối tới hệ thống thành viên đều đi qua adapter (BR-05-002)</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Tải danh sách adapter dạng CSV">↓ Xuất danh sách</button>
+    <button class="btn btn--primary" data-demo="Mở biểu mẫu đăng ký adapter mới">+ Đăng ký adapter</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-05</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-05.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<!-- ===== UI-05-01: Danh sách adapter và sức khỏe kết nối ===== -->
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Tổng số adapter</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">46</div>
+    <div class="stat__meta">Trần cụm 200 (NFR-05-019)</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Đang hoạt động</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-ok-700)">41</div>
+    <div class="stat__meta">Kết nối ổn định, trong ngưỡng độ trễ</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Suy giảm</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">3</div>
+    <div class="stat__meta">Còn phục vụ nhưng vượt ngưỡng lỗi/độ trễ</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Mất kết nối</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">2</div>
+    <div class="stat__meta">Đang tự kết nối lại (NFR-05-009)</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="ad" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="list">Danh sách <span class="tab__count">46</span></button>
+    <button class="tab" data-tab="config">Cấu hình</button>
+    <button class="tab" data-tab="test">Kiểm thử</button>
+    <button class="tab" data-tab="map">Ánh xạ</button>
+    <button class="tab" data-tab="cdc">CDC <span class="tab__count">2</span></button>
+    <button class="tab" data-tab="kamelet">Kamelet</button>
+  </div>
+
+  <!-- Tab: Danh sách — UI-05-01 -->
+  <div class="card__body" data-panel="list" data-panel-group="ad">
+
+    <div class="row mb-4" style="gap:var(--sp-2);flex-wrap:wrap;align-items:flex-end">
+      <div class="search" style="min-width:240px">
+        <input class="input" type="search" placeholder="Tìm theo mã adapter hoặc hệ thống…">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Mọi nhóm hệ thống</option>
+        <option>Nhóm 1 — có API hiện đại</option>
+        <option>Nhóm 2 — có SOAP/WS cũ</option>
+        <option>Nhóm 3 — chỉ có CSDL (CDC)</option>
+        <option>Nhóm 4 — trao đổi tệp</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi giao thức</option><option>REST</option><option>SOAP</option><option>JDBC/CDC</option><option>SFTP</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi mức sức khỏe</option><option>Khỏe mạnh</option><option>Suy giảm</option><option>Mất kết nối</option>
+      </select>
+      <button class="btn" data-demo="Áp dụng bộ lọc danh sách adapter">Lọc</button>
+    </div>
+
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">2 adapter mất kết nối — hiển thị đầu bảng bất kể sắp xếp</div>
+        <div class="t-small">
+          <span class="t-mono">ADP_DAT_DAI_SOAP</span> (hệ thống đích không phản hồi) và
+          <span class="t-mono">ADP_HO_TICH_CDC</span> (tạm dừng do thay đổi lược đồ — xem tab <strong>CDC</strong>).
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Mã adapter</th><th>Hệ thống · Đơn vị chủ quản</th><th>Nhóm</th><th>Giao thức</th>
+            <th>Sức khỏe</th><th class="table__num">Độ trễ P99</th><th class="table__num">Tỷ lệ lỗi</th>
+            <th class="table__num">Lượt gọi 24h</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">ADP_DAT_DAI_SOAP</td>
+            <td class="t-small">Hệ thống đăng ký đất đai<br><span class="t-muted">Sở Tài nguyên &amp; Môi trường</span></td>
+            <td><span class="badge badge--plain">Nhóm 2</span></td>
+            <td class="t-small">SOAP 1.1</td>
+            <td><span class="badge badge--err">● Mất kết nối</span><div class="t-small t-muted">Hết thời gian chờ kết nối</div></td>
+            <td class="table__num" style="color:var(--c-err-700)">—</td>
+            <td class="table__num" style="color:var(--c-err-700)">100%</td>
+            <td class="table__num">2.418</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_DAT_DAI_SOAP">Xem</button>
+              <button class="btn btn--sm" data-demo="Chạy kiểm thử kết nối cho ADP_DAT_DAI_SOAP">Kiểm thử</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_HO_TICH_CDC <span class="badge badge--warn">⚠ Lược đồ đổi</span></td>
+            <td class="t-small">CSDL hộ tịch<br><span class="t-muted">Sở Tư pháp</span></td>
+            <td><span class="badge badge--plain">Nhóm 3</span> <span class="badge badge--info badge--plain">CDC</span></td>
+            <td class="t-small">JDBC/CDC (PostgreSQL)</td>
+            <td><span class="badge badge--err">● Tạm dừng</span><div class="t-small t-muted">Thay đổi lược đồ phá vỡ ánh xạ</div></td>
+            <td class="table__num">—</td>
+            <td class="table__num">—</td>
+            <td class="table__num">0</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_HO_TICH_CDC">Xem</button>
+              <button class="btn btn--sm" data-demo="Mở tab CDC để xử lý thay đổi lược đồ">Xử lý</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_MOT_CUA_REST</td>
+            <td class="t-small">Hệ thống một cửa điện tử<br><span class="t-muted">Văn phòng UBND tỉnh</span></td>
+            <td><span class="badge badge--plain">Nhóm 1</span></td>
+            <td class="t-small">REST / OpenAPI 3.0</td>
+            <td><span class="badge badge--ok">● Khỏe mạnh</span></td>
+            <td class="table__num">142ms</td>
+            <td class="table__num">0,08%</td>
+            <td class="table__num">128.402</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_MOT_CUA_REST">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạm dừng adapter ADP_MOT_CUA_REST">Tạm dừng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_DAN_CU_CDC</td>
+            <td class="t-small">CSDL dân cư địa phương<br><span class="t-muted">Công an tỉnh</span></td>
+            <td><span class="badge badge--plain">Nhóm 3</span> <span class="badge badge--info badge--plain">CDC</span></td>
+            <td class="t-small">JDBC/CDC (Oracle)</td>
+            <td><span class="badge badge--ok">● Khỏe mạnh</span><div class="t-small t-muted">Độ trễ đọc nhật ký 1,8s</div></td>
+            <td class="table__num">96ms</td>
+            <td class="table__num">0,02%</td>
+            <td class="table__num">84.106</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_DAN_CU_CDC">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạm dừng adapter ADP_DAN_CU_CDC">Tạm dừng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_VAN_BAN_SOAP</td>
+            <td class="t-small">Quản lý văn bản điều hành<br><span class="t-muted">Văn phòng UBND tỉnh</span></td>
+            <td><span class="badge badge--plain">Nhóm 2</span></td>
+            <td class="t-small">SOAP 1.2 (TT 39/2017)</td>
+            <td><span class="badge badge--warn">● Suy giảm</span><div class="t-small t-muted">Độ trễ vượt ngưỡng 3 lần/giờ</div></td>
+            <td class="table__num" style="color:var(--c-warn-700)">1.284ms</td>
+            <td class="table__num" style="color:var(--c-warn-700)">1,42%</td>
+            <td class="table__num">38.406</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_VAN_BAN_SOAP">Xem</button>
+              <button class="btn btn--sm" data-demo="Chạy kiểm thử kết nối cho ADP_VAN_BAN_SOAP">Kiểm thử</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_BAO_HIEM_REST</td>
+            <td class="t-small">Hệ thống bảo hiểm xã hội<br><span class="t-muted">Bảo hiểm xã hội tỉnh</span></td>
+            <td><span class="badge badge--plain">Nhóm 1</span></td>
+            <td class="t-small">REST / OpenAPI 3.1</td>
+            <td><span class="badge badge--ok">● Khỏe mạnh</span></td>
+            <td class="table__num">318ms</td>
+            <td class="table__num">0,11%</td>
+            <td class="table__num">12.408</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_BAO_HIEM_REST">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạm dừng adapter ADP_BAO_HIEM_REST">Tạm dừng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_KHO_BAC_SFTP</td>
+            <td class="t-small">Đối soát thu ngân sách<br><span class="t-muted">Kho bạc Nhà nước tỉnh</span></td>
+            <td><span class="badge badge--plain">Nhóm 4</span></td>
+            <td class="t-small">SFTP (tệp CSV)</td>
+            <td><span class="badge badge--ok">● Khỏe mạnh</span><div class="t-small t-muted">Quét thư mục mỗi 15 phút</div></td>
+            <td class="table__num">—</td>
+            <td class="table__num">0%</td>
+            <td class="table__num">96</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_KHO_BAC_SFTP">Xem</button>
+              <button class="btn btn--sm" data-demo="Tạm dừng adapter ADP_KHO_BAC_SFTP">Tạm dừng</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ADP_Y_TE_REST</td>
+            <td class="t-small">Hồ sơ sức khỏe điện tử<br><span class="t-muted">Sở Y tế</span></td>
+            <td><span class="badge badge--plain">Nhóm 1</span></td>
+            <td class="t-small">REST / OpenAPI 3.0</td>
+            <td><span class="badge badge--warn">● Suy giảm</span><div class="t-small t-muted">Nhóm kết nối chạm trần</div></td>
+            <td class="table__num" style="color:var(--c-warn-700)">846ms</td>
+            <td class="table__num">0,64%</td>
+            <td class="table__num">21.740</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Mở chi tiết adapter ADP_Y_TE_REST">Xem</button>
+              <button class="btn btn--sm" data-demo="Chạy kiểm thử kết nối cho ADP_Y_TE_REST">Kiểm thử</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--info mt-4" style="margin-bottom:0">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Adapter chỉ làm giao tiếp kỹ thuật và chuyển đổi định dạng — <strong>không chứa logic nghiệp vụ</strong> (BR-05-001). Logic nghiệp vụ nằm ở <a href="routes.html">luồng tích hợp PH-04</a>.</div>
+    </div>
+  </div>
+
+  <!-- ===== UI-05-02: Đăng ký và cấu hình adapter ===== -->
+  <div class="card__body hidden" data-panel="config" data-panel-group="ad">
+
+    <div class="steps mb-5">
+      <div class="step"><div class="step__num">1</div><div class="step__bar"></div><div class="step__label">Thông tin chung</div></div>
+      <div class="step"><div class="step__num">2</div><div class="step__bar"></div><div class="step__label">Kết nối &amp; xác thực</div></div>
+      <div class="step"><div class="step__num">3</div><div class="step__bar"></div><div class="step__label">Ánh xạ trường</div></div>
+      <div class="step"><div class="step__num">4</div><div class="step__bar"></div><div class="step__label">Kiểm thử &amp; kích hoạt</div></div>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Thông tin chung</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Mã adapter <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="ADP_DAT_DAI_SOAP">
+            <div class="field__hint">Quy ước <span class="t-mono">ADP_{HỆ_THỐNG}_{GIAO_THỨC}</span>, chữ hoa và gạch dưới.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Hệ thống nguồn <span class="field__req">*</span></label>
+            <select class="select">
+              <option>Hệ thống đăng ký đất đai — Sở TN&amp;MT</option>
+              <option>CSDL hộ tịch — Sở Tư pháp</option>
+              <option>Hệ thống một cửa điện tử — Văn phòng UBND tỉnh</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Nhóm hệ thống <span class="field__req">*</span></label>
+            <select class="select">
+              <option>Nhóm 2 — có SOAP/WS cũ</option>
+              <option>Nhóm 1 — có API hiện đại</option>
+              <option>Nhóm 3 — chỉ có CSDL (CDC)</option>
+              <option>Nhóm 4 — trao đổi tệp</option>
+            </select>
+            <div class="field__hint">Nhóm quyết định cơ chế tích hợp; đổi nhóm không cần sửa luồng PH-04 (NFR-05-021).</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Điểm cuối <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="https://dangkydatdai.tnmt.tinh.gov.vn/ws/ThuaDatService">
+          </div>
+          <div class="field">
+            <label class="field__label">Đặc tả dịch vụ</label>
+            <input class="input input--mono" type="text" value="/ws/ThuaDatService?wsdl">
+            <div class="field__hint">WSDL, OpenAPI hoặc mẫu dữ liệu — dùng để dựng cây trường ở tab Ánh xạ.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Kết nối &amp; xác thực</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Cơ chế xác thực <span class="field__req">*</span></label>
+            <select class="select">
+              <option>WS-Security UsernameToken</option>
+              <option>OAuth 2.0 Client Credentials</option>
+              <option>mTLS chứng thư số</option>
+              <option>API Key trên tiêu đề</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Tham chiếu bí mật trong Vault <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="kv/lgsp/adapters/dat-dai/ws-user">
+            <div class="field__hint">Chỉ lưu <strong>tham chiếu</strong> — bí mật lấy từ Vault lúc chạy, không nằm trong cấu hình hay ảnh container (BR-05-007 · NFR-05-012).</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Số kết nối đồng thời tối đa <span class="field__req">*</span></label>
+            <input class="input" type="number" value="40">
+            <div class="field__err">Vượt mức 25 kết nối đã thỏa thuận với Sở TN&amp;MT — có thể làm quá tải hệ thống nguồn (BR-05-009).</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Thời gian chờ</label>
+            <div class="input-group">
+              <input class="input" type="number" value="2" placeholder="Kết nối (giây)">
+              <input class="input" type="number" value="15" placeholder="Đọc (giây)">
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" checked> <span>Bắt buộc TLS 1.2 trở lên cho kết nối ra ngoài</span></label>
+          <label class="check"><input type="checkbox" checked> <span>Tài khoản chỉ có quyền đọc (bắt buộc với CDC/JDBC — BR-05-008)</span></label>
+          <label class="check"><input type="checkbox"> <span>Quét mã độc tệp đính kèm nhận từ bên ngoài</span></label>
+
+          <div class="alert alert--info mt-4" style="margin-bottom:0">
+            <span class="alert__icon">ℹ</span>
+            <div class="t-small">Bộ chuyển đổi khai báo bằng XSLT/JSLT — không viết mã Java cho ánh xạ thông thường (NFR-05-022).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__actions mt-5">
+      <button class="btn" data-demo="Lưu adapter dưới dạng bản nháp">Lưu nháp</button>
+      <button class="btn" data-demo="Quay lại bước trước">← Quay lại</button>
+      <button class="btn btn--primary" data-demo="Sang bước ánh xạ trường">Tiếp tục → Ánh xạ</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-05-03: Kiểm thử kết nối ===== -->
+  <div class="card__body hidden" data-panel="test" data-panel-group="ad">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div class="field" style="margin:0;min-width:280px">
+        <label class="field__label">Adapter kiểm thử</label>
+        <select class="select">
+          <option>ADP_DAT_DAI_SOAP — Sở TN&amp;MT</option>
+          <option>ADP_VAN_BAN_SOAP — Văn phòng UBND tỉnh</option>
+          <option>ADP_MOT_CUA_REST — Văn phòng UBND tỉnh</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" data-demo="Chạy kiểm thử kết nối — chỉ dùng thao tác không gây tác dụng phụ (BR-05-004)">▶ Chạy kiểm thử</button>
+    </div>
+
+    <div class="alert alert--err mb-5">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Kiểm thử thất bại tại bước 2 — Xác thực</div>
+        <div class="t-small">Chạy lúc 03/08/2026 15:12:44 bởi Lê Thị Hà · thời gian 4,2 giây · 2/4 bước đạt.</div>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Kết quả từng bước</div>
+        <div class="timeline">
+          <div class="tl-item tl-item--ok">
+            <div class="tl-time">15:12:41 · 182ms</div>
+            <div class="tl-title">✓ Bước 1 — Kết nối</div>
+            <div class="tl-desc">Bắt tay TLS 1.2 thành công tới <span class="t-mono">dangkydatdai.tnmt.tinh.gov.vn:443</span>. Chứng thư còn hạn 148 ngày.</div>
+          </div>
+          <div class="tl-item tl-item--err">
+            <div class="tl-time">15:12:42 · 3.804ms</div>
+            <div class="tl-title">✕ Bước 2 — Xác thực</div>
+            <div class="tl-desc">Máy chủ trả <span class="t-mono">SOAP Fault: wsse:FailedAuthentication</span> — thông tin đăng nhập bị từ chối.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">—</div>
+            <div class="tl-title">○ Bước 3 — Tải đặc tả</div>
+            <div class="tl-desc">Chưa chạy vì bước trước thất bại.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-time">—</div>
+            <div class="tl-title">○ Bước 4 — Chuyển đổi</div>
+            <div class="tl-desc">Chưa chạy vì bước trước thất bại.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Chi tiết lỗi &amp; hướng dẫn khắc phục</div>
+        <div class="panel__body">
+          <div class="finding">
+            <div class="finding__mark finding__mark--err">✕</div>
+            <div class="finding__text">
+              <div class="finding__title">Xác thực WS-Security bị từ chối</div>
+              <div class="finding__meta">Mã lỗi <span class="t-mono">wsse:FailedAuthentication</span> · bước 2</div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div class="card__title mb-2" style="font-size:var(--fs-md)">Hướng dẫn khắc phục</div>
+            <ol class="t-small" style="padding-left:var(--sp-5);line-height:1.9">
+              <li>Kiểm tra bí mật tại Vault <span class="t-mono">kv/lgsp/adapters/dat-dai/ws-user</span> còn đúng không.</li>
+              <li>Xác nhận với Sở TN&amp;MT tài khoản tích hợp chưa bị khóa hoặc đổi mật khẩu.</li>
+              <li>Kiểm tra đồng hồ hệ thống — WS-Security từ chối bản tin lệch quá 5 phút.</li>
+              <li>Không thử lại nhiều lần liên tiếp để tránh bị khóa tài khoản (BR-05-010).</li>
+            </ol>
+          </div>
+          <div class="alert alert--warn mt-4">
+            <span class="alert__icon">⚠</span>
+            <div class="t-small">Kết quả kiểm thử <strong>không hiển thị bí mật</strong>, kể cả khi lỗi xác thực (NFR-05-014).</div>
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Sao chép hướng dẫn khắc phục để gửi đơn vị chủ quản">⧉ Sao chép để gửi đơn vị</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div class="panel">
+        <div class="panel__head">Dữ liệu mẫu để kiểm thử chuyển đổi</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Bản tin nguồn (SOAP)</label>
+            <textarea class="textarea input--mono" rows="8">&lt;ThuaDatResponse&gt;
+  &lt;maThuaDat&gt;01-2026-004821&lt;/maThuaDat&gt;
+  &lt;soHieuToBanDo&gt;42&lt;/soHieuToBanDo&gt;
+  &lt;dienTich&gt;120.5&lt;/dienTich&gt;
+  &lt;chuSuDung&gt;Nguyễn Văn Bình&lt;/chuSuDung&gt;
+  &lt;ngayCap&gt;15/03/2024&lt;/ngayCap&gt;
+&lt;/ThuaDatResponse&gt;</textarea>
+          </div>
+          <button class="btn btn--sm" data-demo="Chạy thử chuyển đổi với dữ liệu mẫu">▶ Chạy chuyển đổi</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Kết quả chuyển đổi sang CDM</div>
+        <div class="panel__body">
+          <pre class="code"><span class="c">// CDM — thuc_the ThuaDat v1.2</span>
+{
+  <span class="k">"maThuaDat"</span>: <span class="s">"01-2026-004821"</span>,
+  <span class="k">"soHieuToBanDo"</span>: <span class="n">42</span>,
+  <span class="k">"dienTichM2"</span>: <span class="n">120.5</span>,
+  <span class="k">"chuSuDung"</span>: {
+    <span class="k">"hoTen"</span>: <span class="s">"Nguyễn Văn Bình"</span>
+  },
+  <span class="k">"ngayCap"</span>: <span class="s">"2024-03-15"</span>
+}</pre>
+          <div class="alert alert--ok mt-3" style="margin-bottom:0">
+            <span class="alert__icon">✓</span>
+            <div class="t-small">Chuẩn hóa <span class="t-mono">ngayCap</span> từ <span class="t-mono">dd/MM/yyyy</span> sang ISO-8601 ngay tại adapter (BR-05-012).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử kiểm thử</div>
+    <div class="table-wrap mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Thời điểm</th><th>Người chạy</th><th>Kết quả</th><th>Bước dừng</th><th class="table__num">Thời gian</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-small">03/08/2026 15:12:44</td>
+            <td class="t-small">Lê Thị Hà</td>
+            <td><span class="badge badge--err">Thất bại</span></td>
+            <td class="t-small">Bước 2 — Xác thực</td>
+            <td class="table__num">4,2s</td>
+          </tr>
+          <tr>
+            <td class="t-small">03/08/2026 09:40:11</td>
+            <td class="t-small">Lê Thị Hà</td>
+            <td><span class="badge badge--err">Thất bại</span></td>
+            <td class="t-small">Bước 2 — Xác thực</td>
+            <td class="table__num">4,0s</td>
+          </tr>
+          <tr>
+            <td class="t-small">28/07/2026 14:22:05</td>
+            <td class="t-small">Phạm Minh Tuấn</td>
+            <td><span class="badge badge--ok">Đạt</span></td>
+            <td class="t-small">4/4 bước</td>
+            <td class="table__num">1,8s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Nút "Kích hoạt" đang bị vô hiệu</div>
+        <div class="t-small">Không có kiểm thử đạt trong 24 giờ gần nhất — không được kích hoạt adapter (BR-05-003).</div>
+      </div>
+    </div>
+    <div class="card__actions">
+      <button class="btn" disabled>Kích hoạt adapter</button>
+      <button class="btn btn--primary" data-demo="Chạy lại kiểm thử kết nối">▶ Chạy lại kiểm thử</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-05-04: Trình ánh xạ trường ===== -->
+  <div class="card__body hidden" data-panel="map" data-panel-group="ad">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Ánh xạ trường — <span class="t-mono">ADP_DAT_DAI_SOAP</span> → CDM <span class="t-mono">ThuaDat v1.2</span></div>
+        <div class="card__sub">Kéo thả để nối trường nguồn với trường CDM đích</div>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Hệ thống đề xuất ánh xạ theo tên tương đồng — cán bộ phải xác nhận (BR-05-014)">✦ Gợi ý ánh xạ</button>
+        <button class="btn btn--sm" data-demo="Xem trước bản tin mẫu chạy qua ánh xạ hiện tại">Xem trước</button>
+      </div>
+    </div>
+
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">1 trường CDM bắt buộc chưa được ánh xạ — không thể lưu</div>
+        <div class="t-small">Trường <span class="t-mono">maDonViHanhChinh</span> bắt buộc nhưng chưa có nguồn. Bản tin thiếu trường bắt buộc sẽ bị chặn ở PH-04 (BR-05-013).</div>
+      </div>
+    </div>
+
+    <div class="row row--between mb-3" style="align-items:center;flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="t-small">Độ phủ trường CDM bắt buộc: <strong>5/6</strong></div>
+      <div style="flex:1;min-width:200px">
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:83%"></div></div>
+      </div>
+      <div class="t-small" style="color:var(--c-warn-700)">83%</div>
+    </div>
+
+    <div class="diff mb-5">
+      <div>
+        <div class="diff__col-label">Trường nguồn — WSDL <span class="t-mono">ThuaDatService</span></div>
+        <div class="panel">
+          <div class="panel__body" style="padding:var(--sp-2)">
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">maThuaDat</div>
+              <div class="finding__meta">xs:string · bắt buộc</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">soHieuToBanDo</div>
+              <div class="finding__meta">xs:string</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">dienTich</div>
+              <div class="finding__meta">xs:decimal</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">chuSuDung</div>
+              <div class="finding__meta">xs:string</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">ngayCap</div>
+              <div class="finding__meta">xs:string · định dạng dd/MM/yyyy</div></div></div>
+            <div class="finding"><div class="finding__mark">▸</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">ghiChu</div>
+              <div class="finding__meta">xs:string · chưa dùng</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="diff__col-label">Trường CDM đích — <span class="t-mono">ThuaDat v1.2</span></div>
+        <div class="panel">
+          <div class="panel__body" style="padding:var(--sp-2)">
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">maThuaDat</div>
+              <div class="finding__meta">string · bắt buộc · ← maThuaDat</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--warn">⚠</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">soHieuToBanDo</div>
+              <div class="finding__meta">integer · ← soHieuToBanDo <span style="color:var(--c-warn-700)">(chuyển kiểu string → integer)</span></div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">dienTichM2</div>
+              <div class="finding__meta">decimal · bắt buộc · ← dienTich</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">chuSuDung.hoTen</div>
+              <div class="finding__meta">string · bắt buộc · ← chuSuDung</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--ok">✓</div><div class="finding__text">
+              <div class="finding__title t-mono t-small">ngayCap</div>
+              <div class="finding__meta">date · bắt buộc · ← ngayCap (chuẩn hóa ISO-8601)</div></div></div>
+            <div class="finding"><div class="finding__mark finding__mark--err">✕</div><div class="finding__text">
+              <div class="finding__title t-mono t-small" style="color:var(--c-err-700)">maDonViHanhChinh</div>
+              <div class="finding__meta" style="color:var(--c-err-700)">string · <strong>bắt buộc · chưa ánh xạ</strong> — chặn lưu</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng quy tắc ánh xạ</div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Trường nguồn</th><th>Trường CDM</th><th>Kiểu dữ liệu</th><th>Bắt buộc</th><th>Giá trị mặc định</th><th>Quy tắc chuẩn hóa</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">maThuaDat</td>
+            <td class="t-mono t-small">maThuaDat</td>
+            <td class="t-small">string → string</td>
+            <td><span class="badge badge--plain">Có</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="t-small">Cắt khoảng trắng thừa</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc ánh xạ trường maThuaDat">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">soHieuToBanDo</td>
+            <td class="t-mono t-small">soHieuToBanDo</td>
+            <td class="t-small" style="color:var(--c-warn-700)">string → integer ⚠</td>
+            <td><span class="badge badge--muted">Không</span></td>
+            <td class="t-small">0</td>
+            <td class="t-small">Ép kiểu số nguyên, lỗi → dùng mặc định</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc chuyển kiểu dữ liệu">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">dienTich</td>
+            <td class="t-mono t-small">dienTichM2</td>
+            <td class="t-small">decimal → decimal</td>
+            <td><span class="badge badge--plain">Có</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="t-small">Làm tròn 2 chữ số thập phân</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc ánh xạ trường dienTich">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">chuSuDung</td>
+            <td class="t-mono t-small">chuSuDung.hoTen</td>
+            <td class="t-small">string → string</td>
+            <td><span class="badge badge--plain">Có</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="t-small">Chuẩn hóa Unicode NFC, viết hoa đầu từ</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc ánh xạ trường chuSuDung">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">ngayCap</td>
+            <td class="t-mono t-small">ngayCap</td>
+            <td class="t-small">string → date</td>
+            <td><span class="badge badge--plain">Có</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="t-small">Phân tích <span class="t-mono">dd/MM/yyyy</span> → ISO-8601</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa quy tắc chuẩn hóa ngày tháng">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-muted t-small">(chưa có nguồn)</td>
+            <td class="t-mono t-small" style="color:var(--c-err-700)">maDonViHanhChinh</td>
+            <td class="t-small">— → string</td>
+            <td><span class="badge badge--err">Bắt buộc</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="t-small" style="color:var(--c-err-700)">Chưa khai báo — chặn lưu</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Tạo ánh xạ cho trường maDonViHanhChinh">Ánh xạ</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">✦</span>
+      <div>
+        <div class="alert__title">Hệ thống đề xuất 1 ánh xạ theo tên tương đồng</div>
+        <div class="t-small">
+          <span class="t-mono">ghiChu</span> → <span class="t-mono">ghiChuThem</span> (độ tương đồng 78%).
+          Ánh xạ tự động chỉ là <strong>đề xuất</strong> — cần cán bộ xác nhận trước khi áp dụng (BR-05-014).
+        </div>
+      </div>
+    </div>
+
+    <div class="card__actions">
+      <button class="btn" data-demo="Hủy thay đổi ánh xạ">Hủy</button>
+      <button class="btn" disabled>Lưu ánh xạ</button>
+      <span class="t-small t-muted">Bị chặn: còn 1 trường bắt buộc chưa ánh xạ.</span>
+    </div>
+  </div>
+
+  <!-- ===== UI-05-05: Giám sát CDC ===== -->
+  <div class="card__body hidden" data-panel="cdc" data-panel-group="ad">
+
+    <div class="alert alert--err mb-5">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">CDC <span class="t-mono">ADP_HO_TICH_CDC</span> đã TẠM DỪNG do thay đổi lược đồ phá vỡ ánh xạ</div>
+        <div class="t-small">
+          Cột <span class="t-mono">ho_ten_cha</span> trên bảng <span class="t-mono">dkhs_khai_sinh</span> bị đổi tên thành
+          <span class="t-mono">ho_ten_nguoi_cha</span> lúc 03/08/2026 02:14.
+          Hệ thống tạm dừng thay vì phát dữ liệu sai — dữ liệu sai lan vào trục khó khắc phục hơn gián đoạn tạm thời (BR-05-006).
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--4 mb-5">
+      <div class="card stat">
+        <div class="stat__label">Trạng thái CDC</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">TẠM DỪNG</div>
+        <div class="t-small t-muted">Từ 02:14 · 13 giờ 8 phút</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Vị trí đọc (LSN)</div>
+        <div class="stat__value t-mono" style="font-size:var(--fs-lg)">0/1A4F2C88</div>
+        <div class="t-small t-muted">Lưu bền vững trong PostgreSQL (BR-05-015)</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Độ trễ đọc</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">47.208s</div>
+        <div class="t-small t-muted">Ngưỡng cảnh báo 30s (NFR-05-026)</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Sự kiện / phút</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">0</div>
+        <div class="t-small t-muted">Bình thường ≈ 240/phút</div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn mb-5">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Vị trí đọc không cập nhật quá 5 phút</div>
+        <div class="t-small">Nhật ký giao dịch nguồn vẫn tích lũy — cần xử lý sớm để tránh CSDL Sở Tư pháp giữ nhật ký quá lâu gây đầy đĩa.</div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Thay đổi lược đồ chưa xử lý</div>
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr><th>Thời điểm</th><th>Bảng</th><th>Loại thay đổi</th><th>Chi tiết</th><th>Mức ảnh hưởng</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-small">03/08 02:14</td>
+            <td class="t-mono t-small">dkhs_khai_sinh</td>
+            <td><span class="badge badge--err">Phá vỡ</span></td>
+            <td class="t-small">Đổi tên cột <span class="t-mono">ho_ten_cha</span> → <span class="t-mono">ho_ten_nguoi_cha</span></td>
+            <td class="t-small" style="color:var(--c-err-700)">Ánh xạ CDM <span class="t-mono">KhaiSinh.hoTenCha</span> mất nguồn</td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Mở trình ánh xạ để cập nhật trường ho_ten_nguoi_cha">Cập nhật ánh xạ</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">03/08 02:14</td>
+            <td class="t-mono t-small">dkhs_khai_sinh</td>
+            <td><span class="badge badge--warn">Không phá vỡ</span></td>
+            <td class="t-small">Thêm cột <span class="t-mono">ghi_chu_bo_sung</span> (nullable)</td>
+            <td class="t-small t-muted">Không ảnh hưởng — đã tự áp dụng</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết thay đổi lược đồ">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-small">01/08 23:40</td>
+            <td class="t-mono t-small">dkhs_ket_hon</td>
+            <td><span class="badge badge--warn">Không phá vỡ</span></td>
+            <td class="t-small">Nới độ dài <span class="t-mono">noi_dang_ky</span> từ 200 → 400 ký tự</td>
+            <td class="t-small t-muted">Không ảnh hưởng — đã tự áp dụng</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết thay đổi lược đồ">Xem</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row mb-5" style="gap:var(--sp-3);align-items:center;flex-wrap:wrap">
+      <label class="check" style="margin:0"><input type="checkbox"> <span class="t-small">Tôi xác nhận đã cập nhật ánh xạ cho mọi thay đổi phá vỡ</span></label>
+      <button class="btn" disabled>▶ Tiếp tục CDC</button>
+      <span class="t-small t-muted">Nút chỉ bật sau khi tích xác nhận.</span>
+    </div>
+
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng đang theo dõi</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Bảng</th><th class="table__num">Sự kiện 24h</th><th>Sự kiện gần nhất</th><th>Trạng thái</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">dkhs_khai_sinh</td>
+                <td class="table__num">1.842</td>
+                <td class="t-small">03/08 02:13</td>
+                <td><span class="badge badge--err">Tạm dừng</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">dkhs_ket_hon</td>
+                <td class="table__num">406</td>
+                <td class="t-small">03/08 02:13</td>
+                <td><span class="badge badge--err">Tạm dừng</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">dkhs_khai_tu</td>
+                <td class="table__num">218</td>
+                <td class="t-small">03/08 02:12</td>
+                <td><span class="badge badge--err">Tạm dừng</span></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">dkhs_ho_khau</td>
+                <td class="table__num">0</td>
+                <td class="t-small t-muted">Chưa có sự kiện nào</td>
+                <td><span class="badge badge--muted">Trống</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="t-small t-muted mt-3">Bảng <span class="t-mono">dkhs_ho_khau</span> vừa đăng ký theo dõi, chưa phát sinh thay đổi nào — trạng thái rỗng là bình thường.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Độ trễ đọc nhật ký theo thời gian</div>
+        <div class="panel__body">
+          <div class="wf">
+            <div class="wf__name">22:00 – 00:00</div>
+            <div class="wf__track"><div class="wf__bar" style="left:0;width:4%"></div></div>
+            <div class="wf__ms">1,8s</div>
+            <div class="wf__name">00:00 – 02:00</div>
+            <div class="wf__track"><div class="wf__bar" style="left:0;width:5%"></div></div>
+            <div class="wf__ms">2,1s</div>
+            <div class="wf__name">02:00 – 06:00</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:0;width:34%"></div></div>
+            <div class="wf__ms">14.400s</div>
+            <div class="wf__name">06:00 – 12:00</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:0;width:72%"></div></div>
+            <div class="wf__ms">36.000s</div>
+            <div class="wf__name">12:00 – 15:20</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:0;width:100%"></div></div>
+            <div class="wf__ms">47.208s</div>
+          </div>
+          <div class="alert alert--warn mt-4" style="margin-bottom:0">
+            <span class="alert__icon">⚠</span>
+            <div>
+              <div class="alert__title">Gợi ý nguyên nhân</div>
+              <div class="t-small">Độ trễ tăng dốc từ 02:14 — trùng thời điểm thay đổi lược đồ, không phải do nghẽn tài nguyên. Xử lý ánh xạ rồi tiếp tục CDC là đủ.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-05-06: Thư viện Kamelet ===== -->
+  <div class="card__body hidden" data-panel="kamelet" data-panel-group="ad">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="search" style="min-width:280px">
+        <input class="input" type="search" placeholder="Tìm Kamelet theo tên hoặc giao thức…">
+      </div>
+      <button class="btn btn--primary" data-demo="Đóng gói adapter hiện tại thành Kamelet tái sử dụng">+ Đóng gói Kamelet mới</button>
+    </div>
+
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Thêm adapter mới không cần dựng lại ảnh container</div>
+        <div class="t-small">Kamelet nạp động lúc chạy (NFR-05-018 · NFR-05-020) — chọn Kamelet có sẵn giúp rút ngắn thời gian kết nạp hệ thống thành viên.</div>
+      </div>
+    </div>
+
+    <div class="grid grid--3 mb-5">
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-soap-ws-security</div>
+            <div class="card__sub">SOAP 1.1/1.2 · WS-Security</div>
+          </div>
+          <span class="badge badge--ok">v2.4.0</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Gọi dịch vụ SOAP có WS-Security UsernameToken, tự nạp WSDL và sinh cây trường cho trình ánh xạ.</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>9 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Nhóm 2</dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-soap-ws-security để tạo adapter">Dùng Kamelet này</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-debezium-postgres</div>
+            <div class="card__sub">CDC · PostgreSQL logical decoding</div>
+          </div>
+          <span class="badge badge--ok">v3.1.2</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Đọc nhật ký giao dịch PostgreSQL, phát sự kiện vào Kafka theo quy ước <span class="t-mono">{miền}.{thực thể}.{phiên bản}</span>.</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>6 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Nhóm 3</dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-debezium-postgres để tạo adapter">Dùng Kamelet này</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-debezium-oracle</div>
+            <div class="card__sub">CDC · Oracle LogMiner</div>
+          </div>
+          <span class="badge badge--ok">v3.1.2</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Đọc nhật ký giao dịch Oracle bằng LogMiner, dùng tài khoản chỉ đọc theo BR-05-008.</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>4 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Nhóm 3</dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-debezium-oracle để tạo adapter">Dùng Kamelet này</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-rest-oauth2</div>
+            <div class="card__sub">REST · OAuth 2.0 Client Credentials</div>
+          </div>
+          <span class="badge badge--ok">v1.8.0</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Gọi API REST có OAuth 2.0, tự làm mới token và tái sử dụng kết nối (NFR-05-006).</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>18 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Nhóm 1</dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-rest-oauth2 để tạo adapter">Dùng Kamelet này</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-sftp-batch</div>
+            <div class="card__sub">Tệp · SFTP theo lô</div>
+          </div>
+          <span class="badge badge--ok">v1.3.1</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Quét thư mục SFTP, khóa tệp trước khi xử lý và chỉ xử lý tệp đã ghi xong (BR-05-011). Xử lý theo luồng, tệp 500MB không vượt 512MB bộ nhớ.</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>5 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Nhóm 4</dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-sftp-batch để tạo adapter">Dùng Kamelet này</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <div class="card__title">kamelet-ndxp-connector</div>
+            <div class="card__sub">Kết nối NDXP quốc gia</div>
+          </div>
+          <span class="badge badge--warn">v0.9.0 · thử nghiệm</span>
+        </div>
+        <div class="card__body">
+          <p class="t-small t-muted mb-3">Gọi nền tảng NDXP qua mTLS chứng thư số. Đang thử nghiệm — cần rà soát trước khi dùng cho luồng chính thức.</p>
+          <dl class="dl t-small mb-3" style="grid-template-columns:110px 1fr">
+            <dt>Đang dùng bởi</dt><dd>2 adapter</dd>
+            <dt>Nhóm phù hợp</dt><dd>Quốc gia — xem <a href="national.html">PH-14</a></dd>
+          </dl>
+          <button class="btn btn--sm btn--block" data-demo="Dùng Kamelet kamelet-ndxp-connector — bản thử nghiệm">Dùng Kamelet này</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Kamelet do tỉnh tự đóng gói</div>
+    <div class="card">
+      <div class="card__body text-center" style="padding:var(--sp-10)">
+        <div style="font-size:36px;opacity:.35;margin-bottom:var(--sp-3)">◫</div>
+        <div class="card__title mb-2">Chưa có Kamelet tự đóng gói</div>
+        <p class="t-muted t-small mb-4" style="max-width:520px;margin:0 auto var(--sp-4)">
+          Khi một adapter đã ổn định và có khả năng dùng lại cho hệ thống khác, hãy đóng gói thành Kamelet
+          để các đơn vị sau kết nạp nhanh hơn.
+        </p>
+        <button class="btn btn--primary" data-demo="Đóng gói adapter hiện tại thành Kamelet tái sử dụng">+ Đóng gói Kamelet đầu tiên</button>
+      </div>
     </div>
   </div>
 </div>

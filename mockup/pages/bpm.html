@@ -11,25 +11,892 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-11 — Quy trình nghiệp vụ (Flowable BPMN 2.0).</strong>
+  Minh họa các màn <span class="tag-ph">UI-11-01</span> danh sách định nghĩa,
+  <span class="tag-ph">UI-11-02</span> ánh xạ service task,
+  <span class="tag-ph">UI-11-03</span> hàng đợi việc,
+  <span class="tag-ph">UI-11-04</span> chi tiết task,
+  <span class="tag-ph">UI-11-05</span> tiến độ instance,
+  <span class="tag-ph">UI-11-06</span> giám sát tắc nghẽn &amp; Saga — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-11-bpm.md">SRS PH-11</a>.
+  Liên kết chéo: <a href="routes.html">Luồng tích hợp (PH-04)</a> ·
+  <a href="dlq.html">Bản tin lỗi / bù trừ</a>.
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Quy trình nghiệp vụ</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-11</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Flowable BPMN 2.0 · 12 quy trình ACTIVE · 1.842 instance đang chạy · 8 việc chờ xử lý</p>
+  </div>
+  <div class="page-head__actions">
+    <a class="btn" href="routes.html">Luồng Camel (PH-04)</a>
+    <a class="btn" href="dlq.html">DLQ bù trừ</a>
+    <button class="btn btn--primary" data-demo="Tải lên định nghĩa BPMN mới">＋ Tải BPMN</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-11</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-11.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Instance đang chạy</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">1.842</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--up">+47 / 24h</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Việc chờ của tôi</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">8</div>
+    <div class="stat__meta"><span class="badge badge--warn">2 quá hạn</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Treo WAITING_SERVICE</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">14</div>
+    <div class="stat__meta"><span class="t-muted">ngưỡng &gt; 30 phút</span></div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Saga 24h</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">96,2%</div>
+    <div class="stat__meta"><span class="stat__delta stat__delta--down">3 FAILED</span></div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="bpm" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="definitions">Danh sách BPMN</button>
+    <button class="tab" data-tab="mapping">Ánh xạ</button>
+    <button class="tab" data-tab="tasks">Việc của tôi <span class="tab__count">8</span></button>
+    <button class="tab" data-tab="progress">Tiến độ</button>
+    <button class="tab" data-tab="monitor">Giám sát</button>
+  </div>
+
+  <!-- ===== UI-11-01: Danh sách định nghĩa & phiên bản BPMN ===== -->
+  <div id="definitions" data-panel="definitions" data-panel-group="bpm">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="processKey, tên quy trình…" data-filter="bpmn-table">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Tất cả trạng thái</option>
+        <option>ACTIVE</option>
+        <option>READY</option>
+        <option>DRAFT</option>
+        <option>SUSPENDED</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi môi trường</option>
+        <option>PROD</option>
+        <option>STAGING</option>
+        <option>TEST</option>
+      </select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm btn--primary" data-demo="Triển khai phiên bản đã chọn lên STAGING">Triển khai</button>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table" id="bpmn-table">
+        <thead>
+          <tr>
+            <th>processKey</th><th>Tên quy trình</th><th class="table__num">Phiên bản</th>
+            <th>Trạng thái</th><th>Môi trường</th><th class="table__num">Instance</th>
+            <th>Triển khai lần cuối</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">xu-ly-ho-so-mot-cua</td>
+            <td class="t-primary">Xử lý hồ sơ TTHC một cửa</td>
+            <td class="table__num t-mono">v4</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td>PROD</td>
+            <td class="table__num">612</td>
+            <td class="t-small">01/08/2026 · Nguyễn Văn H.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem phiên bản xu-ly-ho-so-mot-cua v4">Phiên bản</button>
+              <button class="btn btn--sm" data-demo="Tải BPMN xu-ly-ho-so-mot-cua">Tải XML</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">cap-giay-phep-xay-dung</td>
+            <td class="t-primary">Cấp giấy phép xây dựng liên thông</td>
+            <td class="table__num t-mono">v2</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td>PROD</td>
+            <td class="table__num">284</td>
+            <td class="t-small">28/07/2026 · Trần Thị L.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem phiên bản cap-giay-phep-xay-dung">Phiên bản</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">lien-thong-bhxh</td>
+            <td class="t-primary">Liên thông cấp thẻ BHYT / BHXH</td>
+            <td class="table__num t-mono">v3</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td>PROD</td>
+            <td class="table__num">391</td>
+            <td class="t-small">25/07/2026 · Lê Minh T.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem tiến độ lien-thong-bhxh">Theo dõi</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">dang-ky-kinh-doanh-lt</td>
+            <td class="t-primary">Đăng ký kinh doanh liên thông (ĐKKD QG)</td>
+            <td class="table__num t-mono">v1</td>
+            <td><span class="badge badge--info">READY</span></td>
+            <td>STAGING</td>
+            <td class="table__num">18</td>
+            <td class="t-small">30/07/2026 · Phạm Quốc A.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--primary" data-demo="Deploy dang-ky-kinh-doanh-lt v1 → PROD">Deploy PROD</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">cap-so-do-thua-dat</td>
+            <td class="t-primary">Cấp sổ đỏ / GCN quyền sử dụng đất</td>
+            <td class="table__num t-mono">v5</td>
+            <td><span class="badge badge--ok">ACTIVE</span></td>
+            <td>PROD</td>
+            <td class="table__num">203</td>
+            <td class="t-small">15/07/2026 · Hoàng Thị M.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="So sánh v4 ↔ v5">So sánh</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">thu-phi-le-phi-tthc</td>
+            <td class="t-primary">Thu phí, lệ phí TTHC qua cổng thanh toán</td>
+            <td class="table__num t-mono">v2</td>
+            <td><span class="badge badge--warn">SUSPENDED</span></td>
+            <td>PROD</td>
+            <td class="table__num">47</td>
+            <td class="t-small">10/06/2026 · Nguyễn Văn H.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Kích hoạt lại thu-phi-le-phi-tthc v3">Thay thế</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">phe-duyet-van-ban-dt</td>
+            <td class="t-primary">Phê duyệt văn bản điện tử liên thông</td>
+            <td class="table__num t-mono">v1</td>
+            <td><span class="badge badge--muted">DRAFT</span></td>
+            <td>—</td>
+            <td class="table__num">0</td>
+            <td class="t-small t-muted">Chưa triển khai</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Validate BPMN phe-duyet-van-ban-dt">Kiểm tra</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono">ho-tro-nguoi-khuyet-tat</td>
+            <td class="t-primary">Hỗ trợ người khuyết tật — xác nhận quyền lợi</td>
+            <td class="table__num t-mono">v1</td>
+            <td><span class="badge badge--info">READY</span></td>
+            <td>TEST</td>
+            <td class="table__num">5</td>
+            <td class="t-small">02/08/2026 · Vũ Thị K.</td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Chạy kiểm thử end-to-end">Kiểm thử</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card__foot">
+      <span class="t-small">12 quy trình · 8 ACTIVE · instance mới luôn dùng phiên bản ACTIVE mới nhất</span>
+      <span class="header__spacer"></span>
+      <button class="btn btn--sm" data-demo="Lọc quy trình không có instance — trạng thái rỗng">Lọc rỗng</button>
+    </div>
+    <div class="alert alert--info mt-4" style="margin:var(--sp-4) var(--sp-5) 0;display:none" id="bpmn-empty">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Không tìm thấy định nghĩa</div>
+        <div class="t-small">Không có quy trình khớp bộ lọc. Thử xóa từ khóa hoặc chọn trạng thái khác.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-11-02: Đăng ký ánh xạ service task & bù trừ ===== -->
+  <div class="card__body hidden" id="mapping" data-panel="mapping" data-panel-group="bpm">
+    <div class="row row--between mb-4">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Ánh xạ service task ↔ route Camel</div>
+        <p class="t-small t-muted mb-0">Mỗi <span class="t-mono">serviceTask</span> BPMN phải trỏ tới route PH-04 đã đăng ký · kèm hành động bù trừ</p>
+      </div>
+      <button class="btn btn--sm btn--primary" data-demo="Mở form đăng ký ánh xạ mới">＋ Đăng ký ánh xạ</button>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div class="panel">
+        <div class="panel__head">Đăng ký / cập nhật ánh xạ</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">processKey</label>
+            <select class="select">
+              <option>lien-thong-bhxh</option>
+              <option>xu-ly-ho-so-mot-cua</option>
+              <option>cap-giay-phep-xay-dung</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">serviceTaskId <span class="field__req">*</span></label>
+            <input class="input input--mono" placeholder="vd. guiTuPhap" value="capTheBHYT">
+          </div>
+          <div class="field">
+            <label class="field__label">Route Camel (PH-04) <span class="field__req">*</span></label>
+            <select class="select">
+              <option>cap-the-bhyt → BHXH tỉnh</option>
+              <option>tra-cuu-cong-dan → NDXP Dân cư</option>
+              <option>gui-tu-phap → Sở Tư pháp</option>
+            </select>
+            <div class="field__hint">Route phải tồn tại trên môi trường đích — xem <a href="routes.html">PH-04</a></div>
+          </div>
+          <div class="field">
+            <label class="field__label">Hành động bù trừ</label>
+            <select class="select">
+              <option>REVOKE_BHYT — thu hồi thẻ đã cấp</option>
+              <option>ROLLBACK_PAYMENT — hoàn phí</option>
+              <option>MANUAL — chuyển xử lý thủ công (không tự bù trừ)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Route bù trừ</label>
+            <input class="input input--mono" value="bu-tru-bhyt" placeholder="routeId bù trừ trên Camel">
+          </div>
+          <div class="row">
+            <button class="btn btn--primary" data-demo="Lưu ánh xạ capTheBHYT — kiểm tra route trước khi deploy">Lưu ánh xạ</button>
+            <button class="btn" data-demo="Kiểm thử gọi thử service task">Gọi thử</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="t-small t-muted mb-2">So khớp BPMN ↔ Camel (rút gọn)</div>
+        <div class="diff mb-4">
+          <div>
+            <div class="diff__col-label">BPMN serviceTask</div>
+            <div class="code t-small" style="padding:var(--sp-3)">
+              &lt;serviceTask id="capTheBHYT"<br>
+              &nbsp;&nbsp;name="Cấp thẻ BHYT"<br>
+              &nbsp;&nbsp;flowable:delegateExpression="${bpmBridge}"/&gt;
+            </div>
+          </div>
+          <div>
+            <div class="diff__col-label">Route Camel (PH-04)</div>
+            <div class="code t-small" style="padding:var(--sp-3)">
+              routeId: cap-the-bhyt<br>
+              from: direct:bpm/capTheBHYT<br>
+              to: bhxh-tinh:8443/api/v1/the<br>
+              saga.compensate: bu-tru-bhyt
+            </div>
+          </div>
+        </div>
+        <div class="alert alert--warn" style="margin:0">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Thiếu bù trừ — chặn deploy PROD</div>
+            <div class="t-small"><span class="t-mono">guiCongDanCu</span> trong <span class="t-mono">dang-ky-kinh-doanh-lt</span> chưa khai báo hành động bù trừ. Bổ sung trước khi triển khai PROD (FR-11-001 E3).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Danh sách ánh xạ đã đăng ký</div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>processKey</th><th>serviceTaskId</th><th>Route Camel</th>
+            <th>Bù trừ</th><th>Route bù trừ</th><th>Trạng thái</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono">lien-thong-bhxh</td>
+            <td class="t-mono">capTheBHYT</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">cap-the-bhyt</a></td>
+            <td class="t-small">REVOKE_BHYT</td>
+            <td class="t-mono t-small">bu-tru-bhyt</td>
+            <td><span class="badge badge--ok">OK</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa ánh xạ capTheBHYT">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">lien-thong-bhxh</td>
+            <td class="t-mono">traCuuCongDan</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-cong-dan</a></td>
+            <td class="t-small">— (chỉ đọc)</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--ok">OK</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết traCuuCongDan">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">xu-ly-ho-so-mot-cua</td>
+            <td class="t-mono">dongBoTrangThai</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">dong-bo-ho-so-tthc</a></td>
+            <td class="t-small">REVERT_STATUS</td>
+            <td class="t-mono t-small">bu-tru-trang-thai</td>
+            <td><span class="badge badge--ok">OK</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa dongBoTrangThai">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">cap-giay-phep-xay-dung</td>
+            <td class="t-mono">guiTuPhap</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">gui-tu-phap</a></td>
+            <td class="t-small">CANCEL_LEGAL_OPINION</td>
+            <td class="t-mono t-small">bu-tru-tu-phap</td>
+            <td><span class="badge badge--ok">OK</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa guiTuPhap">Sửa</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">cap-so-do-thua-dat</td>
+            <td class="t-mono">traCuuThuaDat</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-thua-dat</a></td>
+            <td class="t-small">— (chỉ đọc)</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--ok">OK</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem traCuuThuaDat">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">dang-ky-kinh-doanh-lt</td>
+            <td class="t-mono">guiCongDanCu</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">dong-bo-dkkd</a></td>
+            <td class="t-small t-muted">Chưa khai báo</td>
+            <td class="t-muted">—</td>
+            <td><span class="badge badge--err">Thiếu bù trừ</span></td>
+            <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Bổ sung bù trừ guiCongDanCu">Bổ sung</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono">xu-ly-ho-so-mot-cua</td>
+            <td class="t-mono">thuPhiLePhi</td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">thu-phi-tthc</a></td>
+            <td class="t-small">ROLLBACK_PAYMENT</td>
+            <td class="t-mono t-small">bu-tru-thanh-toan</td>
+            <td><span class="badge badge--warn">Route tạm ngưng</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Kiểm tra route thu-phi-tthc">Kiểm tra</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== UI-11-03: Danh sách user task (hàng đợi việc) ===== -->
+  <div class="card__body hidden" id="tasks" data-panel="tasks" data-panel-group="bpm">
+    <div class="grid grid--3 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Sẵn sàng (chưa claim)</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">5</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Đang làm (đã claim)</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">1</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Quá hạn</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">2</div>
+      </div>
+    </div>
+
+    <div class="toolbar" style="padding:0 0 var(--sp-4)">
+      <div class="search">
+        <span class="search__icon">⌕</span>
+        <input class="input" type="text" placeholder="Mã hồ sơ, tên task…" data-filter="task-table">
+      </div>
+      <select class="select" style="width:auto">
+        <option>Chỉ việc của tôi</option>
+        <option>Cả nhóm thẩm định</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi loại TTHC</option>
+        <option>Cấp GCN xây dựng</option>
+        <option>Liên thông BHXH</option>
+        <option>Cấp sổ đỏ</option>
+      </select>
+      <select class="select" style="width:auto">
+        <option>Mọi trạng thái</option>
+        <option>Quá hạn</option>
+        <option>Sắp đến hạn</option>
+        <option>Đã claim</option>
+      </select>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--sm" data-demo="Nhận việc nhanh — claim task ưu tiên cao nhất">Nhận việc</button>
+    </div>
+
+    <div class="grid grid--2" style="gap:var(--sp-5);align-items:start">
+      <div>
+        <div class="table-wrap">
+          <table class="table" id="task-table">
+            <thead>
+              <tr>
+                <th>Mã hồ sơ</th><th>Tên task</th><th>Hạn xử lý</th>
+                <th>Tuổi thọ</th><th>Ưu tiên</th><th>Trạng thái</th><th class="table__actions"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:var(--c-err-50)">
+                <td class="t-mono t-small">HS-2026-084421</td>
+                <td>Thẩm định hồ sơ cấp GCN XD</td>
+                <td class="t-small"><span class="badge badge--err">02/08 — quá hạn</span></td>
+                <td class="t-small">3 ngày</td>
+                <td><span class="badge badge--err">Cao</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-084421">Nhận</button></td>
+              </tr>
+              <tr style="background:var(--c-err-50)">
+                <td class="t-mono t-small">HS-2026-084099</td>
+                <td>Rà soát trước trả kết quả</td>
+                <td class="t-small"><span class="badge badge--err">01/08 — quá hạn</span></td>
+                <td class="t-small">4 ngày</td>
+                <td><span class="badge badge--warn">TB</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-084099">Nhận</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-084388</td>
+                <td>Phê duyệt kết quả TTHC đất đai</td>
+                <td class="t-small"><span class="badge badge--warn">04/08 — còn 6h</span></td>
+                <td class="t-small">1 ngày</td>
+                <td><span class="badge badge--err">Cao</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-084388">Nhận</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-084512</td>
+                <td>Kiểm tra bổ sung hồ sơ BHXH</td>
+                <td class="t-small">06/08</td>
+                <td class="t-small">6 giờ</td>
+                <td><span class="badge badge--info">Thường</span></td>
+                <td><span class="badge badge--info">Đang làm</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Mở chi tiết HS-2026-084512">Mở</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-083901</td>
+                <td>Xác minh thông tin công dân</td>
+                <td class="t-small">05/08</td>
+                <td class="t-small">2 giờ</td>
+                <td><span class="badge badge--info">Thường</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-083901">Nhận</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-084601</td>
+                <td>Duyệt cấp thẻ BHYT</td>
+                <td class="t-small">07/08</td>
+                <td class="t-small">45 phút</td>
+                <td><span class="badge badge--info">Thường</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-084601">Nhận</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-084220</td>
+                <td>Thẩm định pháp lý hồ sơ</td>
+                <td class="t-small">08/08</td>
+                <td class="t-small">30 phút</td>
+                <td><span class="badge badge--warn">TB</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-084220">Nhận</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HS-2026-083745</td>
+                <td>Phê duyệt liên thông ĐKKD</td>
+                <td class="t-small">09/08</td>
+                <td class="t-small">15 phút</td>
+                <td><span class="badge badge--info">Thường</span></td>
+                <td><span class="badge badge--warn">Chờ claim</span></td>
+                <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Claim HS-2026-083745">Nhận</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="t-small t-muted mt-2">8 việc · sắp xếp: quá hạn trước, rồi gần hạn · không hiển thị dữ liệu mật trên danh sách</div>
+      </div>
+
+      <!-- ===== UI-11-04: Chi tiết task & form hoàn thành ===== -->
+      <div class="panel" id="task-detail">
+        <div class="panel__head">Chi tiết task · HS-2026-084512</div>
+        <div class="panel__body">
+          <div class="mb-4">
+            <div class="t-small"><strong>Task:</strong> Kiểm tra bổ sung hồ sơ BHXH</div>
+            <div class="t-small"><strong>Quy trình:</strong> <span class="t-mono">lien-thong-bhxh</span> v3 · instance <span class="t-mono">pi-8f3a…c21</span></div>
+            <div class="t-small"><strong>Assignee:</strong> Nguyễn Thị H. (bạn) · claim lúc 03/08 09:15</div>
+            <div class="t-small"><strong>Hạn:</strong> 06/08/2026 · <span class="badge badge--info">Còn 2 ngày</span></div>
+          </div>
+
+          <div class="alert alert--info mb-4" style="margin-top:0">
+            <span class="alert__icon">ℹ</span>
+            <div>
+              <div class="alert__title">Thiếu giấy tờ bổ sung</div>
+              <div class="t-small">Công dân Nguyễn Văn A (CCCD che: 001***789012) cần nộp bản sao hộ khẩu. Không hiển thị số định danh đầy đủ trên danh sách (FR-11-017).</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label">Kết quả thẩm định <span class="field__req">*</span></label>
+            <select class="select">
+              <option>Đủ điều kiện — chuyển bước cấp thẻ</option>
+              <option>Yêu cầu bổ sung giấy tờ</option>
+              <option>Từ chối — không đủ điều kiện</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Ghi chú xử lý</label>
+            <textarea class="input" rows="3" placeholder="Ghi chú gửi công dân / lưu hồ sơ…">Đã liên hệ qua cổng DVC; hẹn nộp bản sao hộ khẩu trước 05/08.</textarea>
+          </div>
+          <div class="field">
+            <label class="field__label">Tệp đính kèm</label>
+            <input class="input" type="file" disabled>
+            <div class="field__hint">Mockup — tệp lưu qua PH-09, không gắn trực tiếp BPMN</div>
+          </div>
+          <div class="field">
+            <label class="check"><input type="checkbox" checked> <span>Xác nhận đã rà soát hồ sơ điện tử trên Hệ thống một cửa tỉnh</span></label>
+          </div>
+          <div class="row">
+            <button class="btn btn--primary" data-demo="Hoàn thành task HS-2026-084512 — chuyển bước capTheBHYT">Hoàn thành</button>
+            <button class="btn" data-demo="Ủy quyền task cho đồng nghiệp">Ủy quyền</button>
+            <button class="btn btn--ghost" data-demo="Trả việc về hàng đợi nhóm">Trả việc</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-11-05: Sơ đồ tiến độ instance ===== -->
+  <div class="card__body hidden" id="progress" data-panel="progress" data-panel-group="bpm">
+    <div class="row row--between mb-4">
+      <div class="row row--wrap" style="gap:var(--sp-3)">
+        <div class="field mb-0" style="min-width:280px">
+          <label class="field__label">Instance</label>
+          <select class="select">
+            <option>pi-8f3a91bc — HS-2026-084512 · lien-thong-bhxh</option>
+            <option>pi-7c2e44aa — HS-2026-084421 · cap-giay-phep-xay-dung</option>
+            <option>pi-9d11ff03 — HS-2026-083901 · xu-ly-ho-so-mot-cua</option>
+          </select>
+        </div>
+        <div class="field mb-0">
+          <label class="field__label">Chế độ xem</label>
+          <select class="select">
+            <option>Kỹ thuật (canvas BPMN)</option>
+            <option>Công dân (timeline thân thiện)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Suspend instance pi-8f3a91bc">Tạm dừng</button>
+        <button class="btn btn--sm btn--danger" data-demo="Cancel instance — kích hoạt Saga bù trừ">Hủy instance</button>
+      </div>
+    </div>
+
+    <div class="row mb-3" style="gap:var(--sp-4);flex-wrap:wrap">
+      <span class="t-small"><span class="badge badge--ok badge--plain">■</span> Hoàn thành</span>
+      <span class="t-small"><span class="badge badge--warn badge--plain">■</span> Đang chờ</span>
+      <span class="t-small"><span class="badge badge--err badge--plain">■</span> Lỗi</span>
+      <span class="t-small"><span class="badge badge--info badge--plain">■</span> Bù trừ</span>
+    </div>
+
+    <div class="flow mb-5">
+      <div class="flow__node flow__node--start">
+        <span class="flow__node-icon">▶</span>
+        <span class="flow__node-label">Tiếp nhận</span>
+        <span class="flow__node-sub">03/08 08:02</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--start">
+        <span class="flow__node-icon">✓</span>
+        <span class="flow__node-label">Kiểm tra hồ sơ</span>
+        <span class="flow__node-sub">03/08 08:05</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node">
+        <span class="flow__node-icon">↗</span>
+        <span class="flow__node-label">Tra cứu công dân</span>
+        <span class="flow__node-sub">service · 03/08 08:06</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="border-color:var(--c-warn-500);background:var(--c-warn-50)">
+        <span class="flow__node-icon">👤</span>
+        <span class="flow__node-label">Kiểm tra bổ sung</span>
+        <span class="flow__node-sub">user task · đang chờ</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="opacity:.45">
+        <span class="flow__node-icon">↗</span>
+        <span class="flow__node-label">Cấp thẻ BHYT</span>
+        <span class="flow__node-sub">capTheBHYT</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="opacity:.45">
+        <span class="flow__node-icon">↗</span>
+        <span class="flow__node-label">Đồng bộ trạng thái</span>
+        <span class="flow__node-sub">dongBoTrangThai</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--end" style="opacity:.45">
+        <span class="flow__node-icon">■</span>
+        <span class="flow__node-label">Trả kết quả</span>
+        <span class="flow__node-sub">End event</span>
+      </div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Timeline sự kiện</div>
+        <div class="timeline">
+          <div class="tl-item tl-item--ok">
+            <div class="tl-time">03/08 08:02</div>
+            <div class="tl-title">PROCESS_STARTED</div>
+            <div class="tl-desc">Khởi tạo từ PH-04 · correlationKey HS-2026-084512</div>
+          </div>
+          <div class="tl-item tl-item--ok">
+            <div class="tl-time">03/08 08:05</div>
+            <div class="tl-title">ACTIVITY_COMPLETED — kiemTraHoSo</div>
+            <div class="tl-desc">User task · Nguyễn Thị P.</div>
+          </div>
+          <div class="tl-item tl-item--ok">
+            <div class="tl-time">03/08 08:06</div>
+            <div class="tl-title">SERVICE_TASK_COMPLETED — traCuuCongDan</div>
+            <div class="tl-desc">Route <a class="t-mono" href="routes.html#chi-tiet">tra-cuu-cong-dan</a> · 1,2s · trace <a href="monitoring.html?traceId=a8b2c901">a8b2c901</a></div>
+          </div>
+          <div class="tl-item tl-item--warn">
+            <div class="tl-time">03/08 09:15</div>
+            <div class="tl-title">USER_TASK_CLAIMED — kiemTraBoSung</div>
+            <div class="tl-desc">Assignee Nguyễn Thị H. · đang chờ hoàn thành</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Biến quy trình</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Biến</th><th>Giá trị</th></tr></thead>
+            <tbody>
+              <tr><td class="t-mono t-small">maHoSo</td><td class="t-mono t-small">HS-2026-084512</td></tr>
+              <tr><td class="t-mono t-small">loaiTTHC</td><td class="t-small">CAP_THE_BHYT</td></tr>
+              <tr><td class="t-mono t-small">coQuanTiepNhan</td><td class="t-small">Sở Y tế tỉnh</td></tr>
+              <tr><td class="t-mono t-small">soDinhDanh</td><td class="t-small t-muted">001***789012 (đã che)</td></tr>
+              <tr><td class="t-mono t-small">traceId</td><td class="t-mono t-small"><a href="monitoring.html?traceId=a8b2c901">a8b2c901</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert--warn mt-4" style="margin-bottom:0">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Hủy instance sẽ kích hoạt Saga</div>
+            <div class="t-small">Instance đã hoàn thành <span class="t-mono">traCuuCongDan</span>. Hủy sẽ chạy bù trừ theo ánh xạ đã đăng ký — xem <a href="dlq.html">DLQ</a> nếu bù trừ thất bại.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="t-small t-muted mb-3"><strong>Ví dụ nhánh lỗi &amp; bù trừ</strong> — instance pi-7c2e44aa</div>
+    <div class="flow mb-3">
+      <div class="flow__node flow__node--start"><span class="flow__node-label">guiTuPhap</span><span class="flow__node-sub">✓ 28/07</span></div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node flow__node--err">
+        <span class="flow__node-icon">✕</span>
+        <span class="flow__node-label">capTheBHYT</span>
+        <span class="flow__node-sub">503 · <a href="monitoring.html?traceId=f55a82bc">f55a82bc</a></span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="border-color:var(--c-brand-500);background:var(--c-brand-50)">
+        <span class="flow__node-icon">↩</span>
+        <span class="flow__node-label">Bù trừ REVOKE</span>
+        <span class="flow__node-sub">Saga sg-4421 · đang chạy</span>
+      </div>
+      <span class="flow__arrow">→</span>
+      <div class="flow__node" style="opacity:.45"><span class="flow__node-label">Chờ thủ công</span></div>
+    </div>
+    <button class="btn btn--sm" data-demo="Mở chi tiết lỗi capTheBHYT trên activity">Xem lỗi activity</button>
+  </div>
+
+  <!-- ===== UI-11-06: Giám sát tắc nghẽn & nhật ký Saga ===== -->
+  <div class="card__body hidden" id="monitor" data-panel="monitor" data-panel-group="bpm">
+    <div class="grid grid--4 mb-5">
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Instance RUNNING</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">1.842</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Task quá hạn</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">23</div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Tỷ lệ bù trừ 24h</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">96,2%</div>
+        <div class="stat__meta"><span class="stat__delta stat__delta--down">3 FAILED</span></div>
+      </div>
+      <div class="card stat" style="box-shadow:none">
+        <div class="stat__label">Chờ service P95</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">4,8 phút</div>
+        <div class="stat__meta"><span class="badge badge--warn">14 vượt ngưỡng</span></div>
+      </div>
+    </div>
+
+    <div class="row row--between mb-3">
+      <div class="card__title" style="font-size:var(--fs-md)">Instance treo WAITING_SERVICE</div>
+      <div class="row" style="gap:var(--sp-2)">
+        <select class="select" style="width:auto">
+          <option>Mọi processKey</option>
+          <option>lien-thong-bhxh</option>
+          <option>cap-giay-phep-xay-dung</option>
+        </select>
+        <button class="btn btn--sm" data-demo="Xuất CSV instance treo">Xuất CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>processInstanceId</th><th>Mã hồ sơ</th><th>processKey</th>
+            <th>Activity treo</th><th>Thời gian chờ</th><th>Route</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">pi-aa19…88</td>
+            <td class="t-mono t-small">HS-2026-082901</td>
+            <td class="t-mono t-small">cap-giay-phep-xay-dung</td>
+            <td class="t-small">guiTuPhap</td>
+            <td><span class="badge badge--err">2h 14m</span></td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">gui-tu-phap</a></td>
+            <td class="table__actions">
+              <a class="btn btn--sm" href="#progress" data-demo="Xem tiến độ pi-aa19">Tiến độ</a>
+              <a class="btn btn--sm" href="monitoring.html?traceId=d4e8f102">Trace</a>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">pi-bb22…41</td>
+            <td class="t-mono t-small">HS-2026-083112</td>
+            <td class="t-mono t-small">lien-thong-bhxh</td>
+            <td class="t-small">capTheBHYT</td>
+            <td><span class="badge badge--warn">47m</span></td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">cap-the-bhyt</a></td>
+            <td class="table__actions"><a class="btn btn--sm" href="routes.html#chi-tiet">Route</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">pi-cc33…09</td>
+            <td class="t-mono t-small">HS-2026-081445</td>
+            <td class="t-mono t-small">cap-so-do-thua-dat</td>
+            <td class="t-small">traCuuThuaDat</td>
+            <td><span class="badge badge--warn">38m</span></td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-thua-dat</a></td>
+            <td class="table__actions"><a class="btn btn--sm" href="dlq.html">DLQ</a></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">pi-dd44…77</td>
+            <td class="t-mono t-small">HS-2026-084033</td>
+            <td class="t-mono t-small">xu-ly-ho-so-mot-cua</td>
+            <td class="t-small">dongBoTrangThai</td>
+            <td><span class="badge badge--warn">35m</span></td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">dong-bo-ho-so-tthc</a></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Retry service task dongBoTrangThai">Thử lại</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">pi-ee55…12</td>
+            <td class="t-mono t-small">HS-2026-080901</td>
+            <td class="t-mono t-small">lien-thong-bhxh</td>
+            <td class="t-small">traCuuCongDan</td>
+            <td><span class="badge badge--warn">32m</span></td>
+            <td><a class="t-mono" href="routes.html#chi-tiet">tra-cuu-cong-dan</a></td>
+            <td class="table__actions"><a class="btn btn--sm" href="national.html">NDXP</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row row--between mb-3">
+      <div class="card__title" style="font-size:var(--fs-md)">Nhật ký Saga</div>
+      <div class="row" style="gap:var(--sp-2)">
+        <select class="select" style="width:auto">
+          <option>7 ngày qua</option>
+          <option>24 giờ</option>
+          <option>30 ngày</option>
+        </select>
+        <button class="btn btn--sm" data-demo="Xuất CSV nhật ký Saga">Xuất CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap table-wrap--wide">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>sagaId</th><th>Mã hồ sơ</th><th>processKey</th>
+            <th>Trạng thái</th><th class="table__num">Bước bù trừ</th><th>Kết quả</th><th>Thời điểm</th><th class="table__actions">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:var(--c-err-50)">
+            <td class="t-mono t-small">sg-20260803-4421</td>
+            <td class="t-mono t-small">HS-2026-084421</td>
+            <td class="t-mono t-small">cap-giay-phep-xay-dung</td>
+            <td><span class="badge badge--err">FAILED</span></td>
+            <td class="table__num">2 / 3</td>
+            <td class="t-small">bu-tru-tu-phap OK · REVOKE_BHYT lỗi 503</td>
+            <td class="t-small">03/08 14:22</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--danger" data-demo="Acknowledge Saga FAILED sg-4421">Acknowledge</button>
+              <a class="btn btn--sm" href="dlq.html">DLQ</a>
+            </td>
+          </tr>
+          <tr style="background:var(--c-warn-50)">
+            <td class="t-mono t-small">sg-20260803-4398</td>
+            <td class="t-mono t-small">HS-2026-083778</td>
+            <td class="t-mono t-small">lien-thong-bhxh</td>
+            <td><span class="badge badge--warn">PARTIAL</span></td>
+            <td class="table__num">1 / 2</td>
+            <td class="t-small">ROLLBACK_PAYMENT chờ xác nhận ngân hàng</td>
+            <td class="t-small">03/08 11:05</td>
+            <td class="table__actions">
+              <button class="btn btn--sm btn--danger" data-demo="Acknowledge Saga PARTIAL sg-4398">Acknowledge</button>
+              <button class="btn btn--sm" data-demo="Mở runbook Saga PARTIAL">Runbook</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">sg-20260802-4312</td>
+            <td class="t-mono t-small">HS-2026-082210</td>
+            <td class="t-mono t-small">xu-ly-ho-so-mot-cua</td>
+            <td><span class="badge badge--ok">COMPLETED</span></td>
+            <td class="table__num">3 / 3</td>
+            <td class="t-small">Tất cả bước bù trừ thành công</td>
+            <td class="t-small">02/08 18:40</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem chi tiết Saga sg-4312">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">sg-20260802-4288</td>
+            <td class="t-mono t-small">HS-2026-081901</td>
+            <td class="t-mono t-small">cap-so-do-thua-dat</td>
+            <td><span class="badge badge--ok">COMPLETED</span></td>
+            <td class="table__num">1 / 1</td>
+            <td class="t-small">Không có bước ghi nhận — chỉ đọc</td>
+            <td class="t-small">02/08 09:15</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem sg-4288">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">sg-20260801-4199</td>
+            <td class="t-mono t-small">HS-2026-080512</td>
+            <td class="t-mono t-small">lien-thong-bhxh</td>
+            <td><span class="badge badge--ok">COMPLETED</span></td>
+            <td class="table__num">2 / 2</td>
+            <td class="t-small">REVOKE_BHYT + REVERT_STATUS</td>
+            <td class="t-small">01/08 16:22</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem sg-4199">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">sg-20260731-4102</td>
+            <td class="t-mono t-small">HS-2026-079901</td>
+            <td class="t-mono t-small">dang-ky-kinh-doanh-lt</td>
+            <td><span class="badge badge--info">RUNNING</span></td>
+            <td class="table__num">0 / 4</td>
+            <td class="t-small">Đang chờ hủy instance…</td>
+            <td class="t-small">31/07 22:08</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Theo dõi Saga RUNNING">Theo dõi</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--err mt-5" style="margin-bottom:0">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">3 Saga FAILED / PARTIAL cần acknowledge</div>
+        <div class="t-small">Quản trị quy trình phải xác nhận trước khi đóng ticket. Saga <span class="t-mono">sg-4421</span> liên quan lỗi trên <a href="dlq.html">DLQ</a> — ưu tiên xử lý route <span class="t-mono">cap-the-bhyt</span>.</div>
+      </div>
     </div>
   </div>
 </div>

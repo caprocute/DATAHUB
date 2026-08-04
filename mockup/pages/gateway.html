@@ -11,25 +11,913 @@
 </head>
 <body>
 
+<div class="mock-note">
+  <strong>PH-03 — Cổng tiếp nhận (API Gateway).</strong>
+  Minh họa các màn <span class="tag-ph">UI-03-01</span> Tổng quan lưu lượng,
+  <span class="tag-ph">UI-03-02</span> Cấu hình route,
+  <span class="tag-ph">UI-03-03</span> Hạn mức và hạn ngạch,
+  <span class="tag-ph">UI-03-04</span> Nhật ký WAF và ngoại lệ,
+  <span class="tag-ph">UI-03-05</span> Sức khỏe hạ nguồn — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-03-gateway.md">SRS PH-03</a>.
+  Liên kết chéo: <a href="catalog.html">Danh mục dịch vụ</a> (dịch vụ sau gateway) ·
+  <a href="monitoring.html">Giám sát &amp; truy vết</a> (chỉ số chi tiết).
+</div>
+
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Cổng tiếp nhận</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-03</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">APISIX · 6 replica · cửa sổ 24 giờ gần nhất — điểm vào duy nhất của LGSP (BR-03-001)</p>
+  </div>
+  <div class="page-head__actions">
+    <label class="check" style="margin:0">
+      <input type="checkbox" checked> <span class="t-small">Tự làm mới (30s)</span>
+    </label>
+    <button class="btn" data-demo="Tải cấu hình gateway dạng YAML">↓ Xuất cấu hình</button>
+    <button class="btn btn--primary" data-demo="Nạp nóng cấu hình route — không khởi động lại (BR-03-009)">⟳ Nạp nóng cấu hình</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-03</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-03.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<!-- ===== UI-03-01: Tổng quan lưu lượng ===== -->
+<div class="grid grid--4 mb-6">
+  <div class="card stat">
+    <div class="stat__label">Yêu cầu / giây</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">4.182</div>
+    <div class="stat__delta stat__delta--up">▲ 8,4% so với hôm qua</div>
+    <div class="stat__meta">Đỉnh 24h: 7.940 · trần cụm 10.000 (NFR-03-003)</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Tỷ lệ lỗi</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">0,42%</div>
+    <div class="stat__delta stat__delta--up">▲ 0,11 điểm</div>
+    <div class="stat__meta">4xx 0,31% · 5xx 0,11%</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Độ trễ P99 (gateway)</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">11,8ms</div>
+    <div class="stat__delta stat__delta--flat">■ ổn định</div>
+    <div class="stat__meta">Ngưỡng NFR-03-001: ≤ 15ms</div>
+  </div>
+  <div class="card stat">
+    <div class="stat__label">Kết nối đang mở</div>
+    <div class="stat__value" style="font-size:var(--fs-2xl)">32.740</div>
+    <div class="stat__delta stat__delta--up">▲ 3,2%</div>
+    <div class="stat__meta">≈ 5.457/replica · trần 20.000 (NFR-03-007)</div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="gw" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="overview">Tổng quan</button>
+    <button class="tab" data-tab="route">Route <span class="tab__count">128</span></button>
+    <button class="tab" data-tab="quota">Hạn mức</button>
+    <button class="tab" data-tab="waf">Bảo vệ <span class="tab__count">6</span></button>
+    <button class="tab" data-tab="upstream">Hạ nguồn</button>
+  </div>
+
+  <!-- Tab: Tổng quan — UI-03-01 -->
+  <div class="card__body" data-panel="overview" data-panel-group="gw">
+
+    <div class="row row--between mb-4" style="align-items:flex-end;flex-wrap:wrap">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Lưu lượng theo mã trạng thái</div>
+        <div class="card__sub">Nhấn cột lỗi để mở danh sách yêu cầu lỗi kèm <span class="t-mono">traceId</span> (tra tiếp tại PH-13)</div>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <select class="select" style="width:auto">
+          <option>24 giờ qua</option>
+          <option>6 giờ qua</option>
+          <option>7 ngày qua</option>
+        </select>
+        <button class="btn btn--sm" data-demo="Bỏ mọi bộ lọc đang áp dụng">Xóa lọc</button>
+      </div>
+    </div>
+
+    <div class="wf mb-3">
+      <div class="wf__name">00:00 – 04:00</div>
+      <div class="wf__track"><div class="wf__bar" style="left:0;width:31%"></div></div>
+      <div class="wf__ms">1.240/s</div>
+      <div class="wf__name">04:00 – 08:00</div>
+      <div class="wf__track"><div class="wf__bar" style="left:0;width:46%"></div></div>
+      <div class="wf__ms">1.830/s</div>
+      <div class="wf__name">08:00 – 12:00</div>
+      <div class="wf__track"><div class="wf__bar" style="left:0;width:100%"></div></div>
+      <div class="wf__ms">7.940/s</div>
+      <div class="wf__name">12:00 – 16:00</div>
+      <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:0;width:78%"></div></div>
+      <div class="wf__ms">6.210/s</div>
+      <div class="wf__name">16:00 – 20:00</div>
+      <div class="wf__track"><div class="wf__bar" style="left:0;width:52%"></div></div>
+      <div class="wf__ms">4.120/s</div>
+      <div class="wf__name">20:00 – 24:00</div>
+      <div class="wf__track"><div class="wf__bar" style="left:0;width:24%"></div></div>
+      <div class="wf__ms">960/s</div>
+    </div>
+    <div class="row t-small t-muted mb-5" style="gap:var(--sp-4)">
+      <span>■ 2xx — 99,58%</span>
+      <span style="color:var(--c-warn-700)">■ 4xx — 0,31%</span>
+      <span style="color:var(--c-err-700)">■ 5xx — 0,11%</span>
+      <span>Khung 12:00–16:00 tô vàng do tỷ lệ 4xx vượt 0,5%</span>
+    </div>
+
+    <!-- Thẻ bị chặn -->
+    <div class="grid grid--3 mb-5">
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-err-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Bị WAF chặn (24h)</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">1.284</div>
+          <div class="t-small t-muted">Chủ yếu luật <span class="t-mono">942100</span> — chèn mã SQL</div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-warn-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Vượt hạn mức (429)</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-warn-700)">3.612</div>
+          <div class="t-small t-muted">86% đến từ <span class="t-mono">HE_THONG_MOT_CUA</span></div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border-left:3px solid var(--c-warn-500)">
+        <div class="card__body" style="padding:var(--sp-4)">
+          <div class="stat__label">Xác thực thất bại (401/403)</div>
+          <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-warn-700)">742</div>
+          <div class="t-small t-muted">418 token hết hạn · 226 thiếu phạm vi · 98 chữ ký sai</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--2">
+      <!-- Xếp hạng bên gọi -->
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Top bên gọi theo lưu lượng</div>
+        <div class="card__sub mb-3">Nhấn một dòng để lọc toàn bộ biểu đồ theo client đó</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Bên gọi (clientId)</th><th class="table__num">Yêu cầu 24h</th><th style="width:150px">Mức dùng / hạn mức</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">HE_THONG_MOT_CUA</div>
+                  <div class="t-small t-muted">Văn phòng UBND tỉnh <span class="badge badge--info badge--plain">ESSENTIAL</span></div>
+                </td>
+                <td class="table__num">128.402</td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--err" style="width:96%"></div></div>
+                  <div class="t-small" style="color:var(--c-err-700)">96% · 3.104 lượt bị 429</div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">CONG_DVC_TINH</div>
+                  <div class="t-small t-muted">Sở TT&amp;TT <span class="badge badge--info badge--plain">ESSENTIAL</span></div>
+                </td>
+                <td class="table__num">96.118</td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--warn" style="width:82%"></div></div>
+                  <div class="t-small" style="color:var(--c-warn-700)">82%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">HE_THONG_HO_TICH</div>
+                  <div class="t-small t-muted">Sở Tư pháp</div>
+                </td>
+                <td class="table__num">41.630</td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:44%"></div></div>
+                  <div class="t-small t-muted">44%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">HE_THONG_DAT_DAI</div>
+                  <div class="t-small t-muted">Sở Tài nguyên &amp; Môi trường</div>
+                </td>
+                <td class="table__num">28.947</td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:31%"></div></div>
+                  <div class="t-small t-muted">31%</div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">HE_THONG_BAO_HIEM_XH</div>
+                  <div class="t-small t-muted">Bảo hiểm xã hội tỉnh</div>
+                </td>
+                <td class="table__num">12.408</td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:18%"></div></div>
+                  <div class="t-small t-muted">18%</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Xếp hạng route -->
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Top route theo lưu lượng và độ trễ</div>
+        <div class="card__sub mb-3">Độ trễ đo đầu–cuối, gồm cả thời gian hệ thống hạ nguồn</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Route</th><th class="table__num">Yêu cầu</th><th class="table__num">P99</th><th class="table__num">Lỗi</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">/api/v1/cong-dan/tra-cuu</td>
+                <td class="table__num">142.880</td>
+                <td class="table__num">318ms</td>
+                <td class="table__num">0,12%</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/ho-tich/khai-sinh</td>
+                <td class="table__num">64.210</td>
+                <td class="table__num">1.204ms</td>
+                <td class="table__num" style="color:var(--c-warn-700)">1,84%</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/van-ban/lien-thong</td>
+                <td class="table__num">38.406</td>
+                <td class="table__num">246ms</td>
+                <td class="table__num">0,31%</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/dat-dai/thua-dat</td>
+                <td class="table__num">28.947</td>
+                <td class="table__num" style="color:var(--c-err-700)">3.812ms</td>
+                <td class="table__num" style="color:var(--c-err-700)">4,21%</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/bao-hiem/the-bhyt</td>
+                <td class="table__num">12.408</td>
+                <td class="table__num">508ms</td>
+                <td class="table__num">0,08%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert--warn mt-4" style="margin-bottom:0">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">Route <span class="t-mono">/api/v1/dat-dai/thua-dat</span> suy giảm</div>
+            <div class="t-small">P99 3.812ms và lỗi 4,21% — nguyên nhân ở hạ nguồn, xem tab <strong>Hạ nguồn</strong>.
+              <a href="monitoring.html#trace">Tra trace tại PH-13 →</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-03-02: Cấu hình route Gateway ===== -->
+  <div class="card__body hidden" data-panel="route" data-panel-group="gw">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <div class="search" style="min-width:260px">
+          <input class="input" type="search" placeholder="Tìm theo đường dẫn hoặc dịch vụ…">
+        </div>
+        <select class="select" style="width:auto">
+          <option>Mọi phương thức</option><option>GET</option><option>POST</option><option>PUT</option>
+        </select>
+        <select class="select" style="width:auto">
+          <option>Mọi trạng thái</option><option>Đang phục vụ</option><option>Tạm chặn</option><option>Bản nháp</option>
+        </select>
+      </div>
+      <button class="btn btn--primary" data-demo="Mở biểu mẫu tạo route mới">+ Thêm route</button>
+    </div>
+
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Thay đổi route được nạp nóng</div>
+        <div class="t-small">Cấu hình đẩy qua etcd, có hiệu lực trong ≤ 5 giây mà không khởi động lại và không gây lỗi yêu cầu đang chạy (BR-03-009 · NFR-03-010).</div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Đường dẫn</th><th>Phương thức</th><th>Dịch vụ hạ nguồn</th>
+            <th>Chốt kiểm soát</th><th>Phiên bản</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">/api/v1/cong-dan/tra-cuu</td>
+            <td><span class="badge badge--plain">GET</span></td>
+            <td class="t-small">svc-cong-dan <span class="t-muted">→ PH-04</span></td>
+            <td class="t-small">JWT · Hạn mức · WAF · mTLS</td>
+            <td class="t-mono t-small">v1.4.0</td>
+            <td><span class="badge badge--ok">Đang phục vụ</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Sửa route — thay đổi sẽ nạp nóng">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">/api/v1/ho-tich/khai-sinh</td>
+            <td><span class="badge badge--plain">POST</span></td>
+            <td class="t-small">svc-ho-tich <span class="t-muted">→ PH-04</span></td>
+            <td class="t-small">JWT · Hạn mức · WAF</td>
+            <td class="t-mono t-small">v2.1.0</td>
+            <td><span class="badge badge--ok">Đang phục vụ</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Sửa route — thay đổi sẽ nạp nóng">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">/api/v1/van-ban/lien-thong</td>
+            <td><span class="badge badge--plain">POST</span></td>
+            <td class="t-small">svc-van-ban <span class="t-muted">→ PH-04</span></td>
+            <td class="t-small">JWT · Hạn mức · WAF</td>
+            <td class="t-mono t-small">v1.0.2</td>
+            <td><span class="badge badge--ok">Đang phục vụ</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Sửa route — thay đổi sẽ nạp nóng">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">/api/v1/dat-dai/thua-dat</td>
+            <td><span class="badge badge--plain">GET</span></td>
+            <td class="t-small">svc-dat-dai <span class="t-muted">→ PH-04</span></td>
+            <td class="t-small">JWT · Hạn mức · WAF · Ngắt mạch</td>
+            <td class="t-mono t-small">v1.2.0</td>
+            <td><span class="badge badge--warn">Suy giảm</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Sửa route — thay đổi sẽ nạp nóng">Sửa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">/api/v1/thu-nghiem/ai-tom-tat</td>
+            <td><span class="badge badge--plain">POST</span></td>
+            <td class="t-small">svc-ai-gateway <span class="t-muted">→ PH-17</span></td>
+            <td class="t-small">JWT · Hạn mức chặt</td>
+            <td class="t-mono t-small">v0.3.0</td>
+            <td><span class="badge badge--err">Tạm chặn</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Bỏ chặn route sau khi rà soát an ninh">Bỏ chặn</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">/api/v1/y-te/ho-so-suc-khoe</td>
+            <td><span class="badge badge--plain">GET</span></td>
+            <td class="t-small">svc-y-te <span class="t-muted">→ PH-04</span></td>
+            <td class="t-small">JWT · Hạn mức · WAF · mTLS</td>
+            <td class="t-mono t-small">v0.9.0</td>
+            <td><span class="badge badge--muted">Bản nháp</span></td>
+            <td class="table__actions">
+              <button class="btn btn--sm" data-demo="Xem chi tiết cấu hình route">Xem</button>
+              <button class="btn btn--sm" data-demo="Phát hành route từ bản nháp">Phát hành</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Chi tiết route — <span class="t-mono">/api/v1/dat-dai/thua-dat</span></div>
+        <div class="panel__body">
+          <dl class="dl mb-4">
+            <dt>Dịch vụ hạ nguồn</dt><dd class="t-mono t-small">svc-dat-dai.lgsp.svc.cluster.local:8080</dd>
+            <dt>Cân bằng tải</dt><dd>Round-robin · 3 thực thể</dd>
+            <dt>Thời gian chờ</dt><dd>Kết nối 2s · Đọc 10s</dd>
+            <dt>Thử lại</dt><dd>2 lần, chỉ với lỗi kết nối</dd>
+            <dt>Nguồn gốc CORS</dt><dd class="t-mono t-small">https://dichvucong.tinh.gov.vn</dd>
+            <dt>Phạm vi quyền</dt><dd class="t-mono t-small">datdai.read</dd>
+          </dl>
+          <div class="alert alert--warn" style="margin-bottom:0">
+            <span class="alert__icon">⚠</span>
+            <div class="t-small">Không dùng ký tự đại diện <span class="t-mono">*</span> cho nguồn gốc CORS — hệ thống từ chối lưu (BR-03-011).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Biểu mẫu route</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Đường dẫn <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="/api/v1/dat-dai/thua-dat">
+          </div>
+          <div class="field">
+            <label class="field__label">Dịch vụ hạ nguồn <span class="field__req">*</span></label>
+            <select class="select">
+              <option>svc-dat-dai (PH-04)</option>
+              <option>svc-cong-dan (PH-04)</option>
+              <option>svc-ho-tich (PH-04)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Nguồn gốc CORS được phép <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="*">
+            <div class="field__err">Không chấp nhận ký tự đại diện — phải liệt kê cụ thể từng nguồn gốc (BR-03-011).</div>
+          </div>
+          <label class="check"><input type="checkbox" checked> <span>Bật WAF theo bộ luật OWASP CRS</span></label>
+          <label class="check"><input type="checkbox" checked> <span>Bắt buộc mTLS với hệ thống thành viên</span></label>
+          <div class="card__actions mt-4">
+            <button class="btn" data-demo="Hủy thay đổi route">Hủy</button>
+            <button class="btn btn--primary" data-demo="Lưu và nạp nóng cấu hình route">Lưu &amp; nạp nóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-03-03: Hạn mức và hạn ngạch ===== -->
+  <div class="card__body hidden" data-panel="quota" data-panel-group="gw">
+
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">2 bên gọi đã vượt 80% hạn ngạch chu kỳ</div>
+        <div class="t-small">
+          <span class="t-mono">HE_THONG_MOT_CUA</span> (96%) và
+          <span class="t-mono">CONG_DVC_TINH</span> (82%) — cả hai thuộc nhóm <strong>ESSENTIAL</strong>,
+          cần cân nhắc nâng hạn mức trước khi ảnh hưởng dịch vụ công.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--main">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Bảng hạn mức đang áp dụng</div>
+        <div class="table-wrap table-wrap--wide">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Bên gọi</th><th>Route</th><th class="table__num">Giới hạn</th>
+                <th>Cửa sổ</th><th>Phạm vi</th><th style="width:170px">Mức dùng hiện tại</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">HE_THONG_MOT_CUA</div>
+                  <span class="badge badge--info badge--plain">ESSENTIAL</span>
+                </td>
+                <td class="t-mono t-small">* (mọi route)</td>
+                <td class="table__num">1.000</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--err" style="width:96%"></div></div>
+                  <div class="t-small" style="color:var(--c-err-700)">960/1.000 · 96%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho HE_THONG_MOT_CUA">Sửa</button></td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="t-mono t-small">CONG_DVC_TINH</div>
+                  <span class="badge badge--info badge--plain">ESSENTIAL</span>
+                </td>
+                <td class="t-mono t-small">* (mọi route)</td>
+                <td class="table__num">800</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--warn" style="width:82%"></div></div>
+                  <div class="t-small" style="color:var(--c-warn-700)">656/800 · 82%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho CONG_DVC_TINH">Sửa</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HE_THONG_HO_TICH</td>
+                <td class="t-mono t-small">/api/v1/ho-tich/*</td>
+                <td class="table__num">500</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:44%"></div></div>
+                  <div class="t-small t-muted">220/500 · 44%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho HE_THONG_HO_TICH">Sửa</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HE_THONG_DAT_DAI</td>
+                <td class="t-mono t-small">/api/v1/dat-dai/*</td>
+                <td class="table__num">300</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:31%"></div></div>
+                  <div class="t-small t-muted">93/300 · 31%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho HE_THONG_DAT_DAI">Sửa</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HE_THONG_BAO_HIEM_XH</td>
+                <td class="t-mono t-small">/api/v1/bao-hiem/*</td>
+                <td class="table__num">200</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:18%"></div></div>
+                  <div class="t-small t-muted">36/200 · 18%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho HE_THONG_BAO_HIEM_XH">Sửa</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">CONG_DAN_APP</td>
+                <td class="t-mono t-small">* (mọi route)</td>
+                <td class="table__num">120</td>
+                <td>60 giây</td>
+                <td><span class="badge badge--plain">CONSUMER</span></td>
+                <td>
+                  <div class="bar mb-2"><div class="bar__fill bar__fill--ok" style="width:9%"></div></div>
+                  <div class="t-small t-muted">11/120 · 9%</div>
+                </td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Chỉnh hạn mức cho CONG_DAN_APP">Sửa</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert--info mt-4">
+          <span class="alert__icon">ℹ</span>
+          <div>
+            <div class="alert__title">Hạn mức tính theo <span class="t-mono">clientId</span>, không theo địa chỉ IP</div>
+            <div class="t-small">Nhiều hệ thống thành viên đi chung một địa chỉ qua NAT — tính theo IP sẽ chặn nhầm (BR-03-004).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Biểu mẫu chỉnh hạn mức -->
+      <div class="panel">
+        <div class="panel__head">Chỉnh hạn mức — <span class="t-mono">HE_THONG_MOT_CUA</span></div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Giới hạn (yêu cầu) <span class="field__req">*</span></label>
+            <input class="input" type="number" value="600">
+            <div class="field__err">Thấp hơn lưu lượng trung bình hiện tại (842 req/60s) — sẽ gây lỗi 429 hàng loạt.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Cửa sổ</label>
+            <select class="select"><option>60 giây</option><option>1 giờ</option><option>1 ngày</option></select>
+          </div>
+          <div class="field">
+            <label class="field__label">Dung sai đột biến</label>
+            <input class="input" type="number" value="150">
+            <div class="field__hint">Số yêu cầu được phép vượt tức thời trước khi điều tiết.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Nhóm ưu tiên</label>
+            <select class="select"><option>ESSENTIAL</option><option>STANDARD</option><option>BEST_EFFORT</option></select>
+            <div class="field__hint">Nhóm <span class="t-mono">ESSENTIAL</span> được ưu tiên khi điều tiết (BR-03-008).</div>
+          </div>
+          <div class="alert alert--warn">
+            <span class="alert__icon">⚠</span>
+            <div class="t-small">Bên gọi thuộc nhóm <strong>ESSENTIAL</strong> — giảm hạn mức có thể gián đoạn dịch vụ công. Cần xác nhận lại.</div>
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Hủy chỉnh hạn mức">Hủy</button>
+            <button class="btn btn--primary" data-demo="Áp dụng hạn mức — có hiệu lực ngay, không cần triển khai lại">Áp dụng ngay</button>
+          </div>
+          <div class="t-small t-muted mt-3">Thay đổi có hiệu lực tức thì, không cần triển khai lại.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-03-04: Nhật ký WAF và ngoại lệ ===== -->
+  <div class="card__body hidden" data-panel="waf" data-panel-group="gw">
+
+    <div class="row mb-4" style="gap:var(--sp-2);flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="margin:0;min-width:170px">
+        <label class="field__label">Mã luật</label>
+        <select class="select">
+          <option>Mọi mã luật</option>
+          <option>942100 — SQL injection</option>
+          <option>941100 — XSS</option>
+          <option>930110 — Path traversal</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;min-width:170px">
+        <label class="field__label">Route</label>
+        <select class="select"><option>Mọi route</option><option>/api/v1/cong-dan/*</option><option>/api/v1/dat-dai/*</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:150px">
+        <label class="field__label">Khoảng thời gian</label>
+        <select class="select"><option>24 giờ qua</option><option>7 ngày qua</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:170px">
+        <label class="field__label">Địa chỉ nguồn</label>
+        <input class="input input--mono" type="text" placeholder="203.0.113.0/24">
+      </div>
+      <button class="btn" data-demo="Áp dụng bộ lọc nhật ký WAF">Lọc</button>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Nhật ký chặn (1.284 lượt / 24 giờ)</div>
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Thời điểm</th><th>Địa chỉ nguồn</th><th>Route</th>
+            <th>Mã luật</th><th class="table__num">Điểm bất thường</th><th>Đoạn khớp</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">03/08 14:22:07</td>
+            <td class="t-mono t-small">203.0.113.42</td>
+            <td class="t-mono t-small">/api/v1/cong-dan/tra-cuu</td>
+            <td><span class="badge badge--err">942100</span> <span class="t-small">SQL injection</span></td>
+            <td class="table__num" style="color:var(--c-err-700)">18</td>
+            <td class="t-mono t-small">soCccd=1' OR '1'='1</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem đầy đủ yêu cầu bị chặn — dữ liệu nhạy cảm đã được che">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 13:58:41</td>
+            <td class="t-mono t-small">198.51.100.17</td>
+            <td class="t-mono t-small">/api/v1/van-ban/lien-thong</td>
+            <td><span class="badge badge--err">941100</span> <span class="t-small">XSS</span></td>
+            <td class="table__num" style="color:var(--c-err-700)">15</td>
+            <td class="t-mono t-small">&lt;script&gt;fetch(…)&lt;/script&gt;</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem đầy đủ yêu cầu bị chặn — dữ liệu nhạy cảm đã được che">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 11:04:12</td>
+            <td class="t-mono t-small">203.0.113.88</td>
+            <td class="t-mono t-small">/api/v1/dat-dai/thua-dat</td>
+            <td><span class="badge badge--warn">930110</span> <span class="t-small">Path traversal</span></td>
+            <td class="table__num" style="color:var(--c-warn-700)">9</td>
+            <td class="t-mono t-small">../../etc/passwd</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem đầy đủ yêu cầu bị chặn — dữ liệu nhạy cảm đã được che">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 09:31:55</td>
+            <td class="t-mono t-small">192.0.2.201</td>
+            <td class="t-mono t-small">/api/v1/ho-tich/khai-sinh</td>
+            <td><span class="badge badge--warn">920420</span> <span class="t-small">Content-Type không hợp lệ</span></td>
+            <td class="table__num" style="color:var(--c-warn-700)">6</td>
+            <td class="t-mono t-small">Content-Type: text/xml</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem đầy đủ yêu cầu bị chặn — dữ liệu nhạy cảm đã được che">Chi tiết</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">03/08 08:17:33</td>
+            <td class="t-mono t-small">203.0.113.42</td>
+            <td class="t-mono t-small">/api/v1/cong-dan/tra-cuu</td>
+            <td><span class="badge badge--err">942100</span> <span class="t-small">SQL injection</span></td>
+            <td class="table__num" style="color:var(--c-err-700)">18</td>
+            <td class="t-mono t-small">soCccd=1; DROP TABLE…</td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem đầy đủ yêu cầu bị chặn — dữ liệu nhạy cảm đã được che">Chi tiết</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--info mb-5">
+      <span class="alert__icon">ℹ</span>
+      <div class="t-small">Nhật ký không lưu thân bản tin — thân bản tin có thể chứa dữ liệu cá nhân (BR-03-006 · NFR-03-016). Đoạn khớp chỉ hiển thị phần luật WAF bắt được, đã che dữ liệu nhạy cảm.</div>
+    </div>
+
+    <div class="grid grid--main">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Ngoại lệ đang có hiệu lực</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Route</th><th>Mã luật</th><th>Lý do</th><th>Người duyệt</th><th>Ngày hết hạn</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">/api/v1/van-ban/lien-thong</td>
+                <td><span class="badge badge--plain">920420</span></td>
+                <td class="t-small">Hệ thống quản lý văn bản gửi XML theo TT 39/2017, WAF nhận nhầm là tấn công</td>
+                <td class="t-small">Nguyễn Văn Hùng<br><span class="t-muted">SECURITY_OFFICER</span></td>
+                <td class="t-small" style="color:var(--c-warn-700)">10/08/2026 <span class="badge badge--warn">còn 7 ngày</span></td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Gia hạn ngoại lệ WAF — tối đa 90 ngày">Gia hạn</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/dat-dai/thua-dat</td>
+                <td><span class="badge badge--plain">930110</span></td>
+                <td class="t-small">Tham số chứa dấu chấm kép trong mã thửa đất hợp lệ</td>
+                <td class="t-small">Trần Thị Mai<br><span class="t-muted">SECURITY_OFFICER</span></td>
+                <td class="t-small">28/09/2026</td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Thu hồi ngoại lệ WAF">Thu hồi</button></td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">/api/v1/bao-hiem/the-bhyt</td>
+                <td><span class="badge badge--plain">941100</span></td>
+                <td class="t-small">Trường ghi chú cho phép thẻ HTML cơ bản theo nghiệp vụ BHXH</td>
+                <td class="t-small">Nguyễn Văn Hùng<br><span class="t-muted">SECURITY_OFFICER</span></td>
+                <td class="t-small">15/10/2026</td>
+                <td class="table__actions"><button class="btn btn--sm" data-demo="Thu hồi ngoại lệ WAF">Thu hồi</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert--warn mt-4" style="margin-bottom:0">
+          <span class="alert__icon">⚠</span>
+          <div>
+            <div class="alert__title">1 ngoại lệ sắp hết hạn</div>
+            <div class="t-small">Ngoại lệ <span class="t-mono">920420</span> trên <span class="t-mono">/api/v1/van-ban/lien-thong</span> còn 7 ngày — cần rà soát xem hệ thống nguồn đã sửa định dạng chưa.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Tạo ngoại lệ mới</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Route <span class="field__req">*</span></label>
+            <select class="select">
+              <option>/api/v1/cong-dan/tra-cuu</option>
+              <option>/api/v1/ho-tich/khai-sinh</option>
+              <option>/api/v1/van-ban/lien-thong</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Mã luật <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" placeholder="942100">
+          </div>
+          <div class="field">
+            <label class="field__label">Lý do <span class="field__req">*</span></label>
+            <textarea class="textarea" rows="3" placeholder="Nêu rõ vì sao luật này gây chặn nhầm…"></textarea>
+            <div class="field__hint">Bắt buộc — ngoại lệ là lỗ hổng có chủ đích, phải rà soát định kỳ (BR-03-005).</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Thời hạn (ngày) <span class="field__req">*</span></label>
+            <input class="input" type="number" value="120">
+            <div class="field__err">Vượt quá 90 ngày — không được phép (BR-03-005).</div>
+          </div>
+          <div class="alert alert--warn">
+            <span class="alert__icon">🔐</span>
+            <div class="t-small">Cần vai trò <span class="t-mono">SECURITY_OFFICER</span> và xác nhận lại MFA trước khi lưu.</div>
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Hủy tạo ngoại lệ">Hủy</button>
+            <button class="btn btn--primary" data-demo="Xác nhận MFA rồi tạo ngoại lệ WAF">Xác nhận MFA &amp; tạo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-03-05: Sức khỏe hạ nguồn ===== -->
+  <div class="card__body hidden" data-panel="upstream" data-panel-group="gw">
+
+    <div class="grid grid--4 mb-5">
+      <div class="card stat">
+        <div class="stat__label">Dịch vụ hạ nguồn</div>
+        <div class="stat__value" style="font-size:var(--fs-xl)">14</div>
+        <div class="t-small t-muted">Tổng số cụm hạ nguồn</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Khỏe mạnh</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-ok-700)">11</div>
+        <div class="t-small t-muted">Mọi thực thể vượt kiểm tra</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Suy giảm</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-warn-700)">2</div>
+        <div class="t-small t-muted">Còn thực thể phục vụ được</div>
+      </div>
+      <div class="card stat">
+        <div class="stat__label">Ngắt mạch mở</div>
+        <div class="stat__value" style="font-size:var(--fs-xl);color:var(--c-err-700)">1</div>
+        <div class="t-small t-muted">Đang trả lỗi nhanh, không gọi đích</div>
+      </div>
+    </div>
+
+    <div class="alert alert--err mb-5">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Ngắt mạch <span class="t-mono">svc-dat-dai</span> đang MỞ từ 14:08</div>
+        <div class="t-small">
+          Tỷ lệ lỗi hạ nguồn 62% trong 60 giây liên tiếp → ngắt mạch mở để bảo vệ hệ thống đích.
+          Gateway trả <span class="t-mono">503</span> kèm <span class="t-mono">Retry-After</span> mà không gọi tới hệ thống Sở TN&amp;MT.
+          Thử lại bán mở sau 30 giây. <a href="monitoring.html">Xem chi tiết tại PH-13 →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-5">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Dịch vụ hạ nguồn</th><th>Đơn vị chủ quản</th><th>Thực thể khỏe</th>
+            <th class="table__num">P99 hạ nguồn</th><th class="table__num">Tỷ lệ lỗi</th>
+            <th>Ngắt mạch</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">svc-cong-dan</td>
+            <td class="t-small">Sở TT&amp;TT</td>
+            <td class="t-small">3/3</td>
+            <td class="table__num">306ms</td>
+            <td class="table__num">0,12%</td>
+            <td><span class="badge badge--ok">Đóng</span></td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử kiểm tra sức khỏe">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">svc-ho-tich</td>
+            <td class="t-small">Sở Tư pháp</td>
+            <td class="t-small">2/3</td>
+            <td class="table__num" style="color:var(--c-warn-700)">1.186ms</td>
+            <td class="table__num" style="color:var(--c-warn-700)">1,84%</td>
+            <td><span class="badge badge--ok">Đóng</span></td>
+            <td><span class="badge badge--warn">Suy giảm</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử kiểm tra sức khỏe">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">svc-dat-dai</td>
+            <td class="t-small">Sở Tài nguyên &amp; Môi trường</td>
+            <td class="t-small" style="color:var(--c-err-700)">0/3</td>
+            <td class="table__num" style="color:var(--c-err-700)">3.780ms</td>
+            <td class="table__num" style="color:var(--c-err-700)">62,4%</td>
+            <td><span class="badge badge--err">MỞ</span></td>
+            <td><span class="badge badge--err">Mất kết nối</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Buộc đóng ngắt mạch sau khi xác nhận hệ thống đích đã hồi phục">Đóng mạch</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">svc-van-ban</td>
+            <td class="t-small">Văn phòng UBND tỉnh</td>
+            <td class="t-small">3/3</td>
+            <td class="table__num">232ms</td>
+            <td class="table__num">0,31%</td>
+            <td><span class="badge badge--ok">Đóng</span></td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử kiểm tra sức khỏe">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">svc-bao-hiem</td>
+            <td class="t-small">Bảo hiểm xã hội tỉnh</td>
+            <td class="t-small">2/2</td>
+            <td class="table__num">486ms</td>
+            <td class="table__num">0,08%</td>
+            <td><span class="badge badge--ok">Đóng</span></td>
+            <td><span class="badge badge--ok">Khỏe mạnh</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem lịch sử kiểm tra sức khỏe">Lịch sử</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">svc-ndxp-proxy</td>
+            <td class="t-small">Kết nối NDXP (PH-14)</td>
+            <td class="t-small">1/2</td>
+            <td class="table__num" style="color:var(--c-warn-700)">1.940ms</td>
+            <td class="table__num" style="color:var(--c-warn-700)">2,12%</td>
+            <td><span class="badge badge--warn">Bán mở</span></td>
+            <td><span class="badge badge--warn">Suy giảm</span></td>
+            <td class="table__actions"><a class="btn btn--sm" href="national.html">Xem PH-14</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Phân bố độ trễ theo chặng — <span class="t-mono">/api/v1/dat-dai/thua-dat</span></div>
+        <div class="panel__body">
+          <div class="wf">
+            <div class="wf__name">Gateway (PH-03)</div>
+            <div class="wf__track"><div class="wf__bar" style="left:0;width:1%"></div></div>
+            <div class="wf__ms">11ms</div>
+            <div class="wf__name">Camel lõi (PH-04)</div>
+            <div class="wf__track"><div class="wf__bar" style="left:1%;width:3%"></div></div>
+            <div class="wf__ms">94ms</div>
+            <div class="wf__name">Adapter (PH-05)</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--warn" style="left:4%;width:8%"></div></div>
+            <div class="wf__ms">302ms</div>
+            <div class="wf__name">Hệ thống Sở TN&amp;MT</div>
+            <div class="wf__track"><div class="wf__bar wf__bar--err" style="left:12%;width:88%"></div></div>
+            <div class="wf__ms">3.373ms</div>
+          </div>
+          <div class="alert alert--info mt-4" style="margin-bottom:0">
+            <span class="alert__icon">ℹ</span>
+            <div class="t-small">Gateway chỉ đóng góp 11ms trong tổng 3.780ms — nguyên nhân nằm ở hệ thống đích, không ở LGSP.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Cấu hình kiểm tra sức khỏe</div>
+        <div class="panel__body">
+          <dl class="dl mb-4">
+            <dt>Điểm cuối kiểm tra</dt><dd class="t-mono t-small">/actuator/health</dd>
+            <dt>Chu kỳ</dt><dd>5 giây</dd>
+            <dt>Ngưỡng lỗi</dt><dd>3 lần liên tiếp → đánh dấu không khỏe</dd>
+            <dt>Ngưỡng hồi phục</dt><dd>2 lần liên tiếp → đưa lại vào cụm</dd>
+            <dt>Ngưỡng ngắt mạch</dt><dd>Tỷ lệ lỗi ≥ 50% trong 60 giây</dd>
+            <dt>Thử bán mở</dt><dd>Sau 30 giây, cho 1 yêu cầu thăm dò</dd>
+          </dl>
+          <div class="alert alert--warn" style="margin-bottom:0">
+            <span class="alert__icon">⚠</span>
+            <div>
+              <div class="alert__title">Khi toàn bộ thực thể đều không khỏe</div>
+              <div class="t-small">Gateway giữ lại thực thể tốt nhất thay vì chặn hết — mất một phần dịch vụ vẫn tốt hơn mất toàn bộ (BR-03-010).</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

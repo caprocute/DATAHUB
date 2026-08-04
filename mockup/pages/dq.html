@@ -8,28 +8,1041 @@
 <script src="../js/theme.js"></script>
 <script>window.LGSP_PAGE = { id: 'dq', title: 'Chất lượng dữ liệu', crumbs: [
   { text: 'Trang chủ', href: 'index.html' }, { text: 'Chất lượng dữ liệu' }] };</script>
+<style>
+  /* Bổ sung cục bộ: bảng Kanban đơn giản cho UI-08-07 — app.css chưa có.
+     Nên gộp vào css/app.css nếu các phân hệ khác cũng cần bảng trạng thái dạng cột. */
+  .kanban { display: grid; grid-template-columns: repeat(5, minmax(180px, 1fr));
+            gap: var(--sp-3); overflow-x: auto; padding-bottom: var(--sp-2); }
+  .kanban__col { background: var(--c-surface-2); border: 1px solid var(--c-border);
+                 border-radius: var(--r-md); padding: var(--sp-3); min-width: 180px; }
+  .kanban__head { font-size: var(--fs-sm); font-weight: 600; margin-bottom: var(--sp-3);
+                  display: flex; justify-content: space-between; align-items: center; }
+  .kanban__card { background: var(--c-surface); border: 1px solid var(--c-border);
+                  border-radius: var(--r-sm); padding: var(--sp-3); margin-bottom: var(--sp-2); }
+  .kanban__card--overdue { border-left: 3px solid var(--c-err-500); }
+  /* Đa giác 6 chiều chất lượng — thay biểu đồ radar bằng lưới nhãn + thanh, đọc được ở cả 2 chế độ */
+  .radar6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+</style>
 </head>
 <body>
+
+<div class="mock-note">
+  <strong>PH-08 — Quản lý chất lượng dữ liệu.</strong>
+  Minh họa các màn <span class="tag-ph">UI-08-01</span> Tổng quan theo miền,
+  <span class="tag-ph">UI-08-02</span> Quản lý luật kiểm tra,
+  <span class="tag-ph">UI-08-03</span> Trọng số và ngưỡng,
+  <span class="tag-ph">UI-08-04</span> Job quét &amp; tiến độ,
+  <span class="tag-ph">UI-08-05</span> Bản ghi lỗi,
+  <span class="tag-ph">UI-08-06</span> Báo cáo &amp; so kỳ,
+  <span class="tag-ph">UI-08-07</span> Ticket khắc phục — đặc tả tại mục M6 của
+  <a href="../../docs/07-srs/SRS-PH-08-dq.md">SRS PH-08</a>.
+  Liên kết chéo: <a href="mdm.html">Dữ liệu chủ</a> (bản ghi vàng) ·
+  <a href="reference.html">Danh mục dùng chung</a> (luật VALIDITY tra danh mục).
+</div>
 
 <div class="page-head">
   <div class="page-head__main">
     <h1 class="page-title">Chất lượng dữ liệu</h1>
-    <p class="page-desc">Phân hệ <span class="tag-ph">PH-08</span> — màn hình đang được xây dựng</p>
+    <p class="page-desc">Sáu chiều chất lượng · 5 miền dữ liệu · kỳ đánh giá tháng 7/2026</p>
+  </div>
+  <div class="page-head__actions">
+    <button class="btn" data-demo="Mở báo cáo chất lượng kỳ gần nhất">Mở báo cáo</button>
+    <button class="btn btn--primary" data-demo="Chạy quét chất lượng ngay cho miền đang chọn">▶ Quét ngay</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card__body text-center" style="padding:var(--sp-10)">
-    <div style="font-size:40px;opacity:.35;margin-bottom:var(--sp-4)">◷</div>
-    <div class="card__title mb-2">Màn hình chưa dựng</div>
-    <p class="t-muted mb-5" style="max-width:520px;margin:0 auto var(--sp-5)">
-      Mockup của phân hệ <strong>PH-08</strong> nằm trong kế hoạch Giai đoạn 6 của
-      checklist. Đặc tả màn hình đã có tại mục <em>M6 — Giao diện người dùng</em>
-      của SRS PH-08.
-    </p>
-    <div class="row" style="justify-content:center">
-      <a class="btn" href="../index.html">← Về bảng điều khiển</a>
-      <a class="btn btn--primary" href="routes.html">Xem màn đã dựng (PH-04)</a>
+<div class="alert alert--err mb-6">
+  <span class="alert__icon">✕</span>
+  <div>
+    <div class="alert__title">Miền <span class="t-mono">DAT_DAI</span> kết luận FAIL · 1 job quét thất bại · 4 ticket quá hạn</div>
+    <div class="t-small">
+      Điểm tổng 58,4/100 — dưới ngưỡng đạt 70. Miền này được đưa lên đầu danh sách để ưu tiên xử lý.
+    </div>
+  </div>
+</div>
+
+<!-- ===== UI-08-01: Tổng quan chất lượng theo miền ===== -->
+<div class="grid grid--4 mb-5">
+  <div class="card" style="border-left:3px solid var(--c-err-500)">
+    <div class="card__body">
+      <div class="row row--between mb-2">
+        <div class="stat__label">DAT_DAI — Đất đai</div>
+        <span class="badge badge--err">FAIL</span>
+      </div>
+      <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-err-700)">58,4</div>
+      <div class="stat__delta stat__delta--down">▼ 4,2 điểm so kỳ trước</div>
+      <div class="t-small t-muted mt-2">🔴 DEGRADED · quét gần nhất 01/08/2026</div>
+    </div>
+  </div>
+  <div class="card" style="border-left:3px solid var(--c-warn-500)">
+    <div class="card__body">
+      <div class="row row--between mb-2">
+        <div class="stat__label">HO_TICH — Hộ tịch</div>
+        <span class="badge badge--warn">WARN</span>
+      </div>
+      <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-warn-700)">72,6</div>
+      <div class="stat__delta stat__delta--flat">■ 0,3 điểm</div>
+      <div class="t-small t-muted mt-2">⚪ STABLE · quét gần nhất 01/08/2026</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card__body">
+      <div class="row row--between mb-2">
+        <div class="stat__label">DAN_CU — Dân cư</div>
+        <span class="badge badge--ok">PASS</span>
+      </div>
+      <div class="stat__value" style="font-size:var(--fs-2xl);color:var(--c-ok-700)">91,2</div>
+      <div class="stat__delta stat__delta--up">▲ 2,8 điểm</div>
+      <div class="t-small t-muted mt-2">🟢 IMPROVED · quét gần nhất 01/08/2026</div>
+    </div>
+  </div>
+  <div class="card" style="border-left:3px solid var(--c-warn-500)">
+    <div class="card__body">
+      <div class="row row--between mb-2">
+        <div class="stat__label">DOANH_NGHIEP</div>
+        <span class="badge badge--warn">Thiếu chiều</span>
+      </div>
+      <div class="stat__value" style="font-size:var(--fs-2xl)">84,0</div>
+      <div class="stat__delta stat__delta--up">▲ 1,1 điểm</div>
+      <div class="t-small mt-2" style="color:var(--c-warn-700)">⚠ INCOMPLETE_DIMENSIONS</div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-6">
+  <div class="tabs" data-tabs-group="dq" style="margin:0;padding:0 var(--sp-5)">
+    <button class="tab is-active" data-tab="overview">Tổng quan</button>
+    <button class="tab" data-tab="rules">Luật <span class="tab__count">86</span></button>
+    <button class="tab" data-tab="weights">Trọng số</button>
+    <button class="tab" data-tab="scan">Quét</button>
+    <button class="tab" data-tab="findings">Lỗi <span class="tab__count">1.284</span></button>
+    <button class="tab" data-tab="report">Báo cáo</button>
+    <button class="tab" data-tab="tickets">Khắc phục <span class="tab__count">18</span></button>
+  </div>
+
+  <!-- Tab: Tổng quan — UI-08-01 -->
+  <div class="card__body" data-panel="overview" data-panel-group="dq">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div>
+        <div class="card__title" style="font-size:var(--fs-md)">Sáu chiều chất lượng — miền <span class="t-mono">DAT_DAI</span></div>
+        <div class="card__sub">Nhấn một thẻ miền ở trên để xem chi tiết chiều của miền đó</div>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Chạy quét chất lượng ngay cho miền DAT_DAI">▶ Quét ngay</button>
+        <button class="btn btn--sm" data-demo="Mở báo cáo chất lượng miền DAT_DAI">Mở báo cáo</button>
+        <button class="btn btn--sm" data-demo="Lọc bản ghi lỗi mức CRITICAL của miền DAT_DAI">Xem lỗi CRITICAL</button>
+      </div>
+    </div>
+
+    <div class="radar6 mb-5">
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Đầy đủ (completeness)</span><span class="t-small" style="color:var(--c-err-700)">52%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:52%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 25%</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Chính xác (accuracy)</span><span class="t-small" style="color:var(--c-err-700)">61%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--err" style="width:61%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 25%</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Nhất quán (consistency)</span><span class="t-small" style="color:var(--c-warn-700)">74%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:74%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 15%</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Hợp lệ (validity)</span><span class="t-small" style="color:var(--c-warn-700)">68%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--warn" style="width:68%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 15%</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Duy nhất (uniqueness)</span><span class="t-small" style="color:var(--c-ok-700)">88%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:88%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 10%</div>
+      </div>
+      <div>
+        <div class="row row--between mb-2"><span class="t-small">Kịp thời (timeliness)</span><span class="t-small" style="color:var(--c-ok-700)">82%</span></div>
+        <div class="bar"><div class="bar__fill bar__fill--ok" style="width:82%"></div></div>
+        <div class="t-small t-muted mt-2">Ngưỡng đạt 80% · trọng số 10%</div>
+      </div>
+    </div>
+
+    <div class="grid grid--2">
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Cảnh báo cần xử lý</div>
+        <div class="panel">
+          <div class="panel__body" style="padding:0">
+            <div class="finding">
+              <div class="finding__mark finding__mark--err">✕</div>
+              <div class="finding__text">
+                <div class="finding__title">Job quét <span class="t-mono">JOB-2026-0801-DAT-DAI</span> thất bại</div>
+                <div class="finding__meta">Mất kết nối adapter nguồn ở 62% tiến độ · 01/08/2026 02:47</div>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="finding__mark finding__mark--warn">⚠</div>
+              <div class="finding__text">
+                <div class="finding__title">Miền <span class="t-mono">DOANH_NGHIEP</span> thiếu chiều đánh giá</div>
+                <div class="finding__meta">Chưa có luật cho chiều "Kịp thời" — không xuất được báo cáo chính thức</div>
+              </div>
+            </div>
+            <div class="finding">
+              <div class="finding__mark finding__mark--err">✕</div>
+              <div class="finding__text">
+                <div class="finding__title">4 ticket khắc phục quá hạn</div>
+                <div class="finding__meta">Sở TN&amp;MT (3) · Sở Tư pháp (1) — quá hạn từ 4 đến 18 ngày</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card__title mb-3" style="font-size:var(--fs-md)">Điểm theo miền và xu hướng</div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Miền</th><th class="table__num">Điểm</th><th>Kết luận</th><th>Δ so kỳ</th><th>Xu hướng</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="t-mono t-small">DAT_DAI</td>
+                <td class="table__num" style="color:var(--c-err-700)">58,4</td>
+                <td><span class="badge badge--err">FAIL</span></td>
+                <td class="t-small" style="color:var(--c-err-700)">−4,2</td>
+                <td class="t-small">🔴 DEGRADED</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">HO_TICH</td>
+                <td class="table__num" style="color:var(--c-warn-700)">72,6</td>
+                <td><span class="badge badge--warn">WARN</span></td>
+                <td class="t-small t-muted">+0,3</td>
+                <td class="t-small">⚪ STABLE</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">DOANH_NGHIEP</td>
+                <td class="table__num">84,0</td>
+                <td><span class="badge badge--warn">Thiếu chiều</span></td>
+                <td class="t-small" style="color:var(--c-ok-700)">+1,1</td>
+                <td class="t-small">🟢 IMPROVED</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">DAN_CU</td>
+                <td class="table__num" style="color:var(--c-ok-700)">91,2</td>
+                <td><span class="badge badge--ok">PASS</span></td>
+                <td class="t-small" style="color:var(--c-ok-700)">+2,8</td>
+                <td class="t-small">🟢 IMPROVED</td>
+              </tr>
+              <tr>
+                <td class="t-mono t-small">VAN_BAN</td>
+                <td class="table__num" style="color:var(--c-ok-700)">94,8</td>
+                <td><span class="badge badge--ok">PASS</span></td>
+                <td class="t-small t-muted">+0,1</td>
+                <td class="t-small">⚪ STABLE</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="t-small t-muted mt-3">Nhấn một dòng để mở tab <strong>Lỗi</strong> đã lọc sẵn theo miền đó.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-02: Quản lý luật kiểm tra ===== -->
+  <div class="card__body hidden" data-panel="rules" data-panel-group="dq">
+
+    <div class="row mb-4" style="gap:var(--sp-3);flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="margin:0;min-width:220px">
+        <label class="field__label">Miền dữ liệu</label>
+        <select class="select">
+          <option>DAT_DAI — Đất đai</option>
+          <option>HO_TICH — Hộ tịch</option>
+          <option>DAN_CU — Dân cư</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;min-width:200px">
+        <label class="field__label">Phiên bản bộ luật</label>
+        <select class="select"><option>v4 — DRAFT</option><option>v3 — ACTIVE</option><option>v2</option></select>
+      </div>
+      <button class="btn btn--primary" data-demo="Thêm luật kiểm tra mới vào bản nháp v4">+ Thêm luật</button>
+      <button class="btn" data-demo="Kích hoạt bộ luật v4 — thay thế bộ luật ACTIVE hiện tại">Kích hoạt v4</button>
+    </div>
+
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Đang xem bản nháp v4 (DRAFT)</div>
+        <div class="t-small">Sửa luật trên bộ ACTIVE luôn tạo bản nháp mới, không sửa tại chỗ — bảo toàn khả năng truy vết điểm số các kỳ trước.</div>
+      </div>
+    </div>
+
+    <div class="row mb-4" style="gap:var(--sp-2);flex-wrap:wrap">
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Đầy đủ">Đầy đủ <span class="tab__count">18</span></button>
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Chính xác">Chính xác <span class="tab__count">22</span></button>
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Nhất quán">Nhất quán <span class="tab__count">14</span></button>
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Hợp lệ">Hợp lệ <span class="tab__count">20</span></button>
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Duy nhất">Duy nhất <span class="tab__count">6</span></button>
+      <button class="btn btn--sm" data-demo="Lọc luật theo chiều Kịp thời">Kịp thời <span class="tab__count">6</span></button>
+    </div>
+
+    <div class="grid grid--main">
+      <div class="table-wrap table-wrap--wide">
+        <table class="table">
+          <thead>
+            <tr><th>Mã luật</th><th>Chiều</th><th>Trường</th><th>Toán tử</th><th>Mức</th><th>Inline</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_001</td>
+              <td><span class="badge badge--plain">Đầy đủ</span></td>
+              <td class="t-mono t-small">thuaDat.maDonViHanhChinh</td>
+              <td class="t-small">NOT_NULL</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_001 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_002</td>
+              <td><span class="badge badge--plain">Hợp lệ</span></td>
+              <td class="t-mono t-small">thuaDat.loaiDat</td>
+              <td class="t-small">IN_REFERENCE(<span class="t-mono">DM_LOAI_DAT</span>)</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_002 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_003</td>
+              <td><span class="badge badge--plain">Chính xác</span></td>
+              <td class="t-mono t-small">thuaDat.dienTichM2</td>
+              <td class="t-small">RANGE(0.1 … 10000000)</td>
+              <td><span class="badge badge--warn">MAJOR</span></td>
+              <td><span class="badge badge--muted">Không</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_003 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_004</td>
+              <td><span class="badge badge--plain">Duy nhất</span></td>
+              <td class="t-mono t-small">thuaDat.maThuaDat</td>
+              <td class="t-small">UNIQUE</td>
+              <td><span class="badge badge--err">CRITICAL</span></td>
+              <td><span class="badge badge--ok">Có</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_004 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_005</td>
+              <td><span class="badge badge--plain">Nhất quán</span></td>
+              <td class="t-mono t-small">thuaDat.ngayCap ↔ ngayHetHan</td>
+              <td class="t-small">LESS_THAN</td>
+              <td><span class="badge badge--warn">MAJOR</span></td>
+              <td><span class="badge badge--muted">Không</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_005 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_006</td>
+              <td><span class="badge badge--plain">Kịp thời</span></td>
+              <td class="t-mono t-small">thuaDat.ngayCapNhat</td>
+              <td class="t-small">FRESHER_THAN(180 ngày)</td>
+              <td><span class="badge badge--muted">MINOR</span></td>
+              <td><span class="badge badge--muted">Không</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa luật DQ_DD_006 — tạo bản nháp mới">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-mono t-small">DQ_DD_007 <span class="badge badge--info">Mới ở v4</span></td>
+              <td><span class="badge badge--plain">Hợp lệ</span></td>
+              <td class="t-mono t-small">thuaDat.hinhThucSuDung</td>
+              <td class="t-small" style="color:var(--c-err-700)">IN_REFERENCE(chưa chọn)</td>
+              <td><span class="badge badge--warn">MAJOR</span></td>
+              <td><span class="badge badge--muted">Không</span></td>
+              <td class="table__actions"><button class="btn btn--sm btn--primary" data-demo="Chọn danh mục RDM cho luật DQ_DD_007">Chọn danh mục</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Biểu mẫu luật</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Chiều chất lượng <span class="field__req">*</span></label>
+            <select class="select">
+              <option>Hợp lệ (validity)</option><option>Đầy đủ</option><option>Chính xác</option>
+              <option>Nhất quán</option><option>Duy nhất</option><option>Kịp thời</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label">Trường kiểm tra <span class="field__req">*</span></label>
+            <input class="input input--mono" type="text" value="thuaDat.hinhThucSuDung">
+          </div>
+          <div class="field">
+            <label class="field__label">Danh mục RDM đối chiếu <span class="field__req">*</span></label>
+            <select class="select">
+              <option>— Chưa chọn —</option>
+              <option>DM_HINH_THUC_SU_DUNG_DAT</option>
+              <option>DM_LOAI_DAT</option>
+            </select>
+            <div class="field__err">Luật chiều "Hợp lệ" bắt buộc chọn danh mục RDM — không chọn thì chặn lưu.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Mức nghiêm trọng</label>
+            <select class="select"><option>MAJOR</option><option>CRITICAL</option><option>MINOR</option></select>
+          </div>
+          <label class="check"><input type="checkbox"> <span class="t-small">Chạy inline (chặn bản tin sai ngay tại luồng PH-04)</span></label>
+          <div class="card__actions mt-4">
+            <button class="btn btn--sm" data-demo="Chạy thử luật trên một recordId mẫu">Xem trước</button>
+            <button class="btn btn--sm btn--primary" disabled>Lưu luật</button>
+          </div>
+          <div class="t-small t-muted mt-2">Bị chặn: chưa chọn danh mục RDM.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-03: Trọng số và ngưỡng ===== -->
+  <div class="card__body hidden" data-panel="weights" data-panel-group="dq">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3);align-items:flex-end">
+      <div class="field" style="margin:0;min-width:240px">
+        <label class="field__label">Miền dữ liệu</label>
+        <select class="select"><option>DAT_DAI — Đất đai</option><option>HO_TICH — Hộ tịch</option></select>
+      </div>
+      <div class="t-small t-muted">Thay đổi trọng số cần đồng thuận của đơn vị chủ quản miền dữ liệu.</div>
+    </div>
+
+    <div class="grid grid--main">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Chiều chất lượng</th><th class="table__num">Trọng số</th><th class="table__num">Ngưỡng đạt</th><th class="table__num">Điểm hiện tại</th><th>Kết luận</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="t-small">Đầy đủ (completeness)</td>
+              <td class="table__num">25%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-err-700)">52%</td>
+              <td><span class="badge badge--err">Không đạt</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Đầy đủ">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small">Chính xác (accuracy)</td>
+              <td class="table__num">25%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-err-700)">61%</td>
+              <td><span class="badge badge--err">Không đạt</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Chính xác">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small">Nhất quán (consistency)</td>
+              <td class="table__num">15%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-warn-700)">74%</td>
+              <td><span class="badge badge--warn">Sát ngưỡng</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Nhất quán">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small">Hợp lệ (validity)</td>
+              <td class="table__num">15%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-warn-700)">68%</td>
+              <td><span class="badge badge--err">Không đạt</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Hợp lệ">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small">Duy nhất (uniqueness)</td>
+              <td class="table__num">10%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-ok-700)">88%</td>
+              <td><span class="badge badge--ok">Đạt</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Duy nhất">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small">Kịp thời (timeliness)</td>
+              <td class="table__num">10%</td>
+              <td class="table__num">80%</td>
+              <td class="table__num" style="color:var(--c-ok-700)">82%</td>
+              <td><span class="badge badge--ok">Đạt</span></td>
+              <td class="table__actions"><button class="btn btn--sm" data-demo="Sửa trọng số và ngưỡng chiều Kịp thời">Sửa</button></td>
+            </tr>
+            <tr>
+              <td class="t-small"><strong>Tổng</strong></td>
+              <td class="table__num"><strong>100%</strong></td>
+              <td class="table__num">70 điểm</td>
+              <td class="table__num" style="color:var(--c-err-700)"><strong>58,4</strong></td>
+              <td><span class="badge badge--err">FAIL</span></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Chỉnh trọng số — chiều Đầy đủ</div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label">Trọng số (%) <span class="field__req">*</span></label>
+            <input class="input" type="number" value="25">
+            <div class="field__hint">Tổng trọng số 6 chiều phải bằng đúng 100%.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Ngưỡng đạt (%) <span class="field__req">*</span></label>
+            <input class="input" type="number" value="80">
+          </div>
+          <div class="field">
+            <label class="field__label">Ngưỡng kết luận miền</label>
+            <input class="input" type="number" value="70">
+            <div class="field__hint">Điểm tổng dưới ngưỡng này → kết luận FAIL.</div>
+          </div>
+          <div class="alert alert--info">
+            <span class="alert__icon">ℹ</span>
+            <div class="t-small">Đổi trọng số làm điểm các kỳ trước không so sánh được trực tiếp — báo cáo sẽ ghi rõ phiên bản trọng số đã dùng.</div>
+          </div>
+          <div class="card__actions">
+            <button class="btn" data-demo="Hủy thay đổi trọng số">Hủy</button>
+            <button class="btn btn--primary" data-demo="Lưu trọng số và ngưỡng mới cho miền DAT_DAI">Lưu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-04: Job quét & tiến độ ===== -->
+  <div class="card__body hidden" data-panel="scan" data-panel-group="dq">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <select class="select" style="width:auto"><option>Mọi miền</option><option>DAT_DAI</option><option>HO_TICH</option></select>
+        <select class="select" style="width:auto"><option>Mọi trạng thái</option><option>Đang chạy</option><option>Thất bại</option><option>Hoàn tất</option></select>
+      </div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn" data-demo="Lên lịch quét định kỳ hằng tháng">Lên lịch quét</button>
+        <button class="btn btn--primary" data-demo="Chạy job quét chất lượng ngay">▶ Quét ngay</button>
+      </div>
+    </div>
+
+    <div class="panel mb-5">
+      <div class="panel__head">Job đang chạy — <span class="t-mono">JOB-2026-0803-HO-TICH</span></div>
+      <div class="panel__body">
+        <div class="row row--between mb-2">
+          <span class="t-small">Quét FULL miền <span class="t-mono">HO_TICH</span> · 86 luật · bắt đầu 15:20:04</span>
+          <span class="t-small t-mono">64%</span>
+        </div>
+        <div class="bar mb-3"><div class="bar__fill" style="width:64%"></div></div>
+        <div class="row" style="gap:var(--sp-5);flex-wrap:wrap">
+          <div><div class="stat__label">Bản ghi đã quét</div><div class="t-mono">184.062 / 287.440</div></div>
+          <div><div class="stat__label">Lỗi phát hiện</div><div class="t-mono" style="color:var(--c-warn-700)">642</div></div>
+          <div><div class="stat__label">Tốc độ</div><div class="t-mono">4.180 bản ghi/giây</div></div>
+          <div><div class="stat__label">Còn lại</div><div class="t-mono">≈ 25 giây</div></div>
+        </div>
+        <div class="card__actions mt-4">
+          <button class="btn btn--sm btn--danger" data-demo="Dừng job quét đang chạy">Dừng job</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card__title mb-3" style="font-size:var(--fs-md)">Lịch sử job quét</div>
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr><th>Mã job</th><th>Miền</th><th>Loại quét</th><th>Bắt đầu</th><th class="table__num">Bản ghi</th><th class="table__num">Lỗi</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0803-HO-TICH</td>
+            <td class="t-mono t-small">HO_TICH</td>
+            <td><span class="badge badge--plain">FULL</span></td>
+            <td class="t-small">03/08 15:20</td>
+            <td class="table__num">184.062</td>
+            <td class="table__num" style="color:var(--c-warn-700)">642</td>
+            <td><span class="badge badge--info">Đang chạy</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem nhật ký job đang chạy">Nhật ký</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0801-DAT-DAI</td>
+            <td class="t-mono t-small">DAT_DAI</td>
+            <td><span class="badge badge--plain">FULL</span></td>
+            <td class="t-small">01/08 02:00</td>
+            <td class="table__num">148.204</td>
+            <td class="table__num" style="color:var(--c-err-700)">1.284</td>
+            <td><span class="badge badge--err">Thất bại 62%</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Chạy lại job quét thất bại">Chạy lại</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0801-DAN-CU</td>
+            <td class="t-mono t-small">DAN_CU</td>
+            <td><span class="badge badge--plain">FULL</span></td>
+            <td class="t-small">01/08 02:00</td>
+            <td class="table__num">412.806</td>
+            <td class="table__num">318</td>
+            <td><span class="badge badge--ok">Hoàn tất</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem kết quả job JOB-2026-0801-DAN-CU">Kết quả</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0801-VAN-BAN</td>
+            <td class="t-mono t-small">VAN_BAN</td>
+            <td><span class="badge badge--plain">FULL</span></td>
+            <td class="t-small">01/08 02:00</td>
+            <td class="table__num">96.418</td>
+            <td class="table__num">42</td>
+            <td><span class="badge badge--ok">Hoàn tất</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem kết quả job JOB-2026-0801-VAN-BAN">Kết quả</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0801-DOANH-NGHIEP</td>
+            <td class="t-mono t-small">DOANH_NGHIEP</td>
+            <td><span class="badge badge--plain">FULL</span></td>
+            <td class="t-small">01/08 02:00</td>
+            <td class="table__num">64.210</td>
+            <td class="table__num">186</td>
+            <td><span class="badge badge--warn">Hoàn tất — thiếu chiều</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem kết quả job JOB-2026-0801-DOANH-NGHIEP">Kết quả</button></td>
+          </tr>
+          <tr>
+            <td class="t-mono t-small">JOB-2026-0715-DAT-DAI</td>
+            <td class="t-mono t-small">DAT_DAI</td>
+            <td><span class="badge badge--plain">DELTA</span></td>
+            <td class="t-small">15/07 02:00</td>
+            <td class="table__num">18.406</td>
+            <td class="table__num">204</td>
+            <td><span class="badge badge--ok">Hoàn tất</span></td>
+            <td class="table__actions"><button class="btn btn--sm" data-demo="Xem kết quả job JOB-2026-0715-DAT-DAI">Kết quả</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--err" style="margin-bottom:0">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">Job <span class="t-mono">JOB-2026-0801-DAT-DAI</span> dừng ở 62%</div>
+        <div class="t-small">
+          Adapter <span class="t-mono">ADP_DAT_DAI_SOAP</span> mất kết nối lúc 02:47 — xem
+          <a href="adapters.html">chi tiết adapter</a>. Điểm miền DAT_DAI được tính trên phần đã quét,
+          báo cáo chính thức sẽ bị chặn cho tới khi có một lần quét FULL thành công.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-05: Bản ghi lỗi (findings) ===== -->
+  <div class="card__body hidden" data-panel="findings" data-panel-group="dq">
+
+    <div class="row mb-4" style="gap:var(--sp-2);flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="margin:0;min-width:150px">
+        <label class="field__label">Miền</label>
+        <select class="select"><option>DAT_DAI</option><option>Mọi miền</option><option>HO_TICH</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:140px">
+        <label class="field__label">Chiều</label>
+        <select class="select"><option>Mọi chiều</option><option>Đầy đủ</option><option>Hợp lệ</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:130px">
+        <label class="field__label">Mức</label>
+        <select class="select"><option>CRITICAL</option><option>Mọi mức</option><option>MAJOR</option><option>MINOR</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:150px">
+        <label class="field__label">Luật</label>
+        <select class="select"><option>Mọi luật</option><option>DQ_DD_001</option><option>DQ_DD_002</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:150px">
+        <label class="field__label">Trạng thái</label>
+        <select class="select"><option>OPEN</option><option>Mọi trạng thái</option><option>CLEARED</option></select>
+      </div>
+      <button class="btn" data-demo="Áp dụng bộ lọc bản ghi lỗi">Lọc</button>
+    </div>
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="t-small t-muted">Đang hiển thị <strong>1.284</strong> bản ghi lỗi · đã chọn 3 dòng</div>
+      <div class="row" style="gap:var(--sp-2)">
+        <button class="btn btn--sm" data-demo="Xuất bản ghi lỗi ra CSV cho đơn vị chủ quản xử lý hàng loạt">↓ CSV</button>
+        <button class="btn btn--sm" data-demo="Xuất bản ghi lỗi ra JSON">↓ JSON</button>
+        <button class="btn btn--sm btn--primary" data-demo="Gộp 3 bản ghi lỗi đã chọn thành một ticket khắc phục">Gộp thành ticket (3)</button>
+      </div>
+    </div>
+
+    <div class="table-wrap table-wrap--wide mb-4">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:36px"><input type="checkbox"></th>
+            <th>Record ID</th><th>Chiều</th><th>Luật</th><th>Mức</th><th>Thông điệp</th><th>Ticket</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">TD-01-2026-004821</td>
+            <td><span class="badge badge--plain">Đầy đủ</span></td>
+            <td class="t-mono t-small">DQ_DD_001</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-small">Trường <span class="t-mono">maDonViHanhChinh</span> rỗng</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">TD-01-2026-004822</td>
+            <td><span class="badge badge--plain">Đầy đủ</span></td>
+            <td class="t-mono t-small">DQ_DD_001</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-small">Trường <span class="t-mono">maDonViHanhChinh</span> rỗng</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" checked></td>
+            <td class="t-mono t-small">TD-01-2026-004904</td>
+            <td><span class="badge badge--plain">Hợp lệ</span></td>
+            <td class="t-mono t-small">DQ_DD_002</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-small">Mã loại đất <span class="t-mono">LUC</span> không có trong <span class="t-mono">DM_LOAI_DAT</span></td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__actions"><a class="btn btn--sm" href="reference.html">Xem danh mục</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">TD-01-2026-005112</td>
+            <td><span class="badge badge--plain">Duy nhất</span></td>
+            <td class="t-mono t-small">DQ_DD_004</td>
+            <td><span class="badge badge--err">CRITICAL</span></td>
+            <td class="t-small">Mã thửa đất trùng với <span class="t-mono">TD-01-2026-005113</span></td>
+            <td class="t-mono t-small">TK-2026-0418</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">TD-01-2026-005240</td>
+            <td><span class="badge badge--plain">Chính xác</span></td>
+            <td class="t-mono t-small">DQ_DD_003</td>
+            <td><span class="badge badge--warn">MAJOR</span></td>
+            <td class="t-small">Diện tích 0 m² nằm ngoài khoảng hợp lệ</td>
+            <td class="t-mono t-small">TK-2026-0418</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">TD-01-2026-005318</td>
+            <td><span class="badge badge--plain">Nhất quán</span></td>
+            <td class="t-mono t-small">DQ_DD_005</td>
+            <td><span class="badge badge--warn">MAJOR</span></td>
+            <td class="t-small">Ngày cấp sau ngày hết hạn</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox"></td>
+            <td class="t-mono t-small">TD-01-2026-005402</td>
+            <td><span class="badge badge--plain">Kịp thời</span></td>
+            <td class="t-mono t-small">DQ_DD_006</td>
+            <td><span class="badge badge--muted">MINOR</span></td>
+            <td class="t-small">Chưa cập nhật 412 ngày (ngưỡng 180 ngày)</td>
+            <td class="t-muted t-small">—</td>
+            <td class="table__actions"><a class="btn btn--sm" href="mdm.html">Bản ghi vàng</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert--warn mb-3">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">3 bản ghi CRITICAL chưa có ticket khắc phục</div>
+        <div class="t-small">Gợi ý gộp thành một ticket giao cho Sở TN&amp;MT — cả ba đều thuộc nhóm thiếu mã đơn vị hành chính.</div>
+      </div>
+    </div>
+
+    <div class="alert alert--info" style="margin-bottom:0">
+      <span class="alert__icon">🔒</span>
+      <div class="t-small">
+        Không hiển thị giá trị gốc của trường nhạy cảm — chỉ tóm tắt đã che.
+        Bản ghi trạng thái <span class="t-mono">CLEARED</span> mặc định bị ẩn, bật bộ lọc trạng thái mới thấy.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-06: Báo cáo & so kỳ ===== -->
+  <div class="card__body hidden" data-panel="report" data-panel-group="dq">
+
+    <div class="row mb-4" style="gap:var(--sp-3);flex-wrap:wrap;align-items:flex-end">
+      <div class="field" style="margin:0;min-width:180px">
+        <label class="field__label">Loại báo cáo</label>
+        <select class="select"><option>Báo cáo tháng</option><option>Báo cáo chính thức năm</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:150px">
+        <label class="field__label">Kỳ</label>
+        <select class="select"><option>Tháng 7/2026</option><option>Tháng 6/2026</option><option>Năm 2025</option></select>
+      </div>
+      <div class="field" style="margin:0;min-width:180px">
+        <label class="field__label">Miền</label>
+        <select class="select"><option>DAT_DAI — Đất đai</option><option>Toàn bộ 5 miền</option></select>
+      </div>
+      <button class="btn" data-demo="Tải báo cáo chất lượng dạng PDF">↓ PDF</button>
+      <button class="btn" data-demo="Tải báo cáo chất lượng dạng JSON">↓ JSON</button>
+    </div>
+
+    <div class="steps mb-5">
+      <div class="step is-done"><div class="step__num">✓</div><div class="step__bar"></div><div class="step__label">DRAFT</div></div>
+      <div class="step is-active"><div class="step__num">2</div><div class="step__bar"></div><div class="step__label">PENDING_APPROVAL</div></div>
+      <div class="step"><div class="step__num">3</div><div class="step__bar"></div><div class="step__label">OFFICIAL</div></div>
+    </div>
+
+    <div class="grid grid--2 mb-5">
+      <div class="panel">
+        <div class="panel__head">Khối điểm — kỳ tháng 7/2026 so tháng 6/2026</div>
+        <div class="panel__body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Chỉ tiêu</th><th class="table__num">T7/2026</th><th class="table__num">T6/2026</th><th class="table__num">Δ</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="t-small"><strong>Điểm tổng</strong></td>
+                  <td class="table__num" style="color:var(--c-err-700)"><strong>58,4</strong></td>
+                  <td class="table__num">62,6</td>
+                  <td class="table__num" style="color:var(--c-err-700)">−4,2</td>
+                </tr>
+                <tr><td class="t-small">Đầy đủ</td><td class="table__num">52%</td><td class="table__num">58%</td><td class="table__num" style="color:var(--c-err-700)">−6</td></tr>
+                <tr><td class="t-small">Chính xác</td><td class="table__num">61%</td><td class="table__num">64%</td><td class="table__num" style="color:var(--c-err-700)">−3</td></tr>
+                <tr><td class="t-small">Nhất quán</td><td class="table__num">74%</td><td class="table__num">73%</td><td class="table__num" style="color:var(--c-ok-700)">+1</td></tr>
+                <tr><td class="t-small">Hợp lệ</td><td class="table__num">68%</td><td class="table__num">70%</td><td class="table__num" style="color:var(--c-err-700)">−2</td></tr>
+                <tr><td class="t-small">Duy nhất</td><td class="table__num">88%</td><td class="table__num">86%</td><td class="table__num" style="color:var(--c-ok-700)">+2</td></tr>
+                <tr><td class="t-small">Kịp thời</td><td class="table__num">82%</td><td class="table__num">82%</td><td class="table__num t-muted">0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Khuyến nghị tự sinh</div>
+        <div class="panel__body" style="padding:0">
+          <div class="finding">
+            <div class="finding__mark finding__mark--err">1</div>
+            <div class="finding__text">
+              <div class="finding__title">Bổ sung mã đơn vị hành chính cho 4.218 thửa đất</div>
+              <div class="finding__meta">Chiều Đầy đủ · nâng ước tính +11 điểm tổng · giao Sở TN&amp;MT</div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--err">2</div>
+            <div class="finding__text">
+              <div class="finding__title">Chuẩn hóa mã loại đất theo <span class="t-mono">DM_LOAI_DAT</span></div>
+              <div class="finding__meta">Chiều Hợp lệ · 842 bản ghi dùng mã ngoài danh mục · nâng +4 điểm</div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--warn">3</div>
+            <div class="finding__text">
+              <div class="finding__title">Xử lý 96 cặp mã thửa đất trùng</div>
+              <div class="finding__meta">Chiều Duy nhất · cần đối chiếu với hồ sơ giấy</div>
+            </div>
+          </div>
+          <div class="finding">
+            <div class="finding__mark finding__mark--warn">4</div>
+            <div class="finding__text">
+              <div class="finding__title">Chạy lại job quét FULL cho miền DAT_DAI</div>
+              <div class="finding__meta">Job gần nhất chỉ hoàn tất 62% — điểm hiện tại chưa phản ánh đủ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert--warn mb-4">
+      <span class="alert__icon">⚠</span>
+      <div>
+        <div class="alert__title">Chưa đủ điều kiện phê duyệt chính thức</div>
+        <div class="t-small">
+          Miền <span class="t-mono">DAT_DAI</span> chưa có lần quét FULL thành công trong kỳ, miền
+          <span class="t-mono">DOANH_NGHIEP</span> còn cờ <span class="t-mono">INCOMPLETE_DIMENSIONS</span>.
+          Nút "Phê duyệt chính thức" chỉ bật khi mọi miền bắt buộc đã quét FULL đầy đủ.
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert--info mb-4">
+      <span class="alert__icon">ℹ</span>
+      <div>
+        <div class="alert__title">Phương pháp chọn ảnh chụp cho báo cáo năm</div>
+        <div class="t-small">Báo cáo năm lấy ảnh chụp của lần quét FULL cuối cùng trong tháng 12, không lấy trung bình 12 tháng — bảo đảm điểm phản ánh trạng thái dữ liệu tại thời điểm chốt.</div>
+      </div>
+    </div>
+
+    <div class="card__actions">
+      <button class="btn" data-demo="Lưu báo cáo ở trạng thái DRAFT">Lưu nháp</button>
+      <button class="btn" data-demo="Trình lãnh đạo phê duyệt báo cáo chất lượng">Trình phê duyệt</button>
+      <button class="btn btn--primary" disabled>Phê duyệt chính thức</button>
+    </div>
+  </div>
+
+  <!-- ===== UI-08-07: Ticket khắc phục ===== -->
+  <div class="card__body hidden" data-panel="tickets" data-panel-group="dq">
+
+    <div class="row row--between mb-4" style="flex-wrap:wrap;gap:var(--sp-3)">
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <select class="select" style="width:auto"><option>Mọi đơn vị</option><option>Sở TN&amp;MT</option><option>Sở Tư pháp</option></select>
+        <select class="select" style="width:auto"><option>Mọi miền</option><option>DAT_DAI</option><option>HO_TICH</option></select>
+        <button class="btn btn--sm" data-demo="Lọc nhanh các ticket đã quá hạn">⚑ Chỉ ticket quá hạn (4)</button>
+      </div>
+      <button class="btn btn--primary" data-demo="Tạo ticket khắc phục mới từ bản ghi lỗi">+ Tạo ticket</button>
+    </div>
+
+    <div class="alert alert--err mb-4">
+      <span class="alert__icon">✕</span>
+      <div>
+        <div class="alert__title">4 ticket quá hạn</div>
+        <div class="t-small">Quá hạn từ 4 đến 18 ngày — đã gửi nhắc tự động tới đầu mối của đơn vị chủ quản.</div>
+      </div>
+    </div>
+
+    <div class="kanban mb-5">
+      <div class="kanban__col">
+        <div class="kanban__head"><span>OPEN</span><span class="badge badge--plain">5</span></div>
+        <div class="kanban__card kanban__card--overdue">
+          <div class="t-mono t-small">TK-2026-0402</div>
+          <div class="t-small mb-2">Bổ sung mã đơn vị hành chính — 4.218 thửa đất</div>
+          <div class="t-small" style="color:var(--c-err-700)">⚑ Quá hạn 18 ngày</div>
+          <div class="t-small t-muted">Sở TN&amp;MT</div>
+        </div>
+        <div class="kanban__card kanban__card--overdue">
+          <div class="t-mono t-small">TK-2026-0407</div>
+          <div class="t-small mb-2">Chuẩn hóa mã loại đất ngoài danh mục</div>
+          <div class="t-small" style="color:var(--c-err-700)">⚑ Quá hạn 11 ngày</div>
+          <div class="t-small t-muted">Sở TN&amp;MT</div>
+        </div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0431</div>
+          <div class="t-small mb-2">Rà soát ngày cấp sau ngày hết hạn</div>
+          <div class="t-small t-muted">Hạn 12/08/2026 · Sở TN&amp;MT</div>
+        </div>
+      </div>
+
+      <div class="kanban__col">
+        <div class="kanban__head"><span>IN_PROGRESS</span><span class="badge badge--plain">6</span></div>
+        <div class="kanban__card kanban__card--overdue">
+          <div class="t-mono t-small">TK-2026-0418</div>
+          <div class="t-small mb-2">Xử lý 96 cặp mã thửa đất trùng</div>
+          <div class="t-small" style="color:var(--c-err-700)">⚑ Quá hạn 6 ngày</div>
+          <div class="t-small t-muted">Sở TN&amp;MT · đang đối chiếu hồ sơ giấy</div>
+        </div>
+        <div class="kanban__card kanban__card--overdue">
+          <div class="t-mono t-small">TK-2026-0420</div>
+          <div class="t-small mb-2">Bổ sung nơi đăng ký khai sinh còn thiếu</div>
+          <div class="t-small" style="color:var(--c-err-700)">⚑ Quá hạn 4 ngày</div>
+          <div class="t-small t-muted">Sở Tư pháp</div>
+        </div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0442</div>
+          <div class="t-small mb-2">Cập nhật dữ liệu thửa đất quá 180 ngày</div>
+          <div class="t-small t-muted">Hạn 20/08/2026 · Sở TN&amp;MT</div>
+        </div>
+      </div>
+
+      <div class="kanban__col">
+        <div class="kanban__head"><span>RESOLVED</span><span class="badge badge--plain">4</span></div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0388</div>
+          <div class="t-small mb-2">Chuẩn hóa định dạng ngày cấp giấy chứng nhận</div>
+          <div class="t-small t-muted">Chờ đánh giá lại · Sở TN&amp;MT</div>
+        </div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0395</div>
+          <div class="t-small mb-2">Bổ sung mã dân tộc còn trống</div>
+          <div class="t-small t-muted">Chờ đánh giá lại · Công an tỉnh</div>
+        </div>
+      </div>
+
+      <div class="kanban__col">
+        <div class="kanban__head"><span>VERIFIED</span><span class="badge badge--plain">2</span></div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0341</div>
+          <div class="t-small mb-2">Xóa bản ghi trùng trong CSDL dân cư</div>
+          <div class="t-small" style="color:var(--c-ok-700)">✓ Đánh giá lại đạt · 28/07</div>
+        </div>
+      </div>
+
+      <div class="kanban__col">
+        <div class="kanban__head"><span>REOPENED</span><span class="badge badge--plain">1</span></div>
+        <div class="kanban__card">
+          <div class="t-mono t-small">TK-2026-0356</div>
+          <div class="t-small mb-2">Chuẩn hóa mã nghề nghiệp</div>
+          <div class="t-small" style="color:var(--c-warn-700)">Đánh giá lại vẫn còn 218 lỗi</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid--2">
+      <div class="panel">
+        <div class="panel__head">Chi tiết ticket — <span class="t-mono">TK-2026-0402</span></div>
+        <div class="panel__body">
+          <dl class="dl mb-4">
+            <dt>Tiêu đề</dt><dd>Bổ sung mã đơn vị hành chính cho thửa đất</dd>
+            <dt>Miền · Chiều</dt><dd><span class="t-mono">DAT_DAI</span> · Đầy đủ</dd>
+            <dt>Bản ghi lỗi</dt><dd>4.218 finding, luật <span class="t-mono">DQ_DD_001</span></dd>
+            <dt>Đơn vị chịu trách nhiệm</dt><dd>Sở Tài nguyên &amp; Môi trường</dd>
+            <dt>Đầu mối</dt><dd>Phạm Minh Tuấn</dd>
+            <dt>Hạn xử lý</dt><dd style="color:var(--c-err-700)">16/07/2026 — quá hạn 18 ngày</dd>
+            <dt>Trạng thái</dt><dd><span class="badge badge--err">OPEN · quá hạn</span></dd>
+          </dl>
+
+          <div class="field">
+            <label class="field__label">Ghi chú xử lý <span class="field__req">*</span></label>
+            <textarea class="textarea" rows="3" placeholder="Bắt buộc nhập ghi chú khi chuyển sang RESOLVED…"></textarea>
+            <div class="field__hint">Chuyển sang RESOLVED bắt buộc có ghi chú mô tả cách khắc phục.</div>
+          </div>
+          <div class="field">
+            <label class="field__label">Bằng chứng khắc phục</label>
+            <input class="input" type="text" placeholder="Đường dẫn tệp hoặc mã lô cập nhật…">
+          </div>
+
+          <div class="alert alert--info">
+            <span class="alert__icon">ℹ</span>
+            <div class="t-small">Đơn vị chủ quản <strong>không tự chuyển</strong> ticket sang VERIFIED — chỉ cán bộ chất lượng dữ liệu xác nhận sau khi đánh giá lại đạt.</div>
+          </div>
+
+          <div class="card__actions">
+            <button class="btn" data-demo="Chuyển ticket sang trạng thái IN_PROGRESS">Nhận xử lý</button>
+            <button class="btn btn--primary" data-demo="Chạy đánh giá lại bản ghi lỗi của ticket TK-2026-0402">▶ Đánh giá lại</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head">Kết quả đánh giá lại gần nhất</div>
+        <div class="panel__body">
+          <div class="alert alert--err mb-4">
+            <span class="alert__icon">✕</span>
+            <div>
+              <div class="alert__title">Đánh giá lại thất bại vì lỗi kỹ thuật — ticket giữ nguyên trạng thái</div>
+              <div class="t-small">
+                Adapter <span class="t-mono">ADP_DAT_DAI_SOAP</span> không phản hồi lúc 15:04.
+                Ticket <strong>không</strong> tự chuyển REOPENED vì đây là lỗi kỹ thuật, không phải kết luận dữ liệu vẫn sai.
+              </div>
+            </div>
+          </div>
+          <div class="timeline">
+            <div class="tl-item tl-item--err">
+              <div class="tl-time">03/08 15:04</div>
+              <div class="tl-title">Đánh giá lại thất bại</div>
+              <div class="tl-desc">Không kết nối được adapter nguồn — cần thử lại sau khi khôi phục kết nối.</div>
+            </div>
+            <div class="tl-item tl-item--warn">
+              <div class="tl-time">28/07 09:12</div>
+              <div class="tl-title">Nhắc quá hạn lần 2</div>
+              <div class="tl-desc">Gửi tới đầu mối Phạm Minh Tuấn và lãnh đạo Sở TN&amp;MT.</div>
+            </div>
+            <div class="tl-item tl-item--warn">
+              <div class="tl-time">20/07 09:00</div>
+              <div class="tl-title">Nhắc quá hạn lần 1</div>
+              <div class="tl-desc">Gửi tới đầu mối của đơn vị chủ quản.</div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-time">02/07 14:20</div>
+              <div class="tl-title">Tạo ticket từ 4.218 bản ghi lỗi</div>
+              <div class="tl-desc">Gộp bởi Lê Thị Hà · hạn xử lý 16/07/2026.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
