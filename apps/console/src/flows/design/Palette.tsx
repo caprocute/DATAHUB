@@ -41,6 +41,8 @@ export function Palette({ hasFrom }: Props) {
   const [q, setQ] = useState('')
   const [kind, setKind] = useState<NodeKind>('component')
   const [label, setLabel] = useState<string | null>(null)
+  /** Khối nhãn mặc định thu gọn để nhường chỗ cho danh sách. */
+  const [labelsOpen, setLabelsOpen] = useState(false)
   const [scrollTop, setScrollTop] = useState(0)
   const [viewH, setViewH] = useState(600)
   const listRef = useRef<HTMLDivElement>(null)
@@ -103,26 +105,42 @@ export function Palette({ hasFrom }: Props) {
           ))}
         </div>
 
+        {/* Nhãn gập lại được: đây là khối ăn nhiều chiều cao nhất của bảng lọc (đo được
+            ~100px trên tổng 201px), mà phần lớn thời gian người dùng chỉ tìm theo tên.
+            Mặc định thu gọn để danh sách 751 nút có thêm chỗ; đang lọc thì mở sẵn. */}
         {labels.length > 0 && (
-          <div className="pal__chips">
+          <>
             <button
               type="button"
-              className={label === null ? 'pal__chip is-active' : 'pal__chip'}
-              onClick={() => setLabel(null)}
+              className="pal__more"
+              aria-expanded={labelsOpen}
+              onClick={() => setLabelsOpen((v) => !v)}
             >
-              Tất cả
+              {labelsOpen ? '▾' : '▸'} Lọc theo nhãn
+              {label && <span className="pal__chip-n"> · {labelVi(label)}</span>}
             </button>
-            {labels.map((l) => (
-              <button
-                key={l.label}
-                type="button"
-                className={label === l.label ? 'pal__chip is-active' : 'pal__chip'}
-                onClick={() => setLabel(label === l.label ? null : l.label)}
-              >
-                {labelVi(l.label)} <span className="pal__chip-n">{l.count}</span>
-              </button>
-            ))}
-          </div>
+            {labelsOpen && (
+              <div className="pal__chips">
+                <button
+                  type="button"
+                  className={label === null ? 'pal__chip is-active' : 'pal__chip'}
+                  onClick={() => setLabel(null)}
+                >
+                  Tất cả
+                </button>
+                {labels.map((l) => (
+                  <button
+                    key={l.label}
+                    type="button"
+                    className={label === l.label ? 'pal__chip is-active' : 'pal__chip'}
+                    onClick={() => setLabel(label === l.label ? null : l.label)}
+                  >
+                    {labelVi(l.label)} <span className="pal__chip-n">{l.count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

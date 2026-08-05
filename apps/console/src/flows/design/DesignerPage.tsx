@@ -36,6 +36,7 @@ import { NodeConfig } from './NodeConfig'
 import { Palette } from './Palette'
 import { mapWaterfall, RunContext, type StageRun } from './RunContext'
 import { StatusContext } from './StatusContext'
+import { YamlEditor } from './YamlEditor'
 import { useFlowHistory } from './useFlowHistory'
 import '@xyflow/react/dist/style.css'
 import './designer.css'
@@ -97,6 +98,8 @@ function DesignerInner() {
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [loading, setLoading] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
+  /** Cửa sổ xem/sửa YAML toàn màn hình (đồng bộ ngược về sơ đồ). */
+  const [yamlOpen, setYamlOpen] = useState(false)
   // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
   // muốn rộng chỗ; mở lại mỗi lần vào là bắt họ thao tác lại từ đầu.
   const [leftOpen, setLeftOpen] = usePanelState('lgsp.designer.left', true)
@@ -579,6 +582,14 @@ function DesignerInner() {
                 <div className="dsg__panel-head">
                   Camel YAML DSL
                   <span className="count">{yaml.trimEnd().split('\n').length} dòng</span>
+                  <Button
+                    size="small"
+                    className="dsg__yaml-open"
+                    onClick={() => setYamlOpen(true)}
+                    title="Mở toàn màn hình để đọc và sửa"
+                  >
+                    ⤢ Mở rộng
+                  </Button>
                 </div>
                 <div className="dsg__panel-body">
                   <pre className="dsg__yaml-code">{yaml}</pre>
@@ -588,6 +599,20 @@ function DesignerInner() {
           )}
         </aside>
       </div>
+
+      <YamlEditor
+        open={yamlOpen}
+        yaml={yaml}
+        onClose={() => setYamlOpen(false)}
+        onApply={(n, e) => {
+          // Ghi vào lịch sử trước khi thay để hoàn tác được nếu áp nhầm.
+          commit()
+          setNodes(autoLayout(n, e))
+          setEdges(e)
+          setSaveState('dirty')
+          message.success('Đã áp YAML vào sơ đồ')
+        }}
+      />
 
       <NodeConfig
         open={configOpen && Boolean(selected)}

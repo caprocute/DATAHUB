@@ -103,8 +103,10 @@
   overflow: hidden;
 }
 
+/* Bảng thành phần: 751 nút nên cần chỗ thật. Rộng theo màn hình thay vì cứng 280px —
+   ở 280px tên dài như "AWS Bedrock Agent Runtime" bị cắt, khó nhận ra thành phần. */
 .dsg__left {
-  flex: 0 0 280px;
+  flex: 0 0 clamp(280px, 22%, 420px);
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -209,7 +211,8 @@
 
 /* 1024–1440px: panel phải tự gập để canvas còn đủ chỗ */
 @media (max-width: 1440px) {
-  .dsg__left { flex-basis: 240px; }
+  /* Không ép lại bề rộng bảng thành phần — `clamp(280px, 22%, 420px)` đã tự co theo
+     màn hình; ghi đè 240px ở đây làm tên thành phần bị cắt trên chính màn 1280–1440. */
   .dsg__right { flex-basis: 300px; }
 }
 
@@ -297,6 +300,18 @@
   border-color: var(--c-brand-600, #2563eb);
   color: #fff;
 }
+
+/* Nút gập khối nhãn — kiểu chữ thường, không giống nút bấm để không tranh chú ý. */
+.pal__more {
+  align-self: flex-start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--c-text-2, #4b5563);
+  font-size: 12px;
+  cursor: pointer;
+}
+.pal__more:hover { color: var(--c-brand-600, #0b5cab); }
 
 .pal__chips {
   display: flex;
@@ -393,8 +408,12 @@
 }
 /* ---------- Khung React Flow ---------- */
 
+/* Chiếm trọn `.dsg__canvas`. Trước đây đặt `height: clamp(520px, 68vh, 820px)` —
+   chiều cao cứng sót lại từ bản mockup: ở màn 900px nó ra 612px trong khi khung cha
+   cao 844px, để lại **232px trắng** dưới sơ đồ. Flex thì luôn khớp khung cha. */
 .canvas-rf {
-  height: clamp(520px, 68vh, 820px);
+  height: 100%;
+  min-height: 0;
   background: var(--c-bg);
   position: relative;
 }
@@ -863,7 +882,7 @@
 @media (max-width: 860px) {
   .designer--rf { grid-template-columns: minmax(0, 1fr); }
   .designer--rf > .panel:first-child { max-height: 280px; }
-  .canvas-rf { height: 460px; }
+  /* Không ép chiều cao cứng cho canvas — khung cha đã lo bằng flex. */
 }
 
 
@@ -1232,4 +1251,42 @@
   color: var(--c-text-3, #6b7280);
   background: var(--c-surface-2, #f3f4f6);
   user-select: none;
+}
+
+/* ---------- Trình soạn YAML toàn màn hình (vùng 3) ---------- */
+
+/* Nút mở rộng nằm cuối đầu panel, sau số dòng. */
+.dsg__yaml-open { margin-left: 8px; flex: none; }
+
+.yml {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 0;
+}
+.yml__err { flex: none; }
+/* Ô soạn chiếm hết chỗ còn lại — đây là lý do mở cửa sổ lớn. */
+.yml__code {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--c-surface-2, #f9fafb);
+  color: var(--c-text, #111827);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: none;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.yml__code:focus-visible {
+  outline: 2px solid var(--c-brand-600, #0b5cab);
+  outline-offset: 2px;
 }
