@@ -13,6 +13,7 @@
  */
 
 import { lookupNode, toneOfNode } from './catalog';
+import { EXPR_LANGS } from './expression';
 import { NODE_H, NODE_W, nextId, type SeqEdge, type StageData, type StageNode } from './model';
 
 /* ---------- Bộ đọc YAML tối giản ---------- */
@@ -160,16 +161,31 @@ function makeStage(ref: string, label: string, props: YMap, uri?: string, role: 
   };
 }
 
-/** Rút biểu thức của một bước về chuỗi để hiện trên sơ đồ. */
-function exprOf(v: Node): string | undefined {
-  if (typeof v === 'string') return v;
+/**
+ * Rút biểu thức của một bước về chuỗi để hiện trên sơ đồ, **kèm ngôn ngữ**.
+ *
+ * Ngôn ngữ phải giữ lại: trước đây bộ đọc trả về mỗi chuỗi rồi bộ sinh mặc định
+ * ghi lại thành `simple`, nên `constant: "x"` quay vòng thành `simple: "x"` —
+ * đổi ngữ nghĩa mà không báo gì. Danh sách lấy đúng theo `schemas/language/`
+ * (26 ngôn ngữ) thay vì năm cái đoán tay như bản cũ.
+ */
+export function exprOfWithLang(v: Node): { value: string; lang: string } | undefined {
+  // Dạng rút gọn `expression: "..."` không nói ngôn ngữ; Camel hiểu là `simple`.
+  if (typeof v === 'string') return { value: v, lang: 'simple' };
   if (isMap(v)) {
-    for (const lang of ['simple', 'constant', 'jsonpath', 'xpath', 'groovy']) {
+    for (const lang of EXPR_LANGS) {
       const e = v[lang];
-      if (typeof e === 'string') return e;
+      if (typeof e === 'string') return { value: e, lang };
+      // Dạng đầy đủ `simple: { expression: "..." }` — còn mang `resultType`, `trim`…
+      if (isMap(e) && typeof e.expression === 'string') return { value: e.expression, lang };
     }
   }
   return undefined;
+}
+
+/** Rút biểu thức về chuỗi (bỏ ngôn ngữ) — giữ cho nơi gọi chỉ cần hiển thị. */
+function exprOf(v: Node): string | undefined {
+  return exprOfWithLang(v)?.value;
 }
 
 interface Ctx {
@@ -250,9 +266,18 @@ function buildSteps(steps: YList, ctx: Ctx): { head?: string; tail?: string } {
     const entry = lookupNode(key);
     const label = entry?.title ?? key;
     const params = isMap(props.parameters) ? props.parameters : props;
-    const expr = exprOf(props.expression);
+    // Biểu thức nằm ở một trong hai chỗ: lồng dưới `expression:`, hoặc **thẳng trên
+    // chính bước** (`setBody: { constant: "x" }`) — dạng thứ hai trước đây bị bỏ qua
+    // hoàn toàn nên giá trị rơi mất im lặng.
+    const found = exprOfWithLang(props.expression) ?? exprOfWithLang(props);
     const merged: YMap = { ...params };
-    if (expr !== undefined) merged.expression = expr;
+    if (found !== undefined) {
+      merged.expression = found.value;
+      // Giữ ngôn ngữ để bộ sinh ghi lại đúng thứ đã đọc, thay vì mặc định `simple`.
+      merged.exprLang = found.lang;
+      // Khóa ngôn ngữ ở cấp bước đã được rút vào `expression`; để lại sẽ ghi ra hai lần.
+      for (const lang of EXPR_LANGS) delete merged[lang];
+    }
     delete merged.uri;
 
     const id = nextId('n');

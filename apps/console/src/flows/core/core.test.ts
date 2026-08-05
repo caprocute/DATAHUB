@@ -20,6 +20,7 @@ import {
   contextFromSample,
   detectLang,
   evaluate,
+  EXPR_LANGS,
   suggestTokens,
 } from './expression';
 import {
@@ -122,6 +123,85 @@ describe('chặn lỗi đã từng làm hỏng sản phẩm', () => {
     const x = node('component/xmpp', { uri: 'xmpp://a', props: { room: 'p1' } });
     const yaml = emitRouteYaml([from, x], [link(from, x)], { routeId: 'r' });
     expect(yaml).toContain('room: p1');
+  });
+
+  /**
+   * Lỗi 5 — mất nội dung bản tin khi quay vòng YAML (phát hiện 2026-08-05).
+   *
+   * `setBody: { constant: "x" }` từng quay vòng thành `setBody: { expression: {} }`:
+   * bộ đọc chỉ nhìn khóa `expression` nên không thấy `constant` nằm thẳng trên bước,
+   * rồi bộ sinh mặc định ghi lại thành `simple`. Route vẫn **nạp được bằng Camel**
+   * nên BR-D-04 không bắt được — chỉ sai lúc chạy.
+   */
+  it('`setBody: constant` quay vòng không mất giá trị và không đổi ngôn ngữ', () => {
+    const src = [
+      '- route:',
+      '    id: ping-health',
+      '    from:',
+      '      uri: direct:health',
+      '      steps:',
+      '        - setBody:',
+      '            constant: "lgsp-camel-dancu:ok"',
+      '        - log:',
+      '            message: "ping ${body}"',
+    ].join('\n');
+
+    const g = graphFromYaml(src);
+    const out = emitRouteYaml(g.nodes, g.edges, { routeId: 'ping-health' });
+
+    expect(out).toContain('lgsp-camel-dancu:ok');
+    expect(out).toMatch(/setBody:\s*\n\s*expression:\s*\n\s*constant:/);
+    // Không được âm thầm đổi sang `simple` — đó chính là lỗi cũ.
+    expect(out).not.toMatch(/setBody:[\s\S]*?simple:/);
+    // Và tuyệt đối không được ra khối rỗng.
+    expect(out).not.toMatch(/expression:\s*\{\}/);
+  });
+
+  it('mọi ngôn ngữ biểu thức của Camel quay vòng giữ nguyên giá trị và ngôn ngữ', () => {
+    for (const lang of EXPR_LANGS) {
+      const src = [
+        '- route:',
+        '    id: r',
+        '    from:',
+        '      uri: direct:start',
+        '      steps:',
+        '        - setBody:',
+        `            ${lang}: "gia-tri-${lang}"`,
+      ].join('\n');
+
+      const g = graphFromYaml(src);
+      const out = emitRouteYaml(g.nodes, g.edges, { routeId: 'r' });
+
+      expect(out, `ngôn ngữ ${lang} mất giá trị`).toContain(`gia-tri-${lang}`);
+      expect(out, `ngôn ngữ ${lang} bị đổi`).toMatch(new RegExp(`${lang}:`));
+      expect(out, `ngôn ngữ ${lang} ra khối rỗng`).not.toMatch(/expression:\s*\{\}/);
+    }
+  });
+
+  it('`exprLang` là ghi chú nội bộ, không lọt vào YAML gửi cho Camel', () => {
+    const src = [
+      '- route:',
+      '    id: r',
+      '    from:',
+      '      uri: direct:start',
+      '      steps:',
+      '        - setBody:',
+      '            constant: "x"',
+    ].join('\n');
+    const g = graphFromYaml(src);
+    expect(emitRouteYaml(g.nodes, g.edges, { routeId: 'r' })).not.toContain('exprLang');
+  });
+
+  /**
+   * Danh sách ngôn ngữ là hợp đồng với dữ liệu catalog đã vendor. Lệch một cái là
+   * biểu thức dùng ngôn ngữ đó lại rơi mất im lặng — đúng cơ chế của lỗi 5.
+   */
+  it('EXPR_LANGS khớp đúng thư mục lược đồ ngôn ngữ đã vendor', async () => {
+    const mods = import.meta.glob('./generated/schemas/language/*.json');
+    const onDisk = Object.keys(mods)
+      .map((p) => p.split('/').pop()!.replace('.json', ''))
+      .sort();
+    expect([...EXPR_LANGS].sort()).toEqual(onDisk);
   });
 
   /** Lỗi 2 — bộ đếm mã đếm từ 0 nên trùng mã do bộ đọc YAML đặt. */

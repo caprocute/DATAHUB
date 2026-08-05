@@ -9,7 +9,55 @@
  * Không hỗ trợ: gọi phương thức Java (`${body.getFoo()}`), hàm ngày giờ, số học phức tạp.
  */
 
+/**
+ * Ngôn ngữ biểu thức **xem trước được ngay trên trình duyệt**.
+ *
+ * Hẹp hơn hẳn `EXPR_LANGS` bên dưới: đây là tập mà tệp này tự diễn giải được để
+ * xem trước lúc gõ, còn `EXPR_LANGS` là tập Camel DSL chấp nhận. Đừng gộp hai
+ * khái niệm — biểu thức `groovy` là **hợp lệ để lưu** dù không xem trước được.
+ */
 export type ExprLang = 'simple' | 'jsonpath' | 'constant';
+
+/**
+ * 26 ngôn ngữ biểu thức của Camel DSL — đúng theo `generated/schemas/language/`.
+ *
+ * Thứ tự quyết định ngôn ngữ nào được nhận khi một bước khai nhiều khóa cùng lúc
+ * (Camel không cho, nhưng tệp sửa tay thì có thể). `simple` và `constant` để đầu
+ * vì phổ biến nhất trong luồng LGSP.
+ *
+ * Danh sách này là **hợp đồng với bộ đọc/bộ sinh**: thiếu một ngôn ngữ ở đây thì
+ * biểu thức dùng ngôn ngữ đó bị rơi mất khi quay vòng YAML.
+ */
+export const EXPR_LANGS = [
+  'simple',
+  'constant',
+  'csimple',
+  'jsonpath',
+  'xpath',
+  'groovy',
+  'header',
+  'exchangeProperty',
+  'variable',
+  'datasonnet',
+  'hl7terser',
+  'java',
+  'joor',
+  'jq',
+  'js',
+  'language',
+  'method',
+  'mvel',
+  'ognl',
+  'python',
+  'ref',
+  'spel',
+  'tokenize',
+  'wasm',
+  'xquery',
+  'xtokenize',
+] as const;
+
+export type CamelExprLang = (typeof EXPR_LANGS)[number];
 
 export interface EvalContext {
   /** Thân bản tin mẫu đã phân tích. Chuỗi không phải JSON thì giữ nguyên dạng chuỗi. */

@@ -1,4 +1,5 @@
 import { lookupNode, peekSchema, refName } from './catalog';
+import { EXPR_LANGS } from './expression';
 import { BRANCHING, type SeqEdge, type StageData, type StageNode } from './model';
 
 /* ---------- Bộ ghi YAML tối giản ---------- */
@@ -91,6 +92,10 @@ function schemaProps(
   const out: { [k: string]: Val } = {};
   for (const [k, v] of Object.entries(props)) {
     if (omit.includes(k)) continue;
+    // `exprLang` là ghi chú nội bộ của trình thiết kế, **không phải trường Camel**.
+    // Lọc thẳng ở đây vì khi chặng không có lược đồ thì `allowed` là null và mọi
+    // khóa lọt qua — khi đó khóa này sẽ rơi vào YAML và Camel từ chối nạp route.
+    if (k === 'exprLang') continue;
     if (allowed && !allowed.has(k)) continue;
     out[k] = v;
   }
@@ -125,6 +130,20 @@ function buildGraph(nodes: StageNode[], edges: SeqEdge[]): Graph {
   return { byId, outs, inDeg };
 }
 
+/**
+ * Dựng khối biểu thức, **giữ đúng ngôn ngữ đã đọc từ YAML**.
+ *
+ * Không có `exprLang` (chặng vừa dựng trên sơ đồ) thì dùng `simple` — đúng mặc định
+ * của Camel cho dạng rút gọn. Cố ý **không** đoán ngôn ngữ theo hình dạng chuỗi ở đây:
+ * đoán sai chính là cách `constant: "lgsp-camel-dancu:ok"` từng bị ghi thành `simple`,
+ * đổi ngữ nghĩa mà không báo gì. Đoán chỉ dùng ở chỗ xem trước, không dùng lúc ghi.
+ */
+function exprWith(d: StageData, expr: string, fallback = 'simple'): Val {
+  const lang = d.props.exprLang;
+  const known = typeof lang === 'string' && (EXPR_LANGS as readonly string[]).includes(lang);
+  return { [known ? (lang as string) : fallback]: expr };
+}
+
 /** Một chặng thành một phần tử trong danh sách `steps` của Camel. */
 function stepFor(d: StageData): Val {
   const entry = lookupNode(d.ref);
@@ -132,15 +151,17 @@ function stepFor(d: StageData): Val {
   // Chặng có thể mang `kind/name`; Camel DSL chỉ biết tên trần.
   const name = refName(d.ref);
   const expr = String(p.expression ?? '');
+  // Ngôn ngữ do bộ đọc giữ lại; luồng dựng mới trên sơ đồ thì đoán theo hình dạng.
+  const exprVal = exprWith(d, expr);
 
   switch (name) {
     case 'choice':
       // `choice` dựng riêng ở walk() vì còn phải gắn các nhánh.
       return { choice: {} };
     case 'setHeader':
-      return { setHeader: { name: String(p.name ?? ''), expression: { simple: expr } } };
+      return { setHeader: { name: String(p.name ?? ''), expression: exprVal } };
     case 'setBody':
-      return { setBody: { expression: { simple: expr } } };
+      return { setBody: { expression: exprVal } };
     case 'transform': {
       if (d.mappings?.length) {
         return {
@@ -150,17 +171,26 @@ function stepFor(d: StageData): Val {
           },
         };
       }
-      return { transform: { expression: { simple: expr } } };
+      return { transform: { expression: exprVal } };
     }
     case 'filter':
-      return { filter: { expression: { simple: expr } } };
+      return { filter: { expression: exprVal } };
     case 'enrich':
       // Lược đồ `enrich` **không có** `timeout` — xem ghi chú ở `schemaProps`.
-      return { enrich: { expression: { constant: expr }, ...schemaProps(d.ref, p, ['expression']) } };
+      // Mặc định `constant` (không phải `simple`) vì biểu thức ở đây là URI đích.
+      return {
+        enrich: {
+          expression: exprWith(d, expr, 'constant'),
+          ...schemaProps(d.ref, p, ['expression']),
+        },
+      };
     case 'pollEnrich':
       // `pollEnrich` thì có `timeout` thật (thời gian chờ lấy bản tin).
       return {
-        pollEnrich: { expression: { constant: expr }, ...schemaProps(d.ref, p, ['expression']) },
+        pollEnrich: {
+          expression: exprWith(d, expr, 'constant'),
+          ...schemaProps(d.ref, p, ['expression']),
+        },
       };
     case 'wireTap':
       return { wireTap: { uri: String(p.uri ?? d.uri ?? '') } };
