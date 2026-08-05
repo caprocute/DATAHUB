@@ -48,6 +48,32 @@ const ENV_VARS: Record<string, string> = {
 
 const EMPTY_RUN: Record<string, StageRun> = {}
 
+/**
+ * Trạng thái thu gọn panel, nhớ qua các phiên (FR-D-013, G3-6).
+ *
+ * Dùng `localStorage` là đúng chỗ ở đây: đây là tùy chọn hiển thị của riêng máy này,
+ * không phải dữ liệu nghiệp vụ — khác hẳn nhật ký chạy vốn phải nằm ở máy chủ.
+ */
+function usePanelState(key: string, fallback: boolean) {
+  const [open, setOpen] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(key)
+      return raw === null ? fallback : raw === '1'
+    } catch {
+      // Trình duyệt chặn lưu trữ (chế độ riêng tư) — vẫn chạy, chỉ là không nhớ.
+      return fallback
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, open ? '1' : '0')
+    } catch {
+      /* không nhớ được thì thôi, không chặn việc chính */
+    }
+  }, [key, open])
+  return [open, setOpen] as const
+}
+
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error'
 
 const SAVE_LABEL: Record<SaveState, string> = {
@@ -71,8 +97,18 @@ function DesignerInner() {
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [loading, setLoading] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
-  const [leftOpen, setLeftOpen] = useState(true)
-  const [rightOpen, setRightOpen] = useState(true)
+  // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
+  // muốn rộng chỗ; mở lại mỗi lần vào là bắt họ thao tác lại từ đầu.
+  const [leftOpen, setLeftOpen] = usePanelState('lgsp.designer.left', true)
+  const [rightOpen, setRightOpen] = usePanelState('lgsp.designer.right', true)
+
+  /**
+   * Bản định nghĩa lúc mở luồng — mốc phát hiện người khác sửa cùng lúc (G3-5).
+   *
+   * Khai ở đây, trước mọi effect dùng tới. Không dùng `useState`: giá trị chỉ để so
+   * sánh lúc lưu, đổi nó không cần vẽ lại sơ đồ.
+   */
+  const baseYamlRef = useRef<string>('')
 
   const history = useFlowHistory(nodes, edges, setNodes, setEdges)
   const { commit, undo, redo, canUndo, canRedo } = history
@@ -94,6 +130,8 @@ function DesignerInner() {
         setVersionNo(v)
         const ver = await getVersion(code, v)
         if (!alive) return
+        // Mốc chống ghi đè: nhớ đúng bản vừa đọc về (G3-5).
+        baseYamlRef.current = ver.definitionYaml ?? ''
         try {
           const g = graphFromYaml(ver.definitionYaml ?? '')
           bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
@@ -186,13 +224,37 @@ function DesignerInner() {
     if (!canDesign) return
     setSaveState('saving')
     try {
+      // Chống ghi đè khi hai người cùng sửa (FR-D-013): đọc lại bản trên máy chủ, nếu
+      // nó đã khác mốc lúc ta mở ra thì có người khác vừa lưu. Ghi đè lặng lẽ ở đây
+      // là **mất trắng công sức của người kia** mà không ai biết.
+      const current = await getVersion(code, versionNo)
+      const server = current.definitionYaml ?? ''
+      if (baseYamlRef.current && server !== baseYamlRef.current) {
+        setSaveState('dirty')
+        modal.confirm({
+          title: 'Người khác vừa sửa luồng này',
+          content:
+            'Bản trên máy chủ đã thay đổi kể từ lúc bạn mở. Ghi đè sẽ mất phần sửa của họ.',
+          okText: 'Vẫn ghi đè',
+          okButtonProps: { danger: true },
+          cancelText: 'Để tôi xem lại',
+          onOk: async () => {
+            await saveDefinition(code, versionNo, yaml)
+            baseYamlRef.current = yaml
+            setSaveState('saved')
+            message.warning('Đã ghi đè bản của người khác')
+          },
+        })
+        return
+      }
       await saveDefinition(code, versionNo, yaml)
+      baseYamlRef.current = yaml
       setSaveState('saved')
     } catch (e) {
       setSaveState('error')
       message.error(`Lưu lỗi: ${e instanceof Error ? e.message : e}`)
     }
-  }, [canDesign, code, versionNo, yaml, message])
+  }, [canDesign, code, versionNo, yaml, message, modal])
 
   // Tự lưu sau 30 giây không thao tác (FR-D-013).
   useEffect(() => {

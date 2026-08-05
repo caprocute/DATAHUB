@@ -56,6 +56,120 @@ function isDuration(name: string, s: SchemaProp): boolean {
  * Catalog có 876 trường `enum` — dùng ô text cho chúng là bắt người dùng đoán giá trị
  * hợp lệ, đây là điểm bản trước làm sai khiến "751 nút trông không khác gì nhau".
  */
+/**
+ * Bảng khóa–giá trị cho trường `object` / `array` (FR-D-022, G4-6).
+ *
+ * Giá trị vẫn lưu dưới dạng chuỗi JSON để không phải đổi kiểu `props`; bảng chỉ là lớp
+ * soạn thảo bên trên. JSON hỏng thì **không** nuốt mất dữ liệu — hiện ô text thô để
+ * người dùng tự sửa, vì im lặng ghi đè bằng bảng rỗng là xóa cấu hình của họ.
+ */
+function KeyValueTable({
+  value,
+  onChange,
+  arrayMode,
+}: {
+  value: string
+  onChange: (v: string) => void
+  arrayMode: boolean
+}) {
+  const parsed = useMemo((): { rows: [string, string][]; broken: boolean } => {
+    if (!value.trim()) return { rows: [], broken: false }
+    try {
+      const j: unknown = JSON.parse(value)
+      if (Array.isArray(j)) {
+        return { rows: j.map((v, i) => [String(i), typeof v === 'string' ? v : JSON.stringify(v)]), broken: false }
+      }
+      if (j && typeof j === 'object') {
+        return {
+          rows: Object.entries(j as Record<string, unknown>).map(([k, v]) => [
+            k,
+            typeof v === 'string' ? v : JSON.stringify(v),
+          ]),
+          broken: false,
+        }
+      }
+      return { rows: [], broken: true }
+    } catch {
+      return { rows: [], broken: true }
+    }
+  }, [value])
+
+  function write(rows: [string, string][]) {
+    if (arrayMode) {
+      onChange(rows.length ? JSON.stringify(rows.map(([, v]) => v)) : '')
+      return
+    }
+    const obj: Record<string, string> = {}
+    for (const [k, v] of rows) if (k.trim()) obj[k] = v
+    onChange(Object.keys(obj).length ? JSON.stringify(obj) : '')
+  }
+
+  if (parsed.broken) {
+    return (
+      <>
+        <Input.TextArea
+          size="small"
+          autoSize={{ minRows: 2, maxRows: 6 }}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <div className="cfg__hint cfg__hint--warn">
+          Giá trị hiện không phải JSON hợp lệ nên chưa mở được dạng bảng. Sửa ở đây rồi
+          bảng sẽ hiện lại — dữ liệu của bạn không bị xóa.
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <div className="cfg__kv">
+      {parsed.rows.map(([k, v], i) => (
+        <div className="cfg__kv-row" key={i}>
+          {!arrayMode && (
+            <Input
+              size="small"
+              placeholder="khóa"
+              value={k}
+              onChange={(e) => {
+                const next = [...parsed.rows]
+                next[i] = [e.target.value, v]
+                write(next)
+              }}
+            />
+          )}
+          <Input
+            size="small"
+            placeholder={arrayMode ? `phần tử ${i + 1}` : 'giá trị'}
+            value={v}
+            onChange={(e) => {
+              const next = [...parsed.rows]
+              next[i] = [k, e.target.value]
+              write(next)
+            }}
+          />
+          <Button
+            size="small"
+            type="text"
+            danger
+            title="Xóa dòng"
+            onClick={() => write(parsed.rows.filter((_, j) => j !== i))}
+          >
+            ×
+          </Button>
+        </div>
+      ))}
+      <Button
+        size="small"
+        type="dashed"
+        block
+        onClick={() => write([...parsed.rows, [arrayMode ? String(parsed.rows.length) : '', '']])}
+      >
+        + Thêm {arrayMode ? 'phần tử' : 'khóa'}
+      </Button>
+    </div>
+  )
+}
+
 function Control({
   name,
   schema,
@@ -129,6 +243,21 @@ function Control({
         inherited={sample?.inherited}
         env={env}
         rows={1}
+      />
+    )
+  }
+
+  // Trường `object`/`array`: bảng khóa–giá trị (FR-D-022, G4-6).
+  //
+  // Camel nhận các trường này dạng map tham số (ví dụ `headers`, `parameters`). Ô text
+  // trần bắt người dùng tự gõ JSON đúng cú pháp, sai một dấu ngoặc là hỏng cả route mà
+  // chỉ biết khi Camel từ chối nạp.
+  if (schema.type === 'object' || schema.type === 'array') {
+    return (
+      <KeyValueTable
+        value={value === undefined ? '' : String(value)}
+        onChange={(v) => onChange(v === '' ? undefined : v)}
+        arrayMode={schema.type === 'array'}
       />
     )
   }

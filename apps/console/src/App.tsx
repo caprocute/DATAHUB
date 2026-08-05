@@ -16,7 +16,14 @@ function Protected({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   if (loading) return null
   // Mang theo nơi định vào để đăng nhập xong quay lại đúng chỗ, không đổ về mặc định.
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  //
+  // Đặt trong **query** chứ không chỉ `state` của Router: `state` nằm trong bộ nhớ,
+  // mất khi người dùng tải lại trang `/login` hoặc dán thẳng link. Query sống qua cả
+  // vòng chuyển trang sang Keycloak nên deep link mới thật sự được giữ (G0-4).
+  if (!user) {
+    const target = `${location.pathname}${location.search}`
+    return <Navigate to={`/login?from=${encodeURIComponent(target)}`} replace />
+  }
   return children
 }
 

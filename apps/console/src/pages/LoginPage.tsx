@@ -5,7 +5,18 @@ import { useAuth } from '../auth/AuthContext'
 export function LoginPage() {
   const { user, loading, login } = useAuth()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from
+  /**
+   * Nơi người dùng định vào trước khi bị chặn.
+   *
+   * Ưu tiên query (sống qua tải lại trang và qua vòng chuyển sang Keycloak), rồi mới
+   * tới `state` của Router để tương thích lối điều hướng cũ. Chỉ nhận đường dẫn nội
+   * bộ bắt đầu bằng một dấu `/` — nhận cả URL tuyệt đối là mở đường chuyển hướng
+   * người dùng sang trang ngoài ngay sau khi đăng nhập (open redirect).
+   */
+  const raw =
+    new URLSearchParams(location.search).get('from') ??
+    (location.state as { from?: string } | null)?.from
+  const from = raw && /^\/(?!\/)/.test(raw) ? raw : undefined
 
   if (loading) return null
   // Đã có phiên rồi thì vào thẳng, không bắt bấm lại nút đăng nhập.

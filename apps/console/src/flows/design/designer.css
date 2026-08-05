@@ -940,6 +940,13 @@
 .cfg__num { display: flex; align-items: center; gap: 6px; }
 .cfg__unit { font-size: 11px; color: var(--c-text-3, #6b7280); }
 
+/* Bảng khóa–giá trị cho trường object/array (G4-6). Cột khóa hẹp hơn cột giá trị vì
+   khóa thường ngắn (tên tham số) còn giá trị có thể là URL hay biểu thức dài. */
+.cfg__kv { display: flex; flex-direction: column; gap: 6px; }
+.cfg__kv-row { display: flex; align-items: center; gap: 6px; }
+.cfg__kv-row > .ant-input:first-child { flex: 0 1 38%; }
+.cfg__kv-row > .ant-input:last-of-type { flex: 1 1 auto; min-width: 0; }
+
 .cfg__foot {
   flex: none; display: flex; align-items: center; gap: 12px;
   padding: 12px 16px; border-top: 1px solid var(--c-border, #e5e7eb);

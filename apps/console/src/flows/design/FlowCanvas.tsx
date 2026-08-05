@@ -6,6 +6,7 @@ import {
   Controls,
   MiniMap,
   ReactFlow,
+  SelectionMode,
   useReactFlow,
   type Connection,
   type EdgeChange,
@@ -94,6 +95,12 @@ export function FlowCanvas({
         proOptions={{ hideAttribution: false }}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode={['Meta', 'Control']}
+        // Chọn vùng: giữ Shift rồi kéo (FR-D-012). Giữ `panOnDrag` ở nút trái nên kéo
+        // trên nền vẫn là di chuyển khung nhìn — sơ đồ dài hơn màn hình vẫn panning được.
+        selectionOnDrag={false}
+        selectionKeyCode="Shift"
+        selectionMode={SelectionMode.Partial}
+        panOnDrag
         nodesConnectable
         elevateEdgesOnSelect
       >

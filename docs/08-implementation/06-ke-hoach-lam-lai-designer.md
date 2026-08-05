@@ -54,8 +54,10 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       ```
 - [x] **G0-3.** Route mới trong `App.tsx`: `/flows`, `/flows/:code/design` (ngoài `AppShell`),
       `/flows/:code/test`, `/flows/:code/runs`, `/flows/review`.
-- [ ] **G0-4.** Sửa nốt lỗi deep link qua vòng đăng nhập (FR-D-2-4) — `location.state` của
-      Router không sống qua lượt chuyển trang tới Keycloak, phải mang bằng `url_state`.
+- [x] **G0-4.** Sửa nốt lỗi deep link qua vòng đăng nhập (FR-D-2-4). *(chuyển đích sang
+      **query** `?from=`: `location.state` mất khi tải lại `/login` hoặc dán thẳng link.
+      Kèm theo chặn open redirect — `//evil.com` cũng lọt `startsWith('/')`; nay chỉ nhận
+      đúng một dấu `/` mở đầu, kiểm 11 ca gồm `//`, `///`, `https:`, `javascript:`.)*
 
 ## 3. G1 — Lõi (không giao diện, test trước)
 
@@ -98,11 +100,16 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       <1024 hai panel thành ngăn kéo · không cuộn ngang ở khung ngoài.
 - [x] **G3-3.** Bảng thành phần: tab theo loại, lọc nhãn có số đếm, tìm kiếm < 50 ms,
       **ảo hóa danh sách**, huy hiệu mức hỗ trợ, mô tả khi di chuột (FR-D-011).
-- [ ] **G3-4.** Canvas: kéo–thả, chèn giữa cạnh, chọn vùng, nhân bản, hoàn tác ≥50 bước,
-      tự sắp xếp, minimap, chặng khóa (FR-D-012).
-- [ ] **G3-5.** Trạng thái lưu rõ ràng + tự lưu 30 giây + cảnh báo rời trang + chống ghi
-      đè khi hai người cùng sửa (FR-D-013).
-- [ ] **G3-6.** Panel kiểm tra và panel YAML thu gọn được, nhớ trạng thái thu gọn.
+- [x] **G3-4.** Canvas: kéo–thả, chèn giữa cạnh, chọn vùng, nhân bản, hoàn tác ≥50 bước,
+      tự sắp xếp, minimap, chặng khóa (FR-D-012). *(bổ sung chọn vùng bằng Shift+kéo,
+      giữ `panOnDrag` nên kéo nền vẫn di chuyển khung nhìn.)*
+- [x] **G3-5.** Trạng thái lưu rõ ràng + tự lưu 30 giây + cảnh báo rời trang + chống ghi
+      đè khi hai người cùng sửa (FR-D-013). *(tự lưu và cảnh báo đã có; bổ sung chống ghi
+      đè: đọc lại bản máy chủ trước khi lưu, khác mốc lúc mở thì hỏi rõ thay vì ghi đè
+      lặng lẽ — mất trắng công người khác mà không ai biết.)*
+- [x] **G3-6.** Panel kiểm tra và panel YAML thu gọn được, nhớ trạng thái thu gọn.
+      *(`localStorage` — đúng chỗ vì là tùy chọn hiển thị của riêng máy, khác nhật ký
+      chạy vốn phải ở máy chủ.)*
 
 ## 6. G4 — D-03 Cửa sổ cấu hình chặng
 
@@ -112,13 +119,17 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       ẩn tab rỗng, hiện số trường đã đặt/tổng (FR-D-021).
 - [x] **G4-4.** Mặc định chỉ hiện trường bắt buộc + đã đặt; nút «Hiện tất cả (N)».
 - [x] **G4-5.** **Ô tìm trong trường**, lọc xuyên mọi tab.
-- [ ] **G4-6.** Sinh điều khiển theo kiểu thật: `enum`→Select (876 trường), boolean→công tắc,
+- [x] **G4-6.** Sinh điều khiển theo kiểu thật: `enum`→Select (876 trường), boolean→công tắc,
       số→ô số có biên, duration→số+đơn vị, biểu thức→trình soạn, bí mật→chọn kết nối,
-      object/array→bảng khóa–giá trị (FR-D-022).
+      object/array→bảng khóa–giá trị (FR-D-022). *(bổ sung nốt bảng khóa–giá trị; JSON
+      hỏng thì hiện ô thô để sửa, **không** nuốt mất cấu hình. Kiểm 8 ca biên.)*
 - [x] **G4-7.** Mỗi trường hiện tiêu đề + mô tả gốc + mặc định + tên tham số Camel +
       dấu bắt buộc + cảnh báo `deprecated`.
-- [ ] **G4-8.** Kiểm tra tại chỗ, tổng lỗi ở chân cửa sổ, huy hiệu đỏ trên node (FR-D-023).
-- [ ] **G4-9.** Bản tin mẫu + kế thừa từ chặng trước + xem trước biểu thức (FR-D-024).
+- [x] **G4-8.** Kiểm tra tại chỗ, tổng lỗi ở chân cửa sổ, huy hiệu đỏ trên node (FR-D-023).
+      *(đã có sẵn từ đợt trước — soi lại mã: `cfg__field--missing`, `missingCount` ở chân
+      cửa sổ, chấm đỏ/vàng trên node.)*
+- [x] **G4-9.** Bản tin mẫu + kế thừa từ chặng trước + xem trước biểu thức (FR-D-024).
+      *(đã có sẵn — nhãn «kế thừa» và xem trước trong `ExpressionField`.)*
 
 ## 7. G5 — D-04 Chạy thử và D-05 Nhật ký chạy
 
@@ -165,6 +176,7 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-06 theo quyết định làm lại toàn bộ `src/designer/` |
+| 2026-08-05 | **G0-4, G3-4/5/6, G4-6 xong**. G0-4: đích deep link chuyển sang query `?from=` vì `location.state` mất khi tải lại trang; nhân đó chặn open redirect (`//evil.com` lọt `startsWith('/')`), kiểm 11 ca. G3-5: chống ghi đè khi hai người cùng sửa. G4-6: bảng khóa–giá trị, JSON hỏng không nuốt dữ liệu, kiểm 8 ca biên. **Soi lại mã thấy G4-8 và G4-9 đã làm xong từ đợt trước** — trước đó tôi trả `[ ]` nhầm cho hai mục này |
 | 2026-08-05 | **G2-1/2/3/5 + G5-2/4/5/6/7/9 xong**, kiểm chứng trên hệ thống chạy thật (Postgres + Keycloak + control): lọc/phân trang phía máy chủ; `sort` chèn `;DROP TABLE` bị danh sách trắng chặn, bảng còn nguyên; nhân bản không kế thừa `git_commit_ref`; tạm dừng luồng DRAFT → 409; chạy thử ghi 1 lần chạy + 9 chặng vào `ph04.route_test_run*`, đọc lại đúng thứ tự; soi bảng xác nhận **không lưu nội dung bản tin**; CASCADE dọn nhật ký quá hạn đúng. Test bắt lỗi trước khi lên môi trường: `List.of(...).contains(null)` ném NPE ở `RouteQuery` — `sort` null là trường hợp thường gặp nhất nên **mọi lần liệt kê không sắp xếp đều 500** |
 | 2026-08-04 | **G1-7 xong**: 122 ca lõi xanh. Bộ test bắt lỗi bộ sinh: chặng rẽ nhánh chỉ có một cạnh ra không sinh khối `choice` nên điều kiện trên cạnh biến mất không báo lỗi — luật định tuyến thành chặng chạy vô điều kiện. Sửa: xét theo `BRANCHING` thay vì đếm cạnh. Nghiệm thu: `Started nghiem-thu-choice-mot-nhanh (direct://mot-nhanh)` trên Camel thật |
 | 2026-08-04 | Xong G0–G6. **Nghiệm thu N-2 đạt**: Camel thật khởi động route do bộ sinh mới tạo (`Started nghiem-thu-br-d-04` · BUILD SUCCESS). **N-3/N-4 đo được**: gõ tìm kiếm 13,3 ms (ngưỡng 50) · ảo hóa 297 mục lọc chỉ dựng 18 phần tử DOM · canvas 68% ở 1920px (ngưỡng 60) · không cuộn ngang ở 1024/1280/1440/1920. **N-5**: cửa sổ cấu hình đúng 75% (960px), chia tab theo nhóm gốc. Bốn lỗi sửa dọc đường: `useBlocker` ngoài data router làm trắng trang · thiếu `@xyflow/react/dist/style.css` · thiếu `AntApp` ở gốc khiến `message.success` ném lỗi · thiếu bảng token nên nền node trong suốt |
