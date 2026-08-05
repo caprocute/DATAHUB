@@ -871,10 +871,15 @@
    định — antd định cỡ thân bằng flex nên phần trăm không giải ra được, cả chuỗi con
    tụt về 0 và `overflow-y: auto` ở `.cfg__fields` **không có gì để cuộn**: trường
    tràn thẳng ra ngoài rồi bị `overflow: hidden` của modal cắt cụt. */
+/* **Một vùng cuộn duy nhất** cho cả cửa sổ.
+   Trước đây mỗi phần tự cuộn riêng (2 cột phụ + vùng trường + 2 ô nhập = 5 thanh
+   cuộn lồng nhau): lăn chuột ở chỗ nào ra chỗ đó, cuộn hết vùng trong mới tới vùng
+   ngoài — rất khó dùng. Nay chỉ thân modal cuộn, mọi thứ bên trong trôi theo. */
 .cfg-modal .ant-modal-body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 !important;
   display: flex;
   flex-direction: column;
@@ -901,7 +906,10 @@
 /* `flex: 1 1 0` + `min-height: 0` thay cho `height: 100%`: chiếm hết chỗ cha cho mà
    không phụ thuộc cha có chiều cao xác định hay không. `min-height: 0` là bắt buộc —
    thiếu nó, flex item không co xuống dưới kích thước nội dung và vẫn tràn. */
-.cfg { display: flex; flex: 1 1 0; min-height: 0; }
+/* Để `stretch` (mặc định) nên nền và đường viền của ba cột luôn phủ hết chiều cao,
+   không bị hụt giữa chừng khi cột phụ ngắn hơn cột giữa. Nội dung cột phụ tự ghim
+   riêng bên dưới. */
+.cfg { display: flex; flex: 0 0 auto; align-items: stretch; }
 /* Cột phụ co giãn theo bề rộng cửa sổ thay vì cứng 240px: ở 95% màn hình, hai cột
    cứng trông hụt so với phần giữa, còn màn hẹp thì chúng lại lấn chỗ nhập liệu.
    `clamp` giữ trong khoảng đọc được — không bao giờ hẹp quá 220px hay rộng quá 340px. */
@@ -914,7 +922,13 @@
   padding: 12px;
   background: var(--c-surface-2, #f9fafb);
   border-right: 1px solid var(--c-border, #e5e7eb);
-  overflow-y: auto;
+  /* Không tự cuộn: chỉ thân modal cuộn (một thanh duy nhất). Nội dung cột ghim lại
+     để bản tin mẫu và kết quả vẫn nhìn được khi đang cuộn giữa danh sách trường —
+     đó là lý do tồn tại của hai cột này. */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
 }
 .cfg__side:last-child { border-right: 0; border-left: 1px solid var(--c-border, #e5e7eb); }
 .cfg__side-head {
@@ -948,10 +962,19 @@
 }
 
 /* Cột giữa */
-.cfg__main { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* Cột giữa nở theo nội dung; `align-self: stretch` để nền và đường viền vẫn phủ hết
+   chiều cao khi cột phụ ngắn hơn. */
+.cfg__main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-self: stretch; }
+/* Ghim thanh công cụ và dải tab khi cuộn: cả cửa sổ chỉ có một vùng cuộn, nếu để
+   chúng trôi theo thì cuộn xuống giữa danh sách là mất luôn ô tìm trường và nút đổi
+   tab — muốn sang nhóm khác phải cuộn ngược lên đầu. */
 .cfg__toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   flex: none; display: flex; align-items: center; gap: 12px;
   padding: 10px 16px; border-bottom: 1px solid var(--c-border, #e5e7eb);
+  background: var(--c-surface, #fff);
 }
 .cfg__find {
   flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 10px;
@@ -961,49 +984,39 @@
 .cfg__count { flex: none; font-size: 12px; color: var(--c-text-3, #6b7280); }
 
 .cfg__uri { flex: none; padding: 12px 16px 0; }
-.cfg__tabs-wrap { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 0 16px; }
-.cfg__tabs { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
-.cfg__tabs .ant-tabs-nav { flex: none; margin-bottom: 8px; }
-/* antd 6 đổi tên `.ant-tabs-content-holder` thành `.ant-tabs-body-holder`; giữ cả hai
-   để không phụ thuộc phiên bản. Trước đó quy tắc trỏ vào tên cũ **không khớp phần tử
-   nào**, nên cả chuỗi chiều cao đứt ngay tại đây. */
+/* ---- Chuỗi chiều cao: cho nội dung **nở tự nhiên**, không giam để cuộn riêng ----
+   Mô hình cũ giam từng tầng rồi để `.cfg__fields` tự cuộn, sinh ra thanh cuộn lồng
+   nhau. Nay mọi tầng cao theo nội dung, chỉ thân modal cuộn. */
+.cfg__tabs-wrap { flex: 0 0 auto; display: flex; flex-direction: column; padding: 0 16px; }
+.cfg__tabs { flex: 0 0 auto; display: flex; flex-direction: column; }
+/* Dải tab ghim ngay dưới thanh công cụ (cao ~51px) để luôn đổi nhóm được. */
+.cfg__tabs .ant-tabs-nav {
+  position: sticky;
+  top: 51px;
+  z-index: 2;
+  flex: none;
+  margin-bottom: 8px;
+  background: var(--c-surface, #fff);
+}
 .cfg__tabs .ant-tabs-content-holder,
-.cfg__tabs .ant-tabs-body-holder {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
+.cfg__tabs .ant-tabs-body-holder,
+.cfg__tabs .ant-tabs-body,
+.cfg__tabs .ant-tabs-content,
+.cfg__tabs .ant-tabs-tabpane {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
+  overflow: visible;
+  height: auto;
 }
-/* antd bản mới chèn thêm `.ant-tabs-body` giữa holder và content. Nó là `display:
-   block` nên tự co theo nội dung (đo được 12px) và bóp chết cả nhánh dưới — phải kéo
-   nó vào chuỗi flex, không thì vùng cuộn gần như không có chiều cao. */
-.cfg__tabs .ant-tabs-body {
-  flex: 1 1 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-/* Chuỗi `height: 100%` lồng nhiều tầng không giải ra được vì các tầng trên định cỡ
-   bằng flex chứ không có chiều cao xác định — kết quả là `.cfg__fields` phình theo
-   nội dung (đo được 4007px) và `overflow-y: auto` **không có gì để cuộn**, trường bị
-   cắt cụt ở đáy cửa sổ. Dùng flex suốt chuỗi để mỗi tầng nhận đúng chỗ cha cho. */
-.cfg__tabs .ant-tabs-content {
-  flex: 1 1 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.cfg__tabs .ant-tabs-tabpane { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 .cfg__tabnum { font-size: 10px; color: var(--c-text-3, #6b7280); }
 
 /* Đây là vùng cuộn thật của cửa sổ cấu hình. `flex: 1 1 0` + `min-height: 0` để nó
    nhận đúng chiều cao còn lại và co được xuống dưới kích thước nội dung — thiếu
    `min-height: 0` thì flex item không co, lại tràn như cũ. */
 .cfg__fields {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: auto;
+  /* Cao theo nội dung, **không** tự cuộn — chỉ thân modal cuộn (một thanh duy nhất). */
+  flex: 0 0 auto;
   padding-right: 6px;
   padding-bottom: 12px;
   /* Rải trường thành nhiều cột khi đủ rộng — đây mới là chỗ 95% màn hình phát huy
@@ -1051,9 +1064,12 @@
   /* Xếp dọc thì hai cột phụ phải **co lại được**, không thì chúng chiếm hết chiều cao
      theo nội dung và `.cfg__main` còn 0 — vùng trường mất chỗ nên không cuộn được.
      Trần 14% mỗi cột: ở 22% vùng nhập liệu chỉ còn ~105px, không dùng nổi. */
+  /* Xếp dọc thì **bỏ ghim**: cột phụ nằm trên cùng, ghim lại sẽ chiếm mất chiều cao
+     vốn đã ít và đè lên chỗ nhập liệu. Cứ để chúng cuộn qua như nội dung thường. */
   .cfg__side {
-    flex: 0 1 auto;
-    max-height: 14%;
+    position: static;
+    max-height: none;
+    flex: 0 0 auto;
     border-right: 0;
     border-bottom: 1px solid var(--c-border, #e5e7eb);
   }
