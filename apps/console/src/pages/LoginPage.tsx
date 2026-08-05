@@ -19,6 +19,10 @@ export function LoginPage() {
   const from = raw && /^\/(?!\/)/.test(raw) ? raw : undefined
 
   if (loading) return null
+  // Còn tham số callback trên URL nghĩa là `handleOidcCallback` chưa chạy xong; tự
+  // điều hướng lúc này sẽ tranh chấp với `OidcRedirect` và cướp mất đích deep link.
+  const q = new URLSearchParams(location.search)
+  if (q.has('code') || q.has('state') || q.has('error')) return null
   // Đã có phiên rồi thì vào thẳng, không bắt bấm lại nút đăng nhập.
   if (user) return <Navigate to={from && from !== '/login' ? from : '/flows'} replace />
 

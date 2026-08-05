@@ -54,10 +54,10 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
       ```
 - [x] **G0-3.** Route mới trong `App.tsx`: `/flows`, `/flows/:code/design` (ngoài `AppShell`),
       `/flows/:code/test`, `/flows/:code/runs`, `/flows/review`.
-- [x] **G0-4.** Sửa nốt lỗi deep link qua vòng đăng nhập (FR-D-2-4). *(chuyển đích sang
-      **query** `?from=`: `location.state` mất khi tải lại `/login` hoặc dán thẳng link.
-      Kèm theo chặn open redirect — `//evil.com` cũng lọt `startsWith('/')`; nay chỉ nhận
-      đúng một dấu `/` mở đầu, kiểm 11 ca gồm `//`, `///`, `https:`, `javascript:`.)*
+- [x] **G0-4.** Sửa nốt lỗi deep link qua vòng đăng nhập (FR-D-2-4). *(kiểm chứng thật
+      trên trình duyệt: mở `/flows/at-5812634/design` lúc chưa đăng nhập → Keycloak →
+      **quay lại đúng trình thiết kế, canvas vẽ ra**; đăng nhập thường vẫn về `/flows`.
+      Ba lỗi chồng nhau, xem mục 10.)*
 
 ## 3. G1 — Lõi (không giao diện, test trước)
 
@@ -176,6 +176,7 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-06 theo quyết định làm lại toàn bộ `src/designer/` |
+| 2026-08-05 | **G0-4 kiểm chứng thật trên trình duyệt** — lần đánh dấu trước là *sai*, chạy thử mới lộ ra vẫn rơi về `/flows`. Ba lỗi chồng nhau: (1) `Protected` đẩy sang `/login` ngay giữa lượt callback nên **gói cả URL callback vào `from=`**; (2) `handleOidcCallback` `replaceState` thẳng sang đích nhưng React Router không hay biết, route `index` của `/` liền đè sang `/flows`; (3) StrictMode gắn–tháo–gắn effect nên **cả hai lượt đều `cancelled`** trước khi `signinRedirectCallback` trả về, không lượt nào đặt được đích qua `setState`, mà `code` thì đã tiêu thụ. Cách sửa: đọc đích **đồng bộ từ tham số `state` ngay lúc nạp mô-đun**, không phụ thuộc thứ tự effect. |
 | 2026-08-05 | **G0-4, G3-4/5/6, G4-6 xong**. G0-4: đích deep link chuyển sang query `?from=` vì `location.state` mất khi tải lại trang; nhân đó chặn open redirect (`//evil.com` lọt `startsWith('/')`), kiểm 11 ca. G3-5: chống ghi đè khi hai người cùng sửa. G4-6: bảng khóa–giá trị, JSON hỏng không nuốt dữ liệu, kiểm 8 ca biên. **Soi lại mã thấy G4-8 và G4-9 đã làm xong từ đợt trước** — trước đó tôi trả `[ ]` nhầm cho hai mục này |
 | 2026-08-05 | **G2-1/2/3/5 + G5-2/4/5/6/7/9 xong**, kiểm chứng trên hệ thống chạy thật (Postgres + Keycloak + control): lọc/phân trang phía máy chủ; `sort` chèn `;DROP TABLE` bị danh sách trắng chặn, bảng còn nguyên; nhân bản không kế thừa `git_commit_ref`; tạm dừng luồng DRAFT → 409; chạy thử ghi 1 lần chạy + 9 chặng vào `ph04.route_test_run*`, đọc lại đúng thứ tự; soi bảng xác nhận **không lưu nội dung bản tin**; CASCADE dọn nhật ký quá hạn đúng. Test bắt lỗi trước khi lên môi trường: `List.of(...).contains(null)` ném NPE ở `RouteQuery` — `sort` null là trường hợp thường gặp nhất nên **mọi lần liệt kê không sắp xếp đều 500** |
 | 2026-08-04 | **G1-7 xong**: 122 ca lõi xanh. Bộ test bắt lỗi bộ sinh: chặng rẽ nhánh chỉ có một cạnh ra không sinh khối `choice` nên điều kiện trên cạnh biến mất không báo lỗi — luật định tuyến thành chặng chạy vô điều kiện. Sửa: xét theo `BRANCHING` thay vì đếm cạnh. Nghiệm thu: `Started nghiem-thu-choice-mot-nhanh (direct://mot-nhanh)` trên Camel thật |

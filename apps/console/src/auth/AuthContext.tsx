@@ -30,12 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     ;(async () => {
       try {
+        // Vẫn phải gọi để đổi `code` lấy token và dọn URL. Đích deep link thì **không**
+        // lấy từ đây: lời gọi này bất đồng bộ, mà StrictMode gắn–tháo–gắn effect ngay
+        // trong lượt vẽ đầu nên cả hai lượt đều bị đánh dấu hủy trước khi nó trả về —
+        // không lượt nào đặt được đích. `HomeRedirect` đọc đồng bộ qua `takeBootTarget`.
         const target = await handleOidcCallback()
         const current = await userManager.getUser()
-        if (!cancelled) {
-          setUser(current)
-          if (target) setRedirectTo(target)
-        }
+        if (cancelled) return
+        setUser(current)
+        if (target) setRedirectTo(target)
       } finally {
         if (!cancelled) setLoading(false)
       }
