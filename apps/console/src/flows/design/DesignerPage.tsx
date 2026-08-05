@@ -449,7 +449,7 @@ function DesignerInner() {
         <div className="dsg__bar-id">
           <span className="dsg__bar-code">{code}</span>
           <Tag>v{versionNo}</Tag>
-          <Tag color={route?.status === 'ACTIVE' ? 'green' : 'default'}>{route?.status ?? 'DRAFT'}</Tag>
+          <Tag color={route?.status === 'ACTIVE' ? '#15803d' : 'default'}>{route?.status ?? 'DRAFT'}</Tag>
         </div>
         <span className={`dsg__saved dsg__saved--${saveState}`}>{SAVE_LABEL[saveState]}</span>
         <span className="dsg__bar-sub">

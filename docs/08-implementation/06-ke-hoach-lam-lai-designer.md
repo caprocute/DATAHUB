@@ -166,8 +166,8 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | **N-3** | Đo trên trình duyệt | NFR-D-01…05 đạt ngưỡng |
 | **N-4** | Thu nhỏ cửa sổ 1024/1280/1440/1920 | Không vỡ bố cục, không cuộn ngang |
 | **N-5** | Mở node 154 thuộc tính | Cửa sổ 75%, chia tab đúng nhóm, tìm trường chạy |
-| **N-6** | e2e: tạo → thiết kế → chạy thử → xem nhật ký → gửi duyệt → duyệt → publish | Xanh trọn đường |
-| **N-7** | Bàn phím + tương phản | Điều hướng được không cần chuột; đạt AA |
+| **N-6** | e2e: tạo → thiết kế → chạy thử → xem nhật ký → gửi duyệt → duyệt → publish | ✅ **Đạt** — chạy thật hai tài khoản: tạo (DRAFT v1) → chạy thử (PASSED, 9 chặng vào CSDL) → gửi duyệt (PENDING_REVIEW) → **bốn mắt chặn người tạo tự duyệt (409)** → người khác duyệt → APPROVED + ACTIVE, `git_commit_ref: file:462edfb96e4c`, tệp `routes/<code>/route.camel.yaml` khớp đúng YAML designer sinh |
+| **N-7** | Bàn phím + tương phản | ✅ **Đạt** — 62 phần tử focus được ở màn thiết kế, **0 nút thiếu nhãn**, thứ tự Tab hợp lý, không bẫy focus. Đo tương phản trên 5 màn: **0 chỗ dưới ngưỡng**. Vòng focus 6,16:1 (ngưỡng 3). Bốn lỗi thật đã sửa, xem mục 10 |
 
 ---
 
@@ -176,6 +176,7 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-06 theo quyết định làm lại toàn bộ `src/designer/` |
+| 2026-08-05 | **N-6 và N-7 đạt.** N-6 chạy thật hai tài khoản qua đủ 9 bước, bốn mắt chặn đúng (409), tệp GitOps ghi ra khớp YAML designer sinh. N-7 phát hiện và sửa **bốn lỗi tiếp cận thật**: (1) mọi nút tự dựng đặt `outline: none` mà không thay bằng dấu hiệu nào — người dùng bàn phím **không thấy mình đang ở đâu** (WCAG 2.4.7); (2) chữ trạng thái lưu 12px chỉ 3,3:1; (3) huy hiệu bảng thành phần 4,4:1; (4) thẻ trạng thái dùng bảng màu dựng sẵn của antd — bảng đó là hằng số, `colorSuccess` **không** đổi được và CSS ngoài **không thắng** được CSS-in-JS, phải chỉ định mã màu thẳng ở nơi gọi. Nhân đó sửa hai lỗi lộ ra khi hết phiên: 401 không được xử lý (mọi màn thành rỗng, người dùng tưởng mất dữ liệu) và trạng thái rỗng nói "chưa có luồng nào" ngay cả khi gọi API hỏng |
 | 2026-08-05 | **Kiểm chứng giao diện trên trình duyệt thật** (không chỉ typecheck): danh sách hiện đủ cột «Sửa gần nhất»; gõ `demo` → mạng gọi `?q=demo&sort=updated_at&page=0&size=15`, còn 1 dòng, phân trang đọc `total` **từ máy chủ**; menu thao tác đủ 6 mục, «Xóa bản nháp» tự khóa khi luồng không có nháp; ngăn lịch sử phiên bản hiện `git_commit_ref` và báo đúng "cần ít nhất hai phiên bản để so sánh"; nhật ký chạy đọc từ CSDL — 9 chặng, 80 ms, băng "lưu tại trình duyệt" đã gỡ; bấm dòng ra waterfall đúng thứ tự |
 | 2026-08-05 | **G0-4 kiểm chứng thật trên trình duyệt** — lần đánh dấu trước là *sai*, chạy thử mới lộ ra vẫn rơi về `/flows`. Ba lỗi chồng nhau: (1) `Protected` đẩy sang `/login` ngay giữa lượt callback nên **gói cả URL callback vào `from=`**; (2) `handleOidcCallback` `replaceState` thẳng sang đích nhưng React Router không hay biết, route `index` của `/` liền đè sang `/flows`; (3) StrictMode gắn–tháo–gắn effect nên **cả hai lượt đều `cancelled`** trước khi `signinRedirectCallback` trả về, không lượt nào đặt được đích qua `setState`, mà `code` thì đã tiêu thụ. Cách sửa: đọc đích **đồng bộ từ tham số `state` ngay lúc nạp mô-đun**, không phụ thuộc thứ tự effect. |
 | 2026-08-05 | **G0-4, G3-4/5/6, G4-6 xong**. G0-4: đích deep link chuyển sang query `?from=` vì `location.state` mất khi tải lại trang; nhân đó chặn open redirect (`//evil.com` lọt `startsWith('/')`), kiểm 11 ca. G3-5: chống ghi đè khi hai người cùng sửa. G4-6: bảng khóa–giá trị, JSON hỏng không nuốt dữ liệu, kiểm 8 ca biên. **Soi lại mã thấy G4-8 và G4-9 đã làm xong từ đợt trước** — trước đó tôi trả `[ ]` nhầm cho hai mục này |

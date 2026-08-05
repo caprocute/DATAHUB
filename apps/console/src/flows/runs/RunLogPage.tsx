@@ -10,10 +10,10 @@ import {
 } from '../../api/routesApi'
 
 const OUTCOME_COLOR: Record<string, string> = {
-  OK: 'green',
-  PASSED: 'green',
-  FAILED: 'red',
-  ERROR: 'red',
+  OK: '#15803d',
+  PASSED: '#15803d',
+  FAILED: '#b91c1c',
+  ERROR: '#b91c1c',
 }
 
 function isOk(s: string): boolean {
@@ -240,7 +240,7 @@ export function RunLogPage() {
                 width: 150,
                 render: (_, r) => (
                   <Space size={4}>
-                    <Tag color={isOk(r.aStatus) ? 'green' : 'red'}>{r.aStatus}</Tag>
+                    <Tag color={isOk(r.aStatus) ? '#15803d' : '#b91c1c'}>{r.aStatus}</Tag>
                     <span>{r.aMs} ms</span>
                   </Space>
                 ),
@@ -253,7 +253,7 @@ export function RunLogPage() {
                     <Typography.Text type="secondary">không có chặng này</Typography.Text>
                   ) : (
                     <Space size={4}>
-                      <Tag color={isOk(r.bStatus) ? 'green' : 'red'}>{r.bStatus}</Tag>
+                      <Tag color={isOk(r.bStatus) ? '#15803d' : '#b91c1c'}>{r.bStatus}</Tag>
                       <span>{r.bMs} ms</span>
                     </Space>
                   ),
@@ -294,7 +294,7 @@ export function RunLogPage() {
                 title: 'Kết quả',
                 dataIndex: 'status',
                 width: 120,
-                render: (s: string) => <Tag color={isOk(s) ? 'green' : 'red'}>{s}</Tag>,
+                render: (s: string) => <Tag color={isOk(s) ? '#15803d' : '#b91c1c'}>{s}</Tag>,
               },
               {
                 title: 'Thời gian',

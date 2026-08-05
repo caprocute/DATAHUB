@@ -84,7 +84,7 @@ export function VersionHistory({ route, onClose }: Props) {
             dataIndex: 'status',
             width: 120,
             render: (s: string) => (
-              <Tag color={s === 'APPROVED' ? 'green' : s === 'PENDING_REVIEW' ? 'blue' : 'default'}>
+              <Tag color={s === 'APPROVED' ? '#15803d' : s === 'PENDING_REVIEW' ? '#1d4ed8' : 'default'}>
                 {STATUS_VI[s] ?? s}
               </Tag>
             ),

@@ -14,11 +14,11 @@ import {
 
 /** Nhãn tiếng Việt cho trạng thái từng chặng trong waterfall. */
 const STAGE_VI: Record<string, { label: string; color: string }> = {
-  OK: { label: 'Thành công', color: 'green' },
-  SUCCESS: { label: 'Thành công', color: 'green' },
+  OK: { label: 'Thành công', color: '#15803d' },
+  SUCCESS: { label: 'Thành công', color: '#15803d' },
   SKIPPED: { label: 'Bỏ qua', color: 'default' },
-  FAILED: { label: 'Lỗi', color: 'red' },
-  ERROR: { label: 'Lỗi', color: 'red' },
+  FAILED: { label: 'Lỗi', color: '#b91c1c' },
+  ERROR: { label: 'Lỗi', color: '#b91c1c' },
 }
 
 /**
@@ -205,7 +205,7 @@ export function TestRunPage() {
           {result ? (
             <>
               <Space style={{ margin: '6px 0' }}>
-                <Tag color={result.outcome === 'OK' ? 'green' : 'red'}>{result.outcome}</Tag>
+                <Tag color={result.outcome === 'OK' ? '#15803d' : '#b91c1c'}>{result.outcome}</Tag>
                 <Typography.Text type="secondary">
                   {result.durationMs} ms · {result.mode} · v{result.versionNo}
                 </Typography.Text>

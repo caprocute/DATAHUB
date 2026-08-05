@@ -42,13 +42,20 @@ const STATUS_VI: Record<string, string> = {
   RETIRED: 'Đã gỡ',
 }
 
+/**
+ * Màu thẻ trạng thái — dùng mã màu thật, **không** dùng tên màu dựng sẵn của antd.
+ *
+ * Bảng màu dựng sẵn (`green`, `orange`…) cho chữ tông -600 trên nền rất nhạt, chỉ đạt
+ * ~3,3:1 — dưới ngưỡng 4,5:1 của WCAG AA cho chữ thường. Bảng đó là hằng số của thư
+ * viện, token `colorSuccess` không đổi được, nên phải chỉ định màu thẳng ở đây (N-7).
+ */
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'default',
-  PENDING_REVIEW: 'blue',
-  TESTING: 'cyan',
-  ACTIVE: 'green',
-  PAUSED: 'orange',
-  RETIRED: 'red',
+  PENDING_REVIEW: '#1d4ed8',
+  TESTING: '#0e7490',
+  ACTIVE: '#15803d',
+  PAUSED: '#b45309',
+  RETIRED: '#b91c1c',
 }
 
 /** Cột máy chủ cho phép sắp xếp — phải khớp danh sách trắng ở `RouteQuery`. */
@@ -258,7 +265,7 @@ export function FlowListPage() {
         width: 130,
         render: (_: unknown, r: RouteSummary) => (
           <Space size={4}>
-            {r.currentVersionNo != null && <Tag color="green">v{r.currentVersionNo}</Tag>}
+            {r.currentVersionNo != null && <Tag color="#15803d">v{r.currentVersionNo}</Tag>}
             {r.draftVersionNo != null && <Tag>nháp v{r.draftVersionNo}</Tag>}
           </Space>
         ),
@@ -415,9 +422,14 @@ export function FlowListPage() {
           emptyText: (
             <Empty
               description={
-                q || status
-                  ? 'Không có luồng nào khớp bộ lọc'
-                  : 'Chưa có luồng nào. Bấm «Tạo luồng mới» để bắt đầu.'
+                // Gọi API hỏng thì **không** được nói "chưa có luồng nào": người dùng
+                // sẽ tưởng dữ liệu đã mất trong khi thật ra chỉ là hết phiên hay
+                // máy chủ không trả lời. Ba trạng thái rỗng phải phân biệt rõ.
+                error
+                  ? 'Không tải được danh sách — xem thông báo lỗi phía trên.'
+                  : q || status
+                    ? 'Không có luồng nào khớp bộ lọc'
+                    : 'Chưa có luồng nào. Bấm «Tạo luồng mới» để bắt đầu.'
               }
             />
           ),

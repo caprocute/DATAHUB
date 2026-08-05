@@ -67,10 +67,12 @@
   border-radius: 50%;
   background: currentColor;
 }
-.dsg__saved--dirty { color: var(--c-warn-600, #d97706); }
-.dsg__saved--saved { color: var(--c-ok-600, #16a34a); }
-.dsg__saved--saving { color: var(--c-text-3, #6b7280); }
-.dsg__saved--error { color: var(--c-err-600, #dc2626); }
+/* Chữ 12px nên phải đạt 4.5:1 (WCAG AA cho chữ thường), không phải 3:1.
+   Tông -600 mặc định chỉ được ~3.3:1 trên nền trắng nên hạ xuống -700/-800. */
+.dsg__saved--dirty { color: #b45309; }
+.dsg__saved--saved { color: #15803d; }
+.dsg__saved--saving { color: #52525b; }
+.dsg__saved--error { color: #b91c1c; }
 
 /* ---------- Thân: ba cột co giãn ---------- */
 
@@ -240,6 +242,25 @@
   border-color: var(--c-brand-500, #3b82f6);
 }
 
+/* ---------- Vòng focus bàn phím (N-7 / WCAG 2.4.7) ----------
+   Các nút tự dựng đều đặt `outline: none` mà không thay bằng dấu hiệu nào khác, nên
+   người dùng bàn phím **không thấy mình đang ở đâu**. Dùng `:focus-visible` để chuột
+   không bị vẽ vòng thừa, và vòng đủ dày/tương phản để nhìn rõ trên nền sáng lẫn tối. */
+.pal__tab:focus-visible,
+.pal__chip:focus-visible,
+.pal__item:focus-visible,
+.pal__search:focus-visible,
+.dsg__toggle:focus-visible,
+.cfg__tab:focus-visible,
+.cfg__find:focus-visible,
+.ydiff__mode:focus-visible,
+.seq-edge__add:focus-visible {
+  outline: 2px solid var(--c-brand-600, #0b5cab);
+  outline-offset: 2px;
+  /* Viền phụ màu nền để vòng focus không chìm khi nút nằm sát nút khác. */
+  box-shadow: 0 0 0 4px var(--c-surface, #fff);
+}
+
 .pal__tabs { display: flex; flex-wrap: wrap; gap: 4px; }
 .pal__tab {
   padding: 3px 8px;
@@ -336,11 +357,12 @@
   padding: 0 4px;
   border-radius: 4px;
   background: var(--c-surface-2, #f3f4f6);
-  color: var(--c-text-3, #6b7280);
+  /* Chữ 9px trên nền xám: tông -3 chỉ đạt ~4.4:1, thiếu chuẩn AA (N-7). */
+  color: #52525b;
   font-size: 9px;
   font-weight: 600;
 }
-.pal__badge--warn { color: var(--c-warn-600, #d97706); }
+.pal__badge--warn { color: #b45309; }
 
 .pal__foot {
   flex: none;
@@ -428,8 +450,10 @@
   background: var(--c-text-3);
 }
 
-.n8n-node--trigger .n8n-node__icon { background: var(--c-ok-600, #16a34a); }
-.n8n-node--auth .n8n-node__icon { background: var(--c-warn-600, #d97706); }
+/* Chữ trắng trên các nền này phải đạt 4.5:1. Tông -600 của xanh lá và cam chỉ được
+   ~3.3:1 nên hạ xuống -700/-800; các tông còn lại đã đạt sẵn (N-7). */
+.n8n-node--trigger .n8n-node__icon { background: #15803d; }
+.n8n-node--auth .n8n-node__icon { background: #b45309; }
 .n8n-node--eip .n8n-node__icon { background: var(--c-brand-600, #2563eb); }
 .n8n-node--transform .n8n-node__icon { background: #0f766e; }
 .n8n-node--enrich .n8n-node__icon { background: #6d28d9; }

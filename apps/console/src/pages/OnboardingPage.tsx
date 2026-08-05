@@ -67,7 +67,7 @@ function ReviewCard({ title, review }: { title: string; review: Review | null })
       <div className="review-card__head">
         <strong>{title}</strong>
         {done ? (
-          <Tag color={review.status === 'PASS' ? 'green' : 'red'}>
+          <Tag color={review.status === 'PASS' ? '#15803d' : '#b91c1c'}>
             {review.status === 'PASS' ? 'Đạt' : 'Không đạt'}
           </Tag>
         ) : (
@@ -358,10 +358,10 @@ export function OnboardingPage() {
             width: 130,
             render: (_, r) => (
               <Space size={4}>
-                <Tag color={r.legalReview?.status === 'PASS' ? 'green' : r.legalReview?.status === 'FAIL' ? 'red' : undefined}>
+                <Tag color={r.legalReview?.status === 'PASS' ? '#15803d' : r.legalReview?.status === 'FAIL' ? '#b91c1c' : undefined}>
                   PL
                 </Tag>
-                <Tag color={r.techReview?.status === 'PASS' ? 'green' : r.techReview?.status === 'FAIL' ? 'red' : undefined}>
+                <Tag color={r.techReview?.status === 'PASS' ? '#15803d' : r.techReview?.status === 'FAIL' ? '#b91c1c' : undefined}>
                   KT
                 </Tag>
               </Space>
