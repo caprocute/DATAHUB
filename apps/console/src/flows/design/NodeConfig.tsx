@@ -305,8 +305,23 @@ function Field({
   env?: Record<string, string>
 }) {
   const missing = required && (value === undefined || value === '')
+  // Trường cần nhiều bề ngang thì chiếm trọn hàng của lưới: biểu thức có trình soạn
+  // kèm xem trước, object/array là bảng khóa–giá trị, bí mật có dòng cảnh báo dài —
+  // nhét vào một cột hẹp thì không gõ nổi.
+  const wide =
+    isExpression(name, schema) ||
+    isSecret(name, schema) ||
+    schema.type === 'object' ||
+    schema.type === 'array'
+  const cls = [
+    'cfg__field',
+    missing ? 'cfg__field--missing' : '',
+    wide ? 'cfg__field--wide' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
   return (
-    <div className={missing ? 'cfg__field cfg__field--missing' : 'cfg__field'}>
+    <div className={cls}>
       <label className="cfg__label">
         {schema.title ?? name}
         {required && <span className="cfg__req"> *</span>}
@@ -336,9 +351,10 @@ function Field({
 /**
  * D-03 — Cửa sổ cấu hình một chặng.
  *
- * Chốt **75% × 75%** màn hình: lược đồ Camel có trung vị 19 thuộc tính, p90 64 và tối
- * đa 154 — cửa sổ nhỏ như bản trước không thể dùng được. Tab chia theo **nhóm gốc**
- * của catalog (Kaoto), bố cục ba cột INPUT│THAM SỐ│OUTPUT theo thẩm mỹ n8n.
+ * Chốt **95% × 95%** màn hình: lược đồ Camel có trung vị 19 thuộc tính, p90 64 và tối
+ * đa 154 — ở 75% người dùng phải cuộn liên tục và không thấy đủ trường cùng lúc.
+ * Tab chia theo **nhóm gốc** của catalog (Kaoto), bố cục ba cột INPUT│THAM SỐ│OUTPUT
+ * theo thẩm mỹ n8n.
  */
 export function NodeConfig({
   open,
@@ -435,12 +451,16 @@ export function NodeConfig({
   const paramPanel = (list: [string, SchemaProp][], groupTotal: number) => (
     <div className="cfg__fields">
       {list.length === 0 ? (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={
-            searching ? 'Không có trường nào khớp từ khóa' : 'Nhóm này chưa đặt trường nào'
-          }
-        />
+        // Trạng thái rỗng và nút bên dưới là phần tử của lưới — không cho chiếm trọn
+        // hàng thì chúng nép vào cột đầu, trông như bị lệch.
+        <div className="cfg__field--wide">
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              searching ? 'Không có trường nào khớp từ khóa' : 'Nhóm này chưa đặt trường nào'
+            }
+          />
+        </div>
       ) : (
         list.map(([k, v]) => (
           <Field
@@ -456,9 +476,11 @@ export function NodeConfig({
         ))
       )}
       {!searching && !showAll && groupTotal > list.length && (
-        <Button size="small" block onClick={() => setShowAll(true)}>
-          Hiện tất cả ({groupTotal - list.length} trường còn lại)
-        </Button>
+        <div className="cfg__field--wide">
+          <Button size="small" block onClick={() => setShowAll(true)}>
+            Hiện tất cả ({groupTotal - list.length} trường còn lại)
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -469,7 +491,7 @@ export function NodeConfig({
       onCancel={onClose}
       footer={null}
       className="cfg-modal"
-      width="75vw"
+      width="95vw"
       centered
       destroyOnHidden
       title={

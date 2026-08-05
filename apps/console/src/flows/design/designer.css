@@ -847,20 +847,21 @@
 }
 
 
-/* ---------- D-03 Cửa sổ cấu hình chặng: 75% màn hình ---------- */
+/* ---------- D-03 Cửa sổ cấu hình chặng: 95% màn hình ----------
+   Node nhiều thuộc tính (tối đa 154) cần chỗ thật sự: ở 75% phải cuộn liên tục và
+   không nhìn được nhiều trường cùng lúc. Bỏ `max-width` cứng để màn rộng dùng được
+   hết chỗ — trước đây trần 1600px khiến màn 2560px vẫn chỉ hiện một dải hẹp ở giữa. */
 
 .cfg-modal.ant-modal {
-  width: 75vw !important;
+  width: 95vw !important;
   min-width: 960px;
-  max-width: 1600px;
   padding-bottom: 0;
 }
 .cfg-modal .ant-modal-container {
   display: flex;
   flex-direction: column;
-  height: 75vh;
+  height: 95vh;
   min-height: 640px;
-  max-height: 1000px;
   overflow: hidden;
   border-radius: 12px;
 }
@@ -901,8 +902,11 @@
    không phụ thuộc cha có chiều cao xác định hay không. `min-height: 0` là bắt buộc —
    thiếu nó, flex item không co xuống dưới kích thước nội dung và vẫn tràn. */
 .cfg { display: flex; flex: 1 1 0; min-height: 0; }
+/* Cột phụ co giãn theo bề rộng cửa sổ thay vì cứng 240px: ở 95% màn hình, hai cột
+   cứng trông hụt so với phần giữa, còn màn hẹp thì chúng lại lấn chỗ nhập liệu.
+   `clamp` giữ trong khoảng đọc được — không bao giờ hẹp quá 220px hay rộng quá 340px. */
 .cfg__side {
-  flex: 0 0 240px;
+  flex: 0 1 clamp(220px, 18%, 340px);
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -1002,7 +1006,18 @@
   overflow-y: auto;
   padding-right: 6px;
   padding-bottom: 12px;
+  /* Rải trường thành nhiều cột khi đủ rộng — đây mới là chỗ 95% màn hình phát huy
+     tác dụng: node 64 thuộc tính ở một cột phải cuộn rất dài, chia cột thì thấy được
+     nhiều trường cùng lúc. `auto-fill` + `minmax` tự quyết số cột theo bề rộng thật,
+     không cần điểm gãy cứng. */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0 24px;
+  align-content: start;
 }
+/* Trường dài (biểu thức, bảng khóa–giá trị, mẫu bản tin) chiếm trọn hàng: ép chúng
+   vào một cột hẹp làm mất chỗ gõ và bảng bị bóp méo. */
+.cfg__field--wide { grid-column: 1 / -1; }
 .cfg__field { margin-bottom: 14px; }
 .cfg__field--missing .cfg__label { color: var(--c-err-600, #dc2626); }
 .cfg__label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -1034,16 +1049,20 @@
   .cfg-modal.ant-modal { width: 96vw !important; min-width: 0; }
   .cfg { flex-direction: column; }
   /* Xếp dọc thì hai cột phụ phải **co lại được**, không thì chúng chiếm hết chiều cao
-     theo nội dung và `.cfg__main` còn 0 — vùng trường mất chỗ nên không cuộn được. */
+     theo nội dung và `.cfg__main` còn 0 — vùng trường mất chỗ nên không cuộn được.
+     Trần 14% mỗi cột: ở 22% vùng nhập liệu chỉ còn ~105px, không dùng nổi. */
   .cfg__side {
     flex: 0 1 auto;
-    max-height: 22%;
+    max-height: 14%;
     border-right: 0;
     border-bottom: 1px solid var(--c-border, #e5e7eb);
   }
   .cfg__side:last-child { border-left: 0; }
   /* Giữ phần giữa luôn có chỗ: đây mới là nơi người dùng nhập liệu. */
   .cfg__main { flex: 1 1 0; min-height: 0; }
+  /* Màn hẹp thì một cột: chia đôi ở đây làm mỗi cột hụt bề ngang, nhãn và ô nhập
+     đều bị bó. Ưu tiên đọc được hơn là nhét nhiều trường trên một hàng. */
+  .cfg__fields { grid-template-columns: 1fr; }
 }
 
 /* ---------- Panel kiểm tra (findings) ---------- */
