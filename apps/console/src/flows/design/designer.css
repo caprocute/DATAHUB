@@ -44,6 +44,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Vùng thông tin phụ giữa thanh trên: số chặng, runtime, số lỗi, nút tô đường chạy.
+   Phải là flex — để `display: block` mặc định thì nút nằm inline dính sát chữ, và ở
+   màn hẹp nó rớt dòng đè lên chữ. `min-width: 0` cho phép chữ co lại rồi cắt bằng
+   `…` thay vì đẩy các nút bên phải tràn ra ngoài. */
+.dsg__bar-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+.dsg__bar-sub > .ant-typography {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dsg__bar-sub > button { flex: none; }
+
 .dsg__bar-actions {
   margin-left: auto;
   display: flex;
