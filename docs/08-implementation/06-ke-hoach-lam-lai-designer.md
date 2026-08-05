@@ -75,13 +75,19 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 
 ## 4. G2 — D-01 Danh sách luồng
 
-- [ ] **G2-1.** Bảng: lọc/tìm/sắp xếp/phân trang **phía máy chủ**.
-- [ ] **G2-2.** Cột: mã · tên · trạng thái · phiên bản hiện hành/nháp · `git_commit_ref` ·
-      nguồn→đích · người sửa cuối · thời điểm.
-- [ ] **G2-3.** Thao tác từng dòng: Thiết kế · Chạy thử · Nhật ký · Nhân bản · Đổi tên ·
-      Tạm dừng/Kích hoạt · Xóa nháp (FR-D-002).
+- [x] **G2-1.** Bảng: lọc/tìm/sắp xếp/phân trang **phía máy chủ**. *(kiểm chứng: `size=3`
+      trả 3/`total=4`; `q=demo`→1; `status=DRAFT`→1; `sort` chèn `;DROP TABLE` bị danh
+      sách trắng đẩy về `updated_at`, bảng còn nguyên 4 dòng.)*
+- [x] **G2-2.** Cột: mã · tên · trạng thái · phiên bản hiện hành/nháp · `git_commit_ref` ·
+      nguồn→đích · người sửa cuối · thời điểm. *(thêm cột `route.updated_by`; luồng cũ
+      để NULL — điền giá trị giả là bịa dữ liệu kiểm toán.)*
+- [x] **G2-3.** Thao tác từng dòng: Thiết kế · Chạy thử · Nhật ký · Nhân bản · Đổi tên ·
+      Tạm dừng/Kích hoạt · Xóa nháp (FR-D-002). *(kiểm chứng: đổi tên ghi được
+      `updated_by`; nhân bản ra DRAFT v1 **không** kế thừa `git_commit_ref`; tạm dừng
+      luồng DRAFT → 409, ACTIVE→PAUSED→ACTIVE chạy được; xóa phiên bản đang chạy → 409.)*
 - [x] **G2-4.** Tạo luồng mới: chọn luồng trống hoặc mẫu, kiểm tra trùng mã ngay (FR-D-003).
-- [ ] **G2-5.** Lịch sử phiên bản + so sánh hai phiên bản (FR-D-004).
+- [x] **G2-5.** Lịch sử phiên bản + so sánh hai phiên bản (FR-D-004). *(API
+      `GET /routes/{code}/versions`; `VersionHistory` cho chọn **hai mốc bất kỳ**.)*
 - [x] **G2-6.** Trạng thái rỗng phân biệt "chưa có dữ liệu" và "bộ lọc không khớp".
 
 ## 5. G3 — D-02 Trình thiết kế toàn màn hình
@@ -117,15 +123,22 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 ## 7. G5 — D-04 Chạy thử và D-05 Nhật ký chạy
 
 - [x] **G5-1.** Màn chạy thử riêng: chọn phiên bản, chế độ, bản tin vào, biến môi trường.
-- [ ] **G5-2.** Chặn chạy khi còn lỗi kiểm tra.
+- [x] **G5-2.** Chặn chạy khi còn lỗi kiểm tra. *(kiểm trước khi bấm và khóa nút; máy
+      chủ vẫn là chốt chặn thật. Không kiểm được thì **không** chặn — khóa oan còn tệ hơn.)*
 - [x] **G5-3.** Waterfall theo chặng, bấm chặng xem vào/ra (FR-D-030).
-- [ ] **G5-4.** Tô đường chạy lên sơ đồ khi quay lại D-02 (FR-D-031).
-- [ ] **G5-5.** So sánh hai lần chạy (FR-D-032).
-- [ ] **G5-6.** **Bảng CSDL mới** `ph04.route_test_run` + `route_test_run_stage`
-      (lane L-CTRL) — lưu lịch sử chạy, `traceId`, kết quả từng chặng.
-- [ ] **G5-7.** API danh sách/chi tiết lần chạy; **không ghi bí mật, không ghi PII thô**.
+- [x] **G5-4.** Tô đường chạy lên sơ đồ khi quay lại D-02 (FR-D-031). *(`mapWaterfall` đã
+      có sẵn nhưng **chưa từng được gọi** — `DesignerPage` vẫn truyền `EMPTY_RUN`. Nay
+      tải lần chạy gần nhất và tô, có nút tắt.)*
+- [x] **G5-5.** So sánh hai lần chạy (FR-D-032). *(ghép theo tên chặng, hiện chênh lệch ms.)*
+- [x] **G5-6.** **Bảng CSDL mới** `ph04.route_test_run` + `route_test_run_stage`
+      (lane L-CTRL) — lưu lịch sử chạy, `traceId`, kết quả từng chặng. *(kiểm chứng trên
+      Postgres thật: chạy thử ghi 1 lần chạy + 9 chặng, đọc lại qua API đúng thứ tự.)*
+- [x] **G5-7.** API danh sách/chi tiết lần chạy; **không ghi bí mật, không ghi PII thô**.
+      *(soi bảng: chỉ có tên chặng `receive/schema/authz/…`, không cột nào chứa body/header.)*
 - [x] **G5-8.** Màn nhật ký: lọc theo thời gian/kết quả/người chạy/phiên bản (FR-D-040/041).
-- [ ] **G5-9.** Dọn nhật ký quá 90 ngày, số ngày cấu hình được (FR-D-042).
+- [x] **G5-9.** Dọn nhật ký quá 90 ngày, số ngày cấu hình được (FR-D-042). *(cron 03:15,
+      `lgsp.routes.test-run-retention-days`; kiểm chứng CASCADE: xóa bản ghi 200 ngày tuổi
+      kéo theo chặng con, lần chạy mới còn nguyên.)*
 
 ## 8. G6 — D-06 Duyệt
 
@@ -152,5 +165,6 @@ trước và test được ngay; các màn dựng trên lõi đã chắc.
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-04 | Khởi tạo IP-06 theo quyết định làm lại toàn bộ `src/designer/` |
+| 2026-08-05 | **G2-1/2/3/5 + G5-2/4/5/6/7/9 xong**, kiểm chứng trên hệ thống chạy thật (Postgres + Keycloak + control): lọc/phân trang phía máy chủ; `sort` chèn `;DROP TABLE` bị danh sách trắng chặn, bảng còn nguyên; nhân bản không kế thừa `git_commit_ref`; tạm dừng luồng DRAFT → 409; chạy thử ghi 1 lần chạy + 9 chặng vào `ph04.route_test_run*`, đọc lại đúng thứ tự; soi bảng xác nhận **không lưu nội dung bản tin**; CASCADE dọn nhật ký quá hạn đúng. Test bắt lỗi trước khi lên môi trường: `List.of(...).contains(null)` ném NPE ở `RouteQuery` — `sort` null là trường hợp thường gặp nhất nên **mọi lần liệt kê không sắp xếp đều 500** |
 | 2026-08-04 | **G1-7 xong**: 122 ca lõi xanh. Bộ test bắt lỗi bộ sinh: chặng rẽ nhánh chỉ có một cạnh ra không sinh khối `choice` nên điều kiện trên cạnh biến mất không báo lỗi — luật định tuyến thành chặng chạy vô điều kiện. Sửa: xét theo `BRANCHING` thay vì đếm cạnh. Nghiệm thu: `Started nghiem-thu-choice-mot-nhanh (direct://mot-nhanh)` trên Camel thật |
 | 2026-08-04 | Xong G0–G6. **Nghiệm thu N-2 đạt**: Camel thật khởi động route do bộ sinh mới tạo (`Started nghiem-thu-br-d-04` · BUILD SUCCESS). **N-3/N-4 đo được**: gõ tìm kiếm 13,3 ms (ngưỡng 50) · ảo hóa 297 mục lọc chỉ dựng 18 phần tử DOM · canvas 68% ở 1920px (ngưỡng 60) · không cuộn ngang ở 1024/1280/1440/1920. **N-5**: cửa sổ cấu hình đúng 75% (960px), chia tab theo nhóm gốc. Bốn lỗi sửa dọc đường: `useBlocker` ngoài data router làm trắng trang · thiếu `@xyflow/react/dist/style.css` · thiếu `AntApp` ở gốc khiến `message.success` ném lỗi · thiếu bảng token nên nền node trong suốt |
