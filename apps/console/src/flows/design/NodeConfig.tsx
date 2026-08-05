@@ -591,23 +591,6 @@ export function NodeConfig({
             )}
           </div>
 
-          <div className="cfg__foot">
-            <div className="cfg__foot-left">
-              {node.data.locked ? (
-                <span className="cfg__hint">🔒 Chặng bắt buộc của khung chuẩn — không gỡ được</span>
-              ) : (
-                <Button size="small" danger onClick={() => { onDelete(); onClose() }}>
-                  Gỡ chặng
-                </Button>
-              )}
-            </div>
-            <Typography.Text type="secondary" className="cfg__hint">
-              Esc để đóng · thay đổi áp ngay
-            </Typography.Text>
-            <Button type="primary" onClick={onClose}>
-              Xong
-            </Button>
-          </div>
         </div>
 
         {/* Cột phải — kết quả chạy + ghi chú */}
@@ -634,6 +617,26 @@ export function NodeConfig({
             onChange={(e) => onNote(e.target.value)}
           />
         </aside>
+      </div>
+
+      {/* Chân nút là anh em của `.cfg`, **không** nằm trong cột giữa: nằm trong thì nó
+          trôi theo nội dung và người dùng phải cuộn xuống đáy mới bấm được «Xong». */}
+      <div className="cfg__foot">
+        <div className="cfg__foot-left">
+          {node.data.locked ? (
+            <span className="cfg__hint">🔒 Chặng bắt buộc của khung chuẩn — không gỡ được</span>
+          ) : (
+            <Button size="small" danger onClick={() => { onDelete(); onClose() }}>
+              Gỡ chặng
+            </Button>
+          )}
+        </div>
+        <Typography.Text type="secondary" className="cfg__hint">
+          Esc để đóng · thay đổi áp ngay
+        </Typography.Text>
+        <Button type="primary" onClick={onClose}>
+          Xong
+        </Button>
       </div>
     </Modal>
   )
