@@ -865,7 +865,19 @@
   border-radius: 12px;
 }
 .cfg-modal .ant-modal-header { flex: none; margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--c-border, #e5e7eb); }
-.cfg-modal .ant-modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 0 !important; }
+/* Thân modal phải là **flex container** chứ không chỉ là hộp cao 100%.
+   `.cfg` bên trong dùng `height: 100%`, mà phần trăm chỉ ăn khi cha có chiều cao xác
+   định — antd định cỡ thân bằng flex nên phần trăm không giải ra được, cả chuỗi con
+   tụt về 0 và `overflow-y: auto` ở `.cfg__fields` **không có gì để cuộn**: trường
+   tràn thẳng ra ngoài rồi bị `overflow: hidden` của modal cắt cụt. */
+.cfg-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
 
 .cfg__title { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .cfg__icon {
@@ -885,7 +897,10 @@
 .cfg__desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Ba cột: INPUT │ THAM SỐ │ OUTPUT */
-.cfg { display: flex; height: 100%; min-height: 0; }
+/* `flex: 1 1 0` + `min-height: 0` thay cho `height: 100%`: chiếm hết chỗ cha cho mà
+   không phụ thuộc cha có chiều cao xác định hay không. `min-height: 0` là bắt buộc —
+   thiếu nó, flex item không co xuống dưới kích thước nội dung và vẫn tràn. */
+.cfg { display: flex; flex: 1 1 0; min-height: 0; }
 .cfg__side {
   flex: 0 0 240px;
   min-width: 0;
@@ -945,11 +960,49 @@
 .cfg__tabs-wrap { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding: 0 16px; }
 .cfg__tabs { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 .cfg__tabs .ant-tabs-nav { flex: none; margin-bottom: 8px; }
-.cfg__tabs .ant-tabs-content-holder { flex: 1 1 0; min-height: 0; overflow: hidden; }
-.cfg__tabs .ant-tabs-content, .cfg__tabs .ant-tabs-tabpane { height: 100%; }
+/* antd 6 đổi tên `.ant-tabs-content-holder` thành `.ant-tabs-body-holder`; giữ cả hai
+   để không phụ thuộc phiên bản. Trước đó quy tắc trỏ vào tên cũ **không khớp phần tử
+   nào**, nên cả chuỗi chiều cao đứt ngay tại đây. */
+.cfg__tabs .ant-tabs-content-holder,
+.cfg__tabs .ant-tabs-body-holder {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* antd bản mới chèn thêm `.ant-tabs-body` giữa holder và content. Nó là `display:
+   block` nên tự co theo nội dung (đo được 12px) và bóp chết cả nhánh dưới — phải kéo
+   nó vào chuỗi flex, không thì vùng cuộn gần như không có chiều cao. */
+.cfg__tabs .ant-tabs-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* Chuỗi `height: 100%` lồng nhiều tầng không giải ra được vì các tầng trên định cỡ
+   bằng flex chứ không có chiều cao xác định — kết quả là `.cfg__fields` phình theo
+   nội dung (đo được 4007px) và `overflow-y: auto` **không có gì để cuộn**, trường bị
+   cắt cụt ở đáy cửa sổ. Dùng flex suốt chuỗi để mỗi tầng nhận đúng chỗ cha cho. */
+.cfg__tabs .ant-tabs-content {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cfg__tabs .ant-tabs-tabpane { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 .cfg__tabnum { font-size: 10px; color: var(--c-text-3, #6b7280); }
 
-.cfg__fields { height: 100%; overflow-y: auto; padding-right: 6px; padding-bottom: 12px; }
+/* Đây là vùng cuộn thật của cửa sổ cấu hình. `flex: 1 1 0` + `min-height: 0` để nó
+   nhận đúng chiều cao còn lại và co được xuống dưới kích thước nội dung — thiếu
+   `min-height: 0` thì flex item không co, lại tràn như cũ. */
+.cfg__fields {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+  padding-bottom: 12px;
+}
 .cfg__field { margin-bottom: 14px; }
 .cfg__field--missing .cfg__label { color: var(--c-err-600, #dc2626); }
 .cfg__label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
@@ -980,8 +1033,17 @@
 @media (max-width: 1024px) {
   .cfg-modal.ant-modal { width: 96vw !important; min-width: 0; }
   .cfg { flex-direction: column; }
-  .cfg__side { flex: none; border-right: 0; border-bottom: 1px solid var(--c-border, #e5e7eb); }
+  /* Xếp dọc thì hai cột phụ phải **co lại được**, không thì chúng chiếm hết chiều cao
+     theo nội dung và `.cfg__main` còn 0 — vùng trường mất chỗ nên không cuộn được. */
+  .cfg__side {
+    flex: 0 1 auto;
+    max-height: 22%;
+    border-right: 0;
+    border-bottom: 1px solid var(--c-border, #e5e7eb);
+  }
   .cfg__side:last-child { border-left: 0; }
+  /* Giữ phần giữa luôn có chỗ: đây mới là nơi người dùng nhập liệu. */
+  .cfg__main { flex: 1 1 0; min-height: 0; }
 }
 
 /* ---------- Panel kiểm tra (findings) ---------- */
