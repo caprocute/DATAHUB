@@ -1,0 +1,10 @@
+# Ví dụ route YAML dùng chung (GitOps / designer) — đồng bộ với camel/dancu
+- route:
+    id: ping-health
+    from:
+      uri: direct:health
+      steps:
+        - setBody:
+            constant: "lgsp-camel-dancu:ok"
+        - log:
+            message: "ping ${body}"

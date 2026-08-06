@@ -34,6 +34,13 @@ export interface SeqEdgeData extends Record<string, unknown> {
   when?: string;
   /** Nhánh mặc định của `choice`. */
   otherwise?: boolean;
+  /**
+   * Tên khe nhánh trong DSL (`steps`, `doCatch`, `doFinally`, `when`, `otherwise`).
+   *
+   * Do `flatten.ts` (K1) đặt khi chiếu cây xuống sơ đồ — nhờ nó mà cạnh biết mình
+   * thuộc nhánh nào để vẽ nhãn và để dựng ngược về đúng khe cũ.
+   */
+  slot?: string;
 }
 
 export type SeqEdge = Edge<SeqEdgeData>;

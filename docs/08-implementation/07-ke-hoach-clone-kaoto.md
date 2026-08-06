@@ -118,8 +118,31 @@ K6 (DataMapper) để cuối vì nó là hạng mục nặng nhất và phụ th
 
 > Thay `apps/console/src/flows/core/`. Đây là gói rủi ro cao nhất của cả đợt.
 
-- [ ] **K1-1.** Thêm phụ thuộc `yaml` (eemeli/yaml). Lý do chọn: giữ được **comment** và
-      thứ tự khóa khi round-trip.
+### 3.0. Khảo sát trước khi viết — lỗi #6 *(mất cấu trúc lồng, im lặng)*
+
+Đo bằng round-trip thật trên bộ mẫu (2026-08-06). Kết quả **nghiêm trọng hơn lỗi #5**:
+
+| Cấu trúc | Bộ đọc báo | Thực tế sau round-trip |
+|---|---|---|
+| `doTry` | **OK** | `doTry: {}` — mất cả `steps` được bảo vệ **lẫn toàn bộ `doCatch`** |
+| `loadBalance` | **OK** | `loadBalance: {}` — mất hết nhánh cân tải |
+| `multicast` | **OK** | `multicast: {}` — mất hết nhánh |
+| `split` | **OK** | mất `steps` con, chỉ còn biểu thức |
+| nhiều route/tệp | lỗi rõ ràng | — |
+| Kamelet · Pipe · `routeConfiguration` | lỗi rõ ràng | — |
+
+Ba dòng cuối **báo lỗi đàng hoàng** nên người dùng biết đường tránh. Bốn dòng đầu mới là
+vấn đề: bộ đọc **báo thành công** rồi lặng lẽ vứt cây con. Mở một luồng có `doTry` để xem
+rồi bấm lưu là **xóa sạch nhánh xử lý lỗi** — không cảnh báo, và YAML sinh ra vẫn hợp lệ
+nên Camel vẫn nạp được, y hệt cơ chế của lỗi #5.
+
+Đây là lý do K1 **thay lõi** chứ không vá: nguồn gốc là mô hình phẳng
+`StageNode[]`/`SeqEdge[]` không có chỗ biểu diễn cây con, nên mọi bộ đọc viết trên nó đều
+sẽ phải vứt dữ liệu ở đúng chỗ này.
+
+- [x] **K1-1.** Thêm phụ thuộc `yaml` (eemeli/yaml) — **2.9.0, không phụ thuộc con**, và
+      `vite` đã kéo sẵn nên dedupe, chi phí bundle thực tế thấp hơn ước tính ban đầu.
+      Lý do chọn: giữ được **comment** và thứ tự khóa khi round-trip.
 
       > **Đây không phải tiện nghi — là lỗi mất dữ liệu đang tồn tại, đã kiểm chứng.**
       > Cả **5/5** tệp trong `routes/` đều có comment, kể cả luồng đang chạy
@@ -134,22 +157,24 @@ K6 (DataMapper) để cuối vì nó là hạng mục nặng nhất và phụ th
       > Dấu vết `routeCode`/`version` **không bị xóa lộ liễu mà bị thay bằng banner trông cũng
       > chính thống như vậy** — nhìn tệp sau đó không ai biết là đã mất. BR-D-06 yêu cầu ghi
       > nhật ký mọi thay đổi, nên đây là lỗi kiểm toán. N-3 là **cổng chặn**.
-- [ ] **K1-2.** `resource.ts` — lớp `CamelResource`:
+- [x] **K1-2.** `tree.ts` — lớp `CamelResource`:
       ```text
       CamelResource (1 file YAML)
         ├── kind: Route | Kamelet | Pipe | Test
         ├── entities: VisualEntity[]        # nhiều route trong một file
         └── beans / metadata                # K5
       ```
-- [ ] **K1-3.** `entity.ts` — `VisualEntity`: cây node lồng nhau thay đồ thị phẳng.
+- [x] **K1-3.** `tree.ts` — `VisualEntity` + `StepNode.branches`: cây node lồng nhau thay đồ thị phẳng.
       Mỗi node có **đường dẫn** (`route.from.steps.2.choice.when.0`) thay vì mã sinh tăng dần —
       đây là điều làm `doTry`/`loadBalance` lồng biểu diễn được, và **loại bỏ hẳn lỗi #2**
       của IP-06 vì không còn bộ đếm.
-- [ ] **K1-4.** `serialize.ts` — cây → YAML qua thư viện, giữ comment.
-- [ ] **K1-5.** `deserialize.ts` — YAML → cây. **Không còn khái niệm "ngoài tập con"**:
-      mọi cấu trúc Camel YAML hợp lệ phải đọc được, kể cả `doTry`, `loadBalance`,
-      nhiều route một file, `routeConfiguration`.
-- [ ] **K1-6.** `flatten.ts` — cây → `StageNode[]`/`SeqEdge[]` cho XYFlow vẽ.
+- [x] **K1-4.** `serialize.ts` — cây → YAML qua thư viện, giữ comment.
+      *(Comment mở đầu tệp route **không** nằm ở `doc.commentBefore` mà ở `items[0].commentBefore` —
+      đúng chỗ `GitOpsPublisher` ghi dòng xuất xứ. Test bắt được thiếu sót này ngay lần chạy đầu.)*
+- [x] **K1-5.** `deserialize.ts` — YAML → cây. **Không còn khái niệm "ngoài tập con"**:
+      đọc được `doTry`/`loadBalance`/`multicast`/`split` **kèm cây con**, nhiều route một
+      tệp, `routeConfiguration`, Kamelet, Pipe.
+- [x] **K1-6.** `flatten.ts` — cây → `StageNode[]`/`SeqEdge[]` cho XYFlow vẽ.
       **Giữ nguyên ADR-017**: XYFlow vẫn là động cơ vẽ, chỉ đổi nguồn dữ liệu.
       Node lồng hiện thành nhóm gập được, không phải cạnh phẳng.
 - [ ] **K1-7.** `validate.ts` — sửa theo Q1: chặng khung chuẩn thành **cảnh báo**
@@ -305,4 +330,5 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 | Ngày | Thay đổi |
 |---|---|
 | 2026-08-05 | Khởi tạo IP-07 sau khi chốt Q1–Q5. Phân tích hiện trạng: catalog **đã có đủ 742 lược đồ** (thiếu màn duyệt, không thiếu dữ liệu); nút thắt thật là mô hình phẳng `StageNode[]`/`SeqEdge[]` ở `core/model.ts` và bộ YAML tự viết chỉ đọc được tập con nó sinh ra; `route_type` hiện mang nghĩa vận chuyển (`SYNC`) nên Kamelet/Pipe/Test cần cột `resource_kind` riêng |
+| 2026-08-06 | **K1-1…K1-6 xong.** `tree.ts` + `deserialize.ts` + `serialize.ts` + `flatten.ts`, 22 ca test mới (148 tổng). Nghiệm thu trên **Camel 4.18.2 thật**: `k1-nested` (doTry+doCatch+doFinally+choice 2 nhánh+multicast) và `k1-multi-a`/`k1-multi-b` (nhiều route một tệp — thứ lõi cũ **không mở nổi**) đều `Started`. Hai lỗi của chính bộ sinh mới bị test/Camel bắt kịp thời: (1) `otherwise` ghi thành **danh sách trần** → Camel từ chối `Unsupported type: SEQUENCE`; lược đồ vendor **không** phát hiện được vì thuộc tính `steps` của `otherwise` khai là null — phải ghi dạng đối tượng bọc `steps`; (2) `constant` ghi **hai lần** vì khóa ngôn ngữ dạng chuỗi rơi vào `props` còn dạng đầy đủ rơi vào `rest`, dọn thiếu một bên. Thêm `K1ChoiceOrderTest` chứng minh thứ tự khóa `otherwise` trước `when` **không** đổi ngữ nghĩa định tuyến (a=1→nhanh-mot, a=2→nhanh-hai, a=99→nhanh-khac) — "route khởi động được" không đủ, đúng bài học lỗi #5 |
 | 2026-08-05 | **Chạy round-trip thật trên tệp trong `routes/` khi khảo sát — lộ hai lỗi mất dữ liệu đang tồn tại.** (1) Comment xuất xứ do `GitOpsPublisher` ghi (`# routeCode=at-5812634 version=1`) bị **thay bằng banner mặc định**, không phải xóa lộ liễu — mất dấu vết kiểm toán mà nhìn tệp không nhận ra (BR-D-06). (2) `setBody: {constant: "…"}` round-trip thành `expression: {}` — **nội dung bản tin biến mất im lặng**, mà route vẫn nạp được bằng Camel nên BR-D-04 không bắt được. Lỗi (2) ghi thành **lỗi #5** + gói **K0** để sửa ngay, không đợi hết đợt |
