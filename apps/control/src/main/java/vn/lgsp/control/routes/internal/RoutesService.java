@@ -69,12 +69,11 @@ class RoutesService implements RoutesApi {
   private final GitOpsPublisher gitOps;
 
   /**
-   * Bắt buộc khung chín chặng khi publish (IP-07 K1-7b).
+   * Bắt buộc khung chuẩn khi publish **luồng đối ngoại** (IP-07 K1-7b, BR-D-01).
    *
-   * Mặc định **tắt** để giữ nguyên hành vi hiện tại: chưa có khái niệm "luồng đối ngoại"
-   * trong mã lẫn SRS, nên tự đặt ra luật phân loại ở đây là quyết định chính sách vượt
-   * quyền. Bật cờ này thì mọi route thiếu chặng đều bị chặn publish. Khi SRS chốt cách
-   * phân biệt đối ngoại/nội bộ thì thay cờ bằng thuộc tính của từng luồng.
+   * Mặc định **tắt**: bốn luồng hiện có đều là luồng thử, `source_system` không khớp hồ sơ
+   * kết nạp nào, nên bật sớm chỉ tăng rủi ro chặn oan mà không chặn thêm gì. Bật khi đã có
+   * luồng đối ngoại thật.
    */
   private final boolean strictExternal;
 
@@ -87,6 +86,24 @@ class RoutesService implements RoutesApi {
     this.validator = validator;
     this.gitOps = gitOps;
     this.strictExternal = strictExternal;
+  }
+
+  /**
+   * Luồng **đối ngoại** hay không (BR-D-01 §10.1).
+   *
+   * Định nghĩa nghiệp vụ: `source_system` khớp mã một hệ thống **đã kết nạp và đang hiệu
+   * lực** ở PH-01.
+   *
+   * **Vì sao chưa hỏi thẳng PH-01.** Gọi `OnboardingApi` từ đây làm `ApplicationModules
+   * .verify()` đỏ: cả hai mô-đun đều khai `allowedDependencies = "shared"`, tức là kiến
+   * trúc **cố ý** giữ chúng độc lập. Mở phụ thuộc `routes → onboarding` là quyết định
+   * kiến trúc (cần ADR), không phải chi tiết cài đặt — xem IP-07 K1-7c.
+   *
+   * Tạm thời: bật cờ thì coi **mọi route** là đối ngoại. Không bật thì giữ nguyên hành vi
+   * hiện tại. Không đoán bừa theo tên hệ thống — đoán sai thì chặn oan hoặc thả lọt.
+   */
+  private boolean isExternal(String routeCode) {
+    return strictExternal;
   }
 
   /** Loại tài nguyên của một luồng; thiếu dữ liệu thì coi là `ROUTE` (IP-07 K2-5). */
@@ -296,7 +313,7 @@ class RoutesService implements RoutesApi {
     }
     ValidationResultDto v =
         validator.validate(
-            stripCanvasMarker(current.definitionYaml()), kindOf(routeCode), strictExternal);
+            stripCanvasMarker(current.definitionYaml()), kindOf(routeCode), isExternal(routeCode));
     if (!v.valid()) {
       throw new RouteValidationException("chặn publish — YAML lỗi", v);
     }

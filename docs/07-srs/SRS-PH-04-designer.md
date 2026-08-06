@@ -362,10 +362,15 @@ sơ kết nạp ở trạng thái `APPROVED`/`ACTIVE` trong PH-01. Luồng nội
 `direct:`/`seda:`, tiện ích, thử nghiệm) chỉ nhận cảnh báo.
 
 > ⚠ **Trạng thái thi hành.** Cơ chế đã có (`CamelYamlValidator` + cờ
-> `lgsp.routes.strict-standard-stages`), nhưng **mặc định tắt** cho tới khi có luồng đối
-> ngoại thật: bốn luồng hiện có trong CSDL đều là luồng thử, `source_system` (`at-src`,
-> `console`, `src`) không khớp hồ sơ kết nạp nào. Bật sớm thì không chặn gì thêm mà chỉ
-> tăng rủi ro chặn oan.
+> `lgsp.routes.strict-standard-stages`), **mặc định tắt**. Bốn luồng hiện có trong CSDL đều
+> là luồng thử, `source_system` (`at-src`, `console`, `src`) không khớp hồ sơ kết nạp nào.
+>
+> **Phần tra danh mục PH-01 chưa nối được.** `OnboardingApi.isOnboardedSystem()` đã có,
+> nhưng gọi nó từ mô-đun `routes` làm `ApplicationModules.verify()` đỏ: cả hai mô-đun đều
+> khai `allowedDependencies = "shared"`, tức kiến trúc **cố ý** giữ PH-01 và PH-04 độc lập.
+> Mở phụ thuộc này là **quyết định kiến trúc cần ADR**. Ba lối đi và trạng thái chờ ghi ở
+> [IP-07 K1-7c](../08-implementation/07-ke-hoach-clone-kaoto.md). Trong khi chờ: bật cờ thì
+> coi mọi route là đối ngoại; **không đoán theo tên hệ thống**.
 
 ### 10.2. BR-D-04b — vì sao BR-D-04 một mình không đủ
 

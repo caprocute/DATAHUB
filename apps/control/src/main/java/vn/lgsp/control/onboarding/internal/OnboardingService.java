@@ -470,6 +470,25 @@ class OnboardingService implements OnboardingApi {
         MAPPER);
   }
 
+  @Override
+  public boolean isOnboardedSystem(String systemCode) {
+    if (systemCode == null || systemCode.isBlank()) {
+      return false;
+    }
+    // So khớp không phân biệt hoa thường: `source_system` của luồng do người dùng gõ tay,
+    // còn `system_code` do quy trình kết nạp sinh — hai bên khác kiểu chữ là chuyện thường.
+    Integer hit =
+        jdbc.query(
+            """
+            SELECT 1 FROM ph01.application
+            WHERE LOWER(system_code) = LOWER(?) AND status IN ('APPROVED', 'ACTIVE')
+            LIMIT 1
+            """,
+            rs -> rs.next() ? 1 : null,
+            systemCode);
+    return hit != null;
+  }
+
   /* ---------- Tệp đính kèm (FR-01-003) ---------- */
 
   @Override

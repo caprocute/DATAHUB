@@ -56,6 +56,16 @@ public interface OnboardingApi {
   /** Hồ sơ tới hạn rà soát quyền — dùng cho danh sách nhắc việc (FR-01-013). */
   List<ApplicationDto> dueForAccessReview();
 
+  /**
+   * Mã hệ thống đó đã kết nạp và đang hiệu lực hay chưa (`APPROVED`/`ACTIVE`).
+   *
+   * PH-04 dùng để biết một luồng có phải **đối ngoại** không: luồng có `source_system`
+   * khớp một hệ thống đã kết nạp thì phải đủ khung chuẩn mới publish được (BR-D-01).
+   * Trả về qua API mô-đun thay vì cho PH-04 đọc thẳng bảng `ph01.*` — ranh giới
+   * Modulith cấm truy cập `internal/` xuyên mô-đun.
+   */
+  boolean isOnboardedSystem(String systemCode);
+
   /* ---------- Tệp đính kèm (FR-01-003) ---------- */
 
   AttachmentDto attach(

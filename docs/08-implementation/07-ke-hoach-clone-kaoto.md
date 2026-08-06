@@ -207,17 +207,34 @@ sẽ phải vứt dữ liệu ở đúng chỗ này.
       > không phải hệ quả của K1. Xử lý ở **K2-6** thay vì lặng lẽ bỏ qua.
 
 - [~] **K1-7b.** `CamelYamlValidator` nâng chặng khung chuẩn lên `ERROR` để `publish()`
-      chặn thật — **đã làm phần cơ chế**, có test chứng minh chặn được (bỏ cờ đi thì test đỏ).
+      chặn thật — **cơ chế xong**, có test chứng minh chặn được (bỏ cờ đi thì test đỏ).
+      Bật theo cờ `lgsp.routes.strict-standard-stages`, **mặc định tắt**.
 
-      > ⚠ **Điều còn thiếu là quyết định chính sách, không phải mã.** Bật theo cờ
-      > `lgsp.routes.strict-standard-stages`, **mặc định tắt** để giữ nguyên hành vi hiện tại.
-      > Lý do không tự bật: **chưa có khái niệm "luồng đối ngoại" trong mã lẫn SRS** —
-      > `source_system`/`target_system` là chuỗi tự do, không có cờ nào phân biệt đối ngoại
-      > với nội bộ. Tự đặt ra luật phân loại ở đây là quyết định chính sách vượt quyền, mà
-      > đoán sai thì hoặc chặn oan luồng nội bộ hoặc thả lọt luồng đối ngoại.
+- [ ] **K1-7c.** *(mới — chặn bởi ranh giới kiến trúc)* Nối định nghĩa "luồng đối ngoại"
+      vào danh mục hệ thống thành viên PH-01.
+
+      > **Đã làm được.** `OnboardingApi.isOnboardedSystem(systemCode)` — hỏi PH-01 xem một
+      > mã hệ thống đã kết nạp và đang hiệu lực (`APPROVED`/`ACTIVE`) chưa. Đặt ở API mô-đun
+      > vì PH-01 mới là chủ quản của câu hỏi này.
       >
-      > **Cần chủ dự án chốt**: phân biệt đối ngoại/nội bộ bằng gì? Khi có câu trả lời thì
-      > thay cờ toàn cục bằng thuộc tính của từng luồng.
+      > **Chỗ vướng.** Gọi API đó từ `RoutesService` làm `ApplicationModules.verify()` **đỏ**:
+      > ```text
+      > Module 'routes' depends on named interface(s) 'onboarding :: api'
+      > ... Allowed targets: shared.
+      > ```
+      > Cả `routes` lẫn `onboarding` đều khai `allowedDependencies = "shared"` — kiến trúc
+      > **cố ý** giữ hai phân hệ độc lập, và `shared` hiện trống rỗng chứ không phải chỗ đổ
+      > đồ chung. Mở phụ thuộc `routes → onboarding` là **quyết định kiến trúc cần ADR**,
+      > không phải chi tiết cài đặt nên tôi không tự mở.
+      >
+      > **Ba lối đi, cần chủ dự án chọn:** (a) ADR mới cho phép `routes → onboarding :: api`;
+      > (b) PH-01 phát **sự kiện** khi hệ thống được kết nạp, PH-04 giữ bản sao đọc — đúng
+      > tinh thần Modulith nhưng tốn công hơn; (c) thêm cột `is_external` cho từng luồng,
+      > người tạo tự chọn — không cần đụng ranh giới mô-đun.
+      >
+      > Trong khi chờ: bật cờ thì coi **mọi route** là đối ngoại; không bật thì giữ nguyên
+      > hành vi hiện tại. **Không đoán theo tên hệ thống** — đoán sai thì chặn oan hoặc thả lọt.
+
 - [x] **K1-8.** Test lõi: **152 ca xanh** (122 cũ + 30 mới), gồm 4 ca chặn lỗi cũ (§1),
       round-trip giữ comment, `doTry`/`loadBalance`/`multicast`/`split`, nhiều route một tệp,
       Kamelet, Pipe, `routeConfiguration`, và ca **quay vòng hai lần cho kết quả y hệt**
