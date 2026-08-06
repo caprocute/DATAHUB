@@ -187,4 +187,53 @@ class CamelYamlValidatorTest {
     assertThat(validator.validate(PIPE, CamelYamlValidator.ResourceKind.ROUTE, false).valid())
         .isFalse();
   }
+
+  /* ---------- IP-07 K5-4 — BR-D-02 ---------- */
+
+  private static String routeWithBean(String propLine) {
+    return """
+        - beans:
+            - name: khoBiMat
+              type: vn.lgsp.KhoBiMat
+              properties:
+        %s
+        - route:
+            id: r
+            from:
+              uri: direct:start
+              steps:
+                - log:
+                    message: "receive schema authz transform enrich route deliver audit respond"
+        """
+        .formatted(propLine);
+  }
+
+  @Test
+  void chanBiMatGhiThangVaoBean() {
+    var r = validator.validate(routeWithBean("        password: matkhau-that"));
+    assertThat(r.valid()).isFalse();
+    assertThat(r.findings()).anyMatch(f -> "SECRET".equals(f.code()));
+  }
+
+  /**
+   * Mẫu cũ chặn cả tham chiếu Vault — tức là **cấm đúng cách làm mà BR-D-02 yêu cầu**.
+   * Người dùng làm đúng vẫn bị chặn publish thì họ sẽ tìm cách lách, và đó mới là rủi ro thật.
+   */
+  @Test
+  void khongChanThamChieuVaultVaBean() {
+    assertThat(validator.validate(routeWithBean("        password: '{{vault:lgsp/db#password}}'")).valid())
+        .isTrue();
+    assertThat(validator.validate(routeWithBean("        password: '#khoBiMat'")).valid()).isTrue();
+    assertThat(validator.validate(routeWithBean("        apiKey: '{{lgsp.api.key}}'")).valid())
+        .isTrue();
+  }
+
+  /** `token` là khóa bí mật rất thường gặp mà mẫu cũ cho lọt. */
+  @Test
+  void chanCaTokenChuKhongRiengPassword() {
+    for (String key : new String[] {"token", "apiKey", "api_key", "clientSecret", "privateKey"}) {
+      var r = validator.validate(routeWithBean("        " + key + ": lo-that"));
+      assertThat(r.valid()).as("khóa %s lẽ ra phải bị chặn", key).isFalse();
+    }
+  }
 }

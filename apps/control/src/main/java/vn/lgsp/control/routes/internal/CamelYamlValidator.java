@@ -14,9 +14,27 @@ import vn.lgsp.control.routes.api.ValidationResultDto;
 @Component
 class CamelYamlValidator {
 
+  /**
+   * Bí mật ghi thẳng vào định nghĩa luồng (BR-D-02).
+   *
+   * <p>Hai điều đã sửa ở IP-07 K5-4, đều kiểm chứng bằng cách chạy chính biểu thức này:
+   *
+   * <ol>
+   *   <li><b>Bỏ sót {@code token}</b> — khóa bí mật rất thường gặp mà mẫu cũ cho lọt.
+   *   <li><b>Chặn nhầm tham chiếu hợp lệ</b> — mẫu cũ khớp cả
+   *       {@code password: '{{vault:lgsp/db#password}}'}, tức là **cấm đúng cách làm mà
+   *       BR-D-02 yêu cầu**. Người dùng làm đúng vẫn bị chặn publish thì họ sẽ tìm cách
+   *       lách, và đó mới là rủi ro thật.
+   * </ol>
+   *
+   * <p>Giữ đồng bộ với {@code beans.ts} phía console — console cảnh báo sớm, đây là chốt chặn.
+   */
   private static final Pattern SECRET_PATTERN =
       Pattern.compile(
-          "(?i)(password|client[_-]?secret|api[_-]?key|private[_-]?key)\\s*[:=]\\s*\\S+");
+          "(?i)(password|client[_-]?secret|api[_-]?key|private[_-]?key|token)\\s*[:=]\\s*"
+              // Không tính là lộ khi giá trị chỉ **trỏ tới** kho bí mật:
+              // `{{...}}` placeholder Camel · `#bean` · `vault:`/`secret:`.
+              + "(?!['\"]?(\\{\\{|#|vault:|secret:))\\S+");
 
   private static final String[] REQUIRED_STAGES = {
     "receive", "schema", "authz", "transform", "enrich", "route", "deliver", "audit", "respond"
