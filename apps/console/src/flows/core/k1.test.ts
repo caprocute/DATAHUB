@@ -300,3 +300,96 @@ describe('K1 — tệp thật trong repo (N-9 tương thích ngược)', () => {
     });
   }
 });
+
+describe('K1-8 — round-trip nguyên vẹn trên tệp phức tạp', () => {
+  /**
+   * Cổng ra của K1: một tệp gom đủ thứ lõi cũ làm hỏng — `doTry` ba khe, `choice` nhiều
+   * nhánh, EIP lồng trong EIP, nhiều route một tệp, comment ở đầu — phải quay vòng
+   * **không mất một mẩu nào**.
+   */
+  const COMPLEX = `# Tệp nghiệm thu K1 — không được mất gì
+- route:
+    id: phuc-tap
+    from:
+      uri: direct:vao
+      steps:
+        - doTry:
+            steps:
+              - to:
+                  uri: http://dich-vu-ngoai
+              - split:
+                  simple: \${body}
+                  steps:
+                    - log:
+                        message: tung-phan-tu
+            doCatch:
+              - exception:
+                  - java.io.IOException
+                steps:
+                  - log:
+                      message: loi-mang
+              - exception:
+                  - java.lang.Exception
+                steps:
+                  - log:
+                      message: loi-khac
+            doFinally:
+              steps:
+                - log:
+                    message: don-dep
+        - choice:
+            when:
+              - simple: \${header.loai} == 'A'
+                steps:
+                  - multicast:
+                      steps:
+                        - to:
+                            uri: kafka:chu-de-1
+                        - to:
+                            uri: kafka:chu-de-2
+              - simple: \${header.loai} == 'B'
+                steps:
+                  - setBody:
+                      constant: loai-B
+            otherwise:
+              steps:
+                - log:
+                    message: khong-ro-loai
+- route:
+    id: phuc-tap-2
+    from:
+      uri: direct:vao-2
+      steps:
+        - log:
+            message: route-thu-hai`;
+
+  it('giữ đủ mọi giá trị, không sinh khối rỗng', () => {
+    const out = rt(COMPLEX);
+    const phaiCon = [
+      'Tệp nghiệm thu K1',
+      'http://dich-vu-ngoai', 'tung-phan-tu',
+      'java.io.IOException', 'loi-mang',
+      'java.lang.Exception', 'loi-khac',
+      'don-dep',
+      'kafka:chu-de-1', 'kafka:chu-de-2',
+      'loai-B', 'khong-ro-loai',
+      'phuc-tap', 'phuc-tap-2', 'route-thu-hai',
+      'direct:vao', 'direct:vao-2',
+    ];
+    for (const v of phaiCon) expect(out, `mất "${v}"`).toContain(v);
+    expect(out, 'có khối rỗng — dấu hiệu mất cấu trúc').not.toMatch(/:\s*\{\}\s*$/m);
+  });
+
+  it('quay vòng hai lần cho kết quả y hệt (ổn định, không bào mòn dần)', () => {
+    const mot = rt(COMPLEX);
+    const hai = serialize(deserialize(mot), mot);
+    expect(hai).toBe(mot);
+  });
+
+  it('giữ đúng hai route và đúng ba khe của doTry', () => {
+    const res = deserialize(COMPLEX);
+    expect(res.entities).toHaveLength(2);
+    const doTry = res.entities[0].steps.find((s) => s.name === 'doTry')!;
+    expect(doTry.branches.map((b) => b.slot).sort()).toEqual(['doCatch','doCatch','doFinally','steps']);
+  });
+});

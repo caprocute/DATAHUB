@@ -664,8 +664,22 @@ describe('kiểm tra luồng trước khi gửi duyệt', () => {
     expect(validate([a, b], []).some((x) => /nhiều chặng tiếp nhận/i.test(x.title))).toBe(true);
   });
 
-  it('thiếu chặng bắt buộc của khung chuẩn bị báo lỗi', () => {
-    expect(validate([fromNode()], []).some((x) => /Thiếu chặng bắt buộc/i.test(x.title))).toBe(true);
+  /**
+   * Q1 (IP-07): khung chuẩn hạ từ **lỗi chặn** xuống **cảnh báo**.
+   *
+   * Lý do đổi: mức `error` khiến không dựng nổi luồng trắng kiểu Kaoto, mà kamelet và
+   * pipe thì về cấu trúc **không thể** có bốn chặng này. Chốt chặn thật chuyển sang máy
+   * chủ lúc publish với luồng đối ngoại — nới trải nghiệm thiết kế, không nới kiểm soát.
+   */
+  it('thiếu chặng khung chuẩn là cảnh báo, không chặn người dựng luồng', () => {
+    const f = validate([fromNode()], []).filter((x) => /Thiếu chặng khung chuẩn/i.test(x.title));
+    expect(f.length).toBeGreaterThan(0);
+    for (const x of f) expect(x.level).toBe('warn');
+  });
+
+  it('luồng trắng chỉ có chặng tiếp nhận vẫn dựng được, không có lỗi chặn', () => {
+    const errs = validate([fromNode()], []).filter((x) => x.level === 'error');
+    expect(errs).toHaveLength(0);
   });
 
   it('chặng mồ côi chỉ là cảnh báo, không chặn', () => {

@@ -177,14 +177,43 @@ sẽ phải vứt dữ liệu ở đúng chỗ này.
 - [x] **K1-6.** `flatten.ts` — cây → `StageNode[]`/`SeqEdge[]` cho XYFlow vẽ.
       **Giữ nguyên ADR-017**: XYFlow vẫn là động cơ vẽ, chỉ đổi nguồn dữ liệu.
       Node lồng hiện thành nhóm gập được, không phải cạnh phẳng.
-- [ ] **K1-7.** `validate.ts` — sửa theo Q1: chặng khung chuẩn thành **cảnh báo**
-      (`severity: warning`), không phải lỗi chặn. Giữ nguyên các lỗi thật (thiếu tham số
-      bắt buộc, node mồ côi, `choice` không vét cạn).
-- [ ] **K1-8.** Test lõi ≥ 120 ca: 4 ca chặn lỗi cũ (§1) + round-trip **giữ comment** +
-      `doTry`/`loadBalance`/multi-route + 3 loại tài nguyên mới.
+- [x] **K1-7.** `validate.ts` — sửa theo Q1: chặng khung chuẩn thành **cảnh báo**, không
+      phải lỗi chặn. Giữ nguyên các lỗi thật (thiếu tham số bắt buộc, node mồ côi,
+      `choice` không vét cạn). Luồng trắng chỉ có chặng tiếp nhận nay **không còn lỗi chặn**.
 
-**Cổng ra K1:** `npm test` xanh, và round-trip một file YAML Camel thật lấy từ `routes/`
-cho ra **đúng byte** ban đầu (trừ khác biệt thụt lề đã chuẩn hóa).
+      > ⚠ **Đính chính giả định của Q1.** Q1 nói "cảnh báo lúc thiết kế, **vẫn chặn lúc
+      > publish** với luồng đối ngoại". Soi mã `CamelYamlValidator` thì **chốt chặn đó chưa
+      > từng tồn tại**: `REQUIRED_STAGES` ở máy chủ vốn đã phát mức `WARN`, mà `publish()`
+      > chỉ chặn khi có finding mức `ERROR` (`RoutesService:257`).
+      >
+      > Nghĩa là hạ mức ở console **không nới lỏng kiểm soát nào đang có** — nhưng cũng
+      > nghĩa là **hiện không tầng nào bắt buộc khung chuẩn**. Đây là khoảng trống có thật,
+      > không phải hệ quả của K1. Xử lý ở **K2-6** thay vì lặng lẽ bỏ qua.
+
+- [ ] **K1-7b.** *(mới, do đính chính trên)* `CamelYamlValidator`: phân biệt **luồng đối
+      ngoại** với luồng nội bộ/kamelet/pipe, và với luồng đối ngoại thì nâng chặng khung
+      chuẩn lên `ERROR` để `publish()` chặn thật. Cần cột `resource_kind` của K2-5 để biết
+      loại tài nguyên, nên làm cùng K2.
+- [x] **K1-8.** Test lõi: **152 ca xanh** (122 cũ + 30 mới), gồm 4 ca chặn lỗi cũ (§1),
+      round-trip giữ comment, `doTry`/`loadBalance`/`multicast`/`split`, nhiều route một tệp,
+      Kamelet, Pipe, `routeConfiguration`, và ca **quay vòng hai lần cho kết quả y hệt**
+      (chứng minh không bào mòn dần qua mỗi lần lưu).
+
+**Cổng ra K1 — ✅ đạt (2026-08-06).** `npm test` 152 ca xanh, `tsc --noEmit` sạch, và
+tệp nghiệm thu gom đủ cấu trúc khó (`doTry` ba khe + `split` lồng trong `doTry` +
+`choice` nhiều nhánh + `multicast` lồng trong `when` + hai route một tệp + comment đầu tệp)
+**chạy đúng trên Camel 4.18.2 thật**, không chỉ khởi động được:
+
+```text
+tung-phan-tu   ← split lồng trong doTry chạy
+don-dep        ← doFinally chạy
+da-huong-1/2   ← multicast lồng trong when chạy
+khong-ro-loai  ← otherwise chạy đúng dù được ghi trước when
+Tests run: 3, Failures: 0, Errors: 0 · BUILD SUCCESS
+```
+
+Đây là mức bằng chứng bài học lỗi #5 đòi hỏi: route `Started` **không** đủ, phải thấy
+bản tin đi đúng nhánh.
 
 ---
 

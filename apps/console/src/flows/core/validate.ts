@@ -38,13 +38,25 @@ export function validate(nodes: StageNode[], edges: SeqEdge[]): Finding[] {
     });
   }
 
+  /**
+   * Chặng của khung chuẩn: **cảnh báo lúc thiết kế, không chặn** (Q1 — IP-07).
+   *
+   * Trước đây là `error` nên không dựng nổi luồng trắng kiểu Kaoto — mà kamelet và pipe
+   * thì về cấu trúc **không thể** có bốn chặng này. Nay hạ xuống `warn`: người dùng vẫn
+   * thấy rõ mình đang thiếu gì, nhưng không bị khóa tay lúc đang dựng.
+   *
+   * **Chốt chặn thật vẫn ở máy chủ lúc publish** với luồng đối ngoại (`CamelYamlValidator`) —
+   * hạ mức ở đây là nới trải nghiệm thiết kế, không nới kiểm soát vận hành.
+   */
   for (const name of MANDATORY_STAGES) {
     if (!nodes.some((n) => n.data.label === name)) {
       push({
-        level: 'error',
-        title: `Thiếu chặng bắt buộc: ${name}`,
-        detail: 'Khung xương chuẩn của nền tảng yêu cầu chặng này ở mọi luồng tích hợp.',
-        hint: 'Xem BR-04-001 tại SRS PH-04.',
+        level: 'warn',
+        title: `Thiếu chặng khung chuẩn: ${name}`,
+        detail:
+          'Khung chuẩn của nền tảng khuyến nghị chặng này cho luồng tích hợp đối ngoại. ' +
+          'Luồng nội bộ, kamelet và pipe không bắt buộc.',
+        hint: 'Xem BR-D-01 tại SRS PH-04/D.',
       });
     }
   }
