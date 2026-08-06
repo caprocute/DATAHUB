@@ -148,6 +148,8 @@ export async function createRoute(body: {
   targetSystem?: string
   definitionYaml: string
   routeType?: string
+  /** Loại tài nguyên Camel: `ROUTE` | `KAMELET` | `PIPE` | `TEST` (IP-07 K2-5). */
+  resourceKind?: string
 }) {
   return apiAdminPost<RouteSummary>('/routes', body)
 }

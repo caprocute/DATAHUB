@@ -167,4 +167,24 @@ class CamelYamlValidatorTest {
         """;
     assertThat(validator.validate(du, CamelYamlValidator.ResourceKind.ROUTE, true).valid()).isTrue();
   }
+
+  /**
+   * K2-2/K2-6 — lối **tạo mới** cũng phải kiểm theo đúng loại tài nguyên.
+   *
+   * Bắt được khi chạy thật: `create()` gọi overload một tham số (luôn coi là ROUTE) nên
+   * tạo Kamelet/Pipe từ mẫu bị trả 422 "thiếu khối route/from". Kiểm theo khung route một
+   * loại tài nguyên vốn không có `route:` là sai từ gốc.
+   */
+  @Test
+  void kameletVaPipeKhongBiKiemTheoKhungRouteOLoiTaoMoi() {
+    assertThat(validator.validate(KAMELET, CamelYamlValidator.ResourceKind.KAMELET, false).valid())
+        .isTrue();
+    assertThat(validator.validate(PIPE, CamelYamlValidator.ResourceKind.PIPE, false).valid())
+        .isTrue();
+    // Và đúng như lỗi đã gặp: kiểm nhầm theo ROUTE thì cả hai đều trượt.
+    assertThat(validator.validate(KAMELET, CamelYamlValidator.ResourceKind.ROUTE, false).valid())
+        .isFalse();
+    assertThat(validator.validate(PIPE, CamelYamlValidator.ResourceKind.ROUTE, false).valid())
+        .isFalse();
+  }
 }

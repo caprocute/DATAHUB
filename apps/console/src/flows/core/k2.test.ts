@@ -284,3 +284,56 @@ describe('K2-1 — chuyển route không mất công sức đang làm', () => {
     expect(out).toContain('cua-route-hai');
   });
 });
+
+describe('K2-3 — routeConfiguration / errorHandler / onException cấp tệp', () => {
+  const SRC = `- routeConfiguration:
+    id: cau-hinh-chung
+    onException:
+      - onException:
+          exception:
+            - java.io.IOException
+          handled:
+            constant: "true"
+          steps:
+            - log:
+                message: bat-loi-chung
+    errorHandler:
+      deadLetterChannel:
+        deadLetterUri: kafka:lgsp.dlq
+- route:
+    id: r
+    from:
+      uri: direct:a
+      steps:
+        - log:
+            message: xin-chao
+`;
+
+  it('đọc được cả routeConfiguration lẫn route trong một tệp', () => {
+    const res = deserialize(SRC);
+    expect(res.entities.map((e) => e.kind)).toEqual(['routeConfiguration', 'route']);
+  });
+
+  it('giữ nguyên onException và errorHandler khi quay vòng', () => {
+    const out = serialize(deserialize(SRC), SRC);
+    expect(out).toContain('java.io.IOException');
+    expect(out).toContain('bat-loi-chung');
+    expect(out).toContain('deadLetterChannel');
+    expect(out).toContain('kafka:lgsp.dlq');
+  });
+
+  /**
+   * `routeConfiguration` **không có** thuộc tính `steps` trong lược đồ — chỉ có
+   * `errorHandler`/`onException`/`intercept`… Ghi `steps: []` là bịa khóa không tồn tại,
+   * đúng lớp lỗi #1 của IP-06 (bộ sinh tự thêm `timeout` cho `enrich`).
+   */
+  it('không bịa khóa `steps` cho thực thể vốn không có bước', () => {
+    const out = serialize(deserialize(SRC), SRC);
+    expect(out).not.toMatch(/steps:\s*\[\]/);
+  });
+
+  it('thực thể có bước thật thì vẫn ghi `steps`', () => {
+    const out = serialize(deserialize(SRC), SRC);
+    expect(out).toMatch(/steps:\s*\n\s*- log:/);
+  });
+});

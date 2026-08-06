@@ -277,8 +277,13 @@ bản tin đi đúng nhánh.
       > rồi mới chuyển; có test khẳng định sửa route thứ hai **không đụng** route thứ nhất.
 - [ ] **K2-2.** Tạo route mới: **luồng trắng** hoặc chọn mẫu (Q1). Mẫu "khung chuẩn LGSP"
       = 4 chặng cũ, nhưng **gỡ được**.
-- [ ] **K2-3.** `routeConfiguration`, `errorHandler`, `onException` cấp file — các entity
-      này đã có lược đồ sẵn trong `core/generated/schemas/entity/`.
+- [x] **K2-3.** `routeConfiguration`, `errorHandler`, `onException` cấp tệp — lõi cây đọc và
+      ghi lại nguyên vẹn, có test.
+
+      > **Một lỗi của bộ sinh, bắt được nhờ đối chiếu lược đồ:** ghi `steps: []` cho
+      > `routeConfiguration`, mà lược đồ của nó **không có** thuộc tính `steps` (chỉ có
+      > `errorHandler`/`onException`/`intercept`…). Bịa khóa không tồn tại đúng là lớp lỗi #1
+      > của IP-06 (`enrich` tự thêm `timeout`). Nay chỉ ghi `steps` khi thật sự có bước.
 - [x] **K2-4.** Đổi tên route cập nhật mọi tham chiếu `direct:`/`seda:` trỏ tới nó.
       `renameEntity` trả kèm **số tham chiếu đã sửa** để giao diện nói rõ thay vì âm thầm
       đổi. Chặng tiếp nhận qua `rest:`/`kafka:` thì tên route không phải địa chỉ nên

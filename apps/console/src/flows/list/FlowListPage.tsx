@@ -27,8 +27,7 @@ import {
   type RouteSummary,
 } from '../../api/routesApi'
 import { useRoles } from '../../auth/useRoles'
-import { emitRouteYaml } from '../core/emit'
-import { emptyFlow } from '../core/model'
+import { TEMPLATES, templateById } from '../core/templates'
 import '../design/designer.css'
 import { VersionHistory } from './VersionHistory'
 
@@ -139,12 +138,21 @@ export function FlowListPage() {
   }
 
   async function doCreate() {
-    const v = await form.validateFields()
-    const { nodes, edges } = emptyFlow()
+    const v = (await form.validateFields()) as {
+      routeCode: string
+      title: string
+      sourceSystem: string
+      targetSystem?: string
+      template: string
+    }
+    const tpl = templateById(v.template) ?? TEMPLATES[0]
     try {
+      const { template: _t, ...rest } = v
       await createRoute({
-        ...v,
-        definitionYaml: emitRouteYaml(nodes, edges, { routeId: v.routeCode, errorHandler: true }),
+        ...rest,
+        // Loại tài nguyên do **mẫu** quyết định: Kamelet và Pipe không phải route thường.
+        resourceKind: tpl.resourceKind,
+        definitionYaml: tpl.yaml(v.routeCode),
       })
       message.success('Đã tạo luồng mới')
       setCreateOpen(false)
@@ -447,11 +455,30 @@ export function FlowListPage() {
         okText="Tạo & thiết kế"
         cancelText="Hủy"
       >
-        <Typography.Paragraph type="secondary" className="t-small">
-          Luồng mới dựng sẵn bốn chặng bắt buộc của khung chuẩn (Tiếp nhận · Kiểm tra lược đồ ·
-          Ủy quyền · Ghi vết). Bổ sung phần nghiệp vụ vào giữa ở trình thiết kế.
-        </Typography.Paragraph>
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" initialValues={{ template: 'standard-9-stage' }}>
+          <Form.Item
+            name="template"
+            label="Bắt đầu từ"
+            tooltip="Mẫu chỉ là điểm xuất phát — mọi chặng đều sửa và gỡ được ở trình thiết kế."
+          >
+            <Select
+              options={TEMPLATES.map((t) => ({
+                value: t.id,
+                label: t.title,
+                // Mô tả ngay trong mục chọn: tên mẫu một mình không đủ để chọn đúng.
+                title: t.description,
+              }))}
+              optionRender={(o) => {
+                const t = templateById(String(o.value))
+                return (
+                  <div>
+                    <div>{t?.title}</div>
+                    <div className="t-small" style={{ opacity: 0.65 }}>{t?.description}</div>
+                  </div>
+                )
+              }}
+            />
+          </Form.Item>
           <Form.Item
             name="routeCode"
             label="Mã luồng"

@@ -103,7 +103,11 @@ function writeEntity(e: VisualEntity): Rec {
 
   if (e.from) {
     body.from = clean({ ...e.from.props, uri: e.from.uri, steps });
-  } else {
+  } else if (steps.length) {
+    // Chỉ ghi `steps` khi **thật sự có bước**. `routeConfiguration` không có thuộc tính
+    // `steps` trong lược đồ (chỉ có `errorHandler`/`onException`/`intercept`…), nên ghi
+    // `steps: []` là bịa ra khóa không tồn tại — đúng lớp lỗi #1 của IP-06 mà `schemaProps`
+    // sinh ra để chặn.
     body.steps = steps;
   }
   return clean(body);

@@ -111,6 +111,18 @@ class RoutesService implements RoutesApi {
     return externalSystems.isOnboarded(src);
   }
 
+  /** Đọc loại tài nguyên từ chuỗi; thiếu hoặc lạ thì coi là `ROUTE` (IP-07 K2-5). */
+  private static CamelYamlValidator.ResourceKind parseKind(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return CamelYamlValidator.ResourceKind.ROUTE;
+    }
+    try {
+      return CamelYamlValidator.ResourceKind.valueOf(raw.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      return CamelYamlValidator.ResourceKind.ROUTE;
+    }
+  }
+
   /** Loại tài nguyên của một luồng; thiếu dữ liệu thì coi là `ROUTE` (IP-07 K2-5). */
   private CamelYamlValidator.ResourceKind kindOf(String routeCode) {
     String raw =
@@ -132,7 +144,11 @@ class RoutesService implements RoutesApi {
   @Override
   @Transactional
   public RouteSummaryDto create(RouteCreateRequest request, String actor) {
-    ValidationResultDto v = validator.validate(stripCanvasMarker(request.definitionYaml()));
+    // Loại tài nguyên lấy **từ chính yêu cầu**: kiểm Kamelet/Pipe theo khung route sẽ
+    // báo "thiếu khối route/from" — sai hoàn toàn với hai loại đó (IP-07 K2-6).
+    ValidationResultDto v =
+        validator.validate(
+            stripCanvasMarker(request.definitionYaml()), parseKind(request.resourceKind()), false);
     if (!v.valid()) {
       throw new RouteValidationException("YAML không hợp lệ khi tạo route", v);
     }
@@ -244,7 +260,8 @@ class RoutesService implements RoutesApi {
     if (!"DRAFT".equals(current.status())) {
       throw new IllegalStateException("chỉ sửa được phiên bản DRAFT");
     }
-    ValidationResultDto v = validator.validate(stripCanvasMarker(update.definitionYaml()));
+    ValidationResultDto v =
+        validator.validate(stripCanvasMarker(update.definitionYaml()), kindOf(routeCode), false);
     if (!v.valid()) {
       throw new RouteValidationException("YAML không hợp lệ", v);
     }
@@ -289,7 +306,8 @@ class RoutesService implements RoutesApi {
     if (!"DRAFT".equals(current.status()) && !"TESTING".equals(current.status())) {
       throw new IllegalStateException("chỉ submit từ DRAFT/TESTING");
     }
-    ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
+    ValidationResultDto v =
+        validator.validate(stripCanvasMarker(current.definitionYaml()), kindOf(routeCode), false);
     if (!v.valid()) {
       throw new RouteValidationException("chặn gửi duyệt — YAML lỗi", v);
     }
