@@ -31,13 +31,21 @@ import { deserialize } from '../core/deserialize'
 import { serialize } from '../core/serialize'
 import { flatten } from '../core/flatten'
 import { applyGraphToTree, unmappedNodes } from '../core/unflatten'
-import { insertAfterAt, newStep } from '../core/mutate'
+import {
+  addEntity,
+  duplicateEntity,
+  insertAfterAt,
+  newStep,
+  removeEntity,
+  renameEntity,
+} from '../core/mutate'
 import type { CamelResource } from '../core/tree'
 import { prefetchSchemas, statusByNode, validate } from '../core/validate'
 import { FlowCanvas } from './FlowCanvas'
 import { InteractionContext, type DraggedNode, type Interaction } from './interaction'
 import { autoLayout } from './layout'
 import { NodeConfig } from './NodeConfig'
+import { EntityList } from './EntityList'
 import { Palette } from './Palette'
 import { mapWaterfall, RunContext, type StageRun } from './RunContext'
 import { StatusContext } from './StatusContext'
@@ -128,6 +136,21 @@ function DesignerInner() {
    * `null` khi định nghĩa đã lưu không đọc được — khi đó lùi về bộ sinh cũ.
    */
   const treeRef = useRef<CamelResource | null>(null)
+  /**
+   * Bản cây để **vẽ** danh sách route (K2-1).
+   *
+   * `treeRef` là nguồn sự thật lúc sinh YAML (ref nên không gây vẽ lại mỗi lần gõ), còn
+   * state này chỉ để giao diện biết mà cập nhật. Hai chỗ luôn đặt cùng lúc qua `setTree`.
+   */
+  const [tree, setTreeState] = useState<CamelResource | null>(null)
+  /** Route đang mở trên canvas; chỉ số trong `tree.entities`. */
+  const [activeEntity, setActiveEntity] = useState(0)
+
+  /** Đặt cây ở cả hai chỗ — quên một bên là sinh YAML từ cây cũ. */
+  const setTree = useCallback((next: CamelResource | null) => {
+    treeRef.current = next
+    setTreeState(next)
+  }, [])
 
   const history = useFlowHistory(nodes, edges, setNodes, setEdges)
   const { commit, undo, redo, canUndo, canRedo } = history
@@ -154,16 +177,17 @@ function DesignerInner() {
         try {
           // Lõi cây (K1) đọc được mọi cấu trúc Camel hợp lệ, kể cả `doTry`/`loadBalance`
           // và nhiều route một tệp — thứ bộ đọc cũ hoặc vứt cây con hoặc từ chối mở.
-          const tree = deserialize(ver.definitionYaml ?? '')
-          treeRef.current = tree
-          const g = flatten(tree)
+          const parsed = deserialize(ver.definitionYaml ?? '')
+          setTree(parsed)
+          setActiveEntity(0)
+          const g = flatten(parsed)
           bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
           setNodes(autoLayout(g.nodes, g.edges))
           setEdges(g.edges)
         } catch {
           // Định nghĩa đã lưu không đọc được (YAML hỏng cú pháp) — dựng luồng
           // trống và nói rõ, không im lặng ghi đè công sức của người dùng.
-          treeRef.current = null
+          setTree(null)
           message.warning('Không đọc được định nghĩa đã lưu — mở luồng trống. Bản trên máy chủ chưa bị thay đổi.')
           const g = emptyFlow()
           setNodes(autoLayout(g.nodes, g.edges))
@@ -237,12 +261,15 @@ function DesignerInner() {
    * thà YAML kém tinh gọn còn hơn lặng lẽ bỏ rơi chặng người dùng vừa thêm.
    */
   const yaml = useMemo(() => {
-    const tree = treeRef.current
-    if (tree && unmappedNodes(tree, nodes).length === 0) {
-      return serialize(applyGraphToTree(tree, nodes, edges), baseYamlRef.current || undefined)
+    const current = treeRef.current
+    if (current && unmappedNodes(current, nodes).length === 0) {
+      return serialize(
+        applyGraphToTree(current, nodes, edges, activeEntity),
+        baseYamlRef.current || undefined,
+      )
     }
     return emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true })
-  }, [nodes, edges, code])
+  }, [nodes, edges, code, activeEntity])
   const errorCount = findings.filter((f) => f.level === 'error').length
   const selected = nodes.find((n) => n.selected)
   const selectedSample = useMemo(
@@ -361,13 +388,101 @@ function DesignerInner() {
       // cạnh ra có thể rơi vào trong `doCatch`/`when` — luồng rẽ nhánh có nhiều đuôi —
       // và khi đó chặng người dùng thả sẽ **chui vào nhánh xử lý lỗi** thay vì nối tiếp
       // route. Neo không ở cấp gốc thì nối vào cuối danh sách gốc.
-      const topLevel = new Set((tree.entities[0]?.steps ?? []).map((s) => s.path))
+      const topLevel = new Set((tree.entities[activeEntity]?.steps ?? []).map((s) => s.path))
       const anchor = afterNodeId && topLevel.has(afterNodeId) ? afterNodeId : undefined
-      const { resource, path } = insertAfterAt(tree, 0, anchor, newStep(name, props))
-      treeRef.current = resource
+      const { resource, path } = insertAfterAt(tree, activeEntity, anchor, newStep(name, props))
+      setTree(resource)
       return path
     },
-    [],
+    [activeEntity, setTree],
+  )
+
+  /**
+   * Chuyển sang route khác trong cùng tệp (FR-D-005).
+   *
+   * Áp thay đổi của route đang mở vào cây **trước khi** chuyển — không thì công sức trên
+   * canvas biến mất lặng lẽ khi người dùng bấm sang route khác rồi bấm quay lại.
+   */
+  const selectEntity = useCallback(
+    (index: number) => {
+      const current = treeRef.current
+      if (!current || index === activeEntity) return
+      const saved =
+        unmappedNodes(current, nodes).length === 0
+          ? applyGraphToTree(current, nodes, edges, activeEntity)
+          : current
+      setTree(saved)
+      setActiveEntity(index)
+      const g = flatten(saved, index)
+      bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
+      setNodes(autoLayout(g.nodes, g.edges))
+      setEdges(g.edges)
+    },
+    [activeEntity, nodes, edges, setNodes, setEdges, setTree],
+  )
+
+  /** Vẽ lại canvas theo một cây và một route — dùng chung cho mọi thao tác thực thể. */
+  const showEntity = useCallback(
+    (next: CamelResource, index: number) => {
+      setTree(next)
+      setActiveEntity(index)
+      const g = flatten(next, index)
+      bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
+      setNodes(autoLayout(g.nodes, g.edges))
+      setEdges(g.edges)
+      markDirty()
+    },
+    [setNodes, setEdges, setTree, markDirty],
+  )
+
+  const addEntityAt = useCallback(
+    (id: string) => {
+      const current = treeRef.current
+      if (!current) return
+      const next = addEntity(current, id)
+      showEntity(next, next.entities.length - 1)
+    },
+    [showEntity],
+  )
+
+  const removeEntityAt = useCallback(
+    (index: number) => {
+      const current = treeRef.current
+      if (!current || current.entities.length <= 1) return
+      const next = removeEntity(current, index)
+      showEntity(next, Math.max(0, Math.min(index, next.entities.length - 1)))
+    },
+    [showEntity],
+  )
+
+  const duplicateEntityAt = useCallback(
+    (index: number, newId: string) => {
+      const current = treeRef.current
+      if (!current) return
+      showEntity(duplicateEntity(current, index, newId), index + 1)
+    },
+    [showEntity],
+  )
+
+  /**
+   * Đổi mã route, **cập nhật cả tham chiếu** trỏ tới nó (FR-D-007).
+   *
+   * Nói rõ số tham chiếu đã sửa: đổi mã mà im lặng sửa luồng khác trong cùng tệp là thứ
+   * người dùng cần biết, không phải thứ nên giấu đi cho gọn.
+   */
+  const renameEntityAt = useCallback(
+    (index: number, newId: string) => {
+      const current = treeRef.current
+      if (!current) return
+      const { resource, updatedRefs } = renameEntity(current, index, newId)
+      showEntity(resource, index)
+      message.success(
+        updatedRefs > 0
+          ? `Đã đổi mã route và sửa ${updatedRefs} tham chiếu trỏ tới nó`
+          : 'Đã đổi mã route (không có tham chiếu nào cần sửa)',
+      )
+    },
+    [showEntity, message],
   )
 
   const addStage = useCallback(
@@ -577,7 +692,21 @@ function DesignerInner() {
 
       <div className="dsg__body">
         <aside className={leftOpen ? 'dsg__left' : 'dsg__left is-collapsed'}>
-          {leftOpen && <Palette hasFrom={hasFrom} />}
+          {leftOpen && (
+            <>
+              <EntityList
+                resource={tree}
+                activeIndex={activeEntity}
+                onSelect={selectEntity}
+                onAdd={addEntityAt}
+                onRemove={removeEntityAt}
+                onDuplicate={duplicateEntityAt}
+                onRename={renameEntityAt}
+                disabled={!canDesign || !tree}
+              />
+              <Palette hasFrom={hasFrom} />
+            </>
+          )}
         </aside>
 
         <div className="dsg__center">

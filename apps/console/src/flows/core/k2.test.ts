@@ -236,3 +236,51 @@ describe('K2 — chặng thả vào canvas không chui nhầm vào nhánh', () =
     expect(last.props.message).toBe('noi-tiep');
   });
 });
+
+describe('K2-1 — chuyển route không mất công sức đang làm', () => {
+  const HAI_ROUTE = `- route:
+    id: mot
+    from:
+      uri: direct:a
+      steps:
+        - log:
+            message: cua-route-mot
+- route:
+    id: hai
+    from:
+      uri: direct:b
+      steps:
+        - log:
+            message: cua-route-hai`;
+
+  it('flatten theo chỉ số cho đúng route', () => {
+    const base = deserialize(HAI_ROUTE);
+    const g0 = flatten(base, 0);
+    const g1 = flatten(base, 1);
+    expect(g0.nodes.some((n) => n.data.props.message === 'cua-route-mot')).toBe(true);
+    expect(g0.nodes.some((n) => n.data.props.message === 'cua-route-hai')).toBe(false);
+    expect(g1.nodes.some((n) => n.data.props.message === 'cua-route-hai')).toBe(true);
+  });
+
+  it('sửa route thứ hai rồi áp vào cây không đụng route thứ nhất', () => {
+    const base = deserialize(HAI_ROUTE);
+    const g1 = flatten(base, 1);
+    const target = g1.nodes.find((n) => n.data.props.message === 'cua-route-hai')!;
+    target.data = { ...target.data, props: { ...target.data.props, message: 'da-sua' } };
+
+    const next = applyGraphToTree(base, g1.nodes, g1.edges, 1);
+    const out = serialize(next, undefined);
+    expect(out).toContain('da-sua');
+    // Route đầu phải nguyên vẹn — đây là chỗ dễ ghi đè nhầm nhất.
+    expect(out).toContain('cua-route-mot');
+    expect(out).not.toContain('cua-route-hai');
+  });
+
+  it('applyGraphToTree mặc định chỉ số 0 — không âm thầm ghi lên route khác', () => {
+    const base = deserialize(HAI_ROUTE);
+    const g0 = flatten(base, 0);
+    const out = serialize(applyGraphToTree(base, g0.nodes, g0.edges), undefined);
+    expect(out).toContain('cua-route-mot');
+    expect(out).toContain('cua-route-hai');
+  });
+});

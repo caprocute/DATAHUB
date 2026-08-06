@@ -1290,3 +1290,132 @@
   outline: 2px solid var(--c-brand-600, #0b5cab);
   outline-offset: 2px;
 }
+
+/* ---------- Danh sách route trong tệp (K2-1 · FR-D-005/006/007) ---------- */
+
+/* Nằm trên bảng thành phần trong cùng cột trái: đây là bộ chọn phạm vi cho chính
+   những gì bảng thành phần thả vào, nên đứng cạnh nhau thì đọc được quan hệ. */
+.dsg__ents {
+  flex: 0 0 auto;
+  /* Nhiều route thì cuộn trong chính khối này, **không** đẩy bảng thành phần
+     tụt khỏi tầm nhìn. */
+  max-height: 38%;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--c-border, #e5e7eb);
+}
+.dsg__ents--single { border-bottom: 1px solid var(--c-border, #e5e7eb); }
+
+.dsg__ents-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2, 8px);
+  padding: var(--sp-2, 8px) var(--sp-3, 12px);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-2, #4b5563);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dsg__ents-count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--c-bg, #f6f7f9);
+  color: var(--c-text-2, #4b5563);
+  font-size: 11px;
+}
+
+.dsg__ents-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 var(--sp-2, 8px) var(--sp-2, 8px);
+  list-style: none;
+}
+.dsg__ents-list li {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.dsg__ent {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px var(--sp-2, 8px);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--c-text, #111827);
+}
+.dsg__ent:hover { background: var(--c-bg, #f6f7f9); }
+.dsg__ent.is-active {
+  background: var(--c-brand-50, #eff6ff);
+  border-color: var(--c-brand-500, #3b82f6);
+}
+.dsg__ent-name {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dsg__ent-sub {
+  font-size: 11px;
+  color: var(--c-text-2, #4b5563);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsg__ent-more {
+  flex: 0 0 auto;
+  width: 24px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-text-2, #4b5563);
+  cursor: pointer;
+}
+.dsg__ent-more:hover { background: var(--c-bg, #f6f7f9); }
+
+.dsg__ents-add {
+  flex: 0 0 auto;
+  margin: 0 var(--sp-2, 8px) var(--sp-2, 8px);
+  padding: 6px var(--sp-2, 8px);
+  border: 1px dashed var(--c-border, #e5e7eb);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--c-text-2, #4b5563);
+  font-size: 12px;
+  cursor: pointer;
+}
+.dsg__ents-add:hover:not(:disabled) {
+  border-color: var(--c-brand-500, #3b82f6);
+  color: var(--c-brand-600, #2563eb);
+}
+.dsg__ents-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dsg__ents-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--sp-2, 8px) var(--sp-2, 8px);
+}
+.dsg__ents-add-row > :first-child { flex: 1 1 100%; }
+.dsg__ents-err {
+  flex: 1 1 100%;
+  font-size: 11px;
+  color: var(--c-danger-600, #dc2626);
+}
+.dsg__ents-hint {
+  margin: var(--sp-2, 8px) 0 0;
+  font-size: 12px;
+  color: var(--c-text-2, #4b5563);
+}

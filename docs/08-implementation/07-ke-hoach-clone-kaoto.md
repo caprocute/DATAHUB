@@ -265,9 +265,16 @@ bản tin đi đúng nhánh.
 
 ## 4. K2 — Tạo và quản lý route
 
-- [~] **K2-1.** Nhiều route trong **một** file. *(Lõi xong: `addEntity`/`removeEntity`/
-      `duplicateEntity`/`renameEntity` trong `mutate.ts`, có test. **Giao diện danh sách
-      route ở thanh bên trái chưa làm** — còn lại của gói này.)*
+- [x] **K2-1.** Nhiều route trong **một** file: danh sách route ở thanh bên trái designer,
+      chuyển qua lại, thêm/xóa/đổi tên/nhân bản (`EntityList.tsx`).
+      *(Kiểm chứng trên trình duyệt thật với tệp 3 route: chuyển sang route có `doTry` thì
+      canvas vẽ đúng **hai nhánh** — `steps` được bảo vệ và `doCatch` — thứ lõi cũ bóp thành
+      `doTry: {}`. Sau khi chuyển, YAML vẫn giữ đủ `doCatch`, lớp ngoại lệ, comment xuất xứ
+      và cả 3 route; 0 lỗi console. Deep link qua vòng đăng nhập vẫn đúng.)*
+
+      > **Điểm dễ mất dữ liệu nhất của gói này:** chuyển route mà quên áp thay đổi của route
+      > đang mở vào cây thì công sức trên canvas biến mất lặng lẽ. `selectEntity` áp trước
+      > rồi mới chuyển; có test khẳng định sửa route thứ hai **không đụng** route thứ nhất.
 - [ ] **K2-2.** Tạo route mới: **luồng trắng** hoặc chọn mẫu (Q1). Mẫu "khung chuẩn LGSP"
       = 4 chặng cũ, nhưng **gỡ được**.
 - [ ] **K2-3.** `routeConfiguration`, `errorHandler`, `onException` cấp file — các entity
