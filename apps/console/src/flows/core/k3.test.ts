@@ -260,3 +260,34 @@ spec:
     expect(Array.isArray(mau.properties)).toBe(false);
   });
 });
+
+describe('K3 — thay đổi chỉ đụng cây vẫn phải ra YAML', () => {
+  /**
+   * Lỗi thật đã gặp: `useMemo` sinh YAML đọc `treeRef.current` nhưng danh sách phụ thuộc
+   * chỉ có `nodes`/`edges`. Sửa tham số Kamelet **không** đụng sơ đồ, nên memo không tính
+   * lại và YAML hiện ra vẫn là bản cũ — người dùng tưởng thao tác của mình rơi mất.
+   *
+   * Test này khóa **bản chất** của lỗi ở tầng lõi: đổi cây thôi phải cho YAML khác.
+   */
+  it('sửa tham số Kamelet cho ra YAML khác, dù sơ đồ không đổi', () => {
+    const res = deserialize(KAMELET)
+    const truoc = serialize(res, KAMELET)
+
+    const props = readProps(res)
+    props[0] = { ...props[0], description: 'Mo ta hoan toan moi' }
+    const sau = serialize(writeProps(res, props), KAMELET)
+
+    expect(sau).not.toBe(truoc)
+    expect(sau).toContain('Mo ta hoan toan moi')
+    // Và không đụng gì tới phần luồng.
+    expect(sau).toContain('timer:tick')
+    expect(sau).toContain('kamelet:sink')
+  })
+
+  it('sửa tiêu đề Kamelet cũng cho ra YAML khác', () => {
+    const res = deserialize(KAMELET)
+    expect(serialize(writeMeta(res, { title: 'Ten hoan toan moi' }), KAMELET)).toContain(
+      'Ten hoan toan moi',
+    )
+  })
+})

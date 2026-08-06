@@ -264,15 +264,17 @@ function DesignerInner() {
    * thà YAML kém tinh gọn còn hơn lặng lẽ bỏ rơi chặng người dùng vừa thêm.
    */
   const yaml = useMemo(() => {
-    const current = treeRef.current
-    if (current && unmappedNodes(current, nodes).length === 0) {
+    // Dùng `tree` (state) chứ **không** `treeRef.current`: đọc từ ref thì thay đổi chỉ
+    // đụng cây — sửa tham số Kamelet, đổi metadata — không làm memo tính lại, YAML hiện
+    // ra vẫn là bản cũ và người dùng tưởng thao tác của mình rơi mất.
+    if (tree && unmappedNodes(tree, nodes).length === 0) {
       return serialize(
-        applyGraphToTree(current, nodes, edges, activeEntity),
+        applyGraphToTree(tree, nodes, edges, activeEntity),
         baseYamlRef.current || undefined,
       )
     }
     return emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true })
-  }, [nodes, edges, code, activeEntity])
+  }, [tree, nodes, edges, code, activeEntity])
   const errorCount = findings.filter((f) => f.level === 'error').length
   const selected = nodes.find((n) => n.selected)
   const selectedSample = useMemo(
