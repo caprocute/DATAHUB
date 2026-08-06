@@ -13,6 +13,7 @@ import {
 } from '../../api/routesApi'
 import { useRoles } from '../../auth/useRoles'
 import { CATALOG_RUNTIME, lookupNode, refName } from '../core/catalog'
+import { setPendingTarget, takePendingPick } from '../catalog/pendingInsert'
 import { emitRouteYaml } from '../core/emit'
 import {
   BRANCHING,
@@ -47,6 +48,7 @@ import { autoLayout } from './layout'
 import { NodeConfig } from './NodeConfig'
 import { readBeans } from '../core/beans'
 import { BeanRegistry } from './BeanRegistry'
+import { DataMapper } from './DataMapper'
 import { EntityList } from './EntityList'
 import { KameletSpec } from './KameletSpec'
 import { Palette } from './Palette'
@@ -118,6 +120,8 @@ function DesignerInner() {
   const [kameletOpen, setKameletOpen] = useState(false)
   /** Sổ đăng ký bean cấp tệp (K5-1) — dùng chung cho mọi route trong tệp. */
   const [beansOpen, setBeansOpen] = useState(false)
+  /** Trình ánh xạ dữ liệu (K6) — mở cho chặng `transform` đang chọn. */
+  const [mapperOpen, setMapperOpen] = useState(false)
   /** Cửa sổ xem/sửa YAML toàn màn hình (đồng bộ ngược về sơ đồ). */
   const [yamlOpen, setYamlOpen] = useState(false)
   // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
@@ -522,6 +526,41 @@ function DesignerInner() {
     [hasFrom, nodes, edges, setNodes, setEdges, markDirty, adoptIntoTree],
   )
 
+  /**
+   * Sang màn danh mục để tra cứu đầy đủ rồi thêm ngược lại (K4-4).
+   *
+   * Lưu chỗ đang đứng **trước** khi rời đi; màn danh mục đọc lại để biết nút "Thêm vào
+   * luồng" phải trỏ về đâu.
+   */
+  const browseCatalog = useCallback(() => {
+    setPendingTarget({ code, title: route?.title })
+    navigate('/components')
+  }, [code, route?.title, navigate])
+
+  /**
+   * Nhận thành phần người dùng chọn ở màn danh mục (K4-4).
+   *
+   * Chạy sau khi luồng nạp xong (`loading` false): `addStage` cần biết luồng đã có chặng
+   * tiếp nhận chưa mới quyết định được vai trò `from`/`step` của chặng mới. Chạy sớm hơn
+   * thì mọi thứ chọn từ danh mục đều thành `from`.
+   *
+   * `takePendingPick` **đọc một lần rồi xóa**, nên StrictMode gọi effect hai lần cũng chỉ
+   * chèn một chặng.
+   */
+  useEffect(() => {
+    if (loading || !canDesign) return
+    const ref = takePendingPick(code)
+    if (!ref) return
+    const cat = lookupNode(ref)
+    if (!cat) return
+    // Thả xuống một chỗ trống dễ thấy; người dùng kéo lại tùy ý sau.
+    addStage({ ref }, { x: 80, y: 80 + nodes.length * 24 })
+    message.success(`Đã thêm ${cat.title} từ danh mục`)
+    // `nodes.length` chỉ dùng để né chồng chỗ — không đưa vào phụ thuộc, nếu không mỗi
+    // lần sơ đồ đổi lại chạy lại effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, canDesign, code, addStage, message])
+
   const insertOnEdge = useCallback(
     (edgeId: string, item: DraggedNode) => {
       const edge = edgesRef.current.find((e) => e.id === edgeId)
@@ -698,6 +737,12 @@ function DesignerInner() {
               Tham số Kamelet
             </Button>
           )}
+          {/* Ánh xạ dữ liệu chỉ có nghĩa với chặng biến đổi. */}
+          {selected && refName(selected.data.ref) === 'transform' && (
+            <Button size="small" onClick={() => setMapperOpen(true)}>
+              Ánh xạ dữ liệu
+            </Button>
+          )}
           {/* Bean là cấu hình **cấp tệp**, dùng được cho mọi route trong tệp. */}
           {tree && tree.kind !== 'Test' && (
             <Button size="small" onClick={() => setBeansOpen(true)}>
@@ -730,7 +775,7 @@ function DesignerInner() {
                 onRename={renameEntityAt}
                 disabled={!canDesign || !tree}
               />
-              <Palette hasFrom={hasFrom} />
+              <Palette hasFrom={hasFrom} onBrowseCatalog={browseCatalog} />
             </>
           )}
         </aside>
@@ -842,6 +887,35 @@ function DesignerInner() {
           setEdges(e)
           setSaveState('dirty')
           message.success('Đã áp YAML vào sơ đồ')
+        }}
+      />
+
+      <DataMapper
+        open={mapperOpen}
+        sample={selectedSample?.sample}
+        savedMappings={selected?.data.mappings as never}
+        onClose={() => setMapperOpen(false)}
+        onSave={(jq, mps) => {
+          if (!selected) return
+          commit()
+          // JQ vào `expression` của chặng `transform`; ánh xạ giữ kèm node để mở lại sửa
+          // được — JQ là một chiều, không dựng ngược ra bảng ánh xạ.
+          setNodes((ns) =>
+            ns.map((n) =>
+              n.id === selected.id
+                ? {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      props: { ...n.data.props, expression: jq, exprLang: 'jq' },
+                      mappings: mps as never,
+                    },
+                  }
+                : n,
+            ),
+          )
+          markDirty()
+          message.success(`Đã lưu ${mps.length} ánh xạ trường`)
         }}
       />
 
