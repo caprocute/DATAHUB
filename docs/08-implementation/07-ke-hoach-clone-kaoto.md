@@ -107,7 +107,7 @@ K1 lõi cây ──> K2 đa route ──> K3 Kamelet/Pipe ──> K4 catalog ─
 phẳng `StageNode[]`/`SeqEdge[]` thì không biểu diễn nổi Kamelet (`spec.template.from`) hay
 Pipe (`spec.source`/`spec.sink`). Làm K3 trước K1 sẽ phải viết lại lần hai.
 
-K4 (catalog) **ít phụ thuộc lõi nhất** — dữ liệu 742 lược đồ đã vendor sẵn — nên tách ra
+K4 (catalog) **ít phụ thuộc lõi nhất** — dữ liệu 751 nút đã vendor sẵn — nên tách ra
 làm song song được nếu cần kết quả sớm.
 
 K6 (DataMapper) để cuối vì nó là hạng mục nặng nhất và phụ thuộc K5 (bean registry).
@@ -287,7 +287,10 @@ bản tin đi đúng nhánh.
 
 ## 6. K4 — Màn catalog *(chạy song song được)*
 
-Dữ liệu đã có đủ: **742 lược đồ** trong `core/generated/schemas/` (323 component ·
+Dữ liệu đã có đủ: **751 nút** trong chỉ mục, **742 tệp lược đồ** trong
+`core/generated/schemas/` — chênh 9 là các kamelet **không có tham số cấu hình** nên nhà
+sản xuất không phát hành lược đồ; vẫn là mục hợp lệ, màn chi tiết phải hiện "không có
+tham số" thay vì báo lỗi tải. Phân bố: (323 component ·
 243 kamelet · 74 pattern · 48 dataformat · 26 language · 21 entity · 7 loadbalancer).
 Đây là **màn còn thiếu**, không phải dữ liệu còn thiếu.
 

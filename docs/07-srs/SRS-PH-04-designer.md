@@ -35,11 +35,13 @@ Nguyên tắc: **một màn = một nhiệm vụ**. Không dồn nhiều nhiệm
 | Mã | Màn | Nhiệm vụ | Đường dẫn | Bố cục |
 |---|---|---|---|---|
 | **D-01** | Danh sách luồng | Tìm, lọc, theo dõi trạng thái, mở việc | `/flows` | Có khung ứng dụng (sidebar + đầu trang) |
-| **D-02** | Trình thiết kế | Dựng và sửa **một** luồng | `/flows/:code/design` | **Toàn màn hình**, ẩn sidebar |
+| **D-02** | Trình thiết kế | Dựng và sửa **một tệp** (có thể chứa nhiều route) | `/flows/:code/design` | **Toàn màn hình**, ẩn sidebar |
 | **D-03** | Cấu hình chặng | Đặt tham số **một** chặng | Lớp phủ trên D-02 | Cửa sổ **75%** màn hình |
 | **D-04** | Chạy thử | Chạy và đọc kết quả một luồng | `/flows/:code/test` | Có khung ứng dụng |
 | **D-05** | Nhật ký chạy | Tra lịch sử các lần chạy | `/flows/:code/runs` | Có khung ứng dụng |
 | **D-06** | Duyệt | Thẩm định và phê duyệt phiên bản | `/flows/review` | Có khung ứng dụng |
+| **D-07** | Danh mục thành phần | Tra cứu **751 nút** Camel đã vendor | `/catalog` | Có khung ứng dụng |
+| **D-08** | Ánh xạ dữ liệu | Vẽ ánh xạ trường nguồn → đích | Lớp phủ trên D-02 | Cửa sổ lớn |
 
 ### 2.1. Luồng đi giữa các màn
 
@@ -129,8 +131,8 @@ Trái→phải; thẻ node màu theo nhóm; cạnh cong; chèn giữa cạnh b�
 bảng thành phần; chọn nhiều bằng vùng quét; nhân bản (`⌘D`); xóa; hoàn tác/làm lại
 ≥ 50 bước; tự sắp xếp; thu phóng; minimap khi > 20 node; **giữ mượt ở 200 node**.
 
-Chặng bắt buộc của khung chuẩn (`Tiếp nhận · Kiểm tra lược đồ · Ủy quyền · Ghi vết`)
-khóa, không gỡ được (BR-04-001).
+Chặng khung chuẩn (`Tiếp nhận · Kiểm tra lược đồ · Ủy quyền · Ghi vết`) do mẫu tạo sẵn
+nhưng **gỡ được**; gỡ thì `validate` cảnh báo, không chặn (BR-D-01 §10.1 — sửa 2026-08-06).
 
 ### FR-D-013 — Trạng thái lưu rõ ràng · **M**
 
@@ -252,6 +254,72 @@ chỉ ẩn nút cho đỡ bấm nhầm.
 
 ---
 
+## 8b. Yêu cầu bổ sung — clone mô hình Kaoto *(thêm 2026-08-06)*
+
+> **Căn cứ.** [IP-07](../08-implementation/07-ke-hoach-clone-kaoto.md) · quyết định của chủ
+> dự án 2026-08-05: clone **mô hình hoạt động** của Kaoto, giao diện giữ định hướng riêng.
+> Bốn hạng mục thiếu so với Kaoto: quản lý route, Kamelet/Pipe/Test, danh mục, Bean/DataMapper.
+
+### 8b.1. Tệp nhiều thực thể — `FR-D-005…008`
+
+| Mã | Yêu cầu | Ưu tiên |
+|---|---|:-:|
+| **FR-D-005** | Một tệp chứa **nhiều route**; danh sách thực thể ở thanh bên trái D-02, chuyển qua lại giữ nguyên trạng thái từng sơ đồ | **M** |
+| **FR-D-006** | Thêm / xóa / nhân bản route trong tệp | **M** |
+| **FR-D-007** | Đổi mã route **cập nhật mọi tham chiếu** `direct:`/`seda:` trỏ tới nó; báo rõ số tham chiếu đã sửa, không đổi lặng lẽ | **M** |
+| **FR-D-008** | `routeConfiguration` / `errorHandler` / `onException` cấp tệp | **S** |
+
+**Ngoại lệ FR-D-007.** Chặng tiếp nhận không phải điểm gọi nội bộ (`rest:`, `kafka:`) thì
+tên route không phải địa chỉ — không sửa gì, và nói rõ là không có tham chiếu nào đổi.
+
+### 8b.2. Loại tài nguyên — `FR-D-060…064`
+
+| Mã | Yêu cầu | Ưu tiên |
+|---|---|:-:|
+| **FR-D-060** | Chọn loại khi tạo mới: **Route · Kamelet · Pipe · Test** | **M** |
+| **FR-D-061** | **Kamelet**: soạn `spec.definition` (tham số: tên, kiểu, mặc định, bắt buộc, mô tả) + `spec.template.from` | **M** |
+| **FR-D-062** | Kamelet tự viết hiện trong bảng thành phần cạnh 243 kamelet dựng sẵn, **phân biệt rõ nguồn** | **S** |
+| **FR-D-063** | **Pipe**: `source` → `steps[]` → `sink`; canvas tuyến tính, khóa thao tác rẽ nhánh | **M** |
+| **FR-D-064** | **Test**: gắn với một route, khai báo bản tin vào và khẳng định đầu ra | **S** |
+
+**Ràng buộc dữ liệu.** Loại tài nguyên lưu ở cột riêng `resource_kind`, **không dùng lại**
+`route_type` — cột đó mang ngữ nghĩa vận chuyển (`SYNC`/`ASYNC`), khác hẳn ngữ nghĩa loại tệp.
+
+### 8b.3. Danh mục thành phần (D-07) — `FR-D-070…073`
+
+> **Hai con số, đừng lẫn.** Chỉ mục có **751 nút** (số dùng cho bảng thành phần và D-07),
+> nhưng chỉ **742 tệp lược đồ** trên đĩa: **9 kamelet không có tham số cấu hình** nên nhà
+> sản xuất không phát hành lược đồ cho chúng (`dns-*-action`, `json-serialize-action`…).
+> Chúng vẫn là mục hợp lệ trong danh mục — màn chi tiết phải hiện "không có tham số cấu
+> hình" thay vì báo lỗi tải lược đồ.
+
+| Mã | Yêu cầu | Ưu tiên |
+|---|---|:-:|
+| **FR-D-070** | Duyệt toàn bộ **751 nút** đã vendor, tab theo loại, lọc nhãn gốc có số đếm | **M** |
+| **FR-D-071** | Tìm kiếm có xếp hạng, **ảo hóa** danh sách (ngưỡng NFR-D-02) | **M** |
+| **FR-D-072** | Trang chi tiết: mô tả gốc, bảng thuộc tính theo nhóm, cú pháp URI, mức hỗ trợ, cảnh báo `deprecated` | **M** |
+| **FR-D-073** | Hiện rõ **nguồn và giấy phép** catalog (Apache-2.0, `camel-quarkus/3.35.0`) — nghĩa vụ tuân thủ | **M** |
+
+### 8b.4. Bean, Metadata, DataMapper (D-08) — `FR-D-080…085`
+
+| Mã | Yêu cầu | Ưu tiên |
+|---|---|:-:|
+| **FR-D-080** | **Bean registry** cấp tệp: `name`, `type`, `properties` | **M** |
+| **FR-D-081** | Trường nhận bean hiện **Select** các bean đã khai, không bắt gõ tay `#beanName` | **S** |
+| **FR-D-082** | **Metadata** cho Kamelet/Pipe: `name`, `labels`, `annotations` | **S** |
+| **FR-D-083** | **DataMapper**: cây nguồn/đích kéo thả; ánh xạ 1–1, nhiều–1, 1–nhiều | **M** |
+| **FR-D-084** | Thư viện hàm biến đổi: chuỗi, số, ngày, điều kiện, tra bảng | **S** |
+| **FR-D-085** | Xem trước ánh xạ **chạy thật qua engine ở máy chủ**, không mô phỏng ở trình duyệt | **M** |
+
+**Kiến trúc DataMapper.** UI tự viết (React 19, theo `ui_ux_rule.md`) + engine
+`atlasmap-runtime` (Java) ở `apps/control`. Gói giao diện AtlasMap peer React 17 và
+PatternFly 4 — dùng API đã bị gỡ khỏi React 19, không nhúng thẳng được vào console.
+**FR-D-085 mô phỏng ở trình duyệt là sai**: kết quả sẽ lệch với lúc chạy thật.
+
+**Giữ nguyên BR-D-02.** Bean **không** chứa bí mật — chỉ tham chiếu Vault / kết nối PH-05.
+
+---
+
 ## 9. Yêu cầu phi chức năng
 
 | Mã | Yêu cầu | Ngưỡng |
@@ -271,12 +339,48 @@ chỉ ẩn nút cho đỡ bấm nhầm.
 
 | Mã | Ràng buộc |
 |---|---|
-| **BR-D-01** | Chặng bắt buộc của khung chuẩn không gỡ được (kế thừa BR-04-001) |
+| **BR-D-01** | Khung chuẩn là **mẫu gỡ được** lúc thiết kế; **bắt buộc lúc publish** với luồng đối ngoại — xem §10.1 |
 | **BR-D-02** | Không lưu bí mật trong định nghĩa luồng — chỉ tham chiếu Vault / kết nối PH-05 |
 | **BR-D-03** | Bản tin mẫu không đi vào định nghĩa đem triển khai |
 | **BR-D-04** | YAML sinh ra **phải nạp được bằng Camel thật** — điều kiện nghiệm thu bắt buộc |
+| **BR-D-04b** | YAML quay vòng (mở → lưu) **không được mất dữ liệu**: giữ nguyên biểu thức, cấu trúc lồng và comment — xem §10.2 |
 | **BR-D-05** | Còn lỗi kiểm tra thì không gửi duyệt được |
 | **BR-D-06** | Mọi thay đổi trạng thái luồng ghi nhật ký kiểm toán |
+
+### 10.1. BR-D-01 — sửa 2026-08-06 *(trước đây: "không gỡ được")*
+
+**Phát biểu mới.** Bốn chặng khung chuẩn là **mẫu khởi tạo**, người dùng gỡ được.
+`validate` phát **cảnh báo** chứ không chặn. Chốt chặn thật nằm ở **máy chủ lúc publish**,
+và chỉ áp cho **luồng đối ngoại**.
+
+**Lý do sửa.** Mức "lỗi chặn" khiến không dựng nổi luồng trắng — mà Kamelet và Pipe thì
+**về cấu trúc không thể** có bốn chặng này (Kamelet là mảnh dùng lại, Pipe là nối
+nguồn–đích). Giữ nguyên ràng buộc cũ đồng nghĩa loại bỏ hai loại tài nguyên đó.
+
+**Định nghĩa "luồng đối ngoại".** Luồng có `source_system` khớp `system_code` của một hồ
+sơ kết nạp ở trạng thái `APPROVED`/`ACTIVE` trong PH-01. Luồng nội bộ (nối hai route bằng
+`direct:`/`seda:`, tiện ích, thử nghiệm) chỉ nhận cảnh báo.
+
+> ⚠ **Trạng thái thi hành.** Cơ chế đã có (`CamelYamlValidator` + cờ
+> `lgsp.routes.strict-standard-stages`), nhưng **mặc định tắt** cho tới khi có luồng đối
+> ngoại thật: bốn luồng hiện có trong CSDL đều là luồng thử, `source_system` (`at-src`,
+> `console`, `src`) không khớp hồ sơ kết nạp nào. Bật sớm thì không chặn gì thêm mà chỉ
+> tăng rủi ro chặn oan.
+
+### 10.2. BR-D-04b — vì sao BR-D-04 một mình không đủ
+
+Ba lỗi mất dữ liệu thật, phát hiện 2026-08-05/06 bằng cách quay vòng chính các tệp trong
+`routes/` (chi tiết: [IP-07](../08-implementation/07-ke-hoach-clone-kaoto.md)):
+
+| Lỗi | Hệ quả |
+|---|---|
+| `setBody: {constant: "x"}` → `expression: {}` | **Thân bản tin biến mất** |
+| `doTry`/`loadBalance`/`multicast`/`split` → khối rỗng | **Mất cả nhánh xử lý lỗi** |
+| Comment xuất xứ `# routeCode=… version=…` bị thay bằng banner | **Mất dấu vết kiểm toán** (BR-D-06) |
+
+Cả ba đều **im lặng** và YAML sinh ra **vẫn nạp được bằng Camel** — nên BR-D-04 không bắt
+được. Bài học: "route khởi động được" **không** phải bằng chứng đủ; phải chứng minh bản tin
+đi đúng nhánh và giá trị còn nguyên.
 
 ---
 
@@ -285,11 +389,13 @@ chỉ ẩn nút cho đỡ bấm nhầm.
 | Màn | FR |
 |---|---|
 | D-01 | FR-D-001…004 · FR-04-020/021/022 |
-| D-02 | FR-D-010…013 · FR-04-026/027/034/038/039/040 |
+| D-02 | FR-D-010…013 · **FR-D-005…008** · **FR-D-060…064** · FR-04-026/027/034/038/039/040 |
 | D-03 | FR-D-020…024 · FR-04-031/032/033/037 |
 | D-04 | FR-D-030…032 · FR-04-028/035 |
 | D-05 | FR-D-040…042 · FR-04-025 |
 | D-06 | FR-D-050/051 · FR-04-029 |
+| D-07 | FR-D-070…073 |
+| D-08 | FR-D-080…085 |
 
 ---
 
@@ -297,4 +403,5 @@ chỉ ẩn nút cho đỡ bấm nhầm.
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-06 | **Cập nhật theo IP-07 (clone mô hình Kaoto).** (1) **Sửa BR-D-01**: khung chuẩn từ "không gỡ được" thành mẫu gỡ được lúc thiết kế, bắt buộc lúc publish với luồng đối ngoại — ràng buộc cũ loại bỏ hẳn Kamelet/Pipe vốn về cấu trúc không thể có bốn chặng đó; định nghĩa "đối ngoại" bám `system_code` của hồ sơ kết nạp PH-01 (§10.1). (2) **Thêm BR-D-04b**: quay vòng YAML không được mất dữ liệu — ba lỗi mất dữ liệu thật đã phát hiện đều *im lặng* và YAML vẫn nạp được bằng Camel, nên BR-D-04 một mình không bắt được (§10.2). (3) Thêm **FR-D-005…008** (tệp nhiều route), **FR-D-060…064** (Kamelet/Pipe/Test), **FR-D-070…073** (danh mục D-07), **FR-D-080…085** (Bean/Metadata/DataMapper D-08) và hai màn **D-07**, **D-08** |
 | 2026-08-04 | Khởi tạo — tách sáu màn theo nhiệm vụ, chuẩn hóa cửa sổ cấu hình 75%, bổ sung nghiệp vụ nhật ký chạy (D-05) còn thiếu, đặt ngưỡng phi chức năng theo số liệu catalog thật |
