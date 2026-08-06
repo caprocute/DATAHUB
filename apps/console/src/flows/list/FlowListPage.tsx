@@ -48,6 +48,19 @@ const STATUS_VI: Record<string, string> = {
  * ~3,3:1 — dưới ngưỡng 4,5:1 của WCAG AA cho chữ thường. Bảng đó là hằng số của thư
  * viện, token `colorSuccess` không đổi được, nên phải chỉ định màu thẳng ở đây (N-7).
  */
+/** Nhãn loại tài nguyên; `ROUTE` không hiện vì đó là mặc định, hiện chỉ thêm nhiễu. */
+const KIND_VI: Record<string, string> = {
+  KAMELET: 'Kamelet',
+  PIPE: 'Pipe',
+  TEST: 'Test',
+}
+
+const KIND_COLOR: Record<string, string> = {
+  KAMELET: 'purple',
+  PIPE: 'cyan',
+  TEST: 'orange',
+}
+
 const STATUS_COLOR: Record<string, string> = {
   DRAFT: 'default',
   PENDING_REVIEW: '#1d4ed8',
@@ -258,7 +271,19 @@ export function FlowListPage() {
         title: 'Mã luồng',
         dataIndex: 'routeCode',
         sorter: true,
-        render: (v: string) => <Typography.Text strong>{v}</Typography.Text>,
+        // Loại tài nguyên đi kèm mã thay vì thành cột riêng: bảng đã rộng sẵn, mà
+        // người dùng cần biết đây là Route hay Kamelet/Pipe/Test **ngay khi đọc mã**
+        // — bốn loại này thao tác khác hẳn nhau (IP-07 K3-5).
+        render: (v: string, row: RouteSummary) => (
+          <span className="flw__code">
+            <Typography.Text strong>{v}</Typography.Text>
+            {row.resourceKind && row.resourceKind !== 'ROUTE' && (
+              <Tag className="flw__kind" color={KIND_COLOR[row.resourceKind] ?? 'default'}>
+                {KIND_VI[row.resourceKind] ?? row.resourceKind}
+              </Tag>
+            )}
+          </span>
+        ),
       },
       { title: 'Tên', dataIndex: 'title', sorter: true },
       {

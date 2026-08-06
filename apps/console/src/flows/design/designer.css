@@ -1584,3 +1584,18 @@
   /* Hẹp thì xếp dọc — ba cột ở bề ngang này thành ba cột không đọc nổi. */
   .dmp, .dmp__out { grid-template-columns: 1fr; }
 }
+
+/* ---------- Nhãn loại tài nguyên trên danh sách luồng (K3-5) ---------- */
+
+.flw__code {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/* Nhãn nhỏ hơn mã luồng — nó là thông tin phụ, không được lấn mã. */
+.flw__kind {
+  margin-inline-end: 0 !important;
+  font-size: 10px;
+  line-height: 16px;
+}

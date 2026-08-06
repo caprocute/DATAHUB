@@ -1,0 +1,60 @@
+# Sinh từ trình thiết kế luồng LGSP — Camel YAML DSL
+# Định nghĩa này đi vào kho Git rồi Argo CD triển khai, không sửa trực tiếp trên môi trường.
+- route:
+    id: route-mse6qrrt
+    from:
+      uri: 'rest:get:/api/v1/thua-dat/{soThuTu}'
+      parameters:
+        consumes: application/json
+      steps:
+        - to:
+            uri: 'json-validator:schema/thua-dat-v2.json'
+        - to:
+            uri: 'http://opa.lgsp.svc:8181/v1/data/lgsp/authz/thuadat.read'
+            parameters:
+              httpMethod: POST
+        - transform:
+            expression:
+              simple: $.ThuaDat.SoThuTu ← $.soThuTu; $.ThuaDat.ChuSoHuu.HoTen ← $.chuSoHuu.hoTen; $.ThuaDat.ChuSoHuu.SoDinhDanh ← $.chuSoHuu.soDinhDanh; $.ThuaDat.ViTri.MaDonViHanhChinh ← $.viTri.maDonViHanhChinh; $.ThuaDat.DienTich ← $.dienTich
+        - enrich:
+            expression:
+              constant: 'direct:tra-cuu-danh-muc-dvhc'
+        - choice:
+            when:
+              - expression:
+                  simple: '${header.loaiHoSo} == ''CAP_MOI'''
+                steps:
+                  - setHeader:
+                      name: lgspPhanLoai
+                      expression:
+                        simple: CAP_MOI
+              - expression:
+                  simple: '${header.loaiHoSo} == ''CHINH_LY'''
+                steps:
+                  - setHeader:
+                      name: lgspPhanLoai
+                      expression:
+                        simple: CHINH_LY
+        - to:
+            uri: 'xslt:transforms/cdm-to-datdai-v3.xsl'
+        - to:
+            uri: 'http://adapter-csdl-datdai.lgsp.svc:8080/api/v1/thua-dat'
+            parameters:
+              httpMethod: POST
+        - wireTap:
+            uri: 'kafka:lgsp.audit.trace'
+        - to:
+            uri: 'couchbase:protocol://hostname:port'
+            parameters:
+              exchangePattern: InOnly
+- onException:
+    exception:
+      - java.lang.Exception
+    redeliveryPolicy:
+      maximumRedeliveries: 3
+      redeliveryDelay: 1000
+      backOffMultiplier: 2
+    steps:
+      - to:
+          uri: 'kafka:lgsp.dlq.route-mse6qrrt'
+

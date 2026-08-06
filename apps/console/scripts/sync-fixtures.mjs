@@ -56,9 +56,14 @@ for (const rel of sources) {
 }
 
 // Bản sao thừa: tệp gốc đã xóa hoặc đổi tên.
+//
+// Bỏ qua tiền tố `db__`: đó là **ảnh chụp luồng thật từ CSDL** dùng cho cổng N-9
+// (tương thích ngược), không có bản gốc trong `routes/` để đối chiếu. Xóa nhầm chúng
+// là mất đúng bộ dữ liệu chứng minh lõi mới đọc được luồng người dùng đã tạo.
 const expected = new Set(sources.map(flatten));
 for (const name of readdirSync(fixturesDir)) {
-  if (name.endsWith('.camel.yaml') && !expected.has(name)) {
+  if (!name.endsWith('.camel.yaml') || name.startsWith('db__')) continue;
+  if (!expected.has(name)) {
     problems.push(`bản sao thừa (tệp gốc đã đổi tên hoặc xóa): ${name}`);
   }
 }
