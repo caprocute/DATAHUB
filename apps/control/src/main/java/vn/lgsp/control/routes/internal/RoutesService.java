@@ -212,6 +212,10 @@ class RoutesService implements RoutesApi {
       where.append(" AND r.status = ?");
       args.add(query.status());
     }
+    if (query.resourceKind() != null) {
+      where.append(" AND r.resource_kind = ?");
+      args.add(query.resourceKind());
+    }
     if (query.q() != null) {
       where.append(
           " AND (LOWER(r.route_code) LIKE ? OR LOWER(r.title) LIKE ?"

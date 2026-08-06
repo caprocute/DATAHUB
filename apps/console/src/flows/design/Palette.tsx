@@ -1,4 +1,5 @@
-import { useDeferredValue, useMemo, useRef, useState, type DragEvent } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
+import { searchRoutes } from '../../api/routesApi'
 import {
   CATALOG_TOTAL,
   KIND_VI,
@@ -38,6 +39,15 @@ const OVERSCAN = 6
  * gõ phím phải vẽ lại toàn bộ, không đạt ngưỡng < 50 ms của NFR-D-02.
  */
 export function Palette({ hasFrom }: Props) {
+  /**
+   * Kamelet **tự viết** trong hệ thống (K3-2 — FR-D-062).
+   *
+   * Nạp một lần khi mở tab Kamelet. Hiện cạnh 243 kamelet dựng sẵn nhưng **có huy hiệu
+   * riêng**: người dùng phải phân biệt được thứ nền tảng bảo đảm với thứ đơn vị mình tự
+   * viết — nhầm hai loại này là nhầm cả trách nhiệm vận hành khi nó hỏng.
+   */
+  const [mine, setMine] = useState<CatalogNode[]>([])
+  const [mineLoaded, setMineLoaded] = useState(false)
   const [q, setQ] = useState('')
   const [kind, setKind] = useState<NodeKind>('component')
   const [label, setLabel] = useState<string | null>(null)
@@ -51,11 +61,40 @@ export function Palette({ hasFrom }: Props) {
   const deferredQ = useDeferredValue(q)
   const role = hasFrom ? 'step' : undefined
 
+  useEffect(() => {
+    if (kind !== 'kamelet' || mineLoaded) return
+    setMineLoaded(true)
+    void searchRoutes({ resourceKind: 'KAMELET', size: 200 })
+      .then((page) =>
+        setMine(
+          page.items.map((r) => ({
+            name: r.routeCode,
+            kind: 'kamelet' as const,
+            title: r.title || r.routeCode,
+            description: `Kamelet tự viết — ${r.sourceSystem}`,
+            labels: ['tu-viet'],
+          })),
+        ),
+      )
+      // Không nạp được thì bảng vẫn dùng được với kamelet dựng sẵn; báo lỗi ồn ào ở đây
+      // chặn mất việc chính của người dùng.
+      .catch(() => setMine([]))
+  }, [kind, mineLoaded])
+
   const labels = useMemo(() => labelsOfKind(kind), [kind])
-  const results = useMemo(
-    () => searchNodes(deferredQ, { kind, label: label ?? undefined, role }),
-    [deferredQ, kind, label, role],
-  )
+  const results = useMemo(() => {
+    const base = searchNodes(deferredQ, { kind, label: label ?? undefined, role })
+    if (kind !== 'kamelet' || !mine.length) return base
+    // Kamelet tự viết lên **đầu** danh sách: đó là thứ người dùng vừa tạo và đang tìm.
+    const needle = deferredQ.trim().toLowerCase()
+    const mineHit = needle
+      ? mine.filter(
+          (m) =>
+            m.name.toLowerCase().includes(needle) || m.title.toLowerCase().includes(needle),
+        )
+      : mine
+    return [...mineHit, ...base]
+  }, [deferredQ, kind, label, role, mine])
 
   const first = Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN)
   const last = Math.min(results.length, Math.ceil((scrollTop + viewH) / ROW_H) + OVERSCAN)
@@ -180,6 +219,11 @@ export function Palette({ hasFrom }: Props) {
                     <span className="pal__text">
                       <span className="pal__name">
                         {n.title}
+                        {/* Kamelet tự viết: nền tảng **không** bảo đảm, trách nhiệm vận
+                            hành thuộc đơn vị viết ra nó — phải nhìn là biết ngay. */}
+                        {n.labels?.includes('tu-viet') && (
+                          <span className="pal__badge pal__badge--mine">tự viết</span>
+                        )}
                         {n.deprecated && <span className="pal__badge pal__badge--warn">cũ</span>}
                         {n.supportLevel === 'Preview' && <span className="pal__badge">thử nghiệm</span>}
                       </span>

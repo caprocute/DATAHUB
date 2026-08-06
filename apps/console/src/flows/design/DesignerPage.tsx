@@ -46,6 +46,7 @@ import { InteractionContext, type DraggedNode, type Interaction } from './intera
 import { autoLayout } from './layout'
 import { NodeConfig } from './NodeConfig'
 import { EntityList } from './EntityList'
+import { KameletSpec } from './KameletSpec'
 import { Palette } from './Palette'
 import { mapWaterfall, RunContext, type StageRun } from './RunContext'
 import { StatusContext } from './StatusContext'
@@ -111,6 +112,8 @@ function DesignerInner() {
   const [saveState, setSaveState] = useState<SaveState>('saved')
   const [loading, setLoading] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
+  /** Cửa sổ soạn tham số Kamelet (K3-1) — chỉ mở được khi tài nguyên là Kamelet. */
+  const [kameletOpen, setKameletOpen] = useState(false)
   /** Cửa sổ xem/sửa YAML toàn màn hình (đồng bộ ngược về sơ đồ). */
   const [yamlOpen, setYamlOpen] = useState(false)
   // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
@@ -678,6 +681,12 @@ function DesignerInner() {
           <Button size="small" onClick={() => setConfigOpen(true)} disabled={!selected}>
             Cấu hình
           </Button>
+          {/* Chỉ Kamelet mới có `spec.definition` — nút này vô nghĩa với Route/Pipe. */}
+          {tree?.kind === 'Kamelet' && (
+            <Button size="small" onClick={() => setKameletOpen(true)}>
+              Tham số Kamelet
+            </Button>
+          )}
           <Button size="small" onClick={() => leaveTo(`/flows/${code}/test`)}>
             Chạy thử
           </Button>
@@ -816,6 +825,17 @@ function DesignerInner() {
           setEdges(e)
           setSaveState('dirty')
           message.success('Đã áp YAML vào sơ đồ')
+        }}
+      />
+
+      <KameletSpec
+        open={kameletOpen}
+        resource={tree}
+        onClose={() => setKameletOpen(false)}
+        onSave={(next) => {
+          setTree(next)
+          markDirty()
+          message.success('Đã lưu tham số Kamelet')
         }}
       />
 

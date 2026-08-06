@@ -61,11 +61,12 @@ class RoutesController {
   Map<String, Object> list(
       @RequestParam(value = "q", required = false) String q,
       @RequestParam(value = "status", required = false) String status,
+      @RequestParam(value = "resourceKind", required = false) String resourceKind,
       @RequestParam(value = "sort", required = false) String sort,
       @RequestParam(value = "desc", defaultValue = "true") boolean desc,
       @RequestParam(value = "page", defaultValue = "0") int page,
       @RequestParam(value = "size", defaultValue = "20") int size) {
-    RoutePageDto result = routesApi.search(new RouteQuery(q, status, sort, desc, page, size));
+    RoutePageDto result = routesApi.search(new RouteQuery(q, status, resourceKind, sort, desc, page, size));
     return Map.of(
         "items", result.items(),
         "total", result.total(),

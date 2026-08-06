@@ -11,13 +11,15 @@ import java.util.Locale;
  *
  * @param q tìm theo mã / tên / hệ nguồn
  * @param status lọc theo trạng thái, rỗng là mọi trạng thái
+ * @param resourceKind lọc theo loại tài nguyên (`ROUTE`/`KAMELET`/`PIPE`/`TEST`), rỗng là
+ *     mọi loại — dùng cho bảng thành phần liệt kê kamelet tự viết (IP-07 K3-2)
  * @param sort tên cột sắp xếp; chỉ nhận danh sách trắng bên dưới
  * @param desc sắp xếp giảm dần
  * @param page trang bắt đầu từ 0
  * @param size số dòng mỗi trang
  */
 public record RouteQuery(
-    String q, String status, String sort, boolean desc, int page, int size) {
+    String q, String status, String resourceKind, String sort, boolean desc, int page, int size) {
 
   /**
    * Cột được phép sắp xếp → biểu thức SQL.
@@ -35,6 +37,10 @@ public record RouteQuery(
   public RouteQuery {
     q = q == null || q.isBlank() ? null : q.trim();
     status = status == null || status.isBlank() ? null : status.trim().toUpperCase(Locale.ROOT);
+    resourceKind =
+        resourceKind == null || resourceKind.isBlank()
+            ? null
+            : resourceKind.trim().toUpperCase(Locale.ROOT);
     // Phải xét null **trước**: `SORTABLE` tạo bằng `List.of(...)` nên không nhận null,
     // `contains(null)` ném thẳng NullPointerException. Mà null lại là trường hợp
     // thường gặp nhất — giao diện không gửi tham số sắp xếp thì mọi lần liệt kê đều 500.

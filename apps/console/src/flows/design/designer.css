@@ -398,6 +398,9 @@
   font-weight: 600;
 }
 .pal__badge--warn { color: #b45309; }
+/* Kamelet tự viết. Đo tương phản trên nền `#f3f4f6`: 6,09:1 — vượt ngưỡng AA 4,5:1 cho
+   chữ nhỏ (N-7). `#2563eb` chỉ được 4,7:1 nên sát quá, `#3b82f6` thì trượt hẳn (3,34:1). */
+.pal__badge--mine { color: #1d4ed8; }
 
 .pal__foot {
   flex: none;
@@ -1419,3 +1422,23 @@
   font-size: 12px;
   color: var(--c-text-2, #4b5563);
 }
+
+/* ---------- Trình soạn tham số Kamelet (K3-1 · FR-D-061) ---------- */
+
+.kml__meta {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--sp-3, 12px);
+  margin-bottom: var(--sp-3, 12px);
+}
+.kml__meta label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kml__meta span {
+  font-size: 12px;
+  color: var(--c-text-2, #4b5563);
+}
+.kml__errs { margin-bottom: var(--sp-3, 12px); }
+.kml__add { margin-top: var(--sp-2, 8px); }

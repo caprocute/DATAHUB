@@ -83,6 +83,8 @@ export async function listRoutes() {
 export type RouteQuery = {
   q?: string
   status?: string
+  /** Lọc theo loại tài nguyên: `ROUTE` | `KAMELET` | `PIPE` | `TEST` (IP-07 K3-2). */
+  resourceKind?: string
   sort?: string
   desc?: boolean
   page?: number
@@ -99,6 +101,7 @@ export async function searchRoutes(query: RouteQuery = {}) {
   const p = new URLSearchParams()
   if (query.q?.trim()) p.set('q', query.q.trim())
   if (query.status) p.set('status', query.status)
+  if (query.resourceKind) p.set('resourceKind', query.resourceKind)
   if (query.sort) p.set('sort', query.sort)
   if (query.desc !== undefined) p.set('desc', String(query.desc))
   p.set('page', String(query.page ?? 0))
