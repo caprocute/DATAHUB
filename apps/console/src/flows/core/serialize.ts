@@ -122,6 +122,7 @@ function writeEntity(e: VisualEntity): Rec {
 export function serialize(res: CamelResource, original?: string): string {
   if (res.kind === 'Kamelet') return writeKamelet(res, original);
   if (res.kind === 'Pipe') return writePipe(res, original);
+  if (res.kind === 'Test') return writeTest(res, original);
 
   const list: Rec[] = [];
   if (res.beans.length) list.push({ beans: res.beans });
@@ -166,6 +167,20 @@ function firstItem(doc: Document): { commentBefore?: string | null } | undefined
   const items = contents?.items;
   if (!Array.isArray(items) || !items.length) return undefined;
   return items[0] as { commentBefore?: string | null };
+}
+
+/** Test: ghi trả nguyên `spec` — không có luồng để dựng lại (K3-4). */
+function writeTest(res: CamelResource, original?: string): string {
+  const rest = res.rest as Rec;
+  return withComments(
+    clean({
+      apiVersion: rest.apiVersion ?? 'camel.apache.org/v1',
+      kind: 'Test',
+      metadata: res.metadata,
+      spec: rest.spec,
+    }),
+    original,
+  );
 }
 
 function writeKamelet(res: CamelResource, original?: string): string {

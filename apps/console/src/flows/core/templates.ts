@@ -18,7 +18,7 @@ export interface FlowTemplate {
   title: string;
   description: string;
   /** Loại tài nguyên mẫu này sinh ra — khớp `resource_kind` ở máy chủ. */
-  resourceKind: 'ROUTE' | 'KAMELET' | 'PIPE';
+  resourceKind: 'ROUTE' | 'KAMELET' | 'PIPE' | 'TEST';
   /** Sinh YAML cho một mã luồng cụ thể. */
   yaml: (routeCode: string) => string;
 }
@@ -169,7 +169,34 @@ spec:
 `,
 };
 
-export const TEMPLATES: FlowTemplate[] = [BLANK, STANDARD, REST_INTEGRATION, KAMELET, PIPE];
+/**
+ * Test: ca kiểm thử cho một route.
+ *
+ * Mỗi ca **phải có ít nhất một khẳng định** — ca không khẳng định gì thì luôn đạt, và đội
+ * vận hành tưởng luồng đã được kiểm trong khi thực tế không kiểm gì cả. Mẫu này làm gương
+ * đúng ngay từ đầu.
+ */
+const TEST: FlowTemplate = {
+  id: 'test',
+  title: 'Test (ca kiểm thử)',
+  description: 'Khai báo bản tin vào và khẳng định đầu ra cho một route.',
+  resourceKind: 'TEST',
+  yaml: (code) => `apiVersion: camel.apache.org/v1
+kind: Test
+metadata:
+  name: ${code}
+spec:
+  route: ${code.replace(/^test-/, '')}
+  cases:
+    - name: Truong hop thuan
+      body: '{"maHoSo":"HS001"}'
+      headers:
+        Content-Type: application/json
+      expectBodyContains: HS001
+`,
+};
+
+export const TEMPLATES: FlowTemplate[] = [BLANK, STANDARD, REST_INTEGRATION, KAMELET, PIPE, TEST];
 
 export function templateById(id: string): FlowTemplate | undefined {
   return TEMPLATES.find((t) => t.id === id);

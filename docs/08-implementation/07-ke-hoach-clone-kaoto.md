@@ -302,20 +302,53 @@ bản tin đi đúng nhánh.
 
 ## 5. K3 — Kamelet, Pipe, Test
 
-- [ ] **K3-1.** **Kamelet**: `spec.definition` (JSON Schema tham số) + `spec.template.from`.
-      Trình soạn tham số kamelet: tên, kiểu, mặc định, bắt buộc, mô tả.
-- [ ] **K3-2.** Kamelet tự viết hiện trong bảng thành phần cạnh 243 kamelet dựng sẵn,
-      phân biệt rõ nguồn.
-- [ ] **K3-3.** **Pipe**: `spec.source` → `spec.steps[]` → `spec.sink`, kèm `errorHandler`.
-      Canvas Pipe là **dãy tuyến tính**, không phải đồ thị nhánh — dùng lại `VisualEntity`
-      nhưng khóa thao tác rẽ nhánh.
-- [ ] **K3-4.** **Test** (Camel JBang / Citrus): gắn với một route, khai báo bản tin vào và
-      khẳng định đầu ra.
-- [ ] **K3-5.** Bộ chọn loại khi tạo mới: Route · Kamelet · Pipe · Test.
-- [ ] **K3-6.** Nghiệm thu từng loại bằng Camel thật (xem N-2).
+- [x] **K3-1.** **Kamelet**: `kamelet.ts` đọc/ghi `spec.definition` đúng dạng JSON Schema
+      draft-07 mà 243 kamelet vendor dùng; `KameletSpec.tsx` soạn tên/kiểu/nhãn/mô tả/mặc
+      định/bắt buộc. Nút chỉ hiện khi tài nguyên là Kamelet.
 
-> **Câu hỏi mở K3-4** — chạy Test bằng `camel-jbang` trong container ở `apps/control`,
-> hay đẩy sang runner riêng? Quyết định khi tới K3, không chặn K1/K2.
+      > **Kiểu tham số lấy theo dữ liệu thật, không theo enum lược đồ.** Enum của
+      > `KameletConfiguration` là `string|number|boolean` — sai cả hai đầu: thiếu `integer`
+      > (phổ biến thứ ba, 111 lần) và có `number` mà **không kamelet gốc nào dùng**. Đếm
+      > trên 243 kamelet: `string` 1256 · `boolean` 316 · `integer` 111 · `binary` 9 ·
+      > `long` 1. Có test khóa danh sách với thư mục lược đồ.
+
+- [x] **K3-2.** Kamelet tự viết hiện **đầu** tab Kamelet, cạnh 243 kamelet dựng sẵn, có huy
+      hiệu "tự viết" riêng (màu `#1d4ed8`, đo được 6,09:1 — đạt AA cho chữ 9px). Người dùng
+      phải phân biệt được thứ nền tảng bảo đảm với thứ đơn vị tự viết: nhầm hai loại là nhầm
+      cả trách nhiệm vận hành khi nó hỏng. Kèm `resourceKind` cho `RouteQuery` (lọc phía máy chủ).
+
+- [x] **K3-3.** **Pipe**: `pipe.ts` đọc dãy `source` → `steps[]` → `sink`, sửa tham số và
+      đổi Kamelet từng mắt mà **giữ nguyên `apiVersion`/`kind` của `ref`** — dựng lại cả mắt
+      sẽ làm bay thứ Camel cần để tra đúng Kamelet. Khóa mọi thao tác rẽ nhánh
+      (`allowedInPipe`): Pipe là dãy tuyến tính, thả `choice` vào là dựng ra thứ không nạp được.
+
+- [~] **K3-4.** **Test**: `test-resource.ts` + mẫu — `spec.route` trỏ route được kiểm,
+      `spec.cases[]` mỗi ca có bản tin vào và khẳng định. **Mô hình xong, bộ chạy chưa có.**
+
+      > **Lỗi mất dữ liệu bắt được ở đây:** `deserialize` không có nhánh cho `kind: Test` nên
+      > tệp Test rơi vào lối đọc route và **mất sạch nội dung** — quay vòng ra `[]`. Đã thêm
+      > `readTest`/`writeTest` và test chặn.
+      >
+      > **Bộ chạy thật chưa có, và điều này phải nói thẳng.** Soi `RoutesService.testRun`:
+      > nó dựng waterfall **chín chặng cố định** với thời lượng suy từ `stage.hashCode()` —
+      > **không nạp Camel, không đọc định nghĩa luồng**. Nghĩa là "chạy thử PASSED" hiện nay
+      > không chứng minh điều gì về luồng. `runnerStatus()` nói rõ trạng thái này thay vì để
+      > người dùng tưởng ca kiểm thử đã được thi hành.
+      >
+      > Quyết định K3-4 (chọn `camel-jbang` trong `apps/control`) **chưa thi hành được ở môi
+      > trường này**: không có `jbang`, không có mạng để tải. `GitOpsPublisher` đã dùng
+      > `ProcessBuilder` nên đường đi kỹ thuật là rõ. Để lại cho đợt có mạng.
+
+- [x] **K3-5.** Bộ chọn loại khi tạo mới — đã xong ở K2-2, nay đủ cả bốn loại
+      (Route · Kamelet · Pipe · Test).
+
+- [~] **K3-6.** Nghiệm thu bằng Camel thật: **Route đạt** (K2). **Kamelet/Pipe/Test chưa** —
+      `camel/dancu` không có `camel-quarkus-kamelet` và kho Maven offline cũng không có gói
+      đó. Thay bằng đối chiếu cấu trúc với chính 243 lược đồ nhà sản xuất phát hành. Nghiệm
+      thu runtime để lại cho N-2 khi có mạng.
+
+> **K3-4 đã chốt** — chạy bằng `camel-jbang` trong `apps/control` (`TestRunService` đã ở đó,
+> không cần thêm dịch vụ mới). Chưa thi hành được vì môi trường không có `jbang`/mạng.
 
 ---
 

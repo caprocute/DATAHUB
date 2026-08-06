@@ -10,6 +10,14 @@ import {
   validateProps,
 } from './kamelet';
 import { readLinks, updateLink, setLinkKamelet, allowedInPipe, validatePipe } from './pipe';
+import {
+  readCases,
+  readTargetRoute,
+  runnerStatus,
+  validateTest,
+  writeCases,
+} from './test-resource';
+import { templateById } from './templates';
 
 const KAMELET = `apiVersion: camel.apache.org/v1
 kind: Kamelet
@@ -289,5 +297,97 @@ describe('K3 — thay đổi chỉ đụng cây vẫn phải ra YAML', () => {
     expect(serialize(writeMeta(res, { title: 'Ten hoan toan moi' }), KAMELET)).toContain(
       'Ten hoan toan moi',
     )
+  })
+})
+
+describe('K3-4 — tài nguyên Test', () => {
+  const TEST_YAML = `apiVersion: camel.apache.org/v1
+kind: Test
+metadata:
+  name: test-tra-cuu
+spec:
+  route: tra-cuu
+  cases:
+    - name: Truong hop thuan
+      body: '{"maHoSo":"HS001"}'
+      headers:
+        Content-Type: application/json
+      expectBodyContains: HS001
+    - name: Ho so khong ton tai
+      body: '{"maHoSo":"KHONG-CO"}'
+      expectStage: respond
+`
+
+  /**
+   * Lỗi thật đã gặp: `deserialize` không có nhánh cho `kind: Test` nên tệp rơi vào lối
+   * đọc route và **mất sạch nội dung** — quay vòng ra `[]`.
+   */
+  it('nhận đúng loại và không mất nội dung khi quay vòng', () => {
+    const res = deserialize(TEST_YAML)
+    expect(res.kind).toBe('Test')
+    const out = serialize(res, TEST_YAML)
+    expect(out).not.toBe('[]\n')
+    expect(out).toContain('kind: Test')
+    expect(out).toContain('route: tra-cuu')
+    expect(out).toContain('HS001')
+    expect(out).toContain('expectStage: respond')
+    expect(out).toContain('Content-Type: application/json')
+  })
+
+  it('đọc đúng route đích và các ca kiểm thử', () => {
+    const res = deserialize(TEST_YAML)
+    expect(readTargetRoute(res)).toBe('tra-cuu')
+    const cases = readCases(res)
+    expect(cases).toHaveLength(2)
+    expect(cases[0].expectBodyContains).toBe('HS001')
+    expect(cases[0].headers['Content-Type']).toBe('application/json')
+    expect(cases[1].expectStage).toBe('respond')
+  })
+
+  it('ghi ca mới rồi đọc lại thấy đủ', () => {
+    const res = deserialize(TEST_YAML)
+    const cases = readCases(res)
+    cases.push({ name: 'Ca moi', body: 'x', headers: {}, expectBodyContains: 'y' })
+    expect(readCases(writeCases(res, cases))).toHaveLength(3)
+  })
+
+  /** Ca không khẳng định gì thì **luôn đạt** — vận hành tưởng đã kiểm mà thực ra không. */
+  it('bắt được ca kiểm thử không có khẳng định nào', () => {
+    const res = writeCases(deserialize(TEST_YAML), [
+      { name: 'Ca rong', body: 'x', headers: {} },
+    ])
+    expect(validateTest(res)).toContainEqual(expect.stringContaining('luôn đạt'))
+  })
+
+  it('bắt được thiếu route đích và ca trùng tên', () => {
+    const khongRoute = deserialize(`apiVersion: camel.apache.org/v1
+kind: Test
+metadata:
+  name: t
+spec:
+  cases: []
+`)
+    expect(validateTest(khongRoute)).toContainEqual(expect.stringContaining('Chưa chọn route'))
+    const trung = writeCases(deserialize(TEST_YAML), [
+      { name: 'A', body: '', headers: {}, expectBodyContains: 'x' },
+      { name: 'A', body: '', headers: {}, expectBodyContains: 'y' },
+    ])
+    expect(validateTest(trung)).toContainEqual(expect.stringContaining('trùng'))
+  })
+
+  /**
+   * Bộ chạy thật **chưa có**: `testRun` phía máy chủ dựng waterfall chín chặng cố định từ
+   * mã băm tên chặng, không nạp Camel. Nói thẳng cho người dùng còn hơn để "PASSED" thành
+   * lời hứa sai.
+   */
+  it('nói rõ bộ chạy chưa có, không hứa hão', () => {
+    const st = runnerStatus()
+    expect(st.available).toBe(false)
+    expect(st.reason).toMatch(/mô phỏng/)
+  })
+
+  it('mẫu Test hợp lệ ngay khi tạo — mọi ca đều có khẳng định', () => {
+    const res = deserialize(templateById('test')!.yaml('test-tra-cuu'))
+    expect(validateTest(res)).toHaveLength(0)
   })
 })

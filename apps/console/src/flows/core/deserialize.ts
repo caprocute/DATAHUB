@@ -257,6 +257,7 @@ export function deserialize(src: string): CamelResource {
 
   if (kind === 'Kamelet') return readKamelet(root as Rec);
   if (kind === 'Pipe') return readPipe(root as Rec);
+  if (kind === 'Test') return readTest(root as Rec);
 
   // Tệp route: danh sách các khối cấp cao nhất.
   const list: unknown[] = Array.isArray(root) ? root : root == null ? [] : [root];
@@ -280,6 +281,23 @@ export function deserialize(src: string): CamelResource {
   });
 
   return { kind: 'Route', entities, beans, rest };
+}
+
+/**
+ * Test: `spec.route` + `spec.cases[]` (K3-4).
+ *
+ * Không có luồng để vẽ — giữ toàn bộ `spec` trong `rest` để `test-resource.ts` đọc/ghi.
+ * Thiếu nhánh này thì tệp Test rơi vào lối đọc route và **mất sạch nội dung**: đã gặp
+ * thật, tệp quay vòng ra `[]`.
+ */
+function readTest(root: Rec): CamelResource {
+  return {
+    kind: 'Test',
+    entities: [],
+    metadata: isRec(root.metadata) ? root.metadata : undefined,
+    beans: [],
+    rest: { apiVersion: root.apiVersion, kind: root.kind, spec: root.spec },
+  };
 }
 
 /** Kamelet: `spec.template.from` + `spec.definition`. */
