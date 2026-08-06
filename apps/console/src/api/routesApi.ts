@@ -5,6 +5,12 @@ export type RouteSummary = {
   routeCode: string
   title: string
   routeType: string
+  /**
+   * Loại tài nguyên Camel: `ROUTE` | `KAMELET` | `PIPE` | `TEST` (IP-07 K2-5).
+   *
+   * Khác `routeType` — cột đó nói cách vận chuyển (`SYNC`/`ASYNC`), cột này nói loại tệp.
+   */
+  resourceKind?: string
   status: string
   sourceSystem: string
   targetSystem?: string | null

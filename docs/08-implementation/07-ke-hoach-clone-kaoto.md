@@ -206,10 +206,18 @@ sẽ phải vứt dữ liệu ở đúng chỗ này.
       > nghĩa là **hiện không tầng nào bắt buộc khung chuẩn**. Đây là khoảng trống có thật,
       > không phải hệ quả của K1. Xử lý ở **K2-6** thay vì lặng lẽ bỏ qua.
 
-- [ ] **K1-7b.** *(mới, do đính chính trên)* `CamelYamlValidator`: phân biệt **luồng đối
-      ngoại** với luồng nội bộ/kamelet/pipe, và với luồng đối ngoại thì nâng chặng khung
-      chuẩn lên `ERROR` để `publish()` chặn thật. Cần cột `resource_kind` của K2-5 để biết
-      loại tài nguyên, nên làm cùng K2.
+- [~] **K1-7b.** `CamelYamlValidator` nâng chặng khung chuẩn lên `ERROR` để `publish()`
+      chặn thật — **đã làm phần cơ chế**, có test chứng minh chặn được (bỏ cờ đi thì test đỏ).
+
+      > ⚠ **Điều còn thiếu là quyết định chính sách, không phải mã.** Bật theo cờ
+      > `lgsp.routes.strict-standard-stages`, **mặc định tắt** để giữ nguyên hành vi hiện tại.
+      > Lý do không tự bật: **chưa có khái niệm "luồng đối ngoại" trong mã lẫn SRS** —
+      > `source_system`/`target_system` là chuỗi tự do, không có cờ nào phân biệt đối ngoại
+      > với nội bộ. Tự đặt ra luật phân loại ở đây là quyết định chính sách vượt quyền, mà
+      > đoán sai thì hoặc chặn oan luồng nội bộ hoặc thả lọt luồng đối ngoại.
+      >
+      > **Cần chủ dự án chốt**: phân biệt đối ngoại/nội bộ bằng gì? Khi có câu trả lời thì
+      > thay cờ toàn cục bằng thuộc tính của từng luồng.
 - [x] **K1-8.** Test lõi: **152 ca xanh** (122 cũ + 30 mới), gồm 4 ca chặn lỗi cũ (§1),
       round-trip giữ comment, `doTry`/`loadBalance`/`multicast`/`split`, nhiều route một tệp,
       Kamelet, Pipe, `routeConfiguration`, và ca **quay vòng hai lần cho kết quả y hệt**
@@ -246,12 +254,15 @@ bản tin đi đúng nhánh.
       `renameEntity` trả kèm **số tham chiếu đã sửa** để giao diện nói rõ thay vì âm thầm
       đổi. Chặng tiếp nhận qua `rest:`/`kafka:` thì tên route không phải địa chỉ nên
       không đụng tới.
-- [ ] **K2-5.** DB: thêm cột `resource_kind VARCHAR(20)` vào `ph04.route`
-      (changeset Liquibase mới). **Không dùng lại `route_type`** — cột đó đang mang
-      ngữ nghĩa vận chuyển (`SYNC`, mặc định ở `RoutesService:86`), khác hẳn ngữ nghĩa
-      loại tệp. Gộp hai khái niệm vào một cột sẽ hỏng cả hai.
-- [ ] **K2-6.** `CamelYamlValidator` (Java) nhận thêm 3 loại tài nguyên; `REQUIRED_STAGES`
-      chuyển thành cảnh báo theo Q1.
+- [x] **K2-5.** DB: cột `resource_kind VARCHAR(20) NOT NULL DEFAULT 'ROUTE'` + chỉ mục,
+      changeset `007-e-resource-kind.yaml`. **Không dùng lại `route_type`** — cột đó mang
+      ngữ nghĩa vận chuyển (`SYNC`), khác hẳn ngữ nghĩa loại tệp.
+      *(Kiểm chứng trên Postgres 17 thật đang chạy, có sẵn 4 luồng: cột và chỉ mục tạo
+      đúng, **4 dòng cũ điền `ROUTE`**, `route_type` không bị đụng tới, hai changeset ghi
+      `EXECUTED` trong `databasechangelog`, ứng dụng khởi động sạch.)*
+- [x] **K2-6.** `CamelYamlValidator` nhận thêm 3 loại tài nguyên: Kamelet/Pipe kiểm theo
+      hình dạng CRD (`kind:` + khóa bắt buộc dưới `spec`), **không** bắt theo khung chín
+      chặng vì về cấu trúc chúng không thể có. 10 ca test.
 
 ---
 

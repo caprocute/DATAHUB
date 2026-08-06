@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -38,6 +39,7 @@ class RoutesService implements RoutesApi {
               rs.getString("route_code"),
               rs.getString("title"),
               rs.getString("route_type"),
+              rs.getString("resource_kind"),
               rs.getString("status"),
               rs.getString("source_system"),
               rs.getString("target_system"),
@@ -51,7 +53,7 @@ class RoutesService implements RoutesApi {
   /** Phần `SELECT` dùng chung cho danh sách và chi tiết — giữ một chỗ để khỏi lệch cột. */
   private static final String SUMMARY_SELECT =
       """
-      SELECT r.route_id, r.route_code, r.title, r.route_type, r.status,
+      SELECT r.route_id, r.route_code, r.title, r.route_type, r.resource_kind, r.status,
              r.source_system, r.target_system, r.current_version_id,
              r.updated_by, r.updated_at,
              (SELECT MAX(v.version_no) FROM ph04.route_version v
@@ -66,10 +68,43 @@ class RoutesService implements RoutesApi {
   private final CamelYamlValidator validator;
   private final GitOpsPublisher gitOps;
 
-  RoutesService(JdbcTemplate jdbc, CamelYamlValidator validator, GitOpsPublisher gitOps) {
+  /**
+   * Bắt buộc khung chín chặng khi publish (IP-07 K1-7b).
+   *
+   * Mặc định **tắt** để giữ nguyên hành vi hiện tại: chưa có khái niệm "luồng đối ngoại"
+   * trong mã lẫn SRS, nên tự đặt ra luật phân loại ở đây là quyết định chính sách vượt
+   * quyền. Bật cờ này thì mọi route thiếu chặng đều bị chặn publish. Khi SRS chốt cách
+   * phân biệt đối ngoại/nội bộ thì thay cờ bằng thuộc tính của từng luồng.
+   */
+  private final boolean strictExternal;
+
+  RoutesService(
+      JdbcTemplate jdbc,
+      CamelYamlValidator validator,
+      GitOpsPublisher gitOps,
+      @Value("${lgsp.routes.strict-standard-stages:false}") boolean strictExternal) {
     this.jdbc = jdbc;
     this.validator = validator;
     this.gitOps = gitOps;
+    this.strictExternal = strictExternal;
+  }
+
+  /** Loại tài nguyên của một luồng; thiếu dữ liệu thì coi là `ROUTE` (IP-07 K2-5). */
+  private CamelYamlValidator.ResourceKind kindOf(String routeCode) {
+    String raw =
+        jdbc.query(
+            "SELECT resource_kind FROM ph04.route WHERE route_code = ?",
+            rs -> rs.next() ? rs.getString(1) : null,
+            routeCode);
+    if (raw == null || raw.isBlank()) {
+      return CamelYamlValidator.ResourceKind.ROUTE;
+    }
+    try {
+      return CamelYamlValidator.ResourceKind.valueOf(raw.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      // Giá trị lạ trong CSDL: kiểm theo route còn hơn bỏ qua không kiểm gì.
+      return CamelYamlValidator.ResourceKind.ROUTE;
+    }
   }
 
   @Override
@@ -84,17 +119,23 @@ class RoutesService implements RoutesApi {
     OffsetDateTime now = OffsetDateTime.now();
     String type =
         request.routeType() == null || request.routeType().isBlank() ? "SYNC" : request.routeType();
+    // Bỏ trống thì hiểu là ROUTE — giữ đúng hành vi của mọi luồng đã có (IP-07 K2-5).
+    String kind =
+        request.resourceKind() == null || request.resourceKind().isBlank()
+            ? "ROUTE"
+            : request.resourceKind();
     jdbc.update(
         """
         INSERT INTO ph04.route
-          (route_id, route_code, title, route_type, status, source_system, target_system,
-           current_version_id, created_by, created_at, updated_at, updated_by)
-        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
+          (route_id, route_code, title, route_type, resource_kind, status, source_system,
+           target_system, current_version_id, created_by, created_at, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
         """,
         routeId,
         request.routeCode(),
         request.title(),
         type,
+        kind,
         request.sourceSystem(),
         request.targetSystem(),
         actor,
@@ -253,7 +294,9 @@ class RoutesService implements RoutesApi {
     if (!List.of("DRAFT", "PENDING_REVIEW", "APPROVED").contains(current.status())) {
       throw new IllegalStateException("không publish được trạng thái " + current.status());
     }
-    ValidationResultDto v = validator.validate(stripCanvasMarker(current.definitionYaml()));
+    ValidationResultDto v =
+        validator.validate(
+            stripCanvasMarker(current.definitionYaml()), kindOf(routeCode), strictExternal);
     if (!v.valid()) {
       throw new RouteValidationException("chặn publish — YAML lỗi", v);
     }
@@ -412,14 +455,16 @@ class RoutesService implements RoutesApi {
     jdbc.update(
         """
         INSERT INTO ph04.route
-          (route_id, route_code, title, route_type, status, source_system, target_system,
-           current_version_id, created_by, created_at, updated_at, updated_by)
-        VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
+          (route_id, route_code, title, route_type, resource_kind, status, source_system,
+           target_system, current_version_id, created_by, created_at, updated_at, updated_by)
+        VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, ?, NULL, ?, ?, ?, ?)
         """,
         routeId,
         request.routeCode(),
         request.title(),
         src.routeType(),
+        // Bản sao giữ nguyên loại tài nguyên của bản gốc.
+        src.resourceKind(),
         src.sourceSystem(),
         src.targetSystem(),
         actor,

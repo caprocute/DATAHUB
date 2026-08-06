@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-c-attachment-review.yaml
   - include:
       file: db/changelog/changes/006-d-route-test-run.yaml
+  - include:
+      file: db/changelog/changes/007-e-resource-kind.yaml

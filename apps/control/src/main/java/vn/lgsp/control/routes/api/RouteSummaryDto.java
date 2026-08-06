@@ -14,6 +14,8 @@ public record RouteSummaryDto(
     String routeCode,
     String title,
     String routeType,
+    /** Loại tài nguyên Camel: `ROUTE` | `KAMELET` | `PIPE` | `TEST` (IP-07 K2-5). */
+    String resourceKind,
     String status,
     String sourceSystem,
     String targetSystem,

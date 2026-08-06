@@ -1,0 +1,36 @@
+databaseChangeLog:
+  # IP-07 K2-5 — phân biệt **loại tài nguyên** (Route / Kamelet / Pipe / Test).
+  #
+  # Cố ý **không dùng lại `route_type`**: cột đó đang mang ngữ nghĩa *vận chuyển*
+  # (`SYNC` là mặc định ở `RoutesService`), khác hẳn ngữ nghĩa *loại tệp*. Gộp hai
+  # khái niệm vào một cột sẽ hỏng cả hai — lọc theo loại tệp sẽ vướng giá trị vận
+  # chuyển và ngược lại.
+  - changeSet:
+      id: 007-route-resource-kind
+      author: lgsp-ip07
+      changes:
+        - addColumn:
+            schemaName: ph04
+            tableName: route
+            columns:
+              - column:
+                  name: resource_kind
+                  type: VARCHAR(20)
+                  # Dữ liệu cũ đều là route Camel thuần — điền ROUTE cho đúng sự thật
+                  # thay vì để NULL rồi bắt mọi chỗ đọc phải đoán.
+                  defaultValue: ROUTE
+                  constraints:
+                    nullable: false
+
+  # Lọc theo loại tài nguyên là thao tác thường xuyên của màn danh sách (K2-1),
+  # thiếu chỉ mục thì mỗi lần lọc là một lần quét toàn bảng.
+  - changeSet:
+      id: 007-route-resource-kind-index
+      author: lgsp-ip07
+      changes:
+        - createIndex:
+            schemaName: ph04
+            tableName: route
+            indexName: ix_route_resource_kind
+            columns:
+              - column: { name: resource_kind }
