@@ -210,30 +210,35 @@ sẽ phải vứt dữ liệu ở đúng chỗ này.
       chặn thật — **cơ chế xong**, có test chứng minh chặn được (bỏ cờ đi thì test đỏ).
       Bật theo cờ `lgsp.routes.strict-standard-stages`, **mặc định tắt**.
 
-- [ ] **K1-7c.** *(mới — chặn bởi ranh giới kiến trúc)* Nối định nghĩa "luồng đối ngoại"
-      vào danh mục hệ thống thành viên PH-01.
+- [x] **K1-7c.** Nối định nghĩa "luồng đối ngoại" vào danh mục hệ thống thành viên PH-01
+      — **theo phương án (b): PH-01 phát sự kiện, PH-04 giữ bản sao đọc.**
 
-      > **Đã làm được.** `OnboardingApi.isOnboardedSystem(systemCode)` — hỏi PH-01 xem một
-      > mã hệ thống đã kết nạp và đang hiệu lực (`APPROVED`/`ACTIVE`) chưa. Đặt ở API mô-đun
-      > vì PH-01 mới là chủ quản của câu hỏi này.
+      > **Vì sao không gọi thẳng.** `RoutesService` → `OnboardingApi` làm
+      > `ApplicationModules.verify()` đỏ (`Allowed targets: shared`). Cả hai mô-đun đều khai
+      > `allowedDependencies = "shared"` — kiến trúc cố ý giữ PH-01 và PH-04 độc lập.
       >
-      > **Chỗ vướng.** Gọi API đó từ `RoutesService` làm `ApplicationModules.verify()` **đỏ**:
-      > ```text
-      > Module 'routes' depends on named interface(s) 'onboarding :: api'
-      > ... Allowed targets: shared.
-      > ```
-      > Cả `routes` lẫn `onboarding` đều khai `allowedDependencies = "shared"` — kiến trúc
-      > **cố ý** giữ hai phân hệ độc lập, và `shared` hiện trống rỗng chứ không phải chỗ đổ
-      > đồ chung. Mở phụ thuộc `routes → onboarding` là **quyết định kiến trúc cần ADR**,
-      > không phải chi tiết cài đặt nên tôi không tự mở.
+      > **Cách làm.** `SystemApprovedEvent` đặt ở `shared` (mô-đun khai `Type.OPEN`, là phụ
+      > thuộc hợp lệ của mọi mô-đun) → PH-01 phát khi duyệt, cạnh outbox sẵn có →
+      > `ExternalSystemRegistry` của PH-04 nghe và ghi vào `ph04.external_system` của **chính
+      > mình**. Không cần ADR vì không mở phụ thuộc mới nào.
       >
-      > **Ba lối đi, cần chủ dự án chọn:** (a) ADR mới cho phép `routes → onboarding :: api`;
-      > (b) PH-01 phát **sự kiện** khi hệ thống được kết nạp, PH-04 giữ bản sao đọc — đúng
-      > tinh thần Modulith nhưng tốn công hơn; (c) thêm cột `is_external` cho từng luồng,
-      > người tạo tự chọn — không cần đụng ranh giới mô-đun.
+      > **Hai chi tiết dễ hỏng, đã xử lý:**
+      > 1. **Nạp lại dữ liệu cũ.** Bản sao chỉ nghe sự kiện thì hệ thống kết nạp **trước** khi
+      >    có mã này sẽ mãi bị coi là nội bộ — chốt chặn thả lọt đúng những luồng lâu đời nhất
+      >    mà không ai thấy gì bất thường. Changeset `008-…-backfill` nạp một lần: **28 hệ
+      >    thống** đã có.
+      > 2. **So khớp hoa thường.** `source_system` người dùng gõ tay, `system_code` do quy
+      >    trình sinh. So khớp cứng thì luồng đối ngoại lọt qua im lặng. Cả hai phía hạ về
+      >    chữ thường; test chứng minh chặn được (bỏ `toLowerCase` đi thì đỏ).
       >
-      > Trong khi chờ: bật cờ thì coi **mọi route** là đối ngoại; không bật thì giữ nguyên
-      > hành vi hiện tại. **Không đoán theo tên hệ thống** — đoán sai thì chặn oan hoặc thả lọt.
+      > **Nghiệm thu trên hệ thống chạy thật** (Postgres + Keycloak + control): duyệt
+      > `SYS_15659162` qua đúng quy trình (thẩm định pháp lý → kỹ thuật → duyệt, API thật với
+      > token `dev-reviewer`) → bản sao PH-04 **nhận được ngay** (`sys_15659162`). Tạo luồng có
+      > `sourceSystem: SYS_15659162` → phân loại **đối ngoại = true** dù khác kiểu chữ.
+      > Bốn luồng cũ vẫn là nội bộ (đúng — chúng là luồng thử).
+      >
+      > Cờ `lgsp.routes.strict-standard-stages` vẫn **mặc định tắt**: bốn luồng hiện có đều
+      > nội bộ nên bật cũng không đổi gì, chỉ thêm rủi ro. Bật khi có luồng đối ngoại thật.
 
 - [x] **K1-8.** Test lõi: **152 ca xanh** (122 cũ + 30 mới), gồm 4 ca chặn lỗi cũ (§1),
       round-trip giữ comment, `doTry`/`loadBalance`/`multicast`/`split`, nhiều route một tệp,

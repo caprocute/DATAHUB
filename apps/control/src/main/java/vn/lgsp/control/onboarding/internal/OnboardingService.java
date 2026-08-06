@@ -9,11 +9,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.lgsp.control.shared.events.SystemApprovedEvent;
 import vn.lgsp.control.onboarding.api.AccessReviewRequest;
 import vn.lgsp.control.onboarding.api.ApplicationDto;
 import vn.lgsp.control.onboarding.api.ApplicationSubmitRequest;
@@ -110,7 +112,21 @@ class OnboardingService implements OnboardingApi {
   private final OutboxWriter outbox;
   private final AttachmentStorage storage;
 
-  OnboardingService(JdbcTemplate jdbc, OutboxWriter outbox, AttachmentStorage storage) {
+  /**
+   * Kênh sự kiện **trong tiến trình** cho các phân hệ khác trong cùng ứng dụng.
+   *
+   * Song song với outbox chứ không thay thế: outbox dành cho bus ngoài (chưa có broker),
+   * còn kênh này để PH-04 biết ngay mà không phải phụ thuộc vào `onboarding :: api` —
+   * phụ thuộc đó làm `ApplicationModules.verify()` đỏ (IP-07 K1-7c).
+   */
+  private final ApplicationEventPublisher events;
+
+  OnboardingService(
+      JdbcTemplate jdbc,
+      OutboxWriter outbox,
+      AttachmentStorage storage,
+      ApplicationEventPublisher events) {
+    this.events = events;
     this.jdbc = jdbc;
     this.outbox = outbox;
     this.storage = storage;
@@ -248,6 +264,8 @@ class OnboardingService implements OnboardingApi {
                 escape(clientId),
                 escape(approvedBy));
     outbox.enqueue("onboarding.system-approved.v1", payload);
+    // Phát trong tiến trình để PH-04 cập nhật bản sao đọc danh mục hệ thống.
+    events.publishEvent(new SystemApprovedEvent(current.systemCode()));
 
     ApplicationDto after = load(id);
     // Bí mật trả về đúng một lần ở đây; các lối đọc khác luôn `null`.

@@ -1,0 +1,45 @@
+databaseChangeLog:
+  # IP-07 K1-7c — bản sao đọc danh mục hệ thống đã kết nạp, thuộc sở hữu PH-04.
+  #
+  # Vì sao không hỏi thẳng PH-01: cả `routes` lẫn `onboarding` đều khai
+  # `allowedDependencies = "shared"`, nên gọi `OnboardingApi` từ `routes` làm
+  # `ApplicationModules.verify()` đỏ — kiến trúc cố ý giữ hai phân hệ độc lập.
+  # PH-01 phát sự kiện, PH-04 giữ bản sao trong schema của **chính mình**.
+  - changeSet:
+      id: 008-ph04-external-system
+      author: lgsp-ip07
+      changes:
+        - createTable:
+            schemaName: ph04
+            tableName: external_system
+            remarks: >-
+              Bản sao đọc: hệ thống thành viên đã kết nạp và đang hiệu lực. Dùng để biết
+              một luồng có phải đối ngoại không (BR-D-01). Nguồn sự thật vẫn là PH-01.
+            columns:
+              - column:
+                  name: system_code
+                  type: VARCHAR(80)
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: synced_at
+                  type: TIMESTAMPTZ
+                  constraints: { nullable: false }
+
+  # Nạp lại hệ thống đã kết nạp **trước** khi có sự kiện này.
+  #
+  # Thiếu bước này thì bản sao chỉ có hệ thống kết nạp từ nay về sau, còn hệ thống cũ
+  # mãi mãi bị coi là nội bộ — chốt chặn khung chuẩn thả lọt đúng những luồng lâu đời
+  # nhất, mà không ai thấy gì bất thường.
+  #
+  # Đây là **lần nạp một chiều duy nhất**; sau đó sự kiện lo phần cập nhật. Viết bằng SQL
+  # thô vì Liquibase không có changeset dạng "chép từ bảng khác có điều kiện".
+  - changeSet:
+      id: 008-ph04-external-system-backfill
+      author: lgsp-ip07
+      changes:
+        - sql:
+            sql: >-
+              INSERT INTO ph04.external_system (system_code, synced_at)
+              SELECT DISTINCT LOWER(system_code), now() FROM ph01.application
+              WHERE status IN ('APPROVED', 'ACTIVE')
+              ON CONFLICT (system_code) DO NOTHING

@@ -77,33 +77,38 @@ class RoutesService implements RoutesApi {
    */
   private final boolean strictExternal;
 
+  private final ExternalSystemRegistry externalSystems;
+
   RoutesService(
       JdbcTemplate jdbc,
       CamelYamlValidator validator,
       GitOpsPublisher gitOps,
+      ExternalSystemRegistry externalSystems,
       @Value("${lgsp.routes.strict-standard-stages:false}") boolean strictExternal) {
     this.jdbc = jdbc;
     this.validator = validator;
     this.gitOps = gitOps;
+    this.externalSystems = externalSystems;
     this.strictExternal = strictExternal;
   }
 
   /**
    * Luồng **đối ngoại** hay không (BR-D-01 §10.1).
    *
-   * Định nghĩa nghiệp vụ: `source_system` khớp mã một hệ thống **đã kết nạp và đang hiệu
-   * lực** ở PH-01.
-   *
-   * **Vì sao chưa hỏi thẳng PH-01.** Gọi `OnboardingApi` từ đây làm `ApplicationModules
-   * .verify()` đỏ: cả hai mô-đun đều khai `allowedDependencies = "shared"`, tức là kiến
-   * trúc **cố ý** giữ chúng độc lập. Mở phụ thuộc `routes → onboarding` là quyết định
-   * kiến trúc (cần ADR), không phải chi tiết cài đặt — xem IP-07 K1-7c.
-   *
-   * Tạm thời: bật cờ thì coi **mọi route** là đối ngoại. Không bật thì giữ nguyên hành vi
-   * hiện tại. Không đoán bừa theo tên hệ thống — đoán sai thì chặn oan hoặc thả lọt.
+   * Định nghĩa: `source_system` khớp mã một hệ thống **đã kết nạp và đang hiệu lực** ở PH-01.
+   * Tra trên bản sao đọc của chính PH-04 (`ExternalSystemRegistry`) chứ không gọi
+   * `OnboardingApi` — phụ thuộc đó làm `ApplicationModules.verify()` đỏ (IP-07 K1-7c).
    */
   private boolean isExternal(String routeCode) {
-    return strictExternal;
+    if (!strictExternal) {
+      return false;
+    }
+    String src =
+        jdbc.query(
+            "SELECT source_system FROM ph04.route WHERE route_code = ?",
+            rs -> rs.next() ? rs.getString(1) : null,
+            routeCode);
+    return externalSystems.isOnboarded(src);
   }
 
   /** Loại tài nguyên của một luồng; thiếu dữ liệu thì coi là `ROUTE` (IP-07 K2-5). */
