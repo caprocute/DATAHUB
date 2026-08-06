@@ -31,6 +31,7 @@ import { deserialize } from '../core/deserialize'
 import { serialize } from '../core/serialize'
 import { flatten } from '../core/flatten'
 import { applyGraphToTree, unmappedNodes } from '../core/unflatten'
+import { insertAfterAt, newStep } from '../core/mutate'
 import type { CamelResource } from '../core/tree'
 import { prefetchSchemas, statusByNode, validate } from '../core/validate'
 import { FlowCanvas } from './FlowCanvas'
@@ -336,6 +337,39 @@ function DesignerInner() {
 
   /* ---------- Thao tác sơ đồ ---------- */
 
+  /**
+   * Đưa một chặng vừa dựng vào **cây**, trả về đường dẫn thật để dùng làm mã node (K2).
+   *
+   * Sơ đồ và cây phải khớp mã: `unflatten` tra bước theo `node.id === step.path`. Chặng
+   * chỉ tồn tại trên sơ đồ sẽ bị `unmappedNodes` phát hiện và ép cả luồng lùi về bộ sinh
+   * cũ — tức là **mất cấu trúc lồng** đang giữ. Nên thêm chặng phải vào cây trước.
+   *
+   * Chưa có cây (luồng dựng mới hoàn toàn) thì trả `undefined`, giữ mã sinh sẵn.
+   */
+  const adoptIntoTree = useCallback(
+    (node: StageNode, afterNodeId: string | undefined, role: 'from' | 'step'): string | undefined => {
+      const tree = treeRef.current
+      // Chặng tiếp nhận nằm ở `from`, không phải trong `steps` — chưa hỗ trợ thay `from`
+      // qua lối này, để `unmappedNodes` bắt và lùi về bộ sinh cũ thay vì dựng cây sai.
+      if (!tree || role === 'from') return undefined
+
+      const name = refName(node.data.ref)
+      const props: Record<string, string | number | boolean> = { ...node.data.props }
+      if (node.data.uri) props.uri = node.data.uri
+
+      // Chỉ chèn "sau" khi chặng neo nằm ở **cấp gốc** của route. Đuôi luồng tính theo
+      // cạnh ra có thể rơi vào trong `doCatch`/`when` — luồng rẽ nhánh có nhiều đuôi —
+      // và khi đó chặng người dùng thả sẽ **chui vào nhánh xử lý lỗi** thay vì nối tiếp
+      // route. Neo không ở cấp gốc thì nối vào cuối danh sách gốc.
+      const topLevel = new Set((tree.entities[0]?.steps ?? []).map((s) => s.path))
+      const anchor = afterNodeId && topLevel.has(afterNodeId) ? afterNodeId : undefined
+      const { resource, path } = insertAfterAt(tree, 0, anchor, newStep(name, props))
+      treeRef.current = resource
+      return path
+    },
+    [],
+  )
+
   const addStage = useCallback(
     (item: DraggedNode, pos: XYPosition) => {
       const cat = lookupNode(item.ref)
@@ -346,12 +380,17 @@ function DesignerInner() {
       const tail = role === 'step' && tails.length === 1 ? tails[0] : null
 
       markDirty()
-      setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { ...node, selected: true }])
+      // Chèn vào **cây** trước, rồi lấy đường dẫn thật làm mã node (K2). Không làm bước
+      // này thì chặng mới không có chỗ trong cây, `unmappedNodes` phát hiện và cả luồng
+      // phải lùi về bộ sinh cũ — mất hết cấu trúc lồng đang giữ.
+      const id = adoptIntoTree(node, tail?.id, role)
+      const placed = { ...node, id: id ?? node.id }
+      setNodes((ns) => [...ns.map((n) => ({ ...n, selected: false })), { ...placed, selected: true }])
       if (tail) {
-        setEdges((es) => [...es, { id: nextId('e'), source: tail.id, target: node.id, type: 'seq' }])
+        setEdges((es) => [...es, { id: nextId('e'), source: tail.id, target: placed.id, type: 'seq' }])
       }
     },
-    [hasFrom, nodes, edges, setNodes, setEdges, markDirty],
+    [hasFrom, nodes, edges, setNodes, setEdges, markDirty, adoptIntoTree],
   )
 
   const insertOnEdge = useCallback(

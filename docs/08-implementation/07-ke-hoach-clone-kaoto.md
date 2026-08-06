@@ -235,14 +235,17 @@ bản tin đi đúng nhánh.
 
 ## 4. K2 — Tạo và quản lý route
 
-- [ ] **K2-1.** Nhiều route trong **một** file: danh sách route ở thanh bên trái designer,
-      chuyển qua lại, thêm/xóa/đổi tên/nhân bản.
+- [~] **K2-1.** Nhiều route trong **một** file. *(Lõi xong: `addEntity`/`removeEntity`/
+      `duplicateEntity`/`renameEntity` trong `mutate.ts`, có test. **Giao diện danh sách
+      route ở thanh bên trái chưa làm** — còn lại của gói này.)*
 - [ ] **K2-2.** Tạo route mới: **luồng trắng** hoặc chọn mẫu (Q1). Mẫu "khung chuẩn LGSP"
       = 4 chặng cũ, nhưng **gỡ được**.
 - [ ] **K2-3.** `routeConfiguration`, `errorHandler`, `onException` cấp file — các entity
       này đã có lược đồ sẵn trong `core/generated/schemas/entity/`.
-- [ ] **K2-4.** Đổi tên route cập nhật mọi tham chiếu `direct:`/`seda:` trỏ tới nó,
-      hoặc cảnh báo rõ nếu không tự sửa được. **Không đổi lặng lẽ làm hỏng luồng khác.**
+- [x] **K2-4.** Đổi tên route cập nhật mọi tham chiếu `direct:`/`seda:` trỏ tới nó.
+      `renameEntity` trả kèm **số tham chiếu đã sửa** để giao diện nói rõ thay vì âm thầm
+      đổi. Chặng tiếp nhận qua `rest:`/`kafka:` thì tên route không phải địa chỉ nên
+      không đụng tới.
 - [ ] **K2-5.** DB: thêm cột `resource_kind VARCHAR(20)` vào `ph04.route`
       (changeset Liquibase mới). **Không dùng lại `route_type`** — cột đó đang mang
       ngữ nghĩa vận chuyển (`SYNC`, mặc định ở `RoutesService:86`), khác hẳn ngữ nghĩa
