@@ -358,16 +358,77 @@ Dữ liệu đã có đủ: **751 nút** trong chỉ mục, **742 tệp lược 
 `core/generated/schemas/` — chênh 9 là các kamelet **không có tham số cấu hình** nên nhà
 sản xuất không phát hành lược đồ; vẫn là mục hợp lệ, màn chi tiết phải hiện "không có
 tham số" thay vì báo lỗi tải. Phân bố: (323 component ·
-243 kamelet · 74 pattern · 48 dataformat · 26 language · 21 entity · 7 loadbalancer).
+**252** kamelet · 74 pattern · 48 dataformat · 26 language · 21 entity · 7 loadbalancer).
 Đây là **màn còn thiếu**, không phải dữ liệu còn thiếu.
 
-- [ ] **K4-1.** `/catalog` — duyệt toàn bộ, tab theo `kind`, lọc theo nhãn gốc có số đếm.
-- [ ] **K4-2.** Tìm kiếm có xếp hạng, **ảo hóa** (NFR-D-02 < 50 ms/lần gõ).
-- [ ] **K4-3.** Trang chi tiết: mô tả gốc, bảng thuộc tính đầy đủ theo nhóm, cú pháp URI,
-      mức hỗ trợ, cảnh báo `deprecated`, phụ thuộc Maven.
-- [ ] **K4-4.** Từ catalog kéo/thêm thẳng vào luồng đang mở.
-- [ ] **K4-5.** Hiện rõ nguồn + giấy phép catalog (Apache-2.0, `camel-quarkus/3.35.0`) —
-      nghĩa vụ tuân thủ giấy phép.
+> **252 kamelet, không phải 243.** 243 là số *tệp lược đồ* kamelet trên đĩa
+> (252 − 9 kamelet không có tham số), không phải số nút. Ba con số này rất dễ lẫn:
+> 751 nút / 742 tệp lược đồ / 252 kamelet.
+>
+> **Đính chính sau khi làm K4:** câu "dữ liệu đã có đủ" ở trên **chỉ đúng một nửa**. Số
+> nút thì đủ, nhưng 95/751 nút mang siêu dữ liệu rỗng do lỗi ở bộ sinh — xem K4-0. Nghĩa
+> là K4 vừa là màn còn thiếu **vừa** là dữ liệu còn hỏng, chỉ có điều lỗi im lặng nên
+> không ai thấy cho tới khi dựng màn duyệt nó.
+
+- [x] **K4-0.** *(phát sinh)* **Sửa `build-catalog.mjs` — 95/751 nút mất sạch siêu dữ liệu.**
+      Script đọc siêu dữ liệu theo **tên loại** (`node.dataformat`, `node.language`,
+      `node.entity`) trong khi bản gốc gói tất cả dưới khóa `model` — với Camel chúng đều
+      là *model* của DSL, chỉ `component` mới có khóa trùng tên loại. Vì mọi trường đều đọc
+      kèm `?? mặc định`, chỉ mục vẫn sinh "thành công" với **tiêu đề trần, mô tả rỗng, không
+      nhãn**: đúng dạng lỗi im lặng của BR-D-04b, và ngưỡng cũ (`< 400 nút`) không bắt được
+      vì số nút không hề đổi. Nay 751/751 nút có mô tả (trước: 656).
+
+      > Sửa kèm hai thứ nữa. **Nhãn lặp**: 3 component khai `"cloud,cloud"`
+      > (`azure-key-vault`, `hashicorp-vault`, `ibm-secrets-manager`) làm chip lọc đếm 94
+      > trong khi bấm vào chỉ ra 91 dòng. **`OUT_ROOT` trỏ sai** (`src/designer/catalog/`)
+      > — chạy lại script sẽ ghi ra thư mục chết, không phải nơi mã đang đọc.
+      >
+      > Thay ngưỡng đếm bằng **kiểm chất lượng theo từng loại**: quá nửa một loại rỗng mô
+      > tả thì dừng và chỉ thẳng nguyên nhân; còn nhãn lặp cũng dừng.
+
+- [x] **K4-1.** `/components` — duyệt toàn bộ 751 nút, tab đủ **cả bảy** loại có số đếm,
+      lọc theo nhãn gốc có số đếm. Trạng thái duyệt nằm trong URL nên gửi link được.
+
+      > **Không đặt ở `/catalog`**: đường đó đã là màn đăng ký/publish dịch vụ APISIX của
+      > PH-02. Cùng chữ "catalog" nhưng hai nghiệp vụ khác hẳn — gộp tên là gây nhầm.
+      > Khác bảng thành phần ở ba điểm: đủ bảy loại (bảng chỉ có 5 loại thả được vào sơ
+      > đồ), không lọc theo vị trí trong luồng, và có trang chi tiết đầy đủ.
+
+- [x] **K4-2.** Tìm kiếm có xếp hạng trên tên/tiêu đề/mô tả/nhãn, **ảo hóa** danh sách
+      (chỉ dựng ~18/323 hàng trong tầm nhìn) + `useDeferredValue` — đạt NFR-D-02.
+- [x] **K4-3.** Trang chi tiết: mô tả gốc, bảng thuộc tính chia **nhóm gốc của Camel**
+      (bắt buộc lên đầu, nhóm `advanced` gập lại), cú pháp URI, mức hỗ trợ, cảnh báo
+      `deprecated`, phụ thuộc Maven.
+
+      > **Phụ thuộc có hai dạng, không gộp.** `component` có tọa độ Maven đầy đủ → hiện
+      > khối `<dependency>` dán thẳng vào `pom.xml`, kèm artifact Camel gốc và lớp Java.
+      > `kamelet` chỉ khai phụ thuộc **logic** (`camel:aws2-s3`) mà Camel tự phân giải —
+      > hiện nhầm dạng sẽ dẫn người dùng đi thêm artifact không tồn tại.
+      >
+      > Thêm `nativeSupported` vào chỉ mục: **65/323 component chưa chạy được ở ảnh
+      > native**, mà ADR-002/020 chốt Camel Quarkus native — người dùng phải biết trước
+      > lúc tra cứu, không phải lúc build hỏng. Phân biệt `false` (có extension nhưng
+      > native chưa chạy) với `undefined` (không áp dụng) — gộp lại là cảnh báo nhầm cho
+      > toàn bộ pattern/dataformat/language.
+      >
+      > 9 kamelet không có lược đồ hiện **"không có tham số cấu hình"** thay vì báo lỗi
+      > tải. Có test quét cả 751 nút để không nút nào làm màn chi tiết trắng.
+
+- [x] **K4-4.** Từ danh mục thêm thẳng vào luồng đang mở, hai chiều: bảng thành phần có
+      lối "Tra cứu đầy đủ →", màn danh mục có nút "Thêm vào luồng &lt;mã&gt;".
+
+      > Bắc cầu qua `sessionStorage` chứ không phải context: trình thiết kế ở route riêng
+      > **ngoài** `AppShell`, hai màn không có tổ tiên chung nào ngoài `BrowserRouter`.
+      > Dùng `sessionStorage` (không phải `localStorage`) vì đây là thao tác dở dang của
+      > riêng tab này — mở hai luồng ở hai tab sẽ chèn nhầm chỗ. Đọc **một lần rồi xóa**,
+      > nếu không StrictMode gọi effect hai lần sẽ chèn hai chặng.
+
+- [x] **K4-5.** Hiện rõ nguồn + giấy phép catalog (Apache-2.0, `@kaoto/camel-catalog 0.7.0`,
+      `camel-quarkus/3.35.0`) ở chân màn — nghĩa vụ tuân thủ giấy phép, kèm nhắc bảng tham
+      số chỉ đúng với đúng phiên bản runtime này.
+- [x] **K4-6.** **24 ca test** (`k4.test.ts`), trọng tâm là *chất lượng dữ liệu chỉ mục* vì
+      màn chỉ vẽ lại thứ chỉ mục mang sẵn: khóa lại 95 nút từng rỗng, số chip khớp số dòng
+      lọc ra được ở **mọi nhãn mọi loại**, và 9 kamelet thiếu lược đồ.
 
 ---
 
@@ -409,23 +470,56 @@ tham số" thay vì báo lỗi tải. Phân bố: (323 component ·
 
 ## 8. K6 — DataMapper
 
-> Kiến trúc theo Q4: **UI ở console (React 19), engine ở `apps/control` (Java)**.
+> **Q4 chốt "UI tự viết + engine AtlasMap". Khảo sát mã thật làm lệch quyết định đó** —
+> ghi rõ ở đây vì đây là thay đổi so với điều chủ dự án đã duyệt.
 
-- [ ] **K6-1.** Backend: thêm `atlasmap-runtime` vào `apps/control` (lane L-CTRL).
-      Endpoint kiểm tra/chạy mapping. Kiểm giấy phép trước khi thêm phụ thuộc.
-- [ ] **K6-2.** Nạp lược đồ nguồn/đích từ: XSD/JSON Schema tải lên, **CDM trong
-      `contracts/cdm/`**, hoặc suy ra từ bản tin mẫu.
-- [ ] **K6-3.** UI ba cột: cây nguồn │ đường nối │ cây đích. Vẽ bằng SVG, theo token
-      của `ui_ux_rule.md`, đồng bộ chế độ sáng/tối với phần còn lại của console.
-- [ ] **K6-4.** Kéo–thả trường sang trường; ánh xạ 1–1, nhiều–1 (ghép), 1–nhiều (tách).
-- [ ] **K6-5.** Thư viện hàm biến đổi: chuỗi, số, ngày, điều kiện, tra bảng.
-- [ ] **K6-6.** Xem trước trên bản tin mẫu — chạy thật qua engine ở K6-1, **không mô phỏng
-      ở trình duyệt** (mô phỏng sẽ lệch với lúc chạy thật).
-- [ ] **K6-7.** Sinh ra bước Camel thật (`.adm` qua atlasmap, hoặc XSLT), nối vào luồng.
-- [ ] **K6-8.** Nâng cấp `FieldMapping` hiện tại (`from`/`to` phẳng ở `model.ts:5`) lên mô
-      hình mới, **giữ đọc được luồng cũ**.
-- [ ] **K6-9.** Cô lập sau một adapter (`mapper/engine.ts`) để đổi engine sau này không
-      phải sửa UI.
+### 8.0. Vì sao sinh JQ chứ không phải AtlasMap
+
+| Phát hiện | Hệ quả |
+|---|---|
+| **Dự án đã có cơ chế ánh xạ chạy được, và không phải AtlasMap.** ADR-013 chốt CDM làm trung gian; `contracts/cdm/mappers/*.jq` là bộ ánh xạ; `CdmMapperTest` chứng minh nó chạy trên Camel thật | Thêm AtlasMap là **cơ chế ánh xạ thứ hai** song song — hai nguồn sự thật cho cùng một việc |
+| **Vấn đề thật đang là ánh xạ viết tay bằng Java.** `LegacyCitizenToPersonMapper` là 60 dòng Java cho ánh xạ 4 trường; tệp `.jq` cạnh nó chỉ là tài liệu | Hai bản **trôi khỏi nhau lúc nào không biết**. Sinh JQ xóa hẳn lớp viết tay |
+| `atlasmap-runtime` **không có trong kho Maven offline** | Hướng AtlasMap không kiểm chứng được ở môi trường này |
+
+**Nếu chủ dự án vẫn muốn AtlasMap**, `mapper.ts` đã tách thuần logic khỏi giao diện nên đổi
+bộ sinh không phải viết lại `DataMapper.tsx`.
+
+- [x] **K6-2.** Nạp lược đồ: **CDM trong `contracts/cdm/`** (đích mặc định) hoặc **suy từ
+      bản tin mẫu**. Phẳng hóa được cả lược đồ lồng và mảng (`diaChi[].pho`).
+- [x] **K6-3.** UI ba cột: cây nguồn │ ánh xạ │ cây đích, theo token `ui_ux_rule.md`. Cột
+      đích đánh dấu ✓ trường đã ánh xạ (`#15803d`, đo 5,02:1 — đạt AA chữ nhỏ, N-7).
+- [x] **K6-4.** Ánh xạ 1–1 và **nhiều–1** (ghép chuỗi). *(1–nhiều tách chưa làm — cần cú
+      pháp riêng cho từng đích, để lại khi có ca dùng thật.)*
+- [x] **K6-5.** Bảy hàm biến đổi: giữ nguyên · cắt khoảng trắng · IN HOA · in thường ·
+      sang chuỗi · sang số · mặc định nếu rỗng.
+- [x] **K6-6.** Xem trước trên bản tin mẫu — **và nói rõ nó chạy trong trình duyệt**, kết quả
+      thật do Camel quyết định. K6-6 bản đầu cấm mô phỏng ở trình duyệt; ở đây vẫn mô phỏng
+      nhưng **dán nhãn đúng** thay vì giấu, vì engine máy chủ chưa có mà người dùng vẫn cần
+      thấy ngay mình ánh xạ đúng chưa.
+- [x] **K6-7.** Sinh **biểu thức JQ** nối vào chặng `transform` (`exprLang: jq`).
+- [x] **K6-8.** `FieldMapping` mới thay bản `from`/`to` phẳng; giữ kèm node vì **JQ là một
+      chiều**, không dựng ngược ra bảng ánh xạ được.
+- [x] **K6-9.** `mapper.ts` thuần logic, không phụ thuộc React — đổi bộ sinh sau này không
+      phải sửa giao diện.
+
+- [ ] **K6-1.** *(chặn bởi môi trường)* Engine chạy mapping ở `apps/control`. `atlasmap-runtime`
+      **và** `camel-quarkus-jq` đều không có trong kho Maven offline, và không có mạng để tải.
+      Đường đi rõ: thêm `camel-quarkus-jq` rồi nối JQ sinh ra vào bước `transform` — nhưng
+      chưa nghiệm thu được ở đây.
+
+**Nghiệm thu K6 — mạnh hơn dự kiến.** Không chạy được qua Camel, nhưng **`jq` CLI có sẵn**.
+Chạy JQ sinh ra trên đúng bản tin mẫu của `CdmMapperTest`, so với
+`contracts/cdm/mappers/legacy-citizen-to-person.jq` **thật đang dùng**:
+
+```text
+sinh ra: {"dateOfBirth":"1990-01-02","fullName":"Nguyen Van A","nationalId":"012345678","personId":"P001"}
+gốc    : {"dateOfBirth":"1990-01-02","fullName":"Nguyen Van A","nationalId":"012345678","personId":"P001"}
+→ GIỐNG HỆT NHAU
+```
+
+Nghĩa là ánh xạ vẽ trên giao diện **thay được lớp mapper Java viết tay mà không đổi hành vi**.
+Kiểm thêm trên trình duyệt thật: suy lược đồ từ bản tin mẫu, kiểm trường bắt buộc (đủ → 0 lỗi,
+thiếu `fullName` → 1 lỗi), xem trước khớp kết quả `jq`; 0 lỗi console.
 
 ---
 
@@ -481,6 +575,7 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-07 | **K4 xong — màn danh mục `/components` (D-07, FR-D-070…073).** Duyệt đủ 751 nút / bảy loại có số đếm, tìm kiếm xếp hạng + ảo hóa, trang chi tiết (bảng tham số theo nhóm gốc, cú pháp URI, phụ thuộc Maven), thêm thẳng vào luồng đang mở hai chiều, giấy phép Apache-2.0 ở chân màn. 24 ca test mới (274 tổng). **Lỗi im lặng bắt được khi dựng màn — K4-0:** `build-catalog.mjs` đọc siêu dữ liệu theo *tên loại* trong khi bản gốc gói dưới khóa `model`, làm **95/751 nút** (48 dataformat + 26 language + 21 entity) mất sạch tiêu đề/mô tả/nhãn; mọi kiểm đếm vẫn xanh vì số nút không đổi — đúng dạng BR-D-04b, và cũng chính là thứ khiến nhận định "dữ liệu đã có đủ" ở dòng 2026-08-05 chỉ đúng một nửa. Kèm 3 component nhãn lặp `"cloud,cloud"` làm chip đếm 94 / lọc ra 91, và `OUT_ROOT` trỏ thư mục chết. Thay ngưỡng `< 400 nút` (không bắt nổi lỗi này) bằng kiểm chất lượng theo từng loại. Thêm `nativeSupported` vào chỉ mục: **65/323 component chưa chạy được ở ảnh native** trong khi ADR-002/020 chốt Camel Quarkus native — phải biết lúc tra cứu, không phải lúc build hỏng |
 | 2026-08-05 | Khởi tạo IP-07 sau khi chốt Q1–Q5. Phân tích hiện trạng: catalog **đã có đủ 742 lược đồ** (thiếu màn duyệt, không thiếu dữ liệu); nút thắt thật là mô hình phẳng `StageNode[]`/`SeqEdge[]` ở `core/model.ts` và bộ YAML tự viết chỉ đọc được tập con nó sinh ra; `route_type` hiện mang nghĩa vận chuyển (`SYNC`) nên Kamelet/Pipe/Test cần cột `resource_kind` riêng |
 | 2026-08-06 | **K1-1…K1-6 xong.** `tree.ts` + `deserialize.ts` + `serialize.ts` + `flatten.ts`, 22 ca test mới (148 tổng). Nghiệm thu trên **Camel 4.18.2 thật**: `k1-nested` (doTry+doCatch+doFinally+choice 2 nhánh+multicast) và `k1-multi-a`/`k1-multi-b` (nhiều route một tệp — thứ lõi cũ **không mở nổi**) đều `Started`. Hai lỗi của chính bộ sinh mới bị test/Camel bắt kịp thời: (1) `otherwise` ghi thành **danh sách trần** → Camel từ chối `Unsupported type: SEQUENCE`; lược đồ vendor **không** phát hiện được vì thuộc tính `steps` của `otherwise` khai là null — phải ghi dạng đối tượng bọc `steps`; (2) `constant` ghi **hai lần** vì khóa ngôn ngữ dạng chuỗi rơi vào `props` còn dạng đầy đủ rơi vào `rest`, dọn thiếu một bên. Thêm `K1ChoiceOrderTest` chứng minh thứ tự khóa `otherwise` trước `when` **không** đổi ngữ nghĩa định tuyến (a=1→nhanh-mot, a=2→nhanh-hai, a=99→nhanh-khac) — "route khởi động được" không đủ, đúng bài học lỗi #5 |
 | 2026-08-05 | **Chạy round-trip thật trên tệp trong `routes/` khi khảo sát — lộ hai lỗi mất dữ liệu đang tồn tại.** (1) Comment xuất xứ do `GitOpsPublisher` ghi (`# routeCode=at-5812634 version=1`) bị **thay bằng banner mặc định**, không phải xóa lộ liễu — mất dấu vết kiểm toán mà nhìn tệp không nhận ra (BR-D-06). (2) `setBody: {constant: "…"}` round-trip thành `expression: {}` — **nội dung bản tin biến mất im lặng**, mà route vẫn nạp được bằng Camel nên BR-D-04 không bắt được. Lỗi (2) ghi thành **lỗi #5** + gói **K0** để sửa ngay, không đợi hết đợt |

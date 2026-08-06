@@ -40,7 +40,7 @@ Nguyên tắc: **một màn = một nhiệm vụ**. Không dồn nhiều nhiệm
 | **D-04** | Chạy thử | Chạy và đọc kết quả một luồng | `/flows/:code/test` | Có khung ứng dụng |
 | **D-05** | Nhật ký chạy | Tra lịch sử các lần chạy | `/flows/:code/runs` | Có khung ứng dụng |
 | **D-06** | Duyệt | Thẩm định và phê duyệt phiên bản | `/flows/review` | Có khung ứng dụng |
-| **D-07** | Danh mục thành phần | Tra cứu **751 nút** Camel đã vendor | `/catalog` | Có khung ứng dụng |
+| **D-07** | Danh mục thành phần | Tra cứu **751 nút** Camel đã vendor | `/components` | Có khung ứng dụng |
 | **D-08** | Ánh xạ dữ liệu | Vẽ ánh xạ trường nguồn → đích | Lớp phủ trên D-02 | Cửa sổ lớn |
 
 ### 2.1. Luồng đi giữa các màn
@@ -297,8 +297,21 @@ tên route không phải địa chỉ — không sửa gì, và nói rõ là kh�
 |---|---|:-:|
 | **FR-D-070** | Duyệt toàn bộ **751 nút** đã vendor, tab theo loại, lọc nhãn gốc có số đếm | **M** |
 | **FR-D-071** | Tìm kiếm có xếp hạng, **ảo hóa** danh sách (ngưỡng NFR-D-02) | **M** |
-| **FR-D-072** | Trang chi tiết: mô tả gốc, bảng thuộc tính theo nhóm, cú pháp URI, mức hỗ trợ, cảnh báo `deprecated` | **M** |
+| **FR-D-072** | Trang chi tiết: mô tả gốc, bảng thuộc tính theo nhóm, cú pháp URI, mức hỗ trợ, cảnh báo `deprecated`, **phụ thuộc Maven** | **M** |
 | **FR-D-073** | Hiện rõ **nguồn và giấy phép** catalog (Apache-2.0, `camel-quarkus/3.35.0`) — nghĩa vụ tuân thủ | **M** |
+
+> **Đường dẫn là `/components`, không phải `/catalog`.** `/catalog` đã là màn đăng ký và
+> publish dịch vụ APISIX của PH-02 — cùng chữ "catalog" nhưng hai nghiệp vụ khác hẳn nhau.
+>
+> **Phụ thuộc của FR-D-072 có hai dạng, không gộp.** `component` mang tọa độ Maven đầy đủ
+> (`groupId`/`artifactId`/`version`) → hiện khối `<dependency>` dán thẳng vào `pom.xml`.
+> `kamelet` **không** có tọa độ riêng, chỉ khai phụ thuộc logic dạng `camel:aws2-s3` mà
+> Camel tự phân giải — hiện nhầm dạng sẽ dẫn người dùng đi thêm artifact không tồn tại.
+>
+> **Thêm cảnh báo native.** 65/323 component chưa chạy được ở ảnh native, trong khi
+> ADR-002/020 chốt Camel Quarkus native. Màn phải cảnh báo lúc *tra cứu*, không để người
+> dùng phát hiện lúc build hỏng. Phân biệt "có extension nhưng native chưa chạy" với
+> "không áp dụng" — gộp lại là cảnh báo nhầm cho toàn bộ pattern/dataformat/language.
 
 ### 8b.4. Bean, Metadata, DataMapper (D-08) — `FR-D-080…085`
 
