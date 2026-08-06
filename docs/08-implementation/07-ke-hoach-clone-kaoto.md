@@ -373,14 +373,37 @@ tham số" thay vì báo lỗi tải. Phân bố: (323 component ·
 
 ## 7. K5 — Bean và Metadata
 
-- [ ] **K5-1.** **Bean registry** cấp file: `beans[]` với `name`, `type`, `properties`.
-      Lược đồ đã có ở `schemas/entity/bean.json`.
-- [ ] **K5-2.** Trường nào nhận bean thì hiện **Select** các bean đã khai, không bắt gõ tay
-      chuỗi `#beanName`.
-- [ ] **K5-3.** **Metadata** cho Kamelet/Pipe: `metadata.name`, `labels`, `annotations`
-      (`ObjectMeta.json` đã có).
-- [ ] **K5-4.** BR-D-02 vẫn tuyệt đối: bean **không** chứa bí mật — chỉ tham chiếu Vault /
-      kết nối PH-05. Kiểm ở cả console và `CamelYamlValidator`.
+- [x] **K5-1.** **Bean registry** cấp tệp (`beans.ts` + `BeanRegistry.tsx`): tên, lớp,
+      thuộc tính; giữ nguyên khóa ngoài bộ ta quản (`initMethod`, `factoryMethod`…). Chặn
+      bean **trùng tên** — Camel giữ bean sau đè bean trước nên cấu hình bean đầu biến mất
+      lặng lẽ, luồng vẫn chạy nhưng với thứ khác hẳn. Là cửa sổ riêng vì bean dùng chung cho
+      **mọi route trong tệp**.
+
+- [x] **K5-2.** Trường nhận bean hiện **ô chọn** thay vì bắt gõ `#tenBean`. Đặt **trước**
+      nhánh object/array vì nhiều trường nhận bean khai kiểu `object` — rơi xuống bảng
+      khóa–giá trị thì người dùng lại phải tự gõ đúng cú pháp tham chiếu.
+
+- [x] **K5-3.** **Metadata** cho Kamelet/Pipe: chỉ cho sửa `name`/`labels`/`annotations`.
+      `ObjectMeta` còn `uid`, `resourceVersion`, `managedFields`… nhưng đó là **trường
+      Kubernetes tự quản** — cho người dùng đụng là mời gọi lỗi khó lần. Đọc giữ nguyên tất
+      cả, ghi chỉ đụng ba trường kia.
+
+- [x] **K5-4.** BR-D-02 — **hai lỗ thật ở `CamelYamlValidator`**, kiểm chứng bằng cách chạy
+      chính biểu thức đó chứ không đọc suông:
+
+      > 1. **Chặn nhầm tham chiếu hợp lệ.** Mẫu cũ khớp cả
+      >    `password: '{{vault:lgsp/db#password}}'` — tức là **cấm đúng cách làm mà BR-D-02
+      >    yêu cầu**. Người dùng làm đúng vẫn bị chặn publish thì họ sẽ tìm cách lách, và đó
+      >    mới là rủi ro thật.
+      > 2. **Bỏ sót `token`** — khóa bí mật rất thường gặp, lọt thẳng qua chốt chặn.
+      >
+      > Sửa cả hai; test chứng minh bắt được (đưa mẫu cũ trở lại thì 2 ca đỏ). Console cảnh
+      > báo sớm cùng luật, máy chủ vẫn là chốt chặn thật.
+
+**Nghiệm thu K5.** Tệp có `beans` cấp tệp qua đúng lối K5 dùng (đọc → ghi lại) vẫn
+`Started k5-bean (direct://k5bean)` trên **Camel 4.18.2 thật**. Kiểm trên trình duyệt:
+`Bean (1)` hiện đúng số; nhập `password=matkhau-that` → cảnh báo BR-D-02 và **khóa nút lưu**;
+đổi sang `{{vault:...}}` → cho lưu, ghi đúng vào YAML, bean cũ và route còn nguyên.
 
 ---
 
