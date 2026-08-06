@@ -45,6 +45,8 @@ import { FlowCanvas } from './FlowCanvas'
 import { InteractionContext, type DraggedNode, type Interaction } from './interaction'
 import { autoLayout } from './layout'
 import { NodeConfig } from './NodeConfig'
+import { readBeans } from '../core/beans'
+import { BeanRegistry } from './BeanRegistry'
 import { EntityList } from './EntityList'
 import { KameletSpec } from './KameletSpec'
 import { Palette } from './Palette'
@@ -114,6 +116,8 @@ function DesignerInner() {
   const [configOpen, setConfigOpen] = useState(false)
   /** Cửa sổ soạn tham số Kamelet (K3-1) — chỉ mở được khi tài nguyên là Kamelet. */
   const [kameletOpen, setKameletOpen] = useState(false)
+  /** Sổ đăng ký bean cấp tệp (K5-1) — dùng chung cho mọi route trong tệp. */
+  const [beansOpen, setBeansOpen] = useState(false)
   /** Cửa sổ xem/sửa YAML toàn màn hình (đồng bộ ngược về sơ đồ). */
   const [yamlOpen, setYamlOpen] = useState(false)
   // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
@@ -275,6 +279,11 @@ function DesignerInner() {
     }
     return emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true })
   }, [tree, nodes, edges, code, activeEntity])
+  /** Tên bean đã khai trong tệp — cấp cho cửa sổ cấu hình để hiện ô chọn (K5-2). */
+  const beanNames = useMemo(
+    () => (tree ? readBeans(tree).map((b) => b.name).filter(Boolean) : []),
+    [tree],
+  )
   const errorCount = findings.filter((f) => f.level === 'error').length
   const selected = nodes.find((n) => n.selected)
   const selectedSample = useMemo(
@@ -689,6 +698,12 @@ function DesignerInner() {
               Tham số Kamelet
             </Button>
           )}
+          {/* Bean là cấu hình **cấp tệp**, dùng được cho mọi route trong tệp. */}
+          {tree && tree.kind !== 'Test' && (
+            <Button size="small" onClick={() => setBeansOpen(true)}>
+              Bean{tree.beans.length ? ` (${tree.beans.length})` : ''}
+            </Button>
+          )}
           <Button size="small" onClick={() => leaveTo(`/flows/${code}/test`)}>
             Chạy thử
           </Button>
@@ -830,6 +845,17 @@ function DesignerInner() {
         }}
       />
 
+      <BeanRegistry
+        open={beansOpen}
+        resource={tree}
+        onClose={() => setBeansOpen(false)}
+        onSave={(next) => {
+          setTree(next)
+          markDirty()
+          message.success('Đã lưu bean')
+        }}
+      />
+
       <KameletSpec
         open={kameletOpen}
         resource={tree}
@@ -842,6 +868,7 @@ function DesignerInner() {
       />
 
       <NodeConfig
+        beanNames={beanNames}
         open={configOpen && Boolean(selected)}
         node={selected}
         onClose={() => setConfigOpen(false)}

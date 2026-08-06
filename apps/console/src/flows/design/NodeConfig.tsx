@@ -11,6 +11,7 @@ import {
   type PropertiesSchema,
   type SchemaProp,
 } from '../core/catalog'
+import { acceptsBean, beanRef, refToBeanName } from '../core/beans'
 import type { StageNode } from '../core/model'
 import { ExpressionField } from './ExpressionField'
 
@@ -29,6 +30,8 @@ interface Props {
   sample?: { sample: string; inherited: boolean }
   runOutput?: { status: string; durationMs: number; detail?: string }
   env?: Record<string, string>
+  /** Bean đã khai trong tệp — trường nhận bean hiện ô chọn thay vì bắt gõ `#ten` (K5-2). */
+  beanNames?: string[]
 }
 
 /** Trường mang bí mật — không bao giờ nhập thẳng trên node (BR-D-02). */
@@ -177,6 +180,7 @@ function Control({
   onChange,
   sample,
   env,
+  beanNames = [],
 }: {
   name: string
   schema: SchemaProp
@@ -184,6 +188,8 @@ function Control({
   onChange: (v: PropValue | undefined) => void
   sample?: { sample: string; inherited: boolean }
   env?: Record<string, string>
+  /** Bean đã khai trong tệp — để trường nhận bean hiện ô chọn (K5-2). */
+  beanNames?: string[]
 }) {
   const placeholder = schema.default !== undefined ? `mặc định: ${String(schema.default)}` : ''
 
@@ -247,6 +253,27 @@ function Control({
     )
   }
 
+  // Trường nhận **bean**: chọn từ sổ đăng ký thay vì bắt gõ tay `#tenBean` (K5-2, FR-D-081).
+  //
+  // Đặt **trước** nhánh object/array vì nhiều trường nhận bean khai kiểu `object` — rơi
+  // xuống bảng khóa–giá trị thì người dùng lại phải tự gõ đúng cú pháp tham chiếu.
+  if (beanNames.length && acceptsBean(name, schema.type)) {
+    const current = refToBeanName(value)
+    return (
+      <Select
+        size="small"
+        allowClear
+        showSearch
+        style={{ width: '100%' }}
+        value={current}
+        placeholder="Chọn bean đã khai trong tệp"
+        onChange={(v) => onChange(v ? beanRef(v) : undefined)}
+        options={beanNames.map((b) => ({ value: b, label: b }))}
+        notFoundContent="Chưa khai bean nào trong tệp"
+      />
+    )
+  }
+
   // Trường `object`/`array`: bảng khóa–giá trị (FR-D-022, G4-6).
   //
   // Camel nhận các trường này dạng map tham số (ví dụ `headers`, `parameters`). Ô text
@@ -295,6 +322,7 @@ function Field({
   onChange,
   sample,
   env,
+  beanNames,
 }: {
   name: string
   schema: SchemaProp
@@ -303,6 +331,7 @@ function Field({
   onChange: (v: PropValue | undefined) => void
   sample?: { sample: string; inherited: boolean }
   env?: Record<string, string>
+  beanNames?: string[]
 }) {
   const missing = required && (value === undefined || value === '')
   // Trường cần nhiều bề ngang thì chiếm trọn hàng của lưới: biểu thức có trình soạn
@@ -341,6 +370,7 @@ function Field({
         onChange={onChange}
         sample={sample}
         env={env}
+        beanNames={beanNames}
       />
       <div className="cfg__param">{name}</div>
       {missing && <div className="cfg__hint cfg__hint--err">Trường bắt buộc</div>}
@@ -369,6 +399,7 @@ export function NodeConfig({
   sample,
   runOutput,
   env,
+  beanNames = [],
 }: Props) {
   const entry = node ? lookupNode(node.data.ref) : undefined
   const [schema, setSchema] = useState<PropertiesSchema>({})
@@ -472,6 +503,7 @@ export function NodeConfig({
             onChange={(val) => onProp(k, val)}
             sample={sample}
             env={env}
+            beanNames={beanNames}
           />
         ))
       )}
