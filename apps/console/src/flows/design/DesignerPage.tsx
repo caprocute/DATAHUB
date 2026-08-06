@@ -27,7 +27,11 @@ import {
   type StageData,
   type StageNode,
 } from '../core/model'
-import { graphFromYaml } from '../core/parse'
+import { deserialize } from '../core/deserialize'
+import { serialize } from '../core/serialize'
+import { flatten } from '../core/flatten'
+import { applyGraphToTree, unmappedNodes } from '../core/unflatten'
+import type { CamelResource } from '../core/tree'
 import { prefetchSchemas, statusByNode, validate } from '../core/validate'
 import { FlowCanvas } from './FlowCanvas'
 import { InteractionContext, type DraggedNode, type Interaction } from './interaction'
@@ -112,6 +116,17 @@ function DesignerInner() {
    * sánh lúc lưu, đổi nó không cần vẽ lại sơ đồ.
    */
   const baseYamlRef = useRef<string>('')
+  /**
+   * Cây `CamelResource` của định nghĩa đang mở (K1 — IP-07).
+   *
+   * Sơ đồ chỉ là **một cách chiếu** của cây này. Giữ cây lại để lúc sinh YAML thì áp
+   * thay đổi lên nó thay vì dựng lại từ sơ đồ phẳng — sơ đồ không biểu diễn nổi khe
+   * `doCatch`/`doFinally`, nên sinh từ sơ đồ sẽ **bóp méo** `doTry` thành `choice`
+   * và làm bay lớp ngoại lệ (đo thật, xem IP-07 §3.0).
+   *
+   * `null` khi định nghĩa đã lưu không đọc được — khi đó lùi về bộ sinh cũ.
+   */
+  const treeRef = useRef<CamelResource | null>(null)
 
   const history = useFlowHistory(nodes, edges, setNodes, setEdges)
   const { commit, undo, redo, canUndo, canRedo } = history
@@ -136,13 +151,18 @@ function DesignerInner() {
         // Mốc chống ghi đè: nhớ đúng bản vừa đọc về (G3-5).
         baseYamlRef.current = ver.definitionYaml ?? ''
         try {
-          const g = graphFromYaml(ver.definitionYaml ?? '')
+          // Lõi cây (K1) đọc được mọi cấu trúc Camel hợp lệ, kể cả `doTry`/`loadBalance`
+          // và nhiều route một tệp — thứ bộ đọc cũ hoặc vứt cây con hoặc từ chối mở.
+          const tree = deserialize(ver.definitionYaml ?? '')
+          treeRef.current = tree
+          const g = flatten(tree)
           bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
           setNodes(autoLayout(g.nodes, g.edges))
           setEdges(g.edges)
         } catch {
-          // Định nghĩa đã lưu không đọc được (sửa tay ngoài tập con) — dựng luồng
+          // Định nghĩa đã lưu không đọc được (YAML hỏng cú pháp) — dựng luồng
           // trống và nói rõ, không im lặng ghi đè công sức của người dùng.
+          treeRef.current = null
           message.warning('Không đọc được định nghĩa đã lưu — mở luồng trống. Bản trên máy chủ chưa bị thay đổi.')
           const g = emptyFlow()
           setNodes(autoLayout(g.nodes, g.edges))
@@ -204,10 +224,24 @@ function DesignerInner() {
   }, [code, nodes.length])
 
   const runOverlay = showRun ? runStages : EMPTY_RUN
-  const yaml = useMemo(
-    () => emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true }),
-    [nodes, edges, code],
-  )
+  /**
+   * YAML của luồng đang sửa.
+   *
+   * Có cây (mở từ định nghĩa đã lưu) thì **áp thay đổi lên cây** rồi ghi ra — giữ được
+   * `doCatch`/`doFinally`, khóa lạ và comment. Sinh thẳng từ sơ đồ phẳng sẽ bóp méo
+   * `doTry` thành `choice` và làm bay lớp ngoại lệ.
+   *
+   * Chưa có cây (luồng dựng mới trên canvas) thì dùng bộ sinh cũ. Chặng **thêm mới**
+   * cũng chưa vào được cây, nên khi có chặng như vậy thì cũng lùi về bộ sinh cũ —
+   * thà YAML kém tinh gọn còn hơn lặng lẽ bỏ rơi chặng người dùng vừa thêm.
+   */
+  const yaml = useMemo(() => {
+    const tree = treeRef.current
+    if (tree && unmappedNodes(tree, nodes).length === 0) {
+      return serialize(applyGraphToTree(tree, nodes, edges), baseYamlRef.current || undefined)
+    }
+    return emitRouteYaml(nodes, edges, { routeId: code || 'draft', errorHandler: true })
+  }, [nodes, edges, code])
   const errorCount = findings.filter((f) => f.level === 'error').length
   const selected = nodes.find((n) => n.selected)
   const selectedSample = useMemo(
@@ -604,9 +638,12 @@ function DesignerInner() {
         open={yamlOpen}
         yaml={yaml}
         onClose={() => setYamlOpen(false)}
-        onApply={(n, e) => {
+        onApply={(n, e, tree) => {
           // Ghi vào lịch sử trước khi thay để hoàn tác được nếu áp nhầm.
           commit()
+          // Thay luôn cây đang giữ: không thì lần sinh YAML sau vẫn áp thay đổi lên
+          // cây cũ và **nuốt mất** bản người dùng vừa sửa tay.
+          treeRef.current = tree
           setNodes(autoLayout(n, e))
           setEdges(e)
           setSaveState('dirty')

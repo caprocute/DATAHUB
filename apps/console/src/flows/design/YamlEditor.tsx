@@ -1,15 +1,22 @@
 import { Alert, Button, Modal, Space, Typography } from 'antd'
 import { useEffect, useState } from 'react'
-import { graphFromYaml, YamlParseError } from '../core/parse'
+import { deserialize, DeserializeError } from '../core/deserialize'
+import { flatten } from '../core/flatten'
 import { bumpSeq, type SeqEdge, type StageNode } from '../core/model'
+import type { CamelResource } from '../core/tree'
 
 interface Props {
   open: boolean
   /** YAML đang sinh từ sơ đồ — nguồn để mở trình soạn. */
   yaml: string
   onClose: () => void
-  /** Áp YAML đã sửa ngược lại sơ đồ. */
-  onApply: (nodes: StageNode[], edges: SeqEdge[]) => void
+  /**
+   * Áp YAML đã sửa ngược lại sơ đồ.
+   *
+   * Trả kèm **cây** vừa đọc: trình thiết kế phải thay cây đang giữ, không thì lần sinh
+   * YAML sau vẫn áp thay đổi lên cây cũ và **nuốt mất** bản sửa tay.
+   */
+  onApply: (nodes: StageNode[], edges: SeqEdge[], tree: CamelResource) => void
 }
 
 /**
@@ -17,9 +24,9 @@ interface Props {
  *
  * Panel YAML bên phải chỉ đủ liếc qua; đọc nghiêm túc hay sửa tay thì cần cả màn hình.
  *
- * Đồng bộ ngược đi qua `graphFromYaml` — bộ đọc **chỉ hiểu tập con** mà trình thiết kế
- * sinh ra. Cấu trúc ngoài tập con bị từ chối kèm số dòng thay vì dựng ra sơ đồ sai:
- * mất công sức của người dùng còn tệ hơn là báo "chưa đọc được".
+ * Đồng bộ ngược đi qua lõi cây (K1 — IP-07), nên **mọi cấu trúc Camel hợp lệ** đều đọc
+ * được, kể cả `doTry`/`loadBalance` và nhiều route một tệp. Chỉ YAML **hỏng cú pháp**
+ * mới bị từ chối, kèm số dòng — giữ nguyên sơ đồ thay vì dựng ra sơ đồ sai.
  */
 export function YamlEditor({ open, yaml, onClose, onApply }: Props) {
   const [draft, setDraft] = useState(yaml)
@@ -37,17 +44,18 @@ export function YamlEditor({ open, yaml, onClose, onApply }: Props) {
 
   function apply() {
     try {
-      const g = graphFromYaml(draft)
+      const tree = deserialize(draft)
+      const g = flatten(tree)
       // Đẩy bộ đếm mã vượt mọi mã vừa nạp, không thì chặng thêm sau sẽ trùng mã và
       // React Flow bỏ mất nút (lỗi đã gặp ở IP-06 §0).
       bumpSeq([...g.nodes.map((n) => n.id), ...g.edges.map((e) => e.id)])
-      onApply(g.nodes, g.edges)
+      onApply(g.nodes, g.edges, tree)
       setError(null)
       onClose()
     } catch (e) {
       // Đọc không được thì **giữ nguyên sơ đồ** và nói rõ dòng lỗi.
       setError(
-        e instanceof YamlParseError && e.line
+        e instanceof DeserializeError && e.line
           ? `Dòng ${e.line}: ${e.message}`
           : String(e instanceof Error ? e.message : e),
       )

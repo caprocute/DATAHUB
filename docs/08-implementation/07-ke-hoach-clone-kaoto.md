@@ -175,6 +175,22 @@ sẽ phải vứt dữ liệu ở đúng chỗ này.
       đọc được `doTry`/`loadBalance`/`multicast`/`split` **kèm cây con**, nhiều route một
       tệp, `routeConfiguration`, Kamelet, Pipe.
 - [x] **K1-6.** `flatten.ts` — cây → `StageNode[]`/`SeqEdge[]` cho XYFlow vẽ.
+- [x] **K1-6b.** *(mới)* `unflatten.ts` — sơ đồ → cây, và **nối lõi mới vào trình thiết kế**.
+
+      > **Vì sao phải có, đo bằng thử nghiệm thật.** Trình thiết kế sửa trực tiếp trên
+      > `StageNode[]` ở **29 chỗ**. Thử đổi *mỗi bộ đọc* sang lõi cây mà vẫn để *bộ ghi cũ*
+      > chạy trên sơ đồ phẳng thì không chỉ mất dữ liệu mà **bóp méo**:
+      > ```diff
+      > - doTry:  steps → to(http://x);  doCatch → exception java.io.IOException
+      > + choice: when[0] → to(http://x); when[1] → log(loi)      # lớp ngoại lệ biến mất
+      > ```
+      > Xử lý lỗi lặng lẽ hóa thành định tuyến điều kiện. Nên bộ đọc và bộ ghi **phải đổi
+      > cùng lúc**. `applyGraphToTree` lấy cây gốc làm nền rồi áp thay đổi từ sơ đồ, nên
+      > khóa lạ, thuộc tính khe và comment đều còn nguyên.
+      >
+      > Hạn chế đã biết: **chặng thêm mới trên canvas chưa vào được cây** (chưa có đường
+      > dẫn). Khi có chặng như vậy thì lùi về bộ sinh cũ — thà YAML kém tinh gọn còn hơn
+      > lặng lẽ bỏ rơi chặng người dùng vừa thêm. Sửa thẳng trên cây là việc của K2.
       **Giữ nguyên ADR-017**: XYFlow vẫn là động cơ vẽ, chỉ đổi nguồn dữ liệu.
       Node lồng hiện thành nhóm gập được, không phải cạnh phẳng.
 - [x] **K1-7.** `validate.ts` — sửa theo Q1: chặng khung chuẩn thành **cảnh báo**, không
@@ -349,7 +365,7 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 | Viết lại lõi làm hỏng luồng đang chạy | **Cao** | N-9 chặn; giữ `parse.ts` cũ làm bộ đọc dự phòng tới khi N-9 đạt |
 | `atlasmap-runtime` xung đột phụ thuộc với Spring Boot 4 | **Cao** | Kiểm ở K6-1 **trước** khi làm UI; nếu vỡ thì lùi về XSLT thuần |
 | Khối lượng K6 vượt dự kiến | Trung bình | K6-4/5 làm được từng phần; ánh xạ 1–1 đã dùng được rồi |
-| Bundle phình sau khi thêm `yaml` | Thấp | ~40KB gz; đo lại ở N-5 |
+| Bundle phình sau khi thêm `yaml` | Thấp | **Đã đo: 570,11 → 603,29 KB gz (+33 KB)** cho *cả* thư viện `yaml` lẫn toàn bộ lõi cây mới — thấp hơn ước tính 40 KB. `yaml` không có phụ thuộc con và `vite` đã kéo sẵn nên dedupe |
 | Sửa BR-D-01 bị hiểu là nới lỏng kiểm soát | Trung bình | T-1 ghi rõ: cảnh báo lúc thiết kế, **vẫn chặn lúc publish** với luồng đối ngoại |
 
 ---
