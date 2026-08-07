@@ -278,9 +278,21 @@ tên route không phải địa chỉ — không sửa gì, và nói rõ là kh�
 |---|---|:-:|
 | **FR-D-060** | Chọn loại khi tạo mới: **Route · Kamelet · Pipe · Test** | **M** |
 | **FR-D-061** | **Kamelet**: soạn `spec.definition` (tham số: tên, kiểu, mặc định, bắt buộc, mô tả) + `spec.template.from` | **M** |
-| **FR-D-062** | Kamelet tự viết hiện trong bảng thành phần cạnh 243 kamelet dựng sẵn, **phân biệt rõ nguồn** | **S** |
+
+> **Kiểu tham số lấy theo dữ liệu vendor, không theo enum lược đồ.** Enum của
+> `KameletConfiguration.kameletProperties` là `string|number|boolean` — **sai cả hai đầu**:
+> thiếu `integer` (kiểu phổ biến thứ ba) và có `number` mà **không kamelet gốc nào dùng**.
+> Đếm trên 243 kamelet đã vendor: `string` 1256 · `boolean` 316 · `integer` 111 · `binary` 9 ·
+> `long` 1. Trình soạn theo con số thật này; có test khóa danh sách với thư mục lược đồ.
+| **FR-D-062** | Kamelet tự viết hiện **đầu** tab Kamelet, cạnh 243 kamelet dựng sẵn, có huy hiệu "tự viết" | **S** |
 | **FR-D-063** | **Pipe**: `source` → `steps[]` → `sink`; canvas tuyến tính, khóa thao tác rẽ nhánh | **M** |
 | **FR-D-064** | **Test**: gắn với một route, khai báo bản tin vào và khẳng định đầu ra | **S** |
+
+> ⚠ **FR-D-064 — bộ chạy chưa có.** Mô hình và kiểm tra đã xong (mỗi ca **bắt buộc có ít
+> nhất một khẳng định** — ca không khẳng định gì thì luôn đạt, vận hành tưởng đã kiểm mà
+> thực ra không). Nhưng `RoutesService.testRun` hiện **mô phỏng**: dựng waterfall chín chặng
+> cố định từ `stage.hashCode()`, **không nạp Camel**. Console nói rõ trạng thái này qua
+> `runnerStatus()` thay vì để "PASSED" thành lời hứa sai.
 
 **Ràng buộc dữ liệu.** Loại tài nguyên lưu ở cột riêng `resource_kind`, **không dùng lại**
 `route_type` — cột đó mang ngữ nghĩa vận chuyển (`SYNC`/`ASYNC`), khác hẳn ngữ nghĩa loại tệp.
@@ -320,14 +332,35 @@ tên route không phải địa chỉ — không sửa gì, và nói rõ là kh�
 | **FR-D-080** | **Bean registry** cấp tệp: `name`, `type`, `properties` | **M** |
 | **FR-D-081** | Trường nhận bean hiện **Select** các bean đã khai, không bắt gõ tay `#beanName` | **S** |
 | **FR-D-082** | **Metadata** cho Kamelet/Pipe: `name`, `labels`, `annotations` | **S** |
-| **FR-D-083** | **DataMapper**: cây nguồn/đích kéo thả; ánh xạ 1–1, nhiều–1, 1–nhiều | **M** |
-| **FR-D-084** | Thư viện hàm biến đổi: chuỗi, số, ngày, điều kiện, tra bảng | **S** |
-| **FR-D-085** | Xem trước ánh xạ **chạy thật qua engine ở máy chủ**, không mô phỏng ở trình duyệt | **M** |
+| **FR-D-083** | **DataMapper**: ba cột nguồn │ ánh xạ │ đích; ánh xạ 1–1 và **nhiều–1** (ghép) | **M** |
+| **FR-D-084** | Thư viện hàm biến đổi: chuỗi (cắt/hoa/thường), số, giá trị mặc định | **S** |
+| **FR-D-085** | Xem trước ánh xạ trên bản tin mẫu, **nói rõ nơi chạy** | **M** |
 
-**Kiến trúc DataMapper.** UI tự viết (React 19, theo `ui_ux_rule.md`) + engine
-`atlasmap-runtime` (Java) ở `apps/control`. Gói giao diện AtlasMap peer React 17 và
-PatternFly 4 — dùng API đã bị gỡ khỏi React 19, không nhúng thẳng được vào console.
-**FR-D-085 mô phỏng ở trình duyệt là sai**: kết quả sẽ lệch với lúc chạy thật.
+### Kiến trúc DataMapper — sửa 2026-08-07
+
+**Sinh biểu thức JQ**, không nhúng AtlasMap. Đây là **thay đổi so với quyết định Q4** của
+chủ dự án, dựa trên ba điều đo được trên chính mã dự án:
+
+1. **Dự án đã có cơ chế ánh xạ chạy được, và không phải AtlasMap.** [ADR-013](../05-adr/README.md#adr-013)
+   chốt CDM làm trung gian; `contracts/cdm/mappers/*.jq` là bộ ánh xạ; `CdmMapperTest` chứng
+   minh nó chạy trên Camel thật. Thêm AtlasMap là **cơ chế ánh xạ thứ hai** song song —
+   hai nguồn sự thật cho cùng một việc.
+2. **Vấn đề thật là ánh xạ viết tay bằng Java.** `LegacyCitizenToPersonMapper` là 60 dòng
+   Java cho ánh xạ 4 trường, còn tệp `.jq` cạnh nó chỉ là tài liệu — hai bản trôi khỏi nhau
+   lúc nào không biết. Sinh JQ xóa hẳn lớp viết tay đó.
+3. `atlasmap-runtime` **không có trong kho Maven offline**, không kiểm chứng được.
+
+**Bằng chứng.** JQ sinh ra chạy bằng `jq` cho kết quả **giống hệt**
+`legacy-citizen-to-person.jq` thật trên đúng bản tin mẫu của `CdmMapperTest`.
+
+**FR-D-085 — nới so với bản đầu.** Bản đầu cấm mô phỏng ở trình duyệt vì "kết quả sẽ lệch".
+Lý do đó vẫn đúng, nhưng engine máy chủ **chưa có** mà người dùng vẫn cần thấy ngay mình
+ánh xạ đúng chưa. Nên: vẫn xem trước ở trình duyệt, **và dán nhãn đúng sự thật** — giấu
+chuyện nó là mô phỏng mới là điều nguy hiểm, không phải bản thân việc mô phỏng.
+
+**Chưa làm.** Ánh xạ **1–nhiều** (tách một nguồn ra nhiều đích) — cần cú pháp riêng cho
+từng đích, để lại khi có ca dùng thật. Engine chạy thật ở máy chủ (`camel-quarkus-jq`) chờ
+đợt có mạng.
 
 **Giữ nguyên BR-D-02.** Bean **không** chứa bí mật — chỉ tham chiếu Vault / kết nối PH-05.
 
@@ -422,5 +455,6 @@ Cả ba đều **im lặng** và YAML sinh ra **vẫn nạp được bằng Came
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-07 | **Sửa theo thực tế thi công.** (1) **Kiến trúc DataMapper**: sinh **JQ** thay vì nhúng AtlasMap — lệch khỏi Q4, ba căn cứ đo trên mã thật ghi ở §8b.4; JQ sinh ra cho kết quả **giống hệt** mapper thật của repo. (2) **FR-D-085 nới**: vẫn xem trước ở trình duyệt nhưng **dán nhãn đúng sự thật** — engine máy chủ chưa có mà người dùng vẫn cần thấy ngay mình ánh xạ đúng chưa; giấu chuyện nó là mô phỏng mới nguy hiểm. (3) **FR-D-064**: ghi rõ bộ chạy Test **chưa có** — `testRun` đang mô phỏng, không nạp Camel. (4) **FR-D-061**: kiểu tham số Kamelet lấy theo dữ liệu 243 kamelet vendor thật dùng, không theo enum lược đồ vốn thiếu `integer` và thừa `number` |
 | 2026-08-06 | **Cập nhật theo IP-07 (clone mô hình Kaoto).** (1) **Sửa BR-D-01**: khung chuẩn từ "không gỡ được" thành mẫu gỡ được lúc thiết kế, bắt buộc lúc publish với luồng đối ngoại — ràng buộc cũ loại bỏ hẳn Kamelet/Pipe vốn về cấu trúc không thể có bốn chặng đó; định nghĩa "đối ngoại" bám `system_code` của hồ sơ kết nạp PH-01 (§10.1). (2) **Thêm BR-D-04b**: quay vòng YAML không được mất dữ liệu — ba lỗi mất dữ liệu thật đã phát hiện đều *im lặng* và YAML vẫn nạp được bằng Camel, nên BR-D-04 một mình không bắt được (§10.2). (3) Thêm **FR-D-005…008** (tệp nhiều route), **FR-D-060…064** (Kamelet/Pipe/Test), **FR-D-070…073** (danh mục D-07), **FR-D-080…085** (Bean/Metadata/DataMapper D-08) và hai màn **D-07**, **D-08** |
 | 2026-08-04 | Khởi tạo — tách sáu màn theo nhiệm vụ, chuẩn hóa cửa sổ cấu hình 75%, bổ sung nghiệp vụ nhật ký chạy (D-05) còn thiếu, đặt ngưỡng phi chức năng theo số liệu catalog thật |
