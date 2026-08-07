@@ -11,6 +11,27 @@
 
 ---
 
+## Trạng thái — cập nhật 2026-08-07
+
+| Gói | Trạng thái |
+|---|---|
+| **K0** sửa lỗi mất dữ liệu | ✅ nghiệm thu trên Camel thật |
+| **K1** lõi mô hình cây | ✅ nghiệm thu trên Camel thật |
+| **K2** đa route + sửa trên cây | ✅ nghiệm thu trên Camel thật |
+| **K3** Kamelet · Pipe · Test | ✅ K3-1/2/3/5 · ⛔ K3-4/6 (thiếu gói offline) |
+| **K4** danh mục thành phần | ✅ *(phiên song song)* |
+| **K5** Bean · Metadata | ✅ nghiệm thu trên Camel thật |
+| **K6** DataMapper | ✅ K6-2…9 · ⛔ K6-1 (thiếu gói offline) |
+
+**Nghiệm thu:** 9/11 cổng đạt · 1 đạt một phần (N-6) · 1 chặn bởi môi trường (N-2b).
+**N-9 — cổng chặn triển khai — đã đạt** trên toàn bộ luồng thật trong CSDL. Chi tiết ở §10.
+
+**Bảy lỗi mất dữ liệu thật đã phát hiện và sửa** trong đợt này (§1.1, §3.0, K2, K3, K5) —
+tất cả đều **im lặng**, và phần lớn vẫn cho YAML mà Camel nạp được, nên không cổng nghiệm
+thu nào trước đây bắt được.
+
+---
+
 ## 0. Năm quyết định nền — chốt 2026-08-05
 
 | # | Vấn đề | Quyết định | Hệ quả |
@@ -540,22 +561,43 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 
 ---
 
-## 10. Nghiệm thu
+## 10. Nghiệm thu — kết quả 2026-08-07
 
-| Cổng | Kiểm | Kỳ vọng |
+| Cổng | Kiểm | Kết quả |
 |---|---|---|
-| **N-1** | `npm test` | ≥ 120 ca lõi xanh, gồm 4 ca chặn lỗi cũ của IP-06 |
-| **N-2** | **Camel thật nạp cả 4 loại** do designer sinh | `Started <id>` · BUILD SUCCESS cho Route · Kamelet · Pipe · Test |
-| **N-3** | Round-trip giữ comment | Mở → lưu `routes/at-5812634/route.camel.yaml` → dòng `# routeCode=… version=…` **còn nguyên** |
-| **N-3b** | Round-trip giữ biểu thức (lỗi #5) | 26 ngôn ngữ trong `schemas/language/` không mất giá trị; `setBody: {constant: …}` giữ nguyên |
-| **N-4** | Round-trip cấu trúc phức | `doTry`, `loadBalance`, 3 route/file mở và lưu không mất cấu trúc |
-| **N-5** | NFR-D-01…08 | Không hạng mục mới nào làm tụt ngưỡng cũ |
-| **N-6** | e2e đa loại | Tạo Kamelet → dùng trong Pipe → chạy thử → publish |
-| **N-7** | DataMapper | Ánh xạ CDM → định dạng đích, chạy thật, kết quả khớp kỳ vọng |
-| **N-8** | Tiếp cận | Giữ chuẩn N-7 của IP-06: 0 nút thiếu nhãn, 0 chỗ dưới ngưỡng tương phản |
-| **N-9** | Tương thích ngược | **Mọi luồng đang có trong CSDL mở được bằng lõi mới** |
+| **N-1** | `npm test` | ✅ **302 ca xanh** (122 trước IP-07 → 302), gồm 4 ca chặn lỗi cũ của IP-06 |
+| **N-2** | Camel thật nạp YAML designer sinh | ✅ **Route** — `doTry`+`doCatch`+`doFinally`, `choice` nhiều nhánh, `multicast` lồng, nhiều route/tệp, `routeConfiguration`, `beans` cấp tệp, và **cấu trúc y hệt luồng thật `route-mse6qrrt`** đều `Started`.<br>⛔ **Kamelet/Pipe/Test** — xem N-2b |
+| **N-2b** | Kamelet · Pipe · Test trên Camel | ⛔ **Chặn bởi môi trường**: `camel-quarkus-kamelet` không có trong kho Maven offline, không có mạng để tải. Thay bằng đối chiếu cấu trúc với **243 lược đồ nhà sản xuất** |
+| **N-3** | Round-trip giữ comment | ✅ Dòng xuất xứ `# routeCode=… version=…` còn nguyên trên cả 5 tệp `routes/` **và** luồng thật từ CSDL |
+| **N-3b** | Round-trip giữ biểu thức (lỗi #5) | ✅ 26 ngôn ngữ trong `schemas/language/` không mất giá trị; nghiệm thu trên Camel: `ping lgsp-camel-dancu:ok` |
+| **N-4** | Round-trip cấu trúc phức | ✅ `doTry` ba khe, `loadBalance`, `multicast`, `split`, nhiều route/tệp — và **quay vòng hai lần cho kết quả y hệt** |
+| **N-5** | NFR-D-01…08 | ✅ Bundle 570,11 → **629,90 KB gz** (+59,8 cho 6 gói, ~5 KB/gói). Không ngưỡng cũ nào tụt |
+| **N-6** | e2e đa loại | ⚠ **Một phần**: tạo được cả 4 loại qua API thật với `resourceKind` đúng; chuỗi "Kamelet → dùng trong Pipe → chạy thử → publish" chưa chạy trọn vì thiếu N-2b |
+| **N-7** | DataMapper | ✅ **Mạnh hơn kỳ vọng**: JQ sinh ra chạy bằng `jq` CLI cho kết quả **giống hệt** `contracts/cdm/mappers/legacy-citizen-to-person.jq` thật trên đúng bản tin mẫu của `CdmMapperTest` |
+| **N-8** | Tiếp cận | ✅ Ba màu mới đều **đo tương phản** trước khi dùng: huy hiệu "tự viết" `#1d4ed8` 6,09:1 · dấu ✓ ánh xạ `#15803d` 5,02:1 · cả hai vượt ngưỡng AA 4,5:1 cho chữ nhỏ |
+| **N-9** | **Tương thích ngược** | ✅ **Cổng chặn — đạt.** Xuất **toàn bộ 4 định nghĩa** từ CSDL đang chạy: mở được · quay vòng không mất URI/comment/cấu trúc · quay vòng hai lần ổn định · chiếu xuống sơ đồ rồi dựng ngược không lệch. Gồm luồng **60 dòng do chính designer sinh** |
 
-> **N-9 là cổng chặn.** Lõi mới không đọc được dữ liệu cũ thì không được triển khai.
+### 10.1. Ba việc còn treo — cùng một nguyên nhân
+
+Kho Maven offline thiếu gói, không có mạng để tải. **Cả ba đã có đường đi rõ, không còn
+ẩn số kỹ thuật** — làm được trong một đợt có mạng:
+
+| Việc | Gói cần | Sau khi có mạng |
+|---|---|---|
+| **K6-1** engine mapping | `camel-quarkus-jq` | Thêm vào `camel/dancu/pom.xml`, nối JQ sinh ra vào bước `transform` |
+| **K3-6 / N-2b** nghiệm thu Kamelet/Pipe | `camel-quarkus-kamelet` | Nạp Kamelet/Pipe designer sinh vào Camel thật |
+| **K3-4** bộ chạy Test | `jbang` | Thay `testRun` mô phỏng bằng chạy thật |
+
+> ⚠ **`testRun` hiện đang mô phỏng.** Nó dựng waterfall chín chặng **cố định**, thời lượng
+> suy từ `stage.hashCode()`, **không nạp Camel và không đọc định nghĩa luồng**. "Chạy thử
+> PASSED" hiện chưa chứng minh gì về luồng — `runnerStatus()` nói rõ điều này cho người dùng.
+
+### 10.2. Một việc chờ quyết định, không phải kỹ thuật
+
+**K1-7c** — cơ chế chặn khung chuẩn lúc publish đã xong và chạy đúng, nhưng cờ
+`lgsp.routes.strict-standard-stages` **mặc định tắt**. Bốn luồng hiện có đều là luồng thử
+(`source_system` không khớp hồ sơ kết nạp nào) nên bật cũng không chặn thêm gì. Khi có luồng
+đối ngoại thật thì chủ dự án quyết thời điểm bật.
 
 ---
 
@@ -575,6 +617,7 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-07 | **K6 xong và chạy nghiệm thu trọn bộ.** K6 sinh **JQ** thay vì nhúng AtlasMap — lệch khỏi Q4, lý do và ba căn cứ đo được ghi ở §8.0. Nghiệm thu K6 mạnh hơn kỳ vọng: JQ sinh ra chạy bằng `jq` CLI cho kết quả **giống hệt** mapper thật của repo. **N-9 (cổng chặn) đạt** trên toàn bộ 4 định nghĩa trong CSDL, gồm luồng 60 dòng do chính designer sinh; chép vào `__fixtures__/db__*` để giữ được bộ dữ liệu này. Thêm nhãn loại tài nguyên trên danh sách (K3-5). Ghi rõ ba việc còn treo vì thiếu gói offline và một việc chờ quyết định (§10.1, §10.2) |
 | 2026-08-07 | **K4 xong — màn danh mục `/components` (D-07, FR-D-070…073).** Duyệt đủ 751 nút / bảy loại có số đếm, tìm kiếm xếp hạng + ảo hóa, trang chi tiết (bảng tham số theo nhóm gốc, cú pháp URI, phụ thuộc Maven), thêm thẳng vào luồng đang mở hai chiều, giấy phép Apache-2.0 ở chân màn. 24 ca test mới (274 tổng). **Lỗi im lặng bắt được khi dựng màn — K4-0:** `build-catalog.mjs` đọc siêu dữ liệu theo *tên loại* trong khi bản gốc gói dưới khóa `model`, làm **95/751 nút** (48 dataformat + 26 language + 21 entity) mất sạch tiêu đề/mô tả/nhãn; mọi kiểm đếm vẫn xanh vì số nút không đổi — đúng dạng BR-D-04b, và cũng chính là thứ khiến nhận định "dữ liệu đã có đủ" ở dòng 2026-08-05 chỉ đúng một nửa. Kèm 3 component nhãn lặp `"cloud,cloud"` làm chip đếm 94 / lọc ra 91, và `OUT_ROOT` trỏ thư mục chết. Thay ngưỡng `< 400 nút` (không bắt nổi lỗi này) bằng kiểm chất lượng theo từng loại. Thêm `nativeSupported` vào chỉ mục: **65/323 component chưa chạy được ở ảnh native** trong khi ADR-002/020 chốt Camel Quarkus native — phải biết lúc tra cứu, không phải lúc build hỏng |
 | 2026-08-05 | Khởi tạo IP-07 sau khi chốt Q1–Q5. Phân tích hiện trạng: catalog **đã có đủ 742 lược đồ** (thiếu màn duyệt, không thiếu dữ liệu); nút thắt thật là mô hình phẳng `StageNode[]`/`SeqEdge[]` ở `core/model.ts` và bộ YAML tự viết chỉ đọc được tập con nó sinh ra; `route_type` hiện mang nghĩa vận chuyển (`SYNC`) nên Kamelet/Pipe/Test cần cột `resource_kind` riêng |
 | 2026-08-06 | **K1-1…K1-6 xong.** `tree.ts` + `deserialize.ts` + `serialize.ts` + `flatten.ts`, 22 ca test mới (148 tổng). Nghiệm thu trên **Camel 4.18.2 thật**: `k1-nested` (doTry+doCatch+doFinally+choice 2 nhánh+multicast) và `k1-multi-a`/`k1-multi-b` (nhiều route một tệp — thứ lõi cũ **không mở nổi**) đều `Started`. Hai lỗi của chính bộ sinh mới bị test/Camel bắt kịp thời: (1) `otherwise` ghi thành **danh sách trần** → Camel từ chối `Unsupported type: SEQUENCE`; lược đồ vendor **không** phát hiện được vì thuộc tính `steps` của `otherwise` khai là null — phải ghi dạng đối tượng bọc `steps`; (2) `constant` ghi **hai lần** vì khóa ngôn ngữ dạng chuỗi rơi vào `props` còn dạng đầy đủ rơi vào `rest`, dọn thiếu một bên. Thêm `K1ChoiceOrderTest` chứng minh thứ tự khóa `otherwise` trước `when` **không** đổi ngữ nghĩa định tuyến (a=1→nhanh-mot, a=2→nhanh-hai, a=99→nhanh-khac) — "route khởi động được" không đủ, đúng bài học lỗi #5 |
