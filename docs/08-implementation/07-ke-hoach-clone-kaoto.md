@@ -22,6 +22,7 @@
 | **K4** danh mục thành phần | ✅ *(phiên song song)* |
 | **K5** Bean · Metadata | ✅ nghiệm thu trên Camel thật |
 | **K6** DataMapper | ✅ K6-2…9 · ⛔ K6-1 (thiếu gói offline) |
+| **T-1…T-5** tài liệu | ✅ đủ năm mục (§9) — ADR-021/022 chốt 2026-08-17 |
 
 **Nghiệm thu:** 9/11 cổng đạt · 1 đạt một phần (N-6) · 1 chặn bởi môi trường (N-2b).
 **N-9 — cổng chặn triển khai — đã đạt** trên toàn bộ luồng thật trong CSDL. Chi tiết ở §10.
@@ -548,16 +549,26 @@ thiếu `fullName` → 1 lỗi), xem trước khớp kết quả `jq`; 0 lỗi c
 
 Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật "không vibe coding".
 
-- [ ] **T-1.** **SRS PH-04/D — sửa BR-D-01** theo Q1: từ "không gỡ được" thành "khung chuẩn
+- [x] **T-1.** **SRS PH-04/D — sửa BR-D-01** theo Q1: từ "không gỡ được" thành "khung chuẩn
       là mẫu; gỡ chặng thì `validate` cảnh báo; luồng đối ngoại vẫn phải đủ chặng trước khi
-      publish". Ghi rõ lý do đổi.
-- [ ] **T-2.** SRS PH-04/D — thêm FR cho: đa route (`FR-D-005…`), Kamelet/Pipe/Test
-      (`FR-D-06x`), catalog (`FR-D-07x`), bean/metadata (`FR-D-08x`), DataMapper (`FR-D-09x`).
-- [ ] **T-3.** SRS PH-04/D — thêm màn **D-07 Catalog** và **D-08 DataMapper** vào mục 2 và
-      ma trận mục 11.
-- [ ] **T-4.** **ADR mới** cho Q2 (bỏ bộ YAML tự viết, dùng thư viện + mô hình cây) và Q4
+      publish". Ghi rõ lý do đổi. *(SRS §10.1 — kèm lý do: ràng buộc cũ loại bỏ hẳn
+      Kamelet/Pipe vốn về cấu trúc không thể có bốn chặng đó.)*
+- [x] **T-2.** SRS PH-04/D — thêm FR cho: đa route (`FR-D-005…008`), Kamelet/Pipe/Test
+      (`FR-D-060…064`), catalog (`FR-D-070…073`), bean/metadata **và DataMapper**
+      (`FR-D-080…085`). *(Dự kiến ban đầu tách DataMapper thành `FR-D-09x` riêng; khi viết
+      SRS thì gộp vào dải `FR-D-08x` cùng Bean/Metadata vì cả ba đều thuộc màn **D-08**.
+      **Không có `FR-D-09x`** — sửa lại ở đây cho khớp SRS thay vì để tài liệu lệch nhau.)*
+- [x] **T-3.** SRS PH-04/D — thêm màn **D-07 Catalog** và **D-08 DataMapper** vào mục 2 và
+      ma trận mục 11. *(Cả bảng §2 lẫn ma trận §11 đều có: `D-07 | FR-D-070…073`,
+      `D-08 | FR-D-080…085`.)*
+- [x] **T-4.** **ADR mới** cho Q2 (bỏ bộ YAML tự viết, dùng thư viện + mô hình cây) và Q4
       (DataMapper tách UI/engine). Hai quyết định này đủ sức nặng kiến trúc để cần ADR.
-- [ ] **T-5.** Cập nhật `docs/08-implementation/04-ke-hoach-phat-trien.md` chèn IP-07.
+      *(→ [ADR-021](../05-adr/README.md#adr-021) và [ADR-022](../05-adr/README.md#adr-022).
+      ADR-022 ghi rõ **bản thi công lệch khỏi Q4**: sinh JQ chứ không nhúng `atlasmap-runtime`,
+      bốn căn cứ ở §8.0. ADR-021 ghi rõ **`emit.ts` chưa gỡ** và vì sao đường lùi đó còn cần.)*
+- [x] **T-5.** Cập nhật `docs/08-implementation/04-ke-hoach-phat-trien.md` chèn IP-07.
+      *(Nối ở WP-24 + bảng liên kết §16 + lịch sử §17. Nhân tiện ghi rõ **`testRun` của WP-25
+      đang mô phỏng** — DoD ở đó đánh `[x]` mà không nói bộ chạy không nạp Camel.)*
 
 ---
 
@@ -617,6 +628,7 @@ Kho Maven offline thiếu gói, không có mạng để tải. **Cả ba đã c�
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-17 | **Đóng §9 — năm mục thay đổi tài liệu.** T-1/T-2/T-3 thực ra **đã xong từ 2026-08-06** trong SRS PH-04/D, chỉ chưa tick; rà lại từng mục trên SRS thật rồi mới đánh dấu. Sửa một chỗ tài liệu lệch nhau: T-2 hẹn `FR-D-09x` cho DataMapper nhưng SRS gộp vào `FR-D-080…085` — **không có `FR-D-09x`**. T-4 viết mới [ADR-021](../05-adr/README.md#adr-021) (mô hình cây + thư viện `yaml`; ghi rõ `emit.ts` **chưa gỡ** và vì sao đường lùi còn cần) và [ADR-022](../05-adr/README.md#adr-022) (DataMapper sinh JQ — **ghi thẳng là lệch khỏi Q4** chủ dự án đã duyệt). Bằng chứng của ADR-022 **kiểm chứng lại độc lập**, không chép số: chạy `toJq` rồi đưa qua `jq` CLI, kết quả trùng khít mapper contract. T-5 nối IP-06/IP-07 vào IP-04 và **ghi rõ `testRun` của WP-25 đang mô phỏng** |
 | 2026-08-07 | **K6 xong và chạy nghiệm thu trọn bộ.** K6 sinh **JQ** thay vì nhúng AtlasMap — lệch khỏi Q4, lý do và ba căn cứ đo được ghi ở §8.0. Nghiệm thu K6 mạnh hơn kỳ vọng: JQ sinh ra chạy bằng `jq` CLI cho kết quả **giống hệt** mapper thật của repo. **N-9 (cổng chặn) đạt** trên toàn bộ 4 định nghĩa trong CSDL, gồm luồng 60 dòng do chính designer sinh; chép vào `__fixtures__/db__*` để giữ được bộ dữ liệu này. Thêm nhãn loại tài nguyên trên danh sách (K3-5). Ghi rõ ba việc còn treo vì thiếu gói offline và một việc chờ quyết định (§10.1, §10.2) |
 | 2026-08-07 | **K4 xong — màn danh mục `/components` (D-07, FR-D-070…073).** Duyệt đủ 751 nút / bảy loại có số đếm, tìm kiếm xếp hạng + ảo hóa, trang chi tiết (bảng tham số theo nhóm gốc, cú pháp URI, phụ thuộc Maven), thêm thẳng vào luồng đang mở hai chiều, giấy phép Apache-2.0 ở chân màn. 24 ca test mới (274 tổng). **Lỗi im lặng bắt được khi dựng màn — K4-0:** `build-catalog.mjs` đọc siêu dữ liệu theo *tên loại* trong khi bản gốc gói dưới khóa `model`, làm **95/751 nút** (48 dataformat + 26 language + 21 entity) mất sạch tiêu đề/mô tả/nhãn; mọi kiểm đếm vẫn xanh vì số nút không đổi — đúng dạng BR-D-04b, và cũng chính là thứ khiến nhận định "dữ liệu đã có đủ" ở dòng 2026-08-05 chỉ đúng một nửa. Kèm 3 component nhãn lặp `"cloud,cloud"` làm chip đếm 94 / lọc ra 91, và `OUT_ROOT` trỏ thư mục chết. Thay ngưỡng `< 400 nút` (không bắt nổi lỗi này) bằng kiểm chất lượng theo từng loại. Thêm `nativeSupported` vào chỉ mục: **65/323 component chưa chạy được ở ảnh native** trong khi ADR-002/020 chốt Camel Quarkus native — phải biết lúc tra cứu, không phải lúc build hỏng |
 | 2026-08-05 | Khởi tạo IP-07 sau khi chốt Q1–Q5. Phân tích hiện trạng: catalog **đã có đủ 742 lược đồ** (thiếu màn duyệt, không thiếu dữ liệu); nút thắt thật là mô hình phẳng `StageNode[]`/`SeqEdge[]` ở `core/model.ts` và bộ YAML tự viết chỉ đọc được tập con nó sinh ra; `route_type` hiện mang nghĩa vận chuyển (`SYNC`) nên Kamelet/Pipe/Test cần cột `resource_kind` riêng |

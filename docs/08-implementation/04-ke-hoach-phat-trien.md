@@ -336,6 +336,15 @@ flowchart TB
 - [x] Duyệt UI-04-09 API thật + RBAC FE + bốn mắt *(review API; Kết nạp/Catalog RBAC)*
 - [x] UI-04-01 cột status / version / `git_commit_ref` thật *(list `/flows`)*
 
+> **Mở rộng sau WP-24 — [IP-06](06-ke-hoach-lam-lai-designer.md) rồi [IP-07](07-ke-hoach-clone-kaoto.md).**
+> DoD trên chỉ là đường đi được của trình thiết kế. Hai đợt tiếp theo nâng nó lên mô hình
+> Kaoto: **IP-06** làm lại giao diện; **IP-07** thay lõi phẳng `StageNode[]` bằng **mô hình cây**
+> ([ADR-021](../05-adr/README.md#adr-021)), thêm Kamelet · Pipe · Test, màn danh mục **D-07**
+> (751 nút), Bean/Metadata, và **DataMapper D-08 sinh JQ** ([ADR-022](../05-adr/README.md#adr-022)).
+> Trạng thái và nghiệm thu: [IP-07 §10](07-ke-hoach-clone-kaoto.md). **Ba việc còn treo vì kho
+> Maven offline thiếu gói** (`camel-quarkus-jq`, `camel-quarkus-kamelet`, `jbang`) — trong đó
+> **`testRun` hiện đang mô phỏng**, chưa nạp Camel thật; xem [IP-07 §10.1](07-ke-hoach-clone-kaoto.md).
+
 ### WP-25 — CAMEL: test runner API  **[SS một phần với WP-24]**
 
 **Lane:** L-CAMEL · FR-04-028/035  
@@ -343,6 +352,14 @@ flowchart TB
 - [x] Endpoint chạy thử (giả lập đích) *(`POST /api/admin/v1/routes/{code}/versions/{v}/test-runs`)*
 - [x] Trả waterfall theo chặng *(9 bước; pin data UI stub DataMapper riêng)*
 - [x] Không ghi secret vào log *(không echo sample/body trong waterfall)*
+
+> ⚠ **`testRun` hiện đang mô phỏng — DoD trên đạt về mặt hợp đồng API, không phải về mặt chạy thật.**
+> `RoutesService.testRun` kiểm YAML hợp lệ rồi dựng waterfall **chín chặng cố định**, thời lượng
+> suy từ `stage.hashCode()`; nó **không nạp Camel và không đọc định nghĩa luồng**. Nghĩa là
+> "chạy thử PASSED" **chưa chứng minh gì về luồng** ngoài việc YAML hợp lệ.
+> Chặn bởi môi trường: `jbang` không có trong kho Maven/gói offline. Đường đi đã rõ — xem
+> [IP-07 §10.1](07-ke-hoach-clone-kaoto.md). **Phải đóng trước cổng W6** (WP-64 "loại bỏ mọi
+> stub UI đường chính") — không được coi là xong ở đây.
 
 ### WP-26 — QA: AT lõi PH-04
 
@@ -644,6 +661,8 @@ Rút còn **3 lane**: FOUND+PLAT+SEC · CTRL+ADAPT+CAMEL · FE(+QA nhẹ)
 | [IP-01](01-mo-hinh-phat-trien.md) | Phân vân tách DU/PH |
 | [IP-02](02-huong-dan-lap-trinh.md) | Chuẩn mã / gate |
 | [IP-03](03-stack-cong-nghe.md) | Chọn thư viện |
+| [IP-06](06-ke-hoach-lam-lai-designer.md) | Làm lại giao diện trình thiết kế (sau WP-24) |
+| [IP-07](07-ke-hoach-clone-kaoto.md) | Lõi cây, Kamelet/Pipe/Test, danh mục D-07, DataMapper D-08 (sau IP-06) |
 | [04-deployment](../04-deployment/README.md) | Hạ tầng & go-live bước 1–19 |
 | [07-srs/CHECKLIST](../07-srs/CHECKLIST.md) | Trạng thái SRS/mockup |
 | [SRS-19](../07-srs/SRS-19-rbac-matrix.md) | Mọi endpoint |
@@ -656,3 +675,4 @@ Rút còn **3 lane**: FOUND+PLAT+SEC · CTRL+ADAPT+CAMEL · FE(+QA nhẹ)
 |---|---|
 | 2026-08-03 | Khởi tạo IP-04 — wave W0–W6, WP, lane đa agent |
 | 2026-08-04 | Đóng DOC-01/02/03 (SRS PH-10, PH-13, từ điển dữ liệu **đã xong**) · thêm DOC-05 rà soát vòng đời phiên bản · WP-01 thêm DoD khóa baseline theo cụm thật + kiểm chứng WORM lưu trữ đối tượng ([ADR-020](../05-adr/README.md#adr-020)) · cập nhật cổng W0 |
+| 2026-08-17 | **Chèn [IP-06](06-ke-hoach-lam-lai-designer.md) và [IP-07](07-ke-hoach-clone-kaoto.md) vào mạch kế hoạch** (IP-07 T-5) — trước đây hai đợt này không được nhắc ở đâu trong IP-04, đọc IP-04 một mình không thấy trình thiết kế đã đi xa hơn WP-24. Ghi nối ở WP-24 + bảng liên kết §16. **Ghi rõ `testRun` của WP-25 đang mô phỏng**: DoD đạt về hợp đồng API nhưng bộ chạy không nạp Camel, "PASSED" chưa chứng minh gì về luồng — phải đóng trước cổng W6 (WP-64). Kèm [ADR-021](../05-adr/README.md#adr-021) (mô hình cây + thư viện `yaml`) và [ADR-022](../05-adr/README.md#adr-022) (DataMapper sinh JQ, **lệch khỏi Q4 gốc** — không nhúng AtlasMap) |

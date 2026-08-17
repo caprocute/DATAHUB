@@ -26,6 +26,8 @@
 | [ADR-018](#adr-018) | Mô hình phát triển: DU hybrid, production-first (biên bắt buộc tách ngay) | Đã chốt |
 | [ADR-019](#adr-019) | Spring Boot 4 + Spring Modulith cho DU ứng dụng; Camel giữ Quarkus (ADR-002) | Đã chốt |
 | [ADR-020](#adr-020) | Chính sách vòng đời phiên bản; thay MinIO cho lưu trữ đối tượng; giữ Java 21 | Đã chốt |
+| [ADR-021](#adr-021) | Mô hình cây `CamelResource` + thư viện `yaml` thay bộ đọc/ghi YAML tự viết | Đã chốt |
+| [ADR-022](#adr-022) | DataMapper sinh biểu thức JQ; không nhúng AtlasMap | Đã chốt |
 
 ---
 
@@ -682,6 +684,111 @@ Chi tiết → [IP-01](../08-implementation/01-mo-hinh-phat-trien.md). Runtime D
 **Điều kiện xét lại.** Nâng lên Java 25 khi dòng **Camel LTS kế tiếp** lấy JDK 25 làm nền và chuỗi native tương ứng ổn định. Ghi vào changelog ADR khi đổi.
 
 **Hệ quả tiêu cực:** không dùng được tính năng ngôn ngữ mới của 22–25; chấp nhận vì đổi lại là chuỗi native ổn định.
+
+---
+
+## ADR-021
+### Mô hình cây `CamelResource` + thư viện `yaml` thay bộ đọc/ghi YAML tự viết
+
+| Mục | Nội dung |
+|---|---|
+| **Trạng thái** | Chấp nhận |
+| **Ngày** | 2026-08-07 |
+| **Bổ sung cho** | [ADR-015](#adr-015) (Kaoto làm mẫu tham chiếu), [ADR-017](#adr-017) (XYFlow) |
+| **Nguồn** | Quyết định **Q2** của [IP-07](../08-implementation/07-ke-hoach-clone-kaoto.md) |
+
+**Bối cảnh.** [ADR-015](#adr-015) chốt trình thiết kế PH-04 sinh và đọc lại **Camel YAML DSL**, nhưng không nói bằng cơ chế nào. Bản thi công đầu (IP-06) tự viết cả hai chiều: `emit.ts` ghi YAML bằng cách nối chuỗi, `parse.ts` đọc bằng luật riêng, trên một mô hình **đồ thị phẳng** `StageNode[]` / `SeqEdge[]`.
+
+Khảo sát cho IP-07 cho thấy mô hình phẳng là nút thắt thật, ở hai mức:
+
+| Mức | Vấn đề |
+|---|---|
+| **Biểu diễn** | Đồ thị phẳng không mang nổi cấu trúc lồng. `doTry`/`doCatch`/`doFinally` bị bóp thành `choice`; Kamelet (`spec.template.from`) và Pipe (`spec.source`/`spec.sink`) **không biểu diễn được** — nghĩa là ba trong bốn loại tài nguyên Camel nằm ngoài tầm |
+| **Mất dữ liệu im lặng** | Bộ đọc tự viết chỉ hiểu **tập con YAML mà chính nó sinh ra**. Mọi khóa lạ, comment, hoặc ngôn ngữ biểu thức chưa xử lý đều rơi mất **không cảnh báo**, và YAML sau vòng lặp vẫn **nạp được bằng Camel** — nên `BR-D-04` ("Camel nạp được") một mình không bắt được lớp lỗi này |
+
+Bảy lỗi mất dữ liệu thật đã ghi nhận theo cơ chế đó, trong đó `setBody: {constant: …}` quay vòng thành `expression: {}` — **thân bản tin biến mất** mà route vẫn khởi động bình thường (IP-07 §1.1, lỗi #5).
+
+**Phương án cân nhắc:**
+
+| Phương án | Ưu điểm | Nhược điểm |
+|---|---|---|
+| Giữ bộ tự viết, vá từng lỗi | Không đụng lõi đang chạy | Vá theo triệu chứng; mỗi khóa Camel chưa xử lý là một lỗ mất dữ liệu mới. Không giải quyết được giới hạn biểu diễn |
+| **Thư viện `yaml` + mô hình cây `CamelResource`/`VisualEntity`** | Giữ nguyên cây tài liệu (comment, khóa lạ, thứ tự); biểu diễn được cấu trúc lồng và cả bốn loại tài nguyên; sơ đồ trở thành **phép chiếu** của cây thay vì nguồn sự thật | Viết lại lõi — gói rủi ro cao nhất của IP-07; tăng kích thước bundle |
+| Nhúng lõi Kaoto (`@kaoto/kaoto`) | Không phải tự viết | Kéo theo ràng buộc React/PatternFly — đúng thứ [ADR-015](#adr-015) đã loại trừ |
+
+**Quyết định.** Lõi trình thiết kế dùng **thư viện `yaml`** cho việc đọc/ghi tài liệu và một **mô hình cây** `CamelResource` / `VisualEntity` làm nguồn sự thật. Sơ đồ trên canvas là **phép chiếu hai chiều** của cây (`flatten` / `unflatten`), không phải nơi lưu trạng thái.
+
+**Ranh giới:**
+
+| Việc | Do ai |
+|---|---|
+| Đọc/ghi tài liệu YAML, giữ comment và khóa lạ | Thư viện `yaml` |
+| Mô hình tài nguyên, sửa trên cây, phép chiếu ra sơ đồ | `flows/core/` — `tree.ts`, `serialize.ts`, `deserialize.ts`, `flatten.ts`, `unflatten.ts` |
+| Vẽ và tương tác sơ đồ | XYFlow ([ADR-017](#adr-017)) |
+
+**Đường lùi còn giữ lại — có chủ đích.** `emit.ts` **chưa gỡ**. `DesignerPage` dùng cây khi mở từ định nghĩa đã lưu, và lùi về bộ sinh cũ trong hai trường hợp: luồng dựng mới hoàn toàn trên canvas (chưa có cây), và khi có chặng vừa thêm chưa vào được cây. Lý do: thà YAML kém tinh gọn còn hơn **lặng lẽ bỏ rơi chặng người dùng vừa thêm** — đúng ràng buộc "không nuốt dữ liệu người dùng" của IP-07 §1. Gỡ hẳn `emit.ts` là việc của đợt sau, khi mọi lối thêm chặng đều ghi thẳng vào cây.
+
+**Hệ quả tích cực:**
+- Đọc được YAML **không phải do designer sinh ra** — YAML viết tay và sơ đồ đồ họa sống chung được, đúng kỳ vọng của [ADR-015](#adr-015).
+- Comment xuất xứ do GitOps ghi (`# routeCode=… version=…`) còn nguyên sau vòng lặp — giữ dấu vết kiểm toán (`BR-D-06`).
+- Mở đường cho Kamelet, Pipe và Test — ba loại tài nguyên mô hình cũ không biểu diễn nổi.
+- Quay vòng **hai lần** cho kết quả y hệt (nghiệm thu N-4).
+
+**Hệ quả tiêu cực:**
+- Viết lại lõi trên mã đang chạy. Giảm thiểu bằng **cổng chặn N-9**: xuất toàn bộ định nghĩa thật trong CSDL, mở lại và quay vòng không được lệch — đã đạt trước khi nối vào đường chính.
+- Bundle tăng: đo **570,11 → 603,29 KB gz (+33 KB)** cho *cả* thư viện `yaml` lẫn toàn bộ lõi cây (`yaml` không có phụ thuộc con và `vite` đã kéo sẵn nên dedupe). Sau khi cộng thêm sáu gói tính năng của IP-07: **629,90 KB gz**.
+- Tồn tại **hai bộ ghi** trong thời gian còn đường lùi — chấp nhận có thời hạn, ghi rõ ở trên.
+- `BR-D-04` không còn đủ làm cổng nghiệm thu; phải kèm `BR-D-04b` (quay vòng không mất dữ liệu) vì Camel nạp được **không** chứng minh dữ liệu còn nguyên.
+
+---
+
+## ADR-022
+### DataMapper sinh biểu thức JQ; không nhúng AtlasMap
+
+| Mục | Nội dung |
+|---|---|
+| **Trạng thái** | Chấp nhận |
+| **Ngày** | 2026-08-07 |
+| **Bổ sung cho** | [ADR-013](#adr-013) (CDM làm trung gian chuyển đổi) |
+| **Nguồn** | Quyết định **Q4** của [IP-07](../08-implementation/07-ke-hoach-clone-kaoto.md) — **và bản thi công lệch khỏi Q4**, xem dưới |
+
+**Bối cảnh.** PH-04 cần màn ánh xạ trường nguồn → trường đích bằng giao diện (`FR-D-080…085`, màn D-08). Q4 chốt phương án **UI tự viết + engine `atlasmap-runtime` Java** ở `apps/control`. Khảo sát mã thật khi thi công làm lệch quyết định đó — ghi ở đây vì là thay đổi so với điều chủ dự án đã duyệt.
+
+**Vì sao lệch:**
+
+| Phát hiện khi khảo sát | Hệ quả |
+|---|---|
+| **Dự án đã có cơ chế ánh xạ chạy được, và không phải AtlasMap.** [ADR-013](#adr-013) chốt CDM làm trung gian; `contracts/cdm/mappers/*.jq` là bộ ánh xạ; `CdmMapperTest` chứng minh nó chạy trên Camel thật | Thêm AtlasMap là **cơ chế ánh xạ thứ hai** song song — hai nguồn sự thật cho cùng một việc |
+| **Vấn đề thật là ánh xạ viết tay bằng Java.** `LegacyCitizenToPersonMapper` là 62 dòng Java cho ánh xạ 4 trường; tệp `.jq` cạnh nó chỉ đóng vai tài liệu | Hai bản **trôi khỏi nhau lúc nào không biết**. Sinh JQ xóa hẳn lớp viết tay |
+| Gói giao diện AtlasMap peer **React 17** + PatternFly 4, dùng API đã bị gỡ khỏi React 19 | Console đang React 19.1 / `antd 6` / `@xyflow/react 12` — hạ về React 17 sẽ làm vỡ cả hai |
+| `atlasmap-runtime` **không có trong kho Maven offline** | Hướng AtlasMap không kiểm chứng được ở môi trường này |
+
+**Phương án cân nhắc:**
+
+| Phương án | Ưu điểm | Nhược điểm |
+|---|---|---|
+| Nhúng UI AtlasMap nguyên khối | Không phải tự viết lớp vẽ | Xung đột React 19 / Ant Design — trái [ADR-016](#adr-016) |
+| UI tự viết + engine `atlasmap-runtime` (Q4 gốc) | Giữ thư viện hàm biến đổi của AtlasMap | Cơ chế ánh xạ thứ hai song song CDM/JQ; không kiểm chứng được offline |
+| **UI tự viết + sinh biểu thức JQ** | Dùng đúng cơ chế [ADR-013](#adr-013) đã chốt; xóa lớp mapper Java viết tay; chạy trong `transform` của khung chuẩn | JQ **một chiều** — không dựng ngược từ biểu thức ra bảng ánh xạ |
+
+**Quyết định.** DataMapper **tự viết giao diện** (React 19, theo `ui_ux_rule.md`) và **sinh biểu thức JQ** nối vào chặng `transform` (`exprLang: jq`). **Không** nhúng AtlasMap, cả UI lẫn runtime.
+
+**Ràng buộc kèm theo:**
+- `mapper.ts` **thuần logic**, không phụ thuộc React — đổi bộ sinh sau này không phải viết lại `DataMapper.tsx`. Nếu chủ dự án vẫn muốn AtlasMap thì thay bộ sinh, giữ nguyên lớp vẽ.
+- Vì JQ một chiều, bảng ánh xạ (`FieldMapping`) được **giữ kèm node** trong định nghĩa luồng — không suy ngược từ biểu thức.
+- Xem trước chạy **trong trình duyệt** và phải **dán nhãn đúng như vậy**; kết quả thật do Camel quyết định.
+
+**Bằng chứng.** JQ do giao diện sinh, chạy bằng `jq` CLI trên đúng bản tin mẫu của `CdmMapperTest`, cho kết quả **giống hệt** `contracts/cdm/mappers/legacy-citizen-to-person.jq` đang dùng thật — nghĩa là ánh xạ vẽ trên giao diện thay được lớp mapper Java viết tay **mà không đổi hành vi**.
+
+**Hệ quả tích cực:**
+- Một cơ chế ánh xạ duy nhất trong toàn hệ, thống nhất với [ADR-013](#adr-013).
+- Xóa được lớp mapper Java viết tay — hết nguy cơ hai bản trôi khỏi nhau.
+- Không kéo React 17 / PatternFly vào console; [ADR-016](#adr-016) giữ nguyên.
+
+**Hệ quả tiêu cực:**
+- Mất thư viện hàm biến đổi phong phú của AtlasMap; bản đầu chỉ có **bảy hàm** (giữ nguyên · cắt khoảng trắng · IN HOA · in thường · sang chuỗi · sang số · mặc định nếu rỗng). Mở rộng theo ca dùng thật.
+- Ánh xạ **1–nhiều** (tách một nguồn ra nhiều đích) chưa làm — cần cú pháp riêng cho từng đích.
+- **Chưa nghiệm thu được qua Camel:** `camel-quarkus-jq` không có trong kho Maven offline. Đường đi đã rõ (thêm gói, nối JQ vào bước `transform`) nhưng là **điều kiện ra còn treo** — xem IP-07 §10.1.
 
 ---
 
