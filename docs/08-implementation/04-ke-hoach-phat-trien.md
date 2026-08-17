@@ -357,9 +357,13 @@ flowchart TB
 > `RoutesService.testRun` kiểm YAML hợp lệ rồi dựng waterfall **chín chặng cố định**, thời lượng
 > suy từ `stage.hashCode()`; nó **không nạp Camel và không đọc định nghĩa luồng**. Nghĩa là
 > "chạy thử PASSED" **chưa chứng minh gì về luồng** ngoài việc YAML hợp lệ.
-> Chặn bởi môi trường: `jbang` không có trong kho Maven/gói offline. Đường đi đã rõ — xem
-> [IP-07 §10.1](07-ke-hoach-clone-kaoto.md). **Phải đóng trước cổng W6** (WP-64 "loại bỏ mọi
-> stub UI đường chính") — không được coi là xong ở đây.
+> Chặn bởi `jbang` chưa có. Đường đi đã rõ — xem [IP-07 §10.1](07-ke-hoach-clone-kaoto.md).
+> **Phải đóng trước cổng W6** (WP-64 "loại bỏ mọi stub UI đường chính") — không được coi là
+> xong ở đây.
+>
+> **Giảm nhẹ 2026-08-18:** màn chạy thử có thêm đường **LIVE** — suy điểm chạy thật từ chính
+> định nghĩa YAML, hiện lệnh `curl`, và gọi thật vào runtime qua proxy. Kết quả LIVE là phản
+> hồi HTTP thật. **Không thay** K3-4: waterfall theo chặng vẫn mô phỏng.
 
 ### WP-26 — QA: AT lõi PH-04
 

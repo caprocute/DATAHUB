@@ -18,13 +18,15 @@
 | **K0** sửa lỗi mất dữ liệu | ✅ nghiệm thu trên Camel thật |
 | **K1** lõi mô hình cây | ✅ nghiệm thu trên Camel thật |
 | **K2** đa route + sửa trên cây | ✅ nghiệm thu trên Camel thật |
-| **K3** Kamelet · Pipe · Test | ✅ K3-1/2/3/5 · ⛔ K3-4/6 (thiếu gói offline) |
+| **K3** Kamelet · Pipe · Test | ✅ K3-1/2/3/5/6 *(K3-6 đóng 2026-08-18)* · ⛔ K3-4 (thiếu `jbang`) |
 | **K4** danh mục thành phần | ✅ *(phiên song song)* |
 | **K5** Bean · Metadata | ✅ nghiệm thu trên Camel thật |
-| **K6** DataMapper | ✅ K6-2…9 · ⛔ K6-1 (thiếu gói offline) |
+| **K6** DataMapper | ✅ K6-1…9 *(K6-1 đóng 2026-08-18)* |
 | **T-1…T-5** tài liệu | ✅ đủ năm mục (§9) — ADR-021/022 chốt 2026-08-17 |
 
-**Nghiệm thu:** 9/11 cổng đạt · 1 đạt một phần (N-6) · 1 chặn bởi môi trường (N-2b).
+**Nghiệm thu:** 10/11 cổng đạt · 1 đạt một phần (N-6). **N-2b đóng 2026-08-18** — Kamelet
+designer sinh nạp và chạy được trên Camel thật (§10.1a); Pipe còn treo vì thiếu Kamelet
+tham chiếu, không phải vì lõi designer.
 **N-9 — cổng chặn triển khai — đã đạt** trên toàn bộ luồng thật trong CSDL. Chi tiết ở §10.
 
 **Bảy lỗi mất dữ liệu thật đã phát hiện và sửa** trong đợt này (§1.1, §3.0, K2, K3, K5) —
@@ -578,7 +580,7 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 |---|---|---|
 | **N-1** | `npm test` | ✅ **302 ca xanh** (122 trước IP-07 → 302), gồm 4 ca chặn lỗi cũ của IP-06 |
 | **N-2** | Camel thật nạp YAML designer sinh | ✅ **Route** — `doTry`+`doCatch`+`doFinally`, `choice` nhiều nhánh, `multicast` lồng, nhiều route/tệp, `routeConfiguration`, `beans` cấp tệp, và **cấu trúc y hệt luồng thật `route-mse6qrrt`** đều `Started`.<br>⛔ **Kamelet/Pipe/Test** — xem N-2b |
-| **N-2b** | Kamelet · Pipe · Test trên Camel | ⛔ **Chặn bởi môi trường**: `camel-quarkus-kamelet` không có trong kho Maven offline, không có mạng để tải. Thay bằng đối chiếu cấu trúc với **243 lược đồ nhà sản xuất** |
+| **N-2b** | Kamelet · Pipe · Test trên Camel | ✅ **Đạt 2026-08-18** (trước đó ⛔ vì kho Maven offline thiếu `camel-quarkus-kamelet`). `KameletDesignerTest` nạp Kamelet **đã quay vòng qua lõi designer** vào Camel 4.18.2 thật và khẳng định **thân bản tin còn nguyên**, không chỉ `Started`. Test tự chứng minh chặn được: đưa lỗi #5 trở lại → đỏ. Còn treo: **Pipe** (thiếu Kamelet tham chiếu), **Test** (thiếu `jbang`) — xem §10.1a |
 | **N-3** | Round-trip giữ comment | ✅ Dòng xuất xứ `# routeCode=… version=…` còn nguyên trên cả 5 tệp `routes/` **và** luồng thật từ CSDL |
 | **N-3b** | Round-trip giữ biểu thức (lỗi #5) | ✅ 26 ngôn ngữ trong `schemas/language/` không mất giá trị; nghiệm thu trên Camel: `ping lgsp-camel-dancu:ok` |
 | **N-4** | Round-trip cấu trúc phức | ✅ `doTry` ba khe, `loadBalance`, `multicast`, `split`, nhiều route/tệp — và **quay vòng hai lần cho kết quả y hệt** |
@@ -591,17 +593,40 @@ Không có mục này thì mã và đặc tả lệch nhau — vi phạm luật 
 ### 10.1. Ba việc còn treo — cùng một nguyên nhân
 
 Kho Maven offline thiếu gói, không có mạng để tải. **Cả ba đã có đường đi rõ, không còn
-ẩn số kỹ thuật** — làm được trong một đợt có mạng:
+ẩn số kỹ thuật** — làm được trong một đợt có mạng.
 
-| Việc | Gói cần | Sau khi có mạng |
+**Cập nhật 2026-08-18 — đã có mạng, đóng được hai trong ba:**
+
+| Việc | Gói cần | Trạng thái |
 |---|---|---|
-| **K6-1** engine mapping | `camel-quarkus-jq` | Thêm vào `camel/dancu/pom.xml`, nối JQ sinh ra vào bước `transform` |
-| **K3-6 / N-2b** nghiệm thu Kamelet/Pipe | `camel-quarkus-kamelet` | Nạp Kamelet/Pipe designer sinh vào Camel thật |
-| **K3-4** bộ chạy Test | `jbang` | Thay `testRun` mô phỏng bằng chạy thật |
+| **K6-1** engine mapping | `camel-quarkus-jq` | ✅ **Xong.** Thêm vào `camel/dancu/pom.xml` cùng `camel-quarkus-sql` + `quarkus-jdbc-postgresql`; luồng demo `tra-cuu-cong-dan` đi thẳng Postgres → JQ → CDM `person.v1` |
+| **K3-6 / N-2b** nghiệm thu Kamelet/Pipe | `camel-quarkus-kamelet` | ✅ **Xong.** Xem §10.1a |
+| **K3-4** bộ chạy Test | `jbang` | ⛔ **Còn treo** — `testRun` vẫn mô phỏng |
 
-> ⚠ **`testRun` hiện đang mô phỏng.** Nó dựng waterfall chín chặng **cố định**, thời lượng
+> ⚠ **`testRun` hiện vẫn mô phỏng.** Nó dựng waterfall chín chặng **cố định**, thời lượng
 > suy từ `stage.hashCode()`, **không nạp Camel và không đọc định nghĩa luồng**. "Chạy thử
-> PASSED" hiện chưa chứng minh gì về luồng — `runnerStatus()` nói rõ điều này cho người dùng.
+> PASSED" chưa chứng minh gì về luồng — `runnerStatus()` nói rõ điều này cho người dùng.
+>
+> **Giảm nhẹ (2026-08-18):** màn chạy thử nay có thêm đường **LIVE** — suy điểm chạy thật
+> từ chính định nghĩa YAML, hiện lệnh `curl` chép được, và gọi thật vào runtime qua proxy.
+> Kết quả LIVE là phản hồi HTTP thật. Đây **không thay** K3-4 (waterfall theo chặng vẫn
+> mô phỏng), nhưng người vận hành đã có một đường kiểm chứng thật thay vì chỉ con dấu giả.
+
+### 10.1a. N-2b đã đóng — Kamelet designer sinh chạy trên Camel thật
+
+`camel-quarkus-kamelet` tải được nên kiểm thẳng thay vì đối chiếu lược đồ:
+
+- `KameletDesignerTest` nạp Kamelet **đã quay vòng qua chính lõi designer**
+  (`deserialize` → `serialize`) vào Camel 4.18.2 thật, tiêu thụ bằng `kamelet:` và khẳng
+  định **thân bản tin tới đích còn nguyên** (`lgsp-kamelet:ok`), không chỉ "route Started" —
+  đúng bài học lỗi #5: route vẫn khởi động bình thường trong khi thân bản tin đã biến mất.
+- **Kiểm chứng test thật sự chặn được:** tạm đưa lỗi #5 trở lại (`constant` → `expression: {}`)
+  → **đỏ**; khôi phục → xanh. Test không chứng minh được là đỏ được thì chỉ là trang trí.
+- Lỗi lộ ra khi chạy **không phải** ở đầu ra designer: Kamelet parse tốt, chỉ thiếu
+  `camel-quarkus-timer` cho chặng tiếp nhận của mẫu. Thêm gói là xong.
+
+Còn lại của N-2b: **Pipe** chưa nạp thật (mẫu Pipe tham chiếu `timer-source`/`log-sink` của
+kho Kamelet chính thức, chưa vendor). Kamelet — phần khó và là nền của Pipe — đã đạt.
 
 ### 10.2. Một việc chờ quyết định, không phải kỹ thuật
 
@@ -628,6 +653,7 @@ Kho Maven offline thiếu gói, không có mạng để tải. **Cả ba đã c�
 
 | Ngày | Thay đổi |
 |---|---|
+| 2026-08-18 | **Có mạng — đóng K6-1 và K3-6/N-2b.** `camel-quarkus-jq` + `camel-quarkus-sql` + `quarkus-jdbc-postgresql` vào `camel/dancu`: luồng demo đi thẳng Postgres → JQ → CDM `person.v1`. `camel-quarkus-kamelet` đóng **N-2b** — cổng treo từ 2026-08-07: Kamelet do designer sinh (đã quay vòng qua `deserialize`/`serialize`) nạp và **chạy ra đúng thân bản tin** trên Camel 4.18.2 thật. Lỗi lộ ra khi chạy **không nằm ở đầu ra designer** mà chỉ là thiếu `camel-quarkus-timer` cho chặng tiếp nhận của mẫu. Kiểm chứng test chặn được bằng cách đưa lỗi #5 trở lại → đỏ. Còn treo: **K3-4** (`jbang`, `testRun` vẫn mô phỏng) và **Pipe** (thiếu Kamelet tham chiếu `timer-source`/`log-sink`). Thêm đường **LIVE** ở màn chạy thử để giảm nhẹ K3-4 — gọi thật vào runtime, không thay waterfall mô phỏng |
 | 2026-08-17 | **Đóng §9 — năm mục thay đổi tài liệu.** T-1/T-2/T-3 thực ra **đã xong từ 2026-08-06** trong SRS PH-04/D, chỉ chưa tick; rà lại từng mục trên SRS thật rồi mới đánh dấu. Sửa một chỗ tài liệu lệch nhau: T-2 hẹn `FR-D-09x` cho DataMapper nhưng SRS gộp vào `FR-D-080…085` — **không có `FR-D-09x`**. T-4 viết mới [ADR-021](../05-adr/README.md#adr-021) (mô hình cây + thư viện `yaml`; ghi rõ `emit.ts` **chưa gỡ** và vì sao đường lùi còn cần) và [ADR-022](../05-adr/README.md#adr-022) (DataMapper sinh JQ — **ghi thẳng là lệch khỏi Q4** chủ dự án đã duyệt). Bằng chứng của ADR-022 **kiểm chứng lại độc lập**, không chép số: chạy `toJq` rồi đưa qua `jq` CLI, kết quả trùng khít mapper contract. T-5 nối IP-06/IP-07 vào IP-04 và **ghi rõ `testRun` của WP-25 đang mô phỏng** |
 | 2026-08-07 | **K6 xong và chạy nghiệm thu trọn bộ.** K6 sinh **JQ** thay vì nhúng AtlasMap — lệch khỏi Q4, lý do và ba căn cứ đo được ghi ở §8.0. Nghiệm thu K6 mạnh hơn kỳ vọng: JQ sinh ra chạy bằng `jq` CLI cho kết quả **giống hệt** mapper thật của repo. **N-9 (cổng chặn) đạt** trên toàn bộ 4 định nghĩa trong CSDL, gồm luồng 60 dòng do chính designer sinh; chép vào `__fixtures__/db__*` để giữ được bộ dữ liệu này. Thêm nhãn loại tài nguyên trên danh sách (K3-5). Ghi rõ ba việc còn treo vì thiếu gói offline và một việc chờ quyết định (§10.1, §10.2) |
 | 2026-08-07 | **K4 xong — màn danh mục `/components` (D-07, FR-D-070…073).** Duyệt đủ 751 nút / bảy loại có số đếm, tìm kiếm xếp hạng + ảo hóa, trang chi tiết (bảng tham số theo nhóm gốc, cú pháp URI, phụ thuộc Maven), thêm thẳng vào luồng đang mở hai chiều, giấy phép Apache-2.0 ở chân màn. 24 ca test mới (274 tổng). **Lỗi im lặng bắt được khi dựng màn — K4-0:** `build-catalog.mjs` đọc siêu dữ liệu theo *tên loại* trong khi bản gốc gói dưới khóa `model`, làm **95/751 nút** (48 dataformat + 26 language + 21 entity) mất sạch tiêu đề/mô tả/nhãn; mọi kiểm đếm vẫn xanh vì số nút không đổi — đúng dạng BR-D-04b, và cũng chính là thứ khiến nhận định "dữ liệu đã có đủ" ở dòng 2026-08-05 chỉ đúng một nửa. Kèm 3 component nhãn lặp `"cloud,cloud"` làm chip đếm 94 / lọc ra 91, và `OUT_ROOT` trỏ thư mục chết. Thay ngưỡng `< 400 nút` (không bắt nổi lỗi này) bằng kiểm chất lượng theo từng loại. Thêm `nativeSupported` vào chỉ mục: **65/323 component chưa chạy được ở ảnh native** trong khi ADR-002/020 chốt Camel Quarkus native — phải biết lúc tra cứu, không phải lúc build hỏng |

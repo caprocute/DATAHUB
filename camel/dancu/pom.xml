@@ -76,6 +76,12 @@
       <groupId>org.apache.camel.quarkus</groupId>
       <artifactId>camel-quarkus-jq</artifactId>
     </dependency>
+    <!-- Kamelet/Pipe do trình thiết kế sinh (IP-07 K3). Cần để đóng cổng nghiệm thu
+         N-2b: nạp được cả bốn loại tài nguyên designer sinh vào Camel thật. -->
+    <dependency>
+      <groupId>org.apache.camel.quarkus</groupId>
+      <artifactId>camel-quarkus-kamelet</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
@@ -95,6 +101,18 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Đích `mock:` để khẳng định thân bản tin thật, không chỉ "route Started" (N-2b). -->
+    <dependency>
+      <groupId>org.apache.camel.quarkus</groupId>
+      <artifactId>camel-quarkus-mock</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- `timer:` là chặng tiếp nhận của mẫu Kamelet mà trình thiết kế sinh ra. -->
+    <dependency>
+      <groupId>org.apache.camel.quarkus</groupId>
+      <artifactId>camel-quarkus-timer</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -1,0 +1,27 @@
+# Kamelet do trình thiết kế LGSP sinh (IP-07 K3) — quay vòng qua deserialize→serialize.
+# Dùng cho cổng nghiệm thu N-2b: Camel thật phải nạp được Kamelet designer sinh ra.
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: lgsp-echo-source
+spec:
+  definition:
+    title: lgsp-echo-source
+    description: Nguon phat mot ban tin co dinh — dung cho nghiem thu N-2b
+    properties:
+      message:
+        title: Message
+        description: Noi dung ban tin phat ra
+        type: string
+        default: lgsp-kamelet:ok
+  template:
+    from:
+      uri: timer:tick
+      parameters:
+        period: "1000"
+        repeatCount: "1"
+      steps:
+        - setBody:
+            constant: "{{message}}"
+        - to:
+            uri: kamelet:sink
