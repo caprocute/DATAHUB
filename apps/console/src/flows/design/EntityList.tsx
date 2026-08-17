@@ -22,8 +22,9 @@ const ID_RE = /^[a-z0-9][a-z0-9-]*$/
  * Một tệp Camel YAML chứa được **nhiều route**; trước đây trình thiết kế chỉ mở được một
  * và bộ đọc cũ còn từ chối hẳn tệp nhiều route. Bảng này là chỗ chuyển qua lại giữa chúng.
  *
- * Ẩn hẳn khi tệp chỉ có **một** thực thể: chiếm chỗ của bảng thành phần mà không nói thêm
- * được gì. Hiện ngay khi có từ hai, hoặc khi người dùng chủ động thêm.
+ * Nay nằm trong **thẻ riêng** trên ray panel trái nên luôn hiện đủ danh sách, kể cả khi
+ * tệp mới có một route: thẻ đã là chỗ dành riêng, không còn giành chiều cao với bảng
+ * thành phần như hồi hai khối xếp chồng trong một cột.
  */
 export function EntityList({
   resource,
@@ -41,25 +42,6 @@ export function EntityList({
   const [error, setError] = useState<string | null>(null)
 
   const entities = resource?.entities ?? []
-  if (entities.length <= 1 && !adding) {
-    return (
-      <div className="dsg__ents dsg__ents--single">
-        <button
-          type="button"
-          className="dsg__ents-add"
-          onClick={() => {
-            setDraft('')
-            setError(null)
-            setAdding(true)
-          }}
-          disabled={disabled}
-          title="Thêm một route nữa vào cùng tệp này"
-        >
-          ＋ Thêm route vào tệp
-        </button>
-      </div>
-    )
-  }
 
   /** Kiểm mã trước khi nhận: trùng mã làm hai route đè lên nhau khi Camel nạp. */
   function validate(id: string, exceptIndex = -1): string | null {
@@ -124,9 +106,9 @@ export function EntityList({
 
   return (
     <div className="dsg__ents">
-      <div className="dsg__ents-head">
-        <span>Route trong tệp</span>
-        <span className="dsg__ents-count">{entities.length}</span>
+      <div className="dsg__panel-head">
+        Route trong tệp
+        <span className="count">{entities.length}</span>
       </div>
 
       <ul className="dsg__ents-list">

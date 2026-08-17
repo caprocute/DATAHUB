@@ -52,6 +52,7 @@ import { DataMapper } from './DataMapper'
 import { EntityList } from './EntityList'
 import { KameletSpec } from './KameletSpec'
 import { Palette } from './Palette'
+import { SidePanelRail, type RailTab } from './SidePanelRail'
 import { mapWaterfall, RunContext, type StageRun } from './RunContext'
 import { StatusContext } from './StatusContext'
 import { YamlEditor } from './YamlEditor'
@@ -73,11 +74,13 @@ const EMPTY_RUN: Record<string, StageRun> = {}
  * Dùng `localStorage` là đúng chỗ ở đây: đây là tùy chọn hiển thị của riêng máy này,
  * không phải dữ liệu nghiệp vụ — khác hẳn nhật ký chạy vốn phải nằm ở máy chủ.
  */
-function usePanelState(key: string, fallback: boolean) {
-  const [open, setOpen] = useState<boolean>(() => {
+function usePanelState(key: string, fallback: string | null) {
+  const [tab, setTab] = useState<string | null>(() => {
     try {
       const raw = localStorage.getItem(key)
-      return raw === null ? fallback : raw === '1'
+      // Chuỗi rỗng là "đã thu gọn hẳn" — khác hẳn `null` nghĩa là chưa từng chọn gì.
+      if (raw === null) return fallback
+      return raw === '' ? null : raw
     } catch {
       // Trình duyệt chặn lưu trữ (chế độ riêng tư) — vẫn chạy, chỉ là không nhớ.
       return fallback
@@ -85,12 +88,12 @@ function usePanelState(key: string, fallback: boolean) {
   })
   useEffect(() => {
     try {
-      localStorage.setItem(key, open ? '1' : '0')
+      localStorage.setItem(key, tab ?? '')
     } catch {
       /* không nhớ được thì thôi, không chặn việc chính */
     }
-  }, [key, open])
-  return [open, setOpen] as const
+  }, [key, tab])
+  return [tab, setTab] as const
 }
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'error'
@@ -124,10 +127,12 @@ function DesignerInner() {
   const [mapperOpen, setMapperOpen] = useState(false)
   /** Cửa sổ xem/sửa YAML toàn màn hình (đồng bộ ngược về sơ đồ). */
   const [yamlOpen, setYamlOpen] = useState(false)
-  // G3-6 — nhớ trạng thái thu gọn giữa các phiên. Người dùng thu panel lại là vì
-  // muốn rộng chỗ; mở lại mỗi lần vào là bắt họ thao tác lại từ đầu.
-  const [leftOpen, setLeftOpen] = usePanelState('lgsp.designer.left', true)
-  const [rightOpen, setRightOpen] = usePanelState('lgsp.designer.right', true)
+  // G3-6 — nhớ **thẻ đang mở** giữa các phiên, không chỉ đóng/mở. Người dùng đang làm
+  // dở ở bảng thành phần thì lần sau vào phải thấy đúng bảng đó.
+  // Khóa đặt hậu tố `.tab`: khóa cũ chứa '1'/'0' của kiểu đóng/mở, đọc lại sẽ thành tên
+  // thẻ không tồn tại và panel hiện ra trống trơn.
+  const [leftTab, setLeftTab] = usePanelState('lgsp.designer.left.tab', 'component')
+  const [rightTab, setRightTab] = usePanelState('lgsp.designer.right.tab', 'check')
 
   /**
    * Bản định nghĩa lúc mở luồng — mốc phát hiện người khác sửa cùng lúc (G3-5).
@@ -674,6 +679,121 @@ function DesignerInner() {
     }
   }
 
+  /**
+   * Các thẻ của panel trái (K-UI: ray thẻ thay cho kiểu xếp chồng).
+   *
+   * Thêm chức năng mới về sau = thêm một phần tử vào mảng này, không đụng bố cục.
+   */
+  const leftTabs = useMemo<RailTab[]>(
+    () => [
+      {
+        key: 'route',
+        label: 'Route',
+        tone: 'ok',
+        badge: tree?.entities.length ?? 0,
+        render: () => (
+          <EntityList
+            resource={tree}
+            activeIndex={activeEntity}
+            onSelect={selectEntity}
+            onAdd={addEntityAt}
+            onRemove={removeEntityAt}
+            onDuplicate={duplicateEntityAt}
+            onRename={renameEntityAt}
+            disabled={!canDesign || !tree}
+          />
+        ),
+      },
+      {
+        key: 'component',
+        label: 'Thành phần',
+        tone: 'brand',
+        render: () => <Palette hasFrom={hasFrom} onBrowseCatalog={browseCatalog} />,
+      },
+    ],
+    [
+      tree,
+      activeEntity,
+      selectEntity,
+      addEntityAt,
+      removeEntityAt,
+      duplicateEntityAt,
+      renameEntityAt,
+      canDesign,
+      hasFrom,
+      browseCatalog,
+    ],
+  )
+
+  /** Thẻ panel phải — kiểm tra và YAML, mỗi thứ dùng trọn chiều cao thay vì chia đôi. */
+  const rightTabs = useMemo<RailTab[]>(
+    () => [
+      {
+        key: 'check',
+        label: 'Kiểm tra',
+        tone: errorCount > 0 ? 'err' : findings.length > 0 ? 'warn' : 'ok',
+        badge: findings.length,
+        render: () => (
+          <section className="dsg__findings">
+            <div className="dsg__panel-head">
+              Kiểm tra
+              <span className="count">
+                {errorCount} lỗi · {findings.length - errorCount} cảnh báo
+              </span>
+            </div>
+            <div className="dsg__panel-body">
+              {findings.length === 0 ? (
+                <p className="pal__empty">Không có phát hiện nào — luồng hợp lệ.</p>
+              ) : (
+                findings.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`fnd fnd--${f.level}`}
+                    onClick={() =>
+                      f.nodeId && setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === f.nodeId })))
+                    }
+                  >
+                    <span className="fnd__mark">{f.level === 'error' ? '✕' : '⚠'}</span>
+                    <span className="fnd__text">
+                      <span className="fnd__title">{f.title}</span>
+                      <span className="fnd__detail">{f.detail}</span>
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </section>
+        ),
+      },
+      {
+        key: 'yaml',
+        label: 'Camel YAML',
+        tone: 'brand',
+        render: () => (
+          <section className="dsg__yaml">
+            <div className="dsg__panel-head">
+              Camel YAML DSL
+              <span className="count">{yaml.trimEnd().split('\n').length} dòng</span>
+              <Button
+                size="small"
+                className="dsg__yaml-open"
+                onClick={() => setYamlOpen(true)}
+                title="Mở toàn màn hình để đọc và sửa"
+              >
+                ⤢ Mở rộng
+              </Button>
+            </div>
+            <div className="dsg__panel-body">
+              <pre className="dsg__yaml-code">{yaml}</pre>
+            </div>
+          </section>
+        ),
+      },
+    ],
+    [findings, errorCount, yaml, setNodes],
+  )
+
   if (loading) {
     return (
       <div className="dsg">
@@ -762,42 +882,11 @@ function DesignerInner() {
       </div>
 
       <div className="dsg__body">
-        <aside className={leftOpen ? 'dsg__left' : 'dsg__left is-collapsed'}>
-          {leftOpen && (
-            <>
-              <EntityList
-                resource={tree}
-                activeIndex={activeEntity}
-                onSelect={selectEntity}
-                onAdd={addEntityAt}
-                onRemove={removeEntityAt}
-                onDuplicate={duplicateEntityAt}
-                onRename={renameEntityAt}
-                disabled={!canDesign || !tree}
-              />
-              <Palette hasFrom={hasFrom} onBrowseCatalog={browseCatalog} />
-            </>
-          )}
+        <aside className={leftTab ? 'dsg__left' : 'dsg__left is-collapsed'}>
+          <SidePanelRail side="left" tabs={leftTabs} active={leftTab} onChange={setLeftTab} />
         </aside>
 
         <div className="dsg__center">
-          <button
-            type="button"
-            className="dsg__toggle dsg__toggle--left"
-            onClick={() => setLeftOpen((v) => !v)}
-            title={leftOpen ? 'Thu gọn bảng thành phần' : 'Mở bảng thành phần'}
-          >
-            {leftOpen ? '‹' : '›'}
-          </button>
-          <button
-            type="button"
-            className="dsg__toggle dsg__toggle--right"
-            onClick={() => setRightOpen((v) => !v)}
-            title={rightOpen ? 'Thu gọn panel kiểm tra' : 'Mở panel kiểm tra'}
-          >
-            {rightOpen ? '›' : '‹'}
-          </button>
-
           <div className="dsg__canvas">
             <StatusContext.Provider value={status}>
               <RunContext.Provider value={runOverlay}>
@@ -817,59 +906,8 @@ function DesignerInner() {
           </div>
         </div>
 
-        <aside className={rightOpen ? 'dsg__right' : 'dsg__right is-collapsed'}>
-          {rightOpen && (
-            <div className="dsg__right-split">
-              <section className="dsg__findings">
-                <div className="dsg__panel-head">
-                  Kiểm tra
-                  <span className="count">
-                    {errorCount} lỗi · {findings.length - errorCount} cảnh báo
-                  </span>
-                </div>
-                <div className="dsg__panel-body">
-                  {findings.length === 0 ? (
-                    <p className="pal__empty">Không có phát hiện nào — luồng hợp lệ.</p>
-                  ) : (
-                    findings.map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        className={`fnd fnd--${f.level}`}
-                        onClick={() =>
-                          f.nodeId && setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === f.nodeId })))
-                        }
-                      >
-                        <span className="fnd__mark">{f.level === 'error' ? '✕' : '⚠'}</span>
-                        <span className="fnd__text">
-                          <span className="fnd__title">{f.title}</span>
-                          <span className="fnd__detail">{f.detail}</span>
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </section>
-
-              <section className="dsg__yaml">
-                <div className="dsg__panel-head">
-                  Camel YAML DSL
-                  <span className="count">{yaml.trimEnd().split('\n').length} dòng</span>
-                  <Button
-                    size="small"
-                    className="dsg__yaml-open"
-                    onClick={() => setYamlOpen(true)}
-                    title="Mở toàn màn hình để đọc và sửa"
-                  >
-                    ⤢ Mở rộng
-                  </Button>
-                </div>
-                <div className="dsg__panel-body">
-                  <pre className="dsg__yaml-code">{yaml}</pre>
-                </div>
-              </section>
-            </div>
-          )}
+        <aside className={rightTab ? 'dsg__right' : 'dsg__right is-collapsed'}>
+          <SidePanelRail side="right" tabs={rightTabs} active={rightTab} onChange={setRightTab} />
         </aside>
       </div>
 
@@ -880,9 +918,10 @@ function DesignerInner() {
         onApply={(n, e, tree) => {
           // Ghi vào lịch sử trước khi thay để hoàn tác được nếu áp nhầm.
           commit()
-          // Thay luôn cây đang giữ: không thì lần sinh YAML sau vẫn áp thay đổi lên
-          // cây cũ và **nuốt mất** bản người dùng vừa sửa tay.
-          treeRef.current = tree
+          // Thay luôn cây đang giữ **qua setTree** (đặt cả ref lẫn state — bất biến ở
+          // khai báo tree): chỉ đặt ref thì memo YAML và doSave vẫn đọc cây cũ, bản
+          // người dùng vừa áp không vào YAML lưu đi.
+          setTree(tree)
           setNodes(autoLayout(n, e))
           setEdges(e)
           setSaveState('dirty')

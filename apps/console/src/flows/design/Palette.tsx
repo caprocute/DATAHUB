@@ -17,6 +17,8 @@ import { DRAG_MIME } from './interaction'
 interface Props {
   /** Đã có chặng tiếp nhận thì mục chỉ dùng làm đầu luồng bị khóa lại. */
   hasFrom: boolean
+  /** Mở màn danh mục để tra cứu đầy đủ rồi thêm ngược lại (K4-4). */
+  onBrowseCatalog?: () => void
 }
 
 const TABS: { key: NodeKind; label: string }[] = [
@@ -38,7 +40,7 @@ const OVERSCAN = 6
  * Ảo hóa danh sách: chỉ dựng phần tử trong tầm nhìn. Dựng cả 751 thẻ làm mỗi lần
  * gõ phím phải vẽ lại toàn bộ, không đạt ngưỡng < 50 ms của NFR-D-02.
  */
-export function Palette({ hasFrom }: Props) {
+export function Palette({ hasFrom, onBrowseCatalog }: Props) {
   /**
    * Kamelet **tự viết** trong hệ thống (K3-2 — FR-D-062).
    *
@@ -238,7 +240,14 @@ export function Palette({ hasFrom }: Props) {
       </div>
 
       <div className="pal__foot">
-        {results.length} mục · kéo vào sơ đồ
+        <span>{results.length} mục · kéo vào sơ đồ</span>
+        {/* Bảng này chỉ có tooltip; muốn xem đủ bảng tham số, cú pháp URI và phụ thuộc
+            thì sang màn danh mục rồi thêm ngược lại vào đúng luồng này (K4-4). */}
+        {onBrowseCatalog && (
+          <button type="button" className="pal__browse" onClick={onBrowseCatalog}>
+            Tra cứu đầy đủ →
+          </button>
+        )}
       </div>
     </>
   )

@@ -9,7 +9,31 @@
    Token màu lấy từ `theme-mockup/tokens.css`.
    ================================================================ */
 
+/* ---------- Token riêng của trình thiết kế ----------
+
+   Chỉ khai trong phạm vi `.dsg`, **không** đụng `theme-mockup/tokens.css`: các màn khác
+   (danh sách, duyệt, chạy thử) giữ nguyên diện mạo. Sơ đồ luồng là chỗ duy nhất cần nền
+   tối — nền tối làm thẻ chặng và đường nối bật hẳn lên, thứ mà nền xám nhạt không cho
+   được vì thẻ trắng trên nền gần trắng thì gần như không có ranh giới. */
 .dsg {
+  --dsg-rail-w: 44px;
+
+  /* Canvas tối */
+  --dsg-canvas-bg: #12141a;
+  --dsg-canvas-bg-2: #191c24;
+  --dsg-canvas-dot: #333846;
+
+  /* Thẻ chặng sáng nổi trên nền tối */
+  --dsg-node-bg: #fdfdfe;
+  --dsg-node-border: #454b5c;
+  --dsg-node-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 4px 12px rgba(0, 0, 0, .35);
+  --dsg-node-shadow-hi: 0 2px 4px rgba(0, 0, 0, .55), 0 12px 28px rgba(0, 0, 0, .45);
+  --dsg-accent: #4c8dff;
+
+  /* Đường nối — sáng hơn hẳn nền để thấy rõ hướng chảy */
+  --dsg-edge: #737d95;
+  --dsg-edge-hi: var(--dsg-accent);
+
   position: fixed;
   inset: 0;
   display: flex;
@@ -104,17 +128,19 @@
 }
 
 /* Bảng thành phần: 751 nút nên cần chỗ thật. Rộng theo màn hình thay vì cứng 280px —
-   ở 280px tên dài như "AWS Bedrock Agent Runtime" bị cắt, khó nhận ra thành phần. */
+   ở 280px tên dài như "AWS Bedrock Agent Runtime" bị cắt, khó nhận ra thành phần.
+   Cộng thêm `--dsg-rail-w` cho thanh ray: ray nằm **trong** cột này, không đè lên panel. */
 .dsg__left {
-  flex: 0 0 clamp(280px, 22%, 420px);
+  flex: 0 0 calc(clamp(280px, 22%, 420px) + var(--dsg-rail-w));
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   border-right: 1px solid var(--c-border, #e5e7eb);
   background: var(--c-surface, #fff);
   overflow: hidden;
 }
-.dsg__left.is-collapsed { flex-basis: 0; border-right: 0; }
+/* Thu gọn = chỉ còn ray. Không phải bề rộng 0: mất ray thì không còn lối mở lại. */
+.dsg__left.is-collapsed { flex-basis: var(--dsg-rail-w); }
 
 .dsg__center {
   /* `flex: 1 1 0` chứ không phải `flex: 1`: basis auto khiến canvas bị nội dung
@@ -128,35 +154,105 @@
 }
 
 .dsg__right {
-  flex: 0 0 340px;
+  flex: 0 0 calc(360px + var(--dsg-rail-w));
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   border-left: 1px solid var(--c-border, #e5e7eb);
   background: var(--c-surface, #fff);
   overflow: hidden;
 }
-.dsg__right.is-collapsed { flex-basis: 0; border-left: 0; }
+.dsg__right.is-collapsed { flex-basis: var(--dsg-rail-w); }
 
-/* Nút gập panel bám mép canvas */
-.dsg__toggle {
-  position: absolute;
-  top: 12px;
-  z-index: 5;
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--c-border, #e5e7eb);
-  border-radius: 6px;
-  background: var(--c-surface, #fff);
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--c-text-2, #4b5563);
+/* ---------- Ray thẻ của panel bên ---------- */
+
+.dsg-rail {
+  flex: none;
+  width: var(--dsg-rail-w);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px 4px;
+  background: var(--dsg-rail-bg);
+  overflow: hidden;
 }
-.dsg__toggle--left { left: 8px; }
-.dsg__toggle--right { right: 8px; }
-.dsg__toggle:hover { border-color: var(--c-brand-500, #3b82f6); }
+.dsg-rail--left { border-right: 1px solid var(--c-border); order: -1; }
+.dsg-rail--right { border-left: 1px solid var(--c-border); }
+
+/* Thẻ chữ dọc: ray chỉ rộng 44px nên nhãn phải quay đứng mới đọc được.
+   `sideways-lr` cho chữ đọc từ dưới lên — hướng quen thuộc của tab dọc. */
+.dsg-rail__tab {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 2px;
+  writing-mode: sideways-lr;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ant-motion-fast) var(--ant-motion-ease),
+              color var(--ant-motion-fast) var(--ant-motion-ease),
+              border-color var(--ant-motion-fast) var(--ant-motion-ease);
+}
+/* Trình duyệt chưa hỗ trợ `sideways-lr` (Chrome hiện tại) lùi về `vertical-rl` xoay
+   nửa vòng — cùng hướng đọc, không để nhãn nằm ngược. */
+@supports not (writing-mode: sideways-lr) {
+  .dsg-rail__tab { writing-mode: vertical-rl; transform: rotate(180deg); }
+}
+
+.dsg-rail__tab:hover { background: var(--c-surface-2); color: var(--c-text); }
+.dsg-rail__tab.is-active {
+  background: var(--dsg-tab-bg);
+  border-color: var(--dsg-tab-border);
+  color: var(--dsg-tab-fg);
+}
+/* Tông theo nhóm chức năng — nhìn màu biết thẻ nào mà không cần đọc chữ. */
+.dsg-rail__tab--brand.is-active { --dsg-tab-bg: var(--c-brand-50);  --dsg-tab-border: var(--c-brand-200); --dsg-tab-fg: var(--c-brand-700); }
+.dsg-rail__tab--ok.is-active    { --dsg-tab-bg: var(--c-ok-50);     --dsg-tab-border: var(--ant-green-3); --dsg-tab-fg: var(--c-ok-700); }
+.dsg-rail__tab--warn.is-active  { --dsg-tab-bg: var(--c-warn-50);   --dsg-tab-border: var(--ant-gold-3);  --dsg-tab-fg: var(--c-warn-700); }
+.dsg-rail__tab--err.is-active   { --dsg-tab-bg: var(--c-err-50);    --dsg-tab-border: var(--ant-red-2);   --dsg-tab-fg: var(--c-err-700); }
+
+/* Đếm phụ: chữ ngang trở lại cho dễ đọc con số. */
+.dsg-rail__badge {
+  writing-mode: horizontal-tb;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  font-size: 10px;
+  line-height: 17px;
+  text-align: center;
+}
+.dsg-rail__tab.is-active .dsg-rail__badge {
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  color: inherit;
+}
+@supports not (writing-mode: sideways-lr) {
+  .dsg-rail__tab .dsg-rail__badge { transform: rotate(180deg); }
+}
+
+/* Khung nội dung của thẻ đang mở — đây mới là chỗ cuộn (AGENTS §6.1). */
+.dsg-rail__panel {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Con trực tiếp của panel phải tự co được, nếu không vùng cuộn bị đẩy tràn. */
+.dsg-rail__panel > * { min-height: 0; }
+.dsg-rail__panel > section { flex: 1 1 0; display: flex; flex-direction: column; }
 
 /* ---------- Canvas ---------- */
 
@@ -190,21 +286,14 @@
   overflow-y: auto;
 }
 
-/* Panel phải chia đôi: kiểm tra ở trên, YAML ở dưới */
-.dsg__right-split {
-  flex: 1 1 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.dsg__right-split > * { min-height: 0; }
-.dsg__findings { flex: 1 1 40%; display: flex; flex-direction: column; min-height: 0; }
+/* Kiểm tra và YAML nay là **hai thẻ riêng** trên ray, mỗi thẻ dùng trọn chiều cao —
+   không còn chia 40/60 trong một cột như bản trước. */
+.dsg__findings,
 .dsg__yaml {
-  flex: 1 1 60%;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-top: 1px solid var(--c-border, #e5e7eb);
 }
 
 /* ---------- Điểm gãy responsive (FR-D-010) ---------- */
@@ -273,7 +362,7 @@
 .pal__chip:focus-visible,
 .pal__item:focus-visible,
 .pal__search:focus-visible,
-.dsg__toggle:focus-visible,
+.dsg-rail__tab:focus-visible,
 .cfg__tab:focus-visible,
 .cfg__find:focus-visible,
 .ydiff__mode:focus-visible,
@@ -437,61 +526,80 @@
 /* Chiếm trọn `.dsg__canvas`. Trước đây đặt `height: clamp(520px, 68vh, 820px)` —
    chiều cao cứng sót lại từ bản mockup: ở màn 900px nó ra 612px trong khi khung cha
    cao 844px, để lại **232px trắng** dưới sơ đồ. Flex thì luôn khớp khung cha. */
+/* Nền tối có một lớp loang rất nhẹ ở giữa: mặt phẳng đơn sắc rộng nhìn "chết", chút
+   chuyển sáng ở giữa giúp mắt bám vào vùng làm việc. */
 .canvas-rf {
   height: 100%;
   min-height: 0;
-  background: var(--c-bg);
+  background:
+    radial-gradient(115% 85% at 50% 0%, var(--dsg-canvas-bg-2) 0%, var(--dsg-canvas-bg) 68%);
   position: relative;
 }
 
 .canvas-rf .react-flow {
-  --xy-background-color: var(--c-bg);
-  --xy-background-pattern-color: var(--c-border-2);
-  --xy-background-pattern-dots-color: var(--c-border-2);
+  --xy-background-color: transparent;
+  --xy-background-pattern-color: var(--dsg-canvas-dot);
+  --xy-background-pattern-dots-color: var(--dsg-canvas-dot);
 
-  --xy-edge-stroke: var(--c-border-2);
-  --xy-edge-stroke-width: 1.5;
-  --xy-edge-stroke-selected: var(--c-brand-500);
-  --xy-connectionline-stroke: var(--c-brand-500);
+  --xy-edge-stroke: var(--dsg-edge);
+  --xy-edge-stroke-width: 2;
+  --xy-edge-stroke-selected: var(--dsg-edge-hi);
+  --xy-connectionline-stroke: var(--dsg-edge-hi);
   --xy-connectionline-stroke-width: 2;
 
-  --xy-handle-background-color: var(--c-surface);
-  --xy-handle-border-color: var(--c-border-2);
+  --xy-handle-background-color: var(--dsg-node-bg);
+  --xy-handle-border-color: var(--dsg-edge);
 
-  --xy-controls-button-background-color: var(--c-surface);
-  --xy-controls-button-background-color-hover: var(--c-surface-2);
-  --xy-controls-button-color: var(--c-text-2);
-  --xy-controls-button-color-hover: var(--c-text);
-  --xy-controls-button-border-color: var(--c-border);
+  /* Điều khiển và minimap giữ nền tối để không thành hai mảng trắng chọi vào canvas. */
+  --xy-controls-button-background-color: #232733;
+  --xy-controls-button-background-color-hover: #2e3342;
+  --xy-controls-button-color: #c8cddb;
+  --xy-controls-button-color-hover: #ffffff;
+  --xy-controls-button-border-color: #383e4e;
 
-  --xy-minimap-background-color: var(--c-surface);
-  --xy-minimap-mask-background-color: color-mix(in srgb, var(--c-bg) 72%, transparent);
+  --xy-minimap-background-color: #1b1f28;
+  --xy-minimap-mask-background-color: rgba(10, 12, 16, .66);
 
   --xy-attribution-background-color: transparent;
-  --xy-selection-background-color: var(--c-ring);
+  --xy-selection-background-color: rgba(76, 141, 255, .18);
 }
 
-.canvas-rf .react-flow__controls { box-shadow: var(--sh-sm); border-radius: var(--r-md); overflow: hidden; }
-.canvas-rf .react-flow__controls-button { border-bottom-color: var(--c-border); }
-.canvas-rf .react-flow__minimap {
-  border: 1px solid var(--c-border);
+.canvas-rf .react-flow__controls {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
+  border: 1px solid #383e4e;
   border-radius: var(--r-md);
-  box-shadow: var(--sh-sm);
+  overflow: hidden;
 }
-.canvas-rf .react-flow__attribution a { color: var(--c-text-3); font-size: var(--fs-xs); }
+.canvas-rf .react-flow__controls-button { border-bottom-color: #383e4e; }
+.canvas-rf .react-flow__minimap {
+  border: 1px solid #383e4e;
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .45);
+}
+.canvas-rf .react-flow__attribution a { color: #6c7488; font-size: var(--fs-xs); }
+/* Khung chọn vùng (Shift + kéo) phải thấy được trên nền tối. */
+.canvas-rf .react-flow__selection {
+  background: rgba(76, 141, 255, .16);
+  border: 1px solid var(--dsg-accent);
+}
 
 /* ---------- Node kiểu n8N (trái → phải) ---------- */
 
+/* Kích thước phải khớp `NODE_W`/`NODE_H` trong `core/model.ts` — React Flow neo cổng
+   vào/ra theo kích thước đã khai ở đó. Lệch là đường nối rời khỏi cổng.
+   Đổi ở đây thì đổi cả bên kia. */
 .n8n-node {
-  width: 220px;
+  width: 240px;
+  height: 72px;
   box-sizing: border-box;
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: 0;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: 10px;
-  box-shadow: var(--sh-sm);
+  background: var(--dsg-node-bg);
+  border: 1px solid var(--dsg-node-border);
+  border-radius: 12px;
+  box-shadow: var(--dsg-node-shadow);
   overflow: visible;
   transition: border-color var(--ant-motion-fast) var(--ant-motion-ease),
               box-shadow var(--ant-motion-fast) var(--ant-motion-ease),
@@ -499,30 +607,59 @@
 }
 
 .n8n-node:hover {
-  border-color: color-mix(in srgb, var(--c-brand-500) 55%, var(--c-border));
+  border-color: var(--dsg-accent);
   transform: translateY(-1px);
-  box-shadow: var(--sh-md);
+  box-shadow: var(--dsg-node-shadow-hi);
 }
 
+/* Ô icon dùng dải chuyển màu nhẹ thay vì một mảng phẳng: khối màu 44px phẳng lì trông
+   như ô trống, chút chiều sâu làm thẻ ra dáng "thành phần" hơn. Viền phải bên trong
+   tách ô icon khỏi phần chữ mà không cần thêm đường kẻ. */
 .n8n-node__icon {
   flex: none;
-  width: 44px;
+  width: 46px;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: 19px;
   color: #fff;
-  border-radius: 9px 0 0 9px;
-  background: var(--c-text-3);
+  border-radius: 11px 0 0 11px;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .12);
+  background-image: linear-gradient(160deg,
+    color-mix(in srgb, var(--dsg-tone) 82%, #fff) 0%,
+    var(--dsg-tone) 55%,
+    color-mix(in srgb, var(--dsg-tone) 84%, #000) 100%);
+  --dsg-tone: #475569;
 }
 
 /* Chữ trắng trên các nền này phải đạt 4.5:1. Tông -600 của xanh lá và cam chỉ được
-   ~3.3:1 nên hạ xuống -700/-800; các tông còn lại đã đạt sẵn (N-7). */
-.n8n-node--trigger .n8n-node__icon { background: #15803d; }
-.n8n-node--auth .n8n-node__icon { background: #b45309; }
-.n8n-node--eip .n8n-node__icon { background: var(--c-brand-600, #2563eb); }
-.n8n-node--transform .n8n-node__icon { background: #0f766e; }
-.n8n-node--enrich .n8n-node__icon { background: #6d28d9; }
-.n8n-node--dest .n8n-node__icon { background: #475569; }
+   ~3.3:1 nên hạ xuống -700/-800; các tông còn lại đã đạt sẵn (N-7).
+   Dải chuyển màu ở trên chỉ lệch ±18% quanh tông gốc nên vẫn giữ ngưỡng này. */
+.n8n-node--trigger .n8n-node__icon   { --dsg-tone: #15803d; }
+.n8n-node--auth .n8n-node__icon      { --dsg-tone: #b45309; }
+.n8n-node--eip .n8n-node__icon       { --dsg-tone: var(--c-brand-600, #2563eb); }
+.n8n-node--transform .n8n-node__icon { --dsg-tone: #0f766e; }
+.n8n-node--enrich .n8n-node__icon    { --dsg-tone: #6d28d9; }
+.n8n-node--dest .n8n-node__icon      { --dsg-tone: #475569; }
+
+/* Vệt màu mỏng dưới đáy thẻ, cùng tông với ô icon: nhìn cả sơ đồ là nhận ra nhóm chức
+   năng ngay cả khi thẻ bị thu nhỏ lúc phóng xa. */
+.n8n-node::after {
+  content: '';
+  position: absolute;
+  left: 46px;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 11px 0;
+  background: var(--dsg-tone, #475569);
+  opacity: .55;
+}
+.n8n-node--trigger   { --dsg-tone: #15803d; }
+.n8n-node--auth      { --dsg-tone: #b45309; }
+.n8n-node--eip       { --dsg-tone: var(--c-brand-600, #2563eb); }
+.n8n-node--transform { --dsg-tone: #0f766e; }
+.n8n-node--enrich    { --dsg-tone: #6d28d9; }
+.n8n-node--dest      { --dsg-tone: #475569; }
 
 .n8n-node__body {
   flex: 1;
@@ -587,31 +724,39 @@
   box-shadow: 0 0 0 var(--ant-control-outline-w) var(--c-ring), var(--sh-md);
 }
 
+/* Cổng vào/ra. React Flow tự đặt `top: 50%` + `translateY(-50%)` nên cổng luôn nằm
+   giữa cạnh thẻ — đúng chỗ đường nối neo vào, miễn là kích thước thẻ khai đúng. */
 .n8n-node__port {
-  width: 10px !important;
-  height: 10px !important;
+  width: 11px !important;
+  height: 11px !important;
   border-width: 2px !important;
-  background: var(--c-surface) !important;
-  border-color: var(--c-border-2) !important;
+  background: var(--dsg-node-bg) !important;
+  border-color: var(--dsg-edge) !important;
   transition: transform var(--ant-motion-fast), background-color var(--ant-motion-fast),
-              border-color var(--ant-motion-fast);
+              border-color var(--ant-motion-fast), box-shadow var(--ant-motion-fast);
 }
 .n8n-node:hover .n8n-node__port,
 .n8n-node--selected .n8n-node__port {
-  transform: scale(1.25);
-  background: var(--c-brand-500) !important;
-  border-color: var(--c-brand-500) !important;
+  transform: scale(1.3);
+  background: var(--dsg-accent) !important;
+  border-color: var(--dsg-accent) !important;
+  box-shadow: 0 0 0 4px rgba(76, 141, 255, .25);
 }
 
 /* Cạnh bezier */
 .canvas-rf .react-flow__edge-path.seq-edge,
 .canvas-rf .seq-edge {
-  stroke: var(--c-border-2);
+  stroke: var(--dsg-edge);
   stroke-width: 2;
+  stroke-linecap: round;
+}
+/* Trỏ vào cạnh thì sáng lên — lần theo một nhánh trong sơ đồ rậm dễ hơn nhiều. */
+.canvas-rf .react-flow__edge:hover .seq-edge {
+  stroke: color-mix(in srgb, var(--dsg-edge-hi) 70%, var(--dsg-edge));
 }
 .canvas-rf .seq-edge.is-selected {
-  stroke: var(--c-brand-500);
-  stroke-width: 2.5;
+  stroke: var(--dsg-edge-hi);
+  stroke-width: 3;
 }
 
 /* ---------- Cạnh ---------- */
@@ -1319,31 +1464,16 @@
 
 /* ---------- Danh sách route trong tệp (K2-1 · FR-D-005/006/007) ---------- */
 
-/* Nằm trên bảng thành phần trong cùng cột trái: đây là bộ chọn phạm vi cho chính
-   những gì bảng thành phần thả vào, nên đứng cạnh nhau thì đọc được quan hệ. */
+/* Nay là **thẻ riêng** trên ray trái nên dùng trọn chiều cao panel — bỏ hẳn
+   `max-height: 38%` của bản cũ, vốn có để nhường chỗ cho bảng thành phần khi hai khối
+   còn xếp chồng trong một cột. Danh sách dài thì cuộn trong `.dsg__ents-list`. */
 .dsg__ents {
-  flex: 0 0 auto;
-  /* Nhiều route thì cuộn trong chính khối này, **không** đẩy bảng thành phần
-     tụt khỏi tầm nhìn. */
-  max-height: 38%;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid var(--c-border, #e5e7eb);
 }
-.dsg__ents--single { border-bottom: 1px solid var(--c-border, #e5e7eb); }
 
-.dsg__ents-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2, 8px);
-  padding: var(--sp-2, 8px) var(--sp-3, 12px);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-2, #4b5563);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
 .dsg__ents-count {
   padding: 0 6px;
   border-radius: 999px;

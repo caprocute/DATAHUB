@@ -1,9 +1,10 @@
 import dagre from 'dagre';
-import type { SeqEdge, StageNode } from '../core/model';
+import { NODE_H, NODE_W, type SeqEdge, type StageNode } from '../core/model';
 
-/** Kích thước node kiểu n8N (thẻ ngang, icon trái). */
-export const NODE_W = 220;
-export const NODE_H = 68;
+// Kích thước thẻ lấy thẳng từ `core/model` — **không khai lại ở đây**. Bản sao cũ ghi
+// 220×68 trong khi model khai 240×72; dagre đặt nút theo số nhỏ còn React Flow neo cổng
+// theo số lớn, nên đường nối lệch khỏi cổng ở mọi cạnh.
+export { NODE_H, NODE_W };
 
 /**
  * Sắp xếp sơ đồ trái → phải (giống n8N).

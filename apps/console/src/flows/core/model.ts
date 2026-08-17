@@ -71,6 +71,18 @@ export function bumpSeq(ids: Iterable<string>): void {
 
 /* ---------- Kích thước thẻ node ---------- */
 
+/**
+ * Kích thước thẻ node — **nguồn sự thật duy nhất**.
+ *
+ * Ba chỗ phải khớp nhau tuyệt đối, lệch một pixel là đường nối vẽ sai:
+ *   1. hằng số này (báo cho React Flow qua `width`/`height`/`measured`),
+ *   2. `.n8n-node { width }` trong `designer.css`,
+ *   3. bộ sắp xếp `autoLayout` (nay import thẳng từ đây, không khai lại).
+ *
+ * React Flow neo cổng vào/ra theo kích thước **đã đo**, còn dagre đặt nút theo kích
+ * thước ta khai với nó. Trước đây `layout.ts` khai riêng 220×68 trong khi chỗ này là
+ * 240×72, nên mọi cạnh lệch 10px ngang và 2px dọc so với cổng thật.
+ */
 export const NODE_W = 240;
 export const NODE_H = 72;
 
