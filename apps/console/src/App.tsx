@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext'
 import { takeBootTarget } from './auth/oidc'
 import { AppShell } from './shell/AppShell'
 import { CatalogPage } from './pages/CatalogPage'
+import { ComponentCatalogPage } from './flows/catalog/ComponentCatalogPage'
 import { DesignerPage } from './flows/design/DesignerPage'
 import { FlowListPage } from './flows/list/FlowListPage'
 import { ReviewPage } from './flows/review/ReviewPage'
@@ -101,6 +102,9 @@ export default function App() {
             <Route path="flows/:code/runs" element={<RunLogPage />} />
             <Route path="onboarding" element={<OnboardingPage />} />
             <Route path="catalog" element={<CatalogPage />} />
+            {/* D-07 — danh mục 751 thành phần Camel. Tách khỏi `/catalog` (đăng ký dịch
+                vụ API của PH-02): cùng chữ "catalog" nhưng là hai nghiệp vụ khác hẳn. */}
+            <Route path="components" element={<ComponentCatalogPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

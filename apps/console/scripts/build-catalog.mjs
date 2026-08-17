@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CONSOLE_ROOT = path.resolve(HERE, '..');
-const OUT_ROOT = path.join(CONSOLE_ROOT, 'src/designer/catalog/generated');
+const OUT_ROOT = path.join(CONSOLE_ROOT, 'src/flows/core/generated');
 
 /** Phiên bản gói catalog được ghim — đổi phải kèm chạy lại script và commit đầu ra. */
 const CATALOG_PKG = '@kaoto/camel-catalog';
@@ -32,13 +32,23 @@ const CATALOG_PKG_VERSION = '0.7.0';
 const RUNTIME = 'camel-quarkus';
 const RUNTIME_VERSION = '3.35.0';
 
-/** Bảy loại nút của catalog Camel, đúng cách Kaoto chia. */
+/**
+ * Bảy loại nút của catalog Camel, đúng cách Kaoto chia.
+ *
+ * **`meta` là tên khóa chứa siêu dữ liệu bên trong mỗi mục, không phải tên loại.**
+ * Chỉ `component` có khóa trùng tên loại; bốn loại `pattern`/`dataformat`/`language`/
+ * `entity`/`loadbalancer` đều gói siêu dữ liệu dưới khóa `model` vì với Camel chúng
+ * đều là *model* của DSL. Đọc theo tên loại (`node.dataformat`, `node.language`,
+ * `node.entity`) trả về `undefined` — và vì mọi trường đều đọc kèm `?? mặc định`,
+ * chỉ mục vẫn sinh ra "thành công" với **tiêu đề trần, mô tả rỗng, không nhãn**.
+ * Lỗi im lặng đúng dạng BR-D-04b: 95/751 nút từng mất sạch siêu dữ liệu theo lối này.
+ */
 const KINDS = [
   { kind: 'component', file: 'camel-catalog-aggregate-components-*.json', meta: 'component' },
   { kind: 'pattern', file: 'camel-catalog-aggregate-patterns-*.json', meta: 'model' },
-  { kind: 'dataformat', file: 'camel-catalog-aggregate-dataformats-*.json', meta: 'dataformat' },
-  { kind: 'language', file: 'camel-catalog-aggregate-languages-*.json', meta: 'language' },
-  { kind: 'entity', file: 'camel-catalog-aggregate-entities-*.json', meta: 'entity' },
+  { kind: 'dataformat', file: 'camel-catalog-aggregate-dataformats-*.json', meta: 'model' },
+  { kind: 'language', file: 'camel-catalog-aggregate-languages-*.json', meta: 'model' },
+  { kind: 'entity', file: 'camel-catalog-aggregate-entities-*.json', meta: 'model' },
   { kind: 'loadbalancer', file: 'camel-catalog-aggregate-loadbalancers-*.json', meta: 'model' },
 ];
 
@@ -80,12 +90,22 @@ function readKamelets(dir) {
   return JSON.parse(fs.readFileSync(path.join(dir, hit), 'utf8'));
 }
 
-/** Tách nhãn nhóm gốc của Camel: `"cloud,messaging"` → `['cloud','messaging']`. */
+/**
+ * Tách nhãn nhóm gốc của Camel: `"cloud,messaging"` → `['cloud','messaging']`.
+ *
+ * **Khử trùng lặp.** Bản gốc có 3 component khai `"cloud,cloud"` (`azure-key-vault`,
+ * `hashicorp-vault`, `ibm-secrets-manager`). Giữ nguyên thì chip lọc đếm 94 trong khi
+ * lọc thật chỉ ra 91 — số trên nhãn không khớp số dòng người dùng nhìn thấy.
+ */
 function labelsOf(raw) {
-  return String(raw ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+  return [
+    ...new Set(
+      String(raw ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 /** Rút gọn mô tả cho palette — chuỗi đầy đủ vẫn nằm trong tệp schema. */
@@ -107,12 +127,16 @@ function build(dir) {
     const agg = readAggregate(dir, file);
     for (const [name, node] of Object.entries(agg)) {
       const m = node[meta] ?? {};
+      // Bốn mục của `entity` (`ObjectMeta`, `Pipe*`, `KameletConfiguration`) là lược đồ
+      // CRD trần — không có khối `model`. Lấy tiêu đề/mô tả từ chính lược đồ thay vì để
+      // trống, vì màn D-07 phải hiện được chúng.
+      const ps = node.propertiesSchema ?? {};
       const labels = labelsOf(m.label);
       index.push({
         name,
         kind,
-        title: m.title ?? name,
-        description: shortDesc(m.description),
+        title: m.title ?? ps.title ?? name,
+        description: shortDesc(m.description ?? ps.description),
         labels,
         scheme: m.scheme ?? undefined,
         syntax: m.syntax ?? undefined,
@@ -123,6 +147,17 @@ function build(dir) {
         // `input`/`output` của model quyết định EIP có nhận nhánh con hay không.
         input: m.input === true || undefined,
         output: m.output === true || undefined,
+        // Phụ thuộc Maven (FR-D-072): chỉ `component` phát hành đủ tọa độ. Người dùng
+        // cần nó để biết phải thêm gì vào `pom.xml` trước khi luồng chạy được.
+        groupId: m.groupId || undefined,
+        artifactId: m.artifactId || undefined,
+        version: m.version || undefined,
+        // Không chạy được ở ảnh native là ràng buộc vận hành thật với ADR-002/020
+        // (Camel Quarkus native) — phải hiện, không để người dùng phát hiện lúc build.
+        nativeSupported: m.artifactId ? m.nativeSupported === true : undefined,
+        javaType: m.javaType || undefined,
+        firstVersion: m.firstVersion || undefined,
+        camelArtifact: m.metadata?.camelArtifact || undefined,
       });
       if (node.propertiesSchema) {
         writeJson(path.join(OUT_ROOT, 'schemas', kind, `${name}.json`), node.propertiesSchema);
@@ -151,6 +186,11 @@ function build(dir) {
       producerOnly: type === 'sink' || undefined,
       supportLevel: ann['camel.apache.org/kamelet.support.level'] ?? undefined,
       kameletType: type || undefined,
+      // Kamelet không có tọa độ Maven riêng — nó khai `spec.dependencies` dạng
+      // `camel:aws2-s3`. Đó là thứ tương đương phải hiện ở màn chi tiết (FR-D-072).
+      dependencies: Array.isArray(spec.dependencies) && spec.dependencies.length
+        ? spec.dependencies
+        : undefined,
     });
     if (def.properties) {
       writeJson(path.join(OUT_ROOT, 'schemas', 'kamelet', `${name}.json`), {
@@ -189,6 +229,41 @@ function build(dir) {
 
   log(`tổng nút: ${index.length} · schema: ${schemaCount} · vân tay: ${digest}`);
   if (index.length < 400) fail(`chỉ có ${index.length} nút, yêu cầu tối thiểu 400`);
+
+  /*
+   * Chặn lỗi *im lặng* — đếm đủ nút không có nghĩa là đọc đúng.
+   *
+   * Ngưỡng cũ (`< 400 nút`) từng xanh trong khi 95 nút mất sạch tiêu đề, mô tả và nhãn
+   * do đọc nhầm khóa siêu dữ liệu: số nút vẫn đủ vì vòng lặp vẫn chạy hết. Kiểm theo
+   * *chất lượng* từng loại mới bắt được lối hỏng đó.
+   *
+   * `description` rỗng là bình thường ở một số nút gốc, nên không bắt tuyệt đối; bắt
+   * theo **tỷ lệ**: quá nửa một loại mà rỗng thì gần như chắc chắn đọc sai khóa.
+   */
+  const byKind = {};
+  for (const e of index) {
+    const k = (byKind[e.kind] ??= { total: 0, titled: 0, described: 0 });
+    k.total += 1;
+    if (e.title && e.title !== e.name) k.titled += 1;
+    if (e.description) k.described += 1;
+  }
+  for (const [kind, k] of Object.entries(byKind)) {
+    if (k.described * 2 < k.total)
+      fail(
+        `loại ${kind}: ${k.total - k.described}/${k.total} nút không có mô tả — nhiều khả năng ` +
+          `đọc sai khóa siêu dữ liệu trong KINDS (khóa đúng thường là 'model')`,
+      );
+  }
+
+  // Nhãn lặp làm số đếm trên chip lọc lệch số dòng lọc ra được — phải sạch từ nguồn.
+  const dup = index.filter((e) => new Set(e.labels).size !== e.labels.length);
+  if (dup.length) fail(`${dup.length} nút còn nhãn lặp, ví dụ ${dup[0].kind}/${dup[0].name}`);
+  log(
+    'chất lượng: ' +
+      Object.entries(byKind)
+        .map(([k, v]) => `${k} ${v.described}/${v.total} có mô tả`)
+        .join(' · '),
+  );
   return payload;
 }
 

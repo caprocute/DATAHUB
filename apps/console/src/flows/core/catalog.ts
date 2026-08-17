@@ -40,6 +40,25 @@ export interface CatalogNode {
   input?: boolean;
   output?: boolean;
   kameletType?: string;
+
+  /* --- Phụ thuộc và nguồn gốc (FR-D-072); chỉ `component` có đủ tọa độ Maven --- */
+  groupId?: string;
+  artifactId?: string;
+  version?: string;
+  /**
+   * Chạy được trong ảnh native hay không.
+   *
+   * `undefined` nghĩa là **không áp dụng** (nút không phải component nên không có
+   * extension riêng), khác hẳn `false` là "có extension nhưng native chưa chạy được".
+   * Gộp hai thứ này lại sẽ báo nhầm cho toàn bộ pattern/dataformat/language.
+   */
+  nativeSupported?: boolean;
+  javaType?: string;
+  firstVersion?: string;
+  /** Toạ độ Camel gốc, ví dụ `org.apache.camel:camel-timer`. */
+  camelArtifact?: string;
+  /** Kamelet khai phụ thuộc dạng `camel:aws2-s3` thay cho tọa độ Maven. */
+  dependencies?: string[];
 }
 
 interface IndexShape {
@@ -341,6 +360,42 @@ export function searchNodes(query: string, opts: SearchOptions = {}): CatalogNod
     out.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
   }
   return opts.limit ? out.slice(0, opts.limit) : out;
+}
+
+/**
+ * Thứ tự loại nút dùng cho tab của màn danh mục (D-07).
+ *
+ * Khác `TABS` của bảng thành phần: bảng thành phần chỉ hiện 5 loại thả được vào sơ đồ,
+ * còn màn danh mục phải duyệt **toàn bộ 751 nút** (FR-D-070) nên có đủ cả bảy.
+ */
+export const ALL_KINDS: NodeKind[] = KIND_ORDER;
+
+/**
+ * Nhóm thuộc tính của một lược đồ, theo đúng nhóm gốc của Camel.
+ *
+ * Trả về mảng đã xếp thứ tự để màn chi tiết vẽ thẳng, không phải tự sắp lại.
+ */
+export function groupProps(
+  schema: PropertiesSchema,
+): { group: PropGroup; props: { name: string; prop: SchemaProp; required: boolean }[] }[] {
+  const required = new Set(schema.required ?? []);
+  const buckets = new Map<PropGroup, { name: string; prop: SchemaProp; required: boolean }[]>();
+  for (const [name, prop] of Object.entries(schema.properties ?? {})) {
+    const { group } = groupOf(prop);
+    const list = buckets.get(group) ?? [];
+    list.push({ name, prop, required: required.has(name) });
+    buckets.set(group, list);
+  }
+  const order: PropGroup[] = ['common', 'consumer', 'producer', 'security', 'scheduler', 'khac', 'advanced'];
+  return order
+    .filter((g) => buckets.has(g))
+    .map((group) => ({
+      group,
+      // Trường bắt buộc lên đầu: đó là thứ phải điền mới chạy được.
+      props: (buckets.get(group) ?? []).sort(
+        (a, b) => Number(b.required) - Number(a.required) || a.name.localeCompare(b.name),
+      ),
+    }));
 }
 
 /** Nhãn có thật trong một loại nút, kèm số lượng — dựng bộ lọc của bảng thành phần. */

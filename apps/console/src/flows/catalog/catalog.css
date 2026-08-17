@@ -1,0 +1,531 @@
+/* Màn danh mục thành phần D-07 (FR-D-070…073).
+   Dùng chung biến màu với designer.css để hai màn không lệch tông. */
+
+/* Chiều cao và khóa cuộn do `.page-fill` lo (xem luật bố cục ở `styles.css`);
+   ở đây chỉ dựng cột dọc: đầu màn cố định · thân co giãn. */
+.cat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cat__head {
+  flex: none;
+}
+
+.cat__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--c-text, #111827);
+}
+
+.cat__sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--c-text-2, #4b5563);
+  max-width: 76ch;
+}
+
+.cat__pending {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--c-brand-500, #3b82f6);
+  border-radius: 8px;
+  background: #eff6ff;
+  font-size: 13px;
+  color: var(--c-text, #111827);
+}
+
+.cat__link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--c-brand-600, #0b5cab);
+  font: inherit;
+  text-decoration: underline;
+}
+
+/* ---------- Hai cột: danh sách │ chi tiết ---------- */
+
+.cat__body {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.cat__list-pane,
+.cat__detail-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--c-surface, #fff);
+}
+
+.cat__detail-pane {
+  overflow: auto;
+  padding: 20px 24px;
+}
+
+/* Dưới 1100px hai cột chồng lên nhau sẽ hẹp tới mức bảng tham số không đọc được, nên
+   xếp dọc. Khung vẫn khóa chiều cao — vùng cuộn chuyển thành **chính `.cat__body`**:
+   người dùng cuộn qua danh sách rồi tới chi tiết trong một mạch, thay vì hai vùng cuộn
+   lồng nhau cạnh tranh con lăn chuột trên màn đã chật. */
+@media (max-width: 1100px) {
+  .cat__body {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    overflow-y: auto;
+  }
+  .cat__list-pane,
+  .cat__detail-pane {
+    overflow: visible;
+  }
+  .cat__list {
+    max-height: 60vh;
+  }
+}
+
+/* ---------- Bộ lọc ---------- */
+
+.cat__search {
+  margin: 12px 12px 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--c-surface, #fff);
+  color: var(--c-text, #111827);
+}
+
+.cat__search:focus {
+  outline: none;
+  border-color: var(--c-brand-500, #3b82f6);
+}
+
+.cat__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+
+.cat__tab,
+.cat__chip {
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--c-surface, #fff);
+  color: var(--c-text-2, #4b5563);
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cat__tab.is-active,
+.cat__chip.is-active {
+  border-color: var(--c-brand-500, #3b82f6);
+  background: #eff6ff;
+  color: var(--c-brand-600, #0b5cab);
+  font-weight: 600;
+}
+
+.cat__chip.is-static {
+  cursor: default;
+}
+
+.cat__tab-n,
+.cat__chip-n {
+  color: var(--c-text-3, #6b7280);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Không đặt `max-height` ở đây: cắt cụt bằng cuộn trong khối làm người dùng không biết
+   còn nhãn bên dưới. Số nhãn hiện do `LABELS_COLLAPSED` quyết định, kèm chip "+n nữa". */
+.cat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+
+.cat__chip--more {
+  border-style: dashed;
+  color: var(--c-brand-600, #0b5cab);
+}
+
+.cat__count {
+  padding: 0 12px 6px;
+  font-size: 12px;
+  color: var(--c-text-3, #6b7280);
+}
+
+/* ---------- Danh sách ảo hóa ---------- */
+
+.cat__list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-top: 1px solid var(--c-border, #e5e7eb);
+}
+
+.cat__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--c-border, #e5e7eb);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cat__row:hover {
+  background: var(--c-bg, #f6f7f9);
+}
+
+.cat__row.is-active {
+  background: #eff6ff;
+  box-shadow: inset 3px 0 0 var(--c-brand-500, #3b82f6);
+}
+
+.cat__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--c-bg, #f6f7f9);
+  color: var(--c-text-2, #4b5563);
+}
+
+.cat__icon--trigger { background: #ecfdf5; color: #047857; }
+.cat__icon--auth    { background: #fef3c7; color: #92400e; }
+.cat__icon--eip     { background: #ede9fe; color: #5b21b6; }
+.cat__icon--transform { background: #e0f2fe; color: #075985; }
+.cat__icon--enrich  { background: #fce7f3; color: #9d174d; }
+.cat__icon--dest    { background: #f1f5f9; color: #334155; }
+
+.cat__row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cat__row-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text, #111827);
+}
+
+.cat__row-desc,
+.cat__row-ref {
+  font-size: 11px;
+  color: var(--c-text-3, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat__row-desc { max-width: 46ch; }
+
+.cat__row-ref {
+  flex: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.cat__empty,
+.cat__hint,
+.cat__note {
+  padding: 16px;
+  font-size: 13px;
+  color: var(--c-text-3, #6b7280);
+}
+
+.cat__note { padding: 6px 0 0; }
+
+/* ---------- Huy hiệu ---------- */
+
+.cat__badge {
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--c-bg, #f6f7f9);
+  color: var(--c-text-2, #4b5563);
+  border: 1px solid var(--c-border, #e5e7eb);
+}
+
+/* #92400e trên #fffbeb đo được 7,4:1 — đạt AA cả với cỡ chữ 9px. */
+.cat__badge--warn {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+/* ---------- Chi tiết ---------- */
+
+.cat__detail-kind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--c-text-3, #6b7280);
+}
+
+.cat__detail-title {
+  margin: 2px 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--c-text, #111827);
+}
+
+.cat__detail-name {
+  font-size: 12px;
+  color: var(--c-text-2, #4b5563);
+}
+
+.cat__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cat__flag {
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: var(--c-text-2, #4b5563);
+  background: var(--c-bg, #f6f7f9);
+}
+
+.cat__flag--warn {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.cat__add {
+  margin-top: 12px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--c-brand-600, #0b5cab);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cat__add:hover { background: var(--c-brand-500, #3b82f6); }
+
+.cat__desc {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--c-text, #111827);
+  max-width: 80ch;
+}
+
+.cat__meta-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.cat__section {
+  margin-top: 24px;
+}
+
+.cat__section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text, #111827);
+}
+
+.cat__syntax,
+.cat__pom {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--c-bg, #f6f7f9);
+  font-size: 12px;
+  overflow-x: auto;
+}
+
+.cat__pom {
+  margin: 0;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+.cat__kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 10px 0 0;
+  font-size: 13px;
+}
+
+.cat__kv dt { color: var(--c-text-3, #6b7280); }
+.cat__kv dd { margin: 0; color: var(--c-text, #111827); }
+
+.cat__javatype {
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.cat__deps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+
+/* ---------- Bảng tham số ---------- */
+
+.cat__group { margin-top: 16px; }
+
+.cat__group-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2, #4b5563);
+}
+
+/* Bảng tham số rộng hơn cột chi tiết ở màn hẹp — cuộn ngang trong khối của nó,
+   không để cả trang trượt ngang. */
+.cat__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 6px;
+}
+
+.cat__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.cat__table th,
+.cat__table td {
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--c-border, #e5e7eb);
+}
+
+.cat__table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--c-bg, #f6f7f9);
+  font-weight: 600;
+  color: var(--c-text-2, #4b5563);
+  white-space: nowrap;
+}
+
+.cat__table tbody th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cat__table tr:last-child th,
+.cat__table tr:last-child td { border-bottom: 0; }
+
+.cat__table tr.is-deprecated { background: #fffbeb; }
+
+.cat__req {
+  color: #b91c1c;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.cat__type {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--c-text-2, #4b5563);
+}
+
+.cat__enum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+  max-width: 22ch;
+}
+
+.cat__enum code {
+  font-size: 10px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--c-bg, #f6f7f9);
+  border: 1px solid var(--c-border, #e5e7eb);
+}
+
+.cat__prop-desc {
+  min-width: 28ch;
+  color: var(--c-text-2, #4b5563);
+  line-height: 1.5;
+}
+
+.cat__muted { color: var(--c-text-3, #6b7280); }
+
+.cat__more {
+  margin-top: 12px;
+  border: 1px solid var(--c-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--c-surface, #fff);
+  color: var(--c-text-2, #4b5563);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cat__more:hover { border-color: var(--c-brand-500, #3b82f6); }
+
+/* ---------- Giấy phép (FR-D-073) ---------- */
+
+.cat__license {
+  border-top: 1px solid var(--c-border, #e5e7eb);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--c-text-3, #6b7280);
+  line-height: 1.5;
+}
+
+.cat__license-sub { margin-top: 2px; }
+
+/* ---------- Vòng focus bàn phím (WCAG 2.4.7) ---------- */
+
+.cat__tab:focus-visible,
+.cat__chip:focus-visible,
+.cat__row:focus-visible,
+.cat__search:focus-visible,
+.cat__more:focus-visible,
+.cat__add:focus-visible,
+.cat__link-btn:focus-visible {
+  outline: 2px solid var(--c-brand-600, #0b5cab);
+  outline-offset: 1px;
+}
