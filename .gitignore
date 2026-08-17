@@ -40,6 +40,13 @@ coverage/
 deploy/apisix/routes/tra-cuu-E2E_*.yaml
 routes/demo-wp23-*/
 routes/at-*/
+# Luồng do `lgsp-control routes publish` (WP-23) ghi ra khi chạy DEV. Nguồn sự thật là
+# CSDL + trình thiết kế, không phải cây làm việc; chỉ `_examples/` và `_templates/` là mã nguồn.
+routes/tra-cuu/
+routes/tra-cuu-cong-dan/
+
+# Worktree do công cụ agent tạo (bản sao cả kho — tuyệt đối không commit)
+.claude/worktrees/
 
 # OS / IDE
 .project

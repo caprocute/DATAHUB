@@ -7,6 +7,13 @@ body,
   margin: 0;
 }
 
+/* Trang không bao giờ cuộn ở cấp cửa sổ — mọi vùng cuộn nằm bên trong khung của nó.
+   Xem luật bố cục ngay dưới đây. */
+html,
+body {
+  overflow: hidden;
+}
+
 body {
   background:
     radial-gradient(1200px 600px at 10% -10%, #d7e8f8 0%, transparent 55%),
@@ -15,11 +22,144 @@ body {
   color: #142033;
 }
 
+/* ================================================================
+   LUẬT BỐ CỤC — chiều dọc cố định, cuộn bên trong khung
+   ================================================================
+
+   **Màn hình khóa đúng chiều cao cửa sổ; không màn nào được đẩy trang dài ra.**
+   Nội dung dài hơn chỗ có thì cuộn *bên trong* khung của nó.
+
+   Vì sao: cuộn ở cấp cửa sổ làm trôi mất mọi mốc cố định — thanh lọc, tiêu đề bảng,
+   thanh thao tác — nên ở bảng dài người dùng cuộn xuống rồi không còn biết cột nào là
+   cột nào, muốn bấm nút thao tác lại phải cuộn ngược lên. Khóa khung và cho cuộn bên
+   trong giữ được các mốc đó đứng yên.
+
+   Cách áp dụng cho một màn mới:
+
+   1. **Mặc định, không phải làm gì cả.** `.shell-content` đã là vùng cuộn: màn cao quá
+      thì tự cuộn trong đó, thanh menu và khối người dùng vẫn đứng yên. Đa số màn dừng ở đây.
+
+   2. **Màn cần tự quản chiều cao** (danh mục, trình thiết kế — có panel cuộn riêng, thanh
+      lọc phải dính trên): thêm `.page-fill` cho khối gốc của màn. Nó nhận đúng chiều cao
+      còn lại và **tự khóa cuộn ngoài**, phần con nào cuộn thì tự khai `overflow`.
+
+   Ràng buộc cho mọi vùng cuộn lồng nhau: tổ tiên flex phải có `min-height: 0`, thiếu là
+   flex item không co được và vùng cuộn bị đẩy tràn ra ngoài thay vì cuộn.
+   ================================================================ */
+
+.shell {
+  /* `100vh` chứ không phải `100%`: khóa vào đúng khung nhìn để không phụ thuộc chuỗi
+     chiều cao của tổ tiên. `overflow: hidden` chặn mọi thứ bên trong đẩy trang dài ra. */
+  height: 100vh;
+  overflow: hidden;
+}
+
+.shell-sider {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Cột dọc của side menu: logo (cố định) · menu (co giãn, tự cuộn) · người dùng (dính đáy).
+   **Phải đặt trên `.ant-layout-sider-children`, không phải trên `.shell-sider`.** antd chèn
+   lớp bọc này giữa Sider và các con ta viết, và nó là `display: block` — đặt flex ở ngoài
+   thì không áp tới đâu cả, khối người dùng lơ lửng giữa chừng thay vì dính đáy. */
+.shell-sider > .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.shell-main {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Vùng cuộn mặc định của mọi màn. Đây là nơi duy nhất cuộn theo chiều dọc ở mức khung. */
+.shell-content {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px;
+  /* Padding phải nằm *trong* chiều cao, nếu không con `height: 100%` sẽ tràn đúng
+     48px và sinh lại thanh cuộn ngoài mà ta vừa bỏ đi. */
+  box-sizing: border-box;
+}
+
+/* Màn tự quản chiều cao: nhận đúng phần còn lại, tự lo cuộn bên trong.
+   Dùng cho màn có panel cuộn riêng hoặc thanh lọc phải dính trên.
+
+   `.page-fill` **tự khóa cuộn của khung cha** thay vì trông vào `:has()` trên cha —
+   `:has()` mà không được hỗ trợ thì hỏng *im lặng* (màn vừa cuộn ngoài vừa cuộn trong),
+   đúng lớp lỗi khó thấy nhất. Cách này chỉ dùng flexbox, chạy ở mọi nơi. */
+.page-fill {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  /* Khung cha đang `overflow-y: auto`; con cao đúng 100% nên không bao giờ kích hoạt
+     thanh cuộn đó — vùng cuộn thật nằm sâu bên trong màn. */
+}
+
 .shell-logo {
   color: #fff;
   font-weight: 700;
   letter-spacing: 0.04em;
   font-size: 1.05rem;
+  flex: none;
+  padding: 16px 18px;
+}
+
+/* `flex: 0 1 auto` — cao bằng nội dung, **chỉ co khi thiếu chỗ** rồi tự cuộn. Đặt
+   `flex: 1 1 0` ở đây là menu giành hết chiều cao còn lại, khiến `margin-top: auto` của
+   khối người dùng vô tác dụng và nó không còn dính đáy nữa. */
+.shell-menu {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* Đường viền phải của antd chồng lên mép Sider gây vệt 1px khi cuộn. */
+  border-inline-end: 0;
+}
+
+/* ---------- Khối người dùng ở chân side menu ---------- */
+
+.shell-user {
+  flex: none;
+  /* Dính đáy kể cả khi menu ngắn hơn chiều cao Sider. */
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shell-user__id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shell-user__avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+}
+
+/* Trên nền tối của Sider, `Typography.Text` mặc định lấy màu chữ sáng — phải chỉ định,
+   nếu không tên người dùng gần như đọc không ra. */
+.shell-user__name.ant-typography {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  min-width: 0;
+  margin: 0;
 }
 
 .page-card {
@@ -29,14 +169,9 @@ body {
   padding: 1.25rem 1.5rem;
 }
 
-.designer-page {
-  min-height: calc(100vh - 120px);
-}
-
-/* Canvas designer chiếm chiều cao làm việc */
-.designer-page .flow-shell {
-  min-height: 560px;
-}
+/* Đã gỡ `.designer-page` / `.flow-shell`: mã chết còn sót từ bản mockup — không component
+   nào dùng, và `calc(100vh - 120px)` (trừ hao chiều cao thanh trên bằng số cứng) chính là
+   lối làm mà luật bố cục ở trên cấm. Trình thiết kế nay tự khóa khung bằng `.dsg`. */
 
 /* ---------- Thẻ kết quả thẩm định (màn Kết nạp PH-01) ---------- */
 
