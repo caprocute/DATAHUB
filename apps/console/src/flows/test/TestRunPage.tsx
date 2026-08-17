@@ -1,5 +1,5 @@
 import { Alert, App as AntApp, Button, Empty, Input, Select, Space, Table, Tag, Typography } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../design/designer.css'
 import {
@@ -11,6 +11,14 @@ import {
   type TestRunResult,
   type ValidationResult,
 } from '../../api/routesApi'
+import {
+  buildCurl,
+  endpointUrl,
+  extractSqlParams,
+  liveProxyPath,
+  parseHttpEntry,
+  readFromUri,
+} from './runtime'
 
 /** Nhãn tiếng Việt cho trạng thái từng chặng trong waterfall. */
 const STAGE_VI: Record<string, { label: string; color: string }> = {
@@ -42,6 +50,17 @@ export function TestRunPage() {
   /** Kết quả kiểm tra định nghĩa; có lỗi chặn thì không cho chạy (G5-2). */
   const [findings, setFindings] = useState<ValidationResult['findings']>([])
   const [checking, setChecking] = useState(false)
+  /** Định nghĩa của phiên bản đang chọn — nguồn suy ra điểm chạy thật + tham số SQL. */
+  const [defYaml, setDefYaml] = useState('')
+  /** Query string cho lần gọi LIVE (`tinh=Đà Nẵng`); mồi từ tham số SQL khi đọc xong YAML. */
+  const [liveQuery, setLiveQuery] = useState('')
+  const [liveResult, setLiveResult] = useState<{
+    status: number
+    ok: boolean
+    durationMs: number
+    body: string
+    url: string
+  } | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -68,7 +87,10 @@ export function TestRunPage() {
     if (!versionNo) return
     setChecking(true)
     void getVersion(code, versionNo)
-      .then((v) => validateYaml(v.definitionYaml ?? ''))
+      .then((v) => {
+        if (alive) setDefYaml(v.definitionYaml ?? '')
+        return validateYaml(v.definitionYaml ?? '')
+      })
       .then((r) => alive && setFindings(r.valid ? [] : r.findings))
       .catch(() => {
         // Không kiểm được thì **không** chặn: để máy chủ quyết khi bấm chạy, chặn
@@ -83,7 +105,81 @@ export function TestRunPage() {
 
   const blocking = findings.filter((f) => f.severity?.toUpperCase() === 'ERROR')
 
+  /** Điểm chạy thật suy từ định nghĩa + hệ đích (góp ý: «không biết luồng chạy ở đâu»). */
+  const entry = useMemo(() => {
+    const uri = readFromUri(defYaml)
+    return uri ? parseHttpEntry(uri) : null
+  }, [defYaml])
+  const realUrl = useMemo(
+    () => (entry ? endpointUrl(route?.targetSystem, entry) : null),
+    [entry, route?.targetSystem],
+  )
+  const sqlParams = useMemo(() => extractSqlParams(defYaml), [defYaml])
+
+  // Mồi query LIVE bằng tham số SQL — thiếu param là camel-sql trả 500, khó lần.
+  useEffect(() => {
+    if (sqlParams.length) setLiveQuery(sqlParams.map((p) => `${p}=`).join('&'))
+  }, [sqlParams])
+
+  const curlCmd = useMemo(() => {
+    if (!realUrl || !entry) return null
+    return buildCurl(realUrl, entry.method, sqlParams, entry.method === 'GET' ? undefined : sample)
+  }, [realUrl, entry, sqlParams, sample])
+
+  const copy = useCallback(
+    (text: string, label: string) => {
+      void navigator.clipboard
+        .writeText(text)
+        .then(() => message.success(`Đã chép ${label}`))
+        .catch(() => message.error('Trình duyệt chặn clipboard — chép tay giúp'))
+    },
+    [message],
+  )
+
+  /**
+   * Gọi thật vào runtime qua proxy Vite (trình duyệt vướng CORS nếu gọi thẳng cổng
+   * runtime; curl thì không). Kết quả là phản hồi HTTP thật, không phải waterfall giả lập.
+   */
+  const runLive = useCallback(async () => {
+    if (!entry || !route?.targetSystem) return
+    setRunning(true)
+    setError(null)
+    const t0 = performance.now()
+    try {
+      const url = liveProxyPath(route.targetSystem, entry, liveQuery.trim())
+      const res = await fetch(url, {
+        method: entry.method,
+        ...(entry.method === 'GET'
+          ? {}
+          : { headers: { 'Content-Type': 'application/json' }, body: sample }),
+      })
+      const text = await res.text()
+      let pretty = text
+      try {
+        pretty = JSON.stringify(JSON.parse(text), null, 2)
+      } catch {
+        // giữ nguyên body không phải JSON
+      }
+      setLiveResult({
+        status: res.status,
+        ok: res.ok,
+        durationMs: Math.round(performance.now() - t0),
+        body: pretty,
+        url: realUrl ?? url,
+      })
+    } catch (e) {
+      setError(
+        `Không nối được runtime — kiểm tra hệ đích đang chạy (${realUrl ?? '?'}): ${String(
+          e instanceof Error ? e.message : e,
+        )}`,
+      )
+    } finally {
+      setRunning(false)
+    }
+  }, [entry, route?.targetSystem, liveQuery, sample, realUrl])
+
   const run = useCallback(async () => {
+    if (mode === 'LIVE') return runLive()
     setRunning(true)
     setError(null)
     try {
@@ -95,7 +191,7 @@ export function TestRunPage() {
     } finally {
       setRunning(false)
     }
-  }, [code, versionNo, mode, message])
+  }, [code, versionNo, mode, message, runLive])
 
   return (
     <div className="page-card">
@@ -115,8 +211,45 @@ export function TestRunPage() {
         Chạy thử · {code}
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        Gọi API chạy thử của máy chủ trên môi trường giả lập. Kết quả trả về theo từng chặng.
+        {mode === 'LIVE'
+          ? 'Gọi thẳng vào runtime thật và hiện phản hồi HTTP nguyên văn.'
+          : 'Giả lập khung 9 chặng trên máy chủ — không gọi hệ đích thật, chỉ để kiểm định nghĩa và ghi nhật ký.'}
       </Typography.Paragraph>
+
+      {/* Điểm chạy thật — luồng phơi ở đâu, gọi bằng gì (góp ý người dùng 08/2026). */}
+      {entry &&
+        (realUrl ? (
+          <Alert
+            type="info"
+            style={{ marginBottom: 16 }}
+            message={
+              <Space wrap>
+                <Tag color="#1d4ed8">{entry.method}</Tag>
+                <Typography.Text className="t-mono" copyable={{ text: realUrl }}>
+                  {realUrl}
+                </Typography.Text>
+                <Typography.Text type="secondary" className="t-small">
+                  hệ đích {route?.targetSystem} · cổng {new URL(realUrl).port || '80'}
+                </Typography.Text>
+                {curlCmd && (
+                  <Button size="small" onClick={() => copy(curlCmd, 'lệnh curl')}>
+                    Copy curl
+                  </Button>
+                )}
+              </Space>
+            }
+          />
+        ) : (
+          <Alert
+            type="warning"
+            style={{ marginBottom: 16 }}
+            message={
+              entry.path
+                ? `Chưa khai base URL cho hệ đích «${route?.targetSystem ?? '—'}» — bổ sung vào RUNTIME_BASES (flows/test/runtime.ts) để hiện điểm chạy và curl.`
+                : `Chặng tiếp nhận không phơi HTTP (${entry.uri}) — luồng này gọi nội bộ, không có URL để curl.`
+            }
+          />
+        ))}
 
       <Space wrap align="start" style={{ width: '100%', marginBottom: 16 }}>
         <div>
@@ -140,8 +273,10 @@ export function TestRunPage() {
             value={mode}
             onChange={setMode}
             options={[
-              { value: 'MOCK', label: 'Giả lập đích (MOCK)' },
+              { value: 'MOCK', label: 'Giả lập 9 chặng (MOCK)' },
               { value: 'SANDBOX', label: 'Môi trường thử' },
+              // Chỉ mở LIVE khi luồng có URL thật để gọi.
+              ...(realUrl ? [{ value: 'LIVE', label: 'Gọi thật (LIVE)' }] : []),
             ]}
           />
         </div>
@@ -182,27 +317,83 @@ export function TestRunPage() {
 
       <div className="tst__grid">
         <section>
-          <Typography.Text strong>Bản tin đầu vào</Typography.Text>
-          <Input.TextArea
-            className="t-mono"
-            autoSize={{ minRows: 10, maxRows: 20 }}
-            value={sample}
-            onChange={(e) => setSample(e.target.value)}
-            style={{ marginTop: 6 }}
-          />
-          <Typography.Paragraph type="secondary" className="t-small" style={{ marginTop: 6 }}>
-            Không dán dữ liệu cá nhân thật — nhật ký chạy thử lưu lại kết quả từng chặng.
-          </Typography.Paragraph>
+          {mode === 'LIVE' && entry?.method === 'GET' ? (
+            <>
+              <Typography.Text strong>Query string</Typography.Text>
+              <Input
+                className="t-mono"
+                value={liveQuery}
+                onChange={(e) => setLiveQuery(e.target.value)}
+                placeholder="tinh=Đà Nẵng"
+                style={{ marginTop: 6 }}
+              />
+              <Typography.Paragraph type="secondary" className="t-small" style={{ marginTop: 6 }}>
+                {sqlParams.length
+                  ? `Luồng dùng tham số SQL: ${sqlParams.map((p) => `:#${p}`).join(', ')} — để trống giá trị (vd «${sqlParams[0]}=») nghĩa là không lọc; bỏ hẳn tham số sẽ bị runtime báo lỗi.`
+                  : 'Thêm query string nếu luồng cần; để trống thì gọi URL trần.'}
+              </Typography.Paragraph>
+            </>
+          ) : (
+            <>
+              <Typography.Text strong>Bản tin đầu vào</Typography.Text>
+              <Input.TextArea
+                className="t-mono"
+                autoSize={{ minRows: 10, maxRows: 20 }}
+                value={sample}
+                onChange={(e) => setSample(e.target.value)}
+                style={{ marginTop: 6 }}
+              />
+              <Typography.Paragraph type="secondary" className="t-small" style={{ marginTop: 6 }}>
+                Không dán dữ liệu cá nhân thật — nhật ký chạy thử lưu lại kết quả từng chặng.
+              </Typography.Paragraph>
+            </>
+          )}
         </section>
 
         <section>
-          <Typography.Text strong>Kết quả theo chặng</Typography.Text>
+          <Typography.Text strong>
+            {mode === 'LIVE' ? 'Phản hồi HTTP thật' : 'Kết quả theo chặng'}
+          </Typography.Text>
           {error && (
             <Typography.Paragraph type="danger" style={{ marginTop: 6 }}>
               {error}
             </Typography.Paragraph>
           )}
-          {result ? (
+          {mode === 'LIVE' ? (
+            liveResult ? (
+              <>
+                <Space style={{ margin: '6px 0' }}>
+                  <Tag color={liveResult.ok ? '#15803d' : '#b91c1c'}>HTTP {liveResult.status}</Tag>
+                  <Typography.Text type="secondary">
+                    {liveResult.durationMs} ms · <span className="t-mono">{liveResult.url}</span>
+                  </Typography.Text>
+                  <Button size="small" onClick={() => copy(liveResult.body, 'body phản hồi')}>
+                    Copy body
+                  </Button>
+                </Space>
+                {/* Cuộn trong khung, không đẩy cả trang (luật bố cục §6.1). */}
+                <pre
+                  className="t-mono"
+                  style={{
+                    margin: 0,
+                    padding: 10,
+                    maxHeight: 420,
+                    overflow: 'auto',
+                    border: '1px solid rgba(100,116,139,.25)',
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                >
+                  {liveResult.body}
+                </pre>
+              </>
+            ) : (
+              <Empty
+                style={{ marginTop: 24 }}
+                description="Chưa gọi lần nào. Bấm «Chạy thử» để gọi thẳng runtime."
+              />
+            )
+          ) : result ? (
             <>
               <Space style={{ margin: '6px 0' }}>
                 <Tag color={result.outcome === 'OK' ? '#15803d' : '#b91c1c'}>{result.outcome}</Tag>
