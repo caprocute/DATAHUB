@@ -47,3 +47,49 @@ test_data_privacy_status_platform_admin if {
 		"roles": ["PLATFORM_ADMIN"],
 	}
 }
+
+# ---------- WP-31 · PH-07 RDM (SRS-19 §3.4.7) ----------
+
+test_rdm_read_allowed_for_any_authenticated_role if {
+	authz.allow with input as {
+		"action": "rdm.catalog.read",
+		"roles": ["OPERATOR"],
+	}
+}
+
+test_rdm_read_denied_without_roles if {
+	not authz.allow with input as {
+		"action": "rdm.catalog.read",
+		"roles": [],
+	}
+}
+
+test_rdm_write_allowed_for_data_steward if {
+	authz.allow with input as {
+		"action": "rdm.entry.write",
+		"roles": ["DATA_STEWARD"],
+	}
+}
+
+test_rdm_write_allowed_for_platform_admin if {
+	authz.allow with input as {
+		"action": "rdm.entry.write",
+		"roles": ["PLATFORM_ADMIN"],
+	}
+}
+
+# Cổng chặn thật của WP-31: đọc được **không** kéo theo ghi được.
+# Bảng SRS-19 để trống ô ghi của OPERATOR/INTEGRATION_* — test này giữ đúng điều đó.
+test_rdm_write_denied_for_operator if {
+	not authz.allow with input as {
+		"action": "rdm.entry.write",
+		"roles": ["OPERATOR"],
+	}
+}
+
+test_rdm_write_denied_for_integration_admin if {
+	not authz.allow with input as {
+		"action": "rdm.entry.write",
+		"roles": ["INTEGRATION_ADMIN"],
+	}
+}

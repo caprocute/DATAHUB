@@ -1,0 +1,266 @@
+# WP-31 — PH-07 RDM: danh mục dùng chung có phiên bản (FR-07-001…004, 007…009).
+#
+# Phạm vi bảng bám EN-07-01…03 của SRS PH-07. Ba thực thể còn lại (ánh xạ từ điển
+# quốc gia EN-07-04, ánh xạ chéo EN-07-05, nhật ký đồng bộ EN-07-06) **cố ý chưa dựng**:
+# chúng thuộc FR-07-011…016 nằm ngoài DoD của WP-31 trong IP-04, và từ điển quốc gia
+# hiện chưa ban hành (GD-02) nên dựng bảng bây giờ là đoán lược đồ.
+databaseChangeLog:
+  - changeSet:
+      id: w3-002-ph07-danh-muc
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph07
+            tableName: danh_muc
+            remarks: EN-07-01 — định nghĩa một danh mục dùng chung
+            columns:
+              - column:
+                  name: danh_muc_id
+                  type: UUID
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: ma_danh_muc
+                  type: VARCHAR(60)
+                  constraints: { nullable: false, unique: true }
+              - column:
+                  name: ten
+                  type: VARCHAR(200)
+                  constraints: { nullable: false }
+              # `mo_ta` bắt buộc theo EN-07-01: người dùng phải biết khi nào dùng danh mục nào.
+              - column:
+                  name: mo_ta
+                  type: TEXT
+                  constraints: { nullable: false }
+              - column:
+                  name: don_vi_chu_quan
+                  type: VARCHAR(80)
+                  constraints: { nullable: false }
+              # NATIONAL = chỉ đọc, chỉ đồng bộ (FR-07-002 E1).
+              - column:
+                  name: nguon_goc
+                  type: VARCHAR(16)
+                  constraints: { nullable: false }
+              # Biểu thức chính quy kiểm mã mục (FR-07-001 bước 2).
+              - column:
+                  name: cau_truc_ma
+                  type: VARCHAR(200)
+                  constraints: { nullable: false }
+              - column:
+                  name: co_phan_cap
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column: { name: dai_ma_dia_phuong, type: VARCHAR(100) }
+              - column: { name: phien_ban_hien_tai, type: UUID }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints: { nullable: false }
+        - sql:
+            sql: >-
+              ALTER TABLE ph07.danh_muc ADD CONSTRAINT ck_danh_muc_nguon_goc
+              CHECK (nguon_goc IN ('NATIONAL','LOCAL','HYBRID'))
+        - sql:
+            sql: >-
+              ALTER TABLE ph07.danh_muc ADD CONSTRAINT ck_danh_muc_ma
+              CHECK (ma_danh_muc ~ '^[A-Z0-9_]+$')
+
+  - changeSet:
+      id: w3-002-ph07-phien-ban
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph07
+            tableName: danh_muc_phien_ban
+            remarks: EN-07-02 — phiên bản danh mục, hiệu lực theo thời gian
+            columns:
+              - column:
+                  name: phien_ban_id
+                  type: UUID
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: danh_muc_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_phien_ban_danh_muc
+                    referencedTableSchemaName: ph07
+                    referencedTableName: danh_muc
+                    referencedColumnNames: danh_muc_id
+              - column:
+                  name: so_phien_ban
+                  type: INT
+                  constraints: { nullable: false }
+              - column:
+                  name: hieu_luc_tu
+                  type: DATE
+                  constraints: { nullable: false }
+              # Rỗng = còn hiệu lực (EN-07-02).
+              - column: { name: hieu_luc_den, type: DATE }
+              - column:
+                  name: trang_thai
+                  type: VARCHAR(20)
+                  constraints: { nullable: false }
+              - column: { name: can_cu_ban_hanh, type: VARCHAR(300) }
+              - column: { name: nguoi_soan, type: VARCHAR(100) }
+              - column: { name: nguoi_duyet, type: VARCHAR(100) }
+              - column: { name: phat_hanh_luc, type: TIMESTAMPTZ }
+              - column:
+                  name: so_muc
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints: { nullable: false }
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  constraints: { nullable: false }
+        - addUniqueConstraint:
+            schemaName: ph07
+            tableName: danh_muc_phien_ban
+            columnNames: danh_muc_id, so_phien_ban
+            constraintName: uq_phien_ban_so
+        - sql:
+            sql: >-
+              ALTER TABLE ph07.danh_muc_phien_ban ADD CONSTRAINT ck_phien_ban_trang_thai
+              CHECK (trang_thai IN ('DRAFT','PENDING_APPROVAL','PUBLISHED','SUPERSEDED','RETIRED'))
+        # Khoảng hiệu lực không được ngược đời — bắt tại CSDL chứ không chỉ ở tầng ứng dụng.
+        - sql:
+            sql: >-
+              ALTER TABLE ph07.danh_muc_phien_ban ADD CONSTRAINT ck_phien_ban_khoang
+              CHECK (hieu_luc_den IS NULL OR hieu_luc_den >= hieu_luc_tu)
+
+  - changeSet:
+      id: w3-002-ph07-muc
+      author: lgsp-w3
+      changes:
+        - createTable:
+            schemaName: ph07
+            tableName: muc_danh_muc
+            remarks: EN-07-03 — mục (mã) trong một phiên bản danh mục
+            columns:
+              - column:
+                  name: muc_id
+                  type: UUID
+                  constraints: { primaryKey: true, nullable: false }
+              - column:
+                  name: phien_ban_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_muc_phien_ban
+                    referencedTableSchemaName: ph07
+                    referencedTableName: danh_muc_phien_ban
+                    referencedColumnNames: phien_ban_id
+              - column:
+                  name: ma_muc
+                  type: VARCHAR(60)
+                  constraints: { nullable: false }
+              - column:
+                  name: ten
+                  type: VARCHAR(300)
+                  constraints: { nullable: false }
+              - column: { name: ten_viet_tat, type: VARCHAR(80) }
+              # Sinh tự động lúc lưu — phục vụ tìm không dấu (FR-07-010).
+              - column:
+                  name: ten_khong_dau
+                  type: VARCHAR(300)
+                  constraints: { nullable: false }
+              - column:
+                  name: ma_cha_id
+                  type: UUID
+                  constraints:
+                    foreignKeyName: fk_muc_cha
+                    referencedTableSchemaName: ph07
+                    referencedTableName: muc_danh_muc
+                    referencedColumnNames: muc_id
+              - column:
+                  name: thu_tu
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints: { nullable: false }
+              - column:
+                  name: nguon_goc
+                  type: VARCHAR(16)
+                  constraints: { nullable: false }
+              # Thay cho xóa (RB-05): dữ liệu lịch sử vẫn phải giải mã được.
+              - column:
+                  name: ngung_dung
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column: { name: ma_thay_the, type: VARCHAR(60) }
+              - column: { name: thuoc_tinh, type: JSONB }
+        - addUniqueConstraint:
+            schemaName: ph07
+            tableName: muc_danh_muc
+            columnNames: phien_ban_id, ma_muc
+            constraintName: uq_muc_ma_trong_phien_ban
+        - sql:
+            sql: >-
+              ALTER TABLE ph07.muc_danh_muc ADD CONSTRAINT ck_muc_nguon_goc
+              CHECK (nguon_goc IN ('NATIONAL','LOCAL'))
+        - createIndex:
+            schemaName: ph07
+            tableName: muc_danh_muc
+            indexName: ix_muc_tim_khong_dau
+            columns:
+              - column: { name: ten_khong_dau }
+        - createIndex:
+            schemaName: ph07
+            tableName: muc_danh_muc
+            indexName: ix_muc_phien_ban
+            columns:
+              - column: { name: phien_ban_id }
+
+  # Seed danh mục DVHC dùng cho route thí điểm (DoD WP-31 mục 4).
+  # Idempotent: `onlyUpdate` sai thì Liquibase tự bỏ qua nhờ changeset id đã chạy.
+  - changeSet:
+      id: w3-002-ph07-seed-dvhc
+      author: lgsp-w3
+      comment: Seed danh mục DVHC (tỉnh/thành) — nguồn làm giàu cho route thí điểm WP-36
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              INSERT INTO ph07.danh_muc
+                (danh_muc_id, ma_danh_muc, ten, mo_ta, don_vi_chu_quan, nguon_goc,
+                 cau_truc_ma, co_phan_cap, created_at)
+              VALUES
+                ('11111111-1111-1111-1111-111111111111', 'DVHC',
+                 'Danh mục đơn vị hành chính cấp tỉnh',
+                 'Mã tỉnh/thành phố trực thuộc trung ương theo quy ước Cục Thống kê. Dùng để làm giàu và kiểm tra mã địa bàn trong bản tin.',
+                 'Cục Thống kê', 'NATIONAL', '^[0-9]{2}$', false, now());
+
+              INSERT INTO ph07.danh_muc_phien_ban
+                (phien_ban_id, danh_muc_id, so_phien_ban, hieu_luc_tu, trang_thai,
+                 can_cu_ban_hanh, nguoi_soan, nguoi_duyet, phat_hanh_luc, so_muc, created_at)
+              VALUES
+                ('22222222-2222-2222-2222-222222222222',
+                 '11111111-1111-1111-1111-111111111111', 1, DATE '2020-01-01', 'PUBLISHED',
+                 'Seed DEV — WP-31', 'lgsp-w3', 'lgsp-w3', now(), 10, now());
+
+              UPDATE ph07.danh_muc
+                 SET phien_ban_hien_tai = '22222222-2222-2222-2222-222222222222'
+               WHERE danh_muc_id = '11111111-1111-1111-1111-111111111111';
+
+              INSERT INTO ph07.muc_danh_muc
+                (muc_id, phien_ban_id, ma_muc, ten, ten_viet_tat, ten_khong_dau,
+                 thu_tu, nguon_goc, ngung_dung)
+              VALUES
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '01', 'Thành phố Hà Nội',   'Hà Nội',   'thanh pho ha noi',   1, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '31', 'Thành phố Hải Phòng','Hải Phòng','thanh pho hai phong', 2, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '48', 'Thành phố Đà Nẵng',  'Đà Nẵng',  'thanh pho da nang',   3, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '79', 'Thành phố Hồ Chí Minh','TP. HCM','thanh pho ho chi minh', 4, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '92', 'Thành phố Cần Thơ',  'Cần Thơ',  'thanh pho can tho',   5, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '46', 'Tỉnh Thừa Thiên Huế','Huế',      'tinh thua thien hue', 6, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '40', 'Tỉnh Nghệ An',       'Nghệ An',  'tinh nghe an',        7, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '75', 'Tỉnh Đồng Nai',      'Đồng Nai', 'tinh dong nai',       8, 'NATIONAL', false),
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '56', 'Tỉnh Khánh Hòa',     'Khánh Hòa','tinh khanh hoa',      9, 'NATIONAL', false);
+
+              -- Mã đã ngừng dùng, có mã thay thế: chứng minh RB-05 (không xóa, chỉ ngừng)
+              -- và nhánh E2 của FR-07-007 (trả kèm cờ deprecated + mã thay thế) chạy được thật.
+              INSERT INTO ph07.muc_danh_muc
+                (muc_id, phien_ban_id, ma_muc, ten, ten_viet_tat, ten_khong_dau,
+                 thu_tu, nguon_goc, ngung_dung, ma_thay_the)
+              VALUES
+                (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', '02', 'Tỉnh Hà Tây (đã sáp nhập)', 'Hà Tây', 'tinh ha tay da sap nhap', 10, 'NATIONAL', true, '01');

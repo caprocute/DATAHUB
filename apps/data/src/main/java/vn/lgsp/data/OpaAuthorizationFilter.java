@@ -72,6 +72,15 @@ public class OpaAuthorizationFilter extends OncePerRequestFilter {
   }
 
   static Optional<String> resolveAction(String path) {
+    // PH-07 (WP-31) — permission code theo SRS-19 §3.4.7, **không** dùng chung
+    // `data.rdm.status`: đọc danh mục ai cũng được, sửa thì chỉ DATA_STEWARD.
+    // Thứ tự quan trọng: nhánh quản trị phải xét trước nhánh tra cứu.
+    if (path.startsWith("/api/admin/v1/reference")) {
+      return Optional.of("rdm.entry.write");
+    }
+    if (path.startsWith("/api/v1/reference")) {
+      return Optional.of("rdm.catalog.read");
+    }
     if (path.equals("/api/v1/rdm/status") || path.startsWith("/api/v1/rdm/")) {
       return Optional.of("data.rdm.status");
     }
