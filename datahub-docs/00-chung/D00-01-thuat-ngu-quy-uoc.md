@@ -248,9 +248,9 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | CMP-LAW-11 | Dự thảo Khung Kiến trúc tổng thể quốc gia số | Bốn lớp kiến trúc, năng lực NDOP, KPI, AI | Dự thảo, theo dõi bản chính thức |
 | CMP-LAW-12 | Thông tư 13/2017/TT-BTTTT | Yêu cầu kỹ thuật kết nối với CSDL quốc gia | Cần xác minh |
 | CMP-LAW-13 | Thông tư 39/2017/TT-BTTTT | Danh mục tiêu chuẩn kỹ thuật ứng dụng CNTT trong CQNN | Cần xác minh văn bản thay thế |
-| CMP-LAW-14 | Nghị định 45/2026/NĐ-CP (thay Nghị định 73/2019/NĐ-CP) | Quản lý đầu tư ứng dụng CNTT dùng ngân sách; khung báo cáo nghiên cứu khả thi, thiết kế | Chủ đầu tư chỉ đạo áp dụng văn bản mới (21/11/2026); cần xác minh số hiệu và điều khoản cụ thể |
+| CMP-LAW-14 | Nghị định 224/2026/NĐ-CP ngày 24/6/2026 quy định chi tiết Luật Chuyển đổi số 148/2025/QH15 (hiệu lực 01/7/2026); bãi bỏ NĐ 45/2026 (văn bản từng thay NĐ 73/2019) theo khoản 2 Điều 90 | Quản lý dự án đầu tư hệ thống chuyển đổi số: nội dung BCNCKT (Điều 45), thiết kế cơ sở (Điều 46), tuân thủ Khung kiến trúc tổng thể quốc gia số (Điều 37); dự án chưa có quyết định đầu tư áp dụng NĐ này (khoản 1 Điều 91). Chi phí theo Thông tư 39/2026/TT-BKHCN | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
 | CMP-LAW-15 | Nghị định 30/2020/NĐ-CP | Thể thức văn bản; áp dụng cho trình bày bản .docx | Cần xác minh |
-| CMP-LAW-16 | Luật An ninh mạng và văn bản hướng dẫn | Lưu trữ dữ liệu trong nước, nhật ký | Cần xác minh văn bản hiện hành |
+| CMP-LAW-16 | Luật An ninh mạng số 116/2025/QH15 (hiệu lực 01/7/2026) và văn bản hướng dẫn | Lưu trữ dữ liệu trong nước, nhật ký, bảo vệ hệ thống thông tin | Cần xác minh văn bản hướng dẫn |
 | STD-01 | ISO/IEC/IEEE 29148 | Cấu trúc đặc tả yêu cầu | — |
 | STD-02 | ISO/IEC/IEEE 29119-3 | Cấu trúc tài liệu kiểm thử | — |
 | STD-03 | OWASP ASVS 4.x | Yêu cầu kiểm chứng an toàn ứng dụng | — |
