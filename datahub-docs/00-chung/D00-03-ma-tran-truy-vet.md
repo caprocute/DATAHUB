@@ -45,7 +45,7 @@ Mỗi dòng là một chức năng của hệ cũ. Cột **Kết luận** dùng 
 - **Giữ nguyên:** hệ mới có hành vi tương đương với hệ cũ.
 - **Nâng cấp:** giữ mục đích của chức năng nhưng làm đầy đủ hơn, an toàn hơn hoặc tự động hơn.
 - **Thay thế:** mục đích được đáp ứng bằng một cơ chế khác, thường do thay đổi công nghệ (ví dụ JMX được thay bằng OpenTelemetry).
-- **Loại bỏ:** không đưa sang hệ mới. Mỗi dòng loại bỏ phải có lý do và cần chủ đầu tư chấp thuận.
+- **Loại bỏ:** không đưa sang hệ mới. Mỗi dòng loại bỏ phải có lý do và được chủ đầu tư chấp thuận. Ba mục loại bỏ ở §5.1 đã được chấp thuận ngày 21/11/2026.
 
 Cột **PH đích** là phân hệ Datahub chịu trách nhiệm. Cột **Màn hình vận hành** đánh dấu những màn hình có giá trị vận hành mà theo quyết định Q4 phải được giữ lại dưới dạng thiết kế mới.
 
@@ -318,7 +318,7 @@ Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp �
 
 > Bảng trên được đếm bằng script từ chính các bảng ở mục 4. Khi RTM được xuất ra tệp .xlsx ở đợt 1, script này chạy lại mỗi lần build.
 
-### 5.1. Các mục đề xuất loại bỏ cần chủ đầu tư chấp thuận
+### 5.1. Các mục loại bỏ (chủ đầu tư đã chấp thuận ngày 21/11/2026)
 
 | Mã | Chức năng | Lý do |
 |---|---|---|

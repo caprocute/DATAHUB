@@ -248,7 +248,7 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | CMP-LAW-11 | Dự thảo Khung Kiến trúc tổng thể quốc gia số | Bốn lớp kiến trúc, năng lực NDOP, KPI, AI | Dự thảo, theo dõi bản chính thức |
 | CMP-LAW-12 | Thông tư 13/2017/TT-BTTTT | Yêu cầu kỹ thuật kết nối với CSDL quốc gia | Cần xác minh |
 | CMP-LAW-13 | Thông tư 39/2017/TT-BTTTT | Danh mục tiêu chuẩn kỹ thuật ứng dụng CNTT trong CQNN | Cần xác minh văn bản thay thế |
-| CMP-LAW-14 | Nghị định 73/2019/NĐ-CP và văn bản sửa đổi | Quản lý đầu tư ứng dụng CNTT dùng ngân sách; khung báo cáo NCKT, thiết kế | Cần xác minh văn bản sửa đổi |
+| CMP-LAW-14 | Nghị định 45/2026/NĐ-CP (thay Nghị định 73/2019/NĐ-CP) | Quản lý đầu tư ứng dụng CNTT dùng ngân sách; khung báo cáo nghiên cứu khả thi, thiết kế | Chủ đầu tư chỉ đạo áp dụng văn bản mới (21/11/2026); cần xác minh số hiệu và điều khoản cụ thể |
 | CMP-LAW-15 | Nghị định 30/2020/NĐ-CP | Thể thức văn bản; áp dụng cho trình bày bản .docx | Cần xác minh |
 | CMP-LAW-16 | Luật An ninh mạng và văn bản hướng dẫn | Lưu trữ dữ liệu trong nước, nhật ký | Cần xác minh văn bản hiện hành |
 | STD-01 | ISO/IEC/IEEE 29148 | Cấu trúc đặc tả yêu cầu | — |
