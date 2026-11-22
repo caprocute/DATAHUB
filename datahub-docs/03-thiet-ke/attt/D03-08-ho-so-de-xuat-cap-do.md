@@ -344,3 +344,87 @@ Các con số là cận dưới thận trọng; tỉnh điền dân số thực 
 
 > **Câu hỏi mở Q325:** Cách đếm chủ thể DLCN để áp tiêu chí cấp độ có tính dữ liệu chỉ truyền đưa qua (không lưu) không, và đếm theo năm, theo thời điểm hay lũy kế? Danh mục DLCN nhạy cảm theo Luật 91/2025 và Nghị định 356/2025 có bao gồm thông tin tài khoản thanh toán và dữ liệu tiền án, tiền sự đi qua Datahub không? Cần pháp chế của chủ quản xác nhận để bảng 4.9 dùng đúng định nghĩa.
 
+## 5. Thuyết minh đề xuất cấp độ
+
+### 5.1. Phương pháp
+
+Cấp độ được xác định theo ba bước: vạch ranh giới một HTTT duy nhất (mục 4.2, 5.2); áp từng tiêu chí của Nghị định 331/2026 lên hệ thống và ghi cấp độ tối thiểu mà mỗi tiêu chí đòi hỏi (mục 5.3); lấy cấp cao nhất trong các kết quả theo Điều 8 (mục 5.4). Tiêu chí được đánh mã `TCD-nn` để truy vết; mã này là mã nội bộ của hồ sơ, không phải số điều khoản của nghị định. Những tiêu chí mà nội dung chính xác chưa được đối chiếu toàn văn được đánh dấu và có câu hỏi mở; hồ sơ không viện dẫn số khoản, điểm chưa xác minh.
+
+### 5.2. Một hệ thống, không chia nhỏ
+
+Điều 8 Nghị định 331/2026 cấm chia nhỏ hệ thống về hình thức để hạ cấp độ. Datahub có những bộ phận mà nếu tách riêng có thể trông như hệ cấp thấp — trợ lý AI PH-17 chỉ được nhận dữ liệu tối đa mức Hạn chế, danh mục dùng chung PH-07 hầu như không có DLCN, cổng nhà phát triển PH-15 chỉ chứa tài liệu API. Hồ sơ **không** tách các phần đó, vì chúng dùng chung cụm Kubernetes, CSDL, Keycloak, OpenBao, mạng và đội vận hành với phần xử lý DLCN; một lỗ hổng ở PH-17 hay PH-15 là đường vào cho toàn bộ hệ thống. Toàn bộ nền tảng, kể cả site DR, giám sát, sao lưu và chuỗi cung ứng, được xác định một cấp độ.
+
+**[HT-B]** Lập luận tương tự áp dụng theo chiều ngang: nền tảng dùng chung là một HTTT, không phải 34 HTTT nhỏ ghép lại. Không được lập hồ sơ cho từng tenant với số chủ thể của riêng tỉnh đó để né ngưỡng của nền tảng; số chủ thể của nền tảng là tổng (không trùng lặp) của mọi tỉnh tham gia.
+
+### 5.3. Áp dụng từng tiêu chí
+
+Bảng dưới đây áp từng nhóm tiêu chí lên Datahub. Cột "Cấp tối thiểu" là cấp độ mà riêng tiêu chí đó đòi hỏi; cột cuối cho biết mức chắc chắn của việc áp dụng.
+
+| Mã | Tiêu chí (theo chủ đề) | Đánh giá với Datahub | Cấp tối thiểu `HT-A` | Cấp tối thiểu `HT-B` | Mức chắc chắn |
+|---|---|---|---|---|---|
+| TCD-01 | Xử lý DLCN của từ 100.000 chủ thể DLCN cơ bản trở lên | Mục 4.9: ≥ 300.000 ở `QM-NHO`, ≥ 30 triệu ở `QM-CHUNG` | 3 | 3 | Đã tra ngưỡng |
+| TCD-02 | Xử lý DLCN nhạy cảm của từ 10.000 chủ thể trở lên | Mục 4.9: ≥ 100.000 ở `QM-NHO` | 3 | 3 | Đã tra ngưỡng; định nghĩa nhạy cảm cần đối chiếu (Q325) |
+| TCD-03 | Đối tượng phục vụ và phạm vi: hệ phục vụ hoạt động của cơ quan nhà nước và cung cấp dịch vụ cho người dân trên phạm vi tỉnh | Là nền tảng tích hợp cấp tỉnh, phục vụ dịch vụ công trực tuyến của cả tỉnh | ≥ 3 (theo thông lệ khung cũ) | Liên tỉnh: có thể 4 (Q323) | Cần đối chiếu |
+| TCD-04 | Hạ tầng thông tin dùng chung, nền tảng số dùng chung | Datahub là hạ tầng dùng chung của tỉnh; `HT-B` dùng chung nhiều tỉnh | ≥ 3 | Có thể 4 (Q323) | Cần đối chiếu |
+| TCD-05 | Mức độ ảnh hưởng khi bị phá hoại: tới quyền lợi hợp pháp của tổ chức, cá nhân; tới hoạt động của cơ quan nhà nước; tới quốc phòng, an ninh | Ngừng Datahub làm gián đoạn liên thông TTHC và thanh toán toàn tỉnh; lộ dữ liệu ảnh hưởng số lớn công dân; không xử lý bí mật nhà nước | 3 | 3, có thể 4 nếu ảnh hưởng được đánh giá ở quy mô quốc gia | Cần đối chiếu thang ảnh hưởng |
+| TCD-06 | Xử lý thông tin thuộc bí mật nhà nước | Datahub không được thiết kế và không được phép trao đổi bí mật nhà nước; quy chế kết nối cấm HTTT gửi dữ liệu mật | Không áp dụng | Không áp dụng | Chắc chắn về thiết kế |
+| TCD-07 | Xử lý dữ liệu quan trọng, dữ liệu cốt lõi theo Luật Dữ liệu 60/2024, hoặc là thành phần của CSDL quốc gia | Datahub không là CSDL quốc gia; khai thác CSDL quốc gia qua NDXP với vai trò bên xử lý; PH-06 có thể bị xếp là dữ liệu quan trọng của tỉnh | 3 (nếu PH-06 không bị xếp dữ liệu quan trọng) | 3 hoặc 4 | Chưa xác định (Q324) |
+
+Hai tiêu chí TCD-01 và TCD-02 là căn cứ chắc chắn nhất và đủ một mình đưa hệ thống lên tối thiểu cấp độ 3. Các tiêu chí TCD-03, TCD-04, TCD-05 theo thông lệ khung cũ cũng dẫn tới cấp độ 3 cho hệ cấp tỉnh; chúng được nêu để hồ sơ đầy đủ chứ không phải để củng cố một kết luận đã chắc.
+
+> **Câu hỏi mở Q324:** Theo Luật Dữ liệu 60/2024 và văn bản hướng dẫn, danh mục dữ liệu quan trọng, dữ liệu cốt lõi do ai ban hành và dữ liệu chủ công dân cấp tỉnh (PH-06, bản ghi vàng hợp nhất từ nhiều HTTT) có thuộc danh mục đó không? Nghị định 331/2026 có gắn việc xử lý dữ liệu quan trọng, dữ liệu cốt lõi với cấp độ 4 không? Câu trả lời có thể đẩy hồ sơ lên cấp độ 4 khi bật PH-06.
+
+### 5.4. Kết luận và lý do đề xuất cấp độ 3
+
+[Tên cơ quan đề nghị] đề xuất hệ thống "[Tên hệ thống]" ở **cấp độ 3**. Lý do được tóm lại trong bốn ý. Một, hệ thống chắc chắn đáp ứng tiêu chí số chủ thể DLCN của cấp độ 3 (TCD-01, TCD-02) với khoảng cách lớn so với ngưỡng, nên không thể đề xuất cấp độ 1 hay 2. Hai, theo nguyên tắc lấy cấp cao nhất của Điều 8, cấp độ của hệ thống là cấp cao nhất trong các tiêu chí đáp ứng; với các thông tin đã xác minh, không tiêu chí nào chắc chắn đòi cấp độ 4 cho hồ sơ `HT-A`. Ba, hệ thống không xử lý bí mật nhà nước và không là CSDL quốc gia, hai đặc điểm theo thông lệ thường gắn với cấp độ cao hơn. Bốn, phương án bảo vệ (mục 6) đáp ứng đủ 18 nhóm yêu cầu cấp độ 3 của TCVN 14423:2026 và đã chừa sẵn điểm nâng lên cấp độ 4 (mục 7), nên nếu đơn vị thẩm định kết luận khác thì việc nâng cấp là bổ sung biện pháp chứ không thiết kế lại.
+
+**[HT-A]** Kết luận cấp độ 3 vững với ba điều kiện: PH-06 chưa được bật, hoặc đã bật nhưng Q324 xác nhận không phải dữ liệu quan trọng; Nghị định 331/2026 không có ngưỡng DLCN cấp độ 4 thấp hơn số chủ thể của tỉnh (Q323); và tỉnh không giao Datahub phục vụ hệ thống liên tỉnh. Khi một trong ba điều kiện thay đổi, chủ quản phải đánh giá lại cấp độ (mục 5.5).
+
+**[HT-B]** Đề xuất cấp độ 3 cho nền tảng dùng chung là **đề xuất có điều kiện**. Nền tảng tập trung dữ liệu của hàng chục tỉnh, với số chủ thể cùng bậc với dân số cả nước, nên khả năng tiêu chí phạm vi (TCD-03, TCD-04) hoặc một ngưỡng DLCN cao hơn đòi cấp độ 4 là đáng kể. Hồ sơ khuyến nghị chủ quản nền tảng xin ý kiến đơn vị chuyên trách của Bộ Công an về cấp độ **trước khi** hoàn thiện hồ sơ, và lập dự toán theo hai phương án (cấp độ 3; cấp độ 3 cộng nhóm SEC-90…99).
+
+### 5.5. Các điều kiện làm hệ thống phải lên cấp độ 4
+
+Bảng dưới đây liệt kê các yếu tố có thể đẩy Datahub lên cấp độ 4, đánh giá mức khả năng với từng hồ sơ và việc phải làm khi yếu tố xảy ra. Mã `CD4-nn` là mã nội bộ để theo dõi; mỗi yếu tố gắn với một sự kiện kích hoạt đánh giá lại cấp độ.
+
+| Mã | Yếu tố | `HT-A` | `HT-B` | Khi xảy ra |
+|---|---|---|---|---|
+| CD4-01 | Nghị định 331/2026 có ngưỡng số chủ thể DLCN cho cấp độ 4 và số chủ thể của hệ vượt ngưỡng | Có thể với `QM-LON` hoặc khi bật PH-06 | Khả năng cao | Đánh giá lại, lập hồ sơ điều chỉnh cấp độ |
+| CD4-02 | Dữ liệu do hệ xử lý được xếp là dữ liệu quan trọng/cốt lõi (PH-06), hoặc hệ được giao làm thành phần của CSDL quốc gia | Có thể khi bật PH-06 | Có thể | Như trên; kích hoạt SEC-90, SEC-92 trước tiên |
+| CD4-03 | Hệ phục vụ nhiều tỉnh hoặc phạm vi liên vùng (nền tảng dùng chung) | Không | Đang có — cần xác định đây có phải tiêu chí cấp độ 4 không | Xin ý kiến Bộ Công an (Q323) |
+| CD4-04 | Mức ảnh hưởng khi ngừng hoạt động được đánh giá ở quy mô quốc gia (ví dụ gián đoạn thanh toán, liên thông TTHC của nhiều tỉnh cùng lúc) | Không | Có thể | Như CD4-03 |
+| CD4-05 | Một tenant trên nền tảng dùng chung tự xác định cấp độ 4 (ví dụ tỉnh giao xử lý dữ liệu đặc thù) | — | Có thể | Tenant chuyển `DEDICATED_DB`/`DEDICATED_CLUSTER`, áp SEC-90…99 cho tenant đó |
+| CD4-06 | Thay đổi pháp luật hoặc yêu cầu của cơ quan có thẩm quyền | Có thể | Có thể | Theo yêu cầu |
+
+Câu hỏi then chốt là CD4-03: việc một nền tảng phục vụ nhiều tỉnh tự nó có phải yếu tố cấp độ 4 không. Lập luận ủng hộ: phạm vi ảnh hưởng vượt một địa phương, hậu quả khi bị tấn công có tính hệ thống. Lập luận ngược lại: mỗi tenant được cách ly ở tầng hạ tầng và mật mã (SEC-80…88), nên sự cố ở một tỉnh không lan; Điều 30 cho phép hệ cấp độ 3 dùng chung hạ tầng cloud, tức bản thân việc dùng chung không mặc nhiên nâng cấp độ. Hồ sơ không tự kết luận điểm này.
+
+> **Câu hỏi mở Q323:** (a) Nghị định 331/2026 có tiêu chí cấp độ 4 dựa trên số chủ thể DLCN (ngưỡng bao nhiêu), trên phạm vi phục vụ liên tỉnh, liên vùng, hay trên vai trò nền tảng dùng chung không? (b) Ai là chủ quản của nền tảng dùng chung (cơ quan trung ương được giao, một tỉnh đầu mối, hay doanh nghiệp cung cấp dịch vụ cho thuê), và hồ sơ của từng tỉnh lập đầy đủ hay rút gọn? Câu hỏi này trùng một phần với Q311 của D03-07; câu trả lời quyết định cấp độ và số bộ hồ sơ của `HT-B`.
+
+### 5.6. Hồ sơ nền tảng dùng chung: chủ quản và quan hệ với hồ sơ của tỉnh
+
+**[HT-B]** Mục này đề xuất mô hình hai tầng hồ sơ, chờ trả lời Q323. Bảng dưới đây so sánh ba phương án tổ chức chủ quản đã cân nhắc.
+
+| Phương án | Mô tả | Ưu điểm | Nhược điểm |
+|---|---|---|---|
+| A. Một chủ quản nền tảng, tỉnh lập hồ sơ rút gọn | Cơ quan được giao (trung ương hoặc tỉnh đầu mối) là chủ quản nền tảng, lập một hồ sơ cho toàn nền tảng; mỗi tỉnh lập hồ sơ rút gọn cho phần sử dụng của mình, dẫn chiếu hồ sơ nền tảng | Một phương án bảo vệ thống nhất; tỉnh không phải thẩm định lại phần dùng chung; khớp tinh thần Điều 30 | Cần văn bản giao chủ quản; tỉnh phụ thuộc tiến độ hồ sơ nền tảng |
+| B. Mỗi tỉnh là chủ quản của "hệ của mình", nền tảng là hạ tầng | Mỗi tỉnh lập hồ sơ đầy đủ coi nền tảng như hạ tầng dịch vụ | Tỉnh tự chủ | Phần dùng chung bị thẩm định 34 lần; không ai chịu trách nhiệm cuối cùng cho tầng nền tảng; dễ bị xem là chia nhỏ |
+| C. Doanh nghiệp cung cấp dịch vụ là chủ quản nền tảng | Nền tảng là dịch vụ thuê; doanh nghiệp lập hồ sơ cho nền tảng | Đơn giản cho tỉnh | Chủ quản theo Điều 31 là người đứng đầu cơ quan; vai trò doanh nghiệp cần xác minh |
+
+Bản mẫu chọn **phương án A** làm mặc định. Theo đó, hồ sơ nền tảng xác định cấp độ cho toàn bộ nền tảng theo tổng số chủ thể và phạm vi của mọi tỉnh tham gia (mục 5.2), và phương án bảo vệ của nền tảng bao gồm mọi biện pháp `SEC-nn` ở phần trách nhiệm N và H của D03-07 §12. Hồ sơ rút gọn của mỗi tỉnh gồm: thông tin chung (mục 3) với chủ quản là cơ quan của tỉnh; mô tả phần sử dụng (số HTTT kết nối, người dùng, loại dữ liệu, số chủ thể của tỉnh); dẫn chiếu quyết định phê duyệt cấp độ của nền tảng; và phương án bảo vệ cho phần trách nhiệm C (cấu hình tenant, tài khoản và phân quyền, phân loại dữ liệu và mục đích SEC-37, máy trạm người dùng, ứng phó sự cố phía tỉnh). Hai quy tắc ràng buộc quan hệ giữa hai tầng: cấp độ của phần sử dụng của tỉnh không cao hơn cấp độ đã phê duyệt của nền tảng, trừ khi tenant đó chạy chế độ cách ly riêng có biện pháp bổ sung (CD4-05); và mọi thay đổi làm điều chỉnh cấp độ nền tảng phải được thông báo cho chủ quản của mọi tỉnh.
+
+### 5.7. Trình tự thẩm định và phê duyệt
+
+Trình tự dưới đây dựng theo Điều 25 Nghị định 331/2026 ở mức đã tra (phê duyệt cấp độ lần đầu dựa trên hồ sơ đề xuất cấp độ và phương án bảo vệ); các bước và thời hạn cụ thể chờ Q320, Q321.
+
+```mermaid
+flowchart LR
+  A["Đơn vị vận hành lập hồ sơ<br/>theo bản mẫu D03-08"] --> B["Bộ phận chuyên trách ANM<br/>rà soát nội bộ"]
+  B --> C{"Cấp độ đề xuất"}
+  C -->|Cấp độ 3| D["Đơn vị thẩm định cấp độ 3<br/>(Q321)"]
+  C -->|Cấp độ 4| E["Bộ Công an chủ trì thẩm định"]
+  D & E --> F["Chủ quản phê duyệt cấp độ<br/>và phương án bảo vệ"]
+  F --> G["Triển khai phương án,<br/>kiểm tra trước vận hành (mục 8)"]
+  G --> H["Vận hành chính thức<br/>sau cổng RG-4"]
+```
+
+Sơ đồ thể hiện hai điểm. Hồ sơ được phê duyệt **trước** khi vận hành chính thức, vì BRD đặt phê duyệt cấp độ là điều kiện nghiệm thu (KPI-08) và D05-01 đặt "hồ sơ cấp độ có bằng chứng kiểm thử" là tiêu chí ra của cổng `RG-4`. Bước kiểm tra trước vận hành nằm sau phê duyệt phương án nhưng trước vận hành chính thức, để bằng chứng kiểm tra phản ánh hệ thống thật đã triển khai.
+
