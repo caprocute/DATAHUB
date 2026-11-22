@@ -221,3 +221,554 @@ Dữ liệu di trú Aita được dựng trên MySQL 8 trong Testcontainers theo
 
 Mọi ca kiểm thử tạo dữ liệu mới phải dùng mã có tiền tố `TC{nnn}_` (ví dụ `TC015_DM_A`) để dọn dẹp được và không va chạm giữa các ca chạy song song. Ca kiểm thử chạy song song không được sửa danh mục dùng chung của bộ dữ liệu chuẩn; ca nào cần sửa (ví dụ phát hành `LOAI_HINH_TC`) phải chạy trong nhóm tuần tự `@Isolated` hoặc trên bản sao danh mục tạo bằng chế độ CREATE_CATALOG. Đồng hồ hệ thống trong IT được điều khiển bằng `Clock` tiêm vào (múi giờ `Asia/Ho_Chi_Minh`); ngày "hôm nay" mặc định của bộ dữ liệu là 2026-11-21.
 
+## 3. Tổng quan kịch bản kiểm thử
+
+### 3.1. Danh sách kịch bản
+
+Các kịch bản được nhóm theo chức năng của phân hệ và theo các mối quan tâm xuyên suốt (đa tenant, phân quyền, bộ đệm, phi chức năng). Bảng sau là mục lục kịch bản; chi tiết mục tiêu, tiền điều kiện và test case của từng kịch bản ở mục 4 và mục 5.
+
+| Mã | Tên kịch bản | FR chính | UC | Dải TC |
+|---|---|---|---|---|
+| TS-07-01 | Quản lý danh mục: liệt kê, xem, tạo, sửa, xóa, ngừng hiệu lực | 001–004, 009 | UC-07-01, UC-07-14 | TC-07-001…018 |
+| TS-07-02 | Nhóm danh mục | 010 | — | TC-07-019…023 |
+| TS-07-03 | Lược đồ thuộc tính động và phân cấp | 005–007 | UC-07-01 | TC-07-024…038 |
+| TS-07-04 | Nguồn danh mục, quyền cập nhật, mở rộng HYBRID | 008, 048 | UC-07-17 | TC-07-039…046 |
+| TS-07-05 | Bản nháp và bản ghi | 011–013, 017–019 | UC-07-02 | TC-07-047…066 |
+| TS-07-06 | So sánh phiên bản và phân loại thay đổi phá vỡ | 014 | UC-07-06 | TC-07-067…071 |
+| TS-07-07 | Trình duyệt, duyệt, từ chối, phát hành (máy trạng thái phiên bản) | 015, 016 | UC-07-06, UC-07-07 | TC-07-072…092 |
+| TS-07-08 | Tệp mẫu và nhập tệp theo chế độ | 020, 021 | UC-07-03 | TC-07-093…110 |
+| TS-07-09 | Nhập tệp: định dạng, mã hóa, khuôn Aita, tạo danh mục từ tệp, tệp bất thường | 021, 022 | UC-07-04 | TC-07-111…124 |
+| TS-07-10 | Nhập bản ghi qua API theo lô, idempotency | 023 | UC-07-05 | TC-07-125…130 |
+| TS-07-11 | Xuất danh mục và lịch sử tác vụ | 024, 025 | UC-07-08 | TC-07-131…137 |
+| TS-07-12 | Tra cứu khai thác qua API | 026–031, 033 | UC-07-09 | TC-07-138…156 |
+| TS-07-13 | Truy vấn có cấu trúc (DSL) | 032 | UC-07-10 | TC-07-157…170 |
+| TS-07-14 | Sự kiện và outbox | 034 | — | TC-07-171…176 |
+| TS-07-15 | Đồng bộ danh mục quốc gia (máy trạng thái lần đồng bộ) | 035–039 | UC-07-11 | TC-07-177…190 |
+| TS-07-16 | Hệ thống mã, ánh xạ và chuyển mã | 040–043 | UC-07-13 | TC-07-191…199 |
+| TS-07-17 | ĐVHC: sắp xếp, chuyển mã, tra theo thời điểm, dòng lịch sử | 044–047 | UC-07-12 | TC-07-200…213 |
+| TS-07-18 | Danh mục COMMON, PLATFORM và nạp gói nền | 048, 049 | UC-07-15 | TC-07-214…219 |
+| TS-07-19 | Rò rỉ chéo tenant trên mọi nhóm API | FR-00-011 | — | TC-07-220…233 |
+| TS-07-20 | Ma trận phân quyền PERM-07 × vai trò, bốn mắt, phạm vi tổ chức, scope máy | FR-00-071, D02-08 | — | TC-07-234…255 |
+| TS-07-21 | Kiểm toán và lịch sử | 050 | — | TC-07-256…259 |
+| TS-07-22 | Di trú dữ liệu Aita | 051 | UC-07-16 | TC-07-260…267 |
+| TS-07-23 | Khai thác danh mục RESTRICTED | 052 | — | TC-07-268…271 |
+| TS-07-24 | Tham số PH-07 theo tenant | 053 | — | TC-07-272…274 |
+| TS-07-25 | Bộ đệm, ảnh chụp và chịu lỗi | 028, NFR-07-009, 010 | — | TC-07-275…282 |
+| TS-07-26 | Giao diện E2E và yêu cầu dùng chung FR-00 | 018, FR-00-0xx | Nhiều | TC-07-283…292 |
+| TS-07-27 | Hiệu năng (k6) | NFR-07-001…009, 011, 012 | — | TC-07-293…303 |
+| TS-07-28 | Bảo mật (ASVS) | — | — | TC-07-304…315 |
+| TS-07-29 | Khả năng truy cập | FR-00, WCAG 2.1 AA | — | TC-07-316…320 |
+| TS-07-30 | Nghiệm thu người dùng (UAT) tương đương hệ Aita | LGC-DMDC | — | UAT-01…15 (mục 7) |
+
+### 3.2. Máy trạng thái được kiểm thử
+
+PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng thái hợp lệ và các chuyển không hợp lệ có rủi ro nghiệp vụ cao (sửa phiên bản đã phát hành, commit tác vụ đã hết hạn, xác nhận lần đồng bộ đã áp dụng). Bảng sau tổng hợp chuyển trạng thái và test case phủ; trạng thái tác vụ nhập được hiểu theo mô hình `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` → `COMMITTING` → `COMMITTED` cùng các trạng thái kết thúc `FAILED`, `CANCELLED`, `EXPIRED`, bám theo khung chung và DD-12 (bổ sung `SCANNING`).
+
+> **Câu hỏi mở Q07-75:** Tên chính xác của các trạng thái tác vụ nhập (`PENDING`, `COMMITTING`, `EXPIRED`) chưa được khung chung liệt kê đầy đủ; tài liệu này giả định như trên và cần đối chiếu với SDD/CSDL PH-07 khi ban hành. Nếu SDD dùng tên khác, chỉ cần đổi nhãn trong các ca TC-07-093…124, logic kiểm thử không đổi.
+
+| Máy trạng thái | Chuyển | Hợp lệ | Test case |
+|---|---|---|---|
+| Phiên bản | (tạo) → `DRAFT` | Có | TC-07-047 |
+| Phiên bản | `DRAFT` → `IN_REVIEW` (submit) | Có | TC-07-072 |
+| Phiên bản | `IN_REVIEW` → `APPROVED` (approve) | Có | TC-07-073 |
+| Phiên bản | `APPROVED` → `PUBLISHED` (publish) | Có | TC-07-074 |
+| Phiên bản | `IN_REVIEW` → `DRAFT` (reject) | Có | TC-07-076 |
+| Phiên bản | `DRAFT` → `PUBLISHED` (phát hành trực tiếp) | Có khi `require_approval = false` và không vi phạm BR-07-012 | TC-07-084 |
+| Phiên bản | `DRAFT` → `DISCARDED` | Có | TC-07-064 |
+| Phiên bản | `PUBLISHED` → sửa bất kỳ | Không | TC-07-079, TC-07-080 |
+| Phiên bản | `IN_REVIEW`/`APPROVED` → sửa bản ghi | Không | TC-07-081 |
+| Phiên bản | `DISCARDED` → submit | Không | TC-07-082 |
+| Phiên bản | `DRAFT` → approve (bỏ qua submit) khi `require_approval = true` | Không | TC-07-083 |
+| Phiên bản | `IN_REVIEW`/`APPROVED`/`PUBLISHED` → hủy | Không | TC-07-065 |
+| Danh mục | (tạo) → `DRAFT` | Có | TC-07-005 |
+| Danh mục | `DRAFT` → `ACTIVE` (phát hành lần đầu) | Có | TC-07-075 |
+| Danh mục | `ACTIVE` → `RETIRED` | Có | TC-07-013 |
+| Danh mục | `DRAFT` → xóa mềm | Có | TC-07-011 |
+| Danh mục | `ACTIVE` → xóa | Không | TC-07-012 |
+| Danh mục | `RETIRED` → tạo bản nháp mới | Không | TC-07-016 |
+| Danh mục | `DRAFT` → retire | Không | TC-07-017 |
+| Bản ghi | (thêm) → `ACTIVE` | Có | TC-07-050 |
+| Bản ghi | `ACTIVE` → `DEPRECATED` (kèm mã thay thế) | Có | TC-07-055 |
+| Bản ghi | `DEPRECATED` → `ACTIVE` (khôi phục trong bản nháp mới) | Có | TC-07-057 |
+| Bản ghi | đã phát hành → xóa | Không | TC-07-058 |
+| Tác vụ nhập | `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` | Có | TC-07-095 |
+| Tác vụ nhập | `VALIDATED` → `COMMITTING` → `COMMITTED` | Có | TC-07-095 |
+| Tác vụ nhập | `SCANNING` → `FAILED` (tệp nhiễm) | Có | TC-07-119 |
+| Tác vụ nhập | `PARSING` → `FAILED` (tệp hỏng) | Có | TC-07-115 |
+| Tác vụ nhập | `VALIDATED` → `CANCELLED` | Có | TC-07-107 |
+| Tác vụ nhập | `VALIDATED` → `EXPIRED` (sau 24 giờ) | Có | TC-07-104 |
+| Tác vụ nhập | `COMMITTED`/`EXPIRED`/`CANCELLED` → commit | Không | TC-07-104, TC-07-106, TC-07-108 |
+| Tác vụ nhập | `COMMITTING` → `FAILED` (lỗi giữa chừng, hoàn tác) | Có | TC-07-110 |
+| Lần đồng bộ | `RUNNING` → `NO_CHANGE` | Có | TC-07-179 |
+| Lần đồng bộ | `RUNNING` → `APPLIED` (tự áp dụng) | Có | TC-07-180 |
+| Lần đồng bộ | `RUNNING` → `PENDING_CONFIRMATION` | Có | TC-07-182 |
+| Lần đồng bộ | `PENDING_CONFIRMATION` → `APPLIED` (accept) | Có | TC-07-183 |
+| Lần đồng bộ | `PENDING_CONFIRMATION` → `REJECTED` | Có | TC-07-184 |
+| Lần đồng bộ | `RUNNING` → `FAILED` | Có | TC-07-186 |
+| Lần đồng bộ | `APPLIED`/`REJECTED`/`NO_CHANGE` → accept/reject | Không | TC-07-185 |
+
+## 4. Kịch bản và test case chức năng
+
+### TS-07-01 · Quản lý danh mục: liệt kê, xem, tạo, sửa, xóa, ngừng hiệu lực
+
+**Mục tiêu.** Kịch bản này xác nhận vòng đời của thực thể danh mục (`catalog`) từ khi tạo tới khi xóa (nếu chưa phát hành) hoặc ngừng hiệu lực (nếu đã phát hành), cùng các màn liệt kê và xem chi tiết. Đây là nhóm chức năng thay thế trực tiếp các mục LGC-DMDC-001, 003, 004, 009, 012 của hệ Aita nên được ưu tiên cao.
+
+**Phủ.** FR-07-001, 002, 003, 004, 009; BR-07-001, 020; UC-07-01, UC-07-14; API-07-001…006; UI-07-01, 02, 03; ERR-07-001, 002, 004, 018, 022, 031, 032; EVT-07-01, 02, 03.
+
+**Tiền điều kiện chung.** Bộ dữ liệu chuẩn mục 2 đã nạp; người dùng U-T68-TA, U-T68-DS-NV đăng nhập được; đồng hồ hệ thống 2026-11-21.
+
+#### TC-07-001 · Liệt kê danh mục có lọc, sắp xếp và đếm số lượng
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-001 · API-07-001 · UI-07-01 · LGC-DMDC-001
+- **Tiền điều kiện / dữ liệu** T68 có 9 danh mục riêng (CAT-DT68, CAT-LH, CAT-MUC, CAT-NHAP, CAT-RES, CAT-REF, CAT-BIG và 2 danh mục khác); COMMON có 4 danh mục. Người gọi U-T68-VW.
+- **Bước**
+  1. Gọi `GET /catalogs?page=0&size=20&sort=code,asc`.
+  2. Gọi `GET /catalogs?sourceType=LOCAL&status=ACTIVE`.
+  3. Gọi `GET /catalogs?q=loai hinh` (không dấu).
+  4. Gọi `GET /catalogs?classification=RESTRICTED`.
+- **Mong đợi** Bước 1 trả `200`, `totalElements` = 13 (9 của T68 cộng 4 COMMON hiển thị kèm nhãn nguồn `COMMON`), danh sách sắp theo mã tăng dần, không có danh mục nào của T01 hoặc đã xóa mềm. Bước 2 chỉ trả danh mục LOCAL đang ACTIVE (không có `DM_THU_NGHIEM` vì đang DRAFT). Bước 3 trả `LOAI_HINH_TC` (tìm không dấu theo FR-00-020). Bước 4 trả đúng `TRAM_QUAN_TRAC`. Mỗi phần tử có `code`, `name`, `sourceType`, `status`, `classification`, `currentVersionNo`, `itemCount`. KT: không. EVT: không.
+
+#### TC-07-002 · Liệt kê với tham số phân trang hoặc bộ lọc không hợp lệ
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-001 · API-07-001 · FR-00-021
+- **Tiền điều kiện / dữ liệu** Người gọi U-T68-VW.
+- **Bước**
+  1. Gọi `GET /catalogs?size=200` (biên trên).
+  2. Gọi `GET /catalogs?size=201`.
+  3. Gọi `GET /catalogs?status=ARCHIVED` (giá trị không có trong miền).
+  4. Gọi `GET /catalogs?sort=drop_table,asc` (trường sắp xếp không cho phép).
+- **Mong đợi** Bước 1 trả `200`. Bước 2, 3, 4 trả `400` dạng `application/problem+json`, có trường `errors` chỉ rõ tham số sai, không lộ thông điệp SQL. KT: không.
+
+#### TC-07-003 · Xem chi tiết danh mục phân cấp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-002 · API-07-003, 011, 022, 026 · UI-07-02 · LGC-DMDC-003
+- **Tiền điều kiện / dữ liệu** CAT-LH đã phát hành v1; người gọi U-T68-VW.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/versions`.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/versions/current/attributes`.
+  4. Gọi `GET /catalogs/LOAI_HINH_TC/versions/current/items?page=0&size=50`.
+  5. Trên giao diện, mở UI-07-02 của danh mục, lần lượt bấm các tab Tổng quan, Bản ghi, Thuộc tính, Phiên bản.
+- **Mong đợi** Bước 1 trả `200` với `isHierarchical = true`, `maxDepth = 3`, `levelNames` = `["Khối","Loại","Phân loại"]`, `ETag` khớp `version`. Bước 2 liệt kê v1 `PUBLISHED` có nhãn tính toán "Đang hiệu lực". Bước 3 trả 5 thuộc tính theo `sortOrder`. Bước 4 trả 39 bản ghi, mỗi bản ghi có `depth`, `path`, `levelName`. Giao diện hiển thị đúng số liệu, tab Ánh xạ, Đồng bộ chỉ hiện khi có dữ liệu hoặc quyền tương ứng. KT: không.
+
+#### TC-07-004 · Xem chi tiết danh mục không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-002 · API-07-003 · ERR-07-001
+- **Tiền điều kiện / dữ liệu** Người gọi U-T68-VW.
+- **Bước**
+  1. Gọi `GET /catalogs/KHONG_TON_TAI`.
+  2. Gọi `GET /catalogs/DM_DA_XOA` (danh mục đã bị xóa mềm trước đó ở TC-07-011).
+- **Mong đợi** Cả hai trả `404`, `code` = `ERR-07-001`, thông điệp tiếng Việt "Không tìm thấy danh mục", có `traceId`. KT: không.
+
+#### TC-07-005 · Tạo danh mục thủ công kèm thuộc tính ban đầu
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-003, 005, 007 · BR-07-001 · API-07-002 · UI-07-03 · UC-07-01 · EVT-07-01 · LGC-DMDC-004
+- **Tiền điều kiện / dữ liệu** Người gọi U-T68-DS-NV; mã `TC005_CAP_DO`.
+- **Bước**
+  1. Gọi `POST /catalogs` với `Idempotency-Key: k-005`, thân `{"code":"tc005_cap_do","name":"Cấp độ hồ sơ","sourceType":"LOCAL","classification":"PUBLIC","isHierarchical":false,"requireApproval":true,"ownerOrgId":"<ORG-SNV>","attributes":[{"code":"mo_ta","label":"Mô tả","dataType":"TEXT"},{"code":"so_ngay","label":"Số ngày xử lý","dataType":"INTEGER","minValue":0,"queryable":true}]}`.
+  2. Gọi `GET /catalogs/TC005_CAP_DO` và `GET /catalogs/TC005_CAP_DO/versions`.
+  3. Đọc bảng `ph07_rdm.outbox` và topic `t68.rdm.catalog.created.v1`.
+- **Mong đợi** Bước 1 trả `201`, header `Location` trỏ `/catalogs/TC005_CAP_DO`, mã được chuẩn hóa thành chữ hoa. Bước 2 cho `status = DRAFT`, có đúng một phiên bản v1 `DRAFT`, 2 thuộc tính, `tenantId` = `T68` (lấy từ token). Bước 3: đúng một sự kiện EVT-07-01 dạng CloudEvents (`type` = `vn.datahub.rdm.catalog.created.v1`, `source`, `id` duy nhất, `tenantid` = `t68`). KT: có (CREATE catalog, giá trị sau).
+
+#### TC-07-006 · Tạo danh mục trùng mã trong cùng tenant
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-003 · BR-07-001 · API-07-002 · ERR-07-002
+- **Tiền điều kiện / dữ liệu** CAT-LH tồn tại trong T68; người gọi U-T68-DS-NV.
+- **Bước**
+  1. Gọi `POST /catalogs` với `code` = `loai_hinh_tc` (khác hoa thường), `Idempotency-Key` mới.
+- **Mong đợi** `409`, `ERR-07-002`. Không có bản ghi `catalog` mới. EVT: không. KT: có (CREATE catalog, kết quả thất bại) theo FR-00-040 nếu chính sách kiểm toán ghi cả thao tác bị từ chối nghiệp vụ.
+
+#### TC-07-007 · Tạo danh mục trùng mã danh mục COMMON đang ACTIVE
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-003 · BR-07-001 · ERR-07-002
+- **Tiền điều kiện / dữ liệu** COMMON có `GIOI_TINH` ACTIVE; người gọi U-T68-DS-NV.
+- **Bước**
+  1. Gọi `POST /catalogs` với `code` = `GIOI_TINH`.
+  2. Gọi `POST /catalogs` với `code` = `TC007_GIOI_TINH_RIENG`.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-002` (chi tiết nêu trùng với danh mục dùng chung). Bước 2 trả `201`. EVT: chỉ một EVT-07-01 cho bước 2.
+
+#### TC-07-008 · Gửi lại yêu cầu tạo với cùng Idempotency-Key và cùng nội dung
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-003 · API-07-002 · D03-01 §7.2
+- **Tiền điều kiện / dữ liệu** Đã chạy TC-07-005 với `k-005`.
+- **Bước**
+  1. Gửi lại nguyên văn yêu cầu bước 1 của TC-07-005 trong vòng 24 giờ.
+- **Mong đợi** `201` (hoặc `200` kèm header `Idempotency-Replayed: true` theo D03-04), thân phản hồi giống lần đầu; không có danh mục thứ hai; không có EVT-07-01 thứ hai; không có bản ghi kiểm toán thứ hai.
+
+#### TC-07-009 · Dùng lại Idempotency-Key với nội dung khác
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-003 · ERR-07-022
+- **Tiền điều kiện / dữ liệu** Đã chạy TC-07-005 với `k-005`.
+- **Bước**
+  1. Gọi `POST /catalogs` với `Idempotency-Key: k-005` nhưng `name` = "Tên khác".
+- **Mong đợi** `409`, `ERR-07-022`. Danh mục `TC005_CAP_DO` giữ nguyên tên. EVT: không.
+
+#### TC-07-010 · Cập nhật thông tin danh mục với If-Match đúng
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-004 · API-07-004 · UI-07-03 · EVT-07-02 · LGC-DMDC-009
+- **Tiền điều kiện / dữ liệu** CAT-LH ACTIVE, `ETag` = `"7"`; người gọi U-T68-DS-NV (cùng tổ chức chủ quản).
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC`, lấy `ETag`.
+  2. Gọi `PATCH /catalogs/LOAI_HINH_TC` với `If-Match: "7"`, thân `{"name":"Loại hình tổ chức (sửa)","description":"Mô tả mới"}`.
+- **Mong đợi** `200`, `ETag` mới `"8"`; tên mới hiển thị ở UI-07-01; nội dung phiên bản đã phát hành không đổi (tên danh mục là thông tin của thực thể danh mục, không thuộc ảnh chụp phiên bản). EVT-07-02 phát một lần với danh sách trường đổi. KT: có (UPDATE catalog, giá trị trước và sau).
+
+#### TC-07-011 · Xóa danh mục chưa từng phát hành
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-009 · API-07-005 · UI-07-02 · UC-07-14 · LGC-DMDC-012 · FR-00-050, 051
+- **Tiền điều kiện / dữ liệu** CAT-NHAP (`DM_THU_NGHIEM`, `DRAFT`); người gọi U-T68-TA.
+- **Bước**
+  1. Trên UI-07-02 bấm "Xóa danh mục"; hộp xác nhận hiện, nhập lại mã danh mục để xác nhận.
+  2. Gọi tương đương `DELETE /catalogs/DM_THU_NGHIEM` với `If-Match`.
+  3. Gọi `GET /catalogs/DM_THU_NGHIEM`.
+- **Mong đợi** Bước 2 trả `204`. `catalog.deleted_at` có giá trị, phiên bản nháp chuyển `DISCARDED`. Bước 3 trả `404` `ERR-07-001`. Mã `DM_THU_NGHIEM` có thể dùng lại để tạo danh mục mới (chỉ mục duy nhất loại trừ bản ghi đã xóa mềm). KT: có (DELETE catalog). EVT: không có EVT-07-03 (xóa danh mục chưa phát hành không phát sự kiện cho bên khai thác).
+
+#### TC-07-012 · Không cho xóa danh mục đã phát hành
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-009 · API-07-005 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** CAT-MUC ACTIVE; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `DELETE /catalogs/MUC_DO_DVC` với `If-Match` đúng.
+- **Mong đợi** `409`, `ERR-07-004` với chi tiết gợi ý "Danh mục đã phát hành, hãy dùng chức năng ngừng hiệu lực". Danh mục giữ nguyên. Trên UI-07-02 nút "Xóa" không hiển thị với danh mục ACTIVE (FR-00-053).
+
+> **Câu hỏi mở Q07-76:** Khung chung không có mã lỗi riêng cho "danh mục không ở trạng thái cho phép thao tác" (xóa danh mục ACTIVE, ngừng hiệu lực danh mục DRAFT). Tài liệu này tạm dùng `ERR-07-004` cho TC-07-012 và TC-07-017; đề nghị luồng API cân nhắc cấp mã riêng (ví dụ ERR-07-040) và cập nhật hai ca này.
+
+#### TC-07-013 · Ngừng hiệu lực danh mục đã phát hành
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-009 · API-07-006 · UC-07-14 · EVT-07-03 · LGC-DMDC-012
+- **Tiền điều kiện / dữ liệu** Danh mục `TC013_DM` ACTIVE (tạo và phát hành trong bước chuẩn bị), không bị tham chiếu; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `POST /catalogs/TC013_DM:retire` với thân `{"reason":"Hết căn cứ pháp lý","effectiveDate":"2026-12-01"}`.
+  2. Gọi `GET /catalogs/TC013_DM`.
+- **Mong đợi** Bước 1 trả `200`; `status = RETIRED`; phiên bản hiện hành có `effective_to` = 2026-12-01. EVT-07-03 phát một lần (có `reason`, `effectiveDate`). Con trỏ phiên bản hiệu lực trong bộ đệm bị vô hiệu. KT: có (RETIRE catalog, lý do).
+
+#### TC-07-014 · Không ngừng hiệu lực danh mục đang được tham chiếu
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-009 · BR-07-020 · ERR-07-032
+- **Tiền điều kiện / dữ liệu** CAT-REF ACTIVE có thuộc tính CATALOG_REF trỏ `LOAI_HINH_TC`; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `POST /catalogs/LOAI_HINH_TC:retire` với lý do hợp lệ.
+- **Mong đợi** `409`, `ERR-07-032`, chi tiết liệt kê danh mục tham chiếu `LINH_VUC_TTHC`. `LOAI_HINH_TC` vẫn ACTIVE. EVT: không.
+
+#### TC-07-015 · Tra cứu danh mục đã ngừng hiệu lực
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-009, 026 · ERR-07-031 · BR-07-008
+- **Tiền điều kiện / dữ liệu** `TC013_DM` RETIRED từ 2026-12-01; đồng hồ đặt 2026-12-02; người gọi APP-T68-READ.
+- **Bước**
+  1. Gọi `GET /catalogs/TC013_DM/items/A01`.
+  2. Gọi `GET /catalogs/TC013_DM/items/A01?at=2026-11-25`.
+- **Mong đợi** Bước 1 trả `410`, `ERR-07-031`. Bước 2 trả `200` với bản ghi theo phiên bản hiệu lực tại 2026-11-25 (dữ liệu lịch sử vẫn tra được).
+
+#### TC-07-016 · Không tạo bản nháp mới cho danh mục RETIRED
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-009, 011 · API-07-012 · ERR-07-031
+- **Tiền điều kiện / dữ liệu** `TC013_DM` RETIRED; người gọi U-T68-DS-NV.
+- **Bước**
+  1. Gọi `POST /catalogs/TC013_DM/versions`.
+- **Mong đợi** `410`, `ERR-07-031`. Không có phiên bản mới.
+
+#### TC-07-017 · Không ngừng hiệu lực danh mục chưa phát hành
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-009 · API-07-006 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** Danh mục `TC017_DM` DRAFT; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `POST /catalogs/TC017_DM:retire`.
+- **Mong đợi** `409`, `ERR-07-004` (xem Q07-76), gợi ý dùng xóa. Trạng thái giữ `DRAFT`.
+
+#### TC-07-018 · Cập nhật thông tin danh mục với ETag cũ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-004 · API-07-004 · ERR-07-018 · FR-00-052
+- **Tiền điều kiện / dữ liệu** CAT-LH có `ETag` `"8"` sau TC-07-010; người gọi U-T68-DS-NV.
+- **Bước**
+  1. Gọi `PATCH /catalogs/LOAI_HINH_TC` với `If-Match: "7"`.
+  2. Gọi `PATCH /catalogs/LOAI_HINH_TC` không có `If-Match`.
+  3. Trên giao diện: mở UI-07-03 ở hai tab trình duyệt, lưu tab 1, rồi lưu tab 2.
+- **Mong đợi** Bước 1 trả `412`, `ERR-07-018`. Bước 2 trả `428 Precondition Required` theo quy ước D03-01 §7.2. Bước 3: tab 2 hiển thị hộp thoại xung đột có khác biệt, cho chọn "Tải lại" hoặc "Ghi đè" (FR-00-052). Dữ liệu không bị ghi đè âm thầm.
+
+### TS-07-02 · Nhóm danh mục
+
+**Mục tiêu.** Xác nhận cây nhóm danh mục (EN-07-01) hiển thị ở khung trái UI-07-01 được tạo, sửa, xóa đúng và không cho xóa nhóm còn danh mục. Đây là chức năng mới mức S, không có trong hệ Aita.
+
+**Phủ.** FR-07-010; API-07-007…010; UI-07-01; ERR-07-037.
+
+**Tiền điều kiện chung.** T68 có nhóm `HANH_CHINH` chứa CAT-LH, CAT-MUC và nhóm con `HANH_CHINH.TO_CHUC` rỗng. Người gọi U-T68-TA.
+
+#### TC-07-019 · Tạo nhóm con và xem cây nhóm
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-07-010 · API-07-007, 008 · UI-07-01
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `POST /catalog-groups` thân `{"code":"TC019_NHOM","name":"Nhóm thử","parentId":"<id HANH_CHINH>","sortOrder":5}`.
+  2. Gọi `GET /catalog-groups`.
+  3. Trên UI-07-01, mở rộng nút "Hành chính" ở khung trái.
+- **Mong đợi** Bước 1 trả `201`. Bước 2 trả cây có `TC019_NHOM` dưới `HANH_CHINH`, sắp theo `sortOrder`, mỗi nút có số danh mục. Giao diện hiển thị nhóm mới, bấm vào lọc bảng danh mục theo nhóm (FR-07-001). KT: có (CREATE catalog_group).
+
+#### TC-07-020 · Di chuyển nhóm tạo vòng trong cây nhóm
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-010 · API-07-009
+- **Tiền điều kiện / dữ liệu** `HANH_CHINH` là cha của `HANH_CHINH.TO_CHUC`.
+- **Bước**
+  1. Gọi `PATCH /catalog-groups/<id HANH_CHINH>` với `parentId` = id của `HANH_CHINH.TO_CHUC`, `If-Match` đúng.
+- **Mong đợi** `422` lỗi kiểm tra hợp lệ (chi tiết "tạo vòng trong cây nhóm"). Cây không đổi.
+
+#### TC-07-021 · Xóa nhóm rỗng
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-010 · API-07-010
+- **Tiền điều kiện / dữ liệu** `TC019_NHOM` rỗng.
+- **Bước**
+  1. Gọi `DELETE /catalog-groups/<id TC019_NHOM>`.
+- **Mong đợi** `204`; nhóm không còn trong cây. KT: có (DELETE catalog_group).
+
+#### TC-07-022 · Không xóa được nhóm còn danh mục
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-010 · API-07-010 · ERR-07-037
+- **Tiền điều kiện / dữ liệu** `HANH_CHINH` chứa 2 danh mục.
+- **Bước**
+  1. Gọi `DELETE /catalog-groups/<id HANH_CHINH>`.
+- **Mong đợi** `409`, `ERR-07-037`, chi tiết nêu số danh mục còn lại. Nhóm giữ nguyên.
+
+#### TC-07-023 · Tạo nhóm trùng mã
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-010 · API-07-008
+- **Tiền điều kiện / dữ liệu** Nhóm `HANH_CHINH` tồn tại.
+- **Bước**
+  1. Gọi `POST /catalog-groups` với `code` = `hanh_chinh`.
+- **Mong đợi** `409` lỗi trùng mã (chi tiết chỉ rõ trường `code`). Không tạo nhóm mới.
+
+### TS-07-03 · Lược đồ thuộc tính động và phân cấp
+
+**Mục tiêu.** Xác nhận người soạn khai báo, sửa, ẩn, xóa, sắp thứ tự thuộc tính động trong bản nháp; hệ thống kiểm tra tương thích với dữ liệu hiện có (BR-07-013), chặn thuộc tính mức Nhạy cảm (BR-07-025), sinh đúng JSON Schema và cấu hình phân cấp đúng giới hạn (BR-07-014). Kịch bản thay thế LGC-DMDC-004, 010, 018 (hệ cũ chỉ có tên thuộc tính, thứ tự và trạng thái, không có kiểu).
+
+**Phủ.** FR-07-005, 006, 007; BR-07-006, 013, 014, 025; API-07-022…025, 048; UI-07-04; ERR-07-004, 009, 011, 014, 036.
+
+**Tiền điều kiện chung.** CAT-LH có bản nháp v2 (`DRAFT`) tạo từ v1; người gọi U-T68-DS-NV.
+
+#### TC-07-024 · Thêm thuộc tính với đủ các kiểu dữ liệu và ràng buộc
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-005 · API-07-023, 022 · UI-07-04 · LGC-DMDC-004
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 của CAT-LH.
+- **Bước**
+  1. Lần lượt gọi `POST /catalogs/LOAI_HINH_TC/versions/draft/attributes` cho 11 thuộc tính, mỗi kiểu một thuộc tính: `STRING` (`maxLength` 50, `pattern` `^[A-Z]+$`), `TEXT`, `INTEGER` (`minValue` 0, `maxValue` 1000), `DECIMAL`, `BOOLEAN`, `DATE`, `DATETIME`, `ENUM` (`enumValues` `["A","B"]`), `CATALOG_REF` (`refCatalogCode` `DAN_TOC`), `URI`, `EMAIL`; tất cả không bắt buộc.
+  2. Gọi `GET .../versions/draft/attributes`.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/schema?version=draft`.
+- **Mong đợi** Mỗi lệnh trả `201`. Bước 2 liệt kê 16 thuộc tính (5 cũ, 11 mới) theo `sortOrder`. Bước 3 trả JSON Schema (draft 2020-12) có `properties.attrs.properties` đủ 16 khóa, kiểu ánh xạ đúng (`DATE` thành `string` + `format: date`, `ENUM` thành `enum`, `CATALOG_REF` thành `string` kèm `x-ref-catalog`). Phiên bản v1 đã phát hành vẫn chỉ có 5 thuộc tính. KT: có (CREATE attribute_def × 11).
+
+#### TC-07-025 · Chặn thuộc tính mức Nhạy cảm và tên gợi ý dữ liệu cá nhân
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-005 · BR-07-025 · ERR-07-036
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Gọi thêm thuộc tính với `{"code":"so_dinh_danh","label":"Số định danh cá nhân","dataType":"STRING"}`.
+  2. Gọi thêm thuộc tính `{"code":"ghi_chu","dataType":"TEXT","dataClass":"NHAY_CAM"}` (khai báo mức Nhạy cảm).
+  3. Gọi thêm thuộc tính `{"code":"ngay_sinh_nguoi_dai_dien","label":"Ngày sinh","dataType":"DATE"}`.
+- **Mong đợi** Cả ba trả `422`, `ERR-07-036`, chi tiết nêu lý do (tên khớp danh sách từ khóa dữ liệu cá nhân hoặc mức phân loại bị cấm). Không thuộc tính nào được tạo.
+
+> **Câu hỏi mở Q07-77:** Danh sách từ khóa gợi ý dữ liệu cá nhân (ví dụ `cccd`, `cmnd`, `dinh_danh`, `ngay_sinh`, `so_dien_thoai`, `ho_ten`) cần được ATTT và PH-09 thống nhất, cấu hình được theo nền tảng; TC-07-025 dùng bộ từ khóa mặc định trong SDD.
+
+#### TC-07-026 · Thuộc tính CATALOG_REF trỏ danh mục không tồn tại và ràng buộc mâu thuẫn
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-005 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Thêm thuộc tính `CATALOG_REF` với `refCatalogCode` = `KHONG_CO`.
+  2. Thêm thuộc tính `INTEGER` với `minValue` 10, `maxValue` 5.
+  3. Thêm thuộc tính `ENUM` với `enumValues` rỗng.
+  4. Thêm thuộc tính có `code` = `ma` (trùng cột cố định `MA` của khuôn tệp).
+- **Mong đợi** Mỗi lệnh trả `422`, `ERR-07-009` với mảng `errors` nêu trường sai (`refCatalogCode`, `minValue`, `enumValues`, `code`).
+
+#### TC-07-027 · Không sửa lược đồ của phiên bản đã phát hành
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-005, 006 · BR-07-006 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** v1 của CAT-LH `PUBLISHED`.
+- **Bước**
+  1. Gọi `POST /catalogs/LOAI_HINH_TC/versions/1/attributes`.
+  2. Gọi `PATCH /catalogs/LOAI_HINH_TC/versions/1/attributes/viet_tat`.
+  3. Gọi `DELETE /catalogs/LOAI_HINH_TC/versions/1/attributes/viet_tat`.
+- **Mong đợi** Cả ba trả `409`, `ERR-07-004`. `schema_hash` của v1 không đổi.
+
+#### TC-07-028 · Sửa nhãn, sắp lại thứ tự và ẩn thuộc tính
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-006 · API-07-024 · UI-07-04 · LGC-DMDC-010, 018
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Gọi `PATCH .../attributes/viet_tat` thân `{"label":"Tên viết tắt","sortOrder":1}`.
+  2. Gọi `PATCH .../attributes/website` thân `{"status":"HIDDEN"}`.
+  3. Trên UI-07-04 kéo thả thuộc tính `cap_quan_ly` lên đầu danh sách và lưu.
+  4. Gọi `GET /catalogs/LOAI_HINH_TC/import-template?format=xlsx` (theo bản nháp).
+- **Mong đợi** Các lệnh trả `200`. Thứ tự mới được lưu. Thuộc tính `website` HIDDEN không hiện trong tệp mẫu và không trả trong API khai thác sau khi phát hành, nhưng giá trị cũ vẫn được giữ trong `attrs`. Bộ phân loại khác biệt coi đổi nhãn, thứ tự, ẩn là thay đổi không phá vỡ.
+
+#### TC-07-029 · Đổi kiểu thuộc tính khi mọi giá trị chuyển đổi được
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-006 · BR-07-013 · API-07-024
+- **Tiền điều kiện / dữ liệu** Thuộc tính `ma_so` STRING có giá trị "001", "25", "300" trên 3 bản ghi của bản nháp.
+- **Bước**
+  1. Gọi `PATCH .../attributes/ma_so` thân `{"dataType":"INTEGER"}`.
+  2. Gọi `GET .../versions/draft/diff?against=current`.
+- **Mong đợi** Bước 1 trả `200`; giá trị trong `attrs` được chuyển thành số 1, 25, 300. Bước 2 có mục `ATTRIBUTE_TYPE_CHANGED` đánh dấu `breaking = true` (đổi kiểu là phá vỡ theo khung §3.18).
+
+#### TC-07-030 · Đổi kiểu thuộc tính khi có giá trị không chuyển được
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-006 · BR-07-013 · ERR-07-014
+- **Tiền điều kiện / dữ liệu** `viet_tat` STRING có giá trị "UBND", "SNV".
+- **Bước**
+  1. Gọi `PATCH .../attributes/viet_tat` thân `{"dataType":"INTEGER"}`.
+  2. Gọi `PATCH .../attributes/ngay_thanh_lap` thân `{"dataType":"BOOLEAN"}`.
+- **Mong đợi** Cả hai trả `422`, `ERR-07-014`, chi tiết liệt kê tối đa 20 mã bản ghi có giá trị không chuyển được và tổng số. Lược đồ không đổi.
+
+#### TC-07-031 · Thu hẹp ràng buộc độ dài và miền giá trị
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-006 · BR-07-013 · ERR-07-014
+- **Tiền điều kiện / dữ liệu** `viet_tat` `maxLength` 20, giá trị dài nhất 12 ký tự; `cap_quan_ly` ENUM {`TINH`,`XA`} có cả hai giá trị được dùng.
+- **Bước**
+  1. Gọi đổi `maxLength` thành 12.
+  2. Gọi đổi `maxLength` thành 11.
+  3. Gọi đổi `enumValues` thành `["TINH"]`.
+- **Mong đợi** Bước 1 trả `200` và diff đánh dấu thay đổi phá vỡ (thu hẹp ràng buộc). Bước 2 trả `422` `ERR-07-014` (giá trị 12 ký tự vi phạm). Bước 3 trả `422` `ERR-07-014`.
+
+#### TC-07-032 · Xóa thuộc tính trong bản nháp
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-006 · BR-07-013 · API-07-025
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 có `so_bien_che` với giá trị trên 39 bản ghi.
+- **Bước**
+  1. Gọi `DELETE .../versions/draft/attributes/so_bien_che`.
+  2. Gọi `GET .../versions/draft/diff?against=current`.
+- **Mong đợi** Bước 1 trả `204`; khóa `so_bien_che` bị gỡ khỏi `attrs` của bản ghi trong bản nháp (v1 giữ nguyên). Bước 2 có `ATTRIBUTE_REMOVED` với `breaking = true`; vì có thay đổi phá vỡ, phiên bản phải qua duyệt (BR-07-012).
+
+#### TC-07-033 · Thêm thuộc tính bắt buộc không có giá trị mặc định khi đã có bản ghi
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-005 · BR-07-013 · ERR-07-014
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 có 39 bản ghi.
+- **Bước**
+  1. Thêm thuộc tính `ma_qhns` STRING `required = true`, không `defaultValue`.
+  2. Thêm lại với `defaultValue` = "CHUA_CO".
+- **Mong đợi** Bước 1 trả `422` `ERR-07-014`. Bước 2 trả `201`, 39 bản ghi nhận giá trị mặc định.
+
+#### TC-07-034 · Bật ràng buộc duy nhất khi dữ liệu đang trùng
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-006 · BR-07-013 · ERR-07-014
+- **Tiền điều kiện / dữ liệu** Hai bản ghi có `viet_tat` = "SNV".
+- **Bước**
+  1. Gọi `PATCH .../attributes/viet_tat` thân `{"uniqueInVersion":true}`.
+- **Mong đợi** `422`, `ERR-07-014`, chi tiết nêu giá trị trùng "SNV" và hai mã bản ghi.
+
+#### TC-07-035 · Cấu hình phân cấp: bật cây, số cấp, tên cấp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-007 · BR-07-014 · API-07-002, 004 · UI-07-03 · LGC-DMDC-002
+- **Tiền điều kiện / dữ liệu** Danh mục mới `TC035_CAY` phẳng, DRAFT.
+- **Bước**
+  1. Gọi `PATCH /catalogs/TC035_CAY` thân `{"isHierarchical":true,"maxDepth":4,"levelNames":["Cấp 1","Cấp 2","Cấp 3","Cấp 4"]}`.
+  2. Thêm 4 bản ghi lồng nhau `A`, `A.1` (cha `A`), `A.1.1`, `A.1.1.1`.
+  3. Mở tab Bản ghi dạng cây trên UI-07-02.
+- **Mong đợi** Bước 1 trả `200`. Bước 2 thành công, `depth` lần lượt 1…4, `levelName` đúng tên cấp, `path` đúng chuỗi tổ tiên. Cây hiển thị 4 cấp.
+
+#### TC-07-036 · Số cấp tối đa vượt giới hạn 10
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-007 · BR-07-014
+- **Tiền điều kiện / dữ liệu** `TC035_CAY`.
+- **Bước**
+  1. Đặt `maxDepth` = 10 với 10 tên cấp.
+  2. Đặt `maxDepth` = 11.
+  3. Đặt `maxDepth` = 3 nhưng `levelNames` có 2 phần tử.
+- **Mong đợi** Bước 1 trả `200`. Bước 2 và 3 trả `422` lỗi kiểm tra hợp lệ (trường `maxDepth`, `levelNames`).
+
+#### TC-07-037 · Giảm số cấp dưới độ sâu dữ liệu hiện có
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-007 · BR-07-014 · ERR-07-011
+- **Tiền điều kiện / dữ liệu** `TC035_CAY` có bản ghi độ sâu 4.
+- **Bước**
+  1. Gọi `PATCH /catalogs/TC035_CAY` thân `{"maxDepth":3,"levelNames":["Cấp 1","Cấp 2","Cấp 3"]}`.
+- **Mong đợi** `422`, `ERR-07-011`, chi tiết nêu mã `A.1.1.1` vượt cấp.
+
+#### TC-07-038 · JSON Schema sinh từ định nghĩa kiểm tra đúng bản ghi
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** UT (jqwik)
+- **Truy vết** FR-07-005, 013, 033 · ADR-050
+- **Tiền điều kiện / dữ liệu** Bộ sinh định nghĩa thuộc tính ngẫu nhiên (jqwik) gồm mọi kiểu và ràng buộc.
+- **Bước**
+  1. Với mỗi định nghĩa ngẫu nhiên, sinh JSON Schema; sinh 100 giá trị hợp lệ và 100 giá trị vi phạm từng ràng buộc.
+  2. Kiểm tra bằng bộ kiểm tra JSON Schema (networknt) và bằng bộ kiểm tra nghiệp vụ của PH-07.
+- **Mong đợi** Giá trị hợp lệ được chấp nhận, giá trị vi phạm bị từ chối; hai bộ kiểm tra cho kết quả giống nhau 100%.
+
+### TS-07-04 · Nguồn danh mục, quyền cập nhật và mở rộng HYBRID
+
+**Mục tiêu.** Xác nhận ba loại nguồn (`LOCAL`, `NATIONAL`, `HYBRID`) được thiết lập đúng, danh mục NATIONAL chỉ cập nhật qua đồng bộ, danh mục HYBRID chỉ chứa bản ghi bổ sung trong dải mã địa phương và khi tra cứu trả hợp của bản COMMON hiệu lực với phần bổ sung (ADR-052). Thay thế cờ `Is_update` của Aita (LGC-DMDC-017).
+
+**Phủ.** FR-07-008, 048; BR-07-009, 010; UC-07-17; API-07-002, 004, 027, 041, 042; ERR-07-003, 008, 012.
+
+**Tiền điều kiện chung.** CAT-DT, CAT-DT68 như mục 2.3; người gọi U-T68-DS-NV.
+
+#### TC-07-039 · Tạo danh mục HYBRID mở rộng danh mục COMMON
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-008, 048 · UC-07-17 · API-07-002 · LGC-DMDC-017
+- **Tiền điều kiện / dữ liệu** `QUOC_TICH` (COMMON) ACTIVE.
+- **Bước**
+  1. Gọi `POST /catalogs` thân `{"code":"TC039_QT_T68","name":"Quốc tịch mở rộng T68","sourceType":"HYBRID","extendsCatalogCode":"QUOC_TICH","localCodePattern":"^68\\.[0-9]{2}$"}`.
+  2. Gọi `GET /catalogs/TC039_QT_T68`.
+- **Mong đợi** `201`; `extendsCatalogId` trỏ đúng `QUOC_TICH` COMMON; lược đồ thuộc tính của bản nháp kế thừa từ phiên bản hiện hành của danh mục gốc (chỉ đọc), không thêm được thuộc tính bắt buộc mới. EVT-07-01 phát.
+
+#### TC-07-040 · Thêm bản ghi bổ sung trong dải mã địa phương
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-008, 048 · BR-07-010 · API-07-027
+- **Tiền điều kiện / dữ liệu** CAT-DT68 có bản nháp.
+- **Bước**
+  1. Gọi `POST /catalogs/DAN_TOC_T68/versions/draft/items` thân `{"code":"68.03","name":"Nhóm địa phương thử"}`.
+- **Mong đợi** `201`; bản ghi có `isLocalExtension = true`. KT: có.
+
+#### TC-07-041 · Thêm bản ghi HYBRID ngoài dải mã địa phương
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-008 · BR-07-010 · ERR-07-012 · AT-07-007 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** CAT-DT68 có bản nháp.
+- **Bước**
+  1. Thêm bản ghi `code` = `69.01`.
+  2. Thêm bản ghi `code` = `68.1`.
+- **Mong đợi** Cả hai trả `422`, `ERR-07-012`, chi tiết có biểu thức dải hợp lệ `^68\.[0-9]{2}$`.
+
+#### TC-07-042 · Bản ghi HYBRID trùng mã danh mục gốc
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** BR-07-010 · ERR-07-008
+- **Tiền điều kiện / dữ liệu** Danh mục HYBRID `TC042_DT` với dải rộng `^[0-9]{2}$` (cố ý chồng lấn với mã gốc `01`…`55`).
+- **Bước**
+  1. Thêm bản ghi `code` = `05`.
+  2. Thêm bản ghi `code` = `90`.
+- **Mong đợi** Bước 1 trả `409`, `ERR-07-008` (trùng mã của danh mục gốc). Bước 2 trả `201`.
+
+> **Câu hỏi mở Q07-78:** Khi tạo danh mục HYBRID, có nên chặn ngay biểu thức dải mã địa phương chồng lấn với mã hiện có của danh mục gốc hay chỉ chặn từng bản ghi như TC-07-042? Ca kiểm thử hiện theo cách chặn từng bản ghi.
+
+#### TC-07-043 · Tra cứu danh mục HYBRID trả hợp bản COMMON và phần bổ sung
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-048, 028, 026 · ADR-052 · API-07-041, 042
+- **Tiền điều kiện / dữ liệu** CAT-DT68 v1 đã phát hành với 2 bản ghi bổ sung; `DAN_TOC` COMMON có 55 bản ghi. Người gọi APP-T68-READ.
+- **Bước**
+  1. Gọi `GET /catalogs/DAN_TOC_T68/items?limit=1000`.
+  2. Gọi `GET /catalogs/DAN_TOC_T68/items/05`.
+  3. Gọi `GET /catalogs/DAN_TOC_T68/items/68.01`.
+  4. Gọi `GET /catalogs/DAN_TOC/items/68.01` bằng APP-T68-READ.
+- **Mong đợi** Bước 1 trả 57 bản ghi, phần bổ sung có `isLocalExtension = true`. Bước 2 trả bản ghi gốc. Bước 3 trả bản ghi bổ sung. Bước 4 trả `404` `ERR-07-007` (bản ghi địa phương không lẫn vào danh mục COMMON).
+
+#### TC-07-044 · Tenant sửa bản ghi gốc qua danh mục HYBRID hoặc trực tiếp danh mục COMMON
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-048 · BR-07-009, 010 · ERR-07-003
+- **Tiền điều kiện / dữ liệu** CAT-DT68 có bản nháp; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `PATCH /catalogs/DAN_TOC_T68/versions/draft/items/05` sửa tên.
+  2. Gọi `POST /catalogs/DAN_TOC/versions` (tạo bản nháp danh mục COMMON).
+  3. Gọi `POST /catalogs/DAN_TOC/versions/draft/items`.
+- **Mong đợi** Cả ba trả `403`, `ERR-07-003`. Không có thay đổi trong dữ liệu COMMON (kiểm tra `updated_at` của danh mục `DAN_TOC`). EVT: không.
+
+#### TC-07-045 · Không sửa thủ công danh mục NATIONAL
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-008 · BR-07-009 · ERR-07-003 · AT-07-005 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** Danh mục `TC045_NAT` của T68 `sourceType = NATIONAL` được tạo bởi đồng bộ.
+- **Bước**
+  1. Người dùng U-T68-TA gọi `POST /catalogs/TC045_NAT/versions`.
+  2. Gọi `POST /import-jobs` nhập vào `TC045_NAT`.
+  3. Gọi `PATCH /catalogs/TC045_NAT` đổi `sourceType` thành `LOCAL`.
+- **Mong đợi** Bước 1, 2 trả `403` `ERR-07-003`. Bước 3 trả `403` `ERR-07-003` (không đổi nguồn của danh mục đã gắn đồng bộ; muốn tách phải gỡ nguồn đồng bộ trước theo quy trình ở FRS).
+
+#### TC-07-046 · Danh mục HYBRID tự theo phiên bản mới của danh mục gốc
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-048 · ADR-052 · EVT-07-05
+- **Tiền điều kiện / dữ liệu** U-PA phát hành `DAN_TOC` v mới thêm mã `56` hiệu lực 2026-11-21.
+- **Bước**
+  1. Sau khi nhận sự kiện `common.rdm.catalog.published.v1`, gọi `GET /catalogs/DAN_TOC_T68/items/56` bằng APP-T68-READ.
+  2. Gọi `GET /catalogs/DAN_TOC_T68/items/56?at=2026-11-20`.
+- **Mong đợi** Bước 1 trả `200` trong vòng 5 giây sau sự kiện (con trỏ hiệu lực được làm mới). Bước 2 trả `404` `ERR-07-007` (trước ngày hiệu lực).
+

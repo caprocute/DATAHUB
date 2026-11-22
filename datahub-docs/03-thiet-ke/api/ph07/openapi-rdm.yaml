@@ -1,0 +1,1739 @@
+openapi: 3.1.0
+# D03-04-PH07 · Đặc tả OpenAPI phân hệ PH-07 Danh mục dùng chung (RDM)
+# Tài liệu văn xuôi đi kèm: ../D03-04-PH07-api-danh-muc.md
+# Hợp đồng mã: API-07-001…075 (API-07-076 chuyển sang PH-18, xem x-datahub-notes),
+# ERR-07-001…037 (+ ERR-07-040…047 đề xuất bổ sung), EVT-07-01…10 (asyncapi-rdm.yaml).
+info:
+  title: Datahub · PH-07 Danh mục dùng chung (RDM) API
+  version: 1.0.0-draft
+  summary: Quản trị, phát hành, khai thác và chuyển mã danh mục dùng chung đa tenant.
+  description: |
+    API của phân hệ PH-07 (module `rdm` trong đơn vị triển khai `dh-data`) phục vụ hai nhóm
+    người dùng khác nhau và vì vậy được chia thành hai mặt:
+
+    * **Mặt quản trị** (người dùng qua giao diện Datahub, token Authorization Code + PKCE):
+      tạo danh mục, khai báo lược đồ thuộc tính, soạn bản nháp, nhập tệp, trình duyệt,
+      phát hành, đồng bộ quốc gia, ánh xạ mã. Phân trang theo trang (`page`, `size` ≤ 200).
+    * **Mặt khai thác** (HTTT thành viên, token Client Credentials với scope `rdm.read`,
+      `rdm.query`, `rdm.write`): tra cứu một mã, tra lô, lấy toàn bộ theo con trỏ, cây,
+      delta, truy vấn có cấu trúc, chuyển mã ĐVHC, chuyển mã qua bảng ánh xạ.
+      Phân trang theo con trỏ (`cursor`, `limit` ≤ 1000), có ETag và Cache-Control vì
+      phiên bản đã phát hành là bất biến.
+
+    Quy ước chung (D03-01 SAD §7.2): tenant lấy từ token, không truyền qua tham số; lệnh
+    tạo nhận `Idempotency-Key` (lưu 24 giờ, so băm SHA-256 thân yêu cầu); lệnh sửa và lệnh
+    đổi trạng thái bắt buộc `If-Match` với ETag sinh từ cột `version`; lệnh đổi trạng thái
+    dùng hậu tố `:{hành-động}`; lỗi theo RFC 9457 (`application/problem+json`) với mã
+    `ERR-07-nnn`; header `traceparent` (W3C Trace Context) được truyền xuyên suốt.
+
+    Mọi tên miền, máy chủ, client và dữ liệu trong tài liệu này là **giả lập** phục vụ
+    minh họa; không có giá trị kết nối thật.
+  contact:
+    name: Nhóm phân hệ PH-07
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH07
+  x-datahub-phase: PH-07
+servers:
+  - url: https://api.{tenantHost}.datahub.example.vn/api/rdm/v1
+    description: Cổng API (APISIX) của một tenant tỉnh — giả lập
+    variables:
+      tenantHost:
+        default: lamdong
+        description: Tên máy chủ theo tenant, ví dụ `lamdong` cho tenant T68 (giả lập).
+  - url: http://localhost:8080/api/rdm/v1
+    description: Môi trường phát triển cục bộ (`dh-data` chạy trực tiếp, không qua APISIX)
+security:
+  - oauth2User: []
+tags:
+  - name: Danh mục
+    description: Thông tin chung của danh mục, vòng đời DRAFT → ACTIVE → RETIRED (FR-07-001…009).
+  - name: Nhóm danh mục
+    description: Cây phân loại danh mục (FR-07-010).
+  - name: Phiên bản
+    description: Bản nháp, kiểm tra, trình duyệt, duyệt, phát hành, so sánh (FR-07-011…017).
+  - name: Thuộc tính
+    description: Lược đồ thuộc tính động theo từng phiên bản (FR-07-005, 006).
+  - name: Bản ghi (quản trị)
+    description: Thêm, sửa, ngừng dùng, xóa bản ghi trên bản nháp; nhập lô qua API (FR-07-012, 019, 023).
+  - name: Nhập xuất
+    description: Tệp mẫu, tác vụ nhập hai pha, tác vụ xuất, lịch sử tác vụ (FR-07-020…025).
+  - name: Khai thác
+    description: API tra cứu cho HTTT, có bộ đệm và ETag (FR-07-026…031, 033).
+  - name: Truy vấn
+    description: Truy vấn có cấu trúc bằng DSL JSON trên thuộc tính `queryable` (FR-07-032).
+  - name: Đơn vị hành chính
+    description: Sự kiện sắp xếp ĐVHC, dòng lịch sử, chuyển đổi mã cũ sang mới (FR-07-044…047).
+  - name: Đồng bộ quốc gia
+    description: Nguồn đồng bộ NDXP qua PH-14, lần chạy, xác nhận thay đổi phá vỡ, đề xuất bổ sung (FR-07-035…039).
+  - name: Ánh xạ mã
+    description: Hệ thống mã ngoài, bảng ánh xạ, chuyển mã, độ phủ (FR-07-040…043).
+  - name: Kiểm toán và quyền khai thác
+    description: Lịch sử kiểm toán (đọc từ PH-13), cấp quyền khai thác danh mục RESTRICTED (FR-07-050, 052).
+  - name: Nền tảng
+    description: API liên tenant dưới `/api/platform/rdm/v1`, chỉ dành cho PH-20 và quản trị nền tảng (FR-07-049).
+x-datahub-notes:
+  - id: API-07-076
+    text: >-
+      API-07-076 (GET/PATCH /settings) không còn được đặc tả ở PH-07. Theo quyết định ánh xạ
+      DD-14, tham số PH-07 lưu ở `ph18_ops.config_param` với namespace `07.rdm` và được đọc,
+      ghi qua API tham số của PH-18. Các khóa và ý nghĩa vẫn được mô tả ở D03-04-PH07 §2.12.
+paths:
+  # ------------------------------------------------------------------ Danh mục
+  /catalogs:
+    get:
+      tags: [Danh mục]
+      operationId: listCatalogs
+      summary: Danh sách danh mục
+      description: |
+        Trả danh sách danh mục mà người gọi được thấy: danh mục của tenant hiện tại cộng danh mục
+        COMMON (RLS `tenant_id IN (current, 'COMMON')`). Lọc theo nhóm, nguồn, trạng thái, phân
+        loại; tìm từ khóa không dấu trên mã và tên. Kèm số đếm theo trạng thái trong `facets`
+        để giao diện UI-07-01 hiển thị huy hiệu. HTTT có scope `rdm.read` cũng gọi được để khám
+        phá danh mục (FR-07-033); khi đó danh mục RESTRICTED chỉ hiện nếu HTTT được cấp quyền.
+      x-datahub-id: API-07-001
+      x-datahub-fr: [FR-07-001, FR-07-033]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        orgScoped: false
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - name: groupId
+          in: query
+          description: Lọc theo nhóm danh mục; bao gồm cả nhóm con.
+          schema: { type: string, format: uuid }
+        - name: sourceType
+          in: query
+          style: form
+          explode: false
+          description: Lọc theo nguồn, chọn nhiều bằng dấu phẩy.
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/SourceType' }
+        - name: status
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/CatalogStatus' }
+        - name: classification
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/Classification' }
+        - name: scope
+          in: query
+          description: '`ALL` (mặc định) gồm danh mục tenant và COMMON; `TENANT` chỉ của tenant; `COMMON` chỉ danh mục dùng chung toàn quốc.'
+          schema: { type: string, enum: [ALL, TENANT, COMMON], default: ALL }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: sort
+          in: query
+          description: Trường sắp xếp, tiền tố `-` cho giảm dần. Cho phép `code`, `name`, `updatedAt`, `itemCount`.
+          schema: { type: string, default: code, pattern: '^-?(code|name|updatedAt|itemCount)$' }
+        - $ref: '#/components/parameters/Traceparent'
+        - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Một trang danh mục.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogPage' }
+              examples:
+                trangDau: { $ref: '#/components/examples/CatalogPageExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+    post:
+      tags: [Danh mục]
+      operationId: createCatalog
+      summary: Tạo danh mục kèm bản nháp phiên bản 1
+      description: |
+        Tạo danh mục mới ở trạng thái `DRAFT` cùng phiên bản nháp số 1 và các thuộc tính ban đầu
+        trong một giao dịch. Mã danh mục được chuẩn hóa chữ hoa, phải duy nhất trong tenant và
+        không trùng mã danh mục COMMON đang ACTIVE (BR-07-001). Danh mục `NATIONAL` không tạo
+        được qua API này mà qua API-07-056 (nguồn đồng bộ). Danh mục `HYBRID` bắt buộc
+        `extendsCatalogCode` trỏ tới danh mục COMMON/NATIONAL và `localCodePattern`.
+        Thuộc tính có tên gợi ý dữ liệu cá nhân hoặc mức Nhạy cảm bị từ chối (BR-07-025).
+        Phát sự kiện EVT-07-01 qua outbox.
+      x-datahub-id: API-07-002
+      x-datahub-fr: [FR-07-003, FR-07-005, FR-07-007, FR-07-008]
+      x-datahub-permission:
+        permission: PERM-07-create
+        orgScoped: true
+        note: DATA_STEWARD chỉ tạo được danh mục có `ownerOrgId` là tổ chức của mình hoặc tổ chức cấp dưới; PLATFORM_ADMIN tạo danh mục COMMON.
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogCreateRequest' }
+            examples:
+              loaiHinhDn: { $ref: '#/components/examples/CatalogCreateLoaiHinhDn' }
+              hybridDvhc: { $ref: '#/components/examples/CatalogCreateHybrid' }
+      responses:
+        '201':
+          description: Đã tạo danh mục và bản nháp phiên bản 1.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catalog' }
+              examples:
+                daTao: { $ref: '#/components/examples/CatalogLoaiHinhDn' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Danh mục]
+      operationId: getCatalog
+      summary: Chi tiết danh mục
+      description: |
+        Trả thông tin danh mục, phiên bản hiện hành, phiên bản đang mở (nếu có), cấu hình phân cấp,
+        nguồn và số liệu tóm tắt. Header `ETag` dùng cho PATCH/DELETE/`:retire` tiếp theo.
+        Danh mục đã xóa mềm trả 404; danh mục RETIRED vẫn trả 200 với `status = RETIRED`.
+      x-datahub-id: API-07-003
+      x-datahub-fr: [FR-07-002]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Chi tiết danh mục.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catalog' }
+              examples:
+                dvhc: { $ref: '#/components/examples/CatalogDvhc' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Danh mục]
+      operationId: updateCatalog
+      summary: Cập nhật thông tin danh mục
+      description: |
+        Cập nhật một phần theo JSON Merge Patch (RFC 7396): trường vắng mặt giữ nguyên, trường
+        `null` xóa giá trị (chỉ với trường không bắt buộc). Không đổi được `code`, `sourceType`
+        (trừ LOCAL → HYBRID khi chưa phát hành), `extendsCatalogCode` sau khi đã phát hành.
+        Thay đổi `maxDepth` nhỏ hơn độ sâu thực tế của phiên bản hiện hành bị từ chối ERR-07-011.
+        Phát EVT-07-02.
+      x-datahub-id: API-07-004
+      x-datahub-fr: [FR-07-004, FR-07-008]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/CatalogUpdateRequest' }
+            examples:
+              doiTen:
+                summary: Đổi mô tả và bật yêu cầu duyệt
+                value: { description: "Danh mục loại hình doanh nghiệp theo Luật Doanh nghiệp 2020", requireApproval: true }
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogUpdateRequest' }
+      responses:
+        '200':
+          description: Đã cập nhật.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catalog' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [Danh mục]
+      operationId: deleteCatalog
+      summary: Xóa danh mục chưa phát hành
+      description: |
+        Xóa mềm (`deleted_at`) danh mục ở trạng thái `DRAFT` (chưa từng có phiên bản phát hành).
+        Danh mục ACTIVE phải dùng `:retire`; gọi xóa trả 409 ERR-07-004. Thao tác yêu cầu xác
+        nhận trên giao diện (FR-00-050) và sinh bản ghi kiểm toán.
+      x-datahub-id: API-07-005
+      x-datahub-fr: [FR-07-009]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204': { description: Đã xóa mềm. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /catalogs/{catalogCode}:retire:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    post:
+      tags: [Danh mục]
+      operationId: retireCatalog
+      summary: Ngừng hiệu lực danh mục
+      description: |
+        Chuyển danh mục ACTIVE sang RETIRED. Phiên bản hiện hành được đặt `effectiveTo` bằng
+        `effectiveTo` trong yêu cầu (mặc định ngày mai theo giờ Việt Nam); phiên bản đang mở bị hủy.
+        Bị chặn nếu danh mục đang được thuộc tính `CATALOG_REF` của danh mục ACTIVE khác tham chiếu
+        (BR-07-020, ERR-07-032) hoặc đang có nguồn đồng bộ bật. Sau thời điểm ngừng, API khai thác
+        trả 410 ERR-07-031 với truy vấn tại thời điểm sau `effectiveTo`; truy vấn `at` trong quá khứ
+        vẫn trả dữ liệu lịch sử. Phát EVT-07-03.
+      x-datahub-id: API-07-006
+      x-datahub-fr: [FR-07-009]
+      x-datahub-permission:
+        permission: PERM-07-retire
+        proposedForD0208: true
+        note: TENANT_ADMIN trong tenant; PLATFORM_ADMIN với danh mục COMMON.
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogRetireRequest' }
+            example: { reason: "Thay thế bằng danh mục LOAI_HINH_DN_2026 theo Luật sửa đổi", effectiveTo: "2027-01-01" }
+      responses:
+        '200':
+          description: Đã ngừng hiệu lực.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Catalog' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  # ------------------------------------------------------------------ Nhóm danh mục
+  /catalog-groups:
+    get:
+      tags: [Nhóm danh mục]
+      operationId: listCatalogGroups
+      summary: Cây nhóm danh mục
+      description: Trả toàn bộ cây nhóm của tenant cộng nhóm COMMON, kèm số danh mục trong mỗi nhóm (không gồm nhóm con).
+      x-datahub-id: API-07-007
+      x-datahub-fr: [FR-07-010]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - name: flat
+          in: query
+          description: '`true` trả danh sách phẳng có `parentId` thay vì cây lồng.'
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Cây nhóm.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogGroup' }
+              examples:
+                cay: { $ref: '#/components/examples/CatalogGroupTree' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Nhóm danh mục]
+      operationId: createCatalogGroup
+      summary: Tạo nhóm danh mục
+      x-datahub-id: API-07-008
+      x-datahub-fr: [FR-07-010]
+      x-datahub-permission:
+        permission: PERM-07-configure
+        proposedForD0208: true
+        note: TENANT_ADMIN; PLATFORM_ADMIN với nhóm COMMON.
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogGroupCreateRequest' }
+            example: { code: "KINH_TE", name: "Kinh tế, doanh nghiệp", parentId: null, sortOrder: 30, description: "Danh mục phục vụ quản lý doanh nghiệp, đầu tư" }
+      responses:
+        '201':
+          description: Đã tạo nhóm.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /catalog-groups/{groupId}:
+    parameters:
+      - $ref: '#/components/parameters/GroupId'
+    patch:
+      tags: [Nhóm danh mục]
+      operationId: updateCatalogGroup
+      summary: Sửa nhóm danh mục
+      description: Sửa tên, mô tả, thứ tự, nhóm cha. Đổi nhóm cha tạo vòng bị từ chối ERR-07-010.
+      x-datahub-id: API-07-009
+      x-datahub-fr: [FR-07-010]
+      x-datahub-permission:
+        permission: PERM-07-configure
+        proposedForD0208: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/CatalogGroupUpdateRequest' }
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogGroupUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [Nhóm danh mục]
+      operationId: deleteCatalogGroup
+      summary: Xóa nhóm rỗng
+      description: Chỉ xóa được nhóm không còn danh mục và không còn nhóm con (ERR-07-037).
+      x-datahub-id: API-07-010
+      x-datahub-fr: [FR-07-010]
+      x-datahub-permission:
+        permission: PERM-07-configure
+        proposedForD0208: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204': { description: Đã xóa. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  # ------------------------------------------------------------------ Phiên bản
+  /catalogs/{catalogCode}/versions:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Phiên bản]
+      operationId: listCatalogVersions
+      summary: Danh sách phiên bản
+      description: |
+        Liệt kê phiên bản theo `versionNo` giảm dần, gồm phiên bản đã phát hành (kèm nhãn tính
+        `effectiveState`) và phiên bản đang mở. Phiên bản `DISCARDED` chỉ hiện khi `includeDiscarded=true`.
+      x-datahub-id: API-07-011
+      x-datahub-fr: [FR-07-002]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - name: status
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/VersionStatus' }
+        - name: includeDiscarded
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang phiên bản.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersionPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Phiên bản]
+      operationId: createDraftVersion
+      summary: Tạo bản nháp từ phiên bản hiện hành
+      description: |
+        Tạo phiên bản `DRAFT` mới với `versionNo` = số lớn nhất + 1, sao chép toàn bộ lược đồ thuộc
+        tính và bản ghi của phiên bản gốc (mặc định là phiên bản hiện hành; có thể chọn
+        `baseVersionNo` là một phiên bản đã phát hành khác để khôi phục). Sao chép thực hiện bằng
+        `INSERT … SELECT` trong một giao dịch nên với 200.000 bản ghi vẫn nằm trong vài giây;
+        nếu vượt 3 giây, máy chủ trả 202 kèm `Location` tới phiên bản ở trạng thái đang sao chép
+        (`copying = true`). Bị từ chối nếu danh mục đã có phiên bản mở (BR-07-005, ERR-07-005),
+        là danh mục NATIONAL (ERR-07-003) hoặc RETIRED (ERR-07-031).
+      x-datahub-id: API-07-012
+      x-datahub-fr: [FR-07-011]
+      x-datahub-permission:
+        permission: PERM-07-create
+        orgScoped: true
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Prefer'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionCreateRequest' }
+            examples:
+              macDinh:
+                summary: Tạo nháp từ phiên bản hiện hành
+                value: { effectiveFrom: "2027-01-01", legalBasis: "Quyết định số 123/QĐ-UBND ngày 15/12/2026 của UBND tỉnh Lâm Đồng (giả lập)", changeNote: "Bổ sung loại hình hợp tác xã" }
+      responses:
+        '201':
+          description: Đã tạo bản nháp.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+              examples:
+                nhap: { $ref: '#/components/examples/VersionDraft' }
+        '202':
+          description: Bản nháp đang được sao chép nền; theo dõi qua `Location`.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            Retry-After: { $ref: '#/components/headers/RetryAfter' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Phiên bản]
+      operationId: getCatalogVersion
+      summary: Chi tiết phiên bản
+      description: |
+        `versionRef` nhận số phiên bản, `current` (phiên bản hiệu lực hôm nay) hoặc `draft`
+        (phiên bản đang mở, dù ở DRAFT, IN_REVIEW hay APPROVED). Kèm lịch sử duyệt `reviews`.
+      x-datahub-id: API-07-013
+      x-datahub-fr: [FR-07-002]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        note: HTTT chỉ xem được phiên bản đã phát hành; `draft` với client trả 404.
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+        - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Chi tiết phiên bản.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+              examples:
+                daPhatHanh: { $ref: '#/components/examples/VersionPublished' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Phiên bản]
+      operationId: updateDraftVersion
+      summary: Sửa ngày hiệu lực, căn cứ, ghi chú của bản nháp
+      description: |
+        Chỉ áp dụng cho phiên bản `DRAFT`. `effectiveFrom` phải lớn hơn `effectiveFrom` của phiên
+        bản đã phát hành mới nhất (BR-07-007) và không sớm hơn hôm nay trừ phiên bản có
+        `origin` SYNC/MIGRATION (BR-07-027). ETag của phiên bản đổi khi bất kỳ bản ghi hay thuộc
+        tính nào của bản nháp thay đổi, vì `version` của phiên bản được tăng theo mọi thao tác.
+      x-datahub-id: API-07-014
+      x-datahub-fr: [FR-07-016]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/VersionUpdateRequest' }
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [Phiên bản]
+      operationId: discardDraftVersion
+      summary: Hủy bản nháp
+      description: |
+        Chuyển phiên bản `DRAFT` sang `DISCARDED`; bản ghi và thuộc tính của bản nháp được xóa
+        vật lý bởi tác vụ dọn dẹp sau 7 ngày (giữ dấu vết `version_review` với hành động DISCARD).
+        Phiên bản IN_REVIEW phải bị từ chối về DRAFT trước. Nếu đây là phiên bản 1 của danh mục
+        DRAFT, danh mục vẫn tồn tại và có thể tạo lại bản nháp.
+      x-datahub-id: API-07-015
+      x-datahub-fr: [FR-07-017]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204': { description: Đã hủy bản nháp. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /catalogs/{catalogCode}/versions/{versionRef}:validate:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Phiên bản]
+      operationId: validateVersion
+      summary: Kiểm tra hợp lệ toàn bản nháp
+      description: |
+        Chạy toàn bộ quy tắc trên bản nháp: kiểu và ràng buộc thuộc tính (JSON Schema sinh từ
+        lược đồ), duy nhất, mã cha tồn tại, không vòng, độ sâu (BR-07-014), dải mã địa phương
+        (BR-07-010), khoảng hiệu lực, và tính phân loại thay đổi so với phiên bản hiện hành để
+        trả `requiresApproval`. Không đổi trạng thái; idempotent. Với danh mục > 50.000 bản ghi
+        và `Prefer: respond-async`, trả 202 và kết quả sẽ nằm ở `GET …/versions/{v}` trường `lastValidation`.
+      x-datahub-id: API-07-016
+      x-datahub-fr: [FR-07-013]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/Prefer'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Báo cáo kiểm tra.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationReport' }
+              examples:
+                coLoi: { $ref: '#/components/examples/ValidationReportExample' }
+        '202':
+          description: Đang kiểm tra nền.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /catalogs/{catalogCode}/versions/{versionRef}:submit:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Phiên bản]
+      operationId: submitVersion
+      summary: Trình duyệt phiên bản
+      description: |
+        Chuyển `DRAFT` → `IN_REVIEW` sau khi chạy lại kiểm tra hợp lệ; bản nháp có lỗi trả 422
+        ERR-07-009 kèm `errors[]`. Ghi `version_review` (SUBMIT) với `diffStats`, đặt
+        `submittedBy/At`, phát EVT-07-04 để hộp "Việc của tôi" (FR-00-070) tạo việc cho người
+        có `PERM-07-publish`. Trong IN_REVIEW, bản nháp bị khóa sửa.
+      x-datahub-id: API-07-017
+      x-datahub-fr: [FR-07-015]
+      x-datahub-permission:
+        permission: PERM-07-submit
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionActionRequest' }
+            example: { comment: "Đề nghị phê duyệt bổ sung 2 loại hình theo Nghị định mới" }
+      responses:
+        '200':
+          description: Đã trình.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}:approve:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Phiên bản]
+      operationId: approveVersion
+      summary: Duyệt phiên bản
+      description: |
+        Chuyển `IN_REVIEW` → `APPROVED`. Bốn mắt: người trình hoặc người sửa bản nháp lần cuối
+        không được duyệt (BR-07-011, ERR-07-015). Ý kiến duyệt là bắt buộc (FR-00-072).
+      x-datahub-id: API-07-018
+      x-datahub-fr: [FR-07-015]
+      x-datahub-permission:
+        permission: PERM-07-publish
+        fourEyes: true
+        note: DATA_APPROVER trong tenant; PLATFORM_ADMIN với danh mục COMMON. TENANT_ADMIN không có quyền này.
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/VersionActionRequest'
+                - required: [comment]
+            example: { comment: "Đồng ý, đã đối chiếu với văn bản gốc" }
+      responses:
+        '200':
+          description: Đã duyệt.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /catalogs/{catalogCode}/versions/{versionRef}:reject:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Phiên bản]
+      operationId: rejectVersion
+      summary: Từ chối phiên bản
+      description: |
+        Chuyển `IN_REVIEW` (hoặc `APPROVED` chưa phát hành) về `DRAFT`, bắt buộc lý do. Ghi
+        `version_review` (REJECT), phát EVT-07-06 để thông báo cho người trình.
+      x-datahub-id: API-07-019
+      x-datahub-fr: [FR-07-015]
+      x-datahub-permission:
+        permission: PERM-07-publish
+        fourEyes: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RejectRequest' }
+            example: { reason: "Thiếu căn cứ pháp lý cho mã 9001, đề nghị bổ sung văn bản" }
+      responses:
+        '200':
+          description: Đã từ chối, phiên bản trở về DRAFT.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /catalogs/{catalogCode}/versions/{versionRef}:publish:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Phiên bản]
+      operationId: publishVersion
+      summary: Phát hành phiên bản
+      description: |
+        Phát hành phiên bản `APPROVED`, hoặc phát hành thẳng từ `DRAFT` khi danh mục có
+        `requireApproval = false` và thay đổi không vượt ngưỡng, không phá vỡ (BR-07-012,
+        BR-07-026; nếu vi phạm trả 409 ERR-07-016). Trong một giao dịch: chốt `effectiveFrom`,
+        đặt `effectiveTo` của phiên bản trước bằng `effectiveFrom` mới (BR-07-007), cập nhật
+        `catalog.currentVersionId` nếu `effectiveFrom` ≤ hôm nay, chuyển danh mục DRAFT → ACTIVE,
+        làm mới bảng chiếu `admin_unit` nếu là danh mục DVHC, ghi outbox EVT-07-05 (và EVT-07-10
+        nếu có sự kiện sắp xếp ĐVHC). Sau commit, tác vụ nền sinh ảnh chụp JSON.gz/CSV lên Garage;
+        `snapshotUri` được điền khi xong (NFR-07-007). Bốn mắt áp dụng như `:approve`.
+      x-datahub-id: API-07-020
+      x-datahub-fr: [FR-07-016]
+      x-datahub-permission:
+        permission: PERM-07-publish
+        fourEyes: true
+        note: DATA_APPROVER; PLATFORM_ADMIN với COMMON. Phát hành thẳng từ DRAFT chỉ khi requireApproval = false.
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PublishRequest' }
+            examples:
+              phatHanh: { $ref: '#/components/examples/PublishRequestExample' }
+      responses:
+        '200':
+          description: Đã phát hành.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogVersion' }
+              examples:
+                daPhatHanh: { $ref: '#/components/examples/VersionPublished' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/diff:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Phiên bản]
+      operationId: diffVersions
+      summary: So sánh hai phiên bản
+      description: |
+        So sánh phiên bản `versionRef` với `against` (mặc định: phiên bản đã phát hành ngay trước,
+        hoặc phiên bản hiện hành nếu `versionRef` là bản nháp). `summary` luôn tính trên toàn bộ;
+        `changes` phân trang theo trang. Mỗi thay đổi có cờ `breaking` theo quy tắc §3 mục 18 của
+        khung (ngừng dùng/xóa mã, đổi mã cha, xóa thuộc tính, đổi kiểu, thu hẹp ràng buộc).
+      x-datahub-id: API-07-021
+      x-datahub-fr: [FR-07-014]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - name: against
+          in: query
+          description: Phiên bản đối chiếu, nhận số hoặc `current`.
+          schema: { type: string, pattern: '^([1-9][0-9]{0,5}|current)$' }
+        - name: changeType
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/ItemChangeType' }
+        - name: breakingOnly
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Kết quả so sánh.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diff' }
+              examples:
+                loaiHinhDn: { $ref: '#/components/examples/DiffExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # ------------------------------------------------------------------ Thuộc tính
+  /catalogs/{catalogCode}/versions/{versionRef}/attributes:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Thuộc tính]
+      operationId: listAttributes
+      summary: Danh sách thuộc tính của phiên bản
+      description: Trả thuộc tính theo `sortOrder`. Thuộc tính `HIDDEN` chỉ trả cho người dùng quản trị khi `includeHidden=true`.
+      x-datahub-id: API-07-022
+      x-datahub-fr: [FR-07-005]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - name: includeHidden
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Danh sách thuộc tính.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  versionNo: { type: integer, minimum: 1 }
+                  items:
+                    type: array
+                    maxItems: 200
+                    items: { $ref: '#/components/schemas/AttributeDef' }
+              examples:
+                dvhc: { $ref: '#/components/examples/AttributeListDvhc' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Thuộc tính]
+      operationId: createAttribute
+      summary: Thêm thuộc tính vào bản nháp
+      description: |
+        Thêm thuộc tính mới. Thuộc tính bắt buộc chỉ thêm được khi kèm `defaultValue` hoặc bản
+        nháp chưa có bản ghi (nếu không, mọi bản ghi hiện có sẽ vi phạm, ERR-07-014). Mã thuộc
+        tính không trùng mã cột cố định (`code`, `name`, `parentCode`…). Từ khóa gợi ý dữ liệu
+        cá nhân (`cccd`, `so_dinh_danh`, `ho_ten`, `ngay_sinh`, `so_dien_thoai`…) bị chặn ERR-07-036.
+      x-datahub-id: API-07-023
+      x-datahub-fr: [FR-07-005]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AttributeDefCreateRequest' }
+            examples:
+              enum: { $ref: '#/components/examples/AttributeCreateEnum' }
+              ref: { $ref: '#/components/examples/AttributeCreateRef' }
+      responses:
+        '201':
+          description: Đã thêm thuộc tính; ETag trả về là ETag mới của phiên bản.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttributeDef' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/attributes/{attrCode}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+      - $ref: '#/components/parameters/AttrCode'
+    patch:
+      tags: [Thuộc tính]
+      operationId: updateAttribute
+      summary: Sửa thuộc tính trên bản nháp
+      description: |
+        Sửa nhãn, ràng buộc, thứ tự, trạng thái (`ACTIVE`/`HIDDEN`), cờ `queryable`/`searchable`
+        hoặc đổi `dataType`. Đổi kiểu chỉ được khi mọi giá trị hiện có chuyển đổi được
+        (BR-07-013); nếu không trả 422 ERR-07-014 kèm tối đa 100 phần tử `errors[]` chỉ rõ mã bản
+        ghi vi phạm. Thu hẹp ràng buộc được phép nhưng bị đánh dấu thay đổi phá vỡ khi phát hành.
+      x-datahub-id: API-07-024
+      x-datahub-fr: [FR-07-006]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/AttributeDefUpdateRequest' }
+            example: { label: "Loại đơn vị hành chính", queryable: true, maxLength: 32 }
+          application/json:
+            schema: { $ref: '#/components/schemas/AttributeDefUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttributeDef' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [Thuộc tính]
+      operationId: deleteAttribute
+      summary: Xóa thuộc tính khỏi bản nháp
+      description: |
+        Xóa định nghĩa và gỡ khóa tương ứng khỏi `attrs` của mọi bản ghi trong bản nháp. Nếu
+        thuộc tính tồn tại ở phiên bản đã phát hành, thao tác là thay đổi phá vỡ (bắt buộc duyệt).
+        Không xóa được thuộc tính đang là đích của ánh xạ trường đồng bộ (`fieldMapping`).
+      x-datahub-id: API-07-025
+      x-datahub-fr: [FR-07-006]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204':
+          description: Đã xóa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  # ------------------------------------------------------------------ Bản ghi (quản trị)
+  /catalogs/{catalogCode}/versions/{versionRef}/items:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Bản ghi (quản trị)]
+      operationId: listVersionItems
+      summary: Bản ghi của một phiên bản (quản trị)
+      description: |
+        Phục vụ UI-07-02/05: phân trang theo trang, lọc theo trạng thái, mã cha, trạng thái thay
+        đổi so với phiên bản hiện hành (`changeState`, chỉ có nghĩa với bản nháp), tìm không dấu.
+        Khác API-07-041 ở chỗ xem được bản nháp, có `changeState` và không có bộ đệm HTTP.
+      x-datahub-id: API-07-026
+      x-datahub-fr: [FR-07-002, FR-07-018]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ItemStatus' }
+        - name: parentCode
+          in: query
+          description: Chỉ lấy con trực tiếp của mã này; giá trị `~` lấy các nút gốc.
+          schema: { type: string, maxLength: 64 }
+        - name: changeState
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { type: string, enum: [ADDED, CHANGED, DEPRECATED, UNCHANGED] }
+        - name: hasErrors
+          in: query
+          description: Chỉ lấy bản ghi vi phạm ở lần kiểm tra gần nhất.
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - name: sort
+          in: query
+          schema: { type: string, default: sortOrder, pattern: '^-?(code|name|sortOrder|updatedAt|depth)$' }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang bản ghi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItemPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Bản ghi (quản trị)]
+      operationId: createItem
+      summary: Thêm bản ghi vào bản nháp
+      description: |
+        Thêm một bản ghi. Mã được chuẩn hóa chữ hoa, duy nhất trong phiên bản (BR-07-002,
+        ERR-07-008). `attrs` được kiểm tra theo JSON Schema của phiên bản (ERR-07-009). Với danh
+        mục phân cấp, `parentCode` phải tồn tại và độ sâu ≤ `maxDepth` (ERR-07-010, 011). Với
+        danh mục HYBRID, mã phải khớp `localCodePattern` và không trùng mã danh mục gốc (ERR-07-012).
+        `depth`, `path`, `levelName` do máy chủ tính. ETag trả về là ETag mới của phiên bản để
+        client tiếp tục gửi `If-Match` cho thao tác sau.
+      x-datahub-id: API-07-027
+      x-datahub-fr: [FR-07-012]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemCreateRequest' }
+            examples:
+              loaiHinh: { $ref: '#/components/examples/ItemCreateLoaiHinh' }
+      responses:
+        '201':
+          description: Đã thêm.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+      - $ref: '#/components/parameters/ItemCode'
+    patch:
+      tags: [Bản ghi (quản trị)]
+      operationId: updateItem
+      summary: Sửa bản ghi trên bản nháp
+      description: |
+        JSON Merge Patch. Riêng `attrs` được gộp theo khóa: khóa có giá trị `null` bị gỡ (nếu
+        thuộc tính không bắt buộc), khóa vắng mặt giữ nguyên. Đổi `parentCode` của bản ghi đã từng
+        phát hành là thay đổi phá vỡ. Không đổi được `code` (muốn đổi mã thì ngừng dùng mã cũ với
+        `replacedBy` trỏ mã mới — BR-07-003).
+      x-datahub-id: API-07-028
+      x-datahub-fr: [FR-07-012]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/ItemUpdateRequest' }
+            example: { name: "Công ty trách nhiệm hữu hạn một thành viên", attrs: { ten_viet_tat: "TNHH MTV" } }
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [Bản ghi (quản trị)]
+      operationId: deleteDraftItem
+      summary: Xóa bản ghi mới thêm trong bản nháp
+      description: |
+        Chỉ xóa được bản ghi chưa từng xuất hiện ở phiên bản đã phát hành nào (`changeState = ADDED`).
+        Bản ghi đã từng phát hành trả 409 ERR-07-013, client phải dùng `:deprecate`. Bản ghi còn
+        con trong bản nháp trả 422 ERR-07-010.
+      x-datahub-id: API-07-030
+      x-datahub-fr: [FR-07-012]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204':
+          description: Đã xóa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:deprecate:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+      - $ref: '#/components/parameters/ItemCode'
+    post:
+      tags: [Bản ghi (quản trị)]
+      operationId: deprecateItem
+      summary: Ngừng dùng bản ghi, ghi mã thay thế
+      description: |
+        Đặt `status = DEPRECATED`, ghi `replacedBy` (mỗi mã phải tồn tại và ACTIVE trong cùng bản
+        nháp) và `validTo` (mặc định bằng `effectiveFrom` của bản nháp). Bản ghi con còn ACTIVE
+        làm thao tác thất bại 422 ERR-07-010 trừ khi `cascade = true` (ngừng dùng cả nhánh).
+        Gọi lại với `reactivate = true` để khôi phục ACTIVE trong cùng bản nháp.
+      x-datahub-id: API-07-029
+      x-datahub-fr: [FR-07-012, FR-07-019]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemDeprecateRequest' }
+            example: { replacedBy: ["2"], reason: "Gộp vào loại hình Công ty TNHH theo Luật Doanh nghiệp 2020", cascade: false }
+      responses:
+        '200':
+          description: Đã ngừng dùng.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/items:batch:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    post:
+      tags: [Bản ghi (quản trị)]
+      operationId: batchItems
+      summary: Nhập lô bản ghi vào bản nháp (≤ 5.000 thao tác)
+      description: |
+        Áp dụng tối đa 5.000 thao tác `upsert`, `deprecate`, `delete` trong một giao dịch
+        (`atomic = true`, mặc định: một thao tác lỗi thì không thao tác nào được ghi, trả 422 với
+        `errors[].row` là chỉ số thao tác) hoặc từng phần (`atomic = false`: thao tác hợp lệ được
+        ghi, trả 200 với `results[].status = FAILED` cho thao tác lỗi). `versionRef` thường là
+        `draft`; nếu chưa có bản nháp và `createDraftIfMissing = true` thì máy chủ tạo bản nháp từ
+        phiên bản hiện hành trước. Bắt buộc `Idempotency-Key` để HTTT gửi lại an toàn khi mất kết
+        nối: cùng khóa và cùng băm thân trong 24 giờ trả lại đúng kết quả cũ với header
+        `Idempotent-Replayed: true`; cùng khóa khác thân trả 409 ERR-07-022. Giới hạn 5.000 là
+        tham số `07.rdm.batch-max-ops` (PH-18), vượt trả 400 ERR-07-026. Không yêu cầu `If-Match`
+        vì lô thường do máy gửi; xung đột với người sửa song song được xử lý bằng khóa hàng.
+      x-datahub-id: API-07-031
+      x-datahub-fr: [FR-07-023]
+      x-datahub-permission:
+        permission: PERM-07-update
+        scopes: [rdm.write]
+        orgScoped: true
+        note: HTTT dùng scope rdm.write, chỉ ghi được vào danh mục mà HTTT được gán là nguồn cập nhật (catalog_access_grant có scope rdm.write).
+      x-datahub-idempotent: true
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyRequired'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BatchItemsRequest' }
+            examples:
+              honHop: { $ref: '#/components/examples/BatchItemsExample' }
+      responses:
+        '200':
+          description: Kết quả xử lý lô.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Idempotent-Replayed: { $ref: '#/components/headers/IdempotentReplayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BatchResult' }
+              examples:
+                ketQua: { $ref: '#/components/examples/BatchResultExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  # ------------------------------------------------------------------ Nhập xuất
+  /catalogs/{catalogCode}/import-template:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Nhập xuất]
+      operationId: downloadImportTemplate
+      summary: Tải tệp mẫu nhập theo lược đồ
+      description: |
+        Sinh tệp mẫu theo lược đồ của bản nháp (nếu có) hoặc phiên bản hiện hành. Xlsx gồm sheet
+        `HuongDan`, `DuLieu` (dòng 1 nhãn tiếng Việt, dòng 2 mã cột ẩn và khóa, dữ liệu từ dòng 3;
+        cột cố định `MA`, `TEN`, `MA_CHA`, `THU_TU`, `TRANG_THAI`, `MA_THAY_THE`, `HIEU_LUC_TU`,
+        `HIEU_LUC_DEN` rồi thuộc tính động theo `sortOrder`) và `GiaTriHopLe` (giá trị ENUM, có
+        data validation). CSV: RFC 4180, UTF-8 có BOM, dòng tiêu đề là mã cột. `withData = true`
+        điền sẵn bản ghi hiện có để sửa rồi nhập lại (chế độ UPSERT).
+      x-datahub-id: API-07-032
+      x-datahub-fr: [FR-07-020]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [xlsx, csv], default: xlsx }
+        - name: withData
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Tệp mẫu.
+          headers:
+            Content-Disposition: { $ref: '#/components/headers/ContentDisposition' }
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+            text/csv:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /import-jobs:
+    post:
+      tags: [Nhập xuất]
+      operationId: createImportJob
+      summary: Tải tệp và tạo tác vụ nhập (pha 1)
+      description: |
+        Nhận tệp multipart, lưu vào kho đối tượng (DD-12 `file_object`, `scan_status = PENDING`),
+        tạo `import_job` trạng thái `SCANNING` và trả 202 ngay. Tác vụ nền quét mã độc, nhận dạng
+        định dạng theo nội dung (không tin phần mở rộng), tự nhận mã hóa (UTF-8, UTF-8 BOM,
+        UTF-16 LE/BE) nếu không chỉ định, phân tích luồng ghi vào `import_row`, kiểm tra hợp lệ và
+        chuyển `VALIDATED` (hoặc `FAILED`). Client theo dõi qua `Location` hoặc sự kiện EVT-07-07.
+        Kiểm tra đồng bộ trước khi nhận: kích thước ≤ 50 MB (413), kiểu nội dung (415), danh mục
+        và bản nháp tồn tại, quyền ghi. Với `mode = CREATE_CATALOG` không cần `catalogCode` có sẵn
+        mà dùng `newCatalog`. Với `template = LEGACY_AITA`, ô A2 là tên danh mục, dòng 4 là tên
+        thuộc tính, dữ liệu từ dòng 5 (ADR-056).
+      x-datahub-id: API-07-033
+      x-datahub-fr: [FR-07-021, FR-07-022]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+        note: CREATE_CATALOG cần thêm PERM-07-create.
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ImportJobCreateForm' }
+            encoding:
+              file:
+                contentType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel
+              columnMapping:
+                contentType: application/json
+              newCatalog:
+                contentType: application/json
+      responses:
+        '202':
+          description: Đã nhận tệp, tác vụ đang xử lý.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            Retry-After: { $ref: '#/components/headers/RetryAfter' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJob' }
+              examples:
+                dangQuet: { $ref: '#/components/examples/ImportJobScanning' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /import-jobs/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Nhập xuất]
+      operationId: getImportJob
+      summary: Trạng thái, tóm tắt và xem trước tác vụ nhập
+      description: |
+        Trả trạng thái, tiến độ, số dòng hợp lệ/lỗi, tóm tắt hành động (INSERT/UPDATE/DEPRECATE/
+        UNCHANGED), 20 dòng xem trước đầu tiên và thời điểm hết hạn xem trước (24 giờ, BR-07-016).
+        ETag của tác vụ dùng làm `If-Match` cho `:commit`.
+      x-datahub-id: API-07-034
+      x-datahub-fr: [FR-07-021]
+      x-datahub-permission:
+        permission: PERM-07-update
+        note: Người tạo tác vụ hoặc người có PERM-07-update trên danh mục.
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Tác vụ nhập.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Retry-After: { $ref: '#/components/headers/RetryAfter' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJob' }
+              examples:
+                daKiemTra: { $ref: '#/components/examples/ImportJobValidated' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /import-jobs/{jobId}/rows:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Nhập xuất]
+      operationId: listImportRows
+      summary: Dòng xem trước hoặc báo cáo lỗi
+      description: |
+        Mặc định trả JSON phân trang. `valid=false` chỉ lấy dòng lỗi. `format=xlsx` (hoặc
+        `Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`) trả báo cáo
+        lỗi là chính tệp người dùng tải lên có thêm cột `LOI` mô tả lỗi từng dòng và tô đỏ ô lỗi,
+        để người dùng sửa và tải lên lại.
+      x-datahub-id: API-07-035
+      x-datahub-fr: [FR-07-021, FR-07-025]
+      x-datahub-permission:
+        permission: PERM-07-update
+      parameters:
+        - name: valid
+          in: query
+          schema: { type: boolean }
+        - name: action
+          in: query
+          schema: { $ref: '#/components/schemas/ImportRowAction' }
+        - name: format
+          in: query
+          schema: { type: string, enum: [json, xlsx], default: json }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Danh sách dòng hoặc tệp báo cáo lỗi.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportRowPage' }
+              examples:
+                dongLoi: { $ref: '#/components/examples/ImportRowPageExample' }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /import-jobs/{jobId}:commit:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      tags: [Nhập xuất]
+      operationId: commitImportJob
+      summary: Ghi kết quả nhập vào bản nháp (pha 2)
+      description: |
+        Chỉ khi tác vụ `VALIDATED`, chưa hết hạn và bản nháp chưa bị sửa kể từ lúc phân tích
+        (so `version` phiên bản lưu trong tác vụ; nếu khác trả 409 ERR-07-020 và client phải chạy
+        lại tác vụ). Có dòng lỗi mà `skipInvalidRows = false` trả 422 ERR-07-021. Ghi trong một
+        giao dịch bằng `COPY` vào bảng tạm rồi `INSERT … ON CONFLICT`, mục tiêu ≤ 60 giây cho
+        100.000 dòng (NFR-07-005). Với ≤ 5.000 dòng trả 200 đồng bộ; lớn hơn trả 202 và trạng thái
+        `COMMITTING`. Với `CREATE_CATALOG`, tạo danh mục, phiên bản 1 và thuộc tính trong cùng giao dịch.
+      x-datahub-id: API-07-036
+      x-datahub-fr: [FR-07-021, FR-07-022]
+      x-datahub-permission:
+        permission: PERM-07-update
+        orgScoped: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportCommitRequest' }
+            example: { skipInvalidRows: true }
+      responses:
+        '200':
+          description: Đã ghi vào bản nháp.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJob' }
+        '202':
+          description: Đang ghi nền.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJob' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /import-jobs/{jobId}:cancel:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    post:
+      tags: [Nhập xuất]
+      operationId: cancelImportJob
+      summary: Hủy tác vụ nhập
+      description: Hủy tác vụ chưa commit (SCANNING, PARSING, VALIDATED). Dòng tạm bị xóa ngay; tệp gốc giữ 7 ngày để tra soát.
+      x-datahub-id: API-07-037
+      x-datahub-fr: [FR-07-021]
+      x-datahub-permission:
+        permission: PERM-07-update
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Đã hủy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportJob' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /export-jobs:
+    post:
+      tags: [Nhập xuất]
+      operationId: createExportJob
+      summary: Xuất phiên bản danh mục
+      description: |
+        Nếu số dòng ước tính ≤ 10.000 và không có `Prefer: respond-async`, trả 200 kèm nội dung
+        tệp trực tiếp (đồng bộ). Ngược lại tạo tác vụ nền, trả 202 kèm `Location` tới API-07-039;
+        khi xong phát EVT-07-08 và thông báo người dùng (FR-00-031). Tệp xuất có hạn tải 24 giờ.
+        Định dạng XLSX dùng đúng khuôn mẫu nhập nên tệp xuất nhập lại được.
+      x-datahub-id: API-07-038
+      x-datahub-fr: [FR-07-024]
+      x-datahub-permission:
+        permission: PERM-07-export
+        scopes: [rdm.read]
+      x-datahub-idempotent: true
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Prefer'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExportJobRequest' }
+            examples:
+              dvhc: { $ref: '#/components/examples/ExportRequestExample' }
+      responses:
+        '200':
+          description: Tệp xuất trả trực tiếp (≤ 10.000 dòng).
+          headers:
+            Content-Disposition: { $ref: '#/components/headers/ContentDisposition' }
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
+            text/csv:
+              schema: { type: string }
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportJsonDocument' }
+        '202':
+          description: Đã tạo tác vụ xuất nền.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            Retry-After: { $ref: '#/components/headers/RetryAfter' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportJob' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /export-jobs/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      tags: [Nhập xuất]
+      operationId: getExportJob
+      summary: Trạng thái tác vụ xuất và URL tải
+      description: |
+        Khi `COMPLETED`, `downloadUrl` là URL ký sẵn của Garage có hạn bằng `downloadExpiresAt`
+        (tối đa 24 giờ kể từ khi xong); sau hạn trạng thái thành `EXPIRED` và tệp bị xóa.
+      x-datahub-id: API-07-039
+      x-datahub-fr: [FR-07-024]
+      x-datahub-permission:
+        permission: PERM-07-export
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Tác vụ xuất.
+          headers:
+            Retry-After: { $ref: '#/components/headers/RetryAfter' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportJob' }
+              examples:
+                xong: { $ref: '#/components/examples/ExportJobCompleted' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /jobs:
+    get:
+      tags: [Nhập xuất]
+      operationId: listJobs
+      summary: Lịch sử tác vụ nhập xuất
+      description: Liệt kê tác vụ nhập và xuất của tenant, mặc định của chính người gọi; người có PERM-07-update thấy mọi tác vụ trên danh mục mình quản lý.
+      x-datahub-id: API-07-040
+      x-datahub-fr: [FR-07-025]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - name: jobType
+          in: query
+          schema: { type: string, enum: [IMPORT, EXPORT] }
+        - name: catalogCode
+          in: query
+          schema: { $ref: '#/components/schemas/TCode' }
+        - name: status
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { type: string }
+        - name: mine
+          in: query
+          schema: { type: boolean, default: true }
+        - name: createdFrom
+          in: query
+          schema: { type: string, format: date-time }
+        - name: createdTo
+          in: query
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang tác vụ.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JobSummaryPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
