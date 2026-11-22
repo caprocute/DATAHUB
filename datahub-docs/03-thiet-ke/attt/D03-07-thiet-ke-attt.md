@@ -935,3 +935,216 @@ Một quy tắc an ninh đáng nhấn mạnh từ D03-10 §6 là trả về `404
 | SEC-99 | Chuỗi cung ứng mức cao hơn | SEC-55…58 (mục tiêu SLSA L3) | Build kín (hermetic), hai người duyệt phát hành, tái lập độc lập; xác minh nguồn gốc mọi phụ thuộc | Cấp độ 4 |
 
 Ảnh hưởng tổng thể khi nâng lên cấp độ 4 tập trung ở hạ tầng và tổ chức (HSM, site thứ hai active, mạng quản trị, SOC), không ở mã ứng dụng; đây là kết quả trực tiếp của việc chừa điểm từ đầu. Đội phát triển chỉ cần thay đổi cấu hình (địa chỉ seal PKCS#11, chế độ tenant) và chạy tác vụ bọc lại khóa.
+
+## 11. Ma trận tuân thủ
+
+Bốn ma trận dưới đây cho phép hội đồng thẩm định đi từ một yêu cầu của văn bản hoặc tiêu chuẩn tới biện pháp đáp ứng. D03-08 dùng ma trận (a) làm phương án bảo vệ trong hồ sơ.
+
+### 11.a. TCVN 14423:2026, cấp độ 3 (chương 5)
+
+Tên các nhóm 5.1–5.18 dưới đây được ghi theo chủ đề vì chưa đối chiếu được toàn văn; cột "Số mục" đánh dấu "cần đối chiếu" ở những dòng chưa chắc. Ba nhóm 5.13, 5.17, 5.18 (giám sát và phòng thủ, phát triển ứng dụng an toàn, quản lý kiểm tra) là nhóm cấp độ 3 có thêm so với cấp độ 2 và đã được xác định.
+
+| Số mục | Chủ đề yêu cầu | Biện pháp đáp ứng |
+|---|---|---|
+| 5.1 | Quản lý rủi ro an ninh mạng | SEC-06, mục 4 |
+| 5.2 | Quản lý tài sản | SEC-04, mục 3.1 |
+| 5.x (cần đối chiếu) | Chính sách, tổ chức, nhân sự | SEC-01, SEC-02, SEC-03 |
+| 5.x (cần đối chiếu) | Quản lý cấu hình và thay đổi | SEC-07, SEC-50, SEC-51, SEC-52, SEC-65 |
+| 5.x (cần đối chiếu) | Quản lý tài khoản, xác thực, kiểm soát truy cập | SEC-20…29, SEC-85 |
+| 5.x (cần đối chiếu) | Quản lý lỗ hổng, vá | SEC-09, SEC-57 |
+| 5.x (cần đối chiếu) | Nhật ký | SEC-60, SEC-61, SEC-62 |
+| 5.x (cần đối chiếu) | Phòng chống mã độc | SEC-54, SEC-45 |
+| 5.x (cần đối chiếu) | Bảo vệ trình duyệt, thư điện tử | SEC-44; quy chế máy trạm thuộc chủ quản (mục 12) |
+| 5.x (cần đối chiếu) | Bảo vệ hạ tầng mạng | SEC-10…19 |
+| 5.x (cần đối chiếu) | Bảo vệ dữ liệu, mã hóa | SEC-30…39, SEC-88 |
+| 5.x (cần đối chiếu) | Sao lưu, khôi phục | SEC-70, SEC-71 |
+| 5.13 | Giám sát và phòng thủ an ninh mạng | SEC-63, SEC-64, SEC-66, SEC-67, mục 7 |
+| 5.x (cần đối chiếu) | Quản lý nhà cung cấp | SEC-05, SEC-55…58 |
+| 5.15 | Ứng phó sự cố | SEC-72…75, mục 8 |
+| 5.17 | Phát triển ứng dụng an toàn | SEC-40…49 |
+| 5.18 | Quản lý kiểm tra an ninh mạng | SEC-08, SEC-42, SEC-87 |
+| Phụ lục A | An toàn vật lý | Yêu cầu với bên cung cấp hạ tầng (mục 12), D03-09 |
+
+### 11.b. TCVN 11930:2017 cấp độ 3 và Thông tư 12/2022 (đối chiếu kế thừa)
+
+Ma trận này giúp hội đồng quen khung cũ đối chiếu nhanh, và dùng nếu hồ sơ được thẩm định theo chuyển tiếp (Q300).
+
+| Nhóm yêu cầu TCVN 11930:2017 | Biện pháp đáp ứng |
+|---|---|
+| Quản lý: Thiết lập chính sách an toàn thông tin | SEC-01, SEC-06 |
+| Quản lý: Tổ chức bảo đảm ATTT | SEC-02, SEC-05, mục 12 |
+| Quản lý: Bảo đảm nguồn nhân lực | SEC-03 |
+| Quản lý: Quản lý thiết kế, xây dựng hệ thống | SEC-40…42, SEC-55…58, SEC-07 |
+| Quản lý: Quản lý vận hành hệ thống | SEC-04, SEC-09, SEC-28, SEC-61…65, SEC-70…75 |
+| Kỹ thuật: Bảo đảm an toàn mạng | SEC-10…19 |
+| Kỹ thuật: Bảo đảm an toàn máy chủ | SEC-50…54 |
+| Kỹ thuật: Bảo đảm an toàn ứng dụng | SEC-20…29, SEC-40…49 |
+| Kỹ thuật: Bảo đảm an toàn dữ liệu | SEC-30…39, SEC-70 |
+| Thông tư 12/2022: hồ sơ đề xuất cấp độ, phương án bảo đảm ATTT | D03-08 dùng mục 3, 4, 5, 11 |
+
+### 11.c. OWASP ASVS 5.0 (mức 2)
+
+| Chương ASVS 5.0 | Biện pháp đáp ứng |
+|---|---|
+| V1 Encoding and Sanitization | SEC-43, SEC-44, SEC-45 |
+| V2 Validation and Business Logic | SEC-43, SEC-48, SEC-46 |
+| V3 Web Frontend Security | SEC-44, SEC-21 |
+| V4 API and Web Service | SEC-43, SEC-26, SEC-47 |
+| V5 File Handling | SEC-45 |
+| V6 Authentication | SEC-22, SEC-23, SEC-24 |
+| V7 Session Management | SEC-21, SEC-29 |
+| V8 Authorization | SEC-26, SEC-80, SEC-85 |
+| V9 Self-contained Tokens | SEC-25 |
+| V10 OAuth and OIDC | SEC-21, SEC-24, SEC-25 |
+| V11 Cryptography | SEC-31, SEC-34 |
+| V12 Secure Communication | SEC-12, SEC-15, SEC-18 |
+| V13 Configuration | SEC-33, SEC-43, SEC-52 |
+| V14 Data Protection | SEC-31, SEC-32, SEC-39 |
+| V15 Secure Coding and Architecture | SEC-40, SEC-41, SEC-55 |
+| V16 Security Logging and Error Handling | SEC-60, SEC-61, SEC-43 |
+| V17 WebRTC | Không áp dụng (Datahub không dùng WebRTC) |
+
+### 11.d. NFR-00-020…029 của SRS
+
+| NFR | Biện pháp | Ghi chú |
+|---|---|---|
+| NFR-00-020 Mã hóa đường truyền | SEC-12, SEC-15, SEC-18 | Đáp ứng đầy đủ |
+| NFR-00-021 Mã hóa khi lưu | SEC-30, SEC-31 | Đáp ứng đầy đủ |
+| NFR-00-022 Không bí mật trong mã | SEC-33, SEC-41 | Đáp ứng đầy đủ |
+| NFR-00-023 Lỗ hổng phụ thuộc | SEC-41, SEC-57 | Đáp ứng đầy đủ |
+| NFR-00-024 ASVS 5.0 L2 | SEC-40…49, ma trận 11c | Đáp ứng đầy đủ |
+| NFR-00-025 Khóa tài khoản | SEC-22 | Bổ sung khóa vĩnh viễn sau 3 lần khóa tạm |
+| NFR-00-026 Mật khẩu | SEC-22 | **Đề xuất sửa 12 → 14 ký tự** để bằng TCVN 14423:2026 |
+| NFR-00-027 Lưu nhật ký kiểm toán | SEC-62, ADR-031 | **Chốt**: trực tuyến 12 tháng, WORM 5 năm (tối thiểu 3 năm) |
+| NFR-00-028 Lưu log vận hành | SEC-61 | Bổ sung: log an ninh 12 tháng |
+| NFR-00-029 Che DLCN trong log | SEC-32 | Đáp ứng đầy đủ |
+
+## 12. Trách nhiệm và mô hình trách nhiệm chia sẻ
+
+Datahub có bốn bên chịu trách nhiệm ATTT. **Chủ quản HTTT** (UBND tỉnh hoặc cơ quan được giao, theo NĐ 331/2026 Điều 31) chịu trách nhiệm cuối cùng: phê duyệt cấp độ, ban hành quy chế, bố trí bộ phận chuyên trách, quyết định chấp nhận rủi ro tồn dư, thông báo vi phạm. **Đơn vị vận hành** (Trung tâm CNTT/TTDL tỉnh) vận hành hằng ngày, giám sát, xử lý sự cố mức đầu. **Nhà cung cấp nền tảng** (nhà cung cấp sản phẩm, và ở hồ sơ dùng chung là đơn vị vận hành tập trung) chịu trách nhiệm an toàn của phần mềm và, ở hồ sơ dùng chung, của phần nền tảng. **Bên cung cấp hạ tầng** (TTDL tỉnh hoặc nhà cung cấp cloud Chính phủ) chịu trách nhiệm an toàn vật lý, mạng nền, ảo hóa. NĐ 331/2026 Điều 30 cho phép hệ cấp độ 3–4 dùng chung hạ tầng cloud/TTDL đạt yêu cầu, nên ranh giới trách nhiệm phải được ghi trong hợp đồng.
+
+Bảng dưới đây phân trách nhiệm theo lớp cho hai hồ sơ triển khai (C: chủ quản/đơn vị vận hành của tỉnh; N: nhà cung cấp nền tảng; H: bên cung cấp hạ tầng).
+
+| Lớp | Tỉnh độc lập (on-prem) | Nền tảng dùng chung (cloud) |
+|---|---|---|
+| An toàn vật lý, điện, làm mát (Phụ lục A TCVN 14423) | H (TTDL tỉnh) | H (nhà cung cấp cloud, đạt QĐ 8297/QĐ-BCA-A05) |
+| Mạng nền, chống DDoS tầng 3/4 | H | H |
+| Nút, hệ điều hành, K8s (SEC-50…53) | C (có thể thuê N hỗ trợ) | N |
+| Thành phần nền tảng: mesh, gateway, CSDL, Kafka, OpenBao (SEC-10…19, 30…36) | C vận hành, N cung cấp cấu hình chuẩn | N |
+| Phần mềm Datahub, bản vá, chuỗi cung ứng (SEC-40…59) | N | N |
+| Giám sát, SOC (SEC-60…67) | C | N (nền tảng) + C (theo tenant) |
+| Sao lưu, DR (SEC-70, 71) | C | N |
+| Cấu hình tenant, người dùng, phân quyền, kết nạp HTTT (SEC-20…29 phần tenant) | C | C |
+| Phân loại dữ liệu, mục đích, chấp thuận (SEC-37) | C và chủ quản dữ liệu | C và chủ quản dữ liệu |
+| Ứng phó sự cố, thông báo (SEC-72…74) | C (A), N hỗ trợ | C (A cho tenant), N (R cho nền tảng) |
+| Máy trạm người dùng, thư điện tử, nhận thức người dùng | C | C |
+
+> **Câu hỏi mở Q311:** Ở hồ sơ nền tảng dùng chung, ai là chủ quản của phần nền tảng dùng chung (một cơ quan trung ương, một tỉnh đầu mối, hay mỗi tỉnh là chủ quản của tenant mình)? Câu trả lời quyết định hồ sơ cấp độ lập một bộ hay nhiều bộ (D03-08).
+
+> **Câu hỏi mở Q312:** Danh mục HSM, thuật toán mật mã và CA được cơ quan có thẩm quyền chấp nhận cho hệ cấp độ 3–4 (ví dụ yêu cầu dùng mật mã dân sự trong nước, chứng thư từ CA chuyên dùng Chính phủ) là gì? Ảnh hưởng SEC-12, SEC-34, SEC-35, SEC-90.
+
+## 13. Truy vết
+
+Bảng dưới đây nối các yêu cầu, quyết định và mục kiểm kê hệ cũ với mục đáp ứng trong tài liệu này.
+
+| Yêu cầu / quyết định | Đáp ứng tại |
+|---|---|
+| RB-05, RB-06 | Mục 2, 6.6, 10; ADR-030 |
+| REQ-12, LGC-IAM-* | Mục 5.4 (SEC-20…29) |
+| REQ-13 | Mục 7 (SEC-60…67); ADR-031 |
+| REQ-09 | Mục 3.2, 6 (SEC-31, 32, 37…39) |
+| REQ-14, LGC-NGSP-008 | THR-51…54; SEC-24, 33, 37 |
+| REQ-19 | THR-46…50; SEC-36, 48, 67; PB-06 |
+| REQ-20, FR-00-010…012 | Mục 9 (SEC-80…88) |
+| FR-00-001, 002 | SEC-21, SEC-23 |
+| FR-00-003, 005 | SEC-29 (đề xuất sửa FR-00-003) |
+| FR-00-030…034 | SEC-45, bảng 3.2 |
+| FR-00-040…043 | Mục 7.1, 7.2; SEC-60, 62 |
+| FR-00-050, 071 | SEC-07, SEC-28, SEC-48 |
+| FR-00-062 | Bảng 3.2 |
+| FR-00-093, LGC-NFR-007 | SEC-33 |
+| NFR-00-014 | SEC-70, SEC-71 |
+| NFR-00-020…029 | Ma trận 11d |
+| KPI-09 | SEC-33, SEC-41 |
+| KPI-15 | SEC-64, mục 7.5 |
+| ADR-003, ADR-013 | Mục 3.3, 9 |
+| ADR-005, ADR-006 | SEC-24…26 |
+| ADR-012 | SEC-33…36 |
+| ADR-030, ADR-031, ADR-032 | Mục 10; 7.2–7.3; SEC-31, 34, 88 |
+| ADR-033, 034, 035 (luồng C) | SEC-11, SEC-71, SEC-70 |
+| CMP-LAW-05, 16, 17, 18, 19; STD-06 | Mục 2, 6, 11 |
+
+## 14. Câu hỏi mở, mã mới và điểm cần sửa ở tài liệu khác
+
+### 14.1. Câu hỏi mở
+
+> **Câu hỏi mở Q300:** Datahub áp dụng chuyển tiếp Điều 39 NĐ 331/2026 hay là hệ mới (mục 2.1)?
+
+> **Câu hỏi mở Q301:** Văn bản thay Thông tư 12/2022/TT-BTTTT đã có chưa (mục 2.2)?
+
+> **Câu hỏi mở Q302:** Cơ chế bảo vệ callback và API truy vấn trạng thái trong đặc tả PayGov hiện hành (mục 4.4.9, SEC-48)?
+
+> **Câu hỏi mở Q303:** Năng lực mTLS phía client của HTTT tỉnh; chính sách chuyển tiếp cho hợp đồng Nhạy cảm (SEC-24)?
+
+> **Câu hỏi mở Q304:** Quy định riêng cho cơ quan nhà nước trong Luật 91/2025, NĐ 356/2025; thời hạn trả lời chủ thể (mục 6)?
+
+> **Câu hỏi mở Q305:** Thời hạn lưu dữ liệu giao dịch PH-19 theo quy định kế toán (mục 6.2)?
+
+> **Câu hỏi mở Q306:** Chọn SeaweedFS, Ceph RGW hay dịch vụ cloud cho kho WORM có Object Lock compliance (mục 7.2)?
+
+> **Câu hỏi mở Q307:** Thời hạn lưu nhật ký tối thiểu cụ thể theo văn bản hướng dẫn Luật 116/2025 và TCVN 14423:2026 (mục 7.3)?
+
+> **Câu hỏi mở Q308:** Có bắt buộc kết nối giám sát với hệ thống của Bộ Công an hoặc tỉnh không (mục 7.4)?
+
+> **Câu hỏi mở Q309:** Thời hạn, mẫu và nơi nhận báo cáo sự cố an ninh mạng (mục 8.4)?
+
+> **Câu hỏi mở Q310:** Yêu cầu cụ thể của chương 6 TCVN 14423:2026 và tiêu chí cấp độ 4 (mục 10)?
+
+> **Câu hỏi mở Q311:** Chủ quản của phần nền tảng dùng chung là ai (mục 12)?
+
+> **Câu hỏi mở Q312:** Danh mục HSM, thuật toán và CA được chấp nhận cho cấp độ 3–4 (mục 12)?
+
+> **Câu hỏi mở Q313:** Tên chính xác và số mục của 18 nhóm yêu cầu 5.1–5.18 TCVN 14423:2026 để hoàn thiện ma trận 11a và ngưỡng tham số cấp độ 3 (tự khóa phiên, thời hạn lưu nhật ký, tần suất vá) nếu chặt hơn ngưỡng cấp độ 1 đã dùng.
+
+Các số Q314–Q319 để dành.
+
+### 14.2. Mã và thuật ngữ mới đề xuất bổ sung D00-01
+
+Các mã và thuật ngữ dưới đây được tài liệu này dùng lần đầu; luồng lõi gộp vào D00-01 theo §9.3.
+
+| Loại | Mã / thuật ngữ | Định nghĩa | Định nghĩa tại |
+|---|---|---|---|
+| Mã truy vết | `THR-{nn}` | Mối đe dọa trong mô hình STRIDE | D03-07 mục 4.4 |
+| Mã truy vết | `TA-{nn}` | Tác nhân đe dọa | D03-07 mục 4.3 |
+| Mã truy vết | `AS-{nn}` | Tài sản thông tin trong kiểm kê ATTT | D03-07 mục 3.1 |
+| Mã truy vết | `UC-SEC-{nn}` | Use case phát hiện an ninh (luật cảnh báo) | D03-07 mục 7.5 |
+| Mã truy vết | `PB-{nn}` | Playbook ứng phó sự cố | D03-07 mục 8.5 |
+| Mã vùng | `Z0`…`Z7` | Vùng tin cậy mạng | D03-07 mục 3.3 |
+| Mã căn cứ | CMP-LAW-17 NĐ 331/2026; CMP-LAW-18 NĐ 356/2025; CMP-LAW-19 NĐ 278/2025; CMP-LAW-20 QĐ 8297/QĐ-BCA-A05; cập nhật CMP-LAW-03 (thay bởi CMP-LAW-19), CMP-LAW-04 (hết hiệu lực), CMP-LAW-05 (Luật 91/2025/QH15), CMP-LAW-06/07/08 (kế thừa), CMP-LAW-16 (Luật 116/2025/QH15) | Văn bản pháp lý | D03-07 mục 2.2 |
+| Mã tiêu chuẩn | STD-03 cập nhật ASVS 5.0; STD-06 TCVN 14423:2026; STD-07 OWASP API Top 10 2023; STD-08 CIS K8s/NSA-CISA; STD-09 SLSA; STD-10 RFC 9700/8705/7523/7636/9449; STD-11 ISO/IEC 27001/27002:2022; STD-12 NIST SP 800-63B | Tiêu chuẩn kỹ thuật | D03-07 mục 2.3 |
+| Thuật ngữ | BFF (Backend-for-Frontend) | Thành phần phía máy chủ giữ token OAuth thay cho ứng dụng trình duyệt | D03-07 SEC-21 |
+| Thuật ngữ | Envelope encryption, KEK, DEK | Mã hóa dữ liệu bằng khóa dữ liệu (DEK), DEK được bọc bằng khóa mã hóa khóa (KEK) giữ trong kho khóa | ADR-032 |
+| Thuật ngữ | WORM, Object Lock | Lưu trữ ghi một lần, không sửa xóa được trong thời hạn giữ | ADR-031 |
+| Thuật ngữ | Break-glass | Truy cập khẩn cấp có kiểm soát vượt quy trình thường | SEC-28 |
+| Thuật ngữ | Xóa mật mã (crypto-shredding) | Hủy khóa để dữ liệu mã hóa không còn giải được | SEC-39 |
+| Thuật ngữ | Token ràng buộc chứng thư (certificate-bound token) | Token chỉ dùng được trên kết nối mTLS có khóa tương ứng (RFC 8705) | SEC-24 |
+
+### 14.3. Điểm cần sửa ở SRS và SAD (không tự sửa)
+
+Các điểm dưới đây là chênh lệch giữa tài liệu này và tài liệu khác; luồng lõi quyết định và cập nhật.
+
+| Tài liệu, vị trí | Hiện ghi | Đề xuất | Lý do |
+|---|---|---|---|
+| D02-02 FR-00-003 | Tự đăng xuất sau 30 phút, cấu hình 5–120 phút | 15 phút, cấu hình 5–15 phút; cảnh báo trước 2 phút | TCVN 14423:2026 ngưỡng ≤ 15 phút |
+| D02-02 NFR-00-026 | Mật khẩu tối thiểu 12 ký tự | Tối thiểu 14 ký tự | TCVN 14423:2026 (≥ 14 nếu không MFA; áp dụng chung cho đơn giản) |
+| D02-02 NFR-00-025 | Khóa tạm 15 phút sau 5 lần sai | Bổ sung khóa vĩnh viễn sau 3 lần khóa tạm trong 24 giờ | Chống dò chậm |
+| D02-02 NFR-00-027 | "Lưu trữ tối thiểu theo yêu cầu cấp độ (xác định ở D03-07)" | Trực tuyến 12 tháng; WORM 5 năm, không dưới 3 năm | Chốt Q08 |
+| D02-02 NFR-00-028 | Log vận hành 90 ngày | Thêm: log an ninh 12 tháng trực tuyến | Mục 7.3 |
+| D02-02 Q08 | Mở | Đóng, trỏ tới D03-07 mục 7.3 và ADR-031 | — |
+| D02-02 thêm NFR | — | Thêm yêu cầu vô hiệu tài khoản không hoạt động 45 ngày (quản trị 30 ngày) | TCVN 14423:2026; SEC-27 |
+| D03-01 §9 mục 2 | Token 15 phút cho người | 5 phút (giữ ở BFF, làm mới trong suốt); ghi rõ mẫu BFF | SEC-21, SEC-25 |
+| D03-01 §6 dòng Biên | "Ingress NGINX hoặc Envoy Gateway, ADR-03x" | Envoy Gateway + Coraza, ADR-033 | Ingress NGINX cộng đồng đã ngừng phát triển |
+| D03-01 §6 dòng Kho đối tượng | "SeaweedFS hoặc Ceph RGW cho WORM" | Giữ, thêm Q306 | — |
+| D00-01 §2.1 dòng Datahub, CMP-LAW-03 | Viện dẫn NĐ 47/2020 | NĐ 278/2025/NĐ-CP | NĐ 47/2020 đã bị thay |
+| D00-01 §7 CMP-LAW-04/05/06/07/08/16, STD-03 | Như hiện có | Cập nhật theo mục 14.2 | Khung pháp lý mới |
+| D00-03 / D02-02 IF-08 | Syslog hoặc OTLP | Thêm định dạng chuẩn hóa ECS/OCSF | Mục 7.4 |

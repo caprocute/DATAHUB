@@ -296,3 +296,276 @@ Một việc được coi là xong khi đạt toàn bộ điều kiện dưới 
 10. Tài liệu cập nhật: ghi chú phát hành (từ commit), README module nếu đổi cách dùng, ghi chú thay đổi phá vỡ, cập nhật RTM (D00-03) nếu đổi truy vết.
 11. Đã triển khai lên môi trường dev qua GitOps và qua kiểm tra khói; chủ sản phẩm hoặc người được ủy quyền đã nghiệm thu trên môi trường test với việc có giao diện.
 12. Cờ tính năng (nếu có) đã đăng ký với chủ sở hữu và ngày gỡ.
+
+## 8. Quản lý phụ thuộc và ghim phiên bản
+
+### 8.1. Nguyên tắc
+
+SAD §6 chỉ ghi dòng phiên bản chính và giao cho D04-02 ghim số phiên bản cụ thể. Ghim phiên bản có hai mục đích: build lặp lại được (cùng mã nguồn cho cùng sản phẩm, điều kiện để ký và lập SBOM có ý nghĩa), và kiểm soát được khi nào, vì sao một thành phần thay đổi. Nhưng ghim mà không cập nhật thì sau vài tháng sẽ chạy phiên bản hết hỗ trợ, không còn bản vá bảo mật, không qua được hồ sơ cấp độ. Vì vậy chính sách gồm hai nửa: ghim chính xác, và cập nhật có lịch bằng công cụ tự động.
+
+**QT-DEP-01 · Ghim chính xác ở mọi tầng.** Phụ thuộc Maven quản lý tập trung trong `dependencyManagement` của POM gốc qua BOM (Spring Boot, Spring Modulith, Quarkus, Camel Quarkus, AWS SDK…) với phiên bản cụ thể; mô-đun con không khai báo phiên bản. Hai mô-đun Camel hiện nằm ngoài reactor phải được đưa vào POM gốc hoặc dùng chung một BOM nội bộ `datahub-bom`. Plugin Maven ghim phiên bản; Maven Wrapper ghim phiên bản Maven; bật `maven-enforcer-plugin` với `requireMavenVersion`, `requireJavaVersion`, `dependencyConvergence`, `banDuplicatePomDependencyVersions`. Phụ thuộc giao diện dùng lockfile (`pnpm-lock.yaml` hoặc `package-lock.json`) được commit và cài bằng `--frozen-lockfile`/`npm ci`; trong `package.json` dùng phiên bản chính xác (không `^`, `~`) cho phụ thuộc trực tiếp. Ảnh container (ảnh nền, ảnh thành phần bên thứ ba trong Kustomize/Helm) ghim theo digest `@sha256:`, có thẻ phiên bản bên cạnh để đọc được. Action CI ghim theo SHA (QT-CI-03).
+
+**QT-DEP-02 · Chỉ dùng phiên bản còn hỗ trợ.** Mọi thành phần trong bảng 8.2 phải ở dòng phiên bản còn được nhà phát triển hỗ trợ bản vá bảo mật trong ít nhất 6 tháng tính từ ngày phát hành Datahub; ưu tiên dòng hỗ trợ dài hạn (LTS) khi có. Thành phần sắp hết hỗ trợ trong 6 tháng phải có việc nâng cấp trong kế hoạch. Đây cũng là nguyên tắc ghim của IP-03.
+
+**QT-DEP-03 · Nguồn phụ thuộc kiểm soát được.** Build lấy phụ thuộc qua kho trung gian của dự án (Harbor cho ảnh; Nexus, Artifactory hoặc Reposilite cho Maven và npm) có bộ nhớ đệm và quét, không lấy trực tiếp từ Internet ở CI phát hành. Điều này đồng thời là điều kiện cho gói phân phối air-gapped (ADR-036). Bật kiểm tra checksum (Maven `checksumPolicy=fail`, npm integrity trong lockfile).
+
+### 8.2. Bảng phiên bản chính
+
+Bảng dưới đây là bảng ghim phiên bản của Datahub tại thời điểm lập tài liệu, khớp với bảng baseline của IP-03 và mã hiện có trong kho. Cột "Ghim" là phiên bản dùng cho build; ký hiệu `.x` nghĩa là bản vá mới nhất của dòng đó do Renovate cập nhật tự động, còn số cụ thể nằm trong POM hoặc lockfile. Cột "Vòng đời" nêu tình trạng hỗ trợ đã biết; những điểm chưa xác minh được ghi rõ và đưa vào câu hỏi mở Q354. Bảng được rà soát mỗi quý và trước mỗi lần phát hành MINOR.
+
+| Thành phần | Dòng | Ghim | Vòng đời và ghi chú |
+|---|---|---|---|
+| Java (Eclipse Temurin JDK) | 21 LTS | 21.0.x | LTS, hỗ trợ cộng đồng tới khoảng 2029; chọn 21 có chủ đích theo IP-03, đánh giá chuyển 25 LTS ở lần nâng cấp lớn tiếp theo |
+| Maven | 3.9 | 3.9.x (qua Maven Wrapper) | — |
+| Spring Boot | 4.0 | 4.0.x (hiện 4.0.2) | Mỗi dòng MINOR của Spring Boot có thời gian hỗ trợ bản vá miễn phí giới hạn (khoảng 12–13 tháng); dòng 4.0 phát hành 11/2025 nên **cần xác minh ngày hết hỗ trợ và lên kế hoạch nâng dòng MINOR mới hơn** (Q354) |
+| Spring Modulith | 2.0 | 2.0.x (hiện 2.0.1) | Đi kèm dòng Spring Boot; nâng cùng Spring Boot |
+| Apache Camel | 4.18 LTS | 4.18.x | LTS, hỗ trợ tới 02/2027 theo IP-03; không dùng dòng không-LTS. **Phải lên kế hoạch chuyển sang dòng LTS kế tiếp trước 02/2027** |
+| Quarkus / Camel Quarkus platform | 3.33 | 3.33.x (hiện 3.33.2) | Khớp Camel 4.18; xác minh 3.33 thuộc dòng LTS của Quarkus |
+| GraalVM / Mandrel (build native) | Java 21 | Chưa khóa | Phải khớp Camel Quarkus 3.33; khóa khi bật native ở CI phát hành (IP-03) |
+| Liquibase | 4.x | Theo BOM Spring Boot | Cần xác minh điều khoản giấy phép của dòng mới trước khi nâng dòng chính (Q354) |
+| Node.js (công cụ giao diện) | 22 LTS | 22.x | LTS đang ở pha bảo trì; đánh giá chuyển 24 LTS (Q354) |
+| TypeScript | 5 | 5.8.x | — |
+| React | 19 | 19.x | — |
+| Ant Design | 6 | 6.x | — |
+| Vite | 6 | 6.x | Đánh giá nâng dòng chính khi Vitest và plugin tương thích |
+| TanStack Query | 5 | 5.x | Chưa có trong mã hiện tại, thêm theo D04-01 CC-FE-05 |
+| React Router | 7 | 7.x | — |
+| PostgreSQL | 18 | 18.x | Ưu tiên 18 nếu CloudNativePG trên cụm đích hỗ trợ; tối thiểu 17; không khởi tạo mới trên 16 (IP-03) |
+| CloudNativePG | — | Chưa khóa | Phụ thuộc cụm đích (IP-03, D03-09) |
+| Apache Kafka (Strimzi, KRaft) | 4 | Theo phiên bản Strimzi hỗ trợ | Chưa khóa Strimzi (IP-03) |
+| Apicurio Registry | 3 | 3.x | — |
+| Apache APISIX | 3 | 3.x | Ghim bản LTS của APISIX nếu có |
+| Keycloak | 26 | 26.x | — |
+| Open Policy Agent | 1 | 1.x | — |
+| OpenBao | 2 | 2.x | — |
+| Valkey | 8 | 8.x | — |
+| Flowable (nhúng) | 7 | 7.x | Kiểm tra tương thích Spring Boot 4 |
+| Kubernetes | ≥ 1.31 | Theo cụm đích | Chỉ hỗ trợ các bản K8s còn trong vòng hỗ trợ upstream |
+| Argo CD | — | Theo D03-09 | — |
+| Công cụ CI: Semgrep, CodeQL, SpotBugs + FindSecBugs, Trivy, gitleaks, Spectral, oasdiff, Squawk, commitlint, cosign, Syft | — | Ghim phiên bản chính xác trong cấu hình CI | Renovate cập nhật |
+
+### 8.3. Renovate và chính sách cập nhật
+
+**QT-DEP-04 · Renovate là công cụ cập nhật duy nhất.** Renovate (tự vận hành, chạy được on-prem) quét kho mã và kho GitOps, mở PR cập nhật cho Maven, npm, ảnh container, Kustomize, Helm, action CI và Maven Wrapper. Cấu hình `renovate.json` ở gốc kho thuộc CODEOWNERS của nhóm DevSecOps. Không dùng song song Dependabot để tránh PR trùng. Chính sách tự hợp nhất và nhóm cập nhật được chốt trong bảng sau.
+
+| Loại cập nhật | Gom nhóm | Tự hợp nhất | Lịch |
+|---|---|---|---|
+| Bản vá (PATCH) của phụ thuộc thư viện và công cụ | Theo hệ sinh thái (một PR Maven, một PR npm) | Có, nếu mọi cổng xanh và không phải thành phần lõi trong danh sách giữ tay (Spring Boot, Camel, Quarkus, Keycloak, PostgreSQL) | Hằng tuần, sáng thứ Hai |
+| Bản vá có công bố lỗ hổng (CVE) | Riêng từng phụ thuộc | Không; ưu tiên duyệt trong 1 ngày làm việc (CRITICAL) hoặc 5 ngày (HIGH) | Ngay khi có |
+| MINOR | Theo nhóm BOM (ví dụ cả họ Spring) | Không; 1 người duyệt nhóm nền tảng kỹ thuật | Hằng tuần |
+| MAJOR | Riêng từng thành phần | Không; cần đánh giá tác động, có thể cần ADR (nếu đổi dòng của thành phần trong SAD §6) | Hằng tháng, đưa vào kế hoạch |
+| Digest ảnh nền | Gom | Có, nếu G8 xanh | Hằng ngày |
+| Action CI (SHA) | Gom | Có | Hằng tuần |
+
+Renovate được cấu hình độ chờ tối thiểu (`minimumReleaseAge`) 3 ngày với bản phát hành mới không phải bản vá bảo mật, để tránh nhận phải gói bị chiếm quyền mới đăng, và chặn phiên bản không-LTS của các thành phần có chính sách LTS (Camel, Quarkus, Node).
+
+**QT-DEP-05 · Thêm phụ thuộc mới.** PR thêm phụ thuộc trực tiếp mới phải nêu: mục đích, phương án đã cân nhắc, giấy phép, tình trạng bảo trì, kết quả SCA (D04-01 CC-GEN-09); cần duyệt của nhóm nền tảng kỹ thuật. Danh sách giấy phép cho phép mặc định: Apache-2.0, MIT, BSD-2/3-Clause, EPL-2.0, MPL-2.0, ISC, PostgreSQL, CC0; giấy phép copyleft mạnh (GPL, AGPL) hoặc giấy phép nguồn mở có điều kiện thương mại (BUSL, SSPL, FSL) cần ý kiến pháp chế của chủ đầu tư.
+
+**QT-DEP-06 · Ngoại lệ lỗ hổng có thời hạn.** Lỗ hổng HIGH chưa có bản vá hoặc không khai thác được trong ngữ cảnh Datahub được ghi ngoại lệ trong tệp `.trivyignore.yaml` (hoặc VEX) kèm mã CVE, lý do, người duyệt bảo mật, ngày hết hạn ≤ 90 ngày. Ngoại lệ hết hạn làm G7 đỏ trở lại.
+
+## 9. Phiên bản phát hành và changelog
+
+### 9.1. Đánh số phiên bản
+
+**QT-REL-01 · SemVer 2.0 cho sản phẩm và cho hợp đồng.** Sản phẩm Datahub phát hành theo số phiên bản `MAJOR.MINOR.PATCH` của Semantic Versioning 2.0. Mọi DU, gói giao diện và ảnh `dh-runtime` trong cùng monorepo dùng chung một số phiên bản sản phẩm để tỉnh triển khai một bộ đồng nhất (một "bộ phát hành"); thư viện công bố cho bên ngoài (nếu có SDK cho HTTT) có thể có số riêng. Ý nghĩa: MAJOR khi có thay đổi phá vỡ hợp đồng API, sự kiện hoặc yêu cầu nâng cấp hạ tầng không tương thích; MINOR khi thêm chức năng tương thích ngược; PATCH khi chỉ sửa lỗi và bản vá bảo mật. Phiên bản API trong đường dẫn (`/v1`) tách biệt với phiên bản sản phẩm và chỉ tăng khi API đó có thay đổi phá vỡ (NFR-00-055).
+
+**QT-REL-02 · Số phiên bản sinh từ commit.** Công cụ release-please (hoặc semantic-release) đọc commit Conventional Commits trên `main` kể từ thẻ trước, đề xuất số phiên bản kế tiếp và mở một PR phát hành chứa cập nhật số phiên bản và changelog. Hợp nhất PR phát hành tạo thẻ có chữ ký `vX.Y.Z` và kích hoạt quy trình phát hành. Bản thử nghiệm dùng hậu tố `-rc.N`; ảnh build từ `main` chưa phát hành mang thẻ `{phiên-bản-kế}-dev.{số-build}+{sha-ngắn}` và không bao giờ được triển khai lên production.
+
+### 9.2. Changelog và ghi chú phát hành
+
+**QT-REL-03 · Changelog tự động, ghi chú phát hành do người biên tập.** `CHANGELOG.md` ở gốc kho mã sinh tự động từ commit, nhóm theo loại (Tính năng, Sửa lỗi, Bảo mật, Hiệu năng, Thay đổi phá vỡ), mỗi dòng kèm mã truy vết. Ghi chú phát hành cho tỉnh (tiếng Việt, cho người vận hành và chủ quản) do trưởng nhóm kỹ thuật biên tập từ changelog, bổ sung: thay đổi phá vỡ và hướng dẫn chuyển đổi, migration CSDL dài, biến cấu hình mới, thứ tự nâng cấp, lỗ hổng đã vá (mã CVE, mức độ), danh sách FR và LGC mới đáp ứng, và giới hạn đã biết. Ghi chú bảo mật không mô tả chi tiết khai thác trước khi đa số tỉnh đã nâng cấp.
+
+### 9.3. Điều kiện phát hành
+
+**QT-REL-04 · Cổng phát hành.** Một thẻ phát hành chỉ được đưa lên môi trường production của bất kỳ tỉnh nào khi: mọi cổng G1–G9 xanh trên commit được gắn thẻ; DAST không có cảnh báo High; không có lỗ hổng CRITICAL và không có HIGH chưa có ngoại lệ trong SBOM tại thời điểm phát hành (NFR-00-023); kiểm thử tải đạt NFR-00-001…008; kiểm thử chấp nhận và hồi quy của D05-01 đạt; ảnh đã ký và có SBOM, có chứng thực nguồn gốc (mục 10); ghi chú phát hành đã duyệt; người có thẩm quyền phê duyệt phát hành (chủ sản phẩm và đại diện vận hành) đã ký duyệt trên PR cập nhật overlay production của kho GitOps.
+
+### 9.4. Nhánh hỗ trợ phiên bản
+
+**QT-REL-05 · Nhánh `release/X.Y` chỉ khi cần vá phiên bản cũ.** Vì các tỉnh on-prem có thể không nâng cấp đồng thời, sản phẩm duy trì hai dòng MINOR gần nhất (hiện hành và liền trước) nhận bản vá bảo mật trong tối thiểu 6 tháng. Khi cần vá một dòng cũ, tạo nhánh `release/X.Y` từ thẻ `vX.Y.0` (nếu chưa có), sửa trên `main` trước rồi cherry-pick sang nhánh phát hành; không sửa trên nhánh phát hành mà không có trên `main`, trừ khi mã đã không còn trên `main` (khi đó ghi rõ trong PR). Nhánh `release/*` được bảo vệ như `main`.
+
+## 10. Ký ảnh, SBOM và chứng thực nguồn gốc
+
+Chuỗi cung ứng phần mềm là bề mặt tấn công mà cấp độ 3 yêu cầu kiểm soát: kẻ tấn công không cần xâm nhập Datahub nếu có thể chèn mã vào một thư viện hay ảnh mà Datahub tin dùng. Mục này mô tả cách mỗi sản phẩm build được gắn với mã nguồn đã duyệt và cách cụm Kubernetes chỉ chạy những sản phẩm đó.
+
+```mermaid
+flowchart LR
+  S[Commit có chữ ký trên main<br/>hoặc thẻ vX.Y.Z] --> B[CI build<br/>runner kiểm soát]
+  B --> I[Ảnh OCI<br/>digest sha256]
+  B --> SB[SBOM CycloneDX<br/>Syft]
+  B --> P[Chứng thực SLSA<br/>provenance]
+  I --> SG[cosign sign]
+  SB --> AT[cosign attest]
+  P --> AT
+  SG & AT --> H[(Harbor<br/>quét Trivy)]
+  H --> K[Kyverno / admission<br/>xác minh chữ ký + chứng thực]
+  K --> C[Cụm K8s]
+```
+
+Sơ đồ cho thấy ba sản phẩm đi kèm mỗi ảnh: chữ ký, SBOM và chứng thực nguồn gốc. Cả ba được lưu cạnh ảnh trong Harbor dưới dạng tạo tác OCI (OCI artifact), nên khi sao chép ảnh sang Harbor của tỉnh on-prem hoặc vào gói air-gapped (ADR-036), chữ ký và SBOM đi theo. Ở cụm, bộ kiểm soát tiếp nhận (admission controller) từ chối pod có ảnh không có chữ ký hợp lệ của khóa phát hành Datahub, nên kể cả người có quyền quản trị cụm cũng không chạy được ảnh lạ trong namespace của Datahub.
+
+**QT-SC-01 · Ký mọi ảnh bằng cosign.** Mọi ảnh do Datahub build được ký bằng cosign ngay trong job CI tạo ra ảnh, theo digest (không theo thẻ). Khóa ký phát hành nằm trong OpenBao transit hoặc KMS/HSM, CI chỉ có quyền ký qua chính sách, không đọc được khóa; ở môi trường có kết nối, có thể dùng ký không khóa của Sigstore với danh tính OIDC của CI, nhưng hồ sơ on-prem và air-gapped dùng khóa do dự án quản lý (D03-09). Ảnh bên thứ ba được Harbor sao về, quét, và ký lại bằng khóa "đã duyệt" của dự án sau khi qua quét.
+
+**QT-SC-02 · SBOM cho mọi sản phẩm phát hành.** Syft sinh SBOM định dạng CycloneDX JSON (kèm SPDX nếu chủ đầu tư yêu cầu) cho mỗi ảnh và cho mã nguồn (`cyclonedx-maven-plugin`, `@cyclonedx/cyclonedx-npm`), đính kèm vào ảnh bằng `cosign attest --type cyclonedx`, và lưu vào kho SBOM (Dependency-Track hoặc tương đương) để quét lại hằng ngày với cơ sở dữ liệu lỗ hổng mới. Mỗi bộ phát hành giao cho tỉnh kèm SBOM tổng hợp.
+
+**QT-SC-03 · Chứng thực nguồn gốc mức SLSA Build L2, hướng tới L3.** CI sinh chứng thực nguồn gốc (provenance) theo định dạng in-toto/SLSA cho mỗi ảnh, ghi kho mã, commit, quy trình build, tham số; ký và đính kèm bằng cosign. Mục tiêu ban đầu là SLSA Build L2 (build trên dịch vụ được lưu trữ, chứng thực có chữ ký); hướng tới L3 (build cô lập, chứng thực không giả mạo được bởi người viết quy trình) khi chuẩn bị nâng cấp độ 4.
+
+**QT-SC-04 · Xác minh khi triển khai.** Chính sách Kyverno (hoặc Sigstore policy-controller) trong mọi namespace của Datahub yêu cầu: ảnh từ Harbor của dự án, có chữ ký hợp lệ của khóa phát hành, có chứng thực SBOM và provenance, tham chiếu theo digest. Chính sách ở chế độ thực thi (enforce) trên staging và production, chế độ kiểm tra (audit) trên dev. Chi tiết cấu hình ở D03-09.
+
+## 11. Quy trình sửa nóng
+
+Sửa nóng (hotfix) là thay đổi khẩn cấp để khắc phục sự cố đang ảnh hưởng production: lỗi làm gián đoạn data plane, lỗ hổng đang bị khai thác hoặc có mức CRITICAL, rò rỉ dữ liệu, hoặc lỗi làm sai dữ liệu nghiệp vụ. Sửa nóng vẫn đi qua PR và các cổng tự động; cái được rút ngắn là thời gian chờ con người, không phải các bước kiểm tra.
+
+```mermaid
+sequenceDiagram
+  participant OC as Người trực sự cố
+  participant DEV as Lập trình viên
+  participant RV as Người duyệt
+  participant CI as CI
+  participant GO as Kho GitOps / Argo CD
+  OC->>DEV: Mở sự cố INC-nnn, xác định mức
+  DEV->>DEV: Nhánh hotfix/INC-nnn-... từ main (hoặc release/X.Y)
+  DEV->>CI: PR + kiểm thử tái hiện lỗi
+  CI-->>DEV: G1–G8 (G9 rút gọn)
+  RV->>DEV: Duyệt (1 người, ≤ 30 phút)
+  DEV->>CI: Squash merge, thẻ vX.Y.Z+1
+  CI->>GO: Ảnh đã ký, cập nhật overlay
+  OC->>GO: Phê duyệt production
+  GO-->>OC: Triển khai, theo dõi
+  RV->>DEV: Hậu kiểm người thứ hai ≤ 1 ngày
+```
+
+Sơ đồ trên mô tả các bước. Những điểm khác với quy trình thường được nêu dưới đây.
+
+**QT-HF-01 · Khi nào được dùng.** Chỉ dùng cho sự cố có mã `INC` mức nghiêm trọng 1 hoặc 2 theo quy trình ứng phó sự cố của D03-07 (dải SEC-70–79), do người trực sự cố hoặc trưởng nhóm kỹ thuật xác nhận. Lỗi khác đi theo quy trình thường.
+
+**QT-HF-02 · Sửa trên `main` trước.** Nhánh `hotfix/INC-{nnn}-{mô-tả}` tách từ `main`; nếu tỉnh bị ảnh hưởng chạy dòng cũ, cherry-pick sang `release/X.Y` sau khi hợp nhất vào `main`. Ngoại lệ duy nhất là khi `main` đã thay đổi tới mức bản sửa không áp dụng được, lúc đó sửa trên `release/X.Y` và mở ngay PR đưa thay đổi tương đương về `main`.
+
+**QT-HF-03 · Kiểm thử tái hiện bắt buộc.** PR sửa nóng phải có kiểm thử tự động tái hiện lỗi (đỏ trước khi sửa, xanh sau khi sửa); không có ngoại lệ, vì đây là cách duy nhất bảo đảm lỗi không quay lại.
+
+**QT-HF-04 · Rút gọn có kiểm soát.** Một người duyệt trước hợp nhất (là người duyệt bảo mật nếu sự cố là lỗ hổng); G9 chỉ chạy bộ E2E khói; mọi cổng khác chạy đầy đủ. Người duyệt thứ hai hậu kiểm trong 1 ngày làm việc; phát hiện của hậu kiểm được xử lý như lỗi mức cao.
+
+**QT-HF-05 · Ghi nhận sau sự cố.** Trong 5 ngày làm việc sau sửa nóng, nhóm lập báo cáo sau sự cố (không đổ lỗi, blameless) nêu nguyên nhân gốc, vì sao các cổng không chặn được, và hành động phòng ngừa (thường là luật tự động mới theo QT-RV-05). Lỗ hổng bảo mật được đánh giá nghĩa vụ thông báo theo quy định (báo vi phạm dữ liệu cá nhân trong 72 giờ theo Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 và Nghị định 356/2025/NĐ-CP nếu có ảnh hưởng dữ liệu cá nhân), phối hợp với quy trình của D03-07.
+
+## 12. Môi trường phát triển cục bộ và bí mật trong phát triển
+
+### 12.1. Môi trường cục bộ
+
+**QT-DEV-01 · Một lệnh để chạy.** Lập trình viên mới phải chạy được DU mình phụ trách và kiểm thử của nó trong vòng một ngày từ khi có máy. Kho mã cung cấp: cấu hình devcontainer (`.devcontainer/devcontainer.json`) với JDK 21, Maven, Node 22, pnpm, công cụ CLI (kubectl, kustomize, cosign, trivy, gitleaks, semgrep) ở đúng phiên bản bảng 8.2; `Makefile` với các mục tiêu `make bootstrap`, `make dev-up`, `make test`, `make verify` (chạy cục bộ tương đương G1–G7); và `deploy/compose/docker-compose.yml` dựng PostgreSQL 18, Kafka KRaft, Apicurio, Keycloak (realm mẫu `dh-t01`, `dh-t02` với người dùng giả), Valkey, Garage, OpenBao chế độ dev, OTel Collector và Grafana nhẹ.
+
+**QT-DEV-02 · Testcontainers cho kiểm thử, Spring Boot dev services cho chạy thử.** Kiểm thử tích hợp tự dựng phụ thuộc bằng Testcontainers (D04-01 CC-TEST-01), không giả định có compose đang chạy. Khi chạy ứng dụng cục bộ, có thể dùng hỗ trợ Docker Compose hoặc Testcontainers lúc phát triển của Spring Boot (`spring-boot-docker-compose`, `spring-boot-testcontainers`) và dev services của Quarkus để tự dựng phụ thuộc. Ảnh dùng trong Testcontainers và compose lấy từ Harbor (hoặc bản sao), ghim phiên bản như ở production.
+
+**QT-DEV-03 · Đa tenant ngay ở cục bộ.** Môi trường cục bộ luôn có ít nhất hai tenant giả (`T01`, `T02`) để lập trình viên tự thấy hành vi cách ly; dữ liệu mẫu do bộ sinh dữ liệu giả tạo ra, không dùng dữ liệu thật hay bản sao production.
+
+**QT-DEV-04 · Môi trường xem trước theo PR.** PR có nhãn `preview` được dựng môi trường tạm trong namespace riêng trên cụm dev (qua Argo CD ApplicationSet theo PR), tự hủy khi PR đóng hoặc sau 72 giờ, dùng cho kiểm thử E2E (G9) và cho chủ sản phẩm xem trước.
+
+### 12.2. Bí mật trong phát triển
+
+**QT-SEC-01 · Không có bí mật thật ở máy lập trình viên.** Bí mật của môi trường test, staging, production không bao giờ được cấp cho máy cá nhân. Môi trường cục bộ dùng thông tin xác thực sinh ngẫu nhiên lúc dựng compose (script `make dev-up` sinh mật khẩu vào tệp `.env` không commit) hoặc do Testcontainers tạo. Tệp `.env.example` chỉ chứa tên biến và chú thích, không giá trị.
+
+**QT-SEC-02 · Chặn bí mật trước khi tới kho.** Pre-commit hook (`pre-commit` framework hoặc lefthook) chạy gitleaks trên thay đổi đã stage; nền tảng Git bật chặn đẩy bí mật (push protection) nếu có; G7 chạy gitleaks trên PR và toàn lịch sử (NFR-00-022). Cấu hình `.gitleaks.toml` bổ sung luật cho định dạng bí mật đặc thù (khóa OpenBao, client secret Keycloak, khóa PayGov, chuỗi kết nối JDBC có mật khẩu).
+
+**QT-SEC-03 · Lộ bí mật là sự cố.** Bí mật bị commit (kể cả lên nhánh chưa hợp nhất, kể cả đã xóa ở commit sau) được coi là đã lộ: thu hồi và xoay vòng ngay trong OpenBao, mở sự cố `INC`, rồi mới làm sạch lịch sử nếu cần. Không coi việc xóa commit là đủ.
+
+**QT-SEC-04 · Bí mật CI và GitOps.** CI truy cập bí mật qua OIDC liên kết với OpenBao (thông tin xác thực ngắn hạn theo job), không lưu bí mật dài hạn trong cấu hình CI khi tránh được. Kho GitOps không chứa bí mật; chỉ chứa `ExternalSecret` trỏ tới đường dẫn `kv/dh/{tenant}/...` (ADR-012, D03-10 §4).
+
+## 13. Quy trình thay đổi hợp đồng API và sự kiện
+
+Hợp đồng API và sự kiện là cam kết với HTTT thành viên của nhiều tỉnh, nhiều đơn vị phát triển khác nhau; một thay đổi phá vỡ không báo trước làm gãy tích hợp ở nơi Datahub không kiểm soát. Vì vậy thay đổi hợp đồng có quy trình riêng, tách khỏi thay đổi hiện thực (nguyên tắc "hợp đồng trước" NT-04 của SAD, D04-01 CC-GEN-02).
+
+**QT-CT-01 · PR hợp đồng đi trước.** Thay đổi hợp đồng nằm trong một PR riêng chỉ đụng `contracts/` (nhãn `contract-change`), được duyệt bởi nhóm kiến trúc và nhóm sở hữu hợp đồng, và nếu có bên tiêu dùng nội bộ khác DU thì đại diện bên tiêu dùng. Sau khi hợp nhất, mã máy chủ và mã khách được sinh lại; PR hiện thực tham chiếu PR hợp đồng. Với thay đổi nhỏ chỉ thêm trường tùy chọn, được phép gộp hợp đồng và hiện thực trong cùng PR.
+
+**QT-CT-02 · Phân loại thay đổi.** oasdiff (OpenAPI) và kiểm tra tương thích của Apicurio (schema sự kiện) tự phân loại thay đổi. Cách xử lý từng loại được chốt trong bảng sau.
+
+| Loại thay đổi | Ví dụ | Xử lý |
+|---|---|---|
+| Tương thích ngược | Thêm endpoint, thêm trường tùy chọn ở yêu cầu, thêm trường ở phản hồi, thêm giá trị enum ở yêu cầu | PR hợp đồng thường; tăng MINOR sản phẩm |
+| Phá vỡ API | Xóa hoặc đổi tên trường, đổi kiểu, thêm trường bắt buộc ở yêu cầu, thêm giá trị enum ở phản hồi khi bên nhận dùng enum đóng, đổi ngữ nghĩa | Tạo phiên bản mới trong đường dẫn (`/v2`) song song `/v1`; `/v1` gắn `Deprecation` và `Sunset` ≥ 6 tháng (NFR-00-055); thông báo cho HTTT qua cổng nhà phát triển và thư điện tử đầu mối; ghi chú phát hành; tăng MAJOR nếu là API công bố cho HTTT |
+| Phá vỡ sự kiện | Xóa trường, đổi kiểu | Topic phiên bản mới `.v{n+1}`; bên phát phát song song hai topic trong thời gian chuyển tiếp ≥ 6 tháng; schema mới đăng ký nhóm mới trong Apicurio |
+| Gỡ bỏ phiên bản cũ | Hết thời hạn `Sunset` | Kiểm tra chỉ số sử dụng tại APISIX/Kafka bằng 0 trong 30 ngày hoặc được chủ quản chấp thuận; PR gỡ có duyệt kiến trúc |
+
+**QT-CT-03 · Kiểm thử hợp đồng hai phía.** Phía nhà cung cấp kiểm tra mã thật khớp hợp đồng (kiểm thử sinh từ OpenAPI chạy trên `@SpringBootTest`, hoặc Spring Cloud Contract); phía tiêu dùng nội bộ (giao diện, DU khác, luồng Camel) dùng kiểu sinh từ hợp đồng và kiểm thử với máy chủ giả sinh từ hợp đồng (Prism hoặc MSW). Chi tiết chiến lược ở ADR-038 và D05-01. G5 chạy cả hai phía.
+
+**QT-CT-04 · Hợp đồng là tài liệu công bố.** Hợp đồng đã hợp nhất được xuất bản tự động lên cổng nhà phát triển (PH-15) và đăng ký Apicurio khi phát hành, với lịch sử phiên bản và changelog theo hợp đồng, để HTTT thành viên tự tra cứu.
+
+## 14. Quy trình phát hành luồng Camel qua GitOps
+
+Luồng tích hợp khác mã sản phẩm ở chỗ nó là **cấu hình theo tenant** do cán bộ tích hợp của tỉnh thiết kế, không phải mã do đội sản phẩm viết, và nó thay đổi thường xuyên hơn nhiều so với chu kỳ phát hành sản phẩm. Vì vậy luồng có quy trình riêng nhưng vẫn theo cùng nguyên tắc: mọi thay đổi có dấu vết trong Git, được kiểm tra tự động, được người có thẩm quyền duyệt, và chỉ Argo CD được thay đổi runtime (ADR-009, ADR-013, SAD §5).
+
+```mermaid
+flowchart TB
+  D[Trình thiết kế dh-console<br/>hoặc YAML viết tay] --> V[dh-integration lưu nháp<br/>validator: CC-CAMEL-*]
+  V --> T[Chạy thử trên sandbox<br/>bản tin mẫu ẩn danh]
+  T --> A[Quy trình duyệt Flowable<br/>người duyệt của tenant]
+  A --> G[dh-integration tạo commit có chữ ký<br/>+ PR vào kho GitOps luồng]
+  G --> C[CI kho GitOps<br/>schema, lint, Semgrep YAML, kiểm thử luồng]
+  C --> M[Hợp nhất tự động<br/>khi CI xanh và đã duyệt]
+  M --> AR[Argo CD đồng bộ<br/>dh-runtime theo tenant]
+  AR --> O[Theo dõi: lỗi, độ trễ, DLQ<br/>tự hoàn tác khi vượt ngưỡng]
+```
+
+Sơ đồ trên cho thấy luồng đi từ trình thiết kế tới runtime. Điểm quan trọng là `dh-integration` không bao giờ ra lệnh trực tiếp cho `dh-runtime`: nó chỉ tạo commit vào kho GitOps, và chỉ sau khi CI của kho GitOps kiểm tra xong thì Argo CD mới đồng bộ. Nhờ đó luồng do trình thiết kế sinh và luồng viết tay chịu cùng một bộ kiểm tra, và lịch sử Git là nhật ký đầy đủ ai đã thay đổi luồng nào, khi nào, ai duyệt.
+
+**QT-RT-01 · Cấu trúc kho GitOps luồng.** Luồng nằm ở `routes/{tenant}/{mã-luồng}/` theo D04-01 CC-CAMEL-01; tệp `CODEOWNERS` của kho GitOps gán thư mục `routes/{tenant}/` cho nhóm duyệt luồng của tenant đó, nên tenant này không duyệt được luồng của tenant khác. Thư mục `routes/_templates/` và danh mục Kamelet thuộc nhóm PH-04/PH-05 của đội sản phẩm.
+
+**QT-RT-02 · Kiểm tra tự động trước khi hợp nhất.** CI kho GitOps chạy: kiểm tra lược đồ YAML DSL; validator luồng (routeId, errorHandler DLQ, Kamelet trong danh mục cho phép, ngôn ngữ biểu thức bị cấm, không bí mật, tenant trong `route.meta.yaml` khớp thư mục); Semgrep với luật YAML; gitleaks; kiểm thử luồng với bản tin mẫu trong `test/` trên ảnh `dh-runtime` cùng phiên bản đang chạy ở tenant; kiểm tra hạn mức số luồng của tenant (D03-10 §5.3).
+
+**QT-RT-03 · Duyệt theo phân tách nhiệm vụ.** Người thiết kế luồng không tự duyệt luồng của mình. Luồng có phân loại dữ liệu cao nhất là Nhạy cảm hoặc kết nối tới đích mới chưa có trong danh sách đích đăng ký cần thêm người duyệt có vai trò an toàn thông tin của tenant. Quyết định duyệt ghi trong Flowable và trong mô tả commit (mã yêu cầu duyệt, người duyệt), là bản ghi kiểm toán (FR-00-040).
+
+**QT-RT-04 · Triển khai tiến dần và hoàn tác.** Argo CD đồng bộ luồng mới lên `dh-runtime` của tenant theo chiến lược cuốn chiếu; luồng có lưu lượng lớn có thể dùng phát hành thử (canary) theo tỉ lệ tại APISIX. Nếu trong 15 phút đầu tỉ lệ lỗi của luồng vượt ngưỡng cấu hình (mặc định 5% hoặc gấp 3 lần mức trước đó) hoặc DLQ tăng bất thường, hệ thống tự tạo commit hoàn tác về phiên bản trước và cảnh báo người thiết kế. Hoàn tác thủ công cũng là một commit hoàn tác, không sửa tay trên cụm.
+
+**QT-RT-05 · Tương thích phiên bản runtime.** `route.meta.yaml` ghi phiên bản `dh-runtime` tối thiểu mà luồng cần. Khi nâng cấp `dh-runtime` (bản phát hành sản phẩm), CI chạy lại kiểm thử của toàn bộ luồng của mọi tenant trên ảnh mới trước khi phát hành; luồng thất bại được báo cho tenant trước khi nâng cấp.
+
+## 15. Mã và thuật ngữ mới đề xuất bổ sung D00-01
+
+Tài liệu đề xuất bổ sung các mục trong bảng dưới đây vào D00-01; luồng lõi gộp theo D00-01 §9.3.
+
+| Loại | Đề xuất | Vị trí |
+|---|---|---|
+| Mã | `QT-{nhóm}-{nn}`: quy tắc quy trình kỹ thuật, định nghĩa tại D04-02. Nhóm ∈ `BR` (nhánh), `CM` (commit), `PR`, `RV` (review), `CI`, `DEP` (phụ thuộc), `REL` (phát hành), `SC` (chuỗi cung ứng), `HF` (sửa nóng), `DEV`, `SEC` (bí mật trong phát triển), `CT` (hợp đồng), `RT` (luồng Camel) | §3.1 |
+| Mã | `G1`…`G9`: cổng chất lượng CI, định nghĩa tại D04-02 §6 | §3.1 |
+| Mã | `INC-{nnn}`, `BUG-{nnn}`: mã sự cố và mã lỗi trên hệ thống theo dõi công việc, được phép dùng làm `{mã-việc}` trong tên nhánh | §3.1, §6 |
+| Thuật ngữ | **Phát triển dựa trên nhánh chính** (Trunk-based development), **Cổng chất lượng** (Quality gate), **Hàng đợi hợp nhất** (Merge queue), **Cờ tính năng** (Feature flag), **Sửa nóng** (Hotfix), **Đại diện bảo mật** (Security champion) | §2.2 |
+| Thuật ngữ | **SBOM** (Software Bill of Materials), **SLSA** (Supply-chain Levels for Software Artifacts), **Chứng thực nguồn gốc** (Provenance attestation), **VEX** (Vulnerability Exploitability eXchange) | §2.2, §2.3 |
+| Thuật ngữ | **DoR / DoD** (Definition of Ready / Definition of Done) | §2.3 |
+| Quy ước | Bổ sung loại `sec`, `hotfix`, `release` cho tên nhánh; tên cờ tính năng `ff.{module}.{tính-năng}` | §6 |
+
+## 16. Truy vết
+
+Bảng dưới đây ánh xạ yêu cầu, quyết định và tài liệu liên quan tới mục đáp ứng.
+
+| Yêu cầu, ADR, tài liệu | Đáp ứng tại |
+|---|---|
+| NFR-00-005 (hiệu năng giao diện) | G9 |
+| NFR-00-013 (nâng cấp không gián đoạn) | 9.3, 14 (QT-RT-04) |
+| NFR-00-022 (không bí mật) | G7, 12.2 |
+| NFR-00-023 (lỗ hổng phụ thuộc) | G7, G8, 8.3, QT-DEP-06, 9.3 |
+| NFR-00-024 (ASVS 5.0 mức 2) | 5.4, G7, 9.3 (DAST) |
+| NFR-00-040 (WCAG 2.2 AA) | G9 |
+| NFR-00-045 (thống nhất giao diện) | G6 |
+| NFR-00-053 (độ phủ) | G4 |
+| NFR-00-054 (ranh giới module) | G2 |
+| NFR-00-055 (tương thích ngược API) | G5, 13 |
+| FR-00-011 (không rò rỉ chéo tenant) | G3, 5.5 |
+| FR-00-040 (kiểm toán) | 7.2, QT-RT-03 |
+| ADR-009 (GitOps Argo CD) | 2, 14 |
+| ADR-010, ADR-002 (Camel YAML DSL, Camel Quarkus) | 14, G8 (native) |
+| ADR-012 (OpenBao) | 12.2, QT-SC-01 |
+| ADR-013 (tách control/data plane) | 14 |
+| ADR-036 (gói air-gapped) | QT-DEP-03, 10 |
+| ADR-037 (quy trình Git, cổng CI) | Toàn bộ tài liệu |
+| ADR-038 (chiến lược kiểm thử) | G3, G5, QT-CT-03 |
+| SAD §6 (ghim phiên bản tại D04-02) | 8.2 |
+| D03-10 §6 (quy tắc đa tenant) | 5.5, G2, G3 |
+| D04-01 (quy chuẩn lập trình) | 5.3, 5.4, 6 |
+| SEC-40–49, SEC-50–59, SEC-70–79 (D03-07) | 5.4, 6, 10, 11 |
+| TCVN 14423:2026 cấp độ 3: phát triển ứng dụng an toàn, quản lý cấu hình, quản lý lỗ hổng (cần đối chiếu số mục) | 1, 6, 8, 10 |
+
+## 17. Câu hỏi mở
+
+> **Câu hỏi mở Q353:** Nền tảng Git và CI chính thức của dự án là GitHub (đang dùng GitHub Actions trong kho mã) hay GitLab tự vận hành on-prem (phù hợp hơn với hồ sơ air-gapped và yêu cầu lưu mã nguồn trong nước)? Lựa chọn ảnh hưởng cú pháp CODEOWNERS, luật bảo vệ nhánh, hàng đợi hợp nhất, ký commit do nền tảng, và khả năng dùng CodeQL (Q355 ở D04-01).
+
+> **Câu hỏi mở Q354:** Cần xác minh với nguồn chính thức tại thời điểm khóa phiên bản: ngày hết hỗ trợ bản vá miễn phí của Spring Boot 4.0 và Spring Modulith 2.0 (để quyết định nâng lên dòng MINOR mới hơn trước phát hành MVP); Quarkus 3.33 có thuộc dòng LTS không; điều khoản giấy phép của Liquibase ở dòng chính mới; chuyển Node 22 sang Node 24 LTS cho công cụ giao diện; và kế hoạch chuyển Camel 4.18 LTS sang dòng LTS kế tiếp trước 02/2027.
+
+> **Câu hỏi mở Q357:** Chủ đầu tư có yêu cầu bắt buộc ký commit cho mọi người đóng góp, kể cả nhà thầu phụ và cán bộ kỹ thuật tỉnh, và cơ chế quản lý khóa ký (khóa SSH cá nhân, GPG, hay gitsign không khóa) không? Đồng thời cần xác nhận nhân sự cho vai trò người duyệt bảo mật trung tâm và đại diện bảo mật mỗi nhóm (QT-RV-02).
+
+Các câu hỏi Q350–Q352, Q355, Q356, Q358, Q359 nằm ở D04-01.
