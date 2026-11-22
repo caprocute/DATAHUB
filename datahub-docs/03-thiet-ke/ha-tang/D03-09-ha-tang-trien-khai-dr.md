@@ -111,7 +111,7 @@ Bảng dưới đây ước tính dung lượng dữ liệu sau 12 tháng vận 
 | Log vận hành (Loki, đã nén) | 90 ngày | 15 GB | 50 GB | 150 GB | 1,2 TB |
 | Trace (Tempo, đã nén) | 14 ngày | 3 GB | 15 GB | 45 GB | 0,3 TB |
 | Chỉ số (Mimir) | 90 ngày đầy đủ; 25 tháng dạng tổng hợp SLO | 40 GB | 110 GB | 300 GB | 2 TB |
-| Kho WORM kiểm toán và bằng chứng | Theo ADR-031 (giả định 5 năm để định cỡ) | 20 GB/năm | 60 GB/năm | 180 GB/năm | 2 TB/năm |
+| Kho WORM kiểm toán và bằng chứng (hệ lưu trữ riêng, tách Garage) | 5 năm, tối thiểu 3 năm (ADR-031) | 20 GB/năm | 60 GB/năm | 180 GB/năm | 2 TB/năm |
 | Kho ảnh container Harbor | 10 bản phát hành gần nhất | 150 GB | 150 GB | 150 GB | 300 GB |
 
 **Siêu dữ liệu lượt gọi.** NFR-00-062 đòi 5 triệu bản ghi mỗi ngày mỗi tenant, giữ 12 tháng và truy vấn được, tức 1,825 tỷ bản ghi/tenant/năm và khoảng 62 tỷ bản ghi/năm trên nền tảng dùng chung. PostgreSQL, kể cả có TimescaleDB, không phải lựa chọn hợp lý ở quy mô này; SAD §6 đã đề xuất ClickHouse khi lưu lượng vượt 50 triệu lượt/tháng, và `QM-VUA` đã ở mức 150 triệu lượt/tháng. Với bảng `ReplicatedMergeTree` sắp xếp theo `(tenant_id, route_id, ts)`, mã hóa `LowCardinality` cho chuỗi lặp và nén ZSTD, một bản ghi khoảng 1 KB thô nén còn khoảng 60–80 byte; tài liệu dùng 70 byte. `QM-VUA`: 1,825 tỷ × 70 byte ≈ 128 GB. `QM-CHUNG`: 62 tỷ × 70 byte ≈ 4,35 TB. Đường đi dữ liệu là APISIX ghi bản ghi qua plugin `kafka-logger` (sau bộ che dữ liệu) vào topic `{tenant}.obs.access.logged.v1`, ClickHouse tiêu thụ bằng bảng động cơ Kafka và view vật chất hóa. Nhờ vậy log truy cập không đi vào Loki, tránh lưu trùng.
@@ -122,7 +122,7 @@ Bảng dưới đây ước tính dung lượng dữ liệu sau 12 tháng vận 
 
 **Kafka.** Lưu lượng ghi vào Kafka của `QM-VUA` gồm siêu dữ liệu lượt gọi (5 GB/ngày), sự kiện nghiệp vụ (2 triệu × 2 KB = 4 GB/ngày), sự kiện outbox và CDC (khoảng 1 GB/ngày). Giữ 7 ngày cho sự kiện nghiệp vụ và 3 ngày cho siêu dữ liệu (đã có bản trong ClickHouse) được 15 + 35 + 7 ≈ 60–70 GB trước nhân bản. Hệ số nhân bản 3 cho 210 GB, chia 3 broker là 70 GB mỗi broker; cộng 100% dự phòng cho bùng phát và việc phát lại, mỗi broker cần 200 GiB.
 
-**Log, trace, chỉ số.** Log `QM-VUA`: 5 triệu lượt × 3 KB/1.000 lượt = 15 MB/ngày log theo lượt, cộng 1 GB/ngày log nền và log lỗi của các thành phần, nhân 90 ngày được khoảng 270 GB thô; Loki nén còn khoảng 15–20%, tức khoảng 50 GB. Trace: 5 triệu × 10% × 6 span × 800 byte ≈ 2,4 GB/ngày, giữ 14 ngày được 34 GB thô, khoảng 15 GB sau nén. Chỉ số: 250.000 chuỗi × 2.880 mẫu/ngày (30 giây một mẫu) × 90 ngày × 1,5 byte/mẫu ≈ 97 GB; cộng tổng hợp SLO 25 tháng (khoảng 10.000 chuỗi) và chỉ mục được khoảng 110 GB.
+**Log, trace, chỉ số.** Log `QM-VUA`: 5 triệu lượt × 3 KB/1.000 lượt = 15 MB/ngày log theo lượt, cộng 1 GB/ngày log nền và log lỗi của các thành phần, nhân 90 ngày được khoảng 270 GB thô; Loki nén còn khoảng 15–20%, tức khoảng 50 GB. Log an ninh (khoảng 10% tổng log) được giữ 12 tháng theo D03-07 ở một tenant Loki riêng, cộng thêm khoảng 20 GB cho `QM-VUA`; con số ở bảng đã gồm phần này. Trace: 5 triệu × 10% × 6 span × 800 byte ≈ 2,4 GB/ngày, giữ 14 ngày được 34 GB thô, khoảng 15 GB sau nén. Chỉ số: 250.000 chuỗi × 2.880 mẫu/ngày (30 giây một mẫu) × 90 ngày × 1,5 byte/mẫu ≈ 97 GB; cộng tổng hợp SLO 25 tháng (khoảng 10.000 chuỗi) và chỉ mục được khoảng 110 GB.
 
 > **Câu hỏi mở Q332:** Thời hạn giữ trace (14 ngày) và chỉ số chi tiết (90 ngày) là đề xuất của tài liệu này, SRS chưa quy định. Cần D03-07 xác nhận TCVN 14423:2026 ở cấp độ 3 không đòi thời hạn dài hơn cho loại dữ liệu này (cần đối chiếu số mục của nhóm yêu cầu nhật ký).
 
@@ -197,7 +197,7 @@ flowchart TB
 
 Sơ đồ thể hiện ba quyết định quan trọng. Thứ nhất, Datahub có **hai cửa vào tách biệt**: cửa ngoài trong DMZ chỉ phục vụ những gì phải mở ra Internet (cổng nhà phát triển, callback PayGov, API công bố cho bên ngoài nếu tỉnh cho phép), còn cửa trong phục vụ HTTT và cán bộ trên mạng truyền số liệu chuyên dùng (TSLCD) hoặc mạng nội bộ tỉnh. Tách hai cửa giúp giao diện quản trị `dh-console` không bao giờ lộ ra Internet, và cho phép áp chính sách WAF, giới hạn tốc độ khác nhau cho hai loại người dùng. Thứ hai, **mọi kết nối ra ngoài đi qua egress gateway** với danh sách đích khai báo (NDXP, PayGov, kho cập nhật của nhà cung cấp nếu có), đúng yêu cầu "còn lại đóng" ở SRS §2.2; pod ứng dụng không có tuyến ra Internet trực tiếp. Thứ ba, **vùng quản trị tách riêng**: thao tác quản trị cụm chỉ đi từ máy trạm nhảy (bastion) có ghi lại phiên, Harbor và kho Git nằm ở vùng quản trị để cụm workload kéo về (mô hình kéo), không có kết nối từ ngoài đẩy vào cụm.
 
-**Phân vùng mạng.** Bảng sau quy định các vùng mạng của `HT-A`, chức năng và luồng được phép. Dải địa chỉ là ví dụ giả lập; TTDL cấp dải thật khi khảo sát. Các quy tắc này hiện thực nhóm biện pháp SEC-10–19 (phân vùng, tường lửa, network policy) ở tầng hạ tầng TTDL; bên trong cụm, network policy Cilium từ chối mặc định thực hiện cùng nguyên tắc ở mức pod (mục 4.4).
+**Phân vùng mạng.** Bảng sau quy định các vùng mạng ở tầng hạ tầng của `HT-A`, chức năng và luồng được phép; đây là phần hiện thực vật lý của tám vùng tin cậy `Z0`…`Z7` ở D03-07 (SEC-13): Internet là Z0, DMZ là Z1, vùng ứng dụng chứa Z2–Z4, vùng dữ liệu chứa Z5 và phần lưu trữ của Z6, vùng quản trị là Z7. Dải địa chỉ là ví dụ giả lập; TTDL cấp dải thật khi khảo sát. Các quy tắc này hiện thực nhóm biện pháp SEC-10–19 (phân vùng, tường lửa, network policy) ở tầng hạ tầng TTDL; bên trong cụm, network policy Cilium từ chối mặc định thực hiện cùng nguyên tắc ở mức pod (mục 4.4).
 
 | Vùng | Ví dụ dải | Thành phần | Luồng vào được phép | Luồng ra được phép |
 |---|---|---|---|---|
@@ -338,25 +338,27 @@ Các tác tử chạy trên mọi nút (DaemonSet) như Cilium, ztunnel của Is
 
 Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị áp network policy, hạn mức tài nguyên (ResourceQuota), chính sách Kyverno và quyền RBAC; việc chia namespace theo mặt và theo mức độ nhạy cảm giúp chính sách đơn giản và kiểm tra được.
 
-| Namespace | Nội dung | Mặt | Ghi chú |
-|---|---|---|---|
-| `dh-edge` | Envoy Gateway (bộ điều khiển và proxy), cấu hình WAF | Biên | Chỉ namespace này có Service kiểu LoadBalancer |
-| `dh-gateway` | APISIX, OPA sidecar, bộ đồng bộ cấu hình | Data | |
-| `dh-runtime` | `dh-runtime` dùng chung, nhãn tenant trên từng luồng | Data | |
-| `dh-rt-{tenant}` | `dh-runtime` riêng cho tenant trên 50 luồng hoặc có yêu cầu (D03-10 §4) | Data | Tạo bởi ApplicationSet theo tenant |
-| `dh-iam` | Keycloak | Phụ thuộc data | |
-| `dh-cache` | Valkey | Phụ thuộc data | |
-| `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | |
-| `dh-payment` | `dh-payment` | Control + data | Tách riêng vì yêu cầu bảo mật cao hơn (SAD §4.2); network policy riêng ra kênh thanh toán |
-| `dh-assist` | `dh-assist` | Control | Tắt hoàn toàn được |
-| `dh-db` | Các cụm CNPG, PgBouncer | Dữ liệu | |
-| `dh-kafka` | Strimzi, Kafka, Apicurio, MirrorMaker 2 | Dữ liệu | |
-| `dh-olap` | ClickHouse, ClickHouse Keeper | Dữ liệu | |
-| `dh-s3` | Garage | Dữ liệu | |
-| `dh-secrets` | OpenBao, External Secrets Operator | Nền tảng | |
-| `dh-obs` | OTel Collector, Mimir, Loki, Tempo, Grafana | Giám sát | |
-| `dh-system` | Kyverno, cert-manager, các operator, Argo CD, Argo Rollouts, KEDA, Velero | Nền tảng | Có thể tách tiếp theo operator |
-| `istio-system`, `kube-system` | Istio ambient, Cilium, CSI | Nền tảng | |
+| Namespace | Nội dung | Mặt | Vùng tin cậy (D03-07, SEC-13) | Ghi chú |
+|---|---|---|---|---|
+| `dh-edge` | Envoy Gateway (bộ điều khiển và proxy), cấu hình WAF | Biên | Z1 | Chỉ namespace này có Service kiểu LoadBalancer |
+| `dh-gateway` | APISIX, OPA sidecar, bộ đồng bộ cấu hình, BFF của giao diện | Data | Z2 | |
+| `dh-runtime` | `dh-runtime` dùng chung, nhãn tenant trên từng luồng | Data | Z4 | |
+| `dh-rt-{tenant}` | `dh-runtime` riêng cho tenant trên 50 luồng hoặc có yêu cầu (D03-10 §4) | Data | Z4 | Tạo bởi ApplicationSet theo tenant |
+| `dh-iam` | Keycloak | Phụ thuộc data | Z6 | |
+| `dh-cache` | Valkey | Phụ thuộc data | Z5 | |
+| `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | Z3 | |
+| `dh-payment` | `dh-payment` | Control + data | Z3 | Tách riêng vì yêu cầu bảo mật cao hơn (SAD §4.2); network policy riêng ra kênh thanh toán |
+| `dh-assist` | `dh-assist` | Control | Z3 | Tắt hoàn toàn được |
+| `dh-db` | Các cụm CNPG, PgBouncer | Dữ liệu | Z5 (`pg-iam` thuộc Z6) | |
+| `dh-kafka` | Strimzi, Kafka, Apicurio, MirrorMaker 2 | Dữ liệu | Z5 | |
+| `dh-olap` | ClickHouse, ClickHouse Keeper | Dữ liệu | Z5 | |
+| `dh-s3` | Garage | Dữ liệu | Z5 | |
+| `dh-secrets` | OpenBao, External Secrets Operator | Nền tảng | Z6 | |
+| `dh-obs` | OTel Collector, Mimir, Loki, Tempo, Grafana | Giám sát | Z7 | |
+| `dh-system` | Kyverno, cert-manager, các operator, Argo CD, Argo Rollouts, KEDA, Velero | Nền tảng | Z7 | Có thể tách tiếp theo operator |
+| `istio-system`, `kube-system` | Istio ambient, Cilium, CSI | Nền tảng | Z7 | |
+
+D03-07 (SEC-13) gom namespace theo vùng ở mức thô (`dh-edge`, `dh-gw`, `dh-app`, `dh-rt-*`, `dh-data`, `dh-sec`, `dh-ops`). Tài liệu này chia mịn hơn để áp hạn mức tài nguyên, PodDisruptionBudget và quyền vận hành theo từng loại kho; mỗi namespace mang nhãn `dh.gov.vn/zone` bằng mã vùng tương ứng ở cột trên, và network policy, chính sách Kyverno được viết theo nhãn vùng nên khớp mô hình tám vùng của D03-07. Bảng ánh xạ tên này cần được D03-07 xác nhận để hai tài liệu dùng chung một bộ tên.
 
 ### 4.3. Phân bố pod: topology spread, PodDisruptionBudget, priority class
 
@@ -381,7 +383,7 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 
 **Cilium** là CNI, chạy chế độ eBPF thay kube-proxy. Cilium thực thi network policy từ chối mặc định: mỗi namespace có một chính sách `default-deny` cả chiều vào và ra, sau đó từng luồng được mở bằng `CiliumNetworkPolicy` có nhãn nguồn, nhãn đích và cổng. Luồng ra khỏi cụm chỉ được phép tới egress gateway (Cilium Egress Gateway hoặc proxy egress trong DMZ) với chính sách theo tên miền (FQDN policy) cho NDXP và PayGov. Cilium Hubble được bật để ghi lại luồng bị chặn, phục vụ điều tra sự cố (nhóm SEC-60–69). Mã hóa giữa các nút bằng WireGuard của Cilium **không** bật vì Istio ambient đã mã hóa mTLS ở tầng 4; bật cả hai chỉ tốn CPU.
 
-**Istio ambient mesh** cung cấp mTLS giữa mọi pod mà không cần sidecar (đáp ứng NFR-00-020 và nhóm SEC-10–19). Tác tử ztunnel trên mỗi nút mã hóa và xác thực danh tính SPIFFE của pod; chính sách `AuthorizationPolicy` ở tầng 4 chỉ cho phép danh tính được liệt kê gọi dịch vụ (ví dụ chỉ service account của APISIX được gọi `dh-runtime` ở cổng HTTP). Waypoint proxy (tầng 7) chỉ triển khai cho namespace cần chính sách theo đường dẫn hoặc thử lại ở tầng 7, mặc định không có, để không thêm chặng trên đường đi của data plane. Kafka, PostgreSQL và Garage nằm trong mesh nhưng vẫn bật TLS ở giao thức gốc của chúng, vì cần xác thực chứng thư của chính kho (ví dụ khi kết nối từ site DR, nằm ngoài mesh).
+**Istio ambient mesh** cung cấp mTLS giữa mọi pod mà không cần sidecar (đáp ứng NFR-00-020 và nhóm SEC-10–19). `PeerAuthentication` ở chế độ `STRICT` cho toàn mesh (theo D03-07), không chấp nhận lưu lượng không mã hóa giữa các pod. Tác tử ztunnel trên mỗi nút mã hóa và xác thực danh tính SPIFFE của pod; chính sách `AuthorizationPolicy` ở tầng 4 chỉ cho phép danh tính được liệt kê gọi dịch vụ (ví dụ chỉ service account của APISIX được gọi `dh-runtime` ở cổng HTTP). Waypoint proxy (tầng 7) chỉ triển khai cho namespace cần chính sách theo đường dẫn hoặc thử lại ở tầng 7, mặc định không có, để không thêm chặng trên đường đi của data plane. Kafka, PostgreSQL và Garage nằm trong mesh nhưng vẫn bật TLS ở giao thức gốc của chúng, vì cần xác thực chứng thư của chính kho (ví dụ khi kết nối từ site DR, nằm ngoài mesh).
 
 **Gateway API** là chuẩn duy nhất cho định tuyến vào cụm. Envoy Gateway là bộ điều khiển hiện thực Gateway API ở biên (ADR-033); mỗi cửa vào là một tài nguyên `Gateway` (`dh-external`, `dh-internal`) với các `HTTPRoute` tới APISIX, giao diện tĩnh và Keycloak. APISIX đứng sau Envoy Gateway và làm cổng API nghiệp vụ (ADR-005). Hai tầng có vai trò khác nhau: Envoy Gateway lo TLS, chứng thư khách, WAF, giới hạn kết nối và tốc độ thô theo địa chỉ nguồn để chống tràn; APISIX lo xác thực OAuth, gói sử dụng, hạn mức theo consumer, chính sách OPA, nhật ký nghiệp vụ. Không dùng Ingress NGINX vì dự án cộng đồng đã công bố ngừng phát triển năm 2025 (ADR-033).
 
@@ -492,6 +494,7 @@ Bảng dưới đây là kết quả định cỡ cho môi trường PROD ở si
 | `dh-platform` (gồm Flowable) | 2 × 0,5/1, 2/2 | 2 × 1,5/3, 3/3 | 3 × 2/4, 4/4 | 4 × 2/4, 6/6 |
 | `dh-payment` | 2 × 0,5/1, 1,5/1,5 | 2 × 1/2, 2/2 | 3 × 1/2, 2/2 | 4 × 2/4, 4/4 |
 | `dh-assist` (tùy chọn, chưa tính mô hình ngôn ngữ) | 0–2 × 0,5/1, 2/2 | 2 × 1/2, 2/2 | 2 × 1/2, 3/3 | 3 × 2/4, 4/4 |
+| BFF của `dh-console`, `dh-portal` (SEC-21 ở D03-07) | 2 × 0,25/0,5, 0,5/0,5 | 2 × 0,5/1, 0,75/0,75 | 3 × 0,5/1, 1/1 | 4 × 1/2, 1/1 |
 | Giao diện `dh-console`, `dh-portal` | 2+2 × 0,05/0,2, 0,1 | 2+2 × 0,1/0,5, 0,1 | 3+3 × 0,1/0,5, 0,1 | 3+3 × 0,2/1, 0,25 |
 | Apicurio Registry | 2 × 0,25/1, 1/1 | 2 × 0,5/1, 1/1 | 2 × 0,5/1, 1,5/1,5 | 3 × 1/2, 2/2 |
 | PostgreSQL `pg-core` (hoặc mỗi ô CSDL) | 3 × 2/—, 8/8, 150 | 3 × 4/—, 16/16, 500 | 3 × 8/—, 32/32, 1.500 | 4 ô × 3 × 8/—, 64/64, 2.500 |
@@ -848,7 +851,7 @@ Trang trạng thái là một trang tĩnh đặt ở hạ tầng độc lập v�
 
 Sao lưu và DR giải quyết hai bài toán khác nhau. DR bảo vệ trước việc mất site, nhưng sao chép liên tục cũng sao chép luôn lỗi: một lệnh xóa nhầm, một lỗi di trú làm hỏng dữ liệu, hay mã độc mã hóa dữ liệu đều lan sang site DR trong vài giây. Sao lưu bảo vệ trước những tình huống đó bằng bản sao tại các thời điểm quá khứ, tách biệt và không sửa được. Datahub áp dụng quy tắc **3-2-1-1-0** (ADR-035): ít nhất **3** bản dữ liệu (bản chạy và hai bản sao lưu); trên **2** loại phương tiện khác nhau (đĩa NVMe của cụm và kho đối tượng trên ổ HDD hoặc băng từ); **1** bản ở ngoài site; **1** bản bất biến hoặc ngoại tuyến; **0** lỗi khi kiểm tra khôi phục.
 
-Hiện thực cụ thể như sau. Bản thứ nhất là dữ liệu chạy trên cụm. Bản thứ hai là kho sao lưu S3 có khóa đối tượng ở chế độ tuân thủ (compliance mode, người quản trị cũng không xóa được trước hạn) đặt ở site DR nhưng ngoài cụm Kubernetes DR, do một tài khoản quản trị khác quản lý; hiện thực bằng Ceph RGW, SeaweedFS có khóa đối tượng đã kiểm chứng, thiết bị lưu trữ WORM của TTDL hoặc lưu trữ đối tượng của cloud Chính phủ (ADR-008). Bản thứ ba là bản xuất hằng tháng ra phương tiện ngoại tuyến (băng từ LTO hoặc ổ đĩa rời mã hóa) cất ở vị trí thứ ba do chủ quản chỉ định. Mọi bản sao lưu được mã hóa trước khi rời cụm bằng khóa do OpenBao quản lý (khóa bọc dữ liệu được sao lưu riêng như khóa niêm phong, mục 4.7), để kho sao lưu bị lộ cũng không lộ dữ liệu.
+Hiện thực cụ thể như sau. Bản thứ nhất là dữ liệu chạy trên cụm. Kho WORM chứa nhật ký kiểm toán (ADR-031, giữ 5 năm, tối thiểu 3 năm) là một hệ lưu trữ riêng tách khỏi Garage theo D03-07; kho sao lưu dưới đây có cùng yêu cầu khóa đối tượng và có thể dùng chung thiết bị với bucket và chính sách riêng nếu Q347 chấp thuận. Bản thứ hai là kho sao lưu S3 có khóa đối tượng ở chế độ tuân thủ (compliance mode, người quản trị cũng không xóa được trước hạn) đặt ở site DR nhưng ngoài cụm Kubernetes DR, do một tài khoản quản trị khác quản lý; hiện thực bằng Ceph RGW, SeaweedFS có khóa đối tượng đã kiểm chứng, thiết bị lưu trữ WORM của TTDL hoặc lưu trữ đối tượng của cloud Chính phủ (ADR-008). Bản thứ ba là bản xuất hằng tháng ra phương tiện ngoại tuyến (băng từ LTO hoặc ổ đĩa rời mã hóa) cất ở vị trí thứ ba do chủ quản chỉ định. Mọi bản sao lưu được mã hóa trước khi rời cụm bằng khóa do OpenBao quản lý (khóa bọc dữ liệu được sao lưu riêng như khóa niêm phong, mục 4.7), để kho sao lưu bị lộ cũng không lộ dữ liệu.
 
 ### 8.2. Bảng đối tượng sao lưu
 
@@ -950,14 +953,14 @@ Bảng sau tổng hợp thời hạn giữ dữ liệu quan sát, đồng bộ v
 | Loại dữ liệu | Kho | Trực tuyến | Lưu trữ dài hạn | Căn cứ |
 |---|---|---|---|---|
 | Log vận hành | Loki | 90 ngày | Không | NFR-00-028 |
-| Log an ninh (xác thực, từ chối ủy quyền, Hubble, Kyverno, kiểm toán Kubernetes API) | Loki và SIEM của tỉnh | 90 ngày ở Loki; theo SIEM | Theo D03-07 | Nhóm SEC-60–69 |
+| Log an ninh (xác thực, từ chối ủy quyền, Hubble, Kyverno, sự kiện Keycloak) | Loki (tenant Loki `security` riêng) và SIEM của tỉnh | 12 tháng | Theo D03-07 | D03-07, nhóm SEC-60–69 |
 | Nhật ký kiểm toán nghiệp vụ | PostgreSQL phân vùng theo tháng | 12 tháng | Kho WORM theo ADR-031 | NFR-00-027 |
 | Siêu dữ liệu lượt gọi | ClickHouse | 12 tháng (TTL theo phân vùng tháng) | Không | NFR-00-062 |
 | Chỉ số chi tiết | Mimir | 90 ngày | Tổng hợp SLO 25 tháng | Đề xuất, Q332 |
 | Trace | Tempo | 14 ngày | Không | Đề xuất, Q332 |
-| Nhật ký kiểm toán Kubernetes API | Loki | 90 ngày | Kho WORM 12 tháng | Nhóm SEC-60–69 |
+| Nhật ký kiểm toán Kubernetes API | Loki (tenant `security`) và kho WORM | 12 tháng | Kho WORM theo ADR-031 | D03-07, nhóm SEC-60–69 |
 
-> **Câu hỏi mở Q347:** Thời hạn lưu trữ dài hạn nhật ký kiểm toán (giả định 5 năm khi định cỡ kho WORM ở mục 2.4) phụ thuộc ADR-031 và D03-07; khi chốt, dung lượng kho WORM và chính sách khóa đối tượng phải cập nhật theo.
+> **Câu hỏi mở Q347:** ADR-031 và D03-07 đặt thời hạn lưu kiểm toán dài hạn 5 năm (tối thiểu 3 năm) trên kho WORM riêng có khóa đối tượng chế độ tuân thủ; sản phẩm kho WORM còn mở ở Q306 của D03-07. Cần chốt việc kho WORM và kho sao lưu bất biến (mục 8.1) có dùng chung một thiết bị với bucket, chính sách riêng hay phải là hai hệ tách biệt.
 
 ### 9.4. Vận hành thường xuyên
 

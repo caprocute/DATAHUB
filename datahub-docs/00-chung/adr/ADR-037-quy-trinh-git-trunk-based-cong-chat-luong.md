@@ -34,12 +34,12 @@ Chọn **phương án B**, với các nội dung sau, đặc tả chi tiết ở
 1. Một nhánh dài hạn `main`, được bảo vệ (cấm đẩy trực tiếp và đẩy ép, áp dụng cả quản trị viên); nhánh ngắn đặt tên `{loại}/{mã-việc}-{mô-tả}` theo D00-01 §6, sống tối đa 3 ngày làm việc; hợp nhất bằng squash; commit có chữ ký được xác minh.
 2. Thông điệp commit và tiêu đề PR theo Conventional Commits 1.0, bổ sung loại `sec` và chân `Refs:` bắt buộc mã truy vết với `feat`, `fix`, `sec`; kiểm tra bằng commitlint.
 3. Mọi thay đổi qua PR nhỏ (≤ 400 dòng khuyến nghị, ≤ 800 tối đa) có mẫu mô tả và liên kết FR/US/NFR/ADR; tối thiểu 2 người duyệt với mã chạy, trong đó 1 CODEOWNER phân hệ, cộng người duyệt bảo mật khi PR có nhãn `security-impact` hoặc `tenant-impact`; SLA phản hồi 4 giờ làm việc cho PR nhỏ.
-4. Chín cổng CI G1–G9 chặn merge: build và kiểm tra tĩnh; kiểm thử đơn vị, Modulith verify, ArchUnit, lint migration; kiểm thử tích hợp có kiểm thử rò rỉ chéo tenant; độ phủ (NFR-00-053); hợp đồng (Spectral, oasdiff, Apicurio); giao diện (lint, kiểu, không CSS tự do); bảo mật (Semgrep, CodeQL hoặc FindSecBugs, SCA, gitleaks, quét IaC); ảnh container (Trivy); E2E với axe-core và Lighthouse. Không ai được bỏ qua cổng; ngoại lệ chỉ qua nhãn `gate-override` có lý do và được ghi nhận.
+4. Chín cổng CI CI-1–CI-9 chặn merge: build và kiểm tra tĩnh; kiểm thử đơn vị, Modulith verify, ArchUnit, lint migration; kiểm thử tích hợp có kiểm thử rò rỉ chéo tenant; độ phủ (NFR-00-053); hợp đồng (Spectral, oasdiff, Apicurio); giao diện (lint, kiểu, không CSS tự do); bảo mật (Semgrep, CodeQL hoặc FindSecBugs, SCA, gitleaks, quét IaC); ảnh container (Trivy); E2E với axe-core và Lighthouse. Không ai được bỏ qua cổng; ngoại lệ chỉ qua nhãn `gate-override` có lý do và được ghi nhận.
 5. Phát hành theo SemVer, số phiên bản và changelog sinh từ commit; ảnh ký cosign, có SBOM CycloneDX và chứng thực nguồn gốc SLSA, cụm chỉ chạy ảnh đã ký; phụ thuộc ghim chính xác và cập nhật bằng Renovate.
 6. Sửa nóng vẫn qua PR và các cổng tự động, chỉ rút ngắn thời gian duyệt (1 người trước, 1 người hậu kiểm), bắt buộc kiểm thử tái hiện.
 7. Luồng Camel theo tenant đi vào runtime chỉ qua commit vào kho GitOps do `dh-integration` tạo sau khi duyệt, được CI kho GitOps kiểm tra cùng bộ luật như luồng viết tay.
 
-Hệ cổng G1–G9 thay cho Gate A, B, C, D, S của IP-02; bảng đối chiếu ở D04-02 §6.3.
+Hệ cổng CI-1–CI-9 thay cho Gate A, B, C, D, S của IP-02; bảng đối chiếu ở D04-02 §6.3.
 
 ## Hệ quả
 

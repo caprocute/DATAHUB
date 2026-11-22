@@ -26,7 +26,7 @@ flowchart LR
   A[Việc đạt DoR<br/>có FR/US/NFR] --> B[Nhánh ngắn<br/>feat/FR-07-021-...]
   B --> C[Commit theo<br/>Conventional Commits]
   C --> D[PR vào main<br/>mẫu PR + nhãn]
-  D --> E{Cổng CI<br/>G1–G9}
+  D --> E{Cổng CI<br/>CI-1–CI-9}
   E -- đỏ --> C
   E -- xanh --> F[Review<br/>CODEOWNERS + checklist]
   F -- yêu cầu sửa --> C
@@ -226,25 +226,25 @@ PR có nhãn `tenant-impact` hoặc chạm dữ liệu nghiệp vụ được ki
 
 ### 6.1. Danh sách cổng
 
-Cổng chất lượng (quality gate) là bước kiểm tra tự động mà PR phải vượt qua trước khi được hợp nhất. Datahub có chín cổng, đánh số G1 đến G9, thay cho cách gọi Gate A, B, C, D, S của IP-02 (bảng đối chiếu ở mục 6.3). Bảng dưới đây liệt kê từng cổng, nội dung kiểm tra, ngưỡng đạt, căn cứ và thời điểm chạy. Cổng chạy theo phạm vi thay đổi: PR chỉ đụng giao diện không chạy kiểm thử Java và ngược lại, nhưng PR đụng thư viện dùng chung chạy toàn bộ.
+Cổng chất lượng (quality gate) là bước kiểm tra tự động mà PR phải vượt qua trước khi được hợp nhất. Datahub có chín cổng, đánh số CI-1 đến CI-9 (tiền tố `CI-` để không nhầm với các cổng quản lý dự án G1, G2… của D01-02 và cổng phát hành kiểm thử RG-1…RG-5 của D05-01), thay cho cách gọi Gate A, B, C, D, S của IP-02 (bảng đối chiếu ở mục 6.3). Bảng dưới đây liệt kê từng cổng, nội dung kiểm tra, ngưỡng đạt, căn cứ và thời điểm chạy. Cổng chạy theo phạm vi thay đổi: PR chỉ đụng giao diện không chạy kiểm thử Java và ngược lại, nhưng PR đụng thư viện dùng chung chạy toàn bộ.
 
 | Cổng | Nội dung | Ngưỡng đạt (chặn merge) | Căn cứ | Chạy khi |
 |---|---|---|---|---|
-| G1 Build và kiểm tra tĩnh cơ bản | Biên dịch Maven với Error Prone + NullAway; `spotless:check`; commitlint tiêu đề PR; kiểm tra mã truy vết trong PR; kiểm tra tên nhánh | Biên dịch không lỗi, không cảnh báo NullAway; định dạng đúng | D04-01 CC-JAVA-01, 06; QT-CM-02; QT-PR-03 | Mọi PR |
-| G2 Kiểm thử đơn vị và kiến trúc | JUnit (Surefire); `ApplicationModules.verify()`; bộ luật ArchUnit Datahub; lint migration (Squawk + luật tùy biến); kiểm thử đơn vị Rego (`opa test`) | 100% kiểm thử qua; Modulith verify xanh (NFR-00-054); không vi phạm ArchUnit, lint migration | D04-01 CC-MOD-02, 05; CC-SQL-11; CC-TEN-02, 03, 05 | Mọi PR có mã Java, changelog hoặc Rego |
-| G3 Kiểm thử tích hợp | Failsafe với Testcontainers (PostgreSQL 18, Kafka, Keycloak, Valkey); kiểm tra RLS sau migration; **bộ kiểm thử rò rỉ chéo tenant**; kiểm thử meta độ phủ kiểm thử rò rỉ theo endpoint; kiểm thử luồng Camel (JVM) | 100% qua; mọi endpoint có kiểm thử rò rỉ; mọi bảng có RLS | D04-01 CC-TEST-01, 03; CC-TEN-03, 06; FR-00-011 | Mọi PR có mã backend hoặc luồng |
-| G4 Độ phủ | JaCoCo (backend), Vitest coverage (giao diện); độ phủ trên phần thay đổi | Backend ≥ 80% dòng mã nghiệp vụ, giao diện ≥ 70% (NFR-00-053); phần thay đổi ≥ 80% | NFR-00-053 | Kèm G2, G6 |
-| G5 Hợp đồng | Spectral với bộ luật Datahub và luật OWASP API; oasdiff phát hiện thay đổi phá vỡ; kiểm tra tương thích schema với Apicurio (chế độ `BACKWARD`/`FULL`); kiểm thử hợp đồng phía nhà cung cấp và phía tiêu dùng; sinh lại mã khách và kiểm tra không lệch | Không lỗi Spectral; không thay đổi phá vỡ khi chưa tăng phiên bản chính (NFR-00-055); kiểm thử hợp đồng qua | D04-01 CC-API-01…04 | PR có nhãn `contract-change` hoặc đụng controller |
-| G6 Giao diện | `tsc --noEmit`; ESLint `--max-warnings 0` (gồm `jsx-a11y`, `security`, luật không CSS tự do); Prettier; Stylelint; Vitest + Testing Library; build Vite; kiểm tra kích thước gói | Không lỗi; kích thước gói khởi đầu không tăng quá 5% so với `main` nếu không có lý do | D04-01 CC-FE-*; NFR-00-045 | PR đụng `apps/console`, `apps/portal`, `packages/` |
-| G7 Bảo mật mã và phụ thuộc | SAST: Semgrep, CodeQL, SpotBugs FindSecBugs; SCA: Trivy `fs` trên `pom.xml` và lockfile npm, kiểm tra giấy phép; quét bí mật: gitleaks trên diff và toàn lịch sử; quét IaC: Trivy `config` (hoặc Checkov) trên Kustomize, Helm values, Dockerfile | Không phát hiện mức chặn theo D04-01 §9.4; 0 bí mật (NFR-00-022); 0 CRITICAL, 0 HIGH chưa có ngoại lệ (NFR-00-023); giấy phép trong danh sách cho phép | D04-01 mục 9; SEC-40–49, SEC-50–59 | Mọi PR |
-| G8 Ảnh container | Build ảnh (Jib hoặc Dockerfile đa tầng trên ảnh nền tối thiểu đã duyệt); build native cho `dh-runtime`; Trivy `image`; kiểm tra chạy không root, không công cụ shell thừa | 0 CRITICAL; 0 HIGH chưa có ngoại lệ; ảnh nền từ Harbor nội bộ | D03-09; SEC-50–59 | Trên `main` sau hợp nhất; trên PR khi đụng Dockerfile, POM DU, phụ thuộc |
-| G9 E2E, truy cập, hiệu năng giao diện | Playwright E2E luồng chính trên môi trường tạm (ephemeral) dựng bằng Testcontainers hoặc namespace riêng; axe-core trên mọi màn được chạm; Lighthouse CI | 0 lỗi axe mức A/AA (NFR-00-040); LCP ≤ 2,5 giây, INP ≤ 200 ms (NFR-00-005) | NFR-00-005, 040 | PR đụng giao diện (bắt buộc); hằng đêm trên `main` (toàn bộ) |
+| CI-1 Build và kiểm tra tĩnh cơ bản | Biên dịch Maven với Error Prone + NullAway; `spotless:check`; commitlint tiêu đề PR; kiểm tra mã truy vết trong PR; kiểm tra tên nhánh | Biên dịch không lỗi, không cảnh báo NullAway; định dạng đúng | D04-01 CC-JAVA-01, 06; QT-CM-02; QT-PR-03 | Mọi PR |
+| CI-2 Kiểm thử đơn vị và kiến trúc | JUnit (Surefire); `ApplicationModules.verify()`; bộ luật ArchUnit Datahub; lint migration (Squawk + luật tùy biến); kiểm thử đơn vị Rego (`opa test`) | 100% kiểm thử qua; Modulith verify xanh (NFR-00-054); không vi phạm ArchUnit, lint migration | D04-01 CC-MOD-02, 05; CC-SQL-11; CC-TEN-02, 03, 05 | Mọi PR có mã Java, changelog hoặc Rego |
+| CI-3 Kiểm thử tích hợp | Failsafe với Testcontainers (PostgreSQL 18, Kafka, Keycloak, Valkey); kiểm tra RLS sau migration; **bộ kiểm thử rò rỉ chéo tenant**; kiểm thử meta độ phủ kiểm thử rò rỉ theo endpoint; kiểm thử luồng Camel (JVM) | 100% qua; mọi endpoint có kiểm thử rò rỉ; mọi bảng có RLS | D04-01 CC-TEST-01, 03; CC-TEN-03, 06; FR-00-011 | Mọi PR có mã backend hoặc luồng |
+| CI-4 Độ phủ | JaCoCo (backend), Vitest coverage (giao diện); độ phủ trên phần thay đổi | Backend ≥ 80% dòng mã nghiệp vụ, giao diện ≥ 70% (NFR-00-053); phần thay đổi ≥ 80% | NFR-00-053 | Kèm CI-2, CI-6 |
+| CI-5 Hợp đồng | Spectral với bộ luật Datahub và luật OWASP API; oasdiff phát hiện thay đổi phá vỡ; kiểm tra tương thích schema với Apicurio (chế độ `BACKWARD`/`FULL`); kiểm thử hợp đồng phía nhà cung cấp và phía tiêu dùng; sinh lại mã khách và kiểm tra không lệch | Không lỗi Spectral; không thay đổi phá vỡ khi chưa tăng phiên bản chính (NFR-00-055); kiểm thử hợp đồng qua | D04-01 CC-API-01…04 | PR có nhãn `contract-change` hoặc đụng controller |
+| CI-6 Giao diện | `tsc --noEmit`; ESLint `--max-warnings 0` (gồm `jsx-a11y`, `security`, luật không CSS tự do); Prettier; Stylelint; Vitest + Testing Library; build Vite; kiểm tra kích thước gói | Không lỗi; kích thước gói khởi đầu không tăng quá 5% so với `main` nếu không có lý do | D04-01 CC-FE-*; NFR-00-045 | PR đụng `apps/console`, `apps/portal`, `packages/` |
+| CI-7 Bảo mật mã và phụ thuộc | SAST: Semgrep, CodeQL, SpotBugs FindSecBugs; SCA: Trivy `fs` trên `pom.xml` và lockfile npm, kiểm tra giấy phép; quét bí mật: gitleaks trên diff và toàn lịch sử; quét IaC: Trivy `config` (hoặc Checkov) trên Kustomize, Helm values, Dockerfile | Không phát hiện mức chặn theo D04-01 §9.4; 0 bí mật (NFR-00-022); 0 CRITICAL, 0 HIGH chưa có ngoại lệ (NFR-00-023); giấy phép trong danh sách cho phép | D04-01 mục 9; SEC-40–49, SEC-50–59 | Mọi PR |
+| CI-8 Ảnh container | Build ảnh (Jib hoặc Dockerfile đa tầng trên ảnh nền tối thiểu đã duyệt); build native cho `dh-runtime`; Trivy `image`; kiểm tra chạy không root, không công cụ shell thừa | 0 CRITICAL; 0 HIGH chưa có ngoại lệ; ảnh nền từ Harbor nội bộ | D03-09; SEC-50–59 | Trên `main` sau hợp nhất; trên PR khi đụng Dockerfile, POM DU, phụ thuộc |
+| CI-9 E2E, truy cập, hiệu năng giao diện | Playwright E2E luồng chính trên môi trường tạm (ephemeral) dựng bằng Testcontainers hoặc namespace riêng; axe-core trên mọi màn được chạm; Lighthouse CI | 0 lỗi axe mức A/AA (NFR-00-040); LCP ≤ 2,5 giây, INP ≤ 200 ms (NFR-00-005) | NFR-00-005, 040 | PR đụng giao diện (bắt buộc); hằng đêm trên `main` (toàn bộ) |
 
 Ngoài chín cổng chặn trên PR, các kiểm tra sau chạy định kỳ trên `main` hoặc môi trường kiểm thử và mở việc tự động khi thất bại, không chặn PR nhưng chặn phát hành (mục 9.3): quét DAST OWASP ZAP hằng đêm trên môi trường test; quét lại toàn bộ ảnh đang chạy và SBOM đã lưu với cơ sở dữ liệu lỗ hổng mới mỗi ngày; kiểm thử tải k6 theo NFR-00-001…008 hằng tuần và trước phát hành; bộ quét mẫu dữ liệu cá nhân trên log của môi trường test (NFR-00-029); kiểm thử hỗn loạn theo D05-01.
 
 ### 6.2. Nguyên tắc vận hành CI
 
-**QT-CI-01 · Thời gian phản hồi.** Tổng thời gian các cổng G1–G7 trên một PR điển hình nên ≤ 15 phút, G1–G2 ≤ 5 phút để lập trình viên nhận phản hồi nhanh. Đạt bằng chạy song song, bộ đệm Maven và npm, chạy theo phạm vi thay đổi (Maven `-pl` với `-amd`, Nx/Turborepo affected cho giao diện) và tái sử dụng container Testcontainers. Thời gian CI được theo dõi; vượt ngưỡng hai tuần liên tiếp thì nhóm DevSecOps tối ưu.
+**QT-CI-01 · Thời gian phản hồi.** Tổng thời gian các cổng CI-1–CI-7 trên một PR điển hình nên ≤ 15 phút, CI-1–CI-2 ≤ 5 phút để lập trình viên nhận phản hồi nhanh. Đạt bằng chạy song song, bộ đệm Maven và npm, chạy theo phạm vi thay đổi (Maven `-pl` với `-amd`, Nx/Turborepo affected cho giao diện) và tái sử dụng container Testcontainers. Thời gian CI được theo dõi; vượt ngưỡng hai tuần liên tiếp thì nhóm DevSecOps tối ưu.
 
 **QT-CI-02 · Kiểm thử chập chờn không được bỏ qua lặng lẽ.** Kiểm thử thất bại ngẫu nhiên (flaky) được cách ly bằng nhãn `@Tag("quarantine")` có mã việc, chạy riêng và không chặn PR tối đa 10 ngày làm việc; sau thời hạn phải sửa hoặc xóa. Không cho phép chạy lại CI nhiều lần cho tới khi xanh mà không ghi nhận.
 
@@ -254,16 +254,16 @@ Ngoài chín cổng chặn trên PR, các kiểm tra sau chạy định kỳ tr�
 
 ### 6.3. Đối chiếu với cổng của IP-02
 
-Bảng dưới đây đối chiếu tên cổng cũ trong IP-02 và quy trình CI hiện có của kho mã với hệ cổng G1–G9, để đội chuyển đổi cấu hình mà không mất kiểm tra nào.
+Bảng dưới đây đối chiếu tên cổng cũ trong IP-02 và quy trình CI hiện có của kho mã với hệ cổng CI-1–CI-9, để đội chuyển đổi cấu hình mà không mất kiểm tra nào.
 
 | IP-02 / CI hiện có | Nội dung cũ | Tương ứng mới | Thay đổi chính |
 |---|---|---|---|
-| Gate A (`gate-a.yml`) | Biên dịch, kiểm thử đơn vị, ArchUnit, kiểm thử luồng Camel | G1, G2, G3 | Thêm Error Prone/NullAway, Spotless, ArchUnit đầy đủ, lint migration, kiểm thử tích hợp và rò rỉ chéo tenant |
-| Gate B | Lint OpenAPI, phát hiện thay đổi phá vỡ | G5 | Thêm AsyncAPI, Apicurio, kiểm thử hợp đồng |
-| Gate C | Lint, kiểm tra kiểu, kiểm thử thành phần giao diện | G6 | Thêm Stylelint, luật không CSS tự do, kích thước gói |
-| Gate D | Kiểm tra truy cập thử nghiệm (cảnh báo) | G9 | Chuyển thành chặn với màn bị chạm; thêm Lighthouse CI |
-| Gate S (`gate-s.yml`) | gitleaks, SAST, Trivy ảnh | G7, G8 | Thêm CodeQL, FindSecBugs, SCA, quét IaC; ghim action theo SHA |
-| `camel-native.yml`, `at-ph04.yml` | Build native, kiểm thử chấp nhận PH-04 | G8, G9 | Native build chạy trước phát hành `dh-runtime`; AT chạy hằng đêm |
+| Gate A (`gate-a.yml`) | Biên dịch, kiểm thử đơn vị, ArchUnit, kiểm thử luồng Camel | CI-1, CI-2, CI-3 | Thêm Error Prone/NullAway, Spotless, ArchUnit đầy đủ, lint migration, kiểm thử tích hợp và rò rỉ chéo tenant |
+| Gate B | Lint OpenAPI, phát hiện thay đổi phá vỡ | CI-5 | Thêm AsyncAPI, Apicurio, kiểm thử hợp đồng |
+| Gate C | Lint, kiểm tra kiểu, kiểm thử thành phần giao diện | CI-6 | Thêm Stylelint, luật không CSS tự do, kích thước gói |
+| Gate D | Kiểm tra truy cập thử nghiệm (cảnh báo) | CI-9 | Chuyển thành chặn với màn bị chạm; thêm Lighthouse CI |
+| Gate S (`gate-s.yml`) | gitleaks, SAST, Trivy ảnh | CI-7, CI-8 | Thêm CodeQL, FindSecBugs, SCA, quét IaC; ghim action theo SHA |
+| `camel-native.yml`, `at-ph04.yml` | Build native, kiểm thử chấp nhận PH-04 | CI-8, CI-9 | Native build chạy trước phát hành `dh-runtime`; AT chạy hằng đêm |
 
 ## 7. Định nghĩa Ready và Done
 
@@ -284,7 +284,7 @@ Một việc (user story, yêu cầu sửa lỗi, việc kỹ thuật) chỉ đ�
 
 Một việc được coi là xong khi đạt toàn bộ điều kiện dưới đây. DoD này thay và mở rộng mục 7 của `AGENTS.md`.
 
-1. Mã đã hợp nhất vào `main` qua PR, đủ người duyệt theo mục 5.2, mọi cổng G1–G9 áp dụng đều xanh.
+1. Mã đã hợp nhất vào `main` qua PR, đủ người duyệt theo mục 5.2, mọi cổng CI-1–CI-9 áp dụng đều xanh.
 2. Tiêu chí chấp nhận được kiểm chứng bằng kiểm thử tự động; FR mức M có ít nhất một ca dương tính và một ca âm tính (D00-01 §3.2); API mới có kiểm thử rò rỉ chéo tenant và kiểm thử phân quyền âm tính.
 3. Độ phủ đạt ngưỡng NFR-00-053 và không giảm.
 4. Hợp đồng OpenAPI/AsyncAPI cập nhật và đăng ký Apicurio nếu đổi hợp đồng; mã khách giao diện đã sinh lại.
@@ -354,14 +354,14 @@ Bảng dưới đây là bảng ghim phiên bản của Datahub tại thời đi
 | Bản vá có công bố lỗ hổng (CVE) | Riêng từng phụ thuộc | Không; ưu tiên duyệt trong 1 ngày làm việc (CRITICAL) hoặc 5 ngày (HIGH) | Ngay khi có |
 | MINOR | Theo nhóm BOM (ví dụ cả họ Spring) | Không; 1 người duyệt nhóm nền tảng kỹ thuật | Hằng tuần |
 | MAJOR | Riêng từng thành phần | Không; cần đánh giá tác động, có thể cần ADR (nếu đổi dòng của thành phần trong SAD §6) | Hằng tháng, đưa vào kế hoạch |
-| Digest ảnh nền | Gom | Có, nếu G8 xanh | Hằng ngày |
+| Digest ảnh nền | Gom | Có, nếu CI-8 xanh | Hằng ngày |
 | Action CI (SHA) | Gom | Có | Hằng tuần |
 
 Renovate được cấu hình độ chờ tối thiểu (`minimumReleaseAge`) 3 ngày với bản phát hành mới không phải bản vá bảo mật, để tránh nhận phải gói bị chiếm quyền mới đăng, và chặn phiên bản không-LTS của các thành phần có chính sách LTS (Camel, Quarkus, Node).
 
 **QT-DEP-05 · Thêm phụ thuộc mới.** PR thêm phụ thuộc trực tiếp mới phải nêu: mục đích, phương án đã cân nhắc, giấy phép, tình trạng bảo trì, kết quả SCA (D04-01 CC-GEN-09); cần duyệt của nhóm nền tảng kỹ thuật. Danh sách giấy phép cho phép mặc định: Apache-2.0, MIT, BSD-2/3-Clause, EPL-2.0, MPL-2.0, ISC, PostgreSQL, CC0; giấy phép copyleft mạnh (GPL, AGPL) hoặc giấy phép nguồn mở có điều kiện thương mại (BUSL, SSPL, FSL) cần ý kiến pháp chế của chủ đầu tư.
 
-**QT-DEP-06 · Ngoại lệ lỗ hổng có thời hạn.** Lỗ hổng HIGH chưa có bản vá hoặc không khai thác được trong ngữ cảnh Datahub được ghi ngoại lệ trong tệp `.trivyignore.yaml` (hoặc VEX) kèm mã CVE, lý do, người duyệt bảo mật, ngày hết hạn ≤ 90 ngày. Ngoại lệ hết hạn làm G7 đỏ trở lại.
+**QT-DEP-06 · Ngoại lệ lỗ hổng có thời hạn.** Lỗ hổng HIGH chưa có bản vá hoặc không khai thác được trong ngữ cảnh Datahub được ghi ngoại lệ trong tệp `.trivyignore.yaml` (hoặc VEX) kèm mã CVE, lý do, người duyệt bảo mật, ngày hết hạn ≤ 90 ngày. Ngoại lệ hết hạn làm CI-7 đỏ trở lại.
 
 ## 9. Phiên bản phát hành và changelog
 
@@ -377,7 +377,7 @@ Renovate được cấu hình độ chờ tối thiểu (`minimumReleaseAge`) 3 
 
 ### 9.3. Điều kiện phát hành
 
-**QT-REL-04 · Cổng phát hành.** Một thẻ phát hành chỉ được đưa lên môi trường production của bất kỳ tỉnh nào khi: mọi cổng G1–G9 xanh trên commit được gắn thẻ; DAST không có cảnh báo High; không có lỗ hổng CRITICAL và không có HIGH chưa có ngoại lệ trong SBOM tại thời điểm phát hành (NFR-00-023); kiểm thử tải đạt NFR-00-001…008; kiểm thử chấp nhận và hồi quy của D05-01 đạt; ảnh đã ký và có SBOM, có chứng thực nguồn gốc (mục 10); ghi chú phát hành đã duyệt; người có thẩm quyền phê duyệt phát hành (chủ sản phẩm và đại diện vận hành) đã ký duyệt trên PR cập nhật overlay production của kho GitOps.
+**QT-REL-04 · Cổng phát hành.** Một thẻ phát hành chỉ được đưa lên môi trường production của bất kỳ tỉnh nào khi: mọi cổng CI-1–CI-9 xanh trên commit được gắn thẻ; DAST không có cảnh báo High; không có lỗ hổng CRITICAL và không có HIGH chưa có ngoại lệ trong SBOM tại thời điểm phát hành (NFR-00-023); kiểm thử tải đạt NFR-00-001…008; kiểm thử chấp nhận và hồi quy của D05-01 đạt; ảnh đã ký và có SBOM, có chứng thực nguồn gốc (mục 10); ghi chú phát hành đã duyệt; người có thẩm quyền phê duyệt phát hành (chủ sản phẩm và đại diện vận hành) đã ký duyệt trên PR cập nhật overlay production của kho GitOps.
 
 ### 9.4. Nhánh hỗ trợ phiên bản
 
@@ -425,7 +425,7 @@ sequenceDiagram
   OC->>DEV: Mở sự cố INC-nnn, xác định mức
   DEV->>DEV: Nhánh hotfix/INC-nnn-... từ main (hoặc release/X.Y)
   DEV->>CI: PR + kiểm thử tái hiện lỗi
-  CI-->>DEV: G1–G8 (G9 rút gọn)
+  CI-->>DEV: CI-1–CI-8 (CI-9 rút gọn)
   RV->>DEV: Duyệt (1 người, ≤ 30 phút)
   DEV->>CI: Squash merge, thẻ vX.Y.Z+1
   CI->>GO: Ảnh đã ký, cập nhật overlay
@@ -442,7 +442,7 @@ Sơ đồ trên mô tả các bước. Những điểm khác với quy trình th
 
 **QT-HF-03 · Kiểm thử tái hiện bắt buộc.** PR sửa nóng phải có kiểm thử tự động tái hiện lỗi (đỏ trước khi sửa, xanh sau khi sửa); không có ngoại lệ, vì đây là cách duy nhất bảo đảm lỗi không quay lại.
 
-**QT-HF-04 · Rút gọn có kiểm soát.** Một người duyệt trước hợp nhất (là người duyệt bảo mật nếu sự cố là lỗ hổng); G9 chỉ chạy bộ E2E khói; mọi cổng khác chạy đầy đủ. Người duyệt thứ hai hậu kiểm trong 1 ngày làm việc; phát hiện của hậu kiểm được xử lý như lỗi mức cao.
+**QT-HF-04 · Rút gọn có kiểm soát.** Một người duyệt trước hợp nhất (là người duyệt bảo mật nếu sự cố là lỗ hổng); CI-9 chỉ chạy bộ E2E khói; mọi cổng khác chạy đầy đủ. Người duyệt thứ hai hậu kiểm trong 1 ngày làm việc; phát hiện của hậu kiểm được xử lý như lỗi mức cao.
 
 **QT-HF-05 · Ghi nhận sau sự cố.** Trong 5 ngày làm việc sau sửa nóng, nhóm lập báo cáo sau sự cố (không đổ lỗi, blameless) nêu nguyên nhân gốc, vì sao các cổng không chặn được, và hành động phòng ngừa (thường là luật tự động mới theo QT-RV-05). Lỗ hổng bảo mật được đánh giá nghĩa vụ thông báo theo quy định (báo vi phạm dữ liệu cá nhân trong 72 giờ theo Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 và Nghị định 356/2025/NĐ-CP nếu có ảnh hưởng dữ liệu cá nhân), phối hợp với quy trình của D03-07.
 
@@ -450,19 +450,19 @@ Sơ đồ trên mô tả các bước. Những điểm khác với quy trình th
 
 ### 12.1. Môi trường cục bộ
 
-**QT-DEV-01 · Một lệnh để chạy.** Lập trình viên mới phải chạy được DU mình phụ trách và kiểm thử của nó trong vòng một ngày từ khi có máy. Kho mã cung cấp: cấu hình devcontainer (`.devcontainer/devcontainer.json`) với JDK 21, Maven, Node 22, pnpm, công cụ CLI (kubectl, kustomize, cosign, trivy, gitleaks, semgrep) ở đúng phiên bản bảng 8.2; `Makefile` với các mục tiêu `make bootstrap`, `make dev-up`, `make test`, `make verify` (chạy cục bộ tương đương G1–G7); và `deploy/compose/docker-compose.yml` dựng PostgreSQL 18, Kafka KRaft, Apicurio, Keycloak (realm mẫu `dh-t01`, `dh-t02` với người dùng giả), Valkey, Garage, OpenBao chế độ dev, OTel Collector và Grafana nhẹ.
+**QT-DEV-01 · Một lệnh để chạy.** Lập trình viên mới phải chạy được DU mình phụ trách và kiểm thử của nó trong vòng một ngày từ khi có máy. Kho mã cung cấp: cấu hình devcontainer (`.devcontainer/devcontainer.json`) với JDK 21, Maven, Node 22, pnpm, công cụ CLI (kubectl, kustomize, cosign, trivy, gitleaks, semgrep) ở đúng phiên bản bảng 8.2; `Makefile` với các mục tiêu `make bootstrap`, `make dev-up`, `make test`, `make verify` (chạy cục bộ tương đương CI-1–CI-7); và `deploy/compose/docker-compose.yml` dựng PostgreSQL 18, Kafka KRaft, Apicurio, Keycloak (realm mẫu `dh-t01`, `dh-t02` với người dùng giả), Valkey, Garage, OpenBao chế độ dev, OTel Collector và Grafana nhẹ.
 
 **QT-DEV-02 · Testcontainers cho kiểm thử, Spring Boot dev services cho chạy thử.** Kiểm thử tích hợp tự dựng phụ thuộc bằng Testcontainers (D04-01 CC-TEST-01), không giả định có compose đang chạy. Khi chạy ứng dụng cục bộ, có thể dùng hỗ trợ Docker Compose hoặc Testcontainers lúc phát triển của Spring Boot (`spring-boot-docker-compose`, `spring-boot-testcontainers`) và dev services của Quarkus để tự dựng phụ thuộc. Ảnh dùng trong Testcontainers và compose lấy từ Harbor (hoặc bản sao), ghim phiên bản như ở production.
 
 **QT-DEV-03 · Đa tenant ngay ở cục bộ.** Môi trường cục bộ luôn có ít nhất hai tenant giả (`T01`, `T02`) để lập trình viên tự thấy hành vi cách ly; dữ liệu mẫu do bộ sinh dữ liệu giả tạo ra, không dùng dữ liệu thật hay bản sao production.
 
-**QT-DEV-04 · Môi trường xem trước theo PR.** PR có nhãn `preview` được dựng môi trường tạm trong namespace riêng trên cụm dev (qua Argo CD ApplicationSet theo PR), tự hủy khi PR đóng hoặc sau 72 giờ, dùng cho kiểm thử E2E (G9) và cho chủ sản phẩm xem trước.
+**QT-DEV-04 · Môi trường xem trước theo PR.** PR có nhãn `preview` được dựng môi trường tạm trong namespace riêng trên cụm dev (qua Argo CD ApplicationSet theo PR), tự hủy khi PR đóng hoặc sau 72 giờ, dùng cho kiểm thử E2E (CI-9) và cho chủ sản phẩm xem trước.
 
 ### 12.2. Bí mật trong phát triển
 
 **QT-SEC-01 · Không có bí mật thật ở máy lập trình viên.** Bí mật của môi trường test, staging, production không bao giờ được cấp cho máy cá nhân. Môi trường cục bộ dùng thông tin xác thực sinh ngẫu nhiên lúc dựng compose (script `make dev-up` sinh mật khẩu vào tệp `.env` không commit) hoặc do Testcontainers tạo. Tệp `.env.example` chỉ chứa tên biến và chú thích, không giá trị.
 
-**QT-SEC-02 · Chặn bí mật trước khi tới kho.** Pre-commit hook (`pre-commit` framework hoặc lefthook) chạy gitleaks trên thay đổi đã stage; nền tảng Git bật chặn đẩy bí mật (push protection) nếu có; G7 chạy gitleaks trên PR và toàn lịch sử (NFR-00-022). Cấu hình `.gitleaks.toml` bổ sung luật cho định dạng bí mật đặc thù (khóa OpenBao, client secret Keycloak, khóa PayGov, chuỗi kết nối JDBC có mật khẩu).
+**QT-SEC-02 · Chặn bí mật trước khi tới kho.** Pre-commit hook (`pre-commit` framework hoặc lefthook) chạy gitleaks trên thay đổi đã stage; nền tảng Git bật chặn đẩy bí mật (push protection) nếu có; CI-7 chạy gitleaks trên PR và toàn lịch sử (NFR-00-022). Cấu hình `.gitleaks.toml` bổ sung luật cho định dạng bí mật đặc thù (khóa OpenBao, client secret Keycloak, khóa PayGov, chuỗi kết nối JDBC có mật khẩu).
 
 **QT-SEC-03 · Lộ bí mật là sự cố.** Bí mật bị commit (kể cả lên nhánh chưa hợp nhất, kể cả đã xóa ở commit sau) được coi là đã lộ: thu hồi và xoay vòng ngay trong OpenBao, mở sự cố `INC`, rồi mới làm sạch lịch sử nếu cần. Không coi việc xóa commit là đủ.
 
@@ -483,7 +483,7 @@ Hợp đồng API và sự kiện là cam kết với HTTT thành viên của nh
 | Phá vỡ sự kiện | Xóa trường, đổi kiểu | Topic phiên bản mới `.v{n+1}`; bên phát phát song song hai topic trong thời gian chuyển tiếp ≥ 6 tháng; schema mới đăng ký nhóm mới trong Apicurio |
 | Gỡ bỏ phiên bản cũ | Hết thời hạn `Sunset` | Kiểm tra chỉ số sử dụng tại APISIX/Kafka bằng 0 trong 30 ngày hoặc được chủ quản chấp thuận; PR gỡ có duyệt kiến trúc |
 
-**QT-CT-03 · Kiểm thử hợp đồng hai phía.** Phía nhà cung cấp kiểm tra mã thật khớp hợp đồng (kiểm thử sinh từ OpenAPI chạy trên `@SpringBootTest`, hoặc Spring Cloud Contract); phía tiêu dùng nội bộ (giao diện, DU khác, luồng Camel) dùng kiểu sinh từ hợp đồng và kiểm thử với máy chủ giả sinh từ hợp đồng (Prism hoặc MSW). Chi tiết chiến lược ở ADR-038 và D05-01. G5 chạy cả hai phía.
+**QT-CT-03 · Kiểm thử hợp đồng hai phía.** Phía nhà cung cấp kiểm tra mã thật khớp hợp đồng (kiểm thử sinh từ OpenAPI chạy trên `@SpringBootTest`, hoặc Spring Cloud Contract); phía tiêu dùng nội bộ (giao diện, DU khác, luồng Camel) dùng kiểu sinh từ hợp đồng và kiểm thử với máy chủ giả sinh từ hợp đồng (Prism hoặc MSW). Chi tiết chiến lược ở ADR-038 và D05-01. CI-5 chạy cả hai phía.
 
 **QT-CT-04 · Hợp đồng là tài liệu công bố.** Hợp đồng đã hợp nhất được xuất bản tự động lên cổng nhà phát triển (PH-15) và đăng ký Apicurio khi phát hành, với lịch sử phiên bản và changelog theo hợp đồng, để HTTT thành viên tự tra cứu.
 
@@ -522,7 +522,7 @@ Tài liệu đề xuất bổ sung các mục trong bảng dưới đây vào D0
 | Loại | Đề xuất | Vị trí |
 |---|---|---|
 | Mã | `QT-{nhóm}-{nn}`: quy tắc quy trình kỹ thuật, định nghĩa tại D04-02. Nhóm ∈ `BR` (nhánh), `CM` (commit), `PR`, `RV` (review), `CI`, `DEP` (phụ thuộc), `REL` (phát hành), `SC` (chuỗi cung ứng), `HF` (sửa nóng), `DEV`, `SEC` (bí mật trong phát triển), `CT` (hợp đồng), `RT` (luồng Camel) | §3.1 |
-| Mã | `G1`…`G9`: cổng chất lượng CI, định nghĩa tại D04-02 §6 | §3.1 |
+| Mã | `CI-1`…`CI-9`: cổng chất lượng CI, định nghĩa tại D04-02 §6 | §3.1 |
 | Mã | `INC-{nnn}`, `BUG-{nnn}`: mã sự cố và mã lỗi trên hệ thống theo dõi công việc, được phép dùng làm `{mã-việc}` trong tên nhánh | §3.1, §6 |
 | Thuật ngữ | **Phát triển dựa trên nhánh chính** (Trunk-based development), **Cổng chất lượng** (Quality gate), **Hàng đợi hợp nhất** (Merge queue), **Cờ tính năng** (Feature flag), **Sửa nóng** (Hotfix), **Đại diện bảo mật** (Security champion) | §2.2 |
 | Thuật ngữ | **SBOM** (Software Bill of Materials), **SLSA** (Supply-chain Levels for Software Artifacts), **Chứng thực nguồn gốc** (Provenance attestation), **VEX** (Vulnerability Exploitability eXchange) | §2.2, §2.3 |
@@ -535,27 +535,27 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định và tài liệu liên
 
 | Yêu cầu, ADR, tài liệu | Đáp ứng tại |
 |---|---|
-| NFR-00-005 (hiệu năng giao diện) | G9 |
+| NFR-00-005 (hiệu năng giao diện) | CI-9 |
 | NFR-00-013 (nâng cấp không gián đoạn) | 9.3, 14 (QT-RT-04) |
-| NFR-00-022 (không bí mật) | G7, 12.2 |
-| NFR-00-023 (lỗ hổng phụ thuộc) | G7, G8, 8.3, QT-DEP-06, 9.3 |
-| NFR-00-024 (ASVS 5.0 mức 2) | 5.4, G7, 9.3 (DAST) |
-| NFR-00-040 (WCAG 2.2 AA) | G9 |
-| NFR-00-045 (thống nhất giao diện) | G6 |
-| NFR-00-053 (độ phủ) | G4 |
-| NFR-00-054 (ranh giới module) | G2 |
-| NFR-00-055 (tương thích ngược API) | G5, 13 |
-| FR-00-011 (không rò rỉ chéo tenant) | G3, 5.5 |
+| NFR-00-022 (không bí mật) | CI-7, 12.2 |
+| NFR-00-023 (lỗ hổng phụ thuộc) | CI-7, CI-8, 8.3, QT-DEP-06, 9.3 |
+| NFR-00-024 (ASVS 5.0 mức 2) | 5.4, CI-7, 9.3 (DAST) |
+| NFR-00-040 (WCAG 2.2 AA) | CI-9 |
+| NFR-00-045 (thống nhất giao diện) | CI-6 |
+| NFR-00-053 (độ phủ) | CI-4 |
+| NFR-00-054 (ranh giới module) | CI-2 |
+| NFR-00-055 (tương thích ngược API) | CI-5, 13 |
+| FR-00-011 (không rò rỉ chéo tenant) | CI-3, 5.5 |
 | FR-00-040 (kiểm toán) | 7.2, QT-RT-03 |
 | ADR-009 (GitOps Argo CD) | 2, 14 |
-| ADR-010, ADR-002 (Camel YAML DSL, Camel Quarkus) | 14, G8 (native) |
+| ADR-010, ADR-002 (Camel YAML DSL, Camel Quarkus) | 14, CI-8 (native) |
 | ADR-012 (OpenBao) | 12.2, QT-SC-01 |
 | ADR-013 (tách control/data plane) | 14 |
 | ADR-036 (gói air-gapped) | QT-DEP-03, 10 |
 | ADR-037 (quy trình Git, cổng CI) | Toàn bộ tài liệu |
-| ADR-038 (chiến lược kiểm thử) | G3, G5, QT-CT-03 |
+| ADR-038 (chiến lược kiểm thử) | CI-3, CI-5, QT-CT-03 |
 | SAD §6 (ghim phiên bản tại D04-02) | 8.2 |
-| D03-10 §6 (quy tắc đa tenant) | 5.5, G2, G3 |
+| D03-10 §6 (quy tắc đa tenant) | 5.5, CI-2, CI-3 |
 | D04-01 (quy chuẩn lập trình) | 5.3, 5.4, 6 |
 | SEC-40–49, SEC-50–59, SEC-70–79 (D03-07) | 5.4, 6, 10, 11 |
 | TCVN 14423:2026 cấp độ 3: phát triển ứng dụng an toàn, quản lý cấu hình, quản lý lỗ hổng (cần đối chiếu số mục) | 1, 6, 8, 10 |
