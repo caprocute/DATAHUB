@@ -524,7 +524,7 @@ Quy tắc nghiệp vụ là các ràng buộc mà mọi FR, API và màn hình p
 | BR-19-030 | Lịch sử trạng thái, IPN nguyên văn, phiên đã chốt, biên bản và quyết định phê duyệt không được sửa hay xóa; mọi điều chỉnh thực hiện bằng bản ghi bù có tham chiếu bản ghi gốc. | — | FR-19-028, 029, 047 |
 | BR-19-031 | Quy tắc che mặc định (áp dụng khi PH-09 không trả chính sách): họ tên giữ chữ cái đầu mỗi từ và từ cuối (`Nguyễn V*** A**`); điện thoại giữ 4 số cuối; thư điện tử giữ 2 ký tự đầu và tên miền; số định danh giữ 4 số cuối; địa chỉ chỉ giữ cấp tỉnh. Người có `PERM-19-transaction-read-pii` xem bản đầy đủ, mỗi lần xem ghi kiểm toán. File xuất mặc định che. | — | FR-19-051, 052 |
 | BR-19-032 | Không lưu số thẻ, số tài khoản đầy đủ, mã CVV, mã OTP của người nộp ở bất kỳ bảng, log hay nhật ký tích hợp nào; chỉ lưu mã ngân hàng, mã kênh và tối đa 4 số cuối nếu NCC trả về. Adapter phải lọc các trường này trước khi ghi nhật ký. | — | FR-19-024, 029, 054 |
-| BR-19-034 | Mỗi đối tác có đúng một chế độ định tuyến: `LEGACY` (hệ cũ xử lý, PH-03 chuyển tiếp sang hệ cũ), `SHADOW` (hệ cũ xử lý; PH-19 nhận bản sao yêu cầu, ghi giao dịch với cờ `is_shadow = true`, không gọi NCC, chỉ để so sánh) hoặc `DATAHUB`. Chuyển chế độ cần phê duyệt (BR-19-011). Chỉ được chuyển sang `DATAHUB` khi đối chiếu FR-19-068 cho đối tác đó đạt 0 bản ghi lệch trong ít nhất 7 ngày `SHADOW` liên tiếp. Được quay lui `DATAHUB → LEGACY` trong 30 ngày; giao dịch đang dở tiếp tục được xử lý ở hệ đã tạo ra nó. Giao dịch `is_shadow` bị loại khỏi báo cáo, hạn mức và đối soát. | 7 ngày SHADOW; quay lui 30 ngày | FR-19-066, 068 |
+| BR-19-034 | Mỗi đối tác có đúng một chế độ định tuyến: `LEGACY` (hệ cũ xử lý, PH-03 chuyển tiếp sang hệ cũ), `SHADOW` (hệ cũ xử lý; PH-19 nhận bản sao yêu cầu, ghi giao dịch với cờ `is_shadow = true`, không gọi NCC, chỉ để so sánh) hoặc `DATAHUB`. Chuyển chế độ cần phê duyệt (BR-19-011). Chỉ được chuyển sang `DATAHUB` khi đối chiếu FR-19-068 cho đối tác đó đạt 0 bản ghi lệch chưa giải thích trong số ngày `SHADOW` liên tiếp tối thiểu do tỉnh cấu hình (mặc định 7 ngày, OQ-19-18) và không còn phiên đối soát mở của đối tác. Được quay lui `DATAHUB → LEGACY` trong 30 ngày; giao dịch đang dở tiếp tục được xử lý ở hệ đã tạo ra nó. Giao dịch `is_shadow` bị loại khỏi báo cáo, hạn mức và đối soát. | 7 ngày SHADOW (cấu hình); quay lui 30 ngày | FR-19-066, 068 |
 
 ## 7. Máy trạng thái
 
@@ -913,5 +913,651 @@ User story là đơn vị lập kế hoạch của đội phát triển; D02-05 
 | US-19-055 | Là quản trị thanh toán, tôi muốn chuyển từng đối tác qua các chế độ LEGACY, SHADOW, DATAHUB có phê duyệt và quay lui được, để chuyển đổi không gián đoạn thu. | O. Di trú | UC-19-29 | FR-19-066 | 8 | Đ2 |
 | US-19-056 | Là HTTT đối tác chưa kịp sửa mã, tôi muốn gọi PH-19 theo hợp đồng API cũ trong một thời gian có hạn, để vẫn thu được trong lúc nâng cấp. | O. Di trú | UC-19-29 | FR-19-067 | 8 | Sau |
 
-Tổng điểm ước lượng của 55 câu chuyện đợt 2 là 291 SP; câu chuyện US-19-056 chỉ được lập kế hoạch khi OQ-19-17 xác nhận có nhu cầu.
+Tổng điểm ước lượng của 55 câu chuyện đợt 2 là 281 SP; câu chuyện US-19-056 chỉ được lập kế hoạch khi OQ-19-17 xác nhận có nhu cầu.
+
+## 9. Thực thể dữ liệu (`EN-19-nn`)
+
+Mục này cấp mã cho 25 thực thể của PH-19 và chốt tên bảng, các cột chính, khóa quan trọng và quan hệ, để luồng CSDL (D03-03-PH19) viết DDL và changeset Liquibase, luồng API viết lược đồ và luồng kiểm thử sinh dữ liệu mà không phải đoán. Mọi bảng nằm trong schema `ph19_payment` của CSDL thuộc DU `dh-payment`, tuân theo D03-10 và ADR-003: có đủ cột ngữ cảnh `id`, `tenant_id`, `created_at`, `created_by`, `updated_at`, `updated_by`, `version` (D00-01 §5.1, không nhắc lại trong từng bảng dưới đây), có chính sách RLS `FORCE` trong cùng changeset, và mọi khóa duy nhất nghiệp vụ đều bắt đầu bằng `tenant_id`. Bảng chỉ-ghi-thêm (append-only) không có `updated_*` có ý nghĩa và vai trò ứng dụng không có quyền `UPDATE`/`DELETE` trên chúng (NFR-19-016); ngoại lệ này được ghi trong SDD. Cột "B" là bắt buộc (`NOT NULL`).
+
+Bảng hệ cũ được thay thế như sau: `payment_provider` → EN-19-01, `payment_service_group` → EN-19-04, `payment_service` → EN-19-05, `payment_partner` → EN-19-06, `payment_transaction` → EN-19-10 (số tiền `int(10)` thành `T-MONEY`, `pay_date` chuỗi thành `paid_at` kiểu `T-TS`, theo FR-00-091). Khóa số tự tăng của hệ cũ được giữ trong `legacy_mapping` (EN-19-25).
+
+### 9.1. Thực thể dùng chung và danh mục tham chiếu
+
+PH-19 không sở hữu bản sao của thực thể dùng chung; nó lưu khóa tham chiếu và đọc qua `api/` của module chủ quản hoặc qua API của phân hệ khác. Mã `DD-nn` lấy theo từ điển dữ liệu hiện hành (SRS-00 của repo) và chờ D02-07 xác nhận.
+
+| Mã | Thực thể dùng chung | Chủ quản | PH-19 dùng ở đâu |
+|---|---|---|---|
+| DD-01 | Hệ thống thông tin thành viên | PH-01 | `payment_partner.member_system_id` |
+| DD-03 | Người dùng | PH-12 | Mọi cột `*_by`; người phụ trách chênh lệch; người lập, người duyệt |
+| DD-04 | Vai trò và quyền | PH-12 | `ROLE-*`, `PERM-19-*` (mục 13) |
+| DD-05 | Bản ghi kiểm toán | PH-13 | FR-19-053; bản ghi đi qua `outbox_event` |
+| DD-06 | Danh mục dùng chung | PH-07 | Mọi cột `*_code` tham chiếu danh mục ở mục 1.5 |
+| DD-08 | Vết xử lý bản tin | PH-13 | `trace_id` trên mọi bảng giao dịch (FR-19-055) |
+| DD-09 | Bản tin lỗi (DLQ) | PH-18 | IPN và webhook không tự xử lý được |
+| DD-10 | Sự kiện nghiệp vụ | PH-10 | EVT-19-01…18 |
+| DD-11 | Nhãn phân loại dữ liệu | PH-09 | Nhãn của cột dữ liệu cá nhân người nộp |
+
+Các cột tham chiếu danh mục PH-07 dùng kiểu `T-CODE` và mã danh mục sau: `sector_code` → `DM_LINH_VUC_TTHC`; `channel_code` → `DM_KENH_THANH_TOAN`; `bank_code` → `DM_NGAN_HANG`; `fee_type_code` → `DM_LOAI_PHI_LE_PHI`; `collecting_agency_code`, `agency_code` → `DM_CO_QUAN`; `procedure_code` → `DM_THU_TUC_HANH_CHINH`; `currency` → `DM_LOAI_TIEN_TE`; `reason_code` của hoàn tiền → `DM_LY_DO_HOAN_TIEN`; nhãn của `discrepancy.type` → `DM_LOAI_CHENH_LECH_DOI_SOAT`; ánh xạ mã kết quả NCC → `DM_MA_LOI_NCC_THANH_TOAN`.
+
+### 9.2. Danh mục thực thể
+
+| Mã | Bảng | Thực thể | Loại | FR chính |
+|---|---|---|---|---|
+| EN-19-01 | `payment_provider` | Nhà cung cấp thanh toán | Danh mục có vòng đời | FR-19-001…012 |
+| EN-19-02 | `provider_credential` | Tham chiếu thông tin xác thực NCC | Cấu hình | FR-19-002, 012 |
+| EN-19-03 | `provider_check_run` | Lần kiểm tra kết nối, giao dịch thử | Chỉ-ghi-thêm | FR-19-003, 004, 005 |
+| EN-19-04 | `payment_service_group` | Nhóm dịch vụ | Danh mục | FR-19-013 |
+| EN-19-05 | `payment_service` | Dịch vụ thanh toán | Danh mục có vòng đời | FR-19-014, 015, 016 |
+| EN-19-06 | `payment_partner` | Đối tác | Danh mục có vòng đời | FR-19-017, 018, 066 |
+| EN-19-07 | `partner_client` | Client máy-máy của đối tác | Cấu hình | FR-19-019 |
+| EN-19-08 | `partner_service_grant` | Gán dịch vụ và hạn mức | Cấu hình | FR-19-020 |
+| EN-19-09 | `partner_webhook_endpoint` | Đầu nhận webhook | Cấu hình | FR-19-021 |
+| EN-19-10 | `payment_transaction` | Giao dịch thanh toán | Giao dịch, phân vùng tháng | FR-19-022…037 |
+| EN-19-11 | `transaction_event` | Lịch sử trạng thái giao dịch | Chỉ-ghi-thêm, phân vùng tháng | FR-19-028 |
+| EN-19-12 | `idempotency_record` | Bản ghi idempotency | Tạm thời (24 giờ) | FR-19-033 |
+| EN-19-13 | `callback_inbox` | Hộp nhận IPN | Chỉ-ghi-thêm (phần nguyên văn), phân vùng tháng | FR-19-029…032 |
+| EN-19-14 | `integration_log` | Nhật ký tích hợp | Chỉ-ghi-thêm, phân vùng tháng | FR-19-054, 055, 060 |
+| EN-19-15 | `refund_request` | Yêu cầu hoàn tiền | Giao dịch | FR-19-038…041 |
+| EN-19-16 | `approval_request` | Đề nghị phê duyệt bốn mắt | Giao dịch | FR-19-005, 010, 018, 039, 046, 047, 066 |
+| EN-19-17 | `reconciliation_session` | Phiên đối soát | Giao dịch | FR-19-042, 043, 047, 048 |
+| EN-19-18 | `reconciliation_item` | Dòng đối soát | Chỉ-ghi-thêm theo lần chạy | FR-19-044 |
+| EN-19-19 | `discrepancy` | Bản ghi chênh lệch | Giao dịch | FR-19-031, 045, 046 |
+| EN-19-20 | `webhook_delivery` | Lần gửi webhook | Giao dịch | FR-19-060, 062 |
+| EN-19-21 | `outbox_event` | Hộp gửi sự kiện | Tạm thời (xóa sau khi phát, giữ 7 ngày) | FR-19-053, 061 |
+| EN-19-22 | `tenant_payment_config` | Phiên bản cấu hình thanh toán của tenant | Có phiên bản | FR-19-063, 064 |
+| EN-19-23 | `stored_file` | Tệp lưu ở kho đối tượng | Siêu dữ liệu tệp | FR-19-040, 043, 045, 048, 052, 058 |
+| EN-19-24 | `background_job` | Tác vụ nền (xuất, báo cáo, biên bản, di trú) | Giao dịch | FR-19-048, 052, 058, 065, 068 |
+| EN-19-25 | `legacy_mapping` | Ánh xạ khóa hệ cũ | Chỉ-ghi-thêm | FR-19-065, 068 |
+
+### 9.3. Cột chính của từng thực thể
+
+Các bảng dưới đây liệt kê cột nghiệp vụ chính (ngoài cột ngữ cảnh). D03-03-PH19 được thêm cột kỹ thuật (chỉ mục, cột tính toán) nhưng không được đổi tên hay kiểu các cột này mà không cập nhật tài liệu này.
+
+**EN-19-01 `payment_provider`** — một bản ghi là một kết nối tới một nhà cung cấp. Một tenant được có nhiều bản ghi cùng `adapter_type = PAYGOV` (mỗi bản ghi một mã đơn vị kết nối), phục vụ trường hợp sáp nhập tỉnh khi kết nối PayGov của tỉnh cũ còn hiệu lực (OQ-19-19). Xóa mềm (`deleted_at`) không dùng; ngừng hẳn bằng `RETIRED`.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `code` | T-CODE | ✓ | Mã NCC, duy nhất trong tenant, bất biến |
+| `name` | T-NAME | ✓ | Tên hiển thị |
+| `adapter_type` | T-ENUM | ✓ | `PAYGOV`, `MOCK` (giả lập, chỉ môi trường thử); thêm giá trị khi có adapter mới |
+| `status` | T-ENUM | ✓ | Mục 7.1 |
+| `health_status` | T-ENUM | ✓ | `UNKNOWN`, `HEALTHY`, `DEGRADED`, `DOWN` |
+| `health_checked_at` | T-TS | | Lần kiểm tra sức khỏe gần nhất |
+| `circuit_state` | T-ENUM | ✓ | `CLOSED`, `OPEN`, `HALF_OPEN` (bản sao để hiển thị; nguồn thật trong bộ nhớ, đồng bộ qua Valkey) |
+| `sandbox_base_url`, `production_base_url` | T-URI | | Địa chỉ hai môi trường |
+| `connection_key` | varchar(32) | ✓ | Khóa định tuyến callback ngẫu nhiên, không đoán được, xuất hiện trong đường dẫn callback (API-19-201…204); duy nhất toàn cục (ADR-045) |
+| `merchant_ref` | T-CODE | | Mã đơn vị kết nối do NCC cấp (giả định, OQ-19-08) |
+| `refund_mode` | T-ENUM | ✓ | `API`, `MANUAL` (BR-19-024) |
+| `effective_from` | T-DATE | | Ngày bắt đầu hiệu lực (hệ cũ: "ngày bắt đầu") |
+| `tech_contact_name`, `biz_contact_name` | T-NAME | | Đầu mối kỹ thuật, nghiệp vụ |
+| `tech_contact_phone`, `biz_contact_phone` | T-PHONE | | |
+| `tech_contact_email`, `biz_contact_email` | T-EMAIL | | |
+| `capabilities` | T-JSON | ✓ | Năng lực adapter khai báo: hủy, truy vấn, hoàn, hoàn một phần, kiểu dữ liệu đối soát |
+| `pending_change` | T-JSON | | Thay đổi kết nối chờ kiểm tra lại (BR-19-026) |
+
+Khóa: duy nhất (`tenant_id`, `code`); duy nhất (`connection_key`). Quan hệ: 1–n với EN-19-02, 03, 05, 10, 17.
+
+**EN-19-02 `provider_credential`** — tham chiếu bí mật của một NCC theo môi trường và mục đích; không bao giờ chứa giá trị bí mật (NFR-19-022).
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `provider_id` | T-ID | ✓ | FK → EN-19-01 |
+| `environment` | T-ENUM | ✓ | `SANDBOX`, `PRODUCTION` |
+| `purpose` | T-ENUM | ✓ | `SIGNING_KEY`, `VERIFY_CERT` (chứng thư của NCC để xác minh IPN), `MTLS_CLIENT_CERT`, `API_CREDENTIAL` |
+| `secret_ref` | T-SECRET-REF | ✓ | Đường dẫn OpenBao `kv/dh/{tenant}/payment/...` |
+| `fingerprint` | varchar(128) | | Dấu vân tay SHA-256 của chứng thư/khóa công khai |
+| `valid_from`, `valid_to` | T-TS | | Hạn dùng; căn cứ cảnh báo 30/14/7 ngày |
+| `credential_status` | T-ENUM | ✓ | `ACTIVE`, `NEXT` (đang chuyển tiếp khi xoay), `RETIRED` |
+
+Khóa: tối đa một `ACTIVE` và một `NEXT` cho mỗi (`tenant_id`, `provider_id`, `environment`, `purpose`).
+
+**EN-19-03 `provider_check_run`** — mỗi lần kiểm tra kết nối hoặc giao dịch thử, làm bằng chứng cho checklist kích hoạt.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `provider_id` | T-ID | ✓ | FK → EN-19-01 |
+| `check_type` | T-ENUM | ✓ | `CONNECTION`, `TEST_TRANSACTION` |
+| `environment` | T-ENUM | ✓ | `SANDBOX`, `PRODUCTION` |
+| `result` | T-ENUM | ✓ | `RUNNING`, `PASSED`, `FAILED` |
+| `steps` | T-JSON | ✓ | Kết quả từng bước: TLS, xác thực, gọi thử, IPN (tên bước, kết quả, độ trễ, thông điệp đã che) |
+| `test_transaction_id` | T-ID | | FK → EN-19-10 khi là giao dịch thử |
+| `started_at`, `finished_at` | T-TS | | |
+| `trace_id` | T-TRACE | ✓ | |
+
+**EN-19-04 `payment_service_group`** — nhóm dịch vụ (hệ cũ gọi "lĩnh vực giao dịch").
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `code` | T-CODE | ✓ | Duy nhất trong tenant |
+| `name` | T-NAME | ✓ | |
+| `sector_code` | T-CODE | | `DM_LINH_VUC_TTHC` |
+| `description` | T-TEXT | | |
+| `display_order` | integer | ✓ | Thứ tự hiển thị |
+
+Xóa mềm (`deleted_at`); không xóa khi còn dịch vụ. Khóa: duy nhất (`tenant_id`, `code`) với `deleted_at IS NULL`.
+
+**EN-19-05 `payment_service`** — dịch vụ thanh toán mà đối tác dùng để thu.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `code` | T-CODE | ✓ | Duy nhất trong tenant, bất biến |
+| `name` | T-NAME | ✓ | |
+| `group_id` | T-ID | ✓ | FK → EN-19-04 |
+| `provider_id` | T-ID | ✓ | FK → EN-19-01 (BR-19-008) |
+| `status` | T-ENUM | ✓ | Mục 7.2 |
+| `fee_type_code` | T-CODE | ✓ | `DM_LOAI_PHI_LE_PHI` |
+| `collecting_agency_code` | T-CODE | ✓ | `DM_CO_QUAN` |
+| `procedure_code` | T-CODE | | `DM_THU_TUC_HANH_CHINH` |
+| `beneficiary_ref` | T-CODE | | Tham chiếu tài khoản thụ hưởng đã đăng ký với NCC (OQ-19-11) |
+| `min_amount`, `max_amount` | T-MONEY | ✓ | Khoảng số tiền cho phép (BR-19-001) |
+| `expiry_minutes` | integer | | Thời hạn riêng (BR-19-003) |
+| `catalog_invalid` | T-BOOL | ✓ | Cờ mã danh mục hết hiệu lực (FR-19-016) |
+
+Khóa: duy nhất (`tenant_id`, `code`). `CHECK (min_amount > 0 AND max_amount >= min_amount)`.
+
+**EN-19-06 `payment_partner`** — HTTT được phép thu qua PH-19.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `code` | T-CODE | ✓ | Duy nhất trong tenant |
+| `name` | T-NAME | ✓ | |
+| `status` | T-ENUM | ✓ | Mục 7.3 |
+| `routing_mode` | T-ENUM | ✓ | `LEGACY`, `SHADOW`, `DATAHUB` (BR-19-034) |
+| `agency_code` | T-CODE | ✓ | `DM_CO_QUAN` – cơ quan chủ quản |
+| `member_system_id` | T-ID | | HTTT thành viên PH-01 (DD-01); bắt buộc trước khi gửi duyệt |
+| `legacy_app_code` | varchar(255) | | `app_code` của hệ cũ, dùng khi di trú và cho lớp tương thích |
+| `allowed_return_urls` | T-JSON | ✓ | Danh sách tiền tố địa chỉ quay về được phép (BR-19-004 bước 15) |
+| `tech_contact_*`, `biz_contact_*` | T-NAME, T-PHONE, T-EMAIL | | Đầu mối |
+
+Khóa: duy nhất (`tenant_id`, `code`); duy nhất (`tenant_id`, `legacy_app_code`) khi khác rỗng.
+
+**EN-19-07 `partner_client`** — client máy-máy tại PH-12 gắn với đối tác.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `partner_id` | T-ID | ✓ | FK → EN-19-06 |
+| `idp_client_id` | varchar(255) | ✓ | `client_id` trong realm `dh-{tenant}` của Keycloak |
+| `auth_method` | T-ENUM | ✓ | `MTLS`, `PRIVATE_KEY_JWT` |
+| `cert_fingerprint` | varchar(128) | | Với `MTLS` |
+| `expires_at` | T-TS | | |
+| `revoked_at` | T-TS | | Thu hồi tức thì |
+
+Khóa: duy nhất (`tenant_id`, `idp_client_id`).
+
+**EN-19-08 `partner_service_grant`** — dịch vụ đối tác được dùng và hạn mức.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `partner_id` | T-ID | ✓ | FK → EN-19-06 |
+| `service_id` | T-ID | ✓ | FK → EN-19-05 |
+| `max_amount_per_txn` | T-MONEY | | Hạn mức mỗi giao dịch |
+| `daily_txn_limit` | integer | | Hạn mức số giao dịch mỗi ngày |
+| `daily_amount_limit` | T-MONEY | | Hạn mức tổng tiền mỗi ngày |
+| `valid_from`, `valid_to` | T-TS | | |
+
+Khóa: duy nhất (`tenant_id`, `partner_id`, `service_id`).
+
+**EN-19-09 `partner_webhook_endpoint`** — đầu nhận thông báo của đối tác.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `partner_id` | T-ID | ✓ | FK → EN-19-06 |
+| `url` | T-URI | ✓ | Bắt buộc `https`, không trỏ địa chỉ nội bộ (ERR-19-044) |
+| `event_types` | T-JSON | ✓ | Danh sách loại sự kiện đăng ký nhận (mục 10.4) |
+| `secret_ref`, `next_secret_ref` | T-SECRET-REF | ✓ / | Bí mật ký hiện hành và bí mật mới khi xoay (NFR-19-021) |
+| `endpoint_status` | T-ENUM | ✓ | `ACTIVE`, `DISABLED` |
+
+**EN-19-10 `payment_transaction`** — giao dịch thanh toán; phân vùng theo tháng của `created_at` (ADR-047).
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `transaction_code` | varchar(32) | ✓ | Mã giao dịch PH-19 (BR-19-002) |
+| `partner_id`, `service_id`, `provider_id` | T-ID | ✓ | FK → EN-19-06, 05, 01 |
+| `partner_order_id` | varchar(64) | ✓ | Mã đơn hàng / mã hồ sơ của đối tác (hệ cũ `order_id`) |
+| `status` | T-ENUM | ✓ | Mục 7.4 |
+| `amount` | T-MONEY | ✓ | Số tiền (hệ cũ `amount int(10)`) |
+| `refunded_amount` | T-MONEY | ✓ | Tổng đã hoàn thành công, mặc định 0 |
+| `currency` | varchar(3) | ✓ | `VND` |
+| `description` | T-TEXT | ✓ | Nội dung thu (hệ cũ `order_info`) |
+| `payer_name_enc`, `payer_id_no_enc`, `payer_phone_enc`, `payer_email_enc` | bytea | | Dữ liệu cá nhân người nộp đã mã hóa mức trường (NFR-19-024) |
+| `payer_search_hash` | varchar(64) | | HMAC của tên chuẩn hóa để tìm kiếm mà không giải mã |
+| `return_url` | T-URI | ✓ | Địa chỉ quay về của đối tác |
+| `payment_url` | T-URI | | Địa chỉ trang thanh toán NCC trả về |
+| `provider_reference` | varchar(128) | | Mã tham chiếu của NCC (hệ cũ `transaction_no`) |
+| `channel_code`, `bank_code` | T-CODE | | `DM_KENH_THANH_TOAN`, `DM_NGAN_HANG` |
+| `procedure_code` | T-CODE | | `DM_THU_TUC_HANH_CHINH` |
+| `expires_at` | T-TS | ✓ | BR-19-003 |
+| `paid_at` | T-TS | | Thời điểm thanh toán NCC xác nhận (hệ cũ `pay_date` kiểu chuỗi) |
+| `finalized_at` | T-TS | | Thời điểm đạt trạng thái kết thúc lần đầu (KPI-92) |
+| `is_test`, `is_shadow`, `late_paid`, `init_uncertain`, `needs_reconciliation` | T-BOOL | ✓ | Cờ theo BR-19-033, 034, 018, 012, 017 |
+| `next_poll_at` | T-TS | | Lần truy vấn chủ động kế tiếp (BR-19-016) |
+| `client_ip` | inet | | Địa chỉ IP người nộp nếu đối tác gửi (hệ cũ `ip_address`) |
+| `sequence` | integer | ✓ | Số thứ tự thông báo (BR-19-021) |
+| `trace_id` | T-TRACE | ✓ | |
+
+Khóa: khóa chính (`id`, `created_at`) do phân vùng; duy nhất (`transaction_code`); duy nhất có điều kiện (`tenant_id`, `partner_id`, `partner_order_id`) khi `status` thuộc nhóm của BR-19-007; chỉ mục (`tenant_id`, `provider_id`, `provider_reference`); chỉ mục (`tenant_id`, `status`, `next_poll_at`).
+
+**EN-19-11 `transaction_event`** — mỗi lần đổi trạng thái giao dịch, ghi cùng giao dịch CSDL (FR-19-028); bất biến.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `transaction_id` | T-ID | ✓ | FK → EN-19-10 |
+| `from_status`, `to_status` | T-ENUM | / ✓ | Trạng thái cũ (rỗng khi tạo), mới |
+| `source` | T-ENUM | ✓ | `PARTNER_API`, `PROVIDER_INIT`, `IPN`, `POLL`, `MANUAL_SYNC`, `USER`, `EXPIRY_JOB`, `DISCREPANCY_RESOLUTION`, `REFUND`, `MIGRATION` |
+| `source_ref_id` | T-ID | | Bản ghi gây ra (IPN, yêu cầu hoàn, chênh lệch…) |
+| `reason` | T-TEXT | | Lý do, mã kết quả NCC |
+| `actor_id` | T-ID | | Người thực hiện nếu có |
+| `occurred_at` | T-TS | ✓ | |
+| `trace_id` | T-TRACE | ✓ | |
+
+**EN-19-12 `idempotency_record`** — kết quả của yêu cầu ghi có `Idempotency-Key` (BR-19-006); xóa sau 24 giờ.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `client_id` | varchar(255) | ✓ | Client gọi |
+| `idempotency_key` | varchar(64) | ✓ | |
+| `request_method`, `request_path` | varchar(8), varchar(512) | ✓ | |
+| `request_hash` | varchar(64) | ✓ | SHA-256 thân yêu cầu chuẩn hóa |
+| `state` | T-ENUM | ✓ | `IN_PROGRESS`, `COMPLETED` |
+| `response_status` | smallint | | |
+| `response_body` | T-JSON | | |
+| `expires_at` | T-TS | ✓ | |
+
+Khóa: duy nhất (`tenant_id`, `client_id`, `request_method`, `request_path`, `idempotency_key`).
+
+**EN-19-13 `callback_inbox`** — mọi IPN (thanh toán, hoàn tiền, thông báo dữ liệu đối soát) nhận được, kể cả bị từ chối; phân vùng theo tháng.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `provider_id` | T-ID | ✓ | Xác định từ `connection_key` của đường dẫn |
+| `callback_type` | T-ENUM | ✓ | `PAYMENT`, `REFUND`, `RECON_NOTICE` |
+| `received_at` | T-TS | ✓ | |
+| `source_ip` | inet | ✓ | |
+| `raw_headers`, `raw_body` | T-JSON, text | ✓ | Nguyên văn (đã lọc theo BR-19-032), bất biến |
+| `raw_hash` | varchar(64) | ✓ | SHA-256 nguyên văn |
+| `nonce` | varchar(128) | | Mã duy nhất của thông báo (giả định, OQ-19-03) |
+| `provider_reference`, `transaction_code` | varchar(128), varchar(32) | | Trích xuất từ nội dung |
+| `verification_result` | T-ENUM | ✓ | `VERIFIED`, `BAD_SIGNATURE`, `EXPIRED`, `REPLAYED`, `SOURCE_DENIED`, `MALFORMED` |
+| `processing_status` | T-ENUM | ✓ | `RECEIVED`, `PROCESSED`, `DUPLICATE`, `QUARANTINED`, `FAILED`, `REJECTED` |
+| `processing_error` | T-TEXT | | |
+| `processed_at` | T-TS | | |
+| `attempt_count` | integer | ✓ | Số lần xử lý (kể cả xử lý lại FR-19-032) |
+| `transaction_id`, `refund_request_id` | T-ID | | Liên kết sau khi xử lý |
+| `trace_id` | T-TRACE | ✓ | |
+
+Khóa: duy nhất (`tenant_id`, `provider_id`, `nonce`) khi `nonce` khác rỗng; chỉ mục (`processing_status`, `received_at`).
+
+**EN-19-14 `integration_log`** — mỗi lượt trao đổi với NCC hoặc đối tác (FR-19-054), gồm cả từng lần thử webhook; phân vùng theo tháng.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `direction` | T-ENUM | ✓ | `OUT_PROVIDER`, `IN_PROVIDER`, `IN_PARTNER`, `OUT_PARTNER` |
+| `operation` | T-ENUM | ✓ | `INIT`, `QUERY`, `CANCEL`, `REFUND`, `RECON_FETCH`, `HEALTH`, `IPN`, `RETURN`, `CREATE`, `READ`, `WEBHOOK` |
+| `provider_id`, `partner_id` | T-ID | | |
+| `transaction_id`, `refund_request_id`, `webhook_delivery_id` | T-ID | | |
+| `attempt_no` | integer | | Với webhook |
+| `http_status` | smallint | | |
+| `result_code` | varchar(64) | | Mã kết quả NCC hoặc `ERR-19-nnn` |
+| `latency_ms` | integer | ✓ | |
+| `request_body_masked`, `response_body_masked` | T-JSON | | Đã che và cắt ở 64 KB |
+| `occurred_at` | T-TS | ✓ | |
+| `trace_id` | T-TRACE | ✓ | |
+
+**EN-19-15 `refund_request`** — yêu cầu hoàn tiền.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `refund_code` | varchar(32) | ✓ | Mã yêu cầu hoàn, duy nhất toàn cục |
+| `transaction_id` | T-ID | ✓ | FK → EN-19-10 |
+| `requested_by_type` | T-ENUM | ✓ | `USER`, `PARTNER` |
+| `partner_refund_id` | varchar(64) | | Mã của đối tác khi lập qua API |
+| `amount` | T-MONEY | ✓ | |
+| `status` | T-ENUM | ✓ | Mục 7.5 |
+| `mode` | T-ENUM | ✓ | `API`, `MANUAL` |
+| `reason_code` | T-CODE | ✓ | `DM_LY_DO_HOAN_TIEN` |
+| `reason_text` | T-TEXT | | |
+| `bank_code` | T-CODE | | `DM_NGAN_HANG` (khi hoàn thủ công) |
+| `provider_refund_ref` | varchar(128) | | |
+| `voucher_no`, `voucher_date` | varchar(64), T-DATE | | Chứng từ hoàn thủ công (BR-19-024) |
+| `execution_count` | integer | ✓ | ≤ 3 |
+| `approval_id` | T-ID | | FK → EN-19-16 |
+| `completed_at` | T-TS | | |
+| `trace_id` | T-TRACE | ✓ | |
+
+Khóa: duy nhất (`refund_code`); duy nhất có điều kiện (`tenant_id`, `transaction_id`) khi trạng thái chưa kết thúc (BR-19-022).
+
+**EN-19-16 `approval_request`** — đề nghị phê duyệt bốn mắt dùng chung cho mọi loại đối tượng (ADR-046); chứa tối đa hai quyết định.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `approval_type` | T-ENUM | ✓ | `PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBOARD`, `PARTNER_TERMINATE`, `REFUND`, `DISCREPANCY_RESOLUTION`, `RECON_REOPEN`, `ROUTING_MODE_CHANGE` |
+| `target_type`, `target_id` | T-ENUM, T-ID | ✓ | Đối tượng được phê duyệt |
+| `payload` | T-JSON | ✓ | Nội dung đề nghị và ảnh chụp bằng chứng (checklist, số tiền, cách xử lý) |
+| `required_approvals` | smallint | ✓ | 1 hoặc 2 |
+| `status` | T-ENUM | ✓ | `PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, `EXPIRED` |
+| `requested_by` | T-ID | ✓ | Người lập |
+| `first_approver_id`, `first_decided_at` | T-ID, T-TS | | |
+| `second_approver_id`, `second_decided_at` | T-ID, T-TS | | |
+| `decision_note` | T-TEXT | | Bắt buộc khi từ chối |
+| `expires_at` | T-TS | ✓ | BR-19-011 |
+
+`CHECK (first_approver_id <> requested_by AND second_approver_id NOT IN (requested_by, first_approver_id))`; tối đa một `PENDING` cho mỗi (`tenant_id`, `target_type`, `target_id`, `approval_type`).
+
+**EN-19-17 `reconciliation_session`** — phiên đối soát của một NCC cho một ngày.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `provider_id` | T-ID | ✓ | FK → EN-19-01 |
+| `business_date` | T-DATE | ✓ | Ngày giao dịch (BR-19-025) |
+| `status` | T-ENUM | ✓ | Mục 7.6 |
+| `run_no` | integer | ✓ | Số lần chạy, tăng khi chạy lại hoặc mở lại |
+| `source_type` | T-ENUM | | `API`, `FILE_FETCH`, `FILE_UPLOAD` |
+| `source_file_id` | T-ID | | FK → EN-19-23 |
+| `dh_count`, `provider_count` | integer | | Số dòng hai phía |
+| `dh_amount`, `provider_amount` | T-MONEY | | Tổng tiền hai phía |
+| `matched_count`, `discrepancy_count` | integer | | |
+| `next_collect_at` | T-TS | | |
+| `closed_at`, `closed_by` | T-TS, T-ID | | |
+| `minutes_file_id` | T-ID | | Biên bản (FR-19-048) |
+
+Khóa: duy nhất (`tenant_id`, `provider_id`, `business_date`).
+
+**EN-19-18 `reconciliation_item`** — một dòng so khớp của một lần chạy.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `session_id` | T-ID | ✓ | FK → EN-19-17 |
+| `run_no` | integer | ✓ | |
+| `item_kind` | T-ENUM | ✓ | `PAYMENT`, `REFUND` |
+| `transaction_id`, `refund_request_id` | T-ID | | Phía PH-19 |
+| `provider_reference` | varchar(128) | | Phía NCC |
+| `dh_amount`, `provider_amount` | T-MONEY | | |
+| `dh_status`, `provider_status` | varchar(32) | | |
+| `match_result` | T-ENUM | ✓ | `MATCHED`, `MISMATCHED`, `MISSING_DH`, `MISSING_PROVIDER` |
+| `discrepancy_id` | T-ID | | FK → EN-19-19 |
+
+**EN-19-19 `discrepancy`** — bản ghi chênh lệch.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `session_id` | T-ID | ✓ | FK → EN-19-17 |
+| `type` | T-ENUM | ✓ | Mục 7.7 |
+| `status` | T-ENUM | ✓ | Mục 7.7 |
+| `transaction_id`, `refund_request_id`, `callback_id` | T-ID | | Đối tượng liên quan |
+| `dh_amount`, `provider_amount` | T-MONEY | | |
+| `assignee_id` | T-ID | | Người phụ trách |
+| `due_at` | T-TS | ✓ | BR-19-028 |
+| `escalation_ref` | varchar(128) | | Mã yêu cầu hỗ trợ gửi NCC |
+| `notes` | T-JSON | | Ghi chú theo thời gian (người, lúc, nội dung) |
+| `resolution_type` | T-ENUM | | Mục 7.7 |
+| `resolution_note` | T-TEXT | | Bắt buộc khi `NO_ACTION` |
+| `approval_id` | T-ID | | FK → EN-19-16 |
+| `detected_at`, `resolved_at` | T-TS | ✓ / | KPI-96 |
+
+**EN-19-20 `webhook_delivery`** — việc gửi một sự kiện tới một đầu nhận.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `endpoint_id` | T-ID | ✓ | FK → EN-19-09 |
+| `event_id` | T-ID | ✓ | `id` của sự kiện (trùng `outbox_event.id`) |
+| `event_type` | varchar(64) | ✓ | Ví dụ `transaction.succeeded` |
+| `payload` | T-JSON | ✓ | Thân thông báo (đã ký khi gửi) |
+| `status` | T-ENUM | ✓ | Mục 7.8 |
+| `attempt_count` | integer | ✓ | |
+| `next_attempt_at` | T-TS | | |
+| `last_http_status` | smallint | | |
+| `delivered_at` | T-TS | | KPI-98 |
+
+Khóa: duy nhất (`tenant_id`, `endpoint_id`, `event_id`).
+
+**EN-19-21 `outbox_event`** — hộp gửi transactional outbox cho sự kiện Kafka, bản ghi kiểm toán và webhook (ADR-042).
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `aggregate_type`, `aggregate_id` | varchar(64), T-ID | ✓ | Khóa phân vùng Kafka là `aggregate_id` |
+| `event_type` | varchar(64) | ✓ | Tên sự kiện, ví dụ `transaction.succeeded` |
+| `topic` | varchar(255) | ✓ | Tạo bằng hàm đặt tên có tenant (D03-10) |
+| `payload` | T-JSON | ✓ | CloudEvents, có header `dhtenant` |
+| `occurred_at` | T-TS | ✓ | |
+| `published_at` | T-TS | | |
+| `publish_attempts` | integer | ✓ | |
+
+**EN-19-22 `tenant_payment_config`** — mỗi dòng là một phiên bản cấu hình; phiên bản có hiệu lực là dòng có `effective_from` lớn nhất ≤ hiện tại.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `config_version` | integer | ✓ | Tăng dần |
+| `effective_from` | T-TS | ✓ | |
+| `settings` | T-JSON | ✓ | Thời hạn giao dịch, giờ chốt, hạn xử lý chênh lệch, bật hoàn tiền, ngưỡng duyệt hai cấp, hạn hoàn, lịch webhook, số ngày SHADOW, thời gian lưu (lược đồ JSON trong SDD) |
+| `module_enabled` | T-BOOL | ✓ | Cờ bật phân hệ do PH-20 đặt (FR-19-064) |
+| `change_note` | T-TEXT | | |
+
+Khóa: duy nhất (`tenant_id`, `config_version`).
+
+**EN-19-23 `stored_file`** — siêu dữ liệu của tệp trong bucket `dh-{tenant}-payment` (ADR-008): file đối soát, biên bản, file xuất, chứng từ hoàn, đính kèm chênh lệch, báo cáo lỗi di trú.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `purpose` | T-ENUM | ✓ | `RECON_SOURCE`, `RECON_MINUTES`, `EXPORT`, `REPORT`, `REFUND_VOUCHER`, `ATTACHMENT`, `MIGRATION_REPORT` |
+| `owner_type`, `owner_id` | T-ENUM, T-ID | | Đối tượng sở hữu |
+| `object_key` | varchar(1024) | ✓ | |
+| `file_name` | T-NAME | ✓ | |
+| `content_type` | varchar(127) | ✓ | |
+| `size_bytes` | bigint | ✓ | |
+| `sha256` | varchar(64) | ✓ | |
+| `retention_until` | T-DATE | | Khóa đối tượng (NFR-19-014) |
+| `superseded_by` | T-ID | | Biên bản bị thay thế khi mở lại phiên |
+
+**EN-19-24 `background_job`** — tác vụ nền dài.
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `job_type` | T-ENUM | ✓ | `TRANSACTION_EXPORT`, `REPORT_EXPORT`, `RECON_MINUTES`, `MIGRATION_IMPORT`, `MIGRATION_COMPARE` |
+| `parameters` | T-JSON | ✓ | Bộ lọc, kỳ báo cáo, lô di trú |
+| `job_status` | T-ENUM | ✓ | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED` |
+| `progress_pct` | smallint | ✓ | |
+| `result_summary` | T-JSON | | Số dòng, tổng tiền, số lỗi, kết quả đối chiếu |
+| `result_file_id` | T-ID | | FK → EN-19-23 |
+| `requested_by` | T-ID | ✓ | |
+| `started_at`, `finished_at` | T-TS | | |
+
+**EN-19-25 `legacy_mapping`** — ánh xạ khóa hệ cũ sang khóa mới, bảo đảm di trú chạy lại không sinh trùng (FR-19-065).
+
+| Cột | Kiểu | B | Mô tả |
+|---|---|---|---|
+| `legacy_table` | varchar(64) | ✓ | Một trong năm bảng hệ cũ |
+| `legacy_key` | varchar(255) | ✓ | Khóa hệ cũ (`id` hoặc `code`) |
+| `target_type`, `target_id` | T-ENUM, T-ID | ✓ | Bản ghi mới |
+| `source_hash` | varchar(64) | ✓ | Băm dòng nguồn, phát hiện thay đổi khi chạy lại |
+| `job_id` | T-ID | ✓ | FK → EN-19-24 |
+
+Khóa: duy nhất (`tenant_id`, `legacy_table`, `legacy_key`).
+
+### 9.4. Sơ đồ quan hệ tổng
+
+```mermaid
+erDiagram
+    payment_provider ||--o{ provider_credential : "có"
+    payment_provider ||--o{ provider_check_run : "được kiểm tra"
+    payment_provider ||--o{ payment_service : "phục vụ"
+    payment_service_group ||--o{ payment_service : "gom"
+    payment_partner ||--o{ partner_client : "có"
+    payment_partner ||--o{ partner_service_grant : "được gán"
+    payment_service ||--o{ partner_service_grant : "được gán cho"
+    payment_partner ||--o{ partner_webhook_endpoint : "nhận tại"
+    payment_partner ||--o{ payment_transaction : "tạo"
+    payment_service ||--o{ payment_transaction : "thu theo"
+    payment_provider ||--o{ payment_transaction : "xử lý"
+    payment_transaction ||--o{ transaction_event : "lịch sử"
+    payment_transaction ||--o{ callback_inbox : "nhận IPN"
+    payment_transaction ||--o{ refund_request : "được hoàn"
+    payment_transaction ||--o{ integration_log : "trao đổi"
+    refund_request }o--o| approval_request : "duyệt qua"
+    payment_provider ||--o{ reconciliation_session : "đối soát"
+    reconciliation_session ||--o{ reconciliation_item : "gồm"
+    reconciliation_session ||--o{ discrepancy : "phát sinh"
+    reconciliation_item }o--o| discrepancy : "sinh"
+    discrepancy }o--o| approval_request : "duyệt qua"
+    partner_webhook_endpoint ||--o{ webhook_delivery : "gửi tới"
+    outbox_event ||--o{ webhook_delivery : "kích hoạt"
+    webhook_delivery ||--o{ integration_log : "lần thử"
+    reconciliation_session }o--o| stored_file : "file nguồn, biên bản"
+    background_job }o--o| stored_file : "kết quả"
+    background_job ||--o{ legacy_mapping : "ghi"
+```
+
+Sơ đồ cho thấy ba cụm dữ liệu. Cụm **cấu hình** (NCC, dịch vụ, nhóm dịch vụ, đối tác và các bảng con) thay đổi chậm và do người quản trị ghi. Cụm **giao dịch** xoay quanh `payment_transaction`, với lịch sử bất biến, IPN, hoàn tiền, nhật ký tích hợp và webhook là các bảng vệ tinh; đây là cụm có khối lượng lớn nên được phân vùng theo tháng. Cụm **đối soát** gắn với NCC theo ngày và tham chiếu ngược vào giao dịch qua dòng đối soát và chênh lệch. `approval_request`, `stored_file`, `background_job` và `outbox_event` là các bảng hạ tầng nghiệp vụ dùng chung trong phân hệ; `tenant_payment_config` và `idempotency_record` đứng độc lập nên không vẽ.
+
+## 10. Giao diện lập trình và sự kiện
+
+### 10.1. Quy ước chung
+
+PH-19 có ba nhóm API REST, mỗi nhóm một tệp OpenAPI 3.1 riêng (mục 16), đều đi qua PH-03 (APISIX). Nhóm **quản trị** `/api/payment/v1` (API-19-001…090) phục vụ giao diện quản trị, xác thực bằng token OIDC của người dùng và kiểm tra quyền `PERM-19-*` qua OPA (ADR-006). Nhóm **đối tác** `/api/payment-partner/v1` (API-19-101…110) cho HTTT đối tác gọi bằng token máy-máy (NFR-19-019); quyền của đối tác là các `PERM-19-partner-*` gán cho vai trò `ROLE-PARTNER_SYSTEM`, đồng thời mọi truy vấn bị giới hạn trong dữ liệu của chính đối tác. Nhóm **callback** `/api/payment-callback/v1` (API-19-201…204) cho nhà cung cấp gọi về; không có token, thay vào đó xác minh theo NFR-19-020. Đường dẫn callback chứa `connectionKey`, khóa ngẫu nhiên riêng của từng bản ghi NCC (EN-19-01), để xác định tenant và NCC trước khi xác minh chữ ký, vì IPN không mang token và một tenant có thể có nhiều kết nối PayGov (ADR-045).
+
+Mọi API tuân theo: lỗi dạng `application/problem+json` (RFC 9457) với trường mở rộng `code` = `ERR-19-nnn` và `traceId`; phân trang con trỏ (`cursor`, `limit` mặc định 20, tối đa 200); header `traceparent`; khóa lạc quan bằng `ETag`/`If-Match` cho mọi `PATCH`, `PUT` và thao tác đổi trạng thái; mọi `POST` của nhóm đối tác bắt buộc `Idempotency-Key` (BR-19-006); thao tác đổi trạng thái được mô hình hóa thành tài nguyên con danh từ số nhiều (`/suspensions`, `/lifecycle-requests`) theo D00-01 §6. Cột "PERM" ghi phần sau `PERM-19-`.
+
+### 10.2. API quản trị (`/api/payment/v1`)
+
+| Mã | Method | Đường dẫn (sau `/api/payment/v1`) | Mô tả | PERM | FR |
+|---|---|---|---|---|---|
+| API-19-001 | GET | `/providers` | Danh sách NCC, lọc trạng thái, sức khỏe, từ khóa | provider-read | FR-19-007 |
+| API-19-002 | POST | `/providers` | Khai báo NCC (`DRAFT`) | provider-write | FR-19-001 |
+| API-19-003 | GET | `/providers/{providerId}` | Chi tiết NCC kèm sức khỏe, mạch ngắt, hạn chứng thư, số dịch vụ | provider-read | FR-19-008, 011 |
+| API-19-004 | PATCH | `/providers/{providerId}` | Sửa NCC (BR-19-026) | provider-write | FR-19-009 |
+| API-19-005 | DELETE | `/providers/{providerId}` | Xóa cứng NCC `DRAFT` | provider-delete | FR-19-010 |
+| API-19-006 | GET | `/providers/{providerId}/credentials` | Danh sách tham chiếu bí mật (chỉ siêu dữ liệu) | provider-read | FR-19-002 |
+| API-19-007 | PUT | `/providers/{providerId}/credentials/{environment}` | Gắn tham chiếu bí mật của một môi trường | credential-manage | FR-19-002 |
+| API-19-008 | POST | `/providers/{providerId}/credentials/{environment}/rotations` | Xoay khóa, chứng thư (tạo bản `NEXT`, chuyển tiếp) | credential-manage | FR-19-012 |
+| API-19-009 | POST | `/providers/{providerId}/connection-tests` | Chạy kiểm tra kết nối | provider-test | FR-19-003 |
+| API-19-010 | POST | `/providers/{providerId}/test-transactions` | Tạo giao dịch thử | provider-test | FR-19-004 |
+| API-19-011 | GET | `/providers/{providerId}/check-runs` | Kết quả kiểm tra, giao dịch thử, trạng thái checklist | provider-read | FR-19-003, 004, 005 |
+| API-19-012 | POST | `/providers/{providerId}/lifecycle-requests` | Đề nghị `ACTIVATE` hoặc `RETIRE` (tạo `approval_request`) | provider-write (ACTIVATE); provider-delete (RETIRE) | FR-19-005, 010 |
+| API-19-013 | POST | `/providers/{providerId}/suspensions` | Tạm dừng NCC | provider-suspend | FR-19-006 |
+| API-19-014 | POST | `/providers/{providerId}/resumptions` | Mở lại NCC | provider-suspend | FR-19-006 |
+| API-19-015 | GET | `/service-groups` | Danh sách nhóm dịch vụ | service-read | FR-19-013 |
+| API-19-016 | POST | `/service-groups` | Thêm nhóm dịch vụ | service-write | FR-19-013, 016 |
+| API-19-017 | GET | `/service-groups/{groupId}` | Chi tiết nhóm dịch vụ | service-read | FR-19-013 |
+| API-19-018 | PATCH | `/service-groups/{groupId}` | Sửa nhóm dịch vụ | service-write | FR-19-013, 016 |
+| API-19-019 | DELETE | `/service-groups/{groupId}` | Xóa mềm nhóm (không còn dịch vụ) | service-write | FR-19-013 |
+| API-19-020 | GET | `/services` | Danh sách, tìm dịch vụ | service-read | FR-19-014 |
+| API-19-021 | POST | `/services` | Thêm dịch vụ | service-write | FR-19-014, 016 |
+| API-19-022 | GET | `/services/{serviceId}` | Chi tiết dịch vụ | service-read | FR-19-014 |
+| API-19-023 | PATCH | `/services/{serviceId}` | Sửa dịch vụ | service-write | FR-19-014, 016 |
+| API-19-024 | DELETE | `/services/{serviceId}` | Xóa cứng dịch vụ `DRAFT` chưa có giao dịch | service-activate | FR-19-015 |
+| API-19-025 | POST | `/services/{serviceId}/activations` | Kích hoạt hoặc mở lại dịch vụ | service-activate | FR-19-015 |
+| API-19-026 | POST | `/services/{serviceId}/suspensions` | Tạm dừng dịch vụ | service-activate | FR-19-015 |
+| API-19-027 | POST | `/services/{serviceId}/retirements` | Ngừng hẳn dịch vụ | service-activate | FR-19-015 |
+| API-19-028 | GET | `/catalog-lookups/{catalogCode}/items` | Tra mục danh mục PH-07 cho biểu mẫu (có đệm, chỉ các danh mục ở mục 1.5) | service-read | FR-19-016 |
+| API-19-029 | GET | `/partners` | Danh sách, tìm đối tác | partner-read | FR-19-017 |
+| API-19-030 | POST | `/partners` | Đăng ký đối tác (`DRAFT`) | partner-write | FR-19-017 |
+| API-19-031 | GET | `/partners/{partnerId}` | Chi tiết đối tác | partner-read | FR-19-017 |
+| API-19-032 | PATCH | `/partners/{partnerId}` | Sửa hồ sơ đối tác | partner-write | FR-19-017 |
+| API-19-033 | POST | `/partners/{partnerId}/lifecycle-requests` | Đề nghị `ONBOARD` hoặc `TERMINATE` | partner-write | FR-19-018 |
+| API-19-034 | POST | `/partners/{partnerId}/suspensions` | Tạm dừng đối tác | partner-suspend | FR-19-018 |
+| API-19-035 | POST | `/partners/{partnerId}/resumptions` | Mở lại đối tác | partner-suspend | FR-19-018 |
+| API-19-036 | GET | `/partners/{partnerId}/clients` | Danh sách client của đối tác | partner-read | FR-19-019 |
+| API-19-037 | POST | `/partners/{partnerId}/clients` | Cấp client tại PH-12 | partner-client-manage | FR-19-019 |
+| API-19-038 | DELETE | `/partners/{partnerId}/clients/{clientId}` | Thu hồi client | partner-client-manage | FR-19-019 |
+| API-19-039 | GET | `/partners/{partnerId}/service-grants` | Dịch vụ được gán và hạn mức | partner-read | FR-19-020 |
+| API-19-040 | PUT | `/partners/{partnerId}/service-grants/{serviceId}` | Gán dịch vụ, đặt hạn mức | partner-write | FR-19-020 |
+| API-19-041 | DELETE | `/partners/{partnerId}/service-grants/{serviceId}` | Bỏ gán dịch vụ | partner-write | FR-19-020 |
+| API-19-042 | GET | `/partners/{partnerId}/webhook-endpoints` | Danh sách đầu nhận webhook | partner-read | FR-19-021 |
+| API-19-043 | POST | `/partners/{partnerId}/webhook-endpoints` | Thêm đầu nhận | partner-webhook-manage | FR-19-021 |
+| API-19-044 | PATCH | `/partners/{partnerId}/webhook-endpoints/{endpointId}` | Sửa, vô hiệu đầu nhận | partner-webhook-manage | FR-19-021 |
+| API-19-045 | POST | `/partners/{partnerId}/webhook-endpoints/{endpointId}/test-deliveries` | Gửi thử webhook | partner-webhook-manage | FR-19-021 |
+| API-19-046 | POST | `/partners/{partnerId}/webhook-endpoints/{endpointId}/secret-rotations` | Xoay bí mật ký | partner-webhook-manage | FR-19-021 |
+| API-19-047 | POST | `/partners/{partnerId}/routing-mode-requests` | Đề nghị đổi chế độ định tuyến | migration-switch | FR-19-066 |
+| API-19-048 | GET | `/approval-requests` | Hộp phê duyệt: đề nghị người dùng lập hoặc có quyền quyết định | (theo loại đề nghị) | FR-19-005, 010, 018, 039, 046, 047, 066 |
+| API-19-049 | GET | `/approval-requests/{approvalId}` | Chi tiết đề nghị kèm bằng chứng | (theo loại đề nghị) | như trên |
+| API-19-050 | POST | `/approval-requests/{approvalId}/decisions` | Duyệt, từ chối, hoặc người lập rút đề nghị | provider-activate; partner-approve; refund-approve; discrepancy-approve; recon-reopen-approve; migration-switch (theo loại) | như trên |
+| API-19-051 | GET | `/transactions` | Danh sách, tìm từ khóa, tra cứu nâng cao | transaction-read | FR-19-049, 050 |
+| API-19-052 | GET | `/transactions/{transactionId}` | Chi tiết giao dịch (PII che theo quyền) | transaction-read; transaction-read-pii | FR-19-051, 055 |
+| API-19-053 | POST | `/transactions/{transactionId}/status-syncs` | Đồng bộ trạng thái thủ công | transaction-sync | FR-19-037 |
+| API-19-054 | GET | `/transactions/{transactionId}/events` | Dòng thời gian trạng thái | transaction-read | FR-19-028, 051 |
+| API-19-055 | POST | `/transactions/{transactionId}/cancellations` | Cán bộ hủy giao dịch | transaction-cancel | FR-19-026 |
+| API-19-056 | GET | `/callbacks` | Danh sách IPN theo trạng thái xử lý, kết quả xác minh | callback-read | FR-19-032 |
+| API-19-057 | GET | `/callbacks/{callbackId}` | Chi tiết IPN (nguyên văn đã che) | callback-read | FR-19-032 |
+| API-19-058 | POST | `/callbacks/{callbackId}/replays` | Xử lý lại IPN | callback-replay | FR-19-032 |
+| API-19-059 | POST | `/refunds` | Kế toán lập yêu cầu hoàn | refund-create | FR-19-038 |
+| API-19-060 | GET | `/refunds` | Danh sách yêu cầu hoàn | refund-read | FR-19-041 |
+| API-19-061 | GET | `/refunds/{refundId}` | Chi tiết, lịch sử yêu cầu hoàn | refund-read | FR-19-041 |
+| API-19-062 | POST | `/refunds/{refundId}/executions` | Thực thi lại, chuyển thủ công, hoặc ghi nhận chứng từ hoàn thủ công | refund-execute | FR-19-040 |
+| API-19-063 | POST | `/reconciliation-sessions` | Tạo phiên thủ công cho một ngày | recon-run | FR-19-042 |
+| API-19-064 | GET | `/reconciliation-sessions` | Danh sách phiên | discrepancy-read | FR-19-042, 047 |
+| API-19-065 | POST | `/reconciliation-sessions/{sessionId}/files` | Tải file đối soát lên | recon-upload | FR-19-043 |
+| API-19-066 | POST | `/reconciliation-sessions/{sessionId}/runs` | Thu thập lại, chạy lại so khớp | recon-run | FR-19-043, 044 |
+| API-19-067 | GET | `/reconciliation-sessions/{sessionId}` | Chi tiết phiên, tổng hợp hai phía | discrepancy-read | FR-19-044, 047 |
+| API-19-068 | POST | `/reconciliation-sessions/{sessionId}/closures` | Chốt phiên | recon-close | FR-19-047, 048 |
+| API-19-069 | POST | `/reconciliation-sessions/{sessionId}/reopen-requests` | Đề nghị mở lại phiên | recon-close | FR-19-047 |
+| API-19-070 | GET | `/reconciliation-sessions/{sessionId}/items` | Dòng đối soát của lần chạy | discrepancy-read | FR-19-044 |
+| API-19-071 | GET | `/discrepancies` | Danh sách chênh lệch, lọc loại, tuổi, người phụ trách | discrepancy-read | FR-19-045 |
+| API-19-072 | PATCH | `/discrepancies/{discrepancyId}` | Giao việc, nhận việc, chuyển cấp NCC, ghi chú | discrepancy-handle | FR-19-045 |
+| API-19-073 | POST | `/discrepancies/{discrepancyId}/resolution-proposals` | Đề xuất cách xử lý (tạo đề nghị phê duyệt) | discrepancy-handle | FR-19-046 |
+| API-19-074 | GET | `/discrepancies/{discrepancyId}` | Chi tiết chênh lệch | discrepancy-read | FR-19-045 |
+| API-19-075 | GET | `/integration-logs` | Danh sách nhật ký tích hợp | log-read | FR-19-054 |
+| API-19-076 | GET | `/integration-logs/{logId}` | Chi tiết một lượt trao đổi, liên kết vết PH-13 | log-read | FR-19-054, 055 |
+| API-19-077 | GET | `/webhook-deliveries` | Danh sách lượt gửi webhook | webhook-read | FR-19-062 |
+| API-19-078 | POST | `/webhook-deliveries/{deliveryId}/resends` | Gửi lại thủ công | webhook-resend | FR-19-062 |
+| API-19-079 | GET | `/webhook-deliveries/{deliveryId}` | Chi tiết lượt gửi và các lần thử | webhook-read | FR-19-062 |
+| API-19-080 | GET | `/dashboards/overview` | Số liệu dashboard tổng quan | dashboard-read | FR-19-056 |
+| API-19-081 | GET | `/dashboards/channels` | Số liệu dashboard kênh thanh toán 30 ngày | dashboard-read | FR-19-057 |
+| API-19-082 | GET | `/reports/{reportCode}` | Dữ liệu một báo cáo định kỳ theo kỳ | report-read | FR-19-058 |
+| API-19-083 | POST | `/export-jobs` | Tạo tác vụ xuất: danh sách giao dịch, báo cáo, biên bản đối soát | transaction-export; report-export (theo loại) | FR-19-048, 052, 058 |
+| API-19-084 | GET | `/export-jobs/{jobId}` | Tiến độ và đường tải kết quả (chỉ người tạo) | transaction-export; report-export | FR-19-048, 052, 058 |
+| API-19-085 | GET | `/config` | Cấu hình hiện hành và lịch sử phiên bản | config-read | FR-19-063 |
+| API-19-086 | POST | `/config/versions` | Tạo phiên bản cấu hình mới có ngày hiệu lực | config-write | FR-19-063 |
+| API-19-087 | POST | `/files` | Tải lên tệp đính kèm (chứng từ, tài liệu hoàn tiền, chênh lệch) | refund-create; refund-execute; discrepancy-handle (theo mục đích) | FR-19-038, 040, 045 |
+| API-19-088 | GET | `/files/{fileId}` | Siêu dữ liệu và đường tải có hạn của tệp | theo đối tượng sở hữu | FR-19-040, 045, 048, 065 |
+| API-19-089 | POST | `/migration-runs` | Chạy lô nhập dữ liệu hệ cũ hoặc đối chiếu sau di trú | migration-run | FR-19-065, 068 |
+| API-19-090 | GET | `/migration-runs` | Danh sách lần chạy di trú, kết quả đối chiếu, đường tải báo cáo lỗi | migration-run | FR-19-065, 068 |
+
+### 10.3. API đối tác và API callback
+
+| Mã | Method | Đường dẫn | Mô tả | PERM | FR |
+|---|---|---|---|---|---|
+| API-19-101 | POST | `/api/payment-partner/v1/payments` | Tạo giao dịch, trả `transactionCode`, `paymentUrl`, `expiresAt` | partner-pay-create | FR-19-022, 023, 024, 033, 034 |
+| API-19-102 | GET | `/api/payment-partner/v1/payments/{transactionCode}` | Truy vấn trạng thái theo mã giao dịch | partner-pay-read | FR-19-035 |
+| API-19-103 | GET | `/api/payment-partner/v1/payments?partnerOrderId=` | Truy vấn theo mã đơn hàng (mọi lượt giao dịch của mã đó) | partner-pay-read | FR-19-035 |
+| API-19-104 | POST | `/api/payment-partner/v1/payments/{transactionCode}/cancellations` | Đối tác hủy giao dịch chưa thanh toán | partner-pay-create | FR-19-026 |
+| API-19-105 | POST | `/api/payment-partner/v1/refunds` | Đối tác lập yêu cầu hoàn | partner-refund-create | FR-19-038 |
+| API-19-106 | GET | `/api/payment-partner/v1/refunds/{refundCode}` | Truy vấn yêu cầu hoàn | partner-pay-read | FR-19-041 |
+| API-19-107 | GET | `/api/payment-partner/v1/reconciliation-reports?date=` | Tải kết quả đối soát phần của đối tác cho phiên đã chốt | partner-recon-read | FR-19-048 |
+| API-19-108 | GET | `/api/payment-partner/v1/services` | Danh sách dịch vụ được gán và hạn mức còn lại trong ngày | partner-pay-read | FR-19-020, 022 |
+| API-19-109 | GET | `/api/payment-partner/v1/notifications?after=` | Kéo các thông báo đã phát (dự phòng khi webhook lỡ), theo con trỏ | partner-pay-read | FR-19-060, 062 |
+| API-19-110 | POST | `/api/payment-partner/v1/legacy-compat/{operation}` | Mặt nạ tương thích hợp đồng API hệ cũ, ánh xạ sang API-19-101…103 (đường dẫn thật theo hợp đồng cũ, OQ-19-17) | partner-pay-create | FR-19-067 |
+| API-19-201 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/ipn` | Nhận IPN kết quả thanh toán | công khai, xác minh chữ ký | FR-19-029, 030, 031 |
+| API-19-202 | GET | `/api/payment-callback/v1/paygov/{connectionKey}/return` | Người nộp quay về: xác minh tham số, hiển thị UI-19-28, chuyển về đối tác | công khai, xác minh chữ ký | FR-19-025 |
+| API-19-203 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/refund-ipn` | Nhận kết quả hoàn tiền (nếu PayGov hỗ trợ, OQ-19-06) | công khai, xác minh chữ ký | FR-19-041 |
+| API-19-204 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/reconciliation-notices` | Nhận thông báo dữ liệu đối soát sẵn sàng (nếu PayGov hỗ trợ, OQ-19-07) | công khai, xác minh chữ ký | FR-19-043 |
+
+Tên trường, định dạng ký và mã phản hồi của bốn API callback là **Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối Nền tảng thanh toán của Cổng DVCQG do VPCP cấp** (OQ-19-01…07). Tệp `ph19-paygov-callback.yaml` mô tả hợp đồng phía PH-19; phần ánh xạ sang đặc tả PayGov nằm trong adapter (ADR-040).
+
+Các FR không có API riêng vì là tác vụ nền hoặc phản ứng với sự kiện: FR-19-011 (lịch kiểm tra sức khỏe, kết quả đọc qua API-19-003), FR-19-016 (tiêu thụ sự kiện danh mục thay đổi của PH-07), FR-19-023 (bên trong API-19-101), FR-19-024 (adapter gọi ra NCC), FR-19-027 và FR-19-036 (tác vụ định kỳ), FR-19-028 và FR-19-053 (ghi trong cùng giao dịch CSDL), FR-19-059 (phát metric qua OpenTelemetry), FR-19-061 (bộ phát outbox), FR-19-064 (tiêu thụ sự kiện vòng đời tenant của PH-20 qua `events/` của module, D03-10).
+
+### 10.4. Sự kiện (`EVT-19-nn`)
+
+Sự kiện được ghi vào `outbox_event` trong cùng giao dịch CSDL với thay đổi trạng thái (FR-19-061) rồi phát lên Kafka (ADR-004) với lược đồ đăng ký tại Apicurio, định dạng CloudEvents có header `dhtenant` (D03-10). Tên topic theo mẫu `{tenant}.payment.{thực-thể}.{sự-kiện}.v1` với `{tenant}` là mã tenant viết thường, ví dụ `t68.payment.transaction.succeeded.v1`. Mọi payload có `eventId`, `occurredAt`, `tenantId`, `traceId` và `sequence` (BR-19-021); payload không chứa dữ liệu cá nhân người nộp. Việc HTTT đối tác tiêu thụ trực tiếp topic (qua ACL theo tiền tố của PH-10) hay chỉ nhận webhook chờ OQ-19-15; webhook dùng cùng `eventId` và cùng thân nội dung với sự kiện.
+
+| Mã | Topic (sau `{tenant}.payment.`) | Khóa phân vùng | Payload chính | Bên tiêu thụ | FR |
+|---|---|---|---|---|---|
+| EVT-19-01 | `provider.status-changed.v1` | `providerId` | `providerCode`, `fromStatus`, `toStatus`, `reason` | PH-13, PH-16 | FR-19-005, 006, 010 |
+| EVT-19-02 | `provider.health-changed.v1` | `providerId` | `providerCode`, `healthStatus`, `circuitState`, `errorRate`, `p95LatencyMs` | PH-13, PH-18 | FR-19-011 |
+| EVT-19-03 | `service.status-changed.v1` | `serviceId` | `serviceCode`, `fromStatus`, `toStatus`, `catalogInvalid` | HTTT đối tác, PH-16 | FR-19-015, 016 |
+| EVT-19-04 | `partner.status-changed.v1` | `partnerId` | `partnerCode`, `fromStatus`, `toStatus`, `routingMode` | PH-13, PH-03 (định tuyến strangler) | FR-19-018, 066 |
+| EVT-19-05 | `transaction.created.v1` | `transactionId` | `transactionCode`, `partnerCode`, `partnerOrderId`, `serviceCode`, `amount`, `expiresAt` | PH-16, lớp dữ liệu dùng chung | FR-19-022 |
+| EVT-19-06 | `transaction.pending.v1` | `transactionId` | `transactionCode`, `providerCode`, `providerReference` | PH-16 | FR-19-024 |
+| EVT-19-07 | `transaction.succeeded.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `amount`, `paidAt`, `providerReference`, `channelCode`, `bankCode`, `latePaid` | HTTT đối tác (webhook), PH-16, lớp dữ liệu dùng chung | FR-19-030, 031, 060 |
+| EVT-19-08 | `transaction.failed.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `reasonCode`, `providerResultCode` | HTTT đối tác (webhook), PH-16 | FR-19-024, 030 |
+| EVT-19-09 | `transaction.cancelled.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `cancelledBy` | HTTT đối tác (webhook), PH-16 | FR-19-026 |
+| EVT-19-10 | `transaction.expired.v1` | `transactionId` | `transactionCode`, `partnerOrderId`, `needsReconciliation` | HTTT đối tác (webhook), PH-16 | FR-19-027 |
+| EVT-19-11 | `refund.requested.v1` | `transactionId` | `refundCode`, `transactionCode`, `amount`, `reasonCode`, `requestedByType` | PH-13, PH-16 | FR-19-038 |
+| EVT-19-12 | `refund.decided.v1` | `transactionId` | `refundCode`, `decision` (`APPROVED`/`REJECTED`), `approvalLevel` | HTTT đối tác (webhook), PH-13 | FR-19-039 |
+| EVT-19-13 | `refund.succeeded.v1` | `transactionId` | `refundCode`, `transactionCode`, `amount`, `completedAt`, `transactionStatus` | HTTT đối tác (webhook), PH-16 | FR-19-041, 060 |
+| EVT-19-14 | `refund.failed.v1` | `transactionId` | `refundCode`, `transactionCode`, `reasonCode`, `executionCount` | HTTT đối tác (webhook), PH-13 | FR-19-041 |
+| EVT-19-15 | `reconciliation.matched.v1` | `sessionId` | `providerCode`, `businessDate`, `runNo`, số lượng và tổng tiền hai phía, `discrepancyCount` | PH-16, PH-13 | FR-19-044 |
+| EVT-19-16 | `reconciliation.closed.v1` | `sessionId` | `providerCode`, `businessDate`, `runNo`, `minutesFileSha256` | HTTT đối tác, PH-16 | FR-19-047, 048 |
+| EVT-19-17 | `discrepancy.detected.v1` | `discrepancyId` | `type`, `transactionCode`, `businessDate`, `dhAmount`, `providerAmount` | PH-13 (cảnh báo), PH-18 | FR-19-031, 044 |
+| EVT-19-18 | `discrepancy.resolved.v1` | `discrepancyId` | `type`, `resolutionType`, `transactionCode` | PH-13, PH-16 | FR-19-046 |
+
+Sự kiện của yêu cầu hoàn dùng khóa phân vùng `transactionId` (không phải `refundId`) để sự kiện hoàn và sự kiện giao dịch gốc nằm cùng phân vùng, giữ đúng thứ tự cho bên tiêu thụ. PH-19 tiêu thụ hai loại sự kiện của phân hệ khác: danh mục thay đổi của PH-07 (FR-19-016) và vòng đời tenant của PH-20 (FR-19-064); tên topic của chúng do phân hệ chủ quản định nghĩa.
 
