@@ -482,3 +482,214 @@ Hai loại màn cần tận dụng tối đa diện tích: designer (PTN-07) khi
 
 Cổng nhà phát triển dùng khung khác: thanh trên ngang vật liệu `glass-chrome` (chuyển `glass-chrome-scrolled` khi cuộn như mục 3.5) cao `size-topbar`, rộng toàn màn hình, nội dung căn giữa giới hạn `size-page-max`. Không có sidebar ứng dụng; trang tài liệu có mục lục trái riêng là một phần của PTN-14. Cổng có chân trang trên canvas gồm liên kết điều khoản sử dụng, chính sách bảo vệ dữ liệu cá nhân, đầu mối hỗ trợ của tỉnh và phiên bản cổng. Chữ thân trong cổng dùng `font-callout` thay vì `font-body` để dễ đọc văn bản dài.
 
+## 4. Mẫu màn hình chuẩn
+
+### 4.1. Cách đọc một mẫu
+
+Mỗi mẫu `PTN-{nn}` dưới đây được đặc tả theo cùng một khung: mục đích, khi dùng và khi không dùng, ví dụ màn thực tế trong Datahub, sơ đồ vùng, bảng thành phần và vật liệu theo vùng, hành vi, trạng thái, phím tắt, tiêu chí nghiệm thu và sai lầm thường gặp. Sơ đồ vùng chỉ vẽ phần `main` (vùng nội dung) vì sidebar và thanh trên đã được quy định ở mục 3 và giống nhau cho mọi mẫu của `dh-console`. Bảng dưới tóm tắt mười bốn mẫu để người thiết kế chọn nhanh.
+
+| Mã | Tên | Câu hỏi chọn mẫu | Ví dụ điển hình |
+|---|---|---|---|
+| PTN-01 | Danh sách | Người dùng cần tìm, lọc, so sánh nhiều bản ghi cùng loại? | Danh sách API, danh sách giao dịch |
+| PTN-02 | Chi tiết | Người dùng cần xem đầy đủ một đối tượng và thao tác trên nó? | Chi tiết API, chi tiết HTTT |
+| PTN-03 | Biểu mẫu trang | Tạo/sửa đối tượng có trên 8 trường hoặc nhiều nhóm? | Tạo dịch vụ thu, sửa gói sử dụng |
+| PTN-04 | Biểu mẫu nhanh | Tạo/sửa đối tượng nhỏ, tối đa khoảng 8 trường, không rời ngữ cảnh? | Thêm mục danh mục, thêm đầu mối kỹ thuật |
+| PTN-05 | Wizard | Quy trình nhiều bước có thứ tự bắt buộc, bước sau phụ thuộc bước trước? | Kết nạp HTTT, đăng ký API từ OpenAPI |
+| PTN-06 | Dashboard | Theo dõi chỉ số tổng hợp, xu hướng? | Tổng quan, bảng giám sát |
+| PTN-07 | Designer | Tạo dựng cấu trúc dạng đồ thị bằng thao tác trực quan? | Thiết kế luồng, sơ đồ topic |
+| PTN-08 | Cây + bảng | Dữ liệu phân cấp, chọn nút cha để xem con? | Cây danh mục, nhóm dịch vụ thu |
+| PTN-09 | Nhập có xem trước | Nạp hàng loạt từ tệp? | Nhập danh mục Excel |
+| PTN-10 | Hộp việc và duyệt | Xử lý hàng đợi yêu cầu chờ quyết định? | Hộp việc |
+| PTN-11 | Giám sát thời gian thực / tra log | Khám phá khối lượng lớn sự kiện theo thời gian? | Tra log, truy vết, nhật ký kiểm toán |
+| PTN-12 | Cài đặt | Cấu hình tham số theo nhóm, ít thay đổi? | Cài đặt cá nhân, tham số hệ thống |
+| PTN-13 | Trang lỗi và trạng thái hệ thống | Không thể hiển thị nội dung bình thường? | 403, 404, bảo trì |
+| PTN-14 | Tài liệu cổng nhà phát triển | Đọc tài liệu dài có cấu trúc và thử API? | Tài liệu API trên dh-portal |
+
+### 4.2. Bảng trạng thái chuẩn dùng chung
+
+Mọi mẫu có tải dữ liệu đều phải xử lý đầy đủ bộ trạng thái dưới đây, kế thừa và mở rộng mục 5 của `docs/ui_ux_rule.md`. Mỗi mẫu ở các mục sau chỉ ghi phần **cụ thể hóa** của mình (vị trí, nội dung); những gì không ghi được hiểu là theo bảng này. Mã trạng thái `ST-xx` là mã cục bộ của tài liệu này, dùng để kiểm thử viên tham chiếu.
+
+| Mã | Trạng thái | Điều kiện | Hiển thị chuẩn | Thành phần |
+|---|---|---|---|---|
+| ST-01 | Đang tải lần đầu | Chưa có dữ liệu trong bộ nhớ đệm | Skeleton đúng hình dạng nội dung sẽ hiện (hàng bảng, thẻ, khối mô tả) tại chỗ vùng dữ liệu; tiêu đề trang và hành động chính hiện ngay; không dùng vòng xoay toàn trang. Skeleton chỉ hiện sau 200ms để tránh nháy khi máy chủ trả nhanh | `CMP-Skeleton` |
+| ST-02 | Đang tải lại | Đã có dữ liệu cũ, đang lấy dữ liệu mới (đổi trang, lọc, làm mới) | Giữ dữ liệu cũ hiển thị, thêm thanh tiến độ mảnh 2px ở mép trên khối dữ liệu và đặt `aria-busy="true"`; không xóa trắng bảng | `CMP-ProgressBar` (không xác định) |
+| ST-03 | Rỗng (chưa có dữ liệu) | Truy vấn không điều kiện trả 0 bản ghi | Minh họa đơn sắc, tiêu đề nói rõ chưa có gì, một câu giải thích đối tượng này dùng để làm gì, nút hành động chính (nếu có quyền) và liên kết HDSD | `CMP-EmptyState` |
+| ST-04 | Không có kết quả | Có điều kiện lọc/tìm, trả 0 bản ghi | "Không tìm thấy {đối tượng} phù hợp" kèm điều kiện đang áp dụng và nút "Xóa bộ lọc"; không hiện nút Thêm mới như hành động chính | `CMP-EmptyState` (biến thể tìm kiếm) |
+| ST-05 | Lỗi tải | Máy chủ trả 5xx, hết thời gian chờ | Tại vùng dữ liệu: biểu tượng lỗi, thông điệp theo FR-00-080, mã lỗi và mã truy vết có nút sao chép, nút "Thử lại". Các vùng khác của trang vẫn dùng được | `CMP-Alert` hoặc `CMP-ResultPage` (khi lỗi toàn trang), `CMP-CopyButton` |
+| ST-06 | Mất kết nối | Trình duyệt `offline` hoặc yêu cầu mạng thất bại không có phản hồi | `CMP-Banner` mức cảnh báo ngay dưới thanh trên "Mất kết nối tới máy chủ. Đang thử kết nối lại…"; dữ liệu đã tải vẫn hiển thị, thao tác ghi bị vô hiệu; tự thử lại theo lũy thừa (2, 4, 8, 16, tối đa 30 giây); khi có lại kết nối, dải chuyển "Đã kết nối lại" 3 giây rồi tự ẩn và dữ liệu được làm mới | `CMP-Banner` |
+| ST-07 | Không có quyền (403) | API trả 403 cho truy vấn chính của trang | PTN-13 biến thể 403 trong khung ứng dụng | `CMP-ResultPage` |
+| ST-08 | Đối tượng không tồn tại hoặc đã bị xóa (404/410) | Mở chi tiết bằng URL cũ, hoặc đối tượng bị xóa khi đang xem | PTN-13 biến thể "Không tìm thấy" với tên loại đối tượng và mã đã tìm; nếu đối tượng bị xóa mềm và người dùng có quyền khôi phục thì có nút "Xem trong thùng rác" (FR-00-051); nút "Về danh sách {đối tượng}" giữ bộ lọc gần nhất | `CMP-ResultPage` |
+| ST-09 | Đang lưu | Đã gửi yêu cầu ghi, chưa có phản hồi | Nút gửi chuyển trạng thái `loading` (vòng xoay trong nút, nhãn giữ nguyên), vô hiệu mọi nút gửi khác để không gửi trùng; biểu mẫu không bị khóa đọc; sau 3 giây chưa xong thì chuyển thành tác vụ nền (FR-00-054) | `CMP-Button` (loading), `CMP-JobProgress` |
+| ST-10 | Lưu thành công | Phản hồi 2xx | `CMP-Toast` "Đã lưu {đối tượng} {tên}." 4 giây, có nút "Xem" nếu thao tác tạo mới; điều hướng theo quy tắc của mẫu | `CMP-Toast` |
+| ST-11 | Lỗi kiểm tra hợp lệ | 400/422 với danh sách lỗi theo trường | Lỗi tại từng trường (FR-00-081), `CMP-Alert` tóm tắt đầu biểu mẫu liệt kê số lỗi có liên kết nhảy tới trường; focus chuyển tới trường lỗi đầu tiên | `CMP-FormField`, `CMP-Alert` |
+| ST-12 | Lỗi nghiệp vụ | 409/422 với mã `ERR-{PH}-{nnn}` | `CMP-Alert` mức lỗi trong ngữ cảnh thao tác (đầu biểu mẫu hoặc trong hộp thoại), thông điệp nghiệp vụ dễ hiểu, mã lỗi ở dòng phụ | `CMP-Alert` |
+| ST-13 | Xung đột phiên bản | 412 do `If-Match` không khớp (FR-00-052) | `CMP-Modal` "Đối tượng đã được {người} cập nhật lúc {giờ}" với `CMP-DiffViewer` so sánh bản của bạn và bản mới nhất; ba lựa chọn "Tải bản mới nhất" (mặc định), "Ghi đè" (cần quyền, màu cảnh báo, hỏi xác nhận), "Hủy" để tự sao chép dữ liệu | `CMP-Modal`, `CMP-DiffViewer` |
+| ST-14 | Hết phiên | Không thao tác quá ngưỡng (FR-00-003) | `CMP-SessionTimeoutDialog` 2 phút trước; khi hết, biểu mẫu chưa lưu được giữ bản nháp cục bộ (không gồm trường bí mật) để khôi phục sau đăng nhập | `CMP-SessionTimeoutDialog` |
+| ST-15 | Chỉ đọc | Người dùng có quyền xem nhưng không có quyền sửa, hoặc chế độ liên tenant | Nút ghi ẩn hoặc vô hiệu theo mục 2.6; biểu mẫu hiển thị dạng mô tả | |
+
+Thời gian chờ mặc định của một yêu cầu đọc từ giao diện là 15 giây, của yêu cầu ghi là 30 giây; vượt thời gian chờ được xử lý như ST-05. TanStack Query được cấu hình thử lại tự động tối đa 2 lần cho yêu cầu đọc lỗi mạng hoặc 5xx (không thử lại 4xx), và không bao giờ tự thử lại yêu cầu ghi trừ khi API có khóa idempotency.
+
+### 4.3. Hành vi dùng chung
+
+Bốn hành vi dưới đây xuất hiện ở nhiều mẫu nên được quy định một lần.
+
+**Giữ bộ lọc khi quay lại.** Khi người dùng rời một danh sách (mở chi tiết, mở biểu mẫu) rồi quay lại bằng breadcrumb, nút Quay lại của trình duyệt, nút "Quay lại" trong trang hoặc mục menu, danh sách hiển thị đúng bộ lọc, sắp xếp, trang và vị trí cuộn trước đó. Với nút Quay lại của trình duyệt, điều này có sẵn vì trạng thái nằm trên URL. Với breadcrumb và mục menu, khung lưu URL gần nhất của mỗi danh sách trong `sessionStorage` theo khóa route và tenant; bấm mục menu khi đang ở chính danh sách đó thì xóa bộ lọc về mặc định (hành vi "về đầu").
+
+**Cảnh báo rời trang khi chưa lưu.** Mọi biểu mẫu (PTN-03, PTN-04, PTN-05, PTN-07, PTN-12) theo dõi trạng thái "đã thay đổi" (dirty) so với giá trị ban đầu. Khi người dùng điều hướng trong ứng dụng, đóng Drawer/Modal hoặc đổi tenant trong lúc biểu mẫu dirty, giao diện mở `CMP-ConfirmDialog` "Bạn có thay đổi chưa lưu" với ba nút "Ở lại" (mặc định, focus đầu), "Bỏ thay đổi" (màu cảnh báo) và, khi biểu mẫu hợp lệ, "Lưu và rời đi". Khi đóng tab hoặc tải lại trang, dùng sự kiện `beforeunload` của trình duyệt (trình duyệt tự hiển thị hộp thoại của nó). Biểu mẫu không dirty thì không hỏi.
+
+**Chống gửi trùng.** Mọi nút gửi bị vô hiệu ngay khi bấm cho tới khi có phản hồi (ST-09). Mọi thao tác tạo mới và thao tác nghiệp vụ gửi kèm tiêu đề `Idempotency-Key` sinh ở trình duyệt khi mở biểu mẫu, để nếu người dùng bấm lại sau lỗi mạng thì máy chủ không tạo hai bản ghi (kế thừa CRUD-ACT-04, 05).
+
+**Xung đột ETag.** Mọi màn sửa lấy `ETag` khi tải đối tượng và gửi `If-Match` khi lưu. Phản hồi 412 dẫn tới ST-13. Thao tác trên hàng của danh sách (đổi trạng thái) cũng gửi `If-Match` theo phiên bản đối tượng mà danh sách đang hiển thị.
+
+### 4.4. PTN-01 · Danh sách
+
+**Mục đích.** Cho người dùng tìm, lọc, sắp xếp, so sánh nhiều bản ghi cùng loại và đi tới từng bản ghi. Đây là mẫu phổ biến nhất của Datahub, chiếm khoảng một nửa số màn hình.
+
+**Khi dùng.** Tập đối tượng phẳng (không phân cấp) có thể lớn tới hàng triệu bản ghi (NFR-00-003). **Khi không dùng.** Dữ liệu phân cấp (dùng PTN-08); luồng sự kiện theo thời gian cần khám phá tự do (PTN-11); hàng đợi cần quyết định (PTN-10).
+
+**Ví dụ trong Datahub.** Danh sách API (PH-02, `/ket-noi/api`), danh sách giao dịch thanh toán (PH-19, `/thanh-toan/giao-dich`), danh sách HTTT thành viên (PH-01), danh sách luồng (PH-04), danh sách người dùng (PH-12), hàng đợi lỗi DLQ (PH-18).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main ─────────────────────────────────────────────────────────────────────────┐
+│ ① PageHeader (trên canvas)                                                    │
+│   Breadcrumb                                                                  │
+│   Tiêu đề "Danh mục API" (font-title-2)  [Xuất ▾] [Nhập] [+ Thêm API]        │
+│   Mô tả ngắn một dòng (tùy chọn, color-text-secondary)                        │
+│ ② (tùy chọn) Dải thẻ tóm tắt: 4 × CMP-KpiCard nhỏ hoặc CMP-SegmentedControl  │
+│   lọc nhanh theo trạng thái "Tất cả 1.204 | Phát hành 980 | Chờ duyệt 12 …"  │
+│ ┌ ③ Khối dữ liệu (color-surface-solid, radius-lg, shadow-1) ────────────────┐│
+│ │ FilterBar: [🔍 Tìm theo tên, mã…] [Trạng thái ▾] [Lĩnh vực ▾] [+ Bộ lọc] ││
+│ │            [Bộ lọc đã lưu ▾]                    [Xóa bộ lọc] [⚙ Cột] [⟳] ││
+│ │ Chip điều kiện đang áp dụng: (Trạng thái: Phát hành ×) (Lĩnh vực: Tư pháp ×)│
+│ │──────────────────────────────────────────────────────────────────────────── ││
+│ │ ④ BulkActionBar (chỉ khi chọn ≥1): "Đã chọn 3" [Tạm dừng] [Xuất] [Bỏ chọn]││
+│ │ ⑤ DataTable                                                               ││
+│ │ [☐] Mã ↕ │ Tên ↕         │ Trạng thái │ Cơ quan    │ Cập nhật ↓  │ ⋯     ││
+│ │ [☐] …    │ …             │ ●Phát hành │ …          │ 21/11/2026  │ ⋯     ││
+│ │──────────────────────────────────────────────────────────────────────────── ││
+│ │ ⑥ Pagination: "1–20 trong 1.204" [10|20|50|100] ‹ 1 2 3 … 61 › Tới trang[ ]││
+│ └──────────────────────────────────────────────────────────────────────────── ┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Sơ đồ cho thấy toàn bộ bộ lọc, bảng và phân trang nằm trong **một** khối đặc duy nhất, để người dùng hiểu chúng là một khối thao tác liên kết; PageHeader nằm ngoài khối, trên canvas. Vùng ② là tùy chọn và chỉ dùng khi số lượng theo trạng thái là thông tin có giá trị (ví dụ số API chờ duyệt).
+
+**Thành phần và vật liệu theo vùng.**
+
+| Vùng | Thành phần | Vật liệu | Ghi chú |
+|---|---|---|---|
+| ① | `CMP-PageHeader`, `CMP-Breadcrumb`, `CMP-Button` (primary cho hành động chính, default cho phụ), `CMP-DropdownMenu` (Xuất) | Trên canvas, không nền | Tối đa một nút primary; tối đa ba nút hiển thị, còn lại vào menu "Thêm" |
+| ② | `CMP-KpiCard` hoặc `CMP-SegmentedControl` | Khối đặc | Bấm thẻ áp bộ lọc tương ứng |
+| ③ | `CMP-FilterBar`, `CMP-SearchField`, `CMP-Select`, `CMP-DateRangePicker`, `CMP-Tag` (chip điều kiện) | Đặc | Popup của Select, DatePicker là `glass-overlay` |
+| ④ | `CMP-BulkActionBar` | Đặc, dính `z-sticky` đầu bảng | Thay chỗ hàng tiêu đề bảng, không đẩy nội dung |
+| ⑤ | `CMP-DataTable` (ProTable), `CMP-StatusTag`, `CMP-Identifier`, `CMP-Timestamp`, `CMP-Money`, `CMP-DropdownMenu` (⋯) | Đặc; tiêu đề cột `color-surface-solid-2` dính `z-sticky` | Hàng chọn `color-fill-selected` |
+| ⑥ | `CMP-Pagination` | Đặc | |
+| Chi tiết nhanh | `CMP-Drawer` `size-drawer-md` | `glass-modal`, nội dung trong giếng đặc | Tùy chọn: xem nhanh không rời danh sách, query `chon` |
+
+**Hành vi.**
+
+1. *Tải.* Truy vấn danh sách gửi đầy đủ điều kiện từ URL lên máy chủ; phân trang, lọc, sắp xếp luôn ở máy chủ (FR-00-021, CRUD-FLT-08). Mặc định sắp xếp "Cập nhật gần nhất giảm dần" trừ khi FRS quy định khác.
+2. *Tìm kiếm.* Ô tìm kiếm áp dụng sau 400ms ngừng gõ hoặc khi nhấn `Enter` (CRUD-FLT-03), tìm không phân biệt hoa thường và dấu (FR-00-020). Placeholder nêu rõ tìm theo trường nào ("Tìm theo tên hoặc mã API").
+3. *Lọc.* Bộ lọc cơ bản (tối đa bốn) luôn hiện; bộ lọc nâng cao mở bằng "+ Bộ lọc" trong `CMP-Popover`. Mỗi thay đổi bộ lọc đưa trang về 1 (CRUD-FLT-06) và xóa lựa chọn hàng. Điều kiện đang áp dụng hiện thành chip có nút xóa từng chip. "Xóa bộ lọc" chỉ hiện khi có điều kiện. Lưu bộ lọc thường dùng (FR-00-024) qua "Bộ lọc đã lưu ▾ › Lưu bộ lọc hiện tại".
+4. *Sắp xếp.* Bấm tiêu đề cột sắp xếp được xoay vòng tăng → giảm → mặc định; tiêu đề có `aria-sort`. Một tiêu chí chính tại một thời điểm (CRUD-TBL-05).
+5. *Cột.* Nút "Cột" cho ẩn/hiện và đổi thứ tự cột (kéo thả có phương án bàn phím: nút lên/xuống ở mỗi dòng, WCAG 2.5.7); lựa chọn ghi nhớ theo người dùng. Cột mã và cột hành động không ẩn được.
+6. *Bảng.* Tên hoặc mã đối tượng ở cột đầu là liên kết mở chi tiết (CRUD-R-02); cả hàng không phải là vùng bấm để tránh mở nhầm khi bôi chọn chữ. Chữ dài cắt bằng "…" với tooltip (CRUD-TBL-07). Trường trống hiển thị "—" (CRUD-R-05). Số và tiền căn phải, dùng `font-feature-tabular`. Trạng thái dùng `CMP-StatusTag` có chữ (CRUD-TBL-09, FR-00-053). Bảng có cuộn ngang thì cột hành động dính phải (CRUD-TBL-11).
+7. *Hành động trên hàng.* Tối đa hai hành động hiện thành `CMP-IconButton` có tooltip; còn lại trong menu "⋯". Chỉ hiện hành động hợp lệ với trạng thái của hàng (mục 2.6).
+8. *Chọn và hàng loạt.* Checkbox tiêu đề ba trạng thái (CRUD-SEL-02); lựa chọn giữ khi đổi trang, xóa khi đổi bộ lọc. Thao tác hàng loạt trả kết quả theo từng bản ghi; thành công một phần hiển thị `CMP-Modal` liệt kê bản ghi thất bại và lý do (CRUD-SEL-08, CRUD-D-09).
+9. *Xóa.* Xác nhận bằng `CMP-ConfirmDialog` nêu tên bản ghi (CRUD-D-02); sau xóa, tải lại trang hiện tại giữ bộ lọc; nếu trang trống thì lùi một trang (CRUD-D-07, 08).
+10. *Xuất.* Xuất theo bộ lọc hiện tại (FR-00-030); trên 10.000 dòng chạy nền và báo qua trung tâm thông báo (FR-00-031); hộp thoại xuất nêu rõ số dòng sẽ xuất và trường nhạy cảm bị che (FR-00-034).
+11. *Làm mới.* Nút "⟳" làm mới thủ công; danh sách không tự làm mới định kỳ trừ khi FRS yêu cầu (ví dụ DLQ làm mới 30 giây), khi đó có công tắc "Tự làm mới" và thời điểm cập nhật cuối.
+12. *Phân trang.* "1–20 trong 1.204", chọn cỡ trang, ô "Tới trang" chỉ nhận 1…tổng số trang (CRUD-PAG-01…07). Với tập rất lớn mà đếm tổng tốn kém (log, giao dịch nhiều triệu), API được phép trả tổng ước lượng; khi đó hiển thị "1–20 trong khoảng 1,2 triệu" và ẩn ô "Tới trang".
+
+**Trạng thái cụ thể.** ST-01: 8 hàng skeleton cao `size-table-row`. ST-03: trong khối dữ liệu, ẩn FilterBar, hiện `CMP-EmptyState` với nút hành động chính và nút "Nhập từ tệp" nếu có. ST-04: bảng giữ hàng tiêu đề, thân bảng hiện EmptyState biến thể tìm kiếm. ST-05: thân bảng hiện Alert lỗi có "Thử lại", FilterBar vẫn dùng được.
+
+**Phím tắt.** `/` focus ô tìm kiếm; `N` mở tạo mới (khi có quyền); `J`/`K` di chuyển hàng đang focus; `Enter` mở chi tiết hàng đang focus; `X` chọn/bỏ chọn hàng; `Shift+X` chọn tất cả trên trang; `Esc` bỏ chọn.
+
+**Tiêu chí nghiệm thu PTN-01.**
+
+- [ ] Mọi điều kiện lọc, từ khóa, sắp xếp, trang, cỡ trang đều xuất hiện trên URL; mở URL đó ở tab mới cho cùng kết quả.
+- [ ] Gõ "da nang" tìm ra bản ghi chứa "Đà Nẵng".
+- [ ] Đổi bộ lọc đưa về trang 1 và xóa lựa chọn hàng.
+- [ ] Mở chi tiết rồi bấm breadcrumb quay lại: bộ lọc, trang, vị trí cuộn được khôi phục.
+- [ ] Tổng bản ghi, cỡ trang, tổng số trang luôn khớp `ceil(tổng / cỡ)`.
+- [ ] ST-01, ST-03, ST-04, ST-05 hiển thị đúng khi giả lập API tương ứng.
+- [ ] Cột hành động dính phải khi cuộn ngang ở 1280px.
+- [ ] Hành động trên hàng chỉ hiện khi đủ quyền và hợp lệ với trạng thái.
+- [ ] Xóa bản ghi cuối của trang 3 tự lùi về trang 2.
+- [ ] Bảng 1 triệu bản ghi phản hồi p95 ≤ 1,5 giây (NFR-00-003).
+- [ ] Toàn bộ thao tác thực hiện được chỉ bằng bàn phím; axe-core 0 lỗi.
+
+**Sai lầm thường gặp.** Lọc phía trình duyệt trên dữ liệu đã tải; để cả hàng là vùng bấm; dùng màu không chữ cho trạng thái; đặt nhiều nút primary; đánh số thứ tự bắt đầu lại từ 1 ở mỗi trang; quên xóa lựa chọn khi đổi bộ lọc; đặt bộ lọc ra ngoài khối dữ liệu thành một thẻ riêng; để bảng trắng khi lỗi.
+
+### 4.5. PTN-02 · Chi tiết
+
+**Mục đích.** Hiển thị đầy đủ một đối tượng nghiệp vụ, trạng thái vòng đời, quan hệ với đối tượng khác, lịch sử thay đổi, và là nơi thực hiện các thao tác trên đối tượng.
+
+**Khi dùng.** Mọi đối tượng có mã, có vòng đời hoặc có quan hệ. **Khi không dùng.** Đối tượng quá nhỏ chỉ vài trường (dùng Drawer xem nhanh từ PTN-01).
+
+**Ví dụ trong Datahub.** Chi tiết API (PH-02, `/ket-noi/api/{ma-api}` với tab Tổng quan, Phiên bản, Gói sử dụng, Đăng ký, Thống kê, Lịch sử); chi tiết HTTT thành viên (PH-01, tab Hồ sơ, Ứng dụng và thông tin xác thực, Đầu mối, API đang dùng, Lịch sử); chi tiết giao dịch (PH-19); chi tiết danh mục (PH-07, tab Mục, Thuộc tính, Phiên bản, Lịch sử).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
+│ ① PageHeader                                                                  │
+│   Breadcrumb: Kết nối & API › Danh mục API › Tra cứu hộ tịch                  │
+│   [‹] Tra cứu hộ tịch  ●Phát hành  v2.1      [Sửa] [Ngừng khuyến nghị] [⋯]   │
+│   Mã: API_HOTICH_TRACUU [⧉] · Cơ quan: Sở Tư pháp · Cập nhật 21/11/2026 14:05│
+│ ② Tabs: Tổng quan | Phiên bản (3) | Gói sử dụng | Đăng ký (12) | Lịch sử     │
+│ ┌ ③ Nội dung tab ───────────────────────────────────────┐ ┌ ④ Cột phụ ──────┐│
+│ │ Khối đặc "Thông tin chung" (DescriptionList 2 cột)     │ │ Khối đặc         ││
+│ │                                                        │ │ "Trạng thái &    ││
+│ │ Khối đặc "Cấu hình"                                    │ │  vòng đời"       ││
+│ │                                                        │ │ (Steps/Timeline) ││
+│ │ Khối đặc "Đối tượng liên quan" (DataTable gọn)         │ │ Khối "Thông tin  ││
+│ │                                                        │ │  hệ thống"       ││
+│ └────────────────────────────────────────────────────────┘ └──────────────────┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Sơ đồ có hai cột ở tab Tổng quan: cột chính 8/12 chứa các khối thông tin, cột phụ 4/12 chứa trạng thái vòng đời và thông tin hệ thống (người tạo, ngày tạo, người cập nhật, ngày cập nhật theo CRUD-R-03, R-04). Dưới `bp-xl`, cột phụ chuyển xuống dưới cột chính. Các tab khác dùng toàn chiều rộng.
+
+**Thành phần và vật liệu theo vùng.**
+
+| Vùng | Thành phần | Vật liệu |
+|---|---|---|
+| ① | `CMP-PageHeader`, `CMP-StatusTag`, `CMP-Identifier`, `CMP-CopyButton`, `CMP-Button`, `CMP-DropdownMenu` | Trên canvas |
+| ② | `CMP-Tabs` | Trên canvas; thanh tab dính dưới thanh trên khi cuộn (`z-sticky`), lúc dính có nền `color-canvas` |
+| ③ | `CMP-Card`, `CMP-DescriptionList`, `CMP-DataTable`, `CMP-CodeEditor` (chỉ đọc), `CMP-JsonViewer`, `CMP-MaskedValue` | Đặc |
+| ④ | `CMP-Card`, `CMP-Steps` hoặc `CMP-Timeline`, `CMP-ApprovalPanel` (khi đối tượng đang chờ duyệt) | Đặc |
+| Tab Lịch sử | `CMP-AuditTrail`, `CMP-DiffViewer` | Đặc |
+
+**Tab Lịch sử (bắt buộc, FR-00-043).** Mọi trang chi tiết đối tượng phải có tab "Lịch sử" ở vị trí cuối cùng, hiển thị nhật ký kiểm toán của chính đối tượng đó từ PH-13. Tab dùng `CMP-AuditTrail`: dòng thời gian theo thứ tự mới nhất trên cùng, mỗi mục gồm thời điểm, chủ thể (người hoặc máy, kèm đơn vị), hành động (Tạo, Sửa, Đổi trạng thái, Duyệt, Từ chối, Xem dữ liệu nhạy cảm, Xuất), lý do nếu có, kết quả và mã truy vết. Mục "Sửa" mở rộng được để xem `CMP-DiffViewer` giá trị trước và sau (đã che theo FR-00-041). Tab có bộ lọc theo loại hành động, chủ thể và khoảng thời gian, phân trang máy chủ, và có liên kết "Mở trong Nhật ký kiểm toán" tới PTN-11 với bộ lọc đối tượng điền sẵn. Tab Lịch sử là chỉ đọc tuyệt đối, không có hành động sửa hay xóa (FR-00-042). Route `/{ma}/lich-su` mở thẳng tab này.
+
+**Hành vi.**
+
+1. Tiêu đề trang là tên đối tượng; mã nghiệp vụ hiện ở dòng phụ kèm nút sao chép.
+2. Hành động trên đối tượng đặt ở góc phải PageHeader, theo thứ tự: hành động chính của trạng thái hiện tại (primary, ví dụ "Gửi duyệt" khi Nháp, "Phát hành" khi đã duyệt), "Sửa", rồi menu "⋯" chứa hành động ít dùng và hành động phá hủy (cuối menu, chữ màu lỗi, ngăn cách bằng đường kẻ). Chỉ hiện hành động hợp lệ (FR-00-053).
+3. Thao tác ảnh hưởng vận hành (tạm dừng, thu hồi, ngừng) mở `CMP-ReasonDialog` bắt buộc lý do (FR-00-050); thao tác phá hủy mở `CMP-ConfirmDialog`.
+4. Tab được giữ trên URL (mục 2.4); dữ liệu từng tab tải lười khi mở tab lần đầu, có số đếm trên nhãn tab nếu rẻ để tính.
+5. Đối tượng đang chờ duyệt hiển thị `CMP-Alert` mức thông tin dưới PageHeader "Đối tượng đang chờ {người/nhóm} duyệt từ {thời điểm}" và nếu người xem là người duyệt thì hiện `CMP-ApprovalPanel` ở cột phụ.
+6. Trường mức Nhạy cảm hiện bằng `CMP-MaskedValue`; "Hiện" cần lý do và được kiểm toán.
+7. Khi đối tượng bị người khác thay đổi trong lúc đang xem (nhận qua kênh đẩy nếu có), hiện `CMP-Alert` "Đối tượng vừa được cập nhật" với nút "Tải lại"; không tự thay dữ liệu dưới mắt người dùng.
+8. Nút "‹" quay lại chỉ hiện khi có màn cha xác định (CRUD-UI-04) và về danh sách với bộ lọc đã giữ.
+
+**Trạng thái cụ thể.** ST-01: skeleton PageHeader (tiêu đề, nhãn trạng thái) và hai khối DescriptionList. ST-08: đối tượng bị xóa khi đang xem dẫn tới thay nội dung bằng PTN-13 "Không tìm thấy", giữ breadcrumb. Tab không có dữ liệu (ví dụ chưa có đăng ký) dùng `CMP-EmptyState` cỡ nhỏ trong tab.
+
+**Phím tắt.** `E` sửa (khi có quyền); `[`/`]` chuyển tab trước/sau; `H` mở tab Lịch sử; `Alt+←` quay lại danh sách.
+
+**Tiêu chí nghiệm thu PTN-02.**
+
+- [ ] Có tab "Lịch sử" ở cuối, hiển thị đúng bản ghi kiểm toán của đối tượng, không có hành động sửa/xóa.
+- [ ] Mở `/{ma}/lich-su` hiển thị đúng tab Lịch sử.
+- [ ] Hiển thị đủ người tạo, ngày tạo, người cập nhật, ngày cập nhật; trường trống hiện "—".
+- [ ] Ở mỗi trạng thái vòng đời, chỉ các hành động hợp lệ được hiện.
+- [ ] Thao tác tạm dừng/thu hồi bắt buộc lý do; lý do xuất hiện trong tab Lịch sử.
+- [ ] Mở URL đối tượng không tồn tại hiển thị PTN-13 "Không tìm thấy" kèm mã đã tìm.
+- [ ] "Hiện" trường nhạy cảm sinh bản ghi kiểm toán loại "Xem dữ liệu nhạy cảm".
+- [ ] Ở 1280px, cột phụ không bị cắt; dưới `bp-xl` chuyển xuống dưới.
+
+**Sai lầm thường gặp.** Thiếu tab Lịch sử hoặc đặt lịch sử thành một danh sách ở cuối trang; hiện mọi nút rồi báo lỗi khi bấm; dùng một khối thẻ duy nhất dài cả trang; đặt mã nghiệp vụ không có nút sao chép; dùng id nội bộ trên URL.
+

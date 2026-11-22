@@ -641,3 +641,416 @@ export interface DhDividerProps { orientation?: 'horizontal' | 'vertical'; spaci
 
 **Điều cấm.** Cấm dùng Divider thay khoảng trắng giữa mọi khối (lạm dụng làm giao diện rối; ưu tiên khoảng cách `space-6`). Cấm Divider nét đứt.
 
+
+## 5. Nhóm chỉ báo và nhãn
+
+### 5.1. CMP-StatusTag
+
+**Mục đích.** `CMP-StatusTag` hiển thị trạng thái vòng đời của một đối tượng nghiệp vụ hoặc trạng thái của một lượt chạy, giao dịch. Đây là thành phần hiện thực FR-00-053: mọi phân hệ hiển thị trạng thái bằng cùng một bộ nhãn, cùng màu, cùng chữ. Bảng ánh xạ trạng thái được định nghĩa **một lần** trong tài liệu này và trong mã nguồn ở `@datahub/ui/status/registry.ts`; màn hình không bao giờ tự chọn màu cho trạng thái.
+
+**Khi dùng.** Cột "Trạng thái" trong bảng, tiêu đề trang chi tiết (cạnh tên đối tượng trong `CMP-PageHeader`), thẻ, kết quả lượt chạy. **Khi không dùng.** Phân loại, thẻ gắn tự do (dùng `CMP-Tag`); số đếm (dùng `CMP-Badge`); chỉ báo sức khỏe nhỏ trong không gian chật như cạnh tên nút trên canvas (dùng `CMP-StatusDot`, nhưng vẫn theo cùng bảng ánh xạ).
+
+**Nền antd.** `Tag` của antd v6 với `variant="filled"`, không dùng prop `color` preset (D03-05-02 §13.2). Màu được gắn qua lớp `dh-status-tag--{tone}` đọc biến `--dh-color-{tone}-bg` và `--dh-color-{tone}-on-bg`. Hàm bọc cố định `closable={false}` (trạng thái không đóng được), `bordered={false}`.
+
+**Năm sắc thái.** Mọi trạng thái được quy về một trong năm sắc thái (tone) có ý nghĩa cố định. Bảng dưới đây nêu ý nghĩa của sắc thái, token, và hình dạng chỉ báo đi kèm chữ. Hình dạng là kênh thông tin thứ hai sau chữ, để người mù màu phân biệt được ngay cả khi không đọc chữ (WCAG 1.4.1).
+
+| Sắc thái | Ý nghĩa | Nền / chữ | Chỉ báo mặc định |
+|---|---|---|---|
+| `success` | Hoạt động bình thường, đã hoàn tất tốt, đang có hiệu lực | `color-success-bg` / `color-success-on-bg` | Chấm tròn đặc |
+| `warning` | Cần chú ý, tạm thời không hoạt động, sắp hết hạn, có thể phục hồi | `color-warning-bg` / `color-warning-on-bg` | Chấm tròn rỗng (vòng) |
+| `error` | Thất bại, bị thu hồi, bị từ chối, không phục hồi được nếu không can thiệp | `color-error-bg` / `color-error-on-bg` | Biểu tượng `error` cỡ `size-icon-sm` |
+| `info` | Đang trong quy trình, đang chờ một bên xử lý, đang chạy | `color-info-bg` / `color-info-on-bg` | Chấm tròn nửa (hoặc spinner nhỏ với trạng thái "đang chạy") |
+| `neutral` | Chưa có hiệu lực, đã kết thúc tự nhiên, không còn hoạt động nhưng không phải lỗi | `color-neutral-bg` / `color-neutral-on-bg` | Chấm tròn viền đứt (vòng nét đứt) |
+
+**Bảng ánh xạ trạng thái dùng chung.** Bảng dưới đây ánh xạ mã trạng thái chuẩn (kiểu `T-ENUM`, D00-01 §5) sang nhãn tiếng Việt và sắc thái. Mỗi phân hệ khi định nghĩa máy trạng thái của đối tượng (D02-03, D03-03) phải dùng mã trong bảng này nếu nghĩa trùng; chỉ khi không có mã phù hợp mới đề xuất mã mới bằng PR vào `registry.ts` kèm cập nhật bảng này. Cột "Nhóm" cho biết loại đối tượng thường dùng, không giới hạn.
+
+| Mã | Nhãn hiển thị | Sắc thái | Nhóm | Ghi chú |
+|---|---|---|---|---|
+| `DRAFT` | Bản nháp | `neutral` | Vòng đời đối tượng | Đang soạn, chưa gửi |
+| `PENDING_APPROVAL` | Chờ duyệt | `info` | Vòng đời, yêu cầu | Đang chờ người duyệt (FR-00-070) |
+| `CHANGES_REQUESTED` | Cần chỉnh sửa | `warning` | Yêu cầu | Người duyệt trả lại kèm ý kiến |
+| `APPROVED` | Đã duyệt | `success` | Vòng đời, yêu cầu | Được duyệt, có thể chưa công bố |
+| `REJECTED` | Từ chối | `error` | Yêu cầu | Bị từ chối, có lý do (FR-00-072) |
+| `PUBLISHED` | Đã công bố | `success` | Dịch vụ, API, danh mục, sản phẩm dữ liệu | Đang có hiệu lực với bên dùng |
+| `ACTIVE` | Đang hoạt động | `success` | Tenant, tài khoản, kết nối, khóa API | |
+| `SUSPENDED` | Tạm dừng | `warning` | Dịch vụ, tenant, tài khoản, đăng ký | Có thể khôi phục |
+| `DEPRECATED` | Ngừng cung cấp | `warning` | Phiên bản API, dịch vụ | Vẫn chạy nhưng sắp gỡ; tooltip nêu ngày gỡ dự kiến |
+| `RETIRED` | Đã gỡ | `neutral` | Phiên bản API, dịch vụ | Không còn phục vụ |
+| `CLOSED` | Đã đóng | `neutral` | Yêu cầu, sự cố, phiên | Kết thúc tự nhiên |
+| `REVOKED` | Thu hồi | `error` | Khóa API, chứng thư, quyền, đăng ký | Bị chấm dứt chủ động, không khôi phục |
+| `EXPIRED` | Hết hạn | `neutral` | Khóa API, chứng thư, liên kết tải | |
+| `EXPIRING` | Sắp hết hạn | `warning` | Khóa API, chứng thư | Còn ≤ 30 ngày (ngưỡng do phân hệ cấu hình) |
+| `DISABLED` | Đã vô hiệu | `neutral` | Tài khoản, luồng, lịch chạy | Do người dùng tắt |
+| `DELETED` | Đã xóa | `neutral` | Mọi đối tượng xóa mềm (FR-00-051) | Chỉ hiện trong chế độ xem dữ liệu đã xóa |
+| `ERROR` | Lỗi | `error` | Kết nối, đồng bộ, cấu hình | Trạng thái lỗi kéo dài |
+| `QUEUED` | Đang chờ chạy | `info` | Tác vụ nền, lượt chạy | |
+| `RUNNING` | Đang chạy | `info` | Tác vụ nền, lượt chạy luồng (FR-00-054) | Chỉ báo là spinner nhỏ; tắt quay khi giảm chuyển động |
+| `SUCCEEDED` | Thành công | `success` | Lượt chạy, lượt gọi, giao dịch | |
+| `PARTIALLY_SUCCEEDED` | Thành công một phần | `warning` | Nhập dữ liệu, xử lý hàng loạt (CRUD-D-09) | |
+| `FAILED` | Thất bại | `error` | Lượt chạy, lượt gọi, giao dịch | |
+| `CANCELLED` | Đã hủy | `neutral` | Lượt chạy, giao dịch, yêu cầu | Do người dùng hoặc hệ thống hủy |
+| `TIMED_OUT` | Quá thời gian | `error` | Lượt gọi, lượt chạy | |
+| `RETRYING` | Đang thử lại | `warning` | Lượt chuyển sự kiện, lượt gọi | |
+| `PENDING_PAYMENT` | Chờ thanh toán | `info` | Giao dịch thanh toán | |
+| `PAID` | Đã thanh toán | `success` | Giao dịch thanh toán | |
+| `REFUND_PENDING` | Chờ hoàn tiền | `info` | Giao dịch thanh toán | |
+| `REFUNDED` | Hoàn tiền | `neutral` | Giao dịch thanh toán | Đã hoàn tất hoàn tiền; không phải lỗi |
+| `RECONCILE_PENDING` | Chờ đối soát | `info` | Giao dịch, kỳ đối soát | |
+| `RECONCILED` | Đã đối soát | `success` | Giao dịch, kỳ đối soát | |
+| `RECONCILE_MISMATCH` | Lệch đối soát | `error` | Giao dịch, kỳ đối soát | Cần xử lý |
+| `HEALTHY` | Bình thường | `success` | Sức khỏe dịch vụ, nút hạ tầng | |
+| `DEGRADED` | Suy giảm | `warning` | Sức khỏe dịch vụ | |
+| `DOWN` | Ngừng hoạt động | `error` | Sức khỏe dịch vụ | |
+| `UNKNOWN` | Không xác định | `neutral` | Mọi nhóm | Dự phòng khi nhận mã chưa có trong bảng |
+
+Bốn quy tắc đi kèm bảng. Thứ nhất, sắc thái thể hiện **mức cần chú ý**, không thể hiện "tốt hay xấu" về đạo đức: "Hoàn tiền" là `neutral` vì giao dịch đã kết thúc đúng quy trình; "Ngừng cung cấp" là `warning` vì bên dùng phải hành động trước ngày gỡ. Thứ hai, nhãn hiển thị trong bảng là nhãn chuẩn; nếu một phân hệ cần nhãn khác cho cùng mã (ví dụ PH thanh toán muốn "Đã hoàn tiền"), phải sửa nhãn ở đây cho mọi phân hệ, không ghi đè cục bộ. Thứ ba, mã chưa có trong bảng hiển thị là `UNKNOWN` kèm mã gốc trong tooltip, và thành phần ghi cảnh báo `console.warn` ở môi trường phát triển để phát hiện sớm. Thứ tư, khi phân hệ có máy trạng thái riêng chưa chuẩn hóa, có thể truyền `customStatus={{ label, tone }}` nhưng lint báo cảnh báo và PR phải giải thích.
+
+**Kích thước.** `sm` cao 20px, chữ `font-caption` độ đậm 500, đệm ngang `space-2`, dùng trong bảng chế độ gọn và `CMP-StatusDot` có nhãn. `md` (mặc định) cao `size-control-sm` (24px), chữ `font-footnote` độ đậm 500, đệm ngang `space-2`. Bo góc `radius-pill`. Khoảng giữa chỉ báo và chữ là `space-1`; chỉ báo dạng chấm có đường kính 6px (`sm`) hoặc 8px (`md`).
+
+**Trạng thái.** Nhãn không tương tác, không có hover hay focus. Khi trạng thái có giải thích bổ sung (lý do tạm dừng, ngày gỡ của `DEPRECATED`), thành phần nhận `description` và bọc trong `CMP-Tooltip`, đồng thời trở thành focus được (`tabIndex={0}`) để người dùng bàn phím xem được; nhưng giải thích đó cũng phải có ở trang chi tiết, không chỉ nằm trong tooltip.
+
+**Token.** `TKN-color-success-bg`, `TKN-color-success-on-bg`, `TKN-color-warning-bg`, `TKN-color-warning-on-bg`, `TKN-color-error-bg`, `TKN-color-error-on-bg`, `TKN-color-info-bg`, `TKN-color-info-on-bg`, `TKN-color-neutral-bg`, `TKN-color-neutral-on-bg`, `TKN-radius-pill`, `TKN-font-caption`, `TKN-font-footnote`, `TKN-space-1`, `TKN-space-2`, `TKN-size-control-sm`, `TKN-size-icon-sm`. Chấm chỉ báo dùng `currentColor` (bằng màu chữ `-on-bg`), nên tự đạt 3:1 trên nền nhẹ.
+
+**Nền đặt.** Mọi nền kể cả glass, vì nhãn dùng cặp nền nhẹ + chữ trên nền nhẹ nên tương phản không phụ thuộc lớp dưới (D03-05-02 §4.4).
+
+**ARIA.** Phần tử `<span>`; chỉ báo hình có `aria-hidden="true"` vì chữ đã đủ nghĩa. Trong ô bảng, tiêu đề cột "Trạng thái" cung cấp ngữ cảnh; ngoài bảng, thành phần thêm chữ ẩn "Trạng thái:" trước nhãn khi prop `announcePrefix` bật. Khi trạng thái thay đổi trực tiếp trên màn hình (tác vụ chạy xong), vùng chứa nhãn do màn hình đặt `aria-live="polite"`, không phải thành phần.
+
+**Nội dung tiếng Việt.** Nhãn là cụm danh từ hoặc tính từ ngắn, tối đa 3 từ, viết hoa chữ cái đầu: "Đã công bố", "Chờ duyệt". Không dùng tiếng Anh trong nhãn; thuật ngữ tiếng Anh nếu cần đặt trong tooltip (ví dụ "Ngừng cung cấp (Deprecated)").
+
+**API.**
+
+```tsx
+export type DhStatusCode = keyof typeof statusRegistry; // 'DRAFT' | 'PENDING_APPROVAL' | ...
+export type DhTone = 'success' | 'warning' | 'error' | 'info' | 'neutral';
+
+export interface DhStatusTagProps {
+  status: DhStatusCode | (string & {}); // mã lạ → UNKNOWN
+  size?: 'sm' | 'md';
+  description?: string;
+  announcePrefix?: boolean;
+  /** Chỉ dùng khi chưa chuẩn hóa; lint cảnh báo. */
+  customStatus?: { label: string; tone: DhTone };
+  testId?: string;
+}
+
+/** Dùng cho bộ lọc, biểu đồ: lấy nhãn và sắc thái từ cùng nguồn. */
+export function getStatusMeta(code: string): { label: string; tone: DhTone; known: boolean };
+```
+
+```tsx
+<StatusTag status={service.status} />
+<StatusTag status="DEPRECATED" description="Gỡ dự kiến ngày 31/03/2027. Hãy chuyển sang phiên bản v2." />
+```
+
+Bộ lọc trạng thái trong `CMP-FilterBar` dùng `getStatusMeta` để sinh tùy chọn của `CMP-Select`, nên nhãn trong bộ lọc và trong bảng luôn trùng nhau.
+
+**Điều cấm.** Cấm dùng `Tag color="green"` hay `CMP-Tag` để hiển thị trạng thái. Cấm nhãn trạng thái chỉ có màu, không chữ. Cấm tự định nghĩa nhãn tiếng Việt cho mã đã có trong bảng. Cấm dùng sắc thái `error` cho trạng thái kết thúc bình thường.
+
+### 5.2. CMP-Tag
+
+**Mục đích.** `CMP-Tag` hiển thị nhãn phân loại hoặc giá trị gắn tự do: nhãn của dịch vụ, lĩnh vực, giá trị đã chọn trong bộ lọc, phương thức HTTP. Khác `CMP-StatusTag` ở chỗ không mang nghĩa vòng đời và có thể đóng được.
+
+**Nền antd.** `Tag` với `variant="filled"`. Không dùng `color` preset.
+
+**Biến thể.** `neutral` (mặc định, nền `color-neutral-bg` qua token `Tag.defaultBg` đã đặt ở D03-05-02, chữ `color-text-primary`), `accent` (nền `color-accent-subtle`, chữ `color-accent-on-subtle`; dùng cho giá trị bộ lọc đang áp dụng), `outline` (nền trong suốt, viền `color-border-subtle`; dùng trong vùng đã có nhiều màu). Phương thức HTTP (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) dùng biến thể `neutral` với chữ `font-mono-sm`; không gán màu riêng từng phương thức, vì màu không mang thêm thông tin so với chữ và gây nhầm với trạng thái.
+
+**Kích thước.** `sm` cao 20px, `md` cao `size-control-sm`; bo `radius-sm`; chữ `font-caption` (`sm`) hoặc `font-footnote` (`md`).
+
+**Trạng thái.** Tag tĩnh không có trạng thái tương tác. Tag đóng được (`closable`) có nút đóng là `CMP-IconButton` cỡ thị giác 16px với vùng chạm mở rộng 24px, nhãn truy cập "Bỏ {giá trị}". Tag chọn được (`checkable`, dùng trong bộ lọc nhanh) có trạng thái chọn: nền `color-fill-selected`, chữ `color-accent-on-subtle`, `aria-pressed`.
+
+**Token.** `TKN-color-neutral-bg`, `TKN-color-text-primary`, `TKN-color-accent-subtle`, `TKN-color-accent-on-subtle`, `TKN-color-border-subtle`, `TKN-color-fill-selected`, `TKN-color-fill-hover`, `TKN-radius-sm`, `TKN-font-caption`, `TKN-font-footnote`, `TKN-font-mono-sm`.
+
+**Nền đặt.** Mọi nền.
+
+**Bàn phím và ARIA.** Tag đóng được: Tab tới nút đóng, Enter hoặc Space đóng; sau khi đóng, focus chuyển sang tag kế tiếp hoặc về ô nhập liên quan. Tag chọn được: phần tử `<button aria-pressed>`.
+
+**Nội dung.** Chữ trong tag tối đa 24 ký tự hiển thị; dài hơn thì rút gọn với tooltip chữ đầy đủ.
+
+**API.**
+
+```tsx
+export interface DhTagProps {
+  children: React.ReactNode;
+  variant?: 'neutral' | 'accent' | 'outline';
+  size?: 'sm' | 'md';
+  mono?: boolean;
+  closable?: boolean;
+  onClose?: () => void;
+  checkable?: boolean;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  testId?: string;
+}
+```
+
+```tsx
+<Tag mono>GET</Tag>
+<Tag variant="accent" closable onClose={() => removeFilter('domain')}>Lĩnh vực: Hộ tịch</Tag>
+```
+
+**Điều cấm.** Cấm dùng `CMP-Tag` cho trạng thái. Cấm gán màu theo giá trị (mỗi nhãn một màu) vì tạo cảm giác mang nghĩa trạng thái.
+
+### 5.3. CMP-Badge
+
+**Mục đích.** `CMP-Badge` hiển thị số đếm nhỏ gắn lên một phần tử khác: số thông báo chưa đọc trên chuông, số việc chờ duyệt cạnh mục menu "Việc của tôi", số bộ lọc đang áp dụng trên nút lọc.
+
+**Nền antd.** `Badge` với `count`, `overflowCount={99}`, `showZero={false}`. Không dùng `Badge.Ribbon`. Chấm không số (`dot`) được phép cho "có mục mới" khi số lượng không quan trọng.
+
+**Biến thể.** `accent` (mặc định, nền `color-accent`, chữ `color-text-on-accent`), `error` (nền `color-error-solid`, chữ `color-text-on-accent`; chỉ cho cảnh báo cần xử lý ngay, ví dụ số sự cố), `neutral` (nền `color-fill-control`, chữ `color-text-secondary`; số đếm thông tin như số bản ghi trong tab). Biến thể `inline` đặt số đứng cạnh chữ (trong tab, mục menu) thay vì chồng lên góc.
+
+**Kích thước.** Cao 18px (token thành phần antd `Badge.indicatorHeight`), chữ 12px độ đậm 600 với `font-feature-tabular`; `Badge.dotSize` 8px. Hai giá trị này đặt trong `theme.components.Badge`.
+
+**Token.** `TKN-color-accent`, `TKN-color-error-solid`, `TKN-color-text-on-accent`, `TKN-color-fill-control`, `TKN-color-text-secondary`, `TKN-font-feature-tabular`, `TKN-radius-pill`. Badge chồng lên phần tử trên glass có viền ngoài 2px màu `color-surface-solid` để tách khỏi biểu tượng (`Badge.badgeShadowColor`).
+
+**Nền đặt.** Mọi nền.
+
+**ARIA.** Số đếm chồng lên nút không được đọc riêng; thành phần cung cấp chữ để ghép vào tên truy cập của nút cha, ví dụ nút chuông có `aria-label="Thông báo, 5 mục chưa đọc"`. Prop `srLabel` của Badge sinh chuỗi này; nút cha dùng nó. Chấm `dot` đi kèm chữ ẩn "có mục mới". Khi số tăng, không tự đọc to (tránh làm phiền); `CMP-NotificationCenter` quyết định thông báo.
+
+**Nội dung.** Số dùng định dạng Việt Nam khi lớn hơn 999 nhưng vì `overflowCount` 99, hiển thị "99+".
+
+**API.**
+
+```tsx
+export interface DhBadgeProps {
+  count?: number;
+  dot?: boolean;
+  variant?: 'accent' | 'error' | 'neutral';
+  inline?: boolean;
+  children?: React.ReactNode;   // phần tử được gắn badge
+  /** Danh từ đếm: "mục chưa đọc" → "5 mục chưa đọc". */
+  unit: string;
+  testId?: string;
+}
+export function badgeSrLabel(count: number | undefined, unit: string): string;
+```
+
+```tsx
+<Badge count={unread} unit="mục chưa đọc">
+  <IconButton icon={<Icon name="notification" />} label={`Thông báo, ${badgeSrLabel(unread, 'mục chưa đọc')}`} />
+</Badge>
+```
+
+**Điều cấm.** Cấm dùng Badge để hiển thị trạng thái (dùng `CMP-StatusTag` hoặc `CMP-StatusDot`). Cấm Badge `error` cho số đếm thông thường.
+
+### 5.4. CMP-StatusDot
+
+**Mục đích.** `CMP-StatusDot` là chỉ báo trạng thái thu gọn: một chấm tròn kèm chữ ngắn hoặc kèm tooltip. Dùng ở nơi `CMP-StatusTag` quá to: cạnh tên nút trên `CMP-FlowCanvas`, trong danh sách nút hạ tầng dày đặc, trong mục menu chuyển tenant.
+
+**Nền antd.** `Badge` với `status` không dùng; thành phần tự viết để dùng chung bảng ánh xạ của `CMP-StatusTag` và hình dạng chỉ báo năm sắc thái.
+
+**Biến thể.** `labeled` (mặc định, chấm + chữ `font-footnote` màu `color-text-secondary`), `dot-only` (chỉ chấm; bắt buộc có `CMP-Tooltip` và chữ ẩn cho trình đọc màn hình, chỉ dùng khi ngữ cảnh lặp lại cùng ý nghĩa và có chú giải trên màn hình). Với `RUNNING`, chấm có hiệu ứng nhịp thở (độ đục 1 → 0,4 → 1, chu kỳ 1,6 giây), tắt khi giảm chuyển động.
+
+**Kích thước.** Chấm 8px, khoảng cách tới chữ `space-1`. Hình dạng theo sắc thái như bảng của `CMP-StatusTag` (đặc, vòng, biểu tượng lỗi 12px, nửa, nét đứt). Màu chấm dùng `color-{tone}-text` (không phải `-solid`) để đạt 3:1 trên nền đặc và `glass-overlay`; riêng `warning` dùng `color-warning-text`.
+
+**Token.** `TKN-color-success-text`, `TKN-color-warning-text`, `TKN-color-error-text`, `TKN-color-info-text`, `TKN-color-neutral-text`, `TKN-color-text-secondary`, `TKN-font-footnote`, `TKN-space-1`.
+
+**Nền đặt.** Nền đặc và `glass-overlay`. Không đặt trực tiếp trên `glass-chrome` vì màu trạng thái trên chrome chưa được kiểm tra trường hợp xấu nhất.
+
+**ARIA.** `labeled`: chấm `aria-hidden`. `dot-only`: `role="img"`, `aria-label` bằng nhãn trạng thái.
+
+**API.**
+
+```tsx
+export interface DhStatusDotProps {
+  status: DhStatusCode | (string & {});
+  variant?: 'labeled' | 'dot-only';
+  /** Ghi đè chữ hiển thị nhưng giữ sắc thái theo mã, ví dụ "12 ms". */
+  label?: string;
+  testId?: string;
+}
+```
+
+```tsx
+<StatusDot status="HEALTHY" />
+<StatusDot status="DEGRADED" variant="dot-only" />
+```
+
+**Điều cấm.** Cấm dùng `dot-only` trong cột bảng mà không có chú giải. Cấm màu chấm khác bảng ánh xạ.
+
+### 5.5. CMP-Avatar
+
+**Mục đích.** `CMP-Avatar` đại diện cho một người dùng, một hệ thống máy hoặc một tenant bằng ảnh hoặc chữ cái đầu. Dùng trong `CMP-UserMenu`, `CMP-AuditTrail` (chủ thể của bản ghi kiểm toán), danh sách người duyệt.
+
+**Nền antd.** `Avatar` với `shape="circle"` (người) hoặc `shape="square"` bo `radius-sm` (hệ thống máy, tenant). `Avatar.Group` với `max={{ count: 3 }}` cho danh sách người.
+
+**Biến thể.** `image` khi có ảnh; `initials` khi không có ảnh: hai ký tự gồm chữ cái đầu của từ đầu tiên (họ) và từ cuối cùng (tên) trong họ tên, theo thứ tự xuất hiện, ví dụ "Nguyễn Văn An" → "NA"; tên chỉ có một từ thì lấy một ký tự. Chữ giữ dấu (ví dụ "Đặng" → "Đ"). Nền chữ cái đầu chọn từ `color-chart-1` đến `color-chart-7` theo băm ổn định của mã người dùng, chữ `color-text-on-accent`. Lưu ý: chỉ các màu có tương phản chữ trắng ≥ 4,5:1 ở chế độ sáng được dùng (`color-chart-1`, `-3`, `-4`, `-5`, `-6`, `-7`); `color-chart-2` và `color-chart-8` bị loại; ở chế độ tối dùng nền `color-neutral-bg` với chữ `color-neutral-on-bg` để không phải kiểm tra thêm tương phản chữ trắng trên các màu biểu đồ tối. `system`: biểu tượng `key` hoặc `tenant` trên nền `color-fill-control`, dùng cho chủ thể máy trong kiểm toán.
+
+**Kích thước.** `sm` 24px (bảng, nhật ký), `md` 32px (menu người dùng), `lg` 40px (trang hồ sơ). Chữ cái đầu dùng `font-caption` độ đậm 600 (`sm`), `font-footnote` 600 (`md`), `font-body-strong` (`lg`).
+
+**Token.** `TKN-color-chart-1`, `TKN-color-chart-3`, `TKN-color-chart-4`, `TKN-color-chart-5`, `TKN-color-chart-6`, `TKN-color-chart-7`, `TKN-color-text-on-accent`, `TKN-color-neutral-bg`, `TKN-color-neutral-on-bg`, `TKN-color-fill-control`, `TKN-radius-pill`, `TKN-radius-sm`, `TKN-size-control-sm`, `TKN-size-control-md`, `TKN-size-control-lg`.
+
+**Nền đặt.** Mọi nền.
+
+**ARIA.** Avatar đứng cạnh tên người: `aria-hidden="true"` (tên đã nói). Avatar đứng riêng (trong `Avatar.Group`): `role="img"` và `aria-label` bằng họ tên; phần "+2" có `aria-label="và 2 người khác"`.
+
+**Bảo vệ dữ liệu.** Ảnh đại diện tải qua URL có ký tên ngắn hạn của kho đối tượng, không nhúng base64 vào phản hồi danh sách. Avatar không hiển thị thông tin cá nhân khác ngoài tên hiển thị.
+
+**API.**
+
+```tsx
+export interface DhAvatarProps {
+  name: string;
+  subjectType?: 'user' | 'system' | 'tenant';
+  src?: string;
+  size?: 'sm' | 'md' | 'lg';
+  /** Mã ổn định để chọn màu nền chữ cái đầu. */
+  seed: string;
+  decorative?: boolean;
+}
+```
+
+```tsx
+<Space size="small"><Avatar name={actor.name} seed={actor.id} size="sm" decorative /> <Text>{actor.name}</Text></Space>
+```
+
+**Điều cấm.** Cấm dùng ảnh mặc định của bên thứ ba (Gravatar) vì gửi thư điện tử băm ra ngoài. Cấm chọn màu ngẫu nhiên mỗi lần hiển thị.
+
+## 6. Nhóm phản hồi tiến trình và gợi ý
+
+### 6.1. CMP-Spinner
+
+**Mục đích.** `CMP-Spinner` báo một thao tác đang chạy mà không biết trước thời lượng, ở phạm vi nhỏ: trong nút, trong ô, trong vùng nhỏ của thẻ. Với tải dữ liệu lần đầu của một vùng có cấu trúc biết trước (bảng, thẻ, biểu mẫu), dùng `CMP-Skeleton`; với thao tác biết tiến độ, dùng `CMP-ProgressBar`.
+
+**Nền antd.** `Spin` với `indicator` là biểu tượng tự vẽ (vòng cung SVG nét 2px quay 0,8 giây một vòng) thay cho bốn chấm mặc định của antd, để khớp ngôn ngữ Liquid Glass. Đặt toàn cục qua `ConfigProvider spin={{ indicator }}` trong `CMP-ThemeProvider`.
+
+**Kích thước.** `sm` = `size-icon-sm` (trong nút `sm`, ô bảng), `md` = `size-icon-md` (trong nút `md`, `lg`), `lg` = 32px (giữa vùng nội dung). Token thành phần antd `Spin.dotSize`, `Spin.dotSizeSM`, `Spin.dotSizeLG` đặt tương ứng 16, 14, 32.
+
+**Màu.** Kế thừa `currentColor`; mặc định `color-icon-secondary`, trong nút primary là `color-text-on-accent`.
+
+**Chuyển động.** Khi giảm chuyển động, vòng cung không quay mà đổi độ đục nhịp chậm (1 → 0,5, chu kỳ 1,6 giây), vẫn cho biết đang chạy.
+
+**Độ trễ hiển thị.** Prop `delay` mặc định 150ms (antd `Spin.delay`), tránh nhấp nháy với thao tác nhanh.
+
+**Token.** `TKN-color-icon-secondary`, `TKN-color-text-on-accent`, `TKN-size-icon-sm`, `TKN-size-icon-md`.
+
+**Nền đặt.** Mọi nền.
+
+**ARIA.** Spinner đứng riêng có `role="status"` và chữ ẩn từ prop `label` (mặc định "Đang tải"). Spinner trong nút không có `role` riêng; nút đã có `aria-busy`. Vùng đang tải có `aria-busy="true"` do vùng chứa đặt.
+
+**API.**
+
+```tsx
+export interface DhSpinnerProps { size?: 'sm' | 'md' | 'lg'; label?: string; delay?: number; testId?: string; }
+```
+
+```tsx
+<Spinner size="lg" label="Đang tải danh sách lượt chạy" />
+```
+
+**Điều cấm.** Cấm dùng spinner toàn trang che cả ứng dụng (dùng Skeleton theo vùng). Cấm spinner quá 3 giây mà không chuyển sang thông báo tiến độ hoặc tác vụ nền (FR-00-054).
+
+### 6.2. CMP-Skeleton
+
+**Mục đích.** `CMP-Skeleton` giữ chỗ cho nội dung đang tải lần đầu bằng các khối xám có hình dạng giống nội dung thật, để bố cục không nhảy khi dữ liệu về (giảm CLS, phục vụ NFR-00-005) và người dùng biết sắp thấy gì.
+
+**Nền antd.** `Skeleton` (đoạn), `Skeleton.Input`, `Skeleton.Button`, `Skeleton.Avatar`, `Skeleton.Node`. Hàm bọc cung cấp các mẫu dựng sẵn khớp thành phần phức hợp: `table` (hàng tiêu đề + n hàng, chiều cao `size-table-row`), `description` (cặp nhãn – giá trị), `form` (nhãn + ô nhập), `card`, `kpi`.
+
+**Thị giác.** Khối nền `color-fill-control`, bo `radius-xs` cho dòng chữ và bo theo thành phần thật cho khối khác. Hiệu ứng ánh sáng lướt (shimmer) bật mặc định với chu kỳ 1,6 giây, dải sáng dùng `color-fill-hover`; token thành phần antd `Skeleton.gradientFromColor` và `Skeleton.gradientToColor` đặt lần lượt theo `color-fill-control` và `color-fill-pressed`. Khi giảm chuyển động, tắt shimmer, giữ khối tĩnh.
+
+**Thời điểm.** Skeleton chỉ cho lần tải đầu. Khi làm mới dữ liệu đã có (đổi trang, lọc lại), giữ dữ liệu cũ hiển thị mờ nhẹ kèm `CMP-Spinner` nhỏ ở góc vùng hoặc thanh tiến trình mảnh trên đầu bảng, không quay về Skeleton (tránh nhấp nháy, TanStack Query `placeholderData: keepPreviousData`). Skeleton chỉ hiện sau 200ms; nếu dữ liệu về trước đó thì không hiện.
+
+**Token.** `TKN-color-fill-control`, `TKN-color-fill-hover`, `TKN-color-fill-pressed`, `TKN-radius-xs`, `TKN-size-table-row`, `TKN-motion-duration-slower`.
+
+**Nền đặt.** Nền đặc. Trong popover glass (danh sách đang tải của Select), dùng `CMP-Spinner` thay vì Skeleton.
+
+**ARIA.** Vùng chứa Skeleton có `aria-busy="true"` và `aria-label` mô tả ("Đang tải bảng dịch vụ"); các khối có `aria-hidden="true"`.
+
+**API.**
+
+```tsx
+export interface DhSkeletonProps {
+  preset?: 'text' | 'table' | 'description' | 'form' | 'card' | 'kpi';
+  rows?: number;
+  columns?: number;     // preset table
+  label: string;
+  active?: boolean;     // shimmer, mặc định true
+}
+```
+
+```tsx
+{isLoading ? <Skeleton preset="description" rows={6} label="Đang tải thông tin dịch vụ" /> : <DescriptionList … />}
+```
+
+**Điều cấm.** Cấm Skeleton có hình dạng khác hẳn nội dung thật. Cấm dùng Skeleton cho thao tác gửi biểu mẫu.
+
+### 6.3. CMP-ProgressBar
+
+**Mục đích.** `CMP-ProgressBar` thể hiện tiến độ đã biết của một thao tác (nhập tệp, xuất dữ liệu, tải lên) hoặc mức sử dụng hạn mức (dung lượng, hạn ngạch lượt gọi). Thành phần phức hợp `CMP-JobProgress` (D03-05-04) ghép ProgressBar với trạng thái tác vụ nền.
+
+**Nền antd.** `Progress` với `type="line"`. Không dùng `type="circle"` và `type="dashboard"` trong ứng dụng quản trị (vòng tròn chiếm diện tích, khó so sánh), trừ trong `CMP-KpiCard` nếu D03-05-04 cho phép.
+
+**Biến thể.** `progress` (tiến độ thao tác; màu `color-accent`; khi xong chuyển `color-success-text` và hiện biểu tượng `success`; khi lỗi chuyển `color-error-text` và biểu tượng `error`) và `meter` (mức sử dụng; màu theo ngưỡng: dưới 80% `color-accent`, từ 80% `color-warning-solid` kèm chữ "Sắp đạt hạn mức", từ 100% `color-error-solid` kèm chữ "Đã đạt hạn mức"; ngưỡng cấu hình được). Biến thể `indeterminate` (không biết tiến độ, dải chạy qua lại) chỉ dùng tạm khi máy chủ chưa trả tiến độ, tối đa vài giây.
+
+**Kích thước.** Độ dày 4px (`sm`, trên đầu bảng) hoặc 8px (`md`, mặc định). Bo `radius-xs` (token thành phần antd `Progress.lineBorderRadius`). Rãnh (`Progress.remainingColor`) dùng `color-fill-control`.
+
+**Chữ đi kèm.** Phần trăm hiển thị bên phải bằng `font-footnote` với `font-feature-tabular`, làm tròn số nguyên, định dạng "45%". Với nhập tệp, chữ phụ nêu số tuyệt đối "4.500 / 10.000 dòng". Phần trăm không bao giờ là kênh duy nhất của trạng thái lỗi; luôn kèm chữ "Thất bại" và biểu tượng.
+
+**Token.** `TKN-color-accent`, `TKN-color-success-text`, `TKN-color-error-text`, `TKN-color-warning-solid`, `TKN-color-error-solid`, `TKN-color-fill-control`, `TKN-radius-xs`, `TKN-font-footnote`, `TKN-font-feature-tabular`, `TKN-motion-duration-base`.
+
+**Nền đặt.** Nền đặc và `glass-overlay` (trong `CMP-Notification` báo tiến độ tác vụ nền).
+
+**ARIA.** `role="progressbar"`, `aria-valuenow`, `aria-valuemin="0"`, `aria-valuemax="100"`, `aria-valuetext` dạng "4.500 trên 10.000 dòng, 45%". `indeterminate` không có `aria-valuenow`. Biến thể `meter` dùng `role="meter"`. Thay đổi phần trăm không được đọc liên tục; vùng chứa thông báo `aria-live` ở các mốc 25/50/75/100% hoặc khi xong.
+
+**API.**
+
+```tsx
+export interface DhProgressBarProps {
+  variant?: 'progress' | 'meter' | 'indeterminate';
+  percent?: number;
+  status?: 'active' | 'success' | 'error';
+  size?: 'sm' | 'md';
+  valueText?: string;
+  thresholds?: { warning: number; error: number }; // meter, mặc định 80/100
+  label: string;
+  showPercent?: boolean;
+}
+```
+
+```tsx
+<ProgressBar label="Tiến độ nhập tệp" percent={45} valueText="4.500 / 10.000 dòng" />
+<ProgressBar variant="meter" label="Hạn ngạch lượt gọi tháng này" percent={86} />
+```
+
+**Điều cấm.** Cấm thanh tiến độ giả (tăng theo thời gian không dựa vào máy chủ). Cấm dùng màu đỏ cho thanh `progress` đang chạy bình thường.
+
+### 6.4. CMP-Tooltip
+
+**Mục đích.** `CMP-Tooltip` hiển thị chữ gợi ý ngắn khi hover hoặc focus vào một phần tử: tên của nút biểu tượng, chữ đầy đủ của nội dung bị rút gọn, lý do nút bị khóa, giờ chính xác của thời điểm tương đối.
+
+**Khi dùng.** Bổ sung thông tin không bắt buộc cho thao tác. **Khi không dùng.** Thông tin người dùng **bắt buộc** phải biết để hoàn thành việc (hướng dẫn nhập, điều kiện, cảnh báo hậu quả) không được chỉ nằm trong tooltip; phải hiển thị thường trực bằng chữ mô tả của `CMP-FormField` hoặc `CMP-Alert`. Nội dung tương tác (liên kết, nút) không được đặt trong tooltip; dùng `CMP-Popover` (D03-05-04).
+
+**Nền antd.** `Tooltip`. Nền là `colorBgSpotlight` = `color-surface-inverse` (nền đảo đặc, **không glass**), chữ `color-text-on-inverse`. Token thành phần antd `Tooltip.maxWidth` 320 đã đặt ở D03-05-02 §13.3. Hàm bọc cố định `mouseEnterDelay={0.4}`, `mouseLeaveDelay={0.1}`, `arrow={false}` (Liquid Glass không dùng mũi tên; tooltip cách phần tử 6px), `trigger={['hover', 'focus']}`, `destroyOnHidden`. Lớp `dh-tooltip` gắn qua `classNames.root`, phần thân qua `classNames.container` (tên phần ngữ nghĩa đã đối chiếu antd 6.7.1).
+
+**Kích thước.** Đệm `space-1` dọc và `space-2` ngang, chữ `font-footnote`, bo `radius-sm`, rộng tối đa 320px, xuống dòng tự nhiên. Không có kích thước khác.
+
+**Chuyển động.** Xuất hiện bằng mờ dần + phóng `motion-scale-enter` trong `motion-duration-fast` với `motion-ease-emphasized`; khi giảm chuyển động chỉ mờ dần.
+
+**Token.** `TKN-color-surface-inverse`, `TKN-color-text-on-inverse`, `TKN-font-footnote`, `TKN-radius-sm`, `TKN-space-1`, `TKN-space-2`, `TKN-motion-duration-fast`, `TKN-motion-ease-emphasized`, `TKN-motion-scale-enter`, `TKN-z-tooltip`.
+
+**Nền đặt.** Tooltip tự có nền đặc nên đặt được trên mọi nền; mở được từ trong Modal, popover glass.
+
+**Bàn phím và ARIA.** Tooltip mở **ngay** khi phần tử nhận focus bằng bàn phím (không chờ 400ms), đóng khi mất focus hoặc khi nhấn Esc (WCAG 1.4.13: có thể bỏ qua). Người dùng di chuột từ phần tử lên tooltip thì tooltip không đóng (có thể rê). Phần tử kích hoạt nhận `aria-describedby` trỏ tới tooltip, trừ trường hợp tooltip là tên duy nhất của nút biểu tượng: khi đó `CMP-IconButton` dùng `aria-label` và tooltip chỉ hiển thị thị giác (`aria-hidden` trên tooltip) để không đọc hai lần. Phần tử không focus được (chữ bị rút gọn) phải được thành phần cha thêm `tabIndex={0}`. Tooltip không mở trên thiết bị cảm ứng khi chạm (chạm là kích hoạt); thông tin vì vậy càng không được là bắt buộc.
+
+**Nội dung tiếng Việt.** Câu ngắn, tối đa khoảng 80 ký tự, không dấu chấm cuối nếu là cụm từ, có dấu chấm nếu là câu đầy đủ. Tooltip của nút biểu tượng là động từ ("Làm mới", "Cài đặt cột"). Có thể kèm `CMP-Kbd` phím tắt.
+
+**API.**
+
+```tsx
+export interface DhTooltipProps {
+  title: React.ReactNode;
+  children: React.ReactElement;         // phần tử nhận ref và focus
+  placement?: 'top' | 'bottom' | 'left' | 'right';
+  /** true khi tooltip lặp lại aria-label của phần tử, để tránh đọc hai lần. */
+  visualOnly?: boolean;
+  open?: boolean;                        // điều khiển, dùng cho trạng thái "Đã sao chép"
+}
+```
+
+```tsx
+<Tooltip title="Thời điểm theo giờ Việt Nam (UTC+07:00)">
+  <Text tabIndex={0}>2 phút trước</Text>
+</Tooltip>
+```
+
+**Điều cấm.** Cấm đặt thông tin bắt buộc duy nhất trong tooltip. Cấm liên kết, nút trong tooltip. Cấm dùng thuộc tính HTML `title` thay tooltip. Cấm tooltip glass. Cấm tooltip trên phần tử `disabled` gốc (không nhận sự kiện; dùng `disabledReason`).
+

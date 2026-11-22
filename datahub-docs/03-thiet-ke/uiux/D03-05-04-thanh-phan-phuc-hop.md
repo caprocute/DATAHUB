@@ -602,3 +602,502 @@ export interface DhResultPageProps {
   primaryAction={<DhButton type="primary" href={`/requests/${req.id}`}>Xem yêu cầu</DhButton>} />
 ```
 
+
+## 6. Hiển thị dữ liệu
+
+### 6.1. CMP-Card
+
+`CMP-Card` là khối nền đặc cơ bản nhóm nội dung liên quan trên trang chi tiết, dashboard và trang cài đặt. Card là "bề mặt đặc nằm trên canvas" theo mô hình lớp của D03-05-02 §4.1. Không dùng Card để bọc một bảng đã có khung riêng (`CMP-DataTable` tự có thẻ) và không lồng Card trong Card.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Card` của antd, `variant="outlined"`; token thành phần `headerFontSize`, `bodyPadding`, `headerPadding` theo D03-05-02 §13.3. |
+| Giải phẫu | (1) Tiêu đề `font-title-3`; (2) phụ đề hoặc mô tả; (3) vùng hành động đầu thẻ (`extra`): tối đa hai `CMP-IconButton` hoặc một nút chữ; (4) thân; (5) chân thẻ tùy chọn (liên kết "Xem tất cả"). |
+| Vật liệu | Nền đặc `color-surface-solid`, viền `color-border-subtle`, `shadow-1`. Vùng phụ trong thẻ dùng `color-surface-solid-2`. Card có ảnh đầu thẻ dùng bo góc đồng tâm cho ảnh. |
+| Biến thể | `default`, `section` (không viền, dùng làm nhóm trong trang cài đặt), `interactive` (cả thẻ bấm được, hover dùng `color-fill-hover`, dùng cho lưới lựa chọn). |
+| Kích thước | Đệm `space-5` (gọn `space-4`); bo `radius-lg`. |
+| Trạng thái | Đang tải (Skeleton thân), sẵn sàng, rỗng (EmptyState `compact`), lỗi (Alert `inline` trong thân), không có quyền (EmptyState `no-permission` `compact`). |
+| Token | `color-surface-solid`, `color-surface-solid-2`, `color-border-subtle`, `shadow-1`, `radius-lg`, `space-4`, `space-5`, `font-title-3`. |
+| Bàn phím, ARIA | Card có tiêu đề là `<section aria-labelledby>`; biến thể `interactive` là một phần tử `<a>` hoặc `<button>` duy nhất bao toàn thẻ, không chứa phần tử tương tác lồng nhau. |
+| Nội dung | Tiêu đề danh từ ngắn ("Thông tin kết nối", "Lượt gọi 7 ngày"). |
+| Điều cấm | Không đặt glass cho Card; không lồng Card. |
+
+```ts
+export interface DhCardProps {
+  title?: string; subtitle?: string; extra?: React.ReactNode; footer?: React.ReactNode;
+  variant?: 'default' | 'section' | 'interactive'; href?: string; onClick?: () => void;
+  loading?: boolean; error?: DhApiError; empty?: boolean; children?: React.ReactNode;
+}
+```
+
+```tsx
+<DhCard title="Thông tin kết nối" extra={<DhCopyButton value={endpoint} label="Sao chép địa chỉ" />}>
+  <DhDescriptionList items={connectionItems} column={2} />
+</DhCard>
+```
+
+### 6.2. CMP-KpiCard
+
+`CMP-KpiCard` hiển thị một chỉ số quan trọng trên dashboard (PTN-06) và trang tổng quan phân hệ: giá trị lớn, đơn vị, so sánh với kỳ trước và biểu đồ nhỏ (sparkline) tùy chọn. Không dùng KpiCard cho số liệu không có ý nghĩa so sánh hoặc cho danh sách số liệu (dùng `CMP-DescriptionList`).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Mở rộng `CMP-Card`; giá trị dùng `Statistic` của antd với `formatter` theo định dạng số Việt Nam; sparkline là `CMP-Chart` biến thể `spark`. |
+| Giải phẫu | (1) Nhãn chỉ số; (2) giá trị lớn và đơn vị; (3) chỉ báo thay đổi: mũi tên Lucide `TrendingUp`/`TrendingDown`, phần trăm và chữ "so với 7 ngày trước"; (4) sparkline; (5) liên kết "Xem chi tiết". |
+| Vật liệu | Nền đặc như Card. |
+| Biến thể | `default`, `with-spark`, `status` (giá trị là trạng thái sức khỏe, dùng `CMP-StatusTag`). |
+| Kích thước | Giá trị `font-display`; nhãn `font-footnote`; cao tối thiểu 120px; lưới 4 cột từ `bp-xxl`, 2 cột dưới `bp-xl`. |
+| Trạng thái | Đang tải (Skeleton giá trị), sẵn sàng, không có dữ liệu kỳ trước (ẩn chỉ báo thay đổi, ghi "Chưa đủ dữ liệu so sánh"), lỗi (giá trị "—" kèm biểu tượng cảnh báo và Tooltip lỗi). |
+| Token | `font-display`, `font-feature-tabular`, `font-footnote`, `color-success-text`, `color-error-text`, `color-text-secondary`. |
+| Bàn phím, ARIA | Toàn thẻ có nhãn đọc liền mạch: "Lượt gọi API hôm nay: 1.234.567, tăng 12,5% so với 7 ngày trước"; sparkline `aria-hidden="true"` vì giá trị đã có ở chữ. |
+| Nội dung | Chiều tăng không mặc định là tốt: thành phần nhận `goodDirection` để tô `color-success-text` hay `color-error-text` (ví dụ tỷ lệ lỗi tăng là xấu); màu luôn kèm mũi tên và chữ "tăng"/"giảm". |
+| Điều cấm | Không làm tròn mất nghĩa (dùng "1,2 triệu" chỉ khi có Tooltip giá trị đầy đủ); không chỉ dùng màu để báo tăng giảm. |
+
+```ts
+export interface DhKpiCardProps {
+  label: string; value: number | null; unit?: string;
+  format?: 'number' | 'percent' | 'money' | 'duration';
+  delta?: { value: number; periodLabel: string }; goodDirection?: 'up' | 'down';
+  spark?: number[]; href?: string; loading?: boolean; error?: DhApiError;
+}
+```
+
+```tsx
+<DhKpiCard label="Tỷ lệ lỗi gateway" value={0.42} format="percent" goodDirection="down"
+  delta={{ value: 0.08, periodLabel: 'so với 7 ngày trước' }} spark={errorRateSeries} href="/monitoring/gateway" />
+```
+
+### 6.3. CMP-DescriptionList
+
+`CMP-DescriptionList` trình bày các cặp nhãn–giá trị chỉ đọc trên trang chi tiết (PTN-02), trong Drawer xem nhanh và trong khối "Thông tin hệ thống" (người tạo, ngày tạo, người cập nhật, ngày cập nhật, CRUD-R-03/04). Không dùng cho dữ liệu có thể sửa tại chỗ (dùng `CMP-Form` chế độ chỉ đọc chuyển sang sửa).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Descriptions` của antd, `layout="vertical"` khi hẹp hơn `bp-md`, `"horizontal"` khi rộng; `colon={false}`; `column` 1–3. |
+| Giải phẫu | (1) Tiêu đề nhóm tùy chọn; (2) nhãn; (3) giá trị, dùng thành phần nguyên tử phù hợp (`CMP-Timestamp`, `CMP-Money`, `CMP-Identifier`, `CMP-MaskedValue`, `CMP-StatusTag`); (4) nút sao chép cạnh giá trị định danh. |
+| Vật liệu | Kế thừa nền đặc của Card hoặc giếng nội dung. |
+| Biến thể | `default`, `system-info` (bốn trường hệ thống cố định ở cuối trang chi tiết), `bordered` (có đường kẻ, dùng trong so sánh). |
+| Kích thước | Nhãn `font-footnote` `color-text-tertiary`; giá trị `font-body`; khoảng hàng `space-3`. |
+| Trạng thái | Đang tải (Skeleton theo số trường), sẵn sàng, giá trị rỗng hiển thị "—" (CRUD-R-05), giá trị bị che (`CMP-MaskedValue` với nút "Hiện" khi có quyền, FR-00-034). |
+| Token | `font-footnote`, `font-body`, `color-text-tertiary`, `color-text-primary`, `space-3`. |
+| Bàn phím, ARIA | Dựng bằng `<dl>`, `<dt>`, `<dd>`; giá trị dài cắt dòng bằng `…` và mở rộng bằng nút "Xem thêm" (không chỉ Tooltip, vì Tooltip không chọn chữ được). |
+| Nội dung | Nhãn như nhãn biểu mẫu tương ứng để người dùng nhận ra cùng trường. |
+| Điều cấm | Không để giá trị trống; không đặt hành động sửa trong từng ô. |
+
+```ts
+export interface DhDescriptionListProps {
+  items: Array<{ key: string; label: string; value: React.ReactNode; span?: number; copyable?: string }>;
+  column?: 1 | 2 | 3; variant?: 'default' | 'system-info' | 'bordered'; loading?: boolean; title?: string;
+}
+```
+
+```tsx
+<DhDescriptionList variant="system-info" items={[
+  { key: 'cb', label: 'Người tạo', value: s.createdByName },
+  { key: 'ca', label: 'Ngày tạo', value: <DhTimestamp value={s.createdAt} /> },
+]} />
+```
+
+### 6.4. CMP-Tree
+
+`CMP-Tree` hiển thị dữ liệu phân cấp: danh mục dùng chung nhiều cấp (PH-07), đơn vị hành chính, cây cơ quan, cây thư mục dự án tích hợp. Đây là cột trái của PTN-08 (cây + bảng). Không dùng Tree cho dữ liệu phẳng hoặc chỉ hai cấp ít mục (dùng nhóm trong Select hoặc Tabs).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Tree` của antd, `blockNode`, `virtual` với `height` khi trên 200 nút, `loadData` cho tải lười theo cấp, `showLine={{ showLeafIcon: false }}`. |
+| Giải phẫu | (1) Ô tìm trong cây (lọc cục bộ với cây đã tải, hoặc tìm máy chủ trả đường dẫn để mở rộng); (2) nút mở/đóng; (3) biểu tượng loại nút; (4) nhãn có tô đậm phần khớp; (5) số đếm con tùy chọn; (6) menu ngữ cảnh "⋯" theo `allowedActions` của nút. |
+| Vật liệu | Nền đặc `color-surface-solid` (cột trái của PTN-08 là một thẻ đặc, không phải glass). |
+| Biến thể | `navigate` (chọn một nút để lọc bảng bên phải), `checkable` (chọn nhiều, ba trạng thái cha), `draggable` (sắp xếp lại; bắt buộc có lệnh "Di chuyển tới…" trong menu ngữ cảnh làm phương án không kéo thả theo WCAG 2.5.7). |
+| Kích thước | Cao nút 32px (gọn 28px); thụt cấp 24px; rộng cột 280–360px, kéo giãn được bằng tay nắm có phương án bàn phím (mũi tên trái/phải khi tay nắm có focus). |
+| Trạng thái | Đang tải gốc (Skeleton 6 dòng), đang tải con (Spinner ở nút), rỗng, lỗi tải con (biểu tượng lỗi ở nút, nút "Thử lại"), nút bị vô hiệu, nút đã chọn (`color-fill-selected`). |
+| Token | `color-fill-selected`, `color-fill-hover`, `color-accent-on-subtle`, `color-border-subtle` (đường nối), `font-body`, `radius-md`. |
+| Bàn phím, ARIA | Mẫu ARIA Tree: `role="tree"`, `role="treeitem"`, `aria-expanded`, `aria-level`, `aria-setsize`, `aria-posinset`; mũi tên lên/xuống di chuyển, phải mở/vào con, trái đóng/về cha, Home/End, ký tự đầu để nhảy, Space chọn ở biến thể `checkable`. |
+| Nội dung | Nhãn nút dạng "Mã · Tên" khi mã có nghĩa ("79 · TP. Hồ Chí Minh"). |
+| Điều cấm | Không chỉ cho kéo thả để sắp xếp; không tải toàn bộ cây lớn hơn 5.000 nút một lần. |
+
+```ts
+export interface DhTreeNode { key: string; title: string; isLeaf?: boolean; count?: number; allowedActions?: string[]; children?: DhTreeNode[] }
+export interface DhTreeProps {
+  variant?: 'navigate' | 'checkable' | 'draggable';
+  treeData: DhTreeNode[]; loadChildren?: (key: string) => Promise<DhTreeNode[]>;
+  selectedKey?: string; onSelect?: (key: string) => void;
+  checkedKeys?: string[]; onCheck?: (keys: string[]) => void;
+  onMove?: (key: string, targetParentKey: string, index: number) => Promise<void>;
+  searchable?: boolean; nodeActions?: (node: DhTreeNode) => DhMenuItem[];
+}
+```
+
+```tsx
+<DhTree variant="navigate" searchable treeData={roots} loadChildren={fetchChildUnits}
+  selectedKey={params.unit} onSelect={(unit) => setParams({ unit, page: 1 })} />
+```
+
+### 6.5. CMP-Transfer
+
+`CMP-Transfer` chuyển mục giữa hai danh sách "Có thể chọn" và "Đã chọn", dùng khi tập lựa chọn lớn và người dùng cần thấy rõ những gì đã chọn: gán quyền cho vai trò (PH-12), chọn trường dữ liệu được khai thác (PH-09), chọn dịch vụ vào gói sử dụng (PH-02). Không dùng khi dưới 10 lựa chọn (dùng nhóm `CMP-Checkbox`) hoặc khi chỉ chọn một.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Transfer` của antd, `showSearch`, `oneWay={false}`, `pagination` khi trên 200 mục; với danh sách máy chủ lớn dùng `render` tùy biến và tìm máy chủ. |
+| Giải phẫu | (1) Hai khung danh sách có tiêu đề và số đếm ("Có thể chọn (124)", "Đã chọn (8)"); (2) ô tìm mỗi khung; (3) ô chọn tất cả ba trạng thái; (4) hai nút chuyển "Thêm" và "Bỏ"; (5) mục có mô tả phụ. |
+| Vật liệu | Nền đặc; mỗi khung `color-surface-solid` viền `color-border-subtle`. |
+| Biến thể | `default`, `with-description` (mục hai dòng). |
+| Kích thước | Mỗi khung rộng tối thiểu 280px, cao 360px; nút chuyển `size-control-md`. |
+| Trạng thái | Đang tải, rỗng mỗi khung (EmptyState `compact`), mục vô hiệu (kèm Tooltip lý do, ví dụ "Quyền này chỉ dành cho vai trò nền tảng"), lỗi tải. |
+| Token | `color-surface-solid`, `color-border-subtle`, `color-fill-selected`, `radius-lg`, `font-body`. |
+| Bàn phím, ARIA | Mỗi khung là `role="listbox"` `aria-multiselectable="true"`; Space chọn mục, nút chuyển có nhãn chữ "Thêm vào đã chọn" và "Bỏ khỏi đã chọn" (không chỉ mũi tên); số đếm cập nhật qua `aria-live="polite"`. |
+| Nội dung | Tiêu đề khung theo nghiệp vụ ("Quyền có thể gán", "Quyền đã gán"). |
+| Điều cấm | Không chỉ dùng kéo thả để chuyển mục. |
+
+```ts
+export interface DhTransferProps<K extends string = string> {
+  dataSource: Array<{ key: K; title: string; description?: string; disabledReason?: string }>;
+  targetKeys: K[]; onChange: (keys: K[]) => void;
+  titles: [string, string]; loading?: boolean; onSearch?: (dir: 'left' | 'right', q: string) => void;
+}
+```
+
+```tsx
+<DhTransfer titles={['Quyền có thể gán', 'Quyền đã gán']} dataSource={permissions}
+  targetKeys={form.permissions} onChange={setPermissions} />
+```
+
+### 6.6. CMP-Chart
+
+`CMP-Chart` là lớp bọc Apache ECharts (ADR-023) cho mọi biểu đồ của `dh-console` và `dh-portal`: lưu lượng API, tỷ lệ lỗi, độ trễ, chất lượng dữ liệu, chỉ tiêu báo cáo. Thành phần bảo đảm biểu đồ lấy màu, chữ, lưới từ token, đọc được ở cả hai chế độ sáng tối, không dựa vào màu làm phương tiện duy nhất, và luôn có bảng dữ liệu thay thế cho trình đọc màn hình (NFR-00-040).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `echarts/core` nhập theo nhu cầu (tree-shaking): `LineChart`, `BarChart`, `PieChart`, `HeatmapChart`, `GridComponent`, `TooltipComponent`, `LegendComponent`, `DataZoomComponent`, `AriaComponent`, `SVGRenderer` (mặc định) và `CanvasRenderer` (khi trên 5.000 điểm). Theme `datahub-light` và `datahub-dark` đăng ký bằng `echarts.registerTheme` từ `tokens.light`/`tokens.dark` của `@datahub/tokens`; đổi chế độ thì khởi tạo lại biểu đồ với theme mới. |
+| Giải phẫu | (1) Tiêu đề và mô tả ngắn (nằm ngoài canvas biểu đồ, là chữ HTML); (2) thanh công cụ: chọn khoảng thời gian (`CMP-SegmentedControl` "1 giờ / 24 giờ / 7 ngày / 30 ngày"), nút "Xem dạng bảng", nút "Tải PNG/CSV"; (3) vùng vẽ; (4) nhãn trực tiếp ở cuối mỗi đường hoặc trên mỗi cột; (5) chú giải có ký hiệu hình dạng; (6) Tooltip; (7) bảng dữ liệu thay thế. |
+| Vật liệu | Vùng vẽ nền đặc `color-surface-solid` (biểu đồ nằm trong `CMP-Card`). Tooltip của ECharts dùng nền đảo đặc `color-surface-inverse` như `CMP-Tooltip`, không glass. |
+| Biến thể | `line`, `area`, `bar`, `stacked-bar`, `pie` (chỉ khi tối đa 5 phần và có nhãn phần trăm trực tiếp), `heatmap`, `spark` (không trục, không tương tác, cho KpiCard). |
+| Kích thước | Cao mặc định 280px (`spark`: 40px); chữ trục `font-caption`; nhãn dữ liệu `font-caption` đậm 500. |
+| Trạng thái | Đang tải (Skeleton hình chữ nhật đúng chiều cao), rỗng ("Chưa có dữ liệu trong khoảng thời gian này"), lỗi (Alert `inline`), dữ liệu một phần (chú thích "Thiếu dữ liệu từ 10:00 đến 10:15" và khoảng trống trên đường, không nối giả). |
+| Token | `color-chart-1` … `color-chart-8` theo thứ tự ưu tiên (màu 8 dùng cuối), `color-text-secondary` (chữ trục), `color-border-subtle` (lưới), `color-surface-inverse` + `color-text-on-inverse` (Tooltip), `font-family-sans`, `font-caption`, `font-feature-tabular`, `motion-duration-base` (tắt khi giảm chuyển động). |
+| Bàn phím, ARIA | Phần tử chứa có `role="figure"` và `aria-labelledby` trỏ tiêu đề, `aria-describedby` trỏ đoạn tóm tắt sinh tự động (ví dụ "Lượt gọi tăng từ 12.300 lên 18.900 trong 7 ngày, cao nhất ngày 20/11/2026"). Tùy chọn `aria: { enabled: true, decal: { show: true } }` của ECharts bật hoa văn (decal) phân biệt chuỗi khi in hoặc khi người dùng bật chế độ tương phản. Nút "Xem dạng bảng" mở `<table>` HTML thật (có `<caption>`, `<th scope>`) thay thế vùng vẽ; bảng này luôn có trong DOM ở dạng ẩn trực quan để trình đọc màn hình truy cập. Tooltip mở được bằng bàn phím: khi vùng vẽ có focus, mũi tên trái/phải di chuyển giữa các điểm dữ liệu và giá trị được đọc qua `aria-live="polite"`. |
+| Nội dung | Số theo định dạng Việt Nam trong trục và Tooltip (`1.234.567`, `12,5%`); thời gian trục `HH:mm` hoặc `DD/MM`; tiêu đề nêu đại lượng và đơn vị ("Độ trễ p95 (ms)"). |
+| Điều cấm | Không dùng biểu đồ 3D, biểu đồ tròn trên 5 phần, hai trục tung khác đơn vị trừ khi có nhãn rõ; không phân biệt chuỗi chỉ bằng màu; không viết mã màu hex trong `option`. |
+
+Theme được sinh như đoạn mã dưới đây; biểu đồ nghiệp vụ không tự đặt `color`, `textStyle` hay `backgroundColor`. Nhãn trực tiếp được bật bằng `endLabel` cho đường và `label.show` cho cột; khi có trên 4 chuỗi, thành phần chuyển sang chú giải có ký hiệu (`legend.icon` lần lượt `circle`, `rect`, `triangle`, `diamond`…) để giữ phân biệt không dựa vào màu.
+
+```ts
+// @datahub/ui/src/chart/theme.ts
+import * as echarts from 'echarts/core';
+import { tokens } from '@datahub/tokens';
+for (const mode of ['light', 'dark'] as const) {
+  const t = tokens[mode];
+  echarts.registerTheme(`datahub-${mode}`, {
+    color: [t.color.chart1, t.color.chart2, t.color.chart3, t.color.chart4, t.color.chart5, t.color.chart6, t.color.chart7, t.color.chart8],
+    backgroundColor: 'transparent',
+    textStyle: { fontFamily: t.font.familySans, color: t.color.textSecondary },
+    categoryAxis: { axisLine: { lineStyle: { color: t.color.borderSubtle } }, splitLine: { show: false } },
+    valueAxis: { splitLine: { lineStyle: { color: t.color.borderSubtle } } },
+    tooltip: { backgroundColor: t.color.surfaceInverse, borderWidth: 0, textStyle: { color: t.color.textOnInverse } },
+  });
+}
+
+export interface DhChartProps {
+  kind: 'line' | 'area' | 'bar' | 'stacked-bar' | 'pie' | 'heatmap' | 'spark';
+  title: string; description?: string; unit?: string;
+  series: Array<{ name: string; data: Array<[string | number, number | null]> }>;
+  xType?: 'time' | 'category'; height?: number;
+  loading?: boolean; error?: DhApiError; summary?: string; // ghi đè tóm tắt tự sinh
+  onRangeChange?: (range: '1h' | '24h' | '7d' | '30d') => void;
+}
+```
+
+```tsx
+<DhCard title="Lượt gọi API theo ngày">
+  <DhChart kind="line" title="Lượt gọi API theo ngày" unit="lượt" xType="time"
+    series={[{ name: 'Thành công', data: okSeries }, { name: 'Lỗi', data: errSeries }]}
+    loading={q.isPending} error={q.error ?? undefined} onRangeChange={setRange} />
+</DhCard>
+```
+
+## 7. Lớp nổi
+
+Lớp nổi là nơi vật liệu glass được dùng nhiều nhất, nên nhóm này tuân thủ chặt mục 2.1. Bảng dưới đây tóm tắt cách các lớp nổi xếp chồng và vật liệu của chúng, để kỹ sư biết lớp nào được mở từ lớp nào.
+
+| Thành phần | Vật liệu khung | Nội dung | Lớp chồng | Được mở từ bên trong Modal/Drawer |
+|---|---|---|---|---|
+| `CMP-Modal`, `CMP-ConfirmDialog`, `CMP-ReasonDialog` | `glass-modal` | Giếng nội dung đặc | `z-modal` | Không (cấm Modal chồng Modal); ConfirmDialog là ngoại lệ có kiểm soát, xem 7.3 |
+| `CMP-Drawer` | `glass-modal` | Giếng nội dung đặc | `z-drawer` | Không mở Drawer từ Modal; từ Drawer chỉ được mở ConfirmDialog/ReasonDialog |
+| `CMP-Popover`, `CMP-DropdownMenu`, popup Select | `glass-overlay` | Trực tiếp trên glass | `z-popover` | Có (ngoại lệ glass trên glass được phép) |
+| `CMP-SessionTimeoutDialog` | `glass-modal` | Giếng nội dung đặc | `z-session-dialog` | Luôn nằm trên mọi lớp |
+
+### 7.1. CMP-Modal
+
+`CMP-Modal` là hộp thoại chặn (modal dialog) cho tác vụ ngắn cần tập trung: biểu mẫu nhanh ít trường (PTN-04), xem trước, chọn đối tượng. Nó là khung chung mà `CMP-ConfirmDialog`, `CMP-ReasonDialog`, `CMP-SessionTimeoutDialog` và `CMP-CommandPalette` kế thừa. Không dùng Modal cho biểu mẫu trên 8 trường hoặc có cuộn dài (dùng `CMP-Drawer` hoặc trang PTN-03), không dùng để hiển thị thông báo thành công (dùng Toast), và không mở Modal từ trong Modal.
+
+#### 7.1.1. Giải phẫu và vật liệu
+
+Modal có cấu trúc hai lớp theo nguyên tắc bo góc đồng tâm của Liquid Glass. Lớp ngoài là **khung glass** dùng vật liệu `glass-modal`, bo `radius-xl` (20px), đệm `space-2` (8px). Lớp trong là **giếng nội dung** nền `color-surface-solid`, bo 20 − 8 = 12px, tính bằng hàm `radius-concentric(radius-xl, space-2)` của D03-05-02 §7. Tiêu đề và nút đóng nằm trên khung glass (chữ chính đạt 12,80:1 ở trường hợp xấu nhất); thân và mọi liên kết nằm trong giếng đặc (vì chữ liên kết trên `glass-modal` chỉ đạt 4,09:1 ở trường hợp xấu nhất). Footer nằm trên khung glass, chỉ chứa nút (nút có nền riêng, không phụ thuộc tương phản với khung).
+
+| Phần con | Khóa `classNames` (antd 6.7.1) | Vật liệu, token |
+|---|---|---|
+| Lớp che phía sau | `mask` | `color-scrim`; `mask={{ blur: false, closable: false }}` (không nhòe lớp che để tránh glass chồng glass và tiết kiệm GPU) |
+| Khung | `container` | `.dh-glass--modal`, `radius-xl`, `shadow-4` ghép `glass-highlight-top` và `glass-edge`; đệm `space-2` |
+| Đầu (tiêu đề, nút đóng) | `header`, `title`, `close` | Trên khung glass; tiêu đề `font-title-2` `color-text-primary`; đệm `space-4` `space-4` `space-3` |
+| Thân (giếng nội dung) | `body` | `color-surface-solid`, bo 12px, đệm `space-5` (gọn `space-4`), cuộn nội bộ khi cao hơn 70vh |
+| Chân (footer) | `footer` | Trên khung glass; đệm `space-3` `space-4`; nút căn phải: nút phụ trước, nút chính sau cùng |
+
+Ở chế độ glass `off`, khung có nền `glass-off-tint` (`color-surface-solid`) và giếng nội dung có thêm viền `color-border-subtle` để vẫn phân biệt hai lớp. Ở chế độ `lite`, khung dùng `glass-lite-tint` và `blur-none`.
+
+#### 7.1.2. Hành vi
+
+Bảng sau quy định hành vi bắt buộc của Modal; đây là các điểm hay bị làm sai khi dùng antd mặc định.
+
+| Hành vi | Quy định | Cấu hình antd |
+|---|---|---|
+| Bẫy focus (focus trap) | Focus không rời Modal khi mở; Tab và Shift+Tab vòng trong Modal | `focusable={{ trap: true, focusTriggerAfterClose: true }}` |
+| Focus ban đầu | Vào trường nhập đầu tiên nếu là biểu mẫu; vào nút an toàn (Hủy) nếu là xác nhận phá hủy; nếu không có thì vào tiêu đề (`tabIndex=-1`) | Tự xử lý trong `afterOpenChange` |
+| Trả focus | Khi đóng, focus về phần tử đã mở Modal | `focusTriggerAfterClose: true` |
+| Esc | Đóng Modal; nếu biểu mẫu bẩn thì hỏi "Bỏ thay đổi?" ngay trong giếng nội dung (dải Alert `warning` với nút "Bỏ thay đổi" và "Tiếp tục sửa"), không mở Modal thứ hai | `keyboard` |
+| Bấm lớp che | Không đóng (tránh mất dữ liệu do bấm nhầm) | `mask={{ closable: false }}` |
+| Cuộn nền | Khóa cuộn trang | `scrollLock` (mặc định) |
+| Chồng Modal | Cấm. `DhModal` kiểm tra ngăn xếp lớp nổi của `CMP-AppShell`; mở Modal khi đã có Modal sẽ ghi cảnh báo ở môi trường phát triển và thay nội dung Modal hiện tại bằng bước kế tiếp (mẫu "điều hướng trong Modal") | Ngăn xếp `useDhOverlayStack` |
+| Hủy khi ẩn | Có, để biểu mẫu mở lại ở trạng thái mới | `destroyOnHidden` |
+| Chuyển động | Phóng `motion-scale-enter` với `motion-duration-slow` và `motion-ease-emphasized`; đóng `motion-ease-exit`; giảm chuyển động thì chỉ mờ dần | Token `motionDurationSlow`, `motionEaseOutBack` |
+| Đang gửi | Nút chính loading, nút đóng và Esc tạm khóa cho tới khi có kết quả | `confirmLoading`, `keyboard={!submitting}` |
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Modal` của antd v6. Props cố định: `centered`, `mask={{ blur: false, closable: false }}`, `focusable={{ trap: true, focusTriggerAfterClose: true }}`, `destroyOnHidden`, `classNames={{ container: 'dh-glass--modal dh-modal__frame', body: 'dh-modal__well' }}`, `width` từ `size-modal-sm`/`md`/`lg`. Không dùng `Modal.confirm` tĩnh; dùng `CMP-ConfirmDialog`. |
+| Biến thể | `form` (thân là `CMP-Form` `panel`, footer có "Hủy" và nút chính), `view` (chỉ nút "Đóng"), `select` (thân là danh sách chọn, nút chính "Chọn"). |
+| Kích thước | `sm` = `size-modal-sm` (416px, xác nhận), `md` = `size-modal-md` (560px, mặc định), `lg` = `size-modal-lg` (800px, xem trước, so sánh); dưới `bp-md` Modal chiếm toàn chiều rộng trừ lề `space-4`. |
+| Trạng thái | Đang mở, đang tải nội dung (Skeleton trong giếng), sẵn sàng, đang gửi, lỗi gửi (Alert trong giếng, không đóng Modal), bẩn (cảnh báo khi đóng), đóng. |
+| Token | `glass-modal`, `radius-xl`, `space-2`, `color-surface-solid`, `color-scrim`, `shadow-4`, `glass-highlight-top`, `glass-edge`, `font-title-2`, `z-modal`, `motion-duration-slow`, `motion-ease-emphasized`, `motion-ease-exit`, `size-modal-sm`, `size-modal-md`, `size-modal-lg`. |
+| Bàn phím, ARIA | `role="dialog"`, `aria-modal="true"`, `aria-labelledby` trỏ tiêu đề, `aria-describedby` trỏ đoạn mô tả đầu giếng nếu có; nút đóng `aria-label="Đóng"`, vùng chạm ≥ 24×24. |
+| Nội dung | Tiêu đề là hành động hoặc đối tượng ("Thêm khóa truy cập"); nút chính lặp lại động từ của tiêu đề ("Thêm"); nút phụ luôn là "Hủy". |
+| Điều cấm | Không chồng Modal; không đặt liên kết hoặc chữ cấp hai trực tiếp trên khung glass; không đóng khi bấm lớp che; không đặt bảng dữ liệu đầy đủ trong Modal (dùng Drawer `lg` hoặc trang). |
+
+```ts
+export interface DhModalProps {
+  open: boolean; onClose: () => void;
+  title: string; description?: string;
+  size?: 'sm' | 'md' | 'lg'; variant?: 'form' | 'view' | 'select';
+  primaryText?: string; onPrimary?: () => Promise<void> | void; primaryDanger?: boolean;
+  submitting?: boolean; dirty?: boolean; loading?: boolean; error?: DhApiError;
+  initialFocus?: 'first-field' | 'cancel' | 'title';
+  children: React.ReactNode;
+}
+```
+
+```tsx
+<DhModal open={open} onClose={close} title="Thêm khóa truy cập" size="md" variant="form"
+  primaryText="Thêm" onPrimary={form.submit} submitting={create.isPending} dirty={form.isDirty}>
+  <DhForm variant="panel" onSubmit={create.mutateAsync} sections={[{ key: 'k', title: 'Thông tin khóa', children: <KeyFields /> }]} />
+</DhModal>
+```
+
+### 7.2. CMP-Drawer
+
+`CMP-Drawer` là ngăn trượt từ cạnh phải cho biểu mẫu nhanh nhiều trường (PTN-04), xem nhanh chi tiết một dòng từ danh sách mà không rời danh sách, bộ lọc mở rộng trên màn hẹp, và khung Sidebar dưới `bp-lg`. Không dùng Drawer cho tác vụ cần toàn màn (dùng trang), không mở Drawer từ Modal, và không mở Drawer chồng Drawer quá một cấp (chỉ cho phép một Drawer con `md` trên Drawer `lg` khi xem chi tiết phần tử con, dùng thuộc tính đẩy `push`).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Drawer` của antd v6. Props cố định: `placement="right"` (sidebar: `"left"`), `size` lấy `size-drawer-md` hoặc `size-drawer-lg`, `mask={{ blur: false, closable: true }}` cho xem nhanh và `closable: false` khi là biểu mẫu, `focusable={{ trap: true, focusTriggerAfterClose: true }}`, `destroyOnHidden`, `classNames={{ section: 'dh-glass--modal dh-drawer__frame', body: 'dh-drawer__well' }}` (khóa `content` đã lỗi thời, dùng `section`). `resizable` bật cho Drawer xem chi tiết, có phương án bàn phím (tay nắm nhận focus, mũi tên trái/phải đổi độ rộng 16px). |
+| Giải phẫu | (1) Lớp che `color-scrim`; (2) khung `glass-modal`, chỉ bo cạnh hở (`radius-xl` ở hai góc trái khi đặt bên phải), đệm `space-2`; (3) đầu: tiêu đề `font-title-3`, phụ đề, `CMP-StatusTag`, vùng `extra` (nút "Mở trang đầy đủ"), nút đóng; (4) giếng nội dung đặc bo 12px; (5) chân: thanh nút giống Modal. |
+| Vật liệu | Khung `glass-modal`; giếng `color-surface-solid`; footer trên khung glass chỉ chứa nút. |
+| Biến thể | `form`, `view` (xem nhanh, có Tabs thu gọn), `filter`, `nav` (sidebar dưới `bp-lg`). |
+| Kích thước | `md` = `size-drawer-md` (560px), `lg` = `size-drawer-lg` (880px); dưới `bp-md` chiếm toàn chiều rộng. |
+| Trạng thái | Như Modal; thêm trạng thái "đang xem bản ghi không còn tồn tại" (giếng hiển thị `CMP-EmptyState` với nội dung "Bản ghi đã bị xóa hoặc thay đổi" và nút "Tải lại danh sách"). |
+| Token | `glass-modal`, `radius-xl`, `space-2`, `color-surface-solid`, `color-scrim`, `shadow-4`, `size-drawer-md`, `size-drawer-lg`, `z-drawer`, `motion-duration-slow`, `motion-ease-emphasized`. |
+| Bàn phím, ARIA | `role="dialog"`, `aria-modal="true"`, `aria-labelledby`; Esc đóng (hỏi nếu bẩn); khi Drawer xem nhanh mở từ một dòng bảng, mũi tên lên/xuống kèm Alt chuyển sang bản ghi trước/sau mà không đóng Drawer. |
+| Nội dung | Như Modal. Drawer xem nhanh luôn có liên kết "Mở trang đầy đủ" để có URL chia sẻ được. |
+| Điều cấm | Không mở Drawer từ Modal; không đặt liên kết trực tiếp trên khung; không dùng Drawer bên trái ngoài biến thể `nav`. |
+
+```ts
+export interface DhDrawerProps extends Omit<DhModalProps, 'size' | 'variant'> {
+  size?: 'md' | 'lg'; variant?: 'form' | 'view' | 'filter' | 'nav';
+  status?: React.ReactNode; fullPageHref?: string;
+  onPrev?: () => void; onNext?: () => void; resizable?: boolean;
+}
+```
+
+```tsx
+<DhDrawer open={!!selectedId} onClose={() => setSelectedId(undefined)} variant="view" size="md"
+  title={app?.name ?? ''} status={<DhStatusTag lifecycle={app?.status} />} fullPageHref={`/apps/${selectedId}`}
+  onPrev={selectPrev} onNext={selectNext}>
+  <AppQuickView id={selectedId} />
+</DhDrawer>
+```
+
+### 7.3. CMP-ConfirmDialog
+
+`CMP-ConfirmDialog` xin xác nhận trước thao tác phá hủy hoặc không hoàn tác được: xóa (xóa mềm theo FR-00-051), thu hồi khóa, hủy yêu cầu, gửi thông báo (CRUD-ACT-03). Đây là hiện thực của vế "phải yêu cầu xác nhận" trong FR-00-050. Khi thao tác còn ảnh hưởng vận hành (tạm dừng dịch vụ, thu hồi đăng ký, hoàn tiền), dùng `CMP-ReasonDialog` thay thế vì cần lý do.
+
+ConfirmDialog có ba mức nghiêm trọng, chọn theo hậu quả của thao tác. Bảng sau là quy tắc chọn mức; SDD phân hệ ghi rõ mức cho từng thao tác.
+
+| Mức | Khi dùng | Hình thức xác nhận | Ví dụ |
+|---|---|---|---|
+| `normal` | Thao tác thay đổi trạng thái, hoàn tác được | Hai nút, nút chính màu nhấn | "Gửi thông báo phiên bản MB01?" |
+| `destructive` | Xóa mềm, thu hồi; khôi phục được bởi quản trị | Hai nút, nút chính phá hủy (`color-error-solid`), focus ban đầu ở "Hủy" | "Xóa dịch vụ Tra cứu hộ tịch?" |
+| `dangerous` | Xóa đối tượng có phụ thuộc rộng, xóa tenant, thu hồi chứng thư gốc, xóa hàng loạt trên 50 bản ghi | Như `destructive` và bắt buộc gõ đúng tên hoặc mã đối tượng; nút chính chỉ bật khi khớp | "Nhập T68 để xác nhận xóa tenant" |
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Modal` cỡ `sm`, biến thể nội bộ `confirm`; gọi qua hook `useDhConfirm()` trả về `Promise<boolean>`. |
+| Giải phẫu | (1) Biểu tượng mức (Lucide `TriangleAlert` cho `destructive`/`dangerous`) trên khung; (2) tiêu đề dạng câu hỏi; (3) trong giếng: mô tả hậu quả, danh sách đối tượng bị ảnh hưởng (tối đa 5 dòng rồi "và 12 bản ghi khác"), phụ thuộc bị ảnh hưởng (ví dụ "3 đăng ký sử dụng sẽ ngừng hoạt động"); (4) ô nhập xác nhận (mức `dangerous`) với nhãn "Nhập {mã} để xác nhận"; (5) footer: "Hủy" và nút chính mang động từ cụ thể. |
+| Vật liệu | Như Modal: khung `glass-modal`, giếng đặc. |
+| Biến thể | `normal`, `destructive`, `dangerous`; `bulk` (thêm số lượng, CRUD-D-02). |
+| Kích thước | `size-modal-sm`. |
+| Trạng thái | Chờ xác nhận, chưa khớp tên (nút chính vô hiệu, mô tả nói rõ cần gõ gì), đang thực hiện (nút loading, khóa Esc), lỗi (Alert trong giếng, giữ hộp thoại), thành công một phần với hàng loạt (chuyển sang bảng kết quả từng bản ghi, CRUD-D-09, CRUD-SEL-08). |
+| Token | Như Modal, thêm `color-error-solid` (nút chính phá hủy), `color-error-text` (biểu tượng), `color-warning-text`. |
+| Bàn phím, ARIA | `role="alertdialog"`, `aria-describedby` trỏ đoạn hậu quả; focus ban đầu: `normal` vào nút chính, `destructive` vào "Hủy", `dangerous` vào ô nhập; Enter không kích hoạt nút phá hủy khi focus đang ở "Hủy". So khớp tên phân biệt hoa thường, cắt khoảng trắng hai đầu, không cho dán từ bộ nhớ tạm bị chặn (cho phép dán để hỗ trợ công nghệ hỗ trợ). |
+| Nội dung | Tiêu đề "Xóa dịch vụ “Tra cứu hộ tịch”?"; mô tả "Dịch vụ sẽ bị gỡ khỏi danh mục và không thể gọi được nữa. Quản trị tỉnh có thể khôi phục trong 30 ngày." Nút chính "Xóa dịch vụ", không dùng "Đồng ý" hay "OK". |
+| Điều cấm | Không dùng `Popconfirm` cho thao tác phá hủy (khó dùng với bàn phím, nội dung quá ngắn); không đặt nút phá hủy làm focus mặc định; không xác nhận bằng hộp thoại `window.confirm`. |
+
+ConfirmDialog là trường hợp duy nhất được mở từ bên trong Drawer hoặc Modal (ví dụ xóa một dòng con trong Drawer). Khi đó `DhModal` không mở lớp thứ hai mà thay giếng nội dung hiện tại bằng nội dung xác nhận, giữ nguyên khung, và trả về nội dung cũ khi hủy; nhờ vậy quy tắc "không chồng Modal" vẫn được giữ.
+
+```ts
+export interface DhConfirmOptions {
+  severity?: 'normal' | 'destructive' | 'dangerous';
+  title: string; consequence: React.ReactNode;
+  affected?: string[]; affectedTotal?: number;
+  confirmText: string;                 // động từ cụ thể, ví dụ "Xóa dịch vụ"
+  typeToConfirm?: string;              // bắt buộc với dangerous
+  onConfirm: () => Promise<DhBulkResult | void>;
+}
+export interface DhBulkResult { succeeded: string[]; failed: Array<{ id: string; label: string; reason: string }> }
+export function useDhConfirm(): (opts: DhConfirmOptions) => Promise<boolean>;
+```
+
+```tsx
+const confirm = useDhConfirm();
+await confirm({ severity: 'dangerous', title: `Xóa tenant “${t.name}”?`, typeToConfirm: t.code,
+  consequence: 'Toàn bộ người dùng của tenant sẽ mất quyền truy cập. Dữ liệu được giữ theo chính sách lưu giữ 90 ngày.',
+  confirmText: 'Xóa tenant', onConfirm: () => deleteTenant.mutateAsync(t.id) });
+```
+
+### 7.4. CMP-ReasonDialog
+
+`CMP-ReasonDialog` xin xác nhận kèm lý do bắt buộc cho thao tác ảnh hưởng vận hành theo vế thứ hai của FR-00-050: tạm dừng dịch vụ, thu hồi đăng ký, khóa HTTT thành viên, hoàn tiền, truy cập liên tenant (FR-00-012), xem dữ liệu Nhạy cảm đầy đủ (FR-00-034). Lý do được gửi cùng yêu cầu và ghi vào nhật ký kiểm toán (FR-00-041 trường "lý do"). ReasonDialog cũng là hộp từ chối trong `CMP-ApprovalPanel` (FR-00-072).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Modal` cỡ `md` biến thể nội bộ `reason`; gọi qua `useDhReason()` trả về `Promise<{ reason: string; code?: string } | null>`. |
+| Giải phẫu | (1) Tiêu đề hành động; (2) trong giếng: mô tả hậu quả và đối tượng bị ảnh hưởng; (3) `CMP-Select` "Nhóm lý do" (tùy chọn, danh mục lý do chuẩn do phân hệ cấu hình, ví dụ "Bảo trì theo kế hoạch", "Vi phạm điều khoản", "Yêu cầu của chủ quản dữ liệu"); (4) `CMP-TextArea` "Lý do" bắt buộc, tối thiểu 10 ký tự, tối đa 1.000 ký tự, có bộ đếm; (5) tùy chọn bổ sung theo nghiệp vụ (ví dụ "Thông báo cho HTTT bị ảnh hưởng"); (6) ghi chú "Lý do được lưu vào nhật ký kiểm toán và không sửa được."; (7) footer "Hủy" và nút chính. |
+| Vật liệu | Như Modal. |
+| Biến thể | `operational` (nút chính màu nhấn hoặc phá hủy theo thao tác), `reject` (từ chối yêu cầu, nút chính "Từ chối" kiểu phá hủy viền), `sensitive-access` (xem dữ liệu nhạy cảm, có thêm thời hạn truy cập). |
+| Kích thước | `size-modal-md`; ô lý do cao 4 dòng, tự giãn tới 10 dòng. |
+| Trạng thái | Chưa nhập đủ (nút chính vẫn bấm được; khi bấm, hiện lỗi tại trường "Vui lòng nêu lý do, tối thiểu 10 ký tự."), đang gửi, lỗi, thành công (đóng và Toast). |
+| Token | Như Modal, thêm `font-footnote` + `color-text-tertiary` (ghi chú kiểm toán). |
+| Bàn phím, ARIA | Focus ban đầu vào ô lý do; Ctrl/⌘+Enter gửi; ô lý do `aria-required="true"`, `aria-describedby` trỏ bộ đếm và ghi chú kiểm toán. |
+| Nội dung | Tiêu đề "Tạm dừng dịch vụ “Tra cứu hộ tịch”"; mô tả "Các HTTT đang gọi dịch vụ sẽ nhận lỗi 503 cho tới khi dịch vụ được kích hoạt lại." |
+| Điều cấm | Không cho gửi lý do toàn khoảng trắng hoặc ký tự lặp vô nghĩa dưới 10 ký tự; không điền sẵn lý do; không dùng ReasonDialog cho xóa thông thường không ảnh hưởng vận hành. |
+
+```ts
+export interface DhReasonOptions {
+  variant?: 'operational' | 'reject' | 'sensitive-access';
+  title: string; consequence: React.ReactNode; confirmText: string; danger?: boolean;
+  reasonCodes?: Array<{ value: string; label: string }>;
+  minLength?: number;                  // mặc định 10
+  extraFields?: React.ReactNode;
+  onSubmit: (input: { reason: string; code?: string; extra?: Record<string, unknown> }) => Promise<void>;
+}
+export function useDhReason(): (opts: DhReasonOptions) => Promise<{ reason: string; code?: string } | null>;
+```
+
+```tsx
+const askReason = useDhReason();
+await askReason({ title: `Tạm dừng dịch vụ “${s.name}”`, confirmText: 'Tạm dừng', danger: true,
+  consequence: 'Các HTTT đang gọi dịch vụ sẽ nhận lỗi 503 cho tới khi dịch vụ được kích hoạt lại.',
+  reasonCodes: suspendReasons, onSubmit: ({ reason, code }) => suspend.mutateAsync({ id: s.id, reason, code }) });
+```
+
+### 7.5. CMP-Popover
+
+`CMP-Popover` là lớp nổi không chặn, mở từ một phần tử kích hoạt để hiển thị nội dung phụ có thể tương tác: giải thích chi tiết một chỉ số, bộ chọn nhỏ, thẻ xem nhanh người dùng. Không dùng Popover cho nội dung chỉ đọc một dòng (dùng `CMP-Tooltip`), cho danh sách lệnh (dùng `CMP-DropdownMenu`) hoặc cho biểu mẫu nhiều trường (dùng Drawer).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Popover` của antd, `trigger="click"` (không dùng `hover` cho nội dung tương tác), `arrow={false}`, `classNames={{ root: 'dh-glass--overlay' }}`; token `Popover.popoverBg` = tint `glass-overlay` (D03-05-02 §13.3). |
+| Giải phẫu | (1) Tiêu đề tùy chọn `font-body-strong`; (2) nội dung; (3) hàng hành động tùy chọn. |
+| Vật liệu | `glass-overlay`, nội dung trực tiếp lên glass; được phép mở từ trong Modal/Drawer. |
+| Biến thể | `default`, `info` (giải thích có liên kết "Tìm hiểu thêm"). |
+| Kích thước | Rộng 240–360px; đệm `space-3`; bo `radius-lg`; cách phần tử kích hoạt `space-1`. |
+| Trạng thái | Đóng, mở (phóng từ phía phần tử kích hoạt, `motion-duration-base`, `motion-ease-emphasized`), đang tải nội dung (Skeleton). |
+| Token | `glass-overlay`, `radius-lg`, `shadow-3`, `space-3`, `z-popover`, `motion-duration-base`. |
+| Bàn phím, ARIA | Phần tử kích hoạt có `aria-expanded`, `aria-controls`, `aria-haspopup="dialog"`; Popover `role="dialog"` không modal; Esc đóng và trả focus; Tab đi vào nội dung; bấm ra ngoài đóng. |
+| Nội dung | Ngắn, tối đa 3 đoạn. |
+| Điều cấm | Không mở Popover chồng Popover; không đặt Popover chứa nội dung bắt buộc phải đọc mới làm tiếp được. |
+
+```ts
+export interface DhPopoverProps { title?: string; content: React.ReactNode; actions?: React.ReactNode; children: React.ReactElement; placement?: 'top' | 'bottom' | 'left' | 'right' | 'bottomLeft' | 'bottomRight' }
+```
+
+```tsx
+<DhPopover title="Hạn mức là gì?" content="Số lượt gọi tối đa trong một tháng theo gói sử dụng. Vượt hạn mức sẽ nhận lỗi 429.">
+  <DhIconButton icon="CircleHelp" label="Giải thích hạn mức" />
+</DhPopover>
+```
+
+### 7.6. CMP-DropdownMenu
+
+`CMP-DropdownMenu` là danh sách lệnh mở từ một nút: "Thao tác khác" trên PageHeader, menu "⋯" trên dòng bảng, menu xuất dữ liệu, menu bộ lọc đã lưu. Không dùng DropdownMenu để chọn giá trị cho biểu mẫu (dùng `CMP-Select`) hoặc điều hướng chính (dùng Sidebar).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Dropdown` của antd với `menu={{ items }}`, `trigger={['click']}`, `classNames={{ root: 'dh-glass--overlay' }}`; token `Menu.popupBg` = `colorBgElevated`. |
+| Giải phẫu | (1) Nhóm có tiêu đề `font-caption` đậm 600; (2) mục: biểu tượng, nhãn, phím tắt `CMP-Kbd`, mô tả phụ tùy chọn; (3) đường phân cách; (4) mục phá hủy ở cuối, chữ `color-error-text`, tách bằng đường phân cách; (5) mục con (tối đa một cấp). |
+| Vật liệu | `glass-overlay`. |
+| Biến thể | `actions`, `export` (Excel, CSV, kèm số dòng ước tính), `selectable` (có dấu chọn, cho bộ lọc đã lưu). |
+| Kích thước | Rộng tối thiểu 180px; mục cao `size-control-md`; bo `radius-lg`, mục bo `radius-md`; đệm `space-1`. |
+| Trạng thái | Mục thường, hover/focus (`color-fill-hover`), vô hiệu (kèm Tooltip lý do nếu có `disabledReason`), đang tải danh sách mục. |
+| Token | `glass-overlay`, `radius-lg`, `radius-md`, `shadow-3`, `color-fill-hover`, `color-error-text`, `font-body`, `font-caption`, `z-popover`. |
+| Bàn phím, ARIA | Mẫu ARIA Menu Button: nút `aria-haspopup="menu"`, `aria-expanded`; menu `role="menu"`, mục `role="menuitem"`; Enter/Space/mũi tên xuống mở và focus mục đầu, mũi tên lên/xuống di chuyển, Home/End, ký tự đầu nhảy mục, Esc đóng và trả focus. |
+| Nội dung | Nhãn động từ ("Sao chép", "Tạm dừng…"); dấu "…" cuối nhãn khi lệnh mở hộp thoại tiếp theo. |
+| Điều cấm | Không quá 10 mục; không lồng quá một cấp; không chứa hành động duy nhất của màn hình (nút chính phải hiện ra ngoài). |
+
+```ts
+export type DhMenuItem =
+  | { type?: 'item'; key: string; label: string; icon?: string; shortcut?: string; danger?: boolean; disabledReason?: string; onClick: () => void }
+  | { type: 'group'; key: string; label: string; children: DhMenuItem[] }
+  | { type: 'divider'; key: string };
+export interface DhDropdownMenuProps { items: DhMenuItem[]; trigger: React.ReactElement; variant?: 'actions' | 'export' | 'selectable' }
+```
+
+```tsx
+<DhDropdownMenu trigger={<DhIconButton icon="Ellipsis" label="Thao tác khác" />} items={[
+  { key: 'copy', label: 'Sao chép mã', icon: 'Copy', onClick: copyCode },
+  { type: 'divider', key: 'd' },
+  { key: 'delete', label: 'Xóa…', icon: 'Trash2', danger: true, onClick: onDelete },
+]} />
+```
+
+### 7.7. CMP-SessionTimeoutDialog
+
+`CMP-SessionTimeoutDialog` hiện thực FR-00-003: sau thời gian không thao tác (mặc định 30 phút, tenant cấu hình 5–120 phút), hệ thống tự đăng xuất, và **trước 2 phút** hiển thị hộp thoại cảnh báo có đếm ngược để người dùng chọn tiếp tục. Hộp thoại do `CMP-AppShell` gắn một lần, không phân hệ nào tự dựng.
+
+Cơ chế hoạt động như sau. Bộ đếm không thao tác lắng nghe `pointerdown`, `keydown`, `wheel`, `touchstart` (đã điều tiết 1 lần mỗi 30 giây) và đồng bộ giữa các thẻ trình duyệt cùng phiên qua `BroadcastChannel('dh-session')`: thao tác ở thẻ nào cũng đặt lại bộ đếm ở mọi thẻ, và quyết định "Tiếp tục" hay "Đăng xuất" ở một thẻ đóng hộp thoại ở mọi thẻ. Thời điểm hết hạn tính theo đồng hồ tuyệt đối (`Date.now()` so với mốc lưu), không theo `setTimeout` cộng dồn, để đúng cả khi thẻ bị trình duyệt làm chậm ở nền. Khi còn 2 phút, hộp thoại mở; "Tiếp tục làm việc" gọi làm mới token với Keycloak và đặt lại bộ đếm; hết giờ thì giao diện xóa bộ nhớ đệm TanStack Query, gọi đăng xuất OIDC và chuyển tới trang đăng nhập với tham số quay về đúng trang (FR-00-001). Thời lượng không thao tác lấy từ cấu hình tenant, không mã hóa cứng, để kiểm thử với đồng hồ giả lập.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Modal` cỡ `sm`, `zIndex` = `z-session-dialog` (1200) để nằm trên mọi Modal, Drawer, Toast; `keyboard={false}` (Esc không được hiểu là "tiếp tục" ngầm); `mask={{ closable: false }}`. Đây là ngoại lệ duy nhất được hiển thị khi đang có Modal khác mở, vì là hộp thoại hệ thống; Modal phía dưới bị `inert` trong lúc này. |
+| Giải phẫu | (1) Biểu tượng `Clock` trên khung; (2) tiêu đề; (3) trong giếng: đồng hồ đếm ngược `mm:ss` cỡ `font-title-1` chữ số đều độ rộng, thanh `CMP-ProgressBar` giảm dần, câu giải thích; (4) footer: "Đăng xuất" (phụ) và "Tiếp tục làm việc" (chính). |
+| Vật liệu | Khung `glass-modal`, giếng đặc. |
+| Biến thể | `warning` (còn 2 phút), `expired` (đã đăng xuất do hết giờ ở thẻ khác hoặc máy ngủ: thông báo và nút "Đăng nhập lại"). |
+| Kích thước | `size-modal-sm`. |
+| Trạng thái | Đếm ngược, đang làm mới phiên (nút chính loading), làm mới thất bại (Alert lỗi theo FR-00-080 và nút "Đăng nhập lại"), hết giờ. |
+| Token | Như Modal, thêm `z-session-dialog`, `font-title-1`, `font-feature-tabular`, `color-warning-text`. |
+| Bàn phím, ARIA | `role="alertdialog"`, focus ban đầu vào "Tiếp tục làm việc"; đồng hồ không đọc mỗi giây: vùng `aria-live="polite"` chỉ thông báo khi mở ("Phiên làm việc sẽ hết sau 2 phút"), khi còn 60 giây và 15 giây (đáp ứng WCAG 2.2.1 về điều chỉnh thời hạn: người dùng được cảnh báo và gia hạn bằng một thao tác đơn). |
+| Nội dung | Tiêu đề "Phiên làm việc sắp hết"; mô tả "Bạn đã không thao tác trong 28 phút. Để bảo vệ dữ liệu, hệ thống sẽ tự đăng xuất sau 01:59. Các thay đổi chưa lưu sẽ bị mất." |
+| Điều cấm | Không tự gia hạn khi chỉ có yêu cầu nền (thăm dò, SSE) mà người dùng không thao tác; không ẩn hộp thoại sau Modal khác; không dùng Toast cho cảnh báo này. |
+
+```ts
+export interface DhSessionTimeoutConfig {
+  idleMinutes: number;          // từ cấu hình tenant, 5–120
+  warnBeforeSeconds?: number;   // mặc định 120
+  onRefresh: () => Promise<void>;
+  onLogout: (reason: 'idle' | 'user') => Promise<void>;
+}
+export function DhSessionTimeoutDialog(props: DhSessionTimeoutConfig): JSX.Element;
+```
+
+```tsx
+<DhSessionTimeoutDialog idleMinutes={tenant.sessionIdleMinutes}
+  onRefresh={() => auth.refreshToken()} onLogout={(r) => auth.logout({ reason: r, returnTo: location.href })} />
+```
+
