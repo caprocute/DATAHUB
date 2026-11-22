@@ -1054,3 +1054,443 @@ export interface DhTooltipProps {
 
 **Điều cấm.** Cấm đặt thông tin bắt buộc duy nhất trong tooltip. Cấm liên kết, nút trong tooltip. Cấm dùng thuộc tính HTML `title` thay tooltip. Cấm tooltip glass. Cấm tooltip trên phần tử `disabled` gốc (không nhận sự kiện; dùng `disabledReason`).
 
+## 7. Nhóm nhập liệu
+
+### 7.0. Quy tắc chung của điều khiển nhập liệu
+
+Mọi thành phần trong mục này tuân theo năm quy tắc chung, nên các mục con chỉ nêu điểm khác. Thứ nhất, điều khiển nhập liệu **không tự hiển thị nhãn, chữ mô tả và thông báo lỗi**; ba phần này do `CMP-FormField` (D03-05-04) dựng và nối bằng `id`, `aria-labelledby`, `aria-describedby`, `aria-invalid`, `aria-required`. Điều khiển dùng ngoài biểu mẫu (ví dụ ô tìm kiếm trên thanh công cụ) phải có `aria-label`. Thứ hai, biến thể thị giác mặc định là `outlined` (viền `color-border-control` đạt 3:1, WCAG 1.4.11); biến thể `filled` (nền `color-fill-control`, không viền) chỉ dùng trong thanh công cụ và topbar; `borderless` chỉ dùng cho sửa tại chỗ trong ô bảng. Thứ ba, trạng thái `invalid` lấy từ prop `status="error"` của antd, viền `color-error-text`, và token thành phần antd `errorActiveShadow` dùng `color-error-bg`; chữ lỗi do `CMP-FormField` hiển thị ngay dưới trường (FR-00-081). Thứ tư, kích thước `sm` / `md` / `lg` ánh xạ `size-control-sm` / `size-control-md` / `size-control-lg`, bo `radius-sm` (`sm`) hoặc `radius-md`, chữ luôn `font-body` 14px (không giảm cỡ ở `sm` vì chữ nhập là nội dung). Thứ năm, điều khiển nhập liệu luôn đặt trên nền đặc (`color-surface-solid` của trang, thẻ, giếng nội dung Modal); ngoại lệ là ô tìm kiếm biến thể `filled` trên topbar glass do `CMP-Topbar` quy định, và các điều khiển trong popover glass (bộ lọc cột của bảng) dùng `glass-overlay`.
+
+Token dùng chung cho cả nhóm: `TKN-color-surface-solid`, `TKN-color-surface-solid-2` (readonly), `TKN-color-fill-control` (filled, disabled), `TKN-color-border-control`, `TKN-color-border-subtle`, `TKN-color-text-primary`, `TKN-color-text-tertiary` (placeholder), `TKN-color-text-disabled`, `TKN-color-error-text`, `TKN-color-error-bg`, `TKN-color-focus-ring`, `TKN-color-focus-ring-inner`, `TKN-size-control-sm`, `TKN-size-control-md`, `TKN-size-control-lg`, `TKN-radius-sm`, `TKN-radius-md`, `TKN-font-body`, `TKN-motion-duration-instant`. Token thành phần antd `Input.hoverBorderColor` giữ `color-border-control` (không đổi màu viền khi hover để tránh nhầm với focus), `Input.activeBorderColor` là `color-accent`, `Input.activeShadow` dùng `controlOutline`.
+
+Chữ giữ chỗ (placeholder) là ví dụ định dạng ("VD: 0912345678"), không thay nhãn và không chứa hướng dẫn bắt buộc, vì biến mất khi người dùng gõ.
+
+### 7.1. CMP-Input
+
+**Mục đích.** `CMP-Input` nhận chuỗi một dòng: tên, mã, URL, thư điện tử, từ khóa tìm kiếm.
+
+**Nền antd.** `Input` và `Input.Search` (cho biến thể tìm kiếm). Hàm bọc cố định `autoComplete` theo `type` (ví dụ `"off"` cho mã nghiệp vụ, `"email"` cho thư điện tử), `allowClear` bật mặc định với biểu tượng `close` Lucide và nhãn "Xóa nội dung", `count` bật khi có `maxLength` (CRUD-C-02, hiển thị "12/255").
+
+**Biến thể.** `text` (mặc định), `search` (tiền tố biểu tượng `search`, nhấn Enter gọi `onSearch` theo CRUD-FLT-03, không có nút "Tìm" riêng trong ô; nút "Tìm kiếm" của `CMP-FilterBar` nằm ngoài), `code` (chữ `font-family-mono`, tự chuyển chữ hoa theo `T-CODE` khi mất focus, kiểm tra mẫu `^[A-Z0-9][A-Z0-9_.-]{0,63}$`), `url` (`inputMode="url"`), `email` (`type="email"`, `inputMode="email"`). Tiền tố và hậu tố (`prefix`, `suffix`) chỉ chứa `CMP-Icon` hoặc chữ đơn vị ngắn.
+
+**Tìm kiếm không dấu.** FR-00-020 yêu cầu tìm "da nang" ra "Đà Nẵng". Việc so khớp không phân biệt hoa thường và dấu tiếng Việt là **trách nhiệm của backend** (chuẩn hóa `unaccent` + `lower` ở truy vấn PostgreSQL hoặc chỉ mục tìm kiếm). Biến thể `search` chỉ có ba trách nhiệm phía giao diện: gửi nguyên văn chuỗi người dùng gõ sau khi cắt khoảng trắng hai đầu và chuẩn hóa NFC (để "Đà" gõ bằng bộ gõ tổ hợp và bộ gõ dựng sẵn cho cùng chuỗi), không tự bỏ dấu (để backend còn ưu tiên kết quả khớp đúng dấu nếu muốn), và trì hoãn (debounce) 300ms khi dùng chế độ tìm theo gõ (`searchMode="instant"`) cho danh sách nhỏ. Với bộ gõ tiếng Việt (Unikey, EVKey, bộ gõ macOS), thành phần không gửi tìm kiếm khi đang trong phiên soạn ký tự (`compositionstart` → `compositionend`), tránh gửi chuỗi dở dang như "Ða" rồi "Đà".
+
+**Trạng thái.** Đủ tám trạng thái trừ `pressed`. `loading` chỉ có ở biến thể `search` khi đang tìm (spinner ở hậu tố).
+
+**Bàn phím và ARIA.** Biến thể `search` có `role="searchbox"` (antd `Input` với `type="search"`); Esc xóa nội dung khi có nội dung, lần Esc thứ hai không làm gì (để Modal chứa nó không bị đóng ngoài ý muốn, thành phần gọi `stopPropagation` ở lần Esc đầu).
+
+**Nội dung.** Giá trị được cắt khoảng trắng hai đầu trước khi gửi (do `CMP-Form`); thông báo lỗi định dạng theo FR-00-080: nói điều sai và cách sửa ("Mã chỉ gồm chữ in hoa, số, dấu chấm, gạch dưới, gạch ngang; tối đa 64 ký tự").
+
+**API.**
+
+```tsx
+export interface DhInputProps {
+  variant?: 'text' | 'search' | 'code' | 'url' | 'email';
+  appearance?: 'outlined' | 'filled' | 'borderless';
+  size?: 'sm' | 'md' | 'lg';
+  value?: string;
+  defaultValue?: string;
+  onChange?: (value: string) => void;          // nhận chuỗi, không nhận event
+  onSearch?: (value: string) => void;          // variant="search"
+  searchMode?: 'enter' | 'instant';
+  placeholder?: string;
+  maxLength?: number;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  allowClear?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  status?: 'error' | 'warning';
+  loading?: boolean;
+  id?: string;
+  'aria-label'?: string;
+  'aria-describedby'?: string;
+  testId?: string;
+  ref?: React.Ref<InputRef>;
+}
+```
+
+```tsx
+<Input variant="search" aria-label="Tìm theo tên hoặc mã dịch vụ" placeholder="Tên hoặc mã dịch vụ"
+  onSearch={(q) => setFilter({ q, page: 1 })} />
+<Input variant="code" maxLength={64} placeholder="VD: TRA_CUU_HO_TICH" />
+```
+
+**Điều cấm.** Cấm bỏ dấu chuỗi tìm kiếm phía giao diện rồi lọc dữ liệu đã tải (CRUD-FLT-08). Cấm dùng placeholder thay nhãn. Cấm `type="number"` (dùng `CMP-NumberInput`). Cấm `type="password"` cho bí mật hệ thống (dùng `CMP-SecretField`).
+
+### 7.2. CMP-SecretField
+
+**Mục đích.** `CMP-SecretField` xử lý giá trị bí mật: khóa API, client secret, mật khẩu kết nối cơ sở dữ liệu, khóa ký webhook. Thành phần có hai chế độ phục vụ hai tình huống khác nhau về bảo mật.
+
+**Chế độ `issue` (hiển thị một lần khi cấp).** Sau khi máy chủ sinh bí mật mới (tạo khóa API, xoay vòng client secret), bí mật được trả về **đúng một lần** trong phản hồi tạo. Thành phần hiển thị bí mật trong giếng nội dung của một Modal với các quy tắc sau:
+
+1. Bí mật hiển thị bằng `font-mono`, đầy đủ (không che), trong ô chỉ đọc nền `color-surface-solid-2`, kèm `CMP-CopyButton variant="labeled"` có `sensitive` và nút "Tải tệp .txt" (tùy chọn theo phân hệ).
+2. Một `CMP-Alert` (D03-05-04) sắc thái `warning` thường trực phía trên: "Đây là lần duy nhất bí mật được hiển thị. Hãy sao chép và lưu ở nơi an toàn. Nếu làm mất, bạn phải tạo bí mật mới."
+3. Nút đóng Modal có nhãn "Tôi đã lưu bí mật" và chỉ bật sau khi người dùng đã bấm sao chép hoặc tải tệp, hoặc đã tích ô xác nhận "Tôi đã lưu bí mật ở nơi an toàn". Esc và bấm ra ngoài không đóng Modal ở chế độ này.
+4. **Không lưu bí mật trong state lâu dài.** Bí mật chỉ được giữ trong `useRef` cục bộ của thành phần, không đưa vào bộ đệm TanStack Query (mutation tạo đặt `gcTime: 0` và thành phần đọc từ `onSuccess` rồi xóa `data` của mutation bằng `reset()`), không vào Redux/Zustand, không vào URL, không vào `localStorage`/`sessionStorage`, không ghi log. Khi Modal đóng hoặc thành phần bị gỡ, ref được gán chuỗi rỗng.
+5. Phần tử hiển thị có `autoComplete="off"`, `spellCheck={false}`, `data-1p-ignore`, `data-lpignore="true"` để trình quản lý mật khẩu và trình kiểm tra chính tả không thu thập.
+
+**Chế độ `input` (nhập bí mật).** Người dùng nhập bí mật của hệ thống ngoài (mật khẩu kết nối). Nền là `Input.Password` với nút hiện/ẩn biểu tượng `view` / `hide` (nhãn "Hiện bí mật" / "Ẩn bí mật"). Khi sửa một bản ghi đã có bí mật, máy chủ không bao giờ trả lại bí mật; ô hiển thị giá trị giữ chỗ "Đã đặt • cập nhật 12/11/2026" và nút "Thay bí mật"; chỉ khi bấm, ô nhập mới mở. Biểu mẫu gửi trường bí mật chỉ khi người dùng đã nhập giá trị mới (giá trị `undefined` nghĩa là giữ nguyên). Bí mật tự che lại khi ô mất focus quá 30 giây.
+
+**Kích thước, trạng thái, token.** Như quy tắc chung, thêm `TKN-font-mono`, `TKN-color-warning-bg`, `TKN-color-warning-on-bg`.
+
+**Nền đặt.** Chỉ nền đặc (giếng nội dung Modal hoặc biểu mẫu).
+
+**Bàn phím và ARIA.** Ô hiển thị bí mật ở chế độ `issue` có `aria-label="Bí mật vừa được cấp"` và `aria-describedby` trỏ tới cảnh báo; focus ban đầu của Modal đặt vào nút sao chép. Nút hiện/ẩn ở chế độ `input` có `aria-pressed` và `aria-controls`.
+
+**API.**
+
+```tsx
+type DhSecretFieldProps =
+  | {
+      mode: 'issue';
+      /** Hàm lấy bí mật một lần; thành phần giữ trong ref, không trong state. */
+      takeSecret: () => string;
+      secretLabel: string;              // "Khóa API"
+      allowDownload?: boolean;
+      onAcknowledge: () => void;        // người dùng đã xác nhận lưu
+      onCopyAudit?: () => void;
+    }
+  | {
+      mode: 'input';
+      value?: string;
+      onChange?: (value: string | undefined) => void;
+      hasExistingSecret?: boolean;
+      existingUpdatedAt?: string;       // T-TS
+      disabled?: boolean;
+      status?: 'error';
+      id?: string;
+      'aria-describedby'?: string;
+    };
+```
+
+```tsx
+<SecretField mode="issue" secretLabel="Khóa API" takeSecret={() => created.current!.secret}
+  onAcknowledge={closeModal} onCopyAudit={() => audit('API_KEY_SECRET_COPIED', created.current!.id)} />
+```
+
+**Điều cấm.** Cấm lưu bí mật vào bất kỳ kho trạng thái nào ngoài ref cục bộ. Cấm hiển thị lại bí mật đã cấp ở bất kỳ màn hình nào. Cấm gửi bí mật trong tham số URL. Cấm dùng `CMP-MaskedValue` cho bí mật (MaskedValue cho phép mở xem lại, bí mật thì không).
+
+### 7.3. CMP-TextArea
+
+**Mục đích.** `CMP-TextArea` nhận chuỗi nhiều dòng: mô tả, ghi chú, lý do (trong `CMP-ReasonDialog`), ý kiến duyệt (FR-00-072).
+
+**Nền antd.** `Input.TextArea` với `autoSize={{ minRows: 3, maxRows: 12 }}` mặc định, `showCount` bật khi có `maxLength`. Mô tả theo `T-TEXT` có `maxLength={4000}`.
+
+**Biến thể.** `default`; `reason` (tối thiểu 10 ký tự sau khi cắt khoảng trắng, bộ đếm hiển thị "Còn thiếu 6 ký tự" cho đến khi đủ, dùng trong `CMP-ReasonDialog`); `code` không có (dùng `CMP-CodeEditor`).
+
+**Trạng thái, token.** Như quy tắc chung. Vùng kéo đổi kích thước (`resize`) tắt khi `autoSize`; khi bật, chỉ cho kéo dọc và luôn có phương án không kéo là `autoSize` (WCAG 2.5.7).
+
+**Bàn phím.** Enter xuống dòng; Ctrl/⌘ + Enter gửi biểu mẫu chứa nó nếu biểu mẫu khai báo (gợi ý `CMP-Kbd` hiển thị dưới trường).
+
+**API.**
+
+```tsx
+export interface DhTextAreaProps {
+  variant?: 'default' | 'reason';
+  value?: string; defaultValue?: string; onChange?: (value: string) => void;
+  minLength?: number; maxLength?: number;
+  minRows?: number; maxRows?: number;
+  placeholder?: string; disabled?: boolean; readOnly?: boolean; status?: 'error';
+  submitOnModEnter?: boolean;
+  id?: string; 'aria-describedby'?: string; testId?: string;
+  ref?: React.Ref<TextAreaRef>;
+}
+```
+
+```tsx
+<TextArea variant="reason" minLength={10} maxLength={1000} placeholder="VD: Tạm dừng để bảo trì cơ sở dữ liệu nguồn" />
+```
+
+**Điều cấm.** Cấm nhận Markdown hoặc HTML rồi hiển thị không qua làm sạch. Cấm TextArea không giới hạn độ dài.
+
+### 7.4. CMP-NumberInput
+
+**Mục đích.** `CMP-NumberInput` nhận số: hạn ngạch, thời gian chờ, số lần thử lại, số tiền (với biến thể `money`).
+
+**Nền antd.** `InputNumber` với `controls={false}` mặc định (nút tăng giảm nhỏ khó bấm và vùng chạm dưới 24px); bật `controls` chỉ khi khoảng giá trị nhỏ (dưới 20 bước). Hàm bọc đặt `decimalSeparator=","` và bộ `formatter` / `parser` định dạng hàng nghìn bằng dấu chấm theo kiểu Việt Nam ("1.234.567"; "12,5"). Chữ số dùng `font-feature-tabular`, căn phải.
+
+**Biến thể.** `number` (mặc định), `integer` (`precision={0}`), `money` (`precision={0}`, hậu tố "₫", giá trị kiểu `T-MONEY`; số tiền lớn hơn `Number.MAX_SAFE_INTEGER` được truyền dạng chuỗi và thành phần dùng chế độ `stringMode` của antd để không mất chính xác), `percent` (hậu tố "%", 0–100), `duration` (hậu tố đơn vị do màn hình truyền: "ms", "giây", "phút").
+
+**Trạng thái.** Ngoài trạng thái chung, giá trị ngoài `min` / `max` được giữ nguyên khi đang gõ và chỉ báo lỗi khi mất focus, không tự kẹp giá trị (tự kẹp làm người dùng mất dữ liệu đã gõ mà không biết).
+
+**Bàn phím và ARIA.** Mũi tên lên/xuống tăng giảm `step`; Shift + mũi tên tăng giảm 10 bước. Thành phần đặt `role="spinbutton"`, `aria-valuemin`, `aria-valuemax`, `aria-valuenow` (antd đã có) và `inputMode="decimal"` hoặc `"numeric"`.
+
+**Token.** Chung, thêm `TKN-font-feature-tabular`.
+
+**API.**
+
+```tsx
+export interface DhNumberInputProps {
+  variant?: 'number' | 'integer' | 'money' | 'percent' | 'duration';
+  unit?: string;                        // duration
+  value?: number | string | null;       // string khi money vượt safe integer
+  onChange?: (value: number | string | null) => void;
+  min?: number; max?: number; step?: number;
+  controls?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  placeholder?: string; disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+  ref?: React.Ref<HTMLInputElement>;
+}
+```
+
+```tsx
+<NumberInput variant="duration" unit="ms" min={100} max={60000} step={100} />
+<NumberInput variant="money" min={0} />
+```
+
+**Điều cấm.** Cấm dùng số thực cho tiền. Cấm định dạng kiểu Mỹ ("1,234.5"). Cấm tự kẹp giá trị khi đang gõ.
+
+### 7.5. CMP-Select
+
+**Mục đích.** `CMP-Select` chọn một hoặc nhiều giá trị từ danh sách: trạng thái, lĩnh vực, đơn vị, phương thức xác thực, người dùng. Đây là điều khiển chính của `CMP-FilterBar` (FR-00-023).
+
+**Khi dùng / không dùng.** Từ 6 lựa chọn trở lên, hoặc danh sách động. Dưới 6 lựa chọn loại trừ nhau và cần thấy hết: `CMP-Radio` (trong biểu mẫu) hoặc `CMP-SegmentedControl` (chuyển chế độ xem). Dữ liệu phân cấp: `CMP-TreeSelect`. Chuyển nhiều mục giữa hai danh sách lớn: `CMP-Transfer`.
+
+**Nền antd.** `Select`. Hàm bọc cố định: `suffixIcon` là `chevron-down` Lucide; `allowClear` bật khi không bắt buộc; `optionFilterProp="label"`; `notFoundContent` là chữ "Không có lựa chọn phù hợp" (không dùng ảnh trống của antd); `popupMatchSelectWidth` là `true` với độ rộng tối thiểu 200px; `virtual` bật (mặc định antd) cho danh sách dài; `getPopupContainer` để mặc định (gắn vào `body`) trừ khi trong Modal cần cuộn cùng, khi đó `CMP-Modal` cung cấp container qua context.
+
+**Popup dùng glass-overlay.** Danh sách thả xuống là lớp nổi nên dùng vật liệu `glass-overlay`. Hàm bọc gắn lớp `dh-glass--overlay` qua `classNames.popup.root` (tên phần ngữ nghĩa đã đối chiếu antd 6.7.1; không dùng `popupClassName` đã cũ). Nền `colorBgElevated` đã được ánh xạ sang tint của `glass-overlay` ở D03-05-02 §13.2, nên lớp CSS chỉ thêm `backdrop-filter`, viền và bóng `shadow-3`. Option đang được trỏ (`optionActiveBg`) dùng `color-fill-hover`, option đã chọn (`optionSelectedBg`) dùng `color-fill-selected` với chữ `optionSelectedColor` là `color-accent-on-subtle` và `optionSelectedFontWeight` 500, kèm biểu tượng `copied` (dấu tích) ở cuối để không chỉ dựa vào màu. Bo popup `radius-lg`, option bo `radius-sm` có lề trong `space-1`. Chế độ glass "Tắt" làm popup thành nền đặc tự động qua token. Select mở từ trong Modal vẫn dùng `glass-overlay` (ngoại lệ glass chồng glass được phép).
+
+**Biến thể chức năng.** Bốn tính năng có thể kết hợp:
+
+1. **Nhiều giá trị** (`multiple`): giá trị đã chọn hiển thị thành `CMP-Tag` cỡ `sm` đóng được; `maxTagCount="responsive"` để tự gộp thành "+3" khi chật, tooltip của "+3" liệt kê giá trị ẩn. Popup không đóng sau mỗi lần chọn. Có hai mục đặc biệt đầu danh sách khi `selectAll` bật: "Chọn tất cả" và "Bỏ chọn tất cả" (chỉ với danh sách tĩnh dưới 200 mục).
+2. **Tìm kiếm** (`showSearch`): bật mặc định khi có từ 10 lựa chọn. Với danh sách tĩnh, lọc phía giao diện bằng hàm so khớp bỏ dấu tiếng Việt `matchVi(label, query)` của `@datahub/ui/format` (chuẩn hóa NFD, bỏ dấu kết hợp, đổi "đ" thành "d", không phân biệt hoa thường); đây là danh sách nhỏ đã nằm trọn trong bộ nhớ nên không vi phạm CRUD-FLT-08.
+3. **Tải từ xa** (`remote`): khi danh sách lớn hoặc phụ thuộc quyền (người dùng, đơn vị, dịch vụ), thành phần nhận `fetchOptions(query, page)` trả `{ items, hasMore }`; gọi sau debounce 300ms, hủy yêu cầu cũ bằng `AbortController`, cuộn tới cuối tải trang tiếp (`onPopupScroll`), hiển thị `CMP-Spinner` cỡ `sm` cuối danh sách khi đang tải, và thông báo lỗi "Không tải được danh sách. Thử lại" kèm nút thử lại khi lỗi. Bỏ dấu là việc của backend (FR-00-020). Giá trị đã chọn nhưng không nằm trong trang hiện tại được hiển thị nhờ prop `value` dạng `{ value, label }` (`labelInValue`) để không phải tải lại nhãn.
+4. **Nhóm** (`options` có `options` con): tiêu đề nhóm `font-caption` độ đậm 600 màu `color-text-secondary`.
+
+**Kích thước, trạng thái.** Như quy tắc chung; trạng thái `loading` hiện spinner thay mũi tên.
+
+**Token.** Chung, cộng với nhóm token của popup. Tint của popup không gọi trực tiếp mà lấy qua `colorBgElevated` (ánh xạ từ `TKN-glass-overlay`); lớp CSS dùng `TKN-blur-lg`, `TKN-saturate-glass-muted`, `TKN-glass-highlight-top`, `TKN-glass-edge`, `TKN-shadow-3`, `TKN-radius-lg`, `TKN-color-fill-hover`, `TKN-color-fill-selected`, `TKN-color-accent-on-subtle`, `TKN-z-popover`, `TKN-motion-duration-base`, `TKN-motion-ease-emphasized`.
+
+**Bàn phím và ARIA.** Theo mẫu combobox của ARIA APG: `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant` (antd cung cấp). Mũi tên xuống mở và di chuyển, Enter chọn, Esc đóng popup (Esc lần hai mới đến Modal), Backspace trong ô trống của chế độ nhiều giá trị xóa tag cuối, gõ ký tự để tìm. Số kết quả được thông báo qua vùng `aria-live` ("12 lựa chọn").
+
+**Nội dung.** Placeholder dạng "Chọn {đối tượng}" ("Chọn trạng thái"); với nhiều giá trị "Chọn một hoặc nhiều {đối tượng}". Nhãn option dùng tên nghiệp vụ; khi trùng tên, thêm mã ở chữ phụ (`font-footnote`, `color-text-secondary`).
+
+**API.**
+
+```tsx
+export interface DhSelectOption<V = string> { value: V; label: string; description?: string; disabled?: boolean; }
+
+export interface DhSelectProps<V = string> {
+  options?: Array<DhSelectOption<V> | { label: string; options: DhSelectOption<V>[] }>;
+  multiple?: boolean;
+  value?: V | V[] | DhSelectOption<V> | DhSelectOption<V>[];
+  onChange?: (value: any) => void;
+  showSearch?: boolean;
+  selectAll?: boolean;
+  remote?: {
+    fetchOptions: (query: string, page: number, signal: AbortSignal) => Promise<{ items: DhSelectOption<V>[]; hasMore: boolean }>;
+    debounceMs?: number;            // mặc định 300
+  };
+  placeholder?: string;
+  size?: 'sm' | 'md' | 'lg';
+  appearance?: 'outlined' | 'filled' | 'borderless';
+  allowClear?: boolean;
+  disabled?: boolean; readOnly?: boolean; loading?: boolean; status?: 'error';
+  id?: string; 'aria-label'?: string; 'aria-describedby'?: string; testId?: string;
+  ref?: React.Ref<RefSelectProps>;
+}
+```
+
+```tsx
+<Select multiple placeholder="Chọn trạng thái"
+  options={['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED', 'SUSPENDED'].map((c) => ({ value: c, label: getStatusMeta(c).label }))} />
+
+<Select placeholder="Chọn đơn vị" remote={{ fetchOptions: (q, p, signal) => api.units.search({ q, page: p }, { signal }) }} />
+```
+
+**Điều cấm.** Cấm tải toàn bộ danh sách lớn về trình duyệt để lọc. Cấm popup nền đặc tự viết thay vì `glass-overlay`. Cấm dùng `mode="tags"` cho phép nhập giá trị tự do trừ khi đặc tả màn hình ghi rõ (khi đó dùng `CMP-Select` với `allowCreate` có kiểm tra định dạng). Cấm Select cho dưới 3 lựa chọn.
+
+### 7.6. CMP-TreeSelect
+
+**Mục đích.** `CMP-TreeSelect` chọn một hoặc nhiều nút trong dữ liệu phân cấp: đơn vị hành chính (tỉnh → xã), cơ cấu tổ chức, cây danh mục, nhóm dịch vụ.
+
+**Nền antd.** `TreeSelect`. Popup gắn `dh-glass--overlay` qua `classNames.popup.root`; biểu tượng mở rộng `chevron-right`; `treeLine` tắt; `showSearch` bật với `treeNodeFilterProp="title"` và lọc bỏ dấu `matchVi` cho cây tĩnh.
+
+**Biến thể.** Đơn chọn (mặc định); nhiều chọn có hộp kiểm (`treeCheckable`) với `showCheckedStrategy` mặc định `SHOW_PARENT` (chọn cả cha thì chỉ hiện cha) để danh sách tag gọn; tải lười (`loadData`) cho cây lớn như đơn vị hành chính, tải con khi mở nút; tìm kiếm từ xa cho cây lớn (backend trả các nút khớp kèm đường dẫn tổ tiên).
+
+**Trạng thái, token, nền.** Như `CMP-Select`. Nút không chọn được (chỉ để nhóm) có `selectable: false` và chữ `color-text-secondary`, không dùng `color-text-disabled` vì không phải bị vô hiệu.
+
+**Bàn phím và ARIA.** Mũi tên lên/xuống di chuyển, phải mở nút / vào con, trái đóng nút / về cha, Space bật tắt hộp kiểm, Enter chọn. Popup có `role="tree"`, nút có `aria-level`, `aria-expanded`, `aria-selected` hoặc `aria-checked`.
+
+**Nội dung.** Giá trị đã chọn hiển thị nhãn kèm đường dẫn rút gọn khi trùng tên ("Phường 1 · Quận 3").
+
+**API.**
+
+```tsx
+export interface DhTreeSelectProps<V = string> {
+  treeData: DhTreeNode<V>[];
+  multiple?: boolean;                 // dùng treeCheckable
+  checkedStrategy?: 'parent' | 'child' | 'all';
+  loadChildren?: (node: DhTreeNode<V>) => Promise<DhTreeNode<V>[]>;
+  remoteSearch?: (query: string, signal: AbortSignal) => Promise<DhTreeNode<V>[]>;
+  value?: V | V[]; onChange?: (value: V | V[]) => void;
+  placeholder?: string; size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+export interface DhTreeNode<V = string> { value: V; title: string; isLeaf?: boolean; selectable?: boolean; children?: DhTreeNode<V>[]; }
+```
+
+```tsx
+<TreeSelect placeholder="Chọn đơn vị hành chính" treeData={provinces} loadChildren={(n) => api.adminUnits.children(n.value)} />
+```
+
+**Điều cấm.** Cấm tải toàn bộ cây hơn 2.000 nút một lần. Cấm cây sâu quá 6 cấp trong TreeSelect (dùng `CMP-Tree` trong trang).
+
+### 7.7. CMP-Checkbox
+
+**Mục đích.** `CMP-Checkbox` bật tắt một lựa chọn độc lập trong biểu mẫu (chấp nhận điều khoản, "Gửi thông báo cho người tạo"), hoặc chọn nhiều mục trong nhóm (`Checkbox.Group`), hoặc chọn hàng trong `CMP-DataTable`.
+
+**Khi dùng / không dùng.** Lựa chọn chỉ có hiệu lực khi bấm Lưu: Checkbox. Thiết lập có hiệu lực ngay khi gạt: `CMP-Switch`.
+
+**Nền antd.** `Checkbox`, `Checkbox.Group`. Wave tắt toàn cục; phản hồi nhấn áp lên ô chọn. Token thành phần antd `Checkbox.checkboxSize` 16 (ô thị giác), vùng chạm mở rộng tới 24×24 bằng nhãn bọc ngoài và lớp giả.
+
+**Trạng thái.** `unchecked` (viền `color-border-control`, nền `color-surface-solid`), `checked` (nền `color-accent`, dấu tích `color-text-on-accent`), `indeterminate` (nền `color-accent`, gạch ngang; dùng cho "chọn tất cả" khi chọn một phần), cộng `hover`, `focus-visible`, `disabled` (nền `color-fill-control`, dấu `color-text-disabled`), `invalid` (viền `color-error-text`). Bo `radius-xs`.
+
+**Token.** `TKN-color-border-control`, `TKN-color-surface-solid`, `TKN-color-accent`, `TKN-color-accent-hover`, `TKN-color-text-on-accent`, `TKN-color-fill-control`, `TKN-color-text-disabled`, `TKN-color-error-text`, `TKN-radius-xs`, `TKN-motion-duration-fast`.
+
+**Nền đặt.** Nền đặc và `glass-overlay` (bộ lọc cột, menu chọn cột hiển thị).
+
+**Bàn phím và ARIA.** Space bật tắt. Nhóm có `role="group"` với `aria-labelledby` trỏ nhãn nhóm (do `CMP-FormField` dựng `fieldset`/`legend`). `indeterminate` đặt `aria-checked="mixed"`.
+
+**Nội dung.** Nhãn là câu khẳng định mô tả điều xảy ra khi chọn ("Gửi thư thông báo cho người tạo"), không phủ định ("Không gửi thư").
+
+**API.**
+
+```tsx
+export interface DhCheckboxProps {
+  checked?: boolean; defaultChecked?: boolean; indeterminate?: boolean;
+  onChange?: (checked: boolean) => void;
+  children?: React.ReactNode;     // nhãn
+  disabled?: boolean; status?: 'error';
+  id?: string; 'aria-label'?: string; 'aria-describedby'?: string; testId?: string;
+  ref?: React.Ref<CheckboxRef>;
+}
+export interface DhCheckboxGroupProps<V = string> {
+  options: Array<{ value: V; label: string; disabled?: boolean }>;
+  value?: V[]; onChange?: (value: V[]) => void;
+  direction?: 'vertical' | 'horizontal';   // mặc định vertical khi > 3 mục
+  disabled?: boolean;
+}
+```
+
+```tsx
+<Checkbox>Gửi thư thông báo cho người tạo</Checkbox>
+```
+
+**Điều cấm.** Cấm Checkbox có hiệu lực tức thì không cần Lưu (dùng Switch). Cấm Checkbox không nhãn ngoài ô chọn hàng của bảng (ô chọn hàng có `aria-label` "Chọn {tên hàng}").
+
+### 7.8. CMP-Radio
+
+**Mục đích.** `CMP-Radio` chọn đúng một trong 2 đến 5 lựa chọn loại trừ nhau, khi người dùng cần thấy tất cả lựa chọn để so sánh (phương thức xác thực, kiểu lịch chạy).
+
+**Nền antd.** `Radio.Group` với `options`. Không dùng `optionType="button"` (dùng `CMP-SegmentedControl`). Biến thể `card` (mỗi lựa chọn là một khối có tiêu đề và mô tả, viền `color-border-subtle`, chọn thì viền `color-accent` 2px và nền `color-accent-subtle`) dùng khi lựa chọn cần giải thích, ví dụ chọn kiểu kết nối trong wizard PTN-05.
+
+**Trạng thái.** Như Checkbox; ô tròn 16px (`Radio.radioSize`), chấm trong 8px (`Radio.dotSize`) màu `color-text-on-accent` trên nền `color-accent`.
+
+**Token.** Như Checkbox, thêm `TKN-color-accent-subtle`, `TKN-color-border-subtle`, `TKN-radius-lg` (biến thể card), `TKN-space-4`.
+
+**Nền đặt.** Nền đặc.
+
+**Bàn phím và ARIA.** `role="radiogroup"`; Tab vào nhóm focus mục đang chọn (hoặc mục đầu), mũi tên di chuyển và chọn đồng thời, Tab rời nhóm.
+
+**Nội dung.** Lựa chọn sắp theo thứ tự logic hoặc phổ biến nhất trước; luôn có giá trị mặc định hợp lý được chọn sẵn, trừ khi việc chọn sẵn tạo thiên lệch có hậu quả (khi đó để trống và bắt buộc chọn).
+
+**API.**
+
+```tsx
+export interface DhRadioGroupProps<V = string> {
+  options: Array<{ value: V; label: string; description?: string; disabled?: boolean }>;
+  value?: V; onChange?: (value: V) => void;
+  variant?: 'default' | 'card';
+  direction?: 'vertical' | 'horizontal';
+  disabled?: boolean; status?: 'error';
+  id?: string; 'aria-labelledby'?: string; testId?: string;
+}
+```
+
+```tsx
+<RadioGroup variant="card" options={[
+  { value: 'REST', label: 'REST API', description: 'Gọi dịch vụ HTTP của hệ thống nguồn' },
+  { value: 'DB', label: 'Cơ sở dữ liệu', description: 'Đọc trực tiếp bảng hoặc khung nhìn' },
+]} />
+```
+
+**Điều cấm.** Cấm Radio đơn lẻ. Cấm hơn 5 lựa chọn (dùng Select).
+
+### 7.9. CMP-Switch
+
+**Mục đích.** `CMP-Switch` bật tắt một thiết lập **có hiệu lực ngay**: bật/tắt lịch chạy, bật thông báo theo kênh (FR-00-061), bật chế độ gọn.
+
+**Nền antd.** `Switch`. Token thành phần antd `Switch.trackHeight` 22 và `Switch.handleSize` 18 đã đặt ở D03-05-02 §13.3 (viên nang kiểu iOS thu nhỏ); cỡ `sm` dùng `trackHeightSM` và `handleSizeSM` mặc định của antd. Nút gạt nền `color-surface-solid` (`Switch.handleBg`) với bóng nhẹ.
+
+**Trạng thái.** Tắt: rãnh `color-fill-control` kèm viền trong 1px `color-border-control` để rãnh đạt 3:1 (rãnh `fill-control` một mình không đạt 3:1 trên nền trắng). Bật: rãnh `color-accent`. `loading`: spinner trong nút gạt, chặn thao tác, dùng khi việc bật tắt gọi máy chủ; nếu máy chủ lỗi, Switch quay về giá trị cũ và màn hình hiển thị `CMP-Toast` lỗi. `disabled`: rãnh `color-fill-control`, nút gạt mờ theo `opacity-disabled`.
+
+**Thao tác ảnh hưởng vận hành.** Nếu tắt một thứ đang phục vụ (tắt lịch đồng bộ đang chạy, tạm dừng dịch vụ), Switch không đổi ngay mà mở `CMP-ConfirmDialog` hoặc `CMP-ReasonDialog` theo FR-00-050; chỉ đổi giá trị sau khi xác nhận và máy chủ trả thành công. Prop `confirm` cấu hình việc này.
+
+**Token.** `TKN-color-fill-control`, `TKN-color-border-control`, `TKN-color-accent`, `TKN-color-surface-solid`, `TKN-opacity-disabled`, `TKN-radius-pill`, `TKN-motion-duration-fast`, `TKN-motion-ease-emphasized`.
+
+**Nền đặt.** Nền đặc và `glass-overlay`.
+
+**Bàn phím và ARIA.** `role="switch"`, `aria-checked`; Space và Enter bật tắt. Switch luôn có nhãn chữ bên cạnh (bên trái trong danh sách cài đặt, PTN-12); không dùng chữ bên trong rãnh ("Bật"/"Tắt") vì quá nhỏ.
+
+**Nội dung.** Nhãn nêu thiết lập ở thể khẳng định ("Gửi thông báo qua thư điện tử"); trạng thái hiện tại có thể nhắc bằng chữ phụ khi quan trọng ("Đang bật từ 10/11/2026").
+
+**API.**
+
+```tsx
+export interface DhSwitchProps {
+  checked?: boolean; onChange?: (checked: boolean) => void | Promise<unknown>;
+  size?: 'sm' | 'md';
+  loading?: boolean; disabled?: boolean; disabledReason?: string;
+  confirm?: { when: 'on' | 'off' | 'both'; kind: 'confirm' | 'reason'; title: string; description?: string };
+  id?: string; 'aria-labelledby'?: string; testId?: string;
+}
+```
+
+```tsx
+<Switch checked={schedule.enabled} onChange={(v) => toggleSchedule.mutateAsync(v)}
+  confirm={{ when: 'off', kind: 'reason', title: 'Tắt lịch đồng bộ?' }} aria-labelledby="lbl-schedule" />
+```
+
+**Điều cấm.** Cấm Switch trong biểu mẫu chỉ có hiệu lực khi bấm Lưu (dùng Checkbox). Cấm Switch không nhãn.
+
+### 7.10. CMP-SegmentedControl
+
+**Mục đích.** `CMP-SegmentedControl` chuyển giữa 2 đến 5 chế độ xem hoặc khoảng giá trị ngắn của cùng một nội dung: "Bảng / Biểu đồ", "1 giờ / 24 giờ / 7 ngày", "JSON / XML". Đây là điều khiển mang dấu ấn Liquid Glass rõ nhất: nút chọn nổi lên như một mảnh kính trượt trên rãnh.
+
+**Khi dùng / không dùng.** Thay đổi cách xem, không thay đổi dữ liệu. Điều hướng giữa các phần nội dung khác nhau dùng `CMP-Tabs`. Lựa chọn giá trị trong biểu mẫu dùng `CMP-Radio`.
+
+**Nền antd.** `Segmented`. Token thành phần antd đã đặt ở D03-05-02 §13.3: `Segmented.trackBg` = `color-fill-control`, `Segmented.itemSelectedBg` = nền nổi của mảnh kính, `Segmented.trackPadding` 2 (bo đồng tâm: rãnh `radius-md` 10px, nút chọn 8px). Thêm `itemHoverBg` = `color-fill-hover`, `itemColor` = `color-text-secondary`, `itemSelectedColor` = `color-text-primary`. Nút chọn có bóng `shadow-1`. Chuyển động trượt `motion-duration-base` với `motion-ease-emphasized`; tắt trượt khi giảm chuyển động (nút chọn đổi chỗ tức thì).
+
+**Kích thước.** `sm` / `md` / `lg` theo `size-control-*` (chiều cao tổng của rãnh). Mục có thể chỉ biểu tượng (bắt buộc `aria-label` và tooltip) hoặc biểu tượng + chữ.
+
+**Token.** `TKN-color-fill-control`, `TKN-color-surface-solid`, `TKN-color-fill-hover`, `TKN-color-text-secondary`, `TKN-color-text-primary`, `TKN-shadow-1`, `TKN-radius-md`, `TKN-radius-sm`, `TKN-size-control-sm`, `TKN-size-control-md`, `TKN-size-control-lg`, `TKN-motion-duration-base`, `TKN-motion-ease-emphasized`.
+
+**Nền đặt.** Nền đặc và mọi vật liệu glass (thường xuất hiện trên thanh công cụ trong `CMP-PageHeader`).
+
+**Bàn phím và ARIA.** Antd v6 hiển thị dạng `radiogroup`; mũi tên trái phải di chuyển và chọn. Đây là hành vi đúng cho chuyển chế độ xem.
+
+**Nội dung.** Nhãn ngắn 1–2 từ, cùng loại từ (cùng là danh từ).
+
+**API.**
+
+```tsx
+export interface DhSegmentedControlProps<V extends string = string> {
+  options: Array<{ value: V; label?: string; icon?: React.ReactNode; ariaLabel?: string; disabled?: boolean }>;
+  value?: V; onChange?: (value: V) => void;
+  size?: 'sm' | 'md' | 'lg';
+  block?: boolean;
+  'aria-label': string;
+  testId?: string;
+}
+```
+
+```tsx
+<SegmentedControl aria-label="Khoảng thời gian" value={range} onChange={setRange}
+  options={[{ value: '1h', label: '1 giờ' }, { value: '24h', label: '24 giờ' }, { value: '7d', label: '7 ngày' }]} />
+```
+
+**Điều cấm.** Cấm dùng thay Tabs cho nội dung khác nhau. Cấm hơn 5 mục. Cấm thay đổi dữ liệu khi đổi mục.
+

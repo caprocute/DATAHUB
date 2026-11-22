@@ -693,3 +693,318 @@ Sơ đồ có hai cột ở tab Tổng quan: cột chính 8/12 chứa các khố
 
 **Sai lầm thường gặp.** Thiếu tab Lịch sử hoặc đặt lịch sử thành một danh sách ở cuối trang; hiện mọi nút rồi báo lỗi khi bấm; dùng một khối thẻ duy nhất dài cả trang; đặt mã nghiệp vụ không có nút sao chép; dùng id nội bộ trên URL.
 
+### 4.6. PTN-03 · Biểu mẫu trang
+
+**Mục đích.** Tạo mới hoặc sửa một đối tượng có nhiều trường, chia nhóm, cần không gian và sự tập trung của cả một trang.
+
+**Khi dùng.** Trên khoảng 8 trường, có nhóm trường phụ thuộc nhau, có trình soạn mã hoặc bảng con. **Khi không dùng.** Đối tượng nhỏ (PTN-04); quy trình có bước bắt buộc theo thứ tự (PTN-05).
+
+**Ví dụ trong Datahub.** Tạo/sửa gói sử dụng (PH-02, kiểu xác thực, rate limit, quota, danh sách đường dẫn); tạo dịch vụ thu (PH-19); sửa hồ sơ HTTT (PH-01); tạo chính sách cổng API (PH-03); tạo quy tắc chất lượng (PH-08).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
+│ ① PageHeader: Breadcrumb · "Tạo gói sử dụng" (hoặc "Sửa gói: {tên}")         │
+│ ┌ ② Mục lục nhóm (≥ bp-xl) ┐ ┌ ③ Biểu mẫu (cột rộng tối đa size-form-max) ──┐ │
+│ │ ● Thông tin chung        │ │ Alert tóm tắt lỗi (chỉ khi có lỗi)            │ │
+│ │ ○ Xác thực               │ │ ┌ Khối đặc "Thông tin chung" ──────────────┐ │ │
+│ │ ○ Giới hạn               │ │ │ Nhãn *  [ trường ]   Nhãn  [ trường ]     │ │ │
+│ │ ○ Đường dẫn cho phép     │ │ │ Mô tả trợ giúp (font-footnote)            │ │ │
+│ │ (dính, cuộn theo)        │ │ └───────────────────────────────────────────┘ │ │
+│ └──────────────────────────┘ │ ┌ Khối đặc "Xác thực" ──────────────────────┐ │ │
+│                              │ └───────────────────────────────────────────┘ │ │
+│                              └───────────────────────────────────────────────┘ │
+│ ④ Thanh thao tác dính đáy (color-surface-solid, shadow-2, z-sticky)           │
+│   "Có thay đổi chưa lưu"                         [Hủy] [Lưu nháp] [Lưu]      │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Biểu mẫu chia thành các khối đặc theo nhóm nghiệp vụ; mỗi khối có tiêu đề `font-title-3`. Mục lục nhóm bên trái giúp nhảy nhanh trong biểu mẫu dài và đánh dấu nhóm có lỗi bằng biểu tượng kèm chữ "(2 lỗi)". Thanh thao tác dính đáy luôn nhìn thấy để người dùng không phải cuộn xuống cuối mới lưu được; thanh này là bề mặt đặc chứ không glass vì nó nằm trên nội dung.
+
+**Thành phần và vật liệu.** ① `CMP-PageHeader` trên canvas. ② danh sách liên kết neo (anchor) trên canvas. ③ `CMP-Form`, `CMP-FormField`, các điều khiển nguyên tử (`CMP-Input`, `CMP-Select`, `CMP-NumberInput`, `CMP-Switch`, `CMP-DatePicker`, `CMP-SecretField`, `CMP-CodeEditor`), `CMP-Alert`; khối `CMP-Card` đặc. ④ `CMP-Button`, nền đặc.
+
+**Hành vi.**
+
+1. Biểu mẫu sửa tải dữ liệu mới nhất và `ETag` (CRUD-U-02); lưu gửi `If-Match` (ST-13).
+2. Nhãn đặt trên trường (không đặt bên trái) để chịu được nhãn tiếng Việt dài và chuyển một cột dễ dàng; trường bắt buộc đánh dấu `*` kèm `aria-required`, và chú thích "Trường có dấu * là bắt buộc" ở đầu biểu mẫu.
+3. Kiểm tra hợp lệ phía trình duyệt khi rời trường (blur) và khi gửi; lỗi máy chủ ánh xạ về trường theo con trỏ JSON của RFC 9457 (FR-00-081). Không kiểm tra từng phím gõ, trừ định dạng mã.
+4. Trường không sửa được hiển thị chỉ đọc (CRUD-U-03); trường phụ thuộc (ví dụ chọn kiểu xác thực mTLS thì hiện trường chứng chỉ) hiện/ẩn ngay với chuyển động `motion-duration-base`.
+5. "Lưu" xong điều hướng tới PTN-02 của đối tượng (tạo mới) hoặc quay về trang trước (sửa), kèm ST-10. "Lưu nháp" chỉ có với đối tượng có trạng thái Nháp. "Hủy" quay lại, hỏi nếu dirty.
+6. Biểu mẫu dirty được tự lưu bản nháp cục bộ 10 giây một lần (không gồm trường bí mật); mở lại biểu mẫu khi có bản nháp cục bộ thì hiện `CMP-Alert` "Có bản nháp chưa lưu lúc {giờ}" với "Khôi phục" và "Bỏ".
+7. Bố cục hai cột chỉ dùng cho cặp trường ngắn liên quan (Từ ngày/Đến ngày); dưới `bp-md` luôn một cột.
+
+**Trạng thái cụ thể.** ST-01 (chỉ khi sửa): skeleton các khối trường. ST-09 đến ST-13 theo bảng chung; ST-11 chuyển focus tới trường lỗi đầu tiên và cuộn tới đó.
+
+**Phím tắt.** `Ctrl+S` lưu; `Ctrl+Enter` lưu khi focus trong vùng soạn thảo; `Esc` không đóng trang (chỉ đóng popup).
+
+**Tiêu chí nghiệm thu PTN-03.**
+
+- [ ] Gửi biểu mẫu thiếu trường bắt buộc: lỗi hiện tại từng trường, có tóm tắt đầu trang, focus tới trường lỗi đầu tiên.
+- [ ] Lỗi 422 từ máy chủ hiện đúng tại trường tương ứng.
+- [ ] Bấm "Lưu" hai lần liên tiếp chỉ tạo một bản ghi.
+- [ ] Rời trang khi dirty hiện hộp thoại; khi không dirty không hỏi.
+- [ ] Hai người sửa cùng đối tượng: người lưu sau nhận hộp thoại xung đột có so sánh khác biệt.
+- [ ] Thanh thao tác luôn nhìn thấy ở 1366×768.
+- [ ] Mọi trường có nhãn liên kết `for`/`id`; trình đọc màn hình đọc nhãn, trạng thái bắt buộc và lỗi.
+
+**Sai lầm thường gặp.** Đặt nút Lưu chỉ ở cuối biểu mẫu dài; chỉ báo lỗi ở đầu trang; dùng placeholder thay nhãn; ẩn trường không sửa được; xóa dữ liệu đã nhập khi máy chủ báo lỗi.
+
+### 4.7. PTN-04 · Biểu mẫu nhanh (Drawer/Modal)
+
+**Mục đích.** Tạo hoặc sửa đối tượng nhỏ mà không rời ngữ cảnh đang làm việc.
+
+**Khi dùng.** Tối đa khoảng 8 trường, một nhóm, không có bảng con. Dùng **Drawer** khi người dùng cần nhìn danh sách phía sau để tham chiếu (thêm mục danh mục, thêm đầu mối kỹ thuật, sửa nhanh tham số); dùng **Modal** cho thao tác ngắn có tính quyết định (đổi tên, nhập lý do, xác nhận có thêm trường). **Khi không dùng.** Biểu mẫu dài, có trình soạn mã lớn, hoặc cần liên kết sâu bền vững (dùng PTN-03).
+
+**Ví dụ trong Datahub.** Thêm mục danh mục (PH-07, Drawer); thêm đầu mối kỹ thuật cho HTTT (PH-01, Drawer); xoay vòng bí mật ứng dụng (PH-01, Modal, hiện bí mật một lần); yêu cầu quyền từ trang 403 (Modal); tạo topic nhanh (PH-10, Drawer).
+
+**Sơ đồ vùng (Drawer).**
+
+```text
+                              ┌ Drawer glass-modal, size-drawer-md, radius-xl cạnh hở ┐
+ (nội dung trang phía sau     │ ① Tiêu đề "Thêm mục danh mục" (font-title-3)    [×] │
+  bị che bởi color-scrim)     │ ┌ ② Giếng nội dung đặc (radius đồng tâm 12px) ──────┐ │
+                              │ │ Nhãn * [ trường ]                                  │ │
+                              │ │ Nhãn   [ trường ]                                  │ │
+                              │ │ (cuộn trong giếng nếu dài)                         │ │
+                              │ └────────────────────────────────────────────────────┘ │
+                              │ ③ Chân: [Hủy]               [Lưu và thêm tiếp] [Lưu] │
+                              └────────────────────────────────────────────────────────┘
+```
+
+Khung Drawer là vật liệu `glass-modal`, cách mép phải và mép trên/dưới viewport `space-2`, bo `radius-xl`. Toàn bộ trường nhập nằm trong giếng nội dung nền `color-surface-solid` có bán kính đồng tâm (`radius-xl` trừ `space-2` = 12px), vì `glass-modal` không đạt tương phản chữ liên kết trong trường hợp xấu nhất. Tiêu đề và chân nằm trực tiếp trên kính, chỉ chứa chữ chính và nút.
+
+**Thành phần.** `CMP-Drawer` hoặc `CMP-Modal`, `CMP-Form`, `CMP-FormField`, `CMP-Button`. Popup Select bên trong là `glass-overlay` (ngoại lệ kính trên kính được phép).
+
+**Hành vi.**
+
+1. Mở bằng hành động trên trang; focus vào trường đầu tiên; focus bị giữ trong lớp phủ (focus trap); đóng trả focus về nút đã mở.
+2. Đóng bằng `Esc`, nút ×, bấm vào scrim (chỉ Drawer, không áp dụng cho Modal có dữ liệu dirty) đều qua kiểm tra dirty.
+3. "Lưu" xong đóng lớp phủ, hiện ST-10, làm mới danh sách phía sau và làm nổi bật hàng mới 2 giây (`color-fill-selected` mờ dần). "Lưu và thêm tiếp" giữ lớp phủ mở, xóa trường, focus trường đầu.
+4. Drawer có thể liên kết sâu qua query (`?chon={ma}&che-do=sua`) nếu FRS yêu cầu.
+5. Không mở lớp phủ thứ hai chồng lên lớp phủ thứ nhất, trừ hộp thoại xác nhận (`CMP-ConfirmDialog`) và `CMP-ReasonDialog`.
+6. Bí mật hiển thị một lần (thông tin xác thực mới) dùng `CMP-SecretField` với nút sao chép, cảnh báo "Bí mật chỉ hiển thị một lần" và yêu cầu tích "Tôi đã lưu bí mật" trước khi đóng được.
+
+**Phím tắt.** `Esc` đóng; `Ctrl+Enter` lưu.
+
+**Tiêu chí nghiệm thu PTN-04.**
+
+- [ ] Focus vào trường đầu khi mở, bị giữ trong lớp phủ, trả về nút mở khi đóng.
+- [ ] Chữ liên kết và chữ cấp hai chỉ nằm trong giếng đặc, không nằm trực tiếp trên `glass-modal`.
+- [ ] `Esc` khi dirty hiện hộp thoại xác nhận.
+- [ ] "Lưu và thêm tiếp" tạo bản ghi và giữ lớp phủ mở với trường trống.
+- [ ] Ở chế độ glass "Tắt", khung Drawer nền đặc, bố cục không đổi.
+
+**Sai lầm thường gặp.** Nhồi biểu mẫu dài vào Modal; Modal mở Modal; đặt chữ trực tiếp lên kính; đóng mất dữ liệu khi bấm nhầm ra ngoài.
+
+### 4.8. PTN-05 · Wizard
+
+**Mục đích.** Dẫn người dùng qua quy trình nhiều bước có thứ tự, trong đó bước sau phụ thuộc kết quả bước trước, và kết thúc bằng một bước rà soát trước khi gửi.
+
+**Khi dùng.** Từ 3 đến 7 bước; có kiểm tra hoặc phân tích giữa các bước; người dùng ít làm nên cần được dẫn. **Khi không dùng.** Chỉ để chia một biểu mẫu dài cho "đỡ rối" mà các bước không phụ thuộc nhau (dùng PTN-03 có mục lục nhóm).
+
+**Ví dụ trong Datahub.** Kết nạp HTTT thành viên (PH-01: thông tin hệ thống → đầu mối → hồ sơ pháp lý → rà soát → gửi duyệt); đăng ký API từ OpenAPI (PH-02: tải đặc tả → kiểm tra và xem trước endpoint → phân loại → gói sử dụng → rà soát); kích hoạt dịch vụ thu có giao dịch thử (PH-19); chạy di trú hệ cũ (PH-18: chọn nguồn → chọn phạm vi → chạy thử đối chiếu → chạy thật → báo cáo FR-00-092); khởi tạo tenant (PH-20).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
+│ ① PageHeader: Breadcrumb · "Kết nạp hệ thống thành viên"        [Lưu và thoát]│
+│ ② Steps: (1)✓ Thông tin ── (2)● Đầu mối ── (3)○ Hồ sơ ── (4)○ Rà soát        │
+│ ┌ ③ Khối đặc nội dung bước (rộng tối đa size-form-max, căn giữa) ──────────┐  │
+│ │ Tiêu đề bước, mô tả ngắn bước này để làm gì                               │  │
+│ │ Trường / bảng / kết quả phân tích                                         │  │
+│ └────────────────────────────────────────────────────────────────────────── ┘  │
+│ ④ Thanh dính đáy:  [Hủy]                           [‹ Quay lại] [Tiếp tục ›] │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Thành phần và vật liệu.** ② `CMP-Steps` trên canvas (nhãn bước luôn có chữ, không chỉ số); ③ `CMP-Card` đặc chứa `CMP-Form`, `CMP-Upload`, `CMP-DataTable`, `CMP-JobProgress`; bước rà soát dùng `CMP-DescriptionList` theo nhóm có liên kết "Sửa" quay về bước tương ứng; ④ thanh đặc dính đáy.
+
+**Hành vi.**
+
+1. Mỗi bước được kiểm tra hợp lệ khi bấm "Tiếp tục"; không cho sang bước sau khi bước hiện tại lỗi. Có thể quay lại bước đã hoàn thành bằng nút "Quay lại" hoặc bấm vào bước trên `CMP-Steps`; không nhảy tới bước chưa tới.
+2. Trạng thái wizard được lưu phía máy chủ dưới dạng bản nháp sau mỗi bước (đối tượng ở trạng thái Nháp), để người dùng "Lưu và thoát" rồi tiếp tục sau từ danh sách; bước hiện tại phản ánh trên URL (`?buoc=2`).
+3. Bước chạy lâu (phân tích đặc tả, chạy thử di trú) chạy nền với `CMP-JobProgress` (FR-00-054); người dùng có thể rời trang và được báo qua trung tâm thông báo.
+4. Bước cuối là "Rà soát" chỉ đọc; nút cuối mang tên hành động thật ("Gửi duyệt", "Kích hoạt", "Chạy di trú"), không dùng "Hoàn tất" chung chung.
+5. Sau gửi, hiển thị `CMP-ResultPage` thành công với bước tiếp theo ("Yêu cầu đã được gửi tới Quản trị tỉnh. Bạn sẽ nhận thông báo khi có kết quả.") và nút "Xem hồ sơ", "Về danh sách".
+
+**Trạng thái cụ thể.** Khi mở wizard từ bản nháp đã bị người khác gửi duyệt, hiện ST-13 biến thể "Bản nháp này đã được gửi duyệt bởi {người}" và chuyển sang PTN-02.
+
+**Phím tắt.** `Alt+→` tiếp tục; `Alt+←` quay lại.
+
+**Tiêu chí nghiệm thu PTN-05.**
+
+- [ ] Không sang được bước sau khi bước hiện tại có lỗi; lỗi hiện tại trường.
+- [ ] "Lưu và thoát" rồi mở lại từ danh sách tiếp tục đúng bước, đúng dữ liệu.
+- [ ] Tải lại trình duyệt ở bước 3 vẫn ở bước 3.
+- [ ] Bước rà soát hiển thị toàn bộ dữ liệu đã nhập; "Sửa" quay về đúng bước.
+- [ ] `CMP-Steps` thông báo cho trình đọc màn hình "Bước 2 trên 4, Đầu mối, hiện tại".
+
+**Sai lầm thường gặp.** Mất dữ liệu khi quay lại bước trước; wizard một bước; nút cuối "Hoàn tất" không rõ hậu quả; không lưu nháp nên quy trình dài bị mất khi hết phiên.
+
+### 4.9. PTN-06 · Dashboard
+
+**Mục đích.** Cho người dùng nắm nhanh tình trạng tổng thể qua chỉ số tổng hợp, xu hướng và cảnh báo, rồi đi sâu vào chi tiết khi cần.
+
+**Khi dùng.** Trang chủ của người dùng; bảng giám sát vận hành; tổng quan theo phân hệ (kênh thanh toán, chất lượng dữ liệu, chỉ tiêu). **Khi không dùng.** Khi người dùng cần thao tác trên từng bản ghi (PTN-01) hoặc khám phá sự kiện thô (PTN-11).
+
+**Ví dụ trong Datahub.** Tổng quan (`/tong-quan`, thẻ lắp theo quyền); bảng giám sát PH-13 (lượt gọi API, tỷ lệ lỗi, độ trễ p95, luồng lỗi, DLQ tồn); dashboard kênh thanh toán PH-19 (giao dịch theo kênh, tỷ lệ thành công); điểm chất lượng dữ liệu PH-08; báo cáo chỉ tiêu PH-16.
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
+│ ① PageHeader: "Bảng giám sát"  [Khoảng: 24 giờ qua ▾] [⟳ Tự làm mới: 30s ▾]  │
+│              Cập nhật lúc 14:05:32                     [⛶ Toàn màn hình] [⋯] │
+│ ② Hàng KPI (≥ bp-xxl: 4 thẻ; bp-lg…bp-xxl: 2–3; < bp-lg: 1–2)                │
+│ ┌ KpiCard ──────┐ ┌ KpiCard ──────┐ ┌ KpiCard ──────┐ ┌ KpiCard ──────┐       │
+│ │ Lượt gọi API  │ │ Tỷ lệ lỗi     │ │ Độ trễ p95    │ │ DLQ tồn       │       │
+│ │ 4.812.300     │ │ 0,08% ▼0,02   │ │ 42 ms         │ │ 17 ⚠          │       │
+│ │ ▁▂▃▅▆▇ so hôm qua│ (sparkline)   │ │               │ │               │       │
+│ └───────────────┘ └───────────────┘ └───────────────┘ └───────────────┘       │
+│ ③ Lưới biểu đồ 12 cột                                                        │
+│ ┌ Card: Lưu lượng theo giờ (8 cột) ───────────┐ ┌ Card: Cảnh báo đang mở (4) ┐│
+│ │ CMP-Chart (đường)                            │ │ Danh sách gọn, liên kết     ││
+│ └──────────────────────────────────────────────┘ └─────────────────────────────┘│
+│ ┌ Card: Top 10 API lỗi (6) ─────┐ ┌ Card: Luồng lỗi gần đây (6) ──────────────┐│
+│ └───────────────────────────────┘ └────────────────────────────────────────────┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Sơ đồ đi từ tổng quát tới cụ thể: hàng KPI trả lời "mọi thứ có ổn không", lưới biểu đồ trả lời "vì sao", các danh sách gọn dẫn tới chi tiết. Thẻ KPI tuân thủ quy tắc của skill trực quan hóa dữ liệu ở D03-05-04 (`CMP-KpiCard`): số chính `font-display` với `font-feature-tabular`, nhãn ở trên, so sánh kèm mũi tên và chữ (không chỉ màu), sparkline không trục.
+
+**Thành phần và vật liệu.** ① `CMP-PageHeader`, `CMP-Select` (khoảng thời gian), `CMP-Timestamp`; ② `CMP-KpiCard` đặc; ③ `CMP-Card` đặc chứa `CMP-Chart` (ECharts, ADR-023, bảng màu `color-chart-1…8`), danh sách gọn `CMP-DataTable` biến thể gọn, `CMP-StatusTag`. Tooltip của biểu đồ là nền đảo đặc.
+
+**Hành vi.**
+
+1. *Khoảng thời gian* chung cho cả trang, giữ trên URL (`khoang=24h` hoặc `tu`/`den`); lựa chọn sẵn: 15 phút, 1 giờ, 24 giờ, 7 ngày, 30 ngày, tùy chọn.
+2. *Làm mới tự động* có các mức Tắt / 15 giây / 30 giây / 1 phút / 5 phút; mặc định 30 giây cho bảng giám sát, Tắt cho dashboard báo cáo. Chỉ làm mới khi tab trình duyệt đang hiển thị (`visibilitychange`); làm mới không nháy skeleton mà cập nhật tại chỗ (ST-02), và không đẩy thông báo vào vùng `aria-live` mỗi lần làm mới, trừ khi một KPI vượt ngưỡng cảnh báo.
+3. *Đi sâu.* Bấm thẻ KPI hoặc điểm dữ liệu điều hướng tới màn chi tiết với bộ lọc tương ứng (ví dụ thẻ "DLQ tồn" tới `/van-hanh/dlq?trang-thai=cho-xu-ly`). Mọi biểu đồ có nút "Xem dạng bảng" hiển thị dữ liệu dưới dạng bảng có thể đọc bằng trình đọc màn hình (phương án thay thế cho biểu đồ, WCAG 1.1.1).
+4. *Mỗi thẻ tải độc lập*: một thẻ lỗi hiển thị ST-05 trong thẻ, các thẻ khác vẫn hoạt động.
+5. *Ngưỡng.* KPI vượt ngưỡng hiển thị `CMP-StatusTag` mức cảnh báo/lỗi kèm chữ ("Vượt ngưỡng 1%"), viền trái 3px màu trạng thái.
+6. *Chế độ trực ca.* Bật bằng "⋯ › Chế độ trực ca": ép chủ đề tối (`data-theme="dark"`) bất kể cài đặt cá nhân, vào toàn màn hình (mục 3.9), tăng cỡ chữ KPI một bậc (`font-display-lg`), ẩn mọi điều khiển trừ khoảng thời gian và đồng hồ, bật làm mới 15 giây, tắt hiệu ứng glass (`data-glass="off"`) để giảm tải GPU khi chạy liên tục nhiều giờ trên màn hình lớn. KPI vượt ngưỡng nhấp nháy viền một lần rồi giữ nguyên (không nhấp nháy liên tục, WCAG 2.3.1), kèm biểu tượng.
+7. *Tùy biến.* Người dùng có thể ẩn/hiện và sắp xếp thẻ trên trang Tổng quan (sắp xếp có phương án bàn phím bằng nút "Di chuyển lên/xuống"); bố cục lưu theo người dùng. Bảng giám sát vận hành có bố cục cố định do quản trị tỉnh cấu hình.
+
+**Trạng thái cụ thể.** ST-01: skeleton từng thẻ đúng kích thước để bố cục không nhảy. Không có dữ liệu trong khoảng thời gian: biểu đồ hiện trục và dòng chữ "Không có dữ liệu trong khoảng thời gian đã chọn", không vẽ đường bằng 0 giả. Dữ liệu trễ (nguồn chỉ số chậm hơn 2 lần chu kỳ làm mới): dòng "Cập nhật lúc" chuyển màu cảnh báo kèm chữ "Dữ liệu có thể đã cũ".
+
+**Phím tắt.** `R` làm mới; `F` toàn màn hình; `T` mở chọn khoảng thời gian.
+
+**Tiêu chí nghiệm thu PTN-06.**
+
+- [ ] Đổi khoảng thời gian cập nhật mọi thẻ và URL.
+- [ ] Làm mới tự động dừng khi tab ẩn, tiếp tục khi tab hiện.
+- [ ] Một thẻ lỗi không làm hỏng các thẻ khác.
+- [ ] Mọi biểu đồ có "Xem dạng bảng"; số liệu bảng khớp biểu đồ.
+- [ ] Không có thông tin nào chỉ truyền đạt bằng màu (kiểm tra ở chế độ xám).
+- [ ] Chế độ trực ca: tối, toàn màn hình, glass tắt, dải liên tenant vẫn hiện nếu có.
+- [ ] Bố cục ổn định khi tải (CLS < 0,1).
+
+**Sai lầm thường gặp.** Quá nhiều thẻ KPI (trên 8) làm loãng; biểu đồ tròn nhiều lát; dùng màu đỏ/xanh không chữ; làm mới bằng cách tải lại toàn trang; vẽ số 0 khi thiếu dữ liệu.
+
+### 4.10. PTN-07 · Designer (canvas)
+
+**Mục đích.** Cho kỹ sư tạo dựng và xem cấu trúc dạng đồ thị (nút và cạnh) bằng thao tác trực quan, đồng bộ hai chiều với biểu diễn văn bản.
+
+**Khi dùng.** Luồng tích hợp, mô hình quy trình, sơ đồ kết nối. **Khi không dùng.** Cấu trúc tuyến tính đơn giản biểu diễn tốt bằng bảng.
+
+**Ví dụ trong Datahub.** Thiết kế luồng tích hợp PH-04 (`/tich-hop/luong/{ma}/thiet-ke`, đồng bộ Camel YAML DSL theo ADR-010); sơ đồ kết nối topic PH-10 (`/tich-hop/so-do`, chế độ chỉ xem, publisher → topic → subscriber); mô hình quy trình BPMN PH-11 (Đợt 2).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (toàn chiều rộng, không lề dưới, cao = viewport − topbar) ───────────────┐
+│ ① Thanh công cụ: [‹] Luồng "Đồng bộ hộ tịch" ●Nháp v5 · Đã lưu 14:02         │
+│    [↶][↷] [Thiết kế|YAML|Chia đôi] [Kiểm tra] [Chạy thử] [Lưu] [Gửi duyệt][⛶]│
+│ ┌ ② Bảng nút ──┐ ┌ ③ Canvas (nền color-surface-solid-2, lưới chấm) ──┐ ┌ ④ Inspector ┐│
+│ │ 🔍 Tìm nút   │ │                                                    │ │ Thuộc tính  ││
+│ │ ▾ Nguồn      │ │   [REST vào] ──▶ [Chuyển đổi] ──▶ [Gọi SOAP]       │ │ nút đang    ││
+│ │   REST       │ │                       │                            │ │ chọn        ││
+│ │   Lịch       │ │                       ▼                            │ │ (Form)      ││
+│ │ ▾ Xử lý      │ │                  [Ghi log]                         │ │             ││
+│ │ ▾ Đích       │ │                                  ┌ minimap ┐ [+][−]│ │             ││
+│ └──────────────┘ └────────────────────────────────────────────────────┘ └─────────────┘│
+│ ⑤ Bảng dưới thu gọn được: Vấn đề (3) | Kết quả chạy thử | Nhật ký            │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Designer chiếm toàn bộ vùng nội dung, không cuộn trang; mỗi vùng tự cuộn. Bảng nút trái rộng 240px, Inspector phải rộng 360px, cả hai thu gọn được; bảng dưới cao 240px khi mở. Canvas là bề mặt đặc (`color-surface-solid-2`) chứ không glass, vì nút và cạnh cần tương phản ổn định; các nút điều khiển nổi trên canvas (thu phóng, minimap) là `glass-overlay`.
+
+**Thành phần và vật liệu.** ① thanh công cụ đặc; ② `CMP-NodePalette` đặc; ③ `CMP-FlowCanvas`, `CMP-FlowNode` (XYFlow), nền đặc; ④ `CMP-Inspector` đặc chứa `CMP-Form`; chế độ YAML dùng `CMP-CodeEditor` (Monaco); ⑤ `CMP-Tabs`, `CMP-LogViewer`, `CMP-DataTable`; so sánh phiên bản dùng `CMP-DiffViewer`.
+
+**Hành vi.**
+
+1. *Thêm nút.* Kéo từ bảng nút thả vào canvas, **hoặc** chọn nút trong bảng rồi nhấn `Enter` để chèn sau nút đang chọn (phương án không kéo thả, WCAG 2.5.7). Nối cạnh bằng kéo từ cổng ra tới cổng vào, **hoặc** trong Inspector chọn "Nút tiếp theo" từ danh sách.
+2. *Bàn phím trên canvas.* `Tab` di chuyển giữa các nút theo thứ tự luồng, phím mũi tên dịch chuyển nút đang chọn 8px (`Shift` 32px), `Delete` xóa (có hoàn tác), `Ctrl+Z`/`Ctrl+Shift+Z` hoàn tác/làm lại. Mỗi nút có `aria-label` mô tả loại, tên và số cạnh vào/ra; có chế độ "Xem dạng danh sách" liệt kê nút và cạnh cho trình đọc màn hình.
+3. *Đồng bộ YAML.* Chế độ Thiết kế, YAML và Chia đôi chuyển qua lại không mất dữ liệu; sửa YAML hợp lệ cập nhật canvas sau 500ms; YAML lỗi cú pháp hiện lỗi trong trình soạn và trong bảng Vấn đề, canvas giữ trạng thái hợp lệ gần nhất kèm dải "YAML đang có lỗi, sơ đồ hiển thị phiên bản hợp lệ gần nhất".
+4. *Lưu.* Tự lưu bản nháp phía máy chủ 30 giây một lần khi có thay đổi, chỉ báo "Đang lưu… / Đã lưu {giờ}" trên thanh công cụ; `Ctrl+S` lưu ngay; lưu dùng `If-Match` (ST-13 hiển thị so sánh YAML). Rời trang khi có thay đổi chưa lưu lên máy chủ hỏi xác nhận.
+5. *Kiểm tra và chạy thử.* "Kiểm tra" chạy xác thực cấu trúc, kết quả vào bảng Vấn đề, bấm một vấn đề chọn nút liên quan. "Chạy thử" mở Drawer nhập bản tin mẫu, chạy nền, kết quả hiển thị theo từng nút (nút đi qua có dấu ✓, nút lỗi có dấu ✕ và chữ).
+6. *Chỉ xem.* Luồng đã phát hành mở ở chế độ chỉ xem; muốn sửa phải "Tạo phiên bản mới" (sinh bản nháp). Sơ đồ kết nối PH-10 luôn chỉ xem, bấm nút mở Drawer chi tiết topic/hệ thống.
+7. *Màn hình nhỏ.* Dưới `bp-lg` hiển thị thông báo yêu cầu màn hình rộng và chế độ YAML chỉ đọc.
+
+**Trạng thái cụ thể.** ST-01: canvas trống với skeleton 3 nút. Rỗng (luồng mới): canvas hiện gợi ý "Kéo một nút Nguồn vào đây hoặc nhấn Enter trên nút trong bảng bên trái để bắt đầu". Mất kết nối khi đang sửa: tiếp tục sửa cục bộ, chỉ báo "Chưa lưu lên máy chủ", tự đồng bộ khi có lại kết nối.
+
+**Phím tắt.** `Ctrl+S` lưu; `Ctrl+Z`/`Ctrl+Shift+Z`; `Delete`; `Ctrl+D` nhân bản nút; `0` vừa khung; `+`/`−` thu phóng; `Ctrl+\` chuyển chế độ YAML; `F` toàn màn hình; `?` danh sách phím tắt.
+
+**Tiêu chí nghiệm thu PTN-07.**
+
+- [ ] Tạo một luồng ba nút hoàn toàn bằng bàn phím, không kéo thả.
+- [ ] Sửa trên canvas cập nhật YAML và ngược lại, không mất thuộc tính.
+- [ ] YAML lỗi không làm hỏng canvas; lỗi hiện ở bảng Vấn đề.
+- [ ] Tự lưu hoạt động; hai người sửa cùng luồng nhận xung đột có so sánh.
+- [ ] Luồng 200 nút thu phóng, kéo mượt (≥ 50 khung hình/giây trên máy văn phòng chuẩn).
+- [ ] Trạng thái chạy thử của nút có chữ/biểu tượng, không chỉ màu.
+
+**Sai lầm thường gặp.** Chỉ hỗ trợ kéo thả; canvas glass; mất dữ liệu khi chuyển chế độ YAML; Inspector là Modal che canvas; không có hoàn tác.
+
+### 4.11. PTN-08 · Cây + bảng (master–detail)
+
+**Mục đích.** Duyệt dữ liệu phân cấp: chọn một nút ở cây bên trái để xem và thao tác nội dung của nút đó ở bên phải.
+
+**Khi dùng.** Danh mục phân cấp, nhóm dịch vụ, vai trò và quyền, đơn vị hành chính. **Khi không dùng.** Cây chỉ có một cấp (dùng bộ lọc của PTN-01).
+
+**Ví dụ trong Datahub.** Danh mục dùng chung PH-07 (`/du-lieu/danh-muc`: cây nhóm danh mục trái, bảng danh mục phải; trong chi tiết một danh mục phân cấp như đơn vị hành chính: cây mục trái, chi tiết mục phải); nhóm dịch vụ thu PH-19; nhóm và vai trò PH-12 (cây nhóm trái, danh sách thành viên và quyền phải).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main ─────────────────────────────────────────────────────────────────────────┐
+│ ① PageHeader: "Danh mục dùng chung"                     [Nhập] [+ Thêm]       │
+│ ┌ ② Khối cây (đặc, rộng 280px, kéo giãn 240–480) ┐┊┌ ③ Khối chi tiết (đặc) ──┐│
+│ │ [🔍 Tìm trong cây]                              │┊│ Tiêu đề nút đang chọn    ││
+│ │ ▾ Tất cả (124)                                  │┊│ FilterBar                ││
+│ │   ▾ Hành chính (18)                             │┊│ DataTable (như PTN-01)   ││
+│ │     ● Đơn vị hành chính                         │┊│                          ││
+│ │   ▸ Dân cư (22)                                 │┊│ Pagination               ││
+│ │   ▸ Y tế (9)                                    │┊│                          ││
+│ │ [+ Thêm nhóm]                                   │┊│                          ││
+│ └─────────────────────────────────────────────────┘┊└──────────────────────────┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án bàn phím (focus tay nắm rồi dùng mũi tên trái/phải, `role="separator"` với `aria-valuenow`). Chiều rộng cây ghi nhớ theo người dùng. Dưới `bp-lg`, cây thu vào một `CMP-Drawer` mở bằng nút "Chọn nhóm" và tên nhóm đang chọn hiện trên tiêu đề khối chi tiết.
+
+**Thành phần.** ② `CMP-Tree`, `CMP-SearchField`, `CMP-Badge` (số đếm); ③ như PTN-01 hoặc `CMP-DescriptionList` khi chi tiết là một mục.
+
+**Hành vi.**
+
+1. Nút đang chọn phản ánh trên URL (`?nhom={ma}` hoặc `/{ma-muc}`); mở URL tự mở rộng cây tới nút đó và cuộn tới.
+2. Cây tải lười theo cấp với cây lớn (trên 500 nút); tìm trong cây gọi máy chủ, hiển thị kết quả kèm đường dẫn cha và tự mở rộng.
+3. Bàn phím theo mẫu tree view của ARIA APG: mũi tên lên/xuống di chuyển, `→` mở/vào con, `←` đóng/về cha, `Home`/`End`, gõ ký tự để nhảy tới nút bắt đầu bằng ký tự đó.
+4. Di chuyển nút (đổi cha) bằng kéo thả **hoặc** hành động "Di chuyển tới…" mở `CMP-TreeSelect` chọn cha mới; di chuyển hỏi xác nhận nếu nút có con.
+5. Danh mục có phiên bản (PH-07): khối chi tiết hiển thị bộ chọn phiên bản và nhãn "Bản nháp"/"Đã công bố" rõ ràng; sửa chỉ trên bản nháp.
+
+**Trạng thái cụ thể.** Cây rỗng: `CMP-EmptyState` trong khối cây với "Thêm nhóm đầu tiên". Chưa chọn nút: khối chi tiết hiện "Chọn một nhóm ở bên trái để xem danh mục" (mặc định chọn "Tất cả" để tránh trạng thái này ở trang danh sách).
+
+**Phím tắt.** `Ctrl+Shift+F` focus tìm trong cây; `Alt+1`/`Alt+2` chuyển focus giữa khối cây và khối chi tiết.
+
+**Tiêu chí nghiệm thu PTN-08.**
+
+- [ ] Mở URL có `nhom` mở rộng đúng nhánh, chọn đúng nút.
+- [ ] Toàn bộ thao tác cây bằng bàn phím theo APG.
+- [ ] Di chuyển nút thực hiện được không cần kéo thả.
+- [ ] Cây 10.000 nút tải lười, mở một cấp dưới 500ms.
+- [ ] Kéo giãn bằng bàn phím hoạt động; độ rộng được ghi nhớ.
+
+**Sai lầm thường gặp.** Tải toàn bộ cây lớn một lần; mất lựa chọn khi tải lại; chỉ cho đổi cha bằng kéo thả; cây và bảng cuộn chung một thanh cuộn.
+

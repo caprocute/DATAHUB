@@ -1101,3 +1101,333 @@ export function DhSessionTimeoutDialog(props: DhSessionTimeoutConfig): JSX.Eleme
   onRefresh={() => auth.refreshToken()} onLogout={(r) => auth.logout({ reason: r, returnTo: location.href })} />
 ```
 
+## 8. Bảng dữ liệu
+
+### 8.1. CMP-DataTable
+
+`CMP-DataTable` là thành phần quan trọng nhất của `dh-console`: mọi màn danh sách (PTN-01), bảng con trên trang chi tiết (PTN-02), cột phải của PTN-08 và hộp việc (PTN-10) đều dùng nó. Thành phần hiện thực một lần toàn bộ yêu cầu danh sách dùng chung: phân trang máy chủ (FR-00-021), sắp xếp và trạng thái trên URL (FR-00-022), lọc (FR-00-020, FR-00-023, phối hợp `CMP-FilterBar`), xuất (FR-00-030, FR-00-031, FR-00-034), hành động theo `allowedActions` (FR-00-053), cùng các quy tắc CRUD-TBL, CRUD-SEL, CRUD-PAG kế thừa từ docs/ui_ux_rule.md. Không dùng DataTable cho dữ liệu dạng cặp nhãn–giá trị (dùng `CMP-DescriptionList`), cho log thời gian thực (dùng `CMP-LogViewer`) hoặc cho bảng nhập liệu có sửa từng ô (SDD phân hệ đặc tả riêng dựa trên `EditableProTable`).
+
+#### 8.1.1. Nền thư viện và thuộc tính cố định
+
+DataTable dựa trên `ProTable` của `@ant-design/pro-components` (phiên bản tương thích antd 6, cố định trong `package.json` của `@datahub/ui`). Bảng dưới đây liệt kê thuộc tính cố định mà `DhDataTable` đặt sẵn; màn hình nghiệp vụ không được ghi đè các thuộc tính này.
+
+| Thuộc tính ProTable | Giá trị cố định | Lý do |
+|---|---|---|
+| `search` | `false` | Dùng `CMP-FilterBar` để bố cục và đồng bộ URL thống nhất |
+| `request` | Hàm bọc TanStack Query, đọc tham số từ URL, khóa truy vấn `['t', tenantId, resource, params]` | Phân trang, sắp xếp, lọc ở máy chủ (CRUD-TBL-02, CRUD-FLT-08) |
+| `params` | Đối tượng tham số đã giải mã từ URL | Bảng tải lại khi URL đổi, kể cả khi người dùng bấm quay lại |
+| `pagination` | `{ defaultPageSize: 20, pageSizeOptions: [10, 20, 50, 100], showSizeChanger: true, showQuickJumper: totalPages > 5, showTotal }`, `current` và `pageSize` lấy từ URL | FR-00-021, CRUD-PAG-01…07 |
+| `sticky` | `{ offsetHeader: size-topbar }` | Tiêu đề dính dưới Topbar khi cuộn trang (CRUD-TBL-10) |
+| `scroll` | `{ x: 'max-content' }` | Cuộn ngang khi hẹp, kết hợp cột thao tác cố định phải |
+| `rowKey` | `'id'` | Khóa ổn định cho chọn nhiều qua trang |
+| `options` | `{ density: true, setting: { draggable: true, checkable: true }, reload: true, fullScreen: false }` | Mật độ, cài đặt cột, tải lại |
+| `columnsState` | `{ value, onChange }` nối với API tùy chọn người dùng (khóa `tableKey`), không dùng `localStorage` | Cài đặt cột lưu theo người dùng, theo dõi được trên mọi máy |
+| `tableAlertRender`, `tableAlertOptionRender` | `false` | Thay bằng `CMP-BulkActionBar` |
+| `rowSelection` | `{ preserveSelectedRowKeys: true, getCheckboxProps }` khi có hành động hàng loạt | CRUD-SEL-01, 02, 06, 07 |
+| `columnEmptyText` | `'—'` | CRUD-R-05 |
+| `dateFormatter` | Hàm định dạng theo `CMP-Timestamp` | DD/MM/YYYY HH:mm (CRUD-TBL-08) |
+| `cardBordered` | `true` | Bảng là một thẻ đặc bo `radius-lg` |
+| `locale.emptyText` | `CMP-EmptyState` theo nguyên nhân | CRUD-TBL-12 |
+| `showSorterTooltip` | `{ target: 'sorter-icon' }` | Tooltip giải thích chiều sắp xếp (CRUD-TBL-04) |
+
+#### 8.1.2. Giải phẫu và vật liệu
+
+Bảng dữ liệu là **nền đặc tuyệt đối**: không phần con nào của DataTable dùng glass, kể cả khi tiêu đề dính trượt dưới Topbar. Lý do là bảng chứa chữ cỡ nhỏ mật độ cao, cần tương phản tối đa và ổn định khi cuộn; glass ở đây chỉ làm giảm khả năng đọc và tăng chi phí kết xuất trên máy văn phòng.
+
+| Phần con | Mô tả | Vật liệu, token |
+|---|---|---|
+| Khung thẻ | Bao FilterBar (nếu đi kèm), thanh công cụ, bảng, phân trang | `color-surface-solid`, `color-border-subtle`, `radius-lg`, `shadow-1` |
+| Thanh công cụ | Trái: tiêu đề bảng con hoặc số bản ghi đã chọn; phải: nút "Xuất" (`CMP-DropdownMenu` biến thể `export`), "Tải lại", "Mật độ", "Cài đặt cột", nút chính bổ sung tùy chọn | Nền đặc; nút `CMP-IconButton` có Tooltip (CRUD-UI-06, 07) |
+| Hàng tiêu đề | Tiêu đề cột `font-body-strong` `color-text-secondary`, biểu tượng sắp xếp, biểu tượng lọc cột (nếu có), Checkbox ba trạng thái | `color-surface-solid-2` (`Table.headerBg`), dính với `z-sticky` |
+| Cột chọn | Checkbox căn giữa, rộng 48px, cố định trái | Vùng chạm ≥ 24×24 |
+| Cột STT | Số thứ tự theo toàn tập, căn phải, `font-feature-tabular`, rộng 64px, cố định trái | Xem 8.1.4 |
+| Cột dữ liệu | Theo `valueType` chuẩn (mục 8.1.3) | `font-body`, `color-text-primary` |
+| Cột thao tác | Cố định phải (CRUD-TBL-11), căn giữa, tối đa hai `CMP-IconButton` hiện trực tiếp và menu "⋯" chứa phần còn lại | Nền đặc `color-surface-solid` có bóng tách nhẹ khi bảng cuộn ngang |
+| Hàng | Cao `size-table-row` (48px chuẩn, 36px gọn) | Hover `Table.rowHoverBg` (`color-surface-solid-2`), chọn `color-fill-selected`, chọn + hover `color-fill-selected-hover` |
+| Thanh tiến độ làm mới | Dải 2px ở mép trên thân bảng khi `isFetching` | `color-accent` |
+| Phân trang | `CMP-Pagination` ở chân thẻ, căn phải; tổng số bản ghi bên trái | Nền đặc |
+| `CMP-BulkActionBar` | Xuất hiện khi có bản ghi được chọn (mục 8.2) | Nền đặc |
+
+#### 8.1.3. Cột và kiểu giá trị
+
+Mỗi cột khai báo `valueType` chuẩn của Datahub; DataTable tự chọn thành phần nguyên tử, căn chỉnh và độ rộng tối thiểu theo bảng dưới đây (kế thừa chuẩn căn chỉnh của docs/ui_ux_rule.md §2.3).
+
+| `dhType` | Hiển thị | Căn chỉnh | Sắp xếp mặc định |
+|---|---|---|---|
+| `text` | Cắt một dòng bằng `…`, Tooltip đầy đủ khi bị cắt (CRUD-TBL-07); tối đa 2 dòng khi `wrap: 2` | Trái | Có nếu máy chủ hỗ trợ |
+| `link` | Tên đối tượng là liên kết tới trang chi tiết (CRUD-R-02); Ctrl/⌘+bấm mở thẻ mới | Trái | Có |
+| `code` | `CMP-Identifier` (mono, nút sao chép khi rê) | Trái | Có |
+| `status` | `CMP-StatusTag` (màu kèm chữ, CRUD-TBL-09, FR-00-053) | Trái | Có |
+| `datetime`, `date` | `CMP-Timestamp` DD/MM/YYYY HH:mm hoặc DD/MM/YYYY | Trái, chữ số đều độ rộng | Có; mặc định toàn bảng `createdAt,desc` (CRUD-TBL-03) |
+| `number`, `percent` | `1.234.567`, `12,5%` | Phải | Có |
+| `money` | `CMP-Money` "1.250.000 ₫" | Phải | Có |
+| `masked` | `CMP-MaskedValue`; "Hiện" chỉ khi có quyền và qua `CMP-ReasonDialog` (FR-00-034) | Trái | Không |
+| `user` | `CMP-Avatar` cỡ nhỏ và tên | Trái | Có |
+| `tags` | Tối đa 2 `CMP-Tag`, "+3" có Tooltip | Trái | Không |
+| `actions` | Theo `allowedActions` của dòng | Giữa | Không |
+
+Quy tắc sắp xếp: chỉ cột khai báo `sortable` mới có biểu tượng; mỗi thời điểm một tiêu chí chính (CRUD-TBL-05), bấm lần lượt tăng → giảm → bỏ; trạng thái ghi vào tham số `sort` trên URL. Khi người dùng bỏ sắp xếp, bảng trở về thứ tự mặc định do máy chủ quy định và hiển thị biểu tượng mặc định trên cột tương ứng.
+
+#### 8.1.4. Cột STT theo toàn tập
+
+Cột STT tính theo vị trí trong toàn bộ tập kết quả, không bắt đầu lại từ 1 ở mỗi trang (CRUD-TBL-06). Công thức là `(page − 1) × size + index + 1`. Không dùng `valueType: 'indexBorder'` của ProTable vì nó đánh số theo trang. Cột STT chỉ có nghĩa khi thứ tự ổn định, vì vậy máy chủ luôn thêm `id` làm tiêu chí sắp xếp phụ.
+
+#### 8.1.5. Trạng thái trên URL và phối hợp với FilterBar
+
+DataTable và FilterBar dùng chung hook `useDhListParams(screenKey)` đọc và ghi tham số theo bảng ở mục 3.4. Đổi trang hoặc số dòng ghi `page`, `size`; đổi sắp xếp ghi `sort` và giữ trang; đổi bộ lọc đưa `page` về 1 và **xóa lựa chọn** (khuyến nghị mặc định của CRUD-SEL-06). Khi người dùng mở chi tiết rồi quay lại, URL còn nguyên nên danh sách hiện đúng trang, bộ lọc, sắp xếp (CRUD-FLT-07, CRUD-C-07). Sau khi xóa bản ghi cuối cùng của trang cuối, bảng tự lùi về trang trước (CRUD-D-08) và cập nhật URL bằng `replace`.
+
+#### 8.1.6. Chọn nhiều và hành động hàng loạt
+
+Checkbox tiêu đề chọn hoặc bỏ toàn bộ bản ghi **trên trang hiện tại**, có ba trạng thái chưa chọn, chọn một phần, chọn toàn bộ (CRUD-SEL-01, 02). Lựa chọn được giữ khi đổi trang (`preserveSelectedRowKeys`) và bị xóa khi đổi bộ lọc. Dòng không đủ điều kiện cho bất kỳ hành động hàng loạt nào có Checkbox vô hiệu kèm Tooltip lý do (CRUD-SEL-07). Khi có ít nhất một dòng được chọn, `CMP-BulkActionBar` xuất hiện (CRUD-SEL-03) với số bản ghi chính xác (CRUD-SEL-04); dòng được chọn có nền `color-fill-selected` (CRUD-SEL-05). Kết quả hành động hàng loạt luôn trả theo từng bản ghi (CRUD-SEL-08, CRUD-D-09).
+
+#### 8.1.7. Hành động theo allowedActions
+
+Mỗi dòng dữ liệu từ máy chủ có `allowedActions`. Màn hình khai báo danh mục hành động một lần (`actions` prop) với khóa trùng giá trị trong `allowedActions`; DataTable chỉ hiển thị hành động có trong mảng của dòng đó. Hai hành động có `inline: true` đầu tiên hiện thành `CMP-IconButton` có Tooltip; phần còn lại vào menu "⋯". Hành động phá hủy luôn nằm cuối menu và tự đi qua `CMP-ConfirmDialog` hoặc `CMP-ReasonDialog` theo `confirm` khai báo. Nếu một dòng không có hành động nào, ô thao tác hiển thị trống (không hiện "—" để tránh hiểu nhầm là thiếu dữ liệu) và cột vẫn giữ độ rộng.
+
+#### 8.1.8. Xuất dữ liệu
+
+Nút "Xuất" mở menu "Xuất Excel (.xlsx)" và "Xuất CSV (UTF-8)". Yêu cầu xuất gửi **toàn bộ tham số lọc và sắp xếp hiện tại trên URL** (không gửi `page`, `size`) cùng danh sách cột đang hiển thị theo cài đặt cột, để tệp khớp đúng những gì người dùng thấy (FR-00-030). Hệ thống phân nhánh theo số dòng ước tính trả về từ API đếm:
+
+1. Tối đa 10.000 dòng: xuất đồng bộ, nút "Xuất" ở trạng thái loading, tệp tải về ngay, Toast "Đã xuất 1.234 dòng".
+2. Trên 10.000 dòng: tạo tác vụ nền (FR-00-031). DataTable hiện `CMP-JobProgress` dạng gọn ngay dưới thanh công cụ, người dùng được rời màn hình; khi xong, `CMP-Notification` và mục trong `CMP-NotificationCenter` chứa liên kết tải có hạn 24 giờ.
+3. Bảng có cột `masked`: tệp mặc định che giá trị (FR-00-034); nếu người dùng có quyền xem đầy đủ, menu có thêm mục "Xuất kèm dữ liệu nhạy cảm…" mở `CMP-ReasonDialog` biến thể `sensitive-access`.
+
+Mục xuất chỉ hiển thị khi màn hình có nghiệp vụ xuất và phản hồi danh sách có `listActions` chứa `EXPORT`. Mỗi lần xuất sinh bản ghi kiểm toán ở máy chủ (FR-00-040).
+
+#### 8.1.9. Mật độ và cài đặt cột
+
+Mật độ có hai giá trị "Chuẩn" (hàng 48px) và "Gọn" (hàng 36px), mặc định theo `data-density` toàn ứng dụng; nút "Mật độ" trên thanh công cụ cho ghi đè theo bảng và được lưu theo người dùng cùng cài đặt cột. Cài đặt cột cho phép ẩn hiện, sắp lại thứ tự (kéo thả, với phương án bàn phím là nút "Lên"/"Xuống" trên từng mục, đáp ứng WCAG 2.5.7), cố định trái hoặc phải và nút "Khôi phục mặc định". Cột STT, cột chọn, cột thao tác và cột tên đối tượng không ẩn được. Cài đặt lưu qua API tùy chọn người dùng với khóa `{tableKey}`, phạm vi theo tenant.
+
+#### 8.1.10. Trạng thái
+
+Bảng dưới đây liệt kê trạng thái hiển thị của DataTable và điều kiện chuyển; nó là danh sách kiểm thử bắt buộc cho mọi màn PTN-01 (docs/ui_ux_rule.md §5).
+
+| Trạng thái | Điều kiện | Hiển thị |
+|---|---|---|
+| Đang tải lần đầu | Chưa có dữ liệu | Hàng tiêu đề thật và 5 hàng `CMP-Skeleton` theo độ rộng cột; phân trang ẩn |
+| Đang làm mới | Đổi trang, sắp xếp, lọc, tải lại | Giữ dữ liệu cũ, dải tiến độ 2px, `aria-busy="true"`; không nhấp nháy về Skeleton |
+| Rỗng | `total = 0` và không có `q`, `f.*` | `CMP-EmptyState` `no-data`, nút tạo nếu có quyền |
+| Không có kết quả | `total = 0` và có bộ lọc | `CMP-EmptyState` `no-result`, nút "Đặt lại bộ lọc" |
+| Lỗi | Truy vấn lỗi | `CMP-Alert` `error` trong thân bảng với mã lỗi, mã truy vết, nút "Thử lại"; giữ FilterBar để người dùng sửa điều kiện |
+| Mất kết nối | Lỗi mạng | Như lỗi, kèm `CMP-Banner` toàn ứng dụng |
+| Không có quyền | 403 | `CMP-EmptyState` `no-permission`; ẩn thanh công cụ |
+| Đang xử lý hàng loạt | Đã gửi hành động hàng loạt | BulkActionBar loading, các dòng được chọn khóa Checkbox |
+| Bản ghi đã thay đổi | Hành động trên dòng trả 404 hoặc 412 | Toast cảnh báo "Bản ghi đã bị xóa hoặc thay đổi. Danh sách đã được tải lại." và tự làm mới |
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Biến thể | `list` (PTN-01, kèm FilterBar), `embedded` (bảng con trong tab chi tiết, phân trang `simple` nếu ít dòng, không xuất), `selector` (trong Modal `select`, chọn một hoặc nhiều, không có cột thao tác). |
+| Kích thước | Hàng `size-table-row`; đệm ô theo `Table.cellPaddingBlock`/`cellPaddingInline` (D03-05-02 §13.3); chiều rộng theo vùng nội dung, không giới hạn `size-page-max` với danh sách. |
+| Token | `color-surface-solid`, `color-surface-solid-2`, `color-border-subtle`, `color-fill-selected`, `color-fill-selected-hover`, `color-text-primary`, `color-text-secondary`, `font-body`, `font-body-strong`, `font-feature-tabular`, `size-table-row`, `size-topbar` (độ lệch dính), `radius-lg`, `shadow-1`, `z-sticky`. |
+| Bàn phím, ARIA | Bảng là `<table>` ngữ nghĩa có `<caption>` ẩn trực quan nêu tên danh sách và tổng số bản ghi; tiêu đề cột sắp xếp được là `<button>` trong `<th>` với `aria-sort`; Tab đi qua phần tử tương tác theo thứ tự hàng (liên kết tên, Checkbox, nút thao tác), không bẫy focus trong bảng; sau khi đổi trang, focus về `<caption>`/đầu bảng và vùng `aria-live="polite"` đọc "Trang 3 trên 12, hiển thị 41 đến 60 trong 234 bản ghi". Bấm vào dòng không mở chi tiết (tránh xung đột với Checkbox và nút, docs/ui_ux_rule.md §11 điểm 11); chỉ liên kết tên mở chi tiết. |
+| Nội dung | Tiêu đề cột là thuật ngữ nghiệp vụ thống nhất (CRUD-TBL-01), danh từ ngắn, không viết tắt khó hiểu; tooltip biểu tượng: "Xuất dữ liệu", "Tải lại", "Mật độ hiển thị", "Cài đặt cột". |
+| Điều cấm | Không phân trang hoặc lọc ở trình duyệt; không dùng glass cho bất kỳ phần nào; không tự suy luận hành động từ vai trò; không bắt đầu lại STT mỗi trang; không mở chi tiết khi bấm cả dòng; không lưu cài đặt cột chỉ ở `localStorage`. |
+
+```ts
+export interface DhColumn<T> {
+  key: keyof T & string; title: string; dhType: 'text' | 'link' | 'code' | 'status' | 'datetime' | 'date' | 'number' | 'percent' | 'money' | 'masked' | 'user' | 'tags';
+  sortable?: boolean; width?: number; minWidth?: number; wrap?: 1 | 2;
+  hideable?: boolean; defaultHidden?: boolean; fixed?: 'left' | 'right';
+  href?: (row: T) => string; render?: (row: T) => React.ReactNode; // chỉ khi dhType không đủ
+}
+export interface DhRowAction<T> {
+  key: string;                           // khớp giá trị trong row.allowedActions
+  label: string; icon?: string; inline?: boolean; danger?: boolean;
+  confirm?: Omit<DhConfirmOptions, 'onConfirm'> | ({ reason: true } & Omit<DhReasonOptions, 'onSubmit'>);
+  run: (row: T, input?: { reason?: string }) => Promise<void>;
+}
+export interface DhBulkAction<T> {
+  key: string; label: string; icon?: string; danger?: boolean;
+  eligible: (row: T) => boolean;        // thường dựa trên row.allowedActions
+  confirm?: DhRowAction<T>['confirm'];
+  run: (ids: string[], input?: { reason?: string }) => Promise<DhBulkResult>;
+}
+export interface DhListResponse<T> { items: T[]; page: number; size: number; totalElements: number; totalPages: number; listActions?: string[] }
+export interface DhDataTableProps<T extends { id: string; allowedActions?: string[] }> {
+  tableKey: string;                      // khóa lưu cài đặt cột, ví dụ 'ph02.services'
+  resource: string;                      // khóa truy vấn
+  fetcher: (params: DhListParams) => Promise<DhListResponse<T>>;
+  columns: DhColumn<T>[];
+  showIndex?: boolean;                   // mặc định true với variant list
+  actions?: DhRowAction<T>[];
+  bulkActions?: DhBulkAction<T>[];
+  export?: { formats: Array<'xlsx' | 'csv'>; fileBaseName: string; start: (params: DhListParams, fmt: 'xlsx' | 'csv', columns: string[]) => Promise<{ jobId?: string; fileUrl?: string }> };
+  variant?: 'list' | 'embedded' | 'selector';
+  emptyAction?: React.ReactNode;         // nút tạo trong trạng thái rỗng
+  caption: string;                       // tên bảng cho trình đọc màn hình
+}
+```
+
+```tsx
+<DhFilterBar screenKey="ph02.services" searchPlaceholder="Tìm theo mã hoặc tên dịch vụ" filters={serviceFilters} />
+<DhDataTable<ServiceRow> tableKey="ph02.services" resource="services" caption="Danh sách dịch vụ"
+  fetcher={api.services.list}
+  columns={[
+    { key: 'name', title: 'Tên dịch vụ', dhType: 'link', sortable: true, hideable: false, href: (r) => `/services/${r.id}` },
+    { key: 'code', title: 'Mã dịch vụ', dhType: 'code', sortable: true },
+    { key: 'status', title: 'Trạng thái', dhType: 'status', sortable: true },
+    { key: 'ownerName', title: 'Cơ quan chủ quản', dhType: 'text' },
+    { key: 'callsMonth', title: 'Lượt gọi tháng', dhType: 'number', sortable: true },
+    { key: 'createdAt', title: 'Ngày tạo', dhType: 'datetime', sortable: true },
+  ]}
+  actions={[
+    { key: 'EDIT', label: 'Sửa', icon: 'Pencil', inline: true, run: (r) => navigate(`/services/${r.id}/edit`) },
+    { key: 'SUSPEND', label: 'Tạm dừng…', icon: 'Pause', confirm: { reason: true, title: 'Tạm dừng dịch vụ', confirmText: 'Tạm dừng', consequence: 'HTTT đang gọi sẽ nhận lỗi 503.' }, run: (r, i) => api.services.suspend(r.id, i!.reason!) },
+    { key: 'DELETE', label: 'Xóa…', icon: 'Trash2', danger: true, confirm: { severity: 'destructive', title: 'Xóa dịch vụ?', confirmText: 'Xóa dịch vụ', consequence: 'Quản trị tỉnh có thể khôi phục trong 30 ngày.' }, run: (r) => api.services.remove(r.id) },
+  ]}
+  bulkActions={[{ key: 'DELETE', label: 'Xóa', icon: 'Trash2', danger: true, eligible: (r) => !!r.allowedActions?.includes('DELETE'), run: api.services.bulkDelete }]}
+  export={{ formats: ['xlsx', 'csv'], fileBaseName: 'danh-sach-dich-vu', start: api.services.export }}
+  emptyAction={<DhButton type="primary" href="/services/new">Thêm dịch vụ</DhButton>} />
+```
+
+### 8.2. CMP-BulkActionBar
+
+`CMP-BulkActionBar` là thanh thao tác hàng loạt hiện khi người dùng chọn ít nhất một dòng trong DataTable. Thanh thay thế vùng cảnh báo mặc định của ProTable để thống nhất hành vi và hiển thị kết quả từng bản ghi. Không dùng ngoài DataTable.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Thành phần tự viết bằng `Flex`, gắn vào DataTable qua ngữ cảnh lựa chọn. |
+| Giải phẫu | (1) Số bản ghi đã chọn "Đã chọn 12 bản ghi" kèm ghi chú "(trên nhiều trang)" khi lựa chọn vượt trang hiện tại; (2) liên kết "Bỏ chọn"; (3) các hành động hàng loạt, mỗi nút ghi số bản ghi đủ điều kiện khi khác tổng ("Xóa (9)"); (4) Tooltip trên nút giải thích bản ghi không đủ điều kiện. |
+| Vật liệu | Nền đặc `color-fill-selected` với chữ `color-accent-on-subtle` cho số đếm; dính ở đầu thân bảng (`position: sticky`, `z-sticky`) ngay dưới hàng tiêu đề, không glass. |
+| Biến thể | `default`; `result` sau khi chạy: tóm tắt "Đã xóa 9 bản ghi. 3 bản ghi không xóa được." kèm nút "Xem chi tiết" mở bảng kết quả từng bản ghi (mã, tên, lý do) trong `CMP-Modal` `md`. |
+| Kích thước | Cao `size-control-lg`; đệm ngang `space-4`. |
+| Trạng thái | Ẩn (0 dòng, CRUD-SEL-03), hiện, đang chạy (nút loading, khóa lựa chọn), kết quả một phần, lỗi toàn bộ. |
+| Token | `color-fill-selected`, `color-accent-on-subtle`, `font-body-strong`, `space-4`, `size-control-lg`, `z-sticky`, `motion-duration-base`. |
+| Bàn phím, ARIA | `role="toolbar"` `aria-label="Thao tác hàng loạt"`; số đếm nằm trong vùng `aria-live="polite"`; khi thanh xuất hiện, focus không bị chuyển (người dùng vẫn ở Checkbox) nhưng phím tắt Alt+B đưa focus tới thanh. |
+| Nội dung | Số đếm chính xác, định dạng Việt Nam (CRUD-SEL-04). |
+| Điều cấm | Không hiện khi chưa chọn gì; không cho chạy hành động trên bản ghi không đủ quyền; không chỉ báo "Thành công" khi có bản ghi thất bại. |
+
+```ts
+export interface DhBulkActionBarProps { selectedCount: number; acrossPages: boolean; actions: Array<{ key: string; label: string; eligibleCount: number; danger?: boolean; onRun: () => void }>; onClear: () => void; result?: DhBulkResult; running?: boolean }
+```
+
+```tsx
+// Được DhDataTable dựng tự động từ bulkActions; dùng trực tiếp chỉ trong Storybook.
+<DhBulkActionBar selectedCount={12} acrossPages actions={[{ key: 'DELETE', label: 'Xóa', eligibleCount: 9, danger: true, onRun }]} onClear={clear} />
+```
+
+## 9. Mã, log, so sánh
+
+Nhóm này hiển thị nội dung kỹ thuật dày đặc nên luôn dùng nền đặc và font `font-family-mono`. Monaco được tải từ gói cục bộ qua `loader.config({ monaco })` của `@monaco-editor/react`, không tải từ CDN, vì `dh-console` chạy trong trung tâm dữ liệu tỉnh có thể không ra Internet. Theme Monaco `datahub-light`/`datahub-dark` được sinh từ token bằng `monaco.editor.defineTheme`.
+
+### 9.1. CMP-CodeEditor
+
+`CMP-CodeEditor` là trình soạn mã cho YAML Camel DSL (PH-04), JSON Schema và AsyncAPI (PH-10), biểu thức ánh xạ, chính sách OPA Rego (PH-12), mẫu thông báo. Không dùng cho xem mã chỉ đọc ngắn (dùng `CMP-CodeText` hoặc `CMP-JsonViewer`).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Editor` của `@monaco-editor/react`. Options cố định: `minimap: { enabled: false }` (bật khi trên 500 dòng), `fontFamily` = `font-family-mono`, `fontSize: 13`, `lineHeight: 20` (`font-mono`), `wordWrap: 'on'` với YAML/Markdown, `accessibilitySupport: 'auto'`, `renderLineHighlight: 'line'`, `scrollBeyondLastLine: false`, `tabSize: 2`, `automaticLayout: true`. Kiểm tra cú pháp bằng JSON Schema cấp từ máy chủ (`monaco-yaml`, chẩn đoán JSON tích hợp). |
+| Giải phẫu | (1) Thanh công cụ: ngôn ngữ, "Định dạng", "Sao chép", "Toàn màn hình", gợi ý "Ctrl+M: chuyển chế độ Tab"; (2) vùng soạn có số dòng; (3) thanh trạng thái: vị trí con trỏ, số lỗi/cảnh báo bấm được để nhảy tới; (4) bảng lỗi thu gọn liệt kê chẩn đoán. |
+| Vật liệu | Nền đặc `color-surface-solid`; thanh công cụ và thanh trạng thái `color-surface-solid-2`; viền `color-border-subtle`, bo `radius-lg`. |
+| Biến thể | `edit`, `readonly` (`readOnly: true`, ẩn "Định dạng"), `inline` (một vùng nhỏ 3–10 dòng trong biểu mẫu, không thanh công cụ). |
+| Kích thước | Cao mặc định 360px, kéo giãn theo chiều dọc; `inline` tự giãn theo nội dung tới 10 dòng. |
+| Trạng thái | Đang tải trình soạn (Skeleton khối mã), sẵn sàng, có lỗi cú pháp (gạch dưới `color-error-text` và biểu tượng ở lề kèm thông điệp tiếng Việt), chỉ đọc, vô hiệu, bẩn. |
+| Token | `font-mono`, `font-family-mono`, `color-surface-solid`, `color-surface-solid-2`, `color-border-subtle`, `color-error-text`, `color-warning-text`, `color-fill-selected` (dòng chọn), `radius-lg`. |
+| Bàn phím, ARIA | Monaco giữ Tab để thụt lề, nên thành phần phải công bố cách thoát: Ctrl+M bật chế độ Tab di chuyển focus (WCAG 2.1.2, không bẫy bàn phím); thông báo này đặt ở thanh công cụ và trong `aria-describedby`. Có nhãn `aria-label` theo trường ("Nội dung YAML của luồng"). F8 nhảy tới lỗi kế tiếp. |
+| Nội dung | Thông điệp chẩn đoán dịch sang tiếng Việt cho lỗi phổ biến; giữ thông điệp gốc trong Tooltip phụ. |
+| Điều cấm | Không tải Monaco từ CDN; không hiển thị bí mật trong trình soạn (bí mật luôn là `T-SECRET-REF`); không dùng Monaco cho trường văn bản thường. |
+
+```ts
+export interface DhCodeEditorProps { language: 'yaml' | 'json' | 'xml' | 'sql' | 'rego' | 'markdown' | 'javascript'; value: string; onChange?: (v: string) => void; schemaUri?: string; variant?: 'edit' | 'readonly' | 'inline'; ariaLabel: string; height?: number; onValidate?: (markers: Array<{ line: number; message: string; severity: 'error' | 'warning' }>) => void }
+```
+
+```tsx
+<DhCodeEditor language="yaml" ariaLabel="Nội dung YAML của luồng" schemaUri="/api/integration/v1/schemas/camel-yaml"
+  value={flow.yaml} onChange={setYaml} onValidate={setMarkers} />
+```
+
+### 9.2. CMP-JsonViewer
+
+`CMP-JsonViewer` hiển thị JSON chỉ đọc dạng cây thu gọn được: thân yêu cầu và phản hồi trong truy vết lượt gọi (PH-13), thông điệp DLQ (PH-18), giá trị trước/sau trong `CMP-AuditTrail`. Không dùng khi cần sửa (dùng CodeEditor) hoặc so sánh (dùng DiffViewer).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Thành phần tự viết dựng cây từ đối tượng JSON, ảo hóa bằng `@tanstack/react-virtual` khi trên 1.000 nút; chế độ "Văn bản thô" chuyển sang `CMP-CodeEditor` `readonly`. |
+| Giải phẫu | (1) Thanh công cụ: "Mở tất cả", "Đóng tất cả", ô tìm khóa/giá trị, "Sao chép JSON", chuyển "Cây / Văn bản thô"; (2) dòng nút: nút mở, khóa, giá trị tô theo kiểu (chuỗi, số, logic, null) kèm nhãn kiểu khi rê; (3) số phần tử của mảng/đối tượng khi thu gọn; (4) giá trị đã che hiển thị "••••" với nhãn "Đã che". |
+| Vật liệu | Nền đặc `color-surface-solid-2`, bo `radius-md`. |
+| Biến thể | `tree`, `raw`, `compact` (không thanh công cụ, cho ô bảng và Popover). |
+| Kích thước | Chữ `font-mono-sm`; thụt cấp 16px; cao tối đa 480px rồi cuộn. |
+| Trạng thái | Sẵn sàng, rỗng ("Không có nội dung"), JSON không hợp lệ (hiển thị văn bản thô kèm Alert `warning` "Nội dung không phải JSON hợp lệ"), quá lớn trên 5 MB (chỉ hiển thị 1.000 dòng đầu và nút "Tải tệp"). |
+| Token | `font-mono-sm`, `color-surface-solid-2`, `color-text-primary`, `color-text-secondary` (khóa), `color-success-text` (chuỗi), `color-info-text` (số), `color-warning-text` (logic, null), `radius-md`. |
+| Bàn phím, ARIA | Cây theo mẫu ARIA Tree như `CMP-Tree`; màu kiểu luôn kèm cách viết phân biệt (chuỗi trong ngoặc kép, `null` viết chữ) nên không dựa vào màu. |
+| Nội dung | Khóa giữ nguyên; không dịch. |
+| Điều cấm | Không hiển thị giá trị trường mức Nhạy cảm chưa che (che từ máy chủ, NFR-00-029). |
+
+```ts
+export interface DhJsonViewerProps { value: unknown; variant?: 'tree' | 'raw' | 'compact'; defaultExpandDepth?: number; maskedPaths?: string[] }
+```
+
+```tsx
+<DhJsonViewer value={trace.responseBody} defaultExpandDepth={2} />
+```
+
+### 9.3. CMP-LogViewer
+
+`CMP-LogViewer` hiển thị log vận hành và log thực thi luồng theo thời gian thực hoặc theo truy vấn: log `dh-runtime` của một luồng (PH-04), log lượt gọi (PH-13), log tác vụ nền (PH-18). Đây là thành phần lõi của PTN-11. Không dùng cho nhật ký kiểm toán (dùng `CMP-AuditTrail`, vì kiểm toán có cấu trúc và có hiệu lực pháp lý).
+
+#### 9.3.1. Hành vi
+
+Log có thể lên tới hàng trăm nghìn dòng, vì vậy danh sách luôn **ảo hóa** bằng `@tanstack/react-virtual`: chỉ các dòng trong khung nhìn cộng vùng đệm được dựng DOM, chiều cao dòng cố định 18px (`font-mono-sm`) để tính vị trí chính xác, dòng xuống hàng được bật theo lựa chọn và khi đó đo chiều cao động. Bộ đệm phía giao diện giữ tối đa 50.000 dòng gần nhất; vượt quá thì bỏ dòng cũ và hiện chú thích "Đã ẩn 12.345 dòng cũ hơn. Dùng bộ lọc thời gian để xem lại." Ở chế độ trực tiếp, dữ liệu đến qua SSE; khi người dùng cuộn lên khỏi đáy, chế độ "Bám đuôi" tự tạm dừng và nút "Có 128 dòng mới, cuộn xuống" xuất hiện, để dòng mới không đẩy mất chỗ người dùng đang đọc. **Che dữ liệu cá nhân (PII)** được thực hiện ở máy chủ trước khi gửi (NFR-00-029); giao diện thêm một lớp bảo vệ thứ hai bằng bộ mẫu nhận diện (số CCCD 12 chữ số, số điện thoại, thư điện tử) và hiển thị giá trị khớp dưới dạng `CMP-MaskedValue` không có nút "Hiện".
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Thành phần tự viết; ảo hóa `@tanstack/react-virtual`; nguồn dữ liệu là `EventSource` (trực tiếp) hoặc truy vấn phân trang theo con trỏ (lịch sử). |
+| Giải phẫu | (1) Thanh lọc: mức log (chọn nhiều), ô tìm (tô sáng kết quả, nút trước/sau), khoảng thời gian, lọc theo `trace_id`; (2) thanh điều khiển: "Bám đuôi" (Switch), "Tạm dừng luồng", "Xuống hàng", "Sao chép", "Tải tệp"; (3) danh sách dòng: thời điểm `HH:mm:ss.SSS`, nhãn mức, nguồn, thông điệp, `trace_id` bấm được để mở truy vết; (4) dòng mở rộng hiển thị trường có cấu trúc bằng `CMP-JsonViewer` `compact`; (5) chỉ báo kết nối trực tiếp. |
+| Vật liệu | Nền đặc `color-surface-solid` (sáng) hoặc `color-surface-solid` tối theo chế độ; không glass, không nền đen cố định. |
+| Biến thể | `live`, `history`, `embedded` (trong Drawer của một tác vụ, không thanh lọc). |
+| Kích thước | Dòng 18px (`font-mono-sm`); cao mặc định chiếm phần còn lại của khung nhìn, tối thiểu 320px. |
+| Trạng thái | Đang kết nối, đang nhận (chấm `CMP-StatusDot` xanh kèm chữ "Đang nhận"), tạm dừng, mất kết nối (chữ "Mất kết nối, đang thử lại sau 5 giây" và nút "Kết nối lại"), rỗng ("Chưa có dòng log nào khớp bộ lọc"), lỗi truy vấn (Alert). |
+| Token | `font-mono-sm`, `font-family-mono`, `color-surface-solid`, `color-fill-hover` (dòng rê), `color-fill-selected` (dòng chọn, kết quả tìm), `color-error-on-bg` + `color-error-bg` (ERROR), `color-warning-on-bg` + `color-warning-bg` (WARN), `color-info-on-bg` + `color-info-bg` (INFO), `color-neutral-on-bg` + `color-neutral-bg` (DEBUG, TRACE), `color-text-tertiary` (thời điểm). |
+| Bàn phím, ARIA | Danh sách `role="log"` với `aria-live="off"` khi bám đuôi (không đọc liên tục) và vùng tóm tắt riêng `aria-live="polite"` báo "Có 3 lỗi mới" tối đa mỗi 10 giây; mũi tên lên/xuống di chuyển dòng đang chọn, Enter mở rộng, Ctrl/⌘+F focus ô tìm của thành phần (không chặn tìm của trình duyệt khi focus ở ngoài), End bật lại bám đuôi. |
+| Nội dung | Nhãn mức là chữ đầy đủ in hoa ngắn "ERROR", "WARN", "INFO", "DEBUG" đặt trong nhãn nền nhẹ, nên mức log được nhận ra bằng chữ chứ không chỉ bằng màu. |
+| Điều cấm | Không dựng toàn bộ dòng vào DOM; không hiển thị PII chưa che; không tô màu cả dòng chỉ bằng màu chữ mà không có nhãn mức. |
+
+```ts
+export interface DhLogLine { ts: string; level: 'ERROR' | 'WARN' | 'INFO' | 'DEBUG' | 'TRACE'; source?: string; message: string; traceId?: string; fields?: Record<string, unknown> }
+export interface DhLogViewerProps { variant?: 'live' | 'history' | 'embedded'; streamUrl?: string; query?: (cursor?: string) => Promise<{ lines: DhLogLine[]; next?: string }>; maxBuffer?: number; onTraceClick?: (traceId: string) => void; ariaLabel: string }
+```
+
+```tsx
+<DhLogViewer variant="live" ariaLabel="Log thực thi luồng Đồng bộ hộ tịch"
+  streamUrl={`/api/integration/v1/flows/${flowId}/logs/stream`} onTraceClick={(id) => navigate(`/monitoring/traces/${id}`)} />
+```
+
+### 9.4. CMP-DiffViewer
+
+`CMP-DiffViewer` so sánh hai phiên bản: phiên bản luồng trước khi phát hành (PH-04), phiên bản API và schema (PH-02, PH-10), giá trị trước/sau trong nhật ký kiểm toán, và đặc biệt là **giải quyết xung đột khi lưu** theo FR-00-052. Không dùng để hiển thị một phiên bản đơn.
+
+#### 9.4.1. Chế độ xung đột ETag
+
+Khi `CMP-Form` nhận 412 Precondition Failed (ETag không khớp `If-Match`), DiffViewer mở trong `CMP-Modal` cỡ `lg` ở chế độ `conflict`. Đầu giếng nội dung là `CMP-Alert` `warning`: "Dịch vụ này vừa được Nguyễn Văn A cập nhật lúc 14:05 ngày 22/11/2026, sau khi bạn mở biểu mẫu." Thân so sánh hai cột "Phiên bản hiện tại trên hệ thống" (trái) và "Thay đổi của bạn" (phải); với biểu mẫu có cấu trúc, so sánh theo trường (bảng ba cột Trường / Hiện tại / Của bạn, chỉ liệt kê trường khác nhau, đánh dấu trường cả hai cùng sửa là "Xung đột"); với nội dung văn bản (YAML, JSON) dùng `DiffEditor` của Monaco. Footer có ba nút: "Hủy" (quay lại biểu mẫu, giữ dữ liệu đang nhập), "Tải lại phiên bản mới" (bỏ thay đổi của mình, nạp bản hiện tại và ETag mới) và "Ghi đè" (gửi lại với ETag mới; nút kiểu phá hủy viền, mở `CMP-ConfirmDialog` `destructive` "Ghi đè thay đổi của Nguyễn Văn A?"). Mỗi lần ghi đè được ghi kiểm toán với ghi chú "ghi đè sau xung đột".
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `DiffEditor` của `@monaco-editor/react` cho văn bản (`renderSideBySide` khi rộng hơn `bp-lg`, gộp khi hẹp; `readOnly: true`; `originalEditable: false`); thành phần tự viết cho so sánh theo trường. |
+| Giải phẫu | (1) Tiêu đề hai cột kèm phiên bản, người sửa, thời điểm; (2) thanh điều khiển: "Cạnh nhau / Gộp", "Chỉ hiện khác biệt", nút khác biệt trước/sau, số khác biệt; (3) vùng so sánh; (4) chú giải ký hiệu: dòng thêm có dấu "+", dòng xóa có dấu "−". |
+| Vật liệu | Nền đặc; dòng thêm `color-success-bg`, dòng xóa `color-error-bg`, phần chữ thay đổi đậm hơn bằng gạch chân; khi nằm trong Modal thì nằm trong giếng đặc. |
+| Biến thể | `text`, `fields`, `conflict` (kèm ba hành động ở trên). |
+| Kích thước | Cao mặc định 480px; trong Modal `lg` chiếm phần giếng còn lại. |
+| Trạng thái | Đang tải hai phiên bản, sẵn sàng, không có khác biệt ("Hai phiên bản giống nhau"), lỗi tải, đang ghi đè/tải lại. |
+| Token | `color-success-bg`, `color-success-on-bg`, `color-error-bg`, `color-error-on-bg`, `color-warning-bg` (trường xung đột), `font-mono`, `color-surface-solid`, `radius-lg`. |
+| Bàn phím, ARIA | F7 / Shift+F7 tới khác biệt kế tiếp/trước (theo Monaco) và nút tương đương trên thanh điều khiển; mỗi khác biệt được đọc dạng "Dòng 12, đã thêm: …"; bảng so sánh theo trường là `<table>` có tiêu đề cột. Thêm/xóa luôn có ký hiệu "+"/"−" nên không dựa vào màu. |
+| Nội dung | Nhãn cột dùng ngôn ngữ người dùng, không dùng "original/modified". |
+| Điều cấm | Không tự hợp nhất thay đổi ngầm; không bỏ dữ liệu người dùng đang nhập khi họ bấm "Hủy". |
+
+```ts
+export interface DhDiffViewerProps {
+  variant: 'text' | 'fields' | 'conflict';
+  language?: string;
+  left: { label: string; author?: string; at?: string; value: string | Record<string, unknown> };
+  right: { label: string; author?: string; at?: string; value: string | Record<string, unknown> };
+  fieldLabels?: Record<string, string>;
+  onOverwrite?: () => Promise<void>; onReload?: () => void; onCancel?: () => void;
+}
+```
+
+```tsx
+<DhDiffViewer variant="conflict" fieldLabels={serviceFieldLabels}
+  left={{ label: 'Phiên bản hiện tại trên hệ thống', author: latest.updatedByName, at: latest.updatedAt, value: latest }}
+  right={{ label: 'Thay đổi của bạn', value: draft }}
+  onOverwrite={() => save(draft, latestEtag)} onReload={() => form.reset(latest)} onCancel={closeConflict} />
+```
+
