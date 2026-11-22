@@ -192,14 +192,14 @@ Sơ đồ cho thấy ba tính chất mà phương án bảo vệ dựa vào. Th�
 
 Sơ đồ vật lý chi tiết, dải địa chỉ và quy tắc tường lửa nằm ở D03-09 §3.1 (`HT-A`) và §3.2 (`HT-B`), nộp kèm hồ sơ. Vùng tin cậy logic của D03-07 và vùng mạng hạ tầng của D03-09 được hiện thực chồng lên nhau: vùng mạng hạ tầng là lớp tường lửa của TTDL hoặc nhóm bảo mật của cloud, vùng logic là namespace Kubernetes với network policy từ chối mặc định (SEC-13, SEC-14). Bảng dưới đây ánh xạ hai cách chia để đơn vị thẩm định đối chiếu hai tài liệu.
 
-| Vùng mạng hạ tầng (D03-09) | Vùng logic (D03-07) | Thành phần chính |
-|---|---|---|
-| Internet, mạng TSLCD/nội bộ tỉnh | Z0 | Người dùng, HTTT, NDXP, PayGov |
-| DMZ | Z1 và phần ra của Z4 | Cân bằng tải, chống DDoS, Envoy Gateway ngoài, egress gateway |
-| Vùng ứng dụng (node pool không trạng thái) | Z2, Z3, Z4, phần Keycloak của Z6 | Envoy Gateway trong, APISIX, BFF, DU, `dh-runtime`, Keycloak |
-| Vùng dữ liệu (node pool có trạng thái) | Z5 | PostgreSQL, Kafka, Garage, ClickHouse |
-| Vùng quản trị | Z7 và phần OpenBao niêm phong, kho sao lưu của Z6 | Bastion, Harbor, Git, OpenBao niêm phong, kho sao lưu S3 bất biến, NTP, DNS |
-| Liên site | — | Sao chép CSDL, Kafka MirrorMaker 2, Garage, Harbor, Git |
+| Vùng mạng hạ tầng (D03-09 §3) | Vùng logic (D03-07) | Namespace (D03-09 §4.2) | Thành phần chính |
+|---|---|---|---|
+| Internet, mạng TSLCD/nội bộ tỉnh | Z0 | — | Người dùng, HTTT, NDXP, PayGov |
+| DMZ | Z1 và phần ra của Z4 | `dh-edge` | Cân bằng tải, chống DDoS, Envoy Gateway ngoài, egress gateway |
+| Vùng ứng dụng (node pool không trạng thái) | Z2, Z3, Z4, phần Keycloak của Z6 | `dh-gateway`, `dh-control`, `dh-payment`, `dh-assist`, `dh-runtime`, `dh-rt-{tenant}`, `dh-iam` | Envoy Gateway trong, APISIX, BFF, DU, `dh-runtime`, Keycloak |
+| Vùng dữ liệu (node pool có trạng thái) | Z5 (`pg-iam` thuộc Z6) | `dh-db`, `dh-kafka`, `dh-olap`, `dh-s3`, `dh-cache` | PostgreSQL, Kafka, Garage, ClickHouse, Valkey |
+| Vùng quản trị | Z7; OpenBao niêm phong và kho sao lưu thuộc Z6 | `dh-obs`, `dh-system`, `dh-secrets` (Z6), `istio-system`, `kube-system` | Bastion, Harbor, Git, OpenBao niêm phong, kho sao lưu S3 bất biến, NTP, DNS |
+| Liên site | — | — | Sao chép CSDL, Kafka MirrorMaker 2, Garage, Harbor, Git |
 
 **[HT-A]** Sơ đồ dưới đây là bản rút gọn của D03-09 §3.1 cho hồ sơ tỉnh độc lập, đủ để đơn vị thẩm định thấy vị trí hệ thống trong TTDL tỉnh.
 
@@ -428,3 +428,204 @@ flowchart LR
 
 Sơ đồ thể hiện hai điểm. Hồ sơ được phê duyệt **trước** khi vận hành chính thức, vì BRD đặt phê duyệt cấp độ là điều kiện nghiệm thu (KPI-08) và D05-01 đặt "hồ sơ cấp độ có bằng chứng kiểm thử" là tiêu chí ra của cổng `RG-4`. Bước kiểm tra trước vận hành nằm sau phê duyệt phương án nhưng trước vận hành chính thức, để bằng chứng kiểm tra phản ánh hệ thống thật đã triển khai.
 
+## 6. Phương án bảo vệ
+
+### 6.1. Nguyên tắc và nguồn
+
+Phương án bảo vệ của hồ sơ là danh mục biện pháp `SEC-01`…`SEC-88` định nghĩa ở D03-07 mục 5 và 9, áp dụng cho cả hai hồ sơ triển khai, với phân công thực hiện theo D03-07 §12. Hồ sơ không chép lại nội dung biện pháp; bảng ở mục 6.2 tóm lược theo nhóm yêu cầu của TCVN 14423:2026 cấp độ 3 (chương 5), và **ma trận đầy đủ là D03-07 mục 11a**, nộp kèm như một phần của phương án. Mỗi biện pháp ở D03-07 có tiêu chí đo được và cách kiểm chứng, nên phương án có thể kiểm tra được chứ không chỉ là cam kết. Tên các nhóm 5.1–5.18 được ghi theo chủ đề vì chưa đối chiếu toàn văn, trừ các mục đã xác định (5.1, 5.2, 5.13, 5.15, 5.17, 5.18); với hồ sơ thẩm định theo khung cũ, D03-07 mục 11b cung cấp ánh xạ sang TCVN 11930:2017 và Thông tư 12/2022.
+
+### 6.2. Yêu cầu theo nhóm của TCVN 14423:2026 cấp độ 3
+
+Bảng dưới đây là tóm lược phương án. Cột "Tham số chính" nêu một hai ngưỡng tiêu biểu để đơn vị thẩm định thấy mức chặt của biện pháp; ngưỡng đầy đủ ở D03-07.
+
+| Nhóm (số mục) | Biện pháp | Tham số chính | Nơi chi tiết |
+|---|---|---|---|
+| Quản lý rủi ro (5.1) | SEC-06 | Đánh giá rủi ro khi khởi tạo, mỗi 6 tháng và khi đổi kiến trúc; mô hình STRIDE | D03-07 §4 |
+| Quản lý tài sản (5.2) | SEC-04 | Kiểm kê tự động hằng ngày (chặt hơn mức 1 lần/năm) | D03-07 §3.1; Phụ lục A |
+| Chính sách, tổ chức, nhân sự (cần đối chiếu số mục) | SEC-01, 02, 03, 05 | Quy chế ban hành trước vận hành; thu hồi quyền ≤ 24 giờ; đào tạo ≥ 1 lần/năm | Mục 6.3 |
+| Cấu hình và thay đổi (cần đối chiếu) | SEC-07, 50, 51, 52, 59, 65 | Mọi thay đổi PROD qua Git có người thứ hai duyệt; CIS Benchmark; phát hiện lệch cấu hình hằng giờ | D03-07 §5.2, 5.7 |
+| Tài khoản, xác thực, kiểm soát truy cập (cần đối chiếu) | SEC-20…29, 85 | MFA cho mọi vai trò quản trị; mật khẩu ≥ 14 ký tự; khóa phiên nhàn rỗi 15 phút; vô hiệu tài khoản sau 45 ngày (quản trị 30 ngày); token 5 phút | D03-07 §5.4 |
+| Lỗ hổng và vá (cần đối chiếu) | SEC-09, 57 | Quét liên tục; vá hệ điều hành hằng tháng; chặn CRITICAL khi phát hành | D03-07 §5.2 |
+| Nhật ký (cần đối chiếu) | SEC-60, 61, 62 | Kiểm toán chỉ-thêm, chuỗi băm, WORM 5 năm; log an ninh 12 tháng trực tuyến | D03-07 §7; ADR-031 |
+| Phòng chống mã độc (cần đối chiếu) | SEC-54, 45 | Phát hiện hành vi lúc chạy (eBPF); quét tệp tải lên | D03-07 §5.6, 5.7 |
+| Trình duyệt, thư điện tử (cần đối chiếu) | SEC-44; quy chế máy trạm của chủ quản | CSP chặt, cookie an toàn; thư điện tử chỉ gửi liên kết | D03-07 §5.6 |
+| Hạ tầng mạng (cần đối chiếu) | SEC-10…19 | Tám vùng Z0–Z7; network policy từ chối mặc định; mTLS STRICT; egress có danh sách | D03-07 §5.3; D03-09 §3, §4 |
+| Bảo vệ dữ liệu, mật mã (cần đối chiếu) | SEC-30…39, 80…88 | Mã hóa volume; mã hóa trường Nhạy cảm bằng khóa riêng theo tenant (ADR-032); che DLCN trong log | D03-07 §5.5, §6, §9 |
+| Sao lưu, khôi phục (cần đối chiếu) | SEC-70, 71 | Sao lưu bất biến ngoài site; RPO ≤ 15 phút; RTO ≤ 1 giờ data plane; diễn tập DR hằng quý | D03-09 §7, §8 |
+| Giám sát và phòng thủ (5.13) | SEC-63, 64, 66, 67 | Đẩy log ra SIEM/SOC; MTTD ≤ 5 phút cho luật mức cao | D03-07 §7.4, 7.5 |
+| Nhà cung cấp, chuỗi cung ứng (cần đối chiếu) | SEC-05, 55…58 | Điều khoản ATTT trong hợp đồng, báo sự cố ≤ 24 giờ; ảnh ký cosign, SBOM, mục tiêu SLSA mức 3 | D03-07 §5.2, 5.7 |
+| Ứng phó sự cố (5.15) | SEC-72…75 | Phân loại ≤ 30 phút; 8 playbook; diễn tập 2 lần/năm; thông báo vi phạm DLCN ≤ 72 giờ | D03-07 §8 |
+| Phát triển ứng dụng an toàn (5.17) | SEC-40…49 | OWASP ASVS 5.0 mức 2; SAST, DAST, kiểm thử API trong CI | D03-07 §5.6; D04-01, D04-02 |
+| Quản lý kiểm tra an ninh mạng (5.18) | SEC-08, 42, 87 | Pentest độc lập ≥ 1 lần/năm và trước phát hành lớn; kube-bench hằng quý; kiểm thử rò rỉ chéo tenant hằng ngày | Mục 8; D05-01 §5.5, 5.6 |
+| An toàn vật lý (Phụ lục A) | Yêu cầu đối với bên cung cấp hạ tầng | Mục 6.4 | D03-07 §12; D03-09 |
+
+### 6.3. Yêu cầu quản lý
+
+**Tổ chức và nhân sự chuyên trách.** Điều 31 Nghị định 331/2026 quy định người đứng đầu là chủ quản và phải bố trí bộ phận hoặc nhân sự chuyên trách an ninh mạng phù hợp cấp độ. Hồ sơ cam kết chủ quản ban hành quyết định giao [Bộ phận chuyên trách ANM] trước khi vận hành (SEC-02), với ít nhất một đầu mối liên lạc 24/7 (`TT-08`). Bản mẫu đề xuất mức tối thiểu sau, chờ xác nhận theo Q327: **[HT-A]** bộ phận chuyên trách của chủ quản có tối thiểu 2 người, trong đó 1 người phụ trách Datahub, cộng đội vận hành tối thiểu 2 người đã qua đào tạo Kubernetes (D03-09 §3.1); **[HT-B]** đơn vị vận hành nền tảng có bộ phận an ninh mạng riêng trực 24/7, và mỗi tỉnh có tối thiểu 1 đầu mối an ninh mạng cho phần tenant. Mọi nhân sự có quyền vào vùng Z7 ký cam kết bảo mật, được kiểm tra lý lịch và đào tạo hằng năm (SEC-03).
+
+> **Câu hỏi mở Q327:** Nghị định 331/2026 Điều 31 (hoặc văn bản hướng dẫn) quy định số lượng, tiêu chuẩn năng lực tối thiểu của nhân sự chuyên trách an ninh mạng cho hệ cấp độ 3 không, và có cho phép thuê ngoài dịch vụ (ví dụ SOC, đơn vị vận hành nền tảng) thay một phần nhân sự chuyên trách không?
+
+**Quy chế.** Trước vận hành chính thức, chủ quản ban hành bộ quy chế gồm: chính sách an ninh mạng chung; quy chế quản lý tài khoản và phân quyền; quy chế kết nối, chia sẻ dữ liệu qua Datahub (vai trò các bên với DLCN, cấm truyền bí mật nhà nước, yêu cầu xác thực theo mức phân loại); quy chế ứng phó sự cố; quy chế làm việc với nhà cung cấp và nhà thầu (SEC-01, SEC-05). D03-07 §5.2 nêu nội dung bắt buộc của từng quy chế.
+
+**Kiểm tra, đánh giá định kỳ.** Sau khi vận hành, chủ quản tổ chức tự đánh giá theo ma trận D03-07 mục 11 hằng năm, đánh giá cấu hình theo CIS hằng quý và kiểm thử xâm nhập độc lập ít nhất hằng năm và khi thay đổi lớn (SEC-08); kết quả và kế hoạch khắc phục được lưu làm bằng chứng cho kiểm tra của cơ quan có thẩm quyền. Tần suất bắt buộc theo Nghị định 331/2026 cần đối chiếu (Q328); nếu quy định chặt hơn thì áp quy định.
+
+**Ứng phó sự cố.** Quy trình sáu bước, bốn mức sự cố P1–P4, bảng RACI và mốc báo cáo ở D03-07 §8 là phương án ứng phó của hồ sơ. Hai nghĩa vụ pháp lý được thiết kế thành nhánh song song ngay khi phân loại: thông báo vi phạm DLCN tới Cục A05 trong 72 giờ (Luật 91/2025) và báo cáo sự cố an ninh mạng tới cơ quan có thẩm quyền (thời hạn chờ Q309 của D03-07). Ở `HT-B`, nhà cung cấp nền tảng báo chủ quản tỉnh bị ảnh hưởng ≤ 1 giờ với sự cố P1 (SEC-05).
+
+### 6.4. Yêu cầu vật lý tại TTDL (Phụ lục A TCVN 14423:2026)
+
+Datahub không sở hữu phòng máy; yêu cầu an toàn vật lý được đáp ứng bởi bên cung cấp hạ tầng và đưa vào hồ sơ bằng hai cách. **[HT-A]** TTDL tỉnh cung cấp văn bản xác nhận đáp ứng Phụ lục A cho phòng máy đặt Datahub ở cả site chính và site DR: kiểm soát ra vào có ghi nhật ký, giám sát hình ảnh, nguồn điện dự phòng (UPS và máy phát), làm mát dự phòng, phòng cháy chữa cháy, giám sát môi trường; ba máy chủ là ba vùng lỗi độc lập về nguồn và chuyển mạch (D03-09 §3.1); đĩa mã hóa nên tháo đĩa không đọc được dữ liệu (SEC-30). **[HT-B]** Nhà cung cấp cloud chứng minh bằng hồ sơ cấp độ đã phê duyệt của hạ tầng cloud và kết quả đánh giá theo bộ tiêu chí an ninh mạng cho nền tảng điện toán đám mây (Quyết định 8297/QĐ-BCA-A05, chưa xác minh chi tiết), toàn bộ hạ tầng đặt trong lãnh thổ Việt Nam. Danh mục bằng chứng điền ở `TT-40`, `TT-41`.
+
+> **Câu hỏi mở Q329:** Với `HT-B`, hạ tầng cloud Chính phủ phải có cấp độ đã phê duyệt không thấp hơn cấp độ của nền tảng Datahub không, và hồ sơ nền tảng kế thừa biện pháp của tầng cloud theo Điều 30 bằng hình thức nào (dẫn chiếu quyết định phê duyệt, biên bản đánh giá theo Quyết định 8297/QĐ-BCA-A05, hay điều khoản hợp đồng)?
+
+## 7. Lộ trình đáp ứng cấp độ 4
+
+Hệ thống được thiết kế "sẵn sàng cấp độ 4" theo ADR-030: kiến trúc không chứa quyết định nào phải làm lại khi nâng cấp, các biện pháp bổ sung cắm được vào điểm đã chừa, và có bảng chênh lệch để lập dự toán. Bảng điểm chờ `SEC-90`…`SEC-99` ở D03-07 §10.2 là lộ trình của hồ sơ. Bảng dưới đây xếp các biện pháp thành ba bước theo thứ tự nên làm khi một yếu tố ở mục 5.5 xảy ra; thời gian tính từ quyết định nâng cấp (mốc N).
+
+| Bước | Biện pháp | Gắn với yếu tố | Thời gian dự kiến |
+|---|---|---|---|
+| 1. Khóa và cách ly dữ liệu | SEC-90 (HSM cho khóa gốc và KEK, chỉ bọc lại khóa dữ liệu), SEC-92 (CSDL riêng theo tenant) | CD4-01, CD4-02, CD4-05 | N + 3 tháng |
+| 2. Quản trị và giám sát | SEC-93 (mạng quản trị out-of-band), SEC-94 (PAM ghi phiên mọi truy cập), SEC-95 (SOC 24/7), SEC-97 (máy trạm quản trị chuyên dụng), SEC-98 (DLP, UEBA) | Mọi yếu tố | N + 6 tháng |
+| 3. Sẵn sàng và đảm bảo | SEC-91 (hai TTDL active–active cho data plane), SEC-96 (pentest 2 lần/năm, red team), SEC-99 (build kín, hai người duyệt phát hành) | Mọi yếu tố | N + 9 tháng |
+
+Ảnh hưởng tập trung ở hạ tầng và tổ chức, không ở mã ứng dụng: đội phát triển chỉ đổi cấu hình (địa chỉ seal PKCS#11, chế độ tenant) và chạy tác vụ bọc lại khóa. Danh sách cần đối chiếu lại với chương 6 TCVN 14423:2026 khi có toàn văn (Q310 của D03-07). Ở `HT-B`, bước 1 có thể áp riêng cho tenant cấp độ 4 mà không nâng cả nền tảng; bước 2 và 3 thường phải áp cho nền tảng.
+
+## 8. Kế hoạch kiểm tra, đánh giá trước khi đưa vào vận hành
+
+Trước vận hành chính thức, hệ thống được kiểm tra để chứng minh phương án bảo vệ đã được triển khai thật, không chỉ trên giấy. Kế hoạch dựa trên D05-01 (kế hoạch kiểm thử tổng thể, §5.5 kiểm thử bảo mật, §5.6 kiểm thử rò rỉ chéo tenant, §6.2 cổng phát hành) và D05-04 (kế hoạch kiểm thử bảo mật chi tiết: bảng kiểm ASVS, kịch bản pentest, ánh xạ từng `SEC-nn`). Bảng dưới đây liệt kê hạng mục kiểm tra, người thực hiện và bằng chứng đưa vào hồ sơ.
+
+| Hạng mục | Nội dung | Thực hiện | Bằng chứng | Ngưỡng đạt |
+|---|---|---|---|---|
+| Tự đánh giá theo ma trận | Kiểm từng dòng D03-07 mục 11a với hệ đã triển khai | Bộ phận chuyên trách ANM, nhà cung cấp | Bảng tự đánh giá có minh chứng từng dòng | 100% dòng Đạt hoặc có ngoại lệ được chủ quản chấp thuận |
+| Kiểm thử bảo mật tự động | SAST, SCA, quét bí mật, DAST, quét cấu hình | Đường ống CI (D05-01 §5.5) | Báo cáo SARIF tập trung | 0 CRITICAL; 0 HIGH chưa có ngoại lệ (NFR-00-023) |
+| Bảng kiểm ASVS 5.0 mức 2 | Từng yêu cầu L2 | Đội kiểm thử (D05-04) | Bảng kiểm có minh chứng | 100% yêu cầu áp dụng Đạt hoặc ngoại lệ (NFR-00-024) |
+| Kiểm thử rò rỉ chéo tenant | Mọi endpoint, mọi tầng lưu trữ | Tự động (D05-01 §5.6) | Kết quả chạy | 100% đạt |
+| Đánh giá cấu hình hạ tầng | kube-bench theo CIS, kiểm tra TLS, network policy | Đơn vị vận hành | Báo cáo kube-bench, testssl | 0 vi phạm mức cao |
+| Kiểm thử xâm nhập độc lập | Hộp xám, OWASP WSTG, API Top 10 2023, leo thang liên tenant | Đơn vị độc lập (Q362 của D05-01) | Báo cáo pentest, biên bản tái kiểm | 0 phát hiện Critical/High còn mở |
+| Diễn tập DR và sao lưu | Chuyển site, khôi phục từ kho bất biến | Đơn vị vận hành | Biên bản diễn tập (D03-09 §7.10) | Đạt RPO/RTO của NFR-00-014 |
+| Kiểm tra phát hiện và ứng phó | Sinh sự kiện an ninh mẫu, chạy một playbook | Bộ phận chuyên trách ANM | Nhật ký cảnh báo, biên bản | Cảnh báo ≤ 5 phút; playbook hoàn tất đúng RACI |
+| Kiểm tra vật lý | Xác nhận Phụ lục A | Bên cung cấp hạ tầng | Văn bản xác nhận | Đủ mục |
+
+Các hạng mục trên là tiêu chí ra của cổng `RG-4` (D05-01 §6.2). Báo cáo tổng hợp kết quả kiểm tra được chủ quản xem xét trước khi quyết định đưa vào vận hành; nếu Nghị định 331/2026 yêu cầu đánh giá bởi tổ chức được cấp phép hoặc bởi cơ quan có thẩm quyền, kết quả ở bảng là đầu vào cho đánh giá đó (Q328).
+
+> **Câu hỏi mở Q328:** Nghị định 331/2026 có bắt buộc kiểm tra, đánh giá an ninh mạng trước khi đưa hệ cấp độ 3 vào vận hành do tổ chức độc lập được cấp phép thực hiện không, và tần suất kiểm tra, đánh giá định kỳ bắt buộc với cấp độ 3 là bao nhiêu? Liên quan Q360, Q362 của D05-01.
+
+## 9. Chuyển tiếp từ LGSP cũ
+
+Datahub thay thế LGSP hiện hành của tỉnh theo cách thay dần, nên trong một giai đoạn hai hệ cùng chạy và nối với nhau qua cầu nối tạm. Điều 39 Nghị định 331/2026 quy định hệ đang đầu tư trước 01/7/2026 được thẩm định theo Nghị định 85/2016 trong 6 tháng và trong 12 tháng phải đáp ứng nghị định mới. Bảng dưới đây nêu cách xử lý cho bốn tình huống; tỉnh chọn tình huống và điền `TT-11`, `TT-50`.
+
+| Tình huống | Xử lý với Datahub | Xử lý với LGSP cũ |
+|---|---|---|
+| S1. LGSP cũ đã được phê duyệt cấp độ theo Nghị định 85; Datahub là dự án mới | Lập hồ sơ mới theo Nghị định 331 và TCVN 14423:2026 bằng bản mẫu này | Giữ quyết định cũ cho phần còn chạy; trong 12 tháng rà soát đáp ứng nghị định mới hoặc hoàn tất cắt chuyển; quyết định cũ hết hiệu lực khi khối cuối cùng ngừng |
+| S2. LGSP cũ đã được phê duyệt; Datahub là nâng cấp, mở rộng của chính hệ đó | Lập hồ sơ điều chỉnh cấp độ cho hệ sau nâng cấp theo khung mới; phương án bảo vệ là của Datahub | Như S1 |
+| S3. LGSP cũ chưa được phê duyệt cấp độ | Lập hồ sơ mới cho Datahub; ưu tiên rút ngắn thời gian cùng chạy | Không lập hồ sơ riêng tốn kém cho hệ sắp ngừng; đưa phần còn chạy và cầu nối vào phụ lục rủi ro chuyển tiếp của hồ sơ Datahub, kèm biện pháp bù (cô lập mạng, giám sát tăng cường, hạn cắt chuyển); chờ xác nhận chấp nhận cách làm này (Q326) |
+| S4. Dự án Datahub được phê duyệt đầu tư trước 01/7/2026 | Có thể thẩm định theo Nghị định 85 nếu còn trong thời hạn 6 tháng; bản mẫu khuyến nghị vẫn lập theo khung mới vì phải đáp ứng nghị định mới trong 12 tháng; dùng ma trận D03-07 mục 11b nếu thẩm định theo khung cũ | Như S1 hoặc S3 |
+
+Trong mọi tình huống, cầu nối tạm (Pulsar–Kafka, gateway cũ – APISIX, đọc dữ liệu di trú) nằm **trong** ranh giới Datahub và được bảo vệ như thành phần của Datahub: tài khoản riêng có thời hạn, đích khai báo, ghi kiểm toán, tháo bỏ khi cắt chuyển khối tương ứng (cổng `RG-5`). LGSP cũ nằm ngoài ranh giới và được coi là hệ có thể bị xâm phạm.
+
+> **Câu hỏi mở Q326:** Mốc 6 tháng và 12 tháng của Điều 39 tính từ 01/7/2026 hay từ ngày Nghị định 331/2026 có hiệu lực? Datahub được coi là hệ mới hay nâng cấp của LGSP cũ (S1 hay S2)? Với tỉnh mà LGSP cũ chưa được phê duyệt cấp độ (S3), có được xử lý phần còn chạy bằng phụ lục rủi ro chuyển tiếp trong hồ sơ Datahub không? Liên quan Q300 của D03-07.
+
+## 10. Phụ lục
+
+### Phụ lục A. Danh mục tài sản (mẫu điền)
+
+Bảng dưới đây là mẫu kiểm kê tài sản nộp kèm hồ sơ. Cột mã và mô tả lấy từ D03-07 §3.1; tỉnh điền số lượng và phiên bản từ báo cáo kiểm kê tự động (SEC-04) tại thời điểm lập hồ sơ.
+
+| Mã | Tài sản | Số lượng/bản sao | Phiên bản | Vị trí (site, vùng) | Đơn vị quản lý |
+|---|---|---|---|---|---|
+| AS-01…03, AS-05 | DU control plane, `dh-payment`, `dh-assist`, giao diện | [ ] | [ ] | [Site], Z3 | [ ] |
+| AS-04 | APISIX, `dh-runtime`, Kafka | [ ] | [ ] | [Site], Z2/Z4/Z5 | [ ] |
+| AS-06, AS-07, AS-09 | PostgreSQL CNPG, Garage, Valkey | [ ] | [ ] | [Site], Z5 | [ ] |
+| (chưa có mã) | ClickHouse siêu dữ liệu lượt gọi | [ ] | [ ] | [Site], Z5 | [ ] |
+| AS-08, AS-16 | Kho WORM, nhật ký kiểm toán | [ ] | [ ] | [Site], Z6/Z5 | [ ] |
+| AS-10, AS-11, AS-12 | Keycloak, OpenBao, chính sách OPA | [ ] | [ ] | [Site], Z6 | [ ] |
+| AS-13, AS-14, AS-15 | Argo CD và Git, CI và Harbor, bộ quan sát | [ ] | [ ] | [Site], Z7 | [ ] |
+| AS-17 | Kho sao lưu bất biến | [ ] | [ ] | [Vị trí ngoài site] | [ ] |
+| AS-18 | Máy chủ, nút K8s, thiết bị mạng | [ ] | [ ] | [Site, giá máy] | [ ] |
+| AS-19 | Thông tin xác thực NDXP, PayGov | [ ] | — | OpenBao | [ ] |
+
+### Phụ lục B. Văn bản viện dẫn
+
+Văn bản được chia hai nhóm như D03-07 §2.2; mã `CMP-LAW-nn` và `STD-nn` theo D03-07. Văn bản hiện hành là căn cứ chính; văn bản kế thừa chỉ dùng đối chiếu hoặc khi thẩm định theo chuyển tiếp.
+
+| Nhóm | Văn bản | Dùng ở mục |
+|---|---|---|
+| Hiện hành | Luật An ninh mạng số 116/2025/QH15 (CMP-LAW-16) | 2, 6.3 |
+| Hiện hành | Nghị định 331/2026/NĐ-CP — Điều 8, 25, 30, 31, 39 đã tra; thành phần hồ sơ, tiêu chí cấp độ 4 chưa xác minh (CMP-LAW-17) | 1.2, 5, 6.3, 9 |
+| Hiện hành | TCVN 14423:2026, chương 5 (cấp độ 3), chương 6 (cấp độ 4), Phụ lục A (STD-06) | 6, 7 |
+| Hiện hành | Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 (CMP-LAW-05); Nghị định 356/2025/NĐ-CP (CMP-LAW-18) | 4.9, 6.3 |
+| Hiện hành | Luật Dữ liệu số 60/2024/QH15 (CMP-LAW-01) | 5.3 |
+| Hiện hành | Nghị định 278/2025/NĐ-CP về kết nối, chia sẻ dữ liệu bắt buộc (CMP-LAW-19) | 4.7 |
+| Hiện hành | Quyết định 8297/QĐ-BCA-A05 về tiêu chí an ninh mạng cho cloud phục vụ CPĐT, chưa xác minh chi tiết (CMP-LAW-20) | 6.4 |
+| Tham khảo kỹ thuật | OWASP ASVS 5.0 (STD-03), OWASP API Security Top 10 2023 (STD-07), CIS Kubernetes Benchmark (STD-08), SLSA (STD-09) | 6.2, 8 |
+| Kế thừa | Nghị định 85/2016/NĐ-CP (CMP-LAW-06), chỉ khi áp dụng chuyển tiếp | 9 |
+| Kế thừa | Thông tư 12/2022/TT-BTTTT (CMP-LAW-07); TCVN 11930:2017 (CMP-LAW-08), đã bị TCVN 14423:2026 thay thế | 1.2, 6.1 |
+| Hết hiệu lực | Nghị định 13/2023/NĐ-CP (CMP-LAW-04), thay bởi Luật 91/2025 và Nghị định 356/2025 | 4.9 |
+
+### Phụ lục C. Bảng điền thông tin
+
+Bảng dưới đây tổng hợp mọi chỗ điền của bản mẫu, nguồn và người cung cấp. Hồ sơ chỉ được trình khi mọi dòng bắt buộc đã điền.
+
+| Mã | Thông tin | Nguồn | Người cung cấp | Bắt buộc |
+|---|---|---|---|---|
+| TT-01…TT-11 | Thông tin định danh (mục 3.1) | Quyết định giao nhiệm vụ, phê duyệt đầu tư | Chủ quản | Có |
+| TT-20 | Số người dùng theo nhóm | Khảo sát, danh sách tài khoản LGSP cũ | Đơn vị vận hành | Có |
+| TT-21 | Số HTTT kết nối, số API, số luồng | Danh mục của LGSP cũ, kế hoạch kết nối | Đơn vị vận hành | Có |
+| TT-22 | Lượt gọi API/ngày, tỷ lệ tới NDXP | Nhật ký gateway LGSP cũ (Q330 của D03-09) | Đơn vị vận hành | Có |
+| TT-23 | Giao dịch thanh toán/ngày | Số liệu PayGov của tỉnh | Đơn vị thụ hưởng | Có nếu bật PH-19 |
+| TT-24 | Dân số tỉnh; số chủ thể DLCN cơ bản, nhạy cảm (mục 4.9) | Niên giám thống kê; tính theo phương pháp mục 4.9 | Chủ quản, pháp chế | Có |
+| TT-25 | Có bật PH-06 trong phạm vi hồ sơ không | Kế hoạch triển khai | Chủ quản | Có |
+| TT-30 | Số máy chủ, thiết bị theo site | D03-09 §5.5/5.6, hợp đồng hạ tầng | Bên cung cấp hạ tầng | Có |
+| TT-40 | Văn bản xác nhận an toàn vật lý (Phụ lục A TCVN 14423:2026) | TTDL tỉnh hoặc nhà cung cấp cloud | Bên cung cấp hạ tầng | Có |
+| TT-41 | Quyết định cấp độ của hạ tầng cloud | Nhà cung cấp cloud | Bên cung cấp hạ tầng | `HT-B` |
+| TT-50 | Tình huống chuyển tiếp S1–S4, số quyết định cấp độ của LGSP cũ | Hồ sơ LGSP cũ | Chủ quản | Có |
+| TT-51 | Quyết định giao bộ phận chuyên trách ANM, danh sách nhân sự | Chủ quản | Chủ quản | Có |
+| TT-52 | Quyết định phê duyệt cấp độ của nền tảng (cho hồ sơ rút gọn của tỉnh) | Chủ quản nền tảng | Chủ quản nền tảng | `HT-B` |
+
+## 11. Mã và thuật ngữ mới đề xuất bổ sung D00-01
+
+Tài liệu dùng ba loại mã nội bộ mới, đề xuất luồng lõi bổ sung vào D00-01 §3.1. Tài liệu cũng đề xuất D03-07 bổ sung mã tài sản cho ClickHouse (ví dụ `AS-20`), vì thành phần này có ở D03-09 và SAD nhưng chưa có trong kiểm kê D03-07 §3.1.
+
+| Mã | Đối tượng | Định nghĩa tại | Ví dụ |
+|---|---|---|---|
+| `TCD-{nn}` | Tiêu chí xác định cấp độ được áp dụng trong hồ sơ (mã nội bộ, không phải số điều khoản) | D03-08 §5.3 | `TCD-01` |
+| `CD4-{nn}` | Yếu tố có thể đẩy hệ thống lên cấp độ 4, kích hoạt đánh giá lại | D03-08 §5.5 | `CD4-03` |
+| `TT-{nn}` | Trường thông tin cần điền trong bản mẫu hồ sơ | D03-08 Phụ lục C | `TT-24` |
+
+Thuật ngữ đề xuất: **hồ sơ nền tảng** (hồ sơ cấp độ của nền tảng dùng chung, do chủ quản nền tảng lập) và **hồ sơ rút gọn của tỉnh** (hồ sơ cho phần sử dụng của một tỉnh trên nền tảng dùng chung, dẫn chiếu hồ sơ nền tảng), định nghĩa ở mục 5.6; **DLCN nhạy cảm (pháp lý)** để phân biệt với mức phân loại nội bộ "Nhạy cảm" (mục 4.9).
+
+## 12. Truy vết
+
+Bảng dưới đây cho biết yêu cầu nào được tài liệu này đáp ứng và ở mục nào.
+
+| Nguồn | Nội dung | Mục đáp ứng |
+|---|---|---|
+| BO-04, KPI-08 | Hồ sơ cấp độ 3 được phê duyệt trước vận hành chính thức | 2, 5, 5.7, 8 |
+| BO-06, NFR-00-060 | Nền tảng dùng chung nhiều tỉnh | 1.3, 5.2, 5.6 |
+| RB-06 (D02-02) | Đạt cấp độ 3, sẵn sàng cấp độ 4 | 5.4, 6, 7 |
+| SH-07 (D02-01) | Cơ quan chuyên trách cần hồ sơ đầy đủ | 1.2, 2 |
+| REQ-09 | Phân loại dữ liệu, kiểm soát khai thác theo mục đích | 4.8, 4.9, 6.2 |
+| NFR-00-010, NFR-00-014 | Sẵn sàng, RPO/RTO | 4.5, 6.2, 8 |
+| NFR-00-020…029 | Yêu cầu bảo mật tối thiểu | 6.2 (qua D03-07 mục 11d) |
+| NFR-00-024 | ASVS 5.0 mức 2 | 6.2, 8 |
+| ADR-030 | Cấp độ 3, chừa điểm cấp độ 4 | 5.4, 7 |
+| ADR-031, ADR-032 | Nhật ký WORM; mã hóa trường | 6.2 |
+| ADR-034, ADR-036 | DR hai site; hai hồ sơ triển khai | 1.3, 4.5 |
+| LGC-NFR-008 | Yêu cầu ATTT máy chủ, CSDL, ứng dụng của hệ cũ | 6.2 |
+| D05-01 RG-4 | Hồ sơ cấp độ có bằng chứng kiểm thử | 8 |
+
+## 13. Câu hỏi mở
+
+Danh sách dưới đây tổng hợp câu hỏi mở của tài liệu (dải Q320–Q329). Ba câu hỏi Q320, Q321, Q323 chặn việc trình hồ sơ và cần được trả lời trước tiên.
+
+| Mã | Nội dung tóm tắt | Mục | Người trả lời |
+|---|---|---|---|
+| Q320 | Thành phần hồ sơ và mẫu biểu theo Điều 25 Nghị định 331/2026 | 1.2 | Pháp chế, bộ phận chuyên trách ANM |
+| Q321 | Ai thẩm định, ai phê duyệt cấp độ 3; thời hạn | 2 | Pháp chế, Công an tỉnh |
+| Q322 | Yêu cầu cấp độ tối thiểu của NDXP, PayGov với LGSP kết nối; đăng ký theo nền tảng hay theo tỉnh | 4.7 | Đơn vị quản lý NDXP, PayGov |
+| Q323 | Tiêu chí cấp độ 4 (ngưỡng DLCN, phạm vi liên tỉnh, nền tảng dùng chung); chủ quản của nền tảng dùng chung | 5.3, 5.5, 5.6 | Chủ đầu tư, Bộ Công an |
+| Q324 | PH-06 có là dữ liệu quan trọng/cốt lõi; quan hệ với cấp độ 4 | 5.3 | Pháp chế, cơ quan quản lý dữ liệu |
+| Q325 | Cách đếm chủ thể DLCN; định nghĩa DLCN nhạy cảm áp cho dữ liệu đi qua | 4.9 | Pháp chế |
+| Q326 | Mốc thời hạn Điều 39; Datahub là hệ mới hay nâng cấp; xử lý LGSP cũ chưa phê duyệt | 9 | Pháp chế, chủ quản |
+| Q327 | Số lượng, tiêu chuẩn nhân sự chuyên trách theo Điều 31; thuê ngoài | 6.3 | Pháp chế, chủ quản |
+| Q328 | Kiểm tra trước vận hành bởi tổ chức độc lập; tần suất kiểm tra định kỳ cấp độ 3 | 6.3, 8 | Pháp chế, Bộ Công an |
+| Q329 | Cấp độ yêu cầu của hạ tầng cloud và hình thức kế thừa biện pháp theo Điều 30 | 4.2, 6.4 | Nhà cung cấp cloud, Bộ Công an |

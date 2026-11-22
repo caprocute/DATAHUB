@@ -213,7 +213,7 @@ Trong cụm Kubernetes, vùng ứng dụng và vùng dữ liệu là các node p
 
 **Mô hình trách nhiệm ở `HT-A`.** Bảng RACI rút gọn sau phân định ai làm gì. R là người thực hiện, A là người chịu trách nhiệm cuối cùng, C là người được hỏi ý kiến.
 
-| Hạng mục | TTDL tỉnh | Nhà cung cấp Datahub | Chủ quản HTTT (Sở KH&CN hoặc đơn vị được giao) |
+| Hạng mục | TTDL tỉnh | Nhà cung cấp Datahub | Chủ quản HTTT (UBND tỉnh hoặc cơ quan được giao, thường là Sở KH&CN; theo D03-07 §12) |
 |---|---|---|---|
 | Phòng máy, điện, làm mát, an toàn vật lý | R, A | — | C |
 | Máy chủ, ảo hóa, mạng, tường lửa, cân bằng tải | R, A | C | — |

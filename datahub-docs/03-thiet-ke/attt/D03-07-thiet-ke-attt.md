@@ -118,6 +118,7 @@ Không thể bảo vệ cái chưa biết là mình có. Bảng dưới đây ki
 | AS-17 | Sao lưu | Bản sao CNPG (Barman), Velero, bản sao WORM ngoài site | Nhạy cảm | Vận hành | Cao (khi DR) |
 | AS-18 | Hạ tầng cụm | Nút K8s, etcd, control plane K8s, Cilium, Istio | Tối mật kỹ thuật (etcd chứa Secret) | Bên cung cấp hạ tầng | Rất cao |
 | AS-19 | Thông tin xác thực ra ngoài | Client NDXP, khóa ký PayGov, tài khoản CSDL nguồn | Tối mật kỹ thuật | Chủ quản từng kết nối | Cao |
+| AS-20 | Kho phân tích lưu lượng | ClickHouse (`dh-olap`, Z5): siêu dữ liệu lượt gọi API giữ 12 tháng theo D03-09 | Hạn chế (định danh HTTT, địa chỉ nguồn; không chứa nội dung bản tin) | Vận hành | Trung bình |
 
 "Tối mật kỹ thuật" ở đây không phải mức phân loại dữ liệu nghiệp vụ mà là nhãn cho vật liệu khóa và bí mật mà nếu lộ sẽ làm vô hiệu hóa mọi biện pháp khác; chúng được xử lý theo `SEC-33…36` và không bao giờ xuất hiện ngoài OpenBao hoặc bộ nhớ tiến trình.
 
