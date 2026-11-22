@@ -469,3 +469,225 @@ class CatalogApiIT extends CrossTenantLeakTestSupport {
   }
 }
 ```
+
+## 4. Camel Quarkus và Camel YAML DSL
+
+Luồng tích hợp của PH-04, bộ điều hợp của PH-05 và kết nối quốc gia của PH-14 chạy trên `dh-runtime` là ứng dụng Camel Quarkus biên dịch native (ADR-002), luồng được viết bằng Camel YAML DSL (ADR-010) và đi vào sản xuất qua Git và Argo CD (ADR-009). Luồng có thể do người viết tay hoặc do trình thiết kế sinh ra; cả hai đều phải tuân thủ mục này, và bộ kiểm tra luồng (validator) của `dh-integration` áp các luật tự động trước khi cho phép gửi duyệt.
+
+### 4.1. Cấu trúc tệp và đặt tên
+
+**CC-CAMEL-01 · Một luồng một thư mục [tự động].** Mỗi luồng nằm ở `routes/{tenant}/{mã-luồng}/` trong kho Git cấu hình, gồm `route.camel.yaml` (định nghĩa), `route.meta.yaml` (mã luồng, tenant, chủ sở hữu, phân loại dữ liệu cao nhất đi qua, FR liên quan, phiên bản), `application.properties` (tham số không bí mật) và thư mục `test/` chứa bản tin mẫu đã ẩn danh. Mã luồng theo `T-CODE` viết thường gạch nối khi dùng làm tên thư mục.
+
+**CC-CAMEL-02 · `routeId` duy nhất, có nghĩa [tự động].** Mọi route khai báo `id` tường minh theo mẫu `{tenant}-{mã-luồng}-{chặng}` viết thường gạch nối, ví dụ `t68-tra-cuu-ho-tich-receive`, `t68-tra-cuu-ho-tich-deliver`. Không để Camel tự sinh `route1`, vì `routeId` là nhãn trên chỉ số, log và trace dùng để chẩn đoán. Mọi bước quan trọng (`to`, `toD`, `process`, `transform`) cũng có `id` để hiện tên trên trace.
+
+**CC-CAMEL-03 · Theo khung chín chặng chuẩn [review].** Luồng chuẩn đi qua các chặng `receive → schema → authz → transform → enrich → route → deliver → audit → respond` (mẫu `routes/_templates/standard-9-stage.camel.yaml` hiện có). Chặng có thể rỗng nhưng không được đảo thứ tự kiểm tra lược đồ và ủy quyền ra sau chuyển đổi, vì chuyển đổi dữ liệu chưa được kiểm tra là nguồn lỗi chèn mã.
+
+### 4.2. Xử lý lỗi và DLQ
+
+**CC-CAMEL-04 · Bộ xử lý lỗi tường minh trên mọi luồng [tự động].** Mỗi tệp luồng khai báo `errorHandler` kiểu `deadLetterChannel` trỏ tới Kamelet DLQ chuẩn `dh-dlq-sink`, với chính sách thử lại có giới hạn: tối đa 3 lần, lùi theo cấp số nhân (khởi đầu 1 giây, hệ số 2, trần 30 giây), chỉ thử lại lỗi tạm thời (lỗi kết nối, `5xx`, `429`); lỗi `4xx` khác và lỗi kiểm tra lược đồ đưa thẳng vào DLQ không thử lại. Cấm `errorHandler: noErrorHandler` và cấm `onException` với `handled: true` mà không ghi DLQ hoặc phản hồi lỗi.
+
+**CC-CAMEL-05 · DLQ mang đủ ngữ cảnh, không mang bí mật [tự động].** Bản tin vào DLQ (topic `{tenant}.integration.dlq.v1`) mang header CloudEvents `dhtenant`, `traceparent`, `routeId`, mã lỗi, số lần thử, thời điểm; thân bản tin được giữ nguyên để xử lý lại ở PH-18 nhưng trường mức Nhạy cảm đã được mã hóa hoặc che theo phân loại khai báo trong `route.meta.yaml`. Header xác thực (`Authorization`, cookie, khóa API) bị xóa trước khi ghi DLQ.
+
+**CC-CAMEL-06 · Lỗi trả cho bên gọi theo RFC 9457 [tự động].** Luồng nhận đồng bộ (`platform-http`) trả lỗi bằng Kamelet `dh-problem-response` để có cùng định dạng `application/problem+json` với API Spring (mục 3.5), không trả ngăn xếp hay thông điệp ngoại lệ.
+
+### 4.3. Kamelet và cấu hình
+
+**CC-CAMEL-07 · Kết nối ra ngoài chỉ qua Kamelet đã duyệt [tự động].** Luồng nghiệp vụ không dùng trực tiếp URI thành phần kết nối ra ngoài (`http:`, `https:`, `sql:`, `ftp:`, `sftp:`, `kafka:`, `jms:`, `file:`), mà dùng Kamelet trong danh mục đã duyệt của PH-05 (`dh-http-sink`, `dh-sql-source`…). Kamelet đóng gói sẵn TLS, xác thực, giới hạn thời gian chờ (connect ≤ 5 giây, đọc ≤ 30 giây mặc định), giới hạn kích thước phản hồi, danh sách đích cho phép và che log. Validator chặn URI thành phần ngoài danh sách cho phép.
+
+**CC-CAMEL-08 · Tham số qua property, bí mật qua kho bí mật [tự động].** Địa chỉ, thời gian chờ, ngưỡng dùng placeholder `{{datahub.route.xxx}}` đọc từ `application.properties` của luồng. Thông tin xác thực dùng tham chiếu kho bí mật `{{secret:kv/dh/{tenant}/...}}` (giải qua tích hợp OpenBao của Quarkus hoặc tệp do External Secrets gắn vào), không bao giờ ghi giá trị trong YAML. Kamelet có tham số đánh dấu `x-descriptors: urn:camel:group:credentials` để trình thiết kế không hiển thị và không lưu giá trị.
+
+**CC-CAMEL-09 · Đích động phải qua danh sách cho phép [tự động].** `toD` với URI ghép từ dữ liệu bản tin là nguồn SSRF (CC-SEC-15). Chỉ được dùng `toD` khi phần động là tham số đường dẫn đã kiểm tra theo mẫu; máy chủ đích luôn tĩnh hoặc lấy từ danh sách đích đăng ký của HTTT thành viên.
+
+### 4.4. Biểu thức bị cấm
+
+**CC-CAMEL-10 · Không thực thi mã tùy ý trong luồng [tự động].** Luồng YAML chỉ được dùng ngôn ngữ biểu thức an toàn: `simple` (giới hạn ở truy cập header, thuộc tính, thân), `jq`, `jsonpath`, `xpath` (với bộ phân tích tắt thực thể ngoài, mục 9), `constant`, `header`, `exchangeProperty`. Các ngôn ngữ và thành phần sau bị cấm trong luồng nghiệp vụ vì cho phép thực thi mã hoặc truy cập hệ thống: `groovy`, `joor`, `java`, `js`, `python`, `mvel`, `ognl`, `spel`, `bean` với tên lớp động, `exec:`, `language:` với script từ bản tin, `class:`, `freemarker`/`velocity` với mẫu lấy từ dữ liệu. Biểu thức `simple` không được chứa `${bean:...}`, `${sys...}`, `${env...}` hay gọi phương thức qua `${body.xxx()}` trên đối tượng không phải dữ liệu. Validator và luật Semgrep YAML chặn các mẫu này.
+
+**CC-CAMEL-11 · Mã Java trong `dh-runtime` tối thiểu [review].** Processor Java chỉ viết khi không diễn đạt được bằng YAML và Kamelet; nằm trong package `vn.datahub.runtime.{miền}`, đăng ký là bean có tên trong danh mục cho phép, tuân thủ toàn bộ mục 3 (null-safety, log, không ghép SQL). Không viết route bằng Java DSL cho luồng nghiệp vụ.
+
+### 4.5. Native và quan sát
+
+**CC-CAMEL-12 · Tương thích native [tự động].** Phụ thuộc mới của `dh-runtime` phải là extension Camel Quarkus có hỗ trợ native; lớp dùng phản chiếu phải đăng ký `@RegisterForReflection`. CI build ảnh native và chạy kiểm thử luồng ở chế độ native (`@QuarkusIntegrationTest`) trước khi phát hành phiên bản `dh-runtime`. Không dùng `Class.forName` với tên lấy từ cấu hình.
+
+**CC-CAMEL-13 · Mọi luồng có trace, chỉ số, tenant [tự động].** Bật `camel-quarkus-opentelemetry` và `camel-quarkus-micrometer`; chỉ số mang nhãn `tenant`, `route_id`, không mang nhãn có số lượng giá trị lớn (mã bản tin, mã công dân). Header `traceparent` được nhận ở `receive` và truyền tiếp ở `deliver`. Tenant của bản tin lấy từ header `X-DH-Tenant` do APISIX đặt sau xác minh token hoặc từ `dhtenant` của sự kiện, được đối chiếu với tenant sở hữu luồng trong `route.meta.yaml`; không khớp thì từ chối và cảnh báo an ninh (D03-10 §3).
+
+**CC-CAMEL-14 · Kiểm thử luồng [tự động].** Mỗi luồng có kiểm thử dùng `camel-quarkus-junit` hoặc Citrus, thay Kamelet ngoài bằng điểm cuối giả (`mock:`, WireMock), chạy ít nhất: một ca thành công, một ca lỗi lược đồ, một ca đích lỗi tạm thời để kiểm tra thử lại và DLQ, một ca tenant không khớp.
+
+Ví dụ dưới đây là một luồng đúng quy chuẩn. Luồng có `routeId` tường minh, bộ xử lý lỗi DLQ, kiểm tra lược đồ trước chuyển đổi, gọi ra ngoài qua Kamelet và không chứa bí mật.
+
+```yaml
+- errorHandler:
+    deadLetterChannel:
+      deadLetterUri: kamelet:dh-dlq-sink?tenant={{datahub.tenant}}
+      useOriginalMessage: true
+      redeliveryPolicy:
+        maximumRedeliveries: 3
+        redeliveryDelay: 1000
+        backOffMultiplier: 2
+        maximumRedeliveryDelay: 30000
+        useExponentialBackOff: true
+        retryAttemptedLogLevel: WARN
+- route:
+    id: t68-tra-cuu-ho-tich-receive
+    from:
+      uri: platform-http:/api/flows/v1/tra-cuu-ho-tich
+      parameters: { httpMethodRestrict: POST }
+      steps:
+        - to: { id: validate-schema, uri: "kamelet:dh-json-schema-validate?schemaRef=ho-tich-request-v1" }
+        - to: { id: authorize, uri: "kamelet:dh-opa-authorize?policy=flows/tra_cuu_ho_tich" }
+        - transform: { id: to-cdm, jq: { expression: "{ soDinhDanh: .so_dinh_danh, hoTen: .ho_ten }" } }
+        - to: { id: deliver, uri: "kamelet:dh-http-sink?target={{datahub.route.target}}&timeoutMs=10000" }
+        - to: { id: audit, uri: "kamelet:dh-audit-sink" }
+```
+
+Ví dụ sai dưới đây vi phạm CC-CAMEL-02 (không có `id`), CC-CAMEL-04 (không có xử lý lỗi), CC-CAMEL-07 và CC-CAMEL-09 (gọi `toD` với máy chủ lấy từ bản tin, gây SSRF), CC-CAMEL-08 (mật khẩu trong YAML) và CC-CAMEL-10 (dùng Groovy).
+
+```yaml
+# SAI — không làm theo
+- route:
+    from:
+      uri: platform-http:/proxy
+      steps:
+        - setBody: { groovy: "request.body.replace('a','b')" }
+        - toD: "https://${header.target}/api?user=admin&password=Secret123"
+```
+
+## 5. TypeScript, React 19, antd v6
+
+Giao diện `dh-console` và `dh-portal` dùng React 19, TypeScript 5, Vite, antd v6 với phong cách Liquid Glass của design system `@datahub/ui` (ADR-020), TanStack Query cho trạng thái máy chủ và React Router. Mục này quy định cách viết mã giao diện; thiết kế thành phần và token ở D03-05, mẫu màn hình ở D03-06.
+
+### 5.1. Cấu trúc thư mục
+
+**CC-FE-01 · Kho mã giao diện theo workspace [tự động].** Giao diện là workspace pnpm (hoặc npm workspaces) gồm `apps/console`, `apps/portal`, `packages/ui` (`@datahub/ui`: thành phần, token, theme antd), `packages/api-client` (`@datahub/api-client`: kiểu và client sinh từ OpenAPI), `packages/i18n` (`@datahub/i18n`: chuỗi tiếng Việt) và `packages/eslint-config`. Ứng dụng tổ chức theo tính năng (feature) chứ không theo loại tệp. Cây dưới đây minh họa.
+
+```text
+apps/console/src/
+├── app/                  # khởi tạo: router, QueryClient, ConfigProvider, AuthProvider
+├── features/
+│   └── rdm/              # PH-07
+│       ├── api/          # hook TanStack Query: useCatalogs, useCreateCatalog
+│       ├── components/   # CatalogTree.tsx, CatalogForm.tsx (chỉ dùng trong rdm)
+│       ├── pages/        # CatalogListPage.tsx (UI-07-01), CatalogDetailPage.tsx
+│       ├── routes.tsx    # khai báo route của tính năng, gắn quyền PERM-07-*
+│       └── index.ts      # điểm xuất duy nhất của tính năng
+├── shared/               # hook, tiện ích dùng chung trong ứng dụng
+└── main.tsx
+```
+
+Cây trên cho thấy mỗi tính năng tương ứng một phân hệ và tự chứa mọi thứ của nó. Tính năng chỉ import tính năng khác qua `index.ts`; luật `import/no-restricted-paths` của ESLint chặn import sâu vào thư mục con của tính năng khác, tương tự ranh giới module ở backend.
+
+### 5.2. Thành phần và hook
+
+**CC-FE-02 · Thành phần hàm, có kiểu đầy đủ [tự động].** Chỉ dùng thành phần hàm; props khai báo bằng `type {Tên}Props`; không dùng `React.FC`; không dùng `any` (`@typescript-eslint/no-explicit-any: error`), dùng `unknown` rồi thu hẹp kiểu. `tsconfig` bật `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`. Một tệp một thành phần xuất ra, tên tệp trùng tên thành phần `PascalCase.tsx` (D00-01 §6).
+
+**CC-FE-03 · Hook đặt tên `useXxx`, tuân thủ luật hook [tự động].** Hook tùy biến đặt tên `useCamelCase`, đặt trong `api/` (hook dữ liệu) hoặc `shared/hooks`. Bật `eslint-plugin-react-hooks` (`rules-of-hooks: error`, `exhaustive-deps: error`). Bật React Compiler của React 19 khi ổn định với antd v6 thì bỏ `useMemo`/`useCallback` thủ công; trước đó chỉ dùng khi đo được lợi ích.
+
+**CC-FE-04 · Không thao tác DOM trực tiếp, không HTML thô [tự động].** Cấm `dangerouslySetInnerHTML` (trừ thành phần hiển thị Markdown của `@datahub/ui` có làm sạch bằng DOMPurify), `innerHTML`, `eval`, `new Function`, `document.write`. Luật `react/no-danger` và `no-eval` ở mức lỗi.
+
+### 5.3. Dữ liệu máy chủ với TanStack Query
+
+**CC-FE-05 · Mọi gọi API qua client sinh từ OpenAPI và TanStack Query [tự động].** Kiểu yêu cầu và phản hồi sinh bằng `openapi-typescript` vào `@datahub/api-client`; lời gọi dùng `openapi-fetch` với kiểu sinh, nên gọi đường dẫn không có trong hợp đồng là lỗi biên dịch. Không gọi `fetch` hay `axios` trực tiếp trong thành phần (luật `no-restricted-globals`/`no-restricted-imports`). Mỗi tài nguyên có một tệp hook trong `features/{x}/api/` với khóa truy vấn theo hàm tạo khóa (`catalogKeys.list(filters)`), không viết khóa dạng mảng tay rải rác.
+
+**CC-FE-06 · Trạng thái máy chủ không sao chép vào trạng thái cục bộ [review].** Dữ liệu từ API sống trong bộ đệm TanStack Query; không chép vào `useState` hay kho toàn cục. Trạng thái lọc, sắp xếp, trang đặt trên URL qua search params (FR-00-022). Sau khi ghi, làm mới bằng `invalidateQueries` theo khóa; cập nhật lạc quan chỉ dùng khi có hoàn tác.
+
+**CC-FE-07 · Gửi `If-Match` và `Idempotency-Key` [tự động].** Hook sửa gửi `If-Match` từ `version`/ETag đã đọc và xử lý `412` bằng hộp thoại xung đột chuẩn của `@datahub/ui` (FR-00-052). Hook tạo sinh `Idempotency-Key` một lần cho mỗi lần mở biểu mẫu, dùng lại khi người dùng bấm gửi lại.
+
+**CC-FE-08 · Lỗi hiển thị theo mã, không theo câu chữ [review].** Lỗi `application/problem+json` được chuyển thành thông báo bằng thành phần `ProblemAlert` của `@datahub/ui`, hiển thị `title`, `detail` và `traceId` có nút sao chép; lỗi theo trường (`errors`) gắn vào trường biểu mẫu tương ứng.
+
+### 5.4. Biểu mẫu
+
+**CC-FE-09 · Biểu mẫu dùng `Form` của antd với lược đồ kiểm tra dùng chung [review].** Biểu mẫu dùng `Form` của antd v6 bọc qua thành phần `DhForm` của `@datahub/ui`. Quy tắc kiểm tra phía giao diện sinh từ ràng buộc OpenAPI hoặc khai báo bằng Zod theo cùng giới hạn, chỉ để phản hồi nhanh cho người dùng; máy chủ vẫn kiểm tra lại toàn bộ (CC-VAL-01). Biểu mẫu không gửi trường mà người dùng không được sửa (tenant, id, trạng thái).
+
+### 5.5. Tiếng Việt và i18n
+
+**CC-FE-10 · Không chuỗi hiển thị viết cứng trong thành phần [tự động].** Chuỗi hiển thị lấy từ `@datahub/i18n` qua hàm `t('rdm.catalog.publish.confirm')`; ngôn ngữ mặc định và duy nhất ở đợt đầu là tiếng Việt (`vi-VN`), cấu trúc sẵn sàng thêm ngôn ngữ khác. `ConfigProvider` của antd dùng `locale={viVN}`; ngày giờ hiển thị theo giờ Việt Nam định dạng `dd/MM/yyyy HH:mm:ss` (T-TS), số theo `Intl.NumberFormat('vi-VN')`, tiền theo đồng không phần thập phân. Luật ESLint `i18next/no-literal-string` (hoặc tương đương) chặn chuỗi chữ trong JSX.
+
+### 5.6. Khả năng truy cập
+
+**CC-FE-11 · WCAG 2.2 mức AA [tự động + review].** Mọi màn đạt 0 lỗi mức A/AA với axe-core (NFR-00-040), kiểm tra bằng `@axe-core/playwright` trong kiểm thử E2E và `eslint-plugin-jsx-a11y` ở mức lỗi. Mọi điều khiển có nhãn truy cập được; biểu tượng không chữ có `aria-label`; thứ tự focus hợp lý, có lối tắt "Bỏ qua tới nội dung" (NFR-00-042); vòng focus nhìn thấy với tương phản ≥ 3:1 kể cả trên nền glass (NFR-00-041); tôn trọng `prefers-reduced-motion` và `prefers-reduced-transparency` (NFR-00-043).
+
+### 5.7. Design system và token, không CSS tự do
+
+**CC-FE-12 · Chỉ dùng thành phần `@datahub/ui` [tự động].** Màn hình dùng thành phần của `@datahub/ui` (`CMP-*`, D03-05); import trực tiếp từ `antd` trong `apps/` chỉ được phép với danh sách thành phần nguyên thủy mà `@datahub/ui` tái xuất, kiểm tra bằng `no-restricted-imports` (NFR-00-045).
+
+**CC-FE-13 · Không CSS tùy biến ngoài token [tự động].** Màu, khoảng cách, bo góc, bóng, độ mờ, cỡ chữ chỉ lấy từ token `--dh-{nhóm}-{vai-trò}-{biến-thể}` (`TKN-*`) hoặc từ `theme.useToken()` của antd đã ánh xạ token. Cấm: giá trị màu viết cứng (hex, `rgb()`, `oklch()`), `px` viết cứng ngoài token, thuộc tính `style={{...}}` mang giá trị trình bày, tệp `.css`/`.less` riêng trong `apps/` ngoài tệp luật bố cục chung. Stylelint với `stylelint-declaration-strict-value` và luật ESLint tùy biến `datahub/no-inline-style` ở mức lỗi; ngoại lệ (ví dụ kích thước canvas của trình thiết kế luồng) khai báo trong tệp cho phép có lý do.
+
+**CC-FE-14 · Bố cục khóa chiều cao cửa sổ [review].** Tuân thủ luật bố cục ở `AGENTS.md` §6.1: không `height: 100vh` bên trong màn, mọi tổ tiên flex của vùng cuộn có `min-height: 0`, bảng rộng cuộn trong khối của nó.
+
+### 5.8. Bảo mật phía trình duyệt
+
+**CC-FE-15 · Token trong bộ nhớ, không trong `localStorage` [tự động].** Xác thực theo OIDC Authorization Code + PKCE với Keycloak (FR-00-001) qua `oidc-client-ts`; access token giữ trong bộ nhớ, refresh token theo cấu hình rotation của Keycloak; không lưu token trong `localStorage` hay `sessionStorage`. Không ghi dữ liệu Nhạy cảm vào kho trình duyệt. Ứng dụng chạy dưới CSP chặt (`default-src 'self'`, không `unsafe-inline` cho script) do APISIX đặt; mã không được cần `unsafe-eval`.
+
+**CC-FE-16 · Ẩn nút không phải là phân quyền [review].** Giao diện ẩn hoặc vô hiệu hành động theo quyền để trải nghiệm tốt, nhưng mọi quyết định thật nằm ở backend; không có logic "nếu là quản trị thì gọi API khác".
+
+### 5.9. ESLint, Prettier và kiểm thử giao diện
+
+**CC-FE-17 · Bộ công cụ chuẩn [tự động].** ESLint 9 cấu hình phẳng (`eslint.config.js`) từ `@datahub/eslint-config` gồm `typescript-eslint` (strict-type-checked), `react`, `react-hooks`, `jsx-a11y`, `import`, `eslint-plugin-security`, `no-unsanitized` và luật tùy biến của Datahub; Prettier 3 (`printWidth: 100`, `singleQuote: true`, `trailingComma: 'all'`) chạy qua `eslint-config-prettier` để hai công cụ không xung đột. `tsc --noEmit`, `eslint --max-warnings 0`, `prettier --check`, `stylelint` chạy trong cổng lint giao diện.
+
+**CC-FE-18 · Kiểm thử giao diện [tự động].** Kiểm thử đơn vị và thành phần dùng Vitest và Testing Library, truy vấn theo vai trò truy cập (`getByRole`) thay vì lớp CSS; giả lập API bằng MSW với dữ liệu sinh từ OpenAPI. Độ phủ ≥ 70% (NFR-00-053). E2E dùng Playwright cho luồng chính, kèm axe-core và Lighthouse CI (LCP ≤ 2,5 giây, INP ≤ 200 ms, NFR-00-005).
+
+Ví dụ dưới đây là một hook và một thành phần đúng quy chuẩn.
+
+```tsx
+// features/rdm/api/useCatalogs.ts
+import { useQuery } from '@tanstack/react-query';
+import { api, type components } from '@datahub/api-client';
+
+export type CatalogFilter = { q?: string; status?: components['schemas']['CatalogStatus']; page: number };
+
+export const catalogKeys = {
+  all: ['rdm', 'catalogs'] as const,
+  list: (f: CatalogFilter) => [...catalogKeys.all, 'list', f] as const,
+};
+
+export function useCatalogs(filter: CatalogFilter) {
+  return useQuery({
+    queryKey: catalogKeys.list(filter),
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/rdm/v1/catalogs', {
+        params: { query: { q: filter.q, status: filter.status, page: filter.page, size: 20 } },
+      });
+      if (error) throw error; // problem+json đã có kiểu
+      return data;
+    },
+  });
+}
+```
+
+```tsx
+// features/rdm/pages/CatalogListPage.tsx  (UI-07-01)
+import { DhPage, DhDataTable, StatusTag, ProblemAlert } from '@datahub/ui';
+import { useT } from '@datahub/i18n';
+import { useCatalogFilterFromUrl } from '../hooks/useCatalogFilterFromUrl';
+import { useCatalogs } from '../api/useCatalogs';
+
+export function CatalogListPage() {
+  const t = useT();
+  const [filter, setFilter] = useCatalogFilterFromUrl();
+  const { data, error, isPending } = useCatalogs(filter);
+  return (
+    <DhPage title={t('rdm.catalog.list.title')}>
+      {error && <ProblemAlert problem={error} />}
+      <DhDataTable
+        rowKey="id"
+        loading={isPending}
+        dataSource={data?.items}
+        columns={[
+          { key: 'code', title: t('rdm.catalog.code'), dataIndex: 'code', sorter: true },
+          { key: 'name', title: t('rdm.catalog.name'), dataIndex: 'name' },
+          { key: 'status', title: t('common.status'), render: (_, r) => <StatusTag status={r.status} /> },
+        ]}
+        onQueryChange={setFilter}
+      />
+    </DhPage>
+  );
+}
+```
+
+Ví dụ sai dưới đây vi phạm CC-FE-05 (gọi `fetch` trực tiếp, đường dẫn tự gõ), CC-FE-06 (chép dữ liệu máy chủ vào `useState`), CC-FE-10 (chuỗi viết cứng), CC-FE-13 (màu và khoảng cách viết cứng) và CC-FE-02 (`any`).
+
+```tsx
+// SAI — không làm theo
+const [rows, setRows] = useState<any[]>([]);
+useEffect(() => { fetch('/api/rdm/catalogs').then(r => r.json()).then(setRows); }, []);
+return <div style={{ color: '#1677ff', padding: 13 }}>Danh mục: {rows.length}</div>;
+```

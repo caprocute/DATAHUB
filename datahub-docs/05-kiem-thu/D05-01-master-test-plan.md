@@ -358,3 +358,154 @@ Bảng tóm tắt dưới đây gom các mức kiểm thử để tra nhanh khi 
 | Hệ thống | Đội kiểm thử, vận hành, đơn vị độc lập | Đội kiểm thử | Mỗi bản ứng viên phát hành | STAGING, PERF | Toàn bộ mục 16 | `RG-3` |
 | Chấp nhận | Đội kiểm thử chuẩn bị | Người dùng, chủ đầu tư | Mỗi đợt | UAT | Kịch bản D05-05, bảng hỏi SUS | `RG-4` |
 
+## 5. Các loại kiểm thử
+
+Mục này mô tả từng loại kiểm thử: nó kiểm chứng yêu cầu nào, làm thế nào, đạt khi nào. Loại kiểm thử nào có tài liệu chuyên đề thì mục này chỉ chốt phạm vi, chỉ tiêu và công cụ.
+
+### 5.1. Kiểm thử chức năng
+
+Kiểm thử chức năng kiểm chứng mọi `FR` và `BR`. Mỗi FR mức M có ít nhất hai test case, một dương tính và một âm tính (D00-01 §3.2 quy tắc 4); FR có ngoại lệ đặc tả thì mỗi ngoại lệ có một ca âm riêng kiểm tra đúng mã `ERR`, mã HTTP và hành vi. Các yêu cầu dùng chung `FR-00` được kiểm thử theo hai tầng: một bộ **kiểm thử khung dùng chung** (TS-00-nn) kiểm tra cơ chế một lần ở thư viện hoặc design system (phân trang, tìm không dấu, xuất Excel, xác nhận thao tác, Problem Details), và mỗi phân hệ có ca kiểm tra áp dụng đúng cơ chế đó trên màn và API của mình. Mục `LGC` được kiểm chứng gián tiếp: test case ghi cột "LGC" khi FR mà nó kiểm thử thay thế chức năng hệ cũ, nhờ đó RTM tính được độ phủ 179 mục LGC cần giữ.
+
+Bộ tiêu chí chấp nhận `AT-{PH}-{nnn}` đã có trong SRS phân hệ của repo (`docs/07-srs/`, mục M10) được dùng làm đầu vào: D05-02 chuyển mỗi AT thành một hoặc nhiều TC, ghi mã AT gốc ở trường "Nguồn" để không mất truy vết với tài liệu cũ.
+
+Các yêu cầu có tiêu chí thời gian (FR-00-003 tự đăng xuất sau 30 phút, hạn xử lý ở PH-11, hạn tải tệp 24 giờ ở FR-00-031) được kiểm thử bằng đồng hồ giả lập (`Clock` tiêm vào ở backend, `page.clock` của Playwright ở giao diện), không chờ thời gian thật.
+
+### 5.2. Kiểm thử hồi quy
+
+Mọi ca tự động ở mục 4 là bộ hồi quy. Bộ hồi quy được chia ba tầng theo thời gian chạy: **tầng PR** (đơn vị, module, tích hợp hệ thống của module bị đổi, hợp đồng) chạy ở mọi PR; **tầng hợp nhất** (toàn bộ tích hợp hệ thống, E2E khói) chạy mỗi lần merge vào nhánh chính; **tầng đêm** (E2E đầy đủ trên ba trình duyệt, visual regression, kiểm thử đột biến, DAST cơ bản, quét log) chạy hằng đêm trên TEST. Việc chọn ca theo module bị đổi dựa vào bản đồ phụ thuộc Modulith: đổi module A thì chạy ca của A và của các module phụ thuộc A. Trước mỗi cổng `RG-2` trở lên, toàn bộ bộ hồi quy chạy lại không chọn lọc. Lỗi đã sửa ở mức nghiêm trọng S1, S2 bắt buộc có ca hồi quy tự động trước khi đóng lỗi.
+
+### 5.3. Kiểm thử hiệu năng
+
+#### 5.3.1. Hồ sơ tải "tỉnh vừa" và các loại kiểm thử
+
+Mọi chỉ tiêu hiệu năng đo trên hồ sơ quy mô "tỉnh vừa" của SRS §6.1: 200 HTTT thành viên, 2.000 API, 500 luồng, 5 triệu lượt gọi API mỗi ngày, cao điểm 300 lượt/giây, 200 người dùng giao diện đồng thời mỗi tenant. Dữ liệu nền được sinh tổng hợp (mục 8) với 1 triệu bản ghi cho màn danh sách lớn nhất. Mô hình lưu lượng hằng ngày được dựng theo hình dạng giờ hành chính (đỉnh 9–11 giờ và 14–16 giờ) với phân bố 80% đọc, 20% ghi, phân bố kích thước bản tin 1 KB / 10 KB / 100 KB theo tỷ lệ 70/25/5 cho tới khi có số liệu thật của tỉnh thí điểm (Q07 của SRS).
+
+Bốn loại kiểm thử hiệu năng được dùng, định nghĩa như sau để mọi bên hiểu thống nhất. **Kiểm thử tải** (load test) chạy ở mức cao điểm danh định để đo chỉ tiêu. **Kiểm thử chịu tải** (stress test) tăng dần quá danh định tới khi hỏng để tìm điểm gãy và kiểm tra hệ suy giảm có kiểm soát (trả `429`/`503` thay vì treo). **Kiểm thử đột biến tải** (spike test) tăng vọt gấp 3 lần trong 1 phút để kiểm tra tự co giãn HPA/KEDA. **Kiểm thử bền** (soak test) chạy ở 70% danh định trong 8 giờ (24 giờ trước `RG-3` của MVP) để phát hiện rò rỉ bộ nhớ, tăng trưởng kết nối, phân mảnh.
+
+#### 5.3.2. Kiểm chứng từng NFR hiệu năng
+
+Bảng dưới đây hiện thực hóa phương pháp đo ở SRS cho từng NFR: kịch bản, điểm đo, điều kiện đạt. Mọi kịch bản k6 xuất kết quả lên Mimir (k6 output Prometheus remote write) để đối chiếu với chỉ số phía máy chủ trên cùng bảng Grafana.
+
+| NFR | Kịch bản kiểm thử | Điểm đo | Điều kiện đạt |
+|---|---|---|---|
+| NFR-00-001 | k6 tải hằng số 300 lượt/giây trong 30 phút qua APISIX tới backend giả lập phản hồi cố định 20 ms; trộn xác thực token, rate limit, OPA | Chênh lệch giữa `apisix_http_latency{type="request"}` và `{type="upstream"}` (độ trễ do APISIX), đối chiếu với độ trễ phía k6 trừ độ trễ backend | p95 ≤ 50 ms, p99 ≤ 100 ms |
+| NFR-00-002 | k6 tăng dần tới 1.000 lượt/giây, giữ 30 phút, APISIX 3 bản sao | Tỷ lệ lỗi `5xx` không do backend; thông lượng duy trì | ≥ 1.000 lượt/giây, lỗi do nền tảng < 0,1% |
+| NFR-00-003 | k6 mô phỏng 200 người dùng đồng thời gọi API danh sách có lọc, sắp xếp, phân trang trên bảng 1 triệu bản ghi; đồng thời Playwright đo thời gian hiển thị màn danh sách (từ điều hướng tới khi bảng có dữ liệu) cho 20 phiên mẫu | Phía API: k6; phía giao diện: Playwright `performance.mark` | p95 ≤ 1,5 giây cả hai phía |
+| NFR-00-004 | Như trên cho màn chi tiết và lệnh lưu biểu mẫu | Như trên | p95 ≤ 1 giây |
+| NFR-00-005 | Lighthouse CI chạy 5 lần mỗi trang trên hồ sơ máy 4 nhân, 8 GB, giới hạn mạng 20 Mbps; INP đo bằng thư viện web-vitals trong kịch bản Playwright thao tác thật | LCP, INP trung vị 5 lần | LCP ≤ 2,5 giây, INP ≤ 200 ms |
+| NFR-00-006 | k6 với phần mở rộng Kafka (xk6-kafka) phát 500 sự kiện/giây vào 50 topic; subscriber giả lập kiểu đẩy ghi thời điểm nhận; đồng hồ các nút đồng bộ NTP | Hiệu thời điểm nhận và thời điểm phát (dấu thời gian trong bản tin) | p95 ≤ 2 giây |
+| NFR-00-007 | k6 gọi luồng chuẩn (nhận REST, chuyển đổi JSON bằng JQ, gửi tới đích giả lập) 300 lượt/giây; ảnh native | Chỉ số `camel_exchange_processing_seconds` của route trừ thời gian gọi đích | p95 ≤ 30 ms |
+| NFR-00-008 | Kiểm thử chức năng có đo thời gian: nhập tệp 100.000 dòng hợp lệ qua API nhập PH-07, đo từ khi tải lên tới khi tác vụ nền hoàn tất | Thời điểm bản ghi tác vụ chuyển `COMPLETED` | ≤ 2 phút; đúng 100.000 bản ghi được ghi |
+| NFR-00-060 | Nền tảng dùng chung khởi tạo 34 tenant; chạy kiểm thử tải trên 5 tenant đồng thời, 29 tenant ở mức nền | Chỉ tiêu NFR-00-001 của từng tenant | Đạt chỉ tiêu ở mọi tenant tải |
+| NFR-00-061 | Chạy NFR-00-002 với N bản sao data plane rồi 2N bản sao | Thông lượng tối đa giữ lỗi < 0,1% | Tỷ lệ ≥ 1,8 |
+| NFR-00-062 | Sinh 5 triệu bản ghi siêu dữ liệu/ngày × 365 ngày cho 1 tenant (dữ liệu tổng hợp); chạy truy vấn báo cáo chuẩn của PH-13 | Thời gian truy vấn, dung lượng | Truy vấn trả kết quả; ngưỡng thời gian chốt ở D05-03 |
+| RSK-T21 | Một tenant phát gấp 3 hạn mức 500 lượt/giây, tenant khác ở tải danh định | Độ trễ và lỗi của tenant khác | Tenant khác vẫn đạt NFR-00-001; tenant vượt nhận `429` |
+
+> **Câu hỏi mở Q361:** NFR-00-062 chưa có chỉ tiêu thời gian truy vấn trên tập 12 tháng (khoảng 1,8 tỷ bản ghi mỗi tenant). Đề nghị bổ sung vào SRS (ví dụ truy vấn tổng hợp theo ngày cho một API trong 30 ngày ≤ 5 giây) để D05-03 có điều kiện đạt.
+
+Chạy hiệu năng trên môi trường PERF có cấu hình bằng hồ sơ "tỉnh vừa" ở D03-09. Mỗi lần chạy ghi lại phiên bản phần mềm, cấu hình tài nguyên, kết quả và so sánh với đường cơ sở (baseline) lần trước; suy giảm quá 10% ở chỉ số p95 bất kỳ là lỗi mức S2 dù chưa vượt chỉ tiêu. Một kịch bản tải rút gọn (5 phút, 100 lượt/giây) chạy hằng đêm trên TEST để phát hiện suy giảm sớm.
+
+### 5.4. Kiểm thử sẵn sàng, hỗn loạn và DR
+
+#### 5.4.1. Đo sẵn sàng (NFR-00-010, 011)
+
+Sẵn sàng không kiểm thử được bằng một lần chạy mà đo liên tục. Trên STAGING và sau này trên PROD, bộ kiểm tra tổng hợp (synthetic probe) bằng Grafana Synthetic Monitoring hoặc Blackbox Exporter gọi mỗi phút một API mẫu qua APISIX, một luồng mẫu trên `dh-runtime`, phát–nhận một sự kiện mẫu, và mở trang đăng nhập `dh-console`. Tỷ lệ phút thành công trên tổng phút (trừ thời gian bảo trì báo trước) là độ sẵn sàng. Trước `RG-4`, STAGING phải có ít nhất 14 ngày đo liên tục đạt ≥ 99,9% cho data plane và ≥ 99,5% cho control plane, như bằng chứng thiết kế đạt; cam kết chính thức đo trên PROD.
+
+#### 5.4.2. Kiểm thử hỗn loạn
+
+Kiểm thử hỗn loạn dùng **Chaos Mesh** (lựa chọn mặc định vì có sẵn các loại lỗi pod, mạng, IO, thời gian và lập lịch thí nghiệm bằng CRD, quản lý được qua GitOps); Litmus là phương án thay thế khi tỉnh đã dùng. Mỗi thí nghiệm có giả thuyết trạng thái ổn định (steady-state hypothesis) đo bằng chỉ số, phạm vi ảnh hưởng giới hạn bằng nhãn namespace, và điều kiện hủy tự động. Thí nghiệm chạy trên STAGING dưới tải nền k6 ở 50% danh định để thấy ảnh hưởng tới người dùng.
+
+| Thí nghiệm | Yêu cầu | Cách gây lỗi | Giả thuyết trạng thái ổn định / điều kiện đạt |
+|---|---|---|---|
+| CX-01 Control plane ngừng 24 giờ | NFR-00-012 | Thu nhỏ mọi DU control plane (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`) về 0 bản sao và chặn mạng tới Keycloak admin; giữ 24 giờ (kiểm thử rút gọn 2 giờ mỗi tuần, bản đủ 24 giờ trước `RG-3`) | APISIX, `dh-runtime`, Kafka tiếp tục phục vụ với cấu hình đã nạp; tỷ lệ lỗi của lưu lượng nền không tăng quá 0,1 điểm phần trăm; token máy mới vẫn được cấp (Keycloak runtime vẫn chạy) |
+| CX-02 Nâng cấp cuốn chiếu dưới tải | NFR-00-013 | Triển khai phiên bản mới qua Argo CD cho APISIX, `dh-runtime` và Kafka (Strimzi rolling) trong khi k6 chạy 300 lượt/giây | 0 lượt gọi lỗi do nâng cấp (k6 ghi mọi phản hồi khác 2xx của lưu lượng hợp lệ) |
+| CX-03 Mất một nút | NFR-00-015 | Chaos Mesh `PodChaos` kiểu `pod-kill` cho mọi pod trên một nút, sau đó cách ly nút (cordon, drain mất kiểm soát hoặc tắt máy ảo) | Không mất dịch vụ ở probe tổng hợp; pod được lập lịch lại và sẵn sàng ≤ 5 phút |
+| CX-04 Mất primary PostgreSQL | NFR-00-010, 014 | Xóa pod primary CloudNativePG | Chuyển đổi dự phòng tự động; không mất giao dịch đã xác nhận (đồng bộ); control plane phục hồi ≤ 5 phút |
+| CX-05 Mất một broker Kafka | NFR-00-006, 010 | `pod-kill` một broker | Không mất sự kiện (kiểm đếm phát–nhận khớp), p95 độ trễ sự kiện tạm vượt nhưng về ≤ 2 giây trong 5 phút |
+| CX-06 Trễ và mất gói tới đích ngoài | REQ-14, REQ-19 | `NetworkChaos` trễ 2 giây, mất 30% gói tới giả lập NDXP và PayGov | Circuit breaker mở, lỗi trả nhanh với mã `ERR` đúng, bản tin vào DLQ đúng chính sách, không cạn luồng xử lý |
+| CX-07 OpenBao không truy cập được | ADR-012 | Chặn mạng tới OpenBao 30 phút | DU đang chạy tiếp tục phục vụ với bí mật đã nạp; cảnh báo phát trong ≤ 5 phút (KPI-15) |
+| CX-08 Lệch đồng hồ | FR-00-042, chữ ký callback | `TimeChaos` lệch 10 phút trên một pod | Chữ ký callback quá cửa sổ thời gian bị từ chối; chuỗi băm kiểm toán không bị phá |
+
+#### 5.4.3. Kiểm thử phục hồi ở mức thành phần
+
+Ngoài thí nghiệm hỗn loạn, mỗi bản ứng viên phát hành chạy kiểm thử khôi phục: khôi phục CSDL tại một thời điểm (PITR) từ bản sao lưu Barman Cloud vào cụm mới và đối chiếu số dòng, tổng kiểm tra với nguồn ở thời điểm đó; khôi phục namespace bằng Velero; khôi phục bucket Garage. Đây cũng là kiểm chứng FR liên quan tới sao lưu ở PH-18.
+
+#### 5.4.4. Diễn tập DR (NFR-00-014)
+
+Diễn tập DR được thực hiện **hằng quý** trên kiến trúc hai site của D03-09 (site chính và site dự phòng của STAGING trước vận hành; của PROD sau vận hành, trong khung giờ bảo trì được duyệt). Kịch bản chuẩn: ghi lưu lượng nghiệp vụ tổng hợp có đánh số tuần tự liên tục; tại thời điểm T_x cắt toàn bộ site chính (mạng và nguồn ở mức mô phỏng); thực hiện quy trình chuyển site theo HDVH; đo **RTO** là thời gian từ T_x tới khi probe tổng hợp data plane xanh trở lại (đạt ≤ 1 giờ) và control plane xanh trở lại (đạt ≤ 4 giờ); đo **RPO** bằng cách tìm số tuần tự cuối cùng có mặt ở site dự phòng và quy đổi ra thời gian (đạt ≤ 15 phút). Diễn tập kết thúc bằng chuyển ngược về site chính và đối chiếu dữ liệu. Biên bản diễn tập là bằng chứng cho hồ sơ cấp độ (D03-08) và thuộc nhóm biện pháp SEC-70–79.
+
+### 5.5. Kiểm thử bảo mật
+
+Kiểm thử bảo mật được chia thành các lớp chạy ở tần suất khác nhau. Bảng dưới đây chốt từng lớp, công cụ, thời điểm, ngưỡng chặn và nhóm biện pháp `SEC-nn` (định nghĩa ở D03-07) được kiểm chứng. Kịch bản chi tiết, bảng kiểm ASVS từng mục và ánh xạ từng `SEC-nn` cụ thể nằm ở D05-04.
+
+| Lớp | Công cụ | Thời điểm | Ngưỡng chặn | Nhóm SEC kiểm chứng |
+|---|---|---|---|---|
+| Quét bí mật | gitleaks (mã, lịch sử commit), Trivy secret scan (ảnh container) | Mọi PR; mọi ảnh trước khi đẩy lên Harbor | 0 phát hiện (NFR-00-022) | SEC-30–39 |
+| SAST | Semgrep với bộ luật Java, TypeScript, YAML, Kubernetes và luật dự án (ví dụ cấm `nativeQuery`, cấm log trường được gắn chú thích `@Sensitive`); CodeQL tùy chọn | Mọi PR | 0 phát hiện mức ERROR chưa có ngoại lệ được duyệt | SEC-40–49 |
+| Phân tích thành phần (SCA) và SBOM | Trivy (thư viện, ảnh, IaC), sinh SBOM CycloneDX; kiểm tra giấy phép | Mọi PR; hằng đêm quét lại kho ảnh | 0 CRITICAL, 0 HIGH chưa có ngoại lệ (NFR-00-023); giấy phép trong danh sách cho phép (RB-04) | SEC-50–59 |
+| Quét cấu hình hạ tầng | Trivy config / Checkov cho Kustomize, Helm; kube-bench theo CIS Kubernetes Benchmark; Kyverno hoặc OPA Gatekeeper chính sách tuyển nhận | Mọi PR đụng `deploy/`; hằng tuần trên cụm | 0 vi phạm mức cao | SEC-10–19, SEC-50–59 |
+| DAST | OWASP ZAP: quét cơ bản (baseline) giao diện hằng đêm; quét API theo OpenAPI (ZAP API scan) có xác thực bằng token kiểm thử cho mọi API nhóm `/api` | Hằng đêm trên TEST; quét đầy đủ trước `RG-3` | 0 cảnh báo High; Medium phải phân loại | SEC-40–49 |
+| Kiểm thử ủy quyền tự động | Bộ kiểm thử rò rỉ chéo tenant (mục 5.6), ma trận vai trò × endpoint sinh từ D02-08 (mỗi cặp vai trò–quyền có ca cho phép và ca từ chối) | Mọi PR | 100% đạt | SEC-20–29, SEC-80–89 |
+| Kiểm thử xác thực, phiên | Ca tích hợp cho MFA (FR-00-002), khóa tài khoản sau 5 lần sai (NFR-00-025), chính sách mật khẩu (NFR-00-026), tự đăng xuất, thu hồi token, client_credentials + mTLS / private_key_jwt (RFC 8705, RFC 7523) | Mọi PR đụng PH-12; trước cổng | 100% đạt | SEC-20–29 |
+| Kiểm tra mã hóa đường truyền | testssl.sh vào biên và các điểm cuối mTLS; kiểm tra Istio `PeerAuthentication` chế độ STRICT | Trước `RG-3`; hằng tháng | TLS 1.3 ở biên, chỉ bộ mã an toàn cho 1.2 (NFR-00-020) | SEC-10–19 |
+| Kiểm tra nhật ký và giám sát | Kiểm thử phát hiện: tạo sự kiện an ninh mẫu (đăng nhập sai liên tiếp, header `dhtenant` không khớp) và kiểm tra cảnh báo tới đích trong ≤ 5 phút | Trước `RG-3` | Cảnh báo đúng | SEC-60–69 |
+| Bảng kiểm ASVS 5.0 L2 | Đánh giá theo từng yêu cầu L2, kết hợp bằng chứng tự động và kiểm tra thủ công | Trước `RG-3` mỗi đợt | 100% yêu cầu L2 áp dụng được ở trạng thái Đạt hoặc Ngoại lệ được duyệt (NFR-00-024) | SEC-40–49 |
+| Kiểm thử xâm nhập | Đơn vị độc lập với đội phát triển, hộp xám, theo OWASP WSTG và API Security Top 10 2023, gồm kịch bản leo thang liên tenant | Trước vận hành chính thức mỗi đợt; định kỳ ít nhất hằng năm và khi thay đổi lớn (Q360) | 0 phát hiện Critical/High còn mở khi phát hành | Mọi nhóm |
+| Kiểm tra bổ sung cấp độ 4 | Chỉ khi tenant hoặc hồ sơ nâng cấp | Theo D05-04 | Theo D03-07 | SEC-90–99 |
+
+Các kiểm thử bảo mật tự động đều xuất kết quả ở định dạng SARIF về một nơi tập trung (DefectDojo hoặc trang bảo mật của nền tảng Git) để theo dõi ngoại lệ, hạn xử lý và xu hướng. Ngoại lệ (chấp nhận rủi ro tạm thời) phải có người duyệt là trưởng nhóm ATTT, hạn hết hiệu lực tối đa 90 ngày và lý do.
+
+> **Câu hỏi mở Q362:** Cần xác định đơn vị kiểm thử xâm nhập độc lập (đơn vị chuyên trách an ninh mạng của tỉnh, doanh nghiệp được cấp phép, hay đơn vị do Bộ Công an chỉ định cho hồ sơ cấp độ) và yêu cầu năng lực, giấy phép của đơn vị đó theo NĐ 331/2026.
+
+### 5.6. Kiểm thử rò rỉ chéo tenant (bắt buộc)
+
+#### 5.6.1. Mục tiêu và luật kỳ vọng
+
+FR-00-011 yêu cầu người dùng và hệ thống của tenant A không được đọc, sửa, xóa, liệt kê hay **suy ra sự tồn tại** của dữ liệu tenant B, với tiêu chí chấp nhận "bộ kiểm thử rò rỉ chéo tenant đạt 100% trên mọi API". D03-10 §6 quy tắc 6 quy định kỳ vọng `404` (không phải `403`), vì `403` tiết lộ rằng tài nguyên tồn tại. Đây là loại kiểm thử quan trọng nhất của kế hoạch (RSK-T01, điểm 9) và là cổng chặn merge.
+
+Luật kỳ vọng của bộ kiểm thử được chốt như bảng dưới đây; mọi ngoại lệ phải ghi trong FRS và được trưởng nhóm ATTT duyệt.
+
+| Thao tác của tenant B lên tài nguyên của tenant A | Kỳ vọng |
+|---|---|
+| `GET /…/{id}` đọc theo định danh | `404`, thân Problem Details không chứa định danh, tên hay bất kỳ thuộc tính nào của tài nguyên |
+| `PUT`, `PATCH`, `DELETE`, `POST /…/{id}:{hành-động}` | `404`; dữ liệu của A không đổi (kiểm tra lại bằng token A: `version` giữ nguyên) |
+| `GET` danh sách, tìm kiếm, xuất | `200` với danh sách không chứa bản ghi nào của A; tổng số (`totalElements`) không tính bản ghi của A |
+| `POST` tạo với tham chiếu tới khóa của A (ví dụ gắn API của A vào gói của B) | `404` hoặc `422` với mã lỗi chung "tham chiếu không tồn tại", giống hệt khi tham chiếu tới định danh ngẫu nhiên |
+| Tạo trùng mã nghiệp vụ `T-CODE` đã có ở A | Thành công (mã nghiệp vụ duy nhất trong phạm vi tenant); nếu bị từ chối với "đã tồn tại" thì là rò rỉ |
+| Gửi `tenant_id` của A trong thân hoặc header `X-DH-Tenant` từ ngoài | Bị bỏ qua hoặc `ERR-00-003` (FR-00-010); bản ghi được tạo thuộc B |
+| Thời gian phản hồi của định danh tồn tại ở A so với định danh ngẫu nhiên | Không phân biệt được về thống kê (kiểm tra kênh phụ ở D05-04, không chặn PR) |
+
+#### 5.6.2. Bộ kiểm thử tự động sinh theo mọi endpoint
+
+Viết tay một ca rò rỉ cho mỗi endpoint là cần nhưng không đủ, vì dễ quên khi thêm endpoint. Datahub vì vậy có một **bộ kiểm thử sinh tự động** (`CrossTenantLeakageSuite`) trong thư viện kiểm thử dùng chung, chạy ở mức tích hợp hệ thống của mỗi DU, hoạt động như sau:
+
+1. **Khám phá endpoint.** Bộ kiểm thử đọc toàn bộ ánh xạ endpoint lúc chạy (`RequestMappingHandlerMapping` của Spring, hoặc danh sách route của Quarkus) và đối chiếu với OpenAPI trong `contracts/`. Endpoint có trong mã mà không có trong hợp đồng, hoặc ngược lại, làm bộ kiểm thử thất bại — nhờ đó không endpoint nào "trốn" được.
+2. **Phân loại.** Mỗi endpoint được phân loại theo phương thức và mẫu đường dẫn: đọc theo định danh, danh sách, ghi theo định danh, hành động, tạo. Endpoint nhóm `/api/platform/` (liên tenant, FR-00-012) và endpoint công khai không cần xác thực được đánh dấu bằng chú thích `@CrossTenantExempt(reason=…)`; danh sách miễn trừ được in vào báo cáo và được rà ở mỗi cổng.
+3. **Gieo dữ liệu.** Với mỗi loại tài nguyên, bộ kiểm thử dùng "bộ gieo" (fixture factory) do phân hệ cung cấp — hợp đồng bắt buộc của mỗi module — để tạo một bản ghi hợp lệ dưới tenant `T90` và lấy định danh. Thiếu bộ gieo cho một loại tài nguyên có endpoint thì bộ kiểm thử thất bại với thông báo chỉ rõ module cần bổ sung.
+4. **Tấn công.** Lấy token thật từ realm của tenant `T91` với vai trò mạnh nhất trong tenant (quản trị tenant) và với client máy; gọi mọi endpoint trên định danh của `T90` theo luật ở 5.6.1. Với danh sách và tìm kiếm, tìm kiếm thêm theo mã và tên của bản ghi `T90`.
+5. **Kiểm tra phụ.** Sau mỗi thao tác ghi, kiểm tra lại bằng token `T90` rằng dữ liệu không đổi; kiểm tra bảng kiểm toán có bản ghi thất bại của `T91` mà không có dữ liệu `T90` trong trường giá trị.
+6. **Báo cáo.** Xuất ma trận endpoint × thao tác × kết quả ở dạng JUnit XML và HTML, lưu làm bằng chứng cổng.
+
+Bên cạnh bộ sinh tự động, các ca viết tay theo quy tắc 6 của D03-10 vẫn bắt buộc cho logic không suy ra được từ đường dẫn (ví dụ tham chiếu lồng trong thân yêu cầu, tham số lọc theo khóa ngoại, tệp đính kèm theo khóa đối tượng).
+
+#### 5.6.3. Cách ly ở các tầng khác
+
+Rò rỉ không chỉ qua REST. Bảng dưới đây liệt kê các kiểm thử cách ly theo tầng ở D03-10 §4, đều tự động.
+
+| Tầng | Ca kiểm thử | Mức |
+|---|---|---|
+| PostgreSQL | Kết nối bằng vai trò ứng dụng, đặt `app.tenant_id = 'T91'`, `SELECT` mọi bảng nghiệp vụ (sinh từ `information_schema`) không thấy dòng của `T90`; không đặt biến phiên thì truy vấn lỗi; DU từ chối khởi động khi vai trò có `BYPASSRLS` | Tích hợp hệ thống |
+| Migration | Lint migration: mọi bảng mới có `tenant_id NOT NULL` và chính sách RLS cùng changeset | PR (tĩnh) |
+| Kafka | Principal của HTTT tenant `T91` không sản xuất, không tiêu thụ được topic `t90.*`; bản tin có header `dhtenant` không khớp tiền tố topic bị chuyển DLQ và phát cảnh báo | Tích hợp hệ thống; sau khởi tạo tenant |
+| Valkey | Khóa luôn có tiền tố `{tenant}:` (kiểm thử hàm tạo tên); người dùng ACL của tenant không đọc khóa tenant khác | Đơn vị, tích hợp |
+| Kho đối tượng | Khóa truy cập của `T91` không đọc, liệt kê được bucket `dh-t90-*`; URL ký sẵn của `T90` không dùng được để truy cập đối tượng khác | Tích hợp hệ thống |
+| OPA | Mọi chính sách có ca `input.tenant != data.resource.tenant` cho kết quả từ chối | Đơn vị (`opa test`) |
+| Keycloak, APISIX | Token realm `dh-t91` gọi route gắn nhãn tenant `T90` bị từ chối; header `X-DH-Tenant` do client gửi bị xóa | E2E |
+| Quan sát | Người dùng quản trị tỉnh `T91` trên Grafana không thấy chỉ số, log, trace có nhãn `tenant="T90"` | E2E |
+| Kho bí mật | Chính sách OpenBao của `T91` không đọc được `kv/dh/t90/*` | Tích hợp hệ thống |
+| Tác vụ nền | Tác vụ chạy cho `T91` chỉ xử lý dữ liệu `T91` (gieo dữ liệu cả hai tenant, kiểm tra kết quả) | Tích hợp module |
+| Trợ lý AI | Truy vấn ngữ nghĩa của `T91` không trả đoạn văn bản nhúng của `T90`; lời nhắc tiêm yêu cầu dữ liệu tenant khác bị từ chối | Tích hợp hệ thống |
+| Sáp nhập tenant | Sau sáp nhập `T90` vào `T92`, `T91` vẫn không thấy dữ liệu nào; dữ liệu có `origin_tenant_id` đúng | Hệ thống |
+
+Saga khởi tạo tenant (D03-10 §5.2) chạy chính bộ kiểm thử cách ly ở bước 9 (kiểm tra khói) dưới dạng rút gọn, để một tenant mới không bao giờ được chuyển `ACTIVE` khi ACL hay chính sách thiếu.
+

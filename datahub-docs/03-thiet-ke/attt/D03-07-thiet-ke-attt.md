@@ -456,6 +456,100 @@ PH-19 có động cơ tài chính trực tiếp: kẻ gian chỉ cần làm Data
 | THR-61 | R | Nội gián nền tảng thao tác trên PROD rồi xóa dấu vết | Z7 | 2 | 4 | TB 8 | SEC-61 (audit log K8s ra WORM), SEC-28 (ghi phiên), SEC-62 | TH 2 |
 | THR-62 | I | Đọc Secret Kubernetes trong etcd hoặc bản sao lưu etcd | AS-18 | 2 | 5 | C 10 | SEC-51 (mã hóa etcd bằng KMS provider), SEC-33 (bí mật quan trọng không đặt tĩnh trong Secret) | TH 4 |
 
-Tổng cộng có 62 mối đe dọa; trước biện pháp có 4 mức Nghiêm trọng (THR-09, THR-15, THR-46 và mức 20 ở biên khi xét tổ hợp), 50 mức Cao và 8 mức Trung bình. Sau biện pháp không còn mối đe dọa ở mức Cao trở lên; 17 mối đe dọa còn ở mức Trung bình và được theo dõi trong sổ rủi ro (D01-02). Rủi ro tồn dư Trung bình chủ yếu thuộc ba loại: tấn công do con người (lừa đảo, nội gián) mà biện pháp kỹ thuật chỉ giảm chứ không loại trừ; phụ thuộc vào năng lực của bên ngoài (đặc tả bảo mật của PayGov, NDXP); và tác nhân cấp quốc gia. Nhóm thứ ba là lý do chính để giữ lộ trình cấp độ 4 (mục 10).
+Tổng cộng có 62 mối đe dọa; trước biện pháp có 3 mối đe dọa mức Nghiêm trọng (THR-09, THR-15, THR-46), 51 mức Cao và 8 mức Trung bình. Sau biện pháp không còn mối đe dọa ở mức Cao trở lên; 17 mối đe dọa còn ở mức Trung bình và được theo dõi trong sổ rủi ro (D01-02). Rủi ro tồn dư Trung bình chủ yếu thuộc ba loại: tấn công do con người (lừa đảo, nội gián) mà biện pháp kỹ thuật chỉ giảm chứ không loại trừ; phụ thuộc vào năng lực của bên ngoài (đặc tả bảo mật của PayGov, NDXP); và tác nhân cấp quốc gia. Nhóm thứ ba là lý do chính để giữ lộ trình cấp độ 4 (mục 10).
 
 > **Câu hỏi mở Q302:** Đặc tả kỹ thuật hiện hành của PayGov quy định cơ chế bảo vệ callback cụ thể nào (thuật toán chữ ký, chứng thư, danh sách IP nguồn, API truy vấn trạng thái)? THR-46 giả định có API truy vấn ngược; nếu không có, tồn dư tăng lên Cao và cần biện pháp bù (đối soát tệp trong ngày trước khi xác nhận hồ sơ).
+
+## 5. Danh mục biện pháp an toàn thông tin
+
+### 5.1. Cách đọc danh mục
+
+Mỗi biện pháp có mã `SEC-nn`, tên, mô tả cách hiện thực trong ngăn xếp Datahub, tham số đo được, thành phần chịu trách nhiệm và cách kiểm chứng. Cột "Kiểm chứng" ghi loại hoạt động mà D05-01 phải lập ca kiểm thử: **CI** (kiểm tra tự động trong đường ống, chặn merge hoặc phát hành), **KT** (kiểm thử chức năng/bảo mật tự động ở môi trường thử), **PT** (kiểm thử xâm nhập), **RS** (rà soát cấu hình hoặc tài liệu bởi người), **DT** (diễn tập). Mỗi nhóm có một bảng tóm tắt và phần văn xuôi giải thích những biện pháp cần lập luận. Ngưỡng tham số được chọn **bằng hoặc chặt hơn** ngưỡng đã đọc được ở TCVN 14423:2026; nơi nào chặt hơn SRS thì được ghi ở mục 14 để sửa SRS.
+
+Bảng ngưỡng tham số chính dưới đây gom các con số mà đội vận hành và hội đồng hay hỏi nhất về một chỗ, kèm so sánh với tham chiếu.
+
+| Tham số | Giá trị thiết kế Datahub | Tham chiếu | Biện pháp |
+|---|---|---|---|
+| Tự khóa phiên giao diện khi không thao tác | 15 phút (cấu hình theo tenant trong khoảng 5–15 phút); cảnh báo trước 2 phút | TCVN 14423:2026 ≤ 15 phút (ngưỡng cấp 1 đã đọc); FR-00-003 hiện ghi 30 phút, 5–120 phút → **phải sửa** | SEC-29 |
+| Thời gian sống tối đa của phiên đăng nhập | 10 giờ (một ca làm việc), sau đó đăng nhập lại | — | SEC-29 |
+| Vô hiệu hóa tài khoản không hoạt động | 45 ngày cho người dùng; 30 ngày cho tài khoản quản trị; client máy không gọi trong 90 ngày bị tạm ngừng và thông báo đầu mối | TCVN 14423:2026: 45 ngày | SEC-27 |
+| Độ dài mật khẩu | ≥ 14 ký tự cho mọi tài khoản cục bộ (kể cả khi có MFA); tối đa ≥ 64 ký tự; cho phép mọi ký tự Unicode | TCVN 14423:2026 ≥ 14 nếu không MFA; NFR-00-026 hiện ghi 12 → **đề xuất sửa thành 14** | SEC-22 |
+| Khóa tài khoản do đăng nhập sai | Khóa tạm 15 phút sau 5 lần sai liên tiếp; khóa vĩnh viễn (cần quản trị mở) sau 3 lần khóa tạm trong 24 giờ | NFR-00-025 | SEC-22 |
+| MFA | Bắt buộc với mọi vai trò `_ADMIN`, vai trò duyệt, cán bộ đối soát PH-19, mọi truy cập Z7; quản trị nền tảng và quản trị tỉnh bắt buộc WebAuthn (khóa phần cứng hoặc passkey) | FR-00-002 | SEC-23 |
+| Thời hạn access token | Máy: 5 phút; người dùng (giữ ở BFF): 5 phút; refresh token người dùng: hết hạn khi phiên nhàn rỗi 15 phút, xoay vòng mỗi lần dùng | SAD §9 ghi 15 phút cho người → điều chỉnh xuống 5 phút vì BFF làm mới trong suốt | SEC-25 |
+| Phiên bản TLS ở biên | TLS 1.3; TLS 1.2 chỉ với bộ mã ECDHE + AEAD cho HTTT cũ có đăng ký ngoại lệ | NFR-00-020 | SEC-12 |
+| Hạn chứng thư | Chứng thư biên ≤ 90 ngày, gia hạn khi còn 30 ngày; chứng thư mesh 24 giờ; chứng thư client HTTT ≤ 1 năm | — | SEC-35 |
+| Vá lỗ hổng | CRITICAL: ≤ 72 giờ (≤ 24 giờ nếu đang bị khai thác hoặc có trong danh sách KEV); HIGH: ≤ 7 ngày; MEDIUM: ≤ 30 ngày; vá định kỳ hệ điều hành nút ≥ 1 lần/tháng | TCVN 14423:2026: vá ≥ 1 lần/tháng | SEC-09 |
+| Kiểm kê tài sản | Tự động hằng ngày; rà soát có ký xác nhận mỗi quý | TCVN 14423:2026: ≥ 1 lần/năm | SEC-04 |
+| Rà soát quyền | Mỗi quý cho vai trò quản trị; mỗi 6 tháng cho vai trò khác | — | SEC-27 |
+| Lưu nhật ký kiểm toán | Trực tuyến 12 tháng; lưu trữ WORM 5 năm (không dưới 3 năm khi tỉnh cấu hình) | Chốt Q08 của SRS, mục 7.3 | SEC-62 |
+| Lưu log vận hành | Trực tuyến 90 ngày; log an ninh (xác thực, WAF, K8s audit) 12 tháng | NFR-00-028 | SEC-61 |
+| Kiểm thử xâm nhập | Trước vận hành chính thức, trước mỗi phát hành lớn, và tối thiểu 1 lần/năm | — | SEC-08 |
+| Diễn tập ứng phó sự cố | 2 lần/năm (một lần kỹ thuật, một lần trên bàn) | — | SEC-73 |
+| Diễn tập khôi phục sao lưu | Mỗi quý | NFR-00-014 | SEC-70 |
+
+### 5.2. Nhóm SEC-01…09: Quản trị, chính sách, tổ chức, nhân sự, nhà cung cấp
+
+Các biện pháp quản lý thường bị coi nhẹ trong thiết kế kỹ thuật, nhưng TCVN 14423:2026 và TCVN 11930:2017 đều đặt chúng ngang hàng với biện pháp kỹ thuật, và phần lớn sự cố nghiêm trọng bắt đầu từ lỗ hổng quy trình. Datahub hiện thực chúng bằng tài liệu chính sách kèm công cụ tự động để chính sách không chỉ nằm trên giấy.
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-01 | Chính sách và quy chế an ninh mạng | Bộ chính sách gồm: chính sách ATTT chung, quy chế quản lý tài khoản, quy chế sử dụng dữ liệu, quy chế ứng phó sự cố, quy chế làm việc với nhà cung cấp. Mẫu do nhà cung cấp sản phẩm soạn (D06-xx), chủ quản từng tỉnh ban hành | Ban hành trước vận hành chính thức; rà soát ≥ 1 lần/năm hoặc khi có thay đổi lớn | Chủ quản HTTT (ban hành), nhà cung cấp (soạn mẫu) | RS |
+| SEC-02 | Tổ chức và bộ phận chuyên trách | Chủ quản chỉ định bộ phận/nhân sự chuyên trách an ninh mạng (NĐ 331/2026 Điều 31); có đầu mối ATTT ở đơn vị vận hành và ở nhà cung cấp; RACI tại mục 12 | Có quyết định phân công; đầu mối liên lạc 24/7 cho sự cố | Chủ quản | RS |
+| SEC-03 | An ninh nhân sự và đào tạo | Kiểm tra lý lịch nhân sự có quyền Z7; cam kết bảo mật; đào tạo nhận thức ATTT khi nhận việc và hằng năm; diễn tập lừa đảo cho cán bộ quản trị; thu hồi mọi quyền trong ngày nghỉ việc (đồng bộ từ LDAP/AD tắt tài khoản) | 100% nhân sự Z7 có cam kết; ≥ 1 buổi đào tạo/năm; thu hồi quyền ≤ 24 giờ | Chủ quản, đơn vị vận hành, nhà cung cấp | RS |
+| SEC-04 | Quản lý tài sản | Kiểm kê tự động: workload và ảnh từ Argo CD, SBOM từ Harbor, nút từ K8s API, chứng thư từ cert-manager, bí mật (siêu dữ liệu) từ OpenBao; xuất báo cáo kiểm kê hằng ngày vào PH-13; tài sản ở mục 3.1 có chủ sở hữu | Cập nhật hằng ngày; rà soát ký xác nhận mỗi quý | Đơn vị vận hành | CI, RS |
+| SEC-05 | Quản lý nhà cung cấp, nhà thầu | Hợp đồng có điều khoản ATTT và DLCN (bên xử lý dữ liệu, thông báo sự cố ≤ 24 giờ cho chủ quản, quyền kiểm tra); nhà thầu HTTT chỉ có vai trò trong tenant với thời hạn; tài khoản nhà thầu hết hạn tự khóa; đánh giá nhà cung cấp cloud theo QĐ 8297/QĐ-BCA-A05 | 100% tài khoản nhà thầu có ngày hết hạn ≤ 12 tháng | Chủ quản | RS |
+| SEC-06 | Quản lý rủi ro | Đánh giá rủi ro theo mục 4 khi khởi tạo, mỗi 6 tháng và khi thay đổi kiến trúc; sổ rủi ro D01-02; rủi ro tồn dư Trung bình được chủ quản chấp thuận | Rà soát ≥ 2 lần/năm | Kiến trúc sư ATTT | RS |
+| SEC-07 | Quản lý thay đổi và cấu hình | Mọi thay đổi PROD qua Git (NT-06) có review của người thứ hai; luồng tích hợp và chính sách qua quy trình duyệt bốn mắt (FR-00-071); thay đổi khẩn có quy trình riêng nhưng vẫn ghi Git và review sau ≤ 2 ngày làm việc; cấu hình chuẩn (baseline) cho mọi thành phần lưu trong Git | 0 thay đổi PROD ngoài Git (đo bằng phát hiện lệch, SEC-65) | Nhóm nền tảng | CI, RS |
+| SEC-08 | Kiểm tra, đánh giá an ninh mạng | Kiểm thử xâm nhập độc lập; đánh giá cấu hình theo CIS hằng quý bằng kube-bench; tự đánh giá theo ma trận mục 11 hằng năm; kiểm tra của cơ quan có thẩm quyền theo NĐ 331/2026 | Pentest ≥ 1 lần/năm và trước phát hành lớn; 0 phát hiện Cao chưa xử lý quá 30 ngày | Chủ quản, nhà cung cấp | PT, RS |
+| SEC-09 | Quản lý lỗ hổng và vá | Trivy Operator quét liên tục ảnh đang chạy; Renovate mở PR cập nhật phụ thuộc; theo dõi cảnh báo từ cơ quan chuyên trách và CVE; SLA vá theo bảng 5.1; ngoại lệ có thời hạn ≤ 30 ngày được kiến trúc sư ATTT duyệt | Đạt SLA ≥ 95%; báo cáo hằng tháng | Nhóm DevSecOps, đơn vị vận hành | CI, RS |
+
+Biện pháp SEC-09 được thiết kế với hai luồng vá khác nhau. Ảnh do Datahub xây được vá bằng phát hành mới qua CI (SEC-55…57), triển khai cuốn chiếu nên không gián đoạn data plane (NFR-00-013). Hệ điều hành nút được vá bằng thay nút (node rotation): nút mới từ ảnh hệ điều hành đã vá được thêm vào, nút cũ được rút tải (drain) và loại bỏ, nhờ đó mỗi tháng toàn bộ nút được thay mới thay vì vá tại chỗ. Ở hồ sơ tỉnh độc lập có máy chủ vật lý cố định, việc vá tại chỗ theo lịch tháng và khởi động lại từng nút một. Với lỗ hổng 0-day chưa có bản vá, quy trình khẩn ở playbook PB-07 (mục 8.5) áp dụng biện pháp giảm thiểu tạm thời: luật ảo hóa vá tại WAF, tắt tính năng, chặn egress.
+
+### 5.3. Nhóm SEC-10…19: Biên và mạng
+
+Mục tiêu của nhóm này là bảo đảm mỗi luồng mạng phải được cho phép tường minh (NT-03) và mọi luồng đều được mã hóa và xác thực hai đầu.
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-10 | Chống DDoS và giới hạn lưu lượng nhiều tầng | Tầng 3/4: dịch vụ chống DDoS của TTDL/cloud và giới hạn kết nối tại bộ cân bằng tải. Tầng 7: Envoy Gateway `BackendTrafficPolicy` giới hạn theo IP nguồn (mặc định 50 yêu cầu/giây/IP cho đường dẫn giao diện), APISIX `limit-req` theo consumer, `limit-count` theo gói và theo tenant (D03-10 §5.3). Đường dẫn đăng nhập Keycloak giới hạn 10 yêu cầu/phút/IP | Chịu được tải gấp 3 lần cao điểm (900 lượt/giây) không suy giảm data plane; nguồn tấn công bị chặn ≤ 60 giây | Bên cung cấp hạ tầng, nhóm nền tảng | KT (kiểm thử tải), DT |
+| SEC-11 | Tường lửa ứng dụng web (WAF) | Coraza tích hợp Envoy Gateway (ADR-033) với OWASP CRS 4.x mức độ hoang tưởng (paranoia level) 2 cho giao diện, mức 1 cho API máy–máy (đã có kiểm tra lược đồ ở APISIX); chế độ chặn trên PROD sau 2 tuần chạy phát hiện ở môi trường thử; luật ảo hóa vá (virtual patch) bổ sung khi có lỗ hổng 0-day; log WAF đẩy về SIEM | Tỉ lệ chặn nhầm < 0,1% lượt hợp lệ; luật vá ảo triển khai ≤ 4 giờ từ khi có thông tin lỗ hổng | Nhóm nền tảng | KT, PT |
+| SEC-12 | Cấu hình TLS | Biên: TLS 1.3 với `TLS_AES_256_GCM_SHA384`, `TLS_AES_128_GCM_SHA256`, `TLS_CHACHA20_POLY1305_SHA256`; TLS 1.2 chỉ khi HTTT có ngoại lệ, giới hạn `ECDHE-ECDSA/RSA-AES128/256-GCM-SHA256/384` và `ECDHE-*-CHACHA20-POLY1305`; nhóm khóa X25519, secp256r1; HSTS `max-age=31536000; includeSubDomains`; OCSP stapling; không nén TLS, không renegotiation. Chứng thư biên RSA 3072 hoặc ECDSA P-256. Ra ngoài (NDXP, PayGov): xác minh đầy đủ chứng thư, ghim CA gốc trong truststore riêng của adapter | Điểm A+ trên công cụ kiểm tra TLS nội bộ (testssl.sh): 0 giao thức/bộ mã yếu | Nhóm nền tảng | CI (testssl.sh trong kiểm thử khói), RS |
+| SEC-13 | Phân vùng mạng | Tám vùng Z0–Z7 (mục 3.3); tầng hạ tầng tách VLAN/subnet cho biên, nút worker, nút dữ liệu, mạng quản trị và mạng lưu trữ; namespace K8s theo vùng (`dh-edge`, `dh-gw`, `dh-app`, `dh-rt-*`, `dh-data`, `dh-sec`, `dh-ops`) | 100% namespace có nhãn vùng; sơ đồ mạng D03-09 khớp cấu hình | Bên cung cấp hạ tầng, nhóm nền tảng | RS |
+| SEC-14 | Network policy từ chối mặc định | Mỗi namespace có `CiliumNetworkPolicy` từ chối mọi ingress/egress, sau đó mở theo cặp nhãn `app.kubernetes.io/name`; DNS chỉ tới CoreDNS; Admin API APISIX, `/actuator`, cổng quản trị Kafka/PG chỉ nhận từ namespace được liệt kê; Hubble ghi luồng bị chặn | 100% namespace có chính sách mặc định từ chối (Kyverno kiểm tra); 0 luồng bất ngờ trong báo cáo Hubble tuần | Nhóm nền tảng | CI (kiểm thử kết nối âm tính), KT |
+| SEC-15 | mTLS trong cụm và ủy quyền dịch vụ | Istio ambient: `PeerAuthentication` mặc định `STRICT` toàn mesh; `AuthorizationPolicy` mặc định từ chối, cho phép theo SPIFFE ID của service account (ví dụ chỉ `dh-connect` được gọi Admin API APISIX); waypoint proxy cho dịch vụ cần chính sách tầng 7. Chứng thư workload do istiod cấp, sống 24 giờ, CA trung gian của mesh được ký từ PKI OpenBao (SEC-35) | 0 kết nối văn bản thô giữa pod (đo bằng chỉ số Istio `connection_security_policy`) | Nhóm nền tảng | KT |
+| SEC-16 | Kiểm soát lưu lượng ra (egress) | Mọi lưu lượng ra Internet qua egress gateway Istio có `ServiceEntry` liệt kê FQDN đích (NDXP, PayGov, kho cập nhật đã duyệt); `CiliumNetworkPolicy` với `toFQDNs` cho pod cần ra ngoài; chặn dải siêu dữ liệu cloud `169.254.169.254/32`, dải nội bộ cụm, dải quản trị đối với egress từ `dh-runtime`; đích mới cho kết nối của luồng được tạo qua quy trình duyệt PH-05 | 0 kết nối ra đích ngoài danh sách; cảnh báo ≤ 5 phút khi bị chặn | Nhóm nền tảng | KT, PT |
+| SEC-17 | DNS và thời gian | CoreDNS nội bộ, chuyển tiếp ra DNS của TTDL có DNSSEC xác minh nếu hạ tầng hỗ trợ; đồng bộ NTP tất cả nút với nguồn thời gian chuẩn quốc gia/TTDL qua chrony, độ lệch cảnh báo > 1 giây | Độ lệch đồng hồ ≤ 1 giây (cần cho nhật ký, TOTP, chống phát lại) | Bên cung cấp hạ tầng | KT |
+| SEC-18 | Bảo vệ điểm cuối dịch vụ dữ liệu | PostgreSQL: TLS bắt buộc (`hostssl` với `scram-sha-256`), người dùng ứng dụng theo DU; Kafka: listener nội bộ mTLS, xác thực principal theo chứng thư, `allow.everyone.if.no.acl.found=false`; Valkey: TLS và ACL người dùng; Garage: khóa truy cập theo DU và tenant, chỉ HTTPS | 0 listener văn bản thô | Nhóm nền tảng | CI (kiểm tra cấu hình), KT |
+| SEC-19 | Truy cập quản trị từ xa | Truy cập Z7 chỉ qua VPN quản trị (WireGuard/IPsec) có MFA, rồi qua bastion; API server K8s xác thực OIDC với Keycloak realm `dh-ops` (nhóm → ClusterRole), không phát hành kubeconfig tĩnh; Argo CD, Grafana quản trị, OpenBao UI chỉ trong Z7 | 0 kubeconfig dài hạn (rà soát); 100% phiên Z7 có MFA | Đơn vị vận hành | RS, PT |
+
+Lựa chọn Istio ambient thay cho sidecar truyền thống được giữ theo ADR-013 và SAD §6: chế độ ambient đặt mTLS ở tầng ztunnel trên mỗi nút, không cần sửa pod, nên mọi workload kể cả thành phần bên thứ ba đều được bảo vệ ngay khi vào namespace có nhãn `istio.io/dataplane-mode=ambient`. Cilium và Istio bổ trợ nhau: Cilium thực thi tầng 3/4 theo danh tính nhãn (khó vượt kể cả khi một pod bị chiếm), Istio thực thi danh tính mật mã (SPIFFE) và tầng 7. Thành phần dữ liệu có giao thức riêng (PostgreSQL, Kafka) vẫn bật TLS ở tầng ứng dụng (SEC-18) vì một số thao tác vận hành (sao chép CNPG giữa site, MirrorMaker 2) đi ngoài mesh.
+
+Đoạn cấu hình mẫu dưới đây minh họa chính sách mặc định của một namespace ứng dụng; tệp đầy đủ nằm trong kho cấu hình nền tảng.
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata: { name: default, namespace: istio-system }
+spec: { mtls: { mode: STRICT } }
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata: { name: allow-connect-to-apisix-admin, namespace: dh-gw }
+spec:
+  selector: { matchLabels: { app.kubernetes.io/name: apisix } }
+  action: ALLOW
+  rules:
+    - from: [{ source: { principals: ["cluster.local/ns/dh-app/sa/dh-connect"] } }]
+      to:   [{ operation: { ports: ["9180"] } }]
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: { name: default-deny, namespace: dh-app }
+spec:
+  endpointSelector: {}
+  ingress: [{}]   # chỉ để kích hoạt chế độ từ chối; các chính sách cho phép bổ sung riêng
+  egress:
+    - toEndpoints: [{ matchLabels: { k8s:io.kubernetes.pod.namespace: kube-system, k8s-app: kube-dns } }]
+      toPorts: [{ ports: [{ port: "53", protocol: UDP }] }]
+```
