@@ -981,3 +981,426 @@ CREATE POLICY rls_sync_change_delete ON ph07_rdm.sync_change FOR DELETE
       OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
 COMMENT ON TABLE ph07_rdm.sync_change IS 'EN-07-12 Chi tiết khác biệt của một lần đồng bộ. Mẫu RLS P. Giữ 3 năm.';
 -- @rollback DROP TABLE IF EXISTS ph07_rdm.sync_change CASCADE;
+
+-- @file 07-0130-mapping.sql
+-- @changeset ph07-1300-code-system
+CREATE TABLE ph07_rdm.code_system (
+  id                uuid          NOT NULL,
+  tenant_id         varchar(16)   NOT NULL,
+  code              varchar(64)   NOT NULL,
+  name              varchar(255)  NOT NULL,
+  owner             varchar(255),
+  member_system_id  uuid,
+  description       text,
+  status            varchar(32)   NOT NULL DEFAULT 'ACTIVE',
+  created_at        timestamptz   NOT NULL DEFAULT now(),
+  created_by        uuid          NOT NULL,
+  updated_at        timestamptz   NOT NULL DEFAULT now(),
+  updated_by        uuid          NOT NULL,
+  version           integer       NOT NULL DEFAULT 0,
+  CONSTRAINT pk_code_system PRIMARY KEY (id),
+  CONSTRAINT uq_code_system_code UNIQUE (tenant_id, code),
+  CONSTRAINT ck_code_system_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
+  CONSTRAINT ck_code_system_code CHECK (code ~ '^[A-Z0-9][A-Z0-9_.-]{0,63}$'),
+  CONSTRAINT ck_code_system_name_nfc CHECK (name IS NFC NORMALIZED),
+  CONSTRAINT ck_code_system_status CHECK (status IN ('ACTIVE','RETIRED'))
+);
+CREATE TRIGGER tg_code_system_touch BEFORE UPDATE ON ph07_rdm.code_system
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
+ALTER TABLE ph07_rdm.code_system ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ph07_rdm.code_system FORCE ROW LEVEL SECURITY;
+CREATE POLICY rls_code_system_select ON ph07_rdm.code_system FOR SELECT
+  USING (tenant_id IN (current_setting('app.tenant_id', false), 'COMMON'));
+CREATE POLICY rls_code_system_insert ON ph07_rdm.code_system FOR INSERT
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_code_system_update ON ph07_rdm.code_system FOR UPDATE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'))
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_code_system_delete ON ph07_rdm.code_system FOR DELETE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+COMMENT ON TABLE ph07_rdm.code_system IS 'EN-07-13 Hệ thống mã ngoài (bộ mã riêng của một HTTT hoặc cơ quan). Mẫu RLS S: hệ thống mã toàn quốc lưu COMMON.';
+COMMENT ON COLUMN ph07_rdm.code_system.member_system_id IS 'FK logic DD-03 ph01_onboarding.member_system.';
+-- @rollback DROP TABLE IF EXISTS ph07_rdm.code_system CASCADE;
+
+-- @changeset ph07-1301-code-mapping
+CREATE TABLE ph07_rdm.code_mapping (
+  id              uuid          NOT NULL,
+  tenant_id       varchar(16)   NOT NULL,
+  catalog_id      uuid          NOT NULL,
+  code_system_id  uuid          NOT NULL,
+  item_code       varchar(64)   NOT NULL,
+  external_code   varchar(128)  NOT NULL,
+  external_label  varchar(255),
+  relation        varchar(32)   NOT NULL DEFAULT 'EQUAL',
+  provisional     boolean       NOT NULL DEFAULT false,
+  reason          text,
+  valid_from      date,
+  valid_to        date,
+  created_at      timestamptz   NOT NULL DEFAULT now(),
+  created_by      uuid          NOT NULL,
+  updated_at      timestamptz   NOT NULL DEFAULT now(),
+  updated_by      uuid          NOT NULL,
+  version         integer       NOT NULL DEFAULT 0,
+  CONSTRAINT pk_code_mapping PRIMARY KEY (id),
+  -- catalog_id và code_system_id có thể là của COMMON (tenant ánh xạ hệ
+  -- thống mã của mình vào danh mục COMMON) nên dùng FK đơn, không ghép tenant.
+  CONSTRAINT fk_code_mapping_catalog FOREIGN KEY (catalog_id) REFERENCES ph07_rdm.catalog (id),
+  CONSTRAINT fk_code_mapping_system FOREIGN KEY (code_system_id) REFERENCES ph07_rdm.code_system (id),
+  CONSTRAINT ck_code_mapping_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
+  CONSTRAINT ck_code_mapping_item CHECK (item_code = upper(item_code)),
+  CONSTRAINT ck_code_mapping_relation CHECK (relation IN ('EQUAL','BROADER','NARROWER','RELATED')),
+  CONSTRAINT ck_code_mapping_reason CHECK (NOT provisional OR length(btrim(coalesce(reason, ''))) > 0),
+  CONSTRAINT ck_code_mapping_valid CHECK (valid_to IS NULL OR valid_from IS NULL OR valid_to > valid_from),
+  -- BR-07-023: trong một hệ thống mã và một khoảng hiệu lực, mỗi mã ngoài
+  -- trỏ tới đúng một mã danh mục (vi phạm trả SQLSTATE 23P01 → ERR-07-033).
+  CONSTRAINT ex_code_mapping_external EXCLUDE USING gist (
+      tenant_id WITH =, catalog_id WITH =, code_system_id WITH =, external_code WITH =,
+      daterange(valid_from, valid_to, '[)') WITH &&)
+);
+-- Chiều xuôi: mã danh mục → mã ngoài (API-07-070 direction=toExternal).
+CREATE INDEX ix_code_mapping_item ON ph07_rdm.code_mapping (catalog_id, code_system_id, item_code);
+-- Chiều ngược dùng index của ràng buộc loại trừ (external_code WITH =).
+CREATE INDEX ix_code_mapping_system ON ph07_rdm.code_mapping (code_system_id);
+CREATE TRIGGER tg_code_mapping_touch BEFORE UPDATE ON ph07_rdm.code_mapping
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
+ALTER TABLE ph07_rdm.code_mapping ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ph07_rdm.code_mapping FORCE ROW LEVEL SECURITY;
+CREATE POLICY rls_code_mapping_select ON ph07_rdm.code_mapping FOR SELECT
+  USING (tenant_id IN (current_setting('app.tenant_id', false), 'COMMON'));
+CREATE POLICY rls_code_mapping_insert ON ph07_rdm.code_mapping FOR INSERT
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_code_mapping_update ON ph07_rdm.code_mapping FOR UPDATE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'))
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_code_mapping_delete ON ph07_rdm.code_mapping FOR DELETE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+COMMENT ON TABLE ph07_rdm.code_mapping IS 'EN-07-14 Ánh xạ mã danh mục ↔ mã ngoài, có khoảng hiệu lực (FR-07-041…043). Mẫu RLS S.';
+COMMENT ON COLUMN ph07_rdm.code_mapping.provisional IS 'Ánh xạ tạm thời; bắt buộc có reason (BR-07-024).';
+-- @rollback DROP TABLE IF EXISTS ph07_rdm.code_mapping CASCADE;
+
+-- @file 07-0150-access-grant.sql
+-- @changeset ph07-1500-catalog-access-grant
+CREATE TABLE ph07_rdm.catalog_access_grant (
+  id                uuid          NOT NULL,
+  tenant_id         varchar(16)   NOT NULL,
+  catalog_id        uuid          NOT NULL,
+  member_system_id  uuid          NOT NULL,
+  scopes            text[]        NOT NULL DEFAULT ARRAY['rdm.read'],
+  granted_by        uuid          NOT NULL,
+  expires_at        timestamptz,
+  created_at        timestamptz   NOT NULL DEFAULT now(),
+  created_by        uuid          NOT NULL,
+  updated_at        timestamptz   NOT NULL DEFAULT now(),
+  updated_by        uuid          NOT NULL,
+  version           integer       NOT NULL DEFAULT 0,
+  CONSTRAINT pk_catalog_access_grant PRIMARY KEY (id),
+  CONSTRAINT uq_catalog_access_grant UNIQUE (catalog_id, member_system_id),
+  CONSTRAINT fk_catalog_access_grant_catalog FOREIGN KEY (catalog_id, tenant_id) REFERENCES ph07_rdm.catalog (id, tenant_id),
+  CONSTRAINT ck_catalog_access_grant_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
+  CONSTRAINT ck_catalog_access_grant_scopes CHECK (cardinality(scopes) >= 1 AND scopes <@ ARRAY['rdm.read','rdm.query']::text[])
+);
+CREATE INDEX ix_catalog_access_grant_member ON ph07_rdm.catalog_access_grant (member_system_id);
+CREATE TRIGGER tg_catalog_access_grant_touch BEFORE UPDATE ON ph07_rdm.catalog_access_grant
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
+ALTER TABLE ph07_rdm.catalog_access_grant ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ph07_rdm.catalog_access_grant FORCE ROW LEVEL SECURITY;
+CREATE POLICY rls_catalog_access_grant_select ON ph07_rdm.catalog_access_grant FOR SELECT
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_catalog_access_grant_insert ON ph07_rdm.catalog_access_grant FOR INSERT
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_catalog_access_grant_update ON ph07_rdm.catalog_access_grant FOR UPDATE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'))
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_catalog_access_grant_delete ON ph07_rdm.catalog_access_grant FOR DELETE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+COMMENT ON TABLE ph07_rdm.catalog_access_grant IS 'EN-07-15 Cấp quyền khai thác danh mục RESTRICTED cho HTTT (FR-07-052, BR-07-019). Mẫu RLS P.';
+COMMENT ON COLUMN ph07_rdm.catalog_access_grant.member_system_id IS 'FK logic DD-03.';
+-- @rollback DROP TABLE IF EXISTS ph07_rdm.catalog_access_grant CASCADE;
+
+-- @file 07-0170-outbox.sql
+-- @changeset ph07-1700-outbox
+-- Cấu trúc DD-11 + tenant_id. Ngoại lệ D00-01 §5.1: event_id là khóa chính,
+-- không có updated_*/version (chỉ-thêm, Debezium đọc WAL).
+CREATE TABLE ph07_rdm.outbox (
+  event_id        uuid          NOT NULL,
+  tenant_id       varchar(16)   NOT NULL,
+  event_type      varchar(128)  NOT NULL,
+  topic           varchar(249)  NOT NULL,
+  aggregate_type  varchar(64)   NOT NULL,
+  aggregate_id    text          NOT NULL,
+  payload         jsonb         NOT NULL,
+  trace_id        char(32)      NOT NULL,
+  occurred_at     timestamptz   NOT NULL DEFAULT now(),
+  CONSTRAINT pk_outbox PRIMARY KEY (event_id),
+  CONSTRAINT ck_outbox_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
+  CONSTRAINT ck_outbox_type CHECK (event_type ~ '^vn\.datahub\.rdm\.[a-z]+\.[a-z]+\.v[0-9]+$'),
+  CONSTRAINT ck_outbox_topic CHECK (topic ~ '^(t[0-9]{2}|common)\.rdm\.[a-z]+\.[a-z]+\.v[0-9]+$'),
+  CONSTRAINT ck_outbox_topic_tenant CHECK (split_part(topic, '.', 1) = lower(tenant_id)),
+  CONSTRAINT ck_outbox_trace CHECK (trace_id ~ '^[0-9a-f]{32}$')
+);
+CREATE INDEX ix_outbox_occurred ON ph07_rdm.outbox (occurred_at);
+ALTER TABLE ph07_rdm.outbox SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000);
+ALTER TABLE ph07_rdm.outbox ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ph07_rdm.outbox FORCE ROW LEVEL SECURITY;
+CREATE POLICY rls_outbox_select ON ph07_rdm.outbox FOR SELECT
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_outbox_insert ON ph07_rdm.outbox FOR INSERT
+  WITH CHECK ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+           OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+CREATE POLICY rls_outbox_delete ON ph07_rdm.outbox FOR DELETE
+  USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
+      OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+COMMENT ON TABLE ph07_rdm.outbox IS 'EN-07-17 Outbox giao dịch (DD-11, SAD §7.3); Debezium EventRouter phát lên Kafka. Mẫu RLS P. Dọn dòng quá 3 ngày.';
+COMMENT ON COLUMN ph07_rdm.outbox.event_type IS 'Dạng vn.datahub.rdm.{thực-thể}.{sự-kiện}.v{n}, ví dụ vn.datahub.rdm.catalog.published.v1.';
+COMMENT ON COLUMN ph07_rdm.outbox.topic IS 'Dạng {tenant viết thường}.rdm.{thực-thể}.{sự-kiện}.v{n}; COMMON dùng tiền tố common.';
+-- @rollback DROP TABLE IF EXISTS ph07_rdm.outbox CASCADE;
+
+-- @file 07-0180-admin-unit.sql
+-- @changeset ph07-1800-admin-unit
+CREATE TABLE ph07_rdm.admin_unit (
+  id              uuid          NOT NULL,
+  tenant_id       varchar(16)   NOT NULL DEFAULT 'COMMON',
+  code            varchar(64)   NOT NULL,
+  name            varchar(255)  NOT NULL,
+  level           varchar(32)   NOT NULL,
+  unit_type       varchar(32)   NOT NULL,
+  parent_id       uuid,
+  effective_from  date          NOT NULL,
+  effective_to    date,
+  successor_ids   jsonb,
+  source_version  text          NOT NULL,
+  created_at      timestamptz   NOT NULL DEFAULT now(),
+  created_by      uuid          NOT NULL,
+  updated_at      timestamptz   NOT NULL DEFAULT now(),
+  updated_by      uuid          NOT NULL,
+  version         integer       NOT NULL DEFAULT 0,
+  deleted_at      timestamptz,
+  CONSTRAINT pk_admin_unit PRIMARY KEY (id),
+  CONSTRAINT fk_admin_unit_parent FOREIGN KEY (parent_id) REFERENCES ph07_rdm.admin_unit (id),
+  CONSTRAINT ck_admin_unit_tenant CHECK (tenant_id = 'COMMON'),
+  CONSTRAINT ck_admin_unit_code CHECK (code ~ '^[0-9]{2}([0-9]{1}|[0-9]{3})?$'),
+  CONSTRAINT ck_admin_unit_name_nfc CHECK (name IS NFC NORMALIZED),
+  CONSTRAINT ck_admin_unit_level CHECK (level IN ('PROVINCE','DISTRICT','COMMUNE')),
+  CONSTRAINT ck_admin_unit_type CHECK (
+       (level = 'PROVINCE' AND unit_type IN ('TINH','THANH_PHO'))
+    OR (level = 'DISTRICT' AND unit_type IN ('QUAN','HUYEN','THI_XA','THANH_PHO'))
+    OR (level = 'COMMUNE'  AND unit_type IN ('XA','PHUONG','DAC_KHU','THI_TRAN'))),
+  CONSTRAINT ck_admin_unit_range CHECK (effective_to IS NULL OR effective_to > effective_from),
+  CONSTRAINT ck_admin_unit_successors CHECK (successor_ids IS NULL OR jsonb_typeof(successor_ids) = 'array'),
+  -- BR-07-021: không gán lại một mã cho đơn vị khác trong khoảng thời gian chồng lấn.
+  CONSTRAINT ex_admin_unit_code EXCLUDE USING gist (
+      code WITH =, daterange(effective_from, effective_to, '[)') WITH &&) WHERE (deleted_at IS NULL)
+);
+CREATE INDEX ix_admin_unit_parent ON ph07_rdm.admin_unit (parent_id);
+CREATE INDEX ix_admin_unit_current ON ph07_rdm.admin_unit (level, code) WHERE effective_to IS NULL AND deleted_at IS NULL;
+CREATE TRIGGER tg_admin_unit_touch BEFORE UPDATE ON ph07_rdm.admin_unit
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
+ALTER TABLE ph07_rdm.admin_unit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ph07_rdm.admin_unit FORCE ROW LEVEL SECURITY;
+CREATE POLICY rls_admin_unit_select ON ph07_rdm.admin_unit FOR SELECT
+  USING (tenant_id IN (current_setting('app.tenant_id', false), 'COMMON'));
+CREATE POLICY rls_admin_unit_insert ON ph07_rdm.admin_unit FOR INSERT
+  WITH CHECK (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM');
+CREATE POLICY rls_admin_unit_update ON ph07_rdm.admin_unit FOR UPDATE
+  USING (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM')
+  WITH CHECK (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM');
+CREATE POLICY rls_admin_unit_delete ON ph07_rdm.admin_unit FOR DELETE
+  USING (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM');
+COMMENT ON TABLE ph07_rdm.admin_unit IS 'EN-07-18 = DD-07 Đơn vị hành chính: bảng chiếu định danh ổn định từ danh mục DVHC, làm mới trong giao dịch phát hành (f_refresh_admin_unit). Chỉ COMMON; chỉ PLATFORM ghi.';
+COMMENT ON COLUMN ph07_rdm.admin_unit.level IS 'PROVINCE, COMMUNE (hiện hành); DISTRICT chỉ trong dữ liệu lịch sử trước 01/7/2025.';
+COMMENT ON COLUMN ph07_rdm.admin_unit.unit_type IS 'TINH, THANH_PHO (cấp tỉnh hoặc huyện), QUAN, HUYEN, THI_XA, XA, PHUONG, DAC_KHU, THI_TRAN (lịch sử). Giá trị lịch sử là đề xuất bổ sung D02-07.';
+COMMENT ON COLUMN ph07_rdm.admin_unit.successor_ids IS 'Mảng id đơn vị kế thừa khi sáp nhập, chia tách, đổi mã.';
+COMMENT ON COLUMN ph07_rdm.admin_unit.source_version IS 'Phiên bản danh mục nguồn, dạng "DVHC:{version_no}".';
+-- @rollback DROP TABLE IF EXISTS ph07_rdm.admin_unit CASCADE;
+
+-- @file 07-0190-guards.sql
+-- @changeset ph07-1900-guard-version splitStatements:false
+-- Bảo vệ tầng CSDL cho BR-07-006 (phiên bản đã phát hành bất biến) và máy
+-- trạng thái phiên bản. Ứng dụng vẫn kiểm tra trước và trả ERR-07-004; trigger
+-- là lớp phòng thủ thứ hai, chặn cả lỗi lập trình lẫn thao tác tay.
+CREATE OR REPLACE FUNCTION ph07_rdm.tg_catalog_version_guard()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  -- Cột được phép đổi trên phiên bản PUBLISHED.
+  c_mutable constant text[] := ARRAY['effective_to','snapshot_uri','updated_at','updated_by','version'];
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.status <> 'DRAFT' THEN
+      RAISE EXCEPTION 'ERR-07-004: phiên bản mới phải ở trạng thái DRAFT (nhận %)', NEW.status
+        USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.status NOT IN ('DRAFT','DISCARDED') THEN
+      RAISE EXCEPTION 'ERR-07-004: không xóa được phiên bản % ở trạng thái %', OLD.id, OLD.status
+        USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- UPDATE
+  IF OLD.status = 'PUBLISHED' THEN
+    IF (to_jsonb(NEW) - c_mutable) IS DISTINCT FROM (to_jsonb(OLD) - c_mutable) THEN
+      RAISE EXCEPTION 'BR-07-006: phiên bản % đã phát hành là bất biến', OLD.id
+        USING ERRCODE = 'check_violation';
+    END IF;
+    IF OLD.effective_to IS NOT NULL AND NEW.effective_to IS DISTINCT FROM OLD.effective_to THEN
+      RAISE EXCEPTION 'BR-07-007: effective_to của phiên bản % đã được chốt', OLD.id
+        USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF NEW.status IS DISTINCT FROM OLD.status AND NOT (
+       (OLD.status = 'DRAFT'     AND NEW.status IN ('IN_REVIEW','PUBLISHED','DISCARDED'))
+    OR (OLD.status = 'IN_REVIEW' AND NEW.status IN ('DRAFT','APPROVED'))
+    OR (OLD.status = 'APPROVED'  AND NEW.status IN ('PUBLISHED'))) THEN
+    RAISE EXCEPTION 'ERR-07-004: không chuyển phiên bản % từ % sang %', OLD.id, OLD.status, NEW.status
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF OLD.status = 'DISCARDED' THEN
+    RAISE EXCEPTION 'ERR-07-004: phiên bản % đã hủy', OLD.id USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END
+$$;
+CREATE TRIGGER tg_catalog_version_guard
+  BEFORE INSERT OR UPDATE OR DELETE ON ph07_rdm.catalog_version
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_catalog_version_guard();
+COMMENT ON FUNCTION ph07_rdm.tg_catalog_version_guard() IS 'Chặn sửa phiên bản PUBLISHED (trừ effective_to một lần, snapshot_uri) và chuyển trạng thái sai máy trạng thái.';
+-- @rollback DROP TRIGGER IF EXISTS tg_catalog_version_guard ON ph07_rdm.catalog_version;
+-- @rollback DROP FUNCTION IF EXISTS ph07_rdm.tg_catalog_version_guard();
+
+-- @changeset ph07-1901-guard-content splitStatements:false
+-- Nội dung phiên bản (thuộc tính, bản ghi, sự kiện sắp xếp) chỉ được ghi khi
+-- phiên bản ở DRAFT; được xóa khi DRAFT hoặc DISCARDED (dọn bản nháp đã hủy).
+CREATE OR REPLACE FUNCTION ph07_rdm.tg_version_content_guard()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_version_id uuid;
+  v_status     text;
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.version_id IS DISTINCT FROM OLD.version_id THEN
+    RAISE EXCEPTION 'ERR-07-004: không chuyển bản ghi sang phiên bản khác' USING ERRCODE = 'check_violation';
+  END IF;
+  v_version_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.version_id ELSE NEW.version_id END;
+  SELECT status INTO v_status FROM ph07_rdm.catalog_version WHERE id = v_version_id;
+  IF NOT FOUND THEN
+    -- Phiên bản cha đang bị xóa (ON DELETE CASCADE) hoặc không tồn tại (FK sẽ báo lỗi).
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+  IF v_status = 'DRAFT' OR (TG_OP = 'DELETE' AND v_status = 'DISCARDED') THEN
+    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  END IF;
+  RAISE EXCEPTION 'ERR-07-004: phiên bản % ở trạng thái %, không sửa được nội dung (%.%)',
+    v_version_id, v_status, TG_TABLE_NAME, TG_OP USING ERRCODE = 'check_violation';
+END
+$$;
+CREATE TRIGGER tg_attribute_def_guard BEFORE INSERT OR UPDATE OR DELETE ON ph07_rdm.attribute_def
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_version_content_guard();
+CREATE TRIGGER tg_catalog_item_guard BEFORE INSERT OR UPDATE OR DELETE ON ph07_rdm.catalog_item
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_version_content_guard();
+CREATE TRIGGER tg_item_succession_guard BEFORE INSERT OR UPDATE OR DELETE ON ph07_rdm.item_succession
+  FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_version_content_guard();
+COMMENT ON FUNCTION ph07_rdm.tg_version_content_guard() IS 'Chỉ cho ghi nội dung khi phiên bản DRAFT (BR-07-006); xóa khi DRAFT/DISCARDED.';
+-- @rollback DROP TRIGGER IF EXISTS tg_attribute_def_guard ON ph07_rdm.attribute_def;
+-- @rollback DROP TRIGGER IF EXISTS tg_catalog_item_guard ON ph07_rdm.catalog_item;
+-- @rollback DROP TRIGGER IF EXISTS tg_item_succession_guard ON ph07_rdm.item_succession;
+-- @rollback DROP FUNCTION IF EXISTS ph07_rdm.tg_version_content_guard();
+
+-- @file 07-0200-functions-domain.sql
+-- @changeset ph07-2000-fn-recompute-hierarchy splitStatements:false
+-- Tính lại depth/path cho toàn bộ một phiên bản bằng một truy vấn đệ quy
+-- (set-based), gọi sau mỗi lô ghi và trước validate/publish. Trả danh sách
+-- vi phạm BR-07-014 để ứng dụng ánh xạ ERR-07-010/011.
+CREATE OR REPLACE FUNCTION ph07_rdm.f_recompute_hierarchy(p_version_id uuid, p_base_version_id uuid DEFAULT NULL)
+  RETURNS TABLE (problem text, item_code varchar)
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_max smallint;
+BEGIN
+  SELECT c.max_depth INTO v_max
+    FROM ph07_rdm.catalog_version v JOIN ph07_rdm.catalog c ON c.id = v.catalog_id
+   WHERE v.id = p_version_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR-07-006: không tìm thấy phiên bản %', p_version_id USING ERRCODE = 'no_data_found';
+  END IF;
+
+  WITH RECURSIVE t(id, code, depth, path) AS (
+      SELECT a.id, a.code, a.depth, a.path FROM (
+          SELECT i.id, i.code, 1 AS depth, ARRAY[]::text[] AS path
+            FROM ph07_rdm.catalog_item i
+           WHERE i.version_id = p_version_id AND i.parent_code IS NULL
+          UNION ALL
+          -- Bản ghi HYBRID treo dưới bản ghi của phiên bản gốc COMMON.
+          SELECT i.id, i.code, b.depth + 1, b.path || b.code::text
+            FROM ph07_rdm.catalog_item i
+            JOIN ph07_rdm.catalog_item b ON b.version_id = p_base_version_id AND b.code = i.parent_code
+           WHERE p_base_version_id IS NOT NULL AND i.version_id = p_version_id
+             AND NOT EXISTS (SELECT 1 FROM ph07_rdm.catalog_item s
+                              WHERE s.version_id = p_version_id AND s.code = i.parent_code)
+      ) a
+      UNION ALL
+      SELECT c.id, c.code, t.depth + 1, t.path || t.code::text
+        FROM t JOIN ph07_rdm.catalog_item c ON c.version_id = p_version_id AND c.parent_code = t.code
+       WHERE t.depth <= 10
+  )
+  UPDATE ph07_rdm.catalog_item ci
+     SET depth = t.depth, path = t.path
+    FROM t
+   WHERE ci.id = t.id AND t.depth <= 10
+     AND (ci.depth <> t.depth OR ci.path <> t.path);
+
+  RETURN QUERY
+  WITH RECURSIVE t(id, code, depth) AS (
+      SELECT a.id, a.code, a.depth FROM (
+          SELECT i.id, i.code, 1 AS depth FROM ph07_rdm.catalog_item i
+           WHERE i.version_id = p_version_id AND i.parent_code IS NULL
+          UNION ALL
+          SELECT i.id, i.code, b.depth + 1
+            FROM ph07_rdm.catalog_item i
+            JOIN ph07_rdm.catalog_item b ON b.version_id = p_base_version_id AND b.code = i.parent_code
+           WHERE p_base_version_id IS NOT NULL AND i.version_id = p_version_id
+             AND NOT EXISTS (SELECT 1 FROM ph07_rdm.catalog_item s
+                              WHERE s.version_id = p_version_id AND s.code = i.parent_code)
+      ) a
+      UNION ALL
+      SELECT c.id, c.code, t.depth + 1
+        FROM t JOIN ph07_rdm.catalog_item c ON c.version_id = p_version_id AND c.parent_code = t.code
+       WHERE t.depth <= 10
+  )
+  SELECT 'ORPHAN_OR_CYCLE'::text, i.code
+    FROM ph07_rdm.catalog_item i
+   WHERE i.version_id = p_version_id AND NOT EXISTS (SELECT 1 FROM t WHERE t.id = i.id)
+  UNION ALL
+  SELECT 'MAX_DEPTH_EXCEEDED'::text, t.code FROM t WHERE t.depth > v_max
+  UNION ALL
+  SELECT 'DEPRECATED_PARENT'::text, c.code
+    FROM ph07_rdm.catalog_item c
+    JOIN ph07_rdm.catalog_item p ON p.version_id = c.version_id AND p.code = c.parent_code
+   WHERE c.version_id = p_version_id AND c.status = 'ACTIVE' AND p.status = 'DEPRECATED';
+END
+$$;
+COMMENT ON FUNCTION ph07_rdm.f_recompute_hierarchy(uuid, uuid) IS 'Tính lại depth/path của một phiên bản DRAFT; trả vi phạm ORPHAN_OR_CYCLE, MAX_DEPTH_EXCEEDED, DEPRECATED_PARENT (BR-07-014).';
+-- @rollback DROP FUNCTION IF EXISTS ph07_rdm.f_recompute_hierarchy(uuid, uuid);

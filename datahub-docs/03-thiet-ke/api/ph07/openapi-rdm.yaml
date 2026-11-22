@@ -1737,3 +1737,643 @@ paths:
               schema: { $ref: '#/components/schemas/JobSummaryPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  # ------------------------------------------------------------------ Khai thác
+  /catalogs/{catalogCode}/items:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Khai thác]
+      operationId: listEffectiveItems
+      summary: Lấy toàn bộ bản ghi hiệu lực (con trỏ)
+      description: |
+        Trả bản ghi của phiên bản hiệu lực tại `at` (mặc định hôm nay theo giờ Việt Nam,
+        BR-07-008) hoặc của phiên bản chỉ định bằng `versionNo`, sắp theo (`sortOrder`, `code`),
+        phân trang con trỏ. Con trỏ mờ gắn với `versionId` nên toàn bộ các trang luôn thuộc cùng
+        một phiên bản dù giữa chừng có phiên bản mới được phát hành. Danh mục HYBRID trả hợp của
+        bản COMMON hiệu lực và bản ghi bổ sung (`isLocalExtension = true`). Phản hồi có `ETag`
+        dạng `"v{versionId}-{hash tham số}"` và `Cache-Control: public, max-age=300` (trang của
+        phiên bản bất biến không bao giờ đổi), cộng header `Datahub-Version-No`. Với danh mục
+        lớn, client nên dùng ảnh chụp (API-07-049) để nạp ban đầu rồi delta (API-07-046).
+      x-datahub-id: API-07-041
+      x-datahub-fr: [FR-07-028]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/VersionNoQuery'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Fields'
+        - $ref: '#/components/parameters/IncludeDeprecated'
+        - name: parentCode
+          in: query
+          description: Chỉ con trực tiếp của mã này.
+          schema: { type: string, maxLength: 64 }
+        - name: level
+          in: query
+          description: Chỉ bản ghi ở cấp có `levelName` hoặc `depth` này (ví dụ `Tỉnh` hoặc `1`).
+          schema: { type: string, maxLength: 64 }
+        - $ref: '#/components/parameters/IfNoneMatch'
+        - $ref: '#/components/parameters/Traceparent'
+        - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Một trang bản ghi.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+            Datahub-Version-No: { $ref: '#/components/headers/DatahubVersionNo' }
+            RateLimit-Limit: { $ref: '#/components/headers/RateLimitLimit' }
+            RateLimit-Remaining: { $ref: '#/components/headers/RateLimitRemaining' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItemCursorPage' }
+              examples:
+                dvhcTinh: { $ref: '#/components/examples/ItemCursorPageExample' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/items/{itemCode}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/ItemCode'
+    get:
+      tags: [Khai thác]
+      operationId: getEffectiveItem
+      summary: Tra một mã tại thời điểm
+      description: |
+        Tra một mã trong phiên bản hiệu lực tại `at`. So khớp mã không phân biệt hoa thường.
+        Bản ghi ngừng dùng vẫn trả 200 với `status = DEPRECATED` và `replacedBy` (BR-07-004);
+        `followReplacement = true` trả kèm bản ghi thay thế trong `replacements`. Mã không có trong
+        phiên bản trả 404 ERR-07-007 (khác với ERR-07-001 khi chính danh mục không tồn tại, để
+        client phân biệt lỗi cấu hình và lỗi dữ liệu). Mục tiêu p95 ≤ 20 ms (NFR-07-001): đường
+        đi không chạm CSDL khi trúng bộ đệm L1/L2.
+      x-datahub-id: API-07-042
+      x-datahub-fr: [FR-07-026]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/VersionNoQuery'
+        - $ref: '#/components/parameters/Fields'
+        - name: followReplacement
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/IfNoneMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Bản ghi.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+            Datahub-Version-No: { $ref: '#/components/headers/DatahubVersionNo' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemLookupResult' }
+              examples:
+                xa: { $ref: '#/components/examples/ItemGetExample' }
+                ngungDung: { $ref: '#/components/examples/ItemGetDeprecatedExample' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/items:lookup:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    post:
+      tags: [Khai thác]
+      operationId: lookupItems
+      summary: Tra lô tối đa 500 mã
+      description: |
+        Tra nhiều mã trong một lượt, dùng POST vì danh sách mã có thể dài hơn giới hạn URL. Thao
+        tác an toàn và idempotent về ngữ nghĩa (không ghi gì) nên không cần `Idempotency-Key`.
+        Mã trùng trong yêu cầu được gộp; thứ tự `items` theo thứ tự xuất hiện đầu tiên trong
+        `codes`. Mã không tìm thấy nằm trong `notFound` thay vì làm cả lô lỗi. Vượt 500 mã trả
+        400 ERR-07-026. Mục tiêu p95 ≤ 150 ms (NFR-07-002).
+      x-datahub-id: API-07-043
+      x-datahub-fr: [FR-07-027]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LookupRequest' }
+            examples:
+              gioiTinh: { $ref: '#/components/examples/LookupRequestExample' }
+      responses:
+        '200':
+          description: Kết quả tra lô.
+          headers:
+            Datahub-Version-No: { $ref: '#/components/headers/DatahubVersionNo' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LookupResponse' }
+              examples:
+                ketQua: { $ref: '#/components/examples/LookupResponseExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/tree:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Khai thác]
+      operationId: getCatalogTree
+      summary: Lấy cây hoặc nhánh con
+      description: |
+        Trả cây lồng từ `root` (bỏ trống: các nút gốc) xuống `depth` cấp (mặc định 1, tối đa 10).
+        Mỗi nút có `childCount` để giao diện tải lười nhánh con. Giới hạn 5.000 nút mỗi phản hồi;
+        vượt thì `truncated = true` và client gọi tiếp cho từng nhánh. Danh mục không phân cấp trả
+        422 ERR-07-011.
+      x-datahub-id: API-07-044
+      x-datahub-fr: [FR-07-029]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: root
+          in: query
+          description: Mã nút gốc của nhánh cần lấy.
+          schema: { type: string, maxLength: 64 }
+        - name: depth
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 10, default: 1 }
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/VersionNoQuery'
+        - $ref: '#/components/parameters/IncludeDeprecated'
+        - name: withAttrs
+          in: query
+          description: Kèm `attrs` trong từng nút (mặc định không, để phản hồi gọn).
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/IfNoneMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Cây.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+            Datahub-Version-No: { $ref: '#/components/headers/DatahubVersionNo' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TreeResponse' }
+              examples:
+                lamDong: { $ref: '#/components/examples/TreeExample' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/items:search:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Khai thác]
+      operationId: searchItems
+      summary: Tìm kiếm không dấu trong danh mục
+      description: |
+        Tìm theo mã (tiền tố) và tên (chứa, không phân biệt hoa thường và dấu: "da lat" ra
+        "Đà Lạt", FR-00-020) cộng thuộc tính `searchable`. Xếp hạng: khớp mã chính xác, tiền tố
+        mã, tiền tố tên, chứa trong tên, rồi theo độ tương tự trigram. `q` tối thiểu 2 ký tự.
+      x-datahub-id: API-07-045
+      x-datahub-fr: [FR-07-030]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 100 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/IncludeDeprecated'
+        - name: level
+          in: query
+          schema: { type: string, maxLength: 64 }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Kết quả tìm kiếm.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResponse' }
+              examples:
+                daLat: { $ref: '#/components/examples/SearchExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/changes:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Khai thác]
+      operationId: getCatalogChanges
+      summary: Lấy thay đổi kể từ một phiên bản (delta)
+      description: |
+        Trả danh sách thay đổi cộng dồn từ phiên bản `sinceVersion` (không gồm) tới `toVersion`
+        (mặc định phiên bản đã phát hành mới nhất, kể cả phiên bản sắp hiệu lực nếu
+        `includeUpcoming = true`). Mỗi mã chỉ xuất hiện một lần với trạng thái cuối cùng. Nếu
+        `sinceVersion` cũ hơn cửa sổ giữ delta (mặc định 20 phiên bản) hoặc giữa hai phiên bản có
+        thay đổi lược đồ phá vỡ, trả `fullResyncRequired = true` và `changes` rỗng: client phải nạp
+        lại từ ảnh chụp. Nếu `sinceVersion` đã là mới nhất, trả 200 với `changes` rỗng (không trả
+        304, để client luôn nhận `toVersionNo`).
+      x-datahub-id: API-07-046
+      x-datahub-fr: [FR-07-031]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: sinceVersion
+          in: query
+          required: true
+          schema: { type: integer, minimum: 0 }
+          description: Phiên bản client đang giữ; `0` nghĩa là chưa có gì (trả toàn bộ dưới dạng ADDED nếu ≤ 10.000 bản ghi, ngược lại yêu cầu nạp ảnh chụp).
+        - name: toVersion
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: includeUpcoming
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Delta.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChangesResponse' }
+              examples:
+                delta: { $ref: '#/components/examples/ChangesExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  # ------------------------------------------------------------------ Truy vấn
+  /catalogs/{catalogCode}/items:query:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    post:
+      tags: [Truy vấn]
+      operationId: queryItems
+      summary: Truy vấn có cấu trúc bằng DSL JSON
+      description: |
+        Lọc theo biểu thức AND/OR lồng ≤ 3 cấp, ≤ 20 điều kiện, trên trường hệ thống và thuộc tính
+        `queryable` (BR-07-018); chọn trường (`select`), sắp xếp (≤ 3 khóa), phân trang con trỏ.
+        Máy chủ dịch sang SQL tham số hóa trên `attrs jsonb` với `statement_timeout = 2s`
+        (ADR-054). Lỗi cú pháp trả 400 ERR-07-023, thuộc tính không cho truy vấn 400 ERR-07-025,
+        vượt giới hạn 422 ERR-07-024. Ngữ pháp đầy đủ ở D03-04-PH07 §5.
+      x-datahub-id: API-07-047
+      x-datahub-fr: [FR-07-032]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.query]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.query]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QueryRequest' }
+            examples:
+              xaPhuong: { $ref: '#/components/examples/QueryRequestExample' }
+              loaiHinhDn: { $ref: '#/components/examples/QueryRequestLoaiHinh' }
+      responses:
+        '200':
+          description: Kết quả truy vấn.
+          headers:
+            Datahub-Version-No: { $ref: '#/components/headers/DatahubVersionNo' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueryResponse' }
+              examples:
+                ketQua: { $ref: '#/components/examples/QueryResponseExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410': { $ref: '#/components/responses/Gone' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/schema:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Khai thác]
+      operationId: getCatalogSchema
+      summary: Lược đồ danh mục và JSON Schema
+      description: |
+        Trả metadata danh mục, cấu hình phân cấp, danh sách thuộc tính và JSON Schema (draft
+        2020-12) mô tả một bản ghi của phiên bản yêu cầu, để HTTT sinh mã kiểm tra dữ liệu phía
+        mình. `schemaHash` đổi khi và chỉ khi lược đồ đổi, nên client có thể so để biết có cần
+        sinh lại mã hay không. Mặc định phiên bản hiện hành; `version` nhận số hoặc `current`.
+      x-datahub-id: API-07-048
+      x-datahub-fr: [FR-07-033]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: version
+          in: query
+          schema: { type: string, pattern: '^([1-9][0-9]{0,5}|current)$', default: current }
+        - $ref: '#/components/parameters/IfNoneMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Lược đồ.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchemaMetadata' }
+              examples:
+                gioiTinh: { $ref: '#/components/examples/SchemaExample' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /catalogs/{catalogCode}/snapshots/{versionRef}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Khai thác]
+      operationId: getSnapshot
+      summary: Tải ảnh chụp phiên bản (chuyển hướng tới URL ký sẵn)
+      description: |
+        Trả 302 với `Location` là URL ký sẵn (hạn 15 phút) tới tệp ảnh chụp trên Garage.
+        `versionRef = draft` không được hỗ trợ (ảnh chụp chỉ có với phiên bản đã phát hành).
+        Nếu ảnh chụp đang được sinh (ngay sau phát hành), trả 503 kèm `Retry-After`. Tệp JSON nén
+        gzip theo cấu trúc `ExportJsonDocument` (một dòng một bản ghi nếu `format=ndjson`).
+      x-datahub-id: API-07-049
+      x-datahub-fr: [FR-07-028]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+        restrictedCheck: true
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [json, ndjson, csv], default: json }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '302':
+          description: Chuyển hướng tới URL ký sẵn.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+            Datahub-Snapshot-Sha256: { $ref: '#/components/headers/SnapshotSha256' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  # ------------------------------------------------------------------ Đơn vị hành chính
+  /catalogs/{catalogCode}/items/{itemCode}/lineage:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/ItemCode'
+    get:
+      tags: [Đơn vị hành chính]
+      operationId: getItemLineage
+      summary: Dòng lịch sử của một bản ghi
+      description: |
+        Trả dòng thời gian các phiên bản mà mã xuất hiện (tên, mã cha, trạng thái, thuộc tính thay
+        đổi) cùng đồ thị kế thừa từ `item_succession` và `replacedBy`: tiền thân (`predecessors`)
+        và kế thừa (`successors`) đến độ sâu `depth`. Áp dụng cho mọi danh mục; với DVHC đây là
+        nguồn cho màn dòng thời gian sắp xếp UI-07-11.
+      x-datahub-id: API-07-050
+      x-datahub-fr: [FR-07-047]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: depth
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 5, default: 2 }
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Dòng lịch sử.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Lineage' }
+              examples:
+                phuong: { $ref: '#/components/examples/LineageExample' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin-units:convert:
+    post:
+      tags: [Đơn vị hành chính]
+      operationId: convertAdminUnits
+      summary: Chuyển mã ĐVHC cũ sang mới (lô ≤ 1.000)
+      description: |
+        Với mỗi mã đầu vào (có thể kèm ngày của hồ sơ `asOf`), xác định đơn vị tại ngày đó rồi
+        đi theo chuỗi sự kiện sắp xếp (`item_succession`) tới `targetDate` (mặc định hôm nay).
+        Kết quả: `EXACT` (đúng một đơn vị đích), `UNCHANGED` (đơn vị không bị sắp xếp), `AMBIGUOUS`
+        (đơn vị bị chia về nhiều đơn vị, trả `candidates` và không tự chọn — BR-07-022),
+        `NOT_FOUND` (mã không tồn tại tại `asOf`). `direction = NEW_TO_OLD` tra ngược: từ mã mới
+        trả các mã tiền thân tại `targetDate` trong quá khứ. Chuyển mã tệp (FR-07-046) do UI-07-11
+        đọc tệp phía trình duyệt và gọi API này theo lô 1.000.
+      x-datahub-id: API-07-051
+      x-datahub-fr: [FR-07-046]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUnitConvertRequest' }
+            examples:
+              hoSoCu: { $ref: '#/components/examples/ConvertRequestExample' }
+      responses:
+        '200':
+          description: Kết quả chuyển mã.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminUnitConvertResponse' }
+              examples:
+                ketQua: { $ref: '#/components/examples/ConvertResponseExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/versions/{versionRef}/successions:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+    get:
+      tags: [Đơn vị hành chính]
+      operationId: listSuccessions
+      summary: Sự kiện sắp xếp ghi nhận trong phiên bản
+      x-datahub-id: API-07-052
+      x-datahub-fr: [FR-07-045]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - name: eventType
+          in: query
+          schema: { $ref: '#/components/schemas/SuccessionEventType' }
+        - name: code
+          in: query
+          description: Lọc sự kiện có mã này trong `fromCodes` hoặc `toCodes`.
+          schema: { type: string, maxLength: 64 }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang sự kiện sắp xếp.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessionPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Đơn vị hành chính]
+      operationId: createSuccession
+      summary: Ghi sự kiện sắp xếp vào bản nháp
+      description: |
+        Ghi một sự kiện `MERGE`, `SPLIT`, `RENAME`, `ABOLISH`, `ESTABLISH`, `RECODE`. Kiểm tra:
+        `fromCodes` tồn tại trong phiên bản hiện hành, `toCodes` tồn tại trong bản nháp, số
+        phần tử phù hợp loại sự kiện (MERGE n→1, SPLIT 1→n, RENAME/RECODE 1→1, ABOLISH n→0,
+        ESTABLISH 0→n), có `legalBasis`, `effectiveDate` bằng `effectiveFrom` của bản nháp hoặc
+        nằm trong khoảng của nó (BR-07-021, ERR-07-035). Tùy chọn `applyToItems = true` tự ngừng
+        dùng mã nguồn và điền `replacedBy`.
+      x-datahub-id: API-07-053
+      x-datahub-fr: [FR-07-045]
+      x-datahub-permission:
+        permission: PERM-07-update
+        note: Với DVHC (COMMON) chỉ PLATFORM_ADMIN.
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuccessionCreateRequest' }
+            examples:
+              sapNhapXa: { $ref: '#/components/examples/SuccessionMergeExample' }
+      responses:
+        '201':
+          description: Đã ghi.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Succession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/versions/{versionRef}/successions/{successionId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/VersionRef'
+      - $ref: '#/components/parameters/SuccessionId'
+    delete:
+      tags: [Đơn vị hành chính]
+      operationId: deleteSuccession
+      summary: Xóa sự kiện sắp xếp trong bản nháp
+      description: Chỉ với phiên bản DRAFT. Không tự khôi phục trạng thái bản ghi đã bị ngừng dùng bởi `applyToItems`.
+      x-datahub-id: API-07-054
+      x-datahub-fr: [FR-07-045]
+      x-datahub-permission:
+        permission: PERM-07-update
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204':
+          description: Đã xóa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }

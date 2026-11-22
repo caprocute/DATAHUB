@@ -772,3 +772,475 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
   2. Gọi `GET /catalogs/DAN_TOC_T68/items/56?at=2026-11-20`.
 - **Mong đợi** Bước 1 trả `200` trong vòng 5 giây sau sự kiện (con trỏ hiệu lực được làm mới). Bước 2 trả `404` `ERR-07-007` (trước ngày hiệu lực).
 
+### TS-07-05 · Bản nháp và bản ghi
+
+**Mục tiêu.** Xác nhận cơ chế phiên bản sao chép khi ghi (copy-on-write): tạo bản nháp từ phiên bản hiện hành, thêm, sửa, ngừng dùng, khôi phục, xóa bản ghi trên bản nháp; kiểm tra hợp lệ đầy đủ (kiểu, bắt buộc, duy nhất, mã cha, vòng, độ sâu); hủy bản nháp; bảo đảm phiên bản đã phát hành không bị ảnh hưởng. Thay thế LGC-DMDC-011 (hệ cũ sửa trực tiếp, không có phiên bản).
+
+**Phủ.** FR-07-011, 012, 013, 017, 018, 019; BR-07-002, 003, 004, 005, 006, 014; UC-07-02; API-07-012…016, 026…030, 044; UI-07-05; ERR-07-004, 005, 008, 009, 010, 011, 013, 018.
+
+**Tiền điều kiện chung.** CAT-LH v1 PUBLISHED, chưa có phiên bản mở (trừ khi ca ghi khác); người gọi U-T68-DS-NV.
+
+#### TC-07-047 · Tạo bản nháp từ phiên bản hiện hành
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-011 · API-07-012 · UC-07-02 · ADR-051 · LGC-DMDC-011
+- **Tiền điều kiện / dữ liệu** CAT-LH v1 có 39 bản ghi, 5 thuộc tính.
+- **Bước**
+  1. Gọi `POST /catalogs/LOAI_HINH_TC/versions` với `Idempotency-Key`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/versions/draft`.
+  3. Truy vấn CSDL: đếm `catalog_item` và `attribute_def` theo `version_id` của bản nháp.
+- **Mong đợi** `201`; bản nháp `version_no = 2`, `status = DRAFT`, `origin = MANUAL`, `effective_from` rỗng. Số bản ghi 39 và số thuộc tính 5 sao chép đầy đủ với `id` mới, cùng `code`. `catalog.current_version_id` vẫn trỏ v1. KT: có (CREATE catalog_version). EVT: không.
+
+#### TC-07-048 · Không tạo bản nháp thứ hai khi đã có phiên bản mở
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-011 · BR-07-005 · ERR-07-005
+- **Tiền điều kiện / dữ liệu** Lặp lại cho ba trạng thái phiên bản mở: `DRAFT`, `IN_REVIEW`, `APPROVED`.
+- **Bước**
+  1. Với mỗi trạng thái, gọi `POST /catalogs/LOAI_HINH_TC/versions` với `Idempotency-Key` mới.
+  2. Gửi đồng thời hai yêu cầu tạo bản nháp (hai luồng) khi chưa có phiên bản mở.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-005` cả ba lần, chi tiết có `versionNo` đang mở. Bước 2: đúng một yêu cầu trả `201`, yêu cầu kia `409` `ERR-07-005` (chỉ mục duy nhất từng phần chặn tranh chấp).
+
+#### TC-07-049 · Sửa ngày hiệu lực, căn cứ pháp lý, ghi chú của bản nháp
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-016 · API-07-014
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Gọi `PATCH /catalogs/LOAI_HINH_TC/versions/draft` với `If-Match`, thân `{"effectiveFrom":"2026-12-01","legalBasis":"Quyết định số 99/QĐ-UBND (giả lập)","changeNote":"Bổ sung loại hình"}`.
+- **Mong đợi** `200`, các trường được lưu; `ETag` tăng.
+
+#### TC-07-050 · Thêm bản ghi hợp lệ vào bản nháp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-012, 013 · API-07-027 · UI-07-05
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Gọi `POST .../versions/draft/items` thân `{"code":"kh01.l01.p10","name":"Phân loại thử","parentCode":"KH01.L01","sortOrder":10,"attrs":{"viet_tat":"PLT","cap_quan_ly":"TINH","ngay_thanh_lap":"2026-01-15"}}`.
+  2. Trên UI-07-05, thêm một bản ghi bằng biểu mẫu.
+- **Mong đợi** `201`; mã lưu chuẩn hóa `KH01.L01.P10`; `depth = 3`, `path = ["KH01","KH01.L01"]`, `status = ACTIVE`, `nameSearch` = "phan loai thu". `item_count` của bản nháp tăng. KT: có.
+
+#### TC-07-051 · Thêm bản ghi trùng mã khác hoa thường
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-012, 013 · BR-07-002 · ERR-07-008
+- **Tiền điều kiện / dữ liệu** Bản nháp có `KH01.L01.P10`.
+- **Bước**
+  1. Thêm bản ghi `code` = `Kh01.l01.p10`.
+  2. Thêm bản ghi `code` = ` KH01.L01.P10 ` (khoảng trắng đầu cuối).
+- **Mong đợi** Cả hai trả `409`, `ERR-07-008`.
+
+#### TC-07-052 · Giá trị thuộc tính vi phạm lược đồ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-013 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** Bản nháp v2.
+- **Bước**
+  1. Thêm bản ghi với `attrs` đồng thời sai: `ngay_thanh_lap` = "2026-02-30", `cap_quan_ly` = "HUYEN", `viet_tat` dài 21 ký tự, `so_bien_che` = "mười", `website` = "khong-phai-uri", thêm khóa lạ `khong_khai_bao`.
+  2. Thêm bản ghi thiếu `name`.
+  3. Thêm bản ghi `code` = `KH-01/ABC` (vi phạm T-CODE).
+- **Mong đợi** Bước 1 trả `422` `ERR-07-009` với mảng `errors` có đúng 6 phần tử (mỗi phần tử `{field, code, message}`), báo đủ lỗi một lần chứ không dừng ở lỗi đầu. Bước 2, 3 trả `422` `ERR-07-009`. Không bản ghi nào được tạo.
+
+#### TC-07-053 · Mã cha không tồn tại và vượt số cấp tối đa
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-013 · BR-07-014 · ERR-07-010, ERR-07-011
+- **Tiền điều kiện / dữ liệu** CAT-LH `maxDepth = 3`.
+- **Bước**
+  1. Thêm bản ghi `parentCode` = `KH99`.
+  2. Thêm bản ghi `parentCode` = `KH01.L01.P01` (sẽ ở cấp 4).
+- **Mong đợi** Bước 1 trả `422` `ERR-07-010`. Bước 2 trả `422` `ERR-07-011`.
+
+#### TC-07-054 · Đổi mã cha tạo vòng
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-013 · BR-07-014 · API-07-028 · ERR-07-010
+- **Tiền điều kiện / dữ liệu** `KH01` là cha của `KH01.L01`.
+- **Bước**
+  1. Gọi `PATCH .../items/KH01` thân `{"parentCode":"KH01.L01"}`.
+  2. Gọi `PATCH .../items/KH01` thân `{"parentCode":"KH01"}` (tự làm cha mình).
+- **Mong đợi** Cả hai trả `422` `ERR-07-010` (chi tiết "tạo vòng"). Cây không đổi.
+
+#### TC-07-055 · Ngừng dùng bản ghi kèm mã thay thế
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-012, 019 · BR-07-003, 004 · API-07-029 · UI-07-05
+- **Tiền điều kiện / dữ liệu** Bản nháp v2; `KH02.L03.P01` đã phát hành ở v1, không có con.
+- **Bước**
+  1. Gọi `POST .../items/KH02.L03.P01:deprecate` thân `{"replacedBy":["KH02.L03.P02"],"reason":"Gộp loại hình"}`.
+  2. Phát hành v2 (qua luồng duyệt chuẩn TS-07-07).
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/items/KH02.L03.P01` bằng APP-T68-READ.
+- **Mong đợi** Bước 1 trả `200`, `status = DEPRECATED`, `replacedBy` lưu đúng. Bước 3 trả `200` kèm `status = DEPRECATED`, `replacedBy = ["KH02.L03.P02"]` (BR-07-004). Bộ phân loại khác biệt đánh dấu ngừng dùng mã là phá vỡ.
+
+#### TC-07-056 · Ngừng dùng bản ghi cha còn con hoạt động và mã thay thế không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-019 · BR-07-014 · ERR-07-010, ERR-07-009
+- **Tiền điều kiện / dữ liệu** `KH01.L01` có 3 con ACTIVE.
+- **Bước**
+  1. Gọi `POST .../items/KH01.L01:deprecate` không kèm tùy chọn ngừng dùng cả nhánh.
+  2. Gọi `POST .../items/KH01.L02.P01:deprecate` thân `{"replacedBy":["KHONG_CO"]}`.
+  3. Gọi `POST .../items/KH01.L02.P02:deprecate` thân `{"replacedBy":["KH01.L02.P02"]}` (tự thay thế).
+- **Mong đợi** Bước 1 trả `422` `ERR-07-010` (bản ghi ACTIVE không được có cha DEPRECATED). Bước 2, 3 trả `422` `ERR-07-009` (trường `replacedBy`).
+
+#### TC-07-057 · Khôi phục bản ghi đã ngừng dùng trong bản nháp mới
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-012 · API-07-028
+- **Tiền điều kiện / dữ liệu** v2 đã phát hành với `KH02.L03.P01` DEPRECATED; tạo bản nháp v3.
+- **Bước**
+  1. Gọi `PATCH .../versions/draft/items/KH02.L03.P01` thân `{"status":"ACTIVE","replacedBy":[]}`.
+  2. Gọi `GET .../versions/draft/diff?against=current`.
+- **Mong đợi** `200`; bản ghi ACTIVE trong v3; diff ghi `CHANGED` (trạng thái), không phá vỡ.
+
+> **Câu hỏi mở Q07-79:** Khung chung không nói rõ có cho khôi phục bản ghi đã ngừng dùng hay không. TC-07-057 giả định cho phép trong bản nháp mới (vì không vi phạm BR-07-003), cần FRS xác nhận.
+
+#### TC-07-058 · Không xóa bản ghi đã từng phát hành
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-012 · BR-07-003 · API-07-030 · ERR-07-013 · AT-07-004 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** Bản nháp v2; `KH01` đã phát hành ở v1.
+- **Bước**
+  1. Gọi `DELETE .../versions/draft/items/KH01`.
+- **Mong đợi** `409`, `ERR-07-013`, chi tiết gợi ý dùng ngừng dùng. Bản ghi giữ nguyên.
+
+#### TC-07-059 · Xóa bản ghi mới thêm trong bản nháp
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-012 · API-07-030
+- **Tiền điều kiện / dữ liệu** `KH01.L01.P10` vừa thêm ở TC-07-050 (chưa từng phát hành).
+- **Bước**
+  1. Gọi `DELETE .../versions/draft/items/KH01.L01.P10`.
+- **Mong đợi** `204`; bản ghi bị xóa vật lý khỏi bản nháp; diff không còn mục `ADDED` tương ứng. KT: có.
+
+#### TC-07-060 · Sửa bản ghi bằng If-Match
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-012 · API-07-028 · UI-07-05 · LGC-DMDC-011
+- **Tiền điều kiện / dữ liệu** Bản nháp v2; bản ghi `KH01.L02` có `ETag` `"3"`.
+- **Bước**
+  1. Gọi `PATCH .../items/KH01.L02` với `If-Match: "3"`, thân `{"name":"Loại 2 (sửa)","attrs":{"viet_tat":"L2S"}}`.
+  2. Trên UI-07-05, sửa trực tiếp ô tên trong bảng và nhấn Enter.
+- **Mong đợi** `200`, `ETag` mới; chỉ khóa `viet_tat` trong `attrs` thay đổi (cập nhật kiểu hợp nhất JSON Merge Patch), các khóa khác giữ nguyên.
+
+#### TC-07-061 · Kiểm tra hợp lệ toàn bản nháp không có lỗi
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-013 · API-07-016
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 hợp lệ.
+- **Bước**
+  1. Gọi `POST .../versions/draft:validate`.
+- **Mong đợi** `200`, `{"valid":true,"errorCount":0,"stats":{...}}` với `stats` gồm số thêm, sửa, ngừng dùng, phá vỡ.
+
+#### TC-07-062 · Kiểm tra hợp lệ toàn bản nháp phát hiện lỗi tích lũy
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API, IT
+- **Truy vết** FR-07-013 · BR-07-014 · API-07-016
+- **Tiền điều kiện / dữ liệu** Chèn trực tiếp vào CSDL (bằng vai trò kiểm thử) hai bản ghi vi phạm mà API đơn lẻ không bắt được do đổi lược đồ sau: một bản ghi `cap_quan_ly` ngoài miền mới, một bản ghi ACTIVE có cha DEPRECATED.
+- **Bước**
+  1. Gọi `POST .../versions/draft:validate`.
+  2. Gọi `POST .../versions/draft:submit`.
+- **Mong đợi** Bước 1 trả `200` với `valid = false`, `errors` liệt kê đủ 2 lỗi theo mã bản ghi. Bước 2 trả `422` `ERR-07-009` (không trình được bản nháp không hợp lệ).
+
+#### TC-07-063 · Hiển thị bản ghi dạng bảng và dạng cây
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-07-018 · UI-07-02, 05 · API-07-026, 044 · LGC-DMDC-002
+- **Tiền điều kiện / dữ liệu** CAT-LH v1; người dùng U-T68-VW.
+- **Bước**
+  1. Mở UI-07-02 tab Bản ghi, chế độ Bảng; đổi trang, sắp xếp theo tên, tìm "phan loai".
+  2. Chuyển chế độ Cây; mở rộng `KH01`, `KH01.L01`.
+  3. Dùng bàn phím mũi tên phải, trái để mở, thu nút cây.
+- **Mong đợi** Bảng phân trang phía máy chủ 20 dòng mặc định (FR-00-021), sắp xếp đúng, tìm không dấu đúng. Cây tải theo nhánh khi mở (không tải toàn bộ), hiển thị tên cấp, số con. Điều hướng bàn phím theo mẫu WAI-ARIA tree.
+
+#### TC-07-064 · Hủy bản nháp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-017 · API-07-015 · EN-07-07
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 có thay đổi.
+- **Bước**
+  1. Gọi `DELETE /catalogs/LOAI_HINH_TC/versions/draft` với `If-Match`, thân `{"reason":"Làm lại"}`.
+  2. Gọi `POST /catalogs/LOAI_HINH_TC/versions`.
+- **Mong đợi** Bước 1 trả `204`; phiên bản chuyển `DISCARDED`, có dòng `version_review` hành động `DISCARD`. Bước 2 trả `201` với `version_no = 3` (không tái sử dụng số 2). KT: có.
+
+#### TC-07-065 · Không hủy phiên bản đang duyệt, đã duyệt hoặc đã phát hành
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-017 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** Ba phiên bản ở `IN_REVIEW`, `APPROVED`, `PUBLISHED` (trên ba danh mục thử).
+- **Bước**
+  1. Gọi `DELETE /catalogs/{c}/versions/{v}` cho từng phiên bản.
+- **Mong đợi** Cả ba trả `409` `ERR-07-004`.
+
+#### TC-07-066 · Thay đổi trên bản nháp không ảnh hưởng tra cứu phiên bản hiện hành
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-011 · BR-07-006 · ADR-051
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 đã đổi tên `KH01` và ngừng dùng `KH02.L03.P01`.
+- **Bước**
+  1. APP-T68-READ gọi `GET /catalogs/LOAI_HINH_TC/items/KH01` và `.../KH02.L03.P01`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/items` với `If-None-Match` bằng ETag lấy trước khi sửa nháp.
+- **Mong đợi** Bước 1 trả dữ liệu của v1 (tên cũ, ACTIVE). Bước 2 trả `304`.
+
+### TS-07-06 · So sánh phiên bản và phân loại thay đổi phá vỡ
+
+**Mục tiêu.** Xác nhận báo cáo khác biệt giữa hai phiên bản liệt kê đúng bản ghi thêm, sửa, ngừng dùng, thay đổi thuộc tính và phân loại đúng phá vỡ hay không phá vỡ theo khung §3.18. Kết quả phân loại là đầu vào của quy tắc duyệt BR-07-012 và của đồng bộ BR-07-017 nên sai ở đây gây sai dây chuyền.
+
+**Phủ.** FR-07-014; BR-07-012, 013; API-07-021; UI-07-07; ERR-07-006.
+
+**Tiền điều kiện chung.** CAT-LH v1 PUBLISHED; bản nháp v2 có: 2 bản ghi thêm, 3 bản ghi đổi tên, 1 bản ghi đổi thuộc tính, 1 bản ghi đổi mã cha, 1 bản ghi ngừng dùng, 1 thuộc tính mới không bắt buộc. Người gọi U-T68-DA1.
+
+#### TC-07-067 · So sánh bản nháp với phiên bản hiện hành
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-014 · API-07-021 · AT-07-009 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/versions/draft/diff?against=current`.
+  2. Gọi lại với `?against=current&changeType=CHANGED&page=0&size=50`.
+- **Mong đợi** `200`; `summary` = `{added:2, changed:4, deprecated:1, parentChanged:1, attributeAdded:1, breaking:2}` (đổi mã cha và ngừng dùng là phá vỡ). Mỗi mục có `itemCode`, `changeType`, `breaking`, `before`, `after` chỉ gồm trường thay đổi. Bước 2 lọc đúng.
+
+#### TC-07-068 · Bộ phân loại thay đổi phá vỡ theo bảng quyết định
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** UT
+- **Truy vết** FR-07-014 · BR-07-013 · khung §3.18
+- **Tiền điều kiện / dữ liệu** Bảng quyết định dưới đây là dữ liệu tham số hóa (`@ParameterizedTest`).
+- **Bước**
+  1. Với mỗi dòng của bảng, dựng cặp phiên bản trước và sau tối thiểu rồi gọi bộ phân loại.
+- **Mong đợi** Kết quả khớp bảng sau.
+
+| Thay đổi | Phá vỡ |
+|---|---|
+| Thêm bản ghi | Không |
+| Sửa tên bản ghi | Không |
+| Sửa giá trị thuộc tính | Không |
+| Thêm thuộc tính không bắt buộc | Không |
+| Thêm thuộc tính bắt buộc có mặc định | Không |
+| Ẩn thuộc tính, đổi nhãn, đổi thứ tự | Không |
+| Ngừng dùng bản ghi | Có |
+| Xóa bản ghi (chỉ có thể với bản ghi chưa phát hành, không xuất hiện trong diff với phiên bản đã phát hành) | Không áp dụng |
+| Đổi mã cha | Có |
+| Xóa thuộc tính | Có |
+| Đổi kiểu thuộc tính | Có |
+| Giảm `maxLength`, thu hẹp `enumValues`, tăng `minValue`, giảm `maxValue`, thêm `pattern` | Có |
+| Nới `maxLength`, thêm giá trị vào `enumValues` | Không |
+| Bật `required` cho thuộc tính đã có | Có |
+
+#### TC-07-069 · So sánh với phiên bản không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-014 · ERR-07-006
+- **Tiền điều kiện / dữ liệu** CAT-LH chỉ có v1, v2.
+- **Bước**
+  1. Gọi `GET .../versions/draft/diff?against=9`.
+  2. Gọi `GET .../versions/9/diff?against=1`.
+- **Mong đợi** Cả hai trả `404` `ERR-07-006`.
+
+#### TC-07-070 · So sánh hai phiên bản đã phát hành không liền kề
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-014 · API-07-021
+- **Tiền điều kiện / dữ liệu** `DVHC` có v1, v2, v3 (mục 2.4); người gọi U-PA.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/versions/3/diff?against=1`.
+- **Mong đợi** `200`; kết quả là khác biệt trực tiếp giữa v1 và v3 (không phải cộng dồn từng bước): `99001`, `99002`, `99003`, `99005` và các huyện ở trạng thái ngừng dùng hoặc vắng mặt theo cách hệ thống quy ước; `99101`, `99102`, `99201` là thêm; `99004` là đổi tên.
+
+#### TC-07-071 · Màn so sánh phiên bản trên giao diện
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-07-014 · UI-07-07
+- **Tiền điều kiện / dữ liệu** Như chung; người dùng U-T68-DA1.
+- **Bước**
+  1. Mở UI-07-07 cho bản nháp v2; xem thẻ tổng hợp và bảng khác biệt.
+  2. Bật bộ lọc "Chỉ thay đổi phá vỡ".
+- **Mong đợi** Thẻ tổng hợp hiển thị đúng số liệu như TC-07-067; dòng phá vỡ có nhãn cảnh báo (không chỉ dùng màu, có biểu tượng và chữ); bộ lọc còn 2 dòng.
+
+### TS-07-07 · Trình duyệt, duyệt, từ chối và phát hành phiên bản
+
+**Mục tiêu.** Xác nhận máy trạng thái phiên bản (khung §3.5) với mọi chuyển hợp lệ và các chuyển không hợp lệ quan trọng; nguyên tắc bốn mắt theo D02-08 (người có `PERM-07-publish` không duyệt hoặc phát hành phiên bản do chính mình trình hoặc sửa lần cuối); ngưỡng thay đổi lớn; ràng buộc ngày hiệu lực; tác dụng phụ khi phát hành (đóng hiệu lực phiên bản trước, sinh ảnh chụp, đổi con trỏ, phát sự kiện).
+
+**Phủ.** FR-07-015, 016; BR-07-005, 006, 007, 008, 011, 012, 026, 027; UC-07-06, 07; API-07-014, 017…020; UI-07-07; ERR-07-004, 015, 016, 017; EVT-07-04, 05, 06; FR-00-070…072.
+
+**Tiền điều kiện chung.** CAT-LH `require_approval = true`; CAT-MUC `require_approval = false`; ngưỡng thay đổi lớn mặc định 10%; người soạn U-T68-DS-NV; người duyệt U-T68-DA1.
+
+#### TC-07-072 · Trình duyệt bản nháp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-015 · API-07-017 · UC-07-06 · EVT-07-04 · FR-00-070
+- **Tiền điều kiện / dữ liệu** Bản nháp v2 của CAT-LH hợp lệ, `effectiveFrom` = 2026-12-01, có `legalBasis`.
+- **Bước**
+  1. U-T68-DS-NV gọi `POST /catalogs/LOAI_HINH_TC/versions/draft:submit` thân `{"comment":"Đề nghị duyệt"}`.
+  2. Đọc topic `t68.rdm.catalog.submitted.v1`.
+  3. U-T68-DA1 mở hộp "Việc của tôi".
+- **Mong đợi** `200`; `status = IN_REVIEW`, `submittedBy` = U-T68-DS-NV; `version_review` có dòng `SUBMIT` kèm `diffStats`. EVT-07-04 phát đúng một lần (có `catalogCode`, `versionNo`, `submittedBy`, `diffStats`, đường dẫn tới UI-07-07). Hộp "Việc của tôi" của U-T68-DA1 có việc chờ duyệt. KT: có (SUBMIT).
+
+#### TC-07-073 · Duyệt phiên bản bởi người khác người trình
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-015 · BR-07-011 · API-07-018 · UI-07-07
+- **Tiền điều kiện / dữ liệu** v2 `IN_REVIEW` do U-T68-DS-NV trình.
+- **Bước**
+  1. U-T68-DA1 gọi `POST .../versions/2:approve` thân `{"comment":"Đồng ý"}`.
+- **Mong đợi** `200`; `status = APPROVED`, `approvedBy` = U-T68-DA1; `version_review` có `APPROVE`. Không phát EVT-07-05. KT: có (APPROVE).
+
+#### TC-07-074 · Phát hành phiên bản đã duyệt
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-016 · BR-07-006, 007 · API-07-020 · UC-07-07 · EVT-07-05 · ADR-053
+- **Tiền điều kiện / dữ liệu** v2 `APPROVED`, `effectiveFrom` = 2026-12-01; v1 hiệu lực từ 2025-01-01 không có `effective_to`.
+- **Bước**
+  1. U-T68-DA1 gọi `POST .../versions/2:publish`.
+  2. Kiểm tra CSDL: `catalog_version` v1, v2; `catalog.current_version_id`.
+  3. Kiểm tra kho đối tượng `s3://dh-t68-rdm/snapshots/LOAI_HINH_TC/2.json.gz` và `.csv`.
+  4. Đọc topic `t68.rdm.catalog.published.v1`.
+- **Mong đợi** `200`; v2 `PUBLISHED`, `publishedBy`, `publishedAt`, `snapshotUri`, `schemaHash` có giá trị; v1 `effective_to` = 2026-12-01 (BR-07-007). `current_version_id` trỏ v2 (con trỏ "phiên bản mới nhất đã phát hành"; phiên bản hiệu lực tại một thời điểm vẫn tính theo khoảng ngày). Ảnh chụp có số bản ghi bằng `item_count`, giải nén ra JSON hợp lệ, SHA-256 ghi trong metadata đối tượng. EVT-07-05 phát đúng một lần với `catalogCode`, `versionNo` = 2, `effectiveFrom`, `stats`, `breaking`, `snapshotUri`. KT: có (PUBLISH).
+
+#### TC-07-075 · Phát hành lần đầu chuyển danh mục sang ACTIVE
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-016 · khung §3.6 · API-07-020
+- **Tiền điều kiện / dữ liệu** Danh mục `TC005_CAP_DO` DRAFT, v1 đã qua submit, approve.
+- **Bước**
+  1. U-T68-DA1 gọi `POST /catalogs/TC005_CAP_DO/versions/1:publish`.
+  2. Gọi `GET /catalogs/TC005_CAP_DO`.
+- **Mong đợi** `status` danh mục chuyển `DRAFT` → `ACTIVE`; v1 `PUBLISHED`. Danh mục xuất hiện trong `GET /catalogs?status=ACTIVE` và tra cứu được qua API khai thác.
+
+#### TC-07-076 · Từ chối phiên bản, bắt buộc lý do
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-015 · API-07-019 · EVT-07-06 · FR-00-072
+- **Tiền điều kiện / dữ liệu** Phiên bản `IN_REVIEW` do U-T68-DS-NV trình.
+- **Bước**
+  1. U-T68-DA1 gọi `POST .../versions/{v}:reject` thân `{}`.
+  2. U-T68-DA1 gọi lại với `{"comment":"Thiếu căn cứ pháp lý"}`.
+  3. U-T68-DS-NV sửa bản ghi trên phiên bản đó.
+- **Mong đợi** Bước 1 trả `422` lỗi kiểm tra hợp lệ (trường `comment` bắt buộc). Bước 2 trả `200`, `status = DRAFT`; `version_review` lưu `REJECT` cùng lý do; EVT-07-06 phát một lần (người nhận là người trình). Bước 3 thành công vì phiên bản đã về `DRAFT`. KT: có (REJECT).
+
+#### TC-07-077 · Người trình không được tự duyệt
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-015 · BR-07-011 · ERR-07-015 · FR-00-071 · D02-08
+- **Tiền điều kiện / dữ liệu** U-T68-DA2 (có cả DATA_STEWARD và DATA_APPROVER) soạn và trình bản nháp v2.
+- **Bước**
+  1. U-T68-DA2 gọi `POST .../versions/2:approve`.
+  2. U-T68-DA2 gọi `POST .../versions/2:reject` (từ chối chính mình được phép rút lại hay không: kỳ vọng theo FRS là không, dùng thao tác này để kiểm tra).
+- **Mong đợi** Bước 1 trả `403`, `ERR-07-015`; phiên bản giữ `IN_REVIEW`. Bước 2 trả `403` `ERR-07-015`. KT: nhật ký an ninh ghi nhận lần thử tự duyệt.
+
+#### TC-07-078 · Người sửa lần cuối không được duyệt hoặc phát hành
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-015, 016 · BR-07-011 · ERR-07-015 · khung §14.3
+- **Tiền điều kiện / dữ liệu** U-T68-DA2 sửa một bản ghi trong bản nháp v2; sau đó U-T68-DS-NV trình.
+- **Bước**
+  1. U-T68-DA2 gọi `:approve`.
+  2. U-T68-DA1 gọi `:approve` (hợp lệ), sau đó U-T68-DA2 gọi `:publish`.
+  3. Với CAT-MUC (`require_approval = false`), U-T68-DA2 sửa bản nháp rồi tự gọi `:publish`.
+- **Mong đợi** Bước 1 trả `403` `ERR-07-015`. Bước 2: duyệt thành công; `:publish` của U-T68-DA2 trả `403` `ERR-07-015`. Bước 3 trả `403` `ERR-07-015`.
+
+#### TC-07-079 · Không sửa bản ghi của phiên bản đã phát hành
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-016 · BR-07-006 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** v1 PUBLISHED.
+- **Bước**
+  1. Gọi `POST /catalogs/LOAI_HINH_TC/versions/1/items`.
+  2. Gọi `PATCH .../versions/1/items/KH01`.
+  3. Gọi `POST .../versions/1/items/KH01:deprecate`.
+  4. Gọi `POST .../versions/1/items:batch`.
+  5. (IT) Dùng vai trò ứng dụng `dh_data_app` chạy `UPDATE ph07_rdm.catalog_item SET name='x' WHERE version_id=<v1>`.
+- **Mong đợi** Bước 1…4 trả `409` `ERR-07-004`. Bước 5 bị từ chối bởi ràng buộc ở CSDL (trigger hoặc chính sách chặn ghi vào phiên bản đã phát hành) nếu SDD chọn bảo vệ hai lớp; nếu SDD chỉ bảo vệ ở tầng ứng dụng thì bước 5 được ghi nhận là rủi ro chấp nhận (xem Q07-80). Băm nội dung v1 không đổi.
+
+> **Câu hỏi mở Q07-80:** Tính bất biến của phiên bản đã phát hành có được bảo vệ ở tầng CSDL (trigger từ chối UPDATE/DELETE khi `status = PUBLISHED`) không? Ca TC-07-079 bước 5 cần câu trả lời từ SDD/CSDL.
+
+#### TC-07-080 · Không sửa ngày hiệu lực, căn cứ của phiên bản đã phát hành
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-016 · BR-07-006 · API-07-014 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** v1 PUBLISHED.
+- **Bước**
+  1. Gọi `PATCH /catalogs/LOAI_HINH_TC/versions/1` đổi `effectiveFrom`, `legalBasis`.
+- **Mong đợi** `409` `ERR-07-004`.
+
+#### TC-07-081 · Không sửa bản ghi khi phiên bản đang duyệt hoặc đã duyệt
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-012, 015 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** Hai phiên bản ở `IN_REVIEW` và `APPROVED`.
+- **Bước**
+  1. Với mỗi phiên bản gọi `PATCH .../items/{code}`, `POST .../attributes`, `POST /import-jobs` (đích là phiên bản đó).
+- **Mong đợi** Mọi lệnh trả `409` `ERR-07-004` (tác vụ nhập bị từ chối ngay khi tạo hoặc khi commit, tùy SDD; ca này kiểm tra không có dữ liệu nào bị ghi).
+
+#### TC-07-082 · Không trình phiên bản đã hủy
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-015, 017 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** Phiên bản số 2 `DISCARDED` (TC-07-064).
+- **Bước**
+  1. Gọi `POST .../versions/2:submit`.
+- **Mong đợi** `409` `ERR-07-004`.
+
+#### TC-07-083 · Không bỏ qua bước trình hoặc bước duyệt khi danh mục cần duyệt
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-015, 016 · BR-07-026 · ERR-07-004
+- **Tiền điều kiện / dữ liệu** CAT-LH `require_approval = true`; bản nháp v2 `DRAFT` rồi `IN_REVIEW`.
+- **Bước**
+  1. Khi `DRAFT`, U-T68-DA1 gọi `:approve`.
+  2. Khi `DRAFT`, U-T68-DA1 gọi `:publish`.
+  3. Khi `IN_REVIEW`, U-T68-DA1 gọi `:publish`.
+- **Mong đợi** Cả ba trả `409` `ERR-07-004`.
+
+#### TC-07-084 · Phát hành trực tiếp từ bản nháp khi không cần duyệt
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-016 · BR-07-026 · API-07-020 · EVT-07-05
+- **Tiền điều kiện / dữ liệu** CAT-MUC 4 bản ghi, bản nháp do U-T68-DS-NV soạn: chỉ đổi tên 0 bản ghi và thêm 0… cụ thể: sửa mô tả thuộc tính và không đổi bản ghi nào (0% thay đổi, không phá vỡ). Người phát hành U-T68-DA1.
+- **Bước**
+  1. U-T68-DA1 gọi `POST /catalogs/MUC_DO_DVC/versions/draft:publish` với `effectiveFrom` hôm nay.
+  2. Trên UI-07-07, kiểm tra nút hiển thị khi người dùng có `PERM-07-publish`.
+- **Mong đợi** `200`; phiên bản chuyển thẳng `DRAFT` → `PUBLISHED`; `version_review` có `PUBLISH` (không có `SUBMIT`, `APPROVE`). EVT-07-05 phát; không phát EVT-07-04. Giao diện hiện nút "Phát hành" (không chỉ "Trình duyệt").
+
+#### TC-07-085 · Phát hành trực tiếp bị chặn khi thay đổi vượt ngưỡng
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-015, 016 · BR-07-012, 026 · ERR-07-016 · AT-07-010 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** Danh mục `TC085_DM` 100 bản ghi, `require_approval = false`; bản nháp thêm 11 bản ghi (11%).
+- **Bước**
+  1. U-T68-DA1 gọi `:publish` trên bản nháp.
+  2. Mở UI-07-07.
+- **Mong đợi** `409` `ERR-07-016`, chi tiết có tỉ lệ 11% và ngưỡng 10%. Giao diện vô hiệu nút "Phát hành" kèm giải thích, chỉ còn "Trình duyệt".
+
+#### TC-07-086 · Phát hành trực tiếp bị chặn khi có thay đổi phá vỡ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** BR-07-012, 026 · ERR-07-016
+- **Tiền điều kiện / dữ liệu** `TC085_DM` (`require_approval = false`), bản nháp chỉ ngừng dùng 1 bản ghi (1%, phá vỡ).
+- **Bước**
+  1. U-T68-DA1 gọi `:publish`.
+  2. Trình duyệt bằng U-T68-DS-NV, U-T68-DA1 duyệt rồi phát hành.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-016`. Bước 2 thành công qua luồng duyệt.
+
+#### TC-07-087 · Biên của ngưỡng thay đổi lớn
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** API, UT
+- **Truy vết** BR-07-012 · FR-07-053
+- **Tiền điều kiện / dữ liệu** `TC085_DM` 100 bản ghi; ngưỡng 10%.
+- **Bước**
+  1. Bản nháp thêm đúng 10 bản ghi; gọi `:publish`.
+  2. Bản nháp khác thêm 10 và sửa tên 1 (11 thay đổi); gọi `:publish`.
+  3. Đổi tham số ngưỡng tenant `07.rdm.large-change-threshold-percent` = 20; lặp bước 2.
+- **Mong đợi** Bước 1 trả `200` (bằng ngưỡng không phải vượt). Bước 2 trả `409` `ERR-07-016`. Bước 3 trả `200`. Cách tính tỉ lệ: số bản ghi thay đổi (thêm, sửa, ngừng dùng) chia số bản ghi của phiên bản hiện hành; danh mục chưa có phiên bản phát hành thì không áp ngưỡng.
+
+> **Câu hỏi mở Q07-81:** Công thức tỉ lệ thay đổi (mẫu số là số bản ghi phiên bản hiện hành hay bản nháp; sửa thuộc tính có tính là thay đổi bản ghi) cần FRS chốt. TC-07-087 dùng công thức ghi trên.
+
+#### TC-07-088 · Ngày hiệu lực không hợp lệ: thiếu, sớm hơn ngày phát hành, hồi tố có lý do
+- **Loại** Âm, Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-016 · BR-07-027 · ERR-07-017
+- **Tiền điều kiện / dữ liệu** Đồng hồ 2026-11-21; phiên bản `APPROVED` của `TC088_DM`; phiên bản `origin = SYNC` của `GIOI_TINH` chờ áp dụng.
+- **Bước**
+  1. Phát hành khi `effectiveFrom` rỗng.
+  2. Phát hành với `effectiveFrom` = 2026-11-20 (`origin = MANUAL`).
+  3. Phát hành phiên bản `origin = SYNC` với `effectiveFrom` = 2026-11-01 và `retroactiveReason` = "Quốc gia ban hành từ 01/11".
+  4. Lặp bước 3 nhưng thiếu `retroactiveReason`.
+- **Mong đợi** Bước 1, 2, 4 trả `422` `ERR-07-017`. Bước 3 trả `200`, lý do hồi tố lưu trong `change_note` hoặc trường riêng và trong kiểm toán.
+
+#### TC-07-089 · Khoảng hiệu lực chồng lấn với phiên bản trước
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-016 · BR-07-007 · ERR-07-017 · AT-07-008 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** `TC089_DM` v1 hiệu lực từ 2026-12-15 (đã phát hành, sắp hiệu lực); v2 `APPROVED`.
+- **Bước**
+  1. Phát hành v2 với `effectiveFrom` = 2026-12-15.
+  2. Phát hành v2 với `effectiveFrom` = 2026-12-10.
+  3. Phát hành v2 với `effectiveFrom` = 2026-12-16.
+- **Mong đợi** Bước 1, 2 trả `422` `ERR-07-017` (phải lớn hơn `effective_from` của phiên bản trước). Bước 3 trả `200`; v1 có `effective_to` = 2026-12-16. Ràng buộc loại trừ `daterange` trong CSDL (nếu có) không bị vi phạm.
+
+#### TC-07-090 · Phiên bản sắp hiệu lực và tra cứu theo thời điểm
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-016, 026 · BR-07-008 · ADR-051
+- **Tiền điều kiện / dữ liệu** CAT-LH v2 phát hành ở TC-07-074 với `effectiveFrom` = 2026-12-01 (đổi tên `KH01`); đồng hồ 2026-11-21.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/versions` và xem nhãn.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/items/KH01`.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/items/KH01?at=2026-12-01`.
+  4. Đặt đồng hồ 2026-12-01T00:00:01+07:00 rồi gọi lại bước 2.
+  5. Đặt đồng hồ 2026-11-30T23:59:59+07:00 (tương đương 2026-11-30T16:59:59Z) rồi gọi lại bước 2.
+- **Mong đợi** Bước 1: v1 "Đang hiệu lực", v2 "Sắp hiệu lực". Bước 2 trả tên cũ (v1). Bước 3 trả tên mới. Bước 4 trả tên mới. Bước 5 trả tên cũ (ngày tính theo giờ Việt Nam, không theo UTC).
+
+#### TC-07-091 · Quản trị tỉnh không được duyệt và phát hành
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-015, 016 · D02-08 §3.1 · khung §14.2
+- **Tiền điều kiện / dữ liệu** Phiên bản `IN_REVIEW` và một phiên bản `APPROVED`; CAT-MUC có bản nháp; người gọi U-T68-TA.
+- **Bước**
+  1. Gọi `:approve` trên phiên bản `IN_REVIEW`.
+  2. Gọi `:publish` trên phiên bản `APPROVED`.
+  3. Gọi `:publish` trên bản nháp CAT-MUC (không cần duyệt).
+  4. Mở UI-07-07 bằng U-T68-TA.
+- **Mong đợi** Bước 1…3 trả 403-PQ; trạng thái không đổi. Giao diện không hiện nút "Duyệt", "Phát hành" cho U-T68-TA.
+
+#### TC-07-092 · Cán bộ quản lý danh mục không tự phát hành dù danh mục không cần duyệt
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-016 · BR-07-026 · D02-08 §3.1
+- **Tiền điều kiện / dữ liệu** CAT-MUC có bản nháp dưới ngưỡng; người gọi U-T68-DS-NV.
+- **Bước**
+  1. Gọi `POST /catalogs/MUC_DO_DVC/versions/draft:publish`.
+- **Mong đợi** 403-PQ (DATA_STEWARD không có `PERM-07-publish` theo D02-08; khung §4 cũ cho phép, đã bị §14 ghi đè). Gợi ý trên giao diện: chỉ có nút "Trình duyệt".
+

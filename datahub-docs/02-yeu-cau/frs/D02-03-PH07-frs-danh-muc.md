@@ -910,3 +910,444 @@ Các ngoại lệ được liệt kê trong bảng sau.
 | Nhóm còn danh mục hoặc nhóm con | ERR-07-037 | 409 | |
 | Tenant tỉnh sửa nhóm `COMMON` | ERR-07-003 | 403 | |
 
+### 5.2. Nhóm B — Bản ghi và phiên bản
+
+#### FR-07-011 · Tạo bản nháp phiên bản mới từ phiên bản hiện hành
+
+Chức năng này mở một bản nháp để soạn thay đổi. Bản nháp là bản sao đầy đủ của phiên bản gốc (copy-on-write), nên người dùng sửa thoải mái mà HTTT vẫn đọc phiên bản đang hiệu lực không bị ảnh hưởng. Đây là điểm khác căn bản với Aita, nơi mọi sửa đổi đi thẳng vào dữ liệu đang dùng.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-011 · Tạo bản nháp phiên bản mới từ phiên bản hiện hành |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; LGC-DMDC-011 |
+| Tác nhân, quyền | DS (○), TA, PA (`COMMON`); `PERM-07-create`. Nội bộ: tiến trình đồng bộ (FR-07-036), nhập lô API (FR-07-023, tự mở nháp nếu cấu hình cho phép) |
+| Tiền điều kiện | Danh mục `ACTIVE`; không `NATIONAL` (trừ tiến trình đồng bộ); không có phiên bản mở (BR-07-005) |
+| Đầu ra | `201` với chi tiết phiên bản nháp: `versionNo` mới, `baseVersionNo`, `status = DRAFT`, `itemCount`, ETag |
+| Hậu điều kiện | Một `catalog_version` mới `DRAFT` với `version_no = max + 1`, `origin` theo nguồn tạo; mọi `attribute_def` và `catalog_item` của phiên bản gốc được sao chép sang phiên bản mới (định danh mới, cùng mã); với ĐVHC, không sao chép `item_succession` (sự kiện sắp xếp thuộc phiên bản ghi nhận) |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_VERSION_CREATE`, `baseVersionNo`, `versionNo`, `origin` |
+
+Đầu vào của API-07-012 được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `baseVersionNo` | T-INT | Không | Phiên bản đã phát hành của danh mục; mặc định là phiên bản có `effective_from` lớn nhất (kể cả phiên bản sắp hiệu lực), không phải phiên bản đang hiệu lực, để không làm mất thay đổi đã phát hành nhưng chưa tới ngày | `4` |
+| `effectiveFrom` | T-DATE | Không | Ngày hiệu lực dự kiến; > `effective_from` của phiên bản gốc | `2027-01-01` |
+| `changeNote` | T-TEXT | Không | ≤ 4.000 | `Bổ sung loại hình mới theo QĐ 12` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống khóa dòng danh mục (`SELECT … FOR UPDATE`) để tuần tự hóa các yêu cầu tạo bản nháp đồng thời.
+2. Hệ thống kiểm tra không có phiên bản ở `DRAFT`, `IN_REVIEW`, `APPROVED`; có thì trả `ERR-07-005` kèm số phiên bản đang mở và người đang soạn.
+3. Hệ thống xác định phiên bản gốc theo `baseVersionNo` hoặc mặc định; nếu người dùng chọn một phiên bản cũ hơn phiên bản mới nhất, hệ thống cảnh báo rằng các thay đổi của phiên bản mới hơn sẽ không có trong bản nháp và sẽ hiện thành khác biệt khi so sánh.
+4. Hệ thống tạo `catalog_version` mới và sao chép thuộc tính, bản ghi bằng câu lệnh `INSERT … SELECT` trong cùng giao dịch; với danh mục 200.000 bản ghi, thao tác phải xong trong 10 giây (NFR-07-011). Nếu dự kiến vượt 3 giây, giao diện hiện tiến độ (FR-00-054).
+5. Hệ thống đặt `stats` của bản nháp về `{added: 0, changed: 0, deprecated: 0, breaking: false}` và ghi kiểm toán.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Đã có phiên bản mở | ERR-07-005 | 409 | Trả số phiên bản mở |
+| Danh mục chưa phát hành (đã có nháp số 1) | ERR-07-005 | 409 | |
+| Danh mục `NATIONAL` hoặc `COMMON` với tenant tỉnh | ERR-07-003 | 403 | |
+| Danh mục `RETIRED` | ERR-07-031 | 410 | |
+| `baseVersionNo` không phải phiên bản đã phát hành | ERR-07-006 | 404 | |
+| `effectiveFrom` không lớn hơn phiên bản gốc | ERR-07-017 | 422 | |
+
+#### FR-07-012 · Thêm, sửa, ngừng dùng bản ghi trên bản nháp
+
+Chức năng này là thao tác soạn thảo hằng ngày trên bản nháp (UI-07-05): thêm bản ghi, sửa tên, mã cha, thứ tự, thuộc tính, ngừng dùng bản ghi, và xóa bản ghi mới thêm. Nó thay chức năng cập nhật danh sách bản ghi của Aita, với khác biệt là bản ghi đã từng phát hành không bị xóa.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-012 · Thêm, sửa, ngừng dùng bản ghi trên bản nháp |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; LGC-DMDC-011 |
+| Tác nhân, quyền | DS (○), TA, PA (`COMMON`); `PERM-07-update` |
+| Tiền điều kiện | Bản nháp `DRAFT`; danh mục không `NATIONAL`; với HYBRID chỉ thao tác trên bản ghi bổ sung |
+| Đầu ra | Thêm: `201` với bản ghi. Sửa: `200`. Ngừng dùng: `200`. Xóa: `204`. Mọi phản hồi kèm ETag mới của bản nháp và `stats` cập nhật |
+| Hậu điều kiện | Bản ghi được thêm, sửa, chuyển `DEPRECATED` hoặc xóa trong bản nháp; `depth`, `path`, `level_name` tính lại cho bản ghi và cây con khi mã cha đổi; `item_count`, `stats` của bản nháp cập nhật; `updated_by` của bản nháp là người thao tác (dùng cho bốn mắt) |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_ITEM_CREATE` / `RDM_ITEM_UPDATE` / `RDM_ITEM_DEPRECATE` / `RDM_ITEM_DELETE`, đối tượng `catalog/{c}/version/{n}/item/{code}`, giá trị trước và sau các trường thay đổi |
+
+Đầu vào của thao tác thêm (API-07-027) và sửa (API-07-028, JSON Merge Patch) được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `code` | T-CODE | Có (thêm); không sửa được | Chuẩn hóa chữ hoa; duy nhất trong bản nháp (BR-07-002); với HYBRID khớp `local_code_pattern` và không trùng mã danh mục gốc (BR-07-010); không trùng mã đã từng phát hành rồi bị xóa khỏi lịch sử (không có, vì không xóa) | `68L001` |
+| `name` | T-NAME | Có | 1…255 ký tự | `Hợp tác xã nông nghiệp công nghệ cao` |
+| `parentCode` | T-CODE | Không | Chỉ khi phân cấp; tồn tại trong bản nháp; không vòng; độ sâu ≤ `max_depth`; cha phải `ACTIVE` nếu bản ghi `ACTIVE` (BR-07-014) | `68L000` |
+| `sortOrder` | T-INT | Không | Mặc định lớn nhất trong cùng cha + 10 | `20` |
+| `validFrom`, `validTo` | T-DATE | Không | `validFrom` < `validTo`; nằm trong khoảng hiệu lực của phiên bản | |
+| `attrs` | T-JSON | Theo lược đồ | Đối tượng có khóa là mã thuộc tính; kiểm tra theo JSON Schema của bản nháp | `{"loai_hinh":"HTX"}` |
+
+Đầu vào của thao tác ngừng dùng (API-07-029) được mô tả trong bảng sau; thao tác xóa (API-07-030) không có thân.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `replacedBy` | Mảng T-CODE | Không | 0…50 mã; mỗi mã tồn tại và `ACTIVE` trong bản nháp; không chứa chính nó | `["68L010"]` |
+| `reason` | T-TEXT | Không | ≤ 1.000 | `Gộp vào loại hình 68L010` |
+| `cascade` | T-BOOL | Không | Mặc định `false`; `true` thì ngừng dùng cả cây con (vì BR-07-014 cấm con `ACTIVE` có cha `DEPRECATED`) | `false` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra bản nháp ở `DRAFT`, `If-Match` với `version` của bản nháp (khóa lạc quan theo phiên bản, đơn giản hơn khóa theo từng bản ghi và đủ dùng vì một bản nháp thường do một người soạn; với bảng sửa trực tiếp, giao diện gửi `If-Match` theo `version` của bản ghi để hai người sửa hai bản ghi khác nhau không xung đột, xem Q07-04).
+2. Hệ thống chuẩn hóa mã và tên, áp giá trị mặc định cho thuộc tính thiếu.
+3. Hệ thống kiểm tra hợp lệ bản ghi theo FR-07-013 (kiểm tra mức bản ghi: kiểu, bắt buộc, mẫu, miền, tham chiếu, mã cha, vòng, độ sâu, duy nhất).
+4. Khi ngừng dùng: nếu bản ghi có con `ACTIVE` và `cascade = false` thì trả `ERR-07-010` với danh sách con; nếu `cascade = true` thì ngừng dùng cả cây con. Ngừng dùng là thay đổi phá vỡ.
+5. Khi xóa: nếu mã đã xuất hiện ở bất kỳ phiên bản đã phát hành nào thì trả `ERR-07-013`; nếu bản ghi có con trong bản nháp thì trả `ERR-07-010`.
+6. Khi sửa `parentCode`: hệ thống kiểm tra không vòng (cha mới không thuộc cây con của bản ghi), tính lại `depth`, `path` cho bản ghi và toàn bộ cây con, kiểm tra độ sâu cây con sau khi dời không vượt `max_depth`. Đổi mã cha của bản ghi đã từng phát hành là thay đổi phá vỡ.
+7. Hệ thống ghi thay đổi, cập nhật `stats` (đếm lại theo so sánh với phiên bản gốc), tăng `version` của bản nháp, ghi kiểm toán, trong một giao dịch.
+
+> **Câu hỏi mở Q07-04:** Cần xác nhận với người dùng có nhu cầu nhiều người cùng soạn một bản nháp đồng thời hay không. Nếu có, khóa lạc quan theo từng bản ghi (cột `version` của `catalog_item`) được dùng cho sửa bản ghi, còn khóa theo phiên bản chỉ dùng cho thao tác lược đồ và chuyển trạng thái; FRS đề xuất phương án này làm mặc định.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Mã trùng trong bản nháp | ERR-07-008 | 409 | |
+| Thuộc tính sai lược đồ | ERR-07-009 | 422 | `errors` theo thuộc tính |
+| Mã cha không tồn tại, tạo vòng, cha `DEPRECATED`, còn con `ACTIVE` khi ngừng dùng không cascade | ERR-07-010 | 422 | |
+| Vượt `max_depth` | ERR-07-011 | 422 | |
+| Mã ngoài dải địa phương hoặc trùng mã gốc (HYBRID) | ERR-07-012 | 422 | |
+| Xóa bản ghi đã từng phát hành | ERR-07-013 | 409 | Hướng dẫn dùng ngừng dùng |
+| Bản nháp không `DRAFT` | ERR-07-004 | 409 | |
+| Danh mục `NATIONAL`, sửa bản ghi kế thừa của HYBRID | ERR-07-003 | 403 | |
+| Không tìm thấy mã bản ghi trong bản nháp | ERR-07-007 | 404 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-013 · Kiểm tra hợp lệ bản ghi theo lược đồ
+
+Chức năng này là bộ kiểm tra dùng chung cho mọi đường ghi dữ liệu (nhập tay, nhập tệp, nhập lô API, đồng bộ, di trú) và có thể được gọi tường minh để kiểm tra toàn bộ bản nháp trước khi trình (API-07-016). Dùng một bộ kiểm tra duy nhất bảo đảm cùng một bản ghi cho cùng một kết luận dù đi qua kênh nào.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-013 · Kiểm tra hợp lệ bản ghi theo lược đồ (kiểu, bắt buộc, duy nhất, mã cha, vòng, độ sâu) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; mới |
+| Tác nhân, quyền | Gọi tường minh: người có `PERM-07-update` hoặc `PERM-07-publish`; gọi ngầm: mọi FR ghi bản ghi |
+| Tiền điều kiện | Phiên bản tồn tại (kiểm tra được cả phiên bản đã phát hành để chẩn đoán, nhưng không sửa) |
+| Đầu ra | `200` với `{valid: bool, errorCount, warningCount, errors: [{itemCode, field, code, message, severity}], checkedAt}`; tối đa 1.000 lỗi trong phản hồi, đầy đủ tải qua `?format=xlsx` |
+| Hậu điều kiện | Kết quả kiểm tra gần nhất được lưu vào `stats.validation` của phiên bản kèm `version` của phiên bản tại thời điểm kiểm tra; thao tác trình duyệt dùng kết quả này nếu `version` không đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không ghi kiểm toán cho kiểm tra (không thay đổi dữ liệu nghiệp vụ) |
+
+Đầu vào của API-07-016 gồm `{c}`, `{v}` và tùy chọn `level` (`ITEM`, `FULL`, mặc định `FULL`). Bảng dưới đây là danh mục các quy tắc kiểm tra, mã quy tắc dùng trong trường `errors[].code` (để giao diện và báo cáo lỗi nhập tệp hiển thị nhất quán), mức nghiêm trọng và mức kiểm tra.
+
+| Mã quy tắc | Nội dung kiểm tra | Mức | Phạm vi |
+|---|---|---|---|
+| `CODE_REQUIRED` | Mã khác rỗng | Lỗi | Bản ghi |
+| `CODE_FORMAT` | Mã khớp mẫu T-CODE sau chuẩn hóa chữ hoa | Lỗi | Bản ghi |
+| `CODE_DUPLICATE` | Mã không trùng trong phiên bản (so sánh không phân biệt hoa thường, BR-07-002) | Lỗi | Liên bản ghi |
+| `CODE_OUT_OF_RANGE` | HYBRID: mã khớp `local_code_pattern`, không trùng mã gốc (BR-07-010) | Lỗi | Bản ghi |
+| `NAME_REQUIRED`, `NAME_TOO_LONG` | Tên khác rỗng, ≤ 255 ký tự | Lỗi | Bản ghi |
+| `ATTR_REQUIRED` | Thuộc tính `required` có giá trị với bản ghi `ACTIVE` | Lỗi | Bản ghi |
+| `ATTR_TYPE` | Giá trị đúng kiểu (mục 4.4) | Lỗi | Bản ghi |
+| `ATTR_MAX_LENGTH`, `ATTR_PATTERN`, `ATTR_RANGE`, `ATTR_ENUM` | Giá trị thỏa ràng buộc | Lỗi | Bản ghi |
+| `ATTR_UNKNOWN` | Khóa trong `attrs` không có trong lược đồ | Lỗi khi nhập API; cảnh báo và bỏ qua khi nhập tệp có cột thừa | Bản ghi |
+| `ATTR_UNIQUE` | Thuộc tính `unique_in_version` không trùng | Lỗi | Liên bản ghi |
+| `ATTR_REF_NOT_FOUND` | Giá trị `CATALOG_REF` tồn tại và `ACTIVE` trong phiên bản hiệu lực của danh mục đích tại `effective_from` của phiên bản đang kiểm tra | Lỗi | Liên danh mục |
+| `PARENT_NOT_FOUND` | Mã cha tồn tại trong phiên bản | Lỗi | Liên bản ghi |
+| `PARENT_CYCLE` | Không có vòng | Lỗi | Liên bản ghi |
+| `PARENT_DEPRECATED` | Bản ghi `ACTIVE` không có cha `DEPRECATED` | Lỗi | Liên bản ghi |
+| `DEPTH_EXCEEDED` | Độ sâu ≤ `max_depth` | Lỗi | Liên bản ghi |
+| `PARENT_NOT_ALLOWED` | Danh mục không phân cấp thì mã cha rỗng | Lỗi | Bản ghi |
+| `REPLACED_BY_INVALID` | Mã thay thế tồn tại, `ACTIVE`, khác chính nó | Lỗi | Liên bản ghi |
+| `VALIDITY_RANGE` | `validFrom` < `validTo` và nằm trong khoảng hiệu lực phiên bản | Lỗi | Bản ghi |
+| `NAME_DUPLICATE_SIBLING` | Hai bản ghi `ACTIVE` cùng cha trùng tên (không dấu, không phân biệt hoa thường) | Cảnh báo | Liên bản ghi |
+| `EMPTY_VERSION` | Phiên bản có ít nhất một bản ghi `ACTIVE` | Lỗi (chỉ khi trình, phát hành) | Phiên bản |
+| `PII_SUSPECT` | Giá trị thuộc tính khớp mẫu số định danh cá nhân 12 chữ số hoặc số điện thoại di động | Cảnh báo | Bản ghi |
+
+Xử lý của kiểm tra toàn bộ (`FULL`) gồm các bước sau.
+
+1. Hệ thống sinh (hoặc lấy từ bộ đệm theo `schema_hash`) JSON Schema của phiên bản.
+2. Hệ thống duyệt luồng mọi bản ghi theo lô 5.000, áp các quy tắc phạm vi "Bản ghi".
+3. Hệ thống chạy các quy tắc liên bản ghi bằng truy vấn tập hợp trên CSDL (đếm trùng mã, trùng giá trị duy nhất; dựng cây bằng truy vấn đệ quy giới hạn độ sâu `max_depth + 1` để phát hiện vòng và vượt cấp).
+4. Hệ thống kiểm tra tham chiếu `CATALOG_REF` bằng một truy vấn nối với phiên bản hiệu lực của từng danh mục đích.
+5. Hệ thống tổng hợp kết quả, lưu vào `stats.validation` cùng `version` của phiên bản, trả phản hồi.
+6. Kiểm tra toàn bộ trên bản nháp 200.000 bản ghi phải xong trong 30 giây; nếu dự kiến vượt 3 giây, API trả `202` kèm đường dẫn theo dõi tiến độ (FR-00-054).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy phiên bản | ERR-07-006 | 404 | |
+| Gọi ngầm từ FR ghi mà bản ghi sai | ERR-07-009, 010, 011, 012, 008 | 422/409 | Theo quy tắc vi phạm đầu tiên nhóm theo mã lỗi; `errors` chứa toàn bộ vi phạm của bản ghi |
+
+#### FR-07-014 · So sánh khác biệt giữa hai phiên bản, phân loại phá vỡ và không phá vỡ
+
+Chức năng này tính và hiển thị khác biệt giữa hai phiên bản bất kỳ của cùng danh mục, đồng thời phân loại từng thay đổi là phá vỡ hay không phá vỡ. Đây là căn cứ để người duyệt quyết định (UI-07-07), để áp quy tắc bắt buộc duyệt (BR-07-012), để tính sự kiện phát hành và delta (FR-07-031), và để đồng bộ quốc gia quyết định tự áp dụng hay chờ xác nhận (FR-07-037). Vì có nhiều nơi dùng, thuật toán được đặc tả chính xác dưới đây.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-014 · So sánh khác biệt giữa hai phiên bản, phân loại phá vỡ/không phá vỡ |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; mới |
+| Tác nhân, quyền | Mọi người có `PERM-07-read`; nội bộ: FR-07-015, 016, 031, 036 |
+| Tiền điều kiện | Hai phiên bản tồn tại và thuộc cùng danh mục |
+| Đầu ra | `200` với khối `summary` và trang `changes` như mô tả ở bước 7; `?format=xlsx` trả tệp khác biệt |
+| Hậu điều kiện | Khi so bản nháp với phiên bản gốc, `stats` của bản nháp được cập nhật |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-021 được mô tả trong bảng sau.
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `{v}` | T-INT hoặc `draft`, `current` | Có | Phiên bản "sau" | `draft` |
+| `against` | T-INT hoặc `current`, `base` | Không | Phiên bản "trước"; mặc định `base` (phiên bản gốc của bản nháp) hoặc phiên bản liền trước | `current` |
+| `changeType` | T-ENUM[] | Không | Lọc `ADDED`, `CHANGED`, `DEPRECATED`, `REACTIVATED`, `REMOVED`, `ATTRIBUTE_*` | |
+| `breakingOnly` | T-BOOL | Không | Chỉ thay đổi phá vỡ | `true` |
+| `page`, `size` | T-INT | Không | `size` ≤ 200 | |
+
+Thuật toán tính khác biệt gồm hai phần, khác biệt lược đồ và khác biệt bản ghi, và được thực hiện như sau.
+
+1. **Ghép lược đồ.** Hệ thống ghép thuộc tính của hai phiên bản theo `code`. Thuộc tính chỉ có ở phiên bản sau là `ATTRIBUTE_ADDED`; chỉ có ở phiên bản trước là `ATTRIBUTE_REMOVED`; có ở cả hai thì so từng trường định nghĩa và sinh `ATTRIBUTE_TYPE_CHANGED` nếu `data_type` đổi, `ATTRIBUTE_CONSTRAINT_CHANGED` nếu ràng buộc đổi, `ATTRIBUTE_META_CHANGED` nếu chỉ nhãn, mô tả, thứ tự, cờ `queryable`, `searchable` đổi.
+2. **Ghép bản ghi.** Hệ thống ghép bản ghi theo mã chuẩn hóa chữ hoa bằng một phép nối ngoài đầy đủ (full outer join) trên CSDL, không nạp toàn bộ vào bộ nhớ.
+3. **Phân loại từng cặp bản ghi.** Mã chỉ có ở phiên bản sau là `ADDED`. Mã chỉ có ở phiên bản trước là `REMOVED` (chỉ xảy ra khi so phiên bản không liền kề có bản ghi mới thêm rồi bị xóa trong nháp, hoặc khi so với dữ liệu nguồn quốc gia). Mã có ở cả hai: nếu trạng thái từ `ACTIVE` sang `DEPRECATED` là `DEPRECATED`; từ `DEPRECATED` sang `ACTIVE` là `REACTIVATED`; ngược lại so các trường `name`, `parent_code`, `sort_order`, `replaced_by`, `valid_from`, `valid_to` và từng khóa trong `attrs` (chỉ khóa của thuộc tính có ở cả hai phiên bản; khóa của thuộc tính bị thêm hoặc xóa đã được tính ở bước 1, không tính lặp lại cho từng bản ghi); có ít nhất một trường khác là `CHANGED` kèm danh sách trường thay đổi và giá trị trước, sau; không trường nào khác là `UNCHANGED` (không trả về trừ khi yêu cầu).
+4. **So sánh giá trị.** Chuỗi so sau chuẩn hóa NFC và cắt khoảng trắng hai đầu, phân biệt hoa thường (đổi hoa thường của tên là một thay đổi có ý nghĩa hiển thị). Số thập phân so theo giá trị (`1.50` bằng `1.5`). Ngày giờ so theo thời điểm UTC. Mảng `replaced_by` so như tập hợp không thứ tự. Giá trị rỗng, `null` và khóa vắng mặt được coi là bằng nhau.
+5. **Phân loại phá vỡ.** Mỗi thay đổi được gắn cờ `breaking` theo bảng phân loại dưới đây (mục 3 §18 của khung chung và BR-07-013).
+6. **Tổng hợp.** Hệ thống đếm `added`, `changed`, `deprecated`, `reactivated`, `removed`, `attributeChanges`, `breakingCount`, tính `changeRatio = (added + changed + deprecated + reactivated + removed) / max(1, itemCount của phiên bản trước)` và `breaking = breakingCount > 0`.
+7. **Trả kết quả.** `summary` gồm các số đếm trên, `changeRatio`, `breaking`, `largeChange = changeRatio > ngưỡng` (tham số `07.rdm.large-change-threshold-percent`, mặc định 10); `changes` là trang các mục `{itemCode, changeType, breaking, fields: [{field, before, after}], breakingReasons}`, sắp xếp phá vỡ trước, sau đó theo mã.
+
+Bảng phân loại phá vỡ dưới đây là nguồn sự thật duy nhất cho mọi nơi cần quyết định phá vỡ; mỗi dòng có lý do để người duyệt hiểu vì sao hệ thống cảnh báo.
+
+| Thay đổi | Phá vỡ | Lý do |
+|---|---|---|
+| `ADDED` bản ghi | Không | HTTT cũ không biết mã mới nhưng không lỗi với dữ liệu hiện có |
+| `CHANGED` tên, `sort_order`, thuộc tính giá trị | Không | Ý nghĩa mã giữ nguyên |
+| `CHANGED` `parent_code` của bản ghi đã từng phát hành | Có | HTTT lọc theo cha hoặc hiển thị cây sẽ sai |
+| `CHANGED` `valid_to` rút ngắn | Có | Mã hết hiệu lực sớm hơn dự kiến |
+| `DEPRECATED` | Có | HTTT đang dùng mã phải chuyển sang mã khác |
+| `REACTIVATED` | Không | Mã trở lại dùng được với nghĩa cũ |
+| `REMOVED` | Có | Mã biến mất |
+| `ATTRIBUTE_ADDED` không bắt buộc | Không | |
+| `ATTRIBUTE_ADDED` bắt buộc | Có | HTTT gửi dữ liệu lên (nhập lô API) sẽ thiếu trường |
+| `ATTRIBUTE_REMOVED`, thuộc tính chuyển `HIDDEN` | Có | HTTT đọc trường sẽ không còn giá trị |
+| `ATTRIBUTE_TYPE_CHANGED` | Có | Bộ phân tích JSON của HTTT có thể lỗi |
+| `ATTRIBUTE_CONSTRAINT_CHANGED` thu hẹp (giảm độ dài, thêm mẫu, thu hẹp khoảng, bỏ giá trị liệt kê, bật bắt buộc, bật duy nhất) | Có | Dữ liệu HTTT gửi lên hợp lệ trước đây có thể bị từ chối |
+| `ATTRIBUTE_CONSTRAINT_CHANGED` nới rộng | Không | |
+| `ATTRIBUTE_META_CHANGED` | Không | |
+| Tắt phân cấp, giảm `max_depth`, thu hẹp `local_code_pattern` | Có | |
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Phiên bản không tồn tại hoặc khác danh mục | ERR-07-006 | 404 | |
+| `size` > 200 | ERR-07-026 | 400 | |
+
+#### FR-07-015 · Trình duyệt, duyệt, từ chối phiên bản
+
+Chức năng này hiện thực máy trạng thái duyệt bốn mắt của PH-07 (quyết định nền §16): người soạn trình bản nháp, người duyệt khác người soạn xem khác biệt rồi duyệt hoặc từ chối. Việc chờ duyệt được đăng vào hộp "Việc của tôi" của PH-12 qua sự kiện, không dùng Flowable ở MVP vì luồng duyệt danh mục đơn giản, cố định và cần phản hồi nhanh.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-015 · Trình duyệt, duyệt, từ chối phiên bản (bốn mắt, ngưỡng thay đổi lớn) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; mới; tuân thủ FR-00-070, FR-00-071, FR-00-072 |
+| Tác nhân, quyền | Trình, rút lại: DS (○), TA, PA (`COMMON`) với `PERM-07-submit`. Duyệt, từ chối, thu hồi duyệt: DA, PA (`COMMON`) với `PERM-07-publish` |
+| Tiền điều kiện | Trình: bản nháp `DRAFT`, kiểm tra hợp lệ không có lỗi. Duyệt, từ chối: phiên bản `IN_REVIEW`. Thu hồi duyệt: phiên bản `APPROVED` |
+| Đầu ra | `200` với phiên bản ở trạng thái mới, `diffSummary` |
+| Hậu điều kiện | Trình: `status = IN_REVIEW`, `submitted_by/at` được gán, một dòng `version_review` `SUBMIT` kèm `diff_stats`. Duyệt: `status = APPROVED`, `approved_by/at`, dòng `APPROVE`. Từ chối: `status = DRAFT`, dòng `REJECT` kèm lý do. Rút lại hoặc thu hồi duyệt: `status = DRAFT`, dòng `version_review` hành động `SUBMIT` hoặc `APPROVE` kèm ghi chú "rút lại"/"thu hồi" |
+| Sự kiện phát ra | Trình: EVT-07-04 `{tenant}.rdm.catalog.submitted.v1` (để PH-12 tạo việc cho người có `PERM-07-publish` phù hợp). Từ chối: EVT-07-06 `{tenant}.rdm.catalog.rejected.v1` (để PH-12 đóng việc, báo người trình). Duyệt: không có sự kiện riêng; PH-12 đóng việc khi nhận EVT-07-05 lúc phát hành hoặc qua lời gọi trực tiếp API đóng việc (xem Q07-05) |
+| Kiểm toán | `RDM_VERSION_SUBMIT` / `APPROVE` / `REJECT` / `WITHDRAW` / `UNAPPROVE`, kèm ý kiến, `diff_stats` |
+
+> **Câu hỏi mở Q07-05:** Khung chung không cấp sự kiện riêng cho thao tác duyệt (approved). Cần thống nhất với PH-12 cách đóng việc chờ duyệt khi phiên bản được duyệt mà chưa phát hành: dùng thêm sự kiện `{tenant}.rdm.catalog.approved.v1` (đề xuất mã EVT-07-11) hay PH-07 gọi API đóng việc của PH-12. FRS đề xuất thêm EVT-07-11 để thống nhất cơ chế.
+
+Đầu vào của các thao tác (API-07-017, 018, 019) được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `comment` | T-TEXT | Có với duyệt và từ chối (FR-00-072); không bắt buộc khi trình | Từ chối: 10…4.000 ký tự; duyệt: 1…4.000 | `Đồng ý, đề nghị phát hành từ 01/01/2027` |
+| `effectiveFrom` | T-DATE | Không (trình) | Cập nhật ngày hiệu lực dự kiến | `2027-01-01` |
+| `legalBasis` | T-TEXT | Không (trình) | ≤ 1.000 | `Quyết định 12/QĐ-SKHĐT` |
+| `action` | T-ENUM | Có với API-07-017 khi rút lại | `SUBMIT` (mặc định), `WITHDRAW` | |
+| `action` | T-ENUM | Có với API-07-018 khi thu hồi | `APPROVE` (mặc định), `UNAPPROVE` | |
+
+Xử lý của thao tác trình gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền `PERM-07-submit` (DS chỉ với danh mục của tổ chức mình), `If-Match`, `status = DRAFT`.
+2. Hệ thống dùng kết quả kiểm tra hợp lệ trong `stats.validation` nếu `version` không đổi kể từ lần kiểm tra; ngược lại chạy FR-07-013 mức `FULL`. Còn lỗi thì trả `ERR-07-009` kèm số lỗi và đường dẫn tải báo cáo.
+3. Hệ thống tính khác biệt với phiên bản gốc theo FR-07-014; khác biệt rỗng (không có thay đổi nào) thì từ chối với `ERR-07-004` và thông điệp "Bản nháp không có thay đổi so với phiên bản gốc".
+4. Hệ thống chuyển `status = IN_REVIEW`, gán `submitted_by/at`, ghi `version_review` (`SUBMIT`, `diff_stats`), ghi outbox EVT-07-04 với `catalogCode`, `versionNo`, `submittedBy`, `diffSummary`, `ownerOrgId`, `requiredPermission = PERM-07-publish`, và kiểm toán.
+
+Xử lý của thao tác duyệt gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền `PERM-07-publish`, `If-Match`, `status = IN_REVIEW`.
+2. Hệ thống kiểm tra bốn mắt (BR-07-011): người duyệt khác `submitted_by` và khác người sửa nội dung cuối cùng của bản nháp (`updated_by` của phiên bản và người sửa cuối của mọi bản ghi, thuộc tính trong bản nháp); vi phạm trả `ERR-07-015`. Kiểm tra được thực hiện trên tập người đã sửa bản nháp (lấy từ cột `updated_by` của bản ghi và thuộc tính thuộc bản nháp) vì người đã đóng góp nội dung cũng không được tự duyệt.
+3. Hệ thống chuyển `status = APPROVED`, gán `approved_by/at`, ghi `version_review` (`APPROVE`, ý kiến) và kiểm toán.
+
+Xử lý của thao tác từ chối gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, `If-Match`, `status = IN_REVIEW`, ý kiến từ 10 ký tự.
+2. Hệ thống kiểm tra bốn mắt như thao tác duyệt (người trình không tự từ chối; người trình muốn sửa thì dùng rút lại).
+3. Hệ thống chuyển `status = DRAFT`, xóa `submitted_by/at`, ghi `version_review` (`REJECT`, lý do), ghi outbox EVT-07-06 và kiểm toán.
+
+Xử lý của thao tác rút lại và thu hồi duyệt: người trình (hoặc TA) rút lại khi `IN_REVIEW`; người duyệt đã duyệt (hoặc người khác có `PERM-07-publish`) thu hồi khi `APPROVED`; cả hai đưa phiên bản về `DRAFT`, ghi `version_review` và ghi outbox EVT-07-06 với `reason = WITHDRAWN` hoặc `UNAPPROVED` để PH-12 đóng việc.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Phiên bản không ở trạng thái cho phép, bản nháp không có thay đổi | ERR-07-004 | 409 | |
+| Bản nháp còn lỗi hợp lệ | ERR-07-009 | 422 | Trả số lỗi, liên kết báo cáo |
+| Người duyệt là người trình hoặc người sửa nội dung | ERR-07-015 | 403 | |
+| Từ chối không có lý do đủ dài | — | 400 | Lỗi hợp lệ chung |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-016 · Phát hành phiên bản với ngày hiệu lực và căn cứ pháp lý
+
+Chức năng này đưa một phiên bản vào sử dụng: gán khoảng hiệu lực, đóng phiên bản trước, sinh ảnh chụp, làm mới bộ đệm và phát sự kiện cho HTTT. Đây là thao tác quan trọng nhất về tính đúng đắn của PH-07, vì sau khi phát hành phiên bản trở thành bất biến.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-016 · Phát hành phiên bản với ngày hiệu lực và căn cứ pháp lý |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; mới |
+| Tác nhân, quyền | DA, PA (`COMMON`) với `PERM-07-publish`; tiến trình đồng bộ (tác nhân hệ thống) khi `auto_apply`; tiến trình di trú và nạp gói nền (tác nhân hệ thống, PA khởi chạy) |
+| Tiền điều kiện | Phiên bản `APPROVED`; hoặc `DRAFT` khi danh mục `require_approval = false`, thay đổi không vượt ngưỡng và không phá vỡ (BR-07-026); kiểm tra hợp lệ không lỗi; danh mục không `RETIRED` |
+| Đầu ra | `200` với phiên bản `PUBLISHED`, `effectiveFrom`, `effectiveTo`, `snapshotUri`, nhãn hiệu lực |
+| Hậu điều kiện | Phiên bản `PUBLISHED`, bất biến; `published_by/at`, `effective_from`, `legal_basis` gán; phiên bản đã phát hành có `effective_to` rỗng trước đó được gán `effective_to = effective_from` mới (BR-07-007); `catalog.status = ACTIVE` (nếu là lần đầu); `current_version_id` cập nhật nếu phiên bản mới có hiệu lực từ hôm nay; ảnh chụp JSON.gz và CSV được ghi lên kho đối tượng; với danh mục `DVHC`, bảng chiếu `admin_unit` (EN-07-18) được làm mới trong cùng giao dịch; chỉ mục biểu thức cho thuộc tính `queryable` mới được tạo |
+| Sự kiện phát ra | EVT-07-05 `{tenant}.rdm.catalog.published.v1` với `catalogCode`, `versionNo`, `effectiveFrom`, `effectiveTo` của phiên bản trước, `stats`, `breaking`, `snapshotUri`, `schemaHash`; với `DVHC` có sự kiện sắp xếp thì thêm EVT-07-10 `common.rdm.adminunit.reorganized.v1` |
+| Kiểm toán | `RDM_VERSION_PUBLISH`, `versionNo`, `effectiveFrom`, `legalBasis`, `stats`, `breaking`, kênh (`APPROVED` hay `DIRECT`) |
+
+Đầu vào của API-07-020 được mô tả trong bảng sau; các trường cũng có thể đã được gán trước qua API-07-014.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `effectiveFrom` | T-DATE | Có (nếu chưa gán) | ≥ hôm nay (BR-07-027), trừ `origin` là `SYNC` hoặc `MIGRATION` được hồi tố có lý do; > `effective_from` của mọi phiên bản đã phát hành (BR-07-007) | `2027-01-01` |
+| `legalBasis` | T-TEXT | Có với danh mục `require_approval = true`; không bắt buộc với danh mục khác | ≤ 1.000 ký tự; số hiệu, ngày, cơ quan ban hành văn bản | `Quyết định 12/QĐ-SKHĐT ngày 20/12/2026` |
+| `changeNote` | T-TEXT | Không | ≤ 4.000 | |
+| `retroactiveReason` | T-TEXT | Khi hồi tố | 10…1.000 | `Đồng bộ phiên bản quốc gia ban hành ngày 15/11/2026` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền `PERM-07-publish` và `If-Match`.
+2. Hệ thống kiểm tra trạng thái: nếu `APPROVED` thì tiếp; nếu `DRAFT` thì kiểm tra `require_approval = false`, tính khác biệt (FR-07-014) và yêu cầu `largeChange = false` và `breaking = false` (BR-07-012, BR-07-026), vi phạm trả `ERR-07-016` kèm `summary`; trạng thái khác trả `ERR-07-004`.
+3. Hệ thống kiểm tra bốn mắt: người phát hành khác người sửa nội dung cuối và khác người trình (BR-07-011); với phát hành thẳng từ `DRAFT`, người phát hành khác mọi người đã sửa bản nháp. Tác nhân hệ thống (đồng bộ, di trú, nạp gói nền) được miễn, vì không có người soạn.
+4. Hệ thống kiểm tra ngày hiệu lực theo BR-07-007 và BR-07-027; vi phạm trả `ERR-07-017`.
+5. Hệ thống chạy lại kiểm tra hợp lệ nếu `version` của phiên bản khác với lần kiểm tra lưu trong `stats.validation` (trường hợp không xảy ra với `APPROVED` vì nội dung bị khóa, nhưng kiểm tra để phòng thủ) và kiểm tra lại tham chiếu `CATALOG_REF` tại ngày `effectiveFrom` (danh mục đích có thể đã đổi từ lúc duyệt).
+6. Hệ thống trong một giao dịch, sau khi khóa dòng danh mục: gán `effective_to` cho phiên bản đã phát hành có `effective_to` rỗng và `effective_from` nhỏ hơn; chuyển phiên bản sang `PUBLISHED`, gán các trường phát hành và `stats` cuối cùng; cập nhật `catalog.status` và `current_version_id`; với `DVHC`, làm mới bảng chiếu `admin_unit` (FR-07-044); ghi `version_review` `PUBLISH`; ghi outbox EVT-07-05 (và EVT-07-10 nếu có sự kiện sắp xếp); ghi kiểm toán.
+7. Sau khi giao dịch cam kết, tác vụ nền sinh ảnh chụp: tệp `s3://dh-{tenant}-rdm/snapshots/{catalogCode}/{versionNo}.json.gz` (mảng bản ghi theo thứ tự mã, kèm khối `meta` gồm lược đồ, `schemaHash`, khoảng hiệu lực, `sha256` của nội dung) và tệp `.csv.gz` cùng tên; ghi `snapshot_uri` vào phiên bản (cột kỹ thuật cho phép ghi sau phát hành, không thuộc nội dung bất biến). Nếu sinh ảnh chụp lỗi, tác vụ thử lại theo lũy thừa tối đa 5 lần và cảnh báo vận hành; API khai thác vẫn phục vụ từ CSDL trong thời gian đó.
+8. Bộ đệm L1 và L2 được làm mới con trỏ phiên bản hiệu lực khi các pod nhận EVT-07-05 (ADR-053); dữ liệu của phiên bản mới được nạp lười theo khóa `version_id`.
+9. Toàn bộ thao tác với phiên bản 50.000 bản ghi kể cả ảnh chụp xong trong 30 giây; sự kiện lên Kafka trong 5 giây sau cam kết (NFR-07-007).
+
+Bảng dưới đây minh họa quy tắc khoảng hiệu lực khi phát hành, vì đây là điểm dễ sai nhất khi có phiên bản sắp hiệu lực.
+
+| Tình huống | Trước khi phát hành | Phát hành v5 với `effectiveFrom` | Sau khi phát hành |
+|---|---|---|---|
+| Thông thường | v4 `[2026-01-01, ∅)` | `2027-01-01` | v4 `[2026-01-01, 2027-01-01)`, v5 `[2027-01-01, ∅)` |
+| Có phiên bản sắp hiệu lực | v3 `[2026-01-01, 2026-12-01)`, v4 `[2026-12-01, ∅)` (hôm nay 21/11/2026) | `2027-01-01` | v4 `[2026-12-01, 2027-01-01)`, v5 `[2027-01-01, ∅)` |
+| Ngày không hợp lệ | v4 `[2026-12-01, ∅)` | `2026-11-25` | Từ chối `ERR-07-017` vì nhỏ hơn `effective_from` của v4 |
+| Hồi tố đồng bộ | v4 `[2026-01-01, ∅)` | `2026-11-15`, `origin = SYNC` | v4 `[2026-01-01, 2026-11-15)`, v5 `[2026-11-15, ∅)`; ghi lý do hồi tố |
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Phiên bản không `APPROVED` (hoặc `DRAFT` hợp lệ) | ERR-07-004 | 409 | |
+| Phát hành thẳng nhưng vượt ngưỡng hoặc phá vỡ | ERR-07-016 | 409 | Hướng dẫn trình duyệt |
+| Người phát hành là người trình hoặc người sửa | ERR-07-015 | 403 | |
+| Ngày hiệu lực sai, hồi tố không có lý do | ERR-07-017 | 422 | |
+| Còn lỗi hợp lệ, tham chiếu `CATALOG_REF` không còn | ERR-07-009 | 422 | |
+| Thiếu căn cứ pháp lý khi bắt buộc | — | 400 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-017 · Hủy bản nháp
+
+Chức năng này bỏ một bản nháp không dùng nữa, giải phóng suất phiên bản mở để tạo bản nháp khác.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-017 · Hủy bản nháp |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | DS (○), TA, PA (`COMMON`) với `PERM-07-update` |
+| Tiền điều kiện | Phiên bản `DRAFT` (phiên bản `IN_REVIEW` phải rút lại trước, `APPROVED` phải thu hồi duyệt trước); không phải nháp số 1 của danh mục chưa phát hành (trường hợp đó dùng xóa danh mục, FR-07-009); không phải bản nháp đồng bộ đang gắn với lần đồng bộ `PENDING_CONFIRMATION` (dùng từ chối đồng bộ, FR-07-037) |
+| Đầu ra | `204` |
+| Hậu điều kiện | `status = DISCARDED`; số phiên bản không được tái sử dụng; bản ghi và thuộc tính của phiên bản bị xóa vật lý sau 7 ngày bởi tác vụ dọn dẹp (phiên bản `DISCARDED` vẫn giữ dòng `catalog_version` và `version_review` để kiểm toán); tác vụ nhập đang ở `VALIDATED` của bản nháp chuyển `CANCELLED` |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_VERSION_DISCARD`, `versionNo`, lý do, `stats` tại thời điểm hủy |
+
+Đầu vào của API-07-015 gồm `{c}`, `{v}`, tiêu đề `If-Match` và tham số `reason` (T-TEXT, không bắt buộc, ≤ 1.000 ký tự).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, `If-Match`, trạng thái và các điều kiện loại trừ ở tiền điều kiện.
+2. Hệ thống chuyển `status = DISCARDED`, ghi `version_review` (`DISCARD`), hủy tác vụ nhập liên quan, ghi kiểm toán.
+3. Giao diện yêu cầu xác nhận trước khi gọi (FR-00-050), hiển thị số thay đổi sẽ mất.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Phiên bản không `DRAFT`, là nháp số 1 chưa phát hành, hoặc gắn với đồng bộ chờ xác nhận | ERR-07-004 | 409 | Thông điệp chỉ cách làm đúng |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-018 · Hiển thị bản ghi dạng bảng và dạng cây
+
+Chức năng này hiển thị bản ghi của một phiên bản trên giao diện quản trị dưới hai dạng (UI-07-02 tab Bản ghi, UI-07-05), thay chức năng hiển thị dạng cây của Aita (LGC-DMDC-002) và bổ sung dạng bảng có lọc, sắp xếp, tô màu thay đổi.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-018 · Hiển thị bản ghi dạng bảng và dạng cây |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-002 |
+| Tác nhân, quyền | Mọi người có `PERM-07-read` |
+| Tiền điều kiện | Phiên bản tồn tại |
+| Đầu ra | Dạng bảng: trang bản ghi (API-07-026) với cột cố định và cột thuộc tính động theo `sort_order`, ẩn thuộc tính `HIDDEN`. Dạng cây: các nút gốc và con trực tiếp được nạp lười theo nút khi mở rộng (API-07-026 với `parentCode`), mỗi nút có `childCount` |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào là tham số của API-07-026: `{c}`, `{v}`, `view` (`table`, `tree`), `parentCode` (với `tree`, rỗng để lấy gốc), `q`, `status`, `changeType`, `attrs.{code}` (lọc bằng giá trị chính xác trên thuộc tính bất kỳ, chỉ trong giao diện quản trị), `page`, `size` (≤ 200), `sort`.
+
+Xử lý gồm các bước sau.
+
+1. Dạng bảng: hệ thống trả trang bản ghi theo bộ lọc; tìm `q` không dấu trên mã, tên và thuộc tính `searchable`; sắp xếp mặc định theo `path` rồi `sort_order` để bản ghi cùng nhánh đứng liền nhau.
+2. Dạng cây: hệ thống trả các nút con trực tiếp của `parentCode`, mỗi nút kèm `childCount` (đếm con `ACTIVE` và `DEPRECATED`) để giao diện vẽ nút mở rộng; nút `DEPRECATED` hiển thị gạch ngang.
+3. Khi `q` có giá trị ở dạng cây, hệ thống trả các nút khớp kèm toàn bộ tổ tiên (từ `path`) để giao diện mở sẵn nhánh chứa kết quả.
+4. Với bản nháp, mỗi bản ghi kèm `changeType` để tô màu (thêm xanh lá, sửa vàng, ngừng dùng đỏ) theo design system.
+5. Danh mục 200.000 bản ghi hiển thị trang đầu trong ≤ 1,5 giây (NFR-00-003).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy danh mục hoặc phiên bản | ERR-07-001, ERR-07-006 | 404 | |
+| `view = tree` với danh mục không phân cấp | — | 400 | |
+
+#### FR-07-019 · Ghi mã thay thế và quan hệ kế thừa cho bản ghi ngừng dùng
+
+Chức năng này ghi và hiển thị quan hệ "mã cũ được thay bằng mã nào" để HTTT tự chuyển dữ liệu. Với danh mục thông thường, quan hệ nằm ở trường `replaced_by` của bản ghi; với ĐVHC, quan hệ được suy ra từ sự kiện sắp xếp (FR-07-045).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-019 · Ghi mã thay thế và quan hệ kế thừa cho bản ghi ngừng dùng |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | Ghi: DS (○), TA, PA (`COMMON`) với `PERM-07-update`. Xem: `PERM-07-read`, HTTT `rdm.read` |
+| Tiền điều kiện | Bản nháp `DRAFT`; bản ghi `DEPRECATED` trong bản nháp (hoặc đang được ngừng dùng qua API-07-029) |
+| Đầu ra | Bản ghi với `replacedBy` mới |
+| Hậu điều kiện | `replaced_by` của bản ghi được cập nhật; sửa `replaced_by` của bản ghi đã ngừng dùng ở phiên bản trước là thay đổi không phá vỡ |
+| Sự kiện phát ra | Không (đi kèm EVT-07-05 khi phát hành) |
+| Kiểm toán | `RDM_ITEM_UPDATE` với trường `replacedBy` |
+
+Đầu vào là trường `replacedBy` (mảng T-CODE, 0…50 phần tử) gửi qua API-07-029 hoặc API-07-028 với bản ghi `DEPRECATED`.
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra mỗi mã trong `replacedBy` tồn tại, `ACTIVE` trong bản nháp và khác mã của chính bản ghi.
+2. Hệ thống kiểm tra không tạo chuỗi thay thế vòng (A thay bằng B, B thay bằng A) bằng cách đi theo `replaced_by` của các bản ghi `DEPRECATED` tối đa 10 bước.
+3. Với danh mục `DVHC`, trường `replaced_by` không nhập tay được mà được tính lại từ sự kiện sắp xếp của bản nháp mỗi khi sự kiện thay đổi (FR-07-045); nhập tay trả `ERR-07-035`.
+4. Khi tra cứu (FR-07-026, 027), bản ghi `DEPRECATED` trả kèm `replacedBy` và, nếu yêu cầu `resolveReplacement = true`, trả thêm bản ghi thay thế cuối cùng sau khi đi hết chuỗi (tối đa 10 bước).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Mã thay thế không tồn tại, không `ACTIVE`, trùng chính nó, tạo vòng | ERR-07-009 | 422 | `errors[].code = REPLACED_BY_INVALID` |
+| Nhập tay `replacedBy` cho ĐVHC | ERR-07-035 | 422 | Hướng dẫn ghi sự kiện sắp xếp |
+

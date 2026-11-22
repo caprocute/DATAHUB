@@ -707,3 +707,317 @@ Sơ đồ tuần tự cho thấy PH-07 không gọi trực tiếp hộp "Việc 
 
 > **Câu hỏi mở Q07-21:** "Phát hành theo lịch" (luồng 12a) có cần ở MVP không? Nếu có, phát hành tự động chạy dưới danh nghĩa người duyệt đã chọn lịch hay dưới danh nghĩa hệ thống, và có cần kiểm tra lại quyền của người duyệt tại thời điểm chạy?
 
+
+### 6.7. UC-07-07 · Phát hành phiên bản
+
+Phát hành là thời điểm một phiên bản trở thành bất biến và được đưa ra khai thác. Đây là thao tác có ảnh hưởng rộng nhất của PH-07: sau khi phát hành, mọi HTTT tra cứu theo ngày hiệu lực sẽ nhận dữ liệu mới, bộ đệm trong các pod được làm mới qua sự kiện, ảnh chụp được sinh cho data plane `dh-runtime`, và với ĐVHC, bảng chiếu `admin_unit` được làm mới cho các phân hệ khác. Vì vậy thao tác phải nguyên tử ở phần dữ liệu và có đảm bảo "ít nhất một lần" ở phần sự kiện.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-07-07 |
+| Tên | Phát hành phiên bản |
+| Mục tiêu | Người duyệt đưa phiên bản đã duyệt (hoặc bản nháp đủ điều kiện phát hành trực tiếp) ra khai thác với ngày hiệu lực và căn cứ pháp lý xác định |
+| Tác nhân chính | ROLE-DATA_APPROVER (ROLE-PLATFORM_ADMIN với `COMMON`); hệ thống trong UC-07-11 và UC-07-16 |
+| Tác nhân phụ | Kho đối tượng Garage (ảnh chụp), Bên nhận sự kiện (EVT-07-05, EVT-07-10), hộp "Việc của tôi", bộ đệm Valkey |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-07-016, FR-07-034, FR-07-050 |
+| Tiền điều kiện | Phiên bản ở `APPROVED`, hoặc ở `DRAFT` và thỏa BR-07-026; người dùng có `PERM-07-publish`, khác người trình và người sửa lần cuối; MFA còn hiệu lực |
+| Điều kiện kích hoạt | Người duyệt chọn "Phát hành" trên UI-07-07 |
+| Đảm bảo tối thiểu | Hoặc phiên bản được phát hành trọn vẹn (trạng thái, khoảng hiệu lực phiên bản trước, con trỏ phiên bản hiện hành, outbox) hoặc không thay đổi gì; nếu sinh ảnh chụp thất bại sau commit, phiên bản vẫn phát hành và ảnh chụp được sinh lại bằng tác vụ bù |
+| Đảm bảo thành công | Phiên bản ở `PUBLISHED`, `published_by/at` ghi nhận, `effective_from` như đã định; `effective_to` của phiên bản đã phát hành liền trước bằng `effective_from` mới (BR-07-007); `catalog.status = ACTIVE`; `current_version_id` trỏ đúng phiên bản hiệu lực hôm nay; ảnh chụp JSON.gz và CSV có tại `s3://dh-t68-rdm/snapshots/{catalogCode}/{versionNo}.json.gz`, `snapshot_uri` được ghi; EVT-07-05 đã phát; bộ đệm L1/L2 cập nhật con trỏ |
+
+**Luồng chính**
+
+1. Người duyệt mở UI-07-07 của phiên bản 4 đã `APPROVED`. Hệ thống hiển thị tóm tắt khác biệt, ngày hiệu lực 01/12/2026, căn cứ pháp lý và cảnh báo nếu có thay đổi phá vỡ: "Phiên bản có 1 mã ngừng dùng. 7 HTTT đã tra cứu danh mục này trong 30 ngày qua sẽ chịu ảnh hưởng." (số HTTT lấy từ chỉ số `rdm_lookup_total` theo client).
+2. Người duyệt chọn "Phát hành", xác nhận trong hộp thoại có nhắc lại ngày hiệu lực.
+3. Giao diện gọi API-07-020 kèm `If-Match` của phiên bản.
+4. Hệ thống kiểm tra quyền, bốn mắt, trạng thái, BR-07-007 (ngày hiệu lực lớn hơn ngày hiệu lực của phiên bản đã phát hành liền trước), BR-07-027 (không sớm hơn hôm nay, trừ `origin` `SYNC` hoặc `MIGRATION`).
+5. Trong một giao dịch, hệ thống: đặt `status = PUBLISHED`, `published_by/at`; đặt `effective_to` của phiên bản liền trước; tính lại `item_count`, `stats`, `schema_hash`; cập nhật `catalog.status = ACTIVE` nếu đang `DRAFT`; cập nhật `current_version_id` nếu `effective_from` ≤ hôm nay; ghi `version_review` (`action = PUBLISH`); ghi EVT-07-05 vào outbox với `catalogCode`, `versionNo`, `effectiveFrom`, `stats`, `breaking`, `snapshotUri` dự kiến.
+6. Hệ thống trả 200 kèm thông tin phiên bản.
+7. Sau commit, tác vụ nền sinh ảnh chụp: đọc bản ghi theo thứ tự `sort_order, code`, ghi luồng ra JSON.gz và CSV, tải lên kho đối tượng, ghi `snapshot_uri` (cập nhật cột kỹ thuật, không làm thay đổi nội dung bất biến).
+8. Debezium đọc outbox và đẩy EVT-07-05 lên topic `t68.rdm.catalog.published.v1`. Các pod `dh-data` nhận sự kiện, làm mới con trỏ "phiên bản hiệu lực" trong L1 và L2; các phiên bản cũ vẫn ở bộ đệm theo khóa `version_id` cho đến khi bị đẩy ra theo LRU. `dh-runtime` nhận sự kiện và nạp ảnh chụp mới.
+9. Hộp "Việc của tôi" đóng mọi việc còn mở liên quan phiên bản; người trình nhận thông báo "Phiên bản 4 đã phát hành, hiệu lực từ 01/12/2026".
+10. Giao diện hiển thị phiên bản với nhãn "Sắp hiệu lực" (vì ngày hiệu lực ở tương lai) và liên kết tải ảnh chụp (API-07-049).
+
+**Luồng thay thế**
+
+- **1a. Phát hành trực tiếp từ `DRAFT`.** Từ UC-07-06 luồng 3a; bước 4 kiểm tra thêm BR-07-012 và BR-07-026 tại máy chủ, ghi `version_review` một dòng `PUBLISH` với ghi chú "phát hành trực tiếp". Tiếp tục bước 5.
+- **5a. Ngày hiệu lực là hôm nay.** `current_version_id` được chuyển ngay; nhãn hiển thị "Đang hiệu lực". Tiếp tục bước 6.
+- **5b. Ngày hiệu lực ở tương lai.** `current_version_id` giữ phiên bản cũ; bộ lập lịch chạy lúc 00:00 giờ Việt Nam mỗi ngày chuyển con trỏ cho các phiên bản tới ngày hiệu lực và phát sự kiện làm mới bộ đệm nội bộ (không phát lại EVT-07-05). Tra cứu với tham số `at` trong tương lai trả dữ liệu phiên bản mới ngay sau khi phát hành. Tiếp tục bước 6.
+- **5c. Phiên bản ĐVHC có sự kiện sắp xếp (mở rộng bởi UC-07-12).** Trong cùng giao dịch, hệ thống làm mới bảng chiếu `admin_unit` (DD-07, EN-07-18): cập nhật `effective_to` các đơn vị bị giải thể, sáp nhập; thêm đơn vị mới; cập nhật `successor_ids`; ghi thêm EVT-07-10 `common.rdm.adminunit.reorganized.v1` kèm danh sách sự kiện sắp xếp. Tiếp tục bước 6.
+- **5d. Phiên bản có `origin = SYNC` hoặc `MIGRATION` với ngày hiệu lực hồi tố.** Hệ thống cho phép `effective_from` sớm hơn hôm nay nếu có `change_note` ghi lý do, vẫn bảo đảm lớn hơn ngày hiệu lực phiên bản liền trước. Tiếp tục bước 6.
+
+**Luồng ngoại lệ**
+
+- **E1. Phiên bản không ở trạng thái phát hành được (bước 4).** Hệ thống trả ERR-07-004 "Phiên bản chưa được duyệt hoặc đã phát hành." Giao diện tải lại.
+- **E2. Người phát hành là người trình hoặc người sửa lần cuối (bước 4).** Hệ thống trả ERR-07-015.
+- **E3. Vượt ngưỡng khi phát hành trực tiếp (bước 4, luồng 1a).** Hệ thống trả ERR-07-016.
+- **E4. Ngày hiệu lực không hợp lệ (bước 4).** Hệ thống trả ERR-07-017 "Ngày hiệu lực phải sau 01/10/2026 (ngày hiệu lực của phiên bản 3) và không sớm hơn hôm nay." Người duyệt không sửa được ngày ở trạng thái `APPROVED`; người duyệt từ chối để người trình sửa, hoặc quản trị cho phép sửa ngày qua API-07-014 khi phiên bản `APPROVED` (xem Q07-22).
+- **E5. ETag không khớp (bước 3).** Hệ thống trả ERR-07-018.
+- **E6. Sinh ảnh chụp thất bại (bước 7).** Tác vụ nền thử lại theo lũy thừa (1, 2, 4, 8 phút, tối đa 6 lần); nếu vẫn lỗi, ghi cảnh báo vận hành và chỉ số; tra cứu qua API vẫn chạy từ PostgreSQL và bộ đệm; `dh-runtime` tiếp tục dùng ảnh chụp cũ và báo trạng thái "trễ" trên bảng giám sát.
+- **E7. Danh mục đã `RETIRED` (bước 4).** Hệ thống trả ERR-07-031.
+
+**Quy tắc nghiệp vụ áp dụng:** BR-07-005, BR-07-006, BR-07-007, BR-07-008, BR-07-011, BR-07-012, BR-07-021 (với ĐVHC), BR-07-026, BR-07-027.
+
+**Yêu cầu phi chức năng liên quan:** NFR-07-007 (phát hành 50.000 bản ghi kể cả ảnh chụp ≤ 30 giây; sự kiện lên Kafka ≤ 5 giây), NFR-07-009 (tỷ lệ trúng đệm phục hồi ≥ 95% sau 10 phút), NFR-07-010 (data plane không phụ thuộc control plane).
+
+**Tần suất, khối lượng:** 10–60 lần mỗi tenant mỗi tháng; danh mục `COMMON` 5–20 lần mỗi tháng (gồm đồng bộ quốc gia tự áp dụng).
+
+**Sơ đồ tuần tự**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor DA as Người duyệt
+    participant RDM as PH-07 rdm
+    participant DB as PostgreSQL
+    participant JOB as Tác vụ sinh ảnh chụp
+    participant S3 as Garage
+    participant K as Kafka
+    participant POD as Các pod dh-data (L1) + Valkey (L2)
+    participant RT as dh-runtime
+
+    DA->>RDM: POST :publish (API-07-020)
+    RDM->>DB: BEGIN
+    RDM->>DB: version → PUBLISHED, effective_to bản trước
+    RDM->>DB: catalog.current_version_id, status ACTIVE
+    opt Danh mục DVHC có succession
+        RDM->>DB: Làm mới admin_unit (EN-07-18)
+        RDM->>DB: outbox EVT-07-10
+    end
+    RDM->>DB: outbox EVT-07-05
+    RDM->>DB: COMMIT
+    RDM-->>DA: 200 PUBLISHED
+    RDM->>JOB: Kích hoạt sinh ảnh chụp
+    JOB->>DB: Đọc bản ghi theo luồng
+    JOB->>S3: Ghi {versionNo}.json.gz, .csv
+    JOB->>DB: Ghi snapshot_uri
+    DB-->>K: Debezium đẩy EVT-07-05
+    K-->>POD: Làm mới con trỏ phiên bản hiệu lực
+    K-->>RT: Nạp ảnh chụp mới vào bộ nhớ
+```
+
+Sơ đồ cho thấy ranh giới giao dịch bao trọn mọi thay đổi trạng thái và bản ghi outbox, còn sinh ảnh chụp nằm ngoài giao dịch để không kéo dài khóa. Vì phiên bản đã phát hành là bất biến, ảnh chụp sinh muộn vài giây vẫn đúng nội dung; `dh-runtime` dùng `snapshotUri` trong sự kiện và thử lại nếu tệp chưa có. Bộ đệm không cần xóa dữ liệu cũ vì khóa đệm theo `version_id`; chỉ con trỏ "phiên bản hiệu lực" của danh mục cần làm mới.
+
+> **Câu hỏi mở Q07-22:** Khi phiên bản đã `APPROVED` nhưng ngày hiệu lực đã trôi qua trước khi kịp phát hành, có cho người duyệt sửa ngày hiệu lực ngay ở `APPROVED` (không phải trả về `DRAFT`) không? Đề xuất: cho sửa ngày hiệu lực và ghi `version_review`, vì đây không phải thay đổi nội dung.
+
+### 6.8. UC-07-08 · Xuất danh mục
+
+Hệ cũ cho phép xuất danh mục ra Excel và CSV từ màn chi tiết. Datahub giữ thao tác đó, bổ sung định dạng JSON, cho phép chọn phiên bản bất kỳ (kể cả phiên bản lịch sử và bản nháp), chọn cột, và chạy nền cho danh mục lớn để không làm treo giao diện.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-07-08 |
+| Tên | Xuất danh mục |
+| Mục tiêu | Người dùng lấy dữ liệu một phiên bản danh mục ra tệp để lưu trữ, báo cáo, gửi đơn vị khác hoặc chỉnh sửa rồi nhập lại |
+| Tác nhân chính | Người có `PERM-07-export`: ROLE-DATA_STEWARD, ROLE-DATA_APPROVER, ROLE-VIEWER, ROLE-TENANT_ADMIN, ROLE-INTEGRATION_ENGINEER |
+| Tác nhân phụ | Kho đối tượng, dịch vụ thông báo, Bên nhận sự kiện (EVT-07-08) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-07-024, FR-07-025 |
+| Tiền điều kiện | Người dùng có `PERM-07-export`; danh mục tồn tại (kể cả `RETIRED`, cho mục đích lưu trữ) |
+| Điều kiện kích hoạt | Người dùng chọn "Xuất" trên UI-07-02 |
+| Đảm bảo tối thiểu | Không thay đổi dữ liệu danh mục; URL tải có hạn 24 giờ, ký sẵn, chỉ người tạo tác vụ dùng được qua giao diện |
+| Đảm bảo thành công | Người dùng nhận tệp đúng phiên bản, đúng cột, đúng định dạng; tệp xuất xlsx dùng được làm tệp nhập (cùng khuôn `STANDARD`); tác vụ xuất xuất hiện trong lịch sử UI-07-08 |
+
+**Luồng chính**
+
+1. Người dùng mở UI-07-02, chọn "Xuất". Hệ thống mở hộp thoại: chọn phiên bản (mặc định "Đang hiệu lực"; danh sách gồm phiên bản đã phát hành và bản nháp nếu người dùng có quyền xem bản nháp), định dạng (`XLSX` mặc định, `CSV`, `JSON`), phạm vi cột (mọi thuộc tính hoặc chọn), có gồm bản ghi ngừng dùng không (mặc định có).
+2. Người dùng chọn phiên bản 3, định dạng `XLSX`, chọn "Xuất".
+3. Giao diện gọi API-07-038 với `catalogCode`, `versionNo`, `format`, `fields`, `includeDeprecated`.
+4. Hệ thống kiểm tra quyền và số bản ghi; danh mục có 1.850 bản ghi (≤ 10.000) nên hệ thống sinh tệp đồng bộ theo khuôn mới (sheet `HuongDan`, `DuLieu`, `GiaTriHopLe`; sheet `HuongDan` ghi mã danh mục, số phiên bản, ngày hiệu lực, thời điểm xuất, người xuất), ghi `import_job` với `job_type = EXPORT`, `status = COMPLETED` để lưu lịch sử.
+5. Hệ thống trả 200 với tệp `LINH_VUC_TTHC_v3_20261122.xlsx`; trình duyệt tải về.
+
+**Luồng thay thế**
+
+- **4a. Danh mục lớn hơn 10.000 bản ghi hoặc người dùng chọn "Xuất nền".** Hệ thống tạo tác vụ xuất (API-07-038 trả 202 kèm `jobId`), tác vụ nền ghi tệp lên kho đối tượng, đặt `expires_at = now + 24 giờ`, ghi EVT-07-08 và gửi thông báo "Tệp xuất danh mục … đã sẵn sàng". Người dùng mở UI-07-08 (API-07-039) và tải qua URL ký sẵn. Use case kết thúc.
+- **2a. Định dạng CSV.** Tệp theo RFC 4180, UTF-8 có BOM, dấu phân cách `,`, dòng đầu là mã cột; giá trị `attrs` kiểu mảng hoặc đối tượng được tuần tự hóa JSON trong ô. Tiếp tục bước 3.
+- **2b. Định dạng JSON.** Tệp là đối tượng có `catalog`, `version`, `attributes` (định nghĩa) và `items` (mảng); với danh mục lớn, xuất dạng JSON Lines nén gzip. Tiếp tục bước 3.
+- **2c. Phiên bản đã phát hành có sẵn ảnh chụp và người dùng chọn JSON hoặc CSV toàn bộ cột.** Hệ thống trả chuyển hướng tới URL ký sẵn của ảnh chụp (API-07-049) thay vì sinh lại. Use case kết thúc.
+- **1a. Xuất từ lịch sử tác vụ.** Người dùng mở UI-07-08, lọc tác vụ xuất, tải lại tệp còn hạn. Use case kết thúc.
+
+**Luồng ngoại lệ**
+
+- **E1. Không có quyền (bước 4).** Lỗi 403 theo FR-00-012.
+- **E2. Phiên bản không tồn tại (bước 4).** ERR-07-006 "Không tìm thấy phiên bản 9 của danh mục LINH_VUC_TTHC."
+- **E3. URL tải đã hết hạn (luồng 4a, 1a).** Hệ thống hiển thị "Tệp đã hết hạn tải (24 giờ). Vui lòng xuất lại." và nút "Xuất lại" tạo tác vụ mới cùng tham số.
+- **E4. Tác vụ xuất thất bại (luồng 4a).** Tác vụ chuyển `FAILED` với `error_message`; thông báo cho người dùng; người dùng thử lại.
+
+**Quy tắc nghiệp vụ áp dụng:** BR-07-004 (bản ghi ngừng dùng xuất kèm trạng thái và mã thay thế), BR-07-019 không áp dụng cho người dùng giao diện nhưng mọi lần xuất danh mục `RESTRICTED` được ghi kiểm toán có trường phân loại.
+
+**Yêu cầu phi chức năng liên quan:** NFR-07-006 (100.000 dòng xlsx ≤ 60 giây); xuất đồng bộ ≤ 10.000 dòng phải trả ≤ 5 giây.
+
+**Tần suất, khối lượng:** 100–500 lần xuất mỗi tenant mỗi tháng, phần lớn nhỏ hơn 5.000 dòng.
+
+### 6.9. UC-07-09 · Khai thác danh mục qua API (một mã, lô, toàn bộ, cây, delta)
+
+Đây là use case có lưu lượng lớn nhất của PH-07 và là lý do tồn tại của danh mục dùng chung: các HTTT (một cửa, dịch vụ công, quản lý văn bản, hệ thống chuyên ngành) tra mã để hiển thị tên, kiểm tra mã hợp lệ khi nhận hồ sơ và đồng bộ danh mục về CSDL cục bộ. Hệ cũ chỉ có API lấy toàn bộ danh mục và lấy theo mã; Datahub bổ sung tra theo thời điểm, tra lô, lấy cây, lấy thay đổi kể từ một phiên bản (delta), tìm không dấu và tải ảnh chụp, đồng thời đặt chỉ tiêu hiệu năng rất chặt vì các HTTT gọi trong đường găng xử lý hồ sơ.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-07-09 |
+| Tên | Khai thác danh mục qua API (một mã, lô, toàn bộ, cây, delta) |
+| Mục tiêu | Ứng dụng HTTT lấy đúng dữ liệu danh mục có hiệu lực tại một thời điểm, nhanh và ổn định, kể cả khi cơ sở dữ liệu tạm ngừng |
+| Tác nhân chính | Ứng dụng HTTT (scope `rdm.read`) |
+| Tác nhân phụ | Cổng API; ROLE-INTEGRATION_ENGINEER và ROLE-DEVELOPER (thử qua UI-07-12); `dh-runtime` (đọc ảnh chụp) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-07-026, FR-07-027, FR-07-028, FR-07-029, FR-07-030, FR-07-031, FR-07-033, FR-07-047, FR-07-052 |
+| Tiền điều kiện | HTTT là thành viên, có đăng ký sử dụng API danh mục (PH-02) và token có scope `rdm.read`; danh mục có ít nhất một phiên bản `PUBLISHED` |
+| Điều kiện kích hoạt | HTTT gửi yêu cầu tới một trong các API-07-033 (danh sách qua API-07-001 dạng khai thác), 041, 042, 043, 044, 045, 046, 048, 049, 050 |
+| Đảm bảo tối thiểu | Không trả dữ liệu của bản nháp hay phiên bản chưa phát hành; không trả dữ liệu của tenant khác (chỉ tenant hiện hành và `COMMON`); không trả danh mục `RESTRICTED` cho HTTT chưa được cấp quyền |
+| Đảm bảo thành công | HTTT nhận dữ liệu của phiên bản có khoảng hiệu lực chứa thời điểm tra (BR-07-008), kèm `versionNo`, `effectiveFrom`, ETag; bản ghi ngừng dùng trả kèm trạng thái và mã thay thế (BR-07-004); chỉ số `rdm_lookup_total` và `rdm_lookup_duration_seconds` được ghi |
+
+**Luồng chính (tra một mã)**
+
+1. HTTT "Một cửa điện tử tỉnh" cần hiển thị tên xã từ mã `24811` trong hồ sơ. HTTT gửi `GET /api/rdm/v1/catalogs/DVHC/items/24811?at=2026-11-22` (API-07-042) với token scope `rdm.read`.
+2. Cổng API xác thực token, kiểm tra đăng ký sử dụng và hạn mức, chuyển tiếp kèm tenant `T68` và định danh client.
+3. Hệ thống xác định danh mục `DVHC` thuộc `COMMON` (đọc được bởi mọi tenant), phân loại `PUBLIC`.
+4. Hệ thống xác định phiên bản hiệu lực tại ngày 22/11/2026: tra con trỏ trong L1 Caffeine; nếu không có, tra L2 Valkey; nếu không có, truy vấn `catalog_version` và nạp lại.
+5. Hệ thống tra bản ghi theo khóa đệm `(version_id, code chuẩn hóa)` lần lượt L1, L2, PostgreSQL.
+6. Hệ thống trả 200 với thân gồm `code`, `name`, `parentCode`, `levelName`, `status`, `replacedBy`, `validFrom`, `validTo`, `attrs` (chỉ thuộc tính `ACTIVE`, không trả `HIDDEN`), kèm tiêu đề `ETag` (theo `version_id` và mã), `X-Catalog-Version: 7`, `Cache-Control: max-age=300`.
+7. Hệ thống ghi chỉ số `rdm_lookup_total{catalog="DVHC",result="hit"}` và thời gian xử lý.
+
+**Luồng thay thế**
+
+- **1a. Tra lô (FR-07-027).** HTTT gửi `POST /catalogs/DVHC/items:lookup` (API-07-043) với `{"at": "...", "codes": [ ... tối đa 500 mã ... ]}`. Hệ thống tra song song trong bộ đệm, trả mảng `found` và mảng `notFound`; mã không tồn tại không làm hỏng cả lô. Tiếp tục bước 7.
+- **1b. Lấy toàn bộ bản ghi (FR-07-028).** HTTT gửi `GET /catalogs/LINH_VUC_TTHC/items?at=...&limit=1000` (API-07-041). Hệ thống trả trang theo con trỏ ổn định (sắp theo `sort_order, code`), kèm `nextCursor`; con trỏ mã hóa `version_id` nên mọi trang thuộc cùng một phiên bản dù có phát hành mới giữa chừng. HTTT gửi `If-None-Match` với ETag phiên bản đã có; nếu không đổi, hệ thống trả 304. Tiếp tục bước 7.
+- **1c. Tải ảnh chụp (FR-07-028).** HTTT cần toàn bộ danh mục lớn: gửi `GET /catalogs/DVHC/snapshots/current?format=json` (API-07-049); hệ thống trả 302 tới URL ký sẵn trên kho đối tượng, hạn 15 phút. Use case kết thúc.
+- **1d. Lấy cây hoặc nhánh (FR-07-029).** HTTT gửi `GET /catalogs/DVHC/tree?root=68&depth=1` (API-07-044) để lấy các xã thuộc tỉnh mã 68; hệ thống trả cấu trúc lồng `children`, giới hạn 10.000 nút mỗi phản hồi. Tiếp tục bước 7.
+- **1e. Tìm không dấu (FR-07-030).** HTTT gửi `GET /catalogs/DVHC/items:search?q=da lat&limit=20` (API-07-045); hệ thống tìm trên `name_search` và thuộc tính `searchable` bằng chỉ mục trigram, xếp hạng theo độ khớp, trả tối đa 50 kết quả. Tiếp tục bước 7.
+- **1f. Lấy thay đổi kể từ phiên bản (FR-07-031).** HTTT đã đồng bộ tới phiên bản 5, gửi `GET /catalogs/LINH_VUC_TTHC/changes?sinceVersion=5` (API-07-046). Hệ thống trả `fromVersion`, `toVersion` (phiên bản hiệu lực hiện tại), danh sách `added`, `changed` (trạng thái sau), `deprecated` (kèm `replacedBy`) và `schemaChanged` (cờ, kèm `schemaHash`); nếu `sinceVersion` đã bằng phiên bản hiện tại, trả 304. Tiếp tục bước 7.
+- **1g. Liệt kê danh mục và lấy lược đồ (FR-07-033).** HTTT gửi `GET /catalogs?status=ACTIVE` (API-07-001, kết quả lọc theo quyền khai thác) và `GET /catalogs/LINH_VUC_TTHC/schema?version=current` (API-07-048) để nhận định nghĩa thuộc tính và JSON Schema sinh tự động, dùng để sinh mã kiểm tra ở phía HTTT. Tiếp tục bước 7.
+- **1h. Xem dòng lịch sử (FR-07-047).** HTTT gửi `GET /catalogs/DVHC/items/24811/lineage` (API-07-050); hệ thống trả chuỗi phiên bản mà mã xuất hiện, các lần đổi tên, ngừng dùng và các sự kiện kế thừa liên quan (từ `item_succession` và `replaced_by`). Tiếp tục bước 7.
+- **1i. Không truyền `at`.** Hệ thống dùng ngày hiện tại theo giờ Việt Nam (BR-07-008). Tiếp tục bước 2.
+- **5a. Mã thuộc danh mục `HYBRID`.** Hệ thống tra trong hợp của phiên bản `COMMON` hiệu lực và phần bổ sung địa phương hiệu lực (xem UC-07-17), trả thêm trường `isLocalExtension`. Tiếp tục bước 6.
+- **6a. Bản ghi đã ngừng dùng.** Hệ thống vẫn trả 200 với `status = DEPRECATED` và `replacedBy`, kèm tiêu đề `Deprecation` (RFC 9745) để HTTT có thể ghi cảnh báo. Tiếp tục bước 7.
+- **4a. PostgreSQL tạm ngừng.** Hệ thống phục vụ từ L1, L2 và, nếu cần, từ ảnh chụp nạp vào bộ nhớ (chế độ suy giảm); thêm tiêu đề `Warning: 110 - "Dữ liệu phục vụ từ bộ đệm"`; mọi API ghi trả 503. Tiếp tục bước 5.
+
+**Luồng ngoại lệ**
+
+- **E1. Danh mục không tồn tại (bước 3).** ERR-07-001 "Không tìm thấy danh mục DVHX."
+- **E2. Mã không tồn tại tại thời điểm tra (bước 5).** ERR-07-007 "Không tìm thấy mã 99999 trong danh mục DVHC tại ngày 22/11/2026." HTTT có thể thử tra lịch sử bằng `at` cũ hơn hoặc dùng UC-07-12 chuyển mã.
+- **E3. Không có phiên bản hiệu lực tại thời điểm tra (bước 4).** ERR-07-006 "Danh mục không có phiên bản hiệu lực tại ngày 01/01/2020." (ví dụ thời điểm trước phiên bản đầu tiên).
+- **E4. Danh mục đã ngừng hiệu lực (bước 3).** ERR-07-031 "Danh mục LINH_VUC_CU đã ngừng hiệu lực từ 01/07/2026." Tra với `at` trước ngày ngừng vẫn trả dữ liệu.
+- **E5. Danh mục `RESTRICTED`, HTTT chưa được cấp quyền (bước 3).** ERR-07-030 "Hệ thống thông tin chưa được cấp quyền khai thác danh mục hạn chế này." Kỹ sư của HTTT liên hệ quản trị tỉnh để được cấp quyền (API-07-075).
+- **E6. Lô vượt kích thước (luồng 1a).** ERR-07-026.
+- **E7. Con trỏ không hợp lệ hoặc hết hạn (luồng 1b).** Lỗi 400 "Con trỏ phân trang không hợp lệ, vui lòng bắt đầu lại từ trang đầu."
+- **E8. Vượt hạn mức gọi (bước 2).** Cổng API trả 429 kèm `Retry-After` theo chính sách gói sử dụng (PH-03).
+
+**Quy tắc nghiệp vụ áp dụng:** BR-07-004, BR-07-006, BR-07-008, BR-07-010, BR-07-019.
+
+**Yêu cầu phi chức năng liên quan:** NFR-07-001 (một mã p95 ≤ 20 ms), NFR-07-002 (lô 500 mã p95 ≤ 150 ms), NFR-07-003 (trang 1.000 bản ghi p95 ≤ 300 ms), NFR-07-008 (≥ 5.000 lượt/giây mỗi tenant), NFR-07-009 (trúng đệm ≥ 95%), NFR-07-010 (sẵn sàng ≥ 99,9%, chịu được PostgreSQL ngừng 24 giờ), NFR-07-012 (L1 ≤ 256 MB mỗi pod), NFR-07-014 (chỉ số).
+
+**Tần suất, khối lượng:** Hàng triệu lượt mỗi ngày mỗi tenant vào giờ cao điểm hành chính; phân bố tập trung vào khoảng 20 danh mục nóng (ĐVHC, dân tộc, quốc tịch, lĩnh vực TTHC, cơ quan); 80% là tra một mã hoặc lô.
+
+**Sơ đồ tuần tự (tra một mã có bộ đệm hai tầng)**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant APP as Ứng dụng HTTT
+    participant GW as Cổng API
+    participant RDM as PH-07 (pod dh-data)
+    participant L1 as Caffeine L1
+    participant L2 as Valkey L2
+    participant DB as PostgreSQL
+
+    APP->>GW: GET /catalogs/DVHC/items/24811?at=2026-11-22
+    GW->>GW: Xác thực token rdm.read, hạn mức
+    GW->>RDM: Chuyển tiếp (tenant T68, client)
+    RDM->>L1: Con trỏ phiên bản hiệu lực DVHC@2026-11-22
+    alt L1 trượt
+        RDM->>L2: Con trỏ
+        alt L2 trượt
+            RDM->>DB: SELECT phiên bản có khoảng hiệu lực chứa ngày
+            RDM->>L2: Ghi con trỏ
+        end
+        RDM->>L1: Ghi con trỏ
+    end
+    RDM->>L1: Bản ghi (version_id, 24811)
+    alt L1 trượt
+        RDM->>L2: Bản ghi
+        alt L2 trượt
+            RDM->>DB: SELECT catalog_item
+            RDM->>L2: Ghi bản ghi
+        end
+        RDM->>L1: Ghi bản ghi
+    end
+    RDM-->>GW: 200 + ETag + X-Catalog-Version
+    GW-->>APP: 200
+```
+
+Sơ đồ thể hiện hai lần tra đệm tách biệt: lần thứ nhất tìm "phiên bản nào hiệu lực tại ngày tra", lần thứ hai tìm bản ghi trong phiên bản đó. Tách như vậy là cốt lõi của thiết kế ADR-053: bản ghi của một phiên bản đã phát hành không bao giờ đổi nên có thể đệm vô thời hạn theo `version_id`, còn con trỏ là thứ duy nhất thay đổi khi phát hành và được làm mới chủ động bằng sự kiện EVT-07-05. Khi PostgreSQL ngừng, nhánh "L2 trượt" chuyển sang đọc ảnh chụp đã nạp sẵn thay vì truy vấn cơ sở dữ liệu.
+
+> **Câu hỏi mở Q07-23:** API delta (API-07-046) có giới hạn khoảng cách phiên bản không? Đề xuất: nếu `sinceVersion` cũ hơn 20 phiên bản hoặc phiên bản đó có thay đổi lược đồ phá vỡ, trả 410 kèm gợi ý tải ảnh chụp toàn bộ, để tránh tính delta quá lớn.
+
+### 6.10. UC-07-10 · Truy vấn có cấu trúc qua API
+
+Hệ cũ có "API truy vấn danh mục" cho phép lọc theo giá trị thuộc tính, nhưng cài đặt bằng ghép chuỗi truy vấn nên có rủi ro bảo mật và không kiểm soát được hiệu năng. Datahub thay bằng một ngôn ngữ lọc dạng JSON (DSL) có ngữ pháp đóng: chỉ một tập toán tử cố định, chỉ trên thuộc tính được người quản lý danh mục đánh dấu `queryable` (và có chỉ mục), với giới hạn số điều kiện, độ lồng và thời gian chạy. DSL được dịch sang SQL tham số hóa trên cột `attrs jsonb`, không bao giờ nối chuỗi.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-07-10 |
+| Tên | Truy vấn có cấu trúc qua API |
+| Mục tiêu | Ứng dụng HTTT lấy tập con bản ghi thỏa điều kiện trên trường hệ thống và thuộc tính động, chọn trường, sắp xếp, phân trang, mà không phải tải toàn bộ danh mục |
+| Tác nhân chính | Ứng dụng HTTT (scope `rdm.query`) |
+| Tác nhân phụ | ROLE-INTEGRATION_ENGINEER, ROLE-DEVELOPER (dựng và thử truy vấn trên UI-07-12) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-07-032, FR-07-033 |
+| Tiền điều kiện | Token có scope `rdm.query`; danh mục có phiên bản `PUBLISHED`; thuộc tính cần lọc đã đánh dấu `queryable` |
+| Điều kiện kích hoạt | HTTT gửi `POST /catalogs/{c}/items:query` (API-07-047) |
+| Đảm bảo tối thiểu | Không có câu lệnh SQL nào được sinh từ chuỗi người dùng; truy vấn bị ngắt cứng sau 2 giây; truy vấn bị từ chối được đếm bởi `rdm_query_rejected_total{reason}` |
+| Đảm bảo thành công | HTTT nhận các bản ghi thỏa điều kiện, chỉ gồm trường được chọn, theo thứ tự yêu cầu, kèm `nextCursor` nếu còn |
+
+**Luồng chính**
+
+1. Kỹ sư tích hợp mở UI-07-12, chọn danh mục `DVHC`. Hệ thống gọi API-07-048 để lấy lược đồ và hiển thị danh sách trường lọc được (trường hệ thống và thuộc tính `queryable`, ví dụ `attrs.loai_hinh`).
+2. Kỹ sư dựng điều kiện bằng giao diện: `attrs.loai_hinh` thuộc {`PHUONG`, `XA`} và `parentCode` bằng `68` và tên chứa "lâm"; chọn trường trả về `code`, `name`, `attrs.loai_hinh`; sắp xếp theo `sortOrder` tăng dần; `limit` 200. Giao diện hiển thị thân JSON tương ứng như mẫu ở [D03-04-PH07](../../03-thiet-ke/api/D03-04-PH07-api-danh-muc.md).
+3. Kỹ sư chọn "Chạy thử". Giao diện gọi API-07-047 bằng token phiên của người dùng (quyền `PERM-07-read`).
+4. Hệ thống phân tích cú pháp DSL theo JSON Schema của ngôn ngữ, kiểm tra từng `field` là trường hệ thống hoặc thuộc tính `queryable` của phiên bản hiệu lực, kiểm tra toán tử phù hợp kiểu (ví dụ `between` cho số, ngày), kiểm tra giới hạn (≤ 20 điều kiện, lồng ≤ 3 cấp, `in` ≤ 500 giá trị, `limit` ≤ 1.000).
+5. Hệ thống dịch sang SQL tham số hóa: điều kiện thuộc tính dùng toán tử jsonb có chỉ mục (ví dụ `attrs @> $1` cho `eq`, biểu thức `(attrs->>'loai_hinh') = ANY($2)` cho `in` với chỉ mục biểu thức đã tạo khi đánh dấu `queryable`), `contains` dùng `name_search` hoặc giá trị bỏ dấu với trigram; thêm điều kiện `version_id` của phiên bản hiệu lực và RLS tenant; đặt `statement_timeout = 2s`.
+6. Hệ thống chạy truy vấn trên bản sao đọc (read replica) nếu có, trả 200 với `items`, `nextCursor`, `versionNo`, `took` (ms).
+7. Giao diện hiển thị kết quả dạng bảng, thời gian chạy và nút "Sinh lệnh curl" (thay token bằng biến `$TOKEN`, không hiển thị token thật).
+8. Kỹ sư sao chép lệnh vào mã nguồn HTTT; HTTT gọi API-07-047 với token scope `rdm.query` theo cùng luồng bước 4–6.
+
+**Luồng thay thế**
+
+- **2a. Viết trực tiếp JSON.** Kỹ sư chuyển sang chế độ soạn JSON có tô màu cú pháp và gợi ý trường; giao diện kiểm tra cú pháp tại chỗ. Tiếp tục bước 3.
+- **4a. Truy vấn có `at` trong quá khứ.** Hệ thống dùng lược đồ của phiên bản hiệu lực tại thời điểm đó để kiểm tra `queryable`. Tiếp tục bước 5.
+- **6a. Có trang tiếp theo.** HTTT gửi lại cùng thân với `cursor = nextCursor`; con trỏ mã hóa `version_id`, giá trị sắp xếp cuối và băm điều kiện; nếu thân khác điều kiện ban đầu, con trỏ bị từ chối. Quay về bước 4.
+- **6b. Kết quả nằm trọn trong bộ đệm truy vấn.** Truy vấn giống hệt (cùng băm) trên cùng `version_id` được đệm L2 trong 10 phút. Tiếp tục bước 7.
+
+**Luồng ngoại lệ**
+
+- **E1. Sai cú pháp (bước 4).** ERR-07-023 "Biểu thức truy vấn không hợp lệ: toán tử 'like' không được hỗ trợ tại filter.and[1]." kèm vị trí lỗi theo JSON Pointer.
+- **E2. Thuộc tính không cho phép truy vấn (bước 4).** ERR-07-025 "Thuộc tính 'ghi_chu' chưa được bật cho phép truy vấn. Liên hệ cán bộ quản lý danh mục để bật cờ queryable."
+- **E3. Vượt giới hạn (bước 4 hoặc 6).** ERR-07-024 "Truy vấn có 27 điều kiện, vượt giới hạn 20." hoặc "Truy vấn chạy quá 2 giây và đã bị dừng. Hãy thu hẹp điều kiện hoặc dùng thuộc tính có chỉ mục." Chỉ số `rdm_query_rejected_total{reason="timeout"}` tăng.
+- **E4. Không có quyền scope `rdm.query` (bước 3 của HTTT).** 403 theo FR-00-012.
+- **E5. Danh mục `RESTRICTED` chưa cấp quyền.** ERR-07-030.
+
+**Quy tắc nghiệp vụ áp dụng:** BR-07-008, BR-07-018, BR-07-019.
+
+**Yêu cầu phi chức năng liên quan:** NFR-07-004 (100.000 bản ghi p95 ≤ 500 ms, ngắt 2 giây), NFR-07-014 (`rdm_query_rejected_total`).
+
+**Tần suất, khối lượng:** Ít hơn tra cứu một mã khoảng hai bậc; ước 10.000–100.000 lượt mỗi ngày mỗi tenant, chủ yếu trên ĐVHC, danh mục cơ quan và danh mục ngành nghề.
+
+**Sơ đồ hoạt động**
+
+```mermaid
+flowchart TD
+    A[Nhận POST items:query] --> B{Cú pháp DSL hợp lệ?}
+    B -- Không --> E1[ERR-07-023 400]
+    B -- Có --> C{Mọi field là trường hệ thống<br/>hoặc thuộc tính queryable?}
+    C -- Không --> E2[ERR-07-025 400]
+    C -- Có --> D{Trong giới hạn: ≤20 điều kiện,<br/>lồng ≤3, in ≤500, limit ≤1000?}
+    D -- Không --> E3[ERR-07-024 422]
+    D -- Có --> F[Xác định phiên bản hiệu lực theo at]
+    F --> G[Dịch sang SQL tham số hóa<br/>+ version_id + RLS]
+    G --> H{Có trong đệm truy vấn L2?}
+    H -- Có --> K[Trả 200 từ đệm]
+    H -- Không --> I[Chạy với statement_timeout 2s]
+    I --> J{Quá 2 giây?}
+    J -- Có --> E4[ERR-07-024 422<br/>rdm_query_rejected_total timeout]
+    J -- Không --> L[Ghi đệm, trả 200 items + nextCursor]
+```
+
+Sơ đồ hoạt động cho thấy ba lớp chặn trước khi chạm cơ sở dữ liệu: cú pháp, quyền truy vấn trên trường và giới hạn kích thước. Chỉ sau khi qua cả ba lớp, truy vấn mới được dịch sang SQL tham số hóa; lớp cuối là `statement_timeout` ở cơ sở dữ liệu bảo vệ khỏi truy vấn hợp lệ nhưng tốn kém. Thiết kế này đáp ứng BR-07-018 (không SQL tự do) và giúp đội vận hành nhận biết qua chỉ số khi nào cần bật thêm chỉ mục cho một thuộc tính.
+
