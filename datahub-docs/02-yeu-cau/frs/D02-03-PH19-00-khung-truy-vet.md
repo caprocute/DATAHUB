@@ -514,8 +514,7 @@ Quy tắc nghiệp vụ là các ràng buộc mà mọi FR, API và màn hình p
 | Mã | Quy tắc | Tham số mặc định | FR |
 |---|---|---|---|
 | BR-19-025 | Ngày giao dịch đối soát là ngày lịch giờ Việt Nam (00:00:00–23:59:59 UTC+7) theo thời điểm thanh toán `paid_at` do NCC xác nhận (khoản hoàn: theo thời điểm hoàn thành). Phiên tự động được tạo lúc giờ chốt ngày T+1; nếu chưa có dữ liệu NCC thì thu thập lại mỗi 30 phút tới 12:00 rồi cảnh báo. Cách NCC tính ngày giao dịch cần đối chiếu (OQ-19-07). | Giờ chốt 06:00 (cấu hình) | FR-19-042, 043 |
-| BR-19-028 | So khớp theo khóa mã tham chiếu NCC, dự phòng theo `transaction_code`; một dòng khớp khi số tiền bằng nhau (dung sai 0 đ) và trạng thái tương đương theo bảng ánh xạ của adapter. Mỗi dòng không khớp sinh đúng một bản ghi chênh lệch, phân loại theo mục 7.7. Chênh lệch có hạn xử lý; quá hạn thì nhắc người phụ trách, quá 10 ngày làm việc thì chuyển cấp tới người phê duyệt. | Hạn 3 ngày làm việc (cấu hình) | FR-19-044, 045 |
-| BR-19-034 | Chỉ chốt phiên khi mọi chênh lệch của phiên đã `RESOLVED`. Phiên `CLOSED` bất biến; mở lại cần đề nghị có lý do và phê duyệt (BR-19-011); mở lại không xóa kết quả cũ mà tạo một lần chạy mới có số thứ tự, biên bản cũ được giữ và đánh dấu "bị thay thế". | — | FR-19-047, 048 |
+| BR-19-028 | So khớp theo khóa mã tham chiếu NCC, dự phòng theo `transaction_code`; một dòng khớp khi số tiền bằng nhau (dung sai 0 đ) và trạng thái tương đương theo bảng ánh xạ của adapter. Mỗi dòng không khớp sinh đúng một bản ghi chênh lệch, phân loại theo mục 7.7. Chênh lệch có hạn xử lý; quá hạn thì nhắc người phụ trách, quá 10 ngày làm việc thì chuyển cấp tới người phê duyệt. Phiên chỉ được chốt khi mọi chênh lệch của nó đã `RESOLVED`; phiên `CLOSED` bất biến; mở lại cần đề nghị có lý do và phê duyệt (BR-19-011), không xóa kết quả cũ mà tạo một lần chạy mới có số thứ tự, biên bản cũ được giữ và đánh dấu "bị thay thế". | Hạn 3 ngày làm việc (cấu hình) | FR-19-044, 045, 047 |
 
 ### 6.6. Kiểm toán, bất biến, dữ liệu cá nhân và di trú
 
@@ -525,5 +524,394 @@ Quy tắc nghiệp vụ là các ràng buộc mà mọi FR, API và màn hình p
 | BR-19-030 | Lịch sử trạng thái, IPN nguyên văn, phiên đã chốt, biên bản và quyết định phê duyệt không được sửa hay xóa; mọi điều chỉnh thực hiện bằng bản ghi bù có tham chiếu bản ghi gốc. | — | FR-19-028, 029, 047 |
 | BR-19-031 | Quy tắc che mặc định (áp dụng khi PH-09 không trả chính sách): họ tên giữ chữ cái đầu mỗi từ và từ cuối (`Nguyễn V*** A**`); điện thoại giữ 4 số cuối; thư điện tử giữ 2 ký tự đầu và tên miền; số định danh giữ 4 số cuối; địa chỉ chỉ giữ cấp tỉnh. Người có `PERM-19-transaction-read-pii` xem bản đầy đủ, mỗi lần xem ghi kiểm toán. File xuất mặc định che. | — | FR-19-051, 052 |
 | BR-19-032 | Không lưu số thẻ, số tài khoản đầy đủ, mã CVV, mã OTP của người nộp ở bất kỳ bảng, log hay nhật ký tích hợp nào; chỉ lưu mã ngân hàng, mã kênh và tối đa 4 số cuối nếu NCC trả về. Adapter phải lọc các trường này trước khi ghi nhật ký. | — | FR-19-024, 029, 054 |
-| BR-19-034 | (xem mục 6.5) | | |
+| BR-19-034 | Mỗi đối tác có đúng một chế độ định tuyến: `LEGACY` (hệ cũ xử lý, PH-03 chuyển tiếp sang hệ cũ), `SHADOW` (hệ cũ xử lý; PH-19 nhận bản sao yêu cầu, ghi giao dịch với cờ `is_shadow = true`, không gọi NCC, chỉ để so sánh) hoặc `DATAHUB`. Chuyển chế độ cần phê duyệt (BR-19-011). Chỉ được chuyển sang `DATAHUB` khi đối chiếu FR-19-068 cho đối tác đó đạt 0 bản ghi lệch trong ít nhất 7 ngày `SHADOW` liên tiếp. Được quay lui `DATAHUB → LEGACY` trong 30 ngày; giao dịch đang dở tiếp tục được xử lý ở hệ đã tạo ra nó. Giao dịch `is_shadow` bị loại khỏi báo cáo, hạn mức và đối soát. | 7 ngày SHADOW; quay lui 30 ngày | FR-19-066, 068 |
+
+## 7. Máy trạng thái
+
+Tám thực thể của PH-19 có vòng đời và mỗi vòng đời được chốt tại đây thành một máy trạng thái duy nhất. Giá trị trạng thái là `T-ENUM` viết hoa (cột `status` của bảng tương ứng, có ràng buộc `CHECK`) và là enum cố định trong mã nguồn, không phải danh mục PH-07. Mọi chuyển trạng thái không có trong các bảng dưới đây đều bị từ chối với ERR-19-021. Mỗi lần chuyển trạng thái đều ghi kiểm toán (BR-19-029); riêng giao dịch thanh toán ghi thêm một dòng `transaction_event` (FR-19-028). Thuật ngữ "hệ thống" trong cột sự kiện là tác vụ nền hoặc phản ứng với sự kiện của PH-19, không có người thực hiện.
+
+### 7.1. Nhà cung cấp thanh toán (`payment_provider.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Khai báo
+    DRAFT --> PENDING_ACTIVATION: Gửi đề nghị kích hoạt
+    PENDING_ACTIVATION --> ACTIVE: Phê duyệt
+    PENDING_ACTIVATION --> DRAFT: Từ chối / rút / hết hạn
+    ACTIVE --> SUSPENDED: Tạm dừng
+    SUSPENDED --> ACTIVE: Mở lại
+    ACTIVE --> RETIRED: Ngừng hẳn (đã duyệt)
+    SUSPENDED --> RETIRED: Ngừng hẳn (đã duyệt)
+    DRAFT --> [*]: Xóa cứng
+    RETIRED --> [*]
+```
+
+Nhà cung cấp bắt đầu ở `DRAFT`, nơi quản trị thanh toán khai báo thông tin, gắn tham chiếu bí mật, kiểm tra kết nối và chạy giao dịch thử. Chỉ khi checklist kích hoạt đạt (BR-19-010) mới gửi được đề nghị kích hoạt; trong lúc chờ duyệt, NCC ở `PENDING_ACTIVATION` và không sửa được thông tin kết nối. Sau khi `ACTIVE`, NCC có thể bị tạm dừng: khi đó không nhận giao dịch mới nhưng vẫn nhận IPN, truy vấn và đối soát cho giao dịch dở. `RETIRED` là trạng thái cuối, giữ nguyên dữ liệu để tra cứu và đối soát lịch sử. **Sức khỏe** (`health_status`: `UNKNOWN`, `HEALTHY`, `DEGRADED`, `DOWN`) là một chiều độc lập với vòng đời, chỉ được tính cho NCC `ACTIVE`/`SUSPENDED` (FR-19-011) và không làm đổi `status`.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `DRAFT` | Quản trị thanh toán khai báo (API-19-002) | Mã NCC chưa tồn tại trong tenant | FR-19-001 |
+| `DRAFT` | `PENDING_ACTIVATION` | Gửi đề nghị `ACTIVATE` (API-19-012) | Checklist đạt (BR-19-010) | FR-19-005 |
+| `PENDING_ACTIVATION` | `ACTIVE` | Người phê duyệt chấp thuận (API-19-050) | Người duyệt ≠ người lập (BR-19-011); checklist vẫn đạt tại thời điểm duyệt | FR-19-005 |
+| `PENDING_ACTIVATION` | `DRAFT` | Từ chối, người lập rút, hoặc quá 7 ngày | — | FR-19-005 |
+| `ACTIVE` | `SUSPENDED` | Quản trị thanh toán tạm dừng (API-19-013), kèm lý do | — | FR-19-006 |
+| `SUSPENDED` | `ACTIVE` | Mở lại (API-19-014) | Kiểm tra kết nối thành công trong 1 giờ gần nhất | FR-19-006 |
+| `ACTIVE`, `SUSPENDED` | `RETIRED` | Đề nghị `RETIRE` (API-19-012) được phê duyệt | BR-19-027; người duyệt ≠ người lập | FR-19-010 |
+| `DRAFT` | (xóa) | Xóa cứng (API-19-005) | Chưa từng có giao dịch, kể cả giao dịch thử (BR-19-027) | FR-19-010 |
+
+### 7.2. Dịch vụ thanh toán (`payment_service.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Thêm mới
+    DRAFT --> ACTIVE: Kích hoạt
+    ACTIVE --> SUSPENDED: Tạm dừng
+    SUSPENDED --> ACTIVE: Mở lại
+    ACTIVE --> RETIRED: Ngừng hẳn
+    SUSPENDED --> RETIRED: Ngừng hẳn
+    DRAFT --> [*]: Xóa cứng
+    RETIRED --> [*]
+```
+
+Dịch vụ thanh toán có vòng đời đơn giản hơn vì không cần phê duyệt: rủi ro đã được kiểm soát ở NCC (kích hoạt có duyệt) và ở đối tác (gán dịch vụ là thao tác riêng). Dịch vụ chỉ `ACTIVE` được khi NCC của nó `ACTIVE` (BR-19-009). Khi một mã danh mục mà dịch vụ dùng hết hiệu lực ở PH-07, hệ thống bật cờ `catalog_invalid` và cảnh báo (FR-19-016) chứ không tự đổi trạng thái, để không làm gián đoạn việc thu; quản trị thanh toán phải sửa mã trước lần sửa tiếp theo.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `DRAFT` | Thêm dịch vụ (API-19-021) | Mã duy nhất trong tenant; mã danh mục hợp lệ | FR-19-014, 016 |
+| `DRAFT` | `ACTIVE` | Kích hoạt (API-19-025) | NCC `ACTIVE`; mã danh mục còn hiệu lực; đã khai tham chiếu tài khoản thụ hưởng | FR-19-015 |
+| `ACTIVE` | `SUSPENDED` | Tạm dừng (API-19-026) | — | FR-19-015 |
+| `SUSPENDED` | `ACTIVE` | Mở lại (API-19-025) | Như kích hoạt | FR-19-015 |
+| `ACTIVE`, `SUSPENDED` | `RETIRED` | Ngừng hẳn (API-19-027) | BR-19-027 | FR-19-015 |
+| `DRAFT` | (xóa) | Xóa cứng (API-19-024) | Chưa từng có giao dịch | FR-19-015 |
+
+### 7.3. Đối tác (`payment_partner.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: Đăng ký
+    DRAFT --> PENDING_APPROVAL: Gửi duyệt
+    PENDING_APPROVAL --> ACTIVE: Phê duyệt
+    PENDING_APPROVAL --> DRAFT: Từ chối / rút / hết hạn
+    ACTIVE --> SUSPENDED: Tạm dừng
+    SUSPENDED --> ACTIVE: Mở lại
+    ACTIVE --> TERMINATED: Chấm dứt (đã duyệt)
+    SUSPENDED --> TERMINATED: Chấm dứt (đã duyệt)
+    TERMINATED --> [*]
+```
+
+Đối tác là HTTT được phép gọi PH-19 để thu tiền, nên việc đưa vào sử dụng và chấm dứt đều qua phê duyệt. Đối tác `SUSPENDED` không tạo được giao dịch mới nhưng vẫn truy vấn được và vẫn nhận webhook cho giao dịch cũ (FR-19-018). Khi `TERMINATED`, mọi client máy-máy bị thu hồi tại PH-12, webhook của giao dịch còn dở tiếp tục được gửi tối đa 30 ngày. **Chế độ định tuyến** (`routing_mode`: `LEGACY`, `SHADOW`, `DATAHUB`) là chiều độc lập với vòng đời, đổi qua FR-19-066 theo BR-19-034.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `DRAFT` | Đăng ký đối tác (API-19-030) | Mã duy nhất trong tenant | FR-19-017 |
+| `DRAFT` | `PENDING_APPROVAL` | Gửi đề nghị `ONBOARD` (API-19-033) | Đã gắn HTTT thành viên PH-01 (DD-01); có đầu mối; có ít nhất một dịch vụ được gán | FR-19-018 |
+| `PENDING_APPROVAL` | `ACTIVE` | Phê duyệt (API-19-050) | BR-19-011 | FR-19-018 |
+| `PENDING_APPROVAL` | `DRAFT` | Từ chối, rút, hết hạn 7 ngày | — | FR-19-018 |
+| `ACTIVE` | `SUSPENDED` | Tạm dừng (API-19-034), kèm lý do | — | FR-19-018 |
+| `SUSPENDED` | `ACTIVE` | Mở lại (API-19-035) | — | FR-19-018 |
+| `ACTIVE`, `SUSPENDED` | `TERMINATED` | Đề nghị `TERMINATE` (API-19-033) được phê duyệt | BR-19-011; hệ thống thu hồi client | FR-19-018, 019 |
+
+### 7.4. Giao dịch thanh toán (`payment_transaction.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> CREATED: Đối tác tạo
+    CREATED --> PENDING: NCC khởi tạo thành công
+    CREATED --> FAILED: NCC từ chối khởi tạo
+    CREATED --> CANCELLED: Hủy
+    CREATED --> EXPIRED: Quá hạn, truy vấn cuối không thành công
+    PENDING --> SUCCEEDED: IPN / truy vấn thành công
+    PENDING --> FAILED: IPN / truy vấn thất bại
+    PENDING --> CANCELLED: Hủy
+    PENDING --> EXPIRED: Quá hạn, truy vấn cuối không thành công
+    CANCELLED --> SUCCEEDED: Thanh toán muộn
+    EXPIRED --> SUCCEEDED: Thanh toán muộn
+    FAILED --> SUCCEEDED: Xử lý chênh lệch đã duyệt
+    SUCCEEDED --> FAILED: Xử lý chênh lệch đã duyệt
+    SUCCEEDED --> PARTIALLY_REFUNDED: Hoàn một phần thành công
+    SUCCEEDED --> REFUNDED: Hoàn toàn phần thành công
+    PARTIALLY_REFUNDED --> PARTIALLY_REFUNDED: Hoàn thêm một phần
+    PARTIALLY_REFUNDED --> REFUNDED: Tổng hoàn bằng số tiền gốc
+    REFUNDED --> [*]
+```
+
+Giao dịch là thực thể trung tâm và có ba nhóm trạng thái. Nhóm **đang xử lý** gồm `CREATED` (đã ghi nhận, chưa khởi tạo xong tại NCC) và `PENDING` (đã khởi tạo, chờ người nộp thanh toán). Nhóm **kết thúc** gồm `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`; trong đó ba trạng thái không thành công là "kết thúc mềm" vì thực tế tiền vẫn có thể về sau (thanh toán muộn, BR-19-018) hoặc đối soát có thể chứng minh khác (BR-19-015). Nhóm **sau hoàn tiền** gồm `PARTIALLY_REFUNDED` và `REFUNDED`; trạng thái chi tiết của từng lần hoàn nằm ở yêu cầu hoàn (mục 7.5), nhờ đó bỏ được ba trạng thái `REFUND_*` lẫn lộn của hệ cũ. Hai chuyển trạng thái `FAILED → SUCCEEDED` và `SUCCEEDED → FAILED` chỉ xảy ra qua quyết định xử lý chênh lệch đã được phê duyệt (FR-19-046), không bao giờ tự động. Bảng ánh xạ trạng thái hệ cũ khi di trú: `NEW → CREATED`, `PENDING → PENDING`, `SUCCESS → SUCCEEDED`, `FAILED → FAILED`, `REFUND_PENDING → SUCCEEDED` kèm một yêu cầu hoàn `PROCESSING`, `REFUND_SUCCESS → REFUNDED`, `REFUND_FAILED → SUCCEEDED` kèm một yêu cầu hoàn `FAILED`.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `CREATED` | Đối tác gọi API-19-101 | Hợp lệ theo BR-19-004 | FR-19-022, 023, 033, 034 |
+| `CREATED` | `PENDING` | Adapter trả khởi tạo thành công | Lưu `provider_reference`, `payment_url` | FR-19-024 |
+| `CREATED` | `FAILED` | Adapter trả NCC từ chối | BR-19-012 | FR-19-024 |
+| `CREATED`, `PENDING` | `CANCELLED` | Đối tác (API-19-104) hoặc cán bộ (API-19-055) hủy | BR-19-019 | FR-19-026 |
+| `CREATED`, `PENDING` | `EXPIRED` | Tác vụ hết hạn của hệ thống | Quá `expires_at` + 30 phút và truy vấn cuối không thành công, hoặc quá 72 giờ (BR-19-017) | FR-19-027 |
+| `PENDING` (và `CREATED` có `init_uncertain`) | `SUCCEEDED` | IPN hợp lệ (API-19-201) hoặc truy vấn NCC | Số tiền và tham chiếu khớp (BR-19-015) | FR-19-030, 036, 037 |
+| `PENDING` (và `CREATED` có `init_uncertain`) | `FAILED` | IPN hoặc truy vấn báo thất bại | BR-19-015 | FR-19-030, 036, 037 |
+| `CANCELLED`, `EXPIRED` | `SUCCEEDED` | IPN hoặc truy vấn thành công hợp lệ | Đặt `late_paid = true`; sinh chênh lệch `LATE_PAYMENT` (BR-19-018) | FR-19-031 |
+| `FAILED` | `SUCCEEDED` | Thực thi quyết định xử lý chênh lệch | Quyết định `UPDATE_STATUS_FROM_PROVIDER` đã duyệt | FR-19-046 |
+| `SUCCEEDED` | `FAILED` | Thực thi quyết định xử lý chênh lệch | Chênh lệch `MISSING_AT_PROVIDER` hoặc `STATUS_MISMATCH` đã xác minh với NCC và đã duyệt | FR-19-046 |
+| `SUCCEEDED`, `PARTIALLY_REFUNDED` | `PARTIALLY_REFUNDED` | Yêu cầu hoàn chuyển `SUCCEEDED` | Tổng đã hoàn < số tiền gốc | FR-19-041 |
+| `SUCCEEDED`, `PARTIALLY_REFUNDED` | `REFUNDED` | Yêu cầu hoàn chuyển `SUCCEEDED` | Tổng đã hoàn = số tiền gốc | FR-19-041 |
+
+### 7.5. Yêu cầu hoàn tiền (`refund_request.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_APPROVAL: Lập yêu cầu
+    PENDING_APPROVAL --> PENDING_SECOND_APPROVAL: Duyệt cấp 1 (≥ ngưỡng)
+    PENDING_APPROVAL --> APPROVED: Duyệt (< ngưỡng)
+    PENDING_SECOND_APPROVAL --> APPROVED: Duyệt cấp 2
+    PENDING_APPROVAL --> REJECTED: Từ chối
+    PENDING_SECOND_APPROVAL --> REJECTED: Từ chối
+    PENDING_APPROVAL --> CANCELLED: Người lập rút
+    PENDING_SECOND_APPROVAL --> CANCELLED: Người lập rút
+    APPROVED --> PROCESSING: Chế độ API, gửi NCC
+    APPROVED --> AWAITING_MANUAL: Chế độ MANUAL
+    PROCESSING --> SUCCEEDED: NCC xác nhận hoàn
+    PROCESSING --> FAILED: NCC báo lỗi
+    FAILED --> PROCESSING: Thực thi lại (≤ 3 lần)
+    FAILED --> AWAITING_MANUAL: Chuyển thủ công
+    AWAITING_MANUAL --> SUCCEEDED: Ghi nhận chứng từ hoàn
+    SUCCEEDED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+```
+
+Yêu cầu hoàn đi qua hai giai đoạn: phê duyệt và thực thi. Ở giai đoạn phê duyệt, số cấp duyệt phụ thuộc số tiền so với ngưỡng (BR-19-023), mỗi cấp do một người khác nhau và khác người lập. Ở giai đoạn thực thi, chế độ `API` gọi NCC và chờ kết quả qua IPN hoàn tiền (API-19-203) hoặc truy vấn; chế độ `MANUAL` dành cho trường hợp NCC không có API hoàn (OQ-19-06), khi đó việc hoàn diễn ra ngoài hệ thống và kế toán ghi nhận chứng từ (BR-19-024). `FAILED` không phải trạng thái cuối: kế toán có thể thực thi lại hoặc chuyển sang thủ công. Khi yêu cầu hoàn đạt `SUCCEEDED`, giao dịch gốc chuyển trạng thái theo mục 7.4.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `PENDING_APPROVAL` | Kế toán (API-19-059) hoặc đối tác (API-19-105) lập | BR-19-022 | FR-19-038 |
+| `PENDING_APPROVAL` | `PENDING_SECOND_APPROVAL` | Người phê duyệt thứ nhất chấp thuận | Số tiền ≥ ngưỡng (BR-19-023) | FR-19-039 |
+| `PENDING_APPROVAL` | `APPROVED` | Người phê duyệt chấp thuận | Số tiền < ngưỡng | FR-19-039 |
+| `PENDING_SECOND_APPROVAL` | `APPROVED` | Người phê duyệt thứ hai chấp thuận | Khác người lập và người duyệt thứ nhất | FR-19-039 |
+| `PENDING_APPROVAL`, `PENDING_SECOND_APPROVAL` | `REJECTED` | Từ chối kèm lý do, hoặc hết hạn 7 ngày | — | FR-19-039 |
+| `PENDING_APPROVAL`, `PENDING_SECOND_APPROVAL` | `CANCELLED` | Người lập rút | — | FR-19-038 |
+| `APPROVED` | `PROCESSING` | Hệ thống gửi lệnh hoàn tới NCC | Chế độ `API` (BR-19-024) | FR-19-040 |
+| `APPROVED` | `AWAITING_MANUAL` | Hệ thống | Chế độ `MANUAL` | FR-19-040 |
+| `PROCESSING` | `SUCCEEDED` | IPN hoàn tiền hoặc truy vấn thành công | Số tiền khớp | FR-19-041 |
+| `PROCESSING` | `FAILED` | NCC báo lỗi, hoặc quá 72 giờ không có kết quả | — | FR-19-041 |
+| `FAILED` | `PROCESSING` | Kế toán thực thi lại (API-19-062) | Số lần thực thi < 3 | FR-19-040 |
+| `FAILED` | `AWAITING_MANUAL` | Kế toán chọn chuyển thủ công (API-19-062) | — | FR-19-040 |
+| `AWAITING_MANUAL` | `SUCCEEDED` | Kế toán ghi nhận chứng từ (API-19-062) | Có số, ngày, tệp chứng từ; người xác nhận ≠ người phê duyệt | FR-19-040 |
+
+### 7.6. Phiên đối soát (`reconciliation_session.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> SCHEDULED: Tạo phiên
+    SCHEDULED --> COLLECTING: Đến giờ chốt / chạy ngay
+    COLLECTING --> WAITING_DATA: NCC chưa có dữ liệu / file lỗi
+    WAITING_DATA --> COLLECTING: Lượt thu thập lại / tải file lên
+    COLLECTING --> MATCHING: Dữ liệu hợp lệ
+    COLLECTING --> FAILED: Lỗi kỹ thuật hết lượt thử
+    FAILED --> COLLECTING: Chạy lại
+    MATCHING --> READY_TO_CLOSE: Không có chênh lệch
+    MATCHING --> IN_REVIEW: Có chênh lệch
+    IN_REVIEW --> READY_TO_CLOSE: Mọi chênh lệch RESOLVED
+    READY_TO_CLOSE --> IN_REVIEW: Phát sinh chênh lệch mới
+    IN_REVIEW --> MATCHING: Chạy lại so khớp
+    READY_TO_CLOSE --> CLOSED: Chốt phiên
+    CLOSED --> REOPEN_PENDING: Đề nghị mở lại
+    REOPEN_PENDING --> CLOSED: Từ chối / rút / hết hạn
+    REOPEN_PENDING --> IN_REVIEW: Phê duyệt mở lại
+```
+
+Mỗi phiên đối soát ứng với một cặp (NCC, ngày giao dịch) và là duy nhất trong tenant. Phiên đi từ thu thập dữ liệu, qua so khớp tự động, tới xem xét chênh lệch và chốt. `WAITING_DATA` phản ánh tình huống thường gặp là NCC chưa xuất dữ liệu: hệ thống tự thu thập lại mỗi 30 phút (BR-19-025) hoặc chờ kế toán tải file lên; file sai định dạng hay sai mã băm cũng đưa phiên về đây kèm thông báo lỗi. `FAILED` chỉ dành cho lỗi kỹ thuật (kho đối tượng, CSDL) đã hết lượt thử tự động. Phiên `CLOSED` là bất biến; mở lại đi qua `REOPEN_PENDING` để phê duyệt, khi được duyệt thì quay về `IN_REVIEW` với một lần chạy mới (BR-19-028).
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `SCHEDULED` | Hệ thống lúc giờ chốt, hoặc kế toán tạo (API-19-063) | Chưa có phiên cho (NCC, ngày); NCC `ACTIVE`/`SUSPENDED` | FR-19-042 |
+| `SCHEDULED` | `COLLECTING` | Đến giờ chốt hoặc chạy ngay (API-19-066) | — | FR-19-043 |
+| `COLLECTING` | `WAITING_DATA` | NCC chưa có dữ liệu, hoặc file sai định dạng/mã băm | — | FR-19-043 |
+| `WAITING_DATA` | `COLLECTING` | Lượt thu thập lại theo lịch, hoặc kế toán tải file (API-19-065) | — | FR-19-043 |
+| `COLLECTING` | `MATCHING` | File hoặc dữ liệu API hợp lệ, đã lưu Garage | — | FR-19-043, 044 |
+| `COLLECTING` | `FAILED` | Lỗi kỹ thuật sau 3 lần thử | — | FR-19-043 |
+| `FAILED` | `COLLECTING` | Kế toán chạy lại (API-19-066) | — | FR-19-043 |
+| `MATCHING` | `READY_TO_CLOSE` | So khớp xong, 0 dòng lệch | — | FR-19-044 |
+| `MATCHING` | `IN_REVIEW` | So khớp xong, có dòng lệch; sinh chênh lệch | — | FR-19-044, 045 |
+| `IN_REVIEW` | `READY_TO_CLOSE` | Chênh lệch cuối cùng chuyển `RESOLVED` | — | FR-19-046 |
+| `READY_TO_CLOSE` | `IN_REVIEW` | Chênh lệch mới gắn vào phiên (ví dụ IPN bất thường của ngày đó) | — | FR-19-031 |
+| `IN_REVIEW`, `READY_TO_CLOSE` | `MATCHING` | Kế toán chạy lại so khớp (API-19-066) | — | FR-19-044 |
+| `READY_TO_CLOSE` | `CLOSED` | Kế toán chốt (API-19-068) | Mọi chênh lệch `RESOLVED` (BR-19-028); hệ thống sinh biên bản | FR-19-047, 048 |
+| `CLOSED` | `REOPEN_PENDING` | Đề nghị mở lại có lý do (API-19-069) | — | FR-19-047 |
+| `REOPEN_PENDING` | `CLOSED` | Từ chối, rút, hết hạn 7 ngày | — | FR-19-047 |
+| `REOPEN_PENDING` | `IN_REVIEW` | Phê duyệt mở lại | BR-19-011 | FR-19-047 |
+
+### 7.7. Bản ghi chênh lệch (`discrepancy.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN: Phát hiện
+    OPEN --> INVESTIGATING: Giao việc / nhận xử lý
+    INVESTIGATING --> ESCALATED: Chuyển cấp tới NCC
+    ESCALATED --> INVESTIGATING: NCC phản hồi
+    INVESTIGATING --> PROPOSED: Đề xuất xử lý
+    PROPOSED --> INVESTIGATING: Đề xuất bị từ chối
+    PROPOSED --> RESOLVED: Đề xuất được duyệt và thực thi
+    OPEN --> RESOLVED: Tự khớp khi chạy lại
+    INVESTIGATING --> RESOLVED: Tự khớp khi chạy lại
+    ESCALATED --> RESOLVED: Tự khớp khi chạy lại
+    RESOLVED --> [*]
+```
+
+Bản ghi chênh lệch được sinh từ hai nguồn: so khớp đối soát (FR-19-044) và cách ly IPN bất thường (FR-19-031). Chênh lệch không bao giờ bị xóa; nó chỉ kết thúc ở `RESOLVED` theo một trong hai cách: kế toán đề xuất và người phê duyệt khác duyệt, hoặc hệ thống tự đóng với cách xử lý `AUTO_MATCHED` khi lần so khớp lại cho thấy hai phía đã khớp (ví dụ IPN đến muộn). `detected_at` và `resolved_at` là căn cứ tính KPI-96.
+
+Loại chênh lệch (`discrepancy.type`, T-ENUM cố định; nhãn hiển thị lấy từ `DM_LOAI_CHENH_LECH_DOI_SOAT`):
+
+| Giá trị | Ý nghĩa | Nguồn phát hiện |
+|---|---|---|
+| `MISSING_AT_PROVIDER` | PH-19 ghi `SUCCEEDED` nhưng NCC không có giao dịch thành công | Đối soát |
+| `MISSING_AT_DATAHUB` | NCC có giao dịch thành công nhưng PH-19 không có hoặc chưa ở `SUCCEEDED` | Đối soát |
+| `STATUS_MISMATCH` | Hai phía khác trạng thái | Đối soát, IPN |
+| `AMOUNT_MISMATCH` | Hai phía khác số tiền | Đối soát, IPN |
+| `DUPLICATE` | Một yêu cầu bị ghi nhận thành công hai lần ở một phía | Đối soát |
+| `LATE_PAYMENT` | Thành công đến sau khi giao dịch `CANCELLED`/`EXPIRED` | IPN, truy vấn |
+| `REFUND_MISMATCH` | Khoản hoàn lệch số tiền hoặc trạng thái giữa hai phía | Đối soát |
+| `ORPHAN_CALLBACK` | IPN hợp lệ về chữ ký nhưng không tìm thấy giao dịch | IPN |
+
+Cách xử lý (`discrepancy.resolution_type`): `UPDATE_STATUS_FROM_PROVIDER` (cập nhật trạng thái giao dịch theo NCC), `CREATE_REFUND` (lập yêu cầu hoàn), `ACCEPT_PROVIDER_FIGURE` (chấp nhận số liệu của NCC, ghi bản ghi bù), `NO_ACTION` (ghi nhận không xử lý, bắt buộc lý do), `AUTO_MATCHED` (chỉ hệ thống dùng).
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `OPEN` | Hệ thống phát hiện khi so khớp hoặc cách ly IPN | Gắn với phiên của ngày giao dịch tương ứng (tạo phiên `SCHEDULED` nếu chưa có) | FR-19-031, 044 |
+| `OPEN` | `INVESTIGATING` | Giao việc hoặc tự nhận (API-19-072) | Người phụ trách có `discrepancy-handle` | FR-19-045 |
+| `INVESTIGATING` | `ESCALATED` | Chuyển cấp tới NCC (API-19-072), ghi mã yêu cầu hỗ trợ | — | FR-19-045 |
+| `ESCALATED` | `INVESTIGATING` | Ghi nhận phản hồi của NCC | — | FR-19-045 |
+| `INVESTIGATING` | `PROPOSED` | Kế toán đề xuất cách xử lý (API-19-073); tạo đề nghị phê duyệt | — | FR-19-046 |
+| `PROPOSED` | `INVESTIGATING` | Người phê duyệt từ chối, hoặc hết hạn 7 ngày | — | FR-19-046 |
+| `PROPOSED` | `RESOLVED` | Người phê duyệt chấp thuận; hệ thống thực thi cách xử lý | Người duyệt ≠ người đề xuất (BR-19-011) | FR-19-046 |
+| `OPEN`, `INVESTIGATING`, `ESCALATED` | `RESOLVED` | So khớp lại thấy hai phía khớp | `resolution_type = AUTO_MATCHED` | FR-19-044 |
+
+### 7.8. Lần gửi webhook (`webhook_delivery.status`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Có sự kiện cần báo
+    PENDING --> SENDING: Bộ gửi nhận việc
+    SENDING --> DELIVERED: Nhận 2xx
+    SENDING --> RETRY_SCHEDULED: Lỗi tạm thời, còn lượt
+    RETRY_SCHEDULED --> SENDING: Đến giờ thử lại
+    SENDING --> EXHAUSTED: Hết lượt / lỗi không thử lại
+    EXHAUSTED --> PENDING: Gửi lại thủ công
+    PENDING --> CANCELLED: Đầu nhận bị vô hiệu
+    RETRY_SCHEDULED --> CANCELLED: Đầu nhận bị vô hiệu
+    DELIVERED --> [*]
+    CANCELLED --> [*]
+```
+
+Mỗi `webhook_delivery` là việc gửi một sự kiện tới một đầu nhận của đối tác; mỗi lần thử HTTP được ghi thành một dòng `integration_log` gắn với nó. Bộ gửi đọc trực tiếp từ outbox trong DU `dh-payment` nên không phụ thuộc Kafka (ADR-042). `EXHAUSTED` không phải kết thúc hẳn: cán bộ tra cứu gửi lại thủ công sau khi đối tác khắc phục, số thứ tự lần thử tiếp tục tăng. Đối tác cũng có thể chủ động kéo các thông báo đã lỡ qua API-19-109.
+
+| Từ | Đến | Sự kiện kích hoạt | Điều kiện | FR |
+|---|---|---|---|---|
+| — | `PENDING` | Giao dịch hoặc yêu cầu hoàn đạt trạng thái cuối; outbox có sự kiện | Đầu nhận `ACTIVE` đăng ký loại sự kiện đó | FR-19-060 |
+| `PENDING` | `SENDING` | Bộ gửi lấy việc (khóa `SKIP LOCKED`) | — | FR-19-060 |
+| `SENDING` | `DELIVERED` | Đối tác trả 2xx trong 10 s | — | FR-19-060 |
+| `SENDING` | `RETRY_SCHEDULED` | Timeout, lỗi mạng, 5xx, 408, 425, 429 | Còn lượt theo BR-19-020 | FR-19-060 |
+| `RETRY_SCHEDULED` | `SENDING` | Đến `next_attempt_at` | — | FR-19-060 |
+| `SENDING` | `EXHAUSTED` | Hết lượt, hoặc 4xx không thử lại | BR-19-020; phát cảnh báo | FR-19-060 |
+| `EXHAUSTED` | `PENDING` | Cán bộ gửi lại (API-19-078) | Đầu nhận `ACTIVE` | FR-19-062 |
+| `PENDING`, `RETRY_SCHEDULED` | `CANCELLED` | Đầu nhận bị vô hiệu hoặc đối tác `TERMINATED` quá 30 ngày | — | FR-19-021, 018 |
+
+## 8. Use case và user story
+
+### 8.1. Use case (`UC-19-nn`)
+
+Bảng dưới đây cấp 29 use case. Mỗi use case là một mục tiêu trọn vẹn của một tác nhân (D02-04 đặc tả luồng chính, luồng thay thế, ngoại lệ, sơ đồ tuần tự). Cột FR là chiều ngược của cột UC ở mục 4 và đã được đối chiếu một-một: mọi FR xuất hiện trong ít nhất một UC, và mọi cặp (FR, UC) ở mục 4 đều có mặt ở đây. Cột BP cho biết use case thuộc quy trình TO-BE nào (mã con của BP-05); use case không có BP là chức năng hỗ trợ quản lý, giám sát.
+
+| Mã | Tên use case | Tác nhân chính | Tác nhân phụ | FR | BP |
+|---|---|---|---|---|---|
+| UC-19-01 | Khai báo nhà cung cấp và thông tin xác thực | Quản trị thanh toán | Cán bộ ATTT; OpenBao | FR-19-001, 002 | BP-91 |
+| UC-19-02 | Kiểm tra kết nối và giao dịch thử với nhà cung cấp | Quản trị thanh toán | PayGov (môi trường thử) | FR-19-003, 004 | BP-91 |
+| UC-19-03 | Kích hoạt nhà cung cấp có phê duyệt | Quản trị thanh toán | Người phê duyệt | FR-19-005 | BP-91 |
+| UC-19-04 | Tạm dừng, mở lại, ngừng hẳn nhà cung cấp | Quản trị thanh toán | Người phê duyệt | FR-19-006, 010 | BP-91 |
+| UC-19-05 | Tra cứu và cập nhật nhà cung cấp | Quản trị thanh toán | Mọi vai trò thanh toán (xem) | FR-19-007, 008, 009 | — |
+| UC-19-06 | Giám sát sức khỏe và xoay khóa nhà cung cấp | Hệ thống | Cán bộ tra cứu; Cán bộ ATTT; PH-13 | FR-19-011, 012 | — |
+| UC-19-07 | Quản lý nhóm dịch vụ | Quản trị thanh toán | PH-07 | FR-19-013, 016 | — |
+| UC-19-08 | Quản lý dịch vụ thanh toán | Quản trị thanh toán | PH-07 | FR-19-014, 015, 016 | — |
+| UC-19-09 | Đăng ký và phê duyệt đối tác | Quản trị thanh toán | Người phê duyệt; PH-01 | FR-19-017, 018 | BP-92 |
+| UC-19-10 | Cấp client, gán dịch vụ, cấu hình webhook cho đối tác | Quản trị thanh toán | Cán bộ ATTT; PH-12 | FR-19-019, 020, 021 | BP-92 |
+| UC-19-11 | Tạo giao dịch thanh toán | HTTT đối tác | PayGov | FR-19-022, 023, 024, 028, 033, 034 | BP-93 |
+| UC-19-12 | Người nộp thanh toán và quay về | Người nộp tiền | PayGov; HTTT đối tác | FR-19-025 | BP-93 |
+| UC-19-13 | Nhận và xử lý kết quả thanh toán (IPN) | PayGov | Hệ thống | FR-19-028, 029, 030, 031 | BP-93 |
+| UC-19-14 | Hủy và hết hạn giao dịch | HTTT đối tác | Cán bộ tra cứu; Hệ thống; PayGov | FR-19-026, 027 | BP-93 |
+| UC-19-15 | Đối tác truy vấn trạng thái giao dịch | HTTT đối tác | — | FR-19-035 | BP-93 |
+| UC-19-16 | Đồng bộ trạng thái và xử lý lại IPN | Cán bộ tra cứu | Hệ thống; PayGov | FR-19-032, 036, 037 | BP-93 |
+| UC-19-17 | Lập yêu cầu hoàn tiền | Kế toán | HTTT đối tác | FR-19-038 | BP-94 |
+| UC-19-18 | Phê duyệt và thực thi hoàn tiền | Người phê duyệt | Kế toán; PayGov; HTTT đối tác | FR-19-039, 040, 041 | BP-94 |
+| UC-19-19 | Đối soát ngày với nhà cung cấp | Hệ thống | Kế toán; PayGov | FR-19-042, 043, 044 | BP-95 |
+| UC-19-20 | Xử lý chênh lệch đối soát | Kế toán | Người phê duyệt; PayGov | FR-19-045, 046 | BP-95 |
+| UC-19-21 | Chốt, mở lại phiên đối soát và xuất biên bản | Kế toán | Người phê duyệt; HTTT đối tác | FR-19-047, 048 | BP-95 |
+| UC-19-22 | Tra cứu và xuất danh sách giao dịch | Cán bộ tra cứu | Kế toán; Kiểm toán viên | FR-19-049, 050, 052 | — |
+| UC-19-23 | Xem chi tiết giao dịch | Cán bộ tra cứu | PH-13; PH-09 | FR-19-051, 055 | — |
+| UC-19-24 | Xem nhật ký kiểm toán và nhật ký tích hợp | Kiểm toán viên | Cán bộ tra cứu; PH-13 | FR-19-053, 054, 055 | — |
+| UC-19-25 | Giám sát qua dashboard và cảnh báo | Cán bộ tra cứu | Lãnh đạo (xem); PH-13 | FR-19-056, 057, 059 | — |
+| UC-19-26 | Lập và xuất báo cáo định kỳ | Kế toán | Kiểm toán viên | FR-19-058 | — |
+| UC-19-27 | Thông báo kết quả cho đối tác | Hệ thống | HTTT đối tác; Cán bộ tra cứu; PH-10 | FR-19-060, 061, 062 | BP-93 |
+| UC-19-28 | Cấu hình và khởi tạo phân hệ theo tenant | Quản trị thanh toán | PH-20; Quản trị tenant | FR-19-063, 064 | — |
+| UC-19-29 | Di trú từ hệ cũ và chạy song song | Quản trị thanh toán | Người phê duyệt; Kế toán; Hệ Payment cũ; PH-03 | FR-19-065, 066, 067, 068 | BP-96 |
+
+### 8.2. User story (`US-19-nnn`)
+
+User story là đơn vị lập kế hoạch của đội phát triển; D02-05 đặc tả tiêu chí chấp nhận dạng Given/When/Then và xuất file CSV để nạp vào công cụ quản lý công việc. Epic trùng với 15 nhóm miền A–O của mục 4. Điểm câu chuyện (SP) theo dãy Fibonacci, quy chiếu 1 SP ≈ một ngày công của một lập trình viên kể cả kiểm thử tự động; tổng là cơ sở ước lượng, không phải cam kết. Cột "Đợt" theo mục 4: "Đ2" là đợt phát hành đầu tiên của PH-19, "Sau" là sau đợt 2.
+
+| Mã | User story | Epic | UC | FR | SP | Đợt |
+|---|---|---|---|---|---|---|
+| US-19-001 | Là quản trị thanh toán, tôi muốn khai báo một nhà cung cấp mới với mã, tên, loại adapter, đầu mối và địa chỉ hai môi trường, để chuẩn bị đưa kênh thanh toán vào sử dụng. | A. Nhà cung cấp | UC-19-01 | FR-19-001 | 3 | Đ2 |
+| US-19-002 | Là cán bộ ATTT, tôi muốn gắn tham chiếu khóa ký và chứng thư của từng môi trường mà không phải nhập bí mật vào hệ thống, để bí mật chỉ nằm trong kho bí mật. | A. Nhà cung cấp | UC-19-01 | FR-19-002 | 5 | Đ2 |
+| US-19-003 | Là quản trị thanh toán, tôi muốn chạy kiểm tra kết nối và xem kết quả từng bước, để biết chính xác kết nối hỏng ở đâu. | A. Nhà cung cấp | UC-19-02 | FR-19-003 | 5 | Đ2 |
+| US-19-004 | Là quản trị thanh toán, tôi muốn thực hiện một giao dịch thử tới khi nhận được IPN, để chứng minh luồng thanh toán chạy trọn vẹn trước khi kích hoạt. | A. Nhà cung cấp | UC-19-02 | FR-19-004 | 8 | Đ2 |
+| US-19-005 | Là quản trị thanh toán, tôi muốn gửi đề nghị kích hoạt khi checklist đã đạt, để người phê duyệt có đủ bằng chứng ra quyết định. | A. Nhà cung cấp | UC-19-03 | FR-19-005 | 3 | Đ2 |
+| US-19-006 | Là người phê duyệt thanh toán, tôi muốn xem bằng chứng checklist và duyệt hoặc từ chối kích hoạt, để chỉ nhà cung cấp đạt yêu cầu mới được thu tiền. | A. Nhà cung cấp | UC-19-03 | FR-19-005 | 3 | Đ2 |
+| US-19-007 | Là quản trị thanh toán, tôi muốn tạm dừng và mở lại một nhà cung cấp, để ngừng nhận giao dịch mới khi kênh có sự cố mà không bỏ dở giao dịch đang chạy. | A. Nhà cung cấp | UC-19-04 | FR-19-006 | 3 | Đ2 |
+| US-19-008 | Là quản trị thanh toán, tôi muốn xóa nhà cung cấp nháp hoặc đề nghị ngừng hẳn nhà cung cấp đã dùng, để danh sách gọn mà không mất dữ liệu lịch sử. | A. Nhà cung cấp | UC-19-04 | FR-19-010 | 3 | Đ2 |
+| US-19-009 | Là cán bộ thanh toán, tôi muốn tìm, lọc danh sách nhà cung cấp và xem chi tiết từng nhà cung cấp, để nắm tình trạng các kênh thanh toán. | A. Nhà cung cấp | UC-19-05 | FR-19-007, 008 | 5 | Đ2 |
+| US-19-010 | Là quản trị thanh toán, tôi muốn sửa thông tin nhà cung cấp và được buộc kiểm tra lại khi đổi địa chỉ kết nối, để thay đổi không làm hỏng kênh đang chạy. | A. Nhà cung cấp | UC-19-05 | FR-19-009 | 3 | Đ2 |
+| US-19-011 | Là cán bộ tra cứu, tôi muốn nhận cảnh báo trong vòng 3 phút khi nhà cung cấp lỗi, để xử lý sự cố trước khi người dân phản ánh. | A. Nhà cung cấp | UC-19-06 | FR-19-011 | 5 | Đ2 |
+| US-19-012 | Là cán bộ ATTT, tôi muốn xoay khóa, chứng thư không gián đoạn và được nhắc trước hạn 30, 14, 7 ngày, để không bao giờ để chứng thư hết hạn. | A. Nhà cung cấp | UC-19-06 | FR-19-012 | 5 | Đ2 |
+| US-19-013 | Là quản trị thanh toán, tôi muốn quản lý nhóm dịch vụ gắn với lĩnh vực TTHC, để báo cáo thu theo lĩnh vực. | B. Dịch vụ | UC-19-07 | FR-19-013 | 3 | Đ2 |
+| US-19-014 | Là quản trị thanh toán, tôi muốn khai báo dịch vụ thanh toán với NCC, loại khoản thu, đơn vị thu và khoảng số tiền, để đối tác có dịch vụ để thu. | B. Dịch vụ | UC-19-08 | FR-19-014 | 5 | Đ2 |
+| US-19-015 | Là quản trị thanh toán, tôi muốn kích hoạt, tạm dừng, ngừng hẳn dịch vụ, để kiểm soát dịch vụ nào đang được thu. | B. Dịch vụ | UC-19-08 | FR-19-015 | 3 | Đ2 |
+| US-19-016 | Là quản trị thanh toán, tôi muốn được cảnh báo khi mã danh mục mà dịch vụ dùng hết hiệu lực ở PH-07, để sửa kịp thời. | B. Dịch vụ | UC-19-07, UC-19-08 | FR-19-016 | 3 | Đ2 |
+| US-19-017 | Là quản trị thanh toán, tôi muốn lập hồ sơ đối tác gắn với HTTT thành viên, để biết rõ HTTT nào đang thu qua nền tảng. | C. Đối tác | UC-19-09 | FR-19-017 | 3 | Đ2 |
+| US-19-018 | Là người phê duyệt thanh toán, tôi muốn duyệt, tạm dừng, chấm dứt đối tác, để chỉ HTTT được phép mới tạo được giao dịch. | C. Đối tác | UC-19-09 | FR-19-018 | 3 | Đ2 |
+| US-19-019 | Là quản trị thanh toán, tôi muốn cấp và thu hồi client máy-máy cho đối tác, để đối tác xác thực an toàn và bị chặn ngay khi cần. | C. Đối tác | UC-19-10 | FR-19-019 | 5 | Đ2 |
+| US-19-020 | Là quản trị thanh toán, tôi muốn gán dịch vụ và hạn mức cho từng đối tác, để hạn chế rủi ro thu sai, thu vượt. | C. Đối tác | UC-19-10 | FR-19-020 | 3 | Đ2 |
+| US-19-021 | Là quản trị thanh toán, tôi muốn khai báo và gửi thử webhook của đối tác, để chắc chắn đối tác nhận được kết quả. | C. Đối tác | UC-19-10 | FR-19-021 | 3 | Đ2 |
+| US-19-022 | Là HTTT đối tác, tôi muốn gửi yêu cầu thu và nhận ngay địa chỉ thanh toán hoặc một mã lỗi rõ ràng, để chuyển người nộp sang trang thanh toán. | D. Giao dịch | UC-19-11 | FR-19-022, 023 | 8 | Đ2 |
+| US-19-023 | Là HTTT đối tác, tôi muốn yêu cầu của mình được khởi tạo tại PayGov qua một hợp đồng API không đổi, để không phải sửa mã khi đặc tả PayGov thay đổi. | D. Giao dịch | UC-19-11 | FR-19-024 | 13 | Đ2 |
+| US-19-024 | Là người nộp tiền, tôi muốn sau khi thanh toán được chuyển về trang kết quả rồi về cổng dịch vụ công, để biết ngay mình đã nộp thành công hay chưa. | D. Giao dịch | UC-19-12 | FR-19-025 | 5 | Đ2 |
+| US-19-025 | Là HTTT đối tác, tôi muốn hủy giao dịch chưa thanh toán và để giao dịch quá hạn tự hết hạn, để hồ sơ không bị treo. | D. Giao dịch | UC-19-14 | FR-19-026, 027 | 5 | Đ2 |
+| US-19-026 | Là kiểm toán viên, tôi muốn mọi lần đổi trạng thái giao dịch được ghi lại bất biến, để truy được ai, khi nào, vì sao. | D. Giao dịch | UC-19-11, UC-19-13 | FR-19-028 | 3 | Đ2 |
+| US-19-027 | Là kế toán, tôi muốn mọi IPN được xác minh nguồn, chữ ký, thời hạn và tính duy nhất trước khi ghi nhận, để không ghi nhận kết quả giả mạo. | E. Callback | UC-19-13 | FR-19-029 | 8 | Đ2 |
+| US-19-028 | Là HTTT đối tác, tôi muốn kết quả được ghi nhận đúng một lần dù PayGov gửi IPN nhiều lần, để không xử lý hồ sơ hai lần. | E. Callback | UC-19-13 | FR-19-030 | 5 | Đ2 |
+| US-19-029 | Là kế toán, tôi muốn IPN sai số tiền, không tìm thấy giao dịch hay đến muộn được cách ly và sinh chênh lệch, để không có khoản thu nào bị bỏ sót. | E. Callback | UC-19-13 | FR-19-031 | 5 | Đ2 |
+| US-19-030 | Là cán bộ tra cứu, tôi muốn xem danh sách IPN và xử lý lại IPN lỗi sau khi khắc phục, để không phải nhờ PayGov gửi lại. | E. Callback | UC-19-16 | FR-19-032 | 3 | Đ2 |
+| US-19-031 | Là HTTT đối tác, tôi muốn gửi lại yêu cầu an toàn bằng `Idempotency-Key` và không tạo trùng giao dịch cho cùng mã đơn hàng, để người dân không bị thu hai lần. | F. Idempotency | UC-19-11 | FR-19-033, 034 | 8 | Đ2 |
+| US-19-032 | Là HTTT đối tác, tôi muốn truy vấn trạng thái theo mã giao dịch hoặc mã đơn hàng, để tự kiểm tra khi chưa nhận được webhook. | G. Truy vấn | UC-19-15 | FR-19-035 | 3 | Đ2 |
+| US-19-033 | Là cán bộ tra cứu, tôi muốn giao dịch treo được tự truy vấn PayGov theo lịch và có thể đồng bộ ngay khi cần, để không giao dịch nào treo mãi. | G. Truy vấn | UC-19-16 | FR-19-036, 037 | 5 | Đ2 |
+| US-19-034 | Là kế toán hoặc HTTT đối tác, tôi muốn lập yêu cầu hoàn toàn phần hoặc một phần kèm lý do và tài liệu, để trả lại tiền thu sai cho người nộp. | H. Hoàn tiền | UC-19-17 | FR-19-038 | 5 | Đ2 |
+| US-19-035 | Là người phê duyệt thanh toán, tôi muốn duyệt hoặc từ chối yêu cầu hoàn, với yêu cầu lớn cần thêm một người duyệt, để kiểm soát dòng tiền ra. | H. Hoàn tiền | UC-19-18 | FR-19-039 | 5 | Đ2 |
+| US-19-036 | Là kế toán, tôi muốn hoàn tiền được thực thi qua API của NCC hoặc ghi nhận chứng từ khi hoàn thủ công, để mọi khoản hoàn đều có bằng chứng. | H. Hoàn tiền | UC-19-18 | FR-19-040 | 8 | Đ2 |
+| US-19-037 | Là kế toán, tôi muốn theo dõi kết quả hoàn và thấy giao dịch gốc cập nhật trạng thái, để trả lời người nộp chính xác. | H. Hoàn tiền | UC-19-18 | FR-19-041 | 3 | Đ2 |
+| US-19-038 | Là kế toán, tôi muốn phiên đối soát được tự tạo mỗi ngày và tự lấy dữ liệu của NCC, để không phải làm thủ công. | I. Đối soát | UC-19-19 | FR-19-042, 043 | 8 | Đ2 |
+| US-19-039 | Là kế toán, tôi muốn tải file đối soát lên khi NCC chỉ gửi qua kênh khác, để vẫn đối soát được. | I. Đối soát | UC-19-19 | FR-19-043 | 3 | Đ2 |
+| US-19-040 | Là kế toán, tôi muốn hệ thống so khớp tự động từng dòng và tổng hợp số lượng, số tiền hai phía, để chỉ phải xem các dòng lệch. | I. Đối soát | UC-19-19 | FR-19-044 | 8 | Đ2 |
+| US-19-041 | Là kế toán, tôi muốn lọc, giao việc, chuyển cấp và ghi chú chênh lệch, để mỗi chênh lệch có người chịu trách nhiệm. | I. Đối soát | UC-19-20 | FR-19-045 | 5 | Đ2 |
+| US-19-042 | Là người phê duyệt thanh toán, tôi muốn duyệt cách xử lý chênh lệch do kế toán đề xuất, để không ai tự điều chỉnh số liệu một mình. | I. Đối soát | UC-19-20 | FR-19-046 | 5 | Đ2 |
+| US-19-043 | Là kế toán, tôi muốn chốt phiên, đề nghị mở lại khi cần và xuất biên bản đối soát, để có hồ sơ đối soát chính thức. | I. Đối soát | UC-19-21 | FR-19-047, 048 | 5 | Đ2 |
+| US-19-044 | Là cán bộ tra cứu, tôi muốn tìm giao dịch theo từ khóa và lọc nâng cao theo lĩnh vực, trạng thái, thời gian, để trả lời nhanh phản ánh của người dân. | J. Tra cứu | UC-19-22 | FR-19-049, 050 | 5 | Đ2 |
+| US-19-045 | Là cán bộ tra cứu, tôi muốn xem chi tiết giao dịch với dòng thời gian, IPN, webhook, hoàn tiền và mở vết ở PH-13, để hiểu đầy đủ chuyện gì đã xảy ra. | J. Tra cứu | UC-19-23 | FR-19-051, 055 | 5 | Đ2 |
+| US-19-046 | Là kế toán, tôi muốn xuất danh sách giao dịch ra CSV/XLSX đã che dữ liệu cá nhân, để xử lý ngoài hệ thống khi cần. | J. Tra cứu | UC-19-22 | FR-19-052 | 3 | Đ2 |
+| US-19-047 | Là kiểm toán viên, tôi muốn xem nhật ký kiểm toán và nhật ký trao đổi với NCC, đối tác, để kiểm tra tính tuân thủ. | K. Nhật ký | UC-19-24 | FR-19-053, 054, 055 | 5 | Đ2 |
+| US-19-048 | Là cán bộ thanh toán, tôi muốn dashboard tổng quan với số liệu trễ không quá 60 giây và các chỉ số vận hành chuẩn, để nắm tình hình thu trong ngày. | L. Dashboard | UC-19-25 | FR-19-056, 059 | 8 | Đ2 |
+| US-19-049 | Là cán bộ thanh toán, tôi muốn dashboard kênh thanh toán 30 ngày với sức khỏe, độ trễ, hạn chứng thư, để so sánh và theo dõi các kênh. | L. Dashboard | UC-19-25 | FR-19-057 | 5 | Đ2 |
+| US-19-050 | Là kế toán, tôi muốn báo cáo thu theo ngày, tháng, quý và xuất XLSX/PDF (lập lịch gửi tự động làm sau đợt 2), để báo cáo lãnh đạo và Sở Tài chính. | L. Dashboard | UC-19-26 | FR-19-058 | 8 | Đ2 |
+| US-19-051 | Là HTTT đối tác, tôi muốn nhận webhook có ký và sự kiện Kafka theo đúng thứ tự, đồng thời cán bộ gửi lại được lượt hỏng, để cập nhật hồ sơ kịp thời. | M. Thông báo | UC-19-27 | FR-19-060, 061, 062 | 8 | Đ2 |
+| US-19-052 | Là quản trị thanh toán, tôi muốn cấu hình tham số thanh toán của tỉnh có phiên bản, và phân hệ tự khởi tạo khi PH-20 bật, để tỉnh tự vận hành theo quy định riêng. | N. Cấu hình | UC-19-28 | FR-19-063, 064 | 5 | Đ2 |
+| US-19-053 | Là quản trị thanh toán, tôi muốn nhập danh mục và giao dịch lịch sử của hệ cũ, sửa kiểu số tiền và ngày thanh toán, chạy lại nhiều lần không trùng, để không mất dữ liệu (FR-00-090, 091, 093). | O. Di trú | UC-19-29 | FR-19-065 | 8 | Đ2 |
+| US-19-054 | Là kế toán, tôi muốn đối chiếu số lượng, tổng tiền giữa hệ cũ và Datahub theo tháng và đối tác, để xác nhận di trú đúng (FR-00-092). | O. Di trú | UC-19-29 | FR-19-068 | 5 | Đ2 |
+| US-19-055 | Là quản trị thanh toán, tôi muốn chuyển từng đối tác qua các chế độ LEGACY, SHADOW, DATAHUB có phê duyệt và quay lui được, để chuyển đổi không gián đoạn thu. | O. Di trú | UC-19-29 | FR-19-066 | 8 | Đ2 |
+| US-19-056 | Là HTTT đối tác chưa kịp sửa mã, tôi muốn gọi PH-19 theo hợp đồng API cũ trong một thời gian có hạn, để vẫn thu được trong lúc nâng cấp. | O. Di trú | UC-19-29 | FR-19-067 | 8 | Sau |
+
+Tổng điểm ước lượng của 55 câu chuyện đợt 2 là 291 SP; câu chuyện US-19-056 chỉ được lập kế hoạch khi OQ-19-17 xác nhận có nhu cầu.
 

@@ -800,3 +800,111 @@ Luồng đối tác được PH-03 định tuyến theo chế độ của từng
 
 Lộ trình chuyển đổi khối Payment đi theo bốn giai đoạn. Giai đoạn chuẩn bị nhập dữ liệu lịch sử, đưa PayGov vào sử dụng trên Datahub (BP-91) và đăng ký đối tác (BP-92). Giai đoạn song song đưa lần lượt các đối tác sang `SHADOW`; kế toán bắt đầu có số liệu đối soát từ PH-19, và giá trị gốc của KPI-92, KPI-98 được xác lập. Giai đoạn chuyển giao đưa từng đối tác sang `DATAHUB` theo tiêu chí ở mục 7.6, bắt đầu từ đối tác có khối lượng nhỏ. Giai đoạn kết thúc tắt hệ cũ khi KPI-91 đạt 100%, mọi giao dịch dở ở hệ cũ đã đạt trạng thái cuối, mọi phiên đối soát đã chốt và lần đối chiếu cuối cùng đạt KPI-99; dữ liệu hệ cũ được lưu trữ chỉ đọc theo thời hạn quy định.
 
+## 9. Rủi ro nghiệp vụ và biện pháp
+
+Bảng dưới đây liệt kê các rủi ro **nghiệp vụ** của PH-19; rủi ro kỹ thuật cấp hệ thống nằm ở SAD D03-01 (trong đó RSK-A03 về RLS và RSK-A04 về đặc tả PayGov có liên quan trực tiếp) và sổ rủi ro D01-02. Tài liệu này không tự cấp mã `RSK`; cột "STT" là số thứ tự cục bộ, và luồng lõi sẽ cấp mã khi gộp vào sổ rủi ro (mục 12). Khả năng và tác động đánh giá theo ba mức Cao, Trung bình, Thấp.
+
+| STT | Rủi ro | Khả năng | Tác động | Biện pháp | Chủ trì |
+|---|---|---|---|---|---|
+| 1 | Đặc tả kết nối PayGov khác giả định của tài liệu (cách ký, cách gọi về, định dạng đối soát) hoặc thay đổi trong vòng đời sản phẩm | Cao | Trung bình | Cô lập trong adapter (ADR-040, RSK-A04); lấy đặc tả và môi trường thử trước khi bắt đầu đợt 2; kiểm thử hợp đồng định kỳ | SH-02, SH-11 |
+| 2 | PayGov không có API hoàn tiền hoặc không cung cấp dữ liệu đối soát tự động | Trung bình | Trung bình | Chế độ hoàn `MANUAL` và tải tệp đối soát thủ công là bắt buộc ngay từ đầu (REQ-95, REQ-96) | SH-92 |
+| 3 | Tỉnh chỉ có một địa chỉ nhận kết quả với PayGov, làm kết quả của hệ cũ và PH-19 lẫn nhau trong giai đoạn song song | Cao | Cao | Định tuyến kết quả theo hệ đã tạo giao dịch tại PH-03 (mục 8.3); kiểm thử riêng kịch bản chuyển chế độ khi còn giao dịch dở | SH-03, SH-12 |
+| 4 | Người nộp bị thu hai lần cho một hồ sơ (bấm hai lần, đối tác gửi lại, thanh toán muộn sau khi hủy) | Trung bình | Cao | Chống trùng theo khóa và theo mã hồ sơ (REQ-94); xử lý thanh toán muộn; đối soát phát hiện; hoàn tiền theo BP-94 | SH-03, SH-92 |
+| 5 | Thông báo kết quả bị giả mạo để hồ sơ được xử lý mà không nộp tiền | Trung bình | Cao | Xác minh nguồn, chữ ký, chống phát lại; không dùng lượt quay về trình duyệt để chốt; đối soát ngày hôm sau là lớp kiểm tra thứ hai | SH-07 |
+| 6 | Lộ khóa kết nối PayGov hoặc bí mật của đối tác | Thấp | Cao | Kho bí mật theo tenant; xoay khóa không gián đoạn; thu hồi client tức thì; hạn mức theo đối tác hạn chế thiệt hại | SH-07 |
+| 7 | Rò rỉ dữ liệu giao dịch giữa các tỉnh | Thấp | Cao | Cách ly theo D03-10 (RSK-A03); kiểm thử rò rỉ chéo tenant bắt buộc cho mọi API | SH-11 |
+| 8 | Dữ liệu hệ cũ chất lượng thấp: ngày thanh toán không phân tích được, mã đối tác, dịch vụ trùng hoặc mồ côi, trạng thái không chuẩn | Cao | Trung bình | Báo cáo dòng lỗi (FR-00-092); không bỏ qua âm thầm; chủ đầu tư chấp nhận danh sách ngoại lệ trước khi tắt hệ cũ | SH-12, SH-92 |
+| 9 | Tỉnh không đủ người để phê duyệt bốn mắt, dẫn tới tắc phê duyệt hoặc dùng chung tài khoản | Trung bình | Trung bình | Cho phép cán bộ Sở Tài chính, cơ quan thu làm người phê duyệt; cấm người lập tự duyệt ở mức hệ thống; cảnh báo yêu cầu chờ duyệt quá hạn | SH-02, SH-92 |
+| 10 | Nhà thầu HTTT đối tác chậm sửa mã, kéo dài giai đoạn song song | Cao | Trung bình | Chế độ `SHADOW` cho kế toán số liệu sớm; môi trường thử có giả lập; lớp tương thích API cũ khi thật cần (OQ-19-17) | SH-04, SH-05 |
+| 11 | PayGov gián đoạn kéo dài, chặn mọi hồ sơ có thu phí | Thấp | Cao | Phát hiện trong 3 phút (KPI-97), thông báo cho đối tác để hiển thị hướng dẫn cho người dân; kiến trúc sẵn sàng cho kênh thứ hai khi được phép | SH-03, SH-93 |
+| 12 | Sáp nhập tỉnh khi còn giao dịch dở, phiên đối soát mở | Trung bình | Trung bình | Ba điều kiện bổ sung ở mục 8.2 | SH-02, SH-11 |
+| 13 | Chưa rõ trách nhiệm phát hành biên lai giữa PH-19 và HTTT đối tác, dẫn tới thiếu hoặc trùng biên lai | Trung bình | Trung bình | Giữ biên lai ngoài phạm vi PH-19 cho tới khi có kết luận (OQ-19-14); PH-19 cung cấp đủ dữ liệu cho bên lập biên lai | SH-92 |
+
+## 10. Giả định, ràng buộc và câu hỏi mở
+
+### 10.1. Giả định
+
+Các giả định dưới đây là điều kiện để phạm vi và tiến độ của PH-19 đúng như mô tả. Khi một giả định sai, phạm vi hoặc kế hoạch phải được xem lại.
+
+1. Chủ đầu tư ký được thỏa thuận kết nối với Văn phòng Chính phủ cho tỉnh và nhận được đặc tả kỹ thuật cùng môi trường thử trước khi bắt đầu xây dựng PH-19.
+2. Tỉnh được phép kết nối PayGov qua một nền tảng trung gian cấp tỉnh như Datahub (cần xác nhận, mục 2.1 và Q03).
+3. PayGov cung cấp năm năng lực tối thiểu nêu ở mục 2.2; hoàn tiền qua API là không chắc chắn.
+4. HTTT đối tác tính và chịu trách nhiệm về số tiền phải thu; PH-19 không tính phí, lệ phí.
+5. Đợt 2 chỉ thu bằng đồng Việt Nam.
+6. Hệ cũ tiếp tục hoạt động và chủ quản hệ cũ cấp quyền đọc CSDL cho việc di trú và chế độ `SHADOW`.
+7. Các phân hệ phụ thuộc cứng (PH-03, PH-07, PH-10, PH-12, PH-13, PH-20) đã đạt nghiệm thu MVP. Nếu tỉnh triển khai đầu tiên phải tắt hệ cũ sớm, PH-19 được kéo lên MVP và giả định này phải được xem lại.
+
+### 10.2. Ràng buộc
+
+Ràng buộc chung của dự án (Java Spring Boot, PostgreSQL, React và Ant Design v6, dữ liệu lưu trong nước, cấp độ 3 sẵn sàng cấp độ 4) đã nêu ở BRD tổng mục 10. Riêng thanh toán có các ràng buộc sau. PH-19 không giữ tiền và không cung ứng dịch vụ trung gian thanh toán (CMP-LAW-94 đề xuất). PH-19 không lưu số thẻ, số tài khoản đầy đủ của người nộp. Khóa và chứng thư kết nối chỉ nằm trong kho bí mật (ADR-012). PH-19 chạy ở đơn vị triển khai riêng `dh-payment` (D03-01 §4.2). Danh mục ngân hàng, kênh, lĩnh vực, loại phí, cơ quan do PH-07 chủ quản; PH-19 chỉ lưu mã. Mọi chi tiết PayGov phải đi qua adapter.
+
+### 10.3. Câu hỏi mở
+
+Các câu hỏi đã có mã trong khung truy vết được tham chiếu theo mã: **OQ-19-01…08** (đặc tả kỹ thuật PayGov: tham số, chữ ký, cách gọi về, truy vấn, dữ liệu đối soát, hoàn tiền, mã kết quả), **OQ-19-14** (ai phát hành biên lai thu phí, lệ phí điện tử) và **OQ-19-17** (có cần lớp tương thích API hệ cũ không). Các câu hỏi dưới đây là câu hỏi riêng của tài liệu này, đánh số cục bộ theo D00-01 §4.2, và được đề xuất bổ sung vào khung truy vết mục 15.
+
+> **Câu hỏi mở Q01:** Danh sách và số lượng HTTT có thu phí của tỉnh thí điểm, trong đó bao nhiêu HTTT đang thu qua hệ Payment cũ, bao nhiêu tự kết nối PayGov trực tiếp? Cần để xác lập giá trị gốc và mẫu số của KPI-91 (liên quan Q04, Q06 của BRD tổng).
+
+> **Câu hỏi mở Q02:** Khối lượng giao dịch hiện tại và cao điểm (giao dịch mỗi ngày, mỗi giờ cao điểm, số tiền lớn nhất) của hệ cũ là bao nhiêu? Cần để đặt NFR hiệu năng của PH-19 và hồ sơ quy mô.
+
+> **Câu hỏi mở Q03:** Văn bản nào quy định thủ tục kết nối của tỉnh với PayGov, và tỉnh có được kết nối qua nền tảng trung gian cấp tỉnh thay vì từng HTTT kết nối trực tiếp không? Đề nghị chủ đầu tư làm việc với Văn phòng Chính phủ.
+
+> **Câu hỏi mở Q04:** Thời hạn lưu trữ bắt buộc đối với giao dịch, kết quả nguyên văn và biên bản đối soát là bao lâu (CMP-LAW-97 đề xuất)? Cần để đặt giá trị mặc định của thời gian lưu.
+
+> **Câu hỏi mở Q05:** PH-19 có cần lưu số tài khoản thụ hưởng đầy đủ của cơ quan thu, hay chỉ mã tham chiếu đã đăng ký với PayGov? Câu trả lời phụ thuộc đặc tả PayGov.
+
+> **Câu hỏi mở Q06:** Sau sắp xếp đơn vị hành chính 2025, kết nối PayGov và dữ liệu hệ Payment của Đắk Nông cũ thuộc tenant nào, và VPCP có cấp lại kết nối hợp nhất cho tỉnh mới không?
+
+> **Câu hỏi mở Q07:** Đơn vị nào chủ trì nghiệp vụ đối soát và ký biên bản đối soát (Sở Tài chính, từng cơ quan thu hay Trung tâm dữ liệu), và số ngày chạy `SHADOW` không lệch tối thiểu trước khi chuyển một đối tác sang `DATAHUB` là bao nhiêu?
+
+> **Câu hỏi mở Q08:** PayGov có cho phép đăng ký nhiều địa chỉ nhận kết quả cho một kết nối, hoặc đổi địa chỉ nhận mà không gián đoạn không? Câu trả lời quyết định cách định tuyến kết quả ở mục 8.3 (có thể thuộc nhóm OQ-19-01…08).
+
+> **Câu hỏi mở Q09:** Ngưỡng số tiền cần duyệt hai cấp khi hoàn tiền và giờ chốt đối soát mặc định là bao nhiêu? Đề nghị Sở Tài chính tỉnh thí điểm đề xuất.
+
+## 11. Ma trận truy vết REQ → BP → FR → LGC
+
+Ma trận dưới đây nối mỗi REQ con với quy trình TO-BE nơi nó được thực hiện, các FR hiện thực nó (theo cột REQ và UC của khung truy vết mục 4) và các chức năng hệ cũ mà các FR đó phủ. Dòng có cột BP là "Nền" chứa các FR là năng lực xuyên quy trình (tra cứu, giám sát, kiểm toán, cấu hình) không gắn với riêng một BP. Một FR có thể xuất hiện ở nhiều dòng vì nó phục vụ nhiều REQ. Chiều ngược lại (LGC → FR) xem khung truy vết mục 2; chiều xuống (FR → UC → API → bảng → màn hình → TC) xem khung truy vết mục 17.
+
+| REQ con (cha REQ-19) | BP (cha BP-05) | FR | LGC phủ |
+|---|---|---|---|
+| REQ-91 | BP-91 | FR-19-001, 002, 003, 004, 005, 006, 010 | LGC-PAY-001, 004, 005, 007, 008 |
+| REQ-91 | Nền | FR-19-007, 008, 009, 011 | LGC-PAY-002, 003, 004, 006, 009, 023 |
+| REQ-92 | BP-92 | FR-19-014, 015, 016, 017, 018, 019, 020 | LGC-PAY-022 |
+| REQ-92 | Nền | FR-19-013 | LGC-PAY-022 |
+| REQ-93 | BP-93 | FR-19-022, 023, 024, 025, 026, 035 | LGC-PAY-011, 012, 023, 024 (đề xuất) |
+| REQ-94 | BP-92 | FR-19-021 | — |
+| REQ-94 | BP-93 | FR-19-025, 027, 028, 029, 030, 031, 032, 033, 034, 035, 036, 037, 060, 061, 062 | LGC-PAY-010, 011, 012, 019, 024 (đề xuất) |
+| REQ-95 | BP-93 | FR-19-031 | LGC-PAY-010 |
+| REQ-95 | BP-95 | FR-19-042, 043, 044, 045, 046, 047, 048 | — (năng lực mới) |
+| REQ-96 | BP-94 | FR-19-038, 039, 040, 041 | LGC-PAY-025 (đề xuất) |
+| REQ-97 | BP-93 | FR-19-037 | — |
+| REQ-97 | Nền | FR-19-011, 049, 050, 051, 052, 053, 054, 055, 056, 057, 058, 059 | LGC-PAY-003, 009, 011, 013, 014, 015, 016, 017, 018, 019, 020, 021, 023, 026 (đề xuất) |
+| REQ-98 (cha thêm REQ-20) | BP-91 | FR-19-002 | LGC-PAY-001, 004 |
+| REQ-98 | BP-92 | FR-19-019 | — |
+| REQ-98 | BP-93 | FR-19-028, 029 | LGC-PAY-010, 011, 019 |
+| REQ-98 | Nền | FR-19-012, 053, 063, 064 | LGC-PAY-021 |
+| REQ-99 (cha thêm REQ-22) | BP-96 (cha thêm BP-09) | FR-19-065, 066, 067, 068; FR-00-090…093 | LGC-PAY-011, 022, 024 (đề xuất) |
+
+Kiểm tra độ phủ cho thấy: cả 68 FR của khung truy vết đều xuất hiện ít nhất một lần; cả 23 LGC chính thức và 3 LGC đề xuất đều được phủ; mỗi REQ con có ít nhất một BP, trừ phần "Nền" của REQ-91, REQ-92, REQ-97, REQ-98; mỗi BP con có ít nhất một REQ. Ba REQ con có FR không phủ chức năng hệ cũ nào (REQ-95 đối soát, REQ-96 phần lớn hoàn tiền, các FR an toàn của REQ-98) đúng là ba vùng mà hệ cũ thiếu theo mục 3.3.
+
+Bảng sau truy vết mục tiêu và chỉ số tới REQ và BP, để hội đồng thẩm định thấy mỗi chỉ số được đo trên quy trình nào.
+
+| BO con (cha BO-07) | KPI | REQ con | BP con |
+|---|---|---|---|
+| BO-91 | KPI-91 | REQ-92, REQ-93 | BP-92, BP-93 |
+| BO-92 | KPI-92, KPI-93, KPI-98 | REQ-94, REQ-98 | BP-93 |
+| BO-93 | KPI-13, KPI-14, KPI-94, KPI-95, KPI-96 | REQ-95, REQ-96 | BP-94, BP-95 |
+| BO-94 (cha thêm BO-08) | KPI-97 | REQ-91 | BP-91 |
+| BO-95 | — (đo bằng tiêu chí chấp nhận của REQ-97) | REQ-97 | Nền |
+| BO-96 | KPI-91, KPI-99 | REQ-99 | BP-96 |
+
+## 12. Đề xuất bổ sung mã
+
+Theo quy tắc của khung truy vết mục 0, tài liệu này không tự đặt mã chính thức. Các đề xuất dưới đây cần luồng lõi quyết định.
+
+| Đề xuất | Nội dung | Ghi chú cho luồng lõi |
+|---|---|---|
+| CMP-LAW-91…97 | Bảy văn bản pháp lý riêng cho thanh toán ở mục 2.1 | Dùng dải 91–97 để tránh trùng với số mà các luồng khác có thể đề xuất sau CMP-LAW-16; đổi số cơ học khi gộp D00-01 §7 và D00-03 phần D |
+| Thay SH-91, SH-94, SH-95, SH-96, SH-98 | Thay bằng SH-02/SH-03, SH-04/SH-05, SH-09, SH-10, SH-11 của BRD tổng | Khung truy vết mục 1.6 cần cập nhật tương ứng; giữ SH-92, SH-93, SH-97 là mã con đề xuất |
+| Thêm SH-12 vào phạm vi PH-19 | Đơn vị vận hành LGSP cũ tham gia BP-96 | Khung chưa có bên này |
+| Mã RSK cho 13 rủi ro ở mục 9 | Gộp vào sổ rủi ro D01-02 | Rủi ro số 1 trùng ý với RSK-A04, số 7 trùng ý với RSK-A03 |
+| OQ-19 cho Q01…Q09 ở mục 10.3 | Bổ sung vào khung truy vết mục 15 | Q08 có thể gộp vào nhóm OQ-19-01…08 |
