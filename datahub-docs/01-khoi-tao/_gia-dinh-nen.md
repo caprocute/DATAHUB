@@ -29,7 +29,7 @@ Tệp này là **nguồn sự thật duy nhất** cho mọi con số, mốc th�
 
 ## 2. Phân hệ và phạm vi MVP
 
-Datahub gồm 20 phân hệ. **MVP (đợt 1)** gồm 12 phân hệ: PH-01, PH-02, PH-03, PH-04, PH-05, PH-07, PH-10, PH-12, PH-13, PH-14, PH-18, PH-20. **Đợt 2**: PH-06, PH-08, PH-09, PH-11, PH-19. **Đợt 3**: PH-15, PH-16, PH-17.
+Datahub gồm 20 phân hệ. **MVP (đợt 1)** gồm 12 phân hệ: PH-01, PH-02, PH-03, PH-04, PH-05, PH-07, PH-10, PH-12, PH-13, PH-14, PH-18, PH-20. **Đợt 2**: PH-19, PH-15, PH-09, PH-11. **Đợt 3**: PH-06, PH-08, PH-16, PH-17. Phân đợt theo D02-01 §8.3 (nguồn sự thật).
 
 | Mã | Phân hệ | Đợt | Công nghệ đặc thù |
 |---|---|---|---|
@@ -38,16 +38,16 @@ Datahub gồm 20 phân hệ. **MVP (đợt 1)** gồm 12 phân hệ: PH-01, PH-0
 | PH-03 | Cổng API | MVP | Apache APISIX + Coraza WAF |
 | PH-04 | Lõi tích hợp & trình thiết kế luồng | MVP | Camel Quarkus native |
 | PH-05 | Quản lý adapter & kết nối | MVP | Camel Quarkus |
-| PH-06 | Dữ liệu chủ (MDM) | Đợt 2 | Spring Boot |
+| PH-06 | Dữ liệu chủ (MDM) | Đợt 3 | Spring Boot |
 | PH-07 | Danh mục dùng chung & ánh xạ | MVP | Spring Boot, Valkey |
-| PH-08 | Chất lượng dữ liệu | Đợt 2 | Spring Boot |
+| PH-08 | Chất lượng dữ liệu | Đợt 3 | Spring Boot |
 | PH-09 | Bảo vệ dữ liệu cá nhân | Đợt 2 | Spring Boot, Vault/OpenBao Transit |
 | PH-10 | Truyền thông sự kiện | MVP | Kafka (Strimzi), Apicurio |
 | PH-11 | Điều phối quy trình (BPM) | Đợt 2 | Flowable |
 | PH-12 | Định danh, xác thực, ủy quyền | MVP | Keycloak, OPA |
 | PH-13 | Giám sát, ghi vết, cảnh báo | MVP | OpenTelemetry, LGTM, OpenSearch |
 | PH-14 | Kết nối quốc gia (NDXP/NDOP) | MVP | Camel Quarkus |
-| PH-15 | Cổng nhà phát triển | Đợt 3 | React (Backstage chờ ADR) |
+| PH-15 | Cổng nhà phát triển | Đợt 2 | React (Backstage chờ ADR) |
 | PH-16 | Quản trị kiến trúc & KPI | Đợt 3 | Spring Boot, ClickHouse (chờ ADR) |
 | PH-17 | Cổng AI & quản trị AI | Đợt 3 | APISIX AI, pgvector |
 | PH-18 | Vận hành & xử lý bản tin lỗi | MVP | Spring Boot |
@@ -80,8 +80,8 @@ Trình tự và tên gọi các bước theo Nghị định 224/2026/NĐ-CP (quy
 | W1 | Trục tích hợp: PH-01, 02, 03, 04, 05, 12; PH-13 mức cơ bản | T0+2 → T0+6 | 8 | G1 Trục tích hợp |
 | W2 | Dữ liệu & mở rộng MVP: PH-07, 10, 14, 18, 20; PH-13 đầy đủ; kiểm thử hệ thống, ATTT, hiệu năng | T0+6 → T0+10 | 8 | G2 Nghiệm thu MVP |
 | W3 | Thí điểm tại tỉnh 1: cài đặt PROD, di trú, chạy song song (strangler), cắt chuyển theo nhóm dịch vụ; hồ sơ cấp độ 3 được phê duyệt | T0+10 → T0+13 | 6 | G3 Vận hành chính thức MVP |
-| W4 | Đợt 2: PH-19, 06, 08, 09, 11 (chạy song song với W3 bằng đội riêng); cắt chuyển thanh toán khỏi hệ cũ | T0+10 → T0+15 | 10 | G4 Nghiệm thu đợt 2 |
-| W5 | Đợt 3: PH-15, 16, 17; đóng gói phát hành v1.0; nhân rộng sang tỉnh 2; tắt hệ cũ | T0+15 → T0+18 | 6 | G5 Nghiệm thu hoàn thành dự án |
+| W4 | Đợt 2: PH-19, 15, 09, 11 (chạy song song với W3 bằng đội riêng); cắt chuyển thanh toán khỏi hệ cũ | T0+10 → T0+15 | 10 | G4 Nghiệm thu đợt 2 |
+| W5 | Đợt 3: PH-06, 08, 16, 17; đóng gói phát hành v1.0; nhân rộng sang tỉnh 2; tắt hệ cũ | T0+15 → T0+18 | 6 | G5 Nghiệm thu hoàn thành dự án |
 
 Sau G5: **bảo hành 12 tháng** (T0+18 → T0+30), sau đó vận hành, hỗ trợ kỹ thuật theo hợp đồng năm. Hệ cũ chạy song song tối đa đến G5; dịch vụ thanh toán cũ tắt sau khi PH-19 chạy ổn định 30 ngày.
 
