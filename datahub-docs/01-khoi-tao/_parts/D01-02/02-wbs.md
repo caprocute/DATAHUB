@@ -190,8 +190,8 @@ Bảng dưới đây đối chiếu nỗ lực theo wave. Cột "sức chứa" l
 
 ### 2.7. Câu hỏi mở
 
-- **Q-D0102-06:** Đơn vị kiểm thử xâm nhập độc lập (nếu quy định hoặc chủ đầu tư yêu cầu) có được thuê ngoài bằng gói dịch vụ riêng không? Nếu có, 1.25.3 chỉ giữ phần phối hợp và khắc phục, nỗ lực có thể giảm khoảng 3 người-tháng.
-- **Q-D0102-07:** Thời hạn lưu trữ dữ liệu và nhật ký của hệ cũ sau khi tắt là bao lâu? Câu trả lời quyết định quy mô của gói 1.24.6.
+- **Q-D0102-05:** Đơn vị kiểm thử xâm nhập độc lập (nếu quy định hoặc chủ đầu tư yêu cầu) có được thuê ngoài bằng gói dịch vụ riêng không? Nếu có, 1.25.3 chỉ giữ phần phối hợp và khắc phục, nỗ lực có thể giảm khoảng 3 người-tháng.
+- **Q-D0102-06:** Thời hạn lưu trữ dữ liệu và nhật ký của hệ cũ sau khi tắt là bao lâu? Câu trả lời quyết định quy mô của gói 1.24.6.
 
 ### 2.8. Ghi chú cho người tổng hợp
 

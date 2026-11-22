@@ -105,8 +105,8 @@ Dự án có hai bên kiểm soát độc lập với nhà thầu, với vai tr�
 
 ### 9.9. Câu hỏi mở
 
-- **Q-D0102-14:** Thông tư 41/2026/TT-BKHCN (Điều 10 về kiểm thử phần mềm nội bộ) có yêu cầu kiểm thử phải do đơn vị độc lập với nhà thầu phát triển thực hiện, hay nhà thầu tự kiểm thử dưới sự giám sát là đủ? Câu trả lời quyết định phạm vi gói kiểm thử độc lập và có thể làm giảm hoặc tăng nỗ lực QA của nhà thầu.
-- **Q-D0102-15:** Tư vấn giám sát có được cấp quyền truy cập chỉ đọc vào kho mã và hệ thống CI của nhà thầu ngay từ W0 không, hay chỉ nhận báo cáo? Kế hoạch đang giả định có quyền truy cập trực tiếp.
+- **Q-D0102-13:** Thông tư 41/2026/TT-BKHCN (Điều 10 về kiểm thử phần mềm nội bộ) có yêu cầu kiểm thử phải do đơn vị độc lập với nhà thầu phát triển thực hiện, hay nhà thầu tự kiểm thử dưới sự giám sát là đủ? Câu trả lời quyết định phạm vi gói kiểm thử độc lập và có thể làm giảm hoặc tăng nỗ lực QA của nhà thầu.
+- **Q-D0102-14:** Tư vấn giám sát có được cấp quyền truy cập chỉ đọc vào kho mã và hệ thống CI của nhà thầu ngay từ W0 không, hay chỉ nhận báo cáo? Kế hoạch đang giả định có quyền truy cập trực tiếp.
 
 ### 9.10. Ghi chú cho người tổng hợp
 

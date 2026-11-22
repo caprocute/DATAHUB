@@ -148,9 +148,9 @@ Thanh toán theo mốc gắn với cổng là đề xuất của kế hoạch, t
 
 ### 3.10. Câu hỏi mở
 
-- **Q-D0102-08:** Thiết kế chi tiết được phê duyệt trước T0 có được phép ở mức danh mục chức năng và tiêu chí chấp nhận, với FRS, SDD chi tiết được duyệt dần theo wave, mà không bị coi là điều chỉnh thiết kế không? Tóm tắt pháp lý chưa xác minh được Nghị định 224/2026/NĐ-CP có quy định riêng về phát triển linh hoạt hay không; cần đối chiếu Điều 47, Điều 53 của nghị định và Thông tư 41/2026/TT-BKHCN.
-- **Q-D0102-09:** Chủ đầu tư có chấp nhận dùng dịch vụ AI agent mà mã nguồn được xử lý ngoài lãnh thổ Việt Nam không, hay yêu cầu dịch vụ triển khai trong nước?
-- **Q-D0102-10:** Chủ đầu tư cử ai làm PO phía chủ đầu tư, với thời lượng tham gia bao nhiêu, và người đó có thẩm quyền ký biên bản sprint review không?
+- **Q-D0102-07:** Thiết kế chi tiết được phê duyệt trước T0 có được phép ở mức danh mục chức năng và tiêu chí chấp nhận, với FRS, SDD chi tiết được duyệt dần theo wave, mà không bị coi là điều chỉnh thiết kế không? Tóm tắt pháp lý chưa xác minh được Nghị định 224/2026/NĐ-CP có quy định riêng về phát triển linh hoạt hay không; cần đối chiếu Điều 47, Điều 53 của nghị định và Thông tư 41/2026/TT-BKHCN.
+- **Q-D0102-08:** Chủ đầu tư có chấp nhận dùng dịch vụ AI agent mà mã nguồn được xử lý ngoài lãnh thổ Việt Nam không, hay yêu cầu dịch vụ triển khai trong nước?
+- **Q-D0102-09:** Chủ đầu tư cử ai làm PO phía chủ đầu tư, với thời lượng tham gia bao nhiêu, và người đó có thẩm quyền ký biên bản sprint review không?
 
 ### 3.11. Ghi chú cho người tổng hợp
 

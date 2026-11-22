@@ -201,9 +201,9 @@ Phạm vi ở tỉnh 2 giới hạn ở việc chứng minh khả năng nhân r�
 
 ### 4.7. Câu hỏi mở
 
-- **Q-D0102-11:** Trong thời gian chờ quyết định phê duyệt cấp độ 3, Datahub có được nhận lưu lượng thật của tỉnh ở chế độ vận hành thử (hệ cũ vẫn chạy làm dự phòng) không? Nếu không, mọi bước chuyển lưu lượng của N1 đến N5 phải chờ M-12, và G3 trễ tương ứng với thời gian thẩm định.
-- **Q-D0102-12:** Thời gian thẩm định hồ sơ đề xuất cấp độ 3 thực tế tại tỉnh thí điểm là bao lâu? Kế hoạch đang giả định 2 tháng (T0+8 đến T0+10), muộn nhất 4 tháng.
-- **Q-D0102-13:** Nghị định 224/2026/NĐ-CP (Điều 65 khoản 7a) yêu cầu vận hành thử trước nghiệm thu, bàn giao đối với một số hạng mục; thời gian vận hành thử tối thiểu là bao lâu và hạng mục phần mềm nội bộ có thuộc diện này không? Kế hoạch đang coi giai đoạn quan sát 14 ngày của mỗi nhóm cắt chuyển cộng 30 ngày vận hành trước G3 là vận hành thử; nếu quy định yêu cầu dài hơn, G3 phải dời.
+- **Q-D0102-10:** Trong thời gian chờ quyết định phê duyệt cấp độ 3, Datahub có được nhận lưu lượng thật của tỉnh ở chế độ vận hành thử (hệ cũ vẫn chạy làm dự phòng) không? Nếu không, mọi bước chuyển lưu lượng của N1 đến N5 phải chờ M-12, và G3 trễ tương ứng với thời gian thẩm định.
+- **Q-D0102-11:** Thời gian thẩm định hồ sơ đề xuất cấp độ 3 thực tế tại tỉnh thí điểm là bao lâu? Kế hoạch đang giả định 2 tháng (T0+8 đến T0+10), muộn nhất 4 tháng.
+- **Q-D0102-12:** Nghị định 224/2026/NĐ-CP (Điều 65 khoản 7a) yêu cầu vận hành thử trước nghiệm thu, bàn giao đối với một số hạng mục; thời gian vận hành thử tối thiểu là bao lâu và hạng mục phần mềm nội bộ có thuộc diện này không? Kế hoạch đang coi giai đoạn quan sát 14 ngày của mỗi nhóm cắt chuyển cộng 30 ngày vận hành trước G3 là vận hành thử; nếu quy định yêu cầu dài hơn, G3 phải dời.
 
 ### 4.8. Ghi chú cho người tổng hợp
 
