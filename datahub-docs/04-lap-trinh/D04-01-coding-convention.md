@@ -691,3 +691,353 @@ const [rows, setRows] = useState<any[]>([]);
 useEffect(() => { fetch('/api/rdm/catalogs').then(r => r.json()).then(setRows); }, []);
 return <div style={{ color: '#1677ff', padding: 13 }}>Danh mục: {rows.length}</div>;
 ```
+
+## 6. SQL, PostgreSQL 18 và Liquibase
+
+Mỗi DU Spring Boot quản lý lược đồ CSDL của các phân hệ mình bằng Liquibase định dạng YAML (một công cụ cho toàn kho mã, không trộn Flyway). Mục này áp quy ước đặt tên D00-01 §6, kiểu chuẩn §5 và cột bắt buộc §5.1 vào migration.
+
+### 6.1. Đặt tên và kiểu
+
+**CC-SQL-01 · Đặt tên theo D00-01 §6 [tự động].** Schema `ph{nn}_{tên-ngắn}` (ví dụ `ph07_rdm`); bảng và cột `snake_case`, tiếng Anh, danh từ số ít (`catalog_item`, `published_at`). Tên ràng buộc và chỉ mục theo mẫu trong bảng dưới đây để thông báo lỗi CSDL tự giải thích và để migration sau tìm được đối tượng theo tên.
+
+| Đối tượng | Mẫu | Ví dụ |
+|---|---|---|
+| Khóa chính | `pk_{bảng}` | `pk_catalog` |
+| Khóa ngoại | `fk_{bảng}_{bảng-đích}` hoặc `fk_{bảng}_{cột}` | `fk_catalog_item_catalog` |
+| Duy nhất | `uq_{bảng}_{cột...}` | `uq_catalog_tenant_id_code` |
+| Kiểm tra | `ck_{bảng}_{cột}` | `ck_catalog_status` |
+| Chỉ mục | `ix_{bảng}_{cột...}` | `ix_catalog_item_tenant_id_catalog_id` |
+| Chính sách RLS | `tenant_isolation` (đọc ghi), `common_read` (đọc dữ liệu `COMMON`) | — |
+| Changeset `id` | `{số-thứ-tự-tệp}-{mô-tả-kebab}` | `012-create-catalog-item` |
+| Tệp changelog | `changes/{nnn}-{mô-tả}.yaml` | `changes/012-catalog-item.yaml` |
+
+**CC-SQL-02 · Kiểu chuẩn và cột bắt buộc [tự động].** Cột dùng kiểu PostgreSQL theo D00-01 §5 (`uuid` cho `T-ID`, `varchar(64)` cho `T-CODE`, `timestamptz` cho `T-TS`, `numeric(19,0)` cho `T-MONEY`, `varchar(32)` + `CHECK` cho `T-ENUM`, `jsonb` cho `T-JSON`, `varchar(16)` cho `T-TENANT`, `varchar(255)` cho `T-SECRET-REF`). Mọi bảng nghiệp vụ có `id`, `tenant_id`, `created_at`, `created_by`, `updated_at`, `updated_by`, `version`; bảng xóa mềm có `deleted_at`. Cấm `timestamp without time zone`, `float`/`real`/`double precision` cho tiền, `serial`/`identity` cho khóa chính bảng nghiệp vụ, `text` không giới hạn cho trường có giới hạn ở API. Tính duy nhất của mã nghiệp vụ luôn tính trong tenant: `UNIQUE (tenant_id, code)`, không phải `UNIQUE (code)`.
+
+### 6.2. RLS trong cùng changeset
+
+**CC-SQL-03 · Bảng mới kèm `tenant_id NOT NULL` và RLS trong cùng changeset [tự động].** Đây là quy tắc 3 của D03-10 §6. Changeset tạo bảng phải chứa, theo thứ tự: tạo bảng có `tenant_id varchar(16) NOT NULL`, `ENABLE ROW LEVEL SECURITY`, `FORCE ROW LEVEL SECURITY`, `CREATE POLICY tenant_isolation` với `USING` và `WITH CHECK` dùng `current_setting('app.tenant_id', false)`, và cấp quyền cho vai trò ứng dụng. Đặt trong cùng changeset để không có thời điểm nào bảng tồn tại mà không có chính sách, kể cả khi migration dừng giữa chừng. Bộ lint migration (mục 6.4) chặn changeset `createTable` không có các lệnh này; ngoài ra DU tự kiểm tra lúc khởi động và từ chối chạy nếu có bảng trong schema của mình thiếu chính sách hoặc vai trò kết nối có `BYPASSRLS` (D03-10 §4).
+
+**CC-SQL-04 · Vai trò CSDL tách bạch [review].** Migration chạy bằng vai trò chủ sở hữu schema (`ph07_rdm_owner`), ứng dụng chạy bằng vai trò không sở hữu bảng và không có `BYPASSRLS` (`ph07_rdm_app`), chỉ có `SELECT, INSERT, UPDATE, DELETE` trên bảng của schema mình. Bảng nhật ký kiểm toán và outbox chỉ cấp `INSERT, SELECT` (không `UPDATE`, `DELETE`) cho vai trò ứng dụng.
+
+Ví dụ dưới đây là một changeset tạo bảng đúng quy chuẩn.
+
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 012-create-catalog-item
+      author: team-ph07
+      comment: EN-07-03 Mục danh mục (FR-07-003)
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE ph07_rdm.catalog_item (
+                id          uuid         NOT NULL,
+                tenant_id   varchar(16)  NOT NULL,
+                catalog_id  uuid         NOT NULL,
+                code        varchar(64)  NOT NULL,
+                name        varchar(255) NOT NULL,
+                status      varchar(32)  NOT NULL,
+                attributes  jsonb        NOT NULL DEFAULT '{}'::jsonb,
+                valid_from  date         NOT NULL,
+                valid_to    date,
+                created_at  timestamptz  NOT NULL,
+                created_by  uuid         NOT NULL,
+                updated_at  timestamptz  NOT NULL,
+                updated_by  uuid         NOT NULL,
+                version     integer      NOT NULL DEFAULT 0,
+                deleted_at  timestamptz,
+                CONSTRAINT pk_catalog_item PRIMARY KEY (id),
+                CONSTRAINT fk_catalog_item_catalog FOREIGN KEY (catalog_id) REFERENCES ph07_rdm.catalog (id),
+                CONSTRAINT uq_catalog_item_tenant_id_catalog_id_code UNIQUE (tenant_id, catalog_id, code),
+                CONSTRAINT ck_catalog_item_status CHECK (status IN ('DRAFT','ACTIVE','RETIRED'))
+              );
+              CREATE INDEX ix_catalog_item_tenant_id_catalog_id ON ph07_rdm.catalog_item (tenant_id, catalog_id);
+              ALTER TABLE ph07_rdm.catalog_item ENABLE ROW LEVEL SECURITY;
+              ALTER TABLE ph07_rdm.catalog_item FORCE ROW LEVEL SECURITY;
+              CREATE POLICY tenant_isolation ON ph07_rdm.catalog_item
+                USING (tenant_id = current_setting('app.tenant_id', false))
+                WITH CHECK (tenant_id = current_setting('app.tenant_id', false));
+              GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.catalog_item TO ph07_rdm_app;
+      rollback:
+        - sql: { sql: "DROP TABLE ph07_rdm.catalog_item;" }
+```
+
+### 6.3. Migration an toàn, không khóa bảng
+
+Datahub nâng cấp cuốn chiếu không gián đoạn data plane (NFR-00-013), nên migration phải chạy được khi phiên bản cũ của ứng dụng vẫn đang phục vụ. Mỗi thay đổi lược đồ phá vỡ được tách thành chuỗi các bước tương thích theo mẫu mở rộng rồi thu hẹp (expand–contract): thêm cái mới, chạy song song, chuyển dữ liệu, rồi mới bỏ cái cũ ở một phiên bản phát hành sau.
+
+**CC-SQL-05 · Mỗi migration tương thích với phiên bản ứng dụng liền trước [review].** Đổi tên cột hay bảng làm bằng thêm cột mới, ghi cả hai, chuyển dữ liệu theo lô, đọc cột mới, rồi xóa cột cũ ở phiên bản sau. Không xóa cột còn được phiên bản đang chạy đọc.
+
+**CC-SQL-06 · Tránh lệnh giữ khóa lâu [tự động].** Các mẫu sau bị bộ lint migration chặn hoặc bắt buộc viết theo cách an toàn, như liệt kê trong bảng dưới đây.
+
+| Thao tác | Cách cấm | Cách đúng |
+|---|---|---|
+| Tạo chỉ mục trên bảng đã có dữ liệu | `CREATE INDEX` thường | `CREATE INDEX CONCURRENTLY` trong changeset riêng có `runInTransaction: false` |
+| Thêm khóa ngoại | `ADD CONSTRAINT ... FOREIGN KEY` một bước | `ADD CONSTRAINT ... NOT VALID`, sau đó `VALIDATE CONSTRAINT` ở changeset riêng |
+| Thêm `CHECK` | Một bước | `NOT VALID` rồi `VALIDATE` |
+| Thêm cột `NOT NULL` | `ADD COLUMN ... NOT NULL` không mặc định trên bảng lớn | Thêm cột cho phép rỗng hoặc có `DEFAULT` hằng, điền dữ liệu theo lô, thêm `CHECK (col IS NOT NULL) NOT VALID`, `VALIDATE`, rồi `SET NOT NULL` |
+| Đổi kiểu cột | `ALTER COLUMN TYPE` gây ghi lại bảng | Thêm cột mới, chuyển dữ liệu, đổi đọc ghi |
+| Cập nhật hàng loạt | Một `UPDATE` cho cả bảng | Cập nhật theo lô ≤ 10.000 dòng mỗi giao dịch, bằng tác vụ của ứng dụng hoặc changeset lặp |
+| Mọi changeset | Không đặt thời gian chờ | Đặt `SET lock_timeout = '5s'` và `statement_timeout` hợp lý ở đầu changeset để thất bại sớm thay vì xếp hàng chặn lưu lượng |
+
+**CC-SQL-07 · Changeset bất biến, có rollback [tự động].** Changeset đã chạy ở môi trường dùng chung không được sửa (Liquibase kiểm tra checksum); sửa sai bằng changeset mới. Mỗi changeset có `rollback` hoặc ghi lý do không thể hoàn tác trong `comment`. Không dùng `runAlways`, trừ changeset tạo lại hàm hoặc view có `runOnChange` được duyệt.
+
+**CC-SQL-08 · Dữ liệu tham chiếu tách khỏi lược đồ [review].** Dữ liệu nền (danh mục bắt buộc) nạp bằng changeset có `context: seed` và chỉ chứa dữ liệu `COMMON` hoặc dữ liệu mẫu; dữ liệu theo tenant được nạp bởi saga khởi tạo tenant (D03-10 §5.2), không bằng migration.
+
+### 6.4. Chỉ mục, khóa ngoại và kiểm tra tự động
+
+**CC-SQL-09 · Chỉ mục bắt đầu bằng `tenant_id` [review].** Chỉ mục phục vụ truy vấn nghiệp vụ đặt `tenant_id` làm cột đầu (vì mọi truy vấn đều có điều kiện RLS theo tenant). Mọi khóa ngoại có chỉ mục trên cột tham chiếu. Chỉ mục mới phải kèm câu truy vấn mà nó phục vụ trong `comment`. Bảng nhật ký lớn (siêu dữ liệu lượt gọi, NFR-00-062) dùng phân vùng theo thời gian (`PARTITION BY RANGE (created_at)`), không xóa bằng `DELETE`.
+
+**CC-SQL-10 · Khóa ngoại trong phạm vi schema [review].** Khóa ngoại chỉ trỏ trong cùng schema phân hệ. Tham chiếu tới dữ liệu của phân hệ khác lưu dưới dạng mã hoặc `id` không có khóa ngoại, tính nhất quán bảo đảm bằng sự kiện (SAD §7.3).
+
+**CC-SQL-11 · Lint migration trong CI [tự động].** Cổng build chạy bộ lint migration gồm Squawk (bắt mẫu khóa bảng) và luật tùy biến của Datahub (kiểm tra cột bắt buộc, RLS trong cùng changeset, tên ràng buộc, kiểu cấm), cùng một kiểm thử tích hợp chạy toàn bộ changelog trên PostgreSQL 18 Testcontainers rồi truy vấn `pg_class`, `pg_policy` để xác nhận mọi bảng trong schema phân hệ có `relrowsecurity` và `relforcerowsecurity` bằng `true` và có chính sách `tenant_isolation`.
+
+## 7. Hợp đồng OpenAPI và AsyncAPI
+
+**CC-API-01 · Hợp đồng nằm trong `contracts/` và là nguồn sự thật [tự động].** Đặc tả OpenAPI 3.1 đặt ở `contracts/openapi/{nhóm}-v{n}.yaml`, AsyncAPI 3.0 ở `contracts/asyncapi/{miền}-v{n}.yaml`, schema sự kiện (JSON Schema hoặc Avro) ở `contracts/schemas/`. Mã máy chủ kiểm tra khớp với hợp đồng bằng kiểm thử hợp đồng; mã khách sinh từ hợp đồng. PR thay đổi hợp đồng phải được duyệt trước hoặc cùng lúc với PR hiện thực (quy trình ở D04-02 §13).
+
+**CC-API-02 · Quy ước nội dung hợp đồng [tự động].** Mỗi operation có `operationId` dạng `camelCase` duy nhất, nhãn `x-datahub-id: API-{PH}-{nnn}`, `x-datahub-fr` liệt kê FR phục vụ, `x-datahub-permission: PERM-{PH}-{động-từ}`, `security` khai báo tường minh (không có operation nào thiếu `security` trừ `health`), phản hồi lỗi tham chiếu `components/responses/Problem` (RFC 9457), đường dẫn theo `/api/{nhóm}/v{n}/{tài-nguyên-số-nhiều}` kebab-case (D00-01 §6). Mọi schema có `additionalProperties: false` ở yêu cầu, mọi chuỗi có `maxLength`, mọi mảng có `maxItems`, mọi số có `minimum`/`maximum`, mọi trường dùng kiểu chuẩn D00-01 §5 (pattern, format). Spectral chạy bộ luật `@datahub/spectral-ruleset` (kế thừa `spectral:oas` và luật OWASP API Security của Spectral) với mức lỗi chặn merge.
+
+**CC-API-03 · Không thay đổi phá vỡ trong một phiên bản chính [tự động].** oasdiff so sánh hợp đồng với nhánh chính và chặn thay đổi phá vỡ (xóa trường, đổi kiểu, thêm trường bắt buộc ở yêu cầu, thu hẹp enum ở phản hồi…) trừ khi tăng phiên bản chính trong đường dẫn (NFR-00-055). Phiên bản cũ được duy trì ≥ 6 tháng, có header `Deprecation` và `Sunset`.
+
+**CC-API-04 · Sự kiện theo CloudEvents và đặt tên topic chuẩn [tự động].** Sự kiện là CloudEvents 1.0 chế độ có cấu trúc hoặc nhị phân với `id` (UUID v7), `source` (`/datahub/{du}/{module}`), `type` (`vn.datahub.{miền}.{thực-thể}.{sự-kiện}.v{n}`), `time`, phần mở rộng `dhtenant`, `traceparent`, `dataschema` trỏ tới Apicurio. Topic theo `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` (D00-01 §6), tạo bằng hàm chung `Topics.forTenant(...)`. Mỗi sự kiện có mã `EVT-{PH}-{nn}`. Schema đăng ký Apicurio với chế độ tương thích `BACKWARD` (hoặc `FULL` cho sự kiện công bố cho HTTT ngoài), consumer đọc khoan dung (tolerant reader): bỏ qua trường lạ, không lỗi khi thiếu trường tùy chọn.
+
+**CC-API-05 · Sự kiện không mang dữ liệu Nhạy cảm không cần thiết [review].** Sự kiện mang mã và trường tối thiểu để bên nhận phản ứng (mẫu "thông báo có tham chiếu"); bên nhận cần chi tiết thì gọi API có kiểm soát quyền. Trường mức Nhạy cảm không đặt vào sự kiện trừ khi SDD ghi rõ và trường được mã hóa.
+
+## 8. Quy tắc đa tenant
+
+Mục này nhắc lại **nguyên văn** sáu quy tắc cho người phát triển của D03-10 §6, gán mã `CC-TEN-01` đến `CC-TEN-06`, và chỉ ra cách mỗi quy tắc được kiểm tra tự động. Nguyên văn được giữ để không có khác biệt diễn giải giữa thiết kế và quy chuẩn; khi D03-10 thay đổi, bảng này phải được cập nhật theo.
+
+Bảng dưới đây gồm cột quy tắc nguyên văn, cột công cụ kiểm tra và cột cổng CI chặn vi phạm (định nghĩa cổng ở D04-02 §6).
+
+| Mã | Quy tắc (nguyên văn D03-10 §6) | Kiểm tra tự động | Cổng |
+|---|---|---|---|
+| CC-TEN-01 | Không đọc tenant từ tham số đường dẫn, query hay thân yêu cầu. | Luật Semgrep cấm `@PathVariable`/`@RequestParam`/trường record yêu cầu có tên `tenant`, `tenantId`, `tenant_id` trong controller ngoài nhóm `/api/platform/`; luật Spectral cấm tham số hoặc thuộc tính tên `tenant*` trong hợp đồng ngoài nhóm `platform`; luật ArchUnit cấm gọi `TenantContext.set` ngoài `shared.security`; kiểm thử gửi `tenant_id` khác trong thân và xác nhận bị bỏ qua (FR-00-010) | Build, SAST, Hợp đồng |
+| CC-TEN-02 | Không dùng `@Query` native vượt qua RLS; không tạo kết nối CSDL ngoài `DataSource` được quản lý. | Luật ArchUnit: `nativeQuery = true` chỉ trong danh sách cho phép; cấm `DriverManager`, cấm tạo `DataSource`/`HikariDataSource` ngoài `shared.persistence`; DU tự kiểm tra lúc khởi động vai trò không có `BYPASSRLS`; Semgrep cấm `SET ROLE`, `SET app.tenant_id` trong mã nghiệp vụ | Build, SAST |
+| CC-TEN-03 | Mọi bảng mới phải có `tenant_id NOT NULL` và chính sách RLS trong cùng changeset. | Lint migration tùy biến (CC-SQL-11); kiểm thử tích hợp truy vấn `pg_class`/`pg_policy`; kiểm tra lúc khởi động DU | Build, Tích hợp |
+| CC-TEN-04 | Mọi khóa bộ nhớ đệm, tên topic, khóa đối tượng phải dùng hàm tạo tên có tenant của thư viện dùng chung, không ghép chuỗi tay. | Semgrep cấm ghép chuỗi làm đối số của `KafkaTemplate.send`, `RedisTemplate`/`ValkeyTemplate` khóa, `S3Client.putObject` key, `@Cacheable(key=...)` không dùng `TenantKeys`; ArchUnit cấm phụ thuộc trực tiếp các client này ngoài `shared` | SAST, Build |
+| CC-TEN-05 | Mọi tác vụ nền phải được bọc trong `TenantContext.runAs(tenant, …)`. | Luật ArchUnit tùy biến trên phương thức `@Scheduled`, `@KafkaListener`, `@ApplicationModuleListener`, `@Async`; khi chạy, `TenantContext.require()` ném lỗi nếu chưa đặt tenant và kiểm thử tích hợp của tác vụ nền kiểm tra điều này | Build, Tích hợp |
+| CC-TEN-06 | Mỗi API mới phải có ít nhất một ca kiểm thử rò rỉ chéo tenant: tạo dữ liệu ở tenant A, truy cập bằng token tenant B, kỳ vọng `404` (không phải `403`, để không lộ sự tồn tại). | Kiểm thử meta đối chiếu mọi endpoint với danh sách kiểm thử rò rỉ đã đăng ký (CC-TEST-03); bộ kiểm thử rò rỉ chéo tenant chạy trong cổng tích hợp | Tích hợp |
+
+Ngoài sáu quy tắc trên, hai quy tắc bổ sung dưới đây cụ thể hóa D03-10 §3 cho mã nguồn.
+
+**CC-TEN-07 · Tenant của sự kiện phải khớp hai nguồn [tự động].** Consumer Kafka so sánh header `dhtenant` với tiền tố tên topic; không khớp thì chuyển DLQ và phát cảnh báo an ninh, không xử lý. Thư viện chung `TenantAwareRecordInterceptor` làm việc này cho mọi listener.
+
+**CC-TEN-08 · Truy cập liên tenant đi qua API nền tảng có lý do [review].** Chỉ mã trong nhóm `/api/platform/` với vai trò nền tảng được chuyển tenant, bằng `TenantContext.runAsCrossTenant(target, reason, …)`, hàm này bắt buộc lý do và ghi kiểm toán (FR-00-012). Không có cờ "bỏ qua tenant" trong mã nghiệp vụ.
+
+## 9. Lập trình an toàn theo OWASP ASVS 5.0 mức 2
+
+### 9.1. Mục tiêu và cách áp dụng
+
+Datahub phải đạt OWASP ASVS 5.0 mức 2 cho mọi ứng dụng web và API (NFR-00-024). ASVS là chuẩn kiểm chứng, không phải quy chuẩn viết mã, nên mục này dịch từng chương ASVS thành quy tắc lập trình cụ thể và công cụ phát hiện vi phạm sớm nhất có thể, để đến lúc kiểm thử xâm nhập và kiểm thử ASVS ở D05-01 thì phần lớn yêu cầu đã được bảo đảm từ mã. Nhóm quy tắc này hiện thực các biện pháp thuộc dải SEC-40–49 của D03-07 ở mức mã nguồn; số hiệu biện pháp cụ thể trong dải sẽ được gắn khi D03-07 chốt (Q358).
+
+**CC-SEC-01 · ASVS 5.0 mức 2 là đường cơ sở [review].** Mọi tính năng chạm vào xác thực, phân quyền, xử lý tệp, gọi ra ngoài, mật mã hoặc dữ liệu Nhạy cảm phải được gắn nhãn `security-impact` trên PR và qua người duyệt bảo mật (D04-02 §5.2). Danh mục kiểm tra review bảo mật ở D04-02 §5.4 được rút từ bảng 9.2.
+
+**CC-SEC-02 · Mô hình hóa mối đe dọa cho tính năng mới có bề mặt ngoài [review].** Tính năng mở endpoint cho HTTT bên ngoài, thêm Kamelet kết nối loại hệ thống mới, hoặc xử lý loại dữ liệu Nhạy cảm mới phải có ghi chú mô hình mối đe dọa theo STRIDE (tối thiểu một trang trong SDD phân hệ) trước khi hiện thực.
+
+### 9.2. Bảng ánh xạ chương ASVS 5.0 → quy tắc → công cụ
+
+Bảng dưới đây liệt kê mười bảy chương của ASVS 5.0, quy tắc lập trình chính đáp ứng chương đó trong Datahub và công cụ kiểm tra. Chương V17 (WebRTC) không áp dụng vì Datahub không dùng WebRTC. Công cụ được viết tắt như sau: Semgrep là bộ luật Semgrep của Datahub kèm bộ luật cộng đồng `p/java`, `p/typescript`, `p/owasp-top-ten`; CodeQL là truy vấn `security-extended` cho Java và JavaScript/TypeScript; FSB là SpotBugs với plugin FindSecBugs; ESL-S là `eslint-plugin-security` và `eslint-plugin-no-unsanitized`; ZAP là quét DAST OWASP ZAP trên môi trường kiểm thử.
+
+| Chương ASVS 5.0 | Quy tắc lập trình Datahub | Công cụ kiểm tra |
+|---|---|---|
+| V1 Encoding and Sanitization | Truy vấn tham số hóa (CC-JPA-03, CC-SEC-10, 11); không HTML thô ở giao diện (CC-FE-04); thoát ký tự theo ngữ cảnh khi sinh tệp (CC-SEC-16); không thực thi biểu thức tùy ý trong luồng (CC-CAMEL-10); không gọi lệnh hệ thống (CC-SEC-17) | Semgrep, CodeQL, FSB, ESL-S, validator luồng |
+| V2 Validation and Business Logic | Kiểm tra đầu vào ở biên bằng danh sách cho phép (CC-VAL-01…05); quy tắc nghiệp vụ ở tầng dịch vụ (CC-VAL-04); idempotency và chống gửi lặp (CC-TX-05…07); hạn mức theo tenant tại APISIX | Kiểm thử đơn vị, kiểm thử hợp đồng, Spectral (`maxLength`, `additionalProperties`) |
+| V3 Web Frontend Security | CSP chặt, không `unsafe-eval` (CC-FE-15); token trong bộ nhớ; header bảo mật (HSTS, `X-Content-Type-Options`, `frame-ancestors`) do APISIX đặt; cookie (nếu có) `Secure`, `HttpOnly`, `SameSite=Strict` | ESL-S, ZAP, Lighthouse (best practices), kiểm thử E2E kiểm header |
+| V4 API and Web Service | Hợp đồng trước (CC-API-01, 02); phương thức HTTP đúng ngữ nghĩa, không đổi trạng thái bằng `GET`; giới hạn kích thước và độ sâu (CC-VAL-05); phân trang có trần (CC-JPA-05); không lộ trường thừa (CC-JAVA-05) | Spectral (OWASP API ruleset), oasdiff, kiểm thử hợp đồng, ZAP API scan |
+| V5 File Handling | Tải lên theo danh sách phần mở rộng và kiểm tra nội dung thật (magic bytes), giới hạn kích thước, tên lưu là UUID, lưu vào kho đối tượng không vào hệ tệp máy chủ, quét mã độc (CC-SEC-18); chống path traversal (CC-SEC-14); chống chèn công thức khi xuất (CC-SEC-16) | Semgrep, CodeQL (path injection), kiểm thử đơn vị với tệp độc mẫu |
+| V6 Authentication | Không có màn đăng nhập riêng, xác thực qua Keycloak OIDC + PKCE (FR-00-001); không tự lưu mật khẩu; MFA và khóa tài khoản do Keycloak thực thi (NFR-00-025, 026) | Review, kiểm thử cấu hình realm |
+| V7 Session Management | Phiên do Keycloak quản lý; tự đăng xuất theo FR-00-003; thu hồi phiên (FR-00-005); giao diện không giữ token lâu (CC-FE-15) | Kiểm thử E2E, ZAP |
+| V8 Authorization | Từ chối mặc định, mọi endpoint có quyền `PERM` (CC-SEC-08); kiểm tra quyền trên đối tượng chống IDOR/BOLA (CC-SEC-20); chống leo quyền chức năng (CC-SEC-22); cách ly tenant (mục 8); chính sách OPA có kiểm thử Rego | ArchUnit, kiểm thử phân quyền âm tính (CC-TEST-04), kiểm thử rò rỉ chéo tenant, `opa test` |
+| V9 Self-contained Tokens | Xác minh chữ ký JWT bằng JWKS của realm, kiểm `iss`, `aud`, `exp`, `nbf`, chỉ chấp nhận thuật toán bất đối xứng được liệt kê (RS256/ES256/PS256), từ chối `none` và `HS*` (CC-SEC-27) | Kiểm thử đơn vị với token giả mạo, Semgrep (JWT không xác minh) |
+| V10 OAuth and OIDC | Client giao diện là client công khai + PKCE; máy–máy dùng `client_credentials` với mTLS (RFC 8705) hoặc `private_key_jwt` (RFC 7523) theo RFC 9700; không dùng luồng implicit hay password grant | Review cấu hình client Keycloak, kiểm thử tích hợp |
+| V11 Cryptography | Chỉ dùng thư viện chung `vn.datahub.common.crypto` bọc OpenBao transit và JCA với thuật toán được duyệt (AES-256-GCM, SHA-256 trở lên, HMAC-SHA256, Ed25519/ECDSA P-256); cấm MD5, SHA-1, DES, ECB, IV cố định; số ngẫu nhiên bảo mật bằng `SecureRandom` (CC-SEC-25, 26) | Semgrep, FSB (WEAK_MESSAGE_DIGEST, CIPHER_INTEGRITY, PREDICTABLE_RANDOM), CodeQL |
+| V12 Secure Communication | Mọi gọi ra ngoài qua HTTPS với kiểm tra chứng chỉ và tên máy (không `TrustAllCerts`, không tắt hostname verification); mTLS nội bộ do Istio ambient; TLS 1.2 tối thiểu cho HTTT cũ, 1.3 ưu tiên (NFR-00-020) | Semgrep, FSB (WEAK_TRUST_MANAGER, WEAK_HOSTNAME_VERIFIER) |
+| V13 Configuration | Không bí mật trong mã (CC-GEN-05, CC-CFG-02); Actuator tối thiểu (CC-CFG-05); phụ thuộc không có lỗ hổng nghiêm trọng (CC-GEN-09); ảnh container tối thiểu, chạy không root; không bật chế độ gỡ lỗi ở sản xuất | gitleaks, Trivy (phụ thuộc, ảnh, IaC), OWASP Dependency-Check hoặc Trivy SCA, Checkov/Trivy config cho Kustomize |
+| V14 Data Protection | Phân loại dữ liệu bốn mức (SAD §8.2); mã hóa trường Nhạy cảm ở tầng ứng dụng (CC-JPA-07); che khi hiển thị và khi xuất (FR-00-034); không đặt dữ liệu Nhạy cảm vào URL, log, sự kiện (CC-LOG-04, CC-API-05); `Cache-Control: no-store` cho phản hồi có dữ liệu Hạn chế trở lên | Bộ quét mẫu dữ liệu trên log, Semgrep, review |
+| V15 Secure Coding and Architecture | Ranh giới module (CC-MOD-*); phụ thuộc được ghim và kiểm kê bằng SBOM (D04-02 §8, §10); chống giải tuần tự không an toàn (CC-SEC-12); chống gán hàng loạt (CC-SEC-21); xử lý đồng thời an toàn bằng khóa lạc quan (CC-TX-04) | ArchUnit, Modulith verify, Semgrep, FSB, Syft/CycloneDX |
+| V16 Security Logging and Error Handling | Log JSON có trace và tenant (CC-LOG-01, 02); nhật ký kiểm toán chỉ-thêm (CC-LOG-07); không lộ chi tiết lỗi (CC-ERR-03); chống chèn log (CC-LOG-05, CC-SEC-30); ghi sự kiện an ninh (đăng nhập thất bại, từ chối quyền, tenant không khớp) ở dạng có thể đưa lên SIEM | Semgrep, kiểm thử tích hợp kiểm trường log, bộ quét mẫu dữ liệu |
+| V17 WebRTC | Không áp dụng | — |
+
+### 9.3. Mẫu cấm và cách viết đúng
+
+Phần này liệt kê các mẫu mã bị cấm thường gặp nhất trong loại hệ thống như Datahub: nền tảng tích hợp nhận dữ liệu từ hàng trăm HTTT, gọi ra nhiều hệ thống khác, xuất nhập tệp Excel và phục vụ nhiều tenant. Mỗi mẫu có mã quy tắc, giải thích ngắn về nguy cơ, cách đúng và công cụ phát hiện.
+
+**CC-SEC-08 · Mọi endpoint gắn quyền tường minh [tự động].** Phương thức controller phải có `@RequiresPermission("PERM-07-publish")` (annotation của thư viện chung, chuyển thành kiểm tra Spring Security và truy vấn OPA khi cần thuộc tính) hoặc `@PreAuthorize`. Cấu hình bảo mật mặc định `anyRequest().denyAll()` cho đường dẫn không khai báo. Luật ArchUnit ở CC-MOD-05 chặn phương thức thiếu annotation.
+
+**CC-SEC-10 · Cấm SQL, JPQL ghép chuỗi [tự động].** Ghép đầu vào vào câu truy vấn mở đường cho SQL injection, kể cả khi đầu vào "đã kiểm tra". Phát hiện bằng Semgrep (`java.lang.security.audit.formatted-sql-string`, `jdbc-sqli`), CodeQL (`java/sql-injection`), FSB (`SQL_INJECTION_*`).
+
+```java
+// SAI
+jdbc.queryForList("SELECT * FROM ph07_rdm.catalog WHERE code = '" + code + "'");
+// ĐÚNG
+jdbc.sql("SELECT id, code, name FROM ph07_rdm.catalog WHERE code = :code")
+    .param("code", code).query(CatalogRow.class).list();
+```
+
+**CC-SEC-11 · Tên cột, chiều sắp xếp động qua danh sách cho phép [tự động].** Tên cột không tham số hóa được, nên tham số `sort` từ client được ánh xạ qua `Map<String, String>` cố định sang tên cột; giá trị không có trong bản đồ trả `400`. Với Spring Data, dùng `Sort` được dựng từ danh sách cho phép, không truyền nguyên `Pageable` từ client vào truy vấn native.
+
+**CC-SEC-12 · Cấm giải tuần tự không an toàn [tự động].** Không dùng `ObjectInputStream`, `XMLDecoder`, XStream không cấu hình danh sách cho phép, SnakeYAML `new Yaml()` với constructor mặc định trên dữ liệu không tin cậy, Jackson `enableDefaultTyping`/`activateDefaultTyping` hay `@JsonTypeInfo(use = Id.CLASS)`. JSON đa hình dùng `@JsonTypeInfo(use = Id.NAME)` với `@JsonSubTypes` liệt kê đóng. YAML từ người dùng (luồng từ trình thiết kế) được đọc bằng `SafeConstructor` và kiểm tra lược đồ trước khi tới Camel. Phát hiện bằng FSB (`OBJECT_DESERIALIZATION`, `JACKSON_UNSAFE_DESERIALIZATION`), Semgrep, CodeQL (`java/unsafe-deserialization`).
+
+**CC-SEC-13 · Cấm XXE [tự động].** Mọi bộ phân tích XML (DOM, SAX, StAX, `TransformerFactory`, `SchemaFactory`, XPath trong Camel, xử lý SOAP của PH-05/PH-14) tạo qua `SecureXml.newDocumentBuilder()` của thư viện chung, đã bật `XMLConstants.FEATURE_SECURE_PROCESSING`, tắt `DOCTYPE` (`disallow-doctype-decl`), tắt thực thể ngoài và `XInclude`. Đọc tệp `.xlsx` bằng Apache POI phiên bản đã vá và giới hạn tỉ lệ nén (`ZipSecureFile.setMinInflateRatio`) để chống bom nén. Phát hiện bằng FSB (`XXE_*`), CodeQL (`java/xxe`), Semgrep.
+
+```java
+// SAI
+DocumentBuilder b = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+// ĐÚNG
+DocumentBuilder b = SecureXml.newDocumentBuilder(); // DOCTYPE bị cấm, không thực thể ngoài
+```
+
+**CC-SEC-14 · Cấm path traversal [tự động].** Không dựng đường dẫn tệp hay khóa đối tượng từ đầu vào. Tệp lưu ở kho đối tượng với khóa do hệ thống sinh (`{tenant}/{mục-đích}/{uuid}`) qua `TenantKeys.objectKey(...)`; tên gốc chỉ lưu làm siêu dữ liệu đã làm sạch. Khi buộc phải ghép đường dẫn cục bộ (ví dụ giải nén), chuẩn hóa bằng `Path.normalize()` và kiểm tra `startsWith(baseDir)` sau chuẩn hóa; từ chối mục nén có `..` hoặc đường dẫn tuyệt đối (Zip Slip). Phát hiện bằng CodeQL (`java/path-injection`, `java/zipslip`), FSB (`PATH_TRAVERSAL_IN`), Semgrep.
+
+**CC-SEC-15 · Cấm SSRF trong adapter và mọi gọi ra ngoài [tự động].** Bộ điều hợp là nơi Datahub gọi tới địa chỉ do người dùng cấu hình, nên là điểm SSRF nguy hiểm nhất: kẻ tấn công có thể khai báo đích trỏ vào dịch vụ nội bộ (metadata của cloud, Admin API của APISIX, OpenBao). Quy tắc: mọi HTTP client ra ngoài được tạo qua `OutboundHttpClientFactory` của thư viện chung (Spring) hoặc Kamelet `dh-http-sink` (Camel), các thành phần này phân giải DNS rồi kiểm tra địa chỉ IP đích không thuộc dải nội bộ, loopback, link-local, dải metadata `169.254.0.0/16`, dải dịch vụ và pod của cụm (trừ danh sách cho phép tường minh của HTTT đã kết nạp), kiểm tra lại sau mỗi chuyển hướng (hoặc tắt tự động chuyển hướng), chỉ cho phép lược đồ `https` (và `http` khi danh sách cho phép ghi rõ), giới hạn thời gian chờ và kích thước phản hồi. Đích được kiểm tra khi khai báo bộ điều hợp và kiểm tra lại khi gọi để chống DNS rebinding. Lớp mạng có thêm network policy Cilium giới hạn đường ra của `dh-runtime` (SEC-10–19). Phát hiện bằng Semgrep (cấm `RestClient.create()`, `HttpClient.newHttpClient()`, `new URL(input).openConnection()` ngoài factory), CodeQL (`java/ssrf`).
+
+```java
+// SAI: URL lấy từ cấu hình người dùng, gọi thẳng
+restClient.get().uri(adapter.getEndpoint()).retrieve().body(String.class);
+// ĐÚNG: factory kiểm tra đích, chặn dải nội bộ, giới hạn thời gian chờ và kích thước
+outbound.forAdapter(adapter.id()).get(adapter.endpointRef()).retrieve().body(String.class);
+```
+
+**CC-SEC-16 · Chống chèn công thức khi xuất CSV và Excel [tự động].** Xuất danh sách ra `.xlsx` và CSV (FR-00-030) đưa dữ liệu do người dùng khác nhập vào tệp người dùng sẽ mở bằng Excel; ô bắt đầu bằng `=`, `+`, `-`, `@`, ký tự tab hoặc xuống dòng có thể bị hiểu là công thức (CSV injection). Mọi xuất tệp dùng `SpreadsheetExporter` của thư viện chung: với `.xlsx`, ghi giá trị kiểu chuỗi (`CellType.STRING`) không bao giờ đặt công thức từ dữ liệu; với CSV, thêm dấu nháy đơn trước giá trị bắt đầu bằng các ký tự trên và đặt mọi trường trong dấu nháy kép. Trường Nhạy cảm được che theo FR-00-034. Phát hiện bằng Semgrep (cấm `setCellFormula` với dữ liệu, cấm ghi CSV ngoài exporter) và kiểm thử đơn vị với chuỗi `=HYPERLINK(...)`.
+
+**CC-SEC-17 · Cấm thực thi lệnh hệ thống [tự động].** Không dùng `Runtime.exec`, `ProcessBuilder` trong mã ứng dụng; thành phần `exec:` của Camel bị cấm (CC-CAMEL-10). Phát hiện bằng Semgrep, FSB (`COMMAND_INJECTION`).
+
+**CC-SEC-18 · Tải lên tệp an toàn [tự động + review].** Kiểm tra phần mở rộng theo danh sách cho phép của chức năng, kiểm tra kiểu thật bằng Apache Tika (magic bytes), giới hạn kích thước ở APISIX và DU, quét mã độc bằng ClamAV trước khi đưa tệp vào trạng thái dùng được, tên lưu là UUID, trả tệp cho người tải xuống với `Content-Disposition: attachment` và `X-Content-Type-Options: nosniff`.
+
+**CC-SEC-19 · Biểu thức chính quy an toàn [tự động].** Biểu thức chính quy áp lên đầu vào không có lượng từ lồng nhau dễ gây quay lui thảm họa (ReDoS); biểu thức do người dùng cung cấp (ví dụ cấu trúc mã danh mục) được kiểm tra bằng bộ phân tích an toàn và chạy với giới hạn thời gian hoặc bằng thư viện RE2/J. Phát hiện bằng Semgrep (`regex-dos`), CodeQL (`java/redos`, `js/redos`).
+
+**CC-SEC-20 · Chống IDOR/BOLA: mọi truy cập đối tượng kiểm tra quyền trên chính đối tượng [tự động + review].** RLS bảo đảm không đọc chéo tenant, nhưng trong một tenant vẫn có ranh giới giữa tổ chức, giữa HTTT thành viên, giữa người tạo và người khác. Mọi phương thức nhận `id` từ đường dẫn phải tải đối tượng rồi gọi `authz.check(principal, action, resource)` (OPA với thuộc tính đối tượng: tổ chức sở hữu, phân loại, trạng thái) trước khi trả hoặc sửa; không tin rằng "người dùng chỉ biết id của mình". Không có quyền thì trả `404` khi việc lộ sự tồn tại là rủi ro, `403` khi người dùng đã biết đối tượng tồn tại (theo CC-ERR-04). Truy vấn danh sách áp cùng điều kiện quyền ở mức truy vấn. Kiểm tra bằng kiểm thử phân quyền âm tính với hai người dùng cùng tenant khác tổ chức (CC-TEST-04) và kiểm thử rò rỉ chéo tenant.
+
+**CC-SEC-21 · Chống gán hàng loạt (mass assignment) [tự động].** Không ràng buộc thân yêu cầu trực tiếp vào entity; mỗi lệnh có record yêu cầu riêng chỉ chứa trường được phép sửa (CC-JAVA-04, 05); hợp đồng đặt `additionalProperties: false` và Jackson bật `FAIL_ON_UNKNOWN_PROPERTIES` cho yêu cầu. Trường `id`, `tenant_id`, `status`, `version`, `created_*`, `owner` không bao giờ có trong record yêu cầu sửa thuộc tính. Phát hiện bằng ArchUnit (cấm `@RequestBody` có kiểu là `@Entity`), Semgrep, Spectral.
+
+**CC-SEC-22 · Chống leo quyền chức năng (BFLA) [tự động].** Lệnh quản trị và lệnh hành động (`:publish`, `:suspend`, `:approve`) có quyền riêng, tách khỏi quyền sửa thuộc tính; API nền tảng nằm dưới `/api/platform/` với vai trò nền tảng. Kiểm thử phân quyền âm tính gọi mỗi lệnh hành động bằng vai trò chỉ có quyền đọc.
+
+**CC-SEC-25 · Không tự viết mật mã [tự động].** Mã hóa, ký, băm mật khẩu (nếu có), sinh khóa chỉ qua thư viện chung `vn.datahub.common.crypto` hoặc OpenBao transit; thư viện chung chỉ phơi ra thao tác cấp cao (`encryptField`, `sign`, `hmac`) với thuật toán đã chốt. Khóa không bao giờ nằm trong mã hay cấu hình. Phát hiện bằng Semgrep (cấm `Cipher.getInstance` ngoài thư viện chung), FSB.
+
+**CC-SEC-26 · Giá trị bí mật sinh bằng `SecureRandom` [tự động].** Token, mã xác nhận, `client_secret`, khóa idempotency phía máy chủ dùng `SecureRandom` (Java) hoặc `crypto.getRandomValues` (trình duyệt); cấm `Math.random`, `java.util.Random`, `ThreadLocalRandom` cho mục đích này. So sánh giá trị bí mật dùng so sánh thời gian hằng (`MessageDigest.isEqual`). Phát hiện bằng FSB (`PREDICTABLE_RANDOM`), ESL-S (`detect-pseudoRandomBytes`), Semgrep.
+
+**CC-SEC-27 · Xác minh JWT đầy đủ [tự động].** Chỉ dùng `spring-boot-starter-oauth2-resource-server` (hoặc `quarkus-oidc`) với JWKS của realm, kiểm `iss` khớp realm của tenant, `aud` chứa tên DU, `exp`/`nbf` với độ lệch đồng hồ ≤ 30 giây, danh sách thuật toán đóng. Không tự giải mã JWT bằng Base64 để lấy claim trước khi xác minh. Webhook nhận vào xác minh chữ ký HMAC-SHA256 và chống phát lại bằng dấu thời gian ±5 phút và mã sự kiện đã thấy (SAD §7.1).
+
+**CC-SEC-30 · Chống chèn log [tự động].** Như CC-LOG-05; Semgrep luật `crlf-injection-logs`, FSB (`CRLF_INJECTION_LOGS`).
+
+**CC-SEC-31 · Không lộ thông tin qua lỗi và header [tự động].** Như CC-ERR-03; ngoài ra tắt header `Server`, `X-Powered-By`, không trả phiên bản thành phần ở trang lỗi; ZAP kiểm tra trong DAST.
+
+### 9.4. Công cụ và mức chặn
+
+Bảng dưới đây chốt công cụ phân tích bảo mật, phạm vi và mức chặn merge; cấu hình chạy ở cổng tương ứng trong D04-02 §6. Lý do dùng song song Semgrep và CodeQL là hai công cụ bổ sung nhau: Semgrep nhanh, viết luật tùy biến dễ cho các quy tắc riêng của Datahub (đa tenant, factory HTTP), còn CodeQL phân tích luồng dữ liệu liên thủ tục sâu hơn cho các lớp lỗi chèn. Trong môi trường không có GitHub Advanced Security hoặc chạy CI on-prem không kết nối mạng, CodeQL có thể được thay bằng SpotBugs FindSecBugs cộng với Semgrep (Q355).
+
+| Công cụ | Phạm vi | Chặn merge khi |
+|---|---|---|
+| Semgrep (bộ luật Datahub + cộng đồng) | Java, TypeScript, YAML luồng Camel, Dockerfile | Bất kỳ phát hiện mức `ERROR`; mức `WARNING` báo trên PR |
+| CodeQL `security-extended` | Java, JavaScript/TypeScript | Mức `error` hoặc độ nghiêm trọng bảo mật ≥ 7,0 |
+| SpotBugs + FindSecBugs | Bytecode Java | Mọi phát hiện nhóm `SECURITY` không có loại trừ được duyệt |
+| `eslint-plugin-security`, `no-unsanitized` | TypeScript | Mọi lỗi (chạy chung ESLint `--max-warnings 0`) |
+| Trivy (`fs`, `image`, `config`) | Phụ thuộc Maven và npm, ảnh container, Kustomize/Helm, Dockerfile | CRITICAL bất kỳ; HIGH chưa có ngoại lệ được duyệt (NFR-00-023); cấu hình sai mức HIGH trở lên |
+| gitleaks | Toàn bộ lịch sử Git và PR | Bất kỳ phát hiện (NFR-00-022) |
+| OWASP ZAP | Môi trường kiểm thử (DAST) | Cảnh báo mức High; chạy hằng đêm và trước phát hành |
+
+**CC-SEC-40 · Loại trừ phát hiện phải có lý do và hạn [review].** Một phát hiện được đánh dấu dương tính giả hoặc chấp nhận rủi ro bằng chú thích tại chỗ (`// nosemgrep: {rule-id} -- {lý do}, {mã việc}`, `@SuppressFBWarnings(value = "...", justification = "...")`) hoặc trong tệp loại trừ tập trung có ngày hết hạn ≤ 6 tháng. Mọi loại trừ cần người duyệt bảo mật; tệp loại trừ thuộc CODEOWNERS của nhóm ATTT (D04-02 §5.2).
+
+## 10. Áp dụng cho mã hiện có và cơ chế miễn trừ
+
+Quy chuẩn áp dụng ngay cho mọi mã mới. Mã đã có trong kho trước khi D04-01 được duyệt được đưa về quy chuẩn theo lộ trình ở mục 11; trong thời gian chuyển tiếp, công cụ chạy ở chế độ "chỉ chặn trên phần thay đổi" (diff-aware) để PR mới không làm tình trạng xấu thêm, còn phát hiện cũ được ghi thành đường cơ sở (baseline) và giảm dần. Đường cơ sở của Semgrep, SpotBugs, Squawk và luật ESLint tùy biến được commit trong `.quality/baseline/` và chỉ được phép co lại.
+
+**CC-GEN-13 · Miễn trừ một quy tắc phải được ghi nhận [review].** Một mô-đun cần làm khác một quy tắc "Phải" (ví dụ trình thiết kế luồng cần kích thước canvas tính bằng điểm ảnh, trái CC-FE-13) ghi miễn trừ trong tệp `docs/exemptions.yaml` của kho mã gồm mã quy tắc, phạm vi tệp, lý do, người duyệt, ngày hết hạn. Miễn trừ liên quan nhóm `CC-SEC` hoặc `CC-TEN` cần người duyệt bảo mật; miễn trừ không có ngày hết hạn không được chấp nhận.
+
+## 11. Hiện trạng mã nguồn so với quy chuẩn
+
+Khảo sát kho mã tại thời điểm viết (các DU `apps/control`, `apps/data`, `apps/adapter-mgr`, `camel/dancu`, `camel/datdai`, `apps/console`, thư viện `libs/common-java`, migration Liquibase, quy trình CI trong `.github/workflows`) cho thấy nền móng đúng hướng ở nhiều điểm: Java 21, Spring Boot 4.0.2, Spring Modulith 2.0.1, cấu trúc `api`/`internal` theo module và kiểm thử `ApplicationModules.verify()` đã có ở `apps/control` và `apps/data`; Camel Quarkus 3.33.2 với YAML DSL; JDBC đã dùng tham số; có record `ProblemDetail` theo RFC 9457 trong thư viện chung; gitleaks đã chạy trong CI. Bảng dưới đây liệt kê các điểm lệch, mức độ và hướng xử lý; các điểm mức cao phải xử lý trước khi phát triển phân hệ đợt MVP tiếp theo.
+
+| # | Điểm lệch | Quy tắc | Mức | Hướng xử lý |
+|---|---|---|---|---|
+| 1 | Package gốc `vn.lgsp.*`, groupId `vn.lgsp`, DU tên `control`, `data`, `adapter-mgr` khác bản đồ DU của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`…) | CC-MOD-01 | Trung bình | Đổi sang `vn.datahub.{du}` một lần bằng công cụ tái cấu trúc, cùng lúc chốt bản đồ DU (Q350) |
+| 2 | Chưa có xử lý tenant: không `TenantContext`, không đặt `app.tenant_id`, bảng không có `tenant_id`, không có RLS | CC-TEN-01…06, CC-SQL-03 | **Cao** | Xây `vn.datahub.common.tenant` và `shared.persistence` trước mọi tính năng mới; migration bổ sung `tenant_id` + RLS cho bảng hiện có theo mẫu expand–contract |
+| 3 | Schema `ph01`, `ph07` thay vì `ph01_onboarding`, `ph07_rdm`; bảng, cột đặt tên tiếng Việt không dấu (`danh_muc`, `ma_danh_muc`); khóa chính `danh_muc_id` thay vì `id`; `VARCHAR(60)` thay vì `varchar(64)`; thiếu `created_by`, `updated_*`, `version` | CC-SQL-01, 02, D00-01 §5–6 | Cao | Quyết định đổi tên hay chấp nhận ngoại lệ có thời hạn (Q351); bổ sung cột bắt buộc |
+| 4 | Outbox được chuyển đi bằng tác vụ `@Scheduled` thăm dò bảng và ghi `payload` ra log ở mức INFO; chưa có Kafka, chưa có Debezium | CC-TX-03, CC-LOG-04, CC-TEN-05 | Cao (lộ dữ liệu khi có dữ liệu thật) | Bỏ ghi payload ra log ngay; chọn cơ chế chuyển outbox (Q352) |
+| 5 | `ProblemDetail` của thư viện chung thiếu trường `code` (`ERR-{PH}-{nnn}`) và `errors`; chưa có `@RestControllerAdvice` chuẩn | CC-ERR-01, 02 | Trung bình | Mở rộng record, thêm bộ xử lý chung |
+| 6 | Chưa dùng JSpecify, NullAway, Error Prone, Spotless, JaCoCo, ArchUnit (chỉ có Modulith verify) | CC-JAVA-01, 06, CC-MOD-05, CC-TEST-02 | Trung bình | Thêm vào `pluginManagement` của POM gốc |
+| 7 | Chưa có log JSON có cấu trúc, chưa có `trace_id`, `tenant_id` trong log | CC-LOG-01, 02 | Trung bình | Bật structured logging của Boot 4 và JSON logging của Quarkus |
+| 8 | Cấu hình có giá trị mặc định cho mật khẩu CSDL (`${POSTGRES_PASSWORD:lgsp_dev_change_me}`) trong `application.yml` và `application.properties` | CC-CFG-02 | Cao | Bỏ giá trị mặc định; dev cục bộ dùng `.env` hoặc Testcontainers |
+| 9 | Actuator mở `health`, `info` trên cổng ứng dụng; chưa tách cổng quản trị | CC-CFG-05 | Thấp | Thêm `management.server.port` |
+| 10 | Giao diện: chưa có ESLint, Prettier, Stylelint; chưa dùng TanStack Query; chưa có i18n; khoảng 87 chỗ `style={{...}}` và khoảng 2.500 dòng CSS tự do (`designer.css`, `catalog.css`, `tokens.css` dạng mockup); chưa có gói `@datahub/ui`, `@datahub/api-client` | CC-FE-05, 10, 12, 13, 17 | Cao (NFR-00-045) | Lập gói `@datahub/ui` theo D03-05; chuyển dần màn sang token; bật lint với đường cơ sở |
+| 11 | Luồng mẫu (`ping.camel.yaml`, mẫu chín chặng) không khai báo `errorHandler`; `camel/dancu` dùng `camel-quarkus-sql` truy cập CSDL trực tiếp với datasource riêng | CC-CAMEL-04, 07, CC-TEN-02 | Trung bình | Thêm DLQ chuẩn; làm rõ ranh giới truy cập CSDL của `dh-runtime` (Q359) |
+| 12 | Hai mô-đun Camel không nằm trong POM gốc; phiên bản phụ thuộc giao diện dùng khoảng `^`, `~` | D04-02 §8 | Trung bình | Đưa vào reactor hoặc BOM chung; ghim chính xác qua lockfile và Renovate |
+| 13 | CI chỉ có biên dịch, kiểm thử đơn vị và gitleaks; thiếu SAST, SCA, quét ảnh, lint hợp đồng, kiểm thử giao diện; GitHub Actions ghim theo thẻ (`@v4`) chứ không theo SHA | D04-02 §6 | Cao | Triển khai đủ cổng theo D04-02 §6 |
+| 14 | Chưa có `CODEOWNERS`, mẫu PR, `.github/dependabot.yml` hay `renovate.json` | D04-02 §4, §5, §8 | Trung bình | Tạo theo D04-02 |
+
+`AGENTS.md` và IP-02 hiện là luật cho tác tử AI và người phát triển; sau khi D04-01 được duyệt, `AGENTS.md` cần thêm một dòng trỏ tới D04-01 làm nguồn chuẩn và rút bớt các mục trùng (§4 Modulith, §5 bảo mật, §7 DoD) để tránh hai nguồn sự thật.
+
+## 12. Mã và thuật ngữ mới đề xuất bổ sung D00-01
+
+Tài liệu đề xuất bổ sung vào D00-01 các mục trong bảng dưới đây. Việc gộp vào D00-01 do luồng lõi thực hiện theo D00-01 §9.3.
+
+| Loại | Đề xuất | Vị trí trong D00-01 |
+|---|---|---|
+| Mã | `CC-{nhóm}-{nn}`: quy tắc lập trình, định nghĩa tại D04-01. Nhóm ∈ `GEN`, `JAVA`, `MOD`, `ERR`, `TX`, `JPA`, `VAL`, `LOG`, `CFG`, `TEST`, `CAMEL`, `FE`, `SQL`, `API`, `TEN`, `SEC`. Ví dụ `CC-TEN-03` | §3.1 |
+| Thuật ngữ | **Quy chuẩn lập trình** (Coding convention): bộ quy tắc viết mã bắt buộc, có mã `CC` | §2.2 |
+| Thuật ngữ | **Kiểm thử rò rỉ chéo tenant** (Cross-tenant leak test): kiểm thử tạo dữ liệu ở tenant A, truy cập bằng danh tính tenant B và kỳ vọng `404` | §2.2 |
+| Thuật ngữ | **Mở rộng rồi thu hẹp** (Expand–contract): cách thay đổi lược đồ CSDL qua nhiều phiên bản tương thích để không gián đoạn | §2.2 |
+| Thuật ngữ | **Đường cơ sở phát hiện** (Findings baseline): tập phát hiện cũ của công cụ phân tích được ghi nhận để chỉ chặn phát hiện mới | §2.2 |
+| Thuật ngữ | **IDOR/BOLA** (Insecure Direct Object Reference / Broken Object Level Authorization), **SSRF** (Server-Side Request Forgery), **XXE** (XML External Entity), **SAST/DAST/SCA** | §2.3 |
+| Quy ước | Khóa cấu hình `datahub.{module}.{khóa-kebab}`; `routeId` Camel `{tenant}-{mã-luồng}-{chặng}`; tên ràng buộc CSDL `pk_`, `fk_`, `uq_`, `ck_`, `ix_` | §6 |
+| Quy ước | Package thư viện dùng chung `vn.datahub.common.{chủ-đề}` | §6 |
+| Chuẩn | STD-03 cập nhật từ "OWASP ASVS 4.x" thành "OWASP ASVS 5.0" để khớp NFR-00-024 | §7 |
+
+## 13. Truy vết
+
+Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chuẩn tới mục đáp ứng trong tài liệu này.
+
+| Yêu cầu, ADR, chuẩn | Đáp ứng tại |
+|---|---|
+| NFR-00-020 (mã hóa đường truyền) | 9.2 (V12) |
+| NFR-00-021 (mã hóa khi lưu, trường Nhạy cảm) | CC-JPA-07 |
+| NFR-00-022 (không bí mật trong mã) | CC-GEN-05, CC-CFG-02, 9.4 |
+| NFR-00-023 (lỗ hổng phụ thuộc) | CC-GEN-09, 9.4 |
+| NFR-00-024 (ASVS 5.0 mức 2) | Mục 9 |
+| NFR-00-029 (che dữ liệu cá nhân trong log) | CC-LOG-04 |
+| NFR-00-040…045 (truy cập, thống nhất giao diện) | CC-FE-11…14 |
+| NFR-00-051 (trace_id, tenant_id trong log) | CC-LOG-01, 02 |
+| NFR-00-052 (cấu hình không khởi động lại) | CC-CFG-04 |
+| NFR-00-053 (độ phủ) | CC-TEST-02, CC-FE-18 |
+| NFR-00-054 (ranh giới module) | CC-MOD-02, 05 |
+| NFR-00-055 (tương thích ngược API) | CC-API-03 |
+| NFR-00-013 (nâng cấp không gián đoạn) | 6.3 |
+| FR-00-001, 003, 005 (xác thực, phiên) | CC-FE-15, 9.2 (V6, V7) |
+| FR-00-010, 011, 012 (cách ly tenant) | Mục 8 |
+| FR-00-020…022, 030, 034 (danh sách, xuất) | CC-VAL-03, CC-JPA-05, CC-FE-06, CC-SEC-16 |
+| FR-00-040…042 (kiểm toán) | CC-LOG-07 |
+| FR-00-052 (xung đột sửa) | CC-TX-04, CC-FE-07 |
+| ADR-001 (Spring Boot, Modulith) | 3.2 |
+| ADR-002, ADR-010 (Camel Quarkus, YAML DSL) | Mục 4 |
+| ADR-003 (PostgreSQL RLS) | 6.2, mục 8 |
+| ADR-004 (Kafka, Apicurio) | CC-API-04, CC-TX-03, 07 |
+| ADR-006 (Keycloak, OPA) | CC-SEC-08, 20, 27 |
+| ADR-009 (GitOps) | 4.1 |
+| ADR-011 (OpenTelemetry) | CC-LOG-02, CC-CAMEL-13 |
+| ADR-012 (OpenBao) | CC-CFG-02, CC-CAMEL-08 |
+| ADR-020 (Liquid Glass trên antd v6) | 5.7 |
+| ADR-031, ADR-032 (kiểm toán, mã hóa trường) | CC-LOG-07, CC-JPA-07 |
+| ADR-037 (quy trình Git, cổng CI) | Mục 1.3 (mức tự động), 9.4 |
+| D03-10 §6 | Mục 8 (nguyên văn) |
+| SEC-40–49 (D03-07) | Mục 9 |
+| TCVN 14423:2026 nhóm "phát triển ứng dụng an toàn" ở cấp độ 3 (cần đối chiếu số mục) | Mục 1.1, mục 9 |
+
+## 14. Câu hỏi mở
+
+> **Câu hỏi mở Q350:** Bản đồ DU chính thức là bản đồ của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`, `dh-runtime`) hay bản đồ của IP-01 trong kho mã (`lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai`, `lgsp-camel-{miền}`)? Quyết định này chốt package gốc `vn.datahub.{du}` và thời điểm đổi package `vn.lgsp` hiện có.
+
+> **Câu hỏi mở Q351:** Bảng, cột hiện có đặt tên tiếng Việt không dấu (`ph07.danh_muc`, `ma_danh_muc`) và schema thiếu tên ngắn (`ph07` thay vì `ph07_rdm`): đổi ngay sang quy ước D00-01 §6 khi dữ liệu còn ít, hay ghi ngoại lệ có thời hạn?
+
+> **Câu hỏi mở Q352:** Cơ chế chuyển outbox ra Kafka: Debezium đọc WAL (SAD §7.3), tác vụ thăm dò trong DU (mã hiện tại), hay phần mở rộng externalization của Spring Modulith? Debezium cần quyền replication và slot logic trên CNPG, ảnh hưởng vận hành ở hồ sơ on-prem.
+
+> **Câu hỏi mở Q355:** Tổ chức có giấy phép GitHub Advanced Security (CodeQL cho kho riêng) hoặc nền tảng CI on-prem tương đương không? Nếu không, bộ SAST chuẩn là Semgrep cộng SpotBugs FindSecBugs và tài liệu này cần bỏ CodeQL khỏi cổng chặn.
+
+> **Câu hỏi mở Q356:** Giao diện có cần hỗ trợ ngôn ngữ thứ hai (tiếng Anh cho cổng nhà phát triển, hoặc tiếng dân tộc) trong các đợt sau không? Câu trả lời quyết định chọn thư viện i18n đầy đủ (i18next) hay chỉ tệp chuỗi tiếng Việt có kiểu.
+
+> **Câu hỏi mở Q358:** Số hiệu cụ thể của các biện pháp trong dải SEC-40–49 (và SEC-30–39, SEC-60–69, SEC-80–89) do D03-07 chốt; khi có, bảng 9.2 cần thêm cột mã `SEC-nn` cho từng dòng.
+
+> **Câu hỏi mở Q359:** `dh-runtime` (Camel) có được truy cập trực tiếp CSDL nghiệp vụ của Datahub không (mã hiện tại dùng `camel-quarkus-sql` với datasource riêng)? Nếu có, cơ chế đặt `app.tenant_id` cho mỗi bản tin và vai trò CSDL riêng phải được thiết kế ở SDD PH-04; nếu không, truy cập CSDL chỉ dành cho Kamelet nguồn dữ liệu của HTTT thành viên, không phải CSDL của Datahub.
+
+Các câu hỏi Q353, Q354 và Q357 thuộc quy trình kỹ thuật, được nêu ở D04-02.

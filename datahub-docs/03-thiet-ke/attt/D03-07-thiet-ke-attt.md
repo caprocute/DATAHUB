@@ -553,3 +553,385 @@ spec:
     - toEndpoints: [{ matchLabels: { k8s:io.kubernetes.pod.namespace: kube-system, k8s-app: kube-dns } }]
       toPorts: [{ ports: [{ port: "53", protocol: UDP }] }]
 ```
+
+### 5.4. Nhóm SEC-20…29: Định danh, xác thực, ủy quyền
+
+Nhóm này hiện thực ADR-006 (Keycloak cho xác thực, OPA cho ủy quyền) ở mức tham số cụ thể. Có ba loại chủ thể với cơ chế khác nhau: người dùng (OIDC qua BFF), máy (OAuth 2.1 client_credentials ràng buộc chứng thư hoặc private_key_jwt) và workload nội bộ (SPIFFE qua mesh, service account K8s cho OpenBao).
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-20 | Tăng cứng Keycloak và realm | Realm theo tenant tạo từ mẫu (D03-10 §5.2); cấu hình bảo mật của realm (chính sách mật khẩu, luồng xác thực, MFA, thời hạn token, danh sách grant cho phép) được quản bằng GitOps (keycloak-config-cli) và không sửa được qua giao diện quản trị tỉnh. Quản trị tỉnh có vai trò tùy biến `realm-user-admin` (quản lý người dùng, nhóm, gán vai trò Datahub), không có `manage-realm`, `manage-clients`, `manage-authorization`. Tắt grant `password` và `implicit`; tắt đăng ký tự do; bật `Brute Force Detection`; bật sự kiện đăng nhập và sự kiện quản trị, đẩy ra SIEM. Console quản trị Keycloak chỉ trong Z7. Keycloak 26 chạy chế độ production, CSDL riêng trong Z6 | 0 khác biệt giữa cấu hình realm thực tế và Git (kiểm tra hằng giờ) | Nhóm nền tảng (mẫu), vận hành ATTT | CI, KT |
+| SEC-21 | Xác thực người dùng OIDC + PKCE qua BFF | `dh-console` và `dh-portal` dùng mẫu Backend-for-Frontend: BFF (Spring Cloud Gateway nhẹ trong Z2, mỗi ứng dụng một client bí mật) thực hiện Authorization Code + PKCE (`S256`), giữ access/refresh token phía máy chủ trong Valkey (mã hóa, khóa theo phiên), trình duyệt chỉ có cookie phiên `__Host-dh-sid` (`Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`). BFF chuyển tiếp lời gọi `/api/...` tới APISIX kèm token. Đăng xuất gọi `end_session_endpoint` và back-channel logout | 0 token xuất hiện trong bộ nhớ JavaScript, `localStorage`, `sessionStorage` (kiểm thử Playwright) | Nhóm giao diện, nhóm nền tảng | KT, PT |
+| SEC-22 | Chính sách mật khẩu và chống dò | Chính sách Keycloak: `length(14) and maxLength(128) and notUsername and notEmail and passwordHistory(5) and passwordBlacklist(dh-breached.txt)` (danh sách ≥ 100.000 mật khẩu lộ phổ biến, cập nhật mỗi quý); băm `argon2` (Keycloak 26) hoặc `pbkdf2-sha512` ≥ 210.000 vòng; không bắt đổi định kỳ, bắt đổi khi nghi lộ; khóa tạm 15 phút sau 5 lần sai, khóa vĩnh viễn sau 3 lần khóa tạm/24 giờ; thông báo lỗi đăng nhập không phân biệt "sai tên" và "sai mật khẩu". Ưu tiên liên kết LDAP/AD của tỉnh (chính sách của tỉnh phải đạt ngưỡng tương đương, được kiểm tra khi kết nạp) | Mật khẩu ≥ 14 ký tự; 5 lần/15 phút | Vận hành ATTT | KT |
+| SEC-23 | Xác thực đa yếu tố | Luồng xác thực có điều kiện: người dùng có vai trò thuộc nhóm `mfa-required` (mọi `_ADMIN`, vai trò duyệt, `ROLE-PAY_RECONCILER`, vai trò nền tảng) bắt buộc OTP (TOTP RFC 6238, 6 số, 30 giây) hoặc WebAuthn; vai trò nền tảng và quản trị tỉnh bắt buộc WebAuthn (khóa FIDO2 hoặc passkey, `userVerification=required`). Thao tác nhạy cảm (xem đầy đủ dữ liệu Nhạy cảm, hoàn tiền, đổi chính sách, phát hành luồng PROD) yêu cầu xác thực lại bước lên (step-up) nếu lần xác thực cuối > 5 phút, kiểm tra qua claim `acr`/`auth_time`. Khôi phục MFA chỉ qua quản trị cấp trên, có ghi kiểm toán | 100% tài khoản trong nhóm có yếu tố thứ hai đăng ký (báo cáo hằng ngày) | Vận hành ATTT | KT |
+| SEC-24 | Xác thực máy–máy | OAuth 2.1 `client_credentials` với hai phương thức xác thực client được phép: (a) `tls_client_auth` theo RFC 8705, token ràng buộc chứng thư (claim `cnf.x5t#S256`), APISIX đối chiếu dấu vân tay chứng thư của kết nối mTLS với claim; (b) `private_key_jwt` theo RFC 7523 (khóa ES256/PS256, JWT sống ≤ 60 giây, `jti` không lặp). `client_secret_basic` chỉ cho hợp đồng mức Công khai/Nội bộ trong giai đoạn chuyển đổi, bí mật ≥ 256 bit, hết hạn ≤ 180 ngày. Hợp đồng mức Hạn chế: bắt buộc (a) hoặc (b); mức Nhạy cảm: bắt buộc (a). Chứng thư client do CA HTTT của Datahub (OpenBao PKI) cấp qua PH-01 hoặc CA được tỉnh chấp nhận | 0 client dùng `client_secret` cho hợp đồng ≥ Hạn chế (kiểm tra khi đăng ký sử dụng) | Nhóm PH-01/PH-03 | KT, PT |
+| SEC-25 | Token: thời hạn, đối tượng, thu hồi | Access token JWT ký ES256 (hoặc PS256), sống 5 phút cho cả máy và người; claim bắt buộc `iss`, `aud` (theo nhóm API), `tenant`, `azp`, `scope`, `cnf` (nếu ràng buộc); APISIX kiểm tra `iss` khớp realm của `tenant`, `aud`, `exp` với dung sai ≤ 30 giây; JWKS bộ đệm 10 phút và làm mới khi gặp `kid` lạ. Refresh token người dùng xoay vòng mỗi lần dùng, phát hiện dùng lại thì thu hồi cả họ token. Khóa ký realm xoay vòng mỗi 90 ngày, giữ khóa cũ để xác minh thêm 1 ngày. Thu hồi khẩn: vô hiệu client hoặc người dùng trong Keycloak và đẩy danh sách chặn `jti`/`sub` tới APISIX (hiệu lực ≤ 60 giây), không chờ token hết hạn | Thời hạn token đúng cấu hình; thu hồi có hiệu lực ≤ 60 giây | Nhóm nền tảng | KT |
+| SEC-26 | Ủy quyền tập trung bằng OPA | OPA chạy cạnh (sidecar hoặc plugin `opa` của APISIX gọi OPA cục bộ trong pod) tại APISIX và tại mỗi DU (qua thư viện PEP dùng chung). Chính sách Rego trong kho `dh-policies`, có kiểm thử đơn vị (`opa test`, độ phủ ≥ 90%), đóng gói bundle ký (`opa build --signing-key`), OPA xác minh chữ ký trước khi nạp. Mô hình: RBAC theo `ROLE`/`PERM` (D02-08) + ABAC theo tenant, tổ chức, chủ sở hữu đối tượng, mức phân loại, mục đích khai thác (PH-09). Quy tắc gốc: `default allow := false`; mọi quyết định có `input.tenant == data.resource.tenant` trừ đường liên tenant (SEC-85). Ghi nhật ký quyết định (decision log) có che dữ liệu ra Loki | Độ trễ quyết định p99 ≤ 2 ms (cục bộ); 100% route có chính sách (kiểm tra khi đồng bộ cấu hình) | Kiến trúc sư ATTT, nhóm phát triển | CI, KT |
+| SEC-27 | Vòng đời tài khoản và rà soát quyền | Cấp tài khoản qua yêu cầu có duyệt (PH-12) hoặc đồng bộ LDAP/AD; tài khoản không đăng nhập 45 ngày (quản trị 30 ngày) tự vô hiệu bởi tác vụ hằng ngày; client máy không gọi 90 ngày tự tạm ngừng; tài khoản nhà thầu có ngày hết hạn; chiến dịch rà soát quyền định kỳ trong PH-12 (người quản lý xác nhận từng quyền, không phản hồi trong 14 ngày thì gỡ quyền) | Vô hiệu ≤ 24 giờ sau ngưỡng; rà soát quý cho quản trị | Quản trị tỉnh, vận hành ATTT | KT, RS |
+| SEC-28 | Quản lý đặc quyền và truy cập khẩn (break-glass) | Không có tài khoản quản trị dùng chung. Quyền cao (cluster-admin, OpenBao admin, CSDL superuser, Keycloak master realm) không gán thường trực: cấp theo yêu cầu, có thời hạn (just-in-time ≤ 4 giờ), duyệt bởi người thứ hai, qua bastion ghi phiên (Teleport hoặc công cụ tương đương mã nguồn mở). Tài khoản break-glass: 2 tài khoản cho mỗi hệ quan trọng, thông tin xác thực chia làm hai phần niêm phong giữ bởi hai người khác nhau (hoặc khóa FIDO2 trong két), mọi lần dùng phát cảnh báo nghiêm trọng tới SOC và chủ quản, xoay vòng ngay sau khi dùng, kiểm tra hoạt động 6 tháng/lần. Thao tác dữ liệu trực tiếp trên CSDL PROD chỉ qua break-glass | 0 quyền cao thường trực ngoài tài khoản dịch vụ; 100% phiên đặc quyền được ghi | Đơn vị vận hành, chủ quản | RS, DT |
+| SEC-29 | Quản lý phiên | Phiên BFF: nhàn rỗi 15 phút (cấu hình 5–15 theo tenant), tối đa 10 giờ; cảnh báo 2 phút trước khi khóa; tối đa 3 phiên đồng thời mỗi người dùng (quản trị: 1), phiên mới vượt hạn mức thu hồi phiên cũ nhất và thông báo; người dùng xem và thu hồi phiên (FR-00-005); đổi mật khẩu, đổi MFA hoặc bị khóa thì thu hồi mọi phiên; mã phiên sinh lại sau đăng nhập và sau step-up | Khóa đúng 15 phút ± 5 giây (kiểm thử đồng hồ giả lập) | Nhóm giao diện | KT |
+
+**Vì sao chọn BFF thay cho token trong SPA.** Có hai cách để ứng dụng trang đơn (SPA) React gọi API có xác thực: giữ token trong trình duyệt (SPA là client công khai, dùng PKCE) hoặc dùng BFF (token ở máy chủ, trình duyệt chỉ giữ cookie phiên). Giữ token trong trình duyệt đơn giản hơn và đã được OAuth 2.1 cho phép, nhưng bất kỳ lỗ XSS nào cũng cho kẻ tấn công lấy token và dùng ngoài trình duyệt trong suốt thời hạn còn lại, kể cả refresh token. Với giao diện quản trị của một hệ cấp độ 3, nơi mỗi phiên quản trị tỉnh có thể điều khiển dữ liệu cả tỉnh, rủi ro đó không chấp nhận được (THR-10). BFF loại bỏ khả năng đánh cắp token; XSS vẫn có thể thực hiện thao tác trong phiên, nhưng bị giới hạn bởi CSP (SEC-44), step-up (SEC-23) và không kéo dài sau khi đóng trình duyệt. Chi phí là thêm một thành phần phía máy chủ và phụ thuộc Valkey cho phiên; cả hai chấp nhận được vì Valkey đã có trong ngăn xếp và BFF không giữ logic nghiệp vụ. Hướng dẫn "OAuth 2.0 for Browser-Based Applications" của IETF cũng xếp BFF là mẫu an toàn nhất cho ứng dụng có yêu cầu bảo mật cao.
+
+**Vì sao token ràng buộc chứng thư là mặc định cho dữ liệu Nhạy cảm.** Bearer token, dù sống 5 phút, vẫn dùng được bởi bất kỳ ai lấy được nó (từ log của HTTT, proxy trung gian). Token ràng buộc chứng thư theo RFC 8705 chỉ dùng được trên kết nối TLS có khóa riêng tương ứng, nên lộ token không đủ để giả mạo. `private_key_jwt` bảo vệ khâu lấy token (không có bí mật chia sẻ để lộ) nhưng token phát ra vẫn là bearer, nên được chấp nhận cho mức Hạn chế. DPoP (RFC 9449) là phương án ràng buộc token không cần mTLS; được theo dõi để bổ sung khi APISIX hỗ trợ ổn định (Q303).
+
+> **Câu hỏi mở Q303:** Các HTTT của tỉnh (thường do nhiều nhà thầu khác nhau xây) có đủ năng lực triển khai mTLS phía client không? Nếu tỷ lệ thấp, cần chính sách chuyển tiếp: cho phép `private_key_jwt` cho mức Nhạy cảm trong thời hạn 12 tháng kể từ T0, kèm giới hạn IP nguồn.
+
+Ma trận phương thức xác thực theo loại chủ thể dưới đây tổng hợp lại các quy tắc trên để đội PH-01 và PH-03 cấu hình đúng khi kết nạp HTTT.
+
+| Chủ thể | Phương thức | Token | Ràng buộc |
+|---|---|---|---|
+| Cán bộ qua `dh-console` | OIDC Code + PKCE qua BFF, MFA theo vai trò | Ở BFF, 5 phút | Cookie phiên `__Host-` |
+| Nhà phát triển qua `dh-portal` | Như trên; tài khoản thuộc realm tenant hoặc realm `dh-dev` cho sandbox | Ở BFF | — |
+| HTTT, hợp đồng Công khai/Nội bộ | client_credentials, `private_key_jwt` (khuyến nghị) hoặc `client_secret` (chuyển tiếp) | 5 phút, bearer | IP nguồn tùy chọn |
+| HTTT, hợp đồng Hạn chế | client_credentials, `private_key_jwt` hoặc `tls_client_auth` | 5 phút | — hoặc `cnf` |
+| HTTT, hợp đồng Nhạy cảm | client_credentials, `tls_client_auth` | 5 phút, ràng buộc chứng thư | `cnf.x5t#S256` |
+| Workload nội bộ ↔ workload | mTLS mesh (SPIFFE) | Không cần token, hoặc token người dùng gốc được truyền tiếp để ủy quyền | AuthorizationPolicy |
+| DU → OpenBao | Xác thực Kubernetes (service account token có `aud` riêng) | Token OpenBao 1 giờ, gia hạn | Vai trò theo service account |
+| Datahub → NDXP, PayGov | Theo đặc tả bên kia; thông tin xác thực trong OpenBao | Theo bên kia | mTLS nếu hỗ trợ |
+
+### 5.5. Nhóm SEC-30…39: Bảo vệ dữ liệu, mã hóa, khóa, bí mật, dữ liệu cá nhân
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-30 | Mã hóa khi lưu | Volume của nút dữ liệu mã hóa ở tầng khối (LUKS2 AES-256-XTS do hạ tầng cấp, hoặc lớp lưu trữ của cloud có mã hóa với khóa do chủ quản quản lý); Garage mã hóa phía máy chủ bằng khóa SSE-C do DU cung cấp từ OpenBao cho bucket chứa dữ liệu ≥ Hạn chế; Kafka: volume mã hóa, topic Nhạy cảm mã hóa thân bản tin ở tầng ứng dụng; sao lưu CNPG và Velero mã hóa trước khi rời site | 100% volume PV thuộc lớp lưu trữ mã hóa (Kyverno chặn PVC dùng lớp không mã hóa) | Bên cung cấp hạ tầng, nhóm nền tảng | CI, RS |
+| SEC-31 | Mã hóa trường Nhạy cảm | Envelope encryption theo ADR-032: mỗi tenant một khóa mã hóa khóa (KEK) trong OpenBao transit (`transit/keys/dh-{tenant}-pii`, AES-256-GCM96, không cho xuất); DU sinh khóa dữ liệu (DEK) qua `transit/datakey`, mã hóa trường bằng AES-256-GCM với dữ liệu liên kết (AAD) gồm `tenant_id`, tên bảng, tên cột, `id` bản ghi (chống tráo bản mã giữa dòng); lưu `{phiên bản KEK, DEK đã bọc, nonce, bản mã}`. Bộ đệm DEK giải bọc trong bộ nhớ ≤ 5 phút. Tìm kiếm chính xác bằng cột HMAC-SHA256 với khóa riêng theo tenant | 100% trường gắn nhãn Nhạy cảm được mã hóa (kiểm tra bằng quét CSDL tìm mẫu số định danh rõ: 0 kết quả) | Nhóm phát triển (thư viện `dh-crypto`) | CI, KT |
+| SEC-32 | Che dữ liệu trong log, trace, giao diện | Ba lớp: (1) thư viện log dùng chung che theo chú thích `@Classified` và theo mẫu (số định danh 12 số, số điện thoại, thẻ, thư điện tử) trước khi ghi; (2) OTel Collector có processor `redaction`/`transform` loại thuộc tính không thuộc danh sách cho phép và che theo mẫu; (3) APISIX `http-logger` chỉ ghi siêu dữ liệu, không ghi thân. Giao diện che theo bảng mục 3.2 | NFR-00-029: 0 giá trị Nhạy cảm trong log (bộ quét mẫu chạy hằng ngày trên Loki) | Nhóm phát triển, nhóm nền tảng | CI, KT |
+| SEC-33 | Quản lý bí mật | OpenBao HA (3 nút, lưu trữ Raft tích hợp) trong Z6; External Secrets Operator đồng bộ bí mật cần thiết dưới dạng Secret tạm cho thành phần bên thứ ba; DU Spring/Quarkus đọc trực tiếp OpenBao qua Spring Cloud Vault/Quarkus Vault, không qua biến môi trường. Bí mật CSDL dùng engine `database` sinh tài khoản động sống 24 giờ. Đường dẫn `kv/dh/{tenant}/...`, chính sách theo service account. Token gốc thu hồi sau khởi tạo; mở niêm phong bằng auto-unseal qua transit của OpenBao cụm quản lý hoặc Shamir 3/5 giữ bởi 5 người. Nhật ký kiểm toán OpenBao bật hai thiết bị (file + socket) đẩy ra SIEM; OpenBao từ chối phục vụ nếu không ghi được nhật ký | 0 bí mật trong Git, ảnh, biến môi trường (gitleaks, Trivy, Kyverno cấm `env.value` có mẫu bí mật) | Vận hành ATTT | CI, RS |
+| SEC-34 | Quản lý khóa mật mã | Phân cấp khóa: khóa gốc (unseal/root của OpenBao; ở cấp độ 4 nằm trong HSM) → KEK theo tenant và theo mục đích (PII, ký nhật ký, ký webhook, ký callback) → DEK. Xoay vòng KEK mỗi 12 tháng (`transit/keys/.../rotate`, phiên bản cũ chỉ giải mã), tác vụ nền bọc lại DEK (`rewrap`) không cần giải mã dữ liệu; khóa ký JWT 90 ngày; khóa HMAC webhook 12 tháng hoặc theo yêu cầu HTTT; hủy khóa có quy trình hai người. Thuật toán cho phép: AES-256-GCM, ChaCha20-Poly1305, ECDSA P-256/P-384, Ed25519, RSA ≥ 3072, SHA-256/384; cấm MD5, SHA-1, DES/3DES, RC4, RSA < 2048. Danh mục khóa (không chứa vật liệu khóa) được kiểm kê ở SEC-04 | 100% khóa trong hạn xoay vòng | Vận hành ATTT | RS, KT |
+| SEC-35 | Hạ tầng khóa công khai và vòng đời chứng thư | CA gốc nội bộ ngoại tuyến (offline, sinh trên máy cách ly, khóa giữ trong két hoặc HSM) ký các CA trung gian trong OpenBao PKI: `pki-mesh` (ký CA của istiod), `pki-internal` (TLS dịch vụ dữ liệu), `pki-clients` (chứng thư client HTTT). cert-manager với `ClusterIssuer` kiểu Vault/OpenBao cấp và gia hạn tự động; chứng thư biên công khai từ CA được tin cậy (ACME nếu hạ tầng cho phép, hoặc CA do cơ quan cấp). CRL/OCSP cho `pki-clients`; thu hồi chứng thư client HTTT khi chấm dứt kết nối có hiệu lực ≤ 15 phút | 0 chứng thư hết hạn trên PROD; cảnh báo khi còn ≤ 21 ngày (biên) | Vận hành ATTT, nhóm nền tảng | KT, RS |
+| SEC-36 | Khóa ký và chữ ký số | Khóa ký callback/thanh toán, ký chuỗi neo nhật ký, ký bundle OPA, ký ảnh cosign đều là khóa transit không xuất được: dịch vụ gửi băm cần ký tới `transit/sign`, nhận chữ ký. Khóa ký HMAC webhook theo từng đăng ký, lưu ở `kv/dh/{tenant}/webhook/{id}`, hiển thị cho HTTT một lần khi tạo | 0 khóa ký nằm ngoài OpenBao | Vận hành ATTT | RS |
+| SEC-37 | Quản lý xử lý dữ liệu cá nhân | PH-09 duy trì: danh mục phân loại trường; sổ hoạt động xử lý DLCN (mục đích, cơ sở pháp lý, loại dữ liệu, bên nhận, thời hạn lưu); chấp thuận khai thác của chủ quản dữ liệu gắn với mục đích; OPA dùng `purpose` trong token/yêu cầu để quyết định. Mục 6 chi tiết | 100% hợp đồng mức Nhạy cảm có mục đích và chấp thuận trước khi kích hoạt | Nhóm PH-09, chủ quản dữ liệu | KT, RS |
+| SEC-38 | Giả danh hóa và dữ liệu thử | Môi trường không phải PROD chỉ dùng dữ liệu sinh (bộ sinh dữ liệu giả theo D05-01) hoặc dữ liệu giả danh hóa không thể đảo ngược; xuất phục vụ thống kê dùng tổng hợp có ngưỡng tối thiểu (k ≥ 10) | 0 bộ dữ liệu thật ngoài PROD (rà soát) | Nhóm kiểm thử, vận hành | RS |
+| SEC-39 | Thời hạn lưu và xóa an toàn | Mỗi bảng chứa DLCN có thời hạn lưu trong sổ PH-09; tác vụ nền xóa hoặc giả danh hóa khi hết hạn; DLQ hợp đồng Nhạy cảm ≤ 7 ngày; tệp nhập tạm ≤ 24 giờ sau khi xử lý; tệp xuất hạn tải 24 giờ (FR-00-031). Xóa mật mã (crypto-shredding): khi tenant bị chấm dứt, hủy KEK của tenant làm toàn bộ bản mã (kể cả trong sao lưu) không giải được. Thiết bị lưu trữ thải loại được xóa theo NIST SP 800-88 hoặc hủy vật lý có biên bản | Tác vụ xóa chạy hằng ngày, báo cáo số bản ghi đã xóa | Nhóm phát triển, vận hành | KT, RS |
+
+Biện pháp SEC-39 có một điểm thiết kế đáng chú ý: bản sao lưu bất biến (SEC-70) không xóa được trước hạn, nên không thể "xóa" một bản ghi DLCN khỏi sao lưu theo yêu cầu của chủ thể. Xóa mật mã giải quyết mâu thuẫn này ở mức tenant (hủy KEK). Ở mức từng chủ thể, Datahub áp dụng quy tắc: bản ghi bị xóa trong CSDL sống, bản sao lưu cũ hết hạn tự nhiên theo vòng đời sao lưu (tối đa 35 ngày cho sao lưu thường, mục 7 D03-09), và quy trình khôi phục có bước áp lại danh sách xóa (tombstone) trước khi đưa dữ liệu khôi phục vào phục vụ.
+
+### 5.6. Nhóm SEC-40…49: Ứng dụng, API và phát triển an toàn
+
+Mục tiêu đo được của nhóm này là đạt OWASP ASVS 5.0 mức 2 (NFR-00-024) cho mọi ứng dụng web và API, và phủ các mục đặc thù của Datahub mà ASVS không nói tới (trình thiết kế luồng, thanh toán, AI).
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-40 | Vòng đời phát triển an toàn | Yêu cầu bảo mật đưa vào FRS (mục "Kiểm toán", mức phân loại trường); mô hình mối đe dọa cập nhật cho mỗi phân hệ ở SDD; danh sách kiểm tra ASVS L2 gắn vào định nghĩa hoàn thành; review mã bắt buộc (ADR-037) có mục bảo mật; đào tạo lập trình an toàn cho đội phát triển hằng năm | 100% phân hệ có mục mô hình mối đe dọa trong SDD | Trưởng nhóm kỹ thuật | RS |
+| SEC-41 | Phân tích tĩnh, phụ thuộc, bí mật | Trong CI: Semgrep (bộ luật Java/Spring, TypeScript/React, luật riêng Datahub như cấm `@Query(nativeQuery=true)` ngoài danh sách, cấm ghép chuỗi SQL, cấm `dangerouslySetInnerHTML`), SpotBugs + FindSecBugs, ESLint plugin security; SCA bằng OWASP Dependency-Check/Trivy fs; gitleaks trên mọi commit và lịch sử; kho trung gian Maven/npm qua Harbor/Nexus nội bộ, khóa phiên bản (`package-lock.json`, Maven enforcer) | 0 phát hiện CRITICAL/HIGH mở khi merge; 0 bí mật (NFR-00-022, 023) | Nhóm DevSecOps | CI |
+| SEC-42 | Kiểm thử động và kiểm thử API | OWASP ZAP quét chủ động có xác thực trên môi trường thử hằng tuần và trước phát hành; bộ kiểm thử API từ OpenAPI (Schemathesis) tìm lỗi lược đồ và lỗi 5xx; bộ kiểm thử phân quyền tự động sinh từ ma trận `ROLE`/`PERM` (mỗi API × mỗi vai trò không được phép → kỳ vọng `403`/`404`); kiểm thử BOLA (đổi `id` sang đối tượng của chủ thể khác) | 0 phát hiện Cao trước phát hành | Nhóm kiểm thử | KT |
+| SEC-43 | Kiểm tra đầu vào và hợp đồng API | APISIX chỉ công bố route khai báo trong OpenAPI đã duyệt; plugin `request-validation` kiểm tra lược đồ cho API của HTTT; DU kiểm tra lại bằng Bean Validation từ OpenAPI sinh mã; giới hạn thân yêu cầu mặc định 1 MB (API), 50 MB (tải tệp), độ sâu JSON ≤ 32, số phần tử mảng ≤ 10.000; bộ phân tích XML tắt DTD (`disallow-doctype-decl`), thực thể ngoài, XInclude; không dùng giải tuần tự hóa Java gốc; lỗi trả RFC 9457 không có stack trace, phiên bản; tắt `/actuator` ngoài `health`, `prometheus` trên cổng quản lý riêng | 0 route không có lược đồ; 0 lỗi 5xx từ fuzzing | Nhóm phát triển, nhóm PH-03 | CI, KT |
+| SEC-44 | Bảo vệ phía trình duyệt | Header do BFF đặt: `Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{n}'; style-src 'self' 'nonce-{n}'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` tắt camera/micro/địa vị; Trusted Types bật ở chế độ báo cáo rồi bắt buộc; Subresource Integrity cho tài nguyên tĩnh; chống CSRF bằng `SameSite=Strict` + token đồng bộ cho thao tác thay đổi + kiểm tra `Origin`; React không dùng HTML thô, Markdown hiển thị qua bộ lọc (DOMPurify) | Điểm A trên bộ kiểm tra header nội bộ; 0 vi phạm CSP trên luồng chính | Nhóm giao diện | CI, KT |
+| SEC-45 | Xử lý tệp tải lên | Kiểm tra phần mở rộng và kiểu theo nội dung (Apache Tika) trong danh sách cho phép (.xlsx, .csv, .json, .xml, .yaml, .pdf cho tài liệu); giới hạn kích thước 50 MB, kích thước giải nén ≤ 200 MB, tỉ lệ nén ≤ 100:1, số mục trong gói ≤ 1.000; đọc .xlsx bằng chế độ luồng (SAX/`XSSFReader`), `ZipSecureFile.setMinInflateRatio(0.01)`; giới hạn 1.000.000 dòng; quét mã độc ClamAV trước khi xử lý; lưu tệp với tên do hệ thống sinh trong bucket riêng, không bao giờ thực thi; khi xuất CSV/Excel, ô bắt đầu bằng `=`, `+`, `-`, `@`, tab, CR được thêm dấu nháy đơn đầu; khi nhập, cảnh báo ô có dạng công thức | Bộ tệp tấn công mẫu (zip bomb, XXE, công thức) bị từ chối 100% | Nhóm phát triển (thư viện `dh-import`) | KT |
+| SEC-46 | An toàn trình thiết kế luồng | Luồng chỉ được dùng Kamelet và component trong danh sách được duyệt (PH-05); ngôn ngữ biểu thức cho phép: `simple` (chế độ hạn chế, không gọi bean/phương thức), `jq`, `jsonpath`, `xpath` (bảo mật); cấm `groovy`, `js`, `ognl`, `mvel`, `spel`, `bean`, `class`, `exec`, `file` ghi ra đĩa, `ssh`, `language`; trình kiểm tra tĩnh YAML ở `dh-integration` khi lưu và lần nữa trong CI của kho Git cấu hình (chặn merge); đích HTTP/SOAP/CSDL chỉ được tham chiếu qua "kết nối" đã đăng ký và duyệt (không nhận URL tự do), DNS của đích được phân giải và kiểm tra không thuộc dải nội bộ ở thời điểm kết nối; giới hạn thời gian mỗi bước biểu thức 2 giây, kích thước bản tin 10 MB; chạy thử ở namespace sandbox với dữ liệu giả và egress bị chặn trừ đích sandbox | 0 luồng chứa thành phần ngoài danh sách được phát hành (CI) | Nhóm PH-04/PH-05 | CI, PT |
+| SEC-47 | Webhook có ký và chống phát lại | Theo mẫu Standard Webhooks: header `webhook-id` (ULID), `webhook-timestamp` (giây Unix), `webhook-signature: v1,{base64(HMAC-SHA256(khóa, id.timestamp.body))}`; bên nhận từ chối nếu lệch thời gian > 5 phút hoặc `webhook-id` đã gặp; hỗ trợ hai khóa song song khi xoay vòng; URL đích phải HTTPS, đăng ký qua PH-10 có duyệt, được phân giải và chặn dải nội bộ/siêu dữ liệu; thử lại với lùi thời gian theo cấp số, sau 24 giờ chuyển DLQ. Datahub nhận webhook từ ngoài (ví dụ PayGov) theo cùng nguyên tắc với thuật toán của bên gửi | Thư viện kiểm chứng mẫu cung cấp cho HTTT (Java, .NET, PHP, Node) | Nhóm PH-10 | KT |
+| SEC-48 | An toàn thanh toán | Callback PayGov: xác minh chữ ký theo đặc tả (khóa công khai của PayGov ghim trong truststore), giới hạn nguồn nếu PayGov công bố dải; **không tin kết quả từ chuyển hướng trình duyệt**, chỉ cập nhật trạng thái từ callback máy–máy hoặc truy vấn trạng thái chủ động; so khớp mã giao dịch, số tiền (`T-MONEY`), đơn vị tiền, mã dịch vụ, mã đơn vị thụ hưởng với bản ghi gốc, sai lệch thì đánh dấu `MISMATCH` và cảnh báo; máy trạng thái giao dịch chỉ cho chuyển tiếp hợp lệ (`PENDING→PAID` một lần); idempotency theo mã giao dịch của nhà cung cấp (ràng buộc duy nhất CSDL); đối soát tệp hằng ngày; hoàn tiền bắt buộc bốn mắt và step-up MFA; giới hạn giá trị hoàn tiền mỗi ngày theo tenant | 100% callback sai chữ ký/sai số tiền bị từ chối (KT với bộ ca tấn công); đối soát lệch = 0 sau xử lý | Nhóm PH-19 | KT, PT |
+| SEC-49 | An toàn trợ lý AI | `dh-assist` tắt mặc định, tenant bật bằng quyết định có ghi kiểm toán; mặc định dùng mô hình triển khai nội bộ, mô hình ngoài chỉ khi tenant bật riêng, nhà cung cấp lưu dữ liệu trong nước và cam kết không huấn luyện; chỉ lập chỉ mục dữ liệu Công khai/Nội bộ (mô tả API, tài liệu, danh mục), chỉ mục pgvector có `tenant_id` và RLS; mọi công cụ (tool) của trợ lý chạy với token của người dùng hiện tại qua APISIX (không có quyền riêng), chỉ đọc; hành động ghi (ví dụ tạo bản nháp ánh xạ) chỉ đề xuất, người dùng xác nhận; nội dung lấy từ dữ liệu được bọc như dữ liệu không tin cậy trong prompt; bộ lọc đầu ra che mẫu DLCN; giới hạn số lượt và độ dài; ghi nhật ký prompt/đáp (đã che) 90 ngày | Bộ ca tiêm lệnh mẫu (≥ 50 ca) không làm trợ lý gọi công cụ ngoài ý định | Nhóm PH-17 | KT, PT |
+
+Hai biện pháp SEC-46 và SEC-48 cần lập luận thêm. Với SEC-46, cách an toàn nhất là không cho người dùng viết logic tùy ý; nhưng Datahub thay hệ cũ nơi kỹ sư viết Camel XML tự do, nên một số luồng di trú sẽ dùng thành phần bị cấm. Quy tắc là: luồng di trú cần thành phần ngoài danh sách thì được viết lại thành Kamelet mới qua quy trình đăng ký Kamelet (PH-05) do nhóm nền tảng review mã, chứ không mở ngoại lệ trong luồng. Như vậy logic tùy biến luôn nằm trong mã được review và ký, còn YAML của luồng chỉ là cấu hình.
+
+Với SEC-48, nguyên tắc cốt lõi là "kết quả thanh toán chỉ đến từ kênh máy–máy được xác thực và phải khớp với điều Datahub đã yêu cầu". Tham số trên URL quay về của trình duyệt chỉ dùng để hiển thị trang chờ; trạng thái hồ sơ chỉ đổi khi callback hợp lệ hoặc truy vấn trạng thái chủ động xác nhận. Nếu PayGov không có API truy vấn trạng thái (Q302), lớp đối soát tệp cuối ngày là chốt chặn cuối cùng, và hệ thống nghiệp vụ được khuyến nghị không cấp kết quả thủ tục có giá trị cao trước khi đối soát.
+
+### 5.7. Nhóm SEC-50…59: Nền tảng, container, Kubernetes và chuỗi cung ứng
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-50 | Tăng cứng nút và hệ điều hành | Hệ điều hành tối giản cho K8s (Talos Linux, Flatcar hoặc RHEL-compatible tối giản theo D03-09) với cấu hình theo CIS Benchmark mức 1; không SSH thường trực (Talos dùng API có mTLS); SELinux/AppArmor bật; tắt dịch vụ thừa; ảnh hệ điều hành bất biến, thay nút thay vì sửa | kube-bench và CIS-CAT/OpenSCAP: ≥ 95% mục đạt, ngoại lệ ghi lý do | Bên cung cấp hạ tầng, nhóm nền tảng | RS |
+| SEC-51 | Tăng cứng control plane Kubernetes | API server: `--anonymous-auth=false`, OIDC, RBAC, admission `NodeRestriction`, audit policy ghi mức `RequestResponse` cho Secret/RBAC/exec và `Metadata` cho phần còn lại, đẩy audit log ra SIEM; etcd mã hóa Secret bằng KMS provider v2 trỏ tới OpenBao transit; etcd chỉ nhận mTLS từ API server; kubelet `--anonymous-auth=false`, `--authorization-mode=Webhook`; phiên bản K8s trong cửa sổ hỗ trợ (≥ 1.31) | kube-bench mục control plane: 0 FAIL chưa có ngoại lệ | Nhóm nền tảng | CI (kube-bench hằng tuần) |
+| SEC-52 | Pod Security và chính sách admission | Nhãn `pod-security.kubernetes.io/enforce: restricted` cho mọi namespace ứng dụng; ngoại lệ (Cilium, Istio ztunnel, CSI) ở namespace hệ thống có danh sách. Kyverno (chế độ `Enforce`) bổ sung: cấm `privileged`, `hostPath`, `hostNetwork`, `hostPID`; bắt buộc `runAsNonRoot`, `readOnlyRootFilesystem`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, `seccompProfile: RuntimeDefault`; bắt buộc `resources.limits`; cấm thẻ ảnh `latest`, bắt buộc tham chiếu theo digest; cấm `automountServiceAccountToken` khi không cần; Kyverno chạy HA, `failurePolicy: Fail` | 0 vi phạm trên PROD (báo cáo PolicyReport) | Nhóm nền tảng | CI (kyverno test), KT |
+| SEC-53 | RBAC Kubernetes và service account | Mỗi DU một service account riêng, không gán Role nào trên API K8s trừ khi cần (ví dụ Strimzi, CNPG operator); không ai trong nhóm phát triển có quyền ghi PROD; quyền người theo nhóm OIDC: `dh-viewer`, `dh-operator` (không đọc Secret, không exec), `dh-admin` (JIT qua SEC-28); `kubectl exec` vào pod PROD chỉ qua break-glass | 0 ClusterRoleBinding tới `cluster-admin` ngoài danh sách hệ thống | Nhóm nền tảng | RS, CI |
+| SEC-54 | Phòng chống mã độc và phát hiện lúc chạy | Phát hiện hành vi lúc chạy bằng Falco hoặc Tetragon (eBPF) với luật: shell trong container, ghi vào thư mục hệ thống, kết nối ra ngoài bất thường, đọc `/var/run/secrets` bởi tiến trình lạ, tải công cụ dò quét; ảnh không có trình biên dịch, shell (distroless/UBI-micro; Quarkus native trên ảnh tối giản); quét mã độc tệp tải lên (SEC-45); quét mã độc định kỳ máy trạm quản trị theo quy chế của chủ quản | Cảnh báo lúc chạy tới SIEM ≤ 1 phút | Nhóm nền tảng, vận hành ATTT | KT |
+| SEC-55 | Bản dựng tái lập, SBOM, chứng thực nguồn gốc | Mọi ảnh do Datahub xây qua CI trên runner tạm thời; sinh SBOM CycloneDX (Syft/CycloneDX Maven plugin) và chứng thực nguồn gốc SLSA provenance (in-toto), đính kèm ảnh trong Harbor dưới dạng attestation ký cosign; ảnh nền chỉ từ danh sách ảnh gốc được duyệt và được mirror vào Harbor | 100% ảnh PROD có SBOM và provenance; mục tiêu SLSA Build L3 | Nhóm DevSecOps | CI |
+| SEC-56 | Ký và xác minh ảnh | cosign ký ảnh bằng khóa trong OpenBao transit (KMS URI `hashivault://`) hoặc chế độ keyless với Fulcio/Rekor nội bộ khi triển khai được; Kyverno `verifyImages` trên mọi namespace: chỉ chấp nhận ảnh từ `harbor.example.gov.vn/datahub/*` và `harbor.example.gov.vn/mirror/*` có chữ ký của khóa phát hành và attestation SBOM; thành phần bên thứ ba được mirror, quét và ký lại bằng khóa "đã duyệt" | 0 pod chạy ảnh không ký (Kyverno chặn) | Nhóm DevSecOps | CI, KT |
+| SEC-57 | Quét lỗ hổng ảnh và cổng phát hành | Trivy quét ảnh trong CI (chặn CRITICAL, chặn HIGH có bản sửa trừ ngoại lệ), Harbor quét lại khi đẩy và định kỳ hằng ngày, Trivy Operator quét ảnh đang chạy; ngoại lệ dùng tệp VEX có hạn | NFR-00-023 | Nhóm DevSecOps | CI |
+| SEC-58 | Bảo vệ kho mã và CI/CD | Nhánh chính được bảo vệ: cấm đẩy trực tiếp, cấm force-push, ≥ 1 review (≥ 2 cho kho chính sách, kho cấu hình PROD, mã PH-19), CI xanh, commit ký (SSH/GPG/Sigstore gitsign); runner tạm thời cách ly, không dùng chung với dự án khác; CI lấy thông tin xác thực qua OIDC liên kết (OpenBao JWT auth) thay cho bí mật dài hạn; CODEOWNERS cho thư mục nhạy cảm; MFA bắt buộc cho tài khoản kho mã; rà soát quyền kho mã mỗi quý | 0 commit chưa review trên nhánh chính | Nhóm DevSecOps | RS, CI |
+| SEC-59 | Bảo vệ GitOps và Argo CD | Argo CD trong Z7, SSO qua Keycloak, RBAC theo dự án; mỗi `AppProject` giới hạn kho nguồn, namespace đích và loại tài nguyên được phép (dự án `dh-flows-{tenant}` chỉ được tạo tài nguyên luồng trong `dh-rt-{tenant}`); chỉ service account của `dh-integration` được ghi kho luồng, qua PR tự động có duyệt; Argo CD xác minh chữ ký commit (GnuPG keys) trước khi đồng bộ; tự sửa lệch (self-heal) bật để thao tác tay bị hoàn tác và cảnh báo | 0 đồng bộ từ commit không ký | Nhóm nền tảng | KT, RS |
+
+### 5.8. Nhóm SEC-60…69: Nhật ký, giám sát, phát hiện
+
+Bảng dưới đây tóm tắt nhóm giám sát; thiết kế chi tiết (trường bắt buộc, chuỗi băm, thời hạn, luật phát hiện) ở mục 7.
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-60 | Nhật ký kiểm toán ứng dụng | Sự kiện kiểm toán theo FR-00-040/041 do thư viện `dh-audit` sinh trong cùng giao dịch nghiệp vụ (outbox), PH-13 nhận và ghi chỉ-thêm (ADR-031); trường bắt buộc ở mục 7.1 | 100% thao tác thuộc FR-00-040 có bản ghi (kiểm thử đối chiếu) | Nhóm PH-13 | KT |
+| SEC-61 | Nhật ký hệ thống và hạ tầng tập trung | Thu thập bằng OTel Collector/Fluent Bit: log ứng dụng JSON, sự kiện Keycloak, nhật ký quyết định OPA, log APISIX và WAF, audit log K8s, nhật ký OpenBao, `pgaudit` (DDL, vai trò, truy cập bảng Nhạy cảm), Hubble (luồng bị chặn), Falco/Tetragon | Độ trễ thu thập p95 ≤ 60 giây; mất log < 0,01% | Nhóm nền tảng | KT |
+| SEC-62 | Toàn vẹn và lưu giữ nhật ký | Chuỗi băm theo tenant, neo băm ký hằng giờ, sao WORM Object Lock chế độ tuân thủ; trực tuyến 12 tháng, WORM 5 năm (ADR-031) | Công cụ kiểm tra chuỗi chạy hằng ngày: 0 đứt chuỗi | Nhóm PH-13, vận hành ATTT | KT, DT |
+| SEC-63 | Tích hợp SIEM/SOC | Đẩy log an ninh ra SIEM của tỉnh/SOC qua syslog RFC 5424 trên TLS hoặc OTLP (IF-08); định dạng ánh xạ sang trường chung (ECS/OCSF); khi tỉnh chưa có SIEM, dùng Wazuh hoặc bộ luật cảnh báo trên Loki/Grafana trong gói Datahub làm SIEM tối thiểu | Độ trễ tới SIEM ≤ 5 phút | Đơn vị vận hành | KT |
+| SEC-64 | Luật phát hiện và cảnh báo | Bộ luật UC-SEC-01…25 ở mục 7.5, có mức độ, ngưỡng và người nhận; mỗi luật có ca kiểm thử sinh sự kiện giả | MTTD ≤ 5 phút cho luật mức Nghiêm trọng (KPI-15) | Vận hành ATTT | KT, DT |
+| SEC-65 | Giám sát toàn vẹn cấu hình | Argo CD phát hiện lệch so với Git; so khớp cấu hình realm Keycloak, chính sách OpenBao, cấu hình APISIX với nguồn khai báo hằng giờ; Kyverno PolicyReport; cảnh báo khi có thay đổi ngoài Git | Phát hiện lệch ≤ 1 giờ | Nhóm nền tảng | KT |
+| SEC-66 | Kết nối giám sát với cơ quan chuyên trách | Chuẩn bị điểm xuất dữ liệu giám sát (syslog/OTLP, có lọc DLCN) để kết nối với hệ thống giám sát của đơn vị chuyên trách an ninh mạng hoặc Bộ Công an nếu quy định yêu cầu; có thể bật theo tenant | Sẵn sàng kết nối ≤ 5 ngày làm việc từ khi có yêu cầu | Chủ quản, đơn vị vận hành | RS |
+| SEC-67 | Giám sát bất thường nghiệp vụ và gian lận | Luật trên dữ liệu PH-19 (tỉ lệ callback lỗi chữ ký, giao dịch `MISMATCH`, hoàn tiền vượt ngưỡng, hoàn tiền ngoài giờ), PH-14 (tra cứu hàng loạt, tra cứu ngoài giờ), PH-02 (đăng ký sử dụng hàng loạt), xuất dữ liệu số lượng lớn | Cảnh báo trong ≤ 15 phút | Nhóm PH-19, PH-14, vận hành ATTT | KT |
+
+### 5.9. Nhóm SEC-70…79: Sao lưu, liên tục hoạt động, ứng phó sự cố
+
+| Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
+|---|---|---|---|---|---|
+| SEC-70 | Sao lưu mã hóa, bất biến, ngoài site | CNPG backup (Barman Cloud plugin) liên tục WAL + bản đầy đủ hằng ngày; Velero cho tài nguyên K8s và volume; Kafka topic cấu hình qua Git; OpenBao snapshot Raft mã hóa mỗi giờ; tất cả gửi tới kho S3 ngoài site với Object Lock và thông tin xác thực ghi-không-xóa tách khỏi tài khoản vận hành (ADR-035, D03-09); quy tắc 3-2-1-1-0 | RPO ≤ 15 phút; khôi phục thử mỗi quý đạt 100% | Đơn vị vận hành | DT |
+| SEC-71 | Khôi phục thảm họa và liên tục hoạt động | Hai site active–standby (ADR-034), RTO ≤ 1 giờ data plane, ≤ 4 giờ control plane; kế hoạch liên tục hoạt động có danh sách dịch vụ thiết yếu và thứ tự khôi phục | Diễn tập DR mỗi quý (NFR-00-014) | Đơn vị vận hành | DT |
+| SEC-72 | Quy trình ứng phó sự cố | Quy trình 6 bước ở mục 8, phân mức sự cố, RACI, đầu mối 24/7, mốc báo cáo | Thời gian phân loại sự cố ≤ 30 phút | Chủ quản, đơn vị vận hành | DT |
+| SEC-73 | Playbook và diễn tập | 8 playbook ở mục 8.5, cập nhật sau mỗi sự cố và mỗi lần diễn tập | Diễn tập 2 lần/năm | Vận hành ATTT | DT |
+| SEC-74 | Báo cáo sự cố và thông báo vi phạm DLCN | Báo cáo sự cố an ninh mạng tới cơ quan có thẩm quyền theo Luật 116/2025; thông báo vi phạm DLCN trong 72 giờ theo Luật 91/2025; mẫu báo cáo soạn sẵn trong PH-13 | Đúng hạn 100% | Chủ quản | DT |
+| SEC-75 | Pháp y và bảo toàn chứng cứ | Thu snapshot volume, bộ nhớ pod (khi cần), log, trace liên quan vào bucket chứng cứ có Object Lock; ghi chuỗi bảo quản chứng cứ (ai thu, khi nào, băm); cách ly pod nghi nhiễm bằng nhãn `quarantine=true` kích hoạt network policy chặn toàn bộ, không xóa pod trước khi thu chứng cứ | Có bộ công cụ thu chứng cứ được diễn tập | Vận hành ATTT | DT |
+
+Các nhóm `SEC-80…89` (cách ly đa tenant) và `SEC-90…99` (bổ sung khi nâng lên cấp độ 4) được trình bày ở mục 9 và mục 10 vì chúng gắn với lập luận riêng.
+
+## 6. Bảo vệ dữ liệu cá nhân
+
+### 6.1. Ánh xạ từ Nghị định 13/2023 sang văn bản mới
+
+Nhiều tài liệu của hệ cũ và yêu cầu ban đầu viện dẫn Nghị định 13/2023/NĐ-CP. Từ 01/01/2026, Nghị định này được thay bởi Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 và Nghị định 356/2025/NĐ-CP. Các khái niệm cốt lõi được giữ (bên kiểm soát, bên xử lý, bên kiểm soát và xử lý; dữ liệu cá nhân cơ bản và nhạy cảm; đánh giá tác động; thông báo vi phạm trong 72 giờ; cơ quan chuyên trách là Cục A05 Bộ Công an), nên thiết kế chỉ cần đổi căn cứ viện dẫn, không đổi cơ chế. Những điểm cụ thể của Nghị định 356/2025 (mẫu hồ sơ, trường hợp miễn trừ cho cơ quan nhà nước, quy định về chuyển dữ liệu ra nước ngoài) chưa được đối chiếu toàn văn và được ghi thành câu hỏi mở.
+
+> **Câu hỏi mở Q304:** Luật 91/2025 và NĐ 356/2025 có quy định riêng nào cho cơ quan nhà nước xử lý DLCN để thực hiện nhiệm vụ công (miễn sự đồng ý, miễn hoặc đơn giản hóa hồ sơ đánh giá tác động) không? Cần chuyên viên pháp chế đối chiếu toàn văn để chốt mục 6.3.
+
+### 6.2. Vai trò của Datahub theo từng luồng
+
+Vai trò pháp lý của bên vận hành Datahub với DLCN không cố định mà phụ thuộc loại dữ liệu, theo cách phân biệt "dữ liệu đi qua" và "dữ liệu lưu lại" ở SAD §8.3. Việc xác định đúng vai trò quyết định ai chịu nghĩa vụ đánh giá tác động, ai trả lời yêu cầu của chủ thể và ai thông báo vi phạm.
+
+| Luồng dữ liệu | Ví dụ | Vai trò của chủ quản Datahub | Bên kiểm soát | Hệ quả thiết kế |
+|---|---|---|---|---|
+| Dữ liệu đi qua giữa hai HTTT | Sở Tư pháp gọi API dân cư của Sở X qua APISIX | Bên xử lý (chỉ truyền dẫn theo chỉ thị) | Cơ quan cung cấp và cơ quan khai thác (mỗi bên với mục đích của mình) | Không lưu nội dung; chỉ siêu dữ liệu; DLQ ≤ 7 ngày mã hóa; hợp đồng/quy chế kết nối ghi rõ vai trò |
+| Khai thác CSDL quốc gia qua PH-14 | Tra cứu dân cư cho hồ sơ TTHC | Bên xử lý cho cơ quan khai thác của tỉnh; đồng thời là đầu mối kỹ thuật chịu trách nhiệm kiểm soát mục đích theo NĐ 278/2025 | Cơ quan khai thác của tỉnh | Bắt buộc mục đích, chấp thuận, nhật ký có băm khóa tra cứu (THR-51, THR-54) |
+| Dữ liệu chủ PH-06 | Bản ghi vàng công dân, tổ chức | Bên kiểm soát và xử lý (Datahub quyết định cách đối sánh, hợp nhất, lưu trữ) | Chủ quản Datahub (cơ quan chủ quản của tỉnh) | Hồ sơ đánh giá tác động riêng; quyền chủ thể; thời hạn lưu |
+| Giao dịch thanh toán PH-19 | Họ tên, số tiền, mã hồ sơ người nộp | Bên kiểm soát và xử lý (cùng với đơn vị thụ hưởng) | Chủ quản Datahub và đơn vị thụ hưởng | Thời hạn lưu theo quy định kế toán (Q305) |
+| Danh mục dùng chung PH-07 | Thông thường không có DLCN | Không áp dụng (nếu có danh mục chứa DLCN, ví dụ danh sách cán bộ đầu mối, thì là bên kiểm soát) | — | PH-09 phân loại để phát hiện |
+| Tài khoản người dùng, nhật ký kiểm toán | Họ tên, thư điện tử, IP của cán bộ | Bên kiểm soát | Chủ quản Datahub | Cơ sở pháp lý: thực hiện nhiệm vụ, bảo đảm an ninh |
+| Nền tảng dùng chung (cloud) | Mọi dữ liệu của tenant | Nhà cung cấp nền tảng là bên xử lý cho chủ quản của từng tỉnh | Chủ quản của tỉnh | Hợp đồng xử lý dữ liệu; cách ly tenant (mục 9) |
+
+> **Câu hỏi mở Q305:** Thời hạn lưu dữ liệu giao dịch thanh toán PH-19 có phải theo thời hạn lưu chứng từ kế toán (thường 10 năm với chứng từ dùng ghi sổ) hay do đơn vị thụ hưởng lưu, Datahub chỉ lưu bản tham chiếu ngắn hạn? Câu trả lời ảnh hưởng dung lượng WORM và sổ xử lý PH-09.
+
+### 6.3. Cơ sở pháp lý và mục đích xử lý
+
+Mỗi hoạt động xử lý DLCN của Datahub phải có cơ sở pháp lý ghi trong sổ xử lý PH-09. Với cơ quan nhà nước, cơ sở thường là thực hiện nhiệm vụ, quyền hạn theo luật (TTHC, kết nối chia sẻ bắt buộc theo NĐ 278/2025) thay vì sự đồng ý; sự đồng ý chỉ dùng cho tiện ích không bắt buộc (ví dụ đăng ký nhận thông báo). Về kỹ thuật, mục đích được mô hình hóa thành mã `purpose` (ví dụ `TTHC-HO-TICH`, `THONG-KE`) gắn vào đăng ký sử dụng API (PH-02) và vào token máy qua `scope`; OPA từ chối lời gọi tới hợp đồng có trường Nhạy cảm nếu `purpose` không nằm trong danh sách được chủ quản dữ liệu chấp thuận cho HTTT đó.
+
+### 6.4. Đánh giá tác động xử lý dữ liệu cá nhân
+
+Chủ quản Datahub lập hồ sơ đánh giá tác động xử lý DLCN cho các hoạt động mà Datahub là bên kiểm soát (PH-06, PH-19, tài khoản và nhật ký) và hồ sơ của bên xử lý cho phần truyền dẫn, gửi Cục A05 theo quy định. Tài liệu này và D03-08 cung cấp phần kỹ thuật của hồ sơ: mô tả luồng (mục 3.3, 4.2), biện pháp bảo vệ (mục 5), đánh giá rủi ro (mục 4). PH-09 lưu phiên bản hồ sơ và nhắc cập nhật khi thêm hoạt động xử lý mới hoặc tối thiểu mỗi năm.
+
+### 6.5. Quyền của chủ thể dữ liệu
+
+Datahub hỗ trợ chủ quản trả lời yêu cầu của chủ thể (biết, truy cập, chỉnh sửa, xóa, hạn chế xử lý, phản đối) cho dữ liệu Datahub làm chủ. PH-09 cung cấp công cụ tra cứu theo băm định danh để tìm mọi bản ghi liên quan một chủ thể trong PH-06 và PH-19, và tra nhật ký kiểm toán "ai đã truy cập dữ liệu của tôi" qua băm khóa tra cứu (bao gồm truy cập qua PH-14). Với dữ liệu đi qua, Datahub chuyển yêu cầu tới bên kiểm soát tương ứng vì Datahub không lưu nội dung. Thời hạn trả lời theo luật (cần xác minh số ngày ở NĐ 356/2025, Q304) được cấu hình làm hạn xử lý của quy trình PH-11.
+
+### 6.6. Thông báo vi phạm và chuyển dữ liệu
+
+Khi phát hiện vi phạm DLCN, quy trình ứng phó sự cố (mục 8) có nhánh bắt buộc: chủ quản thông báo cho Cục A05 trong 72 giờ kể từ khi phát hiện (SEC-74), bên xử lý (nhà cung cấp nền tảng) thông báo cho chủ quản trong ≤ 24 giờ để chủ quản kịp hạn. Datahub không chuyển dữ liệu ra nước ngoài: dữ liệu lưu trong lãnh thổ (RB-05), egress chỉ tới đích khai báo trong nước (SEC-16), mô hình AI ngoài chỉ được bật khi xử lý trong nước (SEC-49). Mọi ngoại lệ cần đánh giá tác động chuyển dữ liệu theo luật.
+
+### 6.7. Che, giả danh hóa và vai trò của PH-09
+
+Các biện pháp kỹ thuật bảo vệ DLCN được gom về PH-09 để có một nơi quản lý: danh mục phân loại trường (đầu vào cho SEC-31, SEC-32), sổ hoạt động xử lý, mục đích và chấp thuận (SEC-37), chính sách che theo vai trò (SEC-32), lịch xóa và giả danh hóa (SEC-38, SEC-39), công cụ hỗ trợ quyền chủ thể. Giả danh hóa trong Datahub dùng HMAC-SHA256 với khóa riêng theo tenant và theo mục đích (để hai bộ dữ liệu xuất cho hai mục đích không nối được với nhau), còn ẩn danh hóa cho thống kê dùng tổng hợp có ngưỡng k ≥ 10 và loại bỏ trường định danh gián tiếp hiếm.
+
+## 7. Nhật ký kiểm toán và giám sát an ninh mạng
+
+### 7.1. Hai loại nhật ký
+
+Datahub tách rõ **nhật ký kiểm toán** (bằng chứng pháp lý: ai làm gì với đối tượng nào, khi nào, kết quả ra sao; không lấy mẫu, không sửa, lưu dài) và **log vận hành** (phục vụ gỡ lỗi và giám sát; có thể lấy mẫu, lưu ngắn). Nhầm lẫn hai loại dẫn tới hoặc mất bằng chứng do lấy mẫu, hoặc phình dung lượng vì lưu mọi log nhiều năm. Log an ninh (xác thực, WAF, audit K8s, OpenBao, quyết định OPA từ chối) là nhóm giữa: thuộc log vận hành về kênh thu thập nhưng được lưu 12 tháng và đẩy SIEM.
+
+Bản ghi kiểm toán có các trường bắt buộc sau, mở rộng FR-00-041 bằng các trường phục vụ chuỗi băm và tra cứu DLCN.
+
+| Trường | Kiểu | Ý nghĩa |
+|---|---|---|
+| `id` | `T-ID` | UUID v7 |
+| `tenant_id` | `T-TENANT` | Tenant; tenant `PLATFORM` cho thao tác nền tảng |
+| `seq` | `bigint` | Số thứ tự liên tục trong chuỗi của tenant |
+| `occurred_at`, `recorded_at` | `T-TS` | Thời điểm xảy ra (từ DU) và thời điểm ghi (từ PH-13) |
+| `actor_type`, `actor_id`, `actor_name` | `T-ENUM`, `T-ID`, `T-NAME` | Người (`USER`), máy (`CLIENT`), hệ thống (`SYSTEM`); khi thao tác liên tenant có thêm `actor_home_tenant` |
+| `source_ip`, `user_agent`, `session_id` (băm) | — | Nguồn |
+| `action` | `T-CODE` | Ví dụ `CATALOG.PUBLISH`, `PII.REVEAL`, `PAYMENT.REFUND.APPROVE` |
+| `object_type`, `object_id`, `object_key_hmac` | — | Đối tượng; `object_key_hmac` là băm có khóa của khóa nghiệp vụ nhạy cảm (ví dụ số định danh được tra cứu) |
+| `before`, `after` | `T-JSON` | Giá trị trước/sau đã che theo mục 3.2 |
+| `outcome`, `error_code` | `T-ENUM`, `T-CODE` | `SUCCESS`, `DENIED`, `FAILED` |
+| `reason`, `purpose` | `T-TEXT`, `T-CODE` | Lý do (bắt buộc với thao tác FR-00-050, xem Nhạy cảm, liên tenant), mục đích khai thác |
+| `trace_id` | `T-TRACE` | Liên kết trace |
+| `prev_hash`, `hash` | `char(64)` | Chuỗi băm (mục 7.2) |
+
+### 7.2. Chuỗi băm, neo và WORM
+
+Thiết kế theo ADR-031. PH-13 ghi bản ghi vào bảng `ph13_audit.audit_event` chỉ-thêm: vai trò ứng dụng chỉ có `INSERT` và `SELECT`, không có `UPDATE`, `DELETE`, `TRUNCATE`; trigger từ chối sửa đổi dù với vai trò nào trừ quy trình lưu trữ (archive) chạy bằng vai trò riêng chỉ được xóa phân vùng đã hết hạn trực tuyến và đã xác minh có trong WORM. Mỗi bản ghi có `hash = SHA-256(prev_hash || canonical_json(bản ghi không gồm hash))`, chuỗi riêng cho từng tenant để ghi song song và để xuất bằng chứng cho một tỉnh không lộ bản ghi tỉnh khác. Ghi được tuần tự hóa theo tenant bằng khóa tư vấn (advisory lock) hoặc một consumer Kafka mỗi phân vùng tenant.
+
+Mỗi giờ, PH-13 tính neo (anchor) gồm `{tenant, seq cuối, hash cuối, thời điểm}`, ký bằng khóa transit `dh-audit-sign` và ghi vào ba nơi: bảng neo, kho WORM, và (khi được cấu hình) gửi tới SIEM của tỉnh. Kẻ tấn công muốn sửa nhật ký phải dựng lại chuỗi và giả chữ ký neo, đồng thời sửa được bản ở WORM và ở SIEM, là điều không khả thi với cả nội gián nền tảng. Bản ghi được sao sang WORM theo lô mỗi 5 phút dưới dạng tệp JSON Lines nén, kèm neo; bucket WORM bật S3 Object Lock chế độ tuân thủ (compliance), thời hạn giữ mặc định 5 năm, không rút ngắn được kể cả bằng tài khoản quản trị kho đối tượng.
+
+Garage hiện chưa hỗ trợ đầy đủ S3 Object Lock; vì vậy SAD đã ghi lựa chọn SeaweedFS hoặc Ceph RGW cho WORM. Kho WORM phải là hệ lưu trữ riêng (khác cụm Garage dữ liệu nghiệp vụ), tốt nhất ở site DR hoặc hạ tầng do bên khác quản trị, để một sự cố quản trị ở site chính không chạm tới bằng chứng.
+
+> **Câu hỏi mở Q306:** Chọn SeaweedFS hay Ceph RGW (hoặc dịch vụ lưu trữ có Object Lock của cloud Chính phủ) cho kho WORM? Cần kiểm chứng chế độ compliance thực sự không thể rút ngắn trên phiên bản chọn; luồng C (D03-09) chốt.
+
+Công cụ kiểm tra toàn vẹn chạy hằng ngày: duyệt lại chuỗi từ neo đã xác minh gần nhất, đối chiếu với bản WORM, báo cáo đứt chuỗi qua luật UC-SEC-20. Kiểm toán viên có công cụ xuất gói bằng chứng cho một tenant và khoảng thời gian, kèm neo và khóa công khai để tự xác minh ngoại tuyến.
+
+### 7.3. Thời hạn lưu (chốt câu hỏi Q08 của SRS)
+
+Bảng dưới đây chốt thời hạn lưu cho từng loại nhật ký. Căn cứ: NFR-00-027/028 của SRS; tài liệu PH-13 của repo đã dùng mức ≥ 5 năm cho nhật ký kiểm toán WORM; Luật An ninh mạng có yêu cầu lưu nhật ký phục vụ điều tra (thời hạn cụ thể trong văn bản hướng dẫn hiện hành chưa được xác minh); và TCVN 14423:2026 cấp độ 3 có yêu cầu về thời hạn lưu nhật ký mà giá trị chính xác chưa được đọc. Datahub chọn mức đủ dài để chặt hơn mọi giá trị thường gặp trong các văn bản trước đây (TCVN 11930:2017 cấp 3 và hướng dẫn cũ thường yêu cầu tối thiểu 3 tháng đến 1 năm trực tuyến) và phù hợp với chu kỳ thanh tra, kiểm toán nhà nước nhiều năm.
+
+| Loại | Trực tuyến (tra cứu ngay) | Lưu trữ | Sau hạn |
+|---|---|---|---|
+| Nhật ký kiểm toán ứng dụng | 12 tháng (PostgreSQL phân vùng theo tháng) | WORM 5 năm kể từ ngày ghi; tenant có thể cấu hình dài hơn, không được ngắn hơn 3 năm | Xóa tự động khi Object Lock hết hạn, ghi biên bản |
+| Neo băm | Vĩnh viễn trong thời gian vận hành (dung lượng nhỏ) | WORM như trên | — |
+| Log an ninh (Keycloak, WAF, OPA từ chối, K8s audit, OpenBao, pgaudit, Falco) | 12 tháng | 3 năm ở kho lưu trữ nén (có thể cùng WORM) | Xóa |
+| Log vận hành ứng dụng | 90 ngày (NFR-00-028) | Không | Xóa |
+| Siêu dữ liệu lượt gọi API | 12 tháng (NFR-00-062) | Tổng hợp thống kê 5 năm | Xóa chi tiết |
+| Trace | 14 ngày | Không | Xóa |
+| Chỉ số | 13 tháng | Giảm độ phân giải lưu 5 năm | — |
+| Ghi phiên đặc quyền (SEC-28) | 12 tháng | 3 năm | Xóa |
+
+Như vậy NFR-00-027 được chốt là "trực tuyến 12 tháng, lưu trữ WORM 5 năm (tối thiểu 3 năm)". Nếu văn bản hướng dẫn hiện hành (khi xác minh) yêu cầu thời hạn dài hơn, giá trị cấu hình được nâng lên mà không đổi thiết kế; vì Object Lock chỉ cho kéo dài, không cho rút ngắn, việc bắt đầu với 5 năm là lựa chọn an toàn.
+
+> **Câu hỏi mở Q307:** Văn bản hướng dẫn Luật An ninh mạng 116/2025 và TCVN 14423:2026 (mục nhật ký ở chương 5) quy định thời hạn lưu nhật ký tối thiểu cụ thể bao nhiêu cho hệ cấp độ 3? Nếu > 5 năm, nâng cấu hình mặc định.
+
+### 7.4. Tích hợp SIEM/SOC của tỉnh
+
+Datahub không đặt giả định tỉnh nào cũng có SOC. Thiết kế có ba mức: (1) tỉnh có SIEM/SOC: Datahub đẩy log an ninh và cảnh báo qua IF-08 (syslog RFC 5424 trên TLS, hoặc OTLP), mỗi sự kiện có trường chuẩn hóa (`event.category`, `event.action`, `user.id`, `source.ip`, `tenant`, `trace_id`) theo ECS hoặc OCSF; (2) tỉnh chưa có SOC: gói Datahub kèm SIEM tối thiểu (Wazuh, hoặc luật cảnh báo trên Loki + Alertmanager) và bảng điều khiển an ninh trên Grafana, cảnh báo tới đầu mối ATTT qua thư điện tử, tin nhắn; (3) nền tảng dùng chung: SOC của nhà cung cấp nền tảng giám sát toàn nền tảng, đồng thời mỗi tỉnh nhận luồng sự kiện đã lọc theo tenant để đẩy vào SOC của tỉnh. Ở cấp độ 4, mức (2) không còn được chấp nhận (SEC-95).
+
+Kết nối giám sát với cơ quan chuyên trách (SEC-66) dùng cùng điểm xuất, có bộ lọc loại bỏ DLCN; phạm vi và giao thức theo yêu cầu cụ thể của cơ quan khi có văn bản.
+
+> **Câu hỏi mở Q308:** NĐ 331/2026 hoặc văn bản hướng dẫn có bắt buộc hệ cấp độ 3 kết nối, chia sẻ dữ liệu giám sát với hệ thống giám sát của Bộ Công an (hoặc của tỉnh) không, và theo giao thức nào?
+
+### 7.5. Use case phát hiện
+
+Bảng dưới đây là bộ luật phát hiện khởi điểm (SEC-64). Mỗi luật có mức độ (NT nghiêm trọng, C cao, TB trung bình), nguồn dữ liệu, ngưỡng và người nhận mặc định. Ngưỡng được tinh chỉnh sau 30 ngày chạy ở PROD để giảm cảnh báo nhầm; mỗi luật có ca kiểm thử sinh sự kiện giả trong D05-01.
+
+| Mã | Luật | Nguồn | Ngưỡng mặc định | Mức | Mối đe dọa |
+|---|---|---|---|---|---|
+| UC-SEC-01 | Đăng nhập sai hàng loạt từ một IP hoặc trên nhiều tài khoản | Keycloak | ≥ 20 lần sai/5 phút/IP hoặc ≥ 10 tài khoản khác nhau/IP | C | THR-12 |
+| UC-SEC-02 | Đăng nhập thành công của quản trị từ quốc gia/ASN mới hoặc ngoài giờ | Keycloak | Lần đầu thấy ASN; 22:00–06:00 | C | THR-09 |
+| UC-SEC-03 | Tắt MFA, xóa yếu tố thứ hai, đặt lại mật khẩu quản trị | Keycloak admin events | Mọi sự kiện | C | THR-09, THR-38 |
+| UC-SEC-04 | Sử dụng tài khoản break-glass | Keycloak, PAM | Mọi lần | NT | THR-60 |
+| UC-SEC-05 | Gán vai trò quản trị hoặc vai trò nền tảng | Keycloak, PH-12 | Mọi sự kiện | C | THR-38 |
+| UC-SEC-06 | Token bị từ chối do sai `cnf`, sai `aud`, `iss` không khớp tenant | APISIX | ≥ 5/phút/client | C | THR-02, THR-06 |
+| UC-SEC-07 | Client gọi từ IP mới hoặc vượt 5 lần lưu lượng trung bình 7 ngày | APISIX | Như mô tả | TB | THR-02 |
+| UC-SEC-08 | Tỉ lệ `403`/`404` cao của một chủ thể (dò đối tượng, BOLA) | APISIX, OPA | ≥ 50 từ chối/5 phút | C | THR-03 |
+| UC-SEC-09 | Từ chối do tenant không khớp (header, sự kiện Kafka, RLS lỗi `app.tenant_id`) | DU, Kafka consumer, PostgreSQL | Mọi sự kiện | NT | THR-29, THR-30 |
+| UC-SEC-10 | Tra cứu CSDL quốc gia hàng loạt hoặc ngoài giờ | PH-14 | ≥ 500 khóa khác nhau/giờ/HTTT hoặc ngoài giờ vượt 3 lần trung bình | C | THR-51 |
+| UC-SEC-11 | Xem đầy đủ dữ liệu Nhạy cảm nhiều lần | PH-13 audit `PII.REVEAL` | ≥ 20 lần/giờ/người | C | THR-33 |
+| UC-SEC-12 | Xuất dữ liệu số lượng lớn | PH-13 audit | ≥ 100.000 dòng/ngày/người | TB | THR-33 |
+| UC-SEC-13 | Callback thanh toán sai chữ ký hoặc `MISMATCH` số tiền | PH-19 | ≥ 1 sự kiện | C | THR-46, THR-48 |
+| UC-SEC-14 | Hoàn tiền vượt ngưỡng hoặc ngoài giờ | PH-19 | Tổng ngày > ngưỡng tenant | C | THR-49 |
+| UC-SEC-15 | WAF chặn tấn công tiêm, hoặc tăng đột biến luật CRS | Coraza | ≥ 100 lần chặn/5 phút/IP | TB | THR-04, THR-45 |
+| UC-SEC-16 | Lưu lượng bất thường tới biên (dấu hiệu DDoS) | Envoy, LB | > 3 lần cao điểm 5 phút | NT | THR-01 |
+| UC-SEC-17 | Egress bị chặn từ pod ứng dụng | Hubble, Istio egress | ≥ 1 lần với đích lạ | C | THR-15, THR-45 |
+| UC-SEC-18 | Shell hoặc tiến trình lạ trong container | Falco/Tetragon | Mọi sự kiện | NT | THR-14, THR-58 |
+| UC-SEC-19 | Pod bị Kyverno chặn vì ảnh không ký hoặc vi phạm PSS | Kyverno | Mọi sự kiện ở PROD | C | THR-42 |
+| UC-SEC-20 | Đứt chuỗi băm nhật ký hoặc neo không khớp | PH-13 | Mọi sự kiện | NT | THR-34 |
+| UC-SEC-21 | Lệch cấu hình so với Git (Argo CD OutOfSync do thay đổi tay, realm, APISIX) | Argo CD, SEC-65 | Mọi sự kiện ở PROD | C | THR-38, THR-44 |
+| UC-SEC-22 | Truy cập Secret K8s, `exec` vào pod PROD, tạo ClusterRoleBinding | K8s audit | Mọi sự kiện ngoài service account hệ thống | C | THR-60, THR-62 |
+| UC-SEC-23 | OpenBao: đăng nhập root, thay đổi chính sách, từ chối truy cập hàng loạt | OpenBao audit | Root: mọi lần (NT); từ chối ≥ 20/5 phút (C) | NT/C | THR-36, THR-37 |
+| UC-SEC-24 | Chứng thư sắp hết hạn hoặc bị thu hồi vẫn được dùng | cert-manager, APISIX | ≤ 21 ngày; mọi lần dùng chứng thư thu hồi | TB/C | THR-08 |
+| UC-SEC-25 | Truy cập liên tenant | PH-13 audit | Mọi sự kiện (thông báo cho quản trị tỉnh bị truy cập) | TB | THR-38 |
+
+## 8. Ứng phó sự cố
+
+### 8.1. Phân loại mức sự cố
+
+Sự cố an ninh mạng được phân bốn mức để quyết định tốc độ phản ứng và ai phải được báo. Mức được gán khi phân loại ban đầu và có thể nâng trong quá trình xử lý.
+
+| Mức | Tiêu chí (một trong các điều kiện) | Thời gian phản hồi đầu tiên | Người chỉ huy |
+|---|---|---|---|
+| P1 Nghiêm trọng | Lộ DLCN hoặc rò rỉ chéo tenant đã xác nhận; ransomware; chiếm quyền quản trị nền tảng, OpenBao hoặc chuỗi cung ứng; data plane ngừng toàn tỉnh > 30 phút do tấn công; gian lận thanh toán đã ghi nhận | ≤ 15 phút, 24/7 | Trưởng nhóm ứng phó; báo ngay lãnh đạo chủ quản |
+| P2 Cao | Tài khoản quản trị tỉnh hoặc client HTTT bị chiếm nhưng chưa xác nhận lộ dữ liệu; khai thác lỗ hổng đang diễn ra; DDoS gây suy giảm | ≤ 30 phút, 24/7 | Trưởng ca vận hành ATTT |
+| P3 Trung bình | Lỗ hổng nghiêm trọng mới công bố ảnh hưởng thành phần đang chạy; mã độc bị chặn; vi phạm chính sách nội bộ | ≤ 4 giờ làm việc | Đầu mối ATTT |
+| P4 Thấp | Quét dò, cảnh báo nhầm cần tinh chỉnh | ≤ 1 ngày làm việc | Vận hành |
+
+### 8.2. Quy trình
+
+```mermaid
+flowchart LR
+  A[Phát hiện<br/>cảnh báo SIEM, báo cáo người dùng,<br/>thông báo cơ quan] --> B[Phân loại<br/>xác nhận, gán mức P1–P4]
+  B -->|P1/P2| C[Ngăn chặn ngắn hạn<br/>cô lập, thu hồi, chặn]
+  B -->|P3/P4| F
+  C --> D[Thu chứng cứ<br/>SEC-75]
+  D --> E[Loại trừ và khôi phục<br/>vá, xoay khóa, khôi phục sạch]
+  E --> F[Theo dõi tăng cường]
+  F --> G[Rút kinh nghiệm<br/>≤ 10 ngày làm việc]
+  B -->|có DLCN| N[Nhánh thông báo<br/>A05 ≤ 72 giờ]
+  B -->|sự cố ANM| R[Báo cáo cơ quan<br/>có thẩm quyền]
+  G --> H[Cập nhật THR, SEC,<br/>playbook, luật phát hiện]
+```
+
+Quy trình theo sáu bước kinh điển (chuẩn bị là SEC-72/73 có trước). Hai nhánh thông báo chạy song song ngay khi phân loại xác định có liên quan DLCN hoặc là sự cố an ninh mạng phải báo cáo, không đợi xử lý xong, vì thời hạn 72 giờ tính từ khi phát hiện. Bước thu chứng cứ đặt trước loại trừ: không xóa pod, không khôi phục đè lên volume nghi nhiễm trước khi đã chụp. Bước cuối biến bài học thành thay đổi cụ thể trong tài liệu này (mối đe dọa mới, biện pháp mới) và trong bộ luật phát hiện.
+
+### 8.3. RACI
+
+Bảng RACI dưới đây áp dụng cho sự cố P1/P2 (R: thực hiện, A: chịu trách nhiệm cuối cùng, C: được hỏi ý kiến, I: được thông báo). Ở hồ sơ tỉnh độc lập, "nhà cung cấp nền tảng" là nhà cung cấp sản phẩm theo hợp đồng hỗ trợ.
+
+| Hoạt động | Lãnh đạo chủ quản | Bộ phận chuyên trách ANM | Đơn vị vận hành (TTDL/tỉnh) | Nhà cung cấp nền tảng | Chủ quản dữ liệu bị ảnh hưởng | Cơ quan có thẩm quyền |
+|---|---|---|---|---|---|---|
+| Phát hiện, phân loại | I | A | R | R (SOC nền tảng) | — | — |
+| Ngăn chặn kỹ thuật | I | A | R | R | I | — |
+| Quyết định tạm ngừng tenant/dịch vụ | A | R | C | C | C | — |
+| Thu chứng cứ | — | A | R | R | — | C |
+| Thông báo vi phạm DLCN tới A05 | A | R | C | C (cung cấp thông tin ≤ 24 giờ) | C | I |
+| Báo cáo sự cố an ninh mạng | A | R | C | C | — | I |
+| Thông báo chủ thể dữ liệu (nếu phải) | A | R | — | — | R | — |
+| Khôi phục | I | A | R | R | I | — |
+| Rút kinh nghiệm | I | A | R | R | C | — |
+
+### 8.4. Mốc thời gian báo cáo
+
+Các mốc sau là cam kết thiết kế; mốc pháp lý được đánh dấu và cần đối chiếu văn bản hướng dẫn.
+
+| Mốc | Thời hạn | Căn cứ |
+|---|---|---|
+| Nhà cung cấp nền tảng báo chủ quản | ≤ 1 giờ với P1, ≤ 4 giờ với P2 kể từ khi xác nhận | Hợp đồng (SEC-05) |
+| Bên xử lý báo bên kiểm soát vi phạm DLCN | ≤ 24 giờ | Hợp đồng, để bên kiểm soát kịp hạn luật |
+| Thông báo vi phạm DLCN tới Cục A05 | ≤ 72 giờ kể từ khi phát hiện | Luật 91/2025 |
+| Báo cáo sự cố an ninh mạng tới cơ quan chuyên trách | Theo văn bản hướng dẫn Luật 116/2025 (Q309) | Cần đối chiếu |
+| Báo cáo kết thúc sự cố và rút kinh nghiệm | ≤ 10 ngày làm việc sau khi đóng | Nội bộ |
+
+> **Câu hỏi mở Q309:** Thời hạn và mẫu báo cáo sự cố an ninh mạng theo Luật 116/2025 và NĐ 331/2026 (thay cho cơ chế điều phối ứng cứu sự cố cũ) là gì, gửi cơ quan nào ở cấp tỉnh?
+
+### 8.5. Playbook tóm lược
+
+Tám playbook dưới đây là bản tóm lược; bản đầy đủ từng bước, câu lệnh và danh sách liên lạc thuộc tài liệu vận hành D06-03. Mỗi playbook nêu điều kiện kích hoạt, hành động ngăn chặn trong giờ đầu, loại trừ, khôi phục và thông báo.
+
+**PB-01 Lộ khóa API hoặc thông tin xác thực client HTTT.** Kích hoạt khi gitleaks phát hiện bí mật trong kho công khai, HTTT báo lộ, hoặc UC-SEC-06/07. Trong giờ đầu: vô hiệu client trong Keycloak và đẩy danh sách chặn tới APISIX (SEC-25, ≤ 60 giây); thu hồi chứng thư client nếu dùng mTLS (SEC-35); tra siêu dữ liệu lượt gọi 30 ngày của client để xác định lời gọi bất thường (IP, khối lượng, API). Loại trừ: cấp thông tin xác thực mới qua PH-01 theo phương thức mạnh hơn (chuyển sang mTLS nếu đang dùng `client_secret`). Nếu lời gọi bất thường chạm hợp đồng có DLCN thì kích hoạt nhánh thông báo 72 giờ.
+
+**PB-02 Rò rỉ chéo tenant.** Kích hoạt từ UC-SEC-09, kiểm thử phát hiện, hoặc tỉnh báo thấy dữ liệu lạ. Đây luôn là P1. Trong giờ đầu: xác định API/luồng gây rò rỉ qua `trace_id`; tắt route đó tại APISIX hoặc tạm dừng luồng; nếu nghi lỗi diện rộng (ví dụ RLS bị vô hiệu), chuyển các DU liên quan về chế độ chỉ-đọc hoặc tạm ngừng tenant bị ảnh hưởng. Thu chứng cứ: log, audit, cấu hình vai trò CSDL. Loại trừ: sửa lỗi, thêm ca kiểm thử rò rỉ tái hiện vào bộ hồi quy (SEC-87). Thông báo: chủ quản của cả tenant bị lộ và tenant đã nhận dữ liệu; nhánh A05.
+
+**PB-03 Ransomware hoặc phá hoại dữ liệu.** Kích hoạt khi Falco phát hiện mã hóa hàng loạt, volume không đọc được, bản sao lưu bị xóa thử. Trong giờ đầu: cô lập nút/namespace bị ảnh hưởng (nhãn quarantine, cordon nút), thu hồi thông tin xác thực vận hành có thể bị lộ, xác nhận bản sao lưu bất biến ngoài site còn nguyên (SEC-70). Không trả tiền chuộc. Khôi phục: dựng lại cụm từ Git (GitOps) và ảnh đã ký trên nút sạch, khôi phục CSDL về điểm trước thời điểm xâm nhập (PITR), xoay mọi bí mật. Mục tiêu theo RTO ở SEC-71; nếu site chính không tin cậy được thì chuyển sang site DR.
+
+**PB-04 DDoS.** Kích hoạt từ UC-SEC-16. Trong giờ đầu: bật chế độ chống DDoS tăng cường ở tầng hạ tầng (liên hệ TTDL/nhà cung cấp cloud), siết giới hạn tầng 7 tại Envoy (chỉ cho phép IP nguồn của HTTT đã đăng ký vào API máy–máy, thách thức hoặc chặn theo quốc gia với đường dẫn giao diện nếu cần), ưu tiên tài nguyên cho API thiết yếu (đánh dấu ở PH-02). Theo dõi để phân biệt với tải hợp lệ cao điểm (đầu năm học, cuối tháng thanh toán).
+
+**PB-05 Chiếm tài khoản quản trị.** Kích hoạt từ UC-SEC-02/03/05 hoặc người dùng báo. Trong giờ đầu: khóa tài khoản, thu hồi mọi phiên và refresh token, xem lại mọi thao tác của tài khoản trong 30 ngày (audit), hoàn tác thay đổi cấu hình nguy hiểm (Argo CD đồng bộ lại từ Git; realm Keycloak áp lại cấu hình từ Git), kiểm tra tài khoản/client mới được tạo bởi tài khoản đó. Loại trừ: đặt lại thông tin xác thực, đăng ký lại WebAuthn có kiểm tra danh tính trực tiếp.
+
+**PB-06 Gian lận callback thanh toán.** Kích hoạt từ UC-SEC-13/14 hoặc đối soát lệch. Trong giờ đầu: chuyển các giao dịch liên quan về trạng thái chờ xác minh, tạm khóa cấp kết quả hồ sơ phụ thuộc, truy vấn trạng thái thực tại PayGov, đối chiếu tệp đối soát. Nếu phát hiện khóa ký hoặc kênh bị xâm phạm: xoay khóa với PayGov theo thủ tục của PayGov. Thông báo đơn vị thụ hưởng và cơ quan tài chính theo quy chế; giữ chứng cứ cho điều tra.
+
+**PB-07 Lỗ hổng 0-day trong thư viện.** Kích hoạt khi có công bố lỗ hổng nghiêm trọng (cảnh báo từ cơ quan chuyên trách, CVE mức CRITICAL đang bị khai thác). Trong giờ đầu: dùng SBOM (SEC-55) và Trivy Operator xác định mọi ảnh và tenant chứa thành phần; triển khai luật vá ảo tại WAF (≤ 4 giờ); xác nhận egress đang bị chặn (giảm khả năng khai thác kiểu tải mã từ xa); tắt tính năng liên quan nếu được. Loại trừ: phát hành bản vá qua CI theo SLA 24–72 giờ (SEC-09); tra log để tìm dấu hiệu đã bị khai thác trước khi vá.
+
+**PB-08 Xâm phạm chuỗi cung ứng.** Kích hoạt khi thư viện, ảnh nền hoặc công cụ CI được công bố bị cài mã độc, hoặc Kyverno chặn ảnh không ký bất thường. Trong giờ đầu: đóng băng phát hành; xác định bản dựng bị ảnh hưởng qua SBOM và provenance; thu hồi khóa ký nếu nghi lộ (chuyển sang khóa mới, cập nhật chính sách Kyverno chỉ tin khóa mới, ký lại ảnh sạch); xoay thông tin xác thực CI. Khôi phục: dựng lại từ commit đã xác minh, trên runner mới. Thông báo các tỉnh tự vận hành đã nhận bản phát hành bị ảnh hưởng qua kênh bảo mật của nhà cung cấp.
+
+## 9. Cách ly đa tenant dưới góc độ an ninh
+
+D03-10 là nguồn sự thật về cơ chế cách ly theo tầng. Mục này không lặp lại cơ chế mà đặt chúng thành biện pháp an ninh có mã, bổ sung ba điểm D03-10 chưa xử lý: cách ly mật mã (khóa riêng theo tenant), truy cập liên tenant dưới góc nhìn kiểm soát đặc quyền, và cách kiểm chứng liên tục. Nguyên tắc chung là **phòng thủ nhiều lớp**: một lỗi ở một lớp (ví dụ mã ứng dụng quên điều kiện) không được dẫn tới rò rỉ, vì lớp dưới (RLS, ACL, khóa mật mã) vẫn chặn.
+
+| Mã | Tên | Hiện thực (bổ sung cho D03-10) | Tham số đo được | Kiểm chứng |
+|---|---|---|---|---|
+| SEC-80 | Xác định tenant từ token | Tenant chỉ lấy từ token đã xác minh (D03-10 §3); APISIX xóa `X-DH-*` client gửi; DU chỉ tin `X-DH-Tenant` khi đến từ APISIX qua mesh (kiểm tra SPIFFE ID người gọi) | 0 API đọc tenant từ tham số (luật Semgrep) | CI, PT |
+| SEC-81 | RLS bắt buộc và tự kiểm tra | `FORCE ROW LEVEL SECURITY`, vai trò không `BYPASSRLS`, không là chủ sở hữu bảng; `SET LOCAL app.tenant_id` trong giao dịch, bộ kiểm tra khi lấy kết nối từ pool xác nhận biến rỗng; DU từ chối khởi động nếu phát hiện bảng thiếu chính sách | 100% bảng nghiệp vụ có chính sách (lint migration) | CI, KT |
+| SEC-82 | Cách ly Kafka, kho đối tượng, bộ đệm, kho bí mật | ACL Kafka theo tiền tố và principal; bucket và khóa truy cập theo tenant; khóa Valkey qua hàm tạo tên; chính sách OpenBao theo đường dẫn tenant; nhóm Apicurio theo tenant | Kiểm thử ACL âm tính khi khởi tạo tenant: 100% đạt | KT |
+| SEC-83 | Cách ly thời gian chạy | Namespace `dh-rt-{tenant}` cho tenant lớn hoặc có hợp đồng Nhạy cảm; `ResourceQuota`, `LimitRange` theo namespace; network policy chặn giao tiếp giữa namespace runtime của tenant khác nhau; bản tin của tenant A không được xử lý trong pod của tenant B ở namespace chung (định tuyến theo nhãn) | 0 luồng giữa namespace runtime khác tenant (Hubble) | KT |
+| SEC-84 | Cách ly quan sát và nhật ký | Nhãn `tenant` bắt buộc (OTel Collector từ chối dữ liệu thiếu nhãn); Grafana tách organization; Loki/Mimir/Tempo dùng `X-Scope-OrgID` theo tenant (multi-tenancy gốc của LGTM); chuỗi băm kiểm toán theo tenant | Quản trị tỉnh chỉ truy vấn được dữ liệu tenant mình (KT) | KT |
+| SEC-85 | Truy cập liên tenant có kiểm soát | Chỉ vai trò nền tảng; qua API nhóm `/api/platform/`; bắt buộc lý do và mã phiếu hỗ trợ; quyền có thời hạn (JIT ≤ 4 giờ) do người thứ hai duyệt; mỗi truy cập sinh bản ghi kiểm toán trong chuỗi của **tenant bị truy cập** và thông báo cho quản trị tỉnh đó (UC-SEC-25); thống kê toàn nền tảng chỉ dùng dữ liệu tổng hợp | 100% truy cập liên tenant có lý do và thông báo | KT, RS |
+| SEC-86 | Hạn mức chống hàng xóm ồn ào | Hạn mức D03-10 §5.3 thực thi tại APISIX, Kafka quota, ResourceQuota; cảnh báo khi tenant đạt 80% | Một tenant vượt hạn mức không làm tăng p95 tenant khác quá 10% (kiểm thử tải) | KT |
+| SEC-87 | Kiểm thử rò rỉ chéo tenant liên tục | Bộ kiểm thử bắt buộc trong CI (mỗi API mới ≥ 1 ca, kỳ vọng `404`); kiểm thử định kỳ hằng ngày trên môi trường thử với hai tenant giả; kiểm thử ACL Kafka/S3/OpenBao; mục riêng trong pentest | 100% API có ca kiểm thử (FR-00-011) | CI, KT, PT |
+| SEC-88 | Cách ly mật mã theo tenant | KEK riêng cho mỗi tenant (ADR-032), khóa HMAC tìm kiếm riêng, khóa SSE kho đối tượng riêng; dữ liệu của tenant A dù bị đọc nhầm ở tầng lưu trữ cũng không giải mã được bằng ngữ cảnh tenant B vì AAD chứa `tenant_id`; hủy KEK khi chấm dứt tenant (xóa mật mã) | 100% tenant có KEK riêng | KT |
+
+Một quy tắc an ninh đáng nhấn mạnh từ D03-10 §6 là trả về `404` thay vì `403` khi truy cập đối tượng của tenant khác (THR-35). Điều này áp dụng nhất quán ở mọi tầng: OPA trả quyết định "không tồn tại" cho đối tượng khác tenant, và thời gian phản hồi của hai trường hợp không được khác biệt đáng kể (truy vấn RLS trả rỗng tự nhiên đạt điều này).
+
+Ở hồ sơ nền tảng dùng chung, còn một ranh giới mà RLS không bảo vệ: **quản trị nền tảng** có thể truy cập hạ tầng dùng chung. SEC-85, SEC-28 và SEC-31/SEC-88 kết hợp để giới hạn rủi ro này: quản trị nền tảng thao tác hạ tầng không cần đọc dữ liệu; nếu đọc trực tiếp CSDL thì trường Nhạy cảm vẫn là bản mã; khóa giải mã chỉ cấp cho service account của DU chứ không cho tài khoản người. Ở cấp độ 4, `DEDICATED_DB` hoặc `DEDICATED_CLUSTER` cùng HSM theo tenant giảm thêm rủi ro này (SEC-92, SEC-90).
+
+## 10. Lộ trình nâng lên cấp độ 4
+
+### 10.1. Nguyên tắc "sẵn sàng cấp độ 4"
+
+"Sẵn sàng nâng lên cấp độ 4" không có nghĩa là xây sẵn mọi biện pháp cấp độ 4 (chi phí không tương xứng cho đa số tỉnh), mà là: kiến trúc không chứa quyết định nào phải làm lại khi nâng cấp; mọi biện pháp bổ sung cắm được vào điểm đã chừa; và có bảng chênh lệch rõ ràng để lập dự toán khi có quyết định nâng cấp. ADR-030 ghi quyết định này. Chương 6 của TCVN 14423:2026 (cấp độ 4) có cùng 18 nhóm như chương 5; phần lớn chênh lệch là mức độ (tần suất, độc lập, dự phòng) hơn là nhóm mới. Danh sách dưới đây dựa trên khác biệt thường gặp giữa cấp 3 và cấp 4 trong khung cũ và các điểm SAD §9 đã chừa; cần đối chiếu từng yêu cầu chương 6 khi có toàn văn (Q310).
+
+> **Câu hỏi mở Q310:** Tiêu chí xác định cấp độ 4 và các yêu cầu cụ thể ở chương 6 TCVN 14423:2026 khác chương 5 ở những điểm nào? Bảng 10.2 cần được đối chiếu lại khi có toàn văn.
+
+### 10.2. Bảng điểm chờ
+
+| Mã | Biện pháp bổ sung | Điểm đã chừa ở cấp độ 3 | Chi phí/ảnh hưởng ước lượng | Điều kiện kích hoạt |
+|---|---|---|---|---|
+| SEC-90 | HSM cho khóa gốc và KEK | OpenBao dùng seal và transit qua giao diện PKCS#11 được (OpenBao hỗ trợ seal PKCS#11); ADR-032 đã tách KEK khỏi dữ liệu | HSM đạt FIPS 140-2/3 mức 3 hoặc tương đương được cơ quan có thẩm quyền chấp nhận, 2 thiết bị (mỗi site 1); di chuyển khóa: bọc lại DEK, không mã hóa lại dữ liệu | Có quyết định cấp độ 4, hoặc yêu cầu chữ ký số chuyên dùng |
+| SEC-91 | Hai TTDL hoạt động song song (active–active) cho data plane | Data plane không trạng thái (APISIX, runtime); Kafka có MirrorMaker 2; CNPG replica cluster (ADR-034) | Gấp đôi tài nguyên data plane; đường truyền giữa hai site độ trễ ≤ 10 ms; cần giải pháp ghi đồng thời cho PostgreSQL (vẫn active–standby cho CSDL, active–active cho data plane) | Yêu cầu sẵn sàng > 99,95% hoặc cấp độ 4 |
+| SEC-92 | Cách ly CSDL vật lý theo tenant | Chế độ `DEDICATED_DB` và `DEDICATED_CLUSTER` đã có (ADR-003, D03-10) | Mỗi tenant thêm một cụm CNPG 3 nút; vận hành tăng tuyến tính | Tenant cấp độ 4 trên nền tảng dùng chung |
+| SEC-93 | Mạng quản trị tách riêng out-of-band | Vùng Z7 đã tách logic | Mạng vật lý riêng, thiết bị chuyển mạch riêng, cổng quản trị nút (IPMI/BMC) chỉ trên mạng này | Cấp độ 4 |
+| SEC-94 | PAM ghi phiên đầy đủ, truy cập JIT bắt buộc mọi thao tác | SEC-28 đã có JIT cho quyền cao và ghi phiên | Mở rộng cho mọi truy cập hạ tầng (cả quyền xem); lưu ghi phiên 3 năm | Cấp độ 4 |
+| SEC-95 | SOC 24/7 chuyên trách | SEC-63 điểm xuất chuẩn hóa | Hợp đồng SOC hoặc đội SOC riêng; MTTD/MTTR cam kết | Cấp độ 4 (mức SIEM tối thiểu không còn chấp nhận) |
+| SEC-96 | Kiểm thử xâm nhập dày hơn và red team | SEC-08 | Pentest 2 lần/năm + sau mỗi thay đổi lớn; red team 1 lần/năm; đơn vị kiểm thử độc lập được cấp phép | Cấp độ 4 |
+| SEC-97 | Máy trạm quản trị chuyên dụng (PAW) | Truy cập Z7 qua VPN + MFA | Thiết bị cấp riêng, tăng cứng, không dùng thư điện tử/Internet chung | Cấp độ 4 |
+| SEC-98 | Ngăn chặn rò rỉ dữ liệu (DLP) và giám sát hành vi người dùng | SEC-67, UC-SEC-11/12 | Công cụ DLP cho xuất dữ liệu, phân tích hành vi (UEBA) trên SIEM | Cấp độ 4 hoặc sau sự cố rò rỉ |
+| SEC-99 | Chuỗi cung ứng mức cao hơn | SEC-55…58 (mục tiêu SLSA L3) | Build kín (hermetic), hai người duyệt phát hành, tái lập độc lập; xác minh nguồn gốc mọi phụ thuộc | Cấp độ 4 |
+
+Ảnh hưởng tổng thể khi nâng lên cấp độ 4 tập trung ở hạ tầng và tổ chức (HSM, site thứ hai active, mạng quản trị, SOC), không ở mã ứng dụng; đây là kết quả trực tiếp của việc chừa điểm từ đầu. Đội phát triển chỉ cần thay đổi cấu hình (địa chỉ seal PKCS#11, chế độ tenant) và chạy tác vụ bọc lại khóa.
