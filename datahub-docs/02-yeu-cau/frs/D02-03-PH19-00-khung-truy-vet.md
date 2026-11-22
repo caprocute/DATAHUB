@@ -26,8 +26,9 @@ Quy ước mã tuân theo D00-01 §3. Riêng ba điểm sau khác với bản br
 | Loại mã | Dải đã cấp trong tài liệu này | Số lượng | Tài liệu chủ quản nội dung chi tiết |
 |---|---|---|---|
 | `LGC-PAY-nnn` | 001–023 (D00-03 §4.6), đề xuất thêm 024–026 | 23 + 3 | D00-03 |
-| `REQ-nn`, `SH-nn`, `BP-nn` (đề xuất) | REQ-91…99, SH-91…98, BP-91…96 | 9 / 8 / 6 | D02-01-PH19 (BRD) |
-| `BO-nn`, `KPI-nn` (đề xuất) | BO-91…96, KPI-91…99 | 6 / 9 | D02-01-PH19 (BRD) |
+| `REQ-nn`, `BP-nn` (mã con đề xuất) | REQ-91…99 (con của REQ-19), BP-91…96 (con của BP-05) | 9 / 6 | D02-01 (mã cha), D02-01-PH19 (mã con) |
+| `SH-nn` | Chính thức SH-02, 03, 04, 05, 07, 09, 10, 11, 12 (D02-01); đề xuất thêm SH-92, 93, 97 | 9 + 3 | D02-01 |
+| `BO-nn`, `KPI-nn` (mã con đề xuất) | BO-91…96 (con của BO-07), KPI-91…99 (tinh chỉnh KPI-13, KPI-14) | 6 / 9 | D02-01 (mã cha), D02-01-PH19 (mã con) |
 | `FR-19-nnn` | 001–068 | 68 | D02-03-PH19 (FRS) |
 | `NFR-19-nnn` | 001–032 | 32 | D02-03-PH19 (FRS) |
 | `BR-19-nnn` | 001–034 | 34 | D02-03-PH19 (FRS) |
@@ -44,7 +45,7 @@ Quy ước mã tuân theo D00-01 §3. Riêng ba điểm sau khác với bản br
 | `OQ-19-nn` / `A-19-nn` | OQ 01–20; A 01–14 | 20 / 14 | Tài liệu này |
 | `ADR-nnn` | 040–049 | 10 | `00-chung/adr/` |
 
-Các mã `REQ`, `SH`, `BP`, `BO`, `KPI` do D02-01 chủ quản và hiện chưa có số chính thức cho phần thanh toán. Tài liệu này dùng tạm dải 91–99 để các luồng tham chiếu được ngay; luồng lõi sẽ cấp số chính thức khi gộp BRD và việc đổi số là thay thế cơ học một-một.
+Các mã `REQ`, `SH`, `BP`, `BO`, `KPI` do D02-01 chủ quản. BRD tổng đã cấp mã cha chính thức cho thanh toán: `REQ-19` (trung gian thanh toán đa kênh), `BP-05` (thanh toán dịch vụ công và đối soát), `BO-07` cùng `KPI-13` (tỷ lệ đối soát tự động khớp ≥ 99,5%) và `KPI-14` (phát hiện giao dịch lệch ≤ 1 ngày làm việc). Các mã dải 91–99 trong tài liệu này là **mã con đề xuất** tinh chỉnh các mã cha đó ở mức đủ chi tiết để truy vết FR; mỗi lần dùng mã con phải ghi kèm mã cha (ví dụ `REQ-94 ⊂ REQ-19`). Bên liên quan dùng mã `SH` chính thức của D02-01; chỉ ba bên D02-01 chưa có mới giữ mã đề xuất `SH-92`, `SH-93`, `SH-97`. Nếu luồng lõi quyết định gộp mã con vào mã cha thì việc thay thế là cơ học một-một. Về kiến trúc, PH-19 chạy trong đơn vị triển khai (DU) riêng `dh-payment` gồm cả control plane và data plane (D03-01 §4.2), theo mô hình đa tenant của D03-10.
 
 ## 1. Phạm vi, tác nhân và phụ thuộc
 
@@ -140,11 +141,11 @@ PH-19 phụ thuộc cứng vào PH-03, PH-12, PH-13, PH-10, PH-07, PH-20 (đều
 
 Trạng thái vòng đời (mục 7) **không** phải danh mục PH-07: chúng là enum cố định trong mã nguồn vì máy trạng thái phụ thuộc vào chúng.
 
-### 1.6. Yêu cầu nghiệp vụ cấp cao, bên liên quan, quy trình TO-BE (đề xuất cho D02-01)
+### 1.6. Yêu cầu nghiệp vụ cấp cao, bên liên quan, quy trình TO-BE (mã con đề xuất cho D02-01)
 
-Theo D00-01 §3.2, mỗi FR phải tham chiếu ít nhất một `REQ`. BRD tổng chưa có REQ cho thanh toán, nên tài liệu này đề xuất chín REQ; luồng BRD-PH19 đặc tả chi tiết.
+Theo D00-01 §3.2, mỗi FR phải tham chiếu ít nhất một `REQ`. BRD tổng chỉ có một yêu cầu cấp cao cho thanh toán là `REQ-19`, quá rộng để truy vết 68 FR, nên tài liệu này đề xuất chín mã con `REQ-91…99`, **đều thuộc `REQ-19`**; luồng BRD-PH19 đặc tả chi tiết. Các FR về di trú (`REQ-99`) đồng thời hiện thực các yêu cầu dùng chung `FR-00-090…093` của D02-02.
 
-| Mã (đề xuất) | Yêu cầu nghiệp vụ cấp cao |
+| Mã con (đề xuất, ⊂ REQ-19) | Yêu cầu nghiệp vụ cấp cao |
 |---|---|
 | REQ-91 | Tỉnh phải quản lý được vòng đời các nhà cung cấp thanh toán và chỉ đưa vào sử dụng nhà cung cấp đã được kiểm tra, phê duyệt |
 | REQ-92 | Tỉnh phải quản lý được danh mục dịch vụ thanh toán và các HTTT được phép thu qua nền tảng |
@@ -156,18 +157,24 @@ Theo D00-01 §3.2, mỗi FR phải tham chiếu ít nhất một `REQ`. BRD tổ
 | REQ-98 | Phân hệ phải vận hành đa tenant, an toàn theo cấp độ 3 (sẵn sàng cấp độ 4), bảo vệ dữ liệu cá nhân và lưu trữ chứng từ theo quy định |
 | REQ-99 | Việc chuyển từ hệ Payment cũ phải diễn ra từng bước, không gián đoạn thu và không mất dữ liệu lịch sử |
 
-| Mã (đề xuất) | Bên liên quan | Quan tâm chính |
-|---|---|---|
-| SH-91 | Sở Khoa học và Công nghệ / đơn vị vận hành Datahub của tỉnh | Vận hành ổn định, an toàn, chi phí |
-| SH-92 | Sở Tài chính và bộ phận kế toán của cơ quan thu | Số liệu đúng, đối soát khớp, chứng từ |
-| SH-93 | Văn phòng UBND tỉnh / Trung tâm phục vụ hành chính công | Tỷ lệ thanh toán trực tuyến, trải nghiệm người dân |
-| SH-94 | Đơn vị chủ quản HTTT đối tác | Tích hợp đơn giản, kết quả tin cậy |
-| SH-95 | Văn phòng Chính phủ (chủ quản PayGov) | Tuân thủ đặc tả kết nối |
-| SH-96 | Người nộp tiền (công dân, doanh nghiệp) | Nộp một lần, không bị trừ tiền hai lần, được hoàn khi sai |
-| SH-97 | Cơ quan kiểm toán, thanh tra | Truy vết, toàn vẹn chứng cứ |
-| SH-98 | Đơn vị quản trị nền tảng (nhà cung cấp sản phẩm) | Một bản mã cho nhiều tỉnh, nâng cấp đồng loạt |
+Bảng bên liên quan dưới đây dùng mã chính thức của D02-01; cột cuối giữ mã đề xuất cũ để các bản nháp đã trích dẫn tra được.
 
-| Mã (đề xuất) | Quy trình nghiệp vụ TO-BE | UC chính |
+| Mã | Bên liên quan | Quan tâm chính trong PH-19 | Mã đề xuất cũ |
+|---|---|---|---|
+| SH-02 | Sở KH&CN (chủ đầu tư) | Quản lý tập trung việc thu trực tuyến, kiểm soát chi phí | SH-91 |
+| SH-03 | Trung tâm dữ liệu / Trung tâm CNTT tỉnh (vận hành Datahub) | Vận hành ổn định, an toàn, giám sát chủ động | SH-91 |
+| SH-04 | Sở, ngành, UBND cấp xã có HTTT thu phí (chủ quản đối tác) | Tích hợp đơn giản, kết quả tin cậy | SH-94 |
+| SH-05 | Đơn vị phát triển HTTT đối tác | Đặc tả API rõ, môi trường thử, webhook ổn định | SH-94 |
+| SH-07 | Cơ quan chuyên trách ATTT | Hồ sơ cấp độ, bảo vệ khóa ký và dữ liệu giao dịch | — |
+| SH-09 | Cổng thanh toán quốc gia (PayGov, VPCP vận hành) và đơn vị cung cấp dịch vụ thanh toán | Tích hợp đúng đặc tả, đối soát khớp | SH-95 |
+| SH-10 | Người dân và doanh nghiệp (người nộp tiền) | Nộp một lần, không bị trừ tiền hai lần, được hoàn khi sai | SH-96 |
+| SH-11 | Đơn vị cung cấp sản phẩm Datahub | Một bản mã cho nhiều tỉnh, nâng cấp đồng loạt | SH-98 |
+| SH-12 | Đơn vị vận hành hệ LGSP/Payment cũ | Chuyển giao an toàn, không mất dữ liệu | — |
+| SH-92 (đề xuất) | Sở Tài chính và bộ phận kế toán của cơ quan thu | Số liệu đúng, đối soát khớp, chứng từ | SH-92 |
+| SH-93 (đề xuất) | Văn phòng UBND tỉnh / Trung tâm phục vụ hành chính công | Tỷ lệ thanh toán trực tuyến, trải nghiệm người dân | SH-93 |
+| SH-97 (đề xuất) | Cơ quan kiểm toán, thanh tra | Truy vết, toàn vẹn chứng cứ | SH-97 |
+
+| Mã con (đề xuất, ⊂ BP-05) | Quy trình nghiệp vụ TO-BE | UC chính |
 |---|---|---|
 | BP-91 | Đưa một nhà cung cấp thanh toán vào sử dụng | UC-19-01…04 |
 | BP-92 | Đăng ký một HTTT đối tác được thu qua nền tảng | UC-19-08…10 |
@@ -218,7 +225,7 @@ Các yêu cầu phi chức năng của hệ cũ đã có mã `LGC-NFR-001…014`
 
 ## 3. Mục tiêu nghiệp vụ và chỉ số (`BO`, `KPI`)
 
-Mục tiêu nghiệp vụ trả lời câu hỏi "vì sao tỉnh cần PH-19"; chỉ số cho biết khi nào coi là đạt. Mã là đề xuất cho D02-01 (dải 91–99). Mọi KPI đều tính được từ dữ liệu của chính PH-19 hoặc PH-13, không cần nhập tay.
+Mục tiêu nghiệp vụ trả lời câu hỏi "vì sao tỉnh cần PH-19"; chỉ số cho biết khi nào coi là đạt. Mã là mã con đề xuất cho D02-01 (dải 91–99): `BO-91…96` tinh chỉnh `BO-07`; `KPI-94` tinh chỉnh `KPI-13` (mục tiêu PH-19 ≥ 99,9% chặt hơn mức ≥ 99,5% của BRD) và `KPI-95`, `KPI-96` tinh chỉnh `KPI-14`. Mọi KPI đều tính được từ dữ liệu của chính PH-19 hoặc PH-13, không cần nhập tay.
 
 | Mã | Mục tiêu nghiệp vụ | REQ |
 |---|---|---|
@@ -387,4 +394,136 @@ Có 68 FR, chia thành 15 nhóm miền (A–O). Mỗi dòng nêu vừa đủ đ�
 | FR-19-066 | Chuyển chế độ định tuyến theo đối tác | Mỗi đối tác có chế độ `LEGACY`, `SHADOW` (hệ cũ xử lý, Datahub ghi nhận song song để so sánh) hoặc `DATAHUB`; chuyển chế độ cần phê duyệt và quay lui được. | Quản trị thanh toán; Người phê duyệt | migration-switch | M | REQ-99 | — | UC-19-29 | Đ2 |
 | FR-19-067 | Lớp tương thích API hệ cũ | Cung cấp mặt nạ API theo hợp đồng của hệ cũ cho đối tác chưa kịp sửa mã, ánh xạ sang API mới; có ngày ngừng hỗ trợ công bố trước. | HTTT đối tác | partner-pay-create | C | REQ-99 | 024 | UC-19-29 | Sau (chỉ làm khi OQ-19-17 xác nhận cần) |
 | FR-19-068 | Đối chiếu sau di trú | So số lượng, tổng tiền, phân bố trạng thái giữa hệ cũ và Datahub theo tháng và theo đối tác; liệt kê từng bản ghi lệch; kết quả là điều kiện để chuyển chế độ. | Kế toán; Quản trị thanh toán | migration-run | M | REQ-99 | — | UC-19-29 | Đ2 |
+
+## 5. Yêu cầu phi chức năng (`NFR-19-nnn`)
+
+Mục này cấp mã và chốt **con số đo** cho 32 yêu cầu phi chức năng riêng của PH-19. Các yêu cầu phi chức năng cấp hệ thống (`NFR-00-*` của D02-02) vẫn áp dụng; NFR dưới đây chỉ thêm hoặc làm chặt hơn những điểm mà nghiệp vụ thanh toán đòi hỏi: độ trễ của luồng tạo giao dịch, khả năng xử lý callback đúng một lần, an toàn của khóa ký, thời gian lưu chứng từ và cách ly tenant. Mọi con số đều kèm điều kiện đo để đội kiểm thử dựng được kịch bản (TS-19-30…34). Con số nào phụ thuộc vào PayGov hoặc quy mô thực tế của tỉnh thì có câu hỏi mở đi kèm; trong lúc chờ trả lời, con số ghi ở đây là mục tiêu thiết kế bắt buộc.
+
+Hai quy ước đo dùng xuyên suốt. Thứ nhất, "không tính thời gian PayGov" nghĩa là lấy tổng độ trễ đo tại PH-03 trừ đi độ dài span gọi adapter ra nhà cung cấp (span `payment.provider.call` theo OpenTelemetry, ADR-011). Thứ hai, "mỗi tenant" là đo trên một tenant trong khi các tenant khác của cùng cụm dùng chung chạy ở mức tải nền 20% đỉnh của chúng, để phản ánh hiện tượng "hàng xóm ồn ào". Cột "Truy vết" ghi mã yêu cầu hệ cũ (`LGC-NFR`, D00-03 §4.9) và mã con REQ.
+
+### 5.1. Hiệu năng và dung lượng
+
+| Mã | Yêu cầu (đo được) | Cách kiểm chứng | Truy vết |
+|---|---|---|---|
+| NFR-19-001 | Hệ thống phải trả lời API tạo giao dịch (API-19-101) với độ trễ p95 ≤ 300 ms và p99 ≤ 800 ms, **không tính thời gian PayGov**, đo tại PH-03, ở tải 200 giao dịch/giây của một tenant. | Kiểm thử tải với adapter giả lập trả lời cố định 50 ms; đọc histogram `http.server.duration` trừ span adapter | REQ-93, LGC-NFR-002 |
+| NFR-19-002 | Hệ thống phải chịu được tải đỉnh 200 giao dịch tạo mới/giây mỗi tenant trong 15 phút liên tục, tỷ lệ lỗi do PH-19 < 0,1%; cụm dùng chung phải chịu tổng 600 giao dịch/giây. Con số cần xác nhận theo OQ-19-20. | Kiểm thử tải bậc thang 50 → 200 TPS, giữ 15 phút | REQ-98, LGC-NFR-003 |
+| NFR-19-003 | Endpoint nhận IPN (API-19-201) phải trả lời nhà cung cấp với p95 ≤ 200 ms (chỉ xác minh và ghi `callback_inbox`); việc xử lý IPN, gồm đổi trạng thái giao dịch và ghi outbox, phải xong trong p95 ≤ 2 s, p99 ≤ 5 s kể từ lúc nhận. | Kiểm thử tải 300 IPN/giây; đo hiệu `processed_at − received_at` | REQ-94 |
+| NFR-19-004 | API truy vấn trạng thái của đối tác (API-19-102, 103) phải có p95 ≤ 150 ms ở tải 300 yêu cầu/giây mỗi tenant. | Kiểm thử tải | REQ-93 |
+| NFR-19-005 | Lần gửi webhook đầu tiên phải bắt đầu trong p95 ≤ 5 s kể từ khi giao dịch hoặc yêu cầu hoàn đạt trạng thái cuối; ≥ 99% lượt gửi đạt `DELIVERED` trong 60 s khi đầu nhận của đối tác hoạt động bình thường (KPI-98). | Đầu nhận giả lập; đo `first_attempt_at − event.occurred_at` | REQ-94, LGC-PAY-012 |
+| NFR-19-006 | Số liệu trên hai dashboard (UI-19-01, UI-19-02) trễ tối đa 60 s so với dữ liệu giao dịch; trang dashboard tải xong p95 ≤ 2 s. Thay cho cơ chế đệm 10 phút của hệ cũ (LGC-PAY-026). | So sánh số đếm dashboard với truy vấn trực tiếp sau khi bơm giao dịch | REQ-97, LGC-PAY-026 |
+| NFR-19-007 | Màn tra cứu giao dịch (UI-19-14) trả trang đầu p95 ≤ 1,5 s với 10 triệu giao dịch mỗi tenant và 200 người dùng đồng thời mỗi tenant; tra cứu theo mã giao dịch, mã đơn hàng, mã tham chiếu NCC p95 ≤ 300 ms. | Kiểm thử tải trên dữ liệu sinh 10 triệu dòng phân vùng theo tháng | REQ-97, LGC-NFR-002 |
+| NFR-19-008 | Một phiên đối soát 100.000 dòng mỗi phía phải so khớp xong ≤ 10 phút; phiên tự động phải ở trạng thái `IN_REVIEW` hoặc `READY_TO_CLOSE` trước 08:00 nếu dữ liệu NCC có trước 06:00. | Kiểm thử với file đối soát sinh 100.000 dòng, 0,5% dòng lệch | REQ-95, KPI-13 |
+| NFR-19-009 | Tác vụ xuất (FR-19-052, FR-19-058) xử lý 1.000.000 dòng ≤ 10 phút; giới hạn mỗi lần xuất 1.000.000 dòng; đường tải có hạn 24 giờ. | Kiểm thử xuất trên dữ liệu 10 triệu dòng | REQ-97 |
+
+### 5.2. Sẵn sàng, phục hồi và chịu lỗi
+
+| Mã | Yêu cầu (đo được) | Cách kiểm chứng | Truy vết |
+|---|---|---|---|
+| NFR-19-010 | Nhóm API dữ liệu (API đối tác `/api/payment-partner/v1` và callback `/api/payment-callback/v1`) phải sẵn sàng ≥ 99,9% mỗi tháng (tối đa 43 phút gián đoạn); nhóm API quản trị và giao diện ≥ 99,5% mỗi tháng. Thời gian NCC ngừng không tính vào chỉ số của PH-19. | Đo bằng probe tổng hợp mỗi 30 s từ PH-13 | REQ-98, LGC-NFR-001 |
+| NFR-19-011 | Trong một cụm: RPO = 0 cho giao dịch đã xác nhận (CNPG đồng bộ tối thiểu một bản sao) và RTO ≤ 15 phút khi mất một nút CSDL. Khi mất cả site: RPO ≤ 5 phút, RTO ≤ 4 giờ, dữ liệu phục hồi phải được đối chiếu lại với NCC bằng phiên đối soát chạy lại. | Diễn tập chuyển đổi dự phòng hằng quý theo D03-07 | REQ-98 |
+| NFR-19-012 | Lỗi của một NCC không được làm suy giảm API khác: mỗi NCC có bulkhead riêng (tối đa 50 lời gọi đồng thời mỗi tenant), timeout khởi tạo 10 s, truy vấn 5 s; mạch ngắt mở khi ≥ 50% lỗi trong tối thiểu 20 lời gọi ở cửa sổ 60 s, nửa mở sau 30 s (BR-19-013). | Tiêm lỗi: adapter giả lập trả 100% timeout, đo độ trễ API tra cứu | REQ-91, LGC-NFR-006 |
+| NFR-19-013 | Khi Kafka không sẵn sàng, không sự kiện nào bị mất: sự kiện nằm trong `outbox_event` và phải được phát bù trong ≤ 5 phút sau khi Kafka phục hồi; outbox chứa được tối thiểu 24 giờ sự kiện ở tải đỉnh. Webhook không phụ thuộc Kafka (ADR-042). | Ngắt Kafka 30 phút trong kiểm thử tải, so số sự kiện | REQ-94 |
+
+### 5.3. Lưu trữ, toàn vẹn và dữ liệu
+
+| Mã | Yêu cầu (đo được) | Cách kiểm chứng | Truy vết |
+|---|---|---|---|
+| NFR-19-014 | Giao dịch, lịch sử trạng thái, IPN nguyên văn, yêu cầu hoàn, phiên đối soát và biên bản phải được lưu ≥ 10 năm, tương ứng thời hạn lưu chứng từ kế toán dùng trực tiếp để ghi sổ theo Luật Kế toán 2015 (cần đối chiếu, OQ-19-12): 24 tháng gần nhất ở CSDL trực tuyến, phần cũ hơn chuyển sang kho đối tượng Garage (ADR-008) dạng nén có khóa đối tượng (object lock) và vẫn tra cứu được trong ≤ 1 ngày làm việc. | Kiểm tra chính sách vòng đời và thử khôi phục một tháng lưu trữ | REQ-98, ADR-047 |
+| NFR-19-015 | Nhật ký tích hợp (`integration_log`) lưu trực tuyến 12 tháng, lưu nén 5 năm; log ứng dụng lưu 90 ngày; nhật ký kiểm toán lưu theo PH-13 và không ngắn hơn 10 năm với thao tác tài chính (phê duyệt, hoàn tiền, xử lý chênh lệch). | Kiểm tra cấu hình lưu giữ | REQ-98, LGC-NFR-005 |
+| NFR-19-016 | Bản ghi `transaction_event`, `callback_inbox` (phần nguyên văn), phiên đối soát đã `CLOSED` và biên bản phải bất biến: vai trò CSDL của ứng dụng không có quyền `UPDATE`/`DELETE` trên các bảng chỉ-ghi-thêm; mỗi ngày tính chuỗi băm SHA-256 của các dòng phát sinh và lưu vào kho WORM; biên bản có mã băm SHA-256 lưu kèm. | Kiểm thử quyền CSDL; kiểm tra chuỗi băm | REQ-94, REQ-98, BR-19-030 |
+| NFR-19-017 | Mọi số tiền dùng kiểu `T-MONEY` (`numeric(19,0)` / `integer` int64), không dùng số thực ở bất kỳ tầng nào, kể cả JavaScript (hiển thị bằng chuỗi hoặc `BigInt`); mọi thời điểm dùng `T-TS` (UTC). Sửa hai lỗi của hệ cũ theo FR-00-091. | Rà soát lược đồ, kiểm thử biên 999.999.999.999 đ | REQ-94, FR-00-091 |
+
+### 5.4. An toàn thông tin và bảo vệ dữ liệu cá nhân
+
+| Mã | Yêu cầu (đo được) | Cách kiểm chứng | Truy vết |
+|---|---|---|---|
+| NFR-19-018 | Mọi kết nối ra ngoài cụm dùng TLS 1.3 (TLS 1.2 với bộ mã AEAD chỉ khi PayGov chưa hỗ trợ 1.3, OQ-19-02); mọi kết nối trong cụm dùng mTLS của Istio ambient. Kết nối ra PayGov đi qua egress gateway riêng của DU `dh-payment` với allowlist tên miền. | Quét cấu hình TLS; kiểm tra chính sách egress | REQ-98, ADR-013 |
+| NFR-19-019 | Hệ thống xác thực HTTT đối tác bằng OAuth 2.1 `client_credentials` kèm token ràng buộc chứng thư mTLS (RFC 8705) hoặc `private_key_jwt`; token sống ≤ 5 phút; client bị thu hồi mất quyền trong ≤ 60 s (ADR-006). | Kiểm thử thu hồi client trong khi đang gọi | REQ-98 |
+| NFR-19-020 | Mọi IPN phải qua bốn lớp xác minh trước khi được xử lý: nguồn (allowlist IP tại PH-03 và mTLS nếu PayGov hỗ trợ), chữ ký số (thuật toán theo OQ-19-02), cửa sổ thời gian ±5 phút so với đồng hồ hệ thống, và nonce/mã thông báo chưa từng gặp (lưu trong Valkey 24 giờ, đồng thời ràng buộc duy nhất trong CSDL). IPN không đạt bị từ chối, ghi sự kiện an ninh và tăng chỉ số `payment_callback_rejected_total`. | Kiểm thử bảo mật TS-19-30: sai chữ ký, quá hạn, phát lại | REQ-94, REQ-98, LGC-PAY-010 |
+| NFR-19-021 | Webhook gửi đối tác được ký HMAC-SHA256 trên chuỗi `{id}.{timestamp}.{body}` với bí mật ≥ 256 bit riêng mỗi đầu nhận; khi xoay bí mật, hai bí mật cùng hiệu lực trong 7 ngày (ADR-044). Lượt quay về của người nộp được ký và chỉ chuyển hướng tới địa chỉ đã đăng ký của đối tác (chống chuyển hướng mở). | Kiểm thử chữ ký; kiểm thử chuyển hướng mở | REQ-94 |
+| NFR-19-022 | Khóa ký, chứng thư và bí mật của NCC, đối tác chỉ nằm trong OpenBao (ADR-012) theo đường dẫn `kv/dh/{tenant}/payment/...`, đưa vào pod qua External Secrets; CSDL chỉ lưu `T-SECRET-REF`, dấu vân tay và hạn dùng. Không bí mật nào xuất hiện trong log, nhật ký tích hợp hoặc phản hồi API. Thông tin xác thực của hệ cũ được cấp lại, không di trú (FR-00-093). | Quét bí mật trong log và mã nguồn; kiểm thử tĩnh | REQ-98, LGC-NFR-007, FR-00-093 |
+| NFR-19-023 | PH-19 phải đạt yêu cầu an toàn HTTT cấp độ 3 và thiết kế sẵn sàng cấp độ 4 theo Nghị định 85/2016/NĐ-CP, Thông tư 12/2022/TT-BTTTT, TCVN 11930:2017; mức kiểm chứng ứng dụng OWASP ASVS cấp 2, riêng API đối tác và callback cấp 3. Biện pháp chi tiết ánh xạ sang `SEC-nn` ở D03-07. | Đánh giá ATTT, kiểm thử xâm nhập theo OWASP WSTG | REQ-98, LGC-NFR-008 |
+| NFR-19-024 | Dữ liệu cá nhân của người nộp (họ tên, số định danh, điện thoại, thư điện tử, địa chỉ) phải được mã hóa mức trường bằng khóa riêng mỗi tenant qua OpenBao Transit (ADR-048), được che khi hiển thị và khi xuất theo BR-19-031, và gắn nhãn phân loại của PH-09. Hệ thống không lưu số thẻ, số tài khoản đầy đủ (BR-19-032). Căn cứ Nghị định 13/2023/NĐ-CP và Luật Bảo vệ dữ liệu cá nhân 2025. | Kiểm tra CSDL thô không đọc được PII; kiểm thử che | REQ-98 |
+| NFR-19-025 | Cách ly tenant tuyệt đối theo D03-10 và ADR-003: mọi bảng có `tenant_id` và RLS `FORCE`; khóa Valkey có tiền tố tenant; topic có tiền tố tenant; bucket `dh-{tenant}-payment`; khóa ký và chứng thư riêng mỗi tenant. 100% API của PH-19 nằm trong bộ kiểm thử rò rỉ chéo tenant tự động; rate limit riêng mỗi tenant tại PH-03. | TS-19-31 | REQ-98 |
+
+### 5.5. Quan sát, vận hành, giao diện và khả năng mở rộng
+
+| Mã | Yêu cầu (đo được) | Cách kiểm chứng | Truy vết |
+|---|---|---|---|
+| NFR-19-026 | Mọi yêu cầu, sự kiện, IPN, webhook và bản ghi nghiệp vụ mang `trace_id` W3C; log có cấu trúc JSON; trace lấy mẫu theo đuôi, giữ 100% vết có lỗi hoặc liên quan giao dịch không thành công và tối thiểu 10% vết thành công; metric RED cho từng API và từng NCC (ADR-011). Cảnh báo sự cố kênh được gửi trong ≤ 3 phút kể từ lần kiểm tra sức khỏe thất bại đầu tiên (KPI-97). | Diễn tập sự cố NCC; kiểm tra liên kết vết | REQ-97, LGC-NFR-004 |
+| NFR-19-027 | Thêm một NCC mới chỉ cần thêm một adapter cài theo giao diện cổng (port) của lõi, không sửa mã lõi, lược đồ CSDL lõi hay hợp đồng API đối tác (ADR-040); đổi đặc tả PayGov chỉ ảnh hưởng adapter PayGov (RSK-A04 của D03-01). | Rà soát kiến trúc bằng kiểm thử Spring Modulith (`ApplicationModules.verify()`) | REQ-91, LGC-PAY-023 |
+| NFR-19-028 | Đồng hồ của mọi nút đồng bộ NTP với độ lệch ≤ 1 s; ngày giao dịch dùng cho đối soát, hạn mức ngày và báo cáo tính theo giờ Việt Nam (UTC+7) (BR-19-025). | Giám sát độ lệch đồng hồ | REQ-95 |
+| NFR-19-029 | Giao diện quản trị đạt WCAG 2.2 mức AA; chạy trên hai phiên bản mới nhất của Chrome, Edge, Firefox, Safari; độ phân giải tối thiểu 1280×720; khóa chiều cao cửa sổ và cuộn bên trong khung nội dung (AGENTS.md §6.1); theo design system Liquid Glass (ADR-020). Trang kết quả cho người nộp (UI-19-28) dùng được trên điện thoại từ 360 px. | Kiểm thử khả năng truy cập tự động và thủ công | REQ-97, LGC-NFR-009, LGC-NFR-010 |
+| NFR-19-030 | Số tiền hiển thị dạng `1.250.000 ₫` (dấu chấm phân cách nghìn), thời điểm dạng `dd/MM/yyyy HH:mm:ss` giờ Việt Nam; mọi nhãn, thông báo lỗi bằng tiếng Việt; trường `detail` của lỗi RFC 9457 có bản tiếng Việt. | Rà soát giao diện | REQ-97 |
+| NFR-19-031 | Triển khai phiên bản mới không gián đoạn (rolling, tối thiểu 2 bản sao, PodDisruptionBudget); thay đổi CSDL bằng Liquibase theo mẫu mở rộng – thu hẹp, tương thích ngược ít nhất một phiên bản; đổi cấu hình tenant có hiệu lực không cần khởi động lại. Có HDSD, HDVH cho PH-19 (D06-02, D06-03). | Kiểm thử nâng cấp dưới tải 50 TPS: 0 giao dịch lỗi | REQ-98, LGC-NFR-012, LGC-NFR-013, LGC-NFR-014 |
+| NFR-19-032 | Có bộ giả lập PayGov (mock adapter) tái hiện đủ luồng khởi tạo, IPN, truy vấn, hoàn tiền, file đối soát và các lỗi để kiểm thử tự động; hợp đồng OpenAPI 3.1 và AsyncAPI 3 được kiểm thử hợp đồng trong CI; API `v1` được duy trì tối thiểu 12 tháng sau khi phát hành `v2`. | Pipeline CI | REQ-93 |
+
+## 6. Quy tắc nghiệp vụ (`BR-19-nnn`)
+
+Quy tắc nghiệp vụ là các ràng buộc mà mọi FR, API và màn hình phải tôn trọng như nhau; chúng được tách khỏi FR để không phải nhắc lại ở nhiều nơi và để đội kiểm thử viết được ca kiểm thử riêng cho từng quy tắc. Mỗi quy tắc dưới đây có một tham số mặc định; tham số nào ghi "cấu hình" thì quản trị thanh toán sửa được tại UI-19-26 (FR-19-063) trong khoảng cho phép, mọi thay đổi có phiên bản và có hiệu lực từ thời điểm xác định. Mã lỗi trả về khi vi phạm quy tắc xem mục 12.
+
+### 6.1. Giao dịch, số tiền và hợp lệ
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-001 | Đồng tiền duy nhất là `VND`. Số tiền là số nguyên dương kiểu `T-MONEY`, lớn nhất 999.999.999.999 đ, và phải nằm trong khoảng `[min_amount, max_amount]` của dịch vụ. | `VND`; trần 999.999.999.999 | FR-19-022, 023 |
+| BR-19-002 | Mã giao dịch PH-19 (`transaction_code`) gồm mã tenant, ngày tạo `yyMMdd` và 10 ký tự ngẫu nhiên Base32 Crockford (ví dụ `T68261121K7M2Q9XW4P`), duy nhất toàn cục, không đoán được, bất biến. Mã gửi sang NCC là mã này; độ dài tối đa NCC chấp nhận chờ OQ-19-01. | 19 ký tự | FR-19-022 |
+| BR-19-003 | Giao dịch có thời hạn `expires_at = created_at + thời hạn`; thời hạn lấy theo dịch vụ, nếu dịch vụ không khai thì lấy theo tenant. | Cấu hình 5–1.440 phút; mặc định 15 phút | FR-19-022, 027 |
+| BR-19-004 | Kiểm tra hợp lệ yêu cầu tạo giao dịch theo thứ tự cố định và dừng ở lỗi đầu tiên: (1) phân hệ bật cho tenant; (2) đối tác `ACTIVE`; (3) chế độ định tuyến của đối tác là `DATAHUB` hoặc `SHADOW`; (4) `Idempotency-Key` hợp lệ; (5) định dạng trường; (6) dịch vụ tồn tại; (7) dịch vụ `ACTIVE` và NCC của nó `ACTIVE`; (8) dịch vụ được gán cho đối tác; (9) đồng tiền; (10) số tiền dương; (11) khoảng số tiền của dịch vụ; (12) hạn mức mỗi giao dịch; (13) hạn mức ngày; (14) trùng `partner_order_id`; (15) địa chỉ quay về thuộc danh sách cho phép. | — | FR-19-023 |
+| BR-19-005 | Hạn mức ngày của đối tác (số giao dịch và tổng tiền) tính theo ngày giờ Việt Nam trên các giao dịch đã tạo, trừ giao dịch `FAILED` do NCC từ chối khởi tạo và giao dịch thử; bộ đếm giữ trong Valkey, đối chiếu lại với CSDL mỗi 5 phút. | Không giới hạn nếu không khai | FR-19-020, 023 |
+| BR-19-006 | `Idempotency-Key` là chuỗi 16–64 ký tự `[A-Za-z0-9_-]` (khuyến nghị UUID); phạm vi là bộ (tenant, client, method, path); nội dung so sánh bằng SHA-256 của thân yêu cầu đã chuẩn hóa JSON (RFC 8785); bản ghi giữ 24 giờ. Cùng khóa cùng nội dung → trả lại nguyên phản hồi cũ kèm header `Idempotent-Replayed: true`; cùng khóa khác nội dung → ERR-19-003; yêu cầu trước đang xử lý → ERR-19-004. | 24 giờ | FR-19-033 |
+| BR-19-007 | Trong một đối tác, mỗi `partner_order_id` có tối đa một giao dịch ở các trạng thái `CREATED`, `PENDING`, `SUCCEEDED`, `PARTIALLY_REFUNDED`, `REFUNDED`. Được tạo giao dịch mới cho cùng mã khi mọi giao dịch trước đó đã `FAILED`, `CANCELLED` hoặc `EXPIRED`. Bảo đảm bằng chỉ mục duy nhất có điều kiện. | — | FR-19-034 |
+| BR-19-008 | Mỗi dịch vụ gắn đúng một NCC. Đợt 2 không định tuyến tự động sang NCC khác khi NCC chính lỗi; việc đổi NCC của dịch vụ là thao tác quản trị có kiểm toán. | — | FR-19-014, 024 |
+| BR-19-009 | Dịch vụ chỉ chuyển `ACTIVE` khi NCC của nó `ACTIVE` và mọi mã danh mục PH-07 của nó còn hiệu lực. Khi NCC bị tạm dừng, dịch vụ giữ nguyên trạng thái nhưng không nhận giao dịch mới (ERR-19-017). | — | FR-19-006, 015, 016 |
+| BR-19-033 | Giao dịch thử (`is_test = true`) chỉ tạo được qua FR-19-004 trên môi trường thử của NCC; bị loại khỏi dashboard, báo cáo, hạn mức và phiên đối soát chính thức; không được hoàn tiền. | — | FR-19-004, 056, 058 |
+
+### 6.2. Nhà cung cấp, đối tác và phê duyệt
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-010 | Checklist kích hoạt NCC đạt khi đủ cả bốn điều kiện: kiểm tra kết nối môi trường chính thức thành công trong 24 giờ gần nhất; một giao dịch thử thành công kèm IPN hợp lệ trong 7 ngày gần nhất; thông tin xác thực môi trường chính thức còn hạn ≥ 30 ngày; có đầu mối kỹ thuật và nghiệp vụ. | 24 giờ / 7 ngày / 30 ngày | FR-19-003, 004, 005 |
+| BR-19-011 | Nguyên tắc bốn mắt: người phê duyệt phải khác người lập đề nghị (so sánh theo định danh người dùng của PH-12, không theo tên). Đề nghị chưa được quyết định trong thời hạn thì tự hết hạn và đối tượng trở về trạng thái trước. Áp dụng cho: kích hoạt và ngừng hẳn NCC, duyệt và chấm dứt đối tác, hoàn tiền, xử lý chênh lệch, mở lại phiên đối soát, chuyển chế độ định tuyến. | Hạn 7 ngày | FR-19-005, 010, 018, 039, 046, 047, 066 |
+| BR-19-012 | Khi khởi tạo tại NCC: NCC từ chối rõ ràng → giao dịch `FAILED` với mã lý do của NCC, đối tác nhận ERR-19-018; lỗi không xác định (timeout, lỗi 5xx, mất kết nối) → giao dịch giữ `CREATED` với cờ `init_uncertain = true`, đối tác nhận ERR-19-019 (được thử lại bằng cùng `Idempotency-Key`), tác vụ truy vấn chủ động xác định kết quả theo BR-19-016. Không bao giờ tự gọi khởi tạo lần hai cho cùng giao dịch. | — | FR-19-024 |
+| BR-19-013 | Khi mạch ngắt của NCC đang mở, yêu cầu tạo giao dịch bị từ chối **trước khi ghi CSDL** với ERR-19-017 kèm header `Retry-After`; truy vấn, IPN và đối soát vẫn chạy. | Nửa mở sau 30 s | FR-19-011, 024 |
+| BR-19-026 | Thay đổi địa chỉ kết nối hoặc thông tin xác thực của NCC `ACTIVE` chỉ có hiệu lực sau khi kiểm tra kết nối với giá trị mới thành công; trong lúc chờ, giá trị cũ tiếp tục được dùng. Khi xoay khóa, khóa cũ và khóa mới cùng được chấp nhận để xác minh IPN trong thời gian chuyển tiếp. | Chuyển tiếp 7 ngày | FR-19-009, 012 |
+| BR-19-027 | Ngừng hẳn NCC hoặc dịch vụ chỉ được phép khi không còn giao dịch `CREATED`/`PENDING`, không còn yêu cầu hoàn chưa kết thúc và không còn phiên đối soát chưa `CLOSED` liên quan. Xóa cứng chỉ áp dụng cho bản ghi `DRAFT` chưa từng có giao dịch (kể cả giao dịch thử). | — | FR-19-010, 015 |
+
+### 6.3. Kết quả thanh toán, truy vấn và thông báo
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-014 | Trạng thái cuối của giao dịch chỉ được xác lập từ ba nguồn có xác thực: IPN đã xác minh, kết quả truy vấn NCC qua kênh có xác thực, hoặc quyết định xử lý chênh lệch đã phê duyệt. Lượt quay về của người nộp (FR-19-025) chỉ dùng để hiển thị, không bao giờ đổi trạng thái. | — | FR-19-025, 030, 036, 046 |
+| BR-19-015 | Khi xử lý IPN: số tiền phải bằng đúng số tiền giao dịch (dung sai 0 đ) và mã tham chiếu NCC phải khớp (nếu đã có); không khớp → cách ly với chênh lệch `AMOUNT_MISMATCH`, không đổi trạng thái. IPN báo thất bại cho giao dịch đã `SUCCEEDED` → không đổi trạng thái, sinh chênh lệch `STATUS_MISMATCH`. IPN thành công cho giao dịch `FAILED` → cách ly, sinh chênh lệch `STATUS_MISMATCH`; chỉ quyết định xử lý chênh lệch mới đổi được trạng thái. IPN lặp cùng kết quả → trả lời thành công, không đổi gì. | — | FR-19-030, 031 |
+| BR-19-016 | Lịch truy vấn chủ động cho giao dịch `PENDING` (và `CREATED` có `init_uncertain`) chưa có IPN: sau 2, 5, 10, 15 phút kể từ khi tạo; sau đó 30 phút, 1, 2, 4 giờ; rồi mỗi 6 giờ tới 72 giờ. Kết quả truy vấn được áp như một IPN (BR-19-015). Tôn trọng giới hạn tần suất của NCC (OQ-19-04). | Như bên trái | FR-19-036 |
+| BR-19-017 | Giao dịch quá `expires_at` 30 phút mà chưa có kết quả thì được truy vấn lần cuối: NCC trả "chưa thanh toán/không tồn tại/thất bại" → `EXPIRED`; NCC không trả lời → giữ nguyên, thử lại theo BR-19-016; quá 72 giờ vẫn không xác định → `EXPIRED` kèm cờ `needs_reconciliation = true` để đối soát xác nhận. | Trễ 30 phút; trần 72 giờ | FR-19-027 |
+| BR-19-018 | Thanh toán muộn: IPN hoặc truy vấn thành công hợp lệ cho giao dịch `CANCELLED`/`EXPIRED` → giao dịch chuyển `SUCCEEDED` với `late_paid = true`, sinh chênh lệch `LATE_PAYMENT` để kế toán quyết định giữ khoản thu hay hoàn tiền, và webhook gửi đối tác mang cờ `latePaid`. | — | FR-19-026, 031 |
+| BR-19-019 | Chỉ hủy được giao dịch `CREATED`/`PENDING`. Nếu NCC có API hủy (OQ-19-10) thì gọi trước, NCC xác nhận mới chuyển `CANCELLED`; nếu không có thì chuyển `CANCELLED` cục bộ và áp BR-19-018 cho kết quả đến sau. | — | FR-19-026 |
+| BR-19-020 | Lịch gửi webhook: lần đầu ngay; thử lại sau 10 s, 30 s, 1 phút, 5 phút, 15 phút, 30 phút, 1 giờ, 2 giờ, 4 giờ, 8 giờ (11 lần, khoảng 16 giờ) rồi `EXHAUSTED`. Thành công là mã HTTP 2xx trong 10 s. Mã 4xx khác 408, 425, 429 → `EXHAUSTED` ngay. Lần thử có độ ngẫu nhiên ±10%. | Cấu hình được lịch | FR-19-060, 062 |
+| BR-19-021 | Sự kiện và webhook của một giao dịch mang số thứ tự `sequence` tăng dần; Kafka giữ thứ tự theo khóa phân vùng `transaction_id`; đối tác phải bỏ qua thông báo có `sequence` nhỏ hơn thông báo đã xử lý. Mỗi thông báo có `id` duy nhất để đối tác chống trùng. | — | FR-19-060, 061 |
+
+### 6.4. Hoàn tiền
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-022 | Chỉ lập yêu cầu hoàn cho giao dịch `SUCCEEDED` hoặc `PARTIALLY_REFUNDED`, không phải giao dịch thử, còn trong hạn hoàn tính từ `paid_at`; tổng số tiền hoàn (đang xử lý cộng đã thành công) không vượt số tiền gốc; mỗi giao dịch có tối đa một yêu cầu hoàn chưa kết thúc. | Hạn 180 ngày (cấu hình, OQ-19-09) | FR-19-038 |
+| BR-19-023 | Yêu cầu hoàn có số tiền ≥ ngưỡng cần hai người phê duyệt khác nhau và đều khác người lập; dưới ngưỡng cần một người. | Ngưỡng 5.000.000 đ (cấu hình, OQ-19-09) | FR-19-039 |
+| BR-19-024 | Chế độ thực thi hoàn tiền lấy theo NCC: `API` khi adapter khai báo hỗ trợ hoàn và tenant bật hoàn tiền; ngược lại `MANUAL`. Ở chế độ `MANUAL`, việc xác nhận đã hoàn bắt buộc có số chứng từ, ngày chứng từ và tệp chứng từ, và người xác nhận phải khác người phê duyệt. Thực thi lại sau `FAILED` tối đa 3 lần. | — | FR-19-040 |
+
+### 6.5. Đối soát và chênh lệch
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-025 | Ngày giao dịch đối soát là ngày lịch giờ Việt Nam (00:00:00–23:59:59 UTC+7) theo thời điểm thanh toán `paid_at` do NCC xác nhận (khoản hoàn: theo thời điểm hoàn thành). Phiên tự động được tạo lúc giờ chốt ngày T+1; nếu chưa có dữ liệu NCC thì thu thập lại mỗi 30 phút tới 12:00 rồi cảnh báo. Cách NCC tính ngày giao dịch cần đối chiếu (OQ-19-07). | Giờ chốt 06:00 (cấu hình) | FR-19-042, 043 |
+| BR-19-028 | So khớp theo khóa mã tham chiếu NCC, dự phòng theo `transaction_code`; một dòng khớp khi số tiền bằng nhau (dung sai 0 đ) và trạng thái tương đương theo bảng ánh xạ của adapter. Mỗi dòng không khớp sinh đúng một bản ghi chênh lệch, phân loại theo mục 7.7. Chênh lệch có hạn xử lý; quá hạn thì nhắc người phụ trách, quá 10 ngày làm việc thì chuyển cấp tới người phê duyệt. | Hạn 3 ngày làm việc (cấu hình) | FR-19-044, 045 |
+| BR-19-034 | Chỉ chốt phiên khi mọi chênh lệch của phiên đã `RESOLVED`. Phiên `CLOSED` bất biến; mở lại cần đề nghị có lý do và phê duyệt (BR-19-011); mở lại không xóa kết quả cũ mà tạo một lần chạy mới có số thứ tự, biên bản cũ được giữ và đánh dấu "bị thay thế". | — | FR-19-047, 048 |
+
+### 6.6. Kiểm toán, bất biến, dữ liệu cá nhân và di trú
+
+| Mã | Quy tắc | Tham số mặc định | FR |
+|---|---|---|---|
+| BR-19-029 | Mọi thao tác ghi của người dùng và mọi quyết định phê duyệt phải ghi bản ghi kiểm toán vào outbox trong **cùng giao dịch CSDL** với thay đổi nghiệp vụ; không ghi được thì toàn bộ thao tác bị hủy và trả ERR-19-050. Việc chuyển bản ghi từ outbox tới PH-13 là bất đồng bộ nên PH-13 tạm ngừng không chặn thao tác. | — | FR-19-053 |
+| BR-19-030 | Lịch sử trạng thái, IPN nguyên văn, phiên đã chốt, biên bản và quyết định phê duyệt không được sửa hay xóa; mọi điều chỉnh thực hiện bằng bản ghi bù có tham chiếu bản ghi gốc. | — | FR-19-028, 029, 047 |
+| BR-19-031 | Quy tắc che mặc định (áp dụng khi PH-09 không trả chính sách): họ tên giữ chữ cái đầu mỗi từ và từ cuối (`Nguyễn V*** A**`); điện thoại giữ 4 số cuối; thư điện tử giữ 2 ký tự đầu và tên miền; số định danh giữ 4 số cuối; địa chỉ chỉ giữ cấp tỉnh. Người có `PERM-19-transaction-read-pii` xem bản đầy đủ, mỗi lần xem ghi kiểm toán. File xuất mặc định che. | — | FR-19-051, 052 |
+| BR-19-032 | Không lưu số thẻ, số tài khoản đầy đủ, mã CVV, mã OTP của người nộp ở bất kỳ bảng, log hay nhật ký tích hợp nào; chỉ lưu mã ngân hàng, mã kênh và tối đa 4 số cuối nếu NCC trả về. Adapter phải lọc các trường này trước khi ghi nhật ký. | — | FR-19-024, 029, 054 |
+| BR-19-034 | (xem mục 6.5) | | |
 
