@@ -515,7 +515,7 @@ Mục tiêu của nhóm này là bảo đảm mỗi luồng mạng phải đư�
 | SEC-10 | Chống DDoS và giới hạn lưu lượng nhiều tầng | Tầng 3/4: dịch vụ chống DDoS của TTDL/cloud và giới hạn kết nối tại bộ cân bằng tải. Tầng 7: Envoy Gateway `BackendTrafficPolicy` giới hạn theo IP nguồn (mặc định 50 yêu cầu/giây/IP cho đường dẫn giao diện), APISIX `limit-req` theo consumer, `limit-count` theo gói và theo tenant (D03-10 §5.3). Đường dẫn đăng nhập Keycloak giới hạn 10 yêu cầu/phút/IP | Chịu được tải gấp 3 lần cao điểm (900 lượt/giây) không suy giảm data plane; nguồn tấn công bị chặn ≤ 60 giây | Bên cung cấp hạ tầng, nhóm nền tảng | KT (kiểm thử tải), DT |
 | SEC-11 | Tường lửa ứng dụng web (WAF) | Coraza tích hợp Envoy Gateway (ADR-033) với OWASP CRS 4.x mức độ hoang tưởng (paranoia level) 2 cho giao diện, mức 1 cho API máy–máy (đã có kiểm tra lược đồ ở APISIX); chế độ chặn trên PROD sau 2 tuần chạy phát hiện ở môi trường thử; luật ảo hóa vá (virtual patch) bổ sung khi có lỗ hổng 0-day; log WAF đẩy về SIEM | Tỉ lệ chặn nhầm < 0,1% lượt hợp lệ; luật vá ảo triển khai ≤ 4 giờ từ khi có thông tin lỗ hổng | Nhóm nền tảng | KT, PT |
 | SEC-12 | Cấu hình TLS | Biên: TLS 1.3 với `TLS_AES_256_GCM_SHA384`, `TLS_AES_128_GCM_SHA256`, `TLS_CHACHA20_POLY1305_SHA256`; TLS 1.2 chỉ khi HTTT có ngoại lệ, giới hạn `ECDHE-ECDSA/RSA-AES128/256-GCM-SHA256/384` và `ECDHE-*-CHACHA20-POLY1305`; nhóm khóa X25519, secp256r1; HSTS `max-age=31536000; includeSubDomains`; OCSP stapling; không nén TLS, không renegotiation. Chứng thư biên RSA 3072 hoặc ECDSA P-256. Ra ngoài (NDXP, PayGov): xác minh đầy đủ chứng thư, ghim CA gốc trong truststore riêng của adapter | Điểm A+ trên công cụ kiểm tra TLS nội bộ (testssl.sh): 0 giao thức/bộ mã yếu | Nhóm nền tảng | CI (testssl.sh trong kiểm thử khói), RS |
-| SEC-13 | Phân vùng mạng | Tám vùng Z0–Z7 (mục 3.3); tầng hạ tầng tách VLAN/subnet cho biên, nút worker, nút dữ liệu, mạng quản trị và mạng lưu trữ; namespace K8s theo vùng (`dh-edge`, `dh-gw`, `dh-app`, `dh-rt-*`, `dh-data`, `dh-sec`, `dh-ops`) | 100% namespace có nhãn vùng; sơ đồ mạng D03-09 khớp cấu hình | Bên cung cấp hạ tầng, nhóm nền tảng | RS |
+| SEC-13 | Phân vùng mạng | Tám vùng Z0–Z7 (mục 3.3); tầng hạ tầng tách VLAN/subnet cho biên, nút worker, nút dữ liệu, mạng quản trị và mạng lưu trữ; namespace K8s gắn nhãn vùng `dh.gov.vn/zone`, danh sách đầy đủ ở D03-09 mục bố trí namespace (ví dụ `dh-edge` Z1; `dh-gateway` Z2; `dh-control`, `dh-payment` Z3; `dh-runtime`, `dh-rt-*` Z4; `dh-db`, `dh-kafka`, `dh-s3` Z5; `dh-iam`, `dh-secrets` Z6; `dh-obs`, `dh-system` Z7) | 100% namespace có nhãn vùng; sơ đồ mạng D03-09 khớp cấu hình | Bên cung cấp hạ tầng, nhóm nền tảng | RS |
 | SEC-14 | Network policy từ chối mặc định | Mỗi namespace có `CiliumNetworkPolicy` từ chối mọi ingress/egress, sau đó mở theo cặp nhãn `app.kubernetes.io/name`; DNS chỉ tới CoreDNS; Admin API APISIX, `/actuator`, cổng quản trị Kafka/PG chỉ nhận từ namespace được liệt kê; Hubble ghi luồng bị chặn | 100% namespace có chính sách mặc định từ chối (Kyverno kiểm tra); 0 luồng bất ngờ trong báo cáo Hubble tuần | Nhóm nền tảng | CI (kiểm thử kết nối âm tính), KT |
 | SEC-15 | mTLS trong cụm và ủy quyền dịch vụ | Istio ambient: `PeerAuthentication` mặc định `STRICT` toàn mesh; `AuthorizationPolicy` mặc định từ chối, cho phép theo SPIFFE ID của service account (ví dụ chỉ `dh-connect` được gọi Admin API APISIX); waypoint proxy cho dịch vụ cần chính sách tầng 7. Chứng thư workload do istiod cấp, sống 24 giờ, CA trung gian của mesh được ký từ PKI OpenBao (SEC-35) | 0 kết nối văn bản thô giữa pod (đo bằng chỉ số Istio `connection_security_policy`) | Nhóm nền tảng | KT |
 | SEC-16 | Kiểm soát lưu lượng ra (egress) | Mọi lưu lượng ra Internet qua egress gateway Istio có `ServiceEntry` liệt kê FQDN đích (NDXP, PayGov, kho cập nhật đã duyệt); `CiliumNetworkPolicy` với `toFQDNs` cho pod cần ra ngoài; chặn dải siêu dữ liệu cloud `169.254.169.254/32`, dải nội bộ cụm, dải quản trị đối với egress từ `dh-runtime`; đích mới cho kết nối của luồng được tạo qua quy trình duyệt PH-05 | 0 kết nối ra đích ngoài danh sách; cảnh báo ≤ 5 phút khi bị chặn | Nhóm nền tảng | KT, PT |
@@ -535,17 +535,17 @@ spec: { mtls: { mode: STRICT } }
 ---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
-metadata: { name: allow-connect-to-apisix-admin, namespace: dh-gw }
+metadata: { name: allow-connect-to-apisix-admin, namespace: dh-gateway }
 spec:
   selector: { matchLabels: { app.kubernetes.io/name: apisix } }
   action: ALLOW
   rules:
-    - from: [{ source: { principals: ["cluster.local/ns/dh-app/sa/dh-connect"] } }]
+    - from: [{ source: { principals: ["cluster.local/ns/dh-control/sa/dh-connect"] } }]
       to:   [{ operation: { ports: ["9180"] } }]
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
-metadata: { name: default-deny, namespace: dh-app }
+metadata: { name: default-deny, namespace: dh-control }
 spec:
   endpointSelector: {}
   ingress: [{}]   # chỉ để kích hoạt chế độ từ chối; các chính sách cho phép bổ sung riêng

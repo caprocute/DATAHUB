@@ -358,7 +358,7 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `dh-system` | Kyverno, cert-manager, các operator, Argo CD, Argo Rollouts, KEDA, Velero | Nền tảng | Z7 | Có thể tách tiếp theo operator |
 | `istio-system`, `kube-system` | Istio ambient, Cilium, CSI | Nền tảng | Z7 | |
 
-D03-07 (SEC-13) gom namespace theo vùng ở mức thô (`dh-edge`, `dh-gw`, `dh-app`, `dh-rt-*`, `dh-data`, `dh-sec`, `dh-ops`). Tài liệu này chia mịn hơn để áp hạn mức tài nguyên, PodDisruptionBudget và quyền vận hành theo từng loại kho; mỗi namespace mang nhãn `dh.gov.vn/zone` bằng mã vùng tương ứng ở cột trên, và network policy, chính sách Kyverno được viết theo nhãn vùng nên khớp mô hình tám vùng của D03-07. Bảng ánh xạ tên này cần được D03-07 xác nhận để hai tài liệu dùng chung một bộ tên.
+Bảng trên là danh sách namespace chuẩn, được D03-07 (SEC-13) dẫn chiếu. Việc chia mịn theo từng loại kho giúp áp hạn mức tài nguyên, PodDisruptionBudget và quyền vận hành riêng cho từng loại. Mỗi namespace mang nhãn `dh.gov.vn/zone` bằng mã vùng ở cột trên. Network policy và chính sách Kyverno được viết theo nhãn vùng, nhờ đó khớp với mô hình tám vùng của D03-07.
 
 ### 4.3. Phân bố pod: topology spread, PodDisruptionBudget, priority class
 
