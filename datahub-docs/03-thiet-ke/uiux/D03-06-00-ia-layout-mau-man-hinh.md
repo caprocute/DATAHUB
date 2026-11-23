@@ -1008,3 +1008,169 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 
 **Sai lầm thường gặp.** Tải toàn bộ cây lớn một lần; mất lựa chọn khi tải lại; chỉ cho đổi cha bằng kéo thả; cây và bảng cuộn chung một thanh cuộn.
 
+### 4.12. PTN-09 · Nhập dữ liệu có xem trước
+
+**Mục đích.** Nạp hàng loạt bản ghi từ tệp một cách an toàn: người dùng thấy trước dữ liệu sẽ được ghi, thấy lỗi theo dòng và cột, và quyết định ghi hay không (FR-00-032, FR-00-033).
+
+**Khi dùng.** Mọi chức năng nhập tệp (Excel .xlsx, CSV UTF-8). **Khi không dùng.** Tải lên một tệp đính kèm đơn lẻ (dùng `CMP-Upload` trong biểu mẫu).
+
+**Ví dụ trong Datahub.** Nhập danh mục từ Excel PH-07 (`/du-lieu/danh-muc/{ma}/nhap`, 100.000 dòng trong ≤ 2 phút theo NFR-00-008); nhập danh sách HTTT từ hệ cũ PH-01; nhập tệp đối soát PH-19; nhập người dùng hàng loạt PH-12.
+
+**Sơ đồ vùng.** PTN-09 là một wizard ba bước chuyên biệt (kế thừa khung PTN-05).
+
+```text
+┌ main ─────────────────────────────────────────────────────────────────────────┐
+│ ① PageHeader: "Nhập mục danh mục · Giới tính"                                 │
+│ ② Steps: (1) Chọn tệp ── (2) Xem trước và kiểm tra ── (3) Kết quả            │
+│ ┌ Bước 1 (khối đặc) ───────────────────────────────────────────────────────┐ │
+│ │ [⬇ Tải tệp mẫu (.xlsx)]  Hướng dẫn cột bắt buộc (bảng nhỏ)               │ │
+│ │ ┌ Vùng thả tệp ─────────────────────────────┐  hoặc [Chọn tệp]           │ │
+│ │ └───────────────────────────────────────────┘  Tối đa 50 MB, .xlsx/.csv   │ │
+│ │ Tùy chọn: Chế độ [Thêm mới | Thêm và cập nhật | Thay toàn bộ bản nháp]    │ │
+│ └──────────────────────────────────────────────────────────────────────────┘ │
+│ ┌ Bước 2 (khối đặc) ───────────────────────────────────────────────────────┐ │
+│ │ Tóm tắt: 12.480 dòng · 12.452 hợp lệ · 28 lỗi · 310 sẽ cập nhật           │ │
+│ │ [Tất cả | Chỉ dòng lỗi (28) | Thêm mới | Cập nhật]  [⬇ Tải báo cáo lỗi]   │ │
+│ │ DataTable ảo hóa: Dòng │ Mã │ Tên │ … ô lỗi viền + biểu tượng + tooltip    │ │
+│ │ ☐ Bỏ qua 28 dòng lỗi và ghi các dòng hợp lệ                              │ │
+│ └──────────────────────────────────────────────────────────────────────────┘ │
+│ ③ Thanh dính đáy: [Hủy]                        [‹ Chọn tệp khác] [Ghi dữ liệu]│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Thành phần.** `CMP-Steps`, `CMP-Upload` (biến thể vùng thả, có nút chọn tệp cho người dùng bàn phím), `CMP-SegmentedControl`, `CMP-DataTable` (ảo hóa), `CMP-Alert`, `CMP-JobProgress`, `CMP-ResultPage`. Mọi vùng là bề mặt đặc.
+
+**Hành vi.**
+
+1. Tệp mẫu (FR-00-033) có hàng tiêu đề, dòng ví dụ, trang tính "Hướng dẫn" mô tả kiểu dữ liệu và giá trị hợp lệ; tệp mẫu sinh theo thuộc tính động hiện tại của danh mục.
+2. Tải tệp lên kho tạm, phân tích chạy nền (FR-00-054) với `CMP-JobProgress` "Đang kiểm tra 6.200 / 12.480 dòng"; người dùng có thể rời trang và nhận thông báo khi xong.
+3. Bước 2 hiển thị lỗi theo **dòng và cột** của tệp gốc (dòng tính như Excel, có tiêu đề là dòng 1). Ô lỗi có viền `color-error`, biểu tượng và thông điệp trên tooltip, đồng thời có cột "Lỗi" dạng chữ để không chỉ dựa vào màu. Báo cáo lỗi tải về là tệp gốc có thêm cột "Lỗi".
+4. Ghi theo kiểu **tất cả hoặc không** (FR-00-032): nút "Ghi dữ liệu" bị vô hiệu khi còn lỗi, trừ khi người dùng tích "Bỏ qua {n} dòng lỗi"; khi đó nhãn nút đổi thành "Ghi {m} dòng hợp lệ". Chế độ "Thay toàn bộ bản nháp" yêu cầu `CMP-ConfirmDialog` nêu số bản ghi sẽ bị thay.
+5. Ghi chạy nền; bước 3 hiển thị `CMP-ResultPage` với số đã thêm, đã cập nhật, đã bỏ qua, thời gian, liên kết tới đối tượng và mã tác vụ; toàn bộ lần nhập được ghi kiểm toán một bản ghi tổng hợp kèm tệp gốc.
+6. Với dữ liệu có phiên bản (PH-07), nhập luôn ghi vào bản nháp, không ghi thẳng vào bản đã công bố.
+
+**Trạng thái cụ thể.** Tệp sai định dạng hoặc vượt dung lượng: lỗi tại vùng thả, không chuyển bước. Tệp thiếu cột bắt buộc: dừng ở bước 2 với `CMP-Alert` liệt kê cột thiếu, không hiện bảng. Tệp mã hóa không phải UTF-8 (CSV): cảnh báo và cho chọn bảng mã.
+
+**Tiêu chí nghiệm thu PTN-09.**
+
+- [ ] Tải được tệp mẫu; nhập lại tệp mẫu đã điền đúng thì thành công.
+- [ ] Tệp có 1 dòng lỗi: không dòng nào được ghi khi không tích bỏ qua.
+- [ ] Lỗi chỉ ra đúng số dòng và tên cột theo tệp gốc.
+- [ ] 100.000 dòng hoàn tất trong ≤ 2 phút (NFR-00-008); bảng xem trước cuộn mượt.
+- [ ] Vùng thả tệp có phương án chọn tệp bằng bàn phím.
+- [ ] Rời trang trong lúc phân tích, nhận thông báo khi xong, quay lại đúng bước 2.
+
+**Sai lầm thường gặp.** Ghi từng phần rồi báo lỗi giữa chừng; báo lỗi chung chung "Tệp không hợp lệ"; đánh số dòng lệch so với Excel; xem trước chỉ 100 dòng đầu mà không nói rõ.
+
+### 4.13. PTN-10 · Hộp việc và duyệt
+
+**Mục đích.** Cho người duyệt xử lý nhanh và đúng hàng đợi yêu cầu chờ quyết định từ mọi phân hệ (FR-00-070…072).
+
+**Khi dùng.** Hộp việc chung "Việc của tôi"; danh sách "Yêu cầu tôi đã gửi". **Khi không dùng.** Danh sách đối tượng thông thường có trạng thái "Chờ duyệt" (vẫn là PTN-01, nhưng liên kết sang hộp việc).
+
+**Ví dụ trong Datahub.** `/viec-cua-toi` gồm: duyệt kết nạp HTTT, duyệt phát hành API, duyệt đăng ký sử dụng, duyệt phát hành luồng, duyệt công bố danh mục, chấp thuận khai thác dữ liệu, duyệt hoàn tiền, việc BPMN.
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
+│ ① PageHeader: "Hộp việc"   [Chờ tôi (12) | Nhóm của tôi (5) | Đã xử lý]      │
+│ ┌ ② Danh sách việc (đặc, 5/12) ──────┐ ┌ ③ Chi tiết việc (đặc, 7/12) ────────┐│
+│ │ 🔍 [Loại ▾] [Hạn ▾] [Phân hệ ▾]     │ │ Duyệt phát hành API "Tra cứu hộ tịch"││
+│ │ ┌────────────────────────────────┐ │ │ Gửi bởi Nguyễn Văn A · 20/11 09:12   ││
+│ │ │● Phát hành API  Quá hạn 1 ngày │ │ │ Hạn: 22/11/2026 (còn 1 ngày)        ││
+│ │ │  Tra cứu hộ tịch · Sở Tư pháp  │ │ │ ── Nội dung yêu cầu ──              ││
+│ │ └────────────────────────────────┘ │ │ DescriptionList / DiffViewer        ││
+│ │ ┌────────────────────────────────┐ │ │ ── Ý kiến các bước trước ──         ││
+│ │ │  Hoàn tiền GD2026…  Hạn 23/11  │ │ │ Timeline                            ││
+│ │ └────────────────────────────────┘ │ │ ── ApprovalPanel ──                 ││
+│ │ …                                  │ │ Ý kiến * [________________]         ││
+│ │                                    │ │ [Từ chối] [Yêu cầu bổ sung] [Duyệt] ││
+│ └────────────────────────────────────┘ └──────────────────────────────────────┘│
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: duyệt xong một việc, khung chi tiết tự chuyển sang việc kế tiếp. Dưới `bp-xl`, khung chi tiết mở thành trang riêng.
+
+**Thành phần.** `CMP-Tabs`/`CMP-SegmentedControl`, `CMP-FilterBar`, danh sách thẻ việc (`CMP-Card` gọn với `CMP-StatusTag`, `CMP-Timestamp`), `CMP-DescriptionList`, `CMP-DiffViewer`, `CMP-Timeline`, `CMP-ApprovalPanel`, `CMP-ReasonDialog`. Mọi vùng đặc.
+
+**Hành vi.**
+
+1. Việc sắp xếp mặc định theo hạn xử lý gần nhất; việc quá hạn đứng đầu, nhãn "Quá hạn {n} ngày" mức lỗi; sắp hết hạn (dưới 24 giờ) mức cảnh báo.
+2. Việc chọn phản ánh trên URL (`?chon={ma-viec}`); thông báo trong trung tâm thông báo dẫn thẳng tới đây.
+3. Khung chi tiết hiển thị nội dung yêu cầu do phân hệ nguồn cung cấp (thành phần nhúng đăng ký theo loại việc), cộng liên kết "Mở đối tượng" tới PTN-02 của phân hệ.
+4. `CMP-ApprovalPanel`: ô ý kiến bắt buộc với mọi quyết định (FR-00-072), lý do từ chối tối thiểu 10 ký tự. Người tạo yêu cầu không thấy nút duyệt với loại việc áp dụng bốn mắt; thay vào đó là dòng "Bạn là người gửi yêu cầu này nên không thể tự duyệt" (FR-00-071).
+5. Quyết định dùng `If-Match`; nếu việc đã được người khác trong nhóm xử lý, hiện `CMP-Alert` "Việc này đã được {người} xử lý lúc {giờ}" và loại việc khỏi danh sách.
+6. Duyệt hàng loạt chỉ cho phép với loại việc được FRS đánh dấu là an toàn duyệt lô, cần một ý kiến chung và trả kết quả từng việc.
+7. Tab "Đã xử lý" chỉ đọc, giữ lịch sử quyết định của người dùng.
+
+**Trạng thái cụ thể.** Rỗng: "Bạn không có việc nào chờ xử lý" với minh họa nhẹ; không có nút hành động. Đã xử lý hết trong phiên: khung chi tiết hiện "Bạn đã xử lý hết việc trong danh sách".
+
+**Phím tắt.** `J`/`K` việc kế/trước; `A` focus ô ý kiến rồi duyệt bằng `Ctrl+Enter`; `R` mở từ chối. Phím tắt duyệt không bao giờ thực hiện quyết định mà không qua ô ý kiến.
+
+**Tiêu chí nghiệm thu PTN-10.**
+
+- [ ] Hộp việc tổng hợp đúng việc từ mọi phân hệ đã bật cho tenant.
+- [ ] Không duyệt hoặc từ chối được khi ô ý kiến trống; từ chối bắt buộc lý do.
+- [ ] Người tạo không tự duyệt được yêu cầu loại bốn mắt, cả trên giao diện và API.
+- [ ] Hai người cùng nhóm duyệt cùng việc: người sau nhận thông báo đã xử lý.
+- [ ] Số đếm trên sidebar khớp số việc tab "Chờ tôi".
+- [ ] Sau quyết định, khung chi tiết tự chuyển sang việc kế tiếp và focus vào tiêu đề việc.
+
+**Sai lầm thường gặp.** Hộp việc riêng cho mỗi phân hệ; nút "Duyệt" một chạm không cần ý kiến; chỉ hiện mã đối tượng mà không có nội dung cần duyệt; không phân biệt việc của cá nhân và việc của nhóm.
+
+### 4.14. PTN-11 · Giám sát thời gian thực và tra log
+
+**Mục đích.** Cho người dùng khám phá khối lượng lớn sự kiện theo thời gian (log, trace, bản ghi kiểm toán, lượt gọi API) bằng khoảng thời gian và truy vấn, xem chi tiết từng sự kiện và theo dõi trực tiếp khi cần.
+
+**Khi dùng.** Tra log, truy vết, nhật ký kiểm toán, trạng thái nút gateway, sandbox của cổng. **Khi không dùng.** Tập dữ liệu nghiệp vụ có phân trang thông thường (PTN-01).
+
+**Ví dụ trong Datahub.** Tra log PH-13 (`/giam-sat/log`); truy vết theo `trace_id` (`/giam-sat/truy-vet/{trace-id}` với biểu đồ dải thời gian các span); nhật ký kiểm toán (`/giam-sat/kiem-toan`, xuất bằng chứng); nút gateway PH-03.
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
+│ ① PageHeader: "Tra log"                     [Lưu truy vấn] [Xuất] [⋯]         │
+│ ┌ ② Thanh truy vấn (đặc) ───────────────────────────────────────────────────┐ │
+│ │ [Khoảng: 1 giờ qua ▾] [ trace_id:… AND muc:loi AND dich-vu:dh-runtime   ] │ │
+│ │ [Dịch vụ ▾][Mức ▾][HTTT ▾]                     [▶ Chạy] [● Trực tiếp: Tắt]│ │
+│ └───────────────────────────────────────────────────────────────────────────┘ │
+│ ┌ ③ Biểu đồ histogram theo thời gian (đặc, cao 120px, kéo chọn để thu hẹp) ─┐ │
+│ └───────────────────────────────────────────────────────────────────────────┘ │
+│ ┌ ④ LogViewer ảo hóa (đặc, mono) ───────────────┐ ┌ ⑤ Chi tiết sự kiện ─────┐ │
+│ │ 21/11 14:05:32.120  LỖI  dh-runtime  Gọi …    │ │ JsonViewer              │ │
+│ │ 21/11 14:05:32.118  TT   apisix      200 …    │ │ trace_id [⧉] [Mở trace] │ │
+│ │ … (hàng triệu dòng, cuộn ảo)                  │ │ Ngữ cảnh ±50 dòng       │ │
+│ └───────────────────────────────────────────────┘ └─────────────────────────┘ │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Thành phần.** `CMP-DateRangePicker` (có lựa chọn tương đối), `CMP-SearchField` biến thể truy vấn (có tô màu cú pháp và gợi ý trường), `CMP-Select`, `CMP-Chart` (histogram), `CMP-LogViewer` (ảo hóa, `font-mono-sm`), `CMP-JsonViewer`, `CMP-CopyButton`, `CMP-Switch` (trực tiếp). Mọi vùng đặc; chữ log dùng màu chữ tiêu chuẩn, mức log thể hiện bằng nhãn chữ ("LỖI", "CẢNH BÁO", "TT", "GỠ LỖI") cộng màu.
+
+**Hành vi.**
+
+1. *Khoảng thời gian* luôn bắt buộc, mặc định 1 giờ qua; khoảng tối đa theo loại dữ liệu (log 7 ngày một lần truy vấn, kiểm toán 31 ngày) để bảo vệ máy chủ; vượt thì gợi ý thu hẹp. Thời gian hiển thị theo Asia/Ho_Chi_Minh đến mili giây; tooltip hiển thị UTC.
+2. *Truy vấn* có cú pháp đơn giản `trường:giá-trị`, `AND`/`OR`/`NOT`, dấu ngoặc kép cho cụm từ; gợi ý trường và giá trị khi gõ; lỗi cú pháp chỉ vị trí lỗi. Toàn bộ truy vấn và khoảng nằm trên URL (trừ giá trị nhạy cảm, mục 2.4).
+3. *Ảo hóa.* `CMP-LogViewer` chỉ dựng các dòng trong khung nhìn; tải thêm theo con trỏ (cursor) khi cuộn tới cuối, không dùng phân trang số. Dòng dài cắt một dòng, bấm để mở chi tiết ở khung ⑤.
+4. *Histogram* thể hiện số sự kiện theo khoảng; kéo chọn một đoạn (hoặc dùng ô nhập thời gian, phương án không kéo) để thu hẹp khoảng.
+5. *Trực tiếp (live tail)* bật bằng công tắc: sự kiện mới chèn ở đầu, tối đa 1.000 dòng trong bộ nhớ; cuộn khỏi đầu tự tạm dừng chèn và hiện nút "{n} sự kiện mới · Về đầu"; không đẩy sự kiện vào vùng `aria-live`. Trực tiếp tự tắt sau 15 phút không tương tác.
+6. *Che dữ liệu.* Giá trị trường mức Nhạy cảm đã được che ở nguồn (NFR-00-029); giao diện không có nút "hiện" cho log vận hành. Nhật ký kiểm toán hiển thị giá trị trước/sau đã che (FR-00-041).
+7. *Nhật ký kiểm toán* có thêm hành động "Xuất bằng chứng" (gói tệp có chuỗi băm) và "Kiểm tra toàn vẹn"; không có hành động sửa/xóa (FR-00-042).
+8. *Truy vết.* Trang trace hiển thị biểu đồ dải (waterfall) các span theo thời gian, cây span bên trái, chi tiết span bên phải; mọi `trace_id` trong ứng dụng (thông báo lỗi, log) là liên kết tới trang này.
+
+**Trạng thái cụ thể.** Không có kết quả: "Không có sự kiện nào khớp truy vấn trong {khoảng}" kèm gợi ý mở rộng khoảng. Truy vấn quá tải (máy chủ trả 429 hoặc hết thời gian): thông báo "Truy vấn trả về quá nhiều dữ liệu, hãy thu hẹp khoảng thời gian hoặc thêm điều kiện". Kết quả bị cắt: "Đang hiển thị 10.000 sự kiện đầu tiên".
+
+**Phím tắt.** `/` focus ô truy vấn; `Enter` trong ô truy vấn chạy; `L` bật/tắt trực tiếp; `J`/`K` dòng kế/trước; `Enter` mở chi tiết dòng; `C` sao chép dòng.
+
+**Tiêu chí nghiệm thu PTN-11.**
+
+- [ ] Cuộn qua 1 triệu dòng mượt, bộ nhớ trình duyệt không vượt 300 MB.
+- [ ] Truy vấn và khoảng thời gian trên URL; mở lại cho cùng kết quả.
+- [ ] Trực tiếp tự tạm dừng khi người dùng cuộn khỏi đầu.
+- [ ] Không có giá trị nhạy cảm chưa che xuất hiện trên giao diện log.
+- [ ] Mức log có chữ, không chỉ màu.
+- [ ] Nhật ký kiểm toán không có thao tác sửa/xóa; xuất bằng chứng kiểm tra được chuỗi băm.
+
+**Sai lầm thường gặp.** Phân trang số cho log; không giới hạn khoảng thời gian; dùng `aria-live` cho luồng trực tiếp; hiển thị giờ UTC không ghi rõ; chỉ dùng màu cho mức log.
+

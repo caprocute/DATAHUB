@@ -1494,3 +1494,137 @@ export interface DhSegmentedControlProps<V extends string = string> {
 
 **Điều cấm.** Cấm dùng thay Tabs cho nội dung khác nhau. Cấm hơn 5 mục. Cấm thay đổi dữ liệu khi đổi mục.
 
+### 7.11. CMP-DatePicker
+
+**Mục đích.** `CMP-DatePicker` chọn một ngày (`T-DATE`) hoặc một thời điểm (`T-TS`): ngày hiệu lực, hạn của khóa API, thời điểm chạy lịch một lần.
+
+**Nền antd.** `DatePicker` với dayjs, locale `vi_VN` từ `ConfigProvider`. Hàm bọc cố định: `format="DD/MM/YYYY"` (ngày) hoặc `"DD/MM/YYYY HH:mm"` (thời điểm, `showTime={{ format: 'HH:mm' }}`, không chọn giây trừ khi `precision="second"`); tuần bắt đầu thứ Hai (locale `vi`); `suffixIcon` là `calendar` Lucide; popup gắn `dh-glass--overlay` qua `classNames.popup.root` (antd 6.7.1 nhận `classNames.popup` dạng chuỗi hoặc đối tượng, Datahub dùng dạng đối tượng); `needConfirm` bật với `showTime` để người dùng chọn xong giờ mới áp dụng.
+
+**Nhập bằng bàn phím.** Người dùng gõ trực tiếp "21/11/2026" vào ô; thành phần chấp nhận thêm các dạng "21-11-2026", "21.11.2026", "21112026" và chuẩn hóa về "21/11/2026" khi mất focus. Giá trị không hợp lệ (31/02) giữ nguyên chữ đã gõ và báo lỗi "Ngày không hợp lệ. Nhập theo dạng DD/MM/YYYY.", không âm thầm xóa.
+
+**Múi giờ.** Giá trị thời điểm hiển thị và nhập theo `Asia/Ho_Chi_Minh`, chuyển sang UTC ISO 8601 khi gửi (`T-TS` lưu UTC). Giá trị ngày (`T-DATE`) không có múi giờ, gửi dạng `YYYY-MM-DD`. Hàm chuyển đổi nằm trong `@datahub/ui/format` (`toApiDate`, `toApiTimestamp`), không viết tay ở màn hình.
+
+**Ràng buộc.** Prop `min`, `max` (ví dụ hạn khóa API không quá 365 ngày, không ở quá khứ) dùng `disabledDate`; ngày bị khóa trong lịch có chữ `color-text-disabled` và `aria-disabled`. Ràng buộc phải kiểm tra lại ở backend (CRUD-C-03).
+
+**Popup.** Ô ngày hôm nay có viền `color-accent` 1px; ngày chọn nền `color-accent` chữ `color-text-on-accent`; hover `color-fill-hover` (token thành phần antd `DatePicker.cellHoverBg`). Ô ngày 32×32 (đạt vùng chạm). Lớp chân popup có nút "Hôm nay" (ngày) hoặc "Bây giờ" (thời điểm).
+
+**Token.** Chung của nhóm nhập liệu, thêm `TKN-color-accent`, `TKN-color-text-on-accent`, `TKN-color-fill-hover`, `TKN-color-fill-selected`, `TKN-blur-lg`, `TKN-shadow-3`, `TKN-radius-lg`, `TKN-z-popover`, `TKN-font-feature-tabular`.
+
+**Nền đặt.** Ô nhập trên nền đặc; popup trên `glass-overlay`.
+
+**Bàn phím và ARIA.** Ô nhập là `combobox` có `aria-haspopup="dialog"`; mũi tên xuống mở lịch; trong lịch, mũi tên di chuyển theo ngày/tuần, PageUp/PageDown đổi tháng, Shift + PageUp/PageDown đổi năm, Enter chọn, Esc đóng và trả focus về ô. Lịch có tiêu đề tháng năm được đọc ("Tháng 11 năm 2026").
+
+**API.**
+
+```tsx
+export interface DhDatePickerProps {
+  kind?: 'date' | 'datetime';
+  precision?: 'minute' | 'second';
+  /** 'YYYY-MM-DD' cho date; ISO 8601 UTC cho datetime. */
+  value?: string | null;
+  onChange?: (value: string | null) => void;
+  min?: string; max?: string;
+  disabledDate?: (d: Dayjs) => boolean;
+  placeholder?: string;          // mặc định "DD/MM/YYYY"
+  size?: 'sm' | 'md' | 'lg';
+  allowClear?: boolean; disabled?: boolean; readOnly?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+```
+
+```tsx
+<DatePicker kind="date" min={todayIso()} max={addDaysIso(365)} placeholder="DD/MM/YYYY" />
+```
+
+**Điều cấm.** Cấm truyền đối tượng `Dayjs` ra ngoài thành phần (giá trị là chuỗi chuẩn). Cấm định dạng MM/DD. Cấm hiển thị theo múi giờ của máy người dùng khi khác giờ Việt Nam.
+
+### 7.12. CMP-DateRangePicker
+
+**Mục đích.** `CMP-DateRangePicker` chọn khoảng thời gian "từ – đến": lọc nhật ký, lọc giao dịch, kỳ báo cáo, kỳ đối soát. FR-00-023 yêu cầu bộ lọc khoảng thời gian.
+
+**Nền antd.** `DatePicker.RangePicker` với cùng cố định như `CMP-DatePicker`, thêm `separator` là biểu tượng `chevron-right` có `aria-hidden` và chữ ẩn "đến", `placeholder={['Từ ngày', 'Đến ngày']}`.
+
+**Khoảng đặt sẵn (preset).** Bảng chuẩn bên trái popup (prop `presets` của antd, độ rộng `DatePicker.presetsWidth`): "Hôm nay", "Hôm qua", "7 ngày qua", "30 ngày qua", "Tháng này", "Tháng trước", "Quý này", "Năm nay". Với `kind="datetime"` có thêm "15 phút qua", "1 giờ qua", "24 giờ qua" ở đầu (dùng cho PTN-11 giám sát, tra log). Preset tương đối ("7 ngày qua") được lưu trên URL dưới dạng mã preset (`range=last7d`), không phải hai ngày cụ thể, để liên kết chia sẻ luôn cho dữ liệu mới nhất (FR-00-022); khi người dùng chọn ngày cụ thể thì URL lưu hai ngày. Màn hình có thể truyền tập preset riêng nhưng nhãn phải lấy từ từ điển `dhMessages`.
+
+**Ràng buộc.** "Từ" ≤ "Đến" luôn được bảo đảm: khi người dùng chọn ngày "đến" nhỏ hơn "từ", thành phần đổi chỗ hai giá trị (hành vi `order` mặc định của antd) và thông báo qua vùng `aria-live` "Đã đổi chỗ ngày bắt đầu và ngày kết thúc". Prop `maxSpanDays` giới hạn độ dài khoảng (ví dụ tra log tối đa 31 ngày theo NFR-00-003): ngày ngoài giới hạn so với điểm đã chọn bị khóa trong lịch, và chữ phụ dưới trường nêu giới hạn. Ngày "đến" mặc định là cuối ngày (23:59:59) khi `kind="date"`, chuyển đổi do `toApiRange` xử lý, để khoảng "21/11 – 21/11" bao trọn ngày 21.
+
+**Hiển thị.** Ô hiển thị "01/11/2026 → 21/11/2026" hoặc tên preset ("7 ngày qua") khi đang dùng preset tương đối, kèm tooltip hai ngày cụ thể.
+
+**Token, nền, bàn phím.** Như `CMP-DatePicker`; khoảng giữa hai ngày tô `color-fill-selected` (`DatePicker.cellActiveWithRangeBg`). Tab di chuyển giữa ô "từ" và "đến"; trong popup, preset là danh sách nút đứng trước lịch theo thứ tự Tab.
+
+**API.**
+
+```tsx
+export type DhRangePreset = 'today' | 'yesterday' | 'last15m' | 'last1h' | 'last24h' | 'last7d' | 'last30d'
+  | 'thisMonth' | 'lastMonth' | 'thisQuarter' | 'thisYear';
+
+export interface DhDateRangeValue { from: string; to: string; preset?: DhRangePreset; }
+
+export interface DhDateRangePickerProps {
+  kind?: 'date' | 'datetime';
+  value?: DhDateRangeValue | null;
+  onChange?: (value: DhDateRangeValue | null) => void;
+  presets?: DhRangePreset[] | false;
+  maxSpanDays?: number;
+  min?: string; max?: string;
+  size?: 'sm' | 'md' | 'lg';
+  allowClear?: boolean; disabled?: boolean; status?: 'error';
+  'aria-label'?: string; testId?: string;
+}
+```
+
+```tsx
+<DateRangePicker kind="datetime" maxSpanDays={31} presets={['last15m', 'last1h', 'last24h', 'last7d']}
+  aria-label="Khoảng thời gian" value={range} onChange={setRange} />
+```
+
+**Điều cấm.** Cấm hai `CMP-DatePicker` rời nhau thay cho khoảng. Cấm khoảng không giới hạn với dữ liệu lớn. Cấm lưu preset tương đối thành ngày cố định trên URL.
+
+### 7.13. CMP-Upload
+
+**Mục đích.** `CMP-Upload` cho người dùng chọn và tải tệp lên: tệp nhập dữ liệu (FR-00-032, PTN-09), tệp OpenAPI, chứng thư, tài liệu đính kèm hồ sơ duyệt, ảnh đại diện.
+
+**Nền antd.** `Upload` (danh sách tệp) và `Upload.Dragger` (vùng kéo thả). Hàm bọc cố định: `customRequest` dùng hàm tải lên của `@datahub/api-client` (gửi tệp trực tiếp tới kho đối tượng qua URL có ký tên ngắn hạn hoặc qua API, có `X-Request-ID`), `showUploadList` với biểu tượng Lucide, `maxCount` theo prop, `beforeUpload` chạy kiểm tra phía giao diện.
+
+**Biến thể.** `dropzone` (vùng kéo thả, dùng cho tệp chính của trang nhập dữ liệu), `button` (`CMP-Button` "Chọn tệp" kèm danh sách, dùng trong biểu mẫu), `avatar` (ảnh đại diện, xem trước hình tròn).
+
+**Kéo thả có phương án thay thế.** Vùng kéo thả **luôn chứa nút "Chọn tệp"** (`CMP-Button variant="default"`) bên trong, vì kéo thả không dùng được bằng bàn phím và trình đọc màn hình (WCAG 2.5.7, 2.1.1). Cả vùng là một nút lớn focus được mở hộp chọn tệp khi Enter/Space; chữ trong vùng: "Kéo thả tệp vào đây hoặc **Chọn tệp**", dòng phụ nêu ràng buộc. Khi kéo tệp vào, vùng chuyển trạng thái `dragover`: viền nét liền 2px `color-accent`, nền `color-accent-subtle`; bình thường viền 1px nét đứt `color-border-control` (ngoại lệ được phép của quy tắc cấm nét đứt, vì đây là quy ước phổ biến của vùng thả).
+
+**Kiểm tra tệp.** Kiểm tra ba lớp. Lớp một, phía giao diện trong `beforeUpload`: phần mở rộng và kiểu MIME theo `accept` (ví dụ `.xlsx,.csv`), dung lượng tối đa `maxSizeMb`, số tệp tối đa; tệp không đạt bị từ chối ngay với thông báo cụ thể ("Tệp danh-sach.pdf không đúng định dạng. Chỉ nhận .xlsx, .csv." / "Tệp vượt quá 20 MB."). Lớp hai, máy chủ kiểm tra lại kiểu thật bằng chữ ký nội dung (magic bytes), không tin phần mở rộng. Lớp ba, **quét mã độc phía máy chủ**: sau khi tải xong, tệp ở trạng thái "Đang kiểm tra an toàn" (`CMP-StatusDot` `info`), máy chủ quét bằng công cụ chống mã độc (đặc tả ở D03-07) rồi trả "Sẵn sàng" hoặc "Bị chặn: phát hiện mã độc" (`error`). Biểu mẫu chứa tệp chỉ cho gửi khi mọi tệp đã "Sẵn sàng". Giao diện không bao giờ mở hoặc xem trước tệp chưa qua quét.
+
+**Trạng thái của từng tệp.** `uploading` (`CMP-ProgressBar` cỡ `sm` theo phần trăm thật từ sự kiện tiến độ, nút "Hủy tải lên"), `scanning`, `done`, `error` (thông báo lỗi và nút "Thử lại"), `rejected`. Mỗi tệp hiển thị tên (rút gọn giữa nếu dài, tooltip đầy đủ), dung lượng định dạng "1,2 MB", nút "Xóa tệp" (`CMP-IconButton` `delete` với nhãn "Xóa tệp {tên}").
+
+**Token.** `TKN-color-border-control`, `TKN-color-accent`, `TKN-color-accent-subtle`, `TKN-color-surface-solid`, `TKN-color-surface-solid-2`, `TKN-color-text-secondary`, `TKN-color-error-text`, `TKN-radius-lg`, `TKN-space-6`, `TKN-space-12`, `TKN-font-body`, `TKN-font-footnote`, `TKN-size-icon-lg`.
+
+**Nền đặt.** Chỉ nền đặc.
+
+**Bàn phím và ARIA.** Vùng thả là `role="button"` với `aria-describedby` trỏ dòng ràng buộc. Danh sách tệp là `<ul>`; thay đổi trạng thái tệp (xong, lỗi, bị chặn) thông báo qua `aria-live="polite"`. Sau khi xóa tệp, focus chuyển tới tệp kế tiếp hoặc về nút "Chọn tệp".
+
+**Nội dung.** Dòng ràng buộc luôn hiển thị thường trực: "Định dạng .xlsx, .csv · Tối đa 20 MB · 1 tệp". Trang nhập có liên kết "Tải tệp mẫu" cạnh vùng thả (FR-00-033).
+
+**API.**
+
+```tsx
+export interface DhUploadFile { uid: string; name: string; size: number; status: 'uploading' | 'scanning' | 'done' | 'error' | 'rejected'; percent?: number; fileId?: string; error?: string; }
+
+export interface DhUploadProps {
+  variant?: 'dropzone' | 'button' | 'avatar';
+  accept: string[];                 // ['.xlsx', '.csv'] — bắt buộc
+  maxSizeMb: number;                // bắt buộc
+  maxCount?: number;
+  purpose: string;                  // mã mục đích gửi cho máy chủ, vd 'catalog-import'
+  value?: DhUploadFile[]; onChange?: (files: DhUploadFile[]) => void;
+  /** Gọi khi mọi tệp đã qua quét và sẵn sàng. */
+  onReady?: (fileIds: string[]) => void;
+  disabled?: boolean; status?: 'error';
+  id?: string; 'aria-describedby'?: string; testId?: string;
+}
+```
+
+```tsx
+<Upload variant="dropzone" accept={['.xlsx', '.csv']} maxSizeMb={20} maxCount={1} purpose="catalog-import"
+  onReady={([id]) => startPreview(id)} />
+```
+
+**Điều cấm.** Cấm vùng kéo thả không có nút chọn tệp. Cấm tin phần mở rộng tệp ở máy chủ. Cấm xem trước, xử lý tệp trước khi quét xong. Cấm đọc toàn bộ tệp lớn vào bộ nhớ trình duyệt để kiểm tra (chỉ kiểm tra siêu dữ liệu). Cấm thanh tiến độ giả.
+

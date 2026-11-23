@@ -1431,3 +1431,144 @@ export interface DhDiffViewerProps {
   onOverwrite={() => save(draft, latestEtag)} onReload={() => form.reset(latest)} onCancel={closeConflict} />
 ```
 
+## 10. Quy trình
+
+### 10.1. CMP-Steps
+
+`CMP-Steps` hiển thị tiến trình của quy trình nhiều bước: wizard tạo đối tượng (PTN-05, ví dụ khởi tạo tenant, đăng ký HTTT), vòng đời của yêu cầu (Nháp → Chờ duyệt → Đã duyệt → Đã công bố). Không dùng Steps cho các phần ngang hàng (dùng Tabs) hoặc cho lịch sử sự kiện (dùng Timeline).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Steps` của antd v6 với `items` gồm `title`, `content` (thuộc tính `description` đã lỗi thời), `status`; `orientation="horizontal"` (dọc khi hẹp hơn `bp-md` hoặc trên 5 bước); `size="small"` ở chế độ gọn. |
+| Giải phẫu | (1) Chỉ báo bước: số thứ tự, dấu tích khi xong, biểu tượng lỗi khi lỗi; (2) tiêu đề bước; (3) mô tả ngắn hoặc người/thời điểm hoàn tất; (4) đường nối. |
+| Vật liệu | Không nền riêng; đặt trên nền đặc của thẻ wizard hoặc trên canvas. |
+| Biến thể | `wizard` (bước đã xong bấm được để quay lại sửa), `status` (chỉ đọc, thể hiện vòng đời). |
+| Kích thước | Chỉ báo 24px (gọn 20px); tiêu đề `font-body-strong`; mô tả `font-footnote`. |
+| Trạng thái từng bước | Chờ (`wait`), đang làm (`process`), xong (`finish`), lỗi (`error`, kèm chữ "Có lỗi" và số lỗi), vô hiệu. |
+| Token | `color-accent` (bước đang làm), `color-success-text` (xong), `color-error-text` (lỗi), `color-text-tertiary` (chờ), `color-border-subtle` (đường nối). |
+| Bàn phím, ARIA | Danh sách có thứ tự `<ol>` với `aria-label="Các bước"`; bước hiện tại `aria-current="step"`; bước bấm được là nút. Wizard đặt focus vào tiêu đề nội dung bước mới khi chuyển bước. |
+| Nội dung | Tiêu đề bước là danh từ ("Thông tin chung", "Kết nối", "Xác nhận"); nút chuyển "Tiếp tục", "Quay lại", nút cuối nêu hành động ("Tạo tenant"). |
+| Điều cấm | Không quá 7 bước; không cho nhảy tới bước chưa đủ điều kiện; không chỉ dùng màu để báo trạng thái bước. |
+
+```ts
+export interface DhStepsProps { variant?: 'wizard' | 'status'; current: number; items: Array<{ key: string; title: string; content?: string; status?: 'wait' | 'process' | 'finish' | 'error'; errorCount?: number }>; onStepClick?: (index: number) => void }
+```
+
+```tsx
+<DhSteps variant="wizard" current={step} onStepClick={goTo} items={[
+  { key: 'info', title: 'Thông tin chung' }, { key: 'conn', title: 'Kết nối' }, { key: 'review', title: 'Xác nhận' },
+]} />
+```
+
+### 10.2. CMP-ApprovalPanel
+
+`CMP-ApprovalPanel` là khối duyệt dùng chung cho mọi yêu cầu cần phê duyệt từ mọi phân hệ (kết nạp HTTT, công bố dịch vụ, đăng ký sử dụng, khai thác dữ liệu, phát hành luồng, hoàn tiền), hiển thị trong trang chi tiết yêu cầu và trong hộp "Việc của tôi" (PTN-10, FR-00-070). Thành phần hiện thực nguyên tắc bốn mắt (FR-00-071) và yêu cầu ý kiến khi duyệt, lý do bắt buộc khi từ chối (FR-00-072).
+
+Hành vi bốn mắt được bảo đảm ở hai lớp. Máy chủ là lớp quyết định: phản hồi yêu cầu có `allowedActions` không chứa `APPROVE`, `REJECT` khi người xem là người tạo yêu cầu với loại duyệt được đánh dấu, và từ chối mọi lệnh duyệt như vậy. Giao diện là lớp giải thích: khi người xem là người tạo, panel không hiện nút duyệt mà hiện `CMP-Alert` `info` "Bạn là người tạo yêu cầu này nên không thể tự duyệt. Yêu cầu đang chờ một cán bộ khác có quyền duyệt." Ý kiến khi duyệt là trường bắt buộc tối thiểu 1 ký tự có giá trị gợi ý sẵn có thể sửa ("Đồng ý"); lý do khi từ chối đi qua `CMP-ReasonDialog` biến thể `reject` với tối thiểu 10 ký tự. Duyệt nhiều cấp hiển thị cấp hiện tại và các cấp còn lại.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Thành phần tự viết trong `CMP-Card`; danh sách cấp duyệt dùng `CMP-Steps` `status` dọc; lịch sử ý kiến dùng `CMP-Timeline`. |
+| Giải phẫu | (1) Tiêu đề "Phê duyệt" và `CMP-StatusTag` trạng thái yêu cầu; (2) tóm tắt yêu cầu: người gửi, thời điểm gửi, hạn xử lý (đếm ngược, chữ `color-warning-text` khi còn dưới 24 giờ, `color-error-text` khi quá hạn kèm chữ "Quá hạn"); (3) các cấp duyệt và người duyệt; (4) ô "Ý kiến" (`CMP-TextArea`); (5) nút "Duyệt" (chính), "Từ chối" (phá hủy viền), "Yêu cầu bổ sung" (phụ, nếu quy trình hỗ trợ); (6) lịch sử ý kiến các lần trước. |
+| Vật liệu | Nền đặc `color-surface-solid`; khi đặt trong Drawer xem nhanh của PTN-10 thì nằm trong giếng đặc. |
+| Biến thể | `full` (trang chi tiết), `compact` (cột phải của PTN-10, ẩn lịch sử), `readonly` (yêu cầu đã kết thúc: hiện kết quả và ý kiến cuối). |
+| Kích thước | Rộng 360–420px khi là cột phải; toàn chiều rộng khi ở dưới nội dung trên màn hẹp. |
+| Trạng thái | Đang tải, chờ bạn duyệt, bạn là người tạo (không được tự duyệt), chờ người khác, đang gửi quyết định, đã duyệt, đã từ chối, đã bị thu hồi bởi người gửi, quá hạn, xung đột (người khác vừa quyết định trước: Alert "Yêu cầu đã được Trần Thị B duyệt lúc 09:12. Trang đã được tải lại." và tự làm mới). |
+| Token | `color-surface-solid`, `color-warning-text`, `color-error-text`, `color-success-text`, `font-title-3`, `space-4`, `radius-lg`. |
+| Bàn phím, ARIA | `<section aria-labelledby>`; sau khi quyết định thành công, focus chuyển tới thông báo kết quả `role="status"`; trong PTN-10, phím J/K chuyển yêu cầu kế tiếp/trước chỉ khi người dùng bật phím tắt ký tự trong cài đặt (WCAG 2.1.4). |
+| Nội dung | Nút "Duyệt", "Từ chối…", "Yêu cầu bổ sung…"; Toast "Đã duyệt yêu cầu đăng ký sử dụng của Sở Tư pháp". |
+| Điều cấm | Không cho từ chối không có lý do; không hiện nút duyệt cho người tạo khi loại duyệt yêu cầu bốn mắt; không cho duyệt hàng loạt các loại duyệt được đánh dấu bốn mắt mà không có ý kiến chung. |
+
+```ts
+export interface DhApprovalPanelProps {
+  request: { id: string; type: string; status: string; submittedBy: { id: string; name: string }; submittedAt: string; dueAt?: string; allowedActions: string[]; levels: Array<{ name: string; approver?: string; decidedAt?: string; decision?: 'APPROVED' | 'REJECTED' }>; history: Array<{ at: string; actor: string; decision: string; comment: string }>; fourEyes: boolean };
+  currentUserId: string; variant?: 'full' | 'compact' | 'readonly';
+  onApprove: (comment: string) => Promise<void>;
+  onReject: (reason: string, code?: string) => Promise<void>;
+  onRequestChanges?: (comment: string) => Promise<void>;
+}
+```
+
+```tsx
+<DhApprovalPanel request={req} currentUserId={me.id} variant="compact"
+  onApprove={(comment) => decide.mutateAsync({ id: req.id, decision: 'APPROVE', comment })}
+  onReject={(reason) => decide.mutateAsync({ id: req.id, decision: 'REJECT', comment: reason })} />
+```
+
+### 10.3. CMP-JobProgress
+
+`CMP-JobProgress` hiển thị tiến độ của tác vụ chạy lâu chạy nền theo FR-00-054: xuất dữ liệu lớn (FR-00-031), nhập danh mục (FR-00-032, NFR-00-008), xử lý lại DLQ, di trú, đồng bộ danh mục quốc gia. Người dùng được rời màn hình; tác vụ tiếp tục và kết quả đến qua `CMP-Notification`. Không dùng cho thao tác dưới 3 giây (dùng trạng thái loading của nút).
+
+Tiến độ được lấy bằng SSE từ API tác vụ (`/api/platform/v1/jobs/{id}/events`), dự phòng thăm dò mỗi 3 giây khi SSE không khả dụng. Danh sách tác vụ của người dùng được giữ ở `CMP-NotificationCenter` (nhóm "Tác vụ nền"), nên khi quay lại màn hình hoặc mở thẻ mới, JobProgress khôi phục đúng trạng thái theo `jobId`.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Progress` của antd (`type="line"`) bọc trong thành phần tự viết; dạng không xác định khi chưa biết tổng. |
+| Giải phẫu | (1) Tên tác vụ; (2) thanh tiến độ và phần trăm; (3) số đã xử lý / tổng ("4.500 / 12.345 dòng"); (4) thời gian còn lại ước tính; (5) số lỗi (bấm để xem); (6) hành động: "Hủy tác vụ" (khi `allowedActions` có `CANCEL`, đi qua ConfirmDialog), "Chạy nền và tiếp tục làm việc", khi xong "Tải tệp" (kèm hạn "Tải được đến 14:30 ngày 23/11/2026") hoặc "Xem báo cáo lỗi". |
+| Vật liệu | Nền đặc; dạng `inline` dùng `color-surface-solid-2` trong thẻ; dạng trong NotificationCenter kế thừa `glass-overlay` (thanh tiến độ có nền đặc riêng). |
+| Biến thể | `inline` (dưới thanh công cụ DataTable), `card` (trang kết quả nhập, PTN-09), `list-item` (trong NotificationCenter). |
+| Kích thước | Thanh cao 6px (`inline`), 8px (`card`); bo `radius-xs`. |
+| Trạng thái | Đang xếp hàng, đang chạy, đang hủy, hoàn tất, hoàn tất có lỗi (một phần), thất bại (Alert theo FR-00-080 và "Thử lại"), đã hủy, đã hết hạn tải (nút "Tải tệp" ẩn, ghi "Tệp đã hết hạn tải"). |
+| Token | `color-accent` (đang chạy), `color-success-text` (xong), `color-warning-text` (có lỗi), `color-error-text` (thất bại), `color-fill-control` (rãnh), `radius-xs`, `font-feature-tabular`. |
+| Bàn phím, ARIA | Thanh `role="progressbar"` với `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, `aria-valuetext="4.500 trên 12.345 dòng"`; vùng `aria-live="polite"` chỉ đọc mốc 25/50/75/100% và trạng thái kết thúc. |
+| Nội dung | Tên tác vụ gồm động từ và đối tượng ("Xuất danh sách dịch vụ"); thời gian còn lại dạng "khoảng 2 phút". |
+| Điều cấm | Không chặn màn hình trong khi chạy; không hiện phần trăm giả khi chưa biết tổng. |
+
+```ts
+export interface DhJobProgressProps { jobId: string; variant?: 'inline' | 'card' | 'list-item'; title?: string; onDone?: (job: { status: 'SUCCEEDED' | 'PARTIAL' | 'FAILED' | 'CANCELLED'; fileUrl?: string; expiresAt?: string }) => void }
+```
+
+```tsx
+{exportJobId && <DhJobProgress jobId={exportJobId} variant="inline" title="Xuất danh sách dịch vụ" />}
+```
+
+### 10.4. CMP-AuditTrail
+
+`CMP-AuditTrail` là nội dung của tab "Lịch sử" bắt buộc trên mọi màn chi tiết đối tượng (FR-00-043), hiển thị nhật ký kiểm toán của đối tượng đó. Dữ liệu là bản ghi kiểm toán theo FR-00-041 (thời điểm, chủ thể, địa chỉ nguồn, hành động, giá trị trước và sau đã che, kết quả, lý do, `trace_id`) và là chỉ đọc tuyệt đối (FR-00-042): thành phần không có bất kỳ thao tác sửa hay xóa nào. Màn tra cứu kiểm toán toàn hệ thống của PH-13 dùng `CMP-DataTable` với cùng kiểu dữ liệu; AuditTrail là dạng xem theo một đối tượng.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Timeline` cho dòng thời gian và `CMP-DiffViewer` biến thể `fields` cho chi tiết thay đổi; phân trang theo con trỏ với nút "Tải thêm" (không phân trang số vì dữ liệu chỉ thêm). |
+| Giải phẫu | (1) Thanh lọc: loại hành động (chọn nhiều), người thực hiện, khoảng thời gian; (2) mỗi mục: thời điểm, `CMP-Avatar` và tên chủ thể (hoặc nhãn "Hệ thống" / tên ứng dụng khi là máy), động từ hành động ("đã cập nhật", "đã tạm dừng"), `CMP-StatusTag` kết quả nếu thất bại, lý do (khi có); (3) phần mở rộng: bảng các trường thay đổi Trước / Sau (đã che), địa chỉ nguồn, `trace_id` với `CMP-CopyButton` và liên kết mở truy vết; (4) chỉ báo toàn vẹn chuỗi băm "Nhật ký toàn vẹn" (biểu tượng `ShieldCheck` kèm chữ) khi máy chủ xác nhận. |
+| Vật liệu | Nền đặc của nội dung tab. |
+| Biến thể | `object` (theo đối tượng), `compact` (5 mục gần nhất trong Drawer xem nhanh, liên kết "Xem toàn bộ lịch sử"). |
+| Kích thước | Mục thu gọn cao tối thiểu 48px; chữ `font-body`, thời điểm `font-footnote`. |
+| Trạng thái | Đang tải, rỗng ("Chưa có hoạt động nào được ghi nhận"), đang tải thêm, lỗi, không có quyền xem kiểm toán (EmptyState `no-permission`), cảnh báo toàn vẹn (Alert `error` "Phát hiện bất thường trong chuỗi nhật ký. Đã thông báo cho quản trị." khi máy chủ báo chuỗi băm không khớp). |
+| Token | `font-body`, `font-footnote`, `color-text-secondary`, `color-border-subtle`, `color-success-text`, `color-error-text`, `font-mono-sm` (`trace_id`). |
+| Bàn phím, ARIA | Danh sách `<ol>` theo thứ tự thời gian giảm dần, mỗi mục có nút mở rộng `aria-expanded`; "Tải thêm" giữ focus ở vị trí mục mới đầu tiên. |
+| Nội dung | Câu dạng "Nguyễn Văn A đã tạm dừng dịch vụ. Lý do: Bảo trì máy chủ nguồn." Giá trị trước/sau dùng nhãn trường như biểu mẫu. |
+| Điều cấm | Không có hành động sửa, xóa, ẩn mục; không hiển thị giá trị nhạy cảm chưa che; không sắp xếp tăng dần mặc định. |
+
+```ts
+export interface DhAuditTrailProps { objectType: string; objectId: string; variant?: 'object' | 'compact'; fullHistoryHref?: string }
+```
+
+```tsx
+<DhAuditTrail objectType="SERVICE" objectId={service.id} />
+```
+
+### 10.5. CMP-Timeline
+
+`CMP-Timeline` hiển thị chuỗi sự kiện theo thời gian: lịch sử ý kiến duyệt, các mốc của một giao dịch thanh toán (PH-19), các bước thực thi của một lượt gọi. Là nền của `CMP-AuditTrail` và lịch sử trong `CMP-ApprovalPanel`. Không dùng cho tiến trình có bước dự kiến (dùng Steps).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Timeline` của antd v6 với `items` gồm `title` (thời điểm), `content` (nội dung), `icon` (thuộc tính `label`, `children`, `dot` đã lỗi thời); `mode="start"`. |
+| Giải phẫu | (1) Chấm hoặc biểu tượng sự kiện; (2) đường nối; (3) thời điểm; (4) nội dung; (5) nhóm theo ngày ("Hôm nay", "Hôm qua", "20/11/2026"). |
+| Vật liệu | Không nền riêng; kế thừa nền đặc. |
+| Biến thể | `default`, `compact` (một dòng mỗi sự kiện), `status` (biểu tượng theo kết quả: thành công, lỗi, cảnh báo, kèm chữ). |
+| Kích thước | Chấm 10px; khoảng giữa mục `space-4` (gọn `space-3`). |
+| Trạng thái | Đang tải, rỗng, mục đang diễn ra (`loading` trên mục cuối). |
+| Token | `color-border-subtle`, `color-icon-secondary`, `color-success-text`, `color-error-text`, `color-warning-text`, `font-footnote`, `space-3`, `space-4`. |
+| Bàn phím, ARIA | `<ol>`; mỗi mục có thời điểm trong `<time datetime>`; biểu tượng kết quả có chữ thay thế. |
+| Nội dung | Thời điểm qua `CMP-Timestamp`; trong ngày hiện tại hiển thị "14:05", ngày khác "20/11/2026 14:05". |
+| Điều cấm | Không chỉ dùng màu chấm để phân biệt kết quả. |
+
+```ts
+export interface DhTimelineProps { variant?: 'default' | 'compact' | 'status'; groupByDay?: boolean; items: Array<{ key: string; at: string; content: React.ReactNode; result?: 'success' | 'error' | 'warning' | 'info'; icon?: string; pending?: boolean }> }
+```
+
+```tsx
+<DhTimeline variant="status" groupByDay items={payment.events.map((e) => ({ key: e.id, at: e.at, result: e.result, content: e.description }))} />
+```
+
