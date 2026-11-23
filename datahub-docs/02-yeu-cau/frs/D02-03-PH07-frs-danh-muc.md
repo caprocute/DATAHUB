@@ -1351,3 +1351,705 @@ Các ngoại lệ được liệt kê trong bảng sau.
 | Mã thay thế không tồn tại, không `ACTIVE`, trùng chính nó, tạo vòng | ERR-07-009 | 422 | `errors[].code = REPLACED_BY_INVALID` |
 | Nhập tay `replacedBy` cho ĐVHC | ERR-07-035 | 422 | Hướng dẫn ghi sự kiện sắp xếp |
 
+### 5.3. Nhóm C — Nhập và xuất
+
+Nhóm C thay các chức năng nhập xuất Excel, CSV và API của Aita (LGC-DMDC-005…008, 013, 014). Thiết kế tuân thủ FR-00-030…034 (xuất nhập dùng chung) và ADR-056 (nhập tệp hai pha). Mục 5.3.0 đặc tả khuôn mẫu tệp và quy tắc ghép cột dùng chung cho FR-07-020, 021, 022, 024; các FR sau đó chỉ tham chiếu.
+
+#### 5.3.0. Khuôn mẫu tệp và quy tắc chung
+
+**Khuôn chuẩn xlsx.** Tệp mẫu do hệ thống sinh theo lược đồ của phiên bản (FR-07-020) gồm ba sheet. Sheet `HuongDan` chứa hướng dẫn tiếng Việt: tên và mã danh mục, số phiên bản, `schemaHash`, ngày sinh tệp, ý nghĩa từng cột, kiểu, bắt buộc, ràng buộc, định dạng ngày, các chế độ nhập. Sheet `DuLieu` chứa dữ liệu với cấu trúc cố định: dòng 1 là nhãn tiếng Việt của cột (in đậm, cố định khi cuộn, cột bắt buộc có dấu `*`), dòng 2 là mã cột (dòng ẩn và khóa, dùng làm khóa ghép cột chính xác), dữ liệu bắt đầu từ dòng 3. Sheet `GiaTriHopLe` liệt kê giá trị hợp lệ của mọi thuộc tính `ENUM` (cột mã giá trị, cột nhãn) và, với danh mục ≤ 5.000 bản ghi, danh sách mã cha hợp lệ; các cột tương ứng của `DuLieu` có kiểm tra dữ liệu (data validation) dạng danh sách trỏ tới sheet này, để người nhập chọn thay vì gõ.
+
+Bảng dưới đây liệt kê các cột cố định theo đúng thứ tự xuất hiện ở đầu sheet `DuLieu`, trước các cột thuộc tính động.
+
+| Thứ tự | Mã cột (dòng 2) | Nhãn (dòng 1) | Bắt buộc | Ý nghĩa và định dạng |
+|---|---|---|---|---|
+| 1 | `MA` | Mã * | Có | Mã bản ghi, T-CODE; hệ thống chuẩn hóa chữ hoa, cắt khoảng trắng |
+| 2 | `TEN` | Tên * | Có | Tên bản ghi, ≤ 255 ký tự |
+| 3 | `MA_CHA` | Mã cha | Không | Chỉ có khi danh mục phân cấp; mã bản ghi cha trong cùng tệp hoặc trong bản nháp |
+| 4 | `THU_TU` | Thứ tự | Không | Số nguyên; rỗng thì hệ thống tự gán theo thứ tự dòng (bước 10) |
+| 5 | `TRANG_THAI` | Trạng thái | Không | `ACTIVE` hoặc `DEPRECATED` (chấp nhận "Đang dùng"/"Ngừng dùng"); rỗng là `ACTIVE` |
+| 6 | `MA_THAY_THE` | Mã thay thế | Không | Danh sách mã ngăn cách bằng dấu chấm phẩy `;`; chỉ có ý nghĩa khi `DEPRECATED` |
+| 7 | `HIEU_LUC_TU` | Hiệu lực từ | Không | Ngày `dd/MM/yyyy` hoặc ô ngày; ánh xạ `valid_from` |
+| 8 | `HIEU_LUC_DEN` | Hiệu lực đến | Không | Ngày; ánh xạ `valid_to` |
+| 9… | Mã thuộc tính (`attribute_def.code`) | Nhãn thuộc tính, kèm `*` nếu bắt buộc | Theo lược đồ | Theo kiểu thuộc tính (mục 4.4); thuộc tính `HIDDEN` không có trong tệp mẫu nhưng vẫn nhận nếu có trong tệp |
+
+**Khuôn chuẩn CSV.** Tệp CSV theo RFC 4180, mã hóa UTF-8 có BOM (để Excel mở đúng tiếng Việt, FR-00-030), dấu phân cách dấu phẩy, ký tự bao chuỗi là dấu nháy kép, dòng đầu tiên là mã cột (không phải nhãn) theo đúng tên ở bảng trên; không có dòng nhãn, vì CSV chủ yếu dùng cho trao đổi máy. Khi nhập, hệ thống cũng chấp nhận dòng đầu là nhãn tiếng Việt (ghép theo quy tắc ghép cột).
+
+**Khuôn hệ cũ Aita (`LEGACY_AITA`).** Để cán bộ dùng lại tệp đã có từ hệ cũ (LGC-DMDC-005), hệ thống nhận khuôn Aita: ô A2 chứa tên danh mục; dòng 4, bắt đầu từ ô B4, chứa tên thuộc tính (không được để trống ô nào giữa chừng; gặp ô trống đầu tiên là hết danh sách thuộc tính); từ dòng 5 trở đi là bản ghi, cột A bị bỏ qua (thường là số thứ tự), giá trị từ cột B trở đi ứng với thuộc tính cùng cột. Với CSV khuôn Aita, mã hóa là UTF-16 (LE hoặc BE, có hoặc không có BOM), dấu phân cách được tự nhận giữa dấu phẩy và ký tự tab, và các dòng 1, 3 không mang dữ liệu. Vì khuôn Aita không có cột mã, cột tên riêng, hệ thống yêu cầu người dùng chỉ định ở bước ghép cột thuộc tính nào đóng vai trò `MA`, `TEN` và (nếu có) `MA_CHA`; mặc định hệ thống đề xuất theo quy tắc ghép cột dưới đây. Hệ thống tự nhận khuôn Aita khi ô A2 khác rỗng, dòng 1 không chứa mã cột chuẩn và dòng 4 có ít nhất một ô từ B4 khác rỗng; người dùng cũng có thể chọn khuôn tường minh qua tham số `template`.
+
+**Nhận dạng định dạng và mã hóa.** Hệ thống không tin phần mở rộng tên tệp mà kiểm tra nội dung (DD-12): tệp bắt đầu bằng chữ ký ZIP và có `[Content_Types].xml` của bảng tính là xlsx; tệp `xls` (định dạng nhị phân cũ) bị từ chối với hướng dẫn lưu lại dưới dạng xlsx; tệp văn bản được nhận mã hóa theo thứ tự: BOM UTF-8 (`EF BB BF`), BOM UTF-16 LE (`FF FE`), BOM UTF-16 BE (`FE FF`); không có BOM thì thử giải mã UTF-8 nghiêm ngặt trên 64 KB đầu; nếu có nhiều byte `00` ở vị trí chẵn hoặc lẻ thì là UTF-16 không BOM; nếu không giải mã được thì từ chối `ERR-07-019` với gợi ý lưu lại bằng UTF-8. Mã hóa Windows-1258 và TCVN3 không được hỗ trợ vì dễ hỏng tiếng Việt; hệ thống phát hiện dấu hiệu TCVN3 (các byte đặc trưng của phông `.Vn`) để báo lỗi rõ ràng thay vì nhập chữ sai.
+
+**Giới hạn.** Tệp tối đa 50 MB (tham số `07.rdm.import-max-file-mb`) và 200.000 dòng dữ liệu (tham số `07.rdm.import-max-rows`); số cột tối đa 120; độ dài một ô tối đa 4.000 ký tự; tệp xlsx được đọc theo luồng (SAX), từ chối tệp có tỷ lệ nén bất thường (> 100 lần) để chống bom nén; công thức trong ô được đọc giá trị đã tính lưu sẵn, không tính lại; ô gộp chỉ lấy giá trị ở ô đầu.
+
+**Quy tắc ghép cột.** Ghép cột là việc xác định mỗi cột của tệp ứng với trường nào của bản ghi. Hệ thống đề xuất ghép tự động theo thứ tự ưu tiên trong bảng dưới đây, dừng ở quy tắc đầu tiên khớp cho từng cột; người dùng xem và chỉnh ở bước 2 của trình hướng dẫn nhập (UI-07-06), kết quả lưu vào `import_job.column_mapping`.
+
+| Ưu tiên | Quy tắc | Ví dụ |
+|---|---|---|
+| 1 | Dòng 2 của sheet `DuLieu` (khuôn chuẩn) hoặc dòng tiêu đề CSV trùng chính xác mã cột cố định hoặc mã thuộc tính (không phân biệt hoa thường) | `loai_hinh` → thuộc tính `loai_hinh` |
+| 2 | Nhãn cột sau chuẩn hóa (bỏ dấu `*`, bỏ dấu tiếng Việt, chữ thường, gộp khoảng trắng) trùng nhãn chuẩn hóa của cột cố định hoặc thuộc tính | "Loại hình *" → `loai_hinh` |
+| 3 | Nhãn chuẩn hóa thuộc danh sách đồng nghĩa của cột cố định: `MA` ← "ma", "ma so", "code", "ma danh muc"; `TEN` ← "ten", "ten goi", "name", "ten danh muc"; `MA_CHA` ← "ma cha", "ma cap tren", "parent", "parent code"; `THU_TU` ← "stt", "thu tu", "order" (riêng "stt" chỉ ghép khi cột có giá trị số tăng dần) | "Mã số" → `MA` |
+| 4 | Với tạo danh mục mới, cột không khớp được đề xuất thành thuộc tính mới với mã sinh từ nhãn (bỏ dấu, chữ thường, khoảng trắng thành `_`, thêm hậu tố số nếu trùng) và kiểu suy ra theo quy tắc suy kiểu (FR-07-051 bước 6) | "Ghi chú" → thuộc tính mới `ghi_chu`, `TEXT` |
+| 5 | Cột còn lại không ghép: với nhập vào danh mục có sẵn, cột bị bỏ qua và báo cảnh báo `ATTR_UNKNOWN` | |
+
+Sau khi ghép, hệ thống kiểm tra: cột `MA` và `TEN` phải được ghép; mọi thuộc tính `required` phải được ghép (trừ khi có `default_value`); không có hai cột ghép vào cùng một trường. Vi phạm trả `ERR-07-019` với thông điệp liệt kê cột thiếu hoặc trùng.
+
+**Chuẩn hóa giá trị ô.** Mọi giá trị được cắt khoảng trắng hai đầu và chuẩn hóa NFC; ký tự điều khiển (trừ xuống dòng trong `TEXT`) bị loại; ô chỉ chứa khoảng trắng được coi là rỗng. Giá trị bắt đầu bằng `=`, `+`, `-`, `@` trong cột văn bản được giữ nguyên khi nhập, nhưng khi xuất được thêm dấu nháy đơn ở đầu để chống chèn công thức (CSV injection). Ô kiểu số trong xlsx ứng với cột `T-CODE` hoặc `STRING` được đổi về chuỗi không có phần thập phân `.0` và giữ số 0 đầu nếu định dạng ô là văn bản; nếu ô là số và mất số 0 đầu (ví dụ mã tỉnh `01` thành `1`), hệ thống cảnh báo `CODE_LEADING_ZERO` khi độ dài mã khác độ dài phổ biến trong cột.
+
+#### FR-07-020 · Tải tệp mẫu Excel/CSV sinh theo lược đồ của danh mục
+
+Chức năng này sinh tệp mẫu khớp chính xác lược đồ của một phiên bản, để người dùng điền dữ liệu đúng ngay từ đầu (tuân thủ FR-00-033).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-020 · Tải tệp mẫu Excel/CSV sinh theo lược đồ của danh mục |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; tuân thủ FR-00-033 |
+| Tác nhân, quyền | Mọi người có `PERM-07-read` |
+| Tiền điều kiện | Danh mục tồn tại; phiên bản chọn tồn tại |
+| Đầu ra | Tệp `{catalogCode}_v{n}_mau.xlsx` hoặc `.csv` theo khuôn chuẩn mục 5.3.0; tùy chọn `includeData = true` điền sẵn bản ghi hiện có (để sửa rồi nhập lại với chế độ UPSERT hoặc REPLACE) |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Có khi `includeData = true` (coi như xuất dữ liệu, FR-00-040): `RDM_TEMPLATE_DOWNLOAD` với số bản ghi |
+
+Đầu vào của API-07-032 được mô tả trong bảng sau.
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `format` | T-ENUM | Không | `xlsx` (mặc định), `csv` | `xlsx` |
+| `version` | T-INT hoặc từ khóa | Không | `draft` (mặc định nếu có), `current` | `draft` |
+| `includeData` | T-BOOL | Không | Mặc định `false`; nếu `true` mà vượt 10.000 bản ghi thì chuyển sang tác vụ xuất nền (FR-07-024) | `false` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống lấy lược đồ phiên bản, loại thuộc tính `HIDDEN`, sắp theo `sort_order`.
+2. Hệ thống dựng sheet `HuongDan`, `DuLieu` (dòng 1 nhãn, dòng 2 mã ẩn và khóa, định dạng cột văn bản cho `MA`, `MA_CHA`, các cột `STRING`, `ENUM`, `CATALOG_REF` để Excel không làm mất số 0 đầu; định dạng ngày cho cột ngày), `GiaTriHopLe` và kiểm tra dữ liệu.
+3. Với CSV, hệ thống ghi BOM UTF-8 và dòng mã cột.
+4. Hệ thống trả tệp với tiêu đề `Content-Disposition` và `ETag` bằng `schemaHash` (cho phép bộ đệm trình duyệt).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy danh mục, phiên bản | ERR-07-001, ERR-07-006 | 404 | |
+| `format` không hỗ trợ | — | 400 | |
+
+#### FR-07-021 · Nhập bản ghi từ Excel/CSV vào bản nháp
+
+Chức năng này nhập hàng loạt bản ghi từ tệp vào bản nháp của danh mục có sẵn, chạy nền, có xem trước và báo lỗi theo dòng, cột trước khi ghi (tuân thủ FR-00-032), với bốn chế độ nhập. Nó thay hai dịch vụ nhập Excel và CSV của Aita (LGC-DMDC-006, 007), vốn ghi thẳng và không có xem trước.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-021 · Nhập bản ghi từ Excel/CSV vào bản nháp (nền, xem trước, lỗi theo dòng, chế độ UPSERT/REPLACE/APPEND) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; LGC-DMDC-006, LGC-DMDC-007; tuân thủ FR-00-032, FR-00-054 |
+| Tác nhân, quyền | DS (○), TA, PA (`COMMON`) với `PERM-07-update` |
+| Tiền điều kiện | Danh mục không `NATIONAL`, không `RETIRED`; có bản nháp `DRAFT` hoặc người dùng chọn tự tạo bản nháp (`createDraft = true`, áp FR-07-011); không có tác vụ nhập khác của cùng danh mục ở trạng thái chưa kết thúc từ `UPLOADED` tới `COMMITTING` (một tác vụ nhập đang hoạt động mỗi danh mục, tránh hai lần nhập chồng nhau) |
+| Đầu ra | Pha 1: `202 Accepted` với `jobId` và `Location: /api/rdm/v1/import-jobs/{jobId}`; khi xong, API-07-034 trả `status = VALIDATED`, `summary` gồm `totalRows`, `validRows`, `errorRows`, `warningRows`, số dòng theo `action` (`INSERT`, `UPDATE`, `DEPRECATE`, `UNCHANGED`, `DELETE_DRAFT`), `columnMapping`, `encoding`, `expiresAt`; API-07-035 trả dòng xem trước và lỗi. Pha 2: `200` với `status = COMMITTED` và thống kê bản nháp sau khi ghi |
+| Hậu điều kiện | Pha 1: `file_object` (DD-12) và `import_job`, các dòng `import_row` được tạo; bản nháp không đổi. Pha 2: bản nháp được cập nhật theo chế độ nhập; `import_job.status = COMMITTED`; `version` và `stats` của bản nháp cập nhật; `origin` của bản nháp giữ nguyên nếu đã có, `IMPORT` nếu bản nháp được tạo bởi lần nhập này |
+| Sự kiện phát ra | EVT-07-07 `{tenant}.rdm.import.completed.v1` khi tác vụ kết thúc pha 1 (`VALIDATED` hoặc `FAILED`) và khi kết thúc pha 2 (`COMMITTED` hoặc `FAILED`), với `jobId`, `catalogCode`, `status`, `summary`; PH-12 dùng sự kiện này để thông báo người dùng (FR-00-060) |
+| Kiểm toán | `RDM_IMPORT_UPLOAD` (tên tệp, kích thước, `sha256`, chế độ), `RDM_IMPORT_COMMIT` (thống kê, `skipErrors`), `RDM_IMPORT_CANCEL` |
+
+Đầu vào của API-07-033 là yêu cầu multipart gồm tệp và các tham số trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `file` | T-FILE | Có | xlsx hoặc csv; ≤ 50 MB; ≤ 200.000 dòng | `loai_hinh.xlsx` |
+| `catalogCode` | T-CODE | Có | Danh mục tồn tại | `LOAI_HINH_CSKD` |
+| `mode` | T-ENUM | Không | `UPSERT` (mặc định), `REPLACE`, `APPEND` | `UPSERT` |
+| `template` | T-ENUM | Không | `AUTO` (mặc định), `STANDARD`, `LEGACY_AITA` | `AUTO` |
+| `sheetName` | T-NAME | Không | Mặc định `DuLieu`; nếu không có thì sheet đầu tiên | |
+| `headerRow`, `firstDataRow` | T-INT | Không | Ghi đè vị trí dòng tiêu đề và dòng dữ liệu đầu cho tệp không theo khuôn; 1…50 | `1`, `2` |
+| `columnMapping` | T-JSON | Không | `{ "tên cột trong tệp": "mã trường" }`; ghi đè đề xuất tự động | |
+| `createDraft` | T-BOOL | Không | Tự tạo bản nháp nếu chưa có | `true` |
+| `options.emptyMeansNull` | T-BOOL | Không | Mặc định `false`: ô rỗng ở chế độ UPSERT nghĩa là "giữ giá trị cũ"; `true` nghĩa là "xóa giá trị" | `false` |
+| `options.autoSortOrder` | T-BOOL | Không | Mặc định `true`: tự gán `sort_order` theo thứ tự dòng cho dòng `INSERT` không có `THU_TU` | `true` |
+| `Idempotency-Key` (tiêu đề) | Chuỗi | Không | Tránh tải lên trùng khi mạng chập chờn | |
+
+Đầu vào của API-07-036 (commit) gồm `skipErrors` (T-BOOL, mặc định `false`) và `If-Match` bằng ETag của tác vụ.
+
+Bảng dưới đây là bảng hành vi của từng chế độ nhập theo từng trường hợp của một mã trong tệp so với bản nháp. Đây là đặc tả chuẩn để lập trình và kiểm thử; "đã từng phát hành" nghĩa là mã xuất hiện ở ít nhất một phiên bản `PUBLISHED`.
+
+| Trường hợp | `UPSERT` | `REPLACE` | `APPEND` |
+|---|---|---|---|
+| Mã có trong tệp, chưa có trong bản nháp | `INSERT` | `INSERT` | `INSERT` |
+| Mã có trong tệp và trong bản nháp, giá trị khác | `UPDATE` các cột có trong tệp; cột không ghép giữ nguyên; ô rỗng giữ nguyên (trừ `emptyMeansNull`) | `UPDATE` toàn bộ: cột không ghép giữ nguyên, ô rỗng nghĩa là xóa giá trị | Lỗi dòng `CODE_DUPLICATE` |
+| Mã có trong tệp và trong bản nháp, giá trị giống | `UNCHANGED` | `UNCHANGED` | Lỗi dòng `CODE_DUPLICATE` |
+| Mã có trong tệp với `TRANG_THAI = DEPRECATED`, bản nháp đang `ACTIVE` | `DEPRECATE` (kèm `MA_THAY_THE`) | `DEPRECATE` | Lỗi dòng `CODE_DUPLICATE` |
+| Mã có trong tệp với `ACTIVE`, bản nháp đang `DEPRECATED` | `UPDATE` (khôi phục, cảnh báo) | `UPDATE` (khôi phục, cảnh báo) | Lỗi dòng |
+| Mã có trong bản nháp, không có trong tệp, đã từng phát hành | Không đổi | `DEPRECATE` (BR-07-003, không xóa) | Không đổi |
+| Mã có trong bản nháp, không có trong tệp, mới trong nháp | Không đổi | `DELETE_DRAFT` (xóa khỏi bản nháp) | Không đổi |
+| Mã trong bản nháp đã `DEPRECATED`, không có trong tệp | Không đổi | Không đổi | Không đổi |
+| Mã xuất hiện hai lần trong tệp | Cả hai dòng lỗi `CODE_DUPLICATE` | Như `UPSERT` | Như `UPSERT` |
+| Danh mục HYBRID, mã không khớp dải địa phương | Lỗi dòng `CODE_OUT_OF_RANGE` | Như `UPSERT`; `REPLACE` chỉ tác động bản ghi bổ sung, không bao giờ tác động bản ghi kế thừa | Như `UPSERT` |
+
+Chế độ `REPLACE` có tác động lớn (có thể ngừng dùng hàng loạt), nên bước xem trước hiển thị nổi bật số bản ghi sẽ bị ngừng dùng và giao diện yêu cầu xác nhận lần hai khi số này vượt ngưỡng thay đổi lớn. `CREATE_CATALOG` là chế độ thứ tư, chỉ dùng trong FR-07-022.
+
+Xử lý pha 1 gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, danh mục, bản nháp (hoặc tạo bản nháp nếu `createDraft`), không có tác vụ nhập đang hoạt động; ghi nhận `version` hiện tại của bản nháp vào `import_job.options.draftVersionAtParse` để đối chiếu khi commit (BR-07-016).
+2. Hệ thống kiểm tra kích thước trước khi nhận hết luồng tải lên (từ tiêu đề `Content-Length` và đếm byte khi nhận), vượt thì ngắt và trả `ERR-07-019`.
+3. Hệ thống ghi tệp vào kho đối tượng (`s3://dh-{tenant}-rdm/imports/{jobId}/{sha256}`), tạo `file_object` với `scan_status = PENDING`, tạo `import_job` `UPLOADED`, trả `202`.
+4. Tác vụ nền chuyển `SCANNING`, gửi quét mã độc; quá 10 phút chưa có kết quả hoặc kết quả `INFECTED` thì `FAILED` với `error_message` tương ứng (tệp nhiễm bị cách ly, không phân tích).
+5. Khi `CLEAN`, tác vụ chuyển `PARSING`: nhận dạng định dạng, mã hóa, khuôn (mục 5.3.0), ghi `encoding`, `template`; đọc dòng tiêu đề, áp quy tắc ghép cột, kiểm tra cột bắt buộc; lỗi ở mức tệp (sai định dạng, mã hóa, vượt giới hạn, thiếu cột) thì `FAILED` với `ERR-07-019` trong `error_message`.
+6. Tác vụ đọc luồng từng dòng dữ liệu, bỏ dòng trống hoàn toàn, chuẩn hóa giá trị, chuyển kiểu theo lược đồ, áp kiểm tra mức bản ghi (FR-07-013), và ghi `import_row` theo lô 5.000 với `row_no` (số dòng thật trong tệp để người dùng tìm), `item_code`, `payload`, `valid`, `errors`. Vượt 200.000 dòng thì dừng và `FAILED`.
+7. Tác vụ chuyển `VALIDATING`: chạy kiểm tra liên dòng trên tập hợp nhất của bản nháp và tệp (trùng mã trong tệp, trùng giá trị duy nhất, mã cha tồn tại trong tệp hoặc bản nháp, vòng, độ sâu, mã thay thế, cha `DEPRECATED`), sau đó xác định `action` cho từng dòng theo bảng hành vi; với `REPLACE`, tác vụ thêm các dòng ảo (`row_no = 0`) cho bản ghi sẽ bị ngừng dùng hoặc xóa khỏi nháp để xem trước đầy đủ.
+8. Tác vụ tính `summary`, gán `expires_at = now + 24 giờ`, chuyển `VALIDATED`, ghi outbox EVT-07-07 và thông báo cho người tải lên.
+9. Toàn bộ pha 1 với 100.000 dòng xong trong 2 phút (NFR-07-005, NFR-00-008).
+
+Xử lý pha 2 (commit) gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền (người commit phải có `PERM-07-update` trên danh mục, không bắt buộc là người tải lên), `If-Match` của tác vụ, `status = VALIDATED`, chưa hết hạn; sai trả `ERR-07-020`.
+2. Hệ thống kiểm tra `version` hiện tại của bản nháp bằng `draftVersionAtParse` (BR-07-016); khác nghĩa là bản nháp đã bị sửa sau khi phân tích, trả `ERR-07-020` với hướng dẫn chạy lại kiểm tra (API-07-033 với cùng tệp, hệ thống nhận ra `sha256` và cho phép tạo tác vụ mới mà không phải tải lại).
+3. Nếu `errorRows > 0` và `skipErrors = false`, trả `ERR-07-021` (BR-07-015); nếu `skipErrors = true`, chỉ ghi dòng hợp lệ, nhưng nếu dòng lỗi là mã cha của dòng hợp lệ thì dòng con cũng bị loại (hệ thống tính lại tập loại trừ theo cây và báo số dòng bị loại thêm).
+4. Hệ thống chuyển `COMMITTING` và trong một giao dịch duy nhất: áp mọi `action` vào bản nháp bằng lệnh tập hợp (`INSERT … SELECT`, `UPDATE … FROM`) từ `import_row`, tính lại `depth`, `path`, `level_name` cho các nhánh bị ảnh hưởng, tăng `version` của bản nháp, cập nhật `stats`, gán `updated_by` của bản nháp là người commit, chuyển `COMMITTED`, ghi outbox EVT-07-07 và kiểm toán. Lỗi bất kỳ thì hoàn tác toàn bộ, tác vụ `FAILED` với lý do, bản nháp giữ nguyên (tất cả hoặc không).
+5. Commit 100.000 dòng xong trong 60 giây (NFR-07-005).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Tệp sai định dạng, mã hóa, vượt kích thước hoặc số dòng, thiếu cột bắt buộc, tệp nhiễm mã độc | ERR-07-019 | 422 (đồng bộ) hoặc tác vụ `FAILED` | `error_message` tiếng Việt cụ thể |
+| Đã có tác vụ nhập đang hoạt động cho danh mục | ERR-07-020 | 409 | Trả `jobId` đang hoạt động |
+| Commit khi tác vụ hết hạn, đã commit, đã hủy, hoặc bản nháp đã đổi | ERR-07-020 | 409 | |
+| Còn dòng lỗi mà không chọn bỏ qua | ERR-07-021 | 422 | |
+| Không có bản nháp và không chọn tạo | ERR-07-006 | 404 | |
+| Danh mục `NATIONAL`, `COMMON` (tenant tỉnh) | ERR-07-003 | 403 | |
+| `Idempotency-Key` dùng lại với tệp khác | ERR-07-022 | 409 | |
+
+#### FR-07-022 · Tạo danh mục mới từ tệp, hỗ trợ khuôn hệ cũ Aita
+
+Chức năng này tạo một danh mục mới cùng lược đồ và bản ghi từ một tệp, theo chế độ `CREATE_CATALOG`. Nó thay chức năng tạo danh mục từ tệp xlsx, csv của Aita (LGC-DMDC-005) và nhận cả khuôn chuẩn lẫn khuôn Aita, để cán bộ dùng lại ngay các tệp đã có.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-022 · Tạo danh mục mới từ tệp, hỗ trợ khuôn hệ cũ Aita |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-005 |
+| Tác nhân, quyền | DS (○), TA, PA (`COMMON`) với `PERM-07-create` |
+| Tiền điều kiện | Như FR-07-003 |
+| Đầu ra | Pha 1: như FR-07-021, thêm khối `proposedCatalog` (mã, tên lấy từ ô A2 với khuôn Aita hoặc tên tệp với khuôn chuẩn) và `proposedAttributes` (mã, nhãn, kiểu suy ra, bắt buộc suy ra, độ dài tối đa quan sát, số giá trị khác nhau). Pha 2: `201` với danh mục mới ở trạng thái `DRAFT` và bản nháp số 1 chứa bản ghi |
+| Hậu điều kiện | Như FR-07-003 cộng bản ghi của bản nháp số 1; `catalog_version.origin = IMPORT`; với khuôn Aita, mỗi thuộc tính có nhãn gốc lưu trong `description` |
+| Sự kiện phát ra | EVT-07-07 (pha 1, pha 2) và EVT-07-01 (khi danh mục được tạo ở pha 2) |
+| Kiểm toán | `RDM_IMPORT_UPLOAD`, `RDM_CATALOG_CREATE` (kênh `IMPORT`), `RDM_IMPORT_COMMIT` |
+
+Đầu vào của API-07-033 với `mode = CREATE_CATALOG` gồm tệp, `template`, và khối `catalog` chứa các trường của FR-07-003 trừ `attributes`. Ở pha 1, `catalog.code` và `catalog.name` có thể bỏ trống để hệ thống đề xuất; ở pha 2 (API-07-036), người dùng gửi `catalog` đầy đủ và `attributes` đã chỉnh (kiểu, bắt buộc, `queryable`) kèm `columnMapping` cuối cùng.
+
+Xử lý gồm các bước sau.
+
+1. Pha 1 thực hiện như bước 1…6 của FR-07-021 nhưng không cần bản nháp; khi chưa có lược đồ, mọi cột ngoài cột cố định được đề xuất thành thuộc tính mới theo quy tắc ghép cột ưu tiên 4.
+2. Với khuôn Aita, hệ thống lấy tên danh mục từ ô A2 (cắt còn 255 ký tự, cảnh báo nếu cắt), lấy tên thuộc tính từ dòng 4 cột B trở đi, đề xuất cột `MA` là thuộc tính đầu tiên có nhãn chuẩn hóa thuộc danh sách đồng nghĩa của `MA`; nếu không có thì đề xuất cột B; đề xuất `TEN` tương tự, nếu không có thì đề xuất cột C. Người dùng bắt buộc xác nhận cặp cột `MA`, `TEN` trước khi commit, vì Aita không phân biệt mã và tên ở mức mô hình.
+3. Hệ thống suy kiểu mỗi thuộc tính theo quy tắc suy kiểu của FR-07-051 bước 6 trên toàn bộ giá trị của cột, đề xuất `required = true` khi mọi dòng có giá trị, đề xuất `maxLength` bằng độ dài lớn nhất quan sát làm tròn lên bội số 50 (tối thiểu 50, tối đa 2.000), đề xuất `ENUM` khi cột có ≤ 20 giá trị khác nhau trên ≥ 100 dòng.
+4. Hệ thống kiểm tra trùng mã sau chuẩn hóa chữ hoa và báo lỗi dòng `CODE_DUPLICATE` cho mọi dòng trùng; mã không khớp mẫu T-CODE (có dấu, khoảng trắng) được đề xuất chuẩn hóa (bỏ dấu, chữ hoa, khoảng trắng thành `_`) và báo cảnh báo `CODE_NORMALIZED` kèm mã gốc, mã gốc được lưu trong `legacy_ref` của bản ghi.
+5. Pha 2: hệ thống kiểm tra khối `catalog` theo FR-07-003, kiểm tra lại toàn bộ dòng với lược đồ người dùng đã chỉnh (vì đổi kiểu có thể làm dòng hợp lệ thành lỗi; nếu kết quả khác pha 1, trả `ERR-07-020` và yêu cầu xem lại), rồi trong một giao dịch tạo danh mục, phiên bản 1, thuộc tính và bản ghi, chuyển tác vụ `COMMITTED`, ghi outbox EVT-07-01 và EVT-07-07.
+
+Các ngoại lệ gồm mọi ngoại lệ của FR-07-003 và FR-07-021, thêm các trường hợp trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Khuôn Aita mà ô A2 rỗng hoặc dòng 4 không có tên thuộc tính | ERR-07-019 | 422 | Thông điệp chỉ rõ ô thiếu |
+| Không xác định được cột `MA` hoặc `TEN` | ERR-07-019 | 422 | |
+| Lược đồ chỉnh ở pha 2 làm thay đổi kết quả kiểm tra | ERR-07-020 | 409 | Hệ thống chạy lại kiểm tra và trả kết quả mới |
+| Số cột vượt 100 thuộc tính | ERR-07-019 | 422 | |
+
+#### FR-07-023 · Nhập bản ghi qua API theo lô, idempotent
+
+Chức năng này cho phép HTTT nguồn hoặc công cụ tự động đẩy thay đổi bản ghi vào bản nháp qua API, thay API thêm danh mục, thuộc tính, bản ghi của Aita (LGC-DMDC-008). Khác Aita, API chỉ ghi vào bản nháp; việc trình và phát hành vẫn do con người làm, để HTTT không thể tự ý thay đổi dữ liệu đang được các hệ thống khác dùng.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-023 · Nhập bản ghi qua API theo lô, idempotent |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-008 |
+| Tác nhân, quyền | Người dùng có `PERM-07-update` (DS ○, TA, PA); HTTT có scope `rdm.write` và được khai báo là nguồn của danh mục (danh sách HTTT nguồn lưu trong `catalog_access_grant` với scope `rdm.write`) |
+| Tiền điều kiện | Danh mục không `NATIONAL`, không `RETIRED`; có bản nháp `DRAFT`, hoặc `createDraftIfMissing = true` |
+| Đầu ra | `200` với `results[]` theo thứ tự thao tác gửi lên: `{index, op, code, status: APPLIED/UNCHANGED/FAILED, errors}`, `summary`, ETag mới của bản nháp; `207 Multi-Status` không dùng, kết quả từng thao tác nằm trong thân |
+| Hậu điều kiện | Với `atomic = true` (mặc định): tất cả thao tác được áp hoặc không thao tác nào; với `atomic = false`: thao tác hợp lệ được áp, thao tác lỗi được báo |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_ITEM_BATCH`, chủ thể (người hoặc HTTT), số thao tác theo loại, `Idempotency-Key` |
+
+Đầu vào của API-07-031 được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `Idempotency-Key` (tiêu đề) | Chuỗi 8…64 | Có | Lưu kết quả 24 giờ; gửi lại cùng khóa trả nguyên kết quả cũ | `b7e1…` |
+| `If-Match` (tiêu đề) | ETag | Không | Nếu có thì phải khớp `version` bản nháp | |
+| `operations` | Mảng | Có | 1…5.000 phần tử (tham số `07.rdm.batch-max-ops`) | |
+| `operations[].op` | T-ENUM | Có | `UPSERT`, `INSERT`, `UPDATE`, `DEPRECATE`, `DELETE` (chỉ bản ghi mới trong nháp) | `UPSERT` |
+| `operations[].code` | T-CODE | Có | | `68L001` |
+| `operations[].item` | Đối tượng | Với `UPSERT`, `INSERT`, `UPDATE` | Trường như FR-07-012 | |
+| `operations[].replacedBy` | Mảng T-CODE | Không | Với `DEPRECATE` | |
+| `atomic` | T-BOOL | Không | Mặc định `true` | `true` |
+| `createDraftIfMissing` | T-BOOL | Không | Mặc định `false`; HTTT chỉ được dùng nếu cấu hình danh mục cho phép | `false` |
+| `dryRun` | T-BOOL | Không | `true` chỉ kiểm tra, không ghi | `false` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra `Idempotency-Key`: đã có với cùng băm nội dung thì trả kết quả lưu; khác băm trả `ERR-07-022`.
+2. Hệ thống kiểm tra số thao tác ≤ giới hạn, vượt trả `ERR-07-026`; kiểm tra quyền và nguồn của HTTT.
+3. Hệ thống khóa bản nháp (khóa tư vấn theo `version_id`) để tuần tự hóa các lô đồng thời của cùng bản nháp.
+4. Hệ thống áp tuần tự từng thao tác trong bộ nhớ trên tập bản ghi bị ảnh hưởng, kiểm tra mức bản ghi; sau đó chạy kiểm tra liên bản ghi trên tập hợp nhất.
+5. Nếu `atomic = true` và có lỗi, hệ thống không ghi gì và trả `422` với `ERR-07-009` (hoặc mã lỗi tương ứng) kèm `results`; nếu `atomic = false`, ghi các thao tác hợp lệ (loại thao tác phụ thuộc vào thao tác lỗi, ví dụ con của bản ghi lỗi).
+6. Nếu `dryRun = true`, hệ thống dừng sau bước 5 mà không ghi.
+7. Hệ thống ghi trong một giao dịch, tăng `version` bản nháp, cập nhật `stats`, lưu kết quả theo `Idempotency-Key`, ghi kiểm toán.
+8. Lô 5.000 thao tác xử lý xong trong 10 giây.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Lô vượt kích thước | ERR-07-026 | 400 | |
+| Khóa idempotent dùng lại với nội dung khác | ERR-07-022 | 409 | |
+| Lỗi hợp lệ ở chế độ nguyên tử | ERR-07-009 (và mã cụ thể trong `results`) | 422 | |
+| Không có bản nháp | ERR-07-006 | 404 | |
+| HTTT không phải nguồn của danh mục | — | 403 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-024 · Xuất phiên bản ra Excel, CSV, JSON
+
+Chức năng này xuất toàn bộ hoặc một phần bản ghi của một phiên bản ra tệp, thay các chức năng xuất Excel, CSV của Aita (LGC-DMDC-013, 014) và bổ sung JSON, xuất theo phiên bản và theo thời điểm, xuất nền khi lớn (tuân thủ FR-00-030, FR-00-031).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-024 · Xuất phiên bản ra Excel, CSV, JSON (nền khi > 10.000 dòng) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-013, LGC-DMDC-014; tuân thủ FR-00-030, FR-00-031 |
+| Tác nhân, quyền | Mọi vai trò có `PERM-07-export` |
+| Tiền điều kiện | Phiên bản tồn tại; danh mục `RESTRICTED` chỉ xuất bởi người trong tenant có `PERM-07-export` (không xuất qua cổng nhà phát triển) |
+| Đầu ra | ≤ 10.000 dòng và không có tiêu đề `Prefer: respond-async`: `200` trả tệp trực tiếp. Ngược lại: `202` với `jobId`; khi xong, API-07-039 trả URL ký sẵn có hạn 24 giờ |
+| Hậu điều kiện | Với xuất nền: `import_job` `job_type = EXPORT`, `file_object` kết quả có `expires_at` 24 giờ |
+| Sự kiện phát ra | EVT-07-08 `{tenant}.rdm.export.completed.v1` khi xuất nền kết thúc |
+| Kiểm toán | `RDM_EXPORT` với danh mục, phiên bản, định dạng, số dòng, bộ lọc (FR-00-040 yêu cầu kiểm toán xuất dữ liệu) |
+
+Đầu vào của API-07-038 được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `catalogCode` | T-CODE | Có | | `DVHC` |
+| `version` | T-INT hoặc từ khóa | Không | `current` (mặc định), `draft`, số phiên bản | `current` |
+| `at` | T-DATE | Không | Thay cho `version`: phiên bản hiệu lực tại ngày | `2025-06-30` |
+| `format` | T-ENUM | Không | `XLSX` (mặc định), `CSV`, `JSON` | `XLSX` |
+| `template` | T-ENUM | Không | `STANDARD` (mặc định), `LEGACY_AITA` (để nạp ngược vào hệ cũ trong giai đoạn chạy song song) | `STANDARD` |
+| `filter` | T-JSON | Không | Bộ lọc như FR-07-018 (`q`, `status`, `parentCode` kèm cây con) | |
+| `includeDeprecated` | T-BOOL | Không | Mặc định `true` | `true` |
+| `includeHidden` | T-BOOL | Không | Chỉ người có `PERM-07-update`; mặc định `false` | |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống xác định phiên bản, đếm số dòng theo bộ lọc.
+2. Nếu ≤ 10.000 và không yêu cầu bất đồng bộ, hệ thống sinh tệp theo luồng và trả trực tiếp; ngược lại tạo tác vụ `QUEUED` và trả `202`.
+3. Tác vụ chuyển `RUNNING`, sinh tệp theo luồng: xlsx theo khuôn chuẩn (sheet `HuongDan`, `DuLieu` có dòng mã cột, `GiaTriHopLe`), để tệp xuất nhập lại được ngay; CSV UTF-8 BOM; JSON gồm `meta` (danh mục, phiên bản, khoảng hiệu lực, `schemaHash`, thời điểm xuất) và mảng `items`; khuôn `LEGACY_AITA` ghi tên danh mục ô A2, tên thuộc tính dòng 4 từ cột B, bản ghi từ dòng 5, CSV mã hóa UTF-16 LE có BOM.
+4. Giá trị văn bản bắt đầu bằng `=`, `+`, `-`, `@` được thêm dấu nháy đơn (chống chèn công thức).
+5. Tác vụ ghi tệp kết quả lên kho đối tượng, tạo `file_object` (`expires_at` 24 giờ), chuyển `COMPLETED`, ghi outbox EVT-07-08, thông báo người yêu cầu.
+6. Xuất 100.000 dòng xlsx xong trong 60 giây (NFR-07-006).
+7. Tác vụ dọn dẹp chuyển tác vụ quá hạn sang `EXPIRED` và xóa tệp.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy danh mục, phiên bản, hoặc không có phiên bản hiệu lực tại `at` | ERR-07-001, ERR-07-006 | 404 | |
+| Tải tệp đã hết hạn | ERR-07-020 | 409 | Hướng dẫn xuất lại |
+| Danh mục đã ngừng hiệu lực và `at` sau ngày ngừng | ERR-07-031 | 410 | |
+
+#### FR-07-025 · Xem lịch sử tác vụ nhập xuất và tải báo cáo lỗi
+
+Chức năng này cho người dùng theo dõi các tác vụ nhập, xuất và tải báo cáo lỗi chi tiết (UI-07-08).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-025 · Xem lịch sử tác vụ nhập xuất và tải báo cáo lỗi |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | `PERM-07-read`; người dùng thấy tác vụ của mình; TA, PA, DA thấy mọi tác vụ trong tenant; DS thấy tác vụ trên danh mục tổ chức mình |
+| Tiền điều kiện | Không |
+| Đầu ra | API-07-040: trang tác vụ (loại, danh mục, phiên bản, chế độ, định dạng, khuôn, trạng thái, người tạo, thời điểm bắt đầu, kết thúc, thống kê). API-07-035: trang dòng (`valid`, `action`, `errors`) hoặc tệp báo cáo lỗi xlsx khi `format=xlsx`: bản sao dữ liệu gốc thêm cột "Lỗi" và "Hành động", ô lỗi tô đỏ với chú thích, để người dùng sửa ngay trên tệp và nhập lại |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Tải báo cáo lỗi: `RDM_IMPORT_REPORT_DOWNLOAD` |
+
+Đầu vào của API-07-040 gồm `jobType`, `catalogCode`, `status[]`, `createdBy` (chỉ cho vai trò xem mọi tác vụ), `from`, `to`, `page`, `size`; của API-07-035 gồm `valid`, `action[]`, `page`, `size`, `format`.
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống áp phạm vi xem theo vai trò, lọc, phân trang.
+2. Báo cáo lỗi xlsx được sinh từ `import_row` và tệp gốc (nếu tệp gốc còn trong kho, ngược lại từ `payload`), giữ đúng số dòng gốc.
+3. Dòng `import_row` và tệp gốc được giữ 7 ngày rồi xóa bởi tác vụ dọn dẹp (EN-07-09); bản ghi `import_job` giữ 12 tháng để tra lịch sử.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Tác vụ không tồn tại hoặc ngoài phạm vi xem | — | 404 | |
+| Dòng đã bị dọn sau 7 ngày | ERR-07-020 | 409 | Thông báo báo cáo không còn |
+
+### 5.4. Nhóm D — Khai thác
+
+Nhóm D phục vụ HTTT và các phân hệ khác. Đây là phần có yêu cầu hiệu năng và sẵn sàng cao nhất (NFR-07-001…010), nên mọi FR trong nhóm tuân theo các quy định chung sau, không lặp lại ở từng FR.
+
+Phiên bản được chọn theo thời điểm: tham số `at` (T-DATE, mặc định là ngày hiện tại theo giờ Việt Nam) chọn phiên bản đã phát hành có `effective_from ≤ at < effective_to` (BR-07-008); không có phiên bản nào thỏa mãn thì trả `ERR-07-006`; danh mục `RETIRED` với `at` từ ngày ngừng trở đi trả `ERR-07-031`. Tham số `version` (số phiên bản) thay cho `at` khi HTTT muốn ghim một phiên bản cụ thể. Bản nháp không bao giờ được khai thác qua nhóm D. Phản hồi luôn kèm tiêu đề `X-Catalog-Version` (số phiên bản đã dùng) và `ETag` dạng `"{versionId}:{hash tham số}"`; vì phiên bản đã phát hành là bất biến, phản hồi với `version` cố định được đặt `Cache-Control: public, max-age=86400, immutable`, còn phản hồi theo `at` mặc định đặt `max-age=300` vì phiên bản hiệu lực có thể đổi khi sang ngày. Yêu cầu có `If-None-Match` khớp trả `304`. Với danh mục HYBRID, kết quả là hợp của phiên bản hiệu lực của danh mục gốc tại `at` và phiên bản hiệu lực của danh mục HYBRID tại `at`, bản ghi bổ sung mang `isLocalExtension = true`. Danh mục `RESTRICTED` chỉ HTTT có quyền khai thác (FR-07-052) mới truy cập được, HTTT khác nhận `ERR-07-030`. Mọi lượt khai thác được đếm vào chỉ số `rdm_lookup_total{catalog,result}` (NFR-07-014) nhưng không ghi kiểm toán từng lượt, vì khối lượng rất lớn và dữ liệu không nhạy cảm; nhật ký truy cập ở gateway (PH-03) đã ghi ai gọi gì. Dữ liệu được phục vụ từ bộ đệm hai tầng theo ADR-053; khi PostgreSQL ngừng, phục vụ tiếp từ bộ đệm và ảnh chụp (NFR-07-010).
+
+Bản ghi trả về qua nhóm D có cấu trúc thống nhất sau (tên trường camelCase): `code`, `name`, `parentCode`, `depth`, `levelName`, `path`, `sortOrder`, `status`, `replacedBy`, `validFrom`, `validTo`, `attrs` (chỉ thuộc tính `ACTIVE`, không có `HIDDEN`), `isLocalExtension`. Tham số `fields` cho phép chọn một tập con trường (ví dụ `fields=code,name,attrs.loai_hinh`) để giảm kích thước phản hồi.
+
+#### FR-07-026 · Tra cứu một mã tại thời điểm
+
+Chức năng này trả bản ghi của một mã trong danh mục tại một thời điểm. Đây là thao tác được gọi nhiều nhất của Datahub (luồng tích hợp tra mã trên mỗi bản tin), nên được tối ưu cho độ trễ p95 ≤ 20 ms (NFR-07-001).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-026 · Tra cứu một mã tại thời điểm |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-015 |
+| Tác nhân, quyền | HTTT scope `rdm.read`; người dùng `PERM-07-read`; nội bộ: PH-04, `dh-runtime` (tra từ ảnh chụp trong bộ nhớ, ADR-053) |
+| Tiền điều kiện | Danh mục `ACTIVE` hoặc `RETIRED` (với `at` trước ngày ngừng) |
+| Đầu ra | `200` với bản ghi; bản ghi `DEPRECATED` trả bình thường kèm `status` và `replacedBy` (BR-07-004); tùy chọn `resolveReplacement = true` thêm khối `replacement` là bản ghi thay thế cuối chuỗi (khi `replacedBy` có đúng một mã) |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không (xem quy định chung nhóm D) |
+
+Đầu vào của API-07-042 được mô tả trong bảng sau.
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `{c}` | T-CODE | Có | | `DAN_TOC` |
+| `{itemCode}` | T-CODE | Có | So sánh không phân biệt hoa thường | `01` |
+| `at` | T-DATE | Không | Mặc định hôm nay | `2025-06-30` |
+| `version` | T-INT | Không | Loại trừ với `at` | |
+| `fields` | Chuỗi | Không | Danh sách trường | `code,name` |
+| `resolveReplacement` | T-BOOL | Không | Mặc định `false` | |
+
+Xử lý gồm các bước sau.
+
+1. Gateway xác thực token và scope; PH-07 xác định tenant của HTTT.
+2. Hệ thống xác định danh mục trong tenant hoặc `COMMON` (bộ đệm L1 ánh xạ mã danh mục sang định danh, làm mới theo sự kiện).
+3. Hệ thống kiểm tra phân loại `RESTRICTED` và quyền khai thác.
+4. Hệ thống xác định `versionId` hiệu lực tại `at` từ bảng khoảng hiệu lực trong bộ đệm.
+5. Hệ thống tra khóa `(versionId, code)` ở L1, trượt thì L2, trượt nữa thì CSDL (và nạp lại cả L2, L1); với HYBRID tra danh mục bổ sung trước rồi đến danh mục gốc.
+6. Không thấy mã trả `ERR-07-007` (kết quả âm tính cũng được đệm 60 giây để chống tấn công dò mã làm quá tải CSDL).
+7. Hệ thống trả bản ghi, `ETag`, `X-Catalog-Version`.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy danh mục | ERR-07-001 | 404 | |
+| Không có phiên bản hiệu lực tại `at` | ERR-07-006 | 404 | |
+| Không tìm thấy mã tại thời điểm | ERR-07-007 | 404 | Thân lỗi kèm `catalogVersion` đã tra |
+| Danh mục ngừng hiệu lực tại `at` | ERR-07-031 | 410 | Kèm `retiredAt`, `replacementCatalogCode` |
+| HTTT không được cấp quyền danh mục hạn chế | ERR-07-030 | 403 | |
+
+#### FR-07-027 · Tra cứu lô tối đa 500 mã
+
+Chức năng này tra nhiều mã trong một lượt gọi, giảm số vòng mạng cho HTTT cần kiểm tra cả danh sách mã (ví dụ kiểm tra một tệp hồ sơ).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-027 · Tra cứu lô tối đa 500 mã |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-015 |
+| Tác nhân, quyền | Như FR-07-026 |
+| Tiền điều kiện | Như FR-07-026 |
+| Đầu ra | `200` với `found` (ánh xạ mã → bản ghi, theo mã chuẩn hóa chữ hoa) và `notFound` (mảng mã không tìm thấy); thứ tự không đảm bảo; `X-Catalog-Version` |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-043 là thân JSON gồm `codes` (mảng T-CODE, 1…500 phần tử, trùng lặp được gộp), `at`, `version`, `fields`, `resolveReplacement`, `includeDeprecated` (mặc định `true`; `false` thì mã `DEPRECATED` được trả trong `notFound` kèm lý do).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra kích thước lô, vượt 500 (tham số `07.rdm.lookup-batch-max`) trả `ERR-07-026`.
+2. Hệ thống xác định phiên bản như FR-07-026 một lần cho cả lô.
+3. Hệ thống tra L1 cho từng mã, gom các mã trượt tra L2 bằng một lệnh `MGET`, các mã còn trượt tra CSDL bằng một truy vấn `code = ANY(?)`.
+4. Hệ thống trả kết quả với p95 ≤ 150 ms (NFR-07-002).
+
+Các ngoại lệ gồm các ngoại lệ của FR-07-026 trừ `ERR-07-007` (mã không thấy nằm trong `notFound`, không phải lỗi), thêm `ERR-07-026` (HTTP 400) khi lô vượt giới hạn.
+
+#### FR-07-028 · Lấy toàn bộ bản ghi theo phiên bản
+
+Chức năng này cho HTTT nạp toàn bộ danh mục về bộ nhớ hoặc CSDL riêng của mình, qua phân trang con trỏ hoặc tải ảnh chụp, với ETag để chỉ tải lại khi có phiên bản mới.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-028 · Lấy toàn bộ bản ghi theo phiên bản (con trỏ, ETag, tải ảnh chụp) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-015 |
+| Tác nhân, quyền | Như FR-07-026 |
+| Tiền điều kiện | Như FR-07-026 |
+| Đầu ra | API-07-041: `{items: [...], nextCursor, catalogVersion, schemaHash}`; `nextCursor` rỗng khi hết. API-07-049: `302 Found` tới URL ký sẵn của ảnh chụp (hạn 15 phút), kèm tiêu đề `Digest` SHA-256 |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-041 gồm `at`, `version`, `cursor` (chuỗi mờ mã hóa `versionId` và mã cuối cùng đã trả, có chữ ký HMAC để chống giả mạo), `limit` (1…1.000, mặc định 500), `fields`, `includeDeprecated` (mặc định `true`), `parentCode`; của API-07-049 gồm `{v}` (số phiên bản hoặc `current`) và `format` (`json`, `csv`).
+
+Xử lý gồm các bước sau.
+
+1. Lần gọi đầu (không có `cursor`), hệ thống xác định phiên bản như FR-07-026 và ghim nó vào con trỏ; các lần gọi tiếp theo dùng phiên bản trong con trỏ, kể cả khi trong lúc đó phiên bản mới được phát hành, để HTTT không nhận một nửa dữ liệu cũ, một nửa dữ liệu mới.
+2. Hệ thống trả trang sắp theo mã tăng dần với phân trang theo khóa (keyset, `code > lastCode`), không dùng `OFFSET`; một trang 1.000 bản ghi p95 ≤ 300 ms (NFR-07-003).
+3. Với API-07-049, hệ thống kiểm tra quyền như FR-07-026 rồi trả URL ký sẵn tới ảnh chụp trên kho đối tượng; nếu ảnh chụp chưa sẵn sàng (vừa phát hành, đang sinh), trả `503` với `Retry-After: 30`.
+4. HTTT gửi `If-None-Match` với ETag lần trước; phiên bản không đổi thì nhận `304`.
+
+Các ngoại lệ gồm các ngoại lệ của FR-07-026 trừ `ERR-07-007`, thêm: con trỏ sai chữ ký hoặc trỏ tới phiên bản không còn (`400`, `ERR-07-023`); `limit` vượt 1.000 (`ERR-07-026`, 400).
+
+#### FR-07-029 · Lấy cây hoặc nhánh con
+
+Chức năng này trả danh mục phân cấp dưới dạng cây lồng nhau, phục vụ HTTT hiển thị bộ chọn phân cấp (ví dụ chọn tỉnh rồi chọn xã).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-029 · Lấy cây hoặc nhánh con |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-002, LGC-DMDC-015 |
+| Tác nhân, quyền | Như FR-07-026 |
+| Tiền điều kiện | Danh mục phân cấp |
+| Đầu ra | `200` với `nodes`: mảng nút `{code, name, levelName, status, attrs?, children: [...]}` lồng tối đa `depth` cấp tính từ `root`; nút có con chưa trả (do giới hạn `depth`) mang `hasChildren = true` |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-044 gồm `root` (T-CODE, rỗng là mọi gốc), `depth` (1…10, mặc định 1), `at`, `version`, `fields`, `includeDeprecated` (mặc định `false` cho cây, vì bộ chọn không nên hiện mã ngừng dùng).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống xác định phiên bản, kiểm tra danh mục phân cấp (không thì `400`).
+2. Hệ thống lấy các bản ghi có `path` bắt đầu bằng đường dẫn của `root` và `depth` ≤ độ sâu của `root` + `depth`, dựng cây trong bộ nhớ, sắp các nút con theo `sort_order` rồi mã.
+3. Tổng số nút trả về giới hạn 10.000; vượt thì trả `ERR-07-024` (HTTP 422) gợi ý giảm `depth`.
+
+Các ngoại lệ gồm các ngoại lệ của FR-07-026 (với `root` không tồn tại là `ERR-07-007`) và `ERR-07-024` khi cây quá lớn.
+
+#### FR-07-030 · Tìm kiếm không dấu trong danh mục
+
+Chức năng này hỗ trợ ô tìm kiếm có gợi ý (autocomplete) trên giao diện HTTT, tìm theo tên không dấu, không phân biệt hoa thường (tuân thủ tinh thần FR-00-020).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-030 · Tìm kiếm không dấu trong danh mục |
+| Mức ưu tiên | S |
+| Truy vết | REQ-07; FR-00-020 |
+| Tác nhân, quyền | Như FR-07-026 |
+| Tiền điều kiện | Danh mục tồn tại |
+| Đầu ra | `200` với tối đa `limit` bản ghi xếp theo độ liên quan: khớp mã chính xác, mã bắt đầu bằng, tên bắt đầu bằng, tên chứa từ, thuộc tính `searchable` chứa |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-045 gồm `q` (2…100 ký tự), `limit` (1…50, mặc định 20), `at`, `parentCode` (giới hạn trong nhánh), `includeDeprecated` (mặc định `false`), `fields`.
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống chuẩn hóa `q` (chữ thường, bỏ dấu, "đ" thành "d", gộp khoảng trắng).
+2. Hệ thống tìm trên `name_search` và giá trị chuẩn hóa của thuộc tính `searchable` bằng chỉ mục trigram, xếp hạng theo thứ tự đã nêu ở đầu ra, cùng hạng thì theo độ tương đồng trigram rồi `sort_order`.
+3. Ví dụ: `q = "da lat"` khớp bản ghi tên "Phường Đà Lạt" (mã giả định); `q = "dak"` khớp "Đắk…" nhờ bỏ dấu.
+4. p95 ≤ 100 ms với danh mục 200.000 bản ghi.
+
+Các ngoại lệ gồm các ngoại lệ của FR-07-026 trừ `ERR-07-007`, thêm `400` khi `q` ngắn hơn 2 ký tự.
+
+#### FR-07-031 · Lấy thay đổi kể từ một phiên bản (delta)
+
+Chức năng này cho HTTT đã có bản sao danh mục chỉ tải phần thay đổi thay vì tải lại toàn bộ.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-031 · Lấy thay đổi kể từ một phiên bản (delta) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-015 |
+| Tác nhân, quyền | Như FR-07-026 |
+| Tiền điều kiện | `sinceVersion` là phiên bản đã phát hành của danh mục |
+| Đầu ra | `200` với `fromVersion`, `toVersion`, `schemaChanged` (bool), `schemaChanges[]`, `changes[]`: `{code, changeType: ADDED/CHANGED/DEPRECATED/REACTIVATED/REMOVED, item (trạng thái sau), changedFields}`, phân trang con trỏ; `fullReloadRecommended = true` khi tổng thay đổi vượt 50% số bản ghi |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-046 gồm `sinceVersion` (T-INT, bắt buộc), `toVersion` (mặc định phiên bản hiệu lực hôm nay; có thể là phiên bản sắp hiệu lực để HTTT chuẩn bị trước), `cursor`, `limit` (≤ 1.000).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra `sinceVersion` < `toVersion`, cả hai đã phát hành; `sinceVersion` = `toVersion` trả danh sách rỗng.
+2. Hệ thống tính khác biệt giữa hai phiên bản theo thuật toán FR-07-014 (khác biệt trực tiếp giữa hai ảnh chụp, không cộng dồn qua các phiên bản trung gian, nên kết quả đúng kể cả khi một mã được thêm rồi ngừng dùng ở giữa).
+3. Kết quả khác biệt giữa hai phiên bản được đệm theo khóa `(sinceVersionId, toVersionId)` vì cả hai bất biến.
+4. Hệ thống trả trang thay đổi theo mã tăng dần.
+
+Các ngoại lệ gồm các ngoại lệ của FR-07-026, thêm `ERR-07-006` khi `sinceVersion` không tồn tại hoặc không phát hành.
+
+#### FR-07-032 · API truy vấn có cấu trúc
+
+Chức năng này thay "API truy vấn CSDL tùy chọn" của Aita (LGC-DMDC-016). Aita cho phép gửi câu truy vấn gần như tự do, là nguy cơ chèn SQL và lộ dữ liệu. Datahub thay bằng ngôn ngữ truy vấn đặc thù (Domain-Specific Language, DSL) dạng JSON, chỉ trên trường hệ thống và thuộc tính được đánh dấu `queryable`, được dịch sang SQL tham số hóa trên `jsonb` (ADR-054, BR-07-018). Cách làm này giữ được nhu cầu nghiệp vụ (lọc danh mục theo thuộc tính, chọn trường, sắp xếp, phân trang) mà không mở cửa cho truy vấn tùy ý.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-032 · API truy vấn có cấu trúc (lọc, chọn trường, sắp xếp, phân trang) |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-016 |
+| Tác nhân, quyền | HTTT scope `rdm.query`; người dùng `PERM-07-read` qua trình thử API (UI-07-12) |
+| Tiền điều kiện | Danh mục có phiên bản hiệu lực; trường được lọc hoặc sắp xếp là trường hệ thống hoặc thuộc tính `queryable` |
+| Đầu ra | `200` với `items` (chỉ các trường trong `select`), `nextCursor`, `catalogVersion`, `took` (mili giây) |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không ghi kiểm toán từng lượt; truy vấn bị từ chối được đếm vào `rdm_query_rejected_total{reason}` |
+
+Đầu vào của API-07-047 là thân JSON với các trường trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `at` | T-DATE | Không | Như quy định chung | `2026-11-21` |
+| `version` | T-INT | Không | Loại trừ với `at` | |
+| `filter` | Biểu thức | Không | Theo ngữ pháp dưới đây | |
+| `select` | Mảng chuỗi | Không | Trường hệ thống hoặc `attrs.{code}` (bất kỳ thuộc tính `ACTIVE`, không cần `queryable`); mặc định mọi trường | `["code","name"]` |
+| `sort` | Mảng `{field, dir}` | Không | ≤ 3 phần tử; trường hệ thống hoặc thuộc tính `queryable`; `dir` ∈ `asc`, `desc`; mặc định `code asc`; luôn thêm `code` làm khóa phụ để phân trang ổn định | `[{"field":"sortOrder","dir":"asc"}]` |
+| `limit` | T-INT | Không | 1…1.000, mặc định 100 | `200` |
+| `cursor` | Chuỗi | Không | Con trỏ từ trang trước, ký HMAC, gắn với băm của `filter` và `sort` | |
+| `includeDeprecated` | T-BOOL | Không | Mặc định `false` | `false` |
+
+Ngữ pháp của biểu thức lọc được đặc tả dưới dạng EBNF như sau.
+
+```text
+filter     = condition | group ;
+group      = "{" ( "\"and\"" | "\"or\"" ) ":" "[" filter { "," filter } "]" "}"
+           | "{" "\"not\"" ":" filter "}" ;
+condition  = "{" "\"field\"" ":" field "," "\"op\"" ":" op [ "," "\"value\"" ":" value ] "}" ;
+field      = "code" | "name" | "parentCode" | "depth" | "status" | "sortOrder"
+           | "validFrom" | "validTo" | "attrs." attr-code ;
+op         = "eq" | "ne" | "in" | "nin" | "lt" | "lte" | "gt" | "gte" | "between"
+           | "contains" | "startsWith" | "isNull" | "isNotNull" ;
+value      = scalar | "[" scalar { "," scalar } "]" ;
+scalar     = string | number | boolean ;
+```
+
+Bảng dưới đây định nghĩa ngữ nghĩa từng toán tử, kiểu trường áp dụng được và dạng SQL tham số hóa mà bộ dịch sinh ra; `{f}` là biểu thức trường (cột hệ thống, hoặc `(attrs->>'code')::kiểu` với thuộc tính động), `?` là tham số ràng buộc.
+
+| Toán tử | Ý nghĩa | Kiểu trường áp dụng | `value` | SQL sinh ra |
+|---|---|---|---|---|
+| `eq`, `ne` | Bằng, khác | Mọi kiểu | Vô hướng | `{f} = ?`, `{f} IS DISTINCT FROM ?` |
+| `in`, `nin` | Thuộc, không thuộc tập | Mọi kiểu trừ `TEXT` | Mảng 1…500 phần tử | `{f} = ANY(?)`, `NOT ({f} = ANY(?))` |
+| `lt`, `lte`, `gt`, `gte` | So sánh thứ tự | `INTEGER`, `DECIMAL`, `DATE`, `DATETIME`, `depth`, `sortOrder`, `validFrom`, `validTo`, `code` | Vô hướng | `{f} < ?` … |
+| `between` | Trong khoảng đóng | Như trên | Mảng đúng 2 phần tử | `{f} BETWEEN ? AND ?` |
+| `contains` | Chứa chuỗi con, không dấu, không phân biệt hoa thường | `name`, `STRING`, `TEXT` | Chuỗi 2…100 ký tự | `unaccent_lower({f}) LIKE '%' \|\| ? \|\| '%'` với `?` đã chuẩn hóa và thoát ký tự `%`, `_` |
+| `startsWith` | Bắt đầu bằng (phân biệt dấu với `code`, không dấu với tên) | `code`, `name`, `parentCode`, `STRING` | Chuỗi 1…100 | `{f} LIKE ? \|\| '%'` |
+| `isNull`, `isNotNull` | Rỗng, khác rỗng | Mọi kiểu | Không có | `{f} IS NULL` |
+
+Các giới hạn của DSL được liệt kê trong bảng sau, cùng lý do và mã lỗi khi vượt.
+
+| Giới hạn | Giá trị | Lý do | Vượt thì |
+|---|---|---|---|
+| Số điều kiện lá | ≤ 20 | Giới hạn độ phức tạp kế hoạch truy vấn | ERR-07-024 |
+| Độ lồng nhóm | ≤ 3 cấp | Như trên | ERR-07-024 |
+| Phần tử của `in`, `nin` | ≤ 500 | Như tra lô | ERR-07-024 |
+| `limit` | ≤ 1.000 | Kích thước phản hồi | ERR-07-024 |
+| Thời gian chạy | ≤ 2 giây (`statement_timeout` của giao dịch chỉ đọc) | Bảo vệ CSDL dùng chung | ERR-07-024 |
+| Kích thước thân yêu cầu | ≤ 64 KB | Chống lạm dụng | ERR-07-023 |
+| Tốc độ gọi | Theo gói sử dụng ở gateway | | `429` từ gateway |
+
+Ví dụ dưới đây lấy các xã, phường thuộc một tỉnh có tên chứa "lâm", chọn ba trường và sắp theo thứ tự; giả định danh mục `DVHC` khai báo thuộc tính `loai_hinh` là `queryable`.
+
+```json
+{ "at": "2026-11-21",
+  "filter": { "and": [
+      { "field": "attrs.loai_hinh", "op": "in", "value": ["PHUONG", "XA"] },
+      { "field": "parentCode", "op": "eq", "value": "68" },
+      { "or": [ { "field": "name", "op": "contains", "value": "lâm" } ] } ] },
+  "select": ["code", "name", "attrs.loai_hinh"],
+  "sort": [ { "field": "sortOrder", "dir": "asc" } ],
+  "limit": 200, "cursor": null, "includeDeprecated": false }
+```
+
+Bộ dịch sinh câu lệnh tương đương sau (minh họa, tên cột theo D03-03-PH07); mọi giá trị đều là tham số ràng buộc, không bao giờ nối chuỗi.
+
+```sql
+SELECT code, name, attrs->'loai_hinh' AS "attrs.loai_hinh"
+FROM ph07_rdm.catalog_item
+WHERE version_id = $1 AND status = 'ACTIVE'
+  AND (attrs->>'loai_hinh') = ANY($2)
+  AND parent_code = $3
+  AND (unaccent_lower(name) LIKE '%' || $4 || '%')
+  AND (sort_order, code) > ($5, $6)   -- chỉ khi có con trỏ
+ORDER BY sort_order ASC, code ASC
+LIMIT 201;
+```
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra kích thước thân, phân tích JSON theo JSON Schema của DSL; sai cú pháp (khóa lạ, toán tử lạ, `value` sai dạng) trả `ERR-07-023` với đường dẫn JSON Pointer tới phần sai.
+2. Hệ thống xác định phiên bản, quyền khai thác (`rdm.query`, `RESTRICTED`).
+3. Hệ thống kiểm tra từng trường trong `filter` và `sort` là trường hệ thống hoặc thuộc tính `queryable` `ACTIVE` của phiên bản; vi phạm trả `ERR-07-025` nêu tên trường (BR-07-018).
+4. Hệ thống kiểm tra toán tử phù hợp kiểu trường, chuyển `value` sang kiểu của trường (chuỗi ngày sang ngày, số sang số); không chuyển được trả `ERR-07-023`.
+5. Hệ thống đếm điều kiện, độ lồng, kích thước `in`; vượt trả `ERR-07-024`.
+6. Hệ thống dịch sang SQL tham số hóa như ví dụ, luôn kèm điều kiện `version_id` và RLS; với HYBRID dịch thành `UNION ALL` của hai phiên bản.
+7. Hệ thống chạy trong giao dịch chỉ đọc với `statement_timeout = 2s`, trên bản sao đọc (read replica) nếu có; quá thời gian trả `ERR-07-024` với lý do `TIMEOUT`.
+8. Hệ thống lấy `limit + 1` dòng để biết còn trang sau, sinh `nextCursor`, trả kết quả; p95 ≤ 500 ms trên danh mục 100.000 bản ghi (NFR-07-004).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Biểu thức sai cú pháp, giá trị sai kiểu, con trỏ sai | ERR-07-023 | 400 | Chỉ ra vị trí lỗi |
+| Vượt giới hạn điều kiện, độ lồng, phần tử, thời gian | ERR-07-024 | 422 | `reason` ∈ `TOO_MANY_CONDITIONS`, `TOO_DEEP`, `IN_TOO_LARGE`, `LIMIT_TOO_LARGE`, `TIMEOUT` |
+| Trường không `queryable` | ERR-07-025 | 400 | Liệt kê trường `queryable` hợp lệ |
+| HTTT thiếu scope `rdm.query` | — | 403 | |
+| Danh mục hạn chế chưa cấp quyền | ERR-07-030 | 403 | |
+
+#### FR-07-033 · Liệt kê danh mục và lấy lược đồ qua API
+
+Chức năng này cho HTTT khám phá danh mục sẵn có và lấy lược đồ máy đọc được (JSON Schema) để sinh mã kiểm tra dữ liệu phía HTTT.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-033 · Liệt kê danh mục và lấy lược đồ (metadata, JSON Schema) qua API |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-DMDC-015 |
+| Tác nhân, quyền | HTTT `rdm.read`; người dùng `PERM-07-read`; `ROLE-DEVELOPER` trên cổng nhà phát triển (chỉ danh mục `PUBLIC`) |
+| Tiền điều kiện | Không |
+| Đầu ra | API-07-001 (với HTTT): danh sách danh mục `ACTIVE` mà HTTT được khai thác, kèm phiên bản hiệu lực, `schemaHash`, số bản ghi; không trả danh mục `DRAFT`. API-07-048: `{catalog: {...}, version: {...}, attributes: [...], jsonSchema: {...}, levelNames}` |
+| Hậu điều kiện | Không thay đổi |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào của API-07-048 gồm `{c}`, `version` hoặc `at`. JSON Schema sinh theo chuẩn JSON Schema 2020-12, gồm `$id` = `urn:datahub:rdm:{tenant}:{catalogCode}:v{n}`, các thuộc tính hệ thống và khối `attrs` với `properties` sinh từ `attribute_def` theo bảng kiểu ở mục 4.4 (`required` sinh từ thuộc tính bắt buộc; `additionalProperties: false`).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống lọc danh sách theo quyền khai thác của chủ thể (danh mục `RESTRICTED` chỉ hiện với HTTT được cấp quyền; danh mục `INTERNAL` không hiện trên cổng nhà phát triển).
+2. Hệ thống sinh hoặc lấy JSON Schema từ bộ đệm theo `schemaHash`; phản hồi đặt `ETag` bằng `schemaHash`.
+
+Các ngoại lệ gồm `ERR-07-001`, `ERR-07-006`, `ERR-07-030` như FR-07-026.
+
+#### FR-07-034 · Phát sự kiện thay đổi danh mục
+
+Chức năng này đẩy thông báo thay đổi danh mục tới HTTT và phân hệ đã đăng ký, để họ làm mới bản sao ngay khi có phiên bản mới thay vì phải thăm dò định kỳ (BP-03: "phát sự kiện thay đổi tới các HTTT đã đăng ký").
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-034 · Phát sự kiện thay đổi danh mục |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03 |
+| Tác nhân, quyền | Hệ thống phát; HTTT nhận qua PH-10 (đăng ký topic được duyệt, scope `topic:{tên}:subscribe`) |
+| Tiền điều kiện | Thay đổi dữ liệu đã cam kết |
+| Đầu ra | Bản tin CloudEvents 1.0 trên Kafka theo bảng sự kiện EVT-07-01…10 |
+| Hậu điều kiện | Mỗi sự kiện có đúng một dòng outbox; Debezium đưa lên Kafka; topic theo `{tenant}.rdm.{thực-thể}.{sự-kiện}.v1` (tenant viết thường, `COMMON` dùng `common`) |
+| Sự kiện phát ra | EVT-07-01…10 |
+| Kiểm toán | Không riêng (thao tác gốc đã kiểm toán) |
+
+Bảng dưới đây liệt kê các sự kiện, thời điểm phát và nội dung chính; lược đồ chi tiết nằm ở `asyncapi-rdm.yaml` của D03-04-PH07.
+
+| Mã | Topic | Phát khi | Nội dung `data` chính |
+|---|---|---|---|
+| EVT-07-01 | `{tenant}.rdm.catalog.created.v1` | FR-07-003, 022, 038 | `catalogCode`, `name`, `sourceType`, `classification`, `ownerOrgId` |
+| EVT-07-02 | `{tenant}.rdm.catalog.updated.v1` | FR-07-004, 008 | `catalogCode`, `changedFields` |
+| EVT-07-03 | `{tenant}.rdm.catalog.retired.v1` | FR-07-009 | `catalogCode`, `retireDate`, `reason`, `replacementCatalogCode` |
+| EVT-07-04 | `{tenant}.rdm.catalog.submitted.v1` | FR-07-015 trình | `catalogCode`, `versionNo`, `submittedBy`, `diffSummary`, `ownerOrgId` |
+| EVT-07-05 | `{tenant}.rdm.catalog.published.v1` | FR-07-016, 037 | `catalogCode`, `versionNo`, `effectiveFrom`, `stats`, `breaking`, `snapshotUri`, `schemaHash` |
+| EVT-07-06 | `{tenant}.rdm.catalog.rejected.v1` | FR-07-015 từ chối, rút lại, thu hồi | `catalogCode`, `versionNo`, `reason`, `rejectedBy` |
+| EVT-07-07 | `{tenant}.rdm.import.completed.v1` | FR-07-021, 022 | `jobId`, `catalogCode`, `status`, `summary` |
+| EVT-07-08 | `{tenant}.rdm.export.completed.v1` | FR-07-024 | `jobId`, `catalogCode`, `status`, `rowCount` |
+| EVT-07-09 | `{tenant}.rdm.sync.completed.v1` | FR-07-036, 037 | `runId`, `catalogCode`, `status`, `diffStats`, `hasBreaking` |
+| EVT-07-10 | `common.rdm.adminunit.reorganized.v1` | FR-07-016 với `DVHC` có sự kiện sắp xếp | `versionNo`, `effectiveFrom`, `events[]` (loại, mã nguồn, mã đích, căn cứ) |
+
+Xử lý gồm các bước sau.
+
+1. Thao tác nghiệp vụ ghi dòng outbox theo DD-11 (`event_id` UUID v7, `event_type` dạng `vn.datahub.rdm.catalog.published.v1`, `topic`, `aggregate_type = catalog`, `aggregate_id = {tenant}:{catalogCode}`, `payload`, `trace_id`, `occurred_at`, `tenant_id`) trong cùng giao dịch.
+2. Debezium đọc WAL và đưa lên Kafka, khóa phân vùng là `aggregate_id` để sự kiện của cùng danh mục giữ thứ tự.
+3. Sự kiện không chứa dữ liệu bản ghi (chỉ siêu dữ liệu và `snapshotUri`), để bản tin nhỏ và để HTTT lấy dữ liệu qua API có kiểm soát quyền.
+4. Sự kiện tới Kafka trong ≤ 5 giây sau cam kết (NFR-07-007); consumer dùng `event_id` để chống trùng.
+5. Sự kiện của danh mục `COMMON` phát trên topic `common.rdm.*` mà mọi tenant được đăng ký đọc.
+
+Ngoại lệ: không có ngoại lệ trả cho người dùng; lỗi đẩy của Debezium được giám sát ở PH-18 và không làm mất sự kiện vì outbox giữ tới khi được đọc.
+

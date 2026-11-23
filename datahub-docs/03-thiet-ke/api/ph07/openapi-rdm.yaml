@@ -2377,3 +2377,1855 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '412': { $ref: '#/components/responses/PreconditionFailed' }
+  # ------------------------------------------------------------------ Đồng bộ quốc gia
+  /sync-sources:
+    get:
+      tags: [Đồng bộ quốc gia]
+      operationId: listSyncSources
+      summary: Danh sách nguồn đồng bộ
+      x-datahub-id: API-07-055
+      x-datahub-fr: [FR-07-035]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - name: catalogCode
+          in: query
+          schema: { $ref: '#/components/schemas/TCode' }
+        - name: enabled
+          in: query
+          schema: { type: boolean }
+        - name: lastRunStatus
+          in: query
+          schema: { $ref: '#/components/schemas/SyncRunStatus' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang nguồn đồng bộ.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncSourcePage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Đồng bộ quốc gia]
+      operationId: createSyncSource
+      summary: Tạo nguồn đồng bộ (đăng ký đồng bộ danh mục quốc gia)
+      description: |
+        Gắn một danh mục với danh mục từ xa trên NDXP (qua PH-14). Hoặc chỉ định `catalogCode`
+        có sẵn (sẽ chuyển `sourceType` thành NATIONAL nếu đang LOCAL và chưa phát hành), hoặc truyền
+        `createCatalog` để tạo danh mục NATIONAL mới với lược đồ suy ra từ metadata từ xa. Danh mục
+        COMMON chỉ PLATFORM_ADMIN đăng ký. `runNow = true` kích hoạt lần chạy đầu ngay.
+      x-datahub-id: API-07-056
+      x-datahub-fr: [FR-07-035, FR-07-038]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncSourceCreateRequest' }
+            examples:
+              danToc: { $ref: '#/components/examples/SyncSourceCreateExample' }
+      responses:
+        '201':
+          description: Đã tạo nguồn.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncSource' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+  /sync-sources/{sourceId}:
+    parameters:
+      - $ref: '#/components/parameters/SourceId'
+    patch:
+      tags: [Đồng bộ quốc gia]
+      operationId: updateSyncSource
+      summary: Sửa nguồn đồng bộ
+      description: Sửa lịch (`scheduleCron`, biểu thức cron 6 trường của Spring, giờ Việt Nam), `autoApply`, `enabled`, `fieldMapping`.
+      x-datahub-id: API-07-057
+      x-datahub-fr: [FR-07-035]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/SyncSourceUpdateRequest' }
+            example: { scheduleCron: "0 0 1 * * *", autoApply: true }
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncSourceUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncSource' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /sync-sources/{sourceId}:run:
+    parameters:
+      - $ref: '#/components/parameters/SourceId'
+    post:
+      tags: [Đồng bộ quốc gia]
+      operationId: runSyncSource
+      summary: Chạy đồng bộ ngay
+      description: |
+        Tạo `sync_run` với `trigger = MANUAL`, trả 202 kèm `Location` tới lần chạy. Nếu nguồn đang
+        có lần chạy `RUNNING` hoặc `PENDING_CONFIRMATION` thì trả 409 ERR-07-029 kèm id lần chạy đó
+        (khóa bằng advisory lock theo `sourceId`). Kết quả cuối phát EVT-07-09.
+      x-datahub-id: API-07-058
+      x-datahub-fr: [FR-07-036]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncRunRequest' }
+            example: { forceFull: false, note: "Chạy lại sau khi NDXP thông báo cập nhật" }
+      responses:
+        '202':
+          description: Đã bắt đầu.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncRun' }
+              examples:
+                dangChay: { $ref: '#/components/examples/SyncRunRunning' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /sync-runs:
+    get:
+      tags: [Đồng bộ quốc gia]
+      operationId: listSyncRuns
+      summary: Lịch sử lần chạy đồng bộ
+      x-datahub-id: API-07-059
+      x-datahub-fr: [FR-07-036]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - name: sourceId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: catalogCode
+          in: query
+          schema: { $ref: '#/components/schemas/TCode' }
+        - name: status
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/SyncRunStatus' }
+        - name: startedFrom
+          in: query
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang lần chạy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncRunPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /sync-runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    get:
+      tags: [Đồng bộ quốc gia]
+      operationId: getSyncRun
+      summary: Chi tiết lần chạy và danh sách thay đổi
+      description: Kèm trang thay đổi (`sync_change`) lọc được theo `changeType`, `breaking`.
+      x-datahub-id: API-07-060
+      x-datahub-fr: [FR-07-036, FR-07-037]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - name: changeType
+          in: query
+          schema: { $ref: '#/components/schemas/SyncChangeType' }
+        - name: breaking
+          in: query
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Lần chạy.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncRunDetail' }
+              examples:
+                choXacNhan: { $ref: '#/components/examples/SyncRunPending' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /sync-runs/{runId}:accept:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Đồng bộ quốc gia]
+      operationId: acceptSyncRun
+      summary: Xác nhận áp dụng thay đổi phá vỡ
+      description: |
+        Chỉ khi `PENDING_CONFIRMATION`. Tạo phiên bản (`origin = SYNC`) từ dữ liệu đã tải, gồm cả
+        thay đổi phá vỡ, rồi đi theo chính sách duyệt của danh mục: nếu `requireApproval = true`
+        phiên bản ở `IN_REVIEW` chờ người có PERM-07-publish; ngược lại phát hành ngay (người xác
+        nhận cần PERM-07-publish). Cho phép `effectiveFrom` hồi tố theo ngày hiệu lực ở nguồn
+        (BR-07-027). Trạng thái lần chạy chuyển `APPLIED`.
+      x-datahub-id: API-07-061
+      x-datahub-fr: [FR-07-037]
+      x-datahub-permission:
+        permission: PERM-07-sync
+        note: Phát hành ngay (requireApproval = false) cần thêm PERM-07-publish và chịu bốn mắt so với người kích hoạt lần chạy MANUAL.
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SyncRunAcceptRequest' }
+            examples:
+              chapNhan: { $ref: '#/components/examples/SyncAcceptExample' }
+      responses:
+        '200':
+          description: Đã áp dụng.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncRun' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /sync-runs/{runId}:reject:
+    parameters:
+      - $ref: '#/components/parameters/RunId'
+    post:
+      tags: [Đồng bộ quốc gia]
+      operationId: rejectSyncRun
+      summary: Từ chối thay đổi từ nguồn quốc gia
+      description: Chuyển `PENDING_CONFIRMATION` → `REJECTED`, bắt buộc lý do. Lần chạy kế tiếp vẫn tính khác biệt so với phiên bản cục bộ nên thay đổi bị từ chối sẽ xuất hiện lại nếu nguồn chưa đổi.
+      x-datahub-id: API-07-062
+      x-datahub-fr: [FR-07-037]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RejectRequest' }
+            example: { reason: "Nguồn quốc gia xóa nhầm mã 55, đã báo Bộ quản lý danh mục" }
+      responses:
+        '200':
+          description: Đã từ chối.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SyncRun' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /national-catalogs:
+    get:
+      tags: [Đồng bộ quốc gia]
+      operationId: listNationalCatalogs
+      summary: Khám phá danh mục quốc gia trên NDXP
+      description: |
+        Gọi PH-14 (adapter NDXP DMDC) lấy danh sách danh mục quốc gia, đánh dấu danh mục nào đã
+        được tenant (hoặc COMMON) đăng ký đồng bộ. Kết quả được đệm 1 giờ ở L2. NDXP không phản hồi
+        trả 502 ERR-07-028; khi có bộ đệm cũ thì trả bộ đệm cũ với `stale = true`.
+      x-datahub-id: API-07-063
+      x-datahub-fr: [FR-07-038]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - name: withAttributes
+          in: query
+          schema: { type: boolean, default: false }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Danh mục quốc gia.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NationalCatalogPage' }
+              examples:
+                ndxp: { $ref: '#/components/examples/NationalCatalogPageExample' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+  # ------------------------------------------------------------------ Ánh xạ mã
+  /code-systems:
+    get:
+      tags: [Ánh xạ mã]
+      operationId: listCodeSystems
+      summary: Danh sách hệ thống mã ngoài
+      x-datahub-id: API-07-064
+      x-datahub-fr: [FR-07-040]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - name: status
+          in: query
+          schema: { type: string, enum: [ACTIVE, INACTIVE] }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang hệ thống mã.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CodeSystemPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Ánh xạ mã]
+      operationId: createCodeSystem
+      summary: Tạo hệ thống mã ngoài
+      description: Khai báo một hệ thống mã (thường gắn với một HTTT thành viên ở PH-01 qua `memberSystemId`, kiểm tra tồn tại qua API module của PH-01).
+      x-datahub-id: API-07-065
+      x-datahub-fr: [FR-07-040]
+      x-datahub-permission:
+        permission: PERM-07-mapping
+        proposedForD0208: true
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CodeSystemCreateRequest' }
+            example: { code: "MOTCUA_T68", name: "Mã đơn vị của Hệ thống thông tin giải quyết TTHC tỉnh", owner: "Văn phòng UBND tỉnh", memberSystemId: "01933b6e-6c1a-7d2e-9a10-2f5c3e8b9a01", description: "Hệ mã cũ còn dùng mã huyện" }
+      responses:
+        '201':
+          description: Đã tạo.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CodeSystem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /code-systems/{csCode}:
+    parameters:
+      - $ref: '#/components/parameters/CsCode'
+    patch:
+      tags: [Ánh xạ mã]
+      operationId: updateCodeSystem
+      summary: Sửa hệ thống mã ngoài
+      x-datahub-id: API-07-066
+      x-datahub-fr: [FR-07-040]
+      x-datahub-permission:
+        permission: PERM-07-mapping
+        proposedForD0208: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/CodeSystemUpdateRequest' }
+          application/json:
+            schema: { $ref: '#/components/schemas/CodeSystemUpdateRequest' }
+      responses:
+        '200':
+          description: Đã sửa.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CodeSystem' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /catalogs/{catalogCode}/mappings:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Ánh xạ mã]
+      operationId: listMappings
+      summary: Bảng ánh xạ mã của danh mục
+      x-datahub-id: API-07-067
+      x-datahub-fr: [FR-07-041]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2User: []
+        - oauth2Client: [rdm.read]
+      parameters:
+        - name: codeSystem
+          in: query
+          schema: { $ref: '#/components/schemas/TCode' }
+        - name: itemCode
+          in: query
+          schema: { type: string, maxLength: 64 }
+        - name: externalCode
+          in: query
+          schema: { type: string, maxLength: 128 }
+        - name: provisional
+          in: query
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Một trang ánh xạ.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CodeMappingPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /catalogs/{catalogCode}/mappings/{csCode}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/CsCode'
+    put:
+      tags: [Ánh xạ mã]
+      operationId: putMappings
+      summary: Ghi lô ánh xạ (upsert)
+      description: |
+        Ghi tối đa 5.000 ánh xạ giữa danh mục và một hệ thống mã trong một giao dịch. Khóa
+        upsert là (`externalCode`, `validFrom`). `mode = MERGE` (mặc định) chỉ thêm/sửa;
+        `mode = REPLACE_ALL` đặt `validTo = hôm nay` cho ánh xạ đang hiệu lực không có trong lô.
+        Kiểm tra: `itemCode` tồn tại trong phiên bản hiện hành (hoặc bất kỳ phiên bản nếu
+        `allowHistoricalItems = true`), mỗi mã ngoài trỏ đúng một mã danh mục trong cùng khoảng
+        hiệu lực (BR-07-023, ERR-07-033), ánh xạ tạm thời có lý do (BR-07-024, ERR-07-034). PUT
+        là idempotent tự nhiên nên không cần `Idempotency-Key`.
+      x-datahub-id: API-07-068
+      x-datahub-fr: [FR-07-041]
+      x-datahub-permission:
+        permission: PERM-07-mapping
+        proposedForD0208: true
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MappingBatchPut' }
+            examples:
+              motCua: { $ref: '#/components/examples/MappingBatchPutExample' }
+      responses:
+        '200':
+          description: Kết quả ghi lô.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MappingBatchResult' }
+              examples:
+                ketQua: { $ref: '#/components/examples/MappingBatchResultExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /catalogs/{catalogCode}/mappings/{csCode}/{mappingId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/CsCode'
+      - $ref: '#/components/parameters/MappingId'
+    delete:
+      tags: [Ánh xạ mã]
+      operationId: deleteMapping
+      summary: Xóa ánh xạ
+      description: Xóa mềm một ánh xạ (giữ kiểm toán). Muốn ngừng ánh xạ từ một ngày thì dùng PUT với `validTo` thay vì xóa.
+      x-datahub-id: API-07-069
+      x-datahub-fr: [FR-07-041]
+      x-datahub-permission:
+        permission: PERM-07-mapping
+        proposedForD0208: true
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '204': { description: Đã xóa. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+  /mappings:translate:
+    post:
+      tags: [Ánh xạ mã]
+      operationId: translateCodes
+      summary: Chuyển mã qua bảng ánh xạ (lô ≤ 500)
+      description: |
+        Chuyển mã giữa danh mục và hệ thống mã ngoài, hoặc giữa hai hệ thống mã ngoài thông qua
+        mã danh mục làm trung gian (`from` và `to` đều là hệ thống mã). Kết quả từng mã: `MAPPED`
+        (đúng một kết quả), `MULTIPLE` (một mã danh mục có nhiều mã ngoài — trả mọi kết quả, client
+        chọn), `NOT_MAPPED`. Ánh xạ tạm thời chỉ dùng khi `includeProvisional = true` và được đánh
+        dấu trong kết quả. Thao tác chỉ đọc nên không cần `Idempotency-Key`.
+      x-datahub-id: API-07-070
+      x-datahub-fr: [FR-07-042]
+      x-datahub-permission:
+        permission: PERM-07-read
+        scopes: [rdm.read]
+      security:
+        - oauth2Client: [rdm.read]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TranslateRequest' }
+            examples:
+              motCuaSangDvhc: { $ref: '#/components/examples/TranslateRequestExample' }
+      responses:
+        '200':
+          description: Kết quả chuyển mã.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TranslateResponse' }
+              examples:
+                ketQua: { $ref: '#/components/examples/TranslateResponseExample' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /catalogs/{catalogCode}/mappings/{csCode}/coverage:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+      - $ref: '#/components/parameters/CsCode'
+    get:
+      tags: [Ánh xạ mã]
+      operationId: getMappingCoverage
+      summary: Độ phủ ánh xạ
+      description: Tỷ lệ bản ghi ACTIVE của phiên bản hiệu lực có ít nhất một ánh xạ chính thức (không tạm thời), chia theo cấp; kèm mẫu tối đa 100 mã chưa ánh xạ. Cũng xuất ra chỉ số `rdm_mapping_coverage_ratio`.
+      x-datahub-id: API-07-071
+      x-datahub-fr: [FR-07-043]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - $ref: '#/components/parameters/At'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Độ phủ.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Coverage' }
+              examples:
+                dvhc: { $ref: '#/components/examples/CoverageExample' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  # ------------------------------------------------------------------ Kiểm toán, quyền khai thác, đề xuất
+  /catalogs/{catalogCode}/history:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Kiểm toán và quyền khai thác]
+      operationId: getCatalogHistory
+      summary: Lịch sử kiểm toán của danh mục
+      description: |
+        Đọc nhật ký kiểm toán từ PH-13 (qua API của PH-13, không đọc chéo CSDL) lọc theo đối tượng
+        danh mục và các đối tượng con (phiên bản, thuộc tính, bản ghi, ánh xạ). Giá trị trước/sau
+        đã được che theo phân loại. PH-13 không sẵn sàng trả 503 ERR-07-047.
+      x-datahub-id: API-07-072
+      x-datahub-fr: [FR-07-050]
+      x-datahub-permission:
+        permission: PERM-07-read
+        note: ROLE-AUDITOR xem được mọi danh mục của tenant.
+      parameters:
+        - name: action
+          in: query
+          schema: { type: string, maxLength: 64 }
+        - name: actor
+          in: query
+          schema: { type: string, maxLength: 128 }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Lịch sử.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HistoryCursorPage' }
+              examples:
+                lichSu: { $ref: '#/components/examples/HistoryExample' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /catalogs/{catalogCode}/proposals:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    post:
+      tags: [Đồng bộ quốc gia]
+      operationId: createProposal
+      summary: Đề xuất bổ sung bản ghi lên danh mục quốc gia
+      description: |
+        Chỉ với danh mục NATIONAL hoặc HYBRID mở rộng danh mục quốc gia. Gửi đề xuất qua PH-14
+        tới NDXP (dịch vụ "đề xuất bổ sung danh mục"); lưu đề xuất và mã tham chiếu phía quốc gia.
+        Nếu NDXP chưa hỗ trợ trả 502 ERR-07-028 và đề xuất được lưu `status = FAILED` để gửi lại.
+      x-datahub-id: API-07-074
+      x-datahub-fr: [FR-07-039]
+      x-datahub-permission:
+        permission: PERM-07-sync
+      x-datahub-idempotent: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProposalCreateRequest' }
+            examples:
+              dacKhu: { $ref: '#/components/examples/ProposalExample' }
+      responses:
+        '201':
+          description: Đã gửi đề xuất.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Proposal' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+  /catalogs/{catalogCode}/access-grants:
+    parameters:
+      - $ref: '#/components/parameters/CatalogCode'
+    get:
+      tags: [Kiểm toán và quyền khai thác]
+      operationId: listAccessGrants
+      summary: Danh sách HTTT được cấp quyền khai thác
+      description: Áp dụng cho danh mục `RESTRICTED` (bắt buộc để HTTT khai thác) và cho danh mục bất kỳ khi cần cấp scope `rdm.write` cho HTTT làm nguồn cập nhật.
+      x-datahub-id: API-07-075
+      x-datahub-fr: [FR-07-052]
+      x-datahub-permission:
+        permission: PERM-07-read
+      parameters:
+        - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Danh sách cấp quyền.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessGrantList' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Kiểm toán và quyền khai thác]
+      operationId: putAccessGrants
+      summary: Thay toàn bộ danh sách cấp quyền khai thác
+      description: |
+        Thay thế toàn bộ danh sách (PUT, cần `If-Match` theo ETag danh sách). HTTT bị gỡ mất quyền
+        ngay ở lượt gọi kế tiếp (bộ đệm quyết định quyền ≤ 60 giây). Mỗi thay đổi ghi kiểm toán.
+      x-datahub-id: API-07-075
+      x-datahub-fr: [FR-07-052]
+      x-datahub-permission:
+        permission: PERM-07-grant
+        proposedForD0208: true
+        note: TENANT_ADMIN.
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccessGrantPut' }
+            example:
+              grants:
+                - { memberSystemId: "01933b6e-6c1a-7d2e-9a10-2f5c3e8b9a01", scopes: ["rdm.read", "rdm.query"], expiresAt: "2027-12-31T17:00:00Z" }
+      responses:
+        '200':
+          description: Danh sách mới.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessGrantList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '412': { $ref: '#/components/responses/PreconditionFailed' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  # ------------------------------------------------------------------ Nền tảng (đường dẫn gốc khác)
+  /tenants/{tenantId}:seed:
+    servers:
+      - url: https://api.platform.datahub.example.vn/api/platform/rdm/v1
+        description: Cổng API nền tảng (liên tenant) — giả lập
+      - url: http://localhost:8080/api/platform/rdm/v1
+        description: Phát triển cục bộ
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Nền tảng]
+      operationId: seedTenantCatalogs
+      summary: Nạp gói danh mục nền cho tenant mới
+      description: |
+        Đường dẫn đầy đủ `POST /api/platform/rdm/v1/tenants/{tenantId}:seed`. PH-20 gọi trong
+        saga khởi tạo tenant (D03-10 §5). Gói nền gồm nhóm danh mục chuẩn và danh mục LOCAL mẫu
+        (rỗng hoặc có dữ liệu mẫu), danh mục HYBRID mở rộng ĐVHC cho tỉnh; danh mục COMMON không
+        sao chép mà chỉ liên kết. Idempotent theo (`tenantId`, `packageVersion`): gọi lại trả kết
+        quả cũ và danh mục đã tồn tại được `SKIPPED_EXISTS`. Thao tác bù trừ của saga là
+        `dryRun = false, rollback = true` (xóa mềm danh mục do lần nạp tạo khi còn DRAFT).
+      x-datahub-id: API-07-073
+      x-datahub-fr: [FR-07-049]
+      x-datahub-permission:
+        permission: PLATFORM
+        note: Chỉ client dịch vụ của PH-20 (scope `platform.tenant.provision`, giả định) hoặc ROLE-PLATFORM_ADMIN.
+      x-datahub-idempotent: true
+      security:
+        - oauth2Client: [platform.tenant.provision]
+        - oauth2User: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SeedRequest' }
+            examples:
+              t68: { $ref: '#/components/examples/SeedRequestExample' }
+      responses:
+        '200':
+          description: Đã nạp (hoặc trả lại kết quả lần nạp trước).
+          headers:
+            Idempotent-Replayed: { $ref: '#/components/headers/IdempotentReplayed' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SeedResult' }
+              examples:
+                ketQua: { $ref: '#/components/examples/SeedResultExample' }
+        '202':
+          description: Gói lớn, đang nạp nền.
+          headers:
+            Location: { $ref: '#/components/headers/Location' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  # ================================================================== Bảo mật
+  securitySchemes:
+    oauth2Client:
+      type: oauth2
+      description: |
+        HTTT thành viên lấy token bằng Client Credentials tại realm Keycloak của tenant
+        (`dh-t68` cho T68). Scope được sinh tự động từ đăng ký sử dụng đã duyệt (D02-08 §5):
+        `rdm.read` tra cứu, `rdm.query` truy vấn có cấu trúc, `rdm.write` nhập lô vào bản nháp.
+        APISIX kiểm tra chữ ký và scope trước khi chuyển tới `dh-data`; `dh-data` kiểm tra lại
+        tenant và quyền khai thác danh mục RESTRICTED (BR-07-019).
+      flows:
+        clientCredentials:
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token
+          scopes:
+            rdm.read: Tra cứu danh mục (một mã, lô, toàn bộ, cây, delta, lược đồ, ảnh chụp, chuyển mã)
+            rdm.query: Truy vấn có cấu trúc bằng DSL (items:query)
+            rdm.write: Ghi lô bản ghi vào bản nháp (items:batch) với danh mục được cấp
+            platform.tenant.provision: Chỉ client dịch vụ PH-20 — nạp gói danh mục nền (giả định)
+    oauth2User:
+      type: oauth2
+      description: |
+        Người dùng đăng nhập qua OIDC Authorization Code + PKCE (FR-00-001). Quyền chi tiết
+        `PERM-07-*` lấy từ vai trò trong realm tenant và được OPA đánh giá theo D02-08; phạm vi
+        tổ chức (○) căn cứ `catalog.ownerOrgId`.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/auth
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token
+          scopes:
+            openid: Định danh OIDC
+            profile: Thông tin hồ sơ cơ bản
+  # ================================================================== Tham số
+  parameters:
+    CatalogCode:
+      name: catalogCode
+      in: path
+      required: true
+      description: Mã danh mục (T-CODE). So khớp không phân biệt hoa thường; máy chủ chuẩn hóa chữ hoa.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'
+      example: DVHC
+    VersionRef:
+      name: versionRef
+      in: path
+      required: true
+      description: Số phiên bản (1, 2, …), `current` (phiên bản hiệu lực hôm nay theo giờ Việt Nam) hoặc `draft` (phiên bản đang mở).
+      schema:
+        type: string
+        pattern: '^([1-9][0-9]{0,5}|current|draft)$'
+      examples:
+        so: { value: '12' }
+        hienHanh: { value: current }
+        nhap: { value: draft }
+    ItemCode:
+      name: itemCode
+      in: path
+      required: true
+      description: Mã bản ghi. Mã có ký tự đặc biệt phải mã hóa URL; so khớp không phân biệt hoa thường.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'
+      example: '24727'
+    AttrCode:
+      name: attrCode
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/AttrCode' }
+      example: loai_hinh
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SourceId:
+      name: sourceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    MappingId:
+      name: mappingId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SuccessionId:
+      name: successionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CsCode:
+      name: csCode
+      in: path
+      required: true
+      description: Mã hệ thống mã ngoài (T-CODE).
+      schema: { $ref: '#/components/schemas/TCode' }
+      example: MOTCUA_T68
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/TenantCode' }
+      example: T68
+    At:
+      name: at
+      in: query
+      description: |
+        Ngày cần tra (T-DATE, `yyyy-MM-dd`). Mặc định ngày hiện tại theo giờ Việt Nam (UTC+7).
+        Phiên bản được chọn là phiên bản đã phát hành có `effectiveFrom ≤ at < effectiveTo`.
+        Không dùng cùng `versionNo`.
+      schema: { type: string, format: date }
+      example: '2025-06-30'
+    VersionNoQuery:
+      name: versionNo
+      in: query
+      description: Chỉ định chính xác phiên bản đã phát hành (thay cho `at`).
+      schema: { type: integer, minimum: 1 }
+    Page:
+      name: page
+      in: query
+      description: Số trang, bắt đầu từ 0.
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      description: Số dòng mỗi trang (FR-00-021). Tối đa 200.
+      schema: { type: integer, minimum: 1, maximum: 200, default: 20 }
+    Cursor:
+      name: cursor
+      in: query
+      description: Con trỏ mờ lấy từ `cursor.next` của trang trước. Không tự tạo hay giải mã; hết hạn sau 24 giờ.
+      schema: { type: string, maxLength: 512, pattern: '^[A-Za-z0-9_-]+$' }
+    Limit:
+      name: limit
+      in: query
+      description: Số bản ghi tối đa mỗi trang con trỏ.
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 500 }
+    Fields:
+      name: fields
+      in: query
+      style: form
+      explode: false
+      description: Chọn trường trả về, ví dụ `code,name,attrs.loai_hinh`. Mặc định tất cả.
+      schema:
+        type: array
+        maxItems: 50
+        items: { type: string, pattern: '^(code|name|parentCode|depth|path|levelName|sortOrder|status|replacedBy|validFrom|validTo|isLocalExtension|attrs|attrs\.[a-z][a-z0-9_]{0,62})$' }
+    IncludeDeprecated:
+      name: includeDeprecated
+      in: query
+      description: Kèm bản ghi `DEPRECATED`. Mặc định `false` cho danh sách; tra một mã luôn trả kể cả ngừng dùng.
+      schema: { type: boolean, default: false }
+    Q:
+      name: q
+      in: query
+      description: Từ khóa tìm không phân biệt hoa thường và dấu tiếng Việt (FR-00-020).
+      schema: { type: string, maxLength: 100 }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: ETag nhận từ lần đọc trước (sinh từ cột `version`). Không khớp trả 412 ERR-07-018; thiếu trả 428 được quy về 400 ERR-07-040.
+      schema: { type: string, example: 'W/"7"' }
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: ETag đang giữ; trùng thì máy chủ trả 304 không thân.
+      schema: { type: string }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Khóa chống trùng do client sinh (khuyến nghị UUID v4/v7), 16–128 ký tự. Máy chủ lưu
+        (khóa, chủ thể, phương thức, đường dẫn, SHA-256 thân) trong 24 giờ: gửi lại cùng khóa và
+        cùng thân trả lại phản hồi đã lưu kèm `Idempotent-Replayed: true`; cùng khóa khác thân trả
+        409 ERR-07-022. Bắt buộc với HTTT, khuyến nghị với giao diện.
+      schema: { type: string, minLength: 16, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$' }
+    IdempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Như `Idempotency-Key` nhưng bắt buộc.
+      schema: { type: string, minLength: 16, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$' }
+    Traceparent:
+      name: traceparent
+      in: header
+      required: false
+      description: W3C Trace Context. Nếu vắng, APISIX sinh mới. `traceId` trong lỗi lấy từ đây.
+      schema: { type: string, pattern: '^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$' }
+      example: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+    Prefer:
+      name: Prefer
+      in: header
+      required: false
+      description: RFC 7240. `respond-async` yêu cầu xử lý nền và nhận 202.
+      schema: { type: string, enum: [respond-async] }
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: '`vi` (mặc định) hoặc `en`; ảnh hưởng `title`/`detail` của lỗi và nhãn hệ thống, không dịch dữ liệu danh mục.'
+      schema: { type: string, default: vi }
+  # ================================================================== Header phản hồi
+  headers:
+    ETag:
+      description: Thẻ thực thể. Tài nguyên quản trị dùng ETag yếu `W/"{version}"`; tài nguyên khai thác dùng ETag mạnh gắn với `versionId` của phiên bản danh mục.
+      schema: { type: string }
+      example: W/"7"
+    Location:
+      description: URL tuyệt đối của tài nguyên vừa tạo, tác vụ nền, hoặc URL ký sẵn (302).
+      schema: { type: string, format: uri }
+    RetryAfter:
+      description: Số giây nên chờ trước khi hỏi lại trạng thái tác vụ.
+      schema: { type: integer, minimum: 1 }
+    CacheControl:
+      description: |
+        API khai thác: `public, max-age=300, stale-while-revalidate=60` khi yêu cầu tra theo
+        `versionNo` cụ thể có thể dùng `max-age=86400, immutable`. API quản trị: `no-store`.
+      schema: { type: string }
+      example: public, max-age=300, stale-while-revalidate=60
+    DatahubVersionNo:
+      description: Số phiên bản danh mục đã dùng để trả lời (giúp client biết phiên bản hiện hành mà không cần gọi thêm).
+      schema: { type: integer }
+      example: 12
+    IdempotentReplayed:
+      description: '`true` khi phản hồi là bản lưu của lần gọi trước cùng `Idempotency-Key`.'
+      schema: { type: boolean }
+    ContentDisposition:
+      description: Tên tệp tải về, ví dụ `attachment; filename="DVHC_v12.xlsx"`.
+      schema: { type: string }
+    SnapshotSha256:
+      description: SHA-256 (hex) của tệp ảnh chụp để client kiểm tra toàn vẹn sau khi tải.
+      schema: { type: string, pattern: '^[0-9a-f]{64}$' }
+    RateLimitLimit:
+      description: Hạn mức yêu cầu trong cửa sổ hiện tại (do APISIX đặt, theo draft IETF RateLimit headers).
+      schema: { type: integer }
+    RateLimitRemaining:
+      description: Số yêu cầu còn lại trong cửa sổ.
+      schema: { type: integer }
+    RateLimitReset:
+      description: Số giây đến khi cửa sổ đặt lại.
+      schema: { type: integer }
+  # ================================================================== Phản hồi lỗi dùng chung
+  responses:
+    NotModified:
+      description: Không đổi so với ETag client đang giữ.
+      headers:
+        ETag: { $ref: '#/components/headers/ETag' }
+    BadRequest:
+      description: Yêu cầu sai cú pháp hoặc vi phạm giới hạn đầu vào (ERR-07-023, 025, 026, 040).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            loTooLon: { $ref: '#/components/examples/ProblemBatchTooLarge' }
+            truyVanSai: { $ref: '#/components/examples/ProblemQuerySyntax' }
+            khongChoTruyVan: { $ref: '#/components/examples/ProblemNotQueryable' }
+            thamSoSai: { $ref: '#/components/examples/ProblemBadParam' }
+    Unauthorized:
+      description: Thiếu token hoặc token không hợp lệ, hết hạn (ERR-07-041).
+      headers:
+        WWW-Authenticate:
+          schema: { type: string }
+          description: 'Ví dụ `Bearer realm="dh-t68", error="invalid_token"`.'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            hetHan: { $ref: '#/components/examples/ProblemUnauthorized' }
+    Forbidden:
+      description: Không đủ quyền (ERR-07-046), danh mục chỉ đọc (ERR-07-003), tự duyệt (ERR-07-015), HTTT chưa được cấp quyền danh mục hạn chế (ERR-07-030).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            chiDoc: { $ref: '#/components/examples/ProblemReadOnly' }
+            tuDuyet: { $ref: '#/components/examples/ProblemSelfApproval' }
+            hanChe: { $ref: '#/components/examples/ProblemRestricted' }
+            thieuQuyen: { $ref: '#/components/examples/ProblemForbidden' }
+    NotFound:
+      description: Không tìm thấy danh mục (ERR-07-001), phiên bản (ERR-07-006), mã bản ghi tại thời điểm (ERR-07-007), ánh xạ (ERR-07-027) hoặc tài nguyên khác (ERR-07-045). Đối tượng của tenant khác luôn trả 404 để không lộ sự tồn tại (FR-00-011).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            danhMuc: { $ref: '#/components/examples/ProblemCatalogNotFound' }
+            maBanGhi: { $ref: '#/components/examples/ProblemItemNotFound' }
+    Conflict:
+      description: Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            daCoBanMo: { $ref: '#/components/examples/ProblemOpenVersion' }
+            canDuyet: { $ref: '#/components/examples/ProblemApprovalRequired' }
+            trungKhoa: { $ref: '#/components/examples/ProblemIdempotencyReused' }
+            dangThamChieu: { $ref: '#/components/examples/ProblemReferenced' }
+    Gone:
+      description: Danh mục đã ngừng hiệu lực tại thời điểm tra (ERR-07-031).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            ngung: { $ref: '#/components/examples/ProblemRetired' }
+    PreconditionFailed:
+      description: ETag không khớp, đối tượng đã bị người khác sửa (ERR-07-018).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            etag: { $ref: '#/components/examples/ProblemPrecondition' }
+    PayloadTooLarge:
+      description: Thân yêu cầu hoặc tệp vượt kích thước tối đa (ERR-07-042).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            tepLon: { $ref: '#/components/examples/ProblemTooLarge' }
+    UnsupportedMediaType:
+      description: Kiểu nội dung không hỗ trợ (ERR-07-043).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            kieu: { $ref: '#/components/examples/ProblemMediaType' }
+    UnprocessableEntity:
+      description: Dữ liệu đúng cú pháp nhưng vi phạm quy tắc nghiệp vụ (ERR-07-009…012, 014, 017, 019, 021, 024, 034, 035, 036).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            thuocTinh: { $ref: '#/components/examples/ProblemAttrInvalid' }
+            maCha: { $ref: '#/components/examples/ProblemParentInvalid' }
+            ngayHieuLuc: { $ref: '#/components/examples/ProblemEffectiveDate' }
+            tepLoi: { $ref: '#/components/examples/ProblemImportHasErrors' }
+            truyVanVuot: { $ref: '#/components/examples/ProblemQueryLimit' }
+            nhayCam: { $ref: '#/components/examples/ProblemSensitive' }
+    TooManyRequests:
+      description: Vượt giới hạn tần suất (ERR-07-044), do APISIX hoặc `dh-data` trả.
+      headers:
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+        RateLimit-Limit: { $ref: '#/components/headers/RateLimitLimit' }
+        RateLimit-Remaining: { $ref: '#/components/headers/RateLimitRemaining' }
+        RateLimit-Reset: { $ref: '#/components/headers/RateLimitReset' }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            vuot: { $ref: '#/components/examples/ProblemRateLimited' }
+    BadGateway:
+      description: Nguồn quốc gia NDXP (qua PH-14) không phản hồi hoặc trả lỗi (ERR-07-028).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            ndxp: { $ref: '#/components/examples/ProblemNdxp' }
+    ServiceUnavailable:
+      description: Tài nguyên tạm chưa sẵn sàng (ảnh chụp đang sinh) hoặc phân hệ phụ thuộc không sẵn sàng (ERR-07-047).
+      headers:
+        Retry-After: { $ref: '#/components/headers/RetryAfter' }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          examples:
+            dangSinh: { $ref: '#/components/examples/ProblemUnavailable' }
+  # ================================================================== Lược đồ dữ liệu
+  schemas:
+    # ---------------------------------------------------------------- Kiểu chuẩn D00-01 §5
+    TId:
+      type: string
+      format: uuid
+      description: T-ID, UUID phiên bản 7.
+    TCode:
+      type: string
+      pattern: '^[A-Z0-9][A-Z0-9_.-]{0,63}$'
+      description: T-CODE, chữ hoa. Đầu vào chữ thường được chuẩn hóa thành chữ hoa trước khi kiểm tra.
+    TName:
+      type: string
+      minLength: 1
+      maxLength: 255
+      description: T-NAME, Unicode NFC.
+    TText:
+      type: string
+      maxLength: 4000
+    TDate:
+      type: string
+      format: date
+    TTs:
+      type: string
+      format: date-time
+    TenantCode:
+      type: string
+      pattern: '^(T\d{2}|PLATFORM|COMMON)$'
+    AttrCode:
+      type: string
+      pattern: '^([a-z][a-z0-9_]{0,62}|[A-Z0-9][A-Z0-9_.-]{0,63})$'
+      description: Mã thuộc tính, dạng snake_case hoặc T-CODE. Không trùng tên trường hệ thống.
+    ItemCodeValue:
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$'
+      description: Mã bản ghi; lưu chữ hoa (BR-07-002).
+    AuditFields:
+      type: object
+      properties:
+        createdAt: { $ref: '#/components/schemas/TTs' }
+        createdBy: { type: string, description: Định danh người tạo (T-ID) hoặc `client:{clientId}` với HTTT. }
+        updatedAt: { $ref: '#/components/schemas/TTs' }
+        updatedBy: { type: string }
+        version: { type: integer, minimum: 0, description: Khóa lạc quan; ETag = `W/"{version}"`. }
+    # ---------------------------------------------------------------- Liệt kê
+    SourceType:
+      type: string
+      enum: [LOCAL, NATIONAL, HYBRID]
+      description: LOCAL tỉnh tự quản; NATIONAL đồng bộ từ NDXP, chỉ đọc với người dùng; HYBRID mở rộng danh mục COMMON/NATIONAL bằng bản ghi địa phương.
+    Classification:
+      type: string
+      enum: [PUBLIC, INTERNAL, RESTRICTED]
+    CatalogStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, RETIRED]
+    VersionStatus:
+      type: string
+      enum: [DRAFT, IN_REVIEW, APPROVED, PUBLISHED, DISCARDED]
+    EffectiveState:
+      type: string
+      enum: [CURRENT, UPCOMING, EXPIRED]
+      description: Nhãn tính từ khoảng hiệu lực của phiên bản PUBLISHED so với hôm nay; không lưu.
+    VersionOrigin:
+      type: string
+      enum: [MANUAL, IMPORT, API, SYNC, MIGRATION]
+    ItemStatus:
+      type: string
+      enum: [ACTIVE, DEPRECATED]
+    ItemChangeType:
+      type: string
+      enum: [ADDED, CHANGED, DEPRECATED, REACTIVATED, DELETED]
+    AttributeDataType:
+      type: string
+      enum: [STRING, TEXT, INTEGER, DECIMAL, BOOLEAN, DATE, DATETIME, ENUM, CATALOG_REF, URI, EMAIL]
+      description: |
+        STRING ≤ 1000 ký tự (mặc định 255); TEXT ≤ 4000; INTEGER int64; DECIMAL số thập phân
+        lưu dạng chuỗi số trong JSON nếu vượt độ chính xác double; BOOLEAN; DATE `yyyy-MM-dd`;
+        DATETIME ISO 8601 có múi giờ; ENUM giá trị trong `enumValues`; CATALOG_REF mã bản ghi của
+        danh mục `refCatalogCode` (kiểm tra tại thời điểm hiệu lực); URI; EMAIL.
+    AttributeStatus:
+      type: string
+      enum: [ACTIVE, HIDDEN]
+    SuccessionEventType:
+      type: string
+      enum: [MERGE, SPLIT, RENAME, ABOLISH, ESTABLISH, RECODE]
+    ImportMode:
+      type: string
+      enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG]
+    ImportTemplate:
+      type: string
+      enum: [STANDARD, LEGACY_AITA]
+    FileFormat:
+      type: string
+      enum: [XLSX, CSV, JSON]
+    ImportJobStatus:
+      type: string
+      enum: [SCANNING, PARSING, VALIDATED, COMMITTING, COMMITTED, FAILED, CANCELLED, EXPIRED]
+      description: SCANNING (quét mã độc DD-12) → PARSING → VALIDATED → COMMITTING → COMMITTED; FAILED khi tệp nhiễm mã độc, sai định dạng hoặc lỗi hệ thống; EXPIRED sau 24 giờ không commit.
+    ImportRowAction:
+      type: string
+      enum: [INSERT, UPDATE, DEPRECATE, UNCHANGED]
+    ExportJobStatus:
+      type: string
+      enum: [PENDING, RUNNING, COMPLETED, FAILED, EXPIRED]
+    SyncRunStatus:
+      type: string
+      enum: [RUNNING, NO_CHANGE, APPLIED, PENDING_CONFIRMATION, REJECTED, FAILED]
+    SyncChangeType:
+      type: string
+      enum: [ADDED, CHANGED, REMOVED, ATTRIBUTE_ADDED, ATTRIBUTE_REMOVED, ATTRIBUTE_TYPE_CHANGED]
+    MappingRelation:
+      type: string
+      enum: [EQUAL, BROADER, NARROWER, RELATED]
+      description: Quan hệ ngữ nghĩa từ mã danh mục tới mã ngoài theo SKOS (exactMatch, broadMatch, narrowMatch, relatedMatch).
+    # ---------------------------------------------------------------- Lỗi RFC 9457
+    ProblemDetails:
+      type: object
+      description: Lỗi theo RFC 9457 mở rộng. `title`, `detail` bằng tiếng Việt (FR-00-080).
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: '`https://datahub.gov.vn/problems/rdm/{slug}` (tên miền giả định, chờ chốt).'
+        title: { type: string, description: Tóm tắt ngắn, cố định theo `code`. }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string, description: Mô tả cụ thể lần lỗi này và cách khắc phục. }
+        instance: { type: string, format: uri-reference, description: Đường dẫn yêu cầu gây lỗi. }
+        code:
+          type: string
+          pattern: '^ERR-(07|00)-\d{3}$'
+          description: Mã lỗi ERR-07-nnn (hoặc ERR-00-nnn của tầng dùng chung).
+        traceId: { type: string, pattern: '^[0-9a-f]{32}$', description: T-TRACE từ `traceparent`. }
+        timestamp: { $ref: '#/components/schemas/TTs' }
+        errors:
+          type: array
+          maxItems: 1000
+          description: Lỗi chi tiết theo dòng/trường. Với lô, `row` là chỉ số thao tác (từ 0); với tệp, `row` là số dòng trong tệp (từ 1).
+          items: { $ref: '#/components/schemas/ProblemError' }
+        errorsTruncated: { type: boolean, description: '`true` nếu có hơn 1000 lỗi; tải đầy đủ qua báo cáo lỗi.' }
+      additionalProperties: true
+    ProblemError:
+      type: object
+      required: [code, message]
+      properties:
+        row: { type: integer, minimum: 0 }
+        itemCode: { type: string }
+        field: { type: string, description: 'Trường hoặc đường dẫn, ví dụ `attrs.loai_hinh`, `parentCode`, cột `MA_CHA`.' }
+        code: { type: string, description: 'Mã lỗi con, ví dụ `REQUIRED`, `MAX_LENGTH`, `PATTERN`, `ENUM`, `TYPE`, `UNIQUE`, `REF_NOT_FOUND`, `PARENT_NOT_FOUND`, `CYCLE`, `DEPTH`, `LOCAL_RANGE`.' }
+        message: { type: string }
+        value: { description: Giá trị gây lỗi (đã cắt ≤ 200 ký tự). }
+    # ---------------------------------------------------------------- Phân trang
+    PageMeta:
+      type: object
+      required: [number, size, totalElements, totalPages]
+      properties:
+        number: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 200 }
+        totalElements: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+    CursorMeta:
+      type: object
+      required: [limit, hasMore]
+      properties:
+        limit: { type: integer, minimum: 1, maximum: 1000 }
+        next: { type: [string, 'null'], description: Con trỏ trang kế; `null` khi hết. }
+        hasMore: { type: boolean }
+        total: { type: integer, description: Tổng số bản ghi của phiên bản (chỉ trả ở trang đầu, có thể bỏ qua khi tốn kém). }
+    # ---------------------------------------------------------------- Danh mục
+    Catalog:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, tenantId, code, name, sourceType, classification, status, isHierarchical, requireApproval]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            tenantId: { $ref: '#/components/schemas/TenantCode' }
+            code: { $ref: '#/components/schemas/TCode' }
+            name: { $ref: '#/components/schemas/TName' }
+            description: { $ref: '#/components/schemas/TText' }
+            groupId: { type: [string, 'null'], format: uuid }
+            groupName: { type: [string, 'null'], readOnly: true }
+            ownerOrgId: { type: [string, 'null'], format: uuid, description: Tổ chức chủ quản (FK logic DD-02). }
+            ownerOrgName: { type: [string, 'null'], readOnly: true }
+            sourceType: { $ref: '#/components/schemas/SourceType' }
+            classification: { $ref: '#/components/schemas/Classification' }
+            status: { $ref: '#/components/schemas/CatalogStatus' }
+            isHierarchical: { type: boolean }
+            maxDepth: { type: [integer, 'null'], minimum: 1, maximum: 10 }
+            levelNames:
+              type: array
+              maxItems: 10
+              items: { type: string, maxLength: 64 }
+              description: 'Tên từng cấp theo độ sâu, ví dụ `["Tỉnh","Xã"]`.'
+            localCodePattern: { type: [string, 'null'], maxLength: 255, description: Biểu thức chính quy dải mã địa phương (HYBRID). }
+            extendsCatalogId: { type: [string, 'null'], format: uuid }
+            extendsCatalogCode: { type: [string, 'null'], readOnly: true }
+            requireApproval: { type: boolean }
+            currentVersionId: { type: [string, 'null'], format: uuid }
+            currentVersionNo: { type: [integer, 'null'], readOnly: true }
+            currentEffectiveFrom: { type: [string, 'null'], format: date, readOnly: true }
+            openVersion:
+              type: [object, 'null']
+              readOnly: true
+              description: Phiên bản đang mở (DRAFT/IN_REVIEW/APPROVED) nếu có.
+              properties:
+                versionNo: { type: integer }
+                status: { $ref: '#/components/schemas/VersionStatus' }
+                updatedAt: { $ref: '#/components/schemas/TTs' }
+            itemCount: { type: integer, readOnly: true, description: Số bản ghi ACTIVE của phiên bản hiện hành. }
+            hasSyncSource: { type: boolean, readOnly: true }
+            retiredAt: { type: [string, 'null'], format: date-time, readOnly: true }
+            retireReason: { type: [string, 'null'], readOnly: true }
+            legacyRef: { type: [string, 'null'], description: Định danh danh mục ở hệ cũ Aita (di trú). }
+    CatalogCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { $ref: '#/components/schemas/TCode' }
+        name: { $ref: '#/components/schemas/TName' }
+        description: { $ref: '#/components/schemas/TText' }
+        groupId: { type: string, format: uuid }
+        ownerOrgId: { type: string, format: uuid, description: Mặc định tổ chức của người tạo. }
+        sourceType: { type: string, enum: [LOCAL, HYBRID], default: LOCAL }
+        classification: { $ref: '#/components/schemas/Classification' }
+        isHierarchical: { type: boolean, default: false }
+        maxDepth: { type: integer, minimum: 1, maximum: 10 }
+        levelNames:
+          type: array
+          maxItems: 10
+          items: { type: string, maxLength: 64 }
+        localCodePattern: { type: string, maxLength: 255 }
+        extendsCatalogCode: { $ref: '#/components/schemas/TCode' }
+        requireApproval: { type: boolean, default: true }
+        attributes:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/AttributeDefCreateRequest' }
+        initialVersion: { $ref: '#/components/schemas/VersionCreateRequest' }
+      allOf:
+        - if:
+            properties: { sourceType: { const: HYBRID } }
+            required: [sourceType]
+          then:
+            required: [extendsCatalogCode, localCodePattern]
+        - if:
+            properties: { isHierarchical: { const: true } }
+            required: [isHierarchical]
+          then:
+            required: [maxDepth]
+    CatalogUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name: { $ref: '#/components/schemas/TName' }
+        description: { type: [string, 'null'], maxLength: 4000 }
+        groupId: { type: [string, 'null'], format: uuid }
+        ownerOrgId: { type: string, format: uuid }
+        sourceType: { type: string, enum: [LOCAL, HYBRID] }
+        classification: { $ref: '#/components/schemas/Classification' }
+        isHierarchical: { type: boolean }
+        maxDepth: { type: [integer, 'null'], minimum: 1, maximum: 10 }
+        levelNames:
+          type: [array, 'null']
+          maxItems: 10
+          items: { type: string, maxLength: 64 }
+        localCodePattern: { type: [string, 'null'], maxLength: 255 }
+        requireApproval: { type: boolean }
+    CatalogRetireRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 5, maxLength: 1000 }
+        effectiveTo: { $ref: '#/components/schemas/TDate' }
+    CatalogPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Catalog' }
+        page: { $ref: '#/components/schemas/PageMeta' }
+        facets:
+          type: object
+          description: Số đếm theo trạng thái, nguồn trên toàn tập kết quả trước phân trang (UI-07-01).
+          properties:
+            status: { type: object, additionalProperties: { type: integer } }
+            sourceType: { type: object, additionalProperties: { type: integer } }
+    # ---------------------------------------------------------------- Nhóm
+    CatalogGroup:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, code, name]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            tenantId: { $ref: '#/components/schemas/TenantCode' }
+            code: { $ref: '#/components/schemas/TCode' }
+            name: { $ref: '#/components/schemas/TName' }
+            parentId: { type: [string, 'null'], format: uuid }
+            sortOrder: { type: integer, default: 0 }
+            description: { type: [string, 'null'], maxLength: 4000 }
+            catalogCount: { type: integer, readOnly: true }
+            children:
+              type: array
+              items: { $ref: '#/components/schemas/CatalogGroup' }
+    CatalogGroupCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { $ref: '#/components/schemas/TCode' }
+        name: { $ref: '#/components/schemas/TName' }
+        parentId: { type: [string, 'null'], format: uuid }
+        sortOrder: { type: integer, default: 0 }
+        description: { type: [string, 'null'], maxLength: 4000 }
+    CatalogGroupUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name: { $ref: '#/components/schemas/TName' }
+        parentId: { type: [string, 'null'], format: uuid }
+        sortOrder: { type: integer }
+        description: { type: [string, 'null'], maxLength: 4000 }
+    # ---------------------------------------------------------------- Phiên bản
+    VersionStats:
+      type: object
+      description: Thống kê thay đổi so với phiên bản trước (cột `stats jsonb`).
+      properties:
+        added: { type: integer, minimum: 0 }
+        changed: { type: integer, minimum: 0 }
+        deprecated: { type: integer, minimum: 0 }
+        reactivated: { type: integer, minimum: 0 }
+        deleted: { type: integer, minimum: 0, description: Chỉ khác 0 với phiên bản SYNC/MIGRATION. }
+        attributeChanges: { type: integer, minimum: 0 }
+        breaking: { type: integer, minimum: 0, description: Số thay đổi phá vỡ. }
+        changeRatio: { type: number, minimum: 0, description: '(added+changed+deprecated)/số bản ghi phiên bản trước; so với ngưỡng `07.rdm.large-change-threshold-percent`.' }
+    VersionReview:
+      type: object
+      required: [action, actor, at]
+      properties:
+        action: { type: string, enum: [SUBMIT, APPROVE, REJECT, PUBLISH, DISCARD] }
+        actor: { type: string }
+        actorName: { type: string }
+        comment: { type: [string, 'null'] }
+        diffStats: { $ref: '#/components/schemas/VersionStats' }
+        at: { $ref: '#/components/schemas/TTs' }
+    CatalogVersion:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, catalogCode, versionNo, status, origin]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            catalogId: { $ref: '#/components/schemas/TId' }
+            catalogCode: { $ref: '#/components/schemas/TCode' }
+            versionNo: { type: integer, minimum: 1 }
+            status: { $ref: '#/components/schemas/VersionStatus' }
+            effectiveState: { oneOf: [{ $ref: '#/components/schemas/EffectiveState' }, { type: 'null' }] }
+            effectiveFrom: { type: [string, 'null'], format: date }
+            effectiveTo: { type: [string, 'null'], format: date, description: Không gồm (khoảng nửa mở). }
+            legalBasis: { type: [string, 'null'], maxLength: 1000, description: Căn cứ ban hành (số, ngày, cơ quan ban hành văn bản). }
+            changeNote: { type: [string, 'null'], maxLength: 4000 }
+            origin: { $ref: '#/components/schemas/VersionOrigin' }
+            baseVersionNo: { type: [integer, 'null'], description: Phiên bản gốc khi tạo bản nháp. }
+            itemCount: { type: integer, minimum: 0 }
+            stats: { $ref: '#/components/schemas/VersionStats' }
+            requiresApproval: { type: boolean, readOnly: true, description: Tính theo BR-07-012/026 tại thời điểm đọc. }
+            submittedBy: { type: [string, 'null'] }
+            submittedAt: { type: [string, 'null'], format: date-time }
+            approvedBy: { type: [string, 'null'] }
+            approvedAt: { type: [string, 'null'], format: date-time }
+            publishedBy: { type: [string, 'null'] }
+            publishedAt: { type: [string, 'null'], format: date-time }
+            snapshotAvailable: { type: boolean, readOnly: true, description: Ảnh chụp đã sinh xong; tải qua API-07-049 (không lộ `snapshotUri` nội bộ). }
+            schemaHash: { type: [string, 'null'], pattern: '^[0-9a-f]{64}$' }
+            copying: { type: boolean, readOnly: true, description: Bản nháp đang được sao chép nền (202 của API-07-012). }
+            lastValidation: { oneOf: [{ $ref: '#/components/schemas/ValidationReport' }, { type: 'null' }] }
+            reviews:
+              type: array
+              items: { $ref: '#/components/schemas/VersionReview' }
+    VersionCreateRequest:
+      type: object
+      properties:
+        baseVersionNo: { type: integer, minimum: 1, description: Mặc định phiên bản hiện hành. }
+        effectiveFrom: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string, maxLength: 1000 }
+        changeNote: { type: string, maxLength: 4000 }
+    VersionUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        effectiveFrom: { type: [string, 'null'], format: date }
+        legalBasis: { type: [string, 'null'], maxLength: 1000 }
+        changeNote: { type: [string, 'null'], maxLength: 4000 }
+        retroactiveReason: { type: [string, 'null'], maxLength: 1000, description: Bắt buộc khi `effectiveFrom` < hôm nay (chỉ origin SYNC/MIGRATION). }
+    VersionActionRequest:
+      type: object
+      properties:
+        comment: { type: string, maxLength: 2000 }
+    RejectRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 5, maxLength: 2000 }
+    PublishRequest:
+      type: object
+      properties:
+        effectiveFrom: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string, maxLength: 1000 }
+        comment: { type: string, maxLength: 2000 }
+        retroactiveReason: { type: string, maxLength: 1000 }
+    ValidationReport:
+      type: object
+      required: [valid, errorCount, warningCount]
+      properties:
+        valid: { type: boolean }
+        errorCount: { type: integer, minimum: 0 }
+        warningCount: { type: integer, minimum: 0 }
+        checkedAt: { $ref: '#/components/schemas/TTs' }
+        stats: { $ref: '#/components/schemas/VersionStats' }
+        breaking: { type: boolean }
+        requiresApproval: { type: boolean }
+        approvalReasons:
+          type: array
+          items: { type: string, enum: [CATALOG_POLICY, LARGE_CHANGE, BREAKING_CHANGE] }
+        issues:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            required: [severity, code, message]
+            properties:
+              severity: { type: string, enum: [ERROR, WARNING] }
+              itemCode: { type: [string, 'null'] }
+              field: { type: [string, 'null'] }
+              code: { type: string }
+              message: { type: string }
+        issuesTruncated: { type: boolean }
+    CatalogVersionPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogVersion' }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    # ---------------------------------------------------------------- Thuộc tính
+    EnumValue:
+      type: object
+      required: [value, label]
+      properties:
+        value: { type: string, maxLength: 64 }
+        label: { type: string, maxLength: 255 }
+        deprecated: { type: boolean, default: false }
+    AttributeDefBase:
+      type: object
+      properties:
+        label: { $ref: '#/components/schemas/TName' }
+        dataType: { $ref: '#/components/schemas/AttributeDataType' }
+        required: { type: boolean, default: false }
+        uniqueInVersion: { type: boolean, default: false }
+        maxLength: { type: [integer, 'null'], minimum: 1, maximum: 4000 }
+        pattern: { type: [string, 'null'], maxLength: 500, description: Biểu thức chính quy ECMA 262 (chỉ STRING). }
+        minValue: { type: [number, string, 'null'], description: Với INTEGER/DECIMAL là số; với DATE/DATETIME là chuỗi ngày. }
+        maxValue: { type: [number, string, 'null'] }
+        enumValues:
+          type: [array, 'null']
+          maxItems: 500
+          items: { $ref: '#/components/schemas/EnumValue' }
+        refCatalogCode: { oneOf: [{ $ref: '#/components/schemas/TCode' }, { type: 'null' }] }
+        defaultValue: { description: Giá trị mặc định đúng kiểu. }
+        sortOrder: { type: integer, minimum: 0 }
+        status: { $ref: '#/components/schemas/AttributeStatus' }
+        queryable: { type: boolean, default: false, description: Cho phép dùng trong DSL truy vấn (tạo chỉ mục biểu thức). }
+        searchable: { type: boolean, default: false, description: Tham gia tìm kiếm không dấu. }
+        description: { type: [string, 'null'], maxLength: 4000 }
+    AttributeDef:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - $ref: '#/components/schemas/AttributeDefBase'
+        - type: object
+          required: [id, code, label, dataType, required, status, sortOrder]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            versionId: { $ref: '#/components/schemas/TId' }
+            code: { $ref: '#/components/schemas/AttrCode' }
+            legacyFieldId: { type: [string, 'null'] }
+            inheritedFrom: { type: [string, 'null'], description: Mã danh mục gốc nếu thuộc tính kế thừa từ danh mục được mở rộng (HYBRID). }
+    AttributeDefCreateRequest:
+      allOf:
+        - $ref: '#/components/schemas/AttributeDefBase'
+        - type: object
+          required: [code, label, dataType]
+          properties:
+            code: { $ref: '#/components/schemas/AttrCode' }
+          allOf:
+            - if:
+                properties: { dataType: { const: ENUM } }
+                required: [dataType]
+              then:
+                required: [enumValues]
+            - if:
+                properties: { dataType: { const: CATALOG_REF } }
+                required: [dataType]
+              then:
+                required: [refCatalogCode]
+    AttributeDefUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/AttributeDefBase'
+        - type: object
+          minProperties: 1
+    # ---------------------------------------------------------------- Bản ghi
+    ItemAttrs:
+      type: object
+      description: Giá trị thuộc tính động, khóa là mã thuộc tính; kiểm tra bằng JSON Schema của phiên bản (ADR-050).
+      maxProperties: 100
+      additionalProperties:
+        type: [string, number, integer, boolean, 'null']
+    CatalogItem:
+      type: object
+      required: [code, name, status]
+      properties:
+        id: { $ref: '#/components/schemas/TId' }
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        code: { $ref: '#/components/schemas/ItemCodeValue' }
+        name: { $ref: '#/components/schemas/TName' }
+        parentCode: { type: [string, 'null'] }
+        depth: { type: integer, minimum: 1, maximum: 10, readOnly: true }
+        path:
+          type: array
+          readOnly: true
+          items: { type: string }
+          description: Mã tổ tiên từ gốc tới cha trực tiếp.
+        levelName: { type: [string, 'null'], readOnly: true }
+        sortOrder: { type: integer }
+        status: { $ref: '#/components/schemas/ItemStatus' }
+        replacedBy:
+          type: array
+          items: { type: string }
+        validFrom: { type: [string, 'null'], format: date }
+        validTo: { type: [string, 'null'], format: date }
+        attrs: { $ref: '#/components/schemas/ItemAttrs' }
+        isLocalExtension: { type: boolean, description: Bản ghi bổ sung của danh mục HYBRID. }
+        changeState: { type: string, enum: [ADDED, CHANGED, DEPRECATED, UNCHANGED], description: Chỉ có ở API quản trị trên bản nháp. }
+        legacyRef: { type: [string, 'null'] }
+        updatedAt: { $ref: '#/components/schemas/TTs' }
+        version: { type: integer }
+    ItemCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { $ref: '#/components/schemas/ItemCodeValue' }
+        name: { $ref: '#/components/schemas/TName' }
+        parentCode: { type: [string, 'null'], maxLength: 64 }
+        sortOrder: { type: integer, default: 0 }
+        validFrom: { type: [string, 'null'], format: date }
+        validTo: { type: [string, 'null'], format: date }
+        attrs: { $ref: '#/components/schemas/ItemAttrs' }
+    ItemUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name: { $ref: '#/components/schemas/TName' }
+        parentCode: { type: [string, 'null'], maxLength: 64 }
+        sortOrder: { type: integer }
+        validFrom: { type: [string, 'null'], format: date }
+        validTo: { type: [string, 'null'], format: date }
+        attrs: { $ref: '#/components/schemas/ItemAttrs' }
+    ItemDeprecateRequest:
+      type: object
+      properties:
+        replacedBy:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/ItemCodeValue' }
+        reason: { type: string, maxLength: 1000 }
+        validTo: { $ref: '#/components/schemas/TDate' }
+        cascade: { type: boolean, default: false }
+        reactivate: { type: boolean, default: false, description: '`true` để khôi phục ACTIVE bản ghi đã ngừng dùng trong cùng bản nháp.' }
+    CatalogItemPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CatalogItem' }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    CatalogItemCursorPage:
+      type: object
+      required: [catalogCode, versionNo, items, cursor]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        effectiveFrom: { $ref: '#/components/schemas/TDate' }
+        effectiveTo: { type: [string, 'null'], format: date }
+        at: { $ref: '#/components/schemas/TDate' }
+        items:
+          type: array
+          maxItems: 1000
+          items: { $ref: '#/components/schemas/CatalogItem' }
+        cursor: { $ref: '#/components/schemas/CursorMeta' }
+    # ---------------------------------------------------------------- Lô
+    BatchOp:
+      type: object
+      required: [op, code]
+      properties:
+        op: { type: string, enum: [upsert, deprecate, delete] }
+        code: { $ref: '#/components/schemas/ItemCodeValue' }
+        name: { $ref: '#/components/schemas/TName' }
+        parentCode: { type: [string, 'null'], maxLength: 64 }
+        sortOrder: { type: integer }
+        validFrom: { type: [string, 'null'], format: date }
+        validTo: { type: [string, 'null'], format: date }
+        attrs: { $ref: '#/components/schemas/ItemAttrs' }
+        replacedBy:
+          type: array
+          maxItems: 50
+          items: { $ref: '#/components/schemas/ItemCodeValue' }
+        reason: { type: string, maxLength: 1000 }
+      allOf:
+        - if:
+            properties: { op: { const: upsert } }
+          then:
+            required: [name]
+    BatchItemsRequest:
+      type: object
+      required: [ops]
+      properties:
+        ops:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items: { $ref: '#/components/schemas/BatchOp' }
+        atomic: { type: boolean, default: true }
+        dryRun: { type: boolean, default: false, description: Chỉ kiểm tra, không ghi. }
+        createDraftIfMissing: { type: boolean, default: false }
+        attrsMerge: { type: string, enum: [MERGE, REPLACE], default: MERGE, description: '`upsert` gộp `attrs` theo khóa hay thay toàn bộ.' }
+    BatchResult:
+      type: object
+      required: [total, succeeded, failed, results]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        dryRun: { type: boolean }
+        total: { type: integer }
+        succeeded: { type: integer }
+        failed: { type: integer }
+        summary:
+          type: object
+          properties:
+            inserted: { type: integer }
+            updated: { type: integer }
+            deprecated: { type: integer }
+            deleted: { type: integer }
+            unchanged: { type: integer }
+        results:
+          type: array
+          maxItems: 5000
+          items:
+            type: object
+            required: [index, code, status]
+            properties:
+              index: { type: integer, minimum: 0 }
+              code: { type: string }
+              status: { type: string, enum: [INSERTED, UPDATED, DEPRECATED, DELETED, UNCHANGED, FAILED] }
+              errors:
+                type: array
+                items: { $ref: '#/components/schemas/ProblemError' }

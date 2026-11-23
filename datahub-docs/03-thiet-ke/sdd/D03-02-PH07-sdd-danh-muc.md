@@ -1093,3 +1093,658 @@ stateDiagram-v2
 ```
 
 Sơ đồ cho thấy chỉ `PENDING_CONFIRMATION` là trạng thái chờ người. Lần chạy kẹt ở `RUNNING` do pod chết được phát hiện bởi tác vụ dọn dẹp: lần chạy `RUNNING` quá 2 giờ mà khóa tư vấn không còn ai giữ được chuyển sang `FAILED` với lý do `ABANDONED`.
+
+### 4.5. Phát hành phiên bản
+
+#### 4.5.1. Giao dịch phát hành
+
+`PublishService.publish` là nơi duy nhất chuyển phiên bản sang `PUBLISHED`. Mọi bước dưới đây chạy trong **một** giao dịch để bảo đảm hoặc phiên bản được phát hành đầy đủ (con trỏ, khoảng hiệu lực, bảng chiếu ĐVHC, sự kiện) hoặc không có gì thay đổi.
+
+```java
+@Service
+class PublishService {
+
+  @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 30)
+  public VersionEntity publish(String catalogCode, int versionNo, PublishRequest req, Actor actor) {
+    // 1. Khóa hàng danh mục: tuần tự hóa với tạo nháp, phát hành khác, EffectiveScheduler
+    CatalogEntity cat = catalogRepo.findByCodeForUpdate(catalogCode)            // SELECT … FOR UPDATE
+        .orElseThrow(() -> new CatalogNotFoundException(catalogCode));
+    policy.assertWritable(cat, actor);                                          // ERR-07-003
+    VersionEntity v = versionRepo.findForUpdate(cat.getId(), versionNo)
+        .orElseThrow(() -> new VersionNotFoundException(catalogCode, versionNo));
+
+    // 2. Điều kiện ngày hiệu lực (BR-07-007, BR-07-027)
+    LocalDate today = clock.todayVn();
+    VersionEntity prev = versionRepo.findLatestPublished(cat.getId()).orElse(null);
+    dateRules.check(req, prev, today, v.getOrigin());                           // ERR-07-017
+
+    // 3. Kiểm tra toàn phiên bản + ngưỡng
+    ValidationReport rep = validator.validateVersion(v.getId());
+    if (!rep.valid()) throw new SchemaValidationException(rep.firstErrors(100)); // ERR-07-009
+    DiffResult diff = diffEngine.diffStats(prev == null ? null : prev.getId(), v.getId());
+
+    // 4. Máy trạng thái (bốn mắt, PUBLISH hoặc PUBLISH_DIRECT)
+    VersionEvent ev = v.getStatus() == VersionStatus.DRAFT ? VersionEvent.PUBLISH_DIRECT : VersionEvent.PUBLISH;
+    v.setStatus(stateMachine.fire(v.getStatus(), ev, new VersionCtx(cat, actor, diff), v));
+
+    // 5. Đóng phiên bản trước (cập nhật duy nhất được phép trên phiên bản đã phát hành)
+    if (prev != null) versionJdbc.closeEffective(prev.getId(), req.effectiveFrom());
+
+    // 6. Ghi thông tin phát hành
+    v.setEffectiveFrom(req.effectiveFrom()); v.setEffectiveTo(null);
+    v.setLegalBasis(req.legalBasis()); v.setChangeNote(req.changeNote());
+    v.setPublishedBy(actor.id()); v.setPublishedAt(clock.now());
+    v.setStats(diff.stats()); v.setItemCount(rep.itemCount());
+    v.setSchemaHash(schemaCompiler.hashOf(v.getId()));
+
+    // 7. Con trỏ hiệu lực: chỉ chuyển ngay nếu đã tới ngày; nếu chưa, EffectiveScheduler sẽ chuyển
+    if (!req.effectiveFrom().isAfter(today)) cat.setCurrentVersionId(v.getId());
+    if (cat.getStatus() == CatalogStatus.DRAFT) cat.setStatus(CatalogStatus.ACTIVE);
+
+    // 8. Bảng chiếu ĐVHC (ADR-055)
+    boolean reorganized = false;
+    if (AdminUnits.CATALOG_CODE.equals(cat.getCode()) && cat.isCommon())
+      reorganized = adminUnitProjector.refresh(v, prev);
+
+    // 9. Lịch sử duyệt + outbox (cùng giao dịch)
+    reviewRepo.save(VersionReviewEntity.of(v, ReviewAction.PUBLISH, actor, req.changeNote(), diff.stats()));
+    outbox.write(RdmEvents.published(cat, v, diff.hasBreaking()));             // EVT-07-05
+    if (reorganized) outbox.write(RdmEvents.adminUnitReorganized(cat, v));      // EVT-07-10
+
+    // 10. Sự kiện nội bộ Modulith: sinh ảnh chụp sau commit
+    events.publishEvent(new VersionPublishedInternal(cat.getTenantId(), cat.getId(), v.getId()));
+    return v;
+  }
+}
+```
+
+Câu lệnh đóng phiên bản trước và ràng buộc loại trừ:
+
+```sql
+UPDATE ph07_rdm.catalog_version
+   SET effective_to = :newFrom, updated_at = now(), updated_by = :actor, version = version + 1
+ WHERE id = :prevId AND status = 'PUBLISHED'
+   AND (effective_to IS NULL OR effective_to > :newFrom);
+```
+
+Trigger bất biến cho phép riêng cập nhật này nhờ kiểm tra chỉ các cột `effective_to`, `updated_at`, `updated_by`, `version` thay đổi. Ràng buộc `EXCLUDE USING gist` trên `daterange(effective_from, effective_to, '[)')` (D03-03-PH07) là lưới an toàn: nếu có lỗi logic làm chồng lấn khoảng, giao dịch thất bại với `23P01` và được ánh xạ sang ERR-07-017.
+
+Quy tắc ngày (`dateRules`):
+
+| Điều kiện | Kết quả |
+|---|---|
+| `prev != null` và `effectiveFrom ≤ prev.effectiveFrom` | ERR-07-017 (BR-07-007) |
+| `effectiveFrom < today` và `origin ∉ {SYNC, MIGRATION}` | ERR-07-017 (BR-07-027) |
+| `effectiveFrom < today` và `origin ∈ {SYNC, MIGRATION}` và thiếu `retroactiveReason` | ERR-07-017 |
+| `prev` là phiên bản sắp hiệu lực (`prev.effectiveFrom > today`) | Cho phép; `prev.effective_to` đặt bằng `effectiveFrom` mới, nghĩa là phiên bản trước có thể chỉ hiệu lực một khoảng ngắn |
+| `effectiveFrom > today + 365 ngày` | ERR-07-017 (giới hạn hợp lý, tham số `07.rdm.max-future-effective-days`) |
+
+Hồi tố với phiên bản trước: nếu `SYNC` hồi tố về trước `prev.effectiveFrom`, thao tác bị từ chối (không thể chèn phiên bản vào giữa lịch sử); lần đồng bộ chuyển `FAILED` với lý do `RETROACTIVE_CONFLICT` để người quản trị xử lý.
+
+#### 4.5.2. Sinh ảnh chụp sau commit
+
+Sinh ảnh chụp không nằm trong giao dịch phát hành vì nó ghi ra hệ thống ngoài (Garage) và mất vài giây với danh mục lớn. Thiết kế dùng **Spring Modulith event publication registry** (bảng `event_publication` của Modulith, đặt trong schema `ph07_rdm`) thay cho `@TransactionalEventListener(AFTER_COMMIT)` thuần, vì registry lưu sự kiện bền vững cùng giao dịch phát hành và tự phát lại khi pod khởi động lại; `@TransactionalEventListener` thuần sẽ mất việc nếu pod chết ngay sau commit.
+
+```java
+@Component
+class SnapshotOnPublish {
+  @ApplicationModuleListener                         // = @Async + @Transactional(REQUIRES_NEW) + AFTER_COMMIT, có registry
+  void on(VersionPublishedInternal e) {
+    TenantContext.runAs(e.tenantId(), () -> snapshotWriter.write(e.versionId()));
+  }
+}
+```
+
+`SnapshotWriter.write` thực hiện:
+
+1. Đọc bản ghi phiên bản bằng con trỏ máy chủ (fetch 5.000), sắp theo `code`.
+2. Ghi đồng thời hai luồng nén: JSON (một đối tượng đầu `{"catalog":…,"version":…,"schema":…}` theo sau là mảng `items`) và CSV RFC 4180 có BOM, qua `GZIPOutputStream`, tải lên Garage bằng S3 multipart upload (phần 8 MB) từ AWS SDK v2 `S3AsyncClient` với `checksumAlgorithm = SHA256`.
+3. Khóa đối tượng: `snapshots/{catalogCode}/{versionNo}.json.gz`, `snapshots/{catalogCode}/{versionNo}.csv.gz` trong bucket `dh-{tenant}-rdm` (tenant viết thường; COMMON dùng `dh-common-rdm`) tạo qua hàm đặt tên có tenant của thư viện chung (D03-10 §6.4).
+4. Cập nhật `catalog_version.snapshot_uri` và `stats.snapshotSha256` bằng câu lệnh riêng (cột được trigger bất biến cho phép như `effective_to`).
+5. Cập nhật tệp chỉ mục `snapshots/index.json` (danh sách danh mục, phiên bản hiện hành, phiên bản sắp hiệu lực, SHA-256) bằng ghi có điều kiện `If-Match` ETag để tránh hai pod ghi đè lẫn nhau; xung đột thì đọc lại và thử tối đa 5 lần.
+6. Với danh mục là gốc của danh mục HYBRID ở các tenant, phát sự kiện nội bộ để sinh lại ảnh chụp hợp nhất của từng HYBRID (ADR-052). Danh sách HYBRID lấy bằng truy vấn của vai trò `rdm_platform` có kiểm toán vì phải nhìn liên tenant (Câu hỏi mở Q07-35).
+
+Sự kiện EVT-07-05 đã được ghi vào outbox trong giao dịch phát hành với `snapshotUri` là URI **dự kiến** (khóa đối tượng xác định trước). Bên tiêu thụ (`dh-runtime`) nếu tải chưa thấy đối tượng thì thử lại với lùi theo hàm mũ tới 10 phút; xem §5.9. Lý do không chờ ảnh chụp xong mới phát sự kiện: NFR-07-007 yêu cầu sự kiện lên Kafka ≤ 5 giây sau commit, trong khi ảnh chụp 200.000 dòng có thể mất 10–20 giây.
+
+#### 4.5.3. Xử lý lỗi sinh ảnh chụp
+
+Nếu `SnapshotWriter` thất bại (Garage không phản hồi, lỗi mạng), listener ném exception, Modulith giữ bản ghi `event_publication` ở trạng thái chưa hoàn thành. `SnapshotRetryJob` (ShedLock, mỗi 5 phút) gọi `IncompleteEventPublications.resubmitIncompletePublicationsOlderThan(Duration.ofMinutes(2))`. Sau 12 lần thất bại (khoảng 1 giờ), cảnh báo `RdmSnapshotMissing` được kích hoạt (§10.4). Trong thời gian chưa có ảnh chụp, API khai thác vẫn hoạt động bình thường từ CSDL và bộ đệm; chỉ `dh-runtime` dùng tiếp phiên bản cũ, và API-07-049 trả `503` kèm `Retry-After`. Phát hành không bị hoàn tác vì ảnh chụp là dữ liệu dẫn xuất.
+
+### 4.6. Lịch tự chuyển hiệu lực
+
+Phiên bản có thể phát hành trước ngày hiệu lực. `EffectiveScheduler` chạy mỗi ngày lúc 00:00:30 giờ Việt Nam và mỗi khi pod khởi động (bắt kịp khi lịch bị lỡ), dùng ShedLock tên `rdm-effective-switch` để chỉ một pod chạy.
+
+```java
+@Scheduled(cron = "${datahub.rdm.effective.cron:30 0 0 * * *}", zone = "Asia/Ho_Chi_Minh")
+@SchedulerLock(name = "rdm-effective-switch", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
+void switchEffectiveVersions() {
+  LocalDate today = clock.todayVn();
+  for (String tenant : tenantDirectory.activeTenantsIncludingCommon()) {
+    TenantContext.runAs(tenant, () -> {
+      List<UUID> due = versionJdbc.findDueSwitches(today);   // phiên bản PUBLISHED có effective_from ≤ today
+      for (UUID catalogId : due) switchOne(catalogId, today); // giao dịch riêng mỗi danh mục
+    });
+  }
+}
+```
+
+```sql
+-- findDueSwitches: danh mục mà phiên bản lẽ ra hiệu lực hôm nay khác con trỏ hiện tại
+SELECT c.id
+  FROM ph07_rdm.catalog c
+  JOIN ph07_rdm.catalog_version v
+    ON v.catalog_id = c.id AND v.status = 'PUBLISHED'
+   AND v.effective_from <= :today AND (v.effective_to IS NULL OR v.effective_to > :today)
+ WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
+   AND c.current_version_id IS DISTINCT FROM v.id;
+```
+
+`switchOne` khóa hàng danh mục `FOR UPDATE`, tính lại phiên bản hiệu lực, cập nhật `current_version_id`, ghi outbox một sự kiện EVT-07-05 thứ hai với thuộc tính `reason = "EFFECTIVE"` để bộ đệm và `dh-runtime` làm mới con trỏ. Danh mục ĐVHC không cần làm mới `admin_unit` lúc này vì bảng chiếu đã ghi khoảng hiệu lực tương lai khi phát hành.
+
+Lưu ý: tra cứu theo thời điểm không phụ thuộc vào `current_version_id`; `PointerResolver` luôn giải theo khoảng hiệu lực (§4.9.3). Con trỏ chỉ là tối ưu cho trường hợp phổ biến "hôm nay" và cho giao diện. Vì vậy dù lịch chạy trễ vài phút, tra cứu vẫn đúng: con trỏ trong bộ đệm có TTL 60 giây và khóa con trỏ chứa ngày, nên ngày mới tự sinh khóa mới.
+
+### 4.7. Nhập tệp hai pha
+
+#### 4.7.1. Tổng quan
+
+Nhập tệp thực hiện theo ADR-056 với hai pha. Pha 1 (tải lên, quét, phân tích, kiểm tra) chạy nền và kết thúc ở `VALIDATED` với dữ liệu xem trước nằm trong `import_row`. Pha 2 (commit) chạy khi người dùng xác nhận. Mục này mô tả từng bước.
+
+#### 4.7.2. Tải lên (API-07-033)
+
+Controller nhận `multipart/form-data` gồm phần `file` và phần `options` (JSON `CreateImportJobRequest`). Tệp không được đọc vào bộ nhớ: Spring cấu hình `spring.servlet.multipart.file-size-threshold=1MB` để ghi tạm ra đĩa, rồi `ImportJobService` truyền luồng lên Garage đồng thời tính SHA-256 bằng `DigestInputStream`.
+
+1. Kiểm tra quyền `PERM-07-update` trên danh mục (hoặc `PERM-07-create` với `CREATE_CATALOG`) và `CatalogPolicy.assertWritable`.
+2. Kiểm tra kích thước ≤ `07.rdm.import-max-bytes` (mặc định 52.428.800); vượt trả ERR-07-019 ngay (APISIX cũng chặn ở 55 MB).
+3. Đọc 8 byte đầu để nhận chữ ký: `50 4B 03 04` (ZIP, kỳ vọng xlsx) hoặc văn bản (CSV). Phần mở rộng tên tệp chỉ dùng để gợi ý.
+4. Xử lý `Idempotency-Key` (§4.8.3): nếu khóa đã dùng với cùng SHA-256 và cùng `options` thì trả tác vụ cũ; khác nội dung trả ERR-07-022.
+5. Tải lên `s3://dh-{tenant}-rdm/imports/{jobId}/{sha256}.{ext}`, tạo `file_object` (`scan_status = PENDING`, `data_class_id` theo `classification` của danh mục, `expires_at = now + 7 ngày`), tạo `import_job` trạng thái `SCANNING`.
+6. Trả `202 Accepted` với `Location: /api/rdm/v1/import-jobs/{jobId}`.
+
+#### 4.7.3. Hàng đợi tác vụ trong CSDL
+
+Tác vụ nền dùng chính bảng `import_job` làm hàng đợi; không thêm Kafka hay hệ thống hàng đợi khác cho việc này vì cần ràng buộc giao dịch với dữ liệu nghiệp vụ. `ImportJobWorker` ở mỗi pod thăm dò mỗi 2 giây (và được đánh thức ngay qua `LISTEN/NOTIFY` kênh `rdm_jobs` khi có tác vụ mới):
+
+```sql
+SELECT id, tenant_id FROM ph07_rdm.import_job
+ WHERE status IN ('SCANNING','PARSING','QUEUED','COMMITTING')
+   AND (lease_until IS NULL OR lease_until < now())
+ ORDER BY created_at
+ LIMIT :slots
+ FOR UPDATE SKIP LOCKED;
+-- sau đó: UPDATE … SET lease_owner = :podId, lease_until = now() + interval '2 minutes'
+```
+
+Truy vấn này chạy bằng vai trò `rdm_worker` có quyền đọc liên tenant chỉ trên bảng `import_job` (chính sách RLS riêng) để lấy việc; ngay sau khi lấy, worker chuyển sang `TenantContext.runAs(job.tenantId)` cho mọi xử lý tiếp theo. Worker gia hạn `lease_until` mỗi 30 giây; nếu pod chết, tác vụ được pod khác nhận sau khi hết hạn và tiếp tục từ trạng thái lưu (bước phân tích làm lại từ đầu sau khi xóa `import_row` của tác vụ, vì phân tích là idempotent). Hai cột `lease_owner`, `lease_until` là bổ sung cho EN-07-08 (báo cáo cho luồng CSDL). Số tác vụ đồng thời mỗi pod giới hạn bởi `datahub.rdm.jobs.max-concurrent-import` (mặc định 2) và `max-concurrent-export` (mặc định 2).
+
+#### 4.7.4. Quét mã độc
+
+`MalwareScanner` mở kết nối TCP tới `clamd` (dịch vụ trong cụm), gửi lệnh `zINSTREAM` và truyền tệp từ Garage theo khối 64 KB. Phản hồi `stream: OK` thì `scan_status = CLEAN`; `FOUND` thì `INFECTED`, tác vụ `FAILED`, đối tượng bị xóa, sự kiện an ninh gửi PH-13. Lỗi kết nối được thử lại với lùi theo hàm mũ (1, 2, 4, … tối đa 60 giây) tới 1 giờ, sau đó `FAILED` với `SCAN_TIMEOUT`. Kích thước tối đa gửi `clamd` phải cấu hình `StreamMaxLength` ≥ 55 MB ở phía `clamd`.
+
+#### 4.7.5. Phát hiện mã hóa và định dạng
+
+Với CSV, `EncodingDetector` đọc tối đa 64 KB đầu:
+
+```java
+Charset detect(byte[] head) {
+  if (startsWith(head, 0xEF, 0xBB, 0xBF)) return UTF_8;                 // UTF-8 BOM
+  if (startsWith(head, 0xFF, 0xFE)) return UTF_16LE;                    // UTF-16 LE BOM (Aita)
+  if (startsWith(head, 0xFE, 0xFF)) return UTF_16BE;
+  if (isStrictUtf8(head)) return UTF_8;                                  // CharsetDecoder REPORT
+  int zeroEven = countZeroAt(head, 0), zeroOdd = countZeroAt(head, 1);
+  if (zeroOdd > head.length / 4 && zeroEven == 0) return UTF_16LE;       // ASCII xen 0x00 ở byte lẻ
+  if (zeroEven > head.length / 4 && zeroOdd == 0) return UTF_16BE;
+  String guess = UniversalDetector.detectCharset(new ByteArrayInputStream(head)); // juniversalchardet
+  if ("WINDOWS-1252".equals(guess) || "WINDOWS-1258".equals(guess))
+    throw new ImportFileException("ENCODING_UNSUPPORTED", "Tệp không phải UTF-8/UTF-16. Hãy lưu lại dạng CSV UTF-8.");
+  throw new ImportFileException("ENCODING_UNKNOWN", "Không nhận được mã hóa tệp.");
+}
+```
+
+Mã hóa nhận được ghi vào `import_job.encoding`. Dấu phân cách CSV mặc định `,`; nếu dòng đầu không có `,` nhưng có `;` hoặc tab thì tự chọn (tệp Excel tiếng Việt xuất CSV hay dùng `;`). Mọi chuỗi đọc được chuẩn hóa Unicode NFC (`java.text.Normalizer`) để tiếng Việt tổ hợp và dựng sẵn so sánh được.
+
+Với xlsx, trước khi mở bằng FastExcel, `ZipBombGuard` duyệt mục lục ZIP bằng `java.util.zip.ZipFile` (chỉ đọc central directory): từ chối khi số mục > 10.000, tổng kích thước giải nén khai báo > 500 MB, tỉ lệ nén một mục > 100, có `xl/vbaProject.bin`, có `xl/externalLinks/`. Trong lúc đọc, luồng giải nén được bọc `BoundedInputStream` để chặn trường hợp kích thước khai báo sai. Phân tích XML dùng bộ phân tích có tắt DTD và thực thể ngoài (FastExcel dùng StAX với `IS_SUPPORTING_EXTERNAL_ENTITIES=false`; kiểm thử bảo đảm điều này).
+
+#### 4.7.6. Phân tích theo khuôn
+
+`ParserFactory` chọn trình phân tích theo (định dạng, khuôn). Mọi trình phân tích phát ra dãy `RawRow(rowNo, Map<String,String> cells)` dạng `Iterator` lười, không giữ toàn tệp trong bộ nhớ.
+
+| Khuôn | Định dạng | Nhận diện tiêu đề | Dữ liệu từ dòng |
+|---|---|---|---|
+| `STANDARD` | xlsx | Sheet `DuLieu`; dòng 2 (ẩn) là mã cột: `MA`, `TEN`, `MA_CHA`, `THU_TU`, `TRANG_THAI`, `MA_THAY_THE`, `HIEU_LUC_TU`, `HIEU_LUC_DEN`, rồi mã thuộc tính | 3 |
+| `STANDARD` | csv | Dòng 1 là mã cột như trên | 2 |
+| `LEGACY_AITA` | xlsx | Ô A2 là tên danh mục; dòng 4 là **tên** thuộc tính (nhãn tiếng Việt) | 5 |
+| `LEGACY_AITA` | csv (UTF-16) | Dòng 1 tên danh mục; dòng tiêu đề nhận bằng heuristic: dòng đầu tiên có ≥ 2 ô không rỗng sau dòng tên | dòng sau tiêu đề |
+
+Với khuôn Aita, nhãn cột được ánh xạ sang mã thuộc tính bằng `column_mapping` người dùng xác nhận ở bước 2 của UI-07-06. Hệ thống đề xuất sẵn ánh xạ: so khớp nhãn đã chuẩn hóa (bỏ dấu, thường hóa, bỏ khoảng trắng thừa) với `attribute_def.label`; nhãn "Mã", "Mã danh mục", "Code" ánh xạ `MA`; "Tên", "Tên gọi" ánh xạ `TEN`; "Mã cha" ánh xạ `MA_CHA`. Với chế độ `CREATE_CATALOG`, mỗi cột chưa ánh xạ trở thành một thuộc tính `STRING` mới với mã sinh từ nhãn (bỏ dấu, snake_case, cắt 63 ký tự, chống trùng bằng hậu tố số), và tên danh mục lấy từ ô A2.
+
+Giá trị ngày nhận các dạng `yyyy-MM-dd`, `dd/MM/yyyy` và số ngày kiểu Excel (FastExcel trả `BigDecimal` cho ô kiểu ngày; chuyển bằng `DateUtil` với hệ 1900). Ô rỗng được coi là `null`. Cột `TRANG_THAI` nhận `ACTIVE`/`DEPRECATED` hoặc tiếng Việt "Đang dùng"/"Ngừng dùng". Cột `MA_THAY_THE` nhận danh sách phân tách bằng `;`.
+
+#### 4.7.7. Kiểm tra và ghi `import_row`
+
+Phân tích và kiểm tra chạy cùng một lượt duyệt, ghi theo lô 1.000 dòng:
+
+```java
+void parseAndValidate(ImportJob job) {
+  Draft draft = draftLoader.load(job.versionId());                 // lược đồ đã biên dịch, mã hiện có (Set), version
+  job.setDraftVersionAtParse(draft.optimisticVersion());            // dùng cho BR-07-016
+  try (RowSource src = parserFactory.open(job)) {
+    List<ImportRowRecord> batch = new ArrayList<>(1000);
+    Map<String, Integer> seen = new HashMap<>();                    // mã → dòng đầu tiên
+    HierarchyAccumulator hier = new HierarchyAccumulator(draft);     // gom code/parent cho tầng 5
+    int total = 0;
+    while (src.hasNext()) {
+      if (cancelFlag.isCancelled(job.id())) throw new JobCancelledException();
+      RawRow raw = src.next();
+      if (++total > limits.maxRows()) throw new ImportFileException("TOO_MANY_ROWS", "Vượt " + limits.maxRows() + " dòng");
+      ItemCandidate c = mapper.toCandidate(raw, job.columnMapping());
+      List<FieldError> errs = new ArrayList<>(validator.validateRow(c, draft));   // tầng 1–3
+      Integer first = seen.putIfAbsent(c.code(), raw.rowNo());
+      if (first != null) errs.add(FieldError.duplicate(c.code(), first));
+      RowAction action = actionResolver.resolve(job.mode(), c, draft);           // INSERT/UPDATE/UNCHANGED/…
+      if (job.mode() == ImportMode.APPEND && draft.hasCode(c.code())) errs.add(FieldError.existsInAppend(c.code()));
+      hier.add(c, raw.rowNo());
+      batch.add(new ImportRowRecord(job.id(), raw.rowNo(), c.code(), c.toJson(), action, errs.isEmpty(), errs));
+      if (batch.size() == 1000) { importRowDao.insertBatch(batch); batch.clear(); progress.update(job, total); }
+    }
+    if (!batch.isEmpty()) importRowDao.insertBatch(batch);
+    // Tầng 4–5 theo tập, cập nhật lỗi bằng UPDATE … FROM (VALUES …)
+    importRowDao.appendErrors(job.id(), hier.check());
+    if (job.mode() == ImportMode.REPLACE) importRowDao.insertDeprecations(job.id(), draft);  // §4.7.8
+    progress.finish(job, importRowDao.counts(job.id()));
+  }
+}
+```
+
+Tiến độ (`progress`) ghi `total_rows` hiện tại vào `import_job` mỗi lô (giao dịch riêng, ngắn) để API-07-034 hiển thị phần trăm; tổng dòng dự kiến lấy từ kích thước sheet (thẻ `dimension` của xlsx) hoặc ước lượng theo kích thước tệp với CSV. Mỗi lô 1.000 dòng là một giao dịch riêng để tránh giao dịch dài; nếu pod chết giữa chừng, tác vụ được làm lại từ đầu như mô tả ở §4.7.3.
+
+Ước tính hiệu năng: FastExcel đọc khoảng 100.000 dòng × 20 cột trong 5–8 giây; kiểm tra JSON Schema khoảng 20–40 µs mỗi dòng; ghi `import_row` 100 lô × khoảng 150 ms. Tổng pha 1 cho 100.000 dòng khoảng 30–45 giây, trong ngân sách 2 phút của NFR-07-005.
+
+#### 4.7.8. Xử lý theo chế độ
+
+Bảng sau mô tả cách `actionResolver` gán `import_row.action` và cách commit xử lý từng chế độ.
+
+| Chế độ | Mã có trong tệp, có trong nháp | Mã có trong tệp, không có trong nháp | Mã có trong nháp, không có trong tệp |
+|---|---|---|---|
+| `UPSERT` | `UPDATE` nếu khác, `UNCHANGED` nếu giống | `INSERT` | Giữ nguyên |
+| `REPLACE` | như UPSERT | `INSERT` | Đã từng phát hành: thêm dòng `DEPRECATE`; mới trong nháp: thêm dòng `DELETE` (giá trị `action` bổ sung cho EN-07-09) |
+| `APPEND` | Lỗi `ALREADY_EXISTS` | `INSERT` | Giữ nguyên |
+| `CREATE_CATALOG` | (không có nháp) | `INSERT` | (không áp dụng) |
+
+"Đã từng phát hành" được xác định bằng việc mã có trong bất kỳ phiên bản `PUBLISHED` nào của danh mục (truy vấn `EXISTS` trên chỉ mục `(catalog_id, code)`).
+
+#### 4.7.9. Commit (pha 2)
+
+`ImportCommitter.commit` chạy trong một giao dịch, giới hạn 120 giây:
+
+1. Khóa `import_job` `FOR UPDATE`, kiểm tra trạng thái `VALIDATED`, chưa hết hạn (ERR-07-020).
+2. Nếu `error_rows > 0` và không `skipInvalidRows` thì ERR-07-021.
+3. Lấy khóa tư vấn bản nháp (§4.2.3), khóa `catalog_version` `FOR UPDATE`, so `version` với giá trị lúc phân tích; khác thì ERR-07-020 với mã con `DRAFT_CHANGED` (BR-07-016).
+4. Ghi bằng các câu lệnh tập hợp từ `import_row` (dữ liệu không đi qua ứng dụng):
+
+```sql
+-- INSERT và UPDATE
+INSERT INTO ph07_rdm.catalog_item
+  (id, tenant_id, version_id, catalog_id, code, name, parent_code, sort_order, status,
+   replaced_by, valid_from, valid_to, attrs, is_local_extension,
+   depth, path, level_name, created_at, created_by, updated_at, updated_by, version)
+SELECT uuidv7(), r.tenant_id, :versionId, :catalogId, r.item_code,
+       r.payload->>'name', r.payload->>'parentCode', (r.payload->>'sortOrder')::int,
+       coalesce(r.payload->>'status','ACTIVE'),
+       ARRAY(SELECT jsonb_array_elements_text(coalesce(r.payload->'replacedBy','[]'))),
+       (r.payload->>'validFrom')::date, (r.payload->>'validTo')::date,
+       coalesce(r.payload->'attrs','{}'), :isHybrid,
+       (r.payload->>'depth')::int,
+       ARRAY(SELECT jsonb_array_elements_text(r.payload->'path')), r.payload->>'levelName',
+       now(), :actor, now(), :actor, 0
+  FROM ph07_rdm.import_row r
+ WHERE r.job_id = :jobId AND r.valid AND r.action IN ('INSERT','UPDATE')
+ON CONFLICT (version_id, code) DO UPDATE
+   SET name = EXCLUDED.name, parent_code = EXCLUDED.parent_code, sort_order = EXCLUDED.sort_order,
+       status = EXCLUDED.status, replaced_by = EXCLUDED.replaced_by, valid_from = EXCLUDED.valid_from,
+       valid_to = EXCLUDED.valid_to, attrs = EXCLUDED.attrs, depth = EXCLUDED.depth,
+       path = EXCLUDED.path, level_name = EXCLUDED.level_name,
+       updated_at = now(), updated_by = :actor, version = catalog_item.version + 1;
+
+-- DEPRECATE (REPLACE)
+UPDATE ph07_rdm.catalog_item i SET status = 'DEPRECATED', updated_at = now(), updated_by = :actor,
+       version = i.version + 1
+  FROM ph07_rdm.import_row r
+ WHERE r.job_id = :jobId AND r.action = 'DEPRECATE' AND i.version_id = :versionId AND i.code = r.item_code;
+
+-- DELETE (REPLACE, mã mới trong nháp)
+DELETE FROM ph07_rdm.catalog_item i USING ph07_rdm.import_row r
+ WHERE r.job_id = :jobId AND r.action = 'DELETE' AND i.version_id = :versionId AND i.code = r.item_code;
+```
+
+5. Vì `depth`, `path` được tính ở pha 1 dựa trên tập tệp hợp với nháp, sau commit chạy lại `HierarchyChecker` trên toàn phiên bản như kiểm tra cuối; nếu phát sinh lỗi (trường hợp hiếm do bỏ qua dòng lỗi làm mất cha của dòng khác), giao dịch bị hoàn tác và trả ERR-07-010 với danh sách mã.
+6. Cập nhật `catalog_version.item_count`, `stats`, `origin` giữ nguyên nếu đã có (bản nháp `MANUAL` nhập thêm vẫn là `MANUAL`; bản nháp tạo từ `CREATE_CATALOG` là `IMPORT`), tăng `version`.
+7. Đặt `import_job.status = COMMITTED`, `finished_at`; outbox EVT-07-07.
+
+Với 100.000 dòng, bước 4 ước tính 8–15 giây và bước 5 dưới 1 giây, trong ngân sách 60 giây.
+
+#### 4.7.10. Hủy, hết hạn, dọn dẹp
+
+Hủy (API-07-037) đặt cờ trong `import_job.options.cancelRequested` và trạng thái `CANCELLED`; worker kiểm tra cờ giữa các lô (bộ nhớ đệm cờ 2 giây) và dừng. Tác vụ dọn dẹp `ImportHousekeeping` (ShedLock, mỗi giờ) thực hiện: chuyển `VALIDATED` quá `expires_at` sang `EXPIRED`; xóa `import_row` của tác vụ kết thúc quá 7 ngày bằng xóa theo lô 10.000 dòng (hoặc `DROP` phân vùng nếu D03-03-PH07 chọn phân vùng theo tuần); xóa đối tượng Garage của tệp nhập quá 7 ngày (đồng thời đặt vòng đời bucket `imports/` 8 ngày làm lưới an toàn).
+
+#### 4.7.11. Báo cáo lỗi
+
+API-07-035 với `?format=xlsx` sinh báo cáo lỗi theo luồng bằng FastExcel writer: các cột gốc của dòng, thêm cột `LOI_COT`, `LOI_MA`, `LOI_MO_TA`; mỗi lỗi một dòng nếu một dòng có nhiều lỗi. Báo cáo áp dụng `FormulaInjectionSanitizer` (§7.5). Báo cáo trên 10.000 lỗi được sinh nền như tác vụ xuất.
+
+### 4.8. Xuất dữ liệu và nhập lô qua API
+
+#### 4.8.1. Xuất (API-07-038, 039)
+
+`ExportJobService` quyết định chế độ đồng bộ hay nền: nếu số bản ghi của phiên bản ≤ 10.000 và yêu cầu không có `Prefer: respond-async`, tệp được sinh và trả trực tiếp trong phản hồi (luồng, `Content-Disposition: attachment`); ngược lại tạo `import_job` với `job_type = EXPORT`, trả `202` và tác vụ chạy nền.
+
+Ba trình ghi dùng chung giao diện `ExportWriter { void begin(Schema s); void row(ItemRow r); void end(); }` và nhận dữ liệu từ con trỏ máy chủ (`fetchSize = 5.000`) nên bộ nhớ không tăng theo số dòng.
+
+| Định dạng | Thư viện | Đặc điểm |
+|---|---|---|
+| XLSX | FastExcel writer (`org.dhatim.fastexcel.Workbook`) | Ba sheet `HuongDan`, `DuLieu`, `GiaTriHopLe` theo khuôn chuẩn để tệp xuất nhập lại được; dòng 2 chứa mã cột, ẩn và khóa; cột ngày định dạng `dd/mm/yyyy`; luồng ghi thẳng lên Garage |
+| CSV | Commons CSV `CSVPrinter` | UTF-8 có BOM, `,`, `\r\n`, RFC 4180, dòng tiêu đề là mã cột |
+| JSON | Jackson `JsonGenerator` | Cùng cấu trúc ảnh chụp (§4.5.2); có thể gzip theo `Accept-Encoding` |
+
+Khuôn tải về (API-07-032) dùng Apache POI `SXSSFWorkbook` (cửa sổ 100 dòng) vì cần xác thực dữ liệu (data validation) dạng danh sách cho cột `ENUM` tham chiếu sheet `GiaTriHopLe`, bảo vệ sheet và chú thích ô, là các tính năng FastExcel writer hạn chế.
+
+Tệp kết quả của tác vụ nền được ghi tới `s3://dh-{tenant}-rdm/exports/{jobId}/{catalogCode}_v{versionNo}.{ext}`, tạo `file_object` với `expires_at = now + 24h`, gán `import_job.result_file_id`. API-07-039 trả URL ký sẵn (S3 presigned GET) có hạn 15 phút, sinh mới mỗi lần gọi trong hạn 24 giờ của tệp; sau 24 giờ trả ERR-07-020 (`EXPIRED`) và đối tượng bị xóa bởi vòng đời bucket `exports/` 1 ngày. Lý do URL có hạn ngắn hơn tệp: giảm rủi ro URL bị chuyển tiếp; khung chung nói "URL tải (hạn 24 giờ)" được hiểu là tệp tải được trong 24 giờ (Câu hỏi mở Q07-36).
+
+Mọi giá trị chuỗi khi xuất XLSX và CSV đi qua `FormulaInjectionSanitizer` (§7.5). Xuất ghi kiểm toán gồm danh mục, phiên bản, định dạng, số dòng, người xuất.
+
+Ước tính: 100.000 dòng × 20 cột ra XLSX bằng FastExcel khoảng 15–25 giây (NFR-07-006 ≤ 60 giây).
+
+#### 4.8.2. Nhập lô qua API (API-07-031)
+
+Ứng dụng HTTT có scope `rdm.write` (hoặc người dùng có `PERM-07-update`) gửi tối đa 5.000 thao tác (`07.rdm.batch-max-ops`) vào bản nháp. Xử lý đồng bộ trong một giao dịch:
+
+1. Kiểm tra kích thước lô (ERR-07-026), `Idempotency-Key` bắt buộc với scope máy (§4.8.3).
+2. Lấy khóa tư vấn bản nháp; kiểm tra `If-Match` với `catalog_version.version` nếu có (ERR-07-018).
+3. Kiểm tra từng thao tác tầng 1–3, rồi tầng 4–5 trên tập (nháp hợp với thao tác).
+4. Nếu có lỗi và `continueOnError = false`: hoàn tác, trả 422 ERR-07-009 với `errors[]` có `index` thao tác. Nếu `continueOnError = true`: ghi các thao tác hợp lệ, trả `207 Multi-Status` dạng JSON với kết quả từng thao tác.
+5. Ghi bằng `batchUpdate` qua `ItemWriter` (lô JDBC 500 câu), tăng `version` bản nháp, cập nhật `origin` thành `API` nếu bản nháp được tạo bởi API.
+
+#### 4.8.3. Idempotency-Key
+
+`IdempotencyStore` lưu khóa trong bảng `ph07_rdm.idempotency_key` (bổ sung ngoài khung, báo cho luồng CSDL) với cột `tenant_id`, `key` (≤ 128 ký tự), `principal` (người dùng hoặc client), `operation` (mã API), `request_hash` (SHA-256 của thân yêu cầu đã chuẩn hóa JSON, hoặc SHA-256 tệp + options với API-07-033), `status` (`IN_PROGRESS`, `COMPLETED`), `response_status`, `response_body jsonb` (≤ 64 KB, hoặc tham chiếu tài nguyên), `expires_at`. Khóa chính `(tenant_id, principal, operation, key)`.
+
+Lý do lưu ở PostgreSQL thay vì Valkey: kết quả của thao tác ghi phải nhất quán với dữ liệu nghiệp vụ; ghi khóa trong cùng giao dịch với thao tác bảo đảm "đã thực hiện" và "đã ghi khóa" không lệch nhau khi pod chết.
+
+Thuật toán (`IdempotencyFilter` bọc các API tạo, nhập lô, nhập tệp, commit, chạy đồng bộ):
+
+```text
+1. Nếu không có header và API yêu cầu bắt buộc → 400 (ERR-07-026 không phù hợp; dùng lỗi chung FR-00 "thiếu Idempotency-Key").
+2. INSERT … ON CONFLICT DO NOTHING một dòng IN_PROGRESS (giao dịch riêng, ngắn).
+3. Nếu chèn được → thực thi thao tác; trong giao dịch nghiệp vụ, UPDATE dòng khóa thành COMPLETED với phản hồi.
+   Nếu thao tác lỗi nghiệp vụ (4xx) → vẫn lưu COMPLETED với phản hồi lỗi (lặp lại trả cùng lỗi).
+   Nếu lỗi hệ thống (5xx) → xóa dòng khóa để cho phép thử lại.
+4. Nếu đã tồn tại:
+   a. request_hash khác → 409 ERR-07-022.
+   b. IN_PROGRESS → 409 kèm Retry-After: 2 (đang xử lý).
+   c. COMPLETED → trả lại response_status, response_body, header Idempotent-Replayed: true.
+```
+
+Thời hạn lưu: 24 giờ cho API tạo và nhập lô, 7 ngày cho API-07-033 (khớp thời gian lưu tệp nhập). Tác vụ dọn dẹp xóa khóa hết hạn mỗi giờ.
+
+### 4.9. Bộ đệm hai tầng và phân phối
+
+#### 4.9.1. Mô hình dữ liệu đệm
+
+Bộ đệm lưu ba loại mục, khác nhau về tính bất biến. Bảng dưới đây mô tả khóa, giá trị và chính sách của từng loại. Khóa Valkey sinh bởi `CacheKeys` dùng hàm đặt tên có tenant của thư viện chung (D03-10 §6.4); tenant viết thường, COMMON là `common`.
+
+| Loại | Khóa L2 (Valkey) | Giá trị | Bất biến | TTL L1 | TTL L2 |
+|---|---|---|---|---|---|
+| Con trỏ | `{t68}:rdm:ptr:{catalogCode}:{yyyyMMdd}` | `versionId` + `extendsVersionId` (HYBRID) + `effectiveTo` | Không | 60 s | 300 s |
+| Phiên bản đầy đủ (danh mục ≤ 20.000 bản ghi) | `{t68}:rdm:ver:{versionId}` | Bản ghi nén LZ4, mã hóa Smile/CBOR | Có | 6 h sau truy cập cuối | 7 ngày |
+| Bản ghi đơn (danh mục > 20.000 bản ghi) | `{t68}:rdm:item:{versionId}:{code}` | Một bản ghi | Có | 1 h sau truy cập cuối | 24 h |
+| Phủ định | `{t68}:rdm:neg:{versionId}:{code}` | Dấu "không có" | Có | 10 min | 1 h |
+| Metadata danh mục | `{t68}:rdm:cat:{catalogCode}` | `CatalogSummary`, lược đồ | Không | 60 s | 300 s |
+
+Dấu ngoặc nhọn quanh tenant là hash tag của Valkey Cluster, bảo đảm mọi khóa của một tenant nằm cùng slot khi cần thao tác nhiều khóa. Dữ liệu danh mục `RESTRICTED` vẫn được đệm nhưng kiểm tra quyền HTTT (`catalog_access_grant`) diễn ra trước khi đọc đệm (§7.3).
+
+Ở L1, Caffeine được cấu hình với `maximumWeight` theo byte ước lượng (ước lượng = kích thước đã mã hóa × 3 cho đối tượng Java), mặc định 200 MB, `recordStats()`. Hai bộ đệm L1 riêng: `versions` (phiên bản đầy đủ, chiếm phần lớn) và `items` (bản ghi đơn + phủ định), cộng bộ đệm nhỏ `pointers`, `catalogs`.
+
+#### 4.9.2. Luồng tra một mã
+
+```java
+Optional<ItemView> lookup(String tenant, String catalogCode, String code, LocalDate at) {
+  Pointer p = pointerResolver.resolve(tenant, catalogCode, at);            // L1 → L2 → DB
+  if (p == null) throw new CatalogNotFoundException(catalogCode);
+  String c = CodeNormalizer.normalize(code);
+  Optional<ItemView> local = findIn(tenant, p.versionId(), c, p.itemCount());
+  if (local.isPresent() || p.extendsVersionId() == null) return local;
+  return findIn("COMMON", p.extendsVersionId(), c, p.baseItemCount());     // HYBRID: tra gốc (ADR-052)
+}
+
+Optional<ItemView> findIn(String tenant, UUID versionId, String code, int itemCount) {
+  if (itemCount <= smallCatalogThreshold) {                                // 20.000
+    VersionData vd = cache.version(tenant, versionId);                    // L1/L2/DB, nạp gộp
+    return Optional.ofNullable(vd.byCode().get(code));
+  }
+  return cache.item(tenant, versionId, code);                             // L1/L2/DB + phủ định
+}
+```
+
+Với HYBRID, bản ghi địa phương được tra trước; vì BR-07-010 bảo đảm mã địa phương không trùng mã gốc nên thứ tự không đổi kết quả, chỉ là tối ưu (bản ghi địa phương ít, thường đã ở L1). Trường hợp xung đột phát sinh sau (gốc phát hành mã trùng), ADR-052 quy định bản ghi gốc thắng: `HybridMerger` khi nạp phiên bản HYBRID loại bỏ bản ghi địa phương trùng mã với gốc và ghi chỉ số `rdm_hybrid_conflict_total`.
+
+#### 4.9.3. Giải con trỏ
+
+`PointerResolver` giải (tenant, mã danh mục, ngày) thành phiên bản. Với ngày hôm nay, dùng `catalog.current_version_id` nhưng vẫn xác minh khoảng hiệu lực; với ngày khác, truy vấn theo khoảng:
+
+```sql
+SELECT v.id, v.version_no, v.effective_from, v.effective_to, v.item_count, c.extends_catalog_id, c.tenant_id
+  FROM ph07_rdm.catalog c
+  JOIN ph07_rdm.catalog_version v ON v.catalog_id = c.id AND v.status = 'PUBLISHED'
+ WHERE c.code = :code AND c.deleted_at IS NULL
+   AND c.tenant_id IN (current_setting('app.tenant_id'), 'COMMON')
+   AND v.effective_from <= :at AND (v.effective_to IS NULL OR v.effective_to > :at)
+ ORDER BY (c.tenant_id = 'COMMON')            -- ưu tiên danh mục của tenant (HYBRID hoặc LOCAL trùng mã)
+ LIMIT 1;
+```
+
+Nếu danh mục là HYBRID, câu lệnh thứ hai giải phiên bản gốc tại cùng ngày. Danh mục `RETIRED` trả ERR-07-031 cho ngày sau ngày ngừng hiệu lực, nhưng vẫn tra được với `at` trong quá khứ.
+
+#### 4.9.4. Chống dồn tải
+
+Ba lớp chống dồn tải (cache stampede) được áp dụng.
+
+Lớp 1 trong pod: L1 dùng `AsyncLoadingCache` của Caffeine; nhiều luồng cùng hỏi một khóa chỉ sinh một lần nạp, các luồng khác chờ cùng `CompletableFuture`.
+
+Lớp 2 giữa các pod: khi trượt L2, pod lấy khóa `SET {t68}:rdm:lock:ver:{versionId} {podId} NX PX 10000`. Pod lấy được khóa nạp từ PostgreSQL rồi ghi L2; pod không lấy được thì chờ có thăm dò (50 ms, tối đa 2 giây) rồi đọc lại L2; hết 2 giây mà L2 vẫn trống thì tự nạp từ PostgreSQL (chấp nhận nạp trùng hơn là lỗi).
+
+Lớp 3 trước PostgreSQL: `VersionLoader` dùng `Semaphore` giới hạn 4 lần nạp phiên bản đồng thời mỗi pod, và bộ ngắt mạch Resilience4j `rdm-db-loader` (ngưỡng lỗi 50% trên cửa sổ 20 lời gọi, mở 30 giây).
+
+Làm mới sớm (refresh-ahead) cho con trỏ: Caffeine `refreshAfterWrite(45s)` trên L1 con trỏ, nên con trỏ nóng được làm mới nền trước khi hết hạn 60 giây, không có lần trượt đồng loạt.
+
+#### 4.9.5. Làm mới con trỏ khi phát hành
+
+Khi nhận EVT-07-05 (cả khi phát hành và khi `EffectiveScheduler` chuyển hiệu lực), cần xóa con trỏ của danh mục đó ở mọi pod. `PointerInvalidationListener` kết hợp một consumer Kafka dùng chung nhóm (chỉ một pod xử lý mỗi sự kiện) với kênh pub/sub Valkey để lan tỏa tới mọi pod; cách này tránh phải tạo một consumer group riêng cho từng pod:
+
+1. Một pod (consumer group chung `dh-data-rdm-invalidator`) nhận EVT-07-05 từ Kafka, xóa các khóa con trỏ L2 của danh mục bằng `SCAN MATCH {t68}:rdm:ptr:{catalogCode}:*` (số khóa nhỏ: một khóa mỗi ngày được hỏi) và `UNLINK`, rồi `PUBLISH rdm:pointer-invalidate {"tenant":"t68","catalog":"DVHC"}`.
+2. Mọi pod đăng ký kênh `rdm:pointer-invalidate` (Lettuce `StatefulRedisPubSubConnection`), nhận thông điệp và xóa con trỏ L1 tương ứng.
+3. Với danh mục COMMON là gốc của HYBRID, thông điệp mang `tenant: common`; pod xóa mọi con trỏ L1 có `extendsVersionId` thuộc danh mục đó (L1 giữ chỉ mục phụ catalog gốc → khóa con trỏ).
+
+Pub/sub của Valkey không bảo đảm giao nhận; nếu một pod lỡ thông điệp (mất kết nối), con trỏ của nó tự hết hạn sau tối đa 60 giây. Độ trễ hiển thị phiên bản mới vì thế tối đa 60 giây, chấp nhận được vì phiên bản thường phát hành trước ngày hiệu lực. Dữ liệu phiên bản không cần xóa vì bất biến.
+
+Ngoài ra, ngay trong pod xử lý phát hành, `PublishService` sau commit (listener `AFTER_COMMIT` không cần bền vững) xóa con trỏ L1/L2 cục bộ để người phát hành thấy ngay kết quả.
+
+#### 4.9.6. Hành vi khi hạ tầng ngừng (NFR-07-010)
+
+Bảng sau mô tả hành vi tra cứu khi từng thành phần ngừng.
+
+| Sự cố | Hành vi | Ghi chú |
+|---|---|---|
+| Valkey ngừng | L1 tiếp tục phục vụ; trượt L1 đọc thẳng PostgreSQL qua lớp 3 (semaphore + ngắt mạch); khóa phân tán bỏ qua; pub/sub mất nên con trỏ L1 chỉ hết hạn theo TTL | Client Lettuce có thời gian chờ lệnh 50 ms và ngắt mạch `rdm-valkey`; không để Valkey làm chậm đường tra |
+| PostgreSQL ngừng | L1 và L2 phục vụ; con trỏ hết hạn trên L1 được lấy lại từ L2; nếu L2 cũng hết hạn con trỏ, `PointerResolver` dùng **con trỏ dự phòng** `{t68}:rdm:ptr-fallback:{catalogCode}` (TTL 48 giờ, ghi cùng lúc với con trỏ thường) và ảnh chụp chỉ mục Garage; trượt dữ liệu thì `SnapshotFallbackLoader` nạp phiên bản từ ảnh chụp JSON.gz | Đáp ứng "ít nhất 24 giờ"; API quản trị trả 503 |
+| Cả Valkey và PostgreSQL ngừng | L1 phục vụ; trượt L1 nạp từ ảnh chụp Garage (con trỏ lấy từ `snapshots/index.json`) | Độ trễ trượt cao (100–500 ms) nhưng không lỗi |
+| Garage ngừng | Không ảnh hưởng tra cứu qua API; sinh ảnh chụp và xuất nền bị hoãn (§4.5.3) | |
+
+Khi chạy ở chế độ suy giảm, phản hồi có header `Warning: 110 - "Response is Stale"` khi con trỏ được lấy từ nguồn dự phòng, và chỉ số `rdm_lookup_total{result="degraded"}` tăng.
+
+#### 4.9.7. Làm nóng bộ đệm
+
+Khi pod khởi động, `CacheWarmer` (chạy nền sau khi pod sẵn sàng, không chặn readiness) nạp vào L1 các phiên bản hiện hành của danh mục được tra nhiều nhất trong 24 giờ trước (danh sách lưu ở Valkey `{t}:rdm:hot` dạng sorted set, cập nhật mỗi phút từ bộ đếm cục bộ), giới hạn 50 danh mục mỗi tenant hoặc 50% dung lượng L1. Điều này giúp đạt NFR-07-009 (trúng đệm ≥ 95% sau 10 phút).
+
+### 4.10. Truy vấn có cấu trúc, tìm kiếm, cây và delta
+
+#### 4.10.1. Cây cú pháp
+
+`QueryDslParser` đọc `JsonNode` của trường `filter` thành cây cú pháp trừu tượng (AST) bất biến. Cú pháp JSON của DSL đồng thời được mô tả bằng JSON Schema công bố trong OpenAPI để bên khai thác kiểm tra trước khi gửi.
+
+```java
+sealed interface Expr permits And, Or, Not, Cond {}
+record And(List<Expr> items) implements Expr {}
+record Or(List<Expr> items) implements Expr {}
+record Not(Expr item) implements Expr {}
+record Cond(FieldRef field, Op op, Value value) implements Expr {}
+
+enum Op { EQ, NE, IN, NIN, LT, LTE, GT, GTE, BETWEEN, CONTAINS, STARTS_WITH, IS_NULL, IS_NOT_NULL }
+
+sealed interface FieldRef permits SystemField, AttrField {}
+record SystemField(SysCol col) implements FieldRef {}
+record AttrField(String code, DataType type) implements FieldRef {}
+enum SysCol {
+  CODE("code", DataType.STRING), NAME("name", DataType.STRING), PARENT_CODE("parent_code", DataType.STRING),
+  DEPTH("depth", DataType.INTEGER), STATUS("status", DataType.ENUM), SORT_ORDER("sort_order", DataType.INTEGER),
+  VALID_FROM("valid_from", DataType.DATE), VALID_TO("valid_to", DataType.DATE);
+  final String column; final DataType type;
+}
+
+sealed interface Value permits Scalar, ListValue, Range, NoValue {}
+record Scalar(Object v) implements Value {}
+record ListValue(List<Object> vs) implements Value {}
+record Range(Object from, Object to) implements Value {}
+record NoValue() implements Value {}
+```
+
+Quy tắc phân tích:
+
+1. Nút là đối tượng có đúng một trong các khóa `and`, `or`, `not`, hoặc bộ `field` + `op` (+ `value`). Khóa lạ hoặc thiếu trả ERR-07-023 kèm con trỏ JSON (`/filter/and/2`).
+2. `field` được `FieldResolver` giải: tên hệ thống theo camelCase (`parentCode` → `PARENT_CODE`); `attrs.{code}` tra `attribute_def` của phiên bản đích, không có trả ERR-07-023, có nhưng không `queryable` trả ERR-07-025.
+3. Giá trị được ép theo `DataType` của trường: `INTEGER` nhận số nguyên JSON hoặc chuỗi số; `DECIMAL` thành `BigDecimal`; `DATE` theo ISO 8601; `BOOLEAN` chỉ `true`/`false`; `ENUM` phải thuộc miền; sai trả ERR-07-023 với mã con `VALUE_TYPE`.
+4. Kiểm tra toán tử hợp với kiểu: `contains`, `startsWith` chỉ với chuỗi; `lt`…`between` không với `BOOLEAN`, `ENUM`.
+5. `QueryLimits` đếm số `Cond` (≤ 20), độ sâu lồng `and`/`or`/`not` (≤ 3), số phần tử `in`/`nin` (≤ 500), `limit` (≤ 1.000), `select` (≤ 50 trường), `sort` (≤ 3 trường). Vượt trả ERR-07-024 với mã con (`MAX_CONDITIONS`, `MAX_DEPTH`, `MAX_IN`, `MAX_LIMIT`) và tăng `rdm_query_rejected_total{reason}`.
+
+#### 4.10.2. Dịch sang SQL tham số hóa
+
+`SqlTranslator` duyệt AST và sinh mệnh đề `WHERE` chỉ từ các mẫu cố định; mọi giá trị và mọi khóa thuộc tính là tham số gắn (`:p1`, `:p2`, …). Không có chuỗi nào từ yêu cầu được nối vào SQL.
+
+```java
+final class SqlTranslator {
+  private final MapSqlParameterSource params = new MapSqlParameterSource();
+  private int seq;
+
+  String translate(Expr e) {
+    return switch (e) {
+      case And a -> a.items().stream().map(this::translate).collect(joining(" AND ", "(", ")"));
+      case Or o  -> o.items().stream().map(this::translate).collect(joining(" OR ", "(", ")"));
+      case Not n -> "(NOT " + translate(n.item()) + ")";
+      case Cond c -> cond(c);
+    };
+  }
+
+  private String cond(Cond c) {
+    String col = column(c.field());
+    return switch (c.op()) {
+      case EQ -> col + " = " + bind(c);
+      case NE -> "(" + col + " IS DISTINCT FROM " + bind(c) + ")";
+      case IN -> col + " = ANY(" + bindArray(c) + ")";
+      case NIN -> "NOT (" + col + " = ANY(" + bindArray(c) + "))";
+      case LT -> col + " < " + bind(c);
+      case LTE -> col + " <= " + bind(c);
+      case GT -> col + " > " + bind(c);
+      case GTE -> col + " >= " + bind(c);
+      case BETWEEN -> col + " BETWEEN " + bindFrom(c) + " AND " + bindTo(c);
+      case CONTAINS -> containsExpr(c);
+      case STARTS_WITH -> col + " LIKE " + bindLikePrefix(c) + " ESCAPE '\\'";
+      case IS_NULL -> col + " IS NULL";
+      case IS_NOT_NULL -> col + " IS NOT NULL";
+    };
+  }
+
+  /** Cột hệ thống: tên cột cố định từ enum. Thuộc tính: biểu thức jsonb với khóa là tham số, ép kiểu theo data_type. */
+  private String column(FieldRef f) {
+    return switch (f) {
+      case SystemField s -> "i." + s.col().column;
+      case AttrField a -> {
+        String k = bindRaw(a.code());
+        yield switch (a.type()) {
+          case INTEGER -> "ph07_rdm.try_bigint(i.attrs ->> " + k + ")";
+          case DECIMAL -> "ph07_rdm.try_numeric(i.attrs ->> " + k + ")";
+          case DATE -> "ph07_rdm.try_date(i.attrs ->> " + k + ")";
+          case DATETIME -> "ph07_rdm.try_timestamptz(i.attrs ->> " + k + ")";
+          case BOOLEAN -> "(i.attrs -> " + k + ")::boolean";
+          default -> "(i.attrs ->> " + k + ")";
+        };
+      }
+    };
+  }
+
+  private String containsExpr(Cond c) {
+    String v = "%" + escapeLike(Unaccent.lower((String) ((Scalar) c.value()).v())) + "%";
+    return switch (c.field()) {
+      case SystemField s when s.col() == SysCol.NAME -> "i.name_search LIKE " + bindRaw(v) + " ESCAPE '\\'";
+      default -> "lower(ph07_rdm.immutable_unaccent(" + column(c.field()) + ")) LIKE " + bindRaw(v) + " ESCAPE '\\'";
+    };
+  }
+}
+```
+
+Các hàm `try_bigint`, `try_numeric`, `try_date`, `try_timestamptz` là hàm SQL `IMMUTABLE` trả `NULL` khi không ép được (dữ liệu đã kiểm tra lược đồ nên hiếm), tránh câu truy vấn thất bại; chúng cũng là biểu thức của chỉ mục biểu thức cho thuộc tính `queryable` (D03-03-PH07) nên bộ lập kế hoạch dùng được chỉ mục. Phép `eq` trên thuộc tính chuỗi với danh mục lớn được dịch thêm điều kiện `i.attrs @> jsonb_build_object(:k, :v)` để tận dụng chỉ mục GIN `jsonb_path_ops`.
+
+Phép `contains` trên `name` dùng cột sinh `name_search` có chỉ mục trigram GIN (`gin_trgm_ops`); giá trị tìm được bỏ dấu ở tầng Java bằng cùng bảng ánh xạ với hàm `immutable_unaccent` (bảo đảm nhất quán bằng kiểm thử so sánh trên toàn bảng chữ cái tiếng Việt, gồm `đ` → `d`).
+
+#### 4.10.3. Câu truy vấn hoàn chỉnh và phân trang con trỏ
+
+```sql
+SET LOCAL statement_timeout = '2s';
+SET LOCAL app.tenant_id = 'T68';                -- đã đặt bởi TenantSession
+SELECT i.code, i.name, i.parent_code, i.depth, i.path, i.level_name, i.sort_order, i.status,
+       i.replaced_by, i.valid_from, i.valid_to, i.attrs, i.is_local_extension
+  FROM ph07_rdm.catalog_item i
+ WHERE i.version_id = :versionId
+   AND (:includeDeprecated OR i.status = 'ACTIVE')
+   AND <mệnh đề từ SqlTranslator>
+   AND (i.sort_order, i.code) > (:cursorSort, :cursorCode)        -- khi có cursor
+ ORDER BY i.sort_order ASC NULLS LAST, i.code ASC
+ LIMIT :limitPlusOne;
+```
+
+Phân trang theo bộ khóa (keyset): khóa sắp xếp luôn được bổ sung `code` làm khóa phụ để duy nhất. Lấy `limit + 1` dòng để biết còn trang sau. Con trỏ là base64url của JSON `{"v":"<versionId>","k":[<giá trị khóa sắp xếp>…,"<code>"],"h":"<8 byte đầu SHA-256 của filter+sort đã chuẩn hóa>"}`, ký HMAC-SHA256 bằng khóa của module (lấy từ OpenBao, xoay vòng) để client không sửa được. Con trỏ cố định `versionId`, nên duyệt trang luôn nhất quán dù trong lúc duyệt có phiên bản mới phát hành. Con trỏ sai chữ ký, sai `h` hoặc phiên bản đã lưu trữ trả ERR-07-023 với mã con `INVALID_CURSOR`.
+
+Khi sắp xếp giảm dần hoặc hỗn hợp, bộ so sánh hàng (`(a,b) > (x,y)`) không dùng được; trình dịch sinh dạng mở rộng `(a < :x) OR (a = :x AND b > :y)`. Sắp xếp theo thuộc tính động dùng biểu thức ép kiểu như ở `column()` và `NULLS LAST`.
+
+`select` chỉ chọn trường trả về ở tầng ứng dụng (lọc khóa của `attrs` khi tuần tự hóa), không thay đổi SQL, để giữ một kế hoạch truy vấn ổn định.
+
+#### 4.10.4. Đường đánh giá trong bộ nhớ
+
+Nếu phiên bản đích đã có trong L1 dạng phiên bản đầy đủ (≤ 20.000 bản ghi), `InMemoryEvaluator` đánh giá AST trực tiếp: biên dịch AST thành `Predicate<ItemView>` một lần, lọc danh sách đã sắp sẵn theo (`sortOrder`, `code`), áp con trỏ bằng tìm kiếm nhị phân. Kết quả phải đồng nhất với đường SQL; bộ kiểm thử đối chứng chạy 500 truy vấn sinh ngẫu nhiên trên cùng dữ liệu cho cả hai đường và so sánh (§12.2). Phép `contains` trong bộ nhớ dùng `Unaccent.lower` trên `name`; so sánh chuỗi dùng thứ tự byte UTF-8 giống collation `C` của cột `code` (D03-03-PH07 quy định `COLLATE "C"` cho `code`).
+
+#### 4.10.5. Tìm kiếm không dấu, cây, delta
+
+Tìm kiếm (API-07-045) dùng `name_search % :q` (độ tương tự trigram) kết hợp `LIKE` tiền tố, xếp hạng bằng `similarity(name_search, :q) DESC`, `limit ≤ 50`; với danh mục nhỏ trong L1 dùng so khớp bỏ dấu trong bộ nhớ. Thuộc tính `searchable` được đưa vào tìm kiếm bằng biểu thức `lower(immutable_unaccent(attrs->>'x'))` khi có cờ.
+
+Cây (API-07-044) với danh mục trong L1 dựng từ bản đồ `parentCode → children` đã tính sẵn khi nạp phiên bản; với danh mục lớn dùng `path` (mảng mã tổ tiên): nhánh con của `root` là `WHERE :root = ANY(path) AND depth <= rootDepth + :depth`, có chỉ mục GIN trên `path`.
+
+Delta (API-07-046) tính khác biệt giữa phiên bản `sinceVersion` và phiên bản hiện hành bằng `DiffEngine` (§4.3.2), trả danh sách bản ghi thêm, đổi, ngừng dùng; kết quả delta giữa hai phiên bản đã phát hành là bất biến nên được đệm ở L2 với khóa `{t}:rdm:delta:{fromId}:{toId}` TTL 7 ngày.
+
+#### 4.10.6. Hợp nhất HYBRID
+
+Với danh mục HYBRID, mọi API khai thác trả hợp của phiên bản gốc (COMMON) và phiên bản HYBRID hiệu lực tại cùng thời điểm (ADR-052). `HybridMerger` có hai chế độ:
+
+- Trong bộ nhớ (cả hai phần ≤ 20.000): trộn hai danh sách đã sắp, loại bản ghi địa phương trùng mã gốc.
+- SQL: `UNION ALL` hai truy vấn có cùng mệnh đề lọc, mỗi nhánh có `version_id` riêng và phần thứ hai thêm `NOT EXISTS` mã trùng ở phần thứ nhất; `ORDER BY` và `LIMIT` áp trên hợp. Thuộc tính chỉ có ở HYBRID trả `null` cho bản ghi gốc.
+
+```sql
+SELECT * FROM (
+  SELECT i.*, false AS local FROM ph07_rdm.catalog_item i
+   WHERE i.version_id = :baseVersionId AND <lọc>
+  UNION ALL
+  SELECT i.*, true FROM ph07_rdm.catalog_item i
+   WHERE i.version_id = :hybridVersionId AND <lọc>
+     AND NOT EXISTS (SELECT 1 FROM ph07_rdm.catalog_item b
+                      WHERE b.version_id = :baseVersionId AND b.code = i.code)
+) u
+ORDER BY u.sort_order NULLS LAST, u.code
+LIMIT :limitPlusOne;
+```
+
+Con trỏ của truy vấn HYBRID chứa cả hai `versionId`. ETag của API-07-041 với HYBRID là băm của cặp phiên bản.

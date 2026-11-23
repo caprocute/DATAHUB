@@ -482,7 +482,7 @@ Cột của bảng danh mục được đặc tả riêng vì đây là nơi ng�
 | Cập nhật | `updatedAt` | `dd/MM/yyyy HH:mm` | Có (mặc định giảm dần) | 140 px | Ẩn mặc định |
 | Thao tác | — | Nút biểu tượng "Xem", menu "⋯" | — | 88 px, cố định phải (CRUD-TBL-11) | |
 
-> **Câu hỏi mở Q07-70:** Màn này cần API-07-001 hỗ trợ thêm: tham số `scope` (tenant/common), `ownerOrgId`, `openVersionStatus`, `updatedFrom/To`; trường trả về `ownerOrgName`, `currentItemCount`, `currentVersionNo`, `currentEffectiveFrom`, `openVersion {versionNo,status}`, `pendingSyncRun`; khối `facets` đếm theo nguồn và trạng thái; và xuất danh sách danh mục ra xlsx/csv (`Accept: text/csv`). Cần luồng API xác nhận để đưa vào OpenAPI.
+> **Câu hỏi mở Q07-70:** Giao diện PH-07 cần một số tham số và trường API chưa có trong danh sách API-07 của khung chung. Toàn bộ đề nghị được gom ở Phụ lục B (mã B-01, B-02…) để luồng API xử lý một lần; riêng màn này cần B-01 (tham số lọc `scope`, `ownerOrgId`, `openVersionStatus`, `updatedFrom/To` của API-07-001), B-02 (trường tóm tắt `ownerOrgName`, `currentItemCount`, `currentVersionNo`, `currentEffectiveFrom`, `openVersion`, `pendingSyncRun`, khối `facets`) và B-03 (xuất danh sách danh mục ra xlsx, csv).
 
 ### 7.4. Hành động
 
@@ -529,3 +529,557 @@ Ngoài các trạng thái chung ở mục 6, màn có hai điểm riêng. Thứ 
 ### 7.8. Khả năng truy cập
 
 Thứ tự focus: liên kết "Bỏ qua tới nội dung" của `CMP-AppShell` → nút hành động đầu trang → thẻ đếm → cây nhóm → ô tìm kiếm và bộ lọc → bảng → phân trang. Thẻ đếm là `button` có `aria-pressed` phản ánh trạng thái lọc và nhãn đầy đủ "Lọc danh mục nguồn quốc gia, 21 danh mục". Cây nhóm theo mẫu `tree` của WAI-ARIA (mục 13.2), có `aria-label="Nhóm danh mục"`. Bảng có `aria-label="Danh sách danh mục"` và `aria-rowcount` bằng tổng số danh mục; tiêu đề cột sắp xếp được có `aria-sort`. Kết quả tìm kiếm được thông báo qua vùng `role="status"`: "Tìm thấy 12 danh mục." Biểu tượng 🌐 và 🔒 có văn bản thay thế "Dùng chung toàn quốc", "Nguồn quốc gia, chỉ đọc". Kéo thả danh mục vào nhóm có phương án bàn phím: menu "⋯" có mục "Chuyển nhóm…" mở hộp chọn nhóm.
+
+## 8. Đặc tả UI-07-02 · Chi tiết danh mục
+
+### 8.1. Thông tin chung
+
+| Mục | Nội dung |
+|---|---|
+| Mục đích | Xem toàn bộ thông tin một danh mục: thông tin chung, bản ghi (bảng, cây), thuộc tính, phiên bản, ánh xạ, đồng bộ, quyền khai thác, lịch sử; điểm xuất phát mọi thao tác soạn thảo |
+| Người dùng | Mọi vai trò có `PERM-07-read`; tab "Quyền khai thác" với người có `PERM-07-grant`; tab "Lịch sử" với mọi người có quyền đọc (FR-00-043), đặc biệt `ROLE-AUDITOR` |
+| FR, UC | FR-07-002, 004, 009, 011, 017, 018, 019, 024, 029, 035, 041, 047, 048, 050, 052; UC-07-02, 06, 07, 08, 14, 17 |
+| Route | `/rdm/catalogs/:code/:tab` |
+| Mẫu bố cục | PTN-03 Chi tiết có tab |
+| API | API-07-003, 004, 006, 011, 012, 013, 015, 022, 026, 038, 044, 045, 050, 055, 058, 067, 071, 072, 075 |
+
+### 8.2. Bố cục
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│ Trang chủ › Danh mục dùng chung › Danh mục › Loại hồ sơ thủ tục hành chính                 │
+│ [←] Loại hồ sơ thủ tục hành chính  DM_LOAI_HO_SO  [Đang hoạt động][Địa phương][Công khai] │
+│                         [Xuất ▾] [Nhập tệp] [Sửa bản ghi (v4 nháp)] [⋯ Sửa thông tin,     │
+│                                                        Sửa lược đồ, Ngừng hiệu lực]     │
+│ ┌────────────────────────────────────────────────────────────────────────────────────────┐│
+│ │ Hiện hành: v3 · hiệu lực từ 20/06/2026 · 1.842 bản ghi · Chủ quản: Văn phòng UBND tỉnh ││
+│ │ Phiên bản mở: v4 [Bản nháp] sửa lần cuối 21/11/2026 10:12 bởi Nguyễn Văn A [Mở] [So sánh]││
+│ └────────────────────────────────────────────────────────────────────────────────────────┘│
+│ [Tổng quan][Bản ghi][Thuộc tính][Phiên bản 4][Ánh xạ 2][Đồng bộ][Quyền khai thác][Lịch sử]│
+│ ┌────────────────────────────────────────────────────────────────────────────────────────┐│
+│ │ Tab Bản ghi: Phiên bản [v3 đang hiệu lực ▾]  [Bảng | Cây]  [🔍 Tìm mã, tên…] [Trạng thái▾]││
+│ │ ┌────────────────────────┬─────────────────────────────────────────────────────────────┐││
+│ │ │ (chế độ Cây)           │ Chi tiết bản ghi đang chọn                                   │││
+│ │ │ ▾ 01 Cấp tỉnh          │ Mã: 01.02   Tên: Hồ sơ cấp phép xây dựng                     │││
+│ │ │   ▸ 01.01 …            │ Mã cha: 01  Cấp: Nhóm  Trạng thái: Đang dùng                 │││
+│ │ │   ▸ 01.02 … ◀ chọn     │ Thuộc tính: linh_vuc = XAY_DUNG; thoi_han_xu_ly = 15         │││
+│ │ │ ▸ 02 Cấp xã            │ Dòng lịch sử: v1 tạo → v2 đổi tên → v3 không đổi [Xem đầy đủ]│││
+│ │ └────────────────────────┴─────────────────────────────────────────────────────────────┘││
+│ └────────────────────────────────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Dải thông tin tóm tắt luôn hiện ở mọi tab vì hai câu hỏi người dùng hay hỏi nhất là "phiên bản nào đang hiệu lực" và "có ai đang soạn phiên bản mới không". Nút hành động chính trên đầu thay đổi theo ngữ cảnh: nếu có bản nháp thì là "Sửa bản ghi (v{n} nháp)"; nếu không có phiên bản mở thì là "Tạo bản nháp"; nếu phiên bản mở đang chờ duyệt và người dùng có quyền duyệt thì là "Xem và duyệt".
+
+### 8.3. Đầu trang và dải tóm tắt
+
+| STT | Tên | Loại | Nhãn | Kiểu | Nguồn |
+|---|---|---|---|---|---|
+| 1 | Tên và mã | `CMP-PageHeader` `title`, `subTitle` | {name}, {code} | T-NAME, T-CODE | API-07-003 `name`, `code` |
+| 2 | Nhãn trạng thái | `CMP-StatusTag` × 3–4 | Trạng thái, nguồn, phân loại, phạm vi | enum | `status`, `sourceType`, `classification`, `tenantId` |
+| 3 | Phiên bản hiện hành | `Descriptions` | Hiện hành | "v{n} · hiệu lực từ {dd/MM/yyyy} · {count} bản ghi" | `currentVersion.{versionNo,effectiveFrom,itemCount}` |
+| 4 | Chủ quản | `Descriptions` | Chủ quản | tên tổ chức | `ownerOrgName` |
+| 5 | Phiên bản mở | `Descriptions` + `CMP-StatusTag` + nút | Phiên bản mở | "v{n} [trạng thái] sửa lần cuối {ts} bởi {user}" | `openVersion.{versionNo,status,updatedAt,updatedByName}` |
+| 6 | Danh mục gốc (HYBRID) | liên kết | Mở rộng từ | "{code} · {name}" (dùng chung toàn quốc) | `extendsCatalog.{code,name}` |
+| 7 | Thông báo chỉ đọc | `Alert type="info"` | — | câu theo mục 2.5 | tính từ `tenantId`, `sourceType` |
+
+### 8.4. Hành động đầu trang
+
+| Hành động | Hiện khi | API | Xác nhận | Kết quả, thông báo |
+|---|---|---|---|---|
+| Tạo bản nháp | `PERM-07-update`, nguồn ghi được, `ACTIVE`, không có phiên bản mở | API-07-012 (`Idempotency-Key`) | Không | Mở UI-07-05 bản nháp mới; "Đã tạo bản nháp phiên bản {n} từ phiên bản {n-1}." |
+| Sửa bản ghi (v{n} nháp) | `PERM-07-update`, nguồn ghi được, phiên bản mở là `DRAFT` | — | Không | Mở UI-07-05 |
+| Sửa lược đồ | Như trên | — | Không | Mở UI-07-04 |
+| Nhập tệp | `PERM-07-update`, nguồn ghi được, phiên bản mở `DRAFT` | — | Không | Mở UI-07-06 |
+| Xem và duyệt | `PERM-07-publish`, phiên bản mở `IN_REVIEW` hoặc `APPROVED` | — | Không | Mở UI-07-07 với `against=current` |
+| So sánh | Có phiên bản mở | — | Không | Mở UI-07-07 |
+| Hủy bản nháp | `PERM-07-update`, phiên bản mở `DRAFT` | API-07-015 với `If-Match` | `CMP-ConfirmDialog` nguy hiểm: "Hủy bản nháp phiên bản {n}? Toàn bộ thay đổi trong bản nháp sẽ bị bỏ, không khôi phục được." Ô lý do tùy chọn | "Đã hủy bản nháp phiên bản {n}." |
+| Sửa thông tin | `PERM-07-update`, nguồn ghi được, không `RETIRED` | — | Không | Mở UI-07-03 chế độ sửa |
+| Xuất | `PERM-07-export`, có phiên bản phát hành | API-07-038 | Hộp chọn: phiên bản, định dạng (Excel, CSV, JSON), gồm bản ghi ngừng dùng | Trực tiếp hoặc chạy nền |
+| Tải ảnh chụp | `PERM-07-export`, phiên bản phát hành | API-07-049 | Không | Trình duyệt tải theo URL ký sẵn |
+| Ngừng hiệu lực | `PERM-07-retire`, `ACTIVE` | API-07-006 | Như UI-07-01 | |
+| Tạo danh mục mở rộng | Danh mục COMMON hoặc NATIONAL, người dùng có `PERM-07-create` | — | Không | Mở UI-07-03 với `source=HYBRID&extends={code}` |
+
+### 8.5. Tab Tổng quan
+
+Tab hiển thị `Descriptions` hai cột các trường của API-07-003: Mã, Tên, Mô tả, Nhóm, Đơn vị chủ quản, Nguồn, Phân loại dữ liệu, Phân cấp (Có/Không, số cấp tối đa, tên cấp), Dải mã địa phương (HYBRID), Danh mục gốc (HYBRID), Yêu cầu duyệt khi phát hành, Mã hệ cũ (`legacyRef`, chỉ hiện khi có), và nhóm "Thông tin hệ thống": Người tạo, Ngày tạo, Người cập nhật, Ngày cập nhật (CRUD-R-03, R-04). Dưới cùng là thẻ "Tình hình sử dụng" gồm: số phiên bản đã phát hành, ngày phát hành gần nhất, số hệ thống mã có ánh xạ, tỷ lệ phủ ánh xạ thấp nhất, và với danh mục NATIONAL là lần đồng bộ cuối.
+
+> **Câu hỏi mở Q07-71:** SRS cũ yêu cầu bảng "đánh giá tác động" (hệ thống nào đang dùng danh mục, số lượt tra cứu 30 ngày). Số liệu này có ở chỉ số `rdm_lookup_total{catalog}` (NFR-07-014) nhưng chưa có API trả theo danh mục và theo HTTT. Đề nghị luồng API bổ sung `GET /catalogs/{c}/usage?days=30` (hoặc PH-16 cung cấp) để thẻ "Tình hình sử dụng" và màn so sánh UI-07-07 hiển thị tác động.
+
+### 8.6. Tab Bản ghi
+
+Tab bản ghi phục vụ xem và tìm, không sửa (sửa ở UI-07-05). Thành phần như sau.
+
+| STT | Tên | Loại | Nhãn | Kiểu | Mặc định | Nguồn |
+|---|---|---|---|---|---|---|
+| 1 | Chọn phiên bản | `Select` | Phiên bản | số phiên bản | phiên bản hiện hành; tham số `v` | API-07-011 `items[]` gồm nhãn "v3 · Đang hiệu lực", "v4 · Bản nháp" |
+| 2 | Chế độ xem | `Segmented` | Bảng / Cây | `table`/`tree` | `tree` nếu `isHierarchical`, ngược lại `table` | — |
+| 3 | Tìm | `Input.Search` | Tìm mã, tên | chuỗi ≤ 100 | rỗng | API-07-026 `q` (không dấu) |
+| 4 | Lọc trạng thái | `Select multiple` | Trạng thái bản ghi | `ACTIVE`/`DEPRECATED` | `ACTIVE` | `status` |
+| 5 | Lọc cấp | `Select` | Cấp | tên cấp từ `levelNames` | tất cả | `depth` |
+| 6 | Bảng bản ghi | `CMP-DataTable` ảo hóa | — | `CatalogItem[]` | — | API-07-026 |
+| 7 | Cây bản ghi | `CMP-TreeView` nạp lười | — | nút cây | mở cấp 1 | API-07-044 (phiên bản phát hành) hoặc API-07-026 `parentCode` (bản nháp) |
+| 8 | Ngăn chi tiết bản ghi | `CMP-Drawer` (chế độ bảng) hoặc khung phải (chế độ cây) | Chi tiết bản ghi | — | — | dòng đã chọn + API-07-050 |
+
+Cột bảng: Mã (đơn cách, cố định trái), Tên, Mã cha, Cấp (`levelName`), Thứ tự, Trạng thái, Mã thay thế (danh sách liên kết, chỉ với `DEPRECATED`), Hiệu lực từ, Hiệu lực đến, sau đó một cột cho mỗi thuộc tính `ACTIVE` theo `sortOrder` (thuộc tính `HIDDEN` không hiện), giá trị hiển thị theo kiểu (BOOLEAN thành "Có"/"Không", DATE theo `dd/MM/yyyy`, CATALOG_REF thành "{mã} · {tên}" nếu API trả nhãn). Phân trang máy chủ, mặc định 50 dòng, chọn 20/50/100/200 (giới hạn `size` ≤ 200 của API quản trị). Khi người dùng chọn 200 dòng hoặc khi số cột thuộc tính lớn hơn 12, bảng bật ảo hóa cột ngang. Bản ghi kế thừa trong danh mục HYBRID có biểu tượng mắt xích và chữ màu phụ, bộ lọc thêm "Nguồn bản ghi: Tất cả / Kế thừa / Bổ sung địa phương".
+
+Chế độ cây dùng `CMP-TreeView` với nạp lười từng nhánh: mở một nút gọi API-07-044 `root={code}&depth=1&at` với phiên bản phát hành, hoặc API-07-026 `parentCode={code}&size=200` với bản nháp. Nút có hơn 200 con hiện nút "Tải thêm {n} bản ghi" ở cuối nhánh. Ô tìm kiếm ở chế độ cây gọi API-07-045 rồi mở đường dẫn tới bản ghi tìm được bằng `path` (danh sách mã tổ tiên), cuộn tới và đánh dấu.
+
+Ngăn chi tiết bản ghi hiện toàn bộ trường, thuộc tính, và khối "Dòng lịch sử" (FR-07-047) từ API-07-050 dạng `Timeline` dọc: mỗi mục là một phiên bản có thay đổi, ghi loại thay đổi, ngày hiệu lực và liên kết tới bản ghi kế thừa hoặc thay thế.
+
+Màn này cần đề nghị B-04 ở Phụ lục B: API-07-026 hỗ trợ lọc `parentCode`, `depth`, `isLocalExtension` và trả `childCount`, để dựng cây trên bản nháp (API-07-044 chỉ phục vụ phiên bản hiệu lực theo `at`).
+
+### 8.7. Tab Thuộc tính
+
+Bảng chỉ đọc các thuộc tính của phiên bản đang chọn (API-07-022): Thứ tự, Mã, Nhãn, Kiểu dữ liệu (nhãn tiếng Việt theo bảng ở mục 11.5), Bắt buộc, Duy nhất, Cho phép truy vấn, Cho phép tìm kiếm, Ràng buộc (tóm tắt "≤ 255 ký tự", "0–100", "Danh sách 5 giá trị", "Tham chiếu DM_DAN_TOC"), Trạng thái (Hiển thị/Ẩn). Có nút "Sửa lược đồ" dẫn tới UI-07-04 khi có bản nháp và đủ quyền, và nút "Tải JSON Schema" gọi API-07-048 để kỹ sư tích hợp lấy lược đồ.
+
+### 8.8. Tab Phiên bản
+
+Tab liệt kê phiên bản (API-07-011) theo thứ tự số phiên bản giảm dần, dưới dạng bảng kèm dải thời gian hiệu lực trực quan phía trên. Dải thời gian (`CMP-VersionTimeline`) là một trục ngang theo ngày, mỗi phiên bản đã phát hành là một đoạn `[effectiveFrom, effectiveTo)`, đoạn đang hiệu lực tô đậm; bấm vào đoạn chọn dòng tương ứng trong bảng. Cột bảng: Phiên bản, Trạng thái, Hiệu lực (nhãn tính), Hiệu lực từ, Hiệu lực đến, Nguồn tạo (`origin`: Thủ công, Nhập tệp, API, Đồng bộ, Di trú), Số bản ghi, Thay đổi (+thêm / ~sửa / −ngừng, cờ phá vỡ), Căn cứ pháp lý, Người phát hành, Ngày phát hành, Thao tác (Xem bản ghi, So sánh với phiên bản trước, Xuất, Tải ảnh chụp). Hai phiên bản bất kỳ có thể chọn bằng ô chọn rồi bấm "So sánh hai phiên bản đã chọn" để mở UI-07-07 với `v` và `against`.
+
+### 8.9. Tab Ánh xạ
+
+Tab tóm tắt ánh xạ của danh mục với từng hệ thống mã (API-07-067 nhóm theo `codeSystem`, API-07-071 độ phủ): bảng gồm Hệ thống mã, Chủ sở hữu, Số ánh xạ, Số ánh xạ tạm thời, Độ phủ (thanh `Progress` kèm phần trăm), Cập nhật cuối, và nút "Mở bảng ánh xạ" dẫn tới UI-07-10 `/rdm/mappings/{csCode}?catalog={code}`. Nút "Thêm ánh xạ với hệ thống mã khác" hiện với `PERM-07-mapping`.
+
+### 8.10. Tab Đồng bộ
+
+Tab chỉ hiện với danh mục `NATIONAL` hoặc `HYBRID` mở rộng từ danh mục quốc gia. Nội dung: thẻ cấu hình nguồn (API-07-055 lọc theo danh mục: nhà cung cấp, mã danh mục phía quốc gia, lịch chạy hiển thị bằng câu tiếng Việt như "Hằng ngày lúc 01:00", tự áp dụng thay đổi không phá vỡ, bật/tắt, phiên bản quốc gia gần nhất, lần thành công gần nhất), và bảng 10 lần đồng bộ gần nhất (API-07-059). Nút "Đồng bộ ngay" (API-07-058) và "Sửa cấu hình nguồn" hiện với `PERM-07-sync`; mọi chi tiết khác mở ở UI-07-09.
+
+### 8.11. Tab Quyền khai thác
+
+Tab chỉ hiện khi `classification = RESTRICTED` (FR-07-052). Bảng liệt kê HTTT được cấp quyền (API-07-075 GET): Hệ thống thông tin (tên, mã từ PH-01), Phạm vi (`rdm.read`, `rdm.query`), Người cấp, Ngày cấp, Hết hạn. Người có `PERM-07-grant` (đề xuất bổ sung D02-08) thấy nút "Cấp quyền" mở `CMP-Drawer` với: chọn HTTT (`Select` tìm từ xa danh sách HTTT thành viên PH-01, bắt buộc), phạm vi (`Checkbox.Group`, ít nhất một), ngày hết hạn (`DatePicker`, tùy chọn, phải sau hôm nay), lý do (bắt buộc, 10–500 ký tự). Lưu bằng API-07-075 PUT toàn bộ danh sách với `If-Match`. Thu hồi một quyền là xóa khỏi danh sách và PUT lại, có xác nhận "Thu hồi quyền khai thác của {HTTT}? Các lượt gọi tiếp theo của hệ thống này sẽ bị từ chối (ERR-07-030)."
+
+### 8.12. Tab Lịch sử
+
+Tab đáp ứng FR-00-043 và FR-07-050, đọc API-07-072. Bộ lọc: khoảng thời gian (mặc định 90 ngày), loại hành động (tạo, sửa, trình, duyệt, từ chối, phát hành, hủy, nhập, xuất, ngừng hiệu lực), người thực hiện. Bảng: Thời điểm (`dd/MM/yyyy HH:mm:ss`), Người thực hiện, Hành động, Đối tượng (danh mục, phiên bản v{n}, bản ghi {mã}, thuộc tính {mã}), Kết quả, Lý do, Mã truy vết. Bấm dòng mở ngăn kéo với `CMP-DiffViewer` hiển thị giá trị trước và sau (đã che theo FR-00-041). Tab chỉ đọc với mọi vai trò, không có nút xóa hay sửa (FR-00-042).
+
+### 8.13. Trạng thái màn và thông điệp riêng
+
+Khi mã danh mục trong URL không tồn tại, vùng nội dung hiện trang 404 với ERR-07-001. Khi danh mục `RETIRED`, `Alert` loại cảnh báo ở đầu trang: "Danh mục đã ngừng hiệu lực từ {dd/MM/yyyy}. Dữ liệu chỉ còn để tra cứu lịch sử." và ẩn mọi hành động sửa. Tab không áp dụng (ví dụ "Đồng bộ" với danh mục LOCAL) không được hiển thị; truy cập trực tiếp URL của tab đó chuyển hướng về tab Tổng quan. Số đếm trên tab ("Phiên bản 4", "Ánh xạ 2") lấy từ API-07-003 (`versionCount`, `mappingSystemCount`) để không phải gọi API của mọi tab khi mở trang.
+
+### 8.14. Khả năng truy cập
+
+Thanh tab dùng `Tabs` của antd với vai trò `tablist`; phím mũi tên trái, phải chuyển tab, tab được kích hoạt thủ công (Enter) để không gọi API khi người dùng chỉ lướt qua. Mỗi tab đổi URL nên trình đọc màn hình nhận thông báo đổi tiêu đề trang `document.title = "{tab} · {tên danh mục} · Datahub"`. Cây bản ghi theo mẫu tree WAI-ARIA (mục 20.2). Dải thời gian phiên bản có bảng thay thế (chính bảng phiên bản bên dưới) nên đoạn trên trục chỉ là `aria-hidden` cho trình đọc màn hình, tránh lặp thông tin.
+
+## 9. Đặc tả UI-07-03 · Tạo, sửa thông tin danh mục
+
+### 9.1. Thông tin chung
+
+| Mục | Nội dung |
+|---|---|
+| Mục đích | Tạo danh mục mới cùng bản nháp phiên bản 1 và các thuộc tính ban đầu (chế độ tạo); sửa thông tin danh mục (chế độ sửa) |
+| Người dùng | `ROLE-DATA_STEWARD` (○ tổ chức mình), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON) |
+| FR, UC | FR-07-003, 004, 005, 007, 008, 010; UC-07-01, UC-07-17 |
+| Route | `/rdm/catalogs/new` (tạo), `/rdm/catalogs/:code/settings` (sửa) |
+| Mẫu bố cục | PTN-04 Trình hướng dẫn (tạo); biểu mẫu một trang chia khu (sửa) |
+| API | API-07-002, 003, 004, 007, API-07-001 (chọn danh mục gốc, danh mục tham chiếu), API tổ chức PH-20 |
+
+Chế độ tạo dùng trình hướng dẫn ba bước vì việc tạo một danh mục gồm ba nhóm quyết định có thứ tự phụ thuộc: thông tin chung, rồi nguồn và cấu trúc phân cấp (quyết định cột `MA_CHA` và dải mã), rồi lược đồ thuộc tính (phụ thuộc phân cấp). Chế độ sửa không dùng trình hướng dẫn vì người sửa thường chỉ đổi một trường; biểu mẫu một trang với các khu tương ứng ba bước giúp sửa nhanh hơn. Hệ cũ Aita chỉ có tên danh mục và tên thuộc tính; các trường mới (nguồn, phân loại, phân cấp, chính sách duyệt) đều có giá trị mặc định hợp lý để người dùng quen hệ cũ vẫn tạo được nhanh.
+
+### 9.2. Bố cục chế độ tạo
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ Trang chủ › Danh mục dùng chung › Danh mục › Tạo danh mục                               │
+│ [←] Tạo danh mục                                                                      │
+│ ( 1 Thông tin chung ) ─── ( 2 Nguồn và phân cấp ) ─── ( 3 Thuộc tính và xác nhận )    │
+│ ┌──────────────────────────────────────────────────────────────┐┌───────────────────┐│
+│ │ Mã danh mục *        [DM_LINH_VUC_TTHC        ] ✓ chưa dùng  ││ Gợi ý              ││
+│ │ Tên danh mục *       [Lĩnh vực thủ tục hành chính       ] 31/255││ Mã chỉ gồm chữ hoa,││
+│ │ Mô tả                [                                   ]   ││ số, _ . - ; không  ││
+│ │ Nhóm danh mục *      [Hành chính › Thủ tục           ▾]      ││ đổi được sau khi   ││
+│ │ Đơn vị chủ quản *    [Văn phòng UBND tỉnh            ▾]      ││ phát hành.         ││
+│ │ Phân loại dữ liệu *  (•) Công khai ( ) Nội bộ ( ) Hạn chế    ││                    ││
+│ │ Yêu cầu duyệt khi phát hành  [● Bật]                         ││                    ││
+│ └──────────────────────────────────────────────────────────────┘└───────────────────┘│
+│ ════════════════════ chân dính (glass toolbar) ═════════════════════════════════════ │
+│ [Hủy]                                               [Quay lại] [Tiếp tục →]           │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Khung "Gợi ý" bên phải thay đổi theo trường đang có focus, giải thích ý nghĩa và hệ quả của trường. Lý do: các trường như "Phân loại dữ liệu" và "Dải mã địa phương" có hệ quả pháp lý và kỹ thuật mà người dùng nghiệp vụ không tự biết. Ở độ rộng nhỏ hơn 1200 px, khung gợi ý chuyển thành `Tooltip` biểu tượng dấu hỏi cạnh nhãn.
+
+### 9.3. Thành phần bước 1: Thông tin chung
+
+| STT | Tên | Loại | Nhãn | Kiểu | Bắt buộc | Kiểm tra hợp lệ | Mặc định | Nguồn, đích |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Mã danh mục | `Input`, tự chuyển chữ hoa khi gõ | Mã danh mục | T-CODE | Có | Mẫu `^[A-Z0-9][A-Z0-9_.-]{0,63}$`; kiểm tra trùng khi rời ô (gọi API-07-003, 404 là hợp lệ) và hiện "✓ Mã chưa được dùng" hoặc lỗi ERR-07-002; tiền tố gợi ý `DM_` | rỗng | `code` |
+| 2 | Tên danh mục | `Input` `showCount` | Tên danh mục | T-NAME | Có | 2–255 ký tự, cắt khoảng trắng, chuẩn hóa NFC | rỗng | `name` |
+| 3 | Mô tả | `TextArea` `showCount` `autoSize` 3–8 dòng | Mô tả | T-TEXT | Không | ≤ 4.000 ký tự | rỗng | `description` |
+| 4 | Nhóm danh mục | `TreeSelect` | Nhóm danh mục | T-ID | Có | Phải là nhóm lá hoặc nhóm bất kỳ (cho phép) | nhóm đang chọn ở UI-07-01 (`group`) | API-07-007; `groupId` |
+| 5 | Đơn vị chủ quản | `Select showSearch` tìm từ xa | Đơn vị chủ quản | T-ID | Có | Với `ROLE-DATA_STEWARD` phạm vi tổ chức: chỉ chọn được tổ chức của mình (danh sách giới hạn, mặc định chọn sẵn) | tổ chức của người dùng | API tổ chức PH-20; `ownerOrgId` |
+| 6 | Phân loại dữ liệu | `Radio.Group` có mô tả mỗi lựa chọn | Phân loại dữ liệu | `PUBLIC`/`INTERNAL`/`RESTRICTED` | Có | — | `PUBLIC` | `classification` |
+| 7 | Yêu cầu duyệt khi phát hành | `Switch` kèm câu giải thích | Yêu cầu duyệt khi phát hành | T-BOOL | Có | — | Bật | `requireApproval` |
+
+Khi chọn "Hạn chế", một `Alert` cảnh báo xuất hiện: "Danh mục hạn chế chỉ hệ thống thông tin được cấp quyền mới khai thác được. Sau khi tạo, hãy cấp quyền ở tab Quyền khai thác." Khi tắt "Yêu cầu duyệt", câu giải thích đổi thành "Phiên bản được phát hành thẳng nếu thay đổi nhỏ hơn {ngưỡng}% và không phá vỡ; ngược lại vẫn phải duyệt (BR-07-012)." với `{ngưỡng}` lấy từ tham số `07.rdm.large-change-threshold-percent`.
+
+### 9.4. Thành phần bước 2: Nguồn và phân cấp
+
+| STT | Tên | Loại | Nhãn | Kiểu | Bắt buộc | Kiểm tra hợp lệ | Mặc định | Đích |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Nguồn | `Radio.Group` dạng thẻ | Nguồn danh mục | `LOCAL`/`HYBRID` | Có | `NATIONAL` không chọn được ở đây, thẻ hiện mờ kèm câu "Danh mục quốc gia được tạo khi đăng ký đồng bộ ở màn Đồng bộ quốc gia" và liên kết | `LOCAL` | `sourceType` |
+| 2 | Danh mục gốc | `Select showSearch` | Mở rộng từ danh mục | T-CODE | Có khi HYBRID | Chỉ danh mục COMMON hoặc NATIONAL đang hoạt động | rỗng (hoặc `extends` trên URL) | API-07-001 `scope=common`; `extendsCatalogCode` |
+| 3 | Dải mã địa phương | `Input` đơn cách + nút "Thử mẫu" | Dải mã địa phương (biểu thức chính quy) | chuỗi ≤ 255 | Có khi HYBRID | Biên dịch được bằng `new RegExp` với cờ `u`; không khớp chuỗi rỗng; gợi ý mẫu `^68[0-9]{3}$` | rỗng | `localCodePattern` |
+| 4 | Ô thử mẫu | `Input` + kết quả | Thử với mã | chuỗi | Không | Hiện "Khớp", "Không khớp" trực tiếp | rỗng | — |
+| 5 | Có phân cấp | `Switch` | Danh mục có phân cấp (cây) | T-BOOL | Có | Với HYBRID: kế thừa từ danh mục gốc, chỉ đọc | Tắt | `isHierarchical` |
+| 6 | Số cấp tối đa | `InputNumber` | Số cấp tối đa | số nguyên | Có khi phân cấp | 1–10 (BR-07-014) | 2 | `maxDepth` |
+| 7 | Tên các cấp | danh sách `Input` động, số ô = số cấp | Tên cấp 1, Tên cấp 2… | chuỗi ≤ 50 | Không | Không trùng nhau | "Cấp 1", "Cấp 2"… | `levelNames` |
+
+Nút "Thử mẫu" là chi tiết nhỏ nhưng quan trọng: biểu thức chính quy là khái niệm kỹ thuật, cho người dùng thử ngay với vài mã giúp tránh lỗi ERR-07-012 hàng loạt khi nhập tệp sau này. Giao diện cũng hiện mẫu dựng sẵn để chọn nhanh: "Mã tỉnh + 3 chữ số", "Tiền tố chữ + số".
+
+### 9.5. Thành phần bước 3: Thuộc tính và xác nhận
+
+Bước 3 nhúng `AttributeSchemaEditor` của UI-07-04 ở chế độ gọn (không có so sánh với phiên bản trước vì chưa có). Người dùng có thể bỏ qua bước này và khai báo thuộc tính sau. Phía dưới là khối "Xác nhận" tóm tắt mọi lựa chọn dạng `Descriptions` với nút "Sửa" cạnh mỗi nhóm để quay về bước tương ứng. Cột hệ thống `MA`, `TEN`, `MA_CHA` (nếu phân cấp), `THU_TU`, `TRANG_THAI`, `MA_THAY_THE`, `HIEU_LUC_TU`, `HIEU_LUC_DEN` được hiển thị cố định đầu danh sách ở dạng chỉ đọc để người dùng hiểu không cần khai báo lại mã, tên.
+
+### 9.6. Hành động
+
+| Hành động | Hiện khi | API | Xác nhận | Kết quả | Thông báo |
+|---|---|---|---|---|---|
+| Tiếp tục | Bước 1, 2 | — | Không; chạy kiểm tra hợp lệ của bước, lỗi thì focus trường lỗi đầu tiên | Sang bước sau, ghi `step` vào URL | — |
+| Quay lại | Bước 2, 3 | — | Không | Về bước trước, giữ dữ liệu | — |
+| Tạo danh mục | Bước 3 | API-07-002 với `Idempotency-Key` sinh một lần cho phiên trình hướng dẫn | Không | Mở UI-07-05 bản nháp v1 (hoặc UI-07-04 nếu chưa có thuộc tính nào và danh mục cần thuộc tính) | "Đã tạo danh mục "{name}" và bản nháp phiên bản 1." |
+| Tạo và nhập tệp | Bước 3 | API-07-002 rồi điều hướng | Không | Mở UI-07-06 cho bản nháp v1 | Như trên |
+| Hủy | Mọi bước | — | Nếu đã nhập dữ liệu: "Hủy tạo danh mục? Thông tin đã nhập sẽ mất." | Về UI-07-01 với bộ lọc cũ | — |
+| Lưu (chế độ sửa) | Có thay đổi | API-07-004 với `If-Match` | Nếu đổi `classification` sang mức cao hơn hoặc tắt "Yêu cầu duyệt": hộp xác nhận nêu hệ quả | Về UI-07-02 | "Đã lưu thông tin danh mục." |
+
+Dữ liệu trình hướng dẫn được lưu nháp trong `sessionStorage` (khóa `dh.rdm.createWizard`) sau mỗi bước để không mất khi tải lại trang; dữ liệu bị xóa khi tạo thành công hoặc hủy.
+
+### 9.7. Chế độ sửa
+
+Chế độ sửa hiển thị một biểu mẫu chia bốn khu bằng `Card`: "Thông tin chung", "Nguồn và phân cấp", "Chính sách", "Thông tin hệ thống" (chỉ đọc). Trường không sửa được sau khi tạo: Mã danh mục (luôn chỉ đọc); Nguồn (chỉ đọc sau khi đã phát hành); Danh mục gốc (chỉ đọc). Trường "Có phân cấp", "Số cấp tối đa" sửa được nhưng hiện cảnh báo vì ảnh hưởng tới bản nháp: giảm số cấp tối đa nhỏ hơn độ sâu hiện có sẽ bị máy chủ từ chối với ERR-07-011. Khu "Chính sách" chỉ hiện "Yêu cầu duyệt khi phát hành" và đường dẫn tới tham số ngưỡng của tenant (UI-07-13) cho người có `PERM-07-configure`.
+
+### 9.8. Thông điệp riêng và khả năng truy cập
+
+| Tình huống | Mã | Câu |
+|---|---|---|
+| Mã trùng | ERR-07-002 | Theo bảng 5.3, tại trường Mã |
+| Dải mã không biên dịch được | (phía client) | "Biểu thức chính quy không hợp lệ: {thông điệp trình duyệt rút gọn}." |
+| Danh mục gốc không còn hoạt động | ERR-07-031 | "Danh mục gốc đã ngừng hiệu lực, không mở rộng được." |
+| Thuộc tính có dấu hiệu dữ liệu cá nhân | ERR-07-036 | Theo bảng 5.3 |
+| Xung đột khi lưu chế độ sửa | ERR-07-018 | `CMP-ConflictDialog` |
+
+`Steps` có `aria-current="step"` cho bước hiện tại; khi chuyển bước, focus chuyển tới tiêu đề bước (`h2` có `tabIndex=-1`) và vùng `role="status"` đọc "Bước 2 trên 3: Nguồn và phân cấp". Thẻ chọn nguồn là `radiogroup` đúng chuẩn, di chuyển bằng mũi tên. Thông điệp lỗi trường liên kết bằng `aria-describedby` và trường lỗi có `aria-invalid="true"` (FR-00-081).
+
+## 10. Đặc tả UI-07-04 · Trình sửa lược đồ thuộc tính
+
+### 10.1. Thông tin chung
+
+| Mục | Nội dung |
+|---|---|
+| Mục đích | Khai báo, sửa, ẩn, xóa, sắp thứ tự thuộc tính của bản nháp, có kiểm tra tương thích và đánh dấu thay đổi phá vỡ |
+| Người dùng | `ROLE-DATA_STEWARD` (○), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON); vai trò khác xem chỉ đọc |
+| FR, UC, BR | FR-07-005, 006; UC-07-01; BR-07-013, BR-07-025 |
+| Route | `/rdm/catalogs/:code/versions/:v/schema` |
+| Mẫu bố cục | PTN-05 Không gian soạn thảo |
+| API | API-07-022, 023, 024, 025, 048; API-07-022 của phiên bản hiện hành để so sánh |
+
+### 10.2. Bố cục
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ … › Loại hồ sơ TTHC › Phiên bản 4 › Lược đồ thuộc tính                                 │
+│ Lược đồ thuộc tính · v4 [Bản nháp]           [Sửa bản ghi →] [+ Thêm thuộc tính]       │
+│ ⓘ So với phiên bản hiện hành v3: +1 thuộc tính, 1 sửa, 0 xóa · 1 thay đổi phá vỡ       │
+│ ┌──┬───┬──────────────┬──────────────────┬──────────┬────┬────┬────┬────────┬────────┬─┐│
+│ │⠿ │STT│Mã            │Nhãn              │Kiểu      │Bắt │Duy │Truy│Ràng    │So với  │⋯││
+│ │  │   │              │                  │          │buộc│nhất│vấn │buộc    │v3      │ ││
+│ ├──┼───┼──────────────┼──────────────────┼──────────┼────┼────┼────┼────────┼────────┼─┤│
+│ │⠿ │ 1 │linh_vuc      │Lĩnh vực          │Danh mục  │ ✓  │    │ ✓  │DM_LINH…│        │⋯││
+│ │⠿ │ 2 │thoi_han_xu_ly│Thời hạn xử lý(ng)│Số nguyên │    │    │ ✓  │0–365   │~ Sửa ⚡│⋯││
+│ │⠿ │ 3 │ghi_chu       │Ghi chú           │Văn bản dài│   │    │    │≤ 2000  │+ Thêm  │⋯││
+│ └──┴───┴──────────────┴──────────────────┴──────────┴────┴────┴────┴────────┴────────┴─┘│
+│                         ┌───────── Drawer glass: Sửa thuộc tính "thoi_han_xu_ly" ─────┐ │
+│                         │ Mã * [thoi_han_xu_ly] (khóa sau phát hành)                  │ │
+│                         │ Nhãn * [Thời hạn xử lý (ngày)]                              │ │
+│                         │ Kiểu dữ liệu * [Số nguyên ▾]                                │ │
+│                         │ ── Ràng buộc theo kiểu ──  Giá trị nhỏ nhất [0] Lớn nhất[365]│ │
+│                         │ ⚡ Thu hẹp "lớn nhất" từ 999 xuống 365 là thay đổi phá vỡ;   │ │
+│                         │    12 bản ghi hiện có giá trị > 365. [Xem bản ghi]          │ │
+│                         │ [Hủy]                                      [Lưu thuộc tính] │ │
+│                         └─────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Biểu mẫu sửa một thuộc tính đặt trong ngăn kéo thay vì sửa trực tiếp trong bảng, vì mỗi kiểu dữ liệu có bộ ràng buộc khác nhau và cần không gian giải thích hệ quả phá vỡ. Bảng chỉ cho sửa trực tiếp hai thứ đơn giản: thứ tự (kéo thả) và cờ Hiển thị/Ẩn.
+
+### 10.3. Biểu mẫu thuộc tính
+
+Bảng sau liệt kê trường của biểu mẫu thuộc tính. Các trường ràng buộc chỉ hiện khi kiểu dữ liệu tương ứng được chọn (cột "Áp dụng cho kiểu").
+
+| STT | Trường | Loại | Nhãn | Áp dụng cho kiểu | Bắt buộc | Kiểm tra hợp lệ | Mặc định | Đích |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Mã | `Input` đơn cách | Mã thuộc tính | mọi kiểu | Có | `^[a-z][a-z0-9_]{0,62}$` (snake) hoặc T-CODE; không trùng mã khác trong phiên bản; không trùng mã cột hệ thống (`code`, `name`, `parent_code`…); chỉ đọc nếu thuộc tính đã có trong phiên bản phát hành | sinh từ Nhãn (bỏ dấu, snake) | `code` |
+| 2 | Nhãn | `Input` | Nhãn hiển thị | mọi kiểu | Có | 1–255 ký tự | rỗng | `label` |
+| 3 | Mô tả | `TextArea` | Mô tả | mọi kiểu | Không | ≤ 4.000 | rỗng | `description` |
+| 4 | Kiểu dữ liệu | `Select` có nhóm | Kiểu dữ liệu | — | Có | Đổi kiểu với thuộc tính đã phát hành: hiện cảnh báo BR-07-013 | Chuỗi ngắn | `dataType` |
+| 5 | Bắt buộc | `Switch` | Bắt buộc nhập | mọi kiểu | Có | Bật với thuộc tính đã có dữ liệu rỗng: cảnh báo số bản ghi đang rỗng | Tắt | `required` |
+| 6 | Duy nhất | `Switch` | Không trùng trong phiên bản | STRING, INTEGER, URI, EMAIL | Có | — | Tắt | `uniqueInVersion` |
+| 7 | Độ dài tối đa | `InputNumber` | Độ dài tối đa (ký tự) | STRING (1–1.000), TEXT (1–4.000), URI (≤ 2.048), EMAIL (≤ 254) | Không | Trong khoảng ghi ở cột trước | 255 (STRING), 2.000 (TEXT) | `maxLength` |
+| 8 | Mẫu | `Input` đơn cách + nút thử | Mẫu (biểu thức chính quy) | STRING | Không | Biên dịch được | rỗng | `pattern` |
+| 9 | Giá trị nhỏ nhất, lớn nhất | `InputNumber` × 2 | Giá trị nhỏ nhất, Giá trị lớn nhất | INTEGER, DECIMAL, DATE (dạng `DatePicker`), DATETIME | Không | nhỏ nhất ≤ lớn nhất | rỗng | `minValue`, `maxValue` |
+| 10 | Số chữ số thập phân | `InputNumber` | Số chữ số thập phân | DECIMAL | Không | 0–10 | 2 | lưu trong `pattern` hoặc trường mở rộng (Phụ lục B, B-05) |
+| 11 | Danh sách giá trị | `CMP-EnumEditor` (bảng nhỏ: Giá trị, Nhãn, Thứ tự, kéo thả) | Danh sách giá trị | ENUM | Có khi ENUM | 1–200 giá trị; giá trị theo `^[A-Z0-9_]{1,64}$`, không trùng | rỗng | `enumValues` |
+| 12 | Danh mục tham chiếu | `Select showSearch` | Danh mục tham chiếu | CATALOG_REF | Có khi CATALOG_REF | Danh mục đang hoạt động; không tự tham chiếu chính nó | rỗng | `refCatalogCode` |
+| 13 | Giá trị mặc định | điều khiển động theo kiểu (mục 11.5) | Giá trị mặc định | mọi kiểu trừ TEXT | Không | Phải hợp lệ theo chính ràng buộc vừa khai | rỗng | `defaultValue` |
+| 14 | Cho phép truy vấn | `Switch` | Cho phép lọc qua API truy vấn | mọi kiểu trừ TEXT | Có | Tối đa 20 thuộc tính `queryable` mỗi danh mục (đề xuất, Phụ lục B, B-05) | Tắt | `queryable` |
+| 15 | Cho phép tìm kiếm | `Switch` | Đưa vào tìm kiếm không dấu | STRING, TEXT | Có | — | Tắt | `searchable` |
+| 16 | Trạng thái | `Segmented` | Hiển thị / Ẩn | mọi kiểu | Có | — | Hiển thị | `status` |
+
+Nhãn tiếng Việt của kiểu dữ liệu trong `Select`: Chuỗi ngắn (STRING), Văn bản dài (TEXT), Số nguyên (INTEGER), Số thập phân (DECIMAL), Có/Không (BOOLEAN), Ngày (DATE), Ngày giờ (DATETIME), Danh sách giá trị (ENUM), Tham chiếu danh mục (CATALOG_REF), Địa chỉ web (URI), Thư điện tử (EMAIL).
+
+### 10.4. Phát hiện thay đổi phá vỡ phía giao diện
+
+Giao diện so sánh lược đồ bản nháp với lược đồ phiên bản hiện hành (API-07-022 hai lần) để đánh dấu cột "So với v{n}" và cảnh báo ngay khi người dùng sửa, trước khi gọi API. Quy tắc đánh dấu dựa trên khung chung §3 mục 18: xóa thuộc tính, đổi kiểu, giảm `maxLength`, tăng `minValue`, giảm `maxValue`, thêm `pattern` hoặc làm chặt `pattern`, bớt giá trị ENUM, đổi `refCatalogCode`, bật `required` với thuộc tính đã có, bật `uniqueInVersion` là **phá vỡ**; thêm thuộc tính không bắt buộc, sửa nhãn, mô tả, nới ràng buộc, thêm giá trị ENUM, đổi thứ tự, ẩn thuộc tính là **không phá vỡ**. Ẩn thuộc tính được xem là không phá vỡ vì dữ liệu vẫn còn và API vẫn trả; xóa mới là phá vỡ. Phía máy chủ là nơi quyết định cuối cùng; giao diện chỉ cảnh báo sớm. Nếu máy chủ trả ERR-07-014, hộp thoại liệt kê tối đa 20 giá trị không chuyển đổi được kèm nút "Mở bản ghi lỗi trong trình sửa" (điều hướng UI-07-05 với bộ lọc).
+
+Kiểm tra dữ liệu cá nhân (BR-07-025): khi mã hoặc nhãn khớp danh sách từ khóa gợi ý dữ liệu cá nhân (ví dụ `cccd`, `cmnd`, `so_dinh_danh`, `ho_ten`, `ngay_sinh`, `dien_thoai`, `so_dien_thoai`, `dia_chi_thuong_tru`, "họ tên", "ngày sinh", "căn cước"), giao diện hiện cảnh báo vàng tại trường ngay khi gõ. Danh sách từ khóa không cứng trong mã mà lấy từ máy chủ (trường `personalDataHints` trong API-07-048 hoặc cấu hình, Phụ lục B, B-06) để hai phía khớp nhau.
+
+### 10.5. Hành động
+
+| Hành động | Hiện khi | API | Xác nhận | Kết quả, thông báo |
+|---|---|---|---|---|
+| Thêm thuộc tính | `PERM-07-update`, phiên bản `DRAFT`, nguồn ghi được | API-07-023 (`Idempotency-Key`) | Không | Dòng mới cuối bảng; "Đã thêm thuộc tính "{label}"." |
+| Lưu thuộc tính | Như trên, biểu mẫu có thay đổi | API-07-024 (`If-Match` của thuộc tính) | Nếu thay đổi phá vỡ: `CMP-ConfirmDialog` "Thay đổi này là thay đổi phá vỡ: {lý do}. Phiên bản sẽ phải qua duyệt trước khi phát hành. Tiếp tục?" | "Đã lưu thuộc tính." |
+| Ẩn, hiện | Như trên | API-07-024 `status` | Không | Cập nhật tại chỗ |
+| Xóa thuộc tính | Như trên | API-07-025 | Nguy hiểm: "Xóa thuộc tính "{label}"? Giá trị của {n} bản ghi sẽ bị bỏ khỏi phiên bản này." kèm nhãn "Phá vỡ" nếu thuộc tính có trong phiên bản phát hành; gợi ý "Ẩn thay vì xóa" | "Đã xóa thuộc tính." |
+| Sắp thứ tự | Kéo tay nắm ⠿ hoặc Alt+↑/Alt+↓ | API-07-024 `sortOrder` cho các thuộc tính đổi chỗ (tuần tự) | Không | Lưu ngay, hoàn tác bằng thông báo "Đã đổi thứ tự. [Hoàn tác]" |
+| Xem JSON Schema | Luôn | API-07-048 `version={v}` | Không | Ngăn kéo `CMP-CodeBlock` JSON, nút Sao chép |
+| Sửa bản ghi | Có quyền | — | Không | Mở UI-07-05 |
+
+### 10.6. Trạng thái, thông điệp, khả năng truy cập
+
+Phiên bản đã phát hành mở màn này ở chế độ chỉ đọc (không cột kéo thả, không nút thêm), tiêu đề đổi thành "Lược đồ thuộc tính · v{n} [Đã phát hành]". Danh mục chưa có thuộc tính nào hiện trạng thái rỗng "Danh mục chưa có thuộc tính bổ sung. Mã và tên luôn có sẵn; thêm thuộc tính khi cần lưu thêm thông tin cho mỗi bản ghi." Thông điệp riêng: ERR-07-014, ERR-07-036, ERR-07-004 (phiên bản không còn là bản nháp), ERR-07-018. Kéo thả dùng `@dnd-kit/sortable` với `KeyboardSensor`: focus tay nắm, Space để nhấc, mũi tên để di chuyển, Space để thả, Esc để hủy; vùng `role="status"` đọc "Đã nhấc thuộc tính Lĩnh vực, vị trí 1 trên 3", "Đã thả ở vị trí 2".
+
+## 11. Đặc tả UI-07-05 · Trình sửa bản ghi bản nháp
+
+### 11.1. Thông tin chung
+
+| Mục | Nội dung |
+|---|---|
+| Mục đích | Không gian làm việc chính để thêm, sửa, ngừng dùng, xóa (bản ghi mới trong nháp) bản ghi của bản nháp; xem dạng bảng sửa trực tiếp hoặc cây kết hợp biểu mẫu; kiểm tra hợp lệ toàn bản nháp; chuyển sang so sánh và trình duyệt |
+| Người dùng | `ROLE-DATA_STEWARD` (○), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON) |
+| FR, UC, BR | FR-07-012, 013, 018, 019, 017; UC-07-02; BR-07-002, 003, 004, 010, 014 |
+| Route | `/rdm/catalogs/:code/versions/:v/edit` (`v` là số phiên bản nháp hoặc `draft`) |
+| Mẫu bố cục | PTN-05 Không gian soạn thảo |
+| API | API-07-013, 014, 016, 022, 026, 027, 028, 029, 030, 031, 045, 048, 015 |
+
+Màn này là nơi cán bộ quản lý danh mục ngồi lâu nhất, nên được thiết kế như một bảng tính (spreadsheet) có kiểm soát: thao tác bàn phím đầy đủ, sửa tại ô, lỗi hiện tại ô, nhưng mỗi dòng vẫn được kiểm tra theo lược đồ và lưu có kiểm soát phiên bản. Lý do không dùng mô hình "mở hộp thoại cho từng bản ghi" như hệ cũ Aita: với danh mục vài nghìn bản ghi, việc mở, sửa, đóng hộp thoại cho từng dòng chậm hơn nhiều lần so với sửa tại ô. Tuy vậy, biểu mẫu đầy đủ vẫn có (ngăn kéo bản ghi) cho bản ghi có nhiều thuộc tính hoặc giá trị văn bản dài.
+
+### 11.2. Bố cục
+
+Màn có hai chế độ xem dùng chung thanh công cụ và chân trạng thái. Chế độ bảng:
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│ … › Loại hồ sơ TTHC › Phiên bản 4 › Sửa bản ghi                                            │
+│ Sửa bản ghi · v4 [Bản nháp]  Hiệu lực dự kiến 01/01/2027 [✎]   [Lược đồ] [Nhập tệp]        │
+│                                                [Kiểm tra hợp lệ] [So sánh và trình duyệt →]│
+│ ┌ thanh công cụ dính (glass toolbar) ────────────────────────────────────────────────────┐ │
+│ │[Bảng|Cây] [+ Thêm bản ghi] [🔍 Tìm mã, tên…] [Trạng thái▾] [Chỉ dòng chưa lưu 3]       │ │
+│ │[Chỉ dòng lỗi 2] [Cột▾] [Mật độ▾]                    [Hoàn tác] [Làm lại] [Lưu tất cả (3)]│ │
+│ └────────────────────────────────────────────────────────────────────────────────────────┘ │
+│ ┌──┬─┬────────┬─────────────────────┬────────┬────┬─────────┬──────────┬───────────┬──┐ │
+│ │☐ │●│Mã *    │Tên *                │Mã cha  │Thứ │Trạng    │Lĩnh vực *│Thời hạn   │⋯ │ │
+│ │  │ │        │                     │        │tự  │thái     │          │xử lý      │  │ │
+│ ├──┼─┼────────┼─────────────────────┼────────┼────┼─────────┼──────────┼───────────┼──┤ │
+│ │☐ │ │01      │Cấp tỉnh             │—       │ 1  │Đang dùng│HANH_CHINH│—          │⋯ │ │
+│ │☐ │✎│01.02   │Hồ sơ cấp phép XD ▌  │01      │ 2  │Đang dùng│XAY_DUNG  │15         │⋯ │ │
+│ │☐ │!│01.07   │                ⚠    │01      │ 7  │Đang dùng│[chọn ▾] ⚠│400 ⚠      │⋯ │ │
+│ │☐ │+│68001   │Hồ sơ đặc thù tỉnh   │01      │ 8  │Đang dùng│XAY_DUNG  │30         │⋯ │ │
+│ │☐ │ │02.01   │~~Hồ sơ cũ~~         │02      │ 1  │Ngừng→02.05│…      │…          │⋯ │ │
+│ │  │ │ … ảo hóa, 1.842 dòng …                                                       │ │
+│ └──┴─┴────────┴─────────────────────┴────────┴────┴─────────┴──────────┴───────────┴──┘ │
+│ Chân: 1.843 bản ghi · +12 thêm · ~37 sửa · −4 ngừng · 2 lỗi · Lưu lần cuối 10:12:05 ✓     │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Chế độ cây (dùng khi danh mục phân cấp):
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│ (đầu trang và thanh công cụ như trên)                                                    │
+│ ┌──────────────────────────────┬───────────────────────────────────────────────────────┐ │
+│ │ [🔍 tìm trong cây]           │ Bản ghi 01.02 · Hồ sơ cấp phép xây dựng  [Đang dùng]   │ │
+│ │ ▾ 01 Cấp tỉnh            (12)│ ── Thông tin chính ──                                  │ │
+│ │   ▸ 01.01 Hồ sơ đăng ký  (0) │ Mã *        [01.02        ] (khóa: đã phát hành)        │ │
+│ │   ● 01.02 Hồ sơ cấp phép ✎   │ Tên *       [Hồ sơ cấp phép xây dựng            ]      │ │
+│ │   ▸ 01.07 … ⚠                │ Mã cha      [01 · Cấp tỉnh                    ▾]       │ │
+│ │ ▸ 02 Cấp xã              (8) │ Thứ tự      [2]                                        │ │
+│ │ ▸ 68 Bổ sung địa phương  (3) │ Hiệu lực    [__/__/____] → [__/__/____]                │ │
+│ │                              │ ── Thuộc tính ──                                       │ │
+│ │ [+ Thêm con] [+ Thêm cùng cấp]│ Lĩnh vực *  [XAY_DUNG · Xây dựng               ▾]      │ │
+│ │                              │ Thời hạn xử lý (ngày) [15   ]                          │ │
+│ │                              │ Ghi chú     [                                   ]      │ │
+│ │                              │ [Ngừng dùng…] [Xóa]            [Hủy thay đổi] [Lưu]    │ │
+│ └──────────────────────────────┴───────────────────────────────────────────────────────┘ │
+│ (chân trạng thái)                                                                        │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Chế độ cây kết hợp cây bên trái với biểu mẫu động bên phải. Lý do kết hợp: trong danh mục phân cấp, quyết định quan trọng nhất là vị trí của bản ghi trong cây, nên cây phải luôn hiện; còn biểu mẫu đầy đủ giúp sửa bản ghi nhiều thuộc tính mà không phải cuộn ngang. Kéo một nút cây thả vào nút khác đổi mã cha (có xác nhận vì đổi mã cha là thay đổi phá vỡ với bản ghi đã phát hành).
+
+### 11.3. Thành phần
+
+| STT | Tên | Loại | Nhãn | Kiểu | Bắt buộc | Kiểm tra | Mặc định | Nguồn |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Dải bản nháp | `CMP-PageHeader` + `CMP-StatusTag` + `Popover` sửa | Hiệu lực dự kiến | T-DATE | Không | ≥ hôm nay (BR-07-027) | rỗng | API-07-013 `effectiveFrom`; sửa bằng API-07-014 |
+| 2 | Chế độ xem | `Segmented` | Bảng / Cây | enum | — | Cây chỉ khả dụng khi `isHierarchical` | theo danh mục | URL `view` |
+| 3 | Thêm bản ghi | `Button` | Thêm bản ghi | — | — | — | — | — |
+| 4 | Tìm | `Input.Search` | Tìm mã, tên | chuỗi ≤ 100 | — | — | rỗng | API-07-026 `q` |
+| 5 | Lọc trạng thái | `Select multiple` | Trạng thái | enum | — | — | tất cả | `status` |
+| 6 | Lọc dòng chưa lưu | `Button` bật tắt có đếm | Chỉ dòng chưa lưu ({n}) | — | — | — | tắt | trạng thái cục bộ |
+| 7 | Lọc dòng lỗi | `Button` bật tắt có đếm | Chỉ dòng lỗi ({n}) | — | — | — | tắt | kết quả kiểm tra client + API-07-016 |
+| 8 | Hoàn tác, Làm lại | `Button` | Hoàn tác (Ctrl+Z), Làm lại (Ctrl+Y) | — | — | Ngăn xếp 100 thao tác chưa lưu | — | cục bộ |
+| 9 | Lưu tất cả | `Button type="primary"` có đếm | Lưu tất cả ({n}) | — | — | Vô hiệu khi còn dòng lỗi client trong số dòng chưa lưu; tooltip nêu số dòng lỗi | — | API-07-028, 027 |
+| 10 | Lưới sửa | `CMP-EditableGrid` | — | `CatalogItem[]` | — | Mục 11.6 | — | API-07-026 |
+| 11 | Cây | `CMP-TreeView` | Cây bản ghi | — | — | — | — | API-07-026 `parentCode` (Phụ lục B, B-04) |
+| 12 | Biểu mẫu bản ghi | `CMP-DynamicForm` (trong ngăn kéo hoặc khung phải) | Bản ghi {mã} | `CatalogItem` | — | Mục 11.6 | — | API-07-048 JSON Schema + API-07-022 |
+| 13 | Hộp ngừng dùng | `Modal` | Ngừng dùng bản ghi | — | — | Mục 11.8 | — | — |
+| 14 | Chân trạng thái | `CMP-StatusBar` | — | — | — | — | — | API-07-013 `stats`, `itemCount`; trạng thái cục bộ |
+
+Các trường cố định của bản ghi trong biểu mẫu và lưới như sau; chúng đứng trước thuộc tính động.
+
+| Trường | Nhãn | Điều khiển | Bắt buộc | Kiểm tra | Ghi chú |
+|---|---|---|---|---|---|
+| `code` | Mã | `Input` đơn cách, tự chữ hoa | Có | T-CODE; không trùng trong phiên bản (không phân biệt hoa thường, BR-07-002); khớp `localCodePattern` với bản ghi bổ sung của HYBRID (BR-07-010) | Chỉ đọc nếu bản ghi đã có trong phiên bản phát hành; bản ghi mới trong nháp sửa được |
+| `name` | Tên | `Input` | Có | 1–255, NFC | |
+| `parentCode` | Mã cha | `Select showSearch` tìm từ xa trong bản nháp (API-07-026 `q`) hiển thị "{mã} · {tên}" | Không | Tồn tại trong phiên bản; không vòng (kiểm tra client bằng `path` đã nạp, máy chủ quyết định); độ sâu ≤ `maxDepth`; cha không `DEPRECATED` nếu bản ghi `ACTIVE` (BR-07-014) | Chỉ hiện khi danh mục phân cấp |
+| `sortOrder` | Thứ tự | `InputNumber` số nguyên | Không | 0–999.999 | Mặc định = lớn nhất trong cùng cha + 1 |
+| `status` | Trạng thái | Chỉ đọc trong lưới; đổi bằng hành động "Ngừng dùng", "Khôi phục" | — | — | |
+| `replacedBy` | Mã thay thế | Chỉ đọc; sửa trong hộp ngừng dùng | — | — | Liên kết tới bản ghi |
+| `validFrom`, `validTo` | Hiệu lực từ, Hiệu lực đến | `DatePicker` | Không | từ < đến | Hiệu lực riêng của bản ghi trong phiên bản |
+| `levelName` | Cấp | Chỉ đọc, tính từ độ sâu | — | — | |
+
+### 11.4. Hành vi lưới
+
+**Cột.** Cột cố định trái: ô chọn, cột trạng thái dòng (một ký hiệu: trống là không đổi, ✎ là đã sửa chưa lưu, + là bản ghi mới chưa lưu, ! là có lỗi, ⟳ là đang lưu, ⚠ là xung đột), Mã. Tiếp theo: Tên, Mã cha (khi phân cấp), Thứ tự, Trạng thái, Mã thay thế, rồi thuộc tính `ACTIVE` theo `sortOrder`. Cột Hiệu lực từ/đến và thuộc tính `HIDDEN` ẩn mặc định, bật ở "Cột". Cột thao tác "⋯" cố định phải. Tiêu đề cột bắt buộc có dấu `*`. Độ rộng cột tính theo kiểu: BOOLEAN 90 px, DATE 120 px, INTEGER 110 px, STRING 200 px, TEXT 280 px (cắt một dòng); người dùng kéo đổi độ rộng, lưu theo danh mục trong `localStorage`.
+
+**Nạp dữ liệu và ảo hóa.** Lưới nạp dữ liệu theo trang máy chủ (API-07-026, `size` = 200). Khi tổng số bản ghi ≤ 1.000, lưới dùng phân trang thường (50/100/200 dòng). Khi tổng số bản ghi lớn hơn 1.000, lưới chuyển sang chế độ cuộn liên tục có ảo hóa dòng: chỉ dựng các dòng trong khung nhìn cộng 10 dòng đệm mỗi phía (`virtual` của antd Table v6 hoặc `@tanstack/react-virtual`), tự nạp trang kế khi cuộn tới cách cuối 100 dòng (`useInfiniteQuery`), thanh cuộn phản ánh tổng số thật bằng phần tử giữ chỗ. Ngưỡng 1.000 được chọn vì dưới mức này DOM vẫn nhẹ và phân trang thường giúp người dùng định vị theo số trang; trên mức này phân trang trở nên phiền và cuộn ảo cho trải nghiệm bảng tính. Chiều cao dòng cố định theo mật độ (32/40/48 px) để ảo hóa tính đúng vị trí.
+
+**Sắp xếp và lọc.** Sắp xếp phía máy chủ theo Mã, Tên, Thứ tự, Trạng thái và thuộc tính `queryable`; mặc định theo `path` rồi `sortOrder` để cha đứng trước con. Bộ lọc gửi máy chủ, trừ "Chỉ dòng chưa lưu" và "Chỉ dòng lỗi" là lọc trên tập dòng đang có thay đổi cục bộ (không nhiều, giữ trong bộ nhớ). Bộ lọc, sắp xếp, chế độ xem, bản ghi đang chọn được giữ trên URL.
+
+**Sửa trực tiếp ô.** Mô hình sửa theo kiểu bảng tính: một ô hoạt động (active cell) có viền focus `TKN-focus-ring`; bấm đúp, Enter hoặc F2 vào chế độ sửa; gõ ký tự in được cũng vào chế độ sửa và thay giá trị; Enter xác nhận và chuyển xuống ô dưới; Tab xác nhận và sang ô phải; Shift+Tab sang trái; Esc hủy sửa ô. Điều khiển trong ô là phiên bản gọn của điều khiển ở mục 11.5. Giá trị xác nhận được kiểm tra hợp lệ ngay (mục 11.6); ô lỗi có nền `TKN-color-danger-bg`, viền đỏ, biểu tượng ⚠ và tooltip thông điệp. Ô TEXT dài mở `Popover` có `TextArea` thay vì sửa trong ô một dòng. Ô của bản ghi kế thừa (HYBRID) và ô Mã của bản ghi đã phát hành không vào được chế độ sửa; bấm Enter ở đó hiện tooltip giải thích.
+
+**Dán từ bảng tính.** Ctrl+V tại một ô dán khối dữ liệu dạng TSV từ Excel: giao diện tách theo tab và xuống dòng, dán vào các ô bắt đầu từ ô hoạt động, tạo dòng mới nếu vượt cuối, chạy kiểm tra hợp lệ cho mọi ô bị dán. Dán hơn 500 ô hiện hộp xác nhận và gợi ý dùng "Nhập tệp" cho khối lớn. Ctrl+C sao chép vùng chọn ra TSV.
+
+**Phím tắt của màn.** Bảng phím tắt hiện bằng phím `?`.
+
+| Phím | Tác dụng |
+|---|---|
+| Mũi tên | Di chuyển ô hoạt động |
+| Enter, F2 | Sửa ô; Enter lần nữa để xác nhận |
+| Esc | Hủy sửa ô; nếu không ở chế độ sửa thì bỏ vùng chọn |
+| Tab, Shift+Tab | Sang ô phải, trái |
+| Ctrl+Enter | Mở biểu mẫu đầy đủ của dòng hiện tại trong ngăn kéo |
+| Alt+Insert hoặc Ctrl+Shift+= | Thêm bản ghi mới dưới dòng hiện tại (cùng cha) |
+| Ctrl+S | Lưu tất cả dòng chưa lưu |
+| Ctrl+Z, Ctrl+Y | Hoàn tác, làm lại thay đổi chưa lưu |
+| Ctrl+F hoặc `/` | Focus ô tìm kiếm |
+| Ctrl+Shift+D | Ngừng dùng bản ghi hiện tại |
+| Space (ở cột chọn) | Chọn hoặc bỏ chọn dòng |
+| Home, End; Ctrl+Home, Ctrl+End | Đầu, cuối dòng; đầu, cuối bảng |
+| Page Up, Page Down | Cuộn một khung nhìn |
+
+Ctrl+S, Ctrl+Z, Ctrl+F được chặn hành vi mặc định của trình duyệt chỉ khi focus nằm trong vùng trình sửa, để không gây khó chịu ở phần khác của ứng dụng.
+
+### 11.5. Ánh xạ kiểu dữ liệu sang điều khiển
+
+Biểu mẫu động (`CMP-DynamicForm`) và ô sửa của lưới được sinh từ danh sách `attribute_def` (API-07-022) và JSON Schema (API-07-048). Bảng sau là ánh xạ chính thức từ `data_type` sang điều khiển antd, định dạng hiển thị, giá trị gửi API và quy tắc kiểm tra. Mọi màn PH-07 hiển thị hoặc nhập giá trị thuộc tính (UI-07-02, 05, 06, 07, 12) dùng chung ánh xạ này qua hàm `renderAttrValue` và `AttrInput` ở `src/features/rdm/schema/`.
+
+| `data_type` | Điều khiển nhập (antd v6) | Hiển thị đọc | Giá trị JSON gửi đi | JSON Schema tương ứng | Kiểm tra phía client |
+|---|---|---|---|---|---|
+| STRING | `Input` với `maxLength`, `showCount` khi `maxLength` ≥ 100 | Chữ, cắt `…` + tooltip | `string` đã cắt khoảng trắng đầu cuối, NFC | `type: string`, `maxLength`, `pattern` | `required`, `max`, `pattern` (cờ `u`), duy nhất (máy chủ) |
+| TEXT | `Input.TextArea` `autoSize={{minRows:2,maxRows:8}}`, `showCount` | Đoạn văn, giữ xuống dòng, cắt 2 dòng trong lưới | `string` | `type: string`, `maxLength` ≤ 4.000 | `required`, `max` |
+| INTEGER | `InputNumber` `precision={0}`, `step={1}`, phân cách nghìn khi hiển thị | Số căn phải, định dạng `vi-VN` | `integer` | `type: integer`, `minimum`, `maximum` | Số nguyên, khoảng, không nhận "1,5" |
+| DECIMAL | `InputNumber` `stringMode`, `precision` = số chữ số thập phân, `decimalSeparator=","` | Số căn phải, dấu phẩy thập phân | `string` số thập phân chuẩn "12.50" để không mất chính xác (hoặc `number` theo OpenAPI, Phụ lục B, B-05) | `type: number` hoặc `string` + `pattern`, `minimum`, `maximum` | Khoảng, số chữ số thập phân |
+| BOOLEAN | `Switch` khi bắt buộc; `Select` ba lựa chọn "Có", "Không", "—" khi không bắt buộc | "Có" / "Không" / "—" | `true`/`false`/`null` | `type: boolean` (thêm `null` khi không bắt buộc) | — |
+| DATE | `DatePicker` `format="DD/MM/YYYY"`, cho gõ tay `DDMMYYYY` | `dd/MM/yyyy` | `"yyyy-MM-dd"` | `type: string`, `format: date`, `formatMinimum/Maximum` | Ngày hợp lệ, khoảng |
+| DATETIME | `DatePicker` `showTime={{format:'HH:mm:ss'}}` `format="DD/MM/YYYY HH:mm:ss"`, múi giờ cố định Việt Nam | `dd/MM/yyyy HH:mm:ss` (giờ Việt Nam) | ISO có độ lệch `"2026-11-21T08:30:00+07:00"` | `type: string`, `format: date-time` | Thời điểm hợp lệ, khoảng |
+| ENUM | `Select` (`showSearch` khi > 7 giá trị); `Radio.Group` khi ≤ 4 giá trị và trong biểu mẫu đầy đủ | Nhãn của giá trị; giá trị mã trong tooltip | `string` mã giá trị | `enum` | Thuộc danh sách |
+| CATALOG_REF | `Select` `showSearch` `filterOption={false}` tìm từ xa API-07-045 trên danh mục `refCatalogCode` (chờ 300 ms sau phím cuối, tối đa 20 kết quả, hiển thị "{mã} · {tên}", bản ghi ngừng dùng có nhãn "Ngừng dùng" và không chọn được) | "{mã} · {tên}"; mã đơn cách; liên kết mở bản ghi ở danh mục được tham chiếu | `string` mã bản ghi | `type: string` + `x-catalog-ref` | Định dạng T-CODE; tồn tại kiểm tra bằng API-07-042 (`at` = hiệu lực dự kiến của bản nháp) khi rời ô, có bộ đệm |
+| URI | `Input` `type="url"` `inputMode="url"` biểu tượng `LinkOutlined` | Liên kết mở tab mới với `rel="noopener noreferrer"`, chỉ `http`/`https` | `string` | `type: string`, `format: uri`, `maxLength` ≤ 2.048 | URL tuyệt đối, giao thức `http` hoặc `https` |
+| EMAIL | `Input` `type="email"` `inputMode="email"` | Chữ (không tạo liên kết `mailto` tự động) | `string` chữ thường phần miền | `type: string`, `format: email`, `maxLength` ≤ 254 | Định dạng thư điện tử |
+
+Một số quyết định trong bảng cần giải thích. DECIMAL dùng `stringMode` vì `number` của JavaScript làm sai số thập phân (0,1 + 0,2), điều không chấp nhận được với các danh mục như hệ số, mức phí. BOOLEAN không bắt buộc dùng ba lựa chọn vì `Switch` không biểu diễn được "chưa có giá trị", và việc ép thành "Không" làm sai dữ liệu. CATALOG_REF kiểm tra tồn tại tại ngày hiệu lực dự kiến của bản nháp, vì bản ghi được tham chiếu có thể bị ngừng dùng trước ngày đó. EMAIL không tự tạo liên kết `mailto` để tránh vô tình gửi thư tới địa chỉ trong danh mục; và nhắc lại, danh mục chỉ được chứa thư điện tử của tổ chức, không phải của cá nhân (BR-07-025).
+
+### 11.6. Kiểm tra hợp lệ phía client đồng bộ với JSON Schema
+
+Nguyên tắc: máy chủ là nơi quyết định cuối cùng (CRUD-C-03); giao diện kiểm tra sớm để người dùng thấy lỗi ngay khi gõ, và **dùng đúng JSON Schema do máy chủ sinh** (API-07-048 `?version={v}`) thay vì tự viết lại quy tắc. Cách làm như sau.
+
+1. Khi mở trình sửa, hook `useCatalogSchema(code, v)` tải JSON Schema của bản nháp cùng ETag. Schema được biên dịch một lần bằng Ajv 8 (`ajv` chế độ `strict: false`, `allErrors: true`, cùng `ajv-formats` cho `date`, `date-time`, `uri`, `email`, và `ajv-keywords` cho `formatMinimum`) trong một Web Worker để không chặn luồng giao diện với lược đồ lớn (100 thuộc tính theo NFR-07-011).
+2. Mỗi lần một ô được xác nhận, giao diện dựng đối tượng bản ghi đầy đủ của dòng và gọi hàm kiểm tra đã biên dịch. Lỗi Ajv được chuyển thành thông điệp tiếng Việt bằng bảng ánh xạ từ khóa (`required` → "Bắt buộc nhập {nhãn}.", `maxLength` → "{nhãn} tối đa {limit} ký tự.", `pattern` → "{nhãn} không đúng mẫu quy định.", `minimum`/`maximum` → "{nhãn} phải từ {min} đến {max}.", `enum` → "{nhãn} phải là một trong các giá trị cho phép.", `format` → "{nhãn} không đúng định dạng {tên định dạng tiếng Việt}.", `type` → "{nhãn} phải là {tên kiểu}."). Vị trí lỗi `instancePath` như `/attrs/thoi_han_xu_ly` được ánh xạ sang ô hoặc trường `['attrs','thoi_han_xu_ly']`.
+3. Các quy tắc cần dữ liệu ngoài dòng (mã trùng, mã cha tồn tại, vòng, độ sâu, tham chiếu danh mục) được kiểm tra nhẹ phía client với dữ liệu đã nạp và được khẳng định bởi máy chủ khi lưu.
+4. Khi máy chủ trả ERR-07-009, ERR-07-010, ERR-07-011, ERR-07-012 hoặc ERR-07-008, mảng `errors[]` của ProblemDetails (mỗi phần tử có `pointer` dạng JSON Pointer, `code`, `message`) được ánh xạ về ô bằng đúng cơ chế ở bước 2, nên người dùng thấy lỗi máy chủ cùng chỗ với lỗi client.
+5. Nếu ETag của schema đổi (người khác sửa lược đồ trong lúc đang sửa bản ghi, phát hiện khi lưu bị ERR-07-009 với lỗi lạ hoặc qua làm mới định kỳ 60 giây), giao diện hiện `Alert` "Lược đồ thuộc tính vừa được thay đổi. [Tải lại lược đồ]" và sau khi tải lại thì kiểm tra lại mọi dòng chưa lưu.
+
+Lý do dùng JSON Schema làm nguồn chung: ADR-050 đã chọn JSON Schema để kiểm tra `attrs` phía máy chủ; dùng cùng tài liệu ở giao diện bảo đảm hai phía không bao giờ lệch quy tắc, và khi thêm kiểu ràng buộc mới chỉ phải sửa bộ sinh schema ở máy chủ.
+
+### 11.7. Mô hình lưu và xung đột theo dòng
+
+Thay đổi được giữ cục bộ theo dòng trong một kho trạng thái (Zustand, `useDraftEditorStore`) gồm: bản gốc của dòng kèm ETag (từ `version` của bản ghi), bản đang sửa, trạng thái dòng (`clean`, `dirty`, `new`, `saving`, `error`, `conflict`). Lý do giữ cục bộ thay vì lưu từng ô: một bản ghi phải hợp lệ trọn vẹn mới lưu được (ví dụ thuộc tính bắt buộc), và gửi mỗi ô một lượt gọi tạo nhiều bản ghi kiểm toán vô nghĩa.
+
+Lưu xảy ra khi: người dùng rời một dòng đã sửa và dòng hợp lệ (tự lưu dòng, có thể tắt bằng công tắc "Tự lưu khi rời dòng" ở menu "⋯" của thanh công cụ, mặc định bật); bấm "Lưu tất cả" hoặc Ctrl+S; bấm "Lưu" trong biểu mẫu. Dòng mới gọi API-07-027 với `Idempotency-Key` gắn với dòng (tạo một lần, giữ khi thử lại); dòng sửa gọi API-07-028 với `If-Match` là ETag của dòng, chỉ gửi các trường thay đổi (JSON Merge Patch). "Lưu tất cả" gửi song song tối đa 4 yêu cầu một lúc; nếu số dòng chưa lưu lớn hơn 50, giao diện dùng API-07-031 (lô) chia thành các lô 500 thao tác để giảm số lượt gọi. Kết quả trả về theo từng dòng: dòng thành công về `clean` và nhận ETag mới; dòng lỗi về `error` với lỗi tại ô.
+
+Xung đột ETag xử lý theo dòng: dòng nhận 412 (ERR-07-018) chuyển `conflict`, ô có ký hiệu ⚠ ở cột trạng thái, và thanh thông báo trên lưới ghi "{n} dòng bị xung đột do người khác vừa sửa. [Xem và xử lý]". Bấm xử lý mở `CMP-ConflictDialog` cho từng dòng lần lượt, với ba cột "Trường", "Của bạn", "Hiện tại" và ba lựa chọn "Giữ của tôi (ghi đè)", "Lấy bản hiện tại", "Gộp" (gộp chỉ khả dụng khi hai bên sửa các trường khác nhau: lấy trường của bạn chồng lên bản hiện tại rồi lưu với ETag mới). Một xung đột không chặn việc lưu các dòng khác.
+
+> **Câu hỏi mở Q07-72:** Khi giao diện dùng API-07-031 để lưu lô, mỗi thao tác trong lô có mang được ETag riêng (`ifMatch` trong phần tử) và lô có trả kết quả từng phần (thành công một phần) không? Nếu lô là "tất cả hoặc không", giao diện sẽ chỉ dùng lô khi không có dòng sửa (chỉ thêm mới) và lưu dòng sửa bằng API-07-028. Câu hỏi này cũng được ghi ở Phụ lục B (B-07).
+
+### 11.8. Ngừng dùng bản ghi và mã thay thế
+
+Bản ghi đã từng phát hành không xóa được (BR-07-003), chỉ ngừng dùng. Hộp "Ngừng dùng bản ghi" gồm các trường dưới đây.
+
+| Trường | Loại | Nhãn | Bắt buộc | Kiểm tra | Mặc định |
+|---|---|---|---|---|---|
+| Bản ghi | Chỉ đọc | Bản ghi | — | — | "{mã} · {tên}" (hoặc "{n} bản ghi đã chọn") |
+| Mã thay thế | `Select mode="multiple" showSearch` tìm từ xa trong bản nháp | Mã thay thế | Không (cảnh báo khi trống) | Mỗi mã tồn tại, `ACTIVE`, khác bản ghi bị ngừng; tối đa 20 mã | rỗng |
+| Ngày ngừng dùng | `DatePicker` | Ngừng dùng từ ngày | Không | ≥ hiệu lực dự kiến của bản nháp | hiệu lực dự kiến của bản nháp |
+| Lý do | `TextArea` | Lý do | Có | 10–500 ký tự | rỗng |
+| Bản ghi con | `Radio.Group` | Các bản ghi con ({n}) | Có khi có con `ACTIVE` | — | "Ngừng dùng cả bản ghi con"; lựa chọn khác "Chuyển bản ghi con sang mã cha mới…" (mở chọn mã) |
+
+Khi để trống mã thay thế, hộp hiện cảnh báo vàng "Bản ghi ngừng dùng không có mã thay thế. Các hệ thống đang dùng mã này sẽ không biết chuyển sang mã nào." nhưng vẫn cho tiếp tục, đúng quy tắc tương tác số 3 của SRS cũ. Hộp ghi rõ "Đây là thay đổi phá vỡ". API gọi: API-07-029 cho từng bản ghi (hoặc lô qua API-07-031 khi chọn nhiều). Bản ghi ngừng dùng hiển thị tên gạch ngang, trạng thái "Ngừng dùng" và mã thay thế dạng liên kết; có hành động "Khôi phục" (đưa về `ACTIVE`) nếu việc ngừng dùng mới xảy ra trong bản nháp này.
+
+### 11.9. Hành động
+
+| Hành động | Vị trí | Hiện khi | API | Xác nhận, lý do | Kết quả, thông báo |
+|---|---|---|---|---|---|
+| Thêm bản ghi | Thanh công cụ; nút cây "Thêm con", "Thêm cùng cấp" | `PERM-07-update`, `DRAFT`, nguồn ghi được, không có tác vụ ghi đang chạy | (lưu sau) API-07-027 | Không | Dòng mới trạng thái + ở đầu lưới hoặc dưới dòng hiện tại, focus ô Mã |
+| Lưu dòng, Lưu tất cả | Thanh công cụ, biểu mẫu | Có dòng `dirty`/`new` | API-07-027, 028, 031 | Không | "Đã lưu {n} bản ghi." hoặc "Đã lưu {a} bản ghi, {b} bản ghi còn lỗi." |
+| Hủy thay đổi dòng | Menu "⋯" dòng | Dòng `dirty` | — | Không | Dòng về bản gốc |
+| Ngừng dùng | Menu "⋯", thanh hàng loạt | Bản ghi `ACTIVE` | API-07-029 / 031 | Hộp mục 11.8 | "Đã ngừng dùng bản ghi "{mã}"." |
+| Khôi phục | Menu "⋯" | Bản ghi `DEPRECATED` trong nháp này | API-07-028 `status=ACTIVE` (Phụ lục B, B-08) | Không | "Đã khôi phục bản ghi." |
+| Xóa | Menu "⋯", thanh hàng loạt | Bản ghi mới thêm trong nháp (`allowedActions` có `DELETE`, hoặc chưa từng phát hành) | API-07-030 | `CMP-ConfirmDialog`: "Xóa bản ghi "{mã}"? Bản ghi chưa từng phát hành nên sẽ bị xóa khỏi bản nháp." | "Đã xóa bản ghi." ERR-07-013 nếu đã phát hành |
+| Đổi mã cha bằng kéo thả | Cây | Danh mục phân cấp | API-07-028 `parentCode` | "Chuyển "{mã}" và {n} bản ghi con sang dưới "{mã cha mới}"? Đây là thay đổi phá vỡ với bản ghi đã phát hành." | Cây cập nhật |
+| Sửa hiệu lực dự kiến, căn cứ, ghi chú | `Popover` trên dải bản nháp | `DRAFT` | API-07-014 với `If-Match` của phiên bản | Không | "Đã lưu thông tin phiên bản." |
+| Kiểm tra hợp lệ | Đầu trang | `DRAFT` | API-07-016 (có thể chạy nền, trả `202` + theo dõi) | Không | Kết quả: "Bản nháp hợp lệ." hoặc "Có {n} lỗi trên {m} bản ghi." và bật bộ lọc "Chỉ dòng lỗi" |
+| Nhập tệp | Đầu trang | `PERM-07-update`, `DRAFT` | — | Nếu có dòng chưa lưu: "Lưu các thay đổi trước khi nhập?" [Lưu và tiếp tục] [Bỏ thay đổi] | Mở UI-07-06 |
+| So sánh và trình duyệt | Đầu trang | Có phiên bản phát hành trước hoặc bản nháp v1 | — | Như trên nếu có dòng chưa lưu | Mở UI-07-07 |
+| Hủy bản nháp | Menu "⋯" đầu trang | `DRAFT` | API-07-015 | Như UI-07-02 | Về UI-07-02 |
+| Xuất bản nháp | Menu "⋯" đầu trang | `PERM-07-export` | API-07-038 với `version=draft` | Hộp chọn định dạng | Tải hoặc chạy nền |
+
+### 11.10. Trạng thái màn
+
+| Trạng thái | Biểu hiện |
+|---|---|
+| Đang tải | Khung xương lưới 12 dòng; thanh công cụ hiện nhưng vô hiệu |
+| Phiên bản không phải bản nháp | Nếu `v` trỏ tới phiên bản `IN_REVIEW`/`APPROVED`/`PUBLISHED`: chuyển hướng tới UI-07-02 tab Bản ghi với `v`, kèm `message.info` "Phiên bản {v} không còn là bản nháp nên chỉ xem được." |
+| Bản nháp rỗng | `CMP-EmptyState`: "Bản nháp chưa có bản ghi nào. Thêm bản ghi đầu tiên hoặc nhập từ tệp Excel, CSV." với nút "Thêm bản ghi", "Nhập tệp", "Tải tệp mẫu" (API-07-032) |
+| Danh mục chỉ đọc | Không vào được màn (route kiểm tra), chuyển về UI-07-02 với thông báo ERR-07-003 |
+| Có tác vụ nhập đang ghi vào bản nháp | Mục 6.7; lưới chỉ đọc, có nút "Theo dõi tác vụ" |
+| Bản nháp vừa bị người khác trình duyệt hoặc hủy | Phát hiện khi lưu (ERR-07-004) hoặc qua làm mới định kỳ ETag phiên bản (60 giây): `Modal` "Bản nháp đã được {user} trình duyệt lúc {ts}. Các thay đổi chưa lưu của bạn ({n} dòng) không ghi được nữa. [Sao chép thay đổi] [Xem phiên bản]" |
+| Mất kết nối | Dòng chưa lưu giữ nguyên trong kho cục bộ và được lưu tạm vào `sessionStorage`; thanh thông báo "Mất kết nối. {n} thay đổi chưa lưu được giữ lại trên trình duyệt này." |
+
+### 11.11. Thông điệp riêng
+
+| Mã | Ngữ cảnh | Câu |
+|---|---|---|
+| ERR-07-008 | Lưu dòng có mã trùng | Tại ô Mã: "Mã "{mã}" đã có ở bản ghi "{tên bản ghi kia}"." kèm liên kết "Đi tới" |
+| ERR-07-009 | Lưu dòng | Lỗi tại từng ô theo `errors[]` |
+| ERR-07-010, 011 | Đổi mã cha | Tại ô Mã cha, theo bảng 5.3 |
+| ERR-07-012 | Bản ghi bổ sung HYBRID | Tại ô Mã, kèm "Ví dụ mã hợp lệ: {ví dụ sinh từ mẫu nếu được}" |
+| ERR-07-013 | Xóa | Theo bảng 5.3, nút "Ngừng dùng" |
+| ERR-07-018 | Lưu dòng | Mục 11.7 |
+| ERR-07-004 | Bản nháp đổi trạng thái | Mục 11.10 |
+| ERR-07-026 | Lô vượt mức | Không xảy ra vì giao diện tự chia lô; nếu xảy ra: "Số thay đổi vượt giới hạn một lần lưu; hệ thống sẽ chia nhỏ và lưu lại." rồi tự thử lại |
+
+### 11.12. Khả năng truy cập
+
+Lưới dùng mẫu `grid` của WAI-ARIA (không phải `table`) vì có điều hướng ô và sửa tại chỗ: phần tử gốc `role="grid"` với `aria-rowcount` (tổng số bản ghi, kể cả dòng chưa dựng do ảo hóa), `aria-colcount`, `aria-multiselectable="true"`; mỗi dòng `role="row"` có `aria-rowindex` theo vị trí tuyệt đối (để trình đọc màn hình đọc đúng "dòng 1.205 trên 1.843" dù chỉ có 40 dòng trong DOM); mỗi ô `role="gridcell"` có `aria-colindex`, ô lỗi có `aria-invalid="true"` và `aria-describedby` trỏ tới thông điệp lỗi ẩn. Focus dùng kỹ thuật tabindex lưu động (roving tabindex): chỉ ô hoạt động có `tabIndex=0`, Tab đưa focus ra khỏi lưới tới phần tử tiếp theo của trang khi đang không ở chế độ sửa. Khi vào chế độ sửa, focus chuyển vào điều khiển trong ô; Esc trả focus về ô. Trạng thái dòng (✎, +, !, ⚠) có `aria-label` "Đã sửa, chưa lưu", "Bản ghi mới", "Có lỗi", "Xung đột". Kết quả lưu được đọc qua vùng `role="status"`: "Đã lưu 3 bản ghi." hoặc vùng `role="alert"` cho lỗi: "2 bản ghi lỗi chưa lưu được." Cây bản ghi theo mẫu tree (mục 20.2). Thứ tự focus của trang: đầu trang (tiêu đề, nút hành động) → thanh công cụ → lưới hoặc cây → biểu mẫu (chế độ cây) → chân trạng thái.

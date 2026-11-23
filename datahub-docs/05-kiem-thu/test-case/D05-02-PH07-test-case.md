@@ -1156,7 +1156,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 #### TC-07-084 · Phát hành trực tiếp từ bản nháp khi không cần duyệt
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
 - **Truy vết** FR-07-016 · BR-07-026 · API-07-020 · EVT-07-05
-- **Tiền điều kiện / dữ liệu** CAT-MUC 4 bản ghi, bản nháp do U-T68-DS-NV soạn: chỉ đổi tên 0 bản ghi và thêm 0… cụ thể: sửa mô tả thuộc tính và không đổi bản ghi nào (0% thay đổi, không phá vỡ). Người phát hành U-T68-DA1.
+- **Tiền điều kiện / dữ liệu** CAT-MUC 4 bản ghi; bản nháp do U-T68-DS-NV soạn chỉ sửa mô tả một thuộc tính, không đổi bản ghi nào (0% thay đổi, không phá vỡ). Người phát hành U-T68-DA1.
 - **Bước**
   1. U-T68-DA1 gọi `POST /catalogs/MUC_DO_DVC/versions/draft:publish` với `effectiveFrom` hôm nay.
   2. Trên UI-07-07, kiểm tra nút hiển thị khi người dùng có `PERM-07-publish`.
@@ -1243,4 +1243,650 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 - **Bước**
   1. Gọi `POST /catalogs/MUC_DO_DVC/versions/draft:publish`.
 - **Mong đợi** 403-PQ (DATA_STEWARD không có `PERM-07-publish` theo D02-08; khung §4 cũ cho phép, đã bị §14 ghi đè). Gợi ý trên giao diện: chỉ có nút "Trình duyệt".
+
+### TS-07-08 · Tệp mẫu và nhập tệp theo chế độ
+
+**Mục tiêu.** Xác nhận quy trình nhập tệp hai pha (ADR-056): pha 1 tải lên, quét, phân tích luồng, kiểm tra hợp lệ và trả xem trước; pha 2 ghi vào bản nháp trong một giao dịch. Kịch bản kiểm tra từng chế độ `UPSERT`, `REPLACE`, `APPEND` bằng bảng kết quả mong đợi theo dòng, nguyên tắc tất cả hoặc không (BR-07-015), tùy chọn bỏ qua dòng lỗi, hết hạn 24 giờ và kiểm tra bản nháp không bị sửa giữa chừng (BR-07-016). Đây là nhóm thay thế LGC-DMDC-006, 007 nên được nghiệm thu kỹ.
+
+**Phủ.** FR-07-020, 021, 025; BR-07-015, 016; UC-07-03; API-07-032…037, 040; UI-07-06, 08; ERR-07-019, 020, 021; EVT-07-07; FR-00-032, 033, 054.
+
+**Tiền điều kiện chung.** CAT-LH v1 PUBLISHED 39 bản ghi; bản nháp v2 vừa tạo, chưa sửa (trừ khi ca ghi khác); thêm vào bản nháp 2 bản ghi mới `KH03.L09.P04`, `KH03.L09.P05` (chưa từng phát hành) để kiểm thử REPLACE. Người gọi U-T68-DS-NV. Hàng đợi tác vụ nền hoạt động.
+
+#### TC-07-093 · Tải tệp mẫu Excel sinh theo lược đồ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API (đọc tệp bằng Apache POI), E2E
+- **Truy vết** FR-07-020 · API-07-032 · UI-07-06 · FR-00-033 · khung §3.14
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/import-template?format=xlsx`.
+  2. Mở tệp: kiểm tra sheet, dòng 1, dòng 2, thứ tự cột, ràng buộc ô.
+- **Mong đợi** `200`, `Content-Type` xlsx, `Content-Disposition` có tên tệp `LOAI_HINH_TC_mau.xlsx`. Có đúng ba sheet `HuongDan`, `DuLieu`, `GiaTriHopLe`. Sheet `DuLieu` dòng 1 là nhãn tiếng Việt, dòng 2 là mã cột (ẩn, khóa), thứ tự `MA`, `TEN`, `MA_CHA`, `THU_TU`, `TRANG_THAI`, `MA_THAY_THE`, `HIEU_LUC_TU`, `HIEU_LUC_DEN`, rồi `viet_tat`, `cap_quan_ly`, `ngay_thanh_lap`, `so_bien_che`, `website` theo `sortOrder`. Cột `cap_quan_ly` có kiểm tra dữ liệu dạng danh sách lấy từ `GiaTriHopLe`. Thuộc tính HIDDEN không xuất hiện. Sheet `HuongDan` mô tả kiểu, bắt buộc, ràng buộc của từng cột.
+
+#### TC-07-094 · Tệp mẫu CSV và yêu cầu tệp mẫu không hợp lệ
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-020 · API-07-032 · ERR-07-001
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/import-template?format=csv`.
+  2. Gọi `GET /catalogs/KHONG_CO/import-template?format=xlsx`.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/import-template?format=pdf`.
+- **Mong đợi** Bước 1 trả CSV bắt đầu bằng BOM `EF BB BF`, dòng tiêu đề là mã cột phân cách `,`, kết thúc dòng CRLF theo RFC 4180. Bước 2 trả `404` `ERR-07-001`. Bước 3 trả `400`.
+
+#### TC-07-095 · Nhập UPSERT tệp hợp lệ, đi qua đủ trạng thái tác vụ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT, E2E
+- **Truy vết** FR-07-021 · UC-07-03 · API-07-033, 034, 036 · UI-07-06 · EVT-07-07 · LGC-DMDC-006
+- **Tiền điều kiện / dữ liệu** F-OK10.
+- **Bước**
+  1. Gọi `POST /import-jobs` multipart: `file` = F-OK10, `catalogCode` = `LOAI_HINH_TC`, `version` = `draft`, `mode` = `UPSERT`, `Idempotency-Key: imp-095`.
+  2. Thăm dò `GET /import-jobs/{jobId}` mỗi giây, ghi lại chuỗi trạng thái.
+  3. Khi `VALIDATED`, gọi `GET /import-jobs/{jobId}/rows?page=0&size=50`.
+  4. Gọi `POST /import-jobs/{jobId}:commit` thân `{"skipInvalidRows":false}`.
+  5. Gọi `GET /catalogs/LOAI_HINH_TC/versions/draft/items?size=100`.
+- **Mong đợi** Bước 1 trả `202` kèm `Location`. Chuỗi trạng thái quan sát được là `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` (có thể bỏ lỡ trạng thái trung gian ngắn, nhưng không có trạng thái ngoài chuỗi). Tóm tắt: `totalRows` 10, `validRows` 10, `errorRows` 0, `encoding` = `UTF-8`, `template` = `STANDARD`. Bước 4 trả `202`/`200`, trạng thái đi qua `COMMITTING` tới `COMMITTED`. Bản nháp có 46 bản ghi (39 + 7 mới), 3 bản ghi đổi tên. `catalog_version.origin` giữ `MANUAL` hoặc ghi nhận nguồn `IMPORT` theo SDD. EVT-07-07 phát hai lần (một với `status = VALIDATED`, một với `COMMITTED`). KT: có (IMPORT_COMMIT, số dòng). Trên UI-07-06, bốn bước của trình hướng dẫn hoàn tất và có thông báo khi tác vụ nền xong (FR-00-054, 060).
+
+#### TC-07-096 · Bảng kết quả theo dòng của chế độ UPSERT
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · EN-07-09 · API-07-035
+- **Tiền điều kiện / dữ liệu** Tệp `upsert_mix.xlsx` 6 dòng sinh có chủ đích như bảng dưới.
+- **Bước**
+  1. Tạo tác vụ `UPSERT`, chờ `VALIDATED`, đọc `GET /import-jobs/{jobId}/rows`.
+  2. Commit, đọc bản nháp.
+- **Mong đợi** Hành động xem trước và trạng thái sau commit khớp bảng sau.
+
+| Dòng | Nội dung | `action` xem trước | Sau commit |
+|---|---|---|---|
+| 3 | Mã mới `KH01.L01.P20` | `INSERT` | Bản ghi mới ACTIVE |
+| 4 | Mã `KH01` có tên khác | `UPDATE` | Tên mới |
+| 5 | Mã `KH01.L02` giống hệt bản nháp | `UNCHANGED` | Không đổi, `updated_at` không đổi |
+| 6 | Mã `KH02.L01.P01` có `TRANG_THAI` = `DEPRECATED`, `MA_THAY_THE` = `KH02.L01.P02` | `DEPRECATE` | DEPRECATED, `replacedBy` đúng |
+| 7 | Mã `kh01.l03` (chữ thường) có `viet_tat` mới | `UPDATE` | Khớp với `KH01.L03` (BR-07-002) |
+| 8 | Ô `viet_tat` trống với bản ghi đang có giá trị | `UPDATE` | Giá trị bị xóa (ô trống nghĩa là rỗng, theo quy ước ghi trong sheet `HuongDan`) |
+
+> **Câu hỏi mở Q07-82:** Ô trống trong tệp nhập UPSERT nghĩa là "xóa giá trị" hay "giữ nguyên"? TC-07-096 dòng 8 giả định "xóa giá trị", phù hợp với nguyên tắc tệp là ảnh chụp đầy đủ của bản ghi; cần FRS chốt và ghi vào sheet `HuongDan`.
+
+#### TC-07-097 · Chế độ REPLACE: bảng kết quả mong đợi
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-003 · khung §3.13
+- **Tiền điều kiện / dữ liệu** Bản nháp có 41 bản ghi (39 đã phát hành + 2 mới). F-REPL 30 bản ghi: thiếu 9 bản ghi đã phát hành và cả 2 bản ghi mới.
+- **Bước**
+  1. Tạo tác vụ `mode = REPLACE`, chờ `VALIDATED`, đọc tóm tắt và các dòng.
+  2. Commit.
+  3. Đọc bản nháp và diff với v1.
+- **Mong đợi** Tóm tắt xem trước có `toDeprecate` = 9, `toDelete` = 2 và cảnh báo "có thay đổi phá vỡ". Sau commit: bản nháp có 39 bản ghi từng phát hành (9 trong số đó DEPRECATED) + 0 bản ghi mới; 2 bản ghi mới bị xóa vật lý. Diff có 9 mục ngừng dùng, `breaking` > 0. Nếu một bản ghi thiếu trong tệp là cha của bản ghi có trong tệp và vẫn ACTIVE thì tác vụ có lỗi ở mức tệp (ERR-07-010) và không commit được (kiểm tra bằng biến thể tệp `lh_replace_parent.xlsx`).
+
+#### TC-07-098 · REPLACE gây thay đổi phá vỡ buộc phải duyệt
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-012 · ERR-07-016
+- **Tiền điều kiện / dữ liệu** CAT-MUC (`require_approval = false`), nhập REPLACE thiếu 1 bản ghi đã phát hành.
+- **Bước**
+  1. Commit tác vụ, sau đó U-T68-DA1 gọi `:publish` trên bản nháp.
+- **Mong đợi** `:publish` trả `409` `ERR-07-016`; phải qua trình duyệt.
+
+#### TC-07-099 · Chế độ APPEND: trùng mã là lỗi dòng
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-002 · ERR-07-008
+- **Tiền điều kiện / dữ liệu** Tệp `append.csv` 5 dòng: 3 mã mới, 1 mã đã có `KH01`, 1 mã `KH01.L01.P20` lặp hai lần trong tệp.
+- **Bước**
+  1. Tạo tác vụ `mode = APPEND`, chờ `VALIDATED`.
+- **Mong đợi** `validRows` = 3 (chỉ 3 mã mới; mã lặp trong tệp bị đánh lỗi ở lần xuất hiện thứ hai), `errorRows` = 2; lỗi có `code` = `ERR-07-008`, `column` = `MA`.
+
+#### TC-07-100 · Xem trước báo lỗi theo dòng và cột
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-013, 021 · API-07-035 · UI-07-06 · FR-00-032
+- **Tiền điều kiện / dữ liệu** F-ERR (12 dòng dữ liệu từ dòng 3 tới 14 của sheet `DuLieu`).
+- **Bước**
+  1. Tạo tác vụ UPSERT, chờ `VALIDATED`.
+  2. Gọi `GET /import-jobs/{jobId}/rows?valid=false`.
+  3. Trên UI-07-06 bước "Xem trước và lỗi", lọc "Chỉ dòng lỗi".
+- **Mong đợi** Trạng thái `VALIDATED` (có lỗi vẫn là xem trước thành công), `errorRows` = 9. Danh sách lỗi khớp bảng sau (số dòng là số dòng trong Excel). Giao diện hiển thị cùng thông tin, ô lỗi được tô và có chú thích.
+
+| Dòng | Cột | Mã lỗi |
+|---|---|---|
+| 3 | `ngay_thanh_lap` | ERR-07-009 |
+| 4 | `cap_quan_ly` | ERR-07-009 |
+| 5, 6 | `MA` | ERR-07-008 (cả hai dòng hoặc dòng thứ hai, theo quy ước "lần xuất hiện sau là lỗi": chỉ dòng 6) |
+| 7 | `MA_CHA` | ERR-07-010 |
+| 8, 9 | `MA_CHA` | ERR-07-010 (vòng) |
+| 10 | `MA_CHA` | ERR-07-011 |
+| 11 | `TEN` | ERR-07-009 (bắt buộc) |
+
+#### TC-07-101 · Commit tệp có dòng lỗi mà không chọn bỏ qua
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-015 · ERR-07-021 · FR-00-032
+- **Tiền điều kiện / dữ liệu** Tác vụ F-ERR ở `VALIDATED`.
+- **Bước**
+  1. Gọi `:commit` với `{"skipInvalidRows":false}`.
+  2. Đếm bản ghi bản nháp.
+- **Mong đợi** `422` `ERR-07-021`; tác vụ giữ `VALIDATED` (có thể commit lại với tùy chọn bỏ qua); bản nháp không đổi một dòng nào.
+
+#### TC-07-102 · Commit có bỏ qua dòng lỗi
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-015
+- **Tiền điều kiện / dữ liệu** Tác vụ F-ERR ở `VALIDATED`.
+- **Bước**
+  1. Gọi `:commit` với `{"skipInvalidRows":true}`.
+- **Mong đợi** `COMMITTED`; chỉ các dòng hợp lệ được ghi; tóm tắt có `committedRows`, `skippedRows`; bản ghi kiểm toán ghi rõ số dòng bỏ qua.
+
+#### TC-07-103 · Tải báo cáo lỗi và xem lịch sử tác vụ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-025 · API-07-035, 040 · UI-07-08
+- **Tiền điều kiện / dữ liệu** Tác vụ F-ERR đã chạy.
+- **Bước**
+  1. Gọi `GET /import-jobs/{jobId}/rows?valid=false&format=xlsx`.
+  2. Gọi `GET /jobs?type=IMPORT&catalogCode=LOAI_HINH_TC`.
+  3. Mở UI-07-08, lọc theo danh mục.
+- **Mong đợi** Bước 1 trả xlsx gồm dữ liệu gốc của dòng lỗi và cột "Lỗi" mô tả tiếng Việt, người dùng sửa và nhập lại được. Bước 2 trả danh sách có `status`, `mode`, `fileName`, số dòng, người tạo, thời gian. Không lộ `file_id` nội bộ hoặc đường dẫn kho đối tượng.
+
+#### TC-07-104 · Kết quả xem trước hết hạn sau 24 giờ
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** IT (đồng hồ giả lập)
+- **Truy vết** FR-07-021 · BR-07-016 · ERR-07-020
+- **Tiền điều kiện / dữ liệu** Tác vụ F-OK10 ở `VALIDATED` lúc T0.
+- **Bước**
+  1. Đặt đồng hồ T0 + 23 giờ 59 phút; gọi `GET /import-jobs/{jobId}`.
+  2. Đặt đồng hồ T0 + 24 giờ 1 phút; chạy bộ dọn tác vụ hết hạn; gọi `GET`.
+  3. Gọi `:commit`.
+- **Mong đợi** Bước 1 vẫn `VALIDATED`. Bước 2 trạng thái `EXPIRED`. Bước 3 trả `409` `ERR-07-020` (chi tiết "đã hết hạn"). Dòng `import_row` bị dọn theo lịch 7 ngày.
+
+#### TC-07-105 · Bản nháp bị sửa sau khi phân tích
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · BR-07-016 · ERR-07-020
+- **Tiền điều kiện / dữ liệu** Tác vụ F-OK10 ở `VALIDATED` (ghi nhận `version` của bản nháp lúc phân tích).
+- **Bước**
+  1. Người khác sửa một bản ghi trong bản nháp qua `PATCH`.
+  2. Gọi `:commit`.
+- **Mong đợi** `409` `ERR-07-020` (chi tiết "bản nháp đã thay đổi, vui lòng phân tích lại"). Không ghi gì. Tác vụ chuyển `FAILED` hoặc giữ `VALIDATED` có cờ `stale` theo SDD; ca này chỉ yêu cầu không commit được.
+
+#### TC-07-106 · Commit lại tác vụ đã ghi
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-020
+- **Tiền điều kiện / dữ liệu** Tác vụ TC-07-095 `COMMITTED`.
+- **Bước**
+  1. Gọi lại `:commit` không có `Idempotency-Key`.
+  2. Gọi lại `:commit` với đúng `Idempotency-Key` của lần commit trước.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-020`. Bước 2 trả lại phản hồi lần đầu (phát lại idempotent), không ghi thêm.
+
+#### TC-07-107 · Hủy tác vụ nhập đang chờ xác nhận
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-07-021 · API-07-037
+- **Tiền điều kiện / dữ liệu** Tác vụ ở `VALIDATED`.
+- **Bước**
+  1. Gọi `POST /import-jobs/{jobId}:cancel`.
+- **Mong đợi** `200`, trạng thái `CANCELLED`; tệp tải lên được đánh dấu hết hạn trong `file_object`; bản nháp không đổi.
+
+#### TC-07-108 · Commit tác vụ đã hủy
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-020
+- **Tiền điều kiện / dữ liệu** Tác vụ `CANCELLED`.
+- **Bước**
+  1. Gọi `:commit`.
+  2. Gọi `:cancel` lần nữa.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-020`. Bước 2 trả `409` `ERR-07-020` hoặc `200` không đổi trạng thái (idempotent) theo D03-04; không lỗi `500`.
+
+#### TC-07-109 · Ghép cột khi tiêu đề tệp khác khuôn mẫu
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-07-021 · UI-07-06 · EN-07-08 (`column_mapping`)
+- **Tiền điều kiện / dữ liệu** Tệp `custom_header.xlsx` có tiêu đề "Mã", "Tên loại hình", "Mã cấp trên", "Viết tắt", thêm cột "Cột thừa".
+- **Bước**
+  1. Tạo tác vụ; hệ thống đề xuất ghép cột tự động.
+  2. Trên UI-07-06 bước "Ghép cột", xác nhận đề xuất, đặt "Cột thừa" là "Bỏ qua"; gửi `columnMapping`.
+  3. Chờ `VALIDATED`.
+- **Mong đợi** Đề xuất ghép tự động đúng 4 cột theo nhãn (không dấu, không phân biệt hoa thường). Cột bỏ qua không gây lỗi. Ghép thiếu cột bắt buộc `TEN` thì nút "Tiếp tục" bị vô hiệu và API trả `422` `ERR-07-019`.
+
+#### TC-07-110 · Lỗi giữa chừng khi commit được hoàn tác toàn bộ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT (tiêm lỗi)
+- **Truy vết** FR-07-021 · BR-07-015
+- **Tiền điều kiện / dữ liệu** F-100K vào `DM_LON_100K`, tác vụ `VALIDATED`; cấu hình tiêm lỗi ném ngoại lệ ở dòng 70.000 của bước ghi.
+- **Bước**
+  1. Gọi `:commit`.
+  2. Đếm bản ghi bản nháp; kiểm tra outbox.
+- **Mong đợi** Tác vụ `FAILED` với `errorMessage` không lộ chi tiết kỹ thuật; bản nháp đúng như trước commit (0 dòng được ghi); EVT-07-07 phát với `status = FAILED`; không có sự kiện nào khác.
+
+### TS-07-09 · Nhập tệp: định dạng, mã hóa, khuôn Aita, tạo danh mục từ tệp và tệp bất thường
+
+**Mục tiêu.** Xác nhận bộ phân tích tệp nhận đúng các định dạng và mã hóa đã cam kết (xlsx, CSV UTF-8 có và không BOM, UTF-16 LE/BE), hỗ trợ khuôn hệ cũ Aita (ô A2 là tên danh mục, dòng 4 từ ô B4 là tên thuộc tính, từ dòng 5 là bản ghi, theo HDSD Aita mục 4.3), tạo danh mục mới từ tệp, và từ chối an toàn các tệp bất thường (giả mạo đuôi, nhiễm mã độc, bom nén, vượt giới hạn, thiếu cột). Kịch bản thay thế LGC-DMDC-005.
+
+**Phủ.** FR-07-021, 022; UC-07-04; API-07-033, 034, 036; UI-07-06; ERR-07-002, 009, 019; EN-07-19 `file_object` (`scan_status`).
+
+**Tiền điều kiện chung.** Người gọi U-T68-DS-NV; dịch vụ quét mã độc (ClamAV qua cơ chế DD-12) hoạt động ở SIT, được giả lập ở CI.
+
+#### TC-07-111 · Nhập CSV UTF-8 có BOM
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · LGC-DMDC-007
+- **Tiền điều kiện / dữ liệu** F-OK10-CSV; bản nháp CAT-LH.
+- **Bước**
+  1. Tạo tác vụ UPSERT, chờ `VALIDATED`, commit.
+- **Mong đợi** `encoding` = `UTF-8`; kết quả giống TC-07-095 (cùng dữ liệu, khác định dạng); tên có dấu tiếng Việt đúng từng ký tự.
+
+#### TC-07-112 · Nhập CSV UTF-8 không BOM có ký tự tổ hợp
+- **Loại** Dương, Biên · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-021 · khung §3.13
+- **Tiền điều kiện / dữ liệu** F-NOBOM.
+- **Bước**
+  1. Tạo tác vụ, chờ `VALIDATED`, commit.
+  2. Tìm `GET /catalogs/LOAI_HINH_TC/versions/draft/items?q=dong hoa`.
+- **Mong đợi** `encoding` = `UTF-8` (tự nhận dạng không cần BOM). Tên được chuẩn hóa về NFC khi lưu ("Phường Đông Hòa" dạng NFD lưu thành NFC); tìm không dấu ra kết quả.
+
+#### TC-07-113 · Tạo danh mục từ tệp xlsx khuôn Aita
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-022 · UC-07-04 · API-07-033, 036 · UI-07-06 · LGC-DMDC-005
+- **Tiền điều kiện / dữ liệu** F-AITA-X (25 bản ghi; cột B là "Mã nghề").
+- **Bước**
+  1. Gọi `POST /import-jobs` với `mode = CREATE_CATALOG`, `template = LEGACY_AITA`, `newCatalogCode` = `TC113_NGHE`, `codeColumn` = "Mã nghề", `nameColumn` = "Tên nghề".
+  2. Chờ `VALIDATED`; xem lược đồ đề xuất trong tóm tắt.
+  3. Commit.
+  4. Gọi `GET /catalogs/TC113_NGHE` và `.../versions/draft/attributes`, `.../items`.
+- **Mong đợi** Tên danh mục đề xuất lấy từ ô A2 "Danh mục nghề nghiệp (giả lập)". Thuộc tính lấy từ dòng 4 bắt đầu ô B4; cột A (số thứ tự) bị bỏ qua. Thuộc tính không phải mã, tên ("Ghi chú") được tạo kiểu `STRING` với mã sinh tự động dạng không dấu `ghi_chu`, `legacyFieldId` rỗng. Có 25 bản ghi từ dòng 5. Danh mục ở `DRAFT`, v1 `DRAFT` `origin = IMPORT`. EVT-07-01 và EVT-07-07 phát. Giao diện chuyển tới UI-07-02 của danh mục mới (tương đương hành vi Aita chuyển sang màn chỉnh sửa).
+
+#### TC-07-114 · Khuôn Aita CSV mã hóa UTF-16 LE và BE
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, UT
+- **Truy vết** FR-07-022 · LGC-DMDC-005
+- **Tiền điều kiện / dữ liệu** F-AITA-U16, F-AITA-U16BE (phân cách tab).
+- **Bước**
+  1. Tạo tác vụ CREATE_CATALOG LEGACY_AITA cho từng tệp (mã `TC114_LE`, `TC114_BE`).
+  2. Commit và so sánh nội dung hai danh mục với TC-07-113.
+- **Mong đợi** `encoding` lần lượt `UTF-16LE`, `UTF-16BE`; phân cách tab được tự nhận dạng; nội dung ba danh mục giống nhau từng ký tự.
+
+#### TC-07-115 · Tệp hỏng không phân tích được
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-019
+- **Tiền điều kiện / dữ liệu** `truncated.xlsx` (xlsx cắt mất 30% cuối).
+- **Bước**
+  1. Tạo tác vụ, thăm dò trạng thái.
+- **Mong đợi** Trạng thái đi `SCANNING` → `PARSING` → `FAILED`; `errorMessage` tiếng Việt "Tệp không đọc được…", mã `ERR-07-019`. EVT-07-07 `status = FAILED`. Không có dòng `import_row` nào còn lại.
+
+#### TC-07-116 · Tệp giả mạo đuôi
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-019 · DD-12 (`content_type` theo nội dung)
+- **Tiền điều kiện / dữ liệu** F-FAKE.
+- **Bước**
+  1. Gửi `POST /import-jobs` với `file` = F-FAKE, khai báo `Content-Type` = xlsx.
+- **Mong đợi** Bị từ chối ngay khi tải lên với `422` `ERR-07-019` (chi tiết "nội dung tệp không khớp định dạng") hoặc tác vụ `FAILED` trước bước phân tích; tệp không được chuyển cho bộ phân tích; `file_object.content_type` ghi kiểu thực tế phát hiện.
+
+#### TC-07-117 · Vượt giới hạn số dòng và kích thước
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-019 · khung §3.14
+- **Tiền điều kiện / dữ liệu** F-200K1, F-51MB, biến thể đúng 200.000 dòng `big_200000.csv`, đúng 50 MB `big_50mb.csv`.
+- **Bước**
+  1. Gửi lần lượt bốn tệp.
+- **Mong đợi** Tệp 51 MB bị APISIX hoặc ứng dụng từ chối với `413`/`422` `ERR-07-019` trước khi đọc hết thân yêu cầu. Tệp 200.001 dòng: tác vụ `FAILED` với `ERR-07-019` ngay khi bộ đọc luồng gặp dòng 200.001 (không đọc hết tệp mới báo). Hai tệp biên được chấp nhận và tới `VALIDATED`.
+
+#### TC-07-118 · Thiếu cột bắt buộc
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-021 · ERR-07-019
+- **Tiền điều kiện / dữ liệu** F-MISSCOL.
+- **Bước**
+  1. Tạo tác vụ UPSERT không gửi `columnMapping`.
+- **Mong đợi** Tác vụ `FAILED` hoặc `422` `ERR-07-019` với chi tiết "thiếu cột TEN".
+
+#### TC-07-119 · Tệp nhiễm mã độc bị chặn ở bước quét
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API (SIT)
+- **Truy vết** FR-07-021 · DD-12 (`scan_status`) · ERR-07-019
+- **Tiền điều kiện / dữ liệu** F-EICAR.
+- **Bước**
+  1. Tạo tác vụ, thăm dò trạng thái.
+- **Mong đợi** Trạng thái `SCANNING` → `FAILED`; `file_object.scan_status = INFECTED`; tệp bị cách ly hoặc xóa khỏi kho đối tượng; không có dòng `import_row`; có sự kiện an ninh gửi PH-13 kèm tên tệp và người tải.
+
+#### TC-07-120 · Bom nén xlsx
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-021 · ERR-07-019 · NFR-07-012
+- **Tiền điều kiện / dữ liệu** F-ZIPBOMB.
+- **Bước**
+  1. Tạo tác vụ; theo dõi bộ nhớ pod `dh-data`.
+- **Mong đợi** Tác vụ `FAILED` với `ERR-07-019` (vượt tỉ lệ nén hoặc kích thước giải nén tối đa, ví dụ `ZipSecureFile.setMinInflateRatio` của POI); bộ nhớ heap không vượt 2 GB, pod không khởi động lại; các yêu cầu tra cứu song song không bị ảnh hưởng (p95 không vượt 2 lần nền).
+
+#### TC-07-121 · Tạo danh mục từ tệp khuôn chuẩn có sheet khai báo thuộc tính
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-022 · khung §3.13
+- **Tiền điều kiện / dữ liệu** F-NEWCAT.
+- **Bước**
+  1. Tạo tác vụ `mode = CREATE_CATALOG`, `template = STANDARD`, `newCatalogCode` = `TC121_DM`; commit.
+- **Mong đợi** Danh mục mới có thuộc tính đúng kiểu và ràng buộc theo sheet `ThuocTinh`; bản ghi đúng; kiểm tra hợp lệ theo lược đồ mới được áp dụng ngay ở pha 1.
+
+#### TC-07-122 · Khuôn Aita có tên thuộc tính trống hoặc tên danh mục trùng
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-022 · ERR-07-019, ERR-07-002
+- **Tiền điều kiện / dữ liệu** F-AITA-B4; F-AITA-X với `newCatalogCode` = `LOAI_HINH_TC` (đã tồn tại).
+- **Bước**
+  1. Tạo tác vụ CREATE_CATALOG LEGACY_AITA với F-AITA-B4.
+  2. Tạo tác vụ với F-AITA-X và mã trùng.
+- **Mong đợi** Bước 1: `FAILED` `ERR-07-019` "Ô C4 tên thuộc tính không được để trống" (giữ đúng ràng buộc của Aita). Bước 2: `409` `ERR-07-002` ngay khi tạo tác vụ hoặc khi commit.
+
+#### TC-07-123 · Giá trị quá dài
+- **Loại** Biên, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-013, 021 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** F-LONG: `TEN` 255 ký tự (biên), `TEN` 256 ký tự, `TEN` 2.000 ký tự, `viet_tat` 21 ký tự.
+- **Bước**
+  1. Tạo tác vụ, chờ `VALIDATED`.
+- **Mong đợi** Dòng `TEN` 255 ký tự hợp lệ; các dòng còn lại lỗi `ERR-07-009` đúng cột. Giới hạn độ dài `name` theo kiểu T-NAME của D00-01 (giả định 255; đối chiếu D00-01 §5).
+
+#### TC-07-124 · Ô chứa công thức được lưu nguyên văn, không thực thi
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021, 024 · OWASP ASVS V5 (đầu ra)
+- **Tiền điều kiện / dữ liệu** F-FORMULA.
+- **Bước**
+  1. Tạo tác vụ UPSERT, xem trước.
+  2. Commit, đọc bản ghi qua API.
+- **Mong đợi** Xem trước gắn cảnh báo "giá trị bắt đầu bằng ký tự công thức" (không phải lỗi). Giá trị lưu đúng nguyên văn trong CSDL (không tính toán, không gọi mạng). Phần xuất ra tệp được kiểm thử ở TC-07-308.
+
+### TS-07-10 · Nhập bản ghi qua API theo lô, idempotency
+
+**Mục tiêu.** Xác nhận HTTT có scope `rdm.write` ghi được lô thao tác (thêm, sửa, ngừng dùng) vào bản nháp qua API-07-031 với giới hạn 5.000 thao tác, theo kiểu tất cả hoặc không, idempotent theo `Idempotency-Key`. Thay thế LGC-DMDC-008 (Aita có ba API riêng thêm tên danh mục, thêm thuộc tính, thêm bản ghi).
+
+**Phủ.** FR-07-023; UC-07-05; API-07-031; ERR-07-003, 004, 022, 026; tham số `07.rdm.batch-max-ops`.
+
+**Tiền điều kiện chung.** CAT-LH có bản nháp; người gọi APP-T68-WRITE (scope `rdm.write`).
+
+#### TC-07-125 · Lô thao tác hợp lệ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · API-07-031 · UC-07-05 · LGC-DMDC-008
+- **Tiền điều kiện / dữ liệu** Lô 100 thao tác: 60 `upsert` mới, 30 `upsert` sửa, 10 `deprecate`.
+- **Bước**
+  1. Gọi `POST /catalogs/LOAI_HINH_TC/versions/draft/items:batch` với `Idempotency-Key: b-125`, thân `{"operations":[{"op":"upsert","item":{...}},{"op":"deprecate","code":"...","replacedBy":[...]}]}`.
+- **Mong đợi** `200`, kết quả từng thao tác theo chỉ số (`index`, `code`, `result` ∈ `INSERTED`/`UPDATED`/`DEPRECATED`/`UNCHANGED`). Bản nháp phản ánh đủ 100 thao tác. KT: có một bản ghi kiểm toán cho lô (chủ thể là HTTT `HT-NOIVU`, số thao tác). EVT: không (chỉ phát khi phát hành).
+
+#### TC-07-126 · Lô vượt kích thước tối đa
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · ERR-07-026
+- **Tiền điều kiện / dữ liệu** Lô 5.000 và 5.001 thao tác.
+- **Bước**
+  1. Gửi lô 5.000.
+  2. Gửi lô 5.001.
+- **Mong đợi** Bước 1 trả `200`. Bước 2 trả `400` `ERR-07-026` trước khi xử lý bất kỳ thao tác nào.
+
+#### TC-07-127 · Phát lại cùng khóa idempotent và dùng lại khóa với nội dung khác
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · ERR-07-022
+- **Tiền điều kiện / dữ liệu** Đã chạy TC-07-125 với `b-125`.
+- **Bước**
+  1. Gửi lại nguyên văn lô với `b-125`.
+  2. Gửi lô khác nội dung với `b-125`.
+  3. Gửi hai yêu cầu cùng khóa mới `b-127` đồng thời.
+- **Mong đợi** Bước 1 trả phản hồi giống lần đầu, không ghi lại, không thêm kiểm toán. Bước 2 trả `409` `ERR-07-022`. Bước 3: một yêu cầu được xử lý, yêu cầu kia nhận cùng kết quả hoặc `409` "đang xử lý" theo D03-04; bản nháp chỉ chịu tác động một lần.
+
+#### TC-07-128 · Lô có thao tác lỗi bị từ chối toàn bộ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · BR-07-015 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** Lô 50 thao tác, thao tác chỉ số 17 sai kiểu `ngay_thanh_lap`, chỉ số 42 có mã cha không tồn tại.
+- **Bước**
+  1. Gửi lô.
+- **Mong đợi** `422` `ERR-07-009`, `errors` có `index` 17 và 42 kèm mã lỗi con (ERR-07-009, ERR-07-010). Không thao tác nào được ghi.
+
+#### TC-07-129 · Lô ghi vào phiên bản không phải bản nháp hoặc danh mục chỉ đọc
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-023 · ERR-07-004, ERR-07-003
+- **Tiền điều kiện / dữ liệu** CAT-LH v1 PUBLISHED; `GIOI_TINH` COMMON.
+- **Bước**
+  1. Gửi lô vào `/catalogs/LOAI_HINH_TC/versions/1/items:batch`.
+  2. Gửi lô vào `/catalogs/GIOI_TINH/versions/draft/items:batch`.
+- **Mong đợi** Bước 1 trả `409` `ERR-07-004`. Bước 2 trả `403` `ERR-07-003`.
+
+#### TC-07-130 · Ứng dụng thiếu scope ghi
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · khung §14.2 (scope)
+- **Tiền điều kiện / dữ liệu** APP-T68-READ (chỉ `rdm.read`), APP-T68-NOSCOPE.
+- **Bước**
+  1. Mỗi ứng dụng gửi lô hợp lệ.
+  2. APP-T68-WRITE gọi `POST /catalogs` (API quản trị tạo danh mục).
+- **Mong đợi** Bước 1 trả 403-PQ (thiếu scope). Bước 2 trả 403-PQ (scope `rdm.write` chỉ cho nhập lô vào bản nháp, không cho thao tác quản trị khác).
+
+### TS-07-11 · Xuất danh mục và lịch sử tác vụ
+
+**Mục tiêu.** Xác nhận xuất một phiên bản ra Excel, CSV, JSON đúng dữ liệu, đúng mã hóa; xuất lớn chạy nền với liên kết tải có hạn 24 giờ; mọi lần xuất được ghi kiểm toán. Thay thế LGC-DMDC-013, 014.
+
+**Phủ.** FR-07-024, 025; UC-07-08; API-07-038…040; UI-07-02, 08; ERR-07-006; EVT-07-08; FR-00-030, 031, 040.
+
+**Tiền điều kiện chung.** CAT-LH v1, v2 PUBLISHED; CAT-BIG 100.000 bản ghi; người gọi U-T68-VW.
+
+#### TC-07-131 · Xuất Excel đồng bộ cho danh mục nhỏ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-024 · API-07-038 · UI-07-02 · LGC-DMDC-013
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gọi `POST /export-jobs` thân `{"catalogCode":"LOAI_HINH_TC","version":"current","format":"XLSX"}` không có `Prefer: respond-async`.
+  2. Trên UI-07-02, chọn "Xuất" → "Excel".
+- **Mong đợi** `200` trả trực tiếp tệp xlsx; cấu trúc giống tệp mẫu (để nhập lại được), dữ liệu từ dòng 3, đủ 39 (hoặc số hiện hành) bản ghi, cột theo `sortOrder`. KT: có (EXPORT, số dòng, định dạng). EVT: không (xuất đồng bộ không phát EVT-07-08 theo giả định; xem Q07-83).
+
+#### TC-07-132 · Xuất CSV UTF-8 có BOM và JSON
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-024 · LGC-DMDC-014 · FR-00-030
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Xuất `format = CSV`.
+  2. Xuất `format = JSON`.
+  3. Nhập lại tệp CSV vừa xuất vào một bản nháp bằng UPSERT.
+- **Mong đợi** CSV bắt đầu BOM, mở đúng tiếng Việt trên Excel; JSON là mảng đối tượng theo lược đồ API-07-048. Bước 3: mọi dòng `UNCHANGED` (khứ hồi xuất, nhập không mất dữ liệu).
+
+#### TC-07-133 · Xuất lớn chạy nền
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-024 · API-07-038, 039 · EVT-07-08 · FR-00-031
+- **Tiền điều kiện / dữ liệu** CAT-BIG.
+- **Bước**
+  1. Gọi `POST /export-jobs` với `format = XLSX`.
+  2. Thăm dò `GET /export-jobs/{jobId}`.
+  3. Tải tệp qua `downloadUrl`.
+- **Mong đợi** Bước 1 trả `202` (vượt 10.000 dòng tự chuyển nền dù không có `Prefer`). Tác vụ xong trong ≤ 60 giây (NFR-07-006), `downloadUrl` là URL ký sẵn có `expiresAt` = thời điểm xong + 24 giờ. Tệp đủ 100.000 dòng. EVT-07-08 phát một lần. Có thông báo trong ứng dụng cho người tạo.
+
+#### TC-07-134 · Liên kết tải hết hạn
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-024 · FR-00-031
+- **Tiền điều kiện / dữ liệu** Tác vụ xuất TC-07-133.
+- **Bước**
+  1. Sau 24 giờ 1 phút (đồng hồ giả lập; URL ký với thời hạn rút ngắn ở CI), tải `downloadUrl`.
+  2. Gọi `GET /export-jobs/{jobId}`.
+- **Mong đợi** Bước 1 bị kho đối tượng từ chối (`403`). Bước 2 cho trạng thái hết hạn, không còn `downloadUrl`; người dùng phải xuất lại.
+
+#### TC-07-135 · Xuất phiên bản không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-024 · ERR-07-006
+- **Tiền điều kiện / dữ liệu** CAT-LH không có v9.
+- **Bước**
+  1. Gọi `POST /export-jobs` với `version` = 9.
+- **Mong đợi** `404` `ERR-07-006`.
+
+#### TC-07-136 · Xuất phiên bản lịch sử, không xuất thuộc tính ẩn
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-024 · FR-07-006
+- **Tiền điều kiện / dữ liệu** v2 có thuộc tính `website` HIDDEN (TC-07-028).
+- **Bước**
+  1. Xuất v1 và v2 dạng CSV.
+- **Mong đợi** Tệp v1 có cột `website`, đúng dữ liệu v1. Tệp v2 không có cột `website`.
+
+#### TC-07-137 · Kiểm toán xuất và ứng dụng thiếu scope
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-024, 050 · FR-00-040 · NFR-07-015
+- **Tiền điều kiện / dữ liệu** U-T68-VW, APP-T68-NOSCOPE.
+- **Bước**
+  1. U-T68-VW xuất CAT-LH; đọc `GET /catalogs/LOAI_HINH_TC/history`.
+  2. APP-T68-NOSCOPE gọi `POST /export-jobs`.
+- **Mong đợi** Bước 1: lịch sử có mục EXPORT với người, thời điểm, định dạng, phiên bản. Bước 2 trả 403-PQ.
+
+> **Câu hỏi mở Q07-83:** EVT-07-08 có phát cho xuất đồng bộ (≤ 10.000 dòng) hay chỉ cho tác vụ nền? TC-07-131 giả định chỉ tác vụ nền.
+
+### TS-07-12 · Tra cứu khai thác qua API
+
+**Mục tiêu.** Xác nhận các API khai thác mà HTTT dùng hằng ngày: tra một mã, tra lô, lấy toàn bộ theo con trỏ với ETag, lấy cây, tìm không dấu, lấy thay đổi (delta), lấy lược đồ và ảnh chụp. Đây là nhóm có lưu lượng lớn nhất và là nơi thay thế LGC-DMDC-015; kết quả phải đúng theo thời điểm (BR-07-008) và đúng trạng thái ngừng dùng (BR-07-004).
+
+**Phủ.** FR-07-026…031, 033; BR-07-004, 008; UC-07-09; API-07-041…046, 048, 049; ERR-07-001, 006, 007, 026.
+
+**Tiền điều kiện chung.** CAT-LH v1 (hiệu lực từ 2025-01-01 tới 2026-12-01) và v2 (từ 2026-12-01); `DVHC` giả lập v1…v3; đồng hồ 2026-11-21; người gọi APP-T68-READ (scope `rdm.read`) trừ khi ghi khác.
+
+#### TC-07-138 · Tra một mã tại thời điểm hiện tại
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-026 · API-07-042 · UC-07-09 · LGC-DMDC-015 · AT-07-001 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/items/KH01.L01.P01`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/items/kh01.l01.p01`.
+- **Mong đợi** Cả hai `200`, cùng dữ liệu: `code`, `name`, `parentCode`, `path`, `depth`, `levelName`, `status`, `attrs` (không có thuộc tính HIDDEN), `versionNo` = 1, `validFrom`, `validTo`. Có header `ETag` và `Cache-Control: max-age` ngắn. KT: không (thao tác đọc khai thác chỉ ghi chỉ số `rdm_lookup_total`).
+
+#### TC-07-139 · Tra mã không tồn tại
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-026 · ERR-07-007
+- **Tiền điều kiện / dữ liệu** Như chung.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/items/KHONG_CO`.
+  2. Gọi `GET /catalogs/KHONG_CO/items/A`.
+- **Mong đợi** Bước 1 trả `404` `ERR-07-007`. Bước 2 trả `404` `ERR-07-001`. Chỉ số `rdm_lookup_total{result="not_found"}` tăng.
+
+#### TC-07-140 · Tra mã theo thời điểm quá khứ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-026 · BR-07-008 · AT-07-002 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** `DVHC` giả lập.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/items/99001?at=2024-06-01`.
+  2. Gọi `GET /catalogs/DVHC/items/971?at=2024-06-01`.
+  3. Gọi `GET /catalogs/DVHC/items/971?at=2025-07-01`.
+- **Mong đợi** Bước 1 trả bản ghi xã `99001` thuộc huyện `971`, `versionNo` = 1. Bước 2 trả huyện `971` cấp "Huyện". Bước 3 trả `200` với `status = DEPRECATED` và `replacedBy` theo sự kiện ABOLISH (hoặc `404` `ERR-07-007` nếu SDD quy ước đơn vị giải thể không còn trong phiên bản mới; ca kiểm thử bám quy ước của SDD, mặc định là trả DEPRECATED theo BR-07-004).
+
+#### TC-07-141 · Tra mã đã ngừng dùng trả trạng thái và mã thay thế
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-026, 019 · BR-07-004 · AT-07-003 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** `DVHC` v2 hiện hành với `99001` DEPRECATED `replacedBy = ["99101"]`; đồng hồ 2025-08-01.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/items/99001`.
+- **Mong đợi** `200`, `status = DEPRECATED`, `replacedBy = ["99101"]`, header cảnh báo `Deprecation` hoặc trường `warning` theo D03-04.
+
+#### TC-07-142 · Thời điểm tra không hợp lệ hoặc trước mọi phiên bản
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-026 · BR-07-008 · ERR-07-007
+- **Tiền điều kiện / dữ liệu** CAT-LH v1 hiệu lực từ 2025-01-01.
+- **Bước**
+  1. Gọi `?at=2026-13-01`.
+  2. Gọi `?at=21/11/2026`.
+  3. Gọi `?at=2024-12-31`.
+  4. Gọi `?at=2025-01-01` (biên dưới, khoảng đóng bên trái).
+- **Mong đợi** Bước 1, 2 trả `400`. Bước 3 trả `404` `ERR-07-007`. Bước 4 trả `200`.
+
+#### TC-07-143 · Tra lô 500 mã
+- **Loại** Dương, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-027 · API-07-043 · AT-07-020 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** 500 mã của `DVHC` chính thức, trong đó 3 mã không tồn tại, 2 mã lặp, 1 mã chữ thường.
+- **Bước**
+  1. Gọi `POST /catalogs/DVHC/items:lookup` thân `{"codes":[...500 mã...],"at":"2026-11-21"}`.
+- **Mong đợi** `200`; kết quả giữ đúng thứ tự đầu vào; mã không tồn tại có `found = false` (không làm hỏng cả lô); mã lặp trả hai lần; mã chữ thường khớp.
+
+#### TC-07-144 · Tra lô vượt 500 mã
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-027 · ERR-07-026
+- **Tiền điều kiện / dữ liệu** Danh sách 501 mã; danh sách rỗng.
+- **Bước**
+  1. Gửi 501 mã.
+  2. Gửi `codes` rỗng.
+- **Mong đợi** Bước 1 trả `400` `ERR-07-026`. Bước 2 trả `400` lỗi kiểm tra hợp lệ.
+
+#### TC-07-145 · Lấy toàn bộ bản ghi theo con trỏ và chọn trường
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-028 · API-07-041
+- **Tiền điều kiện / dữ liệu** CAT-BIG 100.000 bản ghi.
+- **Bước**
+  1. Gọi `GET /catalogs/DM_LON_100K/items?limit=1000&fields=code,name,attrs.a1`.
+  2. Lặp theo `nextCursor` tới hết.
+  3. Giữa chừng (sau trang 50), phát hành phiên bản mới của CAT-BIG.
+- **Mong đợi** Mỗi trang ≤ 1.000 bản ghi, chỉ gồm trường yêu cầu. Tổng 100.000 bản ghi, không trùng, không sót, thứ tự ổn định theo `sortOrder, code`. Con trỏ mã hóa `versionId`, nên sau bước 3 các trang còn lại vẫn thuộc phiên bản cũ (ảnh chụp nhất quán).
+
+#### TC-07-146 · ETag và If-None-Match
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-028 · API-07-041, 042 · AT-07-022 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/items?limit=1000`, ghi `ETag`.
+  2. Gọi lại với `If-None-Match` = ETag.
+  3. Phát hành phiên bản mới có hiệu lực hôm nay rồi gọi lại bước 2.
+- **Mong đợi** Bước 2 trả `304` không thân. Bước 3 trả `200` với ETag mới.
+
+#### TC-07-147 · Tham số khai thác không hợp lệ
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-028 · API-07-041
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gọi `?limit=1000` và `?limit=1001`.
+  2. Gọi `?cursor=` là chuỗi giả mạo, và con trỏ hợp lệ của danh mục khác.
+  3. Gọi `?fields=code,khong_co`.
+- **Mong đợi** `limit=1000` trả `200`; `limit=1001` trả `400`. Con trỏ giả mạo hoặc của danh mục khác trả `400` (con trỏ được ký, không giải mã được nội dung). `fields` có trường không tồn tại trả `400`.
+
+#### TC-07-148 · Bao gồm hoặc loại bản ghi ngừng dùng
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-028 · BR-07-004
+- **Tiền điều kiện / dữ liệu** `DVHC` v2 có 3 xã DEPRECATED.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/items?at=2025-08-01`.
+  2. Gọi thêm `&includeDeprecated=true`.
+- **Mong đợi** Bước 1 không có bản ghi DEPRECATED. Bước 2 có thêm 3 bản ghi, kèm `replacedBy`.
+
+#### TC-07-149 · Lấy cây và nhánh con
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-029 · API-07-044 · LGC-DMDC-002
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/tree`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/tree?root=KH01&depth=1`.
+  3. Gọi `GET /catalogs/DVHC/tree?root=97&at=2024-06-01`.
+- **Mong đợi** Bước 1 trả cây đủ 3 khối, lồng `children`, sắp theo `sortOrder`. Bước 2 trả `KH01` và đúng các con trực tiếp, con có cờ `hasChildren`. Bước 3 trả cây 3 cấp lịch sử (tỉnh, huyện, xã).
+
+#### TC-07-150 · Cây trên danh mục không phân cấp hoặc gốc không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-029, 018 · ERR-07-007
+- **Tiền điều kiện / dữ liệu** CAT-MUC phẳng.
+- **Bước**
+  1. Gọi `GET /catalogs/MUC_DO_DVC/tree`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/tree?root=KHONG_CO`.
+  3. Gọi `?depth=11`.
+- **Mong đợi** Bước 1 trả `200` với danh sách phẳng (mọi nút cấp 1) hoặc `400` theo D03-04; không lỗi `500`. Bước 2 trả `404` `ERR-07-007`. Bước 3 trả `400`.
+
+#### TC-07-151 · Tìm kiếm không dấu
+- **Loại** Dương, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-030 · API-07-045 · FR-00-020 · AT-07-019 (SRS cũ)
+- **Tiền điều kiện / dữ liệu** `DVHC` chính thức.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/items:search?q=ha noi`.
+  2. Gọi `?q=HÀ NỘI`, `?q=đa`, `?q=` rỗng.
+  3. Gọi `?q=a&limit=51`.
+- **Mong đợi** Bước 1 trả "Thành phố Hà Nội" ở đầu (xếp hạng theo độ khớp). Bước 2: hai truy vấn đầu cho cùng kết quả; `q=đa` khớp cả "Đà" và "Đa"; `q` rỗng trả `400`. Bước 3 trả `400`.
+
+#### TC-07-152 · Lấy thay đổi kể từ một phiên bản
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-031 · API-07-046
+- **Tiền điều kiện / dữ liệu** `DVHC` giả lập v1…v3.
+- **Bước**
+  1. Gọi `GET /catalogs/DVHC/changes?sinceVersion=1`.
+  2. Gọi `?sinceVersion=3` (bằng phiên bản hiện hành).
+- **Mong đợi** Bước 1 trả `toVersion` = 3 và danh sách thay đổi gộp (mỗi mã một mục trạng thái cuối) có `changeType`, kèm `successions` liên quan. Bước 2 trả danh sách rỗng, `toVersion` = 3.
+
+#### TC-07-153 · Delta với phiên bản không hợp lệ
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-031 · ERR-07-006
+- **Tiền điều kiện / dữ liệu** `DVHC` có v1…v3.
+- **Bước**
+  1. Gọi `?sinceVersion=9`.
+  2. Gọi không có `sinceVersion`.
+- **Mong đợi** Bước 1 trả `404` `ERR-07-006`. Bước 2 trả `400`.
+
+#### TC-07-154 · Liệt kê danh mục và lấy lược đồ qua API
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-033 · API-07-001, 048
+- **Tiền điều kiện / dữ liệu** APP-T68-READ.
+- **Bước**
+  1. Gọi `GET /catalogs?status=ACTIVE`.
+  2. Gọi `GET /catalogs/LOAI_HINH_TC/schema`.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/schema?version=1`.
+- **Mong đợi** Bước 1 trả danh mục ACTIVE mà HTTT được phép thấy (không có `TRAM_QUAN_TRAC` RESTRICTED vì `HT-HOTICH` chưa được cấp quyền, xem TS-07-23). Bước 2 trả metadata (mã, tên, phân cấp, tên cấp, thuộc tính, `queryable`) và JSON Schema của phiên bản hiệu lực. Bước 3 trả lược đồ v1.
+
+#### TC-07-155 · Lược đồ của phiên bản hoặc danh mục không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-033 · ERR-07-006, ERR-07-001
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/schema?version=9`.
+  2. Gọi `GET /catalogs/KHONG_CO/schema`.
+  3. APP-T68-READ gọi `GET /catalogs/LOAI_HINH_TC/schema?version=draft`.
+- **Mong đợi** Bước 1 `404` `ERR-07-006`. Bước 2 `404` `ERR-07-001`. Bước 3 `404` `ERR-07-006` (bản nháp không lộ ra API khai thác).
+
+#### TC-07-156 · Tải ảnh chụp phiên bản
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-028 · API-07-049 · ADR-053
+- **Tiền điều kiện / dữ liệu** CAT-LH v1 có ảnh chụp.
+- **Bước**
+  1. Gọi `GET /catalogs/LOAI_HINH_TC/snapshots/1?format=json`, không theo chuyển hướng.
+  2. Theo `Location`, tải và giải nén.
+  3. Gọi `GET /catalogs/LOAI_HINH_TC/snapshots/draft`.
+- **Mong đợi** Bước 1 trả `302` tới URL ký sẵn hạn ngắn của bucket `dh-t68-rdm`. Bước 2 cho tệp có SHA-256 khớp metadata và nội dung khớp `GET .../items` của v1. Bước 3 trả `404` `ERR-07-006`.
 
