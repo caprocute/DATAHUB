@@ -1,0 +1,1075 @@
+# D03-04-PH04 · AsyncAPI PH-04. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-04 Lõi tích hợp — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-04-01…14 (D03-04-PH04 §4, FRS §8.2).
+
+
+    EVT-04-01…10 ghi vào outbox `ph04.outbox` trong cùng giao dịch, Debezium đưa lên Kafka, CloudEvents 1.0 chế độ nhị phân (tiêu đề `ce_*`).
+    EVT-04-11…13 là topic hệ thống `dh.*`, chỉ `dh-integration` và `dh-runtime` có ACL; EVT-04-11 có chữ ký Ed25519 và hạn 60 giây. EVT-04-14
+    do runtime phát, PH-13 sở hữu. Sự kiện không mang định nghĩa luồng hay thân bản tin. Tương thích: chỉ thêm trường tùy chọn trong `v1`; thay
+    đổi phá vỡ sang `v2`, phát song song ≥ 6 tháng (Apicurio BACKWARD). Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  flowCreated:
+    address: '{tenant}.integration.flow.created.v1'
+    title: EVT-04-01
+    description: Tạo luồng (FR-04-003, FR-04-005).
+    messages:
+      flowCreated:
+        $ref: '#/components/messages/flowCreated'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.created.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  flowUpdated:
+    address: '{tenant}.integration.flow.updated.v1'
+    title: EVT-04-02
+    description: Sửa thông tin luồng (FR-04-004).
+    messages:
+      flowUpdated:
+        $ref: '#/components/messages/flowUpdated'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.updated.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  versionSubmitted:
+    address: '{tenant}.integration.version.submitted.v1'
+    title: EVT-04-03
+    description: Gửi duyệt (FR-04-040).
+    messages:
+      versionSubmitted:
+        $ref: '#/components/messages/versionSubmitted'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.version.submitted.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  versionApproved:
+    address: '{tenant}.integration.version.approved.v1'
+    title: EVT-04-04
+    description: Duyệt (FR-04-041).
+    messages:
+      versionApproved:
+        $ref: '#/components/messages/versionApproved'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.version.approved.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  versionChangesRequested:
+    address: '{tenant}.integration.version.changes-requested.v1'
+    title: EVT-04-05
+    description: Yêu cầu sửa (FR-04-041).
+    messages:
+      versionChangesRequested:
+        $ref: '#/components/messages/versionChangesRequested'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.version.changes-requested.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  deploymentRequested:
+    address: '{tenant}.integration.deployment.requested.v1'
+    title: EVT-04-06
+    description: Yêu cầu phát hành, nâng, quay lui, gỡ (FR-04-042, 044, 045, 006).
+    messages:
+      deploymentRequested:
+        $ref: '#/components/messages/deploymentRequested'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.deployment.requested.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  deploymentStatusChanged:
+    address: '{tenant}.integration.deployment.status-changed.v1'
+    title: EVT-04-07
+    description: Trạng thái triển khai đổi.
+    messages:
+      deploymentStatusChanged:
+        $ref: '#/components/messages/deploymentStatusChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.deployment.status-changed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  flowRuntimeStateChanged:
+    address: '{tenant}.integration.flow.runtime-state-changed.v1'
+    title: EVT-04-08
+    description: Tạm dừng, tiếp tục, dừng khẩn đã được xác nhận (FR-04-050).
+    messages:
+      flowRuntimeStateChanged:
+        $ref: '#/components/messages/flowRuntimeStateChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.runtime-state-changed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  flowRetired:
+    address: '{tenant}.integration.flow.retired.v1'
+    title: EVT-04-09
+    description: Luồng đã gỡ (FR-04-006).
+    messages:
+      flowRetired:
+        $ref: '#/components/messages/flowRetired'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.retired.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  testRunCompleted:
+    address: '{tenant}.integration.testrun.completed.v1'
+    title: EVT-04-10
+    description: Lần chạy thử kết thúc (FR-04-030).
+    messages:
+      testRunCompleted:
+        $ref: '#/components/messages/testRunCompleted'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.testrun.completed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  runtimeCommand:
+    address: dh.integration.runtime.command.v1
+    title: EVT-04-11
+    description: 'Lệnh điều khiển runtime có ký (ADR-065). Không qua outbox: dh-integration ghi trực tiếp sau khi lưu runtime_command.'
+    messages:
+      runtimeCommand:
+        $ref: '#/components/messages/runtimeCommand'
+    bindings:
+      kafka:
+        topic: dh.integration.runtime.command.v1
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 86400000
+  runtimeHeartbeat:
+    address: dh.integration.runtime.heartbeat.v1
+    title: EVT-04-12
+    description: Nhịp tim mỗi 30 giây của bản sao runtime.
+    messages:
+      runtimeHeartbeat:
+        $ref: '#/components/messages/runtimeHeartbeat'
+    bindings:
+      kafka:
+        topic: dh.integration.runtime.heartbeat.v1
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 86400000
+  runtimeCommandAck:
+    address: dh.integration.runtime.command-ack.v1
+    title: EVT-04-13
+    description: Xác nhận lệnh của từng bản sao.
+    messages:
+      runtimeCommandAck:
+        $ref: '#/components/messages/runtimeCommandAck'
+    bindings:
+      kafka:
+        topic: dh.integration.runtime.command-ack.v1
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 86400000
+  connectionLog:
+    address: '{tenant}.audit.connection-log.v1'
+    title: EVT-04-14
+    description: 'Nhật ký kết nối từ chặng audit (BR-04-002). Chủ quản topic: PH-13; giữ online 12 tháng, WORM 5 năm ở PH-13.'
+    messages:
+      connectionLog:
+        $ref: '#/components/messages/connectionLog'
+    bindings:
+      kafka:
+        topic: '{tenant}.audit.connection-log.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+operations:
+  publishFlowCreated:
+    action: send
+    channel:
+      $ref: '#/channels/flowCreated'
+    title: EVT-04-01 — dh-integration phát
+    messages:
+    - $ref: '#/channels/flowCreated/messages/flowCreated'
+  publishFlowUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/flowUpdated'
+    title: EVT-04-02 — dh-integration phát
+    messages:
+    - $ref: '#/channels/flowUpdated/messages/flowUpdated'
+  publishVersionSubmitted:
+    action: send
+    channel:
+      $ref: '#/channels/versionSubmitted'
+    title: EVT-04-03 — dh-integration phát
+    messages:
+    - $ref: '#/channels/versionSubmitted/messages/versionSubmitted'
+  publishVersionApproved:
+    action: send
+    channel:
+      $ref: '#/channels/versionApproved'
+    title: EVT-04-04 — dh-integration phát
+    messages:
+    - $ref: '#/channels/versionApproved/messages/versionApproved'
+  publishVersionChangesRequested:
+    action: send
+    channel:
+      $ref: '#/channels/versionChangesRequested'
+    title: EVT-04-05 — dh-integration phát
+    messages:
+    - $ref: '#/channels/versionChangesRequested/messages/versionChangesRequested'
+  publishDeploymentRequested:
+    action: send
+    channel:
+      $ref: '#/channels/deploymentRequested'
+    title: EVT-04-06 — dh-integration phát
+    messages:
+    - $ref: '#/channels/deploymentRequested/messages/deploymentRequested'
+  publishDeploymentStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/deploymentStatusChanged'
+    title: EVT-04-07 — dh-integration phát
+    messages:
+    - $ref: '#/channels/deploymentStatusChanged/messages/deploymentStatusChanged'
+  publishFlowRuntimeStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/flowRuntimeStateChanged'
+    title: EVT-04-08 — dh-integration phát
+    messages:
+    - $ref: '#/channels/flowRuntimeStateChanged/messages/flowRuntimeStateChanged'
+  publishFlowRetired:
+    action: send
+    channel:
+      $ref: '#/channels/flowRetired'
+    title: EVT-04-09 — dh-integration phát
+    messages:
+    - $ref: '#/channels/flowRetired/messages/flowRetired'
+  publishTestRunCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/testRunCompleted'
+    title: EVT-04-10 — dh-integration phát
+    messages:
+    - $ref: '#/channels/testRunCompleted/messages/testRunCompleted'
+  publishRuntimeCommand:
+    action: send
+    channel:
+      $ref: '#/channels/runtimeCommand'
+    title: EVT-04-11 — dh-integration phát
+    messages:
+    - $ref: '#/channels/runtimeCommand/messages/runtimeCommand'
+  publishRuntimeHeartbeat:
+    action: send
+    channel:
+      $ref: '#/channels/runtimeHeartbeat'
+    title: EVT-04-12 — dh-runtime phát
+    messages:
+    - $ref: '#/channels/runtimeHeartbeat/messages/runtimeHeartbeat'
+  publishRuntimeCommandAck:
+    action: send
+    channel:
+      $ref: '#/channels/runtimeCommandAck'
+    title: EVT-04-13 — dh-runtime phát
+    messages:
+    - $ref: '#/channels/runtimeCommandAck/messages/runtimeCommandAck'
+  publishConnectionLog:
+    action: send
+    channel:
+      $ref: '#/channels/connectionLog'
+    title: EVT-04-14 — dh-runtime phát
+    messages:
+    - $ref: '#/channels/connectionLog/messages/connectionLog'
+  receiveRuntimeCommand:
+    action: receive
+    channel:
+      $ref: '#/channels/runtimeCommand'
+    title: dh-runtime nhận
+  receiveRuntimeHeartbeat:
+    action: receive
+    channel:
+      $ref: '#/channels/runtimeHeartbeat'
+    title: dh-integration nhận
+  receiveRuntimeCommandAck:
+    action: receive
+    channel:
+      $ref: '#/channels/runtimeCommandAck'
+    title: dh-integration nhận
+  receiveTestRunCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/testRunCompleted'
+    title: PH-18 thông báo nhận
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    flowCreated:
+      name: flowCreated
+      title: EVT-04-01
+      summary: Tạo luồng (FR-04-003, FR-04-005).
+      payload:
+        $ref: '#/components/schemas/FlowCreated'
+      headers: &id001
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+          ce_source:
+            type: string
+            description: '`/tenants/{tenant}/integration`'
+          ce_type:
+            type: string
+          ce_time: &id004
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Mã luồng.
+          ce_datacontenttype:
+            type: string
+            const: application/json
+          traceparent:
+            type: string
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    flowUpdated:
+      name: flowUpdated
+      title: EVT-04-02
+      summary: Sửa thông tin luồng (FR-04-004).
+      payload:
+        $ref: '#/components/schemas/FlowUpdated'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    versionSubmitted:
+      name: versionSubmitted
+      title: EVT-04-03
+      summary: Gửi duyệt (FR-04-040).
+      payload:
+        $ref: '#/components/schemas/VersionEvent'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    versionApproved:
+      name: versionApproved
+      title: EVT-04-04
+      summary: Duyệt (FR-04-041).
+      payload:
+        $ref: '#/components/schemas/VersionEvent'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    versionChangesRequested:
+      name: versionChangesRequested
+      title: EVT-04-05
+      summary: Yêu cầu sửa (FR-04-041).
+      payload:
+        $ref: '#/components/schemas/VersionEvent'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    deploymentRequested:
+      name: deploymentRequested
+      title: EVT-04-06
+      summary: Yêu cầu phát hành, nâng, quay lui, gỡ (FR-04-042, 044, 045, 006).
+      payload:
+        $ref: '#/components/schemas/DeploymentRequested'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    deploymentStatusChanged:
+      name: deploymentStatusChanged
+      title: EVT-04-07
+      summary: Trạng thái triển khai đổi.
+      payload:
+        $ref: '#/components/schemas/DeploymentStatusChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    flowRuntimeStateChanged:
+      name: flowRuntimeStateChanged
+      title: EVT-04-08
+      summary: Tạm dừng, tiếp tục, dừng khẩn đã được xác nhận (FR-04-050).
+      payload:
+        $ref: '#/components/schemas/RuntimeStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    flowRetired:
+      name: flowRetired
+      title: EVT-04-09
+      summary: Luồng đã gỡ (FR-04-006).
+      payload:
+        $ref: '#/components/schemas/FlowRetired'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    testRunCompleted:
+      name: testRunCompleted
+      title: EVT-04-10
+      summary: Lần chạy thử kết thúc (FR-04-030).
+      payload:
+        $ref: '#/components/schemas/TestRunCompleted'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+    runtimeCommand:
+      name: runtimeCommand
+      title: EVT-04-11
+      summary: 'Lệnh điều khiển runtime có ký (ADR-065). Không qua outbox: dh-integration ghi trực tiếp sau khi lưu runtime_command.'
+      payload:
+        $ref: '#/components/schemas/RuntimeCommand'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{environment}`'
+    runtimeHeartbeat:
+      name: runtimeHeartbeat
+      title: EVT-04-12
+      summary: Nhịp tim mỗi 30 giây của bản sao runtime.
+      payload:
+        $ref: '#/components/schemas/Heartbeat'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{replica}`'
+    runtimeCommandAck:
+      name: runtimeCommandAck
+      title: EVT-04-13
+      summary: Xác nhận lệnh của từng bản sao.
+      payload:
+        $ref: '#/components/schemas/CommandAck'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{commandId}`'
+    connectionLog:
+      name: connectionLog
+      title: EVT-04-14
+      summary: 'Nhật ký kết nối từ chặng audit (BR-04-002). Chủ quản topic: PH-13; giữ online 12 tháng, WORM 5 năm ở PH-13.'
+      payload:
+        $ref: '#/components/schemas/ConnectionLog'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{tenant}:{flowCode}`'
+  schemas:
+    FlowRef:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^T[0-9]{2}$
+        flowId:
+          type: string
+          format: uuid
+        flowCode:
+          type: string
+        workspaceCode:
+          type: string
+      required:
+      - tenantId
+      - flowId
+      - flowCode
+    Actor:
+      type: object
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+          - USER
+          - SYSTEM
+      required:
+      - userId
+      - type
+    FlowCreated:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          name:
+            type: string
+          resourceKind:
+            type: string
+            enum:
+            - ROUTE
+            - KAMELET
+            - PIPE
+            - TEST
+          origin:
+            type: string
+          transport:
+            type: string
+          exposure:
+            type: string
+          actor:
+            $ref: '#/components/schemas/Actor'
+        required:
+        - name
+        - resourceKind
+    FlowUpdated:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          changedFields:
+            type: array
+            items:
+              type: string
+          actor:
+            $ref: '#/components/schemas/Actor'
+        required:
+        - changedFields
+    VersionEvent:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          versionNo: &id002
+            type: integer
+          contentHash:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          status:
+            type: string
+          actor:
+            $ref: '#/components/schemas/Actor'
+          changeNote:
+            type: string
+            maxLength: 2000
+          comment:
+            type: string
+            maxLength: 4000
+          nodeCommentCount: *id002
+          contributors:
+            type: array
+            items:
+              type: string
+        required:
+        - versionNo
+        - contentHash
+        - status
+    DeploymentRequested:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          deploymentId:
+            type: string
+            format: uuid
+          versionNo: *id002
+          environment: &id003
+            type: string
+            enum:
+            - TEST
+            - STAGING
+            - PROD
+          kind:
+            type: string
+            enum:
+            - RELEASE
+            - PROMOTE
+            - ROLLBACK
+            - RETIRE
+          contentHash:
+            type: string
+          runtimeProfile:
+            type: string
+          actor:
+            $ref: '#/components/schemas/Actor'
+        required:
+        - deploymentId
+        - versionNo
+        - environment
+        - kind
+    DeploymentStatusChanged:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          deploymentId:
+            type: string
+            format: uuid
+          versionNo: *id002
+          environment: *id003
+          from:
+            type: string
+          to:
+            type: string
+            enum:
+            - PENDING
+            - SYNCING
+            - SYNCED
+            - OUT_OF_SYNC
+            - FAILED
+          healthStatus:
+            type: string
+          gitCommit:
+            type: string
+          errorCode:
+            type: string
+        required:
+        - deploymentId
+        - environment
+        - to
+    RuntimeStateChanged:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          environment: *id003
+          commandId:
+            type: string
+            format: uuid
+          action:
+            type: string
+            enum:
+            - PAUSE
+            - RESUME
+            - EMERGENCY_STOP
+          routeIds:
+            type: array
+            items:
+              type: string
+          state:
+            type: string
+            enum:
+            - RUNNING
+            - PAUSED
+            - STOPPED
+          reason:
+            type: string
+            maxLength: 1000
+          actor:
+            $ref: '#/components/schemas/Actor'
+        required:
+        - environment
+        - action
+        - state
+    FlowRetired:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          reason:
+            type: string
+            maxLength: 1000
+          actor:
+            $ref: '#/components/schemas/Actor'
+        required:
+        - reason
+    TestRunCompleted:
+      allOf:
+      - $ref: '#/components/schemas/FlowRef'
+      - type: object
+        properties:
+          runId:
+            type: string
+            format: uuid
+          versionNo: *id002
+          definitionHash:
+            type: string
+          mode:
+            type: string
+            enum:
+            - MOCK
+            - SANDBOX_LIVE
+            - SIMULATED
+          status:
+            type: string
+            enum:
+            - PASSED
+            - FAILED
+            - TIMED_OUT
+            - CANCELLED
+          testCaseId:
+            type:
+            - string
+            - 'null'
+            format: uuid
+          durationMs: *id002
+        required:
+        - runId
+        - versionNo
+        - definitionHash
+        - status
+    RuntimeCommand:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          pattern: ^T[0-9]{2}$
+        environment: *id003
+        flowCode:
+          type: string
+        action:
+          type: string
+          enum:
+          - PAUSE
+          - RESUME
+          - EMERGENCY_STOP
+        routeIds:
+          type: array
+          items:
+            type: string
+        drain: &id005
+          type: boolean
+        issuedBy:
+          type: string
+        issuedAt: *id004
+        expiresAt: *id004
+        resendOf:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        keyId:
+          type: string
+          description: Khóa OpenBao transit, ví dụ `dh-runtime-cmd:3`.
+        signature:
+          type: string
+          description: Ed25519 base64url trên JCS (RFC 8785) của toàn bộ trường trừ `signature`.
+      required:
+      - commandId
+      - tenantId
+      - environment
+      - flowCode
+      - action
+      - issuedAt
+      - expiresAt
+      - keyId
+      - signature
+    Heartbeat:
+      type: object
+      properties:
+        replica:
+          type: string
+        tenantId:
+          type: string
+        environment: *id003
+        profile:
+          type: string
+          enum:
+          - core-native
+          - files-native
+          - soap-jvm
+          - legacy-jvm
+        catalogVersion:
+          type: string
+        libVersion:
+          type: string
+        sentAt: *id004
+        flows:
+          type: array
+          items:
+            type: object
+            properties:
+              flowCode:
+                type: string
+              versionNo: *id002
+              contentHash:
+                type: string
+              loaded: *id005
+              loadError:
+                type: string
+                maxLength: 1000
+              localOverride: *id005
+              routes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    routeId:
+                      type: string
+                    state:
+                      type: string
+                      enum:
+                      - Started
+                      - Suspended
+                      - Stopped
+                    inflight: *id002
+                  required:
+                  - routeId
+                  - state
+            required:
+            - flowCode
+            - versionNo
+            - contentHash
+            - loaded
+      required:
+      - replica
+      - tenantId
+      - environment
+      - sentAt
+      - flows
+    CommandAck:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        replica:
+          type: string
+        tenantId:
+          type: string
+        environment: *id003
+        result:
+          type: string
+          enum:
+          - APPLIED
+          - REJECTED
+        reason:
+          type: string
+          enum:
+          - BAD_SIGNATURE
+          - EXPIRED
+          - TENANT_MISMATCH
+          - UNKNOWN_FLOW
+          - UNKNOWN_ROUTE
+          - DUPLICATE
+          - INTERNAL
+        ackedAt: *id004
+      required:
+      - commandId
+      - replica
+      - result
+      - ackedAt
+    ConnectionLog:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        flowCode:
+          type: string
+        versionNo: *id002
+        routeId:
+          type: string
+        environment: *id003
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        messageId:
+          type: string
+        sourceSystem:
+          type: string
+        targetSystem:
+          type: string
+        consumerClientId:
+          type: string
+        operation:
+          type: string
+        httpStatus: *id002
+        outcome:
+          type: string
+          enum:
+          - SUCCESS
+          - BUSINESS_ERROR
+          - TECHNICAL_ERROR
+          - REJECTED
+        errorCode:
+          type: string
+          pattern: ^ERR-04-1[0-9]{2}$
+        receivedAt: *id004
+        respondedAt: *id004
+        durationMs: *id002
+        requestBytes: *id002
+        responseBytes: *id002
+        legalBasisRef:
+          type: string
+        dataSubjectsCount: *id002
+        maskedFields:
+          type: array
+          items:
+            type: string
+      required:
+      - tenantId
+      - flowCode
+      - traceId
+      - outcome
+      - receivedAt

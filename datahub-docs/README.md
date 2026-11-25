@@ -68,7 +68,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | Thứ tự | Phân hệ | Đợt | Lý do ưu tiên | Tình trạng (25/11/2026) |
 |---|---|---|---|---|
 | 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Xong bản 0.2 đủ bảy tập (xem mục dưới), chờ duyệt tổng thể |
-| 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Đang viết: FRS 0.1, ADR-060…069, màn hình D03-06-PH04 0.1 (21 màn, trình thiết kế đặc tả siêu kỹ) xong; use case, SDD, CSDL, API, test case đang viết |
+| 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-060…069, chờ duyệt tổng thể |
 | 3 | PH-19 Thanh toán | Đợt 2 (BRD) | Nghiệp vụ mới hoàn toàn | BRD và khung truy vết xong |
 | 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Chưa bắt đầu |
 | 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Chưa bắt đầu |
@@ -89,6 +89,20 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | D03-04-PH07 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH07-api-danh-muc.md) | `openapi-rdm.yaml`, `asyncapi-rdm.yaml` tại `03-thiet-ke/api/ph07/` |
 | D03-06-PH07 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md) | Bản hi-fi 12 màn (HTML, PNG) tại `03-thiet-ke/uiux/ph07/hifi/` |
 | D05-02-PH07 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH07-test-case.md) | Bảng tính `.xlsx`, tệp Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph07/` |
+
+## Phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
+
+Viết theo khuôn và độ sâu của PH-07. Trình thiết kế (UI-04-04…10) được đặc tả tới từng thành phần Liquid Glass trên antd v6. Hai hợp đồng API được sinh bằng script và đã qua bộ kiểm tra (OpenAPI 3.1, AsyncAPI 3.0). DDL đã chạy thử trên PostgreSQL, gồm RLS và changeset di trú từ bảng W2.
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-03-PH04 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md) | — |
+| D02-04-PH04 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH04-use-case-tich-hop.md) | — |
+| D03-02-PH04 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH04-sdd-tich-hop.md) | — |
+| D03-03-PH04 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH04-csdl-tich-hop.md) | DDL `ph04_int.sql` và công cụ sinh bảng tại `03-thiet-ke/csdl/ph04/` |
+| D03-04-PH04 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH04-api-tich-hop.md) | `openapi-integration.yaml` (70 operation), `asyncapi-integration.yaml` (14 sự kiện), script sinh tại `03-thiet-ke/api/ph04/` |
+| D03-06-PH04 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md) | — |
+| D05-02-PH04 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH04-test-case.md) | 186 ca; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph04/` |
 
 ## Xuất bản .docx
 
