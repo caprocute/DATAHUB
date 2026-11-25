@@ -1131,18 +1131,18 @@ Giả định GĐ: tỉnh QM-VUA 120 luồng năm đầu, 300 năm thứ ba; 35 
 
 | Mức | Phạm vi | Công cụ | Cổng |
 |---|---|---|---|
-| Đơn vị | Quy tắc VR, `YamlCanonicalizer`, `SecretDetector`, `SqlPolicy`, máy trạng thái, `FourEyesGuard`, bộ sinh JQ | JUnit 5, Vitest | CI-3 |
-| Quay vòng YAML | Ngữ liệu §6.2 | Vitest + JUnit | CI-3, chặn |
-| Hai bộ sinh JQ khớp nhau | Ngữ liệu `*.dhmap.json` | Vitest + JUnit | CI-3 |
-| Catalog khớp runtime | `catalog:check`, `catalog-diff` | Node | CI-2 |
-| Modulith | `ApplicationModules.verify()` | JUnit | CI-3 |
-| Tích hợp control plane | API với PostgreSQL, Valkey, Kafka, Gitea (giả kho) | Testcontainers | CI-4 |
-| Cách ly tenant | `TenantIsolationIT` cho mọi bảng `ph04` | Testcontainers | CI-4, chặn |
-| Runtime | Kamelet nền, `TenantGuard`, `dh-default-config`, `dh_map` | `@QuarkusTest`, Camel test | CI-4 |
-| Native | Ảnh `core-native` chạy bộ luồng mẫu | Quarkus native IT | CI-5 |
-| Đầu cuối | Thiết kế → chạy thử → duyệt → phát hành TEST → gọi qua APISIX | Playwright + kind cluster + Argo CD | CI-6 |
+| Đơn vị | Quy tắc VR, `YamlCanonicalizer`, `SecretDetector`, `SqlPolicy`, máy trạng thái, `FourEyesGuard`, bộ sinh JQ | JUnit 5, Vitest | CI-2, CI-6 |
+| Quay vòng YAML | Ngữ liệu §6.2 | Vitest + JUnit | CI-2, CI-6, chặn |
+| Hai bộ sinh JQ khớp nhau | Ngữ liệu `*.dhmap.json` | Vitest + JUnit | CI-2, CI-6 |
+| Catalog khớp runtime | `catalog:check`, `catalog-diff` | Node | CI-6 (job console) |
+| Modulith | `ApplicationModules.verify()` | JUnit | CI-2 |
+| Tích hợp control plane | API với PostgreSQL, Valkey, Kafka, Gitea (giả kho) | Testcontainers | CI-3 |
+| Cách ly tenant | `TenantIsolationIT` cho mọi bảng `ph04` | Testcontainers | CI-3, chặn |
+| Runtime | Kamelet nền, `TenantGuard`, `dh-default-config`, `dh_map` | `@QuarkusTest`, Camel test | CI-3 |
+| Native | Ảnh `core-native` chạy bộ luồng mẫu | Quarkus native IT | CI-8 |
+| Đầu cuối | Thiết kế → chạy thử → duyệt → phát hành TEST → gọi qua APISIX | Playwright + kind cluster + Argo CD | CI-9 |
 | Hiệu năng | NFR-04-001…013 | k6, Lighthouse, Gatling | Trước RG-2 |
-| Hợp đồng API | OpenAPI, AsyncAPI của D03-04-PH04 | Spectral, schemathesis | CI-3 |
+| Hợp đồng API | OpenAPI, AsyncAPI của D03-04-PH04 | Spectral, oasdiff, schemathesis | CI-5 |
 
 Ca kiểm thử chi tiết ở D05-02-PH04.
 
