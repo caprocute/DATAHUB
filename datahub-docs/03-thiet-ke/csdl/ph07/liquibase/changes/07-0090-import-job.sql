@@ -12,7 +12,7 @@ CREATE TABLE ph07_rdm.import_job (
   mode                varchar(32),
   format              varchar(32)   NOT NULL,
   template            varchar(32)   NOT NULL DEFAULT 'STANDARD',
-  status              varchar(32)   NOT NULL DEFAULT 'QUEUED',
+  status              varchar(32)   NOT NULL,
   file_id             uuid,
   file_name           varchar(255),
   file_sha256         char(64),
@@ -49,7 +49,7 @@ CREATE TABLE ph07_rdm.import_job (
   CONSTRAINT ck_import_job_format CHECK (format IN ('XLSX','CSV','JSON')),
   CONSTRAINT ck_import_job_template CHECK (template IN ('STANDARD','LEGACY_AITA')),
   CONSTRAINT ck_import_job_status CHECK (
-       (job_type IN ('IMPORT','MIGRATION') AND status IN ('QUEUED','SCANNING','PARSING','VALIDATED','COMMITTING','COMMITTED','FAILED','CANCELLED','EXPIRED'))
+       (job_type IN ('IMPORT','MIGRATION') AND status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','VALIDATED','COMMITTING','COMMITTED','FAILED','CANCELLED','EXPIRED'))
     OR (job_type = 'EXPORT' AND status IN ('QUEUED','RUNNING','COMPLETED','FAILED','EXPIRED'))
     OR (job_type = 'PROPOSAL' AND status IN ('SUBMITTED','ACCEPTED','REJECTED','UNKNOWN'))),
   CONSTRAINT ck_import_job_encoding CHECK (encoding IS NULL OR encoding IN ('UTF-8','UTF-8-BOM','UTF-16LE','UTF-16BE')),
@@ -63,7 +63,7 @@ CREATE INDEX ix_import_job_history ON ph07_rdm.import_job (tenant_id, created_at
 CREATE INDEX ix_import_job_catalog ON ph07_rdm.import_job (catalog_id, created_at DESC);
 CREATE INDEX ix_import_job_expires ON ph07_rdm.import_job (expires_at) WHERE status IN ('VALIDATED','COMPLETED');
 CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job (created_at)
-  WHERE status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING');
+  WHERE status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','COMMITTING','QUEUED','RUNNING');
 ALTER TABLE ph07_rdm.import_job SET (fillfactor = 85);
 CREATE TRIGGER tg_import_job_touch BEFORE UPDATE ON ph07_rdm.import_job
   FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
@@ -85,12 +85,12 @@ CREATE POLICY rls_import_job_delete ON ph07_rdm.import_job FOR DELETE
       OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
 -- Nhận tác vụ liên tenant: chỉ vai trò ph07_worker, chỉ các cột hàng đợi (GRANT cột ở 07-0900).
 CREATE POLICY rls_import_job_worker_select ON ph07_rdm.import_job FOR SELECT TO ph07_worker
-  USING (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'));
+  USING (status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','COMMITTING','QUEUED','RUNNING'));
 CREATE POLICY rls_import_job_worker_update ON ph07_rdm.import_job FOR UPDATE TO ph07_worker
-  USING (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'))
-  WITH CHECK (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'));
+  USING (status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','COMMITTING','QUEUED','RUNNING'))
+  WITH CHECK (status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','COMMITTING','QUEUED','RUNNING'));
 COMMENT ON TABLE ph07_rdm.import_job IS 'EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên danh mục COMMON mang tenant_id COMMON do PLATFORM thực hiện.';
-COMMENT ON COLUMN ph07_rdm.import_job.status IS 'IMPORT: QUEUED→SCANNING→PARSING→VALIDATED→COMMITTING→COMMITTED (hoặc FAILED/CANCELLED/EXPIRED). EXPORT: QUEUED→RUNNING→COMPLETED (hoặc FAILED/EXPIRED).';
+COMMENT ON COLUMN ph07_rdm.import_job.status IS 'IMPORT, MIGRATION: UPLOADED→SCANNING→PARSING→VALIDATING→VALIDATED→COMMITTING→COMMITTED (hoặc FAILED/CANCELLED/EXPIRED), theo FRS §4.14. EXPORT: QUEUED→RUNNING→COMPLETED (hoặc FAILED/EXPIRED). PROPOSAL: SUBMITTED/ACCEPTED/REJECTED/UNKNOWN.';
 COMMENT ON COLUMN ph07_rdm.import_job.draft_lock_version IS 'Giá trị catalog_version.version lúc phân tích; commit chỉ khi còn bằng (BR-07-016). Cột bổ sung ngoài khung.';
 COMMENT ON COLUMN ph07_rdm.import_job.lease_owner IS 'Pod đang xử lý tác vụ (hàng đợi trong CSDL, D03-02-PH07 §4.7.3).';
 COMMENT ON COLUMN ph07_rdm.import_job.lease_until IS 'Hạn thuê; quá hạn thì pod khác nhận lại tác vụ. Gia hạn mỗi 30 giây.';

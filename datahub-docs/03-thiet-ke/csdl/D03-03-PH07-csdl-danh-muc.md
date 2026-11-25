@@ -495,7 +495,7 @@ EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên d
 | `mode` | `character varying(32)` |  |  |  |
 | `format` | `character varying(32)` | Có |  |  |
 | `template` | `character varying(32)` | Có | `'STANDARD'::character varying` |  |
-| `status` | `character varying(32)` | Có | `'QUEUED'::character varying` | IMPORT: QUEUED→SCANNING→PARSING→VALIDATED→COMMITTING→COMMITTED (hoặc FAILED/CANCELLED/EXPIRED). EXPORT: QUEUED→RUNNING→COMPLETED (hoặc FAILED/EXPIRED). |
+| `status` | `character varying(32)` | Có |  | IMPORT, MIGRATION: UPLOADED→SCANNING→PARSING→VALIDATING→VALIDATED→COMMITTING→COMMITTED (hoặc FAILED/CANCELLED/EXPIRED), theo FRS §4.14. EXPORT: QUEUED→RUNNING→COMPLETED (hoặc FAILED/EXPIRED). PROPOSAL: SUBMITTED/ACCEPTED/REJECTED/UNKNOWN. |
 | `file_id` | `uuid` |  |  |  |
 | `file_name` | `character varying(255)` |  |  |  |
 | `file_sha256` | `character(64)` |  |  |  |
@@ -531,7 +531,7 @@ Ràng buộc:
 | `ck_import_job_lease` | Kiểm tra | `CHECK (((lease_owner IS NULL) = (lease_until IS NULL)))` |
 | `ck_import_job_mode` | Kiểm tra | `CHECK (((((job_type)::text = 'IMPORT'::text) AND ((mode)::text = ANY ((ARRAY['UPSERT'::character varying, 'REPLACE'::character varying, 'APPEND'::character varying, 'CREATE_CATALOG'::character varying, 'MAPPING'::character varying])::text[]))) OR (((job_type)::text <> 'IMPORT'::text) AND (mode IS NULL))))` |
 | `ck_import_job_rows` | Kiểm tra | `CHECK (((total_rows >= 0) AND (valid_rows >= 0) AND (error_rows >= 0) AND ((valid_rows + error_rows) <= total_rows)))` |
-| `ck_import_job_status` | Kiểm tra | `CHECK (((((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'MIGRATION'::character varying])::text[])) AND ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATED'::character varying, 'COMMITTING'::character varying, 'COMMITTED'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying, 'EXPI` |
+| `ck_import_job_status` | Kiểm tra | `CHECK (((((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'MIGRATION'::character varying])::text[])) AND ((status)::text = ANY ((ARRAY['UPLOADED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATING'::character varying, 'VALIDATED'::character varying, 'COMMITTING'::character varying, 'COMMITTED'::character varying, 'FAILED'::character varying, 'C` |
 | `ck_import_job_template` | Kiểm tra | `CHECK (((template)::text = ANY ((ARRAY['STANDARD'::character varying, 'LEGACY_AITA'::character varying])::text[])))` |
 | `ck_import_job_tenant` | Kiểm tra | `CHECK (((tenant_id)::text ~ '^(T[0-9]{2}\|COMMON)$'::text))` |
 | `ck_import_job_type` | Kiểm tra | `CHECK (((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'EXPORT'::character varying, 'MIGRATION'::character varying, 'PROPOSAL'::character varying])::text[])))` |
@@ -549,7 +549,7 @@ Chỉ mục:
 | `ix_import_job_catalog` | `CREATE INDEX ix_import_job_catalog ON ph07_rdm.import_job USING btree (catalog_id, created_at DESC)` |
 | `ix_import_job_expires` | `CREATE INDEX ix_import_job_expires ON ph07_rdm.import_job USING btree (expires_at) WHERE ((status)::text = ANY ((ARRAY['VALIDATED'::character varying, 'COMPLETED'::character varying])::text[]))` |
 | `ix_import_job_history` | `CREATE INDEX ix_import_job_history ON ph07_rdm.import_job USING btree (tenant_id, created_at DESC)` |
-| `ix_import_job_queue` | `CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job USING btree (created_at) WHERE ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'COMMITTING'::character varying, 'RUNNING'::character varying])::text[]))` |
+| `ix_import_job_queue` | `CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job USING btree (created_at) WHERE ((status)::text = ANY ((ARRAY['UPLOADED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATING'::character varying, 'COMMITTING'::character varying, 'QUEUED'::character varying, 'RUNNING'::character varying])::text[]))` |
 | `uq_import_job_idem` | `CREATE UNIQUE INDEX uq_import_job_idem ON ph07_rdm.import_job USING btree (tenant_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)` |
 
 Chính sách RLS: `rls_import_job_delete` (DELETE), `rls_import_job_insert` (INSERT), `rls_import_job_select` (SELECT), `rls_import_job_update` (UPDATE), `rls_import_job_worker_select` (SELECT), `rls_import_job_worker_update` (UPDATE).

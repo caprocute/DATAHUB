@@ -1537,7 +1537,7 @@ Trong quá trình đặc tả, tài liệu cần một số mã chưa có trong 
 | Mã | Nội dung | Lý do |
 |---|---|---|
 | ERR-07-038 | 422 · Tệp tải lên không vượt qua quét mã độc (`scan_status = INFECTED`) | DD-12 thêm bước quét; khung chung chưa có mã riêng (UC-07-03 E2) |
-| Trạng thái `import_job` | `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED`; tác vụ xuất dùng `RUNNING`, `COMPLETED`, `FAILED`, `EXPIRED` | Khung chung chỉ nêu `SCANNING` trước `PARSING`; tên cuối cùng do CSDL chốt |
+| Trạng thái `import_job` | `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED`; tác vụ xuất dùng `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `EXPIRED` | Đã chốt ở FRS §4.14 và ràng buộc `ck_import_job_status` của D03-03-PH07 |
 | Tham số | `07.rdm.batch-rate-per-minute`, `07.rdm.import-max-mb`, `07.rdm.hybrid-default-pattern`, `07.rdm.pii-keywords` | Mục 7.1 |
 | Tham số API | `withdraw` của API-07-019 (rút lại), `skipInvalid` của API-07-036, `continueOnError` của API-07-031, `direction` và `asOf` của API-07-051 | Luồng UC-07-06 8b, UC-07-03 12a, UC-07-05 6a, UC-07-12 B |
 | Tài khoản hệ thống | `system:rdm-sync`, `system:rdm-seed` | Người thực hiện khi đồng bộ tự áp dụng và nạp gói nền |

@@ -3755,14 +3755,14 @@ components:
       enum: [XLSX, CSV, JSON]
     ImportJobStatus:
       type: string
-      enum: [SCANNING, PARSING, VALIDATED, COMMITTING, COMMITTED, FAILED, CANCELLED, EXPIRED]
-      description: SCANNING (quét mã độc DD-12) → PARSING → VALIDATED → COMMITTING → COMMITTED; FAILED khi tệp nhiễm mã độc, sai định dạng hoặc lỗi hệ thống; EXPIRED sau 24 giờ không commit.
+      enum: [UPLOADED, SCANNING, PARSING, VALIDATING, VALIDATED, COMMITTING, COMMITTED, FAILED, CANCELLED, EXPIRED]
+      description: UPLOADED → SCANNING (quét mã độc DD-12) → PARSING → VALIDATING → VALIDATED → COMMITTING → COMMITTED; FAILED khi tệp nhiễm mã độc, sai định dạng hoặc lỗi hệ thống; EXPIRED sau 24 giờ không commit.
     ImportRowAction:
       type: string
-      enum: [INSERT, UPDATE, DEPRECATE, UNCHANGED]
+      enum: [INSERT, UPDATE, DEPRECATE, UNCHANGED, DELETE_DRAFT]
     ExportJobStatus:
       type: string
-      enum: [PENDING, RUNNING, COMPLETED, FAILED, EXPIRED]
+      enum: [QUEUED, RUNNING, COMPLETED, FAILED, EXPIRED]
     SyncRunStatus:
       type: string
       enum: [RUNNING, NO_CHANGE, APPLIED, PENDING_CONFIRMATION, REJECTED, FAILED]
@@ -7995,7 +7995,7 @@ components:
         versionNo: 11
         format: XLSX
         template: LEGACY_AITA
-        status: PENDING
+        status: QUEUED
         rowCount: null
         fileName: null
         fileSize: null

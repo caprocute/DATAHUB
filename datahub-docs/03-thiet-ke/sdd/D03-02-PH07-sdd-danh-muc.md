@@ -1153,16 +1153,18 @@ Tác vụ nhập (`import_job.job_type = IMPORT`) đi qua các trạng thái sau
 
 | Từ | Sự kiện | Điều kiện bảo vệ | Hành động | Đến |
 |---|---|---|---|---|
-| (không) | `UPLOAD` (API-07-033) | Kích thước ≤ 50 MB; chữ ký tệp là xlsx/csv; `Idempotency-Key` chưa dùng hoặc trùng nội dung | Ghi `file_object` (`scan_status = PENDING`), tạo `import_job` | `SCANNING` |
+| (không) | `UPLOAD` (API-07-033) | Kích thước ≤ 50 MB; chữ ký tệp là xlsx/csv; `Idempotency-Key` chưa dùng hoặc trùng nội dung | Ghi `file_object` (`scan_status = PENDING`), tạo `import_job`; `NOTIFY rdm_jobs` | `UPLOADED` |
+| `UPLOADED` | `PICKED` | Worker nhận việc (§4.7.3) | Gửi quét | `SCANNING` |
 | `SCANNING` | `SCAN_CLEAN` | ClamAV trả OK | `file_object.scan_status = CLEAN` | `PARSING` |
 | `SCANNING` | `SCAN_INFECTED` | ClamAV phát hiện | `scan_status = INFECTED`; xóa đối tượng; cảnh báo an ninh | `FAILED` |
 | `SCANNING` | `SCAN_TIMEOUT` | Quá 1 giờ chưa quét được | Ghi `error_message` | `FAILED` |
-| `PARSING` | `PARSED` | Không lỗi cấp tệp | Ghi `total_rows`, `valid_rows`, `error_rows`, `expires_at = now + 24h`; outbox EVT-07-07 (VALIDATED) | `VALIDATED` |
+| `PARSING` | `PARSED` | Không lỗi cấp tệp; đã ghi `import_row` | Ghi `total_rows` | `VALIDATING` |
+| `VALIDATING` | `VALIDATED` | Kiểm tra liên dòng xong (có thể còn dòng lỗi) | Ghi `valid_rows`, `error_rows`, `action` từng dòng, `expires_at = now + 24h`; outbox EVT-07-07 (VALIDATED) | `VALIDATED` |
 | `PARSING` | `PARSE_FAILED` | Lỗi cấp tệp (mã hóa, thiếu cột, vượt số dòng, ZIP bomb) | Ghi lỗi; outbox EVT-07-07 (FAILED) | `FAILED` |
 | `VALIDATED` | `COMMIT` (API-07-036) | Chưa hết hạn; `error_rows = 0` hoặc `skipInvalidRows`; bản nháp chưa đổi (`version` khớp); người gọi có `PERM-07-update` | Đặt trạng thái và chạy pha 2 | `COMMITTING` |
 | `COMMITTING` | `COMMITTED` | Giao dịch ghi thành công | outbox EVT-07-07 (COMMITTED) | `COMMITTED` |
 | `COMMITTING` | `COMMIT_FAILED` | Lỗi giao dịch | Hoàn tác; ghi lỗi | `VALIDATED` (cho thử lại nếu còn hạn) |
-| `SCANNING`, `PARSING`, `VALIDATED` | `CANCEL` (API-07-037) | Người tạo hoặc TENANT_ADMIN | Đánh dấu; tiến trình nền kiểm tra cờ giữa các lô và dừng | `CANCELLED` |
+| `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `VALIDATED` | `CANCEL` (API-07-037) | Người tạo hoặc TENANT_ADMIN | Đánh dấu; tiến trình nền kiểm tra cờ giữa các lô và dừng | `CANCELLED` |
 | `VALIDATED` | `EXPIRE` (lịch) | `expires_at < now` | Xóa `import_row` sớm | `EXPIRED` |
 
 Tác vụ xuất (`job_type = EXPORT`) có máy đơn giản hơn: `QUEUED` → `RUNNING` → `COMPLETED` (ghi `result_file_id`, `expires_at = now + 24h`, outbox EVT-07-08) hoặc `FAILED`; `COMPLETED` → `EXPIRED` khi quá hạn tệp.
@@ -1394,7 +1396,7 @@ Tác vụ nền dùng chính bảng `import_job` làm hàng đợi; không thêm
 
 ```sql
 SELECT id, tenant_id FROM ph07_rdm.import_job
- WHERE status IN ('SCANNING','PARSING','QUEUED','COMMITTING')
+ WHERE status IN ('UPLOADED','SCANNING','PARSING','VALIDATING','COMMITTING','QUEUED','RUNNING')
    AND (lease_until IS NULL OR lease_until < now())
  ORDER BY created_at
  LIMIT :slots
@@ -2195,7 +2197,7 @@ sequenceDiagram
     participant IC as ImportCommitter
     U->>API: POST /import-jobs (multipart, Idempotency-Key)
     API->>S3: PUT imports/{jobId}/{sha256}.xlsx (luồng)
-    API->>PG: INSERT file_object (PENDING), import_job (QUEUED); NOTIFY rdm_jobs
+    API->>PG: INSERT file_object (PENDING), import_job (UPLOADED); NOTIFY rdm_jobs
     API-->>U: 202 jobId
     W->>PG: nhận việc (ph07_worker, FOR UPDATE SKIP LOCKED), đặt lease
     W->>AV: quét luồng tệp

@@ -267,9 +267,9 @@ Mọi trạng thái được hiển thị bằng `CMP-StatusTag`, một thành p
 | Phân loại | `PUBLIC` | Công khai | `TKN-color-status-neutral` | không |
 | Phân loại | `INTERNAL` | Nội bộ | `TKN-color-status-info` | `EyeInvisibleOutlined` |
 | Phân loại | `RESTRICTED` | Hạn chế | `TKN-color-status-warning` | `SafetyOutlined` |
-| Tác vụ | `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `COMMITTING`, `RUNNING` | Đang tải lên, Đang quét an toàn, Đang đọc tệp, Đang kiểm tra, Đang ghi, Đang chạy | `TKN-color-status-processing` | `LoadingOutlined` (dừng xoay khi giảm chuyển động) |
+| Tác vụ | `UPLOADED`, `QUEUED`, `SCANNING`, `PARSING`, `VALIDATING`, `COMMITTING`, `RUNNING` | Đã tải lên, Đang chờ, Đang quét an toàn, Đang đọc tệp, Đang kiểm tra, Đang ghi, Đang chạy | `TKN-color-status-processing` | `LoadingOutlined` (dừng xoay khi giảm chuyển động) |
 | Tác vụ | `VALIDATED` | Chờ xác nhận ghi | `TKN-color-status-warning` | `ExclamationCircleOutlined` |
-| Tác vụ | `COMMITTED`, `SUCCEEDED` | Đã ghi, Hoàn thành | `TKN-color-status-success` | `CheckCircleOutlined` |
+| Tác vụ | `COMMITTED`, `COMPLETED` | Đã ghi, Hoàn thành | `TKN-color-status-success` | `CheckCircleOutlined` |
 | Tác vụ | `FAILED` | Lỗi | `TKN-color-status-danger` | `CloseCircleOutlined` |
 | Tác vụ | `CANCELLED`, `EXPIRED` | Đã hủy, Hết hạn | `TKN-color-status-inactive` | `StopOutlined` |
 | Lần đồng bộ | `RUNNING` | Đang chạy | `TKN-color-status-processing` | `LoadingOutlined` |
@@ -279,7 +279,7 @@ Mọi trạng thái được hiển thị bằng `CMP-StatusTag`, một thành p
 | Lần đồng bộ | `REJECTED` | Đã từ chối | `TKN-color-status-inactive` | `CloseOutlined` |
 | Lần đồng bộ | `FAILED` | Lỗi | `TKN-color-status-danger` | `CloseCircleOutlined` |
 
-> **Câu hỏi mở Q07-69:** Khung chung PH-07 chỉ chốt trạng thái `SCANNING` trước `PARSING` cho tác vụ nhập. Danh sách đầy đủ `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED` (nhập) và `RUNNING`, `SUCCEEDED`, `FAILED`, `EXPIRED` (xuất) là giả định của tài liệu này, cần khớp với `import_job.status` ở D03-03-PH07 và lược đồ `ImportJobStatus` ở OpenAPI.
+> **Câu hỏi mở Q07-69 (đã đóng 25/11/2026):** Tập trạng thái tác vụ được chốt theo FRS §4.14: nhập gồm `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED`; xuất gồm `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `EXPIRED`. D03-03-PH07 (`ck_import_job_status`) và OpenAPI (`ImportJobStatus`, `ExportJobStatus`) dùng đúng tập này.
 
 ### 5.2. Ba màu khác biệt
 
