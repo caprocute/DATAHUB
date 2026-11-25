@@ -143,7 +143,7 @@ Mã trong repo (tháng 11/2026) đã có một phần lớn PH-04. Bảng dướ
 
 | Mã lệch | Hiện trạng trong mã | Thiết kế đích | Xử lý | Căn cứ |
 |---|---|---|---|---|
-| GAP-04-01 | Runtime Camel Quarkus 3.33.2 (Camel 4.18 LTS) ở `camel/dancu`, `camel/datdai`; catalog của trình thiết kế sinh từ `@kaoto/camel-catalog` 0.7.0 cho camel-quarkus **3.35.0** | Catalog phải khớp đúng phiên bản runtime | Sinh lại catalog cho 3.33.2; CI so khớp tệp kê khai runtime với catalog | FR-04-081, ADR-061 |
+| GAP-04-01 | Runtime Camel Quarkus 3.33.2 (Camel 4.18 LTS) ở `camel/dancu`, `camel/datdai`; catalog của trình thiết kế trước đây sinh từ `@kaoto/camel-catalog` 0.7.0 cho camel-quarkus **3.35.0**. Ngày 25/11/2026 đã có thay đổi hạ catalog về dòng 3.33 (PR #5): Kaoto không phát hành nhánh 3.33.2 nên dùng 3.33.1 (Camel 4.18.2), phiên bản đọc từ `camel/*/pom.xml`, `npm run catalog:check` chặn lệch | Catalog khớp phiên bản runtime; lệch bản vá (3.33.1 so với 3.33.2) chấp nhận được khi danh sách thành phần và lược đồ không đổi | Giữ cơ chế của PR #5; bổ sung so khớp theo tệp kê khai hồ sơ runtime và kiểm tra khác biệt lược đồ giữa hai bản vá | FR-04-081, ADR-061 |
 | GAP-04-02 | Luồng nghiệp vụ `TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute` viết bằng Java DSL; chỉ `ping` là YAML | Luồng nghiệp vụ viết bằng YAML DSL (ADR-010) | Chuyển ba luồng sang YAML; Java chỉ còn cho processor và bean nền được duyệt | ADR-062, FR-04-060 |
 | GAP-04-03 | `GitOpsPublisher` ghi tệp `routes/<mã>/route.camel.yaml` trong cùng repo, commit tùy chọn; chưa có kho cấu hình riêng, chưa có Argo CD; runtime không nạp được luồng đã phát hành | Kho cấu hình Git riêng theo tenant và môi trường, Argo CD đồng bộ xuống runtime, runtime nạp YAML lúc chạy | Thiết kế mới ở SDD §5; luồng phát hành báo tình trạng triển khai | FR-04-042, ADR-063 |
 | GAP-04-04 | `testRun` mô phỏng: dựng waterfall chín chặng từ `stage.hashCode()`, luôn trả `PASSED`, không nạp Camel | Chạy Camel thật trong sandbox cô lập, đích mô phỏng | Bộ chạy thử `dh-runtime-sandbox` | FR-04-030, ADR-064 |
@@ -1516,7 +1516,7 @@ Chính sách nền mặc định: cho phép thành phần trong các nhóm HTTP,
 
 1. Mỗi hồ sơ runtime có tệp kê khai `runtime-manifest.json`: phiên bản Quarkus, Camel Quarkus, Camel, danh sách extension, băm ảnh.
 2. Catalog của trình thiết kế sinh bằng công cụ từ `@kaoto/camel-catalog` (hoặc trực tiếp từ `camel-catalog` của đúng phiên bản) cho phiên bản Camel Quarkus trong tệp kê khai; tệp chỉ mục ghi `runtime`, `runtimeVersion`, `camelVersion`, `generatedAt`, băm.
-3. CI của `dh-console` và `dh-integration` chặn khi `runtimeVersion` của catalog khác phiên bản trong tệp kê khai của hồ sơ mặc định (cổng CI bổ sung cho D04-02). Hiện trạng lệch 3.35.0 so với 3.33.2 (GAP-04-01) phải sửa trước khi đóng đợt MVP.
+3. CI của `dh-console` và `dh-integration` chặn khi `runtimeVersion` của catalog khác phiên bản trong tệp kê khai của hồ sơ mặc định (cổng CI bổ sung cho D04-02). Lệch 3.35.0 so với 3.33.2 (GAP-04-01) đã được xử lý bằng PR #5 (catalog 3.33.1, Camel 4.18.2). Lệch ở mức bản vá được chấp nhận khi công cụ so khớp xác nhận danh sách thành phần và lược đồ không đổi; lệch bản phụ (minor) trở lên luôn bị chặn.
 4. Khi nền tảng nâng runtime, catalog mới được phát hành cùng; `dh-integration` đánh dấu mọi luồng cần kiểm tra lại (VR-17) và lập danh sách luồng có thành phần, thuộc tính bị bỏ hoặc đổi tên giữa hai phiên bản.
 5. Trình thiết kế chỉ dùng một phiên bản catalog tại một thời điểm cho một tenant; phiên bản đang chạy của một luồng cũ có thể dùng catalog cũ ở chế độ chỉ đọc để hiển thị.
 
