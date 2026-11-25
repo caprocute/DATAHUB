@@ -67,7 +67,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 
 | Thứ tự | Phân hệ | Đợt | Lý do ưu tiên | Tình trạng (25/11/2026) |
 |---|---|---|---|---|
-| 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Đang viết: FRS xong, OpenAPI, AsyncAPI, DDL có; SDD, màn hình, test case dở |
+| 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Xong bản 0.2 đủ bảy tập (xem mục dưới), chờ duyệt tổng thể |
 | 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Đang viết: FRS 0.1, ADR-060…069, màn hình D03-06-PH04 0.1 (21 màn, trình thiết kế đặc tả siêu kỹ) xong; use case, SDD, CSDL, API, test case đang viết |
 | 3 | PH-19 Thanh toán | Đợt 2 (BRD) | Nghiệp vụ mới hoàn toàn | BRD và khung truy vết xong |
 | 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Chưa bắt đầu |
@@ -75,6 +75,20 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | 6 | PH-02, PH-03, PH-01 | Đợt 3 | Thay API Management | Chưa bắt đầu |
 | 7 | PH-14, PH-18, PH-13, PH-12, PH-20 | Đợt 3–4 | MVP còn lại | Chưa bắt đầu |
 | 8 | PH-06, 08, 09, 11, 15, 16, 17 | Đợt 4 | Sau MVP | Chưa bắt đầu |
+
+## Phân hệ mẫu PH-07 Danh mục dùng chung
+
+Đợt 2 viết trọn vẹn PH-07 làm mẫu độ sâu cho 19 phân hệ còn lại. Các tài liệu dưới đây đã đủ mục theo dàn ý và qua kiểm tra hoàn thành (không còn TBD ngoài câu hỏi mở, liên kết sạch, hợp đồng API kiểm tra ví dụ, xuất thử .docx).
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-03-PH07 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md) | — |
+| D02-04-PH07 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH07-use-case-danh-muc.md) | — |
+| D03-02-PH07 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH07-sdd-danh-muc.md) | — |
+| D03-03-PH07 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH07-csdl-danh-muc.md) | DDL, changelog Liquibase, dữ liệu mồi, công cụ sinh tại `03-thiet-ke/csdl/ph07/` |
+| D03-04-PH07 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH07-api-danh-muc.md) | `openapi-rdm.yaml`, `asyncapi-rdm.yaml` tại `03-thiet-ke/api/ph07/` |
+| D03-06-PH07 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md) | Bản hi-fi 12 màn (HTML, PNG) tại `03-thiet-ke/uiux/ph07/hifi/` |
+| D05-02-PH07 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH07-test-case.md) | Bảng tính `.xlsx`, tệp Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph07/` |
 
 ## Xuất bản .docx
 
