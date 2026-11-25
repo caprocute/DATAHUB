@@ -61,6 +61,20 @@ Thư mục này là **bộ tài liệu độc lập**. Nó tham khảo nội dun
 | D06-04 | Hướng dẫn sử dụng | `06-chuyen-doi-van-hanh/` | Đợt 5 |
 | D06-05 | Tài liệu đào tạo | `06-chuyen-doi-van-hanh/` | Đợt 5 |
 
+## Phân hệ mẫu PH-07 Danh mục dùng chung
+
+Đợt 2 viết trọn vẹn PH-07 làm mẫu độ sâu cho 19 phân hệ còn lại. Các tài liệu dưới đây đã đủ mục theo dàn ý và qua kiểm tra hoàn thành (không còn TBD ngoài câu hỏi mở, liên kết sạch, hợp đồng API kiểm tra ví dụ, xuất thử .docx).
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-03-PH07 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md) | — |
+| D02-04-PH07 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH07-use-case-danh-muc.md) | — |
+| D03-02-PH07 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH07-sdd-danh-muc.md) | — |
+| D03-03-PH07 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH07-csdl-danh-muc.md) | DDL, changelog Liquibase, dữ liệu mồi, công cụ sinh tại `03-thiet-ke/csdl/ph07/` |
+| D03-04-PH07 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH07-api-danh-muc.md) | `openapi-rdm.yaml`, `asyncapi-rdm.yaml` tại `03-thiet-ke/api/ph07/` |
+| D03-06-PH07 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md) | Bản hi-fi 12 màn (HTML, PNG) tại `03-thiet-ke/uiux/ph07/hifi/` |
+| D05-02-PH07 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH07-test-case.md) | Bảng tính `.xlsx`, tệp Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph07/` |
+
 ## Xuất bản .docx
 
 Nguồn là Markdown. Bản .docx theo mẫu hồ sơ nhà nước được sinh bằng `build/build-docx.sh` (xem [build/README.md](build/README.md)). Mỗi tài liệu có khối metadata YAML ở đầu file làm nguồn cho trang bìa và bảng ghi nhận thay đổi.

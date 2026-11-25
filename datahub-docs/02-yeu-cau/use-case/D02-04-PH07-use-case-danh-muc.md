@@ -35,8 +35,8 @@ Bảng dưới liệt kê các tài liệu mà người đọc cần mở song s
 | [D02-01 BRD](../D02-01-brd.md) | Yêu cầu nghiệp vụ REQ-07, REQ-20, REQ-22; quy trình BP-03; mục tiêu BO-05; chỉ số KPI-10, KPI-11 |
 | [D02-02 SRS](../D02-02-srs.md) | Yêu cầu dùng chung FR-00 và NFR-00 |
 | [D02-03-PH07 FRS](../frs/D02-03-PH07-frs-danh-muc.md) | Đặc tả chi tiết FR-07-001…053, BR-07-001…027, NFR-07-001…015 |
-| [D02-05-PH07 User story](../user-story/D02-05-PH07-user-story-danh-muc.md) | Backlog US-07-nnn và tiêu chí chấp nhận Gherkin tương ứng với từng use case |
-| [D02-06-PH07 DFD](../dfd/D02-06-PH07-dfd-danh-muc.md) | Luồng dữ liệu giữa các tiến trình PH-07 và các kho |
+| D02-05 Backlog user story (phần PH-07; chưa viết, thuộc đợt viết backlog toàn hệ thống) | Backlog US-07-nnn và tiêu chí chấp nhận Gherkin tương ứng với từng use case |
+| D02-06 DFD và phân loại dữ liệu (luồng "đồng bộ danh mục"; chưa viết, thuộc đợt viết DFD toàn hệ thống) | Luồng dữ liệu giữa các tiến trình PH-07 và các kho |
 | [D02-07 Từ điển dữ liệu](../D02-07-tu-dien-du-lieu.md) | DD-07 `admin_unit`, DD-11 outbox, DD-12 tệp, DD-14 tham số |
 | [D02-08 Ma trận phân quyền](../D02-08-ma-tran-phan-quyen.md) | Vai trò `ROLE-*` và quyền `PERM-07-*` |
 | [D03-10 Thiết kế đa tenant](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md) | RLS, tenant `COMMON` và `PLATFORM` |

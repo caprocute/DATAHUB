@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D05-02-PH07
 ten: Kịch bản và test case phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-25
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-07, Kiến trúc sư, ATTT, Cán bộ nghiệp vụ nghiệm thu, Chủ đầu tư
 phan_he: PH-07
@@ -11,13 +11,23 @@ nguoi_lap: Nhóm phân hệ PH-07
 
 # D05-02-PH07 · Kịch bản và test case phân hệ PH-07 Danh mục dùng chung
 
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Chứng minh phân hệ Danh mục dùng chung làm đúng mọi yêu cầu đã duyệt, không làm mất chức năng của hệ Danh mục điện tử dùng chung đang vận hành (hệ Aita), và không để lộ dữ liệu giữa các tỉnh trên nền tảng dùng chung.
+
+**Phạm vi.** 30 kịch bản (TS-07-01…30) với 320 ca kiểm thử (TC-07-001…320) và 15 kịch bản nghiệm thu người dùng (UAT-01…15), phủ 53 yêu cầu chức năng FR-07, các quy tắc nghiệp vụ BR-07, mã lỗi ERR-07, yêu cầu phi chức năng NFR-07, bảo mật theo OWASP ASVS 5.0 và khả năng truy cập theo WCAG 2.2 mức AA. Mỗi yêu cầu mức bắt buộc (M) có ít nhất một ca dương tính và một ca âm tính; ma trận truy vết ở mục 8 được sinh tự động từ tài liệu này.
+
+**Căn cứ.** Yêu cầu chức năng D02-03-PH07, ca sử dụng D02-04-PH07, phân quyền D02-08, kế hoạch kiểm thử tổng thể D05-01, cấu trúc tài liệu kiểm thử ISO/IEC/IEEE 29119-3. Yêu cầu an toàn thông tin theo hồ sơ cấp độ 3 (Nghị định 331/2026/NĐ-CP, TCVN 14423:2026) và bảo vệ dữ liệu cá nhân (Luật 91/2025/QH15) được kiểm ở TS-07-19, 20, 28.
+
+**Điểm cần hội đồng lưu ý.** Nhóm ca rò rỉ chéo tenant (TS-07-19) là điều kiện bắt buộc đạt 100% trước khi phát hành. Bộ nghiệm thu mục 7 do cán bộ nghiệp vụ của tỉnh thí điểm tự thực hiện trên dữ liệu di trú của chính tỉnh mình. Bản bảng tính và tệp Gherkin đi kèm ở thư mục `ph07/`.
+
 ## 0. Giới thiệu
 
 Tài liệu này là đặc tả kiểm thử (test specification) của phân hệ PH-07 Danh mục dùng chung (Reference Data Management, viết tắt RDM) thuộc sản phẩm Datahub, được lập theo cấu trúc tài liệu kiểm thử của ISO/IEC/IEEE 29119-3: đặc tả thiết kế kiểm thử (test design specification) thể hiện qua các kịch bản `TS-07-nn`, đặc tả ca kiểm thử (test case specification) thể hiện qua các test case `TC-07-nnn`, và đặc tả thủ tục kiểm thử (test procedure specification) thể hiện qua các bước thực hiện trong từng ca và mẫu mã tự động hóa ở mục 9. Kế hoạch kiểm thử tổng thể của Datahub (mức dự án) nằm ở D05-01; tài liệu này chỉ đi sâu vào PH-07 và kế thừa mọi quy định chung từ đó.
 
 Mục tiêu của tài liệu là bảo đảm ba điều. Thứ nhất, mọi yêu cầu chức năng FR-07, quy tắc nghiệp vụ BR-07, mã lỗi ERR-07 và yêu cầu phi chức năng NFR-07 trong hợp đồng thiết kế của phân hệ đều có ít nhất một ca kiểm thử truy vết được, và mọi FR mức M có tối thiểu một ca dương tính và một ca âm tính theo quy tắc truy vết số 4 của [D00-01 §3.2](../../00-chung/D00-01-thuat-ngu-quy-uoc.md). Thứ hai, các rủi ro đặc thù của một hệ thống đa tenant cho 34 tỉnh, thành (rò rỉ dữ liệu chéo tenant, ghi nhầm vào danh mục toàn quốc, lẫn bộ đệm) được kiểm soát bằng kiểm thử bắt buộc theo [D03-10 §6](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md). Thứ ba, cán bộ nghiệp vụ đang dùng hệ thống Danh mục điện tử dùng chung cũ (hệ Aita) có bộ kịch bản nghiệm thu dễ hiểu để xác nhận hệ thống mới "không mất chức năng" so với hệ cũ, tương ứng các mục `LGC-DMDC-001…019` trong [D00-03](../../00-chung/D00-03-ma-tran-truy-vet.md).
 
-Tài liệu dẫn chiếu các tài liệu PH-07 cùng bộ: [FRS](../../02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md), [Use case](../../02-yeu-cau/use-case/D02-04-PH07-use-case-danh-muc.md), [User story](../../02-yeu-cau/user-story/D02-05-PH07-user-story-danh-muc.md), [SDD](../../03-thiet-ke/sdd/D03-02-PH07-sdd-danh-muc.md), [CSDL](../../03-thiet-ke/csdl/D03-03-PH07-csdl-danh-muc.md), [API](../../03-thiet-ke/api/D03-04-PH07-api-danh-muc.md), [Màn hình](../../03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md); và các tài liệu nền: [D02-02 SRS](../../02-yeu-cau/D02-02-srs.md) (FR-00, NFR-00), [D02-07 Từ điển dữ liệu](../../02-yeu-cau/D02-07-tu-dien-du-lieu.md), [D02-08 Ma trận phân quyền](../../02-yeu-cau/D02-08-ma-tran-phan-quyen.md), [D03-01 SAD](../../03-thiet-ke/D03-01-sad.md), [D03-10 Thiết kế đa tenant](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md). Khi có mâu thuẫn về vai trò và quyền, D02-08 được ưu tiên; mọi kỳ vọng phân quyền trong tài liệu này đã được đối chiếu với D02-08 §3.1.
+Tài liệu dẫn chiếu các tài liệu PH-07 cùng bộ: [FRS](../../02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md), [Use case](../../02-yeu-cau/use-case/D02-04-PH07-use-case-danh-muc.md), [SDD](../../03-thiet-ke/sdd/D03-02-PH07-sdd-danh-muc.md), [CSDL](../../03-thiet-ke/csdl/D03-03-PH07-csdl-danh-muc.md), [API](../../03-thiet-ke/api/D03-04-PH07-api-danh-muc.md), [Màn hình](../../03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md); và các tài liệu nền: [D02-02 SRS](../../02-yeu-cau/D02-02-srs.md) (FR-00, NFR-00), [D02-07 Từ điển dữ liệu](../../02-yeu-cau/D02-07-tu-dien-du-lieu.md), [D02-08 Ma trận phân quyền](../../02-yeu-cau/D02-08-ma-tran-phan-quyen.md), [D03-01 SAD](../../03-thiet-ke/D03-01-sad.md), [D03-10 Thiết kế đa tenant](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md). Khi có mâu thuẫn về vai trò và quyền, D02-08 được ưu tiên; mọi kỳ vọng phân quyền trong tài liệu này đã được đối chiếu với D02-08 §3.1.
 
 ## 1. Phạm vi, chiến lược và tổ chức kiểm thử
 
@@ -66,7 +76,7 @@ WireMock giả lập NDXP cung cấp bốn nhóm điểm cuối tương ứng b�
 | REST Assured / Spring MockMvc | Kiểm thử API | Token giả lập ký bằng khóa thử (JWT có `tenant`, `realm_access.roles`, `org_id`, `scope`) ở CI; token thật từ Keycloak ở SIT |
 | Schemathesis | Kiểm thử hợp đồng OpenAPI `openapi-rdm.yaml` | Phát hiện phản hồi sai lược đồ, mã HTTP ngoài khai báo |
 | Playwright | E2E giao diện | Chạy trên ba trình duyệt; ghi hình khi lỗi |
-| axe-core (`@axe-core/playwright`) | Khả năng truy cập tự động | Tiêu chí WCAG 2.1 mức AA |
+| axe-core (`@axe-core/playwright`) | Khả năng truy cập tự động | Tiêu chí WCAG 2.2 mức AA |
 | NVDA + Firefox | Khả năng truy cập thủ công | Ba luồng chính ở mục 6.4 |
 | k6 | Tải, chịu tải, thời lượng | Xuất chỉ số sang Prometheus remote write |
 | Chaos Mesh | Kiểm thử hỗn loạn | Dừng PostgreSQL, Valkey, cắt mạng tới Garage |
@@ -118,6 +128,7 @@ Người dùng giả lập được đặt tên theo mẫu `{tenant}-{vai trò}[
 | Mã dữ liệu | Tenant | Vai trò (D02-08) | Tổ chức | Mục đích |
 |---|---|---|---|---|
 | U-PA | PLATFORM | ROLE-PLATFORM_ADMIN | — | Ghi COMMON, nạp gói nền |
+| U-PA2 | PLATFORM | ROLE-PLATFORM_ADMIN | — | Người duyệt thứ hai cho danh mục COMMON (bốn mắt) |
 | U-PO | PLATFORM | ROLE-PLATFORM_OPERATOR | — | Kiểm tra chỉ đọc |
 | U-T68-TA | T68 | ROLE-TENANT_ADMIN | — | Toàn quyền tenant trừ duyệt/phát hành |
 | U-T68-DS-NV | T68 | ROLE-DATA_STEWARD | ORG-SNV | Soạn danh mục của Sở Nội vụ |
@@ -257,14 +268,14 @@ Các kịch bản được nhóm theo chức năng của phân hệ và theo cá
 | TS-07-26 | Giao diện E2E và yêu cầu dùng chung FR-00 | 018, FR-00-0xx | Nhiều | TC-07-283…292 |
 | TS-07-27 | Hiệu năng (k6) | NFR-07-001…009, 011, 012 | — | TC-07-293…303 |
 | TS-07-28 | Bảo mật (ASVS) | — | — | TC-07-304…315 |
-| TS-07-29 | Khả năng truy cập | FR-00, WCAG 2.1 AA | — | TC-07-316…320 |
+| TS-07-29 | Khả năng truy cập | FR-00, WCAG 2.2 AA | — | TC-07-316…320 |
 | TS-07-30 | Nghiệm thu người dùng (UAT) tương đương hệ Aita | LGC-DMDC | — | UAT-01…15 (mục 7) |
 
 ### 3.2. Máy trạng thái được kiểm thử
 
-PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng thái hợp lệ và các chuyển không hợp lệ có rủi ro nghiệp vụ cao (sửa phiên bản đã phát hành, commit tác vụ đã hết hạn, xác nhận lần đồng bộ đã áp dụng). Bảng sau tổng hợp chuyển trạng thái và test case phủ; trạng thái tác vụ nhập được hiểu theo mô hình `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` → `COMMITTING` → `COMMITTED` cùng các trạng thái kết thúc `FAILED`, `CANCELLED`, `EXPIRED`, bám theo khung chung và DD-12 (bổ sung `SCANNING`).
+PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng thái hợp lệ và các chuyển không hợp lệ có rủi ro nghiệp vụ cao (sửa phiên bản đã phát hành, commit tác vụ đã hết hạn, xác nhận lần đồng bộ đã áp dụng). Bảng sau tổng hợp chuyển trạng thái và test case phủ; trạng thái tác vụ nhập theo FRS §4.14: `UPLOADED` → `SCANNING` → `PARSING` → `VALIDATING` → `VALIDATED` → `COMMITTING` → `COMMITTED` cùng các trạng thái kết thúc `FAILED`, `CANCELLED`, `EXPIRED`.
 
-> **Câu hỏi mở Q07-75:** Tên chính xác của các trạng thái tác vụ nhập (`PENDING`, `COMMITTING`, `EXPIRED`) chưa được khung chung liệt kê đầy đủ; tài liệu này giả định như trên và cần đối chiếu với SDD/CSDL PH-07 khi ban hành. Nếu SDD dùng tên khác, chỉ cần đổi nhãn trong các ca TC-07-093…124, logic kiểm thử không đổi.
+> **Câu hỏi mở Q07-75 (đã đóng 25/11/2026):** Tên trạng thái tác vụ nhập được chốt theo FRS §4.14 và dùng thống nhất ở D03-03-PH07 (`ck_import_job_status`), OpenAPI (`ImportJobStatus`) và D03-06-PH07. Các ca TC-07-093…124 đã dùng tên mới.
 
 | Máy trạng thái | Chuyển | Hợp lệ | Test case |
 |---|---|---|---|
@@ -273,6 +284,8 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 | Phiên bản | `IN_REVIEW` → `APPROVED` (approve) | Có | TC-07-073 |
 | Phiên bản | `APPROVED` → `PUBLISHED` (publish) | Có | TC-07-074 |
 | Phiên bản | `IN_REVIEW` → `DRAFT` (reject) | Có | TC-07-076 |
+| Phiên bản | `IN_REVIEW` → `DRAFT` (rút lại, `WITHDRAW`) | Có, chỉ người trình | TC-07-256 |
+| Phiên bản | `APPROVED` → `IN_REVIEW` (thu hồi duyệt, `UNAPPROVE`) | Có, người duyệt | TC-07-241 |
 | Phiên bản | `DRAFT` → `PUBLISHED` (phát hành trực tiếp) | Có khi `require_approval = false` và không vi phạm BR-07-012 | TC-07-084 |
 | Phiên bản | `DRAFT` → `DISCARDED` | Có | TC-07-064 |
 | Phiên bản | `PUBLISHED` → sửa bất kỳ | Không | TC-07-079, TC-07-080 |
@@ -291,7 +304,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 | Bản ghi | `ACTIVE` → `DEPRECATED` (kèm mã thay thế) | Có | TC-07-055 |
 | Bản ghi | `DEPRECATED` → `ACTIVE` (khôi phục trong bản nháp mới) | Có | TC-07-057 |
 | Bản ghi | đã phát hành → xóa | Không | TC-07-058 |
-| Tác vụ nhập | `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` | Có | TC-07-095 |
+| Tác vụ nhập | `UPLOADED` → `SCANNING` → `PARSING` → `VALIDATING` → `VALIDATED` | Có | TC-07-095 |
 | Tác vụ nhập | `VALIDATED` → `COMMITTING` → `COMMITTED` | Có | TC-07-095 |
 | Tác vụ nhập | `SCANNING` → `FAILED` (tệp nhiễm) | Có | TC-07-119 |
 | Tác vụ nhập | `PARSING` → `FAILED` (tệp hỏng) | Có | TC-07-115 |
@@ -476,13 +489,14 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-018 · Cập nhật thông tin danh mục với ETag cũ
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
-- **Truy vết** FR-07-004 · API-07-004 · ERR-07-018 · FR-00-052
+- **Truy vết** FR-07-004 · API-07-004 · ERR-07-018, 040, 004 · BR-07-040 · FR-00-052
 - **Tiền điều kiện / dữ liệu** CAT-LH có `ETag` `"8"` sau TC-07-010; người gọi U-T68-DS-NV.
 - **Bước**
   1. Gọi `PATCH /catalogs/LOAI_HINH_TC` với `If-Match: "7"`.
   2. Gọi `PATCH /catalogs/LOAI_HINH_TC` không có `If-Match`.
   3. Trên giao diện: mở UI-07-03 ở hai tab trình duyệt, lưu tab 1, rồi lưu tab 2.
-- **Mong đợi** Bước 1 trả `412`, `ERR-07-018`. Bước 2 trả `428 Precondition Required` theo quy ước D03-01 §7.2. Bước 3: tab 2 hiển thị hộp thoại xung đột có khác biệt, cho chọn "Tải lại" hoặc "Ghi đè" (FR-00-052). Dữ liệu không bị ghi đè âm thầm.
+  4. Gọi `PATCH /catalogs/LOAI_HINH_TC` với `If-Match` đúng và `code = LOAI_HINH_TC2` (danh mục đã phát hành).
+- **Mong đợi** Bước 1 trả `412`, `ERR-07-018`. Bước 2 trả `400` `ERR-07-040` (quy ước thiếu `If-Match` của D03-04-PH07 §6). Bước 4 trả `409` `ERR-07-004`, mã danh mục không đổi (BR-07-040). Bước 3: tab 2 hiển thị hộp thoại xung đột có khác biệt, cho chọn "Tải lại" hoặc "Ghi đè" (FR-00-052). Dữ liệu không bị ghi đè âm thầm.
 
 ### TS-07-02 · Nhóm danh mục
 
@@ -504,11 +518,11 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-020 · Di chuyển nhóm tạo vòng trong cây nhóm
 - **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
-- **Truy vết** FR-07-010 · API-07-009
+- **Truy vết** FR-07-010 · API-07-009 · ERR-07-039
 - **Tiền điều kiện / dữ liệu** `HANH_CHINH` là cha của `HANH_CHINH.TO_CHUC`.
 - **Bước**
   1. Gọi `PATCH /catalog-groups/<id HANH_CHINH>` với `parentId` = id của `HANH_CHINH.TO_CHUC`, `If-Match` đúng.
-- **Mong đợi** `422` lỗi kiểm tra hợp lệ (chi tiết "tạo vòng trong cây nhóm"). Cây không đổi.
+- **Mong đợi** `409` `ERR-07-039` (chi tiết "tạo vòng trong cây nhóm"). Cây không đổi.
 
 #### TC-07-021 · Xóa nhóm rỗng
 - **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
@@ -528,11 +542,11 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-023 · Tạo nhóm trùng mã
 - **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
-- **Truy vết** FR-07-010 · API-07-008
+- **Truy vết** FR-07-010 · API-07-008 · ERR-07-039
 - **Tiền điều kiện / dữ liệu** Nhóm `HANH_CHINH` tồn tại.
 - **Bước**
   1. Gọi `POST /catalog-groups` với `code` = `hanh_chinh`.
-- **Mong đợi** `409` lỗi trùng mã (chi tiết chỉ rõ trường `code`). Không tạo nhóm mới.
+- **Mong đợi** `409` `ERR-07-039` (chi tiết chỉ rõ trường `code`). Không tạo nhóm mới.
 
 ### TS-07-03 · Lược đồ thuộc tính động và phân cấp
 
@@ -1092,7 +1106,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 - **Tiền điều kiện / dữ liệu** U-T68-DA2 (có cả DATA_STEWARD và DATA_APPROVER) soạn và trình bản nháp v2.
 - **Bước**
   1. U-T68-DA2 gọi `POST .../versions/2:approve`.
-  2. U-T68-DA2 gọi `POST .../versions/2:reject` (từ chối chính mình được phép rút lại hay không: kỳ vọng theo FRS là không, dùng thao tác này để kiểm tra).
+  2. U-T68-DA2 gọi `POST .../versions/2:reject` (người trình không được tự từ chối; muốn đưa bản nháp về thì dùng `action = WITHDRAW` trên API-07-017, xem TC-07-256).
 - **Mong đợi** Bước 1 trả `403`, `ERR-07-015`; phiên bản giữ `IN_REVIEW`. Bước 2 trả `403` `ERR-07-015`. KT: nhật ký an ninh ghi nhận lần thử tự duyệt.
 
 #### TC-07-078 · Người sửa lần cuối không được duyệt hoặc phát hành
@@ -1281,7 +1295,7 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
   3. Khi `VALIDATED`, gọi `GET /import-jobs/{jobId}/rows?page=0&size=50`.
   4. Gọi `POST /import-jobs/{jobId}:commit` thân `{"skipInvalidRows":false}`.
   5. Gọi `GET /catalogs/LOAI_HINH_TC/versions/draft/items?size=100`.
-- **Mong đợi** Bước 1 trả `202` kèm `Location`. Chuỗi trạng thái quan sát được là `PENDING` → `SCANNING` → `PARSING` → `VALIDATED` (có thể bỏ lỡ trạng thái trung gian ngắn, nhưng không có trạng thái ngoài chuỗi). Tóm tắt: `totalRows` 10, `validRows` 10, `errorRows` 0, `encoding` = `UTF-8`, `template` = `STANDARD`. Bước 4 trả `202`/`200`, trạng thái đi qua `COMMITTING` tới `COMMITTED`. Bản nháp có 46 bản ghi (39 + 7 mới), 3 bản ghi đổi tên. `catalog_version.origin` giữ `MANUAL` hoặc ghi nhận nguồn `IMPORT` theo SDD. EVT-07-07 phát hai lần (một với `status = VALIDATED`, một với `COMMITTED`). KT: có (IMPORT_COMMIT, số dòng). Trên UI-07-06, bốn bước của trình hướng dẫn hoàn tất và có thông báo khi tác vụ nền xong (FR-00-054, 060).
+- **Mong đợi** Bước 1 trả `202` kèm `Location`. Chuỗi trạng thái quan sát được là `UPLOADED` → `SCANNING` → `PARSING` → `VALIDATING` → `VALIDATED` (có thể bỏ lỡ trạng thái trung gian ngắn, nhưng không có trạng thái ngoài chuỗi). Tóm tắt: `totalRows` 10, `validRows` 10, `errorRows` 0, `encoding` = `UTF-8`, `template` = `STANDARD`. Bước 4 trả `202`/`200`, trạng thái đi qua `COMMITTING` tới `COMMITTED`. Bản nháp có 46 bản ghi (39 + 7 mới), 3 bản ghi đổi tên. `catalog_version.origin` giữ `MANUAL` hoặc ghi nhận nguồn `IMPORT` theo SDD. EVT-07-07 phát hai lần (một với `status = VALIDATED`, một với `COMMITTED`). KT: có (IMPORT_COMMIT, số dòng). Trên UI-07-06, bốn bước của trình hướng dẫn hoàn tất và có thông báo khi tác vụ nền xong (FR-00-054, 060).
 
 #### TC-07-096 · Bảng kết quả theo dòng của chế độ UPSERT
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
@@ -1519,11 +1533,11 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-119 · Tệp nhiễm mã độc bị chặn ở bước quét
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API (SIT)
-- **Truy vết** FR-07-021 · DD-12 (`scan_status`) · ERR-07-019
+- **Truy vết** FR-07-021 · DD-12 (`scan_status`) · BR-07-041 · ERR-07-038
 - **Tiền điều kiện / dữ liệu** F-EICAR.
 - **Bước**
   1. Tạo tác vụ, thăm dò trạng thái.
-- **Mong đợi** Trạng thái `SCANNING` → `FAILED`; `file_object.scan_status = INFECTED`; tệp bị cách ly hoặc xóa khỏi kho đối tượng; không có dòng `import_row`; có sự kiện an ninh gửi PH-13 kèm tên tệp và người tải.
+- **Mong đợi** Trạng thái `SCANNING` → `FAILED` với `ERR-07-038`; `file_object.scan_status = INFECTED`; tệp bị cách ly hoặc xóa khỏi kho đối tượng; không có dòng `import_row`; có sự kiện an ninh gửi PH-13 kèm tên tệp và người tải.
 
 #### TC-07-120 · Bom nén xlsx
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
@@ -1665,14 +1679,16 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
   3. Tải tệp qua `downloadUrl`.
 - **Mong đợi** Bước 1 trả `202` (vượt 10.000 dòng tự chuyển nền dù không có `Prefer`). Tác vụ xong trong ≤ 60 giây (NFR-07-006), `downloadUrl` là URL ký sẵn có `expiresAt` = thời điểm xong + 24 giờ. Tệp đủ 100.000 dòng. EVT-07-08 phát một lần. Có thông báo trong ứng dụng cho người tạo.
 
-#### TC-07-134 · Liên kết tải hết hạn
+#### TC-07-134 · Liên kết tải và báo cáo lỗi hết hạn
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** IT
-- **Truy vết** FR-07-024 · FR-00-031
-- **Tiền điều kiện / dữ liệu** Tác vụ xuất TC-07-133.
+- **Truy vết** FR-07-024, 025 · API-07-035, 039, 040 · ERR-07-020 · FR-00-031
+- **Tiền điều kiện / dữ liệu** Tác vụ xuất TC-07-133; tác vụ nhập F-ERR ở trạng thái `VALIDATED` tạo 8 ngày trước (đồng hồ giả lập).
 - **Bước**
   1. Sau 24 giờ 1 phút (đồng hồ giả lập; URL ký với thời hạn rút ngắn ở CI), tải `downloadUrl`.
   2. Gọi `GET /export-jobs/{jobId}`.
-- **Mong đợi** Bước 1 bị kho đối tượng từ chối (`403`). Bước 2 cho trạng thái hết hạn, không còn `downloadUrl`; người dùng phải xuất lại.
+  3. Gọi `GET /import-jobs/{jobId}/rows?valid=false` của tác vụ nhập 8 ngày tuổi.
+  4. Gọi `GET /import-jobs?createdBy={người khác}` bằng U-T68-DS-NV.
+- **Mong đợi** Bước 1 bị kho đối tượng từ chối (`403`). Bước 2 cho trạng thái `EXPIRED`, không còn `downloadUrl`; người dùng phải xuất lại. Bước 3 trả `409` `ERR-07-020` "Báo cáo không còn" vì dòng đã bị dọn sau 7 ngày; tác vụ vẫn hiện trong lịch sử. Bước 4 không lộ tác vụ của người khác: tham số `createdBy` chỉ có tác dụng với vai trò xem mọi tác vụ, nên kết quả chỉ gồm tác vụ do U-T68-DS-NV tạo.
 
 #### TC-07-135 · Xuất phiên bản không tồn tại
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
@@ -1890,3 +1906,1852 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
   3. Gọi `GET /catalogs/LOAI_HINH_TC/snapshots/draft`.
 - **Mong đợi** Bước 1 trả `302` tới URL ký sẵn hạn ngắn của bucket `dh-t68-rdm`. Bước 2 cho tệp có SHA-256 khớp metadata và nội dung khớp `GET .../items` của v1. Bước 3 trả `404` `ERR-07-006`.
 
+
+### TS-07-13 · Truy vấn có cấu trúc (DSL)
+
+**Mục tiêu.** Kịch bản này xác nhận API truy vấn có cấu trúc thay được nhu cầu "truy vấn CSDL tùy chọn" của Aita (LGC-DMDC-016) mà không mở đường cho truy vấn tùy ý: chỉ lọc, sắp xếp trên trường hệ thống và thuộc tính `queryable`, mọi giá trị là tham số ràng buộc, có giới hạn độ phức tạp và thời gian.
+
+**Phủ.** FR-07-032; BR-07-018; API-07-047; UI-07-12; ERR-07-023, 024, 025, 030.
+
+**Tiền điều kiện chung.** CAT-LH v1 đã phát hành (39 bản ghi); CAT-BIG đã phát hành; CAT-RES cấp quyền khai thác cho `HT-DATDAI`. Người gọi mặc định APP-T68-QUERY. Đường dẫn rút gọn `POST /catalogs/{c}/items:query`.
+
+#### TC-07-157 · Lọc theo thuộc tính queryable, chọn trường và sắp xếp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · BR-07-018 · API-07-047 · LGC-DMDC-016
+- **Tiền điều kiện / dữ liệu** CAT-LH v1; 9 bản ghi cấp 2 có `cap_quan_ly = TINH`.
+- **Bước**
+  1. Gọi với `filter = {"and":[{"field":"attrs.cap_quan_ly","op":"eq","value":"TINH"},{"field":"depth","op":"eq","value":2}]}`, `select = ["code","name","attrs.viet_tat"]`, `sort = [{"field":"attrs.viet_tat","dir":"asc"}]`.
+  2. Gọi lại với `select` chứa `attrs.so_bien_che` (thuộc tính không `queryable`).
+- **Mong đợi** Bước 1 trả `200`, `items` có đúng các bản ghi thỏa hai điều kiện, mỗi phần tử chỉ có ba trường đã chọn, thứ tự theo `viet_tat` rồi `code`; `catalogVersion` = 1; có `took`. Bước 2 trả `200` (thuộc tính không `queryable` vẫn được chọn, chỉ không được lọc hoặc sắp xếp). KT: không. EVT: không.
+
+#### TC-07-158 · Nhóm `and`, `or`, `not` lồng nhau và toán tử tập hợp
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** UT, API
+- **Truy vết** FR-07-032 · API-07-047
+- **Tiền điều kiện / dữ liệu** CAT-LH v1.
+- **Bước**
+  1. Gọi với `{"or":[{"field":"code","op":"startsWith","value":"KH01"},{"not":{"field":"attrs.cap_quan_ly","op":"in","value":["XA"]}}]}`.
+  2. Gọi với `{"field":"attrs.viet_tat","op":"isNull"}`.
+  3. Gọi với `{"field":"name","op":"contains","value":"giao duc"}`.
+- **Mong đợi** Kết quả từng bước khớp với kết quả tính bằng truy vấn SQL tham chiếu viết tay trên cùng dữ liệu (so tập mã). Bước 3 khớp tên có dấu "Giáo dục" (không dấu, không phân biệt hoa thường). Kiểm thử đơn vị của bộ dịch xác nhận câu SQL sinh ra chỉ có tham số `$n`, không có giá trị nối chuỗi.
+
+#### TC-07-159 · Truy vấn tại thời điểm và theo phiên bản
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-032 · FR-07-026 · API-07-047
+- **Tiền điều kiện / dữ liệu** CAT-GT v1 (2020-01-01…2025-01-01), v2 (từ 2025-01-01). Người gọi APP-T68-QUERY (CAT-GT là COMMON, mọi tenant đọc được).
+- **Bước**
+  1. Gọi `/catalogs/GIOI_TINH/items:query` với `at = 2024-06-01`.
+  2. Gọi với `version = 2`.
+  3. Gọi với cả `at` và `version`.
+- **Mong đợi** Bước 1 trả `catalogVersion` = 1. Bước 2 trả `catalogVersion` = 2. Bước 3 trả `400` `ERR-07-023` (hai tham số loại trừ nhau).
+
+#### TC-07-160 · Phân trang bằng con trỏ ổn định
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · API-07-047 · NFR-07-004
+- **Tiền điều kiện / dữ liệu** CAT-BIG (100.000 bản ghi).
+- **Bước**
+  1. Gọi với `limit = 1000`, `sort = [{"field":"sortOrder","dir":"asc"}]`, lặp theo `nextCursor` tới khi rỗng.
+  2. Trong lúc lặp, một luồng khác tạo và phát hành phiên bản mới của CAT-BIG.
+- **Mong đợi** Tổng số mã thu được bằng 100.000, không trùng, không sót; mọi trang có cùng `catalogVersion` (con trỏ gắn với phiên bản của trang đầu). Trang cuối có `nextCursor = null`.
+
+#### TC-07-161 · Con trỏ bị sửa hoặc dùng với bộ lọc khác
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · ERR-07-023
+- **Tiền điều kiện / dữ liệu** Một `nextCursor` hợp lệ lấy từ TC-07-160.
+- **Bước**
+  1. Đổi một ký tự trong con trỏ rồi gọi.
+  2. Dùng con trỏ hợp lệ nhưng thay `filter`.
+  3. Dùng con trỏ của tenant T68 khi gọi bằng APP-T01-READ.
+- **Mong đợi** Bước 1, 2 trả `400` `ERR-07-023` (chữ ký HMAC sai, băm `filter` không khớp). Bước 3 trả `400` hoặc `404-ẩn`, không trả dữ liệu của T68.
+
+#### TC-07-162 · Lọc trên thuộc tính không queryable
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · BR-07-018 · ERR-07-025
+- **Tiền điều kiện / dữ liệu** CAT-LH: `so_bien_che` không `queryable`.
+- **Bước**
+  1. Gọi với `{"field":"attrs.so_bien_che","op":"gt","value":10}`.
+  2. Gọi với `sort = [{"field":"attrs.so_bien_che","dir":"desc"}]`.
+  3. Gọi với `{"field":"attrs.khong_ton_tai","op":"eq","value":"x"}`.
+- **Mong đợi** Cả ba trả `400` `ERR-07-025`, thân lỗi nêu tên trường và danh sách trường `queryable` hợp lệ (`viet_tat`, `cap_quan_ly`). Chỉ số `rdm_query_rejected_total{reason="NOT_QUERYABLE"}` tăng 3.
+
+#### TC-07-163 · Biểu thức sai cú pháp và sai kiểu giá trị
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-07-032 · ERR-07-023
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gửi `filter` có khóa lạ `{"field":"code","op":"regex","value":".*"}`.
+  2. Gửi `{"field":"attrs.ngay_thanh_lap","op":"gte","value":"31/02/2024"}` (không phải ngày ISO).
+  3. Gửi `between` với 3 phần tử.
+  4. Gửi `contains` với chuỗi 1 ký tự.
+  5. Gửi thân không phải JSON.
+- **Mong đợi** Bước 1…4 trả `400` `ERR-07-023`, trường `errors[].pointer` chỉ đúng vị trí bằng JSON Pointer (ví dụ `/filter/op`). Bước 5 trả `400` `ERR-07-023`. Không có thông điệp SQL hay ngăn xếp lỗi Java trong phản hồi.
+
+#### TC-07-164 · Vượt giới hạn độ phức tạp
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · ERR-07-024
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gửi 20 điều kiện lá (biên), rồi 21 điều kiện.
+  2. Gửi nhóm lồng 3 cấp (biên), rồi 4 cấp.
+  3. Gửi `in` 500 phần tử, rồi 501.
+  4. Gửi `limit = 1000`, rồi `1001`.
+- **Mong đợi** Các lần ở biên trả `200`. Các lần vượt trả `422` `ERR-07-024` với `reason` lần lượt `TOO_MANY_CONDITIONS`, `TOO_DEEP`, `IN_TOO_LARGE`, `LIMIT_TOO_LARGE`.
+
+#### TC-07-165 · Truy vấn quá thời gian bị cắt
+- **Loại** Âm, Khả dụng · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-032 · ERR-07-024 · NFR-07-004
+- **Tiền điều kiện / dữ liệu** CAT-BIG; IT tiêm độ trễ bằng `pg_sleep` qua hàm `unaccent_lower` thay thế trong schema thử.
+- **Bước**
+  1. Gửi truy vấn `contains` trên `name` khiến câu SQL chạy quá 2 giây.
+  2. Ngay sau đó gửi một truy vấn đơn giản.
+- **Mong đợi** Bước 1 trả `422` `ERR-07-024` `reason = TIMEOUT` sau khoảng 2 giây, kết nối được trả về pool (đếm `hikaricp_connections_active` trở lại mức trước). Bước 2 trả `200` bình thường. Giao dịch của bước 1 là chỉ đọc (kiểm tra `SHOW transaction_read_only`).
+
+#### TC-07-166 · Chống chèn SQL qua giá trị và tên trường
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API, ZAP
+- **Truy vết** FR-07-032 · BR-07-018 · ASVS V5.3
+- **Tiền điều kiện / dữ liệu** CAT-LH.
+- **Bước**
+  1. Gửi `{"field":"code","op":"eq","value":"x' OR '1'='1"}`.
+  2. Gửi `{"field":"attrs.viet_tat') OR 1=1 --","op":"eq","value":"x"}`.
+  3. Gửi `{"field":"name","op":"contains","value":"%_%"}`.
+- **Mong đợi** Bước 1 trả `200` với `items` rỗng. Bước 2 trả `400` `ERR-07-025` (tên trường không thuộc danh sách cho phép). Bước 3 trả các bản ghi có tên chứa đúng chuỗi "%_%" (ký tự đại diện đã được thoát), tức rỗng với dữ liệu mẫu. Nhật ký PostgreSQL không có câu lệnh chứa giá trị nối chuỗi.
+
+#### TC-07-167 · Danh mục HYBRID trả hợp của gốc và phần bổ sung
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-032 · FR-07-048 · API-07-047
+- **Tiền điều kiện / dữ liệu** CAT-DT68 (HYBRID trên `DAN_TOC`, 2 bản ghi bổ sung).
+- **Bước**
+  1. Gọi `/catalogs/DAN_TOC_T68/items:query` với `filter = {"field":"code","op":"startsWith","value":"68"}`.
+  2. Gọi không có `filter`, `limit = 100`.
+- **Mong đợi** Bước 1 trả đúng `68.01`, `68.02`. Bước 2 trả 57 bản ghi (55 gốc cộng 2 bổ sung), mỗi phần tử có cờ `isLocalExtension` đúng.
+
+#### TC-07-168 · Scope và danh mục hạn chế
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-032 · FR-07-052 · ERR-07-030
+- **Tiền điều kiện / dữ liệu** CAT-RES cấp cho `HT-DATDAI` (APP-T68-QUERY), không cấp cho `HT-HOTICH` (APP-T68-READ).
+- **Bước**
+  1. APP-T68-READ (không có `rdm.query`) gọi truy vấn trên CAT-LH.
+  2. APP-T68-QUERY gọi truy vấn trên CAT-RES.
+  3. Một client có `rdm.query` nhưng thuộc HTTT `HT-KHAC` gọi truy vấn trên CAT-RES.
+- **Mong đợi** Bước 1 trả `403-PQ`. Bước 2 trả `200`. Bước 3 trả `403` `ERR-07-030`.
+
+#### TC-07-169 · Trình thử API trên giao diện
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-07-032 · UI-07-12 · LGC-DMDC-016
+- **Tiền điều kiện / dữ liệu** U-T68-DEV đăng nhập.
+- **Bước**
+  1. Mở UI-07-12, chọn `LOAI_HINH_TC`, dùng bộ dựng điều kiện chọn `cap_quan_ly = TINH`.
+  2. Chuyển sang tab JSON, sửa `limit` thành 5, bấm Chạy (Ctrl+Enter).
+  3. Bấm "Sao chép cURL".
+- **Mong đợi** Bộ dựng chỉ cho chọn thuộc tính `queryable`. Bước 2 hiển thị `200`, thời gian, 5 dòng ở chế độ Bảng và JSON. Bước 3 đưa vào bộ nhớ tạm lệnh cURL không chứa token thật (dùng biến `$TOKEN`).
+
+#### TC-07-170 · Trình thử API báo lỗi tại chỗ
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** E2E
+- **Truy vết** FR-07-032 · UI-07-12 · ERR-07-023, 025
+- **Tiền điều kiện / dữ liệu** U-T68-DEV.
+- **Bước**
+  1. Trong khung JSON, gõ `"op": "regex"`.
+  2. Gõ một trường không `queryable` rồi bấm Chạy.
+- **Mong đợi** Bước 1: khung mã gạch đỏ ngay khi gõ (kiểm tra theo JSON Schema của DSL ở phía trình duyệt), nút Chạy vẫn bấm được. Bước 2: vùng kết quả hiện `400`, thông điệp tiếng Việt "Thuộc tính `so_bien_che` không cho phép lọc. Các thuộc tính lọc được: viet_tat, cap_quan_ly." và vị trí lỗi được đánh dấu trong khung mã.
+
+### TS-07-14 · Sự kiện và outbox
+
+**Mục tiêu.** Xác nhận mỗi thay đổi đã cam kết sinh đúng một sự kiện CloudEvents qua outbox, đúng topic theo tenant, giữ thứ tự theo danh mục, không chứa dữ liệu bản ghi và không mất khi Kafka hoặc Debezium gián đoạn.
+
+**Phủ.** FR-07-034; EVT-07-01…10; NFR-07-007; DD-11; `asyncapi-rdm.yaml`.
+
+**Tiền điều kiện chung.** IT dùng Testcontainers với Debezium Connect; SIT dùng hạ tầng thật. Bộ tiêu thụ thử nghe mọi topic `t68.rdm.*` và `common.rdm.*`.
+
+#### TC-07-171 · Phát hành sinh đúng một sự kiện đúng lược đồ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-034 · EVT-07-05 · NFR-07-007
+- **Tiền điều kiện / dữ liệu** CAT-MUC có bản nháp hợp lệ, `require_approval = false`.
+- **Bước**
+  1. U-T68-DA1 phát hành bản nháp.
+  2. Đọc topic `t68.rdm.catalog.published.v1` trong 10 giây.
+- **Mong đợi** Có đúng một dòng mới trong `ph07_rdm.outbox` và đúng một bản tin trên topic, nhận được trong ≤ 5 giây sau cam kết. Tiêu đề `ce_specversion = 1.0`, `ce_type = vn.datahub.rdm.catalog.published.v1`, `ce_source`, `ce_id` là UUID v7, `ce_tenant = T68`; khóa bản tin `T68:MUC_DO_DVC`. Thân hợp lệ theo lược đồ AsyncAPI, có `versionNo`, `effectiveFrom`, `stats`, `breaking`, `snapshotUri`, `schemaHash` và không có mảng bản ghi.
+
+#### TC-07-172 · Giao dịch hoàn tác không sinh sự kiện
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-034 · DD-11
+- **Tiền điều kiện / dữ liệu** IT tiêm lỗi sau khi ghi outbox nhưng trước cam kết (ngoại lệ trong `PublishService`).
+- **Bước**
+  1. Gọi phát hành CAT-MUC.
+- **Mong đợi** API trả `500` dạng problem+json; bảng `outbox` không có dòng mới; topic không có bản tin sau 10 giây (EVT: không); phiên bản vẫn ở `DRAFT`.
+
+#### TC-07-173 · Thứ tự sự kiện theo danh mục
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-034 · EVT-07-04, 05, 06
+- **Tiền điều kiện / dữ liệu** Danh mục `TC173_DM` mới tạo.
+- **Bước**
+  1. Lần lượt: trình duyệt, từ chối, trình lại, duyệt, phát hành.
+  2. Đọc các topic liên quan, sắp theo `ce_time`.
+- **Mong đợi** Mọi bản tin có cùng khóa `T68:TC173_DM` nên nằm cùng phân vùng; thứ tự nhận khớp thứ tự thao tác (submitted, rejected, submitted, published).
+
+#### TC-07-174 · Kafka gián đoạn không làm mất sự kiện
+- **Loại** Khả dụng · **Ưu tiên** P1 · **Tự động** Chaos
+- **Truy vết** FR-07-034 · NFR-07-007
+- **Tiền điều kiện / dữ liệu** SIT; Chaos Mesh dừng ba broker Kafka trong 5 phút.
+- **Bước**
+  1. Trong lúc Kafka dừng, phát hành 3 danh mục khác nhau.
+  2. Khôi phục Kafka.
+- **Mong đợi** Ba thao tác phát hành trả `200` (không phụ thuộc Kafka). Sau khi Kafka trở lại, ba sự kiện xuất hiện trong ≤ 60 giây, không trùng `ce_id`. Cảnh báo `RdmOutboxLag` bật trong lúc gián đoạn và tắt sau khi đuổi kịp.
+
+#### TC-07-175 · Sự kiện của COMMON và sự kiện sắp xếp ĐVHC
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-034 · EVT-07-05, EVT-07-10 · FR-07-045
+- **Tiền điều kiện / dữ liệu** CAT-DVHC có bản nháp v4 với một sự kiện `MERGE` giả lập.
+- **Bước**
+  1. U-PA phát hành v4.
+  2. Đọc `common.rdm.catalog.published.v1` và `common.rdm.adminunit.reorganized.v1`.
+- **Mong đợi** Có một bản tin trên mỗi topic, `ce_tenant = COMMON`; EVT-07-10 có `events[]` với loại, mã nguồn, mã đích, căn cứ. Bộ tiêu thụ của tenant T68 và T01 đều nhận được.
+
+#### TC-07-176 · Sự kiện không lộ sang tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-07-034 · FR-00-011
+- **Tiền điều kiện / dữ liệu** Bộ tiêu thụ thử dùng chứng thư của T01 với ACL Kafka chỉ cho `t01.*` và `common.*`.
+- **Bước**
+  1. Phát hành CAT-MUC của T68.
+  2. Bộ tiêu thụ T01 cố đăng ký `t68.rdm.catalog.published.v1`.
+- **Mong đợi** Bước 2 bị Kafka từ chối (`TopicAuthorizationException`); bộ tiêu thụ T01 không nhận bản tin nào của T68.
+
+### TS-07-15 · Đồng bộ danh mục quốc gia
+
+**Mục tiêu.** Xác nhận vòng đời nguồn đồng bộ và lần đồng bộ theo FRS §4.15: không đổi thì không tạo phiên bản, thay đổi an toàn được tự áp dụng khi bật, thay đổi phá vỡ phải có người xác nhận, lỗi nguồn không làm hỏng dữ liệu đang dùng. Kịch bản thay chức năng kết nối NGSP của Aita (LGC-DMDC-019, LGC-NGSP-006).
+
+**Phủ.** FR-07-035…039; BR-07-011, 012, 017, 027; API-07-055…063, 074; UI-07-09; ERR-07-002, 005, 015, 028, 029, 031; EVT-07-09.
+
+**Tiền điều kiện chung.** WireMock theo mục 2.6; nguồn `SRC-GT` của CAT-GT do U-PA quản lý (`auto_apply = true`, lịch `0 0 2 * * *`). Kiểm thử ở tenant `PLATFORM` cho danh mục COMMON và ở T68 cho danh mục NATIONAL của tỉnh tạo ở TC-07-187.
+
+#### TC-07-177 · Tạo, sửa, tắt nguồn đồng bộ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-035 · API-07-055, 056, 057 · LGC-DMDC-019
+- **Tiền điều kiện / dữ liệu** U-PA; danh mục COMMON `TC177_QT` (NATIONAL, chưa có nguồn).
+- **Bước**
+  1. `POST /sync-sources` với `catalogCode = TC177_QT`, `provider = NDXP_DMDC`, `remoteCatalogId`, `schedule = "0 30 1 * * *"`, `autoApply = false`, `fieldMapping`.
+  2. `GET /sync-sources?catalogCode=TC177_QT`.
+  3. `PATCH /sync-sources/{id}` với `If-Match` đổi `enabled = false`.
+- **Mong đợi** Bước 1 trả `201`, có `ETag`, lịch chạy kế tiếp `nextRunAt` = 01:30 hôm sau giờ Việt Nam. Bước 2 trả nguồn vừa tạo. Bước 3 trả `200`, `nextRunAt = null`. KT: có (SYNC_SOURCE_CREATE, SYNC_SOURCE_UPDATE).
+
+#### TC-07-178 · Nguồn đồng bộ trùng, lịch sai, danh mục không hợp lệ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-035 · ERR-07-002, 003, 009, 018
+- **Tiền điều kiện / dữ liệu** `SRC-GT` đã có cho CAT-GT.
+- **Bước**
+  1. U-PA tạo nguồn thứ hai cùng `provider` cho CAT-GT.
+  2. U-PA tạo nguồn với `schedule = "* * * * * *"` (mỗi giây) và với biểu thức sai cú pháp.
+  3. U-T68-TA tạo nguồn cho CAT-GT (COMMON).
+  4. U-T68-TA tạo nguồn cho CAT-LH (LOCAL).
+  5. U-PA sửa `SRC-GT` với `If-Match` cũ.
+- **Mong đợi** Bước 1 `409` `ERR-07-002`. Bước 2 `422` `ERR-07-009` (lịch dưới khoảng tối thiểu 1 giờ, cú pháp sai). Bước 3 `403` `ERR-07-003`. Bước 4 `422` `ERR-07-009` (chỉ danh mục NATIONAL hoặc COMMON có nguồn). Bước 5 `412` `ERR-07-018`.
+
+#### TC-07-179 · Lần chạy không có thay đổi
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-07-036 · API-07-058, 060 · EVT-07-09
+- **Tiền điều kiện / dữ liệu** WireMock `BASE`.
+- **Bước**
+  1. U-PA gọi `POST /sync-sources/{SRC-GT}:run`.
+  2. Thăm dò `GET /sync-runs/{runId}` tới khi kết thúc.
+- **Mong đợi** Bước 1 trả `202` kèm `runId`. Lần chạy kết thúc `NO_CHANGE`; không có phiên bản mới; EVT-07-09 phát với `status = NO_CHANGE`. KT: có (SYNC_RUN, người khởi chạy U-PA).
+
+#### TC-07-180 · Thay đổi không phá vỡ được tự áp dụng
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-036 · BR-07-011, 017 · EVT-07-05, 09
+- **Tiền điều kiện / dữ liệu** WireMock `RENAMED_2`; `SRC-GT.autoApply = true`.
+- **Bước**
+  1. Bộ lập lịch kích hoạt lần chạy (IT tua `Clock` tới 02:00).
+- **Mong đợi** Lần chạy `APPLIED`; tạo và phát hành phiên bản `origin = SYNC`, 2 bản ghi đổi tên, `effectiveFrom` theo quy tắc BR-07-011; EVT-07-05 và EVT-07-09 phát; tác nhân kiểm toán là `system:rdm-sync`.
+
+#### TC-07-181 · Tắt tự áp dụng thì thay đổi an toàn cũng chờ xác nhận
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-036 · BR-07-017
+- **Tiền điều kiện / dữ liệu** WireMock `ADDED_5` cho `DAN_TOC`; nguồn `SRC-DT` có `autoApply = false`.
+- **Bước**
+  1. Chạy `SRC-DT`.
+- **Mong đợi** Lần chạy `PENDING_CONFIRMATION`, `diffStats.added = 5`, `hasBreaking = false`; có bản nháp `origin = SYNC` chiếm suất phiên bản mở của `DAN_TOC`.
+
+#### TC-07-182 · Thay đổi phá vỡ dừng ở chờ xác nhận
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-07-036 · BR-07-012, 017 · API-07-060
+- **Tiền điều kiện / dữ liệu** WireMock `REMOVED_1`; `SRC-GT.autoApply = true`.
+- **Bước**
+  1. Chạy `SRC-GT`.
+  2. `GET /sync-runs/{runId}` xem danh sách thay đổi.
+- **Mong đợi** Lần chạy `PENDING_CONFIRMATION` dù `autoApply = true`; thay đổi mã `3` có `changeType = DEPRECATED`, `breaking = true` (đồng bộ không xóa bản ghi). EVT-07-09 có `hasBreaking = true`. Hộp "Việc của tôi" của người có `PERM-07-sync` nhận việc chờ.
+
+#### TC-07-183 · Xác nhận áp dụng thay đổi phá vỡ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-037 · API-07-061 · UI-07-09 · EVT-07-05
+- **Tiền điều kiện / dữ liệu** Lần chạy từ TC-07-182.
+- **Bước**
+  1. U-PA mở UI-07-09, xem khác biệt, nhập ý kiến, bấm "Xác nhận".
+- **Mong đợi** API-07-061 trả `200`; lần chạy `APPLIED`; phiên bản `origin = SYNC` được phát hành với mã `3` ở trạng thái `DEPRECATED`; EVT-07-05 có `breaking = true`. KT: có (SYNC_ACCEPT, ý kiến).
+
+#### TC-07-184 · Từ chối thay đổi
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-037 · API-07-062 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** Một lần chạy `PENDING_CONFIRMATION` mới (lặp TC-07-182).
+- **Bước**
+  1. Gọi `:reject` không có `reason`.
+  2. Gọi `:reject` với `reason` 20 ký tự.
+- **Mong đợi** Bước 1 `422` `ERR-07-009`. Bước 2 `200`, lần chạy `REJECTED`, bản nháp `origin = SYNC` bị hủy, phiên bản hiện hành giữ nguyên; EVT-07-09 `status = REJECTED`.
+
+#### TC-07-185 · Xác nhận hoặc từ chối lần chạy đã kết thúc
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-037 · ERR-07-029
+- **Tiền điều kiện / dữ liệu** Lần chạy `APPLIED` (TC-07-183), `REJECTED` (TC-07-184), `NO_CHANGE` (TC-07-179).
+- **Bước**
+  1. Gọi `:accept` và `:reject` trên từng lần chạy.
+- **Mong đợi** Mọi lời gọi trả `409` `ERR-07-029`; dữ liệu không đổi.
+
+#### TC-07-186 · Nguồn lỗi, quá thời gian hoặc trả dữ liệu hỏng
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-036 · ERR-07-028 · EVT-07-09 · NFR-07-013, 014
+- **Tiền điều kiện / dữ liệu** WireMock lần lượt `HTTP_500`, `TIMEOUT`, `MALFORMED`.
+- **Bước**
+  1. Chạy `SRC-GT` với từng trạng thái.
+- **Mong đợi** Mỗi lần chạy kết thúc `FAILED`, `errorCode = ERR-07-028` (hai trường hợp đầu) hoặc lỗi kiểm tra dữ liệu nguồn (trường hợp ba); không tạo phiên bản; phiên bản hiện hành vẫn phục vụ tra cứu bình thường; chỉ số `rdm_sync_failed_total` tăng; sau 3 lần thất bại liên tiếp, cảnh báo `RdmSyncFailing` bật; khi `rdm_sync_last_success_timestamp` quá 24 giờ, cảnh báo độ tươi (NFR-07-013) bật.
+
+#### TC-07-187 · Khám phá danh mục quốc gia và đăng ký đồng bộ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-038 · API-07-063, 056 · LGC-NGSP-006
+- **Tiền điều kiện / dữ liệu** WireMock trả danh sách 6 danh mục quốc gia, trong đó `TON_GIAO` chưa có ở T68.
+- **Bước**
+  1. U-T68-TA gọi `GET /national-catalogs`.
+  2. Đăng ký đồng bộ `TON_GIAO` vào T68 (tạo danh mục NATIONAL và nguồn trong một thao tác).
+- **Mong đợi** Bước 1 trả 6 danh mục, mỗi mục có cờ `alreadyLinked`. Bước 2 trả `201`; tạo danh mục `TON_GIAO` (NATIONAL, `DRAFT`) và nguồn; lần chạy đầu tiên tạo phiên bản 1 chờ xác nhận. EVT-07-01 phát.
+
+#### TC-07-188 · Đăng ký trùng hoặc khi nguồn quốc gia không phản hồi
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-038 · ERR-07-002, 028
+- **Tiền điều kiện / dữ liệu** `TON_GIAO` đã đăng ký ở TC-07-187.
+- **Bước**
+  1. Đăng ký lại `TON_GIAO`.
+  2. Chuyển WireMock sang `HTTP_500`, gọi `GET /national-catalogs`.
+- **Mong đợi** Bước 1 `409` `ERR-07-002`. Bước 2 `502` `ERR-07-028` dạng problem+json, không lộ địa chỉ NDXP.
+
+#### TC-07-189 · Hai lần chạy cùng lúc trên một nguồn
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-036 · ERR-07-005
+- **Tiền điều kiện / dữ liệu** WireMock `TIMEOUT` để lần chạy đầu kéo dài; hai bản sao `dh-data`.
+- **Bước**
+  1. Gửi đồng thời hai lời gọi `:run` tới hai bản sao.
+- **Mong đợi** Đúng một lời gọi trả `202`; lời gọi còn lại trả `409` `ERR-07-005`; bảng `sync_run` chỉ có một dòng `RUNNING` cho nguồn (chỉ mục `uq_sync_run_running`).
+
+#### TC-07-190 · Đề xuất bổ sung bản ghi lên danh mục quốc gia
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-039 · API-07-074 · BR-07-025 · ERR-07-003, 026, 028
+- **Tiền điều kiện / dữ liệu** Cờ `07.rdm.feature.national-proposal = true` ở T68; WireMock nhận đề xuất và trả mã tiếp nhận.
+- **Bước**
+  1. U-T68-TA gửi đề xuất 2 bản ghi cho `TON_GIAO`.
+  2. Gửi 101 bản ghi trong một đề xuất.
+  3. Gửi đề xuất cho CAT-LH (LOCAL).
+  4. Tắt cờ tính năng rồi gửi lại bước 1.
+- **Mong đợi** Bước 1 `202`, tạo tác vụ `PROPOSAL` ở `SUBMITTED`, sau khi WireMock phản hồi chuyển `ACCEPTED` hoặc `UNKNOWN` theo kịch bản. Bước 2 `400` `ERR-07-026`. Bước 3 `403` `ERR-07-003`. Bước 4 `404` `ERR-07-045` (tính năng tắt nên endpoint không lộ).
+
+### TS-07-16 · Hệ thống mã, ánh xạ và chuyển mã
+
+**Mục tiêu.** Xác nhận người quản lý khai báo được hệ thống mã của HTTT khác, lập bảng ánh xạ có hiệu lực theo thời gian, và luồng tích hợp chuyển mã hai chiều đúng; thay bảng chuyển mã viết cứng trong route Camel của Bus cũ (LGC-BUS-036).
+
+**Phủ.** FR-07-040…043; BR-07-023, 024; API-07-064…071; UI-07-10; ERR-07-002, 004, 007, 018, 026, 027, 030, 033, 034, 045.
+
+**Tiền điều kiện chung.** T68 có hệ thống mã `CS-BHXH-DT` (mã dân tộc của BHXH, giả lập) với 55 ánh xạ tới `DAN_TOC`, trong đó mã `04` ánh xạ hai mã ngoài `DT04`, `DT04B` (quan hệ `NARROWER`) và 3 mã `53`, `54`, `55` chưa ánh xạ. Người ghi mặc định U-T68-IE.
+
+#### TC-07-191 · Tạo, sửa, ngừng hệ thống mã ngoài
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-040 · API-07-064, 065, 066 · LGC-BUS-036
+- **Tiền điều kiện / dữ liệu** U-T68-IE.
+- **Bước**
+  1. `POST /code-systems` với `code = TC191_CS`, `name = "Mã đơn vị của HT-NOIVU"`, `ownerSystem = HT-NOIVU`.
+  2. `PATCH /code-systems/TC191_CS` với `If-Match`, đổi `name`.
+  3. `PATCH` đặt `status = RETIRED`.
+  4. `GET /code-systems?status=ACTIVE`.
+- **Mong đợi** Bước 1 `201`; bước 2, 3 `200`; bước 4 không có `TC191_CS`. KT: có cho bước 1…3.
+
+#### TC-07-192 · Hệ thống mã trùng, không quyền, ETag cũ
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-040 · ERR-07-002, 018, 045 · D02-08
+- **Tiền điều kiện / dữ liệu** `CS-BHXH-DT` đã có.
+- **Bước**
+  1. Tạo lại `CS-BHXH-DT`.
+  2. U-T68-VW tạo hệ thống mã mới.
+  3. Sửa `CS-BHXH-DT` với `If-Match` cũ.
+  4. `PATCH /code-systems/KHONG_CO`.
+- **Mong đợi** Bước 1 `409` `ERR-07-002`. Bước 2 `403-PQ`. Bước 3 `412` `ERR-07-018`. Bước 4 `404` `ERR-07-045`.
+
+#### TC-07-193 · Ghi lô ánh xạ theo chế độ MERGE và REPLACE
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-041 · API-07-067, 068 · BR-07-023
+- **Tiền điều kiện / dữ liệu** `CS-BHXH-DT`.
+- **Bước**
+  1. `PUT /catalogs/DAN_TOC/mappings/CS-BHXH-DT?mode=MERGE` với 3 ánh xạ cho `53`, `54`, `55` (quan hệ `EQUAL`, `validFrom = 2026-12-01`).
+  2. `GET /catalogs/DAN_TOC/mappings?codeSystem=CS-BHXH-DT&at=2026-12-01`.
+  3. `PUT ...?mode=REPLACE` với danh sách chỉ gồm 50 ánh xạ.
+- **Mong đợi** Bước 1 `200`, `stats.created = 3`. Bước 2 trả 58 ánh xạ (55 + 3). Bước 3 `200`; các ánh xạ không có trong danh sách được đóng hiệu lực (`validTo` = hôm nay) chứ không xóa vật lý; tra lại tại ngày hôm qua vẫn thấy ánh xạ cũ. KT: có (MAPPING_PUT, số ánh xạ theo loại).
+
+#### TC-07-194 · Ánh xạ chồng hiệu lực, tạm thời thiếu lý do, mã không tồn tại
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-041 · BR-07-023, 024 · ERR-07-007, 026, 033, 034
+- **Tiền điều kiện / dữ liệu** `DT01` đang ánh xạ tới `01` từ 2024-01-01, không thời hạn.
+- **Bước**
+  1. Ghi ánh xạ `DT01` → `02` từ 2026-01-01 (giao khoảng với ánh xạ cũ).
+  2. Ghi ánh xạ `provisional = true` không có `note`.
+  3. Ghi ánh xạ tới mã danh mục `99` không có trong `DAN_TOC`.
+  4. Ghi lô 5.001 ánh xạ.
+- **Mong đợi** Bước 1 `422` `ERR-07-033`, nêu ánh xạ đang chồng. Bước 2 `422` `ERR-07-034`. Bước 3 `422` hoặc `404` `ERR-07-007` theo phần tử. Bước 4 `400` `ERR-07-026`. Lô lỗi không ghi phần nào (tất cả hoặc không).
+
+#### TC-07-195 · Xóa ánh xạ
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-041 · API-07-069 · ERR-07-027
+- **Tiền điều kiện / dữ liệu** Ánh xạ `TC195` tạo trong ca.
+- **Bước**
+  1. `DELETE /catalogs/DAN_TOC/mappings/CS-BHXH-DT/{id}` với `If-Match`.
+  2. Lặp lại bước 1.
+- **Mong đợi** Bước 1 `204`, KT: có (MAPPING_DELETE). Bước 2 `404` `ERR-07-027`.
+
+#### TC-07-196 · Chuyển mã chiều TO_CATALOG
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-042 · API-07-070 · LGC-BUS-036
+- **Tiền điều kiện / dữ liệu** APP-T68-READ.
+- **Bước**
+  1. `POST /mappings:translate` với `catalog = DAN_TOC`, `codeSystem = CS-BHXH-DT`, `direction = TO_CATALOG`, `codes = ["DT01","DT04B","KHONG_CO"]`.
+- **Mong đợi** `200`; kết quả cùng thứ tự đầu vào: `DT01` `MAPPED` → `01` "Kinh"; `DT04B` `MAPPED` → `04`; `KHONG_CO` `NOT_MAPPED`; `stats` = {MAPPED: 2, NOT_MAPPED: 1}.
+
+#### TC-07-197 · Chuyển mã chiều FROM_CATALOG và bỏ qua ánh xạ tạm thời
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-042 · API-07-070
+- **Tiền điều kiện / dữ liệu** Ánh xạ `55` → `DT55` là tạm thời.
+- **Bước**
+  1. `direction = FROM_CATALOG`, `codes = ["04","55"]`.
+  2. Như bước 1 với `includeProvisional = false`.
+- **Mong đợi** Bước 1: `04` `MULTIPLE` với `externalCodes` `DT04`, `DT04B`; `55` `MAPPED` có `provisional = true`. Bước 2: `55` `NOT_MAPPED`.
+
+#### TC-07-198 · Chuyển mã lô vượt mức, hệ thống mã không tồn tại, danh mục hạn chế
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-042 · ERR-07-001, 026, 030, 045
+- **Tiền điều kiện / dữ liệu** APP-T68-READ; CAT-RES không cấp cho `HT-HOTICH`.
+- **Bước**
+  1. Gửi 501 mã.
+  2. Gửi `codeSystem = KHONG_CO`.
+  3. Gửi `catalog = KHONG_CO`.
+  4. Gửi `catalog = TRAM_QUAN_TRAC`.
+- **Mong đợi** Bước 1 `400` `ERR-07-026`. Bước 2 `404` `ERR-07-045`. Bước 3 `404` `ERR-07-001`. Bước 4 `403` `ERR-07-030`.
+
+#### TC-07-199 · Báo cáo độ phủ ánh xạ và màn ánh xạ
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-07-043 · API-07-071 · UI-07-10 · ERR-07-045
+- **Tiền điều kiện / dữ liệu** Trạng thái đầu kịch bản (55 bản ghi, 52 có ánh xạ).
+- **Bước**
+  1. `GET /catalogs/DAN_TOC/mappings/CS-BHXH-DT/coverage`.
+  2. Gọi với `csCode = KHONG_CO`.
+  3. Mở UI-07-10, bấm thẻ "Chưa ánh xạ", nhập mã ngoài cho `53` trực tiếp trên lưới, lưu.
+- **Mong đợi** Bước 1 `200`, `total = 55`, `mapped = 52`, `ratio = 0.945`, danh sách `unmapped` = `53`, `54`, `55`, `multiple` = `04`. Bước 2 `404` `ERR-07-045`. Bước 3: lưới lọc còn 3 dòng; sau khi lưu, thẻ đếm còn 2 và độ phủ 96,4%.
+
+### TS-07-17 · ĐVHC: sắp xếp, chuyển mã, tra theo thời điểm, dòng lịch sử
+
+**Mục tiêu.** Xác nhận Datahub quản lý được danh mục ĐVHC qua đợt sắp xếp 2025 (bỏ cấp huyện, sáp nhập tỉnh, xã) và trả lời đúng câu hỏi chuyển mã cũ sang mới, kể cả trường hợp chia tách không tự quyết được. Dữ liệu giả lập ở mục 2.4.
+
+**Phủ.** FR-07-044…047; BR-07-014, 021, 022, 027; API-07-050…054; UI-07-11; ERR-07-003, 004, 006, 007, 009, 016, 026, 035; EVT-07-10.
+
+**Tiền điều kiện chung.** CAT-DVHC giả lập v1…v3; U-PA ghi; người tra mặc định APP-T68-READ.
+
+#### TC-07-200 · Ghi sự kiện sắp xếp vào bản nháp
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-045 · API-07-053, 052 · BR-07-021
+- **Tiền điều kiện / dữ liệu** U-PA mở bản nháp v4 của `DVHC`, thêm xã `99301`.
+- **Bước**
+  1. `POST /catalogs/DVHC/versions/draft/successions` với `type = MERGE`, `fromCodes = ["99101","99102"]`, `toCodes = ["99301"]`, `effectiveDate = 2027-01-01`, `legalBasis = "Nghị quyết giả lập số 03/2026"`.
+  2. `GET .../versions/draft/successions`.
+- **Mong đợi** Bước 1 `201`; `99101`, `99102` trong bản nháp được đặt `DEPRECATED`, `replacedBy = 99301`, `validTo = 2027-01-01`. Bước 2 trả sự kiện vừa ghi. KT: có (SUCCESSION_CREATE).
+
+#### TC-07-201 · Sự kiện sắp xếp không hợp lệ
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-045 · BR-07-021 · ERR-07-035
+- **Tiền điều kiện / dữ liệu** Bản nháp v4.
+- **Bước**
+  1. `MERGE` có một mã nguồn.
+  2. `SPLIT` có một mã đích.
+  3. Mã nguồn không có trong phiên bản hiện hành.
+  4. `RENAME` mà mã đích khác mã nguồn.
+  5. Thiếu `legalBasis`.
+  6. Sửa tay `replacedBy` của bản ghi ĐVHC qua API-07-028.
+- **Mong đợi** Bước 1…5 `422` `ERR-07-035` với lý do cụ thể. Bước 6 `422` `ERR-07-035` ("ĐVHC chỉ ghi kế thừa qua sự kiện sắp xếp").
+
+#### TC-07-202 · Chỉ PLATFORM ghi được ĐVHC; không xóa sự kiện của phiên bản đã phát hành
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-044, 045 · API-07-054 · ERR-07-003, 004
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. U-T68-TA ghi sự kiện vào `DVHC`.
+  2. U-PA xóa một sự kiện của v2 (đã phát hành).
+  3. U-PA xóa sự kiện TC-07-200 trong bản nháp.
+- **Mong đợi** Bước 1 `403` `ERR-07-003`. Bước 2 `409` `ERR-07-004`. Bước 3 `204`, các bản ghi nguồn trở lại `ACTIVE` trong bản nháp.
+
+#### TC-07-203 · Phát hành DVHC bắt buộc qua duyệt và phát sự kiện sắp xếp
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-044 · BR-07-027 · ERR-07-016 · EVT-07-10
+- **Tiền điều kiện / dữ liệu** Bản nháp v4 có sự kiện ở TC-07-200.
+- **Bước**
+  1. U-PA phát hành thẳng (không trình).
+  2. U-PA trình; U-PA thứ hai (U-PA2, cùng vai trò) duyệt và phát hành.
+- **Mong đợi** Bước 1 `409` `ERR-07-016` (danh mục ĐVHC luôn cần duyệt). Bước 2 thành công; EVT-07-05 và EVT-07-10 phát trên topic `common.*`.
+
+#### TC-07-204 · Chuyển mã một bước và hai bước
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-07-046 · API-07-051 · BR-07-022
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. `POST /admin-units:convert` với `at = 2026-06-01`, `codes = [{"code":"99001","asOf":"2024-06-01"},{"code":"99005","asOf":"2024-06-01"},{"code":"99004","asOf":"2024-06-01"}]`.
+- **Mong đợi** `200`, cùng thứ tự đầu vào: `99001` `MAPPED` → `99101`, `events` một phần tử `MERGE`; `99005` `MAPPED` → `99201`, `events` hai phần tử `RECODE` rồi `MERGE`; `99004` `UNCHANGED` (chỉ đổi tên), `newName` là tên tại 2026-06-01, `newPath` có mã tỉnh `97`.
+
+#### TC-07-205 · Chia tách trả nhiều ứng viên, không tự chọn
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-046 · BR-07-022
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. Chuyển `99003` (`asOf = 2024-06-01`) với `at = 2025-08-01`.
+  2. Như trên với `at = 2026-06-01`.
+- **Mong đợi** Bước 1 `AMBIGUOUS`, `candidates` = `99102`, `99103` kèm ghi chú địa bàn từ sự kiện `SPLIT`, `newCode = null`. Bước 2 `AMBIGUOUS` với `99102`, `99201`.
+
+#### TC-07-206 · Đơn vị cấp huyện bị bỏ và mã không tồn tại
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-046 · ERR-07-009
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. Chuyển `971` (`asOf = 2024-06-01`) với `at = 2026-06-01`.
+  2. Chuyển `12345` (không tồn tại).
+  3. Chuyển `99001` với `asOf = 2027-01-01` sau `at = 2026-06-01`.
+- **Mong đợi** Bước 1 `NOT_FOUND`, ghi chú "đơn vị đã bị giải thể hoặc bãi bỏ cấp", `newPath` có tỉnh `97`. Bước 2 `NOT_FOUND`. Bước 3 phần tử lỗi `ERR-07-009`, các phần tử khác trong lô vẫn có kết quả.
+
+#### TC-07-207 · Tra ngược mã mới về mã cũ
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-046 · API-07-051
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. `direction = NEW_TO_OLD`, `at = 2026-06-01`, `codes = [{"code":"99201","asOf":"2024-06-01"}]`.
+- **Mong đợi** `AMBIGUOUS` với `candidates` = `99003` (ghi chú "một phần"), `99005`.
+
+#### TC-07-208 · Giới hạn lô và không có phiên bản tại thời điểm
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-046 · ERR-07-006, 026
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Gửi 1.000 mã (biên), rồi 1.001 mã.
+  2. Gửi `at = 2019-01-01` (trước v1).
+- **Mong đợi** 1.000 mã trả `200` với p95 ≤ 300 ms ở môi trường PERF; 1.001 mã `400` `ERR-07-026`. Bước 2 `404` `ERR-07-006`.
+
+#### TC-07-209 · Chuyển mã bằng tệp trên giao diện
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-07-046 · UI-07-11 · FR-07-024
+- **Tiền điều kiện / dữ liệu** F-DVHC-CONV; U-T68-VW.
+- **Bước**
+  1. Mở UI-07-11 tab "Chuyển mã", tải F-DVHC-CONV, chọn ngày đích 2026-06-01, bấm "Chuyển mã".
+  2. Khi tác vụ xong, tải tệp kết quả.
+- **Mong đợi** Tác vụ nhập `mode = ADMIN_UNIT_CONVERT` đi hết hai pha; tệp kết quả cùng định dạng, thêm cột "Mã mới", "Tên mới", "Trạng thái", "Ứng viên"; số dòng bằng tệp vào; tệp hết hạn tải sau 24 giờ. Danh mục `DVHC` không thay đổi.
+
+#### TC-07-210 · Tra theo thời điểm qua các phiên bản
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-044 · FR-07-026 · API-07-026, 044
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. `GET /catalogs/DVHC/tree?at=2024-06-01&root=97`.
+  2. `GET /catalogs/DVHC/tree?at=2026-06-01&root=97`.
+- **Mong đợi** Bước 1 trả cây ba cấp (tỉnh, huyện `971`, `972`, xã). Bước 2 trả cây hai cấp (tỉnh, xã) đúng các mã của v3.
+
+#### TC-07-211 · Dòng lịch sử của một bản ghi
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-047 · API-07-050 · UI-07-11
+- **Tiền điều kiện / dữ liệu** Mục 2.4.
+- **Bước**
+  1. `GET /catalogs/DVHC/items/99101/lineage`.
+  2. Mở UI-07-11, chọn `99101`, xem dòng thời gian.
+- **Mong đợi** Bước 1 trả hai khoảng tồn tại (2025-07-01…2026-01-01 tên cũ, từ 2026-01-01 tên mới), sự kiện vào `MERGE` từ `99001`, `99002`, sự kiện `RENAME`. Bước 2 hiển thị dòng thời gian và bảng thay thế đọc được bằng trình đọc màn hình (mục 20 của D03-06-PH07).
+
+#### TC-07-212 · Dòng lịch sử với mã không tồn tại hoặc danh mục hạn chế
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-047 · ERR-07-001, 007, 030
+- **Tiền điều kiện / dữ liệu** APP-T68-READ.
+- **Bước**
+  1. Lineage của `DVHC/12345`.
+  2. Lineage của `KHONG_CO/01`.
+  3. Lineage của một bản ghi `TRAM_QUAN_TRAC`.
+- **Mong đợi** `404` `ERR-07-007`; `404` `ERR-07-001`; `403` `ERR-07-030`.
+
+#### TC-07-213 · Dòng lịch sử của danh mục thường suy từ mã thay thế
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-07-047 · API-07-050
+- **Tiền điều kiện / dữ liệu** CAT-LH: v2 ngừng dùng `KH01.L03` với `replacedBy = KH01.L04` (tạo trong ca, chạy tuần tự).
+- **Bước**
+  1. Lineage của `LOAI_HINH_TC/KH01.L03`.
+- **Mong đợi** Trả khoảng tồn tại tới ngày hiệu lực của v2 và một sự kiện ra loại `REPLACED` trỏ `KH01.L04`, `derived = true`.
+
+### TS-07-18 · Danh mục COMMON, PLATFORM và nạp gói nền
+
+**Mục tiêu.** Xác nhận danh mục toàn quốc chỉ do tenant `PLATFORM` ghi, mọi tỉnh đọc được, tỉnh mở rộng được bằng HYBRID trong dải mã riêng, và tenant mới nhận gói danh mục nền đầy đủ, chạy lại không sinh trùng. Thay mô hình "mỗi tỉnh một bản sao" của Aita (LGC-DMDC-017).
+
+**Phủ.** FR-07-048, 049; BR-07-001, 010, 011; API-07-073; ERR-07-003, 008, 012, 019, 022, 045, 047, 048.
+
+#### TC-07-214 · Tỉnh đọc COMMON, không ghi được
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-048 · BR-07-001 · ERR-07-003 · LGC-DMDC-017
+- **Tiền điều kiện / dữ liệu** CAT-GT (COMMON).
+- **Bước**
+  1. U-T68-VW `GET /catalogs/GIOI_TINH/items`.
+  2. U-T68-TA tạo bản nháp `GIOI_TINH`.
+  3. U-T68-TA sửa thông tin `GIOI_TINH`.
+- **Mong đợi** Bước 1 `200`, 3 bản ghi, `scope = COMMON`. Bước 2, 3 `403` `ERR-07-003`. KT: không cho bước 1; nhật ký an ninh ghi bước 2, 3.
+
+#### TC-07-215 · PLATFORM ghi COMMON, mọi tenant thấy phiên bản mới
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-048 · EVT-07-05
+- **Tiền điều kiện / dữ liệu** Danh mục `TC215_COMMON` tạo bởi U-PA.
+- **Bước**
+  1. U-PA tạo, thêm 2 bản ghi, trình; U-PA2 duyệt và phát hành.
+  2. U-T68-VW và U-T01-DS đọc `TC215_COMMON`.
+- **Mong đợi** Bước 2: cả hai tenant nhận cùng 2 bản ghi; bộ đệm L2 dùng khóa của `COMMON`, không nhân bản theo tenant.
+
+#### TC-07-216 · HYBRID: bổ sung trong dải mã địa phương
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-048 · BR-07-010 · ERR-07-008, 012
+- **Tiền điều kiện / dữ liệu** CAT-DT68 (`^68\.[0-9]{2}$`).
+- **Bước**
+  1. U-T68-TA thêm bản ghi `68.03` vào bản nháp `DAN_TOC_T68`.
+  2. Thêm bản ghi `56`.
+  3. Thêm bản ghi `01` (trùng mã gốc).
+- **Mong đợi** Bước 1 `201`. Bước 2 `422` `ERR-07-012`. Bước 3 `409` `ERR-07-008`.
+
+#### TC-07-217 · Nạp gói danh mục nền cho tenant mới
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-07-049 · API-07-073 · BR-07-011
+- **Tiền điều kiện / dữ liệu** Tenant `T99` vừa tạo ở PH-20 (`PROVISIONING`); gói nền chuẩn `seed-2026.11` gồm 12 danh mục.
+- **Bước**
+  1. Client PH-20 gọi `POST /api/platform/rdm/v1/tenants/T99:seed` với `Idempotency-Key`.
+  2. Thăm dò tới khi xong.
+- **Mong đợi** `202`; T99 có 12 danh mục, mỗi danh mục một phiên bản `PUBLISHED`, `origin = SEED`, `effectiveFrom` theo BR-07-011; bucket `dh-t99-rdm` có ảnh chụp; EVT-07-01 và EVT-07-05 phát trên topic `t99.*`.
+
+#### TC-07-218 · Chạy lại nạp gói, gói hỏng, tenant sai trạng thái
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-049 · ERR-07-019, 022, 045, 048
+- **Tiền điều kiện / dữ liệu** T99 đã nạp ở TC-07-217.
+- **Bước**
+  1. Gọi lại với cùng `Idempotency-Key`, cùng thân.
+  2. Gọi với cùng khóa, thân khác gói.
+  3. Gọi với gói có tệp băm SHA-256 sai.
+  4. Gọi cho `T404` không tồn tại.
+  5. Gọi cho tenant `SUSPENDED`.
+- **Mong đợi** Bước 1 trả kết quả cũ, không tạo thêm danh mục. Bước 2 `409` `ERR-07-022`. Bước 3 `422` `ERR-07-019`, không có danh mục nào được tạo (tất cả hoặc không). Bước 4 `404` `ERR-07-045`. Bước 5 `409` `ERR-07-048`.
+
+#### TC-07-219 · Nạp gói khi kho đối tượng chưa sẵn sàng
+- **Loại** Khả dụng, Âm · **Ưu tiên** P2 · **Tự động** IT, Chaos
+- **Truy vết** FR-07-049 · ERR-07-047
+- **Tiền điều kiện / dữ liệu** MinIO (thay Garage) dừng.
+- **Bước**
+  1. Gọi nạp gói cho `T98`.
+  2. Khởi động lại MinIO, gọi lại với cùng `Idempotency-Key`.
+- **Mong đợi** Bước 1 `503` `ERR-07-047` có `Retry-After`, không để lại danh mục dở dang. Bước 2 thành công như TC-07-217.
+
+### TS-07-19 · Rò rỉ chéo tenant trên mọi nhóm API
+
+**Mục tiêu.** Chứng minh không có đường nào để một tenant đọc, ghi hoặc suy ra dữ liệu của tenant khác, theo FR-00-011 và D03-10 §6. Mọi ca mang thẻ `tenant-leak` và là điều kiện ra bắt buộc 100% (mục 1.5). Mỗi ca dùng cặp T68 và T01 có danh mục trùng mã `LOAI_HINH_TC` với nội dung khác nhau (CAT-LH, CAT-LH01), nên trả nhầm tenant sẽ lộ ngay qua hậu tố "(T01)".
+
+**Phủ.** FR-00-011; mọi nhóm API-07; RLS `ph07_rdm`; bộ đệm L1, L2; kho đối tượng; Kafka.
+
+**Tiền điều kiện chung.** Bộ dữ liệu chuẩn; vai trò kết nối `dh_data_app` không có `BYPASSRLS`. Mọi phản hồi từ chối là `404-ẩn` hoặc `403-PQ`, không phân biệt "không tồn tại" và "thuộc tenant khác".
+
+#### TC-07-220 · Đọc danh mục và bản ghi của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-002, 026 · API-07-003, 026
+- **Tiền điều kiện / dữ liệu** U-T01-DS; danh mục `TRAM_QUAN_TRAC` chỉ có ở T68.
+- **Bước**
+  1. U-T01-DS gọi `GET /catalogs/TRAM_QUAN_TRAC`.
+  2. U-T01-DS gọi `GET /catalogs/LOAI_HINH_TC/items`.
+- **Mong đợi** Bước 1 `404-ẩn` `ERR-07-001`. Bước 2 trả dữ liệu của T01 (tên có hậu tố "(T01)"), không có bản ghi nào của T68.
+
+#### TC-07-221 · Truy cập phiên bản, bản ghi bằng định danh nội bộ của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · API-07-011, 027
+- **Tiền điều kiện / dữ liệu** Mã UUID của phiên bản v1 CAT-LH (T68) lấy từ CSDL.
+- **Bước**
+  1. U-T01-DS gọi các API nhận `versionRef` bằng UUID của T68.
+  2. U-T01-DS gọi `GET /import-jobs/{jobId của T68}`, `GET /export-jobs/{jobId của T68}`, `GET /sync-runs/{runId của PLATFORM}`.
+- **Mong đợi** Mọi lời gọi `404-ẩn`, thời gian phản hồi không khác biệt có ý nghĩa thống kê so với định danh ngẫu nhiên (kiểm 50 lần, chênh trung vị < 20 ms) để không suy ra được sự tồn tại.
+
+#### TC-07-222 · Ghi vào danh mục của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · API-07-004, 012, 028, 031
+- **Tiền điều kiện / dữ liệu** U-T01-TA.
+- **Bước**
+  1. Sửa thông tin `TRAM_QUAN_TRAC`; tạo bản nháp; thêm bản ghi; nhập lô với UUID phiên bản của T68.
+- **Mong đợi** Mọi lời gọi `404-ẩn`; số dòng trong các bảng của T68 không đổi; KT: không ghi gì cho T68.
+
+#### TC-07-223 · RLS chặn ngay cả khi tầng ứng dụng sai
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · D03-03-PH07 §1 · D03-10 §6
+- **Tiền điều kiện / dữ liệu** IT kết nối bằng `dh_data_app`, đặt `app.tenant_id = 'T01'`.
+- **Bước**
+  1. Chạy `SELECT count(*)` trên mọi bảng có `tenant_id` của `ph07_rdm`.
+  2. Chạy `UPDATE ph07_rdm.catalog SET name = 'x' WHERE tenant_id = 'T68'`.
+  3. Không đặt `app.tenant_id` rồi chạy `SELECT` bất kỳ.
+- **Mong đợi** Bước 1 chỉ đếm dòng của T01 và COMMON (bảng mẫu S, P). Bước 2 cập nhật 0 dòng. Bước 3 báo lỗi `unrecognized configuration parameter` (do `current_setting(..., false)`), không trả dữ liệu.
+
+#### TC-07-224 · Vai trò worker chỉ thấy cột hàng đợi
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · D03-03-PH07 §3.8 · D03-02-PH07 §4.4
+- **Tiền điều kiện / dữ liệu** Có tác vụ nhập `UPLOADED` ở T68 và T01.
+- **Bước**
+  1. `SET LOCAL ROLE ph07_worker; SET LOCAL app.tenant_id = 'PLATFORM'`; chọn các cột hàng đợi.
+  2. Cùng phiên, chọn cột `file_id` hoặc `summary`.
+  3. Cùng phiên, cập nhật `status`.
+- **Mong đợi** Bước 1 thấy tác vụ của cả hai tenant, chỉ các cột `id`, `tenant_id`, `job_type`, `status`, `lease_owner`, `lease_until`, `created_at`. Bước 2, 3 báo `permission denied`.
+
+#### TC-07-225 · Bộ đệm không trả nhầm tenant
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-028 · NFR-07-009
+- **Tiền điều kiện / dữ liệu** Valkey và Caffeine trống.
+- **Bước**
+  1. APP-T68-READ gọi `GET /catalogs/LOAI_HINH_TC/items/KH01` (nạp đệm).
+  2. Ngay sau đó APP-T01-READ gọi cùng đường dẫn trên cùng bản sao `dh-data`.
+  3. Liệt kê khóa Valkey.
+- **Mong đợi** Bước 2 trả bản ghi của T01. Bước 3 mọi khóa có tiền tố tenant (`rdm:T68:...`, `rdm:T01:...`); không có khóa thiếu tenant trừ khóa `rdm:COMMON:...`.
+
+#### TC-07-226 · Ảnh chụp và URL ký sẵn của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-028 · API-07-049
+- **Tiền điều kiện / dữ liệu** URL ký sẵn ảnh chụp v1 CAT-LH của T68.
+- **Bước**
+  1. APP-T01-READ gọi `GET /catalogs/TRAM_QUAN_TRAC/snapshots/1`.
+  2. Dùng khóa truy cập của bucket `dh-t01-rdm` đọc đối tượng trong `dh-t68-rdm`.
+  3. Dùng URL ký sẵn sau 16 phút.
+- **Mong đợi** Bước 1 `404-ẩn`. Bước 2 `AccessDenied`. Bước 3 `403` (URL hết hạn sau 15 phút).
+
+#### TC-07-227 · Tệp xuất, tệp nhập của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-021, 024 · API-07-034, 039
+- **Tiền điều kiện / dữ liệu** Tác vụ xuất `COMPLETED` của T68.
+- **Bước**
+  1. U-T01-TA gọi `GET /export-jobs/{id}` và đường dẫn tải tệp.
+  2. U-T01-TA gọi `GET /import-jobs/{id}/rows` với tác vụ nhập của T68.
+- **Mong đợi** Mọi lời gọi `404-ẩn`.
+
+#### TC-07-228 · Truy vấn DSL, tìm kiếm, cây không vượt tenant
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-030, 032 · API-07-044, 045, 047
+- **Tiền điều kiện / dữ liệu** APP-T01-READ được cấp `rdm.query` trong ca.
+- **Bước**
+  1. Gọi `items:query` không lọc trên `LOAI_HINH_TC`.
+  2. Gọi `items:search?q=khoi`.
+  3. Gọi `tree`.
+- **Mong đợi** Mọi kết quả chỉ có bản ghi "(T01)".
+
+#### TC-07-229 · Ánh xạ và hệ thống mã của tenant khác
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-040…042
+- **Tiền điều kiện / dữ liệu** `CS-BHXH-DT` chỉ có ở T68.
+- **Bước**
+  1. APP-T01-READ gọi `mappings:translate` với `codeSystem = CS-BHXH-DT`.
+  2. U-T01-TA gọi `GET /code-systems/CS-BHXH-DT`.
+- **Mong đợi** `404` `ERR-07-045` cho cả hai.
+
+#### TC-07-230 · Lịch sử kiểm toán không lộ tenant khác
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-050 · API-07-072
+- **Tiền điều kiện / dữ liệu** U-T01-DS (vai trò AU thử thêm U-T01-AU).
+- **Bước**
+  1. `GET /catalogs/LOAI_HINH_TC/history`.
+- **Mong đợi** Chỉ có mục của T01; không có `actor` thuộc realm `t68`.
+
+#### TC-07-231 · Tiêu đề tenant giả mạo
+- **Loại** Bảo mật, Âm · **Ưu tiên** P1 · **Tự động** API · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · D03-10 §6
+- **Tiền điều kiện / dữ liệu** Token của U-T01-DS.
+- **Bước**
+  1. Gửi thêm tiêu đề `X-Tenant-Id: T68` và tham số `?tenant=T68`.
+  2. Gửi token có claim `tenant = T68` nhưng ký bằng khóa không hợp lệ.
+- **Mong đợi** Bước 1: tiêu đề và tham số bị bỏ qua, dữ liệu trả về là của T01. Bước 2 `401` `ERR-07-041`.
+
+#### TC-07-232 · Đồng thời hai tenant trên cùng luồng xử lý
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · D03-02-PH07 §6
+- **Tiền điều kiện / dữ liệu** Một bản sao `dh-data`, pool 4 kết nối, luồng ảo bật.
+- **Bước**
+  1. Gửi xen kẽ 2.000 yêu cầu của T68 và T01 trong 30 giây với 64 luồng song song.
+- **Mong đợi** Mọi phản hồi khớp tenant của token (kiểm theo hậu tố "(T01)"); `app.tenant_id` được đặt lại mỗi giao dịch (kiểm bằng nhật ký `TenantAwareTransactionManager` ở mức DEBUG trong IT).
+
+#### TC-07-233 · Tác vụ nền giữ đúng tenant
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT · thẻ `tenant-leak`
+- **Truy vết** FR-00-011 · FR-07-021, 036
+- **Tiền điều kiện / dữ liệu** Một tác vụ nhập T68, một tác vụ nhập T01 cùng lúc; worker lấy cả hai.
+- **Bước**
+  1. Chạy hai tác vụ tới `COMMITTED`.
+- **Mong đợi** Mỗi tác vụ ghi vào đúng bản nháp của tenant mình; sự kiện EVT-07-07 nằm trên đúng topic `t68.*`, `t01.*`; tệp tạm nằm đúng bucket.
+
+### TS-07-20 · Ma trận phân quyền, bốn mắt, phạm vi tổ chức và scope máy
+
+**Mục tiêu.** Kiểm mỗi ô của ma trận PERM-07 × vai trò ở D02-08 §3.1 bằng ít nhất một ca, kể cả ô "○" (chỉ trong tổ chức của mình) và nguyên tắc bốn mắt. Phần lớn ca chạy dạng bảng tham số (một phương thức kiểm thử, nhiều dòng dữ liệu).
+
+**Phủ.** FR-00-071; D02-08 §3.1; BR-07-011 (bốn mắt); ERR-07-015, 046.
+
+#### TC-07-234 · Quyền xem của mọi vai trò
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API (tham số)
+- **Truy vết** D02-08 · PERM-07-read · API-07-001, 003
+- **Tiền điều kiện / dữ liệu** Mọi người dùng ở mục 2.2.
+- **Bước**
+  1. Mỗi người dùng gọi `GET /catalogs` và `GET /catalogs/LOAI_HINH_TC`.
+- **Mong đợi** Mọi vai trò có `PERM-07-read` nhận `200`.
+
+#### TC-07-235 · Quyền soạn chỉ có ở TA, DS (trong tổ chức) và PA (COMMON)
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API (tham số)
+- **Truy vết** D02-08 · PERM-07-create, update · API-07-002, 004
+- **Tiền điều kiện / dữ liệu** U-T68-VW, AU, IE, SV, DEV, DA1.
+- **Bước**
+  1. Mỗi người dùng tạo danh mục `TC235_{vai trò}`.
+- **Mong đợi** Mọi lời gọi `403-PQ`; không có danh mục nào được tạo.
+
+#### TC-07-236 · DS chỉ sửa danh mục thuộc tổ chức của mình
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** D02-08 (ô ○) · PERM-07-update · ERR-07-046
+- **Tiền điều kiện / dữ liệu** CAT-LH thuộc ORG-SNV.
+- **Bước**
+  1. U-T68-DS-NV tạo bản nháp CAT-LH.
+  2. U-T68-DS-MT thêm bản ghi vào bản nháp đó.
+  3. U-T68-DS-MT tạo danh mục mới với `ownerOrgId = ORG-SNV`.
+- **Mong đợi** Bước 1 `201`. Bước 2 `403` `ERR-07-046`. Bước 3 `403` `ERR-07-046` (DS chỉ đặt chủ quản là tổ chức của mình).
+
+#### TC-07-237 · Quyền trình duyệt
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** D02-08 · PERM-07-submit · API-07-017
+- **Tiền điều kiện / dữ liệu** Bản nháp của CAT-LH.
+- **Bước**
+  1. U-T68-VW trình.
+  2. U-T68-DS-MT trình.
+  3. U-T68-DS-NV trình.
+- **Mong đợi** Bước 1 `403-PQ`; bước 2 `403` `ERR-07-046`; bước 3 `200`.
+
+#### TC-07-238 · Chỉ DA (và PA với COMMON) duyệt, phát hành
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API (tham số)
+- **Truy vết** D02-08 · PERM-07-publish · API-07-018, 020
+- **Tiền điều kiện / dữ liệu** Phiên bản `IN_REVIEW` của CAT-LH do U-T68-DS-NV trình.
+- **Bước**
+  1. U-T68-TA, DS-NV, IE, VW lần lượt gọi duyệt.
+- **Mong đợi** Mọi lời gọi `403-PQ`; phiên bản vẫn `IN_REVIEW`.
+
+#### TC-07-239 · Bốn mắt: người trình không tự duyệt
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** BR-07-011 · FR-07-015 · ERR-07-015
+- **Tiền điều kiện / dữ liệu** U-T68-DA2 vừa có quyền soạn vừa có quyền duyệt.
+- **Bước**
+  1. U-T68-DA2 soạn và trình bản nháp CAT-LH.
+  2. U-T68-DA2 duyệt.
+  3. U-T68-DA1 duyệt.
+- **Mong đợi** Bước 2 `403` `ERR-07-015`. Bước 3 `200`.
+
+#### TC-07-240 · Bốn mắt tính cả người sửa bản nháp
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** BR-07-011 · ERR-07-015
+- **Tiền điều kiện / dữ liệu** U-T68-DS-NV soạn, U-T68-DA2 sửa một bản ghi, U-T68-DS-NV trình.
+- **Bước**
+  1. U-T68-DA2 duyệt.
+- **Mong đợi** `403` `ERR-07-015` (người đã sửa nội dung bản nháp cũng không được duyệt).
+
+#### TC-07-241 · Bốn mắt khi thu hồi duyệt và phát hành
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** BR-07-011 · FR-07-015, 016
+- **Tiền điều kiện / dữ liệu** Phiên bản `APPROVED` bởi U-T68-DA1.
+- **Bước**
+  1. U-T68-DA2 (người soạn) phát hành.
+  2. U-T68-DA1 thu hồi duyệt (`UNAPPROVE`).
+- **Mong đợi** Bước 1 `403` `ERR-07-015`. Bước 2 `200`, phiên bản về `IN_REVIEW`.
+
+#### TC-07-242 · Quyền xuất của mọi vai trò
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API (tham số)
+- **Truy vết** D02-08 · PERM-07-export · API-07-038
+- **Tiền điều kiện / dữ liệu** Mọi người dùng T68.
+- **Bước**
+  1. Mỗi người dùng xuất CAT-MUC dạng CSV.
+- **Mong đợi** Mọi lời gọi `200` hoặc `202`.
+
+#### TC-07-243 · Quyền đồng bộ
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API (tham số)
+- **Truy vết** D02-08 · PERM-07-sync · API-07-058, 061
+- **Tiền điều kiện / dữ liệu** Nguồn `SRC-TG` của `TON_GIAO` ở T68 (TC-07-187).
+- **Bước**
+  1. U-T68-TA, DA1 chạy đồng bộ; U-T68-DS-NV, VW chạy đồng bộ.
+- **Mong đợi** TA, DA1 `202`; DS-NV, VW `403-PQ` (theo D02-08, Q07-68 ở D03-06-PH07).
+
+#### TC-07-244 · Xác nhận đồng bộ kèm phát hành cần quyền phát hành
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-037 · PERM-07-sync, publish
+- **Tiền điều kiện / dữ liệu** Lần chạy `PENDING_CONFIRMATION` ở T68.
+- **Bước**
+  1. U-T68-TA xác nhận.
+  2. U-T68-DA1 xác nhận.
+- **Mong đợi** Bước 1 `403-PQ` (TA không có `PERM-07-publish`). Bước 2 `200`.
+
+#### TC-07-245 · Quyền ánh xạ
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-041 · PERM-07-mapping (đề xuất)
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. U-T68-IE, TA, DS-NV ghi ánh xạ; U-T68-VW, DA1 ghi ánh xạ.
+- **Mong đợi** IE, TA, DS-NV `200`; VW, DA1 `403-PQ`.
+
+#### TC-07-246 · Quyền cấp quyền khai thác
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-052 · PERM-07-grant (đề xuất)
+- **Tiền điều kiện / dữ liệu** CAT-RES.
+- **Bước**
+  1. U-T68-TA thay danh sách cấp quyền của CAT-RES.
+  2. U-T68-DS-NV làm như trên.
+- **Mong đợi** Bước 1 `200`; bước 2 `403-PQ`.
+
+#### TC-07-247 · Quyền cấu hình tham số
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-053 · PERM-07-configure (đề xuất)
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. U-T68-TA đổi `07.rdm.import-preview-ttl-hours`.
+  2. U-T68-DA1 đổi cùng tham số.
+- **Mong đợi** Bước 1 `200`; bước 2 `403-PQ`.
+
+#### TC-07-248 · Quyền xem lịch sử của AU
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-050 · ROLE-AUDITOR
+- **Tiền điều kiện / dữ liệu** Danh mục `DM_THU_NGHIEM` đã xóa mềm 5 ngày trước.
+- **Bước**
+  1. U-T68-AU gọi lịch sử của `DM_THU_NGHIEM`.
+  2. U-T68-VW gọi như trên.
+- **Mong đợi** Bước 1 `200`; bước 2 `404` `ERR-07-001`.
+
+#### TC-07-249 · PA không ghi danh mục của tỉnh
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** D02-08 · BR-07-001
+- **Tiền điều kiện / dữ liệu** U-PA.
+- **Bước**
+  1. U-PA sửa CAT-LH của T68 (đường dẫn của tenant T68).
+- **Mong đợi** `404-ẩn` (PA làm việc trong tenant PLATFORM, không có quyền vào dữ liệu của tỉnh).
+
+#### TC-07-250 · PO chỉ đọc
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** D02-08 · ROLE-PLATFORM_OPERATOR
+- **Tiền điều kiện / dữ liệu** U-PO.
+- **Bước**
+  1. U-PO đọc `GIOI_TINH`; tạo bản nháp `GIOI_TINH`.
+- **Mong đợi** Đọc `200`; tạo bản nháp `403-PQ`.
+
+#### TC-07-251 · Scope máy rdm.read không ghi được
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-00-071 · API-07-031
+- **Tiền điều kiện / dữ liệu** APP-T68-READ.
+- **Bước**
+  1. Nhập lô vào bản nháp CAT-LH.
+- **Mong đợi** `403-PQ`.
+
+#### TC-07-252 · Scope rdm.write chỉ ghi vào bản nháp
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-023 · API-07-031, 017, 020
+- **Tiền điều kiện / dữ liệu** APP-T68-WRITE.
+- **Bước**
+  1. Nhập lô 10 bản ghi vào bản nháp CAT-LH.
+  2. Trình duyệt; phát hành.
+- **Mong đợi** Bước 1 `200`. Bước 2 `403-PQ` cho cả hai (máy không trình, không phát hành).
+
+#### TC-07-253 · Client không có scope rdm
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-00-071
+- **Tiền điều kiện / dữ liệu** APP-T68-NOSCOPE.
+- **Bước**
+  1. `GET /catalogs`.
+- **Mong đợi** `403-PQ` từ APISIX hoặc từ PH-07; không có dữ liệu.
+
+#### TC-07-254 · Token hết hạn, thiếu token
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** ERR-07-041
+- **Tiền điều kiện / dữ liệu** Token hết hạn 1 giây.
+- **Bước**
+  1. Gọi `GET /catalogs` với token hết hạn; không có token.
+- **Mong đợi** `401` `ERR-07-041` cho cả hai, có tiêu đề `WWW-Authenticate`.
+
+#### TC-07-255 · Giao diện ẩn hoặc vô hiệu nút theo quyền
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** D02-08 · UI-07-01, 02, 07 · D03-06-PH07 mục 23.1
+- **Tiền điều kiện / dữ liệu** U-T68-VW, U-T68-DS-MT, U-T68-DA2.
+- **Bước**
+  1. U-T68-VW mở UI-07-01, UI-07-02 của CAT-LH.
+  2. U-T68-DS-MT mở UI-07-02 của CAT-LH.
+  3. U-T68-DA2 mở UI-07-07 của bản nháp chính mình đã trình.
+- **Mong đợi** Bước 1 không có nút "Tạo danh mục", "Mở bản nháp". Bước 2 nút "Mở bản nháp" vô hiệu, di chuột hiện lý do "Danh mục thuộc Sở Nội vụ". Bước 3 nút "Duyệt" vô hiệu với lý do "Bạn đã trình hoặc sửa bản nháp này".
+
+### TS-07-21 · Kiểm toán và lịch sử
+
+**Mục tiêu.** Xác nhận mọi thao tác ghi sinh bản ghi kiểm toán đủ trường, lịch sử gộp được hai nguồn, và nội dung danh mục hạn chế được che với người không đủ quyền.
+
+**Phủ.** FR-07-050; FR-00-040…042; API-07-072; ERR-07-001, 009, 047.
+
+#### TC-07-256 · Mọi thao tác ghi đều có bản ghi kiểm toán
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-050 · FR-00-041
+- **Tiền điều kiện / dữ liệu** Bộ tiêu thụ thử đọc luồng kiểm toán gửi PH-13.
+- **Bước**
+  1. Thực hiện chuỗi: tạo danh mục, thêm thuộc tính, thêm bản ghi, trình, rút lại, trình, duyệt, phát hành, ngừng hiệu lực.
+- **Mong đợi** Mỗi thao tác có đúng một bản ghi với mã hành động `RDM_*` tương ứng, đủ trường chủ thể, thời điểm, địa chỉ nguồn, đối tượng, trước, sau, kết quả, `traceId` trùng `traceparent` của yêu cầu.
+
+#### TC-07-257 · Xem lịch sử gộp và lọc
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-07-050 · API-07-072 · UI-07-02
+- **Tiền điều kiện / dữ liệu** Danh mục sau TC-07-256.
+- **Bước**
+  1. `GET /catalogs/{c}/history`.
+  2. Lọc `action=RDM_VERSION_PUBLISH`.
+  3. Mở tab Lịch sử của UI-07-02.
+- **Mong đợi** Bước 1 trả dòng thời gian giảm dần, mỗi mục có `summary` tiếng Việt. Bước 2 chỉ có một mục. Bước 3 hiển thị cùng dữ liệu.
+
+#### TC-07-258 · Khoảng thời gian không hợp lệ và PH-13 không sẵn sàng
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-050 · ERR-07-009, 047
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Gọi với `from = 2022-01-01`, `to = 2026-11-21` (vượt 3 năm).
+  2. Gọi với `from` sau `to`.
+  3. Dừng giả lập PH-13, gọi lại hợp lệ.
+- **Mong đợi** Bước 1, 2 `422` `ERR-07-009`. Bước 3 `503` `ERR-07-047`, thân có phần dữ liệu từ PH-07 và `partial = true`.
+
+#### TC-07-259 · Che nội dung danh mục hạn chế và ghi nhận xuất lịch sử
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-050 · FR-07-052
+- **Tiền điều kiện / dữ liệu** CAT-RES có lịch sử sửa bản ghi.
+- **Bước**
+  1. U-T68-VW xem lịch sử CAT-RES.
+  2. U-T68-AU xem và xuất CSV.
+- **Mong đợi** Bước 1: `changes[]` giữ mã, che nhãn và thuộc tính. Bước 2: không che; có bản ghi kiểm toán `RDM_HISTORY_EXPORT`.
+
+### TS-07-22 · Di trú dữ liệu Aita
+
+**Mục tiêu.** Xác nhận công cụ di trú chuyển đủ và đúng dữ liệu bốn bảng EAV của Aita, đi qua các API nghiệp vụ, chạy lại được, và biên bản đối soát phát hiện mọi chênh lệch. Dữ liệu ở mục 2.6.
+
+**Phủ.** FR-07-051; FR-00-090…092; BR-07-011, 025, 027; LGC-DMDC-001…019; UI-07-08.
+
+**Tiền điều kiện chung.** MySQL 8 có `aita_seed.sql`; T68 đã nạp gói nền; U-T68-TA chạy công cụ.
+
+#### TC-07-260 · Chạy thử sinh báo cáo, không ghi dữ liệu
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 · FR-00-090 · LGC-DMDC-001…019
+- **Tiền điều kiện / dữ liệu** 40 danh mục Aita.
+- **Bước**
+  1. Chạy công cụ ở chế độ chạy thử.
+- **Mong đợi** Tác vụ loại `MIGRATION` hiện ở UI-07-08; báo cáo có 40 dòng, mỗi dòng một quyết định đề xuất, mã đề xuất, kiểu thuộc tính suy ra, vấn đề; số danh mục trong `ph07_rdm.catalog` của T68 không đổi.
+
+#### TC-07-261 · Suy kiểu thuộc tính và đề xuất cột mã, cột cha
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT
+- **Truy vết** FR-07-051 bước 4…6 · FR-07-022
+- **Tiền điều kiện / dữ liệu** Bảng giá trị mẫu cho từng kiểu (BOOLEAN có ít nhất hai giá trị, INTEGER có số 0 đầu, ngày `31/02/2024`, ENUM ≤ 20 giá trị trên ≥ 100 dòng).
+- **Bước**
+  1. Chạy bộ suy kiểu trên từng cột mẫu.
+- **Mong đợi** Kiểu khớp bảng ở FR-07-051 bước 6; cột toàn `1` không thành BOOLEAN; mã có số 0 đầu thành STRING; ngày không có thật làm cột thành STRING.
+
+#### TC-07-262 · Đối chiếu COMMON: dùng chung, HYBRID, đồng bộ
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 7 · FR-07-048 · LGC-DMDC-017, 019
+- **Tiền điều kiện / dữ liệu** Aita có "Giới tính" trùng COMMON, "Dân tộc" có 2 mã bổ sung, một danh mục `is_update = 1`.
+- **Bước**
+  1. Chạy thử.
+- **Mong đợi** "Giới tính" đề xuất "dùng COMMON kèm ánh xạ" với hệ thống mã `AITA_T68`; "Dân tộc" đề xuất HYBRID cho 2 mã; danh mục `is_update = 1` đề xuất đăng ký đồng bộ quốc gia.
+
+#### TC-07-263 · Phát hiện dữ liệu cá nhân
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 8 · BR-07-025 · ERR-07-036
+- **Tiền điều kiện / dữ liệu** Một danh mục Aita có cột "Số CCCD" chứa chuỗi 12 chữ số.
+- **Bước**
+  1. Chạy thử.
+  2. Chạy thật mà không bỏ thuộc tính đó.
+- **Mong đợi** Bước 1 báo vấn đề "dữ liệu cá nhân", đề xuất loại bỏ. Bước 2 danh mục đó bị bỏ qua với `ERR-07-036`, các danh mục khác vẫn chạy.
+
+#### TC-07-264 · Chạy thật đi qua API, chờ duyệt theo lô
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 10, 11 · API-07-002, 014, 017, 031 · BR-07-011, 027
+- **Tiền điều kiện / dữ liệu** Cấu hình đã chốt sau TC-07-260.
+- **Bước**
+  1. Chạy thật.
+  2. U-T68-DA1 duyệt và phát hành các phiên bản di trú trên UI-07-07.
+- **Mong đợi** Bước 1 tạo danh mục với `legacy_ref`, phiên bản 1 `origin = MIGRATION` ở `IN_REVIEW`; kiểm toán của từng API có chủ thể U-T68-TA. Bước 2 phát hành được, cho phép `effectiveFrom` hồi tố theo BR-07-027; U-T68-TA không duyệt được (bốn mắt).
+
+#### TC-07-265 · Đối soát phát hiện chênh lệch
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 12 · FR-00-091
+- **Tiền điều kiện / dữ liệu** Sau TC-07-264, xóa tay một bản ghi và sửa một ô trong Datahub (trên bản sao CSDL thử).
+- **Bước**
+  1. Chạy đối soát.
+- **Mong đợi** Biên bản (PDF, Excel) tô đỏ hai danh mục lệch, nêu số bản ghi lệch và ô có băm SHA-256 khác; trạng thái "chưa ký được".
+
+#### TC-07-266 · Chạy lại không nạp trùng
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 13 · FR-00-092
+- **Tiền điều kiện / dữ liệu** Chạy thật bị ngắt giữa lô thứ 2 của danh mục lớn.
+- **Bước**
+  1. Chạy lại công cụ.
+- **Mong đợi** Danh mục đã có `legacy_ref` không tạo lại; lô đã nạp được bỏ qua nhờ `Idempotency-Key`; tổng số bản ghi khớp nguồn.
+
+#### TC-07-267 · Bản kết xuất thiếu bảng hoặc dữ liệu biên
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** IT (MIG)
+- **Truy vết** FR-07-051 bước 1 · ERR-07-008, 009
+- **Tiền điều kiện / dữ liệu** (a) Bản kết xuất thiếu bảng `category_details_value`; (b) danh mục có giá trị dài 2.000 ký tự, mã " ab01" và "AB01".
+- **Bước**
+  1. Chạy thử với (a).
+  2. Chạy thử với (b).
+- **Mong đợi** Bước 1 dừng với báo cáo lỗi, không ghi gì. Bước 2 giá trị 2.000 ký tự giữ nguyên (thuộc tính TEXT hoặc STRING 2.000); hai mã trùng sau chuẩn hóa bị báo vấn đề `ERR-07-008`, cột đó không được chọn làm cột mã.
+
+### TS-07-23 · Khai thác danh mục RESTRICTED
+
+**Mục tiêu.** Xác nhận chỉ HTTT được cấp quyền mới khai thác được danh mục hạn chế, cấp quyền có hiệu lực theo thời hạn và mất tác dụng ngay khi HTTT bị đình chỉ.
+
+**Phủ.** FR-07-052; BR-07-019; API-07-075; ERR-07-003, 009, 018, 030.
+
+#### TC-07-268 · Thay danh sách cấp quyền và khai thác
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-052 · BR-07-019 · API-07-075
+- **Tiền điều kiện / dữ liệu** CAT-RES cấp cho `HT-DATDAI`.
+- **Bước**
+  1. U-T68-TA `PUT /catalogs/TRAM_QUAN_TRAC/access-grants` với `If-Match`, `reason`, thêm `HT-HOTICH` scope `rdm.read`, `expiresAt` = 2026-11-21T10:00+07:00.
+  2. Trong ≤ 10 giây, APP-T68-READ gọi `GET /catalogs/TRAM_QUAN_TRAC/items`.
+  3. Tua đồng hồ qua 10:00, gọi lại.
+- **Mong đợi** Bước 1 `200`, `ETag` mới, KT: có (`RDM_ACCESS_GRANT_REPLACE` với phần thêm). Bước 2 `200`. Bước 3 `403` `ERR-07-030`.
+
+#### TC-07-269 · Danh sách cấp quyền sai
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-052 · ERR-07-009, 018
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. PUT với HTTT không tồn tại; HTTT trùng; scope `rdm.write`; `expiresAt` trong quá khứ; thiếu `reason`.
+  2. PUT với `If-Match` cũ.
+- **Mong đợi** Bước 1 mỗi trường hợp `422` `ERR-07-009`, danh sách không đổi. Bước 2 `412` `ERR-07-018`.
+
+#### TC-07-270 · HTTT bị đình chỉ mất quyền ngay
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-052 bước 5 · ERR-07-030
+- **Tiền điều kiện / dữ liệu** `HT-DATDAI` được cấp.
+- **Bước**
+  1. Giả lập PH-01 phát sự kiện `HT-DATDAI` chuyển `SUSPENDED`.
+  2. APP-T68-QUERY gọi `items:query` trên CAT-RES sau 2 giây.
+- **Mong đợi** `403` `ERR-07-030`; bộ đệm quyền ở mọi pod đã bị vô hiệu.
+
+#### TC-07-271 · Nâng mức phân loại lên RESTRICTED cần xác nhận
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-07-052 bước 6 · FR-07-004 · UI-07-03
+- **Tiền điều kiện / dữ liệu** CAT-MUC (`INTERNAL`) có 3 HTTT khai thác trong 30 ngày.
+- **Bước**
+  1. U-T68-TA đổi phân loại CAT-MUC thành `RESTRICTED` trên UI-07-03.
+- **Mong đợi** Hộp xác nhận nêu "3 hệ thống đã khai thác danh mục này trong 30 ngày sẽ mất quyền"; sau khi xác nhận, ba HTTT nhận `ERR-07-030`; tenant tỉnh thay danh sách cấp quyền của danh mục `COMMON` cho HTTT quốc gia bị `403` `ERR-07-003` (kiểm thêm bằng API).
+
+### TS-07-24 · Tham số PH-07 theo tenant
+
+**Mục tiêu.** Xác nhận tham số `07.rdm.*` đọc từ PH-18, tenant chỉ đổi được tham số mức `TENANT` trong miền cho phép, thay đổi áp dụng trong ≤ 60 giây và không ảnh hưởng tác vụ đang chạy.
+
+**Phủ.** FR-07-053; DD-14; FRS §7.1; UI-07-13.
+
+#### TC-07-272 · Đổi ngưỡng thay đổi lớn và áp dụng không cần khởi động lại
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT, E2E
+- **Truy vết** FR-07-053 · UI-07-13 · BR-07-012
+- **Tiền điều kiện / dữ liệu** `07.rdm.large-change-threshold-percent` = 10 (mặc định); bản nháp CAT-MUC đổi 1 trên 4 bản ghi (25%).
+- **Bước**
+  1. Phát hành thẳng CAT-MUC.
+  2. U-T68-TA đặt tham số = 30 trên UI-07-13; chờ 60 giây; phát hành thẳng lại.
+- **Mong đợi** Bước 1 `409` `ERR-07-016`. Bước 2 phát hành thành công; KT: có (`RDM_PARAMETER_UPDATE` do PH-18 ghi).
+
+#### TC-07-273 · Tham số mức PLATFORM và giá trị ngoài miền
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-07-053 bước 4
+- **Tiền điều kiện / dữ liệu** U-T68-TA.
+- **Bước**
+  1. Đổi `07.rdm.import-max-mb` (mức PLATFORM).
+  2. Đổi `07.rdm.max-future-effective-days` = 5000.
+- **Mong đợi** Cả hai bị PH-18 từ chối theo quy ước lỗi của PH-18; giá trị hiệu lực không đổi.
+
+#### TC-07-274 · Tác vụ đang chạy giữ tham số lúc bắt đầu; PH-18 ngừng
+- **Loại** Dương, Khả dụng · **Ưu tiên** P3 · **Tự động** IT
+- **Truy vết** FR-07-053 bước 3 · `07.rdm.import-preview-ttl-hours`
+- **Tiền điều kiện / dữ liệu** Tác vụ nhập `VALIDATED` tạo khi TTL = 24 giờ.
+- **Bước**
+  1. PA đổi TTL nền tảng thành 12 giờ; tua đồng hồ 13 giờ.
+  2. Dừng giả lập PH-18; khởi động lại một pod `dh-data`.
+- **Mong đợi** Bước 1 tác vụ vẫn `VALIDATED` (giữ 24 giờ ghi trong `options`). Bước 2 pod khởi động bằng giá trị mặc định đóng gói, tra cứu không lỗi.
+
+## 5. Kịch bản kiểm thử phi chức năng
+
+Các kịch bản dưới đây kiểm yêu cầu phi chức năng NFR-07, bảo mật và khả năng truy cập. Ngưỡng lấy từ FRS §7.2; cách đo, cấu hình tải và môi trường theo mục 1.3. Ca hiệu năng chỉ được tính đạt khi đạt ngưỡng ở hai lần đo liên tiếp (mục 1.5).
+
+### TS-07-25 · Bộ đệm, ảnh chụp và chịu lỗi
+
+**Mục tiêu.** Xác nhận khai thác danh mục vẫn đúng và nhanh khi bộ đệm lạnh, khi phát hành phiên bản mới, và tiếp tục phục vụ khi PostgreSQL hoặc Valkey ngừng (NFR-07-009, 010).
+
+**Phủ.** FR-07-028; NFR-07-009, 010, 012; ADR-053.
+
+#### TC-07-275 · Phát hành làm mới bộ đệm mọi pod
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-016, 026 · NFR-07-009
+- **Tiền điều kiện / dữ liệu** Ba pod đã đệm CAT-MUC v1.
+- **Bước**
+  1. Phát hành v2 đổi tên một bản ghi.
+  2. Sau 5 giây, gọi tra bản ghi đó trên từng pod.
+- **Mong đợi** Cả ba pod trả tên mới; khóa của v1 trong Valkey vẫn còn (phiên bản bất biến) nhưng con trỏ "phiên bản hiện hành" đã đổi.
+
+#### TC-07-276 · Tỷ lệ trúng đệm ổn định và phục hồi sau khởi động lại
+- **Loại** Hiệu năng · **Ưu tiên** P1 · **Tự động** k6
+- **Truy vết** NFR-07-009
+- **Tiền điều kiện / dữ liệu** PERF; tải đọc 2.000 lượt/giây phân bố Zipf trên 1.000 danh mục.
+- **Bước**
+  1. Chạy 30 phút, đọc `rdm_cache_hit_ratio`.
+  2. Khởi động lại toàn bộ pod, tiếp tục tải 15 phút.
+- **Mong đợi** Bước 1 ≥ 95%. Bước 2 trở lại ≥ 95% trong ≤ 10 phút; không có lỗi `5xx`.
+
+#### TC-07-277 · PostgreSQL ngừng: tra cứu phục vụ từ L2 và ảnh chụp
+- **Loại** Khả dụng · **Ưu tiên** P1 · **Tự động** Chaos
+- **Truy vết** NFR-07-010 · ADR-053
+- **Tiền điều kiện / dữ liệu** SIT; bộ đệm ấm.
+- **Bước**
+  1. Chaos Mesh dừng PostgreSQL chính và bản sao trong 60 phút; giữ tải tra cứu 500 lượt/giây.
+  2. Trong thời gian đó, gọi một API ghi.
+- **Mong đợi** Tra cứu mã đã có trong L2 hoặc ảnh chụp trả `200` với tiêu đề `X-Rdm-Degraded: true`; tỷ lệ lỗi tra cứu < 0,1%. API ghi trả `503` `ERR-07-047`. Cảnh báo `RdmDatabaseDown` bật.
+
+#### TC-07-278 · Valkey ngừng
+- **Loại** Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos
+- **Truy vết** NFR-07-010
+- **Tiền điều kiện / dữ liệu** SIT.
+- **Bước**
+  1. Dừng cả ba nút Valkey 10 phút dưới tải 1.000 lượt/giây.
+- **Mong đợi** Không có lỗi `5xx`; p95 tra một mã ≤ 50 ms (đọc L1 hoặc CSDL); circuit breaker Valkey mở và đóng lại khi Valkey trở lại.
+
+#### TC-07-279 · Garage ngừng khi phát hành
+- **Loại** Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos
+- **Truy vết** FR-07-016 · ERR-07-047
+- **Tiền điều kiện / dữ liệu** Bản nháp CAT-MUC đã duyệt.
+- **Bước**
+  1. Cắt mạng tới Garage, phát hành.
+  2. Khôi phục mạng sau 5 phút.
+- **Mong đợi** Phát hành thành công (ảnh chụp sinh nền); `GET .../snapshots/{v}` trả `503` `ERR-07-047` có `Retry-After` trong lúc chờ; sau khôi phục, ảnh chụp sinh xong trong ≤ 2 phút và EVT-07-05 có `snapshotUri`.
+
+#### TC-07-280 · Ảnh chụp bị sửa bị phát hiện
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-07-028 · ADR-053
+- **Tiền điều kiện / dữ liệu** Ảnh chụp v1 CAT-LH.
+- **Bước**
+  1. Sửa một byte của đối tượng ảnh chụp trong MinIO.
+  2. `dh-runtime` nạp ảnh chụp.
+- **Mong đợi** Thư viện tra cứu từ chối nạp vì SHA-256 lệch metadata, ghi cảnh báo, tiếp tục dùng ảnh chụp cũ trong bộ nhớ.
+
+#### TC-07-281 · Bộ nhớ pod khi nhập, xuất, phát hành danh mục lớn nhất
+- **Loại** Hiệu năng · **Ưu tiên** P1 · **Tự động** k6
+- **Truy vết** NFR-07-012
+- **Tiền điều kiện / dữ liệu** PERF; danh mục 200.000 bản ghi, 100 thuộc tính.
+- **Bước**
+  1. Đồng thời: nhập F-100K, xuất 200.000 dòng xlsx, phát hành danh mục 200.000 bản ghi.
+- **Mong đợi** Không pod nào bị OOM (giới hạn 2 GB); L1 ≤ 256 MB; tra cứu đồng thời vẫn đạt NFR-07-001.
+
+#### TC-07-282 · Hai pod cùng lấy một tác vụ nền
+- **Loại** Biên · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-021 · D03-02-PH07 §4.4
+- **Tiền điều kiện / dữ liệu** 20 tác vụ nhập `UPLOADED`, ba pod.
+- **Bước**
+  1. Bật worker trên cả ba pod cùng lúc; dừng đột ngột một pod giữa chừng.
+- **Mong đợi** Mỗi tác vụ được đúng một pod xử lý (`lease_owner`); tác vụ của pod bị dừng được pod khác nhận lại sau khi `lease_until` hết hạn; không có tác vụ nào ghi hai lần vào bản nháp.
+
+### TS-07-26 · Giao diện E2E và yêu cầu dùng chung FR-00
+
+**Mục tiêu.** Chạy các luồng người dùng chính của D03-06-PH07 mục 22 từ đầu tới cuối trên ba trình duyệt, và kiểm các yêu cầu dùng chung của giao diện (định dạng Việt Nam, URL giữ trạng thái, tác vụ nền).
+
+**Phủ.** FR-07-018; FR-00-020…060; UI-07-01…13.
+
+#### TC-07-283 · Luồng cập nhật danh mục địa phương theo văn bản mới
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-07-011, 012, 015, 016 · UI-07-01, 02, 05, 06, 07 · LGC-DMDC-009…011
+- **Tiền điều kiện / dữ liệu** U-T68-DS-NV, U-T68-DA1; CAT-LH.
+- **Bước**
+  1. DS-NV tìm "loại hình", mở chi tiết, tạo bản nháp, sửa 2 bản ghi, nhập F-OK10, xem khác biệt, trình.
+  2. DA1 vào "Việc của tôi", mở UI-07-07, duyệt và phát hành với ngày hiệu lực hôm sau.
+- **Mong đợi** Mỗi bước hiển thị thông báo đúng D03-06-PH07; sau bước 2, UI-07-02 hiện phiên bản mới với nhãn "Hiệu lực từ {ngày}". Không có lỗi trong bảng điều khiển trình duyệt.
+
+#### TC-07-284 · Sửa bản ghi trên lưới bằng bàn phím
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-07-018 · UI-07-05
+- **Tiền điều kiện / dữ liệu** Bản nháp CAT-LH.
+- **Bước**
+  1. Chỉ dùng bàn phím: di chuyển ô bằng mũi tên, F2 sửa tên, Tab sang ô kế, Ctrl+S lưu.
+- **Mong đợi** Lưu được; vùng `role="status"` đọc "Đã lưu 1 bản ghi."
+
+#### TC-07-285 · Xung đột sửa đồng thời theo từng dòng
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-07-018 · ERR-07-018 · UI-07-05
+- **Tiền điều kiện / dữ liệu** Hai phiên trình duyệt của DS-NV và TA cùng mở bản nháp.
+- **Bước**
+  1. Cả hai sửa cùng một bản ghi; TA lưu trước; DS-NV lưu sau cùng 3 dòng khác.
+- **Mong đợi** 3 dòng khác của DS-NV lưu được; dòng xung đột hiện dấu ⚠ với ba lựa chọn "Xem khác biệt", "Giữ của tôi", "Lấy bản mới".
+
+#### TC-07-286 · URL giữ trạng thái lọc, trang, tab
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-00-021 · UI-07-01, 02
+- **Tiền điều kiện / dữ liệu** U-T68-VW.
+- **Bước**
+  1. Lọc nguồn "Tỉnh", sang trang 2, mở danh mục, chọn tab Phiên bản; sao chép URL, mở tab mới.
+  2. Sửa URL `page=abc`.
+- **Mong đợi** Bước 1 tab mới hiển thị đúng trạng thái. Bước 2 trang không lỗi, về trang 1.
+
+#### TC-07-287 · Định dạng Việt Nam
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-00-022 · D03-06-PH07 mục 2.3
+- **Tiền điều kiện / dữ liệu** CAT-BIG.
+- **Bước**
+  1. Xem số bản ghi, ngày hiệu lực, giá trị thập phân.
+- **Mong đợi** "100.000"; "01/12/2026"; "12,50"; giờ theo Asia/Ho_Chi_Minh.
+
+#### TC-07-288 · Khay tác vụ nền và thông báo khi xong
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-00-054, 060 · UI-07-08
+- **Tiền điều kiện / dữ liệu** F-100K.
+- **Bước**
+  1. Bắt đầu nhập F-100K, chuyển sang UI-07-01.
+- **Mong đợi** Khay "1 tác vụ nền" cập nhật tiến độ; khi `VALIDATED`, có thông báo kèm liên kết quay lại bước 3 của trình hướng dẫn.
+
+#### TC-07-289 · Trình hướng dẫn nhập: ghép cột và khuôn Aita
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-07-021, 022 · UI-07-06 · LGC-DMDC-005
+- **Tiền điều kiện / dữ liệu** F-AITA-X.
+- **Bước**
+  1. Tải F-AITA-X ở chế độ tạo danh mục.
+- **Mong đợi** Giao diện nhận dạng "Khuôn Aita", điền sẵn tên danh mục từ ô A2, đề xuất ghép cột từ dòng 4; người dùng sửa được trước khi xác nhận.
+
+#### TC-07-290 · Lỗi máy chủ hiển thị đúng thông điệp
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** D03-06-PH07 mục 5.3 · ERR-07-047
+- **Tiền điều kiện / dữ liệu** Máy chủ giả lập (Prism) trả `503` `ERR-07-047`, `500` không mã.
+- **Bước**
+  1. Tải UI-07-01 với hai phản hồi lỗi.
+- **Mong đợi** `503`: thông điệp tiếng Việt và nút "Thử lại"; `500`: thông điệp chung kèm mã theo dõi `traceId` để báo hỗ trợ; không hiện ngăn xếp lỗi.
+
+#### TC-07-291 · Giảm trong suốt và tương phản cao
+- **Loại** Truy cập · **Ưu tiên** P2 · **Tự động** E2E (ảnh chụp)
+- **Truy vết** NFR-00-043 · D03-06-PH07 mục 20.5
+- **Tiền điều kiện / dữ liệu** Playwright giả lập `prefers-reduced-transparency: reduce`, `prefers-reduced-motion: reduce`, `forced-colors: active`.
+- **Bước**
+  1. Chụp UI-07-01, 05, 07 ở mỗi chế độ.
+- **Mong đợi** Không còn `backdrop-filter`; mọi thông tin vẫn đọc được; ảnh khớp ảnh chuẩn đã duyệt.
+
+#### TC-07-292 · Hiệu năng giao diện sửa 1.000 dòng
+- **Loại** Hiệu năng · **Ưu tiên** P2 · **Tự động** E2E (web-vitals)
+- **Truy vết** NFR-00-005 · UI-07-05
+- **Tiền điều kiện / dữ liệu** Bản nháp CAT-BIG; máy thử 4 nhân, 8 GB.
+- **Bước**
+  1. Mở UI-07-05, cuộn hết 1.000 dòng đầu, sửa 20 ô.
+- **Mong đợi** LCP ≤ 2,5 giây; INP ≤ 200 ms; không có khung hình dài quá 200 ms khi cuộn.
+
+### TS-07-27 · Hiệu năng (k6)
+
+**Mục tiêu.** Đo các ngưỡng NFR-07-001…008, 011 trên môi trường PERF với dữ liệu quy mô thật (34 tenant × 1.000 danh mục). Kịch bản k6 nằm ở `perf/rdm/*.js`; kết quả đẩy sang Prometheus và đính vào báo cáo phát hành.
+
+**Phủ.** NFR-07-001…008, 011; D05-03 (kế hoạch kiểm thử hiệu năng chung).
+
+| Mã | Tên | Tải | Ngưỡng đạt | Truy vết |
+|---|---|---|---|---|
+| TC-07-293 | Tra một mã, bộ đệm ấm | 5.000 lượt/giây/tenant, 15 phút | p95 ≤ 20 ms, p99 ≤ 50 ms, lỗi < 0,1% | NFR-07-001 · FR-07-026 |
+| TC-07-294 | Tra lô 500 mã | 200 lượt/giây | p95 ≤ 150 ms | NFR-07-002 · FR-07-027 |
+| TC-07-295 | Chuyển mã lô 500 qua ánh xạ | 200 lượt/giây | p95 ≤ 150 ms | NFR-07-002 · FR-07-042 |
+| TC-07-296 | Lấy trang 1.000 bản ghi | 100 lượt/giây | p95 ≤ 300 ms | NFR-07-003 · FR-07-028 |
+| TC-07-297 | Truy vấn DSL trên CAT-BIG (5 mẫu truy vấn) | 50 lượt/giây | p95 ≤ 500 ms; truy vấn quá 2 giây bị ngắt | NFR-07-004 · FR-07-032 |
+| TC-07-298 | Nhập F-100K | 1 tác vụ, lặp 5 lần | Xem trước ≤ 2 phút; commit ≤ 60 giây | NFR-07-005 · FR-07-021 |
+| TC-07-299 | Xuất 100.000 dòng xlsx; xuất đồng bộ 10.000 dòng | 1 tác vụ; 10 lượt/phút | ≤ 60 giây; ≤ 5 giây | NFR-07-006 · FR-07-024 |
+| TC-07-300 | Phát hành 50.000 bản ghi kể cả ảnh chụp | 1 lần, lặp 5 lần | ≤ 30 giây; sự kiện ≤ 5 giây | NFR-07-007 · FR-07-016 |
+| TC-07-301 | Thông lượng toàn cụm trên dữ liệu quy mô đầy đủ | 20.000 lượt/giây, 3 pod, 1 giờ, 34 tenant × 1.000 danh mục | Không suy giảm p95 quá 20% so với 15 phút đầu | NFR-07-008, 011 |
+| TC-07-302 | Thời lượng (soak) | 30% tải đỉnh, 8 giờ | Không rò bộ nhớ (heap sau GC tăng < 5%), không tăng lỗi | NFR-07-008, 012 |
+| TC-07-303 | Chuyển mã ĐVHC lô 1.000 | 50 lượt/giây | p95 ≤ 300 ms | FR-07-046 |
+
+Mỗi ca ở bảng trên có loại Hiệu năng, ưu tiên P1 (TC-07-293, 297, 298, 300, 301) hoặc P2 (các ca còn lại), tự động bằng k6. Dữ liệu dùng chung là bộ quy mô NFR-07-011 nạp sẵn ở PERF; tiền điều kiện chung là bộ đệm đã làm ấm 10 phút (trừ TC-07-298…300 không phụ thuộc bộ đệm).
+
+### TS-07-28 · Bảo mật (ASVS)
+
+**Mục tiêu.** Kiểm các kiểm soát an toàn của PH-07 theo OWASP ASVS 5.0 và yêu cầu ATTT cấp độ 3 (D03-07, mã SEC-40…49 nhóm ứng dụng). Ca rò rỉ chéo tenant nằm riêng ở TS-07-19.
+
+**Phủ.** ASVS V4 (kiểm soát truy cập), V5 (kiểm tra đầu vào), V8 (bảo vệ dữ liệu), V12 (tệp), V13 (API); SEC-40…49; DD-12.
+
+#### TC-07-304 · Tệp giả mạo đuôi
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-021 · DD-12 · ERR-07-019 · ASVS V12
+- **Tiền điều kiện / dữ liệu** F-FAKE.
+- **Bước**
+  1. Tải F-FAKE vào bản nháp CAT-LH.
+- **Mong đợi** Tác vụ `FAILED` với `ERR-07-019` (kiểu nội dung theo chữ ký tệp không phải xlsx) hoặc `ERR-07-038` nếu bộ quét phát hiện trước; tệp bị xóa khỏi vùng tạm.
+
+#### TC-07-305 · Tệp chứa mẫu EICAR
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** DD-12 · ERR-07-038
+- **Tiền điều kiện / dữ liệu** F-EICAR.
+- **Bước**
+  1. Tải F-EICAR.
+- **Mong đợi** Tác vụ `SCANNING` → `FAILED`, `ERR-07-038`; không có dòng nào trong `import_row`; KT: có (sự kiện an ninh tệp nhiễm).
+
+#### TC-07-306 · Bom nén
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-021 · ERR-07-019 · ASVS V12.1
+- **Tiền điều kiện / dữ liệu** F-ZIPBOMB.
+- **Bước**
+  1. Tải F-ZIPBOMB.
+- **Mong đợi** Bộ đọc dừng khi tỉ lệ nén vượt ngưỡng; `FAILED` `ERR-07-019`; bộ nhớ pod không tăng quá 200 MB.
+
+#### TC-07-307 · XXE trong xlsx
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-07-021 · ASVS V5.5
+- **Tiền điều kiện / dữ liệu** F-XXE.
+- **Bước**
+  1. Tải F-XXE.
+- **Mong đợi** Thực thể ngoài không được phân giải; không có nội dung `/etc/passwd` trong dữ liệu xem trước hay nhật ký.
+
+#### TC-07-308 · Chèn công thức khi xuất (CSV injection)
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-07-024 · ASVS V5.2
+- **Tiền điều kiện / dữ liệu** F-FORMULA đã nhập vào bản nháp thử.
+- **Bước**
+  1. Xuất CSV và xlsx.
+- **Mong đợi** Ô bắt đầu bằng `=`, `+`, `-`, `@`, tab, CR được thêm dấu nháy đơn đầu ô; mở trong trình bảng tính không chạy công thức.
+
+#### TC-07-309 · Thao túng định danh đối tượng (IDOR) trong tenant
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** ASVS V4.2 · ERR-07-046
+- **Tiền điều kiện / dữ liệu** U-T68-DS-MT, tác vụ nhập của U-T68-DS-NV.
+- **Bước**
+  1. DS-MT xác nhận ghi (`commit`) tác vụ nhập của DS-NV.
+- **Mong đợi** `403` `ERR-07-046`.
+
+#### TC-07-310 · Thiếu If-Match và chống ghi đè mất dữ liệu
+- **Loại** Bảo mật, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** ERR-07-040 · ASVS V13
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Gọi các API sửa (API-07-004, 014, 028) không có `If-Match`.
+- **Mong đợi** `400` `ERR-07-040`.
+
+#### TC-07-311 · Giới hạn tần suất và kích thước thân
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** ERR-07-042, 044 · `07.rdm.batch-rate-per-minute`
+- **Tiền điều kiện / dữ liệu** APP-T68-WRITE.
+- **Bước**
+  1. Gửi 11 lô trong một phút.
+  2. Gửi thân 70 MB.
+- **Mong đợi** Lô thứ 11 `429` `ERR-07-044` có `Retry-After`. Bước 2 `413` `ERR-07-042`.
+
+#### TC-07-312 · Kiểu nội dung không hỗ trợ
+- **Loại** Bảo mật, Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** ERR-07-043
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Gửi `POST /catalogs` với `Content-Type: application/xml`.
+- **Mong đợi** `415` `ERR-07-043`.
+
+#### TC-07-313 · Không lộ thông tin trong lỗi và tiêu đề bảo mật
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** ZAP
+- **Truy vết** ASVS V7, V14 · SEC-40…49
+- **Tiền điều kiện / dữ liệu** Quét ZAP chủ động có xác thực với từng vai trò.
+- **Bước**
+  1. Chạy quét trên `/api/rdm/v1` và các route console PH-07.
+- **Mong đợi** Không cảnh báo mức Cao; phản hồi lỗi không có ngăn xếp, tên lớp, câu SQL; có `Strict-Transport-Security`, `Content-Security-Policy`, `X-Content-Type-Options`.
+
+#### TC-07-314 · Dữ liệu cá nhân không vào danh mục
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** BR-07-025 · ERR-07-036 · Luật 91/2025/QH15
+- **Tiền điều kiện / dữ liệu** —
+- **Bước**
+  1. Khai báo thuộc tính `so_cccd` không có `piiAcknowledged`.
+  2. Khai báo thuộc tính mức `SENSITIVE`.
+- **Mong đợi** Bước 1 `422` `ERR-07-036` kèm từ khớp. Bước 2 `422` `ERR-07-036`.
+
+#### TC-07-315 · Nhật ký không chứa token và dữ liệu nhạy cảm
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** ASVS V7.1 · SEC-60…67
+- **Tiền điều kiện / dữ liệu** Mức nhật ký INFO.
+- **Bước**
+  1. Chạy toàn bộ TS-07-23 rồi tìm trong nhật ký chuỗi token, URL ký sẵn, giá trị bản ghi CAT-RES.
+- **Mong đợi** Không tìm thấy; URL ký sẵn chỉ ghi phần đường dẫn không có chữ ký.
+
+### TS-07-29 · Khả năng truy cập
+
+**Mục tiêu.** Kiểm giao diện PH-07 đạt WCAG 2.2 mức AA (NFR-00-040…045) bằng axe-core tự động và kiểm thủ công với bàn phím, NVDA (mục 6.4).
+
+**Phủ.** NFR-00-040…045; D03-06-PH07 mục 20.
+
+#### TC-07-316 · Quét axe-core mọi route PH-07
+- **Loại** Truy cập · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** NFR-00-040 · UI-07-01…12
+- **Tiền điều kiện / dữ liệu** Dữ liệu chuẩn; mỗi màn ở trạng thái có dữ liệu và trạng thái lỗi.
+- **Bước**
+  1. Chạy `@axe-core/playwright` với bộ luật `wcag2a`, `wcag2aa`, `wcag22aa`.
+- **Mong đợi** Không vi phạm mức "serious" hoặc "critical".
+
+#### TC-07-317 · Lưới và cây theo mẫu WAI-ARIA
+- **Loại** Truy cập · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** NFR-00-041 · D03-06-PH07 mục 20.1, 20.2
+- **Tiền điều kiện / dữ liệu** UI-07-05 bản nháp CAT-BIG; UI-07-11.
+- **Bước**
+  1. Kiểm thuộc tính `role`, `aria-rowcount`, `aria-rowindex`, `aria-level`, `aria-expanded`; điều hướng bằng phím.
+- **Mong đợi** `aria-rowcount` bằng tổng thật; dòng 1.205 có `aria-rowindex = 1206` (tính dòng tiêu đề); mọi phím ở mục 20.1, 20.2 hoạt động.
+
+#### TC-07-318 · Khác biệt không chỉ dựa vào màu
+- **Loại** Truy cập · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** WCAG 1.4.1 · D03-06-PH07 mục 20.3
+- **Tiền điều kiện / dữ liệu** UI-07-07.
+- **Bước**
+  1. Chụp ảnh ở chế độ thang xám; đọc cột Loại bằng cây truy cập.
+- **Mong đợi** Mỗi dòng có chữ "Thêm mới", "Đã sửa", "Ngừng dùng", "Phá vỡ"; `<del>`, `<ins>` có văn bản ẩn "Giá trị cũ:", "Giá trị mới:".
+
+#### TC-07-319 · Kích thước đích chạm và focus nhìn thấy
+- **Loại** Truy cập · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** WCAG 2.5.8, 2.4.11, 2.4.13
+- **Tiền điều kiện / dữ liệu** UI-07-01, 05, 07.
+- **Bước**
+  1. Đo kích thước mọi nút; Tab qua toàn trang, chụp vòng focus.
+- **Mong đợi** Đích ≥ 24 × 24 px; vòng focus không bị che bởi thanh dính hoặc ngăn kéo glass.
+
+#### TC-07-320 · Ba luồng chính với NVDA
+- **Loại** Truy cập · **Ưu tiên** P1 · **Tự động** Thủ công
+- **Truy vết** NFR-00-040…045 · mục 6.4
+- **Tiền điều kiện / dữ liệu** NVDA + Firefox; người kiểm thử không nhìn màn hình khi thực hiện.
+- **Bước**
+  1. Thực hiện ba luồng ở mục 6.4.
+- **Mong đợi** Hoàn thành cả ba luồng; ghi nhận mọi chỗ NVDA đọc sai hoặc thiếu vào phiếu kết quả mục 6.4.
+
+## 6. Thủ tục kiểm thử thủ công
+
+Phần lớn ca ở mục 4 và 5 chạy tự động. Mục này mô tả bốn thủ tục phải làm bằng tay vì cần phán đoán của người, cần môi trường gần thật, hoặc cần người dùng thật.
+
+### 6.1. Kiểm thử khám phá theo phiên
+
+Mỗi đợt phát hành có hai phiên khám phá 90 phút, mỗi phiên một chủ đề: (1) "người dùng Aita lần đầu dùng Datahub" (người kiểm thử chỉ đọc mục 23.2 của D03-06-PH07 rồi tự làm các việc quen thuộc của hệ cũ); (2) "bản nháp bị nhiều người cùng sửa và một tác vụ nhập đang chạy". Ghi chép theo mẫu phiên (mục tiêu, thời gian, lỗi, câu hỏi, ý tưởng ca mới). Ca mới tìm được đưa vào mục 4 với mã tiếp theo, không dùng lại mã đã có.
+
+### 6.2. Diễn tập di trú
+
+Trước chuyển đổi chính thức của mỗi tỉnh, đội di trú chạy toàn bộ TS-07-22 trên bản sao CSDL Aita đã ẩn danh của tỉnh đó ở môi trường UAT, theo đúng thứ tự: chạy thử, rà đề xuất với cán bộ quản lý danh mục, chạy thật, đối soát, duyệt theo lô. Kết quả gồm biên bản đối soát ký bởi đại diện tỉnh và thời gian chạy thực tế của từng bước, làm đầu vào cho kế hoạch chuyển đổi ở D06-01. Diễn tập đạt khi biên bản không còn dòng đỏ chưa giải trình và tổng thời gian nằm trong cửa sổ chuyển đổi đã thống nhất.
+
+### 6.3. Diễn tập sự cố
+
+Mỗi quý, đội vận hành cùng đội kiểm thử chạy TC-07-174, 277, 278, 279 trên SIT theo kịch bản diễn tập ở D06-03 (hướng dẫn vận hành), ghi thời gian phát hiện (cảnh báo bật), thời gian khôi phục và mọi bước thủ công phải làm. Bước thủ công phát sinh được bổ sung vào runbook của PH-07.
+
+### 6.4. Kiểm thử truy cập thủ công
+
+Người kiểm thử dùng NVDA bản mới nhất với Firefox ESR, không nhìn màn hình, thực hiện ba luồng sau. Mỗi luồng ghi kết quả vào phiếu (bước, NVDA đọc gì, mong đợi, đạt hay không).
+
+| Luồng | Các bước | Mong đợi chính |
+|---|---|---|
+| A. Tìm và xem danh mục | Mở UI-07-01, tìm "dân tộc", lọc nguồn quốc gia, mở chi tiết, chuyển tab Bản ghi, đọc bản ghi thứ 3 | Kết quả tìm được đọc qua vùng trạng thái; tiêu đề cột sắp xếp đọc kèm chiều; tab đọc "tab 3 trên 8" |
+| B. Sửa bản ghi bản nháp | Mở UI-07-05, đi tới dòng 10 bằng phím, sửa tên, lưu bằng Ctrl+S, gây một lỗi mã trùng, sửa lại | Vị trí ô đọc "dòng 10 trên 39, cột Tên"; lỗi đọc qua `role="alert"` và đọc lại khi focus vào ô |
+| C. Duyệt phiên bản | Mở UI-07-07 từ "Việc của tôi", nghe tóm tắt khác biệt, đọc 3 dòng thay đổi, nhập ý kiến, bấm Duyệt | Loại thay đổi đọc bằng chữ; giá trị cũ, mới có tiền tố; nút bị vô hiệu đọc được lý do |
+
+Kiểm thêm phóng to 200% và độ rộng 320 px tương đương (WCAG 1.4.10) cho UI-07-01 và UI-07-07: không mất nội dung, không cuộn hai chiều trừ bảng dữ liệu.
+
+## 7. Nghiệm thu người dùng tương đương hệ Aita
+
+Bộ kịch bản nghiệm thu dành cho cán bộ nghiệp vụ của tỉnh thí điểm, viết bằng ngôn ngữ nghiệp vụ, mỗi kịch bản ứng với một hoặc nhiều chức năng của Aita (`LGC-DMDC`) để xác nhận hệ mới "không mất chức năng". Cán bộ thực hiện trên môi trường UAT với dữ liệu di trú của chính tỉnh mình (mục 6.2), đội kiểm thử hỗ trợ và ghi kết quả. Một kịch bản đạt khi cán bộ tự làm được không cần hướng dẫn thêm ngoài tài liệu D06-04 và kết quả đúng như mong đợi.
+
+| Mã | Việc cán bộ làm | Chức năng Aita tương ứng | Mong đợi | FR | TC tự động liên quan |
+|---|---|---|---|---|---|
+| UAT-01 | Xem danh sách danh mục của tỉnh, biết tổng số và tìm một danh mục theo tên | LGC-DMDC-001 | Thấy đủ danh mục đã di trú, số lượng khớp biên bản đối soát | FR-07-001 | TC-07-001 |
+| UAT-02 | Xem một danh mục phân cấp dạng cây | LGC-DMDC-002 | Cây đúng cha con như hệ cũ | FR-07-030 | TC-07-210 |
+| UAT-03 | Xem chi tiết danh mục: tên, thuộc tính, bản ghi | LGC-DMDC-003 | Nội dung khớp hệ cũ, thuộc tính ẩn của hệ cũ vẫn ẩn | FR-07-002 | TC-07-001, 260 |
+| UAT-04 | Tạo danh mục mới bằng tay với 3 thuộc tính | LGC-DMDC-004 | Danh mục ở trạng thái bản nháp, có đủ thuộc tính | FR-07-003, 005 | TC-07-005 |
+| UAT-05 | Tạo danh mục từ tệp Excel theo khuôn cũ của Aita | LGC-DMDC-005 | Tệp khuôn cũ được nhận dạng, tạo được danh mục | FR-07-022 | TC-07-289 |
+| UAT-06 | Nhập bổ sung bản ghi từ Excel và từ CSV | LGC-DMDC-006, 007 | Có bước xem trước, bản ghi lỗi được chỉ rõ dòng | FR-07-021 | TC-07-095 |
+| UAT-07 | Nhập qua API từ một hệ thống của tỉnh | LGC-DMDC-008 | Bản ghi vào bản nháp, không phát hành tự động | FR-07-023 | TC-07-252 |
+| UAT-08 | Sửa tên danh mục, thêm thuộc tính, sửa bản ghi | LGC-DMDC-009…011 | Sửa trên bản nháp; sau khi duyệt và phát hành, hệ thống khác thấy giá trị mới | FR-07-004, 006, 012 | TC-07-283 |
+| UAT-09 | Xóa một danh mục chưa dùng; thử xóa danh mục đã phát hành | LGC-DMDC-012 | Xóa được danh mục nháp; danh mục đã phát hành chỉ ngừng hiệu lực được | FR-07-009 | TC-07-011, 012 |
+| UAT-10 | Xuất danh mục ra Excel và CSV | LGC-DMDC-013, 014 | Tệp mở được, nhập lại được | FR-07-024 | TC-07-131 |
+| UAT-11 | Một hệ thống của tỉnh tra danh mục qua API | LGC-DMDC-015 | Tra theo mã, theo lô, lấy lược đồ | FR-07-026, 027, 033 | TC-07-154 |
+| UAT-12 | Lọc danh mục theo thuộc tính qua trình thử API | LGC-DMDC-016 | Lọc được trên thuộc tính cho phép, không gõ SQL | FR-07-032 | TC-07-169 |
+| UAT-13 | Dùng danh mục dân tộc toàn quốc và bổ sung nhóm địa phương | LGC-DMDC-017 | Thấy danh mục toàn quốc, bổ sung được mã trong dải tỉnh | FR-07-048 | TC-07-216 |
+| UAT-14 | Ẩn một thuộc tính khỏi hệ thống khai thác | LGC-DMDC-018 | Thuộc tính ẩn trên giao diện, tệp xuất và API, giá trị vẫn giữ | FR-07-006 | TC-07-024…038 |
+| UAT-15 | Cập nhật danh mục quốc gia và xác nhận thay đổi phá vỡ | LGC-DMDC-019, LGC-NGSP-006 | Đồng bộ chạy theo lịch, thay đổi phá vỡ chờ xác nhận | FR-07-036, 037 | TC-07-182, 183 |
+
+Kết quả nghiệm thu được tổng hợp vào biên bản nghiệm thu giai đoạn (mẫu ở D05-01). Kịch bản không đạt mà nguyên nhân là khác biệt có chủ đích so với Aita (ví dụ phải qua duyệt mới có hiệu lực) được ghi "đạt có giải trình" kèm dẫn chiếu quyết định thiết kế.
+
+## 8. Ma trận truy vết
+
+Ma trận dưới đây được sinh tự động từ các test case của tài liệu này (`python3 ph07/tools/gen_matrix.py`), không biên tập tay. Kết quả kiểm tra ngày 25/11/2026: 53/53 FR có ca kiểm thử, mọi FR mức M có ít nhất một ca dương và một ca âm; mọi BR, ERR-07-001…048 và NFR-07-001…015 có ít nhất một ca.
+
+### 8.1. Yêu cầu chức năng → test case
+
+Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-07. FR mức M phải có ít nhất một ca ở mỗi cột; bảng này được sinh tự động bằng `ph07/tools/gen_matrix.py` nên luôn khớp với mục 4 và 5.
+
+| FR | Tên | Mức | LGC | Dương | Âm | Ca khác | Đạt quy tắc |
+|---|---|---|---|---|---|---|---|
+| FR-07-001 | Liệt kê danh mục, đếm số lượng, lọc theo nhóm, nguồn, trạng  | M | LGC-DMDC-001 | 001 | 002 | — | Có |
+| FR-07-002 | Xem chi tiết danh mục: thông tin, thuộc tính, phiên bản, bản | M | LGC-DMDC-003 | 003 | 004, 220 | — | Có |
+| FR-07-003 | Tạo danh mục thủ công | M | LGC-DMDC-004 | 005, 008 | 006, 007, 009 | — | Có |
+| FR-07-004 | Cập nhật thông tin danh mục | M | LGC-DMDC-009 | 010, 271 | 018 | — | Có |
+| FR-07-005 | Khai báo thuộc tính động có kiểu và ràng buộc | M | LGC-DMDC-004, LGC-DMDC-018 | 005, 024, 038 | 025, 026, 027, 033, 038 | — | Có |
+| FR-07-006 | Sửa, ẩn, xóa, sắp thứ tự thuộc tính trong bản nháp có kiểm t | M | LGC-DMDC-010, LGC-DMDC-018 | 028, 029, 032, 136 | 027, 030, 031, 034 | — | Có |
+| FR-07-007 | Cấu hình phân cấp | M | LGC-DMDC-002 | 005, 035 | 036, 037 | — | Có |
+| FR-07-008 | Thiết lập nguồn và quyền cập nhật | M | LGC-DMDC-017 | 039, 040 | 041, 045 | — | Có |
+| FR-07-009 | Xóa danh mục chưa phát hành; ngừng hiệu lực danh mục đã phát | M | LGC-DMDC-012 | 011, 013 | 012, 014, 015, 016, 017 | — | Có |
+| FR-07-010 | Quản lý nhóm danh mục | S | mới | 019, 021 | 020, 022, 023 | — | Có |
+| FR-07-011 | Tạo bản nháp phiên bản mới từ phiên bản hiện hành | M | LGC-DMDC-011 | 047, 066, 283 | 016, 048 | — | Có |
+| FR-07-012 | Thêm, sửa, ngừng dùng bản ghi trên bản nháp | M | LGC-DMDC-011 | 050, 055, 057, 059, 060, 283 | 051, 058, 081 | — | Có |
+| FR-07-013 | Kiểm tra hợp lệ bản ghi theo lược đồ | M | mới | 038, 050, 061 | 038, 051, 052, 053, 054, 062, 100, 123 | — | Có |
+| FR-07-014 | So sánh khác biệt giữa hai phiên bản, phân loại phá vỡ và kh | M | mới | 067, 068, 070, 071 | 068, 069 | — | Có |
+| FR-07-015 | Trình duyệt, duyệt, từ chối phiên bản | M | mới | 072, 073, 076, 283 | 076, 077, 078, 081, 082, 083, 085, 091, 239, 241 | — | Có |
+| FR-07-016 | Phát hành phiên bản với ngày hiệu lực và căn cứ pháp lý | M | mới | 049, 074, 075, 084, 088, 090, 275, 283 | 078, 079, 080, 083, 085, 088, 089, 091, 092, 241 | 279, 300 | Có |
+| FR-07-017 | Hủy bản nháp | M | mới | 064 | 065, 082 | — | Có |
+| FR-07-018 | Hiển thị bản ghi dạng bảng và dạng cây | M | LGC-DMDC-002 | 063, 284 | 150, 285 | — | Có |
+| FR-07-019 | Ghi mã thay thế và quan hệ kế thừa cho bản ghi ngừng dùng | M | mới | 055, 141 | 056 | — | Có |
+| FR-07-020 | Tải tệp mẫu Excel/CSV sinh theo lược đồ của danh mục | M | mới | 093, 094 | 094 | — | Có |
+| FR-07-021 | Nhập bản ghi từ Excel/CSV vào bản nháp | M | LGC-DMDC-006, LGC-DMDC-007 | 095, 096, 097, 098, 102, 107, 109, 111, 112, 289 | 099, 100, 101, 104, 105, 106, 108, 110, 115, 116, 117, 118 (+4) | 124, 233, 282, 298, 304, 306 (+1) | Có |
+| FR-07-022 | Tạo danh mục mới từ tệp, hỗ trợ khuôn hệ cũ Aita | M | LGC-DMDC-005 | 113, 114, 121, 261, 289 | 122 | — | Có |
+| FR-07-023 | Nhập bản ghi qua API theo lô, idempotent | M | LGC-DMDC-008 | 125, 127, 252 | 126, 127, 128, 129, 130, 252 | — | Có |
+| FR-07-024 | Xuất phiên bản ra Excel, CSV, JSON | M | LGC-DMDC-013, LGC-DMDC-014 | 131, 132, 133, 136, 137, 209 | 134, 135, 137, 227 | 124, 299, 308 | Có |
+| FR-07-025 | Xem lịch sử tác vụ nhập xuất và tải báo cáo lỗi | M | mới | 103 | 134 | — | Có |
+| FR-07-026 | Tra cứu một mã tại thời điểm | M | LGC-DMDC-015 | 043, 090, 138, 140, 141, 159, 210, 275 | 015, 139, 142, 220 | 293 | Có |
+| FR-07-027 | Tra cứu lô tối đa 500 mã | M | LGC-DMDC-015 | 143 | 144 | 294 | Có |
+| FR-07-028 | Lấy toàn bộ bản ghi theo phiên bản | M | LGC-DMDC-015 | 043, 145, 146, 148, 156 | 147, 156, 226 | 225, 280, 296 | Có |
+| FR-07-029 | Lấy cây hoặc nhánh con | M | LGC-DMDC-002, LGC-DMDC-015 | 149 | 150 | — | Có |
+| FR-07-030 | Tìm kiếm không dấu trong danh mục | S | mới | 151 | — | 228 | Có |
+| FR-07-031 | Lấy thay đổi kể từ một phiên bản (delta) | M | LGC-DMDC-015 | 152 | 153 | — | Có |
+| FR-07-032 | API truy vấn có cấu trúc | M | LGC-DMDC-016 | 157, 158, 159, 160, 167, 169 | 161, 162, 163, 164, 165, 166, 168, 170 | 228, 297 | Có |
+| FR-07-033 | Liệt kê danh mục và lấy lược đồ qua API | M | LGC-DMDC-015 | 038, 154 | 038, 155 | — | Có |
+| FR-07-034 | Phát sự kiện thay đổi danh mục | M | mới | 171, 173, 175 | 172, 176 | 174 | Có |
+| FR-07-035 | Cấu hình nguồn đồng bộ danh mục quốc gia | M | LGC-DMDC-019, LGC-NGSP-006 | 177 | 178 | — | Có |
+| FR-07-036 | Chạy đồng bộ theo lịch hoặc theo yêu cầu và tính khác biệt | M | LGC-DMDC-019, LGC-NGSP-006 | 179, 180, 181, 182 | 186, 189 | 233 | Có |
+| FR-07-037 | Xác nhận hoặc từ chối thay đổi từ nguồn quốc gia | M | mới | 183, 184 | 185, 244 | — | Có |
+| FR-07-038 | Khám phá danh mục quốc gia và đăng ký đồng bộ | M | LGC-NGSP-006 | 187 | 188 | — | Có |
+| FR-07-039 | Đề xuất bổ sung bản ghi lên danh mục quốc gia | C | mới | 190 | 190 | — | Có |
+| FR-07-040 | Quản lý hệ thống mã ngoài | M | LGC-BUS-036 | 191 | 192, 229 | — | Có |
+| FR-07-041 | Quản lý bảng ánh xạ mã giữa danh mục và hệ thống mã ngoài | M | LGC-BUS-036 | 193, 195, 245 | 194, 195, 229, 245 | — | Có |
+| FR-07-042 | Chuyển mã qua bảng ánh xạ | M | LGC-BUS-036 | 196, 197 | 198, 229 | 295 | Có |
+| FR-07-043 | Báo cáo độ phủ ánh xạ | S | mới | 199 | 199 | — | Có |
+| FR-07-044 | Quản lý danh mục ĐVHC hai cấp kèm lịch sử ba cấp | M | mới | 203, 210 | 202, 203 | — | Có |
+| FR-07-045 | Ghi nhận sự kiện sắp xếp ĐVHC | M | mới | 175, 200 | 201, 202 | — | Có |
+| FR-07-046 | Chuyển đổi mã ĐVHC cũ sang mới và tra ngược | M | mới | 204, 205, 207, 209 | 206, 208 | 303 | Có |
+| FR-07-047 | Xem dòng lịch sử của một bản ghi | M | mới | 211, 213 | 212 | — | Có |
+| FR-07-048 | Chia sẻ danh mục toàn quốc giữa các tenant và mở rộng HYBRID | M | LGC-DMDC-017 | 039, 040, 043, 046, 167, 214, 215, 216, 262 | 044, 214, 216 | — | Có |
+| FR-07-049 | Nạp gói danh mục nền khi khởi tạo tenant | M | mới | 217 | 218, 219 | — | Có |
+| FR-07-050 | Lịch sử thay đổi và kiểm toán | M | mới | 137, 248, 256, 257 | 137, 258 | 230, 259 | Có |
+| FR-07-051 | Di trú dữ liệu danh mục từ hệ cũ Aita | M | LGC-DMDC-001, LGC-DMDC-002, LGC-DMDC-003… | 260, 261, 262, 264, 266 | 263, 265, 267 | — | Có |
+| FR-07-052 | Khai thác danh mục hạn chế và cấp quyền khai thác | M | mới | 246, 268, 271 | 168, 246, 269, 270 | 259 | Có |
+| FR-07-053 | Tham số PH-07 theo tenant | S | mới | 247, 272, 274 | 247, 273 | 087 | Có |
+
+### 8.2. Chức năng hệ cũ → yêu cầu → test case
+
+Mỗi chức năng của Aita (`LGC-DMDC`) và NGSP liên quan được truy tới FR mới và tới ca tự động, ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.
+
+| LGC | FR | TC tự động | UAT |
+|---|---|---|---|
+| LGC-BUS-036 | 040, 041, 042 | 191, 193, 195, 196, 197, 245 | — |
+| LGC-DMDC-001 | 001, 051 | 001, 260 | UAT-01 |
+| LGC-DMDC-002 | 007, 018, 029, 051 | 005, 035, 063, 149, 260, 284 | UAT-02 |
+| LGC-DMDC-003 | 002, 051 | 003, 260 | UAT-03 |
+| LGC-DMDC-004 | 003, 005, 051 | 005, 008, 024, 038, 260 | UAT-04 |
+| LGC-DMDC-005 | 022, 051 | 113, 114, 121, 260, 261, 289 | UAT-05 |
+| LGC-DMDC-006 | 021, 051 | 095, 096, 097, 098, 102, 107, 109, 111 (+3) | UAT-06 |
+| LGC-DMDC-007 | 021, 051 | 095, 096, 097, 098, 102, 107, 109, 111 (+3) | UAT-06 |
+| LGC-DMDC-008 | 023, 051 | 125, 127, 252, 260 | UAT-07 |
+| LGC-DMDC-009 | 004, 051 | 010, 260, 271, 283 | UAT-08 |
+| LGC-DMDC-010 | 006, 051 | 028, 029, 032, 136, 260, 283 | UAT-08 |
+| LGC-DMDC-011 | 011, 012, 051 | 047, 050, 055, 057, 059, 060, 066, 260 (+1) | UAT-08 |
+| LGC-DMDC-012 | 009, 051 | 011, 013, 260 | UAT-09 |
+| LGC-DMDC-013 | 024, 051 | 131, 132, 133, 136, 137, 209, 260 | UAT-10 |
+| LGC-DMDC-014 | 024, 051 | 131, 132, 133, 136, 137, 209, 260 | UAT-10 |
+| LGC-DMDC-015 | 026, 027, 028, 029, 031, 033, 051 | 038, 043, 090, 138, 140, 141, 143, 145 (+10) | UAT-11 |
+| LGC-DMDC-016 | 032, 051 | 157, 158, 159, 160, 167, 169, 260 | UAT-12 |
+| LGC-DMDC-017 | 008, 048, 051 | 039, 040, 043, 046, 167, 214, 215, 216 (+2) | UAT-13 |
+| LGC-DMDC-018 | 005, 006, 051 | 005, 024, 028, 029, 032, 038, 136, 260 | UAT-14 |
+| LGC-DMDC-019 | 035, 036, 051 | 177, 179, 180, 181, 182, 260, 262 | UAT-15 |
+| LGC-NGSP-006 | 035, 036, 038 | 177, 179, 180, 181, 182, 187 | UAT-15 |
+
+### 8.3. Quy tắc nghiệp vụ → test case
+
+| Mã | Test case |
+|---|---|
+| BR-07-001 | 005, 006, 007, 214, 249 |
+| BR-07-002 | 051, 099 |
+| BR-07-003 | 055, 058, 097 |
+| BR-07-004 | 055, 141, 148 |
+| BR-07-005 | 048 |
+| BR-07-006 | 027, 066, 074, 079, 080 |
+| BR-07-007 | 074, 089 |
+| BR-07-008 | 015, 090, 140, 142 |
+| BR-07-009 | 044, 045 |
+| BR-07-010 | 040, 041, 042, 044, 216 |
+| BR-07-011 | 073, 077, 078, 180, 217, 239, 240, 241, 264 |
+| BR-07-012 | 085, 086, 087, 098, 182, 272 |
+| BR-07-013 | 029, 030, 031, 032, 033, 034, 068 |
+| BR-07-014 | 035, 036, 037, 053, 054, 056, 062 |
+| BR-07-015 | 101, 102, 110, 128 |
+| BR-07-016 | 104, 105 |
+| BR-07-017 | 180, 181, 182 |
+| BR-07-018 | 157, 162, 166 |
+| BR-07-019 | 268 |
+| BR-07-020 | 014 |
+| BR-07-021 | 200, 201 |
+| BR-07-022 | 204, 205 |
+| BR-07-023 | 193, 194 |
+| BR-07-024 | 194 |
+| BR-07-025 | 025, 190, 263, 314 |
+| BR-07-026 | 083, 084, 085, 086, 092 |
+| BR-07-027 | 088, 203, 264 |
+| BR-07-040 | 018 |
+| BR-07-041 | 119 |
+
+### 8.4. Mã lỗi → test case
+
+| Mã | Test case |
+|---|---|
+| ERR-07-001 | 004, 094, 155, 198, 212 |
+| ERR-07-002 | 006, 007, 122, 178, 188, 192 |
+| ERR-07-003 | 044, 045, 129, 178, 190, 202, 214 |
+| ERR-07-004 | 018, 027, 065, 079, 080, 081, 082, 083, 129, 202 |
+| ERR-07-005 | 048, 189 |
+| ERR-07-006 | 069, 135, 153, 155, 208 |
+| ERR-07-007 | 139, 142, 150, 194, 212 |
+| ERR-07-008 | 042, 051, 099, 216, 267 |
+| ERR-07-009 | 026, 052, 056, 123, 128, 178, 184, 206, 258, 267 (+1) |
+| ERR-07-010 | 053, 054, 056 |
+| ERR-07-011 | 037, 053 |
+| ERR-07-012 | 041, 216 |
+| ERR-07-013 | 058 |
+| ERR-07-014 | 030, 031, 033, 034 |
+| ERR-07-015 | 077, 078, 239, 240 |
+| ERR-07-016 | 085, 086, 098, 203 |
+| ERR-07-017 | 088, 089 |
+| ERR-07-018 | 018, 178, 192, 269, 285 |
+| ERR-07-019 | 115, 116, 117, 118, 120, 122, 218, 304, 306 |
+| ERR-07-020 | 104, 105, 106, 108, 134 |
+| ERR-07-021 | 101 |
+| ERR-07-022 | 009, 127, 218 |
+| ERR-07-023 | 161, 163, 170 |
+| ERR-07-024 | 164, 165 |
+| ERR-07-025 | 162, 170 |
+| ERR-07-026 | 126, 144, 190, 194, 198, 208 |
+| ERR-07-027 | 195 |
+| ERR-07-028 | 186, 188, 190 |
+| ERR-07-029 | 185 |
+| ERR-07-030 | 168, 198, 212, 270 |
+| ERR-07-031 | 015, 016 |
+| ERR-07-032 | 014 |
+| ERR-07-033 | 194 |
+| ERR-07-034 | 194 |
+| ERR-07-035 | 201 |
+| ERR-07-036 | 025, 263, 314 |
+| ERR-07-037 | 022 |
+| ERR-07-038 | 119, 305 |
+| ERR-07-039 | 020, 023 |
+| ERR-07-040 | 018, 310 |
+| ERR-07-041 | 254 |
+| ERR-07-042 | 311 |
+| ERR-07-043 | 312 |
+| ERR-07-044 | 311 |
+| ERR-07-045 | 192, 198, 199, 218 |
+| ERR-07-046 | 236, 309 |
+| ERR-07-047 | 219, 258, 279, 290 |
+| ERR-07-048 | 012, 017, 218 |
+
+### 8.5. Yêu cầu phi chức năng → test case
+
+| Mã | Test case |
+|---|---|
+| NFR-07-001 | 293 |
+| NFR-07-002 | 294, 295 |
+| NFR-07-003 | 296 |
+| NFR-07-004 | 160, 165, 297 |
+| NFR-07-005 | 298 |
+| NFR-07-006 | 299 |
+| NFR-07-007 | 171, 174, 300 |
+| NFR-07-008 | 301, 302 |
+| NFR-07-009 | 225, 275, 276 |
+| NFR-07-010 | 277, 278 |
+| NFR-07-011 | 301 |
+| NFR-07-012 | 120, 281, 302 |
+| NFR-07-013 | 186 |
+| NFR-07-014 | 186 |
+| NFR-07-015 | 137 |
+
+## 9. Tự động hóa và tệp đi kèm
+
+### 9.1. Tổ chức mã kiểm thử
+
+```text
+apps/data/src/test/java/vn/datahub/data/rdm/
+├── unit/            UT: bộ dịch DSL, bộ phân loại thay đổi, bộ chuyển mã ĐVHC, bộ suy kiểu
+├── it/              IT: RdmIntegrationTestBase (Testcontainers), RLS, outbox, bộ đệm, worker
+├── api/             ST: REST Assured theo TS-07-nn, một lớp mỗi kịch bản (Ts07_13_QueryDslTest…)
+├── tenant/          thẻ @Tag("tenant-leak"), TS-07-19
+└── migration/       thẻ @Tag("migration"), TS-07-22
+apps/console/e2e/rdm/        Playwright, một tệp spec mỗi luồng mục 22 của D03-06-PH07
+perf/rdm/                    k6, một tệp mỗi ca TC-07-293…303
+```
+
+Mỗi phương thức kiểm thử mang chú thích `@TestCase("TC-07-nnn")` (chú thích nội bộ của dự án); báo cáo JUnit XML được hậu xử lý để đối chiếu với ma trận mục 8, ca nào có trong tài liệu mà không có mã tự động (trừ ca "Thủ công") làm pipeline cảnh báo.
+
+### 9.2. Mẫu kiểm thử tích hợp rò rỉ chéo tenant
+
+```java
+@Tag("tenant-leak")
+@TestCase("TC-07-220")
+class CrossTenantReadIT extends RdmIntegrationTestBase {
+
+    @Test
+    void tenantKhacKhongDocDuocDanhMucRieng() {
+        given().auth().oauth2(token("U-T01-DS"))
+            .when().get("/api/rdm/v1/catalogs/TRAM_QUAN_TRAC")
+            .then().statusCode(404)
+            .body("code", equalTo("ERR-07-001"));
+    }
+
+    @Test
+    void danhMucTrungMaTraVeDungTenant() {
+        List<String> names = given().auth().oauth2(token("U-T01-DS"))
+            .when().get("/api/rdm/v1/catalogs/LOAI_HINH_TC/items?size=200")
+            .then().statusCode(200)
+            .extract().jsonPath().getList("items.name");
+        assertThat(names).isNotEmpty().allMatch(n -> n.endsWith("(T01)"));
+    }
+}
+```
+
+### 9.3. Mẫu kiểm thử giao diện
+
+```ts
+// apps/console/e2e/rdm/review-publish.spec.ts — TC-07-283, TC-07-316
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+test('duyệt và phát hành phiên bản từ Việc của tôi', async ({ page }) => {
+  await page.goto('/my-tasks');
+  await page.getByRole('link', { name: /Loại hình tổ chức.*chờ duyệt/ }).click();
+  await expect(page.getByRole('complementary', { name: 'Quyết định phiên bản' })).toBeVisible();
+  await page.getByLabel('Ngày hiệu lực').fill('22/11/2026');
+  await page.getByRole('button', { name: 'Duyệt và phát hành' }).click();
+  await expect(page.getByRole('status')).toContainText('Đã phát hành phiên bản');
+  const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag22aa']).analyze();
+  expect(axe.violations.filter(v => ['serious', 'critical'].includes(v.impact ?? ''))).toEqual([]);
+});
+```
+
+### 9.4. Mẫu kịch bản tải
+
+```js
+// perf/rdm/tc-293-lookup.js — NFR-07-001
+import http from 'k6/http';
+import { check } from 'k6';
+export const options = {
+  scenarios: { lookup: { executor: 'constant-arrival-rate', rate: 5000, timeUnit: '1s', duration: '15m', preAllocatedVUs: 400 } },
+  thresholds: { 'http_req_duration{name:lookup}': ['p(95)<20', 'p(99)<50'], http_req_failed: ['rate<0.001'] },
+};
+const codes = JSON.parse(open('./data/codes-t68.json'));
+export default function () {
+  const c = codes[Math.floor(Math.random() * codes.length)];
+  const r = http.get(`${__ENV.BASE}/api/rdm/v1/catalogs/${c.catalog}/items/${c.code}`,
+    { headers: { Authorization: `Bearer ${__ENV.TOKEN}` }, tags: { name: 'lookup' } });
+  check(r, { '200': (x) => x.status === 200 });
+}
+```
+
+### 9.5. Tệp đi kèm
+
+Ba tệp sau được sinh từ chính tài liệu này bằng công cụ trong `ph07/tools/`, nên luôn khớp với nội dung các mục 4, 5, 7. Khi sửa test case, sửa trong tài liệu rồi chạy lại công cụ; không sửa tay tệp sinh ra.
+
+| Tệp | Nội dung | Công cụ |
+|---|---|---|
+| [`ph07/D05-02-PH07-test-case.xlsx`](ph07/D05-02-PH07-test-case.xlsx) | Sheet `TestCase` (320 dòng: mã, kịch bản, tên, loại, ưu tiên, tự động, FR, LGC, truy vết khác, dữ liệu, bước, mong đợi, cột trống Kết quả, Người chạy, Ngày, Lỗi); sheet `UAT` (15 dòng); sheet `TruyVet` (FR → TC); sheet `HuongDan` | `gen_xlsx.py` |
+| [`ph07/gherkin/`](ph07/gherkin/) | Một tệp `.feature` (tiếng Việt, `# language: vi`) cho mỗi kịch bản TS-07-01…29 và một tệp `uat-tuong-duong-aita.feature` cho mục 7; mỗi ca là một `Kịch bản` mang thẻ `@TC-07-nnn`, `@P1`… | `gen_gherkin.py` |
+| Mục 8 của tài liệu này | Ma trận truy vết | `gen_matrix.py` |
+
+Tệp Gherkin dùng làm đặc tả có thể đọc được cho cán bộ nghiệp vụ và làm khung cho các bước tự động hóa Cucumber ở mức nghiệm thu; ca ở mức đơn vị và tích hợp vẫn viết bằng JUnit như mục 9.2.
