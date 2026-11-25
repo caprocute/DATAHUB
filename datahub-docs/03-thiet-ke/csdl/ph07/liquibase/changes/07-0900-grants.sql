@@ -14,6 +14,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.item_succession      TO ph07_ap
 GRANT SELECT, INSERT                 ON ph07_rdm.version_review       TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.file_object          TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.import_job           TO ph07_app;
+GRANT USAGE ON SCHEMA ph07_rdm TO ph07_worker;
+GRANT SELECT (id, tenant_id, job_type, status, lease_owner, lease_until, created_at) ON ph07_rdm.import_job TO ph07_worker;
+GRANT UPDATE (lease_owner, lease_until) ON ph07_rdm.import_job TO ph07_worker;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.import_row           TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.sync_source          TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.sync_run             TO ph07_app;
@@ -42,5 +45,5 @@ END
 $m$;
 
 -- Hết DDL.
---rollback REVOKE ALL ON ALL TABLES IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly;
+--rollback REVOKE ALL ON ALL TABLES IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly, ph07_worker;
 --rollback REVOKE ALL ON ALL FUNCTIONS IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly;

@@ -17,6 +17,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph07_readonly') THEN
     CREATE ROLE ph07_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
+  -- ph07_worker: chỉ dùng bằng SET LOCAL ROLE trong giao dịch ngắn để nhận
+  -- tác vụ nền liên tenant (D03-02-PH07 §4.7.3, §6.3); không có quyền đọc dữ liệu nghiệp vụ.
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph07_worker') THEN
+    CREATE ROLE ph07_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
 END
 $roles$;
 --rollback empty

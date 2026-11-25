@@ -46,7 +46,7 @@ Ngày 25/11/2026, DDL, changelog sinh ra và dữ liệu nền đã được ch�
 
 ### 1.1. Schema, vai trò và kết nối
 
-Schema `ph07_rdm` do vai trò `ph07_owner` (NOLOGIN) sở hữu. Ứng dụng `dh-data` kết nối bằng tài khoản `dh_data_app`, thành viên vai trò `ph07_app` chỉ có quyền DML trên từng bảng (không DDL, không `BYPASSRLS`); Liquibase chạy bằng `dh_data_migrator`, thành viên `ph07_owner`; báo cáo và kiểm toán đọc bằng `ph07_readonly`. Mật khẩu tài khoản đăng nhập do CloudNativePG quản lý qua OpenBao, không nằm trong DDL. Module khác của `dh-data` không đọc trực tiếp bảng của `ph07_rdm`; chúng gọi API công bố `RdmApi`, `RdmLookupApi` (D03-02-PH07 §3.3), trừ bảng chiếu `admin_unit` (DD-07) được cấp quyền đọc cho các schema khác.
+Schema `ph07_rdm` do vai trò `ph07_owner` (NOLOGIN) sở hữu. Ứng dụng `dh-data` kết nối bằng tài khoản `dh_data_app`, thành viên vai trò `ph07_app` chỉ có quyền DML trên từng bảng (không DDL, không `BYPASSRLS`); Liquibase chạy bằng `dh_data_migrator`, thành viên `ph07_owner`; báo cáo và kiểm toán đọc bằng `ph07_readonly`. Vai trò thứ tư `ph07_worker` không có quyền đọc dữ liệu nghiệp vụ; ứng dụng chỉ chuyển sang vai trò này bằng `SET LOCAL ROLE` trong giao dịch ngắn nhận tác vụ nền liên tenant, và vai trò chỉ thấy các cột hàng đợi của `import_job` (D03-02-PH07 §4.7.3). Mật khẩu tài khoản đăng nhập do CloudNativePG quản lý qua OpenBao, không nằm trong DDL. Module khác của `dh-data` không đọc trực tiếp bảng của `ph07_rdm`; chúng gọi API công bố `RdmApi`, `RdmLookupApi` (D03-02-PH07 §3.3), trừ bảng chiếu `admin_unit` (DD-07) được cấp quyền đọc cho các schema khác.
 
 ### 1.2. Cách ly tenant
 
@@ -115,7 +115,7 @@ for i,t in enumerate(order,1):
 w("""
 ## 4. DDL và changelog Liquibase
 
-Tệp `ph07/ddl/ph07_rdm.sql` là nguồn duy nhất. Tệp được chia thành các đoạn bằng dấu `-- @file`, `-- @changeset`, `-- @rollback`; công cụ `ph07/tools/gen_liquibase.py` đọc các dấu đó và sinh tệp formatted SQL vào `ph07/liquibase/changes/` cùng changelog gốc `db.changelog-ph07.yaml`. Không ai sửa tay tệp sinh ra; CI chạy lại công cụ và báo lỗi nếu tệp trong repo khác kết quả sinh (cổng CI-4 của D04-02). Changelog của PH-07 được `include` vào changelog chung của `dh-data`.
+Tệp `ph07/ddl/ph07_rdm.sql` là nguồn duy nhất. Tệp được chia thành các đoạn bằng dấu `-- @file`, `-- @changeset`, `-- @rollback`; công cụ `ph07/tools/gen_liquibase.py` đọc các dấu đó và sinh tệp formatted SQL vào `ph07/liquibase/changes/` cùng changelog gốc `db.changelog-ph07.yaml`. Không ai sửa tay tệp sinh ra; CI chạy lại công cụ và báo lỗi nếu tệp trong repo khác kết quả sinh (bước kiểm tra hợp đồng trong đường ống CI của D04-02). Changelog của PH-07 được `include` vào changelog chung của `dh-data`.
 
 | Context | Changeset | Khi nào chạy |
 |---|---|---|
@@ -173,7 +173,7 @@ Vòng đời được đặt bằng lifecycle rule của bucket và đồng th�
 
 ## 7. Sao lưu, khôi phục, mã hóa và lưu giữ
 
-Sao lưu PostgreSQL theo D03-09: CloudNativePG sao lưu cơ sở hằng ngày và lưu WAL liên tục lên kho đối tượng của site dự phòng, đạt RPO ≤ 5 phút, RTO ≤ 1 giờ cho `dh-data`. Ảnh chụp phiên bản trên Garage được nhân bản sang site dự phòng; khi khôi phục PostgreSQL về một thời điểm, ảnh chụp mới hơn thời điểm đó không gây sai vì khóa đối tượng gắn với `versionId` đã có trong CSDL. Khôi phục theo một tenant (không khôi phục cả cụm) dùng xuất logic có lọc `tenant_id` từ bản khôi phục tạm sang cụm đang chạy, theo kịch bản ở D06-03.
+Sao lưu PostgreSQL theo D03-09: CloudNativePG sao lưu cơ sở hằng ngày và lưu WAL liên tục lên kho đối tượng của site dự phòng, đạt RPO ≤ 5 phút, RTO ≤ 1 giờ cho `dh-data`. Ảnh chụp phiên bản trên Garage được nhân bản sang site dự phòng; khi khôi phục PostgreSQL về một thời điểm, ảnh chụp mới hơn thời điểm đó không gây sai vì khóa đối tượng gắn với `versionId` đã có trong CSDL. Khôi phục theo một tenant (không khôi phục cả cụm) dùng xuất logic có lọc `tenant_id` từ bản khôi phục tạm sang cụm đang chạy, theo kịch bản khôi phục trong D03-09.
 
 Mã hóa: dữ liệu danh mục không chứa dữ liệu cá nhân (BR-07-025) và có mức phân loại tối đa `RESTRICTED`, nên không mã hóa cột; mã hóa ở tầng lưu trữ (ổ đĩa của node, bucket Garage) và mã hóa đường truyền (TLS tới PostgreSQL, mTLS trong mesh) theo D03-07. Cột `response_body` của `idempotency_key` có thể chứa thông điệp lỗi nhưng không chứa bí mật.
 

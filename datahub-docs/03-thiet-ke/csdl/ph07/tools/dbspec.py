@@ -1,7 +1,7 @@
-import subprocess, json, sys
+import subprocess, json, sys, os
 S=sys.argv[1]
 def q(sql):
-    r=subprocess.run(['psql','-h',S+'/pg','-p','55432','-U','postgres','-d','datahub','-At','-c',sql],capture_output=True,text=True,check=True)
+    r=subprocess.run(['psql','-h',os.environ.get('PGHOST','/var/run/postgresql'),'-p',os.environ.get('PGPORT','5432'),'-U',os.environ.get('PGUSER','postgres'),'-d',os.environ.get('PGDATABASE','datahub'),'-At','-c',sql],capture_output=True,text=True,check=True)
     return r.stdout.strip()
 tabs=json.loads(q("""select json_agg(json_build_object('t',c.relname,'cm',obj_description(c.oid),'part',c.relkind='p') order by c.relname)
  from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ph07_rdm' and c.relkind in ('r','p') and not c.relispartition"""))

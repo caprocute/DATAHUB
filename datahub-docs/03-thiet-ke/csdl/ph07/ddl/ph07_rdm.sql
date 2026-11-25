@@ -40,6 +40,11 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph07_readonly') THEN
     CREATE ROLE ph07_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
+  -- ph07_worker: chỉ dùng bằng SET LOCAL ROLE trong giao dịch ngắn để nhận
+  -- tác vụ nền liên tenant (D03-02-PH07 §4.7.3, §6.3); không có quyền đọc dữ liệu nghiệp vụ.
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph07_worker') THEN
+    CREATE ROLE ph07_worker NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
 END
 $roles$;
 -- @rollback -- Không xóa vai trò khi rollback: vai trò có thể đang được schema khác hoặc tài khoản đăng nhập dùng.
@@ -728,6 +733,8 @@ CREATE TABLE ph07_rdm.import_job (
   draft_lock_version  integer,
   expires_at          timestamptz,
   idempotency_key     varchar(128),
+  lease_owner         varchar(128),
+  lease_until         timestamptz,
   error_message       text,
   started_at          timestamptz,
   finished_at         timestamptz,
@@ -743,23 +750,27 @@ CREATE TABLE ph07_rdm.import_job (
   CONSTRAINT fk_import_job_file FOREIGN KEY (file_id, tenant_id) REFERENCES ph07_rdm.file_object (id, tenant_id),
   CONSTRAINT fk_import_job_result FOREIGN KEY (result_file_id, tenant_id) REFERENCES ph07_rdm.file_object (id, tenant_id),
   CONSTRAINT ck_import_job_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
-  CONSTRAINT ck_import_job_type CHECK (job_type IN ('IMPORT','EXPORT')),
-  CONSTRAINT ck_import_job_mode CHECK ((job_type = 'IMPORT' AND mode IN ('UPSERT','REPLACE','APPEND','CREATE_CATALOG'))
-      OR (job_type = 'EXPORT' AND mode IS NULL)),
+  CONSTRAINT ck_import_job_type CHECK (job_type IN ('IMPORT','EXPORT','MIGRATION','PROPOSAL')),
+  CONSTRAINT ck_import_job_mode CHECK ((job_type = 'IMPORT' AND mode IN ('UPSERT','REPLACE','APPEND','CREATE_CATALOG','MAPPING'))
+      OR (job_type <> 'IMPORT' AND mode IS NULL)),
   CONSTRAINT ck_import_job_format CHECK (format IN ('XLSX','CSV','JSON')),
   CONSTRAINT ck_import_job_template CHECK (template IN ('STANDARD','LEGACY_AITA')),
   CONSTRAINT ck_import_job_status CHECK (
-       (job_type = 'IMPORT' AND status IN ('QUEUED','SCANNING','PARSING','VALIDATED','COMMITTING','COMMITTED','FAILED','CANCELLED','EXPIRED'))
-    OR (job_type = 'EXPORT' AND status IN ('QUEUED','RUNNING','COMPLETED','FAILED','EXPIRED'))),
+       (job_type IN ('IMPORT','MIGRATION') AND status IN ('QUEUED','SCANNING','PARSING','VALIDATED','COMMITTING','COMMITTED','FAILED','CANCELLED','EXPIRED'))
+    OR (job_type = 'EXPORT' AND status IN ('QUEUED','RUNNING','COMPLETED','FAILED','EXPIRED'))
+    OR (job_type = 'PROPOSAL' AND status IN ('SUBMITTED','ACCEPTED','REJECTED','UNKNOWN'))),
   CONSTRAINT ck_import_job_encoding CHECK (encoding IS NULL OR encoding IN ('UTF-8','UTF-8-BOM','UTF-16LE','UTF-16BE')),
   CONSTRAINT ck_import_job_rows CHECK (total_rows >= 0 AND valid_rows >= 0 AND error_rows >= 0 AND valid_rows + error_rows <= total_rows),
-  CONSTRAINT ck_import_job_catalog CHECK (catalog_id IS NOT NULL OR mode = 'CREATE_CATALOG'),
-  CONSTRAINT ck_import_job_file CHECK (job_type = 'EXPORT' OR file_id IS NOT NULL)
+  CONSTRAINT ck_import_job_catalog CHECK (catalog_id IS NOT NULL OR mode = 'CREATE_CATALOG' OR job_type = 'MIGRATION'),
+  CONSTRAINT ck_import_job_file CHECK (job_type <> 'IMPORT' OR file_id IS NOT NULL),
+  CONSTRAINT ck_import_job_lease CHECK ((lease_owner IS NULL) = (lease_until IS NULL))
 );
 CREATE UNIQUE INDEX uq_import_job_idem ON ph07_rdm.import_job (tenant_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
 CREATE INDEX ix_import_job_history ON ph07_rdm.import_job (tenant_id, created_at DESC);
 CREATE INDEX ix_import_job_catalog ON ph07_rdm.import_job (catalog_id, created_at DESC);
 CREATE INDEX ix_import_job_expires ON ph07_rdm.import_job (expires_at) WHERE status IN ('VALIDATED','COMPLETED');
+CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job (created_at)
+  WHERE status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING');
 ALTER TABLE ph07_rdm.import_job SET (fillfactor = 85);
 CREATE TRIGGER tg_import_job_touch BEFORE UPDATE ON ph07_rdm.import_job
   FOR EACH ROW EXECUTE FUNCTION ph07_rdm.tg_touch();
@@ -779,9 +790,18 @@ CREATE POLICY rls_import_job_update ON ph07_rdm.import_job FOR UPDATE
 CREATE POLICY rls_import_job_delete ON ph07_rdm.import_job FOR DELETE
   USING ((tenant_id = current_setting('app.tenant_id', false) AND tenant_id ~ '^T[0-9]{2}$')
       OR (tenant_id = 'COMMON' AND current_setting('app.tenant_id', false) = 'PLATFORM'));
+-- Nhận tác vụ liên tenant: chỉ vai trò ph07_worker, chỉ các cột hàng đợi (GRANT cột ở 07-0900).
+CREATE POLICY rls_import_job_worker_select ON ph07_rdm.import_job FOR SELECT TO ph07_worker
+  USING (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'));
+CREATE POLICY rls_import_job_worker_update ON ph07_rdm.import_job FOR UPDATE TO ph07_worker
+  USING (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'))
+  WITH CHECK (status IN ('QUEUED','SCANNING','PARSING','COMMITTING','RUNNING'));
 COMMENT ON TABLE ph07_rdm.import_job IS 'EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên danh mục COMMON mang tenant_id COMMON do PLATFORM thực hiện.';
 COMMENT ON COLUMN ph07_rdm.import_job.status IS 'IMPORT: QUEUED→SCANNING→PARSING→VALIDATED→COMMITTING→COMMITTED (hoặc FAILED/CANCELLED/EXPIRED). EXPORT: QUEUED→RUNNING→COMPLETED (hoặc FAILED/EXPIRED).';
 COMMENT ON COLUMN ph07_rdm.import_job.draft_lock_version IS 'Giá trị catalog_version.version lúc phân tích; commit chỉ khi còn bằng (BR-07-016). Cột bổ sung ngoài khung.';
+COMMENT ON COLUMN ph07_rdm.import_job.lease_owner IS 'Pod đang xử lý tác vụ (hàng đợi trong CSDL, D03-02-PH07 §4.7.3).';
+COMMENT ON COLUMN ph07_rdm.import_job.lease_until IS 'Hạn thuê; quá hạn thì pod khác nhận lại tác vụ. Gia hạn mỗi 30 giây.';
+COMMENT ON COLUMN ph07_rdm.import_job.job_type IS 'IMPORT, EXPORT; MIGRATION là chạy thử/chạy thật di trú Aita (FR-07-051); PROPOSAL là đề xuất bổ sung lên NDXP (FR-07-039, Q07-07).';
 COMMENT ON COLUMN ph07_rdm.import_job.expires_at IS 'Hạn xem trước (24 giờ, BR-07-016) hoặc hạn tải tệp xuất.';
 -- @rollback DROP TABLE IF EXISTS ph07_rdm.import_job CASCADE;
 
@@ -1635,6 +1655,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.item_succession      TO ph07_ap
 GRANT SELECT, INSERT                 ON ph07_rdm.version_review       TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.file_object          TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.import_job           TO ph07_app;
+GRANT USAGE ON SCHEMA ph07_rdm TO ph07_worker;
+GRANT SELECT (id, tenant_id, job_type, status, lease_owner, lease_until, created_at) ON ph07_rdm.import_job TO ph07_worker;
+GRANT UPDATE (lease_owner, lease_until) ON ph07_rdm.import_job TO ph07_worker;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.import_row           TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.sync_source          TO ph07_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ph07_rdm.sync_run             TO ph07_app;
@@ -1661,7 +1684,7 @@ BEGIN
   END IF;
 END
 $m$;
--- @rollback REVOKE ALL ON ALL TABLES IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly;
+-- @rollback REVOKE ALL ON ALL TABLES IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly, ph07_worker;
 -- @rollback REVOKE ALL ON ALL FUNCTIONS IN SCHEMA ph07_rdm FROM ph07_app, ph07_readonly;
 
 RESET ROLE;

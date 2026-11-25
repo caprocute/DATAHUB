@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-02-PH07
 ten: Thiết kế chi tiết phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-25
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Trưởng nhóm PH-07, Lập trình viên L-DATA, Kiểm thử viên, Nhóm vận hành
 phan_he: PH-07
@@ -1183,7 +1183,7 @@ Hồi tố với phiên bản trước: nếu `SYNC` hồi tố về trước `p
 
 #### 4.5.2. Sinh ảnh chụp sau commit
 
-Sinh ảnh chụp không nằm trong giao dịch phát hành vì nó ghi ra hệ thống ngoài (Garage) và mất vài giây với danh mục lớn. Thiết kế dùng **Spring Modulith event publication registry** (bảng `event_publication` của Modulith, đặt trong schema `ph07_rdm`) thay cho `@TransactionalEventListener(AFTER_COMMIT)` thuần, vì registry lưu sự kiện bền vững cùng giao dịch phát hành và tự phát lại khi pod khởi động lại; `@TransactionalEventListener` thuần sẽ mất việc nếu pod chết ngay sau commit.
+Sinh ảnh chụp không nằm trong giao dịch phát hành vì nó ghi ra hệ thống ngoài (Garage) và mất vài giây với danh mục lớn. Thiết kế dùng **Spring Modulith event publication registry** (bảng `event_publication` của Modulith; bảng thuộc schema dùng chung của DU `dh-data` do module `shared` quản lý, không thuộc `ph07_rdm`, vì mọi module trong DU dùng chung một registry) thay cho `@TransactionalEventListener(AFTER_COMMIT)` thuần, vì registry lưu sự kiện bền vững cùng giao dịch phát hành và tự phát lại khi pod khởi động lại; `@TransactionalEventListener` thuần sẽ mất việc nếu pod chết ngay sau commit.
 
 ```java
 @Component
@@ -1202,7 +1202,7 @@ class SnapshotOnPublish {
 3. Khóa đối tượng: `snapshots/{catalogCode}/{versionNo}.json.gz`, `snapshots/{catalogCode}/{versionNo}.csv.gz` trong bucket `dh-{tenant}-rdm` (tenant viết thường; COMMON dùng `dh-common-rdm`) tạo qua hàm đặt tên có tenant của thư viện chung (D03-10 §6.4).
 4. Cập nhật `catalog_version.snapshot_uri` và `stats.snapshotSha256` bằng câu lệnh riêng (cột được trigger bất biến cho phép như `effective_to`).
 5. Cập nhật tệp chỉ mục `snapshots/index.json` (danh sách danh mục, phiên bản hiện hành, phiên bản sắp hiệu lực, SHA-256) bằng ghi có điều kiện `If-Match` ETag để tránh hai pod ghi đè lẫn nhau; xung đột thì đọc lại và thử tối đa 5 lần.
-6. Với danh mục là gốc của danh mục HYBRID ở các tenant, phát sự kiện nội bộ để sinh lại ảnh chụp hợp nhất của từng HYBRID (ADR-052). Danh sách HYBRID lấy bằng truy vấn của vai trò `rdm_platform` có kiểm toán vì phải nhìn liên tenant (Câu hỏi mở Q07-35).
+6. Với danh mục là gốc của danh mục HYBRID ở các tenant, phát sự kiện nội bộ để sinh lại ảnh chụp hợp nhất của từng HYBRID (ADR-052). Danh sách HYBRID phải nhìn liên tenant nên không đọc trực tiếp được dưới RLS; MVP dùng danh sách đăng ký mở rộng do mỗi tenant ghi vào sự kiện EVT-07-01 của danh mục HYBRID và lưu ở bảng chiếu của module `shared`, phương án cuối chốt ở Câu hỏi mở Q07-35.
 
 Sự kiện EVT-07-05 đã được ghi vào outbox trong giao dịch phát hành với `snapshotUri` là URI **dự kiến** (khóa đối tượng xác định trước). Bên tiêu thụ (`dh-runtime`) nếu tải chưa thấy đối tượng thì thử lại với lùi theo hàm mũ tới 10 phút; xem §5.9. Lý do không chờ ảnh chụp xong mới phát sự kiện: NFR-07-007 yêu cầu sự kiện lên Kafka ≤ 5 giây sau commit, trong khi ảnh chụp 200.000 dòng có thể mất 10–20 giây.
 
@@ -1254,7 +1254,7 @@ Nhập tệp thực hiện theo ADR-056 với hai pha. Pha 1 (tải lên, quét,
 Controller nhận `multipart/form-data` gồm phần `file` và phần `options` (JSON `CreateImportJobRequest`). Tệp không được đọc vào bộ nhớ: Spring cấu hình `spring.servlet.multipart.file-size-threshold=1MB` để ghi tạm ra đĩa, rồi `ImportJobService` truyền luồng lên Garage đồng thời tính SHA-256 bằng `DigestInputStream`.
 
 1. Kiểm tra quyền `PERM-07-update` trên danh mục (hoặc `PERM-07-create` với `CREATE_CATALOG`) và `CatalogPolicy.assertWritable`.
-2. Kiểm tra kích thước ≤ `07.rdm.import-max-bytes` (mặc định 52.428.800); vượt trả ERR-07-019 ngay (APISIX cũng chặn ở 55 MB).
+2. Kiểm tra kích thước ≤ `07.rdm.import-max-mb` (mặc định 50 MB); vượt trả ERR-07-019 ngay (APISIX cũng chặn ở 55 MB).
 3. Đọc 8 byte đầu để nhận chữ ký: `50 4B 03 04` (ZIP, kỳ vọng xlsx) hoặc văn bản (CSV). Phần mở rộng tên tệp chỉ dùng để gợi ý.
 4. Xử lý `Idempotency-Key` (§4.8.3): nếu khóa đã dùng với cùng SHA-256 và cùng `options` thì trả tác vụ cũ; khác nội dung trả ERR-07-022.
 5. Tải lên `s3://dh-{tenant}-rdm/imports/{jobId}/{sha256}.{ext}`, tạo `file_object` (`scan_status = PENDING`, `data_class_id` theo `classification` của danh mục, `expires_at = now + 7 ngày`), tạo `import_job` trạng thái `SCANNING`.
@@ -1274,7 +1274,7 @@ SELECT id, tenant_id FROM ph07_rdm.import_job
 -- sau đó: UPDATE … SET lease_owner = :podId, lease_until = now() + interval '2 minutes'
 ```
 
-Truy vấn này chạy bằng vai trò `rdm_worker` có quyền đọc liên tenant chỉ trên bảng `import_job` (chính sách RLS riêng) để lấy việc; ngay sau khi lấy, worker chuyển sang `TenantContext.runAs(job.tenantId)` cho mọi xử lý tiếp theo. Worker gia hạn `lease_until` mỗi 30 giây; nếu pod chết, tác vụ được pod khác nhận sau khi hết hạn và tiếp tục từ trạng thái lưu (bước phân tích làm lại từ đầu sau khi xóa `import_row` của tác vụ, vì phân tích là idempotent). Hai cột `lease_owner`, `lease_until` là bổ sung cho EN-07-08 (báo cáo cho luồng CSDL). Số tác vụ đồng thời mỗi pod giới hạn bởi `datahub.rdm.jobs.max-concurrent-import` (mặc định 2) và `max-concurrent-export` (mặc định 2).
+Truy vấn này chạy trong giao dịch ngắn với `SET LOCAL app.tenant_id = 'PLATFORM'` và `SET LOCAL ROLE ph07_worker`; vai trò `ph07_worker` chỉ được đọc các cột hàng đợi (`id`, `tenant_id`, `job_type`, `status`, `lease_owner`, `lease_until`, `created_at`) và chỉ sửa hai cột thuê, qua chính sách RLS `rls_import_job_worker_*` (D03-03-PH07 §3.8); ngay sau khi lấy, worker chuyển sang `TenantContext.runAs(job.tenantId)` cho mọi xử lý tiếp theo. Worker gia hạn `lease_until` mỗi 30 giây; nếu pod chết, tác vụ được pod khác nhận sau khi hết hạn và tiếp tục từ trạng thái lưu (bước phân tích làm lại từ đầu sau khi xóa `import_row` của tác vụ, vì phân tích là idempotent). Hai cột `lease_owner`, `lease_until` và chỉ mục `ix_import_job_queue` có trong DDL của EN-07-08. Số tác vụ đồng thời mỗi pod giới hạn bởi `datahub.rdm.jobs.max-concurrent-import` (mặc định 2) và `max-concurrent-export` (mặc định 2).
 
 #### 4.7.4. Quét mã độc
 
@@ -1464,14 +1464,14 @@ Mọi giá trị chuỗi khi xuất XLSX và CSV đi qua `FormulaInjectionSaniti
 
 #### 4.8.3. Idempotency-Key
 
-`IdempotencyStore` lưu khóa trong bảng `ph07_rdm.idempotency_key` (bổ sung ngoài khung, báo cho luồng CSDL) với cột `tenant_id`, `key` (≤ 128 ký tự), `principal` (người dùng hoặc client), `operation` (mã API), `request_hash` (SHA-256 của thân yêu cầu đã chuẩn hóa JSON, hoặc SHA-256 tệp + options với API-07-033), `status` (`IN_PROGRESS`, `COMPLETED`), `response_status`, `response_body jsonb` (≤ 64 KB, hoặc tham chiếu tài nguyên), `expires_at`. Khóa chính `(tenant_id, principal, operation, key)`.
+`IdempotencyStore` lưu khóa trong bảng `ph07_rdm.idempotency_key` (EN-07-16, D03-03-PH07) với cột `tenant_id`, `key` (≤ 128 ký tự), `principal` (người dùng hoặc client), `operation` (mã API), `request_hash` (SHA-256 của thân yêu cầu đã chuẩn hóa JSON, hoặc SHA-256 tệp + options với API-07-033), `status` (`IN_PROGRESS`, `COMPLETED`), `response_status`, `response_body jsonb` (≤ 64 KB, hoặc tham chiếu tài nguyên), `expires_at`. Khóa chính `(tenant_id, principal, operation, key)`.
 
 Lý do lưu ở PostgreSQL thay vì Valkey: kết quả của thao tác ghi phải nhất quán với dữ liệu nghiệp vụ; ghi khóa trong cùng giao dịch với thao tác bảo đảm "đã thực hiện" và "đã ghi khóa" không lệch nhau khi pod chết.
 
 Thuật toán (`IdempotencyFilter` bọc các API tạo, nhập lô, nhập tệp, commit, chạy đồng bộ):
 
 ```text
-1. Nếu không có header và API yêu cầu bắt buộc → 400 (ERR-07-026 không phù hợp; dùng lỗi chung FR-00 "thiếu Idempotency-Key").
+1. Nếu không có header và API yêu cầu bắt buộc → 422 ERR-07-009 với `field = Idempotency-Key`; khóa ngoài 16…128 ký tự cũng trả ERR-07-009.
 2. INSERT … ON CONFLICT DO NOTHING một dòng IN_PROGRESS (giao dịch riêng, ngắn).
 3. Nếu chèn được → thực thi thao tác; trong giao dịch nghiệp vụ, UPDATE dòng khóa thành COMPLETED với phản hồi.
    Nếu thao tác lỗi nghiệp vụ (4xx) → vẫn lưu COMPLETED với phản hồi lỗi (lặp lại trả cùng lỗi).

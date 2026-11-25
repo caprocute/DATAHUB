@@ -32,7 +32,7 @@ Ngày 25/11/2026, DDL, changelog sinh ra và dữ liệu nền đã được ch�
 
 ### 1.1. Schema, vai trò và kết nối
 
-Schema `ph07_rdm` do vai trò `ph07_owner` (NOLOGIN) sở hữu. Ứng dụng `dh-data` kết nối bằng tài khoản `dh_data_app`, thành viên vai trò `ph07_app` chỉ có quyền DML trên từng bảng (không DDL, không `BYPASSRLS`); Liquibase chạy bằng `dh_data_migrator`, thành viên `ph07_owner`; báo cáo và kiểm toán đọc bằng `ph07_readonly`. Mật khẩu tài khoản đăng nhập do CloudNativePG quản lý qua OpenBao, không nằm trong DDL. Module khác của `dh-data` không đọc trực tiếp bảng của `ph07_rdm`; chúng gọi API công bố `RdmApi`, `RdmLookupApi` (D03-02-PH07 §3.3), trừ bảng chiếu `admin_unit` (DD-07) được cấp quyền đọc cho các schema khác.
+Schema `ph07_rdm` do vai trò `ph07_owner` (NOLOGIN) sở hữu. Ứng dụng `dh-data` kết nối bằng tài khoản `dh_data_app`, thành viên vai trò `ph07_app` chỉ có quyền DML trên từng bảng (không DDL, không `BYPASSRLS`); Liquibase chạy bằng `dh_data_migrator`, thành viên `ph07_owner`; báo cáo và kiểm toán đọc bằng `ph07_readonly`. Vai trò thứ tư `ph07_worker` không có quyền đọc dữ liệu nghiệp vụ; ứng dụng chỉ chuyển sang vai trò này bằng `SET LOCAL ROLE` trong giao dịch ngắn nhận tác vụ nền liên tenant, và vai trò chỉ thấy các cột hàng đợi của `import_job` (D03-02-PH07 §4.7.3). Mật khẩu tài khoản đăng nhập do CloudNativePG quản lý qua OpenBao, không nằm trong DDL. Module khác của `dh-data` không đọc trực tiếp bảng của `ph07_rdm`; chúng gọi API công bố `RdmApi`, `RdmLookupApi` (D03-02-PH07 §3.3), trừ bảng chiếu `admin_unit` (DD-07) được cấp quyền đọc cho các schema khác.
 
 ### 1.2. Cách ly tenant
 
@@ -489,7 +489,7 @@ EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên d
 |---|---|---|---|---|
 | `id` | `uuid` | Có |  |  |
 | `tenant_id` | `character varying(16)` | Có |  |  |
-| `job_type` | `character varying(32)` | Có |  |  |
+| `job_type` | `character varying(32)` | Có |  | IMPORT, EXPORT; MIGRATION là chạy thử/chạy thật di trú Aita (FR-07-051); PROPOSAL là đề xuất bổ sung lên NDXP (FR-07-039, Q07-07). |
 | `catalog_id` | `uuid` |  |  |  |
 | `version_id` | `uuid` |  |  |  |
 | `mode` | `character varying(32)` |  |  |  |
@@ -509,6 +509,8 @@ EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên d
 | `draft_lock_version` | `integer` |  |  | Giá trị catalog_version.version lúc phân tích; commit chỉ khi còn bằng (BR-07-016). Cột bổ sung ngoài khung. |
 | `expires_at` | `timestamp with time zone` |  |  | Hạn xem trước (24 giờ, BR-07-016) hoặc hạn tải tệp xuất. |
 | `idempotency_key` | `character varying(128)` |  |  |  |
+| `lease_owner` | `character varying(128)` |  |  | Pod đang xử lý tác vụ (hàng đợi trong CSDL, D03-02-PH07 §4.7.3). |
+| `lease_until` | `timestamp with time zone` |  |  | Hạn thuê; quá hạn thì pod khác nhận lại tác vụ. Gia hạn mỗi 30 giây. |
 | `error_message` | `text` |  |  |  |
 | `started_at` | `timestamp with time zone` |  |  |  |
 | `finished_at` | `timestamp with time zone` |  |  |  |
@@ -522,16 +524,17 @@ Ràng buộc:
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
-| `ck_import_job_catalog` | Kiểm tra | `CHECK (((catalog_id IS NOT NULL) OR ((mode)::text = 'CREATE_CATALOG'::text)))` |
+| `ck_import_job_catalog` | Kiểm tra | `CHECK (((catalog_id IS NOT NULL) OR ((mode)::text = 'CREATE_CATALOG'::text) OR ((job_type)::text = 'MIGRATION'::text)))` |
 | `ck_import_job_encoding` | Kiểm tra | `CHECK (((encoding IS NULL) OR ((encoding)::text = ANY ((ARRAY['UTF-8'::character varying, 'UTF-8-BOM'::character varying, 'UTF-16LE'::character varying, 'UTF-16BE'::character varying])::text[]))))` |
-| `ck_import_job_file` | Kiểm tra | `CHECK ((((job_type)::text = 'EXPORT'::text) OR (file_id IS NOT NULL)))` |
+| `ck_import_job_file` | Kiểm tra | `CHECK ((((job_type)::text <> 'IMPORT'::text) OR (file_id IS NOT NULL)))` |
 | `ck_import_job_format` | Kiểm tra | `CHECK (((format)::text = ANY ((ARRAY['XLSX'::character varying, 'CSV'::character varying, 'JSON'::character varying])::text[])))` |
-| `ck_import_job_mode` | Kiểm tra | `CHECK (((((job_type)::text = 'IMPORT'::text) AND ((mode)::text = ANY ((ARRAY['UPSERT'::character varying, 'REPLACE'::character varying, 'APPEND'::character varying, 'CREATE_CATALOG'::character varying])::text[]))) OR (((job_type)::text = 'EXPORT'::text) AND (mode IS NULL))))` |
+| `ck_import_job_lease` | Kiểm tra | `CHECK (((lease_owner IS NULL) = (lease_until IS NULL)))` |
+| `ck_import_job_mode` | Kiểm tra | `CHECK (((((job_type)::text = 'IMPORT'::text) AND ((mode)::text = ANY ((ARRAY['UPSERT'::character varying, 'REPLACE'::character varying, 'APPEND'::character varying, 'CREATE_CATALOG'::character varying, 'MAPPING'::character varying])::text[]))) OR (((job_type)::text <> 'IMPORT'::text) AND (mode IS NULL))))` |
 | `ck_import_job_rows` | Kiểm tra | `CHECK (((total_rows >= 0) AND (valid_rows >= 0) AND (error_rows >= 0) AND ((valid_rows + error_rows) <= total_rows)))` |
-| `ck_import_job_status` | Kiểm tra | `CHECK (((((job_type)::text = 'IMPORT'::text) AND ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATED'::character varying, 'COMMITTING'::character varying, 'COMMITTED'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying, 'EXPIRED'::character varying])::text[]))) OR (((job_type)::text = 'EXPORT` |
+| `ck_import_job_status` | Kiểm tra | `CHECK (((((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'MIGRATION'::character varying])::text[])) AND ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATED'::character varying, 'COMMITTING'::character varying, 'COMMITTED'::character varying, 'FAILED'::character varying, 'CANCELLED'::character varying, 'EXPI` |
 | `ck_import_job_template` | Kiểm tra | `CHECK (((template)::text = ANY ((ARRAY['STANDARD'::character varying, 'LEGACY_AITA'::character varying])::text[])))` |
 | `ck_import_job_tenant` | Kiểm tra | `CHECK (((tenant_id)::text ~ '^(T[0-9]{2}\|COMMON)$'::text))` |
-| `ck_import_job_type` | Kiểm tra | `CHECK (((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'EXPORT'::character varying])::text[])))` |
+| `ck_import_job_type` | Kiểm tra | `CHECK (((job_type)::text = ANY ((ARRAY['IMPORT'::character varying, 'EXPORT'::character varying, 'MIGRATION'::character varying, 'PROPOSAL'::character varying])::text[])))` |
 | `fk_import_job_catalog` | Khóa ngoại | `FOREIGN KEY (catalog_id, tenant_id) REFERENCES ph07_rdm.catalog(id, tenant_id)` |
 | `fk_import_job_file` | Khóa ngoại | `FOREIGN KEY (file_id, tenant_id) REFERENCES ph07_rdm.file_object(id, tenant_id)` |
 | `fk_import_job_result` | Khóa ngoại | `FOREIGN KEY (result_file_id, tenant_id) REFERENCES ph07_rdm.file_object(id, tenant_id)` |
@@ -546,9 +549,10 @@ Chỉ mục:
 | `ix_import_job_catalog` | `CREATE INDEX ix_import_job_catalog ON ph07_rdm.import_job USING btree (catalog_id, created_at DESC)` |
 | `ix_import_job_expires` | `CREATE INDEX ix_import_job_expires ON ph07_rdm.import_job USING btree (expires_at) WHERE ((status)::text = ANY ((ARRAY['VALIDATED'::character varying, 'COMPLETED'::character varying])::text[]))` |
 | `ix_import_job_history` | `CREATE INDEX ix_import_job_history ON ph07_rdm.import_job USING btree (tenant_id, created_at DESC)` |
+| `ix_import_job_queue` | `CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job USING btree (created_at) WHERE ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'COMMITTING'::character varying, 'RUNNING'::character varying])::text[]))` |
 | `uq_import_job_idem` | `CREATE UNIQUE INDEX uq_import_job_idem ON ph07_rdm.import_job USING btree (tenant_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)` |
 
-Chính sách RLS: `rls_import_job_delete` (DELETE), `rls_import_job_insert` (INSERT), `rls_import_job_select` (SELECT), `rls_import_job_update` (UPDATE).
+Chính sách RLS: `rls_import_job_delete` (DELETE), `rls_import_job_insert` (INSERT), `rls_import_job_select` (SELECT), `rls_import_job_update` (UPDATE), `rls_import_job_worker_select` (SELECT), `rls_import_job_worker_update` (UPDATE).
 
 ### 3.9. `import_row` (EN-07-09)
 
