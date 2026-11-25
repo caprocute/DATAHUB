@@ -450,3 +450,634 @@ stateDiagram-v2
 | Kho cấu hình | Kho Git chứa YAML luồng theo tenant và môi trường, nguồn của Argo CD |
 | Hồ sơ runtime | Tập thành phần được biên dịch vào một ảnh `dh-runtime` |
 | Lệnh khẩn | Lệnh tạm dừng gửi thẳng tới runtime qua topic điều khiển có ký |
+
+## 5. Đặc tả chi tiết yêu cầu chức năng
+
+### 5.0. Cách đọc đặc tả và quy định chung cho mọi FR
+
+Mỗi FR gồm một bảng tóm tắt theo mẫu D00-01 §4.3, bảng đầu vào khi FR có đầu vào đáng kể, danh sách bước xử lý đánh số và bảng ngoại lệ. Các quy định chung dưới đây không lặp lại ở từng FR.
+
+**Tenant và phạm vi.** Tenant xác định từ ngữ cảnh xác thực, không lấy từ tham số client gửi (FR-00-010); mọi truy vấn chạy dưới RLS với `app.tenant_id` của phiên. Đối tượng thuộc tenant khác hoặc thuộc không gian làm việc mà người dùng không là thành viên (với vai trò bị giới hạn theo mục 3.4) trả `404` thay vì `403` để không lộ sự tồn tại (FR-00-011).
+
+**Lũy đẳng và khóa lạc quan.** Thao tác tạo nhận tiêu đề `Idempotency-Key` (16…128 ký tự, lưu 24 giờ); cùng khóa cùng nội dung trả kết quả cũ, cùng khóa khác nội dung trả `ERR-04-018`. Thao tác sửa, xóa, chuyển trạng thái yêu cầu `If-Match` chứa ETag; không khớp trả `ERR-04-006` (412), thiếu trả `ERR-04-007` (428). Riêng lưu định nghĩa (FR-04-024) dùng ETag của phiên bản, không của luồng, để đổi tên luồng không làm hỏng phiên soạn thảo.
+
+**Lỗi.** Lỗi trả theo RFC 9457 với `type`, `title`, `status`, `detail`, `instance`, `code` (mã `ERR-04-nnn`), `traceId`; lỗi kiểm tra hợp lệ thêm mảng `errors` gồm `{path, code, message, severity, nodeId}`, trong đó `nodeId` là mã chặng trên sơ đồ để giao diện tô đúng chặng. Thông điệp tiếng Việt nói rõ sai gì và sửa thế nào (FR-00-080).
+
+**Kiểm toán.** Mọi thao tác ghi thành công sinh bản ghi kiểm toán qua PH-13 theo FR-00-040, FR-00-041 với các trường chung: thời điểm, tenant, chủ thể, địa chỉ nguồn, hành động, loại và mã đối tượng, giá trị trước và sau (chỉ trường thay đổi; với định nghĩa YAML chỉ ghi băm trước và sau, không ghi toàn văn), kết quả, lý do, `traceId`. Cột "Kiểm toán" của từng FR chỉ ghi phần riêng. Thao tác đọc không ghi kiểm toán, trừ đọc nhật ký chạy thử có bản tin thật (FR-04-032).
+
+**Sự kiện.** Sự kiện ghi vào bảng outbox trong cùng giao dịch với thay đổi (SAD §7.3), phát lên topic `{tenant}.integration.{đối tượng}.{động từ}.v1` của PH-10.
+
+**Định nghĩa luồng.** "YAML chuẩn hóa" là YAML sau khi bỏ chú thích bố cục, sắp khóa theo thứ tự của lược đồ Camel, thụt lề hai dấu cách, kết thúc bằng một dòng trống. Băm nội dung tính trên YAML chuẩn hóa. Kích thước định nghĩa tối đa `04.flow.max-definition-kb` (mặc định 512 KiB); vượt trả `ERR-04-033`.
+
+Kiểu dữ liệu chuẩn theo D00-01 §5. FRS dùng thêm: `T-FLOW-CODE` mẫu `^[a-z][a-z0-9-]{2,62}$`; `T-YAML` chuỗi UTF-8 là tài liệu YAML; `T-ENV` ∈ {`TEST`, `STAGING`, `PROD`}; `T-INT` số nguyên 32 bit.
+
+### 5.1. Nhóm A — Không gian làm việc và quản lý luồng
+
+#### FR-04-001 · Liệt kê luồng, tìm theo tên, endpoint, hệ nguồn, môi trường, đếm theo trạng thái
+
+Màn đầu tiên của PH-04 (UI-04-01). Thay danh sách chương trình tích hợp có phân trang của Bus và bốn kiểu tìm kiếm cũ (theo endpoint, nguồn, tên, host). Tìm theo host được thay bằng tìm theo môi trường và namespace vì không còn máy chủ cố định.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-001 · Liệt kê luồng, tìm theo tên, endpoint, hệ nguồn, môi trường, đếm theo trạng thái |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-001, 002, 003, 004, 005, 025; LGC-TOOL-001 · Mã repo: FR-D-001 |
+| Tác nhân, quyền | Mọi vai trò có `PERM-04-read` |
+| Tiền điều kiện | Đã đăng nhập và chọn tenant làm việc (FR-00-004) |
+| Đầu ra | Trang kết quả `items[]` (mã, tên, loại tài nguyên, vận chuyển, đối ngoại/nội bộ, không gian làm việc, trạng thái tổng hợp, phiên bản đang chạy ở PROD, phiên bản mở và trạng thái của nó, HTTT nguồn, HTTT đích, endpoint chính, tình trạng triển khai theo từng môi trường, người sửa cuối, thời điểm sửa cuối, `allowedActions`), `page`, `size`, `totalElements`, khối `facets` đếm theo trạng thái, loại tài nguyên, vận chuyển, không gian làm việc, môi trường có triển khai |
+| Hậu điều kiện | Không đổi dữ liệu |
+| Sự kiện, kiểm toán | Không |
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `q` | T-NAME | Không | Tìm không dấu trên mã, tên, mô tả; 1…100 ký tự | `ho tich` |
+| `endpoint` | chuỗi | Không | Khớp chuỗi con trên URI của chặng đầu và các chặng `to` (đã chuẩn hóa, bỏ tham số truy vấn); 2…200 ký tự | `/ho-tich/tra-cuu` |
+| `sourceSystem` | T-CODE[] | Không | Mã HTTT nguồn | `hotich-tinh` |
+| `targetSystem` | T-CODE[] | Không | Mã HTTT đích | `ndxp` |
+| `workspace` | T-CODE[] | Không | Mã không gian làm việc | `so-tu-phap` |
+| `status` | T-ENUM[] | Không | Trạng thái ở mục 4.9; mặc định mọi trạng thái trừ `RETIRED` | `ACTIVE,DEGRADED` |
+| `resourceKind` | T-ENUM[] | Không | `ROUTE`, `KAMELET`, `PIPE`, `TEST` | `ROUTE` |
+| `transport` | T-ENUM[] | Không | `SYNC`, `ASYNC`, `SCHEDULED`, `MIXED` | `ASYNC` |
+| `environment` | T-ENV | Không | Chỉ luồng có triển khai ở môi trường này | `PROD` |
+| `namespace` | chuỗi | Không | `dh-runtime` hoặc `dh-rt-{tenant}` (thay tìm theo host) | |
+| `hasOpenVersion` | T-BOOL | Không | Có phiên bản mở | `true` |
+| `pendingMyReview` | T-BOOL | Không | Có phiên bản chờ người dùng hiện tại duyệt | `true` |
+| `updatedFrom`, `updatedTo` | T-DATE | Không | Khoảng ngày sửa cuối | |
+| `page`, `size` | T-INT | Không | `size` ∈ {10, 20, 50, 100}, mặc định 20 | |
+| `sort` | chuỗi | Không | `code`, `name`, `updatedAt`, `status`, kèm `,asc` hoặc `,desc`; mặc định `updatedAt,desc` | |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra tham số; sai miền trả `400` với `errors`.
+2. Hệ thống lọc luồng của tenant, loại luồng đã xóa mềm, và với người dùng bị giới hạn theo không gian làm việc (mục 3.4) chỉ giữ luồng của không gian làm việc mà người dùng là thành viên.
+3. Hệ thống áp bộ lọc. Lọc `endpoint` dùng bảng chỉ mục endpoint được tính khi lưu định nghĩa (EN-04-04), không phân tích YAML lúc truy vấn.
+4. Hệ thống tính `facets` trên tập kết quả trước phân trang.
+5. Hệ thống ghép tình trạng triển khai mới nhất theo môi trường (EN-04-06) và tính `allowedActions` theo quyền, trạng thái và vai trò không gian làm việc.
+6. Hệ thống sắp xếp, phân trang, trả kết quả.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Tham số sai kiểu, ngoài miền | — | 400 | `errors` theo tham số |
+| `size` > 100 | ERR-04-026 | 400 | |
+| `workspace` không tồn tại hoặc người dùng không là thành viên | — | 200 | Danh sách rỗng, không báo lỗi |
+
+#### FR-04-002 · Xem chi tiết luồng: thông tin, route, endpoint, thuộc tính, sơ đồ, mã nguồn, phiên bản, triển khai
+
+Màn chi tiết nhiều tab (UI-04-02) thay màn chi tiết agent và chi tiết route của Bus: metadata (người tạo, ngày, mô tả, agent URL), danh sách route, tab endpoint, tab thuộc tính, tab đồ thị, tab mã nguồn, tab dữ liệu thêm, trạng thái hoạt động. Các biểu đồ lượng bản tin, CPU, bộ nhớ của Bus cũ được nhúng từ PH-13 (FR-04-053).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-002 · Xem chi tiết luồng |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-006, 008, 017, 018, 020, 021, 022, 023, 024, 025 · Mã repo: FR-D-004 |
+| Tác nhân, quyền | `PERM-04-read` |
+| Tiền điều kiện | Luồng tồn tại trong tenant, người dùng thấy được theo mục 3.4 |
+| Đầu ra | Thông tin luồng (mọi trường EN-04-02, chủ sở hữu, HTTT liên quan, nhãn, không gian làm việc); danh sách route trong phiên bản chọn (mã route, chặng đầu, số chặng, mô tả, `autoStartup`); danh sách endpoint (chiều vào hoặc ra, thành phần, URI đã che tham số nhạy cảm, phương thức HTTP, đường dẫn); bảng thuộc tính (tham số của từng chặng lấy từ định nghĩa, không đọc từ JMX); sơ đồ chỉ đọc; YAML chuẩn hóa; danh sách phiên bản; triển khai theo môi trường; khối "dữ liệu thêm" gồm nhãn, chú thích, liên kết tài liệu; ETag của luồng |
+| Hậu điều kiện, sự kiện, kiểm toán | Không |
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc |
+|---|---|---|---|
+| `{flowCode}` | T-FLOW-CODE | Có | |
+| `version` | T-INT hoặc `running`, `latest`, `open` | Không | Mặc định `running` nếu có, ngược lại `latest` |
+| `environment` | T-ENV | Không | Với `version=running`, môi trường để chọn phiên bản đang chạy; mặc định `PROD` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống tìm luồng; không thấy hoặc không được thấy trả `ERR-04-001`.
+2. Hệ thống chọn phiên bản theo `version`; không có trả `ERR-04-004`.
+3. Hệ thống trả các khối thông tin. Danh sách route, endpoint và bảng thuộc tính lấy từ cây tài nguyên đã phân tích và lưu khi lưu định nghĩa (EN-04-04), không phân tích lại YAML mỗi lần xem.
+4. URI endpoint được che: tham số có tên thuộc danh sách nhạy cảm (`password`, `secret`, `token`, `apiKey`, `accessKey`, `privateKey`, `passphrase`) thay bằng `***`, dù theo BR-04-003 chúng không thể là giá trị thật.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Không tìm thấy luồng | ERR-04-001 | 404 |
+| Không tìm thấy phiên bản | ERR-04-004 | 404 |
+
+#### FR-04-003 · Tạo luồng mới từ luồng trống, khuôn mẫu, API trong danh mục dịch vụ hoặc tệp YAML
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-003 · Tạo luồng mới |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-013; LGC-TOOL-002 · Mã repo: FR-D-003, FR-D-060 |
+| Tác nhân, quyền | IE với `PERM-04-create`, mức `EDIT` trên không gian làm việc đích |
+| Tiền điều kiện | Tenant hoạt động; không gian làm việc tồn tại |
+| Đầu ra | `201 Created`, `Location: /api/integration/v1/flows/{code}`, thân là chi tiết luồng kèm `openVersionNo = 1`; ETag |
+| Hậu điều kiện | Một `flow` trạng thái `DRAFT`; một `flow_version` số 1 trạng thái `DRAFT`, `origin` ghi nguồn khởi tạo; chỉ mục endpoint, route của phiên bản 1 |
+| Sự kiện phát ra | EVT-04-01 `{tenant}.integration.flow.created.v1` |
+| Kiểm toán | `INT_FLOW_CREATE`, đối tượng `flow/{code}`, giá trị sau là thông tin luồng và băm định nghĩa |
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `code` | T-FLOW-CODE | Có | Duy nhất trong tenant, kể cả luồng đã gỡ trong 30 ngày lưu giữ; không dùng tiền tố dành riêng `dh-`, `sys-`, `platform-` | `tra-cuu-ho-tich` |
+| `name` | T-NAME | Có | 1…255 ký tự, NFC | `Tra cứu hộ tịch cho cổng DVC` |
+| `description` | T-TEXT | Không | ≤ 4.000 ký tự | |
+| `workspaceCode` | T-CODE | Có | Người dùng có mức `EDIT` trở lên | `so-tu-phap` |
+| `resourceKind` | T-ENUM | Có | `ROUTE`, `KAMELET`, `PIPE`, `TEST` | `ROUTE` |
+| `origin` | T-ENUM | Có | `BLANK`, `TEMPLATE`, `API_SPEC`, `YAML_FILE`, `LEGACY_XML` (qua FR-04-082) | `TEMPLATE` |
+| `templateCode` | T-CODE | Khi `TEMPLATE` | Khuôn mẫu tồn tại, cùng loại tài nguyên, được phép cho tenant | `tpl-sync-lookup` |
+| `templateParams` | T-JSON | Không | Theo lược đồ tham số của khuôn mẫu | `{"path":"/ho-tich/tra-cuu"}` |
+| `apiRef` | T-ID | Khi `API_SPEC` | API trong danh mục dịch vụ PH-02 mà người dùng có quyền xem | |
+| `definitionYaml` | T-YAML | Khi `YAML_FILE` | ≤ 512 KiB; phân tích được | |
+| `testTargetFlow` | T-FLOW-CODE | Khi `TEST` | Luồng `ROUTE` hoặc `PIPE` cùng không gian làm việc | `tra-cuu-ho-tich` |
+| `sourceSystem` | T-CODE | Không | HTTT trong danh sách PH-01 đã kết nạp, hoặc mã nội bộ | `cong-dvc-tinh` |
+| `targetSystems` | T-CODE[] | Không | Như trên, tối đa 20 | `["hotich-tinh"]` |
+| `labels` | T-JSON (map) | Không | Tối đa 20 cặp; khóa `^[a-z0-9.-/]{1,63}$` | `{"linh-vuc":"tu-phap"}` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống chuẩn hóa văn bản, kiểm tra quyền và mức truy cập không gian làm việc.
+2. Hệ thống kiểm tra tính duy nhất của `code`; trùng trả `ERR-04-002`.
+3. Hệ thống sinh định nghĩa ban đầu theo `origin`:
+   - `BLANK` với `ROUTE`: một route có chặng đầu trống và, nếu luồng đối ngoại, chín khối chặng chuẩn rỗng (mục 4.6) kèm `routeConfiguration` tham chiếu cấu hình xử lý lỗi nền (FR-04-070).
+   - `BLANK` với `KAMELET`, `PIPE`, `TEST`: khung tối thiểu hợp lệ của loại đó.
+   - `TEMPLATE`: điền tham số vào khuôn mẫu (FR-04-025).
+   - `API_SPEC`: đọc OpenAPI từ PH-02, sinh `rest` DSL với mỗi thao tác một route `direct:{operationId}` có khung chín chặng, lược đồ yêu cầu và phản hồi gắn vào chặng `schema`.
+   - `YAML_FILE`: phân tích, xác định loại tài nguyên từ nội dung; loại khác `resourceKind` khai báo trả `ERR-04-009`.
+4. Hệ thống chạy kiểm tra hợp lệ (FR-04-023) ở chế độ thiết kế; lỗi không chặn việc tạo, được lưu kèm phiên bản.
+5. Hệ thống ghi luồng, phiên bản 1, chỉ mục endpoint và route, outbox EVT-04-01 trong một giao dịch.
+6. Hệ thống ghi kiểm toán và trả `201`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Mã luồng trùng | ERR-04-002 | 409 |
+| Không có mức `EDIT` trên không gian làm việc | ERR-04-003 | 403 |
+| Không gian làm việc không tồn tại | ERR-04-027 | 404 |
+| Khuôn mẫu không tồn tại hoặc không được phép | ERR-04-039 | 404 |
+| YAML không phân tích được | ERR-04-008 | 422 |
+| Loại tài nguyên không khớp nội dung | ERR-04-009 | 422 |
+| Định nghĩa vượt kích thước | ERR-04-033 | 413 |
+| `Idempotency-Key` dùng với nội dung khác | ERR-04-018 | 409 |
+
+#### FR-04-004 · Cập nhật thông tin luồng
+
+Sửa tên, mô tả, không gian làm việc, HTTT nguồn và đích, nhãn, liên kết tài liệu. Các thông tin này không thuộc phiên bản nên sửa trực tiếp. Mã luồng và loại tài nguyên không sửa được. Sửa host, port, method của agent như Bus cũ (LGC-BUS-011) không còn ở đây: tham số kết nối thuộc phiên bản luồng (FR-04-014) hoặc kết nối PH-05.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-004 · Cập nhật thông tin luồng |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-006, 011 · Mã repo: FR-D-002 (đổi tên) |
+| Tác nhân, quyền | IE (`PERM-04-update`, mức `EDIT`), TA |
+| Đầu vào | Các trường `name`, `description`, `workspaceCode`, `sourceSystem`, `targetSystems`, `labels`, `docLinks` (tối đa 10 URL `https`) như FR-04-003; `If-Match` |
+| Đầu ra | `200` với chi tiết luồng, ETag mới |
+| Hậu điều kiện | Thông tin luồng đổi; nếu `sourceSystem` hoặc `targetSystems` đổi làm luồng chuyển từ nội bộ sang đối ngoại thì phiên bản mở được kiểm tra lại với mức nghiêm ngặt của luồng đối ngoại |
+| Sự kiện phát ra | EVT-04-02 `flow.updated` với danh sách trường đổi |
+| Kiểm toán | `INT_FLOW_UPDATE`, giá trị trước và sau của các trường đổi |
+
+Chuyển luồng sang không gian làm việc khác yêu cầu mức `EDIT` ở cả hai nơi. Luồng ở trạng thái `RETIRED` trả `ERR-04-034`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| ETag không khớp | ERR-04-006 | 412 |
+| Thiếu `If-Match` | ERR-04-007 | 428 |
+| Luồng đã gỡ | ERR-04-034 | 409 |
+| Không có quyền trên không gian làm việc đích | ERR-04-003 | 403 |
+
+#### FR-04-005 · Nhân bản luồng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-005 · Nhân bản luồng |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04 · Mã repo: FR-D-002 (nhân bản) |
+| Tác nhân, quyền | IE (`PERM-04-create`) |
+| Đầu vào | `newCode` (T-FLOW-CODE), `newName`, `sourceVersion` (số phiên bản, mặc định phiên bản mới nhất), `workspaceCode` |
+| Đầu ra | `201` như FR-04-003, `origin = DUPLICATE`, `duplicatedFrom = {code, versionNo}` |
+| Hậu điều kiện | Luồng mới `DRAFT`, phiên bản 1 là bản sao định nghĩa và bố cục; không sao chép triển khai, lần chạy thử, lịch sử duyệt, ca kiểm thử (ca kiểm thử sao chép khi `copyTests = true`) |
+| Sự kiện, kiểm toán | EVT-04-01; `INT_FLOW_DUPLICATE` |
+
+Mã route bên trong được giữ nguyên; vì mã route chỉ cần duy nhất trong một runtime, hệ thống thêm hậu tố khi phát hiện trùng với route của luồng khác đang chạy trong cùng namespace (BR-04-011) và báo lại số mã route đã đổi.
+
+#### FR-04-006 · Gỡ bỏ luồng có kiểm tra phụ thuộc, xóa bản nháp
+
+Thay chức năng xóa agent của Bus. Luồng chưa từng phát hành được xóa hẳn (xóa mềm, giải phóng mã sau 30 ngày). Luồng đã phát hành chỉ được **gỡ**: trạng thái mong muốn ở mọi môi trường thành `REMOVED`, lịch sử giữ lại.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-006 · Gỡ bỏ luồng có kiểm tra phụ thuộc |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-010; LGC-TOOL-016 · Mã repo: FR-D-002 (xóa nháp) |
+| Tác nhân, quyền | Xóa luồng chưa phát hành: IE người tạo hoặc TA (`PERM-04-delete`). Gỡ luồng đã phát hành: IA hoặc TA (`PERM-04-delete` và `PERM-04-publish`) |
+| Tiền điều kiện | Không có lần chạy thử đang chạy |
+| Đầu vào | `reason` (T-TEXT 10…1.000 ký tự, bắt buộc với gỡ), `If-Match`, `force` (chỉ TA, bỏ qua cảnh báo phụ thuộc mềm) |
+| Đầu ra | `202 Accepted` với danh sách triển khai được yêu cầu gỡ (luồng đã phát hành); `204` (luồng chưa phát hành) |
+| Hậu điều kiện | Chưa phát hành: `deleted_at` được đặt. Đã phát hành: luồng `RETIRED` khi mọi triển khai báo đã gỡ |
+| Sự kiện phát ra | EVT-04-09 `flow.retired`; EVT-04-06 cho từng môi trường |
+| Kiểm toán | `INT_FLOW_DELETE` hoặc `INT_FLOW_RETIRE`, lý do, danh sách phụ thuộc tại thời điểm gỡ |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống tính phụ thuộc (API-04-016): luồng khác gọi tới route của luồng này qua `direct:`, `seda:`, `kamelet:` (với Kamelet); API ở PH-02 dùng luồng làm backend; subscription ở PH-10 có subscriber là luồng; ca kiểm thử gắn với luồng.
+2. Phụ thuộc cứng (API đang công bố, luồng đang chạy gọi tới) chặn gỡ với `ERR-04-017` kèm danh sách. Phụ thuộc mềm (ca kiểm thử, luồng nháp) hiện cảnh báo; TA có thể gỡ với `force = true`.
+3. Hệ thống ghi trạng thái mong muốn `REMOVED` vào kho cấu hình cho mọi môi trường (FR-04-042) và trả `202`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Còn phụ thuộc cứng | ERR-04-017 | 409 |
+| Thiếu lý do khi gỡ | ERR-04-025 | 400 |
+| Đang có lần chạy thử | ERR-04-005 | 409 |
+
+#### FR-04-007 · Quản lý không gian làm việc và thành viên
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-007 · Quản lý không gian làm việc và thành viên |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04; LGC-BUS-032 |
+| Tác nhân, quyền | TA (`PERM-04-admin`) tạo, sửa, lưu trữ; thành viên mức `MAINTAIN` thêm, bớt thành viên |
+| Đầu vào | `code` (T-CODE, duy nhất trong tenant), `name`, `ownerOrgId`, `description`; danh sách thành viên `{userId hoặc groupId, accessLevel ∈ VIEW, EDIT, MAINTAIN}` |
+| Đầu ra | Không gian làm việc và danh sách thành viên |
+| Hậu điều kiện | Quyền hiệu lực của thành viên thay đổi ngay ở lượt gọi kế tiếp |
+| Sự kiện, kiểm toán | `INT_WORKSPACE_*`, ghi danh sách thành viên thêm, bớt |
+
+Không gian làm việc còn luồng không xóa được, chỉ lưu trữ (ẩn khỏi danh sách chọn khi tạo luồng). Thành viên là nhóm Keycloak được mở rộng thành người dùng lúc kiểm tra quyền. Ở MVP mọi luồng thuộc không gian `DEFAULT` và kiểm tra mức truy cập chỉ bật khi tham số `04.workspace.enforce` bật.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Mã trùng | ERR-04-028 | 409 |
+| Xóa không gian còn luồng | ERR-04-017 | 409 |
+
+### 5.2. Nhóm B — Trình thiết kế luồng
+
+Nhóm B đặc tả hành vi chức năng của trình thiết kế. Bố cục, thành phần, tương tác chuột và bàn phím, trạng thái từng vùng được đặc tả chi tiết ở D03-06-PH04 §8–§16. FR ở đây chỉ quy định điều hệ thống phải làm và điều máy chủ phải kiểm.
+
+#### FR-04-010 · Mở trình thiết kế, phiên soạn thảo và cảnh báo người khác đang sửa
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-010 · Mở trình thiết kế, phiên soạn thảo và cảnh báo người khác đang sửa |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-001, 029 · Mã repo: FR-D-010, FR-D-013 |
+| Tác nhân, quyền | `PERM-04-read` để mở chỉ đọc; `PERM-04-update` và mức `EDIT` để sửa |
+| Tiền điều kiện | Luồng tồn tại |
+| Đầu ra | Định nghĩa của phiên bản mở (hoặc phiên bản được chọn ở chế độ chỉ đọc), bố cục sơ đồ, kết quả kiểm tra gần nhất, phiên bản catalog, danh sách người đang mở luồng, ETag phiên bản |
+| Hậu điều kiện | Một phiên soạn thảo (EN-04-09) được tạo hoặc gia hạn cho người dùng, hết hạn sau 120 giây không có nhịp |
+| Sự kiện, kiểm toán | Không |
+
+Xử lý gồm các bước sau.
+
+1. Nếu luồng có phiên bản mở và người dùng được sửa, trình thiết kế mở phiên bản đó ở chế độ sửa. Nếu không có phiên bản mở, mở phiên bản đang chạy ở PROD (hoặc mới nhất) ở chế độ chỉ đọc, kèm hành động "Tạo phiên bản mới" (FR-04-011).
+2. Trình duyệt gửi nhịp phiên (API-04-034) mỗi 30 giây. Máy chủ trả danh sách người khác đang có phiên trên cùng phiên bản. Giao diện hiển thị chỉ báo "Đang có {n} người khác mở luồng này" với tên và thời điểm. Đây là cảnh báo, không phải khóa cứng; xung đột thật được bắt bằng ETag khi lưu (FR-04-024).
+3. Máy chủ trả `catalogVersion` mà định nghĩa được kiểm tra; nếu khác `catalogVersion` hiện hành của tenant (vì nền tảng vừa nâng runtime), giao diện hiển thị dải "Danh mục thành phần đã cập nhật lên {phiên bản}. Kiểm tra lại luồng trước khi gửi duyệt" và chạy lại kiểm tra (FR-04-081).
+4. Nếu trình duyệt còn bản nháp cục bộ chưa lưu lên máy chủ (FR-04-024 bước 5) mới hơn ETag máy chủ, giao diện hỏi khôi phục.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Luồng đã gỡ | — | 200 | Mở chỉ đọc |
+| Không có quyền sửa | — | 200 | Mở chỉ đọc, ẩn hành động sửa |
+
+#### FR-04-011 · Tạo phiên bản mới từ phiên bản đã có
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-011 · Tạo phiên bản mới từ phiên bản đã có |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-BUS-011 (thay thế) |
+| Tác nhân, quyền | IE (`PERM-04-update`, mức `EDIT`) |
+| Tiền điều kiện | Luồng không có phiên bản mở; luồng không `RETIRED` |
+| Đầu vào | `baseVersion` (mặc định phiên bản đang chạy ở PROD, nếu không có thì mới nhất) |
+| Đầu ra | `201` với phiên bản mới `DRAFT`, `baseVersionNo` |
+| Hậu điều kiện | Phiên bản mới sao chép định nghĩa, bố cục, ca kiểm thử liên kết của phiên bản gốc |
+| Sự kiện, kiểm toán | `INT_VERSION_CREATE` |
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Đã có phiên bản mở | ERR-04-016 | 409 |
+| Phiên bản gốc không tồn tại | ERR-04-004 | 404 |
+
+#### FR-04-012 · Bảng thành phần theo danh mục được phép, tìm kiếm và lọc theo vai trò chặng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-012 · Bảng thành phần theo danh mục được phép |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-003, 004, 005, 006, 007, 008, 009, 010, 011, 012 · Mã repo: FR-D-011 |
+| Tác nhân, quyền | `PERM-04-update` |
+| Đầu vào | Từ khóa tìm, loại (tab), nhãn, vai trò chặng đang chèn (`from` hay bước giữa) |
+| Đầu ra | Danh sách thành phần có tên Camel, tiêu đề tiếng Việt (nếu có), mô tả gốc, nhãn, biểu tượng nhóm, mức hỗ trợ (`stable`, `preview`, `deprecated`), mức native, cờ "cần kết nối PH-05", cờ "Kamelet tự viết của tenant" |
+| Hậu điều kiện | Không |
+
+Quy tắc chức năng của bảng thành phần:
+
+1. Nguồn dữ liệu là chỉ mục catalog của đúng phiên bản runtime (FR-04-081), giao xuống trình duyệt một lần và lưu bộ đệm theo `catalogVersion`. Repo hiện có 751 nút (323 component, 74 EIP, 252 Kamelet, 48 dataformat, 26 language, 21 entity, 7 load balancer); con số chính xác thay đổi theo phiên bản.
+2. Chỉ hiện thành phần được phép theo chính sách (FR-04-080). Thành phần bị cấm không hiện; thành phần đã có trong luồng nhưng sau đó bị cấm vẫn hiện trên sơ đồ với huy hiệu "Không còn được phép" và lỗi kiểm tra `ERR-04-011`.
+3. Tab theo loại: Dùng nhiều, Thành phần, Mẫu EIP, Kamelet, Định dạng dữ liệu, Ngôn ngữ biểu thức. Tab "Dùng nhiều" tính theo tần suất dùng trong các luồng của tenant 90 ngày gần nhất, tối đa 24 mục, cộng các mục do nền tảng ghim.
+4. Nhóm hiển thị theo nghiệp vụ của Tooling cũ để người dùng quen thuộc: Định tuyến (EIP định tuyến), Chuyển đổi dữ liệu (XML, JSON, văn bản, JQ, ánh xạ), Kết nối CSDL, Mạng (HTTP, REST, SOAP, tệp, FTP, SFTP), Hàng đợi bản tin (Kafka nội bộ ưu tiên, sau đó AMQP, MQTT, JMS), Lập lịch, Bảo mật (mã hóa, ký, che dữ liệu). Mỗi thành phần có thể thuộc nhiều nhóm. Bảng ánh xạ nhãn gốc của catalog sang nhóm nghiệp vụ ở SDD §6.3.
+5. Tìm kiếm trên tên Camel, tiêu đề, tiêu đề tiếng Việt, mô tả, nhãn, không dấu, không phân biệt hoa thường; khớp đúng tên xếp trước, khớp tiền tố tiếp theo, khớp mô tả sau cùng. Thời gian phản hồi mỗi lần gõ ≤ 50 ms (NFR-04-002).
+6. Khi người dùng chèn chặng đầu của route, chỉ hiện thành phần dùng được làm điểm vào (`consumer` hoặc Kamelet `source`). Khi chèn bước giữa, ẩn thành phần chỉ có chiều vào. Khi đang soạn Pipe, chỉ hiện Kamelet đúng loại (`source`, `action`, `sink`) cho vị trí đó.
+7. Thành phần có cờ "cần kết nối PH-05" (CSDL, FTP, SFTP, LDAP, MQ ngoài, HTTP tới HTTT ngoài) khi kéo vào sơ đồ mở ngay ô chọn kết nối (FR-04-016) thay vì để người dùng nhập máy chủ, cổng, mật khẩu như Tooling cũ.
+8. Không có chức năng nhập thành phần từ JAR hay sửa `pom.xml` (LGC-TOOL-022, 027 bị loại bỏ). Nút "Đề xuất thành phần mới" mở yêu cầu tới PA theo FR-04-080.
+
+#### FR-04-013 · Thao tác trên sơ đồ: thêm, chèn, xóa, nối, rẽ nhánh, chọn nhiều, thu phóng, tự sắp xếp, hoàn tác
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-013 · Thao tác trên sơ đồ |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-013, 017, 018, 023, 024, 025 · Mã repo: FR-D-012 |
+| Tác nhân, quyền | `PERM-04-update` (chế độ sửa) |
+| Đầu ra | Cây tài nguyên Camel trong bộ nhớ trình duyệt và YAML sinh lại sau mỗi thay đổi |
+
+Các thao tác bắt buộc và quy tắc của chúng:
+
+| Thao tác | Quy tắc |
+|---|---|
+| Thêm chặng | Kéo từ bảng thành phần thả lên sơ đồ; thả lên cạnh thì chèn giữa hai chặng; thả lên chặng thì thay chặng (có xác nhận nếu chặng cũ đã cấu hình); thả vào vùng trống của một nhánh thì nối cuối nhánh. Có cách thêm không cần kéo: chọn chặng rồi nhấn `Enter` trên thành phần trong bảng, hoặc nút `＋` trên cạnh (WCAG 2.5.7) |
+| Chèn ngang, dọc | Chèn sau chặng đang chọn trên cùng nhánh (ngang) hoặc thêm nhánh mới cho chặng rẽ nhánh `choice`, `multicast`, `doTry`, `loadBalance` (dọc) |
+| Xóa chặng | Xóa chặng và nối chặng trước với chặng sau. Xóa chặng rẽ nhánh hỏi "Xóa cả các nhánh con ({n} chặng)?" |
+| Nối, bỏ nối | Kéo từ cổng ra tới cổng vào. Sơ đồ Camel là cây có thứ tự, nên chỉ cho nối hợp lệ theo ngữ nghĩa Camel: một chặng thường có đúng một chặng sau; nhánh chỉ tạo bằng chặng rẽ nhánh. Thả dây ra vùng trống mở bảng thành phần để chọn chặng mới (LGC-TOOL-024 "bắt kết nối khi thả") |
+| Chọn nhiều | Kéo vùng quét, `Shift`+bấm; thao tác xóa, nhân bản, nhóm áp cho tập chọn liên tiếp trên cùng nhánh |
+| Nhân bản | `Ctrl+D` nhân bản chặng hoặc đoạn chặng đang chọn, đặt `id` mới |
+| Xóa toàn bộ | "Xóa nội dung route" (Clear Page của Tooling cũ) giữ chặng đầu, xóa mọi chặng sau, có xác nhận và hoàn tác được |
+| Thu phóng | 10%…400%; vừa khung (`0`); minimap tự hiện khi sơ đồ có trên 20 chặng |
+| Tự sắp xếp | Sắp trái sang phải theo thứ tự luồng (dagre); giữ vị trí chặng người dùng đã ghim |
+| Nhiều route | Một tệp có nhiều route; thanh thực thể bên trái liệt kê route, `routeConfiguration`, `rest`, `beans`; chuyển qua lại giữ nguyên vị trí và mức thu phóng từng sơ đồ (Mã repo FR-D-005) |
+| Hoàn tác, làm lại | Ít nhất 100 bước trong phiên; gộp các thay đổi liên tiếp trên cùng một trường trong 1 giây thành một bước |
+| Nhóm chặng | Khối chặng chuẩn (mục 4.6) hiển thị như nhóm có tiêu đề, thu gọn hoặc mở rộng được |
+
+Mọi thao tác chỉ đổi cây tài nguyên trong trình duyệt; lưu lên máy chủ theo FR-04-024. Giới hạn hiệu năng ở NFR-04-003, 004.
+
+#### FR-04-014 · Cấu hình chặng bằng biểu mẫu sinh từ catalog, khôi phục giá trị gốc
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-014 · Cấu hình chặng bằng biểu mẫu sinh từ catalog |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-019, 020 · Mã repo: FR-D-020, 021, 022, 023, FR-04-037 (repo) |
+| Tác nhân, quyền | `PERM-04-update` |
+| Đầu vào | Chặng đang chọn; lược đồ JSON của thành phần ở phiên bản catalog hiện hành |
+| Đầu ra | Giá trị tham số của chặng trên cây tài nguyên |
+
+Quy tắc chức năng:
+
+1. Biểu mẫu sinh từ lược đồ của thành phần (thuộc tính đường dẫn URI, thuộc tính truy vấn, thuộc tính của EIP). Thuộc tính được nhóm theo nhóm gốc của catalog (`common`, `producer`, `consumer`, `security`, `scheduler`, `advanced` và các nhóm khác nếu có); tab đầu mở sẵn là nhóm có trường bắt buộc.
+2. Mặc định chỉ hiện trường bắt buộc và trường đã có giá trị; nút "Hiện tất cả ({n})" mở phần còn lại. Có ô tìm trường xuyên các nhóm.
+3. Điều khiển theo kiểu: `enum` dùng hộp chọn có mô tả từng giá trị; `boolean` dùng công tắc hiện giá trị mặc định; số dùng ô số có biên; `duration` dùng ô số kèm đơn vị; chuỗi là biểu thức dùng trình soạn biểu thức (FR-04-015); trường bí mật dùng ô chọn kết nối hoặc tham chiếu bí mật (FR-04-016), không có ô nhập tự do; `object`, `array` dùng bảng khóa–giá trị.
+4. Mỗi trường hiện tiêu đề, mô tả gốc, giá trị mặc định, tên tham số Camel, dấu bắt buộc, cảnh báo `deprecated`.
+5. Kiểm tra tại chỗ: sai kiểu, thiếu bắt buộc, ngoài `enum`, sai mẫu báo ngay dưới trường; tổng số lỗi hiện ở chân biểu mẫu và trên huy hiệu của chặng.
+6. "Khôi phục giá trị gốc" (LGC-TOOL-020) có hai mức: khôi phục một trường về giá trị khi mở biểu mẫu, và khôi phục toàn chặng về giá trị trong phiên bản đã lưu gần nhất. "Đặt về mặc định" xóa giá trị để Camel dùng mặc định của thành phần.
+7. Giá trị bằng mặc định không được ghi vào YAML (giữ YAML gọn), trừ khi người dùng ghim "luôn ghi".
+8. Thuộc tính route (mã route, mô tả, `autoStartup`, `routePolicy`, `group`) cấu hình ở Inspector khi chọn route, đáp ứng "thuộc tính theo route" của LGC-TOOL-019.
+9. Chặng có thể được đặt tên hiển thị tiếng Việt (`description` của EIP) và mã `id`; mã `id` duy nhất trong tệp, mẫu `^[a-zA-Z][a-zA-Z0-9-_]{0,63}$`.
+
+#### FR-04-015 · Trình soạn biểu thức có gợi ý, kiểm tra cú pháp và xem trước trên bản tin mẫu
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-015 · Trình soạn biểu thức |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04 · Mã repo: FR-04-031 (repo), FR-04-036 (repo) |
+| Tác nhân, quyền | `PERM-04-update` |
+| Đầu vào | Ngôn ngữ (`simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery`, `groovy` nếu được phép), biểu thức, bản tin mẫu ghim (FR-04-022) |
+| Đầu ra | Biểu thức gán cho trường; kết quả xem trước; lỗi cú pháp |
+
+Quy tắc:
+
+1. Gợi ý tự động theo ngôn ngữ: với `simple` gợi ý `${body}`, `${header.*}`, `${exchangeProperty.*}`, hàm có sẵn; với `jq`, `jsonpath` gợi ý đường dẫn trường lấy từ bản tin mẫu; với mọi ngôn ngữ gợi ý biến cấu hình `{{...}}` của môi trường (FR-04-084) và tiêu đề chuẩn `dh-*`.
+2. Kiểm tra cú pháp chạy ở máy chủ (API-04-032) bằng engine Camel thật của đúng phiên bản runtime, sau 400 ms kể từ lần gõ cuối. Lỗi trả vị trí dòng, cột.
+3. Xem trước chạy biểu thức trên bản tin mẫu ở máy chủ sandbox. Khi sandbox không sẵn sàng, giao diện được phép đánh giá cục bộ cho `simple` cơ bản, `jsonpath` và `jq`, và **bắt buộc** gắn nhãn "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime" (GAP-04-09).
+4. Ngôn ngữ kịch bản tùy ý (`groovy`, `js`, `python`) mặc định không được phép (ADR-062); chỉ hiện khi PA cho phép trong chính sách thành phần của tenant.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Biểu thức không biên dịch được | ERR-04-037 | 422 |
+| Bản tin mẫu vượt kích thước | ERR-04-021 | 413 |
+| Sandbox không sẵn sàng (xem trước máy chủ) | ERR-04-019 | 503 |
+
+#### FR-04-016 · Chọn kết nối PH-05 và tham chiếu bí mật thay vì nhập bí mật
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-016 · Chọn kết nối PH-05 và tham chiếu bí mật |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04, REQ-05; LGC-TOOL-008; LGC-BUS-041 · Mã repo: FR-04-032 (repo), BR-D-02 |
+| Tác nhân, quyền | `PERM-04-update`; kết nối phải được cấp cho không gian làm việc của luồng ở PH-05 |
+| Đầu vào | Loại kết nối cần (theo thành phần), mã kết nối |
+| Đầu ra | Tham chiếu `{{conn:<mã>.<khóa>}}` trong tham số của chặng; tiêu đề hiển thị tên kết nối và trạng thái kiểm tra kết nối gần nhất |
+
+Quy tắc:
+
+1. Ô chọn kết nối liệt kê kết nối PH-05 đúng loại (ví dụ `jdbc-postgresql`, `sftp`, `http-basic`, `oauth2-client`) được cấp cho không gian làm việc, kèm môi trường có giá trị (TEST, STAGING, PROD). Kết nối thiếu giá trị ở PROD được đánh dấu "Chưa sẵn sàng cho PROD".
+2. Chọn kết nối điền các tham số không bí mật (máy chủ, cổng, cơ sở dữ liệu) dưới dạng tham chiếu, không chép giá trị. Người dùng không xem được giá trị bí mật.
+3. Nút "Tạo kết nối mới" mở luồng khai báo kết nối của PH-05 trong tab mới; trình thiết kế làm mới danh sách khi quay lại.
+4. Với CSDL, ô chọn chỉ hiện kết nối loại "chỉ đọc cho luồng" (FR-04-072); kết nối có quyền ghi chỉ hiện khi kết nối đó ở PH-05 được duyệt cho mục đích ghi và luồng đó.
+5. Trình kiểm tra hợp lệ (FR-04-023) báo `ERR-04-013` khi luồng tham chiếu kết nối không tồn tại, không cấp cho không gian làm việc, hoặc sai loại.
+
+#### FR-04-017 · Đồng bộ hai chiều giữa sơ đồ, thuộc tính và YAML, không mất dữ liệu khi quay vòng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-017 · Đồng bộ hai chiều sơ đồ và YAML |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-021, 026 · Mã repo: BR-D-04, BR-D-04b |
+| Tác nhân, quyền | `PERM-04-update` (sửa YAML), `PERM-04-read` (xem) |
+| Đầu ra | Sơ đồ, Inspector và YAML luôn biểu diễn cùng một cây tài nguyên |
+
+Quy tắc:
+
+1. Trình thiết kế có ba chế độ: Sơ đồ, YAML, Chia đôi. Chuyển chế độ không mất dữ liệu.
+2. Sửa trên sơ đồ hoặc Inspector sinh lại YAML trong ≤ 100 ms (NFR-04-005).
+3. Sửa YAML: sau 500 ms không gõ, trình thiết kế phân tích YAML; hợp lệ thì cập nhật sơ đồ, giữ vị trí các chặng có `id` không đổi; lỗi cú pháp thì hiện lỗi tại dòng và ở bảng Vấn đề, sơ đồ giữ trạng thái hợp lệ gần nhất kèm dải "YAML đang có lỗi, sơ đồ hiển thị phiên bản hợp lệ gần nhất".
+4. Quay vòng không mất dữ liệu (BR-04-006): mở YAML rồi lưu không thay đổi phải cho YAML chuẩn hóa có cùng băm với YAML chuẩn hóa ban đầu. Biểu thức, khối lồng (`doTry`, `doCatch`, `doFinally`, `choice`, `multicast`, `split`, `loadBalance`, `circuitBreaker`, `saga`), chú thích dòng, thứ tự khóa không biết (khóa của phiên bản Camel mới hơn catalog) phải được giữ.
+5. Phần tử YAML mà trình thiết kế không biểu diễn được trên sơ đồ (ví dụ cú pháp ngắn lạ, khóa không có trong lược đồ) hiện trên sơ đồ như chặng "Không biểu diễn được", chỉ sửa được trong YAML, và không bị xóa khi sửa phần khác.
+6. Bố cục sơ đồ (vị trí, ghi chú dán, trạng thái thu gọn nhóm) lưu riêng (mục 4.4), không làm bẩn YAML.
+
+#### FR-04-018 · Soạn Kamelet và gửi đăng ký Kamelet tự viết
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-018 · Soạn Kamelet |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04, REQ-05 · Mã repo: FR-D-061, FR-D-062 |
+| Tác nhân, quyền | IE (`PERM-04-update`) |
+| Đầu vào | `metadata.name` (mẫu `^[a-z][a-z0-9-]{2,62}-(source|sink|action)$`), nhãn `camel.apache.org/kamelet.type`; `spec.definition` gồm tiêu đề, mô tả, danh sách tham số (tên, tiêu đề, kiểu, mặc định, bắt buộc, mô tả, `x-descriptors`); `spec.dataTypes`; `spec.template` (một route bắt đầu bằng `kamelet:source`) |
+| Đầu ra | Luồng loại `KAMELET` |
+
+Quy tắc:
+
+1. Kiểu tham số theo dữ liệu thực tế của Kamelet gốc: `string`, `boolean`, `integer`, `binary`, `long`; không dùng `number` dù lược đồ cho phép (theo đếm trên 243 Kamelet đã vendor ở repo: `string` 1.256, `boolean` 316, `integer` 111, `binary` 9, `long` 1).
+2. Tham số nhạy cảm đánh dấu `x-descriptors: urn:camel:group:credentials` và chỉ nhận tham chiếu kết nối, không nhận giá trị.
+3. Kamelet tự viết khi được phát hành trong tenant sẽ xuất hiện đầu tab Kamelet của bảng thành phần với huy hiệu "Của tỉnh". Muốn dùng chung toàn quốc phải qua quy trình đăng ký Kamelet của PH-05 (duyệt bởi PA và SO).
+4. Tên trùng Kamelet nền hoặc Kamelet tự viết khác trong tenant trả `ERR-04-036`.
+
+#### FR-04-019 · Soạn Pipe
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-019 · Soạn Pipe |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04 · Mã repo: FR-D-063 |
+| Tác nhân, quyền | IE |
+| Đầu vào | `source` (Kamelet loại source hoặc tham chiếu topic), `steps[]` (Kamelet loại action), `sink`, `errorHandler` |
+| Đầu ra | Luồng loại `PIPE` |
+
+Sơ đồ Pipe là tuyến tính: khóa thao tác rẽ nhánh, bảng thành phần chỉ hiện Kamelet đúng vị trí. Tham số của từng Kamelet cấu hình bằng biểu mẫu sinh từ `spec.definition`. Pipe được dùng cho các tích hợp một chiều đơn giản thay Bus cũ, ví dụ đọc tệp SFTP định kỳ rồi đẩy lên Kafka.
+
+#### FR-04-020 · Trình ánh xạ dữ liệu sinh biểu thức JQ
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-020 · Trình ánh xạ dữ liệu sinh biểu thức JQ |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-007, 028; LGC-BUS-036 · Mã repo: FR-D-083, 084, 085 |
+| Tác nhân, quyền | IE |
+| Đầu vào | Lược đồ nguồn và đích: JSON Schema, XSD (chuyển sang cây trường), OpenAPI của API PH-02, lược đồ topic Apicurio, lược đồ CDM, hoặc suy ra từ tài liệu mẫu JSON, XML; danh sách ánh xạ |
+| Đầu ra | Một chặng `transform` (hoặc `setBody`) với biểu thức `jq` sinh ra; tệp mô tả ánh xạ `*.dhmap.json` lưu cùng phiên bản để mở lại trên trình ánh xạ |
+
+Quy tắc:
+
+1. Nhập tài liệu mẫu (LGC-TOOL-028): dán hoặc tải tệp JSON, XML ≤ 1 MiB; hệ thống suy ra cây trường với kiểu. Với XML, chặng ánh xạ tự thêm bước `unmarshal` XML sang JSON trước và `marshal` sau nếu đích là XML.
+2. Ánh xạ một–một, nhiều–một (ghép), hằng số, giá trị mặc định khi nguồn rỗng, điều kiện (nếu–thì), lặp mảng (ánh xạ phần tử mảng nguồn sang phần tử mảng đích).
+3. Thư viện hàm: chuỗi (cắt, hoa, thường, nối, tách, thay thế, chuẩn hóa không dấu), số (làm tròn, định dạng), ngày (đổi định dạng `dd/MM/yyyy` sang ISO, đổi múi giờ), kiểm tra rỗng, và **chuyển mã qua PH-07**: chọn bảng ánh xạ mã của PH-07 (ví dụ mã dân tộc của HTTT A sang mã chuẩn), sinh lời gọi hàm `dh_map("<bảng>"; .<trường>)` do runtime cung cấp, tra từ ảnh chụp trong bộ nhớ của PH-07 (ADR-053 của PH-07).
+4. Xem trước chạy JQ thật trên sandbox (API-04-033); không có sandbox thì theo quy tắc nhãn ở FR-04-015 bước 3.
+5. "Xuất ánh xạ" tải tệp `*.dhmap.json` và tệp `*.jq`; "Đặt lại ánh xạ" xóa mọi ánh xạ (có hoàn tác).
+6. Không nhúng AtlasMap hay DataMapper XSLT của Kaoto (ADR-066).
+7. Ánh xạ một–nhiều (tách một nguồn ra nhiều đích khác cấu trúc) chưa làm ở MVP; người dùng viết tay JQ trong trình soạn biểu thức.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Ánh xạ tới trường đích không tồn tại, vòng tham chiếu | ERR-04-038 | 422 |
+| Tài liệu mẫu vượt 1 MiB | ERR-04-021 | 413 |
+
+#### FR-04-021 · Bean, cấu hình cấp tệp và metadata
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-021 · Bean, cấu hình cấp tệp và metadata |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04 · Mã repo: FR-D-008, FR-D-080, 081, 082 |
+| Tác nhân, quyền | IE |
+| Đầu vào | `beans[]` (`name`, `type`, `properties`); `routeConfiguration` (`errorHandler`, `onException`, `intercept`, `onCompletion`); metadata (`name`, `labels`, `annotations`) cho Kamelet, Pipe |
+| Đầu ra | Phần tử cấp tệp trong YAML |
+
+`type` của bean chỉ được chọn từ danh sách lớp được phép trong hồ sơ runtime (thư viện nền `vn.datahub.runtime.*` và lớp chuẩn của Camel, Quarkus được PA duyệt); không nhập tên lớp tự do. Trường của thành phần nhận bean hiện hộp chọn các bean đã khai. Bean không chứa bí mật.
+
+#### FR-04-022 · Ghim bản tin mẫu theo chặng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-022 · Ghim bản tin mẫu theo chặng |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04 · Mã repo: FR-04-033 (repo), FR-D-024, BR-D-03 |
+| Tác nhân, quyền | IE |
+| Đầu vào | Thân (JSON, XML, văn bản ≤ 256 KiB), tiêu đề, thuộc tính exchange giả lập |
+| Đầu ra | Bản tin mẫu gắn với chặng, dùng cho xem trước biểu thức và ánh xạ |
+
+Bản tin mẫu lưu cùng phiên bản ở cột riêng, **không** đi vào YAML đem triển khai (BR-04-007). Chặng chưa ghim dùng bản tin mẫu của chặng trước gần nhất trên đường đi. Trình thiết kế cảnh báo khi bản tin mẫu có dấu hiệu chứa dữ liệu cá nhân thật (mẫu số định danh 12 chữ số, số điện thoại, thư điện tử) và gợi ý thay bằng dữ liệu giả; người có `PERM-04-sample-data` mới được bỏ qua cảnh báo.
+
+#### FR-04-023 · Kiểm tra hợp lệ định nghĩa luồng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-023 · Kiểm tra hợp lệ định nghĩa luồng |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04 · Mã repo: FR-04-027 (repo), FR-04-034 (repo), FR-D-023, BR-D-01, BR-D-05 |
+| Tác nhân, quyền | `PERM-04-update`; chạy tự động khi lưu, gửi duyệt, phát hành |
+| Đầu vào | YAML, loại tài nguyên, mức nghiêm ngặt (`DESIGN`, `SUBMIT`, `PUBLISH`), môi trường đích (với `PUBLISH`) |
+| Đầu ra | `valid`, danh sách phát hiện `{code, severity ∈ ERROR, WARN, INFO, path, nodeId, message, ruleId}` |
+
+Các quy tắc kiểm tra, mã quy tắc và mức nghiêm trọng theo mức nghiêm ngặt:
+
+| Quy tắc | Nội dung | DESIGN | SUBMIT | PUBLISH |
+|---|---|---|---|---|
+| VR-01 | YAML phân tích được, đúng hình dạng của loại tài nguyên | ERROR | ERROR | ERROR |
+| VR-02 | Mọi phần tử, thuộc tính hợp lệ theo lược đồ catalog của phiên bản runtime (thiếu bắt buộc, sai kiểu, ngoài `enum`) | ERROR | ERROR | ERROR |
+| VR-03 | Không có chuỗi giống bí mật viết thẳng; chỉ chấp nhận `{{conn:…}}`, `{{vault:…}}`, `#bean` (BR-04-003) | ERROR | ERROR | ERROR |
+| VR-04 | Mọi thành phần, ngôn ngữ, dataformat được phép theo chính sách của tenant | WARN | ERROR | ERROR |
+| VR-05 | Luồng đối ngoại có đủ chín chặng chuẩn theo thứ tự (BR-04-002) | WARN | ERROR | ERROR |
+| VR-06 | Luồng nội bộ có đủ chín chặng | INFO | WARN | WARN |
+| VR-07 | Tham chiếu kết nối tồn tại, đúng loại, được cấp cho không gian làm việc; ở `PUBLISH` có giá trị cho môi trường đích | WARN | ERROR | ERROR |
+| VR-08 | Mã `id` chặng, mã route duy nhất trong tệp; không trùng route đang chạy của luồng khác trong namespace đích | ERROR | ERROR | ERROR |
+| VR-09 | Tham chiếu nội bộ `direct:`, `seda:` trỏ tới route tồn tại (trong tệp hoặc luồng đã phát hành cùng tenant) | WARN | ERROR | ERROR |
+| VR-10 | Topic Kafka đã đăng ký ở PH-10 và luồng có quyền publish, subscribe tương ứng (BR-04-009) | WARN | ERROR | ERROR |
+| VR-11 | Có `routeConfiguration` xử lý lỗi nền hoặc `errorHandler` có DLQ tới PH-18 (BR-04-008) | WARN | ERROR | ERROR |
+| VR-12 | Thành phần hỗ trợ native, hoặc luồng được gán hồ sơ JVM được phép (BR-04-014) | INFO | WARN | ERROR |
+| VR-13 | Truy cập CSDL tuân thủ Q359: kết nối chỉ đọc, câu lệnh chỉ `SELECT`, `WITH`; không tham chiếu schema control; có đặt `app.tenant_id` (BR-04-015) | ERROR | ERROR | ERROR |
+| VR-14 | Chặng `receive` đặt tiêu đề `dh-tenant` từ nguồn tin cậy; không đặt từ thân hay tiêu đề do bên gọi gửi (BR-04-010) | WARN | ERROR | ERROR |
+| VR-15 | Kamelet có tham số nhạy cảm đánh dấu đúng; Pipe chỉ dùng Kamelet đúng loại | ERROR | ERROR | ERROR |
+| VR-16 | Biểu thức biên dịch được | WARN | ERROR | ERROR |
+| VR-17 | Định nghĩa được kiểm tra trên đúng phiên bản catalog hiện hành của tenant | INFO | ERROR | ERROR |
+| VR-18 | Luồng có điểm vào HTTP thì đường dẫn không trùng luồng khác đang chạy cùng tenant | ERROR | ERROR | ERROR |
+| VR-19 | Không dùng thành phần đọc tệp cục bộ, thực thi lệnh hệ điều hành (`exec`, `ssh` tới máy ngoài danh sách), trừ khi chính sách cho phép tường minh | ERROR | ERROR | ERROR |
+| VR-20 | Ca kiểm thử (loại `TEST`) mỗi ca có ít nhất một khẳng định | ERROR | ERROR | ERROR |
+
+Kiểm tra chạy ở hai nơi: trình duyệt (bộ quy tắc VR-01…09, 15, 18, 20 bằng lược đồ đã tải) cho phản hồi tức thì, và máy chủ (toàn bộ) là chốt chặn có hiệu lực. Mỗi phát hiện có `nodeId` để giao diện tô chặng và đưa người dùng tới đúng trường.
+
+#### FR-04-024 · Lưu bản nháp tự động, phát hiện xung đột, khôi phục phiên nháp
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-024 · Lưu bản nháp tự động và phát hiện xung đột |
+| Mức ưu tiên | M |
+| Truy vết | REQ-04; LGC-TOOL-014, 029 · Mã repo: FR-D-013 |
+| Tác nhân, quyền | IE (`PERM-04-update`, mức `EDIT`) |
+| Đầu vào | `definitionYaml`, `canvasLayout`, `samples`, `If-Match` (ETag phiên bản) |
+| Đầu ra | `200` với ETag mới, kết quả kiểm tra mức `DESIGN`, thời điểm lưu |
+| Hậu điều kiện | Phiên bản mở được cập nhật; chỉ mục route, endpoint tính lại; người dùng được thêm vào danh sách người đóng góp |
+| Sự kiện | Không phát sự kiện cho từng lần lưu nháp |
+| Kiểm toán | `INT_VERSION_SAVE` với băm trước và sau; gộp các lần lưu tự động của cùng người trong 10 phút thành một bản ghi kiểm toán |
+
+Xử lý gồm các bước sau.
+
+1. Trình duyệt tự lưu 30 giây sau thay đổi cuối nếu có thay đổi; `Ctrl+S` lưu ngay. Chỉ báo trạng thái: "Đã lưu {giờ}", "Chưa lưu", "Đang lưu…", "Lưu lỗi", "Chưa lưu lên máy chủ" (mất kết nối).
+2. Máy chủ kiểm tra phiên bản ở trạng thái `DRAFT` hoặc `CHANGES_REQUESTED`; khác trả `ERR-04-005`.
+3. Máy chủ so ETag; không khớp trả `ERR-04-006` kèm ETag hiện tại và người lưu gần nhất. Giao diện mở so sánh YAML ba bên (gốc chung, của tôi, của người kia) để người dùng chọn giữ bản nào hoặc gộp tay. Không bao giờ ghi đè âm thầm.
+4. Máy chủ chạy kiểm tra mức `DESIGN`, lưu định nghĩa và kết quả. Lỗi kiểm tra không chặn lưu.
+5. Khi mất kết nối, trình duyệt lưu bản nháp vào IndexedDB với khóa `dh.int.draft.{tenant}.{flow}.{version}` (thay bảng `draft_session` của Tooling cũ ở phía máy chủ bằng bộ đệm phía trình duyệt cho phần chưa đồng bộ), tự đồng bộ khi có lại kết nối. Dữ liệu cục bộ bị xóa khi lưu thành công hoặc khi người dùng đăng xuất.
+6. Rời trang khi còn thay đổi chưa lưu lên máy chủ: hỏi xác nhận.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Phiên bản không còn ở trạng thái sửa được | ERR-04-005 | 409 |
+| ETag không khớp | ERR-04-006 | 412 |
+| Định nghĩa vượt kích thước | ERR-04-033 | 413 |
+| Thay đổi đang bị đóng băng (FR-04-084) | ERR-04-041 | 423 |
+
+#### FR-04-025 · Thư viện khuôn mẫu luồng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-025 · Thư viện khuôn mẫu luồng |
+| Mức ưu tiên | S |
+| Truy vết | REQ-04; LGC-BUS-013 · Mã repo: FR-04-030 (repo) |
+| Tác nhân, quyền | Dùng: IE. Quản lý khuôn mẫu nền: PA (`PERM-04-catalog-admin`). Khuôn mẫu của tenant: TA |
+| Đầu vào | Khuôn mẫu: mã, tên, mô tả, loại tài nguyên, nhóm, định nghĩa có chỗ trống tham số `${tpl.<tên>}`, lược đồ JSON của tham số, ảnh minh họa sơ đồ |
+| Đầu ra | Danh sách và chi tiết khuôn mẫu; định nghĩa đã điền tham số khi tạo luồng |
+
+Bộ khuôn mẫu nền tối thiểu ở MVP:
+
+| Mã | Tên | Dùng khi |
+|---|---|---|
+| `tpl-standard-9` | Khung chín chặng trống | Luồng đối ngoại bất kỳ |
+| `tpl-sync-lookup` | Tra cứu đồng bộ REST → HTTT đích REST | Cổng DVC tra cứu dữ liệu của sở |
+| `tpl-soap-to-rest` | Bọc dịch vụ SOAP cũ thành REST | Dịch vụ SOAP của hệ cũ |
+| `tpl-db-poll-to-kafka` | Đọc định kỳ CSDL chỉ đọc → Kafka | Đồng bộ dữ liệu từ CSDL hệ cũ (Q359) |
+| `tpl-kafka-to-rest` | Nhận sự kiện Kafka → gọi REST HTTT | Đẩy thông báo cho HTTT nhận |
+| `tpl-sftp-to-kafka` | Đọc tệp SFTP định kỳ → tách dòng → Kafka | Tệp CSV trao đổi định kỳ |
+| `tpl-ndxp-proxy` | Gọi dịch vụ quốc gia qua PH-14 | Tra cứu CSDL quốc gia |
+| `tpl-cdm-normalize` | Chuẩn hóa về CDM có chuyển mã PH-07 | Dữ liệu dân cư, tổ chức |
+
+#### FR-04-026 · Ghi chú dán và luồng con dùng lại
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-026 · Ghi chú dán và luồng con dùng lại |
+| Mức ưu tiên | C (ghi chú), S (luồng con) |
+| Truy vết | REQ-04 · Mã repo: FR-04-039, FR-04-040 (repo) |
+| Tác nhân, quyền | IE |
+
+Ghi chú dán là khối văn bản Markdown giới hạn (đậm, nghiêng, danh sách, liên kết `https`) ≤ 2.000 ký tự, đặt trên sơ đồ, lưu trong bố cục, không vào YAML. Luồng con là route `direct:` trong cùng tệp hoặc trong luồng khác đã phát hành của tenant; chặng gọi luồng con hiển thị tên luồng con và cho "Mở luồng con" (sang tab thực thể hoặc luồng khác ở chế độ chỉ đọc).
+
+#### FR-04-027 · Tải xuống, nhập YAML và xuất gói luồng
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-04-027 · Tải xuống, nhập YAML và xuất gói luồng |
+| Mức ưu tiên | M (tải YAML), S (gói) |
+| Truy vết | REQ-04; LGC-TOOL-015 (thay XML bằng YAML) |
+| Tác nhân, quyền | Tải xuống: `PERM-04-read`. Nhập vào phiên bản mở: `PERM-04-update` |
+| Đầu vào | Định dạng tải: `yaml` (YAML chuẩn hóa), `yaml+layout` (kèm chú thích bố cục `# @dh-canvas-v1:` để mở lại), `bundle` (tệp nén gồm YAML, bố cục, ánh xạ `*.dhmap.json`, ca kiểm thử, `README.md` tự sinh) |
+| Đầu ra | Tệp tải xuống tên `{flow}-v{n}.camel.yaml` hoặc `{flow}-v{n}.dhflow.zip` |
+
+Nhập YAML vào phiên bản mở thay toàn bộ định nghĩa sau khi người dùng xác nhận, có hoàn tác. Tải xuống không chứa bản tin mẫu (có thể chứa dữ liệu cá nhân) trừ khi người dùng chọn rõ và có `PERM-04-sample-data`.
