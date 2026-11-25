@@ -731,3 +731,361 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
   2. TA đặt lại khoảng đóng băng không có cờ, IE1 lưu lại.
 - **Mong đợi** Bước 1 trả `423` ERR-04-041 với `until`. Bước 2 trả `200` (đóng băng thường chỉ chặn phát hành).
 
+### TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, cấu hình chặng
+
+**Mục tiêu.** Kiểm thử E2E trình thiết kế UI-04-04 ở mức thao tác người dùng thật: kéo thả bằng chuột, bàn phím, các cửa sổ cấu hình. Thay công cụ kéo thả Angular của Productivity Tooling (LGC-TOOL).
+
+**Phủ.** FR-04-012, 013, 014; BR-04-014; UC-04-04, 05; API-04-070, 071; UI-04-04, 05, 17; NFR-04-001, 002.
+
+#### TC-04-### · Bảng thành phần chỉ hiện thành phần được phép <!--k:palette-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E, API
+- **Truy vết** FR-04-012, 080 · BR-04-014 · API-04-070 · UI-04-04 · LGC-TOOL-002
+- **Tiền điều kiện / dữ liệu** Chính sách nền cấm `exec`, `ssh`; T68 thu hẹp cấm `ftp`. IE1 mở F-HT v4.
+- **Bước**
+  1. Gọi `GET /catalog`.
+  2. Gọi lại với `If-None-Match` bằng ETag bước 1.
+  3. Trên giao diện, gõ "ftp", "exec", "kafka" vào ô tìm của bảng thành phần.
+  4. Lọc theo vai trò chặng "Gửi đích".
+- **Mong đợi** Bước 1: `entries` không có `exec`, `ssh`, `ftp`; `sftp` có `policy = ALLOWED`. Bước 2 trả `304`. Bước 3: "ftp", "exec" ra "Không có thành phần phù hợp" kèm liên kết "Xem chính sách thành phần"; "kafka" ra `kafka` ở nhóm "Hàng đợi bản tin". Bước 4 chỉ còn thành phần producer. Mỗi lần gõ phản hồi < 50 ms (NFR-04-002, đo `performance.now`).
+
+#### TC-04-### · Thao tác sơ đồ bằng chuột <!--k:canvas-mouse-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-04-013 · UI-04-04 · UC-04-04 · LGC-TOOL-003, 004
+- **Tiền điều kiện / dữ liệu** IE1 mở `tc-trong` v1.
+- **Bước**
+  1. Kéo `log` từ bảng thành phần vào giữa chặng `transform` và `enrich`.
+  2. Kéo `choice` vào sau `route`, thêm hai nhánh `when` và một `otherwise`.
+  3. Chọn ba chặng bằng Shift + nhấp, nhấn Delete, rồi Ctrl+Z.
+  4. Nhấn "Tự sắp xếp".
+  5. Thu phóng bằng Ctrl + cuộn tới 25% và 200%.
+- **Mong đợi** Bước 1: chặng chèn đúng vị trí, mũi tên nối lại, YAML cập nhật trong < 100 ms (NFR-04-005). Bước 2: nhánh hiện thành làn có nhãn điều kiện, `otherwise` luôn cuối. Bước 3: xóa rồi hoàn tác khôi phục đúng ba chặng và thuộc tính. Bước 4: bố cục dagre trái sang phải, không chồng khối. Bước 5: ở 25% nhãn chặng ẩn, chỉ còn biểu tượng và màu nhóm; minimap luôn hiện.
+
+#### TC-04-### · Thao tác không hợp lệ trên sơ đồ <!--k:canvas-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-04-013 · BR-04-002 · UI-04-04
+- **Tiền điều kiện / dữ liệu** IE1 mở `tc-trong` v1 (đối ngoại).
+- **Bước**
+  1. Kéo `kafka` (consumer) vào giữa route như một chặng thường.
+  2. Kéo thả chặng `otherwise` ra ngoài `choice`.
+  3. Xóa khối chặng chuẩn `authz`.
+- **Mong đợi** Bước 1: vùng thả tô đỏ, tooltip "Thành phần này chỉ dùng làm điểm bắt đầu route"; không thêm. Bước 2: không cho thả. Bước 3: hộp xác nhận "Luồng đối ngoại phải có đủ chín chặng chuẩn. Xóa sẽ làm luồng không gửi duyệt được."; xác nhận thì xóa và bảng Vấn đề có VR-05 mức `WARN` (DESIGN).
+
+#### TC-04-### · Cấu hình chặng bằng biểu mẫu sinh từ catalog <!--k:step-config-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E, API
+- **Truy vết** FR-04-014 · API-04-071 · UI-04-05 · UC-04-05
+- **Tiền điều kiện / dữ liệu** IE1 mở F-HT v4, chọn chặng gửi đích `http`.
+- **Bước**
+  1. Gọi `GET /catalog/components/http`.
+  2. Mở UI-04-05 của chặng; mở nhóm "Nâng cao".
+  3. Đổi `connectTimeout` sang `abc`, rồi `5000`.
+  4. Nhấn "Khôi phục giá trị gốc" trên trường `followRedirects`.
+- **Mong đợi** Bước 1: `properties` có nhóm, kiểu, mặc định, `descriptionVi`. Bước 2: trường bắt buộc có dấu, trường `secret = true` không có ô nhập tự do mà chỉ có "Chọn kết nối" hoặc "Tham chiếu bí mật". Bước 3: `abc` báo "Phải là số nguyên" tại chỗ, không lưu; `5000` lưu. Bước 4: trường về mặc định và bị bỏ khỏi YAML (không ghi giá trị mặc định thừa). Cửa sổ có 154 thuộc tính mở trong < 400 ms (NFR-04-006).
+
+#### TC-04-### · Lược đồ thành phần không có trong catalog <!--k:step-config-neg-->
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-04-014 · API-04-071 · ERR-04-035
+- **Tiền điều kiện / dữ liệu** U-T68-IE1.
+- **Bước**
+  1. Gọi `GET /catalog/components/khong-co`.
+  2. Gọi `GET /catalog/components/http?catalogVersion=0.0.0`.
+- **Mong đợi** Cả hai trả `404` ERR-04-035.
+
+#### TC-04-### · Thành phần đã dùng nhưng sau đó bị cấm <!--k:palette-banned-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-04-012, 080 · BR-04-014 · UI-04-04 · ERR-04-011
+- **Tiền điều kiện / dữ liệu** `tc-ftp` dùng `sftp`; TA thu hẹp chính sách cấm `sftp`.
+- **Bước**
+  1. IE1 mở `tc-ftp`.
+  2. Gửi duyệt.
+- **Mong đợi** Bước 1: chặng `sftp` hiện huy hiệu "Không còn được phép" màu cảnh báo, vẫn sửa được thuộc tính. Bước 2 trả `422` ERR-04-009 có finding VR-04 → ERR-04-011.
+
+### TS-04-07 · Quay vòng YAML, tải xuống, nhập YAML
+
+**Mục tiêu.** Bảo đảm không mất dữ liệu khi qua lại giữa sơ đồ, biểu mẫu và YAML (BR-04-006), và YAML đem triển khai không chứa bố cục, bản tin mẫu, ghi chú (BR-04-007).
+
+**Phủ.** FR-04-017, 027; BR-04-006, 007; API-04-022, 026, 027; UI-04-04; ERR-04-008, 009, 033.
+
+#### TC-04-### · Quay vòng không sửa giữ nguyên băm <!--k:roundtrip-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT, E2E
+- **Truy vết** FR-04-017 · BR-04-006 · UI-04-04
+- **Tiền điều kiện / dữ liệu** 40 tệp YAML mẫu trong `src/test/resources/roundtrip/` (gồm mọi EIP trong catalog, chú thích YAML, khóa không theo thứ tự, chuỗi nhiều dòng, ký tự tiếng Việt).
+- **Bước**
+  1. Với mỗi tệp: nạp thành cây tài nguyên, sinh lại YAML, tính băm chuẩn hóa.
+  2. Kiểm thử theo thuộc tính (fast-check): sinh cây ngẫu nhiên hợp lệ 1.000 lần, YAML → cây → YAML.
+  3. E2E: mở F-HT v4, chuyển tab Sơ đồ → YAML → Sơ đồ ba lần, không sửa.
+- **Mong đợi** Bước 1, 2: băm chuẩn hóa trước và sau bằng nhau trong 100% trường hợp; thuộc tính không có trong catalog (thuộc tính tùy biến) được giữ nguyên. Bước 3: chỉ báo "Đã lưu" không đổi, không có lần lưu nào được gửi.
+
+#### TC-04-### · Sửa trong YAML phản ánh lên sơ đồ <!--k:yaml-edit-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** FR-04-017 · UI-04-04
+- **Tiền điều kiện / dữ liệu** IE1 mở F-HT v4, tab YAML (Monaco).
+- **Bước**
+  1. Thêm một bước `log` bằng tay trong YAML.
+  2. Gõ sai thụt lề.
+  3. Chuyển sang tab Sơ đồ khi YAML đang lỗi.
+- **Mong đợi** Bước 1: sau 500 ms sơ đồ có chặng `log` đúng vị trí. Bước 2: gạch đỏ tại dòng, bảng Vấn đề có VR-01. Bước 3: hộp "YAML đang có lỗi cú pháp. Sơ đồ đang hiển thị bản hợp lệ gần nhất." và không ghi đè nội dung đang gõ.
+
+#### TC-04-### · YAML triển khai không chứa bố cục, bản tin mẫu, ghi chú <!--k:yaml-clean-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** IT, GO
+- **Truy vết** FR-04-017, 022, 026 · BR-04-007 · API-04-026
+- **Tiền điều kiện / dữ liệu** F-HT v4 có bố cục, bản tin mẫu MSG-OK ở ba chặng, hai ghi chú dán.
+- **Bước**
+  1. Gọi `GET .../versions/4/download?format=yaml`.
+  2. Gọi `GET .../versions/4/download?format=yaml+layout`.
+  3. Sau khi v4 được phát hành ở TEST, đọc tệp `flows/tra-cuu-ho-tich/flow.camel.yaml` trên `env/test`.
+- **Mong đợi** Bước 1 và 3: không có khóa `dh-layout`, `dh-samples`, `dh-notes`, không có chuỗi `001099000001`. Bước 2: có bố cục ở khối chú thích tách riêng để nhập lại được. Băm chuẩn hóa của tệp trên Git bằng `contentHash` của v4.
+
+#### TC-04-### · Nhập YAML thay định nghĩa <!--k:import-yaml-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-027 · API-04-027
+- **Tiền điều kiện / dữ liệu** F-HT v4; tệp YAML đã sửa ngoài.
+- **Bước**
+  1. Gọi `POST .../versions/4:import-yaml` với `keepLayout = true`.
+- **Mong đợi** `200`; định nghĩa thay mới; chặng có cùng `id` giữ vị trí cũ trên sơ đồ, chặng mới được tự sắp xếp. `validation` trả kèm.
+
+#### TC-04-### · Nhập YAML không hợp lệ <!--k:import-yaml-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-027 · API-04-027 · ERR-04-008, 009, 033
+- **Tiền điều kiện / dữ liệu** YAML-BOMB, YAML-BIG, YAML có thẻ `!!java.lang.Runtime`.
+- **Bước**
+  1. Nhập YAML-BOMB.
+  2. Nhập YAML-BIG.
+  3. Nhập YAML có thẻ kiểu Java.
+  4. Nhập YAML của Kamelet vào phiên bản loại ROUTE.
+- **Mong đợi** Bước 1 trả `422` ERR-04-008 trong < 1 giây, bộ nhớ heap không tăng quá 50 MiB (VR-01 giới hạn bí danh 50, độ sâu 64). Bước 2 trả `413` ERR-04-033. Bước 3 trả `422` ERR-04-008, không tạo đối tượng Java (SnakeYAML Engine không hỗ trợ thẻ toàn cục). Bước 4 trả `422` ERR-04-009.
+
+### TS-04-08 · Biểu thức, kết nối, bí mật, bản tin mẫu
+
+**Mục tiêu.** Bảo đảm không có đường nào ghi bí mật vào định nghĩa luồng, biểu thức được kiểm đúng engine Camel của runtime, bản tin mẫu không mang dữ liệu cá nhân thật ra ngoài sandbox.
+
+**Phủ.** FR-04-015, 016, 022; BR-04-003, 013; UC-04-05; API-04-032, 022; UI-04-05, 06; ERR-04-010, 013, 019, 021, 037.
+
+#### TC-04-### · Kiểm tra và xem trước biểu thức <!--k:expr-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-015 · API-04-032 · UI-04-06 · LGC-TOOL-006
+- **Tiền điều kiện / dữ liệu** IE1; MSG-OK.
+- **Bước**
+  1. Gọi `POST /expressions:check` với `{"language":"simple","expression":"${body[soDinhDanh]} != null","predicate":true}`.
+  2. Gọi với `jsonpath` `$.hoTen`, `evaluate = true`, `sample.body` = MSG-OK.
+  3. Gọi với `jq` `.ngaySinh | split("-")[0]`, `evaluate = true`.
+  4. Trên UI-04-06, gõ `${he` và chờ gợi ý.
+- **Mong đợi** Bước 1 trả `200`, `valid = true`. Bước 2 trả `result = "Nguyễn Văn Thử"`, `resultType = String`, `simulated = false`. Bước 3 trả `"1990"`. Bước 4: gợi ý `header.`, `headers` kèm mô tả tiếng Việt.
+
+#### TC-04-### · Biểu thức lỗi <!--k:expr-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-015 · API-04-032 · ERR-04-037, 019, 021
+- **Tiền điều kiện / dữ liệu** IE1.
+- **Bước**
+  1. Kiểm `simple` `${body[soDinhDanh}`.
+  2. Kiểm như bước 1 ở chế độ chặt.
+  3. Kiểm `jq` với `sample.body` = MSG-BIG.
+  4. Dừng sandbox, kiểm `jq` với `evaluate = true`.
+  5. Kiểm `groovy` (ngôn ngữ không có trong catalog).
+- **Mong đợi** Bước 1 trả `200`, `valid = false`, `error.column` trỏ đúng vị trí; UI-04-06 tô đỏ vị trí. Bước 2 trả `422` ERR-04-037. Bước 3 trả `413` ERR-04-021. Bước 4 trả `503` ERR-04-019 (biên dịch không cần sandbox vẫn chạy được nếu `evaluate = false`). Bước 5 trả `400` ERR-04-049.
+
+#### TC-04-### · Chọn kết nối PH-05 thay vì nhập thông tin đăng nhập <!--k:conn-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E, API
+- **Truy vết** FR-04-016 · BR-04-003 · UI-04-05 · UC-04-05
+- **Tiền điều kiện / dữ liệu** IE1 mở F-HT v4, chặng gửi đích.
+- **Bước**
+  1. Mở ô "Kết nối", tìm "HT".
+  2. Chọn CONN-HT.
+  3. Chọn trường "Mật khẩu proxy", bấm "Tham chiếu bí mật", chọn `vault:ho-tich/proxy`.
+- **Mong đợi** Bước 1 chỉ liệt kê kết nối đã cấp cho WS-HOTICH (không có CONN-DD-ONLY), hiện loại và môi trường có giá trị. Bước 2: YAML có `{{conn:CONN-HT}}`. Bước 3: YAML có `{{vault:ho-tich/proxy}}`; giao diện không có ô nào cho phép dán giá trị bí mật.
+
+#### TC-04-### · Phát hiện bí mật mọi chỗ trong định nghĩa <!--k:secret-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-04-016, 023 · BR-04-003 · API-04-022 · ERR-04-010
+- **Tiền điều kiện / dữ liệu** 24 mẫu bí mật: tham số URI `password=`, `accessKey=`, `Authorization: Basic …` trong `setHeader`, JWT, khóa PEM, chuỗi AWS `AKIA…`, giá trị bean `secret`, chuỗi entropy cao 40 ký tự trong thuộc tính tên `token`; và 10 mẫu hợp lệ: `{{conn:…}}`, `{{vault:…}}`, `#bean`, UUID, băm sha256 trong `contentHash`.
+- **Bước**
+  1. Chạy `SecretDetector` trên từng mẫu (UT).
+  2. Lưu nháp với từng mẫu bí mật (API).
+- **Mong đợi** Bước 1: phát hiện 24/24, không báo nhầm 10/10 mẫu hợp lệ. Bước 2: mỗi lần trả `422` ERR-04-010; `findings[].message` chỉ có đường dẫn và loại ("chuỗi giống mật khẩu"), không có giá trị; log ứng dụng và vết OpenTelemetry không có giá trị (quét bằng `grep` trên log IT).
+
+#### TC-04-### · Kết nối không hợp lệ <!--k:conn-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-016, 023 · API-04-030 · ERR-04-013
+- **Tiền điều kiện / dữ liệu** `tc-conn` tham chiếu lần lượt `{{conn:KHONG-CO}}`, CONN-DD-ONLY (chưa cấp cho WS-HOTICH), CONN-DKKD-RO cho chặng `http` (sai loại).
+- **Bước**
+  1. Gọi `:validate` mức `DESIGN`.
+  2. Gọi `:validate` mức `SUBMIT`.
+- **Mong đợi** Bước 1: ba finding VR-07 mức `WARN`. Bước 2: ba finding VR-07 mức `ERROR`, mã ERR-04-013 trong `args`.
+
+#### TC-04-### · Ghim bản tin mẫu theo chặng và cảnh báo dữ liệu cá nhân <!--k:samples-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-04-022 · BR-04-007, 013 · UI-04-04, 05
+- **Tiền điều kiện / dữ liệu** IE1 (không có `PERM-04-sample-data`), IE2 (được cấp `PERM-04-sample-data` cho F-HT).
+- **Bước**
+  1. IE1 ghim MSG-OK ở chặng `receive`.
+  2. IE1 dán MSG-PII vào chặng `transform`.
+  3. IE2 dán MSG-PII và chọn "Vẫn dùng".
+- **Mong đợi** Bước 1: chặng sau dùng bản tin của chặng trước gần nhất (hiện nhãn "kế thừa từ Tiếp nhận"). Bước 2: cảnh báo "Bản tin mẫu có dấu hiệu chứa dữ liệu cá nhân (số điện thoại, thư điện tử)", nút "Thay bằng dữ liệu giả" và không có "Vẫn dùng". Bước 3: lưu được; KT: có (`INT_SAMPLE_PII_OVERRIDE`).
+
+### TS-04-09 · Trình ánh xạ dữ liệu
+
+**Mục tiêu.** Xác nhận trình ánh xạ sinh JQ đúng, chạy được trên runtime và chuyển mã qua PH-07 bằng hàm `dh_map`.
+
+**Phủ.** FR-04-020, 065; UC-04-06; API-04-033; UI-04-07; ERR-04-021, 038.
+
+#### TC-04-### · Ánh xạ trường, hàm và chuyển mã <!--k:mapper-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** E2E, API, RT
+- **Truy vết** FR-04-020, 065 · API-04-033 · UI-04-07 · UC-04-06 · LGC-TOOL-008
+- **Tiền điều kiện / dữ liệu** Lược đồ nguồn `hotich-yeucau-v1`, đích CDM `cdm-cong-dan-v1`; bảng chuyển mã PH-07 `GIOI_TINH` (giả lập).
+- **Bước**
+  1. Trên UI-04-07, kéo `hoTen` → `ten.day_du`, `ngaySinh` → `ngay_sinh` với hàm "Định dạng ngày", `gioiTinh` → `gioi_tinh` với "Chuyển mã danh mục GIOI_TINH".
+  2. Gọi `POST /mappings:preview` với `sample` = MSG-OK có `gioiTinh = "1"`.
+  3. Chạy luồng mẫu dùng ánh xạ trên runtime (RT).
+- **Mong đợi** Bước 2 trả `jq` có `dh_map("GIOI_TINH"; .gioiTinh)`, `output.gioi_tinh = "NAM"`, `targetValid = true`. Bước 3: runtime trả cùng kết quả với bước 2 (cùng phiên bản thư viện JQ, so sánh từng byte).
+
+#### TC-04-### · Ánh xạ không hợp lệ <!--k:mapper-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-020 · API-04-033 · ERR-04-038, 021
+- **Tiền điều kiện / dữ liệu** Như ca trên.
+- **Bước**
+  1. Xem trước với ánh xạ tới `ten.khong_co`.
+  2. Xem trước với hai trường suy ra lẫn nhau (vòng).
+  3. Xem trước với tài liệu mẫu 1,1 MiB.
+- **Mong đợi** Bước 1, 2 trả `422` ERR-04-038, `findings[].args.target` chỉ trường. Bước 3 trả `413` ERR-04-021.
+
+#### TC-04-### · Trường bắt buộc của đích chưa ánh xạ <!--k:mapper-required-->
+- **Loại** Biên · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-04-020, 084 · API-04-030
+- **Tiền điều kiện / dữ liệu** Ánh xạ thiếu `so_dinh_danh` (bắt buộc ở đích).
+- **Bước**
+  1. `:validate` mức `SUBMIT` với `04.mapping.require-all-required = false`.
+  2. Bật tham số, kiểm lại.
+- **Mong đợi** Bước 1: finding mức `WARN`. Bước 2: finding mức `ERROR`.
+
+### TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
+
+**Phủ.** FR-04-018, 019, 021, 026; UC-04-07; UI-04-08, 09, 10; ERR-04-011, 029, 036.
+
+#### TC-04-### · Soạn Kamelet tự viết và dùng trong luồng <!--k:kamelet-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-018 · UI-04-08 · UC-04-07
+- **Tiền điều kiện / dữ liệu** F-KAM v1 `DRAFT`, tham số `pattern` và `maskChar`.
+- **Bước**
+  1. Trên UI-04-08, khai báo tham số, đánh dấu không nhạy cảm, lưu.
+  2. Đưa F-KAM qua duyệt và phát hành TEST.
+  3. Mở F-HT v4, tìm "ma hoa" trong bảng thành phần.
+- **Mong đợi** Bước 1: VR-15 không có lỗi. Bước 3: F-KAM có trong nhóm "Chặng chuẩn Datahub" với nhãn "Của tỉnh", có `source = TENANT`; khi kéo vào, biểu mẫu sinh từ khai báo tham số.
+
+#### TC-04-### · Kamelet sai <!--k:kamelet-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-018 · ERR-04-036, 029 · BR-04-003
+- **Tiền điều kiện / dữ liệu** IE1.
+- **Bước**
+  1. Tạo Kamelet tên `dh-receive-action` (trùng Kamelet nền).
+  2. Tạo Kamelet có tham số `apiKey` không đánh dấu `format: password`.
+  3. Tạo Kamelet dùng `smb` (không hồ sơ nào có).
+- **Mong đợi** Bước 1 trả `409` ERR-04-036. Bước 2: finding VR-15 `ERROR`. Bước 3: ở mức `PUBLISH` có ERR-04-029.
+
+#### TC-04-### · Soạn Pipe <!--k:pipe-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API, E2E
+- **Truy vết** FR-04-019 · UI-04-09
+- **Tiền điều kiện / dữ liệu** Kamelet `kafka-source`, F-KAM (`action`), `http-sink`.
+- **Bước**
+  1. Tạo Pipe `source: kafka-source`, `steps: [F-KAM]`, `sink: http-sink`.
+  2. Đặt `http-sink` vào `source`.
+- **Mong đợi** Bước 1: hợp lệ. Bước 2: finding VR-15 "Kamelet loại sink không dùng làm nguồn".
+
+#### TC-04-### · Bean khai báo và cấu hình cấp tệp <!--k:bean-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API, E2E
+- **Truy vết** FR-04-021 · UI-04-10 · ERR-04-011
+- **Tiền điều kiện / dữ liệu** Danh sách lớp bean cho phép có `vn.datahub.runtime.beans.VietnameseNormalizer`.
+- **Bước**
+  1. Khai báo bean lớp được phép, dùng `#normalizer` ở chặng `transform`.
+  2. Khai báo bean `java.lang.ProcessBuilder`.
+- **Mong đợi** Bước 1 hợp lệ. Bước 2: VR-04 `ERROR` ở `SUBMIT`, "Lớp không được phép"; gửi duyệt trả ERR-04-009 với ERR-04-011 trong finding.
+
+#### TC-04-### · Ghi chú dán và luồng con <!--k:notes-subflow-->
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** E2E
+- **Truy vết** FR-04-026 · BR-04-007 · UI-04-04
+- **Tiền điều kiện / dữ liệu** F-HT v4.
+- **Bước**
+  1. Thêm hai ghi chú dán màu khác nhau.
+  2. Chọn ba chặng, "Tách thành luồng con".
+- **Mong đợi** Bước 1: ghi chú lưu ở bố cục, không có trong YAML (BR-04-007). Bước 2: sinh route `direct:{flow}-sub-1` trong cùng tệp, chỗ cũ thay bằng `to: direct:…`; quay vòng YAML giữ nguyên băm sau khi tách.
+
+### TS-04-11 · Kiểm tra hợp lệ VR-01…20
+
+**Mục tiêu.** Mỗi quy tắc kiểm tra có ít nhất một ca phát hiện và một ca không báo nhầm, ở đúng mức nghiêm trọng theo FRS FR-04-023. Bộ quy tắc phía trình duyệt và phía máy chủ cho cùng kết quả trên tập quy tắc chung.
+
+**Phủ.** FR-04-023; BR-04-002, 008, 009, 010, 011, 014, 015, 020; API-04-030, 031; ERR-04-009, 011, 012, 013, 031, 043; NFR-04-007.
+
+#### TC-04-### · Ma trận mức nghiêm trọng theo mức kiểm tra <!--k:vr-matrix-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT
+- **Truy vết** FR-04-023 · API-04-030
+- **Tiền điều kiện / dữ liệu** Bộ 20 tệp YAML, mỗi tệp vi phạm đúng một quy tắc VR-01…20 (`src/test/resources/vr/vr-nn.yaml`), cộng YAML-OK.
+- **Bước**
+  1. Chạy `ValidationEngine` trên từng tệp ở ba mức `DESIGN`, `SUBMIT`, `PUBLISH`.
+- **Mong đợi** 60 kết quả khớp đúng bảng FR-04-023 (ví dụ VR-05: `WARN`, `ERROR`, `ERROR`; VR-12: `INFO`, `WARN`, `ERROR`). YAML-OK không có finding nào ở mọi mức. Mỗi finding có `rule`, `severity`, `path`, `nodeId`, `message` tiếng Việt.
+
+#### TC-04-### · Chín chặng chuẩn với luồng đối ngoại và nội bộ <!--k:vr-stages-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023, 060 · BR-04-002 · ERR-04-012
+- **Tiền điều kiện / dữ liệu** `tc-ngoai` (EXTERNAL) và `tc-noi` (INTERNAL), cùng thiếu chặng `authz` và đảo thứ tự `audit` với `deliver`.
+- **Bước**
+  1. `:validate` mức `SUBMIT` trên `tc-ngoai`.
+  2. Như bước 1 trên `tc-noi`.
+- **Mong đợi** Bước 1: VR-05 `ERROR`, `args.stages = ["authz"]`, và một finding thứ tự; map sang ERR-04-012. Bước 2: VR-06 `WARN`, không chặn.
+
+#### TC-04-### · Trùng mã route, trùng đường dẫn HTTP <!--k:vr-dup-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023 · BR-04-011
+- **Tiền điều kiện / dữ liệu** `tc-trung` có route `tra-cuu-ho-tich-main` (trùng F-HT đang chạy) và `path: /ho-tich/tra-cuu`.
+- **Bước**
+  1. `:validate` mức `DESIGN`.
+  2. Đổi mã route và đường dẫn, kiểm lại.
+- **Mong đợi** Bước 1: VR-08 và VR-18 `ERROR` ngay ở `DESIGN`. Bước 2: không còn finding. Đường dẫn trùng F-T01 ở T01 không bị báo (khác tenant).
+
+#### TC-04-### · Topic chưa đăng ký hoặc không có quyền <!--k:vr-topic-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023, 069 · BR-04-009
+- **Tiền điều kiện / dữ liệu** `tc-topic` gửi tới `t68.chua-dang-ky.v1`, TOPIC-NOACL, TOPIC-T01.
+- **Bước**
+  1. `:validate` mức `SUBMIT`.
+- **Mong đợi** Ba finding VR-10 `ERROR`. Với TOPIC-T01 thông điệp là "Không được dùng topic của tỉnh khác".
+
+#### TC-04-### · Thiếu xử lý lỗi và DLQ <!--k:vr-dlq-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023, 070 · BR-04-008
+- **Tiền điều kiện / dữ liệu** `tc-loi` bỏ `routeConfigurationId`, không có `errorHandler`.
+- **Bước**
+  1. `:validate` mức `SUBMIT`.
+  2. Thêm `errorHandler: deadLetterChannel` tới `kafka:t68.ops.dlq.v1`, kiểm lại.
+- **Mong đợi** Bước 1: VR-11 `ERROR`. Bước 2: không còn finding.
+
+#### TC-04-### · Đặt tiêu đề tenant sai chỗ <!--k:vr-tenant-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023, 073 · BR-04-010
+- **Tiền điều kiện / dữ liệu** `tc-ten` có `setHeader: name: dh-tenant, simple: ${header.X-Tenant}` ở chặng `transform`.
+- **Bước**
+  1. `:validate` mức `DESIGN`, `SUBMIT`.
+- **Mong đợi** VR-14 `WARN`, `ERROR`. Thông điệp "Không được đặt tiêu đề dh-tenant; tenant do chặng Tiếp nhận đặt".
+
+#### TC-04-### · Thành phần nguy hiểm và chỉ chạy JVM <!--k:vr-danger-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-023, 075 · BR-04-014 · ERR-04-011, 029
+- **Tiền điều kiện / dữ liệu** `tc-nguy` dùng `exec:`, `file:/etc`, `cxf` (chỉ JVM) khi T68 không được phép hồ sơ `legacy-jvm` nhưng được `soap-jvm`.
+- **Bước**
+  1. `:validate` mức `PUBLISH` với `targetEnvironment = TEST`.
+- **Mong đợi** VR-19 `ERROR` cho `exec`, `file`; VR-12 không báo lỗi cho `cxf` vì có hồ sơ `soap-jvm` hợp lệ; nếu bỏ quyền `soap-jvm` thì VR-12 `ERROR` và ERR-04-029.
+
+#### TC-04-### · HTTT đích chưa kết nạp và catalog cũ <!--k:vr-httt-catalog-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-023, 068, 081 · BR-04-020 · ERR-04-043, 042
+- **Tiền điều kiện / dữ liệu** `tc-dich` có `targetSystems = ["HT-CHUA-KET-NAP"]` (không có ở bản sao PH-01); `definition.catalogVersion` thấp hơn catalog hiện hành.
+- **Bước**
+  1. `:validate` mức `SUBMIT`.
+  2. `:submit`.
+- **Mong đợi** Bước 1: finding với ERR-04-043 và VR-17 `ERROR`. Bước 2 trả `409` ERR-04-042 (kiểm catalog trước khi chạy đủ quy tắc, theo thứ tự ở D03-04-PH04 §3 ghi chú 3).
+
+#### TC-04-### · Kiểm tra trình duyệt và máy chủ cho cùng kết quả <!--k:vr-parity-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** UT
+- **Truy vết** FR-04-023 · NFR-04-007
+- **Tiền điều kiện / dữ liệu** Bộ tệp `vr-nn.yaml` của các quy tắc VR-01…09, 15, 18, 20 (phần chạy được ở trình duyệt).
+- **Bước**
+  1. Chạy bộ quy tắc trình duyệt (Vitest) và máy chủ (JUnit) trên cùng tệp, so sánh `rule`, `severity`, `path`.
+- **Mong đợi** Kết quả trùng khớp 100%. Thời gian máy chủ mức `SUBMIT` cho YAML-200 p95 < 2 giây (NFR-04-007).
+
