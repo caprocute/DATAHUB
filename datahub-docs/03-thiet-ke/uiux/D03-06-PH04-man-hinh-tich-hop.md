@@ -1266,3 +1266,300 @@ Bảng bean: tên, kiểu (chọn từ danh sách lớp cho phép của thư vi�
 ### 16.3. routeConfiguration
 
 `dh-default-config` (khóa, chỉ xem) hiện các `onException` chuẩn: lỗi lược đồ → 400 + ERR-04-101, lỗi quyền → 403, hết thời gian chờ → 504 + thử lại theo `04.retry.*`, mặc định → 500 + DLQ. Người dùng tạo `routeConfiguration` riêng để thêm `onException`, `intercept` cục bộ; không ghi đè được xử lý của chặng chuẩn (VR-13).
+
+## 17. UI-04-11 Chạy thử
+
+**Mục đích.** Chạy phiên bản đang soạn trên Camel thật trong `dh-runtime-sandbox` (ADR-064), với bản tin mẫu, thay hoặc giả lập điểm cuối, xem từng chặng đã đi qua, dữ liệu vào ra tại mỗi chặng, log. Kết quả đạt gắn với `contentHash` để mở khóa gửi duyệt (BR-04-008). Thay chạy thử giả của repo (GAP-04-04: `RoutesService.testRun` tính từ `hashCode`). FR-04-050…053.
+**Dạng.** `CMP-Drawer` dưới cao 50 % (mặc định, để thấy canvas phủ kết quả cùng lúc) hoặc trang `/tich-hop/luong/:ma/chay-thu`. URL `lop=chay-thu`.
+
+### 17.1. Wireframe
+
+```
+┌ Chạy thử · v8 (chưa gửi duyệt) ──────────── [Thiết lập | Kết quả #42 | Lịch sử] ── ⤢ trang riêng ✕ ┐
+│ THIẾT LẬP                                                                                         │
+│ Route vào [nhan-khai-sinh ▾]  Điểm vào: platform-http POST /ho-tich/khai-sinh                     │
+│ Bản tin  (•) Mẫu đã lưu [ks-hop-le ▾]  ( ) Nhập tay  ( ) Tải tệp  ( ) Từ lần chạy #41             │
+│ ┌ Headers ────────────────────────────┐ ┌ Body (JSON) ───────────────────────────── 2,1 KB / 1 MB┐│
+│ │ Content-Type  application/json  ✕   │ │ { "soDinhDanh": "001…", "hoTen": "Nguyễn Văn A", … }   ││
+│ │ dh-tenant     lam-dong (cố định)🔒  │ │                                                        ││
+│ │ ＋ Thêm header                       │ └────────────────────────────────────────────────────────┘│
+│ └─────────────────────────────────────┘                                                           │
+│ Điểm cuối ngoài                                                                                   │
+│ │ Chặng           │ Điểm cuối              │ Cách chạy                         │                   │
+│ │ Gọi hộ tịch     │ ndxp-ho-tich (http)    │ (•) Giả lập: trả mẫu [ks-ok ▾]  ( ) Gọi thật (Test) │ │
+│ │ Đọc CSDL hộ tịch│ pg-ho-tich-ro (sql)    │ (•) Giả lập: trả 3 dòng  ( ) Gọi thật (CSDL thử)    │ │
+│ │ Ghi Kafka       │ dh.ho-tich.ks.v1       │ (•) Bắt lại (không gửi)                              │ │
+│ Thời gian tối đa [30 s ▾]   ☐ Lưu thành ca kiểm thử                                              │
+│                                                                [Chạy thử F5]                      │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 17.2. Thiết lập
+
+| Trường | Quy tắc |
+|---|---|
+| Route vào | Mặc định route đầu tiên có điểm vào ngoài; route `direct:` chọn được để thử riêng |
+| Bản tin | Bốn nguồn. Kích thước ≤ `04.test_payload_max` (mặc định 1 MB; ERR-04-021). Bản tin mẫu lưu theo luồng, có nhãn "chứa dữ liệu thật" bắt buộc khai báo; tỉnh có `04.sample_data_real_forbidden` = true thì chặn lưu bản tin gắn nhãn đó và chỉ người có `PERM-04-sample-data` xem được bản tin cũ |
+| Headers | `dh-tenant` cố định bằng tenant hiện tại, không sửa (TenantGuard) |
+| Điểm cuối ngoài | Liệt kê tự động mọi producer gọi ra ngoài. Ba cách: **Giả lập** (trả bản tin mẫu, độ trễ giả lập, mã lỗi giả lập để thử nhánh lỗi), **Gọi thật** (chỉ tới kết nối PH-05 có bản Test và người dùng có quyền; dùng thông tin xác thực của môi trường Test; mặc định tắt cho kết nối đánh dấu nhạy cảm), **Bắt lại** (với Kafka, tệp, email: ghi nhận nội dung, không gửi). Mặc định mọi điểm cuối là Giả lập |
+| Thời gian tối đa | 5, 10, 30, 60 s; giới hạn bởi `04.test_timeout_max` |
+| Lưu thành ca kiểm thử | Mở thêm phần khẳng định (mục 19) |
+
+### 17.3. Kết quả
+
+```
+┌ Kết quả #42 · [Đạt] · 184 ms · 14:10:22 · Lê V. C · nội dung a3f9… (khớp bản hiện tại ✓) ─────────┐
+│ ┌ DÒNG CHẢY (320) ────────────────┐ ┌ CHI TIẾT CHẶNG: Gọi hộ tịch ─────────────────────────────────┐│
+│ │ ✓ Nhận yêu cầu          2 ms    │ │ [Vào | Ra | Khác biệt | Log 3]                                ││
+│ │ ✓ Kiểm lược đồ          5 ms    │ │ headers (12)  body (JSON)                                     ││
+│ │ ✓ Phân quyền            8 ms    │ │ { "citizenId": "001…", "fullName": "NGUYỄN VĂN A", … }        ││
+│ │ ✓ Ánh xạ               11 ms    │ │                                                               ││
+│ │ ✓ Rẽ nhánh → when 1     0 ms    │ │ Điểm cuối: ndxp-ho-tich · Giả lập "ks-ok" · HTTP 200 · 40 ms  ││
+│ │   ✓ Gọi hộ tịch        40 ms ◀ │ │                                                               ││
+│ │   ⊘ Ghi nhật ký (otherwise)     │ │                                                               ││
+│ │ ✓ Kiểm toán             3 ms    │ │                                                               ││
+│ │ ✓ Trả lời             115 ms    │ │                                                               ││
+│ └─────────────────────────────────┘ └───────────────────────────────────────────────────────────────┘│
+│ Trả về: HTTP 200 · application/json · 312 B  [Xem]     [Chạy lại] [Lưu thành ca kiểm thử] [So sánh…]│
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- Dòng chảy: danh sách chặng theo thứ tự thực thi (đi qua nhánh nào hiện rõ, `split` hiện từng phần tử thu gọn "×12"), trạng thái ✓ ✕ ⊘, thời lượng. Chọn dòng thì chặng trên canvas được chọn và ngược lại.
+- Chi tiết chặng: tab Vào, Ra (headers, body, properties, variables), Khác biệt (vào ↔ ra, dùng `CMP-DiffViewer` JSON), Log (log Camel trong chặng). Dữ liệu được che theo quy tắc audit trước khi lưu và trước khi hiển thị (BR-04-012); trường che hiện "•••• (đã che)".
+- Lỗi: chặng ✕ mở sẵn, có khối "Ngoại lệ": lớp, thông điệp, mã ERR-04-1xx, vết ngăn xếp thu gọn (chỉ khung `org.apache.camel` và `vn.datahub`), gợi ý ("Kiểm tra kết nối ndxp-ho-tich", "Biểu thức ở dòng…").
+- Đầu kết quả ghi `contentHash`; nếu nội dung đã đổi từ lần chạy: "Nội dung đã đổi sau lần chạy này · Chạy lại để dùng cho gửi duyệt" (nhãn cảnh báo).
+
+### 17.4. Tiến trình và trạng thái
+
+| Trạng thái | Hiển thị |
+|---|---|
+| `QUEUED` | "Đang chờ môi trường chạy thử ({vị trí} trong hàng)"; nút "Hủy" |
+| `RUNNING` | Dòng chảy điền dần theo sự kiện SSE; chặng đang chạy có vòng xoay (tắt khi giảm chuyển động, thay bằng chữ "đang chạy"); đồng hồ đếm |
+| `PASSED` | Thông báo nhỏ "Chạy thử đạt" + vùng `aria-live`; nút "Gửi duyệt" trên ① được bật nếu đủ điều kiện khác |
+| `FAILED` | Thông báo lỗi; ⑥ chuyển tab Kết quả chạy; chặng lỗi được chọn |
+| `TIMED_OUT` | "Quá {n} giây. Các chặng đã chạy hiện bên dưới." |
+| Hộp cát không sẵn sàng | ERR-04-019 với nút "Thử lại"; nếu tham số `04.test_allow_simulated` = true (chỉ môi trường phát triển), cho "Mô phỏng không chạy Camel" và kết quả gắn nhãn `SIMULATED`, không mở khóa gửi duyệt |
+| Người dùng rời trình thiết kế khi đang chạy | Tác vụ vào khay nền; xong thì thông báo có liên kết |
+
+## 18. UI-04-12 Nhật ký chạy thử và UI-04-13 Ca kiểm thử
+
+### 18.1. UI-04-12 Nhật ký chạy thử
+
+PTN-01: bảng các lần chạy của luồng: số, thời điểm, người chạy, phiên bản, `contentHash` rút gọn, nguồn bản tin (mẫu, nhập tay, ca kiểm thử), kết quả, thời lượng, chặng lỗi. Lọc theo kết quả, người, phiên bản, khoảng thời gian. Chọn hai dòng → "So sánh" mở hai dòng chảy cạnh nhau, tô chặng khác kết quả, khác thời lượng > 50 %. Lưu giữ `04.test_run_retention_days` (mặc định 30 ngày); bản ghi quá hạn hiện "Dữ liệu chi tiết đã xóa theo thời hạn lưu" nhưng giữ dòng tóm tắt. Thay màn Run log của repo (`RunLogPage`).
+
+### 18.2. UI-04-13 Ca kiểm thử
+
+Drawer phải 720 px từ "Chạy thử ▾ › Ca kiểm thử…" hoặc tab Chạy thử của UI-04-02.
+
+| Phần | Nội dung |
+|---|---|
+| Danh sách ca | Tên, route vào, số khẳng định, kết quả lần chạy cuối, nút ▶ chạy một ca, "Chạy tất cả" |
+| Soạn ca | Tên, mô tả, thiết lập như 17.2 (bản tin, giả lập điểm cuối), **khẳng định**: mỗi dòng gồm Đối tượng (Kết quả cuối, Chặng {id}, Điểm cuối {id}), Thuộc tính (mã HTTP, header, body JQ, số lần gọi, thời lượng), Phép so (bằng, khác, chứa, khớp mẫu, ≤, ≥, khớp lược đồ PH-06), Giá trị |
+| Tạo khẳng định nhanh | Từ kết quả một lần chạy: nhấp phải một giá trị trong tab Ra → "Khẳng định giá trị này" |
+| Lưu trữ | Ca lưu thành tệp `tests/{tên}.dhtest.yaml` trong phiên bản luồng (ResourceKind TEST), được duyệt cùng luồng |
+| Quy tắc | Tham số `04.min_test_cases_external` (mặc định 1): luồng đối ngoại cần ít nhất ngần ấy ca kiểm thử đạt mới gửi duyệt được |
+
+## 19. UI-04-14 Hàng đợi duyệt và màn duyệt
+
+**Mục đích.** Người duyệt xem đủ thông tin để quyết định có cho phiên bản lên môi trường hay không, theo bốn mắt (BR-04-010, ADR-069). Thay `ReviewPage` của repo, nơi bốn mắt chỉ so `created_by` (GAP-04-07). FR-04-060…064.
+
+### 19.1. Hàng đợi `/tich-hop/duyet-luong`
+
+Bảng: luồng, phiên bản, không gian, người gửi, thời điểm gửi (thời gian chờ, đỏ khi quá `04.review_sla_hours`, mặc định 24 giờ), thay đổi so với bản đang chạy (+ ~ −), môi trường mong muốn, rủi ro (huy hiệu: "CSDL trực tiếp", "Kịch bản", "Thành phần mới", "Đối ngoại mới"), trạng thái ("Chờ duyệt", "Đang được {user} xem"). Bộ lọc nhanh: "Gửi cho tôi", "Tôi duyệt được", "Tôi đã gửi". Dòng mà người dùng không được duyệt vì đã tham gia soạn hiện mờ và nhãn "Bạn đã tham gia soạn".
+
+### 19.2. Màn duyệt `/tich-hop/duyet-luong/:ma/:phienBan`
+
+```
+  Tích hợp › Duyệt luồng › Đồng bộ khai sinh sang NDXP v8
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │ v8 [Chờ duyệt] · Gửi bởi Nguyễn V. A 14:12 · Người đóng góp: Trần T. B                   │
+  │ Ghi chú: "Thêm nhánh xử lý giấy khai sinh cấp lại; tăng thời gian chờ NDXP…"             │
+  │ Đề xuất lên: Staging             [Yêu cầu sửa] [Từ chối] [Duyệt ▾ (Duyệt · Duyệt và phát hành)]│
+  └──────────────────────────────────────────────────────────────────────────────────────────┘
+  Tóm tắt │ Khác biệt sơ đồ │ Khác biệt YAML │ Kiểm tra │ Chạy thử │ Rủi ro │ Bình luận 3
+```
+
+| Tab | Nội dung |
+|---|---|
+| Tóm tắt | Mục đích thay đổi, danh sách chặng thêm, sửa, xóa (nhấp mở ở tab sơ đồ), kết nối và Kamelet mới dùng, hồ sơ runtime |
+| Khác biệt sơ đồ | Hai canvas chỉ đọc cạnh nhau (bản đang chạy ở môi trường đích ↔ v8) hoặc một canvas phủ khác biệt (mục 10.7.3), đồng bộ thu phóng và cuộn; chọn chặng sửa thì Inspector so sánh hiện từng trường cũ → mới |
+| Khác biệt YAML | `CMP-DiffViewer` cạnh nhau hoặc gộp, bỏ qua khoảng trắng; tệp ánh xạ, ca kiểm thử, thuộc tính theo môi trường là các tệp riêng trong cây tệp bên trái |
+| Kiểm tra | Kết quả API-04-012 `level=submit` chạy lại lúc mở màn (không dùng kết quả cũ) |
+| Chạy thử | Lần chạy đạt dùng để gửi (khớp `contentHash`), các ca kiểm thử; người duyệt có `PERM-04-test` chạy lại được |
+| Rủi ro | Danh sách tự động: CSDL trực tiếp (Q359: tài khoản, câu SQL, đã khai báo PH-05 chưa, RLS), biểu thức kịch bản, thành phần lần đầu dùng ở tỉnh, điểm cuối ngoài mới, tăng thời gian chờ, bỏ chặng audit… mỗi dòng có ô "Đã xem" bắt buộc tick trước khi Duyệt |
+| Bình luận | Bình luận gắn với chặng hoặc dòng YAML (`CMP-CommentThread`); bình luận mở hiện huy hiệu trên chặng ở tab sơ đồ; tác giả trả lời từ trình thiết kế (bảng dưới có tab "Bình luận duyệt" khi phiên bản `CHANGES_REQUESTED`) |
+
+Hành động:
+
+| Nút | Điều kiện | Hộp |
+|---|---|---|
+| Duyệt | `PERM-04-publish`, người dùng không thuộc người tạo, người đóng góp, người gửi (ERR-04-015 nếu cố); mọi dòng Rủi ro đã tick; kiểm tra không còn lỗi | Xác nhận với ô ý kiến (tùy chọn); nếu `04.review_require_reauth` = true thì xác thực lại (OTP hoặc ký số theo PH-02) |
+| Duyệt và phát hành | Như Duyệt + `PERM-04-promote` cho môi trường đề xuất | Hộp phát hành (mục 20) gộp |
+| Yêu cầu sửa | `PERM-04-publish` | Ý kiến bắt buộc ≥ 10 ký tự; phiên bản sang `CHANGES_REQUESTED`, bình luận mở chuyển tới tác giả |
+| Từ chối | `PERM-04-publish` | Lý do bắt buộc; phiên bản sang `DISCARDED` |
+
+Trạng thái: người khác đã duyệt khi đang xem → banner "Phiên bản đã được {user} duyệt lúc {time}" và nút ẩn; người gửi rút lại → banner và nút ẩn. Người duyệt không có quyền xem kết nối PH-05 vẫn thấy tên kết nối nhưng không thấy chi tiết.
+
+## 20. UI-04-15 Phát hành, triển khai, quay lui
+
+**Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy (tạm dừng, tiếp tục, dừng khẩn) bằng lệnh có ký (ADR-065), quay lui. Thay publish của repo vốn không nạp vào runtime (GAP-04-02). FR-04-065…075. Thay Start/Stop của Bus (LGC-BUS-009, 012, 026).
+
+### 20.1. Hộp phát hành
+
+```
+┌ Phát hành v8 lên Staging ────────────────────────────────────────────────────┐
+│ Đang chạy ở Staging: v7 (từ 21/11/2026)       Kiểm tra trước:                 │
+│ Thay đổi: +2 ~3 −0 [Xem khác biệt]             ✓ v8 đã duyệt bởi Lê V. C       │
+│ Tham số môi trường Staging: ✓ đủ 14/14         ✓ Đã chạy ổn ở Test 26 giờ (≥ 24)│
+│ Hồ sơ runtime: core-native (không đổi)         ✓ Không trong khoảng đóng băng  │
+│ Cách áp dụng  (•) Thay ngay  ( ) Theo lịch [dd/MM/yyyy HH:mm]                  │
+│ Lý do / số phiếu thay đổi * [YC-2026-1142 Bổ sung cấp lại khai sinh         ]  │
+│                                                   [Hủy] [Phát hành]            │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Kiểm tra theo BR-04-014 (phải ổn định ở môi trường trước `04.promote_min_soak_hours`, ERR-04-023); Staging có thể bỏ qua nếu `04.staging_required` = false (Q04-05). Lên Prod cần `PERM-04-promote` cho Prod và xác thực lại.
+
+### 20.2. Theo dõi triển khai
+
+Sau "Phát hành", drawer theo dõi hiện các bước dạng `CMP-Steps` dọc, cập nhật qua SSE:
+
+| Bước | Nội dung hiển thị | Lỗi |
+|---|---|---|
+| 1. Ghi kho cấu hình | Commit `a1b2c3d` vào `dh-flows-{tenant}` nhánh `env/staging` (liên kết xem commit nếu người dùng có quyền) | ERR-04-022, "Thử lại" |
+| 2. Đồng bộ Argo CD | "Đang đồng bộ… (ứng dụng `flows-lam-dong-staging`)"; trạng thái Argo | `OUT_OF_SYNC` quá 5 phút → cảnh báo |
+| 3. Runtime nạp | "2/3 bản sao đã nạp v8 (băm khớp)" cập nhật theo nhịp tim | Bản sao báo lỗi nạp: hiện log lỗi, nút "Quay lui về v7" |
+| 4. Kiểm tra sức khỏe | Số bản tin, tỷ lệ lỗi 5 phút đầu so với v7 | Tỷ lệ lỗi tăng > `04.auto_rollback_error_ratio` → đề xuất quay lui (không tự quay lui trừ khi tham số `04.auto_rollback` = true) |
+
+Đóng drawer được; tiến trình nằm ở thẻ môi trường của UI-04-02 và khay tác vụ nền.
+
+### 20.3. Điều khiển chạy
+
+| Hành động | Hộp | Điều kiện |
+|---|---|---|
+| Tạm dừng ở {env} | Lý do ≥ 10 ký tự; phạm vi: cả luồng hoặc route chọn | `PERM-04-operate` |
+| Tiếp tục | Lý do | |
+| Dừng khẩn | Hộp nguy hiểm: gõ lại mã luồng để xác nhận, lý do ≥ 20 ký tự; giải thích "Dừng ngay mọi route ở {env}, bản tin đang xử lý có thể bị dừng giữa chừng" | `PERM-04-emergency-stop`, dùng được cả trong khoảng đóng băng |
+| Quay lui | Chọn phiên bản đích (mặc định bản trước), xem khác biệt, lý do | `PERM-04-promote`; tạo phiên bản cũ thành đang chạy, phiên bản hiện tại sang `ROLLED_BACK` |
+| Gỡ luồng | Danh sách phụ thuộc (ERR-04-017 nếu còn), gõ lại mã, lý do; gỡ ở mọi môi trường | `PERM-04-delete` |
+
+Sau mỗi lệnh: hàng lệnh trong tab Triển khai hiện trạng thái lệnh (mục 5.1) và "{k}/{n} bản sao đã xác nhận" tới khi `RECONCILED`; quá 5 phút không xác nhận đủ → `PARTIAL` cảnh báo và nút "Gửi lại lệnh".
+
+## 21. UI-04-16 So sánh phiên bản
+
+Trang riêng, chọn "Từ" và "Đến" (phiên bản bất kỳ, hoặc "đang chạy ở {env}"). Ba chế độ: Sơ đồ (phủ khác biệt), YAML (`CMP-DiffViewer`), Danh sách thay đổi (bảng: thực thể, chặng, trường, cũ, mới). Liên kết sâu tới từng thay đổi. Nút "Mở trên sơ đồ" từ YAML. Thay tab Source của Bus (LGC-BUS-023) khi cần đối chiếu.
+
+## 22. UI-04-17 Danh mục thành phần
+
+PTN-08: cây trái là nhóm nghiệp vụ hoặc nhãn catalog; bảng phải các thành phần: tên, tiêu đề, loại (component, EIP, Kamelet, Kamelet tỉnh), hồ sơ runtime hỗ trợ, **chính sách ở tỉnh** (Cho phép, Cho phép có duyệt riêng, Chặn), số luồng dùng. Chi tiết thành phần (drawer): mô tả, tham số (bảng đầy đủ), ví dụ YAML, luồng đang dùng. Người có `PERM-04-catalog-admin` đổi chính sách (lý do bắt buộc), sửa bản dịch tiếng Việt của tiêu đề, tham số, sửa ánh xạ nhóm nghiệp vụ (`palette-groups.json`), xem phiên bản catalog và lịch sử đổi. Người khác có nút "Đề xuất cho phép" (tạo yêu cầu tới quản trị). Chân trang: "Catalog Camel {ver} · khớp runtime {ver} ✓" (ADR-061). Thay `ComponentCatalogPage` của repo.
+
+## 23. UI-04-18 Nhập luồng hệ cũ
+
+PTN-09, bốn bước: ① Tải tệp (XML Camel Spring/Blueprint xuất từ Tooling cũ, gói `.zip` nhiều tệp, hoặc chọn agent từ kết nối Jolokia cũ nếu tỉnh còn chạy song song); ② Phân tích: mỗi route một dòng với trạng thái chuyển đổi (Tự động 100 %, Cần chỉnh {n} điểm, Không chuyển được), danh sách điểm cần chỉnh (thành phần bị chặn, bí mật nhúng trong URI sẽ được tách ra thành tham số để chọn kết nối, bean lớp tùy biến, `pom` phụ thuộc); ③ Ánh xạ: chọn không gian, mã luồng, kết nối PH-05 cho mỗi bí mật được tách, chặng chuẩn được bọc tự động cho luồng đối ngoại; ④ Xem trước và tạo: mỗi route thành một bản nháp, có liên kết mở trình thiết kế. Bí mật tìm thấy trong tệp hệ cũ không bao giờ được lưu; báo cáo nhập liệt kê vị trí để người dùng đổi mật khẩu ở hệ nguồn. Tác vụ nền (ST-11). FR-04-007; phục vụ chạy song song strangler (Q12).
+
+## 24. UI-04-19 Thư viện khuôn mẫu
+
+Lưới thẻ: tên, sơ đồ thu nhỏ, mô tả, loại, số lần dùng, nhãn, phạm vi (Toàn quốc do Datahub cung cấp, Tỉnh). Bộ lọc theo nhóm (Tra cứu đồng bộ, Đồng bộ định kỳ, Nhận sự kiện, Tệp, Thanh toán, NGSP), loại. Chi tiết khuôn: sơ đồ, tham số khuôn, YAML, "Dùng khuôn này" (mở UI-04-03 bước 2). Người có `PERM-04-catalog-admin` tạo khuôn từ một luồng đã duyệt ("Lưu làm khuôn mẫu" ở UI-04-02), sửa, ẩn. Khuôn toàn quốc gồm ít nhất: REST tra cứu qua NDXP, NGSP Tư pháp (LLTP, hộ tịch), BHXH, ĐKKD, mã ĐVQHNS, DMDC quốc gia, VBQPPL, Kafka → CSDL, SFTP định kỳ → REST, thanh toán PayGov (dùng với PH-19).
+
+## 25. UI-04-20 Tham số PH-04
+
+Không có màn riêng: nhóm "04 · Tích hợp" trong màn tham số chung của PH-18 (`/quan-tri/tham-so?nhom=04`), hiện các tham số `04.*` của FRS §7 với miền giá trị, mặc định, giá trị tỉnh, người sửa cuối. Các tham số ảnh hưởng ATTT (`04.sample_data_real_forbidden`, `04.review_require_reauth`, `04.auto_rollback`, `04.test_allow_simulated`) có nhãn "Ảnh hưởng an toàn" và cần duyệt hai người theo PH-18. Thay màn cấu hình hệ thống của Bus (LGC-BUS-031).
+
+## 26. UI-04-21 Không gian làm việc
+
+PTN-01 + PTN-04. Danh sách không gian: tên, mã, đơn vị chủ quản, số thành viên, số luồng, chủ sở hữu. Chi tiết: thông tin; tab **Thành viên** (người dùng hoặc nhóm PH-02, vai trò VIEW/EDIT/MAINTAIN, hạn hiệu lực); tab **Kết nối được cấp** (từ PH-05, chỉ đọc ở đây, cấp ở PH-05); tab **Cờ** ("Được soạn Kamelet", "Được dùng CSDL trực tiếp" — bật cần lý do và căn cứ Q359, "Được dùng biểu thức kịch bản"); tab **Luồng**. Xóa không gian chỉ khi không còn luồng. Thay quản lý project, group của Bus (LGC-BUS-032).
+
+## 27. Kiến trúc mã giao diện
+
+### 27.1. Cấu trúc thư mục `apps/console/src/features/integration/`
+
+| Thư mục | Nội dung | Nguồn hiện có trong repo (`apps/console/src/flows/`) |
+|---|---|---|
+| `pages/` | `FlowListPage`, `FlowDetailPage`, `FlowCreateWizard`, `ReviewQueuePage`, `ReviewPage`, `RunLogPage`, `ComparePage`, `ComponentCatalogPage`, `TemplateLibraryPage`, `LegacyImportPage`, `WorkspacePage` | `EntityList`, `ReviewPage`, `RunLogPage`, `ComponentCatalogPage` (viết lại theo design system) |
+| `designer/model/` | Mô hình Camel (đọc, ghi YAML, giữ chú thích), cây chặng, `id` ổn định, lệnh sửa (command pattern cho hoàn tác) | Một phần trong `DesignerPage`; bỏ cơ chế `# @lgsp-canvas-v1:` |
+| `designer/catalog/` | Nạp `@kaoto/camel-catalog` 3.33.1 theo hồ sơ, chỉ mục tìm kiếm, ánh xạ nhóm nghiệp vụ, bản dịch | `catalog-index` (751 nút) |
+| `designer/canvas/` | `FlowCanvas` (XYFlow), `FlowNode`, `GroupNode`, `EdgeWithInsert`, bố cục ELK trong worker, lớp phủ | `DesignerPage` |
+| `designer/palette/` | `NodePalette`, `QuickInsert` | `Palette` |
+| `designer/inspector/` | `Inspector`, `StepConfigModal`, bộ sinh biểu mẫu từ catalog, các trường đặc thù (biểu thức, bí mật, kết nối, SQL) | `NodeConfig` |
+| `designer/yaml/` | `YamlEditor` (Monaco + lược đồ Camel), đồng bộ hai chiều | `YamlEditor` |
+| `designer/mapper/` | `DataMapper`, bộ sinh JQ, đọc/ghi `*.dhmap.json` | `DataMapper` |
+| `designer/kamelet/`, `designer/pipe/`, `designer/beans/` | Các chế độ đặc thù | `KameletSpec`, `BeanRegistry` |
+| `designer/validation/` | Quy tắc VR-01…12 phía trình duyệt (worker), gộp kết quả máy chủ | `CamelYamlValidator` phía máy chủ là đối chiếu |
+| `testrun/` | Drawer chạy thử, SSE, ca kiểm thử | `TestRunPage` |
+| `deploy/` | Hộp phát hành, theo dõi, điều khiển | — |
+| `api/` | Client sinh từ `openapi-integration.yaml` (TanStack Query) | Gọi trực tiếp `/api/admin/v1/routes` → thay bằng `/api/integration/v1/...` |
+| `a11y/` | Chế độ danh sách, thông báo trực tiếp, bảng phím tắt | — |
+
+### 27.2. Trạng thái và dữ liệu
+
+- Trạng thái máy chủ: TanStack Query, khóa `['int', tenant, 'flow', code, 'version', n]`; ETag giữ trong cache cùng dữ liệu.
+- Trạng thái mô hình soạn: kho Zustand riêng cho mỗi phiên bản đang mở (mô hình, vùng chọn, ngăn hoàn tác, trạng thái lưu); không đặt mô hình vào TanStack Query để tránh vẽ lại toàn cục.
+- Trạng thái giao diện cục bộ (kích thước ngăn, thu gọn, thu phóng): `localStorage` có tiền tố `dh.int.`, bọc try/catch.
+- Bản nháp cục bộ: IndexedDB (mục 10.16.2).
+- Sự kiện trực tiếp: một kết nối SSE mỗi tab tới API-04-095 (chạy thử, triển khai, catalog, khóa soạn thảo), tự nối lại có lùi dần.
+
+### 27.3. Thành phần design system mới cần bổ sung vào D03-05-04
+
+`CMP-DesignerToolbar`, `CMP-EntityRail`, `CMP-NodePalette`, `CMP-FlowCanvas`, `CMP-FlowNode`, `CMP-GroupNode`, `CMP-CanvasControls`, `CMP-Minimap`, `CMP-QuickInsert`, `CMP-Inspector`, `CMP-ExpressionField`, `CMP-SecretRefField`, `CMP-ConnectionSelect`, `CMP-SchemaTree`, `CMP-SaveIndicator`, `CMP-EnvCard`, `CMP-BottomPanel`, `CMP-ShortcutSheet`, `CMP-TreeGrid` (chế độ danh sách). Mỗi thành phần cần story Storybook đủ các trạng thái ở mục 10.7.3 và bài kiểm tra axe.
+
+## 28. Ma trận vai trò × hành động trên giao diện
+
+| Hành động | IE Kỹ sư tích hợp | IA Quản trị tích hợp | TO Vận hành | TA Quản trị tenant | SO ATTT | PA Kiểm toán |
+|---|---|---|---|---|---|---|
+| Xem danh sách, chi tiết | ✓ (không gian của mình + công khai) | ✓ | ✓ | ✓ | ✓ | ✓ chỉ đọc |
+| Tạo, sửa bản nháp | ✓ (EDIT) | ✓ | | | | |
+| Chạy thử | ✓ | ✓ | ✓ (chỉ bản đang chạy) | | | |
+| Gửi duyệt | ✓ | ✓ | | | | |
+| Duyệt | ✓ nếu có `PERM-04-publish` và không tham gia soạn | ✓ (cùng điều kiện) | | | | |
+| Phát hành Test, Staging | | ✓ | ✓ | | | |
+| Phát hành Prod | | ✓ (`promote`) | ✓ (`promote`) | | | |
+| Tạm dừng, tiếp tục | | ✓ | ✓ | | | |
+| Dừng khẩn | | ✓ | ✓ | | ✓ | |
+| Gỡ luồng | | ✓ | | | | |
+| Chính sách thành phần, khuôn mẫu | | ✓ (`catalog-admin`) | | | ✓ xem, đề xuất | |
+| Không gian làm việc | | ✓ (`admin`) | | ✓ | | |
+| Xem bản tin mẫu gắn nhãn dữ liệu thật | | `PERM-04-sample-data` | | | ✓ | ✓ |
+| Nhật ký thay đổi | ✓ (luồng của mình) | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Ánh xạ đầy đủ vai trò → quyền ở D02-08; bảng này chỉ cho thấy giao diện ẩn, hiện gì với mỗi vai trò mặc định.
+
+## 29. Kế hoạch kiểm thử giao diện
+
+| Loại | Công cụ | Phạm vi |
+|---|---|---|
+| Đơn vị | Vitest | Mô hình (YAML ↔ mô hình ↔ YAML khứ hồi trên 300 tệp mẫu, gồm mọi ví dụ YAML trong catalog), bộ sinh JQ, quy tắc VR phía trình duyệt, gộp ba bên |
+| Thành phần | Storybook + test-runner + axe | Mọi `CMP-*` mục 27.3 ở mọi trạng thái, sáng, tối, glass bật, tắt, giảm chuyển động |
+| Đầu cuối | Playwright | Kịch bản TS-04-xx giao diện ở D05-02-PH04: tạo từ khuôn, kéo thả, bàn phím, YAML hai chiều, xung đột, mất mạng, chạy thử (sandbox thật trong CI), gửi duyệt, duyệt bốn mắt, phát hành Test |
+| Hồi quy hình ảnh | Playwright screenshot, `deviceScaleFactor` 1 | 21 màn × sáng/tối; ngưỡng lệch 0,1 % |
+| Hiệu năng | Playwright + trace, luồng mẫu 50, 200, 500 chặng | Ngân sách 10.22 |
+| Khả năng truy cập thủ công | NVDA + Chrome, VoiceOver + Safari | AC-UI-04-04-06, mỗi đợt phát hành |
+| Khả dụng | 5 kỹ sư tích hợp (trong đó 2 người từng dùng Tooling cũ) | Ba nhiệm vụ: tạo luồng tra cứu đối ngoại, sửa ánh xạ có chuyển mã, quay lui; đo thời gian và lỗi |
+
+## 30. Hiện trạng mã và việc phải đổi
+
+| Mã hiện có | Hiện trạng | Đổi theo thiết kế | GAP |
+|---|---|---|---|
+| `DesignerPage` lưu tọa độ vào chú thích `# @lgsp-canvas-v1:` | Có | Bỏ; bố cục tự động; chú thích người dùng được giữ | GAP-04-06 |
+| Catalog `@kaoto/camel-catalog` | Đã khớp 3.33.1 / Camel 4.18.2 (PR #5) | Giữ, thêm tải theo hồ sơ và chính sách tỉnh | GAP-04-01 (xong phần phiên bản) |
+| `TestRunPage` + `RoutesService.testRun` tính kết quả từ `hashCode` | Giả | Sandbox thật, SSE, gắn `contentHash` | GAP-04-04 |
+| `ReviewPage` bốn mắt so `created_by` | Thiếu người đóng góp, người gửi | Theo BR-04-010 | GAP-04-07 |
+| Publish cho phép từ `DRAFT`, không nạp runtime | Sai trạng thái, thiếu Argo | Hộp phát hành, theo dõi bốn bước | GAP-04-02, 03 |
+| Đường dẫn `/flows/*`, API `/api/admin/v1/routes` | Có | `/tich-hop/luong/*`, `/api/integration/v1/*`, chuyển hướng một đợt | GAP-04-13 |
+| Giao diện theo antd mặc định | Chưa theo Liquid Glass | Theo D03-05 | — |
+
+## 31. Câu hỏi mở và giả định
+
+Theo chỉ đạo của người dùng (25/11/2026), các điểm dưới đây đã được chốt bằng giả định hợp lý để làm tiếp; mỗi giả định có thể đổi khi rà soát tổng thể.
+
+| Mã | Câu hỏi | Giả định đang dùng |
+|---|---|---|
+| Q04-30 | Bố cục sơ đồ mặc định dọc hay ngang? | Dọc (giống Kaoto, đọc như danh sách bước); người dùng đổi được, lưu theo người dùng |
+| Q04-31 | Có cho đặt chặng ở tọa độ tùy ý như Tooling cũ? | Không; bố cục tự động, chỉ đổi thứ tự (mục 10.7.1) |
+| Q04-32 | Có đồng soạn thời gian thực (nhiều người sửa cùng lúc)? | Không trong bản 1.0; một người giữ khóa, người khác chỉ đọc, có chuyển quyền |
+| Q04-33 | Ngưỡng màn hình tối thiểu để sửa? | 1024 px; dưới đó chỉ xem |
+| Q04-34 | Ngôn ngữ biểu thức mặc định? | simple cho điều kiện, jq cho biến đổi JSON |
+| Q04-35 | Cho phép biểu thức kịch bản (groovy, js)? | Chặn mặc định; tỉnh bật theo không gian, gắn rủi ro khi duyệt |
+| Q04-36 | Bản tin mẫu có được chứa dữ liệu thật? | Không mặc định (`04.sample_data_real_forbidden` = true); tỉnh muốn mở phải có quyền riêng và che dữ liệu |
+| Q04-37 | Xác thực lại khi duyệt, phát hành Prod? | Có với Prod; duyệt tùy tham số, mặc định tắt |
+| Q04-38 | Bản dịch tiếng Việt của 751 thành phần? | Dịch tiêu đề và mô tả của khoảng 120 thành phần hay dùng ở bản 1.0; còn lại hiện tiếng Anh có nhãn "EN" |
+| Q04-39 | Có nhập từ agent hệ cũ qua Jolokia trực tiếp? | Có, chỉ đọc định nghĩa, khi tỉnh còn chạy song song; mặc định nhập từ tệp XML |
