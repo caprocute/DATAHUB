@@ -1089,3 +1089,521 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
   1. Chạy bộ quy tắc trình duyệt (Vitest) và máy chủ (JUnit) trên cùng tệp, so sánh `rule`, `severity`, `path`.
 - **Mong đợi** Kết quả trùng khớp 100%. Thời gian máy chủ mức `SUBMIT` cho YAML-200 p95 < 2 giây (NFR-04-007).
 
+### TS-04-12 · Chạy thử trên sandbox
+
+**Mục tiêu.** Thay cơ chế "chạy thử giả lập" của mã W2 bằng chạy thật trên `dh-runtime-sandbox`, với đích mô phỏng (`MOCK`) hoặc đích thật môi trường TEST (`SANDBOX_LIVE`). Kết quả chạy thử là điều kiện của gửi duyệt. Vì vậy ca dương tính phải chứng minh lần chạy thử thật sự đi qua Camel, không chỉ trả kết quả dựng sẵn.
+
+**Phủ.** FR-04-030, 032, 033; BR-04-004, 013; UC-04-08; API-04-040…043; UI-04-11, 12; ERR-04-009, 013, 019, 020, 021; EVT-04-10; NFR-04-008.
+
+#### TC-04-### · Chạy thử MOCK đạt <!--k:run-pass-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-030, 033 · API-04-040, 042 · UI-04-11 · UC-04-08 · EVT-04-10 · NFR-04-008
+- **Tiền điều kiện / dữ liệu** F-HT v4 hợp lệ; IE1; MSG-OK; đích mô phỏng trả `{"ketQua":"OK"}`.
+- **Bước**
+  1. Gọi `POST .../versions/4/test-runs` với `{"mode":"MOCK","body":MSG-OK,"assertions":[{"kind":"STATUS","expected":200},{"kind":"STEP_VISITED","nodeId":"deliver-ht"}]}` và `Idempotency-Key`.
+  2. Mở SSE `GET .../test-runs/{runId}/events`.
+  3. Trên UI-04-11, quan sát sơ đồ.
+- **Mong đợi** Bước 1 trả `202`, `Location`, `status = QUEUED`, `definitionHash = contentHash` của v4. Bước 2 nhận `status` → `RUNNING`, chín sự kiện `step` (một cho mỗi chặng chuẩn) có `stage`, `durationMs`, rồi `completed` với `status = PASSED`. Vết OpenTelemetry của lần chạy có span `camel` trong pod sandbox (chứng minh chạy thật). Bước 3: các chặng đã đi tô xanh, nhãn thời gian trên cạnh. EVT-04-10 phát. Từ gửi tới kết quả p95 < 5 giây (NFR-04-008). KT: có (`INT_TESTRUN`).
+
+#### TC-04-### · Chạy thử không đạt và chặng lỗi <!--k:run-fail-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-030, 032 · API-04-040, 042 · UI-04-11, 12
+- **Tiền điều kiện / dữ liệu** F-HT v4; MSG-NOID.
+- **Bước**
+  1. Chạy `MOCK` với MSG-NOID, khẳng định `STATUS = 200`.
+  2. Mở UI-04-12 (nhật ký) của lần chạy.
+- **Mong đợi** Bước 1: `status = FAILED`; `assertionResults[0].passed = false`, `actual = 400`; chặng `schema` có `status = FAILED`, `errorClass = VALIDATION`; chặng sau `schema` có `SKIPPED`. Bước 2: dòng chặng `schema` đỏ, thông điệp "Thiếu trường soDinhDanh", không có giá trị của trường khác (BR-04-013).
+
+#### TC-04-### · Chạy thử với định nghĩa lỗi, kết nối thiếu TEST, bản tin lớn <!--k:run-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-030 · API-04-040 · ERR-04-009, 013, 021
+- **Tiền điều kiện / dữ liệu** `tc-loi-cu-phap` (VR-02 `ERROR`); `tc-notest` dùng CONN-NOTEST.
+- **Bước**
+  1. Chạy thử `tc-loi-cu-phap`.
+  2. Chạy `SANDBOX_LIVE` với `tc-notest`.
+  3. Chạy F-HT v4 với MSG-BIG.
+  4. Chạy với `timeoutSeconds = 121`.
+- **Mong đợi** Lần lượt `422` ERR-04-009 (kèm `findings`), `422` ERR-04-013, `413` ERR-04-021, `400` ERR-04-049. Không có lần chạy nào vào hàng đợi.
+
+#### TC-04-### · Quá thời gian và chặng treo <!--k:run-timeout-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-030 · API-04-042 · ERR-04-020
+- **Tiền điều kiện / dữ liệu** Đích mô phỏng của F-HT trễ 10 giây.
+- **Bước**
+  1. Chạy `MOCK` với `timeoutSeconds = 5`.
+- **Mong đợi** Sau khoảng 5 giây: `status = TIMED_OUT`, `errorCode = ERR-04-020`, `hungNodeId = "deliver-ht"`. Sandbox dừng exchange và giải phóng chỗ trong hạn mức; lần chạy kế tiếp bắt đầu ngay.
+
+#### TC-04-### · Hạn mức chạy thử đồng thời <!--k:run-quota-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-030, 084 · API-04-040 · ERR-04-019
+- **Tiền điều kiện / dữ liệu** `04.test.max-concurrent = 5`; đích trễ 10 giây.
+- **Bước**
+  1. Gửi đồng thời 6 lần chạy thử của T68.
+  2. Cùng lúc gửi 1 lần của T01.
+- **Mong đợi** Năm lần đầu `202`. Lần thứ sáu `429` ERR-04-019 kèm `retryAfterSeconds` và tiêu đề `Retry-After`. Lần của T01 `202` (hạn mức tính theo tenant).
+
+#### TC-04-### · Hủy lần chạy thử <!--k:run-cancel-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-04-030 · API-04-043 · ERR-04-005
+- **Tiền điều kiện / dữ liệu** Một lần chạy đang `QUEUED`, một lần đã `PASSED`.
+- **Bước**
+  1. `:cancel` lần `QUEUED`.
+  2. `:cancel` lần `PASSED`.
+- **Mong đợi** Bước 1 trả `200`, `status = CANCELLED`. Bước 2 trả `409` ERR-04-005.
+
+#### TC-04-### · Sandbox không sẵn sàng và chế độ mô phỏng <!--k:run-sim-->
+- **Loại** Khả dụng · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-030 · BR-04-004 · ERR-04-019
+- **Tiền điều kiện / dữ liệu** Thu nhỏ `dh-runtime-sandbox` về 0 bản sao.
+- **Bước**
+  1. Chạy thử với `04.test.allow-simulation = false`.
+  2. Bật `allow-simulation`, chạy lại.
+- **Mong đợi** Bước 1 trả `503` ERR-04-019. Bước 2 trả `202`, kết quả `mode = SIMULATED`, giao diện hiện nhãn "Mô phỏng, không dùng để gửi duyệt". Lần chạy này không được tính cho BR-04-004 (xem ca gửi duyệt với lần mô phỏng ở TS-04-14).
+
+#### TC-04-### · Nhật ký chạy thử: xem lại, so sánh, dọn <!--k:run-log-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-032 · API-04-041, 042 · UI-04-12 · BR-04-013
+- **Tiền điều kiện / dữ liệu** F-HT có 3 lần chạy; một lần bật `captureBodies`.
+- **Bước**
+  1. Gọi `GET /flows/tra-cuu-ho-tich/test-runs?versionNo=4`.
+  2. Gọi `GET .../test-runs/{id}/steps/3/body?side=out` cho lần có `captureBodies`.
+  3. Trên UI-04-12, chọn hai lần chạy, bấm "So sánh".
+  4. Đặt đồng hồ hệ thống tới 8 ngày sau, chạy job dọn.
+- **Mong đợi** Bước 1: ba lần chạy, mỗi lần có `matchesCurrentHash`. Bước 2: thân đã che theo BR-04-013 (trường phân loại Cá nhân thay bằng `***`). Bước 3: bảng so sánh theo chặng, tô khác biệt thời gian và trạng thái. Bước 4: thân bị xóa khỏi RGW bucket `dh-int-testrun` (`04.test.body-retention-days = 7`), bước 2 nay trả `404`; metadata còn tới 90 ngày.
+
+#### TC-04-### · Chạy thử SANDBOX_LIVE gọi đích TEST <!--k:run-live-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-030 · UC-04-08
+- **Tiền điều kiện / dữ liệu** CONN-HT có giá trị TEST trỏ WireMock `OK`.
+- **Bước**
+  1. Chạy `SANDBOX_LIVE` với MSG-OK.
+- **Mong đợi** `PASSED`; WireMock ghi nhận đúng một lệnh gọi tới URL TEST; không lệnh gọi nào tới URL PROD (kiểm bằng WireMock PROD không nhận yêu cầu). Sandbox chỉ đọc được giá trị TEST của kết nối (OpenBao policy).
+
+### TS-04-13 · Ca kiểm thử của luồng
+
+**Phủ.** FR-04-031; BR-04-004; UC-04-09; API-04-044; UI-04-13; ERR-04-030.
+
+#### TC-04-### · Tạo ca kiểm thử và chạy tất cả <!--k:case-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-031 · API-04-044, 040 · UI-04-13 · UC-04-09
+- **Tiền điều kiện / dữ liệu** F-HT v4.
+- **Bước**
+  1. Tạo ca "KS-01 tra cứu hợp lệ" (MSG-OK, `STATUS = 200`, `BODY_JQ .ketQua == "OK"`).
+  2. Tạo ca "KS-02 thiếu số định danh" (MSG-NOID, `STATUS = 400`, `ERROR_CODE = ERR-04-101`, `STEP_NOT_VISITED deliver-ht`).
+  3. Trên UI-04-13 bấm "Chạy tất cả".
+- **Mong đợi** Bước 1, 2 trả `201`. Bước 3: hai lần chạy có `testCaseId`, cả hai `PASSED`; cột "Kết quả trên bản hiện tại" xanh.
+
+#### TC-04-### · Ca kiểm thử sai và kết quả cũ hết hiệu lực <!--k:case-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-031 · API-04-044 · ERR-04-030, 006
+- **Tiền điều kiện / dữ liệu** Ca KS-01 đã đạt trên băm cũ.
+- **Bước**
+  1. Tạo ca không có khẳng định nào.
+  2. Sửa ca với ETag cũ.
+  3. Xóa ca không tồn tại.
+  4. Sửa định nghĩa v4 (đổi băm), xem lại danh sách ca.
+- **Mong đợi** Bước 1 trả `400` ERR-04-049 (`minItems = 1`, VR-20). Bước 2 trả `412` ERR-04-006. Bước 3 trả `404` ERR-04-030. Bước 4: `lastResult.onCurrentHash = false` cho KS-01, nhãn "Cần chạy lại".
+
+### TS-04-14 · Gửi duyệt, rút lại
+
+**Mục tiêu.** Cổng chất lượng trước duyệt: kiểm tra mức `SUBMIT`, chạy thử đạt trên đúng nội dung, catalog hiện hành, phiên bản bất biến sau khi gửi.
+
+**Phủ.** FR-04-040; BR-04-004, 016, 017, 020; UC-04-10; API-04-050, 051; UI-04-14; ERR-04-005, 009, 014, 025, 042; EVT-04-03.
+
+#### TC-04-### · Gửi duyệt thành công <!--k:submit-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-040 · BR-04-004, 016 · API-04-050 · UC-04-10 · EVT-04-03
+- **Tiền điều kiện / dữ liệu** F-HT v4 hợp lệ; một lần `MOCK` `PASSED` trên băm hiện tại; KS-01, KS-02 đạt trên băm hiện tại; IE1, IE2 là người đóng góp.
+- **Bước**
+  1. IE1 gọi `POST .../versions/4:submit` với `{"changeNote":"Thêm chuẩn hóa họ tên theo QĐ thử","suggestedReviewers":["U-T68-IA1"]}` và `If-Match`.
+- **Mong đợi** `200`, `status = PENDING_REVIEW`, `submittedBy = IE1`, danh sách người đóng góp chụp lại (IE1, IE2). EVT-04-03 phát, PH-18 tạo thông báo cho IA1. `allowedActions` của IE1 chỉ còn `WITHDRAW`. KT: có (`INT_VERSION_SUBMIT`).
+
+#### TC-04-### · Gửi duyệt khi chưa chạy thử đạt trên đúng băm <!--k:submit-notest-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-040 · BR-04-004 · API-04-050 · ERR-04-014
+- **Tiền điều kiện / dữ liệu** F-HT v4: lần `PASSED` gần nhất ở băm cũ; sau đó sửa một thuộc tính.
+- **Bước**
+  1. `:submit`.
+  2. Chạy `MOCK` đạt trên băm mới nhưng KS-02 `FAILED`, `:submit` lại.
+- **Mong đợi** Cả hai trả `409` ERR-04-014; `detail` nêu rõ lý do (chưa có lần đạt trên băm hiện tại, hoặc ca KS-02 chưa đạt).
+
+#### TC-04-### · Lần chạy mô phỏng không được tính <!--k:sim-not-counted-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-04-040, 030 · BR-04-004 · ERR-04-014
+- **Tiền điều kiện / dữ liệu** F-HT v4 chỉ có lần chạy `SIMULATED` đạt trên băm hiện tại (từ ca sandbox không sẵn sàng); hoặc lần chạy cũ di trú từ W2 có `mode = SIMULATED`.
+- **Bước**
+  1. `:submit`.
+- **Mong đợi** `409` ERR-04-014. Câu truy vấn kiểm BR-04-004 (SDD §8.4) lọc `mode <> 'SIMULATED'` (kiểm bằng IT với dữ liệu di trú `ph04-9000`).
+
+#### TC-04-### · Gửi duyệt sai trạng thái, thiếu ghi chú, còn lỗi <!--k:submit-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-040 · BR-04-017 · API-04-050 · ERR-04-005, 009, 025
+- **Tiền điều kiện / dữ liệu** v3 `APPROVED`; `tc-con-loi` có VR-05 `ERROR`.
+- **Bước**
+  1. `:submit` v3.
+  2. `:submit` F-HT v4 với `changeNote = "sửa"`.
+  3. `:submit` `tc-con-loi`.
+- **Mong đợi** Lần lượt `409` ERR-04-005, `400` ERR-04-025, `422` ERR-04-009 kèm `findings`. Phiên bản giữ `DRAFT`. EVT: không.
+
+#### TC-04-### · Rút lại yêu cầu duyệt <!--k:withdraw-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-040 · BR-04-017 · API-04-051
+- **Tiền điều kiện / dữ liệu** F-HT v4 `PENDING_REVIEW`.
+- **Bước**
+  1. IE1 gọi `:withdraw` với lý do hợp lệ.
+  2. IE1 lưu nháp.
+- **Mong đợi** Bước 1 trả `200`, `status = DRAFT`; thông báo cho người duyệt được thu hồi. Bước 2 trả `200`. KT: có (`INT_VERSION_WITHDRAW` có lý do).
+
+#### TC-04-### · Phiên bản đã gửi duyệt không sửa được qua mọi kênh <!--k:submit-immutable-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-040 · BR-04-016 · API-04-022, 027, 044
+- **Tiền điều kiện / dữ liệu** F-HT v4 `PENDING_REVIEW`.
+- **Bước**
+  1. Lưu nháp.
+  2. Nhập YAML.
+  3. Tạo ca kiểm thử mới.
+  4. Gọi `:discard`.
+- **Mong đợi** Bước 1, 2, 4 trả `409` ERR-04-005. Bước 3 trả `201` (ca kiểm thử gắn luồng, không thuộc phiên bản), nhưng không thay đổi `contentHash` của v4.
+
+### TS-04-15 · Duyệt bốn mắt và so sánh phiên bản
+
+**Mục tiêu.** Không ai tự duyệt được phiên bản mình làm ra, kể cả khi có đủ vai trò. Người duyệt phải xem khác biệt trước khi quyết định. Đây là nhóm ca bắt buộc 100% (thẻ `four-eyes`).
+
+**Phủ.** FR-04-041, 043; BR-04-005, 017; UC-04-11; API-04-025, 052, 053; UI-04-14, 16; ERR-04-005, 015, 025, 044; EVT-04-04, 05.
+
+#### TC-04-### · Duyệt phiên bản <!--k:approve-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-041 · BR-04-005 · API-04-053, 025, 052 · UI-04-14 · UC-04-11 · EVT-04-04
+- **Tiền điều kiện / dữ liệu** F-HT v4 `PENDING_REVIEW` (người tạo IE1, đóng góp IE2); IA1.
+- **Bước**
+  1. IA1 gọi `GET /reviews`.
+  2. IA1 gọi `GET .../versions/4/diff?base=3&markViewed=true`.
+  3. IA1 gọi `:review` với `{"decision":"APPROVE","comment":"Đúng đặc tả","checklist":{"c1":true,"c2":true,"c3":true,"c4":true}}`.
+- **Mong đợi** Bước 1: có F-HT v4, `canDecide = true`, `changeSummary` đúng. Bước 2 trả `200` với khác biệt theo chặng. Bước 3 trả `200`, `status = APPROVED`, `approvedBy = IA1`; EVT-04-04 phát. KT: có (`INT_VERSION_APPROVE` với checklist).
+
+#### TC-04-### · Yêu cầu sửa có ý kiến theo chặng <!--k:reqchanges-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-041 · API-04-052 · UI-04-14 · EVT-04-05
+- **Tiền điều kiện / dữ liệu** Như trên.
+- **Bước**
+  1. IA1 gọi `:review` với `decision = REQUEST_CHANGES`, `comment`, `nodeComments = [{"nodeId":"transform-1","text":"Thiếu chuẩn hóa dấu"}]`.
+  2. IE1 mở trình thiết kế.
+- **Mong đợi** Bước 1: `status = CHANGES_REQUESTED`; EVT-04-05 phát. Bước 2: chặng `transform-1` có huy hiệu ý kiến, bảng Vấn đề có mục "Ý kiến người duyệt"; phiên bản sửa được.
+
+#### TC-04-### · Gửi duyệt lại sau khi sửa <!--k:resubmit-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-040, 041 · API-04-050
+- **Tiền điều kiện / dữ liệu** F-HT v4 `CHANGES_REQUESTED`.
+- **Bước**
+  1. IE1 sửa, chạy thử đạt, `:submit`.
+- **Mong đợi** `200`, `status = PENDING_REVIEW`; lịch sử duyệt giữ ý kiến vòng trước.
+
+#### TC-04-### · Tự duyệt bị chặn với người tạo, người đóng góp, người gửi <!--k:four-eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-041 · BR-04-005 · API-04-052 · ERR-04-015
+- **Tiền điều kiện / dữ liệu** Ba phiên bản `PENDING_REVIEW` trong WS-HOTICH: (a) do IA2 tạo; (b) do IE1 tạo, IA2 đóng góp một lần lưu; (c) do IE1 tạo, IA2 gửi duyệt. IA2 có cả vai trò IA và IE.
+- **Bước**
+  1. IA2 xem diff và `:review` APPROVE trên (a), (b), (c).
+  2. Xem `GET /reviews` của IA2.
+- **Mong đợi** Bước 1: cả ba trả `403` ERR-04-015, trạng thái không đổi; KT: có (`INT_REVIEW_DENIED`, nhật ký an ninh). Bước 2: ba mục có `canDecide = false`; trên giao diện nút "Duyệt" ẩn kèm lý do.
+
+#### TC-04-### · Duyệt khi chưa xem so sánh, thiếu checklist, sai trạng thái <!--k:review-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-041, 043 · BR-04-017 · API-04-052 · ERR-04-005, 025
+- **Tiền điều kiện / dữ liệu** F-HT v4 `PENDING_REVIEW`; `tc-nhap` v1 `DRAFT`.
+- **Bước**
+  1. IA1 `:review` APPROVE khi chưa gọi diff.
+  2. IA1 xem diff rồi APPROVE thiếu mục `c3`.
+  3. IA1 REQUEST_CHANGES không có `comment`.
+  4. IA1 APPROVE `tc-nhap` v1.
+- **Mong đợi** Bước 1 trả `409` ERR-04-005 ("chưa xem so sánh"). Bước 2, 3 trả `400` ERR-04-025. Bước 4 trả `409` ERR-04-005.
+
+#### TC-04-### · Duyệt bởi người ngoài không gian hoặc thiếu quyền <!--k:review-scope-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-041, 007 · BR-04-021 · ERR-04-003, 045
+- **Tiền điều kiện / dữ liệu** IA thứ ba `U-T68-IA3` không là thành viên WS-HOTICH; IE2 (không có `PERM-04-publish`).
+- **Bước**
+  1. IA3 `:review` F-HT v4.
+  2. IE2 `:review` F-HT v4.
+- **Mong đợi** Bước 1 trả `403` ERR-04-003. Bước 2 trả 403-PQ.
+
+#### TC-04-### · Xác thực lại khi duyệt <!--k:reauth-->
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-041, 084 · API-04-052 · ERR-04-044
+- **Tiền điều kiện / dữ liệu** `04.review.require-reauth = true`; token của IA1 có `auth_time` cách 10 phút.
+- **Bước**
+  1. `:review` APPROVE.
+  2. Trên giao diện, đăng nhập lại trong cửa sổ bật, duyệt lại.
+- **Mong đợi** Bước 1 trả `401` kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", max_age=300`, `code = ERR-04-044`. Bước 2 trả `200`.
+
+#### TC-04-### · So sánh hai phiên bản bất kỳ <!--k:diff-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-043 · API-04-025 · UI-04-16
+- **Tiền điều kiện / dữ liệu** F-HT v2, v3, v4.
+- **Bước**
+  1. Gọi `diff` v4 với `base=2`.
+  2. Mở UI-04-16 chế độ "Sơ đồ" và "YAML".
+  3. Gọi `diff` v4 với `base=99`.
+- **Mong đợi** Bước 1: `nodes[]` có `ADDED`, `REMOVED`, `MODIFIED` (kèm `fields`), `MOVED` khi chỉ đổi vị trí trong route; khác biệt bố cục không tính. Bước 2: sơ đồ tô xanh, đỏ, vàng; YAML hai cột cuộn đồng bộ. Bước 3 trả `404` ERR-04-004.
+
+### TS-04-16 · Phát hành GitOps và nâng môi trường
+
+**Mục tiêu.** Chỉ phiên bản `APPROVED` đi vào runtime, và chỉ qua Git. Thứ tự môi trường được giữ. `SYNCED` chỉ khi mọi bản sao báo đúng băm. Nhóm ca bắt buộc 100%.
+
+**Phủ.** FR-04-042, 045; BR-04-012, 018, 019, 022; UC-04-12; API-04-054, 056; UI-04-15; ERR-04-005, 009, 022, 023, 029, 041; EVT-04-06, 07, 12; NFR-04-009.
+
+#### TC-04-### · Phát hành lên TEST tới SYNCED <!--k:deploy-sync-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, GO, E2E
+- **Truy vết** FR-04-042 · BR-04-012 · API-04-054 · UI-04-15 · UC-04-12 · EVT-04-06, 07, 12
+- **Tiền điều kiện / dữ liệu** F-HT v4 `APPROVED`; IA1.
+- **Bước**
+  1. Gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"TEST"}` và `Idempotency-Key`.
+  2. Mở SSE `.../deployments/{id}/events`.
+  3. Đọc `env/test` trên Gitea.
+  4. Gọi luồng qua `apisix-int` môi trường TEST.
+- **Mong đợi** Bước 1 trả `202`, `syncStatus = PENDING`. Bước 2: `PENDING` → `SYNCING` (có `gitCommit`) → `SYNCED` khi mọi bản sao gửi nhịp tim EVT-04-12 có `contentHash` của v4; `healthStatus = HEALTHY`. Bước 3: commit có thông điệp chứa `flow=tra-cuu-ho-tich version=4 by=U-T68-IA1 trace=…`, `flow.dh.yaml` có `version: 4`, có chữ ký trong `.dh/signatures`. Bước 4: phản hồi do v4 sinh. EVT-04-06, 07 phát. KT: có (`INT_DEPLOY`).
+
+#### TC-04-### · Nâng TEST → STAGING → PROD theo thứ tự <!--k:promote-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-045 · BR-04-019 · API-04-056 · UC-04-12 · NFR-04-009
+- **Tiền điều kiện / dữ liệu** v4 `SYNCED`, `HEALTHY` ở TEST; `04.env.soak-minutes.STAGING = 1` (rút ngắn cho kiểm thử); TA có `PERM-04-promote`.
+- **Bước**
+  1. TA nâng v4 lên STAGING.
+  2. Sau 1 phút ổn định, TA nâng lên PROD.
+  3. Kiểm Gitea: `env/prod` nhận merge request, CI của kho cấu hình chạy, merge.
+- **Mong đợi** Bước 1, 2 trả `202`. Bước 3: merge request có mô tả phiên bản, người duyệt, liên kết so sánh; sau merge, PROD `SYNCED`. Từ lệnh nâng PROD tới `SYNCED` p95 < 3 phút (NFR-04-009). v3 thành `SUPERSEDED` ở PROD.
+
+#### TC-04-### · Sai thứ tự môi trường, chưa ổn định <!--k:promote-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-042, 045 · BR-04-019 · ERR-04-023
+- **Tiền điều kiện / dữ liệu** `tc-moi` v1 `APPROVED`, chưa triển khai ở đâu; `04.env.soak-minutes.STAGING = 30`.
+- **Bước**
+  1. Phát hành `tc-moi` v1 thẳng lên PROD.
+  2. Phát hành lên TEST, chờ `SYNCED`, nâng lên PROD (bỏ qua STAGING).
+  3. Nâng lên STAGING, ngay lập tức nâng lên PROD.
+  4. Cho TEST thành `DEGRADED` (đích mô phỏng trả 500), nâng lên STAGING.
+- **Mong đợi** Bước 1, 2, 3, 4 trả `409` ERR-04-023, `detail` nêu môi trường trước và điều kiện còn thiếu (thời gian ổn định còn lại ở bước 3). Git: không cho PROD.
+
+#### TC-04-### · Chỉ phiên bản đã duyệt được phát hành <!--k:release-draft-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-042 · BR-04-012 · ERR-04-005
+- **Tiền điều kiện / dữ liệu** `tc-nhap` v1 `DRAFT`; F-HT phiên bản `PENDING_REVIEW`.
+- **Bước**
+  1. IA1 phát hành `tc-nhap` v1 lên TEST.
+  2. IA1 phát hành phiên bản `PENDING_REVIEW` lên TEST.
+  3. Dùng tài khoản Git của nhân viên DevOps đẩy trực tiếp một `flow.camel.yaml` không có chữ ký vào `env/test`.
+- **Mong đợi** Bước 1, 2 trả `409` ERR-04-005. Bước 3: CI kho cấu hình (ADR-068) từ chối vì thiếu chữ ký hợp lệ; nếu nhánh bảo vệ bị vượt qua thì `FlowLoader` của runtime từ chối nạp tệp không có chữ ký khớp `contentHash` đã duyệt, ghi `loadError`, phát cảnh báo an ninh PH-13. Luồng không chạy.
+
+#### TC-04-### · Lỗi ghi Git <!--k:deploy-gitfail-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-042 · API-04-054 · ERR-04-022
+- **Tiền điều kiện / dữ liệu** Gitea trả `500` cho mọi lệnh đẩy (Chaos Mesh hoặc WireMock trước Gitea).
+- **Bước**
+  1. Phát hành F-HT v4 lên TEST.
+- **Mong đợi** `202`; sau ba lần thử lại giãn cách, triển khai `FAILED`, `errorCode = ERR-04-022`; phiên bản vẫn `APPROVED`; nút "Thử lại" có trên UI-04-15. Runtime vẫn chạy phiên bản cũ.
+
+#### TC-04-### · Quá hạn đồng bộ <!--k:deploy-timeout-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** GO
+- **Truy vết** FR-04-042 · BR-04-018
+- **Tiền điều kiện / dữ liệu** `04.deploy.timeout-minutes = 2`; Argo CD tạm dừng đồng bộ ứng dụng `dh-runtime-t68-test`.
+- **Bước**
+  1. Phát hành v4 lên TEST, chờ 2 phút.
+- **Mong đợi** `SYNCING` → `FAILED` với lý do lấy từ trạng thái Argo CD ("OutOfSync"); EVT-04-07 phát; thông báo người phát hành.
+
+#### TC-04-### · Phát hành trong khoảng đóng băng, không có hồ sơ runtime <!--k:deploy-freeze-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-042, 084 · BR-04-022 · ERR-04-041, 029
+- **Tiền điều kiện / dữ liệu** TA đặt khoảng đóng băng 2 giờ tới; `tc-jvm` dùng thành phần chỉ JVM, tenant không được hồ sơ JVM.
+- **Bước**
+  1. Phát hành F-HT v4 lên PROD.
+  2. Phát hành F-HT v4 lên TEST.
+  3. Phát hành `tc-jvm` lên TEST.
+- **Mong đợi** Bước 1 trả `423` ERR-04-041 kèm `until`. Bước 2 trả `202` (đóng băng chỉ chặn PROD). Bước 3 trả `422` ERR-04-029.
+
+#### TC-04-### · Lệch băm sau khi đồng bộ <!--k:out-of-sync-->
+- **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** GO
+- **Truy vết** FR-04-042, 051 · BR-04-018 · EVT-04-07, 12
+- **Tiền điều kiện / dữ liệu** v4 `SYNCED` ở TEST; giả lập một bản sao báo nhịp tim với `contentHash` khác (bản sao bị sửa ConfigMap bằng tay).
+- **Bước**
+  1. Sửa ConfigMap của luồng trong namespace `dh-rt-t68` bằng `kubectl`.
+  2. Chờ 2 nhịp tim.
+- **Mong đợi** Argo CD tự đưa ConfigMap về bản Git (self-heal). Trong lúc lệch, triển khai `OUT_OF_SYNC`, EVT-04-07 phát; khi khớp lại thì về `SYNCED`. Cảnh báo PH-13 "Cấu hình runtime bị sửa ngoài GitOps".
+
+### TS-04-17 · Quay lui
+
+**Phủ.** FR-04-044; BR-04-017, 019, 022; UC-04-13; API-04-055; UI-04-15; ERR-04-025, 040.
+
+#### TC-04-### · Quay lui PROD về phiên bản trước <!--k:rollback-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-044 · API-04-055 · UC-04-13 · EVT-04-06
+- **Tiền điều kiện / dữ liệu** v4 chạy PROD, v3 `SUPERSEDED`; IA1.
+- **Bước**
+  1. Gọi `POST /flows/tra-cuu-ho-tich/deployments:rollback` với `{"environment":"PROD","targetVersionNo":3,"reason":"Tỷ lệ lỗi tăng sau phát hành v4"}`.
+- **Mong đợi** `202`; triển khai `kind = ROLLBACK` không cần duyệt lại và không cần qua STAGING (BR-04-019 trừ quay lui); PROD `SYNCED` với v3; v4 thành `ROLLED_BACK`. KT: có (`INT_ROLLBACK` có lý do).
+
+#### TC-04-### · Quay lui trong khoảng đóng băng <!--k:rollback-freeze-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-044, 084 · BR-04-022
+- **Tiền điều kiện / dữ liệu** Khoảng đóng băng đang hiệu lực.
+- **Bước**
+  1. Quay lui PROD về v3.
+- **Mong đợi** `202` (quay lui được phép khi đóng băng).
+
+#### TC-04-### · Quay lui về phiên bản dùng thành phần nay bị cấm, thiếu lý do <!--k:rollback-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-044 · ERR-04-040, 025, 004
+- **Tiền điều kiện / dữ liệu** F-HT v2 dùng `ftp`, nay T68 cấm `ftp`.
+- **Bước**
+  1. Quay lui về v2.
+  2. Quay lui về v3 với `reason = "lỗi"`.
+  3. Quay lui về v9.
+- **Mong đợi** Lần lượt `409` ERR-04-040 (gợi ý tạm dừng khẩn), `400` ERR-04-025, `404` ERR-04-004.
+
+#### TC-04-### · Gợi ý quay lui khi tỷ lệ lỗi tăng <!--k:rollback-suggest-->
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** E2E
+- **Truy vết** FR-04-044, 051 · UI-04-15
+- **Tiền điều kiện / dữ liệu** `04.deploy.rollback-suggest-error-ratio = 2`; sau phát hành v4, đích trả 500 cho 30% lượt (v3 trước đó 5%).
+- **Bước**
+  1. Mở UI-04-02 sau 5 phút.
+- **Mong đợi** Banner "Tỷ lệ lỗi gấp 6 lần phiên bản trước. Cân nhắc quay lui về v3." với nút "Quay lui". Hệ thống không tự quay lui.
+
+### TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, dừng khẩn, đối soát
+
+**Mục tiêu.** Thay Start/Stop qua JMX-Jolokia của Bus cũ bằng lệnh có ký, hạn ngắn, xác nhận theo từng bản sao. Mọi trạng thái mong muốn cuối cùng phải về Git. Nhóm ca bắt buộc 100% (thẻ `signed-command`).
+
+**Phủ.** FR-04-050; BR-04-017, 018; UC-04-14, 15; API-04-061; UI-04-02; ERR-04-023, 024, 025; EVT-04-08, 11, 13; NFR-04-010; LGC-BUS-009, 012.
+
+#### TC-04-### · Tạm dừng một route ở PROD <!--k:pause-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-050 · API-04-061 · UC-04-14 · EVT-04-08, 11, 13 · NFR-04-010 · LGC-BUS-009
+- **Tiền điều kiện / dữ liệu** F-HT v4 chạy PROD, 2 bản sao; U-T68-TO.
+- **Bước**
+  1. Gọi `POST /flows/tra-cuu-ho-tich/runtime/commands` với `{"environment":"PROD","action":"PAUSE","scope":"ROUTES","routeIds":["tra-cuu-ho-tich-main"],"reason":"Bảo trì HTTT hộ tịch 22:00–23:00","drain":true}`.
+  2. Theo dõi `GET .../commands/{id}`.
+  3. Gọi luồng qua APISIX.
+- **Mong đợi** Bước 1 trả `202`, `status = ISSUED`, `expiresAt = issuedAt + 60 giây`. EVT-04-11 có `signature`, `keyId`. Bước 2: hai `acks` `APPLIED`, `status = ACKNOWLEDGED` trong p95 < 10 giây. Bước 3 trả `503` ERR-04-110. EVT-04-08 phát. Trong vòng 5 phút `desiredState` của route được ghi vào Git (`flow.dh.yaml`), lệnh `RECONCILED`. KT: có (`INT_RUNTIME_PAUSE` có lý do).
+
+#### TC-04-### · Tiếp tục route <!--k:resume-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-050 · API-04-061 · LGC-BUS-012
+- **Tiền điều kiện / dữ liệu** Route đã tạm dừng ở ca trên.
+- **Bước**
+  1. TO gửi `RESUME` cùng phạm vi.
+  2. Gọi luồng.
+- **Mong đợi** `ACKNOWLEDGED`; gọi luồng trả `200`. Bảng route bỏ nhãn "Tạm dừng bởi…".
+
+#### TC-04-### · Dừng khẩn đi trước Git <!--k:estop-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, GO
+- **Truy vết** FR-04-050 · BR-04-018 · API-04-061 · UC-04-15 · NFR-04-010
+- **Tiền điều kiện / dữ liệu** F-HT PROD; U-T68-SO; Gitea bị làm chậm 30 giây mỗi lệnh đẩy.
+- **Bước**
+  1. SO gửi `EMERGENCY_STOP`, `scope = FLOW`, `drain = false`, `incidentRef = "SC-2026-001"`.
+  2. Đo thời gian tới khi cả hai bản sao xác nhận.
+  3. Chờ đối soát.
+- **Mong đợi** Bước 2: < 5 giây, không phụ thuộc độ chậm của Git. Bản sao đặt `localOverride = true` trong nhịp tim. Bước 3: tiến trình `system:int-reconciler` ghi trạng thái `PAUSED` vào Git trong ≤ 5 phút; khi Git khớp, bản sao bỏ `localOverride`. Argo CD đồng bộ trong lúc đó **không** bật lại luồng. KT: có (`INT_RUNTIME_ESTOP`, người thực hiện SO và `system:int-reconciler` cho lần ghi Git).
+
+#### TC-04-### · Đối soát hoàn tất <!--k:reconcile-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** GO
+- **Truy vết** FR-04-050 · BR-04-018
+- **Tiền điều kiện / dữ liệu** Lệnh `ACKNOWLEDGED` từ ca tạm dừng.
+- **Bước**
+  1. Đọc `GET .../commands/{id}` sau 5 phút.
+  2. Đọc `flow.dh.yaml` trên `env/prod`.
+- **Mong đợi** `status = RECONCILED`, `reconciledAt` ≤ `issuedAt + 5 phút`. Tệp có trạng thái mong muốn của route khớp runtime.
+
+#### TC-04-### · Một bản sao không xác nhận, gửi lại <!--k:partial-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** API, Chaos
+- **Truy vết** FR-04-050 · API-04-061 · ERR-04-024
+- **Tiền điều kiện / dữ liệu** Chaos Mesh cắt mạng Kafka của bản sao thứ hai.
+- **Bước**
+  1. TO gửi `PAUSE`.
+  2. Sau 30 giây đọc lệnh.
+  3. Khôi phục mạng, gọi `:resend`.
+- **Mong đợi** Bước 2: `status = PARTIAL`, `ackedReplicas = 1/2`, giao diện liệt kê bản sao chưa xác nhận và nút "Gửi lại lệnh". Bước 3: lệnh mới có `resendOf` = lệnh cũ, chữ ký mới, hạn mới; sau khi đủ xác nhận, lệnh gốc `ACKNOWLEDGED`.
+
+#### TC-04-### · Lệnh có chữ ký sai <!--k:cmd-badsig-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-04-050 · EVT-04-11, 13 · ERR-04-024
+- **Tiền điều kiện / dữ liệu** Client Kafka thử có quyền ghi `dh.integration.runtime.command.v1` (giả định kẻ tấn công vượt được ACL).
+- **Bước**
+  1. Gửi lệnh `EMERGENCY_STOP` với chữ ký Ed25519 sai.
+  2. Gửi lệnh đúng chữ ký nhưng sửa `flowCode` sau khi ký.
+- **Mong đợi** Runtime không thực thi; gửi ack `REJECTED`, `reason = BAD_SIGNATURE`; luồng vẫn chạy; cảnh báo an ninh mức cao ở PH-13.
+
+#### TC-04-### · Lệnh hết hạn và lệnh phát lại <!--k:cmd-expired-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-04-050 · EVT-04-11, 13
+- **Tiền điều kiện / dữ liệu** Một lệnh hợp lệ đã thực thi lúc T; bản ghi Kafka của nó.
+- **Bước**
+  1. Phát lại bản tin lệnh đó lúc T + 90 giây.
+  2. Phát lại lúc T + 20 giây.
+- **Mong đợi** Bước 1: `REJECTED`, `reason = EXPIRED`. Bước 2: `REJECTED`, `reason = DUPLICATE` (đã xử lý `commandId`). Không có thay đổi trạng thái route.
+
+#### TC-04-### · Lệnh mang tenant khác hoặc luồng không tồn tại <!--k:cmd-tenant-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-04-050, 073 · EVT-04-13
+- **Tiền điều kiện / dữ liệu** Lệnh ký đúng khóa nhưng `tenantId = T01` gửi tới runtime namespace `dh-rt-t68`; lệnh cho `flowCode = khong-co`.
+- **Bước**
+  1. Gửi hai lệnh.
+- **Mong đợi** Lần lượt `REJECTED` với `TENANT_MISMATCH`, `UNKNOWN_FLOW`. Runtime T68 không thay đổi.
+
+#### TC-04-### · Lệnh thiếu lý do, sai quyền, môi trường chưa triển khai <!--k:cmd-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-050 · BR-04-017 · API-04-061 · ERR-04-025, 023, 045
+- **Tiền điều kiện / dữ liệu** F-SQL chỉ chạy TEST; TO (không có `PERM-04-emergency-stop`); IE1.
+- **Bước**
+  1. TO `PAUSE` F-HT với `reason = "bảo trì"`.
+  2. TO `PAUSE` F-SQL ở PROD.
+  3. TO `EMERGENCY_STOP` F-HT.
+  4. IE1 `PAUSE` F-HT.
+- **Mong đợi** Lần lượt `400` ERR-04-025, `409` ERR-04-023, 403-PQ, 403-PQ. EVT: không.
+
+#### TC-04-### · Tiếp tục sau dừng khẩn chỉ SO hoặc TA <!--k:estop-resume-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-050 · UC-04-15
+- **Tiền điều kiện / dữ liệu** F-HT đang dừng khẩn.
+- **Bước**
+  1. TO gửi `RESUME`.
+  2. TA gửi `RESUME`.
+- **Mong đợi** Bước 1 trả 403-PQ với `detail` "Luồng đang dừng khẩn; chỉ cán bộ ATTT hoặc quản trị tenant tiếp tục được" (Q04-47). Bước 2 trả `202`.
+
+### TS-04-19 · Tình trạng runtime, điểm kết nối, giám sát, lịch sử
+
+**Phủ.** FR-04-051, 052, 053, 083; API-04-060, 062, 063, 091; UI-04-02; ERR-04-047; LGC-BUS-007, 014…019, 030, 033.
+
+#### TC-04-### · Tình trạng runtime theo môi trường và bản sao <!--k:runtime-status-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-051 · API-04-060 · UI-04-02 · LGC-BUS-014, 015, 017
+- **Tiền điều kiện / dữ liệu** F-HT chạy ba môi trường; một route PROD đang tạm dừng.
+- **Bước**
+  1. Gọi `GET /flows/tra-cuu-ho-tich/runtime`.
+  2. Dừng một bản sao PROD (xóa pod), gọi lại sau 70 giây.
+- **Mong đợi** Bước 1: mỗi môi trường có `versionNo`, `syncStatus`, `healthStatus`, `readyReplicas`/`replicas`, `lastHeartbeatAt`; route tạm dừng có `pausedBy`, `pauseReason`. Bước 2: bản sao mất nhịp tim quá 60 giây không còn trong danh sách; `healthStatus = DEGRADED` tới khi pod mới sẵn sàng.
+
+#### TC-04-### · Lỗi nạp luồng hiển thị cho người vận hành <!--k:load-error-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** GO
+- **Truy vết** FR-04-051 · API-04-060
+- **Tiền điều kiện / dữ liệu** Phát hành `tc-nap-loi` có tham chiếu kết nối mà PH-05 chưa cấp giá trị cho PROD (vượt qua kiểm tra do PH-05 đổi sau khi duyệt).
+- **Bước**
+  1. Phát hành lên TEST; đọc runtime.
+- **Mong đợi** Triển khai `FAILED`, `loadError` nêu "Không phân giải được {{conn:…}} ở TEST" (không lộ giá trị); các luồng khác trong cùng pod vẫn chạy (lỗi nạp một luồng không làm hỏng context).
+
+#### TC-04-### · Điểm kết nối và số liệu theo điểm <!--k:endpoints-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-052 · API-04-062 · LGC-BUS-018
+- **Tiền điều kiện / dữ liệu** F-HT PROD có lưu lượng giả lập 1 giờ.
+- **Bước**
+  1. Gọi `GET .../endpoints?environment=PROD`.
+- **Mong đợi** `items` có một điểm `IN` (`platform-http`, `httpPath`) và các điểm `OUT` (`http` qua CONN-HT, `kafka` topic kiểm toán); `uri` đã che tham số; `metrics` khớp Prometheus trong sai số 1%.
+
+#### TC-04-### · Số liệu và lịch sử khi PH-13 không sẵn sàng <!--k:metrics-history-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-053, 083 · API-04-063, 091 · ERR-04-047 · LGC-BUS-007, 033
+- **Tiền điều kiện / dữ liệu** U-T68-AU, U-T68-VW.
+- **Bước**
+  1. AU gọi `GET .../metrics?environment=PROD&step=1m`.
+  2. AU gọi `GET .../history?action=INT_DEPLOY`.
+  3. VW gọi `GET .../history`.
+  4. Dừng PH-13, AU gọi lại bước 2.
+- **Mong đợi** Bước 1: chuỗi `exchanges`, `failures`, `p95ms`, `dlq`, `dashboardUrl`. Bước 2: các lần triển khai có `before`, `after`. Bước 3: không có `before`, `after`. Bước 4 trả `503` ERR-04-047; các API khác của PH-04 vẫn trả bình thường.
+
