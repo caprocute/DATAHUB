@@ -88,7 +88,7 @@ Mức không gian làm việc (`VIEW`, `EDIT`, `MAINTAIN`, FR-04-007) ghi ở `x
 Hai kiểm tra đặc biệt:
 
 - **Bốn mắt (BR-04-005).** `:review` từ chối người đã tạo phiên bản, người trong `flow_version_contributor` và người gửi duyệt (ERR-04-015, 403). Kiểm tra ở máy chủ, giao diện chỉ ẩn nút.
-- **Xác thực lại khi duyệt.** Khi `04.review.require-reauth` bật, `:review` và phát hành lên PROD cần token có `auth_time` trong 5 phút. Nếu không, máy chủ trả 401 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", max_age=300` (RFC 9470), giao diện mở cửa sổ đăng nhập lại.
+- **Xác thực lại khi duyệt.** Khi `04.review.require-reauth` bật thì `:review` cần token có `auth_time` trong 5 phút; phát hành và nâng lên PROD luôn cần, bất kể tham số (FRS §7.1). Nếu không, máy chủ trả 401 kèm `WWW-Authenticate: Bearer error="insufficient_user_authentication", max_age=300` (RFC 9470), giao diện mở cửa sổ đăng nhập lại.
 
 ## 3. Danh mục endpoint
 
