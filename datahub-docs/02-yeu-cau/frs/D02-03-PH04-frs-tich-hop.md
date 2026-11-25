@@ -700,7 +700,7 @@ Không gian làm việc còn luồng không xóa được, chỉ lưu trữ (ẩ
 
 ### 5.2. Nhóm B — Trình thiết kế luồng
 
-Nhóm B đặc tả hành vi chức năng của trình thiết kế. Bố cục, thành phần, tương tác chuột và bàn phím, trạng thái từng vùng được đặc tả chi tiết ở D03-06-PH04 §8–§16. FR ở đây chỉ quy định điều hệ thống phải làm và điều máy chủ phải kiểm.
+Nhóm B đặc tả hành vi chức năng của trình thiết kế. Bố cục, thành phần, tương tác chuột và bàn phím, trạng thái từng vùng được đặc tả chi tiết ở D03-06-PH04 §10–§18. FR ở đây chỉ quy định điều hệ thống phải làm và điều máy chủ phải kiểm.
 
 #### FR-04-010 · Mở trình thiết kế, phiên soạn thảo và cảnh báo người khác đang sửa
 
@@ -792,7 +792,7 @@ Các thao tác bắt buộc và quy tắc của chúng:
 | Xóa toàn bộ | "Xóa nội dung route" (Clear Page của Tooling cũ) giữ chặng đầu, xóa mọi chặng sau, có xác nhận và hoàn tác được |
 | Thu phóng | 10%…400%; vừa khung (`0`); minimap tự hiện khi sơ đồ có trên 20 chặng |
 | Tự sắp xếp | Sắp trái sang phải theo thứ tự luồng (dagre); giữ vị trí chặng người dùng đã ghim |
-| Nhiều route | Một tệp có nhiều route; thanh thực thể bên trái liệt kê route, `routeConfiguration`, `rest`, `beans`; chuyển qua lại giữ nguyên vị trí và mức thu phóng từng sơ đồ (Mã repo FR-D-005) |
+| Nhiều route | Một tệp có nhiều route; thanh thực thể (bố trí ở D03-06-PH04 §10.5) liệt kê route, `routeConfiguration`, `rest`, `beans`; chuyển qua lại giữ nguyên vị trí và mức thu phóng từng sơ đồ (Mã repo FR-D-005) |
 | Hoàn tác, làm lại | Ít nhất 100 bước trong phiên; gộp các thay đổi liên tiếp trên cùng một trường trong 1 giây thành một bước |
 | Nhóm chặng | Khối chặng chuẩn (mục 4.6) hiển thị như nhóm có tiêu đề, thu gọn hoặc mở rộng được |
 
@@ -1599,6 +1599,11 @@ FR-04-084 (S; LGC-BUS-031). TA đặt tham số `04.*` trong miền cho phép (m
 | `04.sql.statement-timeout-seconds` | số | 10 | 1…120 | Thời gian chờ câu lệnh CSDL |
 | `04.sql.max-rows` | số | 10.000 | 1…100.000 | Số dòng tối đa mỗi lượt |
 | `04.freeze.windows` | danh sách khoảng thời gian | rỗng | — | Khoảng đóng băng thay đổi |
+| `04.flow.require-legal-basis` | boolean | `false` | — | Luồng đối ngoại phải khai căn cứ pháp lý khi tạo (bổ sung từ D03-06-PH04) |
+| `04.review.sla-hours` | số | 24 | 1…168 | Ngưỡng thời gian chờ duyệt để cảnh báo (bổ sung từ D03-06-PH04) |
+| `04.review.require-reauth` | boolean | `false` | Luôn `true` khi môi trường đích là PROD | Xác thực lại khi duyệt, phát hành (bổ sung từ D03-06-PH04) |
+| `04.deploy.rollback-suggest-error-ratio` | số | 2,0 | 1,1…10 | Gợi ý quay lui khi tỷ lệ lỗi 5 phút đầu gấp n lần phiên bản trước; không tự quay lui (bổ sung từ D03-06-PH04) |
+| `04.mapping.require-all-required` | boolean | `false` | — | Trường bắt buộc của lược đồ đích chưa ánh xạ là lỗi ở mức `SUBMIT` (bổ sung từ D03-06-PH04) |
 
 ### 7.2. Yêu cầu phi chức năng riêng của PH-04
 
