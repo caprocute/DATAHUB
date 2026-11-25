@@ -431,7 +431,7 @@ Bảng dưới đây liệt kê các thuật ngữ riêng của PH-07 chưa có 
 
 Mỗi FR dưới đây gồm một bảng tóm tắt theo mẫu D00-01 §4.3, tiếp theo là bảng đầu vào, danh sách bước xử lý đánh số và bảng ngoại lệ. Bước xử lý được viết để kiểm thử viên kiểm chứng được từng bước; các bước kiểm tra quyền và tenant chung không lặp lại ở mọi FR mà được quy định một lần trong mục này.
 
-Các quy định sau áp dụng cho mọi FR của PH-07 trừ khi FR ghi khác. Tenant được xác định từ ngữ cảnh xác thực, không lấy từ tham số do client gửi (tuân thủ FR-00-010); mọi truy vấn chạy dưới RLS với `app.tenant_id` của phiên làm việc. Đối tượng thuộc tenant khác hoặc thuộc tổ chức khác (với vai trò phạm vi ○) trả `404` thay vì `403`, để không lộ sự tồn tại của đối tượng (D02-08 §7, FR-00-011). Thao tác tạo nhận tiêu đề `Idempotency-Key` (chuỗi 8…64 ký tự, lưu 24 giờ); gửi lại cùng khóa và cùng nội dung trả lại kết quả cũ, cùng khóa khác nội dung trả `ERR-07-022`. Thao tác sửa, xóa, chuyển trạng thái yêu cầu tiêu đề `If-Match` chứa ETag (giá trị cột `version` của đối tượng); không khớp trả `ERR-07-018` (HTTP 412, tuân thủ FR-00-052); thiếu tiêu đề trả `428 Precondition Required`. Lỗi trả theo RFC 9457 với trường `type`, `title`, `status`, `detail`, `instance`, `code` (mã `ERR-07-nnn`), `traceId` và với lỗi hợp lệ thì thêm mảng `errors` gồm `{field, code, message}`; thông điệp tiếng Việt nói rõ sai gì và cách sửa (tuân thủ FR-00-080). Thao tác ghi trên danh mục `NATIONAL` (trừ qua đồng bộ) hoặc trên danh mục `COMMON` khi tenant hiện hành không phải `PLATFORM` trả `ERR-07-003`. Thao tác ghi trên danh mục `RETIRED` trả `ERR-07-031`. Mọi thao tác ghi thành công sinh bản ghi kiểm toán qua PH-13 theo FR-00-040, FR-00-041 với các trường chung: thời điểm, tenant, chủ thể (người hoặc máy), địa chỉ nguồn, hành động, loại đối tượng, mã đối tượng, giá trị trước và sau (chỉ các trường thay đổi), kết quả, lý do, `traceId`; cột "Kiểm toán" của từng FR chỉ ghi phần riêng. Sự kiện được ghi vào bảng outbox trong cùng giao dịch với thay đổi dữ liệu (SAD §7.3, DD-11), nên sự kiện không bao giờ phát ra cho một thay đổi bị hủy và không bao giờ mất khi thay đổi đã ghi.
+Các quy định sau áp dụng cho mọi FR của PH-07 trừ khi FR ghi khác. Tenant được xác định từ ngữ cảnh xác thực, không lấy từ tham số do client gửi (tuân thủ FR-00-010); mọi truy vấn chạy dưới RLS với `app.tenant_id` của phiên làm việc. Đối tượng thuộc tenant khác hoặc thuộc tổ chức khác (với vai trò phạm vi ○) trả `404` thay vì `403`, để không lộ sự tồn tại của đối tượng (D02-08 §7, FR-00-011). Thao tác tạo nhận tiêu đề `Idempotency-Key` (chuỗi 16…128 ký tự, lưu 24 giờ); gửi lại cùng khóa và cùng nội dung trả lại kết quả cũ, cùng khóa khác nội dung trả `ERR-07-022`. Thao tác sửa, xóa, chuyển trạng thái yêu cầu tiêu đề `If-Match` chứa ETag (giá trị cột `version` của đối tượng); không khớp trả `ERR-07-018` (HTTP 412, tuân thủ FR-00-052); thiếu tiêu đề trả `ERR-07-040` (HTTP 400). Lỗi trả theo RFC 9457 với trường `type`, `title`, `status`, `detail`, `instance`, `code` (mã `ERR-07-nnn`), `traceId` và với lỗi hợp lệ thì thêm mảng `errors` gồm `{field, code, message}`; thông điệp tiếng Việt nói rõ sai gì và cách sửa (tuân thủ FR-00-080). Thao tác ghi trên danh mục `NATIONAL` (trừ qua đồng bộ) hoặc trên danh mục `COMMON` khi tenant hiện hành không phải `PLATFORM` trả `ERR-07-003`. Thao tác ghi trên danh mục `RETIRED` trả `ERR-07-031`. Mọi thao tác ghi thành công sinh bản ghi kiểm toán qua PH-13 theo FR-00-040, FR-00-041 với các trường chung: thời điểm, tenant, chủ thể (người hoặc máy), địa chỉ nguồn, hành động, loại đối tượng, mã đối tượng, giá trị trước và sau (chỉ các trường thay đổi), kết quả, lý do, `traceId`; cột "Kiểm toán" của từng FR chỉ ghi phần riêng. Sự kiện được ghi vào bảng outbox trong cùng giao dịch với thay đổi dữ liệu (SAD §7.3, DD-11), nên sự kiện không bao giờ phát ra cho một thay đổi bị hủy và không bao giờ mất khi thay đổi đã ghi.
 
 Kiểu dữ liệu chuẩn dùng trong bảng đầu vào theo D00-01 §5. Ngoài ra FRS dùng các kiểu bổ trợ sau: `T-INT` là số nguyên 32 bit, `T-ATTR-CODE` là mã thuộc tính theo mẫu `^[a-z][a-z0-9_]{0,62}$`, `T-REGEX` là biểu thức chính quy ECMA-262 tối đa 500 ký tự, `T-FILE` là tệp đính kèm dạng multipart.
 
@@ -893,6 +893,7 @@ Các ngoại lệ được liệt kê trong bảng sau.
 | Điều kiện | Mã lỗi | HTTP | Hành vi |
 |---|---|---|---|
 | Xóa danh mục đã phát hành | ERR-07-048 | 409 | Thông điệp hướng dẫn dùng ngừng hiệu lực |
+| Ngừng hiệu lực danh mục chưa từng phát hành (`DRAFT`) | ERR-07-048 | 409 | Gợi ý dùng xóa |
 | Ngừng hiệu lực danh mục đang bị tham chiếu | ERR-07-032 | 409 | Liệt kê danh mục tham chiếu |
 | Danh mục đã `RETIRED` | ERR-07-031 | 410 | |
 | Có phiên bản đang chờ duyệt hoặc đã duyệt | ERR-07-004 | 409 | |
@@ -2994,60 +2995,7 @@ Các yêu cầu phi chức năng chung (thời gian phản hồi giao diện, kh
 
 ### 8.1. Mã lỗi ERR-07
 
-Bảng dưới đây là danh mục chính thức mã lỗi của PH-07, dùng chung cho FRS, API, giao diện và kiểm thử. Câu hiển thị cho người dùng nằm ở D03-06-PH07 §5.3; bảng này nêu điều kiện kỹ thuật và mã HTTP. Mã ERR-07-001…037 thuộc khung ban đầu; ERR-07-038…048 là mã bổ sung. Trong bản nháp trước, mã ERR-07-040 và ERR-07-041 từng được dùng cho "tệp nhiễm mã độc" (D02-04-PH07) và "nhóm danh mục trùng, vòng" (FR-07-010) trong khi D03-04-PH07 đã cấp hai mã đó cho lỗi xác thực và thiếu `If-Match`; bảng này giữ phân bổ của D03-04-PH07 vì là hợp đồng sinh mã, và chuyển hai nghĩa kia sang ERR-07-038 và ERR-07-039.
-
-| Mã | HTTP | Điều kiện |
-|---|---|---|
-| ERR-07-001 | 404 | Không tìm thấy danh mục (hoặc thuộc tenant khác) |
-| ERR-07-002 | 409 | Mã đã được dùng: mã danh mục, mã hệ thống mã, nguồn đồng bộ trùng |
-| ERR-07-003 | 403 | Danh mục hoặc đối tượng chỉ đọc với chủ thể (`NATIONAL`, `COMMON` với tenant tỉnh, bản ghi gốc qua HYBRID, lược đồ ĐVHC) |
-| ERR-07-004 | 409 | Phiên bản hoặc tác vụ không ở trạng thái cho phép thao tác |
-| ERR-07-005 | 409 | Đã có phiên bản mở; nguồn đang có lần chạy đồng bộ |
-| ERR-07-006 | 404 | Không tìm thấy phiên bản, hoặc không có phiên bản hiệu lực tại thời điểm |
-| ERR-07-007 | 404 | Không tìm thấy mã bản ghi tại thời điểm |
-| ERR-07-008 | 409 | Mã bản ghi trùng trong phiên bản hoặc trùng mã gốc của HYBRID |
-| ERR-07-009 | 422 | Dữ liệu không hợp lệ theo lược đồ hoặc theo ràng buộc của trường, kèm `errors[]` |
-| ERR-07-010 | 422 | Mã cha không tồn tại hoặc tạo vòng |
-| ERR-07-011 | 422 | Vượt độ sâu tối đa |
-| ERR-07-012 | 422 | Mã bổ sung nằm ngoài dải mã địa phương, hoặc dải chồng mã gốc |
-| ERR-07-013 | 409 | Xóa bản ghi đã từng phát hành |
-| ERR-07-014 | 422 | Thay đổi thuộc tính không tương thích với giá trị hiện có |
-| ERR-07-015 | 403 | Vi phạm bốn mắt |
-| ERR-07-016 | 409 | Phát hành thẳng nhưng có thay đổi lớn hoặc phá vỡ, phải qua duyệt |
-| ERR-07-017 | 422 | Ngày hiệu lực không hợp lệ |
-| ERR-07-018 | 412 | ETag không khớp (`If-Match`) |
-| ERR-07-019 | 422 | Tệp không hợp lệ: định dạng, mã hóa, kích thước, số dòng, khuôn, gói nền hỏng |
-| ERR-07-020 | 409 | Tác vụ nhập không còn ghi được (hết hạn, bản nháp đã đổi, lược đồ chỉnh làm đổi kết quả) |
-| ERR-07-021 | 422 | Còn dòng hoặc bản ghi lỗi mà không chọn bỏ qua |
-| ERR-07-022 | 409 | `Idempotency-Key` đã dùng với nội dung khác |
-| ERR-07-023 | 400 | Biểu thức truy vấn sai cú pháp |
-| ERR-07-024 | 422 | Truy vấn hoặc cây vượt giới hạn độ phức tạp, kích thước hoặc thời gian |
-| ERR-07-025 | 400 | Thuộc tính không cho phép truy vấn |
-| ERR-07-026 | 400 | Số lượng vượt mức tối đa một lần (lô, trang) |
-| ERR-07-027 | 404 | Không tìm thấy ánh xạ |
-| ERR-07-028 | 502 | Nguồn quốc gia (qua PH-14) không phản hồi hoặc trả lỗi |
-| ERR-07-029 | 409 | Lần đồng bộ không còn chờ xác nhận, hoặc phiên bản gốc đã đổi |
-| ERR-07-030 | 403 | HTTT chưa được cấp quyền khai thác danh mục hạn chế |
-| ERR-07-031 | 410 | Danh mục đã ngừng hiệu lực (tại thời điểm tra) |
-| ERR-07-032 | 409 | Danh mục đang bị tham chiếu nên không ngừng hiệu lực được |
-| ERR-07-033 | 422 | Mã ngoài đã ánh xạ tới mã khác trong khoảng hiệu lực giao nhau |
-| ERR-07-034 | 422 | Ánh xạ tạm thời thiếu lý do |
-| ERR-07-035 | 422 | Sự kiện sắp xếp ĐVHC không hợp lệ; nhập tay `replacedBy` cho ĐVHC |
-| ERR-07-036 | 422 | Thuộc tính hoặc dữ liệu gợi ý dữ liệu cá nhân, mức Nhạy cảm |
-| ERR-07-037 | 409 | Nhóm còn danh mục hoặc nhóm con nên không xóa được |
-| ERR-07-038 | 422 | Tệp không vượt qua quét mã độc (`scan_status = INFECTED`) hoặc quét quá hạn (mới; thay ERR-07-040 của bản nháp D02-04-PH07) |
-| ERR-07-039 | 409 | Mã nhóm danh mục trùng, nhóm cha tạo vòng hoặc vượt độ sâu 5 (mới; thay ERR-07-041 của bản nháp FR-07-010) |
-| ERR-07-040 | 400 | Thiếu tiêu đề `If-Match` trên thao tác bắt buộc (quy ước 428 được quy về 400 cho thống nhất client) |
-| ERR-07-041 | 401 | Thiếu token, token không hợp lệ hoặc hết hạn |
-| ERR-07-042 | 413 | Thân yêu cầu hoặc tệp vượt kích thước tối đa |
-| ERR-07-043 | 415 | Kiểu nội dung không hỗ trợ |
-| ERR-07-044 | 429 | Vượt giới hạn tần suất |
-| ERR-07-045 | 404 | Không tìm thấy tài nguyên khác: tác vụ, nguồn, lần chạy, hệ thống mã, sự kiện sắp xếp, tenant |
-| ERR-07-046 | 403 | Không đủ quyền (khi PH-07 tự trả, ngoài lỗi phân quyền chung của gateway) |
-| ERR-07-047 | 503 | Tài nguyên tạm chưa sẵn sàng (ảnh chụp đang sinh) hoặc phân hệ phụ thuộc (PH-13, PH-18) không sẵn sàng |
-| ERR-07-048 | 409 | Danh mục hoặc tenant không ở trạng thái cho phép thao tác (xóa danh mục `ACTIVE`, ngừng hiệu lực danh mục `DRAFT`, nạp gói cho tenant không ở trạng thái khởi tạo) (mới; trả lời Q07-76 của D05-02-PH07) |
-
-Hai điều chỉnh sau áp dụng cho các FR đã viết ở trên kể từ bản này: FR-07-009 dùng ERR-07-048 (thay ERR-07-004) cho "xóa danh mục đã phát hành" và "ngừng hiệu lực danh mục chưa phát hành", vì ERR-07-004 dành cho trạng thái phiên bản; FR-07-010 dùng ERR-07-039 cho nhóm trùng, vòng hoặc vượt độ sâu.
+Mã lỗi ERR-07-001…048 được định nghĩa một lần ở [D03-04-PH07 §6](../../03-thiet-ke/api/D03-04-PH07-api-danh-muc.md) (theo D00-01 §3, mã lỗi thuộc tài liệu API); FRS chỉ dùng mã ở bảng ngoại lệ của từng FR. Ba mã được bổ sung khi viết FRS: ERR-07-038 (tệp không vượt qua quét mã độc), ERR-07-039 (nhóm danh mục trùng, vòng hoặc vượt độ sâu) và ERR-07-048 (danh mục hoặc tenant không ở trạng thái cho phép thao tác). Mã ERR-07-040…047 giữ phân bổ của hợp đồng OpenAPI (lỗi giao thức: thiếu `If-Match`, xác thực, kích thước, kiểu nội dung, tần suất, không tìm thấy tài nguyên khác, thiếu quyền, tạm chưa sẵn sàng).
 
 ### 8.2. Sự kiện EVT-07
 

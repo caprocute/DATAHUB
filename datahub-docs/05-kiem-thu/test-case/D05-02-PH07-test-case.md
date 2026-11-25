@@ -424,13 +424,13 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-012 · Không cho xóa danh mục đã phát hành
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
-- **Truy vết** FR-07-009 · API-07-005 · ERR-07-004
+- **Truy vết** FR-07-009 · API-07-005 · ERR-07-048
 - **Tiền điều kiện / dữ liệu** CAT-MUC ACTIVE; người gọi U-T68-TA.
 - **Bước**
   1. Gọi `DELETE /catalogs/MUC_DO_DVC` với `If-Match` đúng.
-- **Mong đợi** `409`, `ERR-07-004` với chi tiết gợi ý "Danh mục đã phát hành, hãy dùng chức năng ngừng hiệu lực". Danh mục giữ nguyên. Trên UI-07-02 nút "Xóa" không hiển thị với danh mục ACTIVE (FR-00-053).
+- **Mong đợi** `409`, `ERR-07-048` với chi tiết gợi ý "Danh mục đã phát hành, hãy dùng chức năng ngừng hiệu lực". Danh mục giữ nguyên. Trên UI-07-02 nút "Xóa" không hiển thị với danh mục ACTIVE (FR-00-053).
 
-> **Câu hỏi mở Q07-76:** Khung chung không có mã lỗi riêng cho "danh mục không ở trạng thái cho phép thao tác" (xóa danh mục ACTIVE, ngừng hiệu lực danh mục DRAFT). Tài liệu này tạm dùng `ERR-07-004` cho TC-07-012 và TC-07-017; đề nghị luồng API cân nhắc cấp mã riêng (ví dụ ERR-07-040) và cập nhật hai ca này.
+> **Câu hỏi mở Q07-76 (đã đóng ngày 25/11/2026):** Mã riêng cho "danh mục không ở trạng thái cho phép thao tác" là `ERR-07-048` (D03-04-PH07 §6); TC-07-012 và TC-07-017 đã cập nhật.
 
 #### TC-07-013 · Ngừng hiệu lực danh mục đã phát hành
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -468,11 +468,11 @@ PH-07 có năm máy trạng thái. Kiểm thử phủ mọi chuyển trạng th�
 
 #### TC-07-017 · Không ngừng hiệu lực danh mục chưa phát hành
 - **Loại** Âm · **Ưu tiên** P3 · **Tự động** API
-- **Truy vết** FR-07-009 · API-07-006 · ERR-07-004
+- **Truy vết** FR-07-009 · API-07-006 · ERR-07-048
 - **Tiền điều kiện / dữ liệu** Danh mục `TC017_DM` DRAFT; người gọi U-T68-TA.
 - **Bước**
   1. Gọi `POST /catalogs/TC017_DM:retire`.
-- **Mong đợi** `409`, `ERR-07-004` (xem Q07-76), gợi ý dùng xóa. Trạng thái giữ `DRAFT`.
+- **Mong đợi** `409`, `ERR-07-048`, gợi ý dùng xóa. Trạng thái giữ `DRAFT`.
 
 #### TC-07-018 · Cập nhật thông tin danh mục với ETag cũ
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E

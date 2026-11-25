@@ -433,7 +433,7 @@ Trạng thái của `import_job` trong use case này đi theo trình tự `UPLOA
 **Luồng ngoại lệ**
 
 - **E1. Tệp không hợp lệ (bước 4, 6, 7).** Hệ thống trả ERR-07-019 với lý do cụ thể. Thông điệp ví dụ: "Tệp vượt quá 50 MB", "Tệp có 230.000 dòng, vượt giới hạn 200.000 dòng", "Không nhận ra mã hóa ký tự của tệp CSV. Hãy lưu lại dưới dạng CSV UTF-8", "Thiếu cột bắt buộc MA", "Nội dung tệp không phải Excel dù có phần mở rộng .xlsx". Tác vụ chuyển `FAILED`; người dùng sửa tệp và tải lại.
-- **E2. Tệp nhiễm mã độc (bước 6).** Dịch vụ quét trả `INFECTED`; hệ thống chuyển tác vụ sang `FAILED`, xóa tệp khỏi vùng xử lý, ghi sự kiện an ninh (FR-00-045) và hiển thị "Tệp không vượt qua kiểm tra an toàn và đã bị loại bỏ. Vui lòng liên hệ cán bộ an toàn thông tin." mã lỗi ERR-07-040 (mã mới đề xuất, xem mục 8.2).
+- **E2. Tệp nhiễm mã độc (bước 6).** Dịch vụ quét trả `INFECTED`; hệ thống chuyển tác vụ sang `FAILED`, xóa tệp khỏi vùng xử lý, ghi sự kiện an ninh (FR-00-045) và hiển thị "Tệp không vượt qua kiểm tra an toàn và đã bị loại bỏ. Vui lòng liên hệ cán bộ an toàn thông tin." mã lỗi ERR-07-038 (mã mới đề xuất, xem mục 8.2).
 - **E3. Có dòng lỗi nhưng chưa chọn bỏ qua (bước 13).** Hệ thống trả ERR-07-021 "Tệp còn 18 dòng lỗi. Hãy sửa tệp hoặc chọn bỏ qua dòng lỗi." Quay về bước 11.
 - **E4. Tác vụ hết hạn hoặc bản nháp đã thay đổi (bước 14).** Hệ thống trả ERR-07-020 "Kết quả xem trước đã hết hạn (quá 24 giờ) hoặc bản nháp đã được sửa sau khi phân tích. Vui lòng phân tích lại." Giao diện cung cấp nút "Phân tích lại" tạo tác vụ mới từ cùng tệp (không cần tải lên lại).
 - **E5. Bản nháp đã được trình duyệt (bước 14).** Hệ thống trả ERR-07-004; tác vụ giữ `VALIDATED`; người dùng phải chờ phiên bản bị từ chối hoặc được phát hành rồi tạo bản nháp mới.
@@ -1536,7 +1536,7 @@ Trong quá trình đặc tả, tài liệu cần một số mã chưa có trong 
 
 | Mã | Nội dung | Lý do |
 |---|---|---|
-| ERR-07-040 | 422 · Tệp tải lên không vượt qua quét mã độc (`scan_status = INFECTED`) | DD-12 thêm bước quét; khung chung chưa có mã riêng (UC-07-03 E2) |
+| ERR-07-038 | 422 · Tệp tải lên không vượt qua quét mã độc (`scan_status = INFECTED`) | DD-12 thêm bước quét; khung chung chưa có mã riêng (UC-07-03 E2) |
 | Trạng thái `import_job` | `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED`; tác vụ xuất dùng `RUNNING`, `COMPLETED`, `FAILED`, `EXPIRED` | Khung chung chỉ nêu `SCANNING` trước `PARSING`; tên cuối cùng do CSDL chốt |
 | Tham số | `07.rdm.batch-rate-per-minute`, `07.rdm.import-max-mb`, `07.rdm.hybrid-default-pattern`, `07.rdm.pii-keywords` | Mục 7.1 |
 | Tham số API | `withdraw` của API-07-019 (rút lại), `skipInvalid` của API-07-036, `continueOnError` của API-07-031, `direction` và `asOf` của API-07-051 | Luồng UC-07-06 8b, UC-07-03 12a, UC-07-05 6a, UC-07-12 B |
