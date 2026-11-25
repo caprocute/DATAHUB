@@ -1,9 +1,16 @@
-import { CATALOG_LICENSE, CATALOG_RUNTIME, CATALOG_SOURCE, CATALOG_TOTAL } from '../core/catalog'
+import {
+  CATALOG_CAMEL_VERSION,
+  CATALOG_LICENSE,
+  CATALOG_RUNTIME,
+  CATALOG_SOURCE,
+  CATALOG_TARGET_RUNTIME,
+  CATALOG_TOTAL,
+} from '../core/catalog'
 
 /**
  * Nguồn và giấy phép của danh mục (K4-5 — FR-D-073).
  *
- * **Đây là nghĩa vụ tuân thủ, không phải chú thích trang trí.** Toàn bộ 751 nút — mô tả,
+ * **Đây là nghĩa vụ tuân thủ, không phải chú thích trang trí.** Toàn bộ nút — mô tả,
  * tiêu đề, bảng tham số — là tác phẩm phát hành theo Apache-2.0 của Apache Camel qua gói
  * `@kaoto/camel-catalog`. Điều 4 của giấy phép buộc bên phân phối lại phải giữ ghi nhận
  * nguồn; hiện ở đây là cách người dùng cuối thấy được điều đó.
@@ -25,8 +32,10 @@ export function CatalogLicense() {
         </a>
       </div>
       <div className="cat__license-sub">
-        Nhánh runtime <code>{CATALOG_RUNTIME}</code> · {CATALOG_TOTAL} nút · bảng tham số chỉ đúng
-        với phiên bản này
+        Nhánh runtime <code>{CATALOG_RUNTIME}</code>
+        {CATALOG_CAMEL_VERSION ? <> (Camel {CATALOG_CAMEL_VERSION})</> : null} · sinh cho runtime
+        Camel Quarkus {CATALOG_TARGET_RUNTIME} · {CATALOG_TOTAL} nút · bảng tham số chỉ đúng với
+        dòng phiên bản này
       </div>
     </footer>
   )
