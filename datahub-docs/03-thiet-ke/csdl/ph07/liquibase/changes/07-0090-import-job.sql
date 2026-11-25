@@ -44,7 +44,7 @@ CREATE TABLE ph07_rdm.import_job (
   CONSTRAINT fk_import_job_result FOREIGN KEY (result_file_id, tenant_id) REFERENCES ph07_rdm.file_object (id, tenant_id),
   CONSTRAINT ck_import_job_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_import_job_type CHECK (job_type IN ('IMPORT','EXPORT','MIGRATION','PROPOSAL')),
-  CONSTRAINT ck_import_job_mode CHECK ((job_type = 'IMPORT' AND mode IN ('UPSERT','REPLACE','APPEND','CREATE_CATALOG','MAPPING'))
+  CONSTRAINT ck_import_job_mode CHECK ((job_type = 'IMPORT' AND mode IN ('UPSERT','REPLACE','APPEND','CREATE_CATALOG','MAPPING','ADMIN_UNIT_CONVERT'))
       OR (job_type <> 'IMPORT' AND mode IS NULL)),
   CONSTRAINT ck_import_job_format CHECK (format IN ('XLSX','CSV','JSON')),
   CONSTRAINT ck_import_job_template CHECK (template IN ('STANDARD','LEGACY_AITA')),

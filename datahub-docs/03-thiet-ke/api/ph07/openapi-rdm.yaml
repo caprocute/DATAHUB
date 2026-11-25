@@ -4409,7 +4409,7 @@ components:
         catalogCode: { $ref: '#/components/schemas/TCode' }
         mode:
           type: string
-          enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, ADMIN_UNIT_CONVERT]
+          enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, MAPPING, ADMIN_UNIT_CONVERT]
           default: UPSERT
         template: { type: string, enum: [AUTO, STANDARD, LEGACY_AITA], default: AUTO }
         sheetName: { type: string, maxLength: 255, description: 'Mặc định `DuLieu`; không có thì lấy sheet đầu tiên.' }
@@ -4470,7 +4470,7 @@ components:
             jobType: { type: string, enum: [IMPORT, ADMIN_UNIT_CONVERT, PROPOSAL], default: IMPORT }
             catalogCode: { type: [string, 'null'], description: Rỗng khi `CREATE_CATALOG` chưa commit. }
             versionNo: { type: [integer, 'null'] }
-            mode: { type: string, enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, ADMIN_UNIT_CONVERT] }
+            mode: { type: string, enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, MAPPING, ADMIN_UNIT_CONVERT] }
             template: { $ref: '#/components/schemas/ImportTemplate' }
             fileFormat: { $ref: '#/components/schemas/FileFormat' }
             fileName: { type: string }

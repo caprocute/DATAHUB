@@ -1,0 +1,31 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=1440">
+<title>UI-07-12 · Thử API truy vấn</title><link rel="stylesheet" href="hifi.css"></head><body>
+<div class="shell"><header class="top"><div class="logo"><b>Datahub</b> · Quản trị</div><div class="search">Tìm danh mục, bản ghi, tác vụ…  ⌘K</div><div class="sp"></div>
+<span class="tray">⟳ 1 tác vụ nền</span><span class="tray">Tỉnh mẫu</span><div class="avatar">NL</div></header>
+<nav class="side" aria-label="Điều hướng chính"><div class="grp">Dữ liệu</div><a class="" href="#">Tổng quan</a><a class="" href="#">Danh mục dùng chung</a><a class="" href="#">Tác vụ nhập xuất</a><a class="" href="#">Đồng bộ quốc gia</a><a class="" href="#">Ánh xạ mã</a><a class="" href="#">Đơn vị hành chính</a><a class="on" href="#">Thử API truy vấn</a><div class="grp">Cá nhân</div><a href="#">Việc của tôi <span class="tag t-info">3</span></a></nav>
+<main><div class="crumb">Trang chủ / Thử API truy vấn</div>
+<div class="head"><h1>Thử API truy vấn</h1><div class="sp"></div><span class="btn">Sao chép cURL</span><span class="btn pri">Chạy (Ctrl+Enter)</span></div>
+<div class="grid3" style="grid-template-columns:1fr 1fr"><div class="card"><div class="toolbar"><span class="input">Danh mục: KCN ▾</span><span class="input">Tại ngày: 25/11/2026</span><span class="input">Ứng dụng: Cổng DVC ▾</span></div>
+<div class="code">POST /api/rdm/v1/catalogs/KCN/query
+{
+  "filter": {
+    "and": [
+      { "attr": "loai_hinh", "op": "in", "value": ["KCN", "CCN"] },
+      { "attr": "dien_tich_ha", "op": "gte", "value": "100" },
+      { "attr": "ma_dvhc_xa", "op": "eq", "value": "10123" }
+    ]
+  },
+  "fields": ["code", "name", "dien_tich_ha"],
+  "sort": [{ "attr": "dien_tich_ha", "dir": "desc" }],
+  "pageSize": 20
+}</div><div class="muted" style="margin-top:6px">✓ Hợp lệ theo lược đồ v4 · thuộc tính truy vấn được: loai_hinh, dien_tich_ha, ma_dvhc_xa</div></div>
+<div class="card"><div class="toolbar"><span class="tag t-ok">200 OK</span><span class="muted">38 ms · 3 kết quả · ETag "v4"</span><div style="flex:1"></div><span class="btn">Bảng</span><span class="btn pri">JSON</span></div>
+<div class="code">{
+  "items": [
+    { "code": "KCN-01", "name": "KCN Phía Bắc", "dien_tich_ha": "312.50" },
+    { "code": "KCN-03", "name": "KCN Ven Sông", "dien_tich_ha": "205.00" },
+    { "code": "CCN-07", "name": "CCN Trung Tâm", "dien_tich_ha": "104.20" }
+  ],
+  "page": { "size": 20, "next": null },
+  "version": { "no": 4, "effectiveFrom": "2026-09-01" }
+}</div></div></div></main></div><div class="hint">Bản hi-fi minh họa · D03-06-PH07 · UI-07-12</div></body></html>
