@@ -3021,7 +3021,7 @@ Bảng dưới đây là danh mục chính thức mã lỗi của PH-07, dùng c
 | ERR-07-021 | 422 | Còn dòng hoặc bản ghi lỗi mà không chọn bỏ qua |
 | ERR-07-022 | 409 | `Idempotency-Key` đã dùng với nội dung khác |
 | ERR-07-023 | 400 | Biểu thức truy vấn sai cú pháp |
-| ERR-07-024 | 400 | Truy vấn vượt giới hạn độ phức tạp hoặc thời gian |
+| ERR-07-024 | 422 | Truy vấn hoặc cây vượt giới hạn độ phức tạp, kích thước hoặc thời gian |
 | ERR-07-025 | 400 | Thuộc tính không cho phép truy vấn |
 | ERR-07-026 | 400 | Số lượng vượt mức tối đa một lần (lô, trang) |
 | ERR-07-027 | 404 | Không tìm thấy ánh xạ |

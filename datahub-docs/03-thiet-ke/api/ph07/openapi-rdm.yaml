@@ -265,6 +265,8 @@ paths:
                 summary: Đổi mô tả và bật yêu cầu duyệt
                 value: { description: "Danh mục loại hình doanh nghiệp theo Luật Doanh nghiệp 2020", requireApproval: true }
           application/json:
+            examples:
+              doiNhom: { $ref: '#/components/examples/CatalogUpdateExample' }
             schema: { $ref: '#/components/schemas/CatalogUpdateRequest' }
       responses:
         '200':
@@ -273,6 +275,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/CatalogUpdated' }
               schema: { $ref: '#/components/schemas/Catalog' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -340,6 +344,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daNgung: { $ref: '#/components/examples/CatalogRetired' }
               schema: { $ref: '#/components/schemas/Catalog' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -412,6 +418,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daTao: { $ref: '#/components/examples/CatalogGroupCreated' }
               schema: { $ref: '#/components/schemas/CatalogGroup' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -437,8 +445,12 @@ paths:
         required: true
         content:
           application/merge-patch+json:
+            examples:
+              chuyenNhom: { $ref: '#/components/examples/CatalogGroupUpdateExample' }
             schema: { $ref: '#/components/schemas/CatalogGroupUpdateRequest' }
           application/json:
+            examples:
+              chuyenNhom: { $ref: '#/components/examples/CatalogGroupUpdateExample' }
             schema: { $ref: '#/components/schemas/CatalogGroupUpdateRequest' }
       responses:
         '200':
@@ -447,6 +459,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/CatalogGroupUpdated' }
               schema: { $ref: '#/components/schemas/CatalogGroup' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -512,6 +526,8 @@ paths:
           description: Một trang phiên bản.
           content:
             application/json:
+              examples:
+                lichSu: { $ref: '#/components/examples/VersionPageExample' }
               schema: { $ref: '#/components/schemas/CatalogVersionPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -565,6 +581,8 @@ paths:
             Retry-After: { $ref: '#/components/headers/RetryAfter' }
           content:
             application/json:
+              examples:
+                dangSaoChep: { $ref: '#/components/examples/VersionCopying' }
               schema: { $ref: '#/components/schemas/CatalogVersion' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -630,8 +648,12 @@ paths:
         required: true
         content:
           application/merge-patch+json:
+            examples:
+              datNgay: { $ref: '#/components/examples/VersionUpdateExample' }
             schema: { $ref: '#/components/schemas/VersionUpdateRequest' }
           application/json:
+            examples:
+              datNgay: { $ref: '#/components/examples/VersionUpdateExample' }
             schema: { $ref: '#/components/schemas/VersionUpdateRequest' }
       responses:
         '200':
@@ -640,6 +662,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/VersionUpdated' }
               schema: { $ref: '#/components/schemas/CatalogVersion' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -744,6 +768,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daTrinh: { $ref: '#/components/examples/VersionInReview' }
               schema: { $ref: '#/components/schemas/CatalogVersion' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -787,6 +813,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daDuyet: { $ref: '#/components/examples/VersionApproved' }
               schema: { $ref: '#/components/schemas/CatalogVersion' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -825,6 +853,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                tuChoi: { $ref: '#/components/examples/VersionRejected' }
               schema: { $ref: '#/components/schemas/CatalogVersion' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1014,6 +1044,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daThem: { $ref: '#/components/examples/AttributeCreated' }
               schema: { $ref: '#/components/schemas/AttributeDef' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1051,6 +1083,8 @@ paths:
             schema: { $ref: '#/components/schemas/AttributeDefUpdateRequest' }
             example: { label: "Loại đơn vị hành chính", queryable: true, maxLength: 32 }
           application/json:
+            examples:
+              doiNhan: { $ref: '#/components/examples/AttributeUpdateExample' }
             schema: { $ref: '#/components/schemas/AttributeDefUpdateRequest' }
       responses:
         '200':
@@ -1059,6 +1093,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/AttributeUpdated' }
               schema: { $ref: '#/components/schemas/AttributeDef' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1141,6 +1177,8 @@ paths:
           description: Một trang bản ghi.
           content:
             application/json:
+              examples:
+                trang: { $ref: '#/components/examples/ItemPageExample' }
               schema: { $ref: '#/components/schemas/CatalogItemPage' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1182,6 +1220,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daThem: { $ref: '#/components/examples/ItemCreated' }
               schema: { $ref: '#/components/schemas/CatalogItem' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1219,6 +1259,8 @@ paths:
             schema: { $ref: '#/components/schemas/ItemUpdateRequest' }
             example: { name: "Công ty trách nhiệm hữu hạn một thành viên", attrs: { ten_viet_tat: "TNHH MTV" } }
           application/json:
+            examples:
+              suaThuocTinh: { $ref: '#/components/examples/ItemUpdateExample' }
             schema: { $ref: '#/components/schemas/ItemUpdateRequest' }
       responses:
         '200':
@@ -1227,6 +1269,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/ItemUpdated' }
               schema: { $ref: '#/components/schemas/CatalogItem' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1297,6 +1341,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daNgung: { $ref: '#/components/examples/ItemDeprecated' }
               schema: { $ref: '#/components/schemas/CatalogItem' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -1399,6 +1445,8 @@ paths:
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
               schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
             text/csv:
+              examples:
+                khuonCsv: { $ref: '#/components/examples/ImportTemplateCsv' }
               schema: { type: string }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -1567,6 +1615,8 @@ paths:
           description: Đã ghi vào bản nháp.
           content:
             application/json:
+              examples:
+                daGhi: { $ref: '#/components/examples/ImportJobCommitted' }
               schema: { $ref: '#/components/schemas/ImportJob' }
         '202':
           description: Đang ghi nền.
@@ -1574,6 +1624,8 @@ paths:
             Location: { $ref: '#/components/headers/Location' }
           content:
             application/json:
+              examples:
+                dangGhi: { $ref: '#/components/examples/ImportJobCommitting' }
               schema: { $ref: '#/components/schemas/ImportJob' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -1600,6 +1652,8 @@ paths:
           description: Đã hủy.
           content:
             application/json:
+              examples:
+                daHuy: { $ref: '#/components/examples/ImportJobCancelled' }
               schema: { $ref: '#/components/schemas/ImportJob' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -1644,8 +1698,12 @@ paths:
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
               schema: { type: string, contentMediaType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet }
             text/csv:
+              examples:
+                csv: { $ref: '#/components/examples/ExportCsvExample' }
               schema: { type: string }
             application/json:
+              examples:
+                json: { $ref: '#/components/examples/ExportJsonExample' }
               schema: { $ref: '#/components/schemas/ExportJsonDocument' }
         '202':
           description: Đã tạo tác vụ xuất nền.
@@ -1654,6 +1712,8 @@ paths:
             Retry-After: { $ref: '#/components/headers/RetryAfter' }
           content:
             application/json:
+              examples:
+                chayNen: { $ref: '#/components/examples/ExportJobPending' }
               schema: { $ref: '#/components/schemas/ExportJob' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -1734,6 +1794,8 @@ paths:
           description: Một trang tác vụ.
           content:
             application/json:
+              examples:
+                lichSu: { $ref: '#/components/examples/JobPageExample' }
               schema: { $ref: '#/components/schemas/JobSummaryPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2302,6 +2364,8 @@ paths:
           description: Một trang sự kiện sắp xếp.
           content:
             application/json:
+              examples:
+                danhSach: { $ref: '#/components/examples/SuccessionPageExample' }
               schema: { $ref: '#/components/schemas/SuccessionPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2342,6 +2406,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daGhi: { $ref: '#/components/examples/SuccessionCreated' }
               schema: { $ref: '#/components/schemas/Succession' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2405,6 +2471,8 @@ paths:
           description: Một trang nguồn đồng bộ.
           content:
             application/json:
+              examples:
+                danhSach: { $ref: '#/components/examples/SyncSourcePageExample' }
               schema: { $ref: '#/components/schemas/SyncSourcePage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2440,6 +2508,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daTao: { $ref: '#/components/examples/SyncSourceCreated' }
               schema: { $ref: '#/components/schemas/SyncSource' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2469,6 +2539,8 @@ paths:
             schema: { $ref: '#/components/schemas/SyncSourceUpdateRequest' }
             example: { scheduleCron: "0 0 1 * * *", autoApply: true }
           application/json:
+            examples:
+              tatTuApDung: { $ref: '#/components/examples/SyncSourceUpdateExample' }
             schema: { $ref: '#/components/schemas/SyncSourceUpdateRequest' }
       responses:
         '200':
@@ -2477,6 +2549,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/SyncSourceUpdated' }
               schema: { $ref: '#/components/schemas/SyncSource' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2556,6 +2630,8 @@ paths:
           description: Một trang lần chạy.
           content:
             application/json:
+              examples:
+                lichSu: { $ref: '#/components/examples/SyncRunPageExample' }
               schema: { $ref: '#/components/schemas/SyncRunPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2627,6 +2703,8 @@ paths:
           description: Đã áp dụng.
           content:
             application/json:
+              examples:
+                daApDung: { $ref: '#/components/examples/SyncRunApplied' }
               schema: { $ref: '#/components/schemas/SyncRun' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2660,6 +2738,8 @@ paths:
           description: Đã từ chối.
           content:
             application/json:
+              examples:
+                daTuChoi: { $ref: '#/components/examples/SyncRunRejected' }
               schema: { $ref: '#/components/schemas/SyncRun' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2726,6 +2806,8 @@ paths:
           description: Một trang hệ thống mã.
           content:
             application/json:
+              examples:
+                danhSach: { $ref: '#/components/examples/CodeSystemPageExample' }
               schema: { $ref: '#/components/schemas/CodeSystemPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -2757,6 +2839,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daTao: { $ref: '#/components/examples/CodeSystemCreated' }
               schema: { $ref: '#/components/schemas/CodeSystem' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2781,8 +2865,12 @@ paths:
         required: true
         content:
           application/merge-patch+json:
+            examples:
+              ngungDung: { $ref: '#/components/examples/CodeSystemUpdateExample' }
             schema: { $ref: '#/components/schemas/CodeSystemUpdateRequest' }
           application/json:
+            examples:
+              ngungDung: { $ref: '#/components/examples/CodeSystemUpdateExample' }
             schema: { $ref: '#/components/schemas/CodeSystemUpdateRequest' }
       responses:
         '200':
@@ -2791,6 +2879,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daSua: { $ref: '#/components/examples/CodeSystemUpdated' }
               schema: { $ref: '#/components/schemas/CodeSystem' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -2834,6 +2924,8 @@ paths:
           description: Một trang ánh xạ.
           content:
             application/json:
+              examples:
+                trang: { $ref: '#/components/examples/CodeMappingPageExample' }
               schema: { $ref: '#/components/schemas/CodeMappingPage' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -3052,6 +3144,8 @@ paths:
             Location: { $ref: '#/components/headers/Location' }
           content:
             application/json:
+              examples:
+                daGui: { $ref: '#/components/examples/ProposalCreated' }
               schema: { $ref: '#/components/schemas/Proposal' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -3080,6 +3174,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                danhSach: { $ref: '#/components/examples/AccessGrantListExample' }
               schema: { $ref: '#/components/schemas/AccessGrantList' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -3104,6 +3200,8 @@ paths:
         required: true
         content:
           application/json:
+            examples:
+              thay: { $ref: '#/components/examples/AccessGrantPutExample' }
             schema: { $ref: '#/components/schemas/AccessGrantPut' }
             example:
               grants:
@@ -3115,6 +3213,8 @@ paths:
             ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
+              examples:
+                daThay: { $ref: '#/components/examples/AccessGrantListUpdated' }
               schema: { $ref: '#/components/schemas/AccessGrantList' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -4229,3 +4329,4124 @@ components:
               errors:
                 type: array
                 items: { $ref: '#/components/schemas/ProblemError' }
+    # ---------------------------------------------------------------- Khác biệt phiên bản (FR-07-014)
+    DiffChangeType:
+      type: string
+      enum: [ADDED, CHANGED, DEPRECATED, REACTIVATED, REMOVED, ATTRIBUTE_ADDED, ATTRIBUTE_REMOVED, ATTRIBUTE_TYPE_CHANGED, ATTRIBUTE_CONSTRAINT_CHANGED, ATTRIBUTE_META_CHANGED]
+    FieldChange:
+      type: object
+      required: [field]
+      properties:
+        field: { type: string, description: 'Trường hệ thống (`name`, `parentCode`, `sortOrder`, `replacedBy`, `validFrom`, `validTo`, `status`) hoặc `attrs.{code}`.' }
+        before: { description: Giá trị trước; vắng mặt hoặc null là rỗng. }
+        after: { description: Giá trị sau. }
+    Diff:
+      type: object
+      required: [catalogCode, fromVersionNo, toVersion, summary, changes, page]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        fromVersionNo: { type: integer, description: Phiên bản "trước" (`against`). }
+        toVersion: { type: string, description: 'Phiên bản "sau": số phiên bản hoặc `draft`.' }
+        summary:
+          type: object
+          required: [added, changed, deprecated, reactivated, removed, attributeChanges, breakingCount, changeRatio, breaking, largeChange]
+          properties:
+            added: { type: integer }
+            changed: { type: integer }
+            deprecated: { type: integer }
+            reactivated: { type: integer }
+            removed: { type: integer }
+            attributeChanges: { type: integer }
+            breakingCount: { type: integer }
+            changeRatio: { type: number, minimum: 0, description: '(added + changed + deprecated + reactivated + removed) / max(1, số bản ghi phiên bản trước).' }
+            breaking: { type: boolean }
+            largeChange: { type: boolean, description: 'changeRatio vượt `07.rdm.large-change-threshold-percent` (BR-07-012).' }
+        schemaChanges:
+          type: array
+          items:
+            type: object
+            required: [attributeCode, changeType, breaking]
+            properties:
+              attributeCode: { $ref: '#/components/schemas/AttrCode' }
+              changeType: { $ref: '#/components/schemas/DiffChangeType' }
+              breaking: { type: boolean }
+              fields: { type: array, items: { $ref: '#/components/schemas/FieldChange' } }
+        changes:
+          type: array
+          maxItems: 200
+          description: Sắp xếp thay đổi phá vỡ trước, sau đó theo mã.
+          items:
+            type: object
+            required: [itemCode, changeType, breaking]
+            properties:
+              itemCode: { $ref: '#/components/schemas/ItemCodeValue' }
+              changeType: { $ref: '#/components/schemas/DiffChangeType' }
+              breaking: { type: boolean }
+              fields: { type: array, items: { $ref: '#/components/schemas/FieldChange' } }
+              breakingReasons: { type: array, items: { type: string }, description: 'Ví dụ `PARENT_CHANGED`, `REMOVED_PUBLISHED`.' }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    # ---------------------------------------------------------------- Nhập tệp (FR-07-021, 022, 025)
+    ImportJobCreateForm:
+      type: object
+      required: [file]
+      description: Thân multipart của API-07-033. Trường `columnMapping`, `options`, `newCatalog` là phần JSON.
+      properties:
+        file: { type: string, format: binary, description: 'xlsx, xls hoặc csv; ≤ `07.rdm.import-max-mb` MB; ≤ `07.rdm.import-max-rows` dòng.' }
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        mode:
+          type: string
+          enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, ADMIN_UNIT_CONVERT]
+          default: UPSERT
+        template: { type: string, enum: [AUTO, STANDARD, LEGACY_AITA], default: AUTO }
+        sheetName: { type: string, maxLength: 255, description: 'Mặc định `DuLieu`; không có thì lấy sheet đầu tiên.' }
+        headerRow: { type: integer, minimum: 1, maximum: 50 }
+        firstDataRow: { type: integer, minimum: 2, maximum: 51 }
+        encoding: { type: string, enum: [AUTO, UTF-8, UTF-16LE, UTF-16BE, WINDOWS-1258], default: AUTO }
+        delimiter: { type: string, enum: [',', ';', "\t"], description: Chỉ với CSV; mặc định tự nhận. }
+        columnMapping:
+          type: object
+          additionalProperties: { type: string }
+          description: '`{ "tên cột trong tệp": "mã trường" }`; ghi đè đề xuất tự động.'
+        createDraft: { type: boolean, default: false }
+        options:
+          type: object
+          properties:
+            emptyMeansNull: { type: boolean, default: false }
+            autoSortOrder: { type: boolean, default: true }
+        newCatalog:
+          description: Chỉ với `mode = CREATE_CATALOG`; mã, tên do người dùng chọn ghi đè đề xuất.
+          $ref: '#/components/schemas/CatalogCreateRequest'
+    ImportSummary:
+      type: object
+      properties:
+        totalRows: { type: integer }
+        validRows: { type: integer }
+        errorRows: { type: integer }
+        warningRows: { type: integer }
+        actions:
+          type: object
+          properties:
+            INSERT: { type: integer }
+            UPDATE: { type: integer }
+            DEPRECATE: { type: integer }
+            UNCHANGED: { type: integer }
+            DELETE_DRAFT: { type: integer }
+        encoding: { type: string }
+        sheetName: { type: string }
+        detectedTemplate: { type: string, enum: [STANDARD, LEGACY_AITA] }
+    ProposedAttribute:
+      type: object
+      required: [code, label, dataType]
+      properties:
+        code: { $ref: '#/components/schemas/AttrCode' }
+        label: { $ref: '#/components/schemas/TName' }
+        sourceColumn: { type: string }
+        dataType: { $ref: '#/components/schemas/AttributeDataType' }
+        required: { type: boolean }
+        maxLengthObserved: { type: integer }
+        distinctValues: { type: integer }
+        enumCandidates: { type: array, maxItems: 50, items: { type: string }, description: 'Khi suy ra kiểu ENUM (≤ 50 giá trị khác nhau, FR-07-051 bước 6).' }
+    ImportJob:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, status, mode, catalogCode]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            jobType: { type: string, enum: [IMPORT, ADMIN_UNIT_CONVERT, PROPOSAL], default: IMPORT }
+            catalogCode: { type: [string, 'null'], description: Rỗng khi `CREATE_CATALOG` chưa commit. }
+            versionNo: { type: [integer, 'null'] }
+            mode: { type: string, enum: [UPSERT, REPLACE, APPEND, CREATE_CATALOG, ADMIN_UNIT_CONVERT] }
+            template: { $ref: '#/components/schemas/ImportTemplate' }
+            fileFormat: { $ref: '#/components/schemas/FileFormat' }
+            fileName: { type: string }
+            fileSize: { type: integer, description: Byte. }
+            status: { $ref: '#/components/schemas/ImportJobStatus' }
+            progress: { type: integer, minimum: 0, maximum: 100 }
+            summary: { $ref: '#/components/schemas/ImportSummary' }
+            columnMapping:
+              type: object
+              additionalProperties: { type: [string, 'null'] }
+              description: Ánh xạ cột đang áp dụng; giá trị null là cột bị bỏ qua.
+            proposedCatalog:
+              type: [object, 'null']
+              properties:
+                code: { $ref: '#/components/schemas/TCode' }
+                name: { $ref: '#/components/schemas/TName' }
+            proposedAttributes: { type: array, items: { $ref: '#/components/schemas/ProposedAttribute' } }
+            errorMessage: { type: [string, 'null'] }
+            resultFileUrl: { type: [string, 'null'], format: uri, description: 'Tệp kết quả của `ADMIN_UNIT_CONVERT`; URL ký sẵn 24 giờ.' }
+            startedAt: { $ref: '#/components/schemas/TTs' }
+            finishedAt: { type: [string, 'null'], format: date-time }
+            expiresAt: { type: [string, 'null'], format: date-time, description: 'Hạn commit (BR-07-016).' }
+            committedVersionNo: { type: [integer, 'null'] }
+    ImportCommitRequest:
+      type: object
+      properties:
+        skipErrors: { type: boolean, default: false, description: 'Bỏ dòng lỗi và dòng phụ thuộc dòng lỗi (BR-07-015).' }
+        changeNote: { type: string, maxLength: 1000 }
+        newCatalog:
+          description: Chỉ với `CREATE_CATALOG`; xác nhận mã, tên và lược đồ đề xuất đã chỉnh.
+          type: object
+          properties:
+            catalog: { $ref: '#/components/schemas/CatalogCreateRequest' }
+            attributes: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/AttributeDefCreateRequest' } }
+    ImportRow:
+      type: object
+      required: [rowNo, valid, action]
+      properties:
+        rowNo: { type: integer, minimum: 1, description: Số dòng trong tệp. }
+        code: { type: [string, 'null'] }
+        valid: { type: boolean }
+        action: { type: string, enum: [INSERT, UPDATE, DEPRECATE, UNCHANGED, DELETE_DRAFT, SKIPPED] }
+        values: { type: object, additionalProperties: true, description: Giá trị đã chuẩn hóa theo mã trường. }
+        errors: { type: array, items: { $ref: '#/components/schemas/ProblemError' } }
+        warnings: { type: array, items: { $ref: '#/components/schemas/ProblemError' } }
+    ImportRowPage:
+      type: object
+      required: [jobId, items, page]
+      properties:
+        jobId: { $ref: '#/components/schemas/TId' }
+        items: { type: array, maxItems: 500, items: { $ref: '#/components/schemas/ImportRow' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    # ---------------------------------------------------------------- Xuất (FR-07-024) và lịch sử tác vụ (FR-07-025)
+    ExportJobRequest:
+      type: object
+      required: [catalogCode]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        version: { type: string, pattern: '^(current|draft|\d+)$', default: current }
+        at: { $ref: '#/components/schemas/TDate' }
+        format: { type: string, enum: [XLSX, CSV, JSON], default: XLSX }
+        template: { type: string, enum: [STANDARD, LEGACY_AITA], default: STANDARD }
+        filter:
+          type: object
+          properties:
+            q: { type: string, maxLength: 100 }
+            status: { $ref: '#/components/schemas/ItemStatus' }
+            parentCode: { type: string, description: Kèm toàn bộ cây con. }
+        includeDeprecated: { type: boolean, default: true }
+        includeHidden: { type: boolean, default: false, description: Chỉ người có PERM-07-update. }
+    ExportJob:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, status, catalogCode, format]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            catalogCode: { $ref: '#/components/schemas/TCode' }
+            versionNo: { type: integer }
+            format: { $ref: '#/components/schemas/FileFormat' }
+            template: { type: string, enum: [STANDARD, LEGACY_AITA] }
+            status: { $ref: '#/components/schemas/ExportJobStatus' }
+            rowCount: { type: [integer, 'null'] }
+            fileName: { type: [string, 'null'] }
+            fileSize: { type: [integer, 'null'] }
+            downloadUrl: { type: [string, 'null'], format: uri, description: URL ký sẵn, hạn 24 giờ. }
+            expiresAt: { type: [string, 'null'], format: date-time }
+            errorMessage: { type: [string, 'null'] }
+            startedAt: { $ref: '#/components/schemas/TTs' }
+            finishedAt: { type: [string, 'null'], format: date-time }
+    ExportJsonDocument:
+      type: object
+      required: [catalog, version, attributes, items]
+      description: Định dạng JSON của xuất đồng bộ (≤ `07.rdm.export-sync-max-rows` dòng).
+      properties:
+        catalog:
+          type: object
+          properties:
+            code: { $ref: '#/components/schemas/TCode' }
+            name: { $ref: '#/components/schemas/TName' }
+            sourceType: { $ref: '#/components/schemas/SourceType' }
+        version:
+          type: object
+          properties:
+            versionNo: { type: integer }
+            effectiveFrom: { $ref: '#/components/schemas/TDate' }
+            effectiveTo: { type: [string, 'null'], format: date }
+            schemaHash: { type: string }
+        attributes: { type: array, items: { $ref: '#/components/schemas/AttributeDef' } }
+        items: { type: array, items: { $ref: '#/components/schemas/CatalogItem' } }
+        exportedAt: { $ref: '#/components/schemas/TTs' }
+    JobSummary:
+      type: object
+      required: [id, jobType, status]
+      properties:
+        id: { $ref: '#/components/schemas/TId' }
+        jobType: { type: string, enum: [IMPORT, EXPORT, ADMIN_UNIT_CONVERT, PROPOSAL] }
+        catalogCode: { type: [string, 'null'] }
+        versionNo: { type: [integer, 'null'] }
+        mode: { type: [string, 'null'] }
+        format: { type: [string, 'null'] }
+        template: { type: [string, 'null'] }
+        status: { type: string, description: Trạng thái theo loại (ImportJobStatus hoặc ExportJobStatus). }
+        createdBy: { type: string }
+        createdByName: { type: string }
+        startedAt: { $ref: '#/components/schemas/TTs' }
+        finishedAt: { type: [string, 'null'], format: date-time }
+        stats: { type: object, additionalProperties: { type: integer }, description: 'Ví dụ `totalRows`, `errorRows`, `rowCount`.' }
+    JobSummaryPage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/JobSummary' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    # ---------------------------------------------------------------- Khai thác (FR-07-026…033)
+    ItemLookupResult:
+      allOf:
+        - $ref: '#/components/schemas/CatalogItem'
+        - type: object
+          properties:
+            catalogCode: { $ref: '#/components/schemas/TCode' }
+            versionNo: { type: integer }
+            at: { $ref: '#/components/schemas/TDate' }
+            replacement:
+              description: 'Bản ghi thay thế cuối chuỗi khi `resolveReplacement = true` và `replacedBy` có đúng một mã.'
+              $ref: '#/components/schemas/CatalogItem'
+    LookupRequest:
+      type: object
+      required: [codes]
+      properties:
+        codes: { type: array, minItems: 1, maxItems: 500, items: { type: string, maxLength: 64 }, description: 'Trùng lặp được gộp; giới hạn `07.rdm.lookup-batch-max`.' }
+        at: { $ref: '#/components/schemas/TDate' }
+        version: { type: integer, description: Loại trừ với `at`. }
+        fields: { type: array, items: { type: string } }
+        resolveReplacement: { type: boolean, default: false }
+        includeDeprecated: { type: boolean, default: true }
+    LookupResponse:
+      type: object
+      required: [catalogCode, versionNo, found, notFound]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        at: { $ref: '#/components/schemas/TDate' }
+        found:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/ItemLookupResult' }
+          description: Khóa là mã chuẩn hóa chữ hoa.
+        notFound:
+          type: array
+          items:
+            type: object
+            required: [code, reason]
+            properties:
+              code: { type: string }
+              reason: { type: string, enum: [NOT_FOUND, DEPRECATED_EXCLUDED] }
+    TreeNode:
+      type: object
+      required: [code, name, status]
+      properties:
+        code: { $ref: '#/components/schemas/ItemCodeValue' }
+        name: { $ref: '#/components/schemas/TName' }
+        levelName: { type: [string, 'null'] }
+        depth: { type: integer }
+        status: { $ref: '#/components/schemas/ItemStatus' }
+        attrs: { $ref: '#/components/schemas/ItemAttrs' }
+        hasChildren: { type: boolean }
+        children: { type: array, items: { $ref: '#/components/schemas/TreeNode' } }
+    TreeResponse:
+      type: object
+      required: [catalogCode, versionNo, nodes]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        at: { $ref: '#/components/schemas/TDate' }
+        root: { type: [string, 'null'] }
+        depth: { type: integer, minimum: 1, maximum: 10 }
+        nodeCount: { type: integer, maximum: 10000 }
+        nodes: { type: array, items: { $ref: '#/components/schemas/TreeNode' } }
+    SearchResponse:
+      type: object
+      required: [catalogCode, versionNo, items]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        versionNo: { type: integer }
+        q: { type: string }
+        items:
+          type: array
+          maxItems: 50
+          items:
+            allOf:
+              - $ref: '#/components/schemas/CatalogItem'
+              - type: object
+                properties:
+                  matchType: { type: string, enum: [CODE_EXACT, CODE_PREFIX, NAME_PREFIX, NAME_WORD, ATTRIBUTE] }
+                  path: { type: array, items: { type: string }, description: Tên các cấp cha, để hiển thị gợi ý. }
+    ChangesResponse:
+      type: object
+      required: [catalogCode, fromVersion, toVersion, schemaChanged, changes, cursor]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        fromVersion: { type: integer }
+        toVersion: { type: integer }
+        toEffectiveFrom: { $ref: '#/components/schemas/TDate' }
+        schemaChanged: { type: boolean }
+        schemaChanges:
+          type: array
+          items:
+            type: object
+            properties:
+              attributeCode: { $ref: '#/components/schemas/AttrCode' }
+              changeType: { $ref: '#/components/schemas/DiffChangeType' }
+        fullReloadRecommended: { type: boolean, description: Tổng thay đổi vượt 50% số bản ghi. }
+        changes:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            required: [code, changeType]
+            properties:
+              code: { $ref: '#/components/schemas/ItemCodeValue' }
+              changeType: { type: string, enum: [ADDED, CHANGED, DEPRECATED, REACTIVATED, REMOVED] }
+              item: { $ref: '#/components/schemas/CatalogItem' }
+              changedFields: { type: array, items: { type: string } }
+        cursor: { $ref: '#/components/schemas/CursorMeta' }
+    QueryCondition:
+      type: object
+      description: 'Điều kiện lá `{field, op, value}` hoặc nhóm `{and: [...]}`, `{or: [...]}`, `{not: {...}}`; ≤ 20 lá, lồng ≤ 3 cấp.'
+      properties:
+        field: { type: string, description: 'Trường hệ thống hoặc `attrs.{code}` có `queryable = true`.' }
+        op: { type: string, enum: [eq, ne, in, nin, lt, lte, gt, gte, between, contains, startsWith, isNull, isNotNull] }
+        value: { description: Vô hướng, mảng hoặc vắng mặt tùy toán tử. }
+        and: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/QueryCondition' } }
+        or: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/QueryCondition' } }
+        not: { $ref: '#/components/schemas/QueryCondition' }
+    QueryRequest:
+      type: object
+      properties:
+        at: { $ref: '#/components/schemas/TDate' }
+        version: { type: integer }
+        filter: { $ref: '#/components/schemas/QueryCondition' }
+        select: { type: array, maxItems: 120, items: { type: string } }
+        sort:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            required: [field]
+            properties:
+              field: { type: string }
+              dir: { type: string, enum: [asc, desc], default: asc }
+        limit: { type: integer, minimum: 1, maximum: 1000, default: 100 }
+        cursor: { type: string, description: Con trỏ ký HMAC, gắn với băm của filter và sort. }
+        includeDeprecated: { type: boolean, default: false }
+    QueryResponse:
+      type: object
+      required: [items, catalogVersion, took]
+      properties:
+        items: { type: array, items: { type: object, additionalProperties: true } }
+        nextCursor: { type: [string, 'null'] }
+        catalogVersion: { type: integer }
+        took: { type: integer, description: Mili giây. }
+    SchemaMetadata:
+      type: object
+      required: [catalog, version, attributes, jsonSchema]
+      properties:
+        catalog: { $ref: '#/components/schemas/Catalog' }
+        version:
+          type: object
+          properties:
+            versionNo: { type: integer }
+            effectiveFrom: { $ref: '#/components/schemas/TDate' }
+            effectiveTo: { type: [string, 'null'], format: date }
+            schemaHash: { type: string, description: 'SHA-256 của lược đồ đã chuẩn hóa; dùng để HTTT biết lược đồ có đổi.' }
+        attributes: { type: array, items: { $ref: '#/components/schemas/AttributeDef' } }
+        levelNames: { type: array, items: { type: string } }
+        jsonSchema: { type: object, additionalProperties: true, description: JSON Schema 2020-12 của một bản ghi. }
+    # ---------------------------------------------------------------- ĐVHC (FR-07-045…047)
+    SuccessionCreateRequest:
+      type: object
+      required: [eventType, effectiveDate, legalBasis]
+      properties:
+        eventType: { $ref: '#/components/schemas/SuccessionEventType' }
+        fromCodes: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ItemCodeValue' } }
+        toCodes: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ItemCodeValue' } }
+        newUnits:
+          type: array
+          items:
+            type: object
+            required: [code, name, unitType]
+            properties:
+              code: { $ref: '#/components/schemas/ItemCodeValue' }
+              name: { $ref: '#/components/schemas/TName' }
+              parentCode: { type: [string, 'null'] }
+              unitType: { type: string, description: 'Ví dụ `TINH`, `THANH_PHO_TW`, `XA`, `PHUONG`, `DAC_KHU`.' }
+              shortName: { type: string, maxLength: 255 }
+        effectiveDate: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string, minLength: 10, maxLength: 1000 }
+        legalBasisFileId: { $ref: '#/components/schemas/TId' }
+        note: { type: string, maxLength: 4000, description: Bắt buộc với SPLIT. }
+    Succession:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - $ref: '#/components/schemas/SuccessionCreateRequest'
+        - type: object
+          required: [id, versionNo]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            versionNo: { type: integer }
+            affectedItems:
+              type: array
+              readOnly: true
+              items:
+                type: object
+                properties:
+                  code: { type: string }
+                  action: { type: string, enum: [ADDED, DEPRECATED, RENAMED, REPARENTED, NEEDS_PARENT] }
+    SuccessionPage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Succession' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    SuccessionRef:
+      type: object
+      properties:
+        eventType: { $ref: '#/components/schemas/SuccessionEventType' }
+        effectiveDate: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string }
+        codes: { type: array, items: { type: string } }
+    AdminUnitConvertRequest:
+      type: object
+      required: [codes]
+      properties:
+        direction: { type: string, enum: [OLD_TO_NEW, NEW_TO_OLD], default: OLD_TO_NEW }
+        at: { $ref: '#/components/schemas/TDate' }
+        codes:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            type: object
+            required: [code]
+            properties:
+              code: { type: string, maxLength: 64 }
+              asOf: { type: string, format: date, default: '2025-06-30' }
+    AdminUnitConvertResponse:
+      type: object
+      required: [results, stats]
+      properties:
+        direction: { type: string, enum: [OLD_TO_NEW, NEW_TO_OLD] }
+        at: { $ref: '#/components/schemas/TDate' }
+        results:
+          type: array
+          items:
+            type: object
+            required: [input, status]
+            properties:
+              input:
+                type: object
+                properties:
+                  code: { type: string }
+                  asOf: { $ref: '#/components/schemas/TDate' }
+              status: { type: string, enum: [MAPPED, UNCHANGED, AMBIGUOUS, NOT_FOUND] }
+              newCode: { type: [string, 'null'] }
+              newName: { type: [string, 'null'] }
+              newPath:
+                type: [object, 'null']
+                properties:
+                  provinceCode: { type: string }
+                  provinceName: { type: string }
+                  communeCode: { type: string }
+                  communeName: { type: string }
+              candidates:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: { type: string }
+                    name: { type: string }
+                    note: { type: string, description: Ghi chú địa bàn lấy từ sự kiện SPLIT. }
+              events: { type: array, items: { $ref: '#/components/schemas/SuccessionRef' } }
+              note: { type: [string, 'null'] }
+        stats: { type: object, additionalProperties: { type: integer } }
+    Lineage:
+      type: object
+      required: [catalogCode, code, segments]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        code: { $ref: '#/components/schemas/ItemCodeValue' }
+        segments:
+          type: array
+          items:
+            type: object
+            required: [from, versionNoFrom, name, status]
+            properties:
+              from: { $ref: '#/components/schemas/TDate' }
+              to: { type: [string, 'null'], format: date }
+              versionNoFrom: { type: integer }
+              versionNoTo: { type: [integer, 'null'] }
+              name: { $ref: '#/components/schemas/TName' }
+              parentCode: { type: [string, 'null'] }
+              levelName: { type: [string, 'null'] }
+              status: { $ref: '#/components/schemas/ItemStatus' }
+              attrsChanged: { type: array, items: { type: string } }
+        predecessors: { type: array, items: { $ref: '#/components/schemas/LineageLink' } }
+        successors: { type: array, items: { $ref: '#/components/schemas/LineageLink' } }
+    LineageLink:
+      type: object
+      properties:
+        code: { type: string }
+        name: { type: string }
+        eventType: { $ref: '#/components/schemas/SuccessionEventType' }
+        effectiveDate: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string }
+    # ---------------------------------------------------------------- Đồng bộ quốc gia (FR-07-035…039)
+    SyncSourceCreateRequest:
+      type: object
+      required: [catalogCode, remoteCode]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        provider: { type: string, enum: [NDXP_DMDC], default: NDXP_DMDC }
+        remoteCode: { type: string, minLength: 1, maxLength: 128 }
+        scheduleCron: { type: string, description: 'Cron 6 trường, giờ Việt Nam, không dày hơn 1 lần/giờ; mặc định `07.rdm.sync-default-cron`.' }
+        autoApply: { type: boolean, default: true }
+        enabled: { type: boolean, default: true }
+        fieldMapping:
+          type: object
+          additionalProperties: { type: string }
+          description: '`{trườngNguồn: mãThuộcTính}`; bắt buộc có ánh xạ tới `code` và `name`.'
+        createCatalog:
+          description: Chỉ khi đăng ký từ danh mục quốc gia chưa có trong tenant (FR-07-038).
+          $ref: '#/components/schemas/CatalogCreateRequest'
+    SyncSourceUpdateRequest:
+      type: object
+      properties:
+        scheduleCron: { type: string }
+        autoApply: { type: boolean }
+        enabled: { type: boolean }
+        fieldMapping: { type: object, additionalProperties: { type: string } }
+    SyncSource:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, catalogCode, provider, remoteCode, enabled]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            catalogCode: { $ref: '#/components/schemas/TCode' }
+            provider: { type: string, enum: [NDXP_DMDC] }
+            remoteCode: { type: string }
+            remoteName: { type: [string, 'null'] }
+            scheduleCron: { type: string }
+            autoApply: { type: boolean }
+            enabled: { type: boolean }
+            fieldMapping: { type: object, additionalProperties: { type: string } }
+            remoteVersion: { type: [string, 'null'] }
+            lastRunId: { type: [string, 'null'], format: uuid }
+            lastRunStatus:
+              oneOf:
+                - $ref: '#/components/schemas/SyncRunStatus'
+                - type: 'null'
+            lastSuccessAt: { type: [string, 'null'], format: date-time }
+            nextRunAt: { type: [string, 'null'], format: date-time }
+            stale: { type: boolean, readOnly: true, description: 'Quá `07.rdm.sync-stale-alert-days` ngày không thành công.' }
+    SyncSourcePage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SyncSource' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    SyncRunRequest:
+      type: object
+      properties:
+        force: { type: boolean, default: false, description: Bỏ qua so sánh remoteVersion, ép tính lại khác biệt. }
+    SyncRun:
+      type: object
+      required: [id, sourceId, catalogCode, status, trigger, startedAt]
+      properties:
+        id: { $ref: '#/components/schemas/TId' }
+        sourceId: { $ref: '#/components/schemas/TId' }
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        status: { $ref: '#/components/schemas/SyncRunStatus' }
+        trigger: { type: string, enum: [SCHEDULE, MANUAL, FIRST_RUN] }
+        triggeredBy: { type: string }
+        remoteVersion: { type: [string, 'null'] }
+        diffStats:
+          type: object
+          properties:
+            added: { type: integer }
+            changed: { type: integer }
+            removed: { type: integer }
+            attributeAdded: { type: integer }
+            attributeRemoved: { type: integer }
+            attributeTypeChanged: { type: integer }
+            invalid: { type: integer }
+        hasBreaking: { type: boolean }
+        resultVersionNo: { type: [integer, 'null'] }
+        resultVersionStatus:
+          oneOf:
+            - $ref: '#/components/schemas/VersionStatus'
+            - type: 'null'
+        decidedBy: { type: [string, 'null'] }
+        decidedAt: { type: [string, 'null'], format: date-time }
+        decisionNote: { type: [string, 'null'] }
+        startedAt: { $ref: '#/components/schemas/TTs' }
+        finishedAt: { type: [string, 'null'], format: date-time }
+        errorMessage: { type: [string, 'null'] }
+    SyncChange:
+      type: object
+      required: [changeType, breaking]
+      properties:
+        itemCode: { type: [string, 'null'] }
+        attributeCode: { type: [string, 'null'] }
+        changeType: { $ref: '#/components/schemas/SyncChangeType' }
+        breaking: { type: boolean }
+        valid: { type: boolean }
+        errors: { type: array, items: { $ref: '#/components/schemas/ProblemError' } }
+        before: { type: [object, 'null'], additionalProperties: true }
+        after: { type: [object, 'null'], additionalProperties: true }
+    SyncRunDetail:
+      allOf:
+        - $ref: '#/components/schemas/SyncRun'
+        - type: object
+          required: [changes, page]
+          properties:
+            changes: { type: array, maxItems: 200, items: { $ref: '#/components/schemas/SyncChange' } }
+            page: { $ref: '#/components/schemas/PageMeta' }
+    SyncRunPage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/SyncRun' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    SyncRunAcceptRequest:
+      type: object
+      properties:
+        note: { type: string, minLength: 10, maxLength: 1000, description: Bắt buộc khi hasBreaking = true. }
+        skipInvalid: { type: boolean, default: false }
+        excludeItemCodes: { type: array, maxItems: 1000, items: { type: string }, description: Chỉ mã thuộc thay đổi ADDED hoặc CHANGED không phá vỡ. }
+        effectiveFrom: { $ref: '#/components/schemas/TDate' }
+        publishNow: { type: boolean, default: true }
+    NationalCatalogPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [remoteCode, remoteName, localStatus]
+            properties:
+              remoteCode: { type: string }
+              remoteName: { type: string }
+              issuer: { type: [string, 'null'], description: Cơ quan ban hành. }
+              remoteVersion: { type: [string, 'null'] }
+              remoteUpdatedAt: { type: [string, 'null'], format: date-time }
+              itemCount: { type: [integer, 'null'] }
+              localStatus: { type: string, enum: [IN_COMMON, IN_TENANT, AVAILABLE] }
+              localCatalogCode: { type: [string, 'null'] }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    ProposalCreateRequest:
+      type: object
+      required: [itemCodes, justification, contact]
+      properties:
+        itemCodes: { type: array, minItems: 1, maxItems: 100, items: { type: string } }
+        justification: { type: string, minLength: 20, maxLength: 4000 }
+        contact: { type: string, maxLength: 500, description: 'Đơn vị và đầu mối công vụ; không chứa số điện thoại cá nhân (BR-07-025).' }
+        attachments: { type: array, maxItems: 5, items: { $ref: '#/components/schemas/TId' }, description: file_object PDF đã quét sạch. }
+    Proposal:
+      type: object
+      required: [proposalId, status, itemCodes]
+      properties:
+        proposalId: { $ref: '#/components/schemas/TId' }
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        remoteReference: { type: [string, 'null'] }
+        status: { type: string, enum: [SUBMITTED, ACCEPTED, REJECTED, UNKNOWN] }
+        itemCodes: { type: array, items: { type: string } }
+        submittedAt: { $ref: '#/components/schemas/TTs' }
+        submittedBy: { type: string }
+    # ---------------------------------------------------------------- Ánh xạ mã (FR-07-040…043)
+    CodeSystemCreateRequest:
+      type: object
+      required: [code, name]
+      properties:
+        code: { $ref: '#/components/schemas/TCode' }
+        name: { $ref: '#/components/schemas/TName' }
+        owner: { $ref: '#/components/schemas/TName' }
+        memberSystemId: { $ref: '#/components/schemas/TId' }
+        description: { $ref: '#/components/schemas/TText' }
+    CodeSystemUpdateRequest:
+      type: object
+      properties:
+        name: { $ref: '#/components/schemas/TName' }
+        owner: { $ref: '#/components/schemas/TName' }
+        memberSystemId: { type: [string, 'null'], format: uuid }
+        description: { $ref: '#/components/schemas/TText' }
+        status: { type: string, enum: [ACTIVE, RETIRED] }
+    CodeSystem:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - $ref: '#/components/schemas/CodeSystemCreateRequest'
+        - type: object
+          required: [id, tenantId, status]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            tenantId: { $ref: '#/components/schemas/TenantCode' }
+            status: { type: string, enum: [ACTIVE, RETIRED] }
+            memberSystemName: { type: [string, 'null'], readOnly: true }
+            mappedCatalogCount: { type: integer, readOnly: true }
+            mappingCount: { type: integer, readOnly: true }
+    CodeSystemPage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/CodeSystem' } }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    CodeMapping:
+      allOf:
+        - $ref: '#/components/schemas/AuditFields'
+        - type: object
+          required: [id, codeSystem, itemCode, externalCode, relation, provisional]
+          properties:
+            id: { $ref: '#/components/schemas/TId' }
+            codeSystem: { $ref: '#/components/schemas/TCode' }
+            itemCode: { $ref: '#/components/schemas/ItemCodeValue' }
+            itemName: { type: [string, 'null'], readOnly: true }
+            itemStatus:
+              readOnly: true
+              oneOf:
+                - $ref: '#/components/schemas/ItemStatus'
+                - type: 'null'
+            externalCode: { type: string, minLength: 1, maxLength: 128 }
+            externalLabel: { type: [string, 'null'], maxLength: 255 }
+            relation: { $ref: '#/components/schemas/MappingRelation' }
+            provisional: { type: boolean }
+            reason: { type: [string, 'null'], maxLength: 1000 }
+            validFrom: { type: [string, 'null'], format: date }
+            validTo: { type: [string, 'null'], format: date }
+    CodeMappingPage:
+      type: object
+      required: [items, page]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/CodeMapping' } }
+        unmappedItems:
+          type: array
+          description: 'Chỉ khi `unmapped=true`: mã danh mục ACTIVE chưa có ánh xạ.'
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              name: { type: string }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    MappingBatchPut:
+      type: object
+      required: [mappings]
+      properties:
+        mode: { type: string, enum: [MERGE, REPLACE], default: MERGE, description: REPLACE xóa dòng không có trong danh sách. }
+        mappings:
+          type: array
+          minItems: 1
+          maxItems: 5000
+          items:
+            type: object
+            required: [itemCode, externalCode]
+            properties:
+              id: { $ref: '#/components/schemas/TId' }
+              itemCode: { $ref: '#/components/schemas/ItemCodeValue' }
+              externalCode: { type: string, minLength: 1, maxLength: 128 }
+              externalLabel: { type: string, maxLength: 255 }
+              relation: { $ref: '#/components/schemas/MappingRelation' }
+              provisional: { type: boolean, default: false }
+              reason: { type: string, minLength: 10, maxLength: 1000, description: Bắt buộc khi provisional = true (BR-07-024). }
+              validFrom: { $ref: '#/components/schemas/TDate' }
+              validTo: { $ref: '#/components/schemas/TDate' }
+    MappingBatchResult:
+      type: object
+      required: [results, stats]
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required: [index, status]
+            properties:
+              index: { type: integer, minimum: 0 }
+              id: { type: [string, 'null'], format: uuid }
+              status: { type: string, enum: [CREATED, UPDATED, UNCHANGED, DELETED, FAILED] }
+              errors: { type: array, items: { $ref: '#/components/schemas/ProblemError' } }
+        stats: { type: object, additionalProperties: { type: integer } }
+        coverageRatio: { type: number, minimum: 0, maximum: 1 }
+    TranslateRequest:
+      type: object
+      required: [catalog, codeSystem, direction, codes]
+      properties:
+        catalog: { $ref: '#/components/schemas/TCode' }
+        codeSystem: { $ref: '#/components/schemas/TCode' }
+        direction: { type: string, enum: [TO_CATALOG, FROM_CATALOG] }
+        at: { $ref: '#/components/schemas/TDate' }
+        codes: { type: array, minItems: 1, maxItems: 500, items: { type: string, maxLength: 128 } }
+        includeProvisional: { type: boolean, default: true }
+        preferRelation: { $ref: '#/components/schemas/MappingRelation' }
+    TranslateResponse:
+      type: object
+      required: [results, stats]
+      properties:
+        direction: { type: string, enum: [TO_CATALOG, FROM_CATALOG] }
+        results:
+          type: array
+          items:
+            type: object
+            required: [input, status]
+            properties:
+              input: { type: string }
+              status: { type: string, enum: [MAPPED, MULTIPLE, NOT_MAPPED] }
+              itemCode: { type: [string, 'null'] }
+              itemName: { type: [string, 'null'] }
+              itemStatus:
+                oneOf:
+                  - $ref: '#/components/schemas/ItemStatus'
+                  - type: 'null'
+              externalCodes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code: { type: string }
+                    label: { type: [string, 'null'] }
+                    relation: { $ref: '#/components/schemas/MappingRelation' }
+                    provisional: { type: boolean }
+        stats: { type: object, additionalProperties: { type: integer } }
+    Coverage:
+      type: object
+      required: [catalogCode, codeSystem, at, totalActiveItems, mappedItems, provisionalItems, coverageRatio]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        codeSystem: { $ref: '#/components/schemas/TCode' }
+        at: { $ref: '#/components/schemas/TDate' }
+        totalActiveItems: { type: integer }
+        mappedItems: { type: integer }
+        provisionalItems: { type: integer }
+        coverageRatio: { type: number, minimum: 0, maximum: 1 }
+        unmapped:
+          type: array
+          items: { type: object, properties: { code: { type: string }, name: { type: string } } }
+        provisional: { type: array, items: { $ref: '#/components/schemas/CodeMapping' } }
+        staleMappings:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/CodeMapping'
+              - type: object
+                properties:
+                  suggestedItemCodes: { type: array, items: { type: string }, description: Lấy từ replacedBy của mã đã DEPRECATED. }
+        page: { $ref: '#/components/schemas/PageMeta' }
+    # ---------------------------------------------------------------- Kiểm toán, quyền khai thác, nền tảng
+    HistoryEntry:
+      type: object
+      required: [occurredAt, actor, action, objectType, summary, result]
+      properties:
+        occurredAt: { $ref: '#/components/schemas/TTs' }
+        actor:
+          type: object
+          properties:
+            id: { type: string }
+            displayName: { type: string }
+            type: { type: string, enum: [USER, CLIENT, SYSTEM] }
+        action: { type: string, pattern: '^RDM_[A-Z_]+$' }
+        objectType: { type: string, enum: [CATALOG, VERSION, ITEM, ATTRIBUTE, IMPORT_JOB, EXPORT_JOB, SYNC_SOURCE, SYNC_RUN, CODE_SYSTEM, MAPPING, ACCESS_GRANT, SUCCESSION, GROUP] }
+        objectRef: { type: object, additionalProperties: { type: string } }
+        summary: { type: string }
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              before: {}
+              after: {}
+        result: { type: string, enum: [SUCCESS, FAILURE] }
+        reason: { type: [string, 'null'] }
+        traceId: { type: string }
+    HistoryCursorPage:
+      type: object
+      required: [items, cursor]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/HistoryEntry' } }
+        cursor: { $ref: '#/components/schemas/CursorMeta' }
+        partial: { type: boolean, description: true khi PH-13 không sẵn sàng và chỉ có dữ liệu PH-07. }
+    AccessGrant:
+      type: object
+      required: [memberSystemId, scopes]
+      properties:
+        memberSystemId: { $ref: '#/components/schemas/TId' }
+        memberSystemName: { type: string, readOnly: true }
+        scopes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: string, enum: [rdm.read, rdm.query] }
+        grantedBy: { type: string, readOnly: true }
+        grantedAt: { type: string, format: date-time, readOnly: true }
+        expiresAt: { type: [string, 'null'], format: date-time }
+    AccessGrantList:
+      type: object
+      required: [catalogCode, grants]
+      properties:
+        catalogCode: { $ref: '#/components/schemas/TCode' }
+        classification: { $ref: '#/components/schemas/Classification' }
+        grants: { type: array, maxItems: 500, items: { $ref: '#/components/schemas/AccessGrant' } }
+        warning: { type: [string, 'null'], description: 'Ví dụ "không có tác dụng" khi danh mục không phải RESTRICTED.' }
+    AccessGrantPut:
+      type: object
+      required: [grants, reason]
+      properties:
+        grants: { type: array, maxItems: 500, items: { $ref: '#/components/schemas/AccessGrant' } }
+        reason: { type: string, minLength: 10, maxLength: 1000 }
+    SeedRequest:
+      type: object
+      required: [packageVersion]
+      properties:
+        packageVersion: { type: string, pattern: '^\d{4}\.\d{2}(\.\d+)?$' }
+        dryRun: { type: boolean, default: false }
+        include: { type: array, items: { $ref: '#/components/schemas/TCode' }, description: Giới hạn danh mục cần nạp khi nạp bổ sung. }
+    SeedResult:
+      type: object
+      required: [packageVersion, status, catalogs]
+      properties:
+        packageVersion: { type: string }
+        status: { type: string, enum: [COMPLETED, PARTIAL] }
+        dryRun: { type: boolean }
+        catalogs:
+          type: array
+          items:
+            type: object
+            properties:
+              code: { type: string }
+              versionNo: { type: [integer, 'null'] }
+              itemCount: { type: integer }
+              result: { type: string, enum: [CREATED, ALREADY_EXISTS, FAILED, SKIPPED] }
+              error: { type: [string, 'null'] }
+        parameters: { type: array, items: { type: string } }
+        commonAvailable: { type: array, items: { type: string } }
+        warnings: { type: array, items: { type: string } }
+  examples:
+    CatalogPageExample:
+      summary: Trang danh mục có số đếm
+      value:
+        items:
+        - createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-7001-8a1d-000000000001
+          tenantId: T68
+          code: LOAI_HINH_DN
+          name: Loại hình doanh nghiệp
+          description: Danh mục loại hình doanh nghiệp dùng trong cấp phép kinh doanh của tỉnh.
+          groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+          groupName: Kinh tế
+          ownerOrgId: 0193b6a0-7c2e-7015-8a1d-000000000015
+          ownerOrgName: Sở Tài chính
+          sourceType: LOCAL
+          classification: PUBLIC
+          status: ACTIVE
+          isHierarchical: false
+          maxDepth: null
+          levelNames: []
+          localCodePattern: null
+          extendsCatalogId: null
+          extendsCatalogCode: null
+          requireApproval: true
+          currentVersionId: 0193b6a0-7c2e-7065-8a1d-000000000065
+          currentVersionNo: 3
+          currentEffectiveFrom: '2026-07-01'
+          openVersion: null
+          itemCount: 9
+          hasSyncSource: false
+          retiredAt: null
+          retireReason: null
+          legacyRef: aita:category:152
+        page:
+          number: 0
+          size: 20
+          totalElements: 87
+          totalPages: 1
+        facets:
+          status:
+            ACTIVE: 80
+            DRAFT: 5
+            RETIRED: 2
+    CatalogCreateLoaiHinhDn:
+      summary: Tạo danh mục địa phương phẳng kèm lược đồ
+      value:
+        code: LOAI_HINH_DN
+        name: Loại hình doanh nghiệp
+        groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+        sourceType: LOCAL
+        classification: PUBLIC
+        isHierarchical: false
+        requireApproval: true
+        attributes:
+        - code: ten_viet_tat
+          label: Tên viết tắt
+          dataType: STRING
+          maxLength: 20
+        - code: co_tu_cach_phap_nhan
+          label: Có tư cách pháp nhân
+          dataType: BOOLEAN
+          required: true
+        initialVersion:
+          effectiveFrom: '2026-12-01'
+          changeNote: Khởi tạo từ danh mục Aita
+    CatalogCreateHybrid:
+      summary: Tạo danh mục HYBRID mở rộng danh mục quốc gia
+      value:
+        code: LINH_VUC_TTHC_T68
+        name: Lĩnh vực thủ tục hành chính (bổ sung của tỉnh)
+        sourceType: HYBRID
+        extendsCatalogCode: LINH_VUC_TTHC
+        localCodePattern: ^68\.[A-Z0-9_]{1,20}$
+        classification: PUBLIC
+    CatalogLoaiHinhDn:
+      summary: Danh mục vừa tạo
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 0
+        id: 0193b6a0-7c2e-7001-8a1d-000000000001
+        tenantId: T68
+        code: LOAI_HINH_DN
+        name: Loại hình doanh nghiệp
+        description: Danh mục loại hình doanh nghiệp dùng trong cấp phép kinh doanh của tỉnh.
+        groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+        groupName: Kinh tế
+        ownerOrgId: 0193b6a0-7c2e-7015-8a1d-000000000015
+        ownerOrgName: Sở Tài chính
+        sourceType: LOCAL
+        classification: PUBLIC
+        status: DRAFT
+        isHierarchical: false
+        maxDepth: null
+        levelNames: []
+        localCodePattern: null
+        extendsCatalogId: null
+        extendsCatalogCode: null
+        requireApproval: true
+        currentVersionId: null
+        currentVersionNo: null
+        currentEffectiveFrom: null
+        openVersion:
+          versionNo: 1
+          status: DRAFT
+          updatedAt: '2026-11-21T08:30:00+07:00'
+        itemCount: 0
+        hasSyncSource: false
+        retiredAt: null
+        retireReason: null
+        legacyRef: aita:category:152
+    CatalogDvhc:
+      summary: Danh mục ĐVHC dùng chung toàn quốc
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-7002-8a1d-000000000002
+        tenantId: COMMON
+        code: DVHC
+        name: Đơn vị hành chính Việt Nam
+        description: Bảng danh mục và mã số ĐVHC theo Quyết định 19/2025/QĐ-TTg; giữ lịch sử ba cấp trước 01/7/2025.
+        groupId: 0193b6a0-7c2e-700c-8a1d-00000000000c
+        groupName: Hành chính
+        ownerOrgId: null
+        ownerOrgName: null
+        sourceType: NATIONAL
+        classification: PUBLIC
+        status: ACTIVE
+        isHierarchical: true
+        maxDepth: 3
+        levelNames:
+        - Tỉnh
+        - Huyện
+        - Xã
+        localCodePattern: null
+        extendsCatalogId: null
+        extendsCatalogCode: null
+        requireApproval: true
+        currentVersionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+        currentVersionNo: 12
+        currentEffectiveFrom: '2025-07-01'
+        openVersion:
+          versionNo: 13
+          status: DRAFT
+          updatedAt: '2026-11-21T08:30:00+07:00'
+        itemCount: 3355
+        hasSyncSource: true
+        retiredAt: null
+        retireReason: null
+        legacyRef: null
+    CatalogGroupTree:
+      summary: Cây nhóm danh mục
+      value:
+        items:
+        - id: 0193b6a0-7c2e-700a-8a1d-00000000000a
+          tenantId: T68
+          code: KINH_TE
+          name: Kinh tế
+          parentId: null
+          sortOrder: 1
+          catalogCount: 14
+          children:
+          - id: 0193b6a0-7c2e-700b-8a1d-00000000000b
+            tenantId: T68
+            code: DOANH_NGHIEP
+            name: Doanh nghiệp
+            parentId: 0193b6a0-7c2e-700a-8a1d-00000000000a
+            sortOrder: 1
+            catalogCount: 6
+            children: []
+        - id: 0193b6a0-7c2e-700c-8a1d-00000000000c
+          tenantId: COMMON
+          code: HANH_CHINH
+          name: Hành chính
+          parentId: null
+          sortOrder: 2
+          catalogCount: 9
+          children: []
+    VersionDraft:
+      summary: Bản nháp vừa tạo từ phiên bản hiện hành
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: false
+        reviews: []
+        submittedBy: null
+        submittedAt: null
+        approvedBy: null
+        approvedAt: null
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: DRAFT
+        effectiveFrom: null
+        effectiveTo: null
+        legalBasis: null
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 9
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    VersionPublished:
+      summary: Phiên bản đã phát hành
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: CURRENT
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: true
+        copying: false
+        reviews: []
+        submittedBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+        submittedAt: '2026-06-16T10:00:00+07:00'
+        approvedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        approvedAt: '2026-06-17T14:20:00+07:00'
+        publishedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        publishedAt: '2026-06-17T14:21:05+07:00'
+        schemaHash: 9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f
+        id: 0193b6a0-7c2e-7065-8a1d-000000000065
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 3
+        status: PUBLISHED
+        effectiveFrom: '2026-07-01'
+        effectiveTo: null
+        legalBasis: Quyết định 45/QĐ-UBND ngày 15/6/2026 (giả lập)
+        changeNote: Đổi tên hộ kinh doanh theo Luật sửa đổi
+        baseVersionNo: 2
+        itemCount: 9
+        stats:
+          added: 1
+          changed: 0
+          deprecated: 1
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0.25
+    ValidationReportExample:
+      summary: Bản nháp còn lỗi
+      value:
+        valid: false
+        errorCount: 1
+        warningCount: 1
+        checkedAt: '2026-11-21T08:30:00+07:00'
+        stats:
+          added: 1
+          changed: 2
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0.33
+        breaking: false
+        requiresApproval: true
+        approvalReasons:
+        - CATALOG_POLICY
+        - LARGE_CHANGE
+        issues:
+        - severity: ERROR
+          itemCode: HTX
+          field: attrs.co_tu_cach_phap_nhan
+          code: REQUIRED
+          message: Thuộc tính "Có tư cách pháp nhân" là bắt buộc.
+        - severity: WARNING
+          itemCode: DNTN
+          field: name
+          code: NAME_CASE_CHANGED
+          message: Tên đổi chữ hoa thường so với phiên bản 3.
+        issuesTruncated: false
+    PublishRequestExample:
+      summary: Phát hành có ngày hiệu lực và căn cứ
+      value:
+        effectiveFrom: '2027-01-01'
+        legalBasis: Quyết định 12/QĐ-SKHĐT ngày 20/12/2026 (giả lập)
+        comment: Áp dụng từ đầu năm 2027
+    DiffExample:
+      summary: Khác biệt bản nháp so với phiên bản hiện hành
+      value:
+        catalogCode: LOAI_HINH_DN
+        fromVersionNo: 3
+        toVersion: draft
+        summary:
+          added: 1
+          changed: 1
+          deprecated: 1
+          reactivated: 0
+          removed: 0
+          attributeChanges: 1
+          breakingCount: 1
+          changeRatio: 0.33
+          breaking: true
+          largeChange: true
+        schemaChanges:
+        - attributeCode: ma_nganh
+          changeType: ATTRIBUTE_ADDED
+          breaking: false
+        changes:
+        - itemCode: DNTN
+          changeType: DEPRECATED
+          breaking: true
+          fields:
+          - field: status
+            before: ACTIVE
+            after: DEPRECATED
+          breakingReasons:
+          - DEPRECATED_IN_USE
+        - itemCode: HTX
+          changeType: ADDED
+          breaking: false
+          fields: []
+        - itemCode: CP
+          changeType: CHANGED
+          breaking: false
+          fields:
+          - field: attrs.ten_viet_tat
+            before: CTCP
+            after: Cty CP
+        page:
+          number: 0
+          size: 20
+          totalElements: 3
+          totalPages: 1
+    AttributeListDvhc:
+      summary: Lược đồ danh mục ĐVHC
+      value:
+        versionNo: 12
+        items:
+        - id: 0193b6a0-7c2e-7191-8a1d-000000000191
+          versionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+          code: loai_don_vi
+          label: Loại đơn vị
+          dataType: ENUM
+          required: true
+          uniqueInVersion: false
+          enumValues:
+          - value: TINH
+            label: Tỉnh
+          - value: THANH_PHO_TW
+            label: Thành phố trực thuộc trung ương
+          - value: XA
+            label: Xã
+          - value: PHUONG
+            label: Phường
+          - value: DAC_KHU
+            label: Đặc khu
+          - value: HUYEN
+            label: Huyện (trước 01/7/2025)
+            deprecated: true
+          sortOrder: 1
+          status: ACTIVE
+          queryable: true
+          searchable: false
+          legacyFieldId: null
+          inheritedFrom: null
+        - id: 0193b6a0-7c2e-7192-8a1d-000000000192
+          versionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+          code: ten_ngan
+          label: Tên ngắn
+          dataType: STRING
+          required: false
+          uniqueInVersion: false
+          maxLength: 100
+          sortOrder: 2
+          status: ACTIVE
+          queryable: false
+          searchable: true
+          legacyFieldId: null
+          inheritedFrom: null
+    AttributeCreateEnum:
+      summary: Thêm thuộc tính kiểu liệt kê
+      value:
+        code: quy_mo
+        label: Quy mô
+        dataType: ENUM
+        required: false
+        enumValues:
+        - value: SIEU_NHO
+          label: Siêu nhỏ
+        - value: NHO
+          label: Nhỏ
+        - value: VUA
+          label: Vừa
+        - value: LON
+          label: Lớn
+        queryable: true
+        sortOrder: 3
+    AttributeCreateRef:
+      summary: Thêm thuộc tính tham chiếu danh mục khác
+      value:
+        code: ma_tinh
+        label: Tỉnh đăng ký
+        dataType: CATALOG_REF
+        refCatalogCode: DVHC
+        required: false
+        queryable: true
+        sortOrder: 4
+    ItemCreateLoaiHinh:
+      summary: Thêm bản ghi vào bản nháp
+      value:
+        code: HTX
+        name: Hợp tác xã
+        sortOrder: 6
+        attrs:
+          ten_viet_tat: HTX
+          co_tu_cach_phap_nhan: true
+    BatchItemsExample:
+      summary: Lô thao tác qua API
+      value:
+        atomic: true
+        dryRun: false
+        createDraftIfMissing: true
+        ops:
+        - op: upsert
+          code: HTX
+          name: Hợp tác xã
+          attrs:
+            ten_viet_tat: HTX
+            co_tu_cach_phap_nhan: true
+        - op: deprecate
+          code: DNTN
+          replacedBy:
+          - TNHH1TV
+          reason: Theo hướng dẫn chuyển đổi loại hình (giả lập)
+    BatchResultExample:
+      summary: Kết quả lô
+      value:
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        dryRun: false
+        total: 2
+        succeeded: 2
+        failed: 0
+        summary:
+          INSERTED: 1
+          DEPRECATED: 1
+        results:
+        - index: 0
+          code: HTX
+          status: INSERTED
+        - index: 1
+          code: DNTN
+          status: DEPRECATED
+    ImportJobScanning:
+      summary: Tác vụ vừa nhận tệp, đang quét mã độc
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        jobType: IMPORT
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        mode: UPSERT
+        template: STANDARD
+        fileFormat: XLSX
+        fileName: loai_hinh_dn.xlsx
+        fileSize: 48213
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: null
+        errorMessage: null
+        committedVersionNo: null
+        proposedCatalog: null
+        proposedAttributes: []
+        resultFileUrl: null
+        status: SCANNING
+        progress: 5
+        expiresAt: null
+    ImportJobValidated:
+      summary: Đã phân tích xong, chờ xác nhận ghi
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        jobType: IMPORT
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        mode: UPSERT
+        template: STANDARD
+        fileFormat: XLSX
+        fileName: loai_hinh_dn.xlsx
+        fileSize: 48213
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: '2026-11-21T08:30:42+07:00'
+        errorMessage: null
+        committedVersionNo: null
+        proposedCatalog: null
+        proposedAttributes: []
+        resultFileUrl: null
+        status: VALIDATED
+        progress: 100
+        expiresAt: '2026-11-22T08:30:42+07:00'
+        columnMapping:
+          Mã: code
+          Tên: name
+          Tên viết tắt: ten_viet_tat
+          Có tư cách pháp nhân: co_tu_cach_phap_nhan
+          Ghi chú nội bộ: null
+        summary:
+          totalRows: 12
+          validRows: 11
+          errorRows: 1
+          warningRows: 1
+          actions:
+            INSERT: 2
+            UPDATE: 1
+            DEPRECATE: 0
+            UNCHANGED: 8
+            DELETE_DRAFT: 0
+          encoding: UTF-8
+          sheetName: DuLieu
+          detectedTemplate: STANDARD
+    ImportRowPageExample:
+      summary: Dòng xem trước, lọc dòng lỗi
+      value:
+        jobId: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        items:
+        - rowNo: 7
+          code: HTX
+          valid: false
+          action: INSERT
+          values:
+            code: HTX
+            name: Hợp tác xã
+            co_tu_cach_phap_nhan: null
+          errors:
+          - row: 7
+            field: co_tu_cach_phap_nhan
+            code: REQUIRED
+            message: Cột "Có tư cách pháp nhân" không được để trống.
+          warnings: []
+        - rowNo: 9
+          code: CP
+          valid: true
+          action: UPDATE
+          values:
+            code: CP
+            ten_viet_tat: Cty CP
+          errors: []
+          warnings:
+          - row: 9
+            field: ten_viet_tat
+            code: VALUE_CHANGED
+            message: Giá trị khác phiên bản hiện hành.
+        page:
+          number: 0
+          size: 50
+          totalElements: 2
+          totalPages: 1
+    ExportRequestExample:
+      summary: Xuất ĐVHC tại ngày trước sắp xếp theo khuôn Aita
+      value:
+        catalogCode: DVHC
+        at: '2025-06-30'
+        format: XLSX
+        template: LEGACY_AITA
+        includeDeprecated: true
+    ExportJobCompleted:
+      summary: Tác vụ xuất đã xong
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f6-8a1d-0000000001f6
+        catalogCode: DVHC
+        versionNo: 11
+        format: XLSX
+        template: LEGACY_AITA
+        status: COMPLETED
+        rowCount: 10612
+        fileName: DVHC_v11_2025-06-30.xlsx
+        fileSize: 1203344
+        downloadUrl: https://s3.t68.datahub.example.vn/rdm-export/0193b6a0.xlsx?X-Amz-Expires=86400&X-Amz-Signature=gia-lap
+        expiresAt: '2026-11-22T08:31:30+07:00'
+        errorMessage: null
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: '2026-11-21T08:31:30+07:00'
+    ItemCursorPageExample:
+      summary: Trang bản ghi theo con trỏ
+      value:
+        catalogCode: LOAI_HINH_DN
+        versionNo: 3
+        effectiveFrom: '2026-07-01'
+        effectiveTo: null
+        at: '2026-11-21'
+        items:
+        - id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: CP
+          name: Công ty cổ phần
+          parentCode: null
+          depth: 1
+          path:
+          - CP
+          levelName: null
+          sortOrder: 302
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: CTCP
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        - id: 0193b6a0-7c2e-712d-8a1d-00000000012d
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: TNHH1TV
+          name: Công ty trách nhiệm hữu hạn một thành viên
+          parentCode: null
+          depth: 1
+          path:
+          - TNHH1TV
+          levelName: null
+          sortOrder: 301
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: TNHH MTV
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        cursor:
+          limit: 2
+          next: eyJjIjoiVE5ISDFUViJ9.sig
+          hasMore: true
+          total: 9
+    ItemGetExample:
+      summary: Tra một mã còn hiệu lực
+      value:
+        id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+        catalogCode: LOAI_HINH_DN
+        versionNo: 3
+        code: CP
+        name: Công ty cổ phần
+        parentCode: null
+        depth: 1
+        path:
+        - CP
+        levelName: null
+        sortOrder: 302
+        status: ACTIVE
+        replacedBy: []
+        validFrom: null
+        validTo: null
+        attrs:
+          ten_viet_tat: CTCP
+          co_tu_cach_phap_nhan: true
+        isLocalExtension: false
+        legacyRef: null
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        version: 1
+        at: '2026-11-21'
+    ItemGetDeprecatedExample:
+      summary: Tra mã đã ngừng dùng, kèm mã thay thế
+      value:
+        id: 0193b6a0-7c2e-7130-8a1d-000000000130
+        catalogCode: LOAI_HINH_DN
+        versionNo: 3
+        code: HKD
+        name: Hộ kinh doanh cá thể
+        parentCode: null
+        depth: 1
+        path:
+        - HKD
+        levelName: null
+        sortOrder: 304
+        status: DEPRECATED
+        replacedBy:
+        - HKD2026
+        validFrom: null
+        validTo: '2026-07-01'
+        attrs:
+          ten_viet_tat: HKD
+          co_tu_cach_phap_nhan: false
+        isLocalExtension: false
+        legacyRef: null
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        version: 1
+        at: '2026-11-21'
+        replacement:
+          id: 0193b6a0-7c2e-7131-8a1d-000000000131
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: HKD2026
+          name: Hộ kinh doanh
+          parentCode: null
+          depth: 1
+          path:
+          - HKD2026
+          levelName: null
+          sortOrder: 305
+          status: ACTIVE
+          replacedBy: []
+          validFrom: '2026-07-01'
+          validTo: null
+          attrs:
+            ten_viet_tat: HKD
+            co_tu_cach_phap_nhan: false
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+    LookupRequestExample:
+      summary: Tra lô ba mã
+      value:
+        codes:
+        - cp
+        - HKD
+        - XYZ
+        at: '2026-11-21'
+        resolveReplacement: true
+    LookupResponseExample:
+      summary: Kết quả tra lô
+      value:
+        catalogCode: LOAI_HINH_DN
+        versionNo: 3
+        at: '2026-11-21'
+        found:
+          CP:
+            id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+            catalogCode: LOAI_HINH_DN
+            versionNo: 3
+            code: CP
+            name: Công ty cổ phần
+            parentCode: null
+            depth: 1
+            path:
+            - CP
+            levelName: null
+            sortOrder: 302
+            status: ACTIVE
+            replacedBy: []
+            validFrom: null
+            validTo: null
+            attrs:
+              ten_viet_tat: CTCP
+              co_tu_cach_phap_nhan: true
+            isLocalExtension: false
+            legacyRef: null
+            updatedAt: '2026-11-21T08:30:00+07:00'
+            version: 1
+          HKD:
+            id: 0193b6a0-7c2e-7130-8a1d-000000000130
+            catalogCode: LOAI_HINH_DN
+            versionNo: 3
+            code: HKD
+            name: Hộ kinh doanh cá thể
+            parentCode: null
+            depth: 1
+            path:
+            - HKD
+            levelName: null
+            sortOrder: 304
+            status: DEPRECATED
+            replacedBy:
+            - HKD2026
+            validFrom: null
+            validTo: '2026-07-01'
+            attrs:
+              ten_viet_tat: HKD
+              co_tu_cach_phap_nhan: false
+            isLocalExtension: false
+            legacyRef: null
+            updatedAt: '2026-11-21T08:30:00+07:00'
+            version: 1
+            replacement:
+              id: 0193b6a0-7c2e-7131-8a1d-000000000131
+              catalogCode: LOAI_HINH_DN
+              versionNo: 3
+              code: HKD2026
+              name: Hộ kinh doanh
+              parentCode: null
+              depth: 1
+              path:
+              - HKD2026
+              levelName: null
+              sortOrder: 305
+              status: ACTIVE
+              replacedBy: []
+              validFrom: '2026-07-01'
+              validTo: null
+              attrs:
+                ten_viet_tat: HKD
+                co_tu_cach_phap_nhan: false
+              isLocalExtension: false
+              legacyRef: null
+              updatedAt: '2026-11-21T08:30:00+07:00'
+              version: 1
+        notFound:
+        - code: XYZ
+          reason: NOT_FOUND
+    TreeExample:
+      summary: Nhánh tỉnh Lâm Đồng, một cấp
+      value:
+        catalogCode: DVHC
+        versionNo: 12
+        at: '2026-11-21'
+        root: '68'
+        depth: 1
+        nodeCount: 3
+        nodes:
+        - code: '68'
+          name: Tỉnh Lâm Đồng
+          levelName: Tỉnh
+          depth: 1
+          status: ACTIVE
+          hasChildren: true
+          children:
+          - code: '24778'
+            name: Phường Xuân Hương - Đà Lạt
+            levelName: Xã
+            depth: 2
+            status: ACTIVE
+            hasChildren: false
+            children: []
+          - code: '24811'
+            name: Xã Đạ Huoai
+            levelName: Xã
+            depth: 2
+            status: ACTIVE
+            hasChildren: false
+            children: []
+    SearchExample:
+      summary: Tìm không dấu "co phan"
+      value:
+        catalogCode: LOAI_HINH_DN
+        versionNo: 3
+        q: co phan
+        items:
+        - id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: CP
+          name: Công ty cổ phần
+          parentCode: null
+          depth: 1
+          path: []
+          levelName: null
+          sortOrder: 302
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: CTCP
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+          matchType: NAME_WORD
+    ChangesExample:
+      summary: Thay đổi từ phiên bản 2 tới 3
+      value:
+        catalogCode: LOAI_HINH_DN
+        fromVersion: 2
+        toVersion: 3
+        toEffectiveFrom: '2026-07-01'
+        schemaChanged: false
+        schemaChanges: []
+        fullReloadRecommended: false
+        changes:
+        - code: HKD
+          changeType: DEPRECATED
+          item:
+            id: 0193b6a0-7c2e-7130-8a1d-000000000130
+            catalogCode: LOAI_HINH_DN
+            versionNo: 3
+            code: HKD
+            name: Hộ kinh doanh cá thể
+            parentCode: null
+            depth: 1
+            path:
+            - HKD
+            levelName: null
+            sortOrder: 304
+            status: DEPRECATED
+            replacedBy:
+            - HKD2026
+            validFrom: null
+            validTo: '2026-07-01'
+            attrs:
+              ten_viet_tat: HKD
+              co_tu_cach_phap_nhan: false
+            isLocalExtension: false
+            legacyRef: null
+            updatedAt: '2026-11-21T08:30:00+07:00'
+            version: 1
+          changedFields:
+          - status
+          - replacedBy
+          - validTo
+        - code: HKD2026
+          changeType: ADDED
+          item:
+            id: 0193b6a0-7c2e-7131-8a1d-000000000131
+            catalogCode: LOAI_HINH_DN
+            versionNo: 3
+            code: HKD2026
+            name: Hộ kinh doanh
+            parentCode: null
+            depth: 1
+            path:
+            - HKD2026
+            levelName: null
+            sortOrder: 305
+            status: ACTIVE
+            replacedBy: []
+            validFrom: '2026-07-01'
+            validTo: null
+            attrs:
+              ten_viet_tat: HKD
+              co_tu_cach_phap_nhan: false
+            isLocalExtension: false
+            legacyRef: null
+            updatedAt: '2026-11-21T08:30:00+07:00'
+            version: 1
+          changedFields: []
+        cursor:
+          limit: 1000
+          next: null
+          hasMore: false
+          total: 2
+    QueryRequestExample:
+      summary: Lọc xã của một tỉnh theo loại đơn vị
+      value:
+        at: '2026-11-21'
+        filter:
+          and:
+          - field: parentCode
+            op: eq
+            value: '68'
+          - field: attrs.loai_don_vi
+            op: in
+            value:
+            - XA
+            - DAC_KHU
+        select:
+        - code
+        - name
+        - attrs.loai_don_vi
+        sort:
+        - field: name
+          dir: asc
+        limit: 200
+    QueryRequestLoaiHinh:
+      summary: Loại hình có tư cách pháp nhân
+      value:
+        filter:
+          field: attrs.co_tu_cach_phap_nhan
+          op: eq
+          value: true
+        select:
+        - code
+        - name
+        limit: 50
+    QueryResponseExample:
+      summary: Kết quả truy vấn
+      value:
+        items:
+        - code: '24811'
+          name: Xã Đạ Huoai
+          attrs:
+            loai_don_vi: XA
+        - code: '24778'
+          name: Phường Xuân Hương - Đà Lạt
+          attrs:
+            loai_don_vi: PHUONG
+        nextCursor: null
+        catalogVersion: 12
+        took: 18
+    SchemaExample:
+      summary: Lược đồ cho HTTT
+      value:
+        catalog:
+          createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-7002-8a1d-000000000002
+          tenantId: COMMON
+          code: DVHC
+          name: Đơn vị hành chính Việt Nam
+          description: Bảng danh mục và mã số ĐVHC theo Quyết định 19/2025/QĐ-TTg; giữ lịch sử ba cấp trước 01/7/2025.
+          groupId: 0193b6a0-7c2e-700c-8a1d-00000000000c
+          groupName: Hành chính
+          ownerOrgId: null
+          ownerOrgName: null
+          sourceType: NATIONAL
+          classification: PUBLIC
+          status: ACTIVE
+          isHierarchical: true
+          maxDepth: 3
+          levelNames:
+          - Tỉnh
+          - Huyện
+          - Xã
+          localCodePattern: null
+          extendsCatalogId: null
+          extendsCatalogCode: null
+          requireApproval: true
+          currentVersionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+          currentVersionNo: 12
+          currentEffectiveFrom: '2025-07-01'
+          openVersion:
+            versionNo: 13
+            status: DRAFT
+            updatedAt: '2026-11-21T08:30:00+07:00'
+          itemCount: 3355
+          hasSyncSource: true
+          retiredAt: null
+          retireReason: null
+          legacyRef: null
+        version:
+          versionNo: 12
+          effectiveFrom: '2025-07-01'
+          effectiveTo: null
+          schemaHash: 51a0c3d9e2b7f4a851a0c3d9e2b7f4a851a0c3d9e2b7f4a851a0c3d9e2b7f4a8
+        attributes:
+        - id: 0193b6a0-7c2e-7191-8a1d-000000000191
+          versionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+          code: loai_don_vi
+          label: Loại đơn vị
+          dataType: ENUM
+          required: true
+          uniqueInVersion: false
+          enumValues:
+          - value: TINH
+            label: Tỉnh
+          - value: THANH_PHO_TW
+            label: Thành phố trực thuộc trung ương
+          - value: XA
+            label: Xã
+          - value: PHUONG
+            label: Phường
+          - value: DAC_KHU
+            label: Đặc khu
+          - value: HUYEN
+            label: Huyện (trước 01/7/2025)
+            deprecated: true
+          sortOrder: 1
+          status: ACTIVE
+          queryable: true
+          searchable: false
+          legacyFieldId: null
+          inheritedFrom: null
+        - id: 0193b6a0-7c2e-7192-8a1d-000000000192
+          versionId: 0193b6a0-7c2e-7066-8a1d-000000000066
+          code: ten_ngan
+          label: Tên ngắn
+          dataType: STRING
+          required: false
+          uniqueInVersion: false
+          maxLength: 100
+          sortOrder: 2
+          status: ACTIVE
+          queryable: false
+          searchable: true
+          legacyFieldId: null
+          inheritedFrom: null
+        levelNames:
+        - Tỉnh
+        - Xã
+        jsonSchema:
+          $schema: https://json-schema.org/draft/2020-12/schema
+          type: object
+          required:
+          - code
+          - name
+          - attrs
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+            attrs:
+              type: object
+              required:
+              - loai_don_vi
+              properties:
+                loai_don_vi:
+                  enum:
+                  - TINH
+                  - THANH_PHO_TW
+                  - XA
+                  - PHUONG
+                  - DAC_KHU
+                  - HUYEN
+                ten_ngan:
+                  type: string
+                  maxLength: 100
+    LineageExample:
+      summary: Dòng lịch sử một mã xã
+      value:
+        catalogCode: DVHC
+        code: '24811'
+        segments:
+        - from: '2020-01-01'
+          to: '2025-07-01'
+          versionNoFrom: 1
+          versionNoTo: 11
+          name: Thị trấn Đạ M'ri
+          parentCode: '674'
+          levelName: Xã
+          status: ACTIVE
+          attrsChanged: []
+        - from: '2025-07-01'
+          to: null
+          versionNoFrom: 12
+          versionNoTo: null
+          name: Xã Đạ Huoai
+          parentCode: '68'
+          levelName: Xã
+          status: ACTIVE
+          attrsChanged:
+          - loai_don_vi
+        predecessors:
+        - code: '24814'
+          name: Xã Hà Lâm
+          eventType: MERGE
+          effectiveDate: '2025-07-01'
+          legalBasis: Nghị quyết về sắp xếp ĐVHC cấp xã của tỉnh Lâm Đồng năm 2025 (cần đối chiếu số hiệu)
+        successors: []
+    ConvertRequestExample:
+      summary: Chuyển hai mã cũ sang mã mới
+      value:
+        direction: OLD_TO_NEW
+        at: '2026-11-21'
+        codes:
+        - code: '24814'
+          asOf: '2025-06-30'
+        - code: '24820'
+    ConvertResponseExample:
+      summary: Một mã chuyển được, một mã nhiều ứng viên
+      value:
+        direction: OLD_TO_NEW
+        at: '2026-11-21'
+        results:
+        - input:
+            code: '24814'
+            asOf: '2025-06-30'
+          status: MAPPED
+          newCode: '24811'
+          newName: Xã Đạ Huoai
+          newPath:
+            provinceCode: '68'
+            provinceName: Tỉnh Lâm Đồng
+            communeCode: '24811'
+            communeName: Xã Đạ Huoai
+          candidates: []
+          events:
+          - eventType: MERGE
+            effectiveDate: '2025-07-01'
+            legalBasis: Nghị quyết về sắp xếp ĐVHC cấp xã của tỉnh Lâm Đồng năm 2025 (cần đối chiếu số hiệu)
+            codes:
+            - '24811'
+          note: null
+        - input:
+            code: '24820'
+            asOf: '2025-06-30'
+          status: AMBIGUOUS
+          newCode: null
+          newName: null
+          newPath: null
+          candidates:
+          - code: '24823'
+            name: Xã Đạ Tẻh
+            note: Thôn 1 đến thôn 5
+          - code: '24826'
+            name: Xã Đạ Tẻh 2
+            note: Các thôn còn lại
+          events:
+          - eventType: SPLIT
+            effectiveDate: '2025-07-01'
+            legalBasis: Nghị quyết về sắp xếp ĐVHC cấp xã của tỉnh Lâm Đồng năm 2025 (cần đối chiếu số hiệu)
+            codes:
+            - '24823'
+            - '24826'
+          note: Mã cũ bị chia cho hai xã mới; cần địa chỉ chi tiết để chọn.
+        stats:
+          MAPPED: 1
+          AMBIGUOUS: 1
+          UNCHANGED: 0
+          NOT_FOUND: 0
+    SuccessionMergeExample:
+      summary: Sáp nhập hai xã
+      value:
+        eventType: MERGE
+        fromCodes:
+        - '24811'
+        - '24814'
+        toCodes:
+        - '24811'
+        newUnits:
+        - code: '24811'
+          name: Xã Đạ Huoai
+          parentCode: '68'
+          unitType: XA
+        effectiveDate: '2027-01-01'
+        legalBasis: Nghị quyết số …/NQ-UBTVQH15 ngày … (giả lập)
+        note: Sáp nhập toàn bộ diện tích và dân số xã Hà Lâm vào xã Đạ Huoai.
+    SyncSourceCreateExample:
+      summary: Đăng ký đồng bộ danh mục quốc gia
+      value:
+        catalogCode: LOAI_HINH_TC_QG
+        provider: NDXP_DMDC
+        remoteCode: DM_LOAIHINH_TC
+        scheduleCron: 0 0 1 * * *
+        autoApply: true
+        enabled: true
+        fieldMapping:
+          MA: code
+          TEN: name
+          GHICHU: ghi_chu
+    SyncRunRunning:
+      summary: Lần chạy vừa khởi động
+      value:
+        id: 0193b6a0-7c2e-7259-8a1d-000000000259
+        sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        trigger: MANUAL
+        triggeredBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        startedAt: '2026-11-21T08:30:00+07:00'
+        decidedBy: null
+        decidedAt: null
+        decisionNote: null
+        errorMessage: null
+        status: RUNNING
+        remoteVersion: null
+        hasBreaking: false
+        resultVersionNo: null
+        resultVersionStatus: null
+        finishedAt: null
+    SyncRunPending:
+      summary: Lần chạy có thay đổi phá vỡ, chờ xác nhận
+      value:
+        id: 0193b6a0-7c2e-7259-8a1d-000000000259
+        sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        trigger: MANUAL
+        triggeredBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        startedAt: '2026-11-21T08:30:00+07:00'
+        decidedBy: null
+        decidedAt: null
+        decisionNote: null
+        errorMessage: null
+        status: PENDING_CONFIRMATION
+        remoteVersion: 2026.11.15
+        diffStats:
+          added: 3
+          changed: 2
+          removed: 1
+          attributeAdded: 0
+          attributeRemoved: 0
+          attributeTypeChanged: 0
+          invalid: 0
+        hasBreaking: true
+        resultVersionNo: 6
+        resultVersionStatus: DRAFT
+        finishedAt: '2026-11-21T08:31:02+07:00'
+        changes:
+        - itemCode: '07'
+          changeType: REMOVED
+          breaking: true
+          valid: true
+          errors: []
+          before:
+            code: '07'
+            name: Tổ chức xã hội - nghề nghiệp
+          after: null
+        - itemCode: '12'
+          changeType: ADDED
+          breaking: false
+          valid: true
+          errors: []
+          before: null
+          after:
+            code: '12'
+            name: Quỹ xã hội, quỹ từ thiện
+        page:
+          number: 0
+          size: 200
+          totalElements: 6
+          totalPages: 1
+    SyncAcceptExample:
+      summary: Xác nhận và phát hành ngay
+      value:
+        note: Đã rà soát, mã 07 không còn HTTT nào dùng
+        skipInvalid: false
+        effectiveFrom: '2026-12-01'
+        publishNow: true
+    NationalCatalogPageExample:
+      summary: Danh mục trên NDXP
+      value:
+        items:
+        - remoteCode: DM_DANTOC
+          remoteName: Danh mục các dân tộc Việt Nam
+          issuer: Tổng cục Thống kê
+          remoteVersion: '2024.01'
+          remoteUpdatedAt: '2024-01-15T00:00:00+07:00'
+          itemCount: 55
+          localStatus: IN_COMMON
+          localCatalogCode: DAN_TOC
+        - remoteCode: DM_LOAIHINH_TC
+          remoteName: Danh mục loại hình tổ chức
+          issuer: Bộ Nội vụ
+          remoteVersion: 2026.11.15
+          remoteUpdatedAt: '2026-11-15T00:00:00+07:00'
+          itemCount: 12
+          localStatus: AVAILABLE
+          localCatalogCode: null
+        page:
+          number: 0
+          size: 20
+          totalElements: 2
+          totalPages: 1
+    ProposalExample:
+      summary: Đề xuất bổ sung lên danh mục quốc gia
+      value:
+        itemCodes:
+        - 68.CA_PHE_DAC_SAN
+        justification: Tỉnh có lĩnh vực chứng nhận cà phê đặc sản đã giải quyết 1.200 hồ sơ/năm, chưa có mã quốc gia tương ứng.
+        contact: Phòng Kiểm soát TTHC, Văn phòng UBND tỉnh; hộp thư công vụ kstthc@lamdong.example.vn
+        attachments:
+        - 0193b6a0-7c2e-72bd-8a1d-0000000002bd
+    MappingBatchPutExample:
+      summary: Ghi lô ánh xạ cho phần mềm hộ tịch
+      value:
+        mode: MERGE
+        mappings:
+        - itemCode: KINH
+          externalCode: '01'
+          externalLabel: Kinh
+          relation: EQUAL
+        - itemCode: TAY
+          externalCode: '02'
+          externalLabel: Tày
+          relation: EQUAL
+        - itemCode: KHAC
+          externalCode: '99'
+          externalLabel: Dân tộc khác
+          relation: NARROWER
+          provisional: true
+          reason: Chờ Sở Tư pháp xác nhận mã tạm 99 của phần mềm
+    MappingBatchResultExample:
+      summary: Kết quả ghi lô ánh xạ
+      value:
+        results:
+        - index: 0
+          id: 0193b6a0-7c2e-7321-8a1d-000000000321
+          status: UNCHANGED
+          errors: []
+        - index: 1
+          id: 0193b6a0-7c2e-7322-8a1d-000000000322
+          status: CREATED
+          errors: []
+        - index: 2
+          id: null
+          status: FAILED
+          errors:
+          - row: 2
+            field: itemCode
+            code: ITEM_NOT_FOUND
+            message: Mã KHAC không có trong danh mục DAN_TOC.
+        stats:
+          CREATED: 1
+          UNCHANGED: 1
+          FAILED: 1
+        coverageRatio: 0.96
+    TranslateRequestExample:
+      summary: Chuyển mã của HTTT sang mã danh mục
+      value:
+        catalog: DAN_TOC
+        codeSystem: HT_HOTICH
+        direction: TO_CATALOG
+        codes:
+        - '01'
+        - '02'
+        - '77'
+    TranslateResponseExample:
+      summary: Kết quả chuyển mã
+      value:
+        direction: TO_CATALOG
+        results:
+        - input: '01'
+          status: MAPPED
+          itemCode: KINH
+          itemName: Kinh
+          itemStatus: ACTIVE
+          externalCodes: []
+        - input: '02'
+          status: MAPPED
+          itemCode: TAY
+          itemName: Tày
+          itemStatus: ACTIVE
+          externalCodes: []
+        - input: '77'
+          status: NOT_MAPPED
+          itemCode: null
+          itemName: null
+          itemStatus: null
+          externalCodes: []
+        stats:
+          MAPPED: 2
+          MULTIPLE: 0
+          NOT_MAPPED: 1
+    CoverageExample:
+      summary: Độ phủ ánh xạ
+      value:
+        catalogCode: DAN_TOC
+        codeSystem: HT_HOTICH
+        at: '2026-11-21'
+        totalActiveItems: 55
+        mappedItems: 53
+        provisionalItems: 1
+        coverageRatio: 0.9636
+        unmapped:
+        - code: O_DU
+          name: Ơ Đu
+        provisional: []
+        staleMappings: []
+        page:
+          number: 0
+          size: 20
+          totalElements: 1
+          totalPages: 1
+    HistoryExample:
+      summary: Lịch sử thao tác
+      value:
+        items:
+        - occurredAt: '2026-06-17T14:21:05+07:00'
+          actor:
+            id: 0193b6a0-7c2e-7388-8a1d-000000000388
+            displayName: Trần Văn A (giả lập)
+            type: USER
+          action: RDM_VERSION_PUBLISH
+          objectType: VERSION
+          objectRef:
+            catalogCode: LOAI_HINH_DN
+            versionNo: '3'
+          summary: Phát hành phiên bản 3, hiệu lực từ 01/7/2026
+          changes:
+          - field: status
+            before: APPROVED
+            after: PUBLISHED
+          result: SUCCESS
+          reason: null
+          traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        cursor:
+          limit: 50
+          next: null
+          hasMore: false
+        partial: false
+    SeedRequestExample:
+      summary: Nạp gói nền cho tenant mới
+      value:
+        packageVersion: '2026.11'
+        dryRun: false
+    SeedResultExample:
+      summary: Kết quả nạp gói nền
+      value:
+        packageVersion: '2026.11'
+        status: COMPLETED
+        dryRun: false
+        catalogs:
+        - code: NHOM_TTHC_TINH
+          versionNo: 1
+          itemCount: 24
+          result: CREATED
+          error: null
+        - code: DON_VI_TRUC_THUOC
+          versionNo: 1
+          itemCount: 0
+          result: CREATED
+          error: null
+        parameters:
+        - 07.rdm.large-change-threshold-percent
+        - 07.rdm.sync-default-cron
+        commonAvailable:
+        - DVHC
+        - DAN_TOC
+        - GIOI_TINH
+        warnings: []
+    ProblemBatchTooLarge:
+      summary: ERR-07-026 · Số lượng vượt mức cho phép
+      value:
+        type: https://datahub.gov.vn/problems/rdm/vuot-so-luong
+        title: Số lượng vượt mức cho phép
+        status: 400
+        detail: Lô có 742 mã, tối đa 500 mã mỗi lần gọi.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-026
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemQuerySyntax:
+      summary: ERR-07-023 · Biểu thức truy vấn sai cú pháp
+      value:
+        type: https://datahub.gov.vn/problems/rdm/truy-van-sai-cu-phap
+        title: Biểu thức truy vấn sai cú pháp
+        status: 400
+        detail: Toán tử "like" không được hỗ trợ tại filter.and[1].op; dùng "contains" hoặc "startsWith".
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-023
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemNotQueryable:
+      summary: ERR-07-025 · Thuộc tính không cho phép truy vấn
+      value:
+        type: https://datahub.gov.vn/problems/rdm/thuoc-tinh-khong-truy-van
+        title: Thuộc tính không cho phép truy vấn
+        status: 400
+        detail: Thuộc tính "ten_ngan" chưa bật cho phép truy vấn.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-025
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemBadParam:
+      summary: ERR-07-040 · Thiếu tiêu đề If-Match
+      value:
+        type: https://datahub.gov.vn/problems/rdm/thieu-if-match
+        title: Thiếu tiêu đề If-Match
+        status: 400
+        detail: Thao tác sửa cần tiêu đề If-Match chứa ETag lấy từ lần đọc gần nhất.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-040
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemUnauthorized:
+      summary: ERR-07-041 · Chưa xác thực
+      value:
+        type: https://datahub.gov.vn/problems/rdm/chua-xac-thuc
+        title: Chưa xác thực
+        status: 401
+        detail: Token đã hết hạn lúc 08:25; hãy lấy token mới.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-041
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemReadOnly:
+      summary: ERR-07-003 · Danh mục chỉ đọc
+      value:
+        type: https://datahub.gov.vn/problems/rdm/chi-doc
+        title: Danh mục chỉ đọc
+        status: 403
+        detail: Danh mục DVHC là danh mục quốc gia, chỉ được cập nhật qua đồng bộ.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-003
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemSelfApproval:
+      summary: ERR-07-015 · Không được tự duyệt
+      value:
+        type: https://datahub.gov.vn/problems/rdm/bon-mat
+        title: Không được tự duyệt
+        status: 403
+        detail: Bạn đã sửa bản nháp này nên không thể duyệt; hãy chuyển cho người duyệt khác.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-015
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemRestricted:
+      summary: ERR-07-030 · Chưa được cấp quyền khai thác
+      value:
+        type: https://datahub.gov.vn/problems/rdm/chua-cap-quyen-khai-thac
+        title: Chưa được cấp quyền khai thác
+        status: 403
+        detail: HTTT chưa được cấp quyền khai thác danh mục hạn chế DM_NOI_BO.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-030
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemForbidden:
+      summary: ERR-07-046 · Không đủ quyền
+      value:
+        type: https://datahub.gov.vn/problems/rdm/khong-du-quyen
+        title: Không đủ quyền
+        status: 403
+        detail: Thao tác cần quyền PERM-07-publish.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-046
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemCatalogNotFound:
+      summary: ERR-07-001 · Không tìm thấy danh mục
+      value:
+        type: https://datahub.gov.vn/problems/rdm/khong-tim-thay-danh-muc
+        title: Không tìm thấy danh mục
+        status: 404
+        detail: Không có danh mục mã LOAI_HINH_XX.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-001
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemItemNotFound:
+      summary: ERR-07-007 · Không tìm thấy mã
+      value:
+        type: https://datahub.gov.vn/problems/rdm/khong-tim-thay-ma
+        title: Không tìm thấy mã
+        status: 404
+        detail: Mã 99 không có trong danh mục DAN_TOC tại ngày 21/11/2026.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-007
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemOpenVersion:
+      summary: ERR-07-005 · Đã có phiên bản đang mở
+      value:
+        type: https://datahub.gov.vn/problems/rdm/da-co-phien-ban-mo
+        title: Đã có phiên bản đang mở
+        status: 409
+        detail: Danh mục đang có bản nháp số 4; hãy tiếp tục bản nháp đó.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-005
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemApprovalRequired:
+      summary: ERR-07-016 · Phải qua duyệt
+      value:
+        type: https://datahub.gov.vn/problems/rdm/can-duyet
+        title: Phải qua duyệt
+        status: 409
+        detail: Bản nháp có thay đổi phá vỡ nên không phát hành thẳng được; hãy trình duyệt.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-016
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemIdempotencyReused:
+      summary: ERR-07-022 · Idempotency-Key đã dùng
+      value:
+        type: https://datahub.gov.vn/problems/rdm/trung-idempotency-key
+        title: Idempotency-Key đã dùng
+        status: 409
+        detail: Khóa đã được dùng cho một yêu cầu khác nội dung.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-022
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemReferenced:
+      summary: ERR-07-032 · Danh mục đang bị tham chiếu
+      value:
+        type: https://datahub.gov.vn/problems/rdm/dang-bi-tham-chieu
+        title: Danh mục đang bị tham chiếu
+        status: 409
+        detail: Danh mục đang được 2 danh mục khác tham chiếu nên chưa ngừng hiệu lực được.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-032
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemRetired:
+      summary: ERR-07-031 · Danh mục đã ngừng hiệu lực
+      value:
+        type: https://datahub.gov.vn/problems/rdm/da-ngung-hieu-luc
+        title: Danh mục đã ngừng hiệu lực
+        status: 410
+        detail: Danh mục LOAI_HINH_DN_2020 đã ngừng hiệu lực từ 01/01/2026.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-031
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemPrecondition:
+      summary: ERR-07-018 · Dữ liệu đã bị người khác sửa
+      value:
+        type: https://datahub.gov.vn/problems/rdm/etag-khong-khop
+        title: Dữ liệu đã bị người khác sửa
+        status: 412
+        detail: Bản ghi đã được cập nhật lúc 08:29; hãy tải lại trước khi sửa.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-018
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemTooLarge:
+      summary: ERR-07-042 · Vượt kích thước tối đa
+      value:
+        type: https://datahub.gov.vn/problems/rdm/qua-kich-thuoc
+        title: Vượt kích thước tối đa
+        status: 413
+        detail: Tệp 63 MB vượt mức tối đa 50 MB.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-042
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemMediaType:
+      summary: ERR-07-043 · Kiểu nội dung không hỗ trợ
+      value:
+        type: https://datahub.gov.vn/problems/rdm/kieu-noi-dung
+        title: Kiểu nội dung không hỗ trợ
+        status: 415
+        detail: Chỉ nhận tệp xlsx, xls hoặc csv.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-043
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemAttrInvalid:
+      summary: ERR-07-009 · Dữ liệu không hợp lệ
+      value:
+        type: https://datahub.gov.vn/problems/rdm/du-lieu-khong-hop-le
+        title: Dữ liệu không hợp lệ
+        status: 422
+        detail: Có 1 trường không hợp lệ.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-009
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+        errors:
+        - itemCode: HTX
+          field: attrs.co_tu_cach_phap_nhan
+          code: REQUIRED
+          message: Thuộc tính bắt buộc.
+    ProblemParentInvalid:
+      summary: ERR-07-010 · Mã cha không hợp lệ
+      value:
+        type: https://datahub.gov.vn/problems/rdm/ma-cha-khong-hop-le
+        title: Mã cha không hợp lệ
+        status: 422
+        detail: Mã cha 999 không tồn tại trong bản nháp.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-010
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemEffectiveDate:
+      summary: ERR-07-017 · Ngày hiệu lực không hợp lệ
+      value:
+        type: https://datahub.gov.vn/problems/rdm/ngay-hieu-luc
+        title: Ngày hiệu lực không hợp lệ
+        status: 422
+        detail: Ngày hiệu lực phải từ hôm nay (21/11/2026) trở đi.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-017
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemImportHasErrors:
+      summary: ERR-07-021 · Còn dòng lỗi
+      value:
+        type: https://datahub.gov.vn/problems/rdm/con-dong-loi
+        title: Còn dòng lỗi
+        status: 422
+        detail: Tệp còn 1 dòng lỗi; sửa tệp hoặc chọn bỏ qua dòng lỗi.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-021
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+        errors:
+        - row: 7
+          field: co_tu_cach_phap_nhan
+          code: REQUIRED
+          message: Cột không được để trống.
+    ProblemQueryLimit:
+      summary: ERR-07-024 · Truy vấn vượt giới hạn
+      value:
+        type: https://datahub.gov.vn/problems/rdm/vuot-gioi-han-truy-van
+        title: Truy vấn vượt giới hạn
+        status: 422
+        detail: Truy vấn có 24 điều kiện, tối đa 20.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-024
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemSensitive:
+      summary: ERR-07-036 · Không chứa dữ liệu cá nhân
+      value:
+        type: https://datahub.gov.vn/problems/rdm/du-lieu-ca-nhan
+        title: Không chứa dữ liệu cá nhân
+        status: 422
+        detail: Thuộc tính "so_cccd" gợi ý dữ liệu cá nhân; danh mục không được chứa dữ liệu cá nhân.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-036
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemRateLimited:
+      summary: ERR-07-044 · Vượt giới hạn tần suất
+      value:
+        type: https://datahub.gov.vn/problems/rdm/vuot-tan-suat
+        title: Vượt giới hạn tần suất
+        status: 429
+        detail: Đã vượt 10 lô mỗi phút; thử lại sau 35 giây.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-044
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemNdxp:
+      summary: ERR-07-028 · Nguồn quốc gia không phản hồi
+      value:
+        type: https://datahub.gov.vn/problems/rdm/nguon-quoc-gia-loi
+        title: Nguồn quốc gia không phản hồi
+        status: 502
+        detail: NDXP không phản hồi sau 30 giây; lần chạy sẽ thử lại theo lịch.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-028
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    ProblemUnavailable:
+      summary: ERR-07-047 · Tạm chưa sẵn sàng
+      value:
+        type: https://datahub.gov.vn/problems/rdm/tam-chua-san-sang
+        title: Tạm chưa sẵn sàng
+        status: 503
+        detail: Ảnh chụp phiên bản đang được sinh; thử lại sau 10 giây.
+        instance: /api/rdm/v1/catalogs/LOAI_HINH_DN
+        code: ERR-07-047
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        timestamp: '2026-11-21T08:30:00+07:00'
+    CatalogUpdateExample:
+      summary: Đổi mô tả và nhóm
+      value:
+        description: Danh mục loại hình doanh nghiệp theo Luật Doanh nghiệp (giả lập)
+        groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+    CatalogUpdated:
+      summary: Danh mục sau khi sửa
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 8
+        id: 0193b6a0-7c2e-7001-8a1d-000000000001
+        tenantId: T68
+        code: LOAI_HINH_DN
+        name: Loại hình doanh nghiệp
+        description: Danh mục loại hình doanh nghiệp dùng trong cấp phép kinh doanh của tỉnh.
+        groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+        groupName: Kinh tế
+        ownerOrgId: 0193b6a0-7c2e-7015-8a1d-000000000015
+        ownerOrgName: Sở Tài chính
+        sourceType: LOCAL
+        classification: PUBLIC
+        status: ACTIVE
+        isHierarchical: false
+        maxDepth: null
+        levelNames: []
+        localCodePattern: null
+        extendsCatalogId: null
+        extendsCatalogCode: null
+        requireApproval: true
+        currentVersionId: 0193b6a0-7c2e-7065-8a1d-000000000065
+        currentVersionNo: 3
+        currentEffectiveFrom: '2026-07-01'
+        openVersion: null
+        itemCount: 9
+        hasSyncSource: false
+        retiredAt: null
+        retireReason: null
+        legacyRef: aita:category:152
+    CatalogRetired:
+      summary: Danh mục đã ngừng hiệu lực
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 8
+        id: 0193b6a0-7c2e-7001-8a1d-000000000001
+        tenantId: T68
+        code: LOAI_HINH_DN
+        name: Loại hình doanh nghiệp
+        description: Danh mục loại hình doanh nghiệp dùng trong cấp phép kinh doanh của tỉnh.
+        groupId: 0193b6a0-7c2e-700b-8a1d-00000000000b
+        groupName: Kinh tế
+        ownerOrgId: 0193b6a0-7c2e-7015-8a1d-000000000015
+        ownerOrgName: Sở Tài chính
+        sourceType: LOCAL
+        classification: PUBLIC
+        status: RETIRED
+        isHierarchical: false
+        maxDepth: null
+        levelNames: []
+        localCodePattern: null
+        extendsCatalogId: null
+        extendsCatalogCode: null
+        requireApproval: true
+        currentVersionId: 0193b6a0-7c2e-7065-8a1d-000000000065
+        currentVersionNo: 3
+        currentEffectiveFrom: '2026-07-01'
+        openVersion: null
+        itemCount: 9
+        hasSyncSource: false
+        retiredAt: '2027-01-01T00:00:00+07:00'
+        retireReason: Thay thế bằng danh mục LOAI_HINH_DN_2026
+        legacyRef: aita:category:152
+    CatalogGroupCreated:
+      summary: Nhóm vừa tạo
+      value:
+        id: 0193b6a0-7c2e-700d-8a1d-00000000000d
+        tenantId: T68
+        code: Y_TE
+        name: Y tế
+        parentId: null
+        sortOrder: 3
+        description: null
+        catalogCount: 0
+        children: []
+    CatalogGroupUpdateExample:
+      summary: Chuyển nhóm vào nhóm cha
+      value:
+        parentId: 0193b6a0-7c2e-700a-8a1d-00000000000a
+        sortOrder: 2
+    CatalogGroupUpdated:
+      summary: Nhóm sau khi sửa
+      value:
+        id: 0193b6a0-7c2e-700d-8a1d-00000000000d
+        tenantId: T68
+        code: Y_TE
+        name: Y tế
+        parentId: 0193b6a0-7c2e-700a-8a1d-00000000000a
+        sortOrder: 2
+        description: null
+        catalogCount: 0
+        children: []
+    VersionPageExample:
+      summary: Lịch sử phiên bản
+      value:
+        items:
+        - catalogCode: LOAI_HINH_DN
+          effectiveState: null
+          origin: MANUAL
+          requiresApproval: true
+          snapshotAvailable: false
+          copying: false
+          reviews: []
+          submittedBy: null
+          submittedAt: null
+          approvedBy: null
+          approvedAt: null
+          publishedBy: null
+          publishedAt: null
+          schemaHash: null
+          id: 0193b6a0-7c2e-7067-8a1d-000000000067
+          catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+          versionNo: 4
+          status: DRAFT
+          effectiveFrom: null
+          effectiveTo: null
+          legalBasis: null
+          changeNote: Bổ sung loại hình hợp tác xã
+          baseVersionNo: 3
+          itemCount: 9
+          stats:
+            added: 0
+            changed: 0
+            deprecated: 0
+            reactivated: 0
+            deleted: 0
+            attributeChanges: 0
+            breaking: 0
+            changeRatio: 0
+        - catalogCode: LOAI_HINH_DN
+          effectiveState: CURRENT
+          origin: MANUAL
+          requiresApproval: true
+          snapshotAvailable: true
+          copying: false
+          reviews: []
+          submittedBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+          submittedAt: '2026-06-16T10:00:00+07:00'
+          approvedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+          approvedAt: '2026-06-17T14:20:00+07:00'
+          publishedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+          publishedAt: '2026-06-17T14:21:05+07:00'
+          schemaHash: 9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f
+          id: 0193b6a0-7c2e-7065-8a1d-000000000065
+          catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+          versionNo: 3
+          status: PUBLISHED
+          effectiveFrom: '2026-07-01'
+          effectiveTo: null
+          legalBasis: Quyết định 45/QĐ-UBND ngày 15/6/2026 (giả lập)
+          changeNote: Đổi tên hộ kinh doanh theo Luật sửa đổi
+          baseVersionNo: 2
+          itemCount: 9
+          stats:
+            added: 1
+            changed: 0
+            deprecated: 1
+            reactivated: 0
+            deleted: 0
+            attributeChanges: 0
+            breaking: 0
+            changeRatio: 0.25
+        page:
+          number: 0
+          size: 20
+          totalElements: 2
+          totalPages: 1
+    VersionCopying:
+      summary: Bản nháp danh mục lớn đang được sao chép nền
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: true
+        reviews: []
+        submittedBy: null
+        submittedAt: null
+        approvedBy: null
+        approvedAt: null
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: DRAFT
+        effectiveFrom: null
+        effectiveTo: null
+        legalBasis: null
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 0
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    VersionUpdateExample:
+      summary: Đặt ngày hiệu lực và căn cứ cho bản nháp
+      value:
+        effectiveFrom: '2027-01-01'
+        legalBasis: Quyết định 12/QĐ-SKHĐT ngày 20/12/2026 (giả lập)
+    VersionUpdated:
+      summary: Bản nháp sau khi sửa
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: false
+        reviews: []
+        submittedBy: null
+        submittedAt: null
+        approvedBy: null
+        approvedAt: null
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: DRAFT
+        effectiveFrom: '2027-01-01'
+        effectiveTo: null
+        legalBasis: Quyết định 12/QĐ-SKHĐT ngày 20/12/2026 (giả lập)
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 9
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    VersionInReview:
+      summary: Bản nháp đã trình duyệt
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: false
+        reviews:
+        - action: SUBMIT
+          actor: 0193b6a0-7c2e-7387-8a1d-000000000387
+          actorName: Cán bộ (giả lập)
+          comment: Bổ sung hợp tác xã
+          at: '2026-11-21T08:30:00+07:00'
+        submittedBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+        submittedAt: '2026-11-21T08:30:00+07:00'
+        approvedBy: null
+        approvedAt: null
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: IN_REVIEW
+        effectiveFrom: null
+        effectiveTo: null
+        legalBasis: null
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 9
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    VersionApproved:
+      summary: Phiên bản đã duyệt, chờ phát hành
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: false
+        reviews:
+        - action: SUBMIT
+          actor: 0193b6a0-7c2e-7387-8a1d-000000000387
+          actorName: Cán bộ (giả lập)
+          comment: null
+          at: '2026-11-21T08:30:00+07:00'
+        - action: APPROVE
+          actor: 0193b6a0-7c2e-7388-8a1d-000000000388
+          actorName: Cán bộ (giả lập)
+          comment: Đồng ý
+          at: '2026-11-21T08:30:00+07:00'
+        submittedBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+        submittedAt: '2026-11-21T08:30:00+07:00'
+        approvedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        approvedAt: '2026-11-21T08:30:00+07:00'
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: APPROVED
+        effectiveFrom: null
+        effectiveTo: null
+        legalBasis: null
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 9
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    VersionRejected:
+      summary: Bị từ chối, quay về bản nháp
+      value:
+        catalogCode: LOAI_HINH_DN
+        effectiveState: null
+        origin: MANUAL
+        requiresApproval: true
+        snapshotAvailable: false
+        copying: false
+        reviews:
+        - action: SUBMIT
+          actor: 0193b6a0-7c2e-7387-8a1d-000000000387
+          actorName: Cán bộ (giả lập)
+          comment: null
+          at: '2026-11-21T08:30:00+07:00'
+        - action: REJECT
+          actor: 0193b6a0-7c2e-7388-8a1d-000000000388
+          actorName: Cán bộ (giả lập)
+          comment: Thiếu căn cứ pháp lý cho mã HTX
+          at: '2026-11-21T08:30:00+07:00'
+        submittedBy: null
+        submittedAt: null
+        approvedBy: null
+        approvedAt: null
+        publishedBy: null
+        publishedAt: null
+        schemaHash: null
+        id: 0193b6a0-7c2e-7067-8a1d-000000000067
+        catalogId: 0193b6a0-7c2e-7001-8a1d-000000000001
+        versionNo: 4
+        status: DRAFT
+        effectiveFrom: null
+        effectiveTo: null
+        legalBasis: null
+        changeNote: Bổ sung loại hình hợp tác xã
+        baseVersionNo: 3
+        itemCount: 9
+        stats:
+          added: 0
+          changed: 0
+          deprecated: 0
+          reactivated: 0
+          deleted: 0
+          attributeChanges: 0
+          breaking: 0
+          changeRatio: 0
+    AttributeCreated:
+      summary: Thuộc tính vừa thêm
+      value:
+        id: 0193b6a0-7c2e-7193-8a1d-000000000193
+        versionId: 0193b6a0-7c2e-7067-8a1d-000000000067
+        code: quy_mo
+        label: Quy mô
+        dataType: ENUM
+        required: false
+        uniqueInVersion: false
+        enumValues:
+        - value: SIEU_NHO
+          label: Siêu nhỏ
+        - value: NHO
+          label: Nhỏ
+        - value: VUA
+          label: Vừa
+        - value: LON
+          label: Lớn
+        sortOrder: 3
+        status: ACTIVE
+        queryable: true
+        searchable: false
+        legacyFieldId: null
+        inheritedFrom: null
+    AttributeUpdateExample:
+      summary: Đổi nhãn và bật tìm kiếm
+      value:
+        label: Quy mô doanh nghiệp
+        searchable: true
+    AttributeUpdated:
+      summary: Thuộc tính sau khi sửa
+      value:
+        id: 0193b6a0-7c2e-7193-8a1d-000000000193
+        versionId: 0193b6a0-7c2e-7067-8a1d-000000000067
+        code: quy_mo
+        label: Quy mô doanh nghiệp
+        dataType: ENUM
+        required: false
+        uniqueInVersion: false
+        enumValues:
+        - value: SIEU_NHO
+          label: Siêu nhỏ
+        - value: NHO
+          label: Nhỏ
+        - value: VUA
+          label: Vừa
+        - value: LON
+          label: Lớn
+        sortOrder: 3
+        status: ACTIVE
+        queryable: true
+        searchable: true
+        legacyFieldId: null
+        inheritedFrom: null
+    ItemPageExample:
+      summary: Trang bản ghi của bản nháp
+      value:
+        items:
+        - id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: CP
+          name: Công ty cổ phần
+          parentCode: null
+          depth: 1
+          path:
+          - CP
+          levelName: null
+          sortOrder: 302
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: CTCP
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        - id: 0193b6a0-7c2e-712f-8a1d-00000000012f
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: DNTN
+          name: Doanh nghiệp tư nhân
+          parentCode: null
+          depth: 1
+          path:
+          - DNTN
+          levelName: null
+          sortOrder: 303
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: DNTN
+            co_tu_cach_phap_nhan: false
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        - id: 0193b6a0-7c2e-712d-8a1d-00000000012d
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: TNHH1TV
+          name: Công ty trách nhiệm hữu hạn một thành viên
+          parentCode: null
+          depth: 1
+          path:
+          - TNHH1TV
+          levelName: null
+          sortOrder: 301
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: TNHH MTV
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        page:
+          number: 0
+          size: 20
+          totalElements: 10
+          totalPages: 1
+    ItemCreated:
+      summary: Bản ghi vừa thêm vào bản nháp
+      value:
+        id: 0193b6a0-7c2e-7132-8a1d-000000000132
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        code: HTX
+        name: Hợp tác xã
+        parentCode: null
+        depth: 1
+        path:
+        - HTX
+        levelName: null
+        sortOrder: 306
+        status: ACTIVE
+        replacedBy: []
+        validFrom: null
+        validTo: null
+        attrs:
+          ten_viet_tat: HTX
+          co_tu_cach_phap_nhan: true
+        isLocalExtension: false
+        legacyRef: null
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        version: 1
+        changeState: ADDED
+    ItemUpdateExample:
+      summary: Sửa tên viết tắt
+      value:
+        attrs:
+          ten_viet_tat: Cty CP
+    ItemUpdated:
+      summary: Bản ghi sau khi sửa
+      value:
+        id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        code: CP
+        name: Công ty cổ phần
+        parentCode: null
+        depth: 1
+        path:
+        - CP
+        levelName: null
+        sortOrder: 302
+        status: ACTIVE
+        replacedBy: []
+        validFrom: null
+        validTo: null
+        attrs:
+          ten_viet_tat: Cty CP
+          co_tu_cach_phap_nhan: true
+        isLocalExtension: false
+        legacyRef: null
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        version: 2
+        changeState: CHANGED
+    ItemDeprecated:
+      summary: Bản ghi đã ngừng dùng trong bản nháp
+      value:
+        id: 0193b6a0-7c2e-712f-8a1d-00000000012f
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        code: DNTN
+        name: Doanh nghiệp tư nhân
+        parentCode: null
+        depth: 1
+        path:
+        - DNTN
+        levelName: null
+        sortOrder: 303
+        status: DEPRECATED
+        replacedBy:
+        - TNHH1TV
+        validFrom: null
+        validTo: '2027-01-01'
+        attrs:
+          ten_viet_tat: DNTN
+          co_tu_cach_phap_nhan: false
+        isLocalExtension: false
+        legacyRef: null
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        version: 2
+        changeState: DEPRECATED
+    ImportTemplateCsv:
+      summary: Khuôn CSV chuẩn (UTF-8 có BOM)
+      value: 'MA;TEN;MA_CHA;THU_TU;TRANG_THAI;MA_THAY_THE;ten_viet_tat;co_tu_cach_phap_nhan
+
+        CP;Công ty cổ phần;;1;ACTIVE;;CTCP;true
+
+        '
+    ImportJobCommitted:
+      summary: Đã ghi vào bản nháp
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        jobType: IMPORT
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        mode: UPSERT
+        template: STANDARD
+        fileFormat: XLSX
+        fileName: loai_hinh_dn.xlsx
+        fileSize: 48213
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: '2026-11-21T08:33:10+07:00'
+        errorMessage: null
+        committedVersionNo: 4
+        proposedCatalog: null
+        proposedAttributes: []
+        resultFileUrl: null
+        status: COMMITTED
+        progress: 100
+        expiresAt: '2026-11-22T08:30:42+07:00'
+        columnMapping:
+          Mã: code
+          Tên: name
+          Tên viết tắt: ten_viet_tat
+          Có tư cách pháp nhân: co_tu_cach_phap_nhan
+          Ghi chú nội bộ: null
+        summary:
+          totalRows: 12
+          validRows: 11
+          errorRows: 1
+          warningRows: 1
+          actions:
+            INSERT: 2
+            UPDATE: 1
+            DEPRECATE: 0
+            UNCHANGED: 8
+            DELETE_DRAFT: 0
+          encoding: UTF-8
+          sheetName: DuLieu
+          detectedTemplate: STANDARD
+    ImportJobCommitting:
+      summary: Đang ghi (tệp lớn, chạy nền)
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        jobType: IMPORT
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        mode: UPSERT
+        template: STANDARD
+        fileFormat: XLSX
+        fileName: loai_hinh_dn.xlsx
+        fileSize: 48213
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: '2026-11-21T08:30:42+07:00'
+        errorMessage: null
+        committedVersionNo: null
+        proposedCatalog: null
+        proposedAttributes: []
+        resultFileUrl: null
+        status: COMMITTING
+        progress: 40
+        expiresAt: '2026-11-22T08:30:42+07:00'
+        columnMapping:
+          Mã: code
+          Tên: name
+          Tên viết tắt: ten_viet_tat
+          Có tư cách pháp nhân: co_tu_cach_phap_nhan
+          Ghi chú nội bộ: null
+        summary:
+          totalRows: 12
+          validRows: 11
+          errorRows: 1
+          warningRows: 1
+          actions:
+            INSERT: 2
+            UPDATE: 1
+            DEPRECATE: 0
+            UNCHANGED: 8
+            DELETE_DRAFT: 0
+          encoding: UTF-8
+          sheetName: DuLieu
+          detectedTemplate: STANDARD
+    ImportJobCancelled:
+      summary: Tác vụ đã hủy
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+        jobType: IMPORT
+        catalogCode: LOAI_HINH_DN
+        versionNo: 4
+        mode: UPSERT
+        template: STANDARD
+        fileFormat: XLSX
+        fileName: loai_hinh_dn.xlsx
+        fileSize: 48213
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: '2026-11-21T08:30:42+07:00'
+        errorMessage: null
+        committedVersionNo: null
+        proposedCatalog: null
+        proposedAttributes: []
+        resultFileUrl: null
+        status: CANCELLED
+        progress: 100
+        expiresAt: null
+        columnMapping:
+          Mã: code
+          Tên: name
+          Tên viết tắt: ten_viet_tat
+          Có tư cách pháp nhân: co_tu_cach_phap_nhan
+          Ghi chú nội bộ: null
+        summary:
+          totalRows: 12
+          validRows: 11
+          errorRows: 1
+          warningRows: 1
+          actions:
+            INSERT: 2
+            UPDATE: 1
+            DEPRECATE: 0
+            UNCHANGED: 8
+            DELETE_DRAFT: 0
+          encoding: UTF-8
+          sheetName: DuLieu
+          detectedTemplate: STANDARD
+    ExportCsvExample:
+      summary: Tệp CSV xuất đồng bộ
+      value: 'MA;TEN;TRANG_THAI;ten_viet_tat
+
+        CP;Công ty cổ phần;ACTIVE;CTCP
+
+        HKD;Hộ kinh doanh cá thể;DEPRECATED;HKD
+
+        '
+    ExportJsonExample:
+      summary: JSON xuất đồng bộ
+      value:
+        catalog:
+          code: LOAI_HINH_DN
+          name: Loại hình doanh nghiệp
+          sourceType: LOCAL
+        version:
+          versionNo: 3
+          effectiveFrom: '2026-07-01'
+          effectiveTo: null
+          schemaHash: 9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f9f2c1e7ab04d5e6f
+        attributes: []
+        items:
+        - id: 0193b6a0-7c2e-712e-8a1d-00000000012e
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: CP
+          name: Công ty cổ phần
+          parentCode: null
+          depth: 1
+          path:
+          - CP
+          levelName: null
+          sortOrder: 302
+          status: ACTIVE
+          replacedBy: []
+          validFrom: null
+          validTo: null
+          attrs:
+            ten_viet_tat: CTCP
+            co_tu_cach_phap_nhan: true
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        - id: 0193b6a0-7c2e-7130-8a1d-000000000130
+          catalogCode: LOAI_HINH_DN
+          versionNo: 3
+          code: HKD
+          name: Hộ kinh doanh cá thể
+          parentCode: null
+          depth: 1
+          path:
+          - HKD
+          levelName: null
+          sortOrder: 304
+          status: DEPRECATED
+          replacedBy:
+          - HKD2026
+          validFrom: null
+          validTo: '2026-07-01'
+          attrs:
+            ten_viet_tat: HKD
+            co_tu_cach_phap_nhan: false
+          isLocalExtension: false
+          legacyRef: null
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          version: 1
+        exportedAt: '2026-11-21T08:30:00+07:00'
+    ExportJobPending:
+      summary: Tác vụ xuất đã nhận, chạy nền
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-71f6-8a1d-0000000001f6
+        catalogCode: DVHC
+        versionNo: 11
+        format: XLSX
+        template: LEGACY_AITA
+        status: PENDING
+        rowCount: null
+        fileName: null
+        fileSize: null
+        downloadUrl: null
+        expiresAt: null
+        errorMessage: null
+        startedAt: '2026-11-21T08:30:00+07:00'
+        finishedAt: null
+    JobPageExample:
+      summary: Lịch sử tác vụ
+      value:
+        items:
+        - id: 0193b6a0-7c2e-71f5-8a1d-0000000001f5
+          jobType: IMPORT
+          catalogCode: LOAI_HINH_DN
+          versionNo: 4
+          mode: UPSERT
+          format: XLSX
+          template: STANDARD
+          status: COMMITTED
+          createdBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+          createdByName: Cán bộ (giả lập)
+          startedAt: '2026-11-21T08:30:00+07:00'
+          finishedAt: '2026-11-21T08:33:10+07:00'
+          stats:
+            totalRows: 12
+            errorRows: 1
+        - id: 0193b6a0-7c2e-71f6-8a1d-0000000001f6
+          jobType: EXPORT
+          catalogCode: DVHC
+          versionNo: 11
+          mode: null
+          format: XLSX
+          template: LEGACY_AITA
+          status: COMPLETED
+          createdBy: 0193b6a0-7c2e-7387-8a1d-000000000387
+          createdByName: Cán bộ (giả lập)
+          startedAt: '2026-11-21T08:30:00+07:00'
+          finishedAt: '2026-11-21T08:31:30+07:00'
+          stats:
+            rowCount: 10612
+        page:
+          number: 0
+          size: 20
+          totalElements: 2
+          totalPages: 1
+    SuccessionCreated:
+      summary: Sự kiện sắp xếp vừa ghi
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-728b-8a1d-00000000028b
+        versionNo: 13
+        eventType: MERGE
+        fromCodes:
+        - '24811'
+        - '24814'
+        toCodes:
+        - '24811'
+        newUnits:
+        - code: '24811'
+          name: Xã Đạ Huoai
+          parentCode: '68'
+          unitType: XA
+        effectiveDate: '2027-01-01'
+        legalBasis: Nghị quyết số …/NQ-UBTVQH15 ngày … (giả lập)
+        note: Sáp nhập toàn bộ diện tích và dân số xã Hà Lâm vào xã Đạ Huoai.
+        affectedItems:
+        - code: '24814'
+          action: DEPRECATED
+        - code: '24811'
+          action: RENAMED
+    SuccessionPageExample:
+      summary: Sự kiện sắp xếp của bản nháp
+      value:
+        items:
+        - createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-728b-8a1d-00000000028b
+          versionNo: 13
+          eventType: MERGE
+          fromCodes:
+          - '24811'
+          - '24814'
+          toCodes:
+          - '24811'
+          newUnits:
+          - code: '24811'
+            name: Xã Đạ Huoai
+            parentCode: '68'
+            unitType: XA
+          effectiveDate: '2027-01-01'
+          legalBasis: Nghị quyết số …/NQ-UBTVQH15 ngày … (giả lập)
+          note: Sáp nhập toàn bộ diện tích và dân số xã Hà Lâm vào xã Đạ Huoai.
+          affectedItems:
+          - code: '24814'
+            action: DEPRECATED
+          - code: '24811'
+            action: RENAMED
+        page:
+          number: 0
+          size: 20
+          totalElements: 1
+          totalPages: 1
+    SyncSourceCreated:
+      summary: Nguồn đồng bộ vừa tạo
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        provider: NDXP_DMDC
+        remoteCode: DM_LOAIHINH_TC
+        scheduleCron: 0 0 1 * * *
+        autoApply: true
+        enabled: true
+        fieldMapping:
+          MA: code
+          TEN: name
+          GHICHU: ghi_chu
+        remoteName: Danh mục loại hình tổ chức
+        remoteVersion: null
+        lastRunId: null
+        lastRunStatus: null
+        lastSuccessAt: null
+        nextRunAt: '2026-11-22T01:00:00+07:00'
+        stale: false
+    SyncSourcePageExample:
+      summary: Danh sách nguồn đồng bộ
+      value:
+        items:
+        - createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-7258-8a1d-000000000258
+          catalogCode: LOAI_HINH_TC_QG
+          provider: NDXP_DMDC
+          remoteCode: DM_LOAIHINH_TC
+          scheduleCron: 0 0 1 * * *
+          autoApply: true
+          enabled: true
+          fieldMapping:
+            MA: code
+            TEN: name
+            GHICHU: ghi_chu
+          remoteName: Danh mục loại hình tổ chức
+          remoteVersion: 2026.10.01
+          lastRunId: 0193b6a0-7c2e-7259-8a1d-000000000259
+          lastRunStatus: PENDING_CONFIRMATION
+          lastSuccessAt: '2026-11-20T01:00:12+07:00'
+          nextRunAt: '2026-11-22T01:00:00+07:00'
+          stale: false
+        page:
+          number: 0
+          size: 20
+          totalElements: 1
+          totalPages: 1
+    SyncSourceUpdateExample:
+      summary: Tắt tự áp dụng
+      value:
+        autoApply: false
+    SyncSourceUpdated:
+      summary: Nguồn sau khi sửa
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 8
+        id: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        provider: NDXP_DMDC
+        remoteCode: DM_LOAIHINH_TC
+        scheduleCron: 0 0 1 * * *
+        autoApply: false
+        enabled: true
+        fieldMapping:
+          MA: code
+          TEN: name
+          GHICHU: ghi_chu
+        remoteName: Danh mục loại hình tổ chức
+        remoteVersion: 2026.10.01
+        lastRunId: 0193b6a0-7c2e-7259-8a1d-000000000259
+        lastRunStatus: PENDING_CONFIRMATION
+        lastSuccessAt: '2026-11-20T01:00:12+07:00'
+        nextRunAt: '2026-11-22T01:00:00+07:00'
+        stale: false
+    SyncRunPageExample:
+      summary: Lịch sử lần chạy
+      value:
+        items:
+        - id: 0193b6a0-7c2e-7259-8a1d-000000000259
+          sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+          catalogCode: LOAI_HINH_TC_QG
+          trigger: MANUAL
+          triggeredBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+          startedAt: '2026-11-21T08:30:00+07:00'
+          decidedBy: null
+          decidedAt: null
+          decisionNote: null
+          errorMessage: null
+          status: PENDING_CONFIRMATION
+          remoteVersion: 2026.11.15
+          diffStats:
+            added: 3
+            changed: 2
+            removed: 1
+            attributeAdded: 0
+            attributeRemoved: 0
+            attributeTypeChanged: 0
+            invalid: 0
+          hasBreaking: true
+          resultVersionNo: 6
+          resultVersionStatus: DRAFT
+          finishedAt: '2026-11-21T08:31:02+07:00'
+        - id: 0193b6a0-7c2e-725a-8a1d-00000000025a
+          sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+          catalogCode: LOAI_HINH_TC_QG
+          trigger: SCHEDULE
+          triggeredBy: system:rdm-sync
+          startedAt: '2026-11-21T08:30:00+07:00'
+          decidedBy: null
+          decidedAt: null
+          decisionNote: null
+          errorMessage: null
+          status: NO_CHANGE
+          remoteVersion: 2026.11.15
+          diffStats:
+            added: 0
+            changed: 0
+            removed: 0
+            attributeAdded: 0
+            attributeRemoved: 0
+            attributeTypeChanged: 0
+            invalid: 0
+          hasBreaking: false
+          resultVersionNo: null
+          resultVersionStatus: null
+          finishedAt: '2026-11-21T08:31:02+07:00'
+        page:
+          number: 0
+          size: 20
+          totalElements: 2
+          totalPages: 1
+    SyncRunApplied:
+      summary: Đã xác nhận và phát hành
+      value:
+        id: 0193b6a0-7c2e-7259-8a1d-000000000259
+        sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        trigger: MANUAL
+        triggeredBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        startedAt: '2026-11-21T08:30:00+07:00'
+        decidedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        decidedAt: '2026-11-21T08:30:00+07:00'
+        decisionNote: Đã rà soát, mã 07 không còn HTTT nào dùng
+        errorMessage: null
+        status: APPLIED
+        remoteVersion: 2026.11.15
+        diffStats:
+          added: 3
+          changed: 2
+          removed: 1
+          attributeAdded: 0
+          attributeRemoved: 0
+          attributeTypeChanged: 0
+          invalid: 0
+        hasBreaking: true
+        resultVersionNo: 6
+        resultVersionStatus: PUBLISHED
+        finishedAt: '2026-11-21T08:31:02+07:00'
+    SyncRunRejected:
+      summary: Đã từ chối
+      value:
+        id: 0193b6a0-7c2e-7259-8a1d-000000000259
+        sourceId: 0193b6a0-7c2e-7258-8a1d-000000000258
+        catalogCode: LOAI_HINH_TC_QG
+        trigger: MANUAL
+        triggeredBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        startedAt: '2026-11-21T08:30:00+07:00'
+        decidedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+        decidedAt: '2026-11-21T08:30:00+07:00'
+        decisionNote: Chờ văn bản hướng dẫn của Bộ
+        errorMessage: null
+        status: REJECTED
+        remoteVersion: 2026.11.15
+        diffStats:
+          added: 3
+          changed: 2
+          removed: 1
+          attributeAdded: 0
+          attributeRemoved: 0
+          attributeTypeChanged: 0
+          invalid: 0
+        hasBreaking: true
+        resultVersionNo: null
+        resultVersionStatus: null
+        finishedAt: '2026-11-21T08:31:02+07:00'
+    CodeSystemCreated:
+      summary: Hệ thống mã vừa tạo
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-72bc-8a1d-0000000002bc
+        tenantId: T68
+        code: HT_HOTICH
+        name: Bộ mã của phần mềm hộ tịch
+        owner: Sở Tư pháp
+        memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+        description: Mã dân tộc, giới tính, quốc tịch dùng trong phần mềm hộ tịch
+        status: ACTIVE
+        memberSystemName: Phần mềm hộ tịch (giả lập)
+        mappedCatalogCount: 0
+        mappingCount: 0
+    CodeSystemPageExample:
+      summary: Danh sách hệ thống mã
+      value:
+        items:
+        - createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-72bc-8a1d-0000000002bc
+          tenantId: T68
+          code: HT_HOTICH
+          name: Bộ mã của phần mềm hộ tịch
+          owner: Sở Tư pháp
+          memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+          description: Mã dân tộc, giới tính, quốc tịch dùng trong phần mềm hộ tịch
+          status: ACTIVE
+          memberSystemName: Phần mềm hộ tịch (giả lập)
+          mappedCatalogCount: 3
+          mappingCount: 128
+        page:
+          number: 0
+          size: 20
+          totalElements: 1
+          totalPages: 1
+    CodeSystemUpdateExample:
+      summary: Ngừng dùng hệ thống mã
+      value:
+        status: RETIRED
+        description: Phần mềm đã thay bằng hệ thống mới
+    CodeSystemUpdated:
+      summary: Hệ thống mã sau khi sửa
+      value:
+        createdAt: '2026-10-02T09:15:00+07:00'
+        createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+        updatedAt: '2026-11-21T08:30:00+07:00'
+        updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+        version: 7
+        id: 0193b6a0-7c2e-72bc-8a1d-0000000002bc
+        tenantId: T68
+        code: HT_HOTICH
+        name: Bộ mã của phần mềm hộ tịch
+        owner: Sở Tư pháp
+        memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+        description: Phần mềm đã thay bằng hệ thống mới
+        status: RETIRED
+        memberSystemName: Phần mềm hộ tịch (giả lập)
+        mappedCatalogCount: 3
+        mappingCount: 128
+    CodeMappingPageExample:
+      summary: Trang ánh xạ
+      value:
+        items:
+        - createdAt: '2026-10-02T09:15:00+07:00'
+          createdBy: 0193b6a0-7c2e-7385-8a1d-000000000385
+          updatedAt: '2026-11-21T08:30:00+07:00'
+          updatedBy: 0193b6a0-7c2e-7386-8a1d-000000000386
+          version: 7
+          id: 0193b6a0-7c2e-7321-8a1d-000000000321
+          codeSystem: HT_HOTICH
+          itemCode: KINH
+          itemName: Kinh
+          itemStatus: ACTIVE
+          externalCode: '01'
+          externalLabel: Kinh
+          relation: EQUAL
+          provisional: false
+          reason: null
+          validFrom: null
+          validTo: null
+        unmappedItems: []
+        page:
+          number: 0
+          size: 20
+          totalElements: 53
+          totalPages: 1
+    ProposalCreated:
+      summary: Đề xuất đã gửi
+      value:
+        proposalId: 0193b6a0-7c2e-72d0-8a1d-0000000002d0
+        catalogCode: LINH_VUC_TTHC_T68
+        remoteReference: NDXP-DX-2026-00117
+        status: SUBMITTED
+        itemCodes:
+        - 68.CA_PHE_DAC_SAN
+        submittedAt: '2026-11-21T08:30:00+07:00'
+        submittedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+    AccessGrantListExample:
+      summary: Danh sách cấp quyền khai thác
+      value:
+        catalogCode: DM_NOI_BO
+        classification: RESTRICTED
+        warning: null
+        grants:
+        - memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+          memberSystemName: Phần mềm hộ tịch (giả lập)
+          scopes:
+          - rdm.read
+          grantedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+          grantedAt: '2026-10-01T09:00:00+07:00'
+          expiresAt: '2027-10-01T00:00:00+07:00'
+    AccessGrantPutExample:
+      summary: Thay danh sách cấp quyền
+      value:
+        reason: Bổ sung quyền truy vấn theo đề nghị của Sở Tư pháp
+        grants:
+        - memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+          scopes:
+          - rdm.read
+          - rdm.query
+          expiresAt: '2027-10-01T00:00:00+07:00'
+    AccessGrantListUpdated:
+      summary: Danh sách sau khi thay
+      value:
+        catalogCode: DM_NOI_BO
+        classification: RESTRICTED
+        warning: null
+        grants:
+        - memberSystemId: 0193b6a0-7c2e-72c6-8a1d-0000000002c6
+          memberSystemName: Phần mềm hộ tịch (giả lập)
+          scopes:
+          - rdm.read
+          - rdm.query
+          grantedBy: 0193b6a0-7c2e-7388-8a1d-000000000388
+          grantedAt: '2026-11-21T08:30:00+07:00'
+          expiresAt: '2027-10-01T00:00:00+07:00'
