@@ -732,3 +732,321 @@ Cạnh là đường cong bậc hai 1,5 px `color-border-strong`, có đầu mũ
 #### 10.7.7. Điều khiển nổi
 
 `CMP-CanvasControls` (góc dưới trái, `glass-overlay`): − (thu, `Ctrl+-`), mức "85%" (bấm chọn 50/75/100/150 %), + (phóng, `Ctrl+=`), ⤢ vừa khung (`Shift+1`), ⊡ vừa chặng chọn (`Shift+2`), 🔒 khóa sơ đồ (chặn kéo, cho chọn). Phạm vi 25–200 %. Dưới 50 % chặng chuyển sang hiển thị tối giản (chỉ dải màu, biểu tượng, huy hiệu lỗi) để vẫn thấy lỗi. `CMP-Minimap` (góc dưới phải, 200 × 140) hiện khi luồng vượt khung nhìn, ẩn bằng nút ✕, kéo khung nhìn trên minimap để di chuyển; chặng lỗi trên minimap là chấm đỏ có viền.
+
+### 10.8. Tương tác chuột trên canvas
+
+| Thao tác | Trên | Kết quả |
+|---|---|---|
+| Nhấp | Chặng | Chọn chặng, Inspector hiện cấu hình; URL cập nhật `chang={id}` |
+| Nhấp | Nền canvas | Bỏ chọn; Inspector hiện thông tin route |
+| `Ctrl`/`Shift` + nhấp | Chặng | Thêm, bớt chặng khỏi vùng chọn (chỉ chọn nhiều trong cùng một danh sách `steps` liên tiếp hoặc rời rạc; thao tác khả dụng tùy vùng chọn) |
+| Kéo trên nền (giữ `Shift`) | Nền | Khung chọn chữ nhật |
+| Kéo trên nền (không phím) | Nền | Di chuyển khung nhìn; con trỏ `grab` |
+| Cuộn | Nền | Di chuyển dọc; `Shift`+cuộn di chuyển ngang; `Ctrl`+cuộn thu phóng tại vị trí con trỏ |
+| Nhấp đúp | Chặng | Mở UI-04-05 cấu hình mở rộng |
+| Nhấp đúp | Nhãn `when` trên cạnh | Mở UI-04-06 với biểu thức của nhánh |
+| Nhấp đúp | Tiêu đề nhóm | Thu gọn, mở nhóm |
+| Nhấp phải | Chặng, nhóm, cạnh, nền | Menu ngữ cảnh (mục 10.10) |
+| Kéo | Chặng (giữ 150 ms hoặc dịch 4 px) | Bắt đầu kéo để đổi vị trí (mục 10.9) |
+| Rê | Cạnh | Hiện ⊕ |
+| Rê | Huy hiệu ✕/⚠ | Tooltip danh sách vấn đề của chặng |
+| Chạm hai ngón (màn cảm ứng, máy tính bảng) | Nền | Thu phóng; chạm giữ 500 ms trên chặng = nhấp phải |
+
+### 10.9. Kéo thả
+
+#### 10.9.1. Nguồn kéo và vùng thả
+
+| Nguồn | Vùng thả hợp lệ | Kết quả |
+|---|---|---|
+| Mục ở ③ | Cạnh (giữa hai chặng) | Chèn chặng mới vào vị trí đó |
+| Mục ở ③ | Cuối nhánh (ô "Thêm chặng") | Thêm vào cuối nhánh |
+| Mục ở ③ | Chặng `from` (chỉ thành phần có consumer) | Hỏi "Thay điểm vào {cũ} bằng {mới}?"; giữ `steps` |
+| Mục ở ③ | Chặng thường | Hỏi "Thay chặng này?" kèm tùy chọn "Giữ tham số trùng tên" (bật sẵn) |
+| Mục ở ③ | Tiêu đề nhóm `choice` | Thêm nhánh `when` mới có chặng đó |
+| Mục ở ③ | Nền trống | Không hợp lệ: hiện chú thích "Thả lên một cạnh hoặc ô Thêm chặng" |
+| Chặng trên canvas | Cạnh khác, cuối nhánh khác | Di chuyển chặng (kèm toàn bộ con nếu là nhóm) |
+| Chặng + `Alt` | Như trên | Sao chép, `id` mới tự sinh |
+| Nhóm chặng đã chọn nhiều | Như trên | Di chuyển cả vùng chọn, giữ thứ tự |
+| Tệp `.yaml` từ máy | Canvas | Hộp "Nhập YAML": thay thế route này, thêm thành route mới, hoặc hủy |
+| Tệp `.json`, `.xml` từ máy | Canvas | Mở UI-04-11 với tệp làm bản tin mẫu |
+
+#### 10.9.2. Phản hồi khi kéo
+
+- Bóng kéo: bản thu nhỏ của mục (tên + biểu tượng), mờ 85 %, đi theo con trỏ lệch 12 px.
+- Vùng thả hợp lệ: cạnh đổi thành vạch 4 px `color-accent` và hiện chữ "Thả để chèn vào đây"; ô cuối nhánh có viền nét đứt `color-accent`.
+- Vùng không hợp lệ: con trỏ `not-allowed`, chú thích nhỏ dưới con trỏ nêu lý do ("`timer` chỉ dùng làm điểm vào", "Thành phần bị chặn ở tỉnh", "Chặng chuẩn không di chuyển ra ngoài khối chuẩn").
+- Tự cuộn khi kéo cách mép canvas dưới 48 px, tốc độ tăng dần tới 16 px mỗi khung.
+- `Esc` hủy kéo; nhả ngoài vùng hợp lệ cũng hủy, không đổi gì.
+- Thả xong: chặng mới được chọn, Inspector mở tab Cơ bản, focus vào trường bắt buộc đầu tiên chưa có giá trị; vùng thông báo trực tiếp đọc "Đã chèn Gọi REST sau Kiểm lược đồ".
+
+#### 10.9.3. Tương đương bàn phím (WCAG 2.5.7)
+
+| Kéo thả | Bàn phím |
+|---|---|
+| Kéo mục từ ③ vào sau chặng đang chọn | Focus mục ở ③, `Enter` (chèn sau chặng chọn) hoặc `Shift+Enter` (chèn trước) |
+| Kéo vào vị trí bất kỳ | Chọn chặng ở vị trí muốn chèn, `A` (thêm sau) hoặc `Shift+A` (thêm trước) mở bảng chọn nhanh |
+| Di chuyển chặng | `Alt+↑`/`Alt+↓` đổi chỗ với chặng trước, sau trong cùng danh sách; `Ctrl+X` rồi chọn vị trí và `Ctrl+V` để chuyển nhánh |
+| Thay chặng | Menu ngữ cảnh `Shift+F10` → "Thay bằng…" |
+
+### 10.10. Menu ngữ cảnh
+
+`CMP-DropdownMenu` (`glass-overlay`), mở bằng nhấp phải, nút ⋯, `Shift+F10` hoặc phím menu. Mục không áp dụng thì ẩn; mục áp dụng nhưng không được phép (chỉ đọc, chặng chuẩn) thì vô hiệu kèm lý do.
+
+| Đối tượng | Mục (phím tắt) |
+|---|---|
+| Chặng | Cấu hình… (`Ctrl+Enter`) · Đổi tên hiển thị (`F2`) · Thêm chặng sau (`A`) · Thêm chặng trước (`Shift+A`) · Thay bằng… · Bọc trong ▸ {Thử (doTry), Rẽ nhánh, Lọc, Tách, Vòng lặp, Ngắt mạch} · Tách thành route con · Tắt chặng / Bật chặng (`Ctrl+/`) · Nhân đôi (`Ctrl+D`) · Cắt, Sao chép, Dán sau (`Ctrl+X`, `C`, `V`) · Sao chép YAML của chặng · Xem trong YAML (`Ctrl+Shift+Y`) · Chạy thử đến chặng này · Xem tài liệu thành phần ↗ · Xóa (`Delete`) |
+| Nhóm | như chặng, thêm: Thu gọn / Mở · Bỏ bọc (giữ chặng con) · Thêm nhánh (`choice`, `doTry`, `multicast`) |
+| Nhánh `when` | Sửa điều kiện… · Đưa lên / Đưa xuống · Chuyển thành otherwise · Xóa nhánh |
+| Cạnh | Chèn chặng… · Dán vào đây |
+| Nền | Dán (`Ctrl+V`) · Chọn tất cả (`Ctrl+A`) · Tự sắp xếp (`Shift+L`) · Vừa khung · Đổi hướng sơ đồ · Xuất ảnh sơ đồ (SVG, PNG) |
+| Chặng chuẩn `dh-stage-*` | Cấu hình… · Xem trong YAML · Tài liệu chặng chuẩn; "Xóa", "Di chuyển", "Thay bằng" vô hiệu: "Chặng chuẩn bắt buộc với luồng đối ngoại (BR-04-003)" |
+
+"Tách thành route con" lấy vùng chọn liên tiếp, tạo route mới `id` = `{route}-sub-{n}` có `from: direct:{id}`, thay vùng chọn bằng một chặng `to: direct:{id}`, mở route mới ở tab bên cạnh, hoàn tác được trong một bước.
+
+### 10.11. ⑤ Inspector
+
+#### 10.11.1. Đầu Inspector
+
+Biểu tượng, tên hiển thị (sửa tại chỗ), dòng "{loại} · {thành phần}", `id` chặng (`CMP-CodeText`, nút ⧉; sửa `id` qua tab Nâng cao), nút "Tài liệu ↗", nút ⤢ "Mở rộng" (mở UI-04-05 với cùng chặng, `Ctrl+Enter`), nút ⋯ (các mục của menu ngữ cảnh).
+
+#### 10.11.2. Tab và trường
+
+Biểu mẫu sinh từ catalog (`properties` của component, `parameters` của Kamelet, mô hình EIP). Số trường lớn (median 19, p90 64, tối đa 154 ở SRS-PH-04), nên phân tab và lọc:
+
+| Tab | Chứa | Quy tắc |
+|---|---|---|
+| Cơ bản | Trường `required` + trường có `group` là `common` hoặc `producer`/`consumer` tùy vai trò, tối đa 12; với chặng chuẩn là tham số của Kamelet | Luôn mở đầu tiên |
+| Nâng cao | Các trường còn lại theo `group` của catalog (`advanced`, `security`, `scheduler`…), mỗi nhóm là `Collapse` | Ô lọc "Tìm tham số…" trên đầu; công tắc "Chỉ hiện trường đã đặt" |
+| Xử lý lỗi | `onException`, `errorHandler` cục bộ (nếu thành phần hỗ trợ), số lần thử lại, độ trễ, hành vi khi hết lần thử (DLQ Kafka của tenant) | Hiện giá trị kế thừa từ `dh-default-config` với nhãn "Kế thừa" |
+| Mô tả | `description`, ghi chú thiết kế (Markdown, ≤ 2.000 ký tự, lưu vào `description` dài), nhãn | |
+| Dữ liệu vào/ra | Lược đồ vào, ra dự kiến (nếu chặng trước có lược đồ từ PH-06 hoặc từ chạy thử) | Chỉ đọc; nút "Mở trình ánh xạ" khi chặng là ánh xạ |
+
+Trường hiển thị theo kiểu catalog:
+
+| Kiểu catalog | Điều khiển | Kiểm tra trực tuyến |
+|---|---|---|
+| `string` | `Input`; có `enum` thì `Select`; tên dạng `*Uri`, `path` có gợi ý | Mẫu `pattern` nếu có |
+| `integer`, `number`, `duration` | `InputNumber` có đơn vị; `duration` chấp nhận "10s", "500ms", "2m" và hiện giá trị quy đổi | `min`, `max` |
+| `boolean` | `Switch` có ba trạng thái hiển thị: bật, tắt, "Mặc định ({giá trị})" | |
+| `object` (bean tham chiếu) | `Select` bean trong tệp + "Tạo bean…" | Bean tồn tại (VR-09) |
+| biểu thức (`expression`) | `CMP-ExpressionField`: chọn ngôn ngữ (simple, jq, jsonpath, xpath, constant, header) + ô một dòng có tô cú pháp + nút ƒx mở UI-04-06 | Phân tích cú pháp ở trình duyệt (simple, jq); ERR-04-037 |
+| bí mật (`secret: true`) | Không cho nhập giá trị. `CMP-SecretRefField`: chọn kết nối PH-05 hoặc khóa trong kho bí mật `{{secret:…}}` | VR-03, ERR-04-010 |
+| Kết nối (tham số `connection` của Kamelet `dh-*`) | `CMP-ConnectionSelect`: danh sách kết nối PH-05 đúng loại, cấp cho không gian; mỗi mục có trạng thái kiểm tra gần nhất | ERR-04-013 |
+| Lược đồ (tham số `schema`) | `CMP-SchemaSelect` từ PH-06, chọn phiên bản | |
+| Bảng mã (`codeList`) | `CMP-CodeListSelect` từ PH-07 | |
+| SQL (`query` của `sql`, `dh-sql-ro-source`) | `CMP-CodeEditor` SQL cao 120, tô cú pháp; dưới có kết quả kiểm tra tĩnh: "Chỉ SELECT · không có `;` thứ hai · không gọi hàm bị chặn" | VR-16 (Q359, ADR-067): chặn DDL, DML, `COPY`, `SET` ngoài `SET LOCAL app.tenant_id`, nhiều câu lệnh; ERR-04-031 |
+| Ánh xạ khóa-giá trị (headers, query params) | `CMP-KeyValueEditor` | Khóa không trùng |
+
+Mỗi trường: nhãn tiếng Việt (bản dịch catalog) với tên gốc nhỏ bên cạnh (`connectionTimeout`); dấu * nếu bắt buộc; ⓘ mô tả; giá trị mặc định hiện dạng chữ mờ trong ô ("mặc định 30000"); nút ⟲ "Khôi phục mặc định" khi đã đặt (LGC-TOOL-020); nút ƒx cho trường chấp nhận placeholder `{{…}}` (mở danh sách thuộc tính tệp và tham số môi trường). Thay đổi áp ngay vào mô hình (không có nút "Áp dụng"), gom các phím gõ liên tiếp trong 600 ms thành một bước hoàn tác.
+
+#### 10.11.3. Khi không chọn chặng
+
+Inspector hiện "Thông tin route": `id`, mô tả, `routeConfigurationId` (mặc định `dh-default-config`), `autoStartup`, `group`, thống kê (số chặng, số nhánh, số Kamelet), danh sách điểm kết nối của route và vấn đề cấp route.
+
+#### 10.11.4. Chặng chuẩn
+
+Chặng `dh-stage-*` hiện biểu mẫu tham số Kamelet nền: ví dụ `dh-stage-authz` có "Chính sách truy cập" (chọn từ PH-03), "Phạm vi dữ liệu"; `dh-stage-audit` có "Mức nhật ký" (`METADATA`, `FULL_MASKED`), "Trường che" (gợi ý từ lược đồ). Đầu Inspector có dải thông tin "Chặng chuẩn {mã} · bắt buộc với luồng đối ngoại · không xóa, không di chuyển ra ngoài khối" và liên kết tài liệu chặng chuẩn (D03-02-PH04 §4).
+
+### 10.12. ⑥ Bảng dưới
+
+| Tab | Nội dung | Tương tác |
+|---|---|---|
+| Vấn đề | Bảng: mức (✕ lỗi, ⚠ cảnh báo, ⓘ gợi ý), mã (VR-nn hoặc ERR-04-nnn), vị trí (thực thể › chặng › trường), thông điệp, hành động sửa nhanh | Nhấp dòng: chọn chặng, mở Inspector tab chứa trường, focus trường; nút "Sửa nhanh" khi có (ví dụ "Thêm otherwise", "Thêm chặng chuẩn còn thiếu", "Chọn kết nối"); lọc theo mức và theo thực thể; `F8` duyệt |
+| Kết quả chạy | Tóm tắt lần chạy gần nhất: trạng thái, thời lượng, bản tin trả về; danh sách chặng đã qua theo thứ tự với thời lượng, liên kết mở UI-04-11 chi tiết | Nhấp chặng: chọn trên canvas |
+| Nhật ký | Log Camel của lần chạy thử gần nhất (đã che), lọc theo mức, theo route, tìm | Tải tệp log |
+| Lịch sử sửa | Các bước trong ngăn hoàn tác với thời điểm và mô tả; người khác lưu (khi chế độ đồng soạn) | Nhấp một bước để hoàn tác tới đó (có xác nhận) |
+
+Kiểm tra hợp lệ chạy trên trình duyệt sau mỗi thay đổi (trễ 400 ms, Web Worker) cho các quy tắc cú pháp và cấu trúc (VR-01…12); các quy tắc cần máy chủ (VR-13…20: chính sách thành phần, kết nối, bí mật, hồ sơ runtime, SQL, chín chặng chuẩn với cách đánh dấu chính thức) chạy khi lưu (API-04-012) và kết quả gộp vào cùng bảng với nhãn "Máy chủ · {thời điểm}". Danh sách VR đầy đủ ở FRS §5 và D03-02-PH04 §7.
+
+### 10.13. Phím tắt
+
+Phím tắt chỉ có hiệu lực khi focus trong trình thiết kế và không nằm trong ô nhập (trừ các phím có `Ctrl`). Bảng tra nhanh mở bằng `?` (`CMP-ShortcutSheet`).
+
+| Nhóm | Phím | Hành động |
+|---|---|---|
+| Tệp | `Ctrl+S` | Lưu ngay |
+| | `Ctrl+Shift+S` | Tải YAML |
+| Sửa | `Ctrl+Z`, `Ctrl+Shift+Z` / `Ctrl+Y` | Hoàn tác, làm lại |
+| | `Ctrl+X`, `Ctrl+C`, `Ctrl+V` | Cắt, sao chép, dán (YAML trong bộ nhớ tạm, dán được sang trình soạn YAML ngoài) |
+| | `Ctrl+D` | Nhân đôi |
+| | `Delete`, `Backspace` | Xóa chặng chọn (chặng con của nhóm hỏi xác nhận nếu > 3) |
+| | `F2` | Đổi tên hiển thị |
+| | `Ctrl+/` | Tắt, bật chặng |
+| | `Ctrl+F` | Tìm trong luồng |
+| Điều hướng canvas | `↑` `↓` | Chặng trước, sau theo dòng chảy |
+| | `←` `→` | Sang nhánh bên cạnh (trong nhóm) |
+| | `Home`, `End` | Điểm vào, chặng cuối |
+| | `Enter` | Vào trong nhóm (chọn chặng con đầu) |
+| | `Esc` | Ra nhóm cha; lần nữa thì bỏ chọn |
+| | `Tab`, `Shift+Tab` | Rời canvas sang vùng kế (③ → ④ → ⑤ → ⑥) |
+| | `F6` | Xoay vòng giữa các vùng ①…⑥ |
+| Chèn | `A`, `Shift+A` | Thêm sau, trước (bảng chọn nhanh) |
+| | `Ctrl+P` | Focus ô tìm thành phần |
+| | `Alt+↑`, `Alt+↓` | Di chuyển chặng |
+| Xem | `Ctrl+=`, `Ctrl+-`, `Ctrl+0` | Phóng, thu, 100 % |
+| | `Shift+1`, `Shift+2` | Vừa khung, vừa chặng chọn |
+| | `Shift+L` | Tự sắp xếp |
+| | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` | Sơ đồ, YAML, Chia đôi |
+| | `Ctrl+B`, `Ctrl+I`, `Ctrl+J` | Bật tắt ③, ⑤, ⑥ |
+| | `Ctrl+Shift+Y` | Nhảy tới đoạn YAML của chặng chọn |
+| Cấu hình | `Ctrl+Enter` | Mở cấu hình mở rộng |
+| | `Ctrl+M` | Mở trình ánh xạ (khi chặng là ánh xạ) |
+| Chạy, duyệt | `F5`, `Shift+F5` | Chạy thử lại, mở drawer chạy thử |
+| | `F8`, `Shift+F8` | Vấn đề kế, trước |
+| | `Ctrl+Shift+Enter` | Gửi duyệt |
+| Khác | `?` | Bảng phím tắt |
+
+Trên macOS `Ctrl` đọc là `⌘`. Người dùng không đổi được phím tắt trong bản 1.0.
+
+### 10.14. Chế độ YAML và Chia đôi
+
+#### 10.14.1. Trình soạn YAML
+
+`CMP-CodeEditor` (Monaco, ngôn ngữ YAML, lược đồ JSON của Camel YAML DSL 4.18 nạp từ catalog để gợi ý và kiểm tra), nền đặc `color-surface-solid-2`, phông đơn cách 13 px, số dòng, thu gọn khối, bản đồ mã. Hỗ trợ:
+
+- Gợi ý (`Ctrl+Space`): khóa EIP, tên thành phần sau `uri: `, tham số sau `?` hoặc trong `parameters:`, tên Kamelet, `id` bean, khóa thuộc tính tệp `{{…}}`.
+- Di chuột lên khóa: mô tả catalog; lên `uri`: thành phần và tham số.
+- Lỗi cú pháp và lỗi VR hiện thành gạch sóng, cùng nguồn với bảng Vấn đề.
+- `Ctrl+Shift+F` định dạng theo quy ước (thụt 2 dấu cách, thứ tự khóa của Kaoto).
+- Bí mật: dán chuỗi khớp mẫu bí mật (VR-03) thì gạch đỏ ngay và hộp gợi ý "Thay bằng tham chiếu kết nối".
+
+#### 10.14.2. Đồng bộ hai chiều
+
+| Hướng | Khi nào | Hành vi |
+|---|---|---|
+| Sơ đồ → YAML | Mỗi thay đổi mô hình | YAML được sinh lại từ mô hình bằng bộ tuần tự hóa giữ thứ tự khóa và **giữ chú thích `#` đứng trước khóa** (bám theo đường dẫn khóa); vị trí con trỏ của người dùng trong YAML (nếu đang mở chia đôi) được giữ theo đường dẫn khóa |
+| YAML → Sơ đồ | Người dùng ngừng gõ 800 ms, hoặc rời focus, hoặc `Ctrl+S` | Phân tích YAML. Hợp lệ: mô hình cập nhật, sơ đồ vẽ lại, giữ chặng chọn theo `id`. Không hợp lệ (cú pháp): sơ đồ giữ lần hợp lệ cuối, phủ dải cảnh báo "YAML có lỗi ở dòng {n}. Sơ đồ đang hiện bản hợp lệ gần nhất." và mờ 30 %; chuyển sang chế độ Sơ đồ bị chặn kèm tooltip cho tới khi sửa |
+| YAML có cấu trúc trình thiết kế không vẽ được (ví dụ khóa lạ, thành phần ngoài catalog) | Phân tích | Chặng hiện dạng "Chặng chưa hỗ trợ hiển thị" (khung xám, biểu tượng `FileCode`), giữ nguyên YAML, Inspector hiện YAML thô của chặng để sửa; không làm mất dữ liệu |
+| Khác biệt sinh lại | Sơ đồ → YAML làm đổi định dạng ngoài ý (dấu ngoặc, kiểu chuỗi) | Không có: bộ sinh dùng một kiểu chuẩn; lần đầu mở YAML viết tay, trình thiết kế hỏi "Chuẩn hóa định dạng YAML?" (chỉ một lần mỗi phiên bản) và ghi rõ thay đổi chỉ là định dạng |
+
+Hoàn tác dùng chung một ngăn xếp cho hai chế độ: một lần dừng gõ trong YAML là một bước.
+
+#### 10.14.3. Chế độ Chia đôi
+
+Canvas bên trái, YAML bên phải (tỷ lệ 55/45, kéo được). Chọn chặng trên canvas thì YAML cuộn tới và tô nền dòng của chặng (`color-accent-bg`); đặt con trỏ trong YAML thì chặng tương ứng được chọn trên canvas (trễ 200 ms). Inspector thu thành drawer phải khi màn dưới 1600 px.
+
+### 10.15. Chế độ chỉ đọc
+
+| Nguyên nhân | Banner (`CMP-Banner` dính dưới ②) | Lối thoát |
+|---|---|---|
+| Phiên bản không phải `DRAFT` hoặc `CHANGES_REQUESTED` | "Phiên bản v{n} đang ở trạng thái {nhãn}. Bạn đang xem chỉ đọc." | "Tạo bản nháp từ v{n}" (nếu có quyền và chưa có bản nháp); "Mở bản nháp v{m}" (nếu đã có) |
+| Không có quyền sửa | "Bạn chỉ có quyền xem luồng này." | "Xin quyền sửa" (gửi yêu cầu tới chủ không gian, FR-04-005) |
+| Người khác giữ khóa sửa | "{user} đang sửa phiên bản này từ {time}. Bạn đang xem chỉ đọc, nội dung tự cập nhật khi họ lưu." | "Yêu cầu chuyển quyền sửa" (gửi thông báo cho người giữ); người có `PERM-04-admin` thấy "Lấy quyền sửa" (có xác nhận, người kia nhận thông báo và chuyển chỉ đọc sau khi lưu bản cuối) |
+| Đóng băng thay đổi (`04.change_freeze`) | ERR-04-041 | — |
+| Catalog không tải được | "Không tải được danh mục thành phần. Bạn vẫn xem được luồng, nhưng chưa sửa được." | "Thử lại" |
+
+Trong chỉ đọc: ③ ẩn, mọi trường Inspector `readOnly` (vẫn chọn, sao chép được), menu ngữ cảnh chỉ còn mục xem, YAML chỉ đọc, phím sửa bị bỏ qua và vùng thông báo đọc "Chỉ đọc". Chạy thử vẫn dùng được với người có `PERM-04-test`.
+
+### 10.16. Lưu, tự lưu, xung đột, mất kết nối
+
+#### 10.16.1. Khóa soạn thảo
+
+Mở bản nháp với quyền sửa: gọi API-04-025 lấy khóa soạn thảo (EN-04-09) hạn 2 phút, gia hạn mỗi 30 giây khi tab đang hiện và có tương tác trong 15 phút qua. Tab ẩn quá 15 phút hoặc không tương tác 15 phút (bằng ngưỡng khóa phiên của D03-07): tự lưu rồi nhả khóa, chỉ báo đổi thành "Đã nhả quyền sửa do không hoạt động · [Tiếp tục sửa]".
+
+#### 10.16.2. Tự lưu
+
+Lưu khi: `Ctrl+S`; 30 giây sau thay đổi đầu tiên chưa lưu (`04.autosave_interval`); trước khi chạy thử, gửi duyệt, rời trang, đổi phiên bản. Mỗi lần lưu gửi toàn bộ YAML + tệp ánh xạ + `If-Match: {etag}` (API-04-011). Bản nháp cục bộ giữ trong IndexedDB `dh-int-drafts` khóa `{tenant}/{flow}/{version}` cho tới khi máy chủ xác nhận (mã hóa bằng khóa phiên trong bộ nhớ; xóa khi đăng xuất).
+
+#### 10.16.3. Xung đột (ERR-04-006, HTTP 412)
+
+Xảy ra khi khóa hết hạn và người khác đã lưu. Hộp `CMP-Modal` rộng 1200 px, không đóng bằng nhấp ngoài:
+
+```
+┌ Có người đã lưu phiên bản này ─────────────────────────────────────────────────────────┐
+│ Trần T. B đã lưu v8 lúc 14:06. Thay đổi của bạn từ 14:02 chưa được lưu.                 │
+│ [Sơ đồ | YAML]                                                                          │
+│ ┌ Bản gốc (14:02) ──────┐ ┌ Của Trần T. B (14:06) ─┐ ┌ Của bạn ───────────────────────┐ │
+│ │ ...                   │ │ ~ Gọi hộ tịch: timeout │ │ + Ghi nhật ký (nhánh otherwise)│ │
+│ └───────────────────────┘ └────────────────────────┘ └────────────────────────────────┘ │
+│ 2 thay đổi tự gộp được · 1 xung đột: chặng "Gọi hộ tịch" trường "Thời gian chờ"          │
+│   ( ) Giữ của Trần T. B: 5000   (•) Giữ của tôi: 10000                                   │
+│                         [Tải bản của tôi về máy] [Bỏ thay đổi của tôi] [Gộp và lưu]      │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Gộp ba bên theo đường dẫn khóa YAML (chặng xác định bằng `id`). Mỗi xung đột là một cặp radio; "Gộp và lưu" vô hiệu tới khi giải quyết hết. "Tải bản của tôi về máy" luôn có để không bao giờ mất công.
+
+#### 10.16.4. Mất kết nối
+
+Phát hiện qua lỗi mạng hoặc sự kiện `offline`: ST-09, chỉ báo "⊘ Chưa lưu lên máy chủ", vẫn sửa được, chạy thử và gửi duyệt vô hiệu. Có mạng lại: thử lưu ngay; khóa đã mất mà có người khác lưu thì vào 10.16.3.
+
+#### 10.16.5. Rời trang
+
+Có thay đổi chưa lưu: chặn `beforeunload` của trình duyệt và ST-10 cho điều hướng trong ứng dụng. Đóng tab đột ngột: lần mở sau thấy bản nháp cục bộ mới hơn máy chủ thì hỏi "Khôi phục thay đổi chưa lưu từ {time}?" với "Khôi phục", "So sánh", "Bỏ".
+
+### 10.17. Catalog thay đổi
+
+Khi máy chủ báo phiên bản catalog khác bản trình duyệt đang giữ (trường `catalogVersion` của API-04-010 hoặc sự kiện EVT-04-12 qua SSE): banner "Danh mục thành phần đã cập nhật lên {ver}. Tải lại để dùng thành phần mới." và nút "Tải lại danh mục" (lưu trước, giữ chọn). Mở phiên bản luồng được tạo với catalog cũ hơn: kiểm tra lại, chặng dùng tham số bị bỏ hiện cảnh báo VR-14 "Tham số {p} không còn trong Camel {ver}"; không tự xóa tham số.
+
+### 10.18. Chế độ danh sách (thay canvas cho người dùng trình đọc màn hình)
+
+Bật ở "Xem › Chế độ danh sách" hoặc tự gợi ý khi phát hiện điều hướng chỉ bằng bàn phím lâu trên canvas. Canvas thay bằng `CMP-TreeGrid` (`role="treegrid"`): mỗi dòng là một chặng với cột Tên, Loại, Thành phần, Tham số chính, Vấn đề; nhóm và nhánh là nút cây mở được. Mọi thao tác của canvas có trên cây: thêm trước, sau; di chuyển lên, xuống; thụt vào (chuyển vào nhánh), thụt ra; bọc; xóa. Inspector, bảng dưới không đổi. Thông báo trực tiếp (`aria-live="polite"`) cho mỗi thay đổi cấu trúc: "Đã di chuyển Ghi nhật ký vào nhánh otherwise, vị trí 1 trên 1". Đây là cách đáp ứng WCAG 1.3.1, 2.1.1 cho sơ đồ, không phải tính năng phụ (NFR-04-015).
+
+### 10.19. Màn nhỏ và thiết bị
+
+| Chiều rộng | Bố cục |
+|---|---|
+| ≥ 1600 px | Đủ sáu vùng; Chia đôi có Inspector cố định |
+| 1280–1599 px | ③ mặc định chế độ lưới hẹp 240; Inspector 320 |
+| 1024–1279 px | ③ thu thành dải 48 px, mở thành lớp phủ; Inspector thành drawer phải; ⑥ mặc định thu gọn |
+| < 1024 px | Chỉ xem: banner "Trình thiết kế cần màn hình rộng ít nhất 1024 px để sửa. Bạn vẫn xem và chạy thử được." Canvas chỉ đọc, mở Chế độ danh sách nếu muốn; nút "Gửi đường dẫn sang máy tính" (sao chép URL) |
+
+Thu phóng trình duyệt 200 % tương đương màn 720 px và rơi vào hàng cuối, vẫn dùng được (WCAG 1.4.10 cho phép ngoại lệ sơ đồ hai chiều nhưng thông tin vẫn đọc được qua chế độ danh sách).
+
+### 10.20. Hoàn tác, làm lại
+
+Ngăn xếp theo phiên bản, sống trong phiên trình duyệt, tối đa 100 bước (`04.designer_undo_depth`). Mỗi bước có mô tả tiếng Việt và ảnh chụp mô hình dạng vá (JSON Patch) để nhỏ. Các thao tác là một bước: thêm, xóa, di chuyển, bọc, bỏ bọc, tách route con, thay chặng, một đợt gõ trong một trường (600 ms), một đợt gõ YAML (800 ms), dán, nhập YAML, gộp xung đột, khôi phục mặc định. Không hoàn tác được: lưu (lưu không phải thay đổi mô hình), gửi duyệt, chạy thử. Lưu không xóa ngăn xếp. Mở phiên bản khác thì ngăn xếp riêng.
+
+### 10.21. Gửi duyệt
+
+Hộp `CMP-Modal` rộng 720 px:
+
+```
+┌ Gửi duyệt Đồng bộ khai sinh sang NDXP v8 ───────────────────────────────────────┐
+│ Kiểm tra trước khi gửi                                                          │
+│  ✓ Đã lưu                                                                       │
+│  ✓ Không còn lỗi (2 cảnh báo · Xem)                                             │
+│  ✓ Chạy thử đạt lần #41 lúc 14:10, đúng nội dung hiện tại (mã a3f9…)            │
+│  ✓ Đủ chín chặng chuẩn                                                          │
+│  ✓ Kết nối đã cấp: ndxp-ho-tich, pg-ho-tich-ro                                  │
+│  ⚠ 1 truy cập CSDL trực tiếp (Q359): pg-ho-tich-ro · chỉ đọc · đã khai báo PH-05│
+│ Thay đổi so với v7 (đang chạy ở Prod): +2 chặng · ~3 chặng · −0  [Xem khác biệt]│
+│ Ghi chú phát hành *                                                             │
+│ [Thêm nhánh xử lý giấy khai sinh cấp lại; tăng thời gian chờ NDXP…          ]  │
+│ Người duyệt đề xuất   [Lê V. C ▾] (không bắt buộc; mọi người có quyền duyệt    │
+│                        trong không gian đều thấy)                               │
+│ Môi trường mong muốn sau duyệt  ( ) Test  (•) Staging  ( ) Prod                 │
+│                                                   [Hủy] [Gửi duyệt]             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Danh sách kiểm tra gọi API-04-012 với `level=submit`, mỗi dòng ✓ / ✕ / ⚠ có liên kết sửa. Một dòng ✕ thì "Gửi duyệt" vô hiệu. Ghi chú 10–2.000 ký tự. Danh sách người duyệt đề xuất loại sẵn người tạo, người đóng góp, người gửi (BR-04-010, bốn mắt). Gửi thành công: phiên bản sang `PENDING_REVIEW`, trình thiết kế chuyển chỉ đọc với banner "Đã gửi duyệt lúc {time}. [Rút lại]", thông báo tới người duyệt (EVT-04-04).
+
+### 10.22. Ngân sách hiệu năng
+
+| Chỉ số | Mục tiêu (máy văn phòng 4 lõi, 8 GB, Chrome bản hiện hành) |
+|---|---|
+| Mở trình thiết kế tới tương tác được (luồng 50 chặng, catalog đã cache) | ≤ 2,5 s |
+| Tải catalog lần đầu (751 mục, nén) | ≤ 1,5 MB truyền, cache theo phiên bản catalog vĩnh viễn |
+| Kéo chặng, di chuyển canvas với 200 chặng | ≥ 50 khung/s; không dùng `backdrop-filter` trên lớp cuộn |
+| Vẽ lại sau một thay đổi (200 chặng) | ≤ 100 ms |
+| YAML → sơ đồ (2.000 dòng) | ≤ 300 ms trong Web Worker |
+| Kiểm tra hợp lệ phía trình duyệt | ≤ 150 ms cho 200 chặng |
+| Bộ nhớ | ≤ 300 MB với luồng 500 chặng |
+
+Kỹ thuật bắt buộc: ảo hóa chặng ngoài khung nhìn của XYFlow (`onlyRenderVisibleElements`), bố cục ELK trong Web Worker, memo hóa `CMP-FlowNode` theo băm cấu hình, catalog tách theo nhóm và tải lười phần `properties` khi chọn chặng.
+
+### 10.23. Tiêu chí nghiệm thu UI-04-04
+
+| Mã | Tiêu chí |
+|---|---|
+| AC-UI-04-04-01 | Tạo luồng chín chặng chuẩn + một `choice` hai nhánh chỉ bằng bàn phím, không dùng chuột, trong ≤ 5 phút với người đã học phím tắt |
+| AC-UI-04-04-02 | Sửa tham số trên sơ đồ, chuyển YAML thấy đúng giá trị; sửa YAML, chuyển sơ đồ thấy đúng; chú thích `#` trong YAML giữ nguyên sau mười lần chuyển |
+| AC-UI-04-04-03 | Không lưu được giá trị khớp mẫu bí mật ở bất kỳ trường nào hoặc trong YAML |
+| AC-UI-04-04-04 | Hai người mở cùng bản nháp: người sau chỉ đọc; khi khóa hết hạn và cả hai lưu, hộp xung đột hiện đúng ba bên, không mất thay đổi |
+| AC-UI-04-04-05 | Rút mạng 2 phút khi đang sửa, cắm lại: thay đổi được lưu, không mất bước |
+| AC-UI-04-04-06 | Với trình đọc màn hình NVDA + Chrome, chế độ danh sách đọc đủ cấu trúc và mọi thao tác thêm, xóa, di chuyển, bọc có thông báo |
+| AC-UI-04-04-07 | Kiểm tra axe-core không có vi phạm mức nghiêm trọng, nghiêm trọng vừa ở cả ba chế độ, giao diện sáng và tối, glass bật và tắt |
+| AC-UI-04-04-08 | Đạt ngân sách hiệu năng 10.22 trên luồng mẫu 200 chặng |
+| AC-UI-04-04-09 | Mọi thành phần trong bảng thành phần đúng tập catalog 3.33.1 trừ thành phần bị chính sách tỉnh chặn |
+| AC-UI-04-04-10 | Gửi duyệt không được khi `contentHash` khác lần chạy thử đạt gần nhất |
