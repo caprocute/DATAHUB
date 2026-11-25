@@ -1169,7 +1169,7 @@ sequenceDiagram
 
 1. An mở UI-04-17, lọc nhóm "Tệp", xem chi tiết `sftp`: mô tả, cú pháp URI, thuộc tính theo nhóm, mức native `SUPPORTED`, hồ sơ `files-native`, trạng thái "Được phép".
 2. An tìm `smb`, thấy "Cấm, lý do: chưa có trong chính sách nền"; bấm "Đề xuất cho phép" kèm lý do nghiệp vụ (API-04-074).
-3. Đỗ Quang Khải (PA) xem đề xuất, tham khảo SO, chọn "Cần duyệt từng luồng" (API-04-072), phát hành phiên bản chính sách (API-04-073).
+3. Đỗ Quang Khải (PA) xem đề xuất, tham khảo SO, chọn "Cần duyệt từng luồng" (API-04-072); lần lưu tăng `policyVersion`, phiên bản catalog và chính sách hiện hành xem ở API-04-073.
 4. Hệ thống ghi kiểm toán, cập nhật chỉ mục catalog theo tenant.
 
 **Luồng thay thế**
