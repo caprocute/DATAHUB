@@ -1837,7 +1837,7 @@ FRS chịu các ràng buộc: phân quyền theo D02-08 (quyền đề xuất �
 
 ## 11. Câu hỏi mở
 
-Câu hỏi của các tài liệu khác trong bộ PH-04 được quản lý ở chính tài liệu đó (D03-02-PH04: Q04-20…29; D03-06-PH04: Q04-30…39; D05-02-PH04: Q04-40…44). Theo chỉ đạo của chủ đầu tư ngày 25/11/2026, câu hỏi thiếu dữ liệu thật được giải bằng giả định ghi rõ cơ sở; chỉ câu hỏi về lựa chọn thiết kế được đưa ra duyệt.
+Câu hỏi của các tài liệu khác trong bộ PH-04 được quản lý ở chính tài liệu đó (D03-02-PH04: Q04-20…29; D03-06-PH04: Q04-30…39; D05-02-PH04: Q04-40…44; D02-04-PH04: Q04-45…49). Theo chỉ đạo của chủ đầu tư ngày 25/11/2026, câu hỏi thiếu dữ liệu thật được giải bằng giả định ghi rõ cơ sở; chỉ câu hỏi về lựa chọn thiết kế được đưa ra duyệt.
 
 | Mã | Câu hỏi | Mục | Đề xuất tạm |
 |---|---|---|---|

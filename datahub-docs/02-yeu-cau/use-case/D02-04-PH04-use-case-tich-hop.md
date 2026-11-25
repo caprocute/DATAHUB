@@ -529,7 +529,7 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 **Luồng chính**
 
 1. An mở UI-04-03, chọn loại `KAMELET` kiểu `action`, tên `ho-tich-chuan-hoa-action`.
-2. UI-04-10 mở với ba vùng: định nghĩa thuộc tính (tiêu đề, kiểu, bắt buộc, mặc định, `x-descriptors` bí mật), mẫu (template) dạng sơ đồ, xem trước cách Kamelet hiện trong bảng thành phần.
+2. UI-04-08 mở với ba vùng: định nghĩa thuộc tính (tiêu đề, kiểu, bắt buộc, mặc định, `x-descriptors` bí mật), mẫu (template) dạng sơ đồ, xem trước cách Kamelet hiện trong bảng thành phần.
 3. An khai báo thuộc tính `bangMa` (chuỗi, bắt buộc), `connection` (kết nối PH-05, bí mật).
 4. An dựng mẫu: `transform` dùng `{{bangMa}}`, `log`; hệ thống kiểm tra mẫu như một route.
 5. An chạy thử Kamelet trên bản tin mẫu (UC-04-08 với Pipe tạm), gửi duyệt (UC-04-10), Lê Văn Cường duyệt, phát hành (UC-04-12).
@@ -537,8 +537,8 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 
 **Luồng thay thế**
 
-- **1a. Pipe.** An chọn `PIPE`, chọn nguồn `kafka-source`, các bước `ho-tich-chuan-hoa-action`, đích `http-sink`; UI-04-10 hiện dạng ba ô nối nhau, YAML `Pipe` sinh tương ứng.
-- **1b. Bean khai báo (FR-04-021).** Trong luồng, An mở tab Bean, thêm bean `ndxpRetryPolicy` kiểu được phép trong danh sách lớp tenant cho phép (`org.apache.camel.processor.errorhandler.RedeliveryPolicy`), đặt thuộc tính; chặng khác tham chiếu `#bean:ndxpRetryPolicy`.
+- **1a. Pipe.** An chọn `PIPE`, chọn nguồn `kafka-source`, các bước `ho-tich-chuan-hoa-action`, đích `http-sink`; UI-04-09 hiện dạng ba ô nối nhau, YAML `Pipe` sinh tương ứng.
+- **1b. Bean khai báo (FR-04-021).** Trong luồng, An mở cấu hình cấp tệp và bean (UI-04-10), thêm bean `ndxpRetryPolicy` kiểu được phép trong danh sách lớp tenant cho phép (`org.apache.camel.processor.errorhandler.RedeliveryPolicy`), đặt thuộc tính; chặng khác tham chiếu `#bean:ndxpRetryPolicy`.
 - **6a. Nâng phiên bản Kamelet.** Luồng dùng Kamelet giữ phiên bản Kamelet đã ghim; dải "Kamelet có phiên bản mới" trong trình thiết kế luồng dùng nó.
 
 **Luồng ngoại lệ**
@@ -714,7 +714,7 @@ sequenceDiagram
 **Luồng chính**
 
 1. Lê Văn Cường mở UI-04-14 (API-04-053); hàng đợi sắp theo thời gian chờ, dòng quá hạn `04.review.sla-hours` (24 giờ) có nhãn đỏ.
-2. Cường mở `ho-tich-khai-sinh` v8; UI-04-15 hiện khác biệt sơ đồ cạnh nhau, khác biệt YAML, kết quả kiểm tra, chạy thử, ca kiểm thử, ghi chú của An.
+2. Cường mở `ho-tich-khai-sinh` v8; màn duyệt UI-04-14 nhúng so sánh UI-04-16: khác biệt sơ đồ cạnh nhau, khác biệt YAML, kết quả kiểm tra, chạy thử, ca kiểm thử, ghi chú của An.
 3. Cường xem hết các thay đổi; hệ thống ghi đã xem khác biệt (API-04-025).
 4. Cường đánh dấu checklist của tỉnh (`04.review.checklist`): "Không có dữ liệu thật trong bản tin mẫu", "Kết nối đúng môi trường", "Có xử lý lỗi và DLQ", "Chín chặng chuẩn đủ".
 5. Cường chọn "Duyệt", nhập ý kiến; nếu `04.review.require-reauth` bật, hệ thống yêu cầu xác thực lại (PH-12, OTP).
@@ -760,7 +760,7 @@ stateDiagram-v2
 | Mức ưu tiên | M |
 | FR hiện thực | FR-04-042, 045, 075 |
 | Tiền điều kiện | Phiên bản `APPROVED`; không trong khoảng đóng băng |
-| Điều kiện kích hoạt | "Phát hành" trên UI-04-15 hoặc tab Triển khai của UI-04-02 |
+| Điều kiện kích hoạt | "Phát hành" trên màn duyệt UI-04-14 (mở UI-04-15) hoặc tab Triển khai của UI-04-02 |
 | Đảm bảo tối thiểu | Không ghi kho cấu hình khi kiểm tra mức `PUBLISH` lỗi; ảnh runtime chọn đúng hồ sơ có đủ thành phần; thứ tự môi trường theo `04.env.stages` |
 | Đảm bảo thành công | Triển khai `SYNCED`, sức khỏe `HEALTHY` ở môi trường đích; phiên bản trước ở PROD thành `SUPERSEDED` |
 
@@ -934,7 +934,7 @@ sequenceDiagram
     INT->>K: Lệnh (hết hạn 60 s)
     INT-->>SO: 202 commandId (ISSUED)
     K->>RT: Lệnh
-    RT->>RT: Kiểm chữ ký, hạn, tenant; dừng route; bản tin đang xử lý → DLQ
+    RT->>RT: Kiểm chữ ký, hạn, tenant, dừng route, bản tin đang xử lý → DLQ
     RT-->>INT: Xác nhận EVT-04-13 (3/3 < 5 s)
     INT->>GIT: Commit trạng thái mong muốn
     INT->>INT: Đối soát khớp → RECONCILED (≤ 5 phút)
@@ -1131,13 +1131,13 @@ sequenceDiagram
 | Mức ưu tiên | M |
 | FR hiện thực | FR-04-082 |
 | Tiền điều kiện | Có tệp Camel XML hoặc gói xuất `Context`, `Context_file` của hệ cũ |
-| Điều kiện kích hoạt | UI-04-20 hoặc UI-04-03 điểm xuất phát "Nhập từ Bus cũ" |
+| Điều kiện kích hoạt | UI-04-18 hoặc UI-04-03 điểm xuất phát "Nhập từ Bus cũ" |
 | Đảm bảo tối thiểu | Máy chủ, tài khoản, mật khẩu cũ bị gỡ khỏi định nghĩa và không lưu ở đâu trong Datahub |
 | Đảm bảo thành công | Luồng nháp `origin = LEGACY_XML` và báo cáo chuyển đổi |
 
 **Luồng chính**
 
-1. Đội di trú tải gói `context-dongbo-hotich.zip` (≤ 2 MiB) lên UI-04-20.
+1. Đội di trú tải gói `context-dongbo-hotich.zip` (≤ 2 MiB) lên UI-04-18.
 2. Hệ thống (API-04-028) đọc bằng `camel-xml-io` cùng phiên bản runtime; tách bean Spring, route, `routeContext`, `restContext`.
 3. Thay tham số kết nối bằng `{{conn:CHUA_GAN.<khóa>}}`; phần không chuyển được giữ dạng chú thích, chặng "Cần xử lý tay".
 4. Báo cáo: 4 route, 37/41 chặng chuyển được, 4 chặng cần xử lý tay (2 bean tùy biến, 1 lớp Java hệ cũ, 1 `exec` bị cấm), 3 kết nối cần khai báo, khuyến nghị thêm chín chặng chuẩn.
@@ -1213,3 +1213,94 @@ sequenceDiagram
 - **E2. Lệch bản vá có thay đổi lược đồ.** Công cụ so khớp phát hiện; xử lý như lệch bản phụ.
 
 **Quy tắc:** BR-04-020. **Tần suất:** 1–2 lần mỗi năm theo nhịp LTS của Camel Quarkus.
+
+## 7. Luồng phụ dùng chung
+
+### 7.1. Đặt tham số PH-04 và khoảng đóng băng (FR-04-084)
+
+Vũ Thị Hà (TA) mở UI-04-20 (màn tham số chung PH-18 lọc namespace `04.`). Hà đặt `04.env.stages` = `TEST,PROD`, `04.review.sla-hours` = 24, bật `04.flow.require-legal-basis`; khai báo biến môi trường `{{dh.env.ndxp-ma-don-vi}}` với giá trị riêng cho TEST và PROD. Hoàng Minh Đức (SO) thêm khoảng đóng băng `04.freeze.windows` từ 20/12/2026 00:00 tới 05/01/2027 23:59, lý do "Cao điểm cuối năm". Hệ thống kiểm tra giá trị trong miền cho phép (FRS §7.1), ghi kiểm toán giá trị trước và sau, phát sự kiện thay đổi tham số để `dh-integration` làm mới bộ đệm trong ≤ 60 giây.
+
+Trong khoảng đóng băng, UC-04-12 trả ERR-04-041; UC-04-13 và UC-04-15 vẫn chạy được (BR-04-022). Dải thông báo trên UI-04-01, 02, 04 hiện "Đang đóng băng thay đổi tới 05/01/2027".
+
+| Khóa dùng trong tài liệu này | Use case |
+|---|---|
+| `04.workspace.enforce` | UC-04-01, 02 |
+| `04.flow.max-definition-kb`, `04.flow.require-legal-basis` | UC-04-03, 04, 10 |
+| `04.env.stages`, `04.env.soak-minutes.STAGING`, `04.env.prod-requires-promote` | UC-04-12 |
+| `04.review.require-test`, `04.review.checklist`, `04.review.sla-hours`, `04.review.require-reauth` | UC-04-10, 11 |
+| `04.test.max-concurrent`, `04.test.allow-simulation`, `04.test.retention-days`, `04.test.body-retention-days` | UC-04-08, 09 |
+| `04.deploy.timeout-minutes`, `04.deploy.rollback-suggest-error-ratio` | UC-04-12, 13 |
+| `04.runtime.max-body-kb`, `04.runtime.sync-timeout-seconds`, `04.runtime.idempotency-ttl-hours` | UC-04-12, 17, 18 |
+| `04.sql.statement-timeout-seconds`, `04.sql.max-rows` | UC-04-19 |
+| `04.mapping.require-all-required` | UC-04-06 |
+| `04.freeze.windows` | UC-04-12, 13, 15 |
+
+### 7.2. Xem lịch sử và kiểm toán của luồng (FR-04-083)
+
+Người có `PERM-04-read` mở tab Lịch sử của UI-04-02. Hệ thống gọi API-04-091, đọc từ PH-13 bản ghi kiểm toán của luồng, phiên bản, triển khai, lệnh điều khiển, lần chạy thử, xếp theo thời gian giảm dần, lọc theo loại hành động và người thực hiện. Giá trị trước và sau chỉ hiện cho AU, SO, TA; người khác thấy loại hành động, người, thời điểm, lý do. PH-13 không phản hồi thì tab hiện ST-05, các tab khác không ảnh hưởng.
+
+### 7.3. Phát hiện người khác đang mở và gộp ba bên
+
+Dùng ở UC-04-04, 05, 06, 07. Phiên soạn là nhịp mềm (API-04-034, 30 giây, hết hạn sau 120 giây), chỉ để thông tin "ai đang mở"; không có khóa cứng. Chốt chống ghi đè là `If-Match` với ETag ở máy chủ. Khi lưu nhận ERR-04-006, trình duyệt tải bản hiện tại, tính gộp ba bên trên cây tài nguyên theo `id` chặng (gốc chung là bản đã tải, hai bên là của mình và của người lưu sau). Xung đột cùng trường của cùng chặng hiện từng cặp để chọn; phần không xung đột gộp tự động. Bố cục sơ đồ xung đột lấy bản của người đang gộp.
+
+## 8. Tổng hợp mã mới và đối chiếu
+
+### 8.1. Ma trận use case và quy tắc nghiệp vụ
+
+Mỗi BR có ít nhất một ca dương và một ca âm trong D05-02-PH04 theo bảng dưới.
+
+| BR | Use case |
+|---|---|
+| BR-04-001 | UC-04-03, 16 |
+| BR-04-002 | UC-04-03, 04, 10 |
+| BR-04-003 | UC-04-03, 04, 05, 07, 20 |
+| BR-04-004 | UC-04-08, 09, 10 |
+| BR-04-005 | UC-04-11 |
+| BR-04-006 | UC-04-04 |
+| BR-04-007 | UC-04-04, 05 |
+| BR-04-008 | UC-04-17, 18 |
+| BR-04-009 | UC-04-18 |
+| BR-04-010 | UC-04-17, 18, 19 |
+| BR-04-011 | UC-04-04, 16 |
+| BR-04-012 | UC-04-12 |
+| BR-04-013 | UC-04-05, 06, 08, 09, 17 |
+| BR-04-014 | UC-04-05, 12, 20, 21 |
+| BR-04-015 | UC-04-19 |
+| BR-04-016 | UC-04-04, 10 |
+| BR-04-017 | UC-04-11, 13, 14, 15, 16, 21 |
+| BR-04-018 | UC-04-12, 13, 14, 15 |
+| BR-04-019 | UC-04-12 |
+| BR-04-020 | UC-04-04, 07, 11, 22 |
+| BR-04-021 | UC-04-01, 02 |
+| BR-04-022 | UC-04-12, 13, 15, 7.1 |
+
+### 8.2. Mã mới đề xuất ngoài FRS
+
+| Mã | Nội dung | Lý do |
+|---|---|---|
+| Tài khoản hệ thống | `system:int-reconciler` (đối soát lệnh vào Git), `system:int-catalog` (đánh dấu luồng khi nâng catalog) | Người thực hiện của bản ghi kiểm toán do máy tạo (UC-04-14 E4, UC-04-22 bước 4) |
+| Sự kiện | Phát sự kiện thay đổi tham số `04.*` để làm mới bộ đệm | Mục 7.1; FRS chưa nêu mã sự kiện, đề nghị D03-02-PH04 chốt là EVT-04-14 hoặc dùng sự kiện tham số chung của PH-18 |
+| Hành vi | Đổi tiền tố mã cũ trong mã route, đường dẫn HTTP khi nhân bản | UC-04-16 bước 2; FR-04-005 chỉ yêu cầu không trùng |
+| Hành vi | Liên kết sự cố PH-14 trong hộp dừng khẩn (không bắt buộc) | UC-04-15 bước 2 |
+
+### 8.3. Điểm cần luồng khác lưu ý
+
+Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (sổ giả định ở phụ lục D02-01) vì chưa có số liệu thật của tỉnh thí điểm. Thứ hai, ERR-04-043 (HTTT đích chưa kết nạp) mới xuất hiện trong FR-04-068; D03-04-PH04 §6 cần có dòng tương ứng. Thứ ba, kịch bản chặn ở mạng khi dừng khẩn không đủ xác nhận (UC-04-15 E3) cần có trong sổ tay sự cố D03-07.
+
+## 9. Câu hỏi mở
+
+Theo chỉ đạo ngày 25/11/2026, câu hỏi thiếu dữ liệu thật được giải bằng giả định; bảng chỉ giữ câu hỏi về lựa chọn thiết kế, kèm đề xuất tạm được dùng để làm tiếp.
+
+| Mã | Câu hỏi | Use case | Đề xuất tạm |
+|---|---|---|---|
+| Q04-45 | Người duyệt có được phát hành luôn lên PROD trong cùng phiên duyệt hay phải bước nâng riêng do người khác? | UC-04-11, 12 | Theo `04.env.prod-requires-promote` (mặc định bật), cùng người được nâng |
+| Q04-46 | Tạm dừng route có cần người thứ hai xác nhận ở PROD? | UC-04-14 | Không; bắt buộc lý do và kiểm toán |
+| Q04-47 | Sau dừng khẩn, ai được tiếp tục luồng: chỉ SO, TA hay cả TO? | UC-04-15 | SO hoặc TA |
+| Q04-48 | Có cho chạy thử `SANDBOX_LIVE` gọi NDXP môi trường thử nghiệm không, khi NDXP chưa cấp môi trường thử cho tỉnh? | UC-04-08 | Cho khi kết nối có giá trị TEST; ngược lại chỉ `MOCK` |
+| Q04-49 | Gói xuất `Context` của Bus cũ có kèm mật khẩu đã mã hóa không; nếu có, ai giữ khóa khi trích? | UC-04-20 | Đội di trú trích trên máy hệ cũ, gỡ mật khẩu trước khi tải lên |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người thực hiện |
+|---|---|---|---|
+| 0.1 | 25/11/2026 | Bản đầu: 22 use case, luồng phụ, ma trận BR, câu hỏi mở | Nhóm phân tích |
