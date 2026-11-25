@@ -1111,7 +1111,7 @@ Kỹ thuật bắt buộc: chỉ vẽ chặng trong khung nhìn (`onlyRenderVisi
 │ VÀO                      │ THAM SỐ                                    │ RA                       │
 │ Nguồn: lần chạy #41 ▾    │ [🔍 Tìm tham số…]  [☐ Chỉ trường đã đặt]   │ Nguồn: lần chạy #41 ▾    │
 │ ▸ headers (12)           │ ┌ Cơ bản ─────────────────────────────────┐│ ▸ headers (14)           │
-│   dh-tenant  "lam-dong"  │ │ Kết nối *  [ndxp-ho-tich ▾] ✓ 2 giờ trước││   CamelHttpResponseCode │
+│   dh-tenant  "T68"       │ │ Kết nối *  [ndxp-ho-tich ▾] ✓ 2 giờ trước││   CamelHttpResponseCode │
 │   loai       "KS"        │ │ Đường dẫn * [/api/v1/khai-sinh/${…}] ƒx ││     200                  │
 │ ▾ body (JSON)            │ │ Phương thức [POST ▾]                    ││ ▾ body (JSON)            │
 │   { "soDinhDanh": "0…",  │ └─────────────────────────────────────────┘│   { "maGiayTo": "…",     │
@@ -1336,7 +1336,7 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 │          ( ) Theo ca kiểm thử [chọn ▾]                                                             │
 │ ┌ Headers (≤ 50) ─────────────────────┐ ┌ Body (JSON) ──────────────────────────── 2,1 KB / 256 KB┐│
 │ │ Content-Type  application/json  ✕   │ │ { "soDinhDanh": "001…", "hoTen": "Nguyễn Văn A", … }   ││
-│ │ dh-tenant     lam-dong (cố định)🔒  │ │                                                        ││
+│ │ dh-tenant     T68 (cố định)     🔒  │ │                                                        ││
 │ │ ＋ Thêm header                       │ └────────────────────────────────────────────────────────┘│
 │ └─────────────────────────────────────┘                                                           │
 │ Mô phỏng đích (MOCK)                                                                              │

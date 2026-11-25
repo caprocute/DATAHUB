@@ -90,7 +90,7 @@ Tài liệu không lặp lại đặc tả từng FR, không viết DDL đầy �
 
 ### 1.5. Quy ước trong tài liệu
 
-Mã Java là Java 21 (`record`, `sealed interface`, `switch` theo mẫu). Mã TypeScript là TS 5.x, React 19. Mã SQL là PostgreSQL 18. Ví dụ dùng tenant `lam-dong`, không gian `so-tu-phap`, luồng `ho-tich-khai-sinh`, kết nối `ndxp-ho-tich`, `pg-ho-tich-ro`, người dùng giả `u.ie01` (IE), `u.ia01` (IA), `u.to01` (TO). Các đoạn mã là mẫu thiết kế: chữ ký công khai, tên lớp, tên bảng, thứ tự thao tác là ràng buộc; chi tiết bên trong có thể đổi miễn giữ đúng hành vi. Phiên bản thành phần: Spring Boot 4.0.x, Camel Quarkus 3.33.2 (Camel 4.18 LTS) cho runtime, catalog trình thiết kế 3.33.1 (Camel 4.18.2) theo PR #5.
+Mã Java là Java 21 (`record`, `sealed interface`, `switch` theo mẫu). Mã TypeScript là TS 5.x, React 19. Mã SQL là PostgreSQL 18. Ví dụ dùng tenant `T68`, không gian `so-tu-phap`, luồng `ho-tich-khai-sinh`, kết nối `ndxp-ho-tich`, `pg-ho-tich-ro`, người dùng giả `u.ie01` (IE), `u.ia01` (IA), `u.to01` (TO). Các đoạn mã là mẫu thiết kế: chữ ký công khai, tên lớp, tên bảng, thứ tự thao tác là ràng buộc; chi tiết bên trong có thể đổi miễn giữ đúng hành vi. Phiên bản thành phần: Spring Boot 4.0.x, Camel Quarkus 3.33.2 (Camel 4.18 LTS) cho runtime, catalog trình thiết kế 3.33.1 (Camel 4.18.2) theo PR #5.
 
 ## 2. Vị trí trong kiến trúc
 
@@ -545,7 +545,7 @@ Hồ sơ native chỉ đóng gói driver PostgreSQL; CSDL khác (Oracle, SQL Ser
 PH-20 tạo kho khi khởi tạo tenant (ADR-068). Mỗi nhánh môi trường có cùng bố cục:
 
 ```text
-dh-flows-lam-dong/                  # nhánh env/test | env/staging | env/prod
+dh-flows-t68/                  # nhánh env/test | env/staging | env/prod
 ├── README.md                       # sinh tự động, không sửa tay
 ├── tenant.dh.yaml                  # tenant, namespace đích, hồ sơ được phép, phiên bản lib
 ├── flows/
@@ -570,7 +570,7 @@ Tệp `*.dhmap.json` và bố cục sơ đồ không vào kho (BR-04-007); chỉ
 apiVersion: dh.gov.vn/v1
 kind: FlowDeployment
 metadata:
-  tenant: lam-dong
+  tenant: T68
   flow: ho-tich-khai-sinh
   version: 8
   contentHash: sha256:3f1c…
@@ -630,7 +630,7 @@ Cô lập lỗi: mỗi luồng nạp riêng; lỗi nạp một luồng không ch
   "libVersion": "1.4.0",
   "at": "2026-11-25T22:00:30+07:00",
   "flows": [{
-    "tenant": "lam-dong", "flow": "ho-tich-khai-sinh", "version": 8, "contentHash": "sha256:3f1c…",
+    "tenant": "T68", "flow": "ho-tich-khai-sinh", "version": 8, "contentHash": "sha256:3f1c…",
     "state": "STARTED", "loadError": null,
     "routes": [{ "id": "ho-tich-khai-sinh-main", "state": "Started", "inflight": 2,
                  "exchanges1m": 412, "failures1m": 3, "p95ms": 220 }]
@@ -1009,7 +1009,7 @@ Sức khỏe tính mỗi nhịp tim, độc lập trạng thái đồng bộ: `H
 ```json
 {
   "commandId": "0193a8e2-6b1f-7c3e-9a51-6f0f2c1d9e44",
-  "tenant": "lam-dong",
+  "tenant": "T68",
   "flow": "ho-tich-khai-sinh",
   "version": 8,
   "environment": "PROD",

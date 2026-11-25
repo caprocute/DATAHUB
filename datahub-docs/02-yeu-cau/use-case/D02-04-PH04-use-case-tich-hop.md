@@ -63,7 +63,7 @@ Toàn bộ FR-04-001…084 của FRS. Chức năng dùng chung FR-00 (đăng nh�
 
 Mọi thao tác ghi sinh bản ghi kiểm toán theo FR-00-040 với mã sự kiện `INT_*` của FRS; mọi truy vấn CSDL điều khiển chạy dưới RLS theo tenant (D03-10). Các luồng không nhắc lại hai điều này ở từng bước.
 
-Dữ liệu ví dụ là giả lập theo chỉ đạo ngày 25/11/2026 (không có dữ liệu thật): tenant `lam-dong` (tỉnh Lâm Đồng); không gian làm việc `so-tu-phap`; luồng `ho-tich-khai-sinh` "Đồng bộ khai sinh sang NDXP" (đối ngoại, HTTT Hộ tịch tỉnh → Nền tảng NDXP); kết nối `ndxp-ho-tich` (HTTP), `pg-ho-tich-ro` (CSDL chỉ đọc cho luồng). Người dùng giả lập: Nguyễn Văn An (IE, Sở Tư pháp), Trần Thị Bình (IE, người đóng góp), Lê Văn Cường (IA), Phạm Thu Dung (TO), Hoàng Minh Đức (SO), Vũ Thị Hà (TA), Đỗ Quang Khải (PA nền tảng).
+Dữ liệu ví dụ là giả lập theo chỉ đạo ngày 25/11/2026 (không có dữ liệu thật): tenant `T68` (tỉnh Lâm Đồng); không gian làm việc `so-tu-phap`; luồng `ho-tich-khai-sinh` "Đồng bộ khai sinh sang NDXP" (đối ngoại, HTTT Hộ tịch tỉnh → Nền tảng NDXP); kết nối `ndxp-ho-tich` (HTTP), `pg-ho-tich-ro` (CSDL chỉ đọc cho luồng). Người dùng giả lập: Nguyễn Văn An (IE, Sở Tư pháp), Trần Thị Bình (IE, người đóng góp), Lê Văn Cường (IA), Phạm Thu Dung (TO), Hoàng Minh Đức (SO), Vũ Thị Hà (TA), Đỗ Quang Khải (PA nền tảng).
 
 ## 3. Tác nhân
 
@@ -767,7 +767,7 @@ stateDiagram-v2
 **Luồng chính**
 
 1. Cường chọn "Phát hành lên TEST"; hộp xác nhận hiện hồ sơ runtime suy ra (`core-native`), số bản sao, thay đổi so với bản đang chạy ở TEST.
-2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-lam-dong` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
+2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-t68` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
 3. Argo CD đồng bộ; triển khai `SYNCING` rồi `SYNCED` khi runtime báo phiên bản v8 qua nhịp tim của đủ bản sao.
 4. Trình duyệt nhận SSE tiến trình (API-04-054); thẻ TEST "v8 · Đồng bộ · Khỏe".
 5. Nếu luồng có `rest`, PH-02 nhận EVT-04-07 (triển khai `SYNCED`) để cập nhật đặc tả API ở môi trường tương ứng.
@@ -797,7 +797,7 @@ sequenceDiagram
     autonumber
     actor IA as Lê Văn Cường
     participant INT as dh-integration
-    participant GIT as dh-flows-lam-dong
+    participant GIT as dh-flows-t68
     participant ARGO as Argo CD
     participant RT as dh-runtime (PROD)
     IA->>INT: Nâng v8 lên PROD (API-04-056)
@@ -928,7 +928,7 @@ sequenceDiagram
     participant BAO as OpenBao
     participant K as Kafka (command.v1)
     participant RT as dh-runtime ×3
-    participant GIT as dh-flows-lam-dong
+    participant GIT as dh-flows-t68
     SO->>INT: EMERGENCY_STOP + lý do (API-04-061)
     INT->>BAO: Ký Ed25519
     INT->>K: Lệnh (hết hạn 60 s)
@@ -995,7 +995,7 @@ Use case hệ thống: mô tả hành vi của `dh-runtime` với một lượt 
 
 **Luồng chính**
 
-1. Cổng DVC gửi yêu cầu; APISIX xác thực, áp hạn mức, đặt `X-Dh-Consumer`, `X-Dh-Tenant` = `lam-dong`, `X-Dh-Subscription`, `traceparent`, chuyển tới `dh-runtime`.
+1. Cổng DVC gửi yêu cầu; APISIX xác thực, áp hạn mức, đặt `X-Dh-Consumer`, `X-Dh-Tenant` = `T68`, `X-Dh-Subscription`, `traceparent`, chuyển tới `dh-runtime`.
 2. **receive**: đặt `dh-tenant`, `dh-caller`, `dh-flow`, `dh-flow-version`; đo kích thước ≤ `04.runtime.max-body-kb`; `TenantGuard` khóa tiêu đề tenant.
 3. **schema**: kiểm tra JSON Schema `ho-tich-ks` v4; hợp lệ.
 4. **authz**: gọi OPA với `{tenant, caller, subscription, flow, operation, purpose, dataClasses}`; `allow` kèm nghĩa vụ che `cha.soDinhDanh`.
@@ -1057,15 +1057,15 @@ sequenceDiagram
 | Mức ưu tiên | M |
 | FR hiện thực | FR-04-062, 069, 070, 071, 073 |
 | Tiền điều kiện | Luồng `ACTIVE`, được cấp subscribe topic nguồn và publish topic đích ở PH-10 (BR-04-009) |
-| Điều kiện kích hoạt | Bản tin mới trên `lam-dong.ho-tich.khai-sinh.v1` |
+| Điều kiện kích hoạt | Bản tin mới trên `t68.ho-tich.khai-sinh.v1` |
 | Đảm bảo tối thiểu | Offset chỉ ghi nhận sau xử lý xong (at-least-once); tenant lấy từ tiền tố topic, không từ nội dung |
-| Đảm bảo thành công | Bản tin chuẩn hóa lên `lam-dong.cdm.su-kien-ho-tich.v1` với `acks=all`, tiêu đề `dh-tenant`, `traceparent`, `dh-flow`, `dh-source-system` |
+| Đảm bảo thành công | Bản tin chuẩn hóa lên `t68.cdm.su-kien-ho-tich.v1` với `acks=all`, tiêu đề `dh-tenant`, `traceparent`, `dh-flow`, `dh-source-system` |
 
 **Luồng chính**
 
-1. `dh-runtime` tiêu thụ với nhóm `dh-flow-lam-dong-dong-bo-khai-sinh`; giải tuần tự theo lược đồ Apicurio.
-2. Đặt `dh-tenant` = `lam-dong` từ tiền tố topic.
-3. `idempotentConsumer` kiểm khóa `dh:int:idem:lam-dong:dong-bo-khai-sinh:{maHoSo}` (TTL `04.runtime.idempotency-ttl-hours`, mặc định 24 giờ); chưa thấy.
+1. `dh-runtime` tiêu thụ với nhóm `dh-flow-t68-dong-bo-khai-sinh`; giải tuần tự theo lược đồ Apicurio.
+2. Đặt `dh-tenant` = `T68` từ tiền tố topic.
+3. `idempotentConsumer` kiểm khóa `dh:int:idem:T68:dong-bo-khai-sinh:{maHoSo}` (TTL `04.runtime.idempotency-ttl-hours`, mặc định 24 giờ); chưa thấy.
 4. Chuẩn hóa về CDM (như UC-04-17 bước 5).
 5. Phát lên topic đích, khóa phân vùng `maHoSo`, nhà sản xuất lũy đẳng.
 6. Ghi nhận offset; chỉ số, vết, nhật ký kết nối.
@@ -1103,7 +1103,7 @@ sequenceDiagram
 1. An thêm chặng "Đọc CSDL" vào luồng `dong-bo-ho-tich-dinh-ky`, chọn kết nối `pg-ho-tich-ro` (chỉ kết nối loại "CSDL cho luồng" hiện trong ô chọn).
 2. An nhập `SELECT ma_ho_so, ngay_dang_ky FROM ho_tich.khai_sinh WHERE cap_nhat_luc > :#tuLuc ORDER BY cap_nhat_luc LIMIT 500`.
 3. Trình kiểm tra (VR-13) phân tích câu lệnh: một câu `SELECT`, tham số ràng buộc, schema được phép; hợp lệ.
-4. Sau phát hành, runtime lấy tài khoản động từ OpenBao (TTL 1 giờ), mở giao dịch; nếu CSDL có RLS theo tenant thì `SET LOCAL app.tenant_id = 'lam-dong'` từ tiêu đề `dh-tenant`.
+4. Sau phát hành, runtime lấy tài khoản động từ OpenBao (TTL 1 giờ), mở giao dịch; nếu CSDL có RLS theo tenant thì `SET LOCAL app.tenant_id = 'T68'` từ tiêu đề `dh-tenant`.
 5. Chạy với `statement_timeout` (`04.sql.statement-timeout-seconds`, mặc định 10) và giới hạn `04.sql.max-rows` (10.000); trả 312 dòng.
 6. Runtime ghi kiểm toán (mã luồng, phiên bản, tenant, băm câu lệnh, số dòng, thời lượng, `traceId`); phía CSDL pgaudit ghi lớp `READ`.
 
@@ -1174,7 +1174,7 @@ sequenceDiagram
 
 **Luồng thay thế**
 
-- **3a. TA thu hẹp.** Vũ Thị Hà cấm `mail` cho tenant `lam-dong`; luồng đang dùng hiện huy hiệu "Không còn được phép", không gửi duyệt được, phiên bản đang chạy không bị dừng.
+- **3a. TA thu hẹp.** Vũ Thị Hà cấm `mail` cho tenant `T68`; luồng đang dùng hiện huy hiệu "Không còn được phép", không gửi duyệt được, phiên bản đang chạy không bị dừng.
 - **1a. Kamelet không có lược đồ.** Chi tiết hiện "Không có tham số cấu hình" thay vì lỗi.
 
 **Luồng ngoại lệ**
