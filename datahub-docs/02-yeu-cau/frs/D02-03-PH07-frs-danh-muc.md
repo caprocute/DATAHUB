@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH07
 ten: Đặc tả chức năng phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-25
 trang_thai: Dự thảo
 nguoi_doc: Chủ đầu tư, nhóm phân tích nghiệp vụ, kiến trúc sư, đội phát triển dh-data, đội kiểm thử, đội di trú dữ liệu
 phan_he: PH-07
@@ -10,6 +10,23 @@ nguoi_lap: Nhóm phân hệ PH-07
 ---
 
 # D02-03-PH07 · Đặc tả chức năng phân hệ PH-07 Danh mục dùng chung
+
+## Tóm tắt cho hội đồng thẩm định
+
+PH-07 Danh mục dùng chung thay thế khối "Danh mục dùng chung Aita" của LGSP cũ. Phân hệ là nơi duy nhất trong tỉnh quản lý các bảng mã dùng chung (dân tộc, giới tính, đơn vị hành chính, lĩnh vực thủ tục, đơn vị tổ chức…) và cung cấp chúng cho các hệ thống thông tin (HTTT) của tỉnh qua API, sự kiện và tệp. Phân hệ thuộc đợt MVP vì danh mục là khối được chuyển đổi đầu tiên theo kế hoạch strangler (D06-01).
+
+Phạm vi phủ hệ cũ: toàn bộ 19 chức năng của Aita (LGC-DMDC-001…019), chức năng danh mục quốc gia trên NGSP (LGC-NGSP-006) và phần chuyển đổi mã trên bus (LGC-BUS-036) đều có FR tương ứng (mục 9.1). Một chức năng bị thay thế vì lý do an toàn thông tin: "API truy vấn CSDL tùy chọn" của Aita cho phép gửi câu SQL tự do, được thay bằng truy vấn có cấu trúc có giới hạn (FR-07-032, BR-07-018).
+
+Điểm mới so với hệ cũ:
+- Mỗi danh mục có phiên bản và ngày hiệu lực. HTTT tra được mã tại một thời điểm bất kỳ, kể cả trước sắp xếp đơn vị hành chính ngày 01/7/2025.
+- Mọi thay đổi đi qua bản nháp, có duyệt bốn mắt và được ghi kiểm toán.
+- Nhập Excel, CSV có bước xem trước và báo lỗi theo từng dòng; xuất theo từng phiên bản.
+- Danh mục quốc gia được đồng bộ định kỳ qua PH-14 và đối chiếu khác biệt; thay đổi phá vỡ phải có người xác nhận.
+- Có bảng ánh xạ mã giữa danh mục chuẩn và mã riêng của từng HTTT.
+- Có danh mục đơn vị hành chính với lịch sử sáp nhập, chia tách và công cụ chuyển mã cũ sang mới.
+- Dùng chung cho nhiều tỉnh: danh mục toàn quốc quản lý một lần, mỗi tỉnh có danh mục riêng và phần bổ sung địa phương.
+
+Căn cứ pháp lý chính ở mục 1.6. Phạm vi MVP ở mục 9.3, tiêu chí chấp nhận cấp phân hệ ở mục 13. Các phần còn lại dành cho đội kỹ thuật.
 
 ## 1. Mục đích, phạm vi và người đọc
 
@@ -3179,3 +3196,43 @@ Bảng dưới tổng hợp các câu hỏi mở phát sinh trong FRS. Câu hỏ
 | Q07-10 | Thời hạn lưu trực tuyến bản ghi của phiên bản đã hết hiệu lực (mặc định 5 năm) có đáp ứng yêu cầu lưu trữ hồ sơ điện tử của tỉnh | 7.1 | 5 năm trực tuyến, sau đó chỉ còn ảnh chụp trên kho đối tượng |
 | Q07-11 | Thông tư 12/2022/TT-BTTTT đã có văn bản Bộ Công an thay thế chưa; số hiệu Nghị định 165/2025/NĐ-CP và hiệu lực của Nghị định 278/2025/NĐ-CP cần đối chiếu Công báo | 1.6 | Viện dẫn như mục 1.6, đánh dấu cần xác minh |
 
+
+## 12. Danh sách màn hình ở mức chức năng
+
+Bảng dưới đây nêu các màn hình của PH-07 và hành vi ở mức chức năng: màn hình dùng để làm gì, ai dùng, FR nào được thực hiện trên đó. Bố cục, trường, trạng thái và thông điệp chi tiết nằm ở D03-06-PH07. Cột "Màn hệ cũ" cho biết màn tương ứng của Aita được giữ chức năng, gộp lại hay là màn mới.
+
+| UI | Màn hình | Người dùng chính | Hành vi chức năng | FR | Màn hệ cũ |
+|---|---|---|---|---|---|
+| UI-07-01 | Danh sách danh mục | Mọi vai trò có `PERM-07-read` | Lọc theo nhóm, nguồn, trạng thái, phân loại; đếm theo nhóm; mở chi tiết; tạo danh mục mới hoặc tạo từ tệp | 001, 010 | Giữ: màn danh sách và cây danh mục của Aita |
+| UI-07-02 | Chi tiết danh mục | Mọi vai trò có `PERM-07-read` | Xem thông tin, lược đồ, bản ghi theo phiên bản hoặc thời điểm, lịch sử phiên bản, ánh xạ, quyền khai thác, lịch sử thao tác; xuất tệp; ngừng hiệu lực | 002, 009, 018, 019, 024, 050, 052 | Giữ và mở rộng: màn xem chi tiết danh mục |
+| UI-07-03 | Tạo, sửa thông tin danh mục | DATA_STEWARD, TENANT_ADMIN | Khai báo mã, tên, nhóm, nguồn, phân loại, phân cấp, chính sách duyệt | 003, 004, 008, 048 | Giữ: màn tạo danh mục nhập tay |
+| UI-07-04 | Trình sửa lược đồ thuộc tính | DATA_STEWARD | Thêm, sửa, sắp xếp thuộc tính động trên bản nháp; cảnh báo thay đổi phá vỡ | 005, 006, 007, 014 | Giữ: màn cập nhật danh sách thuộc tính |
+| UI-07-05 | Trình sửa bản ghi bản nháp | DATA_STEWARD | Sửa tại ô kiểu bảng tính hoặc dạng cây; kiểm tra hợp lệ tức thời; ngừng dùng bản ghi kèm mã thay thế | 011, 012, 013, 017 | Thiết kế lại: thay hộp thoại sửa từng bản ghi |
+| UI-07-06 | Trình hướng dẫn nhập tệp | DATA_STEWARD | Tải tệp, ánh xạ cột, xem trước và lỗi theo dòng, xác nhận ghi; tải khuôn mẫu | 020, 021, 022, 046, 051 | Giữ chức năng, thiết kế lại: nhập Excel, CSV, tạo danh mục từ tệp |
+| UI-07-07 | So sánh, duyệt và phát hành | DATA_STEWARD (trình), DATA_APPROVER (duyệt, phát hành) | So sánh hai phiên bản, phân loại phá vỡ, trình, duyệt, từ chối, phát hành với ngày hiệu lực và căn cứ pháp lý | 014, 015, 016 | Mới |
+| UI-07-08 | Tác vụ nhập xuất | DATA_STEWARD | Theo dõi tiến độ, tải kết quả, tải báo cáo lỗi, hủy tác vụ | 021, 024, 025 | Mới (hệ cũ chạy đồng bộ, không có tác vụ nền) |
+| UI-07-09 | Đồng bộ quốc gia | DATA_STEWARD, TENANT_ADMIN | Khai báo nguồn, xem lịch, chạy thủ công, xem khác biệt, xác nhận hoặc từ chối lần đồng bộ | 035…039 | Thay thế: màn kết nối danh mục quốc gia qua NGSP |
+| UI-07-10 | Ánh xạ mã | DATA_STEWARD, INTEGRATION_ENGINEER | Khai báo hệ thống mã của HTTT, sửa bảng ánh xạ, nhập lô, xem độ phủ | 040…043 | Mới (thay phần chuyển đổi mã viết tay trên bus) |
+| UI-07-11 | Đơn vị hành chính | Mọi vai trò có `PERM-07-read` | Tra cứu theo thời điểm, xem dòng thời gian sắp xếp, chuyển mã cũ sang mới và ngược lại | 044…047 | Mới |
+| UI-07-12 | Thử truy vấn API | INTEGRATION_ENGINEER, DATA_STEWARD | Soạn truy vấn có cấu trúc, xem kết quả và câu lệnh gọi API tương ứng | 026…033 | Thay thế: màn API truy vấn CSDL tùy chọn |
+| UI-07-13 | Tham số PH-07 | TENANT_ADMIN, PLATFORM_ADMIN | Xem, đặt tham số `07.rdm.*` trong miền cho phép | 053 | Mới |
+
+Chức năng nạp gói nền cho tenant mới (FR-07-049) và nhập lô qua API (FR-07-023) không có màn riêng: chức năng thứ nhất được gọi từ màn khởi tạo tenant của PH-20, chức năng thứ hai chỉ dành cho máy.
+
+## 13. Tiêu chí chấp nhận cấp phân hệ
+
+PH-07 được nghiệm thu khi đạt đủ các tiêu chí dưới đây. Mỗi tiêu chí có cách kiểm chứng cụ thể; kịch bản chi tiết ở D05-02-PH07 và kế hoạch UAT ở D05-05.
+
+| Mã | Tiêu chí | Kiểm chứng |
+|---|---|---|
+| AC-07-01 | 100% mục LGC-DMDC-001…019, LGC-NGSP-006, LGC-BUS-036 có kết luận ở mục 9.1, và mọi mục được giữ hoặc nâng cấp có ít nhất một test case đạt | Báo cáo độ phủ D00-03; kết quả chạy D05-02-PH07 |
+| AC-07-02 | Mọi FR mức M có ít nhất một test case dương tính và một test case âm tính đạt; không còn lỗi mức nghiêm trọng hoặc cao | Ma trận truy vết D05-02-PH07 §8; sổ lỗi |
+| AC-07-03 | Đạt NFR-07-001…015 ở môi trường PERF | Báo cáo kiểm thử hiệu năng D05-03 |
+| AC-07-04 | Không rò dữ liệu giữa tenant: người dùng, HTTT của tenant A không đọc, ghi được danh mục của tenant B qua mọi API và màn hình | Kịch bản cách ly tenant D05-01, TS-07-19 |
+| AC-07-05 | Truy vấn có cấu trúc không chạy được câu SQL do client gửi và từ chối mọi truy vấn vượt giới hạn | Kiểm thử bảo mật D05-04, TS-07-13 |
+| AC-07-06 | Dữ liệu danh mục của Aita tại tỉnh triển khai đầu tiên được di trú đủ: số danh mục, số bản ghi, checksum mã và tên khớp với hệ cũ | Biên bản đối soát sau di trú D06-01 |
+| AC-07-07 | Trong giai đoạn chạy song song, kết quả tra mã của Datahub khớp với Aita trên lưu lượng thật (shadow traffic) ở ít nhất 99,9% lượt tra, các lượt lệch đều giải thích được | Báo cáo so sánh D05-01 |
+| AC-07-08 | Tra cứu ĐVHC theo thời điểm trả đúng mã, tên, cấp trước và sau ngày 01/7/2025 cho bộ mẫu ít nhất 200 đơn vị, kể cả trường hợp chia tách cho nhiều ứng viên | TS-07-17 |
+| AC-07-09 | 100% thao tác ghi có bản ghi kiểm toán đủ trường | TS-07-21 |
+| AC-07-10 | Giao diện PH-07 đạt WCAG 2.2 AA trên các màn UI-07-01…12 | Kiểm thử khả năng truy cập D05-02-PH07 §6 |
+| AC-07-11 | Hợp đồng `openapi-rdm.yaml`, `asyncapi-rdm.yaml` qua lint, và mã nguồn khớp hợp đồng (kiểm thử contract đạt) | Cổng CI D04-02 |
