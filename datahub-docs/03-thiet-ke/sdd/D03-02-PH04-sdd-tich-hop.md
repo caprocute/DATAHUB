@@ -354,3 +354,313 @@ Mỗi hồ sơ sinh `runtime-manifest.json` lúc build (FR-04-081): `profile`, `
 | Ceph RGW bucket `dh-int-testrun` | Thân bản tin chạy thử khi `captureBodies` | Không làm phình CSDL; xóa theo vòng đời 7 ngày |
 
 Mọi đường ghi CSDL đi qua `TenantAwareTransactionManager` của thư viện chung (mẫu ở D03-02-PH07 §6.2), đặt `app.tenant_id` đầu mỗi giao dịch, nên RLS luôn có hiệu lực. Cột `definition_yaml` (≤ 512 KiB), `canvas_layout`, `samples` (`jsonb`) nằm ở bảng `flow_version`; truy vấn danh sách không chọn các cột này.
+
+## 4. Khung chín chặng chuẩn trong runtime
+
+### 4.1. Hợp đồng tiêu đề nội bộ
+
+Mọi exchange trong `dh-runtime` mang bộ tiêu đề dưới đây. Tiêu đề bắt đầu bằng `dh-` do runtime đặt; tiêu đề cùng tên do bên gọi gửi vào bị `dh-receive-action` xóa trước khi đặt lại (chống giả mạo).
+
+| Tiêu đề | Đặt ở | Nguồn | Bất biến |
+|---|---|---|---|
+| `dh-tenant` | `receive` | `X-Dh-Tenant` của APISIX (đồng bộ), tiền tố topic (Kafka), `flow.dh.yaml` (lập lịch) | Có, `TenantGuard` |
+| `dh-caller` | `receive` | `X-Dh-Consumer` của APISIX; mã HTTT nguồn với Kafka | Có |
+| `dh-subscription` | `receive` | `X-Dh-Subscription` | Có |
+| `dh-flow`, `dh-flow-version` | `receive` | Nhãn ConfigMap do Argo CD áp | Có |
+| `dh-stage` | Mỗi chặng | `StageMarker` | Không (đổi theo chặng) |
+| `dh-data-classes` | `schema` | Phân loại trường của lược đồ (PH-09) | Không |
+| `dh-obligations` | `authz` | Kết quả OPA | Không |
+| `dh-enrich-partial` | `enrich` | Khi làm giàu lỗi với `CONTINUE` | Không |
+| `traceparent` | `receive` | W3C; tạo mới nếu thiếu | Không |
+
+`TenantGuard` là `InterceptStrategy` gắn vào mọi route của luồng đã nạp: trước mỗi processor sau `receive`, nó so `dh-tenant` với giá trị chụp lúc `receive` (lưu trong thuộc tính exchange `dh.tenant.locked`, không phải tiêu đề) và so với tenant sở hữu luồng (nhãn `dh.gov.vn/tenant` của ConfigMap). Lệch thì ném `TenantMismatchException`, exchange dừng với lỗi nội bộ, phát cảnh báo ATTT (FR-04-073, E6 của UC-04-17).
+
+```java
+public final class TenantGuard implements InterceptStrategy {
+  @Override
+  public Processor wrapProcessorInInterceptors(CamelContext ctx, NamedNode def, Processor target, Processor next) {
+    return exchange -> {
+      String locked = exchange.getProperty(TenantHeaders.LOCKED, String.class);
+      if (locked != null) {
+        String now = exchange.getMessage().getHeader(TenantHeaders.TENANT, String.class);
+        if (!locked.equals(now) || !locked.equals(owningTenant(exchange))) {
+          throw new TenantMismatchException(locked, now, def.getId());
+        }
+      }
+      target.process(exchange);
+    };
+  }
+}
+```
+
+### 4.2. Kamelet nền
+
+Mỗi chặng chuẩn có một Kamelet nền loại `action` trong `dh-runtime-kamelets`. Kamelet nền có tham số tối thiểu; phần biến thiên của luồng nằm ở bước con mà người thiết kế thêm bên trong khối chặng.
+
+| Chặng | Kamelet nền | Tham số | Hành vi |
+|---|---|---|---|
+| receive | `dh-receive-action` | `maxBodyKb` (mặc định từ `04.runtime.max-body-kb`), `idempotencyKey` (biểu thức, tùy chọn) | Xóa tiêu đề `dh-*` vào, đặt tiêu đề §4.1, khóa tenant, đo kích thước (ERR-04-107), chống trùng khi có khóa (FR-04-071) |
+| schema | `dh-schema-action` | `schemaRef` (mã lược đồ Apicurio hoặc PH-06), `format` (`json`, `xml`, `avro`) | Kiểm tra, trả ≤ 20 lỗi theo đường dẫn (ERR-04-101); đặt `dh-data-classes` |
+| authz | `dh-authz-action` | `operation`, `purpose` | Gọi OPA, đặt `dh-obligations`, từ chối ERR-04-102 |
+| transform | `dh-transform-action` | `jq` hoặc `mappingRef`, `unknownCode` (`FAIL`, `PASS_THROUGH`, `DEFAULT:<mã>`) | Chạy JQ có `dh_map` (ERR-04-108) |
+| enrich | `dh-enrich-action` | `uri` hoặc `direct`, `timeoutMs` (5000), `onError` (`FAIL`, `CONTINUE`) | `enrich` với chiến lược gộp JSON |
+| route | `dh-route-action` | không | Đánh dấu chặng; nội dung là `choice`, `split`, `multicast` do người thiết kế đặt |
+| deliver | `dh-deliver-action` | `connection`, `path`, `method`, `timeoutMs` | Gọi đích trong `circuitBreaker` (Resilience4j: 50% trên 20 lượt, nửa mở sau 30 giây) |
+| audit | `dh-audit-action` | `serviceCode`, `providerSystem` | Ghi nhật ký kết nối lên EVT-04-14 |
+| respond | `dh-respond-action` | `contentType` | Áp nghĩa vụ che của OPA và chính sách PH-09; đặt mã HTTP |
+
+Kamelet nền tham chiếu processor Java bằng `#class:` không được phép trong luồng của người dùng; Kamelet nền nằm ngoài kiểm tra VR-04 vì được ký cùng ảnh runtime. Danh sách Kamelet nền và phiên bản ghi trong `runtime-manifest.json` (`kamelets[]`).
+
+### 4.3. `routeConfiguration` nền và xử lý lỗi
+
+`dh-default-config` được nạp sẵn ở mọi hồ sơ; luồng tham chiếu bằng `routeConfigurationId: dh-default-config` (khuôn mẫu đặt sẵn, VR-11 kiểm tra).
+
+```yaml
+- routeConfiguration:
+    id: dh-default-config
+    onException:
+      - onException:
+          exception: [vn.datahub.runtime.error.TransientException]
+          redeliveryPolicy:
+            maximumRedeliveries: 3
+            redeliveryDelay: 1000
+            backOffMultiplier: 4
+            collisionAvoidanceFactor: 0.2
+            useExponentialBackOff: true
+            retryAttemptedLogLevel: WARN
+          handled: { constant: true }
+          steps:
+            - process: { ref: dhDlqEnvelope }
+            - to: { uri: "kafka:{{dh.tenant}}.ops.dlq.v1" }
+            - process: { ref: dhSyncErrorResponse }
+      - onException:
+          exception: [vn.datahub.runtime.error.BusinessException, vn.datahub.runtime.error.DataException]
+          handled: { constant: true }
+          steps:
+            - process: { ref: dhRouteBusinessError }   # đồng bộ: trả bên gọi; bất đồng bộ: DLQ
+      - onException:
+          exception: [vn.datahub.runtime.error.AuthzDeniedException]
+          handled: { constant: true }
+          steps:
+            - process: { ref: dhSyncErrorResponse }    # không đưa DLQ
+    onCompletion:
+      - onCompletion:
+          steps:
+            - process: { ref: dhStageMetricsFlush }
+```
+
+`ErrorClassifier` ánh xạ ngoại lệ Camel và mã HTTP của đích sang bốn lớp ở FR-04-070: `TransientException` (502, 503, 504, quá thời gian, mất kết nối; 429 theo `Retry-After`), `BusinessException` (400, 404, 409, 422 từ đích), `DataException` (lược đồ, chuyển đổi), `AuthzDeniedException`. Ngoại lệ không phân loại thử lại một lần rồi DLQ và cảnh báo. `dhDlqEnvelope` mã hóa trường phân loại Cá nhân, Nhạy cảm bằng khóa DEK của tenant (OpenBao transit) trước khi đưa DLQ, thêm tiêu đề `dh-dlq-reason`, `dh-dlq-attempts`, `dh-dlq-stage`, `dh-dlq-error-code`.
+
+Phân giải bí mật: `ConnPropertiesFunction` đăng ký tiền tố `conn` cho properties placeholder; `{{conn:ndxp-ho-tich.host}}` đọc giá trị của kết nối PH-05 ở môi trường hiện tại từ OpenBao đường dẫn `kv/dh/{tenant}/conn/{mã}/{env}` lúc khởi động route, giữ trong bộ nhớ, làm mới khi nhận sự kiện xoay kết nối. `{{vault:<path>#<key>}}` chỉ nhận đường dẫn dưới `kv/dh/{tenant}/flow/`.
+
+### 4.4. Luồng mẫu chín chặng
+
+Luồng `ho-tich-khai-sinh` rút gọn dưới đây là đầu ra của khuôn `tpl-standard-9` sau khi điền tham số; cũng là ca quay vòng chuẩn của bộ kiểm thử (§14).
+
+```yaml
+- route:
+    id: ho-tich-khai-sinh-main
+    routeConfigurationId: dh-default-config
+    from:
+      uri: platform-http:/ho-tich/khai-sinh
+      parameters: { httpMethodRestrict: POST }
+      steps:
+        - step:
+            id: dh-stage-receive
+            steps:
+              - kamelet: { name: dh-receive-action, parameters: { idempotencyKey: "${header.Idempotency-Key}" } }
+        - step:
+            id: dh-stage-schema
+            steps:
+              - kamelet: { name: dh-schema-action, parameters: { schemaRef: ho-tich-ks, format: json } }
+        - step:
+            id: dh-stage-authz
+            steps:
+              - kamelet: { name: dh-authz-action, parameters: { operation: khai-sinh.dang-ky, purpose: dvc } }
+        - step:
+            id: dh-stage-transform
+            steps:
+              - kamelet: { name: dh-transform-action, parameters: { mappingRef: ho-tich-ks-to-ndxp } }
+        - step:
+            id: dh-stage-enrich
+            steps:
+              - enrich: { expression: { constant: "direct:lay-ma-dvhc" } }
+        - step:
+            id: dh-stage-route
+            steps:
+              - choice:
+                  when:
+                    - simple: "${body[request][type]} == 'KS'"
+                      steps:
+                        - kamelet:
+                            name: dh-deliver-action
+                            id: dh-stage-deliver
+                            parameters: { connection: ndxp-ho-tich, path: /api/v1/khai-sinh, method: POST, timeoutMs: 15000 }
+                  otherwise:
+                    steps:
+                      - log: { message: "Loại hồ sơ không hỗ trợ: ${body[request][type]}" }
+        - step:
+            id: dh-stage-audit
+            steps:
+              - kamelet: { name: dh-audit-action, parameters: { serviceCode: ho-tich.khai-sinh, providerSystem: ndxp } }
+        - step:
+            id: dh-stage-respond
+            steps:
+              - kamelet: { name: dh-respond-action, parameters: { contentType: application/json } }
+```
+
+Quy tắc nhận diện chặng (thay GAP-04-08): một phần tử EIP có `id` khớp `^dh-stage-(receive|schema|authz|transform|enrich|route|deliver|audit|respond)$` là đầu khối chặng. Chặng `deliver` được phép nằm lồng trong `route` (như trên) vì định tuyến chọn đích; VR-05 kiểm thứ tự theo lần duyệt cây theo chiều sâu, lấy lần xuất hiện đầu của mỗi mã.
+
+### 4.5. Chỉ số, vết, log
+
+| Tín hiệu | Tên | Nhãn | Nguồn |
+|---|---|---|---|
+| Đếm | `dh_flow_exchanges_total` | `tenant`, `flow`, `version`, `route`, `outcome` | `onCompletion` |
+| Đếm | `dh_flow_failures_total` | trên + `stage`, `error_class`, `error_code` | `ErrorClassifier` |
+| Histogram | `dh_flow_duration_seconds` | `tenant`, `flow`, `version`, `route` | Micrometer route policy |
+| Histogram | `dh_flow_stage_duration_seconds` | trên + `stage` | `StageMarker` |
+| Gauge | `dh_flow_circuit_state` | `tenant`, `flow`, `target` | Resilience4j |
+| Đếm | `dh_flow_dlq_total` | `tenant`, `flow`, `reason` | `dhDlqEnvelope` |
+| Đếm | `dh_flow_duplicates_total` | `tenant`, `flow` | `dh-receive-action` |
+| Span | `dh.stage.{mã}` | thuộc tính `dh.tenant`, `dh.flow`, `dh.flow.version` | OTel |
+
+Nhãn `tenant`, `flow` có lực lượng giới hạn (≤ 1.000 luồng hoạt động toàn nền tảng theo D03-10) nên chấp nhận được trong Prometheus. Log JSON có `traceId`, `spanId`, `tenant`, `flow`, `version`, `stage`, không có thân bản tin, không có giá trị tiêu đề ngoài danh sách cho phép (`Content-Type`, `Content-Length`, `dh-*`).
+
+### 4.6. Truy cập CSDL trực tiếp
+
+Kamelet `dh-sql-ro-source` (nguồn định kỳ) và `dh-sql-ro-action` (tra cứu trong luồng) bọc `camel-sql` với `TenantScopedSqlProcessor`:
+
+1. Lấy `DataSource` của kết nối PH-05 loại "CSDL cho luồng"; tài khoản cấp động từ OpenBao database engine (`database/creds/flow-{tenant}-{flow}`), TTL 1 giờ, gia hạn trước khi hết 10 phút.
+2. Mở giao dịch `READ ONLY`, `SET LOCAL statement_timeout = '{04.sql.statement-timeout-seconds}s'`.
+3. Nếu kết nối khai báo `rls: true`: `SELECT set_config('app.tenant_id', :tenant, true)` với `:tenant` từ thuộc tính khóa (§4.1), không từ tiêu đề có thể sửa.
+4. Chạy câu lệnh đã kiểm tra (VR-13) với tham số ràng buộc; đọc tối đa `04.sql.max-rows` + 1 dòng; vượt thì ném `DataException` ERR-04-108.
+5. Ghi bản ghi kiểm toán runtime: `flow`, `version`, `tenant`, `sha256(câu lệnh)`, `rows`, `durationMs`, `traceId`.
+
+Hồ sơ native chỉ đóng gói driver PostgreSQL; CSDL khác (Oracle, SQL Server của HTTT cũ) chạy ở hồ sơ `legacy-jvm`.
+
+## 5. Kho cấu hình và phát hành GitOps
+
+### 5.1. Bố cục kho `dh-flows-{tenant}`
+
+PH-20 tạo kho khi khởi tạo tenant (ADR-068). Mỗi nhánh môi trường có cùng bố cục:
+
+```text
+dh-flows-lam-dong/                  # nhánh env/test | env/staging | env/prod
+├── README.md                       # sinh tự động, không sửa tay
+├── tenant.dh.yaml                  # tenant, namespace đích, hồ sơ được phép, phiên bản lib
+├── flows/
+│   └── ho-tich-khai-sinh/
+│       ├── flow.dh.yaml            # mô tả triển khai (§5.2)
+│       ├── route.camel.yaml        # YAML chuẩn hóa, không có bố cục
+│       ├── mappings/
+│       │   └── ho-tich-ks-to-ndxp.jq
+│       └── tests/                  # ca kiểm thử, chỉ CI kho cấu hình dùng
+│           └── cases.dh.yaml
+├── kamelets/
+│   └── ho-tich-chuan-hoa-action.kamelet.yaml
+└── .dh/
+    └── signatures/                 # chữ ký tách rời của từng tệp do dh-integration ký
+```
+
+Tệp `*.dhmap.json` và bố cục sơ đồ không vào kho (BR-04-007); chỉ có `*.jq` sinh ra. Ca kiểm thử đi vào kho để CI kho cấu hình chạy lại trước khi gộp vào `env/prod` (ADR-068).
+
+### 5.2. `flow.dh.yaml`
+
+```yaml
+apiVersion: dh.gov.vn/v1
+kind: FlowDeployment
+metadata:
+  tenant: lam-dong
+  flow: ho-tich-khai-sinh
+  version: 8
+  contentHash: sha256:3f1c…
+  approvedBy: u.ia01
+  approvedAt: 2026-11-25T09:12:44+07:00
+  publishedBy: u.ia01
+  catalogVersion: camel-quarkus-3.33.2
+spec:
+  desiredState: RUNNING            # RUNNING | PAUSED | REMOVED
+  pausedRoutes: []                 # route bị tạm dừng có chủ đích
+  profile: core-native
+  replicas: 3
+  resources: { cpu: 250m, memory: 256Mi }
+  exposure:
+    http: [{ method: POST, path: /ho-tich/khai-sinh, routeId: ho-tich-khai-sinh-main }]
+    kafka: { consume: [], produce: [] }
+  connections: [ndxp-ho-tich]
+  kamelets: [{ name: dh-receive-action, source: base }, { name: ho-tich-chuan-hoa-action, source: tenant, version: 2 }]
+  env:
+    ndxp-ma-don-vi: "{{dh.env.ndxp-ma-don-vi}}"
+```
+
+`dh-integration` sinh tệp bằng `FlowManifestWriter`; khóa xếp cố định để diff Git ổn định. Trường `desiredState`, `pausedRoutes` là nơi duy nhất ghi trạng thái mong muốn của lệnh điều khiển (§10).
+
+### 5.3. Từ Git tới pod
+
+ApplicationSet `dh-flows` (bộ sinh Git, mỗi tenant một Application mỗi môi trường) dựng từ mỗi thư mục `flows/*`:
+
+1. Một `ConfigMap` `flow-{flow}` chứa `route.camel.yaml`, `*.jq`, `flow.dh.yaml`, nhãn `dh.gov.vn/tenant`, `dh.gov.vn/flow`, `dh.gov.vn/flow-version`, `dh.gov.vn/profile`.
+2. Namespace đích: `dh-runtime` (dùng chung) hoặc `dh-rt-{tenant}` khi `tenant.dh.yaml` đặt `dedicatedNamespace: true` (ngưỡng 50 luồng, D03-10).
+3. Mỗi hồ sơ trong namespace là một Deployment `dh-runtime-{profile}` (≥ 3 bản sao, HPA, KEDA theo độ trễ nhóm tiêu thụ). Luồng đi vào Deployment của hồ sơ ghi trong `flow.dh.yaml`.
+4. Với điểm vào HTTP, Argo CD áp `ApisixRoute` cho `apisix-int` trỏ tới Service của hồ sơ, tiền tố đường dẫn theo tenant.
+
+Argo CD không khởi động lại pod khi ConfigMap luồng đổi; việc nạp do `FlowLoader` làm (§5.4).
+
+### 5.4. `FlowLoader` trong `dh-runtime`
+
+`FlowLoader` là bộ điều khiển nhỏ dùng Kubernetes informer (Fabric8) theo dõi ConfigMap có nhãn `dh.gov.vn/profile = {hồ sơ của pod}` trong namespace của pod.
+
+| Sự kiện ConfigMap | Hành động |
+|---|---|
+| Thêm | Kiểm chữ ký tách rời (khóa công khai của `dh-integration`), phân tích YAML bằng `YamlRoutesBuilderLoader`, nạp vào context với `routeGroup = {flow}`, áp `TenantGuard`, khởi động route trừ route trong `pausedRoutes` hoặc khi `desiredState = PAUSED` |
+| Sửa, đổi `flow-version` | Nạp phiên bản mới song song dưới `routeGroup` tạm; khởi động thành công thì dừng, gỡ nhóm cũ (graceful 30 giây); lỗi thì giữ nhóm cũ, báo `loadError` trong nhịp tim |
+| Sửa, chỉ đổi `desiredState`, `pausedRoutes` | Gọi `RouteController.suspendRoute`, `resumeRoute` |
+| Xóa | Dừng, gỡ nhóm route |
+
+Cô lập lỗi: mỗi luồng nạp riêng; lỗi nạp một luồng không chạm luồng khác (ADR-063). Điểm vào `platform-http` của hai phiên bản không cùng lúc nhận lưu lượng: phiên bản mới chỉ đăng ký đường dẫn sau khi phiên bản cũ ngừng nhận (khoảng gián đoạn ≤ 200 ms, lượt đang xử lý của bản cũ chạy hết). Luồng Kafka dùng cùng nhóm tiêu thụ nên chuyển giao qua tái cân bằng.
+
+`HeartbeatPublisher` phát EVT-04-12 mỗi 30 giây và ngay sau mỗi lần nạp:
+
+```json
+{
+  "replica": "dh-runtime-core-native-7c9f-2xk8p",
+  "profile": "core-native",
+  "namespace": "dh-runtime",
+  "imageDigest": "sha256:…",
+  "libVersion": "1.4.0",
+  "at": "2026-11-25T22:00:30+07:00",
+  "flows": [{
+    "tenant": "lam-dong", "flow": "ho-tich-khai-sinh", "version": 8, "contentHash": "sha256:3f1c…",
+    "state": "STARTED", "loadError": null,
+    "routes": [{ "id": "ho-tich-khai-sinh-main", "state": "Started", "inflight": 2,
+                 "exchanges1m": 412, "failures1m": 3, "p95ms": 220 }]
+  }]
+}
+```
+
+### 5.5. Phát hành và nâng môi trường
+
+```java
+@Transactional
+public DeploymentView release(FlowVersionKey key, ReleaseRequest req, Actor actor, String idemKey) {
+  var v = versions.lockForRelease(key);                         // SELECT … FOR UPDATE
+  guard.requireStatus(v, APPROVED);                             // ERR-04-005
+  freeze.requireOpen(req.target(), actor);                      // ERR-04-041 (BR-04-022)
+  order.requirePreviousStageHealthy(v, req.target());           // ERR-04-023 (BR-04-019)
+  var findings = validation.run(v, Level.PUBLISH, req.target());
+  if (findings.hasErrors()) throw new ValidationFailed(findings); // ERR-04-009
+  var profile = profiles.resolve(v.components());               // ERR-04-029
+  var dep = deployments.createPending(v, req.target(), profile, actor);
+  outbox.add(Evt.deploymentRequested(dep));                     // EVT-04-06
+  afterCommit(() -> gitWriter.write(dep));                      // ngoài giao dịch CSDL
+  return dep.view();
+}
+```
+
+`GitConfigRepository.write(dep)` chạy ở tác vụ nền có thử lại (3 lần, 2 s, 8 s, 30 s): clone nông nhánh đích vào thư mục tạm (bộ đệm cục bộ theo tenant), ghi tệp, ký từng tệp (Ed25519, khóa `transit/dh-integration-git`), commit có chữ ký với tác giả `dh-integration[bot]` và trailer `Dh-Published-By: u.ia01`, `Dh-Deployment: {id}`, push. Với `env/test`: push thẳng. Với `env/prod` (nhánh bảo vệ): push nhánh `release/{flow}-v{n}`, mở yêu cầu gộp, CI kho cấu hình chạy lại VR mức `PUBLISH` và ca kiểm thử, tự gộp khi đạt (ADR-068). Lỗi sau 3 lần: triển khai `FAILED` với ERR-04-022, thông báo người phát hành.
+
+Từ `PENDING` sang `SYNCING` khi Argo CD báo Application `Progressing` (webhook Argo CD hoặc hỏi API mỗi 10 giây); `SYNCED` khi đủ số bản sao báo `version`, `contentHash` mới qua nhịp tim; `OUT_OF_SYNC` khi quá `04.runtime.sync-timeout-seconds` mà chưa đủ; `FAILED` khi quá `04.deploy.timeout-minutes` hoặc có `loadError`.
+
+### 5.6. Outbox và sự kiện
+
+Bảng `ph04.outbox` (DD-11) ghi cùng giao dịch với thay đổi miền; Debezium đọc WAL, định tuyến theo cột `topic` (EVT-04-01…10). Topic hệ thống EVT-04-11 (lệnh) không qua outbox vì lệnh khẩn phải đi trước mọi ghi khác (§10.2); `CommandService` gửi trực tiếp bằng nhà sản xuất Kafka lũy đẳng `acks=all` và ghi bảng `runtime_command` trong cùng luồng xử lý (gửi trước, ghi sau với lệnh khẩn; ghi trước, gửi sau với lệnh thường).
