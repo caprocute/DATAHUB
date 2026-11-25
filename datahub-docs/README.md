@@ -68,7 +68,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | Thứ tự | Phân hệ | Đợt | Lý do ưu tiên | Tình trạng (25/11/2026) |
 |---|---|---|---|---|
 | 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Đang viết: FRS xong, OpenAPI, AsyncAPI, DDL có; SDD, màn hình, test case dở |
-| 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Đang viết: FRS 0.1 xong, ADR-060…069 xong; use case, SDD, CSDL, API, màn hình (trình thiết kế viết siêu kỹ), test case đang viết |
+| 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Đang viết: FRS 0.1, ADR-060…069, màn hình D03-06-PH04 0.1 (21 màn, trình thiết kế đặc tả siêu kỹ) xong; use case, SDD, CSDL, API, test case đang viết |
 | 3 | PH-19 Thanh toán | Đợt 2 (BRD) | Nghiệp vụ mới hoàn toàn | BRD và khung truy vết xong |
 | 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Chưa bắt đầu |
 | 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Chưa bắt đầu |
