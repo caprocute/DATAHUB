@@ -11,6 +11,20 @@ nguoi_lap: Nhóm phân hệ PH-07
 
 # D03-02-PH07 · Thiết kế chi tiết phân hệ PH-07 Danh mục dùng chung
 
+## Tóm tắt cho hội đồng thẩm định
+
+PH-07 quản lý toàn bộ danh mục dùng chung của tỉnh và các danh mục toàn quốc (đơn vị hành chính, dân tộc, giới tính, mã cơ quan…) và cung cấp chúng cho mọi hệ thống thông tin qua API. Tài liệu này mô tả cách phần mềm được xây để đáp ứng các yêu cầu đã chốt ở FRS D02-03-PH07, ở mức để đội lập trình bắt tay viết mã ngay.
+
+Ba điểm thiết kế quyết định chất lượng của phân hệ:
+
+1. **Danh mục có phiên bản bất biến và ngày hiệu lực.** Mỗi lần thay đổi tạo một phiên bản mới qua soạn, duyệt bốn mắt, phát hành; phiên bản đã phát hành không bị sửa. Vì thế mọi hệ thống tra được "mã này có nghĩa gì vào ngày X", điều hệ cũ Aita không làm được, và điều cần thiết khi tỉnh sắp xếp ĐVHC (Nghị quyết 202/2025/QH15).
+2. **Khai thác nhanh, không phụ thuộc cơ sở dữ liệu.** Tra cứu đi qua bộ đệm hai tầng và ảnh chụp trên kho đối tượng (ADR-053), đạt p95 ≤ 20 ms và tiếp tục phục vụ ít nhất 24 giờ khi PostgreSQL ngừng (NFR-07-001, NFR-07-010).
+3. **Cách ly dữ liệu giữa các tỉnh bằng cơ sở dữ liệu.** Mọi bảng bật Row Level Security; danh mục toàn quốc lưu một lần ở tenant `COMMON`, chỉ quản trị nền tảng ghi được (§6).
+
+Về an toàn thông tin, phân hệ không lưu dữ liệu cá nhân (BR-07-025), mọi thao tác ghi được kiểm toán qua PH-13 (§4.16), tệp tải lên được quét mã độc trước khi đọc và tệp xuất được chống chèn công thức (§7). Thiết kế đáp ứng yêu cầu cấp độ 3 theo Nghị định 331/2026/NĐ-CP và TCVN 14423:2026 như mô tả ở D03-07; kết nối với Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo Nghị định 278/2025/NĐ-CP đi qua PH-14 (§4.11).
+
+Phạm vi: module `rdm` trong đơn vị triển khai `dh-data` (Spring Boot 4, Spring Modulith). Ngoài phạm vi: lược đồ CSDL chi tiết (D03-03-PH07), hợp đồng API (D03-04-PH07), màn hình (D03-06-PH07). Các điểm còn chờ quyết định ghi ở §13.3.
+
 ## 1. Phạm vi và cách đọc
 
 ### 1.1. Mục đích
@@ -604,6 +618,120 @@ record ItemRow(UUID id, String tenantId, UUID versionId, UUID catalogId, String 
 ```
 
 Cột `name_search` là cột sinh (`GENERATED ALWAYS AS (lower(ph07_rdm.immutable_unaccent(name))) STORED`) do CSDL tính, ứng dụng không ghi. Hàm `immutable_unaccent` là bọc `IMMUTABLE` của `unaccent` với từ điển cố định, định nghĩa ở D03-03-PH07.
+
+### 3.6. Sơ đồ lớp miền và bất biến
+
+Sơ đồ dưới đây là mô hình miền của module ở mức aggregate. Mỗi aggregate có một lớp gốc chịu trách nhiệm giữ bất biến; lớp khác chỉ thay đổi aggregate qua phương thức của gốc hoặc qua dịch vụ được nêu ở §3.2.
+
+```mermaid
+classDiagram
+    direction LR
+    class Catalog {
+      +UUID id
+      +String tenantId
+      +String code
+      +SourceType sourceType
+      +Classification classification
+      +CatalogStatus status
+      +boolean hierarchical
+      +UUID currentVersionId
+      +UUID extendsCatalogId
+      +retire(reason)
+      +changeSource(type)
+    }
+    class CatalogVersion {
+      +UUID id
+      +int versionNo
+      +VersionStatus status
+      +LocalDate effectiveFrom
+      +LocalDate effectiveTo
+      +Origin origin
+      +String schemaHash
+      +submit(actor)
+      +approve(actor)
+      +reject(actor, reason)
+      +publish(actor, from)
+    }
+    class AttributeDef {
+      +String code
+      +AttrType type
+      +boolean required
+      +boolean uniqueInVersion
+      +boolean queryable
+      +AttrStatus status
+    }
+    class CatalogItem {
+      +String code
+      +String name
+      +String parentCode
+      +ItemStatus status
+      +String replacedBy
+      +JsonNode attrs
+    }
+    class ItemSuccession {
+      +SuccessionType eventType
+      +List~String~ fromCodes
+      +List~String~ toCodes
+      +LocalDate effectiveDate
+    }
+    class VersionReview {
+      +ReviewAction action
+      +UUID actor
+      +String comment
+    }
+    class CatalogGroup
+    class ImportJob {
+      +JobType jobType
+      +JobStatus status
+      +String leaseOwner
+      +Instant leaseUntil
+    }
+    class SyncSource
+    class SyncRun {
+      +SyncStatus status
+      +boolean hasBreaking
+    }
+    class CodeSystem
+    class CodeMapping {
+      +String itemCode
+      +String externalCode
+      +Relation relation
+      +LocalDate validFrom
+    }
+    class AccessGrant {
+      +UUID memberSystemId
+      +Set~Scope~ scopes
+      +Instant expiresAt
+    }
+    CatalogGroup "1" o-- "*" Catalog
+    Catalog "1" *-- "1..*" CatalogVersion
+    CatalogVersion "1" *-- "*" AttributeDef
+    CatalogVersion "1" *-- "*" CatalogItem
+    CatalogVersion "1" *-- "*" ItemSuccession
+    CatalogVersion "1" *-- "*" VersionReview
+    Catalog "1" o-- "*" ImportJob
+    Catalog "1" o-- "0..1" SyncSource
+    SyncSource "1" *-- "*" SyncRun
+    Catalog "1" o-- "*" CodeMapping
+    CodeSystem "1" o-- "*" CodeMapping
+    Catalog "1" o-- "*" AccessGrant
+    Catalog "0..1" --> "1" Catalog : extends (HYBRID)
+```
+
+Sơ đồ cho thấy hai aggregate lớn. `Catalog` sở hữu phiên bản; `CatalogVersion` sở hữu thuộc tính, bản ghi, sự kiện sắp xếp và lịch sử duyệt của chính nó. Các aggregate vận hành (`ImportJob`, `SyncSource`, `CodeMapping`, `AccessGrant`) chỉ tham chiếu danh mục bằng id, không nằm trong ranh giới giao dịch của danh mục. Bảng dưới đây liệt kê các bất biến và nơi bảo đảm.
+
+| Aggregate | Bất biến | Bảo đảm ở ứng dụng | Lưới an toàn ở CSDL |
+|---|---|---|---|
+| Catalog | Mã danh mục duy nhất trong tenant và không trùng `COMMON` đang dùng (BR-07-001) | `CatalogService.create`, giữ khóa tư vấn theo mã trong giao dịch | Chỉ mục duy nhất `uq_catalog_tenant_code`; trùng với `COMMON` không chặn được bằng chỉ mục vì khác tenant |
+| Catalog | Mỗi danh mục có tối đa một phiên bản mở (`DRAFT`, `IN_REVIEW`, `APPROVED`) | `VersionService.createDraft` khóa hàng danh mục | Chỉ mục duy nhất từng phần trên `catalog_version` |
+| CatalogVersion | Phiên bản `PUBLISHED` không đổi nội dung (ADR-051) | `VersionStateMachine` không có chuyển trạng thái sửa | Trigger bất biến trên `catalog_version`, `attribute_def`, `catalog_item` |
+| CatalogVersion | Khoảng hiệu lực các phiên bản đã phát hành không chồng lấn (BR-07-007) | `PublishService.dateRules` | Ràng buộc `EXCLUDE USING gist` |
+| CatalogVersion | Người duyệt khác người trình (BR-07-011) | `VersionStateMachine` điều kiện bảo vệ | Không (quy tắc nghiệp vụ) |
+| CatalogItem | Mã duy nhất trong phiên bản; mã cha tồn tại, không vòng, không vượt độ sâu (BR-07-002, 004) | `ItemValidator`, `HierarchyChecker` | Duy nhất `(version_id, code)`; `f_recompute_hierarchy` |
+| CatalogItem | Thuộc tính đúng lược đồ (BR-07-003) | `SchemaCompiler` + JSON Schema | Không (jsonb tự do theo ADR-050) |
+| ItemSuccession | Một mã ĐVHC không dùng cho hai đơn vị trong cùng khoảng thời gian (BR-07-021) | `SuccessionValidator` | `ex_admin_unit_code` trên `admin_unit` |
+| CodeMapping | Mỗi mã ngoài trỏ tới tối đa một mã danh mục trong khoảng hiệu lực giao nhau (BR-07-023) | `MappingService` | `ex_code_mapping_external` |
+| ImportJob | Commit chỉ khi bản nháp không đổi từ lúc phân tích (BR-07-016) | `ImportCommitter` so `draft_lock_version` | Không |
 
 ## 4. Thiết kế chi tiết từng thành phần
 
@@ -1748,3 +1876,817 @@ LIMIT :limitPlusOne;
 ```
 
 Con trỏ của truy vấn HYBRID chứa cả hai `versionId`. ETag của API-07-041 với HYBRID là băm của cặp phiên bản.
+
+### 4.11. Đồng bộ danh mục quốc gia qua PH-14
+
+#### 4.11.1. Thành phần và ranh giới
+
+PH-07 không gọi thẳng NDXP. Mọi lời gọi đi qua adapter `NDXP_DMDC` của PH-14 (ADR-057), nơi giữ chứng thư số, khóa API, nhật ký kết nối với Nền tảng chia sẻ, điều phối dữ liệu quốc gia theo NĐ 278/2025/NĐ-CP. `NdxpCatalogClient` là client REST nội bộ có ba thao tác, ứng với ba đường của adapter:
+
+| Thao tác | Đường adapter | Dùng ở | Thời gian chờ | Thử lại |
+|---|---|---|---|---|
+| `listRemoteCatalogs(page)` | `GET /internal/ndxp/dmdc/catalogs` | FR-07-038 (API-07-063) | 10 giây | 2 lần, lùi 1 giây và 3 giây |
+| `describe(remoteCode)` | `GET /internal/ndxp/dmdc/catalogs/{code}` | FR-07-035, 036 bước 2 | 10 giây | 2 lần |
+| `fetchItems(remoteCode, pageToken)` | `GET /internal/ndxp/dmdc/catalogs/{code}/items` | FR-07-036 bước 4 | 30 giây mỗi trang | 3 lần mỗi trang, lùi theo hàm mũ tới 30 giây |
+| `submitProposal(remoteCode, items)` | `POST /internal/ndxp/dmdc/catalogs/{code}/proposals` | FR-07-039 | 30 giây | Không thử lại tự động |
+
+Client chạy sau bộ ngắt mạch Resilience4j tên `ndxp` (§8.3). Phản hồi của adapter được ánh xạ: `404` thành ERR-07-028 với chi tiết "không tìm thấy danh mục trên nền tảng quốc gia"; `5xx`, hết thời gian chờ, mạch mở thành ERR-07-028 HTTP 502 ở API đồng bộ, và thành lần chạy `FAILED` ở tác vụ nền.
+
+#### 4.11.2. Bộ lập lịch
+
+`SyncScheduler` dùng ShedLock tên `rdm-sync-tick`, chạy mỗi phút. Ở mỗi nhịp, với mỗi tenant đang hoạt động (kể cả `COMMON` dưới ngữ cảnh `PLATFORM`), bộ lập lịch đọc các nguồn `enabled` có `next_run_at ≤ now()` (tính trong bộ nhớ từ `schedule_cron` và `last_run_id`, không lưu cột) rồi đẩy từng nguồn vào hàng đợi thực thi `rdm-sync` (ThreadPoolTaskExecutor, 2 luồng mỗi pod). Nhịp không chạy đồng bộ trực tiếp để một nguồn chậm không làm trễ các nguồn khác.
+
+Mỗi lần chạy giữ khóa tư vấn PostgreSQL `pg_try_advisory_xact_lock(hashtext('rdm-sync:' || source_id))` trong giao dịch tạo `sync_run`, sau đó giữ khóa phiên `pg_try_advisory_lock` cho tới khi kết thúc. Không giữ được khóa nghĩa là nguồn đang chạy ở pod khác; nhịp lịch bỏ qua, còn API-07-058 trả `409` kèm `runId` của lần đang chạy (FR-07-036 bước 1). Khi sửa nguồn (API-07-057), `SyncSourceService` phát sự kiện nội bộ `SyncSourceChanged` để bộ lập lịch tính lại `next_run_at` trong nhịp kế tiếp, đáp ứng hậu điều kiện ≤ 60 giây của FR-07-035.
+
+#### 4.11.3. Luồng một lần chạy
+
+`SyncRunner.run(sourceId, trigger, force)` thực hiện FR-07-036 theo các bước dưới đây. Mỗi bước có giao dịch riêng, để lần chạy dài không giữ giao dịch mở.
+
+1. Tạo `sync_run` (`RUNNING`), ghi `started_at`.
+2. Gọi `describe`; so `remoteVersion` với `sync_source.remote_version`. Khi NDXP không cung cấp phiên bản tin cậy, `NdxpNormalizer` tính băm SHA-256 của toàn bộ dữ liệu sau chuẩn hóa và dùng làm `remoteVersion` (Q07-06 của FRS); trường hợp này bước 3 chỉ dừng sớm được sau khi đã tải xong dữ liệu.
+3. Tải dữ liệu theo trang vào tệp tạm trên đĩa của pod dạng JSON Lines nén (không giữ cả danh mục trong bộ nhớ, NFR-07-012), đồng thời chuyển từng bản ghi sang mô hình cục bộ theo `field_mapping`.
+4. Kiểm tra hợp lệ từng bản ghi bằng `ItemValidator` với lược đồ của phiên bản hiện hành.
+5. Tính khác biệt bằng `DiffEngine.compareExternal(currentVersionId, Stream<ItemRow>)`, ghi `sync_change` theo lô 1.000 dòng, cập nhật `diff_stats`, `has_breaking`.
+6. Quyết định nhánh bằng `SyncDecisionPolicy` (BR-07-017, BR-07-012) như máy trạng thái §4.4.3.
+7. Nhánh tự áp dụng: `DraftCopier` tạo bản nháp `origin = SYNC`, `ItemWriter.applyChanges` áp `sync_change`, `PublishService.publish` với tác nhân hệ thống `system:rdm-sync`. Nhánh chờ xác nhận: tạo bản nháp nhưng không phát hành; nếu có lần chạy `PENDING_CONFIRMATION` cũ, chuyển nó sang `REJECTED` lý do `SUPERSEDED` và hủy bản nháp cũ trong cùng giao dịch.
+8. Cập nhật `sync_source.last_run_id`, `last_success_at`, `remote_version` (chỉ khi kết thúc `NO_CHANGE` hoặc `APPLIED`); ghi outbox EVT-07-09; ghi kiểm toán; nhả khóa; xóa tệp tạm.
+
+Lỗi ở bước 2 tới 5 đưa lần chạy về `FAILED` với `error_message` đã che (bỏ URL nội bộ, mã thông báo). Điều kiện "hai lần chạy định kỳ liên tiếp thất bại" được tính từ hai `sync_run` gần nhất của nguồn, không lưu bộ đếm riêng; chỉ số `rdm_sync_last_success_timestamp{source}` do `SyncMetrics` cập nhật sau mỗi lần chạy (§10.1).
+
+#### 4.11.4. Xác nhận, từ chối và đề xuất bổ sung
+
+`SyncDecisionService.accept(runId, AcceptRequest)` thực hiện FR-07-037: kiểm tra `If-Match`, trạng thái, phiên bản hiện hành không đổi kể từ lần chạy (so `catalog.current_version_id` với phiên bản gốc lưu trong `sync_run.diff_stats.baseVersionId`), loại bản ghi lỗi khi `skipInvalid`, loại `excludeItemCodes` bằng cách khôi phục bản ghi của bản nháp về giá trị của phiên bản gốc, rồi hoặc phát hành ngay (`publishNow` và người xác nhận có `PERM-07-publish`, bốn mắt so với người bấm chạy) hoặc trình duyệt. `reject` hủy bản nháp `origin = SYNC` và giữ nguyên `remote_version` để lần sau phát hiện lại.
+
+Đề xuất bổ sung (FR-07-039, mức C, không thuộc MVP) được lưu là `import_job` với `job_type = PROPOSAL` (Q07-07 của FRS), trạng thái `SUBMITTED`, `ACCEPTED`, `REJECTED`, `UNKNOWN`. Thông tin `remoteReference` và danh sách mã lưu ở `options`. Ở mỗi lần đồng bộ của nguồn gốc, `ProposalMatcher` đối chiếu mã, tên của bản ghi từ xa với đề xuất đang `SUBMITTED` để chuyển `ACCEPTED`.
+
+### 4.12. Hệ thống mã ngoài, ánh xạ và chuyển mã
+
+#### 4.12.1. Ghi lô ánh xạ
+
+`MappingService.upsert(catalogCode, csCode, MappingBatch)` hiện thực API-07-068 theo FR-07-041. ETag của bảng ánh xạ một cặp (danh mục, hệ thống mã) là `W/"m-{max(version)}-{count}"`, tính bằng một truy vấn gộp; `If-Match` lệch trả ERR-07-018. Thứ tự xử lý:
+
+1. Kiểm tra kích thước lô ≤ `07.rdm.batch-max-ops`.
+2. Tải tập mã danh mục cần kiểm tra theo `validFrom` của từng dòng bằng `LookupService.lookupBatch` (đi qua bộ đệm), ghi lỗi ERR-07-007 cho mã không tồn tại.
+3. Kiểm tra BR-07-023 trong bộ nhớ cho các dòng của lô (mã ngoài trùng với khoảng hiệu lực giao nhau), rồi trong CSDL bằng truy vấn `daterange && daterange` với dòng hiện có; ràng buộc `ex_code_mapping_external` là lưới an toàn và lỗi `23P01` được ánh xạ sang ERR-07-033.
+4. Kiểm tra BR-07-024 (ERR-07-034).
+5. Ghi bằng `INSERT … ON CONFLICT (id) DO UPDATE` theo lô 1.000; với `mode = REPLACE`, xóa các dòng không nằm trong lô bằng `DELETE … WHERE NOT (id = ANY(:keep))` trong cùng giao dịch.
+6. Ghi outbox sự kiện nội bộ `MappingChanged` để `CoverageService` tính lại độ phủ sau commit và để các pod xóa bộ đệm chuyển mã.
+
+Nhập ánh xạ từ tệp dùng tác vụ nhập hai pha (§4.7) với `import_job.mode = MAPPING`; pha hai gọi chính `MappingService.upsert` theo lô, để tệp và API dùng chung một bộ kiểm tra.
+
+#### 4.12.2. Chuyển mã
+
+`TranslateService.translate` (API-07-070, `RdmLookupApi.translate`) nạp bảng ánh xạ hiệu lực tại `at` của cặp (danh mục, hệ thống mã) vào bộ đệm hai tầng với khóa `{t}:rdm:map:{catalogId}:{codeSystemId}:{yyyyMMdd}` (TTL 1 giờ, xóa khi có `MappingChanged`). Giá trị đệm là hai bản đồ: `external → itemCode` và `itemCode → List<Mapping>` đã sắp theo quan hệ ưu tiên (`EQUAL`, `BROADER`, `NARROWER`, `RELATED`) và ánh xạ không tạm thời trước. Kết quả từng mã có trạng thái `MAPPED`, `MULTIPLE`, `NOT_MAPPED` như FR-07-042; với chiều `TO_CATALOG`, bản ghi danh mục được tra qua `LookupService` tại cùng `at` để trả tên và `replacedBy`. Lô 500 mã được xử lý hoàn toàn trong bộ nhớ khi trúng đệm, đáp ứng NFR-07-002.
+
+#### 4.12.3. Độ phủ
+
+`CoverageService.compute(catalogId, codeSystemId, at)` tính các chỉ tiêu của FRS mục 4.16 (số mã `ACTIVE`, số mã có ít nhất một ánh xạ không tạm thời, tỷ lệ, danh sách ánh xạ trỏ tới mã `DEPRECATED`) bằng một truy vấn nối `catalog_item` của phiên bản hiệu lực với `code_mapping` hiệu lực. Kết quả được đệm theo `(catalogId, codeSystemId, versionId, mappingEtag)` và được tính lại khi nhận EVT-07-05 của danh mục hoặc `MappingChanged`. Chỉ số `rdm_mapping_coverage_ratio{catalog,codeSystem}` lấy từ kết quả này (NFR-07-014).
+
+### 4.13. Đơn vị hành chính: sắp xếp, bảng chiếu và chuyển mã
+
+#### 4.13.1. Ghi sự kiện sắp xếp
+
+`SuccessionService` hiện thực API-07-053, 054 (FR-07-045). Mỗi sự kiện có `event_type` trong `MERGE`, `SPLIT`, `RENAME`, `RECODE`, `ABOLISH`, `ESTABLISH` (ràng buộc `ck_item_succession_type`). `SuccessionValidator` kiểm tra bản số của `from_codes`, `to_codes` theo loại, mã nguồn `ACTIVE` tại ngày liền trước `effective_date`, mã đích mới chưa từng được dùng trong khoảng giao nhau (tra `admin_unit` và bản ghi của bản nháp), `effective_date` bằng `effective_from` của bản nháp, và một mã nguồn không xuất hiện ở hai sự kiện của cùng bản nháp. Hệ quả được áp vào bản nháp trong cùng giao dịch bằng `SuccessionApplier`, đúng bảng hệ quả của FR-07-045:
+
+| Loại | Bản số nguồn, đích | Hệ quả trên bản nháp |
+|---|---|---|
+| `MERGE` | ≥ 2, 1 | Nguồn khác đích chuyển `DEPRECATED`, `replaced_by = [đích]`; đích mới được thêm từ `newUnits`; con của nguồn được gán cha là đích |
+| `SPLIT` | ≥ 1, ≥ 2 | Nguồn không nằm trong đích chuyển `DEPRECATED`, `replaced_by` = danh sách đích; `note` bắt buộc; con của nguồn phải được người soạn gán cha mới, trình duyệt bị chặn cho tới khi gán xong |
+| `RENAME` | 1, chính nguồn | Giữ mã; đổi `name`, `short_name`, `unit_type` theo `newUnits[0]` |
+| `RECODE` | 1, 1 khác nguồn | Nguồn `DEPRECATED`, `replaced_by = [đích]`; đích được thêm cùng tên, cùng cha; con được gán cha là đích |
+| `ABOLISH` | ≥ 1, 0 | Nguồn `DEPRECATED`, không có mã thay thế; con phải được gán cha mới |
+| `ESTABLISH` | 0, ≥ 1 | Đích mới được thêm |
+
+Sau khi áp, `HierarchyChecker` tính lại `depth`, `path` của các nhánh bị tác động bằng hàm `f_recompute_hierarchy(versionId, baseVersionId)` của CSDL. Xóa một sự kiện chạy `SuccessionApplier.revert`, khôi phục các bản ghi nguồn về giá trị của phiên bản gốc.
+
+#### 4.13.2. Làm mới bảng chiếu `admin_unit`
+
+`AdminUnitProjector.project(versionId)` được `PublishService` gọi trong giao dịch phát hành khi danh mục là ĐVHC (`catalog.code = 'DVHC'` của `COMMON`). Bảng chiếu là DD-07 dùng chung cho mọi phân hệ, nên làm mới trong cùng giao dịch để phân hệ khác không bao giờ thấy trạng thái nửa vời. Phần việc nặng chạy trong CSDL bằng hàm `f_refresh_admin_unit(versionId, actor)` của D03-03-PH07 (tránh kéo hàng nghìn dòng lên ứng dụng); `AdminUnitProjector` gọi hàm, kiểm tra số dòng trả về và ghi sự kiện. Hàm thực hiện:
+
+1. So bản ghi của phiên bản mới với các dòng `admin_unit` đang hiệu lực.
+2. Đơn vị mới: chèn dòng với `effective_from` = ngày hiệu lực của phiên bản, `source_version` = `versionId`.
+3. Đơn vị bị sáp nhập, chia tách, giải thể, đổi mã: đóng `effective_to` và ghi `successor_ids` theo `to_codes` của sự kiện sắp xếp.
+4. Đơn vị đổi tên hoặc đổi cấp trên: cập nhật `name`, `parent_id` trên dòng hiện hành (tên lịch sử tra qua phiên bản).
+5. Ràng buộc `ex_admin_unit_code` bảo đảm BR-07-021; vi phạm làm hỏng giao dịch phát hành và trả ERR-07-035.
+6. `AdminUnitProjector` ghi outbox EVT-07-10 (`common.rdm.adminunit.reorganized.v1`) với danh sách sự kiện sắp xếp, để PH-20 và các phân hệ dùng ĐVHC cập nhật dữ liệu của mình.
+
+#### 4.13.3. Chuyển mã cũ sang mới
+
+`AdminUnitCodeConverter.convert(codes, asOf, at)` hiện thực FR-07-046 (API-07-051). Đồ thị kế thừa được nạp một lần cho mỗi phiên bản ĐVHC mới nhất vào L1 dưới dạng danh sách sự kiện sắp xếp đã sắp theo ngày (cỡ vài nghìn phần tử, vài trăm KB), khóa `(tenant, latestVersionId)`. Thuật toán áp tập `T` như FRS bước 2 tới 5, giới hạn 50 bước. Chiều ngược (`direction = REVERSE`) áp các sự kiện theo thứ tự giảm dần, thay `to_codes` bằng `from_codes`. Kết quả `AMBIGUOUS` luôn trả danh sách ứng viên, không tự chọn (BR-07-022). Chỉ số `rdm_adminunit_convert_total{direction,status}` đếm theo kết quả.
+
+`LineageService` (API-07-050, FR-07-047) dùng cùng đồ thị, cộng với các đoạn giá trị của bản ghi qua các phiên bản (gộp đoạn liền nhau có cùng giá trị), đệm theo `(catalogId, itemCode, latestVersionId)`.
+
+### 4.14. Phát sự kiện qua outbox
+
+Mọi sự kiện công bố EVT-07-01…10 được ghi vào `ph07_rdm.outbox` trong cùng giao dịch nghiệp vụ bởi `OutboxWriter` (D03-01 §7.3, DD-11). Bảng dưới đây là ánh xạ giữa thao tác và sự kiện; hợp đồng đầy đủ ở `asyncapi-rdm.yaml`.
+
+| Thao tác | Lớp ghi | Sự kiện | Topic |
+|---|---|---|---|
+| Tạo danh mục | `CatalogService.create` | EVT-07-01 | `{tenant}.rdm.catalog.created.v1` |
+| Sửa thông tin, đổi nguồn, đổi phân loại | `CatalogService.update` | EVT-07-02 | `{tenant}.rdm.catalog.updated.v1` |
+| Ngừng hiệu lực | `CatalogService.retire` | EVT-07-03 | `{tenant}.rdm.catalog.retired.v1` |
+| Trình duyệt | `VersionService.submit` | EVT-07-04 | `{tenant}.rdm.catalog.submitted.v1` |
+| Phát hành, tự chuyển hiệu lực | `PublishService`, `EffectiveScheduler` | EVT-07-05 | `{tenant}.rdm.catalog.published.v1` |
+| Từ chối | `VersionService.reject` | EVT-07-06 | `{tenant}.rdm.catalog.rejected.v1` |
+| Commit nhập tệp | `ImportCommitter` | EVT-07-07 | `{tenant}.rdm.import.completed.v1` |
+| Hoàn tất xuất | `ExportJobService` | EVT-07-08 | `{tenant}.rdm.export.completed.v1` |
+| Kết thúc lần đồng bộ | `SyncRunner`, `SyncDecisionService` | EVT-07-09 | `{tenant}.rdm.sync.completed.v1` |
+| Phát hành ĐVHC có sắp xếp | `PublishService` | EVT-07-10 | `common.rdm.adminunit.reorganized.v1` |
+
+Dòng outbox có `event_id` là UUID v7 (đồng thời là `ce_id`), `topic` đã giải tenant (chữ thường), `aggregate_id` là id danh mục, `payload` là phần `data` của CloudEvent, `trace_id` từ ngữ cảnh OpenTelemetry hiện hành. Debezium Outbox Event Router đọc dòng mới, đặt khóa bản tin `{tenant}:{catalogCode}` để mọi sự kiện của một danh mục vào cùng phân vùng và giữ thứ tự, và đặt các tiêu đề `ce_*` ở chế độ binary của CloudEvents 1.0. Bên tiêu thụ phải chống trùng theo `ce_id` vì Debezium bảo đảm ít nhất một lần.
+
+Tác vụ `OutboxPurgeJob` (ShedLock, mỗi giờ) xóa dòng cũ hơn 3 ngày theo lô 10.000 dòng để không giữ khóa lâu. Kích thước `payload` bị giới hạn 256 KB; sự kiện có danh sách thay đổi lớn (ví dụ EVT-07-05 của phiên bản thay 50.000 mã) chỉ mang thống kê và đường dẫn tới tệp khác biệt trên kho đối tượng.
+
+### 4.15. Dùng chung toàn quốc, HYBRID và nạp gói nền cho tenant
+
+`CatalogPolicy` hiện thực chín quy tắc của FR-07-048. Hai điểm hiện thực đáng chú ý:
+
+- **Kiểm tra trùng mã với `COMMON`.** Khi tenant tạo danh mục, `CatalogService.create` giữ khóa tư vấn `hashtext('rdm-code:' || code)` trong giao dịch rồi tra danh mục `COMMON` cùng mã (RLS cho phép tenant đọc `COMMON`). Khi nền tảng tạo danh mục `COMMON`, việc tìm tenant có mã trùng cần nhìn liên tenant; MVP gọi lần lượt từng tenant dưới `TenantContext.runAs` như `EffectiveScheduler` (34 truy vấn có chỉ mục), không cần vai trò bỏ qua RLS.
+- **Gốc thay đổi.** Khi `COMMON` phát hành phiên bản mới, `HybridConflictChecker` (listener của EVT-07-05 trong cùng DU, chạy cho từng tenant có HYBRID mở rộng danh mục đó) kiểm tra mã gốc mới trùng mã bổ sung và mã cha bị ngừng dùng, rồi tạo việc cho cán bộ quản lý danh mục HYBRID qua PH-11. Cờ `baseConflict` trên chi tiết danh mục (FR-07-048 bước 8) không lưu thành cột: `CatalogQueryService` tính khi đọc bằng cách so phiên bản HYBRID hiện hành với phiên bản gốc hiện hành, đệm theo cặp `versionId`, nên cờ tự tắt khi cán bộ phát hành bản HYBRID đã sửa.
+
+`TenantSeeder.seed(tenantId, packageVersion, dryRun)` hiện thực FR-07-049 (API-07-073). Gói nền nằm trong kho cấu hình của PH-20, gồm `manifest.json` (danh sách danh mục, nhóm, tham số mặc định, danh mục `COMMON` bắt buộc, băm SHA-256 từng tệp) và một tệp CSV mỗi danh mục. `SeedPackageRegistry` tải gói, kiểm tra băm, và lưu tiến độ là `import_job` loại `MIGRATION` với `options.seedPackage = packageVersion`, để gọi lại tiếp tục từ danh mục chưa xong. Mỗi danh mục chạy trong giao dịch riêng dưới `TenantContext.runAs(tenantId)` với tác nhân `system:rdm-seed`; phát hành ngay không qua bốn mắt vì tác nhân là hệ thống (BR-07-011).
+
+### 4.16. Kiểm toán và lịch sử
+
+Mọi thao tác ghi gọi `AuditRecorder.record(AuditEntry)` của thư viện chung; thư viện ghi bản ghi kiểm toán vào outbox của module trong cùng giao dịch, và Debezium chuyển tới PH-13. Nhờ vậy kiểm toán không mất khi thao tác đã cam kết và không mất khi PH-13 ngừng (NFR-07-015). Bản ghi có các trường của FR-00-041: tác nhân, tenant, thời điểm, hành động (`RDM_*`), đối tượng (`objectRef = rdm:{catalogCode}[:{versionNo}[:{itemCode}]]`), giá trị trước và sau (chỉ các trường thay đổi), địa chỉ IP, `trace_id`. Với thao tác lô, bản ghi tóm tắt kèm tệp khác biệt trên kho đối tượng `exports/audit/{auditId}.jsonl.gz`, không nhồi hàng nghìn thay đổi vào một bản ghi.
+
+`HistoryService` (API-07-072, FR-07-050) truy vấn PH-13 theo `objectRef` có tiền tố danh mục, nối với `version_review` của PH-07 theo thời gian, che giá trị của danh mục `RESTRICTED` theo quyền (§7.4). PH-13 không sẵn sàng thì trả ERR-07-047 kèm phần dữ liệu PH-07 và `partial = true`.
+
+### 4.17. Công cụ di trú từ Aita
+
+`AitaMigrator` là ứng dụng dòng lệnh chạy cùng mã của `dh-data` với profile Spring `migration` (không chạy trong pod phục vụ). Công cụ đọc bản kết xuất CSDL Aita qua JDBC tới một PostgreSQL tạm (khôi phục từ bản sao lưu Aita, chỉ đọc), và ghi vào Datahub **qua API công bố** (API-07-002, 031, 014, 068) bằng client dịch vụ có `PERM-07-create`, `PERM-07-update`, `PERM-07-mapping` của tenant. Đi qua API thay vì ghi thẳng CSDL bảo đảm mọi kiểm tra, kiểm toán và sự kiện giống hệt thao tác thường.
+
+| Lớp | Trách nhiệm | Bước FR-07-051 |
+|---|---|---|
+| `AitaReader` | Đọc bốn bảng theo cột thực tế, kiểm tra đủ bảng, cột | 1 |
+| `AitaTableBuilder` | Xoay `category_details_value` thành bảng hai chiều theo `jhi_order` | 2 |
+| `AitaMapper` | Đề xuất mã danh mục, cột mã, cột tên, cột cha, kiểu thuộc tính | 3–6 |
+| `CommonMatcher` | Đối chiếu với danh mục `COMMON`, đề xuất dùng `COMMON`, HYBRID hay tạo mới | 7 |
+| `PiiDetector` | Đánh dấu thuộc tính gợi ý dữ liệu cá nhân | 8 |
+| `MigrationPlanWriter` | Ghi kế hoạch chạy thử thành `import_job` loại `MIGRATION` để hiển thị trên UI-07-08 | 9 |
+| `MigrationExecutor` | Chạy thật theo kế hoạch đã chốt, `Idempotency-Key = mig-{tenant}-{category.id}-{lô}` | 10, 13 |
+| `ReconciliationReport` | So băm từng ô, xuất biên bản xlsx | 12 |
+
+Ánh xạ dữ liệu chi tiết ở D03-03-PH07 §8.
+
+### 4.18. Danh mục hạn chế và cấp quyền khai thác
+
+`AccessGrantService` hiện thực FR-07-052. Với danh mục `classification = RESTRICTED`, `RdmAuthorization.checkExploit(catalog, scope)` lấy `member_system_id` từ claim của token client do PH-01 gán khi cấp client (tên claim theo D02-08), tra cấp quyền hiệu lực trong bộ đệm L1 60 giây theo `(catalogId, memberSystemId)` và kiểm tra `scope` (`rdm.read`, `rdm.query`). Không có trả ERR-07-030. Cấp quyền quá `expires_at` tự hết tác dụng vì phép tra so với thời điểm hiện tại. PH-01 phát sự kiện khi HTTT chuyển `SUSPENDED` hoặc `REVOKED`; `MemberSystemListener` xóa mục đệm của HTTT đó trên mọi pod qua kênh `rdm:invalidate`.
+
+API-07-075 PUT thay toàn bộ danh sách trong một giao dịch: xóa dòng không còn, thêm dòng mới, ghi kiểm toán phần khác biệt. ETag của danh sách là `W/"g-{max(version)}-{count}"`.
+
+### 4.19. Tham số theo tenant
+
+`RdmParamProvider` đọc tham số `07.rdm.*` (FRS §7.1) qua API tham số của PH-18, đệm L1 5 phút theo tenant, và làm mới ngay khi nhận sự kiện thay đổi tham số của PH-18. Khi PH-18 không trả lời, provider dùng giá trị đệm gần nhất; chưa từng có giá trị thì dùng mặc định trong `RdmProperties`, ghi cảnh báo và tăng chỉ số `rdm_param_fallback_total`. Giá trị được kiểm tra miền khi đọc; giá trị ngoài miền bị bỏ, dùng mặc định. Tham số mức `PLATFORM` là trần cứng: giá trị của tenant vượt trần bị cắt về trần.
+
+## 5. Biểu đồ tuần tự
+
+Mục này vẽ tuần tự cho các FR phức tạp. Mỗi biểu đồ ghi rõ ranh giới giao dịch (khối `rect`) và sự kiện ghi vào outbox. Người tham gia `GW` là APISIX (PH-03) hoặc BFF của console; `RDM` là module `rdm` trong `dh-data`; `PG` là PostgreSQL; `VK` là Valkey; `S3` là Garage.
+
+### 5.1. Tạo danh mục kèm bản nháp phiên bản 1 (FR-07-003, API-07-002)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Cán bộ (DATA_STEWARD)
+    participant GW as GW
+    participant RDM as RDM CatalogController
+    participant POL as RdmAuthorization / OPA
+    participant SVC as CatalogService
+    participant PG as PG
+    U->>GW: POST /catalogs (Idempotency-Key)
+    GW->>RDM: chuyển tiếp, X-DH-Tenant: T68
+    RDM->>POL: PERM-07-create, tổ chức sở hữu
+    POL-->>RDM: cho phép
+    RDM->>RDM: IdempotencyFilter: chèn khóa IN_PROGRESS
+    rect rgb(235,245,255)
+    RDM->>SVC: create(req)
+    SVC->>PG: SET LOCAL app.tenant_id = 'T68'
+    SVC->>PG: pg_advisory_xact_lock(rdm-code:MA)
+    SVC->>PG: kiểm tra trùng mã tenant và COMMON (BR-07-001)
+    SVC->>PG: INSERT catalog, catalog_version (DRAFT, v1), attribute_def
+    SVC->>PG: INSERT outbox EVT-07-01, outbox kiểm toán
+    SVC->>PG: UPDATE idempotency_key = COMPLETED
+    end
+    RDM-->>GW: 201, ETag, Location
+    GW-->>U: 201
+```
+
+Toàn bộ danh mục, phiên bản 1 và thuộc tính được tạo trong một giao dịch, nên không có danh mục mồ côi thiếu bản nháp. Trùng mã trả ERR-07-002 trước khi chèn; nếu hai yêu cầu cùng mã chạy song song, khóa tư vấn bắt yêu cầu sau chờ và nhận ERR-07-002.
+
+### 5.2. Soạn, trình và duyệt phiên bản (FR-07-011, 012, 015)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor S as Người soạn
+    actor A as Người duyệt (DATA_APPROVER)
+    participant RDM as VersionService
+    participant SM as VersionStateMachine
+    participant CP as DraftCopier
+    participant PG as PG
+    participant WB as PH-11 Việc của tôi
+    S->>RDM: POST /versions (tạo nháp)
+    rect rgb(235,245,255)
+    RDM->>PG: SELECT catalog FOR UPDATE
+    RDM->>CP: copy(currentVersionId → draftId)
+    CP->>PG: INSERT … SELECT attribute_def, catalog_item, item_succession
+    end
+    S->>RDM: PATCH/POST items (If-Match)
+    S->>RDM: POST :submit
+    rect rgb(235,245,255)
+    RDM->>RDM: ItemValidator.validateVersion (toàn bản nháp)
+    RDM->>RDM: DiffEngine + ChangeThresholdPolicy
+    RDM->>SM: SUBMIT (DRAFT → IN_REVIEW)
+    RDM->>PG: UPDATE catalog_version; INSERT version_review; outbox EVT-07-04
+    end
+    PG-->>WB: (Debezium) EVT-07-04 tạo việc chờ duyệt
+    A->>RDM: POST :approve
+    rect rgb(235,245,255)
+    RDM->>SM: APPROVE [approver ≠ submitter, BR-07-011]
+    RDM->>PG: UPDATE status = APPROVED; INSERT version_review
+    end
+```
+
+Biểu đồ cho thấy bước sao chép copy-on-write xảy ra một lần khi tạo nháp; mọi sửa đổi sau đó chỉ chạm bản sao. Kiểm tra toàn bản nháp chạy lại khi trình, để lỗi phát sinh do sửa đồng thời không lọt qua. Từ chối (API-07-019) đi đường tương tự, chuyển về `DRAFT` và ghi EVT-07-06.
+
+### 5.3. Phát hành và sinh ảnh chụp (FR-07-016)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Người duyệt
+    participant PS as PublishService
+    participant PG as PG
+    participant REG as Modulith event registry
+    participant SW as SnapshotWriter
+    participant S3 as S3
+    participant DBZ as Debezium → Kafka
+    A->>PS: POST :publish (effectiveFrom, legalBasis)
+    rect rgb(235,245,255)
+    PS->>PG: SELECT catalog FOR UPDATE
+    PS->>PS: dateRules, kiểm tra trạng thái APPROVED (hoặc phát hành thẳng)
+    PS->>PG: UPDATE phiên bản trước SET effective_to
+    PS->>PG: UPDATE phiên bản SET PUBLISHED; cập nhật current_version_id nếu hiệu lực hôm nay
+    PS->>PG: AdminUnitProjector (nếu ĐVHC)
+    PS->>PG: INSERT outbox EVT-07-05 (+ EVT-07-10)
+    PS->>REG: ghi VersionPublishedInternal
+    end
+    DBZ->>DBZ: đọc outbox, gửi {tenant}.rdm.catalog.published.v1
+    REG->>SW: sau commit (@ApplicationModuleListener)
+    SW->>PG: đọc bản ghi theo con trỏ máy chủ
+    SW->>S3: multipart upload json.gz, csv.gz
+    SW->>PG: UPDATE snapshot_uri, stats.snapshotSha256
+    SW->>S3: cập nhật snapshots/index.json (If-Match)
+```
+
+Sự kiện EVT-07-05 lên Kafka không chờ ảnh chụp (NFR-07-007); bên tiêu thụ cần ảnh chụp thì thử lại tới khi đối tượng xuất hiện (§5.9). Ảnh chụp lỗi được phát lại bởi `SnapshotRetryJob` (§4.5.3).
+
+### 5.4. Tra một mã qua bộ đệm hai tầng (FR-07-026, API-07-042)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as HTTT
+    participant GW as APISIX
+    participant LS as LookupService
+    participant PR as PointerResolver
+    participant L1 as Caffeine L1
+    participant VK as VK (L2)
+    participant PG as PG
+    C->>GW: GET /catalogs/GIOI_TINH/items/1?at=2026-12-01
+    GW->>LS: scope rdm.read, X-DH-Tenant
+    LS->>LS: RdmAuthorization (RESTRICTED → cấp quyền khai thác)
+    LS->>PR: resolve(T68, GIOI_TINH, 2026-12-01)
+    PR->>L1: ptr
+    alt trượt L1
+        PR->>VK: GET {t68}:rdm:ptr:GIOI_TINH:20261201
+        alt trượt L2
+            PR->>VK: SET NX lock (chống dồn tải)
+            PR->>PG: chọn phiên bản PUBLISHED có khoảng chứa ngày
+            PR->>VK: SET ptr TTL 300 giây
+        end
+        PR->>L1: put
+    end
+    PR-->>LS: versionId
+    LS->>L1: ver/item(versionId, code)
+    alt trượt
+        LS->>VK: GET ver hoặc item
+        alt trượt L2 và PG ngừng
+            LS->>LS: SnapshotFallbackLoader đọc ảnh chụp S3
+        end
+    end
+    LS-->>C: 200 ItemView, ETag = versionId
+```
+
+Đường nóng (trúng L1) không chạm mạng ngoài pod, nên đạt p95 ≤ 20 ms (NFR-07-001). Nhánh dự phòng đọc ảnh chụp bảo đảm tra cứu tiếp tục khi PostgreSQL ngừng (NFR-07-010); chi tiết ở §4.9.6.
+
+### 5.5. Nhập tệp hai pha (FR-07-021, API-07-033…036)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Cán bộ
+    participant API as ImportJobController
+    participant S3 as S3
+    participant PG as PG
+    participant W as ImportJobWorker
+    participant AV as ClamAV
+    participant IC as ImportCommitter
+    U->>API: POST /import-jobs (multipart, Idempotency-Key)
+    API->>S3: PUT imports/{jobId}/{sha256}.xlsx (luồng)
+    API->>PG: INSERT file_object (PENDING), import_job (QUEUED); NOTIFY rdm_jobs
+    API-->>U: 202 jobId
+    W->>PG: nhận việc (ph07_worker, FOR UPDATE SKIP LOCKED), đặt lease
+    W->>AV: quét luồng tệp
+    AV-->>W: CLEAN
+    W->>W: ZipBombGuard, EncodingDetector, Parser (SAX/CSV)
+    W->>PG: batch INSERT import_row (hợp lệ, lỗi); cập nhật đếm
+    W->>PG: status = VALIDATED, expires_at = now + 24h
+    U->>API: GET /import-jobs/{id}, /rows (xem trước)
+    U->>API: POST :commit (If-Match)
+    rect rgb(235,245,255)
+    API->>IC: commit(jobId)
+    IC->>PG: kiểm tra draft_lock_version = version bản nháp (BR-07-016)
+    IC->>PG: INSERT … ON CONFLICT từ import_row vào catalog_item
+    IC->>PG: status = COMMITTED; outbox EVT-07-07
+    end
+    API-->>U: 200 tóm tắt
+```
+
+Pha 1 không chạm dữ liệu danh mục, nên người dùng xem trước và hủy được mà không để lại dấu vết. Pha 2 là một giao dịch; nếu bản nháp bị sửa giữa hai pha, commit trả ERR-07-020 và người dùng phải phân tích lại.
+
+### 5.6. Đồng bộ danh mục quốc gia (FR-07-036, 037)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SCH as SyncScheduler
+    participant RUN as SyncRunner
+    participant P14 as PH-14 NDXP_DMDC
+    participant NDXP as NDXP
+    participant PG as PG
+    actor A as Cán bộ có PERM-07-sync
+    SCH->>RUN: nguồn đến hạn
+    RUN->>PG: advisory lock(source); INSERT sync_run RUNNING
+    RUN->>P14: describe(remoteCode)
+    P14->>NDXP: gọi API danh mục (mTLS, chứng thư số)
+    NDXP-->>P14: metadata, remoteVersion
+    P14-->>RUN: metadata
+    alt remoteVersion không đổi
+        RUN->>PG: NO_CHANGE, last_success_at
+    else có thay đổi
+        loop từng trang
+            RUN->>P14: fetchItems(page)
+        end
+        RUN->>RUN: chuẩn hóa, ItemValidator, DiffEngine
+        RUN->>PG: INSERT sync_change; tạo bản nháp origin = SYNC
+        alt tự áp dụng (BR-07-017)
+            RUN->>PG: PublishService.publish (system:rdm-sync); APPLIED
+        else chờ xác nhận
+            RUN->>PG: PENDING_CONFIRMATION; outbox EVT-07-09
+            A->>RUN: POST /sync-runs/{id}:accept
+            RUN->>PG: kiểm tra phiên bản gốc không đổi; publish hoặc submit
+        end
+    end
+    RUN->>PG: cập nhật sync_source; nhả khóa
+```
+
+### 5.7. Chuyển mã ĐVHC cũ sang mới (FR-07-046, API-07-051)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as HTTT (ví dụ PH-20, hệ một cửa)
+    participant AC as AdminUnitCodeConverter
+    participant L1 as L1 đồ thị kế thừa
+    participant PG as PG
+    C->>AC: convert(codes, asOf = 2025-06-30, at = 2026-12-01)
+    AC->>L1: graph(COMMON, latestVersionId)
+    alt trượt
+        AC->>PG: SELECT item_succession các phiên bản PUBLISHED ORDER BY effective_date
+        AC->>L1: put
+    end
+    loop mỗi mã
+        AC->>AC: T = {code}; áp sự kiện trong (asOf, at], tối đa 50 bước
+        AC->>AC: UNCHANGED / MAPPED / AMBIGUOUS / NOT_FOUND
+    end
+    AC-->>C: kết quả kèm tên, đường dẫn tại at
+```
+
+### 5.8. Nạp gói danh mục nền cho tenant mới (FR-07-049, API-07-073)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P20 as PH-20 (khởi tạo tenant)
+    participant TS as TenantSeeder
+    participant P18 as PH-18 tham số
+    participant PG as PG
+    P20->>TS: POST /tenants/T35:seed (packageVersion, Idempotency-Key)
+    TS->>P20: tenant ở trạng thái khởi tạo?
+    TS->>TS: tải gói, kiểm tra SHA-256 theo manifest
+    TS->>PG: tra import_job MIGRATION của (T35, packageVersion)
+    TS->>P18: ghi tham số mặc định chưa có
+    loop mỗi danh mục trong gói
+        rect rgb(235,245,255)
+        TS->>PG: runAs(T35): tạo danh mục, phiên bản 1, bản ghi, phát hành
+        TS->>PG: ghi tiến độ vào import_job.options
+        end
+    end
+    TS-->>P20: COMPLETED hoặc PARTIAL kèm lỗi
+```
+
+Mỗi danh mục một giao dịch, nên lỗi một danh mục không làm hỏng các danh mục đã nạp; PH-20 gọi lại và công cụ tiếp tục từ danh mục chưa xong.
+
+### 5.9. `dh-runtime` làm mới danh mục trong data plane (ADR-013, ADR-053)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant K as Kafka
+    participant RT as dh-runtime (Camel)
+    participant RC as RdmRuntimeCache (thư viện dh-common)
+    participant S3 as S3
+    K->>RT: EVT-07-05 (ce_tenant, catalogCode, versionId, snapshotUri, effectiveFrom)
+    RT->>RC: onPublished(event)
+    alt effectiveFrom ≤ hôm nay
+        RC->>S3: GET snapshotUri
+        alt 404 (ảnh chụp chưa sinh)
+            RC->>RC: thử lại lùi hàm mũ 2 giây … 10 phút
+        end
+        RC->>RC: kiểm tra SHA-256, nạp bộ nhớ, đổi con trỏ nguyên tử
+    else hiệu lực tương lai
+        RC->>RC: lên lịch nạp trước 10 phút
+    end
+    Note over RT,RC: Tra cứu trong route Camel đọc RC, không gọi REST tới dh-data
+```
+
+`dh-runtime` không phụ thuộc control plane: khi `dh-data` ngừng, route vẫn tra danh mục từ bộ nhớ và, khi pod khởi động lại, từ `snapshots/index.json` trên kho đối tượng. Đây là cách PH-07 đáp ứng yêu cầu data plane độc lập của NFR-07-010.
+
+## 6. Đa tenant trong mã nguồn
+
+### 6.1. Ngữ cảnh tenant
+
+`TenantContext` của thư viện chung giữ mã tenant của luồng hiện hành (ScopedValue của Java 21, không dùng ThreadLocal để không rò khi dùng virtual thread). Bộ lọc web của thư viện đặt ngữ cảnh từ tiêu đề nội bộ `X-DH-Tenant` mà APISIX ghi sau khi xác minh claim `tenant` của token (D03-10 §2); tiêu đề do client tự gửi bị APISIX xóa. Tác vụ nền đặt ngữ cảnh bằng `TenantContext.runAs(tenant, …)`. Mã ngoài hai đường này không được tự đặt ngữ cảnh; luật ArchUnit `onlyFiltersAndJobsSetTenant` kiểm tra (§12.6).
+
+Người dùng của tenant `PLATFORM` (PA) thao tác trên danh mục `COMMON`. Ngữ cảnh khi đó là `PLATFORM`, và RLS cho phép ghi dòng `tenant_id = 'COMMON'`. Lớp `CommonWriteScope` là cách duy nhất mã ứng dụng tạo dòng `COMMON`: nó kiểm tra ngữ cảnh là `PLATFORM` và người dùng có vai trò PA, rồi gán `tenant_id = 'COMMON'` cho thực thể mới.
+
+### 6.2. Đặt biến phiên trong giao dịch
+
+`TenantSession` bọc `DataSource` bằng `DelegatingDataSource`; khi Spring mở giao dịch trên một kết nối, `TenantAwareTransactionManager` chạy `SELECT set_config('app.tenant_id', :tenant, true)` (tương đương `SET LOCAL`) ngay sau `BEGIN`. Vì biến là cục bộ theo giao dịch, kết nối trả về pool HikariCP không mang tenant cũ. Truy vấn ngoài giao dịch bị cấm bằng cấu hình `spring.datasource.hikari.auto-commit=false` cùng kiểm tra của `TenantSession`: kết nối không có giao dịch thì ném `IllegalStateException`. Do chính sách RLS dùng `current_setting('app.tenant_id', false)`, quên đặt biến làm câu lệnh lỗi ngay chứ không trả rỗng âm thầm.
+
+```java
+final class TenantAwareTransactionManager extends JdbcTransactionManager {
+  @Override
+  protected void prepareTransactionalConnection(Connection con, TransactionDefinition def) throws SQLException {
+    super.prepareTransactionalConnection(con, def);
+    String tenant = TenantContext.require();                  // ném nếu thiếu ngữ cảnh
+    try (PreparedStatement ps = con.prepareStatement("SELECT set_config('app.tenant_id', ?, true)")) {
+      ps.setString(1, tenant);
+      ps.execute();
+    }
+  }
+}
+```
+
+### 6.3. Tác vụ nền liên tenant
+
+Có bốn loại tác vụ phải nhìn nhiều tenant. Thiết kế tránh vai trò `BYPASSRLS` bằng hai cách: lặp từng tenant, hoặc vai trò hẹp chỉ thấy cột hàng đợi.
+
+| Tác vụ | Cách làm | Lý do |
+|---|---|---|
+| Tự chuyển hiệu lực (`EffectiveScheduler`, §4.6) | Lặp danh sách tenant từ PH-20 (đệm), `runAs` từng tenant | Chạy một lần mỗi ngày, 35 lượt truy vấn có chỉ mục |
+| Lịch đồng bộ (`SyncScheduler`, §4.11.2) | Lặp từng tenant mỗi phút | 35 truy vấn nhỏ mỗi phút, chấp nhận được |
+| Nhận tác vụ nhập xuất (`ImportJobWorker`, §4.7.3) | `SET LOCAL ROLE ph07_worker` trong giao dịch nhận việc; vai trò chỉ đọc cột hàng đợi và sửa cột thuê | Thăm dò 2 giây một lần; lặp 35 tenant sẽ tốn 17 truy vấn mỗi giây mỗi pod |
+| Dọn dẹp (`import_row` theo phân vùng, `outbox`, `idempotency_key`, `file_object` hết hạn) | `import_row`: tác vụ `RdmPartitionJob` (ShedLock, 02:00) gọi hàm `SECURITY DEFINER` `f_import_row_maintain(3, 8)` tạo trước và xóa phân vùng ngày; bảng khác: lặp từng tenant | Xóa phân vùng là DDL, không liên quan tới dòng của tenant nào; các bảng khác xóa theo tenant để giữ cách ly |
+
+Tài khoản `dh_data_app` là thành viên của `ph07_app` và `ph07_worker`. Vai trò `ph07_worker` không có quyền trên bảng nào khác, nên kể cả khi mã nhận việc có lỗi, nó không đọc được bản ghi danh mục của tenant khác.
+
+### 6.4. Kiểm thử cách ly
+
+Bộ kiểm thử `TenantIsolationIT` (Testcontainers PostgreSQL 18, chạy bằng tài khoản có quyền như `dh_data_app`) bắt buộc trong CI, gồm các ca: tenant T68 không đọc, sửa, xóa được dòng của T01 ở mọi bảng của `ph07_rdm`; T68 đọc được nhưng không ghi được dòng `COMMON`; `PLATFORM` ghi được `COMMON` nhưng không ghi được dòng của T68; giao dịch không đặt `app.tenant_id` thất bại; `ph07_worker` không đọc được cột ngoài hàng đợi. Danh sách bảng được lấy động từ `pg_tables`, nên bảng mới thêm mà quên bật RLS làm ca kiểm thử thất bại.
+
+## 7. Bảo mật
+
+### 7.1. Xác thực
+
+Người dùng giao diện xác thực qua Keycloak realm của tenant (OIDC, PKCE) và BFF của console giữ phiên; HTTT dùng client credentials, token có scope `rdm.read`, `rdm.query`, `rdm.write` (FRS Q07-03). `dh-data` là resource server Spring Security, xác minh chữ ký JWT bằng JWKS của realm, kiểm tra `iss` khớp tenant của tiêu đề, `aud = dh-data`, thời hạn. Lời gọi nội bộ giữa DU đi qua mesh với mTLS và token dịch vụ của realm `PLATFORM`. Lỗi xác thực trả ERR-07-041.
+
+### 7.2. Phân quyền
+
+Quyết định phân quyền có ba lớp, theo D02-08:
+
+1. **Vai trò và quyền** (`PERM-07-*`): ánh xạ từ vai trò Keycloak (DS, DA, TA, PA, AU) sang quyền theo ma trận D02-08, đặt trong `RdmPermissions`. Kiểm tra bằng `@PreAuthorize("@rdmAuth.has('PERM-07-update')")` trên controller.
+2. **Phạm vi tổ chức**: quyền có ký hiệu ○ trong D02-08 chỉ áp lên danh mục có `owner_org_id` thuộc tổ chức của người dùng hoặc tổ chức con. `RdmAuthorization.canEdit(catalog)` hỏi OPA với đầu vào `{subject, orgPath, catalog.ownerOrgId, sourceType, tenant}`; gói chính sách `datahub.rdm.authz` nằm trong kho chính sách của PH-02 và được kiểm thử bằng `opa test`.
+3. **Quy tắc nghiệp vụ**: bốn mắt (BR-07-011), danh mục chỉ đọc (`NATIONAL`, `COMMON` với tenant tỉnh, ERR-07-003), danh mục `RESTRICTED` với HTTT (§4.18). Các quy tắc này nằm trong dịch vụ, không phải trong OPA, vì phụ thuộc trạng thái dữ liệu.
+
+Kết quả OPA được đệm 30 giây theo `(subject, catalogId, action)` để thao tác hàng loạt trên giao diện không gọi OPA mỗi lần. OPA không trả lời trong 200 ms thì từ chối (đóng an toàn) và trả ERR-07-047.
+
+### 7.3. Khai thác của HTTT
+
+APISIX kiểm tra scope và rate limit theo gói đăng ký của HTTT (PH-03). Trong `dh-data`, `LookupController` kiểm tra lại scope (phòng cấu hình gateway sai), kiểm tra cấp quyền khai thác với danh mục `RESTRICTED`, và giới hạn tần suất riêng cho thao tác nặng: nhập lô `07.rdm.batch-rate-per-minute` lần mỗi phút mỗi HTTT, truy vấn DSL theo `07.rdm.query-timeout-ms`. Vượt giới hạn trả ERR-07-044 kèm `Retry-After`. Lượt đọc không ghi kiểm toán từng lượt mà được đếm theo `(memberSystemId, catalog, ngày)` ở chỉ số `rdm_lookup_total` (FR-07-050 bước 4).
+
+### 7.4. Bảo vệ dữ liệu
+
+- **Không có dữ liệu cá nhân.** `SensitiveNameGuard` chặn khai báo thuộc tính có tên gợi ý dữ liệu cá nhân theo `07.rdm.pii-keywords` (ERR-07-036); `PiiDetector` dùng cùng danh sách khi nhập tệp và di trú. Vì vậy PH-07 không thuộc diện xử lý dữ liệu cá nhân của Luật 91/2025/QH15, và không cần mã hóa cột (D03-03-PH07 §7).
+- **Danh mục `RESTRICTED`.** Lịch sử thay đổi che nhãn và thuộc tính với người không có `PERM-07-grant` hoặc vai trò AU; tệp xuất ghi kiểm toán với cờ `restricted = true`; ảnh chụp nằm trong bucket của tenant, chỉ tải qua URL ký sẵn hạn 15 phút (API-07-049).
+- **Thông điệp lỗi.** `RdmExceptionHandler` không đưa thông báo của exception nội bộ, câu SQL hay đường dẫn tệp ra `detail`; `error_message` của tác vụ nền được che trước khi lưu.
+- **Nhật ký.** Log không ghi thân yêu cầu ghi dữ liệu; giá trị bản ghi chỉ xuất hiện trong kiểm toán.
+
+### 7.5. Tệp vào và tệp ra
+
+| Rủi ro | Biện pháp | Lớp |
+|---|---|---|
+| Mã độc trong tệp tải lên | Quét ClamAV qua clamd trước khi phân tích; tệp chưa quét sạch không bao giờ được mở (BR-07-041, ERR-07-038) | `MalwareScanner` |
+| Bom nén (xlsx là zip) | Giới hạn tổng kích thước giải nén 20 lần kích thước tệp và ≤ 500 MB, số mục ≤ 10.000, tỷ lệ nén mỗi mục ≤ 100 | `ZipBombGuard` |
+| XXE trong xlsx | Parser SAX với `XMLConstants.FEATURE_SECURE_PROCESSING`, tắt DTD và thực thể ngoài | `PoiSaxParser` |
+| Tệp giả định dạng | Kiểm tra chữ ký tệp (magic bytes) khớp phần mở rộng và `Content-Type`; sai trả ERR-07-043 | `ParserFactory` |
+| Chèn công thức khi mở tệp xuất | Giá trị bắt đầu bằng `=`, `+`, `-`, `@`, tab, xuống dòng được thêm tiền tố `'`; ô xlsx được ghi kiểu chuỗi | `FormulaInjectionSanitizer` |
+| Biểu thức chính quy gây quay lui (ReDoS) | Kiểm tra mẫu khi khai báo, bộ máy regex có ngắt (§4.1.2, Q07-31) | `SchemaCompiler` |
+| Truy vấn DSL nặng | Giới hạn độ sâu, số điều kiện, số thuộc tính truy vấn được (`07.rdm.max-queryable-attributes`), `statement_timeout` theo `07.rdm.query-timeout-ms` | `QueryLimits` |
+| Tên tệp độc hại | Không dùng tên người dùng làm khóa đối tượng; khóa là `{jobId}/{sha256}.{ext}`; tên gốc chỉ lưu ở `file_object.file_name` sau khi bỏ ký tự điều khiển | `ImportJobService` |
+
+## 8. Xử lý lỗi, thử lại và tính nhất quán
+
+### 8.1. Phân cấp exception và ánh xạ RFC 9457
+
+Mọi lỗi nghiệp vụ là lớp con của `RdmException(ErrorCode code, Map<String,Object> args)`, trong đó `ErrorCode` là enum ERR-07-001…048 mang trạng thái HTTP và khóa thông điệp i18n (tiếng Việt mặc định, tiếng Anh dự phòng). `RdmExceptionHandler` (`@RestControllerAdvice`) chuyển thành `application/problem+json`:
+
+```json
+{
+  "type": "https://datahub.gov.vn/problems/ERR-07-017",
+  "title": "Ngày hiệu lực không hợp lệ",
+  "status": 422,
+  "detail": "Ngày hiệu lực 2026-11-20 sớm hơn hôm nay; chỉ phiên bản đồng bộ hoặc di trú được hồi tố.",
+  "instance": "/api/rdm/v1/catalogs/GIOI_TINH/versions/2:publish",
+  "code": "ERR-07-017",
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "errors": []
+}
+```
+
+Bảng mã lỗi đầy đủ là D03-04-PH07 §6. Lỗi không thuộc `RdmException` (lỗi lập trình, lỗi hạ tầng không lường trước) trả `500` với `code = ERR-00-500`, không có `detail` nội bộ, và được ghi log mức ERROR kèm `traceId`.
+
+### 8.2. Ánh xạ lỗi CSDL
+
+| SQLSTATE | Nguồn | Mã lỗi |
+|---|---|---|
+| `23505` trên `uq_catalog_tenant_code` | Trùng mã danh mục | ERR-07-002 |
+| `23505` trên `uq_catalog_item_code` | Trùng mã bản ghi | ERR-07-008 |
+| `23505` trên `uq_catalog_version_open` | Đã có phiên bản mở | ERR-07-005 |
+| `23P01` trên `ex_catalog_version_no_overlap` | Chồng lấn hiệu lực | ERR-07-017 |
+| `23P01` trên `ex_code_mapping_external` | Mã ngoài trùng | ERR-07-033 |
+| `23P01` trên `ex_admin_unit_code` | Mã ĐVHC trùng khoảng | ERR-07-035 |
+| `P0001` từ trigger bất biến | Sửa phiên bản đã phát hành | ERR-07-004 |
+| `57014` (`statement_timeout`) | Truy vấn DSL quá thời gian | ERR-07-024 |
+| `40001`, `40P01` | Xung đột tuần tự hóa, bế tắc | Thử lại giao dịch tối đa 3 lần (§8.3), hết thì `503` ERR-07-047 |
+| `42501` từ chính sách RLS | Lỗi lập trình (ghi sai tenant) | `500`, cảnh báo bảo mật `RdmRlsViolation` |
+
+`DbErrorTranslator` ánh xạ theo tên ràng buộc, không theo nội dung thông điệp, nên đổi ngôn ngữ của PostgreSQL không ảnh hưởng.
+
+### 8.3. Thời gian chờ, thử lại, bộ ngắt mạch
+
+Bảng dưới đây là cấu hình Resilience4j và thời gian chờ cho mọi phụ thuộc. Giá trị nằm trong `RdmProperties` (§9.1), có thể chỉnh theo môi trường.
+
+| Phụ thuộc | Thời gian chờ | Thử lại | Bộ ngắt mạch | Khi lỗi |
+|---|---|---|---|---|
+| PostgreSQL (đường ghi) | `statement_timeout` 30 giây; khóa 5 giây (`lock_timeout`) | Giao dịch 3 lần với `40001`, `40P01`, lùi 50/200/800 ms | Không | ERR-07-047 |
+| PostgreSQL (khai thác) | 2 giây (truy vấn DSL theo tham số) | Không | `pg-read`: mở khi 50% lỗi trong 20 lượt, nửa mở sau 10 giây | Phục vụ từ L2, ảnh chụp (§4.9.6) |
+| Valkey | 50 ms mỗi lệnh | 1 lần | `valkey`: mở khi 50% lỗi trong 50 lượt, nửa mở sau 5 giây | Bỏ qua L2, đọc PG |
+| Garage (ảnh chụp, tệp) | 5 giây kết nối, 60 giây mỗi phần | 3 lần, lùi hàm mũ | `s3`: 50% trong 20 lượt | Ảnh chụp chờ phát lại; nhập tệp `FAILED` |
+| ClamAV | 120 giây mỗi tệp | 1 lần | `clamav` | Tác vụ giữ `SCANNING`, thử lại sau 5 phút; quá 1 giờ thì `FAILED` ERR-07-038 |
+| PH-14 NDXP | Theo §4.11.1 | Theo §4.11.1 | `ndxp`: 50% trong 10 lượt, nửa mở sau 60 giây | Lần chạy `FAILED`; API-07-063 trả ERR-07-028 |
+| PH-18 tham số | 1 giây | 1 lần | `ph18` | Dùng giá trị đệm (§4.19) |
+| PH-20, PH-01 | 1 giây | 1 lần | `ph20`, `ph01` | Dùng đệm 5 phút; không có đệm thì ERR-07-047 |
+| OPA | 200 ms | Không | `opa` | Từ chối (đóng an toàn), ERR-07-047 |
+| PH-13 (đọc lịch sử) | 3 giây | Không | `ph13` | Trả một phần, `partial = true` |
+
+Không thử lại tự động bất kỳ lời gọi nào có tác dụng phụ ra ngoài mà không có khóa chống trùng: gửi đề xuất lên NDXP (FR-07-039) không tự thử lại.
+
+### 8.4. Nhất quán giữa CSDL và hệ thống ngoài
+
+PH-07 không có giao dịch phân tán. Ba cơ chế giữ nhất quán:
+
+1. **Outbox** cho mọi sự kiện công bố và kiểm toán: ghi cùng giao dịch nghiệp vụ, Debezium đẩy ít nhất một lần (§4.14).
+2. **Event publication registry** của Modulith cho tác dụng phụ sau commit trong DU: sinh ảnh chụp, tính lại độ phủ, xóa đệm. Sự kiện chưa hoàn thành được phát lại (§4.5.3).
+3. **Bù trừ** cho luồng nhiều bước có người tham gia: lần đồng bộ bị từ chối thì hủy bản nháp `SYNC`; tác vụ nhập hết hạn thì xóa `import_row` và tệp; nạp gói nền dở dang thì gọi lại tiếp tục từ danh mục chưa xong. Không luồng nào của PH-07 cần saga điều phối bởi Flowable ở MVP (ADR-058).
+
+Dữ liệu dẫn xuất (bộ đệm, ảnh chụp, `admin_unit`, độ phủ) luôn dựng lại được từ PostgreSQL; `RdmRebuildCommand` (lệnh quản trị qua Actuator, chỉ PA) dựng lại cho một danh mục khi nghi ngờ lệch.
+
+## 9. Cấu hình và cờ tính năng
+
+### 9.1. Cấu hình triển khai (`RdmProperties`)
+
+Cấu hình kỹ thuật không đổi theo tenant nằm trong `application.yaml` của `dh-data` dưới tiền tố `datahub.rdm`, được nạp vào `RdmProperties` (`@ConfigurationProperties`, kiểm tra bằng `@Validated`). Giá trị theo môi trường đặt qua ConfigMap của Helm chart (D03-09); bí mật (khóa HMAC con trỏ, thông tin Valkey, S3) lấy từ OpenBao qua External Secrets, không nằm trong ConfigMap.
+
+| Khóa | Mặc định | Ý nghĩa |
+|---|---|---|
+| `datahub.rdm.cache.l1.max-weight-mb` | 256 | Giới hạn bộ đệm L1 mỗi pod (NFR-07-012) |
+| `datahub.rdm.cache.l1.full-version-max-items` | 20000 | Ngưỡng nạp nguyên phiên bản vào L1 (§4.9.1) |
+| `datahub.rdm.cache.ptr-ttl` | `PT300S` | TTL con trỏ ở L2 |
+| `datahub.rdm.draft.async-copy-threshold` | 50000 | Bản nháp lớn hơn ngưỡng thì sao chép chạy nền (§4.2.3) |
+| `datahub.rdm.effective.cron` | `30 0 0 * * *` | Lịch tự chuyển hiệu lực (§4.6) |
+| `datahub.rdm.jobs.poll-interval` | `PT2S` | Chu kỳ thăm dò hàng đợi tác vụ |
+| `datahub.rdm.jobs.max-concurrent-import` | 2 | Tác vụ nhập đồng thời mỗi pod |
+| `datahub.rdm.jobs.max-concurrent-export` | 2 | Tác vụ xuất đồng thời mỗi pod |
+| `datahub.rdm.jobs.lease` | `PT2M` | Thời hạn thuê tác vụ |
+| `datahub.rdm.sync.executor-threads` | 2 | Luồng chạy đồng bộ mỗi pod |
+| `datahub.rdm.snapshot.retry-interval` | `PT5M` | Chu kỳ phát lại ảnh chụp lỗi |
+| `datahub.rdm.scan.clamd-host`, `clamd-port` | `clamav.dh-shared.svc`, 3310 | Dịch vụ quét mã độc |
+| `datahub.rdm.export.presign-ttl` | `PT15M` | Hạn URL ký sẵn |
+| `datahub.rdm.query.max-depth`, `max-conditions` | 8, 50 | Giới hạn cấu trúc DSL (ADR-054) |
+
+### 9.2. Tham số nghiệp vụ theo tenant
+
+Tham số nghiệp vụ là khóa `07.rdm.*` lưu ở PH-18, danh sách chính thức ở FRS §7.1; cách đọc ở §4.19. Thiết kế không đọc tham số nghiệp vụ từ `application.yaml`, để quản trị tỉnh chỉnh được trên giao diện mà không cần triển khai lại.
+
+### 9.3. Cờ tính năng theo tenant
+
+Cờ tính năng dùng cùng cơ chế tham số PH-18, namespace `07.rdm.feature.*`, kiểu boolean, mức đặt `PLATFORM` (quản trị nền tảng bật cho từng tenant). Cờ cho phép đưa tính năng mới tới từng tỉnh theo đợt (D06-01) và tắt nhanh khi có sự cố mà không triển khai lại.
+
+| Cờ | Mặc định | Tác dụng khi tắt |
+|---|---|---|
+| `07.rdm.feature.national-sync` | bật | API-07-055…063 trả ERR-07-046; bộ lập lịch bỏ qua tenant |
+| `07.rdm.feature.hybrid` | bật | Không tạo được danh mục HYBRID mới; HYBRID đã có vẫn khai thác được |
+| `07.rdm.feature.structured-query` | bật | API-07-047 trả ERR-07-046 |
+| `07.rdm.feature.national-proposal` | tắt | API-07-074 trả ERR-07-046 (FR-07-039 ngoài MVP) |
+| `07.rdm.feature.aita-template` | bật tới hết di trú | Khuôn `LEGACY_AITA` không còn trong lựa chọn nhập tệp |
+
+`RdmFeatures.enabled(flag)` đọc cờ qua `RdmParamProvider`; kiểm tra cờ đặt ở controller và ở tác vụ nền, không rải trong lớp nghiệp vụ. Cờ tắt không làm mất dữ liệu đã có.
+
+## 10. Quan sát
+
+### 10.1. Chỉ số
+
+Module phát chỉ số qua Micrometer, xuất OTLP tới OpenTelemetry Collector rồi Mimir (ADR-011). Mọi chỉ số có nhãn `tenant`. Nhãn `catalog` chỉ dùng cho chỉ số khai thác và giới hạn ở 200 danh mục có lượt gọi nhiều nhất mỗi tenant (phần còn lại gộp `other`) để không bùng số chuỗi thời gian. Bảng dưới đây gồm các chỉ số bắt buộc của NFR-07-014 và chỉ số bổ sung của thiết kế.
+
+| Chỉ số | Loại | Nhãn | Phát ở |
+|---|---|---|---|
+| `rdm_lookup_total` | Counter | `catalog`, `result` (`hit`, `miss`, `not_found`, `denied`) | `LookupService` |
+| `rdm_lookup_duration_seconds` | Histogram | `op` (`one`, `batch`, `list`, `tree`, `search`, `delta`) | `LookupService` |
+| `rdm_cache_hit_ratio` | Gauge | `tier` (`l1`, `l2`) | `TwoTierCache` (cửa sổ 1 phút) |
+| `rdm_query_rejected_total` | Counter | `reason` (`depth`, `conditions`, `attribute`, `timeout`) | `QueryLimits` |
+| `rdm_query_duration_seconds` | Histogram | `path` (`sql`, `memory`) | `ItemQueryService` |
+| `rdm_import_job_total` | Counter | `status`, `template` | `ImportJobWorker` |
+| `rdm_publish_duration_seconds` | Histogram | `origin` | `PublishService` |
+| `rdm_sync_run_total` | Counter | `status` | `SyncRunner` |
+| `rdm_sync_last_success_timestamp` | Gauge | `source` | `SyncMetrics` |
+| `rdm_mapping_coverage_ratio` | Gauge | `catalog`, `codeSystem` | `CoverageService` |
+| `rdm_translate_total` | Counter | `result` | `TranslateService` |
+| `rdm_adminunit_convert_total` | Counter | `direction`, `status` | `AdminUnitCodeConverter` |
+| `rdm_snapshot_failures_total` | Counter | — | `SnapshotWriter` |
+| `rdm_job_queue_depth` | Gauge | `type` | `ImportJobWorker` |
+| `rdm_param_fallback_total` | Counter | `key` | `RdmParamProvider` |
+| `rdm_outbox_lag_seconds` | Gauge | — | `OutboxLagProbe` (tuổi dòng outbox cũ nhất chưa dọn) |
+
+### 10.2. Nhật ký
+
+Log có cấu trúc JSON (Logback encoder của thư viện chung) với các trường `timestamp`, `level`, `logger`, `tenant`, `traceId`, `spanId`, `user` (id, không tên), `catalog`, `jobId` khi có. Mức mặc định INFO cho `vn.datahub.data.rdm`; mỗi thao tác ghi sinh một dòng INFO tóm tắt (hành động, đối tượng, thời gian), không ghi thân yêu cầu. Lỗi nghiệp vụ 4xx ghi WARN không kèm stack trace; lỗi 5xx ghi ERROR kèm stack trace. Log đi qua Collector tới Loki, giữ 30 ngày; log không thay thế kiểm toán (kiểm toán ở PH-13, giữ theo D03-07).
+
+### 10.3. Vết
+
+Mọi API và tác vụ nền tạo span OpenTelemetry. Span tên theo quy ước `rdm.{thao tác}` (ví dụ `rdm.publish`, `rdm.import.parse`, `rdm.sync.fetch`) với thuộc tính `datahub.tenant`, `rdm.catalog`, `rdm.version`, `rdm.items` (số bản ghi xử lý). `traceparent` được ghi vào cột `outbox.trace_id`, nên vết nối tiếp được qua Kafka sang bên tiêu thụ. Lấy mẫu: 100% với lỗi và với thao tác ghi, 5% với khai thác thành công.
+
+### 10.4. Cảnh báo
+
+Quy tắc cảnh báo khai báo dạng PrometheusRule trong Helm chart của `dh-data`, đi qua Alertmanager tới kênh trực vận hành (D06-03). Bảng dưới đây là các cảnh báo của PH-07.
+
+| Cảnh báo | Điều kiện | Mức | Xử lý ban đầu |
+|---|---|---|---|
+| `RdmLookupLatencyHigh` | p95 `rdm_lookup_duration_seconds{op="one"}` > 20 ms trong 10 phút | Cảnh báo | Xem tỷ lệ trúng đệm, tải PG |
+| `RdmCacheHitLow` | `rdm_cache_hit_ratio{tier="l1"}` < 0,9 trong 15 phút | Cảnh báo | Xem L1 có bị đuổi do đầy, có phát hành dồn dập |
+| `RdmSnapshotMissing` | `rdm_snapshot_failures_total` tăng liên tục 1 giờ, hoặc phiên bản `PUBLISHED` quá 1 giờ chưa có `snapshot_uri` | Nghiêm trọng | Kiểm tra Garage; chạy `RdmRebuildCommand` |
+| `RdmSyncStale` | `time() - rdm_sync_last_success_timestamp` > 24 giờ | Cảnh báo | Kiểm tra PH-14, NDXP (NFR-07-013) |
+| `RdmJobQueueBacklog` | `rdm_job_queue_depth` > 20 trong 15 phút | Cảnh báo | Tăng bản sao hoặc `max-concurrent-*` |
+| `RdmOutboxLag` | `rdm_outbox_lag_seconds` > 300 | Nghiêm trọng | Kiểm tra Debezium connector |
+| `RdmRlsViolation` | Bất kỳ lỗi `42501` từ RLS | Nghiêm trọng, an ninh | Báo đội ATTT theo D03-07; khoanh vùng bản phát hành |
+| `RdmQueryRejectedSpike` | `rdm_query_rejected_total` > 100 mỗi phút từ một HTTT | Thông tin | Liên hệ HTTT điều chỉnh truy vấn |
+
+Bảng điều khiển Grafana "PH-07 Danh mục" có ba hàng: khai thác (lượt, độ trễ, trúng đệm theo tenant), quản trị (phát hành, nhập xuất, hàng đợi), đồng bộ (trạng thái nguồn, độ tươi). Tệp JSON của bảng điều khiển nằm cùng Helm chart.
+
+## 11. Hiệu năng và vận hành
+
+### 11.1. Ngân sách hiệu năng
+
+Bảng dưới đây chia ngân sách thời gian của các đường quan trọng thành từng chặng, để khi đo không đạt biết chặng nào cần tối ưu. Số liệu là mục tiêu thiết kế, đo lại ở môi trường PERF theo D05-02-PH07 (Q07-32).
+
+| Đường | Chặng | Ngân sách |
+|---|---|---|
+| Tra một mã (NFR-07-001, p95 20 ms) | APISIX | 5 ms |
+| | Mesh, tuần tự hóa | 3 ms |
+| | Kiểm tra quyền (đệm) | 1 ms |
+| | L1 trúng | < 1 ms |
+| | L2 khi trượt L1 | 3 ms |
+| | Dư cho GC, mạng | 7 ms |
+| Tra lô 500 mã (NFR-07-002, p95 150 ms) | Giải con trỏ một lần | 2 ms |
+| | 500 lượt L1 hoặc một `MGET` L2 | 10 ms |
+| | Tuần tự hóa 500 bản ghi | 20 ms |
+| Phát hành 50.000 bản ghi (NFR-07-007, 30 giây) | Giao dịch phát hành | 3 giây |
+| | Ảnh chụp JSON + CSV nén, tải lên | 15 giây |
+| | Làm mới bộ đệm các pod | 2 giây |
+| Nhập 100.000 dòng (NFR-07-005) | Quét mã độc | 20 giây |
+| | Phân tích và kiểm tra | 60 giây |
+| | Commit `INSERT … SELECT` | 30 giây |
+
+### 11.2. Định cỡ
+
+Với NFR-07-011 (34 tenant, 1.000 danh mục mỗi tenant), dung lượng dự kiến của `catalog_item` là khoảng 34 × 1.000 × 1.000 bản ghi trung bình × 5 phiên bản giữ trực tuyến ≈ 170 triệu dòng, khoảng 170 GB kể cả chỉ mục, cộng ĐVHC và danh mục lớn. Cụm PostgreSQL QM-VUA của D03-09 (8 vCPU, 32 GB RAM, 500 GB NVMe) đủ cho giai đoạn đầu; khi vượt 60% dung lượng, tách danh mục của tenant lớn sang CSDL riêng (D03-03-PH07 §1.2). `dh-data` chạy tối thiểu 3 bản sao, mỗi bản 2 vCPU, 2 GB bộ nhớ, HPA theo CPU 70% và theo `rdm_job_queue_depth`.
+
+### 11.3. Thao tác vận hành
+
+| Thao tác | Cách làm | Ai |
+|---|---|---|
+| Dựng lại bộ đệm, ảnh chụp, `admin_unit` của một danh mục | Actuator `POST /actuator/rdm/rebuild?catalog=…` | PA |
+| Phát lại ảnh chụp lỗi ngay | Actuator `POST /actuator/rdm/snapshots:retry` | PA |
+| Xem hàng đợi tác vụ | Actuator `GET /actuator/rdm/jobs` | Vận hành |
+| Hủy tác vụ kẹt | API-07-037 với quyền PA, hoặc chờ hết hạn thuê | PA |
+| Tắt tạm đồng bộ quốc gia của một tenant | Cờ `07.rdm.feature.national-sync` | PA |
+| Làm nóng bộ đệm sau khởi động | Tự động (§4.9.7); thủ công qua Actuator `POST /actuator/rdm/cache:warm` | Vận hành |
+
+Endpoint Actuator của module chỉ mở trên cổng quản trị nội bộ, yêu cầu token dịch vụ của realm `PLATFORM` với vai trò PA, và ghi kiểm toán. Kịch bản xử lý sự cố chi tiết nằm ở Hướng dẫn vận hành D06-03.
+
+## 12. Kiểm thử
+
+### 12.1. Kiểm thử đơn vị
+
+JUnit 5, AssertJ, Mockito. Mục tiêu bao phủ dòng ≥ 80% cho `version`, `item`, `attribute`, `query`, `adminunit`, `mapping` (đo bằng JaCoCo, chặn ở CI theo D04-02). Lớp then chốt có bộ ca dạng bảng: `VersionStateMachine` (mọi cặp trạng thái, sự kiện), `BreakingClassifier` (mọi loại thay đổi của §4.3.3), `PublishService.dateRules`, `SuccessionApplier` (sáu loại sự kiện), `AdminUnitCodeConverter` (chuỗi sắp xếp 2025 thật lấy từ dữ liệu mẫu S03).
+
+### 12.2. Kiểm thử đối chứng và dựa trên thuộc tính
+
+`QueryEquivalenceTest` dùng jqwik sinh 500 truy vấn DSL ngẫu nhiên hợp lệ trên dữ liệu 5.000 bản ghi và so kết quả của đường SQL với đường bộ nhớ (§4.10.4), kể cả thứ tự và phân trang con trỏ. `DiffEngineProperties` kiểm tra tính chất: so một phiên bản với chính nó cho khác biệt rỗng; áp khác biệt (A, B) lên A cho B. `CursorCodecTest` kiểm tra con trỏ bị sửa một byte luôn bị từ chối.
+
+### 12.3. Kiểm thử tích hợp
+
+Testcontainers khởi tạo PostgreSQL 18 (chạy changelog Liquibase thật), Valkey, MinIO-tương thích S3 (Garage bản container), Kafka, ClamAV. Các bộ bắt buộc:
+
+| Bộ | Nội dung |
+|---|---|
+| `TenantIsolationIT` | §6.4 |
+| `PublishFlowIT` | Tạo, soạn, trình, duyệt, phát hành; kiểm tra outbox, ảnh chụp, bộ đệm làm mới |
+| `ImportFlowIT` | Tệp xlsx, CSV UTF-8/UTF-16, khuôn Aita, tệp nhiễm EICAR, bom nén, tệp hết hạn |
+| `SyncFlowIT` | Adapter PH-14 giả lập bằng WireMock: không đổi, tự áp dụng, chờ xác nhận, lỗi, mạch mở |
+| `AdminUnitIT` | Phát hành ĐVHC có sắp xếp, `admin_unit`, EVT-07-10, chuyển mã |
+| `IdempotencyIT` | Gọi lặp, khác nội dung, pod chết giữa chừng (ngắt kết nối) |
+| `OutboxDebeziumIT` | Debezium Server thật đọc outbox, kiểm tra tiêu đề `ce_*`, khóa bản tin |
+| `DegradedModeIT` | Dừng container PostgreSQL, tra cứu vẫn trả từ L2 và ảnh chụp |
+
+### 12.4. Kiểm thử hợp đồng
+
+Kiểm tra `openapi-rdm.yaml` bằng Spectral với bộ luật của dự án và kiểm tra mọi ví dụ khớp schema (D03-04-PH07 §7). Phía máy chủ chạy `OpenApiConformanceIT`: gọi từng endpoint với ví dụ trong hợp đồng và kiểm tra phản hồi khớp schema bằng `swagger-request-validator`. Sự kiện được kiểm tra khớp `asyncapi-rdm.yaml` bằng kiểm thử ghi bản tin mẫu rồi xác thực JSON Schema của phần `payload`.
+
+### 12.5. Kiểm thử hiệu năng và hỗn loạn
+
+k6 chạy các kịch bản của NFR-07-001…009 ở môi trường PERF với dữ liệu tổng hợp theo NFR-07-011; kết quả được lưu vào báo cáo của D05-02-PH07. Chaos Mesh tiêm lỗi: dừng PostgreSQL 30 phút, ngắt Valkey, độ trễ 500 ms tới Garage, giết pod đang xử lý tác vụ nhập. Tiêu chí đạt là NFR-07-010 và không mất tác vụ.
+
+### 12.6. Kiểm thử kiến trúc
+
+Ngoài `ApplicationModules.verify()` (§2.4), `RdmArchitectureTest` (ArchUnit) có các luật:
+
+| Luật | Ý nghĩa |
+|---|---|
+| `onlyItemWriterWritesItems` | Chỉ `ItemWriter` gọi DAO ghi `catalog_item` |
+| `onlyPublishServicePublishes` | Chỉ `PublishService` đặt trạng thái `PUBLISHED` |
+| `onlyDistributionUsesValkey` | Chỉ gói `distribution` phụ thuộc client Valkey |
+| `onlyFiltersAndJobsSetTenant` | Chỉ bộ lọc web và lớp tác vụ nền gọi `TenantContext.runAs` |
+| `webDoesNotTouchPersistence` | Gói `web` không phụ thuộc trực tiếp `persistence` |
+| `noJavaUtilRegexInSchema` | `SchemaCompiler` không dùng `java.util.regex` cho mẫu của người dùng |
+| `noFieldInjection` | Không dùng `@Autowired` trên trường |
+
+## 13. Lộ trình hiện thực, rủi ro và câu hỏi mở
+
+### 13.1. Lộ trình hiện thực theo đợt
+
+Thứ tự hiện thực bám kế hoạch W0 → W6 của dự án; cột "Đợt" dùng mã của kế hoạch phát triển. Mã nguồn W2 hiện có dùng package `vn.lgsp`; đợt W3 đổi sang `vn.datahub` bằng một commit đổi tên thuần (không đổi hành vi) trước khi thêm mã mới của module, để lịch sử dễ theo dõi.
+
+| Đợt | Nội dung | FR chính |
+|---|---|---|
+| W3 | Khung module, CSDL, RLS, tạo và soạn danh mục, phiên bản, duyệt, phát hành, tra cứu cơ bản | 001…019, 026, 027 |
+| W4 | Bộ đệm hai tầng, ảnh chụp, nhập xuất hai pha, khuôn Aita, truy vấn DSL, outbox và sự kiện | 020…025, 028…034 |
+| W5 | Đồng bộ quốc gia, ĐVHC và chuyển mã, ánh xạ mã, HYBRID, cấp quyền khai thác, nạp gói nền | 035…038, 040…042, 044…049, 052 |
+| W6 | Di trú Aita, kiểm toán và lịch sử, độ phủ, tham số, kiểm thử hiệu năng và hỗn loạn | 043, 050, 051, 053 |
+
+FR-07-039 (đề xuất bổ sung lên NDXP, mức C) không thuộc MVP và để sau W6.
+
+### 13.2. Rủi ro kỹ thuật
+
+| Rủi ro | Ảnh hưởng | Giảm thiểu |
+|---|---|---|
+| NDXP thay đổi API hoặc không cung cấp phiên bản tin cậy | Đồng bộ lỗi hoặc tải lại toàn bộ mỗi lần | Toàn bộ chi tiết NDXP nằm trong adapter PH-14; dùng băm nội dung (§4.11.3) |
+| Dữ liệu ĐVHC chính thức chưa có dạng máy đọc | Không nạp đủ 3.321 đơn vị cấp xã đúng hạn | Nạp qua nhập tệp có duyệt; theo dõi Q07-01, Q07-25 |
+| Bản sao copy-on-write tốn dung lượng | CSDL lớn nhanh hơn dự kiến | Giữ trực tuyến theo `07.rdm.version-online-retention-years`, chuyển phiên bản cũ sang ảnh chụp |
+| Ảnh chụp chậm hơn sự kiện | `dh-runtime` tạm dùng phiên bản cũ | Thử lại có lùi; cảnh báo `RdmSnapshotMissing` |
+| Dữ liệu Aita bẩn hơn dự kiến | Di trú kéo dài | Chạy thử sớm ở W4 trên bản sao Aita thật; báo cáo cho từng sở |
+
+### 13.3. Câu hỏi mở
+
+| Mã | Câu hỏi | Mục | Đề xuất tạm |
+|---|---|---|---|
+| Q07-30 | Có dùng jOOQ cho trình dịch DSL và truy vấn động không | §3.5 | Không ở MVP; xem lại nếu `SqlTranslator` vượt 1.500 dòng |
+| Q07-31 | Bộ máy regex cuối cùng cho từ khóa `pattern` của JSON Schema | §4.1.2 | Joni có ngắt theo bước; RE2/J là phương án dự phòng |
+| Q07-32 | Số liệu thời gian sao chép bản nháp và ngân sách hiệu năng chưa đo | §4.2.3, §11.1 | Đo ở W4 trên môi trường PERF |
+| Q07-33 | Phiên bản 1 của danh mục `require_approval = false` có bắt buộc duyệt | §4.3.5 | Có (coi thay đổi 100%) cho tới khi nghiệp vụ xác nhận |
+| Q07-34 | Rút lại phiên bản đang chờ duyệt bằng `withdraw: true` trên API-07-019 hay thêm API riêng | §4.4.1 | Dùng API-07-019 để không thêm mã API |
+| Q07-35 | Cách tìm danh mục HYBRID của mọi tenant mở rộng một danh mục `COMMON` khi sinh ảnh chụp hợp nhất | §4.5.2 | Bảng đăng ký mở rộng ở module `shared`, cập nhật từ EVT-07-01 |
+| Q07-36 | URL tải tệp xuất hạn 15 phút trong khi tệp giữ 24 giờ có đúng ý "URL tải (hạn 24 giờ)" của khung | §4.8.1 | Có; URL ký lại được trong 24 giờ |
+| Q07-37 | Tên claim mang `member_system_id` trong token của HTTT | §4.18 | Theo D02-08; cần nhóm PH-01 chốt |

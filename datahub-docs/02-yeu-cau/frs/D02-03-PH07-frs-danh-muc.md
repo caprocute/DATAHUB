@@ -2968,6 +2968,11 @@ Bảng sau là danh sách chính thức tham số của namespace `07.rdm` lưu 
 | `07.rdm.sync-default-cron` | Chuỗi (cron 6 trường) | `0 0 1 * * *` | Không dày hơn một giờ | TENANT | FR-07-035 |
 | `07.rdm.sync-stale-alert-days` | Số nguyên (ngày) | 7 | 1…30 | TENANT | FR-07-036 (cảnh báo trên giao diện) |
 | `07.rdm.version-online-retention-years` | Số nguyên (năm) | 5 | 3…20 | PLATFORM | Lưu trữ bản ghi của phiên bản cũ (D03-03-PH07) |
+| `07.rdm.feature.national-sync` | Boolean | `true` | | PLATFORM | Cờ tính năng FR-07-035…038 (D03-02-PH07 §9.3) |
+| `07.rdm.feature.hybrid` | Boolean | `true` | | PLATFORM | Cờ tính năng tạo danh mục HYBRID, FR-07-048 |
+| `07.rdm.feature.structured-query` | Boolean | `true` | | PLATFORM | Cờ tính năng FR-07-032 |
+| `07.rdm.feature.national-proposal` | Boolean | `false` | | PLATFORM | Cờ tính năng FR-07-039 (ngoài MVP) |
+| `07.rdm.feature.aita-template` | Boolean | `true` | | PLATFORM | Cờ khuôn nhập `LEGACY_AITA`, FR-07-022; tắt sau khi di trú xong |
 
 ### 7.2. Yêu cầu phi chức năng riêng của PH-07
 
