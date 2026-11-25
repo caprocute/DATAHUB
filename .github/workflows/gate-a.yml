@@ -21,3 +21,24 @@ jobs:
         run: mvn -B -f camel/dancu/pom.xml test
       - name: Camel datdai JVM test
         run: mvn -B -f camel/datdai/pom.xml test
+
+  # Console (L-FE): catalog designer phải cùng dòng với runtime Camel Quarkus của camel/*.
+  # `catalog:check` đọc camel-quarkus.platform.version trong camel/<du>/pom.xml và so với
+  # catalog đã commit — nâng runtime mà quên `npm run catalog` thì đỏ ở đây.
+  console:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/console
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/console/package-lock.json
+      - run: npm ci
+      - name: Catalog designer khớp runtime Camel
+        run: npm run catalog:check
+      - run: npm test
+      - run: npm run build

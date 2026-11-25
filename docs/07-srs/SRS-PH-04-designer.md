@@ -13,11 +13,11 @@
 
 ## 1. Số liệu nền — quyết định thiết kế dựa trên đây
 
-Đo trực tiếp trên catalog đang dùng (`@kaoto/camel-catalog` nhánh `camel-quarkus/3.35.0`):
+Đo trực tiếp trên catalog đang dùng (`@kaoto/camel-catalog` nhánh `camel-quarkus/3.33.1`, Camel 4.18.2 — cùng dòng runtime Camel Quarkus 3.33.2 của `camel/*`; đổi từ 3.35.0 ngày 2026-11-25):
 
 | Chỉ số | Giá trị | Hệ quả thiết kế |
 |---|---|---|
-| Tổng nút khả dụng | **751** (323 component · 74 EIP · 252 kamelet · 48 dataformat · 26 language · 21 entity · 7 loadbalancer) | Bảng thành phần phải có tab + lọc nhãn + tìm kiếm; không thể liệt kê phẳng |
+| Tổng nút khả dụng | **749** (323 component · 75 EIP · 252 kamelet · 47 dataformat · 26 language · 19 entity · 7 loadbalancer) | Bảng thành phần phải có tab + lọc nhãn + tìm kiếm; không thể liệt kê phẳng |
 | Thuộc tính mỗi component | trung vị **19**, p90 **64**, tối đa **154** | **Popup nhỏ là bất khả thi.** Cần cửa sổ lớn, chia nhóm, tìm trong trường |
 | Nhóm thuộc tính gốc | `common` 1148 · `producer` 1536 · `consumer` 944 · `security` 994 · `scheduler` 898 · `advanced` 826+ | Chia tab theo đúng nhóm gốc, không tự đặt nhóm |
 | Kiểu trường | string 4265 · boolean 2357 · integer 1277 · **enum 876** · object 130 | Phải sinh điều khiển theo kiểu; 876 trường enum bắt buộc dùng `Select`, không phải ô text |
@@ -310,7 +310,7 @@ tên route không phải địa chỉ — không sửa gì, và nói rõ là kh�
 | **FR-D-070** | Duyệt toàn bộ **751 nút** đã vendor, tab theo loại, lọc nhãn gốc có số đếm | **M** |
 | **FR-D-071** | Tìm kiếm có xếp hạng, **ảo hóa** danh sách (ngưỡng NFR-D-02) | **M** |
 | **FR-D-072** | Trang chi tiết: mô tả gốc, bảng thuộc tính theo nhóm, cú pháp URI, mức hỗ trợ, cảnh báo `deprecated`, **phụ thuộc Maven** | **M** |
-| **FR-D-073** | Hiện rõ **nguồn và giấy phép** catalog (Apache-2.0, `camel-quarkus/3.35.0`) — nghĩa vụ tuân thủ | **M** |
+| **FR-D-073** | Hiện rõ **nguồn và giấy phép** catalog (Apache-2.0, nhánh `camel-quarkus` cùng dòng runtime `camel/*`) — nghĩa vụ tuân thủ | **M** |
 
 > **Đường dẫn là `/components`, không phải `/catalog`.** `/catalog` đã là màn đăng ký và
 > publish dịch vụ APISIX của PH-02 — cùng chữ "catalog" nhưng hai nghiệp vụ khác hẳn nhau.
