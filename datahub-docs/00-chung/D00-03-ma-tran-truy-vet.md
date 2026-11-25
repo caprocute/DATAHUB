@@ -316,6 +316,8 @@ Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đ
 
 Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp đồng chứ không phải yêu cầu kỹ thuật.
 
+Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 §9.1](../02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md), chiều LGC → FR → test case và nghiệm thu ở [D05-02-PH04 §7, §8.2](../05-kiem-thu/test-case/D05-02-PH04-test-case.md). Khối DMDC tương ứng ở D02-03-PH07 và D05-02-PH07.
+
 > Bảng trên được đếm bằng script từ chính các bảng ở mục 4. Khi RTM được xuất ra tệp .xlsx ở đợt 1, script này chạy lại mỗi lần build.
 
 ### 5.1. Các mục loại bỏ (chủ đầu tư đã chấp thuận ngày 21/11/2026)
