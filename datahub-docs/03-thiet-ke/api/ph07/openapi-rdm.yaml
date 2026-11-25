@@ -4056,8 +4056,16 @@ components:
         retroactiveReason: { type: [string, 'null'], maxLength: 1000, description: 'Bắt buộc khi `effectiveFrom` < hôm nay (chỉ origin SYNC/MIGRATION).' }
     VersionActionRequest:
       type: object
+      description: |
+        Thân của API-07-017 (trình, rút lại) và API-07-018 (duyệt, thu hồi duyệt) theo FR-07-015.
+        `action` của API-07-017 nhận `SUBMIT` (mặc định) hoặc `WITHDRAW` (người trình rút lại);
+        của API-07-018 nhận `APPROVE` (mặc định) hoặc `UNAPPROVE` (thu hồi duyệt trước khi phát hành).
+        Giá trị không thuộc API tương ứng trả ERR-07-009.
       properties:
-        comment: { type: string, maxLength: 2000 }
+        action: { type: string, enum: [SUBMIT, WITHDRAW, APPROVE, UNAPPROVE] }
+        comment: { type: string, maxLength: 4000 }
+        effectiveFrom: { $ref: '#/components/schemas/TDate' }
+        legalBasis: { type: string, maxLength: 1000 }
     RejectRequest:
       type: object
       required: [reason]
@@ -4069,6 +4077,12 @@ components:
         effectiveFrom: { $ref: '#/components/schemas/TDate' }
         legalBasis: { type: string, maxLength: 1000 }
         comment: { type: string, maxLength: 2000 }
+        changeNote: { type: string, maxLength: 4000 }
+        retroactiveReason:
+          type: string
+          minLength: 10
+          maxLength: 1000
+          description: Bắt buộc khi `effectiveFrom` trước hôm nay (chỉ phiên bản `origin` SYNC, MIGRATION; BR-07-027).
         retroactiveReason: { type: string, maxLength: 1000 }
     ValidationReport:
       type: object

@@ -636,7 +636,7 @@ CREATE TABLE ph07_rdm.version_review (
   CONSTRAINT fk_version_review_version FOREIGN KEY (version_id, tenant_id)
     REFERENCES ph07_rdm.catalog_version (id, tenant_id) ON DELETE CASCADE,
   CONSTRAINT ck_version_review_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
-  CONSTRAINT ck_version_review_action CHECK (action IN ('SUBMIT','APPROVE','REJECT','PUBLISH','DISCARD')),
+  CONSTRAINT ck_version_review_action CHECK (action IN ('SUBMIT','WITHDRAW','APPROVE','UNAPPROVE','REJECT','PUBLISH','DISCARD')),
   CONSTRAINT ck_version_review_reject_reason CHECK (action <> 'REJECT' OR length(btrim(coalesce(comment, ''))) > 0)
 );
 CREATE INDEX ix_version_review_version ON ph07_rdm.version_review (version_id, at);
@@ -827,7 +827,7 @@ CREATE TABLE ph07_rdm.import_row (
   CONSTRAINT fk_import_row_job FOREIGN KEY (job_id, tenant_id)
     REFERENCES ph07_rdm.import_job (id, tenant_id) ON DELETE CASCADE,
   CONSTRAINT ck_import_row_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
-  CONSTRAINT ck_import_row_action CHECK (action IS NULL OR action IN ('INSERT','UPDATE','DEPRECATE','UNCHANGED','DELETE')),
+  CONSTRAINT ck_import_row_action CHECK (action IS NULL OR action IN ('INSERT','UPDATE','DEPRECATE','UNCHANGED','DELETE_DRAFT')),
   CONSTRAINT ck_import_row_errors CHECK (errors IS NULL OR jsonb_typeof(errors) = 'array'),
   CONSTRAINT ck_import_row_valid CHECK (valid OR errors IS NOT NULL)
 ) PARTITION BY RANGE (created_at);

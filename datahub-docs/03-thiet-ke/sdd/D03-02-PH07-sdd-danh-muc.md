@@ -1120,9 +1120,10 @@ Bảng dưới đây là bảng chuyển trạng thái đầy đủ của `catal
 | `DRAFT` | `DISCARD` (API-07-015) | Người gọi có `PERM-07-update` | Xóa bản ghi, thuộc tính, sự kiện sắp xếp của phiên bản; giữ dòng phiên bản để truy vết | `DISCARDED` | |
 | `IN_REVIEW` | `APPROVE` (API-07-018) | Người gọi có `PERM-07-publish`; người gọi ≠ `submitted_by` và ≠ `updated_by` (BR-07-011, bốn mắt D02-08) | Ghi `approved_by/at` | `APPROVED` | ERR-07-015 |
 | `IN_REVIEW` | `REJECT` (API-07-019) | Như `APPROVE`; có `comment` | Ghi lý do; outbox EVT-07-06 | `DRAFT` | ERR-07-015, 009 |
-| `IN_REVIEW` | `WITHDRAW` (API-07-019 với `withdraw=true` do người trình) | Người gọi = `submitted_by` | Ghi `version_review` | `DRAFT` | ERR-07-004 |
+| `IN_REVIEW` | `WITHDRAW` (API-07-017 với `action = WITHDRAW`, do người trình) | Người gọi = `submitted_by` | Ghi `version_review` | `DRAFT` | ERR-07-004 |
 | `APPROVED` | `PUBLISH` (API-07-020) | Người gọi có `PERM-07-publish`; ≠ `submitted_by`, ≠ `updated_by`; `effective_from` hợp lệ tại thời điểm phát hành (BR-07-027) | §4.5; outbox EVT-07-05 (và EVT-07-10 nếu DVHC có sự kiện sắp xếp) | `PUBLISHED` | ERR-07-015, 017 |
 | `APPROVED` | `REJECT` | Như `REJECT` ở trên | Trả về soạn | `DRAFT` | ERR-07-015 |
+| `APPROVED` | `UNAPPROVE` (API-07-018 với `action = UNAPPROVE`) | Người gọi = `approved_by` | Ghi `version_review`; xóa `approved_by/at` | `IN_REVIEW` | ERR-07-004 |
 | `PUBLISHED` | mọi sự kiện | | | | ERR-07-004 |
 | `DISCARDED` | mọi sự kiện | | | | ERR-07-004 |
 
@@ -1141,6 +1142,7 @@ stateDiagram-v2
     IN_REVIEW --> DRAFT : REJECT / WITHDRAW
     APPROVED --> PUBLISHED : PUBLISH [bốn mắt, ngày hợp lệ]
     APPROVED --> DRAFT : REJECT
+    APPROVED --> IN_REVIEW : UNAPPROVE
     PUBLISHED --> [*]
     DISCARDED --> [*]
 ```
@@ -2688,7 +2690,7 @@ FR-07-039 (đề xuất bổ sung lên NDXP, mức C) không thuộc MVP và đ�
 | Q07-31 | Bộ máy regex cuối cùng cho từ khóa `pattern` của JSON Schema | §4.1.2 | Joni có ngắt theo bước; RE2/J là phương án dự phòng |
 | Q07-32 | Số liệu thời gian sao chép bản nháp và ngân sách hiệu năng chưa đo | §4.2.3, §11.1 | Đo ở W4 trên môi trường PERF |
 | Q07-33 | Phiên bản 1 của danh mục `require_approval = false` có bắt buộc duyệt | §4.3.5 | Có (coi thay đổi 100%) cho tới khi nghiệp vụ xác nhận |
-| Q07-34 | Rút lại phiên bản đang chờ duyệt bằng `withdraw: true` trên API-07-019 hay thêm API riêng | §4.4.1 | Dùng API-07-019 để không thêm mã API |
+| Q07-34 | Đã đóng 25/11/2026: rút lại dùng API-07-017 với `action = WITHDRAW`, thu hồi duyệt dùng API-07-018 với `action = UNAPPROVE`, đúng FR-07-015 | §4.4.1 | Không thêm API; trước đây đề xuất `withdraw: true` trên API-07-019 không thêm mã API |
 | Q07-35 | Cách tìm danh mục HYBRID của mọi tenant mở rộng một danh mục `COMMON` khi sinh ảnh chụp hợp nhất | §4.5.2 | Bảng đăng ký mở rộng ở module `shared`, cập nhật từ EVT-07-01 |
 | Q07-36 | URL tải tệp xuất hạn 15 phút trong khi tệp giữ 24 giờ có đúng ý "URL tải (hạn 24 giờ)" của khung | §4.8.1 | Có; URL ký lại được trong 24 giờ |
 | Q07-37 | Tên claim mang `member_system_id` trong token của HTTT | §4.18 | Theo D02-08; cần nhóm PH-01 chốt |

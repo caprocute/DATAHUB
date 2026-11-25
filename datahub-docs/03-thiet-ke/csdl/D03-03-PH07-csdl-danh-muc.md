@@ -467,7 +467,7 @@ Ràng buộc:
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
-| `ck_version_review_action` | Kiểm tra | `CHECK (((action)::text = ANY ((ARRAY['SUBMIT'::character varying, 'APPROVE'::character varying, 'REJECT'::character varying, 'PUBLISH'::character varying, 'DISCARD'::character varying])::text[])))` |
+| `ck_version_review_action` | Kiểm tra | `CHECK (((action)::text = ANY ((ARRAY['SUBMIT'::character varying, 'WITHDRAW'::character varying, 'APPROVE'::character varying, 'UNAPPROVE'::character varying, 'REJECT'::character varying, 'PUBLISH'::character varying, 'DISCARD'::character varying])::text[])))` |
 | `ck_version_review_reject_reason` | Kiểm tra | `CHECK ((((action)::text <> 'REJECT'::text) OR (length(btrim(COALESCE(comment, ''::text))) > 0)))` |
 | `ck_version_review_tenant` | Kiểm tra | `CHECK (((tenant_id)::text ~ '^(T[0-9]{2}\|COMMON)$'::text))` |
 | `fk_version_review_version` | Khóa ngoại | `FOREIGN KEY (version_id, tenant_id) REFERENCES ph07_rdm.catalog_version(id, tenant_id) ON DELETE CASCADE` |
@@ -575,7 +575,7 @@ Ràng buộc:
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
-| `ck_import_row_action` | Kiểm tra | `CHECK (((action IS NULL) OR ((action)::text = ANY ((ARRAY['INSERT'::character varying, 'UPDATE'::character varying, 'DEPRECATE'::character varying, 'UNCHANGED'::character varying, 'DELETE'::character varying])::text[]))))` |
+| `ck_import_row_action` | Kiểm tra | `CHECK (((action IS NULL) OR ((action)::text = ANY ((ARRAY['INSERT'::character varying, 'UPDATE'::character varying, 'DEPRECATE'::character varying, 'UNCHANGED'::character varying, 'DELETE_DRAFT'::character varying])::text[]))))` |
 | `ck_import_row_errors` | Kiểm tra | `CHECK (((errors IS NULL) OR (jsonb_typeof(errors) = 'array'::text)))` |
 | `ck_import_row_tenant` | Kiểm tra | `CHECK (((tenant_id)::text ~ '^(T[0-9]{2}\|COMMON)$'::text))` |
 | `ck_import_row_valid` | Kiểm tra | `CHECK ((valid OR (errors IS NOT NULL)))` |
