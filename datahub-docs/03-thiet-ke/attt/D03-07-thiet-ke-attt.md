@@ -135,7 +135,7 @@ Bảng sau là quy tắc chuẩn; mọi ngoại lệ phải ghi trong SDD phân 
 | Log vận hành | Đầy đủ | Đầy đủ | Che một phần (ví dụ `0912***678`, `ng***@example.gov.vn`) | Không ghi giá trị; chỉ ghi tên trường và dấu `[REDACTED]` |
 | Nhật ký kiểm toán | Đầy đủ | Đầy đủ | Che một phần trong giá trị trước/sau | Không ghi giá trị; ghi băm có khóa để tra "ai đã truy cập đối tượng X" |
 | Trace | Thuộc tính span không chứa thân bản tin ở mọi mức | ← | ← | ← |
-| Hiển thị giao diện | Đầy đủ | Theo quyền | Theo quyền, che một phần | Che mặc định; nút "Xem đầy đủ" yêu cầu `PERM-09-reveal`, lý do, sinh bản ghi kiểm toán, hiển thị tối đa 60 giây |
+| Hiển thị giao diện | Đầy đủ | Theo quyền | Theo quyền, che một phần | Che mặc định; nút "Xem đầy đủ" yêu cầu `PERM-09-unmask` (D02-08), lý do, sinh bản ghi kiểm toán, hiển thị tối đa 60 giây |
 | Xuất tệp | Đầy đủ | Theo quyền | Theo quyền | Che, trừ khi có quyền và nêu lý do (FR-00-034); tệp xuất có thủy vân tên người xuất và mã truy vết |
 | Bộ nhớ đệm | Được | Được | Được, TTL ≤ 15 phút, khóa có tiền tố tenant | Không lưu giá trị rõ trong Valkey |
 | Môi trường DEV/TEST | Được dùng dữ liệu thật | Được | Chỉ dữ liệu giả hoặc giả danh hóa | Cấm dữ liệu thật; chỉ dữ liệu sinh |

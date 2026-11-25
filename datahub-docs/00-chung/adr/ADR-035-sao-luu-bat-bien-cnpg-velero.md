@@ -24,7 +24,7 @@ Sao chép DR (ADR-034) lan cả lỗi logic và mã hóa của mã độc sang s
 
 ## Quyết định
 
-Chọn **phương án C**. Đích sao lưu là kho S3 có khóa đối tượng chế độ tuân thủ (Ceph RGW, SeaweedFS đã kiểm chứng khóa đối tượng, thiết bị WORM của TTDL hoặc lưu trữ đối tượng của cloud Chính phủ), không phải Garage, đặt ngoài cụm và ngoài site chính. Mọi bản sao lưu được mã hóa phía máy khách bằng khóa do OpenBao quản lý. Thời gian giữ: 35 ngày cho bản ngày và WAL, 12 tháng cho bản tháng; bản tháng xuất ra phương tiện ngoại tuyến. Mọi đối tượng sao lưu có kiểm tra khôi phục tự động theo lịch ở D03-09 §8.2; kiểm tra khôi phục thất bại là cảnh báo SEV-2. Kho WORM nhật ký kiểm toán theo ADR-031 có thể dùng chung thiết bị nhưng bucket và chính sách riêng.
+Chọn **phương án C**. Đích sao lưu là kho S3 có khóa đối tượng chế độ tuân thủ (Ceph RGW, chốt 25/11/2026; trước đó cân nhắc cả SeaweedFS đã kiểm chứng khóa đối tượng, thiết bị WORM của TTDL hoặc lưu trữ đối tượng của cloud Chính phủ), không phải Garage, đặt ngoài cụm và ngoài site chính. Mọi bản sao lưu được mã hóa phía máy khách bằng khóa do OpenBao quản lý. Thời gian giữ: 35 ngày cho bản ngày và WAL, 12 tháng cho bản tháng; bản tháng xuất ra phương tiện ngoại tuyến. Mọi đối tượng sao lưu có kiểm tra khôi phục tự động theo lịch ở D03-09 §8.2; kiểm tra khôi phục thất bại là cảnh báo SEV-2. Kho WORM nhật ký kiểm toán theo ADR-031 có thể dùng chung thiết bị nhưng bucket và chính sách riêng.
 
 ## Hệ quả
 

@@ -2,8 +2,8 @@
 ma_tai_lieu: ADR-030
 ten: Thiết kế ATTT theo cấp độ 3, chừa điểm nâng cấp cấp độ 4
 phien_ban: 0.1
-ngay: 2026-11-21
-trang_thai: Đề xuất
+ngay: 2026-11-25
+trang_thai: Chấp nhận
 nguoi_doc: Kiến trúc sư, Trưởng nhóm kỹ thuật, Hội đồng thẩm định
 ---
 
