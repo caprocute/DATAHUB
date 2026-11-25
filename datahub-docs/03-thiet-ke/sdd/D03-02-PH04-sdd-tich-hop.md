@@ -664,3 +664,274 @@ Từ `PENDING` sang `SYNCING` khi Argo CD báo Application `Progressing` (webhoo
 ### 5.6. Outbox và sự kiện
 
 Bảng `ph04.outbox` (DD-11) ghi cùng giao dịch với thay đổi miền; Debezium đọc WAL, định tuyến theo cột `topic` (EVT-04-01…10). Topic hệ thống EVT-04-11 (lệnh) không qua outbox vì lệnh khẩn phải đi trước mọi ghi khác (§10.2); `CommandService` gửi trực tiếp bằng nhà sản xuất Kafka lũy đẳng `acks=all` và ghi bảng `runtime_command` trong cùng luồng xử lý (gửi trước, ghi sau với lệnh khẩn; ghi trước, gửi sau với lệnh thường).
+
+## 6. Trình thiết kế
+
+Phần này bổ sung D03-06-PH04 §27 ở mức thuật toán. Mã nằm ở `apps/console/src/features/integration/designer/`.
+
+### 6.1. Mô hình tài nguyên
+
+Trình thiết kế không thao tác trực tiếp trên YAML hay trên nút XYFlow. Nguồn sự thật trong trình duyệt là **cây tài nguyên** (`ResourceTree`) theo mô hình của Kaoto (ADR-060):
+
+```ts
+type NodeId = string;                     // ổn định: lấy từ `id` Camel; thiếu thì sinh `{loại}-{8 ký tự}` và ghi vào YAML
+interface StepNode {
+  id: NodeId;
+  kind: 'from' | 'eip' | 'component' | 'kamelet' | 'unknown';
+  name: string;                           // 'choice', 'to', 'kamelet:dh-deliver-action', 'http'…
+  props: Record<string, unknown>;         // chỉ giá trị khác mặc định hoặc được ghim "luôn ghi"
+  uri?: { scheme: string; path: string; params: Record<string, string> };
+  branches?: { key: 'when' | 'otherwise' | 'doTry' | 'doCatch' | 'doFinally' | 'steps'; cond?: Expr; steps: StepNode[] }[];
+  raw?: unknown;                          // phần tử không biểu diễn được, giữ nguyên để ghi lại
+  comments?: { before?: string[]; inline?: string };
+}
+interface ResourceTree { kind: 'ROUTE' | 'KAMELET' | 'PIPE' | 'TEST'; items: TopLevel[]; beans: BeanDef[]; }
+```
+
+Mọi thay đổi là một `Command` (`InsertStep`, `MoveStep`, `RemoveStep`, `SetProp`, `WrapInStage`, `ExtractSubroute`, `ReplaceDefinition`…) có `apply` và `invert`; ngăn hoàn tác ≥ 100 lệnh, gộp lệnh cùng trường trong 1 giây (D03-06-PH04 §10.20). Sơ đồ (XYFlow) và YAML đều là **hình chiếu** của cây: đổi cây thì vẽ lại sơ đồ và sinh lại YAML (≤ 100 ms, NFR-04-005); sửa YAML thì phân tích lại thành cây sau 500 ms ngừng gõ, rồi đối chiếu `id` để giữ vùng chọn.
+
+### 6.2. Quay vòng YAML và băm nội dung
+
+Bộ đọc, ghi dùng `yaml` (eemeli) chế độ `Document` để giữ chú thích và thứ tự khóa của phần không bị sửa. Quy trình ghi:
+
+1. Duyệt cây, phát `Document` theo thứ tự khóa của lược đồ Camel YAML DSL cho phiên bản catalog (bảng thứ tự sinh cùng catalog).
+2. Phần tử `unknown` ghi lại `raw` nguyên dạng.
+3. Bỏ thuộc tính bằng mặc định của catalog, trừ thuộc tính ghim.
+4. Thụt lề 2, chuỗi nhiều dòng dùng `|`, kết thúc một dòng trống.
+
+**YAML chuẩn hóa** (để băm, để ghi Git) do máy chủ tính bằng `YamlCanonicalizer` (Java, SnakeYAML Engine): bỏ mọi chú thích, sắp khóa theo bảng thứ tự của catalog, chuẩn hóa vô hướng (`true`, số không ngoặc), thụt lề 2, một dòng trống cuối. `contentHash = sha256(canonicalYaml ‖ 0x00 ‖ sha256(*.jq theo tên))`. Trình duyệt không tự tính băm dùng cho điều kiện duyệt; băm chỉ lấy từ máy chủ.
+
+Kiểm thử quay vòng (BR-04-006, ADR-060): bộ ngữ liệu gồm 9 luồng mẫu, 41 tệp XML Bus cũ đã chuyển, toàn bộ ví dụ YAML trong tài liệu Camel 4.18; với mỗi tệp: đọc → ghi không sửa → so byte (phía trình duyệt) và so băm chuẩn hóa (phía máy chủ). Một khác biệt là lỗi chặn CI.
+
+### 6.3. Ánh xạ nhóm nghiệp vụ của bảng thành phần
+
+Tệp `palette-groups.json` (vendor cùng catalog, PA sửa được qua UI-04-17, lưu ở `ph04.palette_group_rule`, phục vụ qua API-04-070) gồm danh sách luật xét theo thứ tự; một thành phần thuộc mọi nhóm có luật khớp:
+
+```json
+{
+  "version": 3,
+  "groups": [
+    { "code": "entry",     "label": "Điểm vào",          "icon": "LogIn",        "color": "color-chart-1",
+      "match": [{ "role": "consumer", "names": ["platform-http","rest","kafka","timer","cron","scheduler"] },
+                { "kameletType": "source" }] },
+    { "code": "routing",   "label": "Định tuyến",        "icon": "GitBranch",    "color": "color-chart-2",
+      "match": [{ "eipLabel": "routing" }, { "names": ["choice","filter","split","aggregate","multicast","recipientList","loadBalance"] }] },
+    { "code": "transform", "label": "Chuyển đổi dữ liệu", "icon": "Shuffle",     "color": "color-chart-3",
+      "match": [{ "eipLabel": "transformation" }, { "kind": ["dataformat","language"] }, { "names": ["jq","setBody","marshal","unmarshal"] }] },
+    { "code": "database",  "label": "Kết nối CSDL",      "icon": "Database",     "color": "color-chart-4",
+      "match": [{ "componentLabel": ["database","sql"] }, { "names": ["dh-sql-ro-source","dh-sql-ro-action"] }] },
+    { "code": "network",   "label": "Mạng",              "icon": "Globe",        "color": "color-chart-5",
+      "match": [{ "names": ["http","https","rest","file","ftp","sftp","ftps","cxf","soap"] }] },
+    { "code": "messaging", "label": "Hàng đợi bản tin",  "icon": "Mail",         "color": "color-chart-6",
+      "match": [{ "componentLabel": ["messaging"] }, { "names": ["kafka","jms","amqp","mqtt"] }] },
+    { "code": "schedule",  "label": "Lập lịch",          "icon": "CalendarClock","color": "color-chart-7",
+      "match": [{ "componentLabel": ["scheduling"] }, { "names": ["timer","quartz","cron","scheduler"] }] },
+    { "code": "security",  "label": "Bảo mật",           "icon": "ShieldCheck",  "color": "color-chart-8",
+      "match": [{ "componentLabel": ["security"] }, { "names": ["crypto","jasypt"] }, { "kameletLabel": "dh-mask" }] },
+    { "code": "dh-stage",  "label": "Chặng chuẩn Datahub","icon": "Hexagon",     "color": "color-accent",
+      "match": [{ "kameletPrefix": "dh-" }] },
+    { "code": "other",     "label": "Khác",              "icon": "Box",          "color": "color-neutral-solid",
+      "match": [{ "fallback": true }] }
+  ],
+  "synonyms": { "gọi api": ["http","rest"], "csdl": ["sql","jdbc"], "tệp": ["file","ftp","sftp"], "hẹn giờ": ["timer","cron"] }
+}
+```
+
+Nhóm `other` chỉ nhận thành phần không khớp nhóm nào khác. Từ đồng nghĩa tiếng Việt dùng cho tìm kiếm (tìm mờ không dấu, `minisearch` trong Web Worker).
+
+### 6.4. Bố cục sơ đồ
+
+Bố cục tự động: dagre trong Web Worker, hướng trái sang phải, `ranksep` 64, `nodesep` 24, khối chặng chuẩn là nút nhóm có thể thu gọn. Người dùng kéo chặng thì vị trí được ghim (`pinned: true`) và lưu ở `canvasLayout.nodes[id]`; lần bố cục sau giữ nút ghim, xếp nút còn lại quanh chúng. `canvasLayout` gồm `nodes{ id → {x, y, pinned, collapsed} }`, `notes[]` (ghi chú dán: văn bản ≤ 2.000 ký tự, màu, vị trí, gắn với `id` chặng tùy chọn), `viewport`. Chặng bị xóa thì mục bố cục của nó bị dọn khi lưu.
+
+### 6.5. Lưu nháp, phiên soạn và gộp ba bên
+
+Trình tự lưu: (1) ghi bản nháp vào IndexedDB khóa `dh.int.draft.{tenant}.{flow}.{version}` sau mỗi lệnh (gộp 1 giây); (2) 30 giây sau thay đổi cuối hoặc `Ctrl+S`, gửi API-04-022 với `If-Match: "{etag}"`, thân `VersionDraftUpdate`; (3) máy chủ trả ETag mới và kết quả mức `DESIGN`; (4) xóa bản IndexedDB tương ứng ETag đã xác nhận.
+
+ETag = `W/"{row_version}-{contentHash[0..8]}"` của `flow_version`. Máy chủ cập nhật bằng `UPDATE … WHERE flow_version_id = ? AND row_version = ?`; 0 dòng thì trả ERR-04-006 kèm `currentEtag`, `savedBy`, `savedAt`.
+
+Gộp ba bên (`ThreeWayMerge` trong worker): đầu vào là cây gốc (lần tải cuối), cây của mình, cây máy chủ. So theo `id` nút:
+
+| Trường hợp | Kết quả |
+|---|---|
+| Nút chỉ một bên sửa | Lấy bên sửa |
+| Nút hai bên sửa khác trường | Gộp theo trường |
+| Cùng trường hai bên khác giá trị | Xung đột, người dùng chọn |
+| Một bên xóa, bên kia sửa | Xung đột |
+| Hai bên chèn nút mới cùng vị trí | Giữ cả hai, nút của mình sau |
+| `canvasLayout` | Lấy của mình |
+| `samples` theo `id` chặng | Như trường |
+
+Phiên soạn (API-04-034): khóa Valkey `dh:int:edit:{tenant}:{flowId}:{versionNo}` là hash `userId → {lastSeen, displayName}`, mỗi trường hết hạn sau 120 giây (Valkey 8 hỗ trợ TTL theo trường `HEXPIRE`). Phản hồi nhịp trả danh sách người khác và `catalogVersion` hiện hành của tenant.
+
+### 6.6. Đường sinh catalog
+
+```text
+camel/*/pom.xml  ──đọc phiên bản──►  tools/catalog-gen (Node)
+                                       │  @kaoto/camel-catalog 0.7.0 (camel-quarkus 3.33.1)
+                                       │  hoặc camel-catalog 4.18.x khi không có gói Kaoto
+                                       ▼
+apps/console/src/features/integration/designer/catalog/generated/
+  ├── index.json        # runtime, runtimeVersion, camelVersion, generatedAt, sha256
+  ├── components/*.json # lược đồ thuộc tính theo nhóm
+  ├── eips.json, languages.json, dataformats.json, kamelets/*.json
+  ├── yaml-key-order.json
+  └── i18n/vi.json      # bản dịch tiêu đề, mô tả
+```
+
+`npm run catalog:check` (cổng CI, PR #5) so `runtimeVersion` với `camel-quarkus.version` của từng hồ sơ trong `dh-runtime/profiles/*/pom.xml`; lệch bản phụ thì đỏ; lệch bản vá thì chạy `catalog-diff` và chỉ xanh khi danh sách thành phần, lược đồ không đổi. `dh-integration` nạp cùng thư mục sinh (đóng vào ảnh) để phục vụ API-04-070, 071 và cho `ValidationEngine` phía máy chủ, nên hai phía luôn cùng một catalog.
+
+Nâng runtime (UC-04-22): `CatalogUpgradeJob` so catalog cũ, mới, ghi `ph04.catalog_change` (thành phần, thuộc tính bị bỏ, đổi tên), đánh dấu `flow_version.needs_revalidation = true` cho phiên bản mở và phiên bản đang chạy của tenant được nâng, phát thông báo cho người đóng góp.
+
+### 6.7. Trình ánh xạ dữ liệu
+
+`*.dhmap.json` (ADR-066):
+
+```json
+{
+  "format": "dhmap/1",
+  "source": { "type": "jsonschema", "ref": "ho-tich-ks", "version": 4 },
+  "target": { "type": "jsonschema", "ref": "ndxp-khai-sinh-req", "version": 3 },
+  "rules": [
+    { "to": "/request/sex",       "from": "/hoSo/gioiTinh", "fn": { "name": "dh_map", "args": ["gioi-tinh-ht-ndxp"] } },
+    { "to": "/request/birthDate", "from": "/hoSo/ngaySinh", "fn": { "name": "date", "args": ["dd/MM/yyyy", "iso"] } },
+    { "to": "/documents",         "from": "/giayTo", "each": [
+        { "to": "type", "from": "loai" }, { "to": "number", "from": "so" } ] },
+    { "to": "/request/province",  "const": { "var": "$tenant" } },
+    { "to": "/requestedAt",       "fn": { "name": "now" } }
+  ],
+  "customJq": null
+}
+```
+
+Bộ sinh JQ (`dhmap → jq`) có hai bản cùng hành vi: TypeScript ở trình duyệt (để xem ngay) và Java ở máy chủ (nguồn chuẩn khi lưu). Bộ kiểm thử dùng chung ngữ liệu `*.dhmap.json → *.jq` mong đợi để hai bản không lệch. Khi lưu, máy chủ sinh lại JQ, so với JQ trình duyệt gửi; khác thì dùng bản máy chủ và ghi cảnh báo. Xem trước gọi API-04-033 trên sandbox (`camel-quarkus-jq` có hàm `dh_map`); sandbox không sẵn sàng thì dùng `jq-web` trong trình duyệt với nhãn mô phỏng (GAP-04-09).
+
+## 7. Kiểm tra hợp lệ
+
+### 7.1. Kiến trúc
+
+Quy tắc VR là các lớp độc lập, cài ở hai nơi:
+
+| Nơi | Quy tắc | Mục đích |
+|---|---|---|
+| Trình duyệt (worker `validation/`) | VR-01…09, 15, 18, 20 và LINT-04-01…06 | Phản hồi tức thì khi soạn |
+| Máy chủ (`ValidationEngine`) | VR-01…20 | Nguồn chuẩn ở mọi mức; mức `SUBMIT`, `PUBLISH` chỉ tính kết quả máy chủ |
+
+```java
+public sealed interface ValidationRule permits Vr01Parse, Vr02Schema, Vr03Secret, /* … */ Vr20TestAssertions {
+  String code();
+  Severity severity(Level level);                // bảng mức của FRS §5.2 FR-04-023
+  void check(ValidationContext ctx, FindingSink sink);
+}
+
+public record ValidationContext(TenantId tenant, ResourceTree tree, Exposure exposure,
+    CatalogSnapshot catalog, ComponentPolicyView policy, ConnectionDirectory connections,
+    TopicDirectory topics, PublishedRouteIndex routes, Environment targetEnv, Level level) {}
+```
+
+`ValidationEngine.run` chạy song song các quy tắc độc lập trên cây đã phân tích một lần, thời hạn tổng 2 giây ở p95 cho luồng 200 chặng (NFR-04-007). Kết quả lưu vào `flow_version.last_validation` (`jsonb`: mức, thời điểm, `catalogVersion`, danh sách `Finding`). Mức `DESIGN` không chặn lưu; `SUBMIT`, `PUBLISH` chặn khi có `ERROR`.
+
+### 7.2. Ghi chú hiện thực từng quy tắc
+
+| VR | Hiện thực |
+|---|---|
+| VR-01 | SnakeYAML Engine `LoadSettings` giới hạn độ sâu 64, bí danh 50, kích thước 512 KiB (chống "billion laughs") |
+| VR-02 | Duyệt cây, mỗi nút đối chiếu lược đồ JSON của thành phần (networknt json-schema-validator), thông báo theo `messageKey` tiếng Việt |
+| VR-03 | `SecretDetector` (§7.3) |
+| VR-04, 12, 19 | Tra `ComponentPolicyView` hợp nhất chính sách nền + tenant, kèm `runtime-manifest.json` để biết native |
+| VR-05, 06 | Thứ tự `dh-stage-*` theo §4.4; `exposure` lấy từ luồng |
+| VR-07 | `ConnectionDirectory.resolve(tenant, workspace, code, env)`; ở `PUBLISH` bắt buộc có giá trị ở `targetEnv` |
+| VR-08, 18 | `PublishedRouteIndex` (bảng `flow_route_index`, `flow_endpoint_index`) trừ chính luồng đó |
+| VR-09 | Tập `direct:`, `seda:` định nghĩa trong tệp ∪ `PublishedRouteIndex` cùng tenant |
+| VR-10 | `TopicDirectory.canPublish/canSubscribe(flow, topic)` |
+| VR-11 | Có `routeConfigurationId: dh-default-config` hoặc `errorHandler` dạng `deadLetterChannel` tới `kafka:{tenant}.ops.dlq.v1` |
+| VR-13 | `SqlPolicy` (§7.4) |
+| VR-14 | Có `dh-receive-action` trong khối `dh-stage-receive`; không có `setHeader` tên `dh-tenant` ở bất kỳ đâu |
+| VR-15 | Thuộc tính Kamelet có `x-descriptors: [urn:camel:group:credentials]` hoặc `format: password` phải là tham chiếu bí mật; Pipe kiểm loại `source`, `action`, `sink` |
+| VR-16 | Biên dịch biểu thức bằng `Language.createPredicate/createExpression` của Camel 4.18 nhúng trong `dh-integration` (chỉ thư viện ngôn ngữ, không có component) |
+| VR-17 | So `definition.catalogVersion` với catalog hiện hành của tenant |
+| VR-20 | Mỗi ca trong tài nguyên `TEST` có ≥ 1 khẳng định |
+
+### 7.3. Phát hiện bí mật
+
+`SecretDetector` kiểm mọi giá trị vô hướng trong cây (kể cả tham số URI, tiêu đề đặt bằng `setHeader`, giá trị bean):
+
+1. Tên khóa khớp `(?i)(pass(word)?|secret|token|api[-_]?key|private[-_]?key|credential|authorization)` mà giá trị không phải `{{conn:…}}`, `{{vault:…}}`, `#bean:…`, `{{dh.env.…}}` hay rỗng.
+2. Giá trị khớp mẫu: khóa PEM (`-----BEGIN`), JWT (`eyJ…\.…\.…`), `Basic [A-Za-z0-9+/=]{12,}`, `Bearer \S{20,}`, URI có `user:pass@`.
+3. Chuỗi dài ≥ 24 ký tự có entropy Shannon ≥ 4,0 bit/ký tự ở trường kiểu chuỗi không thuộc danh sách trường được miễn (biểu thức, đường dẫn, mô tả).
+
+Kết quả không bao giờ lặp lại giá trị; `Finding.args` chỉ có `node`, `field`, `pattern`. Cùng bộ phát hiện chạy trên bản tin mẫu và ca kiểm thử (LINT-04-06 cho dữ liệu giống thật: 12 chữ số dạng số định danh, số điện thoại di động Việt Nam).
+
+### 7.4. Chính sách SQL
+
+`SqlPolicy` dùng JSqlParser 5.x:
+
+1. Tách câu lệnh; hơn một câu → lỗi.
+2. Câu lệnh phải là `PlainSelect`, `SetOperationList` hoặc `WithItem … Select`; mọi `Insert`, `Update`, `Delete`, `Merge`, `Upsert`, DDL, `Execute`, `Copy`, `SELECT … INTO`, `FOR UPDATE` → lỗi.
+3. Duyệt bảng tham chiếu (`TablesNamesFinder`): schema phải thuộc danh sách được phép của kết nối; `ph01…ph20`, `public` của `pg-core`, mọi đối tượng của `pg-payment` → lỗi.
+4. Hàm gọi trong danh sách cấm (`pg_read_file`, `pg_sleep`, `dblink*`, `lo_*`, `set_config`, `nextval`…) → lỗi.
+5. Giá trị vào chỉ là tham số `:#tên`; phát hiện `${…}` của Camel simple ghép vào chuỗi SQL → lỗi.
+
+Lỗi trả ERR-04-031 với `reason` mô tả (không trích câu lệnh đầy đủ). Kiểm tra tĩnh là lớp phụ; chốt chặn là quyền CSDL của tài khoản (ADR-067).
+
+## 8. Chạy thử
+
+### 8.1. Kiến trúc sandbox
+
+`dh-runtime-sandbox` là Quarkus JVM cùng phiên bản Camel Quarkus với hồ sơ đích (một Deployment cho mỗi hồ sơ: `sandbox-core`, `sandbox-files`, `sandbox-soap`, `sandbox-legacy`). Mỗi lần chạy tạo một `CamelContext` riêng trong tiến trình (khởi tạo ≈ 300–800 ms), không dùng chung trạng thái giữa các lần, đóng ngay khi xong. Một pod chạy tối đa 4 lần đồng thời; KEDA mở rộng theo độ dài hàng đợi `dh:int:testrun:queue`.
+
+Cô lập:
+
+| Lớp | Biện pháp |
+|---|---|
+| Mạng | `NetworkPolicy` ra chỉ tới WireMock nội bộ, Kafka sandbox, OPA sandbox; với `SANDBOX_LIVE` thêm danh sách đích của kết nối có giá trị TEST (egress gateway kiểm FQDN) |
+| Thành phần | Chính sách thành phần của sandbox cấm thêm `file`, `exec`, `ssh`, `docker`, `kubernetes-*`; `platform-http` được thay bằng `direct:` gọi trực tiếp |
+| Tài nguyên | Giới hạn CPU, bộ nhớ theo pod; thời hạn mỗi lần 1–120 giây; thân ≤ 256 KiB |
+| Bí mật | Chỉ giá trị TEST của kết nối, cấp qua OpenBao với chính sách `sandbox-{tenant}` |
+| Dữ liệu | Không có quyền đọc CSDL nghiệp vụ; chặng SQL ở `MOCK` trả dữ liệu mẫu ghim của chặng |
+
+### 8.2. Giao thức chạy
+
+1. `TestRunService.start` kiểm mức `DESIGN` (ERR-04-009), hạn mức tenant (`04.test.max-concurrent`, đếm bằng `ZCARD dh:int:testrun:active:{tenant}`), ghi `test_run` `QUEUED` với `definition_hash`, đưa việc vào hàng đợi Valkey Stream `dh:int:testrun:queue` (nhóm tiêu thụ theo hồ sơ).
+2. Pod sandbox nhận việc, gọi `GET /internal/v1/testruns/{id}/bundle` của `dh-integration` (mTLS, tài khoản dịch vụ) lấy YAML chuẩn hóa, `*.jq`, bản tin, ca, cấu hình mô phỏng, giá trị kết nối TEST (chỉ với `SANDBOX_LIVE`).
+3. Sandbox biến đổi cây trước khi nạp:
+   - điểm vào (`from`) thay bằng `direct:dh-test-entry`;
+   - ở `MOCK`: mọi endpoint ra ngoài (`http`, `kafka`, `sql`, `ftp`, Kamelet `sink`, `dh-deliver-action`) thay bằng `mock:` có trả lời theo `samples[nodeId].response` hoặc 200 rỗng; `dh-authz-action` dùng OPA sandbox với chính sách cho phép trừ khi ca kiểm thử đặt `authz: deny`;
+   - `fromNodeId`: các chặng trước đánh dấu `SKIPPED`, bản tin đặt tại chặng đó.
+4. `StepTracer` (Camel `Tracer` tùy biến, `BacklogTracer` tắt) phát sự kiện mỗi chặng: `nodeId`, `status`, `startOffsetMs`, `durationMs`, tiêu đề đã lọc, thân đã che (≤ 64 KiB mỗi lần, cắt có đánh dấu); gửi về `POST /internal/v1/testruns/{id}/steps` theo lô 200 ms.
+5. Hết luồng hoặc hết thời hạn: chạy khẳng định (§8.3), gửi kết quả cuối; thân đầy đủ (khi `captureBodies`) ghi `s3://dh-int-testrun/{tenant}/{runId}/{nodeId}-{in|out}.json` có khóa mã hóa phía máy chủ, vòng đời xóa sau `04.test.body-retention-days`.
+6. `dh-integration` ghi `test_run_step`, cập nhật trạng thái, đẩy SSE (API-04-042: sự kiện `step`, `status`, `completed`), phát EVT-04-10.
+
+Che dữ liệu ở bước 4 dùng phân loại trường của lược đồ (PH-09) và bộ phát hiện §7.3; khi không có lược đồ, mọi giá trị chuỗi khớp mẫu số định danh, điện thoại, email bị che.
+
+### 8.3. Khẳng định
+
+| Loại | Đánh giá |
+|---|---|
+| `STATUS` | Mã HTTP cuối (luồng đồng bộ) |
+| `BODY_JQ` | Biểu thức JQ trên thân cuối trả `true` |
+| `HEADER` | Tiêu đề cuối bằng hoặc khớp mẫu |
+| `STEP_VISITED`, `STEP_NOT_VISITED` | Theo vết |
+| `ENDPOINT_CALLED` | Số lần gọi `mock:` của nút ≥ n (hoặc = n) |
+| `DURATION_LT` | Tổng thời lượng < ms |
+| `ERROR_CODE` | `dh-dlq-error-code` hoặc mã ERR trong phản hồi |
+| `DLQ_SENT` | Có bản tin vào `mock:` thay cho DLQ |
+
+Một lần chạy `PASSED` khi mọi khẳng định đạt và không có ngoại lệ không xử lý. Lần chạy mô phỏng phía trình duyệt (`04.test.allow-simulation`) ghi `SIMULATED` và không bao giờ thỏa BR-04-004 (ADR-064).
+
+### 8.4. Điều kiện gửi duyệt
+
+```sql
+-- BR-04-004: đúng băm hiện tại, không mô phỏng, mọi ca đạt
+SELECT bool_and(ok) FROM (
+  SELECT EXISTS (SELECT 1 FROM ph04.test_run r
+                 WHERE r.flow_version_id = :v AND r.definition_hash = :hash
+                   AND r.status = 'PASSED' AND r.test_case_id IS NULL) AS ok
+  UNION ALL
+  SELECT EXISTS (SELECT 1 FROM ph04.test_run r
+                 WHERE r.flow_version_id = :v AND r.definition_hash = :hash
+                   AND r.test_case_id = c.test_case_id AND r.status = 'PASSED')
+  FROM ph04.test_case c WHERE c.flow_id = :flow AND c.active
+) t;
+```
+
+Lần chạy theo ca cũng tính là "một lần chạy đạt"; câu trên viết tách để dễ đọc, hiện thực gộp. Tham số `04.review.require-test = false` (chỉ áp cho luồng nội bộ) bỏ điều kiện thứ nhất.
