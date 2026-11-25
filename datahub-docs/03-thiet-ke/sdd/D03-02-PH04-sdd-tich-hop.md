@@ -925,7 +925,7 @@ Một lần chạy `PASSED` khi mọi khẳng định đạt và không có ngo�
 SELECT bool_and(ok) FROM (
   SELECT EXISTS (SELECT 1 FROM ph04.test_run r
                  WHERE r.flow_version_id = :v AND r.definition_hash = :hash
-                   AND r.status = 'PASSED' AND r.test_case_id IS NULL) AS ok
+                   AND r.status = 'PASSED' AND r.mode <> 'SIMULATED') AS ok
   UNION ALL
   SELECT EXISTS (SELECT 1 FROM ph04.test_run r
                  WHERE r.flow_version_id = :v AND r.definition_hash = :hash
@@ -934,4 +934,254 @@ SELECT bool_and(ok) FROM (
 ) t;
 ```
 
-Lần chạy theo ca cũng tính là "một lần chạy đạt"; câu trên viết tách để dễ đọc, hiện thực gộp. Tham số `04.review.require-test = false` (chỉ áp cho luồng nội bộ) bỏ điều kiện thứ nhất.
+Lần chạy theo ca cũng tính là "một lần chạy đạt" (điều kiện thứ nhất không lọc `test_case_id`). Lần chạy `SIMULATED` có `status = 'SIMULATED'` nên tự loại; điều kiện `mode` là lớp phòng thủ thêm. Tham số `04.review.require-test = false` (chỉ áp cho luồng nội bộ) bỏ điều kiện thứ nhất.
+
+## 9. Máy trạng thái
+
+Mọi chuyển trạng thái hiện thực bằng một lớp `Transitions` có bảng tường minh; chuyển không có trong bảng ném `IllegalTransition` → ERR-04-005. Cập nhật trạng thái luôn kèm điều kiện trạng thái cũ trong câu `UPDATE` để hai yêu cầu đồng thời không cùng thắng.
+
+### 9.1. Phiên bản
+
+| Từ | Sự kiện | Tới | Điều kiện chốt ở máy chủ | Quyền |
+|---|---|---|---|---|
+| — | Tạo luồng, tạo phiên bản mới | `DRAFT` | Không có phiên bản mở khác (BR-04-016, ERR-04-016) | create, update |
+| `DRAFT`, `CHANGES_REQUESTED` | Lưu nháp | (giữ) | `If-Match` khớp | update |
+| `DRAFT`, `CHANGES_REQUESTED` | Gửi duyệt | `PENDING_REVIEW` | VR mức `SUBMIT` không `ERROR`; BR-04-004; ghi chú; `catalogVersion` hiện hành (VR-17) | submit |
+| `PENDING_REVIEW` | Rút lại | `DRAFT` | Người gửi hoặc TA; lý do | submit |
+| `PENDING_REVIEW` | `REQUEST_CHANGES` | `CHANGES_REQUESTED` | Bốn mắt; ý kiến | publish |
+| `PENDING_REVIEW` | `APPROVE` | `APPROVED` | Bốn mắt; checklist; băm bằng `submitted_hash`; xác thực lại khi bật | publish |
+| `DRAFT`, `CHANGES_REQUESTED` | Hủy | `DISCARDED` | Người tạo, người đóng góp hoặc TA | update |
+| `APPROVED` | Phiên bản khác lên PROD `SYNCED` | `SUPERSEDED` | Tự động | — |
+| `APPROVED` | Bị quay lui khỏi PROD | `ROLLED_BACK` | Tự động | — |
+| `SUPERSEDED` | Quay lui về phiên bản này | `APPROVED` | Tự động khi đích quay lui | — |
+
+`FourEyesGuard`: người quyết định ∉ {`created_by`} ∪ `flow_version_contributor` ∪ {`submitted_by`} (GAP-04-06). Người đóng góp được thêm khi lưu nháp thành công, khi nhập YAML, khi gộp xung đột. Hiện thực ở máy chủ, không dựa vào giao diện ẩn nút.
+
+### 9.2. Luồng
+
+Trạng thái luồng là trạng thái tổng hợp, tính lại sau mỗi sự kiện phiên bản, triển khai, lệnh:
+
+| Trạng thái | Điều kiện |
+|---|---|
+| `DRAFT` | Chưa có phiên bản nào từng `APPROVED` |
+| `IN_REVIEW` | Có phiên bản `PENDING_REVIEW` và chưa có triển khai PROD |
+| `APPROVED` | Có phiên bản `APPROVED` nhưng chưa có triển khai PROD `SYNCED` |
+| `ACTIVE` | Triển khai PROD `SYNCED`, `desiredState = RUNNING`, sức khỏe `HEALTHY` |
+| `DEGRADED` | Triển khai PROD `SYNCED` nhưng sức khỏe `DEGRADED` hoặc `DOWN`, hoặc `OUT_OF_SYNC` |
+| `PAUSED` | `desiredState = PAUSED` ở PROD (cờ `emergency` nếu do dừng khẩn) |
+| `RETIRED` | Đã gỡ; trạng thái cuối |
+
+### 9.3. Triển khai
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: release, promote, rollback
+    PENDING --> SYNCING: Argo CD Progressing
+    PENDING --> FAILED: Ghi Git lỗi sau 3 lần (ERR-04-022)
+    SYNCING --> SYNCED: Đủ bản sao báo version + contentHash
+    SYNCING --> OUT_OF_SYNC: Quá sync-timeout
+    SYNCING --> FAILED: loadError hoặc quá deploy.timeout
+    OUT_OF_SYNC --> SYNCED: Đủ bản sao về sau
+    SYNCED --> OUT_OF_SYNC: Nhịp tim lệch Git
+    SYNCED --> [*]: Bị thay bởi triển khai mới
+```
+
+Sức khỏe tính mỗi nhịp tim, độc lập trạng thái đồng bộ: `HEALTHY` khi mọi bản sao có route `Started` và tỷ lệ lỗi 5 phút < 5%; `DEGRADED` khi một phần bản sao lỗi, route `Suspended` ngoài chủ đích, hoặc tỷ lệ lỗi 5–50%; `DOWN` khi không bản sao nào chạy hoặc tỷ lệ lỗi > 50%; `UNKNOWN` khi quá 90 giây không có nhịp tim.
+
+### 9.4. Lần chạy thử và lệnh điều khiển
+
+| Lần chạy thử | Tới |
+|---|---|
+| `QUEUED` | `RUNNING` (sandbox nhận), `CANCELLED` (người dùng hủy), `FAILED` (sandbox không nhận sau 60 giây) |
+| `RUNNING` | `PASSED`, `FAILED`, `TIMED_OUT`, `CANCELLED` |
+| (trình duyệt) | `SIMULATED` ghi trực tiếp, trạng thái cuối |
+
+| Lệnh | Tới |
+|---|---|
+| `ISSUED` | `DELIVERED` (có xác nhận đầu tiên), `REJECTED` (mọi bản sao từ chối) |
+| `DELIVERED` | `ACKNOWLEDGED` (đủ bản sao), `PARTIAL` (sau 30 giây chưa đủ), `REJECTED` |
+| `ACKNOWLEDGED`, `PARTIAL` | `RECONCILED` (Git và nhịp tim khớp trạng thái mong muốn) |
+
+## 10. Điều khiển runtime
+
+### 10.1. Định dạng lệnh
+
+```json
+{
+  "commandId": "0193a8e2-6b1f-7c3e-9a51-6f0f2c1d9e44",
+  "tenant": "lam-dong",
+  "flow": "ho-tich-khai-sinh",
+  "version": 8,
+  "environment": "PROD",
+  "action": "PAUSE",
+  "scope": { "type": "ROUTES", "routeIds": ["goi-ndxp"] },
+  "drain": true,
+  "issuedBy": "u.to01",
+  "issuedAt": "2026-11-25T22:00:04+07:00",
+  "expiresAt": "2026-11-25T22:01:04+07:00",
+  "keyId": "dh-integration-cmd-2026q4",
+  "sig": "base64url(Ed25519(JCS(payload không có sig)))"
+}
+```
+
+Chữ ký tính trên dạng chuẩn JSON Canonicalization Scheme (RFC 8785) của toàn bộ trường trừ `sig`. Khóa riêng nằm ở OpenBao transit (`transit/keys/dh-integration-cmd`, loại `ed25519`, không xuất được); `CommandSigner` gọi `transit/sign`. Runtime nhận khóa công khai qua ConfigMap `dh-runtime-trust` (gồm khóa hiện hành và khóa kế tiếp khi xoay vòng 90 ngày). Lý do lệnh không nằm trong thông điệp (chỉ ở CSDL và kiểm toán) để topic hệ thống không chứa văn bản tự do.
+
+### 10.2. Gửi, xác nhận, đối soát
+
+| Bước | Lệnh thường (`PAUSE`, `RESUME`) | Lệnh khẩn (`EMERGENCY_STOP`) |
+|---|---|---|
+| 1 | Ghi `runtime_command` `ISSUED` + cập nhật `deployment.desired_state` trong một giao dịch | Ký, gửi Kafka ngay |
+| 2 | Ký, gửi Kafka (khóa phân vùng `tenant/flow`) | Ghi `runtime_command` `ISSUED` |
+| 3 | Ghi `flow.dh.yaml` (`desiredState`, `pausedRoutes`) vào Git | Ghi Git (tác vụ nền, thử lại) |
+| 4 | Runtime kiểm chữ ký, hạn, tenant (nhãn ConfigMap); thi hành; phát EVT-04-13 | Như trái, không xả bản tin; bản tin đang xử lý → DLQ "dừng khẩn" |
+| 5 | `Reconciler` gom xác nhận theo `commandId`; đủ bản sao (theo nhịp tim gần nhất) → `ACKNOWLEDGED`; 30 giây chưa đủ → `PARTIAL` | Như trái |
+| 6 | Khi commit Git đã đồng bộ và nhịp tim khớp → `RECONCILED`, phát EVT-04-08 | Như trái; quá 5 phút chưa khớp → cảnh báo TA, SO (BR-04-018) |
+
+Runtime giữ tập `commandId` đã thi hành 10 phút để bỏ lệnh trùng. Lệnh hết hạn hoặc sai chữ ký trả xác nhận `REJECTED` với `reason` (`EXPIRED`, `BAD_SIGNATURE`, `TENANT_MISMATCH`, `UNKNOWN_FLOW`); `BAD_SIGNATURE` sinh cảnh báo ATTT.
+
+Khi Argo CD đồng bộ một commit cũ hơn lệnh khẩn chưa được ghi Git (ví dụ Git lỗi), `FlowLoader` không bật lại route: nó giữ "trạng thái ghi đè cục bộ" theo lệnh khẩn đã thi hành cho tới khi thấy `flow.dh.yaml` có `desiredState` tương ứng hoặc nhận lệnh `RESUME` có ký mới hơn. Đây là điểm bảo đảm dừng khẩn không bị GitOps vô hiệu.
+
+### 10.3. Đối soát định kỳ
+
+`Reconciler` chạy mỗi 60 giây theo tenant (ShedLock): so `deployment` (mong muốn theo Git đã ghi) với `heartbeat_latest` (thực tế). Lệch quá 5 phút: phát `DeploymentStatusChanged(OUT_OF_SYNC)`, cảnh báo PH-13 `dh_int_reconcile_drift`. Lệch do bản sao chạy phiên bản lạ (băm không có trong CSDL): cảnh báo ATTT mức cao, vì có thể có kênh nạp ngoài GitOps (vi phạm BR-04-012).
+
+## 11. Bảo mật
+
+### 11.1. Phân quyền
+
+Hai lớp quyết định cho mỗi API:
+
+1. **Quyền chức năng** `PERM-04-*` từ token Keycloak (vai trò ánh xạ theo D02-08), kiểm bằng `@PreAuthorize("hasAuthority('PERM-04-submit')")`.
+2. **Phạm vi không gian làm việc** khi `04.workspace.enforce` bật: `WorkspaceAccess.require(user, workspace, level)` với `level` theo thao tác (`VIEW` đọc, `EDIT` sửa, chạy thử, gửi; `MAINTAIN` quản lý thành viên). Duyệt yêu cầu `PERM-04-publish` và mức ≥ `VIEW` trên không gian. TA, PA bỏ qua kiểm tra phạm vi (BR-04-021).
+
+Truy vấn danh sách lọc theo phạm vi ở SQL (`flow.workspace_id = ANY(:allowed)`) chứ không lọc sau khi đọc. Không tồn tại và không có quyền trả cùng ERR-04-001.
+
+OPA chỉ dùng ở data plane (`dh-authz-action`) và cho quyết định có chính sách phức tạp ở control plane (xem giá trị trước, sau của kiểm toán theo vai trò AU, SO, TA).
+
+### 11.2. Các mối đe dọa chính
+
+| Đe dọa | Biện pháp |
+|---|---|
+| Kỹ sư đưa mã tùy ý vào runtime | Cấm `exec`, kịch bản, `bean` ngoài danh sách lớp (VR-04, 19); bốn mắt; ảnh runtime không chứa trình biên dịch Groovy, JS |
+| Nạp luồng ngoài GitOps | Chữ ký tách rời từng tệp trong kho, `FlowLoader` kiểm chữ ký; đối soát băm lạ (§10.3) |
+| Giả lệnh điều khiển | Ed25519, hết hạn 60 giây, chỉ `dh-integration` có ACL ghi topic |
+| Lộ bí mật qua định nghĩa, bản tin mẫu | VR-03, LINT-04-06, `SecretDetector` trên ca kiểm thử; bí mật chỉ ở OpenBao |
+| SSRF qua chạy thử | Chính sách mạng sandbox, egress gateway theo FQDN của kết nối TEST |
+| Đọc lệch tenant ở CSDL | RLS + `SET LOCAL app.tenant_id` từ thuộc tính khóa; tài khoản theo luồng |
+| Lệch tenant trong bản tin | `TenantGuard`; tenant không bao giờ lấy từ thân |
+| Gói XML hệ cũ chứa mật khẩu | `LegacyXmlImporter` gỡ trước khi lưu, không ghi log giá trị; tệp tải lên xóa sau khi chuyển |
+| Tấn công phân tích YAML, XML | Giới hạn độ sâu, bí danh, kích thước; XML tắt DTD, thực thể ngoài |
+
+### 11.3. Cách ly tenant ở control plane
+
+Mọi bảng `ph04.*` có `tenant_id` và RLS (D03-03-PH04). Tác vụ nền liên tenant (`Reconciler`, `TestRunRetentionJob`, `CatalogUpgradeJob`) lặp từng tenant theo danh sách PH-20 và `runAs(tenant)`, theo mẫu D03-02-PH07 §6.3. Bảng `heartbeat_latest` được `HeartbeatProjector` ghi theo tenant trong từng nhịp tim (một nhịp tim có nhiều tenant được tách thành nhiều giao dịch).
+
+## 12. Xử lý lỗi, thử lại và nhất quán
+
+| Tình huống | Cách xử lý |
+|---|---|
+| Lưu nháp đồng thời | ETag, ERR-04-006, gộp ba bên (§6.5) |
+| Tạo, phát hành, chạy thử gửi lại | `Idempotency-Key` lưu Valkey 24 giờ: cùng khóa cùng băm thân trả kết quả cũ; khác thân ERR-04-018 |
+| Ghi Git lỗi | Triển khai `PENDING` giữ, thử lại 3 lần; vẫn lỗi thì `FAILED`, ERR-04-022, không có trạng thái nửa vời ở Git (commit nguyên tử) |
+| Argo CD không đồng bộ | `OUT_OF_SYNC` sau `04.runtime.sync-timeout-seconds`; `FAILED` sau `04.deploy.timeout-minutes` |
+| Kafka không ghi được lệnh | `CommandService` thử lại 5 giây; lệnh khẩn báo lỗi ngay cho SO kèm hướng dẫn chặn ở APISIX (D03-07) |
+| Sandbox chết giữa chừng | Việc trong Valkey Stream không được `XACK` sẽ được nhận lại sau 60 giây; lần chạy quá 2 × thời hạn thì `FAILED` "Sandbox mất kết nối" |
+| PH-13 không nhận kiểm toán | Giữ ở outbox; Debezium gửi lại |
+| PH-05, PH-10 chưa có dữ liệu | VR-07, VR-10 lỗi ở `SUBMIT` (FRS §10.1) |
+| Ánh xạ lỗi | `ProblemDetail` RFC 9457: `type` = `https://datahub.gov.vn/errors/ERR-04-xxx`, `title`, `status`, `detail`, `code`, `traceId`, trường mở rộng theo mã (D03-04-PH04 §6) |
+
+## 13. Cấu hình, quan sát, dung lượng
+
+### 13.1. Cấu hình ứng dụng
+
+| Khóa (`dh-integration`) | Mặc định | Ý nghĩa |
+|---|---|---|
+| `dh.flow.git.base-url` | — | Gốc kho cấu hình (GitHub khi phát triển, GitLab on-prem khi bàn giao, Q353) |
+| `dh.flow.git.repo-pattern` | `dh-flows-{tenant}` | Tên kho |
+| `dh.flow.git.cache-dir` | `/var/cache/dh-flows` | Bộ đệm clone nông |
+| `dh.flow.git.signing-key` | `transit/dh-integration-git` | Khóa ký commit, tệp |
+| `dh.flow.command.signing-key` | `transit/dh-integration-cmd` | Khóa ký lệnh |
+| `dh.flow.command.ttl-seconds` | 60 | Hạn lệnh |
+| `dh.flow.command.partial-after-seconds` | 30 | Mốc `PARTIAL` |
+| `dh.flow.reconcile.drift-alert-minutes` | 5 | BR-04-018 |
+| `dh.flow.heartbeat.unknown-after-seconds` | 90 | Sức khỏe `UNKNOWN` |
+| `dh.flow.sandbox.queue` | `dh:int:testrun:queue` | Hàng đợi chạy thử |
+| `dh.flow.catalog.dir` | `classpath:catalog/` | Catalog sinh cùng ảnh |
+
+Tham số nghiệp vụ theo tenant đọc từ PH-18 (`04.*`, FRS §7.1) qua `FlowParams`, đệm 60 giây, làm mới theo sự kiện thay đổi tham số của PH-18 (đề xuất mã ở D02-04-PH04 §8.2; SDD chọn dùng sự kiện tham số chung của PH-18 thay vì EVT-04 riêng).
+
+### 13.2. Quan sát control plane
+
+| Chỉ số | Ý nghĩa | Cảnh báo |
+|---|---|---|
+| `dh_int_validation_seconds{level}` | Thời gian kiểm tra | p95 `SUBMIT` > 2 s trong 15 phút |
+| `dh_int_testrun_queue_depth{profile}` | Độ dài hàng đợi chạy thử | > 20 trong 10 phút |
+| `dh_int_testrun_duration_seconds{mode,outcome}` | Thời gian chạy thử | p95 `MOCK` > 5 s |
+| `dh_int_release_seconds{env}` | Từ phát hành tới `SYNCED` | p95 PROD > 3 phút (NFR-04-009) |
+| `dh_int_command_ack_seconds{action}` | Từ lệnh tới đủ xác nhận | p95 > 10 s, khẩn > 5 s (NFR-04-010) |
+| `dh_int_reconcile_drift{tenant}` | Số luồng lệch Git | > 0 trong 5 phút |
+| `dh_int_git_write_failures_total` | Ghi Git lỗi | > 0 |
+| `dh_int_unknown_hash_total` | Bản sao chạy băm lạ | > 0 (ATTT) |
+
+### 13.3. Dung lượng ước tính
+
+Giả định GĐ: tỉnh QM-VUA 120 luồng năm đầu, 300 năm thứ ba; 35 tenant. Mỗi phiên bản trung bình 40 KiB YAML + 20 KiB bố cục + 50 KiB bản tin mẫu; 12 phiên bản mỗi luồng mỗi năm → khoảng 0,5 GiB mỗi năm toàn nền tảng cho `flow_version`. Lần chạy thử 30 mỗi phiên bản, vết 20 bước × 2 KiB → khoảng 15 GiB mỗi năm `test_run_step`, giữ 90 ngày (`04.test.retention-days`) nên ổn định quanh 4 GiB. Nhịp tim: 35 tenant × 300 luồng × 3 bản sao mỗi 30 giây, chỉ giữ bản mới nhất (`heartbeat_latest`); lịch sử nằm ở Prometheus.
+
+## 14. Kiểm thử
+
+| Mức | Phạm vi | Công cụ | Cổng |
+|---|---|---|---|
+| Đơn vị | Quy tắc VR, `YamlCanonicalizer`, `SecretDetector`, `SqlPolicy`, máy trạng thái, `FourEyesGuard`, bộ sinh JQ | JUnit 5, Vitest | CI-3 |
+| Quay vòng YAML | Ngữ liệu §6.2 | Vitest + JUnit | CI-3, chặn |
+| Hai bộ sinh JQ khớp nhau | Ngữ liệu `*.dhmap.json` | Vitest + JUnit | CI-3 |
+| Catalog khớp runtime | `catalog:check`, `catalog-diff` | Node | CI-2 |
+| Modulith | `ApplicationModules.verify()` | JUnit | CI-3 |
+| Tích hợp control plane | API với PostgreSQL, Valkey, Kafka, Gitea (giả kho) | Testcontainers | CI-4 |
+| Cách ly tenant | `TenantIsolationIT` cho mọi bảng `ph04` | Testcontainers | CI-4, chặn |
+| Runtime | Kamelet nền, `TenantGuard`, `dh-default-config`, `dh_map` | `@QuarkusTest`, Camel test | CI-4 |
+| Native | Ảnh `core-native` chạy bộ luồng mẫu | Quarkus native IT | CI-5 |
+| Đầu cuối | Thiết kế → chạy thử → duyệt → phát hành TEST → gọi qua APISIX | Playwright + kind cluster + Argo CD | CI-6 |
+| Hiệu năng | NFR-04-001…013 | k6, Lighthouse, Gatling | Trước RG-2 |
+| Hợp đồng API | OpenAPI, AsyncAPI của D03-04-PH04 | Spectral, schemathesis | CI-3 |
+
+Ca kiểm thử chi tiết ở D05-02-PH04.
+
+## 15. Lộ trình hiện thực và MVP
+
+Thứ tự đóng khoảng lệch, mỗi bước là một hoặc vài PR nhỏ có kiểm thử:
+
+| Bước | Nội dung | GAP | Phụ thuộc |
+|---|---|---|---|
+| 1 | Đổi gói `vn.datahub`, tách module `flow`, DDL mới có `tenant_id`, RLS, di trú dữ liệu bảng cũ | 07, 13 | D03-03-PH04 |
+| 2 | Máy trạng thái phiên bản mới, bốn mắt đầy đủ, băm, người đóng góp; chặn phát hành `DRAFT` | 05, 06 | Bước 1 |
+| 3 | `ValidationEngine` theo cây, nhận diện chặng bằng `dh-stage-*` | 08 | Catalog PR #5 |
+| 4 | Thư viện nền và Kamelet nền; viết lại `TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute` bằng YAML; `dh-default-config` | 02, 12 | — |
+| 5 | Kho `dh-flows-{tenant}`, `GitConfigRepository`, ApplicationSet, `FlowLoader`, nhịp tim | 03 | Argo CD (ADR-009) |
+| 6 | Sandbox chạy thử thật, bỏ `testRun` mô phỏng | 04, 09 | Bước 4 |
+| 7 | Kênh lệnh có ký, `Reconciler` | 11 | Bước 5 |
+| 8 | `dh-sql-ro-*`, tài khoản theo luồng | 10 | PH-05 loại kết nối mới |
+| 9 | Trình thiết kế theo D03-06-PH04 (mô hình cây, gộp ba bên, bảng thành phần nhóm nghiệp vụ, Inspector) | — | Bước 2, 3 |
+| 10 | Chuyển XML Bus cũ | — | Bước 4 |
+
+MVP (FRS §9.3) gồm bước 1–7 và 9 với hồ sơ `core-native`, `files-native`; `soap-jvm`, `legacy-jvm`, Kamelet tự viết, Pipe và bước 8 cho hệ ngoài PostgreSQL đi đợt sau.
+
+## 16. Câu hỏi mở
+
+| Mã | Câu hỏi | Đề xuất tạm |
+|---|---|---|
+| Q04-20 | Namespace của sandbox: `dh-sandbox` riêng hay trong `dh-runtime` với nhãn? | `dh-sandbox` riêng, vùng Z4, chính sách mạng riêng; đề nghị bổ sung D03-09 |
+| Q04-21 | Có cần `STAGING` ở tỉnh thí điểm? | Không (mặc định `TEST,PROD`) |
+| Q04-22 | Nhánh `env/prod` bảo vệ bằng yêu cầu gộp có làm chậm quá NFR-04-009 (3 phút)? | Đo ở môi trường thử; nếu vượt thì CI kho cấu hình chỉ chạy VR, ca kiểm thử chạy song song sau gộp |
+| Q04-23 | Valkey 8 `HEXPIRE` có trong bản Valkey của nền tảng? | Có từ Valkey 8.0; nếu không, mỗi người một khóa riêng TTL 120 giây |
+| Q04-24 | Một pod runtime nạp tối đa bao nhiêu luồng trước khi phải tách hồ sơ, namespace? | 50 luồng (D03-10), đo lại với NFR-04-013 |
+| Q04-25 | Có dùng `BacklogTracer` của Camel thay `StepTracer` tự viết? | Tự viết để kiểm soát che dữ liệu và kích thước |
+| Q04-26 | Sandbox có dùng Kafka sandbox thật cho luồng bất đồng bộ ở `MOCK`? | Không; thay bằng `mock:`; `SANDBOX_LIVE` mới dùng Kafka TEST |
+| Q04-27 | Ký từng tệp trong kho cấu hình có cần khi commit đã ký? | Có: `FlowLoader` kiểm được chữ ký mà không cần lịch sử Git |
+| Q04-28 | Lưu `heartbeat_latest` ở PostgreSQL hay Valkey? | PostgreSQL (cần cho đối soát có RLS); Valkey nếu tải ghi vượt 200 dòng/giây |
+| Q04-29 | Chọn Spring Data JDBC thay JPA cho PH-04 có lệch quy ước PH-07? | Chấp nhận: PH-04 không có aggregate cần lazy loading; giữ chung `TenantAwareTransactionManager` |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người thực hiện |
+|---|---|---|---|
+| 0.1 | 25/11/2026 | Bản đầu | Nhóm phân hệ PH-04 |
