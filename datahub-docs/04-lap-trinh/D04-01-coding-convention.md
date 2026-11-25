@@ -1026,7 +1026,7 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chu�
 
 ## 14. Câu hỏi mở
 
-> **Câu hỏi mở Q350:** Bản đồ DU chính thức là bản đồ của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`, `dh-runtime`) hay bản đồ của IP-01 trong kho mã (`lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai`, `lgsp-camel-{miền}`)? Quyết định này chốt package gốc `vn.datahub.{du}` và thời điểm đổi package `vn.lgsp` hiện có.
+> **Q350 (đã chốt 25/11/2026):** dùng bản đồ DU của SAD (`dh-*`), package gốc `vn.datahub.{du}`; package `vn.lgsp` hiện có được đổi dần khi chạm mã. *Câu hỏi gốc:* Bản đồ DU chính thức là bản đồ của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`, `dh-runtime`) hay bản đồ của IP-01 trong kho mã (`lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai`, `lgsp-camel-{miền}`)? Quyết định này chốt package gốc `vn.datahub.{du}` và thời điểm đổi package `vn.lgsp` hiện có.
 
 > **Câu hỏi mở Q351:** Bảng, cột hiện có đặt tên tiếng Việt không dấu (`ph07.danh_muc`, `ma_danh_muc`) và schema thiếu tên ngắn (`ph07` thay vì `ph07_rdm`): đổi ngay sang quy ước D00-01 §6 khi dữ liệu còn ít, hay ghi ngoại lệ có thời hạn?
 

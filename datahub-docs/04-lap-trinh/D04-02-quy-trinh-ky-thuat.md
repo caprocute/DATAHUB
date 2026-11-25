@@ -562,7 +562,7 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định và tài liệu liên
 
 ## 17. Câu hỏi mở
 
-> **Câu hỏi mở Q353:** Nền tảng Git và CI chính thức của dự án là GitHub (đang dùng GitHub Actions trong kho mã) hay GitLab tự vận hành on-prem (phù hợp hơn với hồ sơ air-gapped và yêu cầu lưu mã nguồn trong nước)? Lựa chọn ảnh hưởng cú pháp CODEOWNERS, luật bảo vệ nhánh, hàng đợi hợp nhất, ký commit do nền tảng, và khả năng dùng CodeQL (Q355 ở D04-01).
+> **Q353 (đã chốt 25/11/2026):** phát triển trên GitHub (GitHub Actions); khi bàn giao, cung cấp bản sao trên GitLab tự vận hành on-prem cho tỉnh. *Câu hỏi gốc:* Nền tảng Git và CI chính thức của dự án là GitHub (đang dùng GitHub Actions trong kho mã) hay GitLab tự vận hành on-prem (phù hợp hơn với hồ sơ air-gapped và yêu cầu lưu mã nguồn trong nước)? Lựa chọn ảnh hưởng cú pháp CODEOWNERS, luật bảo vệ nhánh, hàng đợi hợp nhất, ký commit do nền tảng, và khả năng dùng CodeQL (Q355 ở D04-01).
 
 > **Câu hỏi mở Q354:** Cần xác minh với nguồn chính thức tại thời điểm khóa phiên bản: ngày hết hỗ trợ bản vá miễn phí của Spring Boot 4.0 và Spring Modulith 2.0 (để quyết định nâng lên dòng MINOR mới hơn trước phát hành MVP); Quarkus 3.33 có thuộc dòng LTS không; điều khoản giấy phép của Liquibase ở dòng chính mới; chuyển Node 22 sang Node 24 LTS cho công cụ giao diện; và kế hoạch chuyển Camel 4.18 LTS sang dòng LTS kế tiếp trước 02/2027.
 

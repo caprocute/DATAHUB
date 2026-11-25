@@ -50,7 +50,7 @@ Khung pháp lý về an toàn hệ thống thông tin thay đổi lớn trong gi
 
 Chủ đầu tư yêu cầu các biện pháp kiểm soát "theo Thông tư 12/2022/TT-BTTTT và TCVN 11930:2017". Hai văn bản này thuộc khung cũ của Nghị định 85/2016. Datahub sẽ vận hành sau 01/7/2026, nên căn cứ chính phải là văn bản hiện hành; tuy nhiên tài liệu vẫn giữ ánh xạ đối chiếu với hai văn bản cũ vì ba lý do: hội đồng thẩm định và đội ngũ của tỉnh còn quen cấu trúc yêu cầu của TCVN 11930; Nghị định 331/2026 có điều khoản chuyển tiếp (Điều 39) cho hệ đang đầu tư trước 01/7/2026, trong đó việc thẩm định có thể vẫn theo khung cũ trong 6 tháng; và chưa thấy văn bản hướng dẫn của Bộ Công an thay thế toàn bộ Thông tư 12/2022. Nhờ vậy, dù hồ sơ được thẩm định theo khung nào, phương án bảo vệ vẫn đối chiếu được.
 
-> **Câu hỏi mở Q300:** Datahub được xác định là "hệ thống đang đầu tư trước 01/7/2026" (áp dụng chuyển tiếp Điều 39 NĐ 331/2026) hay hệ thống mới? Câu trả lời quyết định hồ sơ D03-08 lập theo khung nào; thiết kế này đáp ứng cả hai.
+> **Q300 (đã chốt 25/11/2026):** Datahub là hệ mới, hồ sơ cấp độ lập theo NĐ 331/2026; phần LGSP cũ còn chạy được xử lý bằng phụ lục rủi ro chuyển tiếp. *Câu hỏi gốc:* Datahub được xác định là "hệ thống đang đầu tư trước 01/7/2026" (áp dụng chuyển tiếp Điều 39 NĐ 331/2026) hay hệ thống mới? Câu trả lời quyết định hồ sơ D03-08 lập theo khung nào; thiết kế này đáp ứng cả hai.
 
 ### 2.2. Văn bản pháp lý
 
@@ -153,7 +153,7 @@ Ranh giới tin cậy (trust boundary) là nơi dữ liệu đi từ vùng có m
 | Vùng | Tên | Thành phần | Mức tin cậy | Kiểm soát vào |
 |---|---|---|---|---|
 | Z0 | Internet và mạng của bên ngoài | Người dùng, HTTT thành viên, nhà phát triển, PayGov, NDXP | Không tin | Chống DDoS, WAF, TLS |
-| Z1 | Biên (DMZ) | Envoy Gateway + WAF Coraza (ADR-033), bộ cân bằng tải | Thấp | Chỉ 443/TCP vào; chỉ chuyển tới Z2 |
+| Z1 | Biên (DMZ) | `apisix-ext` kèm WAF Coraza (ADR-033), bộ cân bằng tải | Thấp | Chỉ 443/TCP vào; chỉ chuyển tới Z2 |
 | Z2 | Cổng API | APISIX, BFF của `dh-console`/`dh-portal` | Trung bình | Xác thực token/mTLS, OPA, rate limit |
 | Z3 | Ứng dụng control plane | 6 DU Spring Boot | Trung bình–cao | mTLS mesh, chính sách ủy quyền Istio theo service account |
 | Z4 | Data plane runtime | `dh-runtime`, namespace `dh-rt-*` | Trung bình | mTLS; ra ngoài chỉ qua egress gateway với danh sách đích |
@@ -172,7 +172,7 @@ flowchart LR
     ND[NDXP]
   end
   subgraph Z1[Z1 Biên]
-    EG[Envoy Gateway + WAF]
+    EG[APISIX biên + WAF]
   end
   subgraph Z2[Z2 Cổng API]
     AP[APISIX]
@@ -255,7 +255,7 @@ flowchart TB
   NDXP([NDXP]):::ext
   LLM([Mô hình AI ngoài<br/>nếu tỉnh cho phép]):::ext
   subgraph TB1[Ranh giới 1: Internet → Biên]
-    WAF[P1 Envoy + WAF]
+    WAF[P1 APISIX + WAF]
   end
   subgraph TB2[Ranh giới 2: Biên → Cổng]
     BFF[P2 BFF console/portal]
@@ -513,8 +513,8 @@ Mục tiêu của nhóm này là bảo đảm mỗi luồng mạng phải đư�
 
 | Mã | Tên | Hiện thực trong Datahub | Tham số đo được | Chịu trách nhiệm | Kiểm chứng |
 |---|---|---|---|---|---|
-| SEC-10 | Chống DDoS và giới hạn lưu lượng nhiều tầng | Tầng 3/4: dịch vụ chống DDoS của TTDL/cloud và giới hạn kết nối tại bộ cân bằng tải. Tầng 7: Envoy Gateway `BackendTrafficPolicy` giới hạn theo IP nguồn (mặc định 50 yêu cầu/giây/IP cho đường dẫn giao diện), APISIX `limit-req` theo consumer, `limit-count` theo gói và theo tenant (D03-10 §5.3). Đường dẫn đăng nhập Keycloak giới hạn 10 yêu cầu/phút/IP | Chịu được tải gấp 3 lần cao điểm (900 lượt/giây) không suy giảm data plane; nguồn tấn công bị chặn ≤ 60 giây | Bên cung cấp hạ tầng, nhóm nền tảng | KT (kiểm thử tải), DT |
-| SEC-11 | Tường lửa ứng dụng web (WAF) | Coraza tích hợp Envoy Gateway (ADR-033) với OWASP CRS 4.x mức độ hoang tưởng (paranoia level) 2 cho giao diện, mức 1 cho API máy–máy (đã có kiểm tra lược đồ ở APISIX); chế độ chặn trên PROD sau 2 tuần chạy phát hiện ở môi trường thử; luật ảo hóa vá (virtual patch) bổ sung khi có lỗ hổng 0-day; log WAF đẩy về SIEM | Tỉ lệ chặn nhầm < 0,1% lượt hợp lệ; luật vá ảo triển khai ≤ 4 giờ từ khi có thông tin lỗ hổng | Nhóm nền tảng | KT, PT |
+| SEC-10 | Chống DDoS và giới hạn lưu lượng nhiều tầng | Tầng 3/4: dịch vụ chống DDoS của TTDL/cloud và giới hạn kết nối tại bộ cân bằng tải. Tầng 7: APISIX `limit-conn` và `limit-req` theo IP nguồn (mặc định 50 yêu cầu/giây/IP cho đường dẫn giao diện), APISIX `limit-req` theo consumer, `limit-count` theo gói và theo tenant (D03-10 §5.3). Đường dẫn đăng nhập Keycloak giới hạn 10 yêu cầu/phút/IP | Chịu được tải gấp 3 lần cao điểm (900 lượt/giây) không suy giảm data plane; nguồn tấn công bị chặn ≤ 60 giây | Bên cung cấp hạ tầng, nhóm nền tảng | KT (kiểm thử tải), DT |
+| SEC-11 | Tường lửa ứng dụng web (WAF) | Coraza chạy dạng plugin proxy-wasm trong APISIX (ADR-033) với OWASP CRS 4.x mức độ hoang tưởng (paranoia level) 2 cho giao diện, mức 1 cho API máy–máy (đã có kiểm tra lược đồ ở APISIX); chế độ chặn trên PROD sau 2 tuần chạy phát hiện ở môi trường thử; luật ảo hóa vá (virtual patch) bổ sung khi có lỗ hổng 0-day; log WAF đẩy về SIEM | Tỉ lệ chặn nhầm < 0,1% lượt hợp lệ; luật vá ảo triển khai ≤ 4 giờ từ khi có thông tin lỗ hổng | Nhóm nền tảng | KT, PT |
 | SEC-12 | Cấu hình TLS | Biên: TLS 1.3 với `TLS_AES_256_GCM_SHA384`, `TLS_AES_128_GCM_SHA256`, `TLS_CHACHA20_POLY1305_SHA256`; TLS 1.2 chỉ khi HTTT có ngoại lệ, giới hạn `ECDHE-ECDSA/RSA-AES128/256-GCM-SHA256/384` và `ECDHE-*-CHACHA20-POLY1305`; nhóm khóa X25519, secp256r1; HSTS `max-age=31536000; includeSubDomains`; OCSP stapling; không nén TLS, không renegotiation. Chứng thư biên RSA 3072 hoặc ECDSA P-256. Ra ngoài (NDXP, PayGov): xác minh đầy đủ chứng thư, ghim CA gốc trong truststore riêng của adapter | Điểm A+ trên công cụ kiểm tra TLS nội bộ (testssl.sh): 0 giao thức/bộ mã yếu | Nhóm nền tảng | CI (testssl.sh trong kiểm thử khói), RS |
 | SEC-13 | Phân vùng mạng | Tám vùng Z0–Z7 (mục 3.3); tầng hạ tầng tách VLAN/subnet cho biên, nút worker, nút dữ liệu, mạng quản trị và mạng lưu trữ; namespace K8s gắn nhãn vùng `dh.gov.vn/zone`, danh sách đầy đủ ở D03-09 mục bố trí namespace (ví dụ `dh-edge` Z1; `dh-gateway` Z2; `dh-control`, `dh-payment` Z3; `dh-runtime`, `dh-rt-*` Z4; `dh-db`, `dh-kafka`, `dh-s3` Z5; `dh-iam`, `dh-secrets` Z6; `dh-obs`, `dh-system` Z7) | 100% namespace có nhãn vùng; sơ đồ mạng D03-09 khớp cấu hình | Bên cung cấp hạ tầng, nhóm nền tảng | RS |
 | SEC-14 | Network policy từ chối mặc định | Mỗi namespace có `CiliumNetworkPolicy` từ chối mọi ingress/egress, sau đó mở theo cặp nhãn `app.kubernetes.io/name`; DNS chỉ tới CoreDNS; Admin API APISIX, `/actuator`, cổng quản trị Kafka/PG chỉ nhận từ namespace được liệt kê; Hubble ghi luồng bị chặn | 100% namespace có chính sách mặc định từ chối (Kyverno kiểm tra); 0 luồng bất ngờ trong báo cáo Hubble tuần | Nhóm nền tảng | CI (kiểm thử kết nối âm tính), KT |
@@ -748,7 +748,7 @@ Mỗi giờ, PH-13 tính neo (anchor) gồm `{tenant, seq cuối, hash cuối, t
 
 Garage hiện chưa hỗ trợ đầy đủ S3 Object Lock; vì vậy SAD đã ghi lựa chọn SeaweedFS hoặc Ceph RGW cho WORM. Kho WORM phải là hệ lưu trữ riêng (khác cụm Garage dữ liệu nghiệp vụ), tốt nhất ở site DR hoặc hạ tầng do bên khác quản trị, để một sự cố quản trị ở site chính không chạm tới bằng chứng.
 
-> **Câu hỏi mở Q306:** Chọn SeaweedFS hay Ceph RGW (hoặc dịch vụ lưu trữ có Object Lock của cloud Chính phủ) cho kho WORM? Cần kiểm chứng chế độ compliance thực sự không thể rút ngắn trên phiên bản chọn; luồng C (D03-09) chốt.
+> **Q306 (đã chốt 25/11/2026):** chọn Ceph RGW với Object Lock chế độ compliance làm kho WORM. *Câu hỏi gốc:* Chọn SeaweedFS hay Ceph RGW (hoặc dịch vụ lưu trữ có Object Lock của cloud Chính phủ) cho kho WORM? Cần kiểm chứng chế độ compliance thực sự không thể rút ngắn trên phiên bản chọn; luồng C (D03-09) chốt.
 
 Công cụ kiểm tra toàn vẹn chạy hằng ngày: duyệt lại chuỗi từ neo đã xác minh gần nhất, đối chiếu với bản WORM, báo cáo đứt chuỗi qua luật UC-SEC-20. Kiểm toán viên có công cụ xuất gói bằng chứng cho một tenant và khoảng thời gian, kèm neo và khóa công khai để tự xác minh ngoại tuyến.
 
@@ -800,7 +800,7 @@ Bảng dưới đây là bộ luật phát hiện khởi điểm (SEC-64). Mỗi
 | UC-SEC-13 | Callback thanh toán sai chữ ký hoặc `MISMATCH` số tiền | PH-19 | ≥ 1 sự kiện | C | THR-46, THR-48 |
 | UC-SEC-14 | Hoàn tiền vượt ngưỡng hoặc ngoài giờ | PH-19 | Tổng ngày > ngưỡng tenant | C | THR-49 |
 | UC-SEC-15 | WAF chặn tấn công tiêm, hoặc tăng đột biến luật CRS | Coraza | ≥ 100 lần chặn/5 phút/IP | TB | THR-04, THR-45 |
-| UC-SEC-16 | Lưu lượng bất thường tới biên (dấu hiệu DDoS) | Envoy, LB | > 3 lần cao điểm 5 phút | NT | THR-01 |
+| UC-SEC-16 | Lưu lượng bất thường tới biên (dấu hiệu DDoS) | APISIX, LB | > 3 lần cao điểm 5 phút | NT | THR-01 |
 | UC-SEC-17 | Egress bị chặn từ pod ứng dụng | Hubble, Istio egress | ≥ 1 lần với đích lạ | C | THR-15, THR-45 |
 | UC-SEC-18 | Shell hoặc tiến trình lạ trong container | Falco/Tetragon | Mọi sự kiện | NT | THR-14, THR-58 |
 | UC-SEC-19 | Pod bị Kyverno chặn vì ảnh không ký hoặc vi phạm PSS | Kyverno | Mọi sự kiện ở PROD | C | THR-42 |
@@ -882,7 +882,7 @@ Tám playbook dưới đây là bản tóm lược; bản đầy đủ từng b�
 
 **PB-03 Ransomware hoặc phá hoại dữ liệu.** Kích hoạt khi Falco phát hiện mã hóa hàng loạt, volume không đọc được, bản sao lưu bị xóa thử. Trong giờ đầu: cô lập nút/namespace bị ảnh hưởng (nhãn quarantine, cordon nút), thu hồi thông tin xác thực vận hành có thể bị lộ, xác nhận bản sao lưu bất biến ngoài site còn nguyên (SEC-70). Không trả tiền chuộc. Khôi phục: dựng lại cụm từ Git (GitOps) và ảnh đã ký trên nút sạch, khôi phục CSDL về điểm trước thời điểm xâm nhập (PITR), xoay mọi bí mật. Mục tiêu theo RTO ở SEC-71; nếu site chính không tin cậy được thì chuyển sang site DR.
 
-**PB-04 DDoS.** Kích hoạt từ UC-SEC-16. Trong giờ đầu: bật chế độ chống DDoS tăng cường ở tầng hạ tầng (liên hệ TTDL/nhà cung cấp cloud), siết giới hạn tầng 7 tại Envoy (chỉ cho phép IP nguồn của HTTT đã đăng ký vào API máy–máy, thách thức hoặc chặn theo quốc gia với đường dẫn giao diện nếu cần), ưu tiên tài nguyên cho API thiết yếu (đánh dấu ở PH-02). Theo dõi để phân biệt với tải hợp lệ cao điểm (đầu năm học, cuối tháng thanh toán).
+**PB-04 DDoS.** Kích hoạt từ UC-SEC-16. Trong giờ đầu: bật chế độ chống DDoS tăng cường ở tầng hạ tầng (liên hệ TTDL/nhà cung cấp cloud), siết giới hạn tầng 7 tại APISIX (chỉ cho phép IP nguồn của HTTT đã đăng ký vào API máy–máy, thách thức hoặc chặn theo quốc gia với đường dẫn giao diện nếu cần), ưu tiên tài nguyên cho API thiết yếu (đánh dấu ở PH-02). Theo dõi để phân biệt với tải hợp lệ cao điểm (đầu năm học, cuối tháng thanh toán).
 
 **PB-05 Chiếm tài khoản quản trị.** Kích hoạt từ UC-SEC-02/03/05 hoặc người dùng báo. Trong giờ đầu: khóa tài khoản, thu hồi mọi phiên và refresh token, xem lại mọi thao tác của tài khoản trong 30 ngày (audit), hoàn tác thay đổi cấu hình nguy hiểm (Argo CD đồng bộ lại từ Git; realm Keycloak áp lại cấu hình từ Git), kiểm tra tài khoản/client mới được tạo bởi tài khoản đó. Loại trừ: đặt lại thông tin xác thực, đăng ký lại WebAuthn có kiểm tra danh tính trực tiếp.
 
@@ -1040,7 +1040,7 @@ Bảng dưới đây phân trách nhiệm theo lớp cho hai hồ sơ triển kh
 | Ứng phó sự cố, thông báo (SEC-72…74) | C (A), N hỗ trợ | C (A cho tenant), N (R cho nền tảng) |
 | Máy trạm người dùng, thư điện tử, nhận thức người dùng | C | C |
 
-> **Câu hỏi mở Q311:** Ở hồ sơ nền tảng dùng chung, ai là chủ quản của phần nền tảng dùng chung (một cơ quan trung ương, một tỉnh đầu mối, hay mỗi tỉnh là chủ quản của tenant mình)? Câu trả lời quyết định hồ sơ cấp độ lập một bộ hay nhiều bộ (D03-08).
+> **Q311 (đã chốt 25/11/2026):** mỗi tỉnh là chủ quản tenant của mình và lập một bộ hồ sơ cấp độ cho phần của mình. *Câu hỏi gốc:* Ở hồ sơ nền tảng dùng chung, ai là chủ quản của phần nền tảng dùng chung (một cơ quan trung ương, một tỉnh đầu mối, hay mỗi tỉnh là chủ quản của tenant mình)? Câu trả lời quyết định hồ sơ cấp độ lập một bộ hay nhiều bộ (D03-08).
 
 > **Câu hỏi mở Q312:** Danh mục HSM, thuật toán mật mã và CA được cơ quan có thẩm quyền chấp nhận cho hệ cấp độ 3–4 (ví dụ yêu cầu dùng mật mã dân sự trong nước, chứng thư từ CA chuyên dùng Chính phủ) là gì? Ảnh hưởng SEC-12, SEC-34, SEC-35, SEC-90.
 
@@ -1079,7 +1079,7 @@ Bảng dưới đây nối các yêu cầu, quyết định và mục kiểm kê
 
 ### 14.1. Câu hỏi mở
 
-> **Câu hỏi mở Q300:** Datahub áp dụng chuyển tiếp Điều 39 NĐ 331/2026 hay là hệ mới (mục 2.1)?
+> **Q300 (đã chốt 25/11/2026):** Datahub là hệ mới, hồ sơ cấp độ lập theo NĐ 331/2026; phần LGSP cũ còn chạy được xử lý bằng phụ lục rủi ro chuyển tiếp. *Câu hỏi gốc:* Datahub áp dụng chuyển tiếp Điều 39 NĐ 331/2026 hay là hệ mới (mục 2.1)?
 
 > **Câu hỏi mở Q301:** Văn bản thay Thông tư 12/2022/TT-BTTTT đã có chưa (mục 2.2)?
 
@@ -1091,7 +1091,7 @@ Bảng dưới đây nối các yêu cầu, quyết định và mục kiểm kê
 
 > **Câu hỏi mở Q305:** Thời hạn lưu dữ liệu giao dịch PH-19 theo quy định kế toán (mục 6.2)?
 
-> **Câu hỏi mở Q306:** Chọn SeaweedFS, Ceph RGW hay dịch vụ cloud cho kho WORM có Object Lock compliance (mục 7.2)?
+> **Q306 (đã chốt 25/11/2026):** chọn Ceph RGW với Object Lock chế độ compliance làm kho WORM. *Câu hỏi gốc:* Chọn SeaweedFS, Ceph RGW hay dịch vụ cloud cho kho WORM có Object Lock compliance (mục 7.2)?
 
 > **Câu hỏi mở Q307:** Thời hạn lưu nhật ký tối thiểu cụ thể theo văn bản hướng dẫn Luật 116/2025 và TCVN 14423:2026 (mục 7.3)?
 
@@ -1101,7 +1101,7 @@ Bảng dưới đây nối các yêu cầu, quyết định và mục kiểm kê
 
 > **Câu hỏi mở Q310:** Yêu cầu cụ thể của chương 6 TCVN 14423:2026 và tiêu chí cấp độ 4 (mục 10)?
 
-> **Câu hỏi mở Q311:** Chủ quản của phần nền tảng dùng chung là ai (mục 12)?
+> **Q311 (đã chốt 25/11/2026):** mỗi tỉnh là chủ quản tenant của mình và lập một bộ hồ sơ cấp độ cho phần của mình. *Câu hỏi gốc:* Chủ quản của phần nền tảng dùng chung là ai (mục 12)?
 
 > **Câu hỏi mở Q312:** Danh mục HSM, thuật toán và CA được chấp nhận cho cấp độ 3–4 (mục 12)?
 
@@ -1144,7 +1144,7 @@ Các điểm dưới đây là chênh lệch giữa tài liệu này và tài li
 | D02-02 Q08 | Mở | Đóng, trỏ tới D03-07 mục 7.3 và ADR-031 | — |
 | D02-02 thêm NFR | — | Thêm yêu cầu vô hiệu tài khoản không hoạt động 45 ngày (quản trị 30 ngày) | TCVN 14423:2026; SEC-27 |
 | D03-01 §9 mục 2 | Token 15 phút cho người | 5 phút (giữ ở BFF, làm mới trong suốt); ghi rõ mẫu BFF | SEC-21, SEC-25 |
-| D03-01 §6 dòng Biên | "Ingress NGINX hoặc Envoy Gateway, ADR-03x" | Envoy Gateway + Coraza, ADR-033 | Ingress NGINX cộng đồng đã ngừng phát triển |
+| D03-01 §6 dòng Biên | "Ingress NGINX hoặc Envoy Gateway, ADR-03x" | APISIX ở biên, WAF Coraza trong APISIX, ADR-033 (đã gộp 25/11/2026) | Ingress NGINX cộng đồng đã ngừng phát triển |
 | D03-01 §6 dòng Kho đối tượng | "SeaweedFS hoặc Ceph RGW cho WORM" | Giữ, thêm Q306 | — |
 | D00-01 §2.1 dòng Datahub, CMP-LAW-03 | Viện dẫn NĐ 47/2020 | NĐ 278/2025/NĐ-CP | NĐ 47/2020 đã bị thay |
 | D00-01 §7 CMP-LAW-04/05/06/07/08/16, STD-03 | Như hiện có | Cập nhật theo mục 14.2 | Khung pháp lý mới |
