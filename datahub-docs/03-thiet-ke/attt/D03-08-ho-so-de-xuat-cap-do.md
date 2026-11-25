@@ -115,7 +115,7 @@ Datahub là điểm trung chuyển có kiểm soát cho mọi trao đổi dữ l
 
 Ranh giới hệ thống quyết định cái gì được xác định cấp độ cùng nhau và cái gì là hệ thống bên ngoài có hồ sơ riêng. Ranh giới được vạch theo nguyên tắc: mọi thành phần do chủ quản Datahub vận hành và cùng phục vụ chức năng tích hợp, chia sẻ dữ liệu đều nằm trong một HTTT duy nhất, kể cả các thành phần hỗ trợ (giám sát, sao lưu, chuỗi cung ứng). Nguyên tắc này đáp ứng yêu cầu cấm chia nhỏ hình thức để hạ cấp độ tại Điều 8 Nghị định 331/2026 (mục 5.2).
 
-**Trong phạm vi** gồm 20 phân hệ PH-01…PH-20 đóng gói thành hai ứng dụng giao diện (`dh-console`, `dh-portal`), sáu đơn vị triển khai (DU) Spring Boot (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`), DU Camel Quarkus `dh-runtime`; các thành phần bên thứ ba chạy trên cùng cụm (Envoy Gateway và WAF Coraza, APISIX, Kafka và Apicurio, PostgreSQL trên CloudNativePG, ClickHouse cho siêu dữ liệu lượt gọi, Garage, Valkey, Keycloak, OPA, OpenBao, bộ quan sát OpenTelemetry/Mimir/Loki/Tempo/Grafana); công cụ triển khai và chuỗi cung ứng (kho Git cấu hình, Argo CD, Harbor, đường ống CI/CD); hạ tầng cụm Kubernetes tại site chính và site DR; kho sao lưu và kho WORM; các cầu nối tạm với LGSP cũ trong giai đoạn chuyển đổi.
+**Trong phạm vi** gồm 20 phân hệ PH-01…PH-20 đóng gói thành hai ứng dụng giao diện (`dh-console`, `dh-portal`), sáu đơn vị triển khai (DU) Spring Boot (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`), DU Camel Quarkus `dh-runtime`; các thành phần bên thứ ba chạy trên cùng cụm (APISIX kèm WAF Coraza, Kafka và Apicurio, PostgreSQL trên CloudNativePG, ClickHouse cho siêu dữ liệu lượt gọi, Garage, Valkey, Keycloak, OPA, OpenBao, bộ quan sát OpenTelemetry/Mimir/Loki/Tempo/Grafana); công cụ triển khai và chuỗi cung ứng (kho Git cấu hình, Argo CD, Harbor, đường ống CI/CD); hạ tầng cụm Kubernetes tại site chính và site DR; kho sao lưu và kho WORM; các cầu nối tạm với LGSP cũ trong giai đoạn chuyển đổi.
 
 **Ngoài phạm vi** là các HTTT thành viên của sở, ngành, xã; NDXP và các CSDL quốc gia; PayGov và kênh thanh toán; VNeID; hệ thống giám sát an ninh mạng (SIEM/SOC) của tỉnh; bản thân LGSP cũ. Các hệ này có chủ quản và hồ sơ cấp độ riêng. Datahub xử lý ranh giới với chúng theo giả định chúng có thể bị xâm phạm (D03-07 §1.2): xác thực máy–máy, kiểm tra đầu vào, giới hạn đích ra ngoài. **[HT-B]** Hạ tầng cloud (phòng máy, mạng ảo, ảo hóa, lưu trữ khối) thuộc hồ sơ cấp độ của nhà cung cấp cloud; nền tảng Datahub kế thừa biện pháp của tầng này theo Điều 30 (Q329).
 
@@ -147,7 +147,7 @@ flowchart LR
     PG["PayGov"]
   end
   subgraph Z1["Z1 Biên"]
-    EG["Envoy Gateway + WAF"]
+    EG["APISIX biên + WAF"]
   end
   subgraph Z2["Z2 Cổng API"]
     AP["APISIX + OPA"]
@@ -195,8 +195,8 @@ Sơ đồ vật lý chi tiết, dải địa chỉ và quy tắc tường lửa 
 | Vùng mạng hạ tầng (D03-09 §3) | Vùng logic (D03-07) | Namespace (D03-09 §4.2) | Thành phần chính |
 |---|---|---|---|
 | Internet, mạng TSLCD/nội bộ tỉnh | Z0 | — | Người dùng, HTTT, NDXP, PayGov |
-| DMZ | Z1 và phần ra của Z4 | `dh-edge` | Cân bằng tải, chống DDoS, Envoy Gateway ngoài, egress gateway |
-| Vùng ứng dụng (node pool không trạng thái) | Z2, Z3, Z4, phần Keycloak của Z6 | `dh-gateway`, `dh-control`, `dh-payment`, `dh-assist`, `dh-runtime`, `dh-rt-{tenant}`, `dh-iam` | Envoy Gateway trong, APISIX, BFF, DU, `dh-runtime`, Keycloak |
+| DMZ | Z1 và phần ra của Z4 | `dh-edge` | Cân bằng tải, chống DDoS, `apisix-ext` kèm WAF, egress gateway |
+| Vùng ứng dụng (node pool không trạng thái) | Z2, Z3, Z4, phần Keycloak của Z6 | `dh-gateway`, `dh-control`, `dh-payment`, `dh-assist`, `dh-runtime`, `dh-rt-{tenant}`, `dh-iam` | `apisix-int`, BFF, DU, `dh-runtime`, Keycloak |
 | Vùng dữ liệu (node pool có trạng thái) | Z5 (`pg-iam` thuộc Z6) | `dh-db`, `dh-kafka`, `dh-olap`, `dh-s3`, `dh-cache` | PostgreSQL, Kafka, Garage, ClickHouse, Valkey |
 | Vùng quản trị | Z7; OpenBao niêm phong và kho sao lưu thuộc Z6 | `dh-obs`, `dh-system`, `dh-secrets` (Z6), `istio-system`, `kube-system` | Bastion, Harbor, Git, OpenBao niêm phong, kho sao lưu S3 bất biến, NTP, DNS |
 | Liên site | — | — | Sao chép CSDL, Kafka MirrorMaker 2, Garage, Harbor, Git |
@@ -217,11 +217,11 @@ flowchart TB
   subgraph SITE1["TTDL [Tên tỉnh] - site chính"]
     subgraph DMZ["DMZ 10.10.0.0/24 (ví dụ)"]
       LB["Cân bằng tải, chống DDoS"]
-      EGO["Envoy Gateway ngoài + WAF"]
+      EGO["apisix-ext + WAF"]
       EGR["Egress gateway"]
     end
     subgraph APPZ["Vùng ứng dụng 10.20.0.0/22 (ví dụ)"]
-      EGI["Envoy Gateway trong"]
+      EGI["apisix-int + WAF"]
       CORE["APISIX, DU, dh-runtime, Keycloak"]
     end
     subgraph DATAZ["Vùng dữ liệu 10.30.0.0/24 (ví dụ)"]
@@ -397,7 +397,7 @@ Bảng dưới đây liệt kê các yếu tố có thể đẩy Datahub lên c�
 
 Câu hỏi then chốt là CD4-03: việc một nền tảng phục vụ nhiều tỉnh tự nó có phải yếu tố cấp độ 4 không. Lập luận ủng hộ: phạm vi ảnh hưởng vượt một địa phương, hậu quả khi bị tấn công có tính hệ thống. Lập luận ngược lại: mỗi tenant được cách ly ở tầng hạ tầng và mật mã (SEC-80…88), nên sự cố ở một tỉnh không lan; Điều 30 cho phép hệ cấp độ 3 dùng chung hạ tầng cloud, tức bản thân việc dùng chung không mặc nhiên nâng cấp độ. Hồ sơ không tự kết luận điểm này.
 
-> **Câu hỏi mở Q323:** (a) Nghị định 331/2026 có tiêu chí cấp độ 4 dựa trên số chủ thể DLCN (ngưỡng bao nhiêu), trên phạm vi phục vụ liên tỉnh, liên vùng, hay trên vai trò nền tảng dùng chung không? (b) Ai là chủ quản của nền tảng dùng chung (cơ quan trung ương được giao, một tỉnh đầu mối, hay doanh nghiệp cung cấp dịch vụ cho thuê), và hồ sơ của từng tỉnh lập đầy đủ hay rút gọn? Câu hỏi này trùng một phần với Q311 của D03-07; câu trả lời quyết định cấp độ và số bộ hồ sơ của `HT-B`.
+> **Q323 (đã chốt 25/11/2026):** phần (b): mỗi tỉnh là chủ quản tenant của mình (như Q311); phần (a) về tiêu chí cấp độ 4 vẫn chờ pháp chế đối chiếu NĐ 331/2026. *Câu hỏi gốc:* (a) Nghị định 331/2026 có tiêu chí cấp độ 4 dựa trên số chủ thể DLCN (ngưỡng bao nhiêu), trên phạm vi phục vụ liên tỉnh, liên vùng, hay trên vai trò nền tảng dùng chung không? (b) Ai là chủ quản của nền tảng dùng chung (cơ quan trung ương được giao, một tỉnh đầu mối, hay doanh nghiệp cung cấp dịch vụ cho thuê), và hồ sơ của từng tỉnh lập đầy đủ hay rút gọn? Câu hỏi này trùng một phần với Q311 của D03-07; câu trả lời quyết định cấp độ và số bộ hồ sơ của `HT-B`.
 
 ### 5.6. Hồ sơ nền tảng dùng chung: chủ quản và quan hệ với hồ sơ của tỉnh
 

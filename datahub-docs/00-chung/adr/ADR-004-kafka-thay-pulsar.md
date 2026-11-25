@@ -2,8 +2,8 @@
 ma_tai_lieu: ADR-004
 ten: Kafka và Apicurio Registry thay Apache Pulsar cho trao đổi sự kiện
 phien_ban: 0.1
-ngay: 2026-11-21
-trang_thai: Đề xuất
+ngay: 2026-11-25
+trang_thai: Chấp nhận
 nguoi_doc: Kiến trúc sư, Trưởng nhóm kỹ thuật, Hội đồng thẩm định
 ---
 

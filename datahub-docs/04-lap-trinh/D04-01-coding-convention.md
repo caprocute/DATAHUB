@@ -1026,7 +1026,7 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chu�
 
 ## 14. Câu hỏi mở
 
-> **Câu hỏi mở Q350:** Bản đồ DU chính thức là bản đồ của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`, `dh-runtime`) hay bản đồ của IP-01 trong kho mã (`lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai`, `lgsp-camel-{miền}`)? Quyết định này chốt package gốc `vn.datahub.{du}` và thời điểm đổi package `vn.lgsp` hiện có.
+> **Q350 (đã chốt 25/11/2026):** dùng bản đồ DU của SAD (`dh-*`), package gốc `vn.datahub.{du}`; package `vn.lgsp` hiện có được đổi dần khi chạm mã. *Câu hỏi gốc:* Bản đồ DU chính thức là bản đồ của SAD (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-payment`, `dh-assist`, `dh-runtime`) hay bản đồ của IP-01 trong kho mã (`lgsp-control`, `lgsp-data`, `lgsp-process`, `lgsp-adapter-mgr`, `lgsp-ai`, `lgsp-camel-{miền}`)? Quyết định này chốt package gốc `vn.datahub.{du}` và thời điểm đổi package `vn.lgsp` hiện có.
 
 > **Câu hỏi mở Q351:** Bảng, cột hiện có đặt tên tiếng Việt không dấu (`ph07.danh_muc`, `ma_danh_muc`) và schema thiếu tên ngắn (`ph07` thay vì `ph07_rdm`): đổi ngay sang quy ước D00-01 §6 khi dữ liệu còn ít, hay ghi ngoại lệ có thời hạn?
 
@@ -1038,6 +1038,6 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chu�
 
 > **Câu hỏi mở Q358:** Số hiệu cụ thể của các biện pháp trong dải SEC-40–49 (và SEC-30–39, SEC-60–69, SEC-80–89) do D03-07 chốt; khi có, bảng 9.2 cần thêm cột mã `SEC-nn` cho từng dòng.
 
-> **Câu hỏi mở Q359:** `dh-runtime` (Camel) có được truy cập trực tiếp CSDL nghiệp vụ của Datahub không (mã hiện tại dùng `camel-quarkus-sql` với datasource riêng)? Nếu có, cơ chế đặt `app.tenant_id` cho mỗi bản tin và vai trò CSDL riêng phải được thiết kế ở SDD PH-04; nếu không, truy cập CSDL chỉ dành cho Kamelet nguồn dữ liệu của HTTT thành viên, không phải CSDL của Datahub.
+> **Q359 (đã chốt 25/11/2026):** cho phép luồng Camel (`dh-runtime`) truy cập trực tiếp CSDL có kiểm soát: chỉ qua tài khoản chỉ đọc riêng cho từng luồng, kết nối phải được khai báo trong danh mục kết nối (PH-05) và mọi truy vấn được ghi kiểm toán; mỗi bản tin phải đặt `app.tenant_id` để RLS lọc theo tenant (thiết kế ở SDD PH-04); không bao giờ truy cập CSDL của control plane (ADR-002). *Câu hỏi gốc:* `dh-runtime` (Camel) có được truy cập trực tiếp CSDL nghiệp vụ của Datahub không (mã hiện tại dùng `camel-quarkus-sql` với datasource riêng)? Nếu có, cơ chế đặt `app.tenant_id` cho mỗi bản tin và vai trò CSDL riêng phải được thiết kế ở SDD PH-04; nếu không, truy cập CSDL chỉ dành cho Kamelet nguồn dữ liệu của HTTT thành viên, không phải CSDL của Datahub.
 
 Các câu hỏi Q353, Q354 và Q357 thuộc quy trình kỹ thuật, được nêu ở D04-02.
