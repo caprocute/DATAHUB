@@ -1050,3 +1050,219 @@ Kỹ thuật bắt buộc: ảo hóa chặng ngoài khung nhìn của XYFlow (`o
 | AC-UI-04-04-08 | Đạt ngân sách hiệu năng 10.22 trên luồng mẫu 200 chặng |
 | AC-UI-04-04-09 | Mọi thành phần trong bảng thành phần đúng tập catalog 3.33.1 trừ thành phần bị chính sách tỉnh chặn |
 | AC-UI-04-04-10 | Gửi duyệt không được khi `contentHash` khác lần chạy thử đạt gần nhất |
+
+## 11. UI-04-05 Cấu hình chặng mở rộng
+
+**Mục đích.** Inspector 360 px đủ cho chỉnh nhanh nhưng chật khi chặng có 60–150 tham số hoặc khi cần nhìn dữ liệu vào, ra để cấu hình đúng. Cửa sổ mở rộng chiếm 75 % màn (theo SRS-PH-04 D-03 của repo), ba cột VÀO · THAM SỐ · RA. FR-04-014, 015, 016. Thay thanh Properties của Tooling (LGC-TOOL-019, 020).
+**Mở bằng.** Nhấp đúp chặng, `Ctrl+Enter`, nút ⤢ ở Inspector. URL thêm `lop=cau-hinh`.
+**Vật liệu.** Khung `glass-modal`, nội dung đặc. Canvas phía sau vẫn thấy mờ để giữ ngữ cảnh; không thao tác được.
+
+### 11.1. Wireframe (75 % × 85 % khung nhìn)
+
+```
+┌ glass-modal ─────────────────────────────────────────────────────────────────────────────────────┐
+│ ⇢ Gọi hộ tịch   to · http            ‹ Kiểm lược đồ   Ghi nhật ký ›        [Tài liệu ↗]   ✕ Esc │
+├──────────────────────────┬────────────────────────────────────────────┬──────────────────────────┤
+│ VÀO                      │ THAM SỐ                                    │ RA                       │
+│ Nguồn: lần chạy #41 ▾    │ [🔍 Tìm tham số…]  [☐ Chỉ trường đã đặt]   │ Nguồn: lần chạy #41 ▾    │
+│ ▸ headers (12)           │ ┌ Cơ bản ─────────────────────────────────┐│ ▸ headers (14)           │
+│   dh-tenant  "lam-dong"  │ │ Kết nối *  [ndxp-ho-tich ▾] ✓ 2 giờ trước││   CamelHttpResponseCode │
+│   loai       "KS"        │ │ Đường dẫn * [/api/v1/khai-sinh/${…}] ƒx ││     200                  │
+│ ▾ body (JSON)            │ │ Phương thức [POST ▾]                    ││ ▾ body (JSON)            │
+│   { "soDinhDanh": "0…",  │ └─────────────────────────────────────────┘│   { "maGiayTo": "…",     │
+│     "hoTen": "Nguyễn…" } │ ▸ Kết nối và thời gian chờ (6 · 2 đã đặt)   │     "trangThai": "OK" }  │
+│ ▸ exchange properties (3)│ ▸ Bảo mật (4)                               │                          │
+│ ▸ variables (1)          │ ▸ Proxy (5)                                 │ Lược đồ ra dự kiến:      │
+│                          │ ▸ Nâng cao (38)                             │ ndxp-khai-sinh-resp v3   │
+│ [kéo trường vào ô tham số│ ▸ Xử lý lỗi                                 │ ✓ khớp lần chạy #41      │
+│  để chèn ${…}]           │ ▸ Mô tả                                     │                          │
+├──────────────────────────┴────────────────────────────────────────────┴──────────────────────────┤
+│ ✕ 1 lỗi  ⚠ 1 cảnh báo · 2 tham số đã đổi trong phiên này          [⟲ Hoàn tác phiên] [Xong Enter] │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.2. Cột VÀO và RA
+
+- Nguồn dữ liệu: `Select` "Lần chạy thử #{n} ({time}, {kết quả})", "Lược đồ PH-06 {tên} v{n}", "Bản tin mẫu {tên}", "Không có". Mặc định lần chạy gần nhất có đi qua chặng này; nếu không có thì lược đồ khai báo ở chặng `dh-stage-schema`.
+- Cây `CMP-JsonTree` hiện headers, body (JSON, XML hiện dạng cây, văn bản hiện dạng thô có cắt 64 KB), exchange properties, variables. Giá trị đã che (theo `dh-stage-audit` và quy tắc che PH-03) hiện "•••• (đã che)".
+- Kéo một nút ở cột VÀO thả vào ô tham số hỗ trợ biểu thức: chèn `${header.loai}`, `${body.soDinhDanh}` (simple) hoặc `.soDinhDanh` (jq) theo ngôn ngữ của ô. Bàn phím: focus nút, `Ctrl+C` sao chép biểu thức đường dẫn, dán vào ô.
+- Cột RA với lược đồ dự kiến hiện ✓ khớp hoặc ⚠ lệch kèm danh sách trường thiếu, thừa.
+- Hai cột thu gọn được (nút ‹ ›) để cột THAM SỐ rộng ra; thu gọn còn 32 px có nhãn dọc.
+
+### 11.3. Cột THAM SỐ
+
+Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiện mọi nhóm cùng lúc dạng `Collapse` với số "(tổng · đã đặt)"; trường biểu thức mở rộng thành ô nhiều dòng; trường SQL, JQ cao 240 px; ô tìm lọc theo tên gốc, nhãn tiếng Việt và mô tả, tô từ khớp. Nhóm chứa lỗi tự mở và có huy hiệu.
+
+### 11.4. Điều hướng và đóng
+
+`‹ ›` ở đầu (hoặc `Alt+←`, `Alt+→`) chuyển sang chặng trước, sau theo dòng chảy mà không đóng cửa sổ. Thay đổi áp ngay vào mô hình như Inspector; "⟲ Hoàn tác phiên" hoàn tác mọi bước kể từ khi mở cửa sổ (một bước gộp). "Xong" hoặc `Esc` đóng, focus trở lại chặng trên canvas. Không có "Hủy" riêng để tránh hiểu lầm thay đổi chưa áp.
+
+### 11.5. Trạng thái
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải `properties` của thành phần | Skeleton trong cột giữa; hai cột bên hiện ngay nếu có dữ liệu |
+| Chưa có dữ liệu chạy thử, không có lược đồ | Cột VÀO: "Chưa có dữ liệu mẫu. Chạy thử luồng hoặc chọn lược đồ để thấy dữ liệu vào chặng này." nút "Chạy thử đến chặng này" |
+| Lần chạy không đi qua chặng | "Lần chạy #{n} không đi qua chặng này (rẽ nhánh khác)." |
+| Chỉ đọc | Mọi trường `readOnly`; nút "Hoàn tác phiên" ẩn |
+| Thành phần không còn trong catalog | Cột giữa hiện YAML thô của chặng trong `CMP-CodeEditor`, cảnh báo VR-14 |
+
+## 12. UI-04-06 Trình soạn biểu thức
+
+**Mục đích.** Viết, kiểm tra biểu thức simple, jq, jsonpath, xpath, constant, header, groovy (nếu hồ sơ JVM và chính sách cho phép) với gợi ý và chạy thử ngay trên dữ liệu mẫu. FR-04-017.
+**Mở bằng.** Nút ƒx trên trường biểu thức, nhấp đúp nhãn `when`, `Ctrl+E` khi focus trong trường biểu thức.
+**Dạng.** `CMP-Popover` neo vào trường khi rộng đủ (640 × 420, `glass-overlay` khung, vùng soạn đặc); tự chuyển thành `CMP-Modal` 960 × 640 khi người dùng bấm ⤢ hoặc màn hẹp.
+
+### 12.1. Wireframe
+
+```
+┌ Biểu thức · Điều kiện nhánh 1 của Rẽ nhánh ──────────────────────────── ⤢ ✕ ┐
+│ Ngôn ngữ [simple ▾]   Kiểu kết quả: boolean                                   │
+│ ┌ đặc ──────────────────────────────────────────────────────────────────────┐ │
+│ │ ${header.loai} == 'KS' && ${body.namSinh} >= 1900                         │ │
+│ └───────────────────────────────────────────────────────────────────────────┘ │
+│ ✓ Cú pháp hợp lệ                                                              │
+│ ┌ Biến khả dụng ───────────┐ ┌ Thử trên dữ liệu ─────────────────────────────┐│
+│ │ 🔍                        │ │ Nguồn [Lần chạy #41 ▾]                        ││
+│ │ header.  (12)             │ │ Kết quả: true  (boolean) · 0,4 ms             ││
+│ │ body.    (JSON)           │ │ ─────────────────────────────────────────────  ││
+│ │ exchangeProperty. (3)     │ │ Thử với dữ liệu khác: [ { "namSinh": 1850 } ] ││
+│ │ variable. (1)             │ │ Kết quả: false                                ││
+│ │ Hàm: date:now, random(…)  │ │                                               ││
+│ └───────────────────────────┘ └───────────────────────────────────────────────┘│
+│                                                        [Hủy] [Áp dụng Ctrl+Enter]│
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.2. Hành vi
+
+- Gợi ý `Ctrl+Space` theo ngôn ngữ: simple (`header.`, `body.`, `exchangeProperty.`, `variable.`, hàm `date:`, `random`, `bodyAs`, toán tử), jq (đường dẫn từ dữ liệu mẫu, hàm jq chuẩn, hàm tùy biến `dh_map` của ADR-066), jsonpath, xpath (namespace từ bản tin mẫu).
+- Kiểm tra cú pháp ngay trên trình duyệt cho simple và jq (bộ phân tích chạy trong Web Worker); xpath, jsonpath, groovy kiểm tra qua máy chủ (API-04-014, trễ 600 ms). Lỗi: gạch sóng tại vị trí, dòng dưới "✕ {ERR-04-037}".
+- "Thử trên dữ liệu": đánh giá trên máy chủ (API-04-014 `evaluate=true`) bằng thư viện ngôn ngữ của Camel đúng phiên bản, trên bản tin mẫu đã chọn hoặc dữ liệu nhập tay (≤ 64 KB). Không gọi được thành phần nào, không truy cập mạng (máy chủ đánh giá trong hộp cát không có kết nối ra ngoài).
+- Kiểu kết quả kỳ vọng suy từ ngữ cảnh: `when`, `filter` cần boolean; `split` cần danh sách; `setHeader` bất kỳ. Lệch kiểu hiện ⚠.
+- "Áp dụng" ghi vào trường và một bước hoàn tác; "Hủy", `Esc` bỏ.
+- Groovy, JavaScript, MVEL bị chặn mặc định theo chính sách thành phần (EN-04-11); nếu tỉnh cho phép thì có cảnh báo cố định "Biểu thức kịch bản chạy mã tùy ý. Người duyệt sẽ được nhắc kiểm tra kỹ."
+
+## 13. UI-04-07 Trình ánh xạ dữ liệu
+
+**Mục đích.** Ánh xạ trực quan từ cấu trúc nguồn sang cấu trúc đích, sinh JQ (ADR-066), lưu thành tệp `*.dhmap.json` cạnh YAML, dùng trong chặng `dh-stage-transform` hoặc Kamelet `dh-jq-action`. Hỗ trợ chuyển mã qua bảng mã PH-07 bằng hàm `dh_map`. Thay màn Data mapping của Tooling (LGC-TOOL-028). FR-04-040…045.
+**Mở bằng.** Nút "Mở trình ánh xạ" ở Inspector của chặng ánh xạ, `Ctrl+M`, nhấp đúp chặng ánh xạ. URL `lop=anh-xa`.
+**Dạng.** `CMP-Modal` toàn màn (96 % × 94 %), khung `glass-modal`, nội dung đặc.
+
+### 13.1. Wireframe
+
+```
+┌ Ánh xạ dữ liệu · Chuyển hồ sơ khai sinh sang NDXP ──────────────── [Trực quan|JQ|Chia đôi]  ✕ ┐
+│ Nguồn: [Lược đồ PH-06 ho-tich-ks v4 ▾]         Đích: [Lược đồ PH-06 ndxp-khai-sinh-req v3 ▾]    │
+├ NGUỒN (360) ──────────────┬ ÁNH XẠ (linh hoạt) ─────────────────────┬ ĐÍCH (360) ──────────────────┤
+│ 🔍 Tìm trường             │                                          │ 🔍 Tìm trường  ☐ Chỉ chưa ánh xạ│
+│ ▾ hoSo {object}           │   hoSo.soDinhDanh ─────────────────────▶ │ ▾ request {object}            │
+│   ● soDinhDanh string     │   hoSo.hoTen ──[ƒ upper]───────────────▶ │   ● citizenId string *    ✓   │
+│   ● hoTen string          │   hoSo.gioiTinh ──[⇄ PH-07 gioi-tinh]──▶ │   ● fullName string *     ✓   │
+│   ● gioiTinh string       │   hoSo.ngaySinh ──[ƒ date dd/MM→ISO]───▶ │   ● sex enum[M,F,O] *     ✓   │
+│   ● ngaySinh string       │                                          │   ● birthDate date *      ✓   │
+│   ▾ cha {object}          │   [ƒ concat] ◀ hoSo.cha.ho, hoSo.cha.ten │   ▾ father {object}          │
+│     ● ho, ● ten           │              └──────────────────────────▶│     ● name string             │
+│ ▾ giayTo [array]          │   [⟳ lặp giayTo → documents]             │   ▾ documents [array]         │
+│   ● loai, ● so            │      loai ──[⇄ PH-07 loai-giay-to]─────▶ │     ● type *  ● number        │
+│                           │                                          │   ● requestedAt  = now() ✓    │
+│                           │                                          │   ● province  = $tenant ✓     │
+├───────────────────────────┴──────────────────────────────────────────┴───────────────────────────────┤
+│ Thử: [Lần chạy #41 ▾] → Kết quả hợp lệ theo ndxp-khai-sinh-req v3 ✓   ✕ 0  ⚠ 1 (father.name rỗng) │
+│ 9/10 trường bắt buộc đã ánh xạ                                      [Hủy thay đổi] [Lưu ánh xạ]  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 13.2. Cột nguồn, đích
+
+`CMP-SchemaTree`: nút cây có biểu tượng kiểu (`{}` object, `[]` array, `Aa` string, `#` number, `📅` date, `✓` boolean, `≡` enum), tên, kiểu, dấu * bắt buộc (đích), ✓ đã ánh xạ (đích), số lần dùng (nguồn). Nguồn cấu trúc lấy từ: lược đồ PH-06 (JSON Schema, XSD), suy từ bản tin mẫu (JSON, XML, CSV có dòng tiêu đề), hoặc lược đồ khai báo ở chặng trước. Cây dài: ảo hóa, tìm kiếm lọc và tự mở nhánh chứa kết quả.
+
+### 13.3. Vùng ánh xạ
+
+| Thao tác | Chuột | Bàn phím |
+|---|---|---|
+| Ánh xạ trực tiếp | Kéo trường nguồn thả vào trường đích | Chọn nguồn, `Space` đánh dấu; chọn đích, `Enter` |
+| Ánh xạ nhiều nguồn vào một đích | Kéo thêm nguồn vào cùng đích → tạo nút hàm `concat` mặc định, đổi hàm được | Như trên, đích đã có ánh xạ thì hỏi "Thay" hay "Thêm vào hàm" |
+| Thêm hàm biến đổi | Bấm vào đường ánh xạ → menu hàm | Chọn đường ánh xạ (`↑`/`↓` trong danh sách ánh xạ), `F` |
+| Giá trị cố định, biểu thức | Bấm "=" ở trường đích | Focus trường đích, `=` |
+| Lặp mảng | Kéo mảng nguồn vào mảng đích → khối "⟳ lặp" chứa ánh xạ con | |
+| Điều kiện | Menu đường ánh xạ → "Chỉ khi…" (biểu thức JQ boolean) | |
+| Xóa ánh xạ | Chọn đường, `Delete` | |
+| Tự ánh xạ theo tên | Nút "Gợi ý ánh xạ" | Khớp tên chính xác, không dấu, đồng nghĩa trong từ điển PH-06; hiện danh sách đề xuất có ô chọn, không tự áp |
+
+Thư viện hàm (nhóm): Chuỗi (`upper`, `lower`, `trim`, `substring`, `replace`, `concat`, `split`, `pad`), Số (`round`, `toNumber`, `format`), Ngày giờ (`parseDate`, `formatDate`, `now`, đổi múi giờ), Logic (`if`, `coalesce`, `default`), Mảng (`map`, `filter`, `first`, `length`, `join`), **Chuyển mã PH-07** (`dh_map(bảng, chiều, khi không khớp)`): chọn bảng mã (danh mục PH-07), chiều (mã nội bộ → mã quốc gia hoặc ngược lại), hành vi khi không khớp (`null`, giữ nguyên, lỗi). Mỗi nút hàm hiện tham số dạng biểu mẫu nhỏ, không bắt viết JQ.
+
+### 13.4. Chế độ JQ và Chia đôi
+
+JQ sinh từ ánh xạ hiện trong `CMP-CodeEditor` (chỉ đọc trong chế độ Trực quan + Chia đôi). Người dùng có thể "Chuyển sang soạn JQ tay": cảnh báo "Sau khi sửa JQ tay, trình ánh xạ trực quan chỉ hiện được các ánh xạ nhận dạng được; phần còn lại hiện dạng khối JQ." Khối JQ không nhận dạng được hiện trong vùng ánh xạ là nút "{} JQ tùy biến" nối tới các trường đích nó ghi (phân tích tĩnh). Tệp `*.dhmap.json` luôn là nguồn chuẩn; JQ là sản phẩm sinh ra (ADR-066).
+
+### 13.5. Thử và kiểm tra
+
+Thanh dưới chạy JQ trên dữ liệu chọn (API-04-014 `language=jq`, có hàm `dh_map` gọi PH-07 ở chế độ chỉ đọc) và kiểm kết quả theo lược đồ đích. Lỗi lược đồ hiện trên cây đích (✕ tại trường). "Lưu ánh xạ" vô hiệu khi JQ không biên dịch được; vẫn lưu được khi còn trường bắt buộc chưa ánh xạ (là cảnh báo VR-18, chặn ở mức gửi duyệt nếu `04.mapping_require_all_required` = true).
+
+### 13.6. Trạng thái
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Chưa chọn nguồn hoặc đích | Cột tương ứng hiện ba nút: "Chọn lược đồ PH-06", "Dán bản tin mẫu", "Lấy từ lần chạy thử" |
+| Lược đồ PH-06 có phiên bản mới | Dải thông tin "Lược đồ {tên} có v{n+1}. [Xem khác biệt] [Nâng lên]"; nâng lên thì trường bị xóa trong lược đồ mới hiện ánh xạ "mồ côi" màu cảnh báo |
+| Bảng mã PH-07 không truy cập được | Nút `dh_map` hiện ⚠ "Không tải được bảng mã {mã}. Ánh xạ vẫn lưu, nhưng chưa thử được." |
+| Cây quá lớn (> 5.000 nút) | Hiện cảnh báo hiệu năng, mặc định thu gọn mọi nhánh |
+
+## 14. UI-04-08 Trình soạn Kamelet
+
+**Mục đích.** Soạn Kamelet của tỉnh (`source`, `sink`, `action`) để đóng gói một cách kết nối dùng lại, thay việc nhập JAR component của Tooling (LGC-TOOL-027 bị loại vì ATTT). FR-04-030, 031.
+**Mở bằng.** Tạo luồng loại Kamelet (UI-04-03) hoặc mở thực thể Kamelet. Cùng khung UI-04-04, thanh thực thể có ba tab cố định: **Đặc tả**, **Mẫu (template)**, **Phụ thuộc**.
+**Quyền.** `PERM-04-update` trong không gian có cờ "Được soạn Kamelet"; phát hành Kamelet dùng chung toàn tỉnh cần `PERM-04-catalog-admin`.
+
+### 14.1. Tab Đặc tả
+
+Biểu mẫu hai cột:
+
+| Trường | Kiểu | Kiểm tra |
+|---|---|---|
+| Tên (metadata.name) | `Input` | `^[a-z][a-z0-9-]*-(source|sink|action)$`, duy nhất trong tenant (ERR-04-036), không dùng tiền tố `dh-` (dành cho Kamelet nền) |
+| Loại | `Radio` source / sink / action | Khớp hậu tố tên |
+| Tiêu đề, mô tả | `Input`, `TextArea` (Markdown) | Bắt buộc |
+| Biểu tượng | Tải SVG ≤ 16 KB (lọc mã độc, bỏ script) hoặc chọn từ bộ Lucide | |
+| Nhãn, nhóm hiển thị trên bảng thành phần | `Select` nhóm nghiệp vụ mục 5.2 | |
+| Kiểu dữ liệu vào, ra (`dataTypes`) | `Select` + lược đồ PH-06 | |
+| Tham số | `CMP-EditableTable`: tên (`camelCase`), tiêu đề tiếng Việt, mô tả, kiểu (`string`, `integer`, `boolean`, `number`), bắt buộc, mặc định, ví dụ, `x-descriptors` (bí mật → bắt buộc là tham chiếu kết nối, ô mật khẩu ẩn), `enum` | Không trùng tên; tham số bí mật không có mặc định |
+
+Bên phải là **xem trước**: Inspector giả lập như người dùng thấy khi thả Kamelet vào luồng, cập nhật trực tiếp.
+
+### 14.2. Tab Mẫu
+
+Canvas soạn `spec.template` như một route có điểm vào `kamelet:source` (với `action`, `sink`) hoặc điểm ra `kamelet:sink` (với `source`). Tham số `{{tênThamSố}}` gợi ý trong mọi trường (ƒx). Cảnh báo khi tham số khai báo không được dùng, hoặc dùng tham số chưa khai báo (VR-12).
+
+### 14.3. Tab Phụ thuộc
+
+Danh sách thành phần Camel mà mẫu dùng, hồ sơ runtime tương thích suy ra (ERR-04-029 nếu không hồ sơ nào đủ), các luồng đang dùng Kamelet này (khi đã phát hành), phiên bản Kamelet (theo phiên bản luồng chứa nó).
+
+### 14.4. Chạy thử Kamelet
+
+Chạy thử Kamelet bọc nó trong route thử sinh tự động (`from: direct:test` → Kamelet với tham số người dùng nhập → `log`), dùng cùng UI-04-11.
+
+## 15. UI-04-09 Trình soạn Pipe
+
+**Mục đích.** Nối nhanh source → các action → sink bằng Kamelet, không cần viết route (Pipe của Camel K, chạy được trong `dh-runtime` dạng YAML). FR-04-032.
+**Bố cục.** Cùng khung UI-04-04, canvas chuyển sang bố cục **ngang cố định** ba vùng: Nguồn (1 ô), Bước xử lý (danh sách ô, kéo đổi thứ tự), Đích (1 ô); thêm mục `errorHandler` (ô nhỏ dưới, chọn: ghi nhật ký, DLQ Kafka của tenant, không). Ô là `CMP-FlowNode` rộng 220.
+**Thả từ bảng thành phần.** Bảng ③ chỉ hiện Kamelet, lọc theo loại hợp lệ với ô đích: ô Nguồn nhận `*-source`, Bước nhận `*-action`, Đích nhận `*-sink`. Thả thành phần Camel thô không được: chú thích "Pipe chỉ dùng Kamelet. Muốn dùng thành phần {x}, chuyển sang route."
+**Chuyển đổi.** Menu "Tệp › Chuyển Pipe thành route" sinh route tương đương (một chiều, có xác nhận), dùng khi cần EIP có nhánh.
+**Inspector.** Tham số Kamelet của ô chọn, như mục 10.11.
+
+## 16. UI-04-10 Cấu hình cấp tệp và bean
+
+**Mở bằng.** Tab "Thuộc tính tệp", "bean" trên thanh thực thể hoặc "Tệp › Thuộc tính tệp". `CMP-Drawer` phải rộng 640 (hoặc chiếm canvas khi mở như tab).
+
+### 16.1. Thuộc tính tệp và tham số môi trường
+
+`CMP-EditableTable` cột: Khóa (`^[a-z][a-zA-Z0-9.\-_]*$`), Mô tả, Giá trị Test, Giá trị Staging, Giá trị Prod, Nguồn (Giá trị trực tiếp / Kho bí mật / Kết nối PH-05). Ô nguồn "Kho bí mật" chỉ nhận tên khóa (`{{secret:ho-tich/api-key}}`), không nhận giá trị. Ô thiếu giá trị cho một môi trường thì đỏ và chặn phát hành lên môi trường đó (VR-17). Nút "Tìm chỗ dùng" liệt kê chặng dùng khóa. Khóa không được dùng ở đâu hiện ⓘ "Chưa dùng". Giá trị theo môi trường lưu trong kho cấu hình theo nhánh `env/*` (ADR-068), không lưu trong phiên bản luồng; trên giao diện vẫn soạn tập trung ở đây.
+
+### 16.2. Bean
+
+Bảng bean: tên, kiểu (chọn từ danh sách lớp cho phép của thư viện nền `dh-camel-lib`, không gõ lớp tùy ý), thuộc tính (biểu mẫu theo lớp), nơi dùng. Thêm bean lớp ngoài danh sách bị chặn (VR-10, BR-04-016): "Chỉ dùng được các lớp đã đăng ký trong thư viện nền. Đề xuất bổ sung qua quản trị tích hợp."
+
+### 16.3. routeConfiguration
+
+`dh-default-config` (khóa, chỉ xem) hiện các `onException` chuẩn: lỗi lược đồ → 400 + ERR-04-101, lỗi quyền → 403, hết thời gian chờ → 504 + thử lại theo `04.retry.*`, mặc định → 500 + DLQ. Người dùng tạo `routeConfiguration` riêng để thêm `onException`, `intercept` cục bộ; không ghi đè được xử lý của chặng chuẩn (VR-13).
