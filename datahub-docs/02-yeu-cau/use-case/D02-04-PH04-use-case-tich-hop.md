@@ -510,3 +510,338 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 - **E4. Sandbox không sẵn sàng.** Xem trước cục bộ có nhãn mô phỏng (theo FR-04-015 mục 3).
 
 **Quy tắc:** BR-04-013 (dữ liệu xem trước được che). **Tần suất:** 1–5 ánh xạ mỗi luồng đối ngoại.
+
+### 6.7. UC-04-07 · Soạn Kamelet, Pipe và bean khai báo
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-07 |
+| Mục tiêu | IE đóng gói một đoạn tích hợp hay dùng thành Kamelet của tỉnh, nối nguồn và đích bằng Pipe, và khai báo bean cấu hình mà không viết Java |
+| Tác nhân chính | IE |
+| Tác nhân phụ | PA (danh mục Kamelet nền) |
+| Mức ưu tiên | S |
+| FR hiện thực | FR-04-018, 019, 021 |
+| Tiền điều kiện | Quyền `PERM-04-create` (Kamelet, Pipe mới) hoặc `PERM-04-update` |
+| Điều kiện kích hoạt | UI-04-03 chọn loại `KAMELET` hoặc `PIPE`; hoặc tab Bean của trình thiết kế |
+| Đảm bảo tối thiểu | Kamelet tự viết đi cùng vòng đời duyệt như luồng; tên Kamelet duy nhất trong tenant và không trùng Kamelet nền |
+| Đảm bảo thành công | Kamelet đã phát hành xuất hiện ở nhóm "Kamelet của tỉnh" trong bảng thành phần của mọi luồng trong tenant |
+
+**Luồng chính**
+
+1. An mở UI-04-03, chọn loại `KAMELET` kiểu `action`, tên `ho-tich-chuan-hoa-action`.
+2. UI-04-10 mở với ba vùng: định nghĩa thuộc tính (tiêu đề, kiểu, bắt buộc, mặc định, `x-descriptors` bí mật), mẫu (template) dạng sơ đồ, xem trước cách Kamelet hiện trong bảng thành phần.
+3. An khai báo thuộc tính `bangMa` (chuỗi, bắt buộc), `connection` (kết nối PH-05, bí mật).
+4. An dựng mẫu: `transform` dùng `{{bangMa}}`, `log`; hệ thống kiểm tra mẫu như một route.
+5. An chạy thử Kamelet trên bản tin mẫu (UC-04-08 với Pipe tạm), gửi duyệt (UC-04-10), Lê Văn Cường duyệt, phát hành (UC-04-12).
+6. Hệ thống đưa Kamelet vào chỉ mục catalog của tenant (API-04-070 trả nhóm "Kamelet của tỉnh"), tính lại hồ sơ runtime tương thích.
+
+**Luồng thay thế**
+
+- **1a. Pipe.** An chọn `PIPE`, chọn nguồn `kafka-source`, các bước `ho-tich-chuan-hoa-action`, đích `http-sink`; UI-04-10 hiện dạng ba ô nối nhau, YAML `Pipe` sinh tương ứng.
+- **1b. Bean khai báo (FR-04-021).** Trong luồng, An mở tab Bean, thêm bean `ndxpRetryPolicy` kiểu được phép trong danh sách lớp tenant cho phép (`org.apache.camel.processor.errorhandler.RedeliveryPolicy`), đặt thuộc tính; chặng khác tham chiếu `#bean:ndxpRetryPolicy`.
+- **6a. Nâng phiên bản Kamelet.** Luồng dùng Kamelet giữ phiên bản Kamelet đã ghim; dải "Kamelet có phiên bản mới" trong trình thiết kế luồng dùng nó.
+
+**Luồng ngoại lệ**
+
+- **E1. Tên trùng (bước 1).** ERR-04-036.
+- **E2. Lớp bean không nằm trong danh sách cho phép.** VR-04 lỗi "Lớp không được phép"; ERR-04-011 ở mức gửi duyệt.
+- **E3. Không hồ sơ runtime nào có đủ thành phần của mẫu.** ERR-04-029, nút "Đề xuất thành phần" (UC-04-21).
+- **E4. Gỡ Kamelet còn luồng dùng.** ERR-04-017 kèm danh sách luồng.
+
+**Quy tắc:** BR-04-003, 020. **Tần suất:** vài Kamelet mỗi quý mỗi tenant (GĐ).
+
+### 6.8. UC-04-08 · Chạy thử luồng
+
+Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại lần chạy thử là giả (D03-06-PH04 §30); use case này mô tả hành vi đích.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-08 |
+| Mục tiêu | IE biết luồng xử lý một bản tin cụ thể ra sao qua từng chặng, trước khi gửi duyệt, mà không chạm hệ thống thật |
+| Tác nhân chính | IE (`PERM-04-update`) |
+| Tác nhân phụ | `dh-runtime-sandbox`; hệ thống đích ở môi trường TEST (chỉ với `SANDBOX_LIVE`) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-04-030, 032, 033 |
+| Tiền điều kiện | Phiên bản không còn lỗi `ERROR` ở mức `DESIGN` |
+| Điều kiện kích hoạt | Nút "Chạy thử" (`F5`) trên UI-04-04, hoặc UI-04-11 |
+| Đảm bảo tối thiểu | Chạy thử không gọi môi trường PROD; bản tin theo dõi được che theo BR-04-013; thân bản tin chỉ lưu khi bật `captureBodies` và xóa sau `04.test.body-retention-days` |
+| Đảm bảo thành công | Lần chạy thử có kết quả `PASSED` hoặc `FAILED` gắn với băm định nghĩa, kèm vết từng chặng |
+
+**Luồng chính**
+
+1. An mở UI-04-11, chọn chế độ `MOCK`, chọn bản tin mẫu "Khai sinh hợp lệ", thời gian chờ 30 giây, bật `captureBodies`.
+2. Hệ thống gửi API-04-040 (`Idempotency-Key`); máy chủ kiểm tra mức `DESIGN`, kiểm tra hạn mức đồng thời của tenant (`04.test.max-concurrent` = 5), ghi lần chạy `QUEUED`, trả `202` và đường dẫn SSE.
+3. Sandbox nhận định nghĩa đúng băm, thay mọi điểm gọi ra ngoài bằng mô phỏng (theo trả lời mẫu của chặng hoặc mặc định 200 rỗng), chạy bản tin; trạng thái `RUNNING`.
+4. Trình thiết kế nhận sự kiện SSE (API-04-042): chặng sáng lần lượt theo vết, mỗi chặng có thời gian, trạng thái, trước và sau (đã che).
+5. Sandbox chạy các khẳng định của lần chạy (mặc định `STATUS` = 200), kết thúc `PASSED` trong 1,8 giây.
+6. Hệ thống ghi kết quả gắn `definitionHash`, phát EVT-04-05; nút "Gửi duyệt" bật nếu đủ điều kiện BR-04-004 (tiếp UC-04-10).
+7. An bấm một chặng trên sơ đồ để xem trước, sau ở bảng dưới; bấm "So sánh với lần chạy trước" để thấy khác biệt.
+
+**Luồng thay thế**
+
+- **1a. `SANDBOX_LIVE`.** Chặng gọi ra ngoài dùng giá trị kết nối môi trường TEST thật (ví dụ NDXP môi trường thử nghiệm). Hộp xác nhận nói rõ hệ thống đích nào sẽ được gọi.
+- **1b. Chạy từ một chặng.** An chọn chặng, "Chạy từ đây" với bản tin ghim tại chặng đó; các chặng trước có trạng thái `SKIPPED`.
+- **1c. Bản tin tùy biến.** Dán JSON ≤ 256 KiB, tối đa 50 tiêu đề.
+- **3a. Sandbox không sẵn sàng, tenant cho mô phỏng (`04.test.allow-simulation`).** Trình duyệt mô phỏng luồng trên catalog, kết quả `SIMULATED` với dải "Kết quả mô phỏng, không dùng để gửi duyệt".
+- **5a. Khẳng định không đạt.** `FAILED`, chặng sai hiện viền lỗi, bảng dưới chỉ khẳng định hỏng kèm giá trị mong đợi và thực tế.
+- **7a. Hủy.** An bấm "Dừng" (API-04-043); trạng thái `CANCELLED`.
+
+**Luồng ngoại lệ**
+
+- **E1. Định nghĩa còn lỗi (bước 2).** ERR-04-009, không chạy, mở bảng Vấn đề.
+- **E2. Vượt hạn mức đồng thời.** ERR-04-019 (429) kèm số lần đang chạy.
+- **E3. Sandbox không sẵn sàng, không cho mô phỏng.** ERR-04-019 (503).
+- **E4. Bản tin vượt kích thước.** ERR-04-021.
+- **E5. `SANDBOX_LIVE` dùng kết nối thiếu giá trị TEST.** ERR-04-013.
+- **E6. Quá thời gian.** `TIMED_OUT`, ERR-04-020 kèm chặng treo.
+- **E7. Mất SSE.** Trình duyệt chuyển sang hỏi API-04-042 mỗi 2 giây cho tới khi kết thúc.
+
+**Quy tắc:** BR-04-004, 013. **Phi chức năng:** NFR-04-007 (bắt đầu chạy thử < 5 giây ở P95). **Tần suất:** 5–40 lần mỗi phiên bản (GĐ).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-04 / UI-04-11
+    participant INT as dh-integration
+    participant SB as dh-runtime-sandbox
+    participant S3 as dh-int-testrun
+    IE->>UI: Chạy thử MOCK, bản tin "Khai sinh hợp lệ"
+    UI->>INT: API-04-040 (Idempotency-Key)
+    INT->>INT: Kiểm tra DESIGN, hạn mức 5
+    INT-->>UI: 202 QUEUED, SSE
+    INT->>SB: Nạp định nghĩa (definitionHash), bản tin
+    SB->>SB: Thay endpoint ra ngoài bằng mô phỏng
+    loop từng chặng
+        SB-->>INT: Vết chặng (đã che)
+        INT-->>UI: SSE step
+    end
+    SB->>S3: Thân bản tin (khi captureBodies)
+    SB-->>INT: Kết quả, khẳng định
+    INT->>INT: Ghi PASSED gắn hash, outbox EVT-04-05
+    INT-->>UI: SSE completed PASSED
+    UI->>IE: Bật "Gửi duyệt"
+```
+
+### 6.9. UC-04-09 · Quản lý ca kiểm thử của luồng
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-09 |
+| Mục tiêu | IE lưu các tình huống kiểm thử lặp lại được, đi cùng luồng qua các phiên bản, làm điều kiện gửi duyệt |
+| Tác nhân chính | IE |
+| Tác nhân phụ | IA (xem kết quả ca khi duyệt) |
+| Mức ưu tiên | S |
+| FR hiện thực | FR-04-031 |
+| Tiền điều kiện | Phiên bản mở |
+| Điều kiện kích hoạt | "Lưu thành ca kiểm thử" từ một lần chạy, hoặc tab Ca kiểm thử của UI-04-11 |
+| Đảm bảo tối thiểu | Ca kiểm thử không chứa bí mật; bản tin của ca qua VR-03 và LINT-04-06 |
+| Đảm bảo thành công | Ca lưu với tên, bản tin, chế độ, danh sách khẳng định; phiên bản mới sao chép ca |
+
+**Luồng chính**
+
+1. Sau lần chạy `PASSED` ở UC-04-08, An bấm "Lưu thành ca kiểm thử", đặt tên "KS-01 hồ sơ hợp lệ".
+2. Hệ thống đề xuất khẳng định từ kết quả: `STATUS` = 200, `STEP_VISITED` "Gọi hộ tịch", `BODY_JQ` `.ketQua.maHoSo != null`, `DURATION_LT` 3000.
+3. An thêm ca "KS-02 thiếu số định danh" với bản tin thiếu trường, khẳng định `STATUS` = 400, `ERROR_CODE` = ERR-04-101, `STEP_NOT_VISITED` "Gọi hộ tịch".
+4. An thêm ca "KS-03 NDXP lỗi" với trả lời mô phỏng 503 tại chặng "Gọi hộ tịch", khẳng định `DLQ_SENT` và `ENDPOINT_CALLED` lần thứ 3 (thử lại).
+5. An bấm "Chạy tất cả"; hệ thống tạo ba lần chạy (API-04-040 theo ca), bảng tổng hợp 3/3 đạt.
+6. Hệ thống lưu ca (API-04-044); điều kiện BR-04-004 giờ yêu cầu cả ba ca đạt trên băm hiện tại.
+
+**Luồng thay thế**
+
+- **2a. Viết khẳng định tay.** Chọn kiểu trong chín loại, biểu thức `BODY_JQ` kiểm tra bằng API-04-033.
+- **6a. Sửa định nghĩa sau khi ca đạt.** Băm đổi; mọi ca chuyển "Chưa chạy trên nội dung hiện tại".
+
+**Luồng ngoại lệ**
+
+- **E1. Biểu thức khẳng định không biên dịch được.** ERR-04-037.
+- **E2. Bản tin vượt kích thước.** ERR-04-021.
+
+**Quy tắc:** BR-04-004, 013. **Tần suất:** 2–10 ca mỗi luồng đối ngoại.
+
+### 6.10. UC-04-10 · Gửi duyệt phiên bản
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-10 |
+| Mục tiêu | IE khóa nội dung phiên bản và đưa vào hàng đợi duyệt kèm bằng chứng kiểm thử |
+| Tác nhân chính | IE (`PERM-04-submit`) |
+| Tác nhân phụ | IA (nhận thông báo), PH-15 (thông báo) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-04-040, 023 |
+| Tiền điều kiện | Phiên bản `DRAFT` hoặc `CHANGES_REQUESTED` |
+| Điều kiện kích hoạt | Nút "Gửi duyệt" |
+| Đảm bảo tối thiểu | Nội dung gửi duyệt là bất biến; mọi sửa sau đó cần rút lại (API-04-051) |
+| Đảm bảo thành công | Phiên bản `PENDING_REVIEW`, luồng `IN_REVIEW`, IA đủ điều kiện nhận thông báo |
+
+**Luồng chính**
+
+1. An bấm "Gửi duyệt"; trình duyệt lưu nốt thay đổi (UC-04-04 bước 7) rồi mở hộp gửi duyệt.
+2. Hộp hiện: kết quả kiểm tra mức `SUBMIT` (API-04-030), lần chạy thử đạt gần nhất trên băm hiện tại, kết quả ca kiểm thử, khác biệt so với phiên bản đang chạy ở PROD (tóm tắt: 3 chặng thêm, 1 sửa).
+3. An nhập ghi chú thay đổi "Thêm ghi nhật ký nhánh otherwise, tăng timeout gọi NDXP lên 15 giây", gợi ý người duyệt Lê Văn Cường.
+4. Hệ thống gọi API-04-050 với `If-Match`; máy chủ kiểm tra mức `SUBMIT` (đủ VR-01…20), BR-04-004, ghi chú; chuyển `PENDING_REVIEW`, ghi băm gửi duyệt, phát EVT-04-03.
+5. PH-15 thông báo người có `PERM-04-publish` trong không gian (trừ người đóng góp); trình thiết kế chuyển chỉ đọc với dải "Đang chờ duyệt".
+
+**Luồng thay thế**
+
+- **2a. Tỉnh bắt buộc căn cứ pháp lý (`04.flow.require-legal-basis`).** Luồng đối ngoại phải gắn văn bản căn cứ từ PH-07; thiếu thì VR mức `SUBMIT` lỗi.
+- **5a. Rút lại.** Trước khi có quyết định, An bấm "Rút lại" (API-04-051) kèm lý do; phiên bản về `DRAFT`.
+
+**Luồng ngoại lệ**
+
+- **E1. Còn lỗi kiểm tra.** ERR-04-009 kèm phát hiện.
+- **E2. Thiếu chạy thử đạt trên đúng băm, hoặc ca chưa đạt.** ERR-04-014, nút "Chạy thử ngay".
+- **E3. Thiếu ghi chú thay đổi.** ERR-04-025.
+- **E4. Trạng thái không cho gửi.** ERR-04-005. **E5.** ETag lệch ERR-04-006.
+
+**Quy tắc:** BR-04-004, 005, 006. **Tần suất:** 10–60 lượt mỗi tháng mỗi tenant (GĐ).
+
+### 6.11. UC-04-11 · Duyệt phiên bản
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-11 |
+| Mục tiêu | Một người thứ hai, không tham gia soạn, xác nhận thay đổi an toàn và đúng nghiệp vụ trước khi lên môi trường |
+| Tác nhân chính | IA (`PERM-04-publish`) |
+| Tác nhân phụ | IE (nhận kết quả) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-04-041, 043 |
+| Tiền điều kiện | Phiên bản `PENDING_REVIEW`; IA không phải người tạo, người đóng góp, người gửi |
+| Điều kiện kích hoạt | Mở UI-04-14 hàng đợi duyệt, hoặc liên kết trong thông báo |
+| Đảm bảo tối thiểu | Không ai tự duyệt được (kiểm ở máy chủ); quyết định ghi kiểm toán cùng checklist và ý kiến |
+| Đảm bảo thành công | Phiên bản `APPROVED`, hoặc `CHANGES_REQUESTED` kèm ý kiến gắn chặng |
+
+**Luồng chính**
+
+1. Lê Văn Cường mở UI-04-14 (API-04-053); hàng đợi sắp theo thời gian chờ, dòng quá hạn `04.review.sla-hours` (24 giờ) có nhãn đỏ.
+2. Cường mở `ho-tich-khai-sinh` v8; UI-04-15 hiện khác biệt sơ đồ cạnh nhau, khác biệt YAML, kết quả kiểm tra, chạy thử, ca kiểm thử, ghi chú của An.
+3. Cường xem hết các thay đổi; hệ thống ghi đã xem khác biệt (API-04-025).
+4. Cường đánh dấu checklist của tỉnh (`04.review.checklist`): "Không có dữ liệu thật trong bản tin mẫu", "Kết nối đúng môi trường", "Có xử lý lỗi và DLQ", "Chín chặng chuẩn đủ".
+5. Cường chọn "Duyệt", nhập ý kiến; nếu `04.review.require-reauth` bật, hệ thống yêu cầu xác thực lại (PH-12, OTP).
+6. Hệ thống gọi API-04-052 `APPROVE`; máy chủ kiểm tra BR-04-005, băm không đổi kể từ gửi; chuyển `APPROVED`, phát EVT-04-04, thông báo An.
+7. Cường chọn tiếp "Phát hành lên TEST" (UC-04-12), hoặc "Duyệt, phát hành sau".
+
+**Luồng thay thế**
+
+- **5a. Yêu cầu sửa.** Cường gắn ý kiến lên chặng "Gọi hộ tịch" ("Cần circuit breaker"), chọn `REQUEST_CHANGES`; phiên bản `CHANGES_REQUESTED`, An nhận thông báo, ý kiến hiện như ghi chú trên sơ đồ khi An mở lại.
+- **1a. Quá hạn duyệt.** PH-15 nhắc người duyệt và TA khi vượt SLA.
+
+**Luồng ngoại lệ**
+
+- **E1. Tự duyệt.** ERR-04-015 (403); giao diện ẩn nút nhưng máy chủ vẫn chặn.
+- **E2. Thiếu ý kiến hoặc checklist.** ERR-04-025.
+- **E3. Phiên bản đã rút lại hoặc đã có quyết định.** ERR-04-005.
+- **E4. Xác thực lại thất bại.** Không ghi quyết định; thông điệp của PH-12.
+
+**Quy tắc:** BR-04-005. **Tần suất:** như UC-04-10.
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> PENDING_REVIEW: Gửi duyệt (UC-04-10)
+    PENDING_REVIEW --> DRAFT: Rút lại
+    PENDING_REVIEW --> CHANGES_REQUESTED: Yêu cầu sửa (UC-04-11)
+    CHANGES_REQUESTED --> PENDING_REVIEW: Gửi lại
+    PENDING_REVIEW --> APPROVED: Duyệt (người thứ hai)
+    APPROVED --> SUPERSEDED: Phiên bản mới lên PROD
+    APPROVED --> ROLLED_BACK: Bị quay lui khỏi PROD
+    DRAFT --> DISCARDED: Hủy bản nháp
+    CHANGES_REQUESTED --> DISCARDED: Hủy bản nháp
+```
+
+### 6.12. UC-04-12 · Phát hành và nâng môi trường
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-12 |
+| Mục tiêu | Phiên bản đã duyệt chạy được ở TEST rồi PROD qua GitOps, có xác nhận đồng bộ và sức khỏe từ runtime |
+| Tác nhân chính | IA (phát hành TEST), IA hoặc TA (`PERM-04-promote`) nâng PROD |
+| Tác nhân phụ | Kho `dh-flows-{tenant}`, Argo CD, `dh-runtime`, PH-02 (đăng ký API khi luồng có `rest`) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-04-042, 045, 075 |
+| Tiền điều kiện | Phiên bản `APPROVED`; không trong khoảng đóng băng |
+| Điều kiện kích hoạt | "Phát hành" trên UI-04-15 hoặc tab Triển khai của UI-04-02 |
+| Đảm bảo tối thiểu | Không ghi kho cấu hình khi kiểm tra mức `PUBLISH` lỗi; ảnh runtime chọn đúng hồ sơ có đủ thành phần; thứ tự môi trường theo `04.env.stages` |
+| Đảm bảo thành công | Triển khai `SYNCED`, sức khỏe `HEALTHY` ở môi trường đích; phiên bản trước ở PROD thành `SUPERSEDED` |
+
+**Luồng chính**
+
+1. Cường chọn "Phát hành lên TEST"; hộp xác nhận hiện hồ sơ runtime suy ra (`core-native`), số bản sao, thay đổi so với bản đang chạy ở TEST.
+2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-lam-dong` kèm chữ ký người phát hành; tạo triển khai `PENDING`.
+3. Argo CD đồng bộ; triển khai `SYNCING` rồi `SYNCED` khi runtime báo phiên bản v8 qua nhịp tim của đủ bản sao.
+4. Trình duyệt nhận SSE tiến trình (API-04-054); thẻ TEST "v8 · Đồng bộ · Khỏe".
+5. Nếu luồng có `rest`, hệ thống phát EVT-04-06 để PH-02 cập nhật đặc tả API ở môi trường tương ứng.
+6. Sau khi kiểm thử ở TEST xong, Cường chọn "Nâng lên PROD" (API-04-056); máy chủ kiểm tra v8 đã `SYNCED`, `HEALTHY` ở TEST (và đủ `04.env.soak-minutes.STAGING` nếu tỉnh dùng STAGING), commit nhánh `env/prod`.
+7. PROD đồng bộ xong; v7 thành `SUPERSEDED`, luồng `ACTIVE`; EVT-04-07 phát cho PH-13, PH-15.
+
+**Luồng thay thế**
+
+- **1a. Duyệt, phát hành sau.** Phiên bản giữ `APPROVED`; ai có quyền phát hành bấm sau.
+- **6a. PROD yêu cầu bước nâng riêng (`04.env.prod-requires-promote` tắt).** Phát hành chọn thẳng PROD sau TEST trong cùng hộp, vẫn theo thứ tự.
+- **3a. Đồng bộ một phần.** 2/3 bản sao báo v8 sau `04.runtime.sync-timeout-seconds`: `OUT_OF_SYNC`, sức khỏe `DEGRADED`, nút "Xem bản sao", "Quay lui".
+- **7a. Tỷ lệ lỗi tăng sau phát hành.** Tỷ lệ lỗi vượt `04.deploy.rollback-suggest-error-ratio` trong 10 phút đầu: dải gợi ý "Quay lui về v7" (UC-04-13); không tự quay lui.
+
+**Luồng ngoại lệ**
+
+- **E1. Kiểm tra mức `PUBLISH` lỗi.** ERR-04-009.
+- **E2. Chưa qua môi trường trước.** ERR-04-023.
+- **E3. Đóng băng.** ERR-04-041 (423).
+- **E4. Ghi kho cấu hình lỗi.** ERR-04-022 (502); triển khai không được tạo, thử lại được.
+- **E5. Không hồ sơ runtime đủ thành phần.** ERR-04-029.
+- **E6. Quá `04.deploy.timeout-minutes`.** Triển khai `FAILED`, sức khỏe giữ theo nhịp tim; thông báo TO.
+
+**Quy tắc:** BR-04-008, 018, 019, 022. **Tần suất:** 10–60 lần mỗi tháng mỗi tenant (GĐ).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor IA as Lê Văn Cường
+    participant INT as dh-integration
+    participant GIT as dh-flows-lam-dong
+    participant ARGO as Argo CD
+    participant RT as dh-runtime (PROD)
+    IA->>INT: Nâng v8 lên PROD (API-04-056)
+    INT->>INT: Kiểm tra PUBLISH, đóng băng, TEST SYNCED+HEALTHY
+    INT->>GIT: Commit env/prod (flow.dh.yaml, YAML chuẩn hóa)
+    INT-->>IA: 202, triển khai PENDING, SSE
+    ARGO->>GIT: Phát hiện commit
+    ARGO->>RT: Áp cấu hình
+    INT-->>IA: SSE SYNCING
+    loop mỗi 30 giây
+        RT-->>INT: Nhịp tim (phiên bản, route, sức khỏe)
+    end
+    INT->>INT: Đủ 3/3 bản sao v8 → SYNCED, HEALTHY
+    INT->>INT: v7 SUPERSEDED, outbox EVT-04-07
+    INT-->>IA: SSE SYNCED
+```
+
+### 6.13. UC-04-13 · Quay lui phiên bản
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-04-13 |
+| Mục tiêu | Đưa môi trường về phiên bản đã duyệt trước đó trong vài phút khi phiên bản mới có sự cố |
+| Tác nhân chính | IA hoặc TO có `PERM-04-publish` |
+| Tác nhân phụ | Kho cấu hình, Argo CD, `dh-runtime` |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-04-044 |
+| Tiền điều kiện | Môi trường có phiên bản trước đã `APPROVED` từng chạy |
+| Điều kiện kích hoạt | "Quay lui" ở tab Triển khai hoặc dải gợi ý của UC-04-12 luồng 7a |
+| Đảm bảo tối thiểu | Quay lui không cần duyệt lại nhưng vẫn qua kiểm tra mức `PUBLISH`; được phép cả khi đóng băng |
+| Đảm bảo thành công | Môi trường chạy phiên bản đích `SYNCED`; phiên bản bị thay thành `ROLLED_BACK` |
+
+**Luồng chính**
+
+1. Phạm Thu Dung thấy tỷ lệ lỗi PROD của v8 là 12%; mở tab Triển khai, chọn "Quay lui", chọn v7.
+2. Hộp hiện khác biệt v8 → v7, yêu cầu lý do ≥ 10 ký tự; Dung nhập "Lỗi 502 từ NDXP sau khi đổi timeout".
+3. Hệ thống gọi API-04-055; máy chủ kiểm tra mức `PUBLISH` cho v7 trên catalog hiện tại, commit `env/prod` trỏ v7.
+4. Runtime đồng bộ; v7 `SYNCED`, v8 `ROLLED_BACK`; phát EVT-04-08, thông báo An và Cường.
+5. An tạo phiên bản v9 từ v8 để sửa (UC-04-04 luồng 1a).
+
+**Luồng ngoại lệ**
+
+- **E1. Thiếu lý do.** ERR-04-025.
+- **E2. v7 dùng thành phần nay bị cấm.** ERR-04-040; gợi ý tạm dừng khẩn (UC-04-15) thay vì quay lui.
+- **E3. Ghi kho lỗi.** ERR-04-022.
+
+**Quy tắc:** BR-04-018, 022. **Phi chức năng:** NFR-04-010 (quay lui hoàn tất ≤ 5 phút). **Tần suất:** hiếm, vài lần mỗi quý.
