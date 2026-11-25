@@ -1038,6 +1038,6 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chu�
 
 > **Câu hỏi mở Q358:** Số hiệu cụ thể của các biện pháp trong dải SEC-40–49 (và SEC-30–39, SEC-60–69, SEC-80–89) do D03-07 chốt; khi có, bảng 9.2 cần thêm cột mã `SEC-nn` cho từng dòng.
 
-> **Câu hỏi mở Q359:** `dh-runtime` (Camel) có được truy cập trực tiếp CSDL nghiệp vụ của Datahub không (mã hiện tại dùng `camel-quarkus-sql` với datasource riêng)? Nếu có, cơ chế đặt `app.tenant_id` cho mỗi bản tin và vai trò CSDL riêng phải được thiết kế ở SDD PH-04; nếu không, truy cập CSDL chỉ dành cho Kamelet nguồn dữ liệu của HTTT thành viên, không phải CSDL của Datahub.
+> **Q359 (đã chốt 25/11/2026):** cho phép luồng Camel (`dh-runtime`) truy cập trực tiếp CSDL có kiểm soát: chỉ qua tài khoản chỉ đọc riêng cho từng luồng, kết nối phải được khai báo trong danh mục kết nối (PH-05) và mọi truy vấn được ghi kiểm toán; không bao giờ truy cập CSDL của control plane (ADR-002). *Câu hỏi gốc:* `dh-runtime` (Camel) có được truy cập trực tiếp CSDL nghiệp vụ của Datahub không (mã hiện tại dùng `camel-quarkus-sql` với datasource riêng)? Nếu có, cơ chế đặt `app.tenant_id` cho mỗi bản tin và vai trò CSDL riêng phải được thiết kế ở SDD PH-04; nếu không, truy cập CSDL chỉ dành cho Kamelet nguồn dữ liệu của HTTT thành viên, không phải CSDL của Datahub.
 
 Các câu hỏi Q353, Q354 và Q357 thuộc quy trình kỹ thuật, được nêu ở D04-02.

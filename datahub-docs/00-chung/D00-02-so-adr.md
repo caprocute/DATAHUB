@@ -67,3 +67,4 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | 25/11/2026 | Chấp nhận ADR-004 (Kafka thay Pulsar), ADR-005 (APISIX, chế độ standalone), ADR-030 (cấp độ 3 sẵn sàng cấp độ 4) | D03-07, D03-09 |
 | 25/11/2026 | Giữ APISIX ở biên, không thêm Envoy Gateway (ADR-033 bản 0.2) | D03-07, D03-08, D03-09, SAD §6 |
 | 25/11/2026 | Q300 hệ mới · Q306 Ceph RGW cho WORM · Q311/Q323(b) mỗi tỉnh chủ quản tenant · Q340 tách `pg-payment` · Q341, Q347 WORM và sao lưu chung hệ Ceph RGW, tách bucket · Q350 bản đồ DU theo SAD · Q353 GitHub khi phát triển, GitLab on-prem khi bàn giao · Q05 chủ quản CNTT là tham số theo tỉnh | Các tài liệu chứa câu hỏi tương ứng |
+| 25/11/2026 | Q359: luồng Camel được truy cập trực tiếp CSDL có kiểm soát (tài khoản chỉ đọc, khai báo ở PH-05, ghi kiểm toán) · Catalog trình thiết kế phải khớp đúng phiên bản Camel Quarkus của runtime (hiện 3.33.2) | D04-01, PH-04, PH-05 |
