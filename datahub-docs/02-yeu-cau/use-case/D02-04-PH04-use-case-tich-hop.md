@@ -574,7 +574,7 @@ Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại
 3. Sandbox nhận định nghĩa đúng băm, thay mọi điểm gọi ra ngoài bằng mô phỏng (theo trả lời mẫu của chặng hoặc mặc định 200 rỗng), chạy bản tin; trạng thái `RUNNING`.
 4. Trình thiết kế nhận sự kiện SSE (API-04-042): chặng sáng lần lượt theo vết, mỗi chặng có thời gian, trạng thái, trước và sau (đã che).
 5. Sandbox chạy các khẳng định của lần chạy (mặc định `STATUS` = 200), kết thúc `PASSED` trong 1,8 giây.
-6. Hệ thống ghi kết quả gắn `definitionHash`, phát EVT-04-05; nút "Gửi duyệt" bật nếu đủ điều kiện BR-04-004 (tiếp UC-04-10).
+6. Hệ thống ghi kết quả gắn `definitionHash`, phát EVT-04-10; nút "Gửi duyệt" bật nếu đủ điều kiện BR-04-004 (tiếp UC-04-10).
 7. An bấm một chặng trên sơ đồ để xem trước, sau ở bảng dưới; bấm "So sánh với lần chạy trước" để thấy khác biệt.
 
 **Luồng thay thế**
@@ -618,7 +618,7 @@ sequenceDiagram
     end
     SB->>S3: Thân bản tin (khi captureBodies)
     SB-->>INT: Kết quả, khẳng định
-    INT->>INT: Ghi PASSED gắn hash, outbox EVT-04-05
+    INT->>INT: Ghi PASSED gắn hash, outbox EVT-04-10
     INT-->>UI: SSE completed PASSED
     UI->>IE: Bật "Gửi duyệt"
 ```
@@ -723,7 +723,7 @@ sequenceDiagram
 
 **Luồng thay thế**
 
-- **5a. Yêu cầu sửa.** Cường gắn ý kiến lên chặng "Gọi hộ tịch" ("Cần circuit breaker"), chọn `REQUEST_CHANGES`; phiên bản `CHANGES_REQUESTED`, An nhận thông báo, ý kiến hiện như ghi chú trên sơ đồ khi An mở lại.
+- **5a. Yêu cầu sửa.** Cường gắn ý kiến lên chặng "Gọi hộ tịch" ("Cần circuit breaker"), chọn `REQUEST_CHANGES`; phiên bản `CHANGES_REQUESTED`, phát EVT-04-05, An nhận thông báo, ý kiến hiện như ghi chú trên sơ đồ khi An mở lại.
 - **1a. Quá hạn duyệt.** PH-15 nhắc người duyệt và TA khi vượt SLA.
 
 **Luồng ngoại lệ**
@@ -767,10 +767,10 @@ stateDiagram-v2
 **Luồng chính**
 
 1. Cường chọn "Phát hành lên TEST"; hộp xác nhận hiện hồ sơ runtime suy ra (`core-native`), số bản sao, thay đổi so với bản đang chạy ở TEST.
-2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-lam-dong` kèm chữ ký người phát hành; tạo triển khai `PENDING`.
+2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-lam-dong` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
 3. Argo CD đồng bộ; triển khai `SYNCING` rồi `SYNCED` khi runtime báo phiên bản v8 qua nhịp tim của đủ bản sao.
 4. Trình duyệt nhận SSE tiến trình (API-04-054); thẻ TEST "v8 · Đồng bộ · Khỏe".
-5. Nếu luồng có `rest`, hệ thống phát EVT-04-06 để PH-02 cập nhật đặc tả API ở môi trường tương ứng.
+5. Nếu luồng có `rest`, PH-02 nhận EVT-04-07 (triển khai `SYNCED`) để cập nhật đặc tả API ở môi trường tương ứng.
 6. Sau khi kiểm thử ở TEST xong, Cường chọn "Nâng lên PROD" (API-04-056); máy chủ kiểm tra v8 đã `SYNCED`, `HEALTHY` ở TEST (và đủ `04.env.soak-minutes.STAGING` nếu tỉnh dùng STAGING), commit nhánh `env/prod`.
 7. PROD đồng bộ xong; v7 thành `SUPERSEDED`, luồng `ACTIVE`; EVT-04-07 phát cho PH-13, PH-15.
 
@@ -835,7 +835,7 @@ sequenceDiagram
 1. Phạm Thu Dung thấy tỷ lệ lỗi PROD của v8 là 12%; mở tab Triển khai, chọn "Quay lui", chọn v7.
 2. Hộp hiện khác biệt v8 → v7, yêu cầu lý do ≥ 10 ký tự; Dung nhập "Lỗi 502 từ NDXP sau khi đổi timeout".
 3. Hệ thống gọi API-04-055; máy chủ kiểm tra mức `PUBLISH` cho v7 trên catalog hiện tại, commit `env/prod` trỏ v7.
-4. Runtime đồng bộ; v7 `SYNCED`, v8 `ROLLED_BACK`; phát EVT-04-08, thông báo An và Cường.
+4. Runtime đồng bộ; v7 `SYNCED`, v8 `ROLLED_BACK`; phát EVT-04-06 khi yêu cầu và EVT-04-07 khi đồng bộ, thông báo An và Cường.
 5. An tạo phiên bản v9 từ v8 để sửa (UC-04-04 luồng 1a).
 
 **Luồng ngoại lệ**
@@ -1279,7 +1279,7 @@ Mỗi BR có ít nhất một ca dương và một ca âm trong D05-02-PH04 theo
 | Mã | Nội dung | Lý do |
 |---|---|---|
 | Tài khoản hệ thống | `system:int-reconciler` (đối soát lệnh vào Git), `system:int-catalog` (đánh dấu luồng khi nâng catalog) | Người thực hiện của bản ghi kiểm toán do máy tạo (UC-04-14 E4, UC-04-22 bước 4) |
-| Sự kiện | Phát sự kiện thay đổi tham số `04.*` để làm mới bộ đệm | Mục 7.1; FRS chưa nêu mã sự kiện, đề nghị D03-02-PH04 chốt là EVT-04-14 hoặc dùng sự kiện tham số chung của PH-18 |
+| Sự kiện | Phát sự kiện thay đổi tham số `04.*` để làm mới bộ đệm | Mục 7.1; FRS chưa nêu mã sự kiện, đề nghị D03-02-PH04 chốt mã mới EVT-04-15 hoặc dùng sự kiện tham số chung của PH-18 |
 | Hành vi | Đổi tiền tố mã cũ trong mã route, đường dẫn HTTP khi nhân bản | UC-04-16 bước 2; FR-04-005 chỉ yêu cầu không trùng |
 | Hành vi | Liên kết sự cố PH-14 trong hộp dừng khẩn (không bắt buộc) | UC-04-15 bước 2 |
 
