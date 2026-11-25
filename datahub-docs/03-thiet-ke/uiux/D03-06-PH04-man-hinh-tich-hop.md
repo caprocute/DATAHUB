@@ -425,7 +425,7 @@ Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt
 
 **Mục đích.** Một trang cho mọi thứ về một luồng: thông tin, route, điểm kết nối, thuộc tính, sơ đồ, mã nguồn, phiên bản, triển khai ở từng môi trường, chạy thử, giám sát, lịch sử. Thay màn chi tiết agent và các tab route của Bus (LGC-BUS-006…008, 015–027). FR-04-002, 004, 006, 033, 043, 050…053, 083.
 **Đường dẫn.** `/tich-hop/luong/:ma?tab=`. **Mẫu.** PTN-02. **Quyền.** `PERM-04-read` + quyền xem không gian (khi `04.workspace.enforce` bật).
-**API.** API-04-012 (chi tiết luồng), 013 (sửa thông tin), 016 (phụ thuộc), 024 (danh sách phiên bản), 041 (lần chạy thử), 054 (triển khai theo môi trường), 060 (tình trạng runtime), 061 (lệnh điều khiển), 062 (điểm kết nối), 063 (số liệu nhúng PH-13), 090 (lịch sử).
+**API.** API-04-012 (chi tiết luồng), 013 (sửa thông tin), 016 (phụ thuộc), 024 (danh sách phiên bản), 041 (lần chạy thử), 054 (triển khai theo môi trường), 060 (tình trạng runtime), 061 (lệnh điều khiển), 062 (điểm kết nối), 063 (số liệu nhúng PH-13), 091 (lịch sử, lấy từ PH-13).
 
 ### 8.1. Wireframe
 
@@ -461,7 +461,7 @@ Thẻ môi trường (`CMP-EnvCard`) là thông tin quan trọng nhất của tr
 
 | Tab | Nội dung | Thành phần chính | LGC, FR |
 |---|---|---|---|
-| Tổng quan | Mô tả, HTTT nguồn, đích, vận chuyển (`SYNC`, `ASYNC`, `SCHEDULED`, `MIXED`, suy từ chặng đầu), đối ngoại hay nội bộ, nhãn, khối "Thông tin thêm"; khối **Phụ thuộc**: luồng con, Kamelet, kết nối PH-05, topic PH-10, lược đồ, bảng mã PH-07, dịch vụ PH-03 dùng luồng này (`CMP-DependencyGraph` thu gọn) | `CMP-Descriptions`, `CMP-DependencyGraph` | BUS-006, 017, 024; FR-04-002, 004 |
+| Tổng quan | Mô tả, HTTT nguồn, đích, vận chuyển (`SYNC`, `ASYNC`, `SCHEDULED`, `MIXED`, suy từ chặng đầu), đối ngoại hay nội bộ, nhãn, khối "Thông tin thêm"; khối **Phụ thuộc**: luồng con, Kamelet, kết nối PH-05, topic PH-10, lược đồ, bảng mã PH-07, API PH-02 dùng luồng làm backend (`CMP-DependencyGraph` thu gọn) | `CMP-Descriptions`, `CMP-DependencyGraph` | BUS-006, 017, 024; FR-04-002, 004 |
 | Sơ đồ | Sơ đồ của phiên bản đang chạy ở môi trường chọn, chỉ đọc; phủ số liệu chạy thật 15 phút, 1 giờ, 24 giờ (số bản tin, tỷ lệ lỗi, p95 theo chặng) | `CMP-FlowCanvas` readOnly | BUS-022; FR-04-033 |
 | Route | Bảng route: `id`, mô tả, điểm vào, trạng thái theo nhịp tim ở từng môi trường, số bản tin, lỗi, nút tạm dừng, tiếp tục route | `CMP-DataTable` | BUS-008, 018, 026; FR-04-050 |
 | Điểm kết nối | Endpoint đã chỉ mục: vai trò (vào, ra), lược đồ URI (`platform-http`, `kafka`, `sql`…), URI đã che tham số, kết nối PH-05, số liệu từ PH-13 | `CMP-DataTable` | BUS-020, 027, 028; FR-04-052 |
@@ -491,7 +491,7 @@ Không tìm thấy hoặc không có quyền đối tượng: ST-05 với ERR-04
   ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
   │ ▦ Từ khuôn mẫu   │ │ ⇄ Từ API         │ │ ◻ Luồng trống    │ │ ⇪ Nhập YAML      │ │ ⧉ Nhân bản       │
   │ Có sẵn 9 chặng   │ │ Chọn API trong   │ │ Chỉ có điểm vào  │ │ Từ tệp           │ │ Sao chép luồng   │
-  │ chuẩn            │ │ danh mục PH-03   │ │                  │ │ .camel.yaml      │ │ đã có            │
+  │ chuẩn            │ │ danh mục PH-02   │ │                  │ │ .camel.yaml      │ │ đã có            │
   │ ✓ Khuyên dùng    │ │                  │ │                  │ │                  │ │                  │
   └──────────────────┘ └──────────────────┘ └──────────────────┘ └──────────────────┘ └──────────────────┘
   Khuôn mẫu  [🔍 Tìm khuôn mẫu…]   [Tất cả] [Tra cứu đồng bộ] [Đồng bộ định kỳ] [Nhận sự kiện] [Tệp] [Quốc gia]
@@ -503,21 +503,22 @@ Không tìm thấy hoặc không có quyền đối tượng: ST-05 với ERR-04
                                                                           [Tiếp tục →]
 ```
 
-Thẻ điểm xuất phát là `CMP-RadioCard` (nhóm radio, mũi tên chuyển lựa chọn). "Từ API": vùng dưới là `CMP-Select` tìm API đã công bố ở PH-03, chọn phiên bản; luồng sinh ra có điểm vào khớp đường dẫn và lược đồ của API. "Nhập YAML": `CMP-FileDropzone` nhận `.yaml`, `.yml`, `.camel.yaml` tối đa `04.flow.max-definition-kb` (mặc định 512 KB), kiểm tra cú pháp ngay khi thả, hiện số route, Kamelet và lỗi. "Nhân bản": `CMP-Select` tìm luồng và phiên bản (FR-04-005). Ngoài luồng loại `ROUTE`, bước 1 cho chọn loại tài nguyên `KAMELET` hoặc `PIPE` qua liên kết "Tạo Kamelet hoặc Pipe".
+Thẻ điểm xuất phát là `CMP-RadioCard` (nhóm radio, mũi tên chuyển lựa chọn). "Từ API": vùng dưới là `CMP-Select` tìm API trong danh mục dịch vụ PH-02 mà người dùng được xem; luồng sinh ra có `rest` DSL, mỗi thao tác một route `direct:{operationId}` có khung chín chặng và lược đồ gắn vào chặng `schema` (FR-04-003 mục 3). "Nhập YAML": `CMP-FileDropzone` nhận `.yaml`, `.yml`, `.camel.yaml` tối đa `04.flow.max-definition-kb` (mặc định 512 KB), kiểm tra cú pháp ngay khi thả, hiện số route, Kamelet và lỗi. "Nhân bản": `CMP-Select` tìm luồng và phiên bản (FR-04-005). Ngoài luồng loại `ROUTE`, bước 1 cho chọn loại tài nguyên `KAMELET` hoặc `PIPE` qua liên kết "Tạo Kamelet hoặc Pipe".
 
 ### 9.2. Trường bước 2
 
 | Trường | Kiểu | Bắt buộc | Kiểm tra | Mặc định, gợi ý |
 |---|---|---|---|---|
-| Tên luồng | `Input` | Có | 3–200 ký tự | Từ khuôn mẫu: "{tên khuôn} – " |
-| Mã luồng | `Input` | Có | `^[a-z][a-z0-9-]{2,62}$`, duy nhất trong tenant (kiểm tra trực tuyến qua API-04-010 `code=`, trễ 400 ms, hiện ✓ hoặc ERR-04-002); không đổi được sau khi tạo (BR-04-001), ô có ghi chú này | Tự sinh từ tên, bỏ dấu, nối gạch; sửa tay thì ngừng tự sinh |
+| Tên luồng | `Input` | Có | 1–255 ký tự, chuẩn hóa NFC | Từ khuôn mẫu: "{tên khuôn} – " |
+| Mã luồng | `Input` | Có | `^[a-z][a-z0-9-]{2,62}$`, không dùng tiền tố dành riêng `dh-`, `sys-`, `platform-`; duy nhất trong tenant kể cả luồng đã gỡ trong 30 ngày (kiểm tra trực tuyến qua API-04-010 `code=`, trễ 400 ms, hiện ✓ hoặc ERR-04-002); không đổi được sau khi tạo (BR-04-001), ô có ghi chú này | Tự sinh từ tên, bỏ dấu, nối gạch; sửa tay thì ngừng tự sinh |
 | Không gian làm việc | `Select` | Có | Không gian người dùng có `EDIT` | Không gian gần nhất |
 | HTTT nguồn | `Select` từ PH-01 | Không | | Có nguồn hoặc đích là HTTT thành viên thì luồng là đối ngoại |
 | HTTT đích | `Select` nhiều chọn từ PH-01 | Không | | |
 | Đối ngoại / nội bộ | Hiển thị suy ra, không sửa | — | | Dòng chữ: "Luồng đối ngoại: bắt buộc đủ chín chặng chuẩn khi gửi duyệt (BR-04-002)" |
-| Mô tả | `TextArea` | Không | ≤ 2.000 ký tự | |
+| Mô tả | `TextArea` | Không | ≤ 4.000 ký tự | |
 | Căn cứ pháp lý | `Select` nhiều chọn từ danh mục văn bản PH-07 | Khi `04.flow.require-legal-basis` bật và luồng đối ngoại (tham số đề xuất, mục 25) | | |
-| Nhãn | `Select` mode tags | Không | ≤ 10 nhãn, mỗi nhãn ≤ 32 ký tự | |
+| Nhãn | `CMP-KeyValueEditor` | Không | Tối đa 20 cặp; khóa `^[a-z0-9.-/]{1,63}$` | Ví dụ `linh-vuc` = `tu-phap` |
+| Liên kết tài liệu | Danh sách URL | Không | Tối đa 10 URL `https` | |
 | Tham số khuôn mẫu `${tpl.*}` | Biểu mẫu sinh từ lược đồ JSON của khuôn | Theo khuôn | Theo khuôn | Ví dụ "Đường dẫn nhận", "Kết nối đích" (chọn từ PH-05) |
 
 Hồ sơ runtime không chọn ở đây: được gán khi phát hành theo thành phần luồng dùng (ADR-063); trình thiết kế hiện hồ sơ dự kiến. Bước 3 hiện tóm tắt, sơ đồ xem trước (canvas chỉ đọc, thu nhỏ) và kết quả kiểm tra mức `DESIGN`. Nút "Tạo và mở trình thiết kế" (chính) và "Tạo" (phụ). Tạo thành công: thông báo "Đã tạo luồng {tên}. Phiên bản v1 sẵn sàng để thiết kế." và chuyển tới UI-04-04.
@@ -894,7 +895,7 @@ Kiểm tra hợp lệ chạy ở hai nơi như FR-04-023. Trình duyệt chạy 
 |---|---|
 | LINT-04-01 | `choice` của luồng đồng bộ thiếu `otherwise`, hoặc nhánh không trả lời |
 | LINT-04-02 | Lồng nhóm sâu hơn 6 cấp; nên tách route con |
-| LINT-04-03 | Thời gian chờ của chặng gọi đích lớn hơn `04.runtime.sync-timeout-seconds` hoặc SLA dịch vụ PH-03 |
+| LINT-04-03 | Thời gian chờ của chặng gọi đích lớn hơn `04.runtime.sync-timeout-seconds` hoặc SLA của API PH-02 công bố luồng |
 | LINT-04-04 | Tham số Kamelet khai báo nhưng không dùng trong mẫu |
 | LINT-04-05 | Trường bắt buộc của lược đồ đích chưa được ánh xạ |
 | LINT-04-06 | Bản tin mẫu có dấu hiệu dữ liệu cá nhân thật (FR-04-022) |
@@ -1538,7 +1539,7 @@ Thiết kế giao diện cần thêm năm tham số; đề nghị bổ sung vào
 
 ## 26. UI-04-21 Không gian làm việc
 
-FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không gian: tên, mã, đơn vị chủ quản, số thành viên, số luồng. Chi tiết: thông tin; tab **Thành viên** (người dùng hoặc nhóm PH-02, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực); tab **Kết nối được cấp** (đọc từ PH-05, cấp ở PH-05); tab **Luồng**. Dải thông tin đầu trang nói rõ hiệu lực: "Giới hạn theo không gian làm việc đang {bật, tắt} (`04.workspace.enforce`). Khi bật, chỉ thành viên mức EDIT sửa được luồng, mức MAINTAIN duyệt được luồng của không gian; TA, PA không bị giới hạn." Xóa không gian chỉ khi không còn luồng. Thay quản lý project, group của Bus (LGC-BUS-032).
+FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không gian: tên, mã, đơn vị chủ quản, số thành viên, số luồng. Chi tiết: thông tin; tab **Thành viên** (người dùng hoặc nhóm PH-12, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực); tab **Kết nối được cấp** (đọc từ PH-05, cấp ở PH-05); tab **Luồng**. Dải thông tin đầu trang nói rõ hiệu lực: "Giới hạn theo không gian làm việc đang {bật, tắt} (`04.workspace.enforce`). Khi bật, chỉ thành viên mức EDIT sửa được luồng, mức MAINTAIN duyệt được luồng của không gian; TA, PA không bị giới hạn." Xóa không gian chỉ khi không còn luồng. Thay quản lý project, group của Bus (LGC-BUS-032).
 
 ## 27. Kiến trúc mã giao diện
 
