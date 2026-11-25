@@ -1607,3 +1607,401 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
   4. Dừng PH-13, AU gọi lại bước 2.
 - **Mong đợi** Bước 1: chuỗi `exchanges`, `failures`, `p95ms`, `dlq`, `dashboardUrl`. Bước 2: các lần triển khai có `before`, `after`. Bước 3: không có `before`, `after`. Bước 4 trả `503` ERR-04-047; các API khác của PH-04 vẫn trả bình thường.
 
+### TS-04-20 · Data plane đồng bộ qua chín chặng
+
+**Mục tiêu.** Luồng đối ngoại F-HT chạy trên `dh-runtime` thật, mỗi chặng chuẩn làm đúng việc và trả đúng mã lỗi ERR-04-101…112 cho bên gọi. Đường đi là HTTT → `apisix-int` → `dh-runtime` → HTTT đích (WireMock).
+
+**Phủ.** FR-04-060, 061, 063, 064, 065, 066, 067, 068, 074; BR-04-002, 010, 013; UC-04-17; ERR-04-101, 102, 103, 104, 105, 107, 108, 109, 111; EVT-04-14; NFR-04-011; LGC-BUS-035, 036, 041.
+
+#### TC-04-### · Bản tin hợp lệ đi qua đủ chín chặng <!--k:rt-sync-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-04-060, 061, 063, 064, 065, 066, 068, 074 · BR-04-002 · UC-04-17 · EVT-04-14 · LGC-BUS-035
+- **Tiền điều kiện / dữ liệu** F-HT v4 PROD; HTTT `HT-MOT-CUA` (giả lập) có đăng ký sử dụng API ở PH-02; OPA cho phép; PH-07 có bảng chuyển mã.
+- **Bước**
+  1. Gọi `POST https://apisix-int…/t68/ho-tich/tra-cuu` với MSG-OK, `traceparent`.
+  2. Đọc vết OpenTelemetry và topic `t68.audit.connection-log.v1`.
+- **Mong đợi** Bước 1 trả `200` với thân đã chuyển CDM, trường `hoTen` được che theo chính sách PH-09 với bên gọi này. Bước 2: vết có span cho đủ chín marker `dh-stage-receive` … `dh-stage-respond` theo đúng thứ tự, cùng `traceId` với bên gọi; EVT-04-14 có `consumerClientId`, `sourceSystem`, `targetSystem`, `outcome = SUCCESS`, `legalBasisRef`, `durationMs`, không có thân bản tin.
+
+#### TC-04-### · Sai lược đồ và vượt kích thước <!--k:rt-schema-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-04-063, 061 · ERR-04-101, 107
+- **Tiền điều kiện / dữ liệu** MSG-NOID, MSG-RT-BIG; bản tin có 30 trường sai.
+- **Bước**
+  1. Gọi với MSG-NOID.
+  2. Gọi với bản tin 30 trường sai.
+  3. Gọi với MSG-RT-BIG.
+- **Mong đợi** Bước 1 trả `400` ERR-04-101 với `errors[].path = "/soDinhDanh"`, không lặp giá trị nào. Bước 2 trả tối đa 20 lỗi. Bước 3 trả `413` ERR-04-107 trước khi đọc hết thân. Hệ đích không nhận lệnh gọi nào. EVT-04-14 có `outcome = REJECTED`.
+
+#### TC-04-### · OPA từ chối hoặc không trả lời <!--k:rt-authz-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-064 · ERR-04-102 · LGC-BUS-041
+- **Tiền điều kiện / dữ liệu** Chính sách OPA từ chối `HT-KHAC`; OPA bị làm chậm 300 ms ở bước 2.
+- **Bước**
+  1. `HT-KHAC` gọi F-HT.
+  2. `HT-MOT-CUA` gọi khi OPA chậm.
+- **Mong đợi** Cả hai trả `403` ERR-04-102 (đóng khi lỗi, không mở). Đầu vào OPA có `tenant`, `caller`, `subscription`, `flow`, `operation`, `purpose`, `dataClasses`. Không đưa DLQ.
+
+#### TC-04-### · Lỗi chuyển đổi và làm giàu <!--k:rt-transform-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-065, 066 · ERR-04-108
+- **Tiền điều kiện / dữ liệu** Bản tin có `gioiTinh = "9"` (không có trong bảng chuyển mã, cấu hình `FAIL`); nguồn làm giàu PH-07 trả `500`.
+- **Bước**
+  1. Gọi với `gioiTinh = "9"`.
+  2. Gọi khi nguồn làm giàu lỗi.
+- **Mong đợi** Bước 1 trả `422` ERR-04-108. Bước 2 trả `502` ERR-04-104 sau số lần thử lại của chặng `enrich`. Thông điệp lỗi không lộ URL nội bộ.
+
+#### TC-04-### · Che dữ liệu cá nhân ở phản hồi và log <!--k:rt-mask-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** RT, IT
+- **Truy vết** FR-04-067, 074 · BR-04-013
+- **Tiền điều kiện / dữ liệu** Chính sách PH-09: `soDinhDanh` che 8 số đầu với bên gọi mục đích `THONG_KE`; log mức DEBUG bật trên runtime.
+- **Bước**
+  1. Gọi F-HT với mục đích `THONG_KE`.
+  2. Quét log runtime, vết, chỉ số, EVT-04-14 tìm `001099000001` và `Nguyễn Văn Thử`.
+- **Mong đợi** Bước 1: phản hồi có `soDinhDanh = "********0001"`. Bước 2: không xuất hiện ở bất kỳ nguồn nào, kể cả log DEBUG (log thân bản tin bị chặn bởi `dh-default-config`).
+
+#### TC-04-### · Đích quá thời gian, lỗi, ngắt mạch <!--k:rt-deliver-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-068, 070 · ERR-04-103, 104, 105
+- **Tiền điều kiện / dữ liệu** WireMock `SLOW_5S` với `04.runtime.sync-timeout-seconds = 3`; `HTTP_500`; `FLAKY_50`.
+- **Bước**
+  1. Gọi khi đích `SLOW_5S`.
+  2. Gọi khi đích `HTTP_500`.
+  3. Gọi 20 lần khi đích `FLAKY_50`, rồi gọi lần 21.
+  4. Sau 30 giây gọi lại khi đích đã `OK`.
+- **Mong đợi** Bước 1 trả `504` ERR-04-103 sau khoảng 3 giây. Bước 2 trả `502` ERR-04-104 sau đúng số lần thử lại cấu hình, giãn cách lũy thừa. Bước 3: lần 21 trả `503` ERR-04-105 ngay (mạch mở, tỷ lệ lỗi ≥ 50% trên 20 lượt), không gọi đích. Bước 4: nửa mở cho một lượt thử, thành công thì đóng mạch.
+
+#### TC-04-### · Đường dẫn không khớp route <!--k:rt-404-->
+- **Loại** Âm · **Ưu tiên** P3 · **Tự động** RT
+- **Truy vết** FR-04-061 · ERR-04-111
+- **Tiền điều kiện / dữ liệu** F-HT PROD.
+- **Bước**
+  1. Gọi `POST …/t68/ho-tich/khong-co`.
+- **Mong đợi** `404` ERR-04-111, thân RFC 9457 không liệt kê các route có sẵn.
+
+#### TC-04-### · Lỗi nội bộ không lộ chi tiết <!--k:rt-500-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-04-070 · ERR-04-109
+- **Tiền điều kiện / dữ liệu** Luồng thử có chặng ném `NullPointerException`.
+- **Bước**
+  1. Gọi luồng.
+- **Mong đợi** `500` ERR-04-109, thân chỉ có `title`, `code`, `traceId`; không có tên lớp, ngăn xếp, đường dẫn tệp.
+
+#### TC-04-### · SOAP qua hồ sơ JVM <!--k:rt-soap-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-04-061, 075 · LGC-BUS-036
+- **Tiền điều kiện / dữ liệu** F-SOAP trên hồ sơ `soap-jvm`; dịch vụ SOAP BHXH giả lập (WireMock SOAP).
+- **Bước**
+  1. Gọi REST F-SOAP; luồng chuyển sang SOAP 1.1 với WS-Security UsernameToken lấy từ `{{conn:…}}`.
+- **Mong đợi** `200`; bản tin SOAP đúng XSD; mật khẩu WS-Security không có trong log. Pod `soap-jvm` tách khỏi pod `core-native`.
+
+### TS-04-21 · Data plane bất đồng bộ, xử lý lỗi, chống trùng
+
+**Phủ.** FR-04-062, 069, 070, 071; BR-04-008, 009; UC-04-18; ERR-04-101, 106; LGC-BUS-039.
+
+#### TC-04-### · Nhận sự kiện Kafka, chuyển CDM, phát sự kiện <!--k:rt-async-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-062, 069 · BR-04-009 · UC-04-18 · LGC-BUS-039
+- **Tiền điều kiện / dữ liệu** F-DD PROD; nhóm tiêu thụ `dh-flow-t68-dong-bo-dat-dai`.
+- **Bước**
+  1. Gửi 100 bản tin vào `t68.datdai.thua-dat.changed.v1`.
+  2. Đọc `t68.cdm.thua-dat.v1`.
+- **Mong đợi** 100 bản tin CDM, khóa phân vùng theo cấu hình luồng, cùng `traceparent` với bản tin vào. Offset chỉ ghi nhận sau khi gửi thành công (at-least-once).
+
+#### TC-04-### · Bản tin lỗi vào DLQ <!--k:rt-dlq-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-070 · BR-04-008 · ERR-04-101
+- **Tiền điều kiện / dữ liệu** Một bản tin không phải JSON; một bản tin làm đích lỗi sau 3 lần thử.
+- **Bước**
+  1. Gửi hai bản tin.
+  2. Đọc `t68.ops.dlq.v1`.
+- **Mong đợi** Hai bản tin trong DLQ có tiêu đề `dh-error-code` (ERR-04-101 và ERR-04-104), `dh-flow`, `dh-version`, `dh-attempts`, `traceparent`. Các bản tin sau đó vẫn được xử lý (không tắc phân vùng). Lỗi giải tuần tự vào DLQ ngay, không thử lại.
+
+#### TC-04-### · Chống trùng bản tin <!--k:rt-idem-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-071 · ERR-04-106
+- **Tiền điều kiện / dữ liệu** F-HT khai báo khóa chống trùng `Idempotency-Key`; `04.runtime.idempotency-ttl-hours = 24`.
+- **Bước**
+  1. Gọi F-HT hai lần cùng `Idempotency-Key`.
+  2. Gọi lần ba cùng khóa sau khi kết quả cũ bị xóa khỏi kho (giả lập vượt 64 KiB, không lưu kết quả).
+  3. Gửi trùng một bản tin Kafka cho F-DD (cùng `ce_id`).
+- **Mong đợi** Bước 1: lần hai trả đúng kết quả lần một, hệ đích nhận một lệnh gọi. Bước 2 trả `409` ERR-04-106. Bước 3: chỉ một bản tin CDM được phát.
+
+#### TC-04-### · Topic không có quyền ở runtime <!--k:rt-topic-acl-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** RT, IT
+- **Truy vết** FR-04-069 · BR-04-009
+- **Tiền điều kiện / dữ liệu** Một luồng đã chạy (giả lập vượt qua kiểm tra tĩnh) cố gửi tới TOPIC-NOACL.
+- **Bước**
+  1. Kích hoạt lần gửi.
+- **Mong đợi** Kafka từ chối do ACL theo principal của runtime tenant; bản tin vào DLQ với ERR-04-109; cảnh báo PH-13. Chứng minh ràng buộc có hai lớp: kiểm tra tĩnh và ACL Kafka.
+
+### TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
+
+**Mục tiêu.** Luồng chỉ đọc được CSDL nguồn theo Q359: tài khoản chỉ đọc riêng theo luồng, chỉ câu lệnh đọc, có giới hạn thời gian và số dòng, có kiểm toán. Nhóm ca bắt buộc 100% (thẻ `q359`).
+
+**Phủ.** FR-04-072; BR-04-015; UC-04-19; ERR-04-013, 031, 108.
+
+#### TC-04-### · Đọc theo lịch với tham số hóa <!--k:sql-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT, IT
+- **Truy vết** FR-04-072 · BR-04-015 · UC-04-19
+- **Tiền điều kiện / dữ liệu** F-SQL TEST; CSDL nguồn giả lập có 2.500 dòng `dkkd.doanh_nghiep`.
+- **Bước**
+  1. Kích hoạt lịch.
+  2. Đọc `pg_stat_activity` và nhật ký kiểm toán.
+- **Mong đợi** Truy vấn chạy bằng `rd_doc_dkkd_sql`, có `SET LOCAL app.tenant_id = 'T68'`, `statement_timeout = 10s`, tham số `$1` (không nối chuỗi). Bản tin kiểm toán có câu lệnh đã chuẩn hóa, số dòng 2.500, không có giá trị dòng.
+
+#### TC-04-### · Chính sách SQL chặn câu ghi và câu nguy hiểm <!--k:sql-policy-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-04-072, 023 · BR-04-015 · ERR-04-031
+- **Tiền điều kiện / dữ liệu** 18 câu lệnh: `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `TRUNCATE`, `DROP`, `COPY … TO PROGRAM`, `SELECT pg_sleep(100)`, `SELECT … FOR UPDATE`, `SELECT dblink(…)`, `SELECT lo_import(…)`, hai câu nối bằng `;`, CTE có `DELETE … RETURNING`, câu tham chiếu `ph04.flow`, `SELECT … ${header.x}` (nối chuỗi), `CALL proc()`, `SET ROLE`; và 6 câu hợp lệ (`SELECT`, `WITH … SELECT`, có `$1`).
+- **Bước**
+  1. Chạy `SqlPolicy` (JSqlParser) trên từng câu.
+  2. Lưu nháp luồng chứa từng câu, `:validate` mức `DESIGN`.
+- **Mong đợi** 18/18 câu bị chặn với VR-13 `ERROR` và ERR-04-031, `reason` cụ thể; 6/6 câu hợp lệ không báo. Câu không phân tích được bị coi là vi phạm (đóng khi lỗi).
+
+#### TC-04-### · Kết nối không phải chỉ đọc <!--k:sql-rw-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-04-072 · BR-04-015 · ERR-04-013
+- **Tiền điều kiện / dữ liệu** `tc-sql-rw` dùng CONN-DKKD-RW.
+- **Bước**
+  1. `:validate` mức `SUBMIT`.
+  2. Ở RT, cấu hình bỏ qua kiểm tra tĩnh, chạy `SELECT` qua kết nối có `INSERT`, rồi thử `INSERT` bằng cách lồng trong hàm do CSDL nguồn định nghĩa.
+- **Mong đợi** Bước 1: VR-13 `ERROR` với ERR-04-013 ("Kết nối không phải loại chỉ đọc"). Bước 2: Kamelet SQL mở giao dịch `READ ONLY` nên `INSERT` trong hàm bị CSDL từ chối (`25006 read_only_sql_transaction`); bản tin vào DLQ với ERR-04-108.
+
+#### TC-04-### · Quá thời gian, vượt số dòng <!--k:sql-limits-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-04-072, 084 · ERR-04-108
+- **Tiền điều kiện / dữ liệu** `04.sql.max-rows = 1000`; bảng 2.500 dòng; một câu `SELECT` trên bảng không có chỉ mục chạy 15 giây.
+- **Bước**
+  1. Chạy câu trả 2.500 dòng.
+  2. Chạy câu 15 giây.
+- **Mong đợi** Bước 1: dừng ở 1.001 dòng, lỗi ERR-04-108 "vượt số dòng tối đa", không trả kết quả cắt cụt im lặng. Bước 2: CSDL hủy câu sau 10 giây (`57014`), ERR-04-108.
+
+### TS-04-23 · Ngữ cảnh tenant và rò rỉ chéo tenant
+
+**Mục tiêu.** Không có đường nào, ở control plane hay data plane, để dữ liệu của T01 hiện ra với người dùng hoặc luồng của T68, và ngược lại. Mọi ca có thẻ `tenant-leak`, bắt buộc 100%.
+
+**Phủ.** FR-04-073; BR-04-010; D03-10 §6; ERR-04-001, 112.
+
+#### TC-04-### · Mọi API đọc theo mã trùng giữa hai tenant <!--k:leak-api-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-073, 001, 002 · API-04-010, 012, 020, 024, 025, 026, 041, 042, 044, 054, 060, 062, 063, 091 · ERR-04-001
+- **Tiền điều kiện / dữ liệu** F-HT ở T68 và F-T01 ở T01 cùng mã `tra-cuu-ho-tich`; mỗi bên có phiên bản, lần chạy, ca, triển khai.
+- **Bước**
+  1. U-T68-TA gọi lần lượt mọi API đọc trong cột truy vết với mã `tra-cuu-ho-tich`.
+  2. Dùng `runId`, `deploymentId`, `commandId` của T01 trong đường dẫn với token T68.
+- **Mong đợi** Bước 1: mọi phản hồi chỉ có dữ liệu của T68 (không có chuỗi `"tinh":"T01"` ở bất kỳ phản hồi nào). Bước 2: mọi lệnh trả 404-ẩn.
+
+#### TC-04-### · RLS chặn ở CSDL kể cả khi ứng dụng sai <!--k:leak-rls-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-04-073
+- **Tiền điều kiện / dữ liệu** Kết nối vai trò `ph04_app`, `SET app.tenant_id = 'T68'`.
+- **Bước**
+  1. `SELECT count(*)` trên 26 bảng của `ph04` với điều kiện `tenant_id = 'T01'`.
+  2. `INSERT` một dòng `flow` với `tenant_id = 'T01'`.
+  3. `UPDATE ph04.component_policy` dòng `PLATFORM` đổi `decision = 'ALLOWED'`.
+  4. Không đặt `app.tenant_id`, `SELECT count(*) FROM ph04.flow`.
+- **Mong đợi** Bước 1 trả 0 ở mọi bảng mẫu P; bảng mẫu S chỉ trả dòng `COMMON`/`PLATFORM`. Bước 2 bị `WITH CHECK` từ chối. Bước 3 không đổi dòng nào (ràng buộc `ck_component_policy_narrow` và chính sách S). Bước 4 trả 0.
+
+#### TC-04-### · Bản tin mang tiêu đề tenant giả <!--k:leak-header-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-04-073, 061 · BR-04-010 · ERR-04-112
+- **Tiền điều kiện / dữ liệu** MSG-TENANT.
+- **Bước**
+  1. Gọi F-HT T68 với tiêu đề `dh-tenant: T01`.
+  2. Một chặng trong luồng thử (vượt qua kiểm tra tĩnh) đặt `dh-tenant = T01` giữa đường.
+- **Mong đợi** Bước 1: `dh-receive-action` bỏ tiêu đề do bên gọi gửi, đặt `T68` từ ngữ cảnh namespace và token đã APISIX xác minh; luồng chạy bình thường cho T68. Bước 2: `TenantGuard` ở chặng gửi đích phát hiện lệch, trả `500` ERR-04-112, không gọi đích; cảnh báo an ninh mức cao.
+
+#### TC-04-### · Runtime, topic, kho cấu hình tách theo tenant <!--k:leak-infra-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** GO, IT
+- **Truy vết** FR-04-073, 042
+- **Tiền điều kiện / dữ liệu** SIT có `dh-rt-t68`, `dh-rt-t01`.
+- **Bước**
+  1. Từ pod `dh-rt-t68`, thử đọc ConfigMap của `dh-rt-t01`.
+  2. Từ pod `dh-rt-t68`, thử tiêu thụ `t01.hotich.yeucau.v1`.
+  3. Từ pod `dh-rt-t68`, thử gọi HTTP tới pod `dh-rt-t01`.
+  4. Dùng token Git của ApplicationSet T68 đẩy vào `dh-flows-t01`.
+  5. Sandbox chạy lần thử của T68 rồi của T01 trên cùng pod.
+- **Mong đợi** Bước 1 bị RBAC từ chối. Bước 2 bị ACL Kafka từ chối. Bước 3 bị NetworkPolicy chặn. Bước 4 bị Gitea từ chối. Bước 5: lần chạy T01 không thấy bất kỳ tiêu đề, thuộc tính, bộ đệm hay biến nào của lần T68 (mỗi lần chạy một `CamelContext` mới, đã dọn).
+
+### TS-04-24 · Ma trận phân quyền và phạm vi không gian làm việc
+
+**Mục tiêu.** Đối chiếu từng quyền PERM-04-* với từng vai trò theo D02-08, cả chiều cho phép và chiều từ chối.
+
+**Phủ.** FR-04-007 và các FR có quyền; D02-08 §3.1; ERR-04-003, 045.
+
+#### TC-04-### · Ma trận vai trò × thao tác <!--k:perm-matrix-->
+- **Loại** Dương, Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-001, 003, 024, 040, 041, 042, 045, 050, 006, 007, 080 · API-04-010, 011, 022, 050, 052, 054, 056, 061, 015, 002, 072
+- **Tiền điều kiện / dữ liệu** Mỗi vai trò PA, PO, TA, TO, SO, IE, IA, VW, AU một người dùng; `04.workspace.enforce = false` để chỉ kiểm quyền chức năng.
+- **Bước**
+  1. Với mỗi cặp (vai trò, thao tác) trong bảng dưới, gọi API tương ứng trên dữ liệu đúng trạng thái.
+- **Mong đợi** Kết quả khớp bảng (✓ thành công, ✗ 403-PQ). Bộ kiểm thử sinh từ D02-08, không viết tay, để lệch ma trận là lỗi kiểm thử.
+
+| Thao tác | PA | PO | TA | TO | SO | IE | IA | VW | AU |
+|---|---|---|---|---|---|---|---|---|---|
+| Xem luồng (`read`) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Tạo luồng (`create`) | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Lưu nháp, chạy thử (`update`) | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Gửi duyệt (`submit`) | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Duyệt, phát hành TEST (`publish`) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Nâng môi trường (`promote`) | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Tạm dừng (`operate`) | ✗ | ✗ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ |
+| Dừng khẩn (`emergency-stop`) | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Gỡ luồng đã phát hành (`delete` + `publish`) | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Không gian làm việc (`admin`) | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Chính sách thành phần nền (`catalog-admin`) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+
+#### TC-04-### · Quyền đối tượng không lộ qua danh sách và tìm kiếm <!--k:perm-list-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-001, 007 · BR-04-021 · API-04-010, 053
+- **Tiền điều kiện / dữ liệu** `04.workspace.enforce = true`; IE3 chỉ ở WS-DATDAI.
+- **Bước**
+  1. IE3 gọi `GET /flows?q=ho tich`, `GET /flows?endpoint=/ho-tich/`, `GET /reviews`.
+  2. IE3 xem `facets`.
+- **Mong đợi** Không phản hồi nào chứa luồng của WS-HOTICH; `facets` chỉ đếm luồng IE3 xem được (không lộ số lượng luồng ẩn).
+
+#### TC-04-### · Giao diện ẩn và giải thích hành động bị khóa <!--k:perm-ui-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** FR-04-002 · UI-04-02, 04
+- **Tiền điều kiện / dữ liệu** VW, IE1, IA1 lần lượt mở UI-04-02 của F-HT v4 `DRAFT`.
+- **Bước**
+  1. So sánh thanh công cụ của ba người.
+- **Mong đợi** Hành động hiển thị khớp đúng `allowedActions` do máy chủ trả; hành động có quyền nhưng sai trạng thái hiện dạng khóa kèm tooltip lấy từ `disabledReasons`; giao diện không tự suy luận quyền (kiểm bằng cách sửa phản hồi giả qua `page.route`).
+
+### TS-04-25 · Catalog, chính sách thành phần, hồ sơ runtime
+
+**Phủ.** FR-04-012, 075, 080, 081; BR-04-014, 020; UC-04-21, 22; API-04-070…074; UI-04-17; ERR-04-011, 029, 035, 042; NFR-04-013.
+
+#### TC-04-### · Đề xuất cho phép thành phần và quyết định <!--k:proposal-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-080 · API-04-074, 072 · UI-04-17 · UC-04-21
+- **Tiền điều kiện / dữ liệu** `smb` có `policy = DENIED`; IE1, U-PA.
+- **Bước**
+  1. IE1 tạo đề xuất `ALLOW` `smb` với lý do 50 ký tự.
+  2. U-PA `:decide` `ACCEPTED`, `policyDecision = PER_FLOW`.
+  3. IE1 xem `GET /catalog`.
+- **Mong đợi** Bước 1 trả `201`, `status = OPEN`. Bước 2 trả `200`; chính sách nền `smb` thành `PER_FLOW`, `policyVersion` tăng. Bước 3: `smb` hiện với nhãn "Cần duyệt từng luồng". KT: có (`INT_POLICY_CHANGE`).
+
+#### TC-04-### · Tỉnh chỉ thu hẹp được chính sách <!--k:policy-narrow-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-04-080 · BR-04-014 · API-04-072
+- **Tiền điều kiện / dữ liệu** U-T68-TA; `exec` bị cấm ở nền.
+- **Bước**
+  1. TA `PATCH /catalog/policies` với `{"changes":[{"kind":"COMPONENT","name":"ftp","decision":"DENIED","reason":"Tỉnh không dùng FTP thường"}]}`.
+  2. TA `PATCH` với `exec` → `ALLOWED`.
+  3. TA `PATCH` với `ftp` → `INHERIT`.
+- **Mong đợi** Bước 1 trả `200`. Bước 2 trả 403-PQ (tỉnh không nới chính sách); kể cả khi gọi thẳng CSDL, ràng buộc `ck_component_policy_narrow` chặn. Bước 3 trả `200`, `ftp` theo nền.
+
+#### TC-04-### · Khớp phiên bản catalog với runtime <!--k:catalog-match-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, CI
+- **Truy vết** FR-04-081 · BR-04-020 · API-04-073
+- **Tiền điều kiện / dữ liệu** Catalog designer 3.33.1 (Camel 4.18.2), runtime Camel Quarkus 3.33.2 (Camel 4.18), đúng trạng thái của mã sau PR #5.
+- **Bước**
+  1. Gọi `GET /catalog/versions`.
+  2. Chạy `npm run catalog:check` trong CI với `pom.xml` runtime đổi sang Camel 4.19.
+- **Mong đợi** Bước 1: `match = true`; mỗi hồ sơ có `camelQuarkusVersion`, `camelVersion`, `imageDigest`. Bước 2: job thất bại, chặn hợp nhất, thông điệp nêu hai phiên bản lệch.
+
+#### TC-04-### · Nâng catalog: luồng soạn trên catalog cũ <!--k:catalog-upgrade-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-081 · BR-04-020 · UC-04-22 · ERR-04-042
+- **Tiền điều kiện / dữ liệu** F-HT v4 soạn trên catalog `cv-1`; PA nâng T68 lên `cv-2`.
+- **Bước**
+  1. Gọi `GET /catalog/versions`.
+  2. IE1 `:submit` v4.
+  3. IE1 mở v4, chọn "Nâng lên danh mục mới", kiểm, gửi lại.
+- **Mong đợi** Bước 1: `pendingUpgrade.affectedFlows ≥ 1` trước khi nâng. Bước 2 trả `409` ERR-04-042. Bước 3: định nghĩa ghi `catalogVersion = cv-2`, kiểm tra lại trên catalog mới, gửi được. `system:int-catalog` đánh dấu luồng bị ảnh hưởng.
+
+#### TC-04-### · Ảnh native khởi động và nạp luồng <!--k:native-start-->
+- **Loại** Hiệu năng · **Ưu tiên** P2 · **Tự động** CI
+- **Truy vết** FR-04-075 · NFR-04-013
+- **Tiền điều kiện / dữ liệu** Ảnh `core-native` dựng ở CI-8.
+- **Bước**
+  1. Khởi động pod không có luồng, đo tới `/q/health/ready`.
+  2. Khởi động với 50 ConfigMap luồng.
+- **Mong đợi** Bước 1 < 1 giây. Bước 2 < 5 giây. Ảnh có chữ ký Cosign, SBOM, không có lỗ hổng mức Cao theo Trivy.
+
+### TS-04-26 · Chuyển Camel XML của Bus cũ
+
+**Phủ.** FR-04-082; UC-04-20; API-04-028; UI-04-18; ERR-04-032; LGC-BUS-020…029, LGC-TOOL-001.
+
+#### TC-04-### · Chuyển gói XML ba route <!--k:legacy-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-04-082 · API-04-028 · UI-04-18 · UC-04-20
+- **Tiền điều kiện / dữ liệu** XML-OK; bảng ánh xạ kết nối cũ → PH-05 (`connectionMap`).
+- **Bước**
+  1. Gọi `POST /legacy-imports` (multipart) với `file`, `workspaceCode = "ho-tich"`, `connectionMap`.
+  2. Gọi `GET /legacy-imports/{jobId}` tới khi `COMPLETED`.
+  3. Mở từng luồng tạo ra.
+- **Mong đợi** Bước 1 trả `202`. Bước 2: `report.routes = 3`, `stepsConverted`, `stepsManual`, `connectionsToDeclare` (kết nối chưa có trong bảng ánh xạ), `recommendations` (ví dụ "Bọc route REST bằng khung chín chặng"); `createdFlows` có 3 mã, mỗi luồng ở `DRAFT`. Bước 3: YAML không còn mật khẩu, URL có thông tin đăng nhập được thay bằng `{{conn:…}}` theo bảng ánh xạ; chặng không chuyển được hiện chặng giữ chỗ màu cảnh báo kèm XML gốc trong ghi chú.
+
+#### TC-04-### · Tệp XML không hợp lệ hoặc nguy hiểm <!--k:legacy-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-04-082 · API-04-028 · ERR-04-032, 046
+- **Tiền điều kiện / dữ liệu** XML-BAD, XML-EXEC, XML có thực thể ngoài (XXE `<!ENTITY x SYSTEM "file:///etc/passwd">`), tệp 3 MiB, tệp `.exe` đổi tên.
+- **Bước**
+  1. Tải lần lượt từng tệp.
+- **Mong đợi** XML-BAD trả `422` ERR-04-032. XML-EXEC: chuyển được nhưng `report.forbiddenComponents = ["exec"]`, chặng bị thay bằng giữ chỗ. XXE: `422` ERR-04-032, không đọc tệp hệ thống (parser tắt DTD). 3 MiB trả `413` ERR-04-033. `.exe` trả `415` ERR-04-046.
+
+### TS-04-27 · Tham số PH-04 và đóng băng thay đổi
+
+**Phủ.** FR-04-084; BR-04-022; UC-04-01 (mục 7.1); API-04-090; UI-04-20; ERR-04-010, 041; LGC-BUS-031.
+
+#### TC-04-### · Đọc tham số và đặt khoảng đóng băng <!--k:params-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-04-084 · API-04-090 · UI-04-20 · LGC-BUS-031
+- **Tiền điều kiện / dữ liệu** U-T68-TA.
+- **Bước**
+  1. Gọi `GET /settings`.
+  2. Trên UI-04-20 (nhúng màn tham số PH-18), đặt `04.test.max-concurrent = 8`.
+  3. Đặt khoảng đóng băng 2026-12-30 18:00 tới 2027-01-02 08:00, lý do "Nghỉ Tết dương lịch".
+- **Mong đợi** Bước 1: đủ 23 tham số `04.*` có `value`, `default`, `domain`. Bước 2: có hiệu lực trong 60 giây (lần chạy thử thứ 6 không còn bị 429). Bước 3: `freezeWindows` có khoảng mới; banner đóng băng hiện trên UI-04-15 trong khoảng đó.
+
+#### TC-04-### · Tham số ngoài miền và ràng buộc không tắt được <!--k:params-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-084
+- **Tiền điều kiện / dữ liệu** U-T68-TA.
+- **Bước**
+  1. Đặt `04.test.max-concurrent = 21`.
+  2. Đặt `04.review.require-test = false` khi tenant có luồng đối ngoại.
+  3. Đặt `04.env.stages = PROD,TEST`.
+- **Mong đợi** Cả ba bị PH-18 từ chối với thông điệp miền; giá trị không đổi.
+
+#### TC-04-### · Biến môi trường không chứa bí mật <!--k:envvars-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-04-084 · API-04-090 · ERR-04-010
+- **Tiền điều kiện / dữ liệu** U-T68-TA.
+- **Bước**
+  1. `PUT /settings/env-vars` với `ma-co-quan` có giá trị khác nhau cho TEST, STAGING, PROD.
+  2. `PUT` với `api-token` có giá trị dạng JWT.
+- **Mong đợi** Bước 1 trả `200`; luồng dùng `{{dh.env.ma-co-quan}}` nhận đúng giá trị theo môi trường. Bước 2 trả `422` ERR-04-010, gợi ý dùng `{{vault:…}}`.
+
+### TS-04-28 · Sự kiện, outbox và hợp đồng API
+
+**Phủ.** FR-04-074 và các FR phát sự kiện; EVT-04-01…14; D03-04-PH04 §4, §7.
+
+#### TC-04-### · Outbox ghi cùng giao dịch, không phát khi lỗi <!--k:outbox-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** EVT-04-01, 03, 04, 06
+- **Tiền điều kiện / dữ liệu** Testcontainers PostgreSQL, Kafka, Debezium.
+- **Bước**
+  1. Tạo luồng; kiểm `ph04.outbox` và topic.
+  2. Gây lỗi sau khi ghi `flow` nhưng trước khi commit (tiêm lỗi ở `FlowService`).
+- **Mong đợi** Bước 1: một dòng outbox, một bản tin CloudEvents trên `t68.integration.flow.created.v1` với tiêu đề `ce_id`, `ce_type`, `ce_source = /tenants/T68/integration`, khóa `T68:{flowId}`. Bước 2: không có dòng luồng, không có dòng outbox, không có bản tin.
+
+#### TC-04-### · Lược đồ mọi sự kiện khớp AsyncAPI <!--k:events-schema-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** EVT-04-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14
+- **Tiền điều kiện / dữ liệu** Chạy đầy đủ một vòng tạo, sửa, gửi, yêu cầu sửa, duyệt, phát hành, tạm dừng, chạy thử, gỡ.
+- **Bước**
+  1. Thu mọi bản tin trên 14 topic, kiểm bằng lược đồ trong `asyncapi-integration.yaml`.
+- **Mong đợi** 100% bản tin hợp lệ; không bản tin nào chứa `definitionYaml`, `samples` hay thân bản tin nghiệp vụ.
+
+#### TC-04-### · Hợp đồng OpenAPI khớp máy chủ <!--k:contract-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, CI
+- **Truy vết** API-04-001, 091
+- **Tiền điều kiện / dữ liệu** `openapi-integration.yaml`; `dh-integration` trên Testcontainers.
+- **Bước**
+  1. Chạy Schemathesis (`--checks all`) trên toàn bộ operation với token IE1, IA1, TA.
+  2. Chạy `oasdiff breaking` so với `main`.
+- **Mong đợi** Không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
+
