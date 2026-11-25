@@ -334,3 +334,401 @@ Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển 
 | ST-10 | Rời trang khi chưa lưu | `CMP-ConfirmDialog` "Bạn có thay đổi chưa lưu. Rời trang sẽ mất các thay đổi này." nút "Lưu rồi rời", "Rời không lưu", "Ở lại" |
 | ST-11 | Tác vụ nền | `CMP-JobProgress` trong drawer; khay tác vụ nền trên thanh trên |
 | ST-12 | Phiên sắp hết hạn | `CMP-SessionTimeoutDialog`; trình thiết kế tự lưu trước khi đăng xuất |
+
+## 7. UI-04-01 Danh sách luồng
+
+**Mục đích.** Điểm vào của PH-04: tìm luồng, xem nhanh tình trạng ở từng môi trường, mở chi tiết hoặc trình thiết kế. Thay màn danh sách agent của Bus (LGC-BUS-001…005) và thanh Project của Tooling (LGC-TOOL-001). FR-04-001, FR-04-002, FR-04-005.
+**Đường dẫn.** `/tich-hop/luong`. **Mẫu.** PTN-01. **Quyền.** `PERM-04-read`.
+**API.** API-04-001 (danh sách, có `facets` đếm theo trạng thái), API-04-005 (không gian làm việc của tôi), API-04-070 (tình trạng triển khai gộp).
+
+### 7.1. Wireframe
+
+```
+┌ glass-chrome ─────────────────────────────────────────────────────────────────────────────────┐
+│ ☰ Datahub   Tích hợp › Luồng tích hợp                          🔍 Ctrl+K   🔔 3   ⧗ 1   👤 │
+└───────────────────────────────────────────────────────────────────────────────────────────────┘
+  Luồng tích hợp                                          [⇪ Nhập luồng hệ cũ] [＋ Tạo luồng ▾]
+  Thiết kế, chạy thử, phát hành các luồng Camel kết nối hệ thống trong tỉnh.
+
+  ┌ Tất cả 142 ┬ Nháp 18 ┬ Chờ duyệt 4 ┬ Đang chạy 103 ┬ Tạm dừng 6 ┬ Suy giảm 3 ┬ Đã gỡ 8 ┐  ← Segmented
+  └────────────┴─────────┴─────────────┴───────────────┴────────────┴────────────┴─────────┘
+  [🔍 Tìm theo mã, tên, endpoint, mô tả…        ] [Không gian ▾] [Loại ▾] [Môi trường ▾] [⚙ Bộ lọc khác 2]
+  Đang lọc: Nguồn = HTTT Hộ tịch ✕   Vận chuyển = REST ✕                       Xóa bộ lọc
+  ┌───────────────────────────────────────────────────────────────────────────────────────────┐
+  │☐│ Mã luồng ▲        │ Tên luồng                │ Loại      │ Nguồn → Đích   │ Test │Stg │Prod│ Phiên bản │ Cập nhật     │ ⋯ │
+  │☐│ ho-tich-khai-sinh │ Đồng bộ khai sinh sang…  │ Đối ngoại │ HTTT HT → NDXP │  ●   │ ●  │ ●  │ v7 · Chạy │ 2 giờ trước  │ ⋯ │
+  │ │                   │ ⓘ 2 route · không gian Tư pháp                                         │
+  │☐│ dkkd-tra-cuu      │ Tra cứu ĐKKD             │ Đối ngoại │ Cổng DVC → ĐKKD│  ●   │ ○  │ —  │ v2 · Nháp │ hôm qua      │ ⋯ │
+  └───────────────────────────────────────────────────────────────────────────────────────────┘
+  Hiển thị 1–20 trong 103                                         ‹ 1 2 3 4 5 6 › [20 / trang ▾]
+```
+
+Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt lên từ đáy khi chọn ít nhất một dòng: "Đã chọn {n}" · [Xuất danh sách] · [Gắn nhãn] · [Tạm dừng ở môi trường…] · [Bỏ chọn].
+
+### 7.2. Thành phần
+
+| # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
+|---|---|---|---|---|---|
+| 1 | Tiêu đề trang và mô tả | `CMP-PageHeader` | Cố định | — | |
+| 2 | Nút "Tạo luồng" có mũi tên | `CMP-Button` primary + `CMP-DropdownMenu` | Mục: "Luồng trống", "Từ khuôn mẫu…", "Nhập từ YAML…", "Kamelet mới", "Pipe mới" | — | Hiện khi `PERM-04-create`; bấm phần chính mở UI-04-03 bước 1 |
+| 3 | Nút "Nhập luồng hệ cũ" | `CMP-Button` default | | — | Hiện khi `PERM-04-create` và tham số `04.legacy_import_enabled` = true |
+| 4 | Thanh đếm theo trạng thái | `CMP-Segmented` | Số từ `facets.status` | API-04-001 | Mặc định "Tất cả" trừ "Đã gỡ"; chọn đồng bộ vào `trang-thai` |
+| 5 | Ô tìm kiếm | `CMP-SearchInput` | 2–100 ký tự; trễ 300 ms; tìm không dấu | `q` | Tìm trên mã, tên, mô tả, URI endpoint đã chỉ mục (EN-04-04) |
+| 6 | Lọc không gian | `CMP-Select` nhiều chọn, có tìm | Không gian người dùng xem được | API-04-005 | Mặc định: không gian của tôi nếu có |
+| 7 | Lọc loại | `CMP-Select` | Đối ngoại, Nội bộ, Kamelet, Pipe | | |
+| 8 | Lọc môi trường | `CMP-Select` | Có triển khai ở: Test, Staging, Prod; "Chưa triển khai" | | |
+| 9 | Bộ lọc khác | `CMP-FilterDrawer` | Vận chuyển (REST, SOAP, Kafka, SFTP, CSDL, Lịch), Nguồn HTTT, Đích HTTT, Chủ sở hữu, Nhãn, Sức khỏe, Cập nhật trong khoảng | PH-01 HTTT | Số trên nút = số điều kiện đang áp |
+| 10 | Dải điều kiện đang lọc | `CMP-FilterChips` | | | Bấm ✕ bỏ một điều kiện |
+| 11 | Bảng | `CMP-DataTable` | Cột ở 7.3 | API-04-001 | Phân trang máy chủ; chọn cột, mật độ, xuất |
+| 12 | Hàng mở rộng | `CMP-DataTable` expandable | Số route, không gian, nhãn, mô tả 2 dòng, lần chạy thử gần nhất | | Mở bằng mũi tên hoặc phím → |
+| 13 | Thanh hàng loạt | `CMP-BulkActionBar` | | | Mỗi hành động hàng loạt mở hộp xác nhận nêu đúng số dòng |
+
+### 7.3. Cột bảng
+
+| Cột | Rộng | Sắp xếp | Hiển thị |
+|---|---|---|---|
+| Chọn | 40 px | | `Checkbox` |
+| Mã luồng | 200 px, ghim trái | Có | `CMP-CodeText`, là liên kết tới UI-04-02 |
+| Tên luồng | linh hoạt, tối thiểu 220 px | Có | Cắt một dòng, tooltip đầy đủ; dưới là biểu tượng loại |
+| Loại | 110 px | | Thẻ "Đối ngoại" (info), "Nội bộ" (neutral), "Kamelet", "Pipe" |
+| Nguồn → Đích | 200 px | | Tên ngắn HTTT; nhiều đích hiện "+2" có tooltip |
+| Test, Staging, Prod | 56 px mỗi cột | | Chấm trạng thái `CMP-StatusDot` + `aria-label` ("Prod: Đồng bộ, khỏe, v7"); "—" chưa triển khai. Tooltip: phiên bản, thời điểm đồng bộ, số bản sao khỏe {k}/{n} |
+| Phiên bản | 120 px | | "v{n} · {nhãn trạng thái luồng}"; thêm biểu tượng bút khi có bản nháp mới hơn |
+| Cập nhật | 140 px | Có (mặc định giảm dần) | Thời gian tương đối, tooltip tuyệt đối và người cập nhật |
+| ⋯ | 48 px, ghim phải | | Menu: "Mở trình thiết kế" (E), "Xem chi tiết", "Chạy thử", "Nhân bản", "Xuất YAML", "Xem nhật ký trên PH-13", "Gỡ luồng" (nguy hiểm) — mỗi mục theo `allowedActions` |
+
+### 7.4. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton 8 dòng; thanh đếm hiện số "—" |
+| Rỗng lần đầu (tỉnh chưa có luồng nào) | Minh họa sơ đồ ba chặng; "Chưa có luồng tích hợp nào. Tạo luồng đầu tiên từ khuôn mẫu, hoặc nhập luồng từ hệ thống LGSP cũ." Nút "Tạo luồng", "Nhập luồng hệ cũ" |
+| Rỗng do lọc | ST-04 |
+| Người chỉ xem, chưa thuộc không gian nào | Bảng hiện luồng công khai trong tỉnh; dải thông tin "Bạn đang xem với quyền chỉ đọc. Để thiết kế luồng, xin quản trị thêm bạn vào một không gian làm việc." |
+| Lỗi tải | ST-05 trong vùng bảng; thanh lọc vẫn dùng được |
+
+### 7.5. Tương tác và phím tắt
+
+`/` focus ô tìm; `↑`/`↓` chuyển dòng; `Enter` mở chi tiết; `E` mở trình thiết kế của dòng đang focus; `Space` chọn dòng; `Ctrl+A` chọn trang hiện tại. Nhấp giữa hoặc `Ctrl`+nhấp mã luồng mở tab mới. Danh sách tự làm mới tình trạng môi trường mỗi 30 giây khi tab trình duyệt đang hiện (không làm mất dòng đang focus).
+
+## 8. UI-04-02 Chi tiết luồng
+
+**Mục đích.** Một trang cho mọi thứ về một luồng: thông tin, route, điểm kết nối, phiên bản, triển khai ở từng môi trường, chạy thử, phụ thuộc, giám sát, nhật ký thay đổi. Thay màn chi tiết agent và các tab route của Bus (LGC-BUS-006, 008, 015–024, 026, 027). FR-04-003, 004, 060–075.
+**Đường dẫn.** `/tich-hop/luong/:ma?tab=`. **Mẫu.** PTN-02. **Quyền.** `PERM-04-read` + quyền xem không gian.
+**API.** API-04-002 (luồng), 010 (phiên bản), 060 (triển khai), 040 (lần chạy thử), 080 (phụ thuộc), 090 (nhật ký), PH-13 nhúng số liệu.
+
+### 8.1. Wireframe
+
+```
+  Tích hợp › Luồng tích hợp › Đồng bộ khai sinh sang NDXP
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │ 🔀 Đồng bộ khai sinh sang NDXP   ho-tich-khai-sinh ⧉   [Đang chạy] [Đối ngoại]           │
+  │ Không gian: Tư pháp · Chủ sở hữu: Nguyễn V. A · HTTT Hộ tịch → Nền tảng NDXP              │
+  │                       [✎ Mở trình thiết kế] [▶ Chạy thử] [⇡ Phát hành ▾] [⏸ Tạm dừng ▾] [⋯]│
+  │ ┌ Test ─────────────┐ ┌ Staging ──────────┐ ┌ Prod ─────────────────────────────┐        │
+  │ │ v8 · Đồng bộ, khỏe│ │ v7 · Đồng bộ, khỏe│ │ v7 · Đồng bộ, khỏe · 3/3 bản sao │        │
+  │ │ 10 phút trước     │ │ 2 ngày trước      │ │ 2 ngày trước · 1.204 bản tin/giờ │        │
+  │ └───────────────────┘ └───────────────────┘ └───────────────────────────────────┘        │
+  └──────────────────────────────────────────────────────────────────────────────────────────┘
+  Tổng quan │ Sơ đồ │ Route 2 │ Điểm kết nối 5 │ Thuộc tính │ Mã nguồn │ Phiên bản 8 │ Triển khai │ Chạy thử │ Phụ thuộc │ Nhật ký
+  ─────────────────────────────────────────────────────────────────────────────────────────────
+  (nội dung tab, nền đặc)
+```
+
+Ba thẻ môi trường (`CMP-EnvCard`) là thông tin quan trọng nhất của trang: phiên bản đang chạy ở đâu và có khỏe không. Thẻ bấm được, mở tab Triển khai lọc theo môi trường. Thẻ "Prod" có viền `color-warning-text` khi `OUT_OF_SYNC` hoặc `DEGRADED`, viền `color-error-text` khi `FAILED`, kèm dòng chữ nêu lý do.
+
+### 8.2. Thanh hành động tiêu đề
+
+| Nút | Điều kiện hiện | Điều kiện bật | Hành vi |
+|---|---|---|---|
+| Mở trình thiết kế | `PERM-04-read` | Luôn | Mở UI-04-04 với bản nháp nếu có, nếu không với phiên bản mới nhất ở chế độ chỉ đọc (người có `PERM-04-update` thấy nút "Tạo bản nháp từ v{n}" trên banner) |
+| Chạy thử | `PERM-04-test` | Có phiên bản ≥ `DRAFT` hợp lệ | Mở drawer UI-04-11 |
+| Phát hành ▾ | `PERM-04-publish` hoặc `PERM-04-promote` | Có phiên bản `APPROVED` chưa ở môi trường đích | Mục: "Lên Test", "Lên Staging", "Lên Prod" (UI-04-15) |
+| Tạm dừng ▾ | `PERM-04-operate` | Luồng `ACTIVE`/`DEGRADED` | Mục: "Tạm dừng ở {env}", "Tiếp tục", "Dừng khẩn" (chỉ `PERM-04-emergency-stop`, màu nguy hiểm) |
+| ⋯ | | | "Nhân bản", "Xuất YAML", "Xuất gói luồng", "Xem nhật ký trên PH-13", "Chuyển không gian", "Gỡ luồng" |
+
+### 8.3. Các tab
+
+| Tab | Nội dung | Thành phần chính | Ghi chú |
+|---|---|---|---|
+| Tổng quan | Mô tả, mục đích, căn cứ pháp lý (liên kết văn bản), HTTT nguồn, đích, dịch vụ PH-03 tiêu thụ luồng, nhãn, "Thông tin thêm" (LGC-BUS-024); bốn thẻ số liệu 24 giờ ở Prod: số bản tin, tỷ lệ lỗi, p95, lần lỗi gần nhất | `CMP-Descriptions`, `CMP-StatCard` | Số liệu từ PH-13; "—" khi chưa triển khai Prod |
+| Sơ đồ | Sơ đồ của phiên bản đang chạy ở môi trường chọn, chỉ đọc; phủ số liệu chặng (số lần qua, lỗi) khi PH-13 có | `CMP-FlowCanvas` readOnly | Bộ chọn môi trường và phiên bản ở góc |
+| Route | Bảng route: id, mô tả, điểm vào, trạng thái theo nhịp tim ở từng môi trường, số bản tin, lỗi, nút tạm dừng route | `CMP-DataTable` | Thay LGC-BUS-008, 018, 026 |
+| Điểm kết nối | Bảng endpoint đã chỉ mục: vai trò (vào, ra), lược đồ (`platform-http`, `kafka`, `sql`…), URI đã che tham số, kết nối PH-05, số liệu | `CMP-DataTable` | URI không bao giờ hiện bí mật; tham số `{{connection.*}}` hiện như thẻ |
+| Thuộc tính | Thuộc tính cấp tệp và tham số môi trường (giá trị theo Test, Staging, Prod trong ba cột) | `CMP-DataTable` | Giá trị đến từ kho bí mật hiện "•••• (kho bí mật)" |
+| Mã nguồn | YAML của phiên bản chọn, chỉ đọc, nút sao chép, tải | `CMP-CodeEditor` readOnly | |
+| Phiên bản | Bảng phiên bản: số, trạng thái, người tạo, người duyệt, ghi chú phát hành, ngày; chọn hai dòng → "So sánh" | `CMP-DataTable` + `CMP-Timeline` | Mỗi dòng có "Mở", "So sánh với đang chạy", "Quay lui về bản này" |
+| Triển khai | Lịch sử triển khai và lệnh điều khiển theo môi trường; chi tiết lệnh hiện số bản sao đã xác nhận | `CMP-DataTable` + `CMP-Drawer` | Mục 19 |
+| Chạy thử | 10 lần gần nhất, liên kết "Xem tất cả" sang UI-04-12; danh sách ca kiểm thử của luồng | `CMP-DataTable` | |
+| Phụ thuộc | Luồng con gọi tới, Kamelet dùng, kết nối PH-05, lược đồ PH-06, bảng mã PH-07, dịch vụ PH-03 dùng luồng này | `CMP-DependencyGraph` + bảng | Dùng cho "Gỡ luồng" |
+| Nhật ký | Sự kiện thay đổi: tạo, lưu, gửi duyệt, duyệt, phát hành, lệnh, ai, khi nào, lý do | `CMP-AuditTimeline` | Lọc theo loại sự kiện |
+
+### 8.4. Trạng thái màn
+
+Không tìm thấy hoặc không có quyền đối tượng: ST-05 với ERR-04-001 (không phân biệt hai trường hợp). Luồng `RETIRED`: banner "Luồng đã gỡ ngày {date} bởi {user}. Lý do: {reason}." và mọi hành động chỉnh sửa ẩn, chỉ còn "Nhân bản". Có lệnh điều khiển đang xử lý: thẻ môi trường hiện "Đang tạm dừng… 2/3 bản sao đã xác nhận" và hai nút "Tạm dừng", "Tiếp tục" vô hiệu kèm lý do.
+
+## 9. UI-04-03 Tạo luồng
+
+**Mục đích.** Tạo luồng mới đủ thông tin quản lý ngay từ đầu, xuất phát từ khuôn mẫu để có sẵn chín chặng chuẩn. Thay hộp thêm project của Tooling (LGC-TOOL-002) và hộp thêm agent có kiểm tra kết nối (LGC-BUS-013). FR-04-001, 006, 007.
+**Đường dẫn.** `/tich-hop/luong/tao-moi?buoc=`. **Mẫu.** PTN-05, ba bước. **Quyền.** `PERM-04-create` và vai trò EDIT ở ít nhất một không gian.
+
+### 9.1. Wireframe bước 1
+
+```
+  Tạo luồng tích hợp                                                              ✕ Hủy
+  ① Điểm xuất phát ──── ② Thông tin luồng ──── ③ Xem lại và tạo
+  ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐ ┌──────────────────┐
+  │ ▦ Từ khuôn mẫu      │ │ ◻ Luồng trống       │ │ ⇪ Nhập YAML         │ │ ⧉ Nhân bản luồng │
+  │ Có sẵn 9 chặng chuẩn│ │ Chỉ có điểm vào     │ │ Từ tệp .camel.yaml  │ │ Sao chép luồng   │
+  │ ✓ Khuyên dùng       │ │                     │ │                     │ │ đã có            │
+  └─────────────────────┘ └─────────────────────┘ └─────────────────────┘ └──────────────────┘
+  Khuôn mẫu  [🔍 Tìm khuôn mẫu…]   [Tất cả] [Tra cứu đồng bộ] [Đồng bộ định kỳ] [Nhận sự kiện] [Tệp]
+  ┌ REST → NDXP tra cứu ──────┐ ┌ Kafka → CSDL ─────────────┐ ┌ SFTP định kỳ → REST ──────┐
+  │ [sơ đồ thu nhỏ 9 chặng]   │ │ [sơ đồ thu nhỏ]           │ │ [sơ đồ thu nhỏ]           │
+  │ Dùng 34 lần · Đối ngoại   │ │ Dùng 12 lần · Nội bộ      │ │ Dùng 7 lần · Đối ngoại    │
+  └───────────────────────────┘ └───────────────────────────┘ └───────────────────────────┘
+                                                                          [Tiếp tục →]
+```
+
+Thẻ điểm xuất phát là `CMP-RadioCard` (nhóm radio, mũi tên chuyển lựa chọn). Khi chọn "Nhập YAML" vùng dưới đổi thành `CMP-FileDropzone` nhận `.yaml`, `.yml`, `.camel.yaml` tối đa `04.max_definition_size` (mặc định 512 KB), kiểm tra cú pháp ngay khi thả và hiện số route, Kamelet, lỗi. Khi chọn "Nhân bản" vùng dưới là `CMP-Select` tìm luồng và phiên bản.
+
+### 9.2. Trường bước 2
+
+| Trường | Kiểu | Bắt buộc | Kiểm tra | Mặc định, gợi ý |
+|---|---|---|---|---|
+| Tên luồng | `Input` | Có | 3–200 ký tự | Từ khuôn mẫu: "{tên khuôn} – " |
+| Mã luồng | `Input` có tiền tố không gian | Có | `^[a-z][a-z0-9-]{2,62}$`, duy nhất trong tenant (kiểm tra trực tuyến API-04-003, trễ 400 ms, hiện ✓ hoặc ERR-04-002) | Tự sinh từ tên, bỏ dấu, nối gạch; sửa tay thì ngừng tự sinh |
+| Không gian làm việc | `Select` | Có | Không gian người dùng có EDIT | Không gian gần nhất |
+| Loại | `Radio` | Có | Đối ngoại, Nội bộ | Theo khuôn mẫu; tooltip: "Đối ngoại: có hệ thống ngoài tỉnh hoặc người dân tham gia, bắt buộc chín chặng chuẩn (BR-04-003)" |
+| HTTT nguồn | `Select` từ PH-01 | Có với Đối ngoại | | |
+| HTTT đích | `Select` nhiều chọn từ PH-01 | Có với Đối ngoại | | |
+| Mô tả | `TextArea` | Không | ≤ 2.000 ký tự | |
+| Căn cứ pháp lý | `Select` nhiều chọn từ danh mục văn bản PH-07 | Có với Đối ngoại khi tham số `04.require_legal_basis` = true | | |
+| Nhãn | `Select` mode tags | Không | ≤ 10 nhãn, mỗi nhãn ≤ 32 ký tự | |
+| Hồ sơ runtime | `Select` | Không | `core-native`, `files-native`, `soap-jvm`, `legacy-jvm` | "Tự chọn theo thành phần" (khuyên dùng) |
+| Tham số khuôn mẫu | Biểu mẫu sinh từ khuôn | Theo khuôn | Theo khuôn | Ví dụ "Đường dẫn nhận", "Kết nối đích" (chọn từ PH-05) |
+
+Bước 3 hiện tóm tắt, sơ đồ xem trước của luồng sẽ tạo (canvas chỉ đọc, thu nhỏ) và danh sách cảnh báo kiểm tra sơ bộ. Nút "Tạo và mở trình thiết kế" (chính) và "Tạo" (phụ). Tạo thành công: thông báo "Đã tạo luồng {tên}. Bản nháp v1 sẵn sàng để thiết kế." và chuyển tới UI-04-04.
+
+### 9.3. Trạng thái
+
+Không có khuôn mẫu nào (tỉnh mới): vùng khuôn mẫu hiện "Chưa có khuôn mẫu. Quản trị tích hợp có thể thêm khuôn ở Khuôn mẫu luồng." và thẻ "Luồng trống" được chọn sẵn. Người dùng không có không gian EDIT: không vào được màn (nút Tạo bị ẩn ở UI-04-01); vào thẳng bằng URL nhận ST-06. Rời trình hướng dẫn giữa chừng: ST-10.
+
+## 10. UI-04-04 Trình thiết kế luồng
+
+### 10.1. Mục đích và phạm vi
+
+Nơi kỹ sư tích hợp vẽ, cấu hình, kiểm tra, chạy thử và gửi duyệt một phiên bản luồng. Mô hình là Camel YAML DSL (ADR-062); sơ đồ và YAML là hai cách nhìn của cùng một mô hình, sửa bên nào bên kia cập nhật (FR-04-012). Trình thiết kế dựng lại mô hình của Kaoto trong React 19 + XYFlow (ADR-060), catalog lấy từ `@kaoto/camel-catalog` đúng phiên bản runtime (ADR-061).
+
+Một tệp luồng có thể chứa nhiều thực thể: route, `routeConfiguration`, `rest`, Kamelet, Pipe, bean, thuộc tính cấp tệp. Trình thiết kế mở một thực thể trên canvas tại một thời điểm; thanh thực thể ② chuyển giữa chúng.
+
+**FR phủ.** FR-04-010…027, 030–033, 040–045, 050–053. **LGC thay thế.** LGC-TOOL-003…026, 028. **Quyền.** Xem: `PERM-04-read`; sửa: `PERM-04-update` + vai trò EDIT trên không gian; chạy thử: `PERM-04-test`; gửi duyệt: `PERM-04-submit`.
+**API.** API-04-010 (đọc phiên bản, ETag), 011 (lưu, `If-Match`), 012 (kiểm tra), 013 (chuyển YAML ↔ mô hình phía máy chủ khi cần đối chiếu), 020 (catalog theo hồ sơ), 021 (chính sách thành phần của tenant), 025 (khóa soạn thảo, nhịp 30 s), 030 (gửi duyệt), 040–043 (chạy thử), PH-05 API-05-010 (kết nối khả dụng), PH-06 (lược đồ), PH-07 (bảng mã).
+
+### 10.2. Wireframe tổng thể (màn 1440 × 900)
+
+```
+┌① DesignerToolbar (đặc, cao 48) ──────────────────────────────────────────────────────────────────────────────────────┐
+│ ‹  Đồng bộ khai sinh sang NDXP  v8 [Bản nháp] ▾   ● Đã lưu 14:02   │ Tệp▾ Sửa▾ Xem▾ │ ↶ ↷ │ [Sơ đồ|YAML|Chia đôi] │
+│                                                                    │ ⚠ 2 ✕ 1 │ ▶ Chạy thử ▾ │ ⇪ Gửi duyệt │ 👥 A,B │ ⛶ │
+├② EntityRail (đặc, cao 36) ───────────────────────────────────────────────────────────────────────────────────────────┤
+│ [⇢ route: nhan-khai-sinh ✕1] [⇢ route: goi-ndxp] [⚙ routeConfiguration] [⬡ bean 2] [≡ Thuộc tính tệp]  ＋ Thêm ▾     │
+├③ NodePalette (đặc, 280) ──┬④ FlowCanvas (đặc solid-2, linh hoạt) ─────────────────────────┬⑤ Inspector (đặc, 360) ──┤
+│ 🔍 Tìm thành phần… Ctrl+P │  · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · │ ⇢ Gọi hộ tịch            │
+│ [Nghiệp vụ|Thành phần|EIP │  ┌──────────────────┐                                         │ to · http  [Tài liệu ↗]  │
+│  |Kamelet] [☰|▦]          │  │▌⤓ Nhận yêu cầu   │ dh-stage-receive                        │ ───────────────────────  │
+│ ★ Hay dùng                │  │  platform-http   │                                         │ [Cơ bản|Nâng cao|Lỗi|    │
+│  ▣ Gọi REST               │  └────────┬─────────┘                                         │  Mô tả]  ⤢ Mở rộng       │
+│  ▣ Ánh xạ dữ liệu         │           ⊕                                                   │ Kết nối *                │
+│ ▸ Điểm vào          7     │  ┌────────▼─────────┐                                         │ [ndxp-ho-tich ▾] ⓘ PH-05 │
+│ ▾ Định tuyến        9     │  │▌✓ Kiểm lược đồ   │                                         │ Đường dẫn *              │
+│  ◆ Rẽ nhánh (choice)      │  └────────┬─────────┘                                         │ [/api/v1/khai-sinh  ] ƒx │
+│  ◆ Lọc (filter)           │           ⋮  (7 chặng)                                        │ Phương thức              │
+│  ◆ Tách (split)           │  ┌────────▼─────────┐  ┌ choice ─────────────────────┐        │ [POST ▾]                 │
+│ ▸ Chuyển đổi dữ liệu 14   │  │▌◆ Rẽ nhánh  ⚠1   │──┤ when ${header.loai}=='KS'  │        │ Thời gian chờ (ms)       │
+│ ▸ Kết nối CSDL       4    │  └──────────────────┘  │ ┌▌⇢ Gọi hộ tịch ✕2 ┐ ◀chọn │        │ [10000  ] mặc định 30000 │
+│ ▸ Mạng              11    │                        │ └──────────────────┘       │        │ ⟲ Khôi phục mặc định     │
+│ ▸ Hàng đợi bản tin   6    │                        │ otherwise                   │        │ ───────────────────────  │
+│ ▸ Lập lịch           3    │                        │ ┌▌✎ Ghi nhật ký     ┐      │        │ ✕ Thiếu kết nối hợp lệ   │
+│ ▸ Bảo mật            5    │                        │ └──────────────────┘       │        │ ⚠ Thời gian chờ > SLA    │
+│ ▸ Chặng chuẩn Datahub 9   │                        └────────────────────────────┘        │                          │
+│ ─────────────────────     │ ┌glass-overlay┐                         ┌glass-overlay──────┐│                          │
+│ 751 thành phần · 612 được │ │ − 85% + ⤢ ⊡ │                         │ ▭ minimap          ││                          │
+│ phép · catalog 3.33.1     │ └─────────────┘                         └───────────────────┘│                          │
+├⑥ BottomPanel (đặc, cao 220, thu được) ───────────────────────────────────────────────────┴──────────────────────────┤
+│ [Vấn đề 3] [Kết quả chạy] [Nhật ký] [Lịch sử sửa]                                                     ⌄ Thu gọn     │
+│ ✕ ERR-04-013  Gọi hộ tịch · Kết nối    Kết nối "ndxp-ho-tich" chưa được cấp cho không gian Tư pháp.  [Đi tới]       │
+│ ⚠ VR-07       Gọi hộ tịch · Thời gian  Thời gian chờ 10.000 ms lớn hơn SLA dịch vụ 5.000 ms.          [Đi tới]       │
+│ ⚠ VR-04       Rẽ nhánh                Nhánh "otherwise" chỉ ghi nhật ký, bản tin sẽ không được trả lời. [Đi tới]    │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 10.3. Lưới bố cục và kích thước
+
+| Vùng | Mặc định | Tối thiểu | Tối đa | Thu gọn | Lưu |
+|---|---|---|---|---|---|
+| ① Thanh công cụ | cao 48 px | — | — | Không | — |
+| ② Thanh thực thể | cao 36 px | — | — | Ẩn khi tệp chỉ có một route và không có thực thể khác (tự hiện khi thêm) | — |
+| ③ Bảng thành phần | rộng 280 px | 220 | 420 | Thành dải 48 px chỉ có biểu tượng nhóm (phím `Ctrl+B`) | `dh.int.designer.palette.width`, `.collapsed` |
+| ④ Canvas | phần còn lại | 480 | — | — | Thu phóng, vị trí theo `{flow}/{entity}` |
+| ⑤ Inspector | rộng 360 px | 300 | 560 | Ẩn khi không chọn chặng nào (hiện thông tin route); `Ctrl+I` bật tắt | `dh.int.designer.inspector.width` |
+| ⑥ Bảng dưới | cao 220 px | 120 | 60 % chiều cao | Thành thanh 32 px hiện số vấn đề (`Ctrl+J`) | `dh.int.designer.bottom.height`, `.tab` |
+
+Ngăn đổi kích thước bằng tay nắm `CMP-Splitter` rộng 4 px (vùng nhận 8 px), focus được bằng Tab, đổi bằng phím mũi tên 16 px mỗi lần, `Shift`+mũi tên 64 px, nhấp đúp trả về mặc định. Ở chế độ toàn màn hình (`F11` của trình duyệt hoặc nút ⛶), khung ứng dụng ẩn; ① vẫn hiện; thoát bằng `Esc` hoặc thanh nổi `CMP-FullscreenBar`.
+
+### 10.4. ① Thanh công cụ
+
+| Vị trí | Điều khiển | Kiểu | Hành vi | Quyền, trạng thái | Phím |
+|---|---|---|---|---|---|
+| 1 | Quay lại ‹ | `Button` icon | Về UI-04-02 (hoặc trang trước nếu cùng PH-04); chưa lưu thì ST-10 | | `Alt+←` |
+| 2 | Tên luồng | `Typography` có nút sửa ✎ khi rê | Sửa tên tại chỗ (3–200 ký tự); `Enter` lưu, `Esc` hủy | `PERM-04-update` | |
+| 3 | Phiên bản và trạng thái ▾ | `Dropdown` | Danh sách phiên bản với nhãn trạng thái; mục "So sánh với phiên bản đang chạy ở Prod", "Tạo bản nháp từ phiên bản này" | | |
+| 4 | Chỉ báo lưu | `CMP-SaveIndicator` | Một trong: "● Chưa lưu" (chấm `color-warning-text`), "⟳ Đang lưu…", "✓ Đã lưu {HH:mm}", "⚠ Lưu lỗi · Thử lại", "⊘ Chưa lưu lên máy chủ (mất kết nối)", "🔒 Chỉ đọc" | | |
+| 5 | Menu Tệp | `Dropdown` | Lưu (`Ctrl+S`); Tải YAML (`Ctrl+Shift+S`); Tải gói luồng (.zip có YAML, ánh xạ, ca kiểm thử); Nhập YAML vào tệp này…; Thuộc tính tệp; Chọn hồ sơ runtime; Lịch sử phiên bản | | |
+| 6 | Menu Sửa | `Dropdown` | Hoàn tác, Làm lại, Cắt, Sao chép, Dán, Nhân đôi, Xóa, Chọn tất cả, Tìm trong luồng (`Ctrl+F`), Thay thế giá trị tham số…, Xóa nội dung route (LGC-TOOL-017, có xác nhận) | | |
+| 7 | Menu Xem | `Dropdown` | Bảng thành phần, Inspector, Bảng dưới (bật tắt); Hướng sơ đồ: Dọc ↓ / Ngang →; Tự sắp xếp (`Shift+L`); Hiện mã chặng (`id`); Hiện mô tả chặng; Hiện chặng chuẩn dạng thu gọn; Chế độ danh sách (a11y, mục 10.19); Mật độ | | |
+| 8 | Hoàn tác ↶, làm lại ↷ | `Button` icon | Ngăn xếp 100 bước của phiên soạn (mục 10.21); tooltip nêu bước: "Hoàn tác: Xóa chặng Ghi nhật ký" | Vô hiệu khi rỗng | `Ctrl+Z`, `Ctrl+Shift+Z`/`Ctrl+Y` |
+| 9 | Chế độ | `CMP-Segmented` | Sơ đồ / YAML / Chia đôi (mục 10.14) | | `Ctrl+1`, `Ctrl+2`, `Ctrl+3` |
+| 10 | Bộ đếm vấn đề | `Button` text | "✕ {lỗi} ⚠ {cảnh báo}"; bấm mở ⑥ tab Vấn đề. Không có vấn đề: "✓ Hợp lệ" màu `color-success-text` | | `F8` tới vấn đề kế, `Shift+F8` trước |
+| 11 | Chạy thử ▾ | `Dropdown.Button` | Phần chính: chạy với bản tin mẫu lần trước (hoặc mở UI-04-11 nếu chưa có); mũi tên: "Chạy với bản tin…", "Chạy ca kiểm thử…", "Chạy tất cả ca kiểm thử", "Xem lịch sử chạy thử" | `PERM-04-test`; vô hiệu khi còn lỗi mức chặn (tooltip ERR-04-009) | `F5`; `Shift+F5` mở drawer |
+| 12 | Gửi duyệt | `Button` primary | Mở hộp gửi duyệt (mục 10.22). Đổi thành "Rút lại" khi phiên bản `PENDING_REVIEW` và người dùng là người gửi | `PERM-04-submit`; vô hiệu kèm lý do khi: còn lỗi, chưa lưu, chưa có chạy thử đạt cho đúng `contentHash` (BR-04-008) | `Ctrl+Shift+Enter` |
+| 13 | Người đang xem | `CMP-AvatarGroup` | Ảnh đại diện người đang mở cùng phiên bản (tối đa 3 + "+n"); người giữ khóa sửa có viền `color-accent` và biểu tượng bút | | |
+| 14 | Toàn màn hình ⛶ | `Button` icon | | | `Ctrl+Shift+F` |
+
+Khi chiều rộng dưới 1280 px, mục 5–7 gộp vào một menu "☰", nhãn "Chạy thử", "Gửi duyệt" chỉ còn biểu tượng có `aria-label`.
+
+### 10.5. ② Thanh thực thể
+
+Mỗi thực thể là một tab `CMP-EntityTab` gồm biểu tượng loại, nhãn "{loại}: {id}", huy hiệu số lỗi nếu có, nút ✕ (xóa thực thể, có xác nhận, chỉ khi không phải thực thể duy nhất). Thứ tự theo thứ tự trong YAML; kéo tab để đổi thứ tự (thay đổi thứ tự trong YAML, hoàn tác được). Nhấp đúp nhãn để đổi `id`.
+
+| Loại thực thể | Biểu tượng | Mở bằng | Ghi chú |
+|---|---|---|---|
+| route | `ArrowRightLeft` | Canvas | |
+| routeTemplate | `LayoutTemplate` | Canvas có tham số mẫu | Chỉ trong không gian có `PERM-04-catalog-admin` |
+| routeConfiguration | `Settings2` | Biểu mẫu (UI-04-10 dạng nhúng), có canvas nhỏ cho `onException` | `dh-default-config` có sẵn, khóa, chỉ xem |
+| rest | `Webhook` | Bảng phương thức REST + canvas `to direct:` | |
+| Kamelet | `Hexagon` | Chế độ Kamelet (UI-04-08) | |
+| Pipe | `Cable` | Chế độ Pipe (UI-04-09) | |
+| beans | `Package` | Bảng bean (UI-04-10) | Gộp mọi bean thành một tab |
+| Thuộc tính tệp | `ListTree` | Bảng thuộc tính (UI-04-10) | |
+
+"＋ Thêm ▾" mở menu: Route mới, Route từ khuôn mẫu…, REST, routeConfiguration, Bean, Kamelet mới (chỉ trong tệp Kamelet). Route mới có sẵn điểm vào `direct:{id}` và được chọn ngay.
+
+### 10.6. ③ Bảng thành phần
+
+#### 10.6.1. Cấu trúc
+
+| Phần | Mô tả |
+|---|---|
+| Ô tìm | `CMP-SearchInput`, focus bằng `Ctrl+P` hoặc `/` khi focus trong ③. Tìm mờ không dấu trên tên, tiêu đề, mô tả, nhãn, tên tiếng Việt, từ đồng nghĩa (ví dụ "gọi api" → `http`, `rest`; "chia" → `split`; "gộp" → `aggregate`). Kết quả xếp: khớp tên chính xác, khớp tiền tố, hay dùng, còn lại. Trễ 120 ms, chạy trong Web Worker trên chỉ mục dựng sẵn |
+| Tab phân loại | `CMP-Segmented` bốn tab: **Nghiệp vụ** (mặc định, nhóm như Tooling cũ, mục 5.2), **Thành phần** (751 component Camel theo nhãn catalog), **EIP** (các processor), **Kamelet** (Kamelet của catalog + Kamelet của tỉnh) |
+| Chế độ hiển thị | Nút ☰ danh sách (mặc định) / ▦ lưới biểu tượng 3 cột (giống Tooling cũ) |
+| Nhóm "★ Hay dùng" | 8 thành phần người dùng dùng nhiều nhất 30 ngày, tính cục bộ; ghim tay bằng nút ☆ khi rê |
+| Nhóm | `Collapse` có số lượng; nhớ trạng thái mở |
+| Chân | "{tổng} thành phần · {được phép} được phép · catalog {phiên bản}"; liên kết "Danh mục thành phần" (UI-04-17) |
+
+#### 10.6.2. Mục thành phần
+
+```
+┌▌[ic] Gọi REST                     ⓘ  ☆ ┐   ← cao 32 (danh sách) · 72×72 (lưới)
+│     http · Mạng                         │
+└─────────────────────────────────────────┘
+```
+
+| Trạng thái mục | Hiển thị | Tương tác |
+|---|---|---|
+| Bình thường | Nền đặc, chữ `color-text` | Kéo được, `Enter` thêm vào sau chặng đang chọn |
+| Rê, focus | Nền `color-fill-hover`, vòng focus `color-focus-ring` 2 px | Hiện ⓘ, ☆ |
+| Không hợp lệ ở vị trí đang chọn | Mờ 50 %, biểu tượng ⊘, tooltip "Chỉ dùng được làm điểm vào (from)" | Không kéo vào vị trí đó được |
+| Bị chặn theo chính sách tỉnh (EN-04-11) | Ẩn mặc định; bật "Hiện cả thành phần bị chặn" thì hiện mờ với ổ khóa và lý do | Không thêm được; nút "Đề xuất cho phép" (mở UI-04-17) |
+| Không có trong hồ sơ runtime đang chọn | Thẻ nhỏ "JVM" hoặc "files"; tooltip "Thêm thành phần này sẽ đổi hồ sơ sang soap-jvm" | Thêm được, hiện cảnh báo VR-15 |
+| Lỗi thời (deprecated trong catalog) | Chữ gạch ngang mờ, thẻ "Lỗi thời", gợi ý thay thế | Thêm được kèm cảnh báo |
+
+Tooltip ⓘ (`CMP-Popover` `glass-overlay`, rộng 320): tiêu đề, mô tả catalog (tiếng Việt khi có bản dịch, nếu không tiếng Anh kèm nhãn "EN"), nhãn, có hỗ trợ consumer/producer, hồ sơ runtime hỗ trợ, liên kết "Tài liệu Camel ↗" (mở `camel.apache.org` phiên bản 4.18 ở tab mới).
+
+#### 10.6.3. Ánh xạ "Nghiệp vụ"
+
+Tab Nghiệp vụ hiện chín nhóm của mục 5.2. Một thành phần thuộc nhiều nhóm (ví dụ `kafka` thuộc "Điểm vào" khi làm consumer và "Hàng đợi bản tin") được hiện ở cả hai nhóm. Bảng ánh xạ đầy đủ `nhãn catalog → nhóm nghiệp vụ` nằm trong tệp cấu hình `palette-groups.json` của console, quản trị tích hợp sửa qua UI-04-17 (D03-02-PH04 §6.3).
+
+### 10.7. ④ Canvas
+
+#### 10.7.1. Mô hình hiển thị
+
+Canvas vẽ cây chặng của một route theo cách Kaoto: điểm vào (`from`) ở trên cùng, các chặng trong `steps` nối tuần tự theo hướng dọc (mặc định) hoặc ngang. Mẫu tích hợp có nhánh (`choice`, `doTry`, `multicast`, `split`, `loop`, `filter`, `aggregate`, `circuitBreaker`, `saga`, `loadBalance`) vẽ thành **nhóm** (container) chứa các nhánh con. Không có cạnh tự do: cạnh luôn suy ra từ thứ tự trong cây, nên người dùng không thể vẽ một sơ đồ mà Camel không chạy được (khác Tooling cũ). Vị trí do bố cục tự động (ELK `layered`, khoảng cách 48 px giữa chặng, 64 px giữa nhánh) tính; người dùng không kéo chặng tới tọa độ tùy ý, chỉ kéo để **đổi thứ tự** hoặc **chuyển vào nhánh khác**.
+
+Lý do: tọa độ tùy ý không có trong Camel YAML DSL và repo hiện ghi tọa độ vào chú thích `# @lgsp-canvas-v1:` (GAP-04-06); bỏ cách này để YAML sạch và so sánh phiên bản chỉ còn khác biệt có nghĩa.
+
+#### 10.7.2. Giải phẫu chặng (`CMP-FlowNode`)
+
+```
+         ┌──────────────────────────────────────┐  rộng 240, cao 56 (gọn: 200 × 40)
+  dải ►  │▌ [ic]  Gọi hộ tịch           ✕2  ⋯  │  ← tên hiển thị: description || tiêu đề catalog
+  nhóm   │▌       to · http · /api/v1/…        │  ← dòng phụ: loại · thành phần · tham số chính
+ 4 px    └──────────────────────────────────────┘
+          ○ cổng vào (ẩn)        ⊕ nút thêm sau (hiện khi rê cạnh) ○ cổng ra (ẩn)
+```
+
+| Phần | Nội dung | Quy tắc |
+|---|---|---|
+| Dải nhóm | Màu nhóm (mục 5.2) | Chặng chuẩn Datahub dùng `color-accent` và góc trên trái có huy hiệu lục giác nhỏ |
+| Biểu tượng | Biểu tượng thành phần từ catalog Kaoto (SVG), nếu không có thì biểu tượng nhóm | 20 × 20 px, có `alt` rỗng (tên đã có ở nhãn) |
+| Tên | `description` của chặng nếu có; nếu không, tiêu đề catalog ("Gọi HTTP") | Một dòng, cắt "…", tooltip đầy đủ |
+| Dòng phụ | `{loại EIP}` · `{thành phần}` · `{tham số chính}` (path, topic, query rút gọn) | `color-text-secondary`, 12 px; tham số chứa `{{…}}` hiện như thẻ |
+| Huy hiệu vấn đề | ✕{n} (lỗi) hoặc ⚠{n} (cảnh báo) | Bấm mở Inspector tab chứa trường lỗi |
+| Huy hiệu chạy thử | ✓ (đạt), ✕ (lỗi), ⊘ (không đi qua), thời lượng "12 ms" | Chỉ khi phủ kết quả (mục 10.7.6) |
+| Huy hiệu khác | 🔒 chặng chuẩn khóa cấu trúc; ⏸ chặng bị tắt (`disabled: true`); ⤷ có `id` tùy chỉnh; 🗎 có mô tả dài | |
+| Nút ⋯ | Mở menu ngữ cảnh (mục 10.10) | Hiện khi rê hoặc chọn; luôn focus được |
+
+#### 10.7.3. Trạng thái chặng
+
+| Trạng thái | Viền | Nền | Biểu tượng, chữ | `aria` |
+|---|---|---|---|---|
+| Bình thường | 1 px `color-border` | `color-surface-solid` | | `aria-label="{tên}, {loại}"` |
+| Rê chuột | 1 px `color-border-strong` | `color-fill-hover` | hiện ⋯ | |
+| Focus bàn phím | vòng 2 px `color-focus-ring`, cách 2 px | | | |
+| Đang chọn | 2 px `color-accent` | `color-accent-bg` | | `aria-selected="true"` |
+| Chọn nhiều | 2 px `color-accent` nét đứt | `color-accent-bg` | | |
+| Có lỗi | 2 px `color-error-text` | | ✕{n} | "…, {n} lỗi" |
+| Có cảnh báo | 2 px `color-warning-text` | | ⚠{n} | "…, {n} cảnh báo" |
+| Bị tắt (`disabled`) | 1 px nét đứt `color-border` | sọc chéo `color-fill` | ⏸, chữ "Đã tắt" | "…, đã tắt" |
+| Kéo đi (nguồn) | | mờ 40 % | | |
+| Chặng chuẩn khóa | 1 px `color-accent` | | 🔒 | "…, chặng chuẩn, không xóa được" |
+| Chạy thử: đạt | viền trái 4 px `color-success-text` thay dải nhóm | | ✓ + thời lượng | "…, chạy thử đạt, 12 mili giây" |
+| Chạy thử: lỗi | 2 px `color-error-text` | `color-error-bg` | ✕ + mã ngoại lệ | |
+| Chạy thử: không đi qua | | mờ 60 % | ⊘ | "…, không đi qua" |
+| Khác biệt (khi so sánh): thêm | 2 px `color-success-text` | | "＋ Thêm" | |
+| Khác biệt: sửa | 2 px `color-warning-text` | | "~ Sửa" | |
+| Khác biệt: xóa | 1 px nét đứt `color-error-text` | mờ | "− Xóa", chữ gạch ngang | |
+
+Khi một chặng vừa lỗi vừa đang chọn: viền chọn 2 px `color-accent` bên ngoài, viền lỗi 2 px bên trong (hai vòng), để không mất thông tin.
+
+#### 10.7.4. Nhóm (container) và nhánh
+
+| Mẫu | Hình vẽ | Nhánh con | Thao tác riêng |
+|---|---|---|---|
+| `choice` | Khung bo 12 px, tiêu đề "◆ Rẽ nhánh", nhánh xếp cạnh nhau | `when` (mỗi nhánh có nhãn là biểu thức rút gọn), `otherwise` (tối đa 1) | Nút "＋ Thêm điều kiện" ở cuối khung; kéo đổi thứ tự `when`; cảnh báo VR-04 khi thiếu `otherwise` ở luồng đối ngoại |
+| `doTry` | Khung tiêu đề "🛡 Thử (doTry)" | thân, `doCatch` (nhiều, nhãn là danh sách ngoại lệ), `doFinally` (tối đa 1) | "＋ Bắt ngoại lệ", "＋ Finally" |
+| `split`, `loop`, `filter`, `aggregate`, `circuitBreaker`, `saga`, `resequence`, `throttle`, `idempotentConsumer` | Khung có tiêu đề và dòng biểu thức | Một thân `steps` | `circuitBreaker` thêm nhánh `onFallback` |
+| `multicast`, `loadBalance` | Khung, nhánh xếp cạnh nhau | Mỗi chặng con là một nhánh | |
+| Chặng chuẩn thu gọn | Khi bật "Hiện chặng chuẩn dạng thu gọn", chín chặng chuẩn liên tiếp gộp thành một thanh mảnh "⬡ 9 chặng chuẩn" bấm để mở | | Mặc định tắt; bật thì giảm nhiễu khi đọc logic nghiệp vụ |
+
+Khung thu gọn được bằng nút ⌃ ở tiêu đề; khi thu, khung hiện "◆ Rẽ nhánh · 3 nhánh · 7 chặng" và giữ huy hiệu lỗi tổng. Trạng thái thu gọn lưu cục bộ theo `id` chặng.
+
+Nhóm lồng tối đa hiển thị 6 cấp; sâu hơn vẫn đúng mô hình nhưng cảnh báo VR-11 "Luồng lồng quá sâu, nên tách thành route con dùng `direct:`" và gợi ý tác vụ "Tách thành route con" (menu ngữ cảnh).
+
+#### 10.7.5. Cạnh và nút thêm
+
+Cạnh là đường cong bậc hai 1,5 px `color-border-strong`, có đầu mũi tên. Cạnh vào nhánh có nhãn (điều kiện `when` rút gọn 32 ký tự, "otherwise", tên ngoại lệ). Rê lên cạnh hiện nút ⊕ ở giữa (vùng nhận 24 × 24); bấm mở **bảng chọn nhanh** (`CMP-QuickInsert`, `glass-overlay`, rộng 360): ô tìm có focus sẵn, 6 gợi ý theo ngữ cảnh (ví dụ sau `from: platform-http` gợi ý "Kiểm lược đồ", "Ánh xạ dữ liệu", "Gọi REST"), danh sách kết quả; `Enter` chèn vào vị trí cạnh. Cuối mỗi nhánh có nút ⊕ mờ "Thêm chặng".
+
+#### 10.7.6. Lớp phủ
+
+| Lớp phủ | Bật bằng | Hiển thị |
+|---|---|---|
+| Kết quả chạy thử | Sau khi chạy thử, hoặc `?lan-chay=` | Huy hiệu ✓ ✕ ⊘ và thời lượng trên mỗi chặng; cạnh đã đi qua đậm 2,5 px `color-success-text`; cạnh không đi qua nét đứt. Dải nổi trên đầu canvas (`glass-overlay`): "Đang xem kết quả lần chạy #{n} · Đạt · 184 ms · [Ẩn] [Mở chi tiết]". Sửa bất kỳ chặng nào thì lớp phủ chuyển sang "Cũ: nội dung đã đổi sau lần chạy này" và mờ đi |
+| Số liệu chạy thật (chỉ đọc, từ UI-04-02) | Bộ chọn môi trường | Số bản tin qua mỗi chặng, tỷ lệ lỗi, p95 24 giờ (PH-13) |
+| Khác biệt | Từ UI-04-16 "Mở trên sơ đồ" | Trạng thái khác biệt mục 10.7.3 |
+| Tìm kiếm | `Ctrl+F` | Chặng khớp có viền `color-accent` nét đứt; ô tìm nổi góc trên phải "2/5 ‹ ›" |
+
+#### 10.7.7. Điều khiển nổi
+
+`CMP-CanvasControls` (góc dưới trái, `glass-overlay`): − (thu, `Ctrl+-`), mức "85%" (bấm chọn 50/75/100/150 %), + (phóng, `Ctrl+=`), ⤢ vừa khung (`Shift+1`), ⊡ vừa chặng chọn (`Shift+2`), 🔒 khóa sơ đồ (chặn kéo, cho chọn). Phạm vi 25–200 %. Dưới 50 % chặng chuyển sang hiển thị tối giản (chỉ dải màu, biểu tượng, huy hiệu lỗi) để vẫn thấy lỗi. `CMP-Minimap` (góc dưới phải, 200 × 140) hiện khi luồng vượt khung nhìn, ẩn bằng nút ✕, kéo khung nhìn trên minimap để di chuyển; chặng lỗi trên minimap là chấm đỏ có viền.
