@@ -20,6 +20,7 @@ for f in "${files[@]}"; do
     --from markdown+yaml_metadata_block+pipe_tables \
     --reference-doc build/reference.docx \
     --lua-filter build/mermaid.lua \
+    --resource-path "$(dirname "$f"):." \
     --metadata title="$(sed -n 's/^ten: //p' "$f" | head -1)" \
     --toc --toc-depth=3 \
     -o "$OUT/$name.docx"
