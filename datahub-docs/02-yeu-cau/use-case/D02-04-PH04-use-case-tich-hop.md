@@ -1001,9 +1001,9 @@ Use case hệ thống: mô tả hành vi của `dh-runtime` với một lượt 
 4. **authz**: gọi OPA với `{tenant, caller, subscription, flow, operation, purpose, dataClasses}`; `allow` kèm nghĩa vụ che `cha.soDinhDanh`.
 5. **transform**: JQ từ trình ánh xạ; `dh_map("gioi-tinh-ht-ndxp")` tra ảnh chụp PH-07 trong bộ nhớ.
 6. **enrich**: gọi luồng con `direct:lay-ma-dvhc` (thời gian chờ 5 giây).
-7. **route/send**: gọi NDXP qua kết nối `ndxp-ho-tich` trong `circuitBreaker`; nhận `200`.
-8. **respond**: áp nghĩa vụ che của OPA và chính sách PH-09; trả `200`.
-9. **audit** (`onCompletion`): ghi nhật ký kết nối NĐ 278/2025 (bên gọi, bên cung cấp, dịch vụ, thời điểm, kết quả, mã vết, loại dữ liệu); chỉ số `dh_flow_*` theo `stage`; span OTel theo chặng.
+7. **route** và **deliver**: chọn đích theo nội dung, gọi NDXP qua kết nối `ndxp-ho-tich` trong `circuitBreaker`; nhận `200`.
+8. **audit**: ghi nhật ký kết nối NĐ 278/2025 (bên gọi, bên cung cấp, dịch vụ, thời điểm, kết quả, mã vết, loại dữ liệu) lên EVT-04-14; `onCompletion` của `dh-default-config` bổ sung kết quả cuối khi luồng rẽ lỗi. Chỉ số `dh_flow_*` theo `stage`, span OTel theo chặng.
+9. **respond**: áp nghĩa vụ che của OPA và chính sách PH-09; trả `200`.
 
 **Luồng thay thế**
 
@@ -1038,12 +1038,12 @@ sequenceDiagram
     RT->>OPA: authz input
     OPA-->>RT: allow + nghĩa vụ che
     RT->>RT: transform (JQ, dh_map), enrich
-    RT->>ND: send trong circuitBreaker
+    RT->>ND: route, deliver trong circuitBreaker
     ND-->>RT: 200
+    RT-)K: audit: connection-log.v1 (EVT-04-14)
     RT->>RT: respond (che theo PH-09, OPA)
     RT-->>GW: 200
     GW-->>DVC: 200
-    RT-)K: audit: connection-log.v1
 ```
 
 ### 6.18. UC-04-18 · Xử lý sự kiện bất đồng bộ qua Kafka
