@@ -61,11 +61,24 @@ Các tài liệu dưới đây là nền tảng hoặc tài liệu anh em của 
 | D03-04-PH07 | [API PH-07](../../03-thiet-ke/api/D03-04-PH07-api-danh-muc.md) | API-07-001…076, EVT-07-01…10, ERR-07 |
 | D03-06-PH07 | [Màn hình PH-07](../../03-thiet-ke/uiux/D03-06-PH07-man-hinh-danh-muc.md) | UI-07-01…13 |
 | D05-02-PH07 | [Ca kiểm thử PH-07](../../05-kiem-thu/test-case/D05-02-PH07-test-case.md) | TC-07 |
-| ADR-050…057 | Quyết định kiến trúc PH-07 | Thuộc tính động jsonb, phiên bản copy-on-write, HYBRID, phân phối, DSL truy vấn, ĐVHC, nhập tệp, đồng bộ quốc gia |
+| ADR-050…058 | Quyết định kiến trúc PH-07 | Thuộc tính động jsonb, phiên bản copy-on-write, HYBRID, phân phối, DSL truy vấn, ĐVHC, nhập tệp, đồng bộ quốc gia, máy trạng thái duyệt nội bộ |
 
 ### 1.5. Quy ước riêng của tài liệu
 
 Trong tài liệu này, "danh mục" (tiếng Anh dùng trong mã nguồn là *catalog*) là một tập mã có cấu trúc dùng chung, ví dụ danh mục dân tộc hay danh mục ĐVHC; "bản ghi" (*item*) là một dòng của danh mục, có mã, tên và các thuộc tính; "phiên bản" (*version*) là một ảnh chụp đầy đủ của danh mục gồm lược đồ và bản ghi. Ký hiệu `{c}` trong đường dẫn API là mã danh mục, `{v}` là số phiên bản hoặc các từ khóa `current` (phiên bản đang hiệu lực) và `draft` (phiên bản đang mở). Thời điểm hiển thị theo giờ Việt Nam (UTC+7); mọi phép so sánh ngày hiệu lực dùng ngày theo giờ Việt Nam trừ khi ghi khác. Mọi ví dụ dùng tenant giả lập `T68` (Lâm Đồng) và người dùng giả lập; không có dữ liệu cá nhân thật.
+
+### 1.6. Căn cứ pháp lý riêng của PH-07
+
+Bảng dưới đây liệt kê các văn bản chi phối trực tiếp yêu cầu của PH-07. Danh sách chung của dự án ở D00-01 §7; khi tra cứu ngày 21/11/2026, một số văn bản trong danh sách chung đã được thay thế, nên PH-07 viện dẫn văn bản hiện hành làm căn cứ chính và ghi văn bản cũ ở cột "Kế thừa, chuyển tiếp". Những điểm chưa đối chiếu Công báo được ghi thành câu hỏi mở (Q07-01, Q07-11), không khẳng định.
+
+| Văn bản hiện hành | Nội dung chi phối PH-07 | FR, BR liên quan | Kế thừa, chuyển tiếp |
+|---|---|---|---|
+| Luật Dữ liệu số 60/2024/QH15 (CMP-LAW-01) và Nghị định 165/2025/NĐ-CP | Dữ liệu chủ, dữ liệu danh mục dùng chung là thành phần quản trị dữ liệu; phân loại dữ liệu | FR-07-008, BR-07-019 | — |
+| Nghị định 278/2025/NĐ-CP về kết nối, chia sẻ dữ liệu bắt buộc | Kết nối danh mục quốc gia qua Nền tảng chia sẻ, điều phối dữ liệu của Trung tâm Dữ liệu quốc gia (NDXP, Agent Node đặt tại tỉnh); thời hạn chuẩn hóa 31/12/2026 | FR-07-035…039, BR-07-009, BR-07-017 | Thay thế toàn bộ Nghị định 47/2020/NĐ-CP (CMP-LAW-03) |
+| Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 (hiệu lực 01/01/2026) và Nghị định 356/2025/NĐ-CP | Danh mục không chứa dữ liệu cá nhân, để không phải áp biện pháp bảo vệ và đánh giá tác động cho dữ liệu được nhân bản rộng | BR-07-025, FR-07-005, FR-07-022, FR-07-051 | Nghị định 356/2025 thay Nghị định 13/2023/NĐ-CP (CMP-LAW-04, 05) |
+| Luật An ninh mạng số 116/2025/QH15 và Nghị định 331/2026/NĐ-CP | Kiểm toán thao tác ghi, quét mã độc tệp tải lên, lưu trữ trong nước; cấp độ HTTT theo D03-07 | FR-07-050, BR-07-041, NFR-07-015 | Kế nhiệm Nghị định 85/2016/NĐ-CP (CMP-LAW-06); tiêu chuẩn kỹ thuật theo TCVN 14423:2026 thay TCVN 11930:2017 |
+| Quyết định 19/2025/QĐ-TTg ban hành Bảng danh mục và mã số ĐVHC Việt Nam; Nghị quyết 202/2025/QH15 và các nghị quyết của UBTVQH về sắp xếp ĐVHC năm 2025 | Mã, tên, cấp ĐVHC và quan hệ kế thừa sau sắp xếp | FR-07-044…047, BR-07-021, BR-07-022 | Mã ĐVHC trước 01/7/2025 vẫn được tra theo thời điểm |
+| Công văn 631/THH-THHT ngày 21/5/2020 (CMP-LAW-09) | Yêu cầu chức năng danh mục dùng chung của LGSP | Mục 9.1 | Giữ làm căn cứ đối chiếu phủ chức năng hệ cũ |
 
 ## 2. Bối cảnh nghiệp vụ
 
@@ -862,7 +875,7 @@ Các ngoại lệ được liệt kê trong bảng sau.
 
 | Điều kiện | Mã lỗi | HTTP | Hành vi |
 |---|---|---|---|
-| Xóa danh mục đã phát hành | ERR-07-004 | 409 | Thông điệp hướng dẫn dùng ngừng hiệu lực |
+| Xóa danh mục đã phát hành | ERR-07-048 | 409 | Thông điệp hướng dẫn dùng ngừng hiệu lực |
 | Ngừng hiệu lực danh mục đang bị tham chiếu | ERR-07-032 | 409 | Liệt kê danh mục tham chiếu |
 | Danh mục đã `RETIRED` | ERR-07-031 | 410 | |
 | Có phiên bản đang chờ duyệt hoặc đã duyệt | ERR-07-004 | 409 | |
@@ -906,7 +919,7 @@ Các ngoại lệ được liệt kê trong bảng sau.
 
 | Điều kiện | Mã lỗi | HTTP | Hành vi |
 |---|---|---|---|
-| Mã nhóm trùng, nhóm cha tạo vòng hoặc vượt độ sâu | ERR-07-041 (mới) | 409 | |
+| Mã nhóm trùng, nhóm cha tạo vòng hoặc vượt độ sâu | ERR-07-039 | 409 | |
 | Nhóm còn danh mục hoặc nhóm con | ERR-07-037 | 409 | |
 | Tenant tỉnh sửa nhóm `COMMON` | ERR-07-003 | 403 | |
 
@@ -2052,4 +2065,1117 @@ Xử lý gồm các bước sau.
 5. Sự kiện của danh mục `COMMON` phát trên topic `common.rdm.*` mà mọi tenant được đăng ký đọc.
 
 Ngoại lệ: không có ngoại lệ trả cho người dùng; lỗi đẩy của Debezium được giám sát ở PH-18 và không làm mất sự kiện vì outbox giữ tới khi được đọc.
+
+### 5.5. Nhóm E — Đồng bộ danh mục quốc gia
+
+Nhóm E thay chức năng "kết nối danh mục quốc gia qua NGSP" của Aita (LGC-DMDC-019, LGC-NGSP-006), vốn là thao tác ghi đè thủ công gắn cờ `is_update`. Ở Datahub, mọi giao tiếp với Nền tảng tích hợp, chia sẻ dữ liệu quốc gia (NDXP) đi qua cổng tiếp hợp `NDXP_DMDC` do PH-14 cung cấp (ADR-057): PH-07 không tự giữ thông tin kết nối, chứng thư hay khóa của NDXP, mà chỉ gọi bốn chức năng của cổng tiếp hợp là liệt kê danh mục quốc gia, lấy cấu trúc danh mục, lấy dữ liệu danh mục (phân trang phía nguồn) và gửi đề xuất bổ sung. Cách tách này giữ PH-07 độc lập với sự thay đổi giao thức của NDXP, và để PH-14 áp chung chính sách thử lại, ngắt mạch, ghi nhật ký kết nối cho mọi phân hệ.
+
+Các quy định chung sau áp dụng cho mọi FR của nhóm E. Danh mục có nguồn đồng bộ là danh mục `NATIONAL`, hoặc danh mục `COMMON` do tenant `PLATFORM` quản lý; danh mục `HYBRID` không có nguồn đồng bộ riêng mà kế thừa thay đổi từ danh mục gốc. Mỗi danh mục có tối đa một nguồn đồng bộ cho mỗi nhà cung cấp (ràng buộc `uq_sync_source_catalog`). Một nguồn không bao giờ có hai lần chạy `RUNNING` cùng lúc (chỉ mục duy nhất `uq_sync_run_running` và khóa phân tán theo `source_id`). Thay đổi do đồng bộ đưa vào luôn đi qua phiên bản `origin = SYNC` và các quy tắc phiên bản thông thường (BR-07-003, BR-07-005, BR-07-006, BR-07-007); đồng bộ không bao giờ xóa bản ghi mà chuyển mã bị nguồn loại bỏ sang `DEPRECATED`. Mọi lỗi từ cổng tiếp hợp được che thông tin kỹ thuật nhạy cảm (địa chỉ máy chủ, chứng thư) trước khi lưu vào `sync_run.error_message` hoặc trả cho người dùng.
+
+#### FR-07-035 · Cấu hình nguồn đồng bộ danh mục quốc gia
+
+Chức năng này khai báo một danh mục của Datahub được đồng bộ từ danh mục nào trên NDXP, theo lịch nào, có tự áp dụng thay đổi không phá vỡ hay không, và ánh xạ trường nguồn sang thuộc tính cục bộ ra sao. Đây là phần cấu hình tách khỏi lần chạy, để người vận hành chỉnh lịch hoặc tắt nguồn mà không động tới dữ liệu.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-035 · Cấu hình nguồn đồng bộ danh mục quốc gia |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03, KPI-11; LGC-DMDC-019, LGC-NGSP-006 |
+| Tác nhân, quyền | Xem: `PERM-07-read`. Tạo, sửa, bật, tắt: PA (`COMMON`), TA, DA với `PERM-07-sync` |
+| Tiền điều kiện | Danh mục tồn tại, không `RETIRED`, `source_type = NATIONAL` (hoặc danh mục `COMMON` với tenant `PLATFORM`); kết nối `NDXP_DMDC` của tenant (hoặc của nền tảng) đã cấu hình ở PH-14 |
+| Đầu ra | API-07-055: trang danh sách nguồn kèm trạng thái lần chạy cuối, `lastSuccessAt`, `remoteVersion`, `nextRunAt` tính từ `scheduleCron`. API-07-056, 057: nguồn đồng bộ với ETag |
+| Hậu điều kiện | `sync_source` (EN-07-10) được tạo hoặc cập nhật; bộ lập lịch nạp lại lịch của nguồn trong ≤ 60 giây |
+| Sự kiện phát ra | Không (thay đổi cấu hình không ảnh hưởng bên khai thác) |
+| Kiểm toán | `RDM_SYNC_SOURCE_CREATE`, `RDM_SYNC_SOURCE_UPDATE` với giá trị trước và sau của `scheduleCron`, `autoApply`, `enabled`, `fieldMapping` |
+
+Đầu vào của thao tác tạo (API-07-056) và sửa (API-07-057) được mô tả trong bảng sau. Khi tạo nguồn cho một danh mục quốc gia chưa có trong Datahub, thao tác tạo đồng thời danh mục theo FR-07-038.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `catalogCode` | T-CODE | Có (tạo) | Danh mục tồn tại và thỏa tiền điều kiện; không sửa sau khi tạo | `LOAI_HINH_TC_QG` |
+| `provider` | T-ENUM | Không | Chỉ `NDXP_DMDC` ở MVP | `NDXP_DMDC` |
+| `remoteCode` | Chuỗi | Có (tạo) | 1…128 ký tự; phải tồn tại trên NDXP (kiểm tra qua cổng tiếp hợp khi tạo); không sửa sau khi tạo | `DM_LOAIHINH_TC` |
+| `scheduleCron` | Chuỗi | Không | Biểu thức cron 6 trường theo giờ Việt Nam; tần suất không dày hơn 1 lần mỗi giờ; mặc định lấy từ `07.rdm.sync-default-cron` (01:00 hằng ngày) | `0 0 1 * * *` |
+| `autoApply` | T-BOOL | Không | Mặc định `true`; `false` thì mọi thay đổi đều chờ xác nhận | `true` |
+| `enabled` | T-BOOL | Không | Mặc định `true` | |
+| `fieldMapping` | Đối tượng | Không | Ánh xạ `{trườngNguồn: mãThuộcTính}`; trường nguồn bắt buộc phải có ánh xạ cho mã và tên bản ghi (`code`, `name`); mã thuộc tính phải tồn tại trong lược đồ phiên bản hiện hành hoặc bản nháp | `{"MA": "code", "TEN": "name", "GHICHU": "ghi_chu"}` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền `PERM-07-sync` và tiền điều kiện của danh mục; danh mục `LOCAL` hoặc `HYBRID` trả `ERR-07-003` kèm hướng dẫn đổi nguồn ở FR-07-008 trước.
+2. Khi tạo, hệ thống gọi cổng tiếp hợp lấy cấu trúc danh mục từ xa theo `remoteCode`; không tồn tại trả `ERR-07-028` với chi tiết "không tìm thấy danh mục trên nền tảng quốc gia"; cổng tiếp hợp không sẵn sàng cũng trả `ERR-07-028` (HTTP 502).
+3. Hệ thống kiểm tra `scheduleCron` hợp lệ và không dày hơn một giờ; kiểm tra `fieldMapping` đủ hai trường bắt buộc và trỏ tới thuộc tính có thật; nếu `fieldMapping` rỗng, hệ thống tự đề xuất ánh xạ theo tên trường (so khớp không dấu giữa tên trường nguồn và mã, nhãn thuộc tính) và trả đề xuất trong phản hồi để giao diện cho người dùng xác nhận.
+4. Hệ thống lưu `sync_source`, ghi kiểm toán, báo bộ lập lịch nạp lại lịch.
+5. Khi sửa `fieldMapping`, hệ thống đặt `remote_version = NULL` để lần chạy kế tiếp tính lại toàn bộ khác biệt thay vì bỏ qua vì phiên bản nguồn không đổi.
+6. Khi tắt (`enabled = false`), lần chạy đang `RUNNING` vẫn chạy tới hết; lần chạy `PENDING_CONFIRMATION` vẫn được xác nhận hoặc từ chối được.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Danh mục không phải `NATIONAL` (hoặc `COMMON` với `PLATFORM`) | ERR-07-003 | 403 | Hướng dẫn đổi nguồn |
+| Danh mục đã có nguồn của cùng nhà cung cấp | ERR-07-002 | 409 | Chi tiết "danh mục đã có nguồn đồng bộ", liên kết tới nguồn |
+| `remoteCode` không tồn tại hoặc cổng tiếp hợp lỗi | ERR-07-028 | 502 | |
+| Cron sai cú pháp, quá dày; `fieldMapping` thiếu `code`, `name` hoặc trỏ tới thuộc tính không có | ERR-07-009 | 422 | `errors[]` theo trường |
+| Danh mục `RETIRED` | ERR-07-031 | 410 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-036 · Chạy đồng bộ theo lịch hoặc theo yêu cầu và tính khác biệt
+
+Chức năng này là lõi của nhóm E: lấy dữ liệu danh mục từ NDXP, chuyển sang mô hình cục bộ, so với phiên bản hiện hành, phân loại từng thay đổi phá vỡ hay không phá vỡ, rồi quyết định tự áp dụng hay chờ xác nhận. Chức năng được thiết kế để phần lớn lần chạy kết thúc rẻ ở `NO_CHANGE` mà không tạo phiên bản, vì danh mục quốc gia ít thay đổi so với tần suất chạy hằng ngày.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-036 · Chạy đồng bộ theo lịch hoặc theo yêu cầu và tính khác biệt |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03, KPI-11; LGC-DMDC-019, LGC-NGSP-006 |
+| Tác nhân, quyền | Bộ lập lịch PH-07 (tác nhân hệ thống `system:rdm-sync`); chạy theo yêu cầu: PA (`COMMON`), TA, DA với `PERM-07-sync`; xem lịch sử và chi tiết: `PERM-07-read` |
+| Tiền điều kiện | Nguồn `enabled = true` (chạy theo lịch) hoặc nguồn tồn tại (chạy theo yêu cầu, kể cả khi đang tắt); không có lần chạy `RUNNING` của cùng nguồn |
+| Đầu ra | API-07-058: `202` với `runId` và `Location` tới API-07-060. API-07-059: trang lịch sử lần chạy. API-07-060: lần chạy với `status`, `trigger`, `remoteVersion`, `diffStats` (`added`, `changed`, `removed`, `attributeAdded`, `attributeRemoved`, `attributeTypeChanged`, `invalid`), `hasBreaking`, `resultVersionNo`, `startedAt`, `finishedAt`, `errorMessage`, và trang `changes` (từng `sync_change` với `itemCode`, `changeType`, `breaking`, `before`, `after`) |
+| Hậu điều kiện | Một `sync_run` (EN-07-11) với trạng thái kết thúc rõ ràng; các `sync_change` (EN-07-12) của lần chạy; với `APPLIED` có phiên bản `origin = SYNC` đã `PUBLISHED`; với `PENDING_CONFIRMATION` có bản nháp `origin = SYNC` chiếm suất phiên bản mở; `sync_source.last_run_id`, và khi thành công `last_success_at`, `remote_version` được cập nhật |
+| Sự kiện phát ra | EVT-07-09 `{tenant}.rdm.sync.completed.v1` ở mọi trạng thái kết thúc trừ `NO_CHANGE` (chỉ đếm vào chỉ số để không làm ồn bên nhận); kèm EVT-07-05 khi `APPLIED` |
+| Kiểm toán | `RDM_SYNC_RUN` với `trigger`, `status`, `diffStats`; chạy theo yêu cầu ghi chủ thể là người bấm |
+
+Đầu vào của API-07-058 gồm `{sourceId}` và thân tùy chọn `{"force": true}` để bỏ qua so sánh `remoteVersion` (ép tính lại khác biệt); API-07-059 nhận bộ lọc `sourceId`, `catalogCode`, `status`, `trigger`, `from`, `to`, `page`, `size`; API-07-060 nhận `{runId}` cùng `breaking`, `changeType`, `page`, `size` để phân trang danh sách thay đổi.
+
+Xử lý gồm các bước sau.
+
+1. Bộ lập lịch quét mỗi phút các nguồn đến hạn theo `scheduleCron` của từng tenant; với mỗi nguồn, hệ thống giữ khóa phân tán theo `source_id` (không giữ được thì bỏ qua lượt này) và tạo `sync_run` với `status = RUNNING`, `trigger = SCHEDULE` hoặc `MANUAL`. Chạy theo yêu cầu khi nguồn đang chạy trả `409` kèm `runId` của lần đang chạy.
+2. Hệ thống gọi cổng tiếp hợp lấy siêu dữ liệu danh mục từ xa: phiên bản hoặc thời điểm cập nhật (`remoteVersion`), ngày hiệu lực, căn cứ pháp lý nếu nguồn cung cấp, danh sách trường và kiểu trường.
+3. Nếu `remoteVersion` trùng `sync_source.remote_version` và không có `force`, lần chạy kết thúc `NO_CHANGE`; cập nhật `last_success_at`, nhả khóa.
+4. Hệ thống lấy toàn bộ dữ liệu từ xa theo trang của nguồn, chuyển từng bản ghi sang mô hình cục bộ theo `fieldMapping`: chuẩn hóa mã theo T-CODE (cắt khoảng trắng, chữ hoa), chuẩn hóa tên theo NFC, chuyển kiểu giá trị theo kiểu thuộc tính đích (quy tắc như nhập tệp FR-07-021). Trường nguồn chưa được ánh xạ bị bỏ qua và được liệt kê trong `diffStats.unmappedFields` để người cấu hình biết.
+5. Hệ thống kiểm tra hợp lệ từng bản ghi đã chuyển theo lược đồ cục bộ (FR-07-013): mã trùng, trường bắt buộc rỗng, giá trị sai kiểu, mã cha không tồn tại. Bản ghi không hợp lệ được ghi `sync_change` loại tương ứng với ghi chú lỗi trong `after._errors` và đếm vào `diffStats.invalid`.
+6. Hệ thống tính khác biệt giữa tập bản ghi từ xa và phiên bản hiện hành theo thuật toán của FR-07-014, với ánh xạ loại thay đổi: mã có ở xa không có ở cục bộ là `ADDED`; có ở cả hai nhưng khác tên, mã cha, thứ tự hoặc thuộc tính là `CHANGED`; có ở cục bộ (`ACTIVE`) không có ở xa là `REMOVED`; trường từ xa mới (đã ánh xạ) là `ATTRIBUTE_ADDED`; thuộc tính cục bộ được ánh xạ mà nguồn không còn là `ATTRIBUTE_REMOVED`; kiểu trường đổi là `ATTRIBUTE_TYPE_CHANGED`. Cờ `breaking` theo bảng phân loại của FR-07-014: `REMOVED`, đổi mã cha, `ATTRIBUTE_REMOVED`, `ATTRIBUTE_TYPE_CHANGED` thu hẹp là phá vỡ; `ADDED`, đổi tên, đổi thứ tự, `ATTRIBUTE_ADDED` không bắt buộc là không phá vỡ.
+7. Nếu khác biệt rỗng (mọi bản ghi trùng khớp), lần chạy kết thúc `NO_CHANGE`, cập nhật `remote_version` và `last_success_at`.
+8. Hệ thống quyết định nhánh theo BR-07-017: nếu `autoApply = true`, không có thay đổi phá vỡ, `diffStats.invalid = 0` và tỷ lệ thay đổi không vượt `07.rdm.large-change-threshold-percent` (BR-07-012) thì đi nhánh tự áp dụng (bước 9); ngược lại đi nhánh chờ xác nhận (bước 10).
+9. Nhánh tự áp dụng: hệ thống tạo bản nháp `origin = SYNC` từ phiên bản hiện hành (FR-07-011), áp các thay đổi (`REMOVED` thành `DEPRECATED`, giữ `replaced_by` nếu nguồn cung cấp mã thay thế), đặt `effective_from` là ngày hiệu lực do nguồn cung cấp, hoặc ngày chạy nếu nguồn không có (cho phép hồi tố với lý do "đồng bộ phiên bản quốc gia ban hành ngày …", BR-07-027), `legal_basis` từ siêu dữ liệu nguồn, `change_note` "Đồng bộ tự động từ NDXP, lần chạy {runId}"; phát hành theo FR-07-016 dưới danh nghĩa `system:rdm-sync` (miễn BR-07-011). Lần chạy kết thúc `APPLIED` với `result_version_id`.
+10. Nhánh chờ xác nhận: hệ thống tạo bản nháp `origin = SYNC` như bước 9 nhưng không phát hành; nếu danh mục đang có bản nháp `origin = SYNC` của lần chạy trước còn `PENDING_CONFIRMATION`, lần chạy cũ chuyển `REJECTED` với lý do "Được thay thế bởi lần chạy {runId}" và bản nháp cũ được hủy trước khi tạo bản nháp mới. Lần chạy kết thúc `PENDING_CONFIRMATION`, `has_breaking` phản ánh có thay đổi phá vỡ hay không; hộp "Việc của tôi" (FR-00-070) nhận việc "Xác nhận thay đổi từ nguồn quốc gia" cho người có `PERM-07-sync` của tenant, qua EVT-07-09.
+11. Lỗi ở bất kỳ bước nào từ 2 đến 6 làm lần chạy kết thúc `FAILED` với `error_message` đã che; dữ liệu danh mục không thay đổi. Nếu hai lần chạy định kỳ liên tiếp của cùng nguồn thất bại, hoặc `last_success_at` cũ hơn 24 giờ, hệ thống phát cảnh báo vận hành qua chỉ số `rdm_sync_last_success_timestamp` (NFR-07-013, NFR-07-014).
+12. Hệ thống nhả khóa, cập nhật `sync_source.last_run_id`, ghi kiểm toán và phát sự kiện theo bảng tóm tắt.
+
+Bảng dưới đây tóm tắt quyết định của bước 8, vì đây là điểm cần kiểm thử kỹ nhất của nhóm E.
+
+| Có thay đổi phá vỡ | Có bản ghi không hợp lệ | Vượt ngưỡng thay đổi lớn | `autoApply` | Kết quả |
+|---|---|---|---|---|
+| Không | Không | Không | `true` | `APPLIED` (tự phát hành) |
+| Không | Không | Không | `false` | `PENDING_CONFIRMATION`, `has_breaking = false` |
+| Không | Không | Có | Bất kỳ | `PENDING_CONFIRMATION`, `has_breaking = false` |
+| Không | Có | Bất kỳ | Bất kỳ | `PENDING_CONFIRMATION`, người xác nhận chọn bỏ qua bản ghi lỗi hoặc từ chối |
+| Có | Bất kỳ | Bất kỳ | Bất kỳ | `PENDING_CONFIRMATION`, `has_breaking = true` |
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy nguồn hoặc lần chạy | ERR-07-045 | 404 | |
+| Nguồn đang có lần chạy `RUNNING` (theo yêu cầu) | ERR-07-005 | 409 | Kèm `runId` của lần đang chạy |
+| Cổng tiếp hợp PH-14 lỗi, quá thời gian (mặc định 120 giây mỗi trang) | ERR-07-028 | 502 | Lần chạy `FAILED`; theo lịch thì thử lại ở lượt kế tiếp |
+| Danh mục có bản nháp do người dùng tạo (chỉ có thể với `COMMON` do `PLATFORM` quản lý) | ERR-07-005 | 409 | Lần chạy `FAILED` với lý do "danh mục đang có bản nháp {versionNo}"; người dùng hủy hoặc phát hành bản nháp trước |
+| Danh mục `RETIRED` | ERR-07-031 | 410 | Nguồn tự tắt |
+
+> **Câu hỏi mở Q07-06:** NDXP có cung cấp trường phiên bản (hoặc thời điểm cập nhật) tin cậy ở mức danh mục để bước 3 bỏ qua lần chạy không đổi không? Nếu không, mỗi lần chạy phải tải toàn bộ dữ liệu và so sánh băm nội dung, tốn băng thông với danh mục lớn (ví dụ danh mục ngành kinh tế). Đề xuất tạm: dùng băm SHA-256 của dữ liệu đã chuẩn hóa làm `remoteVersion` khi nguồn không cung cấp.
+
+#### FR-07-037 · Xác nhận hoặc từ chối thay đổi từ nguồn quốc gia
+
+Chức năng này cho người có thẩm quyền xem chi tiết khác biệt của một lần đồng bộ đang chờ và quyết định áp dụng hay không, đáp ứng yêu cầu "thay đổi phá vỡ phải được con người xác nhận" (BR-07-017). Đây là điểm khác căn bản với Aita, nơi mã bị quốc gia loại bỏ biến mất khỏi danh mục tỉnh mà không ai biết.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-037 · Xác nhận hoặc từ chối thay đổi từ nguồn quốc gia |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, BP-03; mới |
+| Tác nhân, quyền | PA (`COMMON`), TA, DA với `PERM-07-sync`; phát hành ngay khi xác nhận cần thêm `PERM-07-publish` (DA, PA) |
+| Tiền điều kiện | Lần chạy `PENDING_CONFIRMATION`; bản nháp `origin = SYNC` của lần chạy còn `DRAFT` |
+| Đầu ra | `200` với lần chạy ở trạng thái mới; khi xác nhận kèm phiên bản kết quả (`PUBLISHED`, hoặc `IN_REVIEW` khi danh mục `require_approval = true` và người xác nhận không có `PERM-07-publish`) |
+| Hậu điều kiện | Xác nhận: `confirmed_by`, `confirmed_at` được ghi; thay đổi được áp dụng theo lựa chọn; lần chạy `APPLIED`; `sync_source.remote_version` và `last_success_at` cập nhật. Từ chối: lần chạy `REJECTED` có lý do; bản nháp `origin = SYNC` chuyển `DISCARDED`; danh mục giữ nguyên |
+| Sự kiện phát ra | EVT-07-09 với trạng thái mới; EVT-07-05 khi phiên bản được phát hành; EVT-07-04 khi phiên bản được chuyển sang chờ duyệt |
+| Kiểm toán | `RDM_SYNC_ACCEPT` hoặc `RDM_SYNC_REJECT` với `runId`, `diffStats`, ghi chú hoặc lý do, danh sách mã bị bỏ qua |
+
+Đầu vào của API-07-061 (xác nhận) và API-07-062 (từ chối) được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `note` | T-TEXT | Có với xác nhận khi `hasBreaking = true` | 10…1.000 ký tự | `Đã rà soát, các mã bị loại không còn HTTT nào dùng` |
+| `skipInvalid` | T-BOOL | Không | Mặc định `false`; `true` để áp dụng phần hợp lệ và bỏ bản ghi lỗi | `true` |
+| `excludeItemCodes` | T-CODE[] | Không | ≤ 1.000 mã; chỉ được chọn mã thuộc thay đổi `ADDED` hoặc `CHANGED` không phá vỡ (không được giữ lại mã nguồn đã loại để tránh lệch với quốc gia) | `["0123"]` |
+| `effectiveFrom` | T-DATE | Không | Mặc định ngày hiệu lực của nguồn hoặc ngày xác nhận; theo BR-07-007 | `2026-12-01` |
+| `publishNow` | T-BOOL | Không | Mặc định `true`; cần `PERM-07-publish`; `false` hoặc thiếu quyền thì phiên bản được trình duyệt | `true` |
+| `reason` (từ chối) | T-TEXT | Có | 10…1.000 ký tự | `Chờ văn bản hướng dẫn của Bộ` |
+
+Xử lý của thao tác xác nhận gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, `If-Match` của lần chạy, trạng thái `PENDING_CONFIRMATION`; trạng thái khác trả `ERR-07-029`.
+2. Hệ thống kiểm tra phiên bản hiện hành của danh mục không đổi kể từ lần chạy (so `base_version_id` của bản nháp với `current_version_id`); nếu đã đổi (ví dụ một lần đồng bộ khác được áp dụng), trả `ERR-07-029` với gợi ý chạy lại.
+3. Nếu `diffStats.invalid > 0` và `skipInvalid = false`, trả `ERR-07-021` kèm số bản ghi lỗi; nếu `skipInvalid = true`, hệ thống loại bản ghi lỗi khỏi bản nháp, và nếu bản ghi lỗi là cha của bản ghi hợp lệ thì loại cả nhánh con và ghi rõ trong phản hồi.
+4. Hệ thống loại các mã trong `excludeItemCodes` khỏi tập thay đổi được áp dụng (bản ghi giữ như phiên bản hiện hành).
+5. Hệ thống ghi `confirmed_by`, `confirmed_at`, chạy lại kiểm tra hợp lệ toàn bản nháp (FR-07-013).
+6. Nếu `publishNow = true` và người xác nhận có `PERM-07-publish`, hệ thống phát hành bản nháp theo FR-07-016 dưới danh nghĩa người xác nhận, áp bốn mắt so với người đã bấm chạy lần đồng bộ `MANUAL` (BR-07-011); lần chạy chuyển `APPLIED`. Ngược lại, hệ thống trình duyệt bản nháp theo FR-07-015 dưới danh nghĩa người xác nhận (người duyệt phải khác người xác nhận); lần chạy chuyển `APPLIED` khi phiên bản được phát hành sau đó, và trong thời gian chờ giữ trạng thái `PENDING_CONFIRMATION` với `confirmed_by` đã ghi.
+7. Hệ thống cập nhật `sync_source`, ghi kiểm toán, phát sự kiện.
+
+Xử lý của thao tác từ chối gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, `If-Match`, trạng thái.
+2. Hệ thống chuyển lần chạy `REJECTED`, hủy bản nháp `origin = SYNC` (FR-07-017, cho phép riêng với bản nháp đồng bộ), giữ `sync_source.remote_version` cũ để lần chạy kế tiếp phát hiện lại cùng thay đổi; lần chờ mới hiển thị liên kết tới lần bị từ chối gần nhất để người xử lý không phải đọc lại từ đầu.
+3. Hệ thống ghi kiểm toán, phát EVT-07-09, đóng việc trong hộp "Việc của tôi".
+
+Giao diện chi tiết lần chạy (UI-07-09) hiển thị kèm mỗi mã bị `REMOVED` số lượt tra cứu của từng HTTT trong 30 ngày gần nhất (lấy từ chỉ số `rdm_lookup_total` theo `catalog`, `item`, `client` được tổng hợp sẵn), để người xác nhận đánh giá tác động trước khi chấp nhận.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Lần chạy không ở `PENDING_CONFIRMATION`, hoặc phiên bản hiện hành đã đổi | ERR-07-029 | 409 | Hướng dẫn tải lại |
+| Có bản ghi lỗi mà không chọn bỏ qua | ERR-07-021 | 422 | Kèm số bản ghi lỗi |
+| Thiếu ghi chú khi có thay đổi phá vỡ, thiếu lý do từ chối | ERR-07-009 | 422 | |
+| `excludeItemCodes` chứa mã thuộc thay đổi phá vỡ | ERR-07-009 | 422 | `errors[].code = EXCLUDE_NOT_ALLOWED` |
+| Người phát hành trùng người kích hoạt lần chạy `MANUAL` | ERR-07-015 | 403 | Gợi ý bỏ chọn phát hành ngay để trình duyệt |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-038 · Khám phá danh mục quốc gia và đăng ký đồng bộ
+
+Chức năng này cho người dùng duyệt danh sách danh mục mà NDXP đang cung cấp, biết danh mục nào đã có trong Datahub (ở `COMMON` hoặc trong tenant), và đăng ký đồng bộ một danh mục mới chỉ bằng vài thao tác. Nó thay việc cán bộ phải tự tra cứu trên cổng quốc gia rồi nhập tay như ở Aita.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-038 · Khám phá danh mục quốc gia và đăng ký đồng bộ |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-NGSP-006 |
+| Tác nhân, quyền | PA (`COMMON`), TA, DA với `PERM-07-sync` |
+| Tiền điều kiện | Kết nối `NDXP_DMDC` hoạt động |
+| Đầu ra | API-07-063: trang danh mục quốc gia gồm `remoteCode`, `remoteName`, cơ quan ban hành, `remoteVersion`, ngày cập nhật, số bản ghi (nếu nguồn cung cấp), và `localStatus` ∈ `IN_COMMON` (đã có ở `COMMON`, kèm mã danh mục), `IN_TENANT` (đã có nguồn trong tenant), `AVAILABLE`. Đăng ký: danh mục mới `NATIONAL` trạng thái `DRAFT` cùng nguồn đồng bộ và lần chạy đầu |
+| Hậu điều kiện | Danh mục (EN-07-02) và phiên bản nháp số 1 được tạo với lược đồ suy từ cấu trúc từ xa; `sync_source` được tạo với `autoApply` theo lựa chọn; lần chạy đầu được khởi động với `trigger = MANUAL` và luôn dừng ở `PENDING_CONFIRMATION` (lần đầu không tự áp dụng) |
+| Sự kiện phát ra | EVT-07-01 khi danh mục được tạo; EVT-07-09 khi lần chạy đầu kết thúc |
+| Kiểm toán | `RDM_CATALOG_CREATE` (`origin = SYNC`), `RDM_SYNC_SOURCE_CREATE` |
+
+Đầu vào của API-07-063 gồm `q` (tìm không dấu trên mã và tên từ xa), `localStatus`, `page`, `size`. Đăng ký dùng API-07-056 với thân mở rộng gồm các trường của FR-07-035 cộng khối `createCatalog` (`code`, `name`, `groupId`, `ownerOrgId`, `classification`, `isHierarchical`) khi danh mục chưa tồn tại.
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống gọi cổng tiếp hợp liệt kê danh mục từ xa (kết quả được đệm 1 giờ theo tenant để không gọi NDXP mỗi lần người dùng lật trang), đối chiếu `remoteCode` với `sync_source` của tenant và của `COMMON` để gán `localStatus`.
+2. Với tenant tỉnh, danh mục có `localStatus = IN_COMMON` hiển thị kèm khuyến nghị "đã có trong danh mục dùng chung toàn quốc, không cần đăng ký riêng"; nếu người dùng vẫn đăng ký, hệ thống yêu cầu lý do và ghi vào `description` của danh mục (xem Q07-24 ở D02-04-PH07).
+3. Khi đăng ký, hệ thống lấy cấu trúc từ xa, đề xuất mã danh mục cục bộ (chuẩn hóa `remoteCode` theo T-CODE), đề xuất lược đồ (mỗi trường từ xa một thuộc tính, kiểu theo kiểu từ xa, không rõ thì `STRING`) và `fieldMapping`; người dùng xác nhận hoặc chỉnh trên giao diện.
+4. Hệ thống trong một giao dịch tạo danh mục `NATIONAL` (FR-07-003, với `require_approval` theo lựa chọn), thuộc tính của bản nháp số 1, `sync_source`; ghi outbox EVT-07-01; rồi khởi động lần chạy đầu theo FR-07-036 với cờ "lần đầu" buộc đi nhánh chờ xác nhận.
+5. Người dùng xem dữ liệu của lần chạy đầu và xác nhận theo FR-07-037; phiên bản 1 được phát hành, danh mục chuyển `ACTIVE`.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Cổng tiếp hợp lỗi | ERR-07-028 | 502 | Danh sách hiển thị từ bộ đệm nếu còn, kèm thời điểm lấy |
+| Mã danh mục đề xuất trùng | ERR-07-002 | 409 | Người dùng chọn mã khác |
+| Danh mục từ xa đã được đăng ký trong tenant | ERR-07-002 | 409 | Liên kết tới nguồn hiện có |
+| Lược đồ đề xuất có thuộc tính gợi ý dữ liệu cá nhân | ERR-07-036 | 422 | Người dùng bỏ thuộc tính hoặc không ánh xạ trường đó |
+
+#### FR-07-039 · Đề xuất bổ sung bản ghi lên danh mục quốc gia
+
+Chức năng này cho tỉnh gửi đề nghị bổ sung mã địa phương (thường là bản ghi bổ sung của danh mục HYBRID) lên cơ quan quản lý danh mục quốc gia qua NDXP, thay vì gửi công văn giấy rồi chờ. Mức ưu tiên C vì phụ thuộc NDXP có chức năng nhận đề xuất ổn định (Q07-29 ở D02-04-PH07).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-039 · Đề xuất bổ sung bản ghi lên danh mục quốc gia |
+| Mức ưu tiên | C |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | TA, DA, PA với `PERM-07-sync` |
+| Tiền điều kiện | Danh mục là `HYBRID` có gốc là danh mục `NATIONAL` hoặc `COMMON` có nguồn đồng bộ; bản ghi được đề xuất là bản ghi bổ sung `ACTIVE` trong phiên bản đã phát hành; cổng tiếp hợp hỗ trợ chức năng đề xuất |
+| Đầu ra | `202` với đề xuất gồm `proposalId`, `remoteReference` (mã tham chiếu do NDXP trả), `status` ∈ `SUBMITTED`, `ACCEPTED`, `REJECTED`, `UNKNOWN`, danh sách mã đề xuất |
+| Hậu điều kiện | Đề xuất được lưu (trong `import_job` với `job_type = PROPOSAL`, xem Q07-07) và gửi qua cổng tiếp hợp; trạng thái được làm mới ở mỗi lần chạy đồng bộ của nguồn gốc |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_PROPOSAL_SUBMIT` với danh sách mã và `remoteReference` |
+
+Đầu vào của API-07-074 gồm `itemCodes` (T-CODE[], 1…100), `justification` (T-TEXT, 20…4.000 ký tự, nêu căn cứ nghiệp vụ), `contact` (đơn vị, đầu mối công vụ; không chứa số điện thoại cá nhân theo BR-07-025) và `attachments` (tối đa 5 tệp PDF qua `file_object`).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra danh mục, quyền, mỗi mã là bản ghi bổ sung `ACTIVE`, chưa nằm trong một đề xuất đang `SUBMITTED`.
+2. Hệ thống chuyển dữ liệu bản ghi về cấu trúc trường từ xa theo chiều ngược của `fieldMapping` của nguồn gốc và gửi qua cổng tiếp hợp.
+3. Hệ thống lưu đề xuất với `remoteReference`; ở mỗi lần đồng bộ nguồn gốc, nếu dữ liệu từ xa xuất hiện bản ghi có mã hoặc tên trùng mã đề xuất, đề xuất chuyển `ACCEPTED` và cán bộ được nhắc xử lý trùng (ngừng dùng bản ghi bổ sung, ghi `replaced_by` sang mã quốc gia).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Danh mục không phải HYBRID gốc quốc gia, mã không phải bản ghi bổ sung | ERR-07-003 | 403 | |
+| Cổng tiếp hợp không hỗ trợ hoặc lỗi | ERR-07-028 | 502 | Đề xuất không được lưu |
+| Vượt 100 mã | ERR-07-026 | 400 | |
+
+> **Câu hỏi mở Q07-07:** FRS tạm lưu đề xuất bổ sung trong `import_job` với loại `PROPOSAL` để không thêm bảng cho một chức năng mức C. Nếu NDXP có quy trình xử lý đề xuất nhiều bước (tiếp nhận, thẩm định, ban hành) cần theo dõi chi tiết, D03-03-PH07 nên tách bảng `national_proposal` riêng.
+
+
+### 5.6. Nhóm F — Hệ thống mã ngoài và ánh xạ mã
+
+Nhóm F đưa chức năng chuyển đổi ngữ nghĩa dữ liệu của bus cũ (một phần LGC-BUS-036), vốn là các bảng ánh xạ rời rạc gắn với từng luồng tích hợp, về một nơi quản lý chung. Một hệ thống mã ngoài (code system) là bộ mã riêng của một HTTT hoặc một cơ quan cho cùng khái niệm mà danh mục chuẩn biểu diễn, ví dụ mã dân tộc kiểu số của phần mềm hộ tịch. Bảng ánh xạ gắn một danh mục với một hệ thống mã, mỗi dòng nối một mã danh mục với một mã ngoài, có quan hệ ngữ nghĩa, khoảng hiệu lực và cờ tạm thời.
+
+Ánh xạ là dữ liệu của tenant, không phải nội dung của danh mục: ánh xạ không có phiên bản, không qua duyệt, có hiệu lực ngay khi lưu, và được ghi cả cho danh mục `COMMON` mà không vi phạm BR-07-009 (bản ghi `code_mapping` mang `tenant_id` của tenant lập ánh xạ). Lý do không đưa ánh xạ vào vòng đời phiên bản là ánh xạ thay đổi theo nhịp của HTTT đối tác, không theo nhịp ban hành danh mục, và một ánh xạ sai chỉ ảnh hưởng luồng tích hợp với HTTT đó; đổi lại mọi thay đổi ánh xạ đều được kiểm toán đầy đủ giá trị trước và sau. Hệ thống mã toàn quốc (ví dụ bộ mã của một bộ, ngành dùng chung cho mọi tỉnh) được quản trị nền tảng khai báo ở `COMMON`.
+
+#### FR-07-040 · Quản lý hệ thống mã ngoài
+
+Chức năng này khai báo các hệ thống mã ngoài mà tenant cần ánh xạ, gắn với HTTT thành viên (nếu có) để biết bộ mã thuộc về ai.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-040 · Quản lý hệ thống mã ngoài |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-BUS-036 |
+| Tác nhân, quyền | Xem: `PERM-07-read`, HTTT `rdm.read`. Tạo, sửa, ngừng: PA (`COMMON`), TA, DS, IE với `PERM-07-mapping` (đề xuất bổ sung D02-08) |
+| Tiền điều kiện | Không |
+| Đầu ra | API-07-064: trang hệ thống mã (tenant và `COMMON`) với số danh mục đã ánh xạ, số dòng ánh xạ. API-07-065, 066: hệ thống mã kèm ETag |
+| Hậu điều kiện | `code_system` (EN-07-13) được tạo hoặc cập nhật |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_CODE_SYSTEM_CREATE`, `RDM_CODE_SYSTEM_UPDATE` |
+
+Đầu vào của thao tác tạo, sửa được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `code` | Chuỗi | Có (tạo) | Mẫu `^[A-Z0-9][A-Z0-9_.-]{0,63}$`; duy nhất trong tenant và không trùng hệ thống mã `COMMON`; không sửa sau khi tạo | `HT_HOTICH` |
+| `name` | T-NAME | Có | 1…255 | `Bộ mã của phần mềm hộ tịch` |
+| `owner` | T-NAME | Không | Cơ quan sở hữu bộ mã | `Sở Tư pháp` |
+| `memberSystemId` | T-ID | Không | HTTT thành viên `ACTIVE` của tenant, tra ở PH-01 | |
+| `description` | T-TEXT | Không | ≤ 4.000 | |
+| `status` | T-ENUM | Không (sửa) | `ACTIVE`, `RETIRED` | `ACTIVE` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, mã hợp lệ và duy nhất; nếu có `memberSystemId`, gọi PH-01 xác nhận HTTT tồn tại trong tenant (không tồn tại trả lỗi hợp lệ theo trường).
+2. Hệ thống lưu, ghi kiểm toán.
+3. Khi chuyển `status = RETIRED`, bảng ánh xạ của hệ thống mã giữ nguyên để tra lịch sử, nhưng API chuyển mã (FR-07-042) trả `NOT_MAPPED` kèm lý do "hệ thống mã đã ngừng" cho thời điểm sau ngày ngừng, và không cho thêm ánh xạ mới.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Mã trùng | ERR-07-002 | 409 | Chi tiết "mã hệ thống mã đã được dùng" |
+| Tenant tỉnh sửa hệ thống mã `COMMON` | ERR-07-003 | 403 | |
+| Không tìm thấy hệ thống mã | ERR-07-045 | 404 | |
+| Dữ liệu không hợp lệ | ERR-07-009 | 422 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-041 · Quản lý bảng ánh xạ mã giữa danh mục và hệ thống mã ngoài
+
+Chức năng này lập và duy trì bảng ánh xạ giữa mã của một danh mục và mã của một hệ thống mã ngoài, bằng thao tác trên bảng, ghi lô qua API hoặc tải tệp hai cột.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-041 · Quản lý bảng ánh xạ mã giữa danh mục và hệ thống mã ngoài |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-BUS-036 |
+| Tác nhân, quyền | Xem: `PERM-07-read`, HTTT `rdm.read`. Ghi, xóa: PA, TA, DS, IE với `PERM-07-mapping` |
+| Tiền điều kiện | Danh mục có ít nhất một phiên bản `PUBLISHED`; hệ thống mã `ACTIVE` |
+| Đầu ra | API-07-067: trang ánh xạ của danh mục, lọc theo `codeSystem`, `itemCode`, `externalCode`, `relation`, `provisional`, `at` (chỉ ánh xạ hiệu lực tại ngày), `unmapped=true` (liệt kê mã danh mục chưa có ánh xạ). API-07-068: kết quả từng dòng (`CREATED`, `UPDATED`, `UNCHANGED`, `FAILED` kèm lỗi) và độ phủ mới. API-07-069: `204` |
+| Hậu điều kiện | `code_mapping` (EN-07-14) được thêm, sửa hoặc xóa trong một giao dịch cho cả lô; bộ đệm chuyển mã của cặp (danh mục, hệ thống mã) bị vô hiệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_MAPPING_UPSERT` (số dòng, danh sách dòng thay đổi với giá trị trước và sau), `RDM_MAPPING_DELETE` |
+
+Đầu vào của API-07-068 là thân JSON với `mode` (`UPSERT` mặc định: chỉ thêm và sửa các dòng gửi lên; `REPLACE`: thay toàn bộ ánh xạ của cặp danh mục, hệ thống mã bằng tập gửi lên) và mảng `mappings` (1…5.000 phần tử, tham số `07.rdm.batch-max-ops`), mỗi phần tử gồm các trường sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `id` | T-ID | Không | Có thì sửa dòng đó; không có thì khớp theo (`itemCode`, `externalCode`, `validFrom`) | |
+| `itemCode` | T-CODE | Có | Tồn tại trong phiên bản hiệu lực của danh mục tại `validFrom` (hoặc hôm nay); với HYBRID gồm cả mã gốc | `KINH` |
+| `externalCode` | Chuỗi | Có | 1…128 ký tự, giữ nguyên hoa thường | `01` |
+| `externalLabel` | T-NAME | Không | Nhãn của mã ngoài, phục vụ đối chiếu | `Kinh` |
+| `relation` | T-ENUM | Không | `EQUAL` (mặc định), `BROADER` (mã ngoài rộng hơn), `NARROWER` (mã ngoài hẹp hơn), `RELATED` | `EQUAL` |
+| `provisional` | T-BOOL | Không | Mặc định `false` | |
+| `reason` | T-TEXT | Có khi `provisional = true` | 10…1.000 ký tự (BR-07-024) | `Chờ Bộ ban hành mã chính thức` |
+| `validFrom`, `validTo` | T-DATE | Không | Nửa mở `[validFrom, validTo)`; rỗng là không giới hạn; `validTo > validFrom` | `2026-01-01` |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, `If-Match` (ETag của bảng ánh xạ là giá trị lớn nhất của cột `version` trong cặp danh mục, hệ thống mã, để hai người cùng sửa bảng phát hiện được xung đột), kích thước lô.
+2. Với từng dòng, hệ thống kiểm tra `itemCode` tồn tại tại thời điểm `validFrom`; mã không tồn tại ghi lỗi `ERR-07-007` vào kết quả của dòng.
+3. Hệ thống kiểm tra BR-07-023: trong cùng hệ thống mã và cùng khoảng hiệu lực giao nhau, mỗi mã ngoài chỉ trỏ tới một mã danh mục (ràng buộc loại trừ `ex_code_mapping_external`); vi phạm ghi lỗi `ERR-07-033`. Ngược lại, một mã danh mục được phép có nhiều mã ngoài (trường hợp bộ mã ngoài chi tiết hơn).
+4. Hệ thống kiểm tra BR-07-024; vi phạm ghi lỗi `ERR-07-034`.
+5. Nếu mọi dòng hợp lệ, hệ thống ghi cả lô trong một giao dịch; nếu có dòng lỗi, không ghi dòng nào và trả `422` với kết quả từng dòng (tất cả hoặc không, nhất quán với nhập lô FR-07-023), trừ khi `continueOnError = true` thì ghi các dòng hợp lệ và trả `200` với kết quả hỗn hợp.
+6. Với `mode = REPLACE`, các dòng hiện có không nằm trong tập gửi lên bị xóa trong cùng giao dịch; phản hồi liệt kê số dòng bị xóa.
+7. Hệ thống tính lại độ phủ (FR-07-043), vô hiệu bộ đệm chuyển mã, ghi kiểm toán.
+8. Nhập ánh xạ từ tệp hai cột (mã danh mục, mã ngoài, tùy chọn quan hệ, hiệu lực) dùng cơ chế tác vụ nhập hai pha của FR-07-021 với `mode = MAPPING`, pha hai gọi logic của bước 2–7.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Mã danh mục không tồn tại tại ngày hiệu lực | ERR-07-007 | 422 | Lỗi theo dòng |
+| Mã ngoài trùng trong khoảng hiệu lực giao nhau | ERR-07-033 | 422 | Lỗi theo dòng, chỉ ra mã danh mục đang giữ mã ngoài |
+| Ánh xạ tạm thời thiếu lý do | ERR-07-034 | 422 | Lỗi theo dòng |
+| Lô vượt giới hạn | ERR-07-026 | 400 | |
+| Xóa ánh xạ không tồn tại | ERR-07-027 | 404 | |
+| Danh mục chưa có phiên bản phát hành, hệ thống mã `RETIRED` | ERR-07-004 | 409 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-042 · Chuyển mã qua bảng ánh xạ
+
+Chức năng này là API cho luồng tích hợp (PH-04, `dh-runtime`) và HTTT chuyển một danh sách mã theo hai chiều: từ mã ngoài sang mã danh mục và ngược lại, tại một thời điểm. Nó thay cho việc viết cứng bảng chuyển mã trong từng luồng.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-042 · Chuyển mã qua bảng ánh xạ |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; LGC-BUS-036 |
+| Tác nhân, quyền | HTTT `rdm.read`; người dùng `PERM-07-read`; nội bộ PH-04 và `dh-runtime` (tra từ ảnh chụp bảng ánh xạ trong bộ nhớ, như ADR-053) |
+| Tiền điều kiện | Hệ thống mã và danh mục tồn tại |
+| Đầu ra | `200` với mảng kết quả cùng thứ tự đầu vào; mỗi phần tử gồm `input`, `status` ∈ `MAPPED`, `MULTIPLE`, `NOT_MAPPED`, và tùy chiều: `itemCode`, `itemName`, `itemStatus` (chiều `TO_CATALOG`) hoặc `externalCodes[]` với `relation`, `provisional` (chiều `FROM_CATALOG`); khối `stats` đếm theo trạng thái |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không (như quy định chung nhóm D); đếm `rdm_translate_total{catalog,codeSystem,result}` |
+
+Đầu vào của API-07-070 là thân JSON gồm `catalog` (T-CODE), `codeSystem` (mã hệ thống mã), `direction` (`TO_CATALOG` hoặc `FROM_CATALOG`), `at` (T-DATE, mặc định hôm nay), `codes` (1…500 phần tử, tham số `07.rdm.lookup-batch-max`), `includeProvisional` (mặc định `true`), `preferRelation` (mặc định `EQUAL`).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra kích thước lô, quyền khai thác danh mục `RESTRICTED` (FR-07-052).
+2. Hệ thống nạp bảng ánh xạ hiệu lực tại `at` của cặp (danh mục, hệ thống mã) từ bộ đệm (khóa gồm tenant, danh mục, hệ thống mã, ngày), trượt thì truy vấn CSDL và nạp đệm.
+3. Chiều `TO_CATALOG`: với mỗi mã ngoài, tìm ánh xạ hiệu lực tại `at`; theo BR-07-023 có tối đa một, trả `MAPPED` kèm bản ghi danh mục tại `at` (tên, trạng thái; nếu bản ghi đã `DEPRECATED`, kèm `replacedBy` như FR-07-026); không có trả `NOT_MAPPED`.
+4. Chiều `FROM_CATALOG`: với mỗi mã danh mục, trả mọi mã ngoài hiệu lực; một mã thì `MAPPED`, nhiều mã thì `MULTIPLE` và sắp xếp ưu tiên `preferRelation`, ánh xạ không tạm thời trước; không có thì `NOT_MAPPED`.
+5. Khi `includeProvisional = false`, ánh xạ tạm thời bị bỏ qua.
+6. Hệ thống trả kết quả với p95 ≤ 150 ms cho lô 500 mã (tương đương NFR-07-002).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Không tìm thấy danh mục | ERR-07-001 | 404 | |
+| Không tìm thấy hệ thống mã | ERR-07-045 | 404 | |
+| Lô vượt 500 | ERR-07-026 | 400 | |
+| HTTT chưa được cấp quyền danh mục hạn chế | ERR-07-030 | 403 | |
+
+#### FR-07-043 · Báo cáo độ phủ ánh xạ
+
+Chức năng này cho biết bảng ánh xạ đã đầy đủ và còn đúng tới đâu, để cán bộ biết việc còn phải làm trước khi đưa luồng tích hợp vào chạy thật.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-043 · Báo cáo độ phủ ánh xạ |
+| Mức ưu tiên | S |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | `PERM-07-read` |
+| Tiền điều kiện | Danh mục có phiên bản `PUBLISHED`; hệ thống mã tồn tại |
+| Đầu ra | API-07-071: `totalActiveItems`, `mappedItems` (có ít nhất một ánh xạ không tạm thời hiệu lực tại `at`), `provisionalItems`, `coverageRatio`, và ba danh sách phân trang: `unmapped` (mã `ACTIVE` chưa có ánh xạ), `provisional`, `staleMappings` (ánh xạ trỏ tới mã đã `DEPRECATED`, kèm `replacedBy` gợi ý chuyển) |
+| Hậu điều kiện | Không thay đổi dữ liệu; chỉ số `rdm_mapping_coverage_ratio{catalog,codeSystem}` được cập nhật |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào gồm `{c}`, `{csCode}`, `at` (mặc định hôm nay), `list` (`unmapped`, `provisional`, `stale`), `page`, `size`.
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống lấy tập mã `ACTIVE` của phiên bản hiệu lực tại `at` (với HYBRID gồm cả mã gốc) và tập ánh xạ hiệu lực tại `at`.
+2. Hệ thống tính các chỉ tiêu theo định nghĩa độ phủ ở mục 4.16.
+3. Với ánh xạ trỏ tới mã `DEPRECATED` có đúng một `replacedBy`, hệ thống gợi ý thao tác "Chuyển ánh xạ sang mã thay thế"; giao diện gọi API-07-068 với dòng đóng `validTo` ánh xạ cũ và thêm ánh xạ mới.
+4. Khi danh mục phát hành phiên bản mới (EVT-07-05), hệ thống tính lại độ phủ của mọi hệ thống mã đã ánh xạ với danh mục và, nếu có ánh xạ mới trở nên cũ, tạo việc cho người có `PERM-07-mapping` trong hộp "Việc của tôi".
+
+Các ngoại lệ gồm `ERR-07-001`, `ERR-07-006`, `ERR-07-045` như các FR trước.
+
+### 5.7. Nhóm G — Đơn vị hành chính
+
+Nhóm G đặc tả danh mục đơn vị hành chính (mã `DVHC`, thuộc `COMMON`), là danh mục quan trọng nhất của Datahub vì được gần như mọi HTTT và nhiều phân hệ (PH-20 khai báo tổ chức và địa bàn, PH-06 chuẩn hóa địa chỉ, PH-08 kiểm tra chất lượng) dùng. Nhóm này không phải một cơ chế riêng mà là cách áp mô hình chung của PH-07 (phiên bản, hiệu lực, kế thừa) cho bối cảnh sắp xếp ĐVHC năm 2025 (mục 2.4), cộng thêm ba năng lực đặc thù: sự kiện sắp xếp có căn cứ pháp lý, chuyển mã cũ sang mới tại thời điểm, và bảng chiếu `admin_unit` có định danh ổn định cho các phân hệ tham chiếu bằng khóa ngoại logic (ADR-055, DD-07 của D02-07).
+
+Mọi thao tác ghi của nhóm G chỉ do tenant `PLATFORM` thực hiện (BR-07-009); tenant tỉnh chỉ xem, tra cứu và chuyển mã. Danh mục `DVHC` luôn có `require_approval = true`, nên mọi phiên bản phải qua duyệt bốn mắt trong tenant `PLATFORM`.
+
+#### FR-07-044 · Quản lý danh mục ĐVHC hai cấp kèm lịch sử ba cấp
+
+Chức năng này bảo đảm danh mục `DVHC` biểu diễn đúng cả cơ cấu ba cấp trước ngày 01/7/2025 (tỉnh, huyện, xã) và hai cấp từ ngày đó (tỉnh, xã), và mọi tra cứu theo thời điểm trả đúng tên, cấp, đơn vị cha tại thời điểm đó.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-044 · Quản lý danh mục ĐVHC hai cấp kèm lịch sử ba cấp |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới (sắp xếp ĐVHC 2025); DD-07 |
+| Tác nhân, quyền | Ghi: PA với `PERM-07-create`/`update` (tenant `PLATFORM`). Duyệt, phát hành: DA hoặc PA khác người soạn trong tenant `PLATFORM`. Xem, tra cứu: mọi tenant |
+| Tiền điều kiện | Gói nền đã nạp danh mục `DVHC` với lược đồ chuẩn (mục dưới) |
+| Đầu ra | Danh mục `DVHC` với các phiên bản lịch sử và hiện hành; bảng chiếu `admin_unit` (EN-07-18) phản ánh mọi đơn vị từng tồn tại với khoảng hiệu lực |
+| Hậu điều kiện | Sau mỗi lần phát hành phiên bản `DVHC`, `admin_unit` được làm mới trong cùng giao dịch (hàm `f_refresh_admin_unit`); định danh `admin_unit.id` của một đơn vị không đổi qua các phiên bản chừng nào mã và đơn vị còn là một |
+| Sự kiện phát ra | EVT-07-05 khi phát hành; EVT-07-10 khi phiên bản có sự kiện sắp xếp |
+| Kiểm toán | Như FR-07-016 |
+
+Lược đồ chuẩn của danh mục `DVHC` được cố định trong gói nền và không cho tenant sửa, vì các phân hệ khác dựa vào nó. Bảng sau mô tả trường hệ thống và thuộc tính động.
+
+| Trường | Kiểu | Ý nghĩa | Ràng buộc |
+|---|---|---|---|
+| `code` | T-CODE | Mã ĐVHC theo bảng mã quốc gia | Tỉnh 2 chữ số; huyện 3 chữ số (chỉ ở phiên bản trước 01/7/2025); xã 5 chữ số; mẫu `^[0-9]{2}([0-9]{1}\|[0-9]{3})?$` |
+| `name` | T-NAME | Tên đầy đủ, gồm loại đơn vị | Ví dụ "Phường Xuân Hương - Đà Lạt" |
+| `parent_code` | T-CODE | Mã đơn vị cha | Xã thuộc tỉnh (hai cấp) hoặc thuộc huyện (ba cấp) |
+| `level_name` | — | Tên cấp do hệ thống điền | `level_names` = `["Tỉnh", "Xã"]` hiện hành, `["Tỉnh", "Huyện", "Xã"]` lịch sử |
+| `attrs.unit_type` | `ENUM` | Loại đơn vị | `TINH`, `THANH_PHO` (cấp tỉnh); `QUAN`, `HUYEN`, `THI_XA`, `THANH_PHO` (cấp huyện cũ); `XA`, `PHUONG`, `DAC_KHU`, `THI_TRAN` (cấp xã) |
+| `attrs.level` | `ENUM` | Cấp hành chính | `PROVINCE`, `DISTRICT`, `COMMUNE` |
+| `attrs.short_name` | `STRING` | Tên không kèm loại đơn vị | Phục vụ hiển thị gọn và tìm kiếm |
+| `attrs.legal_basis_ref` | `STRING` | Văn bản thành lập hoặc sắp xếp gần nhất | |
+| `attrs.area_km2`, `attrs.population` | `DECIMAL`, `INTEGER` | Diện tích, quy mô dân số theo văn bản sắp xếp | Không bắt buộc; không phải dữ liệu cá nhân |
+
+Xử lý gồm các bước sau.
+
+1. Gói nền nạp hai phiên bản: phiên bản lịch sử ba cấp hiệu lực tới hết ngày 30/6/2025 (`effective_to = 2025-07-01`) và phiên bản hai cấp hiệu lực từ ngày 01/7/2025, cùng các sự kiện sắp xếp của đợt 2025 gắn với phiên bản hai cấp (FR-07-045). Hai phiên bản được nạp với `origin = MIGRATION` cho phép hồi tố (BR-07-027).
+2. Mọi thay đổi sau đó (sắp xếp mới, đổi tên) được làm bằng bản nháp và sự kiện sắp xếp theo FR-07-045, qua duyệt và phát hành như mọi danh mục.
+3. Khi phát hành, hệ thống làm mới `admin_unit`: đơn vị mới được thêm với `effective_from`; đơn vị bị sáp nhập, giải thể hoặc đổi mã được đóng `effective_to` và ghi `successor_ids` từ sự kiện sắp xếp; đơn vị đổi tên giữ nguyên dòng và cập nhật tên hiện hành (tên lịch sử tra qua phiên bản); đơn vị không đổi giữ nguyên dòng và định danh.
+4. Ràng buộc BR-07-021 được kiểm tra hai lớp: trong nghiệp vụ khi ghi sự kiện sắp xếp (FR-07-045), và trong CSDL bằng ràng buộc loại trừ `ex_admin_unit_code` (không tồn tại hai dòng cùng mã có khoảng hiệu lực giao nhau); vi phạm lớp CSDL làm hỏng giao dịch phát hành và trả `ERR-07-035`.
+5. Tra cứu theo thời điểm dùng quy tắc chung của nhóm D: `at = 2025-06-30` trả phiên bản ba cấp, `at = 2025-07-01` trả phiên bản hai cấp.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Tenant không phải `PLATFORM` ghi `DVHC` | ERR-07-003 | 403 | |
+| Sửa lược đồ chuẩn của `DVHC` | ERR-07-003 | 403 | Chi tiết "lược đồ ĐVHC do nền tảng cố định" |
+| Mã gán lại cho đơn vị khác trong khoảng giao nhau | ERR-07-035 | 422 | |
+| Phát hành không qua duyệt | ERR-07-016 | 409 | |
+
+#### FR-07-045 · Ghi nhận sự kiện sắp xếp ĐVHC
+
+Chức năng này ghi một sự kiện sắp xếp (sáp nhập, chia tách, đổi tên, giải thể, thành lập, đổi mã) vào bản nháp của danh mục `DVHC` kèm căn cứ pháp lý và ngày hiệu lực, và tự áp hệ quả của sự kiện lên bản ghi của bản nháp, để người soạn không phải sửa tay từng bản ghi và để quan hệ kế thừa luôn khớp với trạng thái bản ghi.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-045 · Ghi nhận sự kiện sắp xếp ĐVHC |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới; ADR-055 |
+| Tác nhân, quyền | Ghi, xóa: PA với `PERM-07-update` (tenant `PLATFORM`). Xem: mọi tenant (API-07-052) |
+| Tiền điều kiện | Danh mục `DVHC` có bản nháp `DRAFT` |
+| Đầu ra | API-07-053: `201` với sự kiện (`id`, `eventType`, `fromCodes`, `toCodes`, `effectiveDate`, `legalBasis`, `note`) và danh sách bản ghi bản nháp bị tác động. API-07-052: danh sách sự kiện của một phiên bản. API-07-054: `204` |
+| Hậu điều kiện | `item_succession` (EN-07-06) được ghi; bản ghi của bản nháp được cập nhật theo bảng hệ quả dưới đây; `replaced_by` của bản ghi nguồn được tính lại |
+| Sự kiện phát ra | Không (EVT-07-10 phát khi phiên bản được phát hành) |
+| Kiểm toán | `RDM_SUCCESSION_CREATE`, `RDM_SUCCESSION_DELETE` với nội dung sự kiện |
+
+Đầu vào của API-07-053 được mô tả trong bảng sau.
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `eventType` | T-ENUM | Có | `MERGE`, `SPLIT`, `RENAME`, `ABOLISH`, `ESTABLISH`, `RECODE` | `MERGE` |
+| `fromCodes` | T-CODE[] | Theo loại | Bản số theo bảng dưới; mỗi mã `ACTIVE` trong phiên bản hiệu lực ngày liền trước `effectiveDate` | `["24811", "24814"]` |
+| `toCodes` | T-CODE[] | Theo loại | Mã đích; có thể là mã nguồn (đơn vị nguồn tiếp tục tồn tại và nhận thêm địa bàn) hoặc mã mới | `["24811"]` |
+| `newUnits` | Mảng | Khi có mã đích mới | Mỗi phần tử gồm `code`, `name`, `parentCode`, `unitType`, `shortName` | |
+| `effectiveDate` | T-DATE | Có | Bằng `effective_from` của bản nháp (một phiên bản ứng với một ngày hiệu lực) | `2027-01-01` |
+| `legalBasis` | T-TEXT | Có | 10…1.000 ký tự: số hiệu, ngày, cơ quan ban hành | `Nghị quyết số …/NQ-UBTVQH15 ngày …` |
+| `legalBasisFileId` | T-ID | Không | `file_object` PDF đã quét sạch | |
+| `note` | T-TEXT | Có với `SPLIT` | Mô tả phần địa bàn chuyển về từng đích, ≤ 4.000 ký tự | |
+
+Bản số và hệ quả của từng loại sự kiện được quy định trong bảng sau; bản số trùng với ràng buộc `ck_item_succession_cardinality` của CSDL.
+
+| Loại | Nguồn | Đích | Hệ quả trên bản nháp |
+|---|---|---|---|
+| `MERGE` (sáp nhập) | ≥ 2 | 1 | Nguồn khác đích chuyển `DEPRECATED`, `replaced_by = [đích]`, `valid_to = effectiveDate`; đích mới được thêm với `valid_from = effectiveDate`; con của nguồn bị ngừng được gán cha là đích |
+| `SPLIT` (chia tách) | ≥ 1 | ≥ 2 | Nguồn không nằm trong đích chuyển `DEPRECATED`, `replaced_by = đích`; đích mới được thêm; con của nguồn phải được người soạn gán cha mới (hệ thống liệt kê và chặn trình duyệt nếu chưa gán) |
+| `RENAME` (đổi tên) | 1 | Chính nguồn | Bản ghi giữ mã, đổi `name`, `short_name`, `unit_type` theo `newUnits[0]`; không ngừng dùng |
+| `RECODE` (đổi mã) | 1 | 1, khác nguồn | Nguồn chuyển `DEPRECATED`, `replaced_by = [đích]`; đích được thêm với cùng tên, cùng cha; con được gán cha là đích |
+| `ABOLISH` (giải thể, bãi bỏ) | ≥ 1 | 0 | Nguồn chuyển `DEPRECATED`, `replaced_by` rỗng; con phải được gán cha mới (trường hợp bỏ cấp huyện năm 2025) |
+| `ESTABLISH` (thành lập) | 0 | ≥ 1 | Đích mới được thêm |
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra quyền, bản nháp `DRAFT`, `effectiveDate` bằng `effective_from` của bản nháp (nếu bản nháp chưa có `effective_from`, gán bằng `effectiveDate` của sự kiện đầu tiên).
+2. Hệ thống kiểm tra bản số theo loại; mỗi mã nguồn tồn tại và `ACTIVE` trong phiên bản hiệu lực tại ngày liền trước `effectiveDate`; mỗi mã đích mới chưa từng được dùng cho đơn vị khác có khoảng hiệu lực giao nhau với `[effectiveDate, ∞)` (BR-07-021, tra trên `admin_unit` và trên các bản ghi đã thêm trong bản nháp); mã đích hợp lệ theo mẫu của cấp.
+3. Hệ thống kiểm tra một mã nguồn không xuất hiện ở hai sự kiện của cùng bản nháp (trừ `RENAME` đi kèm sự kiện khác của cùng mã đích), để hệ quả không chồng chéo.
+4. Hệ thống ghi `item_succession` và áp hệ quả theo bảng trên vào bản ghi của bản nháp trong cùng giao dịch, rồi tính lại phân cấp (`depth`, `path`) của các nhánh bị tác động.
+5. Khi xóa sự kiện (API-07-054), hệ thống hoàn tác hệ quả: khôi phục bản ghi nguồn về trạng thái như phiên bản gốc của bản nháp, xóa bản ghi đích mới do sự kiện thêm (nếu chưa bị sửa thêm; nếu đã sửa thì hỏi xác nhận), tính lại phân cấp.
+6. Khi trình duyệt (FR-07-015), hệ thống kiểm tra mọi đơn vị con của đơn vị bị ngừng đã có cha `ACTIVE` (BR-07-014) và mọi sự kiện `SPLIT` có `note`.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Bản số sai, mã nguồn không tồn tại hoặc không `ACTIVE`, mã đích đã dùng cho đơn vị khác, thiếu căn cứ, ngày hiệu lực không khớp bản nháp, mã nguồn trùng giữa hai sự kiện | ERR-07-035 | 422 | `detail` nêu lý do cụ thể như UC-07-12 E1 |
+| Bản nháp không `DRAFT`; xóa sự kiện của phiên bản đã phát hành | ERR-07-004 | 409 | Hướng dẫn ghi sự kiện đính chính ở phiên bản sau |
+| Tenant không phải `PLATFORM` | ERR-07-003 | 403 | |
+| Không tìm thấy sự kiện | ERR-07-045 | 404 | |
+
+#### FR-07-046 · Chuyển đổi mã ĐVHC cũ sang mới và tra ngược
+
+Chức năng này trả lời câu hỏi "mã ĐVHC cũ X, có hiệu lực tại ngày lập hồ sơ D1, tương ứng với đơn vị nào tại ngày D2", và chiều ngược "đơn vị mới Y tại ngày D2 được hình thành từ những đơn vị cũ nào tại ngày D1". Đây là chức năng được gọi nhiều trong giai đoạn 2025–2027 khi các HTTT chuẩn hóa dữ liệu phát sinh trước sắp xếp.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-046 · Chuyển đổi mã ĐVHC cũ sang mới và tra ngược |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | HTTT `rdm.read`; người dùng `PERM-07-read` (UI-07-11 tab "Công cụ chuyển mã") |
+| Tiền điều kiện | Danh mục `DVHC` có phiên bản hiệu lực tại các thời điểm được hỏi |
+| Đầu ra | `200` với mảng kết quả cùng thứ tự đầu vào, mỗi phần tử gồm `input` (`code`, `asOf`), `status` ∈ `MAPPED`, `UNCHANGED`, `AMBIGUOUS`, `NOT_FOUND`, `newCode`, `newName`, `newPath` (mã tỉnh, xã), `candidates[]` (khi `AMBIGUOUS`: mã, tên, ghi chú địa bàn từ sự kiện `SPLIT`), `events[]` (chuỗi sự kiện đã đi qua: loại, ngày, căn cứ), `note`; khối `stats` đếm theo trạng thái |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không; đếm `rdm_adminunit_convert_total{direction,status}` |
+
+Đầu vào của API-07-051 là thân JSON gồm `direction` (`OLD_TO_NEW` mặc định, hoặc `NEW_TO_OLD`), `at` (T-DATE, thời điểm đích, mặc định hôm nay) và `codes` (1…1.000 phần tử, mỗi phần tử gồm `code` và `asOf` là ngày mã có hiệu lực; thiếu `asOf` thì mặc định `2025-06-30`, ngày cuối của cơ cấu ba cấp).
+
+Xử lý theo chiều `OLD_TO_NEW` gồm các bước sau, đúng sơ đồ hoạt động của UC-07-12.
+
+1. Hệ thống tìm bản ghi có mã `code` hiệu lực tại `asOf` (phiên bản hiệu lực tại `asOf`); không có thì `NOT_FOUND`.
+2. Hệ thống khởi tạo tập hiện tại `T = {code}` và lần lượt áp các sự kiện sắp xếp có `effective_date` trong khoảng `(asOf, at]` theo thứ tự ngày tăng dần: phần tử của `T` nằm trong `from_codes` của sự kiện được thay bằng `to_codes` (với `ABOLISH`, phần tử bị bỏ khỏi `T`); bản ghi `DEPRECATED` có `replaced_by` mà không có sự kiện tương ứng (dữ liệu cũ) cũng được đi theo `replaced_by`.
+3. Hệ thống dừng khi không còn sự kiện áp được, hoặc sau 50 bước (phòng dữ liệu nạp sai tạo vòng), khi đó trả `NOT_FOUND` kèm ghi chú và ghi cảnh báo vận hành.
+4. Kết luận theo số phần tử của `T`: một phần tử bằng `code` là `UNCHANGED`; một phần tử khác `code` là `MAPPED`; nhiều phần tử là `AMBIGUOUS` với `candidates` (không bao giờ tự chọn, BR-07-022); không phần tử là `NOT_FOUND` kèm ghi chú "đơn vị đã bị giải thể hoặc bãi bỏ cấp, xem đơn vị cha cũ" và, với cấp huyện bị bỏ năm 2025, kèm `newPath` của tỉnh mới tương ứng.
+5. Hệ thống kiểm tra mỗi phần tử kết quả hiệu lực tại `at` và điền tên, đường dẫn tại `at`.
+
+Chiều `NEW_TO_OLD` đi ngược: từ mã hiệu lực tại `at`, áp ngược các sự kiện có `effective_date` trong `(asOf, at]` theo thứ tự ngày giảm dần (thay phần tử thuộc `to_codes` bằng `from_codes`); một kết quả là `MAPPED`, nhiều là `AMBIGUOUS` (trường hợp thường gặp với sáp nhập). Hai chiều dùng chung đồ thị kế thừa nạp sẵn trong bộ nhớ theo phiên bản `DVHC` (làm mới khi nhận EVT-07-10), nên lô 1.000 mã đạt p95 ≤ 300 ms.
+
+Chuyển mã bằng tệp trên giao diện (UC-07-12 luồng B1b) dùng tác vụ nhập hai pha với `mode = ADMIN_UNIT_CONVERT`: pha một quét, phân tích tệp một cột mã (tùy chọn cột ngày); pha hai không ghi vào danh mục mà sinh tệp kết quả cùng định dạng có thêm các cột "Mã mới", "Tên mới", "Trạng thái", "Ứng viên", lưu 24 giờ như tệp xuất (FR-07-024).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Lô vượt 1.000 | ERR-07-026 | 400 | |
+| `asOf` sau `at` với chiều `OLD_TO_NEW` (hoặc ngược lại) | ERR-07-009 | 422 | Theo phần tử |
+| Không có phiên bản `DVHC` hiệu lực tại `at` | ERR-07-006 | 404 | |
+
+#### FR-07-047 · Xem dòng lịch sử của một bản ghi
+
+Chức năng này trả toàn bộ lịch sử của một mã qua các phiên bản: các khoảng thời gian mã tồn tại, tên và đơn vị cha trong từng khoảng, các sự kiện kế thừa vào và ra. Dù được thiết kế trước hết cho ĐVHC, chức năng áp dụng cho mọi danh mục (với danh mục thường, sự kiện được suy từ `replaced_by`).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-047 · Xem dòng lịch sử của một bản ghi |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; mới |
+| Tác nhân, quyền | HTTT `rdm.read`; người dùng `PERM-07-read` |
+| Tiền điều kiện | Danh mục tồn tại; mã từng xuất hiện ở ít nhất một phiên bản đã phát hành |
+| Đầu ra | API-07-050: `code`, `segments[]` (mỗi đoạn gồm `from`, `to`, `versionNoFrom`, `versionNoTo`, `name`, `parentCode`, `levelName`, `status`, `attrsChanged[]`), `predecessors[]` và `successors[]` (mã, tên, loại sự kiện, ngày, căn cứ) |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Không |
+
+Đầu vào gồm `{c}`, `{itemCode}`, `from`, `to` (giới hạn khoảng thời gian, mặc định toàn bộ), `depth` (số bước kế thừa trước và sau cần trả, 1…5, mặc định 1).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống lấy các phiên bản đã phát hành theo thứ tự `effective_from` và giá trị của bản ghi trong từng phiên bản; gộp các phiên bản liên tiếp có cùng tên, cha, trạng thái, thuộc tính thành một đoạn.
+2. Hệ thống lấy sự kiện kế thừa có mã trong `to_codes` (tiền nhiệm) hoặc `from_codes` (kế nhiệm); với danh mục thường dùng `replaced_by` của bản ghi `DEPRECATED` trỏ tới hoặc từ mã.
+3. Hệ thống đi tiếp theo `depth` bước và trả kết quả; kết quả được đệm theo `(catalog, itemCode, latestVersionId)` vì chỉ đổi khi có phiên bản mới.
+
+Các ngoại lệ gồm `ERR-07-001`, `ERR-07-007` (mã chưa từng xuất hiện), `ERR-07-030` như nhóm D.
+
+
+### 5.8. Nhóm H — Đa tenant, nền tảng và quản trị
+
+Nhóm H gồm các chức năng không thuộc một bước cụ thể của vòng đời danh mục nhưng là điều kiện để PH-07 vận hành như một sản phẩm cho nhiều tỉnh: chia sẻ danh mục toàn quốc và mở rộng địa phương, nạp gói danh mục nền khi khởi tạo tenant, lịch sử và kiểm toán, di trú từ hệ cũ, khai thác danh mục hạn chế và tham số của phân hệ theo tenant.
+
+#### FR-07-048 · Chia sẻ danh mục toàn quốc giữa các tenant và mở rộng HYBRID
+
+Chức năng này quy định cách một danh mục `COMMON` được mọi tenant dùng như danh mục của chính mình mà không có bản sao, và cách tenant mở rộng nó bằng danh mục HYBRID (ADR-052). Đây là chức năng xuyên suốt: không có API riêng mà là hành vi của các API nhóm A, B, D khi gặp danh mục `COMMON` hoặc `HYBRID`.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-048 · Chia sẻ danh mục toàn quốc giữa các tenant và mở rộng HYBRID |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07, REQ-20; LGC-DMDC-017 |
+| Tác nhân, quyền | Ghi danh mục `COMMON`: PA trong tenant `PLATFORM`. Đọc: mọi tenant. Tạo HYBRID: DS (○), TA với `PERM-07-create` |
+| Tiền điều kiện | Danh mục `COMMON` `ACTIVE` (để mở rộng) |
+| Đầu ra | Danh mục `COMMON` hiện trong danh sách và tra cứu của mọi tenant, gắn nhãn "Dùng chung toàn quốc"; danh mục HYBRID trả hợp của gốc và bổ sung |
+| Hậu điều kiện | Không có dữ liệu của danh mục `COMMON` bị nhân bản vào tenant; danh mục HYBRID chỉ chứa bản ghi bổ sung |
+| Sự kiện phát ra | Sự kiện của danh mục `COMMON` phát trên topic `common.rdm.*`; sự kiện của HYBRID phát trên topic của tenant; khi gốc phát hành phiên bản mới, danh mục HYBRID **không** phát EVT-07-05 riêng (HTTT đăng ký cả hai topic nếu cần) |
+| Kiểm toán | Như các FR ghi tương ứng; kiểm toán ghi `tenant_id` của chủ thể và `tenant_id` của đối tượng khi khác nhau |
+
+Các quy tắc của chức năng được quy định như sau.
+
+1. **Lưu một lần.** Danh mục toàn quốc lưu với `tenant_id = 'COMMON'`. Chính sách RLS cho phép mọi tenant đọc dòng `COMMON` và chỉ phiên làm việc có `app.tenant_id = 'PLATFORM'` ghi dòng `COMMON` (D03-10). Kiểm tra ở tầng ứng dụng (`ERR-07-003`) chạy trước để người dùng nhận thông điệp rõ ràng thay vì lỗi RLS.
+2. **Không trùng mã.** Mã danh mục của tenant không được trùng mã danh mục `COMMON` đang `ACTIVE` hoặc `DRAFT` (BR-07-001); khi nền tảng tạo danh mục `COMMON` mới có mã trùng danh mục của một tenant, thao tác bị từ chối với danh sách tenant trùng để nền tảng chọn mã khác hoặc phối hợp hợp nhất (xem Q07-08).
+3. **Nhóm và hiển thị.** Tenant thấy cây nhóm `COMMON` (chỉ đọc) bên cạnh cây nhóm của mình; bộ lọc `scope` của FR-07-001 tách được hai loại.
+4. **Dữ liệu của tenant trên danh mục `COMMON`.** Ánh xạ mã (FR-07-041), cấp quyền khai thác (FR-07-052, nếu danh mục `COMMON` là `RESTRICTED`), lịch sử khai thác là dữ liệu của tenant, mang `tenant_id` của tenant, không ghi vào danh mục `COMMON`.
+5. **Tạo HYBRID.** Tenant tạo danh mục `source_type = HYBRID` với `extends_catalog_id` trỏ tới danh mục `COMMON` hoặc `NATIONAL` của chính tenant; danh mục gốc phải `ACTIVE`; `local_code_pattern` bắt buộc, mặc định từ tham số `07.rdm.hybrid-default-pattern` (ví dụ `^68\.[A-Z0-9_]{1,20}$` với tenant T68) và không được khớp mã nào của gốc ở bất kỳ phiên bản đã phát hành nào. Lược đồ của HYBRID là lược đồ của gốc (chỉ đọc) cộng tối đa 20 thuộc tính riêng không bắt buộc.
+6. **Bản ghi bổ sung.** Mỗi bản ghi của HYBRID có `is_local_extension = true`, mã khớp `local_code_pattern` và không trùng mã của gốc (BR-07-010); mã cha có thể là mã của gốc tại phiên bản hiệu lực hoặc mã bổ sung.
+7. **Khai thác hợp.** Tra cứu trên HYBRID tại `at` trả hợp của phiên bản gốc hiệu lực tại `at` và phiên bản HYBRID hiệu lực tại `at`; nếu có trùng mã (chỉ xảy ra khi gốc sau này thêm đúng mã bổ sung), bản ghi gốc được ưu tiên và bản ghi bổ sung bị ẩn khỏi kết quả, kèm cảnh báo vận hành.
+8. **Gốc thay đổi.** Khi gốc phát hành phiên bản mới, hệ thống kiểm tra mọi danh mục HYBRID mở rộng nó: mã gốc mới trùng mã bổ sung, hoặc mã cha của bản ghi bổ sung bị ngừng dùng; với mỗi trường hợp, hệ thống tạo việc trong hộp "Việc của tôi" cho cán bộ quản lý danh mục HYBRID và ghi cờ `baseConflict` trên danh mục cho tới khi được xử lý bằng một phiên bản mới của HYBRID.
+9. **Gốc ngừng hiệu lực.** Gốc không ngừng hiệu lực được khi còn HYBRID `ACTIVE` mở rộng nó (FR-07-009 bước 3); quản trị nền tảng thấy danh sách tenant có HYBRID để phối hợp.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Tenant tỉnh ghi danh mục `COMMON` | ERR-07-003 | 403 | Gợi ý tạo danh mục HYBRID |
+| Mã danh mục trùng `COMMON` | ERR-07-002 | 409 | |
+| Gốc không tồn tại, không `ACTIVE` | ERR-07-001, ERR-07-031 | 404, 410 | |
+| Mã bổ sung ngoài dải, dải khớp mã gốc | ERR-07-012 | 422 | |
+| Mã bổ sung trùng mã gốc | ERR-07-008 | 409 | |
+| Sửa bản ghi của gốc qua HYBRID | ERR-07-003 | 403 | |
+
+> **Câu hỏi mở Q07-08:** Khi nền tảng muốn nâng một danh mục mà nhiều tỉnh đang tự quản (ví dụ danh mục lĩnh vực thủ tục hành chính) lên `COMMON`, quy trình hợp nhất là gì: tỉnh chuyển danh mục của mình thành HYBRID của danh mục `COMMON` mới (giữ mã bổ sung), hay ngừng hiệu lực danh mục tỉnh và chuyển ánh xạ? Cần quy tắc để HTTT không phải đổi mã danh mục trong đường dẫn API.
+
+#### FR-07-049 · Nạp gói danh mục nền khi khởi tạo tenant
+
+Chức năng này là API nền tảng mà PH-20 gọi trong quy trình khởi tạo tenant (BP-08) để tỉnh mới có ngay danh mục địa phương khởi đầu và cấu hình PH-07 mặc định. Danh mục toàn quốc không cần nạp vì đã dùng được qua `COMMON`.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-049 · Nạp gói danh mục nền khi khởi tạo tenant |
+| Mức ưu tiên | M |
+| Truy vết | REQ-20, BP-08; mới |
+| Tác nhân, quyền | Client dịch vụ PH-20 (scope nền tảng `platform.tenant.provision`, giả định) hoặc PA; API ở tiền tố `/api/platform/rdm/v1` không mở ra cổng công khai |
+| Tiền điều kiện | Tenant đã được PH-20 tạo, ở trạng thái khởi tạo; gói nền phiên bản `packageVersion` đã được nền tảng phát hành (tệp gói ở kho đối tượng của `PLATFORM`) |
+| Đầu ra | API-07-073: `200` với `packageVersion`, `status` ∈ `COMPLETED`, `PARTIAL`, `catalogs[]` (mã, phiên bản, số bản ghi, kết quả), `parameters[]` (khóa đã ghi), `commonAvailable[]` (danh mục `COMMON` bắt buộc đọc được), `warnings[]` |
+| Hậu điều kiện | Tham số mặc định `07.rdm.*` của tenant được ghi ở PH-18; nhóm danh mục mặc định được tạo; mỗi danh mục địa phương trong gói có phiên bản 1 `PUBLISHED`, `origin = IMPORT`, `published_by = system:rdm-seed`, `change_note = "Gói danh mục nền {packageVersion}"`; tiến độ nạp lưu theo `(tenantId, packageVersion)` |
+| Sự kiện phát ra | EVT-07-01 và EVT-07-05 cho từng danh mục được tạo |
+| Kiểm toán | `RDM_TENANT_SEED` với `packageVersion`, kết quả, danh sách danh mục |
+
+Gói nền là một tệp nén có tệp kê khai `manifest.json` (phiên bản gói, danh sách nhóm, danh sách danh mục với mã, tên, lược đồ, tệp dữ liệu CSV, `requireApproval`, `classification`, danh sách danh mục `COMMON` bắt buộc, giá trị mặc định của tham số). Nội dung gói do nền tảng quản lý cấu hình như mã nguồn: thay đổi gói qua yêu cầu hợp nhất có duyệt, gói được ký băm SHA-256 và hệ thống từ chối gói có băm không khớp.
+
+Đầu vào của API-07-073 gồm `{tenantId}`, tiêu đề `Idempotency-Key` bắt buộc (khuyến nghị `seed-{tenantId}-{packageVersion}`) và thân `{"packageVersion": "2026.11", "dryRun": false, "include": [...]}` (`include` tùy chọn giới hạn danh mục cần nạp, dùng khi nạp bổ sung).
+
+Xử lý gồm các bước sau.
+
+1. Hệ thống kiểm tra chủ thể là client dịch vụ PH-20 hoặc PA, tenant tồn tại và ở trạng thái khởi tạo (hỏi PH-20), gói tồn tại và băm khớp.
+2. Hệ thống tra tiến độ theo `(tenantId, packageVersion)`: đã `COMPLETED` thì trả lại kết quả đã lưu; đang dở dang thì tiếp tục từ danh mục chưa xong.
+3. Hệ thống ghi tham số mặc định của tenant qua API PH-18 (chỉ khóa chưa có giá trị, không ghi đè tham số tenant đã chỉnh).
+4. Hệ thống tạo nhóm danh mục mặc định (bỏ qua nhóm đã có cùng mã).
+5. Với mỗi danh mục trong gói: trong một giao dịch riêng, dưới ngữ cảnh `app.tenant_id` của tenant đích, tạo danh mục (FR-07-003), phiên bản 1 với lược đồ và bản ghi từ tệp CSV, kiểm tra hợp lệ (FR-07-013), phát hành ngay với `effective_from` là ngày nạp (miễn bốn mắt vì tác nhân hệ thống, BR-07-011); ghi tiến độ của danh mục. Lỗi của một danh mục chỉ hoàn tác danh mục đó.
+6. Hệ thống kiểm tra tenant đọc được các danh mục `COMMON` bắt buộc trong kê khai; thiếu thì thêm cảnh báo (không chặn).
+7. Hệ thống trả kết quả; `status = PARTIAL` khi có danh mục lỗi (HTTP 200 kèm danh sách lỗi, để PH-20 gọi lại và đi bước 2).
+8. Với `dryRun = true`, hệ thống chạy bước 1, 6 và kiểm tra hợp lệ dữ liệu gói, không ghi gì.
+
+Khi nền tảng phát hành gói phiên bản mới cho tenant đã có, PA gọi lại API-07-073 với `packageVersion` mới: danh mục chưa có được tạo như trên; danh mục đã có mà tenant chưa sửa (phiên bản hiện hành vẫn là phiên bản do `system:rdm-seed` phát hành) được cập nhật bằng một bản nháp mới chờ tenant duyệt; danh mục tenant đã sửa không bị động tới, hệ thống chỉ sinh báo cáo khác biệt để tenant tự quyết định (Q07-28 ở D02-04-PH07).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Chủ thể không phải PH-20 hoặc PA | ERR-07-046 | 403 | |
+| Tenant không tồn tại | ERR-07-045 | 404 | |
+| Tenant không ở trạng thái cho phép nạp | ERR-07-048 | 409 | |
+| Gói không tồn tại, băm không khớp, dữ liệu gói không hợp lệ | ERR-07-019 | 422 | Không ghi gì |
+| Cùng `Idempotency-Key` khác nội dung | ERR-07-022 | 409 | |
+| PH-18 không sẵn sàng khi ghi tham số | ERR-07-047 | 503 | Không tạo danh mục nào; PH-20 thử lại |
+
+#### FR-07-050 · Lịch sử thay đổi và kiểm toán
+
+Chức năng này cho người dùng và kiểm toán viên xem ai đã làm gì, khi nào, trên một danh mục, và bảo đảm mọi thao tác ghi của PH-07 sinh bản ghi kiểm toán đầy đủ theo FR-00-040, FR-00-041. Nó thay hoàn toàn tình trạng không có lịch sử của Aita.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-050 · Lịch sử thay đổi và kiểm toán |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; FR-00-040…042; mới |
+| Tác nhân, quyền | `PERM-07-read` xem lịch sử của danh mục mình thấy; `ROLE-AUDITOR` xem mọi danh mục của tenant và xuất bằng chứng |
+| Tiền điều kiện | Danh mục tồn tại (kể cả `RETIRED` và đã xóa mềm trong 30 ngày, với AU) |
+| Đầu ra | API-07-072: trang con trỏ các mục lịch sử, mỗi mục gồm `occurredAt`, `actor` (tên hiển thị, loại người, máy hoặc hệ thống), `action` (mã hành động `RDM_*`), `objectType`, `objectRef` (mã danh mục, số phiên bản, mã bản ghi, mã tác vụ), `summary` tiếng Việt, `changes[]` (trường, giá trị trước, sau; đã che theo phân loại), `result`, `reason`, `traceId` |
+| Hậu điều kiện | Không thay đổi dữ liệu |
+| Sự kiện phát ra | Không |
+| Kiểm toán | Xuất lịch sử (định dạng CSV, JSON) được ghi `RDM_HISTORY_EXPORT` |
+
+Đầu vào của API-07-072 gồm `{c}`, `from`, `to` (mặc định 90 ngày gần nhất, tối đa 3 năm mỗi lần truy vấn), `action[]`, `actor`, `versionNo`, `itemCode`, `cursor`, `limit` (≤ 200).
+
+Lịch sử của PH-07 có hai nguồn, mỗi nguồn trả lời một câu hỏi khác nhau, và API-07-072 gộp hai nguồn thành một dòng thời gian.
+
+| Nguồn | Nội dung | Thời hạn | Vai trò |
+|---|---|---|---|
+| Kiểm toán PH-13 (FR-00-040) | Mọi thao tác ghi: chủ thể, thời điểm, địa chỉ nguồn, hành động, giá trị trước, sau, kết quả, `traceId` | Theo chính sách lưu kiểm toán của nền tảng (tối thiểu 5 năm) | Bằng chứng kiểm toán, không sửa được |
+| Dữ liệu PH-07 | Phiên bản (người tạo, trình, duyệt, phát hành, ngày hiệu lực, căn cứ), `version_review`, `sync_run`, `import_job` | Vĩnh viễn với phiên bản đã phát hành; theo hạn dọn dẹp với tác vụ | Nội dung nghiệp vụ: phiên bản nào có gì, vì sao thay đổi |
+
+Danh mục mã hành động kiểm toán của PH-07 gồm: `RDM_CATALOG_CREATE`, `RDM_CATALOG_UPDATE`, `RDM_CATALOG_SOURCE_CHANGE`, `RDM_CATALOG_DELETE`, `RDM_CATALOG_RETIRE`, `RDM_GROUP_CREATE`, `RDM_GROUP_UPDATE`, `RDM_GROUP_DELETE`, `RDM_ATTRIBUTE_CREATE`, `RDM_ATTRIBUTE_UPDATE`, `RDM_ATTRIBUTE_DELETE`, `RDM_VERSION_CREATE`, `RDM_VERSION_UPDATE`, `RDM_VERSION_DISCARD`, `RDM_VERSION_SUBMIT`, `RDM_VERSION_WITHDRAW`, `RDM_VERSION_APPROVE`, `RDM_VERSION_REVOKE`, `RDM_VERSION_REJECT`, `RDM_VERSION_PUBLISH`, `RDM_ITEM_CREATE`, `RDM_ITEM_UPDATE`, `RDM_ITEM_DEPRECATE`, `RDM_ITEM_DELETE`, `RDM_ITEM_BATCH`, `RDM_IMPORT_UPLOAD`, `RDM_IMPORT_COMMIT`, `RDM_IMPORT_CANCEL`, `RDM_EXPORT`, `RDM_SYNC_SOURCE_CREATE`, `RDM_SYNC_SOURCE_UPDATE`, `RDM_SYNC_RUN`, `RDM_SYNC_ACCEPT`, `RDM_SYNC_REJECT`, `RDM_PROPOSAL_SUBMIT`, `RDM_CODE_SYSTEM_CREATE`, `RDM_CODE_SYSTEM_UPDATE`, `RDM_MAPPING_UPSERT`, `RDM_MAPPING_DELETE`, `RDM_SUCCESSION_CREATE`, `RDM_SUCCESSION_DELETE`, `RDM_ACCESS_GRANT_REPLACE`, `RDM_TENANT_SEED`, `RDM_MIGRATION_RUN`, `RDM_HISTORY_EXPORT`, `RDM_PARAMETER_UPDATE` (ghi bởi PH-18, PH-07 đọc lại).
+
+Xử lý gồm các bước sau.
+
+1. Mỗi thao tác ghi gửi bản ghi kiểm toán tới PH-13 qua cơ chế outbox chung (không gọi đồng bộ), nên kiểm toán không bao giờ mất khi thao tác đã cam kết và không làm chậm thao tác. Với thao tác lô (nhập tệp, nhập lô, ghi ánh xạ), một bản ghi kiểm toán tóm tắt được ghi kèm danh sách thay đổi chi tiết dạng tệp đính kèm trên kho đối tượng khi vượt 500 thay đổi, để bản ghi kiểm toán không quá lớn.
+2. Khi đọc, hệ thống truy vấn PH-13 theo `objectRef` thuộc danh mục và nối với dữ liệu phiên bản của PH-07 theo thời gian; PH-13 không sẵn sàng thì trả `ERR-07-047` kèm phần dữ liệu PH-07 và cờ `partial = true`.
+3. Giá trị trước, sau của danh mục `RESTRICTED` được che một phần với người không có `PERM-07-grant` hoặc vai trò AU (giữ mã, che nhãn và thuộc tính), theo mục 4.10.
+4. Thao tác đọc của HTTT không được kiểm toán từng lượt (quy định chung nhóm D) nhưng được đếm theo HTTT, danh mục, ngày ở chỉ số tổng hợp để phục vụ FR-07-037 và FR-07-009 (cảnh báo tác động).
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Khoảng thời gian vượt 3 năm, `from` sau `to` | ERR-07-009 | 422 | |
+| PH-13 không sẵn sàng | ERR-07-047 | 503 | Trả kèm phần dữ liệu PH-07 nếu có |
+| Không tìm thấy danh mục | ERR-07-001 | 404 | |
+
+#### FR-07-051 · Di trú dữ liệu danh mục từ hệ cũ Aita
+
+Chức năng này chuyển toàn bộ danh mục, thuộc tính và bản ghi từ mô hình EAV bốn bảng của Aita (mục 2.2) sang mô hình của Datahub, theo khung di trú chung FR-00-090…092 (chạy thử, đối soát, chạy thật, chạy lại được). Thiết kế cốt lõi là di trú không ghi thẳng vào bảng mà gọi đúng các API nghiệp vụ (tạo danh mục, nhập lô, trình, duyệt, phát hành), để mọi kiểm tra hợp lệ, kiểm toán và quy tắc phiên bản áp dụng cho dữ liệu di trú như cho mọi thay đổi khác.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-051 · Di trú dữ liệu danh mục từ hệ cũ Aita |
+| Mức ưu tiên | M |
+| Truy vết | REQ-22; LGC-DMDC-001…019 (toàn bộ dữ liệu); FR-00-090…092 |
+| Tác nhân, quyền | TA chạy công cụ di trú (`PERM-07-create`/`update` trong tenant); DS rà soát lược đồ đề xuất của danh mục thuộc tổ chức mình; DA duyệt phát hành; PA với danh mục được đề xuất đưa vào `COMMON` |
+| Tiền điều kiện | Bản kết xuất CSDL Aita (MySQL) hoặc kết nối chỉ đọc tới bản sao, đã đưa vào vùng di trú của tenant; tenant đã nạp gói nền (FR-07-049) |
+| Đầu ra | Báo cáo chạy thử (mỗi danh mục Aita một dòng: đề xuất, lược đồ, số dòng, vấn đề); khi chạy thật: danh mục Datahub với `legacy_ref`, bản ghi với `legacy_ref`, thuộc tính với `legacy_field_id`; biên bản đối soát PDF và Excel |
+| Hậu điều kiện | Mỗi danh mục Aita được xử lý theo đúng một quyết định: tạo mới `LOCAL`, dùng `COMMON` kèm ánh xạ, tạo HYBRID cho phần bổ sung, đăng ký đồng bộ quốc gia, hoặc bỏ qua có lý do; phiên bản 1 của danh mục tạo mới có `origin = MIGRATION`; dữ liệu Aita không bị thay đổi |
+| Sự kiện phát ra | Như các API được gọi (EVT-07-01, 04, 05) |
+| Kiểm toán | `RDM_MIGRATION_RUN` (chế độ, phạm vi, kết quả) và kiểm toán của từng API được gọi với chủ thể là người chạy công cụ |
+
+Xử lý gồm các bước sau.
+
+1. **Đọc nguồn.** Công cụ đọc bốn bảng `category`, `category_fields`, `category_details`, `category_details_value` theo cột thực tế ở mục 2.2 (`jhi_order` thay cho `Order`, có `category_fields_id`). Bản kết xuất thiếu bảng hoặc thiếu cột thì dừng với báo cáo lỗi, không ghi gì.
+2. **Dựng bảng.** Với mỗi `category`, công cụ dựng một bảng hai chiều: dòng là `category_details`, cột là `category_fields` sắp theo `jhi_order` rồi `id`, ô là `category_details_value.value`. Thuộc tính có `status` khác hoạt động được đánh dấu để đề xuất `HIDDEN` (LGC-DMDC-018).
+3. **Đề xuất mã danh mục.** Lấy `category_code` nếu khớp T-CODE sau chuẩn hóa; không thì sinh từ `name` (bỏ dấu, chữ hoa, khoảng trắng thành `_`, cắt 64 ký tự); trùng thì thêm hậu tố số.
+4. **Đề xuất cột mã và cột tên bản ghi.** Cột mã là cột đầu tiên (theo thứ tự) có nhãn thuộc danh sách đồng nghĩa (`mã`, `ma`, `code`, `mã số`, `ký hiệu`) và có giá trị không rỗng, duy nhất sau chuẩn hóa chữ hoa ở mọi dòng; không có thì cột đầu tiên thỏa điều kiện duy nhất; vẫn không có thì sinh mã `{MÃ_DANH_MỤC}_{details.id}` và đánh dấu vấn đề "mã sinh tự động" (Q07-28 ở D02-04-PH07). Cột tên là cột có nhãn thuộc danh sách đồng nghĩa (`tên`, `ten`, `name`, `tên gọi`), không có thì cột kế tiếp cột mã.
+5. **Đề xuất cột cha.** Cột có nhãn thuộc (`mã cha`, `ma_cha`, `parent`, `cấp trên`) mà mọi giá trị khác rỗng đều là mã của dòng khác thì đề xuất bật phân cấp với `parent_code` từ cột đó.
+6. **Suy kiểu thuộc tính.** Với mỗi cột còn lại, công cụ suy kiểu trên toàn bộ giá trị khác rỗng theo thứ tự ưu tiên trong bảng dưới; kiểu đầu tiên mà mọi giá trị đều khớp được chọn; không kiểu nào khớp thì `STRING` (hoặc `TEXT` khi có giá trị dài hơn 2.000 ký tự hoặc có xuống dòng). Quy tắc này cũng là quy tắc suy kiểu của FR-07-022.
+
+| Thứ tự | Kiểu | Điều kiện mọi giá trị khác rỗng | Ghi chú |
+|---|---|---|---|
+| 1 | `BOOLEAN` | Thuộc {`true`, `false`, `có`, `không`, `1`, `0`, `x`, rỗng} không phân biệt hoa thường, và có ít nhất hai giá trị khác nhau | Tránh nhận nhầm cột toàn `1` |
+| 2 | `INTEGER` | Khớp `^-?[0-9]{1,18}$`, không có số 0 đứng đầu (trừ chính `0`) | Có số 0 đứng đầu thì là mã, để `STRING` |
+| 3 | `DECIMAL` | Khớp số thập phân với dấu chấm hoặc dấu phẩy thập phân thống nhất trong cột | |
+| 4 | `DATE` | Khớp `dd/MM/yyyy`, `d/M/yyyy` hoặc `yyyy-MM-dd` và là ngày có thật | |
+| 5 | `DATETIME` | Khớp các mẫu ngày ở trên kèm `HH:mm` hoặc `HH:mm:ss` | Hiểu là giờ Việt Nam |
+| 6 | `EMAIL` | Khớp mẫu thư điện tử | Kèm cảnh báo kiểm tra BR-07-025 |
+| 7 | `URI` | Bắt đầu bằng `http://` hoặc `https://` và phân tích được | |
+| 8 | `ENUM` | Số giá trị khác nhau ≤ 20 trên ≥ 100 dòng, mỗi giá trị ≤ 64 ký tự | Giá trị chuẩn hóa thành mã T-CODE, nhãn là giá trị gốc |
+| 9 | `CATALOG_REF` | Mọi giá trị là mã của một danh mục khác cùng đợt di trú hoặc `COMMON` (khớp ≥ 98% và phần còn lại rỗng) | Chỉ đề xuất, cán bộ phải xác nhận |
+| 10 | `STRING` | Mặc định | `maxLength` theo quy tắc của FR-07-022 bước 3 |
+
+7. **Đối chiếu `COMMON`.** Công cụ so tên chuẩn hóa không dấu và tập mã của danh mục Aita với danh mục `COMMON`: trùng tên và tập mã giao nhau ≥ 90% thì đề xuất "dùng `COMMON` kèm ánh xạ" (mã khác biệt đưa vào bảng ánh xạ với hệ thống mã `AITA_{tenant}`); tập mã Aita là tập cha thực sự của `COMMON` thì đề xuất HYBRID cho phần dư; `is_update = 1` thì đề xuất đăng ký đồng bộ quốc gia (FR-07-038).
+8. **Kiểm tra dữ liệu cá nhân.** Thuộc tính có nhãn hoặc giá trị gợi ý dữ liệu cá nhân (danh sách `07.rdm.pii-keywords`, mẫu số định danh 12 chữ số, mẫu số điện thoại di động) được đánh dấu vấn đề, đề xuất loại bỏ (BR-07-025).
+9. **Báo cáo chạy thử.** Công cụ sinh báo cáo và hiển thị như một tác vụ nhập loại `MIGRATION` trên UI-07-08; cán bộ quản lý danh mục chỉnh đề xuất của danh mục thuộc tổ chức mình (mã, kiểu, bỏ thuộc tính, quyết định); quản trị tỉnh chốt cấu hình. Chạy thử không ghi gì vào danh mục.
+10. **Chạy thật.** Với mỗi danh mục "tạo mới", công cụ gọi API-07-002 (tạo danh mục kèm lược đồ, `legacyRef = category.id`), API-07-031 theo lô 5.000 với `Idempotency-Key = mig-{tenant}-{category.id}-{số lô}`, API-07-014 đặt `effective_from` (ngày ban hành danh mục nếu cán bộ cung cấp, hoặc ngày chuyển đổi; cho phép hồi tố với `origin = MIGRATION`, BR-07-027) và `change_note = "Di trú từ hệ cũ Aita"`, rồi API-07-017 trình duyệt. Mỗi danh mục độc lập; lỗi một danh mục không dừng các danh mục khác.
+11. **Duyệt theo lô.** Người duyệt xem biên bản đối soát chạy thật rồi duyệt, phát hành nhiều phiên bản di trú cùng lúc trên UI-07-07; bốn mắt áp dụng (người duyệt khác người chạy công cụ, BR-07-011).
+12. **Đối soát.** Công cụ so sánh giữa Aita và Datahub: số danh mục theo quyết định, số thuộc tính, số bản ghi, số ô có giá trị, và băm SHA-256 của từng ô sau chuẩn hóa (cắt khoảng trắng, NFC); xuất biên bản; danh mục lệch được tô đỏ và không được ký cho tới khi giải trình hoặc chạy lại.
+13. **Chạy lại.** Danh mục đã có `legacy_ref` được bỏ qua, hoặc nạp bổ sung bản ghi còn thiếu nhờ `Idempotency-Key`; bản ghi đã có `legacy_ref` không bị nạp trùng.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| Bản kết xuất hỏng, thiếu bảng hoặc cột | — | — | Công cụ dừng, báo cáo lỗi, không gọi API |
+| Mã danh mục trùng | ERR-07-002 | 409 | Đề nghị mã khác, chờ cán bộ chốt |
+| Lô bản ghi vi phạm lược đồ | ERR-07-009, ERR-07-008, ERR-07-010 | 422, 409 | Ghi lỗi theo dòng vào báo cáo, giữ bản nháp, cán bộ sửa rồi chạy lại |
+| Thuộc tính gợi ý dữ liệu cá nhân | ERR-07-036 | 422 | Cán bộ loại thuộc tính; biên bản ghi nhận |
+| Đối soát lệch | — | — | Biên bản đánh dấu, không ký |
+
+#### FR-07-052 · Khai thác danh mục hạn chế và cấp quyền khai thác
+
+Chức năng này kiểm soát HTTT nào được khai thác danh mục có mức phân loại `RESTRICTED` (mục 4.10, BR-07-019), và cho quản trị tỉnh cấp, thu hồi quyền đó theo từng danh mục.
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-052 · Khai thác danh mục hạn chế và cấp quyền khai thác |
+| Mức ưu tiên | M |
+| Truy vết | REQ-07; SAD §8.2; mới |
+| Tác nhân, quyền | Xem danh sách cấp quyền: `PERM-07-read`. Thay danh sách: TA, PA (`COMMON`) với `PERM-07-grant` (đề xuất bổ sung D02-08) |
+| Tiền điều kiện | Danh mục tồn tại; cấp quyền chỉ có ý nghĩa với danh mục `RESTRICTED` (với mức khác, API chấp nhận nhưng cảnh báo "không có tác dụng") |
+| Đầu ra | API-07-075 GET: danh sách cấp quyền (`memberSystemId`, tên HTTT tra PH-01, `scopes`, `grantedBy`, `grantedAt`, `expiresAt`). API-07-075 PUT: danh sách mới kèm ETag |
+| Hậu điều kiện | `catalog_access_grant` (EN-07-15) phản ánh đúng danh sách gửi lên; bộ đệm quyền khai thác của danh mục bị vô hiệu ở mọi pod trong ≤ 10 giây |
+| Sự kiện phát ra | Không |
+| Kiểm toán | `RDM_ACCESS_GRANT_REPLACE` với danh sách thêm, bớt, đổi |
+
+Đầu vào của API-07-075 PUT là mảng `grants` (0…500 phần tử), mỗi phần tử gồm `memberSystemId` (T-ID, HTTT `ACTIVE` của tenant), `scopes` (tập con khác rỗng của `rdm.read`, `rdm.query`), `expiresAt` (T-TS, tùy chọn, sau thời điểm hiện tại); kèm `If-Match` và `reason` (10…1.000 ký tự).
+
+Xử lý gồm các bước sau.
+
+1. **Khai thác.** Với mọi API nhóm D, FR-07-042, FR-07-047 trên danh mục `RESTRICTED`, sau khi gateway xác thực token, hệ thống lấy `member_system_id` của client từ token (claim do PH-01 gán khi cấp client) và tra cấp quyền hiệu lực (chưa hết hạn) có scope tương ứng; không có trả `ERR-07-030`. Kết quả tra được đệm 60 giây theo `(catalogId, memberSystemId)` và bị vô hiệu ngay khi danh sách thay đổi.
+2. **Người dùng trong tenant.** Cán bộ có `PERM-07-read` trong tenant xem được danh mục `RESTRICTED` trên giao diện quản trị (FR-07-001 bước 3), vì hạn chế áp cho khai thác của HTTT; xuất tệp (FR-07-024) của danh mục `RESTRICTED` cần `PERM-07-export` và được kiểm toán với cờ `restricted = true`.
+3. **Danh mục `COMMON` hạn chế.** Cấp quyền của tenant trên danh mục `COMMON` mang `tenant_id` của tenant và chỉ có tác dụng với HTTT của tenant đó; nền tảng cấp quyền cho HTTT cấp quốc gia bằng cấp quyền của `COMMON`.
+4. **Thay danh sách.** Hệ thống kiểm tra quyền, `If-Match`, mỗi HTTT tồn tại và `ACTIVE` (PH-01), không trùng HTTT trong danh sách; thay toàn bộ danh sách trong một giao dịch; ghi kiểm toán với phần khác biệt; vô hiệu bộ đệm.
+5. **Hết hạn và thu hồi.** Cấp quyền quá `expiresAt` không còn hiệu lực mà không cần tác vụ nền; HTTT bị PH-01 chuyển `SUSPENDED` hoặc `REVOKED` thì mọi cấp quyền của nó mất tác dụng ngay (PH-01 phát sự kiện, PH-07 vô hiệu bộ đệm).
+6. **Hạ mức phân loại.** Đổi danh mục từ `RESTRICTED` sang mức khác (FR-07-004) không xóa danh sách cấp quyền, để nâng lại mức không mất cấu hình; ngược lại nâng lên `RESTRICTED` làm mọi HTTT chưa được cấp mất quyền ngay, nên giao diện bắt buộc xác nhận và hiển thị số HTTT đã khai thác danh mục trong 30 ngày.
+
+Các ngoại lệ được liệt kê trong bảng sau.
+
+| Điều kiện | Mã lỗi | HTTP | Hành vi |
+|---|---|---|---|
+| HTTT chưa được cấp quyền khai thác | ERR-07-030 | 403 | Thông điệp không nêu danh sách HTTT được cấp |
+| HTTT không tồn tại, không `ACTIVE`, trùng trong danh sách, scope sai | ERR-07-009 | 422 | |
+| Tenant tỉnh thay danh sách của `COMMON` cho HTTT quốc gia | ERR-07-003 | 403 | |
+| ETag không khớp | ERR-07-018 | 412 | |
+
+#### FR-07-053 · Tham số PH-07 theo tenant
+
+Chức năng này cho quản trị tỉnh điều chỉnh các ngưỡng và giới hạn của PH-07 cho phù hợp với tỉnh mình trong khung do nền tảng cho phép. Tham số không lưu ở PH-07 mà ở kho tham số chung của PH-18 (`ph18_ops.config_param`, namespace `07.rdm`, ánh xạ DD-14); vì vậy API-07-076 của khung ban đầu được bỏ và giao diện dùng màn tham số chung của PH-18 (UI-07-13).
+
+| Trường | Nội dung |
+|---|---|
+| Mã, tên | FR-07-053 · Tham số PH-07 theo tenant |
+| Mức ưu tiên | S |
+| Truy vết | REQ-07, REQ-20; DD-14 |
+| Tác nhân, quyền | TA, PA với `PERM-07-configure` (đề xuất bổ sung D02-08); PA đặt giá trị mặc định và miền cho phép của nền tảng |
+| Tiền điều kiện | Không |
+| Đầu ra | Giá trị hiệu lực của từng khóa `07.rdm.*` cho tenant (giá trị tenant nếu có, nếu không là mặc định nền tảng) |
+| Hậu điều kiện | Giá trị được lưu ở PH-18; các pod PH-07 nhận sự kiện thay đổi tham số của PH-18 và áp dụng trong ≤ 60 giây mà không cần khởi động lại |
+| Sự kiện phát ra | Sự kiện thay đổi tham số do PH-18 phát |
+| Kiểm toán | `RDM_PARAMETER_UPDATE` do PH-18 ghi |
+
+Danh sách khóa, kiểu, giá trị mặc định và miền cho phép được quy định ở mục 7.1. Xử lý gồm các bước sau.
+
+1. PH-07 đăng ký với PH-18 lược đồ tham số của namespace `07.rdm` (khóa, kiểu, mặc định, miền, mô tả tiếng Việt, mức áp dụng `PLATFORM` hoặc `TENANT`) khi khởi động; PH-18 dùng lược đồ này để dựng biểu mẫu và kiểm tra giá trị.
+2. PH-07 đọc tham số qua thư viện cấu hình chung với bộ đệm 60 giây theo tenant, làm mới ngay khi nhận sự kiện thay đổi.
+3. Thay đổi tham số chỉ áp dụng cho thao tác bắt đầu sau thời điểm áp dụng; tác vụ đang chạy giữ giá trị lúc bắt đầu (ghi vào `options` của tác vụ) để kết quả nhất quán.
+4. Tham số mức `PLATFORM` (ví dụ giới hạn cứng kích thước tệp) tenant chỉ đọc; tenant đặt giá trị ngoài miền nhận lỗi kiểm tra của PH-18.
+
+Các ngoại lệ do PH-18 trả theo quy ước lỗi của PH-18; PH-18 không sẵn sàng thì PH-07 tiếp tục dùng giá trị đệm gần nhất, hoặc giá trị mặc định đóng gói nếu chưa từng đọc được.
+
+
+## 6. Quy tắc nghiệp vụ
+
+Bảng dưới đây là danh sách chính thức các quy tắc nghiệp vụ của PH-07. Mỗi quy tắc có phát biểu kiểm chứng được, lý do tồn tại (để khi gặp trường hợp chưa được đặc tả, người đọc suy ra được cách xử lý đúng tinh thần), các FR áp dụng và mã lỗi khi vi phạm. Quy tắc được kiểm tra ở tầng ứng dụng để trả thông điệp rõ ràng; những quy tắc ghi "có lớp CSDL" còn được CSDL chặn bằng ràng buộc hoặc trigger (D03-03-PH07), để không thể vi phạm kể cả khi có lỗi lập trình. Mã BR-07-028…039 được để trống cho quy tắc bổ sung sau; BR-07-040 và BR-07-041 là hai quy tắc mới phát sinh khi viết FRS.
+
+| Mã | Phát biểu | Lý do | FR áp dụng | Lỗi khi vi phạm |
+|---|---|---|---|---|
+| BR-07-001 | Mã danh mục (T-CODE) là duy nhất trong tenant và không trùng mã của danh mục `COMMON` đang `DRAFT` hoặc `ACTIVE` | HTTT dùng mã danh mục trong đường dẫn API; trùng mã giữa tenant và `COMMON` làm tra cứu mơ hồ | 003, 022, 038, 048, 049, 051 | ERR-07-002 (có lớp CSDL trong tenant) |
+| BR-07-002 | Mã bản ghi là duy nhất trong một phiên bản, so sánh không phân biệt hoa thường, lưu dạng chữ hoa đã chuẩn hóa | Mã là khóa tra cứu; `ab` và `AB` là hai mã khác nhau sẽ gây lỗi ở HTTT so sánh không phân biệt hoa thường | 012, 021, 022, 023, 036, 048, 051 | ERR-07-008 (có lớp CSDL) |
+| BR-07-003 | Bản ghi đã xuất hiện trong một phiên bản đã phát hành không bị xóa ở các phiên bản sau, chỉ chuyển `DEPRECATED`; đồng bộ chuyển mã bị nguồn loại thành `DEPRECATED` | Dữ liệu nghiệp vụ của HTTT có thể đang mang mã đó; xóa mã làm dữ liệu cũ không còn hiểu được | 012, 021, 023, 036, 037, 045 | ERR-07-013 |
+| BR-07-004 | Bản ghi `DEPRECATED` vẫn tra cứu và xuất được, kết quả luôn kèm `status` và `replacedBy` | HTTT phải biết mã cũ nghĩa là gì và chuyển sang mã nào | 019, 024, 026, 027, 028, 042 | — |
+| BR-07-005 | Mỗi danh mục có tối đa một phiên bản mở (`DRAFT`, `IN_REVIEW` hoặc `APPROVED`) | Tránh hai nhóm cùng soạn hai bản nháp rồi ghi đè nhau | 003, 011, 023, 036, 038 | ERR-07-005 (có lớp CSDL) |
+| BR-07-006 | Phiên bản `PUBLISHED` là bất biến: không sửa thuộc tính, bản ghi, sự kiện sắp xếp, khoảng `effective_from`; chỉ cột kỹ thuật (`snapshot_uri`, `effective_to` khi phát hành phiên bản kế tiếp hoặc ngừng hiệu lực) được ghi | Mọi tra cứu theo thời điểm, ảnh chụp, bộ đệm và kiểm toán dựa trên giả định phiên bản không đổi | 012, 016, 045 và mọi FR ghi | ERR-07-004 (có lớp CSDL) |
+| BR-07-007 | Khoảng hiệu lực `[effective_from, effective_to)` của các phiên bản đã phát hành không chồng lấn; `effective_from` của phiên bản mới lớn hơn `effective_from` của mọi phiên bản đã phát hành; khi phát hành, phiên bản đang có `effective_to` rỗng được đóng bằng `effective_from` mới | Bảo đảm mỗi ngày có tối đa một phiên bản hiệu lực | 016, 036, 037, 044 | ERR-07-017 (có lớp CSDL) |
+| BR-07-008 | Tra cứu theo thời điểm `at` chọn phiên bản đã phát hành có `effective_from ≤ at < effective_to`; không có thì báo không có phiên bản hiệu lực; bản nháp không bao giờ được khai thác | Kết quả tra cứu xác định và tái lập được | 026…033, 042, 046, 047 | ERR-07-006 |
+| BR-07-009 | Danh mục `NATIONAL` chỉ được cập nhật qua đồng bộ; danh mục thuộc `COMMON` chỉ tenant `PLATFORM` được ghi; với tenant tỉnh, cả hai là chỉ đọc | Bản trong Datahub phải trùng bản quốc gia; danh mục toàn quốc phải thống nhất giữa các tỉnh | Mọi FR ghi; 035, 044, 045, 048 | ERR-07-003 (có lớp CSDL qua RLS với `COMMON`) |
+| BR-07-010 | Bản ghi của danh mục HYBRID là bản ghi bổ sung: mã khớp `local_code_pattern` và không trùng mã của danh mục gốc ở bất kỳ phiên bản đã phát hành nào | Phần bổ sung không được che hoặc giả mạo mã quốc gia | 008, 012, 021, 048 | ERR-07-012, ERR-07-008 |
+| BR-07-011 | Bốn mắt: người duyệt, phát hành một phiên bản phải khác người trình và khác mọi người đã sửa nội dung phiên bản đó; người phát hành khi xác nhận đồng bộ phải khác người kích hoạt lần chạy thủ công. Ngoại lệ: tác nhân hệ thống (`system:rdm-sync`, `system:rdm-seed`) khi tự áp dụng đồng bộ và nạp gói nền | FR-00-071; không ai tự ý đưa thay đổi của mình vào dữ liệu đang dùng | 015, 016, 037, 049, 051 | ERR-07-015 |
+| BR-07-012 | Phiên bản có thay đổi phá vỡ, hoặc có tỷ lệ bản ghi thêm, sửa, ngừng dùng trên tổng số bản ghi phiên bản gốc vượt `07.rdm.large-change-threshold-percent`, bắt buộc qua duyệt kể cả khi danh mục `require_approval = false`; với đồng bộ thì bắt buộc chờ xác nhận | Thay đổi lớn hoặc phá vỡ có rủi ro cao cho HTTT | 014, 015, 016, 036 | ERR-07-016 |
+| BR-07-013 | Thay đổi lược đồ trên bản nháp phải tương thích với giá trị hiện có của bản nháp (đổi kiểu, thu hẹp ràng buộc, thêm thuộc tính bắt buộc không có mặc định); thay đổi lược đồ được phân loại phá vỡ theo bảng của FR-07-014 | Không để bản nháp có dữ liệu vi phạm chính lược đồ của nó | 005, 006, 014, 021 | ERR-07-014 |
+| BR-07-014 | Với danh mục phân cấp: mã cha tồn tại trong cùng phiên bản, cây không có vòng, độ sâu không vượt `max_depth` (≤ 10), bản ghi `ACTIVE` không có cha `DEPRECATED` | Cây hợp lệ là điều kiện để tra cây, nhánh và dòng lịch sử đúng | 007, 012, 021, 023, 045 | ERR-07-010, ERR-07-011 |
+| BR-07-015 | Nhập tệp ghi theo kiểu tất cả hoặc không; chỉ khi người dùng chủ động chọn bỏ qua dòng lỗi mới ghi phần hợp lệ, và khi đó dòng hợp lệ phụ thuộc dòng lỗi (con của bản ghi lỗi) cũng bị bỏ | FR-00-032; tránh ghi một phần mà người dùng không biết | 021, 022 | ERR-07-021 |
+| BR-07-016 | Kết quả xem trước của tác vụ nhập chỉ có giá trị trong 24 giờ và chỉ khi bản nháp chưa bị sửa kể từ lúc phân tích | Kết quả kiểm tra phụ thuộc trạng thái bản nháp | 021, 022 | ERR-07-020 |
+| BR-07-017 | Đồng bộ chỉ tự áp dụng khi nguồn bật `auto_apply`, không có thay đổi phá vỡ, không có bản ghi không hợp lệ và không vượt ngưỡng thay đổi lớn; mọi trường hợp khác chờ người có `PERM-07-sync` xác nhận; lần đồng bộ đầu tiên của một nguồn luôn chờ xác nhận | Không thay đổi phá vỡ nào được áp dụng mà không có người chịu trách nhiệm | 036, 037, 038 | ERR-07-029 |
+| BR-07-018 | Truy vấn có cấu trúc chỉ lọc, sắp xếp trên trường hệ thống và thuộc tính `queryable`; không bao giờ chạy câu SQL do client gửi; truy vấn bị giới hạn số điều kiện, độ lồng, số giá trị và thời gian chạy | Thay "API truy vấn CSDL tùy chọn" của Aita, vốn là lỗ hổng an toàn thông tin | 032 | ERR-07-023, ERR-07-024, ERR-07-025 |
+| BR-07-019 | Danh mục `RESTRICTED` chỉ HTTT được cấp quyền khai thác còn hiệu lực trên đúng danh mục đó mới khai thác được qua API | Nội dung hạn chế không được lộ qua kênh máy | 026…033, 042, 052 | ERR-07-030 |
+| BR-07-020 | Danh mục không ngừng hiệu lực được khi đang bị thuộc tính `CATALOG_REF` của phiên bản hiệu lực của danh mục `ACTIVE` khác tham chiếu, hoặc đang là gốc của danh mục HYBRID `ACTIVE` | Ngừng hiệu lực làm gãy kiểm tra hợp lệ của danh mục phụ thuộc | 009, 048 | ERR-07-032 |
+| BR-07-021 | Với ĐVHC, một mã không được gán cho hai đơn vị khác nhau trong hai khoảng thời gian giao nhau | Mã ĐVHC là khóa trong dữ liệu nghiệp vụ nhiều năm; gán lại mã làm dữ liệu lịch sử bị hiểu sai | 044, 045 | ERR-07-035 (có lớp CSDL) |
+| BR-07-022 | Khi chuyển mã ĐVHC cho kết quả nhiều ứng viên, hệ thống trả danh sách ứng viên, không bao giờ tự chọn | Chỉ hệ thống nghiệp vụ có địa chỉ chi tiết mới quyết định đúng | 046 | — |
+| BR-07-023 | Trong một hệ thống mã và một khoảng hiệu lực, mỗi mã ngoài trỏ tới đúng một mã danh mục; một mã danh mục được có nhiều mã ngoài | Chuyển mã chiều vào phải cho kết quả xác định | 041, 042 | ERR-07-033 (có lớp CSDL) |
+| BR-07-024 | Ánh xạ tạm thời phải có lý do | Ánh xạ tạm thời là nợ nghiệp vụ cần theo dõi | 041 | ERR-07-034 (có lớp CSDL) |
+| BR-07-025 | Danh mục không chứa dữ liệu cá nhân: không có mức phân loại Nhạy cảm; thuộc tính có mã, nhãn gợi ý dữ liệu cá nhân bị từ chối hoặc phải xác nhận; thư điện tử chỉ là hộp thư công vụ | Danh mục được nhân bản rộng vào bộ đệm, ảnh chụp, HTTT; không áp được biện pháp bảo vệ dữ liệu cá nhân theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 và Nghị định 356/2025/NĐ-CP | 003, 005, 022, 038, 039, 051 | ERR-07-036 |
+| BR-07-026 | Phát hành thẳng từ `DRAFT` chỉ khi danh mục `require_approval = false`, không có thay đổi phá vỡ, không vượt ngưỡng thay đổi lớn | Lối tắt chỉ dành cho thay đổi nhỏ, rủi ro thấp | 015, 016 | ERR-07-016 |
+| BR-07-027 | `effective_from` của phiên bản không sớm hơn hôm nay (giờ Việt Nam) và không xa hơn `07.rdm.max-future-effective-days`; ngoại lệ: phiên bản `origin = SYNC` hoặc `MIGRATION` được hồi tố khi có lý do | Hồi tố làm thay đổi kết quả tra cứu quá khứ mà HTTT đã dùng; chỉ chấp nhận khi phản ánh văn bản đã có hiệu lực | 016, 036, 037, 044, 049, 051 | ERR-07-017 |
+| BR-07-040 | Mã danh mục không đổi sau khi danh mục đã phát hành lần đầu; mã bản ghi đã từng phát hành không được gán cho đối tượng nghiệp vụ khác ở phiên bản sau | Đổi mã làm gãy HTTT đang gọi; tái dùng mã làm dữ liệu cũ bị hiểu sai | 004, 012 | ERR-07-004, ERR-07-008 |
+| BR-07-041 | Tệp tải lên chỉ được phân tích khi kết quả quét mã độc là `CLEAN` | DD-12; tệp từ người dùng là đầu vào không tin cậy | 021, 022, 039, 046, 051 | ERR-07-038 |
+
+## 7. Tham số và yêu cầu phi chức năng
+
+### 7.1. Tham số PH-07
+
+Bảng sau là danh sách chính thức tham số của namespace `07.rdm` lưu ở PH-18 (FR-07-053). Cột "Mức" cho biết ai đặt được: `PLATFORM` là chỉ quản trị nền tảng (giới hạn cứng), `TENANT` là quản trị tỉnh đặt được trong miền cho phép. Các tài liệu khác trong bộ PH-07 phải dùng đúng tên khóa trong bảng này; các tên khác từng xuất hiện trong bản nháp (`07.rdm.import-max-file-mb`, `07.rdm.import-max-bytes`) được thay bằng `07.rdm.import-max-mb`.
+
+| Khóa | Kiểu | Mặc định | Miền | Mức | Dùng ở |
+|---|---|---|---|---|---|
+| `07.rdm.large-change-threshold-percent` | Số nguyên (%) | 10 | 1…100 | TENANT | BR-07-012; FR-07-014, 016, 036 |
+| `07.rdm.max-future-effective-days` | Số nguyên (ngày) | 365 | 30…1.825 | TENANT | BR-07-027; FR-07-016 |
+| `07.rdm.batch-max-ops` | Số nguyên | 5.000 | 1…5.000 | PLATFORM | FR-07-023, 041 |
+| `07.rdm.batch-rate-per-minute` | Số nguyên | 10 | 1…60 | TENANT | FR-07-023 (số lô mỗi phút mỗi HTTT) |
+| `07.rdm.lookup-batch-max` | Số nguyên | 500 | 1…500 | PLATFORM | FR-07-027, 042 |
+| `07.rdm.import-max-rows` | Số nguyên | 200.000 | 1…200.000 | PLATFORM | FR-07-021, 022 |
+| `07.rdm.import-max-mb` | Số nguyên (MB) | 50 | 1…50 | PLATFORM | FR-07-021, 022, 046 |
+| `07.rdm.import-preview-ttl-hours` | Số nguyên (giờ) | 24 | 1…72 | PLATFORM | BR-07-016 |
+| `07.rdm.export-sync-max-rows` | Số nguyên | 10.000 | 1…50.000 | PLATFORM | FR-07-024 (ngưỡng xuất đồng bộ hay chạy nền) |
+| `07.rdm.max-queryable-attributes` | Số nguyên | 10 | 1…20 | PLATFORM | FR-07-005, 032 |
+| `07.rdm.query-timeout-ms` | Số nguyên (ms) | 2.000 | 500…5.000 | PLATFORM | BR-07-018; FR-07-032 |
+| `07.rdm.hybrid-default-pattern` | Chuỗi (biểu thức chính quy) | `^{mã tỉnh}\.[A-Z0-9_]{1,20}$` | Biểu thức hợp lệ, neo hai đầu | TENANT | FR-07-048 |
+| `07.rdm.pii-keywords` | Danh sách chuỗi | Danh sách gợi ý ở mục 4.4 | 1…500 phần tử | PLATFORM | BR-07-025 |
+| `07.rdm.sync-default-cron` | Chuỗi (cron 6 trường) | `0 0 1 * * *` | Không dày hơn một giờ | TENANT | FR-07-035 |
+| `07.rdm.sync-stale-alert-days` | Số nguyên (ngày) | 7 | 1…30 | TENANT | FR-07-036 (cảnh báo trên giao diện) |
+| `07.rdm.version-online-retention-years` | Số nguyên (năm) | 5 | 3…20 | PLATFORM | Lưu trữ bản ghi của phiên bản cũ (D03-03-PH07) |
+
+### 7.2. Yêu cầu phi chức năng riêng của PH-07
+
+Các yêu cầu phi chức năng chung (thời gian phản hồi giao diện, khả năng truy cập, bảo mật chung) ở D02-02 §5 (NFR-00) áp dụng cho PH-07. Bảng sau là các yêu cầu riêng, đo ở môi trường PERF với cấu hình ở D05-02-PH07 §1.3; ngưỡng thời gian là phân vị 95 đo tại gateway trừ khi ghi khác.
+
+| Mã | Yêu cầu | Ngưỡng | Đo bằng |
+|---|---|---|---|
+| NFR-07-001 | Thời gian tra một mã (FR-07-026) | p95 ≤ 20 ms, p99 ≤ 50 ms với bộ đệm ấm | k6, 5.000 lượt/giây |
+| NFR-07-002 | Thời gian tra lô 500 mã (FR-07-027), chuyển mã lô 500 (FR-07-042) | p95 ≤ 150 ms | k6 |
+| NFR-07-003 | Thời gian lấy một trang 1.000 bản ghi (FR-07-028) | p95 ≤ 300 ms | k6 |
+| NFR-07-004 | Truy vấn có cấu trúc trên danh mục 100.000 bản ghi (FR-07-032) | p95 ≤ 500 ms; truy vấn quá 2 giây bị ngắt | k6, `rdm_query_duration_seconds` |
+| NFR-07-005 | Nhập tệp 100.000 dòng (FR-07-021) | Có xem trước ≤ 2 phút từ lúc tải lên; commit ≤ 60 giây | Kiểm thử hiệu năng tác vụ nền |
+| NFR-07-006 | Xuất 100.000 dòng ra xlsx (FR-07-024) | ≤ 60 giây; xuất đồng bộ ≤ 10.000 dòng trả ≤ 5 giây | Kiểm thử hiệu năng tác vụ nền |
+| NFR-07-007 | Phát hành phiên bản 50.000 bản ghi kể cả sinh ảnh chụp (FR-07-016); độ trễ sự kiện | ≤ 30 giây; sự kiện lên Kafka ≤ 5 giây sau cam kết | Kiểm thử tích hợp có đo thời gian |
+| NFR-07-008 | Thông lượng khai thác | ≥ 5.000 lượt/giây mỗi tenant; ≥ 20.000 lượt/giây toàn cụm với 3 bản sao `dh-data` | k6 |
+| NFR-07-009 | Tỷ lệ trúng bộ đệm khai thác | ≥ 95% ở trạng thái ổn định; phục hồi ≥ 95% trong 10 phút sau khi khởi động lại toàn bộ pod | `rdm_cache_hit_ratio` |
+| NFR-07-010 | Sẵn sàng khai thác | ≥ 99,9% theo tháng; tra cứu tiếp tục ít nhất 24 giờ khi PostgreSQL ngừng (phục vụ từ bộ đệm L2 và ảnh chụp); tra cứu trong data plane (`dh-runtime`) không phụ thuộc control plane | Kiểm thử hỗn loạn (Chaos Mesh) |
+| NFR-07-011 | Quy mô | 34 tenant; mỗi tenant 1.000 danh mục; mỗi danh mục tới 200.000 bản ghi và 100 thuộc tính động; bản nháp 200.000 bản ghi sửa được trên giao diện (phân trang máy chủ, cuộn ảo) | Dữ liệu PERF |
+| NFR-07-012 | Tài nguyên | Bộ đệm L1 ≤ 256 MB mỗi pod; pod `dh-data` giới hạn 2 GB bộ nhớ không bị OOM khi nhập, xuất, phát hành danh mục lớn nhất | Giám sát pod khi chạy NFR-07-005…007 |
+| NFR-07-013 | Độ tươi của danh mục quốc gia | Thay đổi trên NDXP được phát hiện ≤ 24 giờ (KPI-11); cảnh báo khi `last_success_at` quá 24 giờ | `rdm_sync_last_success_timestamp` |
+| NFR-07-014 | Quan sát | Có tối thiểu các chỉ số `rdm_lookup_total{catalog,result}`, `rdm_lookup_duration_seconds`, `rdm_cache_hit_ratio{tier}`, `rdm_query_rejected_total{reason}`, `rdm_query_duration_seconds`, `rdm_import_job_total{status}`, `rdm_publish_duration_seconds`, `rdm_sync_run_total{status}`, `rdm_sync_last_success_timestamp{source}`, `rdm_mapping_coverage_ratio{catalog,codeSystem}`, `rdm_translate_total{result}`, `rdm_adminunit_convert_total{direction,status}`, `rdm_snapshot_failures_total`; vết OpenTelemetry cho mọi API và tác vụ nền | Kiểm tra cấu hình Grafana |
+| NFR-07-015 | Kiểm toán | 100% thao tác ghi có bản ghi kiểm toán đủ trường FR-00-041; không mất bản ghi kiểm toán khi PH-13 ngừng (đệm qua outbox) | Kiểm thử TS-07-21 |
+
+## 8. Mã lỗi, sự kiện và danh mục API
+
+### 8.1. Mã lỗi ERR-07
+
+Bảng dưới đây là danh mục chính thức mã lỗi của PH-07, dùng chung cho FRS, API, giao diện và kiểm thử. Câu hiển thị cho người dùng nằm ở D03-06-PH07 §5.3; bảng này nêu điều kiện kỹ thuật và mã HTTP. Mã ERR-07-001…037 thuộc khung ban đầu; ERR-07-038…048 là mã bổ sung. Trong bản nháp trước, mã ERR-07-040 và ERR-07-041 từng được dùng cho "tệp nhiễm mã độc" (D02-04-PH07) và "nhóm danh mục trùng, vòng" (FR-07-010) trong khi D03-04-PH07 đã cấp hai mã đó cho lỗi xác thực và thiếu `If-Match`; bảng này giữ phân bổ của D03-04-PH07 vì là hợp đồng sinh mã, và chuyển hai nghĩa kia sang ERR-07-038 và ERR-07-039.
+
+| Mã | HTTP | Điều kiện |
+|---|---|---|
+| ERR-07-001 | 404 | Không tìm thấy danh mục (hoặc thuộc tenant khác) |
+| ERR-07-002 | 409 | Mã đã được dùng: mã danh mục, mã hệ thống mã, nguồn đồng bộ trùng |
+| ERR-07-003 | 403 | Danh mục hoặc đối tượng chỉ đọc với chủ thể (`NATIONAL`, `COMMON` với tenant tỉnh, bản ghi gốc qua HYBRID, lược đồ ĐVHC) |
+| ERR-07-004 | 409 | Phiên bản hoặc tác vụ không ở trạng thái cho phép thao tác |
+| ERR-07-005 | 409 | Đã có phiên bản mở; nguồn đang có lần chạy đồng bộ |
+| ERR-07-006 | 404 | Không tìm thấy phiên bản, hoặc không có phiên bản hiệu lực tại thời điểm |
+| ERR-07-007 | 404 | Không tìm thấy mã bản ghi tại thời điểm |
+| ERR-07-008 | 409 | Mã bản ghi trùng trong phiên bản hoặc trùng mã gốc của HYBRID |
+| ERR-07-009 | 422 | Dữ liệu không hợp lệ theo lược đồ hoặc theo ràng buộc của trường, kèm `errors[]` |
+| ERR-07-010 | 422 | Mã cha không tồn tại hoặc tạo vòng |
+| ERR-07-011 | 422 | Vượt độ sâu tối đa |
+| ERR-07-012 | 422 | Mã bổ sung nằm ngoài dải mã địa phương, hoặc dải chồng mã gốc |
+| ERR-07-013 | 409 | Xóa bản ghi đã từng phát hành |
+| ERR-07-014 | 422 | Thay đổi thuộc tính không tương thích với giá trị hiện có |
+| ERR-07-015 | 403 | Vi phạm bốn mắt |
+| ERR-07-016 | 409 | Phát hành thẳng nhưng có thay đổi lớn hoặc phá vỡ, phải qua duyệt |
+| ERR-07-017 | 422 | Ngày hiệu lực không hợp lệ |
+| ERR-07-018 | 412 | ETag không khớp (`If-Match`) |
+| ERR-07-019 | 422 | Tệp không hợp lệ: định dạng, mã hóa, kích thước, số dòng, khuôn, gói nền hỏng |
+| ERR-07-020 | 409 | Tác vụ nhập không còn ghi được (hết hạn, bản nháp đã đổi, lược đồ chỉnh làm đổi kết quả) |
+| ERR-07-021 | 422 | Còn dòng hoặc bản ghi lỗi mà không chọn bỏ qua |
+| ERR-07-022 | 409 | `Idempotency-Key` đã dùng với nội dung khác |
+| ERR-07-023 | 400 | Biểu thức truy vấn sai cú pháp |
+| ERR-07-024 | 400 | Truy vấn vượt giới hạn độ phức tạp hoặc thời gian |
+| ERR-07-025 | 400 | Thuộc tính không cho phép truy vấn |
+| ERR-07-026 | 400 | Số lượng vượt mức tối đa một lần (lô, trang) |
+| ERR-07-027 | 404 | Không tìm thấy ánh xạ |
+| ERR-07-028 | 502 | Nguồn quốc gia (qua PH-14) không phản hồi hoặc trả lỗi |
+| ERR-07-029 | 409 | Lần đồng bộ không còn chờ xác nhận, hoặc phiên bản gốc đã đổi |
+| ERR-07-030 | 403 | HTTT chưa được cấp quyền khai thác danh mục hạn chế |
+| ERR-07-031 | 410 | Danh mục đã ngừng hiệu lực (tại thời điểm tra) |
+| ERR-07-032 | 409 | Danh mục đang bị tham chiếu nên không ngừng hiệu lực được |
+| ERR-07-033 | 422 | Mã ngoài đã ánh xạ tới mã khác trong khoảng hiệu lực giao nhau |
+| ERR-07-034 | 422 | Ánh xạ tạm thời thiếu lý do |
+| ERR-07-035 | 422 | Sự kiện sắp xếp ĐVHC không hợp lệ; nhập tay `replacedBy` cho ĐVHC |
+| ERR-07-036 | 422 | Thuộc tính hoặc dữ liệu gợi ý dữ liệu cá nhân, mức Nhạy cảm |
+| ERR-07-037 | 409 | Nhóm còn danh mục hoặc nhóm con nên không xóa được |
+| ERR-07-038 | 422 | Tệp không vượt qua quét mã độc (`scan_status = INFECTED`) hoặc quét quá hạn (mới; thay ERR-07-040 của bản nháp D02-04-PH07) |
+| ERR-07-039 | 409 | Mã nhóm danh mục trùng, nhóm cha tạo vòng hoặc vượt độ sâu 5 (mới; thay ERR-07-041 của bản nháp FR-07-010) |
+| ERR-07-040 | 400 | Thiếu tiêu đề `If-Match` trên thao tác bắt buộc (quy ước 428 được quy về 400 cho thống nhất client) |
+| ERR-07-041 | 401 | Thiếu token, token không hợp lệ hoặc hết hạn |
+| ERR-07-042 | 413 | Thân yêu cầu hoặc tệp vượt kích thước tối đa |
+| ERR-07-043 | 415 | Kiểu nội dung không hỗ trợ |
+| ERR-07-044 | 429 | Vượt giới hạn tần suất |
+| ERR-07-045 | 404 | Không tìm thấy tài nguyên khác: tác vụ, nguồn, lần chạy, hệ thống mã, sự kiện sắp xếp, tenant |
+| ERR-07-046 | 403 | Không đủ quyền (khi PH-07 tự trả, ngoài lỗi phân quyền chung của gateway) |
+| ERR-07-047 | 503 | Tài nguyên tạm chưa sẵn sàng (ảnh chụp đang sinh) hoặc phân hệ phụ thuộc (PH-13, PH-18) không sẵn sàng |
+| ERR-07-048 | 409 | Danh mục hoặc tenant không ở trạng thái cho phép thao tác (xóa danh mục `ACTIVE`, ngừng hiệu lực danh mục `DRAFT`, nạp gói cho tenant không ở trạng thái khởi tạo) (mới; trả lời Q07-76 của D05-02-PH07) |
+
+Hai điều chỉnh sau áp dụng cho các FR đã viết ở trên kể từ bản này: FR-07-009 dùng ERR-07-048 (thay ERR-07-004) cho "xóa danh mục đã phát hành" và "ngừng hiệu lực danh mục chưa phát hành", vì ERR-07-004 dành cho trạng thái phiên bản; FR-07-010 dùng ERR-07-039 cho nhóm trùng, vòng hoặc vượt độ sâu.
+
+### 8.2. Sự kiện EVT-07
+
+Danh mục sự kiện EVT-07-01…10 và quy tắc phát được quy định ở FR-07-034; lược đồ chi tiết ở `asyncapi-rdm.yaml` của D03-04-PH07. Mã EVT-07-11 được giữ chỗ cho sự kiện "phiên bản đã được duyệt" (`{tenant}.rdm.catalog.approved.v1`) nếu PH-12 cần đóng việc chờ duyệt khi phiên bản được duyệt mà chưa phát hành (Q07-05).
+
+### 8.3. Danh mục API theo FR
+
+Bảng dưới đây gom API-07-001…076 theo FR để đội phát triển chia việc theo lát dọc; chi tiết hợp đồng ở `openapi-rdm.yaml`.
+
+| Nhóm | API | FR |
+|---|---|---|
+| Danh mục, nhóm | API-07-001…006; API-07-007…010 | FR-07-001…004, 008, 009; FR-07-010 |
+| Phiên bản | API-07-011…021 | FR-07-002, 011, 013…017 |
+| Thuộc tính | API-07-022…025 | FR-07-005, 006 |
+| Bản ghi quản trị | API-07-026…031 | FR-07-002, 012, 018, 019, 023 |
+| Nhập xuất | API-07-032…040 | FR-07-020…025 |
+| Khai thác, truy vấn | API-07-041…049 | FR-07-026…033 |
+| ĐVHC | API-07-050…054 | FR-07-045…047 |
+| Đồng bộ | API-07-055…063, 074 | FR-07-035…039 |
+| Ánh xạ | API-07-064…071 | FR-07-040…043 |
+| Kiểm toán, quyền khai thác | API-07-072, 075 | FR-07-050, 052 |
+| Nền tảng | API-07-073 | FR-07-049 |
+| Tham số | API-07-076 (bỏ, dùng PH-18) | FR-07-053 |
+
+## 9. Truy vết
+
+### 9.1. Chức năng hệ cũ sang FR
+
+Bảng sau chứng minh mọi chức năng của Aita được kiểm kê ở D00-03 §4.5 (và hai mục liên quan của NGSP, bus) đều được ít nhất một FR phủ, và cho biết mức thay đổi so với hệ cũ.
+
+| Mã LGC | Chức năng hệ cũ | FR phủ | Mức |
+|---|---|---|---|
+| LGC-DMDC-001 | Danh sách danh mục, số lượng danh mục | FR-07-001 | Giữ nguyên, thêm bộ lọc và `facets` |
+| LGC-DMDC-002 | Hiển thị dữ liệu danh mục dạng cây | FR-07-007, 018, 029 | Giữ nguyên |
+| LGC-DMDC-003 | Xem chi tiết danh mục | FR-07-002 | Giữ nguyên, thêm phiên bản, ánh xạ, lịch sử |
+| LGC-DMDC-004 | Tạo danh mục bằng nhập tay | FR-07-003, 005 | Nâng cấp: thuộc tính có kiểu và ràng buộc |
+| LGC-DMDC-005 | Tạo danh mục từ tệp theo khuôn Aita | FR-07-022 | Nâng cấp: thêm khuôn chuẩn, UTF-8, xem trước |
+| LGC-DMDC-006 | Nhập dữ liệu từ Excel | FR-07-020, 021 | Nâng cấp: chạy nền, hai pha |
+| LGC-DMDC-007 | Nhập dữ liệu từ CSV | FR-07-021 | Nâng cấp |
+| LGC-DMDC-008 | Nhập dữ liệu qua API | FR-07-023 | Nâng cấp: lô, lũy đẳng |
+| LGC-DMDC-009 | Cập nhật tên danh mục | FR-07-004 | Giữ nguyên |
+| LGC-DMDC-010 | Cập nhật danh sách thuộc tính | FR-07-006 | Nâng cấp: trên bản nháp, kiểm tra tương thích |
+| LGC-DMDC-011 | Cập nhật danh sách bản ghi | FR-07-011, 012 | Nâng cấp: bản nháp, phát hành |
+| LGC-DMDC-012 | Xóa danh mục | FR-07-009 | Nâng cấp: xóa mềm hoặc ngừng hiệu lực |
+| LGC-DMDC-013 | Xuất Excel | FR-07-024 | Giữ nguyên, theo phiên bản |
+| LGC-DMDC-014 | Xuất CSV | FR-07-024 | Giữ nguyên |
+| LGC-DMDC-015 | Khai thác qua API | FR-07-026…031, 033 | Nâng cấp: tra theo thời điểm, lô, delta, ảnh chụp |
+| LGC-DMDC-016 | API truy vấn CSDL tùy chọn | FR-07-032 | Thay thế bằng truy vấn có cấu trúc, cấm SQL tự do |
+| LGC-DMDC-017 | Cờ cập nhật `is_update` | FR-07-008, 048 | Nâng cấp: nguồn quyết định quyền ghi |
+| LGC-DMDC-018 | Thứ tự và trạng thái thuộc tính | FR-07-005, 006 | Giữ nguyên |
+| LGC-DMDC-019 | Kết nối danh mục quốc gia qua NGSP | FR-07-035…039 | Nâng cấp: đồng bộ định kỳ, đối chiếu, xác nhận |
+| LGC-NGSP-006 | Danh mục dùng chung quốc gia trên NGSP | FR-07-035, 036, 038, 039 | Giữ nguyên chức năng, qua PH-14 |
+| LGC-BUS-036 | Chuyển đổi dữ liệu trên bus (phần ngữ nghĩa) | FR-07-040…042 | Nâng cấp: bảng ánh xạ dùng chung |
+
+### 9.2. FR sang use case, màn hình và kiểm thử
+
+Bảng sau tóm tắt truy vết xuôi của từng FR; truy vết chi tiết tới từng test case ở D05-02-PH07 §8.
+
+| FR | Mức | UC | UI | TS (D05-02-PH07) |
+|---|---|---|---|---|
+| FR-07-001, 002 | M | UC-07-01 | UI-07-01, 02 | TS-07-01 |
+| FR-07-003, 004 | M | UC-07-01 | UI-07-03 | TS-07-01 |
+| FR-07-005, 006, 007 | M | UC-07-01 | UI-07-04 | TS-07-03 |
+| FR-07-008 | M | UC-07-01, 17 | UI-07-03 | TS-07-04 |
+| FR-07-009 | M | UC-07-14 | UI-07-02 | TS-07-01 |
+| FR-07-010 | S | — | UI-07-01 | TS-07-02 |
+| FR-07-011, 012, 013, 017, 018, 019 | M | UC-07-02 | UI-07-05 | TS-07-05 |
+| FR-07-014 | M | UC-07-06 | UI-07-07 | TS-07-06 |
+| FR-07-015, 016 | M | UC-07-06, 07 | UI-07-07 | TS-07-07 |
+| FR-07-020, 021 | M | UC-07-03 | UI-07-06 | TS-07-08 |
+| FR-07-022 | M | UC-07-04 | UI-07-06 | TS-07-09 |
+| FR-07-023 | M | UC-07-05 | — | TS-07-10 |
+| FR-07-024, 025 | M | UC-07-08 | UI-07-02, 08 | TS-07-11 |
+| FR-07-026…031, 033 | M (030: S) | UC-07-09 | UI-07-12 | TS-07-12 |
+| FR-07-032 | M | UC-07-10 | UI-07-12 | TS-07-13 |
+| FR-07-034 | M | — | — | TS-07-14 |
+| FR-07-035…038 | M | UC-07-11 | UI-07-09 | TS-07-15 |
+| FR-07-039 | C | UC-07-11 | UI-07-09 | TS-07-15 |
+| FR-07-040…042 | M | UC-07-13 | UI-07-10 | TS-07-16 |
+| FR-07-043 | S | UC-07-13 | UI-07-10 | TS-07-16 |
+| FR-07-044…047 | M | UC-07-12 | UI-07-11 | TS-07-17 |
+| FR-07-048 | M | UC-07-17 | UI-07-01, 03 | TS-07-04, TS-07-18 |
+| FR-07-049 | M | UC-07-15 | — | TS-07-18 |
+| FR-07-050 | M | Mọi UC ghi | UI-07-02 tab Lịch sử | TS-07-21 |
+| FR-07-051 | M | UC-07-16 | UI-07-08 | TS-07-22 |
+| FR-07-052 | M | — | UI-07-02 tab Quyền khai thác | TS-07-23 |
+| FR-07-053 | S | Luồng phụ UC (D02-04-PH07 §7.1) | UI-07-13 | TS-07-24 |
+
+### 9.3. Phạm vi MVP
+
+PH-07 thuộc đợt MVP (D02-01 §8.3) vì là một trong bốn khối hệ cũ (DMDC) phải thay thế được ngay. Quy ước của FRS: FR mức M thuộc MVP; FR mức S thuộc đợt 2 nhưng mô hình dữ liệu và API được chừa sẵn ở MVP; FR mức C chỉ làm khi điều kiện bên ngoài sẵn sàng. Bảng sau liệt kê phần không thuộc MVP; mọi FR còn lại trong mục 5 thuộc MVP.
+
+| FR | Mức | Đợt | Lý do |
+|---|---|---|---|
+| FR-07-010 Nhóm danh mục | S | Đợt 2 | MVP hiển thị danh mục phẳng có bộ lọc; nhóm chỉ là tiện ích sắp xếp |
+| FR-07-030 Tìm kiếm không dấu | S | Đợt 2 | MVP tìm theo mã và tiền tố tên; tìm không dấu cần chỉ mục bổ sung |
+| FR-07-043 Báo cáo độ phủ ánh xạ | S | Đợt 2 | Cần dữ liệu ánh xạ tích lũy sau một thời gian vận hành |
+| FR-07-053 Tham số PH-07 theo tenant | S | Đợt 2 | MVP đặt tham số bằng cấu hình triển khai của PH-18 |
+| FR-07-039 Đề xuất bổ sung danh mục quốc gia | C | Khi NDXP mở chức năng đề xuất | Phụ thuộc giả định thứ nhất ở mục 10.2 |
+
+Toàn bộ chức năng nhập, xuất Excel và CSV của Aita (LGC-DMDC-005…008, 013, 014; FR-07-020…025) thuộc MVP, vì đây là khoảng trống đã phát hiện ở repo gốc và là thao tác hằng ngày của cán bộ quản lý danh mục.
+
+## 10. Phụ thuộc, giả định và ràng buộc
+
+### 10.1. Phụ thuộc với phân hệ khác
+
+PH-07 phụ thuộc và được phụ thuộc bởi các phân hệ sau. Mỗi phụ thuộc ghi rõ hướng, cơ chế và hành vi của PH-07 khi phân hệ kia không sẵn sàng, vì phần khai thác của PH-07 phải sẵn sàng cao hơn phần lớn các phân hệ nó phụ thuộc.
+
+| Phân hệ | Hướng | Cơ chế | Khi không sẵn sàng |
+|---|---|---|---|
+| PH-01 Kết nối thành viên | PH-07 dùng | Tra HTTT thành viên (`member_system_id`) cho hệ thống mã và cấp quyền khai thác; nhận sự kiện HTTT bị đình chỉ | Không lưu được hệ thống mã, cấp quyền mới; khai thác dùng bộ đệm quyền |
+| PH-03 Gateway (APISIX) | PH-07 dùng | Xác thực token, scope, giới hạn tần suất, nhật ký truy cập | Toàn bộ API ngừng (ngoài phạm vi PH-07) |
+| PH-04 Luồng tích hợp, `dh-runtime` | Dùng PH-07 | Tra mã, chuyển mã từ ảnh chụp trong bộ nhớ (ADR-053) | — |
+| PH-06 Dữ liệu chủ | Dùng PH-07 | Danh mục làm miền giá trị, `admin_unit` cho địa chỉ | — |
+| PH-08 Chất lượng dữ liệu | Dùng PH-07 | Danh mục làm miền giá trị của quy tắc | — |
+| PH-10 Sự kiện | Dùng PH-07 | Đăng ký topic `*.rdm.*` cho HTTT | — |
+| PH-12 Quy trình, hộp "Việc của tôi" | Dùng sự kiện PH-07 | Tạo, đóng việc chờ duyệt, chờ xác nhận đồng bộ | Việc chưa được tạo; người dùng vẫn thấy trên UI-07-07, 09 |
+| PH-13 Kiểm toán | PH-07 dùng | Ghi qua outbox; đọc cho API-07-072 | Ghi vẫn tiếp tục (outbox giữ); đọc lịch sử trả một phần (ERR-07-047) |
+| PH-14 Kết nối quốc gia | PH-07 dùng | Cổng tiếp hợp `NDXP_DMDC` | Đồng bộ `FAILED`, thử lại lượt sau (ERR-07-028) |
+| PH-18 Vận hành, tham số | PH-07 dùng | Kho tham số `07.rdm.*`, cảnh báo | Dùng giá trị đệm hoặc mặc định đóng gói |
+| PH-20 Quản lý tenant | Hai chiều | PH-20 gọi nạp gói nền; PH-07 cung cấp ĐVHC cho địa bàn tenant, tổ chức | — |
+
+### 10.2. Giả định
+
+FRS dựa trên các giả định sau; nếu giả định sai, các FR liên quan phải xem lại. Thứ nhất, NDXP cung cấp qua PH-14 bốn chức năng danh mục như NGSP cũ (liệt kê, cấu trúc, dữ liệu, đề xuất), chức năng đề xuất có thể chưa ổn định (FR-07-039 mức C). Thứ hai, bảng mã ĐVHC theo Quyết định 19/2025/QĐ-TTg và các nghị quyết sắp xếp năm 2025 có thể lấy được dưới dạng dữ liệu máy đọc để nạp gói nền (Q07-01, Q07-25). Thứ ba, PH-01 gán `member_system_id` vào token của client HTTT để PH-07 kiểm tra quyền khai thác mà không phải gọi PH-01 trong mỗi lượt tra. Thứ tư, PH-18 cung cấp kho tham số có lược đồ và sự kiện thay đổi (DD-14). Thứ năm, dịch vụ quét mã độc theo DD-12 có trong cụm.
+
+### 10.3. Ràng buộc
+
+FRS chịu các ràng buộc sau từ tài liệu nền: phân quyền theo D02-08 (kể cả khi FRS đề xuất bổ sung quyền, mã nguồn kiểm tra mã quyền mới nhưng cấu hình vai trò mặc định theo D02-08 cho tới khi được gộp); đa tenant theo D03-10 (RLS, `COMMON`, `PLATFORM`); quy ước API, outbox theo SAD §7.2, §7.3; phân loại dữ liệu theo SAD §8.2; cấm dữ liệu cá nhân trong danh mục theo BR-07-025 và Luật 91/2025/QH15, Nghị định 356/2025/NĐ-CP; kết nối quốc gia theo Nghị định 278/2025/NĐ-CP (mục 1.6).
+
+## 11. Câu hỏi mở
+
+Bảng dưới tổng hợp các câu hỏi mở phát sinh trong FRS. Câu hỏi của các tài liệu khác trong bộ PH-07 được quản lý ở chính tài liệu đó (D02-04-PH07 §9: Q07-20…29; D03-02-PH07: Q07-30…64; D03-06-PH07: Q07-65…74; D05-02-PH07: Q07-75…89).
+
+| Mã | Câu hỏi | Mục | Đề xuất tạm |
+|---|---|---|---|
+| Q07-01 | Số hiệu, ngày hiệu lực chính xác của Nghị quyết 202/2025/QH15, Quyết định 19/2025/QĐ-TTg, các nghị quyết UBTVQH sắp xếp cấp xã; tổng số 3.321 đơn vị cấp xã | 2.4 | Đối chiếu Công báo trước bản 1.0 |
+| Q07-02 | Có cấp `PERM-07-sync` phạm vi ○ cho DATA_STEWARD không | 3.3 | Theo D02-08 (không cấp) cho tới khi chủ đầu tư quyết định |
+| Q07-03 | Ký pháp scope `rdm.read` hay `rdm:read` | 3.4 | Dùng `rdm.read` |
+| Q07-04 | Có cần nhiều người cùng soạn một bản nháp đồng thời | FR-07-012 | Khóa lạc quan theo bản ghi |
+| Q07-05 | Sự kiện riêng cho thao tác duyệt để PH-12 đóng việc | FR-07-015 | Giữ chỗ EVT-07-11 |
+| Q07-06 | NDXP có trường phiên bản tin cậy ở mức danh mục không | FR-07-036 | Dùng băm nội dung khi không có |
+| Q07-07 | Lưu đề xuất bổ sung quốc gia ở bảng riêng hay `import_job` | FR-07-039 | `import_job` loại `PROPOSAL` ở MVP |
+| Q07-08 | Quy trình nâng danh mục nhiều tỉnh tự quản lên `COMMON` | FR-07-048 | Tỉnh chuyển thành HYBRID của danh mục `COMMON` mới |
+| Q07-09 | Mã lỗi ERR-07-038, 039, 048 mới và việc giữ phân bổ ERR-07-040…047 của D03-04-PH07 có được nhóm lõi chấp thuận | 8.1 | Áp dụng như bảng 8.1 |
+| Q07-10 | Thời hạn lưu trực tuyến bản ghi của phiên bản đã hết hiệu lực (mặc định 5 năm) có đáp ứng yêu cầu lưu trữ hồ sơ điện tử của tỉnh | 7.1 | 5 năm trực tuyến, sau đó chỉ còn ảnh chụp trên kho đối tượng |
+| Q07-11 | Thông tư 12/2022/TT-BTTTT đã có văn bản Bộ Công an thay thế chưa; số hiệu Nghị định 165/2025/NĐ-CP và hiệu lực của Nghị định 278/2025/NĐ-CP cần đối chiếu Công báo | 1.6 | Viện dẫn như mục 1.6, đánh dấu cần xác minh |
 

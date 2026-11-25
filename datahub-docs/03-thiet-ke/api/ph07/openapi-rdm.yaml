@@ -3599,10 +3599,10 @@ components:
       type: object
       properties:
         createdAt: { $ref: '#/components/schemas/TTs' }
-        createdBy: { type: string, description: Định danh người tạo (T-ID) hoặc `client:{clientId}` với HTTT. }
+        createdBy: { type: string, description: "Định danh người tạo (T-ID) hoặc `client:{clientId}` với HTTT." }
         updatedAt: { $ref: '#/components/schemas/TTs' }
         updatedBy: { type: string }
-        version: { type: integer, minimum: 0, description: Khóa lạc quan; ETag = `W/"{version}"`. }
+        version: { type: integer, minimum: 0, description: 'Khóa lạc quan; ETag = `W/"{version}"`.' }
     # ---------------------------------------------------------------- Liệt kê
     SourceType:
       type: string
@@ -3683,7 +3683,7 @@ components:
           type: string
           format: uri
           description: '`https://datahub.gov.vn/problems/rdm/{slug}` (tên miền giả định, chờ chốt).'
-        title: { type: string, description: Tóm tắt ngắn, cố định theo `code`. }
+        title: { type: string, description: 'Tóm tắt ngắn, cố định theo `code`.' }
         status: { type: integer, minimum: 400, maximum: 599 }
         detail: { type: string, description: Mô tả cụ thể lần lỗi này và cách khắc phục. }
         instance: { type: string, format: uri-reference, description: Đường dẫn yêu cầu gây lỗi. }
@@ -3691,7 +3691,7 @@ components:
           type: string
           pattern: '^ERR-(07|00)-\d{3}$'
           description: Mã lỗi ERR-07-nnn (hoặc ERR-00-nnn của tầng dùng chung).
-        traceId: { type: string, pattern: '^[0-9a-f]{32}$', description: T-TRACE từ `traceparent`. }
+        traceId: { type: string, pattern: '^[0-9a-f]{32}$', description: 'T-TRACE từ `traceparent`.' }
         timestamp: { $ref: '#/components/schemas/TTs' }
         errors:
           type: array
@@ -3724,9 +3724,9 @@ components:
       required: [limit, hasMore]
       properties:
         limit: { type: integer, minimum: 1, maximum: 1000 }
-        next: { type: [string, 'null'], description: Con trỏ trang kế; `null` khi hết. }
+        next: { type: [string, 'null'], description: 'Con trỏ trang kế; `null` khi hết.' }
         hasMore: { type: boolean }
-        total: { type: integer, description: Tổng số bản ghi của phiên bản (chỉ trả ở trang đầu, có thể bỏ qua khi tốn kém). }
+        total: { type: integer, description: 'Tổng số bản ghi của phiên bản (chỉ trả ở trang đầu, có thể bỏ qua khi tốn kém).' }
     # ---------------------------------------------------------------- Danh mục
     Catalog:
       allOf:
@@ -3919,7 +3919,7 @@ components:
             effectiveState: { oneOf: [{ $ref: '#/components/schemas/EffectiveState' }, { type: 'null' }] }
             effectiveFrom: { type: [string, 'null'], format: date }
             effectiveTo: { type: [string, 'null'], format: date, description: Không gồm (khoảng nửa mở). }
-            legalBasis: { type: [string, 'null'], maxLength: 1000, description: Căn cứ ban hành (số, ngày, cơ quan ban hành văn bản). }
+            legalBasis: { type: [string, 'null'], maxLength: 1000, description: 'Căn cứ ban hành (số, ngày, cơ quan ban hành văn bản).' }
             changeNote: { type: [string, 'null'], maxLength: 4000 }
             origin: { $ref: '#/components/schemas/VersionOrigin' }
             baseVersionNo: { type: [integer, 'null'], description: Phiên bản gốc khi tạo bản nháp. }
@@ -3932,7 +3932,7 @@ components:
             approvedAt: { type: [string, 'null'], format: date-time }
             publishedBy: { type: [string, 'null'] }
             publishedAt: { type: [string, 'null'], format: date-time }
-            snapshotAvailable: { type: boolean, readOnly: true, description: Ảnh chụp đã sinh xong; tải qua API-07-049 (không lộ `snapshotUri` nội bộ). }
+            snapshotAvailable: { type: boolean, readOnly: true, description: 'Ảnh chụp đã sinh xong; tải qua API-07-049 (không lộ `snapshotUri` nội bộ).' }
             schemaHash: { type: [string, 'null'], pattern: '^[0-9a-f]{64}$' }
             copying: { type: boolean, readOnly: true, description: Bản nháp đang được sao chép nền (202 của API-07-012). }
             lastValidation: { oneOf: [{ $ref: '#/components/schemas/ValidationReport' }, { type: 'null' }] }
@@ -3953,7 +3953,7 @@ components:
         effectiveFrom: { type: [string, 'null'], format: date }
         legalBasis: { type: [string, 'null'], maxLength: 1000 }
         changeNote: { type: [string, 'null'], maxLength: 4000 }
-        retroactiveReason: { type: [string, 'null'], maxLength: 1000, description: Bắt buộc khi `effectiveFrom` < hôm nay (chỉ origin SYNC/MIGRATION). }
+        retroactiveReason: { type: [string, 'null'], maxLength: 1000, description: 'Bắt buộc khi `effectiveFrom` < hôm nay (chỉ origin SYNC/MIGRATION).' }
     VersionActionRequest:
       type: object
       properties:
@@ -4195,7 +4195,7 @@ components:
           maxItems: 5000
           items: { $ref: '#/components/schemas/BatchOp' }
         atomic: { type: boolean, default: true }
-        dryRun: { type: boolean, default: false, description: Chỉ kiểm tra, không ghi. }
+        dryRun: { type: boolean, default: false, description: 'Chỉ kiểm tra, không ghi.' }
         createDraftIfMissing: { type: boolean, default: false }
         attrsMerge: { type: string, enum: [MERGE, REPLACE], default: MERGE, description: '`upsert` gộp `attrs` theo khóa hay thay toàn bộ.' }
     BatchResult:
