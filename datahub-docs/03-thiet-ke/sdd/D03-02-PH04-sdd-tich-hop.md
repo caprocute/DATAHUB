@@ -348,7 +348,7 @@ Mỗi hồ sơ sinh `runtime-manifest.json` lúc build (FR-04-081): `profile`, `
 
 | Cơ chế | Dùng cho | Lý do |
 |---|---|---|
-| Spring Data JDBC | `workspace`, `workspace_member`, `flow`, `flow_version`, `review`, `deployment`, `runtime_command`, `test_case`, `template`, `component_policy` | Aggregate nhỏ, khóa lạc quan qua cột `row_version` khớp `If-Match`; không cần lazy loading của JPA |
+| Spring Data JDBC | `workspace`, `workspace_member`, `flow`, `flow_version`, `review`, `deployment`, `runtime_command`, `test_case`, `template`, `component_policy` | Aggregate nhỏ, khóa lạc quan qua cột `version` khớp `If-Match`; không cần lazy loading của JPA |
 | `JdbcClient` | `flow_route_index`, `flow_endpoint_index`, `test_run`, `test_run_step`, `command_ack`, `heartbeat_latest`, truy vấn danh sách có `facets` | Ghi hàng loạt, `INSERT … ON CONFLICT`, truy vấn động |
 | Valkey | Phiên soạn, khóa lũy đẳng API (24 giờ), hàng đợi chạy thử theo tenant, bộ đệm catalog đã lọc | Dữ liệu ngắn hạn |
 | Ceph RGW bucket `dh-int-testrun` | Thân bản tin chạy thử khi `captureBodies` | Không làm phình CSDL; xóa theo vòng đời 7 ngày |
@@ -747,7 +747,7 @@ Bố cục tự động: dagre trong Web Worker, hướng trái sang phải, `ra
 
 Trình tự lưu: (1) ghi bản nháp vào IndexedDB khóa `dh.int.draft.{tenant}.{flow}.{version}` sau mỗi lệnh (gộp 1 giây); (2) 30 giây sau thay đổi cuối hoặc `Ctrl+S`, gửi API-04-022 với `If-Match: "{etag}"`, thân `VersionDraftUpdate`; (3) máy chủ trả ETag mới và kết quả mức `DESIGN`; (4) xóa bản IndexedDB tương ứng ETag đã xác nhận.
 
-ETag = `W/"{row_version}-{contentHash[0..8]}"` của `flow_version`. Máy chủ cập nhật bằng `UPDATE … WHERE flow_version_id = ? AND row_version = ?`; 0 dòng thì trả ERR-04-006 kèm `currentEtag`, `savedBy`, `savedAt`.
+ETag = `W/"{version}-{contentHash[0..8]}"` của `flow_version`. Máy chủ cập nhật bằng `UPDATE … WHERE id = ? AND version = ?`; 0 dòng thì trả ERR-04-006 kèm `currentEtag`, `savedBy`, `savedAt`.
 
 Gộp ba bên (`ThreeWayMerge` trong worker): đầu vào là cây gốc (lần tải cuối), cây của mình, cây máy chủ. So theo `id` nút:
 
