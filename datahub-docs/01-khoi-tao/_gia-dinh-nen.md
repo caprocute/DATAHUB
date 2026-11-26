@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D01-00
 ten: Bộ giả định nền dùng chung cho D01-01 và D01-02
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: QL, TĐ
 ---
@@ -102,11 +102,11 @@ Sau sắp xếp đơn vị hành chính năm 2025, cả nước còn 34 tỉnh, 
 | Sự kiện Kafka / ngày | 5 triệu | 25 triệu | 80 triệu |
 | Bản ghi danh mục dùng chung | 2 triệu | 5 triệu | 15 triệu |
 | Giao dịch thanh toán / tháng | 100 nghìn | 400 nghìn | 1,2 triệu |
-| Lưu nhật ký nóng / lưu trữ | 90 ngày / 24 tháng | 90 ngày / 24 tháng | 90 ngày / 24 tháng |
+| Lưu nhật ký | Vận hành 90 ngày; kiểm toán và siêu dữ liệu lượt gọi trực tuyến 12 tháng; bản WORM kiểm toán 5 năm (ADR-031) | như cỡ S | như cỡ S |
 | Mục tiêu sẵn sàng data plane | 99,9% | 99,9% | 99,95% |
 | RPO / RTO | RPO 15 phút; RTO 1 giờ data plane, 4 giờ control plane (NFR-00-014) | như cỡ S | RPO 5 phút; RTO 1 giờ data plane, 2 giờ control plane |
 
-Tỉnh thí điểm được giả định là **cỡ M** **[GĐ]**. Môi trường: DEV, TEST, STAGING, PROD và DR (warm standby ở site thứ hai hoặc vùng cloud thứ hai).
+Tỉnh thí điểm được giả định là **cỡ M** **[GĐ]**, gọi là `T01` (GĐ-06; sổ giả định GĐ-01 đến GĐ-07 ở phụ lục D02-01). Môi trường: DEV, TEST, STAGING, PROD và DR (warm standby ở site thứ hai hoặc vùng cloud thứ hai).
 
 ## 5. Đội ngũ thực hiện tham chiếu
 

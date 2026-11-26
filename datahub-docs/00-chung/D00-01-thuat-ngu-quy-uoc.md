@@ -269,6 +269,12 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | CMP-LAW-18 | Nghị định 356/2025/NĐ-CP (xem CMP-LAW-04) | Hồ sơ DPIA gửi A05, thông báo vi phạm DLCN | Tra web 21/11/2026, cần đối chiếu Công báo |
 | CMP-LAW-19 | Nghị định 278/2025/NĐ-CP (xem CMP-LAW-03) | Kết nối với nền tảng chia sẻ dữ liệu quốc gia | Tra web 21/11/2026, cần đối chiếu Công báo |
 | CMP-LAW-20 | Quyết định 8297/QĐ-BCA-A05 (2025) | Tiêu chí an ninh mạng cho nền tảng đám mây phục vụ CPĐT; áp dụng cho hồ sơ HT-B | Tra web 21/11/2026, cần đối chiếu Công báo |
+| CMP-LAW-21 | Luật Chuyển đổi số số 148/2025/QH15 (hiệu lực 01/7/2026) | Luật gốc của NĐ 224/2026; đầu tư, mua sắm, thuê dịch vụ cho chuyển đổi số | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
+| CMP-LAW-22 | Nghị định 194/2025/NĐ-CP ngày 03/7/2025 (Luật Giao dịch điện tử: CSDL quốc gia, kết nối, chia sẻ dữ liệu, dữ liệu mở) | Hạng mục kết nối, chia sẻ CSDL trong thiết kế cơ sở (D01-01 §5.8.3) | Cần xác minh |
+| CMP-LAW-23 | Thông tư 39/2026/TT-BKHCN (hiệu lực 01/7/2026, thay TT 18/2024/TT-BTTTT) | Lập và quản lý chi phí đầu tư, mua sắm, thuê dịch vụ cho chuyển đổi số; cơ cấu tổng mức đầu tư (D01-01 §8) | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
+| CMP-LAW-24 | Thông tư 41/2026/TT-BKHCN (hiệu lực 01/7/2026) | Khảo sát, triển khai, giám sát, kiểm thử, nghiệm thu dự án theo NĐ 224/2026 (D01-02 §3, §10, §13) | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
+| CMP-LAW-25 | Luật Đầu tư công số 58/2024/QH15, sửa đổi bởi Luật 90/2025/QH15 | Nhóm dự án, chủ trương đầu tư; khoản 2 Điều 47 là khung nội dung BCNCKT | Đã đối chiếu nguồn thứ cấp |
+| CMP-LAW-26 | Luật Đấu thầu số 22/2023/QH15, sửa đổi bởi Luật 57/2024/QH15 và Luật 90/2025/QH15 | Lựa chọn nhà thầu, gói EP (D01-01 §9.4, D01-02 §7.3) | Đã đối chiếu VBHN 74/VBHN-VPQH |
 | CMP-LAW-91 | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Nộp phí, lệ phí trực tuyến trong TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | CMP-LAW-92 | Nghị định 42/2022/NĐ-CP về cung cấp thông tin và dịch vụ công trực tuyến | Dịch vụ công trực tuyến toàn trình có thanh toán (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
 | CMP-LAW-93 | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, sửa đổi bởi Nghị định 107/2021/NĐ-CP | Vai trò Cổng DVC quốc gia, HTTT giải quyết TTHC (PH-19) | Cần xác minh (dải 91–97 dành cho PH-19, D02-01-PH19 §2.1) |
