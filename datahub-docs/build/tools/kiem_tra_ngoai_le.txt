@@ -1,0 +1,42 @@
+# Lỗi đã có trước khi bật kiểm tra (26/11/2026). Chỉ được THU HẸP tệp này.
+# Sinh bằng: python3 datahub-docs/build/tools/kiem_tra_ma.py --ghi-ngoai-le
+LINK	README.md	01-khoi-tao/D01-01-bao-cao-nghien-cuu-kha-thi.md	tệp không tồn tại
+LINK	README.md	01-khoi-tao/D01-02-ke-hoach-du-an.md	tệp không tồn tại
+THIEU	ADR-014	không có tệp 00-chung/adr/ADR-014-*.md
+THIEU	ADR-015	không có tệp 00-chung/adr/ADR-015-*.md
+THIEU	ADR-016	không có tệp 00-chung/adr/ADR-016-*.md
+THIEU	ADR-017	không có tệp 00-chung/adr/ADR-017-*.md
+THIEU	ADR-019	không có tệp 00-chung/adr/ADR-019-*.md
+THIEU	API-07-076	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH07-api-danh-muc.md
+THIEU	CMP-Dropdown	chưa định nghĩa trong 03-thiet-ke/uiux/D03-05-03-thanh-phan-nguyen-tu.md, 03-thiet-ke/uiux/D03-05-04-thanh-phan-phuc-hop.md
+THIEU	CMP-FileDropzone	chưa định nghĩa trong 03-thiet-ke/uiux/D03-05-03-thanh-phan-nguyen-tu.md, 03-thiet-ke/uiux/D03-05-04-thanh-phan-phuc-hop.md
+THIEU	CMP-GlassSurface	chưa định nghĩa trong 03-thiet-ke/uiux/D03-05-03-thanh-phan-nguyen-tu.md, 03-thiet-ke/uiux/D03-05-04-thanh-phan-phuc-hop.md
+THIEU	EVT-04-15	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH04-api-tich-hop.md
+THIEU	EVT-07-11	chưa định nghĩa trong 03-thiet-ke/api/D03-04-PH07-api-danh-muc.md
+THIEU	FR-00-045	chưa định nghĩa trong 02-yeu-cau/D02-02-srs.md
+THIEU	PERM-04-admin	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-catalog-admin	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-delete	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-emergency-stop	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-promote	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-sample-data	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-04-update	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-07-configure	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-07-grant	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-07-mapping	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-07-retire	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-07-update	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+THIEU	PERM-13-read	chưa định nghĩa trong 02-yeu-cau/D02-08-ma-tran-phan-quyen.md
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-002	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-004	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-028	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-034	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-042	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-044	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-054	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-061	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-072	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-074	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-082	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH04-api-tich-hop.md	API-04-090	ô đầu hai hàng cùng bảng
+TRUNG	03-thiet-ke/api/D03-04-PH07-api-danh-muc.md	API-07-075	ô đầu hai hàng cùng bảng

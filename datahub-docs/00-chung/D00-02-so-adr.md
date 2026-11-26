@@ -27,7 +27,6 @@ Repo DATAHUB đã có 22 ADR trong `docs/05-adr`. Bộ tài liệu này độc l
 | ADR-040 … 049 | Thanh toán | Luồng PH-19 |
 | ADR-050 … 059 | Danh mục dùng chung và các phân hệ khác | Luồng PH-07 và các phân hệ |
 | ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
-| ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
 
 ## 4. Danh sách ADR
 
@@ -48,8 +47,10 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-011](adr/ADR-011-opentelemetry-lgtm.md) | OpenTelemetry và bộ LGTM cho giám sát xuyên suốt | Đề xuất | Lõi |
 | [ADR-012](adr/ADR-012-openbao-bi-mat.md) | OpenBao (hoặc Vault) làm kho bí mật, cấm bí mật trong mã và tài liệu | Đề xuất | Lõi |
 | [ADR-013](adr/ADR-013-tach-control-data-plane.md) | Tách control plane và data plane | Đề xuất | Lõi |
-| ADR-020 | Liquid Glass trên antd v6 (thay ADR-016 của repo) | Đang viết | Giao diện |
-| ADR-021 | Font chữ giao diện | Đang viết | Giao diện |
+| [ADR-020](adr/ADR-020-liquid-glass-tren-antd-v6.md) | Phong cách Liquid Glass trên Ant Design v6 làm ngôn ngữ thị giác của giao diện (thay ADR-016 của repo) | Đề xuất | Giao diện |
+| [ADR-021](adr/ADR-021-font-chu-giao-dien.md) | Inter và JetBrains Mono làm phông chữ giao diện, tự lưu trữ | Đề xuất | Giao diện |
+| [ADR-022](adr/ADR-022-bieu-tuong-lucide.md) | Lucide làm bộ biểu tượng ứng dụng | Đề xuất | Giao diện |
+| [ADR-023](adr/ADR-023-bieu-do-echarts.md) | Apache ECharts làm thư viện biểu đồ | Đề xuất | Giao diện |
 | [ADR-030](adr/ADR-030-attt-cap-do-3-san-sang-cap-do-4.md) | Thiết kế ATTT theo cấp độ 3, chừa điểm nâng cấp cấp độ 4 | Chấp nhận (25/11/2026) | ATTT và hạ tầng |
 | [ADR-031](adr/ADR-031-nhat-ky-kiem-toan-chuoi-bam-worm.md) | Nhật ký kiểm toán chỉ-thêm, chuỗi băm, WORM; online 12 tháng, WORM 5 năm | Đề xuất | ATTT và hạ tầng |
 | [ADR-032](adr/ADR-032-ma-hoa-truong-nhay-cam-envelope-openbao.md) | Mã hóa trường Nhạy cảm bằng envelope encryption qua OpenBao transit | Đề xuất | ATTT và hạ tầng |
@@ -59,16 +60,6 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-036](adr/ADR-036-hai-ho-so-trien-khai-air-gapped.md) | Hai hồ sơ triển khai HT-A/HT-B và gói phân phối air-gapped | Đề xuất | ATTT và hạ tầng |
 | [ADR-037](adr/ADR-037-quy-trinh-git-trunk-based-cong-chat-luong.md) | Trunk-based, Conventional Commits, review bắt buộc, cổng CI-1…9; GitHub khi phát triển, GitLab on-prem khi bàn giao | Đề xuất | ATTT và hạ tầng |
 | [ADR-038](adr/ADR-038-chien-luoc-kiem-thu.md) | Chiến lược kiểm thử, gồm kiểm thử rò rỉ chéo tenant | Đề xuất | ATTT và hạ tầng |
-| [ADR-060](adr/ADR-060-trinh-thiet-ke-tu-lam-mo-hinh-kaoto.md) | Trình thiết kế tự làm lại mô hình Kaoto bằng React 19 và XYFlow, dùng catalog Kaoto vendor | Đề xuất | PH-04 |
-| [ADR-061](adr/ADR-061-catalog-khop-phien-ban-runtime.md) | Catalog trình thiết kế khớp phiên bản runtime, CI chặn khi lệch | Chấp nhận (25/11/2026) | PH-04 |
-| [ADR-062](adr/ADR-062-luong-nghiep-vu-yaml-dsl-java-cho-thu-vien-nen.md) | Luồng nghiệp vụ bằng YAML DSL; Java chỉ cho thư viện nền | Đề xuất | PH-04 |
-| [ADR-063](adr/ADR-063-anh-runtime-theo-ho-so-nap-yaml-luc-chay.md) | Ảnh `dh-runtime` theo hồ sơ thành phần, nạp YAML lúc chạy qua Argo CD | Đề xuất | PH-04 |
-| [ADR-064](adr/ADR-064-sandbox-chay-thu-camel-that.md) | Sandbox chạy thử Camel thật, đích mô phỏng | Đề xuất | PH-04 |
-| [ADR-065](adr/ADR-065-dieu-khien-runtime-git-va-lenh-co-ky.md) | Điều khiển runtime bằng Git kèm lệnh có ký qua Kafka | Đề xuất | PH-04 |
-| [ADR-066](adr/ADR-066-datamapper-sinh-jq.md) | Trình ánh xạ dữ liệu sinh JQ | Đề xuất | PH-04 |
-| [ADR-067](adr/ADR-067-truy-cap-csdl-truc-tiep-co-kiem-soat.md) | Truy cập CSDL trực tiếp có kiểm soát (Q359) | Chấp nhận (25/11/2026) | PH-04, PH-05 |
-| [ADR-068](adr/ADR-068-kho-cau-hinh-git-theo-tenant.md) | Kho cấu hình luồng theo tenant, nhánh theo môi trường | Đề xuất | PH-04 |
-| [ADR-069](adr/ADR-069-may-trang-thai-phien-ban-va-bon-mat.md) | Máy trạng thái phiên bản luồng, bốn mắt chốt ở máy chủ | Đề xuất | PH-04 |
 | [ADR-060](adr/ADR-060-trinh-thiet-ke-tu-lam-mo-hinh-kaoto.md) | Trình thiết kế tự làm lại mô hình Kaoto bằng React 19 và XYFlow, dùng catalog Kaoto vendor | Đề xuất | PH-04 |
 | [ADR-061](adr/ADR-061-catalog-khop-phien-ban-runtime.md) | Catalog trình thiết kế khớp đúng phiên bản runtime, CI chặn khi lệch | Chấp nhận (25/11/2026) | PH-04 |
 | [ADR-062](adr/ADR-062-luong-nghiep-vu-yaml-dsl-java-cho-thu-vien-nen.md) | Luồng nghiệp vụ bằng YAML DSL; Java chỉ cho thư viện nền | Đề xuất | PH-04 |
