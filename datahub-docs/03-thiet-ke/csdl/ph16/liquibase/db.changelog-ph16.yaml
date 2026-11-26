@@ -1,0 +1,37 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_platform_migrator (thành viên ph16_owner), defaultSchemaName=ph16_kpi.
+# Context: bootstrap (vai trò, schema). Bộ mẫu COMMON nạp bằng changeset ph16-0930; khởi tạo tenant bằng thủ tục p_seed_tenant (16-0090-seed.sql).
+databaseChangeLog:
+  - include:
+      file: changes/16-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0010-indicator.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0020-source.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0030-period.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0040-report.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0050-arch.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0060-national.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0070-ops.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0090-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/16-0900-grants.sql
+      relativeToChangelogFile: true
