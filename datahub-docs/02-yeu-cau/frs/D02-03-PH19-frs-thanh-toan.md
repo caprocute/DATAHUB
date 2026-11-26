@@ -700,7 +700,7 @@ Năng lực mới, không có ở hệ cũ. Cho phép thay khóa ký, chứng th
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | S · Đ2b (MVP thay khóa bằng FR-19-002 kèm kiểm tra kết nối; nhắc hạn có từ MVP qua FR-19-059) |
-| Truy vết | REQ-98; BR-19-026; NFR-19-021, 022; UC-19-06; API-19-008; UI-19-04; EN-19-02; TS-19-06 |
+| Truy vết | REQ-98; BR-19-026; NFR-19-022, 022; UC-19-06; API-19-008; UI-19-04; EN-19-02; TS-19-06 |
 | Tác nhân, quyền | Cán bộ ATTT · `credential-manage` |
 | Tiền điều kiện | NCC `ACTIVE` hoặc `SUSPENDED`; bản `ACTIVE` của mục đích cần xoay tồn tại; bí mật mới đã nạp vào OpenBao |
 | Đầu vào | `purpose`, `newSecretRef`, `overlapDays` (1…30, mặc định 7) |
@@ -1652,12 +1652,12 @@ Nhóm J giữ nguyên các cột và bộ lọc mà cán bộ đã quen ở màn
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-97; LGC-PAY-014, 018; NFR-19-006; UC-19-22; API-19-051; UI-19-14; EN-19-10; TS-19-22 |
+| Truy vết | REQ-97; LGC-PAY-014, 018; NFR-19-007; UC-19-22; API-19-051; UI-19-14; EN-19-10; TS-19-22 |
 | Tác nhân, quyền | Mọi vai trò thanh toán · `transaction-read` |
 | Đầu vào | `q` (2…100 ký tự), `page` (từ 1), `size` (20 mặc định; 10, 20, 50, 100), `sort` (mặc định `createdAt,desc`; cho phép `createdAt`, `paidAt`, `amount`, `status`) |
 | Đầu ra | Trang dữ liệu: mã giao dịch, mã đơn hàng, dịch vụ, lĩnh vực, đối tác, NCC, người nộp (đã che), số tiền, trạng thái, `recon_status`, thời điểm tạo, thời điểm thanh toán; tổng số dòng (chính xác tới 10.000, trên đó trả `totalApprox = true`) |
 
-Quy tắc tìm từ khóa: `q` khớp tuyệt đối với `transaction_code`, `partner_order_id`, `provider_reference`; khớp tiền tố không dấu với tên dịch vụ; khớp với người nộp qua cột băm tìm kiếm (`payer_search_hash`, HMAC-SHA256 của họ tên chuẩn hóa không dấu, số điện thoại, số định danh), nghĩa là chỉ khớp nguyên giá trị, không khớp một phần (ADR-048). Phạm vi mặc định là 30 ngày gần nhất theo `created_at`; vượt 400 ngày trả ERR-19-001 và đề nghị lọc thêm theo đối tác hoặc dịch vụ. Mục tiêu p95 ≤ 2 giây với 50 triệu bản ghi (NFR-19-006).
+Quy tắc tìm từ khóa: `q` khớp tuyệt đối với `transaction_code`, `partner_order_id`, `provider_reference`; khớp tiền tố không dấu với tên dịch vụ; khớp với người nộp qua cột băm tìm kiếm (`payer_search_hash`, HMAC-SHA256 của họ tên chuẩn hóa không dấu, số điện thoại, số định danh), nghĩa là chỉ khớp nguyên giá trị, không khớp một phần (ADR-048). Phạm vi mặc định là 30 ngày gần nhất theo `created_at`; vượt 400 ngày trả ERR-19-001 và đề nghị lọc thêm theo đối tác hoặc dịch vụ. Mục tiêu p95 trang đầu ≤ 1,5 giây với 10 triệu giao dịch mỗi tenant và 200 người dùng đồng thời (NFR-19-007).
 
 #### FR-19-050 · Tra cứu nâng cao
 
@@ -1698,7 +1698,7 @@ Xử lý: mặc định trả dữ liệu người nộp đã che theo chính s�
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | S · Đ2b (MVP chỉ xuất báo cáo tổng hợp và biên bản đối soát) |
-| Truy vết | REQ-97; NFR-19-015; UC-19-22; API-19-083, 084; UI-19-14; EN-19-24; TS-19-22 |
+| Truy vết | REQ-97; NFR-19-009; UC-19-22; API-19-083, 084; UI-19-14; EN-19-24; TS-19-22 |
 | Tác nhân, quyền | Kế toán, kiểm toán viên · `transaction-export`; kèm dữ liệu đầy đủ · `transaction-read-pii` |
 | Đầu vào | Bộ lọc như FR-19-050, `format` (`CSV`, `XLSX`), `columns[]`, `includePii` (chỉ khi có quyền, kèm lý do) |
 | Đầu ra | Tác vụ nền `background_job` loại `EXPORT`, trạng thái `QUEUED` → `RUNNING` → `SUCCEEDED`/`FAILED`; tệp lưu bucket `dh-{tenant}-payment` với đường tải có hạn 24 giờ, chỉ người tạo tải được |
@@ -1713,7 +1713,7 @@ Giới hạn: tối đa `19.export.max-rows` (mặc định 1.000.000, NFR-19-00
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-97, REQ-98; LGC-PAY-021; CMP-LAW-08 (nhóm kiểm toán cấp 3); NFR-19-013, 014; UC-19-24; TS-19-24 |
+| Truy vết | REQ-97, REQ-98; LGC-PAY-021; CMP-LAW-08 (nhóm kiểm toán cấp 3); NFR-19-014, 016; UC-19-24; TS-19-24 |
 | Tác nhân, quyền | Hệ thống |
 | Đầu ra | Bản ghi kiểm toán gửi PH-13 qua sự kiện `audit.recorded.v1` (định dạng chung của D03-07) |
 
@@ -1724,19 +1724,19 @@ Mỗi bản ghi gồm: `tenantId`, `actorType` (`USER`, `CLIENT`, `SYSTEM`), `ac
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-97; LGC-PAY-011, 021; BR-19-032; UC-19-24; API-19-075, 076; UI-19-23; EN-19-14; TS-19-24 |
+| Truy vết | REQ-97; LGC-PAY-011, 021; BR-19-032; NFR-19-015; UC-19-24; API-19-075, 076; UI-19-23; EN-19-14; TS-19-24 |
 | Tác nhân, quyền | Cán bộ tra cứu, kiểm toán viên · `log-read` |
 | Đầu vào (lọc) | `direction` (`IN_PARTNER`, `OUT_PROVIDER`, `IN_PROVIDER`, `OUT_PARTNER`), `operation` (`CREATE`, `QUERY`, `CANCEL`, `REFUND`, `IPN`, `WEBHOOK`, `RECON_FETCH`, `HEALTH`), `resultCode`, `httpStatus`, khoảng thời gian (tối đa 31 ngày), `partnerId`, `providerId`, `transactionCode`, `traceId`, `latencyMinMs` |
 | Đầu ra | Danh sách và chi tiết: thời điểm, hướng, thao tác, đối tượng, mã kết quả, độ trễ, kích thước, nội dung yêu cầu và phản hồi đã che (tối đa 64 KB mỗi phía, phần thừa cắt kèm dấu cắt) |
 
-Adapter và lớp HTTP phải lọc trước khi ghi: tiêu đề `Authorization`, `X-Signature`, khóa, mật khẩu, số thẻ, số tài khoản, CVV, OTP (BR-19-032); dữ liệu người nộp được che theo BR-19-031. Nhật ký tích hợp lưu 90 ngày trực tuyến trong bảng phân vùng theo ngày (ADR-047), sau đó xóa; bản tóm tắt (không nội dung) theo giao dịch giữ cùng giao dịch.
+Adapter và lớp HTTP phải lọc trước khi ghi: tiêu đề `Authorization`, `X-Signature`, khóa, mật khẩu, số thẻ, số tài khoản, CVV, OTP (BR-19-032); dữ liệu người nộp được che theo BR-19-031. Nhật ký tích hợp lưu trực tuyến 12 tháng trong bảng phân vùng theo ngày (ADR-047), sau đó phân vùng được nén chuyển kho đối tượng và giữ 5 năm (NFR-19-015).
 
 #### FR-19-055 · Liên kết truy vết đầu-cuối
 
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | S · MVP |
-| Truy vết | REQ-97; LGC-PAY-021; NFR-19-018; UC-19-23, UC-19-24; API-19-052, 076; UI-19-15, UI-19-23; TS-19-24 |
+| Truy vết | REQ-97; LGC-PAY-021; NFR-19-026; UC-19-23, UC-19-24; API-19-052, 076; UI-19-15, UI-19-23; TS-19-24 |
 | Tác nhân, quyền | Cán bộ tra cứu · `log-read` |
 
 Xử lý: PH-19 nhận `traceparent` (W3C) từ APISIX; không có thì tạo mới. `trace_id` được lưu trên giao dịch (lúc tạo), từng `transaction_event`, `callback_inbox`, `integration_log`, `webhook_delivery`, `outbox_event`, và truyền tiếp trong tiêu đề Kafka, webhook (`traceparent`) và lời gọi NCC (nếu NCC chấp nhận). Màn chi tiết hiển thị `trace_id` và nút "Mở vết" dẫn sang màn vết của PH-13 (OpenTelemetry, ADR-011); người không có quyền xem vết ở PH-13 thì nút bị ẩn.
@@ -1796,7 +1796,7 @@ Mẫu trình bày XLSX và PDF theo thể thức hành chính (NĐ 30/2020): qu�
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-97; LGC-PAY-009; NFR-19-017; UC-19-25; TS-19-25; UI-19-01 |
+| Truy vết | REQ-97; LGC-PAY-009; NFR-19-026; UC-19-25; TS-19-25; UI-19-01 |
 | Tác nhân, quyền | Hệ thống |
 
 | Chỉ số (Prometheus, OpenTelemetry) | Nhãn | Luật cảnh báo mặc định |
@@ -1821,7 +1821,7 @@ Nhãn không chứa mã giao dịch hay dữ liệu cá nhân (giới hạn số
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94; LGC-PAY-012; BR-19-020, 021; NFR-19-010; ADR-044; UC-19-27; EN-19-09, 20; TS-19-27 |
+| Truy vết | REQ-94; LGC-PAY-012; BR-19-020, 021; NFR-19-005, 021; ADR-044; UC-19-27; EN-19-09, 20; TS-19-27 |
 | Tác nhân, quyền | Hệ thống |
 | Đầu ra | `webhook_delivery` cho mỗi (sự kiện, địa chỉ webhook đăng ký loại sự kiện đó) |
 
@@ -1834,10 +1834,10 @@ Xử lý: bộ gửi đọc trực tiếp `outbox_event` trong DU `dh-payment` (
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94; LGC-PAY-012; BR-19-021; NFR-19-009; ADR-042; UC-19-27; EN-19-21; EVT-19-01…18; TS-19-27 |
+| Truy vết | REQ-94; LGC-PAY-012; BR-19-021; NFR-19-013; ADR-042; UC-19-27; EN-19-21; EVT-19-01…18; TS-19-27 |
 | Tác nhân, quyền | Hệ thống |
 
-Xử lý: mọi thay đổi trạng thái ghi `outbox_event` trong cùng giao dịch CSDL. Bộ phát (Debezium Outbox Event Router đọc WAL của `pg-payment`, hoặc bộ phát quét theo lô khi chưa có Debezium, SDD §6) đẩy lên topic `{tenant}.payment.{entity}.{event}.v1`, khóa phân vùng theo bảng §10.4 của khung, định dạng CloudEvents, lược đồ đăng ký ở Apicurio chế độ tương thích `BACKWARD`. Đảm bảo "ít nhất một lần"; người tiêu thụ chống trùng theo `id`. Mục tiêu độ trễ từ ghi tới phát p95 ≤ 2 giây (NFR-19-009). Bản ghi outbox đã phát được xóa sau 7 ngày. Giao dịch bóng không phát EVT-19-05…10 ra ngoài (chỉ topic nội bộ `{tenant}.payment.shadow.v1`).
+Xử lý: mọi thay đổi trạng thái ghi `outbox_event` trong cùng giao dịch CSDL. Bộ phát (Debezium Outbox Event Router đọc WAL của `pg-payment`, hoặc bộ phát quét theo lô khi chưa có Debezium, SDD §6) đẩy lên topic `{tenant}.payment.{entity}.{event}.v1`, khóa phân vùng theo bảng §10.4 của khung, định dạng CloudEvents, lược đồ đăng ký ở Apicurio chế độ tương thích `BACKWARD`. Đảm bảo "ít nhất một lần"; người tiêu thụ chống trùng theo `id`. Khi Kafka không sẵn sàng, sự kiện nằm lại trong outbox và được phát khi Kafka phục hồi, không mất sự kiện nào (NFR-19-013); mục tiêu độ trễ từ ghi tới phát p95 ≤ 2 giây ở điều kiện bình thường. Bản ghi outbox đã phát được xóa sau 7 ngày. Giao dịch bóng không phát EVT-19-05…10 ra ngoài (chỉ topic nội bộ `{tenant}.payment.shadow.v1`).
 
 #### FR-19-062 · Theo dõi và gửi lại webhook
 
@@ -2041,8 +2041,8 @@ Các tham số dưới đây nằm trong `tenant_payment_config.settings` (EN-19
 | `19.webhook.timeout-seconds` | số nguyên | 10 | 3…30 | BR-19-020 |
 | `19.alert.pending-age-minutes` | số nguyên | 30 | 5…1.440 | FR-19-056, 059 |
 | `19.export.max-rows` | số nguyên | 1.000.000 | 1.000…1.000.000 | FR-19-052, ERR-19-047 |
-| `19.retention.integration-log-days` | số nguyên | 90 | 30…365 | FR-19-054, NFR-19-014 |
-| `19.retention.transaction-years` | số nguyên | 10 | 5…20 (chờ OQ-19-12) | NFR-19-014 |
+| `19.retention.integration-log-online-months` | số nguyên | 12 | 12…36 | FR-19-054, NFR-19-015 |
+| `19.retention.transaction-years` | số nguyên | 10 | 10…20 (không thấp hơn NFR-19-014; chờ OQ-19-12) | NFR-19-014 |
 | `19.return-url.allowed-hosts` | danh sách tên miền | rỗng (lấy từ hồ sơ đối tác) | tên miền hợp lệ | FR-19-025 |
 
 ### 7.2. Yêu cầu phi chức năng

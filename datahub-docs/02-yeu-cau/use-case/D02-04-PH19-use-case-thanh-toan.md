@@ -592,5 +592,5 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 - **E3. Địa chỉ webhook không hợp lệ hoặc nội bộ.** ERR-19-044. **E4. Đã có xoay bí mật đang chuyển tiếp.** ERR-19-021.
 - **E5. PH-12 không phản hồi.** ERR-19-099; không tạo bản ghi client cục bộ.
 
-**Quy tắc:** BR-19-005, BR-19-008; NFR-19-022. **Tần suất:** khi đưa đối tác vào dùng; xoay bí mật hằng năm.
+**Quy tắc:** BR-19-005; NFR-19-022. **Tần suất:** khi đưa đối tác vào dùng; xoay bí mật hằng năm.
 
