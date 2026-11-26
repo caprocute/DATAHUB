@@ -5,7 +5,9 @@ Chạy: python3 tools/gen_openapi.py   (từ thư mục api/ph04)
 Sau khi sinh, kiểm tra bằng openapi-spec-validator (CI-5 dùng Spectral).
 Tệp YAML sinh ra là hợp đồng; sửa tệp này rồi sinh lại, không sửa tay YAML.
 """
-import os, yaml
+import copy, os, sys, yaml
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bo_sung as BS
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 R = lambda n: {"$ref": f"#/components/schemas/{n}"}
@@ -280,21 +282,21 @@ PARAMS = {
   "AcceptLanguage": {"name": "Accept-Language", "in": "header", "schema": enum("vi", "en")},
 }
 
-ERR = {
-  "BadRequest": (400, "ERR-04-049", "Tham số hoặc thân yêu cầu không hợp lệ (gồm ERR-04-025 thiếu lý do, ERR-04-026 vượt kích thước trang)."),
-  "Unauthorized": (401, "ERR-04-044", "Thiếu token hoặc token hết hạn."),
-  "Forbidden": (403, "ERR-04-045", "Không đủ quyền chức năng hoặc phạm vi không gian làm việc (gồm ERR-04-003, ERR-04-015)."),
-  "NotFound": (404, "ERR-04-001", "Không tìm thấy hoặc không có quyền xem (không phân biệt)."),
-  "Conflict": (409, "ERR-04-005", "Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ (mã cụ thể trong `code`)."),
-  "PreconditionFailed": (412, "ERR-04-006", "ETag không khớp; kèm `currentEtag`, `savedBy`, `savedAt`."),
-  "PreconditionRequired": (428, "ERR-04-007", "Thiếu tiêu đề If-Match."),
-  "PayloadTooLarge": (413, "ERR-04-033", "Thân vượt giới hạn (định nghĩa 512 KiB ERR-04-033, bản tin 256 KiB ERR-04-021)."),
-  "UnsupportedMediaType": (415, "ERR-04-046", "Kiểu nội dung không hỗ trợ."),
-  "Unprocessable": (422, "ERR-04-009", "Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu; kèm `findings`."),
-  "Locked": (423, "ERR-04-041", "Đang trong khoảng đóng băng thay đổi (BR-04-022)."),
-  "TooManyRequests": (429, "ERR-04-048", "Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời; kèm `retryAfterSeconds`."),
-  "BadGateway": (502, "ERR-04-022", "Không ghi được kho cấu hình."),
-  "ServiceUnavailable": (503, "ERR-04-047", "Phân hệ phụ thuộc chưa sẵn sàng (gồm ERR-04-019 sandbox)."),
+ERR = {  # mô tả ngắn: in vào cột "Lỗi" của đặc tả từng endpoint (chương 10); mã chi tiết ở §6
+  "BadRequest": (400, "ERR-04-049", "Tham số hoặc thân sai (ERR-04-049; thiếu lý do ERR-04-025; trang quá 100 ERR-04-026)."),
+  "Unauthorized": (401, "ERR-04-044", "Thiếu hoặc hết hạn token (ERR-04-044)."),
+  "Forbidden": (403, "ERR-04-045", "Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015)."),
+  "NotFound": (404, "ERR-04-001", "Không tìm thấy hoặc không được xem (ERR-04-001)."),
+  "Conflict": (409, "ERR-04-005", "Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005)."),
+  "PreconditionFailed": (412, "ERR-04-006", "ETag lệch (ERR-04-006)."),
+  "PreconditionRequired": (428, "ERR-04-007", "Thiếu If-Match (ERR-04-007)."),
+  "PayloadTooLarge": (413, "ERR-04-033", "Thân quá lớn (ERR-04-033; bản tin ERR-04-021)."),
+  "UnsupportedMediaType": (415, "ERR-04-046", "Kiểu nội dung không hỗ trợ (ERR-04-046)."),
+  "Unprocessable": (422, "ERR-04-009", "Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings` (ERR-04-009)."),
+  "Locked": (423, "ERR-04-041", "Đóng băng thay đổi (ERR-04-041)."),
+  "TooManyRequests": (429, "ERR-04-048", "Vượt tần suất (ERR-04-048) hoặc hạn mức chạy thử (ERR-04-019)."),
+  "BadGateway": (502, "ERR-04-022", "Không ghi được kho cấu hình (ERR-04-022)."),
+  "ServiceUnavailable": (503, "ERR-04-047", "Phụ thuộc chưa sẵn sàng (ERR-04-047; sandbox ERR-04-019)."),
 }
 RESPONSES = {k: {"description": d, "content": {"application/problem+json": {"schema": R("ProblemDetails"),
     "example": {"type": f"https://datahub.gov.vn/problems/integration/{c.lower()}", "title": d.split(";")[0].split("(")[0].strip().rstrip("."), "status": st,
@@ -457,9 +459,40 @@ ep("get", "/flows/{flowCode}/history", "API-04-091", "getFlowHistory", "Tham s�
    params=[F, {"name": "action", "in": "query", "schema": arr(STR(64)), "style": "form", "explode": False}, {"name": "actor", "in": "query", "schema": STR(64)}, "Cursor", "Limit"],
    ok=(200, "HistoryPage"), errs=["NotFound", "ServiceUnavailable"], desc="`before`, `after` chỉ trả cho AU, SO, TA.")
 
+def flatten(x, schemas):
+    """Gộp allOf thành một đối tượng phẳng: các phần đều đóng (additionalProperties: false) nên allOf
+    nguyên dạng sẽ từ chối mọi bản ghi hợp lệ. Gộp properties, required; giữ additionalProperties: false."""
+    if isinstance(x, list): return [flatten(i, schemas) for i in x]
+    if not isinstance(x, dict): return x
+    if "allOf" in x and len(x) == 1:
+        props, req, extra = {}, [], {}
+        for part in x["allOf"]:
+            if "$ref" in part: part = schemas[part["$ref"].split("/")[-1]]
+            part = flatten(part, schemas)
+            props.update(part.get("properties", {}))
+            req += [r for r in part.get("required", []) if r not in req]
+            if part.get("description"): extra["description"] = part["description"]
+        d = {"type": "object", "properties": props, "additionalProperties": False}
+        if req: d["required"] = req
+        d.update(extra); return d
+    return {k: flatten(v, schemas) for k, v in x.items()}
+
+def ex_param(p, ex):
+    """Gắn ví dụ cho tham số: đường dẫn theo BS.PATH_EX, truy vấn theo ex['q'], tiêu đề theo BS.HDR_EX."""
+    p = copy.deepcopy(p)
+    n = p["name"]
+    if p["in"] == "path" and n in BS.PATH_EX: p["example"] = BS.PATH_EX[n]
+    if p["in"] == "query" and n in ex.get("q", {}): p["example"] = ex["q"][n]
+    if p["in"] == "header" and n in BS.HDR_EX: p["example"] = BS.HDR_EX[n]
+    return p
+
 def build():
     paths = {}
+    for k in ("FlowCodePath", "VersionNoPath", "WorkspacePath", "RunIdPath", "CaseIdPath", "DeploymentIdPath", "CommandIdPath", "IfMatch", "IdempotencyKey"):
+        PARAMS[k] = ex_param(PARAMS[k], {})
     for e in E:
+        ex = BS.EX.get(e["op"], {})
+        if not e["desc"]: e["desc"] = BS.DESC.get(e["op"])
         op = {"tags": [e["tag"]], "operationId": e["op"], "summary": e["summary"],
               "x-datahub-id": e["aid"], "x-datahub-fr": e["fr"],
               "x-datahub-permission": {"permission": e["perm"], **({"workspaceLevel": e["ws"]} if e["ws"] else {})}}
@@ -467,30 +500,30 @@ def build():
         if e["idem"]: op["x-datahub-idempotent"] = True
         params = []
         for p in e["params"]:
-            params.append(P(p) if isinstance(p, str) else p)
+            params.append(P(p) if isinstance(p, str) else ex_param(p, ex))
         if e["idem"]: params.append(P("IdempotencyKey"))
         params += [P("Traceparent"), P("AcceptLanguage")]
         op["parameters"] = params
         if e["body"]:
-            op["requestBody"] = {"required": True, "content": J(e["body"])}
+            op["requestBody"] = {"required": True, "content": J(e["body"], ex.get("req"))}
         elif e["op"] == "startLegacyImport":
             op["requestBody"] = {"required": True, "content": {"multipart/form-data": {"schema": {"type": "object", "required": ["file", "workspaceCode"],
                 "properties": {"file": {"type": "string", "contentEncoding": "binary"}, "workspaceCode": R("WorkspaceCode"),
-                               "connectionMap": STR(20000, description="JSON: mã kết nối cũ → mã kết nối PH-05.")}}}}}
+                               "connectionMap": STR(20000, description="JSON: mã kết nối cũ → mã kết nối PH-05.")}}, "example": ex.get("req")}}}
         code, sch = e["ok"]
         okr = {"description": "Thành công."}
         if e["sse"]:
-            okr["content"] = SSE
+            okr["content"] = {"text/event-stream": {**SSE["text/event-stream"], "example": ex.get("res")}}
         elif e["op"] == "downloadVersion":
-            okr["content"] = {"application/yaml": {"schema": STR()}, "application/zip": {"schema": {"type": "string", "contentEncoding": "binary"}}}
+            okr["content"] = {"application/yaml": {"schema": STR(), "example": ex.get("res")}, "application/zip": {"schema": {"type": "string", "contentEncoding": "binary"}}}
         elif e["op"] == "getTestRunBody":
-            okr["content"] = {"application/json": {"schema": {}}, "text/plain": {"schema": STR()}}
+            okr["content"] = {"application/json": {"schema": {}, "example": ex.get("res")}, "text/plain": {"schema": STR()}}
         elif sch:
-            okr["content"] = J(sch)
+            okr["content"] = J(sch, ex.get("res"))
         hdr = {}
-        if e["etag_out"]: hdr["ETag"] = {"schema": STR(), "description": "W/\"{version}-{contentHash[0..8]}\""}
-        if code == 202: hdr["Location"] = {"schema": STR(), "description": "Tài nguyên theo dõi tiến trình."}
-        if e["op"] == "getCatalogIndex": hdr["ETag"] = {"schema": STR()}
+        if e["etag_out"]: hdr["ETag"] = {"schema": STR(), "description": "W/\"{version}-{contentHash[0..8]}\"", "example": BS.ETAG}
+        if code == 202: hdr["Location"] = {"schema": STR(), "description": "Tài nguyên theo dõi tiến trình.", "example": ex.get("loc", "")}
+        if e["op"] == "getCatalogIndex": hdr["ETag"] = {"schema": STR(), "example": BS.HDR_EX["If-None-Match"]}
         if hdr: okr["headers"] = hdr
         resps = {str(code): okr}
         if e["op"] == "getCatalogIndex": resps["304"] = RESP("NotModified")
@@ -521,7 +554,7 @@ def build():
         "securitySchemes": {"oauth2User": {"type": "oauth2", "description": "Keycloak realm dh-{tenant}; vai trò ánh xạ PERM-04-* (D02-08).",
             "flows": {"authorizationCode": {"authorizationUrl": "https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/auth",
                                             "tokenUrl": "https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token", "scopes": {}}}}},
-        "parameters": PARAMS, "responses": RESPONSES, "schemas": SCHEMAS}}
+        "parameters": PARAMS, "responses": RESPONSES, "schemas": {k: flatten(v, SCHEMAS) for k, v in SCHEMAS.items()}}}
     return doc
 
 if __name__ == "__main__":

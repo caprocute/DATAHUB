@@ -73,6 +73,59 @@ EV = [
   ("runtimeCommandAck", "EVT-04-13", "dh.integration.runtime.command-ack.v1", "CommandAck", "Xác nhận lệnh của từng bản sao.", False, 1, 12),
   ("connectionLog", "EVT-04-14", "{tenant}.audit.connection-log.v1", "ConnectionLog", "Nhật ký kết nối từ chặng audit (BR-04-002). Chủ quản topic: PH-13; giữ online 12 tháng, WORM 5 năm ở PH-13.", True, 30, 12),
 ]
+# Bổ sung bản 0.2: FR, bên nhận, ví dụ payload cho từng sự kiện (dữ liệu giả lập T68)
+FLOW = {"tenantId": "T68", "flowId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10", "flowCode": "tra-cuu-ho-tich", "workspaceCode": "ho-tich"}
+H = "sha256:" + "3f9a1c2e" * 8
+ACT = {"userId": "an.nv", "type": "USER"}
+FR_EV = {"flowCreated": ["FR-04-003", "FR-04-005"], "flowUpdated": ["FR-04-004"], "versionSubmitted": ["FR-04-040"],
+  "versionApproved": ["FR-04-041"], "versionChangesRequested": ["FR-04-041"], "deploymentRequested": ["FR-04-042", "FR-04-044", "FR-04-045", "FR-04-006"],
+  "deploymentStatusChanged": ["FR-04-042"], "flowRuntimeStateChanged": ["FR-04-050"], "flowRetired": ["FR-04-006"], "testRunCompleted": ["FR-04-030"],
+  "runtimeCommand": ["FR-04-050"], "runtimeHeartbeat": ["FR-04-051", "FR-04-042"], "runtimeCommandAck": ["FR-04-050"], "connectionLog": ["FR-04-074"]}
+RECV = {
+  "flowCreated": ["PH-13 (ghi kiểm toán, mở bảng theo dõi luồng)", "PH-18 (thông báo chủ quản không gian)"],
+  "flowUpdated": ["PH-02 (đồng bộ nhãn, chủ quản của API công bố)"],
+  "versionSubmitted": ["PH-18 (thông báo người duyệt được gợi ý và hàng đợi duyệt)"],
+  "versionApproved": ["PH-18 (thông báo người soạn)", "PH-02 (chuẩn bị bản API công bố mới)"],
+  "versionChangesRequested": ["PH-18 (thông báo người soạn kèm số bình luận)"],
+  "deploymentRequested": ["PH-13 (ghi mốc triển khai lên biểu đồ giám sát)"],
+  "deploymentStatusChanged": ["PH-02 (bật, tắt API công bố theo trạng thái)", "PH-13 (cảnh báo triển khai lỗi)", "PH-18 (thông báo người phát hành)"],
+  "flowRuntimeStateChanged": ["PH-02 (đánh dấu API tạm ngừng)", "PH-13 (ghi sự cố, mốc vận hành)"],
+  "flowRetired": ["PH-02 (gỡ API công bố)", "PH-10 (thu hồi nhóm tiêu thụ của luồng)"],
+  "testRunCompleted": ["PH-18 (thông báo người chạy khi đã rời trang)"],
+  "runtimeCommand": ["dh-runtime (mọi bản sao của tenant và môi trường, kiểm chữ ký rồi thi hành)"],
+  "runtimeHeartbeat": ["dh-integration (Reconciler: so băm, cập nhật SYNCED, trạng thái route)"],
+  "runtimeCommandAck": ["dh-integration (Reconciler: đếm xác nhận, đặt ACKNOWLEDGED, PARTIAL, REJECTED)"],
+  "connectionLog": ["PH-13 (lưu nhật ký kết nối theo NĐ 278/2025, online 12 tháng, WORM 5 năm)"],
+}
+EXAMPLES = {
+  "flowCreated": {**FLOW, "name": "Tra cứu hộ tịch qua NDXP", "resourceKind": "ROUTE", "origin": "TEMPLATE", "transport": "SYNC", "exposure": "EXTERNAL", "actor": ACT},
+  "flowUpdated": {**FLOW, "changedFields": ["labels", "targetSystems"], "actor": ACT},
+  "versionSubmitted": {**FLOW, "versionNo": 3, "contentHash": H, "status": "PENDING_REVIEW", "changeNote": "Thêm chặng che số định danh.", "actor": ACT},
+  "versionApproved": {**FLOW, "versionNo": 3, "contentHash": H, "status": "APPROVED", "comment": "Đạt.", "contributors": ["an.nv"], "actor": {"userId": "binh.tt", "type": "USER"}},
+  "versionChangesRequested": {**FLOW, "versionNo": 3, "contentHash": H, "status": "CHANGES_REQUESTED", "comment": "Thiếu ca lỗi hệ đích.", "nodeCommentCount": 2,
+                              "actor": {"userId": "binh.tt", "type": "USER"}},
+  "deploymentRequested": {**FLOW, "deploymentId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "versionNo": 3, "environment": "TEST", "kind": "RELEASE",
+                          "contentHash": H, "runtimeProfile": "core-native", "actor": {"userId": "binh.tt", "type": "USER"}},
+  "deploymentStatusChanged": {**FLOW, "deploymentId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "versionNo": 3, "environment": "TEST",
+                              "from": "SYNCING", "to": "SYNCED", "healthStatus": "HEALTHY", "gitCommit": "9c1e4b7"},
+  "flowRuntimeStateChanged": {**FLOW, "environment": "PROD", "commandId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61", "action": "PAUSE", "state": "PAUSED",
+                              "reason": "Hệ đích NDXP bảo trì.", "actor": {"userId": "cuong.lv", "type": "USER"}},
+  "flowRetired": {**FLOW, "reason": "Thay bằng luồng tra-cuu-ho-tich-v2.", "actor": {"userId": "ta.t68", "type": "USER"}},
+  "testRunCompleted": {**FLOW, "runId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "versionNo": 3, "definitionHash": H, "mode": "MOCK", "status": "PASSED",
+                       "testCaseId": None, "durationMs": 412},
+  "runtimeCommand": {"commandId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61", "tenantId": "T68", "environment": "PROD", "flowCode": "tra-cuu-ho-tich",
+                     "action": "PAUSE", "routeIds": [], "drain": True, "issuedBy": "cuong.lv", "issuedAt": "2026-11-26T14:55:00Z",
+                     "expiresAt": "2026-11-26T14:56:00Z", "resendOf": None, "keyId": "dh-runtime-cmd:3", "signature": "MEUCIQ…giả-lập"},
+  "runtimeHeartbeat": {"replica": "dh-rt-t68-core-7c9d-x2k4p", "tenantId": "T68", "environment": "PROD", "profile": "core-native",
+                       "catalogVersion": "camel-quarkus-3.33.2", "libVersion": "1.4.0", "sentAt": "2026-11-26T14:55:30Z",
+                       "flows": [{"flowCode": "tra-cuu-ho-tich", "versionNo": 2, "contentHash": H, "loaded": True,
+                                  "routes": [{"routeId": "tra-cuu", "state": "Started", "inflight": 1}]}]},
+  "runtimeCommandAck": {"commandId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61", "replica": "dh-rt-t68-core-7c9d-x2k4p", "tenantId": "T68",
+                        "environment": "PROD", "result": "APPLIED", "ackedAt": "2026-11-26T14:55:02Z"},
+  "connectionLog": {"tenantId": "T68", "flowCode": "tra-cuu-ho-tich", "versionNo": 2, "routeId": "tra-cuu", "environment": "PROD",
+                    "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "sourceSystem": "DVC-T68", "targetSystem": "NDXP", "httpStatus": 200,
+                    "outcome": "SUCCESS", "receivedAt": "2026-11-26T14:40:11Z", "durationMs": 184, "legalBasisRef": "ND-278-2025", "maskedFields": ["soDinhDanh"]},
+}
 KEYDESC = {"runtimeCommand": "`{tenant}:{environment}`", "runtimeHeartbeat": "`{replica}`", "runtimeCommandAck": "`{commandId}`", "connectionLog": "`{tenant}:{flowCode}`"}
 
 def build():
@@ -88,7 +141,9 @@ def build():
             "messages": [{"$ref": f"#/channels/{key}/messages/{key}"}]}
         msgs[key] = {"name": key, "title": code, "summary": summ, "payload": R(payload),
             "headers": CE_HEADERS if ten and key != "connectionLog" else obj({"traceparent": S(), "ce_id": S(format="uuid")}),
-            "bindings": {"kafka": {"key": S(description=KEYDESC.get(key, "`{tenant}:{flowId}` để giữ thứ tự theo luồng."))}}}
+            "bindings": {"kafka": {"key": S(description=KEYDESC.get(key, "`{tenant}:{flowId}` để giữ thứ tự theo luồng."))}},
+            "x-datahub-fr": FR_EV[key], "x-datahub-sender": sender, "x-datahub-receivers": RECV[key],
+            "examples": [{"name": f"{code}-vi-du", "payload": EXAMPLES[key]}]}
     # consumer
     for key, who in [("runtimeCommand", "dh-runtime"), ("runtimeHeartbeat", "dh-integration"), ("runtimeCommandAck", "dh-integration"), ("testRunCompleted", "PH-18 thông báo")]:
         ops[f"receive{key[0].upper()}{key[1:]}"] = {"action": "receive", "channel": {"$ref": f"#/channels/{key}"}, "title": f"{who} nhận"}
