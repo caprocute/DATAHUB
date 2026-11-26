@@ -86,8 +86,16 @@ Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi
 | PERM-04-publish | Duyệt phát hành, quay lui | — | — | — | — | — | — | ● | — | — | — | — | — | — | — | — |
 | PERM-04-operate | Kích hoạt, tạm dừng luồng, route | — | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — |
 | PERM-05-read | Xem Kamelet, kết nối | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
-| PERM-05-connection | Khai báo, sửa kết nối nguồn | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
-| PERM-05-kamelet-approve | Duyệt Kamelet mới vào danh mục | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-05-connection | Khai báo, sửa kết nối nguồn, giá trị và bí mật theo môi trường, cấp kết nối, yêu cầu tài khoản CSDL | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-05-kamelet-approve | Duyệt, thu hồi Kamelet (IA: Kamelet của tỉnh; PA: `COMMON` và Kamelet nền) | ● | — | — | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-05-adapter | Tạo, sửa bộ điều hợp, thao tác, cấu hình CDC; gửi duyệt | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-05-test | Chạy kiểm tra kết nối, kiểm thử bộ điều hợp, kiểm tra quyền CSDL, điều kiện CDC | — | — | ● | ● | — | ● | ● | — | — | — | — | — | — | — | — |
+| PERM-05-operate | Tạm ngừng, tiếp tục, tắt môi trường, xoay bí mật, điều khiển CDC | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-05-approve | Duyệt bật giá trị PROD, phiên bản bộ điều hợp, tài khoản ghi CSDL | — | — | — | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-05-db-write-consent | Đồng ý mục đích ghi vào CSDL của HTTT | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-05-kamelet-submit | Soạn, gửi đăng ký Kamelet; đề xuất dùng chung | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-05-audit-read | Xem nhật ký truy cập CSDL của luồng, lịch sử xoay bí mật chi tiết | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-05-admin | Tham số PH-05, bật tắt loại kết nối | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-07-read | Xem danh mục dùng chung | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | PERM-07-create / update | Soạn, nhập danh mục | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
 | PERM-07-submit | Gửi duyệt phát hành | ● (COMMON) | — | ● | — | — | — | — | — | — | — | ○ | — | — | — | — |
@@ -240,3 +248,4 @@ D05-01 sinh tự động từ ma trận mục 3 hai nhóm ca kiểm thử cho m�
 |---|---|---|
 | 0.1 | 2026-11-21 | Bản đầu |
 | 0.2 | 2026-11-26 | Mục 3.3 thay bằng 48 quyền và ma trận của khung PH-19 §13; vai trò thanh toán đổi `PAYMENT_OFFICER` thành `PAYMENT_ACCOUNTANT`, thêm `PAYMENT_OPERATOR`, `PARTNER_SYSTEM`; tách mục 3.4 cho nhà phát triển |
+| 0.3 | 2026-11-26 | Mục 3.1: thêm tám quyền PH-05 (`adapter`, `test`, `operate`, `approve`, `db-write-consent`, `kamelet-submit`, `audit-read`, `admin`), mở rộng mô tả `PERM-05-connection`, `PERM-05-kamelet-approve` thêm IA cho Kamelet của tỉnh (D02-03-PH05 §3.2) |

@@ -1,0 +1,167 @@
+{
+  "phan_he": [
+    {
+      "phan_he": "PH04",
+      "tap": [
+        {
+          "tap": "FRS",
+          "tep": [
+            "02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md"
+          ],
+          "byte": 175499,
+          "tu": 28994,
+          "token_uoc": 58499
+        },
+        {
+          "tap": "Use case",
+          "tep": [
+            "02-yeu-cau/use-case/D02-04-PH04-use-case-tich-hop.md"
+          ],
+          "byte": 93521,
+          "tu": 14776,
+          "token_uoc": 31173
+        },
+        {
+          "tap": "SDD",
+          "tep": [
+            "03-thiet-ke/sdd/D03-02-PH04-sdd-tich-hop.md"
+          ],
+          "byte": 88367,
+          "tu": 12064,
+          "token_uoc": 29455
+        },
+        {
+          "tap": "CSDL",
+          "tep": [
+            "03-thiet-ke/csdl/D03-03-PH04-csdl-tich-hop.md"
+          ],
+          "byte": 51073,
+          "tu": 8467,
+          "token_uoc": 17024
+        },
+        {
+          "tap": "API",
+          "tep": [
+            "03-thiet-ke/api/D03-04-PH04-api-tich-hop.md"
+          ],
+          "byte": 43159,
+          "tu": 6822,
+          "token_uoc": 14386
+        },
+        {
+          "tap": "Màn hình",
+          "tep": [
+            "03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md"
+          ],
+          "byte": 195714,
+          "tu": 28863,
+          "token_uoc": 65238
+        },
+        {
+          "tap": "Test case",
+          "tep": [
+            "05-kiem-thu/test-case/D05-02-PH04-test-case.md"
+          ],
+          "byte": 187177,
+          "tu": 29505,
+          "token_uoc": 62392
+        }
+      ],
+      "tong_byte": 834510,
+      "tong_tu": 129491,
+      "tong_token_uoc": 278170,
+      "tep_kem": 46,
+      "tep_kem_byte": 518561,
+      "git": {
+        "commits": 32,
+        "dau": "2026-11-25T16:50:38+00:00",
+        "cuoi": "2026-11-26T00:39:48+00:00"
+      }
+    },
+    {
+      "phan_he": "PH05",
+      "tap": [
+        {
+          "tap": "FRS",
+          "tep": [
+            "02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md"
+          ],
+          "byte": 149831,
+          "tu": 24018,
+          "token_uoc": 49943
+        },
+        {
+          "tap": "Use case",
+          "tep": [
+            "02-yeu-cau/use-case/D02-04-PH05-use-case-bo-dieu-hop.md"
+          ],
+          "byte": 61462,
+          "tu": 10199,
+          "token_uoc": 20487
+        },
+        {
+          "tap": "SDD",
+          "tep": [
+            "03-thiet-ke/sdd/D03-02-PH05-sdd-bo-dieu-hop.md"
+          ],
+          "byte": 58978,
+          "tu": 8073,
+          "token_uoc": 19659
+        },
+        {
+          "tap": "CSDL",
+          "tep": [
+            "03-thiet-ke/csdl/D03-03-PH05-csdl-bo-dieu-hop.md"
+          ],
+          "byte": 52133,
+          "tu": 8566,
+          "token_uoc": 17377
+        },
+        {
+          "tap": "API",
+          "tep": [
+            "03-thiet-ke/api/D03-04-PH05-api-bo-dieu-hop.md"
+          ],
+          "byte": 41803,
+          "tu": 6247,
+          "token_uoc": 13934
+        },
+        {
+          "tap": "Màn hình",
+          "tep": [
+            "03-thiet-ke/uiux/D03-06-PH05-man-hinh-bo-dieu-hop.md"
+          ],
+          "byte": 101922,
+          "tu": 14803,
+          "token_uoc": 33974
+        },
+        {
+          "tap": "Test case",
+          "tep": [
+            "05-kiem-thu/test-case/D05-02-PH05-test-case.md"
+          ],
+          "byte": 151252,
+          "tu": 23641,
+          "token_uoc": 50417
+        }
+      ],
+      "tong_byte": 617381,
+      "tong_tu": 95547,
+      "tong_token_uoc": 205793,
+      "tep_kem": 57,
+      "tep_kem_byte": 682253,
+      "git": {
+        "commits": 16,
+        "dau": "2026-11-26T02:37:24+00:00",
+        "cuoi": "2026-11-26T03:50:52+00:00"
+      }
+    }
+  ],
+  "ngu_canh_nap": {
+    "cu_byte": 1704254,
+    "cu_token_uoc": 568084,
+    "moi_byte": 39197,
+    "moi_token_uoc": 13065
+  },
+  "cong_thuc": "token ≈ byte UTF-8 / 3"
+}

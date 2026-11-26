@@ -344,6 +344,8 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `dh-gateway` | APISIX, OPA sidecar, bộ đồng bộ cấu hình, BFF của giao diện | Data | Z2 | |
 | `dh-runtime` | `dh-runtime` dùng chung, nhãn tenant trên từng luồng | Data | Z4 | |
 | `dh-rt-{tenant}` | `dh-runtime` riêng cho tenant trên 50 luồng hoặc có yêu cầu (D03-10 §4) | Data | Z4 | Tạo bởi ApplicationSet theo tenant |
+| `dh-probe` | `dh-runtime` hồ sơ `probe-jvm` mỗi tenant: kiểm tra kết nối, thăm dò sức khỏe, kiểm tra điều kiện CDC và quyền CSDL (D03-02-PH05 §3) | Data | Z4 | Cùng chính sách egress với runtime của tenant, không nạp luồng |
+| `dh-cdc` | Cụm Strimzi `KafkaConnect` `dh-cdc-{tenant}` với Debezium cho CDC hệ di sản (ADR-059) | Data | Z4 | Chỉ tạo cho tenant bật `adapter.cdc.enabled`; tách khỏi Kafka Connect chuyển outbox |
 | `dh-iam` | Keycloak | Phụ thuộc data | Z6 | |
 | `dh-cache` | Valkey | Phụ thuộc data | Z5 | |
 | `dh-control` | `dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, giao diện | Control | Z3 | |
@@ -495,6 +497,8 @@ Bảng dưới đây là kết quả định cỡ cho môi trường PROD ở si
 | `dh-assist` (tùy chọn, chưa tính mô hình ngôn ngữ) | 0–2 × 0,5/1, 2/2 | 2 × 1/2, 2/2 | 2 × 1/2, 3/3 | 3 × 2/4, 4/4 |
 | BFF của `dh-console`, `dh-portal` (SEC-21 ở D03-07) | 2 × 0,25/0,5, 0,5/0,5 | 2 × 0,5/1, 0,75/0,75 | 3 × 0,5/1, 1/1 | 4 × 1/2, 1/1 |
 | Giao diện `dh-console`, `dh-portal` | 2+2 × 0,05/0,2, 0,1 | 2+2 × 0,1/0,5, 0,1 | 3+3 × 0,1/0,5, 0,1 | 3+3 × 0,2/1, 0,25 |
+| `probe-jvm` (mỗi tenant, PH-05) | 2 × 0,25/0,5, 0,75/0,75 | 2 × 0,5/1, 0,75/0,75 | 2 × 0,5/1, 1/1 | 2 × 0,5/1, 1/1 mỗi tenant |
+| Kafka Connect CDC `dh-cdc-{tenant}` (chỉ tenant có CDC, ADR-059) | 2 × 0,5/1, 2/2 | 2 × 1/2, 2/2 | 2 × 2/4, 4/4 | 2 × 1/2, 2/2 mỗi tenant có CDC |
 | Apicurio Registry | 2 × 0,25/1, 1/1 | 2 × 0,5/1, 1/1 | 2 × 0,5/1, 1,5/1,5 | 3 × 1/2, 2/2 |
 | PostgreSQL `pg-core` (hoặc mỗi ô CSDL) | 3 × 2/—, 8/8, 150 | 3 × 4/—, 16/16, 500 | 3 × 8/—, 32/32, 1.500 | 4 ô × 3 × 8/—, 64/64, 2.500 |
 | PostgreSQL `pg-iam` (Keycloak) | 3 × 0,5/—, 2/2, 20 | 3 × 1/—, 4/4, 50 | 3 × 1/—, 4/4, 50 | 3 × 2/—, 8/8, 150 |
