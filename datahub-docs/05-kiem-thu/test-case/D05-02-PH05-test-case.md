@@ -641,3 +641,382 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
   1. S-INT `GET /internal/health/states?tenant=T68`.
   2. U-T68-IE1 gọi cùng đường.
 - **Mong đợi** Bước 1 `200`, mỗi mục `kind`, `code`, `env`, `level`, `since`. Bước 2 403-PQ (thiếu scope `adapter:health-read`).
+
+### TS-05-11 · Tài khoản CSDL chỉ đọc theo luồng
+
+**Mục tiêu.** Xác nhận thay nhóm "Database Connection" của Tooling bằng tài khoản động theo luồng, chỉ đọc, sống ngắn, đúng phạm vi, không chạm CSDL control plane.
+
+**Phủ.** FR-05-023, 024, 025, 028; UC-05-08; API-05-035, 036, 039, 040; UI-05-05; BR-05-017, 018, 019; ERR-05-015, 016, 027; EVT-05-15; NFR-05-007; LGC-TOOL-008.
+
+#### TC-05-### · Khai báo kết nối db-flow trỏ CSDL control plane bị chặn <!--k:dbflow-control-plane-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-023 · API-05-011 · ERR-05-016 · BR-05-017
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; kết nối thử `tc-db-cp` loại `db-flow`.
+- **Bước**
+  1. `PUT …/tc-db-cp/environments/TEST` với `jdbcUrl` trỏ `pg-core.dh-data.svc`.
+  2. Với `pg-payment.dh-data.svc`.
+  3. Với SIM-PG nhưng `allowedSchemas = ["ph04","public"]`.
+- **Mong đợi** Cả ba `422` ERR-05-016; không có dòng mới ở `connection_environment`.
+
+#### TC-05-### · Cấp tài khoản chỉ đọc cho luồng, sống 1 giờ <!--k:dbflow-ro-issue-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-05-024 · API-05-035, 036 · EVT-05-15 · UI-05-05 · UC-05-08 · LGC-TOOL-008
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; C-DKKD TEST; luồng `dkkd-dong-bo` ở PH-04.
+- **Bước**
+  1. `POST …/dkkd-db/flow-accounts` với `flowCode = dkkd-dong-bo`, `envs = [TEST]`, `access = READ`, `tables = ["dkkd.doanh_nghiep","dkkd.nganh_nghe"]`.
+  2. Bằng token `dh-runtime` T68, đọc `database/creds/dh-t68-dkkd-dong-bo-test` ở OpenBao.
+  3. Dùng thông tin đó `SELECT` từ hai bảng, rồi `SELECT` từ `dkkd.ho_so_mat`.
+  4. Chờ hết TTL.
+- **Mong đợi** Bước 1 `201`, `ISSUED` ngay (không cần duyệt). EVT: `flow-account.changed`. Bước 2 trả tài khoản `lease_duration = 3600`. Bước 3 lần đầu đạt, lần hai `permission denied`. Bước 4 role bị xóa ở SIM-PG.
+
+#### TC-05-### · Tài khoản chỉ đọc không ghi, không DDL, không vượt RLS <!--k:dbflow-ro-nowrite-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-05-024 · BR-05-019
+- **Tiền điều kiện / dữ liệu** Tài khoản từ [[tc:dbflow-ro-issue]].
+- **Bước** Thử `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `CREATE TABLE`, `SET ROLE`, `COPY … TO PROGRAM`, `SELECT pg_read_file('/etc/passwd')`.
+- **Mong đợi** Mọi lệnh bị SIM-PG từ chối. `pg_roles` của tài khoản: `rolsuper`, `rolcreaterole`, `rolcreatedb`, `rolbypassrls` đều `false`; `default_transaction_read_only = on`.
+
+#### TC-05-### · Yêu cầu bảng ngoài phạm vi; luồng không tồn tại <!--k:dbflow-scope-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-024 · API-05-036 · ERR-05-027, 033
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; C-DKKD `allowedSchemas = dkkd, dm`.
+- **Bước**
+  1. `POST …/flow-accounts` với `tables = ["ns.luong"]`.
+  2. Với `flowCode = khong-co`.
+- **Mong đợi** Bước 1 `422` ERR-05-027. Bước 2 `422` ERR-05-033.
+
+#### TC-05-### · Kiểm tra quyền thực tế phát hiện quyền vượt khai báo <!--k:dbflow-inspect-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-025 · API-05-040 · ERR-05-015 · UI-05-05
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; kết nối `tc-db-ro` khai chỉ đọc, tài khoản gốc ở SIM-PG có `INSERT` trên `dkkd.ket_qua`.
+- **Bước**
+  1. `POST …/tc-db-ro/environments/TEST:inspect-privileges`.
+  2. `POST …/tc-db-ro/environments/TEST:enable`.
+  3. Thu hồi `INSERT` ở SIM-PG, chạy lại bước 1.
+- **Mong đợi** Bước 1 `conclusion = EXCESSIVE`, liệt kê `dkkd.ket_qua INSERT`. Bước 2 `422` ERR-05-015. Bước 3 `conclusion = OK`.
+
+#### TC-05-### · Thu hồi tài khoản có hiệu lực trong 60 giây <!--k:dbflow-revoke-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-05-028 · API-05-039 · NFR-05-007 · EVT-05-15
+- **Tiền điều kiện / dữ liệu** U-T68-SO; tài khoản `ISSUED` đang có phiên mở.
+- **Bước** `POST …/flow-accounts/{id}:revoke` với lý do; đo thời điểm role biến mất ở SIM-PG.
+- **Mong đợi** `200`, `REVOKED`; role bị xóa, phiên bị cắt ≤ 60 giây; lần lấy thông tin mới ở OpenBao bị từ chối. EVT: `flow-account.changed`. KT: có (`FLOW_ACCOUNT_REVOKE`).
+
+### TS-05-12 · Quyền ghi CSDL có đồng ý và duyệt
+
+**Mục tiêu.** Xác nhận ghi CSDL nguồn theo Q359 chỉ có qua đồng ý của cán bộ ATTT, duyệt của IA, có thời hạn và đúng bảng, thao tác.
+
+**Phủ.** FR-05-026; UC-05-09; API-05-036, 037, 038; UI-05-05, 17; BR-05-009, 020; ERR-05-011, 017, 037.
+
+#### TC-05-### · Đề nghị ghi, SO đồng ý, IA duyệt, cấp đúng quyền <!--k:dbwrite-flow-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-026 · API-05-036, 037, 038 · UI-05-05, 17 · BR-05-020 · UC-05-09
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-SO, U-T68-IA1; C-DKKD (đọc ghi); luồng `ghi-ket-qua`.
+- **Bước**
+  1. IE1 `POST …/flow-accounts` với `access = WRITE`, `tables = ["dkkd.ket_qua"]`, `operations = ["INSERT"]`, `expiresAt` +60 ngày, lý do, số văn bản đồng ý.
+  2. SO mở UI-05-17 loại `ph05.db-write`, xem câu lệnh cấp quyền, bấm "Đồng ý".
+  3. IA1 duyệt.
+  4. Dùng tài khoản cấp ra `INSERT` vào `dkkd.ket_qua`, rồi `UPDATE` cùng bảng, rồi `INSERT` vào `dkkd.doanh_nghiep`.
+- **Mong đợi** Bước 1 `202`, `REQUESTED`. Bước 2 `CONSENTED`. Bước 3 `ISSUED`. Bước 4: `INSERT` đạt; `UPDATE` và `INSERT` bảng khác bị từ chối. KT: có ở cả ba bước, có số văn bản.
+
+#### TC-05-### · Ghi trên kết nối chỉ đọc, vượt hạn, duyệt khi chưa đồng ý <!--k:dbwrite-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-026 · API-05-036, 038 · ERR-05-017, 037, 008
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; `tc-db-ro` (chỉ đọc); C-DKKD.
+- **Bước**
+  1. `POST …/tc-db-ro/flow-accounts` với `access = WRITE`.
+  2. `POST …/dkkd-db/flow-accounts` với `access = WRITE`, `expiresAt` +120 ngày.
+  3. IA1 `POST …:approve` cho yêu cầu còn `REQUESTED`.
+- **Mong đợi** Bước 1 `409` ERR-05-017. Bước 2 `422` ERR-05-037. Bước 3 `409` ERR-05-008.
+
+#### TC-05-### · Bốn mắt với tài khoản ghi <!--k:dbwrite-4eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-026 · API-05-037, 038 · ERR-05-011 · BR-05-009
+- **Tiền điều kiện / dữ liệu** U-T68-IA2 (IA + IE) đề nghị ghi; U-T68-SO đã đồng ý.
+- **Bước** IA2 `POST …:approve`.
+- **Mong đợi** `403` ERR-05-011; trạng thái giữ `CONSENTED`.
+
+#### TC-05-### · Tài khoản ghi hết hạn tự thu hồi <!--k:dbwrite-expire-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-05-026, 028 · EVT-05-15
+- **Tiền điều kiện / dữ liệu** Tài khoản từ [[tc:dbwrite-flow]].
+- **Bước** Đồng hồ giả qua `expiresAt`; chạy lịch thu hồi.
+- **Mong đợi** `EXPIRED`; role ở OpenBao database engine bị xóa; chủ sở hữu luồng và SO nhận thông báo 7 ngày trước hạn và lúc hết hạn.
+
+### TS-05-13 · Nhật ký truy cập CSDL của luồng
+
+**Mục tiêu.** Xác nhận mọi câu lệnh của luồng tới CSDL nguồn được ghi lại, không chứa giá trị tham số, tra được theo luồng.
+
+**Phủ.** FR-05-027; UC-05-10; API-05-041; UI-05-05; EVT-05-14; NFR-05-015.
+
+#### TC-05-### · Mỗi câu lệnh có một bản ghi truy cập <!--k:dbaudit-record-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-05-027 · EVT-05-14 · API-05-041 · UC-05-10
+- **Tiền điều kiện / dữ liệu** U-T68-SO; luồng `dkkd-dong-bo` chạy thao tác `dh-sql-ro-source` 5 lần với tham số `maSoThue = 0999000001`.
+- **Bước**
+  1. Đọc topic `t68.adapter.db.access-recorded.v1`.
+  2. `GET /db-access-logs?flowCode=dkkd-dong-bo`.
+- **Mong đợi** 5 sự kiện, 5 dòng `db_access_record`: luồng, phiên bản, thao tác, `statementHash`, số dòng, thời lượng, kết quả, `traceId`; không có giá trị `0999000001`. Bảng chỉ thêm (UPDATE, DELETE bị trigger chặn, xem [[tc:db-append-only]]).
+
+#### TC-05-### · Chỉ SO, AU xem nhật ký; tenant khác không thấy <!--k:dbaudit-perm-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-027 · API-05-041 · ERR-05-012 · BR-05-002
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T01-IE.
+- **Bước** IE1 và U-T01-IE `GET /db-access-logs`.
+- **Mong đợi** IE1 403-PQ. U-T01-IE (có quyền ở T01) `200` với 0 dòng của T68.
+
+### TS-05-14 · Bộ điều hợp: tạo, danh sách, chi tiết
+
+**Mục tiêu.** Xác nhận bộ điều hợp thay connector đa loại của Bus cũ, gắn đúng HTTT và kết nối.
+
+**Phủ.** FR-05-029, 030, 031; API-05-043…046; UI-05-08, 09; BR-05-004, 015; ERR-05-002, 003; LGC-BUS-040.
+
+#### TC-05-### · Tạo bộ điều hợp SOAP và mở trình cấu hình <!--k:adapter-create-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-031 · API-05-044, 045 · UI-05-08, 10 · LGC-BUS-040
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; C-QLVB.
+- **Bước**
+  1. Ở UI-05-08 bấm "Tạo bộ điều hợp", chọn HTTT `HT-QLVB`, giao thức SOAP, kết nối `qlvb-soap`, mã `tc-qlvb`, giới hạn 10.
+  2. `GET /adapters/tc-qlvb`.
+- **Mong đợi** Bước 1 `201`, chuyển UI-05-10 phiên bản 1. Bước 2: `DRAFT`, phiên bản 1 `DRAFT` 0 thao tác, `maxConcurrency = 10`, không có Kamelet sinh. KT: có (`ADAPTER_CREATE`).
+
+#### TC-05-### · Kết nối khác HTTT, giao thức không khớp loại kết nối <!--k:adapter-create-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-031 · API-05-044 · ERR-05-003, 002 · BR-05-015
+- **Tiền điều kiện / dữ liệu** U-T68-IE1.
+- **Bước**
+  1. `POST /adapters` với `systemCode = HT-QLVB`, `connectionCode = ndxp-ho-tich`.
+  2. Với `protocol = SOAP`, `connectionCode = bhxh-sftp` (cùng HTTT giả định).
+  3. Với mã `qlvb-soap` đã có.
+- **Mong đợi** Bước 1 `400` ERR-05-003 rule `same-system` (BR-05-015). Bước 2 `400` ERR-05-003 (giao thức không khớp loại). Bước 3 `409` ERR-05-002.
+
+#### TC-05-### · Danh sách lọc theo nhóm HTTT, có bản chờ duyệt <!--k:adapter-list-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-029 · API-05-043 · UI-05-08 · BR-05-014
+- **Tiền điều kiện / dữ liệu** U-T68-VW; A-DVC, A-QLVB, A-CDC.
+- **Bước** `GET /adapters?systemGroup=2&hasPendingVersion=true`.
+- **Mong đợi** Chỉ A-QLVB, có `effectiveVersion = 3`, `draftVersion = 4`.
+
+#### TC-05-### · Chi tiết bộ điều hợp; sửa chỉ thông tin chung <!--k:adapter-detail-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-030, 031 · API-05-045, 046 · ERR-05-003 · UI-05-09
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-QLVB.
+- **Bước**
+  1. `GET /adapters/qlvb-soap`.
+  2. `PATCH` tên; rồi `PATCH` `{"maxConcurrency":5}`.
+- **Mong đợi** Bước 1 có thao tác, Kamelet sinh, `allowedActions`. Bước 2 lần đầu `200`, lần hai `400` ERR-05-003 (đổi qua phiên bản nháp).
+
+### TS-05-15 · Thao tác REST, phân trang, giới hạn đồng thời
+
+**Mục tiêu.** Xác nhận Kamelet REST dựng yêu cầu an toàn, phân trang không trả thiếu im lặng, tôn trọng hạn mức đối tác và giới hạn tổng tới HTTT.
+
+**Phủ.** FR-05-032, 033, 042; API-05-050; UI-05-10; BR-05-021, 029; ERR-05-017, 032, 105, 106, 110.
+
+#### TC-05-### · Khai báo thao tác REST và gọi qua luồng <!--k:rest-op-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-05-032, 033 · API-05-050 · UI-05-10 · LGC-TOOL-009
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; bản nháp v8 của A-DVC; SIM-HTTP `/api/v2/ho-so/{maHoSo}`.
+- **Bước**
+  1. `PUT /adapters/dvc-rest/versions/8/operations/chi-tiet-ho-so` với `method = GET`, `pathTemplate = /api/v2/ho-so/${param.maHoSo}`.
+  2. Kiểm thử trên TEST với `maHoSo = "H/01 ?x=1"`.
+- **Mong đợi** Bước 1 `200`. Bước 2 SIM-HTTP nhận `GET /api/v2/ho-so/H%2F01%20%3Fx%3D1` (mã hóa URL, không ghép thô), tiêu đề `Authorization: Bearer …` lấy từ kết nối, có `traceparent`.
+
+#### TC-05-### · Tiêu đề xác thực trong thao tác, sideEffect WRITE trên kết nối chỉ đọc <!--k:rest-op-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-032, 033 · API-05-050 · ERR-05-032, 017, 008
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-DVC v8 nháp (kết nối chỉ đọc); A-DVC v7 `APPROVED`.
+- **Bước**
+  1. `PUT …/versions/8/operations/x` với `headers = {"Authorization":"Basic …"}`.
+  2. `PUT …/versions/8/operations/y` với `method = POST`, `sideEffect = WRITE`.
+  3. `PUT …/versions/7/operations/z`.
+- **Mong đợi** Bước 1 `422` ERR-05-032. Bước 2 `409` ERR-05-017. Bước 3 `409` ERR-05-008 (phiên bản đã duyệt bất biến, BR-05-016).
+
+#### TC-05-### · Phân trang đủ trang và lỗi khi vượt số trang tối đa <!--k:rest-paging-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-05-033 · BR-05-021 · ERR-05-110
+- **Tiền điều kiện / dữ liệu** A-DVC thao tác `tra-cuu-ho-so` `PAGE_NUMBER`, `maxPages = 50`.
+- **Bước**
+  1. SIM-HTTP có 37 trang.
+  2. SIM-HTTP có 51 trang.
+  3. Lặp với `CURSOR`, `LINK_HEADER`, `OFFSET_LIMIT`.
+- **Mong đợi** Bước 1 trả đủ bản ghi 37 trang, tiêu đề `dh-adapter-pages = 37`. Bước 2 lỗi ERR-05-110, không trả 50 trang đầu. Bước 3 cùng kết quả với từng chế độ.
+
+#### TC-05-### · Tôn trọng 429 Retry-After của đối tác <!--k:rest-429-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-05-033 · ERR-05-106
+- **Tiền điều kiện / dữ liệu** SIM-HTTP trả 429 `Retry-After: 2` hai lần rồi 200; lần khác luôn 429 `Retry-After: 120`.
+- **Bước** Gọi thao tác hai lần với hai cấu hình.
+- **Mong đợi** Lần 1 thành công sau khoảng 4 giây, không gửi yêu cầu trước khi hết `Retry-After`. Lần 2 trả ERR-05-106 khi `Retry-After` vượt thời gian chờ còn lại.
+
+#### TC-05-### · Giới hạn đồng thời tính tổng trên mọi bản sao <!--k:pool-global-->
+- **Loại** Biên · **Ưu tiên** P1 · **Tự động** RT, k6
+- **Truy vết** FR-05-042 · BR-05-029 · ERR-05-105
+- **Tiền điều kiện / dữ liệu** A-DVC `maxConcurrency = 20`, `acquireTimeoutMs = 3000`; runtime 4 bản sao; SIM-HTTP chậm 2 giây, đếm kết nối đồng thời.
+- **Bước**
+  1. k6 bắn 200 yêu cầu đồng thời vào luồng.
+  2. Tăng runtime lên 5 bản sao, lặp lại.
+- **Mong đợi** SIM-HTTP không bao giờ thấy > 20 kết nối đồng thời (mỗi bản sao ≤ 5, rồi ≤ 4); yêu cầu chờ quá 3 giây trả ERR-05-105; chỉ số `dh_adapter_pool_exhausted_total` tăng.
+
+### TS-05-16 · Bộ điều hợp SOAP và WSDL
+
+**Mục tiêu.** Xác nhận SOAP có WS-Security, phân tích WSDL an toàn (không XXE), ánh xạ SOAP Fault, phát hiện lệch WSDL.
+
+**Phủ.** FR-05-034; UC-05-14; UI-05-10; BR-05-023; ERR-05-023, 107; LGC-BUS-041, LGC-TOOL-012.
+
+#### TC-05-### · Khai báo thao tác SOAP từ WSDL, gọi có UsernameToken <!--k:soap-op-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-05-034 · API-05-050 · UI-05-10 · UC-05-14 · LGC-BUS-041
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; `tc-qlvb` từ [[tc:adapter-create]]; SIM-SOAP WSDL v1.
+- **Bước**
+  1. Ở UI-05-10 thêm thao tác `lay-van-ban-den`, nhóm Giao thức: chọn dịch vụ, cổng, thao tác từ WSDL.
+  2. Kiểm thử trên TEST.
+- **Mong đợi** Bước 1 danh sách dịch vụ nạp từ WSDL đệm, `soapAction` tự điền. Bước 2 SIM-SOAP nhận phong bì có `wsse:UsernameToken` với `Nonce`, `Created`; phản hồi chuyển về JSON chuẩn.
+
+#### TC-05-### · WSDL có thực thể ngoài (XXE) bị từ chối <!--k:soap-xxe-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-034 · API-05-050, 065 · ERR-05-023
+- **Tiền điều kiện / dữ liệu** SIM-SOAP phục vụ WSDL có `<!DOCTYPE … SYSTEM "file:///etc/passwd">` và một bản có "billion laughs".
+- **Bước** Tải WSDL qua kết nối cho thao tác mới; gửi cùng tệp qua API-05-065.
+- **Mong đợi** Cả hai `422` ERR-05-023 "WSDL có khai báo DOCTYPE"; không có yêu cầu nào ra `file://` hay máy chủ ngoài; tiến trình không tăng bộ nhớ đột biến.
+
+#### TC-05-### · SOAP Fault được phân loại theo bảng ánh xạ <!--k:soap-fault-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-05-034 · ERR-05-107
+- **Tiền điều kiện / dữ liệu** Thao tác có `faultMapping`: `soap:Server.Busy` → `TRANSIENT`, `VB-404` → `BUSINESS`.
+- **Bước** SIM-SOAP trả lần lượt ba fault: `Server.Busy`, `VB-404`, `X-LA`.
+- **Mong đợi** ERR-05-107 với lớp lỗi `TRANSIENT`, `BUSINESS`, `BUSINESS` (không có trong bảng); PH-04 chỉ thử lại lớp `TRANSIENT`.
+
+#### TC-05-### · WSDL ở hệ đích đổi so với bản đệm hạ sức khỏe <!--k:soap-drift-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-05-034, 020 · BR-05-023 · EVT-05-06
+- **Tiền điều kiện / dữ liệu** A-QLVB v3 đang chạy; SIM-SOAP đổi sang WSDL v2 (xóa thao tác `LayVanBanDen`).
+- **Bước** Chạy lịch so WSDL.
+- **Mong đợi** Sức khỏe A-QLVB `DEGRADED`, lý do nêu thao tác lệch; EVT: `health.changed`; chủ sở hữu nhận cảnh báo.
+
+### TS-05-17 · Hàng đợi, thư điện tử, LDAP
+
+**Mục tiêu.** Xác nhận Kamelet hàng đợi xác nhận sau xử lý, tự kết nối lại; thư chỉ gửi tới miền cho phép; LDAP thoát giá trị lọc.
+
+**Phủ.** FR-05-035, 037, 039; UC-05-16; BR-05-024, 028; ERR-05-114, 115; LGC-TOOL-010.
+
+#### TC-05-### · Tiêu thụ AMQP, xác nhận sau khi luồng xử lý xong <!--k:mq-ack-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-05-035 · BR-05-024 · UC-05-16 · LGC-TOOL-010
+- **Tiền điều kiện / dữ liệu** Bộ điều hợp `tc-tnmt` thao tác `INBOUND` hàng đợi `ho-so-moi`; luồng tiêu thụ lỗi ở bản tin thứ 3.
+- **Bước** Đẩy 5 bản tin vào SIM-MQ.
+- **Mong đợi** Bản tin 1, 2, 4, 5 được xác nhận; bản tin 3 không bị mất (nằm DLQ của luồng hoặc quay lại hàng đợi theo cấu hình), tiêu đề `traceparent`, `correlationId` được chuyển.
+
+#### TC-05-### · Mất môi giới bản tin, tự kết nối lại <!--k:mq-reconnect-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** Chaos
+- **Truy vết** FR-05-035 · ERR-05-114
+- **Tiền điều kiện / dữ liệu** Như [[tc:mq-ack]].
+- **Bước** Dừng SIM-MQ 2 phút, rồi 6 phút.
+- **Mong đợi** Lần 2 phút: tự kết nối lại theo giãn cách, không mất bản tin. Lần 6 phút: ERR-05-114 ghi nhận, sức khỏe `UNHEALTHY`; có lại thì tiêu thụ tiếp.
+
+#### TC-05-### · Thư chỉ tới miền cho phép; đính kèm có mã độc <!--k:mail-domain-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-05-037 · BR-05-028 · ERR-05-115
+- **Tiền điều kiện / dữ liệu** Bộ điều hợp `tc-mail` miền cho phép `t68.gov.vn`; SIM-MAIL.
+- **Bước**
+  1. Gửi tới `a@t68.gov.vn`, `b@gmail.com`.
+  2. Hộp thư nhận có thư kèm F-EICAR.
+- **Mong đợi** Bước 1 chỉ thư thứ nhất tới SIM-MAIL; thư thứ hai lỗi lớp dữ liệu, không gửi. Bước 2 ERR-05-115, thư chuyển thư mục cách ly, không đưa vào luồng.
+
+#### TC-05-### · LDAP thoát ký tự đặc biệt trong bộ lọc <!--k:ldap-escape-->
+- **Loại** Bảo mật · **Ưu tiên** P3 · **Tự động** RT
+- **Truy vết** FR-05-039
+- **Tiền điều kiện / dữ liệu** Thao tác `search` với `filterTemplate = (uid=${param.uid})`; SIM-LDAP.
+- **Bước** Gọi với `uid = "*)(objectClass=*"`.
+- **Mong đợi** SIM-LDAP nhận bộ lọc `(uid=\2a\29\28objectClass=\2a)`; 0 kết quả; `sizeLimit` ≤ 1.000 được áp.
+
+### TS-05-18 · Bộ điều hợp tệp SFTP
+
+**Mục tiêu.** Xác nhận quét tệp thay nhóm Network, Scheduling của Tooling: chỉ nhận tệp đã ghi xong, mỗi tệp một bản sao xử lý, đọc theo luồng.
+
+**Phủ.** FR-05-036; UC-05-15; BR-05-026; ERR-05-112, 113; NFR-05-008; LGC-TOOL-009, 011.
+
+#### TC-05-### · Quét SFTP, bỏ tệp đang ghi dở <!--k:sftp-ready-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-05-036 · UC-05-15 · ERR-05-112 · LGC-TOOL-011
+- **Tiền điều kiện / dữ liệu** Bộ điều hợp `tc-bhxh` `POLL`, `includePattern = BC_*.csv`, `readyStrategy = STABLE_SIZE`, `stableSeconds = 30`, lịch mỗi phút.
+- **Bước**
+  1. Ghi `BC_01.csv` dần trong 90 giây.
+  2. Ghi `BC_02.csv` một lần; thêm `khac.txt`.
+- **Mong đợi** `BC_01.csv` chỉ được nhận sau khi kích thước ổn định 30 giây (các lượt trước ghi ERR-05-112 mức thông tin); `BC_02.csv` nhận ở lượt kế; `khac.txt` không bị chạm. Tệp xong chuyển `archiveDirectory`.
+
+#### TC-05-### · Hai bản sao không cùng xử lý một tệp <!--k:sftp-lock-->
+- **Loại** Biên · **Ưu tiên** P1 · **Tự động** RT
+- **Truy vết** FR-05-036 · BR-05-026
+- **Tiền điều kiện / dữ liệu** Như [[tc:sftp-ready]]; runtime 3 bản sao.
+- **Bước** Thả 100 tệp cùng lúc.
+- **Mong đợi** Mỗi tệp được xử lý đúng một lần (đếm `dh-file-checksum` ở luồng); có tên tạm `.dh-processing-{uuid}` khi đang xử lý.
+
+#### TC-05-### · Tệp sai định dạng và bản ghi lỗi <!--k:sftp-bad-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-05-036, 041 · ERR-05-113, 109
+- **Tiền điều kiện / dữ liệu** F-CSV-1M (3 dòng thiếu trường bắt buộc, quy tắc `REJECT`); một tệp nhị phân đặt tên `.csv`.
+- **Bước** Thả hai tệp.
+- **Mong đợi** F-CSV-1M: 999.997 bản ghi đi tiếp, 3 bản ghi vào danh sách lỗi với dòng và trường; tệp nhị phân ERR-05-113, chuyển `errorDirectory`.
+
+### TS-05-19 · Bộ điều hợp CSDL theo truy vấn khai báo
+
+**Mục tiêu.** Xác nhận truy vấn CSDL nguồn theo Q359: câu lệnh khai báo trước, tham số ràng buộc, không SQL động, đúng phạm vi.
+
+**Phủ.** FR-05-038; API-05-050; UI-05-10; ERR-05-032, 111; EVT-05-14; LGC-TOOL-008.
+
+#### TC-05-### · Truy vấn khai báo với tham số ràng buộc <!--k:sql-op-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-05-038 · API-05-050 · EVT-05-14 · LGC-TOOL-008
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; bộ điều hợp `tc-dkkd-sql` trên C-DKKD; tài khoản đọc của luồng.
+- **Bước**
+  1. Khai thao tác `statement = SELECT ma_so_thue, ten FROM dkkd.doanh_nghiep WHERE ma_so_thue = :#mst`.
+  2. Luồng gọi với `mst = "0999000001' OR '1'='1"`.
+- **Mong đợi** Bước 1 `200`, `parameters` tự nhận `mst`. Bước 2 trả 0 dòng (giá trị ràng buộc, không ghép chuỗi); SIM-PG nhận câu có `$1`. EVT-05-14 một bản ghi.
+
+#### TC-05-### · Câu lệnh bị chặn khi khai báo <!--k:sql-op-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-038 · API-05-050 · ERR-05-032
+- **Tiền điều kiện / dữ liệu** Như [[tc:sql-op]], kết nối chỉ đọc.
+- **Bước** Khai lần lượt: `DELETE FROM dkkd.doanh_nghiep`; `SELECT 1; DROP TABLE x`; `SELECT pg_sleep(100)`; `SELECT * FROM ph04.flow`; `SELECT dblink(…)`.
+- **Mong đợi** Mọi câu `422` ERR-05-032 với vị trí dòng, cột và quy tắc vi phạm.
+
+#### TC-05-### · Quá thời gian, vượt số dòng <!--k:sql-limits-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-05-038 · ERR-05-111
+- **Tiền điều kiện / dữ liệu** `maxRows = 1000`; bảng 5.000 dòng; câu chậm 40 giây với `timeoutMs = 10000`.
+- **Bước** Chạy hai câu.
+- **Mong đợi** Câu một trả 1.000 dòng với `dh-truncated = true` nếu thao tác cho phép cắt, nếu không ERR-05-111. Câu hai ERR-05-111 trong ≤ 11 giây, SIM-PG thấy phiên bị hủy.
+
+### TS-05-20 · Chuyển đổi định dạng và chuẩn hóa
+
+**Mục tiêu.** Xác nhận chuyển về JSON chuẩn theo quy ước cố định, xem trước bằng đúng bộ chuyển đổi của runtime, chuẩn hóa giá trị thiếu.
+
+**Phủ.** FR-05-040, 041; API-05-054; UI-05-10; ERR-05-108, 109, 032, 035; LGC-TOOL-007.
+
+#### TC-05-### · XML sang JSON: thuộc tính, phần tử lặp theo XSD <!--k:fmt-xml-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-05-040 · API-05-054 · UI-05-10
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; F-XML (phần tử `VanBan` lặp một lần, có thuộc tính `loai`).
+- **Bước** `POST …/versions/4:preview-transform` với F-XML.
+- **Mong đợi** `vanBan` là mảng một phần tử (theo XSD, không đoán theo số lần xuất hiện); thuộc tính thành `@loai`; văn bản kèm thuộc tính thành `#text`; tiền tố không gian tên bỏ theo bảng. Kết quả bằng đúng kết quả runtime trên cùng đầu vào (so băm).
+
+#### TC-05-### · CSV windows-1258, TCVN3; VNI bị từ chối <!--k:fmt-encoding-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** UT, API
+- **Truy vết** FR-05-040 · API-05-050, 054 · ERR-05-032
+- **Tiền điều kiện / dữ liệu** Ba tệp mẫu cùng nội dung "Nguyễn Thị Ánh" ở `windows-1258`, `TCVN3`; thao tác khai `encoding = VNI`.
+- **Bước** Xem trước hai tệp; lưu thao tác với `VNI`.
+- **Mong đợi** JSON có đúng chuỗi Unicode NFC "Nguyễn Thị Ánh"; lưu `VNI` `422` ERR-05-032.
+
+#### TC-05-### · Chuẩn hóa giá trị thiếu: DEFAULT, REJECT, PASS_NULL <!--k:norm-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-05-041 · API-05-054 · ERR-05-109 · UI-05-10
+- **Tiền điều kiện / dữ liệu** Quy tắc: `$.ngayKy` thiếu khi `01/01/1900` → `PASS_NULL`; `$.coQuan` thiếu → `DEFAULT:Chưa rõ`; `$.so` thiếu → `REJECT`.
+- **Bước** Xem trước mẫu 4 bản ghi có các giá trị trên.
+- **Mong đợi** `ngayKy = null`, `coQuan = "Chưa rõ"`, bản ghi thiếu `so` bị từ chối; `warnings[]` nêu đường dẫn, giá trị gốc, quy tắc; số liệu "4 bản ghi · 1 bị từ chối". Ở runtime bản ghi đơn lẻ thiếu `so` trả ERR-05-109.
+
+#### TC-05-### · Phản hồi sai lược đồ; mẫu quá lớn <!--k:fmt-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** RT, API
+- **Truy vết** FR-05-040, 032 · ERR-05-108, 035
+- **Tiền điều kiện / dữ liệu** Thao tác có `responseSchemaRef`; SIM-HTTP trả `so` là số thay vì chuỗi; mẫu 1,5 MiB.
+- **Bước** Gọi thao tác; lưu mẫu 1,5 MiB.
+- **Mong đợi** ERR-05-108 kèm đường dẫn trường sai; mẫu `413` ERR-05-035.
