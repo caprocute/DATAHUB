@@ -19,10 +19,10 @@ def short(ids, n=12):
     s = ', '.join(i[-3:] for i in ids[:n])
     return (s + (f' (+{len(ids)-n})' if len(ids) > n else '')) if ids else '—'
 
-API_DOC = (P.ROOT / '03-thiet-ke/api/D03-05-PH05-api-tich-hop.md').read_text(encoding='utf-8')
+API_DOC = (P.ROOT / '03-thiet-ke/api/D03-04-PH05-api-bo-dieu-hop.md').read_text(encoding='utf-8')
 
 def known(prefix):
-    if prefix == 'ERR':  # danh sách chuẩn ở D03-05-PH05 §6
+    if prefix == 'ERR':  # danh sách chuẩn ở D03-04-PH05 §6
         return sorted(set(re.findall(r'^\| (ERR-05-\d{3}) \|', API_DOC, re.M)))
     return sorted(set(re.findall(r'^\| (' + prefix + r'-05-\d{3}) \|', frs_text, re.M)))
 
@@ -38,7 +38,7 @@ for f, v in frs.items():
     O.append(f"| {f} | {v['name'][:60]} | {v['prio']} | {lg} | {short(b['pos'])} | {short(b['neg'])} | {short(other, 6)} | {ok} |")
 
 O.append('\n### 8.2. Chức năng hệ cũ → yêu cầu → test case\n')
-O.append('Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`LGC-TOOL`) được truy tới FR mới và tới ca tự động, ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
+O.append('Mỗi chức năng kết nối của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`LGC-TOOL`) được truy tới FR mới và tới ca tự động, ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
 O.append('| LGC | FR | TC tự động | UAT |')
 O.append('|---|---|---|---|')
 uat = defaultdict(list)

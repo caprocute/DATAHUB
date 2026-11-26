@@ -55,7 +55,7 @@ sheet(ws3, ['FR', 'Tên', 'Mức', 'LGC', 'Ca dương', 'Ca âm', 'Đạt quy t�
 ws4 = wb.create_sheet('HuongDan')
 for line in ['Tệp sinh tự động từ D05-02-PH05 bằng ph05/tools/gen_xlsx.py. Không sửa tay các cột A–L.',
              'Cột Kết quả chọn: Đạt, Không đạt, Chặn, Chưa chạy. Ghi mã lỗi theo dõi khi Không đạt.',
-             'Quy ước 403-PQ, 404-ẩn, KT, EVT xem mục 1.6 của tài liệu.',
+             'Quy ước 403-PQ, 404-ẩn, KT, EVT xem mục 1.5 của tài liệu.',
              f'Tổng số ca: {len(tcs)}; số kịch bản: {len(tsn)}.']:
     ws4.append([line])
 ws4.column_dimensions['A'].width = 120
