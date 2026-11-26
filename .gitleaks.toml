@@ -25,4 +25,6 @@ regexes = [
   '''sbxs_Pq7Lw2Xv9Tn4KcM8aRf6HdB3''',
   '''dhsk_t68_Zm9vYmFyYmF6cXV4MTIzNDU2Nzg5''',
   '''7c1d9a42-5b3e-4f60-8d17-2a9c0e5f6b31''',
+  # Mã quyền trong bảng sinh OpenAPI PH-15, bị nhận nhầm là khóa
+  '''x\(87, 'Gửi đăng ký sử dụng API production', 'PERM-02-subscribe'''',
 ]
