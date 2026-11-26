@@ -677,3 +677,437 @@ Truy vết ngược từ chức năng hệ cũ: LGC-HUB-001…004 ở UC-10-21; 
 - **E9. Đọc lược đồ không có scope (bước 1).** ERR-10-102.
 
 **Quy tắc áp dụng:** BR-10-001, 006, 007, 011, 020, 021.
+
+### 6.11. UC-10-11 · Phát trực tiếp qua Kafka và xử lý vi phạm lược đồ
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | HTTT lưu lượng lớn phát thẳng vào Kafka qua listener ngoài; nền tảng phát hiện bản tin không theo lược đồ và cán bộ ATTT cắt quyền phát khi cần |
+| Tác nhân chính | HTTT `HT-DVC` (bên phát `ht-dvc-kafka`, `KAFKA_NATIVE`); ROLE-SECURITY_OFFICER (Dũng) |
+| Tác nhân phụ | Kafka (listener `external`, SASL OAUTHBEARER), bộ giám sát tuân thủ của `dh-runtime`, Apicurio, kho `dh-config-{tenant}` |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-034, 023, 032 |
+| Tiền điều kiện | `10.external-kafka.enabled` bật cho T68; publication `ACTIVE` của `ht-dvc-kafka` trên `t68.dvc.ho-so.da-tiep-nhan.v1` với ACL `WRITE` |
+| Điều kiện kích hoạt | `HT-DVC` khởi động producer Kafka |
+| Đảm bảo tối thiểu | Bản tin vi phạm không làm hỏng bên nhận: bộ giao nhận đưa vào DLQ với ERR-10-116 thay vì giao |
+| Đảm bảo thành công | Bản tin ghi với `acks=all`, idempotent, có định danh lược đồ; vi phạm vượt ngưỡng được cảnh báo qua EVT-10-14 |
+
+**Luồng chính**
+
+1. Lập trình viên `HT-DVC` lấy địa chỉ listener ngoài, cấu hình serde Apicurio và mẫu mã ở tab Cách kết nối (API-10-020).
+2. Producer cấu hình `acks=all`, `enable.idempotence=true`, `auto.register=false`, serde Apicurio, tiêu đề `ce_*` bắt buộc, khóa theo `partitionKeyField` (BR-10-008); xác thực SASL OAUTHBEARER, principal `User:{clientId}`.
+3. Kafka kiểm tra ACL và hạn mức `producerByteRate` của `KafkaUser`, ghi bản tin.
+4. Bộ giám sát tuân thủ đọc mẫu theo `10.compliance.sample-ratio` (0,01) bằng nhóm `dh-compliance-t68`, kiểm tra định danh lược đồ, giải tuần tự, tiêu đề CloudEvents, khóa. Mẫu đạt; chỉ số theo publication cập nhật.
+5. Một phiên bản mới của `HT-DVC` lỡ tắt serde Apicurio. Bộ giám sát ghi nhận vi phạm ERR-10-119 theo publication; trong 15 phút vượt `10.compliance.violation-threshold` (10) nên hệ thống phát EVT-10-14, cảnh báo An, Mai, Dũng.
+6. Dũng mở tab Tuân thủ của UI-10-06 (API-10-031): số vi phạm theo loại, mẫu offset. Dũng chọn "Tạm ngừng publication", nhập lý do (LP-10-02). Hệ thống gọi API-10-045 hành động `:suspend`: xóa ACL `WRITE`, publication `SUSPENDED`, phát EVT-10-07; Kafka từ chối ghi trong ≤ 2 phút.
+7. Sau khi `HT-DVC` sửa cấu hình, Chi hoặc Dũng chọn "Tiếp tục" (`:resume`); ACL được cấp lại không cần duyệt lại.
+
+**Luồng thay thế**
+
+- **2a. Luồng PH-04 hoặc DU phát qua listener `internal`.** Kamelet `dh-kafka-sink` hoặc outbox ghi bằng mTLS với principal nội bộ theo tenant và ACL tiền tố; bước 4 vẫn áp dụng.
+- **6a. Thu hồi hẳn.** An (`PERM-10-update`) chọn "Thu hồi" (`:revoke`); publication `REVOKED`, không tiếp tục được; cặp này phải đề nghị mới (UC-10-09).
+
+**Luồng ngoại lệ**
+
+- **E1. Principal ghi sai topic hoặc vượt hạn mức (bước 3).** Kafka từ chối; nền tảng ghi nhận ERR-10-120 theo principal và hiện ở chi tiết bên phát.
+- **E2. Không đủ bản sao đồng bộ (bước 3).** Producer nhận lỗi `NOT_ENOUGH_REPLICAS`; không hạ `acks` (BR-10-007).
+- **E3. Tenant chưa bật Kafka ngoài (bước 1).** Tab Cách kết nối không có địa chỉ listener ngoài; đăng ký bên phát `KAFKA_NATIVE` đã bị chặn ở UC-10-07 E4 (ERR-10-028).
+- **E4. Bản tin vi phạm tới bộ giao nhận (sau bước 5).** Vào DLQ ngay với ERR-10-116, không thử lại (UC-10-14 E1).
+- **E5. Thiếu lý do khi tạm ngừng (bước 6).** ERR-10-009.
+
+**Quy tắc áp dụng:** BR-10-007, 008, 018, 020.
+
+### 6.12. UC-10-12 · Đăng ký nhận sự kiện và xác minh endpoint
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Cơ quan thuế nhận sự kiện cấp phép doanh nghiệp qua webhook, endpoint đã được chứng minh là của mình, có căn cứ nhận dữ liệu |
+| Tác nhân chính | ROLE-INTEGRATION_ENGINEER (An); ROLE-ORG_REQUESTER (Thảo) cho HTTT của Sở Tài chính |
+| Tác nhân phụ | Bộ giao nhận (`dh-runtime`) thực hiện bắt tay, HTTT `HT-THUE` |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-035, 036, 040 |
+| Tiền điều kiện | Bên nhận `ht-thue` `ACTIVE` (`WEBHOOK_PUSH`); topic `ACTIVE`; tenant chưa vượt `maxSubscriptions`; An có `PERM-10-subscribe` |
+| Điều kiện kích hoạt | An bấm "Đăng ký nhận" ở UI-10-06 hoặc UI-10-10 chi tiết `ht-thue` |
+| Đảm bảo tối thiểu | Chưa có nhóm tiêu thụ, chưa giao sự kiện nào trước khi duyệt |
+| Đảm bảo thành công | Subscription `ht-thue-dn-cap-phep` `PENDING_APPROVAL`, endpoint đã xác minh trong 24 giờ, có yêu cầu `SUBSCRIPTION` |
+
+**Luồng chính**
+
+1. Hệ thống mở UI-10-11 bước "Bên nhận và chế độ". An chọn `ht-thue`; hệ thống chỉ cho `deliveryMode` `PUSH` vì `commType` `WEBHOOK_PUSH` (BR-10-017). Mã đề xuất `ht-thue-dn-cap-phep`.
+2. Ở bước "Endpoint", An nhập `https://thue.t68.gov.vn/hooks/dh` và bấm "Xác minh". Hệ thống gọi API-10-051.
+3. Bộ giao nhận gửi `OPTIONS` với `WebHook-Request-Origin: event.t68.datahub`; `HT-THUE` trả `204` với `WebHook-Allowed-Origin` khớp. Hệ thống kiểm tra chứng thư TLS ≥ 1.2, phân giải DNS không ra địa chỉ riêng của nền tảng, FQDN trong danh sách egress (BR-10-026); kết quả `PASSED`, lưu `endpointVerifiedAt`.
+4. Ở bước "Giao nhận", An đặt `workerCount` 3 (≤ 6 phân vùng), `maxRetries` 8, `retryBackoff` mặc định, `timeoutMs` 10000, `failurePolicy` `BLOCK` vì topic có thứ tự (Q10-15), `payloadFormat` `CLOUDEVENTS_STRUCTURED`.
+5. Ở bước "Điểm bắt đầu", An chọn `TIMESTAMP`, `startAt` `2026-11-20T00:00:00+07:00`. Hệ thống ước lượng số bản tin cần giao và thời gian giao hết (FR-10-040).
+6. Ở bước "Ngưỡng và căn cứ", An giữ `lagWarnSeconds` 300, `lagCriticalSeconds` 1800, nhập `purpose` "Cập nhật mã số thuế cho doanh nghiệp mới cấp phép".
+7. An bấm "Gửi duyệt". Hệ thống gọi API-10-047; nhận `201` kèm `approvalRequestCode`; subscription `PENDING_APPROVAL`; tiếp UC-10-13. Danh sách subscription của topic (API-10-046) có thêm dòng mới.
+
+**Luồng thay thế**
+
+- **1a. Thảo (OR) đăng ký cho HTTT của Sở Tài chính.** Danh sách bên nhận chỉ có HTTT của tổ chức Thảo.
+- **1b. Chế độ kéo.** Với `ht-bhxh` (`HTTP_PULL`), An chọn `PULL_API`, đặt `pull.maxBatch` 100, `pull.leaseSeconds` 60; bỏ bước 2, 3.
+- **1c. Kafka ngoài.** Bên nhận `KAFKA_NATIVE` chọn `PULL_KAFKA`; hệ thống hiển thị nhóm bắt buộc `dh-ext-t68-{subscriptionCode}`.
+- **3a. HTTT cũ không trả lời được bắt tay.** Mai (TA) bật ngoại lệ có thời hạn ≤ 180 ngày với lý do; hệ thống thay bắt tay bằng một `POST` sự kiện kiểm tra `vn.datahub.event.subscription.verification`; endpoint trả `2xx` thì kết quả `WAIVED`, lưu `verificationWaiverUntil` (Q10-14).
+- **5a. `LATEST`.** Giao từ cuối topic tại thời điểm `ACTIVE`; mặc định.
+- **5b. `EARLIEST`.** Giao từ đầu dữ liệu còn trong lưu giữ; hệ thống cảnh báo số bản tin ước lượng.
+- **6a. Topic `RESTRICTED`, `SENSITIVE`.** Bắt buộc nhập `legalBasis` (căn cứ pháp lý hoặc văn bản đồng ý chia sẻ) và bên nhận `SYSTEM` đạt cấp độ ATTT (BR-10-019).
+
+**Luồng ngoại lệ**
+
+- **E1. Đã có subscription cho cặp (`ht-thue`, topic) (bước 7).** ERR-10-024.
+- **E2. Topic `DEPRECATED`, `RETIRED` hoặc bên nhận không `ACTIVE` (bước 1).** ERR-10-025 (BR-10-016); hệ thống gợi ý topic kế nhiệm nếu có.
+- **E3. URL không HTTPS, trỏ địa chỉ riêng hoặc ngoài egress (bước 2).** ERR-10-026; quay lại bước 2.
+- **E4. Bắt tay thất bại (bước 3).** ERR-10-027 kèm hướng dẫn: bật xử lý `OPTIONS`, mở tường lửa từ địa chỉ egress, cập nhật chứng thư; quay lại bước 2.
+- **E5. `workerCount` vượt số phân vùng hoặc `10.push.max-workers` (bước 4).** ERR-10-030.
+- **E6. `startAt` ngoài lưu giữ (bước 5).** ERR-10-031 kèm mốc sớm nhất còn dữ liệu.
+- **E7. `PULL_KAFKA` khi tenant chưa bật Kafka ngoài (1c).** ERR-10-028.
+- **E8. Ngoài tổ chức (1a).** ERR-10-044.
+- **E9. Vượt `maxSubscriptions` (bước 7).** ERR-10-011.
+
+**Quy tắc áp dụng:** BR-10-016, 017, 019, 022, 025, 026.
+
+### 6.13. UC-10-13 · Duyệt subscription và cấp phát nhóm tiêu thụ
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Người duyệt kiểm tra căn cứ nhận dữ liệu; sau duyệt, nền tảng tạo khóa ký, khởi tạo vị trí đọc và bắt đầu giao trong ≤ 2 phút |
+| Tác nhân chính | ROLE-INTEGRATION_APPROVER (Bình) |
+| Tác nhân phụ | OpenBao, Kafka Admin API, bộ giao nhận, Keycloak và OPA (với `PULL_API`), kho `dh-config-{tenant}` (với `PULL_KAFKA`) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-037 |
+| Tiền điều kiện | Subscription `PENDING_APPROVAL`; endpoint xác minh trong 24 giờ nếu `PUSH`; Bình khác người đề nghị |
+| Điều kiện kích hoạt | Bình mở yêu cầu `SUBSCRIPTION` ở UI-10-13 |
+| Đảm bảo tối thiểu | Bí mật ký chỉ nằm ở OpenBao; không có nhóm tiêu thụ nào tự đặt vị trí (`auto.offset.reset=none`) |
+| Đảm bảo thành công | Subscription `ACTIVE`, nhóm `dh-sub-t68-ht-thue-dn-cap-phep` ở vị trí `startAt`, khóa ký đầu tiên `ACTIVE`; EVT-10-08 phát |
+
+**Luồng chính**
+
+1. Bình mở yêu cầu (API-10-057, API-10-058): bên nhận, HTTT, chế độ, endpoint và kết quả xác minh, tham số giao, điểm bắt đầu kèm ước lượng, `purpose`, `dataClass` của topic, mức dùng hạn mức worker.
+2. Bình giảm `workerCount` từ 3 xuống 2, nhập ý kiến, chọn "Duyệt" (LP-10-01). Hệ thống gọi API-10-059; subscription sang `PROVISIONING`.
+3. Hệ thống sinh khóa ký 256 bit tiền tố `whsec_`, ghi vào OpenBao `kv/dh/t68/event/subscriptions/ht-thue-dn-cap-phep/signing`; PostgreSQL chỉ lưu `keyId`, trạng thái.
+4. Hệ thống khởi tạo vị trí nhóm theo `offsetsForTimes` tại `startAt` cho từng phân vùng bằng Admin API (BR-10-022), ghi cấu hình runtime (không chứa bí mật) cho bộ giao nhận.
+5. Subscription sang `ACTIVE`, ghi `approvedBy`, `approvedAt`; outbox phát EVT-10-08; bộ giao nhận nhận sự kiện và khởi động worker (UC-10-14).
+6. An mở UI-10-12 (API-10-048). Hệ thống hiện bí mật ký một lần cho người có `PERM-10-subscribe` của subscription, kèm hướng dẫn cấu hình xác minh chữ ký ở `HT-THUE` (BR-10-027).
+
+**Luồng thay thế**
+
+- **2a. Từ chối.** Subscription `REJECTED`; An được thông báo kèm lý do.
+- **2b. Tự duyệt.** Subscription của bên `INTERNAL_SERVICE` trên topic của chính DU khi `10.approval.auto-approve-internal` bật: yêu cầu `APPROVED` với `system:auto` (BR-10-031); bỏ bước 1, 2.
+- **3a. `PULL_API`.** Thay bước 3 bằng gắn scope `topic:{topicName}:subscribe` vào client của `HT-BHXH` và dữ liệu quyền vào OPA; nhóm `dh-sub-t68-ht-bhxh-dn-cap-phep`.
+- **3b. `PULL_KAFKA`.** Thêm ACL `READ`, `DESCRIBE` literal trên topic và `READ` trên nhóm `dh-ext-t68-{subscriptionCode}`, hạn mức `consumerByteRate`, commit `kafka/users/` (LP-10-05).
+- **3c. `INTERNAL`.** Ghi nhận quyền cho VR-10; nhóm `dh-flow-t68-{flow}` hoặc `dh-svc-{service}-t68` (UC-10-25).
+
+**Luồng ngoại lệ**
+
+- **E1. Bình là người đề nghị (bước 2).** ERR-10-008.
+- **E2. Topic hoặc bên nhận đã đổi trạng thái trong lúc chờ (bước 2).** ERR-10-025.
+- **E3. Endpoint quá 24 giờ chưa xác minh lại (bước 2).** ERR-10-027; An xác minh lại (UC-10-12 bước 2) rồi Bình duyệt.
+- **E4. OpenBao, Kafka Admin, Keycloak hoặc Git không khả dụng (bước 3, 4).** ERR-10-029 theo LP-10-04; subscription về `PENDING_APPROVAL`, không để lại khóa hay nhóm dở dang.
+- **E5. Cấp phát `PULL_KAFKA` thất bại (3b).** Subscription `FAILED`; lệnh phụ thuộc trả ERR-10-038; Mai thử lại.
+
+**Quy tắc áp dụng:** BR-10-010, 018, 020, 022, 027, 029, 031.
+
+### 6.14. UC-10-14 · Giao nhận ĐẨY, thử lại và chuyển DLQ
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Mỗi sự kiện được giao tới `HT-THUE` ít nhất một lần, có chữ ký HMAC, giữ thứ tự theo khóa; sự kiện không giao được nằm trong DLQ, không bị bỏ im lặng |
+| Tác nhân chính | Bộ giao nhận webhook của `dh-runtime` |
+| Tác nhân phụ | HTTT `HT-THUE`, OpenBao (khóa ký), Kafka, bộ ghi DLQ của `dh-integration`, Chi (TO) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-038, 039, 049 |
+| Tiền điều kiện | Subscription `PUSH` ở `ACTIVE`; bộ giao nhận có cấu hình qua API-10-073 (scope `event:runtime-config`) |
+| Điều kiện kích hoạt | Có bản tin mới trên phân vùng mà worker đang giữ |
+| Đảm bảo tối thiểu | Không commit offset trước khi giao thành công hoặc đã ghi chắc chắn vào DLQ (BR-10-024) |
+| Đảm bảo thành công | `HT-THUE` trả `2xx`; offset được commit; thống kê giao cập nhật |
+
+**Luồng chính**
+
+1. Worker đọc bản tin offset 18233 phân vùng 4, giải tuần tự theo lược đồ.
+2. Worker dựng `POST https://thue.t68.gov.vn/hooks/dh`, thân `application/cloudevents+json`; kiểm lại IP đích trước lượt giao (BR-10-026).
+3. Worker ký theo ADR-044: `Webhook-Id` bằng `ce_id`, `Webhook-Timestamp`, `X-Datahub-Signature` dạng `t={ts},v1={hex}`, kèm `X-Datahub-Subscription`, `X-Datahub-Attempt`, `X-Datahub-Key-Id`, `traceparent`.
+4. `HT-THUE` xác minh chữ ký, kiểm độ lệch thời gian ≤ `10.push.signature-tolerance-seconds`, chống trùng theo `Webhook-Id` (BR-10-009), trả `200`.
+5. Worker commit offset, ghi thống kê vào `DeliveryStat` theo phút, sang bản tin kế tiếp của phân vùng. Các phân vùng khác chạy song song (BR-10-025).
+
+```mermaid
+sequenceDiagram
+  participant K as Kafka
+  participant W as Bộ giao nhận
+  participant H as HT-THUE
+  participant D as Topic DLQ
+  participant I as Bộ ghi DLQ
+  K->>W: Bản tin offset 18233
+  W->>H: POST có chữ ký HMAC
+  H-->>W: 503
+  W->>W: Chờ giãn dần rồi thử lại
+  W->>H: POST lần thử cuối
+  H-->>W: 503
+  W->>D: Ghi bản tin gốc kèm tiêu đề dh_dlq
+  D-->>W: Xác nhận acks all
+  W->>K: Commit offset
+  D->>I: Tiêu thụ
+  I->>I: Tạo DlqEntry NEW, phát EVT-10-11
+```
+
+Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nhận chỉ commit sau khi topic DLQ xác nhận ghi, nên nếu tiến trình dừng giữa chừng thì bản tin được giao lại, không mất. Bộ ghi DLQ của `dh-integration` biến bản tin trên topic DLQ thành mục bền vững trong `ph10_event`.
+
+**Luồng thay thế**
+
+- **4a. Lỗi tạm thời, ví dụ `503` (ERR-10-112) hoặc quá thời gian (ERR-10-111).** Worker thử lại tại chỗ, lần thứ k chờ `min(maxMs, initialMs × multiplier^(k-1))` nhân nhiễu 0,8…1,2, tôn trọng `Retry-After`; phân vùng đó tạm dừng, phân vùng khác vẫn chạy. Thành công thì tiếp bước 5.
+- **4b. Hết `maxRetries` với `DEAD_LETTER`.** Worker ghi bản tin gốc lên `t68.dkkd.doanh-nghiep.da-cap-phep.v1.dlq` với tiêu đề `dh_dlq_subscription`, `dh_dlq_source_partition`, `dh_dlq_source_offset`, `dh_dlq_error_code`, `dh_dlq_attempts`, `dh_dlq_first_failed_at`; commit; bộ ghi DLQ tạo `DlqEntry` `NEW` (`origin` `PUSH`), mã hóa nội dung theo `dataClass`; phát EVT-10-11 (gộp 1 phút).
+- **4c. Hết `maxRetries` với `BLOCK` (cấu hình của `ht-thue-dn-cap-phep`).** Không bỏ qua: subscription sang `SUSPENDED` lý do "đầu nhận lỗi", phát EVT-10-09, cảnh báo Chi; Chi khắc phục cùng `HT-THUE` rồi tiếp tục (UC-10-16 nhánh 2a), bản tin giao lại từ vị trí cũ.
+- **4d. Ngắt mạch.** Tỷ lệ lỗi ≥ 50% liên tục `10.push.suspend-after-failures-minutes` (30) phút: subscription `SUSPENDED` (`suspendSource` `CIRCUIT_BREAKER`); thăm dò mỗi 5 phút bằng một bản tin, thành công thì tự về `ACTIVE`.
+- **4e. Đang trong thời gian chồng lấn xoay khóa.** Tiêu đề chữ ký mang hai giá trị `v1` (UC-10-17).
+
+**Luồng ngoại lệ**
+
+- **E1. Không giải tuần tự được (bước 1).** DLQ ngay với ERR-10-116, không thử lại.
+- **E2. `4xx` vĩnh viễn, ví dụ `400` (bước 4).** ERR-10-113; không thử lại, xử lý như 4b hoặc 4c theo `failurePolicy`.
+- **E3. Lỗi TLS hoặc chứng thư (bước 2).** ERR-10-114; xử lý như lỗi tạm thời, cảnh báo đầu mối HTTT.
+- **E4. IP đích bị chặn do DNS rebinding hoặc ngoài egress (bước 2).** ERR-10-115; không gửi; xử lý như 4b hoặc 4c.
+- **E5. Không đọc được khóa ký (bước 3).** ERR-10-117; tạm dừng phân vùng, cảnh báo, không bao giờ gửi không ký.
+- **E6. Topic DLQ không ghi được (4b).** Không commit; ERR-10-029 ghi nhật ký, cảnh báo SEV-2; bản tin được thử lại sau.
+
+**Quy tắc áp dụng:** BR-10-009, 022, 023, 024, 025, 026.
+
+### 6.15. UC-10-15 · HTTT nhận sự kiện theo chế độ KÉO
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | `HT-BHXH`, không mở được endpoint nhận vào, tự kéo sự kiện qua API có xác thực, xác nhận sau khi xử lý xong và báo lỗi cho sự kiện không xử lý được |
+| Tác nhân chính | HTTT `HT-BHXH` |
+| Tác nhân phụ | APISIX và OPA, cổng kéo của `dh-runtime`, bộ ghi DLQ |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-043, 044 |
+| Tiền điều kiện | Subscription `ht-bhxh-dn-cap-phep` (`PULL_API`) `ACTIVE`; token của `HT-BHXH` có scope `topic:t68.dkkd.doanh-nghiep.da-cap-phep.v1:subscribe` |
+| Điều kiện kích hoạt | Bộ lập lịch của `HT-BHXH` chạy chu kỳ kéo |
+| Đảm bảo tối thiểu | Vị trí đọc chỉ tiến khi có xác nhận; kéo lặp trong thời gian thuê trả đúng lô cũ |
+| Đảm bảo thành công | Lô sự kiện đã xử lý, vị trí nhóm `dh-sub-t68-ht-bhxh-dn-cap-phep` tiến |
+
+**Luồng chính**
+
+1. `HT-BHXH` gọi API-10-080 `GET /event/v1/subscriptions/ht-bhxh-dn-cap-phep/events?max=100&waitSeconds=20`.
+2. APISIX và OPA kiểm tra token, scope và quan hệ client với bên nhận. Cổng kéo kiểm tra subscription `ACTIVE`.
+3. Cổng đọc tối đa 100 sự kiện từ vị trí đã commit, chờ dài tới 20 giây nếu chưa có; trả `200` với `events[]`, `cursor` (ký HMAC phía máy chủ), `leaseExpiresAt` sau `leaseSeconds` (60).
+4. `HT-BHXH` xử lý từng sự kiện idempotent theo `id` (BR-10-009), gọi API-10-081 `:ack` với `cursor`.
+5. Cổng commit vị trí theo cursor; lượt kéo kế tiếp nhận sự kiện mới.
+
+**Luồng thay thế**
+
+- **1a. Nhận qua Kafka listener ngoài (FR-10-044, S).** Với subscription `PULL_KAFKA`, HTTT dùng consumer Kafka chuẩn, SASL OAUTHBEARER hoặc mTLS, nhóm bắt buộc `dh-ext-t68-{subscriptionCode}`, serde Apicurio đọc lược đồ qua API-10-084; tự commit và tự chịu xử lý lỗi; có thể báo sự kiện lỗi vào DLQ tầng sự kiện qua API-10-083 (`origin` `EXTERNAL_REPORT`).
+- **3a. Không có sự kiện trong `waitSeconds`.** Trả lô rỗng; `HT-BHXH` kéo lại.
+- **3b. Kéo lại khi lô cũ chưa xác nhận và chưa hết lease.** Cổng trả lại đúng lô cũ (kéo lặp an toàn).
+- **3c. Có lượt phát lại `REDELIVER_RANGE` đang chạy.** Bản tin phát lại trả trước bản tin mới (UC-10-19).
+- **4a. Một sự kiện không xử lý được.** `HT-BHXH` gọi API-10-082 `:nack` với `cursor`, `eventIds[]`, `reason`; sự kiện đó vào DLQ (`origin` `PULL_NACK`, ERR-10-113), phát EVT-10-11; các sự kiện còn lại được xác nhận.
+
+**Luồng ngoại lệ**
+
+- **E1. Token hỏng (bước 2).** ERR-10-101.
+- **E2. Thiếu scope hoặc client không phải của bên nhận (bước 2).** ERR-10-102.
+- **E3. Subscription `PAUSED`, `SUSPENDED` hoặc `REVOKED` (bước 2).** ERR-10-110.
+- **E4. Cursor giả, hết hạn lease hoặc không khớp (bước 4).** ERR-10-109; `HT-BHXH` kéo lại và nhận lô từ vị trí đã commit.
+- **E5. Vượt hạn mức kéo (bước 1).** ERR-10-107 kèm `Retry-After`.
+- **E6. Consumer Kafka ngoài dùng sai tên nhóm hoặc vượt hạn mức (1a).** Kafka từ chối; nền tảng ghi nhận ERR-10-120 (BR-10-035).
+
+**Quy tắc áp dụng:** BR-10-009, 020, 022, 035.
+
+### 6.16. UC-10-16 · Vận hành subscription: tạm dừng, sửa, thu hồi
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Vận hành tỉnh chủ động dừng giao khi HTTT bảo trì, theo dõi chất lượng giao, chỉnh tham số mà không mất bản tin, thu hồi khi hết căn cứ |
+| Tác nhân chính | ROLE-TENANT_OPERATOR (Chi); ROLE-INTEGRATION_ENGINEER (An) với sửa, thu hồi |
+| Tác nhân phụ | Bộ giao nhận, cổng kéo, OPA, OpenBao, Kafka Admin |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-041, 046, 047, 056 |
+| Tiền điều kiện | Subscription `ht-thue-dn-cap-phep` `ACTIVE`; Chi có `PERM-10-operate`; An có `PERM-10-subscribe` |
+| Điều kiện kích hoạt | Sở Tài chính báo `HT-THUE` bảo trì từ 20:00 tới 23:00 |
+| Đảm bảo tối thiểu | Không mất bản tin: vị trí đọc giữ nguyên khi tạm dừng; lượt đang gửi hoàn tất hoặc hết thời gian chờ rồi mới dừng |
+| Đảm bảo thành công | Subscription `PAUSED` trong ≤ 10 giây, về `ACTIVE` và giao tiếp từ vị trí đã commit |
+
+**Luồng chính**
+
+1. Chi mở UI-10-12 (API-10-048): trạng thái, lag theo phân vùng, worker, khóa ký, thời gian còn lại trước khi bản tin chưa đọc hết lưu giữ.
+2. Chi bấm "Tạm dừng", nhập lý do "HT-THUE bảo trì theo thông báo số 15" (LP-10-02). Hệ thống gọi API-10-050 `:pause`; subscription `PAUSED`, phát EVT-10-09; bộ giao nhận dừng lấy bản tin mới trong ≤ 10 giây.
+3. Lúc 23:05, Chi bấm "Tiếp tục". Hệ thống gọi API-10-050 `:resume`; subscription `ACTIVE`, giao tiếp từ vị trí đã commit; phát EVT-10-09.
+4. Chi mở tab Thống kê (API-10-052): biểu đồ 1 giờ, 24 giờ, 7 ngày số giao thành công, lỗi tạm thời, thử lại, vào DLQ, p50, p95; tab Lượt lỗi (API-10-053): thời điểm, phân vùng, offset, `ce_id`, mã HTTP, mã lỗi, số lần thử, đoạn đầu phản hồi đã cắt 512 byte và che; trạng thái từng worker.
+
+**Luồng thay thế**
+
+- **2a. Tiếp tục từ `SUSPENDED`.** Subscription bị tạm ngừng do `BLOCK`, ngắt mạch, SO hoặc PH-01: Chi bấm "Tiếp tục" với lý do khắc phục; cần `PERM-10-operate`.
+- **2b. Subscription kéo.** Với `PULL_API`, khi `PAUSED` cổng kéo trả ERR-10-110; với `PULL_KAFKA`, hệ thống gỡ ACL `READ` nhóm.
+- **4a. Sửa tham số không cần duyệt.** An đổi `workerCount` 2 lên 4 (sau khi topic tăng 12 phân vùng ở UC-10-04), `maxRetries`, `timeoutMs`, ngưỡng lag; hệ thống gọi API-10-049 với `If-Match`; bộ giao nhận áp dụng trong ≤ 60 giây bằng tái cân bằng hợp tác, không mất bản tin; phát EVT-10-09.
+- **4b. Sửa tham số cần duyệt lại.** An đổi `endpointUrl` hoặc `failurePolicy`: hệ thống yêu cầu xác minh endpoint mới trước (UC-10-12 bước 2, 3), tạo yêu cầu `SUBSCRIPTION` với khác biệt; subscription vẫn chạy tham số cũ tới khi Bình duyệt. Đổi `deliveryMode` thì giao diện hướng dẫn tạo subscription mới và thu hồi cái cũ.
+- **4c. Thu hồi.** An hoặc Thảo (OR, trong tổ chức) chọn "Thu hồi" với lý do. Hệ thống gọi API-10-050 `:revoke`: dừng bộ giao nhận, gỡ scope, dữ liệu OPA, ACL, thu hồi mọi khóa ký (xóa khỏi OpenBao), hủy lượt phát lại đang chạy, xếp lịch xóa nhóm sau `10.subscription.group-delete-delay-hours` (72); mục DLQ `NEW` giữ để xem, loại bỏ; subscription `REVOKED`, phát EVT-10-09.
+
+**Luồng ngoại lệ**
+
+- **E1. Thiếu lý do (bước 2, 2a, 4c).** ERR-10-009.
+- **E2. Tạm dừng subscription `INTERNAL` (bước 2).** ERR-10-006; điều khiển luồng ở PH-04.
+- **E3. `workerCount` vượt số phân vùng hoặc trần (4a).** ERR-10-030.
+- **E4. Endpoint mới không hợp lệ hoặc xác minh thất bại (4b).** ERR-10-026 hoặc ERR-10-027.
+- **E5. Người khác vừa sửa (4a).** ERR-10-007 theo LP-10-03.
+- **E6. Thu hồi subscription đã `REVOKED` (4c).** ERR-10-006.
+
+**Quy tắc áp dụng:** BR-10-020, 022, 024, 025.
+
+### 6.17. UC-10-17 · Xoay và thu hồi khẩn khóa ký webhook
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Đổi khóa ký định kỳ không gián đoạn giao, và vô hiệu ngay khóa bị lộ |
+| Tác nhân chính | ROLE-TENANT_OPERATOR (Chi); ROLE-SECURITY_OFFICER (Dũng) với thu hồi khẩn |
+| Tác nhân phụ | OpenBao, bộ giao nhận (nhận EVT-10-13), HTTT `HT-THUE` |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-042 |
+| Tiền điều kiện | Subscription `PUSH` có khóa `ACTIVE`; Chi có `PERM-10-operate` |
+| Điều kiện kích hoạt | Hệ thống nhắc khóa sắp quá `10.push.key-max-age-days` (365), hoặc Dũng nhận tin khóa bị lộ |
+| Đảm bảo tối thiểu | Bí mật không bao giờ xuất hiện trong log, kiểm toán, thư hay tệp xuất (BR-10-027) |
+| Đảm bảo thành công | Khóa mới `ACTIVE`, khóa cũ `PREVIOUS` rồi `REVOKED` sau thời gian chồng lấn; EVT-10-13 phát |
+
+**Luồng chính**
+
+1. Chi mở tab Khóa ký ở UI-10-12: `keyId`, trạng thái, `activatedAt`, tuổi khóa.
+2. Chi bấm "Xoay khóa" (LP-10-02). Hệ thống gọi API-10-054 `:rotate`: sinh khóa mới ghi thẳng vào OpenBao, khóa mới `ACTIVE`, khóa cũ `PREVIOUS` với `previousUntil` bằng hôm nay cộng `10.push.key-rotation-overlap-days` (7); phát EVT-10-13.
+3. Hệ thống hiện bí mật mới một lần cho người có `PERM-10-subscribe` của subscription (An), qua giao diện HTTPS; Chi không có quyền này thì thấy thông báo "Đã gửi việc hiển thị khóa cho đầu mối".
+4. Trong 7 ngày, mỗi lượt giao mang hai chữ ký `v1`; `HT-THUE` cập nhật khóa mới bất kỳ lúc nào.
+5. Hết hạn chồng lấn, khóa cũ `REVOKED` và bị xóa khỏi OpenBao; phát EVT-10-13.
+
+**Luồng thay thế**
+
+- **2a. IE xoay.** An (`PERM-10-subscribe`) xoay khóa của subscription mình quản lý; hệ thống hiện bí mật ngay cho An.
+- **2b. Thu hồi khẩn.** Dũng hoặc Mai chọn "Thu hồi khẩn" (API-10-054 `:revoke`) với lý do: khóa hiện tại `REVOKED` ngay, sinh khóa mới, không chồng lấn; `HT-THUE` sẽ từ chối chữ ký tới khi cập nhật khóa mới, các lượt giao lỗi xử lý theo UC-10-14.
+
+**Luồng ngoại lệ**
+
+- **E1. OpenBao không khả dụng (bước 2).** ERR-10-029; khóa cũ giữ nguyên `ACTIVE`.
+- **E2. Bộ giao nhận không đọc được khóa mới (sau bước 2).** ERR-10-117; phân vùng tạm dừng, cảnh báo, không gửi không ký.
+- **E3. Xoay trên subscription `REVOKED` hoặc không phải `PUSH`.** ERR-10-006.
+- **E4. Thiếu lý do (bước 2, 2b).** ERR-10-009.
+
+**Quy tắc áp dụng:** BR-10-027.
+
+### 6.18. UC-10-18 · Xử lý mục DLQ và phát lại mục DLQ
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Vận hành tỉnh tìm nguyên nhân sự kiện giao thất bại, loại bỏ mục không cần, giao lại mục đã khắc phục mà không cần bản tin còn trên topic gốc |
+| Tác nhân chính | ROLE-TENANT_OPERATOR (Chi) |
+| Tác nhân phụ | PH-18 (scope `event:dlq-read`, `event:replay`), bộ phát lại của `dh-runtime`, OpenBao transit, Bình (duyệt) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-050, 053 |
+| Tiền điều kiện | Có mục DLQ `NEW` của `ht-thue-dn-cap-phep`; Chi có `PERM-10-operate` |
+| Điều kiện kích hoạt | Chi nhận EVT-10-11 qua thông báo, mở UI-10-15 của topic |
+| Đảm bảo tối thiểu | Mục DLQ chỉ đổi trạng thái theo máy trạng thái; nội dung nhạy cảm chỉ xem khi có lý do và được kiểm toán |
+| Đảm bảo thành công | Mục đã khắc phục ở `REPLAYED`, mục không cần ở `DISCARDED`; EVT-10-12 phát |
+
+**Luồng chính**
+
+1. Hệ thống gọi API-10-060, hiện mục DLQ lọc theo subscription, `status` `NEW`, `errorCode`, khoảng `firstFailedAt`. Có 42 mục ERR-10-113 trong ngày 25/11.
+2. Chi mở một mục (API-10-061): siêu dữ liệu `sourcePartition`, `sourceOffset`, `eventId`, `eventType`, `eventSubject`, `attempts`, `errorCode`, `errorDetail`. Chi chọn "Xem nội dung"; vì topic `INTERNAL`, hệ thống trả nội dung (API-10-061 phần `payload`) và ghi kiểm toán.
+3. Chi phát hiện `HT-THUE` từ chối do thiếu mã cơ quan cấp trong bảng tra cứu; sau khi Sở Tài chính cập nhật, Chi chọn cả 42 mục và bấm "Phát lại". Hệ thống gọi API-10-064 với `replayMode` `DLQ_ENTRIES`, `rangeType` `ENTRIES`, `dlqEntryIds`, `reason`.
+4. Vì 42 lớn hơn `10.replay.dlq-auto-approve-max` (0), hệ thống tạo yêu cầu `REPLAY`; Bình duyệt ở UI-10-13 (LP-10-01).
+5. Bộ phát lại đưa 42 mục sang `REPLAY_PENDING`, giao từ nội dung lưu trong `DlqEntry` với `X-Datahub-Replay` và cùng `Webhook-Id` như lần đầu. 41 mục thành công sang `REPLAYED`; 1 mục lỗi về `NEW` với `attempts` tăng.
+6. Lượt phát lại `COMPLETED`, phát EVT-10-12; Chi xem kết quả ở UI-10-16.
+
+**Luồng thay thế**
+
+- **2a. Topic `RESTRICTED`, `SENSITIVE`.** Xem nội dung cần lý do; hiển thị đã che theo chính sách PH-09 khi có (Q10-06).
+- **3a. Loại bỏ.** Mục là sự kiện thử nghiệm phát nhầm: Chi chọn mục và "Loại bỏ" với lý do (≤ 1.000 mục mỗi lệnh, hoặc theo bộ lọc chạy nền theo FR-00-054). Hệ thống gọi API-10-062; mục sang `DISCARDED`.
+- **3b. Gửi tới endpoint dự phòng.** Chi chọn `targetEndpointUrl` là endpoint khác đã xác minh của cùng bên nhận.
+- **3c. PH-18 khởi tạo.** Màn xử lý lỗi chung của PH-18 đọc DLQ bằng `event:dlq-read` và đề nghị phát lại bằng `event:replay`; tiếp bước 4.
+- **6a. Dọn nội dung.** Sau `10.dlq.payload-retention-days-after-resolve` (30) ngày từ khi xử lý, nội dung mục `REPLAYED`, `DISCARDED` bị xóa, mục sang `PURGED`, siêu dữ liệu giữ.
+
+**Luồng ngoại lệ**
+
+- **E1. Mục đã được xử lý (bước 3, 3a).** ERR-10-036.
+- **E2. Thiếu lý do (bước 2a, 3, 3a).** ERR-10-009.
+- **E3. Subscription đã `REVOKED` (bước 3).** ERR-10-006; mục vẫn xem, loại bỏ được nhưng không phát lại.
+- **E4. Đang có lượt phát lại khác cho subscription (bước 3).** ERR-10-035.
+- **E5. Số mục vượt `10.replay.max-records` (bước 3).** ERR-10-034.
+- **E6. Bình là người đề nghị (bước 4).** ERR-10-008.
+- **E7. Endpoint dự phòng chưa xác minh (3b).** ERR-10-027.
+
+**Quy tắc áp dụng:** BR-10-009, 024, 028.
+
+### 6.19. UC-10-19 · Đề nghị, duyệt và chạy phát lại theo khoảng
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Giao lại cho bên nhận một khoảng sự kiện đã giao (bên nhận lỗi xử lý nội bộ), hoặc đặt lại vị trí đọc, luôn có duyệt và ước lượng tác động |
+| Tác nhân chính | ROLE-TENANT_OPERATOR (Chi) đề nghị; ROLE-INTEGRATION_APPROVER (Bình) duyệt |
+| Tác nhân phụ | Bộ phát lại của `dh-runtime`, Kafka Admin API, PH-18 (`event:replay`) |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-051, 052 |
+| Tiền điều kiện | Subscription `ACTIVE`, `PAUSED` hoặc `SUSPENDED`; không có lượt khác `APPROVED`, `RUNNING` |
+| Điều kiện kích hoạt | Sở Tài chính báo `HT-THUE` lỗi ghi CSDL ngày 20 và 21/11, cần nhận lại sự kiện |
+| Đảm bảo tối thiểu | Vị trí của subscription không đổi với `REDELIVER_RANGE`; vị trí cũ được lưu để hoàn tác với `RESET_OFFSET` |
+| Đảm bảo thành công | Lượt `rpl-01jdy…` `COMPLETED`; EVT-10-12 phát |
+
+**Luồng chính**
+
+1. Chi mở UI-10-16, bấm "Đề nghị phát lại", chọn `ht-thue-dn-cap-phep`, `replayMode` `REDELIVER_RANGE`, `rangeType` `TIME`, `fromTime` `2026-11-20T00:00:00+07:00`, `toTime` `2026-11-22T00:00:00+07:00`, `ratePerSecond` 500, lý do "Hệ thống thuế lỗi xử lý 20 và 21/11", đánh dấu `acknowledgeDuplicates`.
+2. Hệ thống quy đổi thời gian ra offset theo phân vùng, kiểm tra còn trong lưu giữ, ước lượng 18.400 bản tin và khoảng 37 giây chạy; gọi API-10-064 tạo `ReplayRequest` `PENDING_APPROVAL` và yêu cầu `REPLAY`.
+3. Bình mở yêu cầu ở UI-10-13: phạm vi, ước lượng, tác động "bên nhận nhận lại sự kiện đã nhận"; chọn "Duyệt" (LP-10-01). Lượt sang `APPROVED`.
+4. Bộ phát lại dùng consumer gán phân vùng thủ công, nhóm `dh-replay-t68-{replayCode}`, không tham gia nhóm của subscription; lượt sang `RUNNING`, ghi `startedAt`.
+5. Bộ phát lại giao từng bản tin như UC-10-14, thêm `X-Datahub-Replay`, giữ `Webhook-Id` gốc để `HT-THUE` chống trùng, giới hạn 500 bản tin mỗi giây. Tiến độ (`deliveredRecords`, `failedRecords`, ước lượng còn lại) cập nhật mỗi 5 giây trên UI-10-16 (API-10-063).
+6. Kết thúc: lượt `COMPLETED`, ghi `finishedAt`; phát EVT-10-12. Bản tin lỗi cuối cùng vào DLQ kèm `replayCode` (`origin` `REPLAY`).
+
+**Luồng thay thế**
+
+- **1a. Khoảng theo offset.** Chi chọn `rangeType` `OFFSET`, nhập `partitions[]` với `partition`, `fromOffset`, `toOffset`.
+- **1b. `RESET_OFFSET`.** Chi tạm dừng subscription trước (UC-10-16 bước 2), chọn `RESET_OFFSET` với `fromTime`. Hệ thống nêu tác động: lùi vị trí thì nhận lại mọi sự kiện từ điểm đó; tiến vị trí thì bỏ qua sự kiện và cần xác nhận `acknowledgeSkip`. Khi chạy, bộ phát lại kiểm tra subscription vẫn `PAUSED`, đặt vị trí nhóm theo phân vùng, ghi `previousOffsets` để hoàn tác; Chi tiếp tục subscription.
+- **1c. Bên nhận `PULL_API`.** Bản tin phát lại vào hàng chờ phát lại, trả ở các lượt kéo trước bản tin mới (UC-10-15 nhánh 3c).
+- **1d. PH-18 đề nghị.** PH-18 gọi API-10-064 bằng scope `event:replay`; tiếp bước 2.
+- **3a. Từ chối.** Lượt `REJECTED`.
+- **4a. Lượt `APPROVED` quá 24 giờ chưa chạy** (ví dụ subscription vẫn `SUSPENDED`): tự `CANCELLED`.
+- **5a. Hủy.** Chi bấm "Hủy" (API-10-065); bộ phát lại dừng sau bản tin đang giao, lượt `CANCELLED`, phát EVT-10-12.
+
+**Luồng ngoại lệ**
+
+- **E1. `RESET_OFFSET` khi subscription chưa `PAUSED` (1b).** ERR-10-032.
+- **E2. Khoảng không hợp lệ hoặc ngoài lưu giữ (bước 2).** ERR-10-033 kèm khoảng còn dữ liệu.
+- **E3. Vượt `10.replay.max-records` (bước 2).** ERR-10-034; Chi chia nhỏ khoảng.
+- **E4. Đang có lượt khác (bước 2).** ERR-10-035.
+- **E5. Thiếu xác nhận nhận trùng hoặc thiếu lý do (bước 1).** ERR-10-009.
+- **E6. `ratePerSecond` vượt `10.replay.rate-limit-per-second` (bước 1).** ERR-10-012.
+- **E7. Bình là người đề nghị (bước 3).** ERR-10-008.
+- **E8. Lỗi hạ tầng khi chạy (bước 5).** Lượt `FAILED`, phát EVT-10-12; với `RESET_OFFSET` vị trí cũ vẫn còn trong `previousOffsets`.
+
+**Quy tắc áp dụng:** BR-10-009, 010, 022, 028.
+
+### 6.20. UC-10-20 · Theo dõi độ trễ tiêu thụ và xác nhận cảnh báo
+
+| Mục | Nội dung |
+|---|---|
+| Mục tiêu | Phát hiện sớm bên nhận chậm hoặc ngừng tiến trước khi sự kiện chưa đọc bị hết lưu giữ, phủ cả luồng PH-04 và bên nhận Kafka ngoài |
+| Tác nhân chính | ROLE-TENANT_OPERATOR (Chi) |
+| Tác nhân phụ | Bộ thu lag của `dh-integration`, Kafka Admin API, PH-13 (LGTM), đầu mối HTTT bên nhận |
+| Mức ưu tiên | M |
+| FR hiện thực | FR-10-054, 055, 059 |
+| Tiền điều kiện | Có subscription ở `ACTIVE`, `PAUSED`, `SUSPENDED`; Chi có `PERM-10-operate` |
+| Điều kiện kích hoạt | EVT-10-10 báo `ht-thue-dn-cap-phep` chuyển `WARNING` |
+| Đảm bảo tối thiểu | Việc đánh giá cảnh báo không bị tắt bởi xác nhận |
+| Đảm bảo thành công | Chi xác nhận cảnh báo, nguyên nhân được xử lý, `alertState` về `OK` |
+
+**Luồng chính**
+
+1. Mỗi `10.lag.collect-interval-seconds` (30) giây, bộ thu lag gọi `listOffsets` và `listConsumerGroupOffsets` cho mọi nhóm của tenant (gồm `dh-flow-*`, `dh-ext-*`), tính `lagRecords`, `lagSeconds` theo phân vùng, lưu `LagSample` và xuất `dh_event_consumer_lag_seconds` sang PH-13 (FR-10-059, nhãn `tenant`, không mang dữ liệu nghiệp vụ).
+2. `ht-thue-dn-cap-phep` có `lagSeconds` 420, không nhỏ hơn `lagWarnSeconds` 300, trong hai chu kỳ liên tiếp. Hệ thống đặt `alertState` `WARNING`, phát EVT-10-10, thông báo Chi và đầu mối `HT-THUE`.
+3. Chi mở UI-10-17, lọc `alertState` `WARNING`, `CRITICAL`, `STALLED`; mở dòng `ht-thue-dn-cap-phep` (API-10-055): lag theo phân vùng, xu hướng 24 giờ, thời gian còn lại trước khi hết lưu giữ.
+4. Chi thấy p95 đầu nhận tăng lên 8 giây; bấm "Xác nhận cảnh báo", ghi chú "Đã báo Sở Tài chính, đang tăng worker". Hệ thống gọi API-10-056; ghi người xác nhận, tắt thông báo lặp 4 giờ.
+5. An tăng `workerCount` (UC-10-16 nhánh 4a). Lag giảm; hệ thống đặt `alertState` `OK`, phát EVT-10-10.
+
+**Luồng thay thế**
+
+- **2a. `CRITICAL`.** `lagSeconds` không nhỏ hơn `lagCriticalSeconds` hoặc thời gian còn lại trước khi hết lưu giữ dưới 24 giờ; PH-13 áp luật cảnh báo chung (độ trễ data plane trên 60 giây trong 5 phút là SEV-2).
+- **2b. `STALLED`.** `lagRecords` lớn hơn 0 mà offset đã commit không đổi trong `10.lag.stalled-minutes` (5) phút ở subscription `ACTIVE`; thường do `BLOCK` đang chờ, khóa ký lỗi, hoặc consumer Kafka ngoài dừng. Subscription `PAUSED` không vào `STALLED`.
+- **2c. Theo số bản tin.** `lagRecords` không nhỏ hơn `10.lag.warn-records` (10000) cũng đưa về `WARNING`.
+- **3a. Xem trên sơ đồ.** Chi mở UI-10-14 với lớp phủ `LAG` (UC-10-21).
+
+**Luồng ngoại lệ**
+
+- **E1. Kafka Admin API không khả dụng (bước 1).** Chu kỳ bị bỏ, chỉ số ngừng cập nhật; PH-13 cảnh báo thiếu dữ liệu; trạng thái cảnh báo giữ mức gần nhất.
+- **E2. Thiếu ghi chú khi xác nhận (bước 4).** ERR-10-009.
+- **E3. Khoảng thời gian xu hướng vượt giới hạn truy vấn (bước 3).** ERR-10-049.
+
+**Quy tắc áp dụng:** BR-10-022.
