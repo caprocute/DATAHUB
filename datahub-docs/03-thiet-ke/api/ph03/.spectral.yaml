@@ -1,0 +1,7 @@
+# Bộ luật lint của hợp đồng PH-03 (CC-API-02, D04-01). Kế thừa spectral:oas và OWASP API Security.
+extends:
+  - spectral:oas
+  - "@stoplight/spectral-owasp-ruleset"
+rules:
+  # API quản trị gọi qua BFF cùng nguồn gốc nên không có CORS; CORS theo route là chức năng của API dữ liệu (FR-03-010).
+  owasp:api8:2023-define-cors-origin: off
