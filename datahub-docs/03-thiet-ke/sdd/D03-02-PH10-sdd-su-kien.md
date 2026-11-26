@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH10
 ten: Thiết kế chi tiết phần mềm phân hệ PH-10 Sự kiện
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kỹ sư nền tảng Kafka, kiến trúc sư, ATTT, hội đồng thẩm định
@@ -175,7 +175,7 @@ vn.datahub.integration.event
 │   ├── exchange/                # ManifestExporter, ManifestImportJob (FR-10-070, 071)
 │   ├── migration/               # PulsarInventoryImporter, LegacyMapping, MigrationBridge, BridgeFlowRenderer, Reconciler
 │   └── idempotency/             # IdempotencyFilter, IdempotencyStore
-└── events/                      # record EVT-10-01…15, OutboxWriter, EventTypes (ce_type vn.datahub.event.*)
+└── events/                      # record EVT-10-01…16, OutboxWriter, EventTypes (ce_type vn.datahub.event.*)
 ```
 
 Quy tắc phụ thuộc kiểm bằng Spring Modulith (`ApplicationModules.verify()`) và ArchUnit:
@@ -508,14 +508,14 @@ Lô (`application/cloudevents-batch+json`) được kiểm toàn bộ ở bướ
 | Đọc bản tin | Consumer gán phân vùng thủ công (`assign`), `group.id = dh-sub-{tenant}-{subscriptionCode}` chỉ để đọc, ghi offset đã commit; không `subscribe` nên không tái cân bằng giữa các bản sao cổng. `auto.offset.reset=none` (BR-10-022) |
 | Lease | Valkey khóa `dh:{tenant}:evt:lease:{subscriptionCode}` gồm `leaseId` (ULID), bản sao giữ lease, vị trí đầu và cuối theo phân vùng, `leaseExpiresAt`; đặt bằng `SET NX PX leaseSeconds` |
 | Kéo lặp | Lượt kéo khi lease còn hạn và chưa ack trả lại đúng lô cũ: cổng đọc lại theo khoảng offset ghi trong lease (đọc lại từ Kafka, không giữ lô trong bộ nhớ) |
-| Cursor | Chuỗi base64url của `{subscriptionCode, leaseId, offsets{partition: nextOffset}, exp}` kèm HMAC-SHA256 bằng khóa cursor của tenant (§13.4 mục 3); cursor không giả được, không dùng được cho subscription khác |
+| Cursor | Chuỗi base64url của `{subscriptionCode, leaseId, offsets{partition: nextOffset}, exp}` kèm HMAC-SHA256 bằng khóa cursor của tenant ở OpenBao `kv/dh/{tenant}/event/runtime/cursor` (FRS A.8); cursor không giả được, không dùng được cho subscription khác |
 | Ack | Kiểm chữ ký, `leaseId` khớp lease hiện hành và chưa hết hạn (ERR-10-109); commit offset bằng `commitSync` với `group.id` của subscription (nhóm không có thành viên động nên commit hợp lệ); xóa lease |
 | Nack | Các `eventIds[]` được đọc lại theo khoảng của lease, ghi lên `{topicName}.dlq` với `dh_dlq_error_code = ERR-10-113`, `origin` sẽ là `PULL_NACK`; sau khi DLQ xác nhận thì xử lý như ack cả lô |
 | Chờ dài | Khi không có bản tin, `poll` lặp tới `waitSeconds` (≤ `10.pull.long-poll-max-seconds`) trên luồng ảo; trả `204` khi hết giờ |
 | Định tuyến | Cổng nào nhận yêu cầu thì đọc lease ở Valkey; lease thuộc bản sao khác vẫn phục vụ được vì lô xác định bằng khoảng offset, không phụ thuộc trạng thái trong bộ nhớ |
 | Hàng chờ phát lại | Lượt phát lại `REDELIVER_RANGE` cho `PULL_API` ghi danh sách khoảng vào khóa `dh:{tenant}:evt:replayq:{subscriptionCode}`; lượt kéo ưu tiên khoảng này trước bản tin mới (FR-10-052) |
 
-Khi Valkey không khả dụng, cổng kéo không cấp được lease nên trả `503` kèm `Retry-After: 5`. ERR-10-029 là mã control plane, ERR-10-108 chỉ nói về bản sao đồng bộ của Kafka, nên FRS chưa có mã data plane đúng nghĩa cho "phụ thuộc runtime không khả dụng"; thiết kế trả `503` với `type` chung của RFC 9457 cho tới khi FRS bổ sung (§13.4 mục 6). API phát không bị chặn khi Valkey ngừng: `PublishDeduplicator` bỏ qua bước chống trùng (chấp nhận trùng, bên nhận chống trùng theo `id`) và tăng chỉ số `dh_event_dedup_bypass_total`.
+Khi Valkey không khả dụng, cổng kéo không cấp được lease nên trả `503` kèm `Retry-After: 5`. Mã lỗi là ERR-10-121 (phụ thuộc runtime không khả dụng, FRS 0.2), khác ERR-10-029 của control plane và ERR-10-108 về bản sao đồng bộ của Kafka. API phát không bị chặn khi Valkey ngừng: `PublishDeduplicator` bỏ qua bước chống trùng (chấp nhận trùng, bên nhận chống trùng theo `id`) và tăng chỉ số `dh_event_dedup_bypass_total`.
 
 ### 4.8. Bộ giao nhận webhook
 
@@ -534,7 +534,7 @@ Bộ giao nhận là StatefulSet; mỗi bản sao có số thứ tự `i` trong 
 5. Gửi với thời gian chờ `timeoutMs`. Phân loại kết quả theo bảng §8.5.
 6. Thành công: đánh dấu offset đã xử lý; commit theo lô mỗi 1 giây hoặc mỗi 100 bản tin cho từng phân vùng (chỉ offset liên tục đã xong). Thất bại tạm thời: `RetryPolicy`. Thất bại vĩnh viễn hoặc hết lượt: `DlqWriter`.
 
-`RetryPolicy` tính lần chờ thứ k là `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2, dùng `Retry-After` nếu nhỏ hơn `maxMs` (FR-10-039). Trong lúc chờ, worker `pause()` riêng phân vùng đó và tiếp tục `poll()` để giữ tư cách thành viên nhóm (không vượt `max.poll.interval.ms`); các phân vùng khác vẫn chạy. Hết `maxRetries`: `DEAD_LETTER` thì ghi DLQ rồi đi tiếp; `BLOCK` thì gửi lệnh tạm ngừng về control plane (API nội bộ `POST /runtime/subscriptions/{subscriptionCode}:suspend` với `suspendSource = CIRCUIT_BREAKER` và `suspendReason` ghi "đầu nhận lỗi, failurePolicy BLOCK", §13.4 mục 5), dừng mọi worker của subscription, không commit. Trường hợp này không có worker thăm dò tự tiếp tục: FR-10-039 đòi TO khắc phục rồi tiếp tục. A.2.5 chưa có giá trị `suspendSource` riêng cho `BLOCK` nên thiết kế phân biệt bằng `suspendReason` (§13.4 mục 2).
+`RetryPolicy` tính lần chờ thứ k là `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2, dùng `Retry-After` nếu nhỏ hơn `maxMs` (FR-10-039). Trong lúc chờ, worker `pause()` riêng phân vùng đó và tiếp tục `poll()` để giữ tư cách thành viên nhóm (không vượt `max.poll.interval.ms`); các phân vùng khác vẫn chạy. Hết `maxRetries`: `DEAD_LETTER` thì ghi DLQ rồi đi tiếp; `BLOCK` thì gửi lệnh tạm ngừng về control plane (API nội bộ API-10-086 `POST /runtime/subscriptions/{subscriptionCode}:suspend` với `suspendSource = DELIVERY_BLOCKED` và `suspendReason` ghi "đầu nhận lỗi, failurePolicy BLOCK"), dừng mọi worker của subscription, không commit. Trường hợp này không có worker thăm dò tự tiếp tục: FR-10-039 đòi TO khắc phục rồi tiếp tục. Giá trị `DELIVERY_BLOCKED` (FRS A.2.5) phân biệt trường hợp này với ngắt mạch.
 
 `SubscriptionBreaker` đếm theo cửa sổ trượt 1 phút: tỷ lệ lỗi ≥ 50% liên tục trong `10.push.suspend-after-failures-minutes` phút thì báo control plane đặt `SUSPENDED` với `suspendSource = CIRCUIT_BREAKER`. Ở trạng thái này bộ giao nhận vẫn giữ một worker thăm dò: mỗi 5 phút gửi đúng bản tin đầu tiên chưa commit; thành công thì báo control plane đưa về `ACTIVE` (chỉ khi `suspendSource = CIRCUIT_BREAKER`), tiếp tục giao.
 
@@ -545,7 +545,7 @@ Bộ giao nhận là StatefulSet; mỗi bản sao có số thứ tự `i` trong 
 `DlqIngestor` trong `dh-integration` tiêu thụ mọi topic `*.dlq` của tenant bằng nhóm `dh-svc-dh-integration-{tenant}` (mẫu nhóm DU của Phụ lục A.8), đăng ký theo mẫu tên `^{tenant}\..*\.dlq$`. Với mỗi bản tin, trong một giao dịch `pg-core`:
 
 1. Tra trùng theo (`subscriptionCode`, `sourceTopic`, `sourcePartition`, `sourceOffset`, `attempts`) trên chỉ mục duy nhất, bỏ qua nếu đã có (tiêu thụ lặp an toàn).
-2. Tạo `DlqEntry` `NEW` với `origin` suy từ tiêu đề và đường ghi: bộ giao nhận ghi `PUSH`, cổng kéo ghi `PULL_NACK`, API-10-083 ghi `EXTERNAL_REPORT`, bộ phát lại ghi `REPLAY`, cầu nối ghi `BRIDGE` (FRS A.2.11). Tiêu đề `dh_dlq_*` của Phụ lục A.8 chưa có trường mang `origin`; thiết kế đề nghị thêm `dh_dlq_origin` (§13.4 mục 4).
+2. Tạo `DlqEntry` `NEW` với `origin` suy từ tiêu đề và đường ghi: bộ giao nhận ghi `PUSH`, cổng kéo ghi `PULL_NACK`, API-10-083 ghi `EXTERNAL_REPORT`, bộ phát lại ghi `REPLAY`, cầu nối ghi `BRIDGE` (FRS A.2.11). Nguồn ghi đặt tiêu đề `dh_dlq_origin` (FRS A.8); mục của cầu nối mang thêm `dh_dlq_bridge` và lưu `bridgeCode`, không có `subscriptionCode`.
 3. Ghi nội dung vào `dlq_payload`: topic `PUBLIC`, `INTERNAL` lưu nguyên (`bytea`, mã hóa khi lưu của CNPG, SEC-30); topic `RESTRICTED`, `SENSITIVE` mã hóa phong bì bằng `transit/dh-{tenant}-event-dlq` của OpenBao (SEC-31, SEC-88). `payloadRef` trỏ tới bản ghi nội dung.
 4. Ghi outbox gộp: `DlqAlertAggregator` gom theo subscription trong cửa sổ 1 phút rồi phát một EVT-10-11.
 
@@ -553,7 +553,7 @@ Offset của nhóm ingestor chỉ commit sau khi giao dịch xong. Khi `pg-core`
 
 ### 4.10. Thống kê giao nhận và lượt lỗi
 
-`DeliveryStatsReporter` của bộ giao nhận gộp theo (subscription, phút) trong bộ nhớ và mỗi phút gửi một `DeliveryReport` về control plane. Một topic nội bộ sẽ giữ số liệu tốt hơn khi control plane ngừng, nhưng Phụ lục A.7 không có topic báo cáo giao nhận và tập này không tự đặt topic mới. Vì vậy thiết kế dùng API nội bộ `POST /runtime/delivery-reports` (scope `event:runtime-config`) với đệm 15 phút trong bộ nhớ của bộ giao nhận; quá 15 phút thì bỏ bản cũ nhất và tăng `dh_event_stats_dropped_total` (chỉ số OTLP vẫn đi sang PH-13 nên giám sát không mất). Mã API và lựa chọn topic ghi ở §13.4 mục 5. Control plane ghi `delivery_stat` (một dòng mỗi subscription mỗi phút, khóa `(subscription_code, window_start)` nên gửi lặp ghi đè cùng giá trị) và `delivery_failure` (lượt lỗi, giữ 30 ngày, `responseSnippet` tối đa 512 byte đã lọc theo bộ che SEC-32).
+`DeliveryStatsReporter` của bộ giao nhận gộp theo (subscription, phút) trong bộ nhớ và mỗi phút gửi một `DeliveryReport` về control plane. Một topic nội bộ sẽ giữ số liệu tốt hơn khi control plane ngừng, nhưng Phụ lục A.7 không có topic báo cáo giao nhận và tập này không tự đặt topic mới. Vì vậy thiết kế dùng API nội bộ API-10-085 `POST /runtime/delivery-reports` (scope `event:runtime-config`) với đệm 15 phút trong bộ nhớ của bộ giao nhận; quá 15 phút thì bỏ bản cũ nhất và tăng `dh_event_stats_dropped_total` (chỉ số OTLP vẫn đi sang PH-13 nên giám sát không mất). Mã API là API-10-085 (FRS 0.2). Control plane ghi `delivery_stat` (một dòng mỗi subscription mỗi phút, khóa `(subscription_code, window_start)` nên gửi lặp ghi đè cùng giá trị) và `delivery_failure` (lượt lỗi, giữ 30 ngày, `responseSnippet` tối đa 512 byte đã lọc theo bộ che SEC-32).
 
 ### 4.11. Bộ phát lại
 
@@ -565,7 +565,7 @@ Offset của nhóm ingestor chỉ commit sau khi giao dịch xong. Khi `pg-core`
 |---|---|
 | `REDELIVER_RANGE` | Consumer `assign` các phân vùng của khoảng, không tham gia nhóm của subscription (nhóm `dh-replay-{tenant}-{replayCode}` chỉ để định danh, không commit); giao như §4.8 với `X-Datahub-Replay: {replayCode}` và cùng `Webhook-Id` như lần đầu; `TokenBucket` giới hạn `ratePerSecond`; lỗi cuối vào DLQ với `origin = REPLAY` và `replayCode`. Với `PULL_API` ghi khoảng vào hàng chờ phát lại (§4.7) |
 | `RESET_OFFSET` | Control plane (không phải bộ giao nhận) chạy: kiểm subscription vẫn `PAUSED`, đọc vị trí hiện tại ghi vào `previousOffsets`, gọi Admin `alterConsumerGroupOffsets`, chuyển `COMPLETED`; TO tiếp tục subscription |
-| `DLQ_ENTRIES` | `ReplayRunner` gọi API nội bộ lấy nội dung theo lô 100 mục (`event:replay`), giao từ nội dung đã lưu, báo kết quả từng mục; control plane chuyển mục `REPLAY_PENDING` sang `REPLAYED` hoặc về `NEW` với `attempts` tăng |
+| `DLQ_ENTRIES` | `ReplayRunner` gọi API nội bộ API-10-089 lấy nội dung theo lô 100 mục (`event:replay`), giao từ nội dung đã lưu, báo kết quả từng mục; control plane chuyển mục `REPLAY_PENDING` sang `REPLAYED` hoặc về `NEW` với `attempts` tăng |
 
 Tiến độ (`deliveredRecords`, `failedRecords`) báo mỗi 5 giây. Hủy (`PERM-10-operate`) đặt cờ trong cấu hình runtime; `ReplayRunner` dừng sau bản tin đang giao. Lượt `APPROVED` quá 24 giờ chưa chạy bị `ReplayExpirer` chuyển `CANCELLED`.
 
@@ -608,7 +608,7 @@ Khóa ký đọc trực tiếp OpenBao bằng xác thực Kubernetes của Servi
 | Kamelet `dh-pulsar-bridge-source` | Subscription Pulsar `Failover` tên `pulsarSubscriptionName`; dựng CloudEvents với `id` từ `messageId`, `source = /legacy-hub/{pulsarTopic}`; chuyển nội dung theo lược đồ đích; ghi Kafka `acks=all` với principal `User:CN=dh-runtime-{tenant}`; ack Pulsar sau khi Kafka xác nhận; lỗi chuyển nội dung ghi DLQ với ERR-10-118, `origin = BRIDGE` |
 | Kamelet `dh-pulsar-bridge-sink` | Tiêu thụ topic Kafka với nhóm `dh-bridge-{tenant}-{bridgeCode}`, bỏ phong bì, ghi Pulsar theo định dạng cũ |
 | `BridgeMonitor` | Đọc chỉ số của luồng cầu nối (`bridgedCount`, `lagSeconds`, `lastPulsarMessageId`) mỗi 30 giây, cập nhật `migration_bridge`; vượt `10.migration.bridge-max-lag-seconds` thì cảnh báo; `expiresAt` tới thì dừng (`EXPIRED`) |
-| `MigrationReconciler` | Mỗi giờ so số bản tin theo khoảng giờ giữa Pulsar (`stats` qua Admin REST của Pulsar) và Kafka (đếm bản tin có `source` cầu nối, dựa trên `DeliveryStat` của luồng cầu nối), so mẫu 100 `id`; lưu báo cáo (§13.4 mục 7), cảnh báo khi chênh khác 0 sau khi trừ lag |
+| `MigrationReconciler` | Mỗi giờ so số bản tin theo khoảng giờ giữa Pulsar (`stats` qua Admin REST của Pulsar) và Kafka (đếm bản tin có `source` cầu nối, dựa trên `DeliveryStat` của luồng cầu nối), so mẫu 100 `id`; lưu báo cáo ở kho đối tượng `dh-event-import/{tenant}/reconcile/{bridgeCode}/{yyyyMMddHH}.json` (FRS A.8), cảnh báo khi chênh khác 0 sau khi trừ lag |
 | `CutOverService` | Kiểm điều kiện FR-10-075, dừng cầu nối, chuyển ánh xạ `CUT_OVER`, phát EVT-10-15; quay lui bật lại cầu nối chiều cũ, `ROLLED_BACK`; hết `10.migration.rollback-window-days` thì `CLOSED` |
 
 Ràng buộc không hai chiều cùng lúc (BR-10-033) kiểm bằng chỉ mục duy nhất một phần trên `migration_bridge (tenant_id, pulsar_topic, kafka_topic) WHERE status = 'RUNNING'` cộng kiểm ở dịch vụ khi tạo chiều ngược (ERR-10-042).
@@ -950,7 +950,7 @@ Mỗi chuyển là một phương thức của aggregate; trạng thái nguồn 
 | Subscription | PROVISIONING | (cấp phát) | ACTIVE, FAILED | |
 | Subscription | FAILED | retry | PROVISIONING | |
 | Subscription | ACTIVE | pause, resume | PAUSED, ACTIVE | `PERM-10-operate`, lý do |
-| Subscription | ACTIVE | suspend (SO, PH-01, ngắt mạch, `BLOCK`) | SUSPENDED | `suspendSource` `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `MANUAL` |
+| Subscription | ACTIVE | suspend (SO, PH-01, ngắt mạch, `BLOCK`) | SUSPENDED | `suspendSource` `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`, `MANUAL` |
 | Subscription | SUSPENDED | resume | ACTIVE | Lý do khắc phục; ngắt mạch có thể tự về |
 | Subscription | ACTIVE, PAUSED, SUSPENDED | revoke | REVOKED | Hủy lượt phát lại đang chạy |
 | SigningKey | ACTIVE | rotate | PREVIOUS | Sinh khóa ACTIVE mới |
@@ -963,22 +963,23 @@ Mỗi chuyển là một phương thức của aggregate; trạng thái nguồn 
 | DlqEntry | NEW | replay, discard | REPLAY_PENDING, DISCARDED | ERR-10-036 nếu đã xử lý |
 | DlqEntry | REPLAY_PENDING | (kết quả) | REPLAYED, NEW | |
 | DlqEntry | REPLAYED, DISCARDED | (hết giữ) | PURGED | |
-| MigrationBridge | PENDING_APPROVAL | approve | RUNNING | |
+| MigrationBridge | PENDING_APPROVAL | approve, reject, (hết hạn duyệt) | RUNNING, REJECTED | Mỗi lần đổi trạng thái phát EVT-10-16 |
 | MigrationBridge | RUNNING | stop, (lỗi), (hết hạn) | STOPPED, ERROR, EXPIRED | |
 | MigrationBridge | STOPPED, ERROR | resume | RUNNING | Chưa quá `expiresAt` |
 | LegacyMapping | PROPOSED | (lập kế hoạch) | PLANNED, SKIPPED | |
 | LegacyMapping | PLANNED | (cầu nối RUNNING) | BRIDGING | |
 | LegacyMapping | BRIDGING | cut-over | CUT_OVER | Điều kiện FR-10-075, duyệt CUTOVER |
-| LegacyMapping | CUT_OVER | rollback, (hết cửa sổ) | ROLLED_BACK, CLOSED | |
-| ManifestImportJob | VALIDATING | (xong) | PREVIEW, FAILED | |
+| LegacyMapping | CUT_OVER | rollback, (hết cửa sổ) | ROLLED_BACK, CLOSED | Quay lui không qua duyệt |
+| LegacyMapping | ROLLED_BACK | (cầu nối chiều cũ RUNNING) | BRIDGING | |
+| ManifestImportJob | VALIDATING | (xong), cancel | PREVIEW, FAILED, CANCELLED | |
 | ManifestImportJob | PREVIEW | apply, cancel | APPLYING, CANCELLED | |
 | ManifestImportJob | APPLYING | (xong) | APPLIED, FAILED | |
 
-Ba chuyển chưa có tên ở FRS được đặt ở dạng mô tả trong ngoặc: `LegacyMapping` từ `ROLLED_BACK` đi đâu, `MigrationBridge` từ `PENDING_APPROVAL` khi bị từ chối, và `ManifestImportJob` khi hủy ở `VALIDATING`; ghi ở §13.4 mục 2.
+Ba chuyển `ROLLED_BACK` sang `BRIDGING`, cầu nối sang `REJECTED` và hủy tác vụ nhập ở `VALIDATING` theo FRS 0.2 (A.2.13, A.2.14).
 
 ### 8.2. Outbox
 
-Sự kiện EVT-10-01…15 ghi vào `outbox_event` cùng giao dịch với thay đổi trạng thái; Debezium outbox của `pg-core` (cơ chế chung với PH-04, PH-05) đẩy lên `{tenant}.event.{thực-thể}.{sự-kiện}.v1` với khóa theo cột "Khóa" FRS §8.2 và `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`. `ce_id` là ULID sinh khi ghi outbox, nên Debezium phát lại sau sự cố vẫn mang cùng `id`. Bản ghi kiểm toán đi cùng outbox sang PH-13 (FR-10-065), không ghi trực tiếp. Riêng EVT-10-11 được `DlqAlertAggregator` gộp: mỗi phút một bản ghi outbox cho mỗi subscription có mục mới.
+Sự kiện EVT-10-01…16 ghi vào `outbox_event` cùng giao dịch với thay đổi trạng thái; Debezium outbox của `pg-core` (cơ chế chung với PH-04, PH-05) đẩy lên `{tenant}.event.{thực-thể}.{sự-kiện}.v1` với khóa theo cột "Khóa" FRS §8.2 và `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`. `ce_id` là ULID sinh khi ghi outbox, nên Debezium phát lại sau sự cố vẫn mang cùng `id`. Bản ghi kiểm toán đi cùng outbox sang PH-13 (FR-10-065), không ghi trực tiếp. Riêng EVT-10-11 được `DlqAlertAggregator` gộp: mỗi phút một bản ghi outbox cho mỗi subscription có mục mới.
 
 ### 8.3. Inbox và idempotency
 
@@ -986,7 +987,7 @@ Sự kiện EVT-10-01…15 ghi vào `outbox_event` cùng giao dịch với thay 
 |---|---|---|
 | Lệnh ghi qua `/api/event/v1` | `IdempotencyFilter`: lưu (tenant, chủ thể, `Idempotency-Key`, băm thân, phản hồi) 24 giờ; trùng khóa khác băm trả ERR-10-037 | `Idempotency-Key` 16…128 ký tự |
 | Đăng ký máy (FR-10-066, 067), `ensure-party` | Idempotent tự nhiên theo `topicName`, (`flowCode`, `topicName`, `action`) | Mã nghiệp vụ |
-| Sự kiện tiêu thụ (EVT-05-11, EVT-04-09, PH-01, PH-20) | Bảng inbox (§13.4 mục 1): ghi `ce_id` và xử lý trong một giao dịch, trùng thì bỏ qua | `ce_id` |
+| Sự kiện tiêu thụ (EVT-05-11, EVT-04-09, PH-01, PH-20) | Bảng `inbox_event` (FRS A.3): ghi `ce_id` và xử lý trong một giao dịch, trùng thì bỏ qua | `ce_id` |
 | Bản tin DLQ | Chỉ mục duy nhất theo nguồn và `attempts` (§4.9) | Nguồn |
 | Báo cáo giao nhận | Ghi đè theo (`subscriptionCode`, `windowStart`) | Cửa sổ |
 | Lệnh hệ thống từ `dh-runtime` (tạm ngừng do ngắt mạch, kết quả phát lại) | Mang `configVersion`; bỏ qua khi cũ hơn | `version` |
@@ -1177,6 +1178,8 @@ Bước 1–4 nằm trong W2–W4 của kế hoạch phát triển (song song PH
 
 ### 13.4. Đề nghị bổ sung cho FRS
 
+Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); thân tập này đã dùng tên chốt.
+
 | Mục | Chỗ thiếu ở Phụ lục A | Thiết kế đang dùng | Đề nghị |
 |---|---|---|---|
 | 1 | Bảng lưu khóa idempotency và inbox sự kiện tiêu thụ | Mô tả ở §8.3, chưa đặt tên bảng | Thêm vào A.3 hai bảng hạ tầng (ví dụ `idempotency_record`, `inbox_event`) để tập CSDL dùng chung tên |
@@ -1214,3 +1217,4 @@ Bước 1–4 nằm trong W2–W4 của kế hoạch phát triển (song song PH
 | Phiên bản | Ngày | Nội dung | Người soạn |
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kiến trúc, cấu trúc mã, thành phần, chín sequence, máy trạng thái, lỗi, quan sát, định cỡ, câu hỏi mở Q10-20…29 | Nhóm thiết kế Datahub |
+| 0.2 | 2026-11-26 | Theo FRS 0.2: `DELIVERY_BLOCKED`, ERR-10-121, API-10-085…090, `dh_dlq_origin`, khóa cursor, chuyển trạng thái di trú và tác vụ nhập; §13.4 đã xử lý | Nhóm thiết kế Datahub |

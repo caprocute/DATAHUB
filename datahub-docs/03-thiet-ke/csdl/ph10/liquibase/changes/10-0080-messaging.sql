@@ -17,14 +17,14 @@ CREATE TABLE ph10_event.outbox_event (
   CONSTRAINT pk_outbox_event PRIMARY KEY (event_id),
   CONSTRAINT ck_outbox_event_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_outbox_event_prefix CHECK (split_part(topic, '.', 1) = ph10_event.f_topic_prefix(tenant_id)),
-  -- A.7: đúng 15 topic EVT-10-01…15, cộng kiểm toán gửi PH-13
+  -- A.7: đúng 16 topic EVT-10-01…16, cộng kiểm toán gửi PH-13
   CONSTRAINT ck_outbox_event_topic CHECK (
        substr(topic, length(split_part(topic, '.', 1)) + 2) IN (
          'event.topic.activated.v1', 'event.topic.changed.v1', 'event.topic.deprecated.v1', 'event.topic.retired.v1',
          'event.schema.version-enabled.v1', 'event.publication.activated.v1', 'event.publication.state-changed.v1',
          'event.subscription.activated.v1', 'event.subscription.state-changed.v1', 'event.subscription.lag-alerted.v1',
          'event.delivery.dead-lettered.v1', 'event.replay.completed.v1', 'event.signing-key.rotated.v1',
-         'event.compliance.violated.v1', 'event.migration.cut-over.v1', 'audit.recorded.v1')),
+         'event.compliance.violated.v1', 'event.migration.cut-over.v1', 'event.bridge.state-changed.v1', 'audit.recorded.v1')),
   -- ce_type = vn.datahub.event.{thực-thể}.{sự-kiện} khớp topic (A.7)
   CONSTRAINT ck_outbox_event_type CHECK (
        (split_part(topic, '.', 2) = 'event' AND event_type = 'vn.datahub.event.' || split_part(topic, '.', 3) || '.' || split_part(topic, '.', 4))
@@ -37,7 +37,7 @@ CREATE TABLE ph10_event.outbox_event (
 CREATE INDEX ix_outbox_event_occurred ON ph10_event.outbox_event (occurred_at);
 ALTER TABLE ph10_event.outbox_event SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000);
 CALL ph10_event.p_enable_rls('ph10_event.outbox_event', 'P');
-COMMENT ON TABLE ph10_event.outbox_event IS 'Outbox (DD-11, SAD §7.3) cho EVT-10-01…15 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.';
+COMMENT ON TABLE ph10_event.outbox_event IS 'Outbox (DD-11, SAD §7.3) cho EVT-10-01…16 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.';
 COMMENT ON COLUMN ph10_event.outbox_event.partition_key IS 'Khóa Kafka: topicName, subscriptionCode, publicationCode, replayCode, bridgeCode tùy sự kiện (§6.2).';
 --rollback DROP TABLE IF EXISTS ph10_event.outbox_event CASCADE;
 

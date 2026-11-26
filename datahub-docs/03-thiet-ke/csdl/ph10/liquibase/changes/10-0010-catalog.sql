@@ -61,7 +61,7 @@ CREATE TABLE ph10_event.routing_mode (
   tenant_id          varchar(16)   NOT NULL DEFAULT 'COMMON',
   routing_mode_code  varchar(32)   NOT NULL,
   name               varchar(255)  NOT NULL,
-  ordering           varchar(255)  NOT NULL,
+  ordering           varchar(16)   NOT NULL,
   legacy_code        varchar(64),
   enabled            boolean       NOT NULL DEFAULT true,
   created_at         timestamptz   NOT NULL DEFAULT now(),
@@ -72,12 +72,13 @@ CREATE TABLE ph10_event.routing_mode (
   CONSTRAINT pk_routing_mode PRIMARY KEY (id),
   CONSTRAINT uq_routing_mode_code UNIQUE (routing_mode_code),
   CONSTRAINT ck_routing_mode_tenant CHECK (tenant_id = 'COMMON'),
-  CONSTRAINT ck_routing_mode_code CHECK (routing_mode_code IN ('KEY_HASH', 'ROUND_ROBIN', 'SINGLE_PARTITION'))
+  CONSTRAINT ck_routing_mode_code CHECK (routing_mode_code IN ('KEY_HASH', 'ROUND_ROBIN', 'SINGLE_PARTITION')),
+  CONSTRAINT ck_routing_mode_ordering CHECK (ordering IN ('PER_KEY', 'NONE', 'TOTAL'))
 );
 CREATE TRIGGER tg_routing_mode_touch BEFORE UPDATE ON ph10_event.routing_mode FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_touch();
 CALL ph10_event.p_enable_rls('ph10_event.routing_mode', 'S');
 COMMENT ON TABLE ph10_event.routing_mode IS 'EN-10-16 Chế độ định tuyến (FR-10-061, LGC-HUB-014 routing_mode). Danh mục nền tảng, seed 3 mã phụ lục A.2.9.';
-COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §9.2).';
+COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Bảo đảm thứ tự (A.2.9): PER_KEY trong cùng khóa, NONE không bảo đảm, TOTAL toàn topic.';
 COMMENT ON COLUMN ph10_event.routing_mode.legacy_code IS 'Chế độ Pulsar tương ứng: CustomPartition, RoundRobinPartition, SinglePartition.';
 --rollback DROP TABLE IF EXISTS ph10_event.routing_mode CASCADE;
 

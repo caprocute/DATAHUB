@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH10
 ten: Đặc tả use case phân hệ PH-10 Sự kiện
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -626,7 +626,7 @@ Truy vết ngược từ chức năng hệ cũ: LGC-HUB-001…004 ở UC-10-21; 
 
 - **E1. Topic `DEPRECATED` hoặc bên phát không `ACTIVE` (bước 1, 3).** ERR-10-025.
 - **E2. Đã có publication chưa `REVOKED`, `REJECTED` cho cặp này (bước 1).** ERR-10-024.
-- **E3. Topic `SENSITIVE`, `RESTRICTED` mà HTTT chưa đạt cấp độ ATTT yêu cầu (bước 1).** ERR-10-025 với chi tiết "cấp độ ATTT chưa đạt" (BR-10-019).
+- **E3. Topic `SENSITIVE`, `RESTRICTED` mà HTTT chưa đạt cấp độ ATTT yêu cầu (bước 1).** ERR-10-051 (BR-10-019).
 - **E4. Bình là người đề nghị (bước 3).** ERR-10-008.
 - **E5. Ngoài tổ chức (1a).** ERR-10-044.
 - **E6. Vượt hạn mức (bước 3).** ERR-10-011.
@@ -746,10 +746,10 @@ Truy vết ngược từ chức năng hệ cũ: LGC-HUB-001…004 ở UC-10-21; 
 - **1a. Thảo (OR) đăng ký cho HTTT của Sở Tài chính.** Danh sách bên nhận chỉ có HTTT của tổ chức Thảo.
 - **1b. Chế độ kéo.** Với `ht-bhxh` (`HTTP_PULL`), An chọn `PULL_API`, đặt `pull.maxBatch` 100, `pull.leaseSeconds` 60; bỏ bước 2, 3.
 - **1c. Kafka ngoài.** Bên nhận `KAFKA_NATIVE` chọn `PULL_KAFKA`; hệ thống hiển thị nhóm bắt buộc `dh-ext-t68-{subscriptionCode}`.
-- **3a. HTTT cũ không trả lời được bắt tay.** Mai (TA) bật ngoại lệ có thời hạn ≤ 180 ngày với lý do; hệ thống thay bắt tay bằng một `POST` sự kiện kiểm tra `vn.datahub.event.subscription.verification`; endpoint trả `2xx` thì kết quả `WAIVED`, lưu `verificationWaiverUntil` (Q10-14).
+- **3a. HTTT cũ không trả lời được bắt tay.** Mai (TA) bật ngoại lệ có thời hạn ≤ 180 ngày với lý do qua API-10-091; hệ thống thay bắt tay bằng một `POST` sự kiện kiểm tra `vn.datahub.event.subscription.verification`; endpoint trả `2xx` thì kết quả `WAIVED`, lưu `verificationWaiverUntil`, `verificationWaiverReason` (Q10-14).
 - **5a. `LATEST`.** Giao từ cuối topic tại thời điểm `ACTIVE`; mặc định.
 - **5b. `EARLIEST`.** Giao từ đầu dữ liệu còn trong lưu giữ; hệ thống cảnh báo số bản tin ước lượng.
-- **6a. Topic `RESTRICTED`, `SENSITIVE`.** Bắt buộc nhập `legalBasis` (căn cứ pháp lý hoặc văn bản đồng ý chia sẻ) và bên nhận `SYSTEM` đạt cấp độ ATTT (BR-10-019).
+- **6a. Topic `RESTRICTED`, `SENSITIVE`.** Bắt buộc nhập `legalBasis` (căn cứ pháp lý hoặc văn bản đồng ý chia sẻ) và bên nhận `SYSTEM` đạt cấp độ ATTT (BR-10-019); không đạt thì ERR-10-051.
 
 **Luồng ngoại lệ**
 
@@ -942,7 +942,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 **Luồng ngoại lệ**
 
 - **E1. Thiếu lý do (bước 2, 2a, 4c).** ERR-10-009.
-- **E2. Tạm dừng subscription `INTERNAL` (bước 2).** ERR-10-006; điều khiển luồng ở PH-04.
+- **E2. Tạm dừng subscription `INTERNAL` (bước 2).** ERR-10-052; điều khiển luồng ở PH-04.
 - **E3. `workerCount` vượt số phân vùng hoặc trần (4a).** ERR-10-030.
 - **E4. Endpoint mới không hợp lệ hoặc xác minh thất bại (4b).** ERR-10-026 hoặc ERR-10-027.
 - **E5. Người khác vừa sửa (4a).** ERR-10-007 theo LP-10-03.
@@ -1253,7 +1253,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 **Luồng thay thế**
 
 - **2a. Triển khai lại.** Bộ khai báo gọi lặp; PH-10 trả `200` cho topic đã có cùng cấu hình.
-- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…15) theo cùng cách.
+- **2b. PH-10 đăng ký topic của chính mình.** `t68.event.*` (EVT-10-01…16) theo cùng cách.
 - **2c. Topic nền tảng.** Hà hoặc tài khoản dịch vụ nền tảng đăng ký `dh.integration.runtime.command.v1` thuộc tenant `COMMON`, artifact Apicurio `groupId = dh`.
 - **4a. PH-20 tạm ngừng tenant.** PH-10 chặn mọi lệnh ghi của tenant (ERR-10-039) và tạm ngừng publication, subscription theo quy trình PH-20.
 
@@ -1381,7 +1381,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 - **E1. Ánh xạ không hợp lệ hoặc chưa `PLANNED` (bước 1).** ERR-10-041.
 - **E2. Đã có cầu nối cho topic, hoặc cầu nối ngược chiều cùng cặp (bước 1, 4a).** ERR-10-042 (BR-10-033).
 - **E3. Bản tin không chuyển được theo lược đồ đích (bước 3).** ERR-10-118; vào DLQ của cầu nối (`origin` `BRIDGE`), cầu nối tiếp tục; quá ngưỡng `10.migration.bridge-max-lag-seconds` thì cảnh báo.
-- **E4. Không kết nối được Pulsar (bước 2, 3).** ERR-10-029; cầu nối `ERROR`, cảnh báo Mai và Hà.
+- **E4. Không kết nối được Pulsar (bước 2, 3).** ERR-10-029; cầu nối `ERROR`, PH-10 phát EVT-10-16 để PH-18 theo dõi, cảnh báo Mai và Hà.
 - **E5. Chuyển hẳn khi chưa đủ điều kiện (bước 6).** ERR-10-006 kèm điều kiện chưa đạt.
 - **E6. Bình là người đề nghị (bước 2, 6).** ERR-10-008.
 
@@ -1441,6 +1441,8 @@ Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã mới: UC-10-01
 
 ### 8.2. Đề nghị bổ sung cho FRS
 
+Trạng thái: chín đề nghị dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); tập này đã đổi theo quyết định (ERR-10-051, ERR-10-052, EVT-10-16, API-10-091).
+
 Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tên chuẩn; tập này dùng đúng chữ trong thân FR và đề nghị đưa vào Phụ lục A để các tập sau (API, màn hình, ca kiểm thử) dùng thống nhất.
 
 | Mã đề nghị | Nội dung | Nơi dùng |
@@ -1470,3 +1472,4 @@ Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tê
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-UC, căn cứ FRS D02-03-PH10 0.1 và Phụ lục A |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Theo FRS 0.2: ERR-10-051 (cấp độ ATTT), ERR-10-052 (tạm dừng `INTERNAL`), EVT-10-16, API-10-091; §8.2 đã xử lý |

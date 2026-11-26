@@ -31,7 +31,8 @@ CREATE TABLE ph10_event.publication (
   CONSTRAINT ck_publication_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_publication_code CHECK (publication_code ~ '^pub-[0-9a-hjkmnp-tv-z]{26}$'),
   CONSTRAINT ck_publication_status CHECK (status IN ('PENDING_APPROVAL', 'REJECTED', 'ACTIVE', 'SUSPENDED', 'REVOKED')),
-  CONSTRAINT ck_publication_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_publication_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_publication_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_publication_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_publication_approved CHECK (status NOT IN ('ACTIVE', 'SUSPENDED') OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
   CONSTRAINT ck_publication_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -72,6 +73,9 @@ CREATE TABLE ph10_event.subscription (
   lag_warn_seconds        integer       NOT NULL DEFAULT 300,
   lag_critical_seconds    integer       NOT NULL DEFAULT 1800,
   alert_state             varchar(16)   NOT NULL DEFAULT 'OK',
+  alert_acknowledged_by   varchar(64),
+  alert_acknowledged_at   timestamptz,
+  alert_ack_note          varchar(1000),
   approved_by             varchar(64),
   approved_at             timestamptz,
   push                    jsonb,
@@ -94,7 +98,8 @@ CREATE TABLE ph10_event.subscription (
   CONSTRAINT ck_subscription_start_position CHECK (start_position IN ('LATEST', 'EARLIEST', 'TIMESTAMP')),
   CONSTRAINT ck_subscription_start_at CHECK ((start_position = 'TIMESTAMP') = (start_at IS NOT NULL)),
   CONSTRAINT ck_subscription_alert_state CHECK (alert_state IN ('OK', 'WARNING', 'CRITICAL', 'STALLED')),
-  CONSTRAINT ck_subscription_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_subscription_alert_ack CHECK ((alert_acknowledged_by IS NULL) = (alert_acknowledged_at IS NULL) AND (alert_ack_note IS NULL OR alert_acknowledged_by IS NOT NULL)),
+  CONSTRAINT ck_subscription_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
   CONSTRAINT ck_subscription_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_subscription_approved CHECK (status NOT IN ('PROVISIONING', 'ACTIVE', 'PAUSED', 'SUSPENDED') OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
   CONSTRAINT ck_subscription_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -137,6 +142,7 @@ CREATE TRIGGER tg_subscription_immutable BEFORE UPDATE ON ph10_event.subscriptio
 CALL ph10_event.p_enable_rls('ph10_event.subscription', 'P');
 COMMENT ON TABLE ph10_event.subscription IS 'EN-10-08 Subscription (FR-10-035…048, LGC-HUB-013). Duy nhất theo cặp bên nhận, topic khi còn hiệu lực. deliveryMode khớp commType của bên nhận (BR-10-017, trigger tg_subscription_combo). Nhóm tiêu thụ theo A.8, bất biến.';
 COMMENT ON COLUMN ph10_event.subscription.legal_basis IS 'Căn cứ pháp lý, bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo).';
+COMMENT ON COLUMN ph10_event.subscription.alert_acknowledged_by IS 'Người xác nhận cảnh báo lag (FR-10-055); tắt thông báo lặp 4 giờ, xóa cùng alert_acknowledged_at, alert_ack_note khi alert_state đổi mức.';
 COMMENT ON COLUMN ph10_event.subscription.alert_state IS 'Trạng thái lag gần nhất do bộ thu lag cập nhật (FR-10-054, 055); đổi trạng thái phát EVT-10-10.';
 COMMENT ON COLUMN ph10_event.subscription.push IS 'JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, endpointVerification{result}. Không chứa bí mật.';
 COMMENT ON COLUMN ph10_event.subscription.pull IS 'JSON A.3: maxBatch (≤ 10.pull.max-batch), leaseSeconds.';

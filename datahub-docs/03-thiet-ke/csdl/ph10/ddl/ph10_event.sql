@@ -192,7 +192,7 @@ CREATE TABLE ph10_event.routing_mode (
   tenant_id          varchar(16)   NOT NULL DEFAULT 'COMMON',
   routing_mode_code  varchar(32)   NOT NULL,
   name               varchar(255)  NOT NULL,
-  ordering           varchar(255)  NOT NULL,
+  ordering           varchar(16)   NOT NULL,
   legacy_code        varchar(64),
   enabled            boolean       NOT NULL DEFAULT true,
   created_at         timestamptz   NOT NULL DEFAULT now(),
@@ -203,12 +203,13 @@ CREATE TABLE ph10_event.routing_mode (
   CONSTRAINT pk_routing_mode PRIMARY KEY (id),
   CONSTRAINT uq_routing_mode_code UNIQUE (routing_mode_code),
   CONSTRAINT ck_routing_mode_tenant CHECK (tenant_id = 'COMMON'),
-  CONSTRAINT ck_routing_mode_code CHECK (routing_mode_code IN ('KEY_HASH', 'ROUND_ROBIN', 'SINGLE_PARTITION'))
+  CONSTRAINT ck_routing_mode_code CHECK (routing_mode_code IN ('KEY_HASH', 'ROUND_ROBIN', 'SINGLE_PARTITION')),
+  CONSTRAINT ck_routing_mode_ordering CHECK (ordering IN ('PER_KEY', 'NONE', 'TOTAL'))
 );
 CREATE TRIGGER tg_routing_mode_touch BEFORE UPDATE ON ph10_event.routing_mode FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_touch();
 CALL ph10_event.p_enable_rls('ph10_event.routing_mode', 'S');
 COMMENT ON TABLE ph10_event.routing_mode IS 'EN-10-16 Chế độ định tuyến (FR-10-061, LGC-HUB-014 routing_mode). Danh mục nền tảng, seed 3 mã phụ lục A.2.9.';
-COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §9.2).';
+COMMENT ON COLUMN ph10_event.routing_mode.ordering IS 'Bảo đảm thứ tự (A.2.9): PER_KEY trong cùng khóa, NONE không bảo đảm, TOTAL toàn topic.';
 COMMENT ON COLUMN ph10_event.routing_mode.legacy_code IS 'Chế độ Pulsar tương ứng: CustomPartition, RoundRobinPartition, SinglePartition.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.routing_mode CASCADE;
 
@@ -556,7 +557,8 @@ CREATE TABLE ph10_event.publisher (
   CONSTRAINT ck_publisher_code CHECK (publisher_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_publisher_party_type CHECK (party_type IN ('SYSTEM', 'FLOW', 'INTERNAL_SERVICE', 'LEGACY_BRIDGE')),
   CONSTRAINT ck_publisher_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'RETIRED')),
-  CONSTRAINT ck_publisher_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_publisher_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_publisher_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_publisher_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_publisher_service CHECK (service_code IS NULL OR service_code IN ('dh-connect', 'dh-integration', 'dh-runtime', 'dh-data', 'dh-platform', 'dh-payment', 'dh-assist', 'dh-portal', 'dh-cdc')),
   -- BR-10-017, A.2.8: tổ hợp partyType và commType chiều phát
@@ -613,7 +615,8 @@ CREATE TABLE ph10_event.subscriber (
   CONSTRAINT ck_subscriber_code CHECK (subscriber_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_subscriber_party_type CHECK (party_type IN ('SYSTEM', 'FLOW', 'INTERNAL_SERVICE')),
   CONSTRAINT ck_subscriber_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'RETIRED')),
-  CONSTRAINT ck_subscriber_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_subscriber_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_subscriber_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_subscriber_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_subscriber_service CHECK (service_code IS NULL OR service_code IN ('dh-connect', 'dh-integration', 'dh-runtime', 'dh-data', 'dh-platform', 'dh-payment', 'dh-assist', 'dh-portal', 'dh-cdc')),
   -- BR-10-017, A.2.8: tổ hợp chiều nhận; LEGACY_BRIDGE chỉ là bên phát
@@ -665,7 +668,8 @@ CREATE TABLE ph10_event.publication (
   CONSTRAINT ck_publication_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_publication_code CHECK (publication_code ~ '^pub-[0-9a-hjkmnp-tv-z]{26}$'),
   CONSTRAINT ck_publication_status CHECK (status IN ('PENDING_APPROVAL', 'REJECTED', 'ACTIVE', 'SUSPENDED', 'REVOKED')),
-  CONSTRAINT ck_publication_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_publication_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_publication_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_publication_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_publication_approved CHECK (status NOT IN ('ACTIVE', 'SUSPENDED') OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
   CONSTRAINT ck_publication_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -706,6 +710,9 @@ CREATE TABLE ph10_event.subscription (
   lag_warn_seconds        integer       NOT NULL DEFAULT 300,
   lag_critical_seconds    integer       NOT NULL DEFAULT 1800,
   alert_state             varchar(16)   NOT NULL DEFAULT 'OK',
+  alert_acknowledged_by   varchar(64),
+  alert_acknowledged_at   timestamptz,
+  alert_ack_note          varchar(1000),
   approved_by             varchar(64),
   approved_at             timestamptz,
   push                    jsonb,
@@ -728,7 +735,8 @@ CREATE TABLE ph10_event.subscription (
   CONSTRAINT ck_subscription_start_position CHECK (start_position IN ('LATEST', 'EARLIEST', 'TIMESTAMP')),
   CONSTRAINT ck_subscription_start_at CHECK ((start_position = 'TIMESTAMP') = (start_at IS NOT NULL)),
   CONSTRAINT ck_subscription_alert_state CHECK (alert_state IN ('OK', 'WARNING', 'CRITICAL', 'STALLED')),
-  CONSTRAINT ck_subscription_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_subscription_alert_ack CHECK ((alert_acknowledged_by IS NULL) = (alert_acknowledged_at IS NULL) AND (alert_ack_note IS NULL OR alert_acknowledged_by IS NOT NULL)),
+  CONSTRAINT ck_subscription_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
   CONSTRAINT ck_subscription_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_subscription_approved CHECK (status NOT IN ('PROVISIONING', 'ACTIVE', 'PAUSED', 'SUSPENDED') OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
   CONSTRAINT ck_subscription_four_eyes CHECK (approved_by IS NULL OR approved_by <> created_by),
@@ -771,6 +779,7 @@ CREATE TRIGGER tg_subscription_immutable BEFORE UPDATE ON ph10_event.subscriptio
 CALL ph10_event.p_enable_rls('ph10_event.subscription', 'P');
 COMMENT ON TABLE ph10_event.subscription IS 'EN-10-08 Subscription (FR-10-035…048, LGC-HUB-013). Duy nhất theo cặp bên nhận, topic khi còn hiệu lực. deliveryMode khớp commType của bên nhận (BR-10-017, trigger tg_subscription_combo). Nhóm tiêu thụ theo A.8, bất biến.';
 COMMENT ON COLUMN ph10_event.subscription.legal_basis IS 'Căn cứ pháp lý, bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo).';
+COMMENT ON COLUMN ph10_event.subscription.alert_acknowledged_by IS 'Người xác nhận cảnh báo lag (FR-10-055); tắt thông báo lặp 4 giờ, xóa cùng alert_acknowledged_at, alert_ack_note khi alert_state đổi mức.';
 COMMENT ON COLUMN ph10_event.subscription.alert_state IS 'Trạng thái lag gần nhất do bộ thu lag cập nhật (FR-10-054, 055); đổi trạng thái phát EVT-10-10.';
 COMMENT ON COLUMN ph10_event.subscription.push IS 'JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, endpointVerification{result}. Không chứa bí mật.';
 COMMENT ON COLUMN ph10_event.subscription.pull IS 'JSON A.3: maxBatch (≤ 10.pull.max-batch), leaseSeconds.';
@@ -1025,6 +1034,7 @@ CREATE TABLE ph10_event.dlq_entry (
   event_type         varchar(255),
   event_subject      varchar(255),
   origin             varchar(20)   NOT NULL,
+  bridge_code        varchar(63),
   error_code         varchar(16)   NOT NULL,
   error_detail       varchar(2000),
   attempts           integer       NOT NULL DEFAULT 1,
@@ -1052,6 +1062,7 @@ CREATE TABLE ph10_event.dlq_entry (
   CONSTRAINT ck_dlq_entry_code CHECK (error_code ~ '^ERR-10-[01][0-9]{2}$'),
   CONSTRAINT ck_dlq_entry_source CHECK (origin = 'BRIDGE' OR (subscription_code IS NOT NULL AND source_partition >= 0 AND source_offset >= 0)),
   CONSTRAINT ck_dlq_entry_bridge CHECK (origin <> 'BRIDGE' OR event_id IS NOT NULL),
+  CONSTRAINT ck_dlq_entry_bridge_code CHECK ((origin = 'BRIDGE') = (bridge_code IS NOT NULL) AND (bridge_code IS NULL OR (bridge_code ~ '^brg-[0-9a-hjkmnp-tv-z]{26}$' AND subscription_code IS NULL))),
   CONSTRAINT ck_dlq_entry_times CHECK (last_failed_at >= first_failed_at AND attempts >= 1),
   CONSTRAINT ck_dlq_entry_replay_code CHECK (status <> 'REPLAY_PENDING' OR replay_code IS NOT NULL),
   CONSTRAINT ck_dlq_entry_resolved CHECK ((status IN ('REPLAYED', 'DISCARDED', 'PURGED')) = (resolved_at IS NOT NULL)
@@ -1072,7 +1083,8 @@ CREATE TRIGGER tg_dlq_entry_touch BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH
 CREATE TRIGGER tg_dlq_entry_immutable BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_immutable('tenant_id', 'subscription_code', 'source_topic', 'source_partition', 'source_offset', 'event_id', 'origin', 'first_failed_at');
 CALL ph10_event.p_enable_rls('ph10_event.dlq_entry', 'P');
 COMMENT ON TABLE ph10_event.dlq_entry IS 'EN-10-12 Mục DLQ, nguồn sự thật của DLQ tầng sự kiện (FR-10-049, 050; BR-10-024; ADR-071). DlqWriter tiêu thụ {topicName}.dlq, upsert theo (subscription, topic, partition, offset) nên chạy lại không nhân đôi. id chính là dlqEntryId (UUIDv7). NEW giữ vô thời hạn; siêu dữ liệu giữ 1 năm sau khi xử lý.';
-COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§9.2).';
+COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); khi đó bridge_code xác định cầu nối.';
+COMMENT ON COLUMN ph10_event.dlq_entry.bridge_code IS 'Mã cầu nối khi origin BRIDGE (A.3, tiêu đề dh_dlq_bridge). Không có khóa ngoại vì migration_bridge tạo sau; ứng dụng kiểm tồn tại';
 COMMENT ON COLUMN ph10_event.dlq_entry.payload_ref IS 'pg:dlq_payload/{dlqEntryId}; NULL sau khi dọn nội dung (PURGED).';
 -- @rollback DROP TABLE IF EXISTS ph10_event.dlq_entry CASCADE;
 
@@ -1140,7 +1152,7 @@ CREATE TABLE ph10_event.lag_sample_5m (
 ) PARTITION BY RANGE (window_start);
 CALL ph10_event.p_ensure_partitions('ph10_event.lag_sample_5m', current_date, 4, 'month');
 CALL ph10_event.p_enable_rls('ph10_event.lag_sample_5m', 'P');
-COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §9.2).';
+COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật ghi ở FRS A.3.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.lag_sample_5m CASCADE;
 
 -- @file 10-0070-migration.sql
@@ -1203,6 +1215,7 @@ CREATE TABLE ph10_event.legacy_mapping (
   CONSTRAINT fk_legacy_mapping_job FOREIGN KEY (tenant_id, job_code) REFERENCES ph10_event.manifest_import_job (tenant_id, job_code),
   CONSTRAINT ck_legacy_mapping_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_legacy_mapping_type CHECK (legacy_type IN ('PROJECT', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'PUBLICATION', 'SUBSCRIPTION')),
+  CONSTRAINT ck_legacy_mapping_target_type CHECK (target_type IS NULL OR target_type IN ('PROJECT', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'PUBLICATION', 'SUBSCRIPTION')),
   CONSTRAINT ck_legacy_mapping_status CHECK (status IN ('PROPOSED', 'PLANNED', 'BRIDGING', 'CUT_OVER', 'ROLLED_BACK', 'CLOSED', 'SKIPPED')),
   CONSTRAINT ck_legacy_mapping_confidence CHECK (confidence IN ('HIGH', 'MEDIUM', 'LOW')),
   CONSTRAINT ck_legacy_mapping_target CHECK (status IN ('PROPOSED', 'SKIPPED') OR (target_type IS NOT NULL AND target_code IS NOT NULL)),
@@ -1218,7 +1231,7 @@ CREATE TRIGGER tg_legacy_mapping_immutable BEFORE UPDATE ON ph10_event.legacy_ma
 CALL ph10_event.p_enable_rls('ph10_event.legacy_mapping', 'P');
 COMMENT ON TABLE ph10_event.legacy_mapping IS 'EN-10-18 Ánh xạ di trú Hub Pulsar (FR-10-072, 075, 076; ADR-073). Một dòng mỗi đối tượng cũ; nhập lại cập nhật dòng (job_code trỏ lần nhập gần nhất), không tạo trùng. id chính là mappingId. Giữ 5 năm.';
 COMMENT ON COLUMN ph10_event.legacy_mapping.legacy_id IS 'Khóa chính bảng cũ (project.id, publisher.id…) hoặc tên đầy đủ persistent://{tenant}/{namespace}/{topic} với TOPIC.';
-COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §9.2). Tạm ghi cùng giá trị legacy_type, không CHECK.';
+COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng Datahub đích (A.2.14 LegacyMapping.targetType); subscriber "là luồng" vẫn là SUBSCRIBER với party_type FLOW.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.legacy_mapping CASCADE;
 
 -- @changeset ph10-0720-migration-bridge
@@ -1247,7 +1260,7 @@ CREATE TABLE ph10_event.migration_bridge (
   CONSTRAINT ck_migration_bridge_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_migration_bridge_code CHECK (bridge_code ~ '^brg-[0-9a-hjkmnp-tv-z]{26}$'),
   CONSTRAINT ck_migration_bridge_direction CHECK (direction IN ('PULSAR_TO_KAFKA', 'KAFKA_TO_PULSAR')),
-  CONSTRAINT ck_migration_bridge_status CHECK (status IN ('PENDING_APPROVAL', 'RUNNING', 'STOPPED', 'ERROR', 'EXPIRED')),
+  CONSTRAINT ck_migration_bridge_status CHECK (status IN ('PENDING_APPROVAL', 'REJECTED', 'RUNNING', 'STOPPED', 'ERROR', 'EXPIRED')),
   CONSTRAINT ck_migration_bridge_start CHECK (start_from IN ('LATEST', 'EARLIEST')),
   CONSTRAINT ck_migration_bridge_pulsar CHECK (pulsar_topic ~ '^(persistent|non-persistent)://[^/]+/[^/]+/.+$'),
   CONSTRAINT ck_migration_bridge_expiry CHECK (expires_at > created_at AND expires_at <= created_at + interval '365 days'),
@@ -1278,14 +1291,14 @@ CREATE TABLE ph10_event.outbox_event (
   CONSTRAINT pk_outbox_event PRIMARY KEY (event_id),
   CONSTRAINT ck_outbox_event_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_outbox_event_prefix CHECK (split_part(topic, '.', 1) = ph10_event.f_topic_prefix(tenant_id)),
-  -- A.7: đúng 15 topic EVT-10-01…15, cộng kiểm toán gửi PH-13
+  -- A.7: đúng 16 topic EVT-10-01…16, cộng kiểm toán gửi PH-13
   CONSTRAINT ck_outbox_event_topic CHECK (
        substr(topic, length(split_part(topic, '.', 1)) + 2) IN (
          'event.topic.activated.v1', 'event.topic.changed.v1', 'event.topic.deprecated.v1', 'event.topic.retired.v1',
          'event.schema.version-enabled.v1', 'event.publication.activated.v1', 'event.publication.state-changed.v1',
          'event.subscription.activated.v1', 'event.subscription.state-changed.v1', 'event.subscription.lag-alerted.v1',
          'event.delivery.dead-lettered.v1', 'event.replay.completed.v1', 'event.signing-key.rotated.v1',
-         'event.compliance.violated.v1', 'event.migration.cut-over.v1', 'audit.recorded.v1')),
+         'event.compliance.violated.v1', 'event.migration.cut-over.v1', 'event.bridge.state-changed.v1', 'audit.recorded.v1')),
   -- ce_type = vn.datahub.event.{thực-thể}.{sự-kiện} khớp topic (A.7)
   CONSTRAINT ck_outbox_event_type CHECK (
        (split_part(topic, '.', 2) = 'event' AND event_type = 'vn.datahub.event.' || split_part(topic, '.', 3) || '.' || split_part(topic, '.', 4))
@@ -1298,7 +1311,7 @@ CREATE TABLE ph10_event.outbox_event (
 CREATE INDEX ix_outbox_event_occurred ON ph10_event.outbox_event (occurred_at);
 ALTER TABLE ph10_event.outbox_event SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000);
 CALL ph10_event.p_enable_rls('ph10_event.outbox_event', 'P');
-COMMENT ON TABLE ph10_event.outbox_event IS 'Outbox (DD-11, SAD §7.3) cho EVT-10-01…15 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.';
+COMMENT ON TABLE ph10_event.outbox_event IS 'Outbox (DD-11, SAD §7.3) cho EVT-10-01…16 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.';
 COMMENT ON COLUMN ph10_event.outbox_event.partition_key IS 'Khóa Kafka: topicName, subscriptionCode, publicationCode, replayCode, bridgeCode tùy sự kiện (§6.2).';
 -- @rollback DROP TABLE IF EXISTS ph10_event.outbox_event CASCADE;
 
@@ -1354,9 +1367,9 @@ ON CONFLICT (comm_type_code) DO UPDATE SET name = EXCLUDED.name, direction = EXC
 INSERT INTO ph10_event.routing_mode (id, tenant_id, routing_mode_code, name, ordering, legacy_code, created_by, updated_by)
 SELECT md5('dh-routing-mode:' || r.code)::uuid, 'COMMON', r.code, r.name, r.ord, r.legacy, 'system:seed', 'system:seed'
 FROM (VALUES
-  ('KEY_HASH',         'Theo khóa (băm)', 'Trong cùng khóa', 'CustomPartition'),
-  ('ROUND_ROBIN',      'Chia đều',        'Không',           'RoundRobinPartition'),
-  ('SINGLE_PARTITION', 'Một phân vùng',   'Toàn topic',      'SinglePartition')
+  ('KEY_HASH',         'Theo khóa (băm)', 'PER_KEY',         'CustomPartition'),
+  ('ROUND_ROBIN',      'Chia đều',        'NONE',            'RoundRobinPartition'),
+  ('SINGLE_PARTITION', 'Một phân vùng',   'TOTAL',           'SinglePartition')
 ) AS r(code, name, ord, legacy)
 ON CONFLICT (routing_mode_code) DO UPDATE SET name = EXCLUDED.name, ordering = EXCLUDED.ordering,
   legacy_code = EXCLUDED.legacy_code, updated_by = 'system:seed';

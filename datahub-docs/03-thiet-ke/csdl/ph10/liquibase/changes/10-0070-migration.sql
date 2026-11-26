@@ -61,6 +61,7 @@ CREATE TABLE ph10_event.legacy_mapping (
   CONSTRAINT fk_legacy_mapping_job FOREIGN KEY (tenant_id, job_code) REFERENCES ph10_event.manifest_import_job (tenant_id, job_code),
   CONSTRAINT ck_legacy_mapping_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_legacy_mapping_type CHECK (legacy_type IN ('PROJECT', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'PUBLICATION', 'SUBSCRIPTION')),
+  CONSTRAINT ck_legacy_mapping_target_type CHECK (target_type IS NULL OR target_type IN ('PROJECT', 'TOPIC', 'PUBLISHER', 'SUBSCRIBER', 'PUBLICATION', 'SUBSCRIPTION')),
   CONSTRAINT ck_legacy_mapping_status CHECK (status IN ('PROPOSED', 'PLANNED', 'BRIDGING', 'CUT_OVER', 'ROLLED_BACK', 'CLOSED', 'SKIPPED')),
   CONSTRAINT ck_legacy_mapping_confidence CHECK (confidence IN ('HIGH', 'MEDIUM', 'LOW')),
   CONSTRAINT ck_legacy_mapping_target CHECK (status IN ('PROPOSED', 'SKIPPED') OR (target_type IS NOT NULL AND target_code IS NOT NULL)),
@@ -76,7 +77,7 @@ CREATE TRIGGER tg_legacy_mapping_immutable BEFORE UPDATE ON ph10_event.legacy_ma
 CALL ph10_event.p_enable_rls('ph10_event.legacy_mapping', 'P');
 COMMENT ON TABLE ph10_event.legacy_mapping IS 'EN-10-18 Ánh xạ di trú Hub Pulsar (FR-10-072, 075, 076; ADR-073). Một dòng mỗi đối tượng cũ; nhập lại cập nhật dòng (job_code trỏ lần nhập gần nhất), không tạo trùng. id chính là mappingId. Giữ 5 năm.';
 COMMENT ON COLUMN ph10_event.legacy_mapping.legacy_id IS 'Khóa chính bảng cũ (project.id, publisher.id…) hoặc tên đầy đủ persistent://{tenant}/{namespace}/{topic} với TOPIC.';
-COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §9.2). Tạm ghi cùng giá trị legacy_type, không CHECK.';
+COMMENT ON COLUMN ph10_event.legacy_mapping.target_type IS 'Loại đối tượng Datahub đích (A.2.14 LegacyMapping.targetType); subscriber "là luồng" vẫn là SUBSCRIBER với party_type FLOW.';
 --rollback DROP TABLE IF EXISTS ph10_event.legacy_mapping CASCADE;
 
 --changeset ph10:ph10-0720-migration-bridge
@@ -105,7 +106,7 @@ CREATE TABLE ph10_event.migration_bridge (
   CONSTRAINT ck_migration_bridge_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT ck_migration_bridge_code CHECK (bridge_code ~ '^brg-[0-9a-hjkmnp-tv-z]{26}$'),
   CONSTRAINT ck_migration_bridge_direction CHECK (direction IN ('PULSAR_TO_KAFKA', 'KAFKA_TO_PULSAR')),
-  CONSTRAINT ck_migration_bridge_status CHECK (status IN ('PENDING_APPROVAL', 'RUNNING', 'STOPPED', 'ERROR', 'EXPIRED')),
+  CONSTRAINT ck_migration_bridge_status CHECK (status IN ('PENDING_APPROVAL', 'REJECTED', 'RUNNING', 'STOPPED', 'ERROR', 'EXPIRED')),
   CONSTRAINT ck_migration_bridge_start CHECK (start_from IN ('LATEST', 'EARLIEST')),
   CONSTRAINT ck_migration_bridge_pulsar CHECK (pulsar_topic ~ '^(persistent|non-persistent)://[^/]+/[^/]+/.+$'),
   CONSTRAINT ck_migration_bridge_expiry CHECK (expires_at > created_at AND expires_at <= created_at + interval '365 days'),

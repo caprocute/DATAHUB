@@ -73,6 +73,7 @@ CREATE TABLE ph10_event.dlq_entry (
   event_type         varchar(255),
   event_subject      varchar(255),
   origin             varchar(20)   NOT NULL,
+  bridge_code        varchar(63),
   error_code         varchar(16)   NOT NULL,
   error_detail       varchar(2000),
   attempts           integer       NOT NULL DEFAULT 1,
@@ -100,6 +101,7 @@ CREATE TABLE ph10_event.dlq_entry (
   CONSTRAINT ck_dlq_entry_code CHECK (error_code ~ '^ERR-10-[01][0-9]{2}$'),
   CONSTRAINT ck_dlq_entry_source CHECK (origin = 'BRIDGE' OR (subscription_code IS NOT NULL AND source_partition >= 0 AND source_offset >= 0)),
   CONSTRAINT ck_dlq_entry_bridge CHECK (origin <> 'BRIDGE' OR event_id IS NOT NULL),
+  CONSTRAINT ck_dlq_entry_bridge_code CHECK ((origin = 'BRIDGE') = (bridge_code IS NOT NULL) AND (bridge_code IS NULL OR (bridge_code ~ '^brg-[0-9a-hjkmnp-tv-z]{26}$' AND subscription_code IS NULL))),
   CONSTRAINT ck_dlq_entry_times CHECK (last_failed_at >= first_failed_at AND attempts >= 1),
   CONSTRAINT ck_dlq_entry_replay_code CHECK (status <> 'REPLAY_PENDING' OR replay_code IS NOT NULL),
   CONSTRAINT ck_dlq_entry_resolved CHECK ((status IN ('REPLAYED', 'DISCARDED', 'PURGED')) = (resolved_at IS NOT NULL)
@@ -120,7 +122,8 @@ CREATE TRIGGER tg_dlq_entry_touch BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH
 CREATE TRIGGER tg_dlq_entry_immutable BEFORE UPDATE ON ph10_event.dlq_entry FOR EACH ROW EXECUTE FUNCTION ph10_event.tg_immutable('tenant_id', 'subscription_code', 'source_topic', 'source_partition', 'source_offset', 'event_id', 'origin', 'first_failed_at');
 CALL ph10_event.p_enable_rls('ph10_event.dlq_entry', 'P');
 COMMENT ON TABLE ph10_event.dlq_entry IS 'EN-10-12 Mục DLQ, nguồn sự thật của DLQ tầng sự kiện (FR-10-049, 050; BR-10-024; ADR-071). DlqWriter tiêu thụ {topicName}.dlq, upsert theo (subscription, topic, partition, offset) nên chạy lại không nhân đôi. id chính là dlqEntryId (UUIDv7). NEW giữ vô thời hạn; siêu dữ liệu giữ 1 năm sau khi xử lý.';
-COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§9.2).';
+COMMENT ON COLUMN ph10_event.dlq_entry.subscription_code IS 'NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); khi đó bridge_code xác định cầu nối.';
+COMMENT ON COLUMN ph10_event.dlq_entry.bridge_code IS 'Mã cầu nối khi origin BRIDGE (A.3, tiêu đề dh_dlq_bridge). Không có khóa ngoại vì migration_bridge tạo sau; ứng dụng kiểm tồn tại';
 COMMENT ON COLUMN ph10_event.dlq_entry.payload_ref IS 'pg:dlq_payload/{dlqEntryId}; NULL sau khi dọn nội dung (PURGED).';
 --rollback DROP TABLE IF EXISTS ph10_event.dlq_entry CASCADE;
 
@@ -188,5 +191,5 @@ CREATE TABLE ph10_event.lag_sample_5m (
 ) PARTITION BY RANGE (window_start);
 CALL ph10_event.p_ensure_partitions('ph10_event.lag_sample_5m', current_date, 4, 'month');
 CALL ph10_event.p_enable_rls('ph10_event.lag_sample_5m', 'P');
-COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §9.2).';
+COMMENT ON TABLE ph10_event.lag_sample_5m IS 'Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật ghi ở FRS A.3.';
 --rollback DROP TABLE IF EXISTS ph10_event.lag_sample_5m CASCADE;

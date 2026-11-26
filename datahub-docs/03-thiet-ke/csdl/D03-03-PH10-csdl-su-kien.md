@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH10
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-10 Sự kiện
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -170,7 +170,7 @@ EN-10-16 Chế độ định tuyến (FR-10-061, LGC-HUB-014 routing_mode). Danh
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | `routing_mode_code` | `varchar(32)` | Giá trị: `KEY_HASH`, `ROUND_ROBIN`, `SINGLE_PARTITION`. |
-| `ordering` | `varchar(255)` | Mô tả bảo đảm thứ tự (A.2.9: trong cùng khóa, không, toàn topic). Văn bản, FRS chưa đặt enum (đề nghị bổ sung §9.2). |
+| `ordering` | `varchar(16)` | Bảo đảm thứ tự (A.2.9): PER_KEY trong cùng khóa, NONE không bảo đảm, TOTAL toàn topic. Giá trị: `PER_KEY`, `NONE`, `TOTAL`. |
 | `legacy_code` | `varchar(64), NULL` | Chế độ Pulsar tương ứng: CustomPartition, RoundRobinPartition, SinglePartition. |
 
 Cột khác: `name` (varchar(255)); `enabled` (boolean, mặc định true), cột ngữ cảnh chuẩn (§1.3).
@@ -261,7 +261,7 @@ EN-10-05 Bên phát (FR-10-024, 026, 028, 029, LGC-HUB-010). SYSTEM phải là H
 | `client_id` | `varchar(255), NULL` | Client Keycloak của HTTT (claim azp) cho principal User:{clientId}. |
 | `kafka_principal` | `varchar(255), NULL` | Principal Kafka theo A.8; sinh KafkaUser dh-config-{tenant}/kafka/users/{principal}.yaml. |
 | `status` | `varchar(16), mặc định 'ACTIVE'` | Giá trị: `ACTIVE`, `SUSPENDED`, `RETIRED`. |
-| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`. |
+| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
 | `last_active_at` | `timestamptz, NULL` | Lần phát gần nhất, cập nhật theo lô từ chỉ số (không mỗi bản tin). |
 
 Cột khác: `publisher_code` (varchar(63)); `name` (varchar(255)); `description` (varchar(2000), NULL); `system_code` (varchar(63), NULL); `flow_code` (varchar(63), NULL); `comm_type` (varchar(32)); `suspend_reason` (varchar(1000), NULL), cột ngữ cảnh chuẩn (§1.3). 5 chỉ mục phụ (§3.29, ddl).
@@ -276,7 +276,7 @@ EN-10-06 Bên nhận (FR-10-025…029, LGC-HUB-011). Cờ "là luồng" của h�
 | `flow_code` | `varchar(63), NULL` | Mã luồng PH-04 khi FLOW; không khóa ngoại sang ph04 (khác module), kiểm qua FlowQueryApi. |
 | `service_code` | `varchar(32), NULL` | Mã DU theo A.2.12. |
 | `status` | `varchar(16), mặc định 'ACTIVE'` | Giá trị: `ACTIVE`, `SUSPENDED`, `RETIRED`. |
-| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`. |
+| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
 
 Cột khác: `subscriber_code` (varchar(63)); `name` (varchar(255)); `description` (varchar(2000), NULL); `system_code` (varchar(63), NULL); `comm_type` (varchar(32)); `reference_key` (varchar(255), NULL); `client_id` (varchar(255), NULL); `kafka_principal` (varchar(255), NULL); `suspend_reason` (varchar(1000), NULL); `last_active_at` (timestamptz, NULL), cột ngữ cảnh chuẩn (§1.3). 5 chỉ mục phụ (§3.29, ddl).
 
@@ -290,7 +290,7 @@ EN-10-07 Publication (FR-10-030…032, LGC-HUB-012). Duy nhất theo cặp bên 
 | `status` | `varchar(20), mặc định 'PENDING_APPROVAL'` | Giá trị: `PENDING_APPROVAL`, `REJECTED`, `ACTIVE`, `SUSPENDED`, `REVOKED`. |
 | `granted_scope` | `varchar(255), NULL` | Scope OAuth cấp cho HTTT (SYSTEM); NULL với FLOW, INTERNAL_SERVICE vì đi listener internal (BR-10-018). |
 | `acl_ref` | `varchar(512), NULL` | Đường dẫn tài nguyên KafkaUser trong dh-config-{tenant} chứa ACL WRITE literal trên topic. |
-| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`. |
+| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
 
 Cột khác: `publication_code` (varchar(63)); `publisher_code` (varchar(63)); `topic_name` (varchar(204)); `purpose` (varchar(2000)); `expected_rate_per_minute` (integer, NULL); `approved_by` (varchar(64), NULL); `approved_at` (timestamptz, NULL); `revoked_at` (timestamptz, NULL), cột ngữ cảnh chuẩn (§1.3). 3 chỉ mục phụ (§3.29, ddl).
 
@@ -304,12 +304,13 @@ EN-10-08 Subscription (FR-10-035…048, LGC-HUB-013). Duy nhất theo cặp bên
 | `legal_basis` | `varchar(2000), NULL` | Căn cứ pháp lý, bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo). |
 | `start_position` | `varchar(16), mặc định 'LATEST'` | Giá trị: `LATEST`, `EARLIEST`, `TIMESTAMP`. |
 | `status` | `varchar(20), mặc định 'PENDING_APPROVAL'` | Giá trị: `PENDING_APPROVAL`, `REJECTED`, `PROVISIONING`, `FAILED`, `ACTIVE`, `PAUSED`, `SUSPENDED`, `REVOKED`. |
-| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`. |
+| `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
 | `alert_state` | `varchar(16), mặc định 'OK'` | Trạng thái lag gần nhất do bộ thu lag cập nhật (FR-10-054, 055); đổi trạng thái phát EVT-10-10. Giá trị: `OK`, `WARNING`, `CRITICAL`, `STALLED`. |
+| `alert_acknowledged_by` | `varchar(64), NULL` | Người xác nhận cảnh báo lag (FR-10-055); tắt thông báo lặp 4 giờ, xóa cùng alert_acknowledged_at, alert_ack_note khi alert_state đổi mức. |
 | `push` | `jsonb, NULL` | JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, endpointVerification{result}. Không chứa bí mật. |
 | `pull` | `jsonb, NULL` | JSON A.3: maxBatch (≤ 10.pull.max-batch), leaseSeconds. |
 
-Cột khác: `subscription_code` (varchar(63)); `subscriber_code` (varchar(63)); `topic_name` (varchar(204)); `purpose` (varchar(2000)); `consumer_group` (varchar(255)); `start_at` (timestamptz, NULL); `suspend_reason` (varchar(1000), NULL); `lag_warn_seconds` (integer, mặc định 300); `lag_critical_seconds` (integer, mặc định 1800); `approved_by` (varchar(64), NULL); `approved_at` (timestamptz, NULL); `quota_bytes_per_second` (bigint, NULL), cột ngữ cảnh chuẩn (§1.3). 5 chỉ mục phụ (§3.29, ddl).
+Cột khác: `subscription_code` (varchar(63)); `subscriber_code` (varchar(63)); `topic_name` (varchar(204)); `purpose` (varchar(2000)); `consumer_group` (varchar(255)); `start_at` (timestamptz, NULL); `suspend_reason` (varchar(1000), NULL); `lag_warn_seconds` (integer, mặc định 300); `lag_critical_seconds` (integer, mặc định 1800); `alert_acknowledged_at` (timestamptz, NULL); `alert_ack_note` (varchar(1000), NULL); `approved_by` (varchar(64), NULL); `approved_at` (timestamptz, NULL); `quota_bytes_per_second` (bigint, NULL), cột ngữ cảnh chuẩn (§1.3). 5 chỉ mục phụ (§3.29, ddl).
 
 ### 3.14. `signing_key`
 
@@ -376,8 +377,9 @@ EN-10-12 Mục DLQ, nguồn sự thật của DLQ tầng sự kiện (FR-10-049,
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `subscription_code` | `varchar(63), NULL` | NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); đề nghị FRS bổ sung bridgeCode (§9.2). |
+| `subscription_code` | `varchar(63), NULL` | NULL chỉ với origin BRIDGE (lỗi chuyển bản tin của cầu nối, ERR-10-118); khi đó bridge_code xác định cầu nối. |
 | `origin` | `varchar(20)` | Giá trị: `PUSH`, `PULL_NACK`, `EXTERNAL_REPORT`, `REPLAY`, `BRIDGE`. |
+| `bridge_code` | `varchar(63), NULL` | Mã cầu nối khi origin BRIDGE (A.3, tiêu đề dh_dlq_bridge). Không có khóa ngoại vì migration_bridge tạo sau; ứng dụng kiểm tồn tại |
 | `status` | `varchar(20), mặc định 'NEW'` | Giá trị: `NEW`, `REPLAY_PENDING`, `REPLAYED`, `DISCARDED`, `PURGED`. |
 | `payload_ref` | `varchar(255), NULL` | pg:dlq_payload/{dlqEntryId}; NULL sau khi dọn nội dung (PURGED). |
 
@@ -403,7 +405,7 @@ Cột khác: `tenant_id` (varchar(16)); `subscription_code` (varchar(63)); `cons
 
 ### 3.22. `lag_sample_5m`
 
-Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật FRS chưa đặt tên (đề nghị bổ sung §9.2).
+Gộp 5 phút của lag_sample theo subscription (giá trị lớn nhất qua các phân vùng và trong cửa sổ), cho biểu đồ xu hướng UI-10-17. Giữ 90 ngày. Bảng kỹ thuật ghi ở FRS A.3.
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
@@ -431,7 +433,7 @@ EN-10-18 Ánh xạ di trú Hub Pulsar (FR-10-072, 075, 076; ADR-073). Một dòn
 |---|---|---|
 | `legacy_type` | `varchar(16)` | Giá trị: `PROJECT`, `TOPIC`, `PUBLISHER`, `SUBSCRIBER`, `PUBLICATION`, `SUBSCRIPTION`. |
 | `legacy_id` | `varchar(512)` | Khóa chính bảng cũ (project.id, publisher.id…) hoặc tên đầy đủ persistent://{tenant}/{namespace}/{topic} với TOPIC. |
-| `target_type` | `varchar(20), NULL` | Loại đối tượng đích; FRS chưa đặt enum (đề nghị bổ sung §9.2). Tạm ghi cùng giá trị legacy_type, không CHECK. |
+| `target_type` | `varchar(20), NULL` | Loại đối tượng Datahub đích (A.2.14 LegacyMapping.targetType); subscriber "là luồng" vẫn là SUBSCRIBER với party_type FLOW. Giá trị: `PROJECT`, `TOPIC`, `PUBLISHER`, `SUBSCRIBER`, `PUBLICATION`, `SUBSCRIPTION`. |
 | `confidence` | `varchar(8)` | Giá trị: `HIGH`, `MEDIUM`, `LOW`. |
 | `status` | `varchar(16), mặc định 'PROPOSED'` | Giá trị: `PROPOSED`, `PLANNED`, `BRIDGING`, `CUT_OVER`, `ROLLED_BACK`, `CLOSED`, `SKIPPED`. |
 
@@ -445,13 +447,13 @@ EN-10-19 Cầu nối di trú Pulsar, Kafka (FR-10-073, 074; ADR-073). Tạm th�
 |---|---|---|
 | `direction` | `varchar(20)` | Giá trị: `PULSAR_TO_KAFKA`, `KAFKA_TO_PULSAR`. |
 | `start_from` | `varchar(16), mặc định 'LATEST'` | Giá trị: `LATEST`, `EARLIEST`. |
-| `status` | `varchar(20), mặc định 'PENDING_APPROVAL'` | Giá trị: `PENDING_APPROVAL`, `RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`. |
+| `status` | `varchar(20), mặc định 'PENDING_APPROVAL'` | Giá trị: `PENDING_APPROVAL`, `REJECTED`, `RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`. |
 
 Cột khác: `bridge_code` (varchar(63)); `pulsar_topic` (varchar(512)); `kafka_topic` (varchar(204)); `pulsar_subscription_name` (varchar(255), mặc định 'dh-bridge'); `expires_at` (timestamptz); `last_pulsar_message_id` (varchar(255), NULL); `bridged_count` (bigint, mặc định 0); `lag_seconds` (integer, NULL), cột ngữ cảnh chuẩn (§1.3). 2 chỉ mục phụ (§3.29, ddl).
 
 ### 3.26. `outbox_event`
 
-Outbox (DD-11, SAD §7.3) cho EVT-10-01…15 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.
+Outbox (DD-11, SAD §7.3) cho EVT-10-01…16 và bản ghi kiểm toán gửi PH-13 ({tenant}.audit.recorded.v1). Ghi cùng giao dịch nghiệp vụ; Debezium Outbox Event Router (connector dh-integration-outbox) đọc WAL, định tuyến theo cột topic, khóa theo partition_key. Dọn sau 3 ngày.
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
@@ -577,7 +579,7 @@ Không có giá trị nào ở trên đi vào PostgreSQL, log, kiểm toán hay 
 | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` (BUSINESS) | Bên phát được duyệt | Theo `topic.partitions`, `retention_hours` (mặc định 6, 168 giờ) | `partition_key_field` khi `KEY_HASH` | Sự kiện nghiệp vụ CloudEvents, giá trị theo lược đồ Apicurio |
 | `{tenant}.cdc.{adapterCode}.{schema}.{table}.v{n}` (CDC) | PH-05 đăng ký, Kafka Connect `dh-cdc-{tenant}` ghi | Theo PH-05 (mặc định 168 giờ) | Khóa chính | Bản ghi thay đổi Avro |
 | `{topicName}.dlq` (DLQ, mỗi topic một) | Bộ giao nhận, cổng kéo ghi; `DlqWriter` đọc | Bằng số phân vùng topic gốc; `10.dlq.topic-retention-hours` (168) | Khóa gốc | Bản tin gốc nguyên vẹn kèm tiêu đề `dh_dlq_*` (A.8); kênh chuyển tiếp, nguồn sự thật là `dlq_entry` |
-| `{tenant}.event.topic.activated.v1` … `{tenant}.event.migration.cut-over.v1` (EVT-10-01…15) | `dh-integration` qua `outbox_event` | 3, giữ 7 ngày; EVT-10-11, 14 giữ 30 ngày | `topicName` (01…05), `publicationCode` (06, 07), `subscriptionCode` (08…11, 13), `replayCode` (12), `topicName` (14), `bridgeCode` (15) | Sự kiện miền PH-10, không nội dung sự kiện nghiệp vụ, không bí mật |
+| `{tenant}.event.topic.activated.v1` … `{tenant}.event.bridge.state-changed.v1` (EVT-10-01…16) | `dh-integration` qua `outbox_event` | 3, giữ 7 ngày; EVT-10-11, 14 giữ 30 ngày | `topicName` (01…05), `publicationCode` (06, 07), `subscriptionCode` (08…11, 13), `replayCode` (12), `topicName` (14), `bridgeCode` (15) | Sự kiện miền PH-10, không nội dung sự kiện nghiệp vụ, không bí mật |
 | `{tenant}.audit.recorded.v1` | `dh-integration` qua `outbox_event` | Theo PH-13 | `traceId` | Bản ghi kiểm toán FR-10-065 |
 | `dh.*` (topic nền tảng, tenant `COMMON`) | DU nền tảng | Theo khai báo FR-10-067 | Theo khai báo | Lệnh, sự kiện nội bộ nền tảng |
 
@@ -733,7 +735,7 @@ Repo chưa có bảng PH-10 đang chạy; mô hình EN-10-01…05 của SRS repo
 
 ### 9.2. Đề nghị bổ sung cho FRS
 
-Các điểm dưới đây CSDL đã xử lý tạm và ghi rõ; FRS phụ lục A cần sửa để các tập sau thống nhất. Không tập nào được tự đặt giá trị khác.
+Trạng thái: chín điểm dưới đây đã xử lý ở FRS bản 0.2 (D02-03-PH10 §14); DDL đã thêm `CHECK` cho `routing_mode.ordering`, `legacy_mapping.target_type`, giá trị `DELIVERY_BLOCKED`, `REJECTED`, cột `dlq_entry.bridge_code` và ba cột xác nhận cảnh báo ở `subscription`.
 
 | Số | Nội dung | CSDL đang làm |
 |---|---|---|
@@ -752,3 +754,4 @@ Các điểm dưới đây CSDL đã xử lý tạm và ghi rõ; FRS phụ lục
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-CSDL; 28 bảng; DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 47/47; đối chiếu phụ lục A sạch | Nhóm viết tài liệu (Claude) |
+| 0.2 | 26/11/2026 | Theo FRS 0.2: `CHECK` mới cho `routing_mode.ordering`, `legacy_mapping.target_type`; thêm `DELIVERY_BLOCKED` (`suspend_source`, chỉ subscription), `REJECTED` (`migration_bridge`), cột `dlq_entry.bridge_code`, `subscription.alert_acknowledged_by`, `alert_acknowledged_at`, `alert_ack_note`; outbox nhận EVT-10-16; sửa tại chỗ changeset vì chưa triển khai; chạy lại DDL và kiểm cô lập trên PostgreSQL 16 | Nhóm viết tài liệu (Claude) |

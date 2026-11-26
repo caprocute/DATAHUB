@@ -21,9 +21,9 @@ ON CONFLICT (comm_type_code) DO UPDATE SET name = EXCLUDED.name, direction = EXC
 INSERT INTO ph10_event.routing_mode (id, tenant_id, routing_mode_code, name, ordering, legacy_code, created_by, updated_by)
 SELECT md5('dh-routing-mode:' || r.code)::uuid, 'COMMON', r.code, r.name, r.ord, r.legacy, 'system:seed', 'system:seed'
 FROM (VALUES
-  ('KEY_HASH',         'Theo khóa (băm)', 'Trong cùng khóa', 'CustomPartition'),
-  ('ROUND_ROBIN',      'Chia đều',        'Không',           'RoundRobinPartition'),
-  ('SINGLE_PARTITION', 'Một phân vùng',   'Toàn topic',      'SinglePartition')
+  ('KEY_HASH',         'Theo khóa (băm)', 'PER_KEY',         'CustomPartition'),
+  ('ROUND_ROBIN',      'Chia đều',        'NONE',            'RoundRobinPartition'),
+  ('SINGLE_PARTITION', 'Một phân vùng',   'TOTAL',           'SinglePartition')
 ) AS r(code, name, ord, legacy)
 ON CONFLICT (routing_mode_code) DO UPDATE SET name = EXCLUDED.name, ordering = EXCLUDED.ordering,
   legacy_code = EXCLUDED.legacy_code, updated_by = 'system:seed';

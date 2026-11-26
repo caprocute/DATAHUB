@@ -33,7 +33,8 @@ CREATE TABLE ph10_event.publisher (
   CONSTRAINT ck_publisher_code CHECK (publisher_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_publisher_party_type CHECK (party_type IN ('SYSTEM', 'FLOW', 'INTERNAL_SERVICE', 'LEGACY_BRIDGE')),
   CONSTRAINT ck_publisher_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'RETIRED')),
-  CONSTRAINT ck_publisher_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_publisher_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_publisher_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_publisher_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_publisher_service CHECK (service_code IS NULL OR service_code IN ('dh-connect', 'dh-integration', 'dh-runtime', 'dh-data', 'dh-platform', 'dh-payment', 'dh-assist', 'dh-portal', 'dh-cdc')),
   -- BR-10-017, A.2.8: tổ hợp partyType và commType chiều phát
@@ -90,7 +91,8 @@ CREATE TABLE ph10_event.subscriber (
   CONSTRAINT ck_subscriber_code CHECK (subscriber_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_subscriber_party_type CHECK (party_type IN ('SYSTEM', 'FLOW', 'INTERNAL_SERVICE')),
   CONSTRAINT ck_subscriber_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'RETIRED')),
-  CONSTRAINT ck_subscriber_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER')),
+  CONSTRAINT ck_subscriber_suspend_source CHECK (suspend_source IS NULL OR suspend_source IN ('MANUAL', 'SECURITY', 'PH01', 'CIRCUIT_BREAKER', 'DELIVERY_BLOCKED')),
+  CONSTRAINT ck_subscriber_suspend_blocked CHECK (suspend_source IS DISTINCT FROM 'DELIVERY_BLOCKED'),
   CONSTRAINT ck_subscriber_suspended CHECK ((status = 'SUSPENDED') = (suspend_source IS NOT NULL)),
   CONSTRAINT ck_subscriber_service CHECK (service_code IS NULL OR service_code IN ('dh-connect', 'dh-integration', 'dh-runtime', 'dh-data', 'dh-platform', 'dh-payment', 'dh-assist', 'dh-portal', 'dh-cdc')),
   -- BR-10-017, A.2.8: tổ hợp chiều nhận; LEGACY_BRIDGE chỉ là bên phát
