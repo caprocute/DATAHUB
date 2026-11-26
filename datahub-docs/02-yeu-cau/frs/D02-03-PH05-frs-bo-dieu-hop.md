@@ -22,13 +22,13 @@ phan_he: PH-05
 
 | Chỉ số | Giá trị |
 |---|---|
-| Yêu cầu chức năng | 62 (M: 51, S: 10, C: 1) |
+| Yêu cầu chức năng | 62 (M: 54, S: 7, C: 1) |
 | Quy tắc nghiệp vụ | 30 (BR-05-001…030) |
 | Yêu cầu phi chức năng | 16 (NFR-05-001…016) |
 | Màn hình | 17 (UI-05-01…17) |
 | API | 92 operation (API-05-001…093, 042 để trống), 15 sự kiện (EVT-05-01…15) |
 | Chức năng hệ cũ được phủ | 9 mục `LGC` (Bus connector, Tooling nhóm kết nối, bảo mật endpoint, sửa kết nối) và 1 mục loại bỏ có thay thế (LGC-TOOL-027) |
-| Mức đợt | MVP; năm FR mức S và một FR mức C sang Đợt 3 |
+| Mức đợt | MVP; ba FR mức S (037, 045, 060) và FR mức C (039) sang Đợt 3 |
 
 ## 1. Mục đích, phạm vi và người đọc
 
