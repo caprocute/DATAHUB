@@ -2660,7 +2660,7 @@ sequenceDiagram
   R->>R: FlowLoader nạp route, không khởi động lại pod
   R->>K: Nhịp tim EVT-04-12 (băm mới)
   K->>I: Nhịp tim
-  I->>I: So băm, SYNCED; bản cũ SUPERSEDED
+  I->>I: So băm, SYNCED, bản cũ SUPERSEDED
   I->>K: EVT-04-07 deployment.status-changed
 ```
 
@@ -2898,7 +2898,7 @@ sequenceDiagram
   I->>K: EVT-04-11 lệnh có ký, hết hạn 60 giây
   I->>G: Ghi trạng thái mong muốn PAUSED
   K->>R: Lệnh
-  R->>R: Kiểm chữ ký, hạn, tenant; xả bản tin (drain)
+  R->>R: Kiểm chữ ký, hạn, tenant, xả bản tin (drain)
   R->>K: EVT-04-13 xác nhận từng bản sao
   K->>I: Xác nhận
   I->>I: Đủ xác nhận: ACKNOWLEDGED, RECONCILED
@@ -3177,7 +3177,7 @@ sequenceDiagram
   H->>AP: POST /ho-tich/khai-sinh (token)
   AP->>AP: Xác thực, kiểm tra đăng ký sử dụng
   AP->>R: Chuyển kèm X-Dh-Tenant, X-Dh-Consumer
-  R->>R: receive: đặt dh-*, khóa tenant; schema
+  R->>R: receive: đặt dh-*, khóa tenant, schema
   R->>O: authz (200 ms)
   O-->>R: allow, obligations
   R->>R: transform, enrich, route
@@ -3739,7 +3739,7 @@ sequenceDiagram
   L->>P: Câu lệnh đã qua VR-13, tham số ràng buộc
   P->>B: Lấy tài khoản flow-t68-{flow} (TTL 1 giờ)
   B-->>P: Tài khoản chỉ đọc
-  P->>D: BEGIN READ ONLY; SET LOCAL statement_timeout
+  P->>D: BEGIN READ ONLY, SET LOCAL statement_timeout
   P->>D: set_config('app.tenant_id', tenant khóa)
   P->>D: SELECT … (tối đa max-rows + 1)
   D-->>P: Dòng kết quả (pgaudit ghi READ)
