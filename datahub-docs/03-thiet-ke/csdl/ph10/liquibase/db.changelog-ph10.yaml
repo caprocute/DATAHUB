@@ -1,0 +1,40 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_integration_migrator (thành viên ph10_owner), defaultSchemaName=ph10_event.
+# Context: bootstrap (vai trò, extension, schema). Seed danh mục nền nằm trong 10-0800-seed.sql.
+databaseChangeLog:
+  - include:
+      file: changes/10-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0010-catalog.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0020-topic.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0030-party.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0040-relation.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0050-delivery.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0060-dlq.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0070-migration.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0080-messaging.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0800-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/10-0900-grants.sql
+      relativeToChangelogFile: true
