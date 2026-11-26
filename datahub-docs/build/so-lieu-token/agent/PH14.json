@@ -1,0 +1,153 @@
+{
+  "phan_he": "PH-14",
+  "phien": [
+    {
+      "tap": "frs",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 6.6675,
+      "so_luot": 77,
+      "phut": 34.7,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 132,
+        "output_tokens": 336950,
+        "cache_read_input_tokens": 19591106,
+        "cache_creation_input_tokens": 535378
+      },
+      "tom_tat": "| Loại | Số lượng |\n|---|---|\n| FR | 57 (48 mức M, 8 mức S, 1 mức C), chia chín nhóm A đến I |\n| BR | 37 |\n| NFR | 26 |\n| ERR | 71 (001–039 và 101–132) |\n| API | 90 |\n| EVT | 17 |\n| UI | 17 |\n| EN | 15 |\n\n- Sơ đồ nhóm chức năng, sơ đồ trình tự và sơ đồ trạng thái đều có Mermaid kèm `caption` và đoạn thuyết minh.\n- **Phủ hệ cũ:** 9/9 hàng `LGC` của PH-14 trong D00-03 phần A (`LGC-NGSP-001…008` và `LGC-DMDC-019`) đều có FR và kết luận, trùng với D00-03. Cả 14 FR cũ của `docs/07-srs/SRS-PH-14-national.md` được ánh xạ sang mã mới.\n- **Mã mới ngoài dải sổ tra cứu:** mười quyền `PERM-14-*` mới tôi chỉ đề xuất ở mục \"Đề nghị đồng bộ D02-08\" (không sửa D02-08). Đây cũng là nguyên nhân của 10 lỗi \"thiếu\" nêu trên, giống tiền lệ PH-04 và PH-07; chúng sẽ hết sau khi D02-08 được đồng bộ.\n\n**Câu hỏi mở đã thêm:** 14 câu, Q14-01 đến Q14-14. Các câu quan trọng nhất:\n- Q14-01: danh mục dịch vụ hiện hành của NDXP chưa có, mục 6.4 đang dựa vào phụ lục NGSP của hệ cũ.\n- Q14-02: dịch vụ NDXP hiện hành còn bắt buộc ký số không, và dùng chuẩn nào.\n- Q14-03: khóa chứng thư công vụ có nhập được vào OpenBao `transit` không.\n- Q14-04: NDOP là nền tảng dữ liệu mở (theo D00-01) hay nền tảng điều phối (theo SRS cũ). Tập này theo D00-01, chỉ có câu hỏi này cần chủ đầu tư chốt cách gọi chung.\n\nMục \"Đề nghị đồng bộ\" còn ghi việc cần sửa ở D02-02, D00-01, D00-03, D03-01, D03-07, PH-02, PH-04, PH-05, PH-07, PH-09, PH-12 và PH-13. Nó cũng đề xuất cấp dải ADR 075–079 cho PH-14 với ba ADR; tôi không tạo ADR mới.",
+      "kiem_tra_ma": [
+        "Tổng: 136 tệp, 3963 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 17, TC 1, UI 17, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "uc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 3.4004,
+      "so_luot": 54,
+      "phut": 16.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 76,
+        "output_tokens": 162481,
+        "cache_read_input_tokens": 8540488,
+        "cache_creation_input_tokens": 368399
+      },
+      "tom_tat": "14-use-case-ket-noi-quoc-gia.md` (bản 0.1, 26/11/2026). Tệp gồm metadata, tóm tắt cho hội đồng thẩm định, các chương 1–9, mục \"Đề nghị đồng bộ\" và lịch sử phiên bản. Không đụng tài liệu dùng chung hay phân hệ khác.\n\n**Số mã chính:**\n- **UC:** 38 (`UC-14-01…38`), chia 6 nhóm, mỗi use case một khối đủ 15 mục đúng thứ tự. Tôi đã kiểm tra tự động cả 38 khối.\n- **Phủ FR, API, UI:** 57 FR trên 57 (48 mức M, 8 mức S, 1 mức C), 90 API trên 90, 17 màn hình trên 17.\n- **Sơ đồ:** 6 hình use case tổng, 6 sơ đồ trình tự.\n- **Truy vết:** các bảng UC ↔ FR, UC ↔ UI/API, UC ↔ REQ/quy trình/LGC, và bảng ngược FR → UC.\n- **Luồng phụ dùng chung:** 6 (`LP-14-01…06`).\n- **Mã lỗi:** mọi ERR dẫn đều có thật ở FRS §9.1; câu thông báo lấy từ FRS §9.2.\n\n**Câu hỏi mở đã thêm:** 5, từ `Q14-45` đến `Q14-49`, đã dùng hết dải của tập use case.\n- **Q14-45:** hạn xem xét lại sau tạm ngừng khẩn cấp.\n- **Q14-46:** có cần bốn mắt khi giải trừ `SECURITY_HOLD` không, và mã lỗi cho lượt gọi bị chặn vì trạng thái này.\n- **Q14-47:** Cán bộ ATTT xác nhận điểm cuối chiều vào có thỏa \"người thứ hai duyệt\" của BR-14-022 không.\n- **Q14-48:** chạy song song với dịch vụ mức `SENSITIVE`.\n- **Q14-49:** độ trễ đồng bộ tối đa của tác vụ nền ĐVQHNS.\n\n**Đề nghị đồng bộ (không sửa trực tiếp):**\n- D03-06-PH14: câu thông báo tập này viết thêm cho các mã lỗi dùng chung.\n- D03-04-PH14: mã lỗi cho trạng thái `SECURITY_HOLD`.\n- D02-08: các quyền còn thiếu.\n- D00-03: cột UC cho các mục hệ cũ.\n- Use case đối ứng của PH-02, 03, 06, 07, 09.",
+      "kiem_tra_ma": [
+        "Tổng: 137 tệp, 4001 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 17, TC 1, UI 17, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "sdd",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 4.8728,
+      "so_luot": 67,
+      "phut": 24.4,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 124,
+        "output_tokens": 210931,
+        "cache_read_input_tokens": 16711814,
+        "cache_creation_input_tokens": 436748
+      },
+      "tom_tat": "R, đã ghi ở mục Đề nghị đồng bộ):\n- **Mặt phẳng dữ liệu không nối PostgreSQL.** Cổng chạy bằng ảnh chụp cấu hình có chữ ký, ghi bền qua bộ đệm đĩa và Kafka.\n- **Khóa ký không rời OpenBao.** Ký bằng một nhà cung cấp JCA chỉ gửi giá trị băm tới `transit/sign`.\n- **Đường gọi chung chín chặng.** Kiểm tra mục đích luôn đứng trước đọc đệm.\n- **Hạn mức bằng script Lua nguyên tử ở Valkey.**\n- **`SECURITY_HOLD` cưỡng chế ngay ở cổng.**\n\n**Câu hỏi mở đã thêm: 8, mã Q14-20…27.**\n- Q14-20: chạy JVM hay native.\n- Q14-21: một Deployment mỗi tenant hay cổng dùng chung ở hồ sơ 34 tenant.\n- Q14-22: bộ đệm đĩa trên `emptyDir` hay PVC.\n- Q14-23: giới hạn cấp token của NDXP.\n- Q14-24: cách đếm hạn mức của trung ương và quy tắc cho dịch vụ thiết yếu.\n- Q14-25: chỉnh FR-14-028 bước 3, chủ thể ký thử là cổng.\n- Q14-26: hợp đồng nội bộ với PH-02, PH-07, PH-09.\n- Q14-27: chống trùng thao tác ghi khi Valkey mất.\n\n**Điểm cần lưu ý khi đồng bộ.**\n- **Khác biệt với FRS.** FRS mô tả \"hệ thống ký thử\" ở FR-14-028 bước 3, còn BR-14-004 chỉ cho cổng của đúng tenant được ký. Tôi tách làm hai lớp (đọc khóa công khai ở `dh-integration`, ký thử ở `worker`) và đề nghị FRS chỉnh lại lời (Q14-25).\n- **Mã thiếu có từ trước.** `kiem_tra_ma.py` còn báo 10 mã `PERM-14-*` thiếu ở D02-08, là lỗi của FRS chứ không phải của tập này. Trong SDD tôi chỉ ghi động từ quyền (tiền tố hiểu ngầm) để không thêm lỗi mới.\n- **Mã API đề xuất.** Tôi đề xuất mã API-14-091 cho API cấu hình runtime vì FRS chưa có; tuỳ D03-04-PH14 xác nhận.",
+      "kiem_tra_ma": [
+        "Tổng: 138 tệp, 4002 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 91, ERR 76, EVT 17, TC 1, UI 17, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "csdl",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 7.5846,
+      "so_luot": 104,
+      "phut": 31.2,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 198,
+        "output_tokens": 310102,
+        "cache_read_input_tokens": 31527875,
+        "cache_creation_input_tokens": 531943
+      },
+      "tom_tat": "14, BR-14, ERR-14, NFR-14 và API-14 đã có ở FRS và SDD.\n\n**Kết quả chạy thử**\n- Chạy bằng `ph14/tools/chay_thu.sh`.\n- Cô lập tenant, bốn mắt, chặn bí mật, bất biến, quyền theo vai trò đều đạt.\n- Chạy thử bắt được một lỗi thật. Giá trị cột sinh chưa được tính khi trigger `BEFORE UPDATE` chạy nên trigger \"chỉ tiến\" của sổ giao dịch ban đầu không chặn gì; đã sửa bằng hàm `f_txn_rank`.\n- Khi soát DDL, tôi thấy nhiều `CHECK` để lọt giá trị rỗng (`NULL`); đã bọc `coalesce` và khóa lại bằng khối kiểm 24c–24e.\n\n**Câu hỏi mở đã thêm: 5**\n- Q14-50: chống trùng mã giao dịch xuyên phân vùng, vì khóa duy nhất phải chứa `started_at`.\n- Q14-51: dung lượng sổ giao dịch khoảng 60 GB mỗi tenant cho 12 tháng.\n- Q14-52: lưu nội dung đặc tả trong PostgreSQL hay trong Ceph.\n- Q14-53: phiên `PLATFORM` ghi dòng `COMMON` có quyền rộng hơn mức cần.\n- Q14-54: các thời hạn lưu giữ đang là giả định (`usage_hourly`, `cache_stats`, `async_request`…).\n\n**Đề nghị đồng bộ** (ở cuối tệp chính, không sửa tài liệu chung)\n- SDD §4.16 ghi `ON CONFLICT DO NOTHING` nhưng §8.1 cần cập nhật theo hạng; CSDL làm theo cách thứ hai.\n- FRS §4.2: loại `SERVICE_RECONCILE` lưu ở `reconcile_run`, không ở `sync_run`.\n- D03-07: thống nhất tên khóa `transit` giữa FRS và SDD.\n- D03-09: dung lượng `pg-core` và tên bucket Ceph.\n- D03-10: quy ước phiên `PLATFORM` ghi dòng `COMMON`.\n- D03-04, D05-02, D06-01: các điểm tương ứng đã ghi trong bảng đề nghị.\n\nTôi không dùng git và không tạo ADR mới. Các tệp mới đang ở trạng thái untracked.",
+      "kiem_tra_ma": [
+        "Tổng: 139 tệp, 4002 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 91, ERR 76, EVT 17, TC 1, UI 17, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "api",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.9152,
+      "so_luot": 60,
+      "phut": 13.7,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 96,
+        "output_tokens": 124213,
+        "cache_read_input_tokens": 9402584,
+        "cache_creation_input_tokens": 292948
+      },
+      "tom_tat": "hực. Sáu FR chạy trong cổng nên chỉ có mô tả: 011, 014, 015, 026, 027, 037.\n- **Lược đồ và ví dụ:** 144 lược đồ OpenAPI; 28 ví dụ đã kiểm khớp (24 OpenAPI, 4 AsyncAPI).\n- **Chương 3:** 12 bảng danh mục, mỗi bảng một nhóm endpoint.\n\nKiểm tra đã chạy:\n- OpenAPI qua `openapi-spec-validator` và Spectral `spectral:oas`: 0 lỗi, 0 cảnh báo.\n- AsyncAPI qua `@asyncapi/cli validate`: 0 lỗi, 0 cảnh báo, chỉ một gợi ý nâng lên 3.1.\n- `check_contracts.py` đạt: mã API đủ và không trùng, mọi mã lỗi được tham chiếu đều có định nghĩa, không có trường bí mật hay khóa riêng.\n- Chưa chạy oasdiff và bộ luật Spectral riêng của dự án; hai kiểm tra này dành cho CI-5.\n\nCâu hỏi mở đã thêm là Q14-55…59:\n- **Q14-55:** scope `national.parallel-observe` cho API-14-089.\n- **Q14-56:** `If-Match` lệch trả 409 (theo FRS) hay 412, và `type` của RFC 9457 dạng URL hay `urn:` (SDD ghi `urn:`).\n- **Q14-57:** API cung cấp lại có hợp đồng riêng từng dịch vụ hay dùng khung chung của API-14-075.\n- **Q14-58:** khung bản tin chiều vào là khung chuẩn hóa, chưa phải định dạng thật của trung ương.\n- **Q14-59:** phân trang `page`/`size` cho giao dịch lớn.\n\nMục \"Đề nghị đồng bộ\" có 12 việc, gồm:\n- FRS §9.4: thêm API-14-091, 092 và ERR-14-133.\n- SDD: đổi `type` sang URL và đổi mã tạm ERR-14-127 thành ERR-14-133.\n- D02-08: thêm scope `national.parallel-observe`.\n- D04-01: chốt 409 hay 412 khi `If-Match` lệch.\n- Các hợp đồng chờ PH-02, 03, 04, 07, 09, 12, 13 xác nhận.\n- Tập màn hình PH-14 và D05-02-PH14.\n\nTôi không tạo ADR mới.",
+      "kiem_tra_ma": [
+        "Tổng: 140 tệp, 4004 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, UI 17, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "mh",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.9261,
+      "so_luot": 60,
+      "phut": 13.5,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 110,
+        "output_tokens": 124807,
+        "cache_read_input_tokens": 9953373,
+        "cache_creation_input_tokens": 272886
+      },
+      "tom_tat": "2 AA, 10 tiêu chí nghiệm thu UAC-14.\n- `ph14/hifi/`: `gen_hifi.py`, `shot.js`, `hifi.css` (sao từ ph19), 17 tệp HTML và 17 ảnh PNG. Ảnh UI-14-01 và UI-14-09 từ FRS được dựng lại cùng bộ khung mới.\n\n**Số mã chính:**\n- 17 UI. UI-14-12 (Giao dịch và đối soát) viết siêu chi tiết: lưới, 6 vùng R1…R6, bàn phím, chuột, trợ năng, hiệu năng.\n- 14 A11Y-14, 10 UAC-14.\n- 5 câu hỏi mở mới, Q14-30…34.\n- Không tạo mã FR, UC, API hay TC mới. Không có CMP hay token tự đặt; tôi đã đối chiếu tên với D03-05.\n\n**Câu hỏi mở mới:**\n- **Q14-30:** cấu trúc menu \"Kết nối quốc gia\" gồm 13 mục.\n- **Q14-31:** giới hạn thời gian tra giao dịch và thời hạn tải gói bằng chứng.\n- **Q14-32:** ngưỡng xem nội dung đầy đủ, lý do tối thiểu, thời gian tự che.\n- **Q14-33:** chủ quản HTTT có cần tự xem hạn mức và giao dịch của mình không.\n- **Q14-34:** có cần nút \"Đối soát ngay\" cho giao dịch \"kết quả chưa rõ\" không.\n\n**Điểm cần lưu ý:**\n- D03-06-00 chỉ có một route cho PH-14 (`/tich-hop/dich-vu-quoc-gia`). Tôi giữ route đó và đặt các màn còn lại dưới `/tich-hop/quoc-gia/…`; việc thêm menu ghi ở \"Đề nghị đồng bộ\".\n- Đồng bộ Phụ lục B: API còn thiếu cho màn (p95 và chuỗi theo giờ trong `dashboard`, tham số `asyncState`, API duyệt chung cho 5 loại yêu cầu, `allowedActions` cho mọi tài nguyên).\n- Phụ lục A: không cần CMP hay token mới; chỉ đề nghị bổ sung vài biến thể (thanh mức dùng có mốc, nhãn đếm ngược).\n- `soat_trinh_bay.py` còn báo 3 cảnh báo \"ASCII\", là các wireframe dạng chữ mà khuôn K-MH cho phép kèm ảnh hi-fi.",
+      "kiem_tra_ma": [
+        "Tổng: 141 tệp, 4004 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "tc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 1.6183,
+      "so_luot": 33,
+      "phut": 9.3,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 60,
+        "output_tokens": 89628,
+        "cache_read_input_tokens": 2962259,
+        "cache_creation_input_tokens": 170193
+      },
+      "tom_tat": "-nn.feature` và 1 tệp UAT.\n- `ph14/D05-02-PH14-test-case.xlsx`: 97 ca.\n\n**Số mã chính:**\n- 37 kịch bản: TS-14-01…31 chức năng, TS-14-32…37 phi chức năng.\n- 97 test case, TC-14-001…097, trong đó 69 ca P1. Có 5 ca hiệu năng ở dạng bảng.\n- 10 kịch bản nghiệm thu UAT-01…10, tương đương LGC-NGSP-001…008 và LGC-DMDC-019.\n- Độ phủ do script kiểm: cả 57 FR, 90 API, 17 UI và 38 UC đều có ca. Mọi BR, ERR và NFR cũng có ca; `fill_doc.py` không còn báo BR, ERR, NFR nào thiếu.\n- Mỗi FR mức M có ít nhất một ca dương và một ca âm.\n- Ma trận truy vết ở mục 8 được sinh bằng `fill_doc.py`.\n\n**Cần lưu ý:**\n- **Mã lỗi lệch FRS:** ERR-14-133 có trong tài liệu API (`D03-04-PH14`) nhưng không có trong FRS §9.1. Tôi đã thêm ca `dedup-down` để phủ mã này.\n- **Loại ca nhiều giá trị:** một số ca mang cả loại Dương và Âm (ví dụ `quota-count`, `cache-hit`) để mỗi FR đạt quy tắc dương và âm. Nhờ vậy ca đếm là một, nhưng người đọc cần biết điều này.\n- **Ngân sách:** tôi đã dùng gần hết ngân sách, nên mỗi kịch bản chỉ có 2–3 ca. Chưa chạy lại `gen_gherkin.py` và `gen_xlsx.py` sau lần số hóa cuối. Lần chạy cuối của cả hai vẫn thành công, trước khi kiểm tra mã.\n\n**Câu hỏi mở đã thêm:** Q14-40 (môi trường NDXP/NDOP thử của trung ương), Q14-41 (nguồn dữ liệu hồ sơ giả lập), Q14-42 (chạy bền để đo khả dụng), Q14-43 (thời gian khôi phục về kết nối cũ).\n\n**Đề nghị đồng bộ** (ghi ở cuối tập): D00-04 cập nhật dải mã, D05-01 thêm `sim-ndxp`, tenant `T90` và sáu nhóm ca bắt buộc, D02-08 bổ sung mười quyền `PERM-14-*`.",
+      "kiem_tra_ma": [
+        "Tổng: 142 tệp, 4138 mã khác nhau. Trùng 20, thiếu 34, liên kết hỏng 0 (mới 10, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    }
+  ],
+  "tong_usd": 29.9849
+}
