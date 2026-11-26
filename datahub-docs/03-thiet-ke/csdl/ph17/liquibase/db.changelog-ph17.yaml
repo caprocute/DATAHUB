@@ -1,0 +1,40 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_data_migrator (thành viên ph17_owner), defaultSchemaName=ph17_assist.
+# Context: bootstrap (vai trò, extension, schema). Khởi tạo tenant bằng thủ tục p_seed_tenant (17-0001-functions.sql), không có seed chung.
+databaseChangeLog:
+  - include:
+      file: changes/17-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0010-core.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0020-policy.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0030-model.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0040-knowledge.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0045-pgvector.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0050-chat.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0060-guard.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0070-eval.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0080-govern.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-0900-grants.sql
+      relativeToChangelogFile: true

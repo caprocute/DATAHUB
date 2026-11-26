@@ -347,6 +347,14 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-16-audit-read | Xem nhật ký kiểm toán PH-16 | AU, PU, TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
 | PERM-17-admin | Bật tắt, cấu hình trợ lý theo tenant | TA |
+| PERM-17-model | Khai báo nhà cung cấp, mô hình, phiên bản; bật mô hình cho tenant; tắt khẩn nền tảng | PA, TA (của tenant) |
+| PERM-17-knowledge | Nguồn tri thức, lập chỉ mục, tài liệu tải lên | PA (nguồn COMMON), TA, DS |
+| PERM-17-tool | Bật tắt công cụ, giới hạn, bộ lọc vào ra | TA, SO |
+| PERM-17-eval | Chỉ dẫn hệ thống, bộ đánh giá, ca đỏ, duyệt phiên bản, chất lượng | TA, SO |
+| PERM-17-log-read | Nhật ký hội thoại đã che, vết lời gọi, bằng chứng, báo cáo | SO, AU |
+| PERM-17-feedback | Xử lý phản hồi người dùng | TA, DS |
+| PERM-17-config | Tham số `17.*`, ngưỡng chất lượng | PA (trần), TA |
+| PERM-17-infer | Scope máy `assist:infer` cho PH-04, PH-11 (không gán người) | Không gán vai trò người; tài khoản máy |
 
 : Quyền và vai trò được phép của các phân hệ PH-06, 08, 09, 11, 15, 16, 17
 

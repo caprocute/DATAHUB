@@ -1,0 +1,17 @@
+{
+  "name": "@datahub/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../../../spec/PH07/lat-cat/F-07-010.openapi.yaml -o src/generated/rdm.d.ts --default-non-nullable false"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}

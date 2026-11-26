@@ -1,0 +1,21 @@
+.dh-problem__detail,
+.dh-problem__meta {
+  margin: 0;
+}
+
+.dh-problem__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dh-space-2);
+  margin-top: var(--dh-space-1);
+  color: var(--dh-color-text-secondary);
+  font-size: var(--dh-font-footnote);
+}
+
+/* Nền cảnh báo lỗi có sắc đỏ nhạt: nút Sao chép dùng màu chữ chính, gạch chân, để đủ tương phản AA. */
+.dh-problem__meta .ant-btn-link {
+  color: var(--dh-color-text-primary);
+  text-decoration: underline;
+  padding-inline: var(--dh-space-1);
+}

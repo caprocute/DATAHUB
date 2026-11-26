@@ -1,0 +1,18 @@
+# Vá hợp đồng PH-07 (gói đặc tả máy đọc, K-GOI-DAC-TA §4).
+# Áp lên datahub-docs/03-thiet-ke/api/ph07/openapi-rdm.yaml TRƯỚC khi lint và cắt lát.
+# Mỗi mục là một quyết định của báo cáo sẵn sàng (san-sang.md, mã SS-07-nn).
+# Đợt đồng bộ cuối chép các vá này về tệp nguồn rồi xóa mục tương ứng.
+# op: set (đặt giá trị tại con trỏ JSON), remove (xóa khóa), add (thêm vào cuối mảng)
+# SS-07-01, SS-07-02 đã sửa ở nguồn (PR #37, 26/11/2026), vá đã gỡ.
+# SS-07-03: quyền theo D02-08 (PERM-07-create / update), không dùng PERM-07-configure chưa có trong D02-08.
+- {ss: SS-07-03, op: set, ptr: "/paths/~1catalog-groups/post/x-datahub-permission", value: {permission: PERM-07-create, note: "TENANT_ADMIN với nhóm của tenant; PLATFORM_ADMIN (tenant PLATFORM) với nhóm COMMON."}}
+- {ss: SS-07-03, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/patch/x-datahub-permission", value: {permission: PERM-07-update}}
+- {ss: SS-07-03, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/delete/x-datahub-permission", value: {permission: PERM-07-update}}
+# SS-07-04: tạo vòng khi sửa nhóm là 409 ERR-07-039 (FRS, TC-07-020), không phải 422 ERR-07-010.
+- {ss: SS-07-04, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/patch/description", value: "Sửa tên, mô tả, thứ tự, nhóm cha. Đổi nhóm cha tạo vòng hoặc vượt độ sâu 5 bị từ chối 409 ERR-07-039. Không sửa được `code`."}
+- {ss: SS-07-04, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/patch/responses/409", value: {$ref: "#/components/responses/Conflict"}}
+- {ss: SS-07-04, op: set, ptr: "/components/responses/Conflict/description", value: "Xung đột trạng thái (ERR-07-002, 004, 005, 008, 013, 016, 020, 022, 029, 032, 033, 037, 039)."}
+# SS-07-05: nhóm không xóa mềm (DDL không có deleted_at); DELETE xóa hẳn.
+- {ss: SS-07-05, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/delete/description", value: "Xóa hẳn nhóm không còn danh mục (kể cả RETIRED và danh mục đã xóa mềm còn tham chiếu) và không còn nhóm con; còn thì 409 ERR-07-037."}
+# SS-07-06: lỗi kiểm tra trường trả 422 ERR-07-009 kèm errors[]; thân JSON hỏng cũng vậy.
+- {ss: SS-07-06, op: set, ptr: "/paths/~1catalog-groups/post/responses/422", value: {$ref: "#/components/responses/UnprocessableEntity"}}

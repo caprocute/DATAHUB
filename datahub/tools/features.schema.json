@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "features.json của gói đặc tả máy đọc (K-GOI-DAC-TA §4.3)",
+  "type": "object",
+  "required": ["phan_he", "features"],
+  "properties": {
+    "phan_he": {"type": "string", "pattern": "^PH-\\d{2}$"},
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "fr", "ten", "api", "tc", "passes"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^F-\\d{2}-\\d{3}$"},
+          "fr": {"type": "string", "pattern": "^FR-\\d{2}-\\d{3}$"},
+          "ten": {"type": "string"},
+          "uu_tien": {"enum": ["M", "S", "C", "W", null]},
+          "dot": {"type": ["integer", "null"]},
+          "api": {"type": "array", "items": {"type": "object", "required": ["operationId", "method", "path"]}},
+          "bang": {"type": "array", "items": {"type": "string"}},
+          "ui": {"type": "array", "items": {"type": "string"}},
+          "loi": {"type": "array", "items": {"type": "string"}},
+          "tc": {"type": "array", "items": {"type": "string"}},
+          "co_tac_vu": {"enum": ["S", "M", "L"]},
+          "passes": {"type": "boolean"},
+          "lat_cat": {"type": "string"},
+          "gherkin": {"type": "string"},
+          "ghi_chu": {"type": "string"},
+          "danh_gia": {"type": "object"}
+        }
+      }
+    }
+  }
+}

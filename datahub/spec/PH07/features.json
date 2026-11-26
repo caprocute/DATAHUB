@@ -1,0 +1,2069 @@
+{
+ "$schema": "../../tools/features.schema.json",
+ "phan_he": "PH-07",
+ "nguon": {
+  "frs": "datahub-docs/02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md",
+  "openapi": "datahub-docs/03-thiet-ke/api/ph07/openapi-rdm.yaml",
+  "ddl": "datahub-docs/03-thiet-ke/csdl/ph07/ddl/ph07_rdm.sql",
+  "tc": "datahub-docs/05-kiem-thu/test-case/D05-02-PH07-test-case.md"
+ },
+ "features": [
+  {
+   "id": "F-07-001",
+   "fr": "FR-07-001",
+   "ten": "Liệt kê danh mục, đếm số lượng, lọc theo nhóm, nguồn, trạng thái, phân loại",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-001",
+     "operationId": "listCatalogs",
+     "method": "GET",
+     "path": "/catalogs"
+    }
+   ],
+   "bang": [
+    "ph07_rdm.catalog"
+   ],
+   "ui": [
+    "UI-07-01"
+   ],
+   "loi": [
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-001",
+    "TC-07-002"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-002",
+   "fr": "FR-07-002",
+   "ten": "Xem chi tiết danh mục: thông tin, thuộc tính, phiên bản, bản ghi",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-003",
+     "operationId": "getCatalog",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}"
+    },
+    {
+     "api": "API-07-011",
+     "operationId": "listCatalogVersions",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions"
+    },
+    {
+     "api": "API-07-013",
+     "operationId": "getCatalogVersion",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}"
+    },
+    {
+     "api": "API-07-026",
+     "operationId": "listVersionItems",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-003",
+    "TC-07-004",
+    "TC-07-220"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-003",
+   "fr": "FR-07-003",
+   "ten": "Tạo danh mục thủ công",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-002",
+     "operationId": "createCatalog",
+     "method": "POST",
+     "path": "/catalogs"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-03"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-002",
+    "ERR-07-003",
+    "ERR-07-009",
+    "ERR-07-012",
+    "ERR-07-022",
+    "ERR-07-036"
+   ],
+   "tc": [
+    "TC-07-005",
+    "TC-07-006",
+    "TC-07-007",
+    "TC-07-008",
+    "TC-07-009"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-004",
+   "fr": "FR-07-004",
+   "ten": "Cập nhật thông tin danh mục",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-004",
+     "operationId": "updateCatalog",
+     "method": "PATCH",
+     "path": "/catalogs/{catalogCode}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-03"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-018",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-010",
+    "TC-07-018",
+    "TC-07-271"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-005",
+   "fr": "FR-07-005",
+   "ten": "Khai báo thuộc tính động có kiểu và ràng buộc",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-002",
+     "operationId": "createCatalog",
+     "method": "POST",
+     "path": "/catalogs"
+    },
+    {
+     "api": "API-07-022",
+     "operationId": "listAttributes",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/attributes"
+    },
+    {
+     "api": "API-07-023",
+     "operationId": "createAttribute",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/attributes"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-04"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-009",
+    "ERR-07-014",
+    "ERR-07-018",
+    "ERR-07-036"
+   ],
+   "tc": [
+    "TC-07-024",
+    "TC-07-025",
+    "TC-07-026",
+    "TC-07-027",
+    "TC-07-033",
+    "TC-07-038"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-006",
+   "fr": "FR-07-006",
+   "ten": "Sửa, ẩn, xóa, sắp thứ tự thuộc tính trong bản nháp có kiểm tra tương thích",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-024",
+     "operationId": "updateAttribute",
+     "method": "PATCH",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/attributes/{attrCode}"
+    },
+    {
+     "api": "API-07-025",
+     "operationId": "deleteAttribute",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/attributes/{attrCode}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-04"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-009",
+    "ERR-07-014",
+    "ERR-07-018"
+   ],
+   "tc": [
+    "TC-07-028",
+    "TC-07-029",
+    "TC-07-030",
+    "TC-07-031",
+    "TC-07-032",
+    "TC-07-034",
+    "TC-07-136"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-007",
+   "fr": "FR-07-007",
+   "ten": "Cấu hình phân cấp",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-002",
+     "operationId": "createCatalog",
+     "method": "POST",
+     "path": "/catalogs"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-03",
+    "UI-07-04"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-006",
+    "ERR-07-010",
+    "ERR-07-011"
+   ],
+   "tc": [
+    "TC-07-035",
+    "TC-07-036",
+    "TC-07-037"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-008",
+   "fr": "FR-07-008",
+   "ten": "Thiết lập nguồn và quyền cập nhật",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-002",
+     "operationId": "createCatalog",
+     "method": "POST",
+     "path": "/catalogs"
+    },
+    {
+     "api": "API-07-004",
+     "operationId": "updateCatalog",
+     "method": "PATCH",
+     "path": "/catalogs/{catalogCode}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-03"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-012"
+   ],
+   "tc": [
+    "TC-07-039",
+    "TC-07-040",
+    "TC-07-041",
+    "TC-07-045"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-009",
+   "fr": "FR-07-009",
+   "ten": "Xóa danh mục chưa phát hành; ngừng hiệu lực danh mục đã phát hành",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-005",
+     "operationId": "deleteCatalog",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}"
+    },
+    {
+     "api": "API-07-006",
+     "operationId": "retireCatalog",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}:retire"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-017",
+    "ERR-07-031",
+    "ERR-07-032",
+    "ERR-07-048"
+   ],
+   "tc": [
+    "TC-07-011",
+    "TC-07-012",
+    "TC-07-013",
+    "TC-07-014",
+    "TC-07-015",
+    "TC-07-016",
+    "TC-07-017"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-010",
+   "fr": "FR-07-010",
+   "ten": "Quản lý nhóm danh mục",
+   "uu_tien": "S",
+   "dot": 2,
+   "api": [
+    {
+     "api": "API-07-007",
+     "operationId": "listCatalogGroups",
+     "method": "GET",
+     "path": "/catalog-groups"
+    },
+    {
+     "api": "API-07-008",
+     "operationId": "createCatalogGroup",
+     "method": "POST",
+     "path": "/catalog-groups"
+    },
+    {
+     "api": "API-07-009",
+     "operationId": "updateCatalogGroup",
+     "method": "PATCH",
+     "path": "/catalog-groups/{groupId}"
+    },
+    {
+     "api": "API-07-010",
+     "operationId": "deleteCatalogGroup",
+     "method": "DELETE",
+     "path": "/catalog-groups/{groupId}"
+    }
+   ],
+   "bang": [
+    "ph07_rdm.catalog_group"
+   ],
+   "ui": [
+    "UI-07-01"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-037",
+    "ERR-07-039"
+   ],
+   "tc": [
+    "TC-07-019",
+    "TC-07-020",
+    "TC-07-021",
+    "TC-07-022",
+    "TC-07-023"
+   ],
+   "co_tac_vu": "M",
+   "passes": false,
+   "lat_cat": "datahub/spec/PH07/lat-cat/F-07-010.openapi.yaml",
+   "gherkin": "datahub/spec/PH07/gherkin/F-07-010.feature",
+   "ghi_chu": "Lát cắt mẫu 26/11/2026. Quyết định sẵn sàng: san-sang.md SS-07-03…08."
+  },
+  {
+   "id": "F-07-011",
+   "fr": "FR-07-011",
+   "ten": "Tạo bản nháp phiên bản mới từ phiên bản hiện hành",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-012",
+     "operationId": "createDraftVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-05"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-005",
+    "ERR-07-006",
+    "ERR-07-017",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-047",
+    "TC-07-048",
+    "TC-07-066",
+    "TC-07-283"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-012",
+   "fr": "FR-07-012",
+   "ten": "Thêm, sửa, ngừng dùng bản ghi trên bản nháp",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-027",
+     "operationId": "createItem",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items"
+    },
+    {
+     "api": "API-07-028",
+     "operationId": "updateItem",
+     "method": "PATCH",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}"
+    },
+    {
+     "api": "API-07-030",
+     "operationId": "deleteDraftItem",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}"
+    },
+    {
+     "api": "API-07-029",
+     "operationId": "deprecateItem",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:deprecate"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-05"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-007",
+    "ERR-07-008",
+    "ERR-07-009",
+    "ERR-07-010",
+    "ERR-07-011",
+    "ERR-07-012",
+    "ERR-07-013",
+    "ERR-07-018"
+   ],
+   "tc": [
+    "TC-07-050",
+    "TC-07-051",
+    "TC-07-055",
+    "TC-07-057",
+    "TC-07-058",
+    "TC-07-059",
+    "TC-07-060",
+    "TC-07-081"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-013",
+   "fr": "FR-07-013",
+   "ten": "Kiểm tra hợp lệ bản ghi theo lược đồ",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-016",
+     "operationId": "validateVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}:validate"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-05"
+   ],
+   "loi": [
+    "ERR-07-006",
+    "ERR-07-009"
+   ],
+   "tc": [
+    "TC-07-052",
+    "TC-07-053",
+    "TC-07-054",
+    "TC-07-061",
+    "TC-07-062",
+    "TC-07-100",
+    "TC-07-123"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-014",
+   "fr": "FR-07-014",
+   "ten": "So sánh khác biệt giữa hai phiên bản, phân loại phá vỡ và không phá vỡ",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-021",
+     "operationId": "diffVersions",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/diff"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-04",
+    "UI-07-07"
+   ],
+   "loi": [
+    "ERR-07-006",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-067",
+    "TC-07-068",
+    "TC-07-069",
+    "TC-07-070",
+    "TC-07-071"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-015",
+   "fr": "FR-07-015",
+   "ten": "Trình duyệt, duyệt, từ chối phiên bản",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-017",
+     "operationId": "submitVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}:submit"
+    },
+    {
+     "api": "API-07-018",
+     "operationId": "approveVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}:approve"
+    },
+    {
+     "api": "API-07-019",
+     "operationId": "rejectVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}:reject"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-07"
+   ],
+   "loi": [
+    "ERR-07-004",
+    "ERR-07-009",
+    "ERR-07-015",
+    "ERR-07-018"
+   ],
+   "tc": [
+    "TC-07-072",
+    "TC-07-073",
+    "TC-07-076",
+    "TC-07-077",
+    "TC-07-078",
+    "TC-07-082",
+    "TC-07-083",
+    "TC-07-085",
+    "TC-07-091",
+    "TC-07-239",
+    "TC-07-241"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-016",
+   "fr": "FR-07-016",
+   "ten": "Phát hành phiên bản với ngày hiệu lực và căn cứ pháp lý",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-014",
+     "operationId": "updateDraftVersion",
+     "method": "PATCH",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}"
+    },
+    {
+     "api": "API-07-020",
+     "operationId": "publishVersion",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}:publish"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-07"
+   ],
+   "loi": [
+    "ERR-07-004",
+    "ERR-07-009",
+    "ERR-07-015",
+    "ERR-07-016",
+    "ERR-07-017",
+    "ERR-07-018"
+   ],
+   "tc": [
+    "TC-07-049",
+    "TC-07-074",
+    "TC-07-075",
+    "TC-07-079",
+    "TC-07-080",
+    "TC-07-084",
+    "TC-07-088",
+    "TC-07-089",
+    "TC-07-090",
+    "TC-07-092",
+    "TC-07-275",
+    "TC-07-279"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-017",
+   "fr": "FR-07-017",
+   "ten": "Hủy bản nháp",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-015",
+     "operationId": "discardDraftVersion",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-05"
+   ],
+   "loi": [
+    "ERR-07-004",
+    "ERR-07-018"
+   ],
+   "tc": [
+    "TC-07-064",
+    "TC-07-065"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-018",
+   "fr": "FR-07-018",
+   "ten": "Hiển thị bản ghi dạng bảng và dạng cây",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-026",
+     "operationId": "listVersionItems",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006"
+   ],
+   "tc": [
+    "TC-07-063",
+    "TC-07-284",
+    "TC-07-285"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-019",
+   "fr": "FR-07-019",
+   "ten": "Ghi mã thay thế và quan hệ kế thừa cho bản ghi ngừng dùng",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-029",
+     "operationId": "deprecateItem",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items/{itemCode}:deprecate"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-009",
+    "ERR-07-019",
+    "ERR-07-035"
+   ],
+   "tc": [
+    "TC-07-056"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-020",
+   "fr": "FR-07-020",
+   "ten": "Tải tệp mẫu Excel/CSV sinh theo lược đồ của danh mục",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-032",
+     "operationId": "downloadImportTemplate",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/import-template"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-06"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006"
+   ],
+   "tc": [
+    "TC-07-093",
+    "TC-07-094"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-021",
+   "fr": "FR-07-021",
+   "ten": "Nhập bản ghi từ Excel/CSV vào bản nháp",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-033",
+     "operationId": "createImportJob",
+     "method": "POST",
+     "path": "/import-jobs"
+    },
+    {
+     "api": "API-07-034",
+     "operationId": "getImportJob",
+     "method": "GET",
+     "path": "/import-jobs/{jobId}"
+    },
+    {
+     "api": "API-07-035",
+     "operationId": "listImportRows",
+     "method": "GET",
+     "path": "/import-jobs/{jobId}/rows"
+    },
+    {
+     "api": "API-07-036",
+     "operationId": "commitImportJob",
+     "method": "POST",
+     "path": "/import-jobs/{jobId}:commit"
+    },
+    {
+     "api": "API-07-037",
+     "operationId": "cancelImportJob",
+     "method": "POST",
+     "path": "/import-jobs/{jobId}:cancel"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-06",
+    "UI-07-08"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-006",
+    "ERR-07-019",
+    "ERR-07-020",
+    "ERR-07-021",
+    "ERR-07-022"
+   ],
+   "tc": [
+    "TC-07-095",
+    "TC-07-096",
+    "TC-07-097",
+    "TC-07-098",
+    "TC-07-099",
+    "TC-07-101",
+    "TC-07-102",
+    "TC-07-104",
+    "TC-07-105",
+    "TC-07-106",
+    "TC-07-107",
+    "TC-07-108",
+    "TC-07-109",
+    "TC-07-110",
+    "TC-07-111",
+    "TC-07-112",
+    "TC-07-115",
+    "TC-07-116",
+    "TC-07-117",
+    "TC-07-118",
+    "TC-07-119",
+    "TC-07-120",
+    "TC-07-124",
+    "TC-07-227",
+    "TC-07-233",
+    "TC-07-282",
+    "TC-07-289",
+    "TC-07-304",
+    "TC-07-306",
+    "TC-07-307"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-022",
+   "fr": "FR-07-022",
+   "ten": "Tạo danh mục mới từ tệp, hỗ trợ khuôn hệ cũ Aita",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-033",
+     "operationId": "createImportJob",
+     "method": "POST",
+     "path": "/import-jobs"
+    },
+    {
+     "api": "API-07-036",
+     "operationId": "commitImportJob",
+     "method": "POST",
+     "path": "/import-jobs/{jobId}:commit"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-06"
+   ],
+   "loi": [
+    "ERR-07-019",
+    "ERR-07-020"
+   ],
+   "tc": [
+    "TC-07-113",
+    "TC-07-114",
+    "TC-07-121",
+    "TC-07-122",
+    "TC-07-261"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-023",
+   "fr": "FR-07-023",
+   "ten": "Nhập bản ghi qua API theo lô, idempotent",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-031",
+     "operationId": "batchItems",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/items:batch"
+    }
+   ],
+   "bang": [],
+   "ui": [],
+   "loi": [
+    "ERR-07-006",
+    "ERR-07-009",
+    "ERR-07-018",
+    "ERR-07-022",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-125",
+    "TC-07-126",
+    "TC-07-127",
+    "TC-07-128",
+    "TC-07-129",
+    "TC-07-130",
+    "TC-07-252"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-024",
+   "fr": "FR-07-024",
+   "ten": "Xuất phiên bản ra Excel, CSV, JSON",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-038",
+     "operationId": "createExportJob",
+     "method": "POST",
+     "path": "/export-jobs"
+    },
+    {
+     "api": "API-07-039",
+     "operationId": "getExportJob",
+     "method": "GET",
+     "path": "/export-jobs/{jobId}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02",
+    "UI-07-08"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006",
+    "ERR-07-020",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-131",
+    "TC-07-132",
+    "TC-07-133",
+    "TC-07-134",
+    "TC-07-135",
+    "TC-07-136",
+    "TC-07-137",
+    "TC-07-209",
+    "TC-07-308"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-025",
+   "fr": "FR-07-025",
+   "ten": "Xem lịch sử tác vụ nhập xuất và tải báo cáo lỗi",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-035",
+     "operationId": "listImportRows",
+     "method": "GET",
+     "path": "/import-jobs/{jobId}/rows"
+    },
+    {
+     "api": "API-07-040",
+     "operationId": "listJobs",
+     "method": "GET",
+     "path": "/jobs"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-08"
+   ],
+   "loi": [
+    "ERR-07-006",
+    "ERR-07-020",
+    "ERR-07-030",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-103"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-026",
+   "fr": "FR-07-026",
+   "ten": "Tra cứu một mã tại thời điểm",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-042",
+     "operationId": "getEffectiveItem",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/items/{itemCode}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006",
+    "ERR-07-007",
+    "ERR-07-030",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-138",
+    "TC-07-139",
+    "TC-07-140",
+    "TC-07-141",
+    "TC-07-142",
+    "TC-07-159",
+    "TC-07-210"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-027",
+   "fr": "FR-07-027",
+   "ten": "Tra cứu lô tối đa 500 mã",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-043",
+     "operationId": "lookupItems",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/items:lookup"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-007",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-143",
+    "TC-07-144"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-028",
+   "fr": "FR-07-028",
+   "ten": "Lấy toàn bộ bản ghi theo phiên bản",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-041",
+     "operationId": "listEffectiveItems",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/items"
+    },
+    {
+     "api": "API-07-049",
+     "operationId": "getSnapshot",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/snapshots/{versionRef}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-007",
+    "ERR-07-023",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-145",
+    "TC-07-146",
+    "TC-07-147",
+    "TC-07-148",
+    "TC-07-156",
+    "TC-07-225",
+    "TC-07-226",
+    "TC-07-280"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-029",
+   "fr": "FR-07-029",
+   "ten": "Lấy cây hoặc nhánh con",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-044",
+     "operationId": "getCatalogTree",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/tree"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-007",
+    "ERR-07-024"
+   ],
+   "tc": [
+    "TC-07-149",
+    "TC-07-150"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-030",
+   "fr": "FR-07-030",
+   "ten": "Tìm kiếm không dấu trong danh mục",
+   "uu_tien": "S",
+   "dot": 2,
+   "api": [
+    {
+     "api": "API-07-045",
+     "operationId": "searchItems",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/items:search"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-007"
+   ],
+   "tc": [
+    "TC-07-151",
+    "TC-07-228"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-031",
+   "fr": "FR-07-031",
+   "ten": "Lấy thay đổi kể từ một phiên bản (delta)",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-046",
+     "operationId": "getCatalogChanges",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/changes"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-006"
+   ],
+   "tc": [
+    "TC-07-152",
+    "TC-07-153"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-032",
+   "fr": "FR-07-032",
+   "ten": "API truy vấn có cấu trúc",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-047",
+     "operationId": "queryItems",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/items:query"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-023",
+    "ERR-07-024",
+    "ERR-07-025",
+    "ERR-07-030"
+   ],
+   "tc": [
+    "TC-07-157",
+    "TC-07-158",
+    "TC-07-159",
+    "TC-07-160",
+    "TC-07-161",
+    "TC-07-162",
+    "TC-07-163",
+    "TC-07-164",
+    "TC-07-165",
+    "TC-07-166",
+    "TC-07-167",
+    "TC-07-168",
+    "TC-07-169",
+    "TC-07-170"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-033",
+   "fr": "FR-07-033",
+   "ten": "Liệt kê danh mục và lấy lược đồ qua API",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-001",
+     "operationId": "listCatalogs",
+     "method": "GET",
+     "path": "/catalogs"
+    },
+    {
+     "api": "API-07-048",
+     "operationId": "getCatalogSchema",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/schema"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-12"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006",
+    "ERR-07-030"
+   ],
+   "tc": [
+    "TC-07-154",
+    "TC-07-155"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-034",
+   "fr": "FR-07-034",
+   "ten": "Phát sự kiện thay đổi danh mục",
+   "uu_tien": null,
+   "dot": null,
+   "api": [],
+   "bang": [],
+   "ui": [],
+   "loi": [],
+   "tc": [
+    "TC-07-171",
+    "TC-07-172",
+    "TC-07-173",
+    "TC-07-174",
+    "TC-07-175",
+    "TC-07-176"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-035",
+   "fr": "FR-07-035",
+   "ten": "Cấu hình nguồn đồng bộ danh mục quốc gia",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-055",
+     "operationId": "listSyncSources",
+     "method": "GET",
+     "path": "/sync-sources"
+    },
+    {
+     "api": "API-07-056",
+     "operationId": "createSyncSource",
+     "method": "POST",
+     "path": "/sync-sources"
+    },
+    {
+     "api": "API-07-057",
+     "operationId": "updateSyncSource",
+     "method": "PATCH",
+     "path": "/sync-sources/{sourceId}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-09"
+   ],
+   "loi": [
+    "ERR-07-002",
+    "ERR-07-003",
+    "ERR-07-009",
+    "ERR-07-018",
+    "ERR-07-028",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-177",
+    "TC-07-178"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-036",
+   "fr": "FR-07-036",
+   "ten": "Chạy đồng bộ theo lịch hoặc theo yêu cầu và tính khác biệt",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-058",
+     "operationId": "runSyncSource",
+     "method": "POST",
+     "path": "/sync-sources/{sourceId}:run"
+    },
+    {
+     "api": "API-07-059",
+     "operationId": "listSyncRuns",
+     "method": "GET",
+     "path": "/sync-runs"
+    },
+    {
+     "api": "API-07-060",
+     "operationId": "getSyncRun",
+     "method": "GET",
+     "path": "/sync-runs/{runId}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-09"
+   ],
+   "loi": [
+    "ERR-07-005",
+    "ERR-07-028",
+    "ERR-07-031",
+    "ERR-07-045"
+   ],
+   "tc": [
+    "TC-07-179",
+    "TC-07-180",
+    "TC-07-181",
+    "TC-07-182",
+    "TC-07-186",
+    "TC-07-189"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-037",
+   "fr": "FR-07-037",
+   "ten": "Xác nhận hoặc từ chối thay đổi từ nguồn quốc gia",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-060",
+     "operationId": "getSyncRun",
+     "method": "GET",
+     "path": "/sync-runs/{runId}"
+    },
+    {
+     "api": "API-07-061",
+     "operationId": "acceptSyncRun",
+     "method": "POST",
+     "path": "/sync-runs/{runId}:accept"
+    },
+    {
+     "api": "API-07-062",
+     "operationId": "rejectSyncRun",
+     "method": "POST",
+     "path": "/sync-runs/{runId}:reject"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-09"
+   ],
+   "loi": [
+    "ERR-07-009",
+    "ERR-07-015",
+    "ERR-07-018",
+    "ERR-07-021",
+    "ERR-07-029"
+   ],
+   "tc": [
+    "TC-07-183",
+    "TC-07-184",
+    "TC-07-185",
+    "TC-07-244"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-038",
+   "fr": "FR-07-038",
+   "ten": "Khám phá danh mục quốc gia và đăng ký đồng bộ",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-056",
+     "operationId": "createSyncSource",
+     "method": "POST",
+     "path": "/sync-sources"
+    },
+    {
+     "api": "API-07-063",
+     "operationId": "listNationalCatalogs",
+     "method": "GET",
+     "path": "/national-catalogs"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-09"
+   ],
+   "loi": [
+    "ERR-07-002",
+    "ERR-07-028",
+    "ERR-07-036"
+   ],
+   "tc": [
+    "TC-07-187",
+    "TC-07-188"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-039",
+   "fr": "FR-07-039",
+   "ten": "Đề xuất bổ sung bản ghi lên danh mục quốc gia",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-074",
+     "operationId": "createProposal",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/proposals"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-09"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-026",
+    "ERR-07-028"
+   ],
+   "tc": [
+    "TC-07-190"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-040",
+   "fr": "FR-07-040",
+   "ten": "Quản lý hệ thống mã ngoài",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-064",
+     "operationId": "listCodeSystems",
+     "method": "GET",
+     "path": "/code-systems"
+    },
+    {
+     "api": "API-07-065",
+     "operationId": "createCodeSystem",
+     "method": "POST",
+     "path": "/code-systems"
+    },
+    {
+     "api": "API-07-066",
+     "operationId": "updateCodeSystem",
+     "method": "PATCH",
+     "path": "/code-systems/{csCode}"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-10"
+   ],
+   "loi": [
+    "ERR-07-002",
+    "ERR-07-003",
+    "ERR-07-009",
+    "ERR-07-018",
+    "ERR-07-045"
+   ],
+   "tc": [
+    "TC-07-191",
+    "TC-07-192",
+    "TC-07-229"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-041",
+   "fr": "FR-07-041",
+   "ten": "Quản lý bảng ánh xạ mã giữa danh mục và hệ thống mã ngoài",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-067",
+     "operationId": "listMappings",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/mappings"
+    },
+    {
+     "api": "API-07-068",
+     "operationId": "putMappings",
+     "method": "PUT",
+     "path": "/catalogs/{catalogCode}/mappings/{csCode}"
+    },
+    {
+     "api": "API-07-069",
+     "operationId": "deleteMapping",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}/mappings/{csCode}/{mappingId}"
+    }
+   ],
+   "bang": [
+    "ph07_rdm.code_mapping"
+   ],
+   "ui": [
+    "UI-07-10"
+   ],
+   "loi": [
+    "ERR-07-004",
+    "ERR-07-007",
+    "ERR-07-018",
+    "ERR-07-026",
+    "ERR-07-027",
+    "ERR-07-033",
+    "ERR-07-034"
+   ],
+   "tc": [
+    "TC-07-193",
+    "TC-07-194",
+    "TC-07-195",
+    "TC-07-245"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-042",
+   "fr": "FR-07-042",
+   "ten": "Chuyển mã qua bảng ánh xạ",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-070",
+     "operationId": "translateCodes",
+     "method": "POST",
+     "path": "/mappings:translate"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-10"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-026",
+    "ERR-07-030",
+    "ERR-07-045"
+   ],
+   "tc": [
+    "TC-07-196",
+    "TC-07-197",
+    "TC-07-198"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-043",
+   "fr": "FR-07-043",
+   "ten": "Báo cáo độ phủ ánh xạ",
+   "uu_tien": "S",
+   "dot": 2,
+   "api": [
+    {
+     "api": "API-07-071",
+     "operationId": "getMappingCoverage",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/mappings/{csCode}/coverage"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-10"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-006",
+    "ERR-07-045"
+   ],
+   "tc": [
+    "TC-07-199"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-044",
+   "fr": "FR-07-044",
+   "ten": "Quản lý danh mục ĐVHC hai cấp kèm lịch sử ba cấp",
+   "uu_tien": null,
+   "dot": null,
+   "api": [],
+   "bang": [],
+   "ui": [
+    "UI-07-11"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-016",
+    "ERR-07-035"
+   ],
+   "tc": [
+    "TC-07-202",
+    "TC-07-203",
+    "TC-07-210"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-045",
+   "fr": "FR-07-045",
+   "ten": "Ghi nhận sự kiện sắp xếp ĐVHC",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-052",
+     "operationId": "listSuccessions",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/successions"
+    },
+    {
+     "api": "API-07-053",
+     "operationId": "createSuccession",
+     "method": "POST",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/successions"
+    },
+    {
+     "api": "API-07-054",
+     "operationId": "deleteSuccession",
+     "method": "DELETE",
+     "path": "/catalogs/{catalogCode}/versions/{versionRef}/successions/{successionId}"
+    }
+   ],
+   "bang": [
+    "ph07_rdm.item_succession"
+   ],
+   "ui": [
+    "UI-07-11"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-035",
+    "ERR-07-045"
+   ],
+   "tc": [
+    "TC-07-175",
+    "TC-07-200",
+    "TC-07-201"
+   ],
+   "co_tac_vu": "M",
+   "passes": false
+  },
+  {
+   "id": "F-07-046",
+   "fr": "FR-07-046",
+   "ten": "Chuyển đổi mã ĐVHC cũ sang mới và tra ngược",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-051",
+     "operationId": "convertAdminUnits",
+     "method": "POST",
+     "path": "/admin-units:convert"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-06",
+    "UI-07-11"
+   ],
+   "loi": [
+    "ERR-07-006",
+    "ERR-07-009",
+    "ERR-07-026"
+   ],
+   "tc": [
+    "TC-07-204",
+    "TC-07-205",
+    "TC-07-206",
+    "TC-07-207",
+    "TC-07-208",
+    "TC-07-209"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-047",
+   "fr": "FR-07-047",
+   "ten": "Xem dòng lịch sử của một bản ghi",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-050",
+     "operationId": "getItemLineage",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/items/{itemCode}/lineage"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-11"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-007",
+    "ERR-07-030"
+   ],
+   "tc": [
+    "TC-07-211",
+    "TC-07-212",
+    "TC-07-213"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-048",
+   "fr": "FR-07-048",
+   "ten": "Chia sẻ danh mục toàn quốc giữa các tenant và mở rộng HYBRID",
+   "uu_tien": null,
+   "dot": null,
+   "api": [],
+   "bang": [],
+   "ui": [
+    "UI-07-03"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-002",
+    "ERR-07-003",
+    "ERR-07-008",
+    "ERR-07-012",
+    "ERR-07-031"
+   ],
+   "tc": [
+    "TC-07-043",
+    "TC-07-044",
+    "TC-07-046",
+    "TC-07-167",
+    "TC-07-214",
+    "TC-07-215",
+    "TC-07-216",
+    "TC-07-262"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-049",
+   "fr": "FR-07-049",
+   "ten": "Nạp gói danh mục nền khi khởi tạo tenant",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-073",
+     "operationId": "seedTenantCatalogs",
+     "method": "POST",
+     "path": "/tenants/{tenantId}:seed"
+    }
+   ],
+   "bang": [],
+   "ui": [],
+   "loi": [
+    "ERR-07-019",
+    "ERR-07-022",
+    "ERR-07-045",
+    "ERR-07-046",
+    "ERR-07-047",
+    "ERR-07-048"
+   ],
+   "tc": [
+    "TC-07-217",
+    "TC-07-218",
+    "TC-07-219"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-050",
+   "fr": "FR-07-050",
+   "ten": "Lịch sử thay đổi và kiểm toán",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-072",
+     "operationId": "getCatalogHistory",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/history"
+    }
+   ],
+   "bang": [],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-009",
+    "ERR-07-047"
+   ],
+   "tc": [
+    "TC-07-230",
+    "TC-07-248",
+    "TC-07-256",
+    "TC-07-257",
+    "TC-07-258",
+    "TC-07-259"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-051",
+   "fr": "FR-07-051",
+   "ten": "Di trú dữ liệu danh mục từ hệ cũ Aita",
+   "uu_tien": null,
+   "dot": null,
+   "api": [],
+   "bang": [],
+   "ui": [
+    "UI-07-06"
+   ],
+   "loi": [
+    "ERR-07-002",
+    "ERR-07-008",
+    "ERR-07-009",
+    "ERR-07-010",
+    "ERR-07-036"
+   ],
+   "tc": [
+    "TC-07-260",
+    "TC-07-261",
+    "TC-07-262",
+    "TC-07-263",
+    "TC-07-264",
+    "TC-07-265",
+    "TC-07-266",
+    "TC-07-267"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-052",
+   "fr": "FR-07-052",
+   "ten": "Khai thác danh mục hạn chế và cấp quyền khai thác",
+   "uu_tien": null,
+   "dot": null,
+   "api": [
+    {
+     "api": "API-07-075",
+     "operationId": "listAccessGrants",
+     "method": "GET",
+     "path": "/catalogs/{catalogCode}/access-grants"
+    },
+    {
+     "api": "API-07-075",
+     "operationId": "putAccessGrants",
+     "method": "PUT",
+     "path": "/catalogs/{catalogCode}/access-grants"
+    }
+   ],
+   "bang": [
+    "ph07_rdm.catalog_access_grant"
+   ],
+   "ui": [
+    "UI-07-02"
+   ],
+   "loi": [
+    "ERR-07-003",
+    "ERR-07-009",
+    "ERR-07-018",
+    "ERR-07-030"
+   ],
+   "tc": [
+    "TC-07-168",
+    "TC-07-246",
+    "TC-07-259",
+    "TC-07-268",
+    "TC-07-269",
+    "TC-07-270",
+    "TC-07-271"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  },
+  {
+   "id": "F-07-053",
+   "fr": "FR-07-053",
+   "ten": "Tham số PH-07 theo tenant",
+   "uu_tien": "S",
+   "dot": 2,
+   "api": [],
+   "bang": [],
+   "ui": [
+    "UI-07-13"
+   ],
+   "loi": [
+    "ERR-07-001",
+    "ERR-07-002",
+    "ERR-07-003",
+    "ERR-07-004",
+    "ERR-07-005",
+    "ERR-07-006",
+    "ERR-07-007",
+    "ERR-07-008",
+    "ERR-07-009",
+    "ERR-07-010",
+    "ERR-07-011",
+    "ERR-07-012",
+    "ERR-07-013",
+    "ERR-07-014",
+    "ERR-07-015",
+    "ERR-07-016",
+    "ERR-07-017",
+    "ERR-07-018",
+    "ERR-07-019",
+    "ERR-07-020",
+    "ERR-07-021",
+    "ERR-07-022",
+    "ERR-07-023",
+    "ERR-07-024",
+    "ERR-07-025",
+    "ERR-07-026",
+    "ERR-07-027",
+    "ERR-07-028",
+    "ERR-07-029",
+    "ERR-07-030",
+    "ERR-07-031",
+    "ERR-07-032",
+    "ERR-07-033",
+    "ERR-07-034",
+    "ERR-07-035",
+    "ERR-07-036",
+    "ERR-07-037",
+    "ERR-07-038",
+    "ERR-07-039",
+    "ERR-07-040",
+    "ERR-07-047",
+    "ERR-07-048"
+   ],
+   "tc": [
+    "TC-07-087",
+    "TC-07-247",
+    "TC-07-272",
+    "TC-07-273",
+    "TC-07-274"
+   ],
+   "co_tac_vu": "S",
+   "passes": false
+  }
+ ]
+}

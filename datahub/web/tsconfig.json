@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "types": ["vite/client", "node", "@testing-library/jest-dom"] },
+  "include": [
+    "test",
+    "packages/*/src",
+    "apps/*/src",
+    "apps/*/e2e",
+    "apps/*/*.ts",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ]
+}
