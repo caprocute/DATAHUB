@@ -72,7 +72,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-060…069, chờ duyệt tổng thể |
 | 3 | PH-19 Thanh toán | Đợt 2 | Nghiệp vụ mới hoàn toàn (Q3): đối soát, hoàn tiền, đa kênh | Xong bản 0.1 đủ bảy tập cộng BRD, khung truy vết, ADR-040…049 (26/11/2026), chờ duyệt tổng thể |
 | 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-059, chờ duyệt tổng thể |
-| 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Chưa bắt đầu |
+| 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Xong bản 0.1 đủ bảy tập (FRS 0.3) và ADR-070…073 (26/11/2026), chờ duyệt tổng thể |
 | 6 | PH-02, PH-03, PH-01 | Đợt 3 | Thay API Management | Chưa bắt đầu |
 | 7 | PH-14, PH-18, PH-13, PH-12, PH-20 | Đợt 3–4 | MVP còn lại | Chưa bắt đầu |
 | 8 | PH-06, 08, 09, 11, 15, 16, 17 | Đợt 4 | Sau MVP | Chưa bắt đầu |
@@ -118,6 +118,20 @@ Bộ đầu tiên viết theo cách tối ưu token (D00-04): khuôn ở `00-chu
 | D03-04-PH05 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH05-api-bo-dieu-hop.md) | `openapi-adapter.yaml` (92 operation), `asyncapi-adapter.yaml` (17 kênh), script sinh tại `03-thiet-ke/api/ph05/` |
 | D03-06-PH05 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH05-man-hinh-bo-dieu-hop.md) | — |
 | D05-02-PH05 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH05-test-case.md) | 155 ca; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph05/` |
+
+## Phân hệ PH-10 Sự kiện
+
+Viết theo khuôn D00-04, mỗi tập một phiên riêng; FRS viết trước và có Phụ lục A "Bảng mã và enum chuẩn" làm nguồn chuẩn, đề nghị bổ sung từ các tập sau được hấp thụ vào FRS hai đợt (0.2, 0.3, nhật ký ở FRS §14). Phạm vi: dự án tích hợp, topic có lược đồ Apicurio (tương thích `BACKWARD`, phá vỡ thì tạo `.v{n+1}`, ADR-070), bên phát, bên nhận, publication và subscription có duyệt bốn mắt, bốn chế độ giao nhận `PUSH` (webhook ký HMAC), `PULL_API`, `PULL_KAFKA`, `INTERNAL` (cổng sự kiện và bộ giao nhận trong `dh-runtime`, ADR-071), ACL và hạn mức theo tiền tố tenant sinh qua GitOps Strimzi (ADR-072), DLQ và phát lại có duyệt, consumer lag, dashboard, sơ đồ kết nối, di trú Pulsar bằng cầu nối song song (ADR-073).
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-03-PH10 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH10-frs-su-kien.md) | — |
+| D02-04-PH10 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH10-use-case-su-kien.md) | — |
+| D03-02-PH10 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH10-sdd-su-kien.md) | — |
+| D03-03-PH10 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH10-csdl-su-kien.md) | DDL `ph10_event.sql` (28 bảng, chạy thử trên PostgreSQL 16), changelog Liquibase, bài kiểm cô lập RLS, công cụ tại `03-thiet-ke/csdl/ph10/` |
+| D03-04-PH10 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH10-api-su-kien.md) | `openapi-event.yaml` (121 operation), `asyncapi-event.yaml` (20 kênh), script sinh tại `03-thiet-ke/api/ph10/` |
+| D03-06-PH10 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH10-man-hinh-su-kien.md) | — |
+| D05-02-PH10 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH10-test-case.md) | 158 ca; bảng tính `.xlsx`, Gherkin, công cụ tại `05-kiem-thu/test-case/ph10/` |
 
 ## Phân hệ PH-19 Thanh toán
 
