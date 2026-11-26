@@ -1243,14 +1243,14 @@ Biểu mẫu trên `CMP-Card` đặc `color-surface-solid`, rộng tối đa `si
 | Nút | Quyền | Trạng thái | Hộp | API |
 |---|---|---|---|---|
 | Tạm dừng | `PERM-10-operate` | `ACTIVE`; không `INTERNAL` | `CMP-ReasonDialog` | API-10-050 `:pause` |
-| Tiếp tục | `PERM-10-operate` | `PAUSED`; `SUSPENDED` (lý do khắc phục bắt buộc); không `INTERNAL` | `CMP-ReasonDialog` | API-10-050 `:resume` |
+| Tiếp tục | `PERM-10-operate` | `PAUSED`; `SUSPENDED` (lý do khắc phục bắt buộc); không `INTERNAL` | `CMP-ReasonDialog` | API-10-098 `:resume` |
 | Sửa tham số | `PERM-10-subscribe` | `ACTIVE`, `PAUSED`, `SUSPENDED` | Drawer 18.6 | API-10-049 |
 | Đề nghị phát lại | `PERM-10-operate` | `ACTIVE`, `PAUSED`, `SUSPENDED`; chế độ `PUSH`, `PULL_API` | UI-10-16 `/phat-lai/moi?dang-ky=` | API-10-064 |
 | ⋯ Xoay khóa ký | `PERM-10-operate` hoặc `PERM-10-subscribe` | `PUSH`, chưa `REVOKED` | `CMP-ConfirmDialog` rồi `CMP-SecretField` chế độ `issue` | API-10-054 `:rotate` |
 | ⋯ Thu hồi khóa khẩn | SO, TA (`PERM-10-operate`) | `PUSH` | `CMP-ReasonDialog` màu phá hủy, rồi `CMP-SecretField` | API-10-054 `:revoke` |
 | ⋯ Xác minh lại endpoint | `PERM-10-subscribe` | `PUSH` | Khối xác minh như 17.4.3 | API-10-051 |
 | ⋯ Miễn xác minh | `PERM-10-admin` | `PUSH`, xác minh `FAILED` | `CMP-ReasonDialog` thêm `CMP-DatePicker` "Miễn tới" (≤ 180 ngày) | API-10-091 |
-| ⋯ Thu hồi | `PERM-10-subscribe` | Chưa `REVOKED` | `CMP-ReasonDialog` màu phá hủy, liệt kê hậu quả | API-10-050 `:revoke` |
+| ⋯ Thu hồi | `PERM-10-subscribe` | Chưa `REVOKED` | `CMP-ReasonDialog` màu phá hủy, liệt kê hậu quả | API-10-099 `:revoke` |
 | Xác nhận cảnh báo | `PERM-10-operate` | `alertState` khác `OK` | `CMP-ReasonDialog` ghi chú tùy chọn | API-10-056 |
 
 SO chỉ thấy Tạm dừng (dùng khi sự cố ATTT) và Thu hồi khóa khẩn; không thấy phát lại, DLQ (D02-03-PH10 §3.2). Subscription `INTERNAL` ẩn Tạm dừng, Tiếp tục và hiện `CMP-Alert` "Điều khiển ở luồng PH-04." kèm liên kết (ERR-10-052).

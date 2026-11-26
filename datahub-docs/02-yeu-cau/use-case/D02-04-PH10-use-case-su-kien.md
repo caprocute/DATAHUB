@@ -928,7 +928,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 
 1. Chi mở UI-10-12 (API-10-048): trạng thái, lag theo phân vùng, worker, khóa ký, thời gian còn lại trước khi bản tin chưa đọc hết lưu giữ.
 2. Chi bấm "Tạm dừng", nhập lý do "HT-THUE bảo trì theo thông báo số 15" (LP-10-02). Hệ thống gọi API-10-050 `:pause`; subscription `PAUSED`, phát EVT-10-09; bộ giao nhận dừng lấy bản tin mới trong ≤ 10 giây.
-3. Lúc 23:05, Chi bấm "Tiếp tục". Hệ thống gọi API-10-050 `:resume`; subscription `ACTIVE`, giao tiếp từ vị trí đã commit; phát EVT-10-09.
+3. Lúc 23:05, Chi bấm "Tiếp tục". Hệ thống gọi API-10-098 `:resume`; subscription `ACTIVE`, giao tiếp từ vị trí đã commit; phát EVT-10-09.
 4. Chi mở tab Thống kê (API-10-052): biểu đồ 1 giờ, 24 giờ, 7 ngày số giao thành công, lỗi tạm thời, thử lại, vào DLQ, p50, p95; tab Lượt lỗi (API-10-053): thời điểm, phân vùng, offset, `ce_id`, mã HTTP, mã lỗi, số lần thử, đoạn đầu phản hồi đã cắt 512 byte và che; trạng thái từng worker.
 
 **Luồng thay thế**
@@ -937,7 +937,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 - **2b. Subscription kéo.** Với `PULL_API`, khi `PAUSED` cổng kéo trả ERR-10-110; với `PULL_KAFKA`, hệ thống gỡ ACL `READ` nhóm.
 - **4a. Sửa tham số không cần duyệt.** An đổi `workerCount` 2 lên 4 (sau khi topic tăng 12 phân vùng ở UC-10-04), `maxRetries`, `timeoutMs`, ngưỡng lag; hệ thống gọi API-10-049 với `If-Match`; bộ giao nhận áp dụng trong ≤ 60 giây bằng tái cân bằng hợp tác, không mất bản tin; phát EVT-10-09.
 - **4b. Sửa tham số cần duyệt lại.** An đổi `endpointUrl` hoặc `failurePolicy`: hệ thống yêu cầu xác minh endpoint mới trước (UC-10-12 bước 2, 3), tạo yêu cầu `SUBSCRIPTION` với khác biệt; subscription vẫn chạy tham số cũ tới khi Bình duyệt. Đổi `deliveryMode` thì giao diện hướng dẫn tạo subscription mới và thu hồi cái cũ.
-- **4c. Thu hồi.** An hoặc Thảo (OR, trong tổ chức) chọn "Thu hồi" với lý do. Hệ thống gọi API-10-050 `:revoke`: dừng bộ giao nhận, gỡ scope, dữ liệu OPA, ACL, thu hồi mọi khóa ký (xóa khỏi OpenBao), hủy lượt phát lại đang chạy, xếp lịch xóa nhóm sau `10.subscription.group-delete-delay-hours` (72); mục DLQ `NEW` giữ để xem, loại bỏ; subscription `REVOKED`, phát EVT-10-09.
+- **4c. Thu hồi.** An hoặc Thảo (OR, trong tổ chức) chọn "Thu hồi" với lý do. Hệ thống gọi API-10-099 `:revoke`: dừng bộ giao nhận, gỡ scope, dữ liệu OPA, ACL, thu hồi mọi khóa ký (xóa khỏi OpenBao), hủy lượt phát lại đang chạy, xếp lịch xóa nhóm sau `10.subscription.group-delete-delay-hours` (72); mục DLQ `NEW` giữ để xem, loại bỏ; subscription `REVOKED`, phát EVT-10-09.
 
 **Luồng ngoại lệ**
 
