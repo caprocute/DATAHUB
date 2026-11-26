@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH15
 ten: Thiết kế chi tiết phần mềm phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-connect và dh-portal, kiến trúc sư, ATTT, vận hành, hội đồng thẩm định
@@ -218,7 +218,7 @@ Bảng dưới chốt các điểm FRS giao cho SDD (Q15-07 và các chi tiết 
 | QĐ-15-10 | Kết xuất tài liệu | Máy chủ phân tích đặc tả thành mô hình thao tác (JSON) lúc đồng bộ; SPA dựng giao diện PTN-14 từ mô hình, không nhúng bộ dựng bên thứ ba có HTML thô | Khớp ADR-020, CSP chặt, NFR-15-003. Loại nhúng Swagger UI, Redoc |
 | QĐ-15-11 | Markdown | Máy chủ kiểm bằng cây cú pháp CommonMark (cấm HTML thô, URL lạ) khi lưu; SPA hiển thị bằng bộ dựng không HTML thô và lọc DOMPurify lần hai | Hai lớp (BR-15-013, SEC-44) |
 | QĐ-15-12 | Hạn mức | Bộ đếm cửa sổ trượt trong Valkey (script Lua nguyên tử): theo người ở `portal.try`; theo ứng dụng và tenant ở API-15-082 (áp cả lời gọi ngoài cổng) | Một chỗ đếm cho lời gọi ngoài cổng, không đếm trùng (BR-15-025) |
-| QĐ-15-13 | Ghi vết lượt thử | Bảng `try_run` phân vùng theo ngày, giữ 30 ngày; kiểm toán PH-13 qua `dh-audit` outbox, riêng production và API `RESTRICTED`, `SENSITIVE` gọi đồng bộ trước khi gọi (BR-15-023) | Đạt NFR-15-016 và an toàn khi lỗi |
+| QĐ-15-13 | Ghi vết lượt thử | Bảng `try_run` phân vùng theo tháng, giữ 30 ngày; kiểm toán PH-13 qua `dh-audit` outbox, riêng production và API `RESTRICTED`, `SENSITIVE` gọi đồng bộ trước khi gọi (BR-15-023) | Đạt NFR-15-016 và an toàn khi lỗi |
 | QĐ-15-14 | Đồng bộ danh mục | Inbox theo mã sự kiện, mỗi `apiCode` xử lý tuần tự nhờ khóa tư vấn PostgreSQL, kéo bù theo lịch; đặc tả lấy kèm trong API-02-081 | Đủ NFR-15-004 mà không cần hàng đợi riêng |
 | QĐ-15-15 | Lập lịch | Tác vụ định kỳ chạy ở `worker`, khóa bằng bảng `shedlock` trên `pg-core`, bọc `TenantContext.runAs` | Một bản chạy mỗi lượt khi nhiều pod |
 | QĐ-15-16 | Ủy thác | Cổng gọi PH-02, PH-01 bằng token của chính người dùng (BFF chuyển tiếp), chỉ lưu `externalId` kèm bộ đệm trạng thái 60 giây chỉ để hiển thị (đọc lại từ PH-02, PH-01 khi mở chi tiết) | BR-15-014: không giữ bản sao quyết định |
@@ -525,12 +525,12 @@ Hai nguồn tài khoản dùng chung bảng `dev_account` (`source = TENANT_SSO`
 
 **Sự kiện.** EVT-15-01…05, EVT-15-13.
 
-**Lỗi và xử lý.** Vượt số lượng: `ERR-15-015`, `ERR-15-016`; sai trạng thái: `ERR-15-017`, `ERR-15-018`; xem lại bí mật: `ERR-15-019`; Keycloak lỗi: `ERR-15-020`, bản ghi để `PROVISIONING` rồi bù.
+**Lỗi và xử lý.** Vượt số lượng: `ERR-15-015`, `ERR-15-016`; sai trạng thái: `ERR-15-017`, `ERR-15-018`; xem lại bí mật: `ERR-15-019`; Keycloak lỗi: `ERR-15-020`, bản ghi để `PENDING` rồi bù.
 
 **Quan sát.** `dh_portal_cred_issued_total{kind}`, `dh_portal_cred_old_use_total`, `dh_portal_cred_provision_failures_total`.
 :::
 
-Cấp `client_credentials` theo ba pha để không để lại client mồ côi. Pha 1 (giao dịch CSDL): kiểm quyền, trạng thái, hạn mức số lượng bằng `SELECT … FOR UPDATE` trên `app`, chèn `app_credential` với `provisioning_state = PROVISIONING` và `Idempotency-Key`. Pha 2 (ngoài giao dịch): `KeycloakAdminGateway.createClient` tạo `sbx-{tenant}-{appCode}-{n}`, bật service account, scope duy nhất `sandbox:call`, token 5 phút, `private_key_jwt` nếu có `jwks` hoặc `client_secret_basic` (chỉ sandbox, SEC-24); bí mật nhận về nằm trong biến `SecretOnce` (không in, không tuần tự hóa). Pha 3 (giao dịch): đặt `ACTIVE`, lưu `client_id`, tiền tố 8 ký tự, ghi outbox EVT-15-03 và kiểm toán `SECRET_ISSUED`. `ApiKeyProvisioner` làm tương tự không cần pha 2: sinh khóa, `key_prefix` và `key_hash` theo QĐ-15-09. Phản hồi mang `Cache-Control: no-store`; BFF không ghi thân phản hồi vào log; yêu cầu lặp với cùng `Idempotency-Key` trả lại bản ghi nhưng không có bí mật (`ERR-15-019`), người dùng phải cấp mới.
+Cấp `client_credentials` theo ba pha để không để lại client mồ côi. Pha 1 (giao dịch CSDL): kiểm quyền, trạng thái, hạn mức số lượng bằng `SELECT … FOR UPDATE` trên `app`, chèn `app_credential` với `provisioning_state = PENDING` và `Idempotency-Key`. Pha 2 (ngoài giao dịch): `KeycloakAdminGateway.createClient` tạo `sbx-{tenant}-{appCode}-{n}`, bật service account, scope duy nhất `sandbox:call`, token 5 phút, `private_key_jwt` nếu có `jwks` hoặc `client_secret_basic` (chỉ sandbox, SEC-24); bí mật nhận về nằm trong biến `SecretOnce` (không in, không tuần tự hóa). Pha 3 (giao dịch): đặt `ACTIVE`, lưu `client_id`, tiền tố 8 ký tự, ghi outbox EVT-15-03 và kiểm toán `SECRET_ISSUED`. `ApiKeyProvisioner` làm tương tự không cần pha 2: sinh khóa, `key_prefix` và `key_hash` theo QĐ-15-09. Phản hồi mang `Cache-Control: no-store`; BFF không ghi thân phản hồi vào log; yêu cầu lặp với cùng `Idempotency-Key` trả lại bản ghi nhưng không có bí mật (`ERR-15-019`), người dùng phải cấp mới.
 
 Xoay vòng: bản mới `ACTIVE`, bản cũ `ROTATING` với `grace_until = now + graceHours` (≤ 72 giờ); `CredentialExpiryJob` (hằng giờ) chuyển `ROTATING` hết thời gian chuyển tiếp và `ACTIVE` tới `expires_at` sang `EXPIRED`, xóa client Keycloak hoặc băm, nhắc ở 30, 7, 1 ngày. Thu hồi: đặt `REVOKED`, vô hiệu client, ghi outbox EVT-15-05; subscriber nội bộ xóa khóa Valkey của `forward-auth` (mục 4.10) để hiệu lực ≤ 5 giây, tối đa 60 giây theo TTL (NFR-15-007). Lưu trữ ứng dụng thu hồi mọi thông tin xác thực; khôi phục không khôi phục bí mật. Tham chiếu production (`ProdCredentialRefReader`) đọc từ PH-01 theo token người dùng, chỉ cho cán bộ thuộc tổ chức của HTTT, trả `clientId`, phương thức, 16 ký tự đầu dấu vân tay chứng thư, hạn, trạng thái; không có đường nào trả bí mật production (BR-15-015).
 
@@ -800,7 +800,7 @@ sequenceDiagram
   participant X as Outbox
   D->>B: POST apps appCode credentials
   B->>A: chuyển tiếp, Idempotency-Key
-  A->>A: giao dịch 1 khóa app, kiểm số lượng, PROVISIONING
+  A->>A: giao dịch 1 khóa app, kiểm số lượng, trạng thái PENDING
   A->>G: createClient sbx-t68-appCode-n
   G->>G: kiểm tiền tố sbx và thuộc tính managed-by
   G->>K: tạo client, service account, scope sandbox:call
@@ -812,7 +812,7 @@ sequenceDiagram
   B-->>D: hộp thoại bí mật, không đóng tới khi xác nhận đã lưu
 ```
 
-Bí mật đi một chiều từ Keycloak tới trình duyệt qua bộ nhớ, không vào CSDL, Valkey, log hay outbox (NFR-15-009). Pod chết giữa bước 4 và 8 để lại bản ghi `PROVISIONING`; tác vụ đối soát xóa client không có bản ghi `ACTIVE` sau 15 phút và đánh dấu bản ghi `FAILED`.
+Bí mật đi một chiều từ Keycloak tới trình duyệt qua bộ nhớ, không vào CSDL, Valkey, log hay outbox (NFR-15-009). Pod chết giữa bước 4 và 8 để lại bản ghi `PENDING`; tác vụ đối soát xóa client không có bản ghi `ACTIVE` sau 15 phút và đánh dấu bản ghi `FAILED`.
 
 ### 5.4. Thu hồi thông tin xác thực và hiệu lực ở `forward-auth` (FR-15-031, 039)
 
@@ -835,7 +835,7 @@ sequenceDiagram
   A->>V: xóa khóa auth tenant credId và publish kênh invalidate
   G->>A: forward-auth lượt kế tiếp
   A->>A: không có đệm, đọc app_credential REVOKED
-  A-->>G: 403 ERR-15-018
+  A-->>G: 403 ERR-15-102
 ```
 
 Hiệu lực chặn lượt mới đạt ≤ 5 giây khi Kafka khỏe, và không quá TTL đệm 60 giây khi Kafka chậm (NFR-15-007). Token đã cấp còn sống tối đa 5 phút; nếu cần chặn tức thì cho ứng dụng bị khóa, `forward-auth` kiểm trạng thái ứng dụng chứ không chỉ chữ ký token.
@@ -1070,11 +1070,11 @@ Mỗi aggregate có cột `version` làm khóa lạc quan; lệnh từ API mang 
 
 ### 8.3. Giao dịch với Keycloak: saga và đối soát
 
-Hai thao tác chạm Keycloak (tạo người dùng, tạo client) không nằm được trong giao dịch CSDL, nên thiết kế dùng bản ghi trung gian (`PROVISIONING`) và đối soát thay vì giao dịch phân tán.
+Hai thao tác chạm Keycloak (tạo người dùng, tạo client) không nằm được trong giao dịch CSDL, nên thiết kế dùng bản ghi trung gian (`PENDING`) và đối soát thay vì giao dịch phân tán.
 
 | Tình huống | Tác động | Xử lý |
 |---|---|---|
-| CSDL xong pha 1, Keycloak lỗi | Bản ghi `PROVISIONING`, không client | Trả `ERR-15-020`, bản ghi chuyển `FAILED` sau 15 phút, không tính vào hạn mức |
+| CSDL xong pha 1, Keycloak lỗi | Bản ghi `PENDING`, không client | Trả `ERR-15-020`, bản ghi chuyển `FAILED` sau 15 phút, không tính vào hạn mức |
 | Keycloak tạo xong, pod chết trước pha 3 | Client mồ côi | `ReconcileKeycloakJob` mỗi 15 phút liệt kê client `sbx-*` của tenant, xóa client không có bản ghi `ACTIVE` quá 15 phút |
 | CSDL `REVOKED` nhưng Keycloak chưa vô hiệu | Client còn hiệu lực | `forward-auth` đã chặn theo CSDL; job đối soát vô hiệu client, thử lại lùi mũ |
 | Người dùng Keycloak không có `dev_account` | Mồ côi | Xóa sau 1 giờ |
@@ -1199,7 +1199,7 @@ Chương này nêu định cỡ giả định, cách mở rộng và việc vậ
 - **Định cỡ** (GĐ-15-01, hồ sơ tỉnh vừa): `api` 3 bản sao 1 vCPU, 1,5 GiB; `worker` 2 bản sao 0,5 vCPU, 1 GiB; `portal-sandbox` 3 bản sao 1 vCPU, 1 GiB (giả định theo mục tiêu 100 lượt/giây ở NFR-15-013 và 20 ms mỗi lượt `MOCK`); BFF 2 bản sao 0,5 vCPU. Chỉ số hồ sơ nhỏ `QM-NHO` gộp vai trò theo cờ `portal.sandbox.dedicated`.
 - **Mở rộng:** `api` và `portal-sandbox` không giữ trạng thái, co giãn theo CPU và độ trễ; `worker` giữ một khóa mỗi tác vụ nên thêm bản sao chỉ tăng độ sẵn sàng; OpenSearch một chỉ mục nhỏ một phân đoạn mỗi tenant (500 API, 3.000 phiên bản).
 - **Đường nóng:** trang công khai và danh mục đọc từ Valkey (300 lượt/giây, NFR-15-018); `forward-auth` trúng đệm là một lượt Valkey cộng một bộ đếm Lua; truy vấn danh mục có chỉ mục `(tenant_id, visibility, state)`; danh sách luôn phân trang `co` ≤ 100.
-- **Lưu giữ:** `try_run` phân vùng ngày, bỏ phân vùng sau 30 ngày; kiểm toán chuyển PH-13 (12 tháng, WORM 5 năm); phiên bản trang giữ vĩnh viễn.
+- **Lưu giữ:** `try_run` phân vùng tháng, bỏ phân vùng sau 30 ngày; kiểm toán chuyển PH-13 (12 tháng, WORM 5 năm); phiên bản trang giữ vĩnh viễn.
 - **Sẵn sàng và phục hồi:** `TPH-1`, 99,5% mỗi tháng (NFR-15-008); PH-02 hỏng phục vụ bản sao ≥ 24 giờ; PH-12 hỏng thì trang công khai và đọc tài liệu vẫn chạy nhưng không đăng nhập, không thử; DR theo ADR-034 (RTO control plane ≤ 4 giờ). Sao lưu CSDL theo CNPG (ADR-035), chỉ mục dựng lại từ CSDL.
 - **Vận hành:** sổ tay D06-03 gồm: đồng bộ lại danh mục, dựng lại chỉ mục, xử lý client Keycloak mồ côi, xoay pepper khóa API, thu hồi hàng loạt thông tin xác thực khi sự cố (SEC-72).
 
@@ -1248,7 +1248,7 @@ Rủi ro chính và cách giảm thiểu như sau.
 | Keycloak không đủ token exchange cho `portal-try` | Cao | Dự phòng xác nhận JWS ký bằng `transit` (Q15-20) |
 | Lệch hiển thị giữa SQL, chỉ mục, DTO | Cao | `VisibilitySpec` một nguồn, kiểm tra lại sau tìm kiếm, kiểm thử tính chất |
 | Lạm dụng sandbox, backend thử quá tải | Trung bình | Hạn mức nhiều tầng, ngắt mạch, backend riêng thử |
-| Client Keycloak mồ côi | Trung bình | `PROVISIONING`, đối soát 15 phút |
+| Client Keycloak mồ côi | Trung bình | `PENDING`, đối soát 15 phút |
 | `forward-auth` thành điểm nghẽn hoặc điểm lỗi | Trung bình | Đệm 60 giây, p99 ≤ 25 ms, nhiều bản sao, từ chối an toàn |
 | Chất lượng đặc tả PH-02 kém (thiếu ví dụ) | Trung bình | Cảnh báo khi chủ dịch vụ bật `MOCK` (ERR-15-110 dạng cảnh báo) |
 | Phụ thuộc bộ phân tích tiếng Việt cho OpenSearch | Thấp | `PG_FTS` làm dự phòng (Q15-22) |
@@ -1307,7 +1307,7 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 | dev | `app_member` | 08 | `(app_id, user_id)` | `OWNER`, `DEVELOPER`, `VIEWER` |
 | dev | `app_credential` | 09 | `(client_id)`; `(key_prefix)` | `provisioning_state`, `key_hash`, không có cột bí mật |
 | dev | `prod_credential_ref` | 10 | `(tenant_id, system_code, client_id)` | Bản sao đọc từ PH-01, TTL |
-| try | `try_run` | 11 | `(tryId)`; `(app_id, created_at)` | Phân vùng ngày, giữ 30 ngày, không thân |
+| try | `try_run` | 11 | `(tryId)`; `(app_id, created_at)` | Phân vùng tháng, giữ 30 ngày, không thân |
 | try | `try_collection`, `try_collection_item` | 12 | `(user_id, name)` | ≤ 50 bộ, ≤ 100 yêu cầu |
 | try | `try_prod_grant` | 13 | `(tenant_id, api_code)` | `status`, `valid_until`, `allow_write` |
 | insight | `notification_subscription` | 14 | `(user_id, api_code, channel)` | |
@@ -1324,7 +1324,9 @@ Bảng sau chốt tên bảng để tập CSDL (D03-03-PH15) theo; cột đầy 
 
 : Bảng CSDL dự kiến của PH-15
 
-Phân vùng và lưu giữ: `try_run` theo ngày (bỏ phân vùng sau `15.try.history-days`), `inbox_message` theo tháng, `outbox_event` dọn sau 7 ngày đã phát. Trường tiêu đề liên quan DLCN của nhà thầu (`dev_account.email`, `full_name`, `phone`) mã hóa trường theo ADR-032 nếu D03-03 phân loại là nhạy cảm; tìm theo thư dùng HMAC tìm kiếm (SEC-88).
+**Tên bảng cuối cùng theo DDL.** Danh sách trên là tên dự kiến lúc thiết kế; tên chính thức là DDL `ph15/ddl/ph15_portal.sql` của D03-03-PH15 (35 bảng, mục 10 của tập đó ghi chi tiết). Các bảng đã gộp: `catalog_topic` thành `catalog_api.kind = EVENT`; `catalog_change_notice` thành `inbox_event` cùng `inbox_message`; `search_index_task` bỏ (dựng lại chỉ mục từ PostgreSQL); `reconciliation_report` thành `sync_run.report`; `dev_registration` thành các cột `verification_token_hash`, `verification_expires_at` của `dev_account`; `dev_team_invitation` thành `dev_team_member.invite_status`; `delegation_ref` bỏ (ủy thác lưu ở PH-01 và PH-02); `support_feedback` thành `support_ticket.kind = FEEDBACK`; `sandbox_profile.try_production` thành `try_prod_grant.status`. Bảng DDL thêm so với danh sách: `sync_state`, `legacy_mapping`, `ticket_counter`. Khi hai nơi khác nhau, lấy DDL.
+
+Phân vùng và lưu giữ: `try_run` theo tháng (bỏ phân vùng sau `15.try.history-days`), `inbox_message` theo tháng, `outbox_event` dọn sau 7 ngày đã phát. Trường tiêu đề liên quan DLCN của nhà thầu (`dev_account.email`, `full_name`, `phone`) mã hóa trường theo ADR-032 nếu D03-03 phân loại là nhạy cảm; tìm theo thư dùng HMAC tìm kiếm (SEC-88).
 
 ## Đề nghị đồng bộ
 
@@ -1351,3 +1353,4 @@ Các đề nghị dưới đây không sửa tài liệu ngoài tập PH-15; ch�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD: 14 thành phần, 8 sơ đồ tuần tự, 16 quyết định thiết kế, bảng CSDL dự kiến, câu hỏi mở Q15-20…29 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bộ PH-15: ghi chú tên bảng cuối cùng theo DDL ở Phụ lục A, `try_run` phân vùng tháng, enum `PENDING` thay `PROVISIONING`, mã ERR-15-102 ở hình thu hồi thông tin xác thực |

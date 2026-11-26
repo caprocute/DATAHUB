@@ -33,7 +33,7 @@ Tính năng: TS-15-02 · Mức hiển thị theo người xem và truy cập ẩ
     Biết `15.public.enabled = false` (mặc định); U-ANON.
     Khi `GET /public/catalog/apis/thoi-tiet-cong-khai`.
     Và mở `/dich-vu` ở UI khi chưa đăng nhập.
-    Thì bước 1 `404` ERR-15-001 (giả định, Q15-40); bước 2 chuyển tới `/dang-nhap`, không hiện thông báo lỗi.
+    Thì bước 1 `404` ERR-15-001 (FR-15-008); bước 2 chuyển tới `/dang-nhap`, không hiện thông báo lỗi.
 
   @TC-15-011 @P1 @Âm
   Kịch bản: TC-15-011 Ẩn danh chạm API không đủ điều kiện công khai

@@ -43,7 +43,7 @@ Tính năng: TS-15-01 · Đồng bộ danh mục từ PH-02
     Biết tenant mới T90 chưa từng đồng bộ; trang `huong-dan` đã đăng.
     Khi `GET /catalog/apis` (người dùng T90).
     Và mở UI-15-01.
-    Thì bước 1 trả `503` ERR-15-008, `detail` "Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút"; bước 2 khối danh mục hiện thông báo, các khối nội dung vẫn hiển thị.
+    Thì bước 1 trả `503` ERR-15-008, thông báo "Danh mục dịch vụ chưa sẵn sàng. Thử lại sau ít phút."; bước 2 khối danh mục hiện thông báo, các khối nội dung vẫn hiển thị.
 
   @TC-15-006 @P2 @Âm
   Kịch bản: TC-15-006 Đặc tả hỏng giữ bản cũ, không kéo theo API khác

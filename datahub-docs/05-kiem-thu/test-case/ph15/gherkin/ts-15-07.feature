@@ -32,7 +32,7 @@ Tính năng: TS-15-07 · Soạn trang nội dung Markdown
     # Truy vết: FR-15-014 · API-15-025 · ERR-15-021 · BR-15-013 · LGC mới (không có chức năng hệ cũ tương ứng).
     Biết U-T68-SV; hai nội dung Markdown 204.800 byte và 204.801 byte.
     Khi `PUT` hai nội dung.
-    Thì bản 204.800 byte `200`; bản 204.801 byte `422` ERR-15-021 (mã lỗi cho vượt cỡ chờ Q15-41).
+    Thì bản 204.800 byte `200`; bản 204.801 byte `422` ERR-15-021 (FR-15-014, §9.1; Q15-41 đã giải quyết).
 
   @TC-15-045 @P2 @Dương
   Kịch bản: TC-15-045 Đính kèm ảnh hợp lệ và đọc lại

@@ -16,7 +16,7 @@ Tính năng: TS-15-22 · Thử API trên production
     Biết đăng ký PENDING, đăng ký đã hết hạn, không đăng ký; U-T68-DEV-AN (nhà thầu).
     Khi bình thử khi đăng ký PENDING; khi hết hạn.
     Và an thử production.
-    Thì `403` ERR-15-113 "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."; An `403` ERR-15-113 (giả định, Q15-42); không lời gọi tới gateway production.
+    Thì `403` ERR-15-113 "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."; An `403` ERR-15-113 (FR-15-043); không lời gọi tới gateway production.
 
   @TC-15-130 @P1 @Âm
   Kịch bản: TC-15-130 Dataclass đổi sang nhạy cảm sau khi bật
@@ -62,4 +62,4 @@ Tính năng: TS-15-22 · Thử API trên production
     # Truy vết: FR-15-043 · UI-15-06 · ERR-15-112 · BR-15-033 · LGC mới (không có chức năng hệ cũ tương ứng).
     Biết ngắt PH-02, đồng hồ +25 giờ.
     Khi mở UI-15-06 và gọi API thử production.
-    Thì nút thử production bị ẩn; API `403` ERR-15-112 (giả định, Q15-43); sandbox vẫn thử được.
+    Thì nút thử production bị ẩn; API `403` ERR-15-112, `detail` nêu danh mục quá 24 giờ (FR-15-043, BR-15-033); sandbox vẫn thử được.

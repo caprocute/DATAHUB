@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH15
 ten: Kịch bản và test case phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT)
@@ -34,7 +34,7 @@ tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH15 F
 - API ngoài tầm trả như không tồn tại ở mọi đường, kể cả tìm kiếm và gợi ý (TS-15-02, 04);
 - đường tới trang PUBLISHED chỉ qua duyệt của người khác, Markdown không thực thi script (TS-15-07, 08, 33).
 
-Mã PH-15 hiện chưa có mã nguồn ngoài đặc tả; các ca ở đây là tiêu chí nghiệm thu của công việc mới. Một số hành vi FRS chưa nêu mã trả về; ca ghi "giả định" kèm câu hỏi mở Q15-40…44 ở cuối tài liệu. Số liệu quy mô dùng giả định GĐ-15-01 (tenant vừa: 500 API, 3.000 phiên bản, 2.000 tài khoản `dh-dev`).
+Mã PH-15 hiện chưa có mã nguồn ngoài đặc tả; các ca ở đây là tiêu chí nghiệm thu của công việc mới. Các hành vi FRS từng chưa nêu mã trả về (Q15-40…44) đã được FRS 0.3 chốt; ca còn ghi "giả định" chỉ ở chỗ nêu rõ. Số liệu quy mô dùng giả định GĐ-15-01 (tenant vừa: 500 API, 3.000 phiên bản, 2.000 tài khoản `dh-dev`).
 
 ## 0. Giới thiệu
 
@@ -409,7 +409,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 1. `GET /catalog/apis` (người dùng T90).
 2. Mở UI-15-01.
 
-**Kết quả mong đợi.** Bước 1 trả `503` ERR-15-008, `detail` "Danh mục đang được chuẩn bị. Vui lòng quay lại sau ít phút"; bước 2 khối danh mục hiện thông báo, các khối nội dung vẫn hiển thị.
+**Kết quả mong đợi.** Bước 1 trả `503` ERR-15-008, thông báo "Danh mục dịch vụ chưa sẵn sàng. Thử lại sau ít phút."; bước 2 khối danh mục hiện thông báo, các khối nội dung vẫn hiển thị.
 :::
 
 #### TC-15-006 · Đặc tả hỏng giữ bản cũ, không kéo theo API khác <!--k:sync-bad-spec-->
@@ -521,7 +521,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 1. `GET /public/catalog/apis/thoi-tiet-cong-khai`.
 2. Mở `/dich-vu` ở UI khi chưa đăng nhập.
 
-**Kết quả mong đợi.** Bước 1 `404` ERR-15-001 (giả định, Q15-40); bước 2 chuyển tới `/dang-nhap`, không hiện thông báo lỗi.
+**Kết quả mong đợi.** Bước 1 `404` ERR-15-001 (FR-15-008); bước 2 chuyển tới `/dang-nhap`, không hiện thông báo lỗi.
 :::
 
 #### TC-15-011 · Ẩn danh chạm API không đủ điều kiện công khai <!--k:vis-anon-nonpublic-->
@@ -1043,7 +1043,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 1. `GET .../operations` và `.../spec`.
 2. Mở UI-15-05.
 
-**Kết quả mong đợi.** `422` ERR-15-009; UI "Đặc tả của phiên bản này tạm thời chưa hiển thị được." kèm nút Báo lỗi tài liệu; không `500`.
+**Kết quả mong đợi.** `422` ERR-15-009; UI "Đặc tả của dịch vụ này chưa đọc được. Liên hệ đầu mối của dịch vụ." kèm nút Báo lỗi tài liệu; không `500`.
 :::
 
 #### TC-15-035 · Chọn phiên bản và tải đặc tả có kiểm toán <!--k:doc-versions-->
@@ -1258,7 +1258,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 
 1. `PUT` hai nội dung.
 
-**Kết quả mong đợi.** Bản 204.800 byte `200`; bản 204.801 byte `422` ERR-15-021 (mã lỗi cho vượt cỡ chờ Q15-41).
+**Kết quả mong đợi.** Bản 204.800 byte `200`; bản 204.801 byte `422` ERR-15-021 (FR-15-014, §9.1; Q15-41 đã giải quyết).
 :::
 
 #### TC-15-045 · Đính kèm ảnh hợp lệ và đọc lại <!--k:attach-ok-->
@@ -1676,7 +1676,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 1. Bấm Đăng nhập.
 2. Khách mở `/dich-vu`, `/huong-dan`.
 
-**Kết quả mong đợi.** Bước 1 `503` ERR-15-020 "Dịch vụ đăng nhập tạm gián đoạn. Các trang công khai vẫn xem được"; bước 2 `200`.
+**Kết quả mong đợi.** Bước 1 `503` ERR-15-020 "Dịch vụ định danh tạm thời chưa phản hồi. Thử lại sau."; bước 2 (trang công khai vẫn xem được) `200`.
 :::
 
 #### TC-15-064 · Hồ sơ và thu hồi phiên của mình <!--k:profile-session-->
@@ -1808,7 +1808,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 
 1. Mở `/dang-ky`; `POST /developer-registrations`.
 
-**Kết quả mong đợi.** UI ẩn mục đăng ký; API `403` ERR-15-005 (giả định, Q15-41).
+**Kết quả mong đợi.** UI ẩn mục đăng ký; API `403` ERR-15-005 (FR-15-020).
 :::
 
 #### TC-15-070 · Quản trị duyệt tài khoản <!--k:approve-ok-->
@@ -3145,7 +3145,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 1. Bình thử khi đăng ký PENDING; khi hết hạn.
 2. An thử production.
 
-**Kết quả mong đợi.** `403` ERR-15-113 "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."; An `403` ERR-15-113 (giả định, Q15-42); không lời gọi tới gateway production.
+**Kết quả mong đợi.** `403` ERR-15-113 "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."; An `403` ERR-15-113 (FR-15-043); không lời gọi tới gateway production.
 :::
 
 #### TC-15-130 · Dataclass đổi sang nhạy cảm sau khi bật <!--k:prodtry-sensitive-->
@@ -3269,7 +3269,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 
 1. Mở UI-15-06 và gọi API thử production.
 
-**Kết quả mong đợi.** Nút thử production bị ẩn; API `403` ERR-15-112 (giả định, Q15-43); sandbox vẫn thử được.
+**Kết quả mong đợi.** Nút thử production bị ẩn; API `403` ERR-15-112, `detail` nêu danh mục quá 24 giờ (FR-15-043, BR-15-033); sandbox vẫn thử được.
 :::
 
 ### TS-15-23 · Đăng ký sử dụng, kết nạp, công bố (ủy thác)
@@ -4110,7 +4110,7 @@ Bảng nêu chuyển hợp lệ và chuyển cấm mà các ca chức năng ph�
 
 1. Gọi `GET /me`, `GET /apps`.
 
-**Kết quả mong đợi.** Bị từ chối (`401` hoặc `403`), không lộ dữ liệu của cả hai tenant (giả định mã `403` ERR-15-005, Q15-40).
+**Kết quả mong đợi.** Bị từ chối `403` ERR-15-005, không lộ dữ liệu của cả hai tenant (FR-15-008).
 :::
 
 #### TC-15-173 · Chỉ mục tìm kiếm, bộ đệm, hạn mức theo tenant <!--k:iso-index-cache-->
@@ -5291,15 +5291,15 @@ Các lệnh dưới đây chạy trong thư mục `ph15/tools/` và sinh mọi p
 
 ## 10. Câu hỏi mở
 
-> **Câu hỏi mở Q15-40:** Khi `15.public.enabled = false`, các API `/public/*` trả `404` ERR-15-001 (ngầm định của TC TC-15-010) hay mã khác; và khi tên miền cổng và token thuộc hai tenant khác nhau thì trả `401` hay `403` ERR-15-005 (TC TC-15-172)? Cần FRS chốt để ca khỏi dựa giả định.
+> **Câu hỏi mở Q15-40 (đã giải quyết ở FRS 0.3):** Khi `15.public.enabled = false`, API `/public/*` trả `404` ERR-15-001; tên miền cổng và token thuộc hai tenant khác nhau trả `403` ERR-15-005 (FR-15-008). Ca TC-15-010 và TC-15-172 khớp.
 
-> **Câu hỏi mở Q15-41:** FRS chưa nêu mã lỗi khi trang vượt 200 KB (TC TC-15-044 giả định `422` ERR-15-021, có thể là `413`), và khi `15.dev.signup-enabled = false` thì API trả gì (TC TC-15-069 giả định `403` ERR-15-005). Ngầm định: như hai ca.
+> **Câu hỏi mở Q15-41 (đã giải quyết ở FRS 0.3):** Trang vượt 200 KB trả `422` ERR-15-021 (FR-15-014, đã có ở §9.1); `15.dev.signup-enabled = false` trả `403` ERR-15-005 (FR-15-020). Ca TC-15-044 và TC-15-069 khớp.
 
-> **Câu hỏi mở Q15-42:** Nhà phát triển `dh-dev` (không thuộc HTTT nào) thử production nhận ERR-15-113 (không có đăng ký ACTIVE) hay ERR-15-005; TC TC-15-129 giả định ERR-15-113 để câu thông báo không lộ lý do cấu trúc. Ngầm định: ERR-15-113.
+> **Câu hỏi mở Q15-42 (đã giải quyết ở FRS 0.3):** Nhà phát triển `dh-dev` thử production nhận `403` ERR-15-113 (FR-15-043), không lộ lý do cấu trúc. Ca TC-15-129 khớp.
 
-> **Câu hỏi mở Q15-43:** Khi danh mục quá 24 giờ chưa đồng bộ (BR-15-033), UI ẩn nút thử production nhưng API trả mã nào (TC TC-15-135 giả định `403` ERR-15-112)? Có cần mã riêng cho "dữ liệu cũ" không? Ngầm định: ERR-15-112.
+> **Câu hỏi mở Q15-43 (đã giải quyết ở FRS 0.3):** Danh mục quá 24 giờ chưa đồng bộ: API trả `403` ERR-15-112 kèm `detail` nêu danh mục cũ, không thêm mã riêng (FR-15-043, BR-15-033). Ca TC-15-135 khớp.
 
-> **Câu hỏi mở Q15-44:** Bộ luật PII-15 chặn mã số thuế 10 hoặc 13 chữ số, số CMND 9 chữ số: mọi chuỗi số 9 hay 10 chữ số trong thân thử đều bị coi là DLCN, gây dương tính giả cho mã đơn vị hay mã bưu điện hợp lệ. Cần chốt ngưỡng chấp nhận dương tính giả và cơ chế để chủ dịch vụ khai trường được miễn (nếu có) trước khi lập tập kiểm dương tính giả cho TC-15-115. Ngầm định: không miễn trừ, nhà phát triển dùng dải giả.
+> **Câu hỏi mở Q15-44 (đã giải quyết ở FRS 0.3):** Ngưỡng dương tính giả chấp nhận được là 2% số yêu cầu mẫu hợp lệ của tập kiểm và không có miễn trừ theo dịch vụ ở Đợt 2 (FRS Phụ lục A.7, giả định chờ ATTT xác nhận ở Q15-09). Tập kiểm của TC-15-115 dùng ngưỡng này.
 
 ## Đề nghị đồng bộ
 
@@ -5307,10 +5307,8 @@ Các điểm sau cần tài liệu gốc chốt hoặc chỉnh để ca kiểm t
 
 | Tài liệu | Đề nghị | Lý do |
 |---|---|---|
-| D02-03-PH15 §9.1 | Thêm ERR cho "trang vượt cỡ" hoặc nêu rõ dùng ERR-15-021; nêu mã khi `15.public.enabled = false` và `15.dev.signup-enabled = false` | Ca TC-15-044, TC-15-010, TC-15-069 đang dùng giả định (Q15-40, 41) |
-| D02-03-PH15 §9.3 | Đưa API-15-138 (`GET /content/attachments/{attachmentId}`), 139 (`GET /public/branding`), 140 (`GET /inbox/unread-count`), 141 (`GET /apps:check-code`), 142 (`GET /content/pages/{pageCode}/diff`) vào bảng tóm lược khi FRS lên 0.2 | Ma trận mục 8.9 và ca TC-15-045, TC-15-155, TC-15-143, TC-15-054 dùng các mã này; API-15-141 chưa có ca vì chưa rõ luồng UI dùng (tạo ứng dụng kiểm mã) và sẽ thêm khi FRS 0.2 chốt |
-| D02-03-PH15 FR-15-043 | Ghi rõ mã lỗi cho `dh-dev` thử production và khi danh mục quá 24 giờ | Q15-42, 43 |
-| D02-03-PH15 Phụ lục A.7 | Bổ sung ngưỡng dương tính giả chấp nhận được và cơ chế miễn trừ của PII-15 | Q15-44 |
+| D02-03-PH15 §9.1, FR-15-008, 014, 020, 043, Phụ lục A.7 | Đã chốt ở FRS 0.3 (Q15-40…44), không thêm mã lỗi mới | Không còn ca dựa giả định mã lỗi |
+| D02-03-PH15 §9.3 | Đưa API-15-138 (`GET /content/attachments/{attachmentId}`), 139 (`GET /public/branding`), 140 (`GET /inbox/unread-count`), 141 (`GET /apps:check-code`), 142 (`GET /content/pages/{pageCode}/diff`) vào bảng tóm lược (đã hấp thụ ở FRS 0.2) | Ma trận mục 8.9 và ca TC-15-045, TC-15-155, TC-15-143, TC-15-054 dùng các mã này; API-15-141 chưa có ca vì chưa rõ luồng UI dùng (tạo ứng dụng kiểm mã) và được phủ bằng ca ở bản này |
 | D05-01 | Ghi bộ giả lập dùng chung cho SIT của PH-15: Mailpit, WireMock cho PH-01, PH-02, PH-13, APISIX production giả lập, bộ đồng hồ giả lập | Mục 2.5, 1.3 |
 | D02-08 | Giữ ma trận `PERM-15-*` như đã chốt; TC TC-15-184 sinh ma trận ca từ D02-08 nên cần giữ đồng bộ khi D02-08 đổi | Tránh ca lệch quyền |
 
@@ -5321,3 +5319,4 @@ Các điểm sau cần tài liệu gốc chốt hoặc chỉnh để ca kiểm t
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 37 kịch bản, 10 UAT; công cụ sinh ma trận, Gherkin, bảng tính chép từ ph05 và chỉnh cho PH-15 (UC, UI, EVT hai chữ số; thêm ma trận UC, UI, EVT, API) |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Rà chéo bộ PH-15: Q15-40…44 đã giải quyết theo FRS 0.3, sửa câu thông báo ERR-15-009, 020, 008 theo §9.1 |

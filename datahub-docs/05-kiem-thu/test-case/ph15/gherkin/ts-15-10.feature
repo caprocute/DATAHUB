@@ -25,7 +25,7 @@ Tính năng: TS-15-10 · Đăng nhập, phiên và hồ sơ
     Biết ngắt Keycloak; `15.public.enabled = true`.
     Khi bấm Đăng nhập.
     Và khách mở `/dich-vu`, `/huong-dan`.
-    Thì bước 1 `503` ERR-15-020 "Dịch vụ đăng nhập tạm gián đoạn. Các trang công khai vẫn xem được"; bước 2 `200`.
+    Thì bước 1 `503` ERR-15-020 "Dịch vụ định danh tạm thời chưa phản hồi. Thử lại sau."; bước 2 (trang công khai vẫn xem được) `200`.
 
   @TC-15-064 @P2 @Dương
   Kịch bản: TC-15-064 Hồ sơ và thu hồi phiên của mình

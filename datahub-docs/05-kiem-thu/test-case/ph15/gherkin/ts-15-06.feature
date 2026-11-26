@@ -24,7 +24,7 @@ Tính năng: TS-15-06 · Tài liệu API, phiên bản, so sánh, mẫu mã
     Biết phiên bản có F-SPEC-BAD, chưa từng có bản hợp lệ.
     Khi `GET .../operations` và `.../spec`.
     Và mở UI-15-05.
-    Thì `422` ERR-15-009; UI "Đặc tả của phiên bản này tạm thời chưa hiển thị được." kèm nút Báo lỗi tài liệu; không `500`.
+    Thì `422` ERR-15-009; UI "Đặc tả của dịch vụ này chưa đọc được. Liên hệ đầu mối của dịch vụ." kèm nút Báo lỗi tài liệu; không `500`.
 
   @TC-15-035 @P1 @Dương
   Kịch bản: TC-15-035 Chọn phiên bản và tải đặc tả có kiểm toán

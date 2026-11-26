@@ -33,7 +33,7 @@ Tính năng: TS-15-11 · Tự đăng ký dh-dev và duyệt tài khoản
     # Truy vết: FR-15-020 · UI-15-08 · ERR-15-005 · LGC mới (không có chức năng hệ cũ tương ứng).
     Biết `15.dev.signup-enabled = false`.
     Khi mở `/dang-ky`; `POST /developer-registrations`.
-    Thì UI ẩn mục đăng ký; API `403` ERR-15-005 (giả định, Q15-41).
+    Thì UI ẩn mục đăng ký; API `403` ERR-15-005 (FR-15-020).
 
   @TC-15-070 @P1 @Dương
   Kịch bản: TC-15-070 Quản trị duyệt tài khoản

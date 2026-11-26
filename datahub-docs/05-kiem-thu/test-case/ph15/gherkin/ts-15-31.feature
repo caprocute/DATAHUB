@@ -24,7 +24,7 @@ Tính năng: TS-15-31 · Cô lập tenant
     # Truy vết: BR-15-003 · NFR-15-017 · ERR-15-005 · LGC mới (không có chức năng hệ cũ tương ứng).
     Biết tên miền cổng T01 với token realm T68, và ngược lại.
     Khi gọi `GET /me`, `GET /apps`.
-    Thì bị từ chối (`401` hoặc `403`), không lộ dữ liệu của cả hai tenant (giả định mã `403` ERR-15-005, Q15-40).
+    Thì bị từ chối `403` ERR-15-005, không lộ dữ liệu của cả hai tenant (FR-15-008).
 
   @TC-15-173 @P1 @Âm @Bảo @mật
   Kịch bản: TC-15-173 Chỉ mục tìm kiếm, bộ đệm, hạn mức theo tenant

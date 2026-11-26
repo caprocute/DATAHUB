@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH15
 ten: Đặc tả yêu cầu chức năng phân hệ PH-15 Cổng nhà phát triển
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư dh-portal và dh-connect, kiểm thử viên, chủ dịch vụ, quản trị tỉnh
@@ -1017,7 +1017,7 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 **Luồng xử lý chính.**
 
 1. Hệ thống ánh xạ tên miền sang tenant; tên miền lạ trả ERR-15-001.
-2. Hệ thống kiểm tra `15.public.enabled`; tắt thì chuyển tới đăng nhập.
+2. Hệ thống kiểm tra `15.public.enabled`; tắt thì giao diện chuyển tới đăng nhập, còn API `/public/*` trả ERR-15-001 (404) để không lộ việc cổng công khai đang tắt.
 3. Hệ thống chỉ phục vụ API `PUBLIC` và trang nội dung có `audience = PUBLIC`; không hiện đầu mối, địa chỉ nội bộ, danh sách gói có hạn mức riêng.
 4. Hệ thống áp giới hạn `15.public.rate-limit-per-minute` theo IP và chống thu thập hàng loạt: phản hồi thêm `Cache-Control: public, max-age=300`.
 5. Thao tác cần đăng nhập (thử, tạo ứng dụng, đăng ký, hỏi đáp) hiện lời mời đăng nhập hoặc đăng ký.
@@ -1028,6 +1028,8 @@ Sơ đồ cho thấy sự kiện chỉ là tín hiệu; dữ liệu luôn đư�
 
 - Vượt tần suất: ERR-15-007 (429); "Thao tác quá nhanh. Thử lại sau {n} giây."
 - API không `PUBLIC`: ERR-15-001 (404); "Không tìm thấy nội dung yêu cầu."
+- Cổng công khai đang tắt (`15.public.enabled = false`): ERR-15-001 (404) như trên.
+- Tên miền cổng thuộc tenant khác với token của người gọi: ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này." (chi tiết riêng ở `detail`: Tài khoản không thuộc tenant của cổng này)
 
 **Đầu ra.** `200` hoặc `304`; như FR-15-004, FR-15-006 nhưng rút gọn.
 
@@ -1648,6 +1650,7 @@ Nhóm D cho hai nguồn người dùng vào cổng: cán bộ CQNN đăng nhập
 - Mã sai hoặc hết hạn: ERR-15-013 (400); "Mã xác minh không đúng hoặc đã hết hạn."
 - Đăng ký quá nhiều: ERR-15-037 (429); "Bạn gửi quá nhiều. Thử lại sau {n} phút."
 - Dữ liệu sai: ERR-15-003 (400); lỗi theo trường.
+- Tự đăng ký đang tắt (`15.dev.signup-enabled = false`): ERR-15-005 (403); "Bạn không có quyền thực hiện thao tác này." (chi tiết riêng ở `detail`: Cổng chưa mở đăng ký tài khoản nhà thầu); giao diện ẩn mục đăng ký.
 
 **Đầu ra.** `202`; `registrationId`, `status = PENDING_EMAIL`.
 
@@ -2819,6 +2822,8 @@ Nhóm F cho nhà phát triển gọi thử API ngay trên trang tài liệu mà 
 
 - Dịch vụ chưa bật: ERR-15-112 (403); "Dịch vụ này chưa bật thử trên môi trường thật." (chi tiết riêng ở `detail`: Thử trên production chưa được bật cho dịch vụ này)
 - Không có đăng ký sử dụng: ERR-15-113 (403); "Tổ chức của bạn chưa có đăng ký sử dụng đang hoạt động cho dịch vụ này."
+- Người dùng `dh-dev` (không thuộc HTTT nào): ERR-15-113 như trên, không dùng ERR-15-005, để thông báo không lộ lý do cấu trúc; giao diện đã ẩn nút thử production.
+- Danh mục quá 24 giờ chưa đồng bộ (BR-15-033): ERR-15-112 (403) như dịch vụ chưa bật, chi tiết riêng ở `detail`: Danh mục dịch vụ chưa được đồng bộ trong 24 giờ nên tạm ẩn thử production; không thêm mã lỗi riêng.
 - Dữ liệu nhạy cảm: ERR-15-114 (403); "Dịch vụ có dữ liệu nhạy cảm không cho thử trên môi trường thật."
 - Kiểm toán lỗi: ERR-15-115 (503); "Chưa ghi được nhật ký nên không thử được lúc này." (chi tiết riêng ở `detail`: Hệ thống kiểm toán chưa sẵn sàng nên chưa thể thử trên production)
 - Phương thức bị chặn: ERR-15-116 (422); "Phương thức {phương thức} không được phép ở môi trường này." (chi tiết riêng ở `detail`: Chỉ được thử phương thức GET và HEAD trên production)
@@ -4383,6 +4388,7 @@ Bản 0.2 hấp thụ đề nghị từ sáu tập đã viết sau bản 0.1. M�
 | API | Hấp thụ trường `viewerClass`, `termsUpToDate`, `retryAfterSeconds`, `partial[]`, `appCode` (API-15-074), `TryResponse.result`, `bodyTruncated` | Đã thêm Phụ lục A.9; `appCode` còn ghi ở FR-15-039 |
 | API | EVT-15-04 thêm `appCode`; EVT-15-05, 13 thêm `reason`, `change` | Đã sửa bảng §9.2 với enum cụ thể |
 | Chung | Năm quyền PERM-15 chưa có ở D02-08 | Đã xử lý: D02-08 đã có; sửa §15.1 và 3.2 |
+| Test case | Mã lỗi khi cổng công khai tắt, tự đăng ký tắt, thử production của `dh-dev`, danh mục quá 24 giờ, trang vượt cỡ, ngưỡng dương tính giả PII-15 (Q15-40…44 của tập TC) | Đã chốt ở FR-15-008, 014, 020, 043 và A.7, không thêm mã lỗi mới (chi tiết riêng ở `detail`); trang vượt cỡ giữ ERR-15-021 |
 
 : Nhật ký hấp thụ đề nghị của bản 0.2
 
@@ -4516,6 +4522,8 @@ Bộ luật chặn ở chế độ `BACKEND` và cảnh báo ở `MOCK` (BR-15-0
 
 : Bộ luật nhận dạng PII-15
 
+Ngưỡng dương tính giả chấp nhận được: tối đa 2% số yêu cầu mẫu hợp lệ của tập kiểm (mã đơn vị, mã bưu điện, mã hồ sơ dài 9 hoặc 10 chữ số) bị chặn nhầm; vượt ngưỡng thì ATTT chỉnh mẫu nhận dạng chứ không nới dải giả. Không có cơ chế miễn trừ theo dịch vụ ở Đợt 2: nhà phát triển dùng dải giả quy ước ở bảng trên. Đây là giả định thiết kế, ATTT xác nhận ở Q15-09.
+
 ### A.8. Hành động kiểm toán của cổng
 
 Các hành động dưới đây ghi vào nhật ký kiểm toán ở PH-13 với loại `PORTAL_*` và là giá trị lọc `hanh-dong` của FR-15-060.
@@ -4558,5 +4566,6 @@ Mục này ghi các lần sửa tài liệu để hội đồng thẩm định t
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm yêu cầu PH-15 | Bản đầu: 62 FR, 34 BR, 22 NFR, 63 ERR, 14 EVT, 137 API, 28 UI, 19 câu hỏi mở |
 | 0.2 | 26/11/2026 | Nhóm yêu cầu PH-15 | Hấp thụ đề nghị đồng bộ từ tập use case, thiết kế chi tiết, CSDL, màn hình và API (chi tiết ở mục 15.3): thêm API-15-138…142 (142 API); sửa tham chiếu phụ lục, câu thông báo theo §9.1, enum và thực thể theo CSDL, kiến trúc theo SDD; thêm Phụ lục A.9; năm quyền PERM-15 đã có ở D02-08 |
+| 0.3 | 26/11/2026 | Nhóm yêu cầu PH-15 | Rà chéo bộ PH-15: chốt mã lỗi cho Q15-40…44 của tập test case (FR-15-008, 020, 043, Phụ lục A.7), không đổi số mã |
 
 : Lịch sử phiên bản D02-03-PH15
