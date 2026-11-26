@@ -4314,8 +4314,11 @@ Mỗi mã lỗi mà người dùng có thể gặp được chuyển thành mộ
 | ERR-04-041 | "Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn." | Dải đầu trang, hộp phát hành |
 | ERR-04-042 | "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại." (mới) | Hộp gửi duyệt, phát hành |
 | ERR-04-043 | "HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT." (mới) | Bảng Vấn đề |
+| ERR-04-044 | "Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục." (mới, theo D03-04-PH04 §6) | Hộp thoại đăng nhập lại |
 | ERR-04-045 | "Bạn chưa có quyền thực hiện thao tác này." (mới; biến thể theo ngữ cảnh ở FR-04-032, 080) | Thông báo nổi |
+| ERR-04-046 | "Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ." (mới, theo D03-04-PH04 §6) | Thông báo nổi, ô tải tệp |
 | ERR-04-047 | "Chưa lấy được dữ liệu từ {phân hệ}. Thử lại sau." (mới) | Khối dữ liệu phụ thuộc (kết nối, số liệu, lịch sử) |
+| ERR-04-048 | "Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây." (mới, theo D03-04-PH04 §6) | Thông báo nổi |
 | ERR-04-049 | "Giá trị của {tham số} không hợp lệ." (mới; biến thể theo ngữ cảnh ở FR-04-001, 084) | Dưới trường, bộ lọc |
 | ERR-04-101 | "Bản tin không đúng lược đồ {schemaRef}: {n} lỗi." (mới) | Thân lỗi trả bên gọi; DLQ ở PH-18 |
 | ERR-04-102 | "Bên gọi không được phép dùng dịch vụ này cho mục đích đã khai." (mới) | Thân lỗi; nhật ký kết nối |

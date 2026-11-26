@@ -410,8 +410,11 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-041 | Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn. | — |
 | ERR-04-042 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | "Mở trình thiết kế" (mục 10.17) |
 | ERR-04-043 | HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT. | Bảng Vấn đề; "Xem HTTT ở PH-01" |
+| ERR-04-044 | Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục. | Hộp thoại đăng nhập lại |
 | ERR-04-045 | Bạn không có quyền thực hiện thao tác này. | — |
+| ERR-04-046 | Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ. | Thông báo nổi, ô tải tệp |
 | ERR-04-047 | Chưa lấy được dữ liệu từ {phân hệ}. Thử lại sau. | Khối dữ liệu phụ thuộc (kết nối, số liệu, lịch sử); "Thử lại" |
+| ERR-04-048 | Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây. | Thông báo nổi |
 | ERR-04-049 | Giá trị của {tham số} không hợp lệ. | Dưới trường, bộ lọc |
 
 : Câu hiển thị theo mã lỗi ERR-04 (bản 0.2 đồng bộ với D02-03-PH04 §9.2 và D02-04-PH04 §8.4)
