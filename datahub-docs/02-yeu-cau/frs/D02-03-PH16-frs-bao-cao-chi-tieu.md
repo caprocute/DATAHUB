@@ -1443,7 +1443,7 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 4. Nguồn `STALE` hoặc `FAILED` có quan sát mới hoặc lần kéo đạt thì về `ACTIVE`, phát EVT-16-03.
 5. Tạm dừng: hệ thống chuyển `PAUSED`, ngừng tiêu thụ hoặc kéo, không cảnh báo; tới `until` thì tự tiếp tục.
 
-**Luồng thay thế.** Nguồn chỉ có số theo tháng (ví dụ PH-08 đo hằng tháng): khai `staleHoursOverride` ở nguồn (ví dụ 744 giờ) để không báo `STALE` giả.
+**Luồng thay thế.** Nguồn chỉ có số theo tháng (ví dụ PH-08 đo hằng tháng): khai `staleAfterHours` ở nguồn (ví dụ 744 giờ) để không báo `STALE` giả.
 
 **Luồng ngoại lệ.**
 
@@ -4587,7 +4587,7 @@ PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 ## Phụ lục C. Nhật ký hấp thụ đề nghị
 
-Phụ lục ghi các đề nghị dành cho FRS từ tập UC, SDD, CSDL, API, MH của PH-16 và quyết định ở bản 0.2: 33 đề nghị, nhận 27 (kể cả nhận một phần), không nhận 6. Đề nghị của tập test case D05-02-PH16 xét ở bản sau.
+Phụ lục ghi các đề nghị dành cho FRS từ tập UC, SDD, CSDL, API, MH của PH-16 và quyết định ở bản 0.2: 33 đề nghị, nhận 27 (kể cả nhận một phần), không nhận 6. Đề nghị ĐN-TC-01 (phạm vi trạng thái báo cáo theo vai trò), ĐN-TC-02 (vai trò mở lại kỳ), ĐN-TC-03 (ngưỡng `UNKNOWN`) của tập test case D05-02-PH16 đã có sẵn ở FR-16-031, FR-16-024 và mục 3.2, FR-16-046, không cần sửa FRS (ca kiểm thử sửa theo FRS); ĐN-TC-04…08 xét ở bản sau.
 
 | Mã | Nguồn | Đề nghị | Quyết định | Chỗ sửa |
 |---|---|---|---|---|

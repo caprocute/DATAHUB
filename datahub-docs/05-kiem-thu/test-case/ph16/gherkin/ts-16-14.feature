@@ -6,7 +6,7 @@ Tính năng: TS-16-14 · Gửi duyệt và duyệt báo cáo bốn mắt
   @TC-16-058 @P1 @Dương
   Kịch bản: TC-16-058 Gửi duyệt, duyệt bốn mắt
     # Truy vết: FR-16-028 · API-16-071, 072, 078 · UI-16-11, UI-16-12 · EVT-16-07 · BR-16-004
-    Biết `bc-thang-2026-10` `DRAFT` đủ giải trình (rep-explain); U-T90-TO1 lập, U-T90-TA1 duyệt.
+    Biết `bc-thang-2026-10` `DRAFT` đủ giải trình, đã có `documentNumber`, `recipientsNote` (rep-explain); U-T90-TO1 lập, U-T90-TA1 duyệt.
     Khi U-T90-TO1 `POST /reports/bc-thang-2026-10:submit` `{note: "Gửi duyệt"}`
     Và U-T90-TA1 `GET /review-queue?itemType=REPORT`
     Và U-T90-TA1 `POST /reports/bc-thang-2026-10:approve` kèm `If-Match`
@@ -18,9 +18,9 @@ Tính năng: TS-16-14 · Gửi duyệt và duyệt báo cáo bốn mắt
     Biết báo cáo `PERIODIC` kỳ `M-2026-11` có `bi-mat-ngoai-kho` (bắt buộc) `NO_DATA` và 2 chỉ tiêu `OFF_TRACK` chưa giải trình; chỉ tiêu bắt buộc `ho-so-cap-do-phe-duyet` `PARTIAL` có giải trình.
     Khi `POST …:submit` khi có chỉ tiêu bắt buộc `NO_DATA`
     Và nhập số tay cho chỉ tiêu bắt buộc và xác nhận, tính lại, `POST …:submit` khi còn 2 chỉ tiêu chưa giải trình
-    Và báo cáo dùng mẫu `tc-thieu-dau-de` (thiếu `letterhead.formNo`, `recipients`) rồi `POST …:submit`
-    Và giải trình đủ, dùng mẫu `tc-thang-ngan` rồi `POST …:submit`
-    Thì bước 1 `422` ERR-16-029, nêu danh sách chỉ tiêu. Bước 2 `422` ERR-16-030. Bước 3 `422` ERR-16-061. Bước 4 `200` (chỉ tiêu bắt buộc `PARTIAL` được phép khi có giải trình). Báo cáo `AD_HOC` không bị chặn bởi ERR-16-029.
+    Và giải trình đủ nhưng báo cáo `PERIODIC` chưa có `documentNumber` và `recipientsNote`, `POST …:submit`
+    Và `PATCH` `documentNumber = "125/BC-STTTT"`, `recipientsNote = "UBND tỉnh; Bộ KH&CN."` rồi `POST …:submit`; thử thêm báo cáo `AD_HOC` không có hai trường
+    Thì bước 1 `422` ERR-16-029, nêu danh sách chỉ tiêu. Bước 2 `422` ERR-16-030. Bước 3 `422` ERR-16-061, `errors[]` trỏ `documentNumber`, `recipientsNote`. Bước 4 `200` (chỉ tiêu bắt buộc `PARTIAL` được phép khi có giải trình); báo cáo `AD_HOC` gửi duyệt được mà không cần hai trường (BR-16-027). Báo cáo `AD_HOC` không bị chặn bởi ERR-16-029.
 
   @TC-16-060 @P1 @Âm @Bảo @mật
   Kịch bản: TC-16-060 Người lập hoặc người gửi không tự duyệt; ngoại lệ báo cáo đột xuất

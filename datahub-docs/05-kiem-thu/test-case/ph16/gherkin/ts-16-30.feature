@@ -11,7 +11,7 @@ Tính năng: TS-16-30 · Tham số, lưu giữ dữ liệu và nhật ký kiểm
     Và `PATCH /settings` `{settings: [{key: "16.export.link-hours", value: 48}, {key: "16.period.close-day", value: 7}]}` kèm `If-Match`
     Và tạo xuất mới và kiểm `expiresAt`
     Và `GET /settings`
-    Thì bước 1 24 khóa `16.*` kèm `default`, `ceiling`, `scope`. Bước 2 `200`. Bước 3 `expiresAt` = tạo + 48 giờ, áp dụng ≤ 60 giây, không cần khởi động lại. Bước 4 giá trị mới, `updatedBy`. Thêm chỉ tiêu, nguồn, mẫu gói cũng không cần phát hành.
+    Thì bước 1 25 khóa `16.*` kèm `default`, `ceiling`, `scope`. Bước 2 `200`. Bước 3 `expiresAt` = tạo + 48 giờ, áp dụng ≤ 60 giây, không cần khởi động lại. Bước 4 giá trị mới, `updatedBy`. Thêm chỉ tiêu, nguồn, mẫu gói cũng không cần phát hành.
 
   @TC-16-104 @P1 @Âm
   Kịch bản: TC-16-104 Tham số ngoài miền, vượt trần, khóa bởi PA

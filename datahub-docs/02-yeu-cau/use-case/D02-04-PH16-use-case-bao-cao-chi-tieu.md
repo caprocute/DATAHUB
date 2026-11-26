@@ -618,7 +618,7 @@ Mọi biến trong công thức phải có nguồn. Cán bộ đăng ký nguồn
 **Đảm bảo thành công.** Nguồn `ACTIVE` có hợp đồng chỉ số hợp lệ; trạng thái nguồn luôn phản ánh độ tươi và số lần lỗi.
 
 **Luồng chính.**
-1. Chi chọn loại `EVENT`, nhập mã `ph08-dq-kpi`, phân hệ cung cấp PH-08, `topic`, `schemaRef`, `backfillEndpoint`, `staleHoursOverride = 744` (PH-08 đo hằng tháng) và danh sách `metricCode` của hợp đồng (API-16-022).
+1. Chi chọn loại `EVENT`, nhập mã `ph08-dq-kpi`, phân hệ cung cấp PH-08, `topic`, `schemaRef`, `backfillEndpoint`, `staleAfterHours = 744` (PH-08 đo hằng tháng) và danh sách `metricCode` của hợp đồng (API-16-022).
 2. Hệ thống kiểm mã theo mẫu và chưa dùng, cấu hình đủ theo loại, mọi `metricCode` có trong danh mục (API-16-010) hoặc tạo mục mới `DRAFT`.
 3. Chi bấm "Thử" (API-16-025); hệ thống đọc thử bản tin gần nhất của topic, đối chiếu lược đồ.
 4. Hệ thống lưu nguồn `ACTIVE`, ghi kiểm toán, phát EVT-16-03.

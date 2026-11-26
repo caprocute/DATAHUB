@@ -25,13 +25,13 @@ Tính năng: TS-16-13 · Lập bản nháp, thuyết minh và báo cáo đột x
   Kịch bản: TC-16-056 Viết thuyết minh, giải trình chỉ tiêu chệch; sửa báo cáo đã công bố
     # Truy vết: FR-16-027 · API-16-067, 068, 066 · UI-16-11 · ERR-16-032, ERR-16-003 · BR-16-029
     Biết báo cáo `bc-thang-2026-10` `DRAFT`; `missingExplanations` có 3 mã `OFF_TRACK`; U-T90-TO1.
-    Khi `PATCH /reports/bc-thang-2026-10` cập nhật `sections` với `ReportSectionText` nội dung 500 ký tự
+    Khi `PATCH /reports/bc-thang-2026-10` cập nhật `sections` với `ReportSectionText` nội dung 500 ký tự, kèm `documentNumber = "125/BC-STTTT"` và `recipientsNote = "UBND tỉnh; Bộ KH&CN."` (kèm `If-Match`)
     Và `PUT /reports/bc-thang-2026-10/explanations/{mã}` `{cause, action, dueDate}` cho một mã
     Và lặp lại cho cả ba mã
     Và `GET /reports/bc-thang-2026-10`
     Và `PATCH /reports/bc-thang-2026-09` và `PUT …/explanations/mttd` khi báo cáo `PUBLISHED`
     Và `PUT` giải trình với `cause = ""`
-    Thì bước 2 `200`, `explanation`, `missingExplanations` còn 2. Sau bước 3 rỗng. Bước 4 `explanations[]` đủ ba. Bước 5 `409` ERR-16-032. Bước 6 `400` ERR-16-003.
+    Thì bước 1 `200`, `documentNumber`, `recipientsNote` được lưu nguyên văn (tối đa 64 và 2.000 ký tự). Bước 2 `200`, `explanation`, `missingExplanations` còn 2. Sau bước 3 rỗng. Bước 4 `explanations[]` đủ ba. Bước 5 `409` ERR-16-032. Bước 6 `400` ERR-16-003.
 
   @TC-16-057 @P3 @Dương @Âm
   Kịch bản: TC-16-057 Báo cáo đột xuất theo khoảng và tập chỉ tiêu tự chọn

@@ -503,9 +503,9 @@ Bảng dưới đánh số thành phần theo bố cục trên, kèm điều ki�
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra, nguồn | Ghi chú |
 |---|---|---|---|---|
-| 1 | Dải kỳ chưa chốt, nguồn quá hạn | `CMP-Alert` vàng | Hiện khi kỳ đang xem ở `COMPUTED` hoặc `COLLECTING`, hoặc có nguồn `STALE`; nút "Xem nguồn" mở UI-16-05 lọc `STALE` (API-16-090 `periodState`, `staleSources`) | Không hiện ở chế độ "Chính thức" (kỳ đã chốt) |
+| 1 | Dải kỳ chưa chốt, nguồn quá hạn | `CMP-Alert` vàng | Hiện khi kỳ đang xem ở `COMPUTED` hoặc `COLLECTING`, hoặc có nguồn `STALE`; nút "Xem nguồn" mở UI-16-05 lọc `STALE` (API-16-090 `flags[]`, `provisional`; `periodState`, `staleSources` là đề nghị B-01) | Không hiện ở chế độ "Chính thức" (kỳ đã chốt) |
 | 2 | Thanh lọc | `CMP-Select`, `CMP-SegmentedControl`, `CMP-Button` | Kỳ (mặc định kỳ tháng gần nhất đã tính), công tắc "Chính thức" hoặc "Mới nhất", nút "So sánh kỳ…" chọn kỳ thứ hai; ghi lên URL (API-16-046) | "Chính thức" chỉ liệt kê kỳ có báo cáo `PUBLISHED` |
-| 3 | Thẻ điểm tổng | `CMP-KpiCard` biến thể điểm | Điểm một số thập phân cỡ `font-display`, nhãn trạng thái bằng chữ, mũi tên và Δ so kỳ trước, cùng kỳ năm trước (`totalScore`, `delta`, `yoy`) | Màu theo trạng thái, luôn kèm chữ và biểu tượng |
+| 3 | Thẻ điểm tổng | `CMP-KpiCard` biến thể điểm | Điểm một số thập phân cỡ `font-display`, nhãn trạng thái bằng chữ, mũi tên và Δ so kỳ trước, cùng kỳ năm trước (`overallScore`, `groups[].delta`; `yoy` là đề nghị B-01) | Màu theo trạng thái, luôn kèm chữ và biểu tượng |
 | 4 | Thẻ nhóm (5) | `CMP-StatCard` biến thể vòng điểm | Tên nhóm, vòng điểm `Chart` kiểu gauge, trọng số, Δ, "Có số x/y chỉ tiêu", số chỉ tiêu cần chú ý, nhãn "Thiếu một phần" khi `PARTIAL` (`groups[]`) | Cả thẻ là liên kết; vùng bấm đủ lớn |
 | 5 | Bảng chỉ tiêu cần chú ý | `CMP-DataTable` gọn | Tối đa 7 dòng: `OFF_TRACK` trước, `AT_RISK` sau, `NO_DATA` cuối; cột chỉ tiêu, nhóm, giá trị, mục tiêu, trạng thái, Δ (`attention[]`) | Bấm dòng mở UI-16-02; "Xem tất cả" mở danh sách lọc |
 
@@ -517,9 +517,9 @@ Bảng dưới ghi các trường chính màn đọc từ API-16-090 và cách h
 
 | Trường API | Kiểu | Hiển thị | Ghi chú |
 |---|---|---|---|
-| `totalScore` | number 0…100 | Thẻ điểm tổng, 1 chữ số thập phân, dấu phẩy | Trung bình có trọng số năm nhóm; thiếu nhóm thì "Thiếu một phần" |
+| `overallScore` | number 0…100 | Thẻ điểm tổng, 1 chữ số thập phân, dấu phẩy | Trung bình có trọng số năm nhóm; thiếu nhóm thì "Thiếu một phần" |
 | `groups[].groupCode` | enum `groupCode` | Tên nhóm tiếng Việt (mục 5.1) | Thứ tự cố định: Kết nối, Chia sẻ, Dữ liệu, Vận hành, Kiến trúc |
-| `groups[].coverage` | `n/m` | "Có số 4/4 chỉ tiêu" | Tỷ lệ phủ của nhóm |
+| `groups[].coverage` | number 0…1 | "Có số 4/4 chỉ tiêu" | Tỷ lệ phủ của nhóm; số chỉ tiêu `n/m` tính ở giao diện từ số chỉ tiêu nhóm |
 | `attention[].status` | enum `indicator_value.status` | Chip có chữ và biểu tượng | Không dùng màu một mình |
 | `periodCode` | T-CODE kỳ | Bộ chọn kỳ | Mẫu `M-2026-10` |
 

@@ -1343,8 +1343,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. `POST /periods/M-2026-11:close`
 2. `POST /periods/M-2026-10:reopen` `{reason: "Sửa số liệu nguồn PH-13"}` (dưới 50 ký tự)
 3. `POST /periods/M-2026-10:reopen` với `reason` 60 ký tự khi báo cáo đang `IN_REVIEW`
+4. U-T90-TO1 (có `PERM-16-run`) `POST /periods/M-2026-11:close` và `POST /periods/M-2026-10:reopen`
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-16-025 kèm lý do "còn 2 số liệu tay chờ xác nhận". Bước 2 `422` ERR-16-007. Bước 3 `409` ERR-16-026. Kỳ vẫn `CLOSED`.
+**Kết quả mong đợi.** Bước 1 `422` ERR-16-025 kèm lý do "còn 2 số liệu tay chờ xác nhận". Bước 2 `422` ERR-16-007. Bước 3 `409` ERR-16-026. Bước 4 `403` ERR-00-403 (TO chạy tổng hợp, tính lại nhưng không chốt, không mở lại kỳ, FRS mục 3.2). Kỳ vẫn `CLOSED`.
 
 **Thông báo hiển thị.** ERR-16-025: "Chưa chốt được kỳ M-2026-11: còn 2 số liệu tay chờ xác nhận."; ERR-16-007: "Nhập lý do mở lại (tối thiểu 50 ký tự)."; ERR-16-026: "Kỳ M-2026-10 có báo cáo đang duyệt. Trả báo cáo về nháp trước khi mở lại kỳ."
 
@@ -1803,14 +1804,14 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `PATCH /reports/bc-thang-2026-10` cập nhật `sections` với `ReportSectionText` nội dung 500 ký tự
+1. `PATCH /reports/bc-thang-2026-10` cập nhật `sections` với `ReportSectionText` nội dung 500 ký tự, kèm `documentNumber = "125/BC-STTTT"` và `recipientsNote = "UBND tỉnh; Bộ KH&CN."` (kèm `If-Match`)
 2. `PUT /reports/bc-thang-2026-10/explanations/{mã}` `{cause, action, dueDate}` cho một mã
 3. Lặp lại cho cả ba mã
 4. `GET /reports/bc-thang-2026-10`
 5. `PATCH /reports/bc-thang-2026-09` và `PUT …/explanations/mttd` khi báo cáo `PUBLISHED`
 6. `PUT` giải trình với `cause = ""`
 
-**Kết quả mong đợi.** Bước 2 `200`, `explanation`, `missingExplanations` còn 2. Sau bước 3 rỗng. Bước 4 `explanations[]` đủ ba. Bước 5 `409` ERR-16-032. Bước 6 `400` ERR-16-003.
+**Kết quả mong đợi.** Bước 1 `200`, `documentNumber`, `recipientsNote` được lưu nguyên văn (tối đa 64 và 2.000 ký tự). Bước 2 `200`, `explanation`, `missingExplanations` còn 2. Sau bước 3 rỗng. Bước 4 `explanations[]` đủ ba. Bước 5 `409` ERR-16-032. Bước 6 `400` ERR-16-003.
 
 **Thông báo hiển thị.** ERR-16-032: "Báo cáo đã công bố không sửa được. Dùng chức năng đính chính."
 
@@ -1858,7 +1859,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-16-028 · API-16-071, 072, 078 · UI-16-11, UI-16-12 · EVT-16-07 · BR-16-004.
 
-**Tiền điều kiện, dữ liệu.** `bc-thang-2026-10` `DRAFT` đủ giải trình (rep-explain); U-T90-TO1 lập, U-T90-TA1 duyệt.
+**Tiền điều kiện, dữ liệu.** `bc-thang-2026-10` `DRAFT` đủ giải trình, đã có `documentNumber`, `recipientsNote` (rep-explain); U-T90-TO1 lập, U-T90-TA1 duyệt.
 
 **Các bước.**
 
@@ -1887,10 +1888,10 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. `POST …:submit` khi có chỉ tiêu bắt buộc `NO_DATA`
 2. Nhập số tay cho chỉ tiêu bắt buộc và xác nhận, tính lại, `POST …:submit` khi còn 2 chỉ tiêu chưa giải trình
-3. Báo cáo dùng mẫu `tc-thieu-dau-de` (thiếu `letterhead.formNo`, `recipients`) rồi `POST …:submit`
-4. Giải trình đủ, dùng mẫu `tc-thang-ngan` rồi `POST …:submit`
+3. Giải trình đủ nhưng báo cáo `PERIODIC` chưa có `documentNumber` và `recipientsNote`, `POST …:submit`
+4. `PATCH` `documentNumber = "125/BC-STTTT"`, `recipientsNote = "UBND tỉnh; Bộ KH&CN."` rồi `POST …:submit`; thử thêm báo cáo `AD_HOC` không có hai trường
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-16-029, nêu danh sách chỉ tiêu. Bước 2 `422` ERR-16-030. Bước 3 `422` ERR-16-061. Bước 4 `200` (chỉ tiêu bắt buộc `PARTIAL` được phép khi có giải trình). Báo cáo `AD_HOC` không bị chặn bởi ERR-16-029.
+**Kết quả mong đợi.** Bước 1 `422` ERR-16-029, nêu danh sách chỉ tiêu. Bước 2 `422` ERR-16-030. Bước 3 `422` ERR-16-061, `errors[]` trỏ `documentNumber`, `recipientsNote`. Bước 4 `200` (chỉ tiêu bắt buộc `PARTIAL` được phép khi có giải trình); báo cáo `AD_HOC` gửi duyệt được mà không cần hai trường (BR-16-027). Báo cáo `AD_HOC` không bị chặn bởi ERR-16-029.
 
 **Thông báo hiển thị.** ERR-16-029: "Chỉ tiêu bắt buộc bi-mat-ngoai-kho chưa có số liệu. Báo cáo chính thức chưa gửi duyệt được."; ERR-16-030: "Còn 2 chỉ tiêu chệch hoặc thiếu số chưa có giải trình."; ERR-16-061: "Báo cáo chính thức cần số ký hiệu và nơi nhận trước khi gửi duyệt."
 
@@ -2157,7 +2158,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. U-T90-TO1 `GET /reports?state=XYZ`
 5. U-T91-TO1 `GET /reports/bc-thang-2026-10` của T90
 
-**Kết quả mong đợi.** Bước 1 trả bản nháp kèm người lập, `latestVersion`. Bước 2 VW chỉ thấy báo cáo đã công bố (`PUBLISHED`, `SUPERSEDED`, `WITHDRAWN`), kèm `needsCorrection`. Bước 3 `404` ERR-16-001 (VW không thấy bản nháp, 404-ẩn). Bước 4 `400` ERR-16-057. Bước 5 `404` ERR-16-001 theo tenant.
+**Kết quả mong đợi.** Bước 1 trả bản nháp kèm người lập, `latestVersion`. Bước 2 VW chỉ thấy báo cáo đã công bố (`PUBLISHED`, `SUPERSEDED`; không thấy `WITHDRAWN`, chỉ TA và AU thấy theo FR-16-031), kèm `needsCorrection`. Bước 3 `404` ERR-16-001 (VW không thấy bản nháp, 404-ẩn). Bước 4 `400` ERR-16-057. Bước 5 `404` ERR-16-001 theo tenant.
 
 :::
 
@@ -2286,16 +2287,16 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-16-035, FR-16-037 · API-16-086, 087, 089 · UI-16-01 · BR-16-007, BR-16-009, BR-16-026 · NFR-16-006.
 
-**Tiền điều kiện, dữ liệu.** S-T90-PH17 (scope `kpi.read`); `bc-thang-2026-09` `PUBLISHED`, `bc-thang-2026-08` `WITHDRAWN`, `bc-thang-2026-10` `DRAFT`.
+**Tiền điều kiện, dữ liệu.** S-T90-PH17 (scope `kpi.read`); `bc-thang-2026-09` `PUBLISHED`, `bc-thang-2026-08` `WITHDRAWN`, `bc-thang-2026-10` `DRAFT`; `16.overview.pinned-indicators` = `mttd,httt-ket-noi-ty-le,bi-mat-ngoai-kho,ho-so-cap-do-phe-duyet` (4 mã).
 
 **Các bước.**
 
 1. `GET /feed/indicator-values?periodCode=M-2026-09&onlyOfficial=true&groupCode=KET_NOI`
 2. `GET /feed/reports?reportType=PERIODIC&from=2026-01-01&to=2026-12-31`
 3. `GET /feed/indicator-values?indicatorCodes=mttd,httt-ket-noi-ty-le`
-4. `GET /cards?limit=4` (4 chỉ tiêu ghim, một chỉ tiêu `NO_DATA`) và mở `/tong-quan`
+4. `GET /cards?limit=4` (4 chỉ tiêu ghim theo `16.overview.pinned-indicators`, một chỉ tiêu `NO_DATA`) và mở `/tong-quan`; đặt lại tham số rỗng rồi `GET /cards`
 
-**Kết quả mong đợi.** Bước 1 `200`, `FeedValue` có `value`, `unit`, `status`, `completeness`, `provisional = false`, `reportCode`. Bước 2 chỉ `bc-thang-2026-09` (không bản nháp, không bản `WITHDRAWN`), có `contentHash`, `downloadUrl`. Bước 3 đúng hai chỉ tiêu. p99 ≤ 300 ms ở 50 lượt/giây (đo ở TC-16-116). Bước 4 `cards[]` ≤ 4, mỗi thẻ có `displayValue`, `status`, `trend`, `link` tới `/giam-sat/chi-tieu/chi-so/{ma}`; chỉ tiêu thiếu số hiện "Chưa có số liệu", không điền số cũ; `/tong-quan` hiển thị đủ thẻ.
+**Kết quả mong đợi.** Bước 1 `200`, `FeedValue` có `value`, `unit`, `status`, `completeness`, `provisional = false`, `reportCode`. Bước 2 chỉ `bc-thang-2026-09` (không bản nháp, không bản `WITHDRAWN`), có `contentHash`, `downloadUrl`. Bước 3 đúng hai chỉ tiêu. p99 ≤ 300 ms ở 50 lượt/giây (đo ở TC-16-116). Bước 4 `cards[]` ≤ 4, mỗi thẻ có `displayValue`, `status`, `trend`, `link` tới `/giam-sat/chi-tieu/chi-so/{ma}`; chỉ tiêu thiếu số hiện "Chưa có số liệu", không điền số cũ; `/tong-quan` hiển thị đủ thẻ. Tham số rỗng thì thẻ lấy điểm tổng và chỉ tiêu `OFF_TRACK` có trọng số nhóm cao nhất.
 
 :::
 
@@ -3097,7 +3098,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. Tạo xuất mới và kiểm `expiresAt`
 4. `GET /settings`
 
-**Kết quả mong đợi.** Bước 1 24 khóa `16.*` kèm `default`, `ceiling`, `scope`. Bước 2 `200`. Bước 3 `expiresAt` = tạo + 48 giờ, áp dụng ≤ 60 giây, không cần khởi động lại. Bước 4 giá trị mới, `updatedBy`. Thêm chỉ tiêu, nguồn, mẫu gói cũng không cần phát hành.
+**Kết quả mong đợi.** Bước 1 25 khóa `16.*` kèm `default`, `ceiling`, `scope`. Bước 2 `200`. Bước 3 `expiresAt` = tạo + 48 giờ, áp dụng ≤ 60 giây, không cần khởi động lại. Bước 4 giá trị mới, `updatedBy`. Thêm chỉ tiêu, nguồn, mẫu gói cũng không cần phát hành.
 
 :::
 
@@ -4209,13 +4210,10 @@ Bảng nối tám tiêu chí ở FRS mục 14 với ca chứng minh.
 
 ### 10.1. Đề nghị đồng bộ
 
-Các đề nghị phát sinh khi viết ca; chưa đề nghị nào được hấp thụ.
+Các đề nghị phát sinh khi viết ca. FRS 0.2 đã nêu sẵn nội dung của ĐN-TC-01 (VW chỉ thấy `PUBLISHED`, `SUPERSEDED`; TA, AU thấy thêm `WITHDRAWN`, FR-16-031), ĐN-TC-02 (chỉ TA chốt và mở lại kỳ, FR-16-024, mục 3.2) và ĐN-TC-03 (quá 2 giờ không có tin thì `UNKNOWN`, FR-16-046): ba đề nghị này đóng, ca rep-list, per-close-neg, arch-ops đã sửa theo. Năm đề nghị còn lại chưa được hấp thụ.
 
 | Mã | Tài liệu | Đề nghị |
 |---|---|---|
-| ĐN-TC-01 | D02-03-PH16 FR-16-031 | Ghi rõ phạm vi trạng thái báo cáo theo vai trò: VW chỉ thấy `PUBLISHED`, `SUPERSEDED`, `WITHDRAWN`; ca rep-list giả định vậy |
-| ĐN-TC-02 | D02-03-PH16 FR-16-024, BR-16-011 | Làm rõ vai trò mở lại kỳ: BR-16-011 ghi "cần TA" nhưng `PERM-16-run` gồm cả TO; ca per-close-neg chỉ dùng TA |
-| ĐN-TC-03 | D02-03-PH16 FR-16-013, mục 9.2 | Ghi ngưỡng và giá trị mặc định cho `UNKNOWN` của trạng thái vận hành thành phần (ca arch-ops dùng 2 giờ, giả định) |
 | ĐN-TC-04 | D02-03-PH16 FR-16-053 | Ghi quy tắc idempotent của biên nhận trùng `channelMessageId` (không tạo dòng thứ hai hay `409`); ca nat-receipt chấp nhận hai kết quả |
 | ĐN-TC-05 | D03-04-PH16 (OpenAPI) | Đồng nhất mã lỗi khi `reason` ngắn hơn `minLength` của lược đồ: ERR-16-003 (`400`) hay ERR-16-007 (`422`); nhiều ca chấp nhận cả hai |
 | ĐN-TC-06 | D03-04-PH16 API-16-092 | Ghi `PERM-16-compare` cho PU và cách tạo mã giả (`alias`) ổn định theo kỳ |
