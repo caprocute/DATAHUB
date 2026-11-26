@@ -32,7 +32,7 @@ STATUS = {400: ("BadRequest", "Dữ liệu không hợp lệ", "ERR-08-003"), 40
           504: ("GatewayTimeout", "Vượt ngân sách thời gian", "ERR-08-103")}
 GET_ERRS = {"ERR-08-001", "ERR-08-027", "ERR-08-032", "ERR-08-041", "ERR-08-044", "ERR-08-045"}
 # mã lỗi của FR gộp không áp cho operation này (FR có nhiều bước, operation chỉ thực hiện một bước)
-DROP = {"059": ("ERR-08-038", "ERR-08-039"), "087": ("ERR-08-046",), "088": ("ERR-08-046",), "090": ("ERR-08-046",), "091": ("ERR-08-046",), "092": ("ERR-08-046",), "093": ("ERR-08-046",),
+DROP = {"132": ("ERR-08-005", "ERR-08-007"), "059": ("ERR-08-038", "ERR-08-039"), "087": ("ERR-08-046",), "088": ("ERR-08-046",), "090": ("ERR-08-046",), "091": ("ERR-08-046",), "092": ("ERR-08-046",), "093": ("ERR-08-046",),
         "094": ("ERR-08-046",), "096": ("ERR-08-046",), "084": ("ERR-08-046",)}
 # trạng thái trả về của ví dụ phản hồi theo operation (mặc định ví dụ lấy giá trị enum đầu tiên)
 EX_STATUS = {"009": "ACTIVE", "010": "SUSPENDED", "011": "ACTIVE", "012": "RETIRED", "019": "QUEUED", "038": "PENDING_APPROVAL", "039": "APPROVED", "040": "DRAFT", "041": "ACTIVE", "050": "PENDING_APPROVAL",
@@ -42,6 +42,7 @@ EX_STATUS = {"009": "ACTIVE", "010": "SUSPENDED", "011": "ACTIVE", "012": "RETIR
 NOTE = {
     "006": "Loại `MDM_DOMAIN` cần `mdmDomainCode` có khung nhìn hợp đồng (ERR-08-009); `RDM_CATALOG` cần `rdmCatalogCode` đã phát hành (ERR-08-010); `SOURCE_DATASET` cần `connectionId` chỉ đọc và `objectName` (ERR-08-011, 012); `FLOW_MESSAGE` cần `flowCode`.",
     "130": "Đối tượng phải `ACTIVE` (ERR-08-006); `FLOW_MESSAGE` bị ERR-08-050; `SOURCE_DATASET` cần `updatedAtField`. Bật rồi bộ lập lịch nội bộ và sự kiện PH-06, PH-07 kích hoạt lần đo `INCREMENTAL`.",
+    "132": "Chỉ đọc: tính điểm giả định từ ảnh chụp đầy đủ gần nhất của các đối tượng trong phạm vi, không ghi dữ liệu, không cần bản nháp; chưa có ảnh chụp thì ERR-08-027.",
     "131": "Tắt đo tăng dần; lý do từ 20 ký tự; bộ đệm khóa đổi còn lại được đo bù ở lần `FULL` kế tiếp.",
     "009": "Cần miền có tổ chức chủ quản và cán bộ phụ trách (ERR-08-008); sinh lịch mặc định theo `08.scan.default-cron`.",
     "014": "Phân loại lấy từ PH-09; trường chưa có phân loại xác nhận bị che như Nhạy cảm (cảnh báo ERR-08-047, không chặn). Chưa có trường thì gửi `If-Match: *` để tạo.",
@@ -184,6 +185,8 @@ def build():
             add("ERR-08-001")
         if act and "noifm" not in fl:
             add("ERR-08-006")
+        if code == "132":
+            add("ERR-08-027")
         if code in ("076", "077"):
             add("ERR-08-041", 410)
             add("ERR-08-041", 409)

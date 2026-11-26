@@ -8,7 +8,7 @@ Tính năng: TS-08-02 · Đăng ký đối tượng đo từ PH-06, PH-07, PH-05
     # Truy vết: FR-08-002 · API-08-006, 016 · UI-08-03 · BR-08-004, 005 · PERM-08-asset
     Biết T90; U-T90-DS1; domain `CITIZEN` ở `mdm-sim` trạng thái `ACTIVE` có khung nhìn `ph06_mdm.v_dq_citizen`.
     Khi `GET /sources/mdm-domains`
-    Và `POST /assets` `{assetCode: mdm-citizen, assetType: MDM_DOMAIN, sourceRef: {domainCode: CITIZEN}, domainCode: DAN_CU}`
+    Và `POST /assets` `{assetCode: mdm-citizen, assetType: MDM_DOMAIN, mdmDomainCode: CITIZEN, domainCode: DAN_CU}`
     Thì bước 1 liệt kê `CITIZEN`. Bước 2 `201`, `status = DRAFT`, `fields[]` lấy từ khung nhìn, `recordKey = goldenId`. Nhật ký truy vấn của `mdm-sim` chỉ có `SELECT` trên khung nhìn; không có truy cập bảng vật lý `ph06_mdm.*` (BR-08-005).
 
   @TC-08-007 @P1 @Âm
@@ -24,7 +24,7 @@ Tính năng: TS-08-02 · Đăng ký đối tượng đo từ PH-06, PH-07, PH-05
     # Truy vết: FR-08-003 · API-08-006, 017 · UI-08-03 · LGC-DMDC-006, 007, 008
     Biết T90; danh mục `DVHC` đã phát hành ở `rdm-sim`.
     Khi `GET /sources/rdm-catalogs`
-    Và `POST /assets` `{assetCode: rdm-dvhc, assetType: RDM_CATALOG, sourceRef: {catalogCode: DVHC, versionPolicy: LATEST}}`
+    Và `POST /assets` `{assetCode: rdm-dvhc, assetType: RDM_CATALOG, rdmCatalogCode: DVHC}`
     Thì `201`, `sourceRef = {catalogCode, versionPolicy, versionNo}`. Đối tượng này đo chất lượng danh mục sau mỗi lần nhập hoặc phát hành, không thay chức năng nhập của PH-07.
 
   @TC-08-009 @P2 @Âm
@@ -40,7 +40,7 @@ Tính năng: TS-08-02 · Đăng ký đối tượng đo từ PH-06, PH-07, PH-05
     # Truy vết: FR-08-004 · API-08-006, 018 · UI-08-03 · BR-08-025
     Biết T90; kết nối `hotich-pg-ro` ở `conn-sim` (PostgreSQL bản sao chỉ đọc, đã cấp cho PH-08); bảng `hotich.khai_sinh` (F-HT).
     Khi `POST /sources/connections/hotich-pg-ro:discover`
-    Và `POST /assets` `{assetCode: src-hotich, assetType: SOURCE_DATASET, sourceRef: {connectionCode: hotich-pg-ro, schema: hotich, table: khai_sinh}, recordKey: [so_khai_sinh], updatedAtField: ngay_cap_nhat}`
+    Và `POST /assets` `{assetCode: src-hotich, assetType: SOURCE_DATASET, connectionId: hotich-pg-ro, objectName: hotich.khai_sinh, keyColumns: [so_khai_sinh], updatedAtField: ngay_cap_nhat}`
     Thì bước 1 trả danh sách bảng và cột. Bước 2 `201`, `sourceRef` đủ ba trường, `scanWindow = 22:00-05:00`. PH-08 không lưu thông tin đăng nhập kết nối (bí mật ở OpenBao); nhật ký nguồn chỉ có `SELECT`.
 
   @TC-08-011 @P1 @Âm
@@ -56,19 +56,19 @@ Tính năng: TS-08-02 · Đăng ký đối tượng đo từ PH-06, PH-07, PH-05
   Kịch bản: TC-08-012 Khai báo CDE và kéo phân loại PH-09
     # Truy vết: FR-08-005 · API-08-008, 013, 014, 015 · UI-08-04 · BR-08-012, 031 · PERM-08-asset
     Biết `mdm-citizen` `DRAFT`; `cls-sim` trả `nationalId` `SENSITIVE` `CONFIRMED`, `fullName` `RESTRICTED` `CONFIRMED`.
-    Khi `PUT /assets/mdm-citizen/fields/nationalId` `{isCde: true}`
-    Và `PUT /assets/mdm-citizen/fields/fullName` `{isCde: true}`
+    Khi `PUT /assets/mdm-citizen/fields/nationalId` `{cde: true}`
+    Và `PUT /assets/mdm-citizen/fields/fullName` `{cde: true}`
     Và `POST /assets/mdm-citizen/fields:sync-classification`
     Và `GET /assets/mdm-citizen/fields`
     Và `PATCH /assets/mdm-citizen` đổi tên hiển thị với `If-Match` đúng
-    Thì `nationalId` có `dataClass = SENSITIVE`, `maskingMode = HASH`; `fullName` `RESTRICTED`, `maskingMode = PARTIAL`; `cdeCoverage` hiển thị tỷ lệ CDE có quy tắc `COMPLETENESS` hoặc `VALIDITY` (0 % khi chưa có quy tắc). `PATCH` trả `200` và `ETag` mới. KT: có (field.cde).
+    Thì `nationalId` có `dataClass = SENSITIVE`, `valueMode = HASH_ONLY`; `fullName` `RESTRICTED`, `valueMode = MASKED`; thẻ điểm đối tượng (API-08-106) có `cde[]` với điểm từng CDE có quy tắc `COMPLETENESS` hoặc `VALIDITY` (0 % khi chưa có quy tắc). `PATCH` trả `200` và `ETag` mới. KT: có (field.cde).
 
   @TC-08-013 @P1 @Âm
   Kịch bản: TC-08-013 Che lỏng hơn phân loại hoặc trường không thuộc lược đồ
     # Truy vết: FR-08-005 · API-08-014 · BR-08-012 · ERR-08-003, 014
     Biết như cde-set.
-    Khi `PUT /assets/mdm-citizen/fields/nationalId` `{maskingMode: NONE}`
-    Và `PUT /assets/mdm-citizen/fields/truong_la` `{isCde: true}`
+    Khi `PUT /assets/mdm-citizen/fields/nationalId` `{valueMode: PLAIN}`
+    Và `PUT /assets/mdm-citizen/fields/truong_la` `{cde: true}`
     Thì bước 1 `400` ERR-08-003 (che lỏng hơn mức `SENSITIVE`). Bước 2 `422` ERR-08-014. Cấu hình trường không đổi.
 
   @TC-08-014 @P1 @Âm

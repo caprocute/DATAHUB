@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH08
 ten: Kịch bản và test case phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, chuyên viên quản lý dữ liệu, chủ đầu tư (UAT), hội đồng thẩm định
@@ -18,14 +18,14 @@ Phần này viết cho hội đồng thẩm định: tài liệu chứng minh đ
 
 **Mục tiêu.** Tài liệu chứng minh bốn điều:
 
-- PH-08 làm đúng mọi yêu cầu đã duyệt ở D02-03-PH08 bản 0.1: 61 FR (36 mức M, 21 mức S, 4 mức C), 35 quy tắc BR-08, 20 yêu cầu phi chức năng NFR-08.
+- PH-08 làm đúng mọi yêu cầu trong D02-03-PH08 bản 0.2: 61 FR (36 mức M, 21 mức S, 4 mức C), 35 quy tắc BR-08, 20 yêu cầu phi chức năng NFR-08.
 - Điểm chất lượng tính đúng công thức: điểm chiều theo `POOLED`, điểm tổng có trọng số 0,20/0,20/0,15/0,10/0,15/0,20, chiều bị bỏ qua (`SKIPPED`) không bị tính bằng 0 mà chuẩn hóa trọng số và gắn cờ `INCOMPLETE_DIMENSIONS`; ví dụ số cụ thể cho điểm 91,45 và 93,06.
 - Không giá trị Nhạy cảm nào ở dạng rõ trong bản ghi lỗi, hồ sơ, sự kiện, nhật ký hay tệp xuất; tenant này không đọc được dữ liệu đo của tenant khác ở API, CSDL (RLS), Kafka và bộ đệm quy tắc; bốn mắt không có đường vòng.
 - Kiểm tra trực tuyến đạt p95 ≤ 50 ms, báo cáo năm chỉ công bố khi đủ lần đo toàn bộ, và vòng khắc phục từ lỗi đến phiếu, đo kiểm chứng, báo cáo chạy khép kín.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->152 (TC-08-001…152; 97 ca P1)<!--/gen--> test case và 8 kịch bản nghiệm thu người dùng (UAT-01…08). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi FR mức S, C có ít nhất một ca; ma trận mục 8 sinh bằng `ph08/tools/gen_matrix.py`. PH-08 là năng lực mới của Đợt 3 (hệ cũ không có chức năng chất lượng dữ liệu), nên mục 7 là nghiệm thu theo vai trò thay cho nghiệm thu tương đương hệ cũ.
+**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->153 (TC-08-001…153; 97 ca P1)<!--/gen--> test case và 8 kịch bản nghiệm thu người dùng (UAT-01…08). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi FR mức S, C có ít nhất một ca; ma trận mục 8 sinh bằng `ph08/tools/gen_matrix.py`. PH-08 là năng lực mới của Đợt 3 (hệ cũ không có chức năng chất lượng dữ liệu), nên mục 7 là nghiệm thu theo vai trò thay cho nghiệm thu tương đương hệ cũ.
 
-**Căn cứ.** FRS D02-03-PH08, use case D02-04-PH08, CSDL D03-03-PH08 (test cô lập `ph08_isolation_test.sql`), tập API D03-04-PH08 và màn hình D03-06-PH08 (đang soạn song song, mã API-08 theo FRS 9.4, UI-08 theo FRS 10.1), ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01 (cổng `RG-1…5`); Luật Dữ liệu 60/2024, Nghị định 165/2025, Nghị định 278/2025 (hạn chuẩn hóa dữ liệu 31/12/2026); cấu trúc theo ISO/IEC/IEEE 29119-3.
+**Căn cứ.** FRS D02-03-PH08, use case D02-04-PH08, CSDL D03-03-PH08 (test cô lập `ph08_isolation_test.sql`), tập API D03-04-PH08 và màn hình D03-06-PH08 (bản 0.2, mã API-08 theo FRS 9.4, UI-08 theo FRS 10.1), ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01 (cổng `RG-1…5`); Luật Dữ liệu 60/2024, Nghị định 165/2025, Nghị định 278/2025 (hạn chuẩn hóa dữ liệu 31/12/2026); cấu trúc theo ISO/IEC/IEEE 29119-3.
 
 **Điểm cần hội đồng lưu ý.** Năm nhóm ca bắt buộc đạt 100 % trước khi phát hành:
 
@@ -63,7 +63,7 @@ Chương 1 chiến lược; 2 dữ liệu; 3 danh sách kịch bản; 4 ca chứ
 
 ### 1.1. Đối tượng kiểm thử
 
-Đối tượng là mô-đun `vn.datahub.data.dq` của `dh-data` (các thành phần `dq-scan`, `dq-worker`, `dq-inline`, `dq-finding`, `dq-alert`), schema `ph08_dq` của `pg-core` với RLS theo `tenant_id` (31 bảng), 128 API dưới `/api/dq/v1` (API-08-001…128), 14 topic `{tenant}.dq.*` (EVT-08-01…14) và 20 màn hình dưới `/du-lieu/chat-luong` (UI-08-01…20). Ngoài phạm vi: nội dung bản ghi vàng (PH-06), bảng mã (PH-07), kết nối nguồn (PH-05), che khi trả dữ liệu (PH-09), kênh thông báo (PH-13), KPI tổng hợp (PH-16); các phân hệ này được giả lập (mục 2.5) và ca của chúng thuộc tập D05-02 tương ứng.
+Đối tượng là mô-đun `vn.datahub.data.dq` của `dh-data` (các thành phần `dq-scan`, `dq-worker`, `dq-inline`, `dq-finding`, `dq-alert`), schema `ph08_dq` của `pg-core` với RLS theo `tenant_id` (35 bảng), 132 API dưới `/api/dq/v1` (API-08-001…132), 14 topic `{tenant}.dq.*` (EVT-08-01…14) và 20 màn hình dưới `/du-lieu/chat-luong` (UI-08-01…20). Ngoài phạm vi: nội dung bản ghi vàng (PH-06), bảng mã (PH-07), kết nối nguồn (PH-05), che khi trả dữ liệu (PH-09), kênh thông báo (PH-13), KPI tổng hợp (PH-16); các phân hệ này được giả lập (mục 2.5) và ca của chúng thuộc tập D05-02 tương ứng.
 
 ### 1.2. Mức kiểm thử
 
@@ -245,7 +245,7 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5; mục 3.2 liệt k
 | TS-08-06 | Quy tắc nâng cao, thư viện mẫu và chạy thử | UC-08-06 | 7 |
 | TS-08-07 | Gửi duyệt, duyệt, kích hoạt và ngừng bộ quy tắc | UC-08-07 | 5 |
 | TS-08-08 | So sánh phiên bản, sao chép, nhập và xuất bộ quy tắc | UC-08-08 | 3 |
-| TS-08-09 | Cấu hình trọng số và ngưỡng có duyệt | UC-08-09 | 4 |
+| TS-08-09 | Cấu hình trọng số và ngưỡng có duyệt | UC-08-09 | 5 |
 | TS-08-10 | Lập lịch đo, đo theo yêu cầu, theo dõi và hủy | UC-08-10 | 7 |
 | TS-08-11 | Đo theo lô, đối chiếu danh mục PH-07 và ghi bản ghi lỗi | UC-08-11 | 6 |
 | TS-08-12 | Tính điểm có trọng số, so kỳ trước và xu hướng | UC-08-12 | 9 |
@@ -272,7 +272,7 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5; mục 3.2 liệt k
 | TS-08-33 | Hiệu năng đo lô, hồ sơ, bảng điều khiển và báo cáo | — | 3 |
 | TS-08-34 | Tái lập, chịu lỗi và giao sự kiện | — | 2 |
 | TS-08-35 | Vòng đầy đủ và truy cập giao diện | — | 2 |
-| **Tổng** | | | **152** (97 ca P1) |
+| **Tổng** | | | **153** (97 ca P1) |
 
 : Danh sách 35 kịch bản kèm use case và số ca
 <!--/gen-->
@@ -284,8 +284,8 @@ Một ca có thể thuộc nhiều loại nên tổng theo loại lớn hơn t�
 <!--gen:loai-->
 | Loại | Số ca |
 |---|---|
-| Dương | 77 |
-| Âm | 69 |
+| Dương | 78 |
+| Âm | 70 |
 | Bảo mật | 19 |
 | Biên | 8 |
 | Chịu lỗi | 6 |
@@ -334,11 +334,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /domains` thân `{code: DAN_CU, name: "Dân cư", ownerOrgId: ORG-CA, stewardUserId: DS1}`
+1. `POST /domains` thân `{domainCode: DAN_CU, name: "Dân cư", ownerOrgCode: ORG-CA, stewardUser: DS1}`
 2. `GET /domains/DAN_CU`
 3. `GET /domains?status=ACTIVE&page=0&size=10`
 
-**Kết quả mong đợi.** Bước 1 `201`, tiêu đề `Location` và `ETag`, `status = ACTIVE`, `assetCount = 0`. Bước 2 trả đủ `ownerOrgName`, `stewardUserId`. Bước 3 có đúng một miền. KT: có (domain.create), ghi chủ quản và cán bộ phụ trách. EVT: không.
+**Kết quả mong đợi.** Bước 1 `201`, tiêu đề `Location` và `ETag`, `status = ACTIVE`. Bước 2 trả đủ `ownerOrgCode`, `stewardUser`. Bước 3 có đúng một miền. KT: có (domain.create), ghi chủ quản và cán bộ phụ trách. EVT: không.
 
 :::
 
@@ -382,7 +382,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /domains` với `ownerOrgId = ORG-KHONG-CO`
-2. `POST /domains` với `stewardUserId` là người dùng VW
+2. `POST /domains` với `stewardUser` là người dùng VW
 
 **Kết quả mong đợi.** Cả hai `422` ERR-08-008, không tạo miền, không bản ghi kiểm toán thành công.
 
@@ -461,7 +461,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /sources/mdm-domains`
-2. `POST /assets` `{assetCode: mdm-citizen, assetType: MDM_DOMAIN, sourceRef: {domainCode: CITIZEN}, domainCode: DAN_CU}`
+2. `POST /assets` `{assetCode: mdm-citizen, assetType: MDM_DOMAIN, mdmDomainCode: CITIZEN, domainCode: DAN_CU}`
 
 **Kết quả mong đợi.** Bước 1 liệt kê `CITIZEN`. Bước 2 `201`, `status = DRAFT`, `fields[]` lấy từ khung nhìn, `recordKey = goldenId`. Nhật ký truy vấn của `mdm-sim` chỉ có `SELECT` trên khung nhìn; không có truy cập bảng vật lý `ph06_mdm.*` (BR-08-005).
 
@@ -507,7 +507,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /sources/rdm-catalogs`
-2. `POST /assets` `{assetCode: rdm-dvhc, assetType: RDM_CATALOG, sourceRef: {catalogCode: DVHC, versionPolicy: LATEST}}`
+2. `POST /assets` `{assetCode: rdm-dvhc, assetType: RDM_CATALOG, rdmCatalogCode: DVHC}`
 
 **Kết quả mong đợi.** `201`, `sourceRef = {catalogCode, versionPolicy, versionNo}`. Đối tượng này đo chất lượng danh mục sau mỗi lần nhập hoặc phát hành, không thay chức năng nhập của PH-07.
 
@@ -553,7 +553,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /sources/connections/hotich-pg-ro:discover`
-2. `POST /assets` `{assetCode: src-hotich, assetType: SOURCE_DATASET, sourceRef: {connectionCode: hotich-pg-ro, schema: hotich, table: khai_sinh}, recordKey: [so_khai_sinh], updatedAtField: ngay_cap_nhat}`
+2. `POST /assets` `{assetCode: src-hotich, assetType: SOURCE_DATASET, connectionId: hotich-pg-ro, objectName: hotich.khai_sinh, keyColumns: [so_khai_sinh], updatedAtField: ngay_cap_nhat}`
 
 **Kết quả mong đợi.** Bước 1 trả danh sách bảng và cột. Bước 2 `201`, `sourceRef` đủ ba trường, `scanWindow = 22:00-05:00`. PH-08 không lưu thông tin đăng nhập kết nối (bí mật ở OpenBao); nhật ký nguồn chỉ có `SELECT`.
 
@@ -599,13 +599,13 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `PUT /assets/mdm-citizen/fields/nationalId` `{isCde: true}`
-2. `PUT /assets/mdm-citizen/fields/fullName` `{isCde: true}`
+1. `PUT /assets/mdm-citizen/fields/nationalId` `{cde: true}`
+2. `PUT /assets/mdm-citizen/fields/fullName` `{cde: true}`
 3. `POST /assets/mdm-citizen/fields:sync-classification`
 4. `GET /assets/mdm-citizen/fields`
 5. `PATCH /assets/mdm-citizen` đổi tên hiển thị với `If-Match` đúng
 
-**Kết quả mong đợi.** `nationalId` có `dataClass = SENSITIVE`, `maskingMode = HASH`; `fullName` `RESTRICTED`, `maskingMode = PARTIAL`; `cdeCoverage` hiển thị tỷ lệ CDE có quy tắc `COMPLETENESS` hoặc `VALIDITY` (0 % khi chưa có quy tắc). `PATCH` trả `200` và `ETag` mới. KT: có (field.cde).
+**Kết quả mong đợi.** `nationalId` có `dataClass = SENSITIVE`, `valueMode = HASH_ONLY`; `fullName` `RESTRICTED`, `valueMode = MASKED`; thẻ điểm đối tượng (API-08-106) có `cde[]` với điểm từng CDE có quy tắc `COMPLETENESS` hoặc `VALIDITY` (0 % khi chưa có quy tắc). `PATCH` trả `200` và `ETag` mới. KT: có (field.cde).
 
 :::
 
@@ -624,12 +624,12 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `PUT /assets/mdm-citizen/fields/nationalId` `{maskingMode: NONE}`
-2. `PUT /assets/mdm-citizen/fields/truong_la` `{isCde: true}`
+1. `PUT /assets/mdm-citizen/fields/nationalId` `{valueMode: PLAIN}`
+2. `PUT /assets/mdm-citizen/fields/truong_la` `{cde: true}`
 
 **Kết quả mong đợi.** Bước 1 `400` ERR-08-003 (che lỏng hơn mức `SENSITIVE`). Bước 2 `422` ERR-08-014. Cấu hình trường không đổi.
 
-**Thông báo hiển thị.** ERR-08-003: "nationalId không hợp lệ: mức SENSITIVE phải che ít nhất ở chế độ HASH."; ERR-08-014: "Trường truong_la không có trong đối tượng đo mdm-citizen."
+**Thông báo hiển thị.** ERR-08-003: "Trường nationalId mức SENSITIVE phải che ít nhất ở chế độ HASH_ONLY."; ERR-08-014: "Trường truong_la không có trong đối tượng đo mdm-citizen."
 
 :::
 
@@ -682,7 +682,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. DS1 `GET /assets/mdm-citizen`
 3. DO1 `GET /assets`
 
-**Kết quả mong đợi.** Bước 1 `200`, `items[]` có `score`, `verdict`, `trend`, `lastScanAt`, `openFindings{CRITICAL,MAJOR,MINOR}`, `cdeCoverage`, kèm `facets`. Bước 2 có `ETag`. Bước 3 chỉ các đối tượng của miền thuộc ORG-CA.
+**Kết quả mong đợi.** Bước 1 `200`, `items[]` có `lastScore`, `lastVerdict`, `status`, `domainCode`, kèm `facets`. Bước 2 có `ETag`. Bước 3 chỉ các đối tượng của miền thuộc ORG-CA.
 
 :::
 
@@ -732,7 +732,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. `POST /assets/mdm-citizen:resume`
 4. `POST /assets/rdm-dvhc:retire` (lý do ≥ 20 ký tự)
 
-**Kết quả mong đợi.** Bước 1 `200`, `status = SUSPENDED`, `cancelledScans[]` có lần đo `QUEUED`, lịch không bắn. Bước 3 `ACTIVE`, lịch tiếp tục. Bước 4 `RETIRED`; dữ liệu đo giữ theo chính sách lưu giữ (FR-08-059). KT: có (asset.suspend, asset.resume, asset.retire).
+**Kết quả mong đợi.** Bước 1 `200`, `status = SUSPENDED`, lần đo `QUEUED` của đối tượng chuyển `CANCELLED` (xem ở `GET /scans`), lịch không bắn. Bước 3 `ACTIVE`, lịch tiếp tục. Bước 4 `RETIRED`; dữ liệu đo giữ theo chính sách lưu giữ (FR-08-059). KT: có (asset.suspend, asset.resume, asset.retire).
 
 :::
 
@@ -782,11 +782,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /assets/src-hotich/profile-runs` `{mode: SAMPLE, sampleSize: 5000}`
+1. `POST /assets/src-hotich/profile-runs` `{scanMode: SAMPLE, sampleRows: 5000}`
 2. poll `GET /profile-runs/{runId}` đến `SUCCEEDED`
 3. `GET /profile-runs/{runId}/columns`
 
-**Kết quả mong đợi.** Bước 1 `202`, `status = QUEUED`, `Location` tới API-08-021. Bước 3 mỗi cột có `nullRatio`, `distinctEstimate`, `min`, `max`, `quantiles`, `topPatterns`, `inferredType`; `ten_cha.nullRatio` = 0,042 ± 0,001; `distinctEstimate` lệch ≤ 2 % so với đếm chính xác. Truy vấn lên nguồn chỉ `SELECT`.
+**Kết quả mong đợi.** Bước 1 `202`, `status = QUEUED`, `Location` tới API-08-021. Bước 3 mỗi cột có `rowCount`, `nullCount`, `emptyCount`, `distinctEstimate`, `minMasked`, `maxMasked`, `quantiles`, `patternStats`, `inferredType`; `ten_cha`: `nullCount` / `rowCount` = 0,042 ± 0,001; `distinctEstimate` lệch ≤ 2 % so với đếm chính xác. Truy vấn lên nguồn chỉ `SELECT`.
 
 :::
 
@@ -806,7 +806,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /assets/flow-hotich/profile-runs`
-2. `POST /assets/src-hotich/profile-runs` `{mode: SAMPLE, sampleSize: 50}`
+2. `POST /assets/src-hotich/profile-runs` `{scanMode: SAMPLE, sampleRows: 50}`
 3. `POST` hồ sơ lần hai khi lần một còn `RUNNING`
 4. ngắt `conn-sim` rồi chạy hồ sơ mới
 
@@ -837,7 +837,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. quét `ph08_dq`, log, vết OTel tìm `DH-CANARY-prof`
 5. `GET /profile-runs/{runId}/columns` của đối tượng `src-moi` chưa chạy hồ sơ
 
-**Kết quả mong đợi.** Cột `cccd` chỉ có `topPatterns` (ví dụ `\d{12}`) và số đếm, không có `topValues`. `topValues` của cột không Nhạy cảm chỉ hiện cho DS1, TA thấy rỗng. Quét canary 0 kết quả (Mồi sạch). Bước 5 `404` ERR-08-001 (chưa có hồ sơ).
+**Kết quả mong đợi.** Cột `cccd` chỉ có `patternStats` (ví dụ `\d{12}`) và số đếm, không có `topValues`. `topValues` của cột không Nhạy cảm chỉ hiện cho DS1, TA thấy rỗng. Quét canary 0 kết quả (Mồi sạch). Bước 5 `404` ERR-08-001 (chưa có hồ sơ).
 
 **Thông báo hiển thị.** ERR-08-001 (FR-08-009): "Chưa có hồ sơ dữ liệu cho đối tượng src-moi. Bấm Chạy hồ sơ."
 
@@ -862,7 +862,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. chọn 2 gợi ý, sửa tham số một gợi ý rồi `POST /rule-sets/RS-HOTICH/versions/1/rules`
 3. DS2 lặp bước 2 khi nháp do DS1 tạo
 
-**Kết quả mong đợi.** Bước 1 `200`, `suggestions[]` có `dimension`, `operator`, `target`, `params`, `confidence`, `evidence` (ví dụ `NOT_NULL` cho cột `nullRatio < 1 %`, `REGEX` từ `topPatterns`). Bước 2 quy tắc vào bản nháp với `source = SUGGESTED`. Bước 3 `409` ERR-08-022.
+**Kết quả mong đợi.** Bước 1 `200`, `suggestions[]` có `ruleCode`, `dimension`, `operator`, `severity`, `fieldName`, `params`, `rationale` (ví dụ `NOT_NULL` cho cột có tỷ lệ rỗng dưới 1 %, `REGEX` từ `patternStats`). Bước 2 quy tắc vào bản nháp với `source = SUGGESTED`. Bước 3 `409` ERR-08-022.
 
 **Thông báo hiển thị.** ERR-08-022: "Bộ quy tắc RS-HOTICH đang có bản nháp phiên bản 1 do DS1 tạo."
 
@@ -879,7 +879,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-08-011 · API-08-024 · ERR-08-118.
 
-**Tiền điều kiện, dữ liệu.** Tài khoản dịch vụ `S-T90-PH05` (mTLS); lô chỉ số hợp lệ và một lô thiếu trường `nullRatio`.
+**Tiền điều kiện, dữ liệu.** Tài khoản dịch vụ `S-T90-PH05` (mTLS); lô chỉ số hợp lệ và một lô thiếu trường `nullCount`.
 
 **Các bước.**
 
@@ -1045,7 +1045,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `GET /rules?templateOutdated=true`
 3. `GET /rules?dimension=KHAC`
 
-**Kết quả mong đợi.** `200`, `items[]` có `ruleCode`, `assetCode`, `dimension`, `operator`, `severity`, `execMode`, `lastFailRate`, `templateRef`, kèm `facets`; bước 2 trả đúng 6 quy tắc dùng mẫu cũ. Bước 3 `422` ERR-08-045.
+**Kết quả mong đợi.** `200`, `items[]` có `ruleCode`, `assetCode`, `dimension`, `operator`, `severity`, `execMode`, `templateCode`, kèm `facets`; bước 2 trả đúng 6 quy tắc dùng mẫu cũ. Bước 3 `422` ERR-08-045.
 
 **Thông báo hiển thị.** ERR-08-045: "Tham số dimension không hợp lệ: không thuộc sáu chiều."
 
@@ -1072,10 +1072,10 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /rules:validate-expression` `{language: CEL, expression: "has(ngayCap) && ngayCap >= ngaySinh"}`
+1. `POST /rules:validate-expression` `{assetCode: mdm-citizen, operator: CEL_EXPRESSION, expression: "has(ngayCap) && ngayCap >= ngaySinh"}`
 2. `POST /rule-sets/RS-CITIZEN/versions/1/rules` `{operator: CEL_EXPRESSION, dimension: CONSISTENCY, expression: "..."}`
 
-**Kết quả mong đợi.** Bước 1 `200`, `normalizedExpression`, `estimatedCost` dưới giới hạn, `execMode = BOTH`. Bước 2 `201`, quy tắc chạy được cả lô và trực tuyến.
+**Kết quả mong đợi.** Bước 1 `200`, `valid = true`, `costEstimate` dưới giới hạn, `referencedFields[]`; quy tắc ở bước 2 đặt `execMode = BOTH`. Bước 2 `201`, quy tắc chạy được cả lô và trực tuyến.
 
 :::
 
@@ -1125,7 +1125,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. `POST` `SQL_PREDICATE` có truy vấn con `(SELECT ...)` hoặc `pg_sleep(100)`
 5. `POST` `UNIQUE_IN_ASSET` với `execMode = INLINE`
 
-**Kết quả mong đợi.** Bước 1 `409` ERR-08-006. Bước 2 `201`, `execMode = BATCH`. Bước 3 và 4 `422` ERR-08-020. Bước 5 `422` ERR-08-016 (giả định, xem ĐN-TC-03): quy tắc `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chạy lô.
+**Kết quả mong đợi.** Bước 1 `409` ERR-08-006. Bước 2 `201`, `execMode = BATCH`. Bước 3 và 4 `422` ERR-08-020. Bước 5 `422` ERR-08-016 (BR-08-017): quy tắc `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chạy lô.
 
 **Thông báo hiển thị.** ERR-08-020: "Vị từ SQL dùng nhiều lệnh không được phép. Chỉ được viết điều kiện trên cột của bảng đang đo."; ERR-08-016: "Tham số execMode của quy tắc R-CCCD-UQ không hợp lệ: toán tử chỉ chạy theo lô."; ERR-08-006 (FR-08-014): "Quy tắc vị từ SQL chưa được bật cho tỉnh. Liên hệ quản trị."
 
@@ -1147,9 +1147,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /rule-templates?scope=COMMON`
-2. `POST /rule-sets/RS-ORG/versions/1/rules` `{templateRef: TPL-MST, field: mst}`
+2. `POST /rule-sets/RS-ORG/versions/1/rules` `{templateCode: TPL-MST, fieldName: mst}`
 
-**Kết quả mong đợi.** Bước 1 trả 12 mẫu có phiên bản. Bước 2 `201`, quy tắc `ACCURACY` `CHECKSUM` `MST_10`, `source = TEMPLATE`, giữ `templateRef` và số phiên bản mẫu.
+**Kết quả mong đợi.** Bước 1 trả 12 mẫu có phiên bản. Bước 2 `201`, quy tắc `ACCURACY` `CHECKSUM` `MST_10`, `source = TEMPLATE`, giữ `templateCode` và số phiên bản mẫu.
 
 :::
 
@@ -1195,7 +1195,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. lặp lại với cùng `sampleSeed`
 3. đếm bản ghi lỗi và ảnh chụp mới
 
-**Kết quả mong đợi.** Bước 1 `200`, `dryRunId`, `sampleSeed = 42`, `results[]` (`passCount`, `failCount`, `errorCount`, `examples[]` đã che, `durationMs`), `estimatedScores`; ví dụ lỗi của cột Nhạy cảm chỉ có giá trị băm hoặc che. Bước 2 cùng tập khóa và cùng số đếm. Bước 3 không có bản ghi lỗi, không có ảnh chụp; phiên bản có dấu chạy thử.
+**Kết quả mong đợi.** Bước 1 `200`, `sampleSeed = 42`, `results[]` (`status`, `rowsEvaluated`, `rowsFailed`, `passRate`, `examples[]` đã che), `durationMs`, `estimatedScore`; ví dụ lỗi của cột Nhạy cảm chỉ có giá trị băm hoặc che. Bước 2 cùng tập khóa và cùng số đếm. Bước 3 không có bản ghi lỗi, không có ảnh chụp; phiên bản có dấu chạy thử.
 
 :::
 
@@ -1378,7 +1378,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. `GET /rule-sets/RS-CITIZEN/versions/2/diff?against=1`
 2. `GET /rule-sets/RS-CITIZEN/versions/99`
 
-**Kết quả mong đợi.** Bước 1 `changes[]` có `ADDED`, `MODIFIED`, `REMOVED` với `before`, `after`; quy tắc đổi `ruleCode` được cảnh báo "dấu vân tay lỗi cũ không nối tiếp"; `history[]` có người duyệt, thời điểm. Bước 2 `404` ERR-08-001.
+**Kết quả mong đợi.** Bước 1 danh sách thay đổi có `ADDED`, `MODIFIED`, `REMOVED` kèm giá trị trước và sau; quy tắc đổi `ruleCode` được cảnh báo "dấu vân tay lỗi cũ không nối tiếp"; `history[]` có người duyệt, thời điểm. Bước 2 `404` ERR-08-001.
 
 **Thông báo hiển thị.** ERR-08-001 (FR-08-019): "Không tìm thấy phiên bản 99 của bộ quy tắc RS-CITIZEN."
 
@@ -1404,7 +1404,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. sao chép lần hai khi đích đã có nháp
 4. `GET /rule-sets/RS-CITIZEN/versions/2/export?format=YAML`
 
-**Kết quả mong đợi.** Bước 1 `201`, nháp mới, `rulesNeedingReview[]`. Bước 2 `422` ERR-08-026. Bước 3 `409` ERR-08-022. Bước 4 `200` tệp YAML.
+**Kết quả mong đợi.** Bước 1 `201`, nháp mới, quy tắc có trường vắng ở đích được liệt kê để rà soát. Bước 2 `422` ERR-08-026. Bước 3 `409` ERR-08-022. Bước 4 `200` tệp YAML.
 
 **Thông báo hiển thị.** ERR-08-026: "Đối tượng đích thiếu trường birthDate, nationalId. Khai báo ánh xạ trường trước khi sao chép."; ERR-08-022: "Bộ quy tắc RS-CITIZEN-B đang có bản nháp phiên bản 1 do DS1 tạo."
 
@@ -1456,7 +1456,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /weight-configs`
-2. DS1 `POST /weight-configs` `{scope: TENANT, weights: {COMPLETENESS: 0.25, ACCURACY: 0.20, CONSISTENCY: 0.15, TIMELINESS: 0.10, UNIQUENESS: 0.10, VALIDITY: 0.20}, passThreshold: 85, warnThreshold: 70}`
+2. DS1 `POST /weight-configs` `{scope: TENANT, weights: {completeness: 0.25, accuracy: 0.20, consistency: 0.15, timeliness: 0.10, uniqueness: 0.10, validity: 0.20}, passMin: 85, warnMin: 70}`
 3. `:submit`
 4. DA1 `:approve`
 
@@ -1539,6 +1539,33 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 :::
 
+#### TC-08-153 · Xem trước điểm theo trọng số và ngưỡng mới <!--k:wc-preview-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P2.
+
+**Tự động.** API.
+
+**Truy vết.** FR-08-021 · API-08-132 · UI-08-10 · BR-08-002 · PERM-08-rule-admin · ERR-08-023, 024, 027.
+
+**Tiền điều kiện, dữ liệu.** Miền `DAN_CU` có 3 đối tượng với ảnh chụp đầy đủ gần nhất (F-SCORE, F-ANNUAL); cấu hình hiện hành v0; đối tượng `rdm-dvhc` chưa có ảnh chụp nào; DS1.
+
+**Các bước.**
+
+1. DS1 `POST /weight-configs:preview` `{scope: DOMAIN, domainCode: DAN_CU, weights: {completeness: 0.25, accuracy: 0.20, consistency: 0.15, timeliness: 0.10, uniqueness: 0.10, validity: 0.20}, passMin: 85, warnMin: 70}`
+2. lặp bước 1 với tổng trọng số 1,05
+3. lặp bước 1 với `passMin: 60`, `warnMin: 70`
+4. lặp bước 1 với `{scope: ASSET, assetCode: rdm-dvhc}`
+5. `GET /weight-configs`
+
+**Kết quả mong đợi.** Bước 1 `200`, `assetCount = 3`, `assets[]` mỗi đối tượng có `currentScore`, `projectedScore`, `currentVerdict`, `projectedVerdict`, `snapshotId`; `delta` bằng `projectedScore` trừ `currentScore`; `changedVerdictCount` đúng số đối tượng đổi kết luận. Bước 2 `422` ERR-08-023. Bước 3 `422` ERR-08-024. Bước 4 `422` ERR-08-027. Bước 5 không có cấu hình mới và điểm quá khứ không đổi (xem wc-no-retro): xem trước chỉ đọc, không ghi dữ liệu.
+
+**Thông báo hiển thị.** ERR-08-023: "Tổng trọng số sáu chiều phải bằng 1 (hiện là 1,05)."; ERR-08-024: "Ngưỡng cảnh báo phải nhỏ hơn hoặc bằng ngưỡng đạt và trong khoảng 0 đến 100."; ERR-08-027: "Đối tượng rdm-dvhc chưa có bộ quy tắc đang hiệu lực."
+
+:::
+
 ### TS-08-10 · Lập lịch đo, đo theo yêu cầu, theo dõi và hủy
 
 **Mục tiêu.** Lịch cron, đo theo yêu cầu có hạn mức, đo trùng, hủy, chạy lại và tự hủy khi chờ quá hạn.
@@ -1560,13 +1587,13 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /schedules` `{assetCode: mdm-citizen, cron: "0 0 2 1 * ?", mode: FULL}`
+1. `POST /schedules` `{assetCode: mdm-citizen, cron: "0 0 2 1 * ?", scanMode: FULL}`
 2. `POST /schedules/{id}:pause`
 3. `POST /schedules/{id}:resume`
 4. `GET /schedules?assetCode=mdm-citizen`
 5. `PATCH /schedules/{id}` đổi `cron` thành `0 0 3 1 * ?`
 
-**Kết quả mong đợi.** Bước 1 `201`, `nextFireAt = 2026-12-01T02:00:00+07:00`, `status = ACTIVE`. Bước 2 `PAUSED`, không bắn lần đo. Bước 3 `ACTIVE`, `nextFireAt` giữ. Bước 5 `200`, `nextFireAt` 03:00. Lịch bắn trên một bản sao duy nhất khi có hai bản sao `dh-data` (ShedLock).
+**Kết quả mong đợi.** Bước 1 `201`, `nextRunAt = 2026-12-01T02:00:00+07:00`, `status = ACTIVE`. Bước 2 `PAUSED`, không bắn lần đo. Bước 3 `ACTIVE`, `nextRunAt` giữ. Bước 5 `200`, `nextRunAt` 03:00. Lịch bắn trên một bản sao duy nhất khi có hai bản sao `dh-data` (ShedLock).
 
 :::
 
@@ -1610,7 +1637,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /scans` `{assetCode: mdm-citizen, mode: FULL}` kèm `Idempotency-Key`
+1. `POST /scans` `{assetCode: mdm-citizen, scanMode: FULL}` kèm `Idempotency-Key`
 2. `GET /scans/{scanId}` lặp đến `SUCCEEDED`
 3. `GET /scans/{scanId}/tasks`
 
@@ -1635,8 +1662,8 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. `POST /scans` khi đang `RUNNING`
 2. hủy, tạo đủ 3 lần đo rồi lần thứ 4 trong cùng giờ
-3. `POST /scans` `{mode: SAMPLE, sampleSize: 50}`
-4. `POST /scans` `{trigger: ANNUAL, mode: SAMPLE}`
+3. `POST /scans` `{assetCode: mdm-citizen, scanMode: SAMPLE, sampleSize: 50}`
+4. `POST /scans` `{assetCode: A, scanTrigger: ANNUAL, scanMode: SAMPLE, periodCode: 2026-12}`
 5. `POST /scans` lần hai cùng `Idempotency-Key` nhưng thân khác
 6. lặp cùng khóa, cùng thân
 
@@ -1706,15 +1733,16 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-08-024 · API-08-059 · UI-08-04.
+**Truy vết.** FR-08-024 · API-08-059, 060 · UI-08-04 · PERM-08-run.
 
 **Tiền điều kiện, dữ liệu.** Miền `DAN_CU` có 3 đối tượng `ACTIVE` và 1 `SUSPENDED`.
 
 **Các bước.**
 
-1. `POST /scans` `{domainCode: DAN_CU, mode: FULL}`
+1. UI-08-04 "Đo cả miền" gửi `POST /scans` `{assetCode, scanMode: FULL}` cho từng đối tượng `ACTIVE` của `DAN_CU`, mỗi yêu cầu một `Idempotency-Key`
+2. `GET /scans?assetCode=...` cho đối tượng `SUSPENDED`
 
-**Kết quả mong đợi.** `202`, danh sách 3 `scanId` (mỗi đối tượng `ACTIVE` một lần đo), đối tượng `SUSPENDED` bị bỏ qua.
+**Kết quả mong đợi.** Ba yêu cầu `202`, ba `scanId` khác nhau (mỗi đối tượng `ACTIVE` một lần đo); không có yêu cầu nào cho đối tượng `SUSPENDED` (giao diện bỏ qua) và danh sách lần đo của đối tượng này trống. FRS không có API gộp theo miền.
 
 :::
 
@@ -1739,7 +1767,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /scans` `{mode: FULL}` chờ `SUCCEEDED`
+1. `POST /scans` `{assetCode: mdm-citizen, scanMode: FULL}` chờ `SUCCEEDED`
 2. `GET /scans/{id}/rule-results`
 3. đọc nhật ký truy vấn của `mdm-sim`
 
@@ -1762,7 +1790,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /scans` `{mode: SAMPLE, sampleSize: 1000, sampleSeed: 7}` hai lần
+1. `POST /scans` `{assetCode: src-hotich, scanMode: SAMPLE, sampleSize: 1000, sampleSeed: 7}` hai lần
 2. so tập `recordKey` đã đo
 3. đổi `sampleSeed = 8`
 
@@ -1809,7 +1837,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /scans` `{mode: FULL}`
+1. `POST /scans` `{assetCode: mdm-citizen, scanMode: FULL}`
 2. `GET /scans/{id}/rule-results`
 3. kiểm giản đồ `ph08_dq` tìm bảng chứa mã danh mục
 
@@ -1892,7 +1920,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. `GET /scans/{id}/score`
 3. UT tính điểm với ví dụ của FRS (91,2; 88,0; 79,5; 72,0; 96,0; 85,0)
 
-**Kết quả mong đợi.** Điểm chiều 98,00 (COMPLETENESS), 95,00 (ACCURACY), 80,00 (CONSISTENCY), 90,00 (TIMELINESS), 99,00 (UNIQUENESS), 85,00 (VALIDITY). Điểm tổng = 98×0,20 + 95×0,20 + 80×0,15 + 90×0,10 + 99×0,15 + 85×0,20 = 91,45; `verdict = PASS`; không cờ. Ảnh chụp ghi `ruleSetVersion`, `weightConfigId`, `passCount`, `failCount`, `skippedCount`, `waivedCount` từng chiều. EVT: `scan.completed` kèm `score = 91.45`. Ví dụ thứ hai của FRS cho 86,365, làm tròn nửa lên 86,37, `PASS` với ngưỡng 80.
+**Kết quả mong đợi.** Điểm chiều 98,00 (COMPLETENESS), 95,00 (ACCURACY), 80,00 (CONSISTENCY), 90,00 (TIMELINESS), 99,00 (UNIQUENESS), 85,00 (VALIDITY). Điểm tổng = 98×0,20 + 95×0,20 + 80×0,15 + 90×0,10 + 99×0,15 + 85×0,20 = 91,45; `verdict = PASS`; không cờ. Ảnh chụp ghi `ruleSetVersionId`, `weightConfigId`; từng chiều ghi `rulesPassed`, `rulesFailed`, `rulesSkipped`. EVT: `scan.completed` kèm `score = 91.45`. Ví dụ thứ hai của FRS cho 86,365, làm tròn nửa lên 86,37, `PASS` với ngưỡng 80.
 
 :::
 
@@ -2035,7 +2063,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 4. đo tháng 4
 5. `GET /assets/src-hotich/score-history`
 
-**Kết quả mong đợi.** Tháng 1 `trend = BASELINE`. Tháng 2 Δ = −6,45 → `DEGRADED`, EVT: `score.degraded` (EVT-08-04) vì giảm ≥ 5,0. Tháng 3 Δ = +0,75 → `STABLE`. Tháng 4 Δ = +1,55 → `IMPROVED`. Mỗi ảnh chụp có `findingsNew`, `findingsPersisting`, `findingsResolved`; `series[]` đủ bốn điểm.
+**Kết quả mong đợi.** Tháng 1 `trend = BASELINE`. Tháng 2 Δ = −6,45 → `DEGRADED`, EVT: `score.degraded` (EVT-08-04) vì giảm ≥ 5,0. Tháng 3 Δ = +0,75 → `STABLE`. Tháng 4 Δ = +1,55 → `IMPROVED`. `series[]` đủ bốn điểm, mỗi điểm có `score`, `trend`.
 
 :::
 
@@ -2108,7 +2136,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. quan sát 3 lần thử
 3. bật lại `conn-sim`, `POST /scans/{id}:rerun`
 
-**Kết quả mong đợi.** Lần đo `FAILED` sau 3 lần thử, không có ảnh chụp, `dependencyIssues[]` ghi ERR-08-105; EVT: `scan.failed` (EVT-08-03); cảnh báo vận hành tới PH-13. Lần chạy lại `SUCCEEDED`.
+**Kết quả mong đợi.** Lần đo `FAILED` sau 3 lần thử, không có ảnh chụp, `errorCode = ERR-08-105`; EVT: `scan.failed` (EVT-08-03); cảnh báo vận hành tới PH-13. Lần chạy lại `SUCCEEDED`.
 
 **Thông báo hiển thị.** ERR-08-105: "Không đọc được nguồn của đối tượng src-hotich: kết nối bị từ chối. Thử lại sau."
 
@@ -2226,7 +2254,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Phát sự kiện trong 5 phút
 2. đợi hết cửa sổ
-3. `GET /scans?trigger=EVENT`
+3. `GET /scans?scanTrigger=EVENT`
 4. `POST /assets/mdm-citizen:disable-incremental` rồi phát lại sự kiện, sau đó `:enable-incremental`
 
 **Kết quả mong đợi.** Một lần đo `INCREMENTAL` `trigger = EVENT` chỉ trên 500 khóa đổi; lỗi cập nhật theo dấu vân tay; EVT-08-06 nếu có lỗi mới; lỗi của bản ghi bị hợp nhất `RESOLVED` lý do `RECORD_REMOVED`; ảnh chụp đầy đủ gần nhất không bị thay, điểm hiện hành gộp. Khi `disable-incremental` sự kiện không sinh lần đo nữa; `enable-incremental` bật lại.
@@ -2250,7 +2278,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Phát `catalog.published`
 2. phát `adminunit.reorganized`
-3. `GET /scans?trigger=EVENT`
+3. `GET /scans?scanTrigger=EVENT`
 
 **Kết quả mong đợi.** Lần đo tăng dần cho `rdm-dvhc`; sau `adminunit.reorganized` có lần đo tăng dần cho mọi đối tượng có quy tắc `IN_RDM` với `DVHC`; sự kiện `catalog.retired` làm quy tắc trỏ danh mục ngừng bị cảnh báo.
 
@@ -2302,7 +2330,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `PUT /assets/mdm-citizen/inline-config` `{mode: STRICT, onDependencyFailure: FAIL_OPEN}`
+1. `PUT /assets/mdm-citizen/inline-config` `{inlineEnabled: true, inlineMode: STRICT, onDependencyFailure: FAIL_OPEN}`
 2. `POST /checks:evaluate` bản ghi hợp lệ
 3. bản ghi thiếu `nationalId`
 4. bản ghi chỉ cũ hơn 365 ngày
@@ -2313,7 +2341,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 :::
 
-#### TC-08-080 · ADVISORY không bao giờ FAIL <!--k:chk-advisory-->
+#### TC-08-080 · ADVISORY không bao giờ FAIL, có vi phạm thì WARN <!--k:chk-advisory-->
 
 ::: dac-ta
 **Loại.** Dương.
@@ -2329,8 +2357,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /checks:evaluate` bản ghi thiếu `nationalId` (`CRITICAL`)
+2. `POST /checks:evaluate` bản ghi hợp lệ
 
-**Kết quả mong đợi.** `200`, `verdict` là `PASS` hoặc `WARN`, không bao giờ `FAIL`, kèm `violations[]` (ca ghi lại giá trị thực tế để chốt Q08-44); bản tin trong luồng luôn đi tiếp, chỉ gắn tiêu đề.
+**Kết quả mong đợi.** Bước 1 `200`, `verdict = WARN` (không bao giờ `FAIL`) kèm `violations[]` có quy tắc `CRITICAL`; bước 2 `200`, `verdict = PASS`, `violations[]` trống (BR-08-016). Bản tin trong luồng luôn đi tiếp, chỉ gắn tiêu đề.
 
 :::
 
@@ -2370,7 +2399,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-08-032 · API-08-068, 069 · BR-08-017 · ERR-08-045.
+**Truy vết.** FR-08-032 · API-08-068, 069 · BR-08-017 · ERR-08-101.
 
 **Tiền điều kiện, dữ liệu.** `RS-CITIZEN` có `UNIQUE_IN_ASSET`, `EQ_SOURCE`, `SQL_PREDICATE`, CEL gán `INLINE`; `evaluate-batch` 100 và 101 bản ghi.
 
@@ -2381,9 +2410,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. `POST /checks:evaluate-batch` 100 bản ghi
 4. 101 bản ghi
 
-**Kết quả mong đợi.** `evaluatedRules` không gồm `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`. Batch 100 trả 100 kết luận đúng thứ tự. Batch 101 bị từ chối `422` ERR-08-045 (giả định, xem ĐN-TC-02).
+**Kết quả mong đợi.** `evaluatedRules` không gồm `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`. Batch 100 trả 100 kết luận đúng thứ tự. Batch 101 bị từ chối cả lô `422` ERR-08-101.
 
-**Thông báo hiển thị.** ERR-08-045: "Tham số records không hợp lệ: tối đa 100 bản ghi mỗi lần."
+**Thông báo hiển thị.** ERR-08-101: "Bản ghi không đúng lược đồ của đối tượng mdm-citizen: lô tối đa 100 bản ghi."
 
 :::
 
@@ -2562,7 +2591,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. tắt `mdm-sim`, `GET /findings/FD-0102`
 3. `GET /findings/FD-9999`
 
-**Kết quả mong đợi.** Bước 1 `200`, `rule`, `history[]`, `lineage`, `suggestedOwnerOrgId`. Bước 2 vẫn `200` với dòng "Chưa lấy được nguồn gốc từ PH-06, thử lại sau.", không mã lỗi. Bước 3 `404` ERR-08-001 ("Không tìm thấy bản ghi lỗi FD-9999.").
+**Kết quả mong đợi.** Bước 1 `200`, `finding`, `history[]`, `goldenRecord` (khi có `PERM-06-read`). Bước 2 vẫn `200` với dòng "Chưa lấy được nguồn gốc từ PH-06, thử lại sau.", không mã lỗi. Bước 3 `404` ERR-08-001 ("Không tìm thấy bản ghi lỗi FD-9999.").
 
 **Thông báo hiển thị.** ERR-08-001 (FR-08-038): "Không tìm thấy bản ghi lỗi FD-9999."
 
@@ -2640,10 +2669,10 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DS1 `POST /waivers` `{scope: FINDINGS, findingIds: [3 lỗi], reason: ≥ 50 ký tự, validUntil: +90 ngày}`
+1. DS1 `POST /waivers` `{scope: FINDINGS, findingIds: [3 lỗi], reason: ≥ 50 ký tự, validTo: +90 ngày}`
 2. DA1 `POST /waivers/{id}:approve`
 3. chạy lần đo kế tiếp
-4. đẩy `clock-sim` qua `validUntil`, chạy job hằng ngày
+4. đẩy `clock-sim` qua `validTo`, chạy job hằng ngày
 
 **Kết quả mong đợi.** Bước 1 `PENDING_APPROVAL`. Bước 2 `ACTIVE`, lỗi `WAIVED`, EVT: `waiver.approved` (EVT-08-10). Bước 3 lỗi `WAIVED` không vào mẫu số, đếm riêng. Bước 4 `EXPIRED`, lỗi về `OPEN` và tính lại ở lần đo sau. KT: có (waiver.approve).
 
@@ -2664,7 +2693,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DS1 `POST /waivers` `validUntil` +200 ngày
+1. DS1 `POST /waivers` `validTo` +200 ngày
 2. `POST /waivers` `findingIds = []`
 3. `POST /waivers` lý do 30 ký tự
 4. DS1 `POST /waivers/{id}:approve` ngoại lệ do mình đề nghị
@@ -2719,11 +2748,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /finding-groups?assetCode=mdm-citizen`
-2. `POST /issues` `{findingGroup: …, severity: CRITICAL}`
+2. `POST /issues` `{assetCode: mdm-citizen, ruleCode: R-CCCD-NN, groupKey: …, severity: CRITICAL}`
 3. `GET /issues/{code}`
 4. DO1 `POST /issues/{code}:assign` cho `U-T90-DO1-NV` cùng ORG-CA
 
-**Kết quả mong đợi.** Bước 2 `201`, `issueCode = DQ-2026-000001`, `status = ASSIGNED` hoặc `OPEN`, `ownerOrgId = ORG-CA`, `findingCount = 12`, `dueDate`; 12 lỗi thành `IN_REMEDIATION`. Bước 4 `200`, `assigneeUserId`, `slaRemainingDays`. EVT: `issue.created` (EVT-08-07).
+**Kết quả mong đợi.** Bước 2 `201`, `issueCode = DQ-2026-000001`, `status = ASSIGNED` hoặc `OPEN`, `ownerOrgCode = ORG-CA`, `findingCount = 12`, `slaDueAt`; 12 lỗi thành `IN_REMEDIATION`. Bước 4 `200`, `assignee`, `overdue = false`. EVT: `issue.created` (EVT-08-07).
 
 :::
 
@@ -2768,7 +2797,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. Mở một phiếu mỗi mức
-2. đọc `dueDate`, `slaRemainingDays`
+2. đọc `slaDueAt`, `overdue`
 
 **Kết quả mong đợi.** `CRITICAL` hạn 2026-12-11 (thứ Sáu tuần sau, bỏ thứ Bảy, Chủ nhật); `MAJOR` 2026-12-25; `MINOR` 2027-01-15 (lịch làm việc giả định chỉ trừ thứ Bảy, Chủ nhật; ngày nghỉ lễ chờ Q08-43). `overdue = false`.
 
@@ -2820,7 +2849,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. DO1 `GET /issues?scope=MINE`
 2. `POST /issues/DQ-2026-000001:start`
-3. `POST /issues/DQ-2026-000001/activities` `{type: COMMENT, body: "@DS1 đã sửa 8/12"}` kèm tệp 1 MB
+3. `POST /issues/DQ-2026-000001/activities` `{activityType: COMMENT, comment: "@DS1 đã sửa 8/12"}` kèm tệp 1 MB
 4. `GET /issues/DQ-2026-000001/activities`
 
 **Kết quả mong đợi.** `IN_PROGRESS`; hoạt động `COMMENT`, `ATTACHMENT` có dòng thời gian; nhắc `@DS1` gửi thông báo riêng; EVT: `issue.status-changed` (EVT-08-08) khi đổi trạng thái.
@@ -2873,7 +2902,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DO1 `POST /issues/{code}:mark-fixed` `{note: ≥ 20 ký tự}`
+1. DO1 `POST /issues/{code}:mark-fixed` `{fixNote: ≥ 20 ký tự}`
 2. chờ lần đo `VERIFY`
 3. `GET /issues/{code}`
 
@@ -2975,7 +3004,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DO1 `POST /issues/{code}:reject` `{type: WRONG_OWNER}` lý do 10 ký tự
+1. DO1 `POST /issues/{code}:reject` `{rejectType: WRONG_OWNER}` lý do 10 ký tự
 2. DO1 `:reject` lý do 30 ký tự
 3. DS1 `:transfer` sang ORG-TC
 4. DS1 `:cancel` một phiếu khác `OPEN` lý do đủ dài
@@ -3030,7 +3059,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. cùng lệnh với lỗi `src-hotich`
 4. tắt `mdm-sim`, lặp bước 1
 
-**Kết quả mong đợi.** Bước 1 `200`, `stewardItemIds[]`, mục PH-06 lý do `DQ_FINDING`. Bước 2 gắn thêm lý do, không tạo trùng. Bước 3 `422` ERR-08-051. Bước 4 `503` ERR-08-105. PH-08 không sửa bản ghi vàng.
+**Kết quả mong đợi.** Bước 1 `200`, `stewardItemRef`, mục PH-06 lý do `DQ_FINDING`. Bước 2 gắn thêm lý do, không tạo trùng. Bước 3 `422` ERR-08-051. Bước 4 `503` ERR-08-105. PH-08 không sửa bản ghi vàng.
 
 **Thông báo hiển thị.** ERR-08-051: "Chỉ lỗi của bản ghi vàng mới chuyển được sang hàng đợi dữ liệu chủ."; ERR-08-105: "Không đọc được nguồn của đối tượng mdm-citizen: PH-06 không khả dụng. Thử lại sau."
 
@@ -3057,9 +3086,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. `POST /alert-rules` `{condition: SCORE_BELOW, threshold: 80, severity: HIGH, assetCode: mdm-citizen}`
+1. `POST /alert-rules` `{alertRuleCode: cb-diem-duoi-ngung, name: "Điểm dưới ngưỡng", conditionType: SCORE_BELOW, threshold: 80, severity: HIGH, assetCode: mdm-citizen}`
 2. `PUT /alert-rules/AR-01` đổi ngưỡng 75
-3. `POST /alert-rules` `{condition: SCORE_BELOW, threshold: -5}`
+3. `POST /alert-rules` `{alertRuleCode: cb-am, name: "Ngưỡng âm", conditionType: SCORE_BELOW, threshold: -5, severity: HIGH}`
 4. `GET /alert-rules`
 
 **Kết quả mong đợi.** Bước 1 `201`, bước 2 `200`. Bước 3 `422` ERR-08-037. Bước 4 có quy tắc mặc định và quy tắc vừa tạo; tắt quy tắc mặc định thay vì xóa.
@@ -3104,20 +3133,20 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-08-049 · API-08-102, 103 · BR-08-029 · ERR-08-007, 006.
+**Truy vết.** FR-08-049 · API-08-102, 103 · BR-08-029 · ERR-08-042, 006.
 
 **Tiền điều kiện, dữ liệu.** Cảnh báo `FIRING`; cảnh báo khác `RESOLVED`; DS1.
 
 **Các bước.**
 
 1. `POST /alerts/{id}:acknowledge`
-2. `POST /alerts/{id}:silence` `{reason: ≥ 20 ký tự, until: +3 ngày}`
-3. `:silence` `until: +10 ngày`
+2. `POST /alerts/{id}:silence` `{reason: ≥ 20 ký tự, silencedUntil: +3 ngày}`
+3. `:silence` `silencedUntil: +10 ngày`
 4. `:acknowledge` cảnh báo `RESOLVED`
 
-**Kết quả mong đợi.** Bước 1 `ACKNOWLEDGED`. Bước 2 `SILENCED`, không phát lại trong 3 ngày. Bước 3 `422` ERR-08-007 (thời hạn không quá 7 ngày). Bước 4 `409` ERR-08-006.
+**Kết quả mong đợi.** Bước 1 `ACKNOWLEDGED`. Bước 2 `SILENCED`, không phát lại trong 3 ngày. Bước 3 `422` ERR-08-042 (thời hạn không quá 7 ngày). Bước 4 `409` ERR-08-006.
 
-**Thông báo hiển thị.** ERR-08-007: "Nhập lý do (tối thiểu 20 ký tự)."; ERR-08-006: "Không thể xác nhận khi cảnh báo đang ở trạng thái RESOLVED."
+**Thông báo hiển thị.** ERR-08-042: "Giá trị 2026-12-14 của silencedUntil ngoài khoảng cho phép 7 ngày."; ERR-08-006: "Không thể xác nhận khi cảnh báo đang ở trạng thái RESOLVED."
 
 :::
 
@@ -3195,7 +3224,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. PA `GET /platform/benchmarks`
 2. TA T90 `GET /platform/benchmarks`
 
-**Kết quả mong đợi.** Có `median`, `p25`, `p75`, `participants = 6`; không nêu tên tenant khác. Với TA có thêm `myPercentile`.
+**Kết quả mong đợi.** Có `median`, `p25`, `p75`, `groupSize = 6`, `minGroup`; không nêu tên tenant khác. Với TA có thêm `ownScore`.
 
 :::
 
@@ -3238,21 +3267,21 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-08-052 · API-08-107, 108, 109 · UI-08-18 · PERM-08-report · ERR-08-112.
+**Truy vết.** FR-08-052 · API-08-107, 108, 109 · UI-08-18 · PERM-08-report · ERR-08-056, 112.
 
 **Tiền điều kiện, dữ liệu.** T90 có 3 đối tượng đo thành công trong 2026-11, một đối tượng không; T95 không có lần đo nào; DS1.
 
 **Các bước.**
 
-1. DS1 `POST /reports` `{type: PERIODIC, period: 2026-11}`
+1. DS1 `POST /reports` `{reportType: PERIODIC, periodCode: 2026-11}`
 2. `GET /reports/{code}`
 3. `GET /reports?type=PERIODIC&page=0&size=10`
-4. T95 `POST /reports` `{type: PERIODIC, period: 2026-11}`
+4. T95 `POST /reports` `{reportType: PERIODIC, periodCode: 2026-11}`
 5. tắt kho tệp rồi `POST /reports`
 
-**Kết quả mong đợi.** Bước 1 `201`, `reportCode = BC-DQ-2026-11-T90`, `DRAFT`, `missingAssets[]` có đối tượng chưa đo, `recommendations[]` gợi ý. Bước 3 `422` ERR-08-027 theo ngữ cảnh. Bước 4 thông báo ERR-08-112 trong ứng dụng, không có báo cáo dở dang.
+**Kết quả mong đợi.** Bước 1 `201`, `reportCode = BC-DQ-2026-11-T90`, `DRAFT`, `summary` nêu đối tượng chưa đo, khuyến nghị gợi ý. Bước 3 danh sách có báo cáo vừa tạo. Bước 4 `422` ERR-08-056. Bước 5 thông báo ERR-08-112 trong ứng dụng, không có báo cáo dở dang.
 
-**Thông báo hiển thị.** ERR-08-112: "Không tạo được báo cáo BC-DQ-2026-11-T90. Thử lại sau."; ERR-08-027 (FR-08-052): "Không có lần đo thành công nào trong kỳ 2026-11 để lập báo cáo."
+**Thông báo hiển thị.** ERR-08-112: "Không tạo được báo cáo BC-DQ-2026-11-T90. Thử lại sau."; ERR-08-056 (FR-08-052): "Không có lần đo thành công nào trong kỳ 2026-11 để lập báo cáo."
 
 :::
 
@@ -3276,7 +3305,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. DA1 `:approve`
 4. `GET /reports/{code}`
 
-**Kết quả mong đợi.** `IN_REVIEW` rồi `PUBLISHED` với `contentHash`, `publishedAt`, `approvedBy = DA1`; nội dung bất biến. EVT: `report.published` (EVT-08-11). KT: có (report.publish).
+**Kết quả mong đợi.** `IN_REVIEW` rồi `PUBLISHED` với `contentSha256`, `publishedAt`, `publishedBy = DA1`; nội dung bất biến. EVT: `report.published` (EVT-08-11). KT: có (report.publish).
 
 :::
 
@@ -3324,10 +3353,10 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /reports:check-annual-readiness` `{year: 2026}`
-2. `POST /reports` `{type: ANNUAL, year: 2026}`
+2. `POST /reports` `{reportType: ANNUAL, periodCode: 2026-12, annualMethod: FULL_DECEMBER}`
 3. thêm khuyến nghị, `:submit`, DA1 `:approve`
 
-**Kết quả mong đợi.** Bước 1 `readiness.ready = true`, ba danh sách trống. Bước 2 `201`, `BC-DQ-2026-NAM-T96`, ảnh chụp theo `FULL_DECEMBER`; đối tượng `FLOW_MESSAGE` không đo theo lô nên được loại khỏi điều kiện và báo cáo trình bày bằng thống kê trực tuyến cả năm. Bước 3 `PUBLISHED`; EVT-08-11 và EVT-08-14.
+**Kết quả mong đợi.** Bước 1 `ready = true`, `blockers[]` trống. Bước 2 `201`, `BC-DQ-2026-NAM-T96`, ảnh chụp theo `FULL_DECEMBER`; đối tượng `FLOW_MESSAGE` không đo theo lô nên được loại khỏi điều kiện và báo cáo trình bày bằng thống kê trực tuyến cả năm. Bước 3 `PUBLISHED`; EVT-08-11 và EVT-08-14.
 
 :::
 
@@ -3347,11 +3376,11 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `POST /reports:check-annual-readiness`
-2. `POST /reports` `{type: ANNUAL}`
-3. `POST /scans` `{trigger: ANNUAL, mode: SAMPLE}`
-4. `POST /scans` `{trigger: ANNUAL, mode: FULL}` cho A, B, C, kiểm lại
+2. `POST /reports` `{reportType: ANNUAL, periodCode: 2026-12}`
+3. `POST /scans` `{assetCode: A, scanTrigger: ANNUAL, scanMode: SAMPLE, periodCode: 2026-12}`
+4. `POST /scans` `{assetCode: A, scanTrigger: ANNUAL, scanMode: FULL, periodCode: 2026-12}` cho A, B, C, kiểm lại
 
-**Kết quả mong đợi.** Bước 1 `ready = false`, `missingFull = [C]`, `incomplete = [B]`, `sampleOnly = [A]`. Bước 2 `422` ERR-08-038. Bước 3 `422` ERR-08-030. Bước 4 sau khi đủ ba lần `FULL` sạch, `ready = true`.
+**Kết quả mong đợi.** Bước 1 `ready = false`, `blockers[]` có C (thiếu lần đo `FULL`), B (thiếu chiều), A (chỉ có lần đo mẫu). Bước 2 `422` ERR-08-038. Bước 3 `422` ERR-08-030. Bước 4 sau khi đủ ba lần `FULL` sạch, `ready = true`.
 
 **Thông báo hiển thị.** ERR-08-038: "Chưa đủ điều kiện báo cáo chính thức năm 2026: 3 đối tượng thiếu lần đo toàn bộ hoặc có điểm thiếu chiều."; ERR-08-030: "Kích thước mẫu phải từ 100 đến 1.000.000 bản ghi; lần đo cho báo cáo năm phải đo toàn bộ."
 
@@ -3363,7 +3392,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Phủ.** FR-08-055…057; UC-08-26.
 
-#### TC-08-120 · Xuất báo cáo PDF, XLSX và đối chiếu contentHash <!--k:rep-export-->
+#### TC-08-120 · Xuất báo cáo PDF, XLSX và đối chiếu contentSha256 <!--k:rep-export-->
 
 ::: dac-ta
 **Loại.** Dương.
@@ -3383,7 +3412,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. `format = XLSX`
 4. `format = JSON`, băm nội dung
 
-**Kết quả mong đợi.** `202` rồi `fileUrl`; PDF và XLSX mở được, số liệu trùng báo cáo; băm JSON bằng `contentHash`. VW tải được bản đã xuất của báo cáo `PUBLISHED`.
+**Kết quả mong đợi.** `202` rồi `downloadUrl`; PDF và XLSX mở được, số liệu trùng báo cáo; băm JSON bằng `contentSha256`. VW tải được bản đã xuất của báo cáo `PUBLISHED`.
 
 :::
 
@@ -3427,13 +3456,13 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Các bước.**
 
-1. DO1 `POST /report-subscriptions` `{scope: ORGANIZATION, orgId: ORG-CA, channel: IN_APP}`
-2. DO1 đăng ký `orgId: ORG-TC`
+1. DO1 `POST /report-subscriptions` `{reportType: PERIODIC, recipientType: ORG, recipientRef: ORG-CA, format: PDF}`
+2. DO1 đăng ký `recipientRef: ORG-TC`
 3. công bố báo cáo
 4. tắt `notif-sim`, công bố báo cáo khác
 5. DO1 `DELETE /report-subscriptions/{id}`
 
-**Kết quả mong đợi.** Bước 1 `201`. Bước 2 `403` ERR-08-032. Bước 3 `distribution[]` ghi đã gửi. Bước 4 biên bản "chưa gửi" ERR-08-114, thử lại. Bước 5 hủy được.
+**Kết quả mong đợi.** Bước 1 `201`. Bước 2 `403` ERR-08-032. Bước 3 nhật ký kiểm toán ghi đã gửi. Bước 4 biên bản "chưa gửi" ERR-08-114, thử lại. Bước 5 hủy được.
 
 **Thông báo hiển thị.** ERR-08-032: "Đối tượng mdm-org không thuộc tổ chức của anh/chị."; ERR-08-114: "Cảnh báo hoặc thông báo BC-DQ-2026-11-T90 chưa gửi được tới kênh thông báo."
 
@@ -3487,7 +3516,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. TA `GET /settings`
-2. TA `PUT /settings` `{08.scan.manual-per-hour: 20}` với `If-Match` đúng
+2. TA `PUT /settings` `{values: {"08.scan.manual-per-hour": 20}}` với `If-Match` đúng
 3. `GET /settings`
 
 **Kết quả mong đợi.** Bước 1 liệt kê 43 khóa với `default`, `max`, `updatedBy`. Bước 3 giá trị 20, `updatedBy = TA`. KT: có (setting.update) ghi giá trị trước và sau.
@@ -3588,7 +3617,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. DS1 `GET /audit-events`
 4. thử `UPDATE` và `DELETE` bản ghi kiểm toán bằng `dh_data_app`
 
-**Kết quả mong đợi.** Bước 1 mỗi bản ghi có người thao tác, `tenantId`, hành động, đối tượng, giá trị trước và sau, `traceId`, thời điểm; không chứa giá trị thuộc tính Nhạy cảm. Bước 2 có kiểm toán lượt xuất. Bước 3 `403` ERR-00-403. Bước 4 bị chặn (bất biến).
+**Kết quả mong đợi.** Bước 1 mỗi bản ghi (`AuditEvent`) có `actor`, `action`, `objectType`, `objectCode`, `outcome`, `detail` (giá trị trước và sau), `traceId`, `occurredAt`; không chứa giá trị thuộc tính Nhạy cảm. Bước 2 có kiểm toán lượt xuất. Bước 3 `403` ERR-00-403. Bước 4 bị chặn (bất biến).
 
 :::
 
@@ -3830,7 +3859,7 @@ Tám kịch bản dưới đây không ứng với một use case mà cắt ngan
 3. đo với v7 (quy tắc đổi `ruleCode`)
 4. `GET /findings/{id}`
 
-**Kết quả mong đợi.** Khóa ` 001099000001 ` và `001099000001` cho cùng dấu vân tay `SHA-256(T90, mdm-citizen, R-CCCD-NN, 001099000001)`. v5 → v6: cùng lỗi, `occurrences = 2`, `firstSeenScanId` giữ. v7: dấu vân tay mới, lỗi cũ `RESOLVED` lý do `RULE_RETIRED`, cảnh báo ở bản so sánh.
+**Kết quả mong đợi.** Khóa ` 001099000001 ` và `001099000001` cho cùng dấu vân tay `SHA-256(T90, mdm-citizen, R-CCCD-NN, 001099000001)`. v5 → v6: cùng lỗi, `seenCount = 2`, `firstScanId` giữ. v7: dấu vân tay mới, lỗi cũ `RESOLVED` lý do `RULE_RETIRED`, cảnh báo ở bản so sánh.
 
 :::
 
@@ -3869,7 +3898,7 @@ Tám kịch bản dưới đây không ứng với một use case mà cắt ngan
 
 **Truy vết.** FR-08-036 · FR-08-005 · API-08-073 · BR-08-012 · NFR-08-016.
 
-**Tiền điều kiện, dữ liệu.** `nationalId` `SENSITIVE` (`HASH`), `fullName` và `phone` `RESTRICTED` (`PARTIAL`), `note` `PUBLIC` (`NONE`); canary `DH-CANARY-leak` đặt ở `nationalId`; CCCD giả dải `0010990xxxxx`.
+**Tiền điều kiện, dữ liệu.** `nationalId` `SENSITIVE` (`HASH_ONLY`), `fullName` và `phone` `RESTRICTED` (`MASKED`), `note` `PUBLIC` (`PLAIN`); canary `DH-CANARY-leak` đặt ở `nationalId`; CCCD giả dải `0010990xxxxx`.
 
 **Các bước.**
 
@@ -3892,7 +3921,7 @@ Tám kịch bản dưới đây không ứng với một use case mà cắt ngan
 
 **Truy vết.** FR-08-036 · FR-08-005 · FR-08-038 · API-08-014, 015, 074 · BR-08-012 · ERR-08-047.
 
-**Tiền điều kiện, dữ liệu.** Lỗi cũ của `fullName` che `PARTIAL`; PH-09 nâng `fullName` lên `SENSITIVE`; CDE `email` chưa xác nhận.
+**Tiền điều kiện, dữ liệu.** Lỗi cũ của `fullName` che `MASKED`; PH-09 nâng `fullName` lên `SENSITIVE`; CDE `email` chưa xác nhận.
 
 **Các bước.**
 
@@ -3901,7 +3930,7 @@ Tám kịch bản dưới đây không ứng với một use case mà cắt ngan
 3. tìm API trả giá trị gốc (mọi `GET` ở `/findings`, `/profile-runs`, `/scans`)
 4. kích hoạt đối tượng có CDE `email` `PROPOSED`
 
-**Kết quả mong đợi.** Job nền che lại lỗi cũ thành `HASH`. Không API nào trả giá trị gốc; người có `PERM-09-unmask` đọc lại nguồn qua PH-09 (Q08-07). Trường chưa xác nhận che như `SENSITIVE` kèm cảnh báo ERR-08-047.
+**Kết quả mong đợi.** Job nền che lại lỗi cũ thành `HASH_ONLY`. Không API nào trả giá trị gốc; người có `PERM-09-unmask` đọc lại nguồn qua PH-09 (Q08-07). Trường chưa xác nhận che như `SENSITIVE` kèm cảnh báo ERR-08-047.
 
 **Thông báo hiển thị.** ERR-08-047: "Trường email chưa có phân loại xác nhận ở PH-09. Giá trị sẽ được che như dữ liệu Nhạy cảm."
 
@@ -4279,7 +4308,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-08. FR mức
 | FR-08-018 | Kích hoạt, thay thế, ngừng phiên bản bộ quy  | M | 037, 040, 141 | 041 | Có |
 | FR-08-019 | So sánh phiên bản, xem lịch sử | S | 042 | 042 | Có |
 | FR-08-020 | Sao chép, nhập, xuất bộ quy tắc YAML, JSON | S | 043 | 044 | Có |
-| FR-08-021 | Cấu hình trọng số và ngưỡng có phiên bản, có | M | 045, 048, 141 | 046, 047, 135 | Có |
+| FR-08-021 | Cấu hình trọng số và ngưỡng có phiên bản, có | M | 045, 048, 141, 153 | 046, 047, 135, 153 | Có |
 | FR-08-022 | Liệt kê, tìm quy tắc | M | 029 | 029 | Có |
 | FR-08-023 | Lập lịch đo | M | 049, 151 | 050 | Có |
 | FR-08-024 | Chạy đo theo yêu cầu | M | 051, 055 | 052, 119 | Có |
@@ -4345,7 +4374,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ quy tắ
 | Mã | Test case |
 |---|---|
 | BR-08-001 | 049, 050, 072 |
-| BR-08-002 | 045, 046, 062 |
+| BR-08-002 | 045, 046, 062, 153 |
 | BR-08-003 | 027, 028, 059 |
 | BR-08-004 | 006, 056, 107 |
 | BR-08-005 | 006, 007, 011, 058 |
@@ -4396,7 +4425,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ mã lỗ
 | ERR-08-004 | 005, 125 |
 | ERR-08-005 | 039, 047, 091, 093, 117, 135 |
 | ERR-08-006 | 004, 014, 018, 032, 041, 053, 100, 105, 110, 114 |
-| ERR-08-007 | 018, 039, 041, 047, 053, 091, 093, 096, 103, 105 (+2) |
+| ERR-08-007 | 018, 039, 041, 047, 053, 091, 093, 096, 103, 105 (+1) |
 | ERR-08-008 | 003 |
 | ERR-08-009 | 007 |
 | ERR-08-010 | 009 |
@@ -4412,11 +4441,11 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ mã lỗ
 | ERR-08-020 | 032 |
 | ERR-08-021 | 038 |
 | ERR-08-022 | 022, 025, 043 |
-| ERR-08-023 | 046 |
-| ERR-08-024 | 046 |
+| ERR-08-023 | 046, 153 |
+| ERR-08-024 | 046, 153 |
 | ERR-08-025 | 044 |
 | ERR-08-026 | 043 |
-| ERR-08-027 | 041, 050, 115 |
+| ERR-08-027 | 041, 050, 153 |
 | ERR-08-028 | 018, 020, 052 |
 | ERR-08-029 | 050 |
 | ERR-08-030 | 020, 052, 119 |
@@ -4431,10 +4460,10 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ mã lỗ
 | ERR-08-039 | 117 |
 | ERR-08-040 | 117 |
 | ERR-08-041 | 090 |
-| ERR-08-042 | 065, 125 |
+| ERR-08-042 | 065, 110, 125 |
 | ERR-08-043 | 127 |
 | ERR-08-044 | 114 |
-| ERR-08-045 | 016, 029, 082, 086 |
+| ERR-08-045 | 016, 029, 086 |
 | ERR-08-046 | 044, 100 |
 | ERR-08-047 | 014, 140 |
 | ERR-08-048 | 121 |
@@ -4445,7 +4474,8 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ mã lỗ
 | ERR-08-053 | 038 |
 | ERR-08-054 | 129 |
 | ERR-08-055 | 052 |
-| ERR-08-101 | 081 |
+| ERR-08-056 | 115 |
+| ERR-08-101 | 081, 082 |
 | ERR-08-102 | 081 |
 | ERR-08-103 | 085 |
 | ERR-08-104 | 085 |
@@ -4584,7 +4614,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ api này
 | API-08-057 | 049 |
 | API-08-058 | 049 |
 | API-08-059 | 051, 052, 055, 057, 058, 119 |
-| API-08-060 | 051, 076, 077 |
+| API-08-060 | 051, 055, 076, 077 |
 | API-08-061 | 051, 054, 056, 061, 071, 072, 076, 130, 142 |
 | API-08-062 | 053 |
 | API-08-063 | 053, 071 |
@@ -4656,6 +4686,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ api này
 | API-08-129 | 088 |
 | API-08-130 | 076 |
 | API-08-131 | 076 |
+| API-08-132 | 153 |
 
 : API tới test case
 
@@ -4674,7 +4705,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-08 phủ màn hì
 | UI-08-07 | 026 |
 | UI-08-08 | 026, 030, 033, 035 |
 | UI-08-09 | 037, 042 |
-| UI-08-10 | 045 |
+| UI-08-10 | 045, 153 |
 | UI-08-11 | 049, 051, 151 |
 | UI-08-12 | 051, 053, 056, 060, 061, 062, 063, 064, 068, 071 (+3) |
 | UI-08-13 | 087, 095, 151, 152 |
@@ -4752,18 +4783,18 @@ Bảng nối tám tiêu chí ở FRS mục 14 với ca chứng minh.
 
 ### 10.1. Đề nghị đồng bộ
 
-Tập kiểm thử không sửa FRS và tài liệu chung; các điểm lệch hoặc mơ hồ phát hiện khi viết ca ghi ở bảng dưới.
+Sáu đề nghị của bản 0.1 đã được FRS 0.2 xử lý (chương 15, ĐN-TC-01…06); ca kiểm thử nay bám đúng các quyết định đó. Còn một điểm chờ đợt đồng bộ cuối.
 
-| Mã | Tài liệu | Đề nghị |
+| Mã | Tài liệu | Kết quả và việc còn lại |
 |---|---|---|
-| ĐN-TC-01 | D02-03-PH08 BR-08-016, FR-08-032 | Nêu rõ khi nào `ADVISORY` trả `PASS`, khi nào `WARN` nếu có lỗi `CRITICAL`, `MAJOR` (ca chk-advisory chỉ khẳng định không bao giờ `FAIL`, Q08-44) |
-| ĐN-TC-02 | D02-03-PH08 FR-08-032 | Mã lỗi khi `evaluate-batch` quá 100 bản ghi (ca chk-rules dùng ERR-08-045) |
-| ĐN-TC-03 | D02-03-PH08 FR-08-013, BR-08-017 | Mã lỗi khi đặt `execMode = INLINE` cho toán tử chỉ chạy lô (ca sql-neg dùng ERR-08-016) |
-| ĐN-TC-04 | D02-03-PH08 mục 9.2 | ERR-08-027 dùng cho hai nghĩa ("chưa có bộ quy tắc" và "không có lần đo trong kỳ"); đề nghị câu riêng hoặc mã riêng |
-| ĐN-TC-05 | D02-03-PH08 FR-08-049 | Hạn tắt tiếng quá 7 ngày đang dùng ERR-08-007 (thiếu lý do); đề nghị dùng ERR-08-042 |
-| ĐN-TC-06 | D02-03-PH08 BR-08-015 | Nêu nguồn lịch ngày làm việc và ngày nghỉ lễ để tính SLA (Q08-43) |
+| ĐN-TC-01 | D02-03-PH08 BR-08-016, FR-08-032 | Đã hấp thụ: `ADVISORY` có vi phạm thì `WARN`, không thì `PASS`; ca chk-advisory kiểm cả hai |
+| ĐN-TC-02 | D02-03-PH08 FR-08-032 | Đã hấp thụ: lô quá 100 bản ghi là ERR-08-101; ca chk-rules dùng ERR-08-101 |
+| ĐN-TC-03 | D02-03-PH08 FR-08-013, BR-08-017 | Đã hấp thụ: `INLINE` cho toán tử chỉ chạy lô là ERR-08-016; ca sql-neg đã bỏ chữ "giả định" |
+| ĐN-TC-04 | D02-03-PH08 mục 9.2 | Đã hấp thụ: ERR-08-056 cho kỳ không có lần đo; ca rep-periodic kiểm ERR-08-056 |
+| ĐN-TC-05 | D02-03-PH08 FR-08-049 | Đã hấp thụ: hạn tắt tiếng quá 7 ngày là ERR-08-042; ca al-ack kiểm ERR-08-042 |
+| ĐN-TC-06 | D02-03-PH08 BR-08-015 | Còn mở: nguồn lịch ngày làm việc và ngày nghỉ lễ do PH-13 cấp (Q08-43); ca iss-sla tạm tính thứ Bảy, Chủ nhật |
 
-: Đề nghị đồng bộ phát sinh từ tập kiểm thử PH-08
+: Đề nghị đồng bộ phát sinh từ tập kiểm thử PH-08 và kết quả
 
 ### 10.2. Câu hỏi mở
 
@@ -4775,12 +4806,11 @@ Tập kiểm thử không sửa FRS và tài liệu chung; các điểm lệch h
 
 > **Câu hỏi mở Q08-43:** Lịch ngày làm việc và ngày nghỉ lễ dùng để tính hạn SLA của phiếu lấy từ nguồn nào; ca iss-sla tạm tính thứ Bảy, Chủ nhật.
 
-> **Câu hỏi mở Q08-44:** Kết luận kiểm tra trực tuyến ở chế độ `ADVISORY` khi có lỗi `CRITICAL` là `WARN` hay `PASS` kèm `violations[]`; FRS 0.2 chỉ nêu "luôn `PASS` hoặc `WARN`".
-
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-08-01…35, test case TC-08, ma trận truy vết, Gherkin, bảng tính |
+| 0.2 | 2026-11-26 | Đồng bộ FRS 0.2 và API 0.2: tên trường thân yêu cầu và kết quả theo OpenAPI (`scanMode`, `scanTrigger`, `valueMode`, `slaDueAt`, `periodCode`, `silencedUntil`, `passMin`, `warnMin`); `valueMode` `MASKED`, `HASH_ONLY`, `PLAIN`; ADVISORY `WARN` hoặc `PASS`; lô quá 100 bản ghi ERR-08-101; kỳ không có lần đo ERR-08-056; hạn tắt tiếng ERR-08-042; đo cả miền do giao diện gửi từng đối tượng; thêm ca xem trước trọng số (API-08-132); hấp thụ ĐN-TC-01…05, bỏ Q08-44 |
 
 : Lịch sử phiên bản

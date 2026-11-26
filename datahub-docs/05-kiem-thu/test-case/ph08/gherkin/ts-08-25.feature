@@ -5,14 +5,14 @@ Tính năng: TS-08-25 · Báo cáo kỳ, duyệt, công bố và báo cáo chín
 
   @TC-08-115 @P1 @Dương @Âm
   Kịch bản: TC-08-115 Sinh báo cáo kỳ và báo cáo thiếu lần đo trong kỳ
-    # Truy vết: FR-08-052 · API-08-107, 108, 109 · UI-08-18 · PERM-08-report · ERR-08-112
+    # Truy vết: FR-08-052 · API-08-107, 108, 109 · UI-08-18 · PERM-08-report · ERR-08-056, 112
     Biết T90 có 3 đối tượng đo thành công trong 2026-11, một đối tượng không; T95 không có lần đo nào; DS1.
-    Khi DS1 `POST /reports` `{type: PERIODIC, period: 2026-11}`
+    Khi DS1 `POST /reports` `{reportType: PERIODIC, periodCode: 2026-11}`
     Và `GET /reports/{code}`
     Và `GET /reports?type=PERIODIC&page=0&size=10`
-    Và T95 `POST /reports` `{type: PERIODIC, period: 2026-11}`
+    Và T95 `POST /reports` `{reportType: PERIODIC, periodCode: 2026-11}`
     Và tắt kho tệp rồi `POST /reports`
-    Thì bước 1 `201`, `reportCode = BC-DQ-2026-11-T90`, `DRAFT`, `missingAssets[]` có đối tượng chưa đo, `recommendations[]` gợi ý. Bước 3 `422` ERR-08-027 theo ngữ cảnh. Bước 4 thông báo ERR-08-112 trong ứng dụng, không có báo cáo dở dang.
+    Thì bước 1 `201`, `reportCode = BC-DQ-2026-11-T90`, `DRAFT`, `summary` nêu đối tượng chưa đo, khuyến nghị gợi ý. Bước 3 danh sách có báo cáo vừa tạo. Bước 4 `422` ERR-08-056. Bước 5 thông báo ERR-08-112 trong ứng dụng, không có báo cáo dở dang.
 
   @TC-08-116 @P1 @Dương
   Kịch bản: TC-08-116 Gửi duyệt, duyệt và công bố báo cáo
@@ -22,7 +22,7 @@ Tính năng: TS-08-25 · Báo cáo kỳ, duyệt, công bố và báo cáo chín
     Và DS1 `:submit`
     Và DA1 `:approve`
     Và `GET /reports/{code}`
-    Thì `IN_REVIEW` rồi `PUBLISHED` với `contentHash`, `publishedAt`, `approvedBy = DA1`; nội dung bất biến. EVT: `report.published` (EVT-08-11). KT: có (report.publish).
+    Thì `IN_REVIEW` rồi `PUBLISHED` với `contentSha256`, `publishedAt`, `publishedBy = DA1`; nội dung bất biến. EVT: `report.published` (EVT-08-11). KT: có (report.publish).
 
   @TC-08-117 @P1 @Âm
   Kịch bản: TC-08-117 Thiếu khuyến nghị, tự duyệt, sửa báo cáo đã công bố, thu hồi
@@ -41,16 +41,16 @@ Tính năng: TS-08-25 · Báo cáo kỳ, duyệt, công bố và báo cáo chín
     # Truy vết: FR-08-054 · API-08-115, 107, 111, 112 · UI-08-18 · BR-08-010 · EVT-08-11 · EVT-08-14
     Biết T96 có mọi đối tượng với lần đo `FULL` `SUCCEEDED` trong 2026, ảnh chụp không `INCOMPLETE_DIMENSIONS`; DS1, DA1.
     Khi `POST /reports:check-annual-readiness` `{year: 2026}`
-    Và `POST /reports` `{type: ANNUAL, year: 2026}`
+    Và `POST /reports` `{reportType: ANNUAL, periodCode: 2026-12, annualMethod: FULL_DECEMBER}`
     Và thêm khuyến nghị, `:submit`, DA1 `:approve`
-    Thì bước 1 `readiness.ready = true`, ba danh sách trống. Bước 2 `201`, `BC-DQ-2026-NAM-T96`, ảnh chụp theo `FULL_DECEMBER`; đối tượng `FLOW_MESSAGE` không đo theo lô nên được loại khỏi điều kiện và báo cáo trình bày bằng thống kê trực tuyến cả năm. Bước 3 `PUBLISHED`; EVT-08-11 và EVT-08-14.
+    Thì bước 1 `ready = true`, `blockers[]` trống. Bước 2 `201`, `BC-DQ-2026-NAM-T96`, ảnh chụp theo `FULL_DECEMBER`; đối tượng `FLOW_MESSAGE` không đo theo lô nên được loại khỏi điều kiện và báo cáo trình bày bằng thống kê trực tuyến cả năm. Bước 3 `PUBLISHED`; EVT-08-11 và EVT-08-14.
 
   @TC-08-119 @P1 @Âm @Biên
   Kịch bản: TC-08-119 Báo cáo năm bị chặn khi thiếu FULL, thiếu chiều, chỉ có mẫu
     # Truy vết: FR-08-054 · FR-08-024 · API-08-115, 107, 059 · BR-08-010 · ERR-08-038 · ERR-08-030
     Biết T90: A chỉ có lần đo `SAMPLE`; B có ảnh chụp `INCOMPLETE_DIMENSIONS`; C không có lần `FULL` trong năm.
     Khi `POST /reports:check-annual-readiness`
-    Và `POST /reports` `{type: ANNUAL}`
-    Và `POST /scans` `{trigger: ANNUAL, mode: SAMPLE}`
-    Và `POST /scans` `{trigger: ANNUAL, mode: FULL}` cho A, B, C, kiểm lại
-    Thì bước 1 `ready = false`, `missingFull = [C]`, `incomplete = [B]`, `sampleOnly = [A]`. Bước 2 `422` ERR-08-038. Bước 3 `422` ERR-08-030. Bước 4 sau khi đủ ba lần `FULL` sạch, `ready = true`.
+    Và `POST /reports` `{reportType: ANNUAL, periodCode: 2026-12}`
+    Và `POST /scans` `{assetCode: A, scanTrigger: ANNUAL, scanMode: SAMPLE, periodCode: 2026-12}`
+    Và `POST /scans` `{assetCode: A, scanTrigger: ANNUAL, scanMode: FULL, periodCode: 2026-12}` cho A, B, C, kiểm lại
+    Thì bước 1 `ready = false`, `blockers[]` có C (thiếu lần đo `FULL`), B (thiếu chiều), A (chỉ có lần đo mẫu). Bước 2 `422` ERR-08-038. Bước 3 `422` ERR-08-030. Bước 4 sau khi đủ ba lần `FULL` sạch, `ready = true`.

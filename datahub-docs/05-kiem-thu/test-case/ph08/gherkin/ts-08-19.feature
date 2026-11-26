@@ -8,10 +8,10 @@ Tính năng: TS-08-19 · Mở phiếu khắc phục, phân công và theo dõi S
     # Truy vết: FR-08-041, 042 · API-08-078, 084, 086, 087 · UI-08-13, 15 · EVT-08-07 · PERM-08-remediate
     Biết 12 lỗi `R-CCCD-NN` `CRITICAL` của `mdm-citizen` (miền DAN_CU, chủ quản ORG-CA); DS1.
     Khi `GET /finding-groups?assetCode=mdm-citizen`
-    Và `POST /issues` `{findingGroup: …, severity: CRITICAL}`
+    Và `POST /issues` `{assetCode: mdm-citizen, ruleCode: R-CCCD-NN, groupKey: …, severity: CRITICAL}`
     Và `GET /issues/{code}`
     Và DO1 `POST /issues/{code}:assign` cho `U-T90-DO1-NV` cùng ORG-CA
-    Thì bước 2 `201`, `issueCode = DQ-2026-000001`, `status = ASSIGNED` hoặc `OPEN`, `ownerOrgId = ORG-CA`, `findingCount = 12`, `dueDate`; 12 lỗi thành `IN_REMEDIATION`. Bước 4 `200`, `assigneeUserId`, `slaRemainingDays`. EVT: `issue.created` (EVT-08-07).
+    Thì bước 2 `201`, `issueCode = DQ-2026-000001`, `status = ASSIGNED` hoặc `OPEN`, `ownerOrgCode = ORG-CA`, `findingCount = 12`, `slaDueAt`; 12 lỗi thành `IN_REMEDIATION`. Bước 4 `200`, `assignee`, `overdue = false`. EVT: `issue.created` (EVT-08-07).
 
   @TC-08-096 @P1 @Âm
   Kịch bản: TC-08-096 Lỗi đã thuộc phiếu khác, giao người ngoài tổ chức
@@ -27,7 +27,7 @@ Tính năng: TS-08-19 · Mở phiếu khắc phục, phân công và theo dõi S
     # Truy vết: FR-08-042 · API-08-084, 085 · BR-08-015
     Biết `08.issue.sla-days`: `CRITICAL` 5, `MAJOR` 15, `MINOR` 30 ngày làm việc; mở phiếu lúc thứ Sáu 2026-12-04; Q08-43 (lịch nghỉ lễ).
     Khi mở một phiếu mỗi mức
-    Và đọc `dueDate`, `slaRemainingDays`
+    Và đọc `slaDueAt`, `overdue`
     Thì `CRITICAL` hạn 2026-12-11 (thứ Sáu tuần sau, bỏ thứ Bảy, Chủ nhật); `MAJOR` 2026-12-25; `MINOR` 2027-01-15 (lịch làm việc giả định chỉ trừ thứ Bảy, Chủ nhật; ngày nghỉ lễ chờ Q08-43). `overdue = false`.
 
   @TC-08-098 @P2 @Dương @Biên

@@ -6,7 +6,7 @@ ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư tích hợp PH-04 và PH-06, kiểm thử viên, hội đồng thẩm định
 phan_he: PH-08
-mo_ta: Hợp đồng REST gồm 131 operation gốc /api/dq/v1 và 14 sự kiện phát, 8 sự kiện tiêu thụ của PH-08 Chất lượng dữ liệu, kèm quy ước, quyền, scope máy, mã lỗi RFC 9457, thông báo hiển thị, kiểm tra hợp đồng và đề nghị đồng bộ.
+mo_ta: Hợp đồng REST gồm 132 operation gốc /api/dq/v1 và 14 sự kiện phát, 8 sự kiện tiêu thụ của PH-08 Chất lượng dữ liệu, kèm quy ước, quyền, scope máy, mã lỗi RFC 9457, thông báo hiển thị, kiểm tra hợp đồng và đề nghị đồng bộ.
 tai_lieu_lien_quan: D02-03-PH08 FRS; D03-03-PH08 CSDL; D03-04-PH06; D03-04-PH07; D03-04-PH04; D05-02-PH08 Test case
 ---
 
@@ -14,11 +14,11 @@ tai_lieu_lien_quan: D02-03-PH08 FRS; D03-03-PH08 CSDL; D03-04-PH06; D03-04-PH07;
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tập này là hợp đồng giao tiếp của PH-08 Chất lượng dữ liệu: nơi sở ngành tự đo sáu chiều chất lượng (đầy đủ, chính xác, nhất quán, kịp thời, duy nhất, hợp lệ) trên bản ghi vàng PH-06, danh mục PH-07, bảng của HTTT và bản tin luồng PH-04, rồi giao phiếu khắc phục cho chủ quản và lập báo cáo kỳ, báo cáo năm. PH-08 công bố **131 operation REST** gốc `/api/dq/v1` (module `dq` của `dh-data`), **14 sự kiện** `EVT-08-01…14` và nhận 8 sự kiện của PH-06, PH-07. Mã API-08-001…131 giữ đúng phương thức và đường dẫn của FRS 0.2 mục 9.4 (129 là `POST /findings:search`, 130 và 131 bật, tắt đo tăng dần).
+Tập này là hợp đồng giao tiếp của PH-08 Chất lượng dữ liệu: nơi sở ngành tự đo sáu chiều chất lượng (đầy đủ, chính xác, nhất quán, kịp thời, duy nhất, hợp lệ) trên bản ghi vàng PH-06, danh mục PH-07, bảng của HTTT và bản tin luồng PH-04, rồi giao phiếu khắc phục cho chủ quản và lập báo cáo kỳ, báo cáo năm. PH-08 công bố **132 operation REST** gốc `/api/dq/v1` (module `dq` của `dh-data`), **14 sự kiện** `EVT-08-01…14` và nhận 8 sự kiện của PH-06, PH-07. Mã API-08-001…131 giữ đúng phương thức và đường dẫn của FRS 0.2 mục 9.4 (129 là `POST /findings:search`, 130 và 131 bật, tắt đo tăng dần).
 
 Hợp đồng máy đọc được, sinh từ một nguồn và đã kiểm:
 
-- [`ph08/openapi-dq.yaml`](ph08/openapi-dq.yaml): OpenAPI 3.1, 226 lược đồ, mỗi operation có ví dụ yêu cầu (khi có thân) và phản hồi; 219 ví dụ khớp lược đồ theo [`check_contracts.py`](ph08/tools/check_contracts.py); `openapi-spec-validator` và `@redocly/cli lint` hợp lệ.
+- [`ph08/openapi-dq.yaml`](ph08/openapi-dq.yaml): OpenAPI 3.1, 229 lược đồ, mỗi operation có ví dụ yêu cầu (khi có thân) và phản hồi; 221 ví dụ khớp lược đồ theo [`check_contracts.py`](ph08/tools/check_contracts.py); `openapi-spec-validator` và `@redocly/cli lint` hợp lệ.
 - [`ph08/asyncapi-dq.yaml`](ph08/asyncapi-dq.yaml): AsyncAPI 3.0, 22 kênh (14 phát, 8 nhận), 22 ví dụ khớp payload; `@asyncapi/cli validate` hợp lệ.
 
 Bốn nguyên tắc hợp đồng:
@@ -272,6 +272,7 @@ Danh mục sinh từ [`ph08/tools/spec.py`](ph08/tools/spec.py) bằng `gen_md.p
 | API-08-129 | `POST /findings:search` | finding-read | 037 | - | 200 |
 | API-08-130 | `POST /assets/{assetCode}:enable-incremental` | run | 025 | M | 200 |
 | API-08-131 | `POST /assets/{assetCode}:disable-incremental` | run | 025 | M | 200 |
+| API-08-132 | `POST /weight-configs:preview` | rule-admin | 021 | - | 200 |
 
 : Danh mục endpoint PH-08
 <!-- gen:endpoints:end -->
@@ -375,6 +376,7 @@ Idempotency-Key: 0193b1d4-0000-7000-8000-0000000000a1
  "scanMode": "FULL",
  "scanTrigger": "MANUAL",
  "sampleSize": 10000,
+ "sampleSeed": 20261126,
  "periodCode": "2026-11",
  "note": "Đo trước kỳ báo cáo"
 }
@@ -518,7 +520,7 @@ PH-08 dùng dải ERR-08-001…099 cho control plane và ERR-08-101…199 cho ru
 | ERR-08-024 | 422 | Ngưỡng không hợp lệ | "Ngưỡng cảnh báo phải nhỏ hơn hoặc bằng ngưỡng đạt và trong khoảng 0 đến 100." | UI-08-10 |
 | ERR-08-025 | 422 | Tệp nhập sai lược đồ bộ quy tắc | "Tệp không đúng định dạng bộ quy tắc ở {vị trí}: {chi tiết}." | Hộp thoại nhập |
 | ERR-08-026 | 422 | Sao chép sang đối tượng không tương thích | "Đối tượng đích thiếu trường {danh sách}. Khai báo ánh xạ trường trước khi sao chép." | Hộp thoại sao chép |
-| ERR-08-027 | 422 | Chưa có bộ quy tắc, trọng số hiệu lực hoặc lần đo trong kỳ | "Đối tượng {mã} chưa có bộ quy tắc đang hiệu lực." | UI-08-04, UI-08-11, UI-08-18 |
+| ERR-08-027 | 422 | Chưa có bộ quy tắc hoặc trọng số hiệu lực | "Đối tượng {mã} chưa có bộ quy tắc đang hiệu lực." | UI-08-04, UI-08-11, UI-08-18 |
 | ERR-08-028 | 409 | Đã có lần đo hoặc lần hồ sơ đang chạy | "Đối tượng đang có lần chạy {mã}. Đợi lần này xong hoặc hủy." | Thông báo nổi |
 | ERR-08-029 | 422 | Lịch cron sai hoặc quá dày | "Lịch {biểu thức} không hợp lệ hoặc dày hơn mức cho phép ({n} giờ một lần)." | Biểu mẫu lịch |
 | ERR-08-030 | 422 | Cỡ mẫu sai; đo năm không được dùng mẫu | "Kích thước mẫu phải từ 100 đến 1.000.000 bản ghi; lần đo cho báo cáo năm phải đo toàn bộ." | Hộp thoại đo |
@@ -547,7 +549,8 @@ PH-08 dùng dải ERR-08-001…099 cho control plane và ERR-08-101…199 cho ru
 | ERR-08-053 | 422 | Gửi duyệt khi chưa chạy thử nội dung hiện tại | "Chạy thử phiên bản sau lần sửa cuối trước khi gửi duyệt." | UI-08-07 |
 | ERR-08-054 | 503 | Không ghi được kiểm toán, thao tác bị từ chối (mã chung cho mọi lệnh ghi) | "Hệ thống tạm thời không ghi được nhật ký. Thao tác chưa được thực hiện." | Thông báo nổi |
 | ERR-08-055 | 409 | `Idempotency-Key` đã dùng cho một yêu cầu có thân khác (cùng khóa, cùng đường dẫn, nội dung khác) | "Khóa chống trùng này đã dùng cho một yêu cầu khác nội dung. Tạo khóa mới rồi gửi lại." | Thông báo nổi |
-| ERR-08-101 | 422 | Bản ghi trực tuyến sai lược đồ hoặc quá 64 KB | "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}." | Nhật ký luồng PH-04, UI-08-20 |
+| ERR-08-056 | 422 | Không có lần đo thành công nào trong kỳ báo cáo | "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo." | UI-08-18 |
+| ERR-08-101 | 422 | Bản ghi trực tuyến sai lược đồ hoặc quá 64 KB; lô quá 100 bản ghi | "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}." | Nhật ký luồng PH-04, UI-08-20 |
 | ERR-08-102 | 404 | Đối tượng chưa bật kiểm tra trực tuyến | "Đối tượng {mã} chưa bật kiểm tra trực tuyến." | Nhật ký luồng PH-04 |
 | ERR-08-103 | 504 | Vượt ngân sách thời gian khi `FAIL_CLOSED` | "Kiểm tra chất lượng vượt {n} ms." | Nhật ký luồng PH-04, UI-08-20 |
 | ERR-08-104 | 503 | Phụ thuộc lỗi khi `FAIL_CLOSED` | "Dịch vụ đối chiếu danh mục tạm thời không khả dụng." | Nhật ký luồng PH-04, UI-08-20 |
@@ -587,7 +590,7 @@ Hợp đồng sinh từ một nguồn (`tools/spec.py`, enum đọc thẳng từ
 | Công cụ | Kiểm gì |
 |---|---|
 | [`check_contracts.py`](ph08/tools/check_contracts.py) | OpenAPI 3.1 hợp lệ; 219 ví dụ khớp lược đồ; mỗi operation có `x-datahub-id` duy nhất, `-fr`, `-permission`, `-errors`; lệnh sửa, hành động có `If-Match` (trừ `noifm`), lệnh tạo có `Idempotency-Key`; mã lỗi có ở FRS 9.1 và có mã HTTP trong `responses`; không trường bí mật; AsyncAPI 3.0 đủ 14 + 8 kênh đúng topic |
-| [`doi_chieu_frs.py`](ph08/tools/doi_chieu_frs.py) | Đối chiếu đường dẫn, phương thức, FR của 131 mã FRS 9.4; mã ERR, EVT, PERM; liệt kê trường và enum chỉ có ở API (Phụ lục A) |
+| [`doi_chieu_frs.py`](ph08/tools/doi_chieu_frs.py) | Đối chiếu đường dẫn, phương thức, FR của 132 mã FRS 9.4; mã ERR, EVT, PERM; liệt kê trường và enum chỉ có ở API (Phụ lục A) |
 | `redocly lint`, `asyncapi validate`, `openapi-spec-validator`, Spectral, oasdiff | Lint cú pháp và phong cách; oasdiff chặn thay đổi phá vỡ trong `v1` |
 
 : Kiểm tra hợp đồng trong CI
@@ -643,7 +646,7 @@ Mỗi FR của PH-08 có ít nhất một API hoặc ghi rõ lý do không có. 
 | FR-08-018 | Kích hoạt, thay thế, ngừng phiên bản bộ quy tắc | 041, 042 |
 | FR-08-019 | So sánh phiên bản, xem lịch sử | 028, 030, 043 |
 | FR-08-020 | Sao chép, nhập, xuất bộ quy tắc YAML, JSON | 044, 045, 046 |
-| FR-08-021 | Cấu hình trọng số và ngưỡng có phiên bản, có duyệt | 047, 048, 049, 050, 051, 052 |
+| FR-08-021 | Cấu hình trọng số và ngưỡng có phiên bản, có duyệt | 047, 048, 049, 050, 051, 052, 132 |
 | FR-08-022 | Liệt kê, tìm quy tắc | 025, 053 |
 | FR-08-023 | Lập lịch đo | 054, 055, 056, 057, 058 |
 | FR-08-024 | Chạy đo theo yêu cầu | 059 |
@@ -849,8 +852,8 @@ ETag: W/"3"
 PATCH /api/dq/v1/domains/{domainCode}
 
 {"name": "Hộ tịch và quốc tịch", "description": "Dữ liệu hộ tịch",
- "ownerOrgCode": "so-tu-phap", "stewardUser": "le.thi.hoa",
- "onDependencyFailure": "FAIL_CLOSED"}
+ "ownerOrgCode": "so-tu-phap", "stewardUser": "le.thi.hoa", "status": "INACTIVE",
+ "statusReason": "Ngừng khai thác miền", "onDependencyFailure": "FAIL_CLOSED"}
 ```
 
 ```http
@@ -2010,7 +2013,8 @@ ETag: W/"3"
 ```http
 POST /api/dq/v1/rule-sets/{ruleSetCode}/versions/{version}:dry-run
 
-{"sampleSize": 1000, "ruleCodes": ["CD-ACC-001"]}
+{"sampleSize": 1000, "sampleSeed": 42, "recordKeys": ["2024-0001234"],
+ "ruleCodes": ["CD-ACC-001"]}
 ```
 
 ```http
@@ -2019,7 +2023,7 @@ ETag: W/"3"
 
 {"sampleSize": 1000, "durationMs": 840,
  "results": [{"ruleCode": "CD-ACC-001", "status": "FAILED", "rowsEvaluated": 1000, "rowsFailed": 12,
-   "passRate": 0.988}], "estimatedScore": 92.5}
+   "passRate": 0.988}], "sampleSeed": 42, "estimatedScore": 92.5}
 ```
 
 #### API-08-038 · Gửi duyệt phiên bản
@@ -2928,6 +2932,51 @@ ETag: W/"3"
   "uniqueness": 0.15}, "passMin": 90, "warnMin": 75}
 ```
 
+#### API-08-132 · Xem trước điểm theo trọng số và ngưỡng
+
+::: dac-ta
+**Mục đích.** Xem trước điểm theo trọng số và ngưỡng.
+
+**Phương thức, đường dẫn.** `POST /weight-configs:preview`.
+
+**Quyền.** `PERM-08-rule-admin`.
+
+**FR hiện thực.** FR-08-021.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `WeightPreviewRequest`; trường bắt buộc: `scope`, `weights`, `passMin`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `WeightPreview`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `422`; mã lỗi của thao tác: ERR-08-023, ERR-08-024, ERR-08-027 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ đọc: tính điểm giả định từ ảnh chụp đầy đủ gần nhất của các đối tượng trong phạm vi, không ghi dữ liệu, không cần bản nháp; chưa có ảnh chụp thì ERR-08-027.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/dq/v1/weight-configs:preview
+
+{"scope": "DOMAIN",
+ "weights": {"completeness": 0.2, "accuracy": 0.2, "consistency": 0.15, "timeliness": 0.1,
+  "uniqueness": 0.15}, "passMin": 85, "warnMin": 75, "domainCode": "HO_TICH",
+ "assetCode": "mdm-cong-dan"}
+```
+
+```http
+HTTP/1.1 200 OK
+ETag: W/"3"
+
+{"scope": "DOMAIN", "assetCount": 6, "changedVerdictCount": 0,
+ "assets": [{"assetCode": "mdm-cong-dan", "currentScore": 91.2, "projectedScore": 90.1,
+   "currentVerdict": "PASS", "projectedVerdict": "PASS"}], "currentScore": 91.2,
+ "projectedScore": 90.1, "delta": -1.1}
+```
+
 ### Lịch và lần đo
 
 #### API-08-054 · Danh sách lịch đo
@@ -3167,7 +3216,8 @@ POST /api/dq/v1/scans
 Idempotency-Key: 0193b1d4-0000-7000-8000-0000000000a1
 
 {"assetCode": "mdm-cong-dan", "scanMode": "FULL", "scanTrigger": "MANUAL",
- "sampleSize": 10000, "periodCode": "2026-11", "note": "Đo trước kỳ báo cáo"}
+ "sampleSize": 10000, "sampleSeed": 20261126, "periodCode": "2026-11",
+ "note": "Đo trước kỳ báo cáo"}
 ```
 
 ```http
@@ -4279,7 +4329,8 @@ HTTP/1.1 200 OK
 
 {"items": [{"issueCode": "DQ-2026-000142", "assetCode": "mdm-cong-dan",
    "title": "Số định danh sai mẫu ở hộ tịch", "severity": "CRITICAL", "findingCount": 312}],
- "page": 0, "size": 20, "totalElements": 1}
+ "page": 0, "size": 20, "totalElements": 1,
+ "facets": {"byStatus": {"ASSIGNED": 6, "IN_PROGRESS": 9, "FIXED": 2}, "overdue": 3, "dueSoon": 4}}
 ```
 
 #### API-08-086 · Chi tiết phiếu khắc phục
@@ -4960,7 +5011,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `Alert`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-007 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-007, ERR-08-042 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
 :::
@@ -5002,7 +5053,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `Alert`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-007 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-007, ERR-08-042 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
 :::
@@ -5209,7 +5260,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `201` đã tạo, `Report`; tiêu đề `ETag`, `Location`.
 
-**Lỗi.** HTTP `400`, `409`, `422`; mã lỗi của thao tác: ERR-08-027, ERR-08-038, ERR-08-039, ERR-08-055 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `409`, `422`; mã lỗi của thao tác: ERR-08-056, ERR-08-038, ERR-08-039, ERR-08-055 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
 :::
@@ -5254,7 +5305,7 @@ Location: /api/dq/v1/reports/ma-moi
 
 **Phản hồi thành công.** `200` thành công, `ReportPage`.
 
-**Lỗi.** HTTP `422`; mã lỗi của thao tác: ERR-08-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** `422` Không xử lý được.
 
 **Ghi chú.** Không.
 :::
@@ -5292,7 +5343,7 @@ HTTP/1.1 200 OK
 
 **Phản hồi thành công.** `200` thành công, `Report`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `404`, `422`; mã lỗi của thao tác: ERR-08-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** `404` Không tìm thấy.
 
 **Ghi chú.** Không.
 :::
@@ -5331,7 +5382,7 @@ ETag: W/"3"
 
 **Phản hồi thành công.** `200` thành công, `Report`; tiêu đề `ETag`.
 
-**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-027 (ý nghĩa ở chương mã lỗi).
+**Lỗi.** HTTP `400`, `404`, `409`, `422`; mã lỗi của thao tác: ERR-08-056 (ý nghĩa ở chương mã lỗi).
 
 **Ghi chú.** Không.
 :::
@@ -6036,7 +6087,7 @@ ETag: W/"3"
 
 ## Phụ lục A. Đề nghị đồng bộ
 
-Bản 0.2 đã đồng bộ với FRS 0.2 (nhật ký hấp thụ mục 15): mã API-08-129…131, ERR-08-055, 43 tham số, enum Phụ lục A, `valueMode`, mã phiếu `DQ-yyyy-nnnnnn` và báo cáo `BC-DQ-yyyy-kỳ-Ttt`. Tập này không sửa tài liệu khác; các điểm còn lại cần chủ tài liệu hấp thụ ở đợt đồng bộ cuối.
+Bản 0.2 đã đồng bộ với FRS 0.2 (nhật ký hấp thụ mục 15): mã API-08-129…132, ERR-08-055, ERR-08-056, 43 tham số, enum Phụ lục A, `valueMode`, mã phiếu `DQ-yyyy-nnnnnn` và báo cáo `BC-DQ-yyyy-kỳ-Ttt`. Tập này không sửa tài liệu khác; các điểm còn lại cần chủ tài liệu hấp thụ ở đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
 |---|---|
@@ -6048,11 +6099,11 @@ Bản 0.2 đã đồng bộ với FRS 0.2 (nhật ký hấp thụ mục 15): mã
 
 : Đề nghị đồng bộ với tài liệu khác
 
-Trường chỉ có ở API (kết quả tính, gộp hoặc tham chiếu, không có cột DDL tương ứng): `accuracy`, `completeness`, `consistency`, `timeliness`, `uniqueness`, `validity`, `activeVersionNo`, `activityId`, `added`, `removed`, `annualMethod`, `attributeCount`, `basedOnVersionNo`, `blockers`, `breach`, `breaking`, `bySeverity`, `ceilings`, `changedAttributes`, `collectedAt`, `columnCount`, `costEstimate`, `count`, `deletedRows`, `domainScores`, `downloadUrl`, `droppedPartitions`, `estimatedScore`, `failedRules`, `fieldNames`, `firingAlerts`, `firstScanId`, `forwardedAt`, `fromVersionNo`, `toVersionNo`, `gateEnabled`, `goldenIds`, `mergedIds`, `toGoldenIds`, `survivorId`, `goldenRecord`, `groupSize`, `hasContractView`, `hasPdf`, `hasXlsx`, `itemCount`, `lastScanId`, `lastScore`, `lastVerdict`, `line`, `minGroup`, `namePattern`, `schemaName`, `newFindings`, `newRuleSetCode`, `note`, `objectCode`, `objectTypes`, `objects`, `openFindingsBySeverity`, `openIssueCode`, `openIssues`, `outcome`, `ownScore`, `previousScore`, `publishedVersion`, `rationale`, `referencedFields`, `replacementCatalogCode`, `retireDate`, `resolutionReason`, `rowsAffected`, `scoreAfter`, `scoreBefore`, `seenAt`, `targetAssetCode`, `taskId`, `toLevel`, `trendSeries`, `unconfirmed`, `valid`, `verifyIssueCode`, `versionStatus`. Giá trị enum chỉ có ở API: `BELOW_WARN`, `DENIED`, `ISSUE_DAILY`, `OVERDUE`, `SCAN`, `SCAN_SNAPSHOT`, `SUCCESS`, `TABLE`, `VERDICT_FAIL`, `VIEW`.
+Trường chỉ có ở API (kết quả tính, gộp hoặc tham chiếu, không có cột DDL tương ứng): `accuracy`, `completeness`, `consistency`, `timeliness`, `uniqueness`, `validity`, `activeVersionNo`, `activityId`, `added`, `removed`, `annualMethod`, `attributeCount`, `basedOnSnapshotAt`, `basedOnVersionNo`, `blockers`, `breach`, `breaking`, `bySeverity`, `ceilings`, `changedAttributes`, `changedVerdictCount`, `collectedAt`, `columnCount`, `costEstimate`, `count`, `currentVerdict`, `dimensionsPrev`, `projectedScore`, `projectedVerdict`, `deletedRows`, `domainScores`, `downloadUrl`, `droppedPartitions`, `estimatedScore`, `failedRules`, `fieldNames`, `firingAlerts`, `firstScanId`, `forwardedAt`, `fromVersionNo`, `toVersionNo`, `gateEnabled`, `goldenIds`, `mergedIds`, `toGoldenIds`, `survivorId`, `goldenRecord`, `groupSize`, `hasContractView`, `hasPdf`, `hasXlsx`, `itemCount`, `lastScanId`, `lastScore`, `lastVerdict`, `line`, `minGroup`, `namePattern`, `schemaName`, `newFindings`, `newRuleSetCode`, `note`, `objectCode`, `objectTypes`, `objects`, `openFindingsBySeverity`, `openIssueCode`, `openIssues`, `outcome`, `ownScore`, `previousScore`, `publishedVersion`, `rationale`, `referencedFields`, `replacementCatalogCode`, `retireDate`, `resolutionReason`, `rowsAffected`, `scoreAfter`, `scoreBefore`, `seenAt`, `targetAssetCode`, `taskId`, `toLevel`, `trendSeries`, `unconfirmed`, `valid`, `verifyIssueCode`, `versionStatus`. Giá trị enum chỉ có ở API: `BELOW_WARN`, `DENIED`, `ISSUE_DAILY`, `OVERDUE`, `SCAN`, `SCAN_SNAPSHOT`, `SUCCESS`, `TABLE`, `VERDICT_FAIL`, `VIEW`.
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm PH-08 | Bản đầu: 129 operation, 14 sự kiện phát, 8 sự kiện nhận, bảng mã lỗi và thông báo, 5 câu hỏi mở Q08-55…59, phụ lục đề nghị đồng bộ |
-| 0.2 | 2026-11-26 | Nhóm PH-08 | Đồng bộ đợt đầu với FRS 0.2: 131 operation (thêm API-08-129 `POST /findings:search` theo FRS, API-08-130, 131 bật, tắt đo tăng dần), ERR-08-055 cho `Idempotency-Key` dùng lại với thân khác, enum theo Phụ lục A, `updatedAtField` và cấu hình trực tuyến ở đối tượng đo, `scanTrigger` chỉ `MANUAL`, `ANNUAL`, mã phiếu `DQ-`, mã báo cáo `BC-DQ-`, 43 tham số; chương 11 in ví dụ cho mọi endpoint; giới hạn tập 240 KB |
+| 0.2 | 2026-11-26 | Nhóm PH-08 | Đồng bộ với FRS 0.2: 132 operation (thêm API-08-129 `POST /findings:search` theo FRS, API-08-130, 131 bật, tắt đo tăng dần, API-08-132 `POST /weight-configs:preview` xem trước điểm theo trọng số), ERR-08-056 không có lần đo trong kỳ, ERR-08-101 cho lô quá 100 bản ghi, `etaSeconds` ở lần đo, `facets` ở danh sách phiếu, `dimensionsPrev` ở bảng điều khiển, ERR-08-055 cho `Idempotency-Key` dùng lại với thân khác, enum theo Phụ lục A, `updatedAtField` và cấu hình trực tuyến ở đối tượng đo, `scanTrigger` chỉ `MANUAL`, `ANNUAL`, mã phiếu `DQ-`, mã báo cáo `BC-DQ-`, 43 tham số; chương 11 in ví dụ cho mọi endpoint; giới hạn tập 240 KB |

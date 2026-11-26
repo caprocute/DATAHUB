@@ -296,7 +296,7 @@ body = f"""
 {head("Cài đặt chất lượng dữ liệu", btn("Hoàn tác thay đổi"), btn("Lưu tham số", "dis"))}
 <div class="grid2" style="grid-template-columns:220px minmax(0,1fr)">
   <div class="card tree">{nav19}<div class="muted" style="margin-top:10px">Tab Nhật ký chỉ hiện với SO, AU (<span class="mono">PERM-08-audit-read</span>).</div></div>
-  <div class="card"><div class="toolbar"><b>Tham số theo tenant T68</b><span class="sp" style="flex:1"></span><span class="input">Tìm khóa ⌕</span><span class="muted">40 khóa · 2 giá trị không hợp lệ</span></div>
+  <div class="card"><div class="toolbar"><b>Tham số theo tenant T68</b><span class="sp" style="flex:1"></span><span class="input">Tìm khóa ⌕</span><span class="muted">43 khóa · 2 giá trị không hợp lệ</span></div>
   {pt}
   <div class="muted" style="margin-top:8px">Trần do Quản trị nền tảng đặt ở cấp nền tảng. Ngưỡng Đạt, Cảnh báo và trọng số không nằm ở đây mà ở UI-08-10.</div></div>
 </div>"""

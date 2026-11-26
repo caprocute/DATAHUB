@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH08
 ten: Thiết kế giao diện màn hình phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ quản lý dữ liệu, chủ quản dữ liệu, kiểm thử viên, hội đồng thẩm định
@@ -149,7 +149,7 @@ Nút không có quyền thì ẩn; nút có quyền nhưng sai trạng thái th�
 
 ### 2.5. Dữ liệu nhạy cảm trên giao diện
 
-PH-08 không lưu giá trị gốc của trường Nhạy cảm (BR-08-012). Cột "Giá trị" ở bản ghi lỗi hiện giá trị đã che một phần (`PARTIAL`) hoặc dấu chấm cho giá trị băm (`HASH`) bằng `CMP-MaskedValue`; không có nút "bỏ che" vì giá trị gốc không tồn tại ở PH-08. Muốn xem giá trị gốc, chủ quản tra trực tiếp trong HTTT của mình theo khóa bản ghi (Q08-07). Khóa bản ghi cá nhân dùng làm tiêu chí tìm gửi bằng `POST /findings:search`, không ghi vào URL, `localStorage` hay lịch sử gợi ý.
+PH-08 không lưu giá trị gốc của trường Nhạy cảm (BR-08-012). Cột "Giá trị" ở bản ghi lỗi hiện giá trị đã che một phần (`valueMode = MASKED`) hoặc dấu chấm cho giá trị băm (`HASH_ONLY`) bằng `CMP-MaskedValue`; không có nút "bỏ che" vì giá trị gốc không tồn tại ở PH-08. Muốn xem giá trị gốc, chủ quản tra trực tiếp trong HTTT của mình theo khóa bản ghi (Q08-07). Khóa bản ghi cá nhân dùng làm tiêu chí tìm gửi bằng `POST /findings:search` (API-08-129), không ghi vào URL, `localStorage` hay lịch sử gợi ý.
 
 ### 2.6. Màu không phải kênh duy nhất
 
@@ -348,7 +348,7 @@ Mọi trạng thái hiển thị bằng `CMP-StatusTag` có biểu tượng và 
 | `issue.status` | `OPEN`, `ASSIGNED`, `IN_PROGRESS`, `FIXED`, `VERIFIED`, `REOPENED`, `REJECTED`, `CANCELLED` | Mở, Đã giao, Đang xử lý, Đã báo sửa, Đã kiểm chứng, Mở lại, Bị từ chối, Đã hủy | info, info, info, success, success, warning, neutral, neutral |
 | `alert.status` | `FIRING`, `ACKNOWLEDGED`, `RESOLVED`, `SILENCED` | ● Đang bật, ✓ Đã xác nhận, ✓ Đã hết, ◌ Tắt tiếng | error, info, success, neutral |
 | `report.status` | `DRAFT`, `IN_REVIEW`, `PUBLISHED`, `WITHDRAWN` | Nháp, Chờ duyệt, Đã công bố, Đã thu hồi | neutral, warning, success, neutral |
-| `export.status` | `PENDING_APPROVAL`, `APPROVED`, `READY`, `EXPIRED`, `REJECTED` | Chờ chấp thuận, Đã chấp thuận, Sẵn sàng, Hết hạn, Bị từ chối | warning, info, success, neutral, error |
+| `export.status` | `PENDING_APPROVAL`, `APPROVED`, `RUNNING`, `READY`, `FAILED`, `EXPIRED`, `REJECTED` | Chờ chấp thuận, Đã chấp thuận, Đang tạo tệp, Sẵn sàng, Tạo lỗi, Hết hạn, Bị từ chối | warning, info, info, success, error, neutral, error |
 
 : Nhãn trạng thái dùng chung của PH-08
 
@@ -382,8 +382,20 @@ Câu hiển thị dùng đúng nguyên văn FRS §9.2; `{…}` là biến điề
 | Xung đột: ERR-08-004 | `CMP-ConflictDialog` (`ST-13`) | "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." |
 | Không có hoặc ngoài phạm vi: ERR-08-001, 032 | Trang lỗi `CMP-ResultPage` (`ST-07`, `ST-08`) | "Đối tượng {mã} không thuộc tổ chức của anh/chị." |
 | Kiểm toán: ERR-08-054 | `CMP-Toast` lỗi | "Hệ thống tạm thời không ghi được nhật ký. Thao tác chưa được thực hiện." |
+| Khóa chống trùng: ERR-08-055 | `CMP-Toast` lỗi; giao diện sinh khóa mới cho lần bấm kế | "Khóa chống trùng này đã dùng cho một yêu cầu khác nội dung. Tạo khóa mới rồi gửi lại." |
+| Kỳ không có số liệu: ERR-08-056 | `CMP-Alert` đầu hộp "Tạo báo cáo" (UI-08-18) | "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo." |
 
 : Nhóm mã lỗi ERR-08 và nơi hiển thị
+
+Ba mã dùng ở nhiều màn nên biến `{…}` được điền theo ngữ cảnh như bảng dưới; câu vẫn là câu chuẩn của FRS §9.2.
+
+| Mã | Câu hiển thị sau khi điền biến, theo màn |
+|---|---|
+| ERR-08-005 | UI-08-09, 10, 14, 16, 18: "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt." (nút Duyệt khóa, giải thích bằng `CMP-Tooltip`) |
+| ERR-08-006 | UI-08-09: "Không thể duyệt khi phiên bản đang ở trạng thái Nháp."; UI-08-16: "Không thể báo đã sửa khi phiếu đang ở trạng thái Đã hủy."; UI-08-18: "Không thể công bố khi báo cáo đang ở trạng thái Nháp." |
+| ERR-08-007 | UI-08-09, 14, 15, 17, 18: "Nhập lý do (tối thiểu 20 ký tự)."; UI-08-16 (xác nhận thủ công): "Nhập lý do (tối thiểu 50 ký tự)." |
+
+: Câu ERR-08-005, 006, 007 theo ngữ cảnh
 
 ### 5.4. Dải thông báo dùng chung
 
@@ -486,7 +498,7 @@ Bảng dưới đánh số các thành phần trong bố cục trên, kèm thàn
 | 6 | Thẻ "Phiếu quá hạn" | `CMP-KpiCard` | Số quá hạn, số đã leo thang; bấm mở UI-08-15 `phan-vung=qua-han` | `counters.overdueIssues` | |
 | 7 | Thẻ miền | `CMP-StatCard` biến thể thẻ điểm | Tên miền, chủ quản, điểm, kết luận, Δ, ngày đo, radar nhỏ 70 px không nhãn, huy hiệu "Thiếu chiều Hợp lệ" khi có `INCOMPLETE_DIMENSIONS` | `domains[]` | Viền trái theo kết luận; sắp `FAIL`, `WARN`, `PASS`; miền chưa có đối tượng đo hiện nét đứt và câu rỗng |
 | 8 | Xu hướng | `CMP-Chart` `line` | 13 điểm tháng, một đường mỗi miền được chọn (tối đa 5) và đường toàn tỉnh nét đứt, vạch ngưỡng 80 và 70 (`markLine`), nút "Xem dạng bảng" | `trend[]` | Tooltip nêu điểm, kết luận, số đối tượng |
-| 9 | Radar sáu chiều | `CMP-Chart` `radar` (đề nghị, Phụ lục A) | Điểm tháng này (liền) và tháng trước (đứt), vòng 80 nét đứt; dưới radar sáu điểm chiều bằng chữ | `radar`, `radarPrev` | Có bảng thay thế |
+| 9 | Radar sáu chiều | `CMP-Chart` `radar` (đề nghị, Phụ lục A) | Điểm tháng này (liền) và tháng trước (đứt), vòng 80 nét đứt; dưới radar sáu điểm chiều bằng chữ | `dimensions`, `dimensionsPrev` | Có bảng thay thế |
 | 10 | Đối tượng cần chú ý | `CMP-DataTable` gọn | Tối đa 5 dòng: `FAIL` hoặc cờ thiếu chiều hoặc tụt từ 5 điểm; cột Đối tượng, Điểm, Kết luận, Lý do | `attention[]` | Bấm dòng mở UI-08-04 |
 | 11 | Bộ lọc | `CMP-Select`, `CMP-SegmentedControl` | Kỳ (tháng), miền, tổ chức, chế độ "Của tỉnh" hoặc "So sánh ẩn danh"; ghi lên URL | API-08-001 | Chế độ so sánh ẩn nếu chưa bật `08.benchmark.opt-in` |
 
@@ -652,9 +664,9 @@ Hình dưới là bước 4 "CDE" của wizard, bước cuối trước khi kíc
 | ✓ 1 Loại   ✓ 2 Nguồn   ✓ 3 Trường và khóa   ④ CDE                                         |
 | Chọn CDE, kiểm tra phân loại, cách che          | Tóm tắt đối tượng                          |
 | ⚠ so_dien_thoai_me chưa có phân loại ở PH-09…   |  Mã · Loại · Kết nối · Bảng · Khóa · Miền  |
-| [x] so_dinh_danh  SENSITIVE  HASH               |  Chủ quản · Lịch đo                        |
-| [x] ho_ten        RESTRICTED PARTIAL            | Sau khi kích hoạt: tạo lịch, chạy hồ sơ,   |
-| [ ] noi_sinh      INTERNAL   NONE               |  gợi ý quy tắc                             |
+| [x] so_dinh_danh  SENSITIVE  HASH_ONLY          |  Chủ quản · Lịch đo                        |
+| [x] ho_ten        RESTRICTED MASKED             | Sau khi kích hoạt: tạo lịch, chạy hồ sơ,   |
+| [ ] noi_sinh      INTERNAL   PLAIN              |  gợi ý quy tắc                             |
 ```
 
 ### 9.2. Bước và trường
@@ -709,7 +721,7 @@ Bảng dưới ghi hành động theo quyền và các trạng thái của wizar
 
 **Đường dẫn, mẫu.** `/du-lieu/chat-luong/doi-tuong/{ma}` (tab `/truong`, `/xu-huong`, `/truc-tuyen`, `/lich-su`; `ky`); PTN-02 Chi tiết.
 
-**API.** API-08-007 (`GET /assets/{assetCode}`); API-08-106 (`GET /scorecards/assets/{assetCode}`); API-08-066 (`GET /assets/{assetCode}/score-history`); API-08-013 (trường); API-08-072 (cấu hình trực tuyến); API-08-010, 011, 012 (tạm ngừng, khôi phục, ngừng); API-08-059 (đo ngay).
+**API.** API-08-007 (`GET /assets/{assetCode}`); API-08-106 (`GET /scorecards/assets/{assetCode}`); API-08-066 (`GET /assets/{assetCode}/score-history`); API-08-013 (trường); API-08-072 (cấu hình trực tuyến); API-08-010, 011, 012 (tạm ngừng, khôi phục, ngừng); API-08-059 (đo ngay); API-08-130, 131 (bật, tắt đo tăng dần).
 
 **Điều hướng vào.** Bấm dòng ở UI-08-02, thẻ ở UI-08-01, liên kết từ báo cáo, lần đo, phiếu.
 
@@ -761,8 +773,9 @@ Bảng dưới ghi hành động theo quyền và các trạng thái của thẻ
 
 | Hành động hoặc trạng thái | Quyền, điều kiện | Kết quả, thông báo |
 |---|---|---|
-| Đo ngay | `PERM-08-run`; đối tượng `ACTIVE`, không có lần `QUEUED` hay `RUNNING` | Hộp chọn chế độ `FULL` hoặc `SAMPLE` (cỡ 100…1.000.000, ERR-08-030); mở UI-08-12; hạn mức: "Đã đạt {n} lần đo theo yêu cầu trong một giờ. Thử lại sau {phút} phút." (ERR-08-052) |
+| Đo ngay | `PERM-08-run`; đối tượng `ACTIVE`, không có lần `QUEUED` hay `RUNNING` | Hộp chọn chế độ `FULL` hoặc `SAMPLE` (cỡ 100…1.000.000, ERR-08-030), gửi `scanTrigger = MANUAL`; mở UI-08-12; hạn mức: "Đã đạt {n} lần đo theo yêu cầu trong một giờ. Thử lại sau {phút} phút." (ERR-08-052) |
 | Tạm ngừng, Khôi phục, Ngừng hẳn | `PERM-08-asset`; `CMP-ReasonDialog` | Lịch bị hoãn; điểm lịch sử giữ nguyên |
+| Bật, tắt đo tăng dần | `PERM-08-run`; công tắc ở tab "Lịch sử đo", đối tượng `ACTIVE`, không dùng cho `FLOW_MESSAGE` | Bật gọi API-08-130; tắt cần `CMP-ReasonDialog` (API-08-131); chưa `ACTIVE`: ERR-08-006; `FLOW_MESSAGE`: ERR-08-050 |
 | Chạy hồ sơ | `PERM-08-asset`; không dùng cho `FLOW_MESSAGE` | "Đối tượng loại bản tin trên luồng không chạy hồ sơ hoặc đo theo lô." (ERR-08-050) |
 | Chưa có lần đo | `CMP-EmptyState` "Đối tượng chưa có lần đo nào thành công." kèm nút "Đo ngay" | ERR-08-001 khi gọi thẻ điểm không có ảnh chụp |
 | Đang tải, lỗi | Skeleton thẻ; `ST-05` theo khối | |
@@ -1095,7 +1108,7 @@ Bảng dưới liệt kê trường theo tab; trường tham số đổi theo to
 | Danh mục PH-07 | `CMP-CodeListSelect` | Chiều Hợp lệ | "Quy tắc chiều Hợp lệ phải chọn danh mục PH-07 để đối chiếu." (ERR-08-017); chưa phát hành: ERR-08-010 | `catalogCode` |
 | Đối tượng, trường đối chiếu | `CMP-ResourceSelect`, `CMP-SchemaTree` | Chiều Nhất quán | "Quy tắc chiều Nhất quán phải chọn đối tượng đo và trường để đối chiếu." (ERR-08-018) | `refAssetCode`, `refFieldPath` |
 | Biểu thức CEL, vị từ SQL | `CMP-CodeEditor` | Khi `CEL_EXPRESSION`, `SQL_PREDICATE` | Kiểm tra khi gõ (trễ 600 ms) gọi API-08-034; CEL sai: ERR-08-019; SQL ngoài danh sách cho phép: "Vị từ SQL dùng {thành phần} không được phép. Chỉ được viết điều kiện trên cột của bảng đang đo." (ERR-08-020) | `expression` |
-| Mức, chế độ chạy | `CMP-Select` | Có | `severity`; `exec_mode`; toán tử `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chọn "Lô" (BR-08-017) | `severity`, `execMode` |
+| Mức, chế độ chạy | `CMP-Select` | Có | `severity`; `exec_mode`; toán tử `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chọn "Lô" (BR-08-017); máy chủ vẫn từ chối `INLINE`, `BOTH` bằng ERR-08-016 với tham số `execMode` | `severity`, `execMode` |
 | Thông điệp lỗi | `CMP-Input` | Không | Câu hiển thị cho người xem lỗi; tối đa 300 ký tự | `message` |
 
 : UI-08-08 Biểu mẫu quy tắc và chạy thử, trường
@@ -1196,7 +1209,7 @@ Bảng dưới liệt kê thành phần và quy tắc duyệt.
 
 **Đường dẫn, mẫu.** `/du-lieu/chat-luong/cai-dat/trong-so` (`pham-vi`, `ma`); PTN-12 Cài đặt.
 
-**API.** API-08-047 (`GET /weight-configs`); API-08-048, 049 (tạo, sửa); API-08-050, 051, 052 (`:submit`, `:approve`, `:reject`).
+**API.** API-08-047 (`GET /weight-configs`); API-08-048, 049 (tạo, sửa); API-08-050, 051, 052 (`:submit`, `:approve`, `:reject`); API-08-132 (`POST /weight-configs:preview`).
 
 **Điều hướng vào.** Tab "Cài đặt" › "Trọng số và ngưỡng"; liên kết từ UI-08-12 (cờ `WEIGHTS_CHANGED`).
 
@@ -1236,7 +1249,7 @@ Bảng dưới liệt kê trường, kiểm tra và hành vi.
 | Ngưỡng Đạt, Cảnh báo | `CMP-NumberInput` | `0 ≤ cảnh báo ≤ đạt ≤ 100`; thanh minh họa ba vùng | ERR-08-024 (422) |
 | Lý do hạ ngưỡng | `CMP-TextArea` | Bắt buộc từ 20 ký tự khi hạ ngưỡng Đạt so cấu hình hiện hành | ERR-08-007: "Nhập lý do (tối thiểu {n} ký tự)." |
 | Hiệu lực từ | `CMP-DatePicker` | Không quá khứ | ERR-08-003 |
-| Xem trước tác động | `CMP-DataTable` | Điểm hiện tại và điểm với cấu hình mới trên ảnh chụp gần nhất, Δ, kết luận; không đổi điểm quá khứ | |
+| Xem trước tác động | `CMP-DataTable` | Nút "Xem trước" gọi API-08-132: điểm hiện tại và điểm với cấu hình đang soạn trên ảnh chụp đầy đủ gần nhất của từng đối tượng, Δ, kết luận, số đối tượng đổi kết luận; chỉ đọc, không đổi điểm quá khứ | Chưa có ảnh chụp: ERR-08-027 |
 | Gửi duyệt, Duyệt | `CMP-ApprovalPanel` | Bốn mắt: "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt." (ERR-08-005) | |
 
 : UI-08-10 Trọng số và ngưỡng, trường và kiểm tra
@@ -1291,7 +1304,7 @@ Bảng dưới liệt kê cột, hộp thoại đo và hộp thoại lịch cùn
 |---|---|---|---|---|
 | 1 | Chip kích hoạt | `CMP-FilterChips` | Năm giá trị `scan_trigger` kèm số lượng | |
 | 2 | Cột trạng thái | `CMP-StatusTag`, `CMP-ProgressBar` | `scan_status`; `RUNNING` có thanh tiến độ theo tác vụ; mã lỗi ở cột ghi chú | |
-| 3 | Hộp "Đo theo yêu cầu" | `CMP-Form` trong `CMP-Modal` | Đối tượng (nhiều), chế độ `FULL` hoặc `SAMPLE`; cỡ mẫu 100…1.000.000; lần đo cho báo cáo năm phải `FULL` | "Kích thước mẫu phải từ 100 đến 1.000.000 bản ghi; lần đo cho báo cáo năm phải đo toàn bộ." (ERR-08-030) |
+| 3 | Hộp "Đo theo yêu cầu" | `CMP-Form` trong `CMP-Modal` | Đối tượng (nhiều), chế độ `FULL` hoặc `SAMPLE`; cỡ mẫu 100…1.000.000; lần đo cho báo cáo năm phải `FULL`; gửi `scanTrigger = MANUAL` (`ANNUAL` chỉ từ khối sẵn sàng của UI-08-18; `SCHEDULE`, `EVENT`, `VERIFY` do hệ thống tạo) | "Kích thước mẫu phải từ 100 đến 1.000.000 bản ghi; lần đo cho báo cáo năm phải đo toàn bộ." (ERR-08-030) |
 | 4 | Tab "Lịch đo" | `CMP-DataTable` | Đối tượng, lịch, chế độ, cửa sổ giờ, lần chạy kế, trạng thái `schedule.status` | |
 | 5 | Hộp lịch | `CMP-CronPicker` | Chọn tần suất hoặc cron Quartz (mặc định `0 0 2 1 * ?`), múi giờ, chế độ `FULL`, `INCREMENTAL`; kiểm tra tần suất tối thiểu | ERR-08-029; trùng: "Đối tượng {mã} đã có lịch {chế độ} {biểu thức}." (ERR-08-049) |
 | 6 | Khung hạn mức | `CMP-DescriptionList` | Số lần đo theo yêu cầu trong giờ trên hạn mức `08.scan.manual-per-hour` | |
@@ -1402,7 +1415,7 @@ Tình huống biên của lần đo và cách hiển thị được ghi ở bả
 |---|---|
 | Đang tải | Skeleton đúng hình dải, thẻ thông tin, lưới 12 ô, khối điểm, bảng 8 dòng (`ST-01`) |
 | `QUEUED` | Lưới tác vụ rỗng, câu "Đang chờ tới lượt. Vị trí {n} trong hàng đợi."; nút Hủy; quá `08.scan.queue-timeout-hours`: "Lần đo {mã} chờ quá {n} giờ và đã bị hủy." (ERR-08-119) |
-| `RUNNING` | Thanh tổng và lưới tác vụ thăm dò 5 giây; bảng chỉ có kết quả tạm; điểm chưa hiện; tác vụ lỗi hiện "Không đọc được nguồn của đối tượng {mã}: {nguyên nhân}. Thử lại sau." (ERR-08-105) và tự thử lại tối đa 3 lần |
+| `RUNNING` | Thanh tổng và lưới tác vụ thăm dò 5 giây, "Còn khoảng {n} phút" từ `etaSeconds` (ẩn khi rỗng); bảng chỉ có kết quả tạm; điểm chưa hiện; tác vụ lỗi hiện "Không đọc được nguồn của đối tượng {mã}: {nguyên nhân}. Thử lại sau." (ERR-08-105) và tự thử lại tối đa 3 lần |
 | `PARTIAL` | Dải vàng nêu phần thiếu; điểm có cờ `INCOMPLETE_DIMENSIONS` hoặc dựa trên độ phủ; không dùng cho báo cáo năm (BR-08-010) |
 | `FAILED` | Không có điểm; dải đỏ kèm mã lỗi; nút "Chạy lại"; quá thời gian: "Lần đo {mã} vượt {n} giờ và đã dừng." (ERR-08-106) |
 | Có `TRUNCATED` | Dòng trong cột phải: "Quy tắc {mã} có hơn {n} bản ghi lỗi. Chỉ lưu {n} bản ghi đầu, số đếm vẫn đủ." (ERR-08-110) |
@@ -1433,7 +1446,7 @@ Tương tác: hover một ô tác vụ hiện `CMP-Tooltip` (phạm vi khóa, s�
 
 **Đường dẫn, mẫu.** `/du-lieu/chat-luong/loi` (`trang-thai`, `doi-tuong`, `chieu`, `muc`, `quy-tac`, `nhom=quy-tac`); khóa cá nhân gửi `POST`; PTN-01.
 
-**API.** API-08-073 (`GET /findings`, `POST /findings:search`); API-08-078 (`GET /finding-groups`); API-08-075 (`POST /findings:export`); API-08-084 (`POST /issues`).
+**API.** API-08-073 (`GET /findings`); API-08-129 (`POST /findings:search`, khi lọc theo khóa bản ghi); API-08-078 (`GET /finding-groups`); API-08-075 (`POST /findings:export`); API-08-084 (`POST /issues`).
 
 **Hành động.** Lọc, nhóm, chọn, mở phiếu, đề nghị ngoại lệ, xuất, mở UI-08-14.
 
@@ -1467,9 +1480,9 @@ Bảng dưới liệt kê cột, bộ lọc và thanh chọn của màn lỗi.
 | 1 | Chip trạng thái | `CMP-FilterChips` | Số lỗi theo `finding.status`; mặc định "Mở" | Lỗi `RESOLVED` mặc định ẩn |
 | 2 | Thanh lọc | `CMP-FilterBar` | Đối tượng, chiều, mức, quy tắc, khoảng lần đầu thấy, ô khóa bản ghi gửi `POST` (không lên URL) | DO bị khóa theo tổ chức |
 | 3 | Cột "Khóa bản ghi" | `CMP-Identifier` | Khóa đã chuẩn hóa; bấm mở UI-08-14 | Khóa không phải số định danh; trường cá nhân dùng băm |
-| 4 | Cột "Giá trị" | `CMP-MaskedValue` | `HASH` hiện chấm, `PARTIAL` hiện một phần; chỉ đọc | BR-08-012 |
+| 4 | Cột "Giá trị" | `CMP-MaskedValue` | `HASH_ONLY` hiện chấm, `MASKED` hiện một phần; chỉ đọc (`valueMode`) | BR-08-012 |
 | 5 | Cột "Lần đầu, cuối thấy", "Phiếu" | `CMP-Timestamp`, `CMP-Link` | Từ dấu vân tay; phiếu bấm mở UI-08-16 | |
-| 6 | Chế độ "Nhóm theo quy tắc" | `CMP-DataTable` nhóm | Mỗi nhóm một quy tắc: số lỗi, mức, số mới, còn; chọn nhóm để mở phiếu cho cả nhóm | API-08-078 |
+| 6 | Chế độ "Nhóm theo quy tắc" | `CMP-DataTable` nhóm | Mỗi nhóm một quy tắc (`groupBy=RULE`): số lỗi, mức, số mới, còn; chọn nhóm để mở phiếu cho cả nhóm | API-08-078 |
 | 7 | Thanh chọn | `CMP-SelectionBar` | Số đã chọn, phân rã theo mức, ba nút | `PERM-08-remediate` cho phiếu; `PERM-08-rule-admin` đề nghị ngoại lệ; `PERM-08-export` xuất |
 
 : UI-08-13 Bản ghi lỗi, thành phần và cột
@@ -1596,7 +1609,7 @@ Bảng dưới liệt kê thành phần, hành động theo quyền và trạng 
 
 | Thành phần, hành động | `CMP-*` | Nội dung, kiểm tra | Quyền, thông báo |
 |---|---|---|---|
-| Danh sách phân vùng | `CMP-Tree` | Sáu phân vùng có số đếm; DO chỉ thấy phiếu của tổ chức mình | `PERM-08-remediate` |
+| Danh sách phân vùng | `CMP-Tree` | Sáu phân vùng, số đếm lấy từ `facets` của API-08-085 (theo trạng thái, quá hạn, sắp hạn); DO chỉ thấy phiếu của tổ chức mình | `PERM-08-remediate` |
 | Bảng phiếu | `CMP-DataTable` | Mã, đối tượng và quy tắc, mức, tổ chức, số lỗi, `issue.status`, hạn xử lý (`CMP-ProgressBar` xanh, vàng khi còn ≤ 3 ngày, đỏ khi quá hạn, luôn kèm chữ "Còn n ngày" hoặc "Quá n ngày") | SLA ngày làm việc theo mức (giả định 5, 15, 30; BR-08-015) |
 | Khung xem nhanh | `CMP-Card`, `CMP-Timeline` | Thông tin phiếu, hoạt động gần nhất, nút | |
 | Giao việc | `CMP-ReasonDialog` | Chọn tổ chức, người nhận; ghi `issue_activity` loại `ASSIGNMENT` | `PERM-08-remediate`; sai trạng thái: ERR-08-006 |
@@ -1715,7 +1728,7 @@ Bảng dưới liệt kê thành phần, trường khai báo và kiểm tra.
 |---|---|---|---|
 | Bảng cảnh báo | `CMP-DataTable` | Mã, quy tắc, nội dung, mức `alert.severity`, `alert.status`, bắt đầu, ghi chú (nhắc lại theo `08.alert.repeat-hours`) | Một quy tắc, một đối tượng chỉ có một cảnh báo chưa hết (BR-08-029) |
 | Xác nhận | `CMP-Button` | Người nhận báo "đã biết, đang xử lý", ghi nhận người, giờ | |
-| Tắt tiếng | `CMP-ReasonDialog`, `CMP-DatePicker` | Đến ngày tối đa 7 ngày, lý do ≥ 20 ký tự; hết hạn tự bật lại | ERR-08-007; quá 7 ngày: ERR-08-045 |
+| Tắt tiếng | `CMP-ReasonDialog`, `CMP-DatePicker` | Đến ngày tối đa 7 ngày, lý do ≥ 20 ký tự; hết hạn tự bật lại | ERR-08-007; quá 7 ngày: ERR-08-042 |
 | Quy tắc cảnh báo | `CMP-DataTable`, `CMP-Switch` | Mã, điều kiện `alert.condition` kèm ngưỡng, phạm vi, mức, kênh, bật | `PERM-08-rule-admin` |
 | Hộp quy tắc | `CMP-Form` | Mã, điều kiện, ngưỡng, phạm vi (miền, đối tượng), mức, kênh (`IN_APP`, `EMAIL`), chu kỳ nhắc | ERR-08-037 |
 | Dải gửi lỗi | `CMP-Banner` | ERR-08-114: cảnh báo vẫn hiện trong ứng dụng, hệ thống thử lại | |
@@ -1770,15 +1783,15 @@ Bảng dưới liệt kê thành phần, quy tắc nút theo trạng thái và t
 
 | Thành phần, hành động | `CMP-*` | Nội dung, kiểm tra | Quyền, thông báo |
 |---|---|---|---|
-| Danh sách báo cáo | `CMP-DataTable`, `CMP-FilterBar` | Mã, loại `report_type`, kỳ, `report.status`, người soạn, ngày công bố | `PERM-08-read` |
+| Danh sách báo cáo | `CMP-DataTable`, `CMP-FilterBar` | Mã (`BC-DQ-yyyy-kỳ-Ttt`, báo cáo thay thế thêm `-Rn`), loại `report_type`, kỳ, `report.status`, người soạn, ngày công bố | `PERM-08-read` |
 | Thanh bước quy trình | `CMP-Steps` | Soạn, Chờ duyệt, Đã công bố, Xuất và phân phối | |
-| Khối "Sẵn sàng báo cáo năm" | `CMP-DataTable` | Bốn điều kiện BR-08-010: mỗi đối tượng có lần đo `FULL` thành công trong năm, ảnh chụp đại diện không `INCOMPLETE_DIMENSIONS`, không từ `SAMPLE` hoặc `INCREMENTAL`, có khuyến nghị; điều kiện chưa đạt liệt kê đối tượng và nút "Tạo lần đo FULL còn thiếu" | ERR-08-038 (422); `PERM-08-run` cho nút |
+| Khối "Sẵn sàng báo cáo năm" | `CMP-DataTable` | Bốn điều kiện BR-08-010: mỗi đối tượng có lần đo `FULL` thành công trong năm, ảnh chụp đại diện không `INCOMPLETE_DIMENSIONS`, không từ `SAMPLE` hoặc `INCREMENTAL`, có khuyến nghị; điều kiện chưa đạt liệt kê đối tượng và nút "Tạo lần đo FULL còn thiếu" (gửi `scanTrigger = ANNUAL`) | ERR-08-038 (422); `PERM-08-run` cho nút |
 | Nội dung báo cáo | `CMP-Form`, `CMP-TextArea` | Tóm tắt điều hành, điểm theo miền và chiều, lỗi và khắc phục, khuyến nghị (ít nhất một), khối tiến độ chuẩn hóa tùy chọn (Q08-17) | ERR-08-039; sửa báo cáo đã công bố: ERR-08-040 (409) |
 | Gửi duyệt, Duyệt, Từ chối | `CMP-ApprovalPanel` | Bốn mắt: người soạn không duyệt; từ chối cần lý do | `PERM-08-approve`; ERR-08-005 |
-| Thu hồi | `CMP-ReasonDialog` | Báo cáo `PUBLISHED` sang `WITHDRAWN`, lập báo cáo thay thế | `PERM-08-approve` |
+| Thu hồi | `CMP-ReasonDialog` | Báo cáo `PUBLISHED` sang `WITHDRAWN`, lập báo cáo thay thế mang hậu tố `-Rn` | `PERM-08-approve` |
 | Xuất, Ký số | `CMP-Button`, `CMP-DropdownMenu` | PDF, XLSX; ký số chứng thư cơ quan (Q08-06); tệp hạn tải `08.export.link-hours` | ERR-08-041; ký lỗi: "Không ký số được báo cáo {mã}: {nguyên nhân}." (ERR-08-048); tạo lỗi: ERR-08-112 |
 | Đăng ký nhận | `CMP-DataTable` | Người nhận, kênh `IN_APP`, `EMAIL`; thêm, xóa | `PERM-08-report`; gửi lỗi: ERR-08-114 |
-| Trạng thái màn | `ST-01`, `ST-03`, `ST-07` | Chưa có báo cáo: "Chưa có báo cáo nào. Tạo báo cáo kỳ đầu tiên." | VW chỉ thấy bản `PUBLISHED` |
+| Trạng thái màn | `ST-01`, `ST-03`, `ST-07` | Chưa có báo cáo: "Chưa có báo cáo nào. Tạo báo cáo kỳ đầu tiên."; kỳ chưa có lần đo: ERR-08-056 | VW chỉ thấy bản `PUBLISHED` |
 
 : UI-08-18 Báo cáo chất lượng, thành phần, hành động và thông báo
 
@@ -1817,7 +1830,7 @@ Hình dưới là tab "Tham số" với hai giá trị không hợp lệ.
 ```text
 | ⚠ Chưa đẩy được 3 bản tin KPI chất lượng dữ liệu sang PH-16. (ERR-08-113)      [Xem tab Đẩy KPI]|
 | Cài đặt chất lượng dữ liệu                              [Hoàn tác thay đổi] [Lưu tham số]       |
-| Miền chất lượng | Tham số theo tenant T68 (40 khóa)  [Tìm khóa ⌕]  2 giá trị không hợp lệ           |
+| Miền chất lượng | Tham số theo tenant T68 (43 khóa)  [Tìm khóa ⌕]  2 giá trị không hợp lệ           |
 | > Tham số       | Khóa | Giá trị | Miền, trần | Ý nghĩa                                          |
 | Lưu giữ, dọn    | 08.scan.manual-per-hour | [80] ✕ ngoài khoảng 1…60 (ERR-08-042) | 1…60             |
 | Đẩy KPI PH-16   | 08.finding.retention-months | [9] ✕ dưới 13 tháng (ERR-08-043) | 13…60                |
@@ -1831,7 +1844,7 @@ Bảng dưới liệt kê tab, trường và kiểm tra.
 | Tab, trường | `CMP-*` | Kiểm tra, hành vi | Quyền, lỗi |
 |---|---|---|---|
 | Miền chất lượng | `CMP-DataTable`, `CMP-Form` | Mã miền `^[A-Z][A-Z0-9_]{2,31}$`, tên, tổ chức chủ quản, cán bộ phụ trách, trạng thái `ACTIVE`, `INACTIVE` | `PERM-08-asset`, `PERM-08-config`; thiếu chủ quản: ERR-08-008; trùng: ERR-08-002 |
-| Tham số | `CMP-DataTable` biên tập, `CMP-Input`, `CMP-Switch`, `CMP-Select` | 40 khóa theo FRS §8.2 gom nhóm (lịch đo, hồ sơ, quy tắc, điểm, lỗi, phiếu, trực tuyến, cảnh báo, xuất, so sánh); mỗi dòng nêu mặc định, miền, trần PA; sửa tô viền, lỗi dưới ô | `PERM-08-config`; ngoài miền: ERR-08-042 (422) |
+| Tham số | `CMP-DataTable` biên tập, `CMP-Input`, `CMP-Switch`, `CMP-Select` | 43 khóa theo FRS §8.2 gom nhóm (lịch đo, hồ sơ, quy tắc, điểm, lỗi, phiếu, trực tuyến, cảnh báo, xuất, so sánh); mỗi dòng nêu mặc định, miền, trần PA; sửa tô viền, lỗi dưới ô | `PERM-08-config`; ngoài miền: ERR-08-042 (422) |
 | Lưu giữ và dọn dữ liệu | `CMP-DataTable`, `CMP-Button` | Thời gian lưu lỗi, kết quả quy tắc, ảnh chụp, báo cáo, phiếu, thống kê phút; không dưới sàn; "Xem trước dọn dữ liệu" nêu số bản ghi sẽ xóa; lịch sử các lần dọn | ERR-08-043 (422); dọn lỗi: ERR-08-117 |
 | Đẩy KPI PH-16 | `CMP-DataTable` | Bản tin KPI gần nhất, trạng thái, số chưa đẩy; chậm quá 24 giờ hiện dải | ERR-08-113 |
 | Nhật ký kiểm toán | `CMP-AuditTrail`, `CMP-LogViewer` | Sự kiện PH-08 (ai, làm gì, trên gì, kết quả, `traceId`); chỉ SO, AU | `PERM-08-audit-read`; DS, TA không thấy tab |
@@ -1887,9 +1900,9 @@ Bảng dưới liệt kê thành phần, trường cấu hình và quyền.
 
 | Thành phần, trường | `CMP-*` | Kiểm tra, hành vi | Quyền, thông báo |
 |---|---|---|---|
-| Năm thẻ chỉ số | `CMP-KpiCard` | Yêu cầu/phút, p95 so ngân sách (`08.inline.timeout-ms`), tỷ lệ FAIL, số kết quả degraded (phụ thuộc lỗi, `FAIL_OPEN`), số quá ngân sách | Số liệu gom theo phút, giữ 90 ngày; không có nội dung bản ghi |
+| Năm thẻ chỉ số | `CMP-KpiCard` | Yêu cầu/phút, p95 so ngân sách (`08.inline.timeout-ms`), tỷ lệ FAIL, số kết quả degraded (`failOpenCount` cộng `failClosedCount`, theo phút cùng `p95Ms`), số quá ngân sách | Số liệu gom theo phút, giữ 90 ngày; không có nội dung bản ghi |
 | Đồ thị theo phút | `CMP-Chart` `line` | Tỷ lệ FAIL theo phút và vạch ngưỡng cảnh báo; nút "Xem dạng bảng" | Khoảng 15 phút, 1 giờ, 24 giờ |
-| Cấu hình trực tuyến | `CMP-SegmentedControl`, `CMP-NumberInput` | `inline_mode` (`STRICT` chặn lỗi Nghiêm trọng, Đáng kể; `ADVISORY` không chặn), `on_dependency_failure`, ngân sách 10…50 ms, quy tắc chạy trực tuyến, hành vi Kamelet `dh-dq-check` (`STOP_TO_DLQ`, `CONTINUE_WITH_HEADER`, `ROUTE_TO`) | `PERM-08-rule-admin`; ngoài miền: ERR-08-042; đổi sang `FAIL_CLOSED` cần `CMP-ConfirmDialog` nêu hệ quả chặn luồng |
+| Cấu hình trực tuyến | `CMP-SegmentedControl`, `CMP-NumberInput` | `inline_mode` (`STRICT` chặn lỗi Nghiêm trọng, Đáng kể; `ADVISORY` không chặn: có vi phạm thì trả Cảnh báo kèm danh sách, không có thì Đạt), `on_dependency_failure`, ngân sách 10…50 ms, quy tắc chạy trực tuyến, hành vi Kamelet `dh-dq-check` (`STOP_TO_DLQ`, `CONTINUE_WITH_HEADER`, `ROUTE_TO`) | `PERM-08-rule-admin`; ngoài miền: ERR-08-042; đổi sang `FAIL_CLOSED` cần `CMP-ConfirmDialog` nêu hệ quả chặn luồng |
 | Top quy tắc | `CMP-DataTable` | Quy tắc, chiều, số vi phạm, p95 | |
 | Bên gọi | `CMP-DataTable` | PH-04 luồng, PH-06 cổng chất lượng, scope `dq.check`: yêu cầu, FAIL, lỗi 5xx | |
 | Đối tượng chưa bật | `CMP-EmptyState` | "Đối tượng {mã} chưa bật kiểm tra trực tuyến." (ERR-08-102) kèm nút "Cấu hình" | `ST-03` |
@@ -2045,20 +2058,20 @@ PH-08 chỉ dùng `CMP-*` đã có; các mục dưới là đề xuất, chưa d
 
 Ảnh hi-fi dùng giá trị hex tương đương token; khi D03-05 chốt các đề xuất trên thì sinh lại ảnh.
 
-## Phụ lục B. Đề xuất bổ sung API và trường (đồng bộ D02-03)
+## Phụ lục B. Đề xuất bổ sung API và trường (đã chốt ở FRS 0.2)
 
-Các mục dưới là nhu cầu giao diện chưa thấy trong FRS §9.4, trình chủ nhiệm đề tài quyết định.
+Sáu đề xuất của bản 0.1 đã được FRS 0.2 xử lý (FRS chương 15, ĐN-MH-01…06); màn hình nay dùng đúng tên trường của OpenAPI.
 
-| Mã đề xuất | Nội dung | Màn |
-|---|---|---|
-| B-01 | `GET /dashboard` thêm `radar` và `radarPrev` (sáu chiều kỳ này và kỳ trước) | UI-08-01 |
-| B-02 | Lần đo trả thêm `etaSeconds` và `progressByStage` | UI-08-11, 12 |
-| B-03 | `POST /weight-configs:preview` trả điểm giả định trước khi gửi duyệt | UI-08-10 |
-| B-04 | `GET /inline-stats` thêm `p95Ms` và `degradedCount` theo phút | UI-08-20 |
-| B-05 | `GET /issues` trả số đếm theo từng phân vùng hộp việc | UI-08-15 |
-| B-06 | `GET /findings` hỗ trợ `groupBy=rule,fingerprint` kèm tổng | UI-08-13 |
+| Mã | Đề xuất bản 0.1 | Kết quả ở FRS 0.2 | Màn |
+|---|---|---|---|
+| B-01 | `GET /dashboard` thêm radar kỳ trước | Đã hấp thụ: `dimensions`, `dimensionsPrev` ở API-08-104 (FR-08-050) | UI-08-01 |
+| B-02 | Lần đo trả `etaSeconds`, `progressByStage` | Hấp thụ một phần: `etaSeconds` ở API-08-061; bỏ `progressByStage` vì lưới tác vụ (API-08-067) đã đủ | UI-08-11, 12 |
+| B-03 | `POST /weight-configs:preview` | Đã hấp thụ: API-08-132 (FR-08-021) | UI-08-10 |
+| B-04 | `GET /inline-stats` thêm `p95Ms`, `degradedCount` theo phút | Theo hướng khác: `p95Ms` đã có, số suy giảm là `failOpenCount` cộng `failClosedCount` | UI-08-20 |
+| B-05 | `GET /issues` trả số đếm theo phân vùng | Đã hấp thụ: `facets` ở API-08-085 (FR-08-042) | UI-08-15 |
+| B-06 | `GET /findings` nhóm theo quy tắc và dấu vân tay | Theo hướng khác: `groupBy=RULE` (API-08-073, 078); mỗi lỗi đã là một dấu vân tay | UI-08-13 |
 
-: Đề xuất bổ sung API và trường PH-08
+: Đề xuất bổ sung API và trường PH-08 và kết quả
 
 ## Phụ lục C. Đồng bộ với D03-06-00 và tài liệu khác
 
@@ -2068,7 +2081,7 @@ Các điểm dưới cần chủ tài liệu tương ứng xác nhận; bộ nà
 |---|---|---|
 | C-01 | Cây menu `/du-lieu/chat-luong` có 11 mục con theo mục 4.1 (hiện D03-06-00 chỉ ghi một dòng #22) | D03-06-00 |
 | C-02 | Thêm tab ngữ cảnh "Chất lượng" vào chi tiết miền PH-06 và danh mục PH-07 (liên kết sang UI-08-04) | D03-06-PH06, D03-06-PH07 |
-| C-03 | FRS ghi 20 màn; xác nhận UI-08-18 gồm cả danh sách và chi tiết báo cáo | D02-03-PH08 |
+| C-03 | UI-08-18 gồm cả danh sách và chi tiết báo cáo (FRS 10.1 đã ghi 20 màn, đã rõ ở FRS 0.2) | D02-03-PH08 |
 | C-04 | Xác nhận mã `PERM-08-*` và `ERR-08-*` dùng ở chương 5 và 28 với D02-08 | D02-08 |
 
 : Đề xuất đồng bộ tài liệu liên quan
@@ -2099,5 +2112,6 @@ Bảng dưới ghi các phiên bản của tài liệu.
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: 20 màn, 23 ảnh hi-fi, ma trận, phụ lục đề xuất, câu hỏi Q08-30…39 |
+| 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: `valueMode` (`MASKED`, `HASH_ONLY`, `PLAIN`) thay `PARTIAL`, `HASH`, `NONE` ở UI-08-03, 13 và ảnh hi-fi 03; API-08-129 (tìm lỗi theo khóa), 130, 131 (bật, tắt đo tăng dần), 132 (xem trước trọng số); ERR-08-055, 056; ERR-08-042 thay ERR-08-045 cho hạn tắt tiếng; `scanTrigger` chỉ `MANUAL`, `ANNUAL`; mã phiếu `DQ-yyyy-nnnnnn`, mã báo cáo `BC-DQ-yyyy-kỳ-Ttt[-Rn]`; 43 khóa tham số; câu ERR-08-005, 006, 007 theo ngữ cảnh; hấp thụ Phụ lục B (B-01…06); ảnh hi-fi 03, 19 chụp lại |
 
 : Lịch sử phiên bản D03-06-PH08

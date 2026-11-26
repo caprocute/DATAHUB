@@ -36,9 +36,9 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH08 Use case; D03-02-PH08 Thiết kế c
 | Quy tắc nghiệp vụ | 35 (BR-08-001…035) |
 | Yêu cầu phi chức năng | 20 (NFR-08-001…020) |
 | Màn hình | 20 (UI-08-01…20) |
-| API | 131 operation dự kiến (API-08-001…131), tiền tố `/api/dq/v1` |
+| API | 132 operation dự kiến (API-08-001…132), tiền tố `/api/dq/v1` |
 | Sự kiện | 14 phát (EVT-08-01…14), 8 loại tiêu thụ từ PH-06, PH-07 |
-| Mã lỗi | 55 control (ERR-08-001…055), 19 runtime (ERR-08-101…119); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
+| Mã lỗi | 56 control (ERR-08-001…056), 19 runtime (ERR-08-101…119); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
 | Thực thể mức logic | 33 (EN-08-01…33) |
 | Tham số theo tenant | 43 khóa (mục 8.2) |
 | Chức năng hệ cũ được phủ | Hệ cũ không có chức năng chất lượng dữ liệu; 6 mục `LGC` liên quan gián tiếp |
@@ -394,7 +394,7 @@ Bảng dưới mô tả 33 thực thể mức logic; tên bảng vật lý trong
 | EN-08-07 | Phiên bản bộ quy tắc (`dq_rule_set_version`) | `version`, `status`, `effectiveFrom`, `submittedBy`, `approvedBy`, `lastDryRunId`, `dryRunContentHash`, `dryRunAt`, `changeNote` |
 | EN-08-08 | Quy tắc (`dq_rule`) | `ruleCode`, `dimension`, `operator`, `target` (trường hoặc tổ hợp), `params` (JSONB), `severity`, `execMode`, `weight`, `message`, `enabled`, `templateRef`, `source` |
 | EN-08-09 | Quy tắc mẫu (`dq_rule_template`) | `templateCode`, `dimension`, `operator`, `paramsSchema`, `defaultParams`, `version`, chỉ ở `COMMON` hoặc tenant |
-| EN-08-10 | Cấu hình trọng số, ngưỡng (`dq_weight_config`) | `scope` (tenant, miền, đối tượng), sáu `w_*`, `passThreshold`, `warnThreshold`, `status`, `effectiveFrom` |
+| EN-08-10 | Cấu hình trọng số, ngưỡng (`dq_weight_config`) | `scope` (tenant, miền, đối tượng), sáu `w_*`, `passMin`, `warnMin`, `status`, `effectiveFrom` |
 | EN-08-11 | Lịch đo (`dq_schedule`) | `scheduleId`, `target` (đối tượng hoặc miền), `cron`, `scanMode`, `sampleSize`, `status` |
 | EN-08-12 | Lần đo (`dq_scan_job`) | `scanId`, `assetCode`, `ruleSetVersion`, `weightConfigId`, `scanMode`, `trigger`, `sampleSeed`, `status`, `progress`, `rowsTotal`, `rowsProcessed`, `idempotencyKey`, `flags[]` |
 | EN-08-13 | Tác vụ phân mảnh (`dq_scan_task`) | `taskNo`, `keyRangeFrom`, `keyRangeTo`, `status`, `attempt`, `workerId`, `heartbeatAt`, `notBefore` |
@@ -1387,7 +1387,7 @@ Hình cho thấy hai dòng kiểm soát song song là bộ quy tắc và trọng
 3. Hệ thống kiểm tham số theo lược đồ của toán tử (ERR-08-016): `REGEX` biên dịch được bằng RE2J (không lùi vô hạn), `RANGE` có `min ≤ max`, `MAX_AGE_DAYS` 1…3.650.
 4. Với `VALIDITY`, hệ thống kiểm `catalogCode` có và đã phát hành ở PH-07 (thiếu: ERR-08-017; chưa phát hành: ERR-08-010).
 5. Với `CONSISTENCY` dạng `EQ_SOURCE`, `CROSS_ENTITY`, hệ thống kiểm nguồn đối chiếu là đối tượng đo khác `ACTIVE` cùng tenant và có trường nối (thiếu: ERR-08-018).
-6. Hệ thống gán `execMode` mặc định (`BOTH` cho toán tử mức bản ghi; `BATCH` bắt buộc cho `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`), lưu quy tắc với `ruleCode` duy nhất trong bộ (trùng: ERR-08-002).
+6. Hệ thống gán `execMode` mặc định (`BOTH` cho toán tử mức bản ghi; `BATCH` bắt buộc cho `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`; đặt `INLINE` hoặc `BOTH` cho các toán tử này thì từ chối bằng ERR-08-016 với tên tham số `execMode`), lưu quy tắc với `ruleCode` duy nhất trong bộ (trùng: ERR-08-002).
 
 **Luồng thay thế.** Tắt quy tắc (`enabled = false`) thay vì xóa khi quy tắc đã có ở phiên bản trước; xóa thật chỉ với quy tắc mới thêm trong nháp.
 
@@ -1859,7 +1859,7 @@ Hình cho thấy ngay khi kích hoạt, bộ đệm của kiểm tra trực tuy�
 4. Người soạn gửi duyệt; khi hạ ngưỡng đạt so với cấu hình hiện hành, lý do bắt buộc ≥ 20 ký tự (ERR-08-007).
 5. DA duyệt (kiểm bốn mắt, ERR-08-005); hệ thống chuyển `ACTIVE` từ `effectiveFrom`, cấu hình cũ `SUPERSEDED` (khi cấu hình thôi dùng hẳn thì `RETIRED`). Miền không có DS riêng thì TA soạn và gửi, DA vẫn là người khác (FR-08-017 bước 3, 3a).
 
-**Luồng thay thế.** Chưa có cấu hình nào: dùng trọng số mặc định 0,20/0,20/0,15/0,10/0,15/0,20, ngưỡng 80/70 (cấu hình hệ thống, phiên bản 0).
+**Luồng thay thế.** Chưa có cấu hình nào: dùng trọng số mặc định 0,20/0,20/0,15/0,10/0,15/0,20, ngưỡng 80/70 (cấu hình hệ thống, phiên bản 0). Xem trước (API-08-132): trước khi gửi duyệt, hệ thống tính lại điểm giả định của phạm vi từ ảnh chụp đầy đủ gần nhất, so với cấu hình hiện hành; không ghi dữ liệu, không cần nháp (ERR-08-023, ERR-08-024 cho đầu vào sai, ERR-08-027 khi chưa có ảnh chụp).
 
 **Luồng ngoại lệ.**
 
@@ -1868,7 +1868,7 @@ Hình cho thấy ngay khi kích hoạt, bộ đệm của kiểm tra trực tuy�
 - Hạ ngưỡng thiếu lý do: ERR-08-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
 - Tự duyệt: ERR-08-005 (403); "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt."
 
-**Đầu ra.** `201`, `200`; `configId`, `scope`, `weights{}`, `passThreshold`, `warnThreshold`, `status`, `effectiveFrom`.
+**Đầu ra.** `201`, `200`; `configId`, `scope`, `weights{}`, `passMin`, `warnMin`, `status`, `effectiveFrom`.
 
 **Kết quả.** Lần đo sau thời điểm hiệu lực chấm theo trọng số mới; điểm cũ giữ nguyên.
 
@@ -1880,7 +1880,7 @@ Hình cho thấy ngay khi kích hoạt, bộ đệm của kiểm tra trực tuy�
 
 **Quy tắc nghiệp vụ.** BR-08-002, BR-08-007, BR-08-008, BR-08-023.
 
-**Màn hình, API.** UI-08-10; API-08-047, API-08-048, API-08-049, API-08-050, API-08-051, API-08-052.
+**Màn hình, API.** UI-08-10; API-08-047, API-08-048, API-08-049, API-08-050, API-08-051, API-08-052, API-08-132.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -1888,8 +1888,8 @@ Hình cho thấy ngay khi kích hoạt, bộ đệm của kiểm tra trực tuy�
 | `scope` | enum | Có | `TENANT`, `DOMAIN`, `ASSET` | `DOMAIN` |
 | `scopeRef` | T-CODE | Khi không phải `TENANT` | Miền hoặc đối tượng tồn tại | `DAN_CU` |
 | `weights.COMPLETENESS` … `weights.VALIDITY` | số (4 chữ số thập phân) | Có | 0…1, tổng 1 ± 0,001 | `0.25`, `0.20`, `0.15`, `0.05`, `0.15`, `0.20` |
-| `passThreshold` | số | Có | 0…100 | `85` |
-| `warnThreshold` | số | Có | 0…`passThreshold` | `75` |
+| `passMin` | số | Có | 0…100 | `85` |
+| `warnMin` | số | Có | 0…`passMin` | `75` |
 | `effectiveFrom` | T-TS | Không | ≥ thời điểm duyệt | `2027-01-01T00:00:00+07:00` |
 | `reason` | T-TEXT | Khi hạ ngưỡng | ≥ 20 ký tự | |
 
@@ -2037,7 +2037,7 @@ Hình cho thấy ba cách kích hoạt đều đi vào một bộ thực thi duy
 
 **Kích hoạt.** Nút "Đo ngay" ở UI-08-04 hoặc UI-08-11.
 
-**Đầu vào.** `assetCode` hoặc `domainCode`, `scanMode`, `sampleSize`, `sampleSeed` (tùy chọn), `trigger` (`MANUAL` mặc định, `ANNUAL` khi đo cho báo cáo năm; không nhận `EVENT`, `SCHEDULE`, `VERIFY` do hệ thống tạo), `reason`, `Idempotency-Key` (bắt buộc).
+**Đầu vào.** `assetCode`, `scanMode`, `sampleSize`, `sampleSeed` (tùy chọn), `scanTrigger` (`MANUAL` mặc định, `ANNUAL` khi đo cho báo cáo năm; không nhận `EVENT`, `SCHEDULE`, `VERIFY` do hệ thống tạo), `periodCode` (khi `ANNUAL`), `note`, `Idempotency-Key` (bắt buộc).
 
 **Luồng xử lý chính.**
 
@@ -2046,7 +2046,7 @@ Hình cho thấy ba cách kích hoạt đều đi vào một bộ thực thi duy
 3. Hệ thống kiểm chống trùng: đã có lần đo `QUEUED`, `RUNNING` cùng đối tượng thì xếp hàng hoặc từ chối theo `08.scan.duplicate-policy` (ERR-08-028).
 4. Hệ thống tạo lần đo `QUEUED`, ghi phiên bản quy tắc, `weightConfigId`, `sampleSeed` (sinh ngẫu nhiên 64 bit nếu không có), trả `202`.
 
-**Luồng thay thế.** Chạy cho cả miền: tạo một lần đo cho mỗi đối tượng `ACTIVE`, trả danh sách.
+**Luồng thay thế.** Chạy cho cả miền: UI-08-04 gửi một yêu cầu cho mỗi đối tượng `ACTIVE` của miền, mỗi yêu cầu một `Idempotency-Key`; đối tượng không `ACTIVE` không được gửi; không có API gộp theo miền.
 
 **Luồng ngoại lệ.**
 
@@ -2386,7 +2386,7 @@ Ví dụ ảnh chụp (kế thừa SRS cũ §5.3.2): điểm sáu chiều 91,2; 
 
 **Luồng xử lý chính.**
 
-1. Hệ thống trả tiến độ: tác vụ xong trên tổng, bản ghi đã xử lý, ước lượng thời gian còn lại, quy tắc lỗi, cập nhật mỗi 10 giây.
+1. Hệ thống trả tiến độ: tác vụ xong trên tổng, bản ghi đã xử lý, ước lượng thời gian còn lại (`etaSeconds`, rỗng khi chưa đủ số liệu), quy tắc lỗi, cập nhật mỗi 10 giây.
 2. Hủy: hệ thống kiểm trạng thái `QUEUED`, `RUNNING` (ERR-08-006), báo bộ thực thi dừng ở ranh giới lô, chuyển `CANCELLED`; không tạo ảnh chụp, bản ghi lỗi đã ghi của lần đo bị đánh dấu không tính.
 3. Chạy lại: hệ thống tạo lần đo mới cùng tham số và seed, `rerunOf = scanId`; với `onlyFailedTasks` chỉ chạy tác vụ lỗi rồi gộp với kết quả tác vụ thành công của lần cũ.
 4. Lần đo `QUEUED` quá `08.scan.queue-timeout-hours` (24 giờ) tự `CANCELLED` (ERR-08-119).
@@ -2399,7 +2399,7 @@ Ví dụ ảnh chụp (kế thừa SRS cũ §5.3.2): điểm sáu chiều 91,2; 
 - Thiếu lý do hủy: ERR-08-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
 - Hết hạn chờ: ERR-08-119 (UI-08-11); "Lần đo {mã} chờ quá {n} giờ và đã bị hủy."
 
-**Đầu ra.** `200`; lần đo với `status`, `progress`, `tasks[]`; chạy lại trả `202` với `scanId` mới.
+**Đầu ra.** `200`; lần đo với `status`, `progress`, `etaSeconds`, `tasks[]`; chạy lại trả `202` với `scanId` mới.
 
 **Kết quả.** Vận hành kiểm soát được tải đo lên nguồn.
 
@@ -2495,11 +2495,11 @@ Hình cho thấy một API dùng chung cho hai bên gọi; thống kê theo phú
 1. Hệ thống kiểm token, scope (ERR-00-403), đối tượng bật trực tuyến (ERR-08-102), bản ghi đúng lược đồ và kích thước (ERR-08-101).
 2. Hệ thống lấy quy tắc đã biên dịch từ bộ đệm bộ nhớ (làm mới khi EVT-08-01), lọc theo `dimensions[]` và `execMode`.
 3. Hệ thống đánh giá quy tắc trong ngân sách `08.inline.timeout-ms` (mặc định 40 ms); tra mã `IN_RDM` từ bộ đệm hai tầng của PH-07 (ADR-053), không gọi mạng khi trúng bộ đệm.
-4. Hệ thống quyết định: `STRICT` có lỗi `CRITICAL` hoặc `MAJOR` → `FAIL`; chỉ `MINOR` → `WARN`; không lỗi → `PASS`; `ADVISORY` luôn `PASS` hoặc `WARN` kèm danh sách lỗi.
+4. Hệ thống quyết định: `STRICT` có lỗi `CRITICAL` hoặc `MAJOR` → `FAIL`; chỉ `MINOR` → `WARN`; không lỗi → `PASS`; `ADVISORY` không bao giờ `FAIL`: có vi phạm ở mức nào cũng `WARN` kèm danh sách lỗi, không vi phạm thì `PASS`.
 5. Hết ngân sách hoặc PH-07 không trả lời: áp `onDependencyFailure` của đối tượng; `FAIL_OPEN` trả `PASS` kèm `degraded = true`, `FAIL_CLOSED` trả ERR-08-104 (503) hoặc ERR-08-103 (504).
 6. Hệ thống cộng số đếm vào thống kê phút (FR-08-034); không ghi ảnh chụp; ghi bản ghi lỗi tạm chỉ khi `08.inline.persist-findings = true` (mặc định tắt).
 
-**Luồng thay thế.** Kiểm lô tối đa 100 bản ghi (API-08-069), trả kết luận từng bản ghi.
+**Luồng thay thế.** Kiểm lô tối đa 100 bản ghi (API-08-069), trả kết luận từng bản ghi; lô 101 bản ghi trở lên bị từ chối cả lô bằng ERR-08-101 (422), chi tiết "lô tối đa 100 bản ghi".
 
 **Luồng ngoại lệ.**
 
@@ -3087,7 +3087,7 @@ Hình cho thấy nhánh chuyển PH-06 tách ngay từ lúc mở phiếu: lỗi 
 - DO giao người ngoài tổ chức: ERR-08-032 (403); "Người được giao không thuộc tổ chức {tên}."
 - Đổi hạn thiếu lý do: ERR-08-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
 
-**Đầu ra.** `200`; phiếu với `status`, `ownerOrgId`, `assigneeUserId`, `dueDate`, `overdue`, `slaRemainingDays`.
+**Đầu ra.** `200`; phiếu với `status`, `ownerOrgId`, `assigneeUserId`, `dueDate`, `overdue`, `slaRemainingDays`; danh sách phiếu (API-08-085) kèm `facets` (số phiếu theo trạng thái và số quá hạn) cho các thẻ của hộp việc.
 
 **Kết quả.** Hộp việc của chủ quản hiện phiếu có đếm ngược hạn.
 
@@ -3457,14 +3457,15 @@ Hình cho thấy PH-08 không giữ danh bạ hay kênh gửi; mọi thông báo
 
 1. Hệ thống kiểm trạng thái (ERR-08-006).
 2. Xác nhận: `ACKNOWLEDGED`, ngừng nhắc, ghi người xác nhận.
-3. Tắt tiếng: kiểm `until` ≤ 7 ngày và lý do (ERR-08-007), `SILENCED`; tới `until` mà điều kiện còn thì về `FIRING`.
+3. Tắt tiếng: kiểm lý do ≥ 20 ký tự (ERR-08-007) và `until` ≤ 7 ngày (ERR-08-042), rồi `SILENCED`; tới `until` mà điều kiện còn thì về `FIRING`.
 
 **Luồng thay thế.** Tắt tiếng theo đối tượng trong khoảng bảo trì (áp cho mọi quy tắc cảnh báo).
 
 **Luồng ngoại lệ.**
 
 - Trạng thái không cho thao tác: ERR-08-006 (409); "Không thể {thao tác} cảnh báo đang ở trạng thái {trạng thái}."
-- Tắt tiếng quá dài hoặc thiếu lý do: ERR-08-007 (422); "Nhập lý do (tối thiểu 20 ký tự) và thời hạn không quá 7 ngày."
+- Thiếu lý do: ERR-08-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
+- Hạn tắt tiếng quá 7 ngày: ERR-08-042 (422); "Giá trị {giá trị} của {khóa} ngoài khoảng cho phép {miền}." (khóa là `until`, miền là 7 ngày)
 
 **Đầu ra.** `200`; cảnh báo với `status`, `acknowledgedBy`, `silencedUntil`.
 
@@ -3518,7 +3519,7 @@ Hình cho thấy mọi báo cáo đều qua một cửa duyệt duy nhất trư�
 **Luồng xử lý chính.**
 
 1. Hệ thống đọc bảng tổng hợp cập nhật sau mỗi lần đo (không tính trực tiếp từ bản ghi lỗi) để đạt NFR-08-010.
-2. Hệ thống trả: điểm tỉnh (trung bình có trọng số theo số bản ghi), điểm và kết luận theo miền, radar sáu chiều, xu hướng 13 tháng, số đối tượng `FAIL`, số lỗi `CRITICAL` mở, phiếu quá hạn, lần đo lỗi 7 ngày, tỷ lệ đối tượng được đo trong tháng (mục tiêu 1).
+2. Hệ thống trả: điểm tỉnh (trung bình có trọng số theo số bản ghi), điểm và kết luận theo miền, radar sáu chiều của kỳ này và kỳ trước, xu hướng 13 tháng, số đối tượng `FAIL`, số lỗi `CRITICAL` mở, phiếu quá hạn, lần đo lỗi 7 ngày, tỷ lệ đối tượng được đo trong tháng (mục tiêu 1).
 3. Hệ thống sắp miền `FAIL` lên đầu, gắn nhãn đối tượng có cờ `INCOMPLETE_DIMENSIONS`.
 
 **Luồng thay thế.** Bấm thẻ miền mở UI-08-02 lọc theo miền; bấm số lỗi mở UI-08-13 đã lọc.
@@ -3528,7 +3529,7 @@ Hình cho thấy mọi báo cáo đều qua một cửa duyệt duy nhất trư�
 - Lọc theo tổ chức không thuộc phạm vi của DO: ERR-08-032 (403); "Đối tượng {mã} không thuộc tổ chức của anh/chị."
 - Chưa có lần đo nào: hiện trạng thái trống "Chưa có số liệu. Đăng ký đối tượng đo và chạy lần đo đầu tiên." (không phải lỗi).
 
-**Đầu ra.** `200`; `tenantScore`, `domains[]`, `radar`, `trend[]`, `counters{}`, `coverage`.
+**Đầu ra.** `200`; `tenantScore`, `domains[]`, `radar` (kỳ này, kỳ trước), `trend[]`, `counters{}`, `coverage`.
 
 **Kết quả.** Lãnh đạo biết trong vài giây miền nào cần chỉ đạo.
 
@@ -3616,7 +3617,7 @@ Hình cho thấy mọi báo cáo đều qua một cửa duyệt duy nhất trư�
 
 **Luồng ngoại lệ.**
 
-- Không đối tượng nào có lần đo trong kỳ: ERR-08-027 (422); "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo."
+- Không đối tượng nào có lần đo trong kỳ: ERR-08-056 (422); "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo."
 - Sinh báo cáo lỗi: ERR-08-112 (thông báo trong ứng dụng); "Không sinh được báo cáo {mã}. Thử lại sau."
 
 **Đầu ra.** `201`; `reportCode` (`BC-DQ-2026-11-T68`), `status = DRAFT`, `missingAssets[]`, `recommendations[]`.
@@ -4148,9 +4149,9 @@ Ba mươi lăm quy tắc dưới đây ràng buộc mọi chức năng; mỗi qu
 | BR-08-012 | Không lưu giá trị gốc trường `SENSITIVE` ở bản ghi lỗi, hồ sơ, chạy thử, sự kiện, nhật ký; `SENSITIVE` lưu HMAC, `RESTRICTED` lưu che một phần; che không được lỏng hơn phân loại PH-09 | 005, 008, 009, 016, 036, 037, 038 | RB-07 cũ |
 | BR-08-013 | Dấu vân tay lỗi là `HMAC-SHA256(khóa của tenant, tenantId, assetCode, ruleCode, recordKey chuẩn hóa)` với khóa riêng từng tenant giữ ở OpenBao (`dh-{tenant}-dq-hmac`); SHA-256 trần không được dùng vì số CCCD hoặc mã số thuế dò ngược được; không chứa phiên bản quy tắc để lỗi nối tiếp qua phiên bản | 036 | Mới |
 | BR-08-014 | Chủ quản không tự xác nhận phiếu; `VERIFIED` chỉ do lần đo `VERIFY` sạch hoặc DS xác nhận có lý do; đo kiểm chứng lỗi kỹ thuật giữ `FIXED` | 043, 044 | BR repo 008 |
-| BR-08-015 | SLA phiếu theo mức (`CRITICAL` 5, `MAJOR` 15, `MINOR` 30 ngày làm việc, giả định); quá hạn 5 ngày leo thang cấp 1, 10 ngày cấp 2 | 041, 042, 045 | BR repo 011 (hạn mới) |
-| BR-08-016 | Trực tuyến `STRICT`: lỗi `CRITICAL`, `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; `ADVISORY` không bao giờ `FAIL` | 032, 033, 035 | BR repo 012 |
-| BR-08-017 | Quy tắc `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chạy lô; CEL chạy trực tuyến phải dưới giới hạn chi phí | 013, 014, 032 | NFR repo 001 ghi chú |
+| BR-08-015 | SLA phiếu theo mức (`CRITICAL` 5, `MAJOR` 15, `MINOR` 30 ngày làm việc, giả định; tạm tính thứ Bảy, Chủ nhật là ngày nghỉ cho tới khi PH-13 cấp lịch ngày làm việc và ngày lễ theo tenant); quá hạn 5 ngày leo thang cấp 1, 10 ngày cấp 2 | 041, 042, 045 | BR repo 011 (hạn mới) |
+| BR-08-016 | Trực tuyến `STRICT`: lỗi `CRITICAL`, `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; `ADVISORY` không bao giờ `FAIL`: có bất kỳ vi phạm nào (kể cả `CRITICAL`) thì `WARN` kèm `violations[]`, không vi phạm thì `PASS` | 032, 033, 035 | BR repo 012 |
+| BR-08-017 | Quy tắc `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ chạy lô (đặt `INLINE`, `BOTH` bị ERR-08-016); CEL chạy trực tuyến phải dưới giới hạn chi phí | 013, 014, 032 | NFR repo 001 ghi chú |
 | BR-08-018 | Phụ thuộc lỗi khi trực tuyến: `FAIL_OPEN` trả `PASS` cờ `degraded`, `FAIL_CLOSED` trả `503` hoặc `504`; mặc định `FAIL_OPEN` | 032, 033, 035 | FR repo 009 |
 | BR-08-019 | Lấy mẫu tái lập: seed 64 bit ghi trên lần đo; cùng seed, cùng dữ liệu cho cùng tập mẫu | 016, 024, 026 | NFR repo 008 |
 | BR-08-020 | Mỗi đối tượng tối đa một lần đo `QUEUED` hoặc `RUNNING`; lần mới xếp hàng hoặc bị từ chối theo tham số | 007, 023, 024, 030 | BR repo 010 |
@@ -4289,7 +4290,7 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-08-024 | 422 | Ngưỡng không hợp lệ |
 | ERR-08-025 | 422 | Tệp nhập sai lược đồ bộ quy tắc |
 | ERR-08-026 | 422 | Sao chép sang đối tượng không tương thích |
-| ERR-08-027 | 422 | Chưa có bộ quy tắc, trọng số hiệu lực hoặc lần đo trong kỳ |
+| ERR-08-027 | 422 | Chưa có bộ quy tắc hoặc trọng số hiệu lực |
 | ERR-08-028 | 409 | Đã có lần đo hoặc lần hồ sơ đang chạy |
 | ERR-08-029 | 422 | Lịch cron sai hoặc quá dày |
 | ERR-08-030 | 422 | Cỡ mẫu sai; đo năm không được dùng mẫu |
@@ -4318,7 +4319,8 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-08-053 | 422 | Gửi duyệt khi chưa chạy thử nội dung hiện tại |
 | ERR-08-054 | 503 | Không ghi được kiểm toán, thao tác bị từ chối (mã chung cho mọi lệnh ghi) |
 | ERR-08-055 | 409 | `Idempotency-Key` đã dùng cho một yêu cầu có thân khác (cùng khóa, cùng đường dẫn, nội dung khác) |
-| ERR-08-101 | 422 | Bản ghi trực tuyến sai lược đồ hoặc quá 64 KB |
+| ERR-08-056 | 422 | Không có lần đo thành công nào trong kỳ báo cáo |
+| ERR-08-101 | 422 | Bản ghi trực tuyến sai lược đồ hoặc quá 64 KB; lô quá 100 bản ghi |
 | ERR-08-102 | 404 | Đối tượng chưa bật kiểm tra trực tuyến |
 | ERR-08-103 | 504 | Vượt ngân sách thời gian khi `FAIL_CLOSED` |
 | ERR-08-104 | 503 | Phụ thuộc lỗi khi `FAIL_CLOSED` |
@@ -4401,6 +4403,7 @@ Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập mà
 | ERR-08-053 | "Chạy thử phiên bản sau lần sửa cuối trước khi gửi duyệt." | UI-08-07 |
 | ERR-08-054 | "Hệ thống tạm thời không ghi được nhật ký. Thao tác chưa được thực hiện." | Thông báo nổi |
 | ERR-08-055 | "Khóa chống trùng này đã dùng cho một yêu cầu khác nội dung. Tạo khóa mới rồi gửi lại." | Thông báo nổi |
+| ERR-08-056 | "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo." | UI-08-18 |
 | ERR-08-101 | "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}." | Nhật ký luồng PH-04, UI-08-20 |
 | ERR-08-102 | "Đối tượng {mã} chưa bật kiểm tra trực tuyến." | Nhật ký luồng PH-04 |
 | ERR-08-103 | "Kiểm tra chất lượng vượt {n} ms." | Nhật ký luồng PH-04, UI-08-20 |
@@ -4463,7 +4466,7 @@ PH-08 tiêu thụ tám loại sự kiện dưới để đo tăng dần và gi�
 
 ### 9.4. Danh mục API
 
-Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `openapi-dq.yaml`; đánh số liền theo nhóm chức năng, mỗi operation một mã (API-08-129 đến 131 thêm ở bản 0.2 và đặt cuối bảng để không đổi số các mã cũ). Tiền tố `/api/dq/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn có `/internal` chỉ mở trong mạng nội bộ.
+Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `openapi-dq.yaml`; đánh số liền theo nhóm chức năng, mỗi operation một mã (API-08-129 đến 132 thêm ở bản 0.2 và đặt cuối bảng để không đổi số các mã cũ). Tiền tố `/api/dq/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn có `/internal` chỉ mở trong mạng nội bộ.
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4598,6 +4601,7 @@ Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `ope
 | API-08-129 | `POST /findings:search` | 037 |
 | API-08-130 | `POST /assets/{assetCode}:enable-incremental` | 025 |
 | API-08-131 | `POST /assets/{assetCode}:disable-incremental` | 025 |
+| API-08-132 | `POST /weight-configs:preview` | 021 |
 
 : Danh mục API của PH-08
 
@@ -4801,7 +4805,7 @@ PH-08 được nghiệm thu khi đạt đủ các tiêu chí dưới đây trên
 
 ## 15. Nhật ký hấp thụ đề nghị
 
-Bản 0.2 hấp thụ đề nghị từ UC §8.2 và Q08-45…49, SDD §13.6, CSDL §9.2, API Phụ lục A. Mỗi dòng một đề nghị, xử lý là "Đã hấp thụ" (kèm chỗ sửa), "Dồn đợt đồng bộ cuối" (thuộc tài liệu khác, ghi ở Phụ lục B) hoặc "Từ chối" kèm lý do. MH và TC chưa có dòng.
+Bản 0.2 hấp thụ đề nghị từ UC §8.2 và Q08-45…49, SDD §13.6, CSDL §9.2, API Phụ lục A, TC §10.1 và MH Phụ lục B. Mỗi dòng một đề nghị, xử lý là "Đã hấp thụ" (kèm chỗ sửa), "Dồn đợt đồng bộ cuối" (thuộc tài liệu khác, ghi ở Phụ lục B) hoặc "Từ chối" kèm lý do.
 
 | Mã | Nguồn | Đề nghị | Xử lý |
 |---|---|---|---|
@@ -4848,10 +4852,23 @@ Bản 0.2 hấp thụ đề nghị từ UC §8.2 và Q08-45…49, SDD §13.6, CS
 | ĐN-CSDL-09 | CSDL §9.2 | Tên logic khác cột (`maskingMode` và `value_mode`, `isCde` và `cde`, …) | Đã hấp thụ: `valueMode` thay `maskingMode` ở FRS; phần còn lại là ánh xạ tên ở D03-03 mục 8.1 (Phụ lục A) |
 | ĐN-CSDL-10 | CSDL §9.2 | Ngoại lệ nhắm một quy tắc hoặc một dấu vân tay | Từ chối theo hướng khác: FR-08-040 giữ phạm vi `FINDINGS` với danh sách tới 100.000 dấu vân tay, nên thêm EN-08-33 `dq_waiver_item` thay vì nhiều dòng ngoại lệ |
 | ĐN-CSDL-11 | CSDL §9.2 | Quyền đọc bản ghi lỗi chỉ trả `maskedValue` | Đã hấp thụ: đã nêu ở BR-08-012, FR-08-038; không đổi FRS |
+| ĐN-TC-01 | TC §10.1 | Nêu khi nào `ADVISORY` trả `PASS`, khi nào `WARN` | Đã hấp thụ: BR-08-016, FR-08-032 bước 4 (có vi phạm bất kỳ mức nào thì `WARN`, không thì `PASS`, không bao giờ `FAIL`) |
+| ĐN-TC-02 | TC §10.1 | Mã lỗi khi `evaluate-batch` quá 100 bản ghi | Đã hấp thụ: ERR-08-101 (422), 9.1, FR-08-032 luồng thay thế; không dùng ERR-08-045 vì đó là lỗi tham số danh sách |
+| ĐN-TC-03 | TC §10.1 | Mã lỗi khi đặt `INLINE` cho toán tử chỉ chạy lô | Đã hấp thụ: ERR-08-016, FR-08-013 bước 6, BR-08-017 |
+| ĐN-TC-04 | TC §10.1 | ERR-08-027 dùng cho hai nghĩa | Đã hấp thụ: tách mã mới ERR-08-056 cho "không có lần đo trong kỳ" (9.1, 9.2, FR-08-052); ERR-08-027 chỉ còn nghĩa "chưa có bộ quy tắc hoặc trọng số hiệu lực" |
+| ĐN-TC-05 | TC §10.1 | Hạn tắt tiếng quá 7 ngày dùng ERR-08-042 | Đã hấp thụ: FR-08-049 bước 3 và luồng ngoại lệ tách hai câu (ERR-08-007 thiếu lý do, ERR-08-042 quá hạn) |
+| ĐN-TC-06 | TC §10.1, Q08-43 | Nguồn lịch ngày làm việc và ngày lễ để tính SLA | Dồn đợt đồng bộ cuối: PH-13 cấp lịch theo tenant (Phụ lục B); BR-08-015 ghi tạm thứ Bảy, Chủ nhật nghỉ |
+| ĐN-MH-01 | MH B-01 | `GET /dashboard` thêm radar kỳ trước | Đã hấp thụ: FR-08-050 bước 2 và đầu ra (`radar` kỳ này, kỳ trước) |
+| ĐN-MH-02 | MH B-02 | Lần đo trả `etaSeconds`, `progressByStage` | Đã hấp thụ một phần: FR-08-030 thêm `etaSeconds`; từ chối `progressByStage` vì lưới tác vụ (API-08-063) đã cho tiến độ theo phân mảnh |
+| ĐN-MH-03 | MH B-03 | Xem trước điểm giả định trước khi gửi duyệt trọng số | Đã hấp thụ: API-08-132 `POST /weight-configs:preview`, FR-08-021 luồng thay thế |
+| ĐN-MH-04 | MH B-04 | Thống kê trực tuyến thêm `p95Ms`, `degradedCount` theo phút | Đã hấp thụ theo hướng khác: `p95Ms` đã có ở EN-08-25; số lượt suy giảm là `failOpenCount` cộng `failClosedCount`, không thêm cột |
+| ĐN-MH-05 | MH B-05 | Hộp việc trả số đếm theo từng thẻ | Đã hấp thụ: FR-08-042 đầu ra, API-08-085 kèm `facets` |
+| ĐN-MH-06 | MH B-06 | `GET /findings` nhóm theo quy tắc và dấu vân tay | Đã hấp thụ theo hướng khác: FR-08-037 đã có `groupBy` (`RULE`, `FIELD`, `SOURCE`) và `facets`; không nhóm theo dấu vân tay vì mỗi bản ghi lỗi đã là một dấu vân tay |
+| ĐN-MH-07 | MH Phụ lục A, C | Đề xuất D03-05, D03-06-00, D03-06-PH06, PH07, D02-08 | Dồn đợt đồng bộ cuối: Phụ lục B; C-03 đã rõ, UI-08-18 gồm danh sách và chi tiết báo cáo (10.1) |
 
 : Nhật ký hấp thụ đề nghị của bản 0.2
 
-Tổng kết: 43 dòng đề nghị, gồm 27 đã hấp thụ (kể cả hấp thụ theo hướng khác; ĐN-CSDL-03 từ chối riêng mã báo cáo `DQR-…`), 14 dồn đợt đồng bộ cuối, 2 từ chối (ĐN-CSDL-04, ĐN-CSDL-10).
+Tổng kết: 56 dòng đề nghị, gồm 38 đã hấp thụ (kể cả hấp thụ một phần hoặc theo hướng khác; ĐN-CSDL-03 từ chối riêng mã báo cáo `DQR-…`), 16 dồn đợt đồng bộ cuối, 2 từ chối (ĐN-CSDL-04, ĐN-CSDL-10).
 
 ## Phụ lục A. Nguồn chuẩn giá trị liệt kê
 
@@ -4909,6 +4926,7 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-08 (UC, SDD, CSDL, API,
 | `profile_run.mode` (thêm) | `FULL`, `SAMPLE`, `EXTERNAL` | FR-08-008, 011 |
 | `field_type` (thêm) | `STRING`, `INTEGER`, `DECIMAL`, `DATE`, `TIMESTAMP`, `BOOLEAN`, `CODE`, `JSON` | Trường |
 | `classification_status` (thêm) | `PROPOSED`, `CONFIRMED` | Trường (theo PH-09) |
+| `incremental_buffer.status` (thêm) | `COLLECTING`, `OVERFLOW`, `SCHEDULED`, `DONE` | FR-08-025, EN-08-31 |
 | `skip_reason` (thêm) | `DEPENDENCY_UNAVAILABLE`, `RDM_UNAVAILABLE`, `SOURCE_UNREACHABLE`, `NO_DATA`, `TIMEOUT` | Kết quả quy tắc `SKIPPED` |
 | `dimension_status` (thêm) | `MEASURED`, `SKIPPED` | Điểm chiều |
 | `decision` (thêm) | `APPROVE`, `REJECT` | Duyệt phiên bản, cấu hình, ngoại lệ, yêu cầu xuất |
@@ -4938,31 +4956,20 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 | Tài liệu | Đề nghị |
 |---|---|
-| D02-08 §3.2 | Thêm mười quyền `PERM-08-read`, `PERM-08-asset`, `PERM-08-approve`, `PERM-08-run`, `PERM-08-finding-read`, `PERM-08-remediate`, `PERM-08-report`, `PERM-08-export`, `PERM-08-config`, `PERM-08-audit-read` theo ma trận 3.2; giữ PERM-08-rule-admin và thêm PA (mẫu `COMMON`) |
-| D02-08 §4 | Cặp loại trừ DS và DA trong cùng tenant cho PH-08; ghi tách vai trò DS đo, DO sửa; scope máy `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT), `dq.ingest` (PH-05 đẩy chỉ số hồ sơ) |
-| D00-04 §2 | Dòng PH-08: tình trạng "FRS 0.2" (cập nhật tiếp khi đủ bảy tập); thêm tiền tố khóa Valkey `{tenant}:dq:*`, khóa OpenBao `dh-{tenant}-dq-hmac`, `dh-{tenant}-dq-sign` |
-| D00-04 §3.1, D00-02 | Mở dải ADR 085–089 cho PH-08 (đề xuất, chưa có tệp) với năm nội dung ở 12.3 |
-| D00-04 §3.2 | Chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận tập này |
-| D00-03 | Thêm ghi chú "PH-08 dùng gián tiếp" cho LGC-DMDC-006, 007, 008, LGC-BUS-027, LGC-NGSP-003, 005 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-08 làm chính |
-| D02-01 | Thêm quy trình BP-10 "Đánh giá và cải thiện chất lượng dữ liệu" (mục 2.5) |
-| D02-02 §5 | Dòng PH-08: số FR 61, tham chiếu D02-03-PH08 |
-| D02-03-PH06 | Cấp khung nhìn hợp đồng `ph06_mdm.v_dq_{domain}` cho vai trò `dq_reader` (Q08-08); API nội bộ tạo mục hàng đợi lý do `DQ_FINDING` (FR-08-046); gọi cổng chất lượng `checks:evaluate` và lý do từ chối `DQ_GATE` (FR-08-035) |
-| D02-03-PH05 | Kamelet nền `dh-dq-check` (Q08-09); cấp sử dụng kết nối chỉ đọc cho `dh-data/dq`; API khám phá lược đồ cho PH-08; đẩy chỉ số FR-05-041 sang API-08-024 |
-| D02-03-PH07 | Xác nhận PH-08 dùng ảnh chụp danh mục (ADR-053), tra lô FR-07-027, tra theo thời điểm FR-07-026 và quyền khai thác danh mục hạn chế cho tài khoản dịch vụ PH-08 |
+| D02-08 §3.2, §4 | Thêm mười quyền `PERM-08-read`, `PERM-08-asset`, `PERM-08-approve`, `PERM-08-run`, `PERM-08-finding-read`, `PERM-08-remediate`, `PERM-08-report`, `PERM-08-export`, `PERM-08-config`, `PERM-08-audit-read` theo ma trận 3.2, giữ `PERM-08-rule-admin`, thêm PA (mẫu `COMMON`); `PERM-08-export` cấp thêm cho DO (○) chỉ để chấp thuận xuất có trường Nhạy cảm; xác nhận, tắt tiếng cảnh báo dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; DA dự phòng cấp tỉnh (Q08-18); cặp loại trừ DS và DA trong cùng tenant, tách vai DS đo và DO sửa; scope máy `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT), `dq.ingest` (PH-05 `dh-integration`, chỉ gọi API-08-024) |
+| D00-04 §2, §3.1, §3.2, D00-02 | Dòng PH-08: tình trạng theo tập đã nộp; tiền tố khóa Valkey `{tenant}:dq:*`, khóa OpenBao `dh-{tenant}-dq-hmac`, `dh-{tenant}-dq-sign`; mở dải ADR 085–089 (đề xuất, chưa có tệp, năm nội dung ở 12.3); chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận đủ bảy tập |
+| D00-03 | Ghi chú "PH-08 dùng gián tiếp" cho LGC-DMDC-006, 007, 008, LGC-BUS-027, LGC-NGSP-003, 005 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-08 làm chính |
+| D02-01, D02-02 §5 | D02-01: thêm quy trình BP-10 "Đánh giá và cải thiện chất lượng dữ liệu" (mục 2.5). D02-02 §5: dòng PH-08 có 61 FR, tham chiếu D02-03-PH08 |
+| D02-03-PH06, D03-02-PH06, D03-04-PH06 | Khung nhìn hợp đồng ổn định `ph06_mdm.v_dq_{domain}` cho vai `dq_reader` (Q08-08); `QualityGatePort`, `StewardIntakeApi` ở `mdm::api`; API nội bộ tạo mục hàng đợi lý do `DQ_FINDING` (FR-08-046) và cổng chất lượng gọi `checks:evaluate` với lý do từ chối `DQ_GATE` (FR-08-035); SLA, người nhận; xử lý khi PH-06 từ chối chuyển |
+| D02-03-PH05, D03-02-PH05, D03-04-PH05 | Kamelet nền `dh-dq-check` (Q08-09) với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; cấp sử dụng kết nối chỉ đọc có hạn cho `dh-data/dq`; API khám phá lược đồ (API-08-018); đẩy chỉ số FR-05-041 sang API-08-024 với scope `dq.ingest`; xác nhận độ trễ bản sao chỉ đọc (Q08-19) |
+| D02-03-PH07, D03-02-PH07 | Xác nhận PH-08 dùng ảnh chụp danh mục (ADR-053), tra lô FR-07-027, tra theo thời điểm FR-07-026; `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản dịch vụ PH-08 |
 | D02-03-PH04 | Lý do DLQ `DQ_FAIL` và tiêu đề `dh-dq-verdict`, `dh-dq-violations` |
 | D02-03-PH10 | Đăng ký 14 topic `{tenant}.dq.*` theo FR-10-067 |
-| PH-09 (khi viết) | API tra phân loại trường cho PH-08, sự kiện đổi phân loại, nhận đề xuất phân loại cho CDE |
-| PH-13, PH-16, PH-18 (khi viết) | Tiêu thụ EVT-08-02…14; lịch Quartz cho PH-08; lược đồ KPI chất lượng `kpiSchemaVersion` |
+| PH-09, PH-13, PH-16, PH-18 (khi viết) | PH-09: API tra phân loại trường `ClassificationApi` p95 ≤ 100 ms, sự kiện đổi phân loại, nhận đề xuất phân loại cho CDE. PH-13: tiêu thụ EVT-08-02…14; API lịch ngày làm việc và ngày lễ theo tenant để tính SLA (BR-08-015, Q08-43). PH-16: lược đồ KPI chất lượng `kpiSchemaVersion`. PH-18: lịch Quartz tùy chọn cho PH-08 (phụ thuộc mềm) |
 | Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-08 dẫn |
 | D03-06-00 | Cây menu dưới `/du-lieu/chat-luong` theo 10.1 (20 màn) |
-| D02-08 §3.2 | `PERM-08-export` cấp thêm cho DO (○) chỉ để chấp thuận xuất có trường Nhạy cảm; xác nhận, tắt tiếng cảnh báo dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; DA dự phòng cấp tỉnh (Q08-18) |
-| D02-08 §4 (scope máy) | Thêm scope `dq.ingest` cấp cho PH-05 (`dh-integration`) chỉ gọi API-08-024 |
-| D02-03-PH06, D03-02-PH06, D03-04-PH06 | `QualityGatePort`, `StewardIntakeApi` ở `mdm::api`; khung nhìn `v_dq_{domain}` ổn định; mã lý do `DQ_FINDING` (FR-08-046), `DQ_GATE` (FR-08-035); SLA, người nhận; PH-06 từ chối chuyển |
-| D02-03-PH05, D03-02-PH05, D03-04-PH05 | API thuê kết nối chỉ đọc có hạn cho `dq`, khám phá lược đồ (API-08-018), Kamelet `dh-dq-check` với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; scope `dq.ingest`; xác nhận độ trễ bản sao chỉ đọc (Q08-19) |
-| D03-02-PH07 | `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản dịch vụ PH-08 |
-| PH-09, PH-13 (khi viết) | PH-09: `ClassificationApi` p95 ≤ 100 ms, sự kiện đổi phân loại. PH-13: API lịch ngày làm việc và ngày lễ theo tenant cho tính SLA, tiêu thụ EVT-08-02…14 |
 | D03-09, D03-10, D04-01 | D03-09: hàng `dh-data-dq-worker` (4 bản sao, tối đa 8), KEDA, bucket `dq-reports`, `dq-exports`, `dq-archive`. D03-10: schema `ph08_dq`, ba vai CSDL, ngoại lệ RLS cho so sánh liên tenant. D04-01: quy tắc ArchUnit của `dq` |
-| D03-06-PH08, D05-02-PH08 (đang viết) | MH: câu ngữ cảnh cho ERR-08-005, 006, 007; dùng `valueMode` (không còn `maskingMode`); nút bật, tắt đo tăng dần gọi API-08-130, 131. TC: dựng TS-08 theo UC; thêm mã API-08-129…131, ERR-08-055, EN-08-30…33 |
+| D03-05 (qua D03-06-PH08 Phụ lục A) | Tám thành phần và token đề xuất cho bộ màn hình PH-08 (radar, thẻ điểm, chip chiều, thanh SLA, dải thông báo không đóng được) |
 
 : Đề nghị đồng bộ với tài liệu khác
 
@@ -4970,5 +4977,5 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
-| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 43 đề nghị từ UC, SDD, CSDL, API (chương 15): sửa ví dụ FR-08-028 (86,37), BR-08-013 HMAC-SHA256 khóa theo tenant, PH-18 phụ thuộc mềm; thêm API-08-129…131, ERR-08-055, scope `dq.ingest`, EN-08-30…33, 3 khóa tham số; thống nhất `domain_status`, `weight_config.status`, `value_mode`; 19 enum mới ở Phụ lục A; làm rõ FR-08-016, 017, 021, 025, 035, 044, 046, 054; Q08-18, 19 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 56 đề nghị từ UC, SDD, CSDL, API, TC, MH (chương 15): sửa ví dụ FR-08-028 (86,37), BR-08-013 HMAC-SHA256 khóa theo tenant, PH-18 phụ thuộc mềm; thêm API-08-129…131, ERR-08-055, scope `dq.ingest`, EN-08-30…33, 3 khóa tham số; thống nhất `domain_status`, `weight_config.status`, `value_mode`; 19 enum mới ở Phụ lục A; làm rõ FR-08-016, 017, 021, 025, 035, 044, 046, 054; Q08-18, 19; hấp thụ thêm TC §10.1 và MH Phụ lục B: ADVISORY `WARN` khi có vi phạm, lô quá 100 bản ghi và `INLINE` với toán tử chỉ chạy lô, ERR-08-056 tách khỏi ERR-08-027, ERR-08-042 cho hạn tắt tiếng, API-08-132 xem trước trọng số, `etaSeconds`, `facets`, radar kỳ trước |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 61 FR đủ 17 mục chia mười nhóm, phủ 16 FR của SRS cũ; bảy máy trạng thái; 35 BR, 20 NFR, 40 tham số; 54 mã lỗi control và 19 runtime kèm câu thông báo; 14 sự kiện phát, 8 tiêu thụ; 128 API dự kiến; 20 màn hình; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; thay căn cứ NĐ 47/2020 bằng NĐ 278/2025 |

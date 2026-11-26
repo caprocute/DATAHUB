@@ -79,7 +79,7 @@ _sec = FRS[FRS.index("### 9.4."):FRS.index("## 10. Giao diện")]
 for m in re.finditer(r"^\| API-08-(\d{3}) \| `([A-Z]+) ([^`]+)`(?: \([^)]*\))? \| ([^|]+) \|", _sec, re.M):
     ROWS.append((m.group(1), m.group(2), m.group(3), [f"FR-08-{x}" for x in re.findall(r"\d{3}", m.group(4))]))
 ROWS.sort(key=lambda r: r[0])
-assert len(ROWS) == 131, len(ROWS)
+assert len(ROWS) == 132, len(ROWS)
 
 # ---------------------------------------------------------------- bảng operation
 # mã | tóm tắt | nhóm | quyền (a/b = hoặc) | thân yêu cầu | thân phản hồi | HTTP | truy vấn | cờ
@@ -216,6 +216,7 @@ OPS_TXT = """
 129|Tìm bản ghi lỗi theo khóa bản ghi|Bản ghi lỗi|finding-read|FindingSearchRequest|FindingPage|200|page,size|
 130|Bật đo tăng dần cho đối tượng|Miền và đối tượng đo|run|EnableIncrementalRequest|Asset|200|-|
 131|Tắt đo tăng dần cho đối tượng|Miền và đối tượng đo|run|ReasonBody|Asset|200|-|
+132|Xem trước điểm theo trọng số và ngưỡng|Trọng số và ngưỡng|rule-admin|WeightPreviewRequest|WeightPreview|200|-|noifm
 """
 OPS = {}
 for ln in OPS_TXT.strip().splitlines():
@@ -328,7 +329,7 @@ obj("Domain", "Miền chất lượng (dq_domain).", ("domainCode!", "dcode"), (
 obj("DomainCreate", "Khai báo miền (FR-08-001).", ("domainCode!", "dcode"), ("name!", "str", "Hộ tịch", {"maxLength": 255}), ("description", "str", "Dữ liệu đăng ký hộ tịch", {"maxLength": 2000}),
     ("ownerOrgCode!", "org"), ("stewardUser!", "str", "tran.van.nam"), ("onDependencyFailure", "E:OnDependencyFailure", "FAIL_OPEN"))
 obj("DomainUpdate", "Sửa miền; gửi các trường cần đổi.", ("name", "str", "Hộ tịch và quốc tịch"), ("description", "str", "Dữ liệu hộ tịch"), ("ownerOrgCode", "org"),
-    ("stewardUser", "str", "le.thi.hoa"), ("onDependencyFailure", "E:OnDependencyFailure", "FAIL_CLOSED"))
+    ("stewardUser", "str", "le.thi.hoa"), ("status", "E:DomainStatus", "INACTIVE"), ("statusReason", "str", "Ngừng khai thác miền", {"maxLength": 500}), ("onDependencyFailure", "E:OnDependencyFailure", "FAIL_CLOSED"))
 page("DomainPage", "Domain")
 obj("Asset", "Đối tượng đo (dq_asset).", ("assetCode!", "acode"), ("name!", "str", "Bản ghi vàng công dân"), ("domainCode!", "dcode"), ("assetType!", "E:AssetType", "MDM_DOMAIN"),
     ("status!", "E:AssetStatus", "ACTIVE"), ("statusReason", "str", "Chờ nâng cấp nguồn"), ("ownerOrgCode!", "org"), ("mdmDomainCode", "str", "CITIZEN"), ("rdmCatalogCode", "str", "DM_DAN_TOC"),
@@ -413,11 +414,11 @@ page("RuleTemplatePage", "RuleTemplate")
 obj("RuleListItem", "Dòng danh sách quy tắc toàn tenant (FR-08-022).", ("ruleCode!", "rcode"), ("ruleSetCode!", "rscode"), ("versionNo!", "int", 4), ("versionStatus!", "E:VersionStatus", "ACTIVE"),
     ("assetCode!", "acode"), ("name!", "str", "Số định danh đủ 12 chữ số"), ("dimension!", "E:Dimension", "VALIDITY"), ("operator!", "E:Operator", "REGEX"), ("severity!", "E:Severity", "CRITICAL"), ("enabled!", "bool", True))
 page("RuleListItemPage", "RuleListItem")
-obj("DryRunRequest", "Chạy thử trên mẫu (FR-08-016).", ("sampleSize", "int", 1000, {"minimum": 100, "maximum": 50000}), ("ruleCodes", "[rcode]", ["CD-ACC-001"]))
+obj("DryRunRequest", "Chạy thử trên mẫu (FR-08-016).", ("sampleSize", "int", 1000, {"minimum": 100, "maximum": 10000}), ("sampleSeed", "int", 42), ("recordKeys", "[str]", ["2024-0001234"], {"maxItems": 100}), ("ruleCodes", "[rcode]", ["CD-ACC-001"]))
 obj("DryRunExample", "Ví dụ lỗi đã che.", ("recordKeyMasked", "str", "*******12345"), ("fieldName", "fpath"), ("maskedValue", "str", "****"))
 obj("DryRunRuleResult", "Kết quả chạy thử của một quy tắc.", ("ruleCode!", "rcode"), ("status!", "E:RuleResultStatus", "FAILED"), ("rowsEvaluated!", "int", 1000), ("rowsFailed!", "int", 12),
     ("passRate", "num", 0.988), ("examples", "[$DryRunExample]"))
-obj("DryRunResult", "Kết quả chạy thử.", ("sampleSize!", "int", 1000), ("durationMs!", "int", 840), ("estimatedScore", "score"), ("results!", "[$DryRunRuleResult]"))
+obj("DryRunResult", "Kết quả chạy thử.", ("sampleSize!", "int", 1000), ("durationMs!", "int", 840), ("sampleSeed", "int", 42), ("estimatedScore", "score"), ("results!", "[$DryRunRuleResult]"))
 obj("RuleChange", "Một thay đổi trường của quy tắc.", ("field!", "str", "severity"), ("from", "str", "MAJOR"), ("to", "str", "CRITICAL"))
 obj("RuleDiffItem", "Quy tắc đổi giữa hai phiên bản.", ("ruleCode!", "rcode"), ("changes!", "[$RuleChange]"))
 obj("VersionDiff", "So sánh hai phiên bản (FR-08-019).", ("ruleSetCode!", "rscode"), ("fromVersionNo!", "int", 3), ("toVersionNo!", "int", 4), ("added!", "[rcode]", ["CD-VAL-010"]),
@@ -435,6 +436,13 @@ page("WeightConfigPage", "WeightConfig")
 obj("WeightConfigCreate", "Tạo cấu hình nháp (FR-08-021); ERR-08-023 khi tổng khác 1, ERR-08-024 khi ngưỡng sai.", ("configCode!", "str", "tm-mac-dinh"), ("scope!", "E:WeightScope", "TENANT"),
     ("domainCode", "dcode"), ("assetCode", "acode"), ("weights!", "$WeightSet"), ("passMin!", "num", 90, {"minimum": 0, "maximum": 100}), ("warnMin!", "num", 75, {"minimum": 0, "maximum": 100}),
     ("changeNote", "str", "Tăng trọng số chiều hợp lệ", {"maxLength": 2000}))
+obj("WeightPreviewRequest", "Xem trước điểm giả định (FR-08-021, API-08-132); không ghi dữ liệu. ERR-08-023 khi tổng khác 1, ERR-08-024 khi ngưỡng sai.", ("scope!", "E:WeightScope", "DOMAIN"),
+    ("domainCode", "dcode"), ("assetCode", "acode"), ("weights!", "$WeightSet"), ("passMin!", "num", 85, {"minimum": 0, "maximum": 100}), ("warnMin!", "num", 75, {"minimum": 0, "maximum": 100}))
+obj("WeightPreviewAsset", "Điểm hiện hành và điểm giả định của một đối tượng.", ("assetCode!", "acode"), ("currentScore!", "score", 91.2), ("projectedScore!", "score", 90.1),
+    ("currentVerdict!", "E:Verdict", "PASS"), ("projectedVerdict!", "E:Verdict", "PASS"), ("snapshotId!", "uuid"))
+obj("WeightPreview", "Điểm giả định của phạm vi tính từ ảnh chụp đầy đủ gần nhất, so với cấu hình hiện hành.", ("scope!", "E:WeightScope", "DOMAIN"), ("assetCount!", "int", 6),
+    ("currentScore", "score", 91.2), ("projectedScore", "score", 90.1), ("delta", "num", -1.1), ("currentVerdict", "E:Verdict", "PASS"), ("projectedVerdict", "E:Verdict", "PASS"),
+    ("changedVerdictCount!", "int", 0), ("assets!", "[$WeightPreviewAsset]"), ("basedOnSnapshotAt", "ts"))
 obj("WeightConfigUpdate", "Sửa cấu hình nháp.", ("weights", "$WeightSet"), ("passMin", "num", 90), ("warnMin", "num", 75), ("changeNote", "str", "Điều chỉnh ngưỡng"))
 
 # --- lịch, lần đo
@@ -446,11 +454,11 @@ obj("ScheduleCreate", "Tạo lịch (FR-08-023); ERR-08-029 khi cron sai hoặc 
     ("cron!", "str", "0 0 2 1 * ?"), ("timezone", "str", "Asia/Ho_Chi_Minh"), ("scanMode!", "E:ScanMode", "FULL"))
 obj("ScheduleUpdate", "Sửa lịch.", ("cron", "str", "0 0 2 1 * ?"), ("timezone", "str", "Asia/Ho_Chi_Minh"), ("scanMode", "E:ScanMode", "FULL"))
 obj("ScanCreate", "Chạy đo theo yêu cầu hoặc năm (FR-08-024, 054).", ("assetCode!", "acode"), ("scanMode!", "E:ScanMode", "FULL"), ("scanTrigger", "str", "MANUAL", {"enum": ["MANUAL", "ANNUAL"]}),
-    ("sampleSize", "int", 10000, {"minimum": 100, "maximum": 1000000}), ("periodCode", "period"), ("note", "str", "Đo trước kỳ báo cáo", {"maxLength": 500}))
+    ("sampleSize", "int", 10000, {"minimum": 100, "maximum": 1000000}), ("sampleSeed", "int", 20261126), ("periodCode", "period"), ("note", "str", "Đo trước kỳ báo cáo", {"maxLength": 500}))
 obj("ScanJob", "Lần đo (dq_scan_job).", ("scanId!", "uuid"), ("assetCode!", "acode"), ("ruleSetVersionId", "uuid"), ("weightConfigId", "uuid"), ("scheduleId", "uuid"), ("scanTrigger!", "E:ScanTrigger", "MANUAL"),
     ("scanMode!", "E:ScanMode", "FULL"), ("status!", "E:ScanStatus", "RUNNING"), ("periodCode", "period"), ("requestedBy", "str", "nguyen.thi.lan"), ("verifyIssueCode", "icode"),
     ("sourceEventId", "uuid"), ("rerunOf", "uuid"), ("sourceSnapshotAt", "ts"), ("startedAt", "ts"), ("finishedAt", "ts"), ("taskTotal", "int", 6), ("taskDone", "int", 2),
-    ("rowsScanned", "int", 400000), ("rowsFailed", "int", 3100), ("skippedRules", "int", 0), ("sampleSize", "int", 10000), ("sampleSeed", "int", 20261126),
+    ("rowsScanned", "int", 400000), ("rowsFailed", "int", 3100), ("skippedRules", "int", 0), ("etaSeconds", "int", 420), ("sampleSize", "int", 10000), ("sampleSeed", "int", 20261126),
     ("flags", "[E:SnapshotFlag]", []), ("errorCode", "str", "ERR-08-105"), ("errorMessage", "str", "Không kết nối được nguồn"), ("cancelReason", "str", "Hủy theo yêu cầu của chủ quản dữ liệu"), *AUD)
 page("ScanJobPage", "ScanJob")
 obj("RerunRequest", "Chạy lại lần đo (FR-08-030).", ("reason", "str", "Chạy lại sau khi nguồn khôi phục.", {"maxLength": 500}))
@@ -530,7 +538,8 @@ obj("Issue", "Phiếu khắc phục (dq_issue).", ("issueCode!", "icode"), ("ass
     ("status!", "E:IssueStatus", "ASSIGNED"), ("slaDays", "int", 5), ("slaDueAt", "ts"), ("overdue", "bool", False), ("escalationLevel", "int", 0), ("escalatedAt", "ts"), ("assignedAt", "ts"), ("fixedAt", "ts"),
     ("fixNote", "str", "Đã rà soát và sửa số định danh theo sổ hộ tịch"), ("verifiedAt", "ts"), ("verifyScanId", "uuid"), ("reopenCount", "int", 0), ("rejectType", "E:RejectType", "NOT_A_DEFECT"),
     ("rejectReason", "str"), ("stewardItemRef", "uuid"), ("forwardedToStewardAt", "ts"), ("cancelReason", "str"), *AUD)
-page("IssuePage", "Issue")
+obj("IssuePage", "Trang kết quả kèm số phiếu theo thẻ của hộp việc (`facets`).", ("items!", "[$Issue]"), ("page!", "int", 0), ("size!", "int", 20), ("totalElements!", "int", 1),
+    ("facets", "obj", {"byStatus": {"ASSIGNED": 6, "IN_PROGRESS": 9, "FIXED": 2}, "overdue": 3, "dueSoon": 4}))
 obj("IssueCreate", "Mở phiếu từ nhóm lỗi (FR-08-041); ERR-08-034 khi lỗi đã thuộc phiếu mở khác.", ("assetCode!", "acode"), ("ruleCode!", "rcode"), ("findingIds", "[uuid]"), ("groupKey", "str", "mdm-cong-dan|CD-ACC-001|so-tu-phap"),
     ("title!", "str", "Số định danh sai mẫu ở hộ tịch", {"maxLength": 255}), ("description", "str", "312 bản ghi có số định danh không đủ 12 chữ số", {"maxLength": 4000}),
     ("severity!", "E:Severity", "CRITICAL"), ("ownerOrgCode!", "org"), ("slaDays", "int", 5, {"minimum": 1, "maximum": 90}))
@@ -560,7 +569,7 @@ obj("Alert", "Cảnh báo (dq_alert).", ("alertId!", "uuid"), ("alertRuleCode!",
     ("status!", "E:AlertStatus", "FIRING"), ("dedupKey", "str", "cb-diem-duoi-ngung|mdm-cong-dan"), ("message!", "str", "Điểm chất lượng 71,2 thấp hơn ngưỡng cảnh báo 75."), ("firedAt!", "ts"), ("notifiedAt", "ts"),
     ("notificationRef", "str", "ntf-0193b1d4"), ("acknowledgedBy", "str"), ("acknowledgedAt", "ts"), ("silencedUntil", "ts"), ("silenceReason", "str"), ("resolvedAt", "ts"), *AUD)
 page("AlertPage", "Alert")
-obj("AlertSilence", "Tắt tiếng có thời hạn (FR-08-049).", ("silencedUntil!", "ts"), ("reason!", "str", "Đang bảo trì nguồn dữ liệu, tắt trong 24 giờ.", {"minLength": 5, "maxLength": 500}))
+obj("AlertSilence", "Tắt tiếng có thời hạn (FR-08-049).", ("silencedUntil!", "ts"), ("reason!", "str", "Đang bảo trì nguồn dữ liệu, tắt trong 24 giờ.", R20))
 
 # --- bảng điều khiển, thẻ điểm
 obj("DomainCard", "Thẻ miền trên bảng điều khiển.", ("domainCode!", "dcode"), ("name!", "str", "Hộ tịch"), ("score", "score"), ("verdict", "E:Verdict", "PASS"), ("trend", "E:Trend", "IMPROVED"),
@@ -569,7 +578,7 @@ obj("DimensionAverage", "Điểm trung bình một chiều.", ("dimension!", "E:
 obj("TrendPoint", "Điểm theo kỳ.", ("periodCode!", "period"), ("score!", "score"))
 obj("IssueSummary", "Tổng hợp phiếu.", ("open!", "int", 18), ("overdue!", "int", 3), ("bySeverity", "obj", {"CRITICAL": 2, "MAJOR": 9, "MINOR": 7}))
 obj("Dashboard", "Bảng điều khiển tenant (FR-08-050).", ("periodCode", "period"), ("tenantScore", "score"), ("verdict", "E:Verdict", "PASS"), ("trend", "E:Trend", "IMPROVED"), ("flags", "[E:SnapshotFlag]", []),
-    ("domains!", "[$DomainCard]"), ("dimensions!", "[$DimensionAverage]"), ("trendSeries!", "[$TrendPoint]"), ("issues!", "$IssueSummary"), ("firingAlerts", "int", 2), ("measuredAt", "ts"))
+    ("domains!", "[$DomainCard]"), ("dimensions!", "[$DimensionAverage]"), ("dimensionsPrev", "[$DimensionAverage]"), ("trendSeries!", "[$TrendPoint]"), ("issues!", "$IssueSummary"), ("firingAlerts", "int", 2), ("measuredAt", "ts"))
 obj("Scorecard", "Thẻ điểm theo phạm vi (FR-08-051).", ("scope!", "E:ScorecardScope", "DOMAIN"), ("key!", "str", "HO_TICH"), ("name", "str", "Hộ tịch"), ("score", "score"), ("verdict", "E:Verdict", "PASS"),
     ("trend", "E:Trend", "IMPROVED"), ("delta", "num", 2.4), ("flags", "[E:SnapshotFlag]", []), ("periodCode", "period"), ("official", "bool", False), ("measuredAt", "ts"), ("dimensions", "[$DimensionScore]"))
 page("ScorecardPage", "Scorecard")

@@ -1506,7 +1506,7 @@ Valkey là bộ đệm tầng hai, mọi khóa có hash tag tenant để các kh
 
 | Khóa | Giá trị | Thời gian sống |
 |---|---|---|
-| `{t68}:dq:rules:{assetCode}` | Bộ quy tắc ACTIVE dạng biên dịch sẵn cho kiểm tra trực tuyến: `ruleSetVersionId`, `contentHash`, quy tắc `INLINE` và `BOTH` (CEL, tham số, `inline_mode`), `on_dependency_failure` của miền | 60 giây (`08.inline.cache-ttl-seconds`), xóa ngay khi nhận EVT-08-01 |
+| `{t68}:dq:rules:{assetCode}` | Bộ quy tắc ACTIVE dạng biên dịch sẵn cho kiểm tra trực tuyến: `ruleSetVersionId`, `contentHash`, quy tắc `INLINE` và `BOTH` (CEL, tham số, `inline_mode`), `on_dependency_failure` của miền | 60 giây (hằng số của thiết kế SDD 4.9, không phải khóa tham số tenant), xóa ngay khi nhận EVT-08-01 |
 | `{t68}:dq:rdm:{catalogCode}:{versionId}` | Tập mã hợp lệ của danh mục PH-07 để kiểm `IN_RDM` trực tuyến (nén; danh mục lớn dùng Bloom filter) | 300 giây, xóa khi nhận sự kiện phát hành danh mục PH-07 |
 | `{t68}:dq:agg:{assetId}:{caller}:{yyyyMMddHHmm}` | Bộ đếm gộp theo phút (lượt, đạt, lỗi, độ trễ) trước khi ghi `dq_inline_stat` | 10 phút |
 | `{t68}:dq:cb:{dependency}` | Trạng thái cầu dao của PH-07, PH-05 để chọn FAIL_OPEN hoặc FAIL_CLOSED | 30 giây |

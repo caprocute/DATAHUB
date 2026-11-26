@@ -1348,6 +1348,11 @@ components:
           pattern: ^[a-z][a-z0-9-]{1,62}$
         stewardUser:
           type: string
+        status:
+          $ref: '#/components/schemas/DomainStatus'
+        statusReason:
+          type: string
+          maxLength: 500
         onDependencyFailure:
           $ref: '#/components/schemas/OnDependencyFailure'
     DomainPage:
@@ -2482,7 +2487,14 @@ components:
         sampleSize:
           type: integer
           minimum: 100
-          maximum: 50000
+          maximum: 10000
+        sampleSeed:
+          type: integer
+        recordKeys:
+          type: array
+          items:
+            type: string
+          maxItems: 100
         ruleCodes:
           type: array
           items:
@@ -2530,6 +2542,8 @@ components:
         sampleSize:
           type: integer
         durationMs:
+          type: integer
+        sampleSeed:
           type: integer
         estimatedScore:
           type: number
@@ -2805,6 +2819,98 @@ components:
       - weights
       - passMin
       - warnMin
+    WeightPreviewRequest:
+      type: object
+      description: Xem trước điểm giả định (FR-08-021, API-08-132); không ghi dữ liệu. ERR-08-023 khi tổng khác 1, ERR-08-024 khi ngưỡng sai.
+      properties:
+        scope:
+          $ref: '#/components/schemas/WeightScope'
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        weights:
+          $ref: '#/components/schemas/WeightSet'
+        passMin:
+          type: number
+          minimum: 0
+          maximum: 100
+        warnMin:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+      - scope
+      - weights
+      - passMin
+      - warnMin
+    WeightPreviewAsset:
+      type: object
+      description: Điểm hiện hành và điểm giả định của một đối tượng.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        currentScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        projectedScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        currentVerdict:
+          $ref: '#/components/schemas/Verdict'
+        projectedVerdict:
+          $ref: '#/components/schemas/Verdict'
+        snapshotId:
+          type: string
+          format: uuid
+      required:
+      - assetCode
+      - currentScore
+      - projectedScore
+      - currentVerdict
+      - projectedVerdict
+      - snapshotId
+    WeightPreview:
+      type: object
+      description: Điểm giả định của phạm vi tính từ ảnh chụp đầy đủ gần nhất, so với cấu hình hiện hành.
+      properties:
+        scope:
+          $ref: '#/components/schemas/WeightScope'
+        assetCount:
+          type: integer
+        currentScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        projectedScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        delta:
+          type: number
+        currentVerdict:
+          $ref: '#/components/schemas/Verdict'
+        projectedVerdict:
+          $ref: '#/components/schemas/Verdict'
+        changedVerdictCount:
+          type: integer
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeightPreviewAsset'
+        basedOnSnapshotAt:
+          type: string
+          format: date-time
+      required:
+      - scope
+      - assetCount
+      - changedVerdictCount
+      - assets
     WeightConfigUpdate:
       type: object
       description: Sửa cấu hình nháp.
@@ -2942,6 +3048,8 @@ components:
           type: integer
           minimum: 100
           maximum: 1000000
+        sampleSeed:
+          type: integer
         periodCode:
           type: string
           pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
@@ -3008,6 +3116,8 @@ components:
         rowsFailed:
           type: integer
         skippedRules:
+          type: integer
+        etaSeconds:
           type: integer
         sampleSize:
           type: integer
@@ -4109,7 +4219,7 @@ components:
       - version
     IssuePage:
       type: object
-      description: Trang kết quả.
+      description: Trang kết quả kèm số phiếu theo thẻ của hộp việc (`facets`).
       properties:
         items:
           type: array
@@ -4121,6 +4231,8 @@ components:
           type: integer
         totalElements:
           type: integer
+        facets:
+          type: object
       required:
       - items
       - page
@@ -4554,8 +4666,8 @@ components:
           format: date-time
         reason:
           type: string
-          minLength: 5
-          maxLength: 500
+          minLength: 20
+          maxLength: 2000
       required:
       - silencedUntil
       - reason
@@ -4647,6 +4759,10 @@ components:
           items:
             $ref: '#/components/schemas/DomainCard'
         dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionAverage'
+        dimensionsPrev:
           type: array
           items:
             $ref: '#/components/schemas/DimensionAverage'

@@ -9,7 +9,7 @@ Tính năng: TS-08-14 · Đo tăng dần theo sự kiện PH-06, PH-07
     Biết `mdm-citizen` bật tăng dần; `08.incremental.batch-window-minutes = 15`; `mdm-sim` phát 500 sự kiện `golden.updated` và 1 `golden.merged`.
     Khi phát sự kiện trong 5 phút
     Và đợi hết cửa sổ
-    Và `GET /scans?trigger=EVENT`
+    Và `GET /scans?scanTrigger=EVENT`
     Và `POST /assets/mdm-citizen:disable-incremental` rồi phát lại sự kiện, sau đó `:enable-incremental`
     Thì một lần đo `INCREMENTAL` `trigger = EVENT` chỉ trên 500 khóa đổi; lỗi cập nhật theo dấu vân tay; EVT-08-06 nếu có lỗi mới; lỗi của bản ghi bị hợp nhất `RESOLVED` lý do `RECORD_REMOVED`; ảnh chụp đầy đủ gần nhất không bị thay, điểm hiện hành gộp. Khi `disable-incremental` sự kiện không sinh lần đo nữa; `enable-incremental` bật lại.
 
@@ -19,7 +19,7 @@ Tính năng: TS-08-14 · Đo tăng dần theo sự kiện PH-06, PH-07
     Biết `rdm-dvhc` và `src-hotich` có quy tắc `IN_RDM` với `DVHC`; `rdm-sim` phát `catalog.published` rồi `adminunit.reorganized`.
     Khi phát `catalog.published`
     Và phát `adminunit.reorganized`
-    Và `GET /scans?trigger=EVENT`
+    Và `GET /scans?scanTrigger=EVENT`
     Thì lần đo tăng dần cho `rdm-dvhc`; sau `adminunit.reorganized` có lần đo tăng dần cho mọi đối tượng có quy tắc `IN_RDM` với `DVHC`; sự kiện `catalog.retired` làm quy tắc trỏ danh mục ngừng bị cảnh báo.
 
   @TC-08-078 @P2 @Âm

@@ -7,7 +7,7 @@ Tính năng: TS-08-15 · Kiểm tra trực tuyến bản ghi và bước trong l
   Kịch bản: TC-08-079 Kết luận PASS, WARN, FAIL ở chế độ STRICT
     # Truy vết: FR-08-032 · API-08-068, 071, 072 · UI-08-20 · BR-08-016 · PERM-08-rule-admin
     Biết `mdm-citizen` bật trực tuyến `STRICT`, `FAIL_OPEN`; `RS-CITIZEN` v5 `ACTIVE` (`R-CCCD-NN` `CRITICAL`, `R-CAPNHAT` `MINOR`); `S-T90-PH04` scope `dq.check`.
-    Khi `PUT /assets/mdm-citizen/inline-config` `{mode: STRICT, onDependencyFailure: FAIL_OPEN}`
+    Khi `PUT /assets/mdm-citizen/inline-config` `{inlineEnabled: true, inlineMode: STRICT, onDependencyFailure: FAIL_OPEN}`
     Và `POST /checks:evaluate` bản ghi hợp lệ
     Và bản ghi thiếu `nationalId`
     Và bản ghi chỉ cũ hơn 365 ngày
@@ -16,11 +16,12 @@ Tính năng: TS-08-15 · Kiểm tra trực tuyến bản ghi và bước trong l
     Thì bước 2 `200` `PASS`. Bước 3 `FAIL`, `violations[]` có `ruleCode`, `dimension`, `severity`, `fieldPath`, `message`, không chứa giá trị. Bước 4 `WARN` (chỉ `MINOR`). Mỗi phản hồi có `evaluatedRules`, `durationMs`, `ruleSetVersion = 5`. Bước 5 trả cấu hình đang đặt. Bước 6 dừng ở quy tắc `CRITICAL` đầu tiên vi phạm, `violations[]` có đúng một phần tử, `durationMs` nhỏ hơn bước 3. EVT: `check.failed` (EVT-08-13) gộp theo phút.
 
   @TC-08-080 @P1 @Dương
-  Kịch bản: TC-08-080 ADVISORY không bao giờ FAIL
+  Kịch bản: TC-08-080 ADVISORY không bao giờ FAIL, có vi phạm thì WARN
     # Truy vết: FR-08-032 · FR-08-033 · API-08-068, 071 · BR-08-016
     Biết như chk-verdict nhưng `mode = ADVISORY`.
     Khi `POST /checks:evaluate` bản ghi thiếu `nationalId` (`CRITICAL`)
-    Thì `200`, `verdict` là `PASS` hoặc `WARN`, không bao giờ `FAIL`, kèm `violations[]` (ca ghi lại giá trị thực tế để chốt Q08-44); bản tin trong luồng luôn đi tiếp, chỉ gắn tiêu đề.
+    Và `POST /checks:evaluate` bản ghi hợp lệ
+    Thì bước 1 `200`, `verdict = WARN` (không bao giờ `FAIL`) kèm `violations[]` có quy tắc `CRITICAL`; bước 2 `200`, `verdict = PASS`, `violations[]` trống (BR-08-016). Bản tin trong luồng luôn đi tiếp, chỉ gắn tiêu đề.
 
   @TC-08-081 @P1 @Âm
   Kịch bản: TC-08-081 Bản ghi sai lược đồ, chưa bật trực tuyến, thiếu scope, tenant khác
@@ -35,13 +36,13 @@ Tính năng: TS-08-15 · Kiểm tra trực tuyến bản ghi và bước trong l
 
   @TC-08-082 @P2 @Dương
   Kịch bản: TC-08-082 Chỉ quy tắc cho phép trực tuyến được chạy
-    # Truy vết: FR-08-032 · API-08-068, 069 · BR-08-017 · ERR-08-045
+    # Truy vết: FR-08-032 · API-08-068, 069 · BR-08-017 · ERR-08-101
     Biết `RS-CITIZEN` có `UNIQUE_IN_ASSET`, `EQ_SOURCE`, `SQL_PREDICATE`, CEL gán `INLINE`; `evaluate-batch` 100 và 101 bản ghi.
     Khi `POST /checks:evaluate`
     Và xem `evaluatedRules`
     Và `POST /checks:evaluate-batch` 100 bản ghi
     Và 101 bản ghi
-    Thì `evaluatedRules` không gồm `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`. Batch 100 trả 100 kết luận đúng thứ tự. Batch 101 bị từ chối `422` ERR-08-045 (giả định, xem ĐN-TC-02).
+    Thì `evaluatedRules` không gồm `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE`. Batch 100 trả 100 kết luận đúng thứ tự. Batch 101 bị từ chối cả lô `422` ERR-08-101.
 
   @TC-08-083 @P1 @Dương @Âm
   Kịch bản: TC-08-083 Kamelet dh-dq-check trong luồng PH-04

@@ -266,19 +266,19 @@ Bảng này là ma trận use case với màn hình (UI) và API. UC-08-11 đế
 | UC-08-06 | UI-08-08, 06 | API-08-031, 032, 034…037 |
 | UC-08-07 | UI-08-07, 09 | API-08-038…042 |
 | UC-08-08 | UI-08-09, 06 | API-08-028, 030, 043…046 |
-| UC-08-09 | UI-08-10 | API-08-047…052 |
+| UC-08-09 | UI-08-10 | API-08-047…052, 132 |
 | UC-08-10 | UI-08-11, 04, 12 | API-08-054…063, 067 |
 | UC-08-11 | UI-08-12 (xem kết quả) | API-08-061, 064, 067 |
 | UC-08-12 | UI-08-12, 04 | API-08-065, 066 |
 | UC-08-13 | UI-08-12 | API-08-061, 063 |
-| UC-08-14 | UI-08-11 (xem kết quả) | API-08-060, 061 |
+| UC-08-14 | UI-08-11 (xem kết quả) | API-08-060, 061, 130, 131 |
 | UC-08-15 | UI-08-20 | API-08-068, 069, 071, 072 |
 | UC-08-16 | UI-08-20 | API-08-068, 070…072 |
 | UC-08-17 | UI-08-13, 14 | API-08-073…078 |
 | UC-08-18 | UI-08-14, 13 | API-08-079…083 |
 | UC-08-19 | UI-08-13, 15 | API-08-078, 084…087 |
 | UC-08-20 | UI-08-15, 16 | API-08-085, 086, 088…090, 097 |
-| UC-08-21 | UI-08-16 | API-08-059, 086, 091 |
+| UC-08-21 | UI-08-16 | API-08-086, 090, 091 |
 | UC-08-22 | UI-08-15, 16 | API-08-092…096 |
 | UC-08-23 | UI-08-17 | API-08-098…103 |
 | UC-08-24 | UI-08-01, 04 | API-08-104…106, 128 |
@@ -677,7 +677,7 @@ Mỗi quy tắc thuộc đúng một trong sáu chiều và dùng một toán t�
 - **E1. Đã có nháp (bước 1).** ERR-08-022 (409): "Bộ quy tắc {mã} đang có bản nháp phiên bản {n} do {người} tạo."
 - **E2. Trường không có (bước 2).** ERR-08-014 (422): "Trường {đường dẫn} không có trong đối tượng đo {mã}."
 - **E3. Toán tử sai chiều (bước 2).** ERR-08-015 (422): "Toán tử {toán tử} không dùng được cho chiều {chiều}."
-- **E4. Tham số sai (bước 2).** ERR-08-016 (422): "Tham số {tên} của quy tắc {mã} không hợp lệ: {chi tiết}."
+- **E4. Tham số sai (bước 2).** ERR-08-016 (422): "Tham số {tên} của quy tắc {mã} không hợp lệ: {chi tiết}." Quy tắc `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` mà đặt `INLINE` hoặc `BOTH` cũng bị mã này, với tham số `execMode` (BR-08-017).
 - **E5. Thiếu danh mục (bước 3).** ERR-08-017 (422): "Quy tắc chiều Hợp lệ phải chọn danh mục PH-07 để đối chiếu."
 - **E6. Thiếu nguồn đối chiếu (3a).** ERR-08-018 (422): "Quy tắc chiều Nhất quán phải chọn đối tượng đo và trường để đối chiếu."
 - **E7. Phiên bản chưa có quy tắc bật.** ERR-08-021 (422): "Phiên bản {n} chưa có quy tắc nào đang bật."
@@ -924,7 +924,7 @@ Trọng số sáu chiều và ngưỡng đạt, cảnh báo quyết định kế
 
 **Luồng chính.**
 1. Lan kéo sáu thanh trượt: đầy đủ 0,20, chính xác 0,20, nhất quán 0,15, kịp thời 0,10, duy nhất 0,15, hợp lệ 0,20; đặt ngưỡng 80 và 70 (API-08-048).
-2. Hệ thống kiểm tổng bằng 1 (dung sai 0,001), ngưỡng hợp lệ, và hiện xem trước tác động lên điểm gần nhất.
+2. Hệ thống kiểm tổng bằng 1 (dung sai 0,001), ngưỡng hợp lệ; Lan bấm "Xem trước" (API-08-132) để thấy điểm giả định tính lại từ ảnh chụp đầy đủ gần nhất của từng đối tượng, không ghi dữ liệu.
 3. Lan bấm "Gửi duyệt" (API-08-050).
 4. Hùng xem xem trước, bấm "Duyệt" (API-08-051); hệ thống kiểm Hùng khác Lan.
 5. Hệ thống đặt cấu hình `ACTIVE`; so kỳ khác cấu hình sẽ gắn cờ `WEIGHTS_CHANGED`.
@@ -936,12 +936,13 @@ Trọng số sáu chiều và ngưỡng đạt, cảnh báo quyết định kế
 **Luồng ngoại lệ.**
 - **E1. Tổng khác 1 (bước 2).** ERR-08-023 (422): "Tổng trọng số sáu chiều phải bằng 1 (hiện là {tổng})."
 - **E2. Ngưỡng sai (bước 2).** ERR-08-024 (422): "Ngưỡng cảnh báo phải nhỏ hơn hoặc bằng ngưỡng đạt và trong khoảng 0 đến 100."
+- **E2a. Chưa có ảnh chụp để xem trước (bước 2).** ERR-08-027 (422): "Đối tượng {mã} chưa có bộ quy tắc đang hiệu lực."
 - **E3. Tự duyệt (bước 4).** ERR-08-005 (403): "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt."
 - **E4. Từ chối thiếu lý do (4a).** ERR-08-007 (422): "Nhập lý do (tối thiểu {n} ký tự)."
 
 **Quy tắc áp dụng.** BR-08-002, BR-08-007, BR-08-008, BR-08-023.
 
-**Màn hình, API.** UI-08-10; API-08-047…052; kịch bản TS-08-09.
+**Màn hình, API.** UI-08-10; API-08-047…052, 132; kịch bản TS-08-09.
 :::
 
 ```{.mermaid caption="Trình tự cấu hình trọng số và ngưỡng có duyệt"}
@@ -951,7 +952,8 @@ sequenceDiagram
   participant Q as dq-control
   DS->>Q: Tạo cấu hình trọng số, ngưỡng (API-08-048)
   Q->>Q: Kiểm tổng bằng 1, ngưỡng hợp lệ
-  Q-->>DS: Xem trước tác động
+  DS->>Q: Xem trước điểm giả định (API-08-132)
+  Q-->>DS: Điểm hiện hành và điểm giả định
   DS->>Q: Gửi duyệt (API-08-050)
   DA->>Q: Duyệt (API-08-051)
   Q->>Q: Kiểm DA khác DS, đặt ACTIVE
@@ -1235,7 +1237,7 @@ Khi bản ghi vàng đổi hoặc danh mục được phát hành, hệ thống 
 
 **Truy vết.** REQ-08, REQ-06, REQ-07; BP-03, BP-10; LGC-DMDC-006…008 (gián tiếp).
 
-**Tiền điều kiện.** Đối tượng `ACTIVE` có bộ quy tắc hiệu lực và đã có lần đo `FULL` gần nhất.
+**Tiền điều kiện.** Đối tượng `ACTIVE` có bộ quy tắc hiệu lực, đã có lần đo `FULL` gần nhất và đã bật đo tăng dần (TO bật bằng API-08-130, tắt bằng API-08-131 kèm lý do).
 
 **Kích hoạt.** Nhận sự kiện từ PH-06 hoặc PH-07.
 
@@ -1262,7 +1264,7 @@ Khi bản ghi vàng đổi hoặc danh mục được phát hành, hệ thống 
 
 **Quy tắc áp dụng.** BR-08-020, BR-08-033, BR-08-034.
 
-**Màn hình, API.** UI-08-11 (xem kết quả); API-08-060, 061; kịch bản TS-08-14.
+**Màn hình, API.** UI-08-11 (xem kết quả); API-08-060, 061, 130, 131; kịch bản TS-08-14.
 :::
 
 ```{.mermaid caption="Trình tự đo tăng dần theo sự kiện PH-06"}
@@ -1310,16 +1312,16 @@ Luồng tích hợp thêm bước Kamelet `dh-dq-check` để kiểm bản tin t
 1. Luồng PH-04 gửi bản ghi (≤ 64 KB) kèm mã đối tượng `FLOW-LLTP`.
 2. Hệ thống kiểm lược đồ và bật trực tuyến, nạp quy tắc từ bộ đệm.
 3. Hệ thống chạy quy tắc mức bản ghi (toán tử trực tuyến, CEL dưới giới hạn chi phí), bỏ quy tắc chỉ chạy lô (BR-08-017).
-4. Ở chế độ `STRICT`, lỗi `CRITICAL` hoặc `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; ở `ADVISORY` không bao giờ `FAIL` (BR-08-016).
+4. Ở chế độ `STRICT`, lỗi `CRITICAL` hoặc `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; ở `ADVISORY` không bao giờ `FAIL`: có vi phạm ở mức nào cũng `WARN` kèm danh sách, không vi phạm thì `PASS` (BR-08-016).
 5. Hệ thống trả `200` kèm `verdict`, vi phạm; Kamelet đặt tiêu đề `dh-dq-verdict`, `dh-dq-violations`, luồng định tuyến theo kết luận (đưa vào DLQ lý do `DQ_FAIL` khi `FAIL`).
 
 **Luồng thay thế.**
-- **1a. Gọi lô.** Luồng gửi nhiều bản ghi (API-08-069).
+- **1a. Gọi lô.** Luồng gửi tối đa 100 bản ghi một lần (API-08-069), nhận kết luận từng bản ghi.
 - **3a. Phụ thuộc lỗi.** `FAIL_OPEN` trả `PASS` cờ `degraded`; `FAIL_CLOSED` trả lỗi (BR-08-018).
 - **2a. Chưa có quy tắc.** Hệ thống trả `PASS` không vi phạm.
 
 **Luồng ngoại lệ.**
-- **E1. Sai lược đồ hoặc quá 64 KB (bước 2).** ERR-08-101 (422): "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}."
+- **E1. Sai lược đồ, quá 64 KB hoặc lô quá 100 bản ghi (bước 2).** ERR-08-101 (422): "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}."
 - **E2. Chưa bật trực tuyến (bước 2).** ERR-08-102 (404): "Đối tượng {mã} chưa bật kiểm tra trực tuyến."
 - **E3. Vượt ngân sách khi `FAIL_CLOSED` (bước 3).** ERR-08-103 (504): "Kiểm tra chất lượng vượt {n} ms."
 - **E4. Phụ thuộc lỗi khi `FAIL_CLOSED` (3a).** ERR-08-104 (503): "Dịch vụ đối chiếu danh mục tạm thời không khả dụng."
@@ -1439,7 +1441,7 @@ Bản ghi lỗi chỉ chứa khóa bản ghi và giá trị đã che. DS, DO tra
 5. Lan tải tệp (API-08-077) trong 24 giờ.
 
 **Luồng thay thế.**
-- **1a. Tìm theo khóa cá nhân.** Dùng `POST /findings:search`, giá trị khóa không vào đường dẫn hay nhật ký.
+- **1a. Tìm theo khóa cá nhân.** Dùng `POST /findings:search` (API-08-129), giá trị khóa không vào đường dẫn hay nhật ký.
 - **4a. Có trường Nhạy cảm.** Phúc (DO) chấp thuận (API-08-076), Hùng duyệt (bốn mắt, LP-08-01); khi đó tệp mới sẵn sàng.
 
 **Luồng ngoại lệ.**
@@ -1673,21 +1675,21 @@ Chủ quản không tự xác nhận. Phiếu chỉ `VERIFIED` khi lần đo `VE
 
 **Tiền điều kiện.** Phiếu `FIXED`; đối tượng còn bộ quy tắc hiệu lực.
 
-**Kích hoạt.** Phiếu sang `FIXED` (hệ thống đợi `08.verify.wait-mdm-minutes` nếu nguồn là PH-06); hoặc Lan bấm "Xác nhận" (API-08-091).
+**Kích hoạt.** Phúc bấm "Đã sửa" (API-08-090) và phiếu sang `FIXED` (hệ thống đợi `08.verify.wait-mdm-minutes` nếu nguồn là PH-06, `08.verify.wait-source-minutes` nếu là `SOURCE_DATASET`); hoặc Lan bấm "Xác nhận" (API-08-091).
 
 **Đảm bảo tối thiểu.** Lỗi kỹ thuật khi đo kiểm chứng giữ phiếu ở `FIXED`, không tự mở lại (BR-08-014).
 
 **Đảm bảo thành công.** Phiếu `VERIFIED`, lỗi `RESOLVED`, phát EVT-08-09; hoặc `REOPENED` kèm danh sách lỗi còn lại.
 
 **Luồng chính.**
-1. Hệ thống tạo lần đo trigger `VERIFY` (API-08-059) cho đúng quy tắc và khóa của phiếu.
+1. Khi phiếu sang `FIXED`, hệ thống tự tạo lần đo trigger `VERIFY` (không qua API-08-059, API này chỉ nhận `MANUAL`, `ANNUAL`) cho đúng quy tắc và khóa của phiếu.
 2. Hệ thống chạy như UC-08-11 trên phạm vi đó.
 3. Lần đo sạch: các lỗi `RESOLVED`, phiếu `VERIFIED`, phát EVT-08-09.
 4. Báo Phúc và Lan; Lan xem kết quả ở UI-08-16.
 
 **Luồng thay thế.**
 - **3a. Còn lỗi.** Phiếu `REOPENED`, lỗi còn thấy hiện cho Phúc, về `IN_PROGRESS` khi Phúc nhận lại.
-- **1a. Xác nhận thủ công.** Lan xác nhận có lý do ≥ 20 ký tự khi không đo lại được (ví dụ nguồn đã ngừng).
+- **1a. Xác nhận thủ công.** Lan xác nhận (API-08-091, `mode = MANUAL`) kèm lý do ≥ 50 ký tự khi không đo lại được (ví dụ nguồn đã ngừng); Lan cũng có thể yêu cầu đo lại (`mode = SCAN`).
 - **2a. `SAMPLE`.** Lần đo mẫu chỉ giải quyết lỗi nằm trong mẫu (BR-08-034).
 
 **Luồng ngoại lệ.**
@@ -1697,7 +1699,7 @@ Chủ quản không tự xác nhận. Phiếu chỉ `VERIFIED` khi lần đo `VE
 
 **Quy tắc áp dụng.** BR-08-014, BR-08-034.
 
-**Màn hình, API.** UI-08-16; API-08-059, 086, 091; kịch bản TS-08-21.
+**Màn hình, API.** UI-08-16; API-08-086, 090, 091; kịch bản TS-08-21.
 :::
 
 ```{.mermaid caption="Trình tự đo lại kiểm chứng phiếu khắc phục"}
@@ -1809,13 +1811,15 @@ Cảnh báo báo cho DS, TO khi điểm giảm mạnh, vượt ngưỡng hoặc 
 5. Lần đo kế tiếp điểm hồi phục, hệ thống đặt `RESOLVED` và phát EVT-08-12.
 
 **Luồng thay thế.**
-- **4a. Tắt tiếng.** Chi tắt tiếng tối đa 7 ngày (API-08-103); hết hạn mà điều kiện còn thì về `FIRING`.
+- **4a. Tắt tiếng.** Chi tắt tiếng tối đa 7 ngày kèm lý do ≥ 20 ký tự (API-08-103); hết hạn mà điều kiện còn thì về `FIRING`.
 - **1a. Sửa quy tắc.** API-08-100; xem danh sách API-08-098, 101.
 
 **Luồng ngoại lệ.**
 - **E1. Quy tắc cảnh báo sai (bước 1).** ERR-08-037 (422): "Quy tắc cảnh báo {mã} không hợp lệ: {chi tiết}."
 - **E2. Gửi thất bại (bước 3).** ERR-08-114: "Cảnh báo hoặc thông báo {mã} chưa gửi được tới kênh thông báo." (UI-08-17)
 - **E3. Sai trạng thái (bước 4).** ERR-08-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}."
+- **E4. Thiếu lý do khi tắt tiếng (4a).** ERR-08-007 (422): "Nhập lý do (tối thiểu {n} ký tự)."
+- **E5. Tắt tiếng quá 7 ngày (4a).** ERR-08-042 (422): "Giá trị {giá trị} của {khóa} ngoài khoảng cho phép {miền}."
 
 **Quy tắc áp dụng.** BR-08-024, BR-08-029.
 
@@ -1939,6 +1943,7 @@ Báo cáo kỳ (tháng) tự sinh nháp. Báo cáo chính thức hằng năm ch�
 - **E2. Thiếu khuyến nghị (bước 4).** ERR-08-039 (422): "Báo cáo cần ít nhất một khuyến nghị trước khi gửi duyệt."
 - **E3. Báo cáo đã công bố (bước 3).** ERR-08-040 (409): "Báo cáo {mã} đã công bố và không sửa được. Thu hồi và lập báo cáo thay thế."
 - **E4. Tự duyệt (bước 5).** ERR-08-005 (403): "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt."
+- **E5. Kỳ không có lần đo thành công (bước 3).** ERR-08-056 (422): "Không có lần đo thành công nào trong kỳ {kỳ} để lập báo cáo."
 
 **Quy tắc áp dụng.** BR-08-007, BR-08-009, BR-08-010, BR-08-011.
 
@@ -2101,39 +2106,41 @@ Ba luồng phụ dưới đây lặp lại ở nhiều use case nên đặc tả
 
 ### 8.1. Mã mới và độ phủ
 
-Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-08-01…27, LP-08-01…03, câu hỏi mở Q08-45…49; đề nghị kịch bản kiểm thử TS-08-01…27 ứng với UC-08-01…27 cho D05-02-PH08. Cả 61 FR thuộc ít nhất một use case (§5.4). Mọi mã ERR, EVT, API, UI, PERM, enum và tham số `08.*` lấy đúng FRS chương 8, 9, 10 và Phụ lục A; câu thông báo lấy nguyên văn FRS §9.2.
+Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-08-01…27, LP-08-01…03, câu hỏi Q08-45…49 (đã chốt ở FRS 0.2); đề nghị kịch bản kiểm thử TS-08-01…27 ứng với UC-08-01…27 cho D05-02-PH08. Cả 61 FR thuộc ít nhất một use case (§5.4). Mọi mã ERR, EVT, API, UI, PERM, enum và tham số `08.*` lấy đúng FRS chương 8, 9, 10 và Phụ lục A; câu thông báo lấy nguyên văn FRS §9.2.
 
 ### 8.2. Đề nghị đồng bộ
 
-Tập này không sửa tệp nào ngoài tập của mình. Bảng dưới ghi các điểm cần tài liệu khác đồng bộ để use case và tài liệu kia khớp nhau.
+Bảy đề nghị của bản 0.1 đã được FRS 0.2 xử lý (FRS chương 15); cột cuối ghi kết quả. Tập này không sửa tệp nào ngoài tập của mình.
 
-| Mã | Tài liệu | Đề nghị |
-|---|---|---|
-| ĐN-UC-01 | D02-03-PH08 (FR-08-017, FR-08-021) | Ghi rõ ai là "người đề nghị" khi đối tượng không có DS riêng (TA soạn quy tắc, trọng số); nêu DA dự phòng cấp tỉnh (Q08-45) |
-| ĐN-UC-02 | D02-03-PH08 (FR-08-016) | Cho phép tắt dấu "đã chạy thử" khi chỉ đổi mô tả quy tắc (UC-08-07 bước 1) |
-| ĐN-UC-03 | D02-03-PH08 (FR-08-044) | Nêu API tạo lần đo `VERIFY`: hiện dùng API-08-059 với `trigger = VERIFY`, nên ghi rõ ở FR-08-044 |
-| ĐN-UC-04 | D02-03-PH08 (FR-08-046), D02-03-PH06 | Thống nhất mã lý do `DQ_FINDING` và `DQ_GATE`, quy ước SLA, người nhận ở PH-06 (Q08-47, Q08-48) |
-| ĐN-UC-05 | D03-06-PH08 | Thêm câu thông báo theo ngữ cảnh cho ERR-08-005, 006, 007 ở màn UI-08-09, 16, 18 |
-| ĐN-UC-06 | D05-02-PH08 | Dựng `TS-08-01…27` ứng với UC; luồng đo tăng dần và trực tuyến dùng dữ liệu `T90…T99` |
-| ĐN-UC-07 | D02-08 | Xác nhận 11 quyền PERM-08, cặp loại trừ DS và DA, scope `dq.check`, `dq.read` |
+| Mã | Tài liệu | Đề nghị | Kết quả ở FRS 0.2 |
+|---|---|---|---|
+| ĐN-UC-01 | D02-03-PH08 (FR-08-017, FR-08-021) | Ghi rõ ai là "người đề nghị" khi đối tượng không có DS riêng; nêu DA dự phòng cấp tỉnh | Đã hấp thụ: FR-08-017 bước 3, 3a; Q08-18 |
+| ĐN-UC-02 | D02-03-PH08 (FR-08-016) | Không mất dấu "đã chạy thử" khi chỉ đổi mô tả quy tắc | Đã hấp thụ: FR-08-016 bước 4 |
+| ĐN-UC-03 | D02-03-PH08 (FR-08-044) | Nêu API tạo lần đo `VERIFY` | Đã hấp thụ theo hướng khác: hệ thống tự tạo `VERIFY` khi báo đã sửa; UC-08-21 đã sửa theo |
+| ĐN-UC-04 | D02-03-PH08 (FR-08-046), D02-03-PH06 | Mã lý do `DQ_FINDING`, `DQ_GATE`, SLA, người nhận ở PH-06 | Phần PH-08 đã hấp thụ; phần PH-06 dồn đợt đồng bộ cuối |
+| ĐN-UC-05 | D03-06-PH08 | Câu thông báo theo ngữ cảnh cho ERR-08-005, 006, 007 | Dồn cho tập màn hình; MH 0.2 đã làm |
+| ĐN-UC-06 | D05-02-PH08 | Dựng `TS-08-01…27` ứng với UC | Dồn cho tập kiểm thử; TC 0.2 có TS-08-01…35 phủ mọi UC |
+| ĐN-UC-07 | D02-08 | Xác nhận 11 quyền PERM-08, cặp loại trừ DS và DA, scope máy | Đã hấp thụ vào FRS Phụ lục B (thêm `dq.ingest`); sửa D02-08 dồn đợt đồng bộ cuối |
 
 : Đề nghị đồng bộ cho tài liệu khác
 
 ## 9. Câu hỏi mở
 
-> **Câu hỏi mở Q08-45:** UC-08-07, UC-08-09: DS và DA là cặp loại trừ, nhưng tenant nhỏ có thể chỉ có một người giữ `PERM-08-approve`; nếu người đó cũng là người gửi duyệt (TA có `PERM-08-rule-admin`) thì kích hoạt bị chặn bởi ERR-08-005. Tập này giả định chờ quá 5 ngày thì giao DA khác của tỉnh, nếu không có thì lãnh đạo Sở KH&CN duyệt ngoài hệ thống; cần FRS chốt có DA dự phòng cấp tỉnh hay không.
+Năm câu hỏi Q08-45…49 của bản 0.1 đã được FRS 0.2 chốt, không còn mở ở tập này.
 
-> **Câu hỏi mở Q08-46:** UC-08-21: DO sửa ở HTTT nguồn nhưng bản sao chỉ đọc mà PH-08 đo có thể chậm đồng bộ, làm lần đo `VERIFY` vẫn thấy lỗi cũ và phiếu bị `REOPENED` oan. Đề xuất tham số độ trễ bản sao riêng cho `SOURCE_DATASET` (cạnh `08.verify.wait-mdm-minutes` hiện chỉ cho PH-06); cần PH-05 xác nhận độ trễ thực tế.
+| Mã | Câu hỏi bản 0.1 | Kết quả |
+|---|---|---|
+| Q08-45 | Tenant chỉ có một người giữ `PERM-08-approve` thì bốn mắt bị chặn (UC-08-07, 09) | Buộc có DA dự phòng do TA chỉ định, không duyệt ngoài hệ thống (Q08-18, FR-08-017 bước 3a) |
+| Q08-46 | Bản sao chỉ đọc chậm đồng bộ làm đo `VERIFY` thấy lỗi cũ (UC-08-21) | Tham số `08.verify.wait-source-minutes` (Q08-19) |
+| Q08-47 | Ứng viên bị `DQ_GATE` vào hàng đợi nào, có tính vào bản ghi lỗi không (UC-08-16) | Không tính vào bản ghi lỗi, chỉ thống kê phút (FR-08-035 bước 4); phía PH-06 dồn đợt cuối |
+| Q08-48 | PH-06 từ chối chuyển lỗi bản ghi vàng thì ai đóng phiếu (UC-08-22) | Trả phiếu về DS với lý do (FR-08-046) |
+| Q08-49 | Đối tượng `FLOW_MESSAGE` và điều kiện báo cáo năm (UC-08-25) | Loại khỏi điều kiện sẵn sàng (FR-08-054 bước 1, BR-08-010) |
 
-> **Câu hỏi mở Q08-47:** UC-08-16: khi PH-06 từ chối ứng viên vì `DQ_GATE` ở chế độ `STRICT`, ứng viên đó vào hàng đợi nào, ai chịu SLA xử lý, và có tính vào lỗi của PH-08 không. Đề xuất không tính vào bản ghi lỗi (chỉ thống kê phút); cần thống nhất với FRS PH-06.
-
-> **Câu hỏi mở Q08-48:** UC-08-22: lỗi của bản ghi vàng chuyển sang PH-06 do người quản lý dữ liệu sửa bằng công cụ của PH-06; sau khi sửa, lần đo `VERIFY` đo lại bản ghi vàng có thể chờ PH-06 phát EVT-06-02. Cần quy ước ai đóng phiếu khi PH-06 từ chối chuyển (ví dụ lỗi do nguồn, không do hợp nhất); đề xuất trả phiếu về DS với lý do.
-
-> **Câu hỏi mở Q08-49:** UC-08-25: đối tượng `FLOW_MESSAGE` không đo theo lô (Q08-13) nên không bao giờ có lần đo `FULL`, và điều kiện BR-08-010 làm báo cáo năm không đủ điều kiện nếu đối tượng loại này nằm trong phạm vi. Đề xuất loại `FLOW_MESSAGE` khỏi điều kiện sẵn sàng, báo cáo bằng thống kê trực tuyến cả năm; cần FRS xác nhận.
+: Câu hỏi mở của bản 0.1 và kết quả
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 27 use case phủ 61 FR, năm sơ đồ use case, mỗi use case một sơ đồ trình tự, ma trận UC với FR, UI, API, REQ, LGC, ánh xạ FR repo, bảy đề nghị đồng bộ, câu hỏi mở Q08-45…49 |
-| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ theo FRS 0.2: lịch đo do bộ lập lịch nội bộ (PH-18 là phụ thuộc mềm), dấu vân tay HMAC-SHA256; bảy đề nghị ĐN-UC-01…07 và Q08-45…49 đã được FRS xử lý (FRS chương 15) |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ theo FRS 0.2: lịch đo do bộ lập lịch nội bộ (PH-18 là phụ thuộc mềm), dấu vân tay HMAC-SHA256, đo `VERIFY` do hệ thống tự tạo (UC-08-21 sửa theo FR-08-044, lý do xác nhận thủ công ≥ 50 ký tự), bảy đề nghị ĐN-UC-01…07 và Q08-45…49 đã được FRS xử lý; rà chéo cuối: xem trước trọng số API-08-132, bật, tắt đo tăng dần API-08-130, 131, `POST /findings:search` API-08-129, `ADVISORY` trả `WARN` khi có vi phạm, lô trực tuyến tối đa 100 bản ghi, ERR-08-016 cho `INLINE` với toán tử chỉ chạy lô, ERR-08-042 cho hạn tắt tiếng, ERR-08-056 cho kỳ không có lần đo |

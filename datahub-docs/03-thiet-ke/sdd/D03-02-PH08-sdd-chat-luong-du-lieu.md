@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH08
 ten: Thiết kế chi tiết phần mềm phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư dữ liệu, kiến trúc sư, ATTT, SRE, hội đồng thẩm định
@@ -14,7 +14,7 @@ tai_lieu_lien_quan: D02-03-PH08 FRS; D03-03-PH08 CSDL; D03-04-PH08 API; D03-06-P
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tài liệu mô tả cách hiện thực 61 FR của [D02-03-PH08](../../02-yeu-cau/frs/D02-03-PH08-frs-chat-luong-du-lieu.md). Phân hệ giúp sở ngành tự đo chất lượng dữ liệu của mình theo sáu chiều (đầy đủ, chính xác, nhất quán, kịp thời, duy nhất, hợp lệ), chỉ ra bản ghi nào sai, giao chủ quản sửa ở nguồn, đo lại để kiểm chứng và lập báo cáo định kỳ, báo cáo năm cho lãnh đạo. Hệ cũ (Viettel 2021) không có chức năng này, nên toàn bộ là thiết kế mới. Sáu quyết định chi phối thiết kế:
+Tài liệu mô tả cách hiện thực 61 FR của [D02-03-PH08](../../02-yeu-cau/frs/D02-03-PH08-frs-chat-luong-du-lieu.md). Phân hệ giúp sở ngành tự đo chất lượng dữ liệu của mình theo sáu chiều (đầy đủ, chính xác, nhất quán, kịp thời, duy nhất, hợp lệ), chỉ ra bản ghi nào sai, giao chủ quản sửa ở nguồn, đo lại để kiểm chứng và lập báo cáo định kỳ, báo cáo năm cho lãnh đạo. Hệ cũ không có chức năng này nên toàn bộ là thiết kế mới. Sáu quyết định chi phối thiết kế:
 
 1. **Một module Modulith, một kho quy tắc, hai chế độ đo.** Phân hệ là module `dq` của `dh-data` (Spring Boot 4, Spring Modulith, package `vn.datahub.data.dq`), lưu ở schema `ph08_dq` của `pg-core`. Đo lô và kiểm tra trực tuyến dùng chung một bộ quy tắc có phiên bản; lô chạy ở bộ thực thi mở rộng ngang, trực tuyến chạy trong bộ nhớ bản sao API với ngân sách 40 ms.
 2. **Đẩy phép đo xuống nơi có dữ liệu, giữ một stack Java.** Quy tắc tập hợp dịch sang một câu `SELECT` đẩy xuống (pushdown) có danh sách cho phép; quy tắc mức bản ghi chạy bằng CEL (Common Expression Language, thư viện `cel-java`); hồ sơ dữ liệu dùng Apache DataSketches. Không dùng Great Expectations hay Soda (Python) (ADR 085).
@@ -23,7 +23,7 @@ Tài liệu mô tả cách hiện thực 61 FR của [D02-03-PH08](../../02-yeu-
 5. **Chỉ đọc dữ liệu được đo, qua đường có kiểm soát.** Bản ghi vàng qua khung nhìn hợp đồng PH-06, danh mục qua API PH-07, bảng HTTT qua kết nối PH-05 chỉ đọc (Q359, ADR-067); cấm đọc CSDL control (ADR 087). PH-08 không sửa dữ liệu nguồn.
 6. **Vòng khép kín từ lỗi đến kiểm chứng.** Nhóm lỗi thành phiếu có SLA, chủ quản sửa ở nguồn, lần đo `VERIFY` xác nhận; sự kiện đi qua outbox cùng giao dịch và không mang giá trị dữ liệu; chuyển trạng thái bằng `UPDATE … WHERE status = :expected`.
 
-Tập nêu ba ADR đề xuất ở dạng tóm tắt (085 đến 087, kèm hai quyết định chốt ở SDD thuộc 088 và 089), mười câu hỏi mở Q08-20…29, ma trận thành phần với FR (§13.3) và phụ lục đề nghị đồng bộ (§13.6).
+Tập nêu ba ADR đề xuất ở dạng tóm tắt (085 đến 087, kèm hai quyết định chốt ở SDD thuộc 088 và 089), chín câu hỏi mở Q08-21…29 (Q08-20 đã chốt ở FRS 0.2), ma trận thành phần với FR (§13.3) và các đề nghị đồng bộ còn lại (§13.6).
 
 ## 1. Phạm vi và cách đọc
 
@@ -33,11 +33,11 @@ Tài liệu là thiết kế phần mềm đủ để kỹ sư viết mã và ki
 
 ### 1.2. Người đọc
 
-Kỹ sư `dh-data` đọc chương 3, 4, 5, 8; kỹ sư dữ liệu đọc 4.5, 4.7, 4.16; kiến trúc sư và ATTT đọc 2, 6, 7; SRE đọc 9 đến 11; hội đồng thẩm định đọc phần Tóm tắt và chương 13.
+Kỹ sư `dh-data` đọc chương 3, 4, 5, 8; kỹ sư dữ liệu đọc 4.5, 4.7, 4.16; kiến trúc sư, ATTT đọc 2, 6, 7; SRE đọc 9 đến 11; hội đồng đọc Tóm tắt và chương 13.
 
 ### 1.3. Quy ước trong tài liệu
 
-Mã `FR-08-nnn`, `BR-08-nnn`, `NFR-08-nnn`, `ERR-08-nnn`, `EVT-08-nn`, `API-08-nnn` lấy từ FRS; tên bảng và cột lấy từ DDL `ph08_dq.sql`. Chỉ số quan sát có tiền tố `dq_` như NFR-08-015. Số liệu giả định ghi "giả định" kèm cơ sở: tỉnh `T01` quy mô vừa, 200 HTTT, khoảng 60 đối tượng đo năm đầu và 200 sau ba năm, đối tượng lớn nhất khoảng 1,5 triệu bản ghi (GĐ-06, GĐ-07 của FRS).
+Mã `FR-08-nnn`, `BR-08-nnn`, `NFR-08-nnn`, `ERR-08-nnn`, `EVT-08-nn`, `API-08-nnn` lấy từ FRS; tên bảng và cột lấy từ DDL `ph08_dq.sql`. Chỉ số quan sát có tiền tố `dq_` (NFR-08-015). Số liệu giả định ghi "giả định": tỉnh `T01` quy mô vừa, 200 HTTT, khoảng 60 đối tượng đo năm đầu và 200 sau ba năm, đối tượng lớn nhất khoảng 1,5 triệu bản ghi (GĐ-06, GĐ-07 của FRS).
 
 ### 1.4. Thuật ngữ và chữ viết tắt
 
@@ -60,7 +60,7 @@ Tập thiết kế dùng nhiều thuật ngữ kỹ thuật như pushdown, CEL v
 
 ### 1.5. Cấu trúc tài liệu
 
-Chương 2 và 3 nói vị trí và cấu trúc mã; chương 4 là mô hình miền, 14 thành phần và thuật toán; chương 5 là năm sơ đồ trình tự; chương 6 đến 11 là đa tenant, bảo mật, trạng thái và lỗi, cấu hình, quan sát, hiệu năng và triển khai; chương 12 là kiểm thử; chương 13 là lộ trình, rủi ro, ADR, câu hỏi mở và đề nghị đồng bộ.
+Chương 2, 3: vị trí và cấu trúc mã; 4: mô hình miền, 14 thành phần, thuật toán; 5: năm sơ đồ trình tự; 6 đến 11: đa tenant, bảo mật, trạng thái và lỗi, cấu hình, quan sát, hiệu năng, triển khai; 12: kiểm thử; 13: lộ trình, rủi ro, ADR, câu hỏi mở, đề nghị đồng bộ.
 
 ### 1.6. Tài liệu liên quan và quyết định kiến trúc
 
@@ -68,8 +68,8 @@ Thiết kế dựa trên FRS, thiết kế CSDL, kiến trúc tổng thể và c
 
 | Tài liệu hoặc ADR | Nội dung dùng ở tập này |
 |---|---|
-| D02-03-PH08 FRS | 61 FR, 35 BR, 20 NFR, 40 tham số, mã lỗi, sự kiện, Phụ lục A enum |
-| D03-03-PH08 CSDL | Schema `ph08_dq`: 31 bảng, RLS, phân vùng tháng, `shedlock` |
+| D02-03-PH08 FRS 0.2 | 61 FR, 35 BR, 20 NFR, 43 tham số, 132 API, mã lỗi, sự kiện, Phụ lục A enum |
+| D03-03-PH08 CSDL 0.2 | Schema `ph08_dq`: 35 bảng, RLS, phân vùng tháng, `shedlock` |
 | D03-09 | Namespace `dh-control`, định cỡ `QM-VUA`, KEDA |
 | ADR-067, Q359 | Truy cập CSDL trực tiếp có kiểm soát, tài khoản chỉ đọc |
 | ADR đề xuất 085…089 | Mục 13.4 |
@@ -172,7 +172,7 @@ PH-08 gọi hoặc tiêu thụ sự kiện từ các phân hệ khác; bảng d�
 | PH-09 Quyền riêng tư | `dq` gọi | `ClassificationApi` tra phân loại trường, đệm 5 phút | Coi trường chưa phân loại là `SENSITIVE` |
 | PH-04 Tích hợp | gọi `dq` | `POST /checks:evaluate` qua Kamelet `dh-dq-check` | Luồng áp `onUnavailable`, đo lô không ảnh hưởng |
 | PH-13, PH-16, PH-18 | `dq` phát, nhận | Sự kiện EVT-08-02…14; KPI; lịch Quartz tùy chọn | Outbox giữ và phát lại; lịch nội bộ vẫn chạy |
-| PH-12 Keycloak, OPA | `dq` gọi | Xác thực, quyền, scope `dq.check`, `dq.read` | Từ chối |
+| PH-12 Keycloak, OPA | `dq` gọi | Xác thực, quyền, scope `dq.check`, `dq.read`, `dq.ingest` | Từ chối |
 | OpenBao, Valkey, Garage, Ceph RGW | `dq` gọi | Khóa HMAC theo tenant, bộ đệm, tệp xuất, báo cáo công bố | Xem §8.4 |
 
 : Phụ thuộc của PH-08
@@ -225,24 +225,24 @@ Gói `api` công bố ba interface cho module khác trong cùng DU: `InlineCheck
 
 ### 3.4. Danh sách thành phần được đặc tả
 
-Bảng liệt kê 14 thành phần của chương 4 (mục 4.2 đến 4.15), lớp chính và FR hiện thực. Mỗi mục mở bằng khối đặc tả 10 mục. Mục 4.1 là mô hình miền; 4.16 là các thuật toán.
+Bảng liệt kê 14 thành phần của chương 4 (mục 4.2 đến 4.15) và lớp chính; FR hiện thực nằm ở khối đặc tả từng mục và ma trận 13.3. Mục 4.1 là mô hình miền; 4.16 là các thuật toán.
 
-| Mục | Thành phần | Lớp chính | FR |
-|---|---|---|---|
-| 4.2 | `catalog` · Quản lý đối tượng đo | `DomainService`, `AssetService`, `FieldService`, `SourceDiscoveryService` | FR-08-001…007 |
-| 4.3 | `profile` · Hồ sơ dữ liệu | `ProfileRunner`, `SketchAccumulator`, `RuleSuggester`, `ExternalMetricsReceiver` | FR-08-008…011 |
-| 4.4 | `rule` · Kho quy tắc và vòng duyệt | `RuleSetService`, `VersionLifecycle`, `ApprovalService`, `WeightConfigService`, `TemplateLibrary` | FR-08-012, 013, 015, 017…022 |
-| 4.5 | `compile` · Trình biên dịch quy tắc | `RuleCompiler`, `PushdownTranslator`, `CelCompiler`, `SqlAllowlistValidator`, `DialectAdapter` | FR-08-013, 014, 016, 026 |
-| 4.6 | `scan` · Lập lịch và điều phối | `ScheduleDispatcher`, `ScanPlanner`, `TaskSharder`, `ScanCoordinator`, `IncrementalCollector` | FR-08-023…025, 030 |
-| 4.7 | `worker` · Bộ thực thi lô | `TaskRunner`, `AggregateExecutor`, `RecordStreamExecutor`, `SourceReader`, `Sampler` | FR-08-026, 031 |
-| 4.8 | `rdm` · Cổng đối chiếu PH-07 | `CatalogSnapshotCache`, `RdmGateway`, `RdmBreaker` | FR-08-027, 031 |
-| 4.9 | `inline` · Kiểm tra trực tuyến | `InlineEvaluator`, `RuleCacheManager`, `InlineStatAggregator`, `QualityGateAdapter` | FR-08-032…035 |
-| 4.10 | `score` · Chấm điểm và so kỳ | `ScoreCalculator`, `SnapshotWriter`, `TrendComparator`, `ScorecardService`, `DashboardQuery` | FR-08-028, 029, 050, 051 |
-| 4.11 | `finding` · Kho bản ghi lỗi | `FindingWriter`, `FingerprintService`, `ValueMasker`, `FindingResolver`, `WaiverService`, `FindingExporter` | FR-08-036…040 |
-| 4.12 | `remediation` · Khắc phục và SLA | `IssueService`, `SlaClock`, `EscalationJob`, `VerifyScanTrigger`, `StewardHandoff` | FR-08-041…046 |
-| 4.13 | `alert` · Cảnh báo | `AlertRuleEngine`, `AlertStateMachine`, `AlertPublisher` | FR-08-047…049 |
-| 4.14 | `report` · Báo cáo | `ReportComposer`, `AnnualReadinessChecker`, `PdfRenderer`, `XlsxWriter`, `SigningClient`, `ReportDistributor` | FR-08-052…056 |
-| 4.15 | `outbox`, `ops` · Sự kiện, tích hợp, vận hành | `OutboxWriter`, `InboxConsumer`, `KpiPublisher`, `TenantSettingService`, `RetentionPurger`, `AuditWriter`, `BenchmarkService` | FR-08-057…061, 011 |
+| Mục | Thành phần | Lớp chính |
+|---|---|---|
+| 4.2 | `catalog` · Quản lý đối tượng đo | `DomainService`, `AssetService`, `FieldService`, `SourceDiscoveryService` |
+| 4.3 | `profile` · Hồ sơ dữ liệu | `ProfileRunner`, `SketchAccumulator`, `RuleSuggester`, `ExternalMetricsReceiver` |
+| 4.4 | `rule` · Kho quy tắc và vòng duyệt | `RuleSetService`, `VersionLifecycle`, `ApprovalService`, `WeightConfigService`, `TemplateLibrary` |
+| 4.5 | `compile` · Trình biên dịch quy tắc | `RuleCompiler`, `PushdownTranslator`, `CelCompiler`, `SqlAllowlistValidator`, `DialectAdapter` |
+| 4.6 | `scan` · Lập lịch và điều phối | `ScheduleDispatcher`, `ScanPlanner`, `TaskSharder`, `ScanCoordinator`, `IncrementalCollector` |
+| 4.7 | `worker` · Bộ thực thi lô | `TaskRunner`, `AggregateExecutor`, `RecordStreamExecutor`, `SourceReader`, `Sampler` |
+| 4.8 | `rdm` · Cổng đối chiếu PH-07 | `CatalogSnapshotCache`, `RdmGateway`, `RdmBreaker` |
+| 4.9 | `inline` · Kiểm tra trực tuyến | `InlineEvaluator`, `RuleCacheManager`, `InlineStatAggregator`, `QualityGateAdapter` |
+| 4.10 | `score` · Chấm điểm và so kỳ | `ScoreCalculator`, `SnapshotWriter`, `TrendComparator`, `ScorecardService`, `DashboardQuery` |
+| 4.11 | `finding` · Kho bản ghi lỗi | `FindingWriter`, `FingerprintService`, `ValueMasker`, `FindingResolver`, `WaiverService`, `FindingExporter` |
+| 4.12 | `remediation` · Khắc phục và SLA | `IssueService`, `SlaClock`, `EscalationJob`, `VerifyScanTrigger`, `StewardHandoff` |
+| 4.13 | `alert` · Cảnh báo | `AlertRuleEngine`, `AlertStateMachine`, `AlertPublisher` |
+| 4.14 | `report` · Báo cáo | `ReportComposer`, `AnnualReadinessChecker`, `PdfRenderer`, `XlsxWriter`, `SigningClient`, `ReportDistributor` |
+| 4.15 | `outbox`, `ops` · Sự kiện, tích hợp, vận hành | `OutboxWriter`, `InboxConsumer`, `KpiPublisher`, `TenantSettingService`, `RetentionPurger`, `AuditWriter`, `BenchmarkService` |
 
 : Danh sách thành phần được đặc tả của PH-08
 
@@ -296,7 +296,7 @@ Hình cho thấy `ScanJob` là trục giữa: nó ghim phiên bản quy tắc v�
 
 **FR hiện thực.** FR-08-001…007; BR-08-004, 005, 026, 031.
 
-**Giao diện vào.** API-08-001…018; `AssetLookupApi`; Kafka nghe EVT-06-10 để so lược đồ `MDM_DOMAIN`.
+**Giao diện vào.** API-08-001…018 (ngoài ra API-08-024 nhận chỉ số hồ sơ của PH-05 với scope máy `dq.ingest`); `AssetLookupApi`; Kafka nghe EVT-06-10 để so lược đồ `MDM_DOMAIN`.
 
 **Phụ thuộc ra.** PH-06 (danh sách domain và khung nhìn), PH-07 (danh sách danh mục), PH-05 (khám phá lược đồ), PH-09 (phân loại trường).
 
@@ -313,7 +313,7 @@ Chi tiết thiết kế:
 
 Đăng ký đối tượng đi qua `AssetActivationGuard` với kiểm tra theo loại. `MDM_DOMAIN`: domain PH-06 `ACTIVE` và có khung nhìn `ph06_mdm.v_dq_{domain}` (ERR-08-009). `RDM_CATALOG`: danh mục đã phát hành (ERR-08-010). `SOURCE_DATASET`: kết nối PH-05 `ACTIVE`, chỉ đọc, đã cấp cho `dq` (ERR-08-011), bảng không thuộc schema `ph{nn}_*` (ERR-08-012, BR-08-005); `SourceDiscoveryService` gọi API PH-05 chỉ để lấy tên cột, kiểu, khóa chính. `FLOW_MESSAGE`: lược đồ lấy từ luồng PH-04, chỉ kiểm tra trực tuyến (Q08-13), nên hồ sơ và đo lô trả ERR-08-050.
 
-Kích hoạt đòi hỏi ít nhất một CDE (BR-08-031). `ClassificationSync` gọi PH-09 ghi `data_class` và `masking_mode` cho từng trường; trường chưa phân loại xác nhận được coi là `SENSITIVE` và cảnh báo ERR-08-047; chế độ che không được lỏng hơn phân loại (ERR-08-003). Nhận EVT-06-10, `catalog` so lược đồ domain mới với danh sách trường và đánh dấu trường không còn, để quy tắc liên quan báo ERR-08-116 thay vì chạy sai. Ngừng đối tượng hủy lần đo `QUEUED` và tắt lịch, lỗi đang mở giữ nguyên.
+Kích hoạt đòi hỏi ít nhất một CDE (BR-08-031). `ClassificationSync` gọi PH-09 ghi `data_class` và `value_mode` (`MASKED`, `HASH_ONLY`, `PLAIN`) cho từng trường; trường chưa phân loại xác nhận được coi là `SENSITIVE` và cảnh báo ERR-08-047; chế độ che không được lỏng hơn phân loại (ERR-08-003). Nhận EVT-06-10, `catalog` so lược đồ domain mới với danh sách trường và đánh dấu trường không còn, để quy tắc liên quan báo ERR-08-116 thay vì chạy sai. Ngừng đối tượng hủy lần đo `QUEUED` và tắt lịch, lỗi đang mở giữ nguyên.
 
 ### 4.3. Hồ sơ dữ liệu (`profile`)
 
@@ -356,7 +356,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-08-012, 013, 015, 017…022; BR-08-002, 003, 006, 007, 008, 032.
 
-**Giao diện vào.** API-08-025…053.
+**Giao diện vào.** API-08-025…053, 132 (xem trước điểm theo trọng số: `ScorePreviewService` tính lại từ ảnh chụp đầy đủ gần nhất của `score`, chỉ đọc).
 
 **Phụ thuộc ra.** `compile` (kiểm tính hợp lệ), `catalog` (trường, CDE), `rdm` (tồn tại danh mục), `outbox`.
 
@@ -371,7 +371,7 @@ Chi tiết thiết kế:
 
 Chi tiết thiết kế:
 
-Mọi thay đổi đi qua phiên bản mới (BR-08-006). `RuleEditor` chỉ sửa được phiên bản `DRAFT`; mỗi lần sửa, `content_hash` đổi và dấu "đã chạy thử" (băm lúc chạy thử, cột đề nghị bổ sung ở §13.6) mất hiệu lực, nên gửi duyệt phải khớp hai băm, nếu không trả ERR-08-053. Khi lưu quy tắc, `RuleValidator` của `compile` kiểm: trường thuộc lược đồ (ERR-08-014), toán tử hợp chiều (ERR-08-015), tham số đúng kiểu (ERR-08-016), `IN_RDM` trỏ danh mục có thật và không tự liệt kê mã (BR-08-003, ERR-08-017), `EQ_SOURCE` có nguồn đối chiếu (ERR-08-018), CEL biên dịch được (ERR-08-019), vị từ SQL qua danh sách cho phép (ERR-08-020).
+Mọi thay đổi đi qua phiên bản mới (BR-08-006). `RuleEditor` chỉ sửa được phiên bản `DRAFT`; mỗi lần sửa, `content_hash` đổi và dấu "đã chạy thử" (băm lúc chạy thử, cột `dry_run_content_hash`) mất hiệu lực, nên gửi duyệt phải khớp hai băm, nếu không trả ERR-08-053. Khi lưu quy tắc, `RuleValidator` của `compile` kiểm: trường thuộc lược đồ (ERR-08-014), toán tử hợp chiều (ERR-08-015), tham số đúng kiểu và `exec_mode` hợp toán tử, tức `UNIQUE_*`, `CROSS_ENTITY`, `EQ_SOURCE`, `SQL_PREDICATE` chỉ `BATCH` (ERR-08-016), `IN_RDM` trỏ danh mục có thật và không tự liệt kê mã (BR-08-003, ERR-08-017), `EQ_SOURCE` có nguồn đối chiếu (ERR-08-018), CEL biên dịch được (ERR-08-019), vị từ SQL qua danh sách cho phép (ERR-08-020).
 
 `ApprovalService` kiểm bốn mắt ở máy chủ: người duyệt khác người gửi và người soạn (ERR-08-005), theo cặp loại trừ DS và DA của D02-08. Kích hoạt trong một giao dịch: khóa `FOR UPDATE` bộ quy tắc, phiên bản `ACTIVE` cũ thành `SUPERSEDED`, bản mới thành `ACTIVE`, ghi outbox EVT-08-01; chỉ mục duy nhất từng phần `WHERE status = 'ACTIVE'` là lớp bảo vệ cuối. Phiên bản `APPROVED` hẹn giờ do `ScheduleDispatcher` kích hoạt khi tới `effective_from`. Lần đo đang chạy giữ phiên bản đã ghim lúc xếp hàng.
 
@@ -424,7 +424,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-08-023, 024, 025, 030, 031 (một phần); BR-08-001, 019, 020, 033.
 
-**Giao diện vào.** API-08-054…067; Kafka nghe EVT-06-01…04, 10 và EVT-07-03, 05, 10; API lịch của PH-18 (tùy chọn).
+**Giao diện vào.** API-08-054…067, 130, 131; Kafka nghe EVT-06-01…04, 10 và EVT-07-03, 05, 10; API lịch của PH-18 (tùy chọn).
 
 **Phụ thuộc ra.** `worker` (qua bảng `dq_scan_task`), `score`, `rule` (phiên bản `ACTIVE`, trọng số hiệu lực), `outbox`.
 
@@ -441,13 +441,13 @@ Chi tiết thiết kế:
 
 **Lập lịch.** Nguồn chân lý của lịch là `dq_schedule` (cron Quartz, múi giờ, `next_run_at`). `ScheduleDispatcher` là job `@Scheduled` mỗi phút bọc `@SchedulerLock(name = "dq-dispatch", lockAtMostFor = "50s")` để đúng một bản sao chạy mỗi nhịp; với mỗi lịch tới hạn, trong một giao dịch ngắn nó tính `next_run_at` mới và tạo `dq_scan_job` `QUEUED` qua `ScanPlanner`. Tự lập lịch có khóa thay vì chờ PH-18 (phụ thuộc mềm) để lịch tháng vẫn chạy khi PH-18 chưa sẵn sàng; PH-18 nếu có chỉ gọi `POST /scans` như bên kích hoạt thêm (Q08-20). Lịch lỡ do cả cụm ngừng được bù đúng một lần, ghi `dq_scan_missed_schedule_total`.
 
-**Xếp hàng.** `ScanPlanner.enqueue` kiểm: đối tượng `ACTIVE` (ERR-08-050), có phiên bản quy tắc `ACTIVE` và trọng số hiệu lực (ERR-08-027), hạn mức theo yêu cầu `08.scan.manual-per-hour` bằng bộ đếm Valkey (ERR-08-052); rồi theo BR-08-020, dưới khóa `pg_advisory_xact_lock(hash(tenant, asset))` đếm lần đo `QUEUED`, `RUNNING` và theo `08.scan.duplicate-policy` xếp sau hoặc từ chối ERR-08-028. `Idempotency-Key` ghi vào `idempotency_key` (duy nhất theo tenant). Lần đo `ANNUAL` ép `FULL` (ERR-08-030). Thứ tự lấy khỏi hàng: `ANNUAL`, `VERIFY` trước, rồi `MANUAL`, `SCHEDULE`, `EVENT`.
+**Xếp hàng.** `ScanPlanner.enqueue` kiểm: đối tượng `ACTIVE` (ERR-08-050), có phiên bản quy tắc `ACTIVE` và trọng số hiệu lực (ERR-08-027), hạn mức theo yêu cầu `08.scan.manual-per-hour` bằng bộ đếm Valkey (ERR-08-052); rồi theo BR-08-020, dưới khóa `pg_advisory_xact_lock(hash(tenant, asset))` đếm lần đo `QUEUED`, `RUNNING` và theo `08.scan.duplicate-policy` xếp sau hoặc từ chối ERR-08-028. `Idempotency-Key` ghi vào `idempotency_key` (duy nhất theo tenant). Lần đo `ANNUAL` ép `FULL` (ERR-08-030); `POST /scans` chỉ nhận `scanTrigger` `MANUAL` hoặc `ANNUAL`, còn `SCHEDULE`, `EVENT`, `VERIFY` do hệ thống tạo. Thứ tự lấy khỏi hàng: `ANNUAL`, `VERIFY` trước, rồi `MANUAL`, `SCHEDULE`, `EVENT`.
 
 **Phân mảnh và hàng đợi tác vụ.** `ScanCoordinator` (job `@SchedulerLock("dq-coordinate")` mỗi 10 giây) chọn lần đo bằng `FOR UPDATE SKIP LOCKED`, kiểm cửa sổ giờ `08.scan.window`, chuyển `RUNNING` và gọi `TaskSharder` (§4.16.4) tạo các dòng `dq_scan_task`. Hàng đợi tác vụ chính là bảng này: bộ thực thi nhận bằng `UPDATE … WHERE id = (SELECT t.id FROM dq_scan_task t JOIN dq_scan_job j ON j.id = t.scan_job_id WHERE t.status = 'QUEUED' AND t.not_before <= now() ORDER BY <ưu tiên theo scan_trigger>, t.shard_no FOR UPDATE OF t SKIP LOCKED LIMIT 1) RETURNING *`. Chọn bảng thay vì Kafka vì cần ưu tiên theo loại kích hoạt, hủy tức thời và đếm tiến độ bằng một truy vấn; thông lượng chỉ vài chục tác vụ mỗi giây. Tác vụ cập nhật `heartbeat_at` 30 giây một lần; `ScanWatchdog` trả tác vụ mất nhịp tim quá 3 phút về `QUEUED` (tối đa ba lần), hủy lần đo quá `08.scan.max-duration-hours` (ERR-08-106) hoặc chờ quá `08.scan.queue-timeout-hours` (ERR-08-119).
 
-**Khép lần đo.** Khi `task_done = task_total`, bản sao nhận tác vụ cuối gọi `ScoreCalculator` dưới khóa dòng `dq_scan_job`; điểm chỉ tính một lần nhờ điều kiện `status = 'RUNNING'` ở câu cập nhật cuối. Hủy đặt cờ; bộ thực thi kiểm cờ giữa các lô 1.000 dòng. Chạy lại tạo lần đo mới với `rerun_of`.
+**Khép lần đo.** Khi `task_done = task_total`, bản sao nhận tác vụ cuối gọi `ScoreCalculator` dưới khóa dòng `dq_scan_job`; điểm chỉ tính một lần nhờ điều kiện `status = 'RUNNING'` ở câu cập nhật cuối. Hủy đặt cờ; bộ thực thi kiểm cờ giữa các lô 1.000 dòng. `etaSeconds` suy từ tốc độ xử lý của các tác vụ đã xong, rỗng khi chưa có. Chạy lại tạo lần đo mới với `rerun_of`.
 
-**Đo tăng dần (FR-08-025).** `IncrementalCollector` nghe EVT-06-01…04 ở nhóm Kafka `dq-incremental`, khử trùng bằng `inbox_event`, gom khóa `goldenId` theo đối tượng vào bảng đệm `dq_incremental_buffer` (đề nghị bổ sung, §13.6); mỗi `08.incremental.batch-window-minutes` (15) một job khóa ShedLock theo tenant và đối tượng tạo lần đo `INCREMENTAL`, `scan_trigger = EVENT` trên tập khóa. Vượt 100.000 khóa thì đánh dấu chờ lần `FULL` kế tiếp (BR-08-033). EVT-07-05, 10 tạo lần đo `INCREMENTAL` cho mọi đối tượng có quy tắc `IN_RDM` trỏ danh mục đó.
+**Đo tăng dần (FR-08-025).** `IncrementalCollector` nghe EVT-06-01…04 ở nhóm Kafka `dq-incremental`, khử trùng bằng `inbox_event`, gom khóa `goldenId` theo đối tượng vào bảng đệm `dq_incremental_buffer` (EN-08-31); chỉ đối tượng đã bật đo tăng dần được thu gom (API-08-130, tắt bằng API-08-131); mỗi `08.incremental.batch-window-minutes` (15) một job khóa ShedLock theo tenant và đối tượng tạo lần đo `INCREMENTAL`, `scan_trigger = EVENT` trên tập khóa. Vượt 100.000 khóa thì đánh dấu chờ lần `FULL` kế tiếp (BR-08-033). EVT-07-05, 10 tạo lần đo `INCREMENTAL` cho mọi đối tượng có quy tắc `IN_RDM` trỏ danh mục đó.
 
 ### 4.7. Bộ thực thi lô (`worker`)
 
@@ -541,7 +541,7 @@ Chi tiết thiết kế:
 
 **Ngân sách độ trễ (giả định, đo khi nghiệm thu NFR-08-001).** Với ≤ 50 quy tắc không `UNIQUE_*`: kiểm scope 1 ms, phân tích JSON 1 ms, quy tắc gốc 8 ms, CEL 12 ms, `IN_RDM` từ bộ đệm 3 ms, quyết định và bộ đếm 1 ms, tuần tự hóa 1 ms; tổng khoảng 27 ms, đủ dư để p95 ≤ 50 ms. Ngân sách cứng `08.inline.timeout-ms` mặc định 40 ms: `InlineEvaluator` kiểm đồng hồ giữa các quy tắc và CEL chạy dưới `Future` có hạn; hết hạn thì áp `onDependencyFailure` (BR-08-018).
 
-**Quyết định.** `STRICT`: lỗi `CRITICAL` hoặc `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; `ADVISORY` không bao giờ `FAIL`. `FAIL_OPEN` (mặc định) trả `PASS` với `degraded = true` và lý do; `FAIL_CLOSED` trả ERR-08-103 (504) hoặc ERR-08-104 (503). Phản hồi chỉ có mã quy tắc, đường dẫn trường và thông báo mẫu, không có giá trị bản ghi.
+**Quyết định.** `STRICT`: lỗi `CRITICAL` hoặc `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; `ADVISORY` không bao giờ `FAIL`: có vi phạm ở mức nào cũng `WARN` kèm `violations[]`, không có thì `PASS`. Lô (API-08-069) tối đa 100 bản ghi, 101 bị từ chối cả lô bằng ERR-08-101. `FAIL_OPEN` (mặc định) trả `PASS` với `degraded = true` và lý do; `FAIL_CLOSED` trả ERR-08-103 (504) hoặc ERR-08-104 (503). Phản hồi chỉ có mã quy tắc, đường dẫn trường và thông báo mẫu, không có giá trị bản ghi.
 
 **Thống kê phút.** `InlineStatAggregator` giữ `LongAdder` theo `(đối tượng, bên gọi, chế độ, phút)` và mỗi 60 giây ghi `INSERT … ON CONFLICT DO UPDATE` cộng dồn vào `dq_inline_stat`; p50, p95 lấy từ `HdrHistogram` mỗi bản sao và khi gộp thì lấy giá trị lớn hơn (bảo thủ). Bản sao chết giữa phút mất tối đa 60 giây số đếm của nó (chấp nhận, thống kê không phải bằng chứng pháp lý). EVT-08-13 phát mỗi `(đối tượng, bên gọi)` mỗi phút có `FAIL`.
 
@@ -577,7 +577,7 @@ Chi tiết thiết kế:
 
 `TrendComparator` lấy ảnh chụp đầy đủ liền trước của đối tượng (chỉ `FULL`), tính Δ, gán `trend` theo dải `08.trend.stable-band` (±1,0), `BASELINE` khi chưa có kỳ trước, bật `WEIGHTS_CHANGED` khi `weight_config_id` khác; Δ ≤ −5,0 phát EVT-08-04. EVT-08-05 chỉ phát khi kết luận xấu đi, không lặp ở các kỳ sau.
 
-Lần đo `INCREMENTAL` không tạo ảnh chụp chính thức: `CurrentScoreMerger` lấy ảnh chụp đầy đủ gần nhất, thay số đếm của khóa đã đo lại và lưu "điểm hiện hành" ở `dq_score_current` (đề nghị bổ sung, §13.6); báo cáo năm chỉ thấy ảnh chụp `official`. Thẻ điểm miền và tổ chức là trung bình có trọng số theo `row_count`. `DashboardQuery` đọc ảnh chụp gần nhất mỗi đối tượng qua chỉ mục `(tenant_id, asset_id, measured_at DESC)` và đệm Valkey 60 giây để đạt NFR-08-010.
+Lần đo `INCREMENTAL` không tạo ảnh chụp chính thức: `CurrentScoreMerger` lấy ảnh chụp đầy đủ gần nhất, thay số đếm của khóa đã đo lại và lưu "điểm hiện hành" ở `dq_score_current` (EN-08-32); báo cáo năm chỉ thấy ảnh chụp `official`. Thẻ điểm miền và tổ chức là trung bình có trọng số theo `row_count`. `DashboardQuery` trả radar sáu chiều của kỳ này và kỳ trước (`dimensions`, `dimensionsPrev`) và đọc ảnh chụp gần nhất mỗi đối tượng qua chỉ mục `(tenant_id, asset_id, measured_at DESC)` và đệm Valkey 60 giây để đạt NFR-08-010.
 
 ### 4.11. Kho bản ghi lỗi, dấu vân tay, che theo PH-09 (`finding`)
 
@@ -590,7 +590,7 @@ Lần đo `INCREMENTAL` không tạo ảnh chụp chính thức: `CurrentScoreMe
 
 **FR hiện thực.** FR-08-036…040; BR-08-012, 013, 021, 027, 034; ADR 086.
 
-**Giao diện vào.** Gọi hàm từ `worker`, `scan`; API-08-073…083.
+**Giao diện vào.** Gọi hàm từ `worker`, `scan`; API-08-073…083, 129 (`POST /findings:search` tra theo khóa bản ghi cá nhân, khóa chuẩn hóa rồi băm HMAC, không vào đường dẫn hay nhật ký).
 
 **Phụ thuộc ra.** OpenBao (khóa HMAC theo tenant), PH-09 (chính sách che), Garage (tệp xuất), `outbox`.
 
@@ -624,7 +624,7 @@ Chi tiết thiết kế:
 
 **FR hiện thực.** FR-08-041…046; BR-08-014, 015, 026, 035.
 
-**Giao diện vào.** API-08-078, 084…097; EVT-08-06 nội bộ cho tự mở phiếu.
+**Giao diện vào.** API-08-078, 084…097 (danh sách phiếu API-08-085 kèm `facets` số phiếu theo thẻ hộp việc); EVT-08-06 nội bộ cho tự mở phiếu.
 
 **Phụ thuộc ra.** `finding` (gắn lỗi vào phiếu), `scan` (lần đo `VERIFY`), `mdm::api.StewardIntakeApi`, lịch ngày làm việc của PH-13.
 
@@ -641,11 +641,11 @@ Chi tiết thiết kế:
 
 **Mở phiếu.** `IssueService.openFromGroup` nhóm lỗi `OPEN` theo `(asset, rule, owner_org)`, kiểm lỗi chưa thuộc phiếu mở khác (ERR-08-034), tạo phiếu `OPEN` và đặt `issue_id`, `IN_REMEDIATION` cho lỗi trong cùng giao dịch. `AutoOpenJob` sau mỗi lần đo: kết luận `FAIL` và số lỗi `CRITICAL` mới vượt `08.issue.auto-open-critical` (100) thì tự mở phiếu gộp theo đối tượng và quy tắc (BR-08-035).
 
-**SLA và leo thang.** `SlaClock` tính `sla_due_at` bằng cộng ngày làm việc (CRITICAL 5, MAJOR 15, MINOR 30, giả định theo Q08-04) trên lịch tenant lấy từ PH-13 (lịch lỗi thì dùng thứ hai đến thứ sáu và cảnh báo). Quá hạn là cờ tính từ `sla_due_at`, không phải trạng thái. `EscalationJob` mỗi giờ (ShedLock): quá hạn `08.issue.escalate-after-overdue-days` (5) thì leo thang cấp 1, gấp đôi thì cấp 2, mỗi lần phát EVT-08-08.
+**SLA và leo thang.** `SlaClock` tính `sla_due_at` bằng cộng ngày làm việc (CRITICAL 5, MAJOR 15, MINOR 30, giả định theo Q08-04) trên lịch tenant lấy từ PH-13 (lịch lỗi hoặc chưa có thì dùng thứ hai đến thứ sáu và cảnh báo; nguồn lịch dồn PH-13). Quá hạn là cờ tính từ `sla_due_at`, không phải trạng thái. `EscalationJob` mỗi giờ (ShedLock): quá hạn `08.issue.escalate-after-overdue-days` (5) thì leo thang cấp 1, gấp đôi thì cấp 2, mỗi lần phát EVT-08-08.
 
 **Tách vai.** DO làm `ASSIGNED → IN_PROGRESS → FIXED`; chỉ lần đo `VERIFY` hoặc DS đưa phiếu tới `VERIFIED` hay `REOPENED` (BR-08-014); DO tự xác nhận bị ERR-08-035. Mọi chuyển trạng thái đi bằng `UPDATE dq_issue SET status = :to WHERE id = :id AND status = :from AND version = :v`.
 
-**Kiểm chứng.** `VerifyScanTrigger.onFixed` tạo lần đo `VERIFY` ưu tiên cao trên tập khóa của phiếu (≤ 100.000, quá thì `FULL` cho đối tượng); với `MDM_DOMAIN` đặt `not_before` bằng `08.verify.wait-mdm-minutes` (60). Khi lần đo xong, `onVerifyCompleted`: mọi lỗi `RESOLVED` thì `VERIFIED` và ghi Δ điểm, còn lỗi thì `REOPENED`; lần đo `FAILED` kỹ thuật giữ phiếu `FIXED` (ERR-08-115), thử lại sau 1 giờ tối đa 3 lần rồi giao DS. **Chuyển steward.** `StewardHandoff` chỉ nhận lỗi của `MDM_DOMAIN` (ERR-08-051), gọi `StewardIntakeApi.createItem(domain, goldenId, DQ_FINDING)` với khóa idempotent `issueCode`, lưu `steward_item_ref`; chỉ chuyển mã quy tắc và `goldenId`, không giá trị trường. PH-08 không sửa bản ghi vàng (BR-08-004).
+**Kiểm chứng.** `VerifyScanTrigger.onFixed` (gọi từ API-08-090, không qua `POST /scans`, vốn chỉ nhận `MANUAL`, `ANNUAL`) tạo lần đo `VERIFY` ưu tiên cao trên tập khóa của phiếu (≤ 100.000, quá thì `FULL` cho đối tượng); với `MDM_DOMAIN` đặt `not_before` bằng `08.verify.wait-mdm-minutes` (60), với `SOURCE_DATASET` bằng `08.verify.wait-source-minutes` (0, theo độ trễ bản sao chỉ đọc). DS đo lại hoặc xác nhận thủ công bằng API-08-091 (`mode = SCAN` hoặc `MANUAL`, lý do thủ công ≥ 50 ký tự). Mã phiếu `DQ-yyyy-nnnnnn` cấp tuần tự theo tenant và năm. Khi lần đo xong, `onVerifyCompleted`: mọi lỗi `RESOLVED` thì `VERIFIED` và ghi Δ điểm, còn lỗi thì `REOPENED`; lần đo `FAILED` kỹ thuật giữ phiếu `FIXED` (ERR-08-115), thử lại sau 1 giờ tối đa 3 lần rồi giao DS. **Chuyển steward.** `StewardHandoff` chỉ nhận lỗi của `MDM_DOMAIN` (ERR-08-051; PH-06 từ chối chuyển thì phiếu về DS), gọi `StewardIntakeApi.createItem(domain, goldenId, DQ_FINDING)` với khóa idempotent `issueCode`, lưu `steward_item_ref`; chỉ chuyển mã quy tắc và `goldenId`, không giá trị trường. PH-08 không sửa bản ghi vàng (BR-08-004).
 
 ### 4.13. Cảnh báo (`alert`)
 
@@ -673,7 +673,7 @@ Chi tiết thiết kế:
 
 Chi tiết thiết kế:
 
-Điều kiện cảnh báo (`alert.condition` ở Phụ lục A FRS) được đánh giá theo sự kiện nội bộ chứ không quét định kỳ: `score` gọi `AlertRuleEngine.onSnapshot` sau khi ghi ảnh chụp, `scan` gọi khi lần đo `FAILED`, `remediation` gọi khi quá hạn, `inline` gọi mỗi phút cho `INLINE_FAIL_RATE` (so `fail_count / check_count` với ngưỡng và số mẫu tối thiểu). `AlertDeduplicator` bảo đảm mỗi cặp `(alert_rule, asset)` chỉ có một cảnh báo chưa `RESOLVED` (BR-08-029) bằng chỉ mục duy nhất từng phần; điều kiện còn đúng ở kỳ sau thì chỉ nhắc lại sau `08.alert.repeat-hours` (4 giờ). Tắt tiếng tối đa 7 ngày; hết hạn tự quay về `FIRING` nếu điều kiện còn. Cảnh báo tự `RESOLVED` khi điều kiện hết ở lần đánh giá kế. Việc gửi tới người nhận (email, trong ứng dụng) thuộc PH-13: `AlertPublisher` chỉ ghi EVT-08-12 qua outbox; PH-13 không nhận được trong 24 giờ thì ERR-08-114 hiện ở bảng giám sát.
+Điều kiện cảnh báo (`alert.condition` ở Phụ lục A FRS) được đánh giá theo sự kiện nội bộ chứ không quét định kỳ: `score` gọi `AlertRuleEngine.onSnapshot` sau khi ghi ảnh chụp, `scan` gọi khi lần đo `FAILED`, `remediation` gọi khi quá hạn, `inline` gọi mỗi phút cho `INLINE_FAIL_RATE` (so `fail_count / check_count` với ngưỡng và số mẫu tối thiểu). `AlertDeduplicator` bảo đảm mỗi cặp `(alert_rule, asset)` chỉ có một cảnh báo chưa `RESOLVED` (BR-08-029) bằng chỉ mục duy nhất từng phần; điều kiện còn đúng ở kỳ sau thì chỉ nhắc lại sau `08.alert.repeat-hours` (4 giờ). Tắt tiếng tối đa 7 ngày (quá thì ERR-08-042) và bắt buộc lý do ≥ 20 ký tự (ERR-08-007); hết hạn tự quay về `FIRING` nếu điều kiện còn. Cảnh báo tự `RESOLVED` khi điều kiện hết ở lần đánh giá kế. Việc gửi tới người nhận (email, trong ứng dụng) thuộc PH-13: `AlertPublisher` chỉ ghi EVT-08-12 qua outbox; PH-13 không nhận được trong 24 giờ thì ERR-08-114 hiện ở bảng giám sát.
 
 ### 4.14. Báo cáo: sinh PDF, XLSX, ký số, Ceph RGW (`report`)
 
@@ -707,7 +707,7 @@ Chi tiết thiết kế:
 
 **Duyệt, công bố.** `DRAFT → IN_REVIEW → PUBLISHED`; người duyệt khác người gửi (ERR-08-005, `ck_dq_report_four_eyes`). Công bố trong một giao dịch: chuyển `PUBLISHED`, ghi `content_sha256`, outbox EVT-08-11 và EVT-08-14. Báo cáo `PUBLISHED` bất biến (ERR-08-040); sửa bằng thu hồi `WITHDRAWN` kèm lý do và báo cáo thay thế.
 
-**Dựng tệp, ký, lưu.** `PdfRenderer` render mẫu HTML bằng OpenHTMLtoPDF; biểu đồ radar sáu chiều và xu hướng dựng SVG bằng ECharts chạy phía máy chủ; chân trang có `reportCode` và `contentHash`. `XlsxWriter` ghi luồng `SXSSFWorkbook`. Tính trước `summary` giúp PDF 100 trang trong 2 phút (NFR-08-012); chọn OpenHTMLtoPDF thay vì trình duyệt không đầu để không thêm Chromium vào ảnh (ADR 089). `SigningClient` gửi băm PDF tới dịch vụ ký số nền tảng (PAdES, chứng thư cơ quan, Q08-06); ký lỗi (ERR-08-048) không chặn công bố, báo cáo giữ trạng thái chưa ký. Bản nháp và tệp xuất ở Garage có hạn tải; khi công bố, `ObjectStoreWriter` chép PDF, XLSX và `summary` sang bucket Ceph RGW `dq-reports-official` có Object Lock theo `08.report.official-retention-years` (10 năm), đối chiếu `content_sha256`. `ReportDistributor` đọc `dq_report_subscription` và phát sự kiện tới PH-13 kèm đường dẫn có hạn, không đính kèm tệp.
+**Dựng tệp, ký, lưu.** `PdfRenderer` render mẫu HTML bằng OpenHTMLtoPDF; biểu đồ radar sáu chiều và xu hướng dựng SVG bằng ECharts chạy phía máy chủ; chân trang có `reportCode` (`BC-DQ-yyyy-kỳ-Ttt`, thêm hậu tố `-Rn` cho báo cáo thay thế sau thu hồi) và `contentHash`. `XlsxWriter` ghi luồng `SXSSFWorkbook`. Tính trước `summary` giúp PDF 100 trang trong 2 phút (NFR-08-012); chọn OpenHTMLtoPDF thay vì trình duyệt không đầu để không thêm Chromium vào ảnh (ADR 089). `SigningClient` gửi băm PDF tới dịch vụ ký số nền tảng (PAdES, chứng thư cơ quan, Q08-06); ký lỗi (ERR-08-048) không chặn công bố, báo cáo giữ trạng thái chưa ký. Bản nháp và tệp xuất ở Garage có hạn tải; khi công bố, `ObjectStoreWriter` chép PDF, XLSX và `summary` sang bucket Ceph RGW `dq-reports-official` có Object Lock theo `08.report.official-retention-years` (10 năm), đối chiếu `content_sha256`. `ReportDistributor` đọc `dq_report_subscription` và phát sự kiện tới PH-13 kèm đường dẫn có hạn, không đính kèm tệp.
 
 ### 4.15. Outbox, inbox, tích hợp PH-16, PH-13 và vận hành (`outbox`, `ops`)
 
@@ -739,7 +739,7 @@ Chi tiết thiết kế:
 
 **KPI.** `KpiPublisher` ghi EVT-08-14 trong giao dịch tạo ảnh chụp hoặc công bố báo cáo, khóa idempotent `snapshotId` hoặc `reportCode`; chỉ số phiếu hằng ngày do job 01:00 phát; không giao được quá 24 giờ thì ERR-08-113. Lược đồ có `kpiSchemaVersion`, đổi thì phát song song hai phiên bản 90 ngày; PH-16 lỡ sự kiện đọc lại qua API-08-122. Chỉ số vận hành đi qua Prometheus cho PH-13, không qua sự kiện.
 
-**Tham số, lưu giữ, kiểm toán.** `TenantSettingService` kiểm 40 khóa `08.*` theo miền và trần của PA (ERR-08-042), khóa lưu giữ không dưới sàn (ERR-08-043). `RetentionPurger` (ShedLock, đêm) dọn theo `dq_retention_policy`: lỗi 13 tháng, kết quả quy tắc 24 tháng, thống kê phút 90 ngày bằng `DETACH PARTITION` rồi `DROP` dưới vai `ph08_owner`; phiếu 5 năm sau đóng; ảnh chụp 5 năm; báo cáo công bố 10 năm. `PartitionMaintenanceJob` gọi `p_ensure_partitions` hằng ngày giữ ba tháng phân vùng chuẩn bị. `AuditWriter` ghi đồng bộ cùng giao dịch; không ghi được thì từ chối ERR-08-054. **So sánh liên tenant.** `BenchmarkService` chỉ cho PA, đọc điểm của tenant có `08.benchmark.opt-in`, trả trung vị và tứ phân vị, từ chối khi nhóm dưới `08.benchmark.min-group` (5, ERR-08-044), không nêu tên tenant (BR-08-030); dùng vai CSDL riêng đọc khung nhìn tổng hợp vì RLS cấm đọc chéo.
+**Tham số, lưu giữ, kiểm toán.** `TenantSettingService` kiểm 43 khóa `08.*` theo miền và trần của PA (ERR-08-042), khóa lưu giữ không dưới sàn (ERR-08-043). `RetentionPurger` (ShedLock, đêm) dọn theo `dq_retention_policy`: lỗi 13 tháng, kết quả quy tắc 24 tháng, thống kê phút 90 ngày bằng `DETACH PARTITION` rồi `DROP` dưới vai `ph08_owner`; phiếu 5 năm sau đóng; ảnh chụp 5 năm; báo cáo công bố 10 năm. `PartitionMaintenanceJob` gọi `p_ensure_partitions` hằng ngày giữ ba tháng phân vùng chuẩn bị. `AuditWriter` ghi đồng bộ cùng giao dịch; không ghi được thì từ chối ERR-08-054. **So sánh liên tenant.** `BenchmarkService` chỉ cho PA, đọc điểm của tenant có `08.benchmark.opt-in`, trả trung vị và tứ phân vị, từ chối khi nhóm dưới `08.benchmark.min-group` (5, ERR-08-044), không nêu tên tenant (BR-08-030); dùng vai CSDL riêng đọc khung nhìn tổng hợp vì RLS cấm đọc chéo.
 
 ### 4.16. Thuật toán
 
@@ -949,7 +949,7 @@ Kiểm tra quyền ở máy chủ, độc lập với giao diện: APISIX xác m
 
 | Kiểm soát | Hiện thực | SEC |
 |---|---|---|
-| Xác thực, ủy quyền | OIDC qua BFF cho người; `client_credentials` cho máy; scope `dq.check` (PH-04, PH-06) và `dq.read` (PH-16, HTTT); mTLS nội bộ (NFR-08-017) | SEC-21, 24, 26 |
+| Xác thực, ủy quyền | OIDC qua BFF cho người; `client_credentials` cho máy; scope `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT) và `dq.ingest` (PH-05, chỉ gọi API-08-024); mTLS nội bộ (NFR-08-017) | SEC-21, 24, 26 |
 | Tài khoản đọc dữ liệu đo | Vai `dq_reader` chỉ `SELECT` trên `v_dq_{domain}`; kết nối PH-05 chỉ đọc (Q359, ADR-067); `statement_timeout` 15 phút; cấm đọc `ph{nn}_*` (BR-08-005) | SEC-14, 31 |
 | Không lưu giá trị Nhạy cảm | `ValueMasker`, `ProfileValueGuard`, `ck_dq_finding_no_raw`, `ck_outbox_event_no_value`; log không in giá trị; quét CCCD, MST, SĐT mỗi bản phát hành (NFR-08-016) | SEC-31, 32, 34 |
 | Che theo PH-09 | Chế độ che không lỏng hơn phân loại; trường chưa phân loại coi là `SENSITIVE` | SEC-32 |
@@ -990,7 +990,7 @@ Mọi sự kiện EVT-08-01…14 ghi vào `outbox_event` cùng giao dịch với
 
 ### 8.3. Inbox và idempotency
 
-Sự kiện nhận khử trùng bằng `inbox_event` cùng giao dịch với tác động của nó. Yêu cầu ghi dùng `Idempotency-Key` hai tầng (ADR-041): bộ đệm Valkey 24 giờ và ràng buộc duy nhất ở CSDL (`idempotency_key` của lần đo, `issueCode` khi chuyển steward). Thao tác của bộ thực thi idempotent theo `(scan_task_id, rule_id)` và dấu vân tay nên chạy lại tác vụ không nhân đôi.
+Sự kiện nhận khử trùng bằng `inbox_event` cùng giao dịch với tác động của nó. Yêu cầu ghi dùng `Idempotency-Key` hai tầng (ADR-041): bộ đệm Valkey 24 giờ và ràng buộc duy nhất ở CSDL (`idempotency_key` của lần đo, `issueCode` khi chuyển steward); khóa lưu kèm băm thân yêu cầu, cùng khóa cùng thân trả lại phản hồi cũ, cùng khóa khác thân trả ERR-08-055 (409). Thao tác của bộ thực thi idempotent theo `(scan_task_id, rule_id)` và dấu vân tay nên chạy lại tác vụ không nhân đôi.
 
 ### 8.4. Thời gian chờ, thử lại, ngắt mạch
 
@@ -1014,13 +1014,13 @@ Bảng ghi chính sách cho từng phụ thuộc; mọi thử lại có trần v
 
 ### 8.5. Ánh xạ lỗi
 
-Lỗi trả theo RFC 9457 với `code`, `traceId`, `errors[]` (D03-04-PH08). Ngoại lệ miền (`DomainException`) mang đúng mã ERR-08-nnn của FRS; ngoại lệ hạ tầng được bắt ở ranh giới thành phần và đổi thành mã runtime: `TransientSourceException` hết lượt thành ERR-08-105, `RdmUnavailableException` thành ERR-08-108 (quy tắc `SKIPPED`), hết ngân sách trực tuyến thành ERR-08-103 hoặc ERR-08-104 theo `onDependencyFailure`, vượt trần lỗi thành cờ `TRUNCATED` với ERR-08-110, không ghi được kiểm toán thành ERR-08-054; xung đột phiên bản `If-Match` thành ERR-08-004 hoặc ERR-00-428, chuyển trạng thái sai thành ERR-08-006.
+Lỗi trả theo RFC 9457 với `code`, `traceId`, `errors[]` (D03-04-PH08). Ngoại lệ miền (`DomainException`) mang đúng mã ERR-08-nnn của FRS; ngoại lệ hạ tầng được bắt ở ranh giới thành phần và đổi thành mã runtime: `TransientSourceException` hết lượt thành ERR-08-105, `RdmUnavailableException` thành ERR-08-108 (quy tắc `SKIPPED`), hết ngân sách trực tuyến thành ERR-08-103 hoặc ERR-08-104 theo `onDependencyFailure`, vượt trần lỗi thành cờ `TRUNCATED` với ERR-08-110, không ghi được kiểm toán, hoặc dịch vụ phụ thuộc không khả dụng ở lệnh ghi, thành ERR-08-054 (503 chung); lô kiểm tra trực tuyến quá 100 bản ghi thành ERR-08-101; xung đột phiên bản `If-Match` thành ERR-08-004 hoặc ERR-00-428, chuyển trạng thái sai thành ERR-08-006; kỳ báo cáo không có lần đo thành công thành ERR-08-056, chưa có bộ quy tắc hoặc trọng số hiệu lực thành ERR-08-027.
 
 ## 9. Cấu hình và cờ tính năng theo tenant
 
 ### 9.1. Tham số theo tenant
 
-Bốn mươi khóa `08.*` của FRS §8.2 chỉnh được ở FR-08-058, kiểm miền và trần bởi `TenantSettingService`. Bảng dưới ghi những khóa mà thiết kế dựa vào, thành phần đọc chúng và cách áp dụng thay đổi.
+Bốn mươi ba khóa `08.*` của FRS §8.2 chỉnh được ở FR-08-058, kiểm miền và trần bởi `TenantSettingService`. Bảng dưới ghi những khóa mà thiết kế dựa vào, thành phần đọc chúng và cách áp dụng thay đổi.
 
 | Khóa | Mặc định | Thành phần đọc | Áp dụng thay đổi |
 |---|---|---|---|
@@ -1033,6 +1033,8 @@ Bốn mươi khóa `08.*` của FRS §8.2 chỉnh được ở FR-08-058, kiểm
 | `08.inline.default-mode`, `08.inline.on-dependency-failure` | `ADVISORY`, `FAIL_OPEN` | `InlineConfigService` | Đối tượng chưa đặt riêng |
 | `08.issue.sla-days`, `08.issue.auto-open-critical` | 5, 15, 30; 100 | `SlaClock`, `AutoOpenJob` | Phiếu mới, không đổi hạn phiếu cũ |
 | `08.finding.retention-months` | 13 | `RetentionPurger` | Đêm kế tiếp |
+| `08.scan.heartbeat-timeout-seconds`, `08.scan.task-max-attempts` | 180, 3 | `ScanWatchdog` | Ngay (đọc mỗi nhịp) |
+| `08.verify.wait-mdm-minutes`, `08.verify.wait-source-minutes` | 60, 0 | `VerifyScanTrigger` | Phiếu mới `FIXED` |
 
 : Tham số theo tenant mà thiết kế dựa vào
 
@@ -1042,7 +1044,7 @@ Có bốn cờ: `dq.inline.enabled` (tenant, tắt khẩn cấp: `checks:evaluat
 
 ## 10. Quan sát
 
-Chỉ số phát ra qua Micrometer sang Prometheus, tiền tố `dq_` theo NFR-08-005 và NFR-08-015 (nếu chuẩn chung đòi `datahub_` thì đổi đồng loạt, §13.6). Nhãn có bậc số lượng nhỏ; tuyệt đối không dùng khóa bản ghi, giá trị, tên người làm nhãn (SEC-32); nhãn `asset` chỉ có ở chỉ số điểm và lần đo.
+Chỉ số phát ra qua Micrometer sang Prometheus, tiền tố `dq_` theo NFR-08-005 và NFR-08-015 (nếu chuẩn chung đòi `datahub_` thì đổi đồng loạt). Nhãn có bậc số lượng nhỏ; tuyệt đối không dùng khóa bản ghi, giá trị, tên người làm nhãn (SEC-32); nhãn `asset` chỉ có ở chỉ số điểm và lần đo.
 
 | Nhóm | Chỉ số | Nhãn | Dùng cho |
 |---|---|---|---|
@@ -1086,7 +1088,7 @@ Mọi Deployment có `PodDisruptionBudget minAvailable: 1`, `topologySpreadConst
 
 ### 11.3. Dung lượng
 
-Bảng ghi các bảng tăng nhanh nhất của PH-08 với tenant `T01`, tính theo giả định của FRS.
+Các bảng tăng nhanh nhất với tenant `T01`, theo giả định của FRS.
 
 | Dữ liệu | Công thức giả định | Dung lượng |
 |---|---|---|
@@ -1097,15 +1099,15 @@ Bảng ghi các bảng tăng nhanh nhất của PH-08 với tenant `T01`, tính 
 
 : Dung lượng giả định của PH-08 cho tenant T01
 
-Tổng dữ liệu ở `pg-core` dưới 15 GB sau 13 tháng, nhỏ so với hạn mức 200 GB mỗi tenant của D03-10 §5.3. Truy vấn lỗi theo đối tượng và trạng thái dùng `ix_dq_finding_asset` nên đạt NFR-08-011 (≤ 1,5 giây p95 với 10 triệu dòng). Tải đo theo lô lên bản sao đọc bị giới hạn bằng cửa sổ giờ và `SourceThrottle`.
+Tổng dữ liệu ở `pg-core` dưới 15 GB sau 13 tháng, nhỏ so với hạn mức 200 GB mỗi tenant (D03-10 §5.3). Truy vấn lỗi theo đối tượng và trạng thái dùng `ix_dq_finding_asset` nên đạt NFR-08-011 (≤ 1,5 giây p95 với 10 triệu dòng). Tải đo theo lô lên bản sao đọc bị giới hạn bằng cửa sổ giờ và `SourceThrottle`.
 
 ### 11.4. Phục hồi sau sự cố và vận hành
 
-PH-08 không giữ trạng thái ngoài `pg-core`, Kafka và kho đối tượng, nên RPO ≤ 15 phút, RTO ≤ 30 phút đi theo hạ tầng (ADR-034). Sau chuyển site: Debezium phát lại outbox; `ScanWatchdog` thu hồi lần đo `RUNNING` và chạy lại từng tác vụ; lịch lỡ bù một lần.
+PH-08 không giữ trạng thái ngoài `pg-core`, Kafka và kho đối tượng, nên RPO ≤ 15 phút, RTO ≤ 30 phút theo hạ tầng (ADR-034). Sau chuyển site: Debezium phát lại outbox; `ScanWatchdog` thu hồi lần đo `RUNNING` và chạy lại từng tác vụ; lịch lỡ bù một lần.
 
 ## 12. Kiểm thử
 
-Chiến lược chia theo lớp; bảng dưới ghi nội dung và ví dụ ca của từng lớp, chi tiết ca nằm ở D05-02-PH08.
+Chiến lược chia theo lớp; chi tiết ca nằm ở D05-02-PH08.
 
 | Lớp | Nội dung | Ví dụ ca |
 |---|---|---|
@@ -1124,24 +1126,24 @@ Dữ liệu kiểm thử là dữ liệu sinh (SEC-38) ở tenant T90 đến T99
 
 ### 13.1. Lộ trình
 
-PH-08 thuộc đợt 3. Thứ tự hiện thực theo mức ưu tiên FR (M trước, S, C sau) và theo phụ thuộc: đo lô cần khung nhìn PH-06 và API PH-07, trực tuyến cần quy tắc đã duyệt.
+PH-08 thuộc đợt 3. Thứ tự theo mức ưu tiên FR (M, S, C) và phụ thuộc: đo lô cần khung nhìn PH-06 và API PH-07, trực tuyến cần quy tắc đã duyệt.
 
-| Mốc | Nội dung | FR chính |
-|---|---|---|
-| M1 · Lõi đo lô | `catalog`, `rule`, `compile` (SQL, regex), `scan`, `worker`, `rdm`, `score`, `finding`; đạt NFR-08-003, 007 | 001…003, 005…007, 012, 013, 016…018, 021…024, 026…031, 036…038 |
-| M2 · Vòng khép kín | `remediation`, `report`, `outbox`, bảng điều khiển, `ops`; KPI sang PH-16 | 041…045, 050…054, 058…060 |
-| M3 · Trực tuyến, nguồn HTTT | `inline`, Kamelet, cổng PH-06, nguồn qua PH-05, CEL; đạt NFR-08-001, 002, 005 | 004, 014, 032…035 |
-| M4 · Hoàn thiện | `profile`, tăng dần, cảnh báo, ngoại lệ, chuyển steward, ký số, so sánh liên tenant | 008…011, 015, 019, 020, 025, 039, 040, 046…049, 055…057, 061 |
+| Mốc | Nội dung |
+|---|---|
+| M1 · Lõi đo lô | `catalog`, `rule`, `compile` (SQL, regex), `scan`, `worker`, `rdm`, `score`, `finding`; đạt NFR-08-003, 007 |
+| M2 · Vòng khép kín | `remediation`, `report`, `outbox`, bảng điều khiển, `ops`; KPI sang PH-16 |
+| M3 · Trực tuyến, nguồn HTTT | `inline`, Kamelet, cổng PH-06, nguồn qua PH-05, CEL; đạt NFR-08-001, 002, 005 |
+| M4 · Hoàn thiện | `profile`, tăng dần, cảnh báo, ngoại lệ, chuyển steward, ký số, so sánh liên tenant |
 
 : Lộ trình hiện thực PH-08
 
 ### 13.2. Truy vết hệ cũ
 
-Hệ cũ (Viettel 2021) không có chức năng chất lượng dữ liệu; REQ-08 là năng lực mới. Truy vết gián tiếp theo FRS: LGC-DMDC-006, 007, 008 (kiểm tra khi nhập danh mục; PH-08 đo danh mục sau nhập qua `RDM_CATALOG`), LGC-BUS-027 (thống kê lỗi theo endpoint, tương ứng thống kê trực tuyến ở `inline`), LGC-NGSP-003, 005 (BHXH, ĐKKD làm nguồn đối chiếu, quy tắc `EQ_SOURCE`). Không có LGC nào do PH-08 làm chính.
+Hệ cũ không có chức năng chất lượng dữ liệu; REQ-08 là năng lực mới. Truy vết gián tiếp theo FRS: LGC-DMDC-006, 007, 008 (PH-08 đo danh mục sau nhập qua `RDM_CATALOG`), LGC-BUS-027 (tương ứng thống kê trực tuyến ở `inline`), LGC-NGSP-003, 005 (nguồn đối chiếu cho `EQ_SOURCE`). Không có LGC nào do PH-08 làm chính.
 
 ### 13.3. Ma trận thành phần với FR và rủi ro
 
-Ma trận ghi mỗi thành phần phủ FR nào, để kiểm đủ 61 FR của FRS đều có nơi hiện thực.
+Ma trận cho thấy mỗi thành phần phủ FR nào; đủ 61 FR đều có nơi hiện thực.
 
 | Thành phần | FR hiện thực chính | Bảng ghi |
 |---|---|---|
@@ -1161,7 +1163,7 @@ Ma trận ghi mỗi thành phần phủ FR nào, để kiểm đủ 61 FR của 
 
 : Ma trận thành phần với FR
 
-Năm rủi ro chính của thiết kế và cách giảm thiểu:
+Năm rủi ro chính và cách giảm thiểu:
 
 | Mã | Rủi ro | Giảm thiểu |
 |---|---|---|
@@ -1175,7 +1177,7 @@ Năm rủi ro chính của thiết kế và cách giảm thiểu:
 
 ### 13.4. Quyết định kiến trúc đề xuất
 
-Dải ADR 085 đến 089 dành cho PH-08 (D00-04 §3.1). Tập này tóm tắt ba quyết định chính; tệp ADR do luồng tài liệu chung lập khi FRS đề nghị (Phụ lục B).
+Dải ADR 085 đến 089 dành cho PH-08 (D00-04 §3.1); tập này tóm tắt ba quyết định chính, tệp ADR do luồng tài liệu chung lập.
 
 | Số đề xuất | Tiêu đề | Bối cảnh, quyết định, hệ quả (tóm tắt) |
 |---|---|---|
@@ -1188,49 +1190,42 @@ Dải ADR 085 đến 089 dành cho PH-08 (D00-04 §3.1). Tập này tóm tắt b
 
 ### 13.5. Câu hỏi mở
 
-> **Câu hỏi mở Q08-20:** Lịch đo do bộ lập lịch nội bộ có ShedLock điều khiển (thiết kế này) hay do PH-18 (Quartz); nếu PH-18 là bên kích hoạt chính thì nguồn chân lý của lịch nằm ở đâu để tránh lịch hai nơi.
+> **Đã chốt Q08-20:** FRS 0.2 ghi lịch do bộ lập lịch nội bộ dưới ShedLock, PH-18 chỉ kích hoạt thêm qua `POST /scans` (phụ thuộc mềm); nguồn chân lý của lịch là `dq_schedule`.
 
-> **Câu hỏi mở Q08-21:** Bộ thực thi mở kết nối trực tiếp tới CSDL HTTT bằng thông tin thuê từ PH-05 (thiết kế này) hay mọi truy vấn đi qua proxy hoặc `probe-jvm` của PH-05 để tập trung kiểm soát (ADR-067).
+Chín câu hỏi sau chưa có trả lời; thiết kế dùng phương án nêu ở mục tương ứng.
 
-> **Câu hỏi mở Q08-22:** Động cơ nào của `SOURCE_DATASET` được hỗ trợ ở giai đoạn đầu ngoài PostgreSQL (Oracle, SQL Server, MySQL), và mỗi động cơ cần `DialectAdapter` nào cho `REGEX`, hàm ngày, hàm băm lấy mẫu.
+| Mã | Câu hỏi |
+|---|---|
+| Q08-21 | Bộ thực thi mở kết nối trực tiếp tới CSDL HTTT bằng thông tin thuê từ PH-05 hay mọi truy vấn đi qua proxy hoặc `probe-jvm` của PH-05 (ADR-067) |
+| Q08-22 | Động cơ `SOURCE_DATASET` nào ngoài PostgreSQL được hỗ trợ đầu tiên, và `DialectAdapter` cho `REGEX`, hàm ngày, hàm băm lấy mẫu |
+| Q08-23 | `REGEX` RE2 dịch sang cú pháp động cơ nguồn khi đẩy xuống hay luôn đánh giá ở Java cho cùng nghĩa với trực tuyến |
+| Q08-24 | `cel-java` được chọn có giới hạn chi phí và ngắt giữa chừng không, hay dựa vào đồng hồ và giới hạn cấu trúc (§4.5) |
+| Q08-25 | Tái lập mẫu khi đổi động cơ nguồn: hàm băm lấy mẫu thống nhất hay chỉ "cùng seed cùng mẫu" trong một động cơ |
+| Q08-26 | Đổi khóa HMAC theo tenant: lưu số hiệu phiên bản khóa cạnh `fingerprint` hay chấp nhận một kỳ lỗi "mới" |
+| Q08-27 | Object Lock của Ceph RGW cho báo cáo công bố dùng chế độ tuân thủ hay quản trị; báo cáo `WITHDRAWN` có giữ nguyên bản không |
+| Q08-28 | Bộ thực thi có cần node pool `batch`, `ResourceQuota`, `PriorityClass` thấp hơn API trực tuyến khi chạy tám bản sao (D03-09) |
+| Q08-29 | p95 ≤ 50 ms (NFR-08-001) đo tại máy chủ (không tính APISIX) hay tại bên gọi; nếu tại bên gọi thì giảm số quy tắc tối đa mỗi đối tượng |
 
-> **Câu hỏi mở Q08-23:** Quy tắc `REGEX` viết theo RE2 được dịch sang cú pháp động cơ nguồn khi đẩy xuống, hay luôn đánh giá ở Java để cùng nghĩa với trực tuyến.
-
-> **Câu hỏi mở Q08-24:** Phiên bản `cel-java` chọn dùng có hỗ trợ giới hạn chi phí đánh giá và ngắt giữa chừng không, hay phải dựa vào đồng hồ và giới hạn cấu trúc như §4.5.
-
-> **Câu hỏi mở Q08-25:** Tái lập mẫu qua đổi động cơ nguồn: dùng hàm băm lấy mẫu thống nhất (đọc nhiều khóa hơn) hay chấp nhận "cùng seed cho cùng mẫu" chỉ trong một động cơ.
-
-> **Câu hỏi mở Q08-26:** Quy trình đổi khóa HMAC theo tenant: lưu số hiệu phiên bản khóa cạnh `fingerprint` và tính lại dần, hay chấp nhận một kỳ lỗi "mới" rồi tự đóng lỗi cũ.
-
-> **Câu hỏi mở Q08-27:** Ceph RGW Object Lock cho báo cáo công bố dùng chế độ tuân thủ (không xóa được trước hạn) hay quản trị; báo cáo `WITHDRAWN` có phải giữ nguyên bản không.
-
-> **Câu hỏi mở Q08-28:** Bộ thực thi có cần node pool `batch`, `ResourceQuota` và `PriorityClass` thấp hơn API trực tuyến nếu đo thấy tranh chấp CPU khi chạy tám bản sao (D03-09).
-
-> **Câu hỏi mở Q08-29:** Chỉ tiêu p95 ≤ 50 ms của NFR-08-001 đo tại máy chủ `checks:evaluate` (không tính APISIX) hay tại bên gọi; nếu ở bên gọi thì số quy tắc tối đa mỗi đối tượng trực tuyến phải giảm.
+: Câu hỏi mở của SDD PH-08
 
 ### 13.6. Đề nghị đồng bộ
 
-PH-08 không sửa trực tiếp tài liệu khác; bảng dưới ghi từng đề nghị kèm lý do để các tập khớp nhau.
+Các đề nghị của bản 0.1 về FRS và CSDL (HMAC, ví dụ 86,37, PH-18 phụ thuộc mềm, cột và bảng mới, `failFast`, `Idempotency-Key`) đã được FRS 0.2 và CSDL 0.2 hấp thụ (FRS chương 15, ĐN-SDD-01…12). Bảng dưới là phần dồn đợt đồng bộ cuối.
 
-| Tài liệu | Đề nghị | Lý do |
+| Tài liệu | Đề nghị | Mục SDD |
 |---|---|---|
-| FRS BR-08-013, FR-08-036 | Sửa `SHA-256(…)` thành `HMAC-SHA256` khóa theo tenant (OpenBao) | Khớp ADR 086 và DDL; SHA-256 trần của số CCCD dò ngược được |
-| FRS FR-08-028 ví dụ | Sửa 86,89 thành 86,37 (tính lại 91,2×0,20 + 88,0×0,20 + 79,5×0,15 + 72,0×0,10 + 96,0×0,15 + 85,0×0,20) | Số học |
-| FRS §2.4, FR-08-023 | Ghi "bộ lập lịch nội bộ dưới ShedLock, PH-18 kích hoạt thêm qua API" thay "nhận lịch từ PH-18" | PH-18 là phụ thuộc mềm; Q08-20 |
-| FRS NFR-08-015, §8.2 | Thêm các chỉ số §10 (hoặc ghi "danh sách tối thiểu"); thêm khóa `08.scan.heartbeat-timeout-seconds` (180), `08.scan.task-max-attempts` (3) | Hằng số thiết kế chưa có khóa |
-| D03-03-PH08 CSDL | (a) `dq_scan_task` thêm `heartbeat_at`, `not_before`; (b) `dq_rule_set_version` thêm `dry_run_content_hash`, `dry_run_at`; (c) bảng `dq_incremental_buffer` (tenant, đối tượng, cửa sổ, `keys text[]`) và `dq_score_current`; (d) duy nhất `(tenant_id, idempotency_key)` ở `dq_scan_job`; (e) duy nhất từng phần một cảnh báo chưa `RESOLVED` mỗi `(alert_rule, asset)`; (f) vai `dq_reader` và vai so sánh liên tenant | §4.4, 4.6, 4.10, 4.13, 4.15 |
-| D02-03-PH06, D03-02-PH06 | `QualityGatePort` và `StewardIntakeApi` ở `mdm::api` (đảo phụ thuộc); khung nhìn `v_dq_{domain}` ổn định theo hợp đồng; lý do hàng đợi `DQ_FINDING` | Tránh chu trình Modulith; Q08-08 |
-| D02-03-PH05, D03-02-PH05 | API thuê kết nối chỉ đọc có hạn cho `dq`; khám phá lược đồ; Kamelet `dh-dq-check` với tiêu đề `dh-dq-verdict`, `dh-dq-violations` | §4.2, 4.7; Q08-09, Q08-21 |
+| D02-03-PH06, D03-02-PH06 | `QualityGatePort` và `StewardIntakeApi` ở `mdm::api` (đảo phụ thuộc); khung nhìn `v_dq_{domain}` ổn định; lý do hàng đợi `DQ_FINDING` | §4.2, 4.12; Q08-08 |
+| D02-03-PH05, D03-02-PH05 | API thuê kết nối chỉ đọc có hạn cho `dq`; khám phá lược đồ; Kamelet `dh-dq-check` với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; scope `dq.ingest` | §4.2, 4.7; Q08-09, Q08-21 |
 | D03-02-PH07 | `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản PH-08 | §4.8 |
 | PH-09, PH-13 | PH-09: `ClassificationApi` p95 ≤ 100 ms, sự kiện đổi phân loại. PH-13: API lịch ngày làm việc và ngày lễ theo tenant cho `SlaClock`, tiêu thụ EVT-08-02…14 | §4.2, 4.12 |
 | D03-09, D03-10, D04-01 | D03-09: hàng `dh-data-dq-worker` (4 bản sao ở `QM-VUA`, tối đa 8), `ScaledObject` KEDA, bucket Ceph `dq-reports-official`. D03-10: ngoại lệ RLS duy nhất cho so sánh liên tenant. D04-01: năm quy tắc ArchUnit của `dq` (§3.2) | §11.1, 6, 3.2 |
-| D03-04-PH08 API | Tham số tùy chọn `failFast` cho `checks:evaluate`; `Idempotency-Key` bắt buộc cho `POST /scans` | §4.9, 4.6 |
-| D00-04 §2, §3.2 | Dòng PH-08: SDD 0.1; chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` | Sổ tra cứu |
+| D00-04 §2, §3.2 | Dòng PH-08: SDD 0.2; chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` | Sổ tra cứu |
 
-: Đề nghị đồng bộ
+: Đề nghị đồng bộ còn lại
 
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: module `dq` với 14 thành phần có khối đặc tả 10 mục, trình biên dịch SQL pushdown và CEL, điều phối đo phân mảnh với ShedLock, thuật toán chấm điểm, lấy mẫu có seed, dấu vân tay HMAC, năm sơ đồ trình tự, mô hình triển khai và dung lượng giả định, ma trận thành phần với FR, ADR đề xuất 085 đến 087, câu hỏi mở Q08-20…29, đề nghị đồng bộ |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2 và CSDL 0.2: 35 bảng, 43 tham số, 132 API (thêm API-08-129 tìm lỗi theo khóa, 130 và 131 bật, tắt đo tăng dần, 132 xem trước trọng số), ERR-08-055, ERR-08-056, scope `dq.ingest`, `value_mode`, mã phiếu và mã báo cáo, `scanTrigger` của `POST /scans`, `ADVISORY` trả `WARN` khi có vi phạm, lô tối đa 100 bản ghi, `VERIFY` do hệ thống tạo; Q08-20 đã chốt; §13.6 chỉ còn đề nghị dồn đợt cuối |

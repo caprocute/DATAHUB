@@ -28,7 +28,7 @@ Tính năng: TS-08-17 · Tra cứu, xem chi tiết và xuất bản ghi lỗi
     Khi `GET /findings/FD-0102`
     Và tắt `mdm-sim`, `GET /findings/FD-0102`
     Và `GET /findings/FD-9999`
-    Thì bước 1 `200`, `rule`, `history[]`, `lineage`, `suggestedOwnerOrgId`. Bước 2 vẫn `200` với dòng "Chưa lấy được nguồn gốc từ PH-06, thử lại sau.", không mã lỗi. Bước 3 `404` ERR-08-001 ("Không tìm thấy bản ghi lỗi FD-9999.").
+    Thì bước 1 `200`, `finding`, `history[]`, `goldenRecord` (khi có `PERM-06-read`). Bước 2 vẫn `200` với dòng "Chưa lấy được nguồn gốc từ PH-06, thử lại sau.", không mã lỗi. Bước 3 `404` ERR-08-001 ("Không tìm thấy bản ghi lỗi FD-9999.").
 
   @TC-08-090 @P1 @Dương @Bảo @mật
   Kịch bản: TC-08-090 Xuất có trường Nhạy cảm cần DO chấp thuận

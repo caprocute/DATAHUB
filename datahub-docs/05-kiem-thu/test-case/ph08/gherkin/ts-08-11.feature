@@ -7,7 +7,7 @@ Tính năng: TS-08-11 · Đo theo lô, đối chiếu danh mục PH-07 và ghi b
   Kịch bản: TC-08-056 Thực thi quy tắc theo lô trên mẫu F-SCORE
     # Truy vết: FR-08-026 · API-08-061, 064 · UI-08-12 · BR-08-004, 025
     Biết `mdm-citizen` với F-SCORE (bảng 2.4): 10.000 bản ghi, 6 quy tắc; lần đo `FULL`.
-    Khi `POST /scans` `{mode: FULL}` chờ `SUCCEEDED`
+    Khi `POST /scans` `{assetCode: mdm-citizen, scanMode: FULL}` chờ `SUCCEEDED`
     Và `GET /scans/{id}/rule-results`
     Và đọc nhật ký truy vấn của `mdm-sim`
     Thì `rule-results` khớp bảng 2.4: `R-CCCD-NN` pass 9.800, fail 200; `R-CCCD-RX` pass 9.500, fail 500; `R-NS-EQ` pass 4.000, fail 1.000; `R-CAPNHAT` pass 9.000, fail 1.000; `R-CCCD-UQ` pass 9.900, fail 100; `R-GT-RDM` pass 8.500, fail 1.500. Nhật ký nguồn chỉ có truy vấn tập hợp `SELECT count(*) FILTER (...)` và truy vấn khóa lỗi có `LIMIT`, không kéo toàn bộ bản ghi về PH-08.
@@ -16,7 +16,7 @@ Tính năng: TS-08-11 · Đo theo lô, đối chiếu danh mục PH-07 và ghi b
   Kịch bản: TC-08-057 Lấy mẫu tái lập theo seed
     # Truy vết: FR-08-026 · API-08-059, 064 · BR-08-019 · NFR-08-008
     Biết `src-hotich` F-HT 5.000 dòng.
-    Khi `POST /scans` `{mode: SAMPLE, sampleSize: 1000, sampleSeed: 7}` hai lần
+    Khi `POST /scans` `{assetCode: src-hotich, scanMode: SAMPLE, sampleSize: 1000, sampleSeed: 7}` hai lần
     Và so tập `recordKey` đã đo
     Và đổi `sampleSeed = 8`
     Thì hai lần cùng seed cho cùng tập khóa và cùng số đếm; lần đo ghi `sampleSeed` 64 bit; seed khác cho tập khác. Điểm lần đo mẫu không được dùng cho báo cáo năm (xem rep-annual-neg).
@@ -35,7 +35,7 @@ Tính năng: TS-08-11 · Đo theo lô, đối chiếu danh mục PH-07 và ghi b
   Kịch bản: TC-08-059 Đối chiếu danh mục PH-07 cho chiều hợp lệ
     # Truy vết: FR-08-027 · API-08-064 · BR-08-003 · NFR-08-006 · LGC-DMDC-006, 007, 008
     Biết `src-hotich` có cột `ma_dvhc`: 200 trên 5.000 mã không thuộc `DVHC` hiện hành, 30 mã là mã cũ đã chuyển (EVT-07-10); quy tắc `IN_RDM` `catalogCode = DVHC`.
-    Khi `POST /scans` `{mode: FULL}`
+    Khi `POST /scans` `{assetCode: mdm-citizen, scanMode: FULL}`
     Và `GET /scans/{id}/rule-results`
     Và kiểm giản đồ `ph08_dq` tìm bảng chứa mã danh mục
     Thì `failCount = 200`, `passCount = 4.800`; gợi ý mã mới cho 30 mã cũ; tra PH-07 theo lô 500 mã; không có bảng mã nào ở `ph08_dq` (BR-08-003). Đối tượng `rdm-dvhc` cũng được đo chất lượng sau mỗi lần phát hành danh mục.

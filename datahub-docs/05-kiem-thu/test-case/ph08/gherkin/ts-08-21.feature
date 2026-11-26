@@ -7,7 +7,7 @@ Tính năng: TS-08-21 · Báo đã sửa, đo lại kiểm chứng và xác nh�
   Kịch bản: TC-08-101 Báo đã sửa và đo kiểm chứng sạch
     # Truy vết: FR-08-044 · API-08-090, 086 · UI-08-16 · BR-08-014, 034 · NFR-08-014 · EVT-08-09
     Biết phiếu `IN_PROGRESS` 12 lỗi `R-CCCD-NN`; DO1 đã sửa nguồn; `08.verify.wait-mdm-minutes = 0` ở TEST.
-    Khi DO1 `POST /issues/{code}:mark-fixed` `{note: ≥ 20 ký tự}`
+    Khi DO1 `POST /issues/{code}:mark-fixed` `{fixNote: ≥ 20 ký tự}`
     Và chờ lần đo `VERIFY`
     Và `GET /issues/{code}`
     Thì bước 1 `202`, `verifyScanId`, phiếu `FIXED`. Lần `VERIFY` chỉ trên 12 khóa, sạch → phiếu `VERIFIED`, 12 lỗi `RESOLVED` (`CLEARED`), EVT: `issue.verified` (EVT-08-09). Tổng thời gian ≤ 5 phút với ≤ 10.000 khóa.

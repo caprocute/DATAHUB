@@ -60,4 +60,4 @@ Tính năng: TS-08-05 · Soạn bộ quy tắc và định nghĩa quy tắc theo
     Khi `GET /rules?dimension=VALIDITY&severity=MAJOR&execMode=BOTH&page=0&size=20`
     Và `GET /rules?templateOutdated=true`
     Và `GET /rules?dimension=KHAC`
-    Thì `200`, `items[]` có `ruleCode`, `assetCode`, `dimension`, `operator`, `severity`, `execMode`, `lastFailRate`, `templateRef`, kèm `facets`; bước 2 trả đúng 6 quy tắc dùng mẫu cũ. Bước 3 `422` ERR-08-045.
+    Thì `200`, `items[]` có `ruleCode`, `assetCode`, `dimension`, `operator`, `severity`, `execMode`, `templateCode`, kèm `facets`; bước 2 trả đúng 6 quy tắc dùng mẫu cũ. Bước 3 `422` ERR-08-045.

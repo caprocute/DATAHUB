@@ -7,9 +7,9 @@ Tính năng: TS-08-23 · Khai báo, phát và xử lý cảnh báo chất lượ
   Kịch bản: TC-08-108 Khai báo quy tắc cảnh báo
     # Truy vết: FR-08-047 · API-08-098, 099, 100 · UI-08-17 · PERM-08-rule-admin · ERR-08-037
     Biết T90; DS1.
-    Khi `POST /alert-rules` `{condition: SCORE_BELOW, threshold: 80, severity: HIGH, assetCode: mdm-citizen}`
+    Khi `POST /alert-rules` `{alertRuleCode: cb-diem-duoi-ngung, name: "Điểm dưới ngưỡng", conditionType: SCORE_BELOW, threshold: 80, severity: HIGH, assetCode: mdm-citizen}`
     Và `PUT /alert-rules/AR-01` đổi ngưỡng 75
-    Và `POST /alert-rules` `{condition: SCORE_BELOW, threshold: -5}`
+    Và `POST /alert-rules` `{alertRuleCode: cb-am, name: "Ngưỡng âm", conditionType: SCORE_BELOW, threshold: -5, severity: HIGH}`
     Và `GET /alert-rules`
     Thì bước 1 `201`, bước 2 `200`. Bước 3 `422` ERR-08-037. Bước 4 có quy tắc mặc định và quy tắc vừa tạo; tắt quy tắc mặc định thay vì xóa.
 
@@ -26,10 +26,10 @@ Tính năng: TS-08-23 · Khai báo, phát và xử lý cảnh báo chất lượ
 
   @TC-08-110 @P2 @Dương @Âm
   Kịch bản: TC-08-110 Xác nhận, tắt tiếng và giới hạn 7 ngày
-    # Truy vết: FR-08-049 · API-08-102, 103 · BR-08-029 · ERR-08-007, 006
+    # Truy vết: FR-08-049 · API-08-102, 103 · BR-08-029 · ERR-08-042, 006
     Biết cảnh báo `FIRING`; cảnh báo khác `RESOLVED`; DS1.
     Khi `POST /alerts/{id}:acknowledge`
-    Và `POST /alerts/{id}:silence` `{reason: ≥ 20 ký tự, until: +3 ngày}`
-    Và `:silence` `until: +10 ngày`
+    Và `POST /alerts/{id}:silence` `{reason: ≥ 20 ký tự, silencedUntil: +3 ngày}`
+    Và `:silence` `silencedUntil: +10 ngày`
     Và `:acknowledge` cảnh báo `RESOLVED`
-    Thì bước 1 `ACKNOWLEDGED`. Bước 2 `SILENCED`, không phát lại trong 3 ngày. Bước 3 `422` ERR-08-007 (thời hạn không quá 7 ngày). Bước 4 `409` ERR-08-006.
+    Thì bước 1 `ACKNOWLEDGED`. Bước 2 `SILENCED`, không phát lại trong 3 ngày. Bước 3 `422` ERR-08-042 (thời hạn không quá 7 ngày). Bước 4 `409` ERR-08-006.

@@ -118,14 +118,14 @@ P["02"] = ("Danh sách đối tượng đo", CR + " › Đối tượng đo", bo
 
 # ------------------------------------------------------------------ 03 Wizard
 fields = [
-    ("so_dinh_danh", "VARCHAR(12)", "SENSITIVE", "HASH", True, "Đã xác nhận ở PH-09", ""),
-    ("ho_ten", "VARCHAR(200)", "RESTRICTED", "PARTIAL", True, "Đã xác nhận ở PH-09", ""),
-    ("ngay_sinh", "DATE", "RESTRICTED", "PARTIAL", True, "Đã xác nhận ở PH-09", ""),
-    ("gioi_tinh", "VARCHAR(2)", "INTERNAL", "NONE", True, "Đã xác nhận ở PH-09", ""),
-    ("ma_dvhc_xa", "VARCHAR(5)", "INTERNAL", "NONE", True, "Đã xác nhận ở PH-09", ""),
-    ("so_dien_thoai_me", "VARCHAR(15)", "SENSITIVE", "HASH", True, "Chưa có phân loại", "warn"),
-    ("noi_sinh", "VARCHAR(500)", "INTERNAL", "NONE", False, "Đã xác nhận ở PH-09", ""),
-    ("ngay_cap_nhat", "TIMESTAMP", "INTERNAL", "NONE", False, "Đã xác nhận ở PH-09", ""),
+    ("so_dinh_danh", "VARCHAR(12)", "SENSITIVE", "HASH_ONLY", True, "Đã xác nhận ở PH-09", ""),
+    ("ho_ten", "VARCHAR(200)", "RESTRICTED", "MASKED", True, "Đã xác nhận ở PH-09", ""),
+    ("ngay_sinh", "DATE", "RESTRICTED", "MASKED", True, "Đã xác nhận ở PH-09", ""),
+    ("gioi_tinh", "VARCHAR(2)", "INTERNAL", "PLAIN", True, "Đã xác nhận ở PH-09", ""),
+    ("ma_dvhc_xa", "VARCHAR(5)", "INTERNAL", "PLAIN", True, "Đã xác nhận ở PH-09", ""),
+    ("so_dien_thoai_me", "VARCHAR(15)", "SENSITIVE", "HASH_ONLY", True, "Chưa có phân loại", "warn"),
+    ("noi_sinh", "VARCHAR(500)", "INTERNAL", "PLAIN", False, "Đã xác nhận ở PH-09", ""),
+    ("ngay_cap_nhat", "TIMESTAMP", "INTERNAL", "PLAIN", False, "Đã xác nhận ở PH-09", ""),
 ]
 frows = []
 for f in fields:

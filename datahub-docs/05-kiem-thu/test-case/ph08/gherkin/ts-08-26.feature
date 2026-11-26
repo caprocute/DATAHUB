@@ -4,14 +4,14 @@
 Tính năng: TS-08-26 · Xuất, ký số, phân phối báo cáo và đẩy chỉ số sang PH-16, PH-13
 
   @TC-08-120 @P2 @Dương
-  Kịch bản: TC-08-120 Xuất báo cáo PDF, XLSX và đối chiếu contentHash
+  Kịch bản: TC-08-120 Xuất báo cáo PDF, XLSX và đối chiếu contentSha256
     # Truy vết: FR-08-055 · API-08-116, 117 · UI-08-18 · BR-08-009 · NFR-08-012
     Biết báo cáo `PUBLISHED` 200 đối tượng; U-T90-DS1, U-T90-VW.
     Khi DS1 `POST /reports/{code}/exports` `{format: PDF}`
     Và `GET /reports/{code}/exports/{id}` đến `READY`
     Và `format = XLSX`
     Và `format = JSON`, băm nội dung
-    Thì `202` rồi `fileUrl`; PDF và XLSX mở được, số liệu trùng báo cáo; băm JSON bằng `contentHash`. VW tải được bản đã xuất của báo cáo `PUBLISHED`.
+    Thì `202` rồi `downloadUrl`; PDF và XLSX mở được, số liệu trùng báo cáo; băm JSON bằng `contentSha256`. VW tải được bản đã xuất của báo cáo `PUBLISHED`.
 
   @TC-08-121 @P2 @Dương @Âm
   Kịch bản: TC-08-121 Ký số báo cáo và ký thất bại
@@ -26,12 +26,12 @@ Tính năng: TS-08-26 · Xuất, ký số, phân phối báo cáo và đẩy ch�
   Kịch bản: TC-08-122 Đăng ký nhận báo cáo và phân phối qua PH-13
     # Truy vết: FR-08-056 · API-08-119, 120, 121 · UI-08-18 · EVT-08-11 · ERR-08-114 · ERR-08-032
     Biết báo cáo sắp công bố; DO1 (ORG-CA); `notif-sim`.
-    Khi DO1 `POST /report-subscriptions` `{scope: ORGANIZATION, orgId: ORG-CA, channel: IN_APP}`
-    Và DO1 đăng ký `orgId: ORG-TC`
+    Khi DO1 `POST /report-subscriptions` `{reportType: PERIODIC, recipientType: ORG, recipientRef: ORG-CA, format: PDF}`
+    Và DO1 đăng ký `recipientRef: ORG-TC`
     Và công bố báo cáo
     Và tắt `notif-sim`, công bố báo cáo khác
     Và DO1 `DELETE /report-subscriptions/{id}`
-    Thì bước 1 `201`. Bước 2 `403` ERR-08-032. Bước 3 `distribution[]` ghi đã gửi. Bước 4 biên bản "chưa gửi" ERR-08-114, thử lại. Bước 5 hủy được.
+    Thì bước 1 `201`. Bước 2 `403` ERR-08-032. Bước 3 nhật ký kiểm toán ghi đã gửi. Bước 4 biên bản "chưa gửi" ERR-08-114, thử lại. Bước 5 hủy được.
 
   @TC-08-123 @P2 @Dương @Âm
   Kịch bản: TC-08-123 Đẩy KPI sang PH-16, không giao trùng

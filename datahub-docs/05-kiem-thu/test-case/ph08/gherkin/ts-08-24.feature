@@ -29,7 +29,7 @@ Tính năng: TS-08-24 · Bảng điều khiển, thẻ điểm và so sánh liê
     Biết T90…T95 và T96 đặt `08.benchmark.opt-in = true` (6 tenant); U-PA; U-T90-TA.
     Khi PA `GET /platform/benchmarks`
     Và TA T90 `GET /platform/benchmarks`
-    Thì có `median`, `p25`, `p75`, `participants = 6`; không nêu tên tenant khác. Với TA có thêm `myPercentile`.
+    Thì có `median`, `p25`, `p75`, `groupSize = 6`, `minGroup`; không nêu tên tenant khác. Với TA có thêm `ownScore`.
 
   @TC-08-114 @P3 @Âm
   Kịch bản: TC-08-114 Nhóm nhỏ hơn 5 hoặc tenant chưa tham gia

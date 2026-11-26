@@ -10,7 +10,7 @@ Tính năng: TS-08-13 · Xử lý phụ thuộc không khả dụng khi đo
     Khi `POST /scans` cho `src-hotich`
     Và quan sát 3 lần thử
     Và bật lại `conn-sim`, `POST /scans/{id}:rerun`
-    Thì lần đo `FAILED` sau 3 lần thử, không có ảnh chụp, `dependencyIssues[]` ghi ERR-08-105; EVT: `scan.failed` (EVT-08-03); cảnh báo vận hành tới PH-13. Lần chạy lại `SUCCEEDED`.
+    Thì lần đo `FAILED` sau 3 lần thử, không có ảnh chụp, `errorCode = ERR-08-105`; EVT: `scan.failed` (EVT-08-03); cảnh báo vận hành tới PH-13. Lần chạy lại `SUCCEEDED`.
 
   @TC-08-072 @P1 @Biên
   Kịch bản: TC-08-072 Nguồn rớt giữa chừng và ngưỡng phủ 95 %

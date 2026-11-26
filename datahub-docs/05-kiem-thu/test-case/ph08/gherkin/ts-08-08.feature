@@ -9,7 +9,7 @@ Tính năng: TS-08-08 · So sánh phiên bản, sao chép, nhập và xuất b�
     Biết `RS-CITIZEN` v1 (6 quy tắc) và v2 (thêm 1, sửa 1, đổi `ruleCode` 1).
     Khi `GET /rule-sets/RS-CITIZEN/versions/2/diff?against=1`
     Và `GET /rule-sets/RS-CITIZEN/versions/99`
-    Thì bước 1 `changes[]` có `ADDED`, `MODIFIED`, `REMOVED` với `before`, `after`; quy tắc đổi `ruleCode` được cảnh báo "dấu vân tay lỗi cũ không nối tiếp"; `history[]` có người duyệt, thời điểm. Bước 2 `404` ERR-08-001.
+    Thì bước 1 danh sách thay đổi có `ADDED`, `MODIFIED`, `REMOVED` kèm giá trị trước và sau; quy tắc đổi `ruleCode` được cảnh báo "dấu vân tay lỗi cũ không nối tiếp"; `history[]` có người duyệt, thời điểm. Bước 2 `404` ERR-08-001.
 
   @TC-08-043 @P2 @Dương
   Kịch bản: TC-08-043 Sao chép bộ quy tắc sang đối tượng cùng lược đồ và khác lược đồ
@@ -19,7 +19,7 @@ Tính năng: TS-08-08 · So sánh phiên bản, sao chép, nhập và xuất b�
     Và `POST …:copy` `{targetAssetCode: mdm-org}`
     Và sao chép lần hai khi đích đã có nháp
     Và `GET /rule-sets/RS-CITIZEN/versions/2/export?format=YAML`
-    Thì bước 1 `201`, nháp mới, `rulesNeedingReview[]`. Bước 2 `422` ERR-08-026. Bước 3 `409` ERR-08-022. Bước 4 `200` tệp YAML.
+    Thì bước 1 `201`, nháp mới, quy tắc có trường vắng ở đích được liệt kê để rà soát. Bước 2 `422` ERR-08-026. Bước 3 `409` ERR-08-022. Bước 4 `200` tệp YAML.
 
   @TC-08-044 @P2 @Âm
   Kịch bản: TC-08-044 Nhập tệp sai lược đồ hoặc quá lớn

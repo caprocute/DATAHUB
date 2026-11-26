@@ -8,7 +8,7 @@ Tính năng: TS-08-09 · Cấu hình trọng số và ngưỡng có duyệt
     # Truy vết: FR-08-021 · API-08-047, 048, 050, 051 · UI-08-10 · BR-08-002 · PERM-08-approve
     Biết chưa có cấu hình T90 (dùng v0 mặc định 0,20/0,20/0,15/0,10/0,15/0,20; ngưỡng 80/70); DS1, DA1.
     Khi `GET /weight-configs`
-    Và DS1 `POST /weight-configs` `{scope: TENANT, weights: {COMPLETENESS: 0.25, ACCURACY: 0.20, CONSISTENCY: 0.15, TIMELINESS: 0.10, UNIQUENESS: 0.10, VALIDITY: 0.20}, passThreshold: 85, warnThreshold: 70}`
+    Và DS1 `POST /weight-configs` `{scope: TENANT, weights: {completeness: 0.25, accuracy: 0.20, consistency: 0.15, timeliness: 0.10, uniqueness: 0.10, validity: 0.20}, passMin: 85, warnMin: 70}`
     Và `:submit`
     Và DA1 `:approve`
     Thì bước 1 có v0. Bước 2 `201`, `status = DRAFT`. Bước 4 `ACTIVE`, v0 `SUPERSEDED`; mỗi phạm vi đúng một cấu hình `ACTIVE`; lần đo sau dùng `weightConfigId` mới. KT: có (weight.approve).
@@ -41,3 +41,14 @@ Tính năng: TS-08-09 · Cấu hình trọng số và ngưỡng có duyệt
     Và chạy lần đo S2 `POST /scans`
     Và `GET /scans/{S2}/score`
     Thì S1 giữ 91,45 và `weightConfigId` v0. S2 tính theo v1 (0,25/0,20/0,15/0,10/0,10/0,20): 98×0,25 + 95×0,20 + 80×0,15 + 90×0,10 + 99×0,10 + 85×0,20 = 91,40, `weightConfigId` v1, cờ `WEIGHTS_CHANGED` ở so kỳ S1 → S2.
+
+  @TC-08-153 @P2 @Dương @Âm
+  Kịch bản: TC-08-153 Xem trước điểm theo trọng số và ngưỡng mới
+    # Truy vết: FR-08-021 · API-08-132 · UI-08-10 · BR-08-002 · PERM-08-rule-admin · ERR-08-023, 024, 027
+    Biết miền `DAN_CU` có 3 đối tượng với ảnh chụp đầy đủ gần nhất (F-SCORE, F-ANNUAL); cấu hình hiện hành v0; đối tượng `rdm-dvhc` chưa có ảnh chụp nào; DS1.
+    Khi DS1 `POST /weight-configs:preview` `{scope: DOMAIN, domainCode: DAN_CU, weights: {completeness: 0.25, accuracy: 0.20, consistency: 0.15, timeliness: 0.10, uniqueness: 0.10, validity: 0.20}, passMin: 85, warnMin: 70}`
+    Và lặp bước 1 với tổng trọng số 1,05
+    Và lặp bước 1 với `passMin: 60`, `warnMin: 70`
+    Và lặp bước 1 với `{scope: ASSET, assetCode: rdm-dvhc}`
+    Và `GET /weight-configs`
+    Thì bước 1 `200`, `assetCount = 3`, `assets[]` mỗi đối tượng có `currentScore`, `projectedScore`, `currentVerdict`, `projectedVerdict`, `snapshotId`; `delta` bằng `projectedScore` trừ `currentScore`; `changedVerdictCount` đúng số đối tượng đổi kết luận. Bước 2 `422` ERR-08-023. Bước 3 `422` ERR-08-024. Bước 4 `422` ERR-08-027. Bước 5 không có cấu hình mới và điểm quá khứ không đổi (xem wc-no-retro): xem trước chỉ đọc, không ghi dữ liệu.

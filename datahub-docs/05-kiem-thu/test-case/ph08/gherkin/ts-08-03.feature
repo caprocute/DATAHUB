@@ -10,7 +10,7 @@ Tính năng: TS-08-03 · Tìm, xem, ngừng và khôi phục đối tượng đo
     Khi DS1 `GET /assets?domainCode=DAN_CU&verdict=PASS&sort=score,desc&page=0&size=10`
     Và DS1 `GET /assets/mdm-citizen`
     Và DO1 `GET /assets`
-    Thì bước 1 `200`, `items[]` có `score`, `verdict`, `trend`, `lastScanAt`, `openFindings{CRITICAL,MAJOR,MINOR}`, `cdeCoverage`, kèm `facets`. Bước 2 có `ETag`. Bước 3 chỉ các đối tượng của miền thuộc ORG-CA.
+    Thì bước 1 `200`, `items[]` có `lastScore`, `lastVerdict`, `status`, `domainCode`, kèm `facets`. Bước 2 có `ETag`. Bước 3 chỉ các đối tượng của miền thuộc ORG-CA.
 
   @TC-08-016 @P1 @Âm @Bảo @mật
   Kịch bản: TC-08-016 DO ngoài tổ chức, tham số sai và tenant khác
@@ -30,7 +30,7 @@ Tính năng: TS-08-03 · Tìm, xem, ngừng và khôi phục đối tượng đo
     Và `GET /scans?assetCode=mdm-citizen&status=CANCELLED`
     Và `POST /assets/mdm-citizen:resume`
     Và `POST /assets/rdm-dvhc:retire` (lý do ≥ 20 ký tự)
-    Thì bước 1 `200`, `status = SUSPENDED`, `cancelledScans[]` có lần đo `QUEUED`, lịch không bắn. Bước 3 `ACTIVE`, lịch tiếp tục. Bước 4 `RETIRED`; dữ liệu đo giữ theo chính sách lưu giữ (FR-08-059). KT: có (asset.suspend, asset.resume, asset.retire).
+    Thì bước 1 `200`, `status = SUSPENDED`, lần đo `QUEUED` của đối tượng chuyển `CANCELLED` (xem ở `GET /scans`), lịch không bắn. Bước 3 `ACTIVE`, lịch tiếp tục. Bước 4 `RETIRED`; dữ liệu đo giữ theo chính sách lưu giữ (FR-08-059). KT: có (asset.suspend, asset.resume, asset.retire).
 
   @TC-08-018 @P1 @Âm
   Kịch bản: TC-08-018 Ngừng thiếu lý do, đang đo hoặc sai trạng thái

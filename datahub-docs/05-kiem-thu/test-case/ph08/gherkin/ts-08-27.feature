@@ -8,7 +8,7 @@ Tính năng: TS-08-27 · Tham số tenant, lưu giữ dữ liệu đo và nhật
     # Truy vết: FR-08-058 · API-08-123, 124 · UI-08-19 · PERM-08-config
     Biết T90; U-T90-TA; U-T90-DS1.
     Khi TA `GET /settings`
-    Và TA `PUT /settings` `{08.scan.manual-per-hour: 20}` với `If-Match` đúng
+    Và TA `PUT /settings` `{values: {"08.scan.manual-per-hour": 20}}` với `If-Match` đúng
     Và `GET /settings`
     Thì bước 1 liệt kê 43 khóa với `default`, `max`, `updatedBy`. Bước 3 giá trị 20, `updatedBy = TA`. KT: có (setting.update) ghi giá trị trước và sau.
 
@@ -48,7 +48,7 @@ Tính năng: TS-08-27 · Tham số tenant, lưu giữ dữ liệu đo và nhật
     Và AU `GET /audit-events` xuất nhật ký
     Và DS1 `GET /audit-events`
     Và thử `UPDATE` và `DELETE` bản ghi kiểm toán bằng `dh_data_app`
-    Thì bước 1 mỗi bản ghi có người thao tác, `tenantId`, hành động, đối tượng, giá trị trước và sau, `traceId`, thời điểm; không chứa giá trị thuộc tính Nhạy cảm. Bước 2 có kiểm toán lượt xuất. Bước 3 `403` ERR-00-403. Bước 4 bị chặn (bất biến).
+    Thì bước 1 mỗi bản ghi (`AuditEvent`) có `actor`, `action`, `objectType`, `objectCode`, `outcome`, `detail` (giá trị trước và sau), `traceId`, `occurredAt`; không chứa giá trị thuộc tính Nhạy cảm. Bước 2 có kiểm toán lượt xuất. Bước 3 `403` ERR-00-403. Bước 4 bị chặn (bất biến).
 
   @TC-08-129 @P1 @Âm
   Kịch bản: TC-08-129 Không ghi được kiểm toán thì từ chối thao tác

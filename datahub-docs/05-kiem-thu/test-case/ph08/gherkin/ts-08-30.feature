@@ -11,7 +11,7 @@ Tính năng: TS-08-30 · Bản ghi lỗi: dấu vân tay, che giá trị và kh�
     Và đo với v6 trên cùng dữ liệu
     Và đo với v7 (quy tắc đổi `ruleCode`)
     Và `GET /findings/{id}`
-    Thì khóa ` 001099000001 ` và `001099000001` cho cùng dấu vân tay `SHA-256(T90, mdm-citizen, R-CCCD-NN, 001099000001)`. v5 → v6: cùng lỗi, `occurrences = 2`, `firstSeenScanId` giữ. v7: dấu vân tay mới, lỗi cũ `RESOLVED` lý do `RULE_RETIRED`, cảnh báo ở bản so sánh.
+    Thì khóa ` 001099000001 ` và `001099000001` cho cùng dấu vân tay `SHA-256(T90, mdm-citizen, R-CCCD-NN, 001099000001)`. v5 → v6: cùng lỗi, `seenCount = 2`, `firstScanId` giữ. v7: dấu vân tay mới, lỗi cũ `RESOLVED` lý do `RULE_RETIRED`, cảnh báo ở bản so sánh.
 
   @TC-08-138 @P1 @Dương @Biên
   Kịch bản: TC-08-138 Vòng đời lỗi mới, còn, hết, mở lại và phạm vi lấy mẫu
@@ -26,7 +26,7 @@ Tính năng: TS-08-30 · Bản ghi lỗi: dấu vân tay, che giá trị và kh�
   @TC-08-139 @P1 @Bảo @mật
   Kịch bản: TC-08-139 Che giá trị theo phân loại và leak scan
     # Truy vết: FR-08-036 · FR-08-005 · API-08-073 · BR-08-012 · NFR-08-016
-    Biết `nationalId` `SENSITIVE` (`HASH`), `fullName` và `phone` `RESTRICTED` (`PARTIAL`), `note` `PUBLIC` (`NONE`); canary `DH-CANARY-leak` đặt ở `nationalId`; CCCD giả dải `0010990xxxxx`.
+    Biết `nationalId` `SENSITIVE` (`HASH_ONLY`), `fullName` và `phone` `RESTRICTED` (`MASKED`), `note` `PUBLIC` (`PLAIN`); canary `DH-CANARY-leak` đặt ở `nationalId`; CCCD giả dải `0010990xxxxx`.
     Khi chạy hồ sơ, chạy thử, đo lô, mở phiếu, xuất lỗi, sinh báo cáo
     Và đọc `maskedValue` mỗi trường
     Và quét `ph08_dq`, log 5 phút, vết OTel, outbox, Kafka, tệp xuất, báo cáo tìm canary và mẫu CCCD, MST, SĐT dạng rõ
@@ -35,9 +35,9 @@ Tính năng: TS-08-30 · Bản ghi lỗi: dấu vân tay, che giá trị và kh�
   @TC-08-140 @P1 @Âm @Bảo @mật
   Kịch bản: TC-08-140 Cố hạ che, cố đọc giá trị gốc, phân loại chưa xác nhận
     # Truy vết: FR-08-036 · FR-08-005 · FR-08-038 · API-08-014, 015, 074 · BR-08-012 · ERR-08-047
-    Biết lỗi cũ của `fullName` che `PARTIAL`; PH-09 nâng `fullName` lên `SENSITIVE`; CDE `email` chưa xác nhận.
+    Biết lỗi cũ của `fullName` che `MASKED`; PH-09 nâng `fullName` lên `SENSITIVE`; CDE `email` chưa xác nhận.
     Khi `POST /assets/mdm-citizen/fields:sync-classification`
     Và đọc lại các lỗi cũ của `fullName`
     Và tìm API trả giá trị gốc (mọi `GET` ở `/findings`, `/profile-runs`, `/scans`)
     Và kích hoạt đối tượng có CDE `email` `PROPOSED`
-    Thì job nền che lại lỗi cũ thành `HASH`. Không API nào trả giá trị gốc; người có `PERM-09-unmask` đọc lại nguồn qua PH-09 (Q08-07). Trường chưa xác nhận che như `SENSITIVE` kèm cảnh báo ERR-08-047.
+    Thì job nền che lại lỗi cũ thành `HASH_ONLY`. Không API nào trả giá trị gốc; người có `PERM-09-unmask` đọc lại nguồn qua PH-09 (Q08-07). Trường chưa xác nhận che như `SENSITIVE` kèm cảnh báo ERR-08-047.

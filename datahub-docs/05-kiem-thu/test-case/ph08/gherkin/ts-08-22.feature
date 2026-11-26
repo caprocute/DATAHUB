@@ -7,7 +7,7 @@ Tính năng: TS-08-22 · Từ chối, chuyển, leo thang phiếu và chuyển l
   Kịch bản: TC-08-105 Từ chối, chuyển, hủy phiếu
     # Truy vết: FR-08-045 · API-08-092, 093, 096 · UI-08-15, 16 · EVT-08-08 · ERR-08-007, 006
     Biết phiếu `ASSIGNED` cho ORG-CA (đúng ra thuộc ORG-TC); DO1, DS1.
-    Khi DO1 `POST /issues/{code}:reject` `{type: WRONG_OWNER}` lý do 10 ký tự
+    Khi DO1 `POST /issues/{code}:reject` `{rejectType: WRONG_OWNER}` lý do 10 ký tự
     Và DO1 `:reject` lý do 30 ký tự
     Và DS1 `:transfer` sang ORG-TC
     Và DS1 `:cancel` một phiếu khác `OPEN` lý do đủ dài
@@ -31,4 +31,4 @@ Tính năng: TS-08-22 · Từ chối, chuyển, leo thang phiếu và chuyển l
     Và cùng lệnh với lỗi `goldenId` đã có mục mở
     Và cùng lệnh với lỗi `src-hotich`
     Và tắt `mdm-sim`, lặp bước 1
-    Thì bước 1 `200`, `stewardItemIds[]`, mục PH-06 lý do `DQ_FINDING`. Bước 2 gắn thêm lý do, không tạo trùng. Bước 3 `422` ERR-08-051. Bước 4 `503` ERR-08-105. PH-08 không sửa bản ghi vàng.
+    Thì bước 1 `200`, `stewardItemRef`, mục PH-06 lý do `DQ_FINDING`. Bước 2 gắn thêm lý do, không tạo trùng. Bước 3 `422` ERR-08-051. Bước 4 `503` ERR-08-105. PH-08 không sửa bản ghi vàng.

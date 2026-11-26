@@ -7,17 +7,17 @@ Tính năng: TS-08-18 · Ngoại lệ chấp nhận có hạn và có duyệt
   Kịch bản: TC-08-092 Đề nghị, duyệt và hết hạn ngoại lệ
     # Truy vết: FR-08-040 · API-08-079, 080, 081 · UI-08-14 · BR-08-021 · EVT-08-10 · PERM-08-approve
     Biết 3 lỗi `OPEN` của `mdm-citizen`; DS1, DA1; `clock-sim`.
-    Khi DS1 `POST /waivers` `{scope: FINDINGS, findingIds: [3 lỗi], reason: ≥ 50 ký tự, validUntil: +90 ngày}`
+    Khi DS1 `POST /waivers` `{scope: FINDINGS, findingIds: [3 lỗi], reason: ≥ 50 ký tự, validTo: +90 ngày}`
     Và DA1 `POST /waivers/{id}:approve`
     Và chạy lần đo kế tiếp
-    Và đẩy `clock-sim` qua `validUntil`, chạy job hằng ngày
+    Và đẩy `clock-sim` qua `validTo`, chạy job hằng ngày
     Thì bước 1 `PENDING_APPROVAL`. Bước 2 `ACTIVE`, lỗi `WAIVED`, EVT: `waiver.approved` (EVT-08-10). Bước 3 lỗi `WAIVED` không vào mẫu số, đếm riêng. Bước 4 `EXPIRED`, lỗi về `OPEN` và tính lại ở lần đo sau. KT: có (waiver.approve).
 
   @TC-08-093 @P1 @Âm
   Kịch bản: TC-08-093 Hạn quá trần, phạm vi rỗng, lý do ngắn, tự duyệt
     # Truy vết: FR-08-040 · API-08-079, 081 · BR-08-007, 021 · ERR-08-033, 007
     Biết `08.waiver.max-days = 180`; DS1, DA1.
-    Khi DS1 `POST /waivers` `validUntil` +200 ngày
+    Khi DS1 `POST /waivers` `validTo` +200 ngày
     Và `POST /waivers` `findingIds = []`
     Và `POST /waivers` lý do 30 ký tự
     Và DS1 `POST /waivers/{id}:approve` ngoại lệ do mình đề nghị

@@ -10,7 +10,7 @@ Tính năng: TS-08-12 · Tính điểm có trọng số, so kỳ trước và xu
     Khi chạy lần đo `FULL` của `mdm-citizen`
     Và `GET /scans/{id}/score`
     Và UT tính điểm với ví dụ của FRS (91,2; 88,0; 79,5; 72,0; 96,0; 85,0)
-    Thì điểm chiều 98,00 (COMPLETENESS), 95,00 (ACCURACY), 80,00 (CONSISTENCY), 90,00 (TIMELINESS), 99,00 (UNIQUENESS), 85,00 (VALIDITY). Điểm tổng = 98×0,20 + 95×0,20 + 80×0,15 + 90×0,10 + 99×0,15 + 85×0,20 = 91,45; `verdict = PASS`; không cờ. Ảnh chụp ghi `ruleSetVersion`, `weightConfigId`, `passCount`, `failCount`, `skippedCount`, `waivedCount` từng chiều. EVT: `scan.completed` kèm `score = 91.45`. Ví dụ thứ hai của FRS cho 86,365, làm tròn nửa lên 86,37, `PASS` với ngưỡng 80.
+    Thì điểm chiều 98,00 (COMPLETENESS), 95,00 (ACCURACY), 80,00 (CONSISTENCY), 90,00 (TIMELINESS), 99,00 (UNIQUENESS), 85,00 (VALIDITY). Điểm tổng = 98×0,20 + 95×0,20 + 80×0,15 + 90×0,10 + 99×0,15 + 85×0,20 = 91,45; `verdict = PASS`; không cờ. Ảnh chụp ghi `ruleSetVersionId`, `weightConfigId`; từng chiều ghi `rulesPassed`, `rulesFailed`, `rulesSkipped`. EVT: `scan.completed` kèm `score = 91.45`. Ví dụ thứ hai của FRS cho 86,365, làm tròn nửa lên 86,37, `PASS` với ngưỡng 80.
 
   @TC-08-063 @P1 @Dương @Biên
   Kịch bản: TC-08-063 Chiều bị bỏ qua và cờ INCOMPLETE_DIMENSIONS
@@ -63,7 +63,7 @@ Tính năng: TS-08-12 · Tính điểm có trọng số, so kỳ trước và xu
     Và đo tháng 3
     Và đo tháng 4
     Và `GET /assets/src-hotich/score-history`
-    Thì tháng 1 `trend = BASELINE`. Tháng 2 Δ = −6,45 → `DEGRADED`, EVT: `score.degraded` (EVT-08-04) vì giảm ≥ 5,0. Tháng 3 Δ = +0,75 → `STABLE`. Tháng 4 Δ = +1,55 → `IMPROVED`. Mỗi ảnh chụp có `findingsNew`, `findingsPersisting`, `findingsResolved`; `series[]` đủ bốn điểm.
+    Thì tháng 1 `trend = BASELINE`. Tháng 2 Δ = −6,45 → `DEGRADED`, EVT: `score.degraded` (EVT-08-04) vì giảm ≥ 5,0. Tháng 3 Δ = +0,75 → `STABLE`. Tháng 4 Δ = +1,55 → `IMPROVED`. `series[]` đủ bốn điểm, mỗi điểm có `score`, `trend`.
 
   @TC-08-069 @P2 @Dương
   Kịch bản: TC-08-069 Khác cấu hình trọng số, khác phiên bản quy tắc

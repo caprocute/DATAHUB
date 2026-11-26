@@ -9,7 +9,7 @@ Tính năng: TS-08-20 · Nhận, xử lý và cập nhật tiến độ phiếu 
     Biết phiếu `DQ-2026-000001` `ASSIGNED` cho ORG-CA; DO1.
     Khi DO1 `GET /issues?scope=MINE`
     Và `POST /issues/DQ-2026-000001:start`
-    Và `POST /issues/DQ-2026-000001/activities` `{type: COMMENT, body: "@DS1 đã sửa 8/12"}` kèm tệp 1 MB
+    Và `POST /issues/DQ-2026-000001/activities` `{activityType: COMMENT, comment: "@DS1 đã sửa 8/12"}` kèm tệp 1 MB
     Và `GET /issues/DQ-2026-000001/activities`
     Thì `IN_PROGRESS`; hoạt động `COMMENT`, `ATTACHMENT` có dòng thời gian; nhắc `@DS1` gửi thông báo riêng; EVT: `issue.status-changed` (EVT-08-08) khi đổi trạng thái.
 
