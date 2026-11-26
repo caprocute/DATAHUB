@@ -1,0 +1,80 @@
+name: datahub-docs-dac-ta
+
+# Cổng "đặc tả máy đọc chạy được" cho bộ tài liệu SDLC (bước 2 của quy trình phát triển bằng AI):
+#   1. OpenAPI 3.1 / AsyncAPI 3.0 trong 03-thiet-ke/api/ hợp lệ (Spectral, chỉ đỏ với mức error).
+#   2. DDL, kiểm thử cô lập, bản Liquibase trong 03-thiet-ke/csdl/ chạy thật trên PostgreSQL 16,
+#      từng phân hệ trên CSDL rỗng rồi mọi phân hệ chung một CSDL.
+#   3. Tệp Gherkin trong 05-kiem-thu/test-case/*/gherkin/ đúng cú pháp, mỗi kịch bản một thẻ @TC/@UAT.
+# Chạy tại máy: xem đầu mỗi công cụ trong datahub-docs/build/tools/.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'datahub-docs/03-thiet-ke/api/**'
+      - 'datahub-docs/03-thiet-ke/csdl/**'
+      - 'datahub-docs/05-kiem-thu/test-case/**'
+      - 'datahub-docs/build/tools/**'
+      - '.github/workflows/datahub-docs-dac-ta.yml'
+  pull_request:
+    paths:
+      - 'datahub-docs/03-thiet-ke/api/**'
+      - 'datahub-docs/03-thiet-ke/csdl/**'
+      - 'datahub-docs/05-kiem-thu/test-case/**'
+      - 'datahub-docs/build/tools/**'
+      - '.github/workflows/datahub-docs-dac-ta.yml'
+
+jobs:
+  openapi:
+    name: OpenAPI / AsyncAPI hợp lệ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Spectral
+        working-directory: datahub-docs
+        run: |
+          npx --yes @stoplight/spectral-cli@6.17.1 lint \
+            -r build/tools/spectral.yaml '03-thiet-ke/api/**/*.yaml' \
+            --fail-severity=error --fail-on-unmatched-globs -D -f github-actions
+
+  ddl:
+    name: DDL chạy trên PostgreSQL 16
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Chạy DDL, kiểm thử cô lập, Liquibase
+        run: python3 datahub-docs/build/tools/chay_ddl.py
+
+  gherkin:
+    name: Gherkin đúng cú pháp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Phân tích mọi tệp .feature
+        run: |
+          mkdir -p /tmp/gk && cd /tmp/gk && npm init -y >/dev/null
+          npm i --no-audit --no-fund @cucumber/gherkin@31.0.0 @cucumber/messages@26.0.1
+          cp "$GITHUB_WORKSPACE/datahub-docs/build/tools/kiem_tra_gherkin.mjs" /tmp/gk/
+          DATAHUB_DOCS="$GITHUB_WORKSPACE/datahub-docs" node /tmp/gk/kiem_tra_gherkin.mjs

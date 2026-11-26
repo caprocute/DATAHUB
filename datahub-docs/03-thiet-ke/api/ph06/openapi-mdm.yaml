@@ -1155,7 +1155,7 @@ paths:
                   validator: CCCD_12
                   pattern: ^[0-9]{12}$
                   values:
-                  - 079090001234
+                  - '079090001234'
       responses:
         '200':
           description: Thành công.
@@ -4644,7 +4644,7 @@ paths:
               vi-du:
                 value:
                   attribute: phone
-                  value: 0901234567
+                  value: '0901234567'
                   reason: Công dân xuất trình giấy xác nhận số điện thoại mới.
                   evidenceRef: BB-2026-114
                   validUntil: '2026-11-20T08:00:00+07:00'
@@ -5660,7 +5660,7 @@ paths:
                 value:
                   goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                   identifierType: CCCD_12
-                  value: 079090001234
+                  value: '079090001234'
                   fields:
                   - fullName
       responses:
@@ -7080,7 +7080,7 @@ paths:
               vi-du:
                 value:
                   requestType: ACCESS
-                  subjectIdentifier: 079090001234
+                  subjectIdentifier: '079090001234'
                   verificationRef: XM-2026-0456
                   details: Yêu cầu xem dữ liệu cá nhân.
                   channel: COUNTER

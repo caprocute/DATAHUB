@@ -87,6 +87,6 @@ COMMENT ON PROCEDURE ph15_portal.p_ensure_month_partitions(regclass, date, integ
 --changeset ph15:ph15-0016-fn-unaccent splitStatements:false
 CREATE OR REPLACE FUNCTION ph15_portal.f_unaccent(p_text text) RETURNS text
   LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT AS
-$f$ SELECT ph15_portal.unaccent('ph15_portal.unaccent'::regdictionary, p_text) $f$;
+$f$ SELECT public.unaccent('public.unaccent'::regdictionary, p_text) $f$;
 COMMENT ON FUNCTION ph15_portal.f_unaccent(text) IS 'Bỏ dấu tiếng Việt, đánh dấu IMMUTABLE để dùng được trong trigger tsvector và chỉ mục (dự phòng PG FTS, tham số 15.search.engine).';
 --rollback DROP FUNCTION IF EXISTS ph15_portal.f_unaccent(text);

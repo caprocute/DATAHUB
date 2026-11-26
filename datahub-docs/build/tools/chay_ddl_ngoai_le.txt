@@ -1,0 +1,3 @@
+# Bước DDL hỏng đã biết, chưa sửa (mỗi dòng: phNN<TAB>bước; bước = ddl | test | migrate | liquibase | chung).
+# Mỗi dòng phải có mục tương ứng trong datahub-docs-docx/CHUNG/DE-NGHI-DONG-BO.md. Chỉ được THU HẸP tệp này.
+# 26/11/2026: rỗng, mọi phân hệ đã merge chạy được.

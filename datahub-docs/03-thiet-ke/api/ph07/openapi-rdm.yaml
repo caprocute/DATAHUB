@@ -3203,9 +3203,6 @@ paths:
             examples:
               thay: { $ref: '#/components/examples/AccessGrantPutExample' }
             schema: { $ref: '#/components/schemas/AccessGrantPut' }
-            example:
-              grants:
-                - { memberSystemId: "01933b6e-6c1a-7d2e-9a10-2f5c3e8b9a01", scopes: ["rdm.read", "rdm.query"], expiresAt: "2027-12-31T17:00:00Z" }
       responses:
         '200':
           description: Danh sách mới.
@@ -4083,7 +4080,6 @@ components:
           minLength: 10
           maxLength: 1000
           description: Bắt buộc khi `effectiveFrom` trước hôm nay (chỉ phiên bản `origin` SYNC, MIGRATION; BR-07-027).
-        retroactiveReason: { type: string, maxLength: 1000 }
     ValidationReport:
       type: object
       required: [valid, errorCount, warningCount]
