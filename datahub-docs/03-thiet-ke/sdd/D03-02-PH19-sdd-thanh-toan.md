@@ -510,7 +510,7 @@ sequenceDiagram
   alt SUCCEEDED
     C->>M: CREATED→PENDING (tx2) + outbox EVT-19-06
   else FAILED
-    C->>M: CREATED→FAILED (tx2) + outbox EVT-19-08; Q.release
+    C->>M: CREATED→FAILED (tx2) + outbox EVT-19-08, Q.release
   else UNKNOWN hoặc transportOk=false
     C->>M: giữ CREATED, init_uncertain=true (tx2)
   end
