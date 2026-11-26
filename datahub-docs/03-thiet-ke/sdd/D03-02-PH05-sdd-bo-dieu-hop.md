@@ -120,7 +120,7 @@ Hai module `flow` và `adapter` nằm cùng `dh-integration` nên gọi nhau tro
 
 | Hiện trạng repo | Thiết kế | Khoảng cách |
 |---|---|---|
-| `apps/adapter-mgr` (Spring Boot riêng, bảng `ph05.adapter` 5 cột, chỉ loại `HTTP_MOCK`, lưu `vault_path`) | Module `adapter` trong `dh-integration`, schema `ph05_adapter` 22 bảng | GAP-05-01: gộp vào `dh-integration`, xóa `apps/adapter-mgr` sau khi chuyển dữ liệu (changeset di trú ở D03-03-PH05 §8) |
+| `apps/adapter-mgr` (Spring Boot riêng, bảng `ph05.adapter` 5 cột, chỉ loại `HTTP_MOCK`, lưu `vault_path`) | Module `adapter` trong `dh-integration`, schema `ph05_adapter` 23 bảng | GAP-05-01: gộp vào `dh-integration`, xóa `apps/adapter-mgr` sau khi chuyển dữ liệu (changeset di trú ở D03-03-PH05 §8) |
 | Route `/api/v1/adapters` không quyền, không tenant | `/api/adapter/v1/*`, `PERM-05-*`, RLS | GAP-05-02 |
 | `camel/dancu` datasource dùng chung tài khoản `lgsp` | `dh-sql-ro-source` với tài khoản động | GAP-05-03 (trùng GAP-04-10, xử lý ở PH-05) |
 | Không có kiểm tra kết nối, sức khỏe | `ProbeWorker`, `HealthEvaluator` | GAP-05-04 |
@@ -428,7 +428,7 @@ Nhật ký truy cập (FR-05-027): `DbAccessRecorder` trong Kamelet SQL tính `S
 |---|---|---|---|---|
 | `dh-http-sink` | sink, action | core-native | `connection`, `method`, `path`, `query`, `timeoutMs`, `pagination`, `rateLimit` | `http.AuthApplier`, `Paginator`, `RateLimitGovernor` |
 | `dh-http-source` | source | core-native | `connection` (webhook nhận qua PH-03) | |
-| `dh-soap-sink` | action | soap-jvm | `connection`, `wsdlRef`, `operation`, `faultMapping` | `soap.*` |
+| `dh-soap-sink` | sink (trả phản hồi đồng bộ) | soap-jvm | `connection`, `wsdlRef`, `operation`, `faultMapping` | `soap.*` |
 | `dh-sql-ro-source` | source | core-native, legacy-jvm | `connection`, `statement`, `schedule`, `pagingKey`, `maxRows` | `sql.*` |
 | `dh-sql-ro-action` | action | core-native, legacy-jvm | `connection`, `statement`, `maxRows` | `sql.*` |
 | `dh-sql-write-sink` | sink | core-native, legacy-jvm | `connection`, `statement` | `sql.*` |
