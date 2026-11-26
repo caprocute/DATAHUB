@@ -26,7 +26,7 @@ Tính năng: TS-09-19 · Áp che bản tin cho luồng PH-04
     # Mục đích: Chứng minh lỗi data plane phân biệt rõ nguồn.
     Biết T90; `PD-HGD` ở `SUSPENDED`; S-T90-APPLY-04.
     Khi gửi thân thiếu `channel`.
-    Và gửi bản tin 2 MB (giới hạn giả định `09.apply.max-bytes`, Q09-40).
+    Và gửi bản tin 2 MB (vượt giới hạn 1 MiB của ERR-09-107).
     Và gửi bản tin có trường giả danh theo `PD-HGD`.
     Thì bước 1 `400` ERR-09-106. Bước 2 `413` ERR-09-107. Bước 3 `422` ERR-09-109, không bản tin nào trả giá trị rõ.
 

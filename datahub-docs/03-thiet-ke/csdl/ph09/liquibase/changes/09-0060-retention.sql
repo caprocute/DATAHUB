@@ -66,7 +66,7 @@ CREATE UNIQUE INDEX uq_retention_schedule_line ON ph09_privacy.retention_schedul
 CREATE TRIGGER tg_retention_schedule_line_touch BEFORE UPDATE ON ph09_privacy.retention_schedule_line FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
 CREATE TRIGGER tg_retention_schedule_line_child_frozen BEFORE INSERT OR UPDATE OR DELETE ON ph09_privacy.retention_schedule_line FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_child_frozen('retention_schedule', 'schedule_id');
 CALL ph09_privacy.p_enable_rls('ph09_privacy.retention_schedule_line');
-COMMENT ON TABLE ph09_privacy.retention_schedule_line IS 'EN-09-36 Dòng lịch lưu giữ (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.';
+COMMENT ON TABLE ph09_privacy.retention_schedule_line IS 'EN-09-53 Dòng lịch lưu giữ, bảng con của RetentionSchedule (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.';
 --rollback DROP TABLE IF EXISTS ph09_privacy.retention_schedule_line CASCADE;
 
 --changeset ph09:ph09-0480-retention-task

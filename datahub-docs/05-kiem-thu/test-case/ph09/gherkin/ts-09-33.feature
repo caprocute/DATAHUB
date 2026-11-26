@@ -26,18 +26,19 @@ Tính năng: TS-09-33 · Vi phạm dữ liệu cá nhân và đồng hồ 72 gi�
 
   @TC-09-114 @P1 @Dương @Biên
   Kịch bản: TC-09-114 Cảnh báo ở 24, 48, 60 giờ, thông báo A05 trước 72 giờ
-    # Truy vết: FR-09-059 · API-09-207, 208, 209 · EVT-09-31, 32 · NFR-09-017 · BR-09-054, 055
+    # Truy vết: FR-09-059 · API-09-207, 208, 209, 239 · EVT-09-31, 32 · NFR-09-017 · BR-09-054, 055
     # Mục đích: Chứng minh cảnh báo đúng mốc (±1 phút) và có bằng chứng thông báo trước 72 giờ.
     Biết T95 đồng hồ giả; BR-01 `detectedAt` = T0; `09.breach.alert-hours = 24, 48, 60`.
     Khi tiến đồng hồ đến T0+24 giờ, +48 giờ, +60 giờ.
-    Và Ở T0+70 giờ SO soạn thông báo A05, `:mark-sent`.
+    Và Ở T0+70 giờ SO soạn thông báo A05, `:mark-sent`; `GET /breaches/{id}/notifications` (API-09-239).
     Và thử tạm dừng hoặc đặt lại đồng hồ.
-    Thì bước 1 EVT: `breach.deadline-near` đúng ở ba mốc cho SO, TA, DA, sai số ≤ 1 phút. Bước 2 `SENT`, EVT: `breach.notified`, `BreachStatus = NOTIFIED`. Bước 3 không có đường tạm dừng hay đặt lại; hành vi sau `NOTIFIED` chờ chốt ở ĐN-TC-02.
+    Thì bước 1 EVT: `breach.deadline-near` đúng ở ba mốc cho SO, TA, DA, sai số ≤ 1 phút. Bước 2 `SENT`, EVT: `breach.notified`, `BreachStatus = NOTIFIED`. Bước 3 không có đường tạm dừng hay đặt lại; đồng hồ chỉ dừng khi thông báo A05 đã `SENT` (BR-09-054). Bước 2 danh sách thông báo có bản A05 `SENT`.
 
   @TC-09-115 @P2 @Dương
   Kịch bản: TC-09-115 Khắc phục, bài học, đóng hồ sơ, tải hồ sơ
-    # Truy vết: FR-09-060 · API-09-211, 212, 213, 214 · UI-09-19
+    # Truy vết: FR-09-060 · API-09-211, 212, 213, 214, 240 · UI-09-19
     # Mục đích: Chứng minh hồ sơ có biện pháp, bài học và đóng đúng trạng thái.
     Biết T90; vụ việc `NOTIFIED`; U-T90-SO.
     Khi SO ghi biện pháp khắc phục và bài học; `:close`; `GET .../dossier`.
-    Thì `CLOSED`, hồ sơ có dòng thời gian, thông báo, khắc phục, bài học; KT: có; không giá trị DLCN rõ.
+    Và `GET /breaches/{id}/actions`.
+    Thì `CLOSED`, hồ sơ có dòng thời gian, thông báo, khắc phục, bài học; KT: có; không giá trị DLCN rõ. Bước 2 `200`, liệt kê biện pháp khắc phục kèm người phụ trách, hạn và trạng thái (API-09-240).

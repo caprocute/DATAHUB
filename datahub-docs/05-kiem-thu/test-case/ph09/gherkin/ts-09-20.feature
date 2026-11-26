@@ -5,13 +5,14 @@ Tính năng: TS-09-20 · Xem giá trị đầy đủ có lý do trong 60 giây
 
   @TC-09-068 @P1 @Dương
   Kịch bản: TC-09-068 Cấp phiếu, xác thực phiếu, giá trị tự che sau 60 giây
-    # Truy vết: FR-09-029 · API-09-102, 236 · UI-09-22 · BR-09-026 · NFR-09-015 · PERM-09-unmask
+    # Truy vết: FR-09-029 · API-09-102, 236, 241 · UI-09-22 · BR-09-026 · NFR-09-015 · PERM-09-unmask
     # Mục đích: Chứng minh phiếu hết hạn sau `09.mask.reveal-seconds = 60` và PH-09 không thấy giá trị.
-    Biết T90; U-T90-SO có `PERM-09-unmask`; trường `cccd` ở UI của PH-06 giả lập; canary `DH-CANARY-rev-grant`.
+    Biết T90; U-T90-SO có `PERM-09-unmask`, U-T90-AU; trường `cccd` ở UI của PH-06 giả lập; canary `DH-CANARY-rev-grant`.
     Khi trên UI-09-22 SO nhập lý do 30 ký tự, bấm xem.
     Và DU gọi `POST /privacy/v1/reveal-grants/{gid}:verify` trong 30 giây.
     Và quan sát đồng hồ đếm ngược; gọi `:verify` lại sau 61 giây.
-    Thì bước 1 `201` `{grantId, expiresAt}`, KT: có ghi trước khi cấp. Bước 2 `200`. Bước 3 giá trị tự che lại; `:verify` `403` ERR-09-112. Giá trị rõ không có trong log, bảng `ph09_privacy.*`, đĩa.
+    Và AU `GET /reveal-grants/{grantId}`.
+    Thì bước 1 `201` `{grantId, expiresAt, serverTime, remainingThisHour}` (`remainingThisHour` = 20 trừ số lần đã cấp trong giờ), KT: có ghi trước khi cấp. Bước 2 `200`. Bước 3 giá trị tự che lại; `:verify` `403` ERR-09-112. Giá trị rõ không có trong log, bảng `ph09_privacy.*`, đĩa. Bước 4 `200`, thấy người xem, trường, lý do, hết hạn, trạng thái; không có `value`.
 
   @TC-09-069 @P1 @Âm
   Kịch bản: TC-09-069 Thiếu quyền, lý do ngắn, trường cấm xem, vượt 20 lần mỗi giờ

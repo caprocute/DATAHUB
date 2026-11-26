@@ -28,7 +28,7 @@ Tính năng: TS-09-13 · Quyết định mục đích trực tuyến cho điểm
   Kịch bản: TC-09-045 Bên gọi không có scope hoặc vượt hạn mức gọi
     # Truy vết: FR-09-019 · API-09-227 · ERR-09-111, 113 · PERM-09-read
     # Mục đích: Chứng minh chỉ token dịch vụ có `privacy:decide` gọi được data plane và có giới hạn tốc độ.
-    Biết T90; S-T90-NOSCOPE; S-T90-PEP-04; giới hạn `PH-09 rate` giả định 2.000 lượt mỗi giây mỗi bên gọi (Q09-40).
+    Biết T90; S-T90-NOSCOPE; S-T90-PEP-04; `09.api.rate-du-per-sec = 2.000` lượt mỗi giây mỗi DU.
     Khi S-T90-NOSCOPE gọi `purpose:decide`.
     Và người dùng U-T90-TA gọi `purpose:decide` bằng token người dùng.
     Và S-T90-PEP-04 gọi vượt 2.000 lượt mỗi giây trong 5 giây.
@@ -36,12 +36,12 @@ Tính năng: TS-09-13 · Quyết định mục đích trực tuyến cho điểm
 
   @TC-09-046 @P2 @Dương
   Kịch bản: TC-09-046 Vượt hạn ngạch ngày và vượt trường được phép sinh cảnh báo
-    # Truy vết: FR-09-019, 020 · API-09-227, 237 · BR-09-020 · EVT-09-13
+    # Truy vết: FR-09-019, 020 · NFR-09-026 · API-09-227, 237 · BR-09-020 · EVT-09-13
     # Mục đích: Chứng minh đếm lượt và cảnh báo trong 5 phút khi vượt hạn ngạch hoặc ngoài trường được phép.
     Biết T90; G1 hạn ngạch 2.000 lượt mỗi ngày; PEP báo lượt qua `usage-events:report`.
     Khi PEP báo 2.100 lượt trong ngày, trong đó 10 lượt đọc trường ngoài 4 trường cho phép.
     Và chờ ≤ 5 phút; `GET /usage-anomalies`.
-    Thì có cảnh báo `QUOTA_EXCEEDED` và `OFF_PURPOSE` gắn G1; EVT: `usage.anomaly-detected`; `09.anomaly.auto-suspend = false` nên chấp thuận không đổi trạng thái.
+    Thì có cảnh báo `QUOTA_EXCEEDED` và `OFF_PURPOSE` gắn G1; EVT: `usage.anomaly-detected`; `09.anomaly.auto-suspend = false` nên chấp thuận không đổi trạng thái. Cảnh báo tới DO và SO ≤ 5 phút sau lượt vượt (NFR-09-026).
 
   @TC-09-047 @P1 @Hiệu @năng
   Kịch bản: TC-09-047 Quyết định p95 ≤ 20 ms ở điểm thực thi, 5.000 yêu cầu mỗi giây toàn cụm

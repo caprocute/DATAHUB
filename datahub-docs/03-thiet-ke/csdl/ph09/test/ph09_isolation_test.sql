@@ -57,7 +57,7 @@ SET app.tenant_id = 'T90';
 CALL ph09_privacy.p_seed_tenant('T90');
 SELECT pg_temp.is_true($q$SELECT (SELECT count(*) FROM ph09_privacy.data_class) = 4 AND (SELECT count(*) FROM ph09_privacy.personal_data_category) = 18
   AND (SELECT count(*) FROM ph09_privacy.detector_rule) = 7 AND (SELECT count(*) FROM ph09_privacy.legal_basis) = 7 AND (SELECT count(*) FROM ph09_privacy.mask_type) = 12
-  AND (SELECT count(*) FROM ph09_privacy.tenant_setting) = 36 AND (SELECT count(*) FROM ph09_privacy.log_mask_config) = 1$q$, '01 nạp tenant: 4 mức, 18 loại, 7 mẫu, 7 cơ sở, 12 kiểu che, 36 tham số; chạy lại không nhân bản');
+  AND (SELECT count(*) FROM ph09_privacy.tenant_setting) = 43 AND (SELECT count(*) FROM ph09_privacy.log_mask_config) = 1$q$, '01 nạp tenant: 4 mức, 18 loại, 7 mẫu, 7 cơ sở, 12 kiểu che, 43 tham số; chạy lại không nhân bản');
 SELECT pg_temp.is_true($q$SELECT status = 'ACTIVE' AND (SELECT count(*) FROM ph09_privacy.retention_schedule_line) = 17 FROM ph09_privacy.retention_schedule WHERE schedule_code = 'PH09-OWN'$q$, '02 lịch lưu giữ PH09-OWN ACTIVE với 17 dòng');
 SELECT pg_temp.is_true($q$SELECT value = '10'::jsonb AND floor_value = '3'::jsonb FROM ph09_privacy.tenant_setting WHERE setting_key = '09.request.sla-days'$q$, '03 tham số 09.request.sla-days = 10, sàn 3');
 
@@ -360,7 +360,7 @@ SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.outbox_event (event_id, tenant
 SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.outbox_event (event_id, tenant_id, event_type, topic, aggregate_type, aggregate_id, partition_key, payload, trace_id) VALUES (gen_random_uuid(), 'T90', 'x', 't91.privacy.purpose-grant.revoked.v1', 'PurposeGrant', 'a', 'T90', '{}', repeat('b', 32))$q$, '23514', '129 topic mang tiền tố của đúng tenant');
 SELECT pg_temp.expect($q$UPDATE ph09_privacy.outbox_event SET payload = '{}'$q$, '42501', '130 ứng dụng không UPDATE outbox');
 SELECT pg_temp.expect($q$UPDATE ph09_privacy.tenant_setting SET setting_key = '09.khac.khoa' WHERE setting_key = '09.scan.confidence'$q$, '55000', '131 khóa tham số bất biến');
-SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '09.khong.co', '1', 'x', 'x')$q$, '23514', '132 chỉ 36 khóa tham số 09.* hợp lệ');
+SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '09.khong.co', '1', 'x', 'x')$q$, '23514', '132 chỉ 43 khóa tham số 09.* hợp lệ');
 SELECT pg_temp.expect($q$UPDATE ph09_privacy.tenant_setting SET value = '999999' WHERE setting_key = '09.grant.max-days'$q$, '23514', '133 giá trị tham số không vượt trần của PA (BR-09-059)');
 
 -- ---------- 14. Quyền theo vai trò ----------
@@ -414,5 +414,15 @@ SELECT pg_temp.is_true($q$SELECT count(*) = 0 FROM information_schema.tables WHE
 SELECT pg_temp.is_true($q$SELECT count(*) = 55 FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace WHERE s.nspname = 'ph09_privacy' AND c.relkind IN ('r', 'p') AND NOT c.relispartition$q$, '158 schema có đúng 55 bảng gốc');
 SELECT pg_temp.is_true($q$SELECT count(*) = 6 FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace WHERE s.nspname = 'ph09_privacy' AND c.relkind = 'r' AND c.relispartition$q$, '159 hai bảng phân vùng tháng có 3 phân vùng mỗi bảng');
 SELECT pg_temp.is_true($q$SELECT count(*) = 0 FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace WHERE s.nspname = 'ph09_privacy' AND c.relkind IN ('r', 'p') AND c.relowner <> (SELECT oid FROM pg_roles WHERE rolname = 'ph09_owner')$q$, '160 mọi bảng thuộc ph09_owner (NOLOGIN)');
+SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.access_request (id, tenant_id, httt_id, purpose_code, contract_kind, contract_id, fields, expected_volume, requested_days, justification, owner_org_id, request_kind, created_by, updated_by)
+  VALUES (gen_random_uuid(), 'T90', 'HT-TUPHAP', 'TTHC-HO-TICH', 'API', 'api-dan-cu-tra-cuu', ARRAY['a'], 10, 30, 'Gia hạn chấp thuận nhưng không nêu chấp thuận cần gia hạn', 'ORG', 'RENEWAL', 'x', 'x')$q$, '23514', '161 yêu cầu RENEWAL phải có renews_grant_id');
+SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.access_request (id, tenant_id, httt_id, purpose_code, contract_kind, contract_id, fields, expected_volume, requested_days, justification, owner_org_id, request_kind, renews_grant_id, created_by, updated_by)
+  VALUES (gen_random_uuid(), 'T90', 'HT-TUPHAP', 'TTHC-HO-TICH', 'API', 'api-dan-cu-tra-cuu', ARRAY['a'], 10, 30, 'Yêu cầu mới không được kèm chấp thuận gia hạn', 'ORG', 'NEW', pg_temp.id('pg1'), 'x', 'x')$q$, '23514', '162 yêu cầu NEW không có renews_grant_id');
+SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.access_request (id, tenant_id, httt_id, purpose_code, contract_kind, contract_id, fields, expected_volume, requested_days, justification, owner_org_id, request_kind, renews_grant_id, created_by, updated_by)
+  VALUES (gen_random_uuid(), 'T90', 'HT-TUPHAP', 'TTHC-HO-TICH', 'API', 'api-dan-cu-tra-cuu', ARRAY['a'], 10, 30, 'Gia hạn một chấp thuận không có trong hệ thống', 'ORG', 'RENEWAL', gen_random_uuid(), 'x', 'x')$q$, '23503', '163 renews_grant_id phải trỏ tới chấp thuận có thật');
+SELECT pg_temp.expect($q$INSERT INTO ph09_privacy.access_request (id, tenant_id, httt_id, purpose_code, contract_kind, contract_id, fields, expected_volume, requested_days, justification, owner_org_id, request_kind, created_by, updated_by)
+  VALUES (gen_random_uuid(), 'T90', 'HT-TUPHAP', 'TTHC-HO-TICH', 'API', 'api-dan-cu-tra-cuu', ARRAY['a'], 10, 30, 'Loại yêu cầu ngoài danh sách AccessRequestKind', 'ORG', 'EXTEND', 'x', 'x')$q$, '23514', '164 request_kind chỉ NEW hoặc RENEWAL');
+SELECT pg_temp.is_true($q$INSERT INTO ph09_privacy.access_request (id, tenant_id, httt_id, purpose_code, contract_kind, contract_id, fields, expected_volume, requested_days, justification, owner_org_id, request_kind, renews_grant_id, created_by, updated_by)
+  VALUES (gen_random_uuid(), 'T90', 'HT-TUPHAP', 'TTHC-HO-TICH', 'API', 'api-dan-cu-tra-cuu', ARRAY['a'], 10, 30, 'Gia hạn chấp thuận đang hiệu lực của cùng HTTT', 'ORG', 'RENEWAL', pg_temp.id('pg1'), 'x', 'x') RETURNING true$q$, '165 yêu cầu RENEWAL hợp lệ trỏ tới chấp thuận pg1');
 RESET ROLE;
 \echo 'KẾT QUẢ: toàn bộ khối kiểm thử PASS'

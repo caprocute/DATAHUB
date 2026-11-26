@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH09
 ten: Thiết kế giao diện màn hình phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ ATTT, chủ quản dữ liệu, kiểm thử viên, hội đồng thẩm định
@@ -103,7 +103,7 @@ Bảng liệt kê 22 màn theo FRS §10.1; cột "Hi-fi" cho biết màn có ả
 | UI-09-18 | Hồ sơ đánh giá tác động | PTN-03 | Đầy đủ | Không | 055, 056, 057 |
 | UI-09-19 | Vi phạm dữ liệu cá nhân | PTN-02 | Đầy đủ | Có | 058, 059, 060 |
 | UI-09-20 | Nhật ký bảo vệ dữ liệu | PTN-11 | Đầy đủ | Không | 029, 061 |
-| UI-09-21 | Cài đặt PH-09 | PTN-12 | Đầy đủ | Không | 064 |
+| UI-09-21 | Cài đặt PH-09 | PTN-12 | Đầy đủ | Không | 063, 064 |
 | UI-09-22 | Hộp thoại xem giá trị đầy đủ (dùng chung) | PTN-04 | Siêu chi tiết | Có (2 ảnh) | 029 |
 
 : Danh sách 22 màn hình PH-09
@@ -243,7 +243,7 @@ Sơ đồ cho thấy hai nhánh cùng đổ vào gói chính sách: nhánh mục
 
 ### 4.3. Bảng đường dẫn React Router
 
-Route chính lấy đúng FRS §10.1; đoạn tab con và query theo FRS §10.3 và D03-06-00 §2.4, phần FRS chưa nêu là đề nghị (mục "Đề nghị cho FRS").
+Route chính lấy đúng FRS §10.1; đoạn tab con và query theo FRS §10.3 và D03-06-00 §2.4, FRS 0.2 đã nêu đủ tab con ở §10.3 nên không còn phần đề nghị.
 
 | Route | Màn | Tab con, query | Quyền vào |
 |---|---|---|---|
@@ -261,7 +261,7 @@ Route chính lấy đúng FRS §10.1; đoạn tab con và query theo FRS §10.3 
 | `/du-lieu/quyen-rieng-tu/gia-danh` | UI-09-12 | `/mien`, `/khoa`; `trang-thai` | `PERM-09-read`; sửa `PERM-09-policy` |
 | `/du-lieu/quyen-rieng-tu/gia-danh/khoi-phuc` | UI-09-13 | `trang-thai`, `chon` | `PERM-09-reidentify`, `PERM-09-purpose-approve`, `PERM-09-policy-approve`, `PERM-09-audit-read` |
 | `/du-lieu/quyen-rieng-tu/an-danh` | UI-09-14 | `/cau-hinh`, `/job`, `/rui-ro`, `/tap`, `/chuan-bi`; `chon` | `PERM-09-read`; ghi `PERM-09-anonymize` |
-| `/du-lieu/quyen-rieng-tu/luu-giu` | UI-09-15 | `/lich`, `/tac-vu`, `/giu-phap-ly`, `/bao-cao` | `PERM-09-read`; ghi `PERM-09-retention` |
+| `/du-lieu/quyen-rieng-tu/luu-giu` | UI-09-15 | `/lich`, `/tac-vu`, `/giu-phap-ly`, `/xoa-mat-ma`, `/bao-cao` | `PERM-09-read`; ghi `PERM-09-retention` |
 | `/du-lieu/quyen-rieng-tu/yeu-cau-chu-the` | UI-09-16 | `loai`, `trang-thai`, `phan-vung` (`cua-toi`, `sap-den-han`, `qua-han`), `chon` | `PERM-09-dsr` |
 | `/du-lieu/quyen-rieng-tu/dong-y` | UI-09-17 | `/mau`, `/ban-ghi`; `trang-thai` | `PERM-09-consent` |
 | `/du-lieu/quyen-rieng-tu/dpia` | UI-09-18 | `/{id}`, `/den-han`; `trang-thai` | `PERM-09-ropa` |
@@ -354,6 +354,7 @@ Các mã dưới đây xuất hiện ở nhiều màn; câu hiển thị lấy �
 | ERR-00-403 | 403 | `ST-07` thay nội dung, nêu tên quyền thiếu. Câu của khung lỗi chung |
 | ERR-00-428 | 428 | Giao diện luôn gửi `If-Match`; nếu gặp, tải lại đối tượng rồi thử lại. Câu của khung lỗi chung |
 | ERR-09-001 | 404, 410 | "Không tìm thấy {đối tượng} {mã}." (`ST-08`) |
+| ERR-09-003 | 400 | "Dữ liệu không hợp lệ: {chi tiết}." (dưới ô sai, kèm chi tiết theo trường)  |
 | ERR-09-004 | 409 | "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." (`ST-13`, `CMP-ConflictDialog`) |
 | ERR-09-005 | 403 | "Bạn là người đề nghị hoặc đã quyết định ở bước trước nên không được duyệt bước này." (cạnh nút duyệt vô hiệu) |
 | ERR-09-006 | 409 | "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này." |
@@ -361,6 +362,7 @@ Các mã dưới đây xuất hiện ở nhiều màn; câu hiển thị lấy �
 | ERR-09-008 | 403 | "Bạn chỉ thao tác được trên dữ liệu thuộc tổ chức của mình." (`ST-07`) |
 | ERR-09-009 | 503 | "Chưa kết nối được {tên dịch vụ}. Thử lại sau ít phút." |
 | ERR-09-010 | 503 | "Chưa ghi được nhật ký kiểm toán nên thao tác bị từ chối. Thử lại sau." |
+| ERR-09-081 | 409 | "Idempotency-Key đã dùng với thân khác. Dùng khóa mới." (giao diện sinh khóa mới cho mỗi lần bấm nên người dùng không gặp; hiện ở `CMP-Alert` nếu có) |
 
 : Thông điệp lỗi dùng chung và vị trí hiển thị
 
@@ -419,7 +421,7 @@ Mọi màn xử lý bộ `ST-01…ST-15` của D03-06-00 §4.2; từng màn ch�
 
 **Đường dẫn, mẫu.** `/du-lieu/quyen-rieng-tu` (`khoang`); PTN-06 Dashboard.
 
-**Vai trò, quyền.** SO, TA, DA, DS, AU, VW (`PERM-09-read`); VW chỉ thấy số tổng hợp, không có liên kết sâu. Lập báo cáo: `PERM-09-read`; lịch báo cáo ở UI-09-21.
+**Vai trò, quyền.** SO, TA, DA, DS, AU, VW, TO, PA, DO (`PERM-09-read`; DO chỉ thấy số liệu của tổ chức mình, quyền ○); VW chỉ thấy số tổng hợp, không có liên kết sâu. Lập báo cáo: `PERM-09-read`; lịch báo cáo ở UI-09-21.
 
 **FR.** 020, 030, 049, 062, 063.
 
@@ -539,6 +541,7 @@ Trường của Drawer "Đề xuất phân loại" (nhập tay) và các thao t�
 | Số văn bản căn cứ, lý do | `CMP-Input`, `CMP-TextArea` | Có khi hạ mức | ERR-09-013; lý do dưới 20 ký tự: ERR-09-007 "Nhập lý do tối thiểu 20 ký tự." |
 | Tệp lược đồ (OpenAPI, JSON Schema, Avro) | `CMP-FileDropzone` | Có (nhập lược đồ) | ERR-09-015 "Không đọc được lược đồ: {lý do}." |
 | Phần tử trùng | — | — | ERR-09-014 "Phần tử {đích} đã được đăng ký." |
+| Trường mang nhãn bí mật | — | — | ERR-09-018 "Dữ liệu mang nhãn bí mật nhà nước không được đưa vào Datahub." |
 | Người xác nhận | — | — | Người đề xuất tự xác nhận: ERR-09-005 "Bạn là người đề nghị hoặc đã quyết định ở bước trước nên không được duyệt bước này." |
 | Ngừng loại DLCN | `CMP-ConfirmDialog` | — | ERR-09-011 "Mục {mã} đang được {n} trường sử dụng nên không ngừng được." |
 
@@ -569,11 +572,11 @@ Phím tắt: `/` tìm, `↑ ↓` chọn dòng, `Space` chọn, `Shift+X` xác nh
 
 **Đường dẫn, mẫu.** `/du-lieu/quyen-rieng-tu/phan-loai/{id}` (`/phan-loai`, `/lich-su`, `/hoat-dong`, `/hop-dong`); PTN-02 Chi tiết.
 
-**Vai trò, quyền.** TA, SO, DS, DO, AU; `PERM-09-read`, `PERM-09-classify` (DS, SV chỉ đề xuất).
+**Vai trò, quyền.** TA, SO, DS, DO, AU, SV (đề xuất); `PERM-09-read`, `PERM-09-classify` (DS, SV chỉ đề xuất).
 
 **FR.** 003, 004, 006, 007, 008.
 
-**API.** API-09-011, 015, 016, 017, 019, API-09-028 (mức hợp đồng), API-09-003, 004, 005, 006 (nhãn chặn).
+**API.** API-09-011, 015, 016, 017, 019, API-09-028 (mức hợp đồng), API-09-003, 004, 005, 006 (nhãn chặn), API-09-243 (ngừng phần tử).
 
 **Che DLCN.** Chỉ siêu dữ liệu; không giá trị mẫu. Lý do xem lịch sử không chứa DLCN.
 
@@ -610,7 +613,7 @@ Hạ mức và gỡ nhãn là hai thao tác nhạy nhất của màn nên có ki
 
 : UI-09-03, trường và mã lỗi
 
-Hành động và điều kiện hiện: "Đề xuất" (`PERM-09-classify`), "Xác nhận" và "Từ chối" (TA, SO, DO tổ chức sở hữu; khác người đề xuất, BR-09-003), "Hạ mức" (cần người thứ hai xác nhận, BR-09-002), "Gán nhãn", "Đề nghị gỡ nhãn" và "Duyệt gỡ" (API-09-004, 005, 006). Nút bị chặn bởi bốn mắt vẫn hiện, vô hiệu, kèm chữ "Chờ người thứ hai xác nhận".
+Hành động và điều kiện hiện: "Đề xuất" (`PERM-09-classify`), "Xác nhận" và "Từ chối" (TA, SO, DO tổ chức sở hữu; khác người đề xuất, BR-09-003), "Hạ mức" (cần người thứ hai xác nhận, BR-09-002), "Gán nhãn", "Đề nghị gỡ nhãn" và "Duyệt gỡ" (API-09-004, 005, 006), "Ngừng phần tử" kèm lý do (API-09-243; TA, SO, DO của tổ chức sở hữu, chỉ khi phần tử không còn trong hoạt động `ACTIVE` hay chấp thuận hiệu lực, nếu còn thì ERR-09-006). Nút bị chặn bởi bốn mắt vẫn hiện, vô hiệu, kèm chữ "Chờ người thứ hai xác nhận".
 
 ### 9.3. Trạng thái, phím tắt, truy cập
 
@@ -746,6 +749,7 @@ Bảng liệt kê trường nhập của UI-09-05 kèm kiểu, tính bắt buộ
 | Lý do từ chối | `CMP-TextArea` | Có | ERR-09-007 |
 | Ngừng hoạt động | `CMP-ConfirmDialog` | — | Còn liên kết: ERR-09-022 "Hoạt động còn {n} liên kết đang hiệu lực. Gỡ liên kết trước khi ngừng." |
 | Gửi duyệt hoạt động thiếu mục | — | — | ERR-09-020 "Hoạt động xử lý còn thiếu: {danh sách mục}." |
+| Kích hoạt khi còn trường DLCN chưa thuộc hoạt động | — | — | ERR-09-023 "Có {n} trường dữ liệu cá nhân chưa thuộc hoạt động xử lý nào." |
 | Duyệt bởi người soạn | — | — | ERR-09-005 |
 
 : UI-09-05, trường và mã lỗi
@@ -910,6 +914,8 @@ Danh sách yêu cầu có tab "Yêu cầu của tôi" và "Chấp thuận hiện
 |---|---|---|---|
 | HTTT khai thác | `CMP-ResourceSelect` | Có | Chưa hoạt động hoặc chưa đăng ký sử dụng: ERR-09-027 "HTTT {mã} chưa hoạt động hoặc chưa có đăng ký sử dụng hợp lệ." |
 | Mục đích | `CMP-ResourceSelect` | Có | ERR-09-026 "Mục đích {mã} không còn hiệu lực." |
+| Loại yêu cầu | `CMP-RadioCard` `AccessRequestKind` | Có (mặc định `NEW`) | `RENEWAL` chỉ chọn được khi tổ chức có chấp thuận `ACTIVE`; ERR-09-003 nếu thiếu chấp thuận gia hạn |
+| Chấp thuận cần gia hạn | `CMP-Select` (`renewsGrantId`) | Có khi `RENEWAL` | Chỉ liệt kê chấp thuận `ACTIVE` cùng HTTT và mục đích; gia hạn quá số lần: ERR-09-031 |
 | Hợp đồng, trường cần | `CMP-Transfer` | Có | Trường ngoài mục đích: ERR-09-028 "Trường {tên} nằm ngoài phạm vi của mục đích {mã}." |
 | Khối lượng dự kiến (lượt mỗi ngày) | `CMP-NumberInput` | Có | ERR-09-003 theo lược đồ |
 | Thời hạn đề nghị (ngày) | `CMP-NumberInput` | Có | Vượt trần: ERR-09-030 "Thời hạn chấp thuận tối đa {n} ngày." (`09.grant.max-days`) |
@@ -918,7 +924,7 @@ Danh sách yêu cầu có tab "Yêu cầu của tôi" và "Chấp thuận hiện
 
 : UI-09-08, trường và mã lỗi
 
-Hành động: "Lưu nháp" (API-09-059, 061), "Gửi thẩm định" (API-09-062, chuyển `SUBMITTED`), "Rút" (API-09-063, trước khi DO quyết), "Đề nghị gia hạn" trên chấp thuận sắp hết hạn (báo trước `09.grant.expiring-notice-days`); DO thực hiện gia hạn ở UI-09-09. Khi `NEEDS_INFO`, câu hỏi của DO hiện đầu chi tiết kèm ô trả lời.
+Hành động: "Lưu nháp" (API-09-059, 061), "Gửi thẩm định" (API-09-062, chuyển `SUBMITTED`), "Rút" (API-09-063, trước khi DO quyết), "Đề nghị gia hạn" trên chấp thuận sắp hết hạn (báo trước `09.grant.expiring-notice-days`) mở biểu mẫu với loại `RENEWAL` và chấp thuận đã chọn, gửi qua API-09-061, 062; DO duyệt như mọi yêu cầu khác và hệ thống áp gia hạn (FR-09-015, 016, 017). Khi `NEEDS_INFO`, câu hỏi của DO hiện đầu chi tiết kèm ô trả lời.
 
 ### 14.2. Trạng thái, phím tắt, truy cập
 
@@ -1127,6 +1133,7 @@ Hàng đầu là bốn ô tham số; bên dưới bảng kết quả theo từng
 | Chính sách, phiên bản | `CMP-Select` | Có | ERR-09-001 "Không tìm thấy {đối tượng} {mã}." |
 | Vai trò, mục đích, kênh | `CMP-Select` | Có | ERR-09-003 theo lược đồ |
 | Dữ liệu mẫu | `CMP-TextArea` hoặc `CMP-Upload` CSV | Có | Quá 1.000 dòng: ERR-09-039 "Dữ liệu mẫu tối đa 1.000 dòng." (413) |
+| Dữ liệu mẫu giống dữ liệu thật | — | — | ERR-09-080 "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả." (máy chủ quét mẫu bằng bộ mẫu của FR-09-005, 422) |
 | Kiểu che không hợp | — | — | ERR-09-037 "Kiểu che {kiểu} không áp dụng được cho trường kiểu {kiểu dữ liệu}." |
 
 : UI-09-11, trường và mã lỗi
@@ -1304,6 +1311,7 @@ Thanh bước bốn ô; bước 3 là báo cáo: bốn thẻ chỉ số (k thự
 | Phát hành khi rủi ro cao | — | — | ERR-09-053 "Rủi ro tái định danh cao, không phát hành. Xem khuyến nghị của báo cáo." |
 | Bản ghi còn quá ít | — | — | ERR-09-054 "Sau xử lý chỉ còn {x}% bản ghi, dữ liệu không còn giá trị thống kê." |
 | Mục đích chuẩn bị dữ liệu | `CMP-Select` `DataPrepTarget` | Có | Trường Nhạy cảm ở mục đích không cho phép: ERR-09-055 "Mục đích {mã} không cho phép dùng dữ liệu có trường Nhạy cảm." |
+| Dữ liệu `RESTRICTED` cho AI khi cờ tắt | — | — | ERR-09-082 "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted." |
 | Sửa tập đã phát hành | — | — | ERR-09-056 "Tập dữ liệu đã phát hành, không sửa được. Rút lại để tạo tập mới." |
 
 : UI-09-14, trường và mã lỗi
@@ -1388,7 +1396,7 @@ Truy cập: tab đúng mẫu; hộp xóa mật mã có đoạn "Không hoàn tá
 
 **FR.** 045, 046, 047, 048, 049, 050, 051.
 
-**API.** API-09-164…181.
+**API.** API-09-164…181, 242, 244.
 
 **Che DLCN.** Họ tên che theo kế hoạch che (`Nguyễn V** A`), định danh `*********345`, băm `hs:…`; xem đầy đủ chỉ qua UI-09-22; số định danh nhập ở `CMP-SecretField`, không vào URL.
 
@@ -1432,7 +1440,7 @@ Bảng liệt kê trường nhập của UI-09-16 kèm kiểu, tính bắt buộ
 
 : UI-09-16, trường và mã lỗi
 
-Hành động: "+ Tiếp nhận" (API-09-165), "Xác minh" (167), "Tra cứu" (168, `POST`, định danh trong thân), "Phân công" (173), "Chuyển" và "Báo hoàn tất tác vụ" (170, 172), "Gỡ hạn chế" (178), "Trả lời" (175), "Đóng" (176), "Từ chối" (177, căn cứ BR-09-046), "Lập báo cáo truy cập" (179, 180). Yêu cầu quá `09.dsr.sla-days` hiện nhãn "Quá hạn"; nhắc trước `09.dsr.remind-days`.
+Hành động: "+ Tiếp nhận" (API-09-165), "Xác minh" (167), "Tra cứu" (168, `POST`, định danh trong thân), "Phân công" (173), "Chuyển" và "Báo hoàn tất tác vụ" (170, 172), "Gỡ hạn chế" (178), "Trả lời" (175), "Đóng" (176), "Từ chối" (177, căn cứ BR-09-046), "Gia hạn hạn trả lời" (242, một lần, kèm lý do), "Rút yêu cầu" (244, kèm lý do, trước khi `RESPONDED`), "Lập báo cáo truy cập" (179, 180). Yêu cầu quá `09.dsr.sla-days` hiện nhãn "Quá hạn"; nhắc trước `09.dsr.remind-days`.
 
 ### 22.3. Trạng thái, phím tắt, truy cập
 
@@ -1459,7 +1467,7 @@ Phím tắt: `N` tiếp nhận, `J`, `K` chọn dòng. Truy cập: ô số đị
 
 **FR.** 052, 053.
 
-**API.** API-09-182…187 (mẫu); API-09-188…191 (bản ghi, bằng chứng).
+**API.** API-09-182…187 và 238 (mẫu, chi tiết mẫu); API-09-188…191 và 245 (bản ghi, bằng chứng, tra theo định danh).
 
 **Che DLCN.** Bản ghi chỉ hiện băm chủ thể `hs:…`, mẫu, phiên bản, kênh, thời điểm; định danh rõ không hiện.
 
@@ -1476,7 +1484,7 @@ Tab "Mẫu": mẫu theo mã và `VersionStatus` (nháp, chờ duyệt, hiệu l�
 | Sửa mẫu đã có người đồng ý | — | — | ERR-09-070 "Mẫu đã có người đồng ý. Tạo phiên bản mới thay vì sửa." |
 | Ghi nhận đồng ý: kênh, thời điểm, phiên bản mẫu | `CMP-Select`, `CMP-DatePicker` | Có | ERR-09-071 "Thiếu bằng chứng đồng ý: kênh, thời điểm, phiên bản mẫu." |
 | Rút đồng ý đã rút | — | — | ERR-09-072 "Sự đồng ý đã được rút hoặc hết hiệu lực." |
-| Tra cứu theo chủ thể | `CMP-SecretField` | Không | Gửi bằng `POST`, màn chỉ giữ băm |
+| Tra cứu theo chủ thể | `CMP-SecretField` | Không | Gửi bằng `POST` API-09-245 (loại và giá trị định danh trong thân); màn chỉ giữ băm, không lưu giá trị đã nhập |
 
 : UI-09-17, trường và mã lỗi
 
@@ -1548,7 +1556,7 @@ Phím tắt `Ctrl+S` lưu nháp. Truy cập: mỗi nhóm là `fieldset` có `leg
 ## 25. UI-09-19 Vi phạm dữ liệu cá nhân
 
 ::: dac-ta
-**Mục đích.** Ghi nhận và xử lý vụ việc vi phạm DLCN với đồng hồ 72 giờ không dừng: đánh giá ảnh hưởng, thông báo Cục A05 và chủ thể, khắc phục, bài học, đóng hồ sơ.
+**Mục đích.** Ghi nhận và xử lý vụ việc vi phạm DLCN với đồng hồ 72 giờ chỉ dừng khi đã thông báo Cục A05: đánh giá ảnh hưởng, thông báo Cục A05 và chủ thể, khắc phục, bài học, đóng hồ sơ.
 
 **Đường dẫn, mẫu.** `/du-lieu/quyen-rieng-tu/vi-pham` (`/{id}`; `muc-do`, `trang-thai`); PTN-02 Chi tiết (danh sách ở trang gốc, chi tiết ở `/{id}`).
 
@@ -1556,7 +1564,7 @@ Phím tắt `Ctrl+S` lưu nháp. Truy cập: mỗi nhóm là `fieldset` có `leg
 
 **FR.** 058, 059, 060.
 
-**API.** API-09-202…206 (vụ việc), 207…210 (đồng hồ, thông báo, chủ thể), 211…214 (khắc phục, đóng, hồ sơ); API-09-083 (chuyển từ cảnh báo).
+**API.** API-09-202…206 (vụ việc), 207…210 và 239 (đồng hồ, thông báo, chủ thể), 211…214 và 240 (khắc phục, đóng, hồ sơ); API-09-083 (chuyển từ cảnh báo).
 
 **Che DLCN.** Hồ sơ không chứa giá trị DLCN rõ, chỉ số lượng, loại, băm (BR-09-056); danh sách chủ thể ảnh hưởng nhập là băm.
 
@@ -1569,7 +1577,7 @@ Phím tắt `Ctrl+S` lưu nháp. Truy cập: mỗi nhóm là `fieldset` có `leg
 
 | # | Thành phần | `CMP-*` | Nội dung |
 |---|---|---|---|
-| 1 | Thẻ đồng hồ | `CMP-Banner`, `CMP-ProgressBar`, `CMP-Duration` | Tính từ `detectedAt`, không dừng, không đặt lại (BR-09-054); màu vàng sau 24 giờ, cam sau 48, đỏ sau 60, kèm chữ |
+| 1 | Thẻ đồng hồ | `CMP-Banner`, `CMP-ProgressBar`, `CMP-Duration` | Tính từ `detectedAt`, không tạm dừng, không đặt lại, chỉ dừng khi thông báo Cục A05 đã gửi (BR-09-054); màu vàng sau 24 giờ, cam sau 48, đỏ sau 60, kèm chữ |
 | 2 | Tab "Chi tiết" | `CMP-DescriptionList`, `CMP-Form` | Mô tả, phạm vi, loại dữ liệu, nguồn `BreachSource`, đánh giá mức |
 | 3 | Tab "Thông báo" | `CMP-DataTable` | Người nhận `NotificationRecipient`, hạn, `NotificationStatus`, bằng chứng gửi |
 | 4 | Tab "Chủ thể ảnh hưởng" | `CMP-Upload`, `CMP-DataTable` | Nhập danh sách băm, số lượng; không hiện danh tính |
@@ -1621,11 +1629,11 @@ Truy cập: đồng hồ đọc khi mở trang và khi qua mốc 24, 48, 60 gi�
 
 **Đường dẫn, mẫu.** `/du-lieu/quyen-rieng-tu/nhat-ky` (`/thao-tac`, `/xem-day-du`; `tu`, `den`, `nguoi`, `loai`); PTN-11 Tra log.
 
-**Vai trò, quyền.** SO, AU, PA (`PERM-09-audit-read`); FRS §10.1 còn liệt kê TO nhưng ma trận §3.2 không cấp quyền này cho TO (Q09-30).
+**Vai trò, quyền.** SO, AU, PA (`PERM-09-audit-read`); TO không có quyền này nên không thấy màn (FRS 0.2 đã bỏ TO khỏi UI-09-20).
 
 **FR.** 029, 061.
 
-**API.** API-09-215, 216, 217 (nhật ký); API-09-103 (lịch sử xem đầy đủ).
+**API.** API-09-215, 216, 217 (nhật ký); API-09-103, 241 (lịch sử xem đầy đủ, chi tiết một phiếu không kèm giá trị).
 
 **Che DLCN.** Nhật ký không ghi giá trị `SENSITIVE`; chỉ tên trường, băm có khóa, số lượng (BR-09-058). Màn không bao giờ hiện giá trị đã được xem.
 
@@ -1638,7 +1646,7 @@ Thanh lọc cố định (thời gian, người, loại thao tác, đối tượ
 
 | Nhãn | Kiểu | Bắt buộc | Kiểm tra, mã lỗi, câu |
 |---|---|---|---|
-| Khoảng thời gian | `CMP-DateRangePicker` | Có | Quá `09.audit.query-max-days` (90): tạm dùng ERR-09-078 "Giá trị của {khóa} ngoài miền cho phép {miền}." (đề nghị mã riêng, mục Đề nghị cho FRS) |
+| Khoảng thời gian | `CMP-DateRangePicker` | Có | Quá `09.audit.query-max-days` (90): ERR-09-079 "Chọn khoảng thời gian tối đa {n} ngày." với `{n}` là giá trị tham số |
 | Người, loại thao tác, đối tượng | `CMP-FilterBar` | Không | ERR-09-003 theo lược đồ |
 | Xuất | `CMP-Button` | — | Không ghi được vết xuất: ERR-09-010 |
 
@@ -1653,7 +1661,7 @@ Bảng ghi cách UI-09-20 hiện khi đang tải, rỗng, lỗi, không quyền 
 | Trạng thái | Hiển thị |
 |---|---|
 | Đang tải, rỗng | `ST-01`; `ST-04` "Không có bản ghi trong khoảng đã chọn." |
-| Lỗi, không quyền | `ST-05`; `ST-07` (TO mở `ST-07` kèm tên quyền thiếu) |
+| Lỗi, không quyền | `ST-05`; `ST-07` (người không có `PERM-09-audit-read` mở `ST-07` kèm tên quyền thiếu) |
 | Fallback che | Không áp dụng |
 
 : UI-09-20, trạng thái màn
@@ -1719,7 +1727,7 @@ Phím tắt `Ctrl+S` lưu. Truy cập: nhóm tham số là `fieldset`; miền ch
 
 **FR.** 029 (BR-09-026, BR-09-057, NFR-09-015).
 
-**API.** API-09-102 (xin phiếu); API-09-236 (DU xác thực phiếu, data plane); API-09-103 (lịch sử ở UI-09-20).
+**API.** API-09-102 (xin phiếu); API-09-236 (DU xác thực phiếu, data plane); API-09-103, 241 (lịch sử và chi tiết phiếu ở UI-09-20).
 
 **Giao diện nhúng.** Thuộc tính `targetRef` (đối tượng chứa dữ liệu), `fields[]` (tên trường, tối đa 10), `onRevealed(grantId, expiresAt)`, `fetchValue(grantId)` do màn chủ cung cấp (gọi DU chứa dữ liệu kèm phiếu); hộp thoại không tự lấy giá trị.
 
@@ -1736,7 +1744,7 @@ Hộp thoại rộng `size-modal-sm` mở trên `color-scrim`, khung `glass-moda
 |---|---|---|---|
 | 1 | Tiêu đề, ngữ cảnh | `CMP-Modal`, `CMP-Heading` | "Xem giá trị đầy đủ: {tên trường}", dòng phụ: đối tượng (đã che), mức `SENSITIVE`, "mọi lần xem được ghi nhật ký" |
 | 2 | Ô lý do | `CMP-ReasonDialog` (nội dung), `CMP-TextArea` | Tối thiểu 20 ký tự, đếm ký tự, mẫu câu nhanh theo ngữ cảnh |
-| 3 | Dòng hạn mức | `CMP-Text` | "Còn được xem {n} lần trong giờ này" (`09.mask.reveal-max-per-hour`) |
+| 3 | Dòng hạn mức | `CMP-Text` | "Còn được xem {n} lần trong giờ này" (`09.mask.reveal-max-per-hour`; `{n}` lấy từ `remainingThisHour` của API-09-102) |
 | 4 | Cảnh báo thủy vân | `CMP-Alert` vàng | "Ảnh chụp màn hình sẽ có thủy vân tên bạn và thời điểm xem" |
 | 5 | Đồng hồ | `CMP-Duration` + vòng (đề nghị `CountdownRing`, Phụ lục A) | Số giây còn lại bằng chữ "Còn 47 giây, sau đó tự che lại" |
 | 6 | Giá trị rõ | `CMP-MaskedValue` chế độ `revealed`, `font-mono` | Nền đặc, viền `color-accent`, không chọn được chữ |
@@ -1801,7 +1809,7 @@ Bảng ghi các quy tắc đồng hồ và che lại; đây là phần nhạy nh
 
 | Quy tắc | Nội dung |
 |---|---|
-| Nguồn thời gian | `expiresAt` của máy chủ trừ độ lệch đồng hồ đo ở lần gọi API-09-102; hiển thị làm tròn xuống giây; sai số cho phép ±1 giây (NFR-09-015) |
+| Nguồn thời gian | `expiresAt` trừ `serverTime`, cả hai do API-09-102 trả cùng phiếu, nên không phụ thuộc đồng hồ trình duyệt; hiển thị làm tròn xuống giây; sai số cho phép ±1 giây (NFR-09-015) |
 | Tự che | Khi còn 0 giây: xóa giá trị khỏi bộ nhớ và DOM, thay bằng `CMP-MaskedValue`, `aria-live` đọc "Đã che lại"; không dùng lại phiếu, muốn xem tiếp phải xin phiếu mới có lý do mới |
 | Che sớm | Bấm "Che lại ngay", phím `Esc`, đóng hộp thoại, rời màn, đổi route, hết phiên (`ST-14`) đều che ngay |
 | Tab bị ẩn | Đồng hồ vẫn chạy theo `expiresAt`; quay lại sau khi hết hạn thì thấy giá trị đã che |
@@ -1976,45 +1984,45 @@ Bảng ghi các thành phần và token mới PH-09 đề nghị bổ sung vào 
 
 ## Phụ lục B. Đề nghị bổ sung API
 
-Các trường phản hồi và API dưới đây giúp màn hiển thị đủ mà không phải gọi nhiều lần; việc định nghĩa chi tiết thuộc D03-04-PH09.
+Các trường phản hồi và API dưới đây giúp màn hiển thị đủ mà không phải gọi nhiều lần; việc định nghĩa chi tiết thuộc D03-04-PH09. Cột "Trạng thái" ghi kết quả sau khi FRS 0.2 và D03-04-PH09 bản 0.2 đã đồng bộ.
 
-| # | Đề nghị | Màn |
-|---|---|---|
-| B1 | API-09-218 trả `unclassifiedCount`, `blockedContracts`, `dsrOverdue`, `breachClocks[]`, `bundleAgeSeconds`, `staleEnforcementPoints` | UI-09-01 |
-| B2 | API-09-064 trả mỗi mục kèm `similarGrants`, `anomalies90d`, `orgQuotaUsed`, `overQuota` | UI-09-09 |
-| B3 | API-09-101 trả mỗi ô `ruleId`, `maskType`, cờ `leak`; phản hồi tổng `passed`, `goldenSetResult` | UI-09-11 |
-| B4 | API-09-102 trả thêm `serverTime`, `remainingThisHour` | UI-09-22 |
-| B5 | API-09-010 lọc theo `contractId`, `status`, `provisional`, `blocked` | UI-09-02 |
-| B6 | API-09-164 trả `overdue`, `dueAt`, đếm theo phân vùng | UI-09-16 |
-| B7 | `POST /consents:search` nhận định danh trong thân, trả danh sách theo băm (control plane) | UI-09-17 |
-| B8 | API-09-224 trả mỗi tham số `default`, `floor`, `ceiling`, `source` | UI-09-21 |
+| # | Đề nghị | Màn | Trạng thái |
+|---|---|---|---|
+| B1 | API-09-218 trả `unclassifiedCount`, `blockedContracts`, `dsrOverdue`, `breachClocks[]`, `bundleAgeSeconds`, `staleEnforcementPoints` | UI-09-01 | Còn mở: OpenAPI trả danh sách chỉ số chung `metrics[]` (mã, giá trị, xu hướng, liên kết); cần chốt mã chỉ số với tập API |
+| B2 | API-09-064 trả mỗi mục kèm `similarGrants`, `anomalies90d`, `orgQuotaUsed`, `overQuota` | UI-09-09 | Còn mở: chưa có trong OpenAPI; giao diện tạm gọi API-09-060, 080 để ghép |
+| B3 | API-09-101 trả mỗi ô `ruleId`, `maskType`, cờ `leak`; phản hồi tổng `passed`, `goldenSetResult` | UI-09-11 | Một phần: OpenAPI trả `passed`, `issues[]`, `sampleResult[]`; `goldenSetResult` còn mở |
+| B4 | API-09-102 trả thêm `serverTime`, `remainingThisHour` | UI-09-22 | Đã có ở FRS 0.2 (FR-09-029) và OpenAPI |
+| B5 | API-09-010 lọc theo `contractId`, `status`, `provisional`, `blocked` | UI-09-02 | Một phần: có `contractId`, `status`; `provisional`, `blocked` còn mở |
+| B6 | API-09-164 trả `overdue`, `dueAt`, đếm theo phân vùng | UI-09-16 | Đã có: `overdue`, `dueAt` trong `SubjectRequest`, lọc `overdue`; đếm theo phân vùng còn mở |
+| B7 | `POST /consents:search` nhận định danh trong thân, trả danh sách theo băm (control plane) | UI-09-17 | Đã có: API-09-245 |
+| B8 | API-09-224 trả mỗi tham số `default`, `floor`, `ceiling`, `source` | UI-09-21 | Đã có: `Setting` thêm `defaultValue` và `source` ở OpenAPI 0.2 |
 
-: Đề nghị bổ sung API cho D03-04-PH09
+: Đề nghị bổ sung API và trạng thái
 
 ## Đề nghị đồng bộ
 
 Phần này gom việc cần sửa ở FRS và tài liệu chung; tập màn không tự sửa các tài liệu đó.
 
-### Đề nghị cho FRS D02-03-PH09
+### Kết quả đồng bộ với FRS D02-03-PH09 bản 0.2
 
-Bảng ghi lệch hoặc thiếu phát hiện khi thiết kế màn, kèm đề nghị cụ thể.
+Mười hai đề nghị C1 đến C12 của bản 0.1 đã được FRS 0.2 xử lý (Phụ lục C của FRS, các dòng "MH C1" đến "MH C12"); bảng ghi kết quả và chỗ tập màn đã sửa theo.
 
-| # | Vị trí | Phát hiện và đề nghị |
-|---|---|---|
-| C1 | §10.1 UI-09-09 | Liệt kê TA nhưng ma trận §3.2 không cấp `PERM-09-purpose-approve` cho TA; tập màn cho TA chỉ xem và phát hành bundle (`PERM-09-policy-approve`). Đề nghị ghi rõ |
-| C2 | §10.1 UI-09-20 | Liệt kê TO nhưng không có `PERM-09-audit-read` cho TO; hoặc bỏ TO khỏi màn hoặc cấp quyền (Q09-30) |
-| C3 | §10.1 UI-09-12 | "Đề nghị và duyệt khôi phục (cấp 1, 2)" trùng UI-09-13; đề nghị UI-09-12 chỉ liên kết sang UI-09-13 |
-| C4 | §10.1 UI-09-01, 02, 03 | Thêm DO (○), TO, PA vào UI-09-01 và SV (đề xuất) vào UI-09-02, 03 cho khớp §3.2 |
-| C5 | §10.1 UI-09-21 | Thêm FR-09-063 vì lịch lập báo cáo (API-09-223) nằm ở UI-09-21 |
-| C6 | §10.3 | Bổ sung tab con: UI-09-03 `/hop-dong`; UI-09-07 `/muc-dich`, `/co-so`, `/van-ban`; UI-09-09 `/hop-viec`, `/hieu-luc`, `/canh-bao`, `/bundle`, `/bao-cao`, `/bi-chan`; UI-09-14 `/cau-hinh`, `/job`, `/rui-ro`, `/tap`, `/chuan-bi`; UI-09-15 `/xoa-mat-ma` |
-| C7 | FR-09-017 | OR cần đề nghị gia hạn nhưng chỉ DO có API gia hạn; đề nghị API đề nghị gia hạn hoặc loại yêu cầu `RENEWAL` cho OR |
-| C8 | API-09-190, 235 | Tra đồng ý theo định danh cần control plane nhận định danh trong thân (Phụ lục B7), vì băm HMAC ở data plane |
-| C9 | §9.1 | Thêm ERR-09-079 "Chọn khoảng thời gian tối đa {n} ngày." cho `09.audit.query-max-days`; ERR-09-080 "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả." cho UI-09-11 (Q09-34) |
-| C10 | FR-09-029 | Quy định đồng hồ theo `expiresAt` của máy chủ, trả `serverTime` ở API-09-102; áp cùng `09.mask.reveal-seconds` cho kết quả khôi phục ở FR-09-033 |
-| C11 | §10.1 | Ghi rõ FR-09-027, 028, 019, 032 không có màn (data plane) để người kiểm tra không tìm |
-| C12 | Phụ lục A | `DsrType` giá trị `RESTRICT`; PH-06 dùng chữ `RESTRICTION` ở FR-06-058: đối chiếu để hai phân hệ khớp |
+| # | Đề nghị bản 0.1 | Kết quả ở FRS 0.2 | Đã sửa trong tập |
+|---|---|---|---|
+| C1 | UI-09-09 liệt kê TA không có quyền duyệt | §10.1 ghi DO duyệt, TA xem và phát hành bundle | Khối UI-09-09 giữ nguyên |
+| C2 | UI-09-20 liệt kê TO không có `PERM-09-audit-read` | Bỏ TO, thêm PA | UI-09-20: vai trò, trạng thái không quyền |
+| C3 | UI-09-12 trùng UI-09-13 | UI-09-12 chỉ liên kết sang UI-09-13 | Giữ nguyên |
+| C4 | Thêm DO, TO, PA vào UI-09-01, SV vào UI-09-02, 03 | Đã thêm | UI-09-01, UI-09-03 |
+| C5 | Thêm FR-09-063 vào UI-09-21 | Đã thêm | Bảng 1.5 |
+| C6 | Tab con ở 10.3 | Đã bổ sung | Bảng đường dẫn mục 4.3 đã khớp |
+| C7 | OR cần đề nghị gia hạn | Loại yêu cầu `RENEWAL` và `renewsGrantId` | UI-09-08: hai trường và nút "Đề nghị gia hạn" |
+| C8 | Tra đồng ý theo định danh | API-09-245 | UI-09-17 |
+| C9 | ERR-09-079, 080 | Có ở §9.1, câu đúng như đề nghị | UI-09-20, UI-09-11 |
+| C10 | Đồng hồ theo `expiresAt` và `serverTime`, 60 giây cho kết quả khôi phục | FR-09-029, 033 | UI-09-22 mục 28.4, UI-09-13 |
+| C11 | Ghi rõ chức năng data plane không có màn | §10.1 | Không cần sửa |
+| C12 | `RESTRICT` và `RESTRICTION` | Giữ `RESTRICT`, ánh xạ ở Phụ lục B của FRS | Không cần sửa |
 
-: Đề nghị đồng bộ cho FRS D02-03-PH09
+: Kết quả đồng bộ đề nghị của tập màn với FRS 0.2
 
 ### Đề nghị cho tài liệu chung
 
@@ -2033,7 +2041,7 @@ Bảng ghi tài liệu chung cần sửa theo kết quả thiết kế màn và 
 
 ## Câu hỏi mở
 
-> **Câu hỏi mở Q09-30:** TO có xem được nhật ký bảo vệ dữ liệu ở UI-09-20 không (FRS §10.1 liệt kê TO, ma trận §3.2 không cấp `PERM-09-audit-read`); đề xuất cấp xem nhật ký thao tác của vụ việc mình ghi nhận.
+> **Câu hỏi mở Q09-30:** Đã chốt ở FRS 0.2: UI-09-20 dành cho SO, AU, PA; TO không được cấp `PERM-09-audit-read` để giữ nguyên tắc tối thiểu quyền. Vẫn mở: có nên cho TO xem riêng nhật ký thao tác của vụ việc mình ghi nhận; đề xuất chưa làm ở Đợt 2.
 
 > **Câu hỏi mở Q09-31:** Giới hạn 60 giây ở UI-09-22 có đủ cho người dùng trình đọc màn hình; đề xuất thử với NVDA, JAWS và cho phép xin phiếu mới tính vào hạn mức mỗi giờ thay vì kéo dài thời gian.
 
@@ -2041,13 +2049,13 @@ Bảng ghi tài liệu chung cần sửa theo kết quả thiết kế màn và 
 
 > **Câu hỏi mở Q09-33:** Màn chứa DLCN có cần tự làm mờ khi tab mất focus quá 2 phút (đồng bộ Q06-38); đề xuất làm mờ ở UI-09-13, 16, 19 và UI-09-22.
 
-> **Câu hỏi mở Q09-34:** Ở UI-09-11, người dùng có thể dán dữ liệu thật vào ô dữ liệu mẫu; đề xuất quét mẫu DLCN thật (số định danh đúng kiểm tổng) ở phía máy khách trước khi gửi và từ chối bằng ERR-09-080.
+> **Câu hỏi mở Q09-34:** Ở UI-09-11, người dùng có thể dán dữ liệu thật vào ô dữ liệu mẫu; đề xuất quét mẫu DLCN thật (số định danh đúng kiểm tổng) ở phía máy khách trước khi gửi và từ chối bằng ERR-09-080; máy chủ cũng quét mẫu và trả ERR-09-080 (FR-09-025), nên quét ở máy khách chỉ để báo sớm.
 
 > **Câu hỏi mở Q09-35:** Nhập số định danh chủ thể ở UI-09-16 bằng tay hay hỗ trợ quét mã từ VNeID; đề xuất chỉ nhập tay ở Đợt 2, cân nhắc quét mã ở Đợt 3 (Q09-11).
 
 > **Câu hỏi mở Q09-36:** Phím đơn `A`, `C`, `R`, `I` ở UI-09-09 có xung đột với phần mềm đọc màn hình hoặc bộ gõ tiếng Việt không; đề xuất thử với NVDA, JAWS, Unikey, và cho tắt trong cài đặt cá nhân.
 
-> **Câu hỏi mở Q09-37:** Đồng hồ 72 giờ ở UI-09-19 tính giờ liên tục (BR-09-054); cần kênh nhắc ngoài giờ (tin nhắn, thư điện tử) khi qua mốc 48 và 60 giờ; đề xuất SMS và thư điện tử tới SO trực.
+> **Câu hỏi mở Q09-37:** Đồng hồ 72 giờ ở UI-09-19 chạy liên tục đến khi thông báo Cục A05 đã gửi (BR-09-054); cần kênh nhắc ngoài giờ (tin nhắn, thư điện tử) khi qua mốc 48 và 60 giờ; đề xuất SMS và thư điện tử tới SO trực.
 
 > **Câu hỏi mở Q09-38:** Hồ sơ DPIA và sổ hoạt động có cần xem trước dạng in (mẫu `ROPA_A05`, Q09-03) ngay trong màn; đề xuất xuất tệp và xem ở ngoài, không dựng trình xem in ở Đợt 2.
 
@@ -2060,3 +2068,4 @@ Bảng ghi tài liệu chung cần sửa theo kết quả thiết kế màn và 
 | 0.1 | 26/11/2026 | Nhóm phân hệ PH-09 | Bản đầu: 22 màn UI-09-01…22 theo FRS 0.1 §10.1, 13 ảnh hi-fi, ma trận vai trò, kiểm thử, phụ lục A, B, đề nghị đồng bộ, câu hỏi mở Q09-30…39 |
 
 : Lịch sử phiên bản D03-06-PH09
+| 0.2 | 26/11/2026 | Nhóm phân hệ PH-09 | Đồng bộ FRS 0.2: vai trò UI-09-01, 03, 20 (bỏ TO ở UI-09-20), FR-09-063 ở UI-09-21, loại yêu cầu `RENEWAL`, API-09-238, 241 đến 245 vào các màn, ERR-09-003, 079, 080, 081, 082 theo câu của §9.1, `serverTime` và `remainingThisHour` ở UI-09-22, đồng hồ vi phạm dừng khi đã thông báo, Phụ lục B có trạng thái, đề nghị cho FRS thành bảng kết quả |

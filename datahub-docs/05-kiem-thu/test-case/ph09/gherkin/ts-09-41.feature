@@ -15,7 +15,7 @@ Tính năng: TS-09-41 · Truy cập giao diện và hợp đồng API
   @TC-09-146 @P2 @Dương
   Kịch bản: TC-09-146 OpenAPI `/api/privacy/v1` và `/privacy/v1` khớp FRS 9.4
     # Truy vết: FR-09-064 · API-09-001, 227 · NFR-09-020
-    # Mục đích: Chứng minh 237 API, mã lỗi và enum đúng nguồn chuẩn (FRS Phụ lục A).
+    # Mục đích: Chứng minh 245 API, mã lỗi và enum đúng nguồn chuẩn (FRS Phụ lục A).
     Biết `03-thiet-ke/api/ph09/openapi-privacy.yaml`; Spectral, oasdiff.
     Khi chạy Spectral; so mã API và đường dẫn với bảng FRS 9.4; so enum với Phụ lục A.
     Thì 0 lệch mã, đường dẫn, phương thức; mọi POST ghi có `Idempotency-Key`; mọi lỗi theo RFC 9457 có `code`, `traceId`.

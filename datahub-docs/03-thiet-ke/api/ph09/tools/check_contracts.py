@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm tra hợp đồng PH-09: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 237 và không trùng,
+"""Kiểm tra hợp đồng PH-09: YAML nạp được, mọi $ref có đích, ví dụ khớp lược đồ, mã API đủ 245 và không trùng,
 enum khớp Phụ lục A, AsyncAPI có đủ 32 sự kiện EVT-09 cộng audit.recorded và không mang khóa giá trị DLCN.
 Chạy: python3 check_contracts.py (từ thư mục tools). Thoát 1 nếu có lỗi."""
 import json
@@ -47,8 +47,8 @@ for path, item in OA['paths'].items():
     for m, op in item.items():
         ids.append(op['x-datahub-id'])
         opids.append(op['operationId'])
-if len(ids) != 237 or len(set(ids)) != 237:
-    errs.append('mã API không đủ 237 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
+if len(ids) != 245 or len(set(ids)) != 245:
+    errs.append('mã API không đủ 245 hoặc trùng: %d/%d' % (len(ids), len(set(ids))))
 if len(set(opids)) != len(opids):
     errs.append('operationId trùng')
 frs_ids = set(re.findall(r'^\| (API-09-\d{3}) \|', FRS, re.M))

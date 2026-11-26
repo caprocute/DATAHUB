@@ -33,11 +33,11 @@ Tính năng: TS-09-36 · Phân quyền theo ma trận PERM-09 và bốn mắt
 
   @TC-09-127 @P1 @Âm
   Kịch bản: TC-09-127 Thiếu token, thiếu `If-Match`, ETag cũ, gọi lặp `Idempotency-Key`
-    # Truy vết: FR-09-064, 045 · API-09-225, 165 · ERR-09-004 · BR-09-061
+    # Truy vết: FR-09-064, 045 · API-09-225, 165 · ERR-09-004, 081 · BR-09-061
     # Mục đích: Chứng minh lỗi nền ERR-00-401, 428 và cạnh tranh ghi ERR-09-004.
     Biết T90; U-T90-TA; `ETag` cũ của `/settings`.
     Khi `PUT /settings` không token.
     Và `PUT /settings` thiếu `If-Match`.
     Và `PUT /settings` với `ETag` đã cũ.
-    Và `POST /subject-requests` hai lần cùng `Idempotency-Key`.
-    Thì bước 1 `401` ERR-00-401. Bước 2 `428` ERR-00-428. Bước 3 `409` ERR-09-004 "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." Bước 4 một yêu cầu duy nhất.
+    Và `POST /subject-requests` hai lần cùng `Idempotency-Key` và thân, rồi lần ba cùng khóa với thân khác.
+    Thì bước 1 `401` ERR-00-401. Bước 2 `428` ERR-00-428. Bước 3 `409` ERR-09-004 "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." Bước 4 một yêu cầu duy nhất; dùng lại khóa với thân khác `409` ERR-09-081 "Idempotency-Key đã dùng với thân khác. Dùng khóa mới."

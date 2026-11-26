@@ -26,7 +26,7 @@ Tính năng: TS-09-42 · Tương đương hệ cũ và chức năng cũ của SR
   Kịch bản: TC-09-149 Đối chiếu FR-09-001…009 của SRS cũ với hành vi mới
     # Truy vết: FR-09-004, 007, 029, 033, 034, 035, 036, 037, 038 · BR-09-001, 032, 035 · ERR-09-053, 054 · LGC-TOOL-012
     # Mục đích: Chứng minh từng điểm của SRS cũ có chỗ xử lý, và các khác biệt chủ ý của FRS được kiểm đúng hành vi mới.
-    Biết T90, T96; bảng so sánh SRS cũ (FR-09-001…009) và FRS 0.1.
+    Biết T90, T96; bảng so sánh SRS cũ (FR-09-001…009) và FRS 0.2.
     Khi trường chưa phân loại: SRS cũ coi là mức mật và chặn; chạy `classification:check` với trường chưa phân loại.
     Và khôi phục hàng loạt: SRS cũ yêu cầu duyệt riêng khi hơn 10 bí danh; thử 11 và 101 token.
     Và ẩn danh hóa AI: SRS cũ yêu cầu k cao hơn thông thường; thử k = 10 và k = 20 cho `AI_TRAINING`.

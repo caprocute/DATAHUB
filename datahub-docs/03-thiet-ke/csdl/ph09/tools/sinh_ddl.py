@@ -50,7 +50,7 @@ def settings():
             s = s.replace(".", "")
         return float(s) if "." in s else int(s)
 
-    for m in re.finditer(r"^\| `(09\.[a-z.\-]+)` \| ([^|]+) \| ([^|]+) \|", sec, re.M):
+    for m in re.finditer(r"^\| `(09\.[a-z0-9.\-]+)` \| ([^|]+) \| ([^|]+) \|", sec, re.M):
         k, d, dom = m.group(1), m.group(2).strip(), m.group(3).strip()
         d = d.strip("`")
         if d in ("true", "false"):
@@ -74,7 +74,7 @@ def topics():
 
 SETTINGS = settings()
 TOPICS = topics() + ["audit.recorded.v1"]
-assert len(SETTINGS) == 36 and len(TOPICS) == 33, (len(SETTINGS), len(TOPICS))
+assert len(SETTINGS) == 43 and len(TOPICS) == 33, (len(SETTINGS), len(TOPICS))
 
 TENANT_RE = "^T[0-9]{2}$"
 CODE41 = "^[A-Z][A-Z0-9-]{2,40}$"
@@ -345,7 +345,7 @@ G_PURPOSE.append(T("purpose",
     ccomment={"max_days": "Trần cứng 730 ngày; trần tenant 09.grant.max-days mặc định 365 (BR-09-015)."}))
 
 G_PURPOSE.append(T("purpose_element",
-    "EN-09-15 Trường được phép theo mục đích (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.",
+    "EN-09-52 Trường được phép theo mục đích, bảng con của Purpose (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.",
     ["purpose_id uuid NOT NULL", "element_id uuid NOT NULL"],
     [fk("purpose_element", "purpose_id", "purpose"), fk("purpose_element", "element_id", "data_element"),
      ("uq_purpose_element", "UNIQUE (tenant_id, purpose_id, element_id)")],
@@ -356,9 +356,12 @@ G_PURPOSE.append(T("access_request",
     ["httt_id varchar(63) NOT NULL", "registration_ref varchar(63)", "purpose_code varchar(41) NOT NULL", "contract_kind varchar(8) NOT NULL", "contract_id varchar(128) NOT NULL",
      "fields varchar(63)[] NOT NULL", "expected_volume integer NOT NULL", "requested_days integer NOT NULL", "justification varchar(2000) NOT NULL", "owner_org_id varchar(63) NOT NULL",
      "status varchar(16) NOT NULL DEFAULT 'DRAFT'", "submitted_at timestamptz", "reviewer varchar(64)", "decision varchar(24)", "decision_reason varchar(2000)",
-     "decided_by varchar(64)", "decided_at timestamptz", "due_at timestamptz"],
+     "decided_by varchar(64)", "decided_at timestamptz", "due_at timestamptz",
+     "request_kind varchar(8) NOT NULL DEFAULT 'NEW'", "renews_grant_id uuid"],
     [("fk_access_request_purpose", f"FOREIGN KEY (tenant_id, purpose_code) REFERENCES {S}.purpose (tenant_id, code)"),
      chk("access_request", "kind", f"contract_kind IN {E('ContractKind')}"),
+     chk("access_request", "req_kind", f"request_kind IN {E('AccessRequestKind')}"),
+     chk("access_request", "renews", "(request_kind = 'RENEWAL') = (renews_grant_id IS NOT NULL)"),
      chk("access_request", "fields", "cardinality(fields) >= 1"),
      chk("access_request", "volume", "expected_volume BETWEEN 1 AND 10000000 AND requested_days BETWEEN 1 AND 730"),
      chk("access_request", "justification", "char_length(justification) >= 20"),
@@ -372,7 +375,9 @@ G_PURPOSE.append(T("access_request",
          f"CREATE INDEX ix_access_request_httt ON {S}.access_request (tenant_id, httt_id, created_at DESC);"],
     trig=[("immutable", ["httt_id", "purpose_code", "contract_kind", "contract_id"])], tid=True,
     ccomment={"httt_id": "Mã HTTT ở PH-01 (không khóa ngoại).", "registration_ref": "Đăng ký sử dụng ở PH-02.",
-              "owner_org_id": "Tổ chức chủ quản dữ liệu, đích hộp việc của DO."}))
+              "owner_org_id": "Tổ chức chủ quản dữ liệu, đích hộp việc của DO.",
+              "request_kind": "AccessRequestKind: NEW (mặc định) hoặc RENEWAL, yêu cầu gia hạn chấp thuận hiện có (FR-09-015).",
+              "renews_grant_id": "Chấp thuận ACTIVE được gia hạn; bắt buộc khi RENEWAL, rỗng khi NEW; cùng HTTT và mục đích kiểm ở dịch vụ (FR-09-015, 016)."}))
 
 G_PURPOSE.append(T("purpose_grant",
     "EN-09-17 Chấp thuận khai thác: bộ ba (HTTT, mục đích, hợp đồng), không chuyển nhượng (BR-09-013, FR-09-016, 017). Máy trạng thái GrantStatus; tối đa 3 lần gia hạn mặc định; thu hồi cần lý do 20 ký tự; một chấp thuận hiệu lực mỗi bộ ba. Nguồn của purpose_grants trong bundle OPA (FR-09-018).",
@@ -394,7 +399,8 @@ G_PURPOSE.append(T("purpose_grant",
     idx=[f"CREATE UNIQUE INDEX uq_purpose_grant_live ON {S}.purpose_grant (tenant_id, httt_id, purpose_code, contract_kind, contract_id) WHERE status IN ('SCHEDULED', 'ACTIVE', 'SUSPENDED');",
          f"CREATE INDEX ix_purpose_grant_expiry ON {S}.purpose_grant (tenant_id, valid_to) WHERE status IN ('SCHEDULED', 'ACTIVE', 'SUSPENDED');",
          f"CREATE INDEX ix_purpose_grant_httt ON {S}.purpose_grant (tenant_id, httt_id, status);"],
-    trig=[("immutable", ["request_id", "httt_id", "purpose_code", "contract_kind", "contract_id", "approved_by"])], tid=True))
+    trig=[("immutable", ["request_id", "httt_id", "purpose_code", "contract_kind", "contract_id", "approved_by"])], tid=True,
+    post=[f"ALTER TABLE {S}.access_request ADD CONSTRAINT fk_access_request_renews FOREIGN KEY (tenant_id, renews_grant_id) REFERENCES {S}.purpose_grant (tenant_id, id);"]))
 
 G_PURPOSE.append(T("grant_condition",
     "EN-09-18 Điều kiện của chấp thuận (FR-09-016, BR-09-016): FIELD_SUBSET, DAILY_QUOTA, TIME_WINDOW, NO_EXPORT, MASK_REQUIRED, tham số jsonb. Ghi vào bundle OPA; mỗi loại tối đa một dòng mỗi chấp thuận.",
@@ -656,7 +662,7 @@ G_RET.append(T("retention_schedule",
     trig=[("immutable", ["schedule_code", "version_no"])]))
 
 G_RET.append(T("retention_schedule_line",
-    "EN-09-36 Dòng lịch lưu giữ (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.",
+    "EN-09-53 Dòng lịch lưu giữ, bảng con của RetentionSchedule (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.",
     ["schedule_id uuid NOT NULL", "entity varchar(128) NOT NULL", "category varchar(32)", "retain_days integer NOT NULL", "action varchar(12) NOT NULL", "owner varchar(64) NOT NULL"],
     [fk("retention_schedule_line", "schedule_id", "retention_schedule"),
      chk("retention_schedule_line", "days", "retain_days BETWEEN 1 AND 36500"),
@@ -885,7 +891,7 @@ G_OPS.append(T("tenant_setting",
 
 OUTBOX = ", ".join("'%s'" % t for t in TOPICS)
 G_OPS.append(T("outbox_event",
-    "Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.",
+    "EN-09-54 Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.",
     ["event_id uuid NOT NULL", "tenant_id varchar(16) NOT NULL", "event_type varchar(128) NOT NULL", "topic varchar(249) NOT NULL", "aggregate_type varchar(64) NOT NULL",
      "aggregate_id varchar(255) NOT NULL", "partition_key varchar(255) NOT NULL", "payload jsonb NOT NULL", "trace_id char(32) NOT NULL", "occurred_at timestamptz NOT NULL DEFAULT now()"],
     [("pk_outbox_event", "PRIMARY KEY (event_id)"),
@@ -897,7 +903,7 @@ G_OPS.append(T("outbox_event",
     idx=[f"CREATE INDEX ix_outbox_event_occurred ON {S}.outbox_event (occurred_at);"], std=False, nopk=True))
 
 G_OPS.append(T("inbox_event",
-    "Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.",
+    "EN-09-55 Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.",
     ["tenant_id varchar(16) NOT NULL", "consumer varchar(64) NOT NULL", "event_id varchar(255) NOT NULL", "source_topic varchar(249) NOT NULL", "event_type varchar(255) NOT NULL",
      "received_at timestamptz NOT NULL DEFAULT now()", "processed_at timestamptz", "outcome varchar(2000)"],
     [("pk_inbox_event", "PRIMARY KEY (tenant_id, consumer, event_id)"),
@@ -997,7 +1003,7 @@ def seed_sql():
 
 HEAD = r"""-- =============================================================================
 -- D03-03-PH09 · DDL schema ph09_privacy — PH-09 Quyền riêng tư (bảo vệ dữ liệu cá nhân)
--- Phiên bản 0.1 · 2026-11-26 · Dự thảo
+-- Phiên bản 0.2 · 2026-11-26 · Dự thảo
 -- TỆP SINH bởi tools/sinh_ddl.py từ danh mục bảng và Phụ lục A của D02-03-PH09; sửa ở đó rồi sinh lại.
 --
 -- Chạy độc lập (phát triển):  psql -v ON_ERROR_STOP=1 -U postgres -d ph09_test -f ph09_privacy.sql

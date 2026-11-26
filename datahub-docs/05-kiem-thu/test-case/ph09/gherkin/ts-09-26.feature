@@ -5,12 +5,12 @@ Tính năng: TS-09-26 · Chuẩn bị dữ liệu cho AI, môi trường không 
 
   @TC-09-090 @P1 @Dương
   Kịch bản: TC-09-090 Chuẩn bị dữ liệu AI chỉ ẩn danh, RESTRICTED khi bật và chạy nội bộ
-    # Truy vết: FR-09-038 · API-09-137, 138 · BR-09-037 · ERR-09-003 · EVT-09-18
+    # Truy vết: FR-09-038 · API-09-137, 138 · BR-09-037 · ERR-09-082 · EVT-09-18
     # Mục đích: Chứng minh dữ liệu cho AI chỉ ẩn danh và `RESTRICTED` cần cờ tenant (SEC-38, SEC-49).
     Biết T96; `09.ai.allow-restricted = false`; PH-17 giả lập; U-T90-DS1.
     Khi DS1 `POST /data-preparations` đích `AI_TRAINING` cho tập `RESTRICTED`.
     Và bật `09.ai.allow-restricted = true`, mô hình chạy nội bộ; lặp lại.
-    Thì bước 1 `400` ERR-09-003 (FRS chưa có mã riêng cho cờ tắt, đề nghị ở ĐN-TC-04). Bước 2 `202`, tập ẩn danh k ≥ 10, siêu dữ liệu nêu cấu hình, EVT: `dataset.status-changed` khi phát hành.
+    Thì bước 1 `422` ERR-09-082 "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted." Bước 2 `202`, tập ẩn danh k ≥ 10, siêu dữ liệu nêu cấu hình, EVT: `dataset.status-changed` khi phát hành.
 
   @TC-09-091 @P1 @Âm @Bảo @mật
   Kịch bản: TC-09-091 Đích không PROD dùng dữ liệu SENSITIVE thật bị cấm, mục đích không cho phép

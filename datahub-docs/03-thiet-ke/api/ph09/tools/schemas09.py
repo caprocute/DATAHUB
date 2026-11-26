@@ -43,7 +43,7 @@ READ = {
     'Purpose': 'code!:code, name!:s, description:s, legalBasisCode!:code, allowedCategories!:[code], statutory!:b, maxDays:i, status!:#PurposeStatus',
     'AccessRequest': 'htttId!:s, registrationRef:s, ownerOrgId!:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, fields!:[s], expectedVolume:i, '
                      'requestedDays!:i, justification!:s, status!:#AccessRequestStatus, submittedAt:ts, reviewer:s, decision:#AccessDecision, decisionReason:s, '
-                     'decidedBy:s, decidedAt:ts, dueAt:ts',
+                     'decidedBy:s, decidedAt:ts, dueAt:ts, requestKind!:#AccessRequestKind, renewsGrantId:u',
     'PurposeGrant': 'htttId!:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, requestId:u, fields!:[s], validFrom!:ts, validUntil!:ts, '
                     'status!:#GrantStatus, renewCount!:i, conditions!:[#GrantCondition], suspendedReason:s, revokedReason:s, revokedBy:s, revokedAt:ts',
     'PolicyBundle': 'bundleNo!:i, objectRef!:s, sizeBytes!:i, sha256!:s, testPassed!:b, publishedAt:ts, validUntil!:ts, signingKeyRef!:s, trigger!:e(AUTO|MANUAL|ROLLBACK)',
@@ -114,7 +114,7 @@ PLAIN = {
     'AnonRule': 'field!:s, identifiability!:#IdentifiabilityType, transform!:s, params:o',
     'RetentionLine': 'tableName!:s, retainDays!:i, action!:#RetentionAction, basis:s',
     'RetentionReportRow': 'tableName!:s, action!:#RetentionAction, dueRows!:i, overdueRows!:i, heldRows!:i',
-    'Setting': 'key!:s, value!:o, floorValue:o, ceilingValue:o, updatedAt:ts',
+    'Setting': 'key!:s, value!:o, defaultValue:o, floorValue:o, ceilingValue:o, source:e(DEFAULT|TENANT), updatedAt:ts',
     'SettingList': 'items!:[#Setting]',
     'BulkResult': 'created!:i, updated!:i, skipped!:i, errors!:[#ItemError]',
     'ItemError': 'index!:i, code!:s, message!:s',
@@ -156,6 +156,8 @@ INPUT = {
     'RetireInput': 'reason!:s20',
     'ReasonInput': 'reason!:s20',
     'CommentInput': 'comment:s',
+    'ExtendInput': 'newDueAt!:ts, reason!:s20',
+    'ConsentSearchInput': 'identifierType!:#SubjectIdentifierType, identifier!:s, templateCode:code, status:#ConsentStatus',
     'ActivityLinkInput': 'targetKind!:#TargetKind, targetId!:s',
     'LegalBasisInput': 'code!:code, basisType!:#LegalBasisType, name!:s, rule:s',
     'LegalBasisPatch': 'name:s, rule:s, status:#ElementStatus',
@@ -163,7 +165,7 @@ INPUT = {
     'LegalDocumentPatch': 'effectiveTo:d, status:#ElementStatus',
     'PurposeInput': 'code!:code, name!:s, description:s, legalBasisCode!:code, allowedCategories!:[code], statutory:b, maxDays:i',
     'PurposePatch': 'name:s, description:s, allowedCategories:[code], maxDays:i',
-    'AccessRequestInput': 'htttId!:s, registrationRef:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, fields!:[s], expectedVolume:i, requestedDays!:i, justification!:s',
+    'AccessRequestInput': 'htttId!:s, registrationRef:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, fields!:[s], expectedVolume:i, requestedDays!:i, justification!:s, requestKind:#AccessRequestKind, renewsGrantId:u',
     'AccessDecisionInput': 'decision!:#AccessDecision, comment:s, periodDays:i, conditions:[#GrantConditionInput]',
     'GrantConditionInput': 'conditionType!:#ConditionType, params!:o',
     'InfoRequestInput': 'questions!:[s]',
@@ -254,14 +256,14 @@ DATA_PLANE = {
     'UsageEventsRequest': 'point!:s, events!:[#UsageEvent]',
     'UsageEvent': 'bucket!:ts, htttId!:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, allowed!:i, denied!:i, offPurpose:i',
     'UsageEventsResponse': 'accepted!:i, rejected!:i',
-    'RevealGrantIssued': 'grantId!:u, token!:s, status!:#RevealStatus, issuedAt!:ts, expiresAt!:ts, value!:s',
+    'RevealGrantIssued': 'grantId!:u, token!:s, status!:#RevealStatus, issuedAt!:ts, expiresAt!:ts, serverTime!:ts, remainingThisHour!:i, value!:s',
 }
 
 # schema thân yêu cầu không đi qua READ/INPUT: tên -> lớp phân loại DLCN của thân/phản hồi
 CLASSIFIED = {
     'SubjectRequestInput': 'SENSITIVE', 'RevealGrantIssued': 'SENSITIVE', 'ConsentInput': 'RESTRICTED', 'SubjectRequest': 'RESTRICTED',
     'ConsentRecord': 'RESTRICTED', 'ReidRequestInput': 'RESTRICTED', 'ReidExecuteResult': 'SENSITIVE', 'BreachCase': 'RESTRICTED',
-    'SubjectHashRequest': 'SENSITIVE', 'PseudonymIssueRequest': 'SENSITIVE', 'PseudonymIssueResponse': 'RESTRICTED',
+    'SubjectHashRequest': 'SENSITIVE', 'ConsentSearchInput': 'SENSITIVE', 'PseudonymIssueRequest': 'SENSITIVE', 'PseudonymIssueResponse': 'RESTRICTED',
     'MessageApplyRequest': 'SENSITIVE', 'MessageApplyResponse': 'RESTRICTED', 'AuditEvent': 'RESTRICTED',
 }
 

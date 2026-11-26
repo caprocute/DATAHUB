@@ -1119,41 +1119,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: scope
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/ElementScope'
-      - name: dataClass
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DataClass'
-      - name: personalDataType
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/PersonalDataType'
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/ClassificationStatus'
-      - name: contractId
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: ownerOrgId
-        in: query
-        required: false
-        schema:
-          type: string
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -1338,11 +1303,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/ScanStatus'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2347,21 +2307,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/VersionStatus'
-      - name: purposeCode
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/Code'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2405,21 +2350,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/VersionStatus'
-      - name: purposeCode
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/Code'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -5941,7 +5871,8 @@ paths:
       x-datahub-permission:
         permission: PERM-09-unmask
       description: Phiếu hết hạn sau `09.mask.reveal-seconds` (60) giây, không gia hạn; tối đa 20 phiếu mỗi người mỗi giờ (ERR-09-043); trường `neverReveal` bị từ
-        chối (ERR-09-042); giá trị chỉ có trong thân phản hồi `no-store`, không ghi đĩa; ghi kiểm toán không giá trị (BR-09-026).
+        chối (ERR-09-042); thân trả thêm `serverTime` và `remainingThisHour`, giao diện đếm ngược theo `expiresAt` của máy chủ; giá trị chỉ có trong thân phản hồi
+        `no-store`, không ghi đĩa; ghi kiểm toán không giá trị (BR-09-026).
       security:
       - oauth2User: []
       x-dh-classification: SENSITIVE
@@ -5973,6 +5904,8 @@ paths:
                 status: ISSUED
                 issuedAt: '2026-11-26T09:15:02+07:00'
                 expiresAt: '2026-11-26T09:16:02+07:00'
+                serverTime: '2026-11-26T09:15:02+07:00'
+                remainingThisHour: 17
                 value: <gia-tri-ro-mau>
           headers:
             Location:
@@ -6685,11 +6618,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/PseudonymDomainStatus'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -7281,7 +7209,8 @@ paths:
       - FR-09-033
       x-datahub-permission:
         permission: PERM-09-reidentify
-      description: Yêu cầu MFA mới trong 5 phút và cửa sổ thực hiện 30 phút; kết quả giao qua `resultRef` hết hạn, không trả giá trị gốc trong thân; phát EVT-09-17.
+      description: Yêu cầu MFA mới trong 5 phút và cửa sổ thực hiện 30 phút; kết quả giao qua `resultRef` (Garage, mã hóa SSE-C, tải một lần) hết hạn theo `expiresAt`
+        của máy chủ sau 60 giây, không trả giá trị gốc trong thân; phát EVT-09-17.
       security:
       - oauth2User: []
       x-dh-classification: RESTRICTED
@@ -8057,8 +7986,10 @@ paths:
       - ERR-09-003
       - ERR-09-010
       - ERR-09-055
+      - ERR-09-082
       x-datahub-domain-errors:
       - ERR-09-055
+      - ERR-09-082
     get:
       tags:
       - Giả danh và ẩn danh
@@ -9888,26 +9819,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DsrStatus'
-      - name: requestType
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DsrType'
-      - name: overdue
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: assignedTo
-        in: query
-        required: false
-        schema:
-          type: string
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -10016,26 +9927,6 @@ paths:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
       - $ref: '#/components/parameters/Sort'
-      - name: status
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DsrStatus'
-      - name: requestType
-        in: query
-        required: false
-        schema:
-          $ref: '#/components/schemas/DsrType'
-      - name: overdue
-        in: query
-        required: false
-        schema:
-          type: boolean
-      - name: assignedTo
-        in: query
-        required: false
-        schema:
-          type: string
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -12394,6 +12285,49 @@ paths:
       x-datahub-domain-errors:
       - ERR-09-076
       - ERR-09-077
+    get:
+      tags:
+      - DPIA và vi phạm
+      operationId: api09239
+      summary: Liệt kê thông báo của vụ việc
+      x-datahub-id: API-09-239
+      x-datahub-fr:
+      - FR-09-059
+      x-datahub-permission:
+        permission: PERM-09-breach
+      security:
+      - oauth2User: []
+      x-dh-classification: RESTRICTED
+      parameters:
+      - name: breachId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachNotificationPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-datahub-errors:
+      - ERR-09-001
+      x-datahub-domain-errors: []
   /breaches/{breachId}/notifications/{notificationId}:mark-sent:
     post:
       tags:
@@ -12600,6 +12534,49 @@ paths:
       - ERR-09-076
       x-datahub-domain-errors:
       - ERR-09-076
+    get:
+      tags:
+      - DPIA và vi phạm
+      operationId: api09240
+      summary: Liệt kê biện pháp khắc phục của vụ việc
+      x-datahub-id: API-09-240
+      x-datahub-fr:
+      - FR-09-060
+      x-datahub-permission:
+        permission: PERM-09-breach
+      security:
+      - oauth2User: []
+      x-dh-classification: RESTRICTED
+      parameters:
+      - name: breachId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Sort'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachActionPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-datahub-errors:
+      - ERR-09-001
+      x-datahub-domain-errors: []
   /breaches/{breachId}/lessons:
     post:
       tags:
@@ -13325,6 +13302,404 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
       x-datahub-errors: []
       x-datahub-domain-errors: []
+  /consent-templates/{templateCode}:
+    get:
+      tags:
+      - Sự đồng ý
+      operationId: api09238
+      summary: Chi tiết mẫu đồng ý và các phiên bản
+      x-datahub-id: API-09-238
+      x-datahub-fr:
+      - FR-09-052
+      x-datahub-permission:
+        permission: PERM-09-consent
+      security:
+      - oauth2User: []
+      parameters:
+      - name: templateCode
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Code'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentTemplate'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-datahub-errors:
+      - ERR-09-001
+      x-datahub-domain-errors: []
+  /reveal-grants/{grantId}:
+    get:
+      tags:
+      - Che dữ liệu
+      operationId: api09241
+      summary: Chi tiết một phiếu xem đầy đủ (không kèm giá trị)
+      x-datahub-id: API-09-241
+      x-datahub-fr:
+      - FR-09-029
+      x-datahub-permission:
+        permission: PERM-09-audit-read
+      security:
+      - oauth2User: []
+      x-dh-classification: SENSITIVE
+      parameters:
+      - name: grantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevealGrant'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      x-datahub-errors:
+      - ERR-09-001
+      x-datahub-domain-errors: []
+  /subject-requests/{requestId}:extend:
+    post:
+      tags:
+      - Quyền chủ thể
+      operationId: api09242
+      summary: Gia hạn hạn trả lời kèm lý do
+      x-datahub-id: API-09-242
+      x-datahub-fr:
+      - FR-09-049
+      x-datahub-permission:
+        permission: PERM-09-dsr
+      description: Gia hạn một lần, kèm lý do tối thiểu 20 ký tự; `newDueAt` không quá hạn pháp luật cho phép; thông báo chủ thể về hạn mới (FR-09-049).
+      security:
+      - oauth2User: []
+      x-dh-classification: RESTRICTED
+      x-datahub-idempotent: required
+      parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendInput'
+            example:
+              newDueAt: '2026-12-24T17:00:00+07:00'
+              reason: Yêu cầu phức tạp, cần đối chiếu dữ liệu ở ba hệ thống nguồn
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectRequest'
+              example:
+                id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+                version: 3
+                createdAt: '2026-11-20T09:00:00+07:00'
+                createdBy: nguyen.van.an
+                updatedAt: '2026-11-26T09:15:02+07:00'
+                updatedBy: tran.thi.binh
+                requestType: ACCESS
+                status: IN_PROGRESS
+                channel: COUNTER
+                identifierType: NATIONAL_ID
+                receivedAt: '2026-11-26T09:15:02+07:00'
+                dueAt: '2026-12-24T17:00:00+07:00'
+                overdue: false
+                restrictionActive: false
+                subjectHash: q3Hk7mXw2RtY9bLz0Pv5nCj8sUeAd1GfOiMhT4yVxKo
+          headers:
+            ETag:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-09-001
+      - ERR-09-003
+      - ERR-09-004
+      - ERR-09-006
+      - ERR-09-010
+      x-datahub-domain-errors: []
+  /data-elements/{elementId}:retire:
+    post:
+      tags:
+      - Phân loại
+      operationId: api09243
+      summary: Ngừng phần tử dữ liệu
+      x-datahub-id: API-09-243
+      x-datahub-fr:
+      - FR-09-003
+      x-datahub-permission:
+        permission: PERM-09-classify
+      security:
+      - oauth2User: []
+      x-datahub-idempotent: required
+      parameters:
+      - name: elementId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetireInput'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataElement'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-09-001
+      - ERR-09-003
+      - ERR-09-004
+      - ERR-09-006
+      - ERR-09-007
+      - ERR-09-010
+      - ERR-09-014
+      - ERR-09-015
+      x-datahub-domain-errors:
+      - ERR-09-014
+      - ERR-09-015
+  /subject-requests/{requestId}:withdraw:
+    post:
+      tags:
+      - Quyền chủ thể
+      operationId: api09244
+      summary: Rút yêu cầu của chủ thể
+      x-datahub-id: API-09-244
+      x-datahub-fr:
+      - FR-09-045
+      x-datahub-permission:
+        permission: PERM-09-dsr
+      security:
+      - oauth2User: []
+      x-dh-classification: RESTRICTED
+      x-datahub-idempotent: required
+      parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonInput'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubjectRequest'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-09-001
+      - ERR-09-003
+      - ERR-09-004
+      - ERR-09-006
+      - ERR-09-007
+      - ERR-09-010
+      - ERR-09-062
+      - ERR-09-064
+      - ERR-09-065
+      x-datahub-domain-errors:
+      - ERR-09-062
+      - ERR-09-064
+      - ERR-09-065
+  /consents:search:
+    post:
+      tags:
+      - Sự đồng ý
+      operationId: api09245
+      summary: Tra đồng ý theo định danh trong thân, trả danh sách theo băm
+      x-datahub-id: API-09-245
+      x-datahub-fr:
+      - FR-09-053
+      x-datahub-permission:
+        permission: PERM-09-consent
+      description: 'Tra theo định danh rõ trong thân (bên có quyền nhập): PH-09 tính băm HMAC rồi tra, không ghi định danh vào log, kết quả chỉ mang `subjectHash`
+        (FR-09-053).'
+      security:
+      - oauth2User: []
+      x-dh-classification: RESTRICTED
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentSearchInput'
+            example:
+              identifierType: PHONE
+              identifier: <so-dien-thoai-mau>
+              templateCode: DY-THONG-BAO-SMS
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentRecordPage'
+              example:
+                items:
+                - id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+                  version: 3
+                  createdAt: '2026-11-20T09:00:00+07:00'
+                  createdBy: nguyen.van.an
+                  updatedAt: '2026-11-26T09:15:02+07:00'
+                  updatedBy: tran.thi.binh
+                  templateCode: DY-THONG-BAO-SMS
+                  templateVersion: 2
+                  subjectHash: q3Hk7mXw2RtY9bLz0Pv5nCj8sUeAd1GfOiMhT4yVxKo
+                  status: GIVEN
+                  channel: APP
+                  givenAt: '2026-11-26T09:15:02+07:00'
+                  recordedBy: dich-vu-cong
+                page: 0
+                size: 20
+                totalElements: 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      x-datahub-errors:
+      - ERR-09-003
+      - ERR-09-006
+      - ERR-09-010
+      - ERR-09-071
+      - ERR-09-072
+      x-datahub-domain-errors:
+      - ERR-09-071
+      - ERR-09-072
   /privacy/v1/purpose:decide:
     post:
       tags:
@@ -13506,7 +13881,7 @@ paths:
       - FR-09-028
       x-datahub-permission:
         permission: scope privacy:apply
-      description: Áp kế hoạch che cho bản tin ≤ 256 KB; lô lớn hơn thì ERR-09-107; không ghi được nhật ký che thì từ chối (ERR-09-110); không lưu bản tin.
+      description: Áp kế hoạch che cho bản tin JSON ≤ 1 MiB; lô lớn hơn thì ERR-09-107; không ghi được nhật ký che thì từ chối (ERR-09-110); không lưu bản tin.
       security:
       - oauth2Machine:
         - privacy:apply
@@ -13865,6 +14240,7 @@ paths:
       x-datahub-id: API-09-235
       x-datahub-fr:
       - FR-09-047
+      - FR-09-053
       x-datahub-permission:
         permission: scope privacy:decide
       description: HMAC-SHA256 khóa riêng tenant; không ghi giá trị vào (ERR-09-108 khi OpenBao không khả dụng); chỉ cho bên có `privacy:decide`.
@@ -14142,10 +14518,10 @@ components:
             $ref: '#/components/schemas/ProblemDetails'
           examples:
             ERR_09_003:
-              summary: Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại
+              summary: 'Dữ liệu không hợp lệ: {chi tiết}.'
               value:
                 type: https://datahub.gov.vn/errors/ERR-09-003
-                title: Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại
+                title: 'Dữ liệu không hợp lệ: {chi tiết}.'
                 status: 400
                 code: ERR-09-003
                 traceId: 4bf92f3577b34da6a3ce929d0e0e4736
@@ -14836,11 +15212,76 @@ components:
       - API
       - TOPIC
       - FLOW
+    BlockLabelStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - RELEASE_REQUESTED
+      - RELEASED
+    SchemaFormat:
+      type: string
+      enum:
+      - OPENAPI
+      - JSON_SCHEMA
+      - AVRO
+    FindingResolution:
+      type: string
+      enum:
+      - CLASSIFY
+      - EXCLUDE
+      - FIXED
+    AccessRequestKind:
+      type: string
+      enum:
+      - NEW
+      - RENEWAL
+    DecideReason:
+      type: string
+      enum:
+      - GRANTED
+      - NO_GRANT
+      - BLOCK_LABEL
+      - RESTRICTED_SUBJECT
+      - SENSITIVE_NO_PURPOSE
+    BundleTrigger:
+      type: string
+      enum:
+      - AUTO
+      - MANUAL
+      - ROLLBACK
     MaskPolicyScope:
       type: string
       enum:
       - TENANT
       - CONTRACT
+    UsageGroupBy:
+      type: string
+      enum:
+      - HTTT
+      - PURPOSE
+      - CONTRACT
+      - DAY
+    ConsentCheckStatus:
+      type: string
+      enum:
+      - GIVEN
+      - WITHDRAWN
+      - EXPIRED
+      - NONE
+    BreachClockLevel:
+      type: string
+      enum:
+      - OK
+      - WARN_24
+      - WARN_48
+      - WARN_60
+      - OVERDUE
+    AuditOutcome:
+      type: string
+      enum:
+      - SUCCESS
+      - DENIED
+      - FAILED
     ReportFormat:
       type: string
       enum:
@@ -15706,6 +16147,11 @@ components:
         dueAt:
           type: string
           format: date-time
+        requestKind:
+          $ref: '#/components/schemas/AccessRequestKind'
+        renewsGrantId:
+          type: string
+          format: uuid
       required:
       - version
       - id
@@ -15718,6 +16164,7 @@ components:
       - requestedDays
       - justification
       - status
+      - requestKind
     PurposeGrant:
       type: object
       properties:
@@ -18041,12 +18488,20 @@ components:
         value:
           type: object
           additionalProperties: true
+        defaultValue:
+          type: object
+          additionalProperties: true
         floorValue:
           type: object
           additionalProperties: true
         ceilingValue:
           type: object
           additionalProperties: true
+        source:
+          type: string
+          enum:
+          - DEFAULT
+          - TENANT
         updatedAt:
           type: string
           format: date-time
@@ -18567,6 +19022,33 @@ components:
       properties:
         comment:
           type: string
+    ExtendInput:
+      type: object
+      properties:
+        newDueAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          minLength: 20
+      required:
+      - newDueAt
+      - reason
+    ConsentSearchInput:
+      type: object
+      properties:
+        identifierType:
+          $ref: '#/components/schemas/SubjectIdentifierType'
+        identifier:
+          type: string
+        templateCode:
+          $ref: '#/components/schemas/Code'
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+      required:
+      - identifierType
+      - identifier
+      x-dh-classification: SENSITIVE
     ActivityLinkInput:
       type: object
       properties:
@@ -18689,6 +19171,11 @@ components:
           type: integer
         justification:
           type: string
+        requestKind:
+          $ref: '#/components/schemas/AccessRequestKind'
+        renewsGrantId:
+          type: string
+          format: uuid
       required:
       - htttId
       - purposeCode
@@ -19971,6 +20458,11 @@ components:
         expiresAt:
           type: string
           format: date-time
+        serverTime:
+          type: string
+          format: date-time
+        remainingThisHour:
+          type: integer
         value:
           type: string
       required:
@@ -19979,6 +20471,8 @@ components:
       - status
       - issuedAt
       - expiresAt
+      - serverTime
+      - remainingThisHour
       - value
       x-dh-classification: SENSITIVE
     DataClassPolicyPage:
@@ -20917,6 +21411,50 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SettingChange'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          minimum: 0
+    BreachNotificationPage:
+      type: object
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreachNotification'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          minimum: 0
+    BreachActionPage:
+      type: object
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BreachAction'
         page:
           type: integer
           minimum: 0

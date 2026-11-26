@@ -5,23 +5,25 @@ Tính năng: TS-09-31 · Mẫu và bản ghi sự đồng ý
 
   @TC-09-106 @P1 @Dương @Âm
   Kịch bản: TC-09-106 Tạo mẫu, duyệt, sửa mẫu đã có người đồng ý phải tạo phiên bản mới
-    # Truy vết: FR-09-052 · API-09-183, 185, 186, 184 · ERR-09-069, 070, 005 · BR-09-049
+    # Truy vết: FR-09-052 · API-09-183, 185, 186, 184, 238 · ERR-09-069, 070, 005 · BR-09-049
     # Mục đích: Chứng minh mẫu nêu mục đích cụ thể, dữ liệu, cách rút và không sửa tại chỗ.
     Biết T90; U-T90-SO (soạn), U-T90-DA1; mẫu `CNS-TIENICH` đã có 3 người đồng ý.
     Khi SO tạo mẫu thiếu cách rút lại.
     Và SO tạo mẫu đủ; gửi duyệt; tự duyệt; DA1 duyệt.
     Và SO `PUT /consent-templates/CNS-TIENICH/versions/1` khi đã có người đồng ý.
-    Thì bước 1 `422` ERR-09-069. Bước 2 tự duyệt `403` ERR-09-005, DA1 `ACTIVE`. Bước 3 `409` ERR-09-070 "Mẫu đã có người đồng ý. Tạo phiên bản mới thay vì sửa."
+    Và SO `GET /consent-templates/CNS-TIENICH`.
+    Thì bước 1 `422` ERR-09-069. Bước 2 tự duyệt `403` ERR-09-005, DA1 `ACTIVE`. Bước 3 `409` ERR-09-070 "Mẫu đã có người đồng ý. Tạo phiên bản mới thay vì sửa." Bước 4 `200`, chi tiết mẫu kèm danh sách phiên bản (API-09-238).
 
   @TC-09-107 @P1 @Dương @Âm
   Kịch bản: TC-09-107 Ghi nhận đồng ý đủ bằng chứng, rút trong 60 giây, rút lần hai
-    # Truy vết: FR-09-053, 054 · API-09-188, 189, 191, 234 · ERR-09-071, 072 · BR-09-050, 051 · EVT-09-27, 28
+    # Truy vết: FR-09-053, 054 · API-09-188, 189, 191, 234, 245 · ERR-09-071, 072 · BR-09-050, 051 · EVT-09-27, 28
     # Mục đích: Chứng minh bằng chứng đủ trường và rút đồng ý hiệu lực ≤ 60 giây (đệm `09.consent.cache-seconds` tối đa 60).
     Biết T90; S-T90-CONSENT; mẫu `CNS-TIENICH` v1 `ACTIVE`; chủ thể CC-01 (băm).
     Khi S-T90-CONSENT `POST /consents` thiếu kênh hoặc phiên bản mẫu.
     Và gửi đủ (băm chủ thể, mẫu và phiên bản, băm nội dung hiển thị, thời điểm, kênh `WEB`, người ghi).
     Và `POST /privacy/v1/consents:check`; rút `:withdraw`; kiểm lại sau ≤ 60 giây; rút lần hai.
-    Thì bước 1 `422` ERR-09-071. Bước 2 `201` `GIVEN`, EVT: `consent.given`. Bước 3 trạng thái `GIVEN` rồi `WITHDRAWN` ≤ 60 giây sau khi rút, EVT: `consent.withdrawn`; rút lần hai `409` ERR-09-072. Xử lý trước đó không bị vô hiệu.
+    Và SO `POST /consents:search` với định danh chủ thể trong thân (mã mẫu `<bi-mat-mau>`).
+    Thì bước 1 `422` ERR-09-071. Bước 2 `201` `GIVEN`, EVT: `consent.given`. Bước 3 trạng thái `GIVEN` rồi `WITHDRAWN` ≤ 60 giây sau khi rút, EVT: `consent.withdrawn`; rút lần hai `409` ERR-09-072. Xử lý trước đó không bị vô hiệu. Bước 4 `200`, danh sách bản ghi đồng ý theo băm; định danh không lặp lại trong kết quả và log (API-09-245).
 
   @TC-09-108 @P2 @Âm
   Kịch bản: TC-09-108 Đồng ý chỉ cho tiện ích không bắt buộc

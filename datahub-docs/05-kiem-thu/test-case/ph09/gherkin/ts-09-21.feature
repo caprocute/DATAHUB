@@ -10,8 +10,8 @@ Tính năng: TS-09-21 · Che log, trace và quét rò rỉ DLCN trong log
     Biết T90; F-LOG log 5 phút có `DH-CANARY-log-scan` và CCCD giả ở dạng rõ; U-T90-SO.
     Khi SO `PUT /log-masking-config` mức `SENSITIVE` ghi `[REDACTED]`.
     Và `POST /leak-scans`; `GET /leak-findings`.
-    Và SO `POST /leak-findings/{id}:resolve`.
-    Thì bước 2 có kết quả chỉ tên trường, dịch vụ, thời điểm; không giá trị rõ; thẻ UI-09-01 tăng. Bước 3 `RESOLVED`, KT: có.
+    Và SO `POST /leak-findings/{id}:resolve` với `resolution = FIXED`.
+    Thì bước 2 có kết quả chỉ tên trường, dịch vụ, thời điểm; không giá trị rõ; thẻ UI-09-01 tăng. Bước 3 kết quả không còn `OPEN`, có người xử lý và thời điểm xử lý, KT: có.
 
   @TC-09-073 @P2 @Âm
   Kịch bản: TC-09-073 Cấu hình che log không hợp lệ

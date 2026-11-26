@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH09
 ten: Đặc tả use case phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -68,7 +68,7 @@ Mỗi use case dùng một khối `::: dac-ta` 15 mục theo thứ tự của K-
 
 Luồng chính đánh số 1, 2, 3. Luồng thay thế ghi `số bước + chữ` (3a rẽ tại bước 3) và nêu bước quay lại. Luồng ngoại lệ ghi `E1`, `E2` kèm bước, mã `ERR-09-nnn`, mã HTTP trong ngoặc và câu thông báo trong ngoặc kép (nguyên văn FRS §9.1; dấu `{…}` do máy chủ điền). ERR-09-101…113 là lỗi data plane, không hiện cho người dùng cuối mà ghi vào nhật ký điểm thực thi, UI-09-01 và UI-09-20 (FRS §9.2). Lỗi thiếu quyền chức năng dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428 và không nhắc lại từng use case. Luồng phụ dùng chung ghi `LP-09-nn` (chương 7).
 
-Quy ước chung: lệnh ghi qua `/api/privacy/v1` mang `Idempotency-Key` (BR-09-061) và `If-Match` khi sửa (xung đột: ERR-09-004, 409); đối tượng của tenant khác trả như không tồn tại (ERR-09-001, 404); mọi bảng chạy dưới RLS theo `tenant_id` (BR-09-060); mọi thao tác ghi sinh kiểm toán qua thư viện chung vào PH-13, không ghi được thì thao tác đặc quyền bị từ chối (ERR-09-010, BR-09-057). Dữ liệu ví dụ giả lập, tenant `T68`.
+Quy ước chung: lệnh ghi qua `/api/privacy/v1` mang `Idempotency-Key` (BR-09-061; dùng lại khóa với thân khác: ERR-09-081, 409) và `If-Match` khi sửa (xung đột: ERR-09-004, 409); đối tượng của tenant khác trả như không tồn tại (ERR-09-001, 404); mọi bảng chạy dưới RLS theo `tenant_id` (BR-09-060); mọi thao tác ghi sinh kiểm toán qua thư viện chung vào PH-13, không ghi được thì thao tác đặc quyền bị từ chối (ERR-09-010, BR-09-057). Dữ liệu ví dụ giả lập, tenant `T68`.
 
 | Vai | Người hoặc hệ thống | Ghi chú |
 |---|---|---|
@@ -217,6 +217,148 @@ flowchart TB
 Hình cho thấy chủ thể dữ liệu không đăng nhập Datahub: yêu cầu đến qua cổng dịch vụ công hoặc quầy (nét đứt) và do cán bộ ATTT xử lý; TO ghi nhận vi phạm ban đầu nhưng chỉ SO, TA đóng hồ sơ.
 
 
+## 5. Bảng tổng hợp use case và truy vết
+
+Bốn bảng dưới đây nối use case với FR, màn hình, API, yêu cầu nghiệp vụ, và đảo chiều từ FR về use case để kiểm tra độ phủ. Cả 42 FR mức M, 18 FR mức S và 4 FR mức C đều thuộc ít nhất một use case.
+
+### 5.1. Use case và FR
+
+Các use case máy với máy (05, 12, 13, 15, 18, 19, 23) có tác nhân chính là phân hệ gọi; mức ưu tiên là mức cao nhất trong các FR của use case.
+
+| UC | Tên | Tác nhân chính | Mức | FR |
+|---|---|---|---|---|
+| UC-09-01 | Quản lý danh mục mức phân loại, loại dữ liệu cá nhân và tra cứu, xuất danh mục | TA, SO | M | 001, 002, 008 |
+| UC-09-02 | Đăng ký phần tử dữ liệu từ phân hệ, lược đồ và khai báo MVP | TA, SO, DS | M | 003 |
+| UC-09-03 | Đề xuất, xác nhận và hạ mức phân loại trường | DS, SV đề xuất | M | 004 |
+| UC-09-04 | Quét phát hiện trường nghi dữ liệu cá nhân chưa phân loại | TA, SO, DS | S | 005 |
+| UC-09-05 | Tính và công bố mức phân loại của hợp đồng API, topic, luồng | PH-02, PH-04, PH-10 | M | 006 |
+| UC-09-06 | Gán, gỡ nhãn và chặn dữ liệu bí mật nhà nước | TA, SO, DO | M | 007 |
+| UC-09-07 | Lập, duyệt, liên kết và xuất sổ hoạt động xử lý | SO, TA, DS | M | 009, 010, 011, 013 |
+| UC-09-08 | Quản lý danh mục cơ sở pháp lý, văn bản căn cứ và mục đích khai thác | TA, SO, DO | M | 012, 014 |
+| UC-09-09 | Lập yêu cầu khai thác theo mục đích | OR, SV, TA | M | 015 |
+| UC-09-10 | Thẩm định, chấp thuận có điều kiện hoặc từ chối yêu cầu khai thác | DO | M | 016 |
+| UC-09-11 | Gia hạn, sửa, tạm dừng, thu hồi chấp thuận và tự hết hạn | DO | M | 017 |
+| UC-09-12 | Dựng, ký và phát hành bundle OPA | Hệ thống PH-09 | M | 018 |
+| UC-09-13 | Quyết định mục đích trực tuyến cho điểm thực thi | PH-03, PH-04, PH-06, PH-14, PH-19 | M | 019 |
+| UC-09-14 | Phát hiện khai thác vượt mục đích, hạn ngạch và báo cáo khai thác | DO, SO, TA | S | 020, 021 |
+| UC-09-15 | Chặn kích hoạt hợp đồng mức Nhạy cảm khi chưa có mục đích và chấp thuận | PH-02, PH-04 | M | 022 |
+| UC-09-16 | Quản lý kiểu che và soạn chính sách che | TA, SO, DS | M | 023, 024 |
+| UC-09-17 | Mô phỏng, duyệt và phát hành chính sách che | TA, SO, DS | M | 025, 026 |
+| UC-09-18 | Trả kế hoạch che trực tuyến, đệm và đóng an toàn | PH-03, PH-04, PH-06, PH-14, PH-19 | M | 027 |
+| UC-09-19 | Áp che bản tin cho luồng PH-04 | PH-04 `dh-runtime` | M | 028 |
+| UC-09-20 | Xem giá trị đầy đủ có lý do trong 60 giây | SO, DO | M | 029 |
+| UC-09-21 | Cấu hình che log, trace và quét rò rỉ DLCN trong log | TA, SO, DS | M | 030 |
+| UC-09-22 | Quản lý miền giả danh hóa và vòng đời khóa | TA, SO | M | 031, 034 |
+| UC-09-23 | Giả danh hóa giá trị bằng HMAC hoặc token | PH-04, PH-17 và job chuẩn bị dữ liệu | M | 032 |
+| UC-09-24 | Khôi phục giá trị gốc từ token | SO đề nghị và thực hiện | S | 033 |
+| UC-09-25 | Cấu hình, chạy ẩn danh hóa và đánh giá rủi ro tái định danh | TA, SO, DS cấu hình và chạy | S | 035, 036, 037 |
+| UC-09-26 | Chuẩn bị dữ liệu cho AI, môi trường không phải PROD và quản lý tập đã ẩn danh | TA, SO, DS | M | 038, 039 |
+| UC-09-27 | Lập lịch lưu giữ, chạy tác vụ xóa hoặc giả danh hóa khi hết hạn và báo cáo | TA, SO, DS soạn | M | 040, 041, 044 |
+| UC-09-28 | Giữ pháp lý và xóa mật mã khi chấm dứt tenant | TA, SO, DS đặt giữ | M | 042, 043 |
+| UC-09-29 | Tiếp nhận, xác minh, tra cứu và chuyển xử lý yêu cầu của chủ thể dữ liệu | SO, DS, TA | M | 045, 046, 047, 048 |
+| UC-09-30 | Theo dõi hạn, trả lời, đóng yêu cầu và báo cáo ai đã truy cập dữ liệu của chủ thể | SO, DS, TA | M | 049, 050, 051 |
+| UC-09-31 | Quản lý mẫu và bản ghi sự đồng ý, tra cứu trạng thái | SO, TA, DS | S | 052, 053, 054 |
+| UC-09-32 | Lập, duyệt, nhắc rà soát và xuất hồ sơ đánh giá tác động (DPIA) | SO, TA, DS soạn | M | 055, 056, 057 |
+| UC-09-33 | Ghi nhận vi phạm DLCN, đồng hồ 72 giờ, thông báo Cục A05 và chủ thể | SO, TA, TO | M | 058, 059, 060 |
+| UC-09-34 | Nhật ký bảo vệ dữ liệu, bảng điều khiển, báo cáo định kỳ và cấu hình tham số | SO, AU, TA, PA, VW | M | 061, 062, 063, 064 |
+: Use case, tác nhân chính, mức ưu tiên và FR hiện thực (số đuôi của FR-09-nnn)
+
+### 5.2. Use case, màn hình, API và kiểm thử
+
+Mỗi use case có ít nhất một màn hình hoặc API. Use case 13, 18, 19, 23 không có màn riêng (kết quả xem ở UI-09-01, UI-09-20); use case 05, 12, 15 chỉ có màn hình xem kết quả.
+
+| UC | Màn hình và API |
+|---|---|
+| UC-09-01 | UI-09-02, UI-09-03; API-09-001, 002, 007, 008, 009, 010, 019, 030, 031 |
+| UC-09-02 | UI-09-02, UI-09-03; API-09-010, 011, 012, 013, 014, 243 |
+| UC-09-03 | UI-09-02, UI-09-03; API-09-015, 016, 017, 018 |
+| UC-09-04 | UI-09-04; API-09-020, 021, 022, 023, 024, 025, 026 |
+| UC-09-05 | UI-09-02, UI-09-03 (xem kết quả); API-09-027, 028, 029 |
+| UC-09-06 | UI-09-03; API-09-003, 004, 005, 006, 231 |
+| UC-09-07 | UI-09-05, UI-09-06; API-09-032…044, 051, 052, 053 |
+| UC-09-08 | UI-09-07; API-09-045…050, 054, 055, 056, 057 |
+| UC-09-09 | UI-09-08; API-09-058…063 |
+| UC-09-10 | UI-09-09; API-09-064, 065, 066 |
+| UC-09-11 | UI-09-08, UI-09-09; API-09-067…073 |
+| UC-09-12 | UI-09-09 (băng đồng bộ); API-09-074…078, 233 |
+| UC-09-13 | Không có màn hình (kết quả xem ở UI-09-01, UI-09-20); API-09-227 |
+| UC-09-14 | UI-09-01, UI-09-09; API-09-079…087, 237 |
+| UC-09-15 | UI-09-09, UI-09-02; API-09-088, 089 |
+| UC-09-16 | UI-09-10; API-09-090…095 |
+| UC-09-17 | UI-09-10, UI-09-11; API-09-096…101 |
+| UC-09-18 | Không có màn hình; API-09-228, 232 |
+| UC-09-19 | Không có màn hình; API-09-229, 231 |
+| UC-09-20 | UI-09-22, UI-09-20; API-09-102, 103, 241, 236 |
+| UC-09-21 | UI-09-10, UI-09-01; API-09-104…108 |
+| UC-09-22 | UI-09-12; API-09-109…118 |
+| UC-09-23 | Không có màn hình; API-09-230 |
+| UC-09-24 | UI-09-13, UI-09-12; API-09-119…124 |
+| UC-09-25 | UI-09-14; API-09-125…136 |
+| UC-09-26 | UI-09-14; API-09-137…144 |
+| UC-09-27 | UI-09-15; API-09-145…155, 163 |
+| UC-09-28 | UI-09-15; API-09-156…162 |
+| UC-09-29 | UI-09-16; API-09-164…173, 178, 235, 244 |
+| UC-09-30 | UI-09-16, UI-09-01; API-09-174…177, 179, 180, 181, 242 |
+| UC-09-31 | UI-09-17; API-09-182…191, 234, 238, 245 |
+| UC-09-32 | UI-09-18; API-09-192…201 |
+| UC-09-33 | UI-09-19; API-09-202…214, 239, 240, 083 |
+| UC-09-34 | UI-09-20, UI-09-01, UI-09-21; API-09-215…226 |
+: Use case, màn hình và API (kịch bản kiểm thử TS-09-nn ứng với UC-09-nn)
+
+### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
+
+Mọi use case truy về REQ-09 (BO-04, mức M). BP-01…09 theo D02-01; BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân" là đề nghị bổ sung (FRS Phụ lục B). Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (che dữ liệu nhạy cảm, nâng cấp thành chính sách tập trung) và LGC-NGSP-003 (tra cứu BHXH, giữ nguyên ở PH-14, PH-09 chỉ kiểm soát mục đích); "Không" là năng lực mới.
+
+| UC | REQ | BP | LGC |
+|---|---|---|---|
+| UC-09-01 | REQ-09 | BP-08, BP-11 | Không |
+| UC-09-02, UC-09-04 | REQ-09 | BP-04, BP-11 | Không |
+| UC-09-03, UC-09-06, UC-09-07 | REQ-09 | BP-11 | Không |
+| UC-09-05 | REQ-09 | BP-02, BP-04 | Không |
+| UC-09-08 | REQ-09 | BP-11 | LGC-NGSP-003 |
+| UC-09-09, UC-09-10 | REQ-09 | BP-01 | LGC-NGSP-003 |
+| UC-09-11, UC-09-12 | REQ-09 | BP-11 | LGC-NGSP-003 |
+| UC-09-13, UC-09-14 | REQ-09 | BP-06 | LGC-NGSP-003 |
+| UC-09-15 | REQ-09 | BP-01, BP-02 | LGC-NGSP-003 |
+| UC-09-16, UC-09-17, UC-09-18, UC-09-20, UC-09-21, UC-09-22, UC-09-23, UC-09-24, UC-09-25, UC-09-26 | REQ-09 | BP-11 | LGC-TOOL-012 |
+| UC-09-19 | REQ-09 | BP-02 | LGC-TOOL-012 |
+| UC-09-27, UC-09-29, UC-09-30, UC-09-31, UC-09-32, UC-09-34 | REQ-09 | BP-11 | Không |
+| UC-09-28 | REQ-09 | BP-08 | Không |
+| UC-09-33 | REQ-09 | BP-07 | Không |
+: Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
+
+### 5.4. Ma trận FR và use case
+
+Bảng đảo chiều của 5.1 để kiểm tra độ phủ: mỗi FR ghi use case hiện thực. Không FR nào bị bỏ trống. Mỗi FR thuộc đúng một use case; các use case khác chỉ dùng lại kết quả qua luồng phụ hoặc tham chiếu chéo.
+
+| FR | UC | FR | UC | FR | UC |
+|---|---|---|---|---|---|
+| 001 | 01 | 023 | 16 | 045 | 29 |
+| 002 | 01 | 024 | 16 | 046 | 29 |
+| 003 | 02 | 025 | 17 | 047 | 29 |
+| 004 | 03 | 026 | 17 | 048 | 29 |
+| 005 | 04 | 027 | 18 | 049 | 30 |
+| 006 | 05 | 028 | 19 | 050 | 30 |
+| 007 | 06 | 029 | 20 | 051 | 30 |
+| 008 | 01 | 030 | 21 | 052 | 31 |
+| 009 | 07 | 031 | 22 | 053 | 31 |
+| 010 | 07 | 032 | 23 | 054 | 31 |
+| 011 | 07 | 033 | 24 | 055 | 32 |
+| 012 | 08 | 034 | 22 | 056 | 32 |
+| 013 | 07 | 035 | 25 | 057 | 32 |
+| 014 | 08 | 036 | 25 | 058 | 33 |
+| 015 | 09 | 037 | 25 | 059 | 33 |
+| 016 | 10 | 038 | 26 | 060 | 33 |
+| 017 | 11 | 039 | 26 | 061 | 34 |
+| 018 | 12 | 040 | 27 | 062 | 34 |
+| 019 | 13 | 041 | 27 | 063 | 34 |
+| 020 | 14 | 042 | 28 | 064 | 34 |
+| 021 | 14 | 043 | 28 |  |  |
+| 022 | 15 | 044 | 27 |  |  |
+: Ma trận FR và use case (số đuôi của FR-09-nnn và UC-09-nn)
+
+Năm FR chỉ là chức năng nội bộ của hệ thống, không có màn hình và không người nào bấm: 019, 027, 028, 032, 054 (FR-09-019 quyết định mục đích, FR-09-027 kế hoạch che, FR-09-028 áp che, FR-09-032 giả danh hóa, FR-09-054 tra đồng ý). Chúng được hiện thực ở UC-09-13, 18, 19, 23 và UC-09-31 (tra đồng ý), kết quả chỉ quan sát qua nhật ký điểm thực thi, UI-09-01 và UI-09-20. FR-09-018 (bundle) và FR-09-006 (mức hợp đồng) chạy tự động nhưng có màn hình xem kết quả.
+
 ## 6. Đặc tả chi tiết use case
 
 Ba mươi bốn use case xếp theo nhóm A đến K của FRS. Mức ưu tiên ghi mức cao nhất trong các FR của use case, kèm đợt; FR mức C (Đợt 3) được nêu trong luồng nhưng không làm use case chậm sang Đợt 3 khi use case còn FR mức M.
@@ -297,15 +439,17 @@ Ba mươi bốn use case xếp theo nhóm A đến K của FRS. Mức ưu tiên 
 
 **Luồng thay thế.**
 - **1a. Nhập khai báo MVP.** Cán bộ chạy API-09-014; hệ thống nhập `@Classified`, `x-dh-classification` ở trạng thái `PROPOSED`, giữ nguyên mức đã khai (BR-09-007).
+- **3a. Ngừng phần tử.** TA, SO hoặc DO của tổ chức sở hữu ngừng phần tử không còn dùng bằng API-09-243 kèm lý do; phần tử sang `RETIRED` và vẫn giữ lịch sử phân loại (FR-09-003).
 
 **Luồng ngoại lệ.**
 - **E1. Phần tử đã đăng ký, đăng ký đơn (bước 3).** ERR-09-014 (409): "Phần tử {đích} đã được đăng ký."
 - **E2. Lược đồ hỏng (bước 2).** ERR-09-015 (422): "Không đọc được lược đồ: {lý do}."
 - **E3. Có nhãn bí mật nhà nước (bước 2).** ERR-09-018 (422): "Dữ liệu mang nhãn bí mật nhà nước không được đưa vào Datahub." và phát EVT-09-14 (UC-09-06).
+- **E4. Ngừng phần tử còn liên kết (3a).** ERR-09-006 (409): "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này." khi phần tử còn trong hoạt động `ACTIVE` hoặc chấp thuận hiệu lực.
 
 **Quy tắc áp dụng.** BR-09-001, BR-09-005, BR-09-007.
 
-**Màn hình, API.** UI-09-02, UI-09-03; API-09-010, 011, 012, 013, 014; kịch bản TS-09-02.
+**Màn hình, API.** UI-09-02, UI-09-03; API-09-010, 011, 012, 013, 014, 243; kịch bản TS-09-02.
 :::
 
 ### 6.3. UC-09-03 · Đề xuất, xác nhận và hạ mức phân loại trường
@@ -610,6 +754,7 @@ Ba mươi bốn use case xếp theo nhóm A đến K của FRS. Mức ưu tiên 
 **Luồng thay thế.**
 - **4a. Rút yêu cầu.** Rút khi chưa quyết định (API-09-063), yêu cầu thành `WITHDRAWN`.
 - **1a. Xem chấp thuận hiện có.** Danh sách và chi tiết ở API-09-058, API-09-060, kể cả để gia hạn (UC-09-11).
+- **1b. Đề nghị gia hạn.** OR lập yêu cầu loại `RENEWAL` (`AccessRequestKind`) kèm `renewsGrantId` của chấp thuận `ACTIVE` cùng HTTT và mục đích; DO duyệt ở UC-09-10, rồi hệ thống áp gia hạn ở UC-09-11 (FR-09-015, 016).
 
 **Luồng ngoại lệ.**
 - **E1. HTTT chưa hoạt động (bước 1).** ERR-09-027 (422): "HTTT {mã} chưa hoạt động hoặc chưa có đăng ký sử dụng hợp lệ."
@@ -713,7 +858,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 
 **Đảm bảo tối thiểu.** Thao tác sai trạng thái không đổi gì; mọi thao tác có lý do và kiểm toán.
 
-**Đảm bảo thành công.** Trạng thái mới có hiệu lực tại PEP trong 15 giây (đẩy) và chậm nhất 60 giây (bundle).
+**Đảm bảo thành công.** Trạng thái mới có hiệu lực tại PEP trong 15 giây (đẩy) và chậm nhất 60 giây (bundle), đo theo NFR-09-024; chấp thuận quá `validTo` bị từ chối trong 60 giây và chuyển `EXPIRED` trong 5 phút (NFR-09-025).
 
 **Luồng chính.**
 1. Job phát EVT-09-10 khi chấp thuận còn `09.grant.expiring-notice-days` (30) ngày; Thảo thấy ở UI-09-08.
@@ -732,7 +877,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 - **E2. Thao tác sai trạng thái (2b, 2c).** ERR-09-006 (409): "Đối tượng đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 - **E3. Thiếu lý do (2b, 2c).** ERR-09-007 (422): "Nhập lý do tối thiểu 20 ký tự."
 
-**Quy tắc áp dụng.** BR-09-013, BR-09-015, BR-09-017; LP-09-02.
+**Quy tắc áp dụng.** BR-09-013, BR-09-015, BR-09-017, BR-09-062; LP-09-02.
 
 **Màn hình, API.** UI-09-08, UI-09-09; API-09-067…073; kịch bản TS-09-11.
 :::
@@ -807,7 +952,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 
 **Luồng chính.**
 1. PH-03 gọi `POST /privacy/v1/purpose:decide` (API-09-227) cho `HT-YTE`, hợp đồng `API-HOTICH-KHAISINH`, `purpose:TTHC-HO-TICH`.
-2. Hệ thống kiểm nhãn chặn; có nhãn thì DENY lý do `STATE_SECRET`.
+2. Hệ thống kiểm nhãn chặn; có nhãn thì DENY lý do `STATE_SECRET`. Điểm thực thi đệm `ALLOW` tối đa 15 giây và `DENY` tối đa 5 giây, thu hồi hoặc tạm dừng xóa đệm ngay (BR-09-062).
 3. Hệ thống tra mức hợp đồng: `PUBLIC`, `INTERNAL` cho phép và ghi mục đích; `RESTRICTED` kiểm mục đích thuộc danh mục; `SENSITIVE` đòi chấp thuận `ACTIVE` phủ đủ trường và điều kiện.
 4. Chủ thể đang bị hạn chế thì chỉ mục đích `statutory` được phép.
 5. Hệ thống trả ALLOW kèm `allowedFields`, `obligations`; PEP đếm lượt và báo theo lô (UC-09-14).
@@ -822,7 +967,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 - **E4. Bên gọi không được phép (bước 1).** ERR-09-111 (403): "Bên gọi không được phép dùng API quyền riêng tư."
 - **E5. Nhãn bí mật nhà nước (bước 2).** ERR-09-101 (403): "Dữ liệu bị chặn theo quy định bảo vệ bí mật nhà nước."
 
-**Quy tắc áp dụng.** BR-09-005, BR-09-019, BR-09-020, BR-09-047.
+**Quy tắc áp dụng.** BR-09-005, BR-09-019, BR-09-020, BR-09-047, BR-09-062.
 
 **Màn hình, API.** Không có màn hình (kết quả xem ở UI-09-01, UI-09-20); API-09-227; kịch bản TS-09-13.
 :::
@@ -848,7 +993,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 
 **Đảm bảo tối thiểu.** Cảnh báo không chứa giá trị DLCN, chỉ HTTT, hợp đồng, số lượt.
 
-**Đảm bảo thành công.** Cảnh báo `OPEN` ở hộp việc, phát EVT-09-13; báo cáo xuất được.
+**Đảm bảo thành công.** Cảnh báo `OPEN` ở hộp việc, phát EVT-09-13 trong 5 phút sau khi vượt ngưỡng (NFR-09-026); báo cáo xuất được.
 
 **Luồng chính.**
 1. PH-03 báo lượt khai thác theo lô (API-09-237) mỗi phút.
@@ -995,6 +1140,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 - **E1. Mẫu quá 1.000 dòng (bước 1).** ERR-09-039 (413): "Dữ liệu mẫu tối đa 1.000 dòng."
 - **E2. Chưa mô phỏng đạt (bước 3).** ERR-09-040 (422): "Cần mô phỏng đạt trên bộ dữ liệu mẫu trước khi gửi duyệt."
 - **E3. Tự duyệt (bước 4).** ERR-09-005 (403): "Bạn là người đề nghị hoặc đã quyết định ở bước trước nên không được duyệt bước này."
+- **E4. Dữ liệu mẫu giống dữ liệu thật (bước 1).** ERR-09-080 (422): "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả."
 
 **Quy tắc áp dụng.** BR-09-023, BR-09-025; LP-09-01.
 
@@ -1069,7 +1215,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 **Luồng chính.**
 1. PH-04 gọi `POST /privacy/v1/messages:apply` (API-09-229) kèm kế hoạch và bản tin.
 2. Hệ thống kiểm nhãn chặn trước (API-09-231); có nhãn thì từ chối toàn bản tin.
-3. Hệ thống áp `PARTIAL`, `REPLACE`, `GENERALIZE`, `DROP` bằng thư viện `dh-privacy-pep`; `KEYED_HASH`, `TOKENIZE` gọi miền giả danh (UC-09-23).
+3. Hệ thống áp `PARTIAL`, `REPLACE`, `GENERALIZE`, `DROP` bằng thư viện `dh-privacy-client`; `KEYED_HASH`, `TOKENIZE` gọi miền giả danh (UC-09-23).
 4. Trường chưa phân loại bị `DROP`; hệ thống ghi kiểm toán số lượng theo trường, không ghi giá trị.
 5. Hệ thống trả bản tin đã xử lý.
 
@@ -1114,10 +1260,10 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 2. Hệ thống kiểm quyền, lý do ≥ 20 ký tự, trường không `neverReveal`, số lần chưa vượt `09.mask.reveal-max-per-hour` (20) (API-09-102).
 3. Hệ thống ghi kiểm toán, rồi cấp `RevealGrant` `ISSUED` hết hạn sau `09.mask.reveal-seconds` (60).
 4. PH-06 xác thực phiếu (API-09-236), giải mã và trả giá trị cho giao diện; phiếu thành `VERIFIED`.
-5. Giao diện đếm ngược 60 giây rồi tự che; phiếu `EXPIRED`.
+5. Giao diện đếm ngược theo `expiresAt` và `serverTime` do máy chủ trả (không theo đồng hồ trình duyệt) trong 60 giây rồi tự che; phiếu `EXPIRED`.
 
 **Luồng thay thế.**
-- **5a. Tra lịch sử xem.** AU, SO xem ở UI-09-20 (API-09-103); vượt ngưỡng bất thường thì phát EVT-09-15.
+- **5a. Tra lịch sử xem.** AU, SO xem danh sách ở UI-09-20 (API-09-103) và chi tiết một phiếu, không kèm giá trị (API-09-241); vượt `09.mask.reveal-alert-per-hour` lần xem trong giờ thì phát EVT-09-15.
 
 **Luồng ngoại lệ.**
 - **E1. Chưa được cấp quyền (bước 2).** ERR-09-041 (403): "Bạn chưa được cấp quyền xem giá trị đầy đủ."
@@ -1129,7 +1275,7 @@ Hình cho thấy chấp thuận chỉ có hiệu lực khi bundle ký tới OPA,
 
 **Quy tắc áp dụng.** BR-09-026, BR-09-057; LP-09-02.
 
-**Màn hình, API.** UI-09-22, UI-09-20; API-09-102, 103, 236; kịch bản TS-09-20.
+**Màn hình, API.** UI-09-22, UI-09-20; API-09-102, 103, 241, 236; kịch bản TS-09-20.
 :::
 
 ```{.mermaid caption="Trình tự xem giá trị đầy đủ có phiếu 60 giây"}
@@ -1437,6 +1583,7 @@ Hình cho thấy ba lối ra theo rủi ro: `MEDIUM` buộc SO quyết định, 
 - **E1. Mục tiêu không cho dùng dữ liệu Nhạy cảm (bước 2).** ERR-09-055 (422): "Mục đích {mã} không cho phép dùng dữ liệu có trường Nhạy cảm."
 - **E2. Rủi ro cao (bước 3).** ERR-09-053 (422): "Rủi ro tái định danh cao, không phát hành. Xem khuyến nghị của báo cáo."
 - **E3. Sửa tập đã phát hành (bước 4).** ERR-09-056 (409): "Tập dữ liệu đã phát hành, không sửa được. Rút lại để tạo tập mới."
+- **E4. Dữ liệu Hạn chế cho AI khi cờ tắt (bước 2).** ERR-09-082 (422): "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted."
 
 **Quy tắc áp dụng.** BR-09-034, BR-09-035, BR-09-037.
 
@@ -1568,6 +1715,7 @@ Hình cho thấy ba lối ra theo rủi ro: `MEDIUM` buộc SO quyết định, 
 - **5a. Hạn chế xử lý.** `RESTRICT`: phát EVT-09-26, PH-06 khóa; gỡ bằng `:lift-restriction` kèm căn cứ (API-09-178).
 - **5b. Xóa.** Có căn cứ pháp lý phải giữ thì từ chối có căn cứ; nguồn thẩm quyền quốc gia thì hướng dẫn tới cơ quan đăng ký (BR-09-046).
 - **5c. Dữ liệu đi qua.** Chuyển bên kiểm soát (`CONTROLLER`), PH-09 chỉ cung cấp siêu dữ liệu.
+- **5d. Rút yêu cầu.** Chủ thể hoặc người đại diện rút yêu cầu trước khi `RESPONDED`: SO, DS hoặc TA gọi API-09-244 kèm lý do, yêu cầu sang `WITHDRAWN`, tác vụ đang mở bị hủy (FR-09-045).
 
 **Luồng ngoại lệ.**
 - **E1. Thiếu loại hoặc định danh (bước 2).** ERR-09-062 (422): "Yêu cầu thiếu loại yêu cầu hoặc thông tin định danh chủ thể."
@@ -1578,7 +1726,7 @@ Hình cho thấy ba lối ra theo rủi ro: `MEDIUM` buộc SO quyết định, 
 
 **Quy tắc áp dụng.** BR-09-042, BR-09-043, BR-09-044, BR-09-045, BR-09-046, BR-09-047, BR-09-061.
 
-**Màn hình, API.** UI-09-16; API-09-164…173, 178, 235; kịch bản TS-09-29.
+**Màn hình, API.** UI-09-16; API-09-164…173, 178, 235, 244; kịch bản TS-09-29.
 :::
 
 ```{.mermaid caption="Trình tự xử lý yêu cầu truy cập dữ liệu của chủ thể"}
@@ -1637,7 +1785,7 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 
 **Luồng thay thế.**
 - **3a. Từ chối có căn cứ.** `:reject` (API-09-177), `DsrOutcome = REFUSED`.
-- **1a. Gia hạn.** Gia hạn hạn trả lời cần lý do (khi pháp luật cho phép).
+- **1a. Gia hạn.** SO gia hạn hạn trả lời một lần, kèm lý do và thông báo chủ thể, hạn mới không quá ngày pháp luật cho phép (API-09-242).
 - **2a. Báo cáo tổng hợp.** TA, AU xem tuân thủ hạn theo quý (API-09-181).
 
 **Luồng ngoại lệ.**
@@ -1648,7 +1796,7 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 
 **Quy tắc áp dụng.** BR-09-043, BR-09-044, BR-09-048.
 
-**Màn hình, API.** UI-09-16, UI-09-01; API-09-174…177, 179, 180, 181; kịch bản TS-09-30.
+**Màn hình, API.** UI-09-16, UI-09-01; API-09-174…177, 179, 180, 181, 242; kịch bản TS-09-30.
 :::
 
 ### 6.31. UC-09-31 · Quản lý mẫu và bản ghi sự đồng ý, tra cứu trạng thái
@@ -1683,6 +1831,7 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 
 **Luồng thay thế.**
 - **3a. Rút đồng ý.** API-09-189; bản ghi `WITHDRAWN`, phát EVT-09-28.
+- **5a. Tra theo định danh rõ.** Bên có quyền nhập số điện thoại hoặc thư điện tử của công dân; PH-09 tính băm rồi trả danh sách đồng ý theo băm, không ghi định danh vào nhật ký (API-09-245). Xem một mẫu và các phiên bản của nó ở API-09-238.
 
 **Luồng ngoại lệ.**
 - **E1. Mẫu thiếu nội dung (bước 1).** ERR-09-069 (422): "Mẫu đồng ý cần nêu mục đích cụ thể, dữ liệu xử lý và cách rút lại."
@@ -1693,7 +1842,7 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 
 **Quy tắc áp dụng.** BR-09-049, BR-09-050, BR-09-051.
 
-**Màn hình, API.** UI-09-17; API-09-182…191, 234; kịch bản TS-09-31.
+**Màn hình, API.** UI-09-17; API-09-182…191, 234, 238, 245; kịch bản TS-09-31.
 :::
 
 ### 6.32. UC-09-32 · Lập, duyệt, nhắc rà soát và xuất hồ sơ đánh giá tác động (DPIA)
@@ -1766,9 +1915,9 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 1. Chi ghi nhận vụ việc (API-09-203) với `detectedAt` và mô tả; hệ thống tạo `REPORTED`, đồng hồ chạy, phát EVT-09-30.
 2. Dũng đánh giá (API-09-206): phạm vi 1.200 hồ sơ, `BreachSeverity = HIGH`, có dữ liệu nhạy cảm; vụ việc sang `ASSESSING` rồi `NOTIFYING`.
 3. Hệ thống phát EVT-09-31 ở 24, 48, 60 giờ cho SO, TA (API-09-207).
-4. Dũng soạn thông báo A05 và chủ thể (API-09-208), nhập danh sách chủ thể bị ảnh hưởng theo băm (API-09-210).
-5. Sau khi gửi ngoài hệ thống, Dũng ghi đã gửi kèm bằng chứng (API-09-209); hệ thống phát EVT-09-32, vụ việc `NOTIFIED`.
-6. Dũng ghi khắc phục, bài học (API-09-211, API-09-212), đóng hồ sơ (API-09-213) và tải hồ sơ (API-09-214).
+4. Dũng soạn thông báo A05 và chủ thể (API-09-208), xem lại các thông báo của vụ việc (API-09-239), nhập danh sách chủ thể bị ảnh hưởng theo băm (API-09-210).
+5. Sau khi gửi ngoài hệ thống, Dũng ghi đã gửi kèm bằng chứng (API-09-209); hệ thống phát EVT-09-32, vụ việc `NOTIFIED` và đồng hồ 72 giờ dừng, đây là lần dừng duy nhất (BR-09-054).
+6. Dũng ghi khắc phục, bài học (API-09-211, API-09-212), xem danh sách biện pháp (API-09-240), đóng hồ sơ (API-09-213) và tải hồ sơ (API-09-214).
 
 **Luồng thay thế.**
 - **2a. Không phải vi phạm.** `NOT_A_BREACH` cần SO duyệt và lý do.
@@ -1783,7 +1932,7 @@ Hình cho thấy định danh rõ chỉ đi từ cổng tới PH-09 một lần 
 
 **Quy tắc áp dụng.** BR-09-054, BR-09-055, BR-09-056, BR-09-057.
 
-**Màn hình, API.** UI-09-19; API-09-202…214, 083; kịch bản TS-09-33.
+**Màn hình, API.** UI-09-19; API-09-202…214, 239, 240, 083; kịch bản TS-09-33.
 :::
 
 ```{.mermaid caption="Trình tự đồng hồ 72 giờ và thông báo vi phạm DLCN"}
@@ -1840,159 +1989,17 @@ Hình cho thấy việc gửi thông báo diễn ra ngoài Datahub nhưng bằng
 **Luồng thay thế.**
 
 **Luồng ngoại lệ.**
-- **E1. Khoảng tra quá rộng (bước 1).** ERR-09-036 (422): "Chọn khoảng thời gian tối đa 12 tháng."
+- **E1. Khoảng tra quá rộng (bước 1).** ERR-09-079 (422): "Chọn khoảng thời gian tối đa {n} ngày." với `{n}` là `09.audit.query-max-days`.
 - **E2. Nguồn số liệu lỗi (bước 2).** ERR-09-009 (503): "Chưa kết nối được {tên dịch vụ}. Thử lại sau ít phút."
 - **E3. Giá trị ngoài miền (bước 5).** ERR-09-078 (422): "Giá trị của {khóa} ngoài miền cho phép {miền}."
 - **E4. Xung đột phiên bản (bước 5).** ERR-09-004 (409): "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
-- **E5. Lịch báo cáo sai (bước 3).** ERR-09-003 (400): lược đồ không hợp lệ, thông báo theo khung lỗi chung (FRS §9.1 không nêu câu riêng).
+- **E5. Lịch báo cáo sai (bước 3).** ERR-09-003 (400): "Dữ liệu không hợp lệ: {chi tiết}."
 
 **Quy tắc áp dụng.** BR-09-058, BR-09-059, BR-09-060.
 
 **Màn hình, API.** UI-09-20, UI-09-01, UI-09-21; API-09-215…226; kịch bản TS-09-34.
 :::
 
-
-## 5. Bảng tổng hợp use case và truy vết
-
-Bốn bảng dưới đây nối use case với FR, màn hình, API, yêu cầu nghiệp vụ, và đảo chiều từ FR về use case để kiểm tra độ phủ. Cả 42 FR mức M, 18 FR mức S và 4 FR mức C đều thuộc ít nhất một use case.
-
-### 5.1. Use case và FR
-
-Các use case máy với máy (05, 12, 13, 15, 18, 19, 23) có tác nhân chính là phân hệ gọi; mức ưu tiên là mức cao nhất trong các FR của use case.
-
-| UC | Tên | Tác nhân chính | Mức | FR |
-|---|---|---|---|---|
-| UC-09-01 | Quản lý danh mục mức phân loại, loại dữ liệu cá nhân và tra cứu, xuất danh mục | TA, SO | M | 001, 002, 008 |
-| UC-09-02 | Đăng ký phần tử dữ liệu từ phân hệ, lược đồ và khai báo MVP | TA, SO, DS | M | 003 |
-| UC-09-03 | Đề xuất, xác nhận và hạ mức phân loại trường | DS, SV đề xuất | M | 004 |
-| UC-09-04 | Quét phát hiện trường nghi dữ liệu cá nhân chưa phân loại | TA, SO, DS | S | 005 |
-| UC-09-05 | Tính và công bố mức phân loại của hợp đồng API, topic, luồng | PH-02, PH-04, PH-10 | M | 006 |
-| UC-09-06 | Gán, gỡ nhãn và chặn dữ liệu bí mật nhà nước | TA, SO, DO | M | 007 |
-| UC-09-07 | Lập, duyệt, liên kết và xuất sổ hoạt động xử lý | SO, TA, DS | M | 009, 010, 011, 013 |
-| UC-09-08 | Quản lý danh mục cơ sở pháp lý, văn bản căn cứ và mục đích khai thác | TA, SO, DO | M | 012, 014 |
-| UC-09-09 | Lập yêu cầu khai thác theo mục đích | OR, SV, TA | M | 015 |
-| UC-09-10 | Thẩm định, chấp thuận có điều kiện hoặc từ chối yêu cầu khai thác | DO | M | 016 |
-| UC-09-11 | Gia hạn, sửa, tạm dừng, thu hồi chấp thuận và tự hết hạn | DO | M | 017 |
-| UC-09-12 | Dựng, ký và phát hành bundle OPA | Hệ thống PH-09 | M | 018 |
-| UC-09-13 | Quyết định mục đích trực tuyến cho điểm thực thi | PH-03, PH-04, PH-06, PH-14, PH-19 | M | 019 |
-| UC-09-14 | Phát hiện khai thác vượt mục đích, hạn ngạch và báo cáo khai thác | DO, SO, TA | S | 020, 021 |
-| UC-09-15 | Chặn kích hoạt hợp đồng mức Nhạy cảm khi chưa có mục đích và chấp thuận | PH-02, PH-04 | M | 022 |
-| UC-09-16 | Quản lý kiểu che và soạn chính sách che | TA, SO, DS | M | 023, 024 |
-| UC-09-17 | Mô phỏng, duyệt và phát hành chính sách che | TA, SO, DS | M | 025, 026 |
-| UC-09-18 | Trả kế hoạch che trực tuyến, đệm và đóng an toàn | PH-03, PH-04, PH-06, PH-14, PH-19 | M | 027 |
-| UC-09-19 | Áp che bản tin cho luồng PH-04 | PH-04 `dh-runtime` | M | 028 |
-| UC-09-20 | Xem giá trị đầy đủ có lý do trong 60 giây | SO, DO | M | 029 |
-| UC-09-21 | Cấu hình che log, trace và quét rò rỉ DLCN trong log | TA, SO, DS | M | 030 |
-| UC-09-22 | Quản lý miền giả danh hóa và vòng đời khóa | TA, SO | M | 031, 034 |
-| UC-09-23 | Giả danh hóa giá trị bằng HMAC hoặc token | PH-04, PH-17 và job chuẩn bị dữ liệu | M | 032 |
-| UC-09-24 | Khôi phục giá trị gốc từ token | SO đề nghị và thực hiện | S | 033 |
-| UC-09-25 | Cấu hình, chạy ẩn danh hóa và đánh giá rủi ro tái định danh | TA, SO, DS cấu hình và chạy | S | 035, 036, 037 |
-| UC-09-26 | Chuẩn bị dữ liệu cho AI, môi trường không phải PROD và quản lý tập đã ẩn danh | TA, SO, DS | M | 038, 039 |
-| UC-09-27 | Lập lịch lưu giữ, chạy tác vụ xóa hoặc giả danh hóa khi hết hạn và báo cáo | TA, SO, DS soạn | M | 040, 041, 044 |
-| UC-09-28 | Giữ pháp lý và xóa mật mã khi chấm dứt tenant | TA, SO, DS đặt giữ | M | 042, 043 |
-| UC-09-29 | Tiếp nhận, xác minh, tra cứu và chuyển xử lý yêu cầu của chủ thể dữ liệu | SO, DS, TA | M | 045, 046, 047, 048 |
-| UC-09-30 | Theo dõi hạn, trả lời, đóng yêu cầu và báo cáo ai đã truy cập dữ liệu của chủ thể | SO, DS, TA | M | 049, 050, 051 |
-| UC-09-31 | Quản lý mẫu và bản ghi sự đồng ý, tra cứu trạng thái | SO, TA, DS | S | 052, 053, 054 |
-| UC-09-32 | Lập, duyệt, nhắc rà soát và xuất hồ sơ đánh giá tác động (DPIA) | SO, TA, DS soạn | M | 055, 056, 057 |
-| UC-09-33 | Ghi nhận vi phạm DLCN, đồng hồ 72 giờ, thông báo Cục A05 và chủ thể | SO, TA, TO | M | 058, 059, 060 |
-| UC-09-34 | Nhật ký bảo vệ dữ liệu, bảng điều khiển, báo cáo định kỳ và cấu hình tham số | SO, AU, TA, PA, VW | M | 061, 062, 063, 064 |
-: Use case, tác nhân chính, mức ưu tiên và FR hiện thực (số đuôi của FR-09-nnn)
-
-### 5.2. Use case, màn hình, API và kiểm thử
-
-Mỗi use case có ít nhất một màn hình hoặc API. Use case 13, 18, 19, 23 không có màn riêng (kết quả xem ở UI-09-01, UI-09-20); use case 05, 12, 15 chỉ có màn hình xem kết quả.
-
-| UC | Màn hình và API |
-|---|---|
-| UC-09-01 | UI-09-02, UI-09-03; API-09-001, 002, 007, 008, 009, 010, 019, 030, 031 |
-| UC-09-02 | UI-09-02, UI-09-03; API-09-010, 011, 012, 013, 014 |
-| UC-09-03 | UI-09-02, UI-09-03; API-09-015, 016, 017, 018 |
-| UC-09-04 | UI-09-04; API-09-020, 021, 022, 023, 024, 025, 026 |
-| UC-09-05 | UI-09-02, UI-09-03 (xem kết quả); API-09-027, 028, 029 |
-| UC-09-06 | UI-09-03; API-09-003, 004, 005, 006, 231 |
-| UC-09-07 | UI-09-05, UI-09-06; API-09-032…044, 051, 052, 053 |
-| UC-09-08 | UI-09-07; API-09-045…050, 054, 055, 056, 057 |
-| UC-09-09 | UI-09-08; API-09-058…063 |
-| UC-09-10 | UI-09-09; API-09-064, 065, 066 |
-| UC-09-11 | UI-09-08, UI-09-09; API-09-067…073 |
-| UC-09-12 | UI-09-09 (băng đồng bộ); API-09-074…078, 233 |
-| UC-09-13 | Không có màn hình (kết quả xem ở UI-09-01, UI-09-20); API-09-227 |
-| UC-09-14 | UI-09-01, UI-09-09; API-09-079…087, 237 |
-| UC-09-15 | UI-09-09, UI-09-02; API-09-088, 089 |
-| UC-09-16 | UI-09-10; API-09-090…095 |
-| UC-09-17 | UI-09-10, UI-09-11; API-09-096…101 |
-| UC-09-18 | Không có màn hình; API-09-228, 232 |
-| UC-09-19 | Không có màn hình; API-09-229, 231 |
-| UC-09-20 | UI-09-22, UI-09-20; API-09-102, 103, 236 |
-| UC-09-21 | UI-09-10, UI-09-01; API-09-104…108 |
-| UC-09-22 | UI-09-12; API-09-109…118 |
-| UC-09-23 | Không có màn hình; API-09-230 |
-| UC-09-24 | UI-09-13, UI-09-12; API-09-119…124 |
-| UC-09-25 | UI-09-14; API-09-125…136 |
-| UC-09-26 | UI-09-14; API-09-137…144 |
-| UC-09-27 | UI-09-15; API-09-145…155, 163 |
-| UC-09-28 | UI-09-15; API-09-156…162 |
-| UC-09-29 | UI-09-16; API-09-164…173, 178, 235 |
-| UC-09-30 | UI-09-16, UI-09-01; API-09-174…177, 179, 180, 181 |
-| UC-09-31 | UI-09-17; API-09-182…191, 234 |
-| UC-09-32 | UI-09-18; API-09-192…201 |
-| UC-09-33 | UI-09-19; API-09-202…214, 083 |
-| UC-09-34 | UI-09-20, UI-09-01, UI-09-21; API-09-215…226 |
-: Use case, màn hình và API (kịch bản kiểm thử TS-09-nn ứng với UC-09-nn)
-
-### 5.3. Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
-
-Mọi use case truy về REQ-09 (BO-04, mức M). BP-01…09 theo D02-01; BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân" là đề nghị bổ sung (FRS Phụ lục B). Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (che dữ liệu nhạy cảm, nâng cấp thành chính sách tập trung) và LGC-NGSP-003 (tra cứu BHXH, giữ nguyên ở PH-14, PH-09 chỉ kiểm soát mục đích); "Không" là năng lực mới.
-
-| UC | REQ | BP | LGC |
-|---|---|---|---|
-| UC-09-01 | REQ-09 | BP-08, BP-11 | Không |
-| UC-09-02, UC-09-04 | REQ-09 | BP-04, BP-11 | Không |
-| UC-09-03, UC-09-06, UC-09-07 | REQ-09 | BP-11 | Không |
-| UC-09-05 | REQ-09 | BP-02, BP-04 | Không |
-| UC-09-08 | REQ-09 | BP-11 | LGC-NGSP-003 |
-| UC-09-09, UC-09-10 | REQ-09 | BP-01 | LGC-NGSP-003 |
-| UC-09-11, UC-09-12 | REQ-09 | BP-11 | LGC-NGSP-003 |
-| UC-09-13, UC-09-14 | REQ-09 | BP-06 | LGC-NGSP-003 |
-| UC-09-15 | REQ-09 | BP-01, BP-02 | LGC-NGSP-003 |
-| UC-09-16, UC-09-17, UC-09-18, UC-09-20, UC-09-21, UC-09-22, UC-09-23, UC-09-24, UC-09-25, UC-09-26 | REQ-09 | BP-11 | LGC-TOOL-012 |
-| UC-09-19 | REQ-09 | BP-02 | LGC-TOOL-012 |
-| UC-09-27, UC-09-29, UC-09-30, UC-09-31, UC-09-32, UC-09-34 | REQ-09 | BP-11 | Không |
-| UC-09-28 | REQ-09 | BP-08 | Không |
-| UC-09-33 | REQ-09 | BP-07 | Không |
-: Use case, yêu cầu nghiệp vụ, quy trình và chức năng hệ cũ
-
-### 5.4. Ma trận FR và use case
-
-Bảng đảo chiều của 5.1 để kiểm tra độ phủ: mỗi FR ghi use case hiện thực. Không FR nào bị bỏ trống. Mỗi FR thuộc đúng một use case; các use case khác chỉ dùng lại kết quả qua luồng phụ hoặc tham chiếu chéo.
-
-| FR | UC | FR | UC | FR | UC |
-|---|---|---|---|---|---|
-| 001 | 01 | 023 | 16 | 045 | 29 |
-| 002 | 01 | 024 | 16 | 046 | 29 |
-| 003 | 02 | 025 | 17 | 047 | 29 |
-| 004 | 03 | 026 | 17 | 048 | 29 |
-| 005 | 04 | 027 | 18 | 049 | 30 |
-| 006 | 05 | 028 | 19 | 050 | 30 |
-| 007 | 06 | 029 | 20 | 051 | 30 |
-| 008 | 01 | 030 | 21 | 052 | 31 |
-| 009 | 07 | 031 | 22 | 053 | 31 |
-| 010 | 07 | 032 | 23 | 054 | 31 |
-| 011 | 07 | 033 | 24 | 055 | 32 |
-| 012 | 08 | 034 | 22 | 056 | 32 |
-| 013 | 07 | 035 | 25 | 057 | 32 |
-| 014 | 08 | 036 | 25 | 058 | 33 |
-| 015 | 09 | 037 | 25 | 059 | 33 |
-| 016 | 10 | 038 | 26 | 060 | 33 |
-| 017 | 11 | 039 | 26 | 061 | 34 |
-| 018 | 12 | 040 | 27 | 062 | 34 |
-| 019 | 13 | 041 | 27 | 063 | 34 |
-| 020 | 14 | 042 | 28 | 064 | 34 |
-| 021 | 14 | 043 | 28 |  |  |
-| 022 | 15 | 044 | 27 |  |  |
-: Ma trận FR và use case (số đuôi của FR-09-nnn và UC-09-nn)
-
-Năm FR chỉ là chức năng nội bộ của hệ thống, không có màn hình và không người nào bấm: 019, 027, 028, 032, 054 (FR-09-019 quyết định mục đích, FR-09-027 kế hoạch che, FR-09-028 áp che, FR-09-032 giả danh hóa, FR-09-054 tra đồng ý). Chúng được hiện thực ở UC-09-13, 18, 19, 23 và UC-09-31 (tra đồng ý), kết quả chỉ quan sát qua nhật ký điểm thực thi, UI-09-01 và UI-09-20. FR-09-018 (bundle) và FR-09-006 (mức hợp đồng) chạy tự động nhưng có màn hình xem kết quả.
 
 ## 7. Luồng phụ dùng chung
 
@@ -2013,24 +2020,26 @@ Bốn luồng phụ lặp lại ở nhiều use case nên đặc tả một lầ
 
 Tập này không tạo mã FR, BR, API, ERR, EVT, UI mới. Mã của tập: UC-09-01…34, LP-09-01…04, câu hỏi mở Q09-45…49; đề nghị kịch bản kiểm thử TS-09-01…34 ứng với UC-09-01…34 (1 − 1) cho D05-02-PH09. Cả 64 FR thuộc ít nhất một use case (§5.4). Mã ERR, EVT, API, UI, PERM, enum và tham số `09.*` lấy đúng FRS §8.2, §9, §10.1, Phụ lục A; câu thông báo nguyên văn FRS §9.1.
 
-### 8.2. Đề nghị cho FRS
+### 8.2. Kết quả đồng bộ với FRS 0.2
 
-Sáu điểm lệch hoặc thiếu của FRS 0.1 phát hiện khi viết use case, kèm cách xử lý tạm của tập này.
+Sáu đề nghị của bản 0.1 đã được FRS 0.2 nhận (Phụ lục C, các dòng "UC §8.2"). Bảng ghi kết quả và chỗ tập này đã sửa theo.
 
-| Mã | Nội dung | Nơi dùng | Xử lý tạm trong tập |
+| Mã | Nội dung bản 0.1 | Kết quả ở FRS 0.2 | Đã sửa trong tập |
 |---|---|---|---|
-| ĐN-UC-01 | ERR-09-012 (trường DLCN thiếu loại) có trong §9.1 nhưng không FR nào nêu ở luồng ngoại lệ; đề nghị gắn vào FR-09-004 bước xác nhận | UC-09-03 E4 | Dùng ERR-09-012 ở bước xác nhận |
-| ĐN-UC-02 | ERR-09-003 (400) ở FR-09-044, FR-09-063 trong §9.1 chưa có câu thông báo; đề nghị câu "Dữ liệu không hợp lệ: {chi tiết}." | UC-09-34 E5 | Ghi "theo khung lỗi chung" |
-| ĐN-UC-03 | FR-09-049 nêu "gia hạn thiếu lý do" nhưng §9.4 không có API gia hạn hạn trả lời; đề nghị `POST /subject-requests/{requestId}:extend` | UC-09-30 nhánh 1a | Mô tả nhánh, chưa gắn API |
-| ĐN-UC-04 | `ElementStatus.RETIRED` (FR-09-003) và `DsrStatus.WITHDRAWN` (FR-09-045) có trong Phụ lục A nhưng không có API ngừng phần tử hoặc rút yêu cầu; đề nghị thêm `POST /data-elements/{elementId}:retire` và `POST /subject-requests/{requestId}:withdraw` | UC-09-02, 29 | Không mô tả luồng ngừng, rút |
-| ĐN-UC-05 | ERR-09-026 (mục đích hết hiệu lực) chưa gắn FR-09-015 dù xảy ra ở lập yêu cầu | UC-09-09 E2 | Dùng ERR-09-026 |
-| ĐN-UC-06 | FR-09-020 nêu tự tạm dừng chấp thuận (`09.anomaly.auto-suspend`) nhưng §9.4 không nêu tác nhân hệ thống gọi `:suspend` | UC-09-11 nhánh 2d | Coi là hành động nội bộ |
+| ĐN-UC-01 | ERR-09-012 chưa gắn luồng ngoại lệ | FR-09-004 nêu ERR-09-012 | UC-09-03 E4 giữ nguyên |
+| ĐN-UC-02 | ERR-09-003 chưa có câu thông báo | §9.1: "Dữ liệu không hợp lệ: {chi tiết}." | UC-09-34 E5 dùng câu này |
+| ĐN-UC-03 | Thiếu API gia hạn hạn trả lời | API-09-242 `:extend` (FR-09-049) | UC-09-30 nhánh 1a và danh sách API |
+| ĐN-UC-04 | Thiếu API ngừng phần tử và rút yêu cầu | API-09-243 `:retire` (FR-09-003) và API-09-244 `:withdraw` (FR-09-045) | UC-09-02 nhánh 3a và E4, UC-09-29 nhánh 5d |
+| ĐN-UC-05 | ERR-09-026 chưa gắn FR-09-015 | FR-09-015 nêu ERR-09-026 | UC-09-09 E2 giữ nguyên |
+| ĐN-UC-06 | Tác nhân gọi `:suspend` khi tự tạm dừng | FRS coi là nghiệp vụ nội bộ của tác nhân `system:anomaly-detector`, không có API công khai | UC-09-11 nhánh 2d giữ nguyên |
 
-: Đề nghị bổ sung cho FRS
+: Kết quả đồng bộ đề nghị của tập UC với FRS 0.2
+
+Bản 0.2 còn thêm vào các use case những điểm FRS 0.2 mới nêu: loại yêu cầu `RENEWAL` (UC-09-09 nhánh 1b), đệm quyết định 15 giây và 5 giây (BR-09-062, UC-09-13), `serverTime` cho đồng hồ xem đầy đủ (UC-09-20), ERR-09-079 ở nhật ký (UC-09-34 E1), ERR-09-080 ở mô phỏng (UC-09-17 E4), ERR-09-082 ở dữ liệu AI (UC-09-26 E4), tra đồng ý theo định danh (API-09-245, UC-09-31 nhánh 5a), và đồng hồ vi phạm chỉ dừng khi thông báo Cục A05 đã gửi (BR-09-054, UC-09-33).
 
 ### 8.3. Đề nghị đồng bộ cho tập khác
 
-D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO không giữ `PERM-09-purpose-approve`; DS với DA; người soạn không duyệt chính sách của mình). D02-01: thêm BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân". D03-02-PH09 dùng năm sơ đồ trình tự làm nền luồng thành phần; D03-06-PH09 lấy câu thông báo từ chương 6 và đặt câu cho ERR-09-003; D03-04-PH09 cân nhắc API mới của ĐN-UC-03, 04; D05-02-PH09 dựng TS-09-nn ứng với UC-09-nn, ca đồng hồ (UC-09-20, 24, 30, 33) dùng đồng hồ giả lập. D00-02 chốt ADR 090 (điểm quyết định chính sách tập trung, PH-09 là PAP và PIP, OPA là PDP), ADR 091 (giả danh hóa HMAC-SHA256 theo tenant và mục đích, token qua OpenBao transit), ADR 092 (ẩn danh hóa k-ẩn danh bằng ARX), ADR 093 (phát hiện DLCN bằng bộ mẫu và kiểm tổng).
+D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO không giữ `PERM-09-purpose-approve`; DS với DA; người soạn không duyệt chính sách của mình). D02-01: thêm BP-11 "Quản lý quyền riêng tư và dữ liệu cá nhân". D03-02-PH09 dùng năm sơ đồ trình tự làm nền luồng thành phần; D03-06-PH09 lấy câu thông báo từ chương 6 và đặt câu cho ERR-09-003; D03-04-PH09 đã có API-09-242, 243, 244; D05-02-PH09 dựng TS-09-nn ứng với UC-09-nn, ca đồng hồ (UC-09-20, 24, 30, 33) dùng đồng hồ giả lập. D00-02 chốt ADR 090 (điểm quyết định chính sách tập trung, PH-09 là PAP và PIP, OPA là PDP), ADR 091 (giả danh hóa HMAC-SHA256 theo tenant và mục đích, token qua OpenBao transit), ADR 092 (ẩn danh hóa k-ẩn danh bằng ARX), ADR 093 (phát hiện DLCN bằng bộ mẫu và kiểm tổng).
 
 ## 9. Câu hỏi mở
 
@@ -2049,3 +2058,4 @@ D02-08: xác nhận 13 quyền mới của FRS §3.2 và cặp loại trừ (SO 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 34 use case phủ 64 FR của FRS 0.1, bốn sơ đồ use case, năm sơ đồ trình tự (chấp thuận mục đích, xem đầy đủ, ẩn danh hóa, yêu cầu chủ thể, vi phạm 72 giờ), ma trận truy vết hai chiều, sáu đề nghị cho FRS |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: tên thư viện `dh-privacy-client`, nhánh ngừng phần tử, rút yêu cầu, gia hạn hạn trả lời, đề nghị gia hạn `RENEWAL`, tra đồng ý theo định danh, API-09-238 đến 245 vào bảng truy vết, ERR-09-079, 080, 082, BR-09-062, NFR-09-024 đến 026, đồng hồ 72 giờ dừng khi đã thông báo, mục 8.2 thành bảng kết quả |

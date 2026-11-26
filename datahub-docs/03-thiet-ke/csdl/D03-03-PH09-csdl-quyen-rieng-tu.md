@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH09
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -14,12 +14,12 @@ tai_lieu_lien_quan: D02-03-PH09 FRS; D03-02-PH09 SDD; D03-04-PH09 API; D03-10 Th
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Schema `ph09_privacy` trên cụm `pg-core` có 55 bảng cho 51 thực thể EN-09-01…51 của [D02-03-PH09](../../02-yeu-cau/frs/D02-03-PH09-frs-quyen-rieng-tu.md) §4.2, cộng ba bảng con cần cho khóa ngoại (`purpose_element`, `retention_schedule_line`) và hai bảng thông điệp (`outbox_event`, `inbox_event`). PH-09 là nơi quản lý và nguồn thông tin chính sách (PAP, PIP) về dữ liệu cá nhân (DLCN): danh mục phân loại, sổ xử lý, mục đích và chấp thuận, chính sách che, miền giả danh, lịch lưu giữ, quyền chủ thể, đồng ý, đánh giá tác động, vi phạm. Vì chính nó là phân hệ bảo vệ dữ liệu nên thiết kế đặt hai nguyên tắc lên trước.
+Schema `ph09_privacy` trên cụm `pg-core` có 55 bảng cho 55 thực thể EN-09-01…55 của [D02-03-PH09](../../02-yeu-cau/frs/D02-03-PH09-frs-quyen-rieng-tu.md) §4.2, kể cả hai bảng con (`purpose_element`, `retention_schedule_line`) và hai bảng thông điệp (`outbox_event`, `inbox_event`) mà FRS 0.2 đã cấp mã EN-09-52…55. PH-09 là nơi quản lý và nguồn thông tin chính sách (PAP, PIP) về dữ liệu cá nhân (DLCN): danh mục phân loại, sổ xử lý, mục đích và chấp thuận, chính sách che, miền giả danh, lịch lưu giữ, quyền chủ thể, đồng ý, đánh giá tác động, vi phạm. Vì chính nó là phân hệ bảo vệ dữ liệu nên thiết kế đặt hai nguyên tắc lên trước.
 
 1. **Không lưu giá trị DLCN rõ, không có bảng ánh xạ bí danh.** Định danh chủ thể chỉ ở `*_enc` (mã hóa envelope bằng OpenBao transit, ADR-032) kèm `*_hash` (HMAC-SHA256 khóa theo tenant) để tra mà không giải mã; sổ vi phạm, đồng ý, giữ pháp lý chỉ giữ băm và số lượng; token hóa dùng giải mã transit nên không cần bảng (BR-09-030). Bài kiểm quét toàn schema và không thấy cột hay bảng tên giá trị rõ (§4.2).
 2. **Cách ly tenant bằng `FORCE ROW LEVEL SECURITY` trên mọi bảng** kể cả hai bảng phân vùng tháng; vai `ph09_decide` của data plane `/privacy/v1` chỉ đọc chính sách và chỉ mục, không đọc định danh mã hóa, hồ sơ vi phạm, đề nghị khôi phục (NFR-09-019).
 
-Hai điểm còn lại. Quy tắc nghiệp vụ trọng yếu khóa ngay ở CSDL: bốn mắt khi hạ mức phân loại, duyệt chính sách che, khôi phục giá trị gốc ba người, hủy khóa, xóa mật mã tenant; k ≥ 10; phiếu xem đầy đủ ≤ 60 giây; đồng hồ vi phạm đúng 72 giờ; phiên bản `ACTIVE` bất biến; nhật ký kiểm toán chỉ thêm (mục 1.4). DDL [`ph09/ddl/ph09_privacy.sql`](ph09/ddl/ph09_privacy.sql) chạy sạch trên PostgreSQL 16.15, bài kiểm [`ph09/test/ph09_isolation_test.sql`](ph09/test/ph09_isolation_test.sql) đạt 160 khối PASS (§4.2). Mục 8 ánh xạ thực thể và chức năng sang bảng; mục 9 nêu năm câu hỏi mở Q09-50…54 và đề nghị cho FRS.
+Hai điểm còn lại. Quy tắc nghiệp vụ trọng yếu khóa ngay ở CSDL: bốn mắt khi hạ mức phân loại, duyệt chính sách che, khôi phục giá trị gốc ba người, hủy khóa, xóa mật mã tenant; k ≥ 10; phiếu xem đầy đủ ≤ 60 giây; đồng hồ vi phạm đúng 72 giờ; phiên bản `ACTIVE` bất biến; nhật ký kiểm toán chỉ thêm (mục 1.4). DDL [`ph09/ddl/ph09_privacy.sql`](ph09/ddl/ph09_privacy.sql) chạy sạch trên PostgreSQL 16.15, bài kiểm [`ph09/test/ph09_isolation_test.sql`](ph09/test/ph09_isolation_test.sql) đạt 165 khối PASS (§4.2). Mục 8 ánh xạ thực thể và chức năng sang bảng; mục 9 ghi kết quả đồng bộ với FRS 0.2 và năm câu hỏi mở Q09-50…54.
 
 ## 0. Giới thiệu
 
@@ -119,7 +119,7 @@ Các quy tắc sau do CSDL tự bảo đảm bằng ràng buộc, chỉ mục du
 | `uq_consent_record_given`, `tg_consent_template_frozen` | Một đồng ý GIVEN mỗi (chủ thể, mẫu); nội dung mẫu ACTIVE bất biến | BR-09-050; FR-09-052, 053 |
 | `ck_breach_case_clock`, `_notified`, `_not_breach` | Hạn đúng `detected_at` cộng 72 giờ, không đổi; NOTIFIED cần thông báo hoặc căn cứ miễn trừ | BR-09-054, 055; FR-09-058, 059 |
 | `ck_outbox_event_no_value`, `ck_privacy_audit_event_no_value`, `tg_privacy_audit_event_append_only` | Sự kiện, kiểm toán không mang khóa giá trị; kiểm toán chỉ thêm | BR-09-025, 058; FR-09-061 |
-| `ck_tenant_setting_key`, `_bounds` | Chỉ 36 khóa `09.*`; giá trị số trong sàn và trần của PA | BR-09-059; FR-09-064 |
+| `ck_tenant_setting_key`, `_bounds` | Chỉ 43 khóa `09.*`; giá trị số trong sàn và trần của PA | BR-09-059; FR-09-064 |
 
 : Quy tắc nghiệp vụ chốt ở CSDL
 
@@ -169,6 +169,7 @@ erDiagram
   purpose ||--o{ purpose_grant : "purpose_code"
   purpose_grant ||--o{ grant_condition : "grant_id"
   purpose_grant |o--o{ usage_anomaly : "grant_id"
+  purpose_grant |o--o{ access_request : "renews_grant_id"
   data_element ||..o{ activity_link : "logic, target_id"
   purpose_grant ||..o{ usage_counter : "logic, bộ ba HTTT, mục đích, hợp đồng"
   purpose ||..o{ usage_counter : "logic, purpose_code"
@@ -302,12 +303,12 @@ Phần dưới sinh bằng [`gen_tables_md.py`](ph09/tools/gen_tables_md.py) và
 
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
-| `log_policy` | `varchar(16)` | Cách ghi giá trị vào log vận hành (D03-07 3.2). |
+| `log_policy` | `varchar(16)` | Cách ghi giá trị vào log vận hành (D03-07 3.2). Enum `LogPolicy`. |
 | `encrypt_at_app` | `boolean, mặc định false` | Mã hóa envelope ở tầng ứng dụng (ADR-032). |
 
 : Cột của bảng `data_class`
 
-Cột khác: `code` v(16) DataClass; `rank` smallint; `name` v(100); `display_policy` v(16) {FULL, MASK_BY_ROLE, MASK_DEFAULT}.
+Cột khác: `code` v(16) DataClass; `rank` smallint; `name` v(100); `display_policy` v(16) DisplayPolicy.
 
 ### 3.2. `block_label`
 
@@ -339,7 +340,7 @@ Cột khác: `code` v(16) DataClass; `rank` smallint; `name` v(100); `display_po
 
 : Cột của bảng `block_label`
 
-Cột khác: `label` v(16) BlockLabel; `target_kind` v(16) {ELEMENT, API, TOPIC, FLOW}; `target_id` v(128); `legal_doc` v(255); `assigned_by` v(64); `release_requested_by` v(64); `release_requested_at` tstz; `release_doc` v(255); `released_at` tstz.
+Cột khác: `label` v(16) BlockLabel; `target_kind` v(16) TargetKind; `target_id` v(128); `legal_doc` v(255); `assigned_by` v(64); `release_requested_by` v(64); `release_requested_at` tstz; `release_doc` v(255); `released_at` tstz.
 
 ### 3.3. `personal_data_category`
 
@@ -699,7 +700,7 @@ Cột khác: `code` v(41); `version_no` int; `status` v(20) VersionStatus; `subm
 **Ghi chú.** ETag là `version`.
 :::
 
-Cột: `activity_id` uuid; `target_kind` v(8) {ELEMENT, API, TOPIC, FLOW}; `target_id` v(128).
+Cột: `activity_id` uuid; `target_kind` v(8) TargetKind; `target_id` v(128).
 
 ### 3.15. `purpose`
 
@@ -736,9 +737,9 @@ Cột khác: `code` v(41); `name` v(255); `description` v(2000); `legal_basis_co
 ### 3.16. `purpose_element`
 
 ::: dac-ta
-**Mục đích.** EN-09-15 Trường được phép theo mục đích (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.
+**Mục đích.** EN-09-52 Trường được phép theo mục đích, bảng con của Purpose (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.
 
-**FR phục vụ.** FR-09-014; EN-09-15.
+**FR phục vụ.** FR-09-014; EN-09-52.
 
 **Khóa chính.** `id`.
 
@@ -772,7 +773,7 @@ Cột: `purpose_id` uuid; `element_id` uuid.
 
 **Khóa ngoại.** (tenant_id, purpose_code) → `purpose`.
 
-**Ràng buộc CHECK.** `ck_access_request_` + kind, fields, volume, justification, status, decision, four_eyes, decided, outcome, submitted.
+**Ràng buộc CHECK.** `ck_access_request_` + kind, req_kind, renews, fields, volume, justification, status, decision, four_eyes, decided, outcome, submitted.
 
 **Chỉ mục.** `ix_access_request_inbox`, `ix_access_request_httt`.
 
@@ -788,6 +789,8 @@ Cột: `purpose_id` uuid; `element_id` uuid.
 | `httt_id` | `varchar(63)` | Mã HTTT ở PH-01 (không khóa ngoại). |
 | `registration_ref` | `varchar(63), NULL` | Đăng ký sử dụng ở PH-02. |
 | `owner_org_id` | `varchar(63)` | Tổ chức chủ quản dữ liệu, đích hộp việc của DO. |
+| `request_kind` | `varchar(8), mặc định 'NEW'` | AccessRequestKind: NEW (mặc định) hoặc RENEWAL, yêu cầu gia hạn chấp thuận hiện có (FR-09-015). Enum `AccessRequestKind`. |
+| `renews_grant_id` | `uuid, NULL` | Chấp thuận ACTIVE được gia hạn; bắt buộc khi RENEWAL, rỗng khi NEW; cùng HTTT và mục đích kiểm ở dịch vụ (FR-09-015, 016). |
 
 : Cột của bảng `access_request`
 
@@ -985,7 +988,7 @@ Cột khác: `code` v(48); `mask_type` v(12) MaskType; `pattern_kind` v(24) Mask
 **Ghi chú.** ETag là `version`.
 :::
 
-Cột: `policy_code` v(63); `version_no` int; `status` v(20) VersionStatus; `submitted_by` v(64); `submitted_at` tstz; `decided_by` v(64); `decided_at` tstz; `decision_comment` v(2000); `activated_at` tstz; `superseded_at` tstz; `scope` v(8) {TENANT, CONTRACT}; `contract_kind` v(8) ContractKind; `contract_id` v(128); `description` v(2000); `passed_simulation_id` uuid.
+Cột: `policy_code` v(63); `version_no` int; `status` v(20) VersionStatus; `submitted_by` v(64); `submitted_at` tstz; `decided_by` v(64); `decided_at` tstz; `decision_comment` v(2000); `activated_at` tstz; `superseded_at` tstz; `scope` v(8) MaskPolicyScope; `contract_kind` v(8) ContractKind; `contract_id` v(128); `description` v(2000); `passed_simulation_id` uuid.
 
 ### 3.25. `mask_rule`
 
@@ -1352,9 +1355,9 @@ Cột: `schedule_code` v(41); `version_no` int; `status` v(20) VersionStatus; `s
 ### 3.38. `retention_schedule_line`
 
 ::: dac-ta
-**Mục đích.** EN-09-36 Dòng lịch lưu giữ (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm.
+**Mục đích.** EN-09-53 Dòng lịch lưu giữ, bảng con của RetentionSchedule (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm.
 
-**FR phục vụ.** FR-09-040; EN-09-36.
+**FR phục vụ.** FR-09-040; EN-09-53.
 
 **Khóa chính.** `id`.
 
@@ -1771,7 +1774,7 @@ Cột: `id` uuid; `tenant_id` v(16); `occurred_at` tstz; `actor` v(64); `action`
 **Ghi chú.** ETag là `version`.
 :::
 
-Cột: `period_from` date; `period_to` date; `sections` v(32)[]; `report_format` v(8) {PDF, XLSX, DOCX}; `metrics` jsonb; `file_ref` v(512); `file_sha256` char(64); `generated_by` v(64).
+Cột: `period_from` date; `period_to` date; `sections` v(32)[]; `report_format` v(8) ReportFormat; `metrics` jsonb; `file_ref` v(512); `file_sha256` char(64); `generated_by` v(64).
 
 ### 3.53. `tenant_setting`
 
@@ -1802,9 +1805,9 @@ Cột: `setting_key` v(48) {}; `value` jsonb; `floor_value` jsonb; `ceiling_valu
 ### 3.54. `outbox_event`
 
 ::: dac-ta
-**Mục đích.** Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL.
+**Mục đích.** EN-09-54 Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13.
 
-**FR phục vụ.** Hạ tầng dùng chung.
+**FR phục vụ.** Hạ tầng dùng chung; EN-09-54.
 
 **Khóa chính.** (event_id).
 
@@ -1828,9 +1831,9 @@ Cột: `event_id` uuid; `tenant_id` v(16); `event_type` v(128); `topic` v(249); 
 ### 3.55. `inbox_event`
 
 ::: dac-ta
-**Mục đích.** Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18.
+**Mục đích.** EN-09-55 Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18.
 
-**FR phục vụ.** Hạ tầng dùng chung.
+**FR phục vụ.** Hạ tầng dùng chung; EN-09-55.
 
 **Khóa chính.** (tenant_id, consumer, event_id).
 
@@ -1894,15 +1897,15 @@ Không có changeset di trú dữ liệu: repo chưa có bảng PH-09 nào chạ
 
 Chạy ngày 26/11/2026 trên PostgreSQL 16.15 (Ubuntu 24.04) cài sạch, dữ liệu giả, tenant kiểm thử T90, T91:
 
-- DDL chạy không lỗi trên CSDL `ph09_test` trống với `ON_ERROR_STOP`: 55 bảng gốc, 6 phân vùng, 372 `CHECK`, 39 khóa ngoại, 93 trigger, 220 chính sách RLS (55 bảng × 4).
+- DDL chạy không lỗi trên CSDL `ph09_test` trống với `ON_ERROR_STOP`: 55 bảng gốc, 6 phân vùng, 374 `CHECK`, 40 khóa ngoại, 93 trigger, 220 chính sách RLS (55 bảng × 4).
 - Ghép 12 tệp changelog theo thứ tự trong `db.changelog-ph09.yaml` rồi chạy bằng psql trên CSDL trống khác: không lỗi, cùng 55 bảng. Chưa chạy bằng Liquibase CLI (không có trong máy); CI chạy `liquibase update` trên Testcontainers.
-- [`ph09_isolation_test.sql`](ph09/test/ph09_isolation_test.sql) đạt 160 khối PASS, chia 15 nhóm: nạp tenant (4, 18, 7, 7, 12 và 36 dòng, chạy lại không nhân bản); cô lập tenant (T91 đọc 0 dòng nghiệp vụ T90 trên mọi bảng kể cả phân vùng, không chèn, sửa, xóa; không có dòng `COMMON`; chưa đặt tenant thì thấy 0 dòng); phân loại và hạ mức; nhãn STATE_SECRET; hoạt động xử lý, DPIA; chấp thuận, yêu cầu, bundle; chính sách che, phiếu xem đầy đủ; giả danh hóa, khôi phục, ẩn danh hóa; lưu giữ, giữ pháp lý, xóa mật mã; yêu cầu chủ thể, đồng ý; vi phạm 72 giờ; kiểm toán chỉ thêm, outbox, tham số; quyền ba vai `ph09_app`, `ph09_readonly`, `ph09_decide`; không cột hay bảng nào lưu giá trị DLCN rõ.
+- [`ph09_isolation_test.sql`](ph09/test/ph09_isolation_test.sql) đạt 165 khối PASS, chia 15 nhóm: nạp tenant (4, 18, 7, 7, 12 và 43 dòng, chạy lại không nhân bản); cô lập tenant (T91 đọc 0 dòng nghiệp vụ T90 trên mọi bảng kể cả phân vùng, không chèn, sửa, xóa; không có dòng `COMMON`; chưa đặt tenant thì thấy 0 dòng); phân loại và hạ mức; nhãn STATE_SECRET; hoạt động xử lý, DPIA; chấp thuận, yêu cầu (kể cả loại `RENEWAL` kèm `renews_grant_id`), bundle; chính sách che, phiếu xem đầy đủ; giả danh hóa, khôi phục, ẩn danh hóa; lưu giữ, giữ pháp lý, xóa mật mã; yêu cầu chủ thể, đồng ý; vi phạm 72 giờ; kiểm toán chỉ thêm, outbox, tham số; quyền ba vai `ph09_app`, `ph09_readonly`, `ph09_decide`; không cột hay bảng nào lưu giá trị DLCN rõ.
 
 Bài kiểm `TenantIsolationIT` (D03-02-PH09) tự động hóa các khối này trong CI bằng Testcontainers PostgreSQL 16.
 
 ### 4.3. Đối chiếu với FRS phụ lục A
 
-[`ph09/tools/check_frs.py`](ph09/tools/check_frs.py) đọc FRS và DDL, kiểm: (1) 96 cột có `CHECK` liệt kê giá trị đều khớp đúng một enum Phụ lục A, hoặc là tập con có chủ ý (`personal_data_type` của loại DLCN không có `NONE`); (2) không có giá trị `CHECK` dạng chữ hoa nào mà FRS không có; (3) mọi mã ERR, BR, EN, FR nhắc ở DDL và tài liệu có ở FRS, đủ 51 EN và 64 FR; (4) mọi bảng bật RLS và có `COMMENT`. Kết quả: khớp. Sáu cột có tập giá trị nằm ở mô tả chức năng chứ chưa ở Phụ lục A (`log_policy`, `display_policy`, `target_kind` hai bảng, `mask_policy.scope`, `report_format`) và bốn enum (`AnonTransform`, `ConsentChannel`, `FailMode`, `IdentifierKind`) chỉ dùng ở dịch vụ hoặc trong `jsonb`; đề nghị ở mục 9.2.
+[`ph09/tools/check_frs.py`](ph09/tools/check_frs.py) đọc FRS và DDL, kiểm: (1) 97 cột có `CHECK` liệt kê giá trị đều khớp đúng một enum Phụ lục A, hoặc là tập con có chủ ý (`personal_data_type` của loại DLCN không có `NONE`); (2) không có giá trị `CHECK` dạng chữ hoa nào mà FRS không có; (3) mọi mã ERR, BR, EN, FR nhắc ở DDL và tài liệu có ở FRS, đủ 55 EN và 64 FR; (4) mọi bảng bật RLS và có `COMMENT`. Kết quả: khớp. Năm enum từng chỉ có ở mô tả chức năng (`LogPolicy`, `DisplayPolicy`, `TargetKind`, `MaskPolicyScope`, `ReportFormat`) đã vào Phụ lục A của FRS 0.2 và khớp CHECK; `AccessRequestKind` khớp `ck_access_request_req_kind`. Mười ba enum còn lại (`AnonTransform`, `AuditOutcome`, `BlockLabelStatus`, `BreachClockLevel`, `BundleTrigger`, `ConsentChannel`, `ConsentCheckStatus`, `DecideReason`, `FailMode`, `FindingResolution`, `IdentifierKind`, `SchemaFormat`, `UsageGroupBy`) chỉ dùng ở dịch vụ, trong `jsonb` hoặc suy từ cột khác nên không có CHECK riêng.
 
 ## 5. Dữ liệu khởi tạo
 
@@ -1974,7 +1977,7 @@ Lịch `PH09-OWN` chính là chính sách lưu giữ của PH-09: nó tuân theo
 
 ### 8.1. Thực thể EN-09 → bảng
 
-Bảng ánh xạ 51 thực thể của FRS 4.2 sang bảng; bốn bảng không có mã EN là `purpose_element`, `retention_schedule_line` (bảng con của EN-09-15, EN-09-36), `outbox_event`, `inbox_event` (hạ tầng).
+Bảng ánh xạ 55 thực thể của FRS 4.2 sang bảng, mỗi thực thể đúng một bảng; EN-09-52…55 là hai bảng con (`purpose_element` của Purpose, `retention_schedule_line` của RetentionSchedule) và hai bảng hạ tầng (`outbox_event`, `inbox_event`).
 
 <!-- gen:en:start -->
 | Thực thể | Tên ở FRS 4.2 | Bảng hiện thực |
@@ -1993,7 +1996,7 @@ Bảng ánh xạ 51 thực thể của FRS 4.2 sang bảng; bốn bảng không 
 | EN-09-12 | `ActivityLink` | `activity_link` |
 | EN-09-13 | `LegalBasis` | `legal_basis` |
 | EN-09-14 | `LegalDocument` | `legal_document` |
-| EN-09-15 | `Purpose` | `purpose`, `purpose_element` |
+| EN-09-15 | `Purpose` | `purpose` |
 | EN-09-16 | `AccessRequest` | `access_request` |
 | EN-09-17 | `PurposeGrant` | `purpose_grant` |
 | EN-09-18 | `GrantCondition` | `grant_condition` |
@@ -2014,7 +2017,7 @@ Bảng ánh xạ 51 thực thể của FRS 4.2 sang bảng; bốn bảng không 
 | EN-09-33 | `AnonymizationJob` | `anonymization_job` |
 | EN-09-34 | `RiskReport` | `risk_report` |
 | EN-09-35 | `AnonymizedDataset` | `anonymized_dataset` |
-| EN-09-36 | `RetentionSchedule` | `retention_schedule`, `retention_schedule_line` |
+| EN-09-36 | `RetentionSchedule` | `retention_schedule` |
 | EN-09-37 | `RetentionTask` | `retention_task` |
 | EN-09-38 | `LegalHold` | `legal_hold` |
 | EN-09-39 | `TenantShredRequest` | `tenant_shred_request` |
@@ -2030,10 +2033,14 @@ Bảng ánh xạ 51 thực thể của FRS 4.2 sang bảng; bốn bảng không 
 | EN-09-49 | `PrivacyAuditEvent` | `privacy_audit_event` |
 | EN-09-50 | `ComplianceReport` | `compliance_report` |
 | EN-09-51 | `TenantSetting` | `tenant_setting` |
+| EN-09-52 | `PurposeElement` | `purpose_element` |
+| EN-09-53 | `RetentionScheduleLine` | `retention_schedule_line` |
+| EN-09-54 | `OutboxEvent` | `outbox_event` |
+| EN-09-55 | `InboxEvent` | `inbox_event` |
 
 : Ánh xạ thực thể EN-09 sang bảng
 
-Bảng không có mã EN ở FRS 4.2 (bổ sung để hiện thực chức năng): `outbox_event`, `inbox_event`.
+Bảng không có mã EN ở FRS 4.2 (bổ sung để hiện thực chức năng): .
 <!-- gen:en:end -->
 
 ### 8.2. Chức năng FR-09 → bảng
@@ -2106,7 +2113,7 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 
 | Mã | Câu hỏi | Đề xuất tạm |
 |---|---|---|
-| Q09-50 | Sáu cột có tập giá trị cố định nhưng chưa ở Phụ lục A (`log_policy`, `display_policy`, `target_kind`, `mask_policy.scope`, `report_format`) nên đưa thành enum Phụ lục A hay giữ ở mô tả chức năng | Đưa vào Phụ lục A (`LogPolicy`, `DisplayPolicy`, `TargetKind`, `MaskPolicyScope`, `ReportFormat`) để UC, API, TC dùng chung tên; DDL đã khớp giá trị ở FR-09-001, 007, 011, 024, 063 |
+| Q09-50 | Năm cột có tập giá trị cố định chưa ở Phụ lục A (`log_policy`, `display_policy`, `target_kind`, `mask_policy.scope`, `report_format`) | Đã chốt: FRS 0.2 đưa vào Phụ lục A (`LogPolicy`, `DisplayPolicy`, `TargetKind`, `MaskPolicyScope`, `ReportFormat`); DDL đã khớp, không đổi |
 | Q09-51 | Thời hạn trực tuyến của `privacy_audit_event` (395 ngày), `usage_counter` (400 ngày) và hồ sơ vi phạm (10 năm) so với quy định bảo quản; `usage_counter` khoảng 100 triệu dòng ở tỉnh vừa | Giữ giả định; nếu pháp chế yêu cầu dài hơn thì `ARCHIVE` sang Garage dạng Parquet; chuyển `usage_counter` sang ClickHouse của PH-13 nếu ghi vượt 500 dòng mỗi giây |
 | Q09-52 | Khóa HMAC của `subject_hash` dùng chung với `dh-{tenant}-mdm-hmac` của PH-06 (tra chéo được, một lần quay khóa) hay khóa riêng `dh-{tenant}-privacy-hmac` (tách rủi ro, phải chuyển băm khi tra PH-06); chu kỳ quay | Khóa riêng; PH-09 tính băm theo khóa của PH-06 khi chuyển tác vụ qua giao diện module, không lưu; quay 12 tháng, hai pha (ghi cả hai băm, bỏ băm cũ); cần ATTT và PH-06 xác nhận (liên quan Q09-16) |
 | Q09-53 | `consent_record` có cần phân vùng khi tenant lớn (hàng chục triệu đồng ý, các tiện ích thông báo) | Chưa phân vùng ở tỉnh vừa (300.000 dòng); chỉ mục `uq_consent_record_given` đủ cho tra 60 giây; nếu vượt 20 triệu dòng thì phân vùng băm theo `subject_hash` |
@@ -2114,23 +2121,28 @@ Các câu hỏi chưa có quyết định, kèm đề xuất tạm.
 
 : Câu hỏi mở của tập CSDL PH-09
 
-### 9.2. Đề nghị cho FRS
+### 9.2. Đồng bộ với FRS 0.2
 
-Lệch và thiếu phát hiện khi thiết kế bảng; PH-09 không tự sửa FRS.
+Chín đề nghị của bản 0.1 đã được FRS 0.2 xử lý (Phụ lục C, các dòng "CSDL"); bảng ghi kết quả và việc đã làm ở DDL. Ngoài ra DDL nhận ba thay đổi từ FRS 0.2 không do tập này đề nghị.
 
-| Số | Nội dung | Gợi ý xử lý |
+| Số | Nội dung | Kết quả ở FRS 0.2 và DDL |
 |---|---|---|
-| 1 | Enum ngoài Phụ lục A (Q09-50) | Thêm năm enum vào Phụ lục A |
-| 2 | FR-09-001 ghi `rank` 1 đến 9 còn Phụ lục A cố định bốn mức thứ hạng 1 đến 4 | DDL chặn 1…4 và đúng thứ hạng theo mã; sửa FR-09-001 hoặc cho phép mức tenant tự thêm (ngoài `DataClass`) |
-| 3 | BR-09-002 "hai người khác nhau" mơ hồ khi tính cả người đề xuất | DDL hiểu: người đề xuất, người xác nhận thứ nhất, người xác nhận thứ hai đôi một khác nhau; xin ghi rõ ở BR |
-| 4 | Nhãn STATE_SECRET (EN-09-02) chưa có enum trạng thái; gỡ nhãn nêu "hai người" nhưng chưa nói trạng thái trung gian | DDL dùng cột `release_requested_*`, `released_*` thay trạng thái; nếu cần thì thêm `BlockLabelStatus` |
-| 5 | `PolicyBundle` (EN-09-19) chưa có trạng thái dựng, ký, phát hành | DDL dùng `test_passed`, `published_at`; thêm trạng thái nếu UI-09-01 cần hiển thị |
-| 6 | FR-09-011 và BR-09-011 chưa nói liên kết hoạt động với trường có thuộc nội dung phiên bản không | DDL coi liên kết là nội dung (không thêm vào hoạt động ACTIVE, `tg_child_frozen`); nếu cần thêm liên kết không đổi phiên bản thì bỏ trigger |
-| 7 | `ConsentStatus.EXPIRED` chưa có tác vụ sinh | DDL cho phép giá trị khi `expires_at` qua hạn; FRS nên nêu tác vụ hoặc bỏ giá trị |
-| 8 | Phụ lục A chưa có chuỗi thời hạn `legal_doc` cho nhãn, loại văn bản `docType` | DDL chỉ ràng buộc dạng `^[A-Z][A-Z0-9_]{1,31}$`; thêm enum `LegalDocType` nếu cần |
-| 9 | SRS cũ cho k ≥ 5 và bí danh khôi phục lưu rõ; FRS mới k ≥ 10, không lưu | Đã áp ở DDL; ghi vào bảng chuyển đổi 8.3 |
+| 1 | Enum ngoài Phụ lục A (Q09-50) | Đã thêm năm enum vào Phụ lục A; DDL không đổi |
+| 2 | FR-09-001 ghi `rank` 1 đến 9 | FRS sửa thành 1 đến 4; DDL đã chặn 1…4 theo mã |
+| 3 | BR-09-002 "hai người khác nhau" mơ hồ | BR-09-002 ghi ba người đôi một khác nhau, đúng với CHECK hiện có |
+| 4 | Nhãn chặn chưa có enum trạng thái | Thêm `BlockLabelStatus` dạng suy ra; DDL giữ cột `release_requested_*`, `released_*` |
+| 5 | Bundle chưa có trạng thái dựng, ký, phát hành | Thêm `BundleTrigger`; trạng thái suy từ `test_passed`, `published_at`; DDL không đổi |
+| 6 | Liên kết hoạt động thuộc nội dung phiên bản | FR-09-011 và BR-09-011 đã nêu; `tg_child_frozen` giữ nguyên |
+| 7 | `ConsentStatus.EXPIRED` chưa có tác vụ sinh | FR-09-053 bước 3 nêu việc chạy mỗi 5 phút |
+| 8 | Loại văn bản `docType` | FRS không nhận enum `LegalDocType`: danh mục mở của tenant; DDL giữ ràng buộc dạng mã |
+| 9 | k ≥ 10, không lưu bí danh | Đã ghi ở bảng 11.3 của FRS và mục 8.3 của tập này |
+| 10 | Bốn bảng ngoài danh mục EN | FRS cấp EN-09-52…55; `COMMENT ON TABLE` của bốn bảng mang mã mới, mục 8.1 ánh xạ đủ 55 thực thể |
+| 11 | Loại yêu cầu `RENEWAL` (MH C7) | Thêm cột `request_kind` (`NEW` mặc định, `RENEWAL`), `renews_grant_id` có khóa ngoại sang `purpose_grant`; CHECK `ck_access_request_renews` buộc `RENEWAL` kèm chấp thuận gia hạn và `NEW` thì rỗng |
+| 12 | Bảy khóa tham số mới của FRS 8.2 | `ck_tenant_setting_key` và `p_seed_tenant` nạp 43 khóa, thêm `09.decision.cache-seconds`, `09.feature.dsr-ph11`, `09.feature.l-diversity`, `09.feature.auto-confirm-mvp`, `09.api.rate-user-per-min`, `09.api.rate-du-per-sec`, `09.mask.reveal-alert-per-hour` |
 
-: Đề nghị cho FRS
+: Đồng bộ với FRS 0.2
+
+Việc còn lại cho FRS: dòng `AccessRequestKind` ở Phụ lục A và dòng D03-03-PH09 ở Phụ lục B còn ghi "cần thêm vào DDL"; DDL đã có cột nên đề nghị đổi thành đã thực hiện ở bản 0.2 của tập CSDL.
 
 ### 9.3. Đề nghị đồng bộ tài liệu chung
 
@@ -2141,3 +2153,4 @@ Người điều phối cần chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-CSDL và K-TRINH-BAY: 55 bảng cho 51 thực thể, DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 160 khối PASS, đối chiếu Phụ lục A sạch; ERD sáu nhóm; mã hóa envelope và HMAC, không bảng ánh xạ bí danh; lịch lưu giữ của PH-09; ánh xạ EN, FR sang bảng; năm câu hỏi mở Q09-50…54 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: cột `request_kind`, `renews_grant_id` và hai CHECK của `access_request`, 43 khóa `ck_tenant_setting_key`, mã EN-09-52…55 cho bốn bảng ngoài danh mục, 55 bảng cho 55 thực thể, 165 khối kiểm PASS, 374 CHECK, 40 khóa ngoại; mục 9.2 thành bảng đồng bộ |

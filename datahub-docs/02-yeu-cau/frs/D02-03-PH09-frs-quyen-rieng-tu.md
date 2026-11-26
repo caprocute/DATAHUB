@@ -3582,7 +3582,7 @@ Nhóm K gom các chức năng ngang: nhật ký riêng của PH-09 (FR-09-061), 
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm khoảng thời gian (ERR-09-036) và tìm trong kho kiểm toán của PH-13.
+1. Hệ thống kiểm khoảng thời gian (ERR-09-079) và tìm trong kho kiểm toán của PH-13.
 2. Kết quả không có giá trị DLCN; xem đầy đủ chỉ qua lịch sử phiếu (FR-09-029).
 3. Xuất lớn chạy nền, có thủy vân.
 
@@ -4626,7 +4626,7 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-09 (UC, SDD, CSDL, API,
 | `BlockLabelStatus` | `ACTIVE`, `RELEASE_REQUESTED`, `RELEASED` (suy từ cột `released_*`, không có cột trạng thái) | FR-007 |
 | `SchemaFormat` | `OPENAPI`, `JSON_SCHEMA`, `AVRO` | FR-003 |
 | `FindingResolution` | `CLASSIFY`, `EXCLUDE`, `FIXED` | FR-005, 030 |
-| `AccessRequestKind` | `NEW`, `RENEWAL` (đề xuất của FRS 0.2, cần thêm vào DDL và OpenAPI) | FR-015, 016 |
+| `AccessRequestKind` | `NEW`, `RENEWAL` (thêm ở FRS 0.2, đã có trong DDL và OpenAPI 0.2) | FR-015, 016 |
 | `DecideReason` | `GRANTED`, `NO_GRANT`, `BLOCK_LABEL`, `RESTRICTED_SUBJECT`, `SENSITIVE_NO_PURPOSE` (lý do quyết định mục đích) | FR-019 |
 | `BundleTrigger` | `AUTO`, `MANUAL`, `ROLLBACK` (cách dựng bundle; trạng thái dựng, ký, phát hành suy từ `test_passed`, `published_at`) | FR-018 |
 | `MaskPolicyScope` | `TENANT`, `CONTRACT` | FR-024 |
@@ -4671,8 +4671,8 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC 
 |---|---|---|
 | UC §8.2 ĐN-UC-01 | Gắn ERR-09-012 vào luồng ngoại lệ FR-09-004 | Đã hấp thụ: FR-09-004, luồng ngoại lệ |
 | UC §8.2 ĐN-UC-02 | Câu thông báo cho ERR-09-003 | Đã hấp thụ: ERR-09-003 "Dữ liệu không hợp lệ: {chi tiết}." ở 9.1 và 9.2 |
-| UC §8.2 ĐN-UC-03 | API gia hạn hạn trả lời `:extend` | Đã hấp thụ: API-09-242 (FR-09-049); OpenAPI chưa có |
-| UC §8.2 ĐN-UC-04 | API ngừng phần tử `:retire` và rút yêu cầu `:withdraw` | Đã hấp thụ: API-09-243 (FR-09-003) và API-09-244 (FR-09-045); OpenAPI chưa có |
+| UC §8.2 ĐN-UC-03 | API gia hạn hạn trả lời `:extend` | Đã hấp thụ: API-09-242 (FR-09-049); OpenAPI 0.2 đã có |
+| UC §8.2 ĐN-UC-04 | API ngừng phần tử `:retire` và rút yêu cầu `:withdraw` | Đã hấp thụ: API-09-243 (FR-09-003) và API-09-244 (FR-09-045); OpenAPI 0.2 đã có |
 | UC §8.2 ĐN-UC-05 | Gắn ERR-09-026 vào FR-09-015 | Đã hấp thụ: FR-09-015, luồng ngoại lệ |
 | UC §8.2 ĐN-UC-06 | Tác nhân hệ thống gọi `:suspend` khi tự tạm dừng | Hấp thụ dạng nghiệp vụ nội bộ: FR-09-017, FR-09-020 (tác nhân `system:anomaly-detector`, không qua API công khai); không thêm API |
 | MH C1 | UI-09-09 liệt kê TA nhưng TA không có `PERM-09-purpose-approve` | Đã hấp thụ: 10.1 ghi DO duyệt, TA xem và phát hành bundle |
@@ -4682,7 +4682,7 @@ Bản 0.2 hấp thụ các đề nghị mà tập UC, MH, SDD, CSDL, API và TC 
 | MH C5 | Thêm FR-09-063 vào UI-09-21 | Đã hấp thụ: FR-09-063, mục Màn hình, API |
 | MH C6 | Bổ sung tab con ở 10.3 | Đã hấp thụ: 10.3 |
 | MH C7 | OR cần đề nghị gia hạn | Đã hấp thụ theo phương án loại yêu cầu: `AccessRequestKind.RENEWAL`, trường `renewsGrantId` ở FR-09-015, 016; DDL và OpenAPI cần thêm trường |
-| MH C8 | Tra đồng ý theo định danh trong thân ở control plane | Đã hấp thụ: API-09-245 `POST /consents:search` (FR-09-053); OpenAPI chưa có |
+| MH C8 | Tra đồng ý theo định danh trong thân ở control plane | Đã hấp thụ: API-09-245 `POST /consents:search` (FR-09-053); OpenAPI 0.2 đã có |
 | MH C9 | ERR-09-079, 080 | Đã hấp thụ: 9.1, HTTP 422 và câu thông báo đúng như API 6.3; gắn vào FR-09-061 và FR-09-025 |
 | MH C10 | Đồng hồ theo `expiresAt` của máy chủ, `serverTime`, áp 60 giây cho kết quả khôi phục | Đã hấp thụ: FR-09-029 và FR-09-033; API-09-124 ghi hạn tham chiếu 15 phút nên cần chỉnh theo 60 giây |
 | MH C11 | Ghi rõ chức năng data plane không có màn hình | Đã hấp thụ: 10.1 (FR-09-019, 027, 028, 032, 054) |

@@ -1,6 +1,6 @@
 -- =============================================================================
 -- D03-03-PH09 · DDL schema ph09_privacy — PH-09 Quyền riêng tư (bảo vệ dữ liệu cá nhân)
--- Phiên bản 0.1 · 2026-11-26 · Dự thảo
+-- Phiên bản 0.2 · 2026-11-26 · Dự thảo
 -- TỆP SINH bởi tools/sinh_ddl.py từ danh mục bảng và Phụ lục A của D02-03-PH09; sửa ở đó rồi sinh lại.
 --
 -- Chạy độc lập (phát triển):  psql -v ON_ERROR_STOP=1 -U postgres -d ph09_test -f ph09_privacy.sql
@@ -209,7 +209,7 @@ BEGIN
   ON CONFLICT (tenant_id, code) DO NOTHING;
   INSERT INTO ph09_privacy.tenant_setting (id, tenant_id, setting_key, value, floor_value, ceiling_value, created_by, updated_by)
   SELECT md5('ph09-setting:' || p_tenant || ':' || s.k)::uuid, p_tenant, s.k, s.v::jsonb, s.lo::jsonb, s.hi::jsonb, 'system:seed', 'system:seed'
-  FROM (VALUES ('09.scan.sample-rows', '10000', '1000', '100000'), ('09.scan.schedule-cron', '"0 2 * * 0"', NULL::text, NULL::text), ('09.scan.confidence', '0.8', '0.5', '0.99'), ('09.request.sla-days', '10', '3', '30'), ('09.grant.max-days', '365', '30', '730'), ('09.grant.renew-max', '3', '0', '10'), ('09.grant.expiring-notice-days', '30', '7', '90'), ('09.grant.require-restricted', 'false', NULL::text, NULL::text), ('09.bundle.debounce-seconds', '10', '1', '60'), ('09.bundle.valid-minutes', '60', '15', '240'), ('09.plan.cache-seconds', '300', '60', '300'), ('09.consent.cache-seconds', '60', '0', '60'), ('09.anomaly.quota-warn-percent', '80', '50', '95'), ('09.anomaly.bulk-threshold', '1000', '100', '100000'), ('09.anomaly.auto-suspend', 'false', NULL::text, NULL::text), ('09.mask.reveal-seconds', '60', '30', '60'), ('09.mask.reveal-max-per-hour', '20', '1', '50'), ('09.log.scan-cron', '"0 3 * * *"', NULL::text, NULL::text), ('09.pseudo.key-rotate-days', '365', '90', '730'), ('09.pseudo.min-rotate-days', '30', '7', '90'), ('09.pseudo.destroy-delay-days', '30', '7', '90'), ('09.reid.approval-ttl-hours', '24', '1', '72'), ('09.reid.exec-window-minutes', '30', '5', '120'), ('09.anon.k-min', '10', '10', '100'), ('09.anon.risk-medium-above', '0.05', '0.01', '0.1'), ('09.anon.risk-high-above', '0.1', '0.05', '0.2'), ('09.ai.allow-restricted', 'false', NULL::text, NULL::text), ('09.retention.run-cron', '"0 1 * * *"', NULL::text, NULL::text), ('09.retention.overdue-days', '7', '1', '30'), ('09.shred.delay-days', '30', '7', '90'), ('09.dsr.sla-days', '10', '5', '30'), ('09.dsr.remind-days', '3', '1', '7'), ('09.breach.alert-hours', '[24, 48, 60]', NULL::text, NULL::text), ('09.dpia.review-months', '12', '3', '12'), ('09.audit.query-max-days', '90', '7', '366'), ('09.report.schedule-cron', '"0 6 1 * *"', NULL::text, NULL::text)) AS s(k, v, lo, hi)
+  FROM (VALUES ('09.scan.sample-rows', '10000', '1000', '100000'), ('09.scan.schedule-cron', '"0 2 * * 0"', NULL::text, NULL::text), ('09.scan.confidence', '0.8', '0.5', '0.99'), ('09.request.sla-days', '10', '3', '30'), ('09.grant.max-days', '365', '30', '730'), ('09.grant.renew-max', '3', '0', '10'), ('09.grant.expiring-notice-days', '30', '7', '90'), ('09.grant.require-restricted', 'false', NULL::text, NULL::text), ('09.bundle.debounce-seconds', '10', '1', '60'), ('09.bundle.valid-minutes', '60', '15', '240'), ('09.plan.cache-seconds', '300', '60', '300'), ('09.consent.cache-seconds', '60', '0', '60'), ('09.decision.cache-seconds', '15', '0', '15'), ('09.feature.dsr-ph11', 'false', NULL::text, NULL::text), ('09.feature.l-diversity', 'false', NULL::text, NULL::text), ('09.feature.auto-confirm-mvp', 'false', NULL::text, NULL::text), ('09.api.rate-user-per-min', '300', '60', '1200'), ('09.api.rate-du-per-sec', '2000', '500', '5000'), ('09.anomaly.quota-warn-percent', '80', '50', '95'), ('09.anomaly.bulk-threshold', '1000', '100', '100000'), ('09.anomaly.auto-suspend', 'false', NULL::text, NULL::text), ('09.mask.reveal-seconds', '60', '30', '60'), ('09.mask.reveal-max-per-hour', '20', '1', '50'), ('09.mask.reveal-alert-per-hour', '10', '1', '50'), ('09.log.scan-cron', '"0 3 * * *"', NULL::text, NULL::text), ('09.pseudo.key-rotate-days', '365', '90', '730'), ('09.pseudo.min-rotate-days', '30', '7', '90'), ('09.pseudo.destroy-delay-days', '30', '7', '90'), ('09.reid.approval-ttl-hours', '24', '1', '72'), ('09.reid.exec-window-minutes', '30', '5', '120'), ('09.anon.k-min', '10', '10', '100'), ('09.anon.risk-medium-above', '0.05', '0.01', '0.1'), ('09.anon.risk-high-above', '0.1', '0.05', '0.2'), ('09.ai.allow-restricted', 'false', NULL::text, NULL::text), ('09.retention.run-cron', '"0 1 * * *"', NULL::text, NULL::text), ('09.retention.overdue-days', '7', '1', '30'), ('09.shred.delay-days', '30', '7', '90'), ('09.dsr.sla-days', '10', '5', '30'), ('09.dsr.remind-days', '3', '1', '7'), ('09.breach.alert-hours', '[24, 48, 60]', NULL::text, NULL::text), ('09.dpia.review-months', '12', '3', '12'), ('09.audit.query-max-days', '90', '7', '366'), ('09.report.schedule-cron', '"0 6 1 * *"', NULL::text, NULL::text)) AS s(k, v, lo, hi)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph09_privacy.log_mask_config (id, tenant_id, patterns, created_by, updated_by)
   VALUES (md5('ph09-logmask:' || p_tenant)::uuid, p_tenant, ARRAY['NATIONAL_ID_12', 'PHONE_VN', 'BANK_CARD_LUHN', 'EMAIL'], 'system:seed', 'system:seed')
@@ -800,7 +800,7 @@ CREATE TABLE ph09_privacy.purpose_element (
 CREATE INDEX ix_purpose_element_element ON ph09_privacy.purpose_element (tenant_id, element_id);
 CREATE TRIGGER tg_purpose_element_touch BEFORE UPDATE ON ph09_privacy.purpose_element FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
 CALL ph09_privacy.p_enable_rls('ph09_privacy.purpose_element');
-COMMENT ON TABLE ph09_privacy.purpose_element IS 'EN-09-15 Trường được phép theo mục đích (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.';
+COMMENT ON TABLE ph09_privacy.purpose_element IS 'EN-09-52 Trường được phép theo mục đích, bảng con của Purpose (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.purpose_element CASCADE;
 
 -- @changeset ph09-0260-access-request
@@ -825,6 +825,8 @@ CREATE TABLE ph09_privacy.access_request (
   decided_by       varchar(64),
   decided_at       timestamptz,
   due_at           timestamptz,
+  request_kind     varchar(8) NOT NULL DEFAULT 'NEW',
+  renews_grant_id  uuid,
   created_at       timestamptz NOT NULL DEFAULT now(),
   created_by       varchar(64) NOT NULL,
   updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -835,6 +837,8 @@ CREATE TABLE ph09_privacy.access_request (
   CONSTRAINT ck_access_request_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_access_request_purpose FOREIGN KEY (tenant_id, purpose_code) REFERENCES ph09_privacy.purpose (tenant_id, code),
   CONSTRAINT ck_access_request_kind CHECK (contract_kind IN ('API', 'TOPIC', 'FLOW')),
+  CONSTRAINT ck_access_request_req_kind CHECK (request_kind IN ('NEW', 'RENEWAL')),
+  CONSTRAINT ck_access_request_renews CHECK ((request_kind = 'RENEWAL') = (renews_grant_id IS NOT NULL)),
   CONSTRAINT ck_access_request_fields CHECK (cardinality(fields) >= 1),
   CONSTRAINT ck_access_request_volume CHECK (expected_volume BETWEEN 1 AND 10000000 AND requested_days BETWEEN 1 AND 730),
   CONSTRAINT ck_access_request_justification CHECK (char_length(justification) >= 20),
@@ -854,6 +858,8 @@ COMMENT ON TABLE ph09_privacy.access_request IS 'EN-09-16 Yêu cầu khai thác 
 COMMENT ON COLUMN ph09_privacy.access_request.httt_id IS 'Mã HTTT ở PH-01 (không khóa ngoại).';
 COMMENT ON COLUMN ph09_privacy.access_request.registration_ref IS 'Đăng ký sử dụng ở PH-02.';
 COMMENT ON COLUMN ph09_privacy.access_request.owner_org_id IS 'Tổ chức chủ quản dữ liệu, đích hộp việc của DO.';
+COMMENT ON COLUMN ph09_privacy.access_request.request_kind IS 'AccessRequestKind: NEW (mặc định) hoặc RENEWAL, yêu cầu gia hạn chấp thuận hiện có (FR-09-015).';
+COMMENT ON COLUMN ph09_privacy.access_request.renews_grant_id IS 'Chấp thuận ACTIVE được gia hạn; bắt buộc khi RENEWAL, rỗng khi NEW; cùng HTTT và mục đích kiểm ở dịch vụ (FR-09-015, 016).';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.access_request CASCADE;
 
 -- @changeset ph09-0270-purpose-grant
@@ -907,6 +913,7 @@ CREATE TRIGGER tg_purpose_grant_touch BEFORE UPDATE ON ph09_privacy.purpose_gran
 CREATE TRIGGER tg_purpose_grant_immutable BEFORE UPDATE ON ph09_privacy.purpose_grant FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_immutable('request_id', 'httt_id', 'purpose_code', 'contract_kind', 'contract_id', 'approved_by');
 CALL ph09_privacy.p_enable_rls('ph09_privacy.purpose_grant');
 COMMENT ON TABLE ph09_privacy.purpose_grant IS 'EN-09-17 Chấp thuận khai thác: bộ ba (HTTT, mục đích, hợp đồng), không chuyển nhượng (BR-09-013, FR-09-016, 017). Máy trạng thái GrantStatus; tối đa 3 lần gia hạn mặc định; thu hồi cần lý do 20 ký tự; một chấp thuận hiệu lực mỗi bộ ba. Nguồn của purpose_grants trong bundle OPA (FR-09-018).';
+ALTER TABLE ph09_privacy.access_request ADD CONSTRAINT fk_access_request_renews FOREIGN KEY (tenant_id, renews_grant_id) REFERENCES ph09_privacy.purpose_grant (tenant_id, id);
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.purpose_grant CASCADE;
 
 -- @changeset ph09-0280-grant-condition
@@ -1647,7 +1654,7 @@ CREATE UNIQUE INDEX uq_retention_schedule_line ON ph09_privacy.retention_schedul
 CREATE TRIGGER tg_retention_schedule_line_touch BEFORE UPDATE ON ph09_privacy.retention_schedule_line FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
 CREATE TRIGGER tg_retention_schedule_line_child_frozen BEFORE INSERT OR UPDATE OR DELETE ON ph09_privacy.retention_schedule_line FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_child_frozen('retention_schedule', 'schedule_id');
 CALL ph09_privacy.p_enable_rls('ph09_privacy.retention_schedule_line');
-COMMENT ON TABLE ph09_privacy.retention_schedule_line IS 'EN-09-36 Dòng lịch lưu giữ (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.';
+COMMENT ON TABLE ph09_privacy.retention_schedule_line IS 'EN-09-53 Dòng lịch lưu giữ, bảng con của RetentionSchedule (FR-09-040): bảng hoặc loại dữ liệu, loại DLCN, số ngày lưu, hành động RetentionAction, người chịu trách nhiệm. Nhật ký kiểm toán WORM không thuộc lịch này (BR-09-038). Chỉ sửa khi lịch DRAFT hoặc REJECTED.';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.retention_schedule_line CASCADE;
 
 -- @changeset ph09-0480-retention-task
@@ -2230,7 +2237,7 @@ CREATE TABLE ph09_privacy.tenant_setting (
   CONSTRAINT pk_tenant_setting PRIMARY KEY (id),
   CONSTRAINT ck_tenant_setting_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_tenant_setting_key UNIQUE (tenant_id, setting_key),
-  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('09.scan.sample-rows', '09.scan.schedule-cron', '09.scan.confidence', '09.request.sla-days', '09.grant.max-days', '09.grant.renew-max', '09.grant.expiring-notice-days', '09.grant.require-restricted', '09.bundle.debounce-seconds', '09.bundle.valid-minutes', '09.plan.cache-seconds', '09.consent.cache-seconds', '09.anomaly.quota-warn-percent', '09.anomaly.bulk-threshold', '09.anomaly.auto-suspend', '09.mask.reveal-seconds', '09.mask.reveal-max-per-hour', '09.log.scan-cron', '09.pseudo.key-rotate-days', '09.pseudo.min-rotate-days', '09.pseudo.destroy-delay-days', '09.reid.approval-ttl-hours', '09.reid.exec-window-minutes', '09.anon.k-min', '09.anon.risk-medium-above', '09.anon.risk-high-above', '09.ai.allow-restricted', '09.retention.run-cron', '09.retention.overdue-days', '09.shred.delay-days', '09.dsr.sla-days', '09.dsr.remind-days', '09.breach.alert-hours', '09.dpia.review-months', '09.audit.query-max-days', '09.report.schedule-cron')),
+  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('09.scan.sample-rows', '09.scan.schedule-cron', '09.scan.confidence', '09.request.sla-days', '09.grant.max-days', '09.grant.renew-max', '09.grant.expiring-notice-days', '09.grant.require-restricted', '09.bundle.debounce-seconds', '09.bundle.valid-minutes', '09.plan.cache-seconds', '09.consent.cache-seconds', '09.decision.cache-seconds', '09.feature.dsr-ph11', '09.feature.l-diversity', '09.feature.auto-confirm-mvp', '09.api.rate-user-per-min', '09.api.rate-du-per-sec', '09.anomaly.quota-warn-percent', '09.anomaly.bulk-threshold', '09.anomaly.auto-suspend', '09.mask.reveal-seconds', '09.mask.reveal-max-per-hour', '09.mask.reveal-alert-per-hour', '09.log.scan-cron', '09.pseudo.key-rotate-days', '09.pseudo.min-rotate-days', '09.pseudo.destroy-delay-days', '09.reid.approval-ttl-hours', '09.reid.exec-window-minutes', '09.anon.k-min', '09.anon.risk-medium-above', '09.anon.risk-high-above', '09.ai.allow-restricted', '09.retention.run-cron', '09.retention.overdue-days', '09.shred.delay-days', '09.dsr.sla-days', '09.dsr.remind-days', '09.breach.alert-hours', '09.dpia.review-months', '09.audit.query-max-days', '09.report.schedule-cron')),
   CONSTRAINT ck_tenant_setting_bounds CHECK (jsonb_typeof(value) <> 'number' OR ((floor_value IS NULL OR value >= floor_value) AND (ceiling_value IS NULL OR value <= ceiling_value)))
 );
 CREATE TRIGGER tg_tenant_setting_touch BEFORE UPDATE ON ph09_privacy.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
@@ -2260,7 +2267,7 @@ CREATE TABLE ph09_privacy.outbox_event (
 );
 CREATE INDEX ix_outbox_event_occurred ON ph09_privacy.outbox_event (occurred_at);
 CALL ph09_privacy.p_enable_rls('ph09_privacy.outbox_event');
-COMMENT ON TABLE ph09_privacy.outbox_event IS 'Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.';
+COMMENT ON TABLE ph09_privacy.outbox_event IS 'EN-09-54 Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.outbox_event CASCADE;
 
 -- @changeset ph09-0640-inbox-event
@@ -2280,7 +2287,7 @@ CREATE TABLE ph09_privacy.inbox_event (
 );
 CREATE INDEX ix_inbox_event_received ON ph09_privacy.inbox_event (received_at);
 CALL ph09_privacy.p_enable_rls('ph09_privacy.inbox_event');
-COMMENT ON TABLE ph09_privacy.inbox_event IS 'Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.';
+COMMENT ON TABLE ph09_privacy.inbox_event IS 'EN-09-55 Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.';
 -- @rollback DROP TABLE IF EXISTS ph09_privacy.inbox_event CASCADE;
 
 -- @file 09-0900-grants.sql

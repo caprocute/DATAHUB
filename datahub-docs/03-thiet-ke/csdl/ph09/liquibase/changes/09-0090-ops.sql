@@ -81,7 +81,7 @@ CREATE TABLE ph09_privacy.tenant_setting (
   CONSTRAINT pk_tenant_setting PRIMARY KEY (id),
   CONSTRAINT ck_tenant_setting_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_tenant_setting_key UNIQUE (tenant_id, setting_key),
-  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('09.scan.sample-rows', '09.scan.schedule-cron', '09.scan.confidence', '09.request.sla-days', '09.grant.max-days', '09.grant.renew-max', '09.grant.expiring-notice-days', '09.grant.require-restricted', '09.bundle.debounce-seconds', '09.bundle.valid-minutes', '09.plan.cache-seconds', '09.consent.cache-seconds', '09.anomaly.quota-warn-percent', '09.anomaly.bulk-threshold', '09.anomaly.auto-suspend', '09.mask.reveal-seconds', '09.mask.reveal-max-per-hour', '09.log.scan-cron', '09.pseudo.key-rotate-days', '09.pseudo.min-rotate-days', '09.pseudo.destroy-delay-days', '09.reid.approval-ttl-hours', '09.reid.exec-window-minutes', '09.anon.k-min', '09.anon.risk-medium-above', '09.anon.risk-high-above', '09.ai.allow-restricted', '09.retention.run-cron', '09.retention.overdue-days', '09.shred.delay-days', '09.dsr.sla-days', '09.dsr.remind-days', '09.breach.alert-hours', '09.dpia.review-months', '09.audit.query-max-days', '09.report.schedule-cron')),
+  CONSTRAINT ck_tenant_setting_key CHECK (setting_key IN ('09.scan.sample-rows', '09.scan.schedule-cron', '09.scan.confidence', '09.request.sla-days', '09.grant.max-days', '09.grant.renew-max', '09.grant.expiring-notice-days', '09.grant.require-restricted', '09.bundle.debounce-seconds', '09.bundle.valid-minutes', '09.plan.cache-seconds', '09.consent.cache-seconds', '09.decision.cache-seconds', '09.feature.dsr-ph11', '09.feature.l-diversity', '09.feature.auto-confirm-mvp', '09.api.rate-user-per-min', '09.api.rate-du-per-sec', '09.anomaly.quota-warn-percent', '09.anomaly.bulk-threshold', '09.anomaly.auto-suspend', '09.mask.reveal-seconds', '09.mask.reveal-max-per-hour', '09.mask.reveal-alert-per-hour', '09.log.scan-cron', '09.pseudo.key-rotate-days', '09.pseudo.min-rotate-days', '09.pseudo.destroy-delay-days', '09.reid.approval-ttl-hours', '09.reid.exec-window-minutes', '09.anon.k-min', '09.anon.risk-medium-above', '09.anon.risk-high-above', '09.ai.allow-restricted', '09.retention.run-cron', '09.retention.overdue-days', '09.shred.delay-days', '09.dsr.sla-days', '09.dsr.remind-days', '09.breach.alert-hours', '09.dpia.review-months', '09.audit.query-max-days', '09.report.schedule-cron')),
   CONSTRAINT ck_tenant_setting_bounds CHECK (jsonb_typeof(value) <> 'number' OR ((floor_value IS NULL OR value >= floor_value) AND (ceiling_value IS NULL OR value <= ceiling_value)))
 );
 CREATE TRIGGER tg_tenant_setting_touch BEFORE UPDATE ON ph09_privacy.tenant_setting FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
@@ -111,7 +111,7 @@ CREATE TABLE ph09_privacy.outbox_event (
 );
 CREATE INDEX ix_outbox_event_occurred ON ph09_privacy.outbox_event (occurred_at);
 CALL ph09_privacy.p_enable_rls('ph09_privacy.outbox_event');
-COMMENT ON TABLE ph09_privacy.outbox_event IS 'Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.';
+COMMENT ON TABLE ph09_privacy.outbox_event IS 'EN-09-54 Outbox (DD-11, ADR-042) cho EVT-09-01…32 và bản ghi kiểm toán gửi PH-13. Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL. Sự kiện không mang giá trị DLCN (BR-09-025): CHECK chặn khóa giá trị và định danh. Dọn sau 3 ngày.';
 --rollback DROP TABLE IF EXISTS ph09_privacy.outbox_event CASCADE;
 
 --changeset ph09:ph09-0640-inbox-event
@@ -131,5 +131,5 @@ CREATE TABLE ph09_privacy.inbox_event (
 );
 CREATE INDEX ix_inbox_event_received ON ph09_privacy.inbox_event (received_at);
 CALL ph09_privacy.p_enable_rls('ph09_privacy.inbox_event');
-COMMENT ON TABLE ph09_privacy.inbox_event IS 'Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.';
+COMMENT ON TABLE ph09_privacy.inbox_event IS 'EN-09-55 Inbox chống xử lý trùng cho sự kiện PH-09 tiêu thụ (at-least-once): đổi phân loại từ PH-06 (FR-06-004), sự kiện đăng ký HTTT PH-02, báo lượt khai thác PH-14, sự cố PH-18. Khóa (consumer, event_id). Dọn sau 7 ngày.';
 --rollback DROP TABLE IF EXISTS ph09_privacy.inbox_event CASCADE;

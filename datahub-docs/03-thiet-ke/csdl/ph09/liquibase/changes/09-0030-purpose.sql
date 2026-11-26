@@ -55,7 +55,7 @@ CREATE TABLE ph09_privacy.purpose_element (
 CREATE INDEX ix_purpose_element_element ON ph09_privacy.purpose_element (tenant_id, element_id);
 CREATE TRIGGER tg_purpose_element_touch BEFORE UPDATE ON ph09_privacy.purpose_element FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_touch();
 CALL ph09_privacy.p_enable_rls('ph09_privacy.purpose_element');
-COMMENT ON TABLE ph09_privacy.purpose_element IS 'EN-09-15 Trường được phép theo mục đích (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.';
+COMMENT ON TABLE ph09_privacy.purpose_element IS 'EN-09-52 Trường được phép theo mục đích, bảng con của Purpose (FR-09-014, BR-09-016): phạm vi tối đa mà một chấp thuận của mục đích đó được bao.';
 --rollback DROP TABLE IF EXISTS ph09_privacy.purpose_element CASCADE;
 
 --changeset ph09:ph09-0260-access-request
@@ -80,6 +80,8 @@ CREATE TABLE ph09_privacy.access_request (
   decided_by       varchar(64),
   decided_at       timestamptz,
   due_at           timestamptz,
+  request_kind     varchar(8) NOT NULL DEFAULT 'NEW',
+  renews_grant_id  uuid,
   created_at       timestamptz NOT NULL DEFAULT now(),
   created_by       varchar(64) NOT NULL,
   updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -90,6 +92,8 @@ CREATE TABLE ph09_privacy.access_request (
   CONSTRAINT ck_access_request_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_access_request_purpose FOREIGN KEY (tenant_id, purpose_code) REFERENCES ph09_privacy.purpose (tenant_id, code),
   CONSTRAINT ck_access_request_kind CHECK (contract_kind IN ('API', 'TOPIC', 'FLOW')),
+  CONSTRAINT ck_access_request_req_kind CHECK (request_kind IN ('NEW', 'RENEWAL')),
+  CONSTRAINT ck_access_request_renews CHECK ((request_kind = 'RENEWAL') = (renews_grant_id IS NOT NULL)),
   CONSTRAINT ck_access_request_fields CHECK (cardinality(fields) >= 1),
   CONSTRAINT ck_access_request_volume CHECK (expected_volume BETWEEN 1 AND 10000000 AND requested_days BETWEEN 1 AND 730),
   CONSTRAINT ck_access_request_justification CHECK (char_length(justification) >= 20),
@@ -109,6 +113,8 @@ COMMENT ON TABLE ph09_privacy.access_request IS 'EN-09-16 Yêu cầu khai thác 
 COMMENT ON COLUMN ph09_privacy.access_request.httt_id IS 'Mã HTTT ở PH-01 (không khóa ngoại).';
 COMMENT ON COLUMN ph09_privacy.access_request.registration_ref IS 'Đăng ký sử dụng ở PH-02.';
 COMMENT ON COLUMN ph09_privacy.access_request.owner_org_id IS 'Tổ chức chủ quản dữ liệu, đích hộp việc của DO.';
+COMMENT ON COLUMN ph09_privacy.access_request.request_kind IS 'AccessRequestKind: NEW (mặc định) hoặc RENEWAL, yêu cầu gia hạn chấp thuận hiện có (FR-09-015).';
+COMMENT ON COLUMN ph09_privacy.access_request.renews_grant_id IS 'Chấp thuận ACTIVE được gia hạn; bắt buộc khi RENEWAL, rỗng khi NEW; cùng HTTT và mục đích kiểm ở dịch vụ (FR-09-015, 016).';
 --rollback DROP TABLE IF EXISTS ph09_privacy.access_request CASCADE;
 
 --changeset ph09:ph09-0270-purpose-grant
@@ -162,6 +168,7 @@ CREATE TRIGGER tg_purpose_grant_touch BEFORE UPDATE ON ph09_privacy.purpose_gran
 CREATE TRIGGER tg_purpose_grant_immutable BEFORE UPDATE ON ph09_privacy.purpose_grant FOR EACH ROW EXECUTE FUNCTION ph09_privacy.tg_immutable('request_id', 'httt_id', 'purpose_code', 'contract_kind', 'contract_id', 'approved_by');
 CALL ph09_privacy.p_enable_rls('ph09_privacy.purpose_grant');
 COMMENT ON TABLE ph09_privacy.purpose_grant IS 'EN-09-17 Chấp thuận khai thác: bộ ba (HTTT, mục đích, hợp đồng), không chuyển nhượng (BR-09-013, FR-09-016, 017). Máy trạng thái GrantStatus; tối đa 3 lần gia hạn mặc định; thu hồi cần lý do 20 ký tự; một chấp thuận hiệu lực mỗi bộ ba. Nguồn của purpose_grants trong bundle OPA (FR-09-018).';
+ALTER TABLE ph09_privacy.access_request ADD CONSTRAINT fk_access_request_renews FOREIGN KEY (tenant_id, renews_grant_id) REFERENCES ph09_privacy.purpose_grant (tenant_id, id);
 --rollback DROP TABLE IF EXISTS ph09_privacy.purpose_grant CASCADE;
 
 --changeset ph09:ph09-0280-grant-condition

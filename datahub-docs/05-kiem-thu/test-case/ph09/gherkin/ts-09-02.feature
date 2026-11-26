@@ -25,9 +25,10 @@ Tính năng: TS-09-02 · Đăng ký phần tử dữ liệu từ lược đồ v
     Thì bước 1 OpenAPI và Avro `201` (20 phần tử), `hong.json` `422` ERR-09-015, không tạo phần tử. Bước 2 5 phần tử `ClassificationStatus = PROPOSED`, `source = MVP_IMPORT`, mức đúng như khai. Bước 3 `409` ERR-09-014. Bước 4 `400` ERR-09-003.
 
   @TC-09-006 @P2 @Âm
-  Kịch bản: TC-09-006 Ngừng phần tử đang thuộc hoạt động xử lý
-    # Truy vết: FR-09-003 · API-09-010 · ERR-09-011 · UI-09-03
+  Kịch bản: TC-09-006 Ngừng phần tử đang thuộc hoạt động xử lý rồi ngừng sau khi gỡ liên kết
+    # Truy vết: FR-09-003 · API-09-010, 243 · ERR-09-006 · UI-09-03
     # Mục đích: Chứng minh phần tử đang được hoạt động hoặc hợp đồng dùng không ngừng được.
     Biết T90; phần tử `cccd` thuộc hoạt động `ACTIVE` HD-01.
-    Khi DS1 yêu cầu ngừng phần tử `cccd` từ UI-09-03, tab "Hoạt động liên kết".
-    Thì giao diện hiện số liên kết, nút "Ngừng" bị chặn; gọi API trả `409` ERR-09-011; phần tử vẫn `ACTIVE`.
+    Khi DS1 mở UI-09-03, tab "Hoạt động liên kết" của phần tử `cccd`, bấm "Ngừng phần tử" kèm lý do.
+    Và SO của tổ chức sở hữu gỡ liên kết với HD-01 rồi `POST /data-elements/{id}:retire` (API-09-243).
+    Thì bước 1 giao diện hiện số liên kết, gọi API trả `409` ERR-09-006, phần tử vẫn `ACTIVE`. Bước 2 `200`, `RETIRED`, lịch sử phân loại còn nguyên.

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D05-02-PH09
 ten: Kịch bản và test case phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiểm thử viên, kỹ sư, cán bộ ATTT, chủ đầu tư (UAT), hội đồng thẩm định
@@ -18,12 +18,12 @@ Phần này viết cho hội đồng thẩm định: tài liệu chứng minh đ
 
 **Mục tiêu.** Tài liệu chứng minh bốn điều:
 
-- PH-09 làm đúng mọi yêu cầu đã chốt ở D02-03-PH09 bản 0.1: 64 FR, 61 quy tắc BR-09, 23 yêu cầu phi chức năng, 91 mã lỗi (ERR-09-001…078 và 101…113), 32 sự kiện.
+- PH-09 làm đúng mọi yêu cầu đã chốt ở D02-03-PH09 bản 0.2: 64 FR, 62 quy tắc BR-09, 26 yêu cầu phi chức năng, 95 mã lỗi (ERR-09-001…082 và 101…113), 245 API, 32 sự kiện.
 - Không có đường nào để dữ liệu Nhạy cảm đi qua Datahub khi thiếu mục đích, chấp thuận của chủ quản hoặc kế hoạch che: bản tin có nhãn `STATE_SECRET` bị chặn toàn bộ, chấp thuận bị thu hồi chặn lời gọi tại điểm thực thi trong 15 giây, PH-09 mất kết nối thì điểm thực thi đóng an toàn sau 5 phút đệm.
 - Không có giá trị dữ liệu cá nhân (DLCN) ở dạng rõ trong log, vết, topic, tệp xuất, bảng `ph09_privacy`, và không có đường nào để tenant này đọc dữ liệu quyền riêng tư của tenant khác.
 - Các thao tác đặc quyền (xem đầy đủ, khôi phục giá trị gốc, hủy khóa, xóa mật mã, gỡ nhãn bí mật) luôn có kiểm toán trước, người duyệt khác người đề nghị, tập ẩn danh phát hành đạt k ≥ 10 và đồng hồ vi phạm 72 giờ không bị bỏ sót.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->42<!--/gen--> kịch bản với <!--gen:so-tc-->149 (TC-09-001…149; 107 ca P1)<!--/gen--> test case và 9 kịch bản nghiệm thu người dùng (UAT-01…09). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi mã lỗi ERR-09 có ít nhất một ca, mọi màn hình UI-09 có ca; các API chính (quyết định mục đích, kế hoạch che, áp che, giả danh hóa, xem đầy đủ, khôi phục, ẩn danh hóa, yêu cầu chủ thể, vi phạm) có ca riêng. Ma trận mục 8 sinh bằng `ph09/tools/gen_matrix.py`. Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (nâng cấp) và LGC-NGSP-003 (giữ nguyên, PH-09 thêm kiểm soát) nên mục 7 nghiệm thu tương đương hệ cũ theo vai trò và đối chiếu mười một FR cũ của SRS repo.
+**Phạm vi.** Gồm <!--gen:so-ts-->42<!--/gen--> kịch bản với <!--gen:so-tc-->150 (TC-09-001…150; 108 ca P1)<!--/gen--> test case và 9 kịch bản nghiệm thu người dùng (UAT-01…09). Mọi FR mức M có ít nhất một ca dương và một ca âm, mọi mã lỗi ERR-09 có ít nhất một ca, mọi màn hình UI-09 có ca; các API chính (quyết định mục đích, kế hoạch che, áp che, giả danh hóa, xem đầy đủ, khôi phục, ẩn danh hóa, yêu cầu chủ thể, vi phạm) có ca riêng. Ma trận mục 8 sinh bằng `ph09/tools/gen_matrix.py`. Hệ cũ chỉ có hai chức năng liên quan là LGC-TOOL-012 (nâng cấp) và LGC-NGSP-003 (giữ nguyên, PH-09 thêm kiểm soát) nên mục 7 nghiệm thu tương đương hệ cũ theo vai trò và đối chiếu mười một FR cũ của SRS repo.
 
 **Căn cứ.** FRS D02-03-PH09, use case D02-04-PH09, màn hình D03-06-PH09, SDD D03-02-PH09, ma trận phân quyền D02-08; kế hoạch kiểm thử D05-01 (cổng `RG-1…5`); Luật Bảo vệ dữ liệu cá nhân 91/2025, Nghị định 356/2025/NĐ-CP, Luật Dữ liệu, TCVN 14423:2026; cấu trúc theo ISO/IEC/IEEE 29119-3.
 
@@ -64,7 +64,7 @@ D05-01 kế hoạch kiểm thử; D02-03-PH09 (mã FR, BR, NFR, ERR, EVT, API, U
 
 ### 1.1. Đối tượng kiểm thử
 
-Đối tượng là mô-đun `vn.datahub.data.privacy` của `dh-data` (control plane `/api/privacy/v1`, data plane nội bộ mTLS `/privacy/v1`), Job K8s quét và ẩn danh hóa (ARX), schema `ph09_privacy` của `pg-core` với RLS theo `tenant_id`, 237 API (API-09-001…237), 32 topic `{tenant}.privacy.*` (EVT-09-01…32) và 22 màn hình dưới `/du-lieu/quyen-rieng-tu` (UI-09-01…22). Ngoài phạm vi: nội dung xử lý của PH-06, PH-19, PH-14 (giả lập ở chỗ gọi, ca thuộc tập của phân hệ đó), hành vi nội bộ của OPA và OpenBao (chỉ kiểm tích hợp).
+Đối tượng là mô-đun `vn.datahub.data.privacy` của `dh-data` (control plane `/api/privacy/v1`, data plane nội bộ mTLS `/privacy/v1`), Job K8s quét và ẩn danh hóa (ARX), schema `ph09_privacy` của `pg-core` với RLS theo `tenant_id`, 237 API (API-09-001…245), 32 topic `{tenant}.privacy.*` (EVT-09-01…32) và 22 màn hình dưới `/du-lieu/quyen-rieng-tu` (UI-09-01…22). Ngoài phạm vi: nội dung xử lý của PH-06, PH-19, PH-14 (giả lập ở chỗ gọi, ca thuộc tập của phân hệ đó), hành vi nội bộ của OPA và OpenBao (chỉ kiểm tích hợp).
 
 ### 1.2. Mức kiểm thử
 
@@ -103,7 +103,7 @@ Ba môi trường phục vụ các mức ở mục 1.2.
 Tiêu chí vào và ra bám các cổng `RG-1…5` của D05-01.
 
 - **Vào.** Hợp đồng API-09 và lược đồ sự kiện đã gắn phiên bản; bộ dữ liệu mục 2 nạp được bằng `ph09/seed/` qua API (không chèn SQL, trừ bộ RLS).
-- **Ra.** `RG-1` mọi ca API, DB và rò rỉ chéo tenant đạt; `RG-2` toàn bộ hồi quy đạt, 0 lỗi S1, S2 mở; `RG-3` 100 % ca P1 đã chạy, ≥ 98 % đạt, đo xong NFR-09-001…023 ở PERF; `RG-4` UAT mục 7 ký và 13 tiêu chí chấp nhận cấp phân hệ ở FRS §14 đạt (đối chiếu ở mục 9.2).
+- **Ra.** `RG-1` mọi ca API, DB và rò rỉ chéo tenant đạt; `RG-2` toàn bộ hồi quy đạt, 0 lỗi S1, S2 mở; `RG-3` 100 % ca P1 đã chạy, ≥ 98 % đạt, đo xong NFR-09-001…026 ở PERF; `RG-4` UAT mục 7 ký và 13 tiêu chí chấp nhận cấp phân hệ ở FRS §14 đạt (đối chiếu ở mục 9.2).
 
 ### 1.5. Quy ước mã và cách trình bày
 
@@ -275,11 +275,11 @@ Bảng 3.1 do `fill_doc.py` sinh lại từ chương 4 và 5; mục tiêu đầy
 | TS-09-36 | Phân quyền theo ma trận PERM-09 và bốn mắt | — | 4 |
 | TS-09-37 | Không lộ dữ liệu cá nhân ở sự kiện, tệp xuất và bề mặt tấn công | — | 3 |
 | TS-09-38 | Đóng an toàn, chịu lỗi và phục hồi | — | 4 |
-| TS-09-39 | Hiệu lực tức thời và đồng hồ | — | 4 |
+| TS-09-39 | Hiệu lực tức thời và đồng hồ | — | 5 |
 | TS-09-40 | Hiệu năng, quy mô và quan sát | — | 6 |
 | TS-09-41 | Truy cập giao diện và hợp đồng API | — | 2 |
 | TS-09-42 | Tương đương hệ cũ và chức năng cũ của SRS repo | — | 3 |
-| **Tổng** | | | **149** (107 ca P1) |
+| **Tổng** | | | **150** (108 ca P1) |
 
 : Danh sách 42 kịch bản kèm use case và số ca
 <!--/gen-->
@@ -292,7 +292,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận bốn mức phân loại, danh mục loại DLCN nạp sẵn, chỉnh chính sách log của mức và xuất danh mục đúng phạm vi tenant.
 
-**Phủ.** FR-09-001, 002, 008; UC-09-01; API-09-001, 002, 007, 008, 009, 030, 031; UI-09-02, 03; BR-09-002, 060.
+**Phủ.** FR-09-001, 002, 008; UC-09-01; API-09-001, 002, 007, 008, 009, 030, 031; UI-09-02, 03; BR-09-002, 060; ERR-09-001, 003, 011.
 
 #### TC-09-001 · Xem bốn mức, loại DLCN nạp sẵn và sửa chính sách log của mức <!--k:cls-catalog-->
 
@@ -305,18 +305,19 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-001, 002 · API-09-001, 002, 007 · UI-09-02 · PERM-09-read, PERM-09-policy.
+**Truy vết.** FR-09-001, 002 · API-09-001, 002, 007 · ERR-09-003 · UI-09-02 · PERM-09-read, PERM-09-policy.
 
 **Tiền điều kiện, dữ liệu.** T90 mới nạp; U-T90-VW, U-T90-TA.
 
 **Các bước.**
 
 1. VW `GET /data-classes` và `GET /personal-data-categories`.
-2. TA `PATCH /data-classes/SENSITIVE` đặt chính sách log `REDACT`, kèm `If-Match`.
-3. VW gọi lại `PATCH /data-classes/SENSITIVE`.
+2. TA `PATCH /data-classes/INTERNAL` đặt `logPolicy = PARTIAL_MASK`, kèm `If-Match`.
+3. VW gọi lại `PATCH /data-classes/INTERNAL`.
 4. TA `PATCH` thiếu `If-Match`.
+5. TA `PATCH /data-classes/SENSITIVE` đặt `logPolicy = FULL`.
 
-**Kết quả mong đợi.** Bước 1 `200`, bốn mức `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE`, 18 loại. Bước 2 `200`, `ETag` mới, KT: có (data-class-update). Bước 3 ERR-00-403 (VW thiếu `PERM-09-policy`). Bước 4 `428` ERR-00-428.
+**Kết quả mong đợi.** Bước 1 `200`, bốn mức `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE`, 18 loại. Bước 2 `200`, `ETag` mới, KT: có (data-class-update). Bước 3 ERR-00-403 (VW thiếu `PERM-09-policy`). Bước 4 `428` ERR-00-428. Bước 5 `422` ERR-09-003 vì mức `SENSITIVE` luôn `NO_VALUE`.
 :::
 
 #### TC-09-002 · Thêm loại DLCN trùng mã, ngừng loại đang dùng <!--k:cls-category-neg-->
@@ -330,7 +331,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-002 · API-09-008, 009 · ERR-09-002, 011 · BR-09-002.
+**Truy vết.** FR-09-002 · API-09-008, 009 · ERR-09-001, 002, 011 · BR-09-002.
 
 **Tiền điều kiện, dữ liệu.** T90; loại `HEALTH` đang gắn 3 phần tử; U-T90-SO.
 
@@ -339,8 +340,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. SO `POST /personal-data-categories` với `code = HEALTH`.
 2. SO `PATCH /personal-data-categories/HEALTH` đặt `status = RETIRED`.
 3. SO thêm loại `TC_LOAI_MOI` rồi ngừng ngay.
+4. SO `GET /personal-data-categories/TC_LOAI_MOI` sau khi đã `RETIRED`.
 
-**Kết quả mong đợi.** Bước 1 `409` ERR-09-002. Bước 2 `409` ERR-09-011, không đổi. Bước 3 thêm `201`, ngừng `200`; KT: có cho cả hai.
+**Kết quả mong đợi.** Bước 1 `409` ERR-09-002. Bước 2 `409` ERR-09-011, không đổi. Bước 3 thêm `201`, ngừng `200`; KT: có cho cả hai. Bước 4 `410` ERR-09-001 vì đối tượng danh mục đã ngừng.
 
 **Thông báo hiển thị.** "Mã HEALTH đã được dùng. Chọn mã khác." và "Mục HEALTH đang được 3 trường sử dụng nên không ngừng được."
 :::
@@ -373,7 +375,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận đăng ký phần tử từ phân hệ, lược đồ OpenAPI, JSON Schema, Avro và khai báo MVP, đúng trạng thái, không trùng.
 
-**Phủ.** FR-09-003; UC-09-02; API-09-010…014; UI-09-02, 03; BR-09-001, 007; ERR-09-003, 014, 015.
+**Phủ.** FR-09-003; UC-09-02; API-09-010…014, 243; UI-09-02, 03; BR-09-001, 007; ERR-09-003, 006, 014, 015.
 
 #### TC-09-004 · Đăng ký phần tử hàng loạt qua scope `privacy:register` <!--k:elm-register-->
 
@@ -426,7 +428,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Thông báo hiển thị.** "Không đọc được lược đồ: dòng 3 thiếu `type`." và "Phần tử hs-suc-khoe.cccd đã được đăng ký."
 :::
 
-#### TC-09-006 · Ngừng phần tử đang thuộc hoạt động xử lý <!--k:elm-retire-->
+#### TC-09-006 · Ngừng phần tử đang thuộc hoạt động xử lý rồi ngừng sau khi gỡ liên kết <!--k:elm-retire-->
 
 ::: dac-ta
 **Mục đích.** Chứng minh phần tử đang được hoạt động hoặc hợp đồng dùng không ngừng được.
@@ -437,17 +439,18 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-003 · API-09-010 · ERR-09-011 · UI-09-03.
+**Truy vết.** FR-09-003 · API-09-010, 243 · ERR-09-006 · UI-09-03.
 
 **Tiền điều kiện, dữ liệu.** T90; phần tử `cccd` thuộc hoạt động `ACTIVE` HD-01.
 
 **Các bước.**
 
-1. DS1 yêu cầu ngừng phần tử `cccd` từ UI-09-03, tab "Hoạt động liên kết".
+1. DS1 mở UI-09-03, tab "Hoạt động liên kết" của phần tử `cccd`, bấm "Ngừng phần tử" kèm lý do.
+2. SO của tổ chức sở hữu gỡ liên kết với HD-01 rồi `POST /data-elements/{id}:retire` (API-09-243).
 
-**Kết quả mong đợi.** Giao diện hiện số liên kết, nút "Ngừng" bị chặn; gọi API trả `409` ERR-09-011; phần tử vẫn `ACTIVE`.
+**Kết quả mong đợi.** Bước 1 giao diện hiện số liên kết, gọi API trả `409` ERR-09-006, phần tử vẫn `ACTIVE`. Bước 2 `200`, `RETIRED`, lịch sử phân loại còn nguyên.
 
-**Thông báo hiển thị.** "Mục cccd đang được 1 trường sử dụng nên không ngừng được."
+**Thông báo hiển thị.** "Đối tượng đang ở trạng thái còn liên kết hoạt động ACTIVE, không thực hiện được thao tác này."
 :::
 
 ### TS-09-03 · Đề xuất, xác nhận và hạ mức phân loại trường
@@ -1187,7 +1190,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận vòng đời chấp thuận, giới hạn gia hạn, sự kiện đẩy khi tạm dừng hoặc thu hồi và tự hết hạn không gia hạn ngầm.
 
-**Phủ.** FR-09-017; UC-09-11; API-09-067…073; UI-09-08, 09; BR-09-015, 017; ERR-09-006, 007, 031; EVT-09-06…10.
+**Phủ.** FR-09-017; UC-09-11; API-09-067…073; UI-09-08, 09; BR-09-015, 017; ERR-09-006, 007, 031; EVT-09-06…10; NFR-09-025.
 
 #### TC-09-035 · Gia hạn và sửa chấp thuận, tối đa ba lần <!--k:grant-renew-->
 
@@ -1209,8 +1212,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. DO1 `:renew` G1 thêm 180 ngày (lần 3).
 2. DO1 `:renew` G1 lần 4.
 3. DO1 `:amend` G1 bớt 1 trường, hạ hạn ngạch.
+4. OR1 `POST /access-requests` với `requestKind = RENEWAL`, `renewsGrantId` = chấp thuận `ACTIVE` G3 (cùng HTTT, mục đích).
 
-**Kết quả mong đợi.** Bước 1 `200`, `renewCount = 3`. Bước 2 `422` ERR-09-031 "Chấp thuận đã gia hạn tối đa 3 lần. Lập yêu cầu mới." Bước 3 `200`, EVT: `purpose-grant.approved` (loại sửa), KT: có (grant-amend).
+**Kết quả mong đợi.** Bước 1 `200`, `renewCount = 3`. Bước 2 `422` ERR-09-031 "Chấp thuận đã gia hạn tối đa 3 lần. Lập yêu cầu mới." Bước 3 `200`, EVT: `purpose-grant.approved` (loại sửa), KT: có (grant-amend). Bước 4 `201` `DRAFT`; khi DO duyệt, G3 được gia hạn thay vì tạo chấp thuận mới và `renewCount` tăng 1.
 :::
 
 #### TC-09-036 · Tạm dừng và khôi phục, lý do bắt buộc <!--k:grant-suspend-resume-->
@@ -1273,7 +1277,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** JOB.
 
-**Truy vết.** FR-09-017 · EVT-09-09, 10 · BR-09-015 · API-09-068.
+**Truy vết.** FR-09-017 · NFR-09-025 · EVT-09-09, 10 · BR-09-015 · API-09-068.
 
 **Tiền điều kiện, dữ liệu.** T95 đồng hồ giả; chấp thuận G2 hạn sau 31 ngày, `09.grant.expiring-notice-days = 30`.
 
@@ -1283,7 +1287,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. Tiến đến sau `validTo` 1 phút.
 3. Gọi `purpose:decide` cho G2.
 
-**Kết quả mong đợi.** Bước 1 EVT: `purpose-grant.expiring` đúng một lần. Bước 2 `GrantStatus = EXPIRED`, EVT: `purpose-grant.expired`. Bước 3 `403` ERR-09-102; không gia hạn tự động.
+**Kết quả mong đợi.** Bước 1 EVT: `purpose-grant.expiring` đúng một lần. Bước 2 điểm thực thi từ chối G2 trong ≤ 60 giây sau `validTo`; `GrantStatus = EXPIRED` trong ≤ 5 phút, EVT: `purpose-grant.expired`. Bước 3 `403` ERR-09-102; không gia hạn tự động.
 :::
 
 ### TS-09-12 · Bundle OPA ký và phát hành
@@ -1391,7 +1395,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận quyết định theo mức phân loại, chấp thuận, nhãn bí mật và hạn chế xử lý của chủ thể, mã lỗi data plane và hạn mức gọi.
 
-**Phủ.** FR-09-019; UC-09-13; API-09-227; BR-09-005, 017, 019, 020, 047; ERR-09-101, 102, 103, 104, 111, 113; NFR-09-001, 004.
+**Phủ.** FR-09-019; UC-09-13; API-09-227; BR-09-005, 017, 019, 020, 047; ERR-09-101, 102, 103, 104, 111, 113; NFR-09-001, 004, 024.
 
 #### TC-09-043 · Cho phép khi có chấp thuận, điều kiện đi kèm và bỏ qua chấp thuận ở mức thấp <!--k:dec-allow-->
 
@@ -1457,7 +1461,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Truy vết.** FR-09-019 · API-09-227 · ERR-09-111, 113 · PERM-09-read.
 
-**Tiền điều kiện, dữ liệu.** T90; S-T90-NOSCOPE; S-T90-PEP-04; giới hạn `PH-09 rate` giả định 2.000 lượt mỗi giây mỗi bên gọi (Q09-40).
+**Tiền điều kiện, dữ liệu.** T90; S-T90-NOSCOPE; S-T90-PEP-04; `09.api.rate-du-per-sec = 2.000` lượt mỗi giây mỗi DU.
 
 **Các bước.**
 
@@ -1479,7 +1483,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-019, 020 · API-09-227, 237 · BR-09-020 · EVT-09-13.
+**Truy vết.** FR-09-019, 020 · NFR-09-026 · API-09-227, 237 · BR-09-020 · EVT-09-13.
 
 **Tiền điều kiện, dữ liệu.** T90; G1 hạn ngạch 2.000 lượt mỗi ngày; PEP báo lượt qua `usage-events:report`.
 
@@ -1488,7 +1492,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. PEP báo 2.100 lượt trong ngày, trong đó 10 lượt đọc trường ngoài 4 trường cho phép.
 2. Chờ ≤ 5 phút; `GET /usage-anomalies`.
 
-**Kết quả mong đợi.** Có cảnh báo `QUOTA_EXCEEDED` và `OFF_PURPOSE` gắn G1; EVT: `usage.anomaly-detected`; `09.anomaly.auto-suspend = false` nên chấp thuận không đổi trạng thái.
+**Kết quả mong đợi.** Có cảnh báo `QUOTA_EXCEEDED` và `OFF_PURPOSE` gắn G1; EVT: `usage.anomaly-detected`; `09.anomaly.auto-suspend = false` nên chấp thuận không đổi trạng thái. Cảnh báo tới DO và SO ≤ 5 phút sau lượt vượt (NFR-09-026).
 :::
 
 #### TC-09-047 · Quyết định p95 ≤ 20 ms ở điểm thực thi, 5.000 yêu cầu mỗi giây toàn cụm <!--k:dec-latency-->
@@ -1518,7 +1522,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận cảnh báo, xử lý cảnh báo (ghi nhận, loại trừ, chuyển vụ việc), ngưỡng, báo cáo theo mục đích và xuất.
 
-**Phủ.** FR-09-020, 021; UC-09-14; API-09-079…087, 237; UI-09-01, 09; BR-09-020; ERR-09-034, 036, 007.
+**Phủ.** FR-09-020, 021; UC-09-14; API-09-079…087, 237; UI-09-01, 09; BR-09-020; ERR-09-034, 036, 007; NFR-09-026.
 
 #### TC-09-048 · Ghi nhận, loại trừ và chuyển cảnh báo thành vụ việc vi phạm <!--k:ano-handle-->
 
@@ -1752,7 +1756,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận mô phỏng trên dữ liệu mẫu, điều kiện mô phỏng đạt trước khi gửi duyệt, duyệt bốn mắt, phiên bản, so sánh và quay lại.
 
-**Phủ.** FR-09-025, 026; UC-09-17; API-09-096…101; UI-09-10, 11; BR-09-023, 025; ERR-09-039, 040, 005.
+**Phủ.** FR-09-025, 026; UC-09-17; API-09-096…101; UI-09-10, 11; BR-09-023, 025; ERR-09-039, 040, 080, 005.
 
 #### TC-09-057 · Mô phỏng che trên mẫu F-SIM theo vai trò, mục đích, kênh <!--k:mask-sim-->
 
@@ -1788,7 +1792,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-025, 026 · API-09-101, 096 · ERR-09-039, 040 · BR-09-023.
+**Truy vết.** FR-09-025, 026 · API-09-101, 096 · ERR-09-039, 040, 080 · BR-09-023.
 
 **Tiền điều kiện, dữ liệu.** T90; U-T90-DS1; tệp 1.001 dòng.
 
@@ -1796,8 +1800,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. DS1 `POST /mask-simulations` với 1.001 dòng.
 2. DS1 `:submit` phiên bản chưa có mô phỏng đạt.
+3. DS1 gửi mẫu có số định danh đúng kiểm tổng ngoài miền giả (giá trị lấy từ kho dữ liệu thử, không ghi trong tài liệu).
 
-**Kết quả mong đợi.** Bước 1 `413` ERR-09-039. Bước 2 `422` ERR-09-040.
+**Kết quả mong đợi.** Bước 1 `413` ERR-09-039. Bước 2 `422` ERR-09-040. Bước 3 `422` ERR-09-080 "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả."
 
 **Thông báo hiển thị.** "Dữ liệu mẫu tối đa 1.000 dòng." và "Cần mô phỏng đạt trên bộ dữ liệu mẫu trước khi gửi duyệt."
 :::
@@ -1972,7 +1977,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. Gửi thân thiếu `channel`.
-2. Gửi bản tin 2 MB (giới hạn giả định `09.apply.max-bytes`, Q09-40).
+2. Gửi bản tin 2 MB (vượt giới hạn 1 MiB của ERR-09-107).
 3. Gửi bản tin có trường giả danh theo `PD-HGD`.
 
 **Kết quả mong đợi.** Bước 1 `400` ERR-09-106. Bước 2 `413` ERR-09-107. Bước 3 `422` ERR-09-109, không bản tin nào trả giá trị rõ.
@@ -2027,7 +2032,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận cấp phiếu xem đầy đủ, giới hạn lần, trường cấm xem, hết hạn đúng 60 giây và ghi vết trước khi cấp.
 
-**Phủ.** FR-09-029; UC-09-20; API-09-102, 103, 236; UI-09-22, 20; BR-09-026, 057; ERR-09-007, 010, 041, 042, 043, 112; NFR-09-015.
+**Phủ.** FR-09-029; UC-09-20; API-09-102, 103, 236, 241; UI-09-22, 20; BR-09-026, 057; ERR-09-007, 010, 041, 042, 043, 112; NFR-09-015.
 
 #### TC-09-068 · Cấp phiếu, xác thực phiếu, giá trị tự che sau 60 giây <!--k:rev-grant-->
 
@@ -2040,17 +2045,18 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-09-029 · API-09-102, 236 · UI-09-22 · BR-09-026 · NFR-09-015 · PERM-09-unmask.
+**Truy vết.** FR-09-029 · API-09-102, 236, 241 · UI-09-22 · BR-09-026 · NFR-09-015 · PERM-09-unmask.
 
-**Tiền điều kiện, dữ liệu.** T90; U-T90-SO có `PERM-09-unmask`; trường `cccd` ở UI của PH-06 giả lập; canary `DH-CANARY-rev-grant`.
+**Tiền điều kiện, dữ liệu.** T90; U-T90-SO có `PERM-09-unmask`, U-T90-AU; trường `cccd` ở UI của PH-06 giả lập; canary `DH-CANARY-rev-grant`.
 
 **Các bước.**
 
 1. Trên UI-09-22 SO nhập lý do 30 ký tự, bấm xem.
 2. DU gọi `POST /privacy/v1/reveal-grants/{gid}:verify` trong 30 giây.
 3. Quan sát đồng hồ đếm ngược; gọi `:verify` lại sau 61 giây.
+4. AU `GET /reveal-grants/{grantId}`.
 
-**Kết quả mong đợi.** Bước 1 `201` `{grantId, expiresAt}`, KT: có ghi trước khi cấp. Bước 2 `200`. Bước 3 giá trị tự che lại; `:verify` `403` ERR-09-112. Giá trị rõ không có trong log, bảng `ph09_privacy.*`, đĩa.
+**Kết quả mong đợi.** Bước 1 `201` `{grantId, expiresAt, serverTime, remainingThisHour}` (`remainingThisHour` = 20 trừ số lần đã cấp trong giờ), KT: có ghi trước khi cấp. Bước 2 `200`. Bước 3 giá trị tự che lại; `:verify` `403` ERR-09-112. Giá trị rõ không có trong log, bảng `ph09_privacy.*`, đĩa. Bước 4 `200`, thấy người xem, trường, lý do, hết hạn, trạng thái; không có `value`.
 :::
 
 #### TC-09-069 · Thiếu quyền, lý do ngắn, trường cấm xem, vượt 20 lần mỗi giờ <!--k:rev-neg-->
@@ -2150,9 +2156,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. SO `PUT /log-masking-config` mức `SENSITIVE` ghi `[REDACTED]`.
 2. `POST /leak-scans`; `GET /leak-findings`.
-3. SO `POST /leak-findings/{id}:resolve`.
+3. SO `POST /leak-findings/{id}:resolve` với `resolution = FIXED`.
 
-**Kết quả mong đợi.** Bước 2 có kết quả chỉ tên trường, dịch vụ, thời điểm; không giá trị rõ; thẻ UI-09-01 tăng. Bước 3 `RESOLVED`, KT: có.
+**Kết quả mong đợi.** Bước 2 có kết quả chỉ tên trường, dịch vụ, thời điểm; không giá trị rõ; thẻ UI-09-01 tăng. Bước 3 kết quả không còn `OPEN`, có người xử lý và thời điểm xử lý, KT: có.
 :::
 
 #### TC-09-073 · Cấu hình che log không hợp lệ <!--k:log-config-neg-->
@@ -2580,7 +2586,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận chuẩn bị dữ liệu theo đích, cấm dữ liệu `SENSITIVE` thật ngoài PROD, phát hành, sửa, rút lại tập đã ẩn danh.
 
-**Phủ.** FR-09-038, 039; UC-09-26; API-09-137…144; UI-09-14; BR-09-034, 037; ERR-09-055, 056; SEC-38, 49.
+**Phủ.** FR-09-038, 039; UC-09-26; API-09-137…144; UI-09-14; BR-09-034, 037; ERR-09-055, 056, 082; SEC-38, 49.
 
 #### TC-09-090 · Chuẩn bị dữ liệu AI chỉ ẩn danh, RESTRICTED khi bật và chạy nội bộ <!--k:prep-ai-->
 
@@ -2593,7 +2599,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, JOB.
 
-**Truy vết.** FR-09-038 · API-09-137, 138 · BR-09-037 · ERR-09-003 · EVT-09-18.
+**Truy vết.** FR-09-038 · API-09-137, 138 · BR-09-037 · ERR-09-082 · EVT-09-18.
 
 **Tiền điều kiện, dữ liệu.** T96; `09.ai.allow-restricted = false`; PH-17 giả lập; U-T90-DS1.
 
@@ -2602,7 +2608,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. DS1 `POST /data-preparations` đích `AI_TRAINING` cho tập `RESTRICTED`.
 2. Bật `09.ai.allow-restricted = true`, mô hình chạy nội bộ; lặp lại.
 
-**Kết quả mong đợi.** Bước 1 `400` ERR-09-003 (FRS chưa có mã riêng cho cờ tắt, đề nghị ở ĐN-TC-04). Bước 2 `202`, tập ẩn danh k ≥ 10, siêu dữ liệu nêu cấu hình, EVT: `dataset.status-changed` khi phát hành.
+**Kết quả mong đợi.** Bước 1 `422` ERR-09-082 "Dữ liệu Hạn chế chưa được phép dùng cho AI. Đề nghị TA bật tham số 09.ai.allow-restricted." Bước 2 `202`, tập ẩn danh k ≥ 10, siêu dữ liệu nêu cấu hình, EVT: `dataset.status-changed` khi phát hành.
 :::
 
 #### TC-09-091 · Đích không PROD dùng dữ liệu SENSITIVE thật bị cấm, mục đích không cho phép <!--k:prep-neg-->
@@ -2915,7 +2921,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận theo dõi hạn và nhắc, trả lời có bằng chứng, đóng khi hết tác vụ, báo cáo "ai đã truy cập dữ liệu của tôi".
 
-**Phủ.** FR-09-049, 050, 051; UC-09-30; API-09-174…177, 179, 180, 181; UI-09-16, 01; BR-09-043, 048; ERR-09-067, 068; NFR-09-016.
+**Phủ.** FR-09-049, 050, 051; UC-09-30; API-09-174…177, 179, 180, 181, 242, 244; UI-09-16, 01; BR-09-043, 048; ERR-09-067, 068; NFR-09-016.
 
 #### TC-09-103 · Nhắc trước 3 ngày làm việc và cờ quá hạn <!--k:dsr-due-->
 
@@ -2928,7 +2934,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** JOB.
 
-**Truy vết.** FR-09-049 · API-09-174 · EVT-09-23, 24 · BR-09-043 · NFR-09-016.
+**Truy vết.** FR-09-049 · API-09-174, 242 · EVT-09-23, 24 · BR-09-043 · NFR-09-016.
 
 **Tiền điều kiện, dữ liệu.** T95 đồng hồ giả; 3 yêu cầu hạn sau 3, 0 và -1 ngày làm việc; lịch ngày nghỉ giả định Q09-43.
 
@@ -2936,8 +2942,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 1. Tiến đồng hồ; `GET /subject-requests:due`.
 2. U-T90-VW gọi `GET /subject-requests:due`.
+3. SO `POST /subject-requests/{id}:extend` kèm lý do và hạn mới không quá ngày pháp luật cho phép.
 
-**Kết quả mong đợi.** Yêu cầu 1 có EVT: `dsr.due-soon` đúng một lần. Yêu cầu 3 có cờ `overdue`, EVT: `dsr.overdue` tới SO; trạng thái `DsrStatus` không đổi; thẻ "yêu cầu quá hạn" ở UI-09-01 đúng số. Bước 2 ERR-00-403.
+**Kết quả mong đợi.** Yêu cầu 1 có EVT: `dsr.due-soon` đúng một lần. Yêu cầu 3 có cờ `overdue`, EVT: `dsr.overdue` tới SO; trạng thái `DsrStatus` không đổi; thẻ "yêu cầu quá hạn" ở UI-09-01 đúng số. Bước 2 ERR-00-403. Bước 3 `200`, hạn mới được ghi, chủ thể được báo; hạn vượt mức pháp luật cho phép bị từ chối.
 :::
 
 #### TC-09-104 · Trả lời, lưu bằng chứng và đóng yêu cầu <!--k:dsr-respond-close-->
@@ -2951,7 +2958,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-050 · API-09-175, 176, 177 · ERR-09-067, 068 · BR-09-048 · EVT-09-25.
+**Truy vết.** FR-09-050 · API-09-175, 176, 177, 244 · ERR-09-067, 068 · BR-09-048 · EVT-09-25.
 
 **Tiền điều kiện, dữ liệu.** T90; DSR-01 còn 1 tác vụ `OPEN`; U-T90-DS1.
 
@@ -2960,8 +2967,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. DS1 `:close` khi còn 1 tác vụ.
 2. DS1 `:respond` thiếu kết quả hoặc bằng chứng.
 3. Hoàn tất tác vụ; `:respond` đủ kết quả `FULFILLED` kèm tệp; `:close`.
+4. SO `POST /subject-requests/{id}:withdraw` kèm lý do trên một yêu cầu khác đang `IN_PROGRESS`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-09-067 "Còn 1 tác vụ chưa hoàn tất, chưa đóng được yêu cầu." Bước 2 `422` ERR-09-068. Bước 3 `CLOSED`, bằng chứng lưu 5 năm, EVT: `dsr.closed`.
+**Kết quả mong đợi.** Bước 1 `422` ERR-09-067 "Còn 1 tác vụ chưa hoàn tất, chưa đóng được yêu cầu." Bước 2 `422` ERR-09-068. Bước 3 `CLOSED`, bằng chứng lưu 5 năm, EVT: `dsr.closed`. Bước 4 `200`, `WITHDRAWN`, tác vụ đang mở bị hủy.
 :::
 
 #### TC-09-105 · Báo cáo ai đã truy cập dữ liệu của chủ thể, không lộ nội dung <!--k:dsr-access-report-->
@@ -2992,7 +3000,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận mẫu có phiên bản, bốn mắt, ghi nhận đồng ý kèm bằng chứng, rút đồng ý có hiệu lực trong 60 giây và tra cứu trạng thái.
 
-**Phủ.** FR-09-052, 053, 054; UC-09-31; API-09-182…191, 234; UI-09-17; BR-09-049, 050, 051; ERR-09-069…072; EVT-09-27, 28.
+**Phủ.** FR-09-052, 053, 054; UC-09-31; API-09-182…191, 234, 238, 245; UI-09-17; BR-09-049, 050, 051; ERR-09-069…072; EVT-09-27, 28.
 
 #### TC-09-106 · Tạo mẫu, duyệt, sửa mẫu đã có người đồng ý phải tạo phiên bản mới <!--k:cns-template-->
 
@@ -3005,7 +3013,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-052 · API-09-183, 185, 186, 184 · ERR-09-069, 070, 005 · BR-09-049.
+**Truy vết.** FR-09-052 · API-09-183, 185, 186, 184, 238 · ERR-09-069, 070, 005 · BR-09-049.
 
 **Tiền điều kiện, dữ liệu.** T90; U-T90-SO (soạn), U-T90-DA1; mẫu `CNS-TIENICH` đã có 3 người đồng ý.
 
@@ -3014,8 +3022,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. SO tạo mẫu thiếu cách rút lại.
 2. SO tạo mẫu đủ; gửi duyệt; tự duyệt; DA1 duyệt.
 3. SO `PUT /consent-templates/CNS-TIENICH/versions/1` khi đã có người đồng ý.
+4. SO `GET /consent-templates/CNS-TIENICH`.
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-09-069. Bước 2 tự duyệt `403` ERR-09-005, DA1 `ACTIVE`. Bước 3 `409` ERR-09-070 "Mẫu đã có người đồng ý. Tạo phiên bản mới thay vì sửa."
+**Kết quả mong đợi.** Bước 1 `422` ERR-09-069. Bước 2 tự duyệt `403` ERR-09-005, DA1 `ACTIVE`. Bước 3 `409` ERR-09-070 "Mẫu đã có người đồng ý. Tạo phiên bản mới thay vì sửa." Bước 4 `200`, chi tiết mẫu kèm danh sách phiên bản (API-09-238).
 :::
 
 #### TC-09-107 · Ghi nhận đồng ý đủ bằng chứng, rút trong 60 giây, rút lần hai <!--k:cns-record-withdraw-->
@@ -3029,7 +3038,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-053, 054 · API-09-188, 189, 191, 234 · ERR-09-071, 072 · BR-09-050, 051 · EVT-09-27, 28.
+**Truy vết.** FR-09-053, 054 · API-09-188, 189, 191, 234, 245 · ERR-09-071, 072 · BR-09-050, 051 · EVT-09-27, 28.
 
 **Tiền điều kiện, dữ liệu.** T90; S-T90-CONSENT; mẫu `CNS-TIENICH` v1 `ACTIVE`; chủ thể CC-01 (băm).
 
@@ -3038,8 +3047,9 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 1. S-T90-CONSENT `POST /consents` thiếu kênh hoặc phiên bản mẫu.
 2. Gửi đủ (băm chủ thể, mẫu và phiên bản, băm nội dung hiển thị, thời điểm, kênh `WEB`, người ghi).
 3. `POST /privacy/v1/consents:check`; rút `:withdraw`; kiểm lại sau ≤ 60 giây; rút lần hai.
+4. SO `POST /consents:search` với định danh chủ thể trong thân (mã mẫu `<bi-mat-mau>`).
 
-**Kết quả mong đợi.** Bước 1 `422` ERR-09-071. Bước 2 `201` `GIVEN`, EVT: `consent.given`. Bước 3 trạng thái `GIVEN` rồi `WITHDRAWN` ≤ 60 giây sau khi rút, EVT: `consent.withdrawn`; rút lần hai `409` ERR-09-072. Xử lý trước đó không bị vô hiệu.
+**Kết quả mong đợi.** Bước 1 `422` ERR-09-071. Bước 2 `201` `GIVEN`, EVT: `consent.given`. Bước 3 trạng thái `GIVEN` rồi `WITHDRAWN` ≤ 60 giây sau khi rút, EVT: `consent.withdrawn`; rút lần hai `409` ERR-09-072. Xử lý trước đó không bị vô hiệu. Bước 4 `200`, danh sách bản ghi đồng ý theo băm; định danh không lặp lại trong kết quả và log (API-09-245).
 :::
 
 #### TC-09-108 · Đồng ý chỉ cho tiện ích không bắt buộc <!--k:cns-optional-->
@@ -3145,7 +3155,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Mục tiêu.** Xác nhận ghi nhận, đánh giá, đồng hồ 72 giờ không dừng, thông báo Cục A05 và chủ thể, khắc phục, đóng hồ sơ và hồ sơ không có DLCN rõ.
 
-**Phủ.** FR-09-058, 059, 060; UC-09-33; API-09-202…214; UI-09-19; BR-09-054, 055, 056, 057; ERR-09-075, 076, 077, 006; EVT-09-30, 31, 32; NFR-09-017.
+**Phủ.** FR-09-058, 059, 060; UC-09-33; API-09-202…214, 239, 240; UI-09-19; BR-09-054, 055, 056, 057; ERR-09-075, 076, 077, 006; EVT-09-30, 31, 32; NFR-09-017.
 
 #### TC-09-112 · Ghi nhận vi phạm có thời điểm phát hiện, đánh giá mức, đồng hồ bắt đầu <!--k:brh-record-->
 
@@ -3207,17 +3217,17 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** JOB.
 
-**Truy vết.** FR-09-059 · API-09-207, 208, 209 · EVT-09-31, 32 · NFR-09-017 · BR-09-054, 055.
+**Truy vết.** FR-09-059 · API-09-207, 208, 209, 239 · EVT-09-31, 32 · NFR-09-017 · BR-09-054, 055.
 
 **Tiền điều kiện, dữ liệu.** T95 đồng hồ giả; BR-01 `detectedAt` = T0; `09.breach.alert-hours = 24, 48, 60`.
 
 **Các bước.**
 
 1. Tiến đồng hồ đến T0+24 giờ, +48 giờ, +60 giờ.
-2. Ở T0+70 giờ SO soạn thông báo A05, `:mark-sent`.
+2. Ở T0+70 giờ SO soạn thông báo A05, `:mark-sent`; `GET /breaches/{id}/notifications` (API-09-239).
 3. Thử tạm dừng hoặc đặt lại đồng hồ.
 
-**Kết quả mong đợi.** Bước 1 EVT: `breach.deadline-near` đúng ở ba mốc cho SO, TA, DA, sai số ≤ 1 phút. Bước 2 `SENT`, EVT: `breach.notified`, `BreachStatus = NOTIFIED`. Bước 3 không có đường tạm dừng hay đặt lại; hành vi sau `NOTIFIED` chờ chốt ở ĐN-TC-02.
+**Kết quả mong đợi.** Bước 1 EVT: `breach.deadline-near` đúng ở ba mốc cho SO, TA, DA, sai số ≤ 1 phút. Bước 2 `SENT`, EVT: `breach.notified`, `BreachStatus = NOTIFIED`. Bước 3 không có đường tạm dừng hay đặt lại; đồng hồ chỉ dừng khi thông báo A05 đã `SENT` (BR-09-054). Bước 2 danh sách thông báo có bản A05 `SENT`.
 :::
 
 #### TC-09-115 · Khắc phục, bài học, đóng hồ sơ, tải hồ sơ <!--k:brh-dossier-->
@@ -3231,22 +3241,23 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-060 · API-09-211, 212, 213, 214 · UI-09-19.
+**Truy vết.** FR-09-060 · API-09-211, 212, 213, 214, 240 · UI-09-19.
 
 **Tiền điều kiện, dữ liệu.** T90; vụ việc `NOTIFIED`; U-T90-SO.
 
 **Các bước.**
 
 1. SO ghi biện pháp khắc phục và bài học; `:close`; `GET .../dossier`.
+2. `GET /breaches/{id}/actions`.
 
-**Kết quả mong đợi.** `CLOSED`, hồ sơ có dòng thời gian, thông báo, khắc phục, bài học; KT: có; không giá trị DLCN rõ.
+**Kết quả mong đợi.** `CLOSED`, hồ sơ có dòng thời gian, thông báo, khắc phục, bài học; KT: có; không giá trị DLCN rõ. Bước 2 `200`, liệt kê biện pháp khắc phục kèm người phụ trách, hạn và trạng thái (API-09-240).
 :::
 
 ### TS-09-34 · Nhật ký bảo vệ dữ liệu, bảng điều khiển, báo cáo và tham số
 
 **Mục tiêu.** Xác nhận tra nhật ký theo quyền, bảng điều khiển, báo cáo định kỳ và tham số `09.*` trong miền, trần, sàn do PA đặt.
 
-**Phủ.** FR-09-061…064; UC-09-34; API-09-215…226; UI-09-20, 01, 21; BR-09-058, 059, 060; ERR-09-078, 036; NFR-09-013, 022, 023.
+**Phủ.** FR-09-061…064; UC-09-34; API-09-215…226; UI-09-20, 01, 21; BR-09-058, 059, 060; ERR-09-003, 078, 079; NFR-09-013, 022, 023.
 
 #### TC-09-116 · Tra nhật ký theo thời gian, người, loại thao tác; giới hạn khoảng tra; xuất <!--k:aud-query-->
 
@@ -3259,7 +3270,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-061 · API-09-215, 216, 217 · UI-09-20 · PERM-09-audit-read · BR-09-058.
+**Truy vết.** FR-09-061 · API-09-215, 216, 217 · UI-09-20 · PERM-09-audit-read · ERR-09-079 · BR-09-058.
 
 **Tiền điều kiện, dữ liệu.** T99 2 triệu bản ghi kiểm toán một tháng; U-T90-AU, U-T90-DS1.
 
@@ -3270,7 +3281,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 3. DS1 `GET /audit-events`.
 4. AU `POST /audit-exports`.
 
-**Kết quả mong đợi.** Bước 1 `200`, bản ghi chỉ có tên trường, băm có khóa, số lượng. Bước 2 từ chối vượt khoảng tối đa (ERR-09-078). Bước 3 ERR-00-403. Bước 4 `202`, tệp không có giá trị rõ, KT: có (audit-export).
+**Kết quả mong đợi.** Bước 1 `200`, bản ghi chỉ có tên trường, băm có khóa, số lượng. Bước 2 từ chối `422` ERR-09-079 "Chọn khoảng thời gian tối đa 90 ngày." Bước 3 ERR-00-403. Bước 4 `202`, tệp không có giá trị rõ, KT: có (audit-export).
 :::
 
 #### TC-09-117 · Bảng điều khiển, báo cáo tuân thủ và lịch lập báo cáo <!--k:dash-report-->
@@ -3284,7 +3295,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-09-062, 063 · API-09-218, 219, 220, 221, 222, 223 · UI-09-01 · ERR-09-078 · NFR-09-022.
+**Truy vết.** FR-09-062, 063 · API-09-218, 219, 220, 221, 222, 223 · UI-09-01 · ERR-09-003 · NFR-09-022.
 
 **Tiền điều kiện, dữ liệu.** T90; U-T90-VW, U-T90-TA.
 
@@ -3294,7 +3305,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 2. TA `POST /compliance-reports` kỳ quý; `PUT /compliance-reports:schedule` `0 6 1 * *`; rồi gửi lịch `hai ngay mot lan`.
 3. VW mở UI-09-15.
 
-**Kết quả mong đợi.** Bước 1 danh sách đã lọc khớp `GET /activation-checks:blocked`; chỉ số `privacy_unclassified_fields`, `privacy_dsr_overdue`, `privacy_breach_clock_seconds` đúng. Bước 2 `201`, tệp tải được, lịch hợp lệ `200`, lịch sai `422` ERR-09-078. Bước 3 ERR-00-403.
+**Kết quả mong đợi.** Bước 1 danh sách đã lọc khớp `GET /activation-checks:blocked`; chỉ số `privacy_unclassified_fields`, `privacy_dsr_overdue`, `privacy_breach_clock_seconds` đúng. Bước 2 `201`, tệp tải được, lịch hợp lệ `200`, lịch sai `400` ERR-09-003. Bước 3 ERR-00-403.
 :::
 
 #### TC-09-118 · Tham số ngoài miền, vượt trần PA, không cần khởi động lại <!--k:set-neg-->
@@ -3330,7 +3341,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Mục tiêu.** Chứng minh không đường nào để T91 đọc hoặc ghi dữ liệu quyền riêng tư của T90, ở mọi API đọc, data plane, CSDL, Kafka và khóa mật mã.
 
-**Phủ.** NFR-09-019; FR-09-001…064 (mọi API đọc); API-09-001…237; BR-09-045, 060; ERR-09-001.
+**Phủ.** NFR-09-019; FR-09-001…064 (mọi API đọc); API-09-001…245; BR-09-045, 060; ERR-09-001.
 
 #### TC-09-119 · Rò rỉ chéo tenant: phân loại, sổ xử lý, mục đích, chính sách che, miền, lịch, tham số <!--k:iso-api-catalog-->
 
@@ -3453,7 +3464,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Mục tiêu.** Chứng minh ma trận 16 quyền, quyền theo tổ chức, scope dịch vụ, bốn mắt không có đường vòng.
 
-**Phủ.** FR-09-004, 010, 016, 026, 034, 043, 056; API-09-001…237; BR-09-003, 014; ERR-09-004, 005, 008; PERM-09-*.
+**Phủ.** FR-09-004, 010, 016, 026, 034, 043, 056; API-09-001…245; BR-09-003, 014; ERR-09-004, 005, 008, 081; PERM-09-*.
 
 #### TC-09-124 · Quét ma trận 16 quyền trên 11 vai, kể cả quyền theo tổ chức <!--k:perm-matrix-->
 
@@ -3536,7 +3547,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Tự động.** API.
 
-**Truy vết.** FR-09-064, 045 · API-09-225, 165 · ERR-09-004 · BR-09-061.
+**Truy vết.** FR-09-064, 045 · API-09-225, 165 · ERR-09-004, 081 · BR-09-061.
 
 **Tiền điều kiện, dữ liệu.** T90; U-T90-TA; `ETag` cũ của `/settings`.
 
@@ -3545,9 +3556,9 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 1. `PUT /settings` không token.
 2. `PUT /settings` thiếu `If-Match`.
 3. `PUT /settings` với `ETag` đã cũ.
-4. `POST /subject-requests` hai lần cùng `Idempotency-Key`.
+4. `POST /subject-requests` hai lần cùng `Idempotency-Key` và thân, rồi lần ba cùng khóa với thân khác.
 
-**Kết quả mong đợi.** Bước 1 `401` ERR-00-401. Bước 2 `428` ERR-00-428. Bước 3 `409` ERR-09-004 "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." Bước 4 một yêu cầu duy nhất.
+**Kết quả mong đợi.** Bước 1 `401` ERR-00-401. Bước 2 `428` ERR-00-428. Bước 3 `409` ERR-09-004 "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." Bước 4 một yêu cầu duy nhất; dùng lại khóa với thân khác `409` ERR-09-081 "Idempotency-Key đã dùng với thân khác. Dùng khóa mới."
 :::
 
 ### TS-09-37 · Không lộ dữ liệu cá nhân ở sự kiện, tệp xuất và bề mặt tấn công
@@ -3726,7 +3737,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Mục tiêu.** Chứng minh thu hồi chấp thuận có hiệu lực ≤ 15 giây, đồng bộ bundle p99 ≤ 60 giây, phiếu xem 60 giây, đồng hồ vi phạm bền qua khởi động lại.
 
-**Phủ.** NFR-09-005, 015, 017; BR-09-017, 018, 051; FR-09-017, 018, 029, 059; EVT-09-08.
+**Phủ.** NFR-09-005, 015, 017, 024, 025; BR-09-017, 018, 051, 062; FR-09-017, 018, 029, 059; EVT-09-08.
 
 #### TC-09-135 · Thu hồi chấp thuận có hiệu lực tại điểm thực thi ≤ 15 giây <!--k:rev-15s-->
 
@@ -3739,7 +3750,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Tự động.** IT.
 
-**Truy vết.** FR-09-017, 019 · NFR-09-005 · BR-09-017 · EVT-09-08 · API-09-073, 227.
+**Truy vết.** FR-09-017, 019 · NFR-09-005, 024 · BR-09-017 · EVT-09-08 · API-09-073, 227.
 
 **Tiền điều kiện, dữ liệu.** T97; 3 PEP (PH-03, PH-04, PH-14) bật đệm; 100 chấp thuận `ACTIVE`; mỗi PEP gọi `purpose:decide` 10 lượt mỗi giây.
 
@@ -3817,6 +3828,32 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 2. Tiến đến T0+24 giờ, +48 giờ.
 
 **Kết quả mong đợi.** EVT: `breach.deadline-near` đúng một lần mỗi mốc ± 1 phút; `clock` hiển thị còn đúng thời gian; không mốc nào lặp lại sau khởi động.
+:::
+
+#### TC-09-150 · Đệm quyết định tối đa 15 giây cho ALLOW, 5 giây cho DENY <!--k:cache-decision-->
+
+::: dac-ta
+**Mục đích.** Chứng minh BR-09-062: thư viện `dh-privacy-client` không đệm quá trần, để không dò được từng trường qua kết quả đệm.
+
+**Loại.** Dương, Biên.
+
+**Ưu tiên.** P1.
+
+**Tự động.** JOB.
+
+**Truy vết.** FR-09-019 · API-09-227 · ERR-09-078 · BR-09-062 · NFR-09-024 · EVT-09-08.
+
+**Tiền điều kiện, dữ liệu.** T97; PEP dùng `dh-privacy-client`; `09.decision.cache-seconds = 15`; chấp thuận G1 `ACTIVE`, trường `cccd` chưa thuộc G1; đồng hồ giả.
+
+**Các bước.**
+
+1. PEP gọi `purpose:decide` cho trường được phép ở giây 0, 10 và 16.
+2. PEP gọi cho `cccd` (bị từ chối) ở giây 0, 3 và 6.
+3. Đặt `09.decision.cache-seconds = 3`; lặp bước 2 cách nhau 4 giây.
+4. Khi quyết định `ALLOW` còn trong đệm, DO thu hồi G1.
+5. TA đặt `09.decision.cache-seconds = 30`.
+
+**Kết quả mong đợi.** Bước 1 chỉ lượt giây 0 và 16 tới PH-09, lượt giây 10 lấy từ đệm. Bước 2 lượt giây 3 lấy từ đệm, lượt giây 6 tới PH-09 vì `DENY` chỉ đệm 5 giây. Bước 3 cả hai lượt tới PH-09 (tham số nhỏ hơn 5 giây thì lấy tham số). Bước 4 đệm bị xóa ngay, lượt kế tiếp bị từ chối trong ≤ 15 giây (NFR-09-024). Bước 5 `422` ERR-09-078 "Giá trị của 09.decision.cache-seconds ngoài miền cho phép 0…15."
 :::
 
 ### TS-09-40 · Hiệu năng, quy mô và quan sát
@@ -3962,7 +3999,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Mục tiêu.** Chứng minh 22 màn hình dùng được bằng bàn phím và trình đọc màn hình, và hợp đồng OpenAPI khớp FRS.
 
-**Phủ.** UI-09-01…22; API-09-001…237; NFR-09-023.
+**Phủ.** UI-09-01…22; API-09-001…245; NFR-09-023.
 
 #### TC-09-145 · Truy cập 22 màn hình, trạng thái rỗng, lỗi và hộp thoại xem đầy đủ <!--k:ui-a11y-->
 
@@ -3990,7 +4027,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 #### TC-09-146 · OpenAPI `/api/privacy/v1` và `/privacy/v1` khớp FRS 9.4 <!--k:ct-openapi-->
 
 ::: dac-ta
-**Mục đích.** Chứng minh 237 API, mã lỗi và enum đúng nguồn chuẩn (FRS Phụ lục A).
+**Mục đích.** Chứng minh 245 API, mã lỗi và enum đúng nguồn chuẩn (FRS Phụ lục A).
 
 **Loại.** Dương.
 
@@ -4075,7 +4112,7 @@ Các kịch bản TS-09-35…42 kiểm các tính chất xuyên suốt: cô lậ
 
 **Truy vết.** FR-09-004, 007, 029, 033, 034, 035, 036, 037, 038 · BR-09-001, 032, 035 · ERR-09-053, 054 · LGC-TOOL-012.
 
-**Tiền điều kiện, dữ liệu.** T90, T96; bảng so sánh SRS cũ (FR-09-001…009) và FRS 0.1.
+**Tiền điều kiện, dữ liệu.** T90, T96; bảng so sánh SRS cũ (FR-09-001…009) và FRS 0.2.
 
 **Các bước.**
 
@@ -4126,7 +4163,7 @@ Chín việc dưới đây phủ hai mã hệ cũ và các nhóm FR cốt lõi; 
 
 ### 7.2. Đối chiếu mười một FR cũ của SRS repo
 
-SRS repo (`docs/07-srs/SRS-PH-09-privacy.md`) có 11 FR; FRS 0.1 mở rộng thành 64. Bảng nối từng FR cũ với FR mới, nêu khác biệt chủ ý và ca chứng minh.
+SRS repo (`docs/07-srs/SRS-PH-09-privacy.md`) có 11 FR; FRS 0.2 mở rộng thành 64. Bảng nối từng FR cũ với FR mới, nêu khác biệt chủ ý và ca chứng minh.
 
 | FR cũ | Nội dung cũ | FR mới | Khác biệt | TC |
 |---|---|---|---|---|
@@ -4173,7 +4210,7 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-09. FR mức
 | FR-09-016 | Thẩm định, chấp thuận có điều kiện hoặc từ c | M | 031, 032, 148 | 032, 033, 125, 148 | Có |
 | FR-09-017 | Gia hạn, sửa, tạm dừng, thu hồi chấp thuận v | M | 035, 036, 037, 038 | 035, 036, 120 | Có |
 | FR-09-018 | Đồng bộ chấp thuận và chính sách sang bundle | M | 039, 042 | 040, 041 | Có |
-| FR-09-019 | Quyết định mục đích trực tuyến cho điểm thực | M | 037, 042, 043, 046, 102, 148 | 044, 045, 126, 148 | Có |
+| FR-09-019 | Quyết định mục đích trực tuyến cho điểm thực | M | 037, 042, 043, 046, 102, 148, 150 | 044, 045, 126, 148 | Có |
 | FR-09-020 | Phát hiện khai thác vượt mục đích, vượt hạn  | S | 046, 048, 148 | 049, 148 | Có |
 | FR-09-021 | Báo cáo khai thác theo mục đích | S | 050 | 050 | Có |
 | FR-09-022 | Chặn kích hoạt hợp đồng mức Nhạy cảm khi chư | M | 052 | 051, 053 | Có |
@@ -4229,7 +4266,7 @@ Hai mã chức năng hệ cũ được PH-09 phủ theo FRS mục 11.1: LGC-TOOL
 | LGC | FR của PH-09 | TC | UAT |
 |---|---|---|---|
 | LGC-TOOL-012 | 023, 024, 027, 028, 030, 031, 032, 036 | 042, 054, 055, 057, 060, 063, 072, 075 (+6) | UAT-03, UAT-04 |
-| LGC-NGSP-003 | 014, 015, 016, 017, 018, 019, 020, 021, 022 | 025, 028, 030, 031, 032, 035, 036, 037 (+10) | UAT-01, UAT-02 |
+| LGC-NGSP-003 | 014, 015, 016, 017, 018, 019, 020, 021, 022 | 025, 028, 030, 031, 032, 035, 036, 037 (+11) | UAT-01, UAT-02 |
 
 : Chức năng hệ cũ liên quan gián tiếp tới FR, ca và UAT
 
@@ -4298,6 +4335,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ quy tắ
 | BR-09-059 | 118 |
 | BR-09-060 | 003, 119, 120, 121, 122, 123 |
 | BR-09-061 | 099, 127 |
+| BR-09-062 | 150 |
 
 : Quy tắc nghiệp vụ tới test case
 
@@ -4309,17 +4347,17 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ mã lỗ
 
 | Mã | Test case |
 |---|---|
-| ERR-09-001 | 003, 098, 119, 120 |
+| ERR-09-001 | 002, 003, 098, 119, 120 |
 | ERR-09-002 | 002, 026 |
-| ERR-09-003 | 005, 029, 090 |
+| ERR-09-003 | 001, 005, 029, 117 |
 | ERR-09-004 | 127 |
 | ERR-09-005 | 008, 009, 019, 022, 033, 059, 077, 083, 093, 097 (+3) |
-| ERR-09-006 | 010, 012, 030, 036, 037, 095, 098, 113 |
+| ERR-09-006 | 006, 010, 012, 030, 036, 037, 095, 098, 113 |
 | ERR-09-007 | 032, 036, 049, 069 |
 | ERR-09-008 | 029, 033, 124 |
 | ERR-09-009 | 029 |
 | ERR-09-010 | 020, 070, 084, 131 |
-| ERR-09-011 | 002, 006, 026 |
+| ERR-09-011 | 002, 026 |
 | ERR-09-012 | 008 |
 | ERR-09-013 | 009 |
 | ERR-09-014…015 | 005 |
@@ -4369,7 +4407,11 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ mã lỗ
 | ERR-09-071…072 | 107 |
 | ERR-09-073…074 | 110 |
 | ERR-09-075…077 | 113 |
-| ERR-09-078 | 027, 049, 116, 117, 118 |
+| ERR-09-078 | 027, 049, 118, 150 |
+| ERR-09-079 | 116 |
+| ERR-09-080 | 058 |
+| ERR-09-081 | 127 |
+| ERR-09-082 | 090 |
 | ERR-09-101 | 017, 044, 064 |
 | ERR-09-102 | 037, 038, 044, 122, 148 |
 | ERR-09-103 | 044 |
@@ -4414,6 +4456,9 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ yêu c�
 | NFR-09-021 | 133 |
 | NFR-09-022 | 117, 143 |
 | NFR-09-023 | 142, 145 |
+| NFR-09-024 | 135, 150 |
+| NFR-09-025 | 038 |
+| NFR-09-026 | 046 |
 
 : Yêu cầu phi chức năng tới test case
 
@@ -4430,7 +4475,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ sự ki�
 | EVT-09-05 | 028, 123, 128 |
 | EVT-09-06 | 031, 035, 123, 128 |
 | EVT-09-07 | 036, 123, 128 |
-| EVT-09-08 | 037, 123, 128, 132, 135 |
+| EVT-09-08 | 037, 123, 128, 132, 135, 150 |
 | EVT-09-09…10 | 038, 123, 128 |
 | EVT-09-11 | 039, 123, 128, 132, 136 |
 | EVT-09-12 | 059, 062, 123, 128 |
@@ -4608,7 +4653,7 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ api này
 | API-09-224 | 118, 119 |
 | API-09-225 | 118, 124, 127 |
 | API-09-226 | 118 |
-| API-09-227 | 037, 042, 043, 044, 045, 046, 047, 102, 122, 126 (+5) |
+| API-09-227 | 037, 042, 043, 044, 045, 046, 047, 102, 122, 126 (+6) |
 | API-09-228 | 042, 060, 061, 062, 122, 139 |
 | API-09-229 | 063, 064, 065, 066, 067, 126, 130, 147 |
 | API-09-230 | 078, 079, 080, 081, 126 |
@@ -4619,10 +4664,18 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-09 phủ api này
 | API-09-235 | 100, 122 |
 | API-09-236 | 068, 122, 137 |
 | API-09-237 | 046, 148 |
+| API-09-238 | 106 |
+| API-09-239 | 114 |
+| API-09-240 | 115 |
+| API-09-241 | 068 |
+| API-09-242 | 103 |
+| API-09-243 | 006 |
+| API-09-244 | 104 |
+| API-09-245 | 107 |
 
 : API tới test case (chỉ liệt kê API có ca)
 
-API không có ca riêng (38/237), thuộc nhóm đọc, liệt kê, tải hoặc sửa bản nháp được kiểm cùng API cùng tài nguyên: 003, 021, 025, 032, 035, 038, 045, 047, 048, 058, 067, 084, 092, 104, 112, 113, 114, 120, 123, 125, 127, 131, 139, 141, 145, 148, 151, 156, 164, 182, 187, 190, 192, 195, 198, 202, 205, 210.
+API không có ca riêng (38/245), thuộc nhóm đọc, liệt kê, tải hoặc sửa bản nháp được kiểm cùng API cùng tài nguyên: 003, 021, 025, 032, 035, 038, 045, 047, 048, 058, 067, 084, 092, 104, 112, 113, 114, 120, 123, 125, 127, 131, 139, 141, 145, 148, 151, 156, 164, 182, 187, 190, 192, 195, 198, 202, 205, 210.
 
 ### 8.8. Màn hình → test case
 
@@ -4698,21 +4751,21 @@ Bảng nối 13 tiêu chí ở FRS §14 với ca chứng minh.
 
 ### 10.1. Đề nghị cho FRS
 
-Khi viết ca, tập kiểm thử gặp các điểm FRS 0.1 chưa chốt hoặc lệch nhau; bảng ghi cách ca xử lý tạm. Tập này không sửa FRS.
+FRS 0.2 đã hấp thụ các đề nghị của bản 0.1 (Phụ lục C của FRS); bảng nêu kết quả và cách ca đã chỉnh. Tập này không sửa FRS.
 
-| Mã | Đề nghị | Cách ca xử lý tạm |
+| Mã | Điểm nêu ở bản 0.1 | Kết quả ở FRS 0.2 và ca đã chỉnh |
 |---|---|---|
-| ĐN-TC-01 | Chốt một chỉ tiêu thu hồi chấp thuận: BR-09-017 nêu 15 giây, NFR-09-005 nêu p95 ≤ 15 giây, FRS §14.3 nêu ≤ 60 giây | TC-09-135 đo p95 và giá trị tối đa ≤ 15 giây, bundle dự phòng ≤ 60 giây |
-| ĐN-TC-02 | BR-09-054 ghi đồng hồ 72 giờ không dừng hay đặt lại, FRS §14.11 ghi đồng hồ dừng khi `NOTIFIED` | TC-09-114 kiểm cảnh báo trước `NOTIFIED` và không có đường đặt lại; hành vi sau `NOTIFIED` chờ chốt |
-| ĐN-TC-03 | FR-09-029 phát EVT-09-15 khi vượt "ngưỡng bất thường" nhưng chưa có tham số `09.*` | TC-09-071 dùng 20 lần mỗi giờ (`09.mask.reveal-max-per-hour`); đề nghị thêm tham số riêng |
-| ĐN-TC-04 | Thiếu mã lỗi: dữ liệu `RESTRICTED` cho AI khi `09.ai.allow-restricted = false`; khoảng tra nhật ký vượt `09.audit.query-max-days`; thực hiện khôi phục thiếu MFA; `Idempotency-Key` trùng khác thân | Tạm ERR-09-003, ERR-09-078, ERR-00-401, ERR-00-003 ở TC-09-090, TC-09-116, TC-09-082 |
-| ĐN-TC-05 | Lệch SRS cũ chưa ghi ở Phụ lục B: trường chưa phân loại SRS cũ chặn, FRS mới coi như `SENSITIVE`; mẫu che số định danh cũ giữ 4 đầu 4 cuối, FRS mặc định `keep-last-3` | TC-09-149, TC-09-147 kiểm cả hai, mẫu cũ cấu hình được bằng `KEEP_FIRST_LAST` |
-| ĐN-TC-06 | SRS cũ yêu cầu k cao hơn thường cho dữ liệu AI, FRS chỉ có sàn k ≥ 10; chốt có thêm `09.anon.k-min-ai` không | TC-09-149 chấp nhận k = 10 cho AI |
-| ĐN-TC-07 | Thiếu số cho ERR-09-107 (kích thước tối đa bản tin, lô) và ERR-09-113 (hạn mức gọi data plane) | TC-09-065, TC-09-045 dùng giả định 1 MB và 2.000 lượt mỗi giây (Q09-40) |
-| ĐN-TC-08 | Thiếu NFR số cho tự hết hạn chấp thuận (độ trễ tối đa sau `validTo`) và cảnh báo bất thường "trong 5 phút" (BR-09-020) | TC-09-038, TC-09-046 dùng 60 giây và 5 phút |
-| ĐN-TC-09 | FRS §14.5 dẫn NFR-09-009 cho quét 0 phát hiện, đúng là NFR-09-014; ERR-09-001 gộp `404, 410` chưa nêu khi nào `410` | Ca dùng NFR-09-014; `410` chưa có ca riêng |
+| ĐN-TC-01 | Chỉ tiêu thu hồi 15 giây khác 60 giây | Đã chốt 15 giây qua sự kiện, 60 giây qua bundle (NFR-09-024); TC-09-135 đo cả hai |
+| ĐN-TC-02 | Đồng hồ 72 giờ không dừng hay đặt lại, khác 14.11 | Đã chốt: chỉ dừng khi thông báo A05 đã `SENT` (BR-09-054); TC-09-114 |
+| ĐN-TC-03 | Ngưỡng bất thường của EVT-09-15 chưa có tham số | Đã có `09.mask.reveal-alert-per-hour` mặc định 10; TC-09-071 dùng ngưỡng 10 mỗi giờ |
+| ĐN-TC-04 | Thiếu mã lỗi cho AI khi cờ tắt, khoảng tra nhật ký, khóa trùng khác thân | Đã có ERR-09-082, 079, 081; TC-09-090, 116, 127 dùng mã này. Thiếu MFA dùng ERR-00-401, không cấp mã PH-09 |
+| ĐN-TC-05 | Lệch SRS cũ chưa ghi ở Phụ lục B | Đã ghi ở bảng 11.3 của FRS; TC-09-149, 147 kiểm cả hai phía |
+| ĐN-TC-06 | `09.anon.k-min-ai` cho dữ liệu AI | Không nhận: giữ một sàn k ≥ 10, đặt cao hơn được trong cấu hình; TC-09-149 chấp nhận k = 10 |
+| ĐN-TC-07 | Số cho ERR-09-107 và ERR-09-113 | Đã có 1 MiB và `09.api.rate-du-per-sec = 2.000`; TC-09-065, 045 dùng số này |
+| ĐN-TC-08 | NFR cho tự hết hạn và cảnh báo 5 phút | Đã có NFR-09-025, 026; TC-09-038, 046 |
+| ĐN-TC-09 | NFR dẫn nhầm ở 14.5; khi nào `410` | Đã sửa: NFR-09-014; `410` khi đối tượng danh mục `RETIRED` (TC-09-002) |
 
-: Đề nghị cho FRS và cách ca xử lý tạm
+: Kết quả hấp thụ đề nghị của tập kiểm thử vào FRS 0.2
 
 ### 10.2. Đề nghị đồng bộ tài liệu khác
 
@@ -4731,8 +4784,6 @@ Các việc dưới thuộc tài liệu dùng chung hoặc tập của người 
 
 ### 10.3. Câu hỏi mở
 
-> **Câu hỏi mở Q09-40:** Hạn mức gọi data plane mỗi bên gọi và kích thước tối đa của `messages:apply` chưa có số trong FRS; ca TC-09-045 dùng giả định 2.000 lượt mỗi giây, ca TC-09-065 dùng 1 MB, cần chốt cùng ĐN-TC-07.
-
 > **Câu hỏi mở Q09-41:** Bộ mẫu chuẩn 500 cột cho NFR-09-009 do ai cung cấp và tỷ lệ cột chứa số định danh; đến khi có câu trả lời, ca TC-09-013 dùng bộ sinh 8 cột có số định danh trong 40 cột, nhân lên 500 cột.
 
 > **Câu hỏi mở Q09-42:** Ai sở hữu và duyệt bộ ca chuẩn (golden set ≥ 300 ca, NFR-09-008), và tên trường JSON giả định ở mục 1.5 khi `openapi-privacy.yaml` chốt; tạm dùng 300 ca sinh từ ma trận mức × loại × vai × mục đích × kênh.
@@ -4741,10 +4792,13 @@ Các việc dưới thuộc tài liệu dùng chung hoặc tập của người 
 
 > **Câu hỏi mở Q09-44:** Có đo thật ẩn danh hóa 1 triệu bản ghi (NFR-09-012) và diễn tập DR (NFR-09-021) trên hạ tầng của tỉnh trước nghiệm thu không, và có kiểm thử xâm nhập độc lập riêng cho API xem đầy đủ, khôi phục giá trị gốc ngoài ZAP và quét canary không.
 
+> **Câu hỏi mở Q09-45:** FR-09-025 từ chối mẫu mô phỏng có số định danh đúng kiểm tổng, thẻ đúng Luhn hoặc điện thoại ngoài "miền giả" (ERR-09-080) nhưng FRS chưa nêu miền giả gồm dải nào. Dữ liệu CC-01 (điện thoại `0912345678`) và ca TC-09-057 dùng giá trị mẫu có dạng hợp lệ; cần chốt dải giả cho CCCD, MST, thẻ, điện thoại để ca TC-09-057 và TC-09-058 bước 3 phân biệt được mẫu giả với mẫu thật.
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: kịch bản TS-09-01…42, test case TC-09, ma trận truy vết, Gherkin, bảng tính theo FRS 0.1 |
+| 0.2 | 2026-11-26 | Đồng bộ FRS 0.2: ERR-09-079…082, API-09-238…245, NFR-09-024…026, BR-09-062; sửa mã lỗi ở TC-09-006, 090, 116, 117; thêm TC-09-150; thu hẹp mục 10.1, bỏ Q09-40, thêm Q09-45 |
 
 : Lịch sử phiên bản

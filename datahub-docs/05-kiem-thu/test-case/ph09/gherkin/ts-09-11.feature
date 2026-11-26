@@ -11,7 +11,8 @@ Tính năng: TS-09-11 · Gia hạn, sửa, tạm dừng, thu hồi và tự hế
     Khi DO1 `:renew` G1 thêm 180 ngày (lần 3).
     Và DO1 `:renew` G1 lần 4.
     Và DO1 `:amend` G1 bớt 1 trường, hạ hạn ngạch.
-    Thì bước 1 `200`, `renewCount = 3`. Bước 2 `422` ERR-09-031 "Chấp thuận đã gia hạn tối đa 3 lần. Lập yêu cầu mới." Bước 3 `200`, EVT: `purpose-grant.approved` (loại sửa), KT: có (grant-amend).
+    Và OR1 `POST /access-requests` với `requestKind = RENEWAL`, `renewsGrantId` = chấp thuận `ACTIVE` G3 (cùng HTTT, mục đích).
+    Thì bước 1 `200`, `renewCount = 3`. Bước 2 `422` ERR-09-031 "Chấp thuận đã gia hạn tối đa 3 lần. Lập yêu cầu mới." Bước 3 `200`, EVT: `purpose-grant.approved` (loại sửa), KT: có (grant-amend). Bước 4 `201` `DRAFT`; khi DO duyệt, G3 được gia hạn thay vì tạo chấp thuận mới và `renewCount` tăng 1.
 
   @TC-09-036 @P1 @Dương @Âm
   Kịch bản: TC-09-036 Tạm dừng và khôi phục, lý do bắt buộc
@@ -36,10 +37,10 @@ Tính năng: TS-09-11 · Gia hạn, sửa, tạm dừng, thu hồi và tự hế
 
   @TC-09-038 @P1 @Dương
   Kịch bản: TC-09-038 Tự hết hạn, báo trước 30 ngày, không gia hạn ngầm
-    # Truy vết: FR-09-017 · EVT-09-09, 10 · BR-09-015 · API-09-068
+    # Truy vết: FR-09-017 · NFR-09-025 · EVT-09-09, 10 · BR-09-015 · API-09-068
     # Mục đích: Chứng minh `EXPIRED` tự động và báo trước đúng hạn.
     Biết T95 đồng hồ giả; chấp thuận G2 hạn sau 31 ngày, `09.grant.expiring-notice-days = 30`.
     Khi tiến đồng hồ 1 ngày.
     Và tiến đến sau `validTo` 1 phút.
     Và gọi `purpose:decide` cho G2.
-    Thì bước 1 EVT: `purpose-grant.expiring` đúng một lần. Bước 2 `GrantStatus = EXPIRED`, EVT: `purpose-grant.expired`. Bước 3 `403` ERR-09-102; không gia hạn tự động.
+    Thì bước 1 EVT: `purpose-grant.expiring` đúng một lần. Bước 2 điểm thực thi từ chối G2 trong ≤ 60 giây sau `validTo`; `GrantStatus = EXPIRED` trong ≤ 5 phút, EVT: `purpose-grant.expired`. Bước 3 `403` ERR-09-102; không gia hạn tự động.

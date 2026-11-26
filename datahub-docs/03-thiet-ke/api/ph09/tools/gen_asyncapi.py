@@ -23,7 +23,7 @@ D = {
     2: 'scanId!:u, status!:#ScanStatus, suspectCount!:i',
     3: 'contractKind!:#ContractKind, contractId!:s, fromClass:#DataClass, toClass!:#DataClass, blocked!:b',
     4: 'activityId!:u, code!:code, versionNo!:i, status!:#VersionStatus',
-    5: 'requestId!:u, htttId!:s, purposeCode!:code, contractId!:s, ownerOrgId!:s, dueAt!:ts',
+    5: 'requestId!:u, requestKind!:#AccessRequestKind, renewsGrantId:u, htttId!:s, purposeCode!:code, contractId!:s, ownerOrgId!:s, dueAt!:ts',
     6: 'grantId!:u, htttId!:s, purposeCode!:code, contractKind!:#ContractKind, contractId!:s, validUntil!:ts, change!:e(APPROVED|AMENDED|RENEWED)',
     7: 'grantId!:u, htttId!:s, purposeCode!:code, status!:#GrantStatus',
     8: 'grantId!:u, htttId!:s, purposeCode!:code, contractId!:s, revokedAt!:ts',

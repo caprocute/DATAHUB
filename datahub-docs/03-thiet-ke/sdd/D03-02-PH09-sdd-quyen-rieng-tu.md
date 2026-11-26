@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH09
 ten: Thiết kế chi tiết phần mềm phân hệ PH-09 Quyền riêng tư
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-data, kỹ sư tích hợp PEP, ATTT, pháp chế, kiến trúc sư, hội đồng thẩm định
@@ -23,7 +23,7 @@ Tài liệu mô tả cách hiện thực 64 FR của [D02-03-PH09](../../02-yeu-
 5. **Ẩn danh hóa kiểm chứng được.** Job Kubernetes chạy thư viện ARX (Java, Apache-2.0), đòi k ≥ 10 và đo rủi ro tái định danh trước khi phát hành; rủi ro `HIGH` thì chặn (đề xuất ADR số 092).
 6. **Phát hiện DLCN bằng bộ mẫu và kiểm tổng**, không dùng mô hình học máy ở đợt 2; kết quả quét chỉ là gợi ý, mọi đổi mức đi qua xác nhận của người (đề xuất ADR số 093).
 
-Tập nêu bốn ADR đề xuất (số 090 đến 093), mười câu hỏi mở Q09-20…29 và mục "Đề nghị cho FRS" (§13.5) cho các điểm thiết kế phát hiện lệch hoặc thiếu ở FRS.
+Tập nêu bốn ADR đề xuất (số 090 đến 093), mười câu hỏi mở Q09-20…29 và mục 13.5 ghi kết quả đồng bộ với FRS 0.2 cùng các việc còn lại cho tài liệu khác.
 
 ## 1. Phạm vi và cách đọc
 
@@ -310,7 +310,7 @@ Sơ đồ chỉ nêu quan hệ chính. Bốn bất biến xuyên suốt, kiểm 
 
 **FR hiện thực.** FR-09-001…004, 006…008; BR-09-001…007.
 
-**Giao diện vào.** `ClassificationLookupApi`; API-09-015…018, 027…031; sự kiện đăng ký trường từ PH-06 (FR-06-004) và lược đồ API, topic từ PH-02, PH-10.
+**Giao diện vào.** `ClassificationLookupApi`; API-09-015…018, 027…031, 243 (ngừng phần tử); sự kiện đăng ký trường từ PH-06 (FR-06-004) và lược đồ API, topic từ PH-02, PH-10.
 
 **Phụ thuộc ra.** `crypto` + `audit`, `bundle` (kích hoạt dựng lại), `purpose.ContractActivationGuard`.
 
@@ -428,7 +428,7 @@ Hoạt động `ACTIVE` không sửa tại chỗ. `ActivityVersioning.edit` sao 
 
 **FR hiện thực.** FR-09-023…026, 029, 030; BR-09-021…027.
 
-**Giao diện vào.** API-09-090…108, 236 (xác thực phiếu).
+**Giao diện vào.** API-09-090…108, 236 (xác thực phiếu), 241 (chi tiết phiếu xem, không kèm giá trị).
 
 **Phụ thuộc ra.** `classification` (chỉ mục), `bundle`, `crypto` + `audit`, Loki hoặc kho log (quét rò rỉ).
 
@@ -554,7 +554,7 @@ Nguyên tắc: PH-09 không tự xóa dữ liệu của phân hệ khác. `Reten
 
 **FR hiện thực.** FR-09-045…051; BR-09-042…048, 061.
 
-**Giao diện vào.** API-09-164…181, 235.
+**Giao diện vào.** API-09-164…181, 235, 242 (gia hạn hạn trả lời), 244 (rút yêu cầu).
 
 **Phụ thuộc ra.** PH-06, PH-19, PH-13, PH-14 (bộ tra theo băm), PH-11 (hạn, nếu bật), `crypto`.
 
@@ -584,7 +584,7 @@ Tiếp nhận (`SubjectRequestService.receive`, bắt buộc `Idempotency-Key`, 
 
 **FR hiện thực.** FR-09-052…054; BR-09-049…051.
 
-**Giao diện vào.** API-09-182…191, 234.
+**Giao diện vào.** API-09-182…191, 234, 238 (chi tiết mẫu), 245 (tra đồng ý theo định danh trong thân).
 
 **Phụ thuộc ra.** `crypto` (băm chủ thể), Valkey (đệm), `ropa` (mục đích).
 
@@ -608,7 +608,7 @@ Mẫu đồng ý dùng vòng đời `VersionStatus`; mẫu đã có người đ�
 
 **Đơn vị chạy.** `dh-data` hồ sơ `dataplane`, 3 bản sao, mTLS với danh tính SPIFFE.
 
-**FR hiện thực.** FR-09-019, 027, 028, và phần phục vụ của 018, 032, 054, 047, 029, 020.
+**FR hiện thực.** FR-09-019, 027, 028, và phần phục vụ của 018, 032, 054, 047, 029, 020; BR-09-062.
 
 **Giao diện vào.** API-09-227…237.
 
@@ -666,7 +666,7 @@ Hồ sơ dùng vòng đời `DpiaStatus` (như `VersionStatus` cộng `SUBMITTED
 
 **FR hiện thực.** FR-09-058…060; BR-09-054…057.
 
-**Giao diện vào.** API-09-202…214; sự kiện sự cố từ PH-18, cảnh báo từ `purpose.AnomalyDetector` và PH-13.
+**Giao diện vào.** API-09-202…214, 239, 240 (liệt kê thông báo và biện pháp khắc phục); sự kiện sự cố từ PH-18, cảnh báo từ `purpose.AnomalyDetector` và PH-13.
 
 **Phụ thuộc ra.** PH-18, PH-13 (kiểm toán, mẫu báo cáo), `audit`.
 
@@ -742,7 +742,7 @@ Hồ sơ dùng vòng đời `DpiaStatus` (như `VersionStatus` cộng `SUBMITTED
 
 **Đơn vị chạy.** Trong tiến trình của điểm thực thi; artifact `libs/dh-privacy-client` (Java), cùng ngữ nghĩa với bản Lua cho APISIX gọi OPA cục bộ.
 
-**FR hiện thực.** FR-09-027, 028, 030 (phía PEP); BR-09-027.
+**FR hiện thực.** FR-09-027, 028, 030 (phía PEP); BR-09-027, BR-09-062; NFR-09-024.
 
 **Giao diện vào.** `PrivacyClient.decide`, `plan`, `applyLocal`, `report`; cấu hình `datahub.privacy.client.*`.
 
@@ -793,7 +793,7 @@ sequenceDiagram
   P--)D: usage-events:report theo lô
 ```
 
-Khóa đệm là (`purpose`, `htttId`, `contract`, băm danh sách trường, cờ chủ thể bị hạn chế). Đệm kết quả `ALLOW` sống tối đa 15 giây và bị xóa ngay khi nhận EVT-09-07 hoặc 08 (nên thu hồi có hiệu lực ≤ 15 giây, BR-09-017); `DENY` đệm 5 giây để chống dò. Nếu OPA chưa nạp bundle hoặc `validUntil` đã qua thì hợp đồng `SENSITIVE` bị `DENY` mà không gọi tiếp (NFR-09-007); hợp đồng `RESTRICTED` trở xuống đi theo `FailSafePolicy` (§8.6). Lượt khai thác được gom và gửi bất đồng bộ (`UsageReporter`, lô 500 lượt hoặc 2 giây); mất lô không ảnh hưởng quyết định nhưng tăng `privacy_client_report_dropped_total`.
+Khóa đệm là (`purpose`, `htttId`, `contract`, băm danh sách trường, cờ chủ thể bị hạn chế). Đệm kết quả `ALLOW` sống tối đa 15 giây và bị xóa ngay khi nhận EVT-09-07 hoặc 08 (nên thu hồi có hiệu lực ≤ 15 giây, BR-09-017, NFR-09-024); `DENY` đệm tối đa 5 giây để chống dò từng trường (BR-09-062). Nếu OPA chưa nạp bundle hoặc `validUntil` đã qua thì hợp đồng `SENSITIVE` bị `DENY` mà không gọi tiếp (NFR-09-007); hợp đồng `RESTRICTED` trở xuống đi theo `FailSafePolicy` (§8.6). Lượt khai thác được gom và gửi bất đồng bộ (`UsageReporter`, lô 500 lượt hoặc 2 giây); mất lô không ảnh hưởng quyết định nhưng tăng `privacy_client_report_dropped_total`.
 
 ### 5.2. Kế hoạch che và áp che bản tin PH-04 (FR-09-027, 028)
 
@@ -1066,7 +1066,7 @@ sequenceDiagram
   SO->>B: REMEDIATING rồi CLOSED
 ```
 
-Đồng hồ không dừng, không đặt lại (BR-09-054) và không phụ thuộc trạng thái. Việc không thông báo chủ thể phải có căn cứ miễn (ERR-09-077). Cảnh báo 24 giờ cũng là mốc bên xử lý phải báo vụ việc cho tỉnh (Q09-13). Một vụ việc sang `NOT_A_BREACH` chỉ khi SO duyệt kèm lý do, đồng hồ dừng cùng lúc.
+Đồng hồ không tạm dừng và không đặt lại; điểm dừng duy nhất là khi thông báo Cục A05 chuyển `SENT`, lúc đó vụ việc sang `NOTIFIED` (BR-09-054). Việc không thông báo chủ thể phải có căn cứ miễn (ERR-09-077). Cảnh báo 24 giờ cũng là mốc bên xử lý phải báo vụ việc cho tỉnh (Q09-13). Một vụ việc sang `NOT_A_BREACH` chỉ khi SO duyệt kèm lý do; vụ việc ấy không còn nghĩa vụ thông báo nên không bị tính quá hạn.
 
 ## 6. Đa tenant trong mã nguồn
 
@@ -1186,7 +1186,7 @@ Bảng dưới ghi thời gian chờ, số lần thử lại, ngắt mạch và 
 
 ### 8.5. Ánh xạ lỗi
 
-`PrivacyExceptionHandler` biến `PrivacyException(code, args)` thành phản hồi theo khung D03-04 §6 gồm `code`, `message`, `details`, `traceId`. ERR-09-001…078 trả người dùng control plane, ERR-09-101…113 trả bên gọi data plane và chỉ hiển thị cho người vận hành điểm thực thi. `401`, `403` do thiếu quyền chức năng và `428` do thiếu `If-Match` dùng ERR-00-401, ERR-00-403, ERR-00-428; vi phạm phạm vi tổ chức dùng ERR-09-008. Nhóm lỗi theo nguồn: kiểm tra dữ liệu `422` (ERR-09-007, 012, 013, 016, 020, 028, 037…040, 051…055, 057, 059, 062, 068…071, 073, 075, 077, 078); xung đột trạng thái `409` (ERR-09-002, 004, 006, 011, 014, 017, 022, 029, 045…047, 050, 056, 058, 061, 064, 067, 070, 072, 074, 076); lỗi phụ thuộc `503` hoặc `502` (ERR-09-009, 010, 032, 066, 105, 108, 110); quá hạn mức `429` (ERR-09-043, 113). `DENY` của quyết định mục đích là kết quả `200` hợp lệ, không phải lỗi HTTP (FR-09-019); điểm thực thi mới trả `403` ERR-09-102 cho bên khai thác. Thân lỗi không chứa giá trị DLCN, không nêu trường mang nhãn chặn (BR-09-005).
+`PrivacyExceptionHandler` biến `PrivacyException(code, args)` thành phản hồi theo khung D03-04 §6 gồm `code`, `message`, `details`, `traceId`. ERR-09-001…082 trả người dùng control plane, ERR-09-101…113 trả bên gọi data plane và chỉ hiển thị cho người vận hành điểm thực thi. `401`, `403` do thiếu quyền chức năng và `428` do thiếu `If-Match` dùng ERR-00-401, ERR-00-403, ERR-00-428; vi phạm phạm vi tổ chức dùng ERR-09-008. Nhóm lỗi theo nguồn: kiểm tra dữ liệu `422` (ERR-09-007, 012, 013, 016, 020, 028, 037…040, 051…055, 057, 059, 062, 068…071, 073, 075, 077, 078); xung đột trạng thái `409` (ERR-09-002, 004, 006, 011, 014, 017, 022, 029, 045…047, 050, 056, 058, 061, 064, 067, 070, 072, 074, 076); lỗi phụ thuộc `503` hoặc `502` (ERR-09-009, 010, 032, 066, 105, 108, 110); quá hạn mức `429` (ERR-09-043, 113). `DENY` của quyết định mục đích là kết quả `200` hợp lệ, không phải lỗi HTTP (FR-09-019); điểm thực thi mới trả `403` ERR-09-102 cho bên khai thác. Thân lỗi không chứa giá trị DLCN, không nêu trường mang nhãn chặn (BR-09-005).
 
 ### 8.6. Thiết kế đệm và đóng an toàn ở PEP
 
@@ -1195,7 +1195,7 @@ Bảng dưới ghi thời gian chờ, số lần thử lại, ngắt mạch và 
 | Đệm | Khóa | Hạn | Xóa khi | Hết hạn mà không làm mới được |
 |---|---|---|---|---|
 | Kế hoạch che (`PlanCache`) | (vai trò, mục đích, kênh, hợp đồng) | `09.plan.cache-seconds` (300, trần 300) | EVT-09-12, EVT-09-01 | PEP đọc: chỉ trường `PUBLIC` kèm `X-Datahub-Masking: fallback`. PEP luồng: từ chối (đóng an toàn) |
-| Quyết định (`DecisionCache`) | (mục đích, HTTT, hợp đồng, băm trường, cờ hạn chế) | `ALLOW` 15 giây, `DENY` 5 giây (đề nghị, §13.5) | EVT-09-07, 08, 09, 06 | Gọi OPA cục bộ, rồi `decide` |
+| Quyết định (`DecisionCache`) | (mục đích, HTTT, hợp đồng, băm trường, cờ hạn chế) | `09.decision.cache-seconds` (15, trần 15) cho `ALLOW`, `DENY` tối đa 5 giây (BR-09-062) | EVT-09-07, 08, 09, 06 | Gọi OPA cục bộ, rồi `decide` |
 | Bundle (OPA) | `bundleId` | `validUntil` (60 phút) | Bundle mới nạp | Hợp đồng `SENSITIVE`: `DENY`. `RESTRICTED` trở xuống theo `FailSafePolicy` |
 | Đồng ý (`ConsentCache`) | (`subjectHash`, mẫu) | `09.consent.cache-seconds` (60, trần 60) | EVT-09-28 | Coi như chưa đồng ý cho tiện ích không bắt buộc |
 
@@ -1213,20 +1213,21 @@ Tham số `09.*` (FRS §8.2) do từng tỉnh chỉnh qua `TenantSettingService`
 |---|---|---|
 | Quét | `09.scan.sample-rows`, `09.scan.schedule-cron`, `09.scan.confidence` | `ScanJobRunner` |
 | Chấp thuận | `09.request.sla-days`, `09.grant.max-days` (trần 730), `09.grant.renew-max`, `09.grant.expiring-notice-days`, `09.grant.require-restricted` | `GrantService`, `ContractActivationGuard` |
-| Bundle, đệm | `09.bundle.debounce-seconds`, `09.bundle.valid-minutes`, `09.plan.cache-seconds` (trần 300), `09.consent.cache-seconds` (trần 60) | `BundlePublisher`, `dh-privacy-client` |
+| Bundle, đệm | `09.bundle.debounce-seconds`, `09.bundle.valid-minutes`, `09.plan.cache-seconds` (trần 300), `09.consent.cache-seconds` (trần 60), `09.decision.cache-seconds` (mặc định và trần 15) | `BundlePublisher`, `dh-privacy-client` |
 | Bất thường | `09.anomaly.quota-warn-percent`, `09.anomaly.bulk-threshold`, `09.anomaly.auto-suspend` | `AnomalyDetector` |
-| Che, xem đầy đủ | `09.mask.reveal-seconds` (trần 60), `09.mask.reveal-max-per-hour`, `09.log.scan-cron` | `RevealService`, `LeakScanner` |
+| Che, xem đầy đủ | `09.mask.reveal-seconds` (trần 60), `09.mask.reveal-max-per-hour`, `09.mask.reveal-alert-per-hour` (mặc định 10), `09.log.scan-cron` | `RevealService`, `LeakScanner` |
 | Giả danh hóa | `09.pseudo.key-rotate-days`, `09.pseudo.min-rotate-days`, `09.pseudo.destroy-delay-days`, `09.reid.approval-ttl-hours`, `09.reid.exec-window-minutes` | `KeyLifecycleService`, `ReidentificationService` |
 | Ẩn danh hóa | `09.anon.k-min` (sàn 10), `09.anon.risk-medium-above`, `09.anon.risk-high-above`, `09.ai.allow-restricted` | `AnonConfigService`, `RiskService` |
 | Lưu giữ | `09.retention.run-cron`, `09.retention.overdue-days`, `09.shred.delay-days` | `RetentionPlanner`, `TenantShredService` |
 | Chủ thể, vi phạm, DPIA | `09.dsr.sla-days`, `09.dsr.remind-days`, `09.breach.alert-hours`, `09.dpia.review-months` | `DsrClock`, `BreachClock`, `DpiaReviewScheduler` |
 | Báo cáo, nhật ký | `09.audit.query-max-days`, `09.report.schedule-cron` | `AuditQueryService`, `ComplianceReportService` |
+| Hạn mức gọi API | `09.api.rate-user-per-min` (300, trần 1.200), `09.api.rate-du-per-sec` (2.000, trần 5.000) | Bộ giới hạn ở APISIX (control plane), `DataPlaneController` (data plane); vượt hạn mức trả ERR-09-113 |
 
 : Tham số 09.* và nơi tiêu thụ
 
 ### 9.2. Cờ tính năng
 
-Cờ tính năng là tham số tenant dạng `09.feature.*` đọc cùng cơ chế ở trên (đề nghị, §13.5 vì FRS chưa có): `09.feature.dsr-ph11` (dùng PH-11 cho hạn DSR, mặc định tắt), `09.feature.l-diversity` (bắt buộc `L_DIVERSITY` cho thuộc tính nhạy cảm), `09.feature.auto-confirm-mvp` (xác nhận hàng loạt khai báo MVP sau khi duyệt mẫu). Cờ không đổi được các bất biến an toàn (k tối thiểu, hai người duyệt khôi phục, 72 giờ).
+Cờ tính năng là tham số tenant dạng `09.feature.*` đọc cùng cơ chế ở trên (FRS §8.2): `09.feature.dsr-ph11` (dùng PH-11 cho hạn DSR, mặc định tắt), `09.feature.l-diversity` (bắt buộc `L_DIVERSITY` cho thuộc tính nhạy cảm), `09.feature.auto-confirm-mvp` (xác nhận hàng loạt khai báo MVP sau khi duyệt mẫu). Cờ không đổi được các bất biến an toàn (k tối thiểu, hai người duyệt khôi phục, 72 giờ).
 
 ### 9.3. Cấu hình triển khai
 
@@ -1275,7 +1276,7 @@ Bảng ghi nội dung và ví dụ ca theo từng lớp kiểm thử.
 | Điểm thực thi | `dh-privacy-client` với PH-09 ngắt, chậm, trả `304` | Hết đệm 300 giây: PEP đọc trả `PUBLIC` kèm `X-Datahub-Masking: fallback`, PH-04 từ chối. Bundle quá `validUntil`: `SENSITIVE` bị `DENY` |
 | Đồng hồ | Đồng hồ giả (Clock injection) | Phiếu xem hết hạn đúng 60 giây. Cảnh báo 24, 48, 60 giờ. DSR nhắc trước 3 ngày làm việc |
 | Job ẩn danh | Kind với tập sinh 100.000 bản ghi | `k_actual ≥ k`; còn trường `DIRECT` thì ERR-09-052; rủi ro `HIGH` không phát hành; Job không có quyền tới CSDL |
-| Phi chức năng | k6, chaos, đo dung lượng | NFR-09-001…005, 011, 012; tắt OpenBao, Kafka, PH-13 thì đúng cách lui (§8.4) |
+| Phi chức năng | k6, chaos, đo dung lượng | NFR-09-001…006, 011, 012; tắt OpenBao, Kafka, PH-13 thì đúng cách lui (§8.4) |
 | Bảo mật | ArchUnit, quét CSDL và log, ZAP | Không đường nào giải mã ngoài `crypto`; 0 mẫu số định danh rõ trong `ph09_privacy`, log, trace (NFR-09-014); khôi phục cần ba người khác nhau |
 
 : Chiến lược kiểm thử của PH-09
@@ -1291,7 +1292,7 @@ Thứ tự theo phụ thuộc và mốc W4 của đợt 2; tiêu chí xong đo �
 | Mốc | Nội dung | Tiêu chí xong |
 |---|---|---|
 | M1 | `classification`, `scanner`, `crypto`, `audit`, `persistence`, ArchUnit | Nhập khai báo MVP vào `PROPOSED`; quét 500 cột ≤ 10 phút |
-| M2 | `purpose`, `bundle`, `decision` (quyết định), `dh-privacy-client` bản đầu | NFR-09-001, 005 đạt; thu hồi ≤ 15 giây; PH-04, PH-06 chuyển sang thư viện |
+| M2 | `purpose`, `bundle`, `decision` (quyết định), `dh-privacy-client` bản đầu | NFR-09-001, 005 đạt; thu hồi ≤ 15 giây (NFR-09-024); hết hạn ≤ 60 giây và cảnh báo bất thường ≤ 5 phút (NFR-09-025, 026); PH-04, PH-06 chuyển sang thư viện |
 | M3 | `policy` che, kế hoạch, áp che, xem đầy đủ, `pseudonym` | NFR-09-002, 003, 011, 015 đạt; ca tương đương Rego 100% |
 | M4 | `ropa`, `dpia`, `consent`, `retention` | Mọi trường DLCN thuộc hoạt động `ACTIVE`; tác vụ xóa chạy thử đúng |
 | M5 | `dsr`, `breach`, `reporting`, `anonymize` ARX | NFR-09-012, 016, 017 đạt |
@@ -1341,7 +1342,7 @@ Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì t�
 
 : Đề nghị đồng bộ với tài liệu khác
 
-**Đề nghị cho FRS.** (1) FR-09-028 gọi thư viện `dh-privacy-pep`, các tập thiết kế dùng tên `dh-privacy-client` theo kiến trúc dùng chung của DU; đề nghị chọn một tên và sửa FRS hoặc SDD. (2) Thêm tham số `09.decision.cache-seconds` (mặc định 15, trần 15, miền 0…15) cho đệm quyết định ở PEP, vì BR-09-017 đòi thu hồi ≤ 15 giây nhưng FRS chỉ có đệm kế hoạch 300 giây. (3) Thêm nhóm cờ `09.feature.dsr-ph11`, `09.feature.l-diversity`, `09.feature.auto-confirm-mvp` ở §8.2 (đang được nhắc ngầm ở FR-09-035, 045, 003). (4) FR-09-041 chưa nêu hợp đồng `retention:purge` với phân hệ sở hữu: đề nghị thêm mã API hoặc sự kiện cho nó (hiện chỉ có "gọi API xóa") và yêu cầu `cutoff` hợp lệ. (5) FR-09-019 nêu đệm cho PEP nhưng chưa có NFR riêng cho độ trễ thu hồi tại PEP (mới có NFR-09-005 phía bundle): đề nghị thêm NFR đo từ EVT-09-08 phát đến PEP từ chối (≤ 15 giây). (6) Rà soát API-09-216…226 (báo cáo, bảng điều khiển, cài đặt) khớp §4.16 khi D03-04 xong; đệm `DENY` 5 giây chống dò cũng cần một BR.
+**Kết quả đồng bộ với FRS 0.2.** Sáu đề nghị của bản 0.1 đã được FRS 0.2 nhận (Phụ lục C, các dòng "SDD 13.5"): (1) tên thư viện chốt là `dh-privacy-client` (FR-09-028, §2.4); (2) tham số `09.decision.cache-seconds` có ở §8.2, mặc định và trần 15, miền 0 đến 15; (3) ba cờ `09.feature.*` có ở §8.2; (4) hợp đồng `retention:purge` do phân hệ sở hữu cung cấp, FR-09-041 bước 3 nêu `table`, `cutoff`, `action`, `batchId`, `dryRun` và kiểm `cutoff`, PH-09 không thêm API; (5) NFR-09-024 đặt độ trễ thu hồi tại điểm thực thi ≤ 15 giây qua sự kiện và 60 giây qua bundle; (6) BR-09-062 đặt đệm `DENY` tối đa 5 giây; việc rà API-09-216 đến 226 với §4.16 đã làm ở bản 0.2 của tập API. Tập này đã sửa theo các điểm trên ở mục 4.17, 8.5, 8.6, 9.1, 9.2. Dòng D03-03-PH09 và D03-04-PH09 ở bảng trên được xử lý như sau: DDL có `usage_counter` theo `bucket_at` và chỉ mục `ix_purpose_grant_expiry` nên đủ cho `GrantScheduler`; `ETag` đã có ở `classification-index` và `bundles/current` (API-09-232, 233); bản chụp phân loại dùng `ETag` là băm nội dung nên không cần cột `snapshot_version`; tiêu đề `X-Datahub-Masking` là hành vi của điểm thực thi, không thuộc API của PH-09.
 
 ### 13.6. Câu hỏi mở
 
@@ -1370,3 +1371,4 @@ Bảng ghi việc cần sửa ở tài liệu chung và phân hệ khác, vì t�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: cấu trúc module `privacy`, mô hình miền, 15 thành phần và thư viện `dh-privacy-client` với khối đặc tả 10 mục, chín sơ đồ trình tự, bảng trạng thái theo enum FRS, đệm và đóng an toàn ở PEP, ánh xạ ERR-09, chỉ số `privacy_*`, bốn ADR đề xuất số 090 đến 093, đề nghị cho FRS, câu hỏi mở Q09-20…29 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ FRS 0.2: thư viện `dh-privacy-client` chốt, đệm `DENY` 5 giây theo BR-09-062, `09.decision.cache-seconds`, `09.mask.reveal-alert-per-hour`, hai khóa hạn mức API, ERR-09-001…082, NFR-09-024, đồng hồ vi phạm dừng duy nhất khi đã thông báo Cục A05, mục 13.5 thành kết quả đồng bộ |

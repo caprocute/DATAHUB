@@ -14,12 +14,13 @@ Tính năng: TS-09-17 · Mô phỏng, duyệt và phát hành chính sách che
 
   @TC-09-058 @P1 @Âm
   Kịch bản: TC-09-058 Mẫu quá 1.000 dòng, gửi duyệt khi chưa mô phỏng đạt
-    # Truy vết: FR-09-025, 026 · API-09-101, 096 · ERR-09-039, 040 · BR-09-023
+    # Truy vết: FR-09-025, 026 · API-09-101, 096 · ERR-09-039, 040, 080 · BR-09-023
     # Mục đích: Chứng minh giới hạn mẫu và điều kiện mô phỏng đạt (BR-09-023).
     Biết T90; U-T90-DS1; tệp 1.001 dòng.
     Khi DS1 `POST /mask-simulations` với 1.001 dòng.
     Và DS1 `:submit` phiên bản chưa có mô phỏng đạt.
-    Thì bước 1 `413` ERR-09-039. Bước 2 `422` ERR-09-040.
+    Và DS1 gửi mẫu có số định danh đúng kiểm tổng ngoài miền giả (giá trị lấy từ kho dữ liệu thử, không ghi trong tài liệu).
+    Thì bước 1 `413` ERR-09-039. Bước 2 `422` ERR-09-040. Bước 3 `422` ERR-09-080 "Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả."
 
   @TC-09-059 @P1 @Dương @Âm
   Kịch bản: TC-09-059 Duyệt bốn mắt, kích hoạt, so sánh và quay lại phiên bản

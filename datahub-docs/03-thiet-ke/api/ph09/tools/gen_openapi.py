@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh ../openapi-privacy.yaml (OpenAPI 3.1) cho PH-09 từ FRS D02-03-PH09: §9.4 (API-09-001…237), §9.1 (ERR),
+"""Sinh ../openapi-privacy.yaml (OpenAPI 3.1) cho PH-09 từ FRS D02-03-PH09: §9.4 (API-09-001…245), §9.1 (ERR),
 Phụ lục A (enum). Control plane `/api/privacy/v1` (đường dẫn tương đối), data plane `/privacy/v1` (đường dẫn đầy đủ,
 máy chủ riêng). Lược đồ viết ở schemas09.py. Chạy từ thư mục tools: python3 gen_openapi.py
 Không sửa tay tệp YAML; sửa FRS hoặc tệp này rồi sinh lại."""
@@ -20,11 +20,10 @@ SEC91 = FRS[FRS.index('### 9.1. Mã lỗi'):FRS.index('### 9.2.')]
 
 ROWS = re.findall(r'^\| API-09-(\d{3}) \| `(GET|POST|PUT|PATCH|DELETE) ([^`]+)` \| ([0-9, ]+) \| ([^|]+?) \| ([^|]+?) \|$', SEC94, re.M)
 ERRS = {c: (int(h.split(',')[0]), t.strip().strip('"')) for c, h, t in re.findall(r'^\| (ERR-09-\d{3}) \| ([0-9, ]+) \| ([^|]+?) \|$', SEC91, re.M)}
-# mã đề nghị bổ sung cho FRS (D03-04-PH09 §6.3; đồng bộ với đề nghị C9 của D03-06-PH09)
-ERRX = {'ERR-09-079': (422, 'Chọn khoảng thời gian tối đa {n} ngày.'), 'ERR-09-080': (422, 'Dữ liệu mẫu có dấu hiệu là dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả.'),
-        'ERR-09-081': (409, 'Idempotency-Key đã dùng với thân khác.')}
-DOMX = {215: ['ERR-09-079'], 217: ['ERR-09-079'], 101: ['ERR-09-080']}
-assert len(ROWS) == 237, len(ROWS)
+ERRX = {}
+# mã lỗi gắn thêm theo API (FRS 9.1, 9.2): 079 khoảng thời gian, 080 dữ liệu mẫu giống DLCN thật, 082 AI khi cờ tắt
+DOMX = {215: ['ERR-09-079'], 217: ['ERR-09-079'], 101: ['ERR-09-080'], 137: ['ERR-09-082']}
+assert len(ROWS) == 245, len(ROWS)
 assert len(ERRS) >= 91, len(ERRS)
 
 
@@ -130,6 +129,8 @@ OV = {
     227: ('PurposeDecideRequest', 200, 'PurposeDecideResponse'), 228: ('MaskPlanRequest', 200, 'MaskPlanResponse'), 229: ('MessageApplyRequest', 200, 'MessageApplyResponse'),
     230: ('PseudonymIssueRequest', 200, 'PseudonymIssueResponse'), 231: ('ClassificationCheckRequest', 200, 'ClassificationCheckResponse'),
     232: (None, 200, 'ClassificationIndex'), 233: (None, 200, 'OpaBundle'), 234: ('ConsentCheckRequest', 200, 'ConsentCheckResponse'),
+    239: (None, 200, 'BreachNotificationPage'), 240: (None, 200, 'BreachActionPage'), 242: ('ExtendInput', 200, 'SubjectRequest'),
+    244: ('ReasonInput', 200, 'SubjectRequest'), 245: ('ConsentSearchInput', 200, 'ConsentRecordPage'),
     235: ('SubjectHashRequest', 200, 'SubjectHashResponse'), 236: ('RevealVerifyRequest', 200, 'RevealVerifyResponse'), 237: ('UsageEventsRequest', 202, 'UsageEventsResponse'),
 }
 # 5 thao tác trên tài nguyên nhưng phản hồi không phải bản ghi cùng tên: đã liệt kê ở OV
@@ -164,7 +165,7 @@ DPERR = {227: '101 102 103 104 106 111 113', 228: '101 103 105 106 111', 229: '1
          232: '111', 233: '111', 234: '106 111', 235: '106 108 111', 236: '112 111', 237: '106 107 111 113'}
 FOUR_EYES = {'approve', 'reject', 'confirm', 'approve-release', 'approve-risk', 'decide', 'destroy'}
 
-KEY = [12, 16, 37, 65, 73, 76, 97, 102, 118, 119, 122, 124, 129, 130, 143, 161, 165, 167, 188, 189, 203, 209, 213, 225] + list(range(227, 238))
+KEY = [12, 16, 37, 65, 73, 76, 97, 102, 118, 119, 122, 124, 129, 130, 143, 161, 165, 167, 188, 189, 203, 209, 213, 225] + list(range(227, 238)) + [242, 245]
 NOTE = {
     12: 'Đăng ký hàng loạt tối đa 1.000 phần tử mỗi lời gọi; phần tử đã có trả về `skipped`, không lỗi. Phần tử mới ở trạng thái `PROPOSED`, xử lý như `SENSITIVE` đến khi xác nhận (BR-09-001).',
     16: 'Người xác nhận khác người đề xuất (ERR-09-005). Hạ mức hoặc hạ loại DLCN cần căn cứ và lý do (ERR-09-013) và người xác nhận thứ hai (BR-09-002, 003); phát EVT-09-01.',
@@ -173,11 +174,11 @@ NOTE = {
     73: 'Hiệu lực trong ≤ 15 giây tại điểm thực thi; lý do tối thiểu 20 ký tự (ERR-09-007); phát EVT-09-08.',
     76: 'Chỉ phát hành khi bộ kiểm thử đạt (ERR-09-033) và ký được bằng OpenBao (ERR-09-032, bundle cũ vẫn hiệu lực); `validUntil` ≤ 240 phút, kích thước ≤ 5 MB; phát EVT-09-11.',
     97: 'Người duyệt khác người soạn; chỉ duyệt phiên bản đã mô phỏng đạt (ERR-09-040); phiên bản trước chuyển `SUPERSEDED`; phát EVT-09-12.',
-    102: 'Phiếu hết hạn sau `09.mask.reveal-seconds` (60) giây, không gia hạn; tối đa 20 phiếu mỗi người mỗi giờ (ERR-09-043); trường `neverReveal` bị từ chối (ERR-09-042); giá trị chỉ có trong thân phản hồi `no-store`, không ghi đĩa; ghi kiểm toán không giá trị (BR-09-026).',
+    102: 'Phiếu hết hạn sau `09.mask.reveal-seconds` (60) giây, không gia hạn; tối đa 20 phiếu mỗi người mỗi giờ (ERR-09-043); trường `neverReveal` bị từ chối (ERR-09-042); thân trả thêm `serverTime` và `remainingThisHour`, giao diện đếm ngược theo `expiresAt` của máy chủ; giá trị chỉ có trong thân phản hồi `no-store`, không ghi đĩa; ghi kiểm toán không giá trị (BR-09-026).',
     118: 'Cần hai người khác nhau xác nhận và chờ tối thiểu 7 ngày (BR-09-032); khóa còn dùng thì từ chối (ERR-09-046); phát EVT-09-16; khóa bị hủy làm bí danh của miền không còn giải được.',
     119: 'Tối đa 100 giá trị mỗi đề nghị (ERR-09-049); miền HMAC không khôi phục được (ERR-09-048); danh sách token chỉ lưu dạng băm tổng hợp `tokens_digest`.',
     122: 'Cấp một do chủ quản, cấp hai do ATTT; ba người khác nhau (người đề nghị, cấp một, cấp hai); duyệt hết hiệu lực sau 24 giờ (ERR-09-050); đồng thời phải có MFA khi thực hiện.',
-    124: 'Yêu cầu MFA mới trong 5 phút và cửa sổ thực hiện 30 phút; kết quả giao qua `resultRef` hết hạn, không trả giá trị gốc trong thân; phát EVT-09-17.',
+    124: 'Yêu cầu MFA mới trong 5 phút và cửa sổ thực hiện 30 phút; kết quả giao qua `resultRef` (Garage, mã hóa SSE-C, tải một lần) hết hạn theo `expiresAt` của máy chủ sau 60 giây, không trả giá trị gốc trong thân; phát EVT-09-17.',
     129: 'Bốn mắt; `k` phải ≥ `09.anon.k-min` (10, ERR-09-051); phiên bản `ACTIVE` bất biến.',
     130: 'Job chạy bất đồng bộ (ARX); hoàn tất khi k thực tế ≥ k cấu hình; còn trường định danh trực tiếp thì từ chối (ERR-09-052); rủi ro `HIGH` không phát hành (ERR-09-053).',
     143: 'Rút lại tập đã phát hành, lý do tối thiểu 20 ký tự; phát EVT-09-18.',
@@ -189,10 +190,12 @@ NOTE = {
     203: '`detectedAt` bắt đầu đồng hồ 72 giờ (`deadlineAt = detectedAt + 72 giờ`, không sửa được); phát EVT-09-30; TO được ghi nhận nhưng không đóng hồ sơ (BR-09-057).',
     209: 'Đã gửi thì không sửa; có `evidenceRef`; thông báo Cục A05 làm `notifiedA05At` của vụ việc; phát EVT-09-32.',
     213: 'Chỉ đóng khi hết nghĩa vụ thông báo hoặc có căn cứ miễn trừ (ERR-09-076, 077) và đã ghi bài học.',
+    242: 'Gia hạn một lần, kèm lý do tối thiểu 20 ký tự; `newDueAt` không quá hạn pháp luật cho phép; thông báo chủ thể về hạn mới (FR-09-049).',
+    245: 'Tra theo định danh rõ trong thân (bên có quyền nhập): PH-09 tính băm HMAC rồi tra, không ghi định danh vào log, kết quả chỉ mang `subjectHash` (FR-09-053).',
     225: 'Giá trị ngoài sàn, trần PA đặt ra thì ERR-09-078; đổi `09.plan.cache-seconds`, `09.bundle.valid-minutes` có hiệu lực sau lần dựng bundle kế tiếp; ghi lịch sử.',
     227: 'Đường nóng: p95 ≤ 50 ms khi gọi trực tiếp; thiếu mục đích thì ERR-09-103; không có chấp thuận thì ERR-09-102; chủ thể bị hạn chế xử lý thì ERR-09-104; không khả dụng thì điểm thực thi đóng an toàn.',
     228: 'Kế hoạch che theo trường cho (hợp đồng, mục đích, kênh); bộ đệm `09.plan.cache-seconds`; không lập được thì `failMode` `CLOSED` hoặc `PUBLIC_ONLY` (ERR-09-105).',
-    229: 'Áp kế hoạch che cho bản tin ≤ 256 KB; lô lớn hơn thì ERR-09-107; không ghi được nhật ký che thì từ chối (ERR-09-110); không lưu bản tin.',
+    229: 'Áp kế hoạch che cho bản tin JSON ≤ 1 MiB; lô lớn hơn thì ERR-09-107; không ghi được nhật ký che thì từ chối (ERR-09-110); không lưu bản tin.',
     230: 'Giả danh hóa theo lô ≤ 500 giá trị; `HMAC_SHA256` tính cục bộ, `TOKEN_TRANSIT` dùng OpenBao (ERR-09-108 khi không khả dụng); không lưu giá trị vào, không lưu ánh xạ.',
     231: 'Kiểm tra nhãn STATE_SECRET và mức phân loại hiệu lực của bản tin hoặc lược đồ; nhãn chặn trả `blocked` và ERR-09-101 ở điểm thực thi.',
     232: 'Bản chụp chỉ mục phân loại; hỗ trợ `If-None-Match` và `304`.',
@@ -215,7 +218,13 @@ CTXV = {'id': U1, 'version': 3, 'createdAt': '2026-11-20T09:00:00+07:00', 'creat
 # ví dụ (thân yêu cầu, thân phản hồi); khóa là số API; bí mật là <bi-mat-mau>
 EX = {
     102: ({'elementId': U2, 'recordRef': 'bgh-2026-001203', 'reason': 'Đối chiếu hồ sơ khiếu nại số 3318 của công dân'},
-          {'grantId': U3, 'token': '<bi-mat-mau>', 'status': 'ISSUED', 'issuedAt': '2026-11-26T09:15:02+07:00', 'expiresAt': '2026-11-26T09:16:02+07:00', 'value': '<gia-tri-ro-mau>'}),
+          {'grantId': U3, 'token': '<bi-mat-mau>', 'status': 'ISSUED', 'issuedAt': '2026-11-26T09:15:02+07:00', 'expiresAt': '2026-11-26T09:16:02+07:00', 'serverTime': '2026-11-26T09:15:02+07:00', 'remainingThisHour': 17, 'value': '<gia-tri-ro-mau>'}),
+    242: ({'newDueAt': '2026-12-24T17:00:00+07:00', 'reason': 'Yêu cầu phức tạp, cần đối chiếu dữ liệu ở ba hệ thống nguồn'},
+          {**CTXV, 'requestType': 'ACCESS', 'status': 'IN_PROGRESS', 'channel': 'COUNTER', 'identifierType': 'NATIONAL_ID', 'receivedAt': '2026-11-26T09:15:02+07:00',
+           'dueAt': '2026-12-24T17:00:00+07:00', 'overdue': False, 'restrictionActive': False, 'subjectHash': H}),
+    245: ({'identifierType': 'PHONE', 'identifier': '<so-dien-thoai-mau>', 'templateCode': 'DY-THONG-BAO-SMS'},
+          {'items': [{**CTXV, 'templateCode': 'DY-THONG-BAO-SMS', 'templateVersion': 2, 'subjectHash': H, 'status': 'GIVEN', 'channel': 'APP', 'givenAt': '2026-11-26T09:15:02+07:00',
+                      'recordedBy': 'dich-vu-cong'}], 'page': 0, 'size': 20, 'totalElements': 1}),
     118: ({'reason': 'Miền hết mục đích sử dụng, xóa theo quyết định số 112/QĐ-SO', 'confirmation': 'DESTROY'},
           {**CTXV, 'domainId': U2, 'keyVersion': 2, 'status': 'DECRYPT_ONLY', 'openbaoRef': 'dh-t68-pseudo-DS-NOIBO', 'destroyRequestedBy': 'le.van.cuong'}),
     119: ({'domainCode': 'DS-TOKEN', 'tokens': ['tok_01HZX3Q8', 'tok_01HZX3Q9'], 'purposeCode': 'THANH-TRA-HS', 'basis': 'Quyết định thanh tra số 54/QĐ-TTr',
@@ -341,7 +350,7 @@ def build_paths():
         is_list = m == 'GET' and resp_s and resp_s.endswith('Page')
         if is_list:
             ps += [ref('parameters', 'Page'), ref('parameters', 'Size'), ref('parameters', 'Sort')]
-            for tok in S9.split_top(FILT.get(seg, '')):
+            for tok in S9.split_top(FILT.get(seg, '') if len(parts) == 1 else ''):
                 ps.append(qparam(tok))
         elif m == 'GET' and seg in FILT and resp_s and not resp_s.endswith('Page') and n in (86, 163, 181, 215):
             for tok in S9.split_top(FILT[seg]):
@@ -351,7 +360,7 @@ def build_paths():
         ifm = m in ('PUT', 'PATCH', 'DELETE') or (m == 'POST' and verb and re.search(r'\}(/versions/\{version\})?:[a-z-]+$', path) and n not in (88,))
         if ifm and not dp:
             ps.append(ref('parameters', 'IfMatch'))
-        if m == 'POST' and not dp:
+        if m == 'POST' and not dp and n != 245:
             ps.append(ref('parameters', 'IdempotencyKey'))
             op['x-datahub-idempotent'] = 'required'
         if m == 'GET' and n in (232, 233):
@@ -428,7 +437,7 @@ def build_paths():
             rs.setdefault(str(st), ref('responses', HTTP_NAME[st]))
         if ifm and not dp:
             rs.setdefault('428', ref('responses', 'PreconditionRequired'))
-        if m == 'POST' and not dp:
+        if m == 'POST' and not dp and n != 245:
             rs.setdefault('409', ref('responses', 'Conflict'))
         rs.setdefault('429', ref('responses', 'TooManyRequests'))
         op['responses'] = dict(sorted(rs.items()))
