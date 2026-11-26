@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-05-04
 ten: Thành phần phức hợp và tổ chức
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -41,11 +41,11 @@ Vật liệu là quyết định thiết kế quan trọng nhất của mỗi th
 
 | Vật liệu | Lớp CSS | Được dùng cho | Điều kiện bắt buộc |
 |---|---|---|---|
-| `glass-chrome` | `.dh-glass--chrome` | Sidebar; topbar khi chưa có nội dung cuộn dưới nó; NodePalette và Inspector khi gắn mép bên cạnh vùng canvas | Chỉ đặt trên `color-canvas` (kèm `color-canvas-wash`), nơi phông nền do hệ thống kiểm soát; không đặt trên nội dung có thể cuộn hoặc di chuyển bên dưới |
+| `glass-chrome` | `.dh-glass--chrome` | Sidebar; topbar khi chưa có nội dung cuộn dưới nó; nút của TenantSwitcher, UserMenu, BackgroundTaskTray trên topbar | Chỉ đặt trên `color-canvas` (kèm `color-canvas-wash`), nơi phông nền do hệ thống kiểm soát; không đặt trên nội dung có thể cuộn hoặc di chuyển bên dưới |
 | `glass-chrome-scrolled` | `.dh-glass--chrome-scrolled` | Topbar khi nội dung đang cuộn bên dưới | Chuyển tự động khi `scrollTop > 0` của vùng nội dung; kèm dải `glass-scroll-edge` |
 | `glass-modal` | `.dh-glass--modal` | Khung Modal, Drawer, CommandPalette, khung Drawer của sidebar dưới `bp-lg` | Nội dung đặt trong giếng nội dung (content well) nền `color-surface-solid`, bo góc đồng tâm; không đặt chữ liên kết cỡ thường trực tiếp trên khung |
-| `glass-overlay` | `.dh-glass--overlay` | Popover, DropdownMenu, popup của Select/DatePicker/TreeSelect, Notification, NotificationCenter, popup của TenantSwitcher và UserMenu | Nội dung đặt trực tiếp lên glass vì vật liệu đạt ngưỡng mọi nấc chữ ở trường hợp xấu nhất |
-| Nền đặc | không lớp glass | Bảng, biểu mẫu, thẻ, log, mã, so sánh, biểu đồ, nút trên canvas, minimap, BulkActionBar, giếng nội dung | `color-surface-solid` hoặc `color-surface-solid-2`; Tooltip và Toast dùng nền đảo `color-surface-inverse` |
+| `glass-overlay` | `.dh-glass--overlay` | Popover, DropdownMenu, popup của Select/DatePicker/TreeSelect, Notification, NotificationCenter, popup của TenantSwitcher, UserMenu và BackgroundTaskTray; điều khiển nổi trên canvas (CanvasControls, Minimap, QuickInsert, BulkActionBar `floating`); FullscreenBar | Nội dung đặt trực tiếp lên glass vì vật liệu đạt ngưỡng mọi nấc chữ ở trường hợp xấu nhất |
+| Nền đặc | không lớp glass | Bảng, biểu mẫu, thẻ, log, mã, so sánh, biểu đồ, bề mặt canvas và nút trên canvas, NodePalette, Inspector, DesignerToolbar, BottomPanel, BulkActionBar dính đầu bảng, giếng nội dung | `color-surface-solid` hoặc `color-surface-solid-2`; Tooltip và Toast dùng nền đảo `color-surface-inverse` |
 
 Ba quy tắc phụ được kiểm tra trong review mã. Thứ nhất, không đặt glass chồng glass; ngoại lệ duy nhất là lớp `glass-overlay` mở từ bên trong `glass-modal` (ví dụ Select trong Modal), được phép vì overlay có độ đục 0,94. Thứ hai, ở chế độ glass `lite` và `off`, thành phần không đổi cấu trúc DOM mà chỉ đổi giá trị biến (`glass-lite-tint`, `glass-off-tint`, `blur-none`), do `CMP-ThemeProvider` điều khiển qua `data-glass` trên `<html>`; thành phần không tự đọc `prefers-reduced-transparency`. Thứ ba, vật liệu được gắn vào phần tử con của thành phần antd qua thuộc tính ngữ nghĩa `classNames` của antd v6 (đã đối chiếu antd 6.7.1: Modal có các khóa `root`, `wrapper`, `mask`, `container`, `header`, `title`, `body`, `footer`, `close`; Drawer có `section` thay cho `content` đã lỗi thời; Select có `popup.root`; Dropdown có `root`, `menu`; Popover và Tooltip có `root`, `container`), không ghi đè lớp nội bộ `.ant-*`.
 
@@ -1572,3 +1572,402 @@ export interface DhTimelineProps { variant?: 'default' | 'compact' | 'status'; g
 <DhTimeline variant="status" groupByDay items={payment.events.map((e) => ({ key: e.id, at: e.at, result: e.result, content: e.description }))} />
 ```
 
+## 11. Canvas thiết kế
+
+Nhóm này là bộ khung của mẫu PTN-07 (D03-06-00 §4.10) và được dùng ở ba nơi: trình thiết kế luồng tích hợp PH-04 (UI-04-04, nặng nhất), sơ đồ kết nối topic PH-10 (chế độ xem) và trình soạn mô hình quy trình PH-11. Thành phần ở đây là **khung trung lập về nghiệp vụ**: chúng biết vẽ nút, nhóm, cạnh, cổng, lớp phủ và xử lý chọn, kéo thả, hoàn tác, bàn phím; còn loại chặng, tham số, quy tắc hợp lệ là của phân hệ, truyền vào qua "bộ mô tả loại nút" (node type descriptor). Chi tiết riêng của Camel (chín chặng chuẩn, YAML, catalog) nằm ở D03-06-PH04 §10 và không lặp lại ở đây.
+
+### 11.0. Quy tắc chung của canvas
+
+**Thư viện.** Canvas dùng `@xyflow/react` (XYFlow, React Flow 12) vì repo đã dùng ở `apps/console` và có giấy phép MIT. Bố cục tự động dùng `dagre` chạy trong Web Worker để không chặn luồng giao diện với sơ đồ trên 200 nút. Không dùng thư viện vẽ sơ đồ thứ hai ở bất kỳ phân hệ nào.
+
+**Vật liệu.** Bề mặt canvas, nút, nhóm, bảng thành phần, Inspector, thanh công cụ trình thiết kế và bảng dưới là **nền đặc**, vì đây là nội dung dày cần tương phản ổn định và là vùng có nhiều thao tác kéo (một lớp `backdrop-filter` dưới nút đang kéo làm tụt khung hình dưới 30 khung/giây ở máy văn phòng). Chỉ các điều khiển **nổi trên** canvas (thu phóng, minimap, thanh chọn nhiều, dải kết quả chạy thử, ô tìm nổi, bảng chọn nhanh) dùng `glass-overlay`. Như vậy một màn trình thiết kế có tối đa hai phần tử kính lớn (sidebar, thanh trên của khung khi không ở chế độ toàn màn hình) cộng hai lớp nổi nhỏ, nằm trong giới hạn bốn lớp `backdrop-filter` của D03-05-01 §3.2.
+
+**Hai lớp dữ liệu.** Mọi canvas tách *cấu trúc* (đem triển khai hoặc thực thi, ví dụ YAML Camel, BPMN XML) khỏi *bố cục* (tọa độ, ghim, thu gọn, ghi chú dán). Canvas chỉ sửa bố cục trực tiếp; mọi thay đổi cấu trúc đi qua hàm `onStructureChange` của phân hệ, phân hệ trả cấu trúc mới, canvas vẽ lại. Cạnh luôn được suy ra từ cấu trúc, nên không bao giờ vẽ được một sơ đồ mà máy thực thi không chạy được.
+
+**Hoàn tác.** Ngăn hoàn tác chung cho cấu trúc và bố cục, tối thiểu 100 bước mỗi phiên soạn, mỗi bước có nhãn tiếng Việt ("Xóa chặng Ghi nhật ký") để tooltip nút hoàn tác đọc được. Thao tác kéo liên tục gộp thành một bước.
+
+**Truy cập không dùng chuột (WCAG 2.1.1, 2.5.7).** Mọi thao tác kéo có phương án không kéo: chọn mục trong bảng thành phần rồi `Enter` để chèn sau nút đang chọn; `Alt+↑`/`Alt+↓` di chuyển nút trong chuỗi; menu ngữ cảnh mở bằng `Shift+F10` có đủ lệnh. Canvas có **chế độ danh sách** thay thế (`CMP-TreeGrid` biến thể `structure`, mục 13.5) với đủ thao tác của canvas; đây là đường chính cho người dùng trình đọc màn hình.
+
+**Hiệu năng.** Mục tiêu 60 khung/giây khi kéo và thu phóng với 300 nút trên máy chuẩn 4 nhân, 8 GB (NFR-00-005). Dưới 50% thu phóng, nút chuyển sang hiển thị tối giản (dải màu, biểu tượng, huy hiệu lỗi) và không vẽ chữ phụ. Chỉ vẽ nút trong khung nhìn (`onlyRenderVisibleElements`).
+
+### 11.1. CMP-FlowCanvas
+
+`CMP-FlowCanvas` là bề mặt vẽ sơ đồ: nút, nhóm, cạnh, cổng, lưới, lớp phủ, chọn, kéo thả, thu phóng, menu ngữ cảnh. Không dùng cho sơ đồ chỉ để minh họa trong tài liệu hay trang chi tiết (dùng `CMP-DependencyGraph` ở mục 13.8, nhẹ hơn và chỉ đọc).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `ReactFlow` của `@xyflow/react` với `nodeTypes` đăng ký `CMP-FlowNode`, `CMP-GroupNode`, `CMP-StickyNote`; `proOptions={{ hideAttribution: true }}` chỉ khi đã có giấy phép phù hợp, nếu không giữ ghi công; `deleteKeyCode={null}` (xóa đi qua lệnh có hoàn tác, không để thư viện tự xóa). |
+| Giải phẫu | (1) Bề mặt có lưới chấm; (2) nút và nhóm; (3) cạnh có mũi tên và nhãn; (4) nút ⊕ trên cạnh và cuối nhánh; (5) lớp phủ (kết quả chạy thử, số liệu chạy thật, khác biệt, tìm kiếm); (6) điều khiển nổi `CMP-CanvasControls`, `CMP-Minimap`, `CMP-BulkActionBar` biến thể `floating`; (7) vùng thông báo `aria-live`. |
+| Vật liệu | Nền đặc `color-surface-solid-2`, lưới chấm 1px `color-border-subtle` cách 16px (ẩn dưới 40% thu phóng). Cạnh 1,5px `color-border-control`. |
+| Biến thể | `edit` (mặc định), `readonly` (xem phiên bản đã phát hành, sơ đồ PH-10: không kéo, không chèn, vẫn chọn, tìm, thu phóng), `diff` (so sánh hai phiên bản, tô trạng thái khác biệt), `run-overlay` (phủ kết quả một lần chạy). |
+| Hướng | Trái sang phải (mặc định) hoặc trên xuống dưới; người dùng đổi ở menu Xem, lưu theo người dùng. |
+| Thu phóng | 10–400%; bước theo nút: 25, 50, 75, 100, 150, 200, 400%; con lăn chuột kèm `Ctrl` thu phóng, không kèm thì cuộn khung nhìn. |
+| Trạng thái | Đang tải (khung xương ba nút nối nhau), rỗng (chỉ có điểm vào và lời mời "Kéo thành phần từ bảng bên trái hoặc nhấn ⊕ để thêm chặng"), lỗi tải (`CMP-Alert` giữa canvas có nút "Thử lại"), sơ đồ quá lớn (trên 500 nút: tự gợi ý chế độ danh sách), có lớp phủ cũ (lớp phủ mờ đi kèm dải "Cũ: nội dung đã đổi sau lần chạy này"). |
+| Token | `color-surface-solid-2`, `color-border-subtle`, `color-border-control`, `color-accent`, `color-focus-ring`, `color-success-text`, `color-error-text`, `motion-duration-base`. |
+| Bàn phím, ARIA | Canvas là `role="application"` có `aria-roledescription="sơ đồ"` và `aria-label` ("Sơ đồ route nhan-khai-sinh, 12 chặng"); `Tab` vào canvas focus nút đang chọn hoặc nút đầu; mũi tên di chuyển focus giữa các nút theo thứ tự cấu trúc (không theo tọa độ); `Enter` mở Inspector; `Delete` xóa có hoàn tác; `Ctrl+A` chọn tất cả; `Esc` bỏ chọn; `Shift+F10` mở menu ngữ cảnh; `+`/`−`/`0` thu phóng. Mỗi thay đổi cấu trúc đọc một câu qua `aria-live="polite"` ("Đã chèn chặng Ánh xạ dữ liệu sau Kiểm lược đồ"). |
+| Nội dung | Lời mời ở trạng thái rỗng nêu cả cách kéo và cách không kéo. |
+| Điều cấm | Không vẽ cạnh tự do không suy ra từ cấu trúc; không đặt kính dưới nút; không lưu tọa độ vào cấu trúc đem triển khai; không chỉ hỗ trợ kéo thả. |
+
+```ts
+export interface DhFlowNodeTypeDescriptor {
+  type: string;                                  // 'to', 'choice', 'userTask'…
+  kind: 'node' | 'group';
+  label: (data: unknown) => string;              // tên hiển thị
+  subtitle?: (data: unknown) => string;          // dòng phụ
+  icon: string | React.ReactNode;
+  categoryColor?: `color-chart-${1|2|3|4|5|6|7|8}` | 'color-accent';
+  canBeEntry?: boolean; canHaveNext?: boolean;   // ràng buộc cổng
+}
+
+export interface DhFlowCanvasProps {
+  structure: DhFlowGraph;                        // nút, nhóm, quan hệ suy ra cạnh (do phân hệ dựng)
+  layout: DhFlowLayout;                          // tọa độ, ghim, thu gọn, ghi chú
+  nodeTypes: DhFlowNodeTypeDescriptor[];
+  mode?: 'edit' | 'readonly' | 'diff' | 'run-overlay';
+  direction?: 'LR' | 'TB';
+  issues?: Record<string, { errors: number; warnings: number }>;
+  overlay?: DhFlowOverlay;                       // kết quả chạy thử, số liệu, khác biệt
+  selection?: string[]; onSelectionChange?: (ids: string[]) => void;
+  onStructureChange?: (cmd: DhStructureCommand) => void;   // chèn, xóa, di chuyển, bọc
+  onLayoutChange?: (layout: DhFlowLayout) => void;
+  onOpenInspector?: (id: string) => void;
+  contextMenu?: (target: { kind: 'node' | 'edge' | 'pane'; id?: string }) => DhMenuItem[];
+  'aria-label': string;
+  testId?: string;
+}
+```
+
+```tsx
+<FlowCanvas aria-label={`Sơ đồ route ${route.id}, ${count} chặng`} structure={graph} layout={layout}
+  nodeTypes={camelNodeTypes} issues={issuesByStep} selection={sel} onSelectionChange={setSel}
+  onStructureChange={designer.apply} onLayoutChange={designer.setLayout} onOpenInspector={openInspector} />
+```
+
+### 11.2. CMP-FlowNode
+
+`CMP-FlowNode` là một nút (chặng) trên canvas. Giải phẫu và bảng trạng thái chi tiết của chặng Camel ở D03-06-PH04 §10.7.2–10.7.3 là cách dùng chuẩn; bảng dưới đây là hợp đồng chung mà mọi phân hệ phải theo.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Nút tùy biến của XYFlow (`NodeProps`) với `Handle` cho cổng vào, cổng ra. |
+| Giải phẫu | (1) Dải màu nhóm 4px cạnh trái; (2) biểu tượng 20px; (3) tên một dòng; (4) dòng phụ (loại · thành phần · tham số chính); (5) huy hiệu vấn đề (✕n lỗi, ⚠n cảnh báo); (6) huy hiệu chạy (✓, ✕, ⊘ và `CMP-Duration`); (7) huy hiệu phụ (khóa, tắt, ghim, có mô tả, gọi luồng con); (8) nút ⋯ menu ngữ cảnh; (9) cổng vào, cổng ra 8px, vùng nhận 24×24. |
+| Vật liệu | Nền đặc `color-surface-solid`, viền 1px `color-border-control`, bóng `shadow-1`, bo `radius-md`. |
+| Kích thước | 240×56px (mật độ Chuẩn), 200×40px (Gọn); tối giản dưới 50% thu phóng. |
+| Trạng thái | Bình thường; rê (`color-fill-hover`, hiện ⋯ và cổng); focus bàn phím (vòng focus kép cách 2px); đang chọn (viền 2px `color-accent`, nền `color-accent-subtle`); chọn nhiều (viền 2px nét đứt `color-accent`); có lỗi (viền 2px `color-error-text` + ✕n); có cảnh báo (viền 2px `color-warning-text` + ⚠n); bị tắt (viền nét đứt, nền sọc chéo `color-fill-control`, chữ "Đã tắt"); đang bị kéo (mờ 40%); chặng khóa (viền 1px `color-accent` + `lock`); chạy đạt, chạy lỗi, không đi qua; khác biệt thêm, sửa, xóa, di chuyển; không biểu diễn được (nét đứt, "Chỉ sửa trong mã nguồn"). Vừa lỗi vừa chọn: hai vòng viền (chọn ngoài, lỗi trong). |
+| Token | `color-surface-solid`, `color-border-control`, `color-fill-hover`, `color-fill-control`, `color-accent`, `color-accent-subtle`, `color-error-text`, `color-error-bg`, `color-warning-text`, `color-success-text`, `color-info-text`, `color-text-secondary`, `color-chart-1…8` (dải nhóm), `shadow-1`, `radius-md`, `font-callout`, `font-caption`. |
+| Bàn phím, ARIA | `role="group"` với `aria-roledescription="chặng"`, `aria-label` gồm tên, loại và tình trạng ("Gọi hộ tịch, gọi HTTP, 2 lỗi"); `aria-selected`; cổng là nút có nhãn ("Cổng ra của Gọi hộ tịch"). |
+| Nội dung | Tên ưu tiên mô tả do người dùng đặt; không có thì tiêu đề tiếng Việt của loại nút. Tham số chứa biểu thức hiện dạng thẻ nhỏ. |
+| Điều cấm | Không chỉ dùng màu viền để báo lỗi (luôn có huy hiệu và chữ trong `aria-label`); không cổng nhỏ hơn vùng nhận 24×24; không chữ dưới 12px. |
+
+```ts
+export interface DhFlowNodeData {
+  type: string; label: string; subtitle?: string;
+  issues?: { errors: number; warnings: number };
+  run?: { result: 'passed' | 'failed' | 'skipped'; durationMs?: number; error?: string };
+  diff?: 'added' | 'changed' | 'removed' | 'moved';
+  flags?: Array<'locked' | 'disabled' | 'pinned' | 'described' | 'subflow' | 'not-allowed' | 'source-only'>;
+}
+```
+
+### 11.3. CMP-GroupNode
+
+`CMP-GroupNode` là khung chứa các nút con của một mẫu có nhánh hoặc thân (rẽ nhánh, thử bắt lỗi, lặp, tách, gộp trong Camel; cổng song song, tiến trình con trong BPMN; khối chặng chuẩn Datahub).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Nút nhóm của XYFlow (`parentId`, `extent: 'parent'`), kích thước do bố cục tự động tính theo nội dung. |
+| Giải phẫu | (1) Tiêu đề: biểu tượng, tên mẫu, biểu thức rút gọn; (2) nút thu gọn ⌃; (3) huy hiệu lỗi tổng; (4) các làn nhánh, mỗi làn có nhãn (điều kiện, tên ngoại lệ, "otherwise"); (5) nút "＋ Thêm nhánh" do bộ mô tả loại cho phép. |
+| Vật liệu | Nền đặc `color-surface-solid` nhạt hơn nền canvas một bậc nhờ viền 1px `color-border-subtle`, bo `radius-lg`; nhóm lồng nhau xen kẽ `color-surface-solid` và `color-surface-solid-2` để thấy tầng. |
+| Trạng thái | Mở, thu gọn ("◆ Rẽ nhánh · 3 nhánh · 7 chặng", giữ huy hiệu lỗi tổng), đang chọn, có lỗi, khác biệt. Lồng sâu quá 6 cấp: gợi ý tách thành luồng con (phân hệ quyết định câu chữ). |
+| Bàn phím, ARIA | `role="group"` với `aria-roledescription="nhóm"`, `aria-expanded`; `→` mở và vào nút đầu, `←` thu hoặc ra nhóm cha. |
+| Điều cấm | Không cho kéo nút con ra ngoài nhóm bằng thao tác bố cục (ra ngoài là thay đổi cấu trúc, đi qua lệnh có xác nhận ở vùng thả). |
+
+### 11.4. CMP-StickyNote
+
+`CMP-StickyNote` là ghi chú dán trên canvas để kỹ sư ghi chú thiết kế. Ghi chú thuộc lớp bố cục, không vào cấu trúc triển khai.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Nút XYFlow tùy biến; trình soạn Markdown giới hạn (đậm, nghiêng, danh sách, liên kết `https`) dựa trên `CMP-TextArea` có thanh định dạng nhỏ. |
+| Vật liệu | Nền đặc `color-warning-bg`, chữ `color-warning-on-bg` (đạt 5,41:1), viền 1px `color-border-subtle`, bo `radius-sm`. |
+| Kích thước | Rộng 160–480px, kéo đổi được; tối đa 2.000 ký tự. |
+| Trạng thái | Xem, đang sửa (nhấp đúp hoặc `Enter`, `Esc` thoát), đang chọn. |
+| Bàn phím, ARIA | `role="note"`; trong chế độ danh sách hiện như mục "Ghi chú" theo thứ tự đặt. Liên kết mở thẻ mới, chỉ nhận `https`. |
+| Điều cấm | Không cho HTML thô; không cho ảnh nhúng; không đặt dữ liệu cá nhân (nhắc trong chữ giữ chỗ "Ghi chú thiết kế, không ghi dữ liệu cá nhân"). |
+
+### 11.5. CMP-NodePalette
+
+`CMP-NodePalette` là bảng thành phần bên trái canvas: tìm, lọc theo vị trí chèn, nhóm theo nghiệp vụ, kéo vào canvas hoặc chèn bằng bàn phím. Cấu trúc và các cách xem riêng của PH-04 ở D03-06-PH04 §10.6.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-SearchField` + `CMP-Select` gọn (cách xem) + danh sách ảo hóa (`rc-virtual-list`) có nhóm `Collapse`; chế độ lưới biểu tượng tùy chọn. |
+| Giải phẫu | (1) Ô tìm (`Ctrl+P` hoặc `/`); (2) cách xem; (3) chuyển danh sách/lưới; (4) nhóm "Dùng nhiều" và ghim cá nhân; (5) nhóm có số lượng; (6) mục: dải màu nhóm, biểu tượng, tên, dòng phụ, ⓘ, ☆, thẻ mức hỗ trợ ("Thử nghiệm", "Lỗi thời", "JVM"); (7) chú thích bộ lọc vị trí đang áp; (8) chân: số mục được phép, phiên bản catalog, liên kết danh mục. |
+| Vật liệu | Nền đặc `color-surface-solid`, viền phải `color-border-subtle`. (Bản 0.1 của tài liệu này cho phép `glass-chrome` khi gắn mép canvas; bản 0.2 bỏ ngoại lệ đó cho thống nhất với D03-06-00 PTN-07 và D03-06-PH04 §2.1.) |
+| Kích thước | Rộng 280px (220–420), thu thành dải 48px chỉ biểu tượng nhóm (`Ctrl+B`); mục cao 32px (danh sách) hoặc 72×72px (lưới). |
+| Trạng thái | Đang tải catalog (khung xương 8 dòng), sẵn sàng, không có kết quả tìm ("Không có thành phần phù hợp" và, nếu tên khớp mục bị cấm, dòng "{tên} không được phép ở tỉnh · Đề xuất cho phép"), mục không hợp lệ ở vị trí đang chọn (mờ 50%, `⊘`, tooltip lý do), lỗi tải catalog. |
+| Token | `color-surface-solid`, `color-border-subtle`, `color-fill-hover`, `color-focus-ring`, `color-text-secondary`, `color-chart-1…8`, `font-callout`, `font-caption`. |
+| Bàn phím, ARIA | Danh sách là `role="listbox"` có nhóm (`role="group"` có nhãn); mũi tên di chuyển, `Enter` chèn mục vào sau nút đang chọn trên canvas và đọc kết quả qua `aria-live`; mục kéo được có `aria-roledescription="thành phần kéo được"` và gợi ý "Nhấn Enter để chèn". |
+| Điều cấm | Không hiện mục mà chính sách tenant cấm; không chỉ cho kéo; không tải toàn bộ tài liệu thành phần vào bảng (chỉ chỉ mục tìm kiếm dựng sẵn). |
+
+### 11.6. CMP-Inspector
+
+`CMP-Inspector` là ngăn bên phải hiện và sửa thuộc tính của nút đang chọn. Nó là `CMP-Form` (mục 3.2) sinh động từ bộ mô tả tham số của loại nút, chia tab, có kiểm tra trực tiếp.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Form` `layout="vertical"` cỡ `sm`, `CMP-Tabs` gọn, các trường chọn theo kiểu tham số (bảng dưới). |
+| Giải phẫu | (1) Đầu: biểu tượng, tên nút sửa tại chỗ, loại, liên kết "Tài liệu ↗", nút ⤢ "Mở rộng" (mở `CMP-Modal` `lg` cùng nội dung); (2) tab "Cơ bản", "Nâng cao", "Lỗi", "Mô tả" (phân hệ thêm bớt); (3) trường; (4) vùng vấn đề của nút (lỗi, cảnh báo có liên kết nhảy tới trường); (5) "Khôi phục mặc định" từng trường. |
+| Vật liệu | Nền đặc `color-surface-solid`, viền trái `color-border-subtle`. |
+| Kích thước | Rộng 360px (300–560); ẩn khi không chọn nút (khi đó hiện thông tin của toàn sơ đồ); `Ctrl+I` bật tắt. |
+| Ánh xạ kiểu tham số | `string` → `CMP-Input`; chuỗi dài → `CMP-TextArea`; `boolean` → `CMP-Switch` chỉ khi có hiệu lực ngay, còn lại `CMP-Checkbox`; số → `CMP-NumberInput` có đơn vị; `enum` → `CMP-Select` (dưới 6 lựa chọn: `CMP-Radio`); biểu thức → `CMP-ExpressionField`; bí mật → `CMP-SecretRefField`; kết nối, lược đồ, bảng mã → biến thể `CMP-ResourceSelect`; danh sách cặp → `CMP-KeyValueEditor`; thời lượng → `CMP-NumberInput` đơn vị ms/s/phút; lịch → `CMP-CronPicker`. |
+| Kiểm tra | Trường bắt buộc và định dạng kiểm ở giao diện ngay khi rời trường; kiểm tra ngữ nghĩa (biên dịch biểu thức, kết nối hợp lệ) ở máy chủ sau 400ms; lỗi hiện tại trường và tổng hợp ở (4). Giá trị khác mặc định có chấm nhỏ cạnh nhãn và tooltip "Đã đổi so với mặc định {giá trị}". |
+| Trạng thái | Không chọn nút, một nút, nhiều nút (chỉ hiện trường chung, giá trị khác nhau hiển thị "Nhiều giá trị"), chỉ đọc (biểu mẫu dạng mô tả), đang lưu, lỗi. |
+| Token | `color-surface-solid`, `color-border-subtle`, `color-accent`, `font-callout`, `space-3`. |
+| Bàn phím, ARIA | `<aside role="complementary" aria-label="Thuộc tính chặng">`; `Enter` trên nút canvas đưa focus vào trường đầu của Inspector; `Esc` trong Inspector đưa focus về nút trên canvas. |
+| Điều cấm | Không là Modal che canvas; không lưu từng phím gõ lên máy chủ (gộp và tự lưu theo phiên soạn); không có ô nhập tự do cho tham số bí mật. |
+
+### 11.7. CMP-CanvasControls
+
+`CMP-CanvasControls` là cụm điều khiển nổi góc dưới trái canvas: thu, mức thu phóng, phóng, vừa khung, vừa vùng chọn, khóa bố cục, bật minimap, chú giải.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Flex` chứa `CMP-IconButton` cỡ `sm` và `CMP-DropdownMenu` cho mức thu phóng. |
+| Vật liệu | `glass-overlay`, bo `radius-lg`, bóng `shadow-2`. |
+| Phím | `Ctrl+-` thu, `Ctrl+=` phóng, `0` vừa khung, `Shift+2` vừa vùng chọn; mọi nút có tooltip ghi phím. |
+| Bàn phím, ARIA | `role="toolbar"` `aria-label="Điều khiển sơ đồ"`, mũi tên trái phải giữa các nút (roving tabindex). Mức thu phóng là nút có nhãn "Mức thu phóng 85%". |
+| Điều cấm | Không đặt cụm này trên nền đặc tự vẽ (phải là `glass-overlay` để phân biệt lớp nổi với nội dung). |
+
+### 11.8. CMP-Minimap
+
+`CMP-Minimap` là bản đồ thu nhỏ góc dưới phải canvas, tự hiện khi sơ đồ có trên 20 nút.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `MiniMap` của XYFlow, `pannable`, `zoomable`; nút có lỗi vẽ màu `color-error-solid` có viền để vẫn nhận ra khi mù màu đỏ xanh (hình chấm to hơn nút thường). |
+| Vật liệu | Khung `glass-overlay`; bên trong vẽ nền đặc `color-surface-solid-2` để nút nhỏ đọc được. Kích thước 200×140px. |
+| Bàn phím, ARIA | `aria-hidden="true"` (thông tin đã có ở chế độ danh sách và bảng vấn đề); nút ✕ ẩn minimap focus được. |
+
+### 11.9. CMP-QuickInsert
+
+`CMP-QuickInsert` là bảng chọn nhanh mở từ nút ⊕ trên cạnh, cuối nhánh, hoặc khi thả dây nối ra vùng trống: ô tìm có focus sẵn, tối đa 6 gợi ý theo ngữ cảnh, danh sách kết quả, `Enter` chèn tại vị trí.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Popover` neo tại điểm chèn, chứa `CMP-SearchField` và danh sách `role="listbox"`. |
+| Vật liệu | `glass-overlay`, rộng 360px. |
+| Nội dung | Gợi ý do phân hệ tính (PH-04: theo nút trước; PH-11: theo loại phần tử BPMN); nhóm "Gợi ý" trên, "Kết quả" dưới. |
+| Bàn phím, ARIA | Mẫu combobox; `Esc` đóng và trả focus về nút ⊕; sau khi chèn, focus chuyển tới nút mới trên canvas. |
+| Điều cấm | Không chèn khi lựa chọn không hợp lệ ở vị trí (mục bị ẩn khỏi danh sách, không hiện vô hiệu). |
+
+### 11.10. CMP-DesignerToolbar
+
+`CMP-DesignerToolbar` là thanh công cụ đầu trình thiết kế: quay lại, tên đối tượng sửa tại chỗ, phiên bản và trạng thái, `CMP-SaveIndicator`, menu Tệp/Sửa/Xem, hoàn tác/làm lại, chuyển chế độ (Sơ đồ/Mã/Chia đôi), bộ đếm vấn đề, hành động chạy thử và gửi duyệt, `CMP-AvatarGroup` người đang mở, nút toàn màn hình. Danh sách điều khiển của PH-04 ở D03-06-PH04 §10.4.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Flex` ba vùng (trái: điều hướng và định danh; giữa: soạn; phải: hành động), menu là `CMP-DropdownMenu`, chế độ là `CMP-SegmentedControl`. |
+| Vật liệu | **Nền đặc** `color-surface-solid` có viền dưới `color-border-subtle`. Không dùng glass vì thanh chứa chỉ báo trạng thái lưu, bộ đếm lỗi màu trạng thái và nhiều nút nhỏ phải đọc chắc chắn. |
+| Kích thước | Cao 48px; điều khiển `size-control-sm`. Dưới 1280px, menu gộp vào "☰", nút chính chỉ còn biểu tượng có `aria-label`. |
+| Trạng thái | Bình thường, chỉ đọc (ẩn nút soạn, `CMP-SaveIndicator` "Chỉ đọc"), có vấn đề (bộ đếm "✕ 1 ⚠ 2"), hợp lệ ("✓ Hợp lệ" `color-success-text`), toàn màn hình (vẫn hiện). |
+| Bàn phím, ARIA | `role="toolbar"` có `aria-label="Thanh công cụ trình thiết kế"`; phím tắt ghi trong tooltip và trong `CMP-ShortcutSheet`. |
+| Điều cấm | Không quá một nút chính (thường là "Gửi duyệt" hoặc "Lưu"); không ẩn hành động bị vô hiệu do trạng thái (hiện vô hiệu kèm lý do, D03-05-04 §2.3). |
+
+### 11.11. CMP-EntityRail
+
+`CMP-EntityRail` là dải tab ngang dưới thanh công cụ, liệt kê các thực thể trong cùng một tệp hoặc mô hình (route, cấu hình, bean, REST trong PH-04; tiến trình, tiến trình con trong PH-11). Mỗi mục là một `CMP-EntityTab`.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Tabs` của antd `type="editable-card"` cỡ `small` với `tabBarExtraContent` "＋ Thêm ▾"; kéo đổi thứ tự bằng `@dnd-kit/sortable` có phương án bàn phím. |
+| Giải phẫu `CMP-EntityTab` | Biểu tượng loại, nhãn "{loại}: {mã}", huy hiệu số lỗi `CMP-Badge`, nút ✕ (xóa thực thể, có xác nhận; ẩn khi chỉ còn một thực thể). |
+| Vật liệu | Nền đặc `color-surface-solid`, cao 36px. |
+| Trạng thái | Một thực thể (dải tự ẩn khi phân hệ cho phép), nhiều thực thể, tab có lỗi, tab đang đổi tên (nhấp đúp), tràn (cuộn ngang có nút mũi tên và menu "…"). |
+| Bàn phím, ARIA | Mẫu tab của ARIA APG; `Delete` trên tab mở xác nhận xóa; `Ctrl+Shift+←/→` đổi thứ tự. |
+| Điều cấm | Không xóa thực thể không xác nhận; không đổi thứ tự chỉ bằng kéo. |
+
+### 11.12. CMP-BottomPanel
+
+`CMP-BottomPanel` là ngăn dưới thu gọn được của trình thiết kế, chứa các tab công cụ: "Vấn đề", "Kết quả chạy", "Nhật ký", "Lịch sử sửa", "Bình luận duyệt" (phân hệ chọn).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Tabs` gọn + nội dung theo tab (`CMP-DataTable` gọn cho vấn đề, `CMP-LogViewer` cho nhật ký, `CMP-Timeline` cho lịch sử, `CMP-CommentThread` cho bình luận). |
+| Vật liệu | Nền đặc `color-surface-solid`, viền trên `color-border-subtle`. |
+| Kích thước | Cao 220px (120 tới 60% chiều cao), thu thành thanh 32px hiện số vấn đề; `Ctrl+J` bật tắt; kích thước và tab lưu theo người dùng. |
+| Tab "Vấn đề" | Mỗi dòng: biểu tượng mức (`error`, `warning`, `info`), mã (`CMP-Identifier`), vị trí ("Gọi hộ tịch · Kết nối"), thông điệp, nút "Đi tới" chọn nút và focus trường lỗi. `F8`/`Shift+F8` đi tới vấn đề kế, trước. |
+| Bàn phím, ARIA | `<section aria-label="Bảng dưới">`; số vấn đề thay đổi đọc qua `aria-live="polite"` tối đa một lần mỗi 2 giây. |
+| Điều cấm | Không tự mở bảng dưới mỗi khi có cảnh báo mới (chỉ tự mở khi người dùng bấm chạy thử hoặc gửi duyệt mà có lỗi chặn). |
+
+### 11.13. CMP-Splitter
+
+`CMP-Splitter` là tay nắm đổi kích thước giữa hai ngăn (bảng thành phần, canvas, Inspector, bảng dưới; cũng dùng ở PTN-08 cây + bảng và PTN-11 tra log).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Splitter` của antd v6 (`Splitter.Panel` có `min`, `max`, `collapsible`). |
+| Vật liệu | Đường 1px `color-border-subtle`; khi rê hoặc focus, dải 4px `color-accent`. Vùng nhận 8px. |
+| Bàn phím, ARIA | `role="separator"` `aria-orientation`, `aria-valuenow/min/max` theo px; mũi tên đổi 16px, `Shift`+mũi tên 64px, `Enter` thu gọn hoặc mở, nhấp đúp trả về mặc định. |
+| Điều cấm | Không có tay nắm chỉ kéo được bằng chuột. |
+
+## 12. Khung ứng dụng
+
+Nhóm này dựng khung chung của `dh-console`: lớp điều hướng Liquid Glass (sidebar, thanh trên) và các điểm vào toàn cục (tenant, tìm kiếm, thông báo, tác vụ nền, tài khoản). Bố cục, kích thước, quy tắc URL, menu và hành vi theo quyền đã được quy định ở D03-06-00 §2 và §3; tài liệu này đặc tả hợp đồng thành phần để hiện thực đúng một lần.
+
+### 12.1. CMP-AppShell
+
+`CMP-AppShell` là thành phần gốc của mọi trang sau đăng nhập. Nó dựng năm lớp (canvas, sidebar, thanh trên, vùng nội dung, lớp phủ), cung cấp ngữ cảnh khung (tenant hiện tại, quyền, trạng thái thu gọn sidebar, chế độ toàn màn hình, chế độ liên tenant) và các vùng `aria-live` toàn cục.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Layout` của antd chỉ dùng cho bố cục lưới; sidebar và thanh trên là `CMP-Sidebar`, `CMP-Topbar` (không dùng `Layout.Sider`, `Layout.Header` trực tiếp vì cần vật liệu kính và sidebar nổi cách mép, D03-06-00 §3.3). Bọc trong `CMP-ThemeProvider` (D03-05-01 §9.2) và `App` của antd. |
+| Giải phẫu | (1) Liên kết "Bỏ qua tới nội dung"; (2) dải liên tenant và dải thông báo hệ thống (khi có, `CMP-Banner`); (3) `CMP-Sidebar`; (4) `CMP-Topbar`; (5) `<main id="noi-dung">` cuộn độc lập; (6) bảng bên tùy chọn (Trợ lý AI); (7) vùng lớp phủ (portal của Modal, Drawer, Toast); (8) hai vùng `aria-live` (`polite`, `assertive`). |
+| Vật liệu | Canvas `color-canvas` + `color-canvas-wash`; sidebar `glass-chrome`; thanh trên `glass-chrome` → `glass-chrome-scrolled` + `glass-scroll-edge` khi `main` cuộn (D03-05-01 §5); vùng nội dung trong suốt, các khối bên trong nền đặc. |
+| Biến thể | `default`; `fullscreen` (ẩn sidebar và thanh trên, hiện `CMP-FullscreenBar`); `cross-tenant` (dải cảnh báo, viền trên 2px `color-warning-solid`, tiền tố tiêu đề tab); `kiosk` (dashboard trực ca chỉ đọc, PH-12 cấu hình). |
+| Responsive | Từ `bp-xl`: sidebar mở rộng; 1200–1365px: sidebar thu gọn mặc định; dưới `bp-lg`: sidebar thành `CMP-Drawer` mở bằng nút ≡ (D03-06-00 §3.4). |
+| Trạng thái | Đang khởi động (khung xương sidebar và thanh trên, không có màn trắng), sẵn sàng, mất kết nối (`CMP-Banner` ST-06), bảo trì (chuyển PTN-13), phiên sắp hết (`CMP-SessionTimeoutDialog`). |
+| Token | `color-canvas`, `color-canvas-wash`, `size-sidebar`, `size-sidebar-collapsed`, `size-topbar`, `space-2`, `space-6`, `z-sidebar`, `z-topbar`. |
+| Bàn phím, ARIA | Landmark theo D03-06-00 §3.6: `<nav aria-label="Điều hướng chính">`, `<header>`, `<main>`, `<aside>`; thứ tự focus: bỏ qua → thanh trên → sidebar → nội dung. Đổi route: focus chuyển về `<h1>` của trang mới và vùng `polite` đọc tiêu đề trang. |
+| Điều cấm | Không có màn hình nào dựng khung riêng; không đặt nội dung nghiệp vụ trực tiếp lên kính; không giữ dữ liệu tenant cũ sau khi đổi tenant. |
+
+```ts
+export interface DhAppShellProps {
+  menu: DhMenuNode[];                    // cây menu đã lọc theo quyền (D03-06-00 §2.3)
+  tenant: { id: string; shortName: string; code: string };
+  crossTenant?: { tenantName: string; expiresAt: string; onEnd: () => void };
+  systemBanners?: DhBannerMessage[];
+  assistantEnabled?: boolean;
+  children: React.ReactNode;
+}
+```
+
+### 12.2. CMP-Topbar
+
+`CMP-Topbar` là thanh trên: nút ≡ (dưới `bp-lg`), `CMP-TenantSwitcher`, ô mở `CMP-CommandPalette`, nút Trợ lý AI (khi bật), nút Trợ giúp, `CMP-BackgroundTaskTray`, chuông `CMP-NotificationCenter`, `CMP-UserMenu`.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `<header>` tự dựng với `Flex`; các nút là `CMP-IconButton` biến thể `text` (đặt được trên kính, D03-05-03 §3.2). |
+| Vật liệu | `glass-chrome` khi `main` ở đầu; `glass-chrome-scrolled` + `glass-scroll-edge` khi cuộn. Chuyển vật liệu do `IntersectionObserver` trên mốc đầu `main` (không lắng nghe sự kiện cuộn), chuyển tiếp `motion-duration-base`, tức thì khi giảm chuyển động. |
+| Kích thước | Cao `size-topbar` (56px, Gọn 48px); ô tìm rộng 320–480px, co lại thành nút biểu tượng dưới 1280px. |
+| Nội dung trên kính | Chỉ chữ `color-text-primary`, `color-text-secondary` và biểu tượng; không đặt chữ liên kết, chữ màu trạng thái trên `glass-chrome-scrolled` (D03-05-01 §3.2). Huy hiệu số dùng `CMP-Badge` nền đặc. |
+| Bàn phím, ARIA | `<header role="banner">`; ô tìm là `<button>` có nhãn "Tìm kiếm (Ctrl+K)" và mở bảng lệnh; mọi nút có tên truy cập. |
+| Điều cấm | Không thêm hành động nghiệp vụ của phân hệ lên thanh trên (đặt trong `CMP-PageHeader`); không quá 7 điều khiển ở vùng phải. |
+
+### 12.3. CMP-Sidebar
+
+`CMP-Sidebar` là thanh điều hướng chính hai cấp, tấm kính nổi cách mép `space-2`, bo `radius-xl`, bóng `shadow-2` (D03-06-00 §3.3).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Menu` của antd `mode="inline"` (mở rộng) và `mode="vertical"` với popover cấp 2 (thu gọn); `inlineIndent` 12; mục chọn `itemSelectedBg` = `color-fill-selected`, chữ `color-accent-on-subtle`. |
+| Giải phẫu | (1) Logo và tên hệ thống; (2) nhóm menu cấp 1 có biểu tượng `size-icon-lg`; (3) mục cấp 2; (4) `CMP-Badge` số việc ở "Hộp việc"; (5) nút "Thu gọn" ở chân. |
+| Vật liệu | `glass-chrome` trên canvas; ở dưới `bp-lg` là khung `glass-modal` của Drawer với nội dung menu trong giếng đặc. Chế độ kính "Tắt": nền `color-surface-solid`, giữ bo góc và bóng. |
+| Kích thước | `size-sidebar` (256px; Gọn 232px), thu gọn `size-sidebar-collapsed` (64px; Gọn 56px). Lựa chọn thu gọn ghi nhớ theo người dùng. |
+| Trạng thái | Mở rộng, thu gọn (popover `glass-overlay` cho cấp 2, mở bằng rê, focus, `Enter` hoặc `→`), mục đang chọn, nhóm mở, đang tải menu (khung xương 8 mục). |
+| Bàn phím, ARIA | `<nav aria-label="Điều hướng chính">`; mũi tên lên xuống giữa mục, `→`/`←` mở thu nhóm, `Home`/`End`; mục hiện tại có `aria-current="page"`. |
+| Điều cấm | Không quá hai cấp; không hiện mục người dùng không có quyền (D03-06-00 §2.6); không đặt nội dung động ngoài số đếm lên sidebar. |
+
+### 12.4. CMP-TenantSwitcher
+
+`CMP-TenantSwitcher` hiển thị tenant hiện tại và cho đổi tenant hoặc bước vào chế độ liên tenant (FR-00-004, FR-00-011, FR-00-012). Hành vi đầy đủ ở D03-06-00 §2.11.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | Nút trên thanh trên mở `CMP-Popover` chứa `CMP-SearchField` và danh sách có nhóm "Gần đây", "Tỉnh của tôi", "Truy cập liên tenant" (chỉ vai trò nền tảng). |
+| Hiển thị | Tên ngắn tỉnh + mã tenant `CMP-Identifier` biến thể `badge`; người dùng một tenant: chữ tĩnh không mũi tên. |
+| Vật liệu | Nút trên `glass-chrome`; popup `glass-overlay`. |
+| Hành vi | Đổi tenant: hỏi nếu có thay đổi chưa lưu → về `/tong-quan` của tenant mới → `queryClient.clear()` → nạp lại quyền và menu. Chọn tenant nhóm liên tenant: mở `CMP-ReasonDialog` (loại lý do, mô tả ≥ 20 ký tự, mã phiếu hỗ trợ tùy chọn) trước khi chuyển. |
+| Bàn phím, ARIA | Nút có `aria-haspopup="dialog"` và nhãn "Tenant hiện tại: Tỉnh Mẫu A. Đổi tenant"; danh sách theo mẫu listbox. |
+| Điều cấm | Không đổi tenant mà giữ route cũ; không để yêu cầu mạng nào mang ngữ cảnh tenant cũ sau khi đổi. |
+
+### 12.5. CMP-UserMenu
+
+`CMP-UserMenu` là menu tài khoản ở góc phải thanh trên (D03-06-00 §2.10).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Avatar` cỡ `md` mở `CMP-DropdownMenu` có khối thông tin tùy biến ở đầu. |
+| Mục | Khối thông tin (họ tên, thư điện tử, đơn vị, vai trò trong tenant); "Cài đặt cá nhân"; "Phiên đăng nhập"; "Bộ lọc đã lưu"; chế độ giao diện Sáng/Tối/Theo hệ thống (`CMP-SegmentedControl`); "Hiển thị" (kính Đầy đủ/Giảm/Tắt, mật độ, giảm chuyển động; mở trang cài đặt); "Phím tắt" (mở `CMP-ShortcutSheet`, cũng bằng `?`); "Đăng xuất". |
+| Vật liệu | Popup `glass-overlay`. |
+| Hành vi | Đăng xuất gọi đăng xuất phía Keycloak và xóa bộ nhớ đệm truy vấn, `sessionStorage`, bản nháp cục bộ có dữ liệu của người dùng. |
+| Điều cấm | Không hiển thị mã định danh cá nhân, số điện thoại trong khối thông tin. |
+
+### 12.6. CMP-CommandPalette
+
+`CMP-CommandPalette` là bảng lệnh mở bằng `Ctrl+K`: tìm màn hình, đối tượng, lệnh và hỏi trợ lý AI (D03-06-00 §2.7).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Modal` không có tiêu đề và chân, rộng `size-modal-md`, cách mép trên 12% chiều cao; ô `Input` lớn; danh sách nhóm ảo hóa. |
+| Vật liệu | Khung `glass-modal`; danh sách kết quả trong giếng `color-surface-solid`. |
+| Nguồn kết quả | Màn hình (cây menu đã lọc quyền, lọc tại chỗ), Đối tượng (API tìm hợp nhất, sau 250ms, tối thiểu 2 ký tự), Lệnh (đăng ký bởi màn và toàn cục qua `useRegisterCommand`), Hỏi trợ lý AI (khi bật). Mỗi nhóm tối đa 5 mục và "Xem tất cả". Khi trống: 5 mục gần đây. |
+| Tìm kiếm | Bỏ dấu, không phân biệt hoa thường (`matchVi`), khớp tiền tố từ và khớp mã chính xác (FR-00-020). |
+| Bàn phím, ARIA | `role="dialog"` `aria-modal="true"`; ô nhập `role="combobox"` `aria-controls` trỏ `role="listbox"`; mũi tên, `Enter`, `Tab` chuyển nhóm, `Esc` đóng và trả focus. |
+| Điều cấm | Không trả đối tượng ngoài tenant hiện tại hoặc ngoài quyền xem; không thực thi lệnh phá hủy trực tiếp từ bảng lệnh (lệnh mở màn hoặc hộp xác nhận). |
+
+```ts
+export function useRegisterCommand(cmd: { id: string; title: string; keywords?: string[]; shortcut?: string; run: () => void; when?: () => boolean }): void;
+```
+
+### 12.7. CMP-NotificationCenter
+
+`CMP-NotificationCenter` là trung tâm thông báo mở từ chuông (FR-00-060, D03-06-00 §2.9).
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Badge` trên `CMP-IconButton` chuông mở `CMP-Popover` rộng 400px chứa `CMP-Tabs` "Tất cả", "Việc cần làm", "Tác vụ nền" và danh sách ảo hóa. |
+| Vật liệu | Popup `glass-overlay` (vật liệu này đạt ngưỡng chữ mọi nấc nên danh sách đặt trực tiếp). |
+| Mục thông báo | Biểu tượng loại; tiêu đề một dòng; mô tả tối đa hai dòng; `CMP-Timestamp` biến thể `relative`; nút hành động trực tiếp ("Tải tệp", "Xem báo cáo lỗi"); chấm chưa đọc kèm chữ ẩn "Chưa đọc". |
+| Mức | Thông tin (chỉ tăng huy hiệu); cần chú ý (thêm `CMP-Notification` 6 giây); khẩn (`CMP-Notification` không tự đóng tới khi xác nhận). |
+| Nguồn | SSE khi có, thăm dò 60 giây khi không; số đếm giới hạn "99+". |
+| Bàn phím, ARIA | Nút chuông có nhãn "Thông báo, 3 chưa đọc"; tăng số đếm không đọc `assertive`. |
+| Điều cấm | Không đưa dữ liệu Hạn chế hoặc Nhạy cảm vào nội dung thông báo (chỉ mã và liên kết). |
+
+### 12.8. CMP-BackgroundTaskTray
+
+`CMP-BackgroundTaskTray` là khay tác vụ nền trên thanh trên: xuất tệp lớn (FR-00-031), nhập dữ liệu, chạy thử, phát hành, đồng bộ (FR-00-054). Nó cho người dùng rời màn mà vẫn theo dõi được tác vụ do chính mình khởi chạy.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-IconButton` biểu tượng `tasks` mang `CMP-Badge` số tác vụ đang chạy, mở `CMP-Popover` rộng 360px liệt kê tác vụ, mỗi tác vụ là `CMP-JobProgress` biến thể `list-item` (mục 10.3). |
+| Vật liệu | Nút trên `glass-chrome`; popup `glass-overlay`. |
+| Hiển thị trên nút | Có tác vụ đang chạy: vòng tiến độ mảnh quanh biểu tượng (tắt khi giảm chuyển động, thay bằng chấm); có tác vụ xong chưa xem: chấm `color-success-solid`; có tác vụ lỗi chưa xem: chấm `color-error-solid` kèm chữ ẩn "Có tác vụ lỗi". |
+| Danh sách | Nhóm "Đang chạy", "Xong gần đây (24 giờ)"; mỗi mục: tên tác vụ, phân hệ, tiến độ hoặc kết quả, hành động ("Tải tệp", "Xem kết quả", "Hủy" khi API cho phép), liên kết tới đối tượng. "Xem tất cả" mở `/viec-cua-toi/tac-vu-nen` (PTN-01). |
+| Nguồn | Danh sách tác vụ của người dùng trong tenant hiện tại từ API tác vụ nền dùng chung, cập nhật theo SSE hoặc thăm dò 5 giây khi có tác vụ đang chạy, 60 giây khi không. |
+| Bàn phím, ARIA | Nút có nhãn "Tác vụ nền, 2 đang chạy"; khi tác vụ xong, vùng `polite` đọc một câu ("Xuất danh sách giao dịch đã xong") và trung tâm thông báo nhận thông báo. |
+| Điều cấm | Không hiện tác vụ của người khác; không giữ liên kết tải tệp quá thời hạn của máy chủ (liên kết ký hết hạn thì hiện "Tạo lại liên kết"). |
+
+### 12.9. CMP-ShortcutSheet
+
+`CMP-ShortcutSheet` là bảng tra phím tắt mở bằng `?` (khi focus không ở ô nhập) hoặc từ `CMP-UserMenu`.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `CMP-Modal` `md` chứa danh sách nhóm ("Toàn cục", "Danh sách", "Trình thiết kế"…) với phím hiển thị bằng `CMP-Kbd`; nhóm theo ngữ cảnh hiện tại đứng đầu. |
+| Nguồn | Đăng ký qua `useRegisterShortcut` cùng nơi đăng ký phím, nên bảng luôn khớp hành vi thật. |
+| Cài đặt | Công tắc "Bật phím tắt một ký tự" (mặc định bật) để đáp ứng WCAG 2.1.4; tắt thì chỉ còn phím có `Ctrl`/`Alt`. |
+| Điều cấm | Không ghi đè phím chuẩn của trình duyệt và trình đọc màn hình (`Ctrl+L`, `Ctrl+T`, phím đơn khi trình đọc màn hình ở chế độ duyệt). |
+
+### 12.10. CMP-FullscreenBar
+
+`CMP-FullscreenBar` là thanh nổi nhỏ góc trên phải khi khung ở chế độ toàn màn hình (D03-06-00 §3.9): tên màn, đồng hồ (dashboard), nút "Thoát toàn màn hình".
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Vật liệu | `glass-overlay`, bo `radius-pill`. |
+| Hành vi | Tự mờ sau 3 giây không di chuột, hiện lại khi di chuột hoặc focus; `Esc` thoát. Dải liên tenant và dải hệ thống mức lỗi vẫn hiển thị. |
+| Bàn phím, ARIA | `role="toolbar"` `aria-label="Thanh toàn màn hình"`; không bao giờ ẩn khỏi cây truy cập. |
+
+### 12.11. CMP-StatusBar
+
+`CMP-StatusBar` là chân trạng thái của màn soạn dữ liệu lớn (lưới sửa danh mục PH-07 UI-07-05, nhập có xem trước PTN-09): số bản ghi, số đã đổi chưa lưu, số lỗi, vùng chọn, trạng thái lưu.
+
+| Khía cạnh | Đặc tả |
+|---|---|
+| Nền | `Flex` một dòng dính đáy khối nội dung, chứa `CMP-Text` cỡ `footnote`, `CMP-Badge`, `CMP-SaveIndicator`. |
+| Vật liệu | Nền đặc `color-surface-solid-2`, viền trên `color-border-subtle`; cao 28px. |
+| Nội dung | "1.248 bản ghi · 12 đã sửa · 3 lỗi · Đang chọn 4 ô"; số lỗi là nút đi tới lỗi đầu tiên. |
+| Bàn phím, ARIA | `role="status"`; không đọc mỗi thay đổi (chỉ số lỗi đổi mới đọc, tối đa một lần mỗi 2 giây). |
+| Điều cấm | Không đặt hành động chính ở chân trạng thái. |
