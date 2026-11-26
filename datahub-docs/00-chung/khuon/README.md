@@ -21,6 +21,7 @@ Mỗi phân hệ có bảy tập. Thay vì nạp nguyên bộ PH-07 (khoảng 1,
 | [K-API](K-API.md) | D03-04 Đặc tả API và sự kiện | `03-thiet-ke/api/D03-04-PH04-api-tich-hop.md` §3, §6 |
 | [K-MH](K-MH.md) | D03-06 Thiết kế giao diện màn hình | `03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md` §7, §10 |
 | [K-TC](K-TC.md) | D05-02 Kịch bản và test case | `05-kiem-thu/test-case/D05-02-PH04-test-case.md` |
+| [K-GOI-DAC-TA](K-GOI-DAC-TA.md) | Gói đặc tả máy đọc cho tác nhân viết mã (sinh từ bảy tập) | `datahub/spec/PH07/` (lát cắt F-07-010) |
 
 ## Cách làm một phân hệ theo cách mới
 

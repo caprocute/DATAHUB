@@ -1,0 +1,25 @@
+.dh-conflict__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--dh-color-surface-solid);
+  border-radius: var(--dh-radius-md);
+}
+
+.dh-conflict__table th,
+.dh-conflict__table td {
+  padding: var(--dh-space-2) var(--dh-space-3);
+  border-bottom: 1px solid var(--dh-color-border-subtle);
+  text-align: left;
+  font-weight: var(--dh-font-weight-regular);
+}
+
+.dh-conflict__table thead th {
+  background: var(--dh-color-surface-solid-2);
+  color: var(--dh-color-text-secondary);
+  font-weight: var(--dh-font-weight-medium);
+}
+
+.dh-conflict__confirm {
+  margin-right: var(--dh-space-2);
+  color: var(--dh-color-text-secondary);
+}

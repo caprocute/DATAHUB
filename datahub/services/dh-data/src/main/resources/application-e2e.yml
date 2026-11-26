@@ -1,0 +1,4 @@
+# Profile e2e (Playwright): khóa công khai JWT và CSDL do kịch bản e2e truyền lúc chạy
+# (khóa thử sinh lúc chạy); không có bí mật trong tệp này.
+server:
+  port: ${PORT:18080}

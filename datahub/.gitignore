@@ -1,0 +1,13 @@
+# Sản phẩm build và phụ thuộc
+target/
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+# Khóa và bí mật sinh lúc chạy (không bao giờ commit)
+*.pem
+*.key
+.e2e/
+# Báo cáo kiểm thử
+playwright-report/
+test-results/

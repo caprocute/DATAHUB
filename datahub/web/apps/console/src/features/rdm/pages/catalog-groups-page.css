@@ -1,0 +1,117 @@
+.rdm-page {
+  display: grid;
+  grid-template-columns: var(--dh-size-tree-panel) minmax(0, 1fr);
+  /* Một hàng đúng bằng chiều cao còn lại của vùng nội dung; panel cuộn bên trong, không giãn theo dữ liệu. */
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--dh-space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.rdm-page__groups,
+.rdm-page__table {
+  display: flex;
+  flex-direction: column;
+  background: var(--dh-color-surface-solid);
+  border-radius: var(--dh-radius-md);
+  padding: var(--dh-space-4);
+  gap: var(--dh-space-3);
+  min-height: 0;
+}
+
+.rdm-page__heading {
+  margin: 0;
+  font-size: var(--dh-font-callout);
+  font-weight: var(--dh-font-weight-semibold);
+  color: var(--dh-color-text-primary);
+}
+
+.rdm-page__tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.rdm-page__table {
+  align-items: center;
+  justify-content: center;
+  color: var(--dh-color-text-secondary);
+}
+
+@media (max-width: 50em) {
+  .rdm-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.rdm-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Cấp lồng nhau thể hiện bằng thụt lề theo aria-level (cây phẳng). */
+.rdm-tree__item[aria-level='2'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + var(--dh-space-4)); }
+.rdm-tree__item[aria-level='3'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 2 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='4'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 3 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='5'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 4 * var(--dh-space-4)); }
+.rdm-tree__item[aria-level='6'] > .rdm-tree__row { padding-inline-start: calc(var(--dh-space-2) + 5 * var(--dh-space-4)); }
+
+.rdm-tree__item {
+  outline: none;
+}
+
+.rdm-tree__row {
+  display: flex;
+  align-items: center;
+  gap: var(--dh-space-1);
+  padding: var(--dh-space-1) var(--dh-space-2);
+  border-radius: var(--dh-radius-md);
+  color: var(--dh-color-text-primary);
+}
+
+.rdm-tree__row:hover {
+  background: var(--dh-color-fill-hover);
+}
+
+.rdm-tree__row--selected {
+  background: var(--dh-color-fill-selected);
+  color: var(--dh-color-accent-on-subtle);
+}
+
+.rdm-tree__item:focus-visible > .rdm-tree__row {
+  outline: var(--dh-space-0-5) solid var(--dh-color-focus-ring);
+  outline-offset: var(--dh-space-0-5);
+}
+
+.rdm-tree__toggle {
+  display: inline-flex;
+  width: var(--dh-size-icon-md);
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rdm-tree__label {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: var(--dh-space-2);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.rdm-tree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdm-tree__count {
+  color: var(--dh-color-text-secondary);
+  font-size: var(--dh-font-footnote);
+}
+
+.rdm-tree__badge {
+  margin: 0;
+}

@@ -1,0 +1,31 @@
+# Cổng G1 · lint hợp đồng OpenAPI của gói đặc tả (K-GOI-DAC-TA §5).
+extends:
+  - recommended
+rules:
+  struct: error
+  no-unresolved-refs: error
+  operation-operationId-unique: error
+  no-server-example.com: off            # máy chủ giả lập có chủ đích (datahub.example.vn)
+  no-invalid-media-type-examples: warn
+  no-unused-components: warn
+  # Quy tắc riêng Datahub (D04-01 CC-API-02, CC-SEC-08)
+  rule/dh-ma-api:
+    subject: { type: Operation, property: x-datahub-id }
+    assertions: { defined: true, pattern: '/^API-\d{2}-\d{3}$/' }
+    message: Mọi operation phải có x-datahub-id dạng API-nn-nnn.
+    severity: error
+  rule/dh-truy-vet-fr:
+    subject: { type: Operation, property: x-datahub-fr }
+    assertions: { defined: true }
+    message: Mọi operation phải truy vết FR (x-datahub-fr).
+    severity: error
+  rule/dh-quyen:
+    subject: { type: Operation, property: x-datahub-permission }
+    assertions: { defined: true }
+    message: Deny-by-default — mọi operation phải khai x-datahub-permission (CC-SEC-08).
+    severity: warn
+  rule/dh-khong-tenant-tham-so:
+    subject: { type: Parameter, property: name }
+    assertions: { notPattern: '/^(tenant|tenantId|X-DH-Tenant)$/i' }
+    message: Tenant lấy từ token, không truyền qua tham số (D03-10).
+    severity: warn

@@ -1,0 +1,41 @@
+/* Nền, chữ và vòng focus toàn ứng dụng: chỉ dùng token --dh-* (D03-05-02). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--dh-color-canvas);
+  background-image: var(--dh-color-canvas-wash);
+  background-attachment: fixed;
+  color: var(--dh-color-text-primary);
+  font-family: var(--dh-font-family-sans);
+  font-size: var(--dh-font-body);
+  line-height: var(--dh-font-line-body);
+}
+
+:focus-visible {
+  outline: 2px solid var(--dh-color-focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--dh-color-focus-ring-inner);
+}
+
+.dh-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
