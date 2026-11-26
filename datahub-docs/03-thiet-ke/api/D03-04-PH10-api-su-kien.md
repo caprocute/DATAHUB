@@ -1,11 +1,13 @@
 ---
 ma_tai_lieu: D03-04-PH10
 ten: Đặc tả API và sự kiện phân hệ PH-10 Sự kiện
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; đơn vị kết nối HTTT; ATTT; hội đồng thẩm định
 phan_he: PH-10
+mo_ta: Hợp đồng giao tiếp của PH-10 gồm 121 operation REST ở control plane, data plane và API nội bộ dh-runtime, 16 sự kiện EVT-10, kênh giao ĐẨY webhook có ký và bảng mã lỗi ERR-10 kèm thông báo hiển thị, sinh từ OpenAPI 3.1 và AsyncAPI 3.0 đã kiểm.
+tai_lieu_lien_quan: D02-03-PH10 FRS; D03-02-PH10 SDD; D03-03-PH10 CSDL; D03-06-PH10 Màn hình; D05-02-PH10 Test case
 ---
 
 # D03-04-PH10 · Đặc tả API và sự kiện Sự kiện
@@ -34,6 +36,61 @@ Bốn nguyên tắc hợp đồng:
 
 Căn cứ: FRS D02-03-PH10 §8 và Phụ lục A; SDD D03-02-PH10 §3.3, §4.6…4.16; CSDL D03-03-PH10 (DDL `ph10_event`); ADR-044, ADR-070, ADR-071, ADR-072, ADR-073. Mọi tên miền, dữ liệu trong ví dụ là giả lập, tenant T68.
 
+## 0. Giới thiệu
+
+### 0.1. Mục đích và phạm vi
+
+Tài liệu là hợp đồng giao tiếp chính thức của PH-10 Sự kiện: mọi operation REST của control plane, data plane và API nội bộ cho `dh-runtime`, mọi sự kiện EVT-10 phát lên Kafka, kênh giao ĐẨY webhook và bảng mã lỗi ERR-10. Kỹ sư `dh-integration`, `dh-runtime`, giao diện và đơn vị kết nối HTTT dùng tài liệu để lập trình và kiểm thử tích hợp; hội đồng thẩm định dùng để đánh giá ranh giới xác thực, phân quyền và bảo vệ khóa ký. Ngoài phạm vi: nội dung nghiệp vụ của sự kiện do từng HTTT định nghĩa trong lược đồ (Apicurio) và API của phân hệ khác.
+
+Nguồn chuẩn là hai tệp máy đọc được [`ph10/openapi-event.yaml`](ph10/openapi-event.yaml) và [`ph10/asyncapi-event.yaml`](ph10/asyncapi-event.yaml). Chương 12 (đặc tả từng endpoint, mỗi endpoint một khối 10 mục) sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api.py`, nên tài liệu không lệch hợp đồng.
+
+### 0.2. Người đọc và cách đọc
+
+| Người đọc | Phần cần đọc | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định, ATTT | Tóm tắt, chương 1.1, 1.2, 2, 4.2 | Ranh giới mạng, xác thực, scope, ký webhook, không lộ khóa |
+| Kỹ sư `dh-integration` | Chương 1, 2, 3, 6, 12 | Hiện thực control plane đúng hợp đồng và mã lỗi |
+| Kỹ sư `dh-runtime` | Chương 1.1, 1.3, 4, 12 (nhóm Nội bộ, Data plane) | Cổng sự kiện, bộ giao nhận, cầu nối |
+| Đơn vị kết nối HTTT | Chương 1, 2.2, 4.2, 6.2, 12 (nhóm Data plane) | Phát, kéo, nhận webhook, xác minh chữ ký |
+| Kỹ sư giao diện | Chương 3, 6.4, 12 | Gọi API qua BFF, hiển thị thông báo theo mã lỗi |
+| Kiểm thử viên | Chương 3.2, 6, 7, 9 | Ca kiểm thử hợp đồng, mã lỗi, truy vết FR |
+
+: Người đọc và phần cần đọc của tập API PH-10
+
+### 0.3. Thuật ngữ và chữ viết tắt
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| Control plane, data plane | Phần điều khiển (khai báo, duyệt, vận hành) và phần dữ liệu (phát, kéo, giao sự kiện) |
+| Operation | Một cặp phương thức HTTP và đường dẫn, có một mã `API-10-nnn` |
+| CloudEvents | Chuẩn CNCF mô tả sự kiện (thuộc tính `id`, `source`, `type`, `time`…); dạng nhị phân dùng tiêu đề `ce-*`, dạng có cấu trúc là JSON |
+| Webhook, giao ĐẨY | Datahub gọi HTTP tới địa chỉ do bên nhận đăng ký để giao sự kiện |
+| HMAC | Mã xác thực thông điệp dùng khóa bí mật chung; bên nhận dùng để xác minh chữ ký webhook (ADR-044) |
+| Scope | Phạm vi quyền ghi trong token máy, ví dụ `topic:t68.dkkd.doanh-nghiep.da-cap-phep.v1:publish` |
+| `Idempotency-Key`, `If-Match` | Tiêu đề chống trùng lệnh tạo; tiêu đề khóa lạc quan theo `ETag` |
+| RFC 9457 | Chuẩn thân phản hồi lỗi `application/problem+json` |
+| APISIX, OPA | Cổng API biên (ADR-005) và bộ chính sách phân quyền |
+| DLQ | Dead Letter Queue, topic `{topicName}.dlq` giữ sự kiện giao không được |
+
+: Thuật ngữ và chữ viết tắt của tập API PH-10
+
+### 0.4. Tài liệu tham chiếu
+
+| Tài liệu | Nội dung dùng ở tập này |
+|---|---|
+| D02-03-PH10 FRS §8, Phụ lục A | Danh mục API, mã lỗi, sự kiện, enum, trường |
+| D03-02-PH10 SDD | Thành phần hiện thực từng operation |
+| D03-03-PH10 CSDL | Bảng `ph10_event` ánh xạ với lược đồ JSON |
+| D03-06-PH10 Màn hình §5.3 | Câu thông báo hiển thị theo mã lỗi |
+| D03-07 Thiết kế ATTT | SEC-15, SEC-2x về xác thực máy và mTLS |
+| ADR-005, ADR-044, ADR-070…073 | APISIX, ký webhook, Apicurio, cấu hình runtime, GitOps topic, outbox |
+
+: Tài liệu tham chiếu của tập API PH-10
+
+### 0.5. Cấu trúc tài liệu
+
+Chương 1 nêu quy ước chung, ba mặt giao tiếp, kiến trúc thành phần và sơ đồ trình tự luồng chính. Chương 2 là xác thực và phân quyền. Chương 3 là danh mục 121 operation, ví dụ và ghi chú hiện thực. Chương 4 là sự kiện EVT-10, kênh webhook và kênh mẫu topic. Chương 5 là hợp đồng với phân hệ khác. Chương 6 là bảng mã lỗi và thông báo hiển thị. Chương 7 là kiểm tra hợp đồng trong CI. Chương 8 ánh xạ API hệ cũ. Chương 9 truy vết FR sang API. Chương 10, 11 là đề nghị bổ sung cho FRS và câu hỏi mở. Chương 12 đặc tả từng endpoint bằng khối 10 mục (mục đích, phương thức và đường dẫn, quyền, FR, tham số, thân yêu cầu, chống trùng, phản hồi thành công, lỗi, ghi chú).
+
 ## 1. Quy ước chung
 
 | Mục | Quy ước |
@@ -52,6 +109,8 @@ Căn cứ: FRS D02-03-PH10 §8 và Phụ lục A; SDD D03-02-PH10 §3.3, §4.6�
 | Ngôn ngữ | `Accept-Language: vi` (mặc định) hoặc `en` cho `title`, `detail` ở control plane; data plane chỉ tiếng Anh ngắn trong `title` để HTTT ghi log |
 | Định dạng sự kiện | Control plane và Kafka: CloudEvents 1.0 nhị phân (`ce_*`). Webhook và API kéo: CloudEvents JSON có cấu trúc (`application/cloudevents+json`), hoặc nhị phân (`ce-*`) khi subscription chọn `CLOUDEVENTS_BINARY` (FRS §4.9) |
 
+: Quy ước chung của API PH-10
+
 ### 1.1. Ba mặt giao tiếp và đường mạng
 
 | Mặt | Bên gọi | Đường vào | Xác thực | Operation |
@@ -61,7 +120,58 @@ Căn cứ: FRS D02-03-PH10 §8 và Phụ lục A; SDD D03-02-PH10 §3.3, §4.6�
 | Runtime nội bộ | `dh-runtime` của tenant | `apisix-int`, không qua BFF | mTLS và token máy `dh-runtime-{tenant}`, scope `event:runtime-config`, `event:replay` | 8 (073, 085…090, 119) |
 | Data plane | HTTT thành viên | `apisix-ext` (mạng TSLCD) hoặc `apisix-int` | Token HTTT `client_credentials` có scope `topic:{topicName}:*`, hoặc mTLS (CN `{systemCode}.{tenant}`); OPA kiểm quan hệ bên phát, bên nhận | 6 (079…084) |
 
+: Ba mặt giao tiếp và đường mạng
+
 APISIX xác thực token và gọi OPA trước khi tới cổng sự kiện; cổng chỉ tin danh tính ở tiêu đề do APISIX ghi lại sau xác thực (`X-Dh-Client-Id`, `X-Dh-Tenant`, chỉ chấp nhận trên kết nối mTLS từ APISIX, SEC-15), không tin tiêu đề do HTTT gửi (SDD §4.6).
+
+### 1.2. Kiến trúc thành phần
+
+Hình dưới cho thấy các thành phần mà hợp đồng của tập này nối với nhau. Người dùng chỉ đi qua BFF tới control plane; HTTT chỉ đi qua APISIX tới cổng sự kiện của `dh-runtime`; `dh-runtime` lấy cấu hình qua API nội bộ và giữ bản đệm cục bộ để vẫn chạy khi control plane ngừng (ADR-071).
+
+```{.mermaid caption="Kiến trúc thành phần của các mặt giao tiếp PH-10"}
+flowchart TB
+  U["Người dùng console"] --> BFF["BFF dh-console"]
+  BFF --> CP["dh-integration, module event<br/>/api/event/v1"]
+  M["PH-04, PH-05, PH-13, PH-18"] -->|scope event:*| CP
+  CP --> PG[("pg-core, schema ph10_event")]
+  CP --> AR["Apicurio Registry 3"]
+  CP --> GIT["Kho dh-config-{tenant}<br/>KafkaTopic, KafkaUser"]
+  GIT --> K[("Kafka Strimzi")]
+  H["HTTT thành viên"] --> AX["apisix-ext, apisix-int<br/>token HTTT, OPA"]
+  AX --> GW["Cổng sự kiện dh-runtime<br/>/event/v1"]
+  GW --> K
+  K --> DLV["Bộ giao nhận webhook"]
+  DLV -->|"HMAC, CloudEvents"| WH["Đầu nhận webhook của HTTT"]
+  RT["dh-runtime"] -->|"/api/event/v1/runtime, mTLS"| CP
+```
+
+Ba đường vào tách biệt nhau: control plane không nhận lưu lượng sự kiện, cổng sự kiện không đọc CSDL `ph10_event`, và chỉ bộ giao nhận cầm khóa ký (đọc từ OpenBao). Mọi thay đổi cấu hình cụm Kafka đi qua kho Git (ADR-072) chứ không gọi thẳng API quản trị Kafka.
+
+### 1.3. Sơ đồ trình tự luồng chính
+
+Luồng chính của trục sự kiện là HTTT phát một sự kiện và bên nhận đăng ký kiểu ĐẨY nhận được qua webhook có ký. Sơ đồ nêu các mã API và mã lỗi chính ở từng bước.
+
+```{.mermaid caption="Trình tự phát sự kiện và giao ĐẨY webhook"}
+sequenceDiagram
+  participant H as HTTT bên phát
+  participant A as APISIX và OPA
+  participant G as Cổng sự kiện
+  participant K as Kafka
+  participant D as Bộ giao nhận
+  participant R as HTTT bên nhận
+  H->>A: POST /event/v1/topics/{topicName}/events (API-10-079)
+  A->>A: Kiểm token, scope topic publish (ERR-10-102)
+  A->>G: Chuyển tiếp kèm X-Dh-Client-Id, X-Dh-Tenant
+  G->>G: Kiểm lược đồ Apicurio (ERR-10-105), chống trùng theo id
+  G->>K: Ghi bản ghi CloudEvents nhị phân
+  G-->>H: 202 kèm eventId, partition, offset
+  K->>D: Bộ giao nhận đọc theo consumer group của subscription
+  D->>R: POST webhook, chữ ký HMAC (EVT kênh ĐẨY, mục 4.2)
+  R-->>D: 2xx
+  D->>D: Lỗi tạm thời thì thử lại, hết lượt ghi topic DLQ (ERR-10-111…120)
+```
+
+Bên nhận kiểu KÉO thay bốn bước cuối bằng API-10-081…083 (kéo, xác nhận, báo lỗi). Sự kiện giao không được sau số lượt thử lại theo chính sách sẽ vào topic `{topicName}.dlq` và thành mục DLQ để người vận hành xử lý ở UI-10-15.
 
 ## 2. Xác thực và phân quyền
 
@@ -78,6 +188,8 @@ Quyền theo FRS §3.2 và A.4. Bảng sau tóm tắt quyền theo nhóm operati
 | `PERM-10-approve` | TA, IA | Duyệt, từ chối mọi yêu cầu (API-10-059, 101) |
 | `PERM-10-operate` | TA, TO, SO | Tạm ngừng, tiếp tục bên tham gia, publication, subscription; xoay, thu hồi khóa; xem nội dung và loại bỏ mục DLQ; đề nghị, hủy phát lại; xác nhận cảnh báo lag |
 | `PERM-10-admin` | PA, TA | Danh mục kiểu giao tiếp, chế độ định tuyến, hạn mức, tham số `10.*`, ngoại lệ xác minh endpoint (091), nhập kiểm kê Pulsar, cầu nối, chuyển hẳn, quay lui |
+
+: Quyền người dùng
 
 Quy tắc vượt quyền chức năng, máy chủ kiểm:
 
@@ -101,6 +213,8 @@ Quy tắc vượt quyền chức năng, máy chủ kiểm:
 | `topic:{topicName}:publish` | Client của HTTT có publication `ACTIVE` | API-10-079, 084 | Cấp ở Keycloak khi duyệt (FR-10-031), gỡ khi tạm ngừng, thu hồi; dữ liệu OPA gỡ trước ≤ 60 giây |
 | `topic:{topicName}:subscribe` | Client của HTTT có subscription `ACTIVE` | API-10-080…084 | Client của token phải là client của bên nhận |
 
+: Scope máy và scope HTTT
+
 Mã lỗi xác thực, quyền chung theo FRS 0.3: control plane (`/api/event/v1`, kể cả API nội bộ `runtime`) dùng ERR-10-053 (401) và ERR-10-054 (403 thiếu `PERM-10-*` hoặc scope dịch vụ); data plane (`/event/v1`) dùng ERR-10-101 (401) và ERR-10-102 (403). Mọi operation đều có thể trả hai mã của mặt mình nên bảng §3 không nhắc lại.
 
 ## 3. Danh mục endpoint
@@ -119,11 +233,15 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-005 | `POST /projects/{projectCode}:archive` | Lưu trữ dự án | 005 | `PERM-10-update` |  | 200 | 006, 009, 010 |
 | API-10-006 | `POST /projects/{projectCode}:restore` | Khôi phục dự án đã lưu trữ | 005 | `PERM-10-update` |  | 200 | 006 |
 
+: Danh mục endpoint · Dự án tích hợp
+
 **Giám sát, dashboard, sơ đồ**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
 |---|---|---|---|---|---|---|---|
 | API-10-007 | `GET /graph` | Sơ đồ kết nối bên phát, topic, bên nhận | 058 | `PERM-10-read` |  | 200 | 049 |
+
+: Danh mục endpoint · Giám sát, dashboard, sơ đồ
 
 **Topic**
 
@@ -143,6 +261,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-019 | `GET /topics/{topicName}/migration-status` | Tiến độ chuyển bên nhận sang topic kế nhiệm | 016 | `PERM-10-read` |  | 200 |  |
 | API-10-020 | `GET /topics/{topicName}/connection-info` | Thông tin kết nối và cấu hình mẫu cho bên phát, bên nhận | 007, 024, 034 | `PERM-10-read` |  | 200 |  |
 
+: Danh mục endpoint · Topic
+
 **Lược đồ sự kiện**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
@@ -158,6 +278,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-029 | `POST /topics/{topicName}/schema/versions/{versionNo}:disable` | Vô hiệu phiên bản lược đồ | 022 | `PERM-10-update` |  | 200 | 006, 009 |
 | API-10-030 | `GET /topics/{topicName}/schema/diff` | So sánh hai phiên bản lược đồ | 020 | `PERM-10-read` |  | 200 | 049 |
 | API-10-031 | `GET /topics/{topicName}/compliance` | Tuân thủ lược đồ của bên phát Kafka trực tiếp | 023 | `PERM-10-read` |  | 200 | 049 |
+
+: Danh mục endpoint · Lược đồ sự kiện
 
 **Bên phát, bên nhận**
 
@@ -178,6 +300,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-094 | `POST /subscribers/{subscriberCode}:resume` | Tiếp tục bên nhận | 028 | `PERM-10-operate` |  | 200 | 006, 009 |
 | API-10-095 | `POST /subscribers/{subscriberCode}:retire` | Ngừng dùng bên nhận | 028 | `PERM-10-update` |  | 200 | 006, 009 |
 
+: Danh mục endpoint · Bên phát, bên nhận
+
 **Publication**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
@@ -188,6 +312,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-045 | `POST /publications/{publicationCode}:suspend` | Tạm ngừng publication | 032 | `PERM-10-operate` |  | 200 | 006, 009 |
 | API-10-096 | `POST /publications/{publicationCode}:resume` | Tiếp tục publication | 032 | `PERM-10-operate` |  | 200 | 006, 009, 025 |
 | API-10-097 | `POST /publications/{publicationCode}:revoke` | Thu hồi publication | 032 | `PERM-10-update` |  | 200 | 006, 009 |
+
+: Danh mục endpoint · Publication
 
 **Subscription và giao nhận**
 
@@ -210,6 +336,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-055 | `GET /subscriptions/{subscriptionCode}/lag` | Độ trễ tiêu thụ theo phân vùng | 054 | `PERM-10-read` hoặc `event:metrics-read` (dịch vụ) |  | 200 | 049 |
 | API-10-056 | `POST /subscriptions/{subscriptionCode}/lag-alerts:acknowledge` | Xác nhận cảnh báo lag | 055 | `PERM-10-operate` |  | 200 | 006 |
 
+: Danh mục endpoint · Subscription và giao nhận
+
 **Yêu cầu duyệt**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
@@ -219,6 +347,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-059 | `POST /approval-requests/{requestCode}:approve` | Duyệt yêu cầu | 009, 019, 031, 037, 051 | `PERM-10-approve` |  | 200 | 006, 008, 009, 011, 016, 029, 038, 051 |
 | API-10-101 | `POST /approval-requests/{requestCode}:reject` | Từ chối yêu cầu | 009, 019, 031, 037, 051 | `PERM-10-approve` |  | 200 | 006, 008, 009 |
 | API-10-102 | `POST /approval-requests/{requestCode}:withdraw` | Rút yêu cầu đã gửi | 009, 019, 031, 037, 051 | `PERM-10-create` hoặc `PERM-10-update` hoặc `PERM-10-subscribe` hoặc `PERM-10-operate` |  | 200 | 006, 009 |
+
+: Danh mục endpoint · Yêu cầu duyệt
 
 **DLQ và phát lại**
 
@@ -233,11 +363,15 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-064 | `POST /replays` | Đề nghị phát lại theo khoảng, đặt lại offset, mục DLQ | 051, 053 | `PERM-10-operate` hoặc `event:replay` (dịch vụ) | bắt buộc | 201 | 006, 009, 026, 027, 032, 033, 034, 035, 036 |
 | API-10-065 | `POST /replays/{replayCode}:cancel` | Hủy lượt phát lại | 052 | `PERM-10-operate` |  | 200 | 006, 009 |
 
+: Danh mục endpoint · DLQ và phát lại
+
 **Giám sát, dashboard, sơ đồ**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
 |---|---|---|---|---|---|---|---|
 | API-10-066 | `GET /dashboard` | Dashboard sự kiện của tenant | 057 | `PERM-10-read` hoặc `event:metrics-read` (dịch vụ) |  | 200 | 049 |
+
+: Danh mục endpoint · Giám sát, dashboard, sơ đồ (tiếp)
 
 **Danh mục, hạn mức, tham số**
 
@@ -252,6 +386,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-070 | `GET /settings` | Tham số 10.* hiệu lực của tenant | 063 | `PERM-10-read` |  | 200 |  |
 | API-10-108 | `PATCH /settings` | Sửa tham số 10.* trong miền cho phép | 063 | `PERM-10-admin` |  | 200 | 009, 012 |
 
+: Danh mục endpoint · Danh mục, hạn mức, tham số
+
 **Máy với máy (PH-04)**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
@@ -260,11 +396,15 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-072 | `POST /flows/{flowCode}:ensure-party` | Tạo bên tham gia FLOW và đề nghị quan hệ cho luồng | 069 | `event:permission-check` (dịch vụ) | bắt buộc | 200 | 022, 024, 025, 029 |
 | API-10-109 | `GET /flows/{flowCode}/dependencies` | Publication, subscription của luồng (cho API-04-016) | 069 | `event:permission-check` (dịch vụ) |  | 200 |  |
 
+: Danh mục endpoint · Máy với máy (PH-04)
+
 **Nội bộ dh-runtime**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
 |---|---|---|---|---|---|---|---|
 | API-10-073 | `GET /runtime/subscriptions` | Cấu hình runtime: topic, subscription, lượt phát lại | 038, 043 | `event:runtime-config` (dịch vụ) |  | 200 |  |
+
+: Danh mục endpoint · Nội bộ dh-runtime
 
 **Xuất nhập, di trú Pulsar**
 
@@ -286,6 +426,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-117 | `GET /migrations/reconciliations` | Kết quả đối chiếu Pulsar và Kafka | 075 | `PERM-10-read` |  | 200 | 049 |
 | API-10-118 | `GET /migrations/progress` | Báo cáo tiến độ di trú | 076 | `PERM-10-read` |  | 200 |  |
 
+: Danh mục endpoint · Xuất nhập, di trú Pulsar
+
 **Data plane: phát, kéo, lược đồ**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Idem. | Thành công | Lỗi riêng (ERR-10-) |
@@ -296,6 +438,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-082 | `POST /event/v1/subscriptions/{subscriptionCode}/events:nack` | Báo sự kiện xử lý lỗi, đưa vào DLQ | 043 | `topic:{topicName}:subscribe` |  | 204 | 109, 110, 121 |
 | API-10-083 | `POST /event/v1/subscriptions/{subscriptionCode}/dead-letters` | Bên nhận Kafka ngoài báo bản tin lỗi vào DLQ | 044 | `topic:{topicName}:subscribe` | tùy chọn | 202 | 106, 107, 110 |
 | API-10-084 | `GET /event/v1/registry/{registryPath}` | Tra cứu lược đồ chỉ đọc (Apicurio v3, ccompat/v7) | 024 | `topic:{topicName}:publish` hoặc `:subscribe` |  | 200 | 103 |
+
+: Danh mục endpoint · Data plane: phát, kéo, lược đồ
 
 **Nội bộ dh-runtime**
 
@@ -308,6 +452,8 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-088 | `POST /runtime/replays/{replayCode}/results` | Báo tiến độ, kết quả từng mục DLQ, kết thúc lượt phát lại | 052, 053 | `event:replay` (dịch vụ) |  | 200 | 006 |
 | API-10-089 | `POST /runtime/dlq-entries:fetch-payloads` | Lấy nội dung mục DLQ theo lô ≤ 100 | 053 | `event:replay` (dịch vụ) |  | 200 | 029 |
 | API-10-090 | `POST /runtime/bridges/{bridgeCode}/status` | Báo trạng thái, số bản tin, lag của cầu nối | 073, 074 | `event:runtime-config` (dịch vụ) |  | 204 | 006 |
+
+: Danh mục endpoint · Nội bộ dh-runtime (tiếp)
 <!-- gen:endpoints:end -->
 
 ### 3.1. Tách dòng gộp của FRS
@@ -335,6 +481,8 @@ FRS §8.3 gộp nhiều hành động vào một dòng để giữ thứ tự m�
 | API-10-077 | `GET /migrations/bridges`, `POST /migrations/bridges`, `POST /migrations/bridges/{bridgeCode}:stop` · `:resume` | `GET /migrations/bridges` | API-10-113 `POST /migrations/bridges`; API-10-114 `POST /migrations/bridges/{bridgeCode}:stop`; API-10-115 `POST /migrations/bridges/{bridgeCode}:resume` |
 | API-10-078 | `POST /migrations/mappings/{mappingId}:cut-over` · `:rollback`, `GET /migrations/reconciliations`, `GET /migrations/progress` | `POST /migrations/mappings/{mappingId}:cut-over` | API-10-116 `POST /migrations/mappings/{mappingId}:rollback`; API-10-117 `GET /migrations/reconciliations`; API-10-118 `GET /migrations/progress` |
 | API-10-086 | `POST /runtime/subscriptions/{subscriptionCode}:suspend` (scope `event:runtime-config`; `suspendSource` `CIRCUIT_BREAKER` hoặc `DELIVERY_BLOCKED`), `POST /runtime/subscriptions/{subscriptionCode}:resume` (chỉ khi `CIRCUIT_BREAKER`) | `POST /runtime/subscriptions/{subscriptionCode}:suspend` | API-10-119 `POST /runtime/subscriptions/{subscriptionCode}:resume` |
+
+: Tách dòng gộp của FRS
 <!-- gen:split:end -->
 
 ### 3.2. Ví dụ yêu cầu và phản hồi
@@ -539,6 +687,8 @@ Phản hồi 200 trả từng bộ: bộ thứ nhất `ALLOWED` với `consumerG
 | API-10-120 | Khóa ký đầu tiên sinh lúc duyệt, ghi OpenBao, chưa hiện cho ai; `signingKeyPending = true` tới khi nhận. Chỉ một lần, không `Idempotency-Key`, phản hồi `Cache-Control: no-store`. Người nhận không còn ở đơn vị thì người có `PERM-10-subscribe` trên bên nhận xoay khóa (API-10-054) |
 | API-10-089 | Chỉ trả nội dung mục thuộc lượt phát lại `RUNNING` có `replayCode` đã cho; nội dung topic `RESTRICTED`, `SENSITIVE` giải mã phong bì bằng `transit/dh-{tenant}-event-dlq` |
 
+: Ghi chú hiện thực theo operation
+
 ## 4. Danh mục sự kiện
 
 ### 4.1. Sự kiện của PH-10 (EVT-10-01…16)
@@ -564,6 +714,8 @@ Sự kiện ghi vào `ph10_event.outbox_event` cùng giao dịch nghiệp vụ, 
 | EVT-10-14 | `{tenant}.event.compliance.violated.v1` | Vi phạm lược đồ của bên phát Kafka trực tiếp vượt ngưỡng trong 15 phút. | `publicationCode` | `ComplianceViolated` | PH-13, PH-18 | 023 |
 | EVT-10-15 | `{tenant}.event.migration.cut-over.v1` | Ánh xạ di trú chuyển hẳn hoặc quay lui. | `mappingId` | `MigrationCutOver` | PH-13, PH-18 | 075 |
 | EVT-10-16 | `{tenant}.event.bridge.state-changed.v1` | Cầu nối di trú đổi trạng thái (`RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`, `REJECTED`). | `bridgeCode` | `BridgeStateChanged` | PH-13, PH-18 | 073, 074 |
+
+: Sự kiện của PH-10 (EVT-10-01…16)
 <!-- gen:events:end -->
 
 Người nhận xử lý lũy đẳng: inbox theo (`consumer`, `ce_id`) và bỏ qua sự kiện có `configVersion` nhỏ hơn bản đang giữ (`dh-runtime` dùng cách này cho EVT-10-02, 08, 09). Không sự kiện nào mang giá trị khóa ký, nội dung sự kiện nghiệp vụ hay dữ liệu cá nhân. Ví dụ EVT-10-09 khi ngắt mạch:
@@ -593,6 +745,8 @@ Kênh `webhookDelivery` ở AsyncAPI mô tả yêu cầu `POST` của bộ giao 
 | `X-Datahub-Key-Id` | `keyId` của khóa `ACTIVE` | Bên nhận chọn khóa khi giữ nhiều khóa |
 | `X-Datahub-Replay` | `replayCode` | Chỉ khi giao từ lượt phát lại |
 | `traceparent` | W3C | Nối tiếp từ bên phát |
+
+: Kênh giao ĐẨY webhook (PUSH)
 
 Bộ giao nhận chỉ gửi HTTPS TLS ≥ 1.2 qua egress gateway, không theo chuyển hướng, ghim IP đã kiểm cho từng kết nối (chống DNS rebinding, BR-10-026). Phân loại kết quả: `2xx` thành công; `408`, `425`, `429`, `5xx`, quá `timeoutMs`, lỗi mạng là lỗi tạm thời (ERR-10-111, 112), thử lại giãn dần theo FR-10-039 và tôn trọng `Retry-After`; `4xx` khác là vĩnh viễn, vào DLQ ngay (ERR-10-113); `410 Gone` vào DLQ và tạm ngừng subscription; lỗi TLS ERR-10-114; đích bị chặn ERR-10-115. Không đọc được khóa ký thì tạm dừng phân vùng (ERR-10-117), không bao giờ gửi không ký.
 
@@ -629,6 +783,8 @@ Kênh `businessTopic` (địa chỉ `{tenant}.{domain}.{entity}.{eventName}.v{ma
 | `external` (9093 qua TSLCD) | HTTT `KAFKA_NATIVE` khi `10.external-kafka.enabled` | SASL OAUTHBEARER (principal theo `azp`) hoặc mTLS | Nhóm tiêu thụ bắt buộc `dh-ext-{tenant}-{subscriptionCode}`; serde Apicurio đọc lược đồ qua API-10-084 |
 | `replication` | MirrorMaker 2 sang site DR | mTLS | Ngoài phạm vi API |
 
+: Topic nghiệp vụ và topic DLQ
+
 Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn kèm tiêu đề `dh_dlq_subscription`, `dh_dlq_source_partition`, `dh_dlq_source_offset`, `dh_dlq_error_code`, `dh_dlq_attempts`, `dh_dlq_first_failed_at`, `dh_dlq_origin`, `dh_dlq_bridge` (FRS A.8). Năm nguồn ghi và `origin` tương ứng: bộ giao nhận `PUSH`, cổng kéo khi nack `PULL_NACK`, API-10-083 `EXTERNAL_REPORT`, bộ phát lại `REPLAY`, cầu nối `BRIDGE`. `DlqIngestor` (nhóm `dh-svc-dh-integration-{tenant}`) lưu bền vào `dlq_entry`, `dlq_payload`; HTTT không đọc topic DLQ trực tiếp mà xem qua API-10-060, 061, 103.
 
 ## 5. Hợp đồng với phân hệ khác và bên ngoài
@@ -651,6 +807,8 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 | Strimzi, Argo CD | PH-10 → Git | `KafkaTopic`, `KafkaUser` trong `dh-config-{tenant}` (`kafka/topics/`, `kafka/users/`), ACL theo tiền tố tenant (ADR-072) | Không qua API này; trạng thái thấy qua `provisioningCommit`, `provisioningError` |
 | OpenBao | `dh-integration` ghi; `dh-runtime` đọc | `kv/dh/{tenant}/event/subscriptions/{subscriptionCode}/signing`, `transit/dh-{tenant}-event-dlq`, `kv/dh/{tenant}/event/runtime/cursor` | Không qua API này |
 | Hub Pulsar cũ | Cầu nối ↔ Pulsar | API-10-075 (kiểm kê), 113…116, 078, 117, 118 | Kết nối nguồn tới Pulsar khai ở PH-05 (ADR-073) |
+
+: Hợp đồng với phân hệ khác và bên ngoài
 
 ## 6. Bảng mã lỗi ERR-10
 
@@ -716,6 +874,8 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 | ERR-10-053 | 401 | Control plane: token thiếu, không hợp lệ hoặc hết hạn | 115 API |
 | ERR-10-054 | 403 | Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm vi tổ chức) | 115 API |
 
+: Control plane (ERR-10-001…054)
+
 ### 6.2. Data plane và runtime (ERR-10-101…121)
 
 Mã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có HTTP (111…120) không trả cho bên gọi mà ghi ở `DeliveryFailure.errorCode`, `DlqEntry.errorCode`, tiêu đề `dh_dlq_error_code` và chỉ số.
@@ -743,6 +903,8 @@ Mã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có 
 | ERR-10-119 | — | Bản tin của bên phát Kafka trực tiếp không có định danh lược đồ hợp lệ | Lượt giao, DLQ (`errorCode`): Tuân thủ lược đồ (chỉ số, EVT-10-14) |
 | ERR-10-120 | — | Kafka từ chối do ACL hoặc hạn mức (ghi nhận theo principal) | Lượt giao, DLQ (`errorCode`): Chỉ số theo principal |
 | ERR-10-121 | 503 | Phụ thuộc runtime không khả dụng (Valkey cho lease, Apicurio khi bộ đệm lược đồ rỗng, OpenBao cho khóa cursor); kèm `Retry-After` | 079, 080, 081, 082 |
+
+: Data plane và runtime (ERR-10-101…121)
 <!-- gen:errors:end -->
 
 ### 6.3. Trường mở rộng của phản hồi lỗi
@@ -756,6 +918,8 @@ Mã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có 
 | ERR-10-029, 107, 121 | `retryAfterSeconds` và tiêu đề `Retry-After` | "Kho lược đồ tạm thời không khả dụng; yêu cầu chưa được ghi." |
 | ERR-10-031, 033 | `availableRange[]` (`partition`, `fromOffset`, `toOffset`) | "Dữ liệu trước 19/11/2026 đã hết lưu giữ." |
 | ERR-10-105 | `failedIndex`, `errors[]` | "Sự kiện thứ 3 của lô thiếu trường bắt buộc." |
+
+: Trường mở rộng của phản hồi lỗi
 
 Thông điệp không bao giờ lặp lại nội dung sự kiện, giá trị khóa ký hay thân phản hồi của đầu nhận; `responseSnippet` ở lượt lỗi đã cắt 512 byte và che theo SEC-32.
 
@@ -772,6 +936,8 @@ Thông điệp không bao giờ lặp lại nội dung sự kiện, giá trị k
 | Tệp sinh khớp nguồn | Chạy lại `gen_openapi.py`, `gen_asyncapi.py`, `gen_md.py`, rồi `git diff --exit-code` | CI-5 |
 | Mã API, EVT, ERR khớp tài liệu gốc | `build/tools/kiem_tra_ma.py` | CI-1 |
 
+: Các kiểm tra hợp đồng chạy trong CI
+
 Kết quả chạy ngày 26/11/2026 trên máy viết tài liệu:
 
 | Kiểm | Kết quả |
@@ -781,6 +947,8 @@ Kết quả chạy ngày 26/11/2026 trên máy viết tài liệu:
 | `@asyncapi/parser` 3.3 | 0 lỗi, 0 cảnh báo |
 | Spectral | Không cài trong môi trường viết; chạy ở CI-5 |
 | `doi_chieu_frs.py` | 91 mã FRS §8.3 khớp phương thức và đường dẫn; enum A.2 có đủ; ERR, EVT, PERM, scope không lệch; trường, enum chỉ có ở API liệt kê đủ ở §10.1 |
+
+: Kết quả chạy kiểm tra hợp đồng ngày 26/11/2026
 
 Lệnh chạy lại:
 
@@ -810,6 +978,8 @@ npx @redocly/cli@1.25.0 lint openapi-event.yaml
 | LGC-TOOL-010 | Nhóm Message Broker | API-10-071, 072, 009 (`SYSTEM`); kênh `businessTopic` qua listener `internal` | Broker ngoài ở PH-05 FR-05-035 |
 | LGC-BUS-039 | Document message và event message | API-10-079, 080; kênh `businessTopic`, `webhookDelivery` | Event message bất đồng bộ qua PH-10; document message đồng bộ ở PH-04 |
 
+: Hub Pulsar (LGC-HUB) và Bus
+
 Di trú dữ liệu cấu hình Hub dùng API-10-075 (`sourceKind = PULSAR_HUB`), 110, 111, 076, 112; chạy song song bằng cầu nối API-10-113…115, 090; chuyển hẳn và quay lui API-10-078, 116; đối chiếu và tiến độ API-10-117, 118; sự kiện EVT-10-15, 16.
 
 ### 8.2. API M5 của SRS repo
@@ -828,6 +998,8 @@ SRS repo `docs/07-srs/SRS-PH-10-event.md` §M5 mô tả đường quản trị `
 | `GET …/dlt` | API-10-060 | DLQ theo topic, lưu bền |
 | `/apis/registry/v2/groups/lgsp/artifacts…` | API-10-021…030 (quản trị), 084 (đọc) | Apicurio 3, `groupId` theo tenant; ghi registry chỉ qua control plane |
 | Cấu trúc sự kiện chung `eventId`, `eventType`, `traceId`, `payload` | CloudEvents 1.0 (`id`, `type`, `traceparent`, `data`) | FRS §4.9, CC-API-04 |
+
+: API M5 của SRS repo
 
 ## 9. Truy vết FR → API
 
@@ -912,6 +1084,8 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 | FR-10-074 | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | 077, 090, 113, 114, 115 |
 | FR-10-075 | Đối chiếu, chuyển hẳn và quay lui | 078, 116, 117 |
 | FR-10-076 | Báo cáo tiến độ di trú | 118 |
+
+: Truy vết FR → API
 <!-- gen:fr:end -->
 
 ## 10. Đề nghị bổ sung cho FRS
@@ -942,6 +1116,8 @@ Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS b�
 | 10 | CSDL D03-03-PH10 kiểm `push.endpointVerification` trong `ck_subscription_push`, còn FRS A.3 và API dùng `push.lastVerification` | Lệch tên khóa JSON giữa CSDL và FRS | D03-03-PH10 DDL (luồng CSDL sửa) |
 | 11 | Thêm `Cache-Control: no-store` bắt buộc cho phản hồi API-10-054, 100 vào BR-10-027 | Khóa ký chỉ hiển thị một lần | FRS BR-10-027 |
 
+: Đề nghị khác
+
 ### 10.3. Đề nghị của tập màn hình D03-06-PH10 (Phụ lục B)
 
 Đã xử lý ở FRS bản 0.3: các trường mới dưới đây vào FRS A.3, `dryRun` vào A.3, enum bước xác minh vào A.2.15.
@@ -959,6 +1135,8 @@ Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS b�
 | B9 | Miễn xác minh khi tạo subscription | Không nhận thay đổi API: miễn chỉ làm sau khi tạo, qua API-10-091 trên subscription `PENDING_APPROVAL`, vì miễn cần lý do và quyền `PERM-10-admin` khác người đề nghị. Trả lời Q10-31 của tập màn hình |
 | B10 | `steps[]` có mã bước cố định, `detail`, `validUntil` ở API-10-051 | Nhận: `steps[].name` đã là enum `DNS`, `TLS`, `HANDSHAKE`, `TEST_EVENT` và có `detail`; thêm `validUntil` (hết 24 giờ hiệu lực xác minh) |
 
+: Đề nghị của tập màn hình D03-06-PH10 (Phụ lục B)
+
 Tham số `dryRun` và các trường mới (`allowedActions`, `signingKeyPending`, `validUntil`, `metricsCollectedAt`, `estimatedDurationSeconds`, `commType` ở cạnh sơ đồ) chưa có ở FRS và được liệt kê ở §10.1 để FRS hấp thụ.
 
 ## 11. Câu hỏi mở
@@ -972,6 +1150,2946 @@ Tham số `dryRun` và các trường mới (`allowedActions`, `signingKeyPendin
 > **Câu hỏi mở Q10-58:** Lưu giữ và số phân vùng của topic sự kiện `{tenant}.event.*` đã chốt ở FRS §7.2 (GĐ-01). Tập này theo 7 ngày, 3 phân vùng theo mức của PH-05 (EVT-05), đủ cho `dh-runtime` dựng lại cấu hình sau sự cố dài nhất dự kiến (GĐ-01). Không còn mở; giữ để truy vết.
 
 > **Câu hỏi mở Q10-59:** Có cần một webhook "ping" chủ động định kỳ (không phải bắt tay xác minh) để phát hiện endpoint hỏng trước khi có sự kiện thật với subscription lưu lượng thấp không. Đề xuất tạm: không ở MVP; ngắt mạch và cảnh báo lag `STALLED` đủ, xem lại sau thí điểm.
+
+## 12. Đặc tả từng endpoint
+
+Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api.py`; sửa OpenAPI rồi chạy lại, không sửa tay. Mỗi endpoint một bảng đặc tả 10 mục.
+
+<!-- gen:dac-ta-api:start -->
+
+### Dự án tích hợp
+
+#### API-10-001 · Danh sách, tìm kiếm, lọc dự án
+
+::: dac-ta
+**Mục đích.** Danh sách, tìm kiếm, lọc dự án.
+
+**Phương thức, đường dẫn.** `GET /projects`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-001.
+
+**Tham số.** `q` (query, string, tùy chọn); `status` (query, array, tùy chọn); `ownerOrgCode` (query, OrgCode, tùy chọn); `label` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ProjectPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** OR chỉ thấy dự án có HTTT của tổ chức mình. Mặc định `status=ACTIVE`; `sort` theo `projectCode`, `name`, `updatedAt`, `topicCount`.
+:::
+
+#### API-10-002 · Tạo dự án tích hợp
+
+::: dac-ta
+**Mục đích.** Tạo dự án tích hợp.
+
+**Phương thức, đường dẫn.** `POST /projects`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-003.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ProjectCreate`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Project`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`, `status`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-002, ERR-10-011 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Từ dành riêng của route ERR-10-003; mã trùng kể cả dự án đã lưu trữ ERR-10-002; vượt `maxProjects` ERR-10-011.
+:::
+
+#### API-10-003 · Chi tiết dự án
+
+::: dac-ta
+**Mục đích.** Chi tiết dự án.
+
+**Phương thức, đường dẫn.** `GET /projects/{projectCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-002.
+
+**Tham số.** `projectCode` (path, ProjectCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Project`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-004 · Sửa dự án
+
+::: dac-ta
+**Mục đích.** Sửa dự án.
+
+**Phương thức, đường dẫn.** `PATCH /projects/{projectCode}`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-004.
+
+**Tham số.** `projectCode` (path, ProjectCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ProjectUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Project`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Dự án `ARCHIVED` không sửa được (ERR-10-006).
+:::
+
+#### API-10-005 · Lưu trữ dự án
+
+::: dac-ta
+**Mục đích.** Lưu trữ dự án.
+
+**Phương thức, đường dẫn.** `POST /projects/{projectCode}:archive`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-005.
+
+**Tham số.** `projectCode` (path, ProjectCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Project`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-010 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Còn topic `PENDING_APPROVAL`, `PROVISIONING`, `ACTIVE`, `DEPRECATED` trả ERR-10-010 kèm `dependents`. Topic `DRAFT` còn lại bị xóa mềm.
+:::
+
+#### API-10-006 · Khôi phục dự án đã lưu trữ
+
+::: dac-ta
+**Mục đích.** Khôi phục dự án đã lưu trữ.
+
+**Phương thức, đường dẫn.** `POST /projects/{projectCode}:restore`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-005.
+
+**Tham số.** `projectCode` (path, ProjectCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Project`; trường bắt buộc: `projectCode`, `name`, `ownerOrgCode`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+### Giám sát, dashboard, sơ đồ
+
+#### API-10-007 · Sơ đồ kết nối bên phát, topic, bên nhận
+
+::: dac-ta
+**Mục đích.** Sơ đồ kết nối bên phát, topic, bên nhận.
+
+**Phương thức, đường dẫn.** `GET /graph`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-058.
+
+**Tham số.** `projectCode` (query, ProjectCode, tùy chọn); `topicName` (query, TopicName, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `includeRetired` (query, boolean, tùy chọn); `overlay` (query, GraphOverlay, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Graph`; trường bắt buộc: `nodes`, `edges`, `overlay`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Dựng ba lớp bên phát, topic, bên nhận; vượt `10.graph.max-nodes` trả ERR-10-049, đề nghị lọc theo dự án. Bố cục làm ở trình duyệt.
+:::
+
+#### API-10-066 · Dashboard sự kiện của tenant
+
+::: dac-ta
+**Mục đích.** Dashboard sự kiện của tenant.
+
+**Phương thức, đường dẫn.** `GET /dashboard`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-057.
+
+**Tham số.** `projectCode` (query, ProjectCode, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Dashboard`; trường bắt buộc: `counts`, `lag`, `dlq`, `pendingApprovals`, `generatedAt`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Đếm từ `ph10_event`, làm mới 30 giây. `traffic` null khi PH-13 không khả dụng.
+:::
+
+### Topic
+
+#### API-10-008 · Danh sách topic; tra cứu topic dùng được cho luồng
+
+::: dac-ta
+**Mục đích.** Danh sách topic; tra cứu topic dùng được cho luồng.
+
+**Phương thức, đường dẫn.** `GET /topics`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-006, FR-10-069.
+
+**Tham số.** `q` (query, string, tùy chọn); `projectCode` (query, ProjectCode, tùy chọn); `status` (query, array, tùy chọn); `topicKind` (query, array, tùy chọn); `dataClass` (query, array, tùy chọn); `domain` (query, string, tùy chọn); `usableBy` (query, string, tùy chọn); `action` (query, PermissionAction, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `TopicPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Mặc định ẩn topic `DLQ`. `usableBy=flow:{flowCode}` kèm `action` trả topic luồng dùng được (bảng chọn của trình thiết kế PH-04, scope `event:permission-check` hoặc `PERM-10-read`).
+:::
+
+#### API-10-009 · Tạo topic (người) hoặc đăng ký topic CDC, SYSTEM (máy)
+
+::: dac-ta
+**Mục đích.** Tạo topic (người) hoặc đăng ký topic CDC, SYSTEM (máy).
+
+**Phương thức, đường dẫn.** `POST /topics`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-008, FR-10-066, FR-10-067.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TopicCreate`; trường bắt buộc: `description`, `dataClass`, `schema`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; `201` đã tạo, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`, `Location`; `202` đã nhận, xử lý bất đồng bộ, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-002, ERR-10-004, ERR-10-005, ERR-10-006, ERR-10-011, ERR-10-012, ERR-10-015, ERR-10-017, ERR-10-018, ERR-10-020, ERR-10-029, ERR-10-046, ERR-10-048 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Người dùng: topic `DRAFT` (hoặc `PENDING_APPROVAL` khi `submit`), 201. Tài khoản dịch vụ `event:topic-register` với `topicKind` `CDC`, `SYSTEM`: idempotent theo `topicName` (đã có cùng cấu hình trả 200, khác cấu hình ERR-10-002), tự duyệt theo BR-10-031 và trả 202 với `PROVISIONING` hoặc `PENDING_APPROVAL` trong ≤ 2 giây. Miền dành riêng với người dùng ERR-10-004; tiền tố khác tenant ERR-10-005.
+:::
+
+#### API-10-010 · Chi tiết topic
+
+::: dac-ta
+**Mục đích.** Chi tiết topic.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-007.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-011 · Sửa mô tả; sửa cấu hình khi còn DRAFT
+
+::: dac-ta
+**Mục đích.** Sửa mô tả; sửa cấu hình khi còn DRAFT.
+
+**Phương thức, đường dẫn.** `PATCH /topics/{topicName}`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-008, FR-10-014.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TopicUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-012, ERR-10-045, ERR-10-046, ERR-10-048 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Topic `CDC`, `SYSTEM` chỉ tài khoản dịch vụ chủ quản sửa ngoài mô tả (ERR-10-045).
+:::
+
+#### API-10-012 · Gửi duyệt tạo topic
+
+::: dac-ta
+**Mục đích.** Gửi duyệt tạo topic.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:submit`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-008.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-011, ERR-10-015, ERR-10-017, ERR-10-018 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tạo yêu cầu `TOPIC_CREATE`; topic và phiên bản lược đồ 1 sang `PENDING_APPROVAL`. Trả `approvalRequestCode`.
+:::
+
+#### API-10-013 · Thử lại cấp phát topic FAILED
+
+::: dac-ta
+**Mục đích.** Thử lại cấp phát topic FAILED.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:retry-provisioning`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-010.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-029, ERR-10-038 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ topic `FAILED`: sinh lại tài nguyên, commit mới, sang `PROVISIONING`.
+:::
+
+#### API-10-014 · Hủy cấp phát, đưa topic về DRAFT
+
+::: dac-ta
+**Mục đích.** Hủy cấp phát, đưa topic về DRAFT.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:cancel-provisioning`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-010.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-038 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Topic `FAILED` hoặc `PROVISIONING` quá hạn: về `DRAFT`, xóa artifact Apicurio nếu chưa có bản tin.
+:::
+
+#### API-10-015 · Đề nghị đổi phân vùng, lưu giữ, dọn, định tuyến, mức tương thích
+
+::: dac-ta
+**Mục đích.** Đề nghị đổi phân vùng, lưu giữ, dọn, định tuyến, mức tương thích.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/change-requests`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-011, FR-10-012, FR-10-013, FR-10-021.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `dryRun` (query, boolean, tùy chọn); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TopicChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `TopicChangeResult`; trường bắt buộc: `topic`; `201` đã tạo, `TopicChangeResult`; trường bắt buộc: `topic`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-011, ERR-10-012, ERR-10-013, ERR-10-014, ERR-10-019, ERR-10-045, ERR-10-046, ERR-10-047, ERR-10-048 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Giảm phân vùng ERR-10-013; tăng phân vùng ở topic có khóa thiếu `acknowledgeOrderingImpact` ERR-10-014; đổi định tuyến, khóa hoặc thứ tự cần phiên bản topic mới ERR-10-047; `NONE` với topic đã từng `ACTIVE` ERR-10-019. Áp dụng ngay trả 200 (`approvalRequest` null); cần duyệt trả 201 với `approvalRequest` `TOPIC_CHANGE` và `impactedSubscriptions`. `dryRun=true` chỉ kiểm và trả 200 với `impactedSubscriptions`, cảnh báo thứ tự, không ghi gì.
+:::
+
+#### API-10-016 · Ngừng khuyến nghị topic
+
+::: dac-ta
+**Mục đích.** Ngừng khuyến nghị topic.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:deprecate`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-014.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `DeprecateRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-045 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Topic `ACTIVE` sang `DEPRECATED`; `sunsetAt` mặc định theo `10.topic.deprecation-days`. Phát EVT-10-03.
+:::
+
+#### API-10-017 · Đề nghị ngừng dùng topic
+
+::: dac-ta
+**Mục đích.** Đề nghị ngừng dùng topic.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:retire`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-014.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-010, ERR-10-045 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tạo yêu cầu `TOPIC_RETIRE`; còn subscription chưa `REVOKED` trả ERR-10-010. Khi duyệt: `RETIRED`, phát EVT-10-04, xóa khỏi cụm sau `10.topic.delete-after-retire-days`.
+:::
+
+#### API-10-018 · Tạo phiên bản chính mới của topic
+
+::: dac-ta
+**Mục đích.** Tạo phiên bản chính mới của topic.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}:new-major-version`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-015, FR-10-068.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `NewMajorVersionRequest`; trường bắt buộc: `schema`, `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Topic`; trường bắt buộc: `topicName`, `topicKind`, `partitions`, `retentionHours`, `cleanupPolicy`, `routingMode`, `dataClass`, `status`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-011, ERR-10-015, ERR-10-017, ERR-10-018, ERR-10-029, ERR-10-045, ERR-10-047 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tạo topic `.v{n+1}` (`predecessorTopic`), topic cũ `DEPRECATED` với `successorTopic` khi topic mới `ACTIVE`. Đã có kế nhiệm ERR-10-047. Máy (PH-05, FR-10-068) tự duyệt.
+:::
+
+#### API-10-019 · Tiến độ chuyển bên nhận sang topic kế nhiệm
+
+::: dac-ta
+**Mục đích.** Tiến độ chuyển bên nhận sang topic kế nhiệm.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/migration-status`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-016.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `MigrationStatus`; trường bắt buộc: `topicName`, `items`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-020 · Thông tin kết nối và cấu hình mẫu cho bên phát, bên nhận
+
+::: dac-ta
+**Mục đích.** Thông tin kết nối và cấu hình mẫu cho bên phát, bên nhận.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/connection-info`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-007, FR-10-024, FR-10-034.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionInfo`; trường bắt buộc: `topicName`, `httpPublishUrl`, `registryUrl`, `apicurioGroupId`, `apicurioArtifactId`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không chứa bí mật; listener `external` chỉ khi `10.external-kafka.enabled`.
+:::
+
+### Lược đồ sự kiện
+
+#### API-10-021 · Lược đồ của topic (định dạng, mức tương thích)
+
+::: dac-ta
+**Mục đích.** Lược đồ của topic (định dạng, mức tương thích).
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/schema`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-020.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `EventSchema`; trường bắt buộc: `topicName`, `schemaFormat`, `compatibility`, `apicurioGroupId`, `apicurioArtifactId`, `latestVersionNo`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-022 · Danh sách phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** Danh sách phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/schema/versions`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-020.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `status` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersionList`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-023 · Tạo phiên bản lược đồ nháp (người) hoặc đăng ký phiên bản CDC (máy)
+
+::: dac-ta
+**Mục đích.** Tạo phiên bản lược đồ nháp (người) hoặc đăng ký phiên bản CDC (máy).
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/schema/versions`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-017, FR-10-068.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SchemaVersionCreate`; trường bắt buộc: `content`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; `201` đã tạo, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-015, ERR-10-016, ERR-10-017, ERR-10-018, ERR-10-020, ERR-10-029, ERR-10-045 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Người dùng: phiên bản `DRAFT`. PH-05 (`event:topic-register`): kiểm tương thích theo mức của topic và tự duyệt khi đạt, không đạt ERR-10-016 (FR-10-068).
+:::
+
+#### API-10-024 · Chi tiết một phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** Chi tiết một phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/schema/versions/{versionNo}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-020.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `Accept: application/json` cho siêu dữ liệu; `Accept: application/octet-stream` tải nội dung lược đồ.
+:::
+
+#### API-10-025 · Sửa nội dung phiên bản nháp
+
+::: dac-ta
+**Mục đích.** Sửa nội dung phiên bản nháp.
+
+**Phương thức, đường dẫn.** `PUT /topics/{topicName}/schema/versions/{versionNo}`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-017.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SchemaVersionUpdate`; trường bắt buộc: `content`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-015, ERR-10-017, ERR-10-018, ERR-10-020 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ phiên bản `DRAFT` hoặc `REJECTED` (về `DRAFT`).
+:::
+
+#### API-10-026 · Kiểm tra cú pháp, tương thích, dữ liệu cá nhân
+
+::: dac-ta
+**Mục đích.** Kiểm tra cú pháp, tương thích, dữ liệu cá nhân.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/schema/versions/{versionNo}:check`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-017, FR-10-018.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-039, ERR-10-015, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không đổi trạng thái; ghi `compatibilityReport`, `piiFindings`, `checkedAt`. Không tương thích trả 200 với `compatibilityReport.compatible = false` (không phải lỗi).
+:::
+
+#### API-10-027 · Gửi duyệt phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** Gửi duyệt phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/schema/versions/{versionNo}:submit`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-019.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-015, ERR-10-016, ERR-10-017, ERR-10-018 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chạy lại kiểm tra; không tương thích ERR-10-016; PII `BLOCKING` ERR-10-018. Tạo yêu cầu `SCHEMA_VERSION`.
+:::
+
+#### API-10-028 · Ngừng khuyến nghị phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** Ngừng khuyến nghị phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/schema/versions/{versionNo}:deprecate`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-022.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `ENABLED` sang `DEPRECATED`; bên phát vẫn dùng được. Phát EVT-10-02.
+:::
+
+#### API-10-029 · Vô hiệu phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** Vô hiệu phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/schema/versions/{versionNo}:disable`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-022.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `versionNo` (path, integer, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaVersion`; trường bắt buộc: `topicName`, `versionNo`, `status`, `contentHash`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Sang `DISABLED`; cổng từ chối `dataschema` trỏ phiên bản này (ERR-10-105). Không vô hiệu được phiên bản `ENABLED` duy nhất (ERR-10-006).
+:::
+
+#### API-10-030 · So sánh hai phiên bản lược đồ
+
+::: dac-ta
+**Mục đích.** So sánh hai phiên bản lược đồ.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/schema/diff`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-020.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `from` (query, integer, tùy chọn); `to` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaDiff`; trường bắt buộc: `topicName`, `from`, `to`, `changes`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-031 · Tuân thủ lược đồ của bên phát Kafka trực tiếp
+
+::: dac-ta
+**Mục đích.** Tuân thủ lược đồ của bên phát Kafka trực tiếp.
+
+**Phương thức, đường dẫn.** `GET /topics/{topicName}/compliance`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-023.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Compliance`; trường bắt buộc: `topicName`, `items`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+### Bên phát, bên nhận
+
+#### API-10-032 · Danh sách bên phát
+
+::: dac-ta
+**Mục đích.** Danh sách bên phát.
+
+**Phương thức, đường dẫn.** `GET /publishers`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-025.
+
+**Tham số.** `q` (query, string, tùy chọn); `partyType` (query, array, tùy chọn); `commType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `projectCode` (query, ProjectCode, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PublisherPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** OR chỉ thấy bên phát của tổ chức mình.
+:::
+
+#### API-10-033 · Đăng ký bên phát
+
+::: dac-ta
+**Mục đích.** Đăng ký bên phát.
+
+**Phương thức, đường dẫn.** `POST /publishers`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-026.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `PublisherCreate`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Publisher`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-002, ERR-10-021, ERR-10-022, ERR-10-023, ERR-10-024, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** HTTT không `ACTIVE` ở PH-01 ERR-10-021; luồng không hợp lệ ERR-10-022; DU ngoài danh sách ERR-10-023; cặp (HTTT, kiểu giao tiếp) đã có ERR-10-024.
+:::
+
+#### API-10-034 · Chi tiết bên phát
+
+::: dac-ta
+**Mục đích.** Chi tiết bên phát.
+
+**Phương thức, đường dẫn.** `GET /publishers/{publisherCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-025.
+
+**Tham số.** `publisherCode` (path, PublisherCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publisher`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-035 · Sửa bên phát
+
+::: dac-ta
+**Mục đích.** Sửa bên phát.
+
+**Phương thức, đường dẫn.** `PATCH /publishers/{publisherCode}`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `publisherCode` (path, PublisherCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `PartyUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publisher`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-036 · Tạm ngừng bên phát
+
+::: dac-ta
+**Mục đích.** Tạm ngừng bên phát.
+
+**Phương thức, đường dẫn.** `POST /publishers/{publisherCode}:suspend`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `publisherCode` (path, PublisherCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publisher`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Mọi publication `ACTIVE` sang `SUSPENDED` (FR-10-032); phát EVT-10-07 cho từng quan hệ.
+:::
+
+#### API-10-037 · Danh sách bên nhận
+
+::: dac-ta
+**Mục đích.** Danh sách bên nhận.
+
+**Phương thức, đường dẫn.** `GET /subscribers`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-025.
+
+**Tham số.** `q` (query, string, tùy chọn); `partyType` (query, array, tùy chọn); `commType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `projectCode` (query, ProjectCode, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SubscriberPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-038 · Đăng ký bên nhận
+
+::: dac-ta
+**Mục đích.** Đăng ký bên nhận.
+
+**Phương thức, đường dẫn.** `POST /subscribers`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-027.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SubscriberCreate`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Subscriber`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-002, ERR-10-021, ERR-10-022, ERR-10-023, ERR-10-024, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `partyType = FLOW` thay chức năng "đánh dấu là luồng" của hệ cũ.
+:::
+
+#### API-10-039 · Chi tiết bên nhận
+
+::: dac-ta
+**Mục đích.** Chi tiết bên nhận.
+
+**Phương thức, đường dẫn.** `GET /subscribers/{subscriberCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-025.
+
+**Tham số.** `subscriberCode` (path, SubscriberCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscriber`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-040 · Sửa bên nhận
+
+::: dac-ta
+**Mục đích.** Sửa bên nhận.
+
+**Phương thức, đường dẫn.** `PATCH /subscribers/{subscriberCode}`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `subscriberCode` (path, SubscriberCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `PartyUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscriber`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-041 · Tạm ngừng bên nhận
+
+::: dac-ta
+**Mục đích.** Tạm ngừng bên nhận.
+
+**Phương thức, đường dẫn.** `POST /subscribers/{subscriberCode}:suspend`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `subscriberCode` (path, SubscriberCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscriber`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Mọi subscription `ACTIVE` sang `SUSPENDED`; phát EVT-10-09.
+:::
+
+#### API-10-092 · Tiếp tục bên phát
+
+::: dac-ta
+**Mục đích.** Tiếp tục bên phát.
+
+**Phương thức, đường dẫn.** `POST /publishers/{publisherCode}:resume`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `publisherCode` (path, PublisherCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publisher`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** SO chỉ tiếp tục khi chính SO đã tạm ngừng (`suspendSource = SECURITY`); quan hệ về trạng thái trước.
+:::
+
+#### API-10-093 · Ngừng dùng bên phát
+
+::: dac-ta
+**Mục đích.** Ngừng dùng bên phát.
+
+**Phương thức, đường dẫn.** `POST /publishers/{publisherCode}:retire`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `publisherCode` (path, PublisherCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publisher`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Thu hồi mọi publication; mã không dùng lại.
+:::
+
+#### API-10-094 · Tiếp tục bên nhận
+
+::: dac-ta
+**Mục đích.** Tiếp tục bên nhận.
+
+**Phương thức, đường dẫn.** `POST /subscribers/{subscriberCode}:resume`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `subscriberCode` (path, SubscriberCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscriber`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-095 · Ngừng dùng bên nhận
+
+::: dac-ta
+**Mục đích.** Ngừng dùng bên nhận.
+
+**Phương thức, đường dẫn.** `POST /subscribers/{subscriberCode}:retire`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-028.
+
+**Tham số.** `subscriberCode` (path, SubscriberCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscriber`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Thu hồi mọi subscription.
+:::
+
+### Publication
+
+#### API-10-042 · Danh sách publication
+
+::: dac-ta
+**Mục đích.** Danh sách publication.
+
+**Phương thức, đường dẫn.** `GET /publications`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-030.
+
+**Tham số.** `publisherCode` (query, PublisherCode, tùy chọn); `topicName` (query, TopicName, tùy chọn); `status` (query, array, tùy chọn); `projectCode` (query, ProjectCode, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PublicationPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-043 · Đề nghị publication
+
+::: dac-ta
+**Mục đích.** Đề nghị publication.
+
+**Phương thức, đường dẫn.** `POST /publications`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-030.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `PublicationCreate`; trường bắt buộc: `publisherCode`, `topicName`, `purpose`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Publication`; trường bắt buộc: `publicationCode`, `publisherCode`, `topicName`, `purpose`, `status`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-011, ERR-10-024, ERR-10-025, ERR-10-044, ERR-10-051 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Topic `DEPRECATED` hoặc bên phát không `ACTIVE` ERR-10-025; cặp đã có ERR-10-024; topic `RESTRICTED`, `SENSITIVE` với bên phát chưa đạt cấp độ ATTT ERR-10-051. Tự duyệt theo BR-10-031 với bên `INTERNAL_SERVICE`.
+:::
+
+#### API-10-044 · Chi tiết publication
+
+::: dac-ta
+**Mục đích.** Chi tiết publication.
+
+**Phương thức, đường dẫn.** `GET /publications/{publicationCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-030.
+
+**Tham số.** `publicationCode` (path, PublicationCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publication`; trường bắt buộc: `publicationCode`, `publisherCode`, `topicName`, `purpose`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-045 · Tạm ngừng publication
+
+::: dac-ta
+**Mục đích.** Tạm ngừng publication.
+
+**Phương thức, đường dẫn.** `POST /publications/{publicationCode}:suspend`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-032.
+
+**Tham số.** `publicationCode` (path, PublicationCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publication`; trường bắt buộc: `publicationCode`, `publisherCode`, `topicName`, `purpose`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Gỡ dữ liệu OPA (≤ 60 giây), scope, ACL `WRITE`. Phát EVT-10-07.
+:::
+
+#### API-10-096 · Tiếp tục publication
+
+::: dac-ta
+**Mục đích.** Tiếp tục publication.
+
+**Phương thức, đường dẫn.** `POST /publications/{publicationCode}:resume`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-032.
+
+**Tham số.** `publicationCode` (path, PublicationCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publication`; trường bắt buộc: `publicationCode`, `publisherCode`, `topicName`, `purpose`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-025 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Cấp lại không cần duyệt nếu topic, bên phát còn hợp lệ (ngược lại ERR-10-025).
+:::
+
+#### API-10-097 · Thu hồi publication
+
+::: dac-ta
+**Mục đích.** Thu hồi publication.
+
+**Phương thức, đường dẫn.** `POST /publications/{publicationCode}:revoke`.
+
+**Quyền.** `PERM-10-update`.
+
+**FR hiện thực.** FR-10-032.
+
+**Tham số.** `publicationCode` (path, PublicationCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Publication`; trường bắt buộc: `publicationCode`, `publisherCode`, `topicName`, `purpose`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Sang `REVOKED`, không tiếp tục được.
+:::
+
+### Subscription và giao nhận
+
+#### API-10-046 · Danh sách subscription
+
+::: dac-ta
+**Mục đích.** Danh sách subscription.
+
+**Phương thức, đường dẫn.** `GET /subscriptions`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-035.
+
+**Tham số.** `q` (query, string, tùy chọn); `subscriberCode` (query, SubscriberCode, tùy chọn); `topicName` (query, TopicName, tùy chọn); `status` (query, array, tùy chọn); `deliveryMode` (query, array, tùy chọn); `alertState` (query, array, tùy chọn); `projectCode` (query, ProjectCode, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SubscriptionPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-047 · Đề nghị subscription
+
+::: dac-ta
+**Mục đích.** Đề nghị subscription.
+
+**Phương thức, đường dẫn.** `POST /subscriptions`.
+
+**Quyền.** `PERM-10-subscribe`.
+
+**FR hiện thực.** FR-10-035.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SubscriptionCreate`; trường bắt buộc: `subscriberCode`, `topicName`, `deliveryMode`, `purpose`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-011, ERR-10-024, ERR-10-025, ERR-10-026, ERR-10-027, ERR-10-028, ERR-10-030, ERR-10-031, ERR-10-044, ERR-10-051 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `PUSH` cần endpoint đã xác minh trong 24 giờ (chưa có thì chạy xác minh, lỗi ERR-10-027); `PULL_KAFKA` khi tenant chưa bật ERR-10-028; `workerCount` vượt phân vùng ERR-10-030; `startAt` ngoài lưu giữ ERR-10-031; topic `RESTRICTED`, `SENSITIVE` bắt buộc `legalBasis`. Gán `consumerGroup` theo A.8. Không gửi `failurePolicy` thì mặc định `BLOCK` với topic `orderingRequired`, `DEAD_LETTER` với topic còn lại; `lagWarnSeconds` phải nhỏ hơn `lagCriticalSeconds` (ERR-10-012).
+:::
+
+#### API-10-048 · Chi tiết subscription
+
+::: dac-ta
+**Mục đích.** Chi tiết subscription.
+
+**Phương thức, đường dẫn.** `GET /subscriptions/{subscriptionCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-035, FR-10-056.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-049 · Sửa tham số subscription
+
+::: dac-ta
+**Mục đích.** Sửa tham số subscription.
+
+**Phương thức, đường dẫn.** `PATCH /subscriptions/{subscriptionCode}`.
+
+**Quyền.** `PERM-10-subscribe`.
+
+**FR hiện thực.** FR-10-046.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SubscriptionUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-012, ERR-10-026, ERR-10-027, ERR-10-030, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không cần duyệt lại: `workerCount`, `maxRetries`, `retryBackoff`, `timeoutMs`, `payloadFormat`, `pull`, ngưỡng lag (áp dụng ≤ 60 giây). Đổi `endpointUrl` (phải xác minh trước), `failurePolicy` tạo yêu cầu `SUBSCRIPTION`, trả `approvalRequestCode`, subscription chạy tham số cũ tới khi duyệt. Thay đổi có hiệu lực phát EVT-10-09.
+:::
+
+#### API-10-050 · Tạm dừng subscription
+
+::: dac-ta
+**Mục đích.** Tạm dừng subscription.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}:pause`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-041.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-052 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `ACTIVE` sang `PAUSED`; bộ giao nhận dừng ≤ 10 giây. Subscription `INTERNAL` trả ERR-10-052.
+:::
+
+#### API-10-051 · Xác minh endpoint webhook
+
+::: dac-ta
+**Mục đích.** Xác minh endpoint webhook.
+
+**Phương thức, đường dẫn.** `POST /endpoint-verifications`.
+
+**Quyền.** `PERM-10-subscribe`.
+
+**FR hiện thực.** FR-10-036.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `EndpointVerificationRequest`; trường bắt buộc: `endpointUrl`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `EndpointVerification`; trường bắt buộc: `result`, `checkedAt`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-039, ERR-10-026, ERR-10-027 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Bắt tay `OPTIONS` theo CloudEvents HTTP Webhook (`WebHook-Request-Origin: event.{tenant}.datahub`), kiểm TLS, DNS. Có `subscriptionCode` thì ghi `push.lastVerification`. Thất bại trả 200 với `result = FAILED` khi gọi riêng; trả ERR-10-027 khi dùng trong API-10-047, 049.
+:::
+
+#### API-10-052 · Thống kê giao nhận theo thời gian
+
+::: dac-ta
+**Mục đích.** Thống kê giao nhận theo thời gian.
+
+**Phương thức, đường dẫn.** `GET /subscriptions/{subscriptionCode}/stats`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-056.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `window` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DeliveryStats`; trường bắt buộc: `subscriptionCode`, `window`, `items`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-053 · Lượt giao lỗi gần đây
+
+::: dac-ta
+**Mục đích.** Lượt giao lỗi gần đây.
+
+**Phương thức, đường dẫn.** `GET /subscriptions/{subscriptionCode}/failures`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-056.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `failureClass` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DeliveryFailurePage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không có thân sự kiện; `responseSnippet` ≤ 512 byte đã che.
+:::
+
+#### API-10-054 · Xoay khóa ký webhook
+
+::: dac-ta
+**Mục đích.** Xoay khóa ký webhook.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/signing-keys:rotate`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-042.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SigningKeyRotateRequest`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `SigningKeyIssued`; trường bắt buộc: `subscriptionCode`, `keyId`, `status`, `secret`; tiêu đề `ETag`, `Cache-Control`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Khóa mới `ACTIVE`, khóa cũ `PREVIOUS` trong `10.push.key-rotation-overlap-days`; trả `secret` một lần. Quyền: `PERM-10-operate` hoặc `PERM-10-subscribe`. Phát EVT-10-13.
+:::
+
+#### API-10-055 · Độ trễ tiêu thụ theo phân vùng
+
+::: dac-ta
+**Mục đích.** Độ trễ tiêu thụ theo phân vùng.
+
+**Phương thức, đường dẫn.** `GET /subscriptions/{subscriptionCode}/lag`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-054.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `window` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Lag`; trường bắt buộc: `subscriptionCode`, `consumerGroup`, `alertState`, `lagRecords`, `lagSeconds`, `partitions`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-056 · Xác nhận cảnh báo lag
+
+::: dac-ta
+**Mục đích.** Xác nhận cảnh báo lag.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/lag-alerts:acknowledge`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-055.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `LagAckRequest`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tắt thông báo lặp 4 giờ; không tắt đánh giá. Ba trường xác nhận bị xóa khi `alertState` đổi mức.
+:::
+
+#### API-10-091 · Ngoại lệ xác minh endpoint có thời hạn
+
+::: dac-ta
+**Mục đích.** Ngoại lệ xác minh endpoint có thời hạn.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/endpoint-verification:waive`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-036.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `WaiverRequest`; trường bắt buộc: `reason`, `waiverUntil`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-012 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Ngoại lệ ≤ 180 ngày cho HTTT cũ không trả lời được bắt tay; thay bằng một `POST` sự kiện kiểm tra `vn.datahub.event.subscription.verification`. Ghi `push.lastVerification.result = WAIVED`.
+:::
+
+#### API-10-098 · Tiếp tục subscription
+
+::: dac-ta
+**Mục đích.** Tiếp tục subscription.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}:resume`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-041.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-052 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Từ `PAUSED` hoặc `SUSPENDED` (cần lý do khắc phục). `INTERNAL` trả ERR-10-052.
+:::
+
+#### API-10-099 · Thu hồi subscription
+
+::: dac-ta
+**Mục đích.** Thu hồi subscription.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}:revoke`.
+
+**Quyền.** `PERM-10-subscribe`.
+
+**FR hiện thực.** FR-10-047.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Subscription`; trường bắt buộc: `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `consumerGroup`, `status`, `alertState`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Thu hồi khóa ký, gỡ ACL, xóa nhóm tiêu thụ sau `10.subscription.group-delete-delay-hours`; hủy lượt phát lại đang chạy.
+:::
+
+#### API-10-100 · Thu hồi khẩn khóa ký, sinh khóa mới
+
+::: dac-ta
+**Mục đích.** Thu hồi khẩn khóa ký, sinh khóa mới.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/signing-keys:revoke`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-042.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `SigningKeyIssued`; trường bắt buộc: `subscriptionCode`, `keyId`, `status`, `secret`; tiêu đề `ETag`, `Cache-Control`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Khóa hiện tại `REVOKED` ngay, sinh khóa mới, không chồng lấn (SO, TA). Phát EVT-10-13.
+:::
+
+#### API-10-120 · Nhận khóa ký đầu tiên một lần sau khi duyệt
+
+::: dac-ta
+**Mục đích.** Nhận khóa ký đầu tiên một lần sau khi duyệt.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/signing-keys:claim`.
+
+**Quyền.** `PERM-10-subscribe`.
+
+**FR hiện thực.** FR-10-037, FR-10-042.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SigningKeyIssued`; trường bắt buộc: `subscriptionCode`, `keyId`, `status`, `secret`; tiêu đề `ETag`, `Cache-Control`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-029, ERR-10-044 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** FR-10-037 bước 6: người đề nghị (hoặc người có `PERM-10-subscribe` trên bên nhận) nhận khóa ký đầu tiên đúng một lần sau khi subscription `ACTIVE`; gọi lại khi `signingKeyPending = false` trả ERR-10-006, khi đó dùng API-10-054. Không có `Idempotency-Key` để phản hồi chứa khóa không bị lưu đệm. Phát EVT-10-13.
+:::
+
+### Yêu cầu duyệt
+
+#### API-10-057 · Danh sách yêu cầu duyệt
+
+::: dac-ta
+**Mục đích.** Danh sách yêu cầu duyệt.
+
+**Phương thức, đường dẫn.** `GET /approval-requests`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-009, FR-10-019, FR-10-031, FR-10-037, FR-10-051.
+
+**Tham số.** `requestType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `targetType` (query, array, tùy chọn); `targetCode` (query, string, tùy chọn); `requestedBy` (query, string, tùy chọn); `mine` (query, boolean, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequestPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Nguồn của "Việc của tôi" (UI-10-13) với `status=PENDING`.
+:::
+
+#### API-10-058 · Chi tiết yêu cầu duyệt
+
+::: dac-ta
+**Mục đích.** Chi tiết yêu cầu duyệt.
+
+**Phương thức, đường dẫn.** `GET /approval-requests/{requestCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-009, FR-10-019, FR-10-031, FR-10-037, FR-10-051.
+
+**Tham số.** `requestCode` (path, RequestCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequest`; trường bắt buộc: `requestCode`, `requestType`, `targetType`, `targetCode`, `status`, `requestedBy`, `requestedAt`, `autoApproved`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `payloadDiff` là khác biệt cấu hình; `checks` gồm kết quả kiểm tra hạn mức, tên, dữ liệu cá nhân, tương thích.
+:::
+
+#### API-10-059 · Duyệt yêu cầu
+
+::: dac-ta
+**Mục đích.** Duyệt yêu cầu.
+
+**Phương thức, đường dẫn.** `POST /approval-requests/{requestCode}:approve`.
+
+**Quyền.** `PERM-10-approve`.
+
+**FR hiện thực.** FR-10-009, FR-10-019, FR-10-031, FR-10-037, FR-10-051.
+
+**Tham số.** `requestCode` (path, RequestCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ApproveRequest`; trường bắt buộc: `comment`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequest`; trường bắt buộc: `requestCode`, `requestType`, `targetType`, `targetCode`, `status`, `requestedBy`, `requestedAt`, `autoApproved`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-008, ERR-10-009, ERR-10-011, ERR-10-016, ERR-10-029, ERR-10-038, ERR-10-051 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Bốn mắt: người duyệt khác người tạo đối tượng và người gửi (ERR-10-008). Chạy lại kiểm tra hạn mức (ERR-10-011), tương thích (ERR-10-016), cấp độ ATTT (ERR-10-051). Apicurio, Git, Keycloak không khả dụng ERR-10-029 (yêu cầu giữ `PENDING`).
+:::
+
+#### API-10-101 · Từ chối yêu cầu
+
+::: dac-ta
+**Mục đích.** Từ chối yêu cầu.
+
+**Phương thức, đường dẫn.** `POST /approval-requests/{requestCode}:reject`.
+
+**Quyền.** `PERM-10-approve`.
+
+**FR hiện thực.** FR-10-009, FR-10-019, FR-10-031, FR-10-037, FR-10-051.
+
+**Tham số.** `requestCode` (path, RequestCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RejectRequest`; trường bắt buộc: `comment`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequest`; trường bắt buộc: `requestCode`, `requestType`, `targetType`, `targetCode`, `status`, `requestedBy`, `requestedAt`, `autoApproved`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-008, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Đối tượng về trạng thái trước khi gửi (topic, lược đồ về `DRAFT`; publication, subscription, lượt phát lại, cầu nối sang `REJECTED`).
+:::
+
+#### API-10-102 · Rút yêu cầu đã gửi
+
+::: dac-ta
+**Mục đích.** Rút yêu cầu đã gửi.
+
+**Phương thức, đường dẫn.** `POST /approval-requests/{requestCode}:withdraw`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-009, FR-10-019, FR-10-031, FR-10-037, FR-10-051.
+
+**Tham số.** `requestCode` (path, RequestCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ApprovalRequest`; trường bắt buộc: `requestCode`, `requestType`, `targetType`, `targetCode`, `status`, `requestedBy`, `requestedAt`, `autoApproved`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ người gửi, khi `PENDING`; đối tượng về trạng thái trước khi gửi.
+:::
+
+### DLQ và phát lại
+
+#### API-10-060 · Danh sách mục DLQ (siêu dữ liệu)
+
+::: dac-ta
+**Mục đích.** Danh sách mục DLQ (siêu dữ liệu).
+
+**Phương thức, đường dẫn.** `GET /dlq-entries`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-050.
+
+**Tham số.** `topicName` (query, TopicName, tùy chọn); `subscriptionCode` (query, SubscriptionCode, tùy chọn); `status` (query, array, tùy chọn); `errorCode` (query, string, tùy chọn); `origin` (query, array, tùy chọn); `bridgeCode` (query, BridgeCode, tùy chọn); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `eventId` (query, string, tùy chọn); `eventSubject` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DlqEntryPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Siêu dữ liệu, không nội dung. PH-18 gọi bằng scope `event:dlq-read`. `Accept: text/csv` xuất danh sách.
+:::
+
+#### API-10-061 · Siêu dữ liệu một mục DLQ
+
+::: dac-ta
+**Mục đích.** Siêu dữ liệu một mục DLQ.
+
+**Phương thức, đường dẫn.** `GET /dlq-entries/{dlqEntryId}`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-050.
+
+**Tham số.** `dlqEntryId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DlqEntry`; trường bắt buộc: `dlqEntryId`, `sourceTopic`, `origin`, `errorCode`, `attempts`, `firstFailedAt`, `lastFailedAt`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-062 · Loại bỏ mục DLQ
+
+::: dac-ta
+**Mục đích.** Loại bỏ mục DLQ.
+
+**Phương thức, đường dẫn.** `POST /dlq-entries:discard`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-050.
+
+**Tham số.** `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `DiscardRequest`; trường bắt buộc: `dlqEntryIds`, `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `DlqEntryList`; trường bắt buộc: `items`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-007, ERR-10-037, ERR-10-039, ERR-10-009, ERR-10-036 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** ≤ 1.000 mục `NEW` mỗi lệnh, tất cả hoặc không; mục đã xử lý ERR-10-036.
+:::
+
+#### API-10-063 · Danh sách lượt phát lại
+
+::: dac-ta
+**Mục đích.** Danh sách lượt phát lại.
+
+**Phương thức, đường dẫn.** `GET /replays`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-052.
+
+**Tham số.** `subscriptionCode` (query, SubscriptionCode, tùy chọn); `status` (query, array, tùy chọn); `replayMode` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-064 · Đề nghị phát lại theo khoảng, đặt lại offset, mục DLQ
+
+::: dac-ta
+**Mục đích.** Đề nghị phát lại theo khoảng, đặt lại offset, mục DLQ.
+
+**Phương thức, đường dẫn.** `POST /replays`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-051, FR-10-053.
+
+**Tham số.** `dryRun` (query, boolean, tùy chọn); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ReplayCreate`; trường bắt buộc: `subscriptionCode`, `replayMode`, `rangeType`, `reason`, `acknowledgeDuplicates`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `ReplayEstimate`; trường bắt buộc: `estimatedRecords`, `estimatedDurationSeconds`, `availableRange`; `201` đã tạo, `ReplayRequest`; trường bắt buộc: `replayCode`, `subscriptionCode`, `replayMode`, `rangeType`, `ratePerSecond`, `reason`, `status`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-026, ERR-10-027, ERR-10-032, ERR-10-033, ERR-10-034, ERR-10-035, ERR-10-036 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `RESET_OFFSET` khi subscription chưa `PAUSED` ERR-10-032; khoảng ngoài lưu giữ ERR-10-033 kèm `availableRange`; vượt `10.replay.max-records` ERR-10-034; đã có lượt `APPROVED`, `RUNNING` ERR-10-035; mục DLQ không `NEW` ERR-10-036; `targetEndpointUrl` chưa xác minh ERR-10-027. PH-18 gọi bằng scope `event:replay`. Tạo yêu cầu `REPLAY` (tự duyệt khi số mục DLQ ≤ `10.replay.dlq-auto-approve-max`). `dryRun=true` chỉ kiểm và trả 200 `ReplayEstimate`, không tạo yêu cầu.
+:::
+
+#### API-10-065 · Hủy lượt phát lại
+
+::: dac-ta
+**Mục đích.** Hủy lượt phát lại.
+
+**Phương thức, đường dẫn.** `POST /replays/{replayCode}:cancel`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-052.
+
+**Tham số.** `replayCode` (path, ReplayCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayRequest`; trường bắt buộc: `replayCode`, `subscriptionCode`, `replayMode`, `rangeType`, `ratePerSecond`, `reason`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Dừng sau bản tin đang giao; sang `CANCELLED`, phát EVT-10-12.
+:::
+
+#### API-10-103 · Nội dung một mục DLQ
+
+::: dac-ta
+**Mục đích.** Nội dung một mục DLQ.
+
+**Phương thức, đường dẫn.** `GET /dlq-entries/{dlqEntryId}/payload`.
+
+**Quyền.** `PERM-10-operate`.
+
+**FR hiện thực.** FR-10-050.
+
+**Tham số.** `dlqEntryId` (path, string, bắt buộc); `reason` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DlqPayload`; trường bắt buộc: `dlqEntryId`, `headers`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-009, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Topic `RESTRICTED`, `SENSITIVE` bắt buộc `reason` (ERR-10-009), ghi kiểm toán xem dữ liệu nhạy cảm. Nội dung đã xóa (`PURGED`) trả ERR-10-001.
+:::
+
+#### API-10-104 · Chi tiết, tiến độ lượt phát lại
+
+::: dac-ta
+**Mục đích.** Chi tiết, tiến độ lượt phát lại.
+
+**Phương thức, đường dẫn.** `GET /replays/{replayCode}`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-052.
+
+**Tham số.** `replayCode` (path, ReplayCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayRequest`; trường bắt buộc: `replayCode`, `subscriptionCode`, `replayMode`, `rangeType`, `ratePerSecond`, `reason`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tiến độ cập nhật mỗi 5 giây.
+:::
+
+### Danh mục, hạn mức, tham số
+
+#### API-10-067 · Danh mục kiểu giao tiếp
+
+::: dac-ta
+**Mục đích.** Danh mục kiểu giao tiếp.
+
+**Phương thức, đường dẫn.** `GET /comm-types`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-060.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CommTypeList`; trường bắt buộc: `items`.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-068 · Danh mục chế độ định tuyến
+
+::: dac-ta
+**Mục đích.** Danh mục chế độ định tuyến.
+
+**Phương thức, đường dẫn.** `GET /routing-modes`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-061.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RoutingModeList`; trường bắt buộc: `items`.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-069 · Hạn mức sự kiện của tenant và mức dùng
+
+::: dac-ta
+**Mục đích.** Hạn mức sự kiện của tenant và mức dùng.
+
+**Phương thức, đường dẫn.** `GET /quota`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-062.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `TenantEventQuota`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-070 · Tham số 10.* hiệu lực của tenant
+
+::: dac-ta
+**Mục đích.** Tham số 10.* hiệu lực của tenant.
+
+**Phương thức, đường dẫn.** `GET /settings`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-063.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Settings`; trường bắt buộc: `params`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-105 · Bật, tắt kiểu giao tiếp cho tenant
+
+::: dac-ta
+**Mục đích.** Bật, tắt kiểu giao tiếp cho tenant.
+
+**Phương thức, đường dẫn.** `PATCH /comm-types/{commTypeCode}`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-060.
+
+**Tham số.** `commTypeCode` (path, CommTypeCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CatalogToggle`; trường bắt buộc: `enabled`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CommType`; trường bắt buộc: `commTypeCode`, `name`, `direction`, `allowedPartyTypes`, `enabled`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-009, ERR-10-043 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không tắt được mục đang có bên tham gia `ACTIVE` dùng (ERR-10-043).
+:::
+
+#### API-10-106 · Bật, tắt chế độ định tuyến cho tenant
+
+::: dac-ta
+**Mục đích.** Bật, tắt chế độ định tuyến cho tenant.
+
+**Phương thức, đường dẫn.** `PATCH /routing-modes/{routingModeCode}`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-061.
+
+**Tham số.** `routingModeCode` (path, RoutingModeCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CatalogToggle`; trường bắt buộc: `enabled`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RoutingMode`; trường bắt buộc: `routingModeCode`, `name`, `ordering`, `enabled`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-009, ERR-10-043 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `KEY_HASH` không tắt được; mục đang dùng ERR-10-043.
+:::
+
+#### API-10-107 · Đặt trần (PA) hoặc phân bổ hạn mức (TA)
+
+::: dac-ta
+**Mục đích.** Đặt trần (PA) hoặc phân bổ hạn mức (TA).
+
+**Phương thức, đường dẫn.** `PUT /quota`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-062.
+
+**Tham số.** `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `QuotaUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `TenantEventQuota`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-009, ERR-10-011, ERR-10-012 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-108 · Sửa tham số 10.* trong miền cho phép
+
+::: dac-ta
+**Mục đích.** Sửa tham số 10.* trong miền cho phép.
+
+**Phương thức, đường dẫn.** `PATCH /settings`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-063.
+
+**Tham số.** `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SettingsUpdate`; trường bắt buộc: `params`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Settings`; trường bắt buộc: `params`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-009, ERR-10-012 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Ngoài miền A.5 ERR-10-012; `10.external-kafka.enabled` và tham số phạm vi N chỉ PA.
+:::
+
+### Máy với máy (PH-04)
+
+#### API-10-071 · Kiểm tra quyền phát, nhận của luồng PH-04
+
+::: dac-ta
+**Mục đích.** Kiểm tra quyền phát, nhận của luồng PH-04.
+
+**Phương thức, đường dẫn.** `POST /permissions:check`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-069.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `PermissionCheckRequest`; trường bắt buộc: `items`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PermissionCheckResponse`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không ném lỗi theo từng bộ; PH-04 ánh xạ `DENIED` thành WARN hoặc ERROR theo môi trường.
+:::
+
+#### API-10-072 · Tạo bên tham gia FLOW và đề nghị quan hệ cho luồng
+
+::: dac-ta
+**Mục đích.** Tạo bên tham gia FLOW và đề nghị quan hệ cho luồng.
+
+**Phương thức, đường dẫn.** `POST /flows/{flowCode}:ensure-party`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-069.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `EnsurePartyRequest`; trường bắt buộc: `items`, `onBehalfOf`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `EnsurePartyResponse`; trường bắt buộc: `flowCode`, `items`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `422`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-037, ERR-10-022, ERR-10-024, ERR-10-025, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Idempotent; tạo bên phát, bên nhận `FLOW` nếu chưa có và đề nghị publication, subscription (`INTERNAL`) qua duyệt.
+:::
+
+#### API-10-109 · Publication, subscription của luồng (cho API-04-016)
+
+::: dac-ta
+**Mục đích.** Publication, subscription của luồng (cho API-04-016).
+
+**Phương thức, đường dẫn.** `GET /flows/{flowCode}/dependencies`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-069.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `FlowDependencies`; trường bắt buộc: `flowCode`, `publications`, `subscriptions`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+### Nội bộ dh-runtime
+
+#### API-10-073 · Cấu hình runtime: topic, subscription, lượt phát lại
+
+::: dac-ta
+**Mục đích.** Cấu hình runtime: topic, subscription, lượt phát lại.
+
+**Phương thức, đường dẫn.** `GET /runtime/subscriptions`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-038, FR-10-043.
+
+**Tham số.** `since` (query, integer, tùy chọn); `If-None-Match` (header, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RuntimeConfig`; trường bắt buộc: `tenant`, `configVersion`, `generatedAt`, `topics`, `subscriptions`, `replays`; tiêu đề `ETag`; `304` không đổi.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `dh-runtime` gọi mỗi 30 giây và khi nhận EVT-10-02, 05, 08, 09, 13. `since` trả phần đổi (`full = false`). Không chứa bí mật ký; chỉ `keyId`.
+:::
+
+#### API-10-085 · Báo cáo giao nhận theo phút
+
+::: dac-ta
+**Mục đích.** Báo cáo giao nhận theo phút.
+
+**Phương thức, đường dẫn.** `POST /runtime/delivery-reports`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-056.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `DeliveryReport`; trường bắt buộc: `items`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Một dòng `delivery_stat` mỗi (subscription, phút), gửi lặp ghi đè cùng giá trị; `failures` ghi `delivery_failure`.
+:::
+
+#### API-10-086 · Tạm ngừng do ngắt mạch hoặc failurePolicy BLOCK
+
+::: dac-ta
+**Mục đích.** Tạm ngừng do ngắt mạch hoặc failurePolicy BLOCK.
+
+**Phương thức, đường dẫn.** `POST /runtime/subscriptions/{subscriptionCode}:suspend`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-039.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RuntimeSuspendRequest`; trường bắt buộc: `suspendSource`, `suspendReason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RuntimeSubscription`; trường bắt buộc: `subscriptionCode`, `topicName`, `deliveryMode`, `status`, `consumerGroup`, `configVersion`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `ACTIVE` sang `SUSPENDED` với `suspendSource` do runtime báo; phát EVT-10-09.
+:::
+
+#### API-10-087 · Nhận chạy lượt phát lại APPROVED
+
+::: dac-ta
+**Mục đích.** Nhận chạy lượt phát lại APPROVED.
+
+**Phương thức, đường dẫn.** `POST /runtime/replays/{replayCode}:start`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-052.
+
+**Tham số.** `replayCode` (path, ReplayCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ReplayStartRequest`; trường bắt buộc: `runner`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayRequest`; trường bắt buộc: `replayCode`, `subscriptionCode`, `replayMode`, `rangeType`, `ratePerSecond`, `reason`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `APPROVED` sang `RUNNING`; lượt đã có bản sao khác nhận trả ERR-10-006.
+:::
+
+#### API-10-088 · Báo tiến độ, kết quả từng mục DLQ, kết thúc lượt phát lại
+
+::: dac-ta
+**Mục đích.** Báo tiến độ, kết quả từng mục DLQ, kết thúc lượt phát lại.
+
+**Phương thức, đường dẫn.** `POST /runtime/replays/{replayCode}/results`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-052, FR-10-053.
+
+**Tham số.** `replayCode` (path, ReplayCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ReplayProgress`; trường bắt buộc: `deliveredRecords`, `failedRecords`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReplayRequest`; trường bắt buộc: `replayCode`, `subscriptionCode`, `replayMode`, `rangeType`, `ratePerSecond`, `reason`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Báo mỗi 5 giây; kết quả từng mục DLQ chuyển `REPLAY_PENDING` sang `REPLAYED` hoặc về `NEW`. Báo cuối có `status`; phát EVT-10-12.
+:::
+
+#### API-10-089 · Lấy nội dung mục DLQ theo lô ≤ 100
+
+::: dac-ta
+**Mục đích.** Lấy nội dung mục DLQ theo lô ≤ 100.
+
+**Phương thức, đường dẫn.** `POST /runtime/dlq-entries:fetch-payloads`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-053.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `FetchPayloadsRequest`; trường bắt buộc: `replayCode`, `dlqEntryIds`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DlqPayloadList`; trường bắt buộc: `items`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `503`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-029 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ mục thuộc lượt phát lại `RUNNING` có `replayCode` đã cho; nội dung giải mã phong bì qua OpenBao transit (ERR-10-029 khi không khả dụng).
+:::
+
+#### API-10-090 · Báo trạng thái, số bản tin, lag của cầu nối
+
+::: dac-ta
+**Mục đích.** Báo trạng thái, số bản tin, lag của cầu nối.
+
+**Phương thức, đường dẫn.** `POST /runtime/bridges/{bridgeCode}/status`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-073, FR-10-074.
+
+**Tham số.** `bridgeCode` (path, BridgeCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `BridgeStatusReport`; trường bắt buộc: `status`, `bridgedCount`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Đổi trạng thái thì phát EVT-10-16; ánh xạ `PLANNED` sang `BRIDGING` khi `RUNNING`.
+:::
+
+#### API-10-119 · Tự tiếp tục sau ngắt mạch (chỉ CIRCUIT_BREAKER)
+
+::: dac-ta
+**Mục đích.** Tự tiếp tục sau ngắt mạch (chỉ CIRCUIT_BREAKER).
+
+**Phương thức, đường dẫn.** `POST /runtime/subscriptions/{subscriptionCode}:resume`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-039.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RuntimeResumeRequest`; trường bắt buộc: `probeEventId`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RuntimeSubscription`; trường bắt buộc: `subscriptionCode`, `topicName`, `deliveryMode`, `status`, `consumerGroup`, `configVersion`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-006 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ khi `suspendSource = CIRCUIT_BREAKER` (ngược lại ERR-10-006); về `ACTIVE`, phát EVT-10-09.
+:::
+
+### Xuất nhập, di trú Pulsar
+
+#### API-10-074 · Xuất khai báo EventManifest
+
+::: dac-ta
+**Mục đích.** Xuất khai báo EventManifest.
+
+**Phương thức, đường dẫn.** `POST /exports`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-070.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `ExportRequest`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, string; `202` đã nhận, xử lý bất đồng bộ.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-039, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Trả `application/yaml` (`kind: EventManifest`, `apiVersion: event.datahub.vn/v1`); không có bí mật ký, không có `clientId` nội bộ.
+:::
+
+#### API-10-075 · Tải tệp khai báo hoặc kiểm kê Pulsar để kiểm tra
+
+::: dac-ta
+**Mục đích.** Tải tệp khai báo hoặc kiểm kê Pulsar để kiểm tra.
+
+**Phương thức, đường dẫn.** `POST /imports`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-071, FR-10-072.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** multipart/form-data: object.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `ManifestImportJob`; trường bắt buộc: `jobCode`, `sourceKind`, `status`, `validationErrors`, `preview`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-040, ERR-10-050 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `multipart/form-data`: `file` và `meta` (ImportMeta). `PULSAR_HUB` cần `PERM-10-admin`. Sai cấu trúc ERR-10-040; tham chiếu không có ở tenant đích ERR-10-050.
+:::
+
+#### API-10-076 · Danh sách ánh xạ di trú Pulsar
+
+::: dac-ta
+**Mục đích.** Danh sách ánh xạ di trú Pulsar.
+
+**Phương thức, đường dẫn.** `GET /migrations/mappings`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-072.
+
+**Tham số.** `jobCode` (query, JobCode, tùy chọn); `legacyType` (query, array, tùy chọn); `status` (query, array, tùy chọn); `confidence` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `LegacyMappingPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-077 · Danh sách cầu nối di trú
+
+::: dac-ta
+**Mục đích.** Danh sách cầu nối di trú.
+
+**Phương thức, đường dẫn.** `GET /migrations/bridges`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-073, FR-10-074.
+
+**Tham số.** `status` (query, array, tùy chọn); `direction` (query, array, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `MigrationBridgePage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-078 · Đề nghị chuyển hẳn một ánh xạ
+
+::: dac-ta
+**Mục đích.** Đề nghị chuyển hẳn một ánh xạ.
+
+**Phương thức, đường dẫn.** `POST /migrations/mappings/{mappingId}:cut-over`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-075.
+
+**Tham số.** `mappingId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `LegacyMapping`; trường bắt buộc: `mappingId`, `jobCode`, `legacyType`, `legacyId`, `confidence`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-041 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tạo yêu cầu `CUTOVER` khi đủ điều kiện FR-10-075 (song song ≥ `10.migration.min-parallel-days`, đối chiếu 72 giờ không chênh); thiếu điều kiện ERR-10-041. Duyệt xong: dừng cầu nối, `CUT_OVER`, phát EVT-10-15.
+:::
+
+#### API-10-110 · Trạng thái, xem trước tác vụ nhập
+
+::: dac-ta
+**Mục đích.** Trạng thái, xem trước tác vụ nhập.
+
+**Phương thức, đường dẫn.** `GET /imports/{jobCode}`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-071, FR-10-072.
+
+**Tham số.** `jobCode` (path, JobCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ManifestImportJob`; trường bắt buộc: `jobCode`, `sourceKind`, `status`, `validationErrors`, `preview`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-111 · Áp dụng tác vụ nhập (tạo đối tượng ở trạng thái đầu)
+
+::: dac-ta
+**Mục đích.** Áp dụng tác vụ nhập (tạo đối tượng ở trạng thái đầu).
+
+**Phương thức, đường dẫn.** `POST /imports/{jobCode}:apply`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-071, FR-10-072.
+
+**Tham số.** `jobCode` (path, JobCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `ManifestImportJob`; trường bắt buộc: `jobCode`, `sourceKind`, `status`, `validationErrors`, `preview`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-037, ERR-10-039, ERR-10-006, ERR-10-040, ERR-10-041, ERR-10-050 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ ở `PREVIEW`; tạo đối tượng ở trạng thái đầu (`DRAFT`, `PENDING_APPROVAL`), không bao giờ `ACTIVE` (BR-10-032). `PULSAR_HUB`: ánh xạ sang `PLANNED`.
+:::
+
+#### API-10-112 · Sửa đích hoặc bỏ qua một ánh xạ
+
+::: dac-ta
+**Mục đích.** Sửa đích hoặc bỏ qua một ánh xạ.
+
+**Phương thức, đường dẫn.** `PATCH /migrations/mappings/{mappingId}`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-072.
+
+**Tham số.** `mappingId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `LegacyMappingUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `LegacyMapping`; trường bắt buộc: `mappingId`, `jobCode`, `legacyType`, `legacyId`, `confidence`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-041 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không.
+:::
+
+#### API-10-113 · Đề nghị cầu nối Pulsar sang Kafka hoặc ngược lại
+
+::: dac-ta
+**Mục đích.** Đề nghị cầu nối Pulsar sang Kafka hoặc ngược lại.
+
+**Phương thức, đường dẫn.** `POST /migrations/bridges`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-073, FR-10-074.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `BridgeCreate`; trường bắt buộc: `direction`, `pulsarTopic`, `kafkaTopic`, `expiresAt`, `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `MigrationBridge`; trường bắt buộc: `bridgeCode`, `direction`, `pulsarTopic`, `kafkaTopic`, `status`, `expiresAt`, `version`; tiêu đề `ETag`, `Location`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `409`, `422`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-003, ERR-10-037, ERR-10-039, ERR-10-012, ERR-10-025, ERR-10-041, ERR-10-042 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Tạo yêu cầu `BRIDGE`; `expiresAt` quá `10.migration.bridge-max-days` ERR-10-012; đã có cầu nối cho topic hoặc cầu nối ngược chiều ERR-10-042; topic đích không `ACTIVE` ERR-10-025.
+:::
+
+#### API-10-114 · Dừng cầu nối
+
+::: dac-ta
+**Mục đích.** Dừng cầu nối.
+
+**Phương thức, đường dẫn.** `POST /migrations/bridges/{bridgeCode}:stop`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-073, FR-10-074.
+
+**Tham số.** `bridgeCode` (path, BridgeCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `MigrationBridge`; trường bắt buộc: `bridgeCode`, `direction`, `pulsarTopic`, `kafkaTopic`, `status`, `expiresAt`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Phát EVT-10-16 khi runtime xác nhận dừng (API-10-090).
+:::
+
+#### API-10-115 · Chạy lại cầu nối đã dừng
+
+::: dac-ta
+**Mục đích.** Chạy lại cầu nối đã dừng.
+
+**Phương thức, đường dẫn.** `POST /migrations/bridges/{bridgeCode}:resume`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-073, FR-10-074.
+
+**Tham số.** `bridgeCode` (path, BridgeCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `MigrationBridge`; trường bắt buộc: `bridgeCode`, `direction`, `pulsarTopic`, `kafkaTopic`, `status`, `expiresAt`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-042 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ cầu nối `STOPPED` chưa hết hạn.
+:::
+
+#### API-10-116 · Quay lui một ánh xạ đã chuyển hẳn
+
+::: dac-ta
+**Mục đích.** Quay lui một ánh xạ đã chuyển hẳn.
+
+**Phương thức, đường dẫn.** `POST /migrations/mappings/{mappingId}:rollback`.
+
+**Quyền.** `PERM-10-admin`.
+
+**FR hiện thực.** FR-10-075.
+
+**Tham số.** `mappingId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `LegacyMapping`; trường bắt buộc: `mappingId`, `jobCode`, `legacyType`, `legacyId`, `confidence`, `status`, `version`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-003, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-009, ERR-10-042 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Không qua duyệt (khẩn cấp) nhưng bắt buộc lý do, thông báo IA; trong `10.migration.rollback-window-days`. Bật lại cầu nối chiều cũ; `ROLLED_BACK`; phát EVT-10-15.
+:::
+
+#### API-10-117 · Kết quả đối chiếu Pulsar và Kafka
+
+::: dac-ta
+**Mục đích.** Kết quả đối chiếu Pulsar và Kafka.
+
+**Phương thức, đường dẫn.** `GET /migrations/reconciliations`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-075.
+
+**Tham số.** `bridgeCode` (query, BridgeCode, tùy chọn); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `page` (query, integer, tùy chọn); `size` (query, integer, tùy chọn); `sort` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ReconciliationPage`; trường bắt buộc: `items`, `page`, `size`, `totalElements`.
+
+**Lỗi.** HTTP `400`, `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-049 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Báo cáo chi tiết ở kho đối tượng (`reportRef`).
+:::
+
+#### API-10-118 · Báo cáo tiến độ di trú
+
+::: dac-ta
+**Mục đích.** Báo cáo tiến độ di trú.
+
+**Phương thức, đường dẫn.** `GET /migrations/progress`.
+
+**Quyền.** `PERM-10-read`.
+
+**FR hiện thực.** FR-10-076.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `MigrationProgress`; trường bắt buộc: `mappingsByStatus`, `bridges`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`; mã lỗi của thao tác: ERR-10-053, ERR-10-054 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** `Accept` XLSX để xuất.
+:::
+
+#### API-10-121 · Hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (người tạo)
+
+::: dac-ta
+**Mục đích.** Hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (người tạo).
+
+**Phương thức, đường dẫn.** `POST /imports/{jobCode}:cancel`.
+
+**Quyền.** `PERM-10-create`.
+
+**FR hiện thực.** FR-10-071.
+
+**Tham số.** `jobCode` (path, JobCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ManifestImportJob`; trường bắt buộc: `jobCode`, `sourceKind`, `status`, `validationErrors`, `preview`; tiêu đề `ETag`.
+
+**Lỗi.** HTTP `401`, `403`, `404`, `409`, `412`, `423`; mã lỗi của thao tác: ERR-10-053, ERR-10-054, ERR-10-001, ERR-10-007, ERR-10-039, ERR-10-006, ERR-10-008 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ người tạo tác vụ, khi `VALIDATING` hoặc `PREVIEW` (A.2.13); trạng thái khác ERR-10-006. Không tạo đối tượng nào.
+:::
+
+### Data plane: phát, kéo, lược đồ
+
+#### API-10-079 · Phát một sự kiện hoặc một lô sự kiện
+
+::: dac-ta
+**Mục đích.** Phát một sự kiện hoặc một lô sự kiện.
+
+**Phương thức, đường dẫn.** `POST /topics/{topicName}/events`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-033.
+
+**Tham số.** `topicName` (path, TopicName, bắt buộc); `Idempotency-Key` (header, string, tùy chọn).
+
+**Thân yêu cầu.** application/cloudevents+json: `CloudEvent`; trường bắt buộc: `specversion`, `id`, `source`, `type`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `PublishResult`; trường bắt buộc: `results`.
+
+**Lỗi.** HTTP `400`, `401`, `403`, `404`, `413`, `422`, `429`, `503`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-103, ERR-10-104, ERR-10-105, ERR-10-106, ERR-10-107, ERR-10-108, ERR-10-121 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Thân `application/cloudevents+json` (một sự kiện) hoặc `application/cloudevents-batch+json` (lô, tất cả hoặc không). Ghi `acks=all`, producer idempotent. Chống trùng 24 giờ theo (publication, `id`): lần gọi lặp trả lại kết quả cũ. Lỗi một sự kiện trong lô trả `failedIndex`.
+:::
+
+#### API-10-080 · Kéo lô sự kiện (lease, chờ dài)
+
+::: dac-ta
+**Mục đích.** Kéo lô sự kiện (lease, chờ dài).
+
+**Phương thức, đường dẫn.** `GET /subscriptions/{subscriptionCode}/events`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-043.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `max` (query, integer, tùy chọn); `waitSeconds` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PullResponse`; trường bắt buộc: `events`, `cursor`, `leaseExpiresAt`; `204` không có nội dung.
+
+**Lỗi.** HTTP `401`, `403`, `409`, `429`, `503`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-107, ERR-10-110, ERR-10-121 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Một lease mỗi subscription; kéo lại khi lease chưa ack và chưa hết hạn trả đúng lô cũ. Không có sự kiện sau `waitSeconds` trả 204.
+:::
+
+#### API-10-081 · Xác nhận lô đã kéo
+
+::: dac-ta
+**Mục đích.** Xác nhận lô đã kéo.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/events:ack`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-043.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `AckRequest`; trường bắt buộc: `cursor`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** HTTP `401`, `403`, `409`, `503`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-109, ERR-10-110, ERR-10-121 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Commit offset, xóa lease. Cursor hết hạn hoặc không khớp lease ERR-10-109.
+:::
+
+#### API-10-082 · Báo sự kiện xử lý lỗi, đưa vào DLQ
+
+::: dac-ta
+**Mục đích.** Báo sự kiện xử lý lỗi, đưa vào DLQ.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/events:nack`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-043.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc).
+
+**Thân yêu cầu.** application/json: `NackRequest`; trường bắt buộc: `cursor`, `eventIds`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** HTTP `401`, `403`, `409`, `503`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-109, ERR-10-110, ERR-10-121 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Các `eventIds` vào DLQ (`origin = PULL_NACK`, ERR-10-113) rồi coi như ack cả lô. Phát EVT-10-11 (gộp 1 phút).
+:::
+
+#### API-10-083 · Bên nhận Kafka ngoài báo bản tin lỗi vào DLQ
+
+::: dac-ta
+**Mục đích.** Bên nhận Kafka ngoài báo bản tin lỗi vào DLQ.
+
+**Phương thức, đường dẫn.** `POST /subscriptions/{subscriptionCode}/dead-letters`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-044.
+
+**Tham số.** `subscriptionCode` (path, SubscriptionCode, bắt buộc); `Idempotency-Key` (header, string, tùy chọn).
+
+**Thân yêu cầu.** application/json: `DeadLetterReport`; trường bắt buộc: `items`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ.
+
+**Lỗi.** HTTP `401`, `403`, `409`, `413`, `429`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-106, ERR-10-107, ERR-10-110 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chỉ subscription `PULL_KAFKA`; mục DLQ `origin = EXTERNAL_REPORT` để PH-18 theo dõi.
+:::
+
+#### API-10-084 · Tra cứu lược đồ chỉ đọc (Apicurio v3, ccompat/v7)
+
+::: dac-ta
+**Mục đích.** Tra cứu lược đồ chỉ đọc (Apicurio v3, ccompat/v7).
+
+**Phương thức, đường dẫn.** `GET /registry/{registryPath}`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-10-024.
+
+**Tham số.** `registryPath` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, object.
+
+**Lỗi.** HTTP `401`, `403`, `404`; mã lỗi của thao tác: ERR-10-101, ERR-10-102, ERR-10-103 (ý nghĩa ở chương mã lỗi).
+
+**Ghi chú.** Chuyển tiếp chỉ đọc tới Apicurio Registry 3 (`apis/registry/v3/...`, `apis/ccompat/v7/...`). Plugin APISIX kiểm bằng OPA: chỉ artifact của topic mà token có scope `publish` hoặc `subscribe`; phương thức khác GET trả 405.
+:::
+
+<!-- gen:dac-ta-api:end -->
 
 ## Lịch sử phiên bản
 

@@ -83,6 +83,16 @@ def resp(rs):
     return ok, loi
 
 
+def loi_txt(op, loi):
+    # OpenAPI có x-datahub-errors (mã lỗi riêng của thao tác) thì chỉ liệt kê mã HTTP và các mã đó,
+    # tránh chép mọi mã của phản hồi lỗi dùng chung.
+    ma = op.get('x-datahub-errors')
+    if not ma:
+        return '; '.join(loi) or 'Không'
+    http = ', '.join(x.split(' ')[0] for x in loi)
+    return f"HTTP {http}; mã lỗi của thao tác: {', '.join(ma)} (ý nghĩa ở chương mã lỗi)"
+
+
 nhom = {}
 for path, item in d['paths'].items():
     for m, op in item.items():
@@ -103,7 +113,7 @@ for tag, ops in nhom.items():
         rows = [('Mục đích', muc), ('Phương thức, đường dẫn', f'`{m} {path}`'), ('Quyền', f'`{quyen}`' if quyen.startswith('PERM') else quyen),
                 ('FR hiện thực', fr), ('Tham số', '; '.join(ps) or 'Không'), ('Thân yêu cầu', body(op.get('requestBody'))),
                 ('Chống trùng', 'Có, tiêu đề `Idempotency-Key`' if idem else 'Không'), ('Phản hồi thành công', '; '.join(ok) or 'Không'),
-                ('Lỗi', '; '.join(loi) or 'Không'), ('Ghi chú', mota or 'Không')]
+                ('Lỗi', loi_txt(op, loi)), ('Ghi chú', mota or 'Không')]
         tieu_de = f'#### {aid} · {muc}' if aid not in da_gap else f'#### {muc} ({aid}, {m})'
         da_gap.add(aid)
         L += [tieu_de, '', '::: dac-ta']
