@@ -479,7 +479,7 @@ Khối xem trước câu lệnh cấp quyền (chỉ đọc, `CMP-CodeBlock`) si
 
 ## 13. UI-05-07 Tổng quan sức khỏe
 
-**Mục đích.** Cho TO một màn trực để thấy kết nối, bộ điều hợp nào đang hỏng và việc ATTT tới hạn. **Đường dẫn.** `/tich-hop/suc-khoe`. **Mẫu.** PTN-06. **Quyền.** `PERM-05-read`. **API.** API-05-033, 093.
+**Mục đích.** Cho TO một màn trực để thấy kết nối, bộ điều hợp nào đang hỏng và việc ATTT tới hạn. **Đường dẫn.** `/tich-hop/suc-khoe`. **Mẫu.** PTN-06. **Quyền.** `PERM-05-read`. **API.** API-05-033 (trạng thái chi tiết cho PH-04, PH-13 dùng API-05-093 nội bộ).
 
 ### 13.1. Bố cục
 
@@ -864,3 +864,218 @@ Mở màn với 50 thao tác dưới 1,5 giây ở p95 (tải phiên bản một
 | 3. Xác nhận | Tóm tắt; "Tạo bản nháp" → UI-05-10 với các thao tác đã sinh, mỗi mục chưa có ✓ kiểm thử |
 
 Lỗi cú pháp đặc tả: ERR-05-023 kèm dòng, cột. Đặc tả lớn đang phân tích: `CMP-JobProgress`.
+
+## 18. UI-05-12 Giám sát CDC
+
+**Mục đích.** Khai báo, kiểm tra điều kiện, chạy và theo dõi CDC của một bộ điều hợp; thấy độ trễ và bảng nào đứng. **Đường dẫn.** `/tich-hop/bo-dieu-hop/:ma/cdc?env=`. **Mẫu.** PTN-11. **Quyền.** Xem `PERM-05-read`; khai báo `PERM-05-adapter`; kiểm tra điều kiện `PERM-05-test`; điều khiển `PERM-05-operate`. **API.** API-05-067…074.
+
+### 18.1. Wireframe
+
+```text
+┌ dkkd-cdc · CDC · PROD ──────────── [Đang đọc] ── [Tạm dừng] [Chụp ảnh lại] [Dừng hẳn] [Cấu hình] ┐
+│ [Độ trễ 4,2 s] [Sự kiện 24 giờ 182.410] [Vị trí LSN 2/9A1C0F8 · 10:42:11] [WAL giữ lại 1,4 GiB ⚠] │
+│ [Thay đổi lược đồ chờ 0]                                                                         │
+├ Độ trễ 24 giờ ─── ngưỡng cảnh báo 300 s ── ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─┤
+│  ▁▁▂▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▂▁▁▁                                                                       │
+├ Bảng ──────────────────────────────────────────────────────────────────────────────────────────┤
+│ dkkd.doanh_nghiep   c 1.204  u 9.870  d 12   cuối 10:42:09   topic t01.cdc.dkkd-cdc.dkkd.doanh_nghiep.v1 │
+│ dkkd.nganh_nghe     c 0      u 3      d 0    cuối 08:15:40                                    │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 18.2. Thành phần
+
+| # | Thành phần | `CMP-*` | Nguồn | Ghi chú |
+|---|---|---|---|---|
+| 1 | Trạng thái, điều khiển | `CMP-StatusTag`, `CMP-Button` | `state`, `allowedActions` | Chạy (vô hiệu khi chưa có kiểm tra điều kiện đạt 24 giờ hoặc bộ điều hợp chưa có phiên bản hiệu lực), Tạm dừng, Tiếp tục (vô hiệu ở `PAUSED_SCHEMA` khi còn thay đổi chờ, ERR-05-026, kèm liên kết UI-05-13), Chụp ảnh lại, Dừng hẳn (`CMP-ReasonDialog`, cảnh báo slot PostgreSQL bị xóa sau 7 ngày) |
+| 2 | Thẻ chỉ số | `CMP-KpiCard` | `lagSeconds`, `events24h`, `position`, `retainedWalBytes`, `pendingSchemaChanges` | Độ trễ vượt ngưỡng đổi sắc thái cảnh báo, gấp 4 lần là lỗi, kèm chữ "Vượt ngưỡng" |
+| 3 | Biểu đồ độ trễ | `CMP-Chart` đường | Chỉ số `dh_cdc_lag_seconds` | Đường ngưỡng nét đứt; bảng dữ liệu thay thế |
+| 4 | Bảng theo bảng nguồn | `CMP-DataTable` | `tables[]` | Số `c`, `u`, `d` 24 giờ, sự kiện cuối, topic (`CMP-CopyButton`), tiến độ chụp ảnh khi `SNAPSHOTTING` (`CMP-JobProgress` theo bảng) |
+| 5 | Cấu hình | `CMP-Drawer` | API-05-067, 068 | Engine, bảng (`CMP-Transfer` từ danh sách bảng trong `allowedSchemas`), cột bao gồm, loại trừ, cột nhạy cảm (băm, bỏ), `snapshotMode`, `heartbeatSeconds`, chính sách lược đồ (`PAUSE_ON_BREAKING` mặc định; không cho chọn bỏ qua với bảng có trường bắt buộc) |
+| 6 | Kiểm tra điều kiện | `CMP-Drawer` giống UI-05-04 | API-05-069 | Từng mục theo engine (ví dụ `wal_level = logical`, publication đúng bảng, slot còn chỗ) kèm hướng dẫn gửi đơn vị chủ quản và "Sao chép để gửi" |
+| 7 | Hộp chụp ảnh lại | `CMP-Modal` | API-05-073 | Chọn bảng; bảng > 10 triệu dòng bắt buộc chọn khung giờ ngoài hành chính (`CMP-DatePicker` + giờ); lý do |
+
+### 18.3. Trạng thái
+
+| Trạng thái CDC | Hiển thị bổ sung |
+|---|---|
+| `STOPPED` chưa cấu hình | ST-03 "Chưa cấu hình CDC." kèm "Cấu hình" và giải thích ngắn về điều kiện ở CSDL nguồn |
+| `SNAPSHOTTING` | Tiến độ theo bảng, ước lượng thời gian còn lại |
+| `PAUSED_SCHEMA` | `CMP-Banner` lỗi "CDC dừng do thay đổi lược đồ phá vỡ ở {bảng}." kèm nút "Xử lý" mở UI-05-13 |
+| `FAILED` | `CMP-Alert` lỗi với nguyên nhân (ví dụ mất nhật ký nguồn) và gợi ý "Chụp ảnh lại" |
+| Kafka không khả dụng | `PAUSED` tự động, banner "Tạm dừng vì nền tảng sự kiện không khả dụng; sẽ tự tiếp tục." |
+
+## 19. UI-05-13 Thay đổi lược đồ chờ xử lý
+
+**Mục đích.** Hộp việc cho thay đổi lược đồ CSDL nguồn đã làm CDC dừng hoặc cần ghi nhận. **Đường dẫn.** `/tich-hop/bo-dieu-hop/thay-doi-luoc-do`. **Mẫu.** PTN-10. **Quyền.** Xem `PERM-05-read`; xử lý `PERM-05-adapter`. **API.** API-05-074, 075.
+
+### 19.1. Bố cục
+
+`CMP-Splitter` hai cột: trái danh sách (bộ điều hợp, bảng, loại thay đổi, mức `BREAKING` hoặc `INFO`, phát hiện lúc, trạng thái), phải chi tiết.
+
+```text
+┌ Thay đổi lược đồ ─ [Bộ điều hợp ▾] [Trạng thái: Chờ ▾] ┬ dkkd.doanh_nghiep · Phá vỡ · 10:02 ─────────┐
+│ ● dkkd-cdc  doanh_nghiep  Đổi tên cột   Phá vỡ  10:02   │ Cột cũ          Cột mới                     │
+│ ○ dkkd-cdc  nganh_nghe    Thêm cột      Thông tin 09:11 │ ten_dn  varchar(255)  −                     │
+│                                                         │ −                ten_doanh_nghiep varchar(500) +│
+│                                                         │ Luồng tiêu thụ bị ảnh hưởng: 2 [xem]        │
+│                                                         │ Quyết định: (•) Ánh xạ cột ( ) Chấp nhận    │
+│                                                         │   ( ) Loại bảng khỏi CDC ( ) Chụp ảnh lại   │
+│                                                         │ ten_dn → [ten_doanh_nghiep ▾]               │
+│                                                         │ Lý do [……………]               [Xác nhận]     │
+└─────────────────────────────────────────────────────────┴─────────────────────────────────────────────┘
+```
+
+### 19.2. Chi tiết và quyết định
+
+| Phần tử | `CMP-*` | Nội dung |
+|---|---|---|
+| Khác biệt cột | `CMP-DiffViewer` dạng bảng | Cột, kiểu, null, mặc định, khóa; ký hiệu +, −, ≠ ngoài màu |
+| Ảnh hưởng | `CMP-DataTable` gọn | Luồng tiêu thụ topic của bảng (từ PH-10 và PH-04), phiên bản lược đồ Avro sẽ đăng ký |
+| Quyết định | `CMP-DecisionPanel` | `ACCEPT` (đăng ký lược đồ mới, luồng tự lo tương thích), `MAP_COLUMN` (bảng ánh xạ cột bắt buộc, `columnMap`), `EXCLUDE_TABLE`, `RESNAPSHOT` (xếp lịch chụp ảnh lại); lý do ≥ 20 ký tự |
+| Sau xác nhận | `CMP-Toast` | "Đã xử lý. Còn {n} thay đổi chờ." Khi n = 0 với CDC `PAUSED_SCHEMA`: nút "Tiếp tục CDC" ngay trong toast (cần `PERM-05-operate`) |
+
+Rỗng: "Không có thay đổi lược đồ chờ xử lý."
+
+## 20. UI-05-14 Danh mục Kamelet
+
+**Mục đích.** Duyệt danh mục khối Kamelet khả dụng cho tỉnh: nền, dùng chung, của tỉnh, sinh từ bộ điều hợp. **Đường dẫn.** `/tich-hop/bo-dieu-hop/kamelet`. **Mẫu.** PTN-01. **Quyền.** `PERM-05-read`; soạn cần `PERM-05-kamelet-submit`. **API.** API-05-076.
+
+| # | Thành phần | `CMP-*` | Nội dung |
+|---|---|---|---|
+| 1 | Tiêu đề, nút | `CMP-PageHeader` | "Soạn Kamelet" mở UI-05-16 |
+| 2 | Lọc | `CMP-FilterBar` | `q`, `scope` (Nền, Dùng chung, Của tỉnh), `type` (source, sink, action), nhóm (`HTTP`, `SOAP`, `DATABASE`, `FILE`, `MESSAGING`, `MAIL`, `STAGE`, `ADAPTER`), trạng thái (mặc định ẩn `WITHDRAWN`) |
+| 3 | Bảng | `CMP-DataTable` | Tên (`CMP-CodeText`), tiêu đề tiếng Việt, phạm vi (`CMP-Tag` "Nền", "Dùng chung", "Của tỉnh", "Sinh từ bộ điều hợp"), loại, phiên bản duyệt mới nhất, trạng thái, mức native (`SUPPORTED`, `JVM_ONLY` với tooltip "Chỉ chạy ở hồ sơ JVM"), số nơi dùng; `NEEDS_REVIEW` hiện huy hiệu cảnh báo "Cần xem lại sau khi nâng runtime" |
+
+Kamelet sinh từ bộ điều hợp có liên kết về UI-05-09 thay vì nút sửa (không sửa trực tiếp, BR theo FR-05-047).
+
+## 21. UI-05-15 Chi tiết Kamelet
+
+**Mục đích.** Xem đầy đủ một Kamelet, quản lý vòng đời phiên bản. **Đường dẫn.** `/tich-hop/bo-dieu-hop/kamelet/:ten`. **Mẫu.** PTN-02. **Quyền.** `PERM-05-read`; vòng đời `PERM-05-kamelet-approve`; đề xuất dùng chung `PERM-05-kamelet-submit`. **API.** API-05-077, 078, 085…088.
+
+| Tab | Nội dung | Thành phần |
+|---|---|---|
+| Tham số | Bảng tham số: tên, tiêu đề, kiểu, mặc định, bắt buộc, `x-descriptors` (tham số `credentials` có nhãn "Bí mật"); kiểu dữ liệu vào ra | `CMP-DataTable` |
+| YAML | YAML phiên bản đang xem, tô cú pháp, chỉ đọc; chọn phiên bản; "So sánh" giữa hai phiên bản (`CMP-DiffViewer`) | `CMP-CodeBlock`, `CMP-DiffViewer` |
+| Phiên bản | `CMP-VersionTimeline`: trạng thái, người gửi, người duyệt, ghi chú phát hành, báo cáo kiểm tra tĩnh (`KR-nn`), phụ thuộc thành phần Camel | `CMP-VersionTimeline` |
+| Nơi dùng | Luồng, phiên bản luồng, môi trường đang dùng | `CMP-DataTable` |
+
+| Nút | Hiện khi | Vô hiệu khi | Hành động |
+|---|---|---|---|
+| Tạo phiên bản mới | `PERM-05-kamelet-submit`, phạm vi `TENANT` | Kamelet sinh từ bộ điều hợp | UI-05-16 `?tu={ten}` |
+| Ngừng khuyến nghị | `PERM-05-kamelet-approve` đúng phạm vi | Không ở `APPROVED` | `CMP-ReasonDialog` + chọn Kamelet thay thế gợi ý → API-05-085 |
+| Thu hồi | `PERM-05-kamelet-approve` đúng phạm vi | Đã `WITHDRAWN` | `CMP-ReasonDialog` cảnh báo đỏ, nêu số luồng đang dùng và "Lần phát hành kế tiếp của các luồng này sẽ bị chặn"; gõ lại tên → API-05-086 |
+| Đề xuất dùng chung | `PERM-05-kamelet-submit`, phạm vi `TENANT` | Không có phiên bản `APPROVED` | `CMP-Modal` lý do và mô tả giá trị dùng chung → API-05-088 |
+
+Kamelet nền: các nút vòng đời chỉ hiện với PA; có liên kết "Tài liệu Kamelet nền" tới D03-02-PH05.
+
+## 22. UI-05-16 Soạn và gửi đăng ký Kamelet
+
+**Mục đích.** Thay cơ chế nhập JAR của hệ cũ (LGC-TOOL-027) bằng Kamelet YAML có kiểm tra tĩnh và duyệt. **Đường dẫn.** `/tich-hop/bo-dieu-hop/kamelet/moi`. **Mẫu.** PTN-03. **Quyền.** `PERM-05-kamelet-submit`. **API.** API-05-079…082.
+
+### 22.1. Bố cục
+
+```text
+┌ Soạn Kamelet ── tên [dh-t01-tra-cuu-mst-action] phiên bản [1.0.0] ── [Kiểm tra tĩnh] [Lưu nháp] [Gửi duyệt] ┐
+├ YAML ─────────────────────────────────────────────────┬ Phát hiện (2) ──────────────────────────────────┤
+│ 1 apiVersion: camel.apache.org/v1                     │ ✕ KR-03 dòng 18 cột 12                           │
+│ 2 kind: Kamelet                                       │   Ngôn ngữ kịch bản "groovy" không được phép.    │
+│ …                                                     │ ⚠ KR-09 dòng 7                                   │
+│18     - setBody: { groovy: "…" }                      │   Tham số "matKhau" thiếu x-descriptors credentials│
+└───────────────────────────────────────────────────────┴──────────────────────────────────────────────────┘
+│ Ghi chú phát hành [……]                                                                                    │
+```
+
+### 22.2. Hành vi
+
+| Phần tử | `CMP-*` | Hành vi |
+|---|---|---|
+| Tên, phiên bản | `CMP-Input` | Tên `^[a-z][a-z0-9-]{2,62}-(source\|sink\|action)$`, kiểm trùng (ERR-05-002); SemVer, mới là `1.0.0`; khi `?tu=` thì gợi ý phiên bản kế |
+| YAML | `CMP-CodeEditor` YAML ≤ 256 KiB; nút "Tải tệp" (`CMP-FileDropzone`) | Kiểm cú pháp tức thời; mẫu khởi tạo có `spec.definition`, `spec.template` |
+| Kiểm tra tĩnh | `CMP-Button` | API-05-081; phát hiện gắn vào lề khung mã theo dòng, cột; bấm phát hiện nhảy tới dòng |
+| Phát hiện | `CMP-DataTable` gọn | Mã `KR-nn`, mức, dòng, cột, thông điệp tiếng Việt (ERR-05-020…022) |
+| Gửi duyệt | `CMP-Button` primary | Vô hiệu khi còn phát hiện mức chặn hoặc chưa kiểm tra sau lần sửa cuối; gọi API-05-082, chuyển UI-05-15 |
+
+Rời trang có thay đổi chưa lưu: `CMP-ConfirmDialog`. Bản nháp được lưu ở máy chủ (API-05-079, 080), không lưu cục bộ.
+
+## 23. UI-05-17 Duyệt yêu cầu của phân hệ
+
+**Mục đích.** Một nơi trong "Việc của tôi" cho bốn loại yêu cầu của PH-05. **Đường dẫn.** `/viec-cua-toi?loai=ph05.*&id=`. **Mẫu.** PTN-10. **Quyền.** Theo loại. **API.** API-05-015, 016, 037, 038, 056, 057, 083, 084.
+
+| Loại (`loai`) | Người duyệt | Nội dung khung chi tiết | Hành động |
+|---|---|---|---|
+| `ph05.env-enable` | IA (`PERM-05-approve`) | Kết nối, môi trường PROD, `CMP-DiffViewer` tham số đang chạy và chờ (bí mật chỉ hiện "phiên bản n, ghi bởi …"), lần kiểm tra đạt gần nhất (thời điểm, độ trễ, liên kết UI-05-04), nơi dùng | Duyệt (API-05-015), Từ chối có lý do (016) |
+| `ph05.db-write` | SO đồng ý (`PERM-05-db-write-consent`), rồi IA duyệt (`PERM-05-approve`) | Luồng, bảng, thao tác ghi, hạn, lý do, văn bản đồng ý của đơn vị chủ quản, câu lệnh cấp quyền xem trước (`CMP-CodeBlock`), kết quả kiểm tra quyền | SO: Đồng ý (037) hoặc Từ chối; IA: Duyệt (038) |
+| `ph05.adapter-version` | IA (`PERM-05-approve`) | Tóm tắt thay đổi so với phiên bản hiệu lực, nhãn không tương thích, kết quả kiểm thử từng thao tác, nơi dùng bị ảnh hưởng, liên kết UI-05-10 chỉ đọc | Duyệt (056), Từ chối có lý do (057) |
+| `ph05.kamelet` | IA (`TENANT`) hoặc PA (`COMMON`, nền) (`PERM-05-kamelet-approve`) | YAML, khác biệt với phiên bản trước, báo cáo kiểm tra tĩnh, thành phần Camel dùng, ý kiến SO với `COMMON` | Duyệt (083), Từ chối có lý do (084) |
+
+Bốn mắt: người tạo yêu cầu hoặc người ghi bí mật liên quan thấy nút Duyệt vô hiệu với lý do (ERR-05-011). Bố cục dùng `CMP-ApprovalPanel` của PTN-10; mọi quyết định ghi `CMP-AuditTimeline` của đối tượng.
+
+## 24. Ma trận vai trò và màn hình
+
+X: thao tác đầy đủ; X\*: theo phạm vi hoặc chỉ một phần; R: chỉ xem; trống: không thấy.
+
+| Màn | IE | IA | TO | SO | TA | PA | AU |
+|---|---|---|---|---|---|---|---|
+| UI-05-01 | X | R | R | R | X | R | R |
+| UI-05-02 | X | X\* (duyệt PROD) | X\* (tạm ngừng, xoay) | X\* (tiếp tục sau sự cố) | X | R | R |
+| UI-05-03 | X | | | | X | | |
+| UI-05-04 | X | R | X | R | X | R | R |
+| UI-05-05 | X\* (yêu cầu) | X\* (duyệt) | R | X\* (đồng ý, nhật ký) | X | | X\* (nhật ký) |
+| UI-05-06 | X | | | | X | | |
+| UI-05-07 | R | R | X | R | R | R | R |
+| UI-05-08, 09 | X | X\* (duyệt) | X\* (tạm dừng) | R | X | R | R |
+| UI-05-10 | X | R | R | | X | R | |
+| UI-05-11 | X | | | | X | | |
+| UI-05-12 | X | R | X | R | X | R | R |
+| UI-05-13 | X | R | R | R | X | | |
+| UI-05-14, 15 | X\* (đề xuất) | X\* (duyệt `TENANT`) | R | R | X\* | X\* (duyệt `COMMON`) | R |
+| UI-05-16 | X | | | | X | | |
+| UI-05-17 | | X | | X | | X | |
+
+Tên vai trò theo D02-08; quyền chi tiết theo nhóm `PERM-05-*` ở D02-08 §PH-05.
+
+## 25. Truy vết FR sang màn
+
+| FR | Màn |
+|---|---|
+| FR-05-001…009 | UI-05-01, 02, 03, 17 |
+| FR-05-010 | UI-05-04 |
+| FR-05-011, 012 | UI-05-02 (§8.4), UI-05-03 |
+| FR-05-013, 014, 015 | UI-05-02 tab Nơi dùng; 014, 015 là API nội bộ, không có màn |
+| FR-05-016, 017, 018 | UI-05-02 Lịch sử, UI-05-01 Xuất, UI-05-06 |
+| FR-05-019…022 | UI-05-02, 07, 09 tab Sức khỏe |
+| FR-05-023…028 | UI-05-05, 17 |
+| FR-05-029…031 | UI-05-08, 09 |
+| FR-05-032…042 | UI-05-10 |
+| FR-05-043…045 | UI-05-09, 10, 17 |
+| FR-05-046 | UI-05-11 |
+| FR-05-047 | UI-05-10 tab Kamelet sẽ sinh, UI-05-14 |
+| FR-05-048…053 | UI-05-12, 13 |
+| FR-05-054…058, 060 | UI-05-14, 15, 16, 17 |
+| FR-05-059 | API nội bộ, không có màn |
+| FR-05-061, 062 | Màn cài đặt tenant (PH-20) và báo cáo (PH-13) dùng API-05-090…092; không có màn riêng ở PH-05 |
+
+## Phụ lục A. Thành phần đề xuất bổ sung cho design system
+
+Không có thành phần mới bắt buộc. Hai biến thể đề xuất ghi vào D03-05-04 ở lần cập nhật kế:
+
+| Đề xuất | Dựa trên | Dùng ở | Lý do |
+|---|---|---|---|
+| `CMP-SecretField` biến thể "chỉ ghi có siêu dữ liệu" | `CMP-SecretField` | UI-05-02, 03, 05 | Hiện "Đã khai · phiên bản · người · lúc" thay cho giá trị che; chặn sao chép |
+| `CMP-JsonTree` có bản đồ vị trí nguồn | `CMP-JsonTree`, `CMP-CodeEditor` | UI-05-10 R4 | Tô sáng hai chiều giữa JSON chuẩn và bản gốc XML, CSV |
+
+## Phụ lục B. Danh sách kiểm tra khi dựng màn
+
+| # | Kiểm tra | Áp dụng |
+|---|---|---|
+| 1 | Không trường, nhật ký, URL, bộ nhớ trình duyệt nào chứa giá trị bí mật; kiểm bằng giá trị mồi `DH-CANARY` (D05-02-PH05) | Mọi màn có bí mật |
+| 2 | Mọi nút hành động lấy hiện, ẩn từ quyền và vô hiệu từ `allowedActions`, `disabledReasons` | Mọi màn |
+| 3 | Trạng thái không chỉ bằng màu: có chữ hoặc ký hiệu | Mọi bảng, biểu đồ, khác biệt |
+| 4 | Trạng thái giao diện phản ánh vào URL theo §4.2 | Mọi màn |
+| 5 | Bàn phím đi hết luồng chính không cần chuột; phím tắt UI-05-10 không đè trình đọc màn hình | UI-05-10, 16 |
+| 6 | Tác vụ 202 vào `CMP-BackgroundTaskTray` | UI-05-04, 06, 10, 11, 12 |
+| 7 | Glass chỉ ở lớp khung và lớp nổi; nội dung dày nền đặc; đạt tương phản ở chế độ giảm trong suốt | Mọi màn |
+| 8 | Xem trước UI-05-10 dùng API-05-054, không mô phỏng ở trình duyệt | UI-05-10 |
+| 9 | Câu lỗi lấy theo §5.2, có mã truy vết sao chép được | Mọi màn |
+| 10 | Thử ở 1280, 1440, 1920 px và thu phóng 200 % | UI-05-10 |

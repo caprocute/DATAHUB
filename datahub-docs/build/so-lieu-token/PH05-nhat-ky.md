@@ -10,3 +10,4 @@ Ghi tay trong lúc viết, dùng để điền bảng so sánh ở README §3.
 | SDD xong | 02:59 | Đọc mục lục và §3.5 SDD PH-04; một phiên, 1 commit (tệp viết một lần) |
 | CSDL xong | 03:04 | DDL 23 bảng + bài kiểm cô lập 23 khối chạy trên PostgreSQL 16; một lần sửa DDL (tên Kamelet SOAP); bảng cột sinh bằng script |
 | API xong | 03:13 | spec.py có sẵn từ phiên FRS; viết gen_openapi (114 lược đồ), gen_asyncapi, gen_md, check_contracts; đọc mẫu công cụ PH-04 (gen_openapi, gen_asyncapi, gen_md) và check_contracts PH-19 |
+| Màn hình xong | 03:22 | 17 màn, UI-05-10 siêu chi tiết (lưới R1–R6, 8 nhóm trường, xem trước, phím, trợ năng); viết 3 phần nối tệp, 2 commit; chỉ đối chiếu tên CMP bằng grep, không đọc lại D03-05 |
