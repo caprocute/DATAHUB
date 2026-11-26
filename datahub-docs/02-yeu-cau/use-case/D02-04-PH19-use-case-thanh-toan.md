@@ -594,3 +594,482 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 **Quy tắc:** BR-19-005; NFR-19-022. **Tần suất:** khi đưa đối tác vào dùng; xoay bí mật hằng năm.
 
+### 6.11. UC-19-11 · Tạo giao dịch thanh toán
+
+Use case trung tâm của PH-19, thay "nhận yêu cầu thanh toán, gửi yêu cầu thanh toán" của hệ cũ (LGC-PAY-024) vốn không chống trùng và không phân biệt lỗi khởi tạo với lỗi không xác định.
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-11 |
+| Mục tiêu | HTTT đối tác nhận được địa chỉ thanh toán cho đúng một khoản thu của một hồ sơ, không trùng, không mất |
+| Tác nhân chính | HTTT đối tác (`PERM-19-partner-pay-create`) |
+| Tác nhân phụ | PayGov; PH-03 (APISIX) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-022, 023, 024, 028, 033, 034 |
+| Tiền điều kiện | Đối tác `ACTIVE`, chế độ `DATAHUB`; dịch vụ `ACTIVE` đã gán cho đối tác; NCC `ACTIVE`, mạch không mở |
+| Điều kiện kích hoạt | Công dân chọn "Thanh toán trực tuyến" trên Cổng dịch vụ công của tỉnh cho hồ sơ `000.00.12.H68-261126-0042` |
+| Đảm bảo tối thiểu | Cùng `Idempotency-Key` không bao giờ sinh hai giao dịch; mỗi mã hồ sơ có tối đa một giao dịch đang mở hoặc đã thành công; lỗi không xác định không bao giờ được báo là thất bại |
+| Đảm bảo thành công | Giao dịch `PENDING` có `paymentUrl`, `expiresAt`; EVT-19-05, 06 phát; hạn mức ngày đã trừ |
+
+**Luồng chính**
+
+1. HTTT đối tác lấy token `client_credentials` (`private_key_jwt`) tại PH-12, gọi API-19-101 qua `apisix-ext` với `Idempotency-Key: 4f0c…`, thân: `serviceCode = LP-LLTP`, `partnerOrderId = 000.00.12.H68-261126-0042`, `amount = 200000`, `currency = VND`, thông tin người nộp, `returnUrl`.
+2. PH-03 xác thực token, áp giới hạn tốc độ, chuyển yêu cầu tới `dh-payment` theo chế độ định tuyến của đối tác.
+3. Hệ thống đặt khóa lũy đẳng `SET NX` trên Valkey; kiểm tra hợp lệ 15 bước theo thứ tự cố định của BR-19-004 (FR-19-023), dừng ở lỗi đầu tiên.
+4. Hệ thống tăng bộ đếm hạn mức ngày bằng Lua nguyên tử; trong một giao dịch CSDL: ghi `transaction_order_guard` (chống trùng mã hồ sơ), `payment_transaction` `CREATED` với mã `T68261126K7M2Q9XW4P`, `transaction_event`, `idempotency_record`, outbox EVT-19-05; mã hóa dữ liệu người nộp mức trường.
+5. Hệ thống gọi `PaymentProviderPort.initiate()` qua adapter PayGov trong bulkhead của NCC, timeout 10 giây.
+6. PayGov trả mã kết quả thành công kèm `paymentUrl`, mã tham chiếu; adapter ánh xạ qua bảng `provider_result_mapping` (thao tác `INIT`) ra kết cục `SUCCEEDED`.
+7. Hệ thống chuyển giao dịch `PENDING`, lưu `provider_reference`, outbox EVT-19-06, lưu phản hồi vào `idempotency_record`.
+8. Hệ thống trả 201 với `transactionCode`, `status = PENDING`, `paymentUrl`, `expiresAt`; đối tác chuyển hướng công dân tới `paymentUrl` (UC-19-12).
+
+**Luồng thay thế**
+
+- **1a. Đối tác gửi lại cùng `Idempotency-Key`, cùng nội dung** (mất phản hồi do mạng). Hệ thống trả nguyên phản hồi đã lưu, tiêu đề `Idempotent-Replayed: true`; không gọi PayGov lần hai.
+- **1b. Đối tác tạo lại cho cùng mã hồ sơ sau khi giao dịch trước `FAILED`/`EXPIRED`/`CANCELLED`.** Hệ thống cho phép (BR-19-007), giao dịch mới có mã mới; API-19-103 trả cả hai lượt.
+- **2a. Đối tác ở chế độ `SHADOW`.** Hệ thống ghi giao dịch `is_shadow = true`, không gọi PayGov, không phát sự kiện ra ngoài, trả 202 chỉ để so sánh; yêu cầu thật vẫn do hệ cũ xử lý (UC-19-29).
+- **6a. PayGov từ chối rõ ràng** (ví dụ dịch vụ chưa đăng ký). Giao dịch `FAILED` với mã lý do; đối tác nhận ERR-19-018 (502); hạn mức được hoàn lại.
+- **6b. Không xác định** (timeout, 5xx, mất kết nối, hoặc mã kết quả ánh xạ ra `UNKNOWN`). Giao dịch giữ `CREATED`, `init_uncertain = true`; đối tác nhận ERR-19-019 (504) kèm `transactionCode`; hệ thống truy vấn bù theo BR-19-016 (UC-19-16). Đối tác không được tạo giao dịch mới cho mã hồ sơ này trong khi giao dịch còn mở.
+
+**Luồng ngoại lệ**
+
+- **E1. Thiếu, sai `Idempotency-Key`.** ERR-19-002. **E2. Khóa đã dùng cho nội dung khác.** ERR-19-003. **E3. Yêu cầu cùng khóa đang xử lý.** ERR-19-004 (409, `Retry-After: 1`).
+- **E4. Đối tác không `ACTIVE`.** ERR-19-005. **E5. Đối tác còn ở `LEGACY`.** ERR-19-006.
+- **E6. Dịch vụ không tồn tại, không hoạt động, chưa gán.** ERR-19-007, 008, 009.
+- **E7. Số tiền sai, ngoài khoảng, vượt hạn mức giao dịch, vượt hạn mức ngày, sai loại tiền.** ERR-19-010…014.
+- **E8. Mã hồ sơ đã có giao dịch mở hoặc thành công.** ERR-19-015 kèm `transactionCode` hiện có.
+- **E9. `returnUrl` không thuộc tên miền được phép.** ERR-19-016.
+- **E10. Mạch ngắt mở hoặc NCC tạm dừng.** ERR-19-017 (503, `Retry-After`), không ghi CSDL.
+- **E11. Phân hệ chưa bật cho tenant.** ERR-19-049.
+
+**Quy tắc:** BR-19-001…007, 012, 013; NFR-19-001, 002, 012, 024. **Tần suất:** khoảng 20.000 giao dịch mỗi ngày ở tỉnh thí điểm, đỉnh 50/giây (A-19-19); thiết kế cho 200/giây mỗi tenant.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant P as HTTT đối tác
+  participant G as APISIX (PH-03)
+  participant H as dh-payment
+  participant V as Valkey
+  participant D as pg-payment
+  participant A as Adapter PayGov
+  participant X as PayGov
+  P->>G: POST /payments (Idempotency-Key)
+  G->>H: chuyển tiếp kèm định danh client, traceparent
+  H->>V: SET NX khóa lũy đẳng
+  H->>H: kiểm tra hợp lệ 15 bước (BR-19-004)
+  H->>V: Lua tăng bộ đếm hạn mức ngày
+  H->>D: ghi guard, giao dịch CREATED, event, outbox EVT-19-05
+  H->>A: initiate(tx)
+  A->>X: khởi tạo thanh toán (ký, mTLS)
+  X-->>A: mã kết quả, paymentUrl, mã tham chiếu
+  A-->>H: kết cục SUCCEEDED theo bảng ánh xạ INIT
+  H->>D: giao dịch PENDING, outbox EVT-19-06, lưu phản hồi lũy đẳng
+  H-->>G: 201 transactionCode, paymentUrl, expiresAt
+  G-->>P: 201
+```
+
+### 6.12. UC-19-12 · Người nộp thanh toán và quay về
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-12 |
+| Mục tiêu | Người nộp thanh toán trên trang PayGov và quay về trang của đối tác với thông tin trạng thái đáng tin |
+| Tác nhân chính | Người nộp tiền |
+| Tác nhân phụ | PayGov; HTTT đối tác |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-025 |
+| Tiền điều kiện | Giao dịch `PENDING` có `paymentUrl` |
+| Điều kiện kích hoạt | Người nộp được chuyển hướng tới `paymentUrl` |
+| Đảm bảo tối thiểu | Lượt quay về không bao giờ đổi trạng thái giao dịch (BR-19-014); tham số quay về bị sửa không làm lộ dữ liệu |
+| Đảm bảo thành công | Người nộp thấy trang kết quả UI-19-28 rồi được chuyển về `returnUrl` của đối tác kèm tham số có ký |
+
+**Luồng chính**
+
+1. Người nộp thanh toán trên trang PayGov bằng tài khoản ngân hàng.
+2. PayGov chuyển trình duyệt về `/api/payment-callback/v1/paygov/{connectionKey}/return?...` (API-19-202).
+3. Hệ thống xác minh tham số theo đặc tả adapter (chữ ký nếu PayGov có), đọc trạng thái **hiện tại trong CSDL** của giao dịch, không dùng trạng thái trong tham số.
+4. Hệ thống hiển thị UI-19-28: "Đang xác nhận kết quả" nếu giao dịch còn `PENDING` (tự làm mới 5 giây một lần tối đa 60 giây), hoặc kết quả cuối; có mã giao dịch, số tiền, dịch vụ, không có dữ liệu cá nhân.
+5. Sau tối đa 10 giây (hoặc khi người nộp bấm "Về trang dịch vụ công"), hệ thống chuyển về `returnUrl` kèm `transactionCode`, `status`, `ts`, `sig` (HMAC trên `{transactionCode}.{status}.{ts}` bằng bí mật của đối tác).
+
+**Luồng thay thế**
+
+- **4a. IPN đã tới trước lượt quay về.** Trang hiển thị ngay "Thanh toán thành công".
+- **4b. Người nộp hủy trên trang PayGov.** Trang hiển thị "Bạn đã hủy thanh toán"; giao dịch vẫn `PENDING` tới khi IPN hoặc truy vấn xác nhận (BR-19-014).
+
+**Luồng ngoại lệ**
+
+- **E1. Tham số sai chữ ký, không tìm thấy giao dịch.** Trang lỗi chung "Không xác định được giao dịch", không tiết lộ chi tiết; ghi nhật ký tích hợp mức cảnh báo.
+
+**Quy tắc:** BR-19-014. **Tần suất:** bằng số giao dịch.
+
+### 6.13. UC-19-13 · Nhận và xử lý kết quả thanh toán (IPN)
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-13 |
+| Mục tiêu | Kết quả thanh toán từ PayGov được xác minh và áp đúng một lần vào giao dịch, nhanh, không bị giả mạo |
+| Tác nhân chính | PayGov |
+| Tác nhân phụ | Hệ thống (bộ xử lý inbox); HTTT đối tác (nhận webhook) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-028, 029, 030, 031 |
+| Tiền điều kiện | NCC không `RETIRED`; `connectionKey` hợp lệ |
+| Điều kiện kích hoạt | PayGov gửi IPN tới API-19-201 |
+| Đảm bảo tối thiểu | Mọi IPN đến đều được lưu nguyên văn (kể cả bị từ chối, phần nội dung đã che); IPN lặp không gây chuyển trạng thái lần hai; mã kết quả lạ không bao giờ thành công |
+| Đảm bảo thành công | Giao dịch `SUCCEEDED` hoặc `FAILED`, EVT-19-07 hoặc 08 phát, webhook tới đối tác (UC-19-27) |
+
+**Luồng chính**
+
+1. PayGov gửi IPN tới `apisix-ext`; PH-03 kiểm tra IP nguồn thuộc danh sách cho phép, định tuyến theo mã giao dịch tới Datahub hoặc hệ cũ (A-19-07).
+2. Hệ thống tra `connectionKey` → NCC, đặt ngữ cảnh tenant `T68` trước khi mở giao dịch CSDL (ADR-045).
+3. Hệ thống xác minh theo FR-19-029: cú pháp, chữ ký với khóa công khai `ACTIVE` hoặc `NEXT`, dấu thời gian ±5 phút, nonce chưa gặp, mã đơn vị kết nối khớp.
+4. Hệ thống ghi `callback_inbox` `RECEIVED` (nguyên văn, mã băm) và trả PayGov mã xác nhận theo đặc tả adapter trong ≤ 200 ms (NFR-19-003).
+5. Bộ xử lý inbox nhận bản ghi, khóa hàng giao dịch, ánh xạ mã kết quả qua bảng (thao tác `IPN`) ra `SUCCEEDED`.
+6. Hệ thống kiểm tra số tiền bằng đúng 200.000 đ, mã tham chiếu khớp; chuyển `PENDING` → `SUCCEEDED`, ghi `paid_at`, `channel_code`, `bank_code`, `transaction_event` nguồn `IPN`, outbox EVT-19-07; inbox `PROCESSED`.
+7. Bộ gửi webhook gửi `transaction.succeeded` tới đối tác (UC-19-27).
+
+**Luồng thay thế**
+
+- **4a. IPN lặp đúng nội dung** (nonce đã gặp, mã băm bằng nhau). Trả xác nhận thành công, không xử lý lại.
+- **5a. Kết cục `FAILED`.** Giao dịch → `FAILED` với mã lý do; EVT-19-08.
+- **5b. Kết cục `PENDING`.** Giữ nguyên trạng thái, ghi sự kiện "NCC báo đang xử lý".
+- **5c. Kết cục `UNKNOWN` (mã chưa ánh xạ).** Giữ trạng thái, `needs_reconciliation = true`, inbox `QUARANTINED` (ERR-19-028), cảnh báo `payment_callback_quarantined_total`; hệ thống tiếp tục truy vấn bù; ADM bổ sung ánh xạ (UC-19-05 luồng 2a).
+- **6a. Giao dịch `CANCELLED`/`EXPIRED` nhận IPN thành công.** Thanh toán muộn: → `SUCCEEDED`, `late_paid = true`, sinh chênh lệch `LATE_PAYMENT`, webhook mang `latePaid = true` (BR-19-018).
+- **6b. Giao dịch đã `SUCCEEDED` nhận IPN thất bại.** Không đổi; sinh chênh lệch `STATUS_MISMATCH` (BR-19-015).
+
+**Luồng ngoại lệ**
+
+- **E1. Chữ ký sai.** ERR-19-024 (401); inbox `REJECTED`, chỉ số `payment_callback_rejected_total{reason=BAD_SIGNATURE}`.
+- **E2. Quá hạn.** ERR-19-025. **E3. Nonce gặp lại, nội dung khác.** ERR-19-026. **E4. Nguồn không được phép.** ERR-19-027.
+- **E5. Sai số tiền, sai tham chiếu, không tìm thấy giao dịch.** Trả 200 cho PayGov (không để PayGov gửi lại vô ích), inbox `QUARANTINED` với ERR-19-028, sinh chênh lệch `AMOUNT_MISMATCH` hoặc `ORPHAN_CALLBACK` (FR-19-031).
+
+**Quy tắc:** BR-19-014, 015, 018; NFR-19-003, 020. **Tần suất:** bằng số giao dịch, cộng IPN lặp (giả định 10–20%).
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant X as PayGov
+  participant G as APISIX (PH-03)
+  participant C as dh-payment (callback)
+  participant D as pg-payment
+  participant W as Bộ xử lý inbox
+  participant O as Bộ gửi webhook
+  participant P as HTTT đối tác
+  X->>G: POST /paygov/{connectionKey}/ipn
+  G->>G: allowlist IP, định tuyến theo mã giao dịch
+  G->>C: chuyển tiếp
+  C->>C: tenant từ connectionKey; chữ ký, thời gian, nonce
+  C->>D: ghi callback_inbox RECEIVED
+  C-->>X: xác nhận (≤ 200 ms)
+  W->>D: lấy inbox, khóa hàng giao dịch
+  W->>W: ánh xạ mã IPN → SUCCEEDED; kiểm số tiền, tham chiếu
+  W->>D: giao dịch SUCCEEDED, event, outbox EVT-19-07, inbox PROCESSED
+  O->>D: đọc outbox
+  O->>P: webhook transaction.succeeded (HMAC)
+  P-->>O: 200
+```
+
+### 6.14. UC-19-14 · Hủy và hết hạn giao dịch
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-14 |
+| Mục tiêu | Giao dịch không được thanh toán được đóng đúng lúc, và nếu tiền vẫn về sau thì không mất |
+| Tác nhân chính | Bộ lập lịch (hết hạn); HTTT đối tác hoặc OPR (hủy, `PERM-19-partner-pay-create`, `PERM-19-transaction-cancel`) |
+| Tác nhân phụ | PayGov |
+| Mức ưu tiên, phát hành | M · MVP (hết hạn); S · Đ2b (hủy chủ động) |
+| FR hiện thực | FR-19-026, 027 |
+| Tiền điều kiện | Giao dịch `CREATED` hoặc `PENDING` |
+| Điều kiện kích hoạt | Quá `expires_at` + 30 phút; hoặc đối tác, cán bộ yêu cầu hủy |
+| Đảm bảo tối thiểu | Không giao dịch nào bị đóng `EXPIRED` khi NCC chưa trả lời chắc chắn trong 72 giờ đầu; kết quả muộn vẫn được ghi nhận (BR-19-018) |
+| Đảm bảo thành công | Giao dịch `EXPIRED` hoặc `CANCELLED`, hạn mức ngày được hoàn, webhook tới đối tác |
+
+**Luồng chính (hết hạn)**
+
+1. Tác vụ quét mỗi phút tìm giao dịch `PENDING` có `expires_at + 19.txn.expiry-grace-minutes` < hiện tại.
+2. Hệ thống truy vấn PayGov lần cuối (thao tác `QUERY`).
+3. PayGov báo "chưa thanh toán"; hệ thống chuyển `EXPIRED`, ghi sự kiện, outbox EVT-19-10, hoàn bộ đếm hạn mức.
+
+**Luồng thay thế**
+
+- **3a. PayGov không trả lời.** Giữ `PENDING`, truy vấn theo BR-19-016; quá 72 giờ vẫn không xác định → `EXPIRED` với `needs_reconciliation = true`, đối soát xác nhận sau (BR-19-017).
+- **3b. PayGov báo đã thanh toán.** Áp như IPN thành công (UC-19-13 bước 6).
+- **1a. Đối tác hủy (Đ2b).** Đối tác gọi API-19-104 khi công dân rút hồ sơ; nếu PayGov có API hủy (OQ-19-10) thì gọi trước, xác nhận mới `CANCELLED`; nếu không có thì `CANCELLED` cục bộ; EVT-19-09.
+- **1b. Cán bộ hủy (Đ2b).** OPR hủy ở UI-19-15 (API-19-055), nhập lý do.
+
+**Luồng ngoại lệ**
+
+- **E1. Hủy giao dịch không ở `CREATED`/`PENDING`.** ERR-19-021.
+- **E2. Giao dịch không thuộc đối tác.** ERR-19-020.
+
+**Quy tắc:** BR-19-016, 017, 018, 019. **Tần suất:** giả định 10–15% giao dịch hết hạn.
+
+### 6.15. UC-19-15 · Đối tác truy vấn trạng thái giao dịch
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-15 |
+| Mục tiêu | HTTT đối tác biết chắc trạng thái thanh toán của hồ sơ khi chưa nhận webhook |
+| Tác nhân chính | HTTT đối tác (`PERM-19-partner-pay-read`) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-035 |
+| Tiền điều kiện | Đối tác có client hợp lệ (đối tác `SUSPENDED` vẫn truy vấn được) |
+| Điều kiện kích hoạt | Cán bộ một cửa mở hồ sơ, hoặc tác vụ đối soát nội bộ của đối tác |
+| Đảm bảo tối thiểu | Chỉ trả giao dịch của chính đối tác; không có dữ liệu cá nhân ngoài những gì đối tác đã gửi |
+| Đảm bảo thành công | Đối tác nhận trạng thái hiện hành, `sequence` mới nhất |
+
+**Luồng chính**
+
+1. Đối tác gọi API-19-102 với `transactionCode` (hoặc API-19-103 với `partnerOrderId`).
+2. Hệ thống đọc từ bản sao đọc, kiểm tra quyền sở hữu, trả trạng thái, số tiền, `paidAt`, `refundedAmount`, `latePaid`, `sequence`, `providerReference`, `expiresAt`.
+3. Với API-19-103, hệ thống trả mọi lượt giao dịch của mã hồ sơ, sắp mới nhất trước.
+
+**Luồng ngoại lệ**
+
+- **E1. Không tìm thấy hoặc không thuộc đối tác.** ERR-19-020 (404). **E2. Vượt tần suất.** ERR-19-048 (429).
+
+**Quy tắc:** BR-19-021; NFR-19-004. **Tần suất:** giả định 1–2 lần mỗi giao dịch; tải 300 yêu cầu/giây mỗi tenant.
+
+### 6.16. UC-19-16 · Đồng bộ trạng thái và xử lý lại IPN
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-16 |
+| Mục tiêu | Giao dịch treo được chốt kết quả từ nguồn có xác thực mà không cần chờ đối soát ngày hôm sau |
+| Tác nhân chính | Bộ lập lịch (truy vấn tự động); OPR (`PERM-19-transaction-sync`, `PERM-19-callback-replay`) |
+| Tác nhân phụ | PayGov |
+| Mức ưu tiên, phát hành | M · MVP (truy vấn tự động, xem IPN); S · Đ2b (đồng bộ thủ công, xử lý lại IPN) |
+| FR hiện thực | FR-19-032, 036, 037 |
+| Tiền điều kiện | Giao dịch `PENDING` hoặc `CREATED` có `init_uncertain`; IPN ở `QUARANTINED` hoặc `FAILED` |
+| Điều kiện kích hoạt | Lịch BR-19-016; OPR thao tác ở UI-19-15, UI-19-16 |
+| Đảm bảo tối thiểu | Truy vấn tôn trọng giới hạn tần suất của PayGov; kết quả truy vấn áp như IPN, đúng một lần |
+| Đảm bảo thành công | Giao dịch có kết quả cuối; IPN đã xử lý lại ở `PROCESSED` |
+
+**Luồng chính (truy vấn tự động)**
+
+1. Lúc 2, 5, 10, 15 phút, rồi 30 phút, 1, 2, 4 giờ, rồi mỗi 6 giờ tới 72 giờ sau khi tạo, bộ lập lịch chọn giao dịch chưa có kết quả.
+2. Hệ thống gọi `PaymentProviderPort.query()`; ánh xạ kết quả (thao tác `QUERY`).
+3. Kết cục `SUCCEEDED`: áp như IPN (nguồn `QUERY`), EVT-19-07, webhook.
+
+**Luồng thay thế**
+
+- **1a. Đồng bộ thủ công (Đ2b).** OPR mở UI-19-15, bấm "Đồng bộ với NCC" (API-19-053); hệ thống chạy bước 2–3 ngay.
+- **1b. Xử lý lại IPN (Đ2b).** Sau khi ADM bổ sung ánh xạ mã `24` (UC-19-05), OPR mở UI-19-16 lọc `QUARANTINED`, chọn IPN, bấm "Xử lý lại" (API-19-058); hệ thống xử lý lại từ bản nguyên văn đã lưu với bảng ánh xạ hiện hành.
+- **1c. MVP.** OPR xem danh sách, chi tiết IPN (API-19-056, 057) để điều tra; kết quả cuối đến từ truy vấn tự động hoặc đối soát.
+
+**Luồng ngoại lệ**
+
+- **E1. Đồng bộ quá 1 lần mỗi 60 giây hoặc 10 lần mỗi giờ.** ERR-19-023 (429).
+- **E2. Xử lý lại IPN đã `PROCESSED` hoặc `REJECTED` vì chữ ký.** ERR-19-021 (IPN sai chữ ký không bao giờ được xử lý lại).
+
+**Quy tắc:** BR-19-015, 016; NFR-19-012. **Tần suất:** truy vấn tự động khoảng 1,5 lần mỗi giao dịch không có IPN kịp thời.
+
+### 6.17. UC-19-17 · Lập yêu cầu hoàn tiền
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-17 |
+| Mục tiêu | Khoản thu sai hoặc thu trùng được đề nghị hoàn kèm lý do, chứng từ, không vượt số đã thu |
+| Tác nhân chính | ACC (`PERM-19-refund-create`) |
+| Tác nhân phụ | HTTT đối tác (`PERM-19-partner-refund-create`, qua API-19-105) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-038 |
+| Tiền điều kiện | Tenant bật hoàn tiền; giao dịch `SUCCEEDED`/`PARTIALLY_REFUNDED`, không thử, không bóng, trong hạn 180 ngày |
+| Điều kiện kích hoạt | Hồ sơ bị từ chối giải quyết, hoặc chênh lệch `DUPLICATE` được xử lý bằng `CREATE_REFUND` |
+| Đảm bảo tối thiểu | Tổng hoàn (đang xử lý + đã thành công) không vượt số tiền gốc; mỗi giao dịch có tối đa một yêu cầu hoàn chưa kết thúc |
+| Đảm bảo thành công | Yêu cầu `PENDING_APPROVAL` với số cấp duyệt xác định; EVT-19-11 phát |
+
+**Luồng chính**
+
+1. ACC (Lê Văn Cường) mở UI-19-15 của giao dịch `T68261126K7M2Q9XW4P`, chọn "Lập yêu cầu hoàn"; UI-19-18 mở biểu mẫu.
+2. ACC nhập số tiền 200.000 đ, lý do `HO_SO_BI_TU_CHOI`, đính kèm quyết định từ chối hồ sơ (API-19-087, mục đích `ATTACHMENT`).
+3. ACC gửi (API-19-059); hệ thống kiểm tra theo FR-19-038, xác định 1 cấp duyệt (< 5.000.000 đ), chế độ dự kiến `MANUAL`.
+4. Hệ thống ghi `refund_request` `PENDING_APPROVAL` mã `RK7M2Q9XW4P01AB`, `approval_request` loại `REFUND`, outbox EVT-19-11; thông báo nhóm APR.
+
+**Luồng thay thế**
+
+- **1a. Đối tác lập.** HTTT đối tác gọi API-19-105 với `transactionCode`, `partnerRefundId`, `Idempotency-Key`; hệ thống xử lý như bước 3–4, trả 201.
+- **4a. Người lập rút** khi còn chờ duyệt (API-19-050 `WITHDRAW`): yêu cầu `CANCELLED`.
+
+**Luồng ngoại lệ**
+
+- **E1. Tenant tắt hoàn tiền.** ERR-19-032. **E2. Giao dịch không đủ điều kiện.** ERR-19-029.
+- **E3. Vượt số còn được hoàn.** ERR-19-030. **E4. Quá hạn hoàn.** ERR-19-031.
+
+**Quy tắc:** BR-19-022, 023, 033. **Tần suất:** giả định 0,2–0,5% số giao dịch.
+
+### 6.18. UC-19-18 · Phê duyệt và thực thi hoàn tiền
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-18 |
+| Mục tiêu | Yêu cầu hoàn được duyệt đúng thẩm quyền, tiền được hoàn và giao dịch gốc phản ánh đúng số đã hoàn |
+| Tác nhân chính | APR (`PERM-19-refund-approve`) |
+| Tác nhân phụ | ACC (`PERM-19-refund-execute`); PayGov (chế độ `API`, Đ2b); HTTT đối tác (webhook) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-039, 040, 041 |
+| Tiền điều kiện | Yêu cầu `PENDING_APPROVAL` |
+| Điều kiện kích hoạt | APR mở đề nghị ở UI-19-13 |
+| Đảm bảo tối thiểu | Người duyệt khác người lập, cấp 2 khác cấp 1, người xác nhận chứng từ khác mọi người duyệt; không gửi lệnh hoàn hai lần cho cùng một lần thực thi |
+| Đảm bảo thành công | Yêu cầu `SUCCEEDED`; giao dịch gốc `REFUNDED` hoặc `PARTIALLY_REFUNDED`; EVT-19-13; webhook `refund.succeeded` |
+
+**Luồng chính (chế độ `MANUAL`, MVP)**
+
+1. APR (Trần Thị Bình) mở đề nghị ở UI-19-13, xem giao dịch gốc, tệp đính kèm, lịch sử hoàn; chọn "Duyệt" (API-19-050).
+2. Hệ thống kiểm tra tách nhiệm, kiểm tra lại BR-19-022; chuyển `APPROVED` → `AWAITING_MANUAL`; EVT-19-12; nhắc ACC.
+3. Kế toán đơn vị thu thực hiện hoàn ngoài hệ thống (ủy nhiệm chi trả về tài khoản người nộp).
+4. ACC (Bùi Văn Minh) mở UI-19-18, chọn "Ghi nhận đã hoàn", nhập số chứng từ `UNC-2611-015`, ngày chứng từ, tải tệp chứng từ (API-19-087 mục đích `REFUND_VOUCHER`, rồi API-19-062 `CONFIRM_MANUAL`).
+5. Hệ thống kiểm tra người xác nhận khác người duyệt; chuyển `SUCCEEDED`; trong một giao dịch CSDL cộng `refunded_amount`, chuyển giao dịch gốc `REFUNDED`, outbox EVT-19-13.
+6. Đối tác nhận webhook `refund.succeeded`.
+
+**Luồng thay thế**
+
+- **1a. Hai cấp (≥ 5.000.000 đ).** Cấp 1 duyệt → `PENDING_SECOND_APPROVAL`; Ngô Thị Lan duyệt cấp 2 → `APPROVED`.
+- **1b. Từ chối ở bất kỳ cấp.** `REJECTED`, EVT-19-12; đối tác nhận `refund.rejected`.
+- **2a. Chế độ `API` (Đ2b).** Hệ thống gọi `PaymentProviderPort.refund()` với `refundCode` làm khóa lũy đẳng; `PROCESSING`; chờ IPN hoàn (API-19-203) hoặc truy vấn; thành công → bước 5.
+- **2b. NCC báo lỗi hoàn.** `FAILED`, EVT-19-14; ACC chọn `RETRY` (≤ 3 lần) hoặc `SWITCH_TO_MANUAL`.
+
+**Luồng ngoại lệ**
+
+- **E1. Người duyệt trùng người lập, trùng cấp 1; người xác nhận trùng người duyệt.** ERR-19-033.
+- **E2. Giao dịch gốc đã đổi (ví dụ bị đảo `FAILED` qua chênh lệch).** ERR-19-029 khi duyệt.
+- **E3. Đề nghị đã có quyết định.** ERR-19-034. **E4. Thiếu chứng từ.** ERR-19-001. **E5. Hành động không hợp lệ.** ERR-19-021.
+
+**Quy tắc:** BR-19-011, 022, 023, 024. **Tần suất:** như UC-19-17.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ACC as Kế toán (lập)
+  actor APR as Người phê duyệt
+  actor ACC2 as Kế toán (xác nhận)
+  participant H as dh-payment
+  participant D as pg-payment
+  participant P as HTTT đối tác
+  ACC->>H: POST /refunds (lý do, tệp)
+  H->>D: refund PENDING_APPROVAL, approval REFUND, outbox EVT-19-11
+  APR->>H: POST /approval-requests/{id}/decisions APPROVE
+  H->>H: kiểm tách nhiệm, kiểm lại BR-19-022
+  H->>D: refund AWAITING_MANUAL, outbox EVT-19-12
+  Note over ACC2: Hoàn tiền ngoài hệ thống (ủy nhiệm chi)
+  ACC2->>H: POST /refunds/{id}/executions CONFIRM_MANUAL (chứng từ)
+  H->>H: người xác nhận ≠ người duyệt
+  H->>D: refund SUCCEEDED, giao dịch REFUNDED, outbox EVT-19-13
+  H->>P: webhook refund.succeeded
+```
+
+### 6.19. UC-19-19 · Đối soát ngày với nhà cung cấp
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-19 |
+| Mục tiêu | Mỗi ngày giao dịch của mỗi NCC được so khớp hai phía và mọi dòng lệch trở thành việc có người phụ trách |
+| Tác nhân chính | Bộ lập lịch |
+| Tác nhân phụ | ACC (`PERM-19-recon-run`, `PERM-19-recon-upload`); PayGov |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-042, 043, 044 |
+| Tiền điều kiện | NCC `ACTIVE` hoặc `SUSPENDED` trong ngày T |
+| Điều kiện kích hoạt | 06:00 ngày T+1 (`19.recon.cutoff-time`) |
+| Đảm bảo tối thiểu | Mỗi (NCC, ngày) có đúng một phiên; tệp gốc được lưu trước khi phân tích, kèm SHA-256; giao dịch thử, bóng không vào phiên |
+| Đảm bảo thành công | Phiên `READY_TO_CLOSE` (không lệch) hoặc `IN_REVIEW` (có chênh lệch) trước 08:00 (NFR-19-008); EVT-19-15 phát |
+
+**Luồng chính (MVP, tải tệp theo A-19-17)**
+
+1. 06:00 ngày 27/11/2026, hệ thống tạo phiên (`PAYGOV-T68`, 26/11/2026) `SCHEDULED` → `COLLECTING`; adapter khai `reconSource = FILE_UPLOAD` nên phiên chuyển `WAITING_DATA`, nhắc ACC.
+2. ACC tải tệp đối soát PayGov ngày 26/11 ở UI-19-20 (API-19-065).
+3. Hệ thống lưu tệp gốc vào `dh-T68-payment` (chuẩn hóa chữ thường `dh-t68-payment`), tính SHA-256, adapter kiểm tra cấu trúc, mã đơn vị, ngày; chuẩn hóa 19.842 dòng.
+4. Phiên `MATCHING`; hệ thống ghép theo `providerReference`, phân loại theo bảng FR-19-044: 19.839 `MATCHED`, 2 `MISSING_AT_DATAHUB`, 1 `AMOUNT_MISMATCH`.
+5. Hệ thống ghi dòng đối soát theo lô 5.000, tính tổng hai phía, sinh 3 chênh lệch `OPEN` (EVT-19-17), cập nhật `recon_status` từng giao dịch; phiên `IN_REVIEW`; EVT-19-15.
+
+**Luồng thay thế**
+
+- **1a. Adapter `API` hoặc `FILE_FETCH`** (khi OQ-19-07 trả lời): hệ thống tự lấy dữ liệu; chưa có thì `WAITING_DATA`, thử lại mỗi 30 phút tới 12:00 rồi nhắc ACC.
+- **1b. Thông báo dữ liệu sẵn sàng** (API-19-204): thu thập ngay.
+- **4a. Không lệch.** Phiên `READY_TO_CLOSE`.
+- **5a. Chạy lại** (API-19-066) sau khi IPN đến muộn: chênh lệch cũ đã khớp được đóng `AUTO_MATCHED`.
+- **1c. Phiên thủ công** (API-19-063) cho ngày bị bỏ sót.
+
+**Luồng ngoại lệ**
+
+- **E1. Tệp sai định dạng, sai mã băm, sai NCC, sai ngày.** ERR-19-041; phiên về `WAITING_DATA` kèm lỗi dòng.
+- **E2. Phiên đã tồn tại (thủ công).** ERR-19-040. **E3. Phiên đã chốt.** ERR-19-043.
+- **E4. Lỗi kỹ thuật 3 lần.** Phiên `FAILED`, cảnh báo; ACC chạy lại.
+
+**Quy tắc:** BR-19-025, 028; NFR-19-008; KPI-94. **Tần suất:** 1 phiên mỗi NCC mỗi ngày; 20.000–100.000 dòng.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant S as Bộ lập lịch
+  participant H as dh-payment
+  actor ACC as Kế toán
+  participant A as Adapter PayGov
+  participant O as Garage (kho tệp)
+  participant D as pg-payment
+  S->>H: 06:00 tạo phiên (NCC, T−1)
+  H->>D: phiên SCHEDULED → COLLECTING → WAITING_DATA
+  ACC->>H: POST /reconciliation-sessions/{id}/files
+  H->>O: lưu tệp gốc, SHA-256
+  H->>A: parse(tệp) → dòng chuẩn
+  H->>D: phiên MATCHING
+  H->>D: đọc giao dịch ngày T (paid_at giờ VN), hoàn ngày T
+  H->>H: ghép theo providerReference, phân loại
+  H->>D: dòng đối soát (lô 5.000), chênh lệch OPEN, recon_status
+  H->>D: phiên IN_REVIEW, outbox EVT-19-15, EVT-19-17
+```
+
+### 6.20. UC-19-20 · Xử lý chênh lệch đối soát
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-20 |
+| Mục tiêu | Mỗi chênh lệch được điều tra, xử lý bằng cách được phép và đã được người thứ hai duyệt, trong hạn |
+| Tác nhân chính | ACC (`PERM-19-discrepancy-handle`) |
+| Tác nhân phụ | APR (`PERM-19-discrepancy-approve`); PayGov (bộ phận hỗ trợ) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-045, 046 |
+| Tiền điều kiện | Chênh lệch `OPEN` |
+| Điều kiện kích hoạt | Đối soát sinh chênh lệch; IPN bị cách ly |
+| Đảm bảo tối thiểu | Không chênh lệch nào bị xóa; trạng thái giao dịch chỉ đảo qua quyết định đã duyệt; ghi chú chỉ thêm |
+| Đảm bảo thành công | Chênh lệch `RESOLVED` với cách xử lý, người đề xuất, người duyệt, bằng chứng; phiên về `READY_TO_CLOSE` khi chênh lệch cuối đóng |
+
+**Luồng chính (thiếu ở Datahub)**
+
+1. ACC (Lê Văn Cường) mở UI-19-21 lọc `OPEN`, nhận chênh lệch `MISSING_AT_DATAHUB` của giao dịch `T68261126P3R8...` (API-19-072 `CLAIM`) → `INVESTIGATING`.
+2. ACC mở UI-19-22 (API-19-074): phía PayGov thành công 200.000 đ lúc 23:58:41 ngày 26/11; phía Datahub giao dịch `EXPIRED` với `needs_reconciliation`; IPN liên quan: không có.
+3. ACC chạy "Đồng bộ với NCC" (UC-19-16 luồng 1a) hoặc dùng kết quả truy vấn gần nhất làm bằng chứng; truy vấn xác nhận thành công.
+4. ACC đề xuất `UPDATE_STATUS_FROM_PROVIDER`, `targetStatus = SUCCEEDED`, ghi chú, bằng chứng (API-19-073) → `PROPOSED`, đề nghị `DISCREPANCY_RESOLUTION`.
+5. APR duyệt (API-19-050); hệ thống kiểm tra `version` giao dịch không đổi, chuyển giao dịch `SUCCEEDED` nguồn `DISCREPANCY_RESOLUTION`, `late_paid = true`, chênh lệch `RESOLVED`, EVT-19-18; webhook `transaction.succeeded` tới đối tác.
+
+**Luồng thay thế**
+
+- **1a. `AMOUNT_MISMATCH`.** ACC chuyển cấp tới PayGov (`ESCALATE`, mã yêu cầu hỗ trợ) → `ESCALATED`; PayGov phản hồi → `INVESTIGATING`; ACC đề xuất `ACCEPT_PROVIDER_FIGURE` (bản ghi bù) hoặc `CREATE_REFUND`.
+- **1b. `DUPLICATE`.** Đề xuất `CREATE_REFUND`; khi duyệt, hệ thống tạo yêu cầu hoàn `PENDING_APPROVAL` đi tiếp UC-19-18 với người duyệt khác.
+- **5a. Từ chối.** Chênh lệch về `INVESTIGATING`.
+- **1c. Quá hạn 3 ngày làm việc.** Nhắc người phụ trách; quá 10 ngày làm việc thông báo nhóm APR.
+
+**Luồng ngoại lệ**
+
+- **E1. Cách xử lý không được phép với loại chênh lệch.** ERR-19-001. **E2. Người duyệt trùng người đề xuất.** ERR-19-033.
+- **E3. Giao dịch đã đổi kể từ lúc đề xuất.** ERR-19-045; ACC đề xuất lại.
+- **E4. Phiên đã chốt.** ERR-19-043.
+
+**Quy tắc:** BR-19-011, 014, 015, 018, 028, 030; KPI-96. **Tần suất:** giả định ≤ 0,1% dòng đối soát.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ACC as Kế toán
+  actor APR as Người phê duyệt
+  participant H as dh-payment
+  participant A as Adapter PayGov
+  participant D as pg-payment
+  ACC->>H: PATCH /discrepancies/{id} CLAIM
+  ACC->>H: POST /transactions/{id}/status-syncs
+  H->>A: query(tx)
+  A-->>H: SUCCEEDED (bằng chứng)
+  ACC->>H: POST /discrepancies/{id}/resolution-proposals
+  H->>D: chênh lệch PROPOSED, approval DISCREPANCY_RESOLUTION
+  APR->>H: POST /approval-requests/{id}/decisions APPROVE
+  H->>D: so version; giao dịch SUCCEEDED; chênh lệch RESOLVED; outbox EVT-19-07, EVT-19-18
+```
+
