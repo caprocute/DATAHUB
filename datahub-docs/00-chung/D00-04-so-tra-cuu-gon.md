@@ -41,12 +41,12 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 02 | Danh mục dịch vụ | `dh-connect` | MVP | chưa |
 | 03 | Cổng API | `apisix`, `dh-connect` | MVP | chưa |
 | 04 | Lõi tích hợp, trình thiết kế luồng | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.2 |
-| 05 | Bộ điều hợp | `dh-integration`, `dh-runtime` | MVP | chưa |
+| 05 | Bộ điều hợp | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.1 |
 | 06 | Dữ liệu chủ | `dh-data` | Đợt 3 | chưa |
 | 07 | Danh mục dùng chung | `dh-data` | MVP | đủ bảy tập 0.3 (mẫu) |
 | 08 | Chất lượng dữ liệu | `dh-data` | Đợt 3 | chưa |
 | 09 | Quyền riêng tư | `dh-data` | Đợt 2 | chưa |
-| 10 | Sự kiện | `dh-integration`, `kafka` | MVP | chưa |
+| 10 | Sự kiện | `dh-integration`, `dh-runtime`, `kafka` | MVP | đủ bảy tập (FRS 0.3) |
 | 11 | Quy trình liên thông | `dh-platform` | Đợt 2 | chưa |
 | 12 | Định danh và phân quyền | `keycloak`, `opa`, `dh-platform` | MVP | chưa |
 | 13 | Giám sát và kiểm toán | `dh-platform`, LGTM | MVP | chưa |
@@ -66,7 +66,7 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 
 | Họ | Dải | Ghi chú |
 |---|---|---|
-| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 | 014–019, 024–029, 039–049, 059 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
+| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
 | SEC | 01–09 quản trị · 10–19 mạng · 20–29 IAM · 30–39 dữ liệu · 40–49 ứng dụng · 50–59 nền tảng · 60–67 giám sát · 70–75 sự cố · 80–88 tenant · 90–99 cấp độ 4 | Định nghĩa ở D03-07; tập phân hệ chỉ tham chiếu, không tạo mới |
 | ERR-{PH} | 001–099 control plane · 101–199 runtime/data plane | Theo cách PH-04 (ERR-04-001…049, 101…112) |
 | Câu hỏi mở | `Q{PH}-nn` theo tập: 01–19 FRS · 20–29 SDD · 30–39 màn hình · 40–44 test · 45–49 UC · 50–54 CSDL · 55–59 API | Theo cách PH-04. Câu hỏi cấp hệ thống: Q300–313 D03-07, Q320–329 D03-08, Q330–349 D03-09, Q350–359 D04, Q360–369 D05-01 |
@@ -89,45 +89,55 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | FR | 04 | 69 | `FR-04-001` | `FR-04-084` | `FR-04-085` |
 | FR | 05 | 62 | `FR-05-001` | `FR-05-062` | `FR-05-063` |
 | FR | 07 | 53 | `FR-07-001` | `FR-07-053` | `FR-07-054` |
+| FR | 10 | 76 | `FR-10-001` | `FR-10-076` | `FR-10-077` |
 | FR | 19 | 69 | `FR-19-001` | `FR-19-069` | `FR-19-070` |
 | NFR | 00 | 43 | `NFR-00-001` | `NFR-00-062` | `NFR-00-063` |
 | NFR | 04 | 17 | `NFR-04-001` | `NFR-04-017` | `NFR-04-018` |
 | NFR | 05 | 16 | `NFR-05-001` | `NFR-05-016` | `NFR-05-017` |
 | NFR | 07 | 15 | `NFR-07-001` | `NFR-07-015` | `NFR-07-016` |
+| NFR | 10 | 20 | `NFR-10-001` | `NFR-10-020` | `NFR-10-021` |
 | NFR | 19 | 32 | `NFR-19-001` | `NFR-19-032` | `NFR-19-033` |
 | BR | 04 | 22 | `BR-04-001` | `BR-04-022` | `BR-04-023` |
 | BR | 05 | 30 | `BR-05-001` | `BR-05-030` | `BR-05-031` |
 | BR | 07 | 29 | `BR-07-001` | `BR-07-041` | `BR-07-042` |
+| BR | 10 | 36 | `BR-10-001` | `BR-10-036` | `BR-10-037` |
 | BR | 19 | 34 | `BR-19-001` | `BR-19-034` | `BR-19-035` |
 | UC | 04 | 22 | `UC-04-01` | `UC-04-22` | `UC-04-23` |
 | UC | 05 | 26 | `UC-05-01` | `UC-05-26` | `UC-05-27` |
 | UC | 07 | 17 | `UC-07-01` | `UC-07-17` | `UC-07-18` |
+| UC | 10 | 28 | `UC-10-01` | `UC-10-28` | `UC-10-29` |
 | UC | 19 | 29 | `UC-19-01` | `UC-19-29` | `UC-19-30` |
 | API | 04 | 51 | `API-04-001` | `API-04-091` | `API-04-092` |
 | API | 05 | 93 | `API-05-001` | `API-05-093` | `API-05-094` |
 | API | 07 | 75 | `API-07-001` | `API-07-075` | `API-07-076` |
+| API | 10 | 121 | `API-10-001` | `API-10-121` | `API-10-122` |
 | API | 19 | 107 | `API-19-001` | `API-19-205` | `API-19-206` |
 | EVT | 04 | 14 | `EVT-04-01` | `EVT-04-14` | `EVT-04-15` |
 | EVT | 05 | 15 | `EVT-05-01` | `EVT-05-15` | `EVT-05-16` |
 | EVT | 07 | 10 | `EVT-07-01` | `EVT-07-10` | `EVT-07-11` |
+| EVT | 10 | 16 | `EVT-10-01` | `EVT-10-16` | `EVT-10-17` |
 | EVT | 19 | 18 | `EVT-19-01` | `EVT-19-18` | `EVT-19-19` |
 | ERR | 04 | 61 | `ERR-04-001` | `ERR-04-112` | `ERR-04-113` |
 | ERR | 05 | 60 | `ERR-05-001` | `ERR-05-120` | `ERR-05-121` |
 | ERR | 07 | 48 | `ERR-07-001` | `ERR-07-048` | `ERR-07-049` |
+| ERR | 10 | 75 | `ERR-10-001` | `ERR-10-121` | `ERR-10-122` |
 | ERR | 19 | 51 | `ERR-19-001` | `ERR-19-099` | `ERR-19-100` |
 | UI | 04 | 21 | `UI-04-01` | `UI-04-21` | `UI-04-22` |
 | UI | 05 | 17 | `UI-05-01` | `UI-05-17` | `UI-05-18` |
 | UI | 07 | 13 | `UI-07-01` | `UI-07-13` | `UI-07-14` |
+| UI | 10 | 20 | `UI-10-01` | `UI-10-20` | `UI-10-21` |
 | UI | 19 | 28 | `UI-19-01` | `UI-19-28` | `UI-19-29` |
 | TS | 04 | 32 | `TS-04-01` | `TS-04-32` | `TS-04-33` |
 | TS | 05 | 36 | `TS-05-01` | `TS-05-36` | `TS-05-37` |
 | TS | 07 | 30 | `TS-07-01` | `TS-07-30` | `TS-07-31` |
+| TS | 10 | 35 | `TS-10-01` | `TS-10-35` | `TS-10-36` |
 | TS | 19 | 34 | `TS-19-01` | `TS-19-34` | `TS-19-35` |
 | TC | 04 | 186 | `TC-04-001` | `TC-04-186` | `TC-04-187` |
 | TC | 05 | 155 | `TC-05-001` | `TC-05-155` | `TC-05-156` |
 | TC | 07 | 320 | `TC-07-001` | `TC-07-320` | `TC-07-321` |
+| TC | 10 | 158 | `TC-10-001` | `TC-10-158` | `TC-10-159` |
 | TC | 19 | 187 | `TC-19-001` | `TC-19-836` | `TC-19-837` |
-| ADR | — | 56 | `ADR-001` | `ADR-069` | theo dải nhóm, §3 |
+| ADR | — | 60 | `ADR-001` | `ADR-073` | theo dải nhóm, §3 |
 | SEC | — | 92 | `SEC-01` | `SEC-99` | theo dải nhóm, §3 |
 | PTN | — | 14 | `PTN-01` | `PTN-14` | `PTN-15` |
 | LGC-APIM | — | 27 | `LGC-APIM-001` | `LGC-APIM-027` | `LGC-APIM-028` |
@@ -141,7 +151,7 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | LGC-TOOL | — | 29 | `LGC-TOOL-001` | `LGC-TOOL-029` | `LGC-TOOL-030` |
 | REQ | — | 31 | `REQ-01` | `REQ-99` | `REQ-100` |
 | CMP-LAW | — | 27 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
-| PERM | 01…20 | 117 | — | — | động từ theo D02-08 |
+| PERM | 01…20 | 120 | — | — | động từ theo D02-08 |
 
 <!-- dai-ma:ket-thuc -->
 

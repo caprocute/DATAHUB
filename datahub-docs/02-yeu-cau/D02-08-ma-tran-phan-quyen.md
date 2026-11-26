@@ -103,9 +103,12 @@ Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi
 | PERM-07-export | Xuất danh mục | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | PERM-07-sync | Chạy đồng bộ danh mục quốc gia | ● | — | ● | — | — | — | — | — | — | — | — | ● | — | — | — |
 | PERM-10-read | Xem dự án, topic, sơ đồ kết nối | ● | ● | ● | ● | ● | ● | ● | ● | — | ○ | — | — | ○ | ● | ● |
-| PERM-10-create / update | Tạo dự án, topic, schema | — | — | ● | — | — | ● | — | ○ | — | — | — | — | — | — | — |
-| PERM-10-approve | Duyệt schema, publication, subscription | — | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
-| PERM-10-subscribe | Đăng ký subscriber cho HTTT | — | — | ● | — | — | — | — | — | — | ○ | — | — | — | — | — |
+| PERM-10-create | Tạo dự án, topic, phiên bản lược đồ, bên phát, bên nhận; đề nghị publication; nhập khai báo; gửi duyệt | — | — | ● | — | — | ● | — | ○ | — | — | — | — | — | — | — |
+| PERM-10-update | Sửa dự án, topic (phần không cần duyệt), lược đồ nháp, bên phát, bên nhận; ngừng topic | — | — | ● | — | — | ● | — | ○ | — | — | — | — | — | — | — |
+| PERM-10-approve | Duyệt, từ chối: tạo topic, thay đổi cấu hình, phiên bản lược đồ, publication, subscription, lượt phát lại | — | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-10-subscribe | Đề nghị, sửa, thu hồi subscription cho HTTT và luồng | — | — | ● | — | — | ● | — | — | — | ○ | — | — | — | — | — |
+| PERM-10-operate | Tạm dừng, tiếp tục subscription, publication; xoay khóa ký; xử lý DLQ; đề nghị phát lại; xác nhận cảnh báo lag (SO chỉ tạm ngừng khi sự cố) | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-10-admin | Tham số `10.*`, danh mục kiểu giao tiếp và chế độ định tuyến, hạn mức, Kafka ngoài, di trú Pulsar, topic nền tảng `dh.` (chỉ PA) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-user-admin | Quản lý người dùng, gán vai trò | ● (PLATFORM) | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-read | Xem người dùng, quyền hiệu lực | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-dashboard | Xem bảng điều khiển giám sát | ● | ● | ● | ● | ● | ● | ● | ○ | — | — | — | — | — | ● | ● |
@@ -227,6 +230,7 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | `api:{mã API}:{mã gói}` | Gọi API theo gói sử dụng | Đăng ký sử dụng được duyệt ở PH-02 |
 | `purpose:{mã mục đích}` | Khai thác dữ liệu theo mục đích | Chủ quản dữ liệu chấp thuận ở PH-09 (đợt 2); trong MVP, gắn với đăng ký sử dụng |
 | `topic:{tên topic}:publish` / `:subscribe` | Phát hoặc nhận sự kiện | Publication / subscription được duyệt ở PH-10 |
+| `event:topic-register`, `event:permission-check`, `event:runtime-config`, `event:dlq-read`, `event:replay`, `event:metrics-read` | Scope máy nội bộ của PH-10, chỉ cấp cho tài khoản dịch vụ DU (PH-05, PH-04, `dh-runtime`, PH-18, PH-13), không cấp cho HTTT hay người | Cấp khi triển khai (FRS PH-10 §3.2) |
 | `rdm:read` | Tra cứu danh mục dùng chung | Mặc định cho mọi HTTT `ACTIVE` |
 | `payment:create` | Tạo yêu cầu thanh toán | HTTT được khai báo là đối tác ở PH-19 |
 

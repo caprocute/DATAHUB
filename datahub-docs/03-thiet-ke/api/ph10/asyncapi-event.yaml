@@ -1,0 +1,2179 @@
+# D03-04-PH10 · AsyncAPI PH-10. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: 'Datahub PH-10 Sự kiện: sự kiện và giao nhận'
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-10-01…16 (D03-04-PH10 §4, FRS §8.2, A.7), kênh giao ĐẨY webhook ký HMAC (ADR-044, ADR-071) và kênh mẫu của
+    topic nghiệp vụ, topic DLQ.
+
+
+    EVT-10 ghi vào `ph10_event.outbox_event` cùng giao dịch nghiệp vụ, Debezium đưa lên Kafka; CloudEvents 1.0 nhị phân, `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`.
+    Lưu giữ 7 ngày, 3 phân vùng (giả định theo mức của PH-05, Q10-58). Người nhận xử lý lũy đẳng theo `ce_id` (inbox) và bỏ qua `configVersion`
+    cũ hơn bản đang giữ. Tương thích: chỉ thêm trường tùy chọn trong `v1` (ADR-070, BACKWARD). Không sự kiện nào mang giá trị khóa ký hay nội
+    dung sự kiện nghiệp vụ. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU, `dh-runtime`, Kafka Connect; mTLS, ACL theo CN và tiền tố tenant (D03-09).'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+  kafka-external:
+    host: kafka-ext.{tenantHost}.datahub.example.vn:9093
+    protocol: kafka-secure
+    description: Listener `external` cho HTTT khi `10.external-kafka.enabled`; SASL OAUTHBEARER (Keycloak, principal theo `azp`) hoặc mTLS.
+    variables:
+      tenantHost:
+        default: t68
+    security:
+    - $ref: '#/components/securitySchemes/saslOauth'
+    - $ref: '#/components/securitySchemes/mtls'
+  webhook-endpoint:
+    host: thue.t68.gov.vn
+    protocol: https
+    description: Đầu nhận của HTTT (giả lập); chỉ HTTPS, FQDN trong danh sách egress.
+channels:
+  topicActivated:
+    address: '{tenant}.event.topic.activated.v1'
+    title: EVT-10-01
+    description: 'Topic sang `ACTIVE`. Truy vết FR-10-009, 066. Bên nhận: PH-04, PH-05, PH-02, PH-13.'
+    messages:
+      topicActivated:
+        $ref: '#/components/messages/topicActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  topicChanged:
+    address: '{tenant}.event.topic.changed.v1'
+    title: EVT-10-02
+    description: 'Cấu hình topic, mức tương thích, trạng thái phiên bản lược đồ đổi. Truy vết FR-10-011, 012, 021, 022. Bên nhận: dh-runtime,
+      PH-04, PH-13.'
+    messages:
+      topicChanged:
+        $ref: '#/components/messages/topicChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  topicDeprecated:
+    address: '{tenant}.event.topic.deprecated.v1'
+    title: EVT-10-03
+    description: 'Topic sang `DEPRECATED` (kèm kế nhiệm, `sunsetAt`). Truy vết FR-10-014, 015, 068. Bên nhận: PH-04, PH-02, PH-18.'
+    messages:
+      topicDeprecated:
+        $ref: '#/components/messages/topicDeprecated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.deprecated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  topicRetired:
+    address: '{tenant}.event.topic.retired.v1'
+    title: EVT-10-04
+    description: 'Topic sang `RETIRED`. Truy vết FR-10-014. Bên nhận: PH-04, PH-05, PH-02, PH-13.'
+    messages:
+      topicRetired:
+        $ref: '#/components/messages/topicRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.retired.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  schemaVersionEnabled:
+    address: '{tenant}.event.schema.version-enabled.v1'
+    title: EVT-10-05
+    description: 'Phiên bản lược đồ `ENABLED`. Truy vết FR-10-009, 019, 068. Bên nhận: dh-runtime, PH-04, PH-05, PH-15.'
+    messages:
+      schemaVersionEnabled:
+        $ref: '#/components/messages/schemaVersionEnabled'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.schema.version-enabled.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  publicationActivated:
+    address: '{tenant}.event.publication.activated.v1'
+    title: EVT-10-06
+    description: 'Publication `ACTIVE`. Truy vết FR-10-031. Bên nhận: PH-04, PH-13.'
+    messages:
+      publicationActivated:
+        $ref: '#/components/messages/publicationActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.publication.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  publicationStateChanged:
+    address: '{tenant}.event.publication.state-changed.v1'
+    title: EVT-10-07
+    description: 'Tạm ngừng, tiếp tục, thu hồi publication. Truy vết FR-10-028, 029, 032. Bên nhận: PH-04, PH-13, PH-18.'
+    messages:
+      publicationStateChanged:
+        $ref: '#/components/messages/publicationStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.publication.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  subscriptionActivated:
+    address: '{tenant}.event.subscription.activated.v1'
+    title: EVT-10-08
+    description: 'Subscription `ACTIVE`. Truy vết FR-10-037. Bên nhận: dh-runtime, PH-04, PH-13.'
+    messages:
+      subscriptionActivated:
+        $ref: '#/components/messages/subscriptionActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.subscription.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  subscriptionStateChanged:
+    address: '{tenant}.event.subscription.state-changed.v1'
+    title: EVT-10-09
+    description: 'Tạm dừng, tiếp tục, tạm ngừng, thu hồi, đổi tham số có hiệu lực. Truy vết FR-10-039, 041, 046, 047. Bên nhận: dh-runtime, PH-04,
+      PH-13, PH-18.'
+    messages:
+      subscriptionStateChanged:
+        $ref: '#/components/messages/subscriptionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.subscription.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  lagAlerted:
+    address: '{tenant}.event.subscription.lag-alerted.v1'
+    title: EVT-10-10
+    description: '`alertState` đổi mức (cả khi về `OK`). Truy vết FR-10-055. Bên nhận: PH-13, PH-18.'
+    messages:
+      lagAlerted:
+        $ref: '#/components/messages/lagAlerted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.subscription.lag-alerted.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  deadLettered:
+    address: '{tenant}.event.delivery.dead-lettered.v1'
+    title: EVT-10-11
+    description: 'Có mục DLQ mới (gộp 1 phút theo subscription). Truy vết FR-10-049. Bên nhận: PH-18, PH-13.'
+    messages:
+      deadLettered:
+        $ref: '#/components/messages/deadLettered'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.delivery.dead-lettered.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  replayCompleted:
+    address: '{tenant}.event.replay.completed.v1'
+    title: EVT-10-12
+    description: 'Lượt phát lại `COMPLETED`, `FAILED`, `CANCELLED`. Truy vết FR-10-052, 053. Bên nhận: PH-18, PH-13.'
+    messages:
+      replayCompleted:
+        $ref: '#/components/messages/replayCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.replay.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  signingKeyRotated:
+    address: '{tenant}.event.signing-key.rotated.v1'
+    title: EVT-10-13
+    description: 'Xoay, thu hồi khóa ký. Không mang giá trị khóa. Truy vết FR-10-042. Bên nhận: dh-runtime, PH-13.'
+    messages:
+      signingKeyRotated:
+        $ref: '#/components/messages/signingKeyRotated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.signing-key.rotated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  complianceViolated:
+    address: '{tenant}.event.compliance.violated.v1'
+    title: EVT-10-14
+    description: 'Vi phạm lược đồ của bên phát Kafka trực tiếp vượt ngưỡng trong 15 phút. Truy vết FR-10-023. Bên nhận: PH-13, PH-18.'
+    messages:
+      complianceViolated:
+        $ref: '#/components/messages/complianceViolated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.compliance.violated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  migrationCutOver:
+    address: '{tenant}.event.migration.cut-over.v1'
+    title: EVT-10-15
+    description: 'Ánh xạ di trú chuyển hẳn hoặc quay lui. Truy vết FR-10-075. Bên nhận: PH-13, PH-18.'
+    messages:
+      migrationCutOver:
+        $ref: '#/components/messages/migrationCutOver'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.migration.cut-over.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  bridgeStateChanged:
+    address: '{tenant}.event.bridge.state-changed.v1'
+    title: EVT-10-16
+    description: 'Cầu nối di trú đổi trạng thái (`RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`, `REJECTED`). Truy vết FR-10-073, 074. Bên nhận: PH-13,
+      PH-18.'
+    messages:
+      bridgeStateChanged:
+        $ref: '#/components/messages/bridgeStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.bridge.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  businessTopic:
+    address: '{tenant}.{domain}.{entity}.{eventName}.v{majorVersion}'
+    title: Topic nghiệp vụ (mẫu)
+    description: Mọi topic do PH-10 cấp phát theo BR-10-002. Cấu hình (`partitions`, `retentionHours`, `cleanupPolicy`, `maxMessageBytes`) theo
+      khai báo topic; `replicas = 3`, `min.insync.replicas = 2` (BR-10-004). Bên phát `HTTP_PUBLISH` qua API-10-079; `KAFKA_NATIVE` qua listener
+      `external` (SASL OAUTHBEARER hoặc mTLS); `INTERNAL_KAFKA`, `OUTBOX_CDC`, `DB_CDC` qua listener `internal` mTLS. ACL theo tiền tố tenant,
+      cấp khi publication, subscription được duyệt. Khóa bản tin là giá trị `partitionKeyField` khi `KEY_HASH`.
+    parameters: &id001
+      tenant:
+        $ref: '#/components/parameters/tenant'
+      domain:
+        description: Miền, `^[a-z][a-z0-9-]{1,30}$`, không thuộc miền dành riêng.
+      entity:
+        description: Thực thể, `^[a-z][a-z0-9-]{1,40}$`.
+      eventName:
+        description: Sự kiện, động từ quá khứ.
+      majorVersion:
+        description: Phiên bản chính của topic (`majorVersion`).
+    messages:
+      businessEvent:
+        $ref: '#/components/messages/businessEvent'
+  deadLetterTopic:
+    address: '{tenant}.{domain}.{entity}.{eventName}.v{majorVersion}.dlq'
+    title: Topic DLQ `{topicName}.dlq` (mẫu)
+    description: Tạo cùng topic gốc (BR-10-023), lưu giữ `10.dlq.topic-retention-hours`. Bộ giao nhận, cổng kéo, API-10-083, bộ phát lại, cầu
+      nối ghi bản tin gốc nguyên vẹn kèm tiêu đề `dh_dlq_*`; `DlqIngestor` (`dh-svc-dh-integration-{tenant}`) đọc và lưu bền ở `dlq_entry`, `dlq_payload`.
+      HTTT không đọc trực tiếp.
+    parameters: *id001
+    messages:
+      deadLetter:
+        $ref: '#/components/messages/deadLetter'
+  webhookDelivery:
+    address: '{endpointUrl}'
+    title: Giao ĐẨY webhook (PUSH)
+    description: 'Bộ giao nhận webhook của `dh-runtime` (ADR-071) gửi `POST` tới `push.endpointUrl` đã xác minh, qua egress gateway, chỉ HTTPS
+      TLS ≥ 1.2, không theo chuyển hướng, ghim IP đã kiểm (BR-10-026). Ký HMAC-SHA256 theo ADR-044. Kết quả: `2xx` thành công; `408`, `425`, `429`,
+      `5xx`, quá `timeoutMs`, lỗi mạng là lỗi tạm thời, thử lại giãn dần (FR-10-039); `4xx` khác vào DLQ ngay (ERR-10-113); `410` vào DLQ và tạm
+      ngừng subscription. Mỗi phân vùng giao tuần tự (BR-10-025), at-least-once; bên nhận chống trùng theo `Webhook-Id`.'
+    parameters:
+      endpointUrl:
+        description: '`push.endpointUrl` của subscription, ví dụ `https://thue.t68.gov.vn/hooks/dh`.'
+    servers:
+    - $ref: '#/servers/webhook-endpoint'
+    messages:
+      webhookStructured:
+        $ref: '#/components/messages/webhookStructured'
+      webhookBinary:
+        $ref: '#/components/messages/webhookBinary'
+    bindings:
+      http:
+        bindingVersion: 0.3.0
+  webhookHandshake:
+    address: '{endpointUrl}'
+    title: Bắt tay xác minh endpoint (OPTIONS)
+    description: 'FR-10-036, API-10-051: `OPTIONS` theo CloudEvents HTTP Webhook (chống lạm dụng). Endpoint phải trả `200` hoặc `204` với `WebHook-Allowed-Origin`
+      khớp `WebHook-Request-Origin` (hoặc `*`) trong `push.timeoutMs`. Ngoại lệ API-10-091 thay bằng một `POST` sự kiện `vn.datahub.event.subscription.verification`
+      mà endpoint trả `2xx`.'
+    parameters:
+      endpointUrl:
+        description: URL cần xác minh.
+    servers:
+    - $ref: '#/servers/webhook-endpoint'
+    messages:
+      webhookHandshake:
+        $ref: '#/components/messages/webhookHandshake'
+    bindings:
+      http:
+        bindingVersion: 0.3.0
+operations:
+  sendTopicActivated:
+    action: send
+    channel:
+      $ref: '#/channels/topicActivated'
+    title: 'EVT-10-01: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/topicActivated/messages/topicActivated'
+  receiveTopicActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/topicActivated'
+    title: PH-04, PH-05, PH-02, PH-13 nhận
+    messages:
+    - $ref: '#/channels/topicActivated/messages/topicActivated'
+  sendTopicChanged:
+    action: send
+    channel:
+      $ref: '#/channels/topicChanged'
+    title: 'EVT-10-02: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/topicChanged/messages/topicChanged'
+  receiveTopicChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/topicChanged'
+    title: dh-runtime, PH-04, PH-13 nhận
+    messages:
+    - $ref: '#/channels/topicChanged/messages/topicChanged'
+  sendTopicDeprecated:
+    action: send
+    channel:
+      $ref: '#/channels/topicDeprecated'
+    title: 'EVT-10-03: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/topicDeprecated/messages/topicDeprecated'
+  receiveTopicDeprecated:
+    action: receive
+    channel:
+      $ref: '#/channels/topicDeprecated'
+    title: PH-04, PH-02, PH-18 nhận
+    messages:
+    - $ref: '#/channels/topicDeprecated/messages/topicDeprecated'
+  sendTopicRetired:
+    action: send
+    channel:
+      $ref: '#/channels/topicRetired'
+    title: 'EVT-10-04: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/topicRetired/messages/topicRetired'
+  receiveTopicRetired:
+    action: receive
+    channel:
+      $ref: '#/channels/topicRetired'
+    title: PH-04, PH-05, PH-02, PH-13 nhận
+    messages:
+    - $ref: '#/channels/topicRetired/messages/topicRetired'
+  sendSchemaVersionEnabled:
+    action: send
+    channel:
+      $ref: '#/channels/schemaVersionEnabled'
+    title: 'EVT-10-05: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/schemaVersionEnabled/messages/schemaVersionEnabled'
+  receiveSchemaVersionEnabled:
+    action: receive
+    channel:
+      $ref: '#/channels/schemaVersionEnabled'
+    title: dh-runtime, PH-04, PH-05, PH-15 nhận
+    messages:
+    - $ref: '#/channels/schemaVersionEnabled/messages/schemaVersionEnabled'
+  sendPublicationActivated:
+    action: send
+    channel:
+      $ref: '#/channels/publicationActivated'
+    title: 'EVT-10-06: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/publicationActivated/messages/publicationActivated'
+  receivePublicationActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/publicationActivated'
+    title: PH-04, PH-13 nhận
+    messages:
+    - $ref: '#/channels/publicationActivated/messages/publicationActivated'
+  sendPublicationStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/publicationStateChanged'
+    title: 'EVT-10-07: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/publicationStateChanged/messages/publicationStateChanged'
+  receivePublicationStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/publicationStateChanged'
+    title: PH-04, PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/publicationStateChanged/messages/publicationStateChanged'
+  sendSubscriptionActivated:
+    action: send
+    channel:
+      $ref: '#/channels/subscriptionActivated'
+    title: 'EVT-10-08: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/subscriptionActivated/messages/subscriptionActivated'
+  receiveSubscriptionActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/subscriptionActivated'
+    title: dh-runtime, PH-04, PH-13 nhận
+    messages:
+    - $ref: '#/channels/subscriptionActivated/messages/subscriptionActivated'
+  sendSubscriptionStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/subscriptionStateChanged'
+    title: 'EVT-10-09: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/subscriptionStateChanged/messages/subscriptionStateChanged'
+  receiveSubscriptionStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/subscriptionStateChanged'
+    title: dh-runtime, PH-04, PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/subscriptionStateChanged/messages/subscriptionStateChanged'
+  sendLagAlerted:
+    action: send
+    channel:
+      $ref: '#/channels/lagAlerted'
+    title: 'EVT-10-10: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/lagAlerted/messages/lagAlerted'
+  receiveLagAlerted:
+    action: receive
+    channel:
+      $ref: '#/channels/lagAlerted'
+    title: PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/lagAlerted/messages/lagAlerted'
+  sendDeadLettered:
+    action: send
+    channel:
+      $ref: '#/channels/deadLettered'
+    title: 'EVT-10-11: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/deadLettered/messages/deadLettered'
+  receiveDeadLettered:
+    action: receive
+    channel:
+      $ref: '#/channels/deadLettered'
+    title: PH-18, PH-13 nhận
+    messages:
+    - $ref: '#/channels/deadLettered/messages/deadLettered'
+  sendReplayCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/replayCompleted'
+    title: 'EVT-10-12: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/replayCompleted/messages/replayCompleted'
+  receiveReplayCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/replayCompleted'
+    title: PH-18, PH-13 nhận
+    messages:
+    - $ref: '#/channels/replayCompleted/messages/replayCompleted'
+  sendSigningKeyRotated:
+    action: send
+    channel:
+      $ref: '#/channels/signingKeyRotated'
+    title: 'EVT-10-13: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/signingKeyRotated/messages/signingKeyRotated'
+  receiveSigningKeyRotated:
+    action: receive
+    channel:
+      $ref: '#/channels/signingKeyRotated'
+    title: dh-runtime, PH-13 nhận
+    messages:
+    - $ref: '#/channels/signingKeyRotated/messages/signingKeyRotated'
+  sendComplianceViolated:
+    action: send
+    channel:
+      $ref: '#/channels/complianceViolated'
+    title: 'EVT-10-14: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/complianceViolated/messages/complianceViolated'
+  receiveComplianceViolated:
+    action: receive
+    channel:
+      $ref: '#/channels/complianceViolated'
+    title: PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/complianceViolated/messages/complianceViolated'
+  sendMigrationCutOver:
+    action: send
+    channel:
+      $ref: '#/channels/migrationCutOver'
+    title: 'EVT-10-15: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/migrationCutOver/messages/migrationCutOver'
+  receiveMigrationCutOver:
+    action: receive
+    channel:
+      $ref: '#/channels/migrationCutOver'
+    title: PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/migrationCutOver/messages/migrationCutOver'
+  sendBridgeStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/bridgeStateChanged'
+    title: 'EVT-10-16: dh-integration phát qua outbox'
+    messages:
+    - $ref: '#/channels/bridgeStateChanged/messages/bridgeStateChanged'
+  receiveBridgeStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/bridgeStateChanged'
+    title: PH-13, PH-18 nhận
+    messages:
+    - $ref: '#/channels/bridgeStateChanged/messages/bridgeStateChanged'
+  publishBusinessEvent:
+    action: send
+    channel:
+      $ref: '#/channels/businessTopic'
+    title: Bên phát có publication ACTIVE ghi (FR-10-033, 034)
+    security:
+    - $ref: '#/components/securitySchemes/saslOauth'
+    - $ref: '#/components/securitySchemes/mtls'
+    messages:
+    - $ref: '#/channels/businessTopic/messages/businessEvent'
+  consumeBusinessEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/businessTopic'
+    title: Bộ giao nhận, cổng kéo, luồng PH-04, HTTT Kafka ngoài đọc theo nhóm tiêu thụ A.8 (FR-10-038, 043, 044, 045)
+    security:
+    - $ref: '#/components/securitySchemes/saslOauth'
+    - $ref: '#/components/securitySchemes/mtls'
+    messages:
+    - $ref: '#/channels/businessTopic/messages/businessEvent'
+  writeDeadLetter:
+    action: send
+    channel:
+      $ref: '#/channels/deadLetterTopic'
+    title: dh-runtime ghi DLQ (FR-10-049)
+    messages:
+    - $ref: '#/channels/deadLetterTopic/messages/deadLetter'
+  ingestDeadLetter:
+    action: receive
+    channel:
+      $ref: '#/channels/deadLetterTopic'
+    title: DlqIngestor của dh-integration lưu bền
+    messages:
+    - $ref: '#/channels/deadLetterTopic/messages/deadLetter'
+  deliverWebhook:
+    action: send
+    channel:
+      $ref: '#/channels/webhookDelivery'
+    title: dh-runtime giao sự kiện tới HTTT (FR-10-038)
+    bindings:
+      http:
+        method: POST
+        bindingVersion: 0.3.0
+    messages:
+    - $ref: '#/channels/webhookDelivery/messages/webhookStructured'
+    - $ref: '#/channels/webhookDelivery/messages/webhookBinary'
+  verifyWebhookEndpoint:
+    action: send
+    channel:
+      $ref: '#/channels/webhookHandshake'
+    title: dh-runtime bắt tay xác minh endpoint (FR-10-036)
+    bindings:
+      http:
+        method: OPTIONS
+        bindingVersion: 0.3.0
+    messages:
+    - $ref: '#/channels/webhookHandshake/messages/webhookHandshake'
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`); topic nền tảng dùng tiền tố `dh`.
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do CA nội bộ cấp (cert-manager, PH-12); ACL Kafka theo CN.
+    saslOauth:
+      type: oauth2
+      description: SASL OAUTHBEARER, token client credentials từ Keycloak realm `dh-{tenant}`.
+      flows:
+        clientCredentials:
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token
+          availableScopes: {}
+  messages:
+    topicActivated:
+      name: topicActivated
+      title: EVT-10-01
+      summary: Topic sang `ACTIVE`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TopicActivated'
+      headers: &id002
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            description: ULID duy nhất, dùng chống trùng.
+          ce_source:
+            type: string
+            description: '`/{tenant}/services/dh-integration` cho sự kiện PH-10; `/{tenant}/systems/{systemCode}` cho HTTT.'
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: &id003
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Khóa nghiệp vụ, mặc định là khóa phân vùng.
+          ce_dataschema:
+            type: string
+          ce_datacontenttype:
+            type: string
+          traceparent:
+            type: string
+          dhtenant:
+            type: string
+            pattern: ^T[0-9]{2}$
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`topicName`'
+      examples:
+      - name: EVT-10-01
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.topic.activated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          projectCode: dang-ky-kinh-doanh
+          topicKind: BUSINESS
+          partitions: 6
+          retentionHours: 168
+          routingMode: KEY_HASH
+          partitionKeyField: maDoanhNghiep
+          orderingRequired: true
+          dataClass: INTERNAL
+          latestSchemaVersion: 1
+          activatedAt: '2026-11-26T09:15:02+07:00'
+          ownerServiceCode: null
+          configVersion: 4180
+    topicChanged:
+      name: topicChanged
+      title: EVT-10-02
+      summary: Cấu hình topic, mức tương thích, trạng thái phiên bản lược đồ đổi.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TopicChanged'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`topicName`'
+      examples:
+      - name: EVT-10-02
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.topic.changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          changedFields:
+          - partitions
+          partitions: 12
+          retentionHours: 168
+          cleanupPolicy: DELETE
+          maxMessageBytes: 262144
+          compatibility: BACKWARD
+          enabledVersions:
+          - 2
+          - 3
+          configVersion: 4185
+    topicDeprecated:
+      name: topicDeprecated
+      title: EVT-10-03
+      summary: Topic sang `DEPRECATED` (kèm kế nhiệm, `sunsetAt`).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TopicDeprecated'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`topicName`'
+      examples:
+      - name: EVT-10-03
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.topic.deprecated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          successorTopic: t68.dkkd.doanh-nghiep.da-cap-phep.v2
+          sunsetAt: '2027-02-24T00:00:00+07:00'
+          migrationNote: Phiên bản 2 tách `diaChi` thành đối tượng.
+          configVersion: 4190
+    topicRetired:
+      name: topicRetired
+      title: EVT-10-04
+      summary: Topic sang `RETIRED`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TopicRetired'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`topicName`'
+      examples:
+      - name: EVT-10-04
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.topic.retired
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          retiredAt: '2027-02-24T00:00:05+07:00'
+          configVersion: 4301
+    schemaVersionEnabled:
+      name: schemaVersionEnabled
+      title: EVT-10-05
+      summary: Phiên bản lược đồ `ENABLED`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SchemaVersionEnabled'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`topicName`'
+      examples:
+      - name: EVT-10-05
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.schema.version-enabled
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          versionNo: 3
+          schemaFormat: AVRO
+          compatibility: BACKWARD
+          apicurioGroupId: t68
+          apicurioArtifactId: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          apicurioGlobalId: 1042
+          apicurioContentId: 877
+          contentHash: ddb50afd73e0294218a32b2833f50bbcb1d8d3fc80ca8fab000baed40a691252
+          enabledAt: '2026-11-26T09:15:02+07:00'
+    publicationActivated:
+      name: publicationActivated
+      title: EVT-10-06
+      summary: Publication `ACTIVE`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PublicationActivated'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`publicationCode`'
+      examples:
+      - name: EVT-10-06
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.publication.activated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          publicationCode: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          publisherCode: ht-dkkd
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          grantedScope: topic:t68.dkkd.doanh-nghiep.da-cap-phep.v1:publish
+          approvedBy: binh.tt
+          approvedAt: '2026-11-26T09:15:02+07:00'
+    publicationStateChanged:
+      name: publicationStateChanged
+      title: EVT-10-07
+      summary: Tạm ngừng, tiếp tục, thu hồi publication.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PublicationStateChanged'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`publicationCode`'
+      examples:
+      - name: EVT-10-07
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.publication.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          publicationCode: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          publisherCode: ht-dkkd
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          previousStatus: ACTIVE
+          status: SUSPENDED
+          suspendSource: SECURITY
+          reason: Nghi lộ thông tin xác thực của HTTT, chờ cấp lại.
+    subscriptionActivated:
+      name: subscriptionActivated
+      title: EVT-10-08
+      summary: Subscription `ACTIVE`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SubscriptionActivated'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionCode`'
+      examples:
+      - name: EVT-10-08
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.subscription.activated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: ht-thue-dn-cap-phep
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          subscriptionCode: ht-thue-dn-cap-phep
+          subscriberCode: ht-thue
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          deliveryMode: PUSH
+          consumerGroup: dh-sub-t68-ht-thue-dn-cap-phep
+          startPosition: LATEST
+          configVersion: 4182
+    subscriptionStateChanged:
+      name: subscriptionStateChanged
+      title: EVT-10-09
+      summary: Tạm dừng, tiếp tục, tạm ngừng, thu hồi, đổi tham số có hiệu lực.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SubscriptionStateChanged'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionCode`'
+      examples:
+      - name: EVT-10-09
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.subscription.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: ht-thue-dn-cap-phep
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          subscriptionCode: ht-thue-dn-cap-phep
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          previousStatus: ACTIVE
+          status: SUSPENDED
+          suspendSource: CIRCUIT_BREAKER
+          suspendReason: Tỷ lệ lỗi ≥ 50% liên tục 30 phút.
+          changedFields: []
+          configVersion: 4183
+    lagAlerted:
+      name: lagAlerted
+      title: EVT-10-10
+      summary: '`alertState` đổi mức (cả khi về `OK`).'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/LagAlerted'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionCode`'
+      examples:
+      - name: EVT-10-10
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.subscription.lag-alerted
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: ht-thue-dn-cap-phep
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          subscriptionCode: ht-thue-dn-cap-phep
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          consumerGroup: dh-sub-t68-ht-thue-dn-cap-phep
+          previousAlertState: OK
+          alertState: WARNING
+          lagRecords: 14200
+          lagSeconds: 420
+          sampledAt: '2026-11-26T09:15:02+07:00'
+    deadLettered:
+      name: deadLettered
+      title: EVT-10-11
+      summary: Có mục DLQ mới (gộp 1 phút theo subscription).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DeadLettered'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionCode`'
+      examples:
+      - name: EVT-10-11
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.delivery.dead-lettered
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: ht-thue-dn-cap-phep
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          subscriptionCode: ht-thue-dn-cap-phep
+          bridgeCode: null
+          sourceTopic: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          newEntryCount: 3
+          errorCodes:
+          - ERR-10-112
+          firstFailedAt: '2026-11-26T09:14:05+07:00'
+          lastFailedAt: '2026-11-26T09:14:58+07:00'
+          origin: PUSH
+    replayCompleted:
+      name: replayCompleted
+      title: EVT-10-12
+      summary: Lượt phát lại `COMPLETED`, `FAILED`, `CANCELLED`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReplayCompleted'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`replayCode`'
+      examples:
+      - name: EVT-10-12
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.replay.completed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: rpl-01jd3z0a1b2c3d4e5f6g7h8j9k
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          replayCode: rpl-01jd3z0a1b2c3d4e5f6g7h8j9k
+          subscriptionCode: ht-thue-dn-cap-phep
+          replayMode: REDELIVER_RANGE
+          status: COMPLETED
+          estimatedRecords: 3120
+          deliveredRecords: 3120
+          failedRecords: 0
+          startedAt: '2026-11-26T10:00:00+07:00'
+          finishedAt: '2026-11-26T10:06:40+07:00'
+    signingKeyRotated:
+      name: signingKeyRotated
+      title: EVT-10-13
+      summary: Xoay, thu hồi khóa ký. Không mang giá trị khóa.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SigningKeyRotated'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionCode`'
+      examples:
+      - name: EVT-10-13
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.signing-key.rotated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: ht-thue-dn-cap-phep
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          subscriptionCode: ht-thue-dn-cap-phep
+          keyId: k-20261126
+          status: ACTIVE
+          previousKeyId: k-20251126
+          previousUntil: '2026-12-03T09:15:02+07:00'
+          revokedAt: null
+    complianceViolated:
+      name: complianceViolated
+      title: EVT-10-14
+      summary: Vi phạm lược đồ của bên phát Kafka trực tiếp vượt ngưỡng trong 15 phút.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ComplianceViolated'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`publicationCode`'
+      examples:
+      - name: EVT-10-14
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.compliance.violated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          publicationCode: pub-01jd3y8k2m9p3q7r4t6v8w0y2z
+          publisherCode: ht-dkkd
+          topicName: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          violationCount: 14
+          lastErrorCode: ERR-10-119
+          windowStart: '2026-11-26T09:00:00+07:00'
+          windowEnd: '2026-11-26T09:15:00+07:00'
+    migrationCutOver:
+      name: migrationCutOver
+      title: EVT-10-15
+      summary: Ánh xạ di trú chuyển hẳn hoặc quay lui.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MigrationCutOver'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`mappingId`'
+      examples:
+      - name: EVT-10-15
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.migration.cut-over
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: 01937b30-8e2f-7a10-b3c4-1d2e3f4a5b6c
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          mappingId: 01937b30-8e2f-7a10-b3c4-1d2e3f4a5b6c
+          legacyType: TOPIC
+          legacyId: persistent://lgsp/dkkd/doanh-nghiep-cap-phep
+          targetCode: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          status: CUT_OVER
+          cutOverAt: '2026-11-26T09:15:02+07:00'
+          rollbackUntil: '2026-12-26T09:15:02+07:00'
+          reason: null
+    bridgeStateChanged:
+      name: bridgeStateChanged
+      title: EVT-10-16
+      summary: Cầu nối di trú đổi trạng thái (`RUNNING`, `STOPPED`, `ERROR`, `EXPIRED`, `REJECTED`).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BridgeStateChanged'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`bridgeCode`'
+      examples:
+      - name: EVT-10-16
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z6A
+          ce_source: /t68/services/dh-integration
+          ce_type: vn.datahub.event.bridge.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: brg-01jd3z2a3b4c5d6e7f8g9h0j1k
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          bridgeCode: brg-01jd3z2a3b4c5d6e7f8g9h0j1k
+          direction: PULSAR_TO_KAFKA
+          pulsarTopic: persistent://lgsp/dkkd/doanh-nghiep-cap-phep
+          kafkaTopic: t68.dkkd.doanh-nghiep.da-cap-phep.v1
+          previousStatus: PENDING_APPROVAL
+          status: RUNNING
+          bridgedCount: 0
+          lagSeconds: null
+          errorDetail: null
+    businessEvent:
+      name: businessEvent
+      title: Sự kiện nghiệp vụ
+      summary: 'CloudEvents 1.0 nhị phân: thuộc tính ở tiêu đề `ce_*`, giá trị theo lược đồ Apicurio.'
+      payload:
+        $ref: '#/components/schemas/BusinessData'
+      headers: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Giá trị `partitionKeyField` (UTF-8) khi `KEY_HASH`; rỗng khi `ROUND_ROBIN`.
+      examples:
+      - name: doanh-nghiep-da-cap-phep
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          ce_source: /t68/systems/HT-DKKD
+          ce_type: vn.datahub.dkkd.doanh-nghiep.da-cap-phep
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: '0312345678'
+          ce_dataschema: /apis/registry/v3/groups/t68/artifacts/t68.dkkd.doanh-nghiep.da-cap-phep.v1/versions/3
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+        payload: &id004
+          maDoanhNghiep: '0312345678'
+          loaiThayDoi: CAP_MOI
+          phienBan: 1
+    deadLetter:
+      name: deadLetter
+      title: Bản tin DLQ
+      summary: Bản tin gốc nguyên vẹn (khóa, tiêu đề `ce_*`, giá trị) kèm tiêu đề `dh_dlq_*` (A.8).
+      payload:
+        $ref: '#/components/schemas/BusinessData'
+      headers:
+        type: object
+        properties:
+          dh_dlq_subscription:
+            type: string
+          dh_dlq_source_partition:
+            type: string
+            pattern: ^[0-9]+$
+          dh_dlq_source_offset:
+            type: string
+            pattern: ^[0-9]+$
+          dh_dlq_error_code:
+            type: string
+            pattern: ^ERR-10-1[0-9]{2}$
+          dh_dlq_attempts:
+            type: string
+            pattern: ^[0-9]+$
+          dh_dlq_first_failed_at: *id003
+          dh_dlq_origin:
+            type: string
+            enum:
+            - PUSH
+            - PULL_NACK
+            - EXTERNAL_REPORT
+            - REPLAY
+            - BRIDGE
+          dh_dlq_bridge:
+            type: string
+        additionalProperties: true
+        required:
+        - dh_dlq_source_partition
+        - dh_dlq_source_offset
+        - dh_dlq_error_code
+        - dh_dlq_attempts
+        - dh_dlq_first_failed_at
+        - dh_dlq_origin
+      examples:
+      - name: dlq-push
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          ce_source: /t68/systems/HT-DKKD
+          ce_type: vn.datahub.dkkd.doanh-nghiep.da-cap-phep
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: '0312345678'
+          ce_dataschema: /apis/registry/v3/groups/t68/artifacts/t68.dkkd.doanh-nghiep.da-cap-phep.v1/versions/3
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          dhtenant: T68
+          dh_dlq_subscription: ht-thue-dn-cap-phep
+          dh_dlq_source_partition: '2'
+          dh_dlq_source_offset: '182311'
+          dh_dlq_error_code: ERR-10-112
+          dh_dlq_attempts: '9'
+          dh_dlq_first_failed_at: '2026-11-26T09:01:44+07:00'
+          dh_dlq_origin: PUSH
+        payload: *id004
+    webhookStructured:
+      name: webhookStructured
+      title: Webhook `CLOUDEVENTS_STRUCTURED`
+      contentType: application/cloudevents+json
+      summary: Thân là CloudEvents JSON có cấu trúc; `data` giải mã từ lược đồ.
+      headers:
+        type: object
+        properties:
+          Content-Type:
+            type: string
+            enum:
+            - application/cloudevents+json
+            - application/json
+          Webhook-Id:
+            type: string
+            description: Bằng `ce_id`; giữ nguyên khi thử lại và khi phát lại để bên nhận chống trùng (BR-10-009).
+          Webhook-Timestamp:
+            type: string
+            pattern: ^[0-9]{10}$
+            description: Giây Unix lúc ký; bên nhận từ chối lệch quá `10.push.signature-tolerance-seconds`.
+          X-Datahub-Signature:
+            type: string
+            pattern: ^t=[0-9]{10},v1=[0-9a-f]{64}(,v1=[0-9a-f]{64})?$
+            description: '`t={ts},v1={hex HMAC-SHA256(secret, "{Webhook-Id}.{Webhook-Timestamp}.{body}")}`; hai giá trị `v1` trong thời gian xoay
+              khóa.'
+          X-Datahub-Subscription:
+            type: string
+          X-Datahub-Attempt:
+            type: string
+            pattern: ^[1-9][0-9]*$
+          X-Datahub-Key-Id:
+            type: string
+          X-Datahub-Replay:
+            type: string
+            description: 'Chỉ có khi giao từ lượt phát lại: `replayCode`.'
+          traceparent:
+            type: string
+        additionalProperties: false
+        required:
+        - Content-Type
+        - Webhook-Id
+        - Webhook-Timestamp
+        - X-Datahub-Signature
+        - X-Datahub-Subscription
+        - X-Datahub-Attempt
+        - X-Datahub-Key-Id
+      payload:
+        $ref: '#/components/schemas/CloudEventStructured'
+      examples:
+      - name: giao-lan-dau
+        headers:
+          Content-Type: application/cloudevents+json
+          Webhook-Id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          Webhook-Timestamp: '1795660502'
+          X-Datahub-Signature: t=1795660502,v1=5d41402abc4b2a76b9719d911017c5925d41402abc4b2a76b9719d911017c592
+          X-Datahub-Subscription: ht-thue-dn-cap-phep
+          X-Datahub-Attempt: '1'
+          X-Datahub-Key-Id: k-20261126
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload: &id005
+          specversion: '1.0'
+          id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          source: /t68/systems/HT-DKKD
+          type: vn.datahub.dkkd.doanh-nghiep.da-cap-phep
+          time: '2026-11-26T09:15:02+07:00'
+          subject: '0312345678'
+          dataschema: /apis/registry/v3/groups/t68/artifacts/t68.dkkd.doanh-nghiep.da-cap-phep.v1/versions/3
+          datacontenttype: application/json
+          dhtenant: T68
+          data: *id004
+      - name: phat-lai-trong-thoi-gian-xoay-khoa
+        headers:
+          Content-Type: application/cloudevents+json
+          Webhook-Id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          Webhook-Timestamp: '1795660502'
+          X-Datahub-Signature: t=1795660502,v1=5d41402abc4b2a76b9719d911017c5925d41402abc4b2a76b9719d911017c592,v1=7e240de74fb1ed08fa08d38063f6a6a97e240de74fb1ed08fa08d38063f6a6a9
+          X-Datahub-Subscription: ht-thue-dn-cap-phep
+          X-Datahub-Attempt: '1'
+          X-Datahub-Key-Id: k-20261126
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          X-Datahub-Replay: rpl-01jd3z0a1b2c3d4e5f6g7h8j9k
+        payload: *id005
+    webhookBinary:
+      name: webhookBinary
+      title: Webhook `CLOUDEVENTS_BINARY`
+      contentType: application/json
+      summary: Thuộc tính CloudEvents ở tiêu đề `ce-*`; thân là `data` JSON.
+      headers:
+        type: object
+        properties:
+          Content-Type:
+            type: string
+            enum:
+            - application/cloudevents+json
+            - application/json
+          Webhook-Id:
+            type: string
+            description: Bằng `ce_id`; giữ nguyên khi thử lại và khi phát lại để bên nhận chống trùng (BR-10-009).
+          Webhook-Timestamp:
+            type: string
+            pattern: ^[0-9]{10}$
+            description: Giây Unix lúc ký; bên nhận từ chối lệch quá `10.push.signature-tolerance-seconds`.
+          X-Datahub-Signature:
+            type: string
+            pattern: ^t=[0-9]{10},v1=[0-9a-f]{64}(,v1=[0-9a-f]{64})?$
+            description: '`t={ts},v1={hex HMAC-SHA256(secret, "{Webhook-Id}.{Webhook-Timestamp}.{body}")}`; hai giá trị `v1` trong thời gian xoay
+              khóa.'
+          X-Datahub-Subscription:
+            type: string
+          X-Datahub-Attempt:
+            type: string
+            pattern: ^[1-9][0-9]*$
+          X-Datahub-Key-Id:
+            type: string
+          X-Datahub-Replay:
+            type: string
+            description: 'Chỉ có khi giao từ lượt phát lại: `replayCode`.'
+          traceparent:
+            type: string
+          ce-specversion:
+            type: string
+            const: '1.0'
+          ce-id:
+            type: string
+          ce-source:
+            type: string
+          ce-type:
+            type: string
+          ce-time: *id003
+          ce-subject:
+            type: string
+          ce-dataschema:
+            type: string
+        additionalProperties: false
+        required:
+        - Content-Type
+        - Webhook-Id
+        - Webhook-Timestamp
+        - X-Datahub-Signature
+        - X-Datahub-Subscription
+        - X-Datahub-Attempt
+        - X-Datahub-Key-Id
+        - ce-specversion
+        - ce-id
+        - ce-source
+        - ce-type
+      payload:
+        type: object
+      examples:
+      - name: giao-nhi-phan
+        headers:
+          Content-Type: application/json
+          Webhook-Id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          Webhook-Timestamp: '1795660502'
+          X-Datahub-Signature: t=1795660502,v1=5d41402abc4b2a76b9719d911017c5925d41402abc4b2a76b9719d911017c592
+          X-Datahub-Subscription: ht-thue-dn-cap-phep
+          X-Datahub-Attempt: '1'
+          X-Datahub-Key-Id: k-20261126
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+          ce-specversion: '1.0'
+          ce-id: 01JD3Y8K2M9P3Q7R4T6V8W0Y2Z
+          ce-source: /t68/systems/HT-DKKD
+          ce-type: vn.datahub.dkkd.doanh-nghiep.da-cap-phep
+          ce-time: '2026-11-26T09:15:02+07:00'
+          ce-subject: '0312345678'
+        payload: *id004
+    webhookHandshake:
+      name: webhookHandshake
+      title: Bắt tay `OPTIONS`
+      summary: Không có thân.
+      headers:
+        type: object
+        properties:
+          WebHook-Request-Origin:
+            type: string
+            description: '`event.{tenant}.datahub`'
+          WebHook-Request-Rate:
+            type: string
+            pattern: ^[0-9]+$
+        additionalProperties: false
+        required:
+        - WebHook-Request-Origin
+      payload:
+        type: 'null'
+      examples:
+      - name: bat-tay
+        headers:
+          WebHook-Request-Origin: event.t68.datahub
+          WebHook-Request-Rate: '120'
+        payload: null
+  schemas:
+    TopicActivated:
+      type: object
+      properties:
+        tenantId: &id007
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+        topicName: &id008
+          type: string
+          maxLength: 204
+          pattern: ^(t[0-9]{2}|dh)\.[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*){2,4}\.v[1-9][0-9]*(\.dlq)?$
+        projectCode:
+          type:
+          - string
+          - 'null'
+        topicKind:
+          type: string
+          enum:
+          - BUSINESS
+          - CDC
+          - SYSTEM
+          - DLQ
+        partitions: &id006
+          type: integer
+        retentionHours: *id006
+        routingMode:
+          type: string
+          enum:
+          - KEY_HASH
+          - ROUND_ROBIN
+          - SINGLE_PARTITION
+        partitionKeyField:
+          type:
+          - string
+          - 'null'
+        orderingRequired:
+          type: boolean
+        dataClass:
+          type: string
+          enum:
+          - PUBLIC
+          - INTERNAL
+          - RESTRICTED
+          - SENSITIVE
+        latestSchemaVersion: *id006
+        activatedAt: *id003
+        ownerServiceCode:
+          type:
+          - string
+          - 'null'
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - topicName
+      - topicKind
+      - partitions
+      - routingMode
+      - dataClass
+      - activatedAt
+      - configVersion
+    TopicChanged:
+      type: object
+      properties:
+        tenantId: *id007
+        topicName: *id008
+        changedFields:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        partitions: *id006
+        retentionHours: *id006
+        cleanupPolicy:
+          type: string
+          enum:
+          - DELETE
+          - COMPACT
+          - COMPACT_DELETE
+        maxMessageBytes: *id006
+        compatibility:
+          type: string
+          enum:
+          - BACKWARD
+          - BACKWARD_TRANSITIVE
+          - FORWARD
+          - FORWARD_TRANSITIVE
+          - FULL
+          - FULL_TRANSITIVE
+          - NONE
+        enabledVersions:
+          type: array
+          items: *id006
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - topicName
+      - changedFields
+      - configVersion
+    TopicDeprecated:
+      type: object
+      properties:
+        tenantId: *id007
+        topicName: *id008
+        successorTopic:
+          type:
+          - string
+          - 'null'
+        sunsetAt: *id003
+        migrationNote:
+          type:
+          - string
+          - 'null'
+          maxLength: 2000
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - topicName
+      - sunsetAt
+      - configVersion
+    TopicRetired:
+      type: object
+      properties:
+        tenantId: *id007
+        topicName: *id008
+        retiredAt: *id003
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - topicName
+      - retiredAt
+      - configVersion
+    SchemaVersionEnabled:
+      type: object
+      properties:
+        tenantId: *id007
+        topicName: *id008
+        versionNo: *id006
+        schemaFormat:
+          type: string
+          enum:
+          - AVRO
+          - JSON_SCHEMA
+        compatibility:
+          type: string
+          enum:
+          - BACKWARD
+          - BACKWARD_TRANSITIVE
+          - FORWARD
+          - FORWARD_TRANSITIVE
+          - FULL
+          - FULL_TRANSITIVE
+          - NONE
+        apicurioGroupId:
+          type: string
+        apicurioArtifactId: *id008
+        apicurioGlobalId: &id009
+          type: integer
+          format: int64
+          minimum: 0
+        apicurioContentId: *id009
+        contentHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        enabledAt: *id003
+      additionalProperties: false
+      required:
+      - tenantId
+      - topicName
+      - versionNo
+      - apicurioGlobalId
+      - apicurioContentId
+      - contentHash
+      - enabledAt
+    PublicationActivated:
+      type: object
+      properties:
+        tenantId: *id007
+        publicationCode:
+          type: string
+          pattern: ^pub-[0-9a-hjkmnp-tv-z]{26}$
+        publisherCode:
+          type: string
+        topicName: *id008
+        grantedScope:
+          type: string
+        approvedBy:
+          type: string
+        approvedAt: *id003
+      additionalProperties: false
+      required:
+      - tenantId
+      - publicationCode
+      - publisherCode
+      - topicName
+      - grantedScope
+    PublicationStateChanged:
+      type: object
+      properties:
+        tenantId: *id007
+        publicationCode:
+          type: string
+        publisherCode:
+          type: string
+        topicName: *id008
+        previousStatus: &id010
+          type: string
+          enum:
+          - PENDING_APPROVAL
+          - REJECTED
+          - ACTIVE
+          - SUSPENDED
+          - REVOKED
+        status: *id010
+        suspendSource: &id012
+          type:
+          - string
+          - 'null'
+          enum:
+          - MANUAL
+          - SECURITY
+          - PH01
+          - CIRCUIT_BREAKER
+          - DELIVERY_BLOCKED
+          - null
+        reason:
+          type:
+          - string
+          - 'null'
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - tenantId
+      - publicationCode
+      - topicName
+      - status
+    SubscriptionActivated:
+      type: object
+      properties:
+        tenantId: *id007
+        subscriptionCode:
+          type: string
+        subscriberCode:
+          type: string
+        topicName: *id008
+        deliveryMode:
+          type: string
+          enum:
+          - PUSH
+          - PULL_API
+          - PULL_KAFKA
+          - INTERNAL
+        consumerGroup:
+          type: string
+        startPosition:
+          type: string
+          enum:
+          - LATEST
+          - EARLIEST
+          - TIMESTAMP
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - subscriptionCode
+      - subscriberCode
+      - topicName
+      - deliveryMode
+      - consumerGroup
+      - configVersion
+    SubscriptionStateChanged:
+      type: object
+      properties:
+        tenantId: *id007
+        subscriptionCode:
+          type: string
+        topicName: *id008
+        previousStatus: &id011
+          type: string
+          enum:
+          - PENDING_APPROVAL
+          - REJECTED
+          - PROVISIONING
+          - FAILED
+          - ACTIVE
+          - PAUSED
+          - SUSPENDED
+          - REVOKED
+        status: *id011
+        suspendSource: *id012
+        suspendReason:
+          type:
+          - string
+          - 'null'
+          maxLength: 1000
+        changedFields:
+          type: array
+          items:
+            type: string
+        configVersion: *id006
+      additionalProperties: false
+      required:
+      - tenantId
+      - subscriptionCode
+      - topicName
+      - status
+      - configVersion
+    LagAlerted:
+      type: object
+      properties:
+        tenantId: *id007
+        subscriptionCode:
+          type: string
+        topicName: *id008
+        consumerGroup:
+          type: string
+        previousAlertState: &id013
+          type: string
+          enum:
+          - OK
+          - WARNING
+          - CRITICAL
+          - STALLED
+        alertState: *id013
+        lagRecords: *id009
+        lagSeconds: *id006
+        sampledAt: *id003
+      additionalProperties: false
+      required:
+      - tenantId
+      - subscriptionCode
+      - alertState
+      - lagRecords
+      - lagSeconds
+      - sampledAt
+    DeadLettered:
+      type: object
+      properties:
+        tenantId: *id007
+        subscriptionCode:
+          type:
+          - string
+          - 'null'
+        bridgeCode:
+          type:
+          - string
+          - 'null'
+        sourceTopic: *id008
+        newEntryCount:
+          type: integer
+          minimum: 1
+        errorCodes:
+          type: array
+          items:
+            type: string
+            pattern: ^ERR-10-1[0-9]{2}$
+        firstFailedAt: *id003
+        lastFailedAt: *id003
+        origin:
+          type: string
+          enum:
+          - PUSH
+          - PULL_NACK
+          - EXTERNAL_REPORT
+          - REPLAY
+          - BRIDGE
+      additionalProperties: false
+      required:
+      - tenantId
+      - sourceTopic
+      - newEntryCount
+      - errorCodes
+      - firstFailedAt
+      - lastFailedAt
+    ReplayCompleted:
+      type: object
+      properties:
+        tenantId: *id007
+        replayCode:
+          type: string
+          pattern: ^rpl-[0-9a-hjkmnp-tv-z]{26}$
+        subscriptionCode:
+          type: string
+        replayMode:
+          type: string
+          enum:
+          - REDELIVER_RANGE
+          - RESET_OFFSET
+          - DLQ_ENTRIES
+        status:
+          type: string
+          enum:
+          - COMPLETED
+          - FAILED
+          - CANCELLED
+        estimatedRecords:
+          type:
+          - integer
+          - 'null'
+        deliveredRecords: *id009
+        failedRecords: *id009
+        startedAt: &id014
+          type:
+          - string
+          - 'null'
+          format: date-time
+        finishedAt: *id003
+      additionalProperties: false
+      required:
+      - tenantId
+      - replayCode
+      - subscriptionCode
+      - replayMode
+      - status
+      - deliveredRecords
+      - failedRecords
+      - finishedAt
+    SigningKeyRotated:
+      type: object
+      properties:
+        tenantId: *id007
+        subscriptionCode:
+          type: string
+        keyId:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - PREVIOUS
+          - REVOKED
+        previousKeyId:
+          type:
+          - string
+          - 'null'
+        previousUntil: *id014
+        revokedAt: *id014
+      additionalProperties: false
+      required:
+      - tenantId
+      - subscriptionCode
+      - keyId
+      - status
+    ComplianceViolated:
+      type: object
+      properties:
+        tenantId: *id007
+        publicationCode:
+          type: string
+        publisherCode:
+          type: string
+        topicName: *id008
+        violationCount: *id009
+        lastErrorCode:
+          type: string
+          pattern: ^ERR-10-1[0-9]{2}$
+        windowStart: *id003
+        windowEnd: *id003
+      additionalProperties: false
+      required:
+      - tenantId
+      - publicationCode
+      - topicName
+      - violationCount
+      - windowStart
+      - windowEnd
+    MigrationCutOver:
+      type: object
+      properties:
+        tenantId: *id007
+        mappingId:
+          type: string
+          format: uuid
+        legacyType:
+          type: string
+          enum:
+          - PROJECT
+          - TOPIC
+          - PUBLISHER
+          - SUBSCRIBER
+          - PUBLICATION
+          - SUBSCRIPTION
+        legacyId:
+          type: string
+        targetCode:
+          type:
+          - string
+          - 'null'
+        status:
+          type: string
+          enum:
+          - CUT_OVER
+          - ROLLED_BACK
+        cutOverAt: *id014
+        rollbackUntil: *id014
+        reason:
+          type:
+          - string
+          - 'null'
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - tenantId
+      - mappingId
+      - legacyType
+      - legacyId
+      - status
+    BridgeStateChanged:
+      type: object
+      properties:
+        tenantId: *id007
+        bridgeCode:
+          type: string
+          pattern: ^brg-[0-9a-hjkmnp-tv-z]{26}$
+        direction:
+          type: string
+          enum:
+          - PULSAR_TO_KAFKA
+          - KAFKA_TO_PULSAR
+        pulsarTopic:
+          type: string
+        kafkaTopic: *id008
+        previousStatus: &id015
+          type: string
+          enum:
+          - PENDING_APPROVAL
+          - REJECTED
+          - RUNNING
+          - STOPPED
+          - ERROR
+          - EXPIRED
+        status: *id015
+        bridgedCount: *id009
+        lagSeconds:
+          type:
+          - integer
+          - 'null'
+        errorDetail:
+          type:
+          - string
+          - 'null'
+          maxLength: 2000
+      additionalProperties: false
+      required:
+      - tenantId
+      - bridgeCode
+      - direction
+      - status
+    CloudEventStructured:
+      type: object
+      description: CloudEvents 1.0 JSON có cấu trúc (`application/cloudevents+json`).
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      additionalProperties: true
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+        id:
+          type: string
+          maxLength: 255
+        source:
+          type: string
+          maxLength: 512
+        type:
+          type: string
+          maxLength: 255
+        time: *id003
+        subject:
+          type: string
+          maxLength: 255
+        dataschema:
+          type: string
+          maxLength: 1024
+        datacontenttype:
+          type: string
+        traceparent:
+          type: string
+        dhtenant:
+          type: string
+        data: {}
+    BusinessData:
+      description: Giá trị bản tin theo lược đồ Apicurio của topic (`groupId = {tenant}`, `artifactId = {topicName}`), Avro nhị phân hoặc JSON,
+        có tiền tố định danh lược đồ (byte 0 và 4 byte `contentId`, ADR-070). Lược đồ không lặp ở đây.
