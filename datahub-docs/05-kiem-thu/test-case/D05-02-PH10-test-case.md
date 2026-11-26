@@ -785,7 +785,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 403-PQ (chỉ người gửi được rút). Bước 2 `200`, yêu cầu `WITHDRAWN`, topic và lược đồ về `DRAFT`. Bước 3 sửa được khi `DRAFT`, gửi lại tạo yêu cầu mới `PENDING`.
 
-**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -1140,7 +1140,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 lần đầu `400` ERR-10-009; lần hai `200`, `RETIRED`, EVT: `topic.retired`. Bước 2 API trả 404-ẩn (ERR-10-103), Kafka từ chối do ACL bị xóa. Bước 3 `409` ERR-10-010. Bước 4 mọi publication, subscription thu hồi, ACL xóa, topic `RETIRED`; topic chưa bị xóa khỏi cụm vì còn mục DLQ `NEW`.
 
-**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-010 "Còn {n} đối tượng phụ thuộc."; ERR-10-103 "Không tìm thấy topic {tên}."
+**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-010 "Còn {n} đối tượng phụ thuộc."; ERR-10-103 "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu. Giữ dữ liệu cho TC-10-049.
 :::
@@ -1451,7 +1451,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 bị từ chối (đường tra cứu chỉ đọc, `403` ERR-10-102). Bước 2 Apicurio từ chối đăng ký; producer nhận lỗi; không có phiên bản mới ở artifact.
 
-**Thông báo hiển thị.** ERR-10-102 "Bên gọi không có quyền phát hoặc nhận trên topic này."
+**Thông báo hiển thị.** ERR-10-102 "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -1624,7 +1624,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`. Bước 2 bên phát `SUSPENDED` với `suspendSource = SECURITY`, publication `SUSPENDED`; lượt phát bị từ chối 403-PQ trong ≤ 60 giây; EVT: `publication.state-changed`. Bước 3 về `ACTIVE`, publication `ACTIVE` không cần duyệt lại. Bước 4 `RETIRED`, mã không dùng lại được (ERR-10-002 khi tạo lại). KT: có cho cả bốn bước.
 
-**Thông báo hiển thị.** ERR-10-002 "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-002 "Mã {mã} đã được dùng, kể cả cho đối tượng đã lưu trữ hoặc ngừng dùng. Chọn mã khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Đối tượng ở trạng thái nêu ở kết quả mong đợi.
 :::
@@ -1652,7 +1652,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `400` ERR-10-003 cho cả ba trường. Bước 2 SO nhận 403-PQ (SO chỉ tiếp tục đối tượng `suspendSource = SECURITY`). Bước 3 `409` ERR-10-006; `400` ERR-10-009.
 
-**Thông báo hiển thị.** ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -1685,7 +1685,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 PB-DKKD, PB-DKKD-K và publication của chúng `SUSPENDED` với `suspendSource = PH01`; API phát trả 403-PQ trong ≤ 60 giây; ACL `WRITE` bị gỡ trong ≤ 2 phút. Bước 2 chỉ đối tượng có `suspendSource = PH01` tiếp tục; SB-THUE vẫn `SUSPENDED`. EVT: `publication.state-changed`. KT: có, chủ thể `system:dh-integration`.
 
-**Thông báo hiển thị.** ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Đối tượng ở trạng thái nêu ở kết quả mong đợi.
 :::
@@ -1801,7 +1801,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 lượt phát bị từ chối 403-PQ trong ≤ 60 giây dù token còn hạn. Bước 2 producer nhận `TopicAuthorizationException` trong ≤ 2 phút. Bước 3 phát lại được, không cần duyệt. Bước 4 `REVOKED`, scope gỡ khỏi client; `:resume` trả `409` ERR-10-006. EVT: `publication.state-changed` cho mỗi lần đổi.
 
-**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."; ERR-10-102 "Bên gọi không có quyền phát hoặc nhận trên topic này."
+**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."; ERR-10-102 "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -1864,7 +1864,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1, 2 `400` ERR-10-104. Bước 3 `422` ERR-10-105. Bước 4 `422` ERR-10-105 `failedIndex = 2`; không bản tin nào của lô được ghi (giao dịch Kafka). Bước 5 `413` ERR-10-106. Bước 6 `202` nhưng `dhtenant` trên Kafka bị ghi đè thành `T68`.
 
-**Thông báo hiển thị.** ERR-10-104 "Sự kiện không đúng CloudEvents 1.0 hoặc nguồn không thuộc bên phát."; ERR-10-105 "Dữ liệu sự kiện không khớp lược đồ: {đường dẫn trường}."; ERR-10-106 "Sự kiện hoặc lô vượt kích thước cho phép ({trần})."
+**Thông báo hiển thị.** ERR-10-104 "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token."; ERR-10-105 "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc."; ERR-10-106 "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -1894,7 +1894,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `401` ERR-10-101. Bước 2 403-PQ. Bước 3, 4, 5 404-ẩn ERR-10-103 với thân giống hệt nhau trừ `traceId`. Không có bản tin nào trên topic của T01 hay T68.
 
-**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."; ERR-10-101 "Token không hợp lệ hoặc đã hết hạn."; ERR-10-102 "Bên gọi không có quyền phát hoặc nhận trên topic này."; ERR-10-103 "Không tìm thấy topic {tên}."
+**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."; ERR-10-101 "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại."; ERR-10-102 "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."; ERR-10-103 "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -1947,7 +1947,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 lượt vượt trả `429` ERR-10-107 có `Retry-After`. Bước 2 `503` ERR-10-108, không hạ `acks`; sau khi broker trở lại lượt phát kế tiếp `202`. Không có sự kiện nào được trả `202` mà không có trên Kafka.
 
-**Thông báo hiển thị.** ERR-10-107 "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."; ERR-10-108 "Không đủ bản sao đồng bộ để ghi bền. Thử lại sau."
+**Thông báo hiển thị.** ERR-10-107 "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."; ERR-10-108 "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau."
 
 **Hậu điều kiện.** Lỗi giả lập đã gỡ, các thành phần hoạt động lại bình thường.
 :::
@@ -1975,7 +1975,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200` lược đồ v4. Bước 2 403-PQ. Bước 3 404-ẩn ERR-10-103.
 
-**Thông báo hiển thị.** ERR-10-102 "Bên gọi không có quyền phát hoặc nhận trên topic này."; ERR-10-103 "Không tìm thấy topic {tên}."
+**Thông báo hiển thị.** ERR-10-102 "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."; ERR-10-103 "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -2344,7 +2344,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`, khóa cũ `REVOKED` ngay, không có thời gian chồng lấn, khóa mới sinh và hiển thị một lần. Bước 2 chỉ có chữ ký khóa mới. Bước 3 IE1 `200` (có `PERM-10-subscribe`); VW 403-PQ; SO không lý do `400` ERR-10-009.
 
-**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -2545,7 +2545,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `PAUSED`; SIM-WH không nhận lượt mới sau ≤ 10 giây. Bước 2 API kéo trả `409` ERR-10-110; consumer ngoài mất quyền đọc nhóm. Bước 3 giao tiếp từ offset đã commit, đủ 6.000 sự kiện, không trùng ngoài lượt đang bay lúc dừng. EVT: `subscription.state-changed`.
 
-**Thông báo hiển thị.** ERR-10-110 "Đăng ký nhận không ở trạng thái hoạt động."
+**Thông báo hiển thị.** ERR-10-110 "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện."
 
 **Hậu điều kiện.** Đối tượng ở trạng thái nêu ở kết quả mong đợi.
 :::
@@ -2573,7 +2573,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `422` ERR-10-052. Bước 2 `400` ERR-10-009; `409` ERR-10-006. Bước 3 403-PQ (IE không có `PERM-10-operate`).
 
-**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-052 "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-052 "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -2717,7 +2717,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 trả lại đúng lô A (cùng `id`, cùng `cursor` vị trí). Bước 2 `409` ERR-10-109. Bước 3 lô mới bắt đầu từ cùng vị trí lô A (ít nhất một lần), `leaseId` khác.
 
-**Thông báo hiển thị.** ERR-10-109 "Cursor đã hết hiệu lực hoặc không khớp lượt thuê. Kéo lại để nhận cursor mới."
+**Thông báo hiển thị.** ERR-10-109 "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận."
 
 **Hậu điều kiện.** Đối tượng ở trạng thái nêu ở kết quả mong đợi.
 :::
@@ -2746,7 +2746,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1, 2 `409` ERR-10-109 (HMAC sai), offset không đổi. Bước 3 403-PQ (ERR-10-102); `401` ERR-10-101. Bước 4 404-ẩn, không lộ sự kiện T01.
 
-**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."; ERR-10-101 "Token không hợp lệ hoặc đã hết hạn."; ERR-10-102 "Bên gọi không có quyền phát hoặc nhận trên topic này."; ERR-10-103 "Không tìm thấy topic {tên}."; ERR-10-109 "Cursor đã hết hiệu lực hoặc không khớp lượt thuê. Kéo lại để nhận cursor mới."
+**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."; ERR-10-101 "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại."; ERR-10-102 "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."; ERR-10-103 "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."; ERR-10-109 "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -2799,7 +2799,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 lượt vượt `429` ERR-10-107 có `Retry-After`. Bước 2 kéo trả `503` ERR-10-121 `Retry-After: 5`; API phát vẫn `202` (chống trùng bị bỏ qua).
 
-**Thông báo hiển thị.** ERR-10-107 "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."; ERR-10-121 "Dịch vụ phụ thuộc tạm thời không khả dụng. Thử lại sau {Retry-After} giây."
+**Thông báo hiển thị.** ERR-10-107 "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."; ERR-10-121 "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây."
 
 **Hậu điều kiện.** Lỗi giả lập đã gỡ, các thành phần hoạt động lại bình thường.
 :::
@@ -2886,7 +2886,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `202`, 2 mục DLQ `origin = EXTERNAL_REPORT`. Bước 2 `413` ERR-10-106; `409` ERR-10-110.
 
-**Thông báo hiển thị.** ERR-10-106 "Sự kiện hoặc lô vượt kích thước cho phép ({trần})."; ERR-10-110 "Đăng ký nhận không ở trạng thái hoạt động."
+**Thông báo hiển thị.** ERR-10-106 "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})."; ERR-10-110 "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -2920,7 +2920,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`: `ALLOWED`; `PENDING`; `DENIED` `NO_GRANT`; `DENIED` `TOPIC_NOT_FOUND`. Bước 2 `DENIED` `TOPIC_NOT_ACTIVE`. Bước 3 403-PQ (chỉ scope `event:permission-check`). Không ghi kiểm toán.
 
-**Thông báo hiển thị.** ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -3036,7 +3036,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 20 mục, đủ `sourcePartition`, `sourceOffset`, `eventId`, `attempts`. Bước 2 403-PQ. Bước 3 `400` ERR-10-009; rồi `200`, nội dung giải mã qua OpenBao transit, đã che theo chính sách khi có; KT: có (xem dữ liệu Nhạy cảm). Bước 4 `200` chỉ siêu dữ liệu, không có nội dung.
 
-**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -3065,7 +3065,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`, 10 mục `DISCARDED`. Bước 2 `409` ERR-10-036. Bước 3 `400` ERR-10-003 (MVP tối đa 1.000 mục, loại bỏ theo bộ lọc thuộc Đợt sau theo FRS 0.3); SO 403-PQ. Bước 4 10 mục sang `PURGED`, `dlq_payload` bị xóa, siêu dữ liệu còn; 20 mục `NEW` giữ nguyên nội dung.
 
-**Thông báo hiển thị.** ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-036 "Mục DLQ đã được xử lý bởi {người} lúc {giờ}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-003 câu theo `errors[]` của từng trường, ví dụ "Mã chỉ gồm chữ thường, số và dấu gạch ngang, bắt đầu bằng chữ, 3 đến 63 ký tự."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-036 "Mục DLQ đã được xử lý bởi {người} lúc {giờ}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -3173,7 +3173,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 duyệt `403` ERR-10-008. Bước 2 `400` ERR-10-009. Bước 3 403-PQ (SO không phát lại). Không có lượt nào chạy.
 
-**Thông báo hiển thị.** ERR-10-008 "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-008 "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."; ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -3344,7 +3344,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`, `alertAcknowledgedBy`, `alertAckNote`; thông báo lặp dừng tới khi đổi mức. Bước 2 403-PQ; `409` ERR-10-006.
 
-**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-006 "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -3549,7 +3549,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `200`, áp dụng ngay cho subscription dùng mặc định. Bước 2 `422` ERR-10-012; `400` ERR-10-009. Bước 3 403-PQ (tham số phạm vi N chỉ PA). Bước 4 403-PQ.
 
-**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-012 "Giá trị ngoài miền cho phép ({min} đến {max})."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-009 "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."; ERR-10-012 "Giá trị ngoài miền cho phép ({min} đến {max})."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Chỉ bước thành công để lại thay đổi; bước bị từ chối không đổi dữ liệu.
 :::
@@ -3727,7 +3727,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `422` ERR-10-004. Bước 2 403-PQ (tiền tố `dh.` chỉ PA và tài khoản nền tảng). Bước 3 `422` ERR-10-005. Bước 4 thành công, artifact `groupId = dh`.
 
-**Thông báo hiển thị.** ERR-10-004 "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."; ERR-10-005 "Tiền tố tenant của topic không khớp tenant đang làm việc."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-004 "Tên topic không đúng quy ước hoặc dùng miền dành riêng ({miền}). Miền này chỉ do hệ thống đăng ký."; ERR-10-005 "Tiền tố tenant của topic không khớp tenant đang làm việc."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -3906,7 +3906,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ (FR, UC, API, UI,
 
 **Kết quả mong đợi.** Bước 1 `409` ERR-10-042 cả hai. Bước 2 `422` ERR-10-012. Bước 3 bản tin vào DLQ của cầu nối, `origin = BRIDGE`, `bridgeCode`, ERR-10-118; cầu nối vẫn chạy. Bước 4 cầu nối `EXPIRED`, EVT: `bridge.state-changed`.
 
-**Thông báo hiển thị.** ERR-10-012 "Giá trị ngoài miền cho phép ({min} đến {max})."; ERR-10-042 "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy."; ERR-10-118 nhãn "Cầu nối không chuyển được".
+**Thông báo hiển thị.** ERR-10-012 "Giá trị ngoài miền cho phép ({min} đến {max})."; ERR-10-042 "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy."; ERR-10-118 nhãn "Cầu nối không chuyển được.".
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -4104,7 +4104,7 @@ Các kịch bản dưới đây chạy lại ở mỗi đợt phát hành; TS-10
 
 **Kết quả mong đợi.** Bước 1 404-ẩn; liệt kê chỉ có `t90`. Bước 2 bị từ chối vì không có cặp cấp quyền trong dữ liệu OPA của T90 và tiền tố khác tenant (404-ẩn ERR-10-103). Bước 3 ACL Valkey từ chối.
 
-**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-103 "Không tìm thấy topic {tên}."
+**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-103 "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."
 
 **Hậu điều kiện.** Không lộ hay đổi dữ liệu, bí mật, quyền ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -4229,7 +4229,7 @@ Bảng ca phân quyền tham số hóa (một dòng một vai trò, chạy mọi
 
 **Kết quả mong đợi.** Bước 1 403-PQ (ERR-10-054), không có thay đổi dữ liệu. Bước 2 403-TC. Bước 3 `401` ERR-10-053. Bước 4 nút hành động không hiện hoặc bị vô hiệu kèm lý do (`allowedActions`, `disabledReasons`), và gọi trực tiếp vẫn bị chặn.
 
-**Thông báo hiển thị.** ERR-10-044 ST-07 "Đối tượng ngoài phạm vi tổ chức của bạn."; ERR-10-053 "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-044 ST-07 "Đối tượng ngoài phạm vi tổ chức của bạn."; ERR-10-053 "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -4256,7 +4256,7 @@ Bảng ca phân quyền tham số hóa (một dòng một vai trò, chạy mọi
 
 **Kết quả mong đợi.** Bước 1 operation của mình thành công; operation khác 403-PQ. Bước 2 404-ẩn hoặc 403-PQ, không trả cấu hình T01.
 
-**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này."
+**Thông báo hiển thị.** ERR-10-001 "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."; ERR-10-054 ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền."
 
 **Hậu điều kiện.** Dữ liệu không đổi ngoài điều nêu ở kết quả mong đợi.
 :::
@@ -5369,23 +5369,23 @@ Chương này ghi những chỗ tập kiểm thử cần mà nguồn chưa có, 
 
 ### 10.2. Đề nghị đồng bộ câu thông báo
 
-D03-06-PH10 §5.3 chưa có câu hiển thị cho ERR-10-053, 054, và D03-04-PH10 chưa chốt `detail` cho mã data plane. Tập này dùng tạm các câu dưới đây ở trường "Thông báo hiển thị"; đề nghị nhóm màn hình và nhóm API đưa vào bảng của mình (hoặc sửa, rồi tập này cập nhật theo).
+Các câu dưới đây được dùng ở trường "Thông báo hiển thị" của tập này. Sau đợt đồng bộ ngày 26/11/2026, câu đã thống nhất với D02-03-PH10 FRS §9.2 (nguồn chuẩn câu mới) và D03-06-PH10 §5.3 đã nhận câu ERR-10-053, 054; bảng giữ lại để truy vết đề nghị.
 
 | Mã | HTTP | Câu đề nghị | Đưa vào |
 |---|---|---|---|
 | ERR-10-053 | 401 | "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." | D03-06-PH10 §5.3 |
-| ERR-10-054 | 403 | ST-07 "Bạn không có quyền thực hiện thao tác này." | D03-06-PH10 §5.3 |
-| ERR-10-101 | 401 | "Token không hợp lệ hoặc đã hết hạn." | D03-04-PH10 §6 (`detail`) |
-| ERR-10-102 | 403 | "Bên gọi không có quyền phát hoặc nhận trên topic này." | D03-04-PH10 §6 |
-| ERR-10-103 | 404 | "Không tìm thấy topic {tên}." | D03-04-PH10 §6 |
-| ERR-10-104 | 400 | "Sự kiện không đúng CloudEvents 1.0 hoặc nguồn không thuộc bên phát." | D03-04-PH10 §6 |
-| ERR-10-105 | 422 | "Dữ liệu sự kiện không khớp lược đồ: {đường dẫn trường}." | D03-04-PH10 §6 |
-| ERR-10-106 | 413 | "Sự kiện hoặc lô vượt kích thước cho phép ({trần})." | D03-04-PH10 §6 |
+| ERR-10-054 | 403 | ST-07 "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền." | D03-06-PH10 §5.3 |
+| ERR-10-101 | 401 | "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại." | D03-04-PH10 §6 (`detail`) |
+| ERR-10-102 | 403 | "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động." | D03-04-PH10 §6 |
+| ERR-10-103 | 404 | "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác." | D03-04-PH10 §6 |
+| ERR-10-104 | 400 | "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token." | D03-04-PH10 §6 |
+| ERR-10-105 | 422 | "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc." | D03-04-PH10 §6 |
+| ERR-10-106 | 413 | "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})." | D03-04-PH10 §6 |
 | ERR-10-107 | 429 | "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây." | D03-04-PH10 §6 |
-| ERR-10-108 | 503 | "Không đủ bản sao đồng bộ để ghi bền. Thử lại sau." | D03-04-PH10 §6 |
-| ERR-10-109 | 409 | "Cursor đã hết hiệu lực hoặc không khớp lượt thuê. Kéo lại để nhận cursor mới." | D03-04-PH10 §6 |
-| ERR-10-110 | 409 | "Đăng ký nhận không ở trạng thái hoạt động." | D03-04-PH10 §6 |
-| ERR-10-121 | 503 | "Dịch vụ phụ thuộc tạm thời không khả dụng. Thử lại sau {Retry-After} giây." | D03-04-PH10 §6 |
+| ERR-10-108 | 503 | "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau." | D03-04-PH10 §6 |
+| ERR-10-109 | 409 | "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận." | D03-04-PH10 §6 |
+| ERR-10-110 | 409 | "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện." | D03-04-PH10 §6 |
+| ERR-10-121 | 503 | "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây." | D03-04-PH10 §6 |
 
 : Câu thông báo đề nghị đồng bộ cho mã lỗi chưa có câu
 

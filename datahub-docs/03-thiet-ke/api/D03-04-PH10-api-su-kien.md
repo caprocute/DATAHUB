@@ -20,7 +20,7 @@ Tập này là hợp đồng giao tiếp của phân hệ PH-10 Sự kiện, ph�
 - **Data plane** `/event/v1` (cổng sự kiện của `dh-runtime`, qua `apisix-ext` và `apisix-int`): 6 operation cho HTTT phát, kéo, xác nhận, báo lỗi và tra lược đồ chỉ đọc.
 - **API nội bộ cho `dh-runtime`** (API-10-085…090 và mã tách 119): 7 operation báo giao nhận, ngắt mạch, phát lại, cầu nối; chỉ qua `apisix-int` với mTLS và token máy, không hiện ở BFF.
 
-Mã API-10-001…091 giữ đúng thứ tự gợi ý của FRS §8.3. 18 dòng gộp nhiều hành động ở FRS được tách thành operation riêng, cấp mã mới **API-10-092…119** (28 mã, bảng §3.1). Thêm **API-10-120** (nhận khóa ký đầu tiên) theo đề nghị B7 của tập màn hình D03-06-PH10 (§10.3) và **API-10-121** (hủy tác vụ nhập) theo FRS 0.3. Từ FRS 0.3, §8.3 liệt kê đủ 121 mã. Sự kiện gồm **EVT-10-01…16** theo CloudEvents 1.0, kênh **giao ĐẨY webhook ký HMAC** theo ADR-044 và ADR-071 (dạng có cấu trúc, dạng nhị phân, bắt tay xác minh) và hai **kênh mẫu** cho topic nghiệp vụ `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` và topic DLQ `{topicName}.dlq`.
+Mã API-10-001…091 giữ đúng thứ tự gợi ý của FRS §9.4. 18 dòng gộp nhiều hành động ở FRS được tách thành operation riêng, cấp mã mới **API-10-092…119** (28 mã, bảng §3.1). Thêm **API-10-120** (nhận khóa ký đầu tiên) theo đề nghị B7 của tập màn hình D03-06-PH10 (§10.3) và **API-10-121** (hủy tác vụ nhập) theo FRS 0.3. Từ FRS 0.3, §9.4 liệt kê đủ 121 mã. Sự kiện gồm **EVT-10-01…16** theo CloudEvents 1.0, kênh **giao ĐẨY webhook ký HMAC** theo ADR-044 và ADR-071 (dạng có cấu trúc, dạng nhị phân, bắt tay xác minh) và hai **kênh mẫu** cho topic nghiệp vụ `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` và topic DLQ `{topicName}.dlq`.
 
 Hợp đồng máy đọc được, sinh từ một nguồn và đã kiểm:
 
@@ -34,7 +34,7 @@ Bốn nguyên tắc hợp đồng:
 3. **Không API, không sự kiện nào trả giá trị khóa ký**, trừ đúng một lần trong phản hồi xoay khóa (`SigningKeyIssued.secret`, `readOnly`); kiểm tra hợp đồng chặn trường bí mật ở mọi lược đồ khác.
 4. **Mọi lệnh tạo có `Idempotency-Key`, mọi lệnh sửa và hành động control plane có `If-Match`**, giống PH-04, PH-05; cổng phát chống trùng 24 giờ theo `id` của CloudEvents.
 
-Căn cứ: FRS D02-03-PH10 §8 và Phụ lục A; SDD D03-02-PH10 §3.3, §4.6…4.16; CSDL D03-03-PH10 (DDL `ph10_event`); ADR-044, ADR-070, ADR-071, ADR-072, ADR-073. Mọi tên miền, dữ liệu trong ví dụ là giả lập, tenant T68.
+Căn cứ: FRS D02-03-PH10 §9 và Phụ lục A; SDD D03-02-PH10 §3.3, §4.6…4.16; CSDL D03-03-PH10 (DDL `ph10_event`); ADR-044, ADR-070, ADR-071, ADR-072, ADR-073. Mọi tên miền, dữ liệu trong ví dụ là giả lập, tenant T68.
 
 ## 0. Giới thiệu
 
@@ -78,7 +78,7 @@ Nguồn chuẩn là hai tệp máy đọc được [`ph10/openapi-event.yaml`](p
 
 | Tài liệu | Nội dung dùng ở tập này |
 |---|---|
-| D02-03-PH10 FRS §8, Phụ lục A | Danh mục API, mã lỗi, sự kiện, enum, trường |
+| D02-03-PH10 FRS §9, Phụ lục A | Danh mục API, mã lỗi, sự kiện, enum, trường |
 | D03-02-PH10 SDD | Thành phần hiện thực từng operation |
 | D03-03-PH10 CSDL | Bảng `ph10_event` ánh xạ với lược đồ JSON |
 | D03-06-PH10 Màn hình §5.3 | Câu thông báo hiển thị theo mã lỗi |
@@ -458,10 +458,10 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 
 ### 3.1. Tách dòng gộp của FRS
 
-FRS §8.3 gộp nhiều hành động vào một dòng để giữ thứ tự mã. Mỗi operation cần một mã (khuôn K-API), nên tập này giữ mã FRS cho hành động đầu tiên và cấp mã kế tiếp từ API-10-092 cho hành động còn lại theo thứ tự dòng. Đề nghị FRS cập nhật §8.3 theo bảng dưới (§10.2).
+FRS §9.4 gộp nhiều hành động vào một dòng để giữ thứ tự mã. Mỗi operation cần một mã (khuôn K-API), nên tập này giữ mã FRS cho hành động đầu tiên và cấp mã kế tiếp từ API-10-092 cho hành động còn lại theo thứ tự dòng. Đề nghị FRS cập nhật §9.4 theo bảng dưới (§10.2).
 
 <!-- gen:split:start -->
-| Dòng FRS §8.3 | Nội dung gộp ở FRS | Giữ mã cho | Mã cấp mới |
+| Dòng FRS §9.4 | Nội dung gộp ở FRS | Giữ mã cho | Mã cấp mới |
 |---|---|---|---|
 | API-10-036 | `POST /publishers/{publisherCode}:suspend` · `:resume` · `:retire` | `POST /publishers/{publisherCode}:suspend` | API-10-092 `POST /publishers/{publisherCode}:resume`; API-10-093 `POST /publishers/{publisherCode}:retire` |
 | API-10-041 | `POST /subscribers/{subscriberCode}:suspend` · `:resume` · `:retire` | `POST /subscribers/{subscriberCode}:suspend` | API-10-094 `POST /subscribers/{subscriberCode}:resume`; API-10-095 `POST /subscribers/{subscriberCode}:retire` |
@@ -729,7 +729,7 @@ value: {"tenantId": "T68", "subscriptionCode": "ht-thue-dn-cap-phep", "topicName
         "suspendReason": "Tỷ lệ lỗi ≥ 50% liên tục 30 phút.", "changedFields": [], "configVersion": 4183}
 ```
 
-Sự kiện PH-10 tiêu thụ (FRS §8.2): EVT-05-11 `{tenant}.adapter.cdc.schema-changed.v1` (FR-10-068); EVT-04-09 `{tenant}.integration.flow.retired.v1` (FR-10-029); sự kiện đổi trạng thái HTTT của PH-01, giả định `{tenant}.connect.system.state-changed.v1` (Q10-17); sự kiện khởi tạo, tạm ngừng tenant của PH-20 (FR-10-064). Nhóm tiêu thụ theo A.8: `dh-svc-dh-integration-{tenant}-{consumer}` cho từng bộ tiêu thụ inbox.
+Sự kiện PH-10 tiêu thụ (FRS §9.3): EVT-05-11 `{tenant}.adapter.cdc.schema-changed.v1` (FR-10-068); EVT-04-09 `{tenant}.integration.flow.retired.v1` (FR-10-029); sự kiện đổi trạng thái HTTT của PH-01, giả định `{tenant}.connect.system.state-changed.v1` (Q10-17); sự kiện khởi tạo, tạm ngừng tenant của PH-20 (FR-10-064). Nhóm tiêu thụ theo A.8: `dh-svc-dh-integration-{tenant}-{consumer}` cho từng bộ tiêu thụ inbox.
 
 ### 4.2. Kênh giao ĐẨY webhook (PUSH)
 
@@ -812,7 +812,7 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 
 ## 6. Bảng mã lỗi ERR-10
 
-Ý nghĩa và HTTP theo FRS §8.1 (nạp tự động từ FRS khi sinh, không chép tay). Cột "API phát sinh" sinh từ `x-datahub-errors` của OpenAPI; mã chung (001, 003, 007, 037, 039, 049, 101, 102) ghi số lượng.
+Ý nghĩa và HTTP theo FRS §9.1 (nạp tự động từ FRS khi sinh, không chép tay). Cột "API phát sinh" sinh từ `x-datahub-errors` của OpenAPI; mã chung (001, 003, 007, 037, 039, 049, 101, 102) ghi số lượng.
 
 <!-- gen:errors:start -->
 ### 6.1. Control plane (ERR-10-001…054)
@@ -981,8 +981,8 @@ Bảng dưới cho biết người dùng console nhìn thấy câu gì khi API c
 | ERR-10-050 | 422 | "Đối tượng tham chiếu {mã} không có ở tenant đích." | Dòng xem trước |
 | ERR-10-051 | 422 | "Bên {mã} chưa đạt cấp độ ATTT yêu cầu cho topic {phân loại}." | `CMP-Alert` |
 | ERR-10-052 | 422 | "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04." kèm liên kết luồng | `CMP-Alert` |
-| ERR-10-053 | 401 | "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục; dữ liệu chưa lưu được giữ ở bản nháp." | ST-14 `CMP-SessionTimeoutDialog` |
-| ERR-10-054 | 403 | "Bạn không có quyền {thao tác} trên {đối tượng}. Liên hệ quản trị tỉnh nếu cần cấp quyền." | ST-07 khi tải trang; `CMP-Alert` trong hộp thao tác khi ghi |
+| ERR-10-053 | 401 | "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." | ST-14 `CMP-SessionTimeoutDialog` |
+| ERR-10-054 | 403 | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền." | ST-07 khi tải trang; `CMP-Alert` trong hộp thao tác khi ghi |
 
 : Thông báo hiển thị cho người dùng theo mã lỗi ERR-10 control plane
 
@@ -1009,7 +1009,7 @@ Kết quả chạy ngày 26/11/2026 trên máy viết tài liệu:
 | `@redocly/cli` 1.25 `lint` | Hợp lệ; 1 cảnh báo `no-server-example.com` (máy chủ `localhost` cho phát triển cục bộ, giữ chủ ý) |
 | `@asyncapi/parser` 3.3 | 0 lỗi, 0 cảnh báo |
 | Spectral | Không cài trong môi trường viết; chạy ở CI-5 |
-| `doi_chieu_frs.py` | 91 mã FRS §8.3 khớp phương thức và đường dẫn; enum A.2 có đủ; ERR, EVT, PERM, scope không lệch; trường, enum chỉ có ở API liệt kê đủ ở §10.1 |
+| `doi_chieu_frs.py` | 91 mã FRS §9.4 khớp phương thức và đường dẫn; enum A.2 có đủ; ERR, EVT, PERM, scope không lệch; trường, enum chỉ có ở API liệt kê đủ ở §10.1 |
 
 : Kết quả chạy kiểm tra hợp đồng ngày 26/11/2026
 
@@ -1167,13 +1167,13 @@ Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS b�
 
 | Số | Đề nghị | Lý do | Nơi sửa |
 |---|---|---|---|
-| 1 | Cập nhật §8.3: mỗi dòng một operation theo bảng §3.1 (API-10-092…119) và thêm dòng API-10-120 `POST /subscriptions/{subscriptionCode}/signing-keys:claim` | Khuôn K-API đòi mỗi operation một mã | FRS §8.3 |
-| 2 | Mã lỗi chung cho control plane: 401 token, 403 thiếu `PERM-10-*` (hiện tạm dùng ERR-10-101, 102) | Dải 001…099 chưa có mã xác thực, quyền chung; PH-04 có ERR-04-044, 045 | FRS §8.1 |
-| 3 | API hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (FR-10-071 cho phép người tạo hủy) | FRS §8.3 chưa có dòng; tập này không tự cấp | FRS §8.3, rồi tập API cấp mã kế tiếp |
-| 4 | Loại bỏ mục DLQ theo bộ lọc chạy nền (FR-10-050, FR-00-054) | API-10-062 hiện chỉ nhận danh sách ≤ 1.000 mục | FRS §8.3 |
+| 1 | Cập nhật §8.3: mỗi dòng một operation theo bảng §3.1 (API-10-092…119) và thêm dòng API-10-120 `POST /subscriptions/{subscriptionCode}/signing-keys:claim` | Khuôn K-API đòi mỗi operation một mã | FRS §9.4 |
+| 2 | Mã lỗi chung cho control plane: 401 token, 403 thiếu `PERM-10-*` (hiện tạm dùng ERR-10-101, 102) | Dải 001…099 chưa có mã xác thực, quyền chung; PH-04 có ERR-04-044, 045 | FRS §9.1 |
+| 3 | API hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (FR-10-071 cho phép người tạo hủy) | FRS §9.4 chưa có dòng; tập này không tự cấp | FRS §9.4, rồi tập API cấp mã kế tiếp |
+| 4 | Loại bỏ mục DLQ theo bộ lọc chạy nền (FR-10-050, FR-00-054) | API-10-062 hiện chỉ nhận danh sách ≤ 1.000 mục | FRS §9.4 |
 | 5 | Đầu vào duyệt dùng `comment` (FR-10-009) và lưu `decisionComment` (A.3); đề nghị A.3 ghi rõ ánh xạ | Tránh hai tên cho một trường | FRS A.3 |
 | 6 | Bỏ `decision` (A.2.10) khỏi đầu vào vì API tách `:approve`, `:reject` | Không còn trường nào nhận `APPROVE`, `REJECT` | FRS A.2.10 |
-| 7 | Lưu giữ, số phân vùng của topic `{tenant}.event.*` (tạm 7 ngày, 3 phân vùng) | Đã xử lý: FRS §7.2 nêu 7 ngày, 3 phân vùng (GĐ-01) | FRS §7.2 (Q10-58) |
+| 7 | Lưu giữ, số phân vùng của topic `{tenant}.event.*` (tạm 7 ngày, 3 phân vùng) | Đã xử lý: FRS §8.2 nêu 7 ngày, 3 phân vùng (GĐ-01) | FRS §8.2 (Q10-58) |
 | 8 | FR-10-048 (lọc, gộp lô, Đợt sau) cần tên trường `filters`, `batchSize`, `batchWaitMs` ở A.3 trước khi thêm vào API | FR đã nêu `batchSize`, `batchWaitMs` nhưng phụ lục chưa có | FRS A.3 |
 | 9 | Kiểu node, cạnh của sơ đồ (`PUBLISHER`, `TOPIC`, `SUBSCRIBER`; `PUBLICATION`, `SUBSCRIPTION`) và bước xác minh (`DNS`, `TLS`, `HANDSHAKE`, `TEST_EVENT`) vào A.2.15 | Enum chỉ ở API | FRS A.2.15 |
 | 10 | CSDL D03-03-PH10 kiểm `push.endpointVerification` trong `ck_subscription_push`, còn FRS A.3 và API dùng `push.lastVerification` | Lệch tên khóa JSON giữa CSDL và FRS | D03-03-PH10 DDL (luồng CSDL sửa) |
@@ -1193,7 +1193,7 @@ Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS b�
 | B4 | `dryRun` cho API-10-015 | Nhận: tham số truy vấn `dryRun`, trả 200 `TopicChangeResult` không ghi |
 | B5 | Lọc API-10-046 theo `alertState`, `deliveryMode`, `subscriberCode`, `topicName`, `projectCode`; sắp theo `lagSeconds` | Đã có đủ bộ lọc; sắp `sort=lagSeconds,desc` dùng tham số `sort` chung |
 | B6 | Trạng thái worker và cờ khóa ký chờ nhận ở API-10-048 | Nhận một phần: thêm `signingKeyPending` (đổi tên từ `signingSecretPending` để không trùng luật chặn trường bí mật). Không nhận trạng thái worker vì là dữ liệu chạy của `dh-runtime`; tab Worker dùng API-10-055 (offset, lag theo phân vùng) và API-10-052 (lần giao cuối) |
-| B7 | Đường lấy khóa ký đầu tiên (FR-10-037 bước 6) | Nhận: API-10-120 `POST /subscriptions/{subscriptionCode}/signing-keys:claim` (§3.3); đề nghị FRS thêm vào §8.3 (§10.2 mục 1) |
+| B7 | Đường lấy khóa ký đầu tiên (FR-10-037 bước 6) | Nhận: API-10-120 `POST /subscriptions/{subscriptionCode}/signing-keys:claim` (§3.3); đề nghị FRS thêm vào §9.4 (§10.2 mục 1) |
 | B8 | Chạy thử API-10-064 | Nhận: `dryRun` trả 200 `ReplayEstimate` |
 | B9 | Miễn xác minh khi tạo subscription | Không nhận thay đổi API: miễn chỉ làm sau khi tạo, qua API-10-091 trên subscription `PENDING_APPROVAL`, vì miễn cần lý do và quyền `PERM-10-admin` khác người đề nghị. Trả lời Q10-31 của tập màn hình |
 | B10 | `steps[]` có mã bước cố định, `detail`, `validUntil` ở API-10-051 | Nhận: `steps[].name` đã là enum `DNS`, `TLS`, `HANDSHAKE`, `TEST_EVENT` và có `detail`; thêm `validUntil` (hết 24 giờ hiệu lực xác minh) |
@@ -1210,7 +1210,7 @@ Tham số `dryRun` và các trường mới (`allowedActions`, `signingKeyPendin
 
 > **Câu hỏi mở Q10-57:** API-10-084 dùng một tham số đường dẫn nhiều đoạn (`registryPath`) mà OpenAPI không biểu diễn chuẩn. Có nên liệt kê tường minh các đường Apicurio v3 và `ccompat/v7` mà HTTT được dùng (khoảng 6 đường đọc) với mã API riêng không. Đề xuất tạm: giữ một mã, mô tả danh sách đường cho phép trong plugin APISIX và tài liệu PH-15.
 
-> **Câu hỏi mở Q10-58:** Lưu giữ và số phân vùng của topic sự kiện `{tenant}.event.*` đã chốt ở FRS §7.2 (GĐ-01). Tập này theo 7 ngày, 3 phân vùng theo mức của PH-05 (EVT-05), đủ cho `dh-runtime` dựng lại cấu hình sau sự cố dài nhất dự kiến (GĐ-01). Không còn mở; giữ để truy vết.
+> **Câu hỏi mở Q10-58:** Lưu giữ và số phân vùng của topic sự kiện `{tenant}.event.*` đã chốt ở FRS §8.2 (GĐ-01). Tập này theo 7 ngày, 3 phân vùng theo mức của PH-05 (EVT-05), đủ cho `dh-runtime` dựng lại cấu hình sau sự cố dài nhất dự kiến (GĐ-01). Không còn mở; giữ để truy vết.
 
 > **Câu hỏi mở Q10-59:** Có cần một webhook "ping" chủ động định kỳ (không phải bắt tay xác minh) để phát hiện endpoint hỏng trước khi có sự kiện thật với subscription lưu lượng thấp không. Đề xuất tạm: không ở MVP; ngắt mạch và cảnh báo lag `STALLED` đủ, xem lại sau thí điểm.
 

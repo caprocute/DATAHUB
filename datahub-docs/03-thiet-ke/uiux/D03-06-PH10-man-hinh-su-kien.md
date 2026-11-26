@@ -51,7 +51,7 @@ Ngoài phạm vi: tài nguyên cụm Kafka và nhật ký cổng sự kiện (PH
 | [D02-03-PH10](../../02-yeu-cau/frs/D02-03-PH10-frs-su-kien.md) | FR, BR, ERR-10, PERM-10, Phụ lục A (enum, trường, tham số `10.*`, route UI) |
 | [D02-04-PH10](../../02-yeu-cau/use-case/D02-04-PH10-use-case-su-kien.md) | Kịch bản người dùng, dữ liệu ví dụ |
 | [D03-02-PH10](../sdd/D03-02-PH10-sdd-su-kien.md) | Thành phần `dh-integration`, `dh-runtime`, cách tính lag, cách dựng đồ thị |
-| [D03-04-PH10](../api/D03-04-PH10-api-su-kien.md) | Định nghĩa đầy đủ API-10-001…121 (OpenAPI, AsyncAPI); tài liệu này dẫn chiếu theo số API ở FRS §8.3, kể cả các hành động tách API-10-092…121 |
+| [D03-04-PH10](../api/D03-04-PH10-api-su-kien.md) | Định nghĩa đầy đủ API-10-001…121 (OpenAPI, AsyncAPI); tài liệu này dẫn chiếu theo số API ở FRS §9.4, kể cả các hành động tách API-10-092…121 |
 | [D03-03-PH10](../csdl/D03-03-PH10-csdl-su-kien.md) | Bảng, cột, ràng buộc của các trường hiện trên màn |
 | [D05-02-PH10](../../05-kiem-thu/test-case/D05-02-PH10-test-case.md) | Ca kiểm thử giao diện TC-10 dẫn chiếu UI-10 và câu thông báo mục 5.3 |
 | [D03-05-02](D03-05-02-design-token.md), [D03-05-03](D03-05-03-thanh-phan-nguyen-tu.md), [D03-05-04](D03-05-04-thanh-phan-phuc-hop.md) | Token, thành phần nguyên tử, phức hợp |
@@ -107,7 +107,7 @@ Chương 1 nêu mục đích, phạm vi, người đọc và danh sách màn. Ch
 
 ### 1.7. Danh sách màn hình
 
-Bảng dưới là danh mục 20 màn theo FRS §12 kèm mẫu bố cục, mức chi tiết, FR được hiện thực và UC liên quan (UC lấy từ bảng truy vết UC sang màn của D02-04-PH10).
+Bảng dưới là danh mục 20 màn theo FRS §10.1 kèm mẫu bố cục, mức chi tiết, FR được hiện thực và UC liên quan (UC lấy từ bảng truy vết UC sang màn của D02-04-PH10).
 
 | Mã | Tên | PTN | Mức chi tiết | FR | UC |
 |---|---|---|---|---|---|
@@ -214,7 +214,7 @@ Số đếm, lag, lưu lượng làm mới theo chu kỳ: tổng quan và sơ đ
 
 ## 3. Màn hệ cũ được giữ lại thành gì
 
-Theo quyết định phạm vi Q4 (giữ toàn bộ nghiệp vụ hệ cũ và màn có giá trị vận hành, D00-04 §5), mọi màn của Hub Pulsar được ánh xạ sang màn mới. Bảng dưới là ma trận truy vết `LGC` sang `UI`; ma trận `LGC` sang FR đầy đủ ở FRS §9.1.
+Theo quyết định phạm vi Q4 (giữ toàn bộ nghiệp vụ hệ cũ và màn có giá trị vận hành, D00-04 §5), mọi màn của Hub Pulsar được ánh xạ sang màn mới. Bảng dưới là ma trận truy vết `LGC` sang `UI`; ma trận `LGC` sang FR đầy đủ ở FRS §11.1.
 
 ### 3.1. Danh sách màn hệ cũ và màn mới
 
@@ -471,8 +471,8 @@ Thân lỗi RFC 9457 có `code`, `detail`, `errors[]` theo trường và `traceI
 | ERR-10-050 | "Đối tượng tham chiếu {mã} không có ở tenant đích." | Dòng xem trước |
 | ERR-10-051 | "Bên {mã} chưa đạt cấp độ ATTT yêu cầu cho topic {phân loại}." | `CMP-Alert` |
 | ERR-10-052 | "Thao tác không áp dụng cho đăng ký nhận nội bộ; điều khiển ở luồng PH-04." kèm liên kết luồng | `CMP-Alert` |
-| ERR-10-053 | "Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục; dữ liệu chưa lưu được giữ ở bản nháp." | ST-14 `CMP-SessionTimeoutDialog` |
-| ERR-10-054 | "Bạn không có quyền {thao tác} trên {đối tượng}. Liên hệ quản trị tỉnh nếu cần cấp quyền." | ST-07 khi tải trang; `CMP-Alert` trong hộp thao tác khi ghi |
+| ERR-10-053 | "Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục." | ST-14 `CMP-SessionTimeoutDialog` |
+| ERR-10-054 | "Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền." | ST-07 khi tải trang; `CMP-Alert` trong hộp thao tác khi ghi |
 
 : Câu hiển thị theo mã lỗi ERR-10-001…054 của control plane
 
@@ -521,7 +521,7 @@ Mọi màn áp đủ ST-01…ST-15 của D03-06-00 §4.2. Mục từng màn ch�
 ::: dac-ta
 **Mục đích.** Cho kỹ sư tích hợp, vận hành và quản trị tỉnh thấy ngay quy mô trục sự kiện (bốn thẻ đếm kế thừa Hub), lưu lượng, độ trễ, DLQ, việc chờ duyệt, topic sắp hết hạn và mức dùng hạn mức, để biết hôm nay cần xử lý gì trước.
 
-**Tác nhân, quyền.** IE, TO, TA, VW (FRS §12) và mọi vai trò có `PERM-10-read`; khối "Việc chờ duyệt" chỉ hiện với `PERM-10-approve`; OR chỉ thấy số liệu trong phạm vi tổ chức.
+**Tác nhân, quyền.** IE, TO, TA, VW (FRS §3.1) và mọi vai trò có `PERM-10-read`; khối "Việc chờ duyệt" chỉ hiện với `PERM-10-approve`; OR chỉ thấy số liệu trong phạm vi tổ chức.
 
 **FR, UC.** FR-10-016, 057, 062; UC-10-21, UC-10-05 (topic sắp hết hạn).
 
@@ -618,7 +618,7 @@ Nền trang `color-canvas`; thẻ `color-surface-solid`, bo `radius-lg`, bóng `
 ::: dac-ta
 **Mục đích.** Tìm dự án sự kiện, thấy số topic, bên tham gia và độ trễ lớn nhất của từng dự án; tạo, lưu trữ, khôi phục và xuất khai báo.
 
-**Tác nhân, quyền.** IE, TA (FRS §12); xem `PERM-10-read`; "Tạo dự án" cần `PERM-10-create`; lưu trữ, khôi phục cần `PERM-10-update`; xuất khai báo cần `PERM-10-read`.
+**Tác nhân, quyền.** IE, TA (FRS §3.1); xem `PERM-10-read`; "Tạo dự án" cần `PERM-10-create`; lưu trữ, khôi phục cần `PERM-10-update`; xuất khai báo cần `PERM-10-read`.
 
 **FR, UC.** FR-10-001, 003, 005, 070; UC-10-01, UC-10-28.
 
@@ -720,7 +720,7 @@ Bảng hai tầng chữ (mã đơn cách, tên) với số topic có phân rã t
 ::: dac-ta
 **Mục đích.** Xem thông tin chung, topic, bên tham gia và sơ đồ thu gọn của một dự án; tạo topic nhanh mà không rời trang.
 
-**Tác nhân, quyền.** IE, TA, VW (FRS §12); xem `PERM-10-read`; Sửa, Lưu trữ cần `PERM-10-update`; "Tạo topic" cần `PERM-10-create`; OR chỉ thấy dự án có HTTT thuộc tổ chức mình.
+**Tác nhân, quyền.** IE, TA, VW (FRS §3.1); xem `PERM-10-read`; Sửa, Lưu trữ cần `PERM-10-update`; "Tạo topic" cần `PERM-10-create`; OR chỉ thấy dự án có HTTT thuộc tổ chức mình.
 
 **FR, UC.** FR-10-002, 004, 005, 008, 058 (sơ đồ thu gọn), 070; UC-10-01, UC-10-02.
 
@@ -877,7 +877,7 @@ Drawer kính trên nền danh sách UI-10-02, giếng nội dung đặc. Mã d�
 ::: dac-ta
 **Mục đích.** Tìm topic theo dự án, trạng thái, loại, phân loại, chế độ định tuyến, bên phát, bên nhận; thấy ngay topic có cảnh báo lag, chờ duyệt hay cấp phát lỗi.
 
-**Tác nhân, quyền.** IE, TO (FRS §12) và mọi vai trò có `PERM-10-read`; "Tạo topic" cần `PERM-10-create`; menu dòng "Đăng ký nhận" cần `PERM-10-subscribe`.
+**Tác nhân, quyền.** IE, TO (FRS §3.1) và mọi vai trò có `PERM-10-read`; "Tạo topic" cần `PERM-10-create`; menu dòng "Đăng ký nhận" cần `PERM-10-subscribe`.
 
 **FR, UC.** FR-10-006; hiện kết quả FR-10-066, 067 (topic `CDC`, `SYSTEM`); UC-10-02.
 
@@ -969,7 +969,7 @@ Bảng topic với dòng phụ dự án, phân loại, phiên bản lược đ�
 ::: dac-ta
 **Mục đích.** Một nơi để xem và vận hành một topic: cấu hình, lược đồ, quyền phát, đăng ký nhận kèm lag, DLQ, cách kết nối, chuyển đổi phiên bản, lịch sử; đề nghị thay đổi cấu hình, ngừng, tạo phiên bản mới.
 
-**Tác nhân, quyền.** IE, TO, IA (FRS §12) và mọi vai trò có `PERM-10-read`; nút theo quyền (`PERM-10-create`, `PERM-10-update`, `PERM-10-subscribe`) và trạng thái ở mục 12.3.
+**Tác nhân, quyền.** IE, TO, IA (FRS §3.1) và mọi vai trò có `PERM-10-read`; nút theo quyền (`PERM-10-create`, `PERM-10-update`, `PERM-10-subscribe`) và trạng thái ở mục 12.3.
 
 **FR, UC.** FR-10-007, 010…016, 024, 030, 033, 034 (tab Cách kết nối); UC-10-02, 03, 04, 05, 09, 10, 11, 23.
 
@@ -1109,7 +1109,7 @@ Tab Tổng quan của topic đang hoạt động: bốn thẻ số 24 giờ, lư
 ::: dac-ta
 **Mục đích.** Tạo topic với tên theo quy ước, cấu hình, định tuyến và lược đồ bắt buộc; kiểm tra trước khi gửi duyệt để người duyệt chỉ nhận yêu cầu đã sạch lỗi chặn.
 
-**Tác nhân, quyền.** IE (FRS §12), TA, SV trong phạm vi tổ chức; `PERM-10-create`.
+**Tác nhân, quyền.** IE (FRS §3.1), TA, SV trong phạm vi tổ chức; `PERM-10-create`.
 
 **FR, UC.** FR-10-008, 015 (phiên bản mới), 017; UC-10-02, UC-10-05.
 
@@ -1221,7 +1221,7 @@ Bước 1 của trình hướng dẫn sáu bước: ba ô miền, thực thể, 
 ::: dac-ta
 **Mục đích.** Soạn phiên bản lược đồ mới, kiểm tra cú pháp, quy ước, tương thích, dữ liệu cá nhân; so sánh hai phiên bản; gửi duyệt; ngừng khuyến nghị, vô hiệu phiên bản cũ.
 
-**Tác nhân, quyền.** IE, IA (FRS §12); xem, chạy kiểm tra `PERM-10-read`; tạo phiên bản, gửi duyệt `PERM-10-create`; sửa nháp, ngừng khuyến nghị `PERM-10-update`.
+**Tác nhân, quyền.** IE, IA (FRS §3.1); xem, chạy kiểm tra `PERM-10-read`; tạo phiên bản, gửi duyệt `PERM-10-create`; sửa nháp, ngừng khuyến nghị `PERM-10-update`.
 
 **FR, UC.** FR-10-017…022; UC-10-06.
 
@@ -1316,7 +1316,7 @@ Ba cột trên `color-surface-solid`, ngăn bằng `CMP-Splitter` 1 px `color-bo
 ::: dac-ta
 **Mục đích.** Liệt kê, đăng ký, sửa, tạm ngừng, tiếp tục, ngừng dùng bên phát; xem và quản lý quyền phát của từng bên; xem vi phạm tuân thủ lược đồ của bên phát Kafka.
 
-**Tác nhân, quyền.** IE, TA, SO (FRS §12); xem `PERM-10-read`; đăng ký `PERM-10-create`; sửa, ngừng dùng, thu hồi quyền phát `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`.
+**Tác nhân, quyền.** IE, TA, SO (FRS §3.1); xem `PERM-10-read`; đăng ký `PERM-10-create`; sửa, ngừng dùng, thu hồi quyền phát `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`.
 
 **FR, UC.** FR-10-023, 025, 026, 028, 029, 030, 032; UC-10-07, 08, 09, 11.
 
@@ -1407,7 +1407,7 @@ Danh sách bên phát đủ bốn loại (HTTT, luồng, dịch vụ nội bộ,
 ::: dac-ta
 **Mục đích.** Như UI-10-09 cho bên nhận, kèm danh sách đăng ký nhận của từng bên để thấy một HTTT đang nhận những topic nào, bằng chế độ gì và có trễ không.
 
-**Tác nhân, quyền.** IE, TA, OR, SO (FRS §12); xem `PERM-10-read`; đăng ký `PERM-10-create` hoặc `PERM-10-subscribe` (OR với HTTT của tổ chức mình); sửa, ngừng dùng `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`.
+**Tác nhân, quyền.** IE, TA, OR, SO (FRS §3.1); xem `PERM-10-read`; đăng ký `PERM-10-create` hoặc `PERM-10-subscribe` (OR với HTTT của tổ chức mình); sửa, ngừng dùng `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`.
 
 **FR, UC.** FR-10-025, 027, 028, 029; UC-10-07, 08.
 
@@ -1455,7 +1455,7 @@ Trang chi tiết một bên nhận ở tab Đăng ký nhận: ba đăng ký trê
 ::: dac-ta
 **Mục đích.** Cho kỹ sư tích hợp hoặc đầu mối tổ chức đăng ký một bên nhận nhận sự kiện của một topic bằng một trong bốn chế độ giao nhận, cấu hình đầy đủ tham số, xác minh endpoint webhook và gửi duyệt.
 
-**Tác nhân, quyền.** IE, OR (FRS §12), TA; `PERM-10-subscribe` (OR trong phạm vi tổ chức).
+**Tác nhân, quyền.** IE, OR (FRS §3.1), TA; `PERM-10-subscribe` (OR trong phạm vi tổ chức).
 
 **FR, UC.** FR-10-035, 036, 040; cấu hình cho FR-10-038, 039, 043, 044, 045; UC-10-12.
 
@@ -1725,7 +1725,7 @@ Biểu mẫu trên `CMP-Card` đặc `color-surface-solid`, rộng tối đa `si
 ::: dac-ta
 **Mục đích.** Theo dõi và vận hành một đăng ký nhận: trạng thái, lag theo phân vùng, thống kê giao nhận, lượt lỗi, worker, khóa ký; tạm dừng, tiếp tục, sửa, xoay khóa, đề nghị phát lại, thu hồi.
 
-**Tác nhân, quyền.** IE, TO (FRS §12), TA, SO (Tạm dừng, Thu hồi khóa khẩn), OR trong phạm vi tổ chức; xem `PERM-10-read`; thao tác theo bảng 18.2.
+**Tác nhân, quyền.** IE, TO (FRS §3.1), TA, SO (Tạm dừng, Thu hồi khóa khẩn), OR trong phạm vi tổ chức; xem `PERM-10-read`; thao tác theo bảng 18.2.
 
 **FR, UC.** FR-10-037 (khóa đầu), 038, 039 (thống kê, lượt lỗi), 041, 042, 046, 047, 054, 055, 056; UC-10-13…17, UC-10-20.
 
@@ -1893,7 +1893,7 @@ Thẻ số `CMP-StatCard` nền `color-surface-solid`, số `font-title-1` `font
 ::: dac-ta
 **Mục đích.** Cho IA, TA duyệt chín loại yêu cầu của PH-10 trong hộp việc chung: xem khác biệt, kết quả kiểm tra, tác động; quyết định có ý kiến, bảo đảm bốn mắt.
 
-**Tác nhân, quyền.** IA, TA (FRS §12) với `PERM-10-approve`; người gửi (IE, TO, TA) xem yêu cầu của mình với `PERM-10-read` và rút được; người tạo hoặc người gửi không duyệt được (BR-10-010).
+**Tác nhân, quyền.** IA, TA (FRS §3.1) với `PERM-10-approve`; người gửi (IE, TO, TA) xem yêu cầu của mình với `PERM-10-read` và rút được; người tạo hoặc người gửi không duyệt được (BR-10-010).
 
 **FR, UC.** FR-10-009, 011, 012, 013, 014, 019, 021, 031, 037, 051, 073, 075; UC-10-03, 04, 06, 09, 13, 19, 27.
 
@@ -1969,7 +1969,7 @@ Hộp việc hai cột: danh sách yêu cầu theo loại bên trái, chi tiết
 ::: dac-ta
 **Mục đích.** Thay màn "Integration Project Connections" của Hub: cho thấy ai phát lên topic nào, ai nhận từ topic nào, bằng chế độ gì, quan hệ nào đang trễ, lỗi hay tạm ngừng, để kỹ sư tích hợp rà soát thiết kế liên thông và người vận hành khoanh vùng sự cố.
 
-**Tác nhân, quyền.** IE, TA, TO, VW (FRS §12), AU; `PERM-10-read`; OR thấy nút ngoài tổ chức là "Đối tượng hạn chế".
+**Tác nhân, quyền.** IE, TA, TO, VW (FRS §3.1), AU; `PERM-10-read`; OR thấy nút ngoài tổ chức là "Đối tượng hạn chế".
 
 **FR, UC.** FR-10-058; UC-10-21.
 
@@ -2257,7 +2257,7 @@ Canvas `color-surface-solid-2`; nút nền `color-surface-solid`, viền 1 px `c
 ::: dac-ta
 **Mục đích.** Tra cứu mục DLQ của một topic theo đăng ký nhận, xem nội dung có lý do, loại bỏ, đề nghị phát lại. Màn xử lý gom mọi DLQ ở PH-18 dùng cùng API.
 
-**Tác nhân, quyền.** TO, TA (FRS §12); xem siêu dữ liệu `PERM-10-read`; xem nội dung, loại bỏ, phát lại `PERM-10-operate` (SO không dùng cho việc này).
+**Tác nhân, quyền.** TO, TA (FRS §3.1); xem siêu dữ liệu `PERM-10-read`; xem nội dung, loại bỏ, phát lại `PERM-10-operate` (SO không dùng cho việc này).
 
 **FR, UC.** FR-10-049, 050, 053; UC-10-18.
 
@@ -2320,7 +2320,7 @@ Tab DLQ trong khung topic: bảng mục lọc mặc định trạng thái Mới,
 ::: dac-ta
 **Mục đích.** Liệt kê lượt phát lại, đề nghị lượt mới theo khoảng offset, thời gian hoặc mục DLQ, theo dõi tiến độ, hủy.
 
-**Tác nhân, quyền.** TO, IA (FRS §12), TA; xem `PERM-10-read`; đề nghị, hủy `PERM-10-operate`; duyệt ở UI-10-13.
+**Tác nhân, quyền.** TO, IA (FRS §3.1), TA; xem `PERM-10-read`; đề nghị, hủy `PERM-10-operate`; duyệt ở UI-10-13.
 
 **FR, UC.** FR-10-051, 052, 053; UC-10-18, UC-10-19.
 
@@ -2376,7 +2376,7 @@ Danh sách lượt phát lại đủ ba kiểu và các trạng thái chờ duy�
 ::: dac-ta
 **Mục đích.** Cho người vận hành một bảng mọi đăng ký nhận theo `alertState`, xu hướng và người đã xác nhận cảnh báo, để biết đăng ký nhận nào cần xử lý trước.
 
-**Tác nhân, quyền.** TO (FRS §12), TA; xem `PERM-10-read`; xác nhận `PERM-10-operate`.
+**Tác nhân, quyền.** TO (FRS §3.1), TA; xem `PERM-10-read`; xác nhận `PERM-10-operate`.
 
 **FR, UC.** FR-10-054, 055; UC-10-20.
 
@@ -2431,7 +2431,7 @@ Bảng mật độ gọn sắp mức nặng trước: Ngừng tiến có biểu 
 ::: dac-ta
 **Mục đích.** Quản trị danh mục kiểu giao tiếp, chế độ định tuyến, hạn mức tenant và tham số `10.*`.
 
-**Tác nhân, quyền.** TA, PA (FRS §12); xem `PERM-10-read`; sửa `PERM-10-admin`; trần hạn mức, tham số phạm vi N và `10.external-kafka.enabled` chỉ PA.
+**Tác nhân, quyền.** TA, PA (FRS §3.1); xem `PERM-10-read`; sửa `PERM-10-admin`; trần hạn mức, tham số phạm vi N và `10.external-kafka.enabled` chỉ PA.
 
 **FR, UC.** FR-10-060, 061, 062, 063; UC-10-22.
 
@@ -2476,7 +2476,7 @@ Tab Tham số nhóm `push`: cột giá trị, mặc định, miền, phạm vi (
 ::: dac-ta
 **Mục đích.** Nhập tệp `EventManifest` có xem trước khác biệt, để dựng lại khai báo sự kiện từ bản xuất của dự án hoặc tenant khác mà vẫn qua duyệt.
 
-**Tác nhân, quyền.** IE, TA (FRS §12); `PERM-10-create`.
+**Tác nhân, quyền.** IE, TA (FRS §3.1); `PERM-10-create`.
 
 **FR, UC.** FR-10-071; UC-10-28.
 
@@ -2512,7 +2512,7 @@ Bước xem trước khác biệt: mỗi dòng một đối tượng tô theo `c
 ::: dac-ta
 **Mục đích.** Nhập kiểm kê Hub Pulsar, rà ánh xạ sang đối tượng Datahub, chạy cầu nối song song, đối chiếu, chuyển hẳn, quay lui và theo dõi tiến độ (ADR-073).
 
-**Tác nhân, quyền.** TA, PA (FRS §12); `PERM-10-admin`; xem tiến độ `PERM-10-read` cho TA, PA; IA duyệt `BRIDGE`, `CUTOVER` ở UI-10-13.
+**Tác nhân, quyền.** TA, PA (FRS §3.1); `PERM-10-admin`; xem tiến độ `PERM-10-read` cho TA, PA; IA duyệt `BRIDGE`, `CUTOVER` ở UI-10-13.
 
 **FR, UC.** FR-10-072…076; UC-10-26, UC-10-27.
 
@@ -2731,7 +2731,7 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục C. Đề nghị bổ sung cho FRS
 
-Đã xử lý ở FRS bản 0.3 (§14): C1 vào A.6; C2, C3, C5 vào bảng tham số FR-10-035; C4 vào quy ước đầu §5 (10…500 ký tự); C6 chấp nhận, mặc định `BLOCK` cho topic `orderingRequired` và đóng Q10-15. Phụ lục A được chép sang FRS §10.4 cho D03-05.
+Đã xử lý ở FRS bản 0.3 (§14): C1 vào A.6; C2, C3, C5 vào bảng tham số FR-10-035; C4 vào quy ước đầu §5 (10…500 ký tự); C6 chấp nhận, mặc định `BLOCK` cho topic `orderingRequired` và đóng Q10-15. Phụ lục A được chép sang FRS §12.4 cho D03-05.
 
 | # | Mục FRS | Đề nghị |
 |---|---|---|
@@ -2748,7 +2748,7 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 | # | Tập | Đề nghị |
 |---|---|---|
-| D1 | D02-03-PH10 FRS, D02-04-PH10 UC, D05-02-PH10 TC | Dùng câu mới của ERR-10-053 ("Phiên đăng nhập đã hết hạn. Đăng nhập lại để tiếp tục; dữ liệu chưa lưu được giữ ở bản nháp.") và ERR-10-054 ("Bạn không có quyền {thao tác} trên {đối tượng}. Liên hệ quản trị tỉnh nếu cần cấp quyền.") ở mục 5.3 |
+| D1 | D02-03-PH10 FRS, D02-04-PH10 UC, D05-02-PH10 TC | Dùng câu mới của ERR-10-053 ("Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Đăng nhập lại để tiếp tục.") và ERR-10-054 ("Bạn không có quyền thực hiện thao tác này. Liên hệ quản trị tenant nếu cần được cấp quyền.") ở mục 5.3 |
 | D2 | D02-03-PH10 FRS, D05-02-PH10 TC | Lỗi data plane ERR-10-101…121 không có câu trên `dh-console`; nơi người vận hành thấy từng mã ghi ở bảng thứ hai của mục 5.3 |
 | D3 | D02-03-PH10 FRS | Ảnh giao diện tiêu biểu dẫn `../../03-thiet-ke/uiux/ph10/hifi/ui-10-01.png` và `ui-10-06.png` (tên tệp cố định) |
 | D4 | D03-04-PH10 API | Khối đặc tả các màn dẫn các hành động tách theo FRS §8.3 bản 0.3 (API-10-092…121); bảng 18.2 đổi thu hồi khóa khẩn sang API-10-100, dải 18.5 đổi rút yêu cầu sang API-10-102 |

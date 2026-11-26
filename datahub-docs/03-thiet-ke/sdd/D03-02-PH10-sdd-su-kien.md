@@ -45,7 +45,7 @@ Tài liệu mô tả cách hiện thực 76 FR của PH-10 ở mức đủ để
 
 ### 1.3. Quy ước trong tài liệu
 
-Mọi enum, trạng thái, tên trường, mã quyền, tham số `10.*`, mã màn hình, mã sự kiện và định danh kỹ thuật lấy đúng Phụ lục A của FRS; mã ERR, BR, NFR là của FRS; tên bảng là tên gợi ý ở Phụ lục A.3 (tập CSDL D03-03-PH10 viết song song theo cùng phụ lục); mã API theo gợi ý FRS §8.3 (định nghĩa đầy đủ ở D03-04-PH10). Biện pháp ATTT dẫn mã `SEC-*` đã có ở D03-07, không tạo mới. Định nghĩa chung (danh sách, kiểm toán, đăng nhập, "Việc của tôi") dẫn chiếu FR-00 của SRS, không nhắc lại.
+Mọi enum, trạng thái, tên trường, mã quyền, tham số `10.*`, mã màn hình, mã sự kiện và định danh kỹ thuật lấy đúng Phụ lục A của FRS; mã ERR, BR, NFR là của FRS; tên bảng là tên gợi ý ở Phụ lục A.3 (tập CSDL D03-03-PH10 viết song song theo cùng phụ lục); mã API theo gợi ý FRS §9.4 (định nghĩa đầy đủ ở D03-04-PH10). Biện pháp ATTT dẫn mã `SEC-*` đã có ở D03-07, không tạo mới. Định nghĩa chung (danh sách, kiểm toán, đăng nhập, "Việc của tôi") dẫn chiếu FR-00 của SRS, không nhắc lại.
 
 ### 1.4. Thuật ngữ và chữ viết tắt
 
@@ -187,7 +187,7 @@ Sơ đồ cho thấy ba đường. Đường khai báo đi từ giao diện qua 
 
 ### 2.4. Hiện trạng mã và đường chuyển
 
-Repo hiện có `docs/07-srs/SRS-PH-10-event.md` (FR-10-001…015 cũ) nhưng chưa có mã nguồn của module `event`. Module được tạo mới theo cấu trúc §3; ánh xạ FR cũ sang FR mới ở FRS §9.3. Hai mô-đun `dh-runtime` dựng trên thư viện `dh-runtime-lib` đã có của PH-04 (mTLS mesh, `TenantContext`, chỉ số chung) và PH-05 (đệm bí mật OpenBao `ConnManifestCache` được tái dùng cho khóa ký).
+Repo hiện có `docs/07-srs/SRS-PH-10-event.md` (FR-10-001…015 cũ) nhưng chưa có mã nguồn của module `event`. Module được tạo mới theo cấu trúc §3; ánh xạ FR cũ sang FR mới ở FRS §11.3. Hai mô-đun `dh-runtime` dựng trên thư viện `dh-runtime-lib` đã có của PH-04 (mTLS mesh, `TenantContext`, chỉ số chung) và PH-05 (đệm bí mật OpenBao `ConnManifestCache` được tái dùng cho khóa ký).
 
 ## 3. Cấu trúc mã nguồn
 
@@ -832,7 +832,7 @@ Chi tiết thiết kế:
 3. Ghi nội dung vào `dlq_payload`: topic `PUBLIC`, `INTERNAL` lưu nguyên (`bytea`, mã hóa khi lưu của CNPG, SEC-30); topic `RESTRICTED`, `SENSITIVE` mã hóa phong bì bằng `transit/dh-{tenant}-event-dlq` của OpenBao (SEC-31, SEC-88). `payloadRef` trỏ tới bản ghi nội dung.
 4. Ghi outbox gộp: `DlqAlertAggregator` gom theo subscription trong cửa sổ 1 phút rồi phát một EVT-10-11.
 
-Offset của nhóm ingestor chỉ commit sau khi giao dịch xong. Khi `pg-core` ngừng, bản tin nằm chờ trên topic DLQ (lưu giữ `10.dlq.topic-retention-hours`, mặc định 7 ngày, đủ dài hơn mục tiêu phục hồi `pg-core`). `DlqPurger` chạy mỗi đêm: mục `REPLAYED`, `DISCARDED` quá `10.dlq.payload-retention-days-after-resolve` ngày thì xóa `dlq_payload`, đặt `payloadPurgedAt`, chuyển `PURGED`; siêu dữ liệu giữ 1 năm (FRS §7.2).
+Offset của nhóm ingestor chỉ commit sau khi giao dịch xong. Khi `pg-core` ngừng, bản tin nằm chờ trên topic DLQ (lưu giữ `10.dlq.topic-retention-hours`, mặc định 7 ngày, đủ dài hơn mục tiêu phục hồi `pg-core`). `DlqPurger` chạy mỗi đêm: mục `REPLAYED`, `DISCARDED` quá `10.dlq.payload-retention-days-after-resolve` ngày thì xóa `dlq_payload`, đặt `payloadPurgedAt`, chuyển `PURGED`; siêu dữ liệu giữ 1 năm (FRS §8.2).
 
 ### 4.10. Thống kê giao nhận và lượt lỗi
 
@@ -966,7 +966,7 @@ Chi tiết thiết kế:
 4. Ghi `lag_sample` theo lô, xuất `dh_event_consumer_lag_records`, `dh_event_consumer_lag_seconds`.
 5. `AlertEvaluator` tính `alertState` theo FR-10-055 (`WARNING` cần hai chu kỳ liên tiếp; `CRITICAL` khi vượt `lagCriticalSeconds` hoặc thời gian còn lại trước hết lưu giữ dưới 24 giờ; `STALLED` khi offset đã commit không đổi trong `10.lag.stalled-minutes` phút ở `ACTIVE`). Đổi mức thì ghi trạng thái và EVT-10-10 trong một giao dịch.
 
-`LagSampleRollup` mỗi 5 phút gộp mẫu 30 giây, giữ mẫu gốc 48 giờ và bản gộp 90 ngày (FRS §7.2) bằng phân vùng bảng theo ngày (chi tiết ở D03-03-PH10).
+`LagSampleRollup` mỗi 5 phút gộp mẫu 30 giây, giữ mẫu gốc 48 giờ và bản gộp 90 ngày (FRS §8.2) bằng phân vùng bảng theo ngày (chi tiết ở D03-03-PH10).
 
 ### 4.14. Đăng ký máy với máy
 
@@ -1464,7 +1464,7 @@ Ba chuyển `ROLLED_BACK` sang `BRIDGING`, cầu nối sang `REJECTED` và hủy
 
 ### 8.2. Outbox
 
-Sự kiện EVT-10-01…16 ghi vào `outbox_event` cùng giao dịch với thay đổi trạng thái; Debezium outbox của `pg-core` (cơ chế chung với PH-04, PH-05) đẩy lên `{tenant}.event.{thực-thể}.{sự-kiện}.v1` với khóa theo cột "Khóa" FRS §8.2 và `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`. `ce_id` là ULID sinh khi ghi outbox, nên Debezium phát lại sau sự cố vẫn mang cùng `id`. Bản ghi kiểm toán đi cùng outbox sang PH-13 (FR-10-065), không ghi trực tiếp. Riêng EVT-10-11 được `DlqAlertAggregator` gộp: mỗi phút một bản ghi outbox cho mỗi subscription có mục mới.
+Sự kiện EVT-10-01…16 ghi vào `outbox_event` cùng giao dịch với thay đổi trạng thái; Debezium outbox của `pg-core` (cơ chế chung với PH-04, PH-05) đẩy lên `{tenant}.event.{thực-thể}.{sự-kiện}.v1` với khóa theo cột "Khóa" FRS §9.3 và `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`. `ce_id` là ULID sinh khi ghi outbox, nên Debezium phát lại sau sự cố vẫn mang cùng `id`. Bản ghi kiểm toán đi cùng outbox sang PH-13 (FR-10-065), không ghi trực tiếp. Riêng EVT-10-11 được `DlqAlertAggregator` gộp: mỗi phút một bản ghi outbox cho mỗi subscription có mục mới.
 
 ### 8.3. Inbox và idempotency
 
@@ -1608,7 +1608,7 @@ Vết: cổng tạo span `event.publish` nối tiếp `traceparent` của HTTT, 
 | `dh-runtime-event-gateway` | 2 bản sao, 0,5 vCPU, 512 MiB | 70 sự kiện/giây là 4% NFR-10-004; bản sao thứ hai cho sẵn sàng |
 | `dh-runtime-event-dispatcher` | 2 bản sao, 1 vCPU, 1 GiB; KEDA tới 6 | 110 lượt/giây so với 200 lượt/giây mỗi bản sao (NFR-10-005); 360 consumer, `fetch.max.bytes` 1 MiB |
 | Module `event` trong `dh-integration` | Thêm khoảng 0,5 vCPU, 512 MiB | Bộ thu lag 400 nhóm mỗi 30 giây, ingestor DLQ |
-| Kafka | 1.800 phân vùng (150 topic và 150 DLQ, 6 phân vùng) cộng topic CDC, `SYSTEM`; khoảng 85 GB đĩa (2 KB × 2 triệu × 7 ngày × 3 bản sao) cộng 30% dự phòng | Đề nghị thêm vào D03-09 (FRS §10.4) |
+| Kafka | 1.800 phân vùng (150 topic và 150 DLQ, 6 phân vùng) cộng topic CDC, `SYSTEM`; khoảng 85 GB đĩa (2 KB × 2 triệu × 7 ngày × 3 bản sao) cộng 30% dự phòng | Đề nghị thêm vào D03-09 (FRS §12.4) |
 | `pg-core` `ph10_event` | `delivery_stat` khoảng 350 nghìn dòng/ngày (chỉ ghi phút có lượt), 90 ngày; `lag_sample` khoảng 7 triệu dòng/ngày, 48 giờ; cả hai phân vùng theo ngày | §7.2 FRS |
 | Valkey | Dưới 200 MiB: khóa chống trùng 24 giờ (2 triệu × khoảng 80 byte), lease, ảnh chụp cấu hình | |
 
@@ -1693,7 +1693,7 @@ Trạng thái: bảy mục dưới đây đã xử lý ở FRS bản 0.2 (D02-03
 | 2 | Giá trị `suspendSource` cho tạm ngừng do `failurePolicy = BLOCK` (khác ngắt mạch vì không tự tiếp tục). Chuyển trạng thái: `LegacyMapping` sau `ROLLED_BACK`; `MigrationBridge` khi yêu cầu `BRIDGE` bị từ chối; `ManifestImportJob` hủy ở `VALIDATING` | Ghi trong ngoặc ở §8.1 | Bổ sung chuyển ở A.2.13, A.2.14 (đề xuất `ROLLED_BACK` sang `BRIDGING` khi bật lại cầu nối; cầu nối bị từ chối không tạo bản ghi `RUNNING`) |
 | 3 | Đường dẫn OpenBao cho khóa ký cursor của API kéo | §4.7 | Thêm vào A.8 một đường dẫn dạng `kv/dh/{tenant}/event/runtime/cursor` |
 | 4 | Tiêu đề DLQ mang `origin` | §4.9 suy từ đường ghi | Thêm `dh_dlq_origin` vào A.8 |
-| 5 | API nội bộ cho `dh-runtime`: báo cáo giao nhận, tạm ngừng do ngắt mạch hoặc `BLOCK`, nhận việc và báo kết quả phát lại, lấy nội dung mục DLQ | §4.8, 4.10, 4.11 | Thêm mã API kế tiếp từ API-10-085 ở FRS §8.3 (tập API cấp) |
+| 5 | API nội bộ cho `dh-runtime`: báo cáo giao nhận, tạm ngừng do ngắt mạch hoặc `BLOCK`, nhận việc và báo kết quả phát lại, lấy nội dung mục DLQ | §4.8, 4.10, 4.11 | Thêm mã API kế tiếp từ API-10-085 ở FRS §9.4 (tập API cấp) |
 | 6 | Mã lỗi data plane cho phụ thuộc runtime không khả dụng (Valkey, Apicurio khi đệm rỗng) | §4.7 trả `503` không mã riêng | Thêm một mã trong dải 121…199 |
 | 7 | Thực thể lưu báo cáo đối chiếu di trú, kết quả xác minh endpoint, xác nhận cảnh báo lag | §4.16, FR-10-036, FR-10-055 | Thêm trường hoặc bảng vào A.3 (`endpointVerification` hiện chỉ có enum `result`) |
 

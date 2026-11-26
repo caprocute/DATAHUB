@@ -130,11 +130,11 @@ Mỗi use case trong chương 6 viết bằng một khối đặc tả hai cột
 
 ### 2.2. Quy ước trong luồng
 
-Luồng chính đánh số 1, 2, 3. Luồng thay thế ghi `số bước + chữ` (ví dụ `3a` rẽ tại bước 3) và quay lại luồng chính ở bước nêu rõ. Luồng ngoại lệ ghi `E1`, `E2` kèm bước phát sinh, mã lỗi `ERR-10-nnn` của FRS §8.1 với mã HTTP trong ngoặc và câu thông báo trong ngoặc kép; sau đó use case kết thúc hoặc quay lại bước nêu rõ. Luồng phụ dùng chung (bốn mắt, lý do bắt buộc, cấp phát bất đồng bộ…) ghi `LP-10-nn` và đặc tả một lần ở chương 7.
+Luồng chính đánh số 1, 2, 3. Luồng thay thế ghi `số bước + chữ` (ví dụ `3a` rẽ tại bước 3) và quay lại luồng chính ở bước nêu rõ. Luồng ngoại lệ ghi `E1`, `E2` kèm bước phát sinh, mã lỗi `ERR-10-nnn` của FRS §9.1 với mã HTTP trong ngoặc và câu thông báo trong ngoặc kép; sau đó use case kết thúc hoặc quay lại bước nêu rõ. Luồng phụ dùng chung (bốn mắt, lý do bắt buộc, cấp phát bất đồng bộ…) ghi `LP-10-nn` và đặc tả một lần ở chương 7.
 
 Câu thông báo control plane lấy từ D03-06-PH10 §5.3; dấu `{…}` là tham số máy chủ điền vào `detail`; nơi hiển thị trên giao diện (dưới trường, `CMP-Alert`, `CMP-Modal`…) theo cột "Vị trí" của bảng đó nên không chép lại ở từng luồng. Lỗi giao nhận ERR-10-111…120 không có người nhìn trực tiếp; người vận hành thấy nhãn và gợi ý ở tab Lượt lỗi của UI-10-12 (D03-06-PH10 §18.4). Lỗi data plane ERR-10-101…110 trả cho HTTT trong `detail` của thân RFC 9457; câu ghi trong tập này là đề xuất, chờ đồng bộ (§8.3).
 
-Quy ước chung không nhắc lại trong từng use case (FRS §5): lệnh ghi qua `/api/event/v1` mang `Idempotency-Key` và `If-Match` khi sửa; đối tượng của tenant khác trả như không tồn tại (ERR-10-001, 404, "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."); tenant đang tạm ngừng hoặc đóng băng thay đổi trả ERR-10-039 (423, "Tenant đang tạm ngừng hoặc đóng băng thay đổi tới {thời điểm}.") cho mọi lệnh ghi; thiếu token hoặc thiếu quyền ở control plane trả ERR-10-053 (401) hoặc ERR-10-054 (403); phụ thuộc không khả dụng trả ERR-10-029 theo LP-10-04. Mọi thao tác ghi sinh kiểm toán theo FR-10-065; mọi truy vấn chạy dưới RLS theo tenant.
+Quy ước chung không nhắc lại trong từng use case (FRS §6.1): lệnh ghi qua `/api/event/v1` mang `Idempotency-Key` và `If-Match` khi sửa; đối tượng của tenant khác trả như không tồn tại (ERR-10-001, 404, "Không tìm thấy {loại đối tượng} {mã}. Đối tượng có thể đã bị xóa hoặc thuộc tenant khác."); tenant đang tạm ngừng hoặc đóng băng thay đổi trả ERR-10-039 (423, "Tenant đang tạm ngừng hoặc đóng băng thay đổi tới {thời điểm}.") cho mọi lệnh ghi; thiếu token hoặc thiếu quyền ở control plane trả ERR-10-053 (401) hoặc ERR-10-054 (403); phụ thuộc không khả dụng trả ERR-10-029 theo LP-10-04. Mọi thao tác ghi sinh kiểm toán theo FR-10-065; mọi truy vấn chạy dưới RLS theo tenant.
 
 Dữ liệu ví dụ đều giả lập, tenant `T68` (tỉnh thí điểm, topic tiền tố `t68.`). Bảng dưới liệt kê người và hệ thống giả lập dùng xuyên suốt chương 6.
 
@@ -1013,14 +1013,14 @@ Use case data plane chính: HTTT phát sự kiện CloudEvents qua cổng sự k
 **Luồng ngoại lệ.**
 
 - **E1. Token hỏng hoặc hết hạn (bước 3).** ERR-10-101 (401). Thông báo: "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại."
-- **E2. Thiếu scope, publication `SUSPENDED` hoặc `REVOKED` (bước 3).** ERR-10-102 (403); có hiệu lực ngay khi OPA cập nhật, không đợi token hết hạn (BR-10-020). Thông báo: "Client không có quyền {phát hoặc nhận} trên topic {tên} hoặc quan hệ đang không hoạt động."
-- **E3. Topic không tồn tại, `RETIRED`, hoặc thuộc tenant khác, ví dụ HTTT của T68 gọi topic `t01.…` (bước 4).** ERR-10-103 (404; BR-10-001). Thông báo: "Topic {tên} không tồn tại hoặc không nhận sự kiện."
-- **E4. Phong bì sai hoặc `source` không thuộc bên phát (bước 4).** ERR-10-104 (400). Thông báo: "Sự kiện không đúng CloudEvents 1.0 hoặc source không thuộc bên phát."
-- **E5. `data` không khớp lược đồ hoặc thiếu `maDoanhNghiep` khi `orderingRequired` (bước 5).** ERR-10-105 (422). Thông báo: "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}."
-- **E6. Vượt kích thước (bước 2).** ERR-10-106 (413). Thông báo: "Sự kiện hoặc lô vượt kích thước tối đa {n} byte."
-- **E7. Vượt hạn mức phát (bước 3).** ERR-10-107 (429) kèm `Retry-After`; HTTT giãn tốc độ. Thông báo: "Vượt hạn mức {phát hoặc kéo}. Thử lại sau {giây} giây."
-- **E8. Không đủ bản sao đồng bộ (bước 5).** ERR-10-108 (503); cổng không hạ mức xác nhận (BR-10-007); HTTT thử lại theo `Retry-After`. Thông báo: "Cụm chưa đủ bản sao đồng bộ nên chưa ghi sự kiện. Thử lại sau {giây} giây."
-- **E9. Đọc lược đồ không có scope (bước 1).** ERR-10-102 (403). Thông báo: "Client không có quyền {phát hoặc nhận} trên topic {tên} hoặc quan hệ đang không hoạt động."
+- **E2. Thiếu scope, publication `SUSPENDED` hoặc `REVOKED` (bước 3).** ERR-10-102 (403); có hiệu lực ngay khi OPA cập nhật, không đợi token hết hạn (BR-10-020). Thông báo: "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."
+- **E3. Topic không tồn tại, `RETIRED`, hoặc thuộc tenant khác, ví dụ HTTT của T68 gọi topic `t01.…` (bước 4).** ERR-10-103 (404; BR-10-001). Thông báo: "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác."
+- **E4. Phong bì sai hoặc `source` không thuộc bên phát (bước 4).** ERR-10-104 (400). Thông báo: "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token."
+- **E5. `data` không khớp lược đồ hoặc thiếu `maDoanhNghiep` khi `orderingRequired` (bước 5).** ERR-10-105 (422). Thông báo: "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc."
+- **E6. Vượt kích thước (bước 2).** ERR-10-106 (413). Thông báo: "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})."
+- **E7. Vượt hạn mức phát (bước 3).** ERR-10-107 (429) kèm `Retry-After`; HTTT giãn tốc độ. Thông báo: "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."
+- **E8. Không đủ bản sao đồng bộ (bước 5).** ERR-10-108 (503); cổng không hạ mức xác nhận (BR-10-007); HTTT thử lại theo `Retry-After`. Thông báo: "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau."
+- **E9. Đọc lược đồ không có scope (bước 1).** ERR-10-102 (403). Thông báo: "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."
 
 **Quy tắc áp dụng.** BR-10-001, 006, 007, 011, 020, 021.
 
@@ -1071,7 +1071,7 @@ Bên phát lưu lượng lớn được ghi thẳng vào Kafka qua listener ngo�
 **Luồng ngoại lệ.**
 
 - **E1. Principal ghi sai topic hoặc vượt hạn mức (bước 3).** Kafka từ chối; nền tảng ghi nhận ERR-10-120 theo principal và hiện ở chi tiết bên phát. Gợi ý hiện ở tab Lượt lỗi UI-10-12: "Kiểm tra quyền và hạn mức của principal."
-- **E2. Không đủ bản sao đồng bộ (bước 3).** Producer nhận lỗi `NOT_ENOUGH_REPLICAS` trực tiếp từ cụm; không hạ `acks` (BR-10-007). Kênh này không qua cổng nên không có thân RFC 9457; lỗi tương đương ở API phát là ERR-10-108 (503, "Cụm chưa đủ bản sao đồng bộ nên chưa ghi sự kiện. Thử lại sau {giây} giây.").
+- **E2. Không đủ bản sao đồng bộ (bước 3).** Producer nhận lỗi `NOT_ENOUGH_REPLICAS` trực tiếp từ cụm; không hạ `acks` (BR-10-007). Kênh này không qua cổng nên không có thân RFC 9457; lỗi tương đương ở API phát là ERR-10-108 (503, "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau.").
 - **E3. Tenant chưa bật Kafka ngoài (bước 1).** Tab Cách kết nối không có địa chỉ listener ngoài; đăng ký bên phát `KAFKA_NATIVE` đã bị chặn ở UC-10-07 E4 (ERR-10-028 (422)). Thông báo: "Tenant chưa bật Kafka ngoài. Đề nghị quản trị nền tảng bật trước khi dùng chế độ này."
 - **E4. Bản tin vi phạm tới bộ giao nhận (sau bước 5).** Vào DLQ ngay với ERR-10-116, không thử lại (UC-10-14 E1). Gợi ý hiện ở tab Lượt lỗi UI-10-12: "Bản tin không khớp lược đồ; báo bên phát."
 - **E5. Thiếu lý do khi tạm ngừng (bước 6).** ERR-10-009 (400). Thông báo: "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
@@ -1323,10 +1323,10 @@ Chế độ KÉO dành cho HTTT không mở được endpoint nhận vào. Use c
 **Luồng ngoại lệ.**
 
 - **E1. Token hỏng (bước 2).** ERR-10-101 (401). Thông báo: "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại."
-- **E2. Thiếu scope hoặc client không phải của bên nhận (bước 2).** ERR-10-102 (403). Thông báo: "Client không có quyền {phát hoặc nhận} trên topic {tên} hoặc quan hệ đang không hoạt động."
-- **E3. Subscription `PAUSED`, `SUSPENDED` hoặc `REVOKED` (bước 2).** ERR-10-110 (409). Thông báo: "Đăng ký nhận {mã} không ở trạng thái hoạt động."
-- **E4. Cursor giả, hết hạn lease hoặc không khớp (bước 4).** ERR-10-109 (409); `HT-BHXH` kéo lại và nhận lô từ vị trí đã commit. Thông báo: "Cursor hết hiệu lực hoặc không khớp lease. Kéo lại từ vị trí đã xác nhận."
-- **E5. Vượt hạn mức kéo (bước 1).** ERR-10-107 (429) kèm `Retry-After`. Thông báo: "Vượt hạn mức {phát hoặc kéo}. Thử lại sau {giây} giây."
+- **E2. Thiếu scope hoặc client không phải của bên nhận (bước 2).** ERR-10-102 (403). Thông báo: "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động."
+- **E3. Subscription `PAUSED`, `SUSPENDED` hoặc `REVOKED` (bước 2).** ERR-10-110 (409). Thông báo: "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện."
+- **E4. Cursor giả, hết hạn lease hoặc không khớp (bước 4).** ERR-10-109 (409); `HT-BHXH` kéo lại và nhận lô từ vị trí đã commit. Thông báo: "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận."
+- **E5. Vượt hạn mức kéo (bước 1).** ERR-10-107 (429) kèm `Retry-After`. Thông báo: "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây."
 - **E6. Consumer Kafka ngoài dùng sai tên nhóm hoặc vượt hạn mức (1a).** Kafka từ chối; nền tảng ghi nhận ERR-10-120 (BR-10-035). Gợi ý hiện ở tab Lượt lỗi UI-10-12: "Kiểm tra quyền và hạn mức của principal."
 
 **Quy tắc áp dụng.** BR-10-009, 020, 022, 035.
@@ -1552,7 +1552,7 @@ Phát lại theo khoảng offset hoặc thời gian, hoặc đặt lại vị tr
 - **E5. Thiếu xác nhận nhận trùng hoặc thiếu lý do (bước 1).** ERR-10-009 (400). Thông báo: "Cần nhập lý do hoặc xác nhận trước khi tiếp tục."
 - **E6. `ratePerSecond` vượt `10.replay.rate-limit-per-second` (bước 1).** ERR-10-012 (422). Thông báo: "Giá trị ngoài miền cho phép ({min} đến {max})."
 - **E7. Bình là người đề nghị (bước 3).** ERR-10-008 (403). Thông báo: "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."
-- **E8. Lỗi hạ tầng khi chạy (bước 5).** Lượt `FAILED`, phát EVT-10-12; với `RESET_OFFSET` vị trí cũ vẫn còn trong `previousOffsets`. Bộ phát lại ghi ERR-10-121 (503) khi phụ thuộc runtime không khả dụng; Chi thấy lượt ở trạng thái thất bại trên UI-10-16 kèm câu "Dịch vụ runtime {tên} tạm thời không khả dụng. Thử lại sau {giây} giây."
+- **E8. Lỗi hạ tầng khi chạy (bước 5).** Lượt `FAILED`, phát EVT-10-12; với `RESET_OFFSET` vị trí cũ vẫn còn trong `previousOffsets`. Bộ phát lại ghi ERR-10-121 (503) khi phụ thuộc runtime không khả dụng; Chi thấy lượt ở trạng thái thất bại trên UI-10-16 kèm câu "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây."
 
 **Quy tắc áp dụng.** BR-10-009, 010, 022, 028.
 
@@ -1981,7 +1981,7 @@ Use case chạy song song hai hệ qua cầu nối Pulsar và Kafka (ADR-073), �
 
 - **E1. Ánh xạ không hợp lệ hoặc chưa `PLANNED` (bước 1).** ERR-10-041 (422). Thông báo: "Ánh xạ không hợp lệ: {lý do}."
 - **E2. Đã có cầu nối cho topic, hoặc cầu nối ngược chiều cùng cặp (bước 1, 4a).** ERR-10-042 (409; BR-10-033). Thông báo: "Đã có cầu nối cho topic này hoặc cầu nối ngược chiều đang chạy."
-- **E3. Bản tin không chuyển được theo lược đồ đích (bước 3).** ERR-10-118; vào DLQ của cầu nối (`origin` `BRIDGE`), cầu nối tiếp tục; quá ngưỡng `10.migration.bridge-max-lag-seconds` thì cảnh báo. Gợi ý hiện ở tab Lượt lỗi UI-10-12: "Cầu nối không chuyển được bản tin sang lược đồ đích; bản tin vào DLQ của cầu nối."
+- **E3. Bản tin không chuyển được theo lược đồ đích (bước 3).** ERR-10-118; vào DLQ của cầu nối (`origin` `BRIDGE`), cầu nối tiếp tục; quá ngưỡng `10.migration.bridge-max-lag-seconds` thì cảnh báo. Gợi ý hiện ở tab Lượt lỗi UI-10-12: "Cầu nối không chuyển được."
 - **E4. Không kết nối được Pulsar (bước 2, 3).** ERR-10-029 (503); cầu nối `ERROR`, PH-10 phát EVT-10-16 để PH-18 theo dõi, cảnh báo Mai và Hà. Thông báo: "Dịch vụ {tên} tạm thời không khả dụng; thay đổi chưa được ghi. Thử lại sau."
 - **E5. Chuyển hẳn khi chưa đủ điều kiện (bước 6).** ERR-10-006 (409) kèm điều kiện chưa đạt. Thông báo: "Không thực hiện được khi {đối tượng} đang ở trạng thái {nhãn trạng thái}."
 - **E6. Bình là người đề nghị (bước 2, 6).** ERR-10-008 (403). Thông báo: "Bạn đã tạo hoặc gửi yêu cầu này nên không được duyệt. Cần người duyệt khác."
@@ -2057,7 +2057,7 @@ Năm luồng phụ dưới đây lặp lại ở nhiều use case nên được 
 
 ### 8.1. Mã mới và độ phủ
 
-Tập này không tạo mã FR, BR, API, ERR, EVT, UI, TS mới. Mã của tập: UC-10-01…28, LP-10-01…05, câu hỏi mở Q10-45…48. Bản 0.3 chỉ thêm câu thông báo mới cho các mã đã có ở FRS §8.1 (§8.3).
+Tập này không tạo mã FR, BR, API, ERR, EVT, UI, TS mới. Mã của tập: UC-10-01…28, LP-10-01…05, câu hỏi mở Q10-45…48. Bản 0.3 chỉ thêm câu thông báo mới cho các mã đã có ở FRS §9.1 (§8.3).
 
 Đối chiếu độ phủ (§5.1): cả 66 FR mức M đều thuộc ít nhất một use case; 8 FR mức S (016, 022, 023, 024, 044, 070, 074, 076) có trong use case dưới dạng luồng chính hoặc luồng thay thế; FR-10-071 (C) là nhánh 1b của UC-10-28; FR-10-048 (C, Đợt sau) không có use case. FR-10-064 (cách ly đa tenant) và FR-10-065 (kiểm toán) là yêu cầu xuyên suốt, hiện thực ở UC-10-10, 24 và UC-10-01, đồng thời áp dụng cho mọi thao tác ghi qua LP-10-01…05. Mỗi use case có ít nhất một UI hoặc ghi rõ là use case máy, và có API (§5.2). Mọi `LGC-HUB-001…014`, LGC-TOOL-010, LGC-BUS-039 có use case (§5.3).
 
@@ -2085,22 +2085,22 @@ Các mục dưới đây use case cần dùng nhưng Phụ lục A chưa có tê
 
 ### 8.3. Đề nghị đồng bộ cho tập màn hình và API
 
-Bảng thông báo D03-06-PH10 §5.3 hiện phủ ERR-10-001…052 và nhãn ERR-10-111…120 ở §18.4, nhưng chưa có câu cho các mã data plane trả trực tiếp cho HTTT và hai mã runtime. Tập này đề xuất câu `detail` dưới đây và đã dùng trong luồng ngoại lệ; đề nghị tập màn hình (§5.3) và tập API (D03-04-PH10, ví dụ thân lỗi) đưa vào để ba tập dùng một câu.
+Câu thông báo dưới đây đã thống nhất với D02-03-PH10 FRS §9.2 trong đợt đồng bộ ngày 26/11/2026. D03-06-PH10 §5.3 giữ câu cho ERR-10-001…054 và nơi hiển thị cho người vận hành của mã data plane; bảng giữ lại để truy vết đề nghị đưa các câu này vào `detail` mẫu của D03-04-PH10.
 
 | Mã | HTTP | Câu đề xuất | Dùng ở |
 |---|---|---|---|
 | ERR-10-101 | 401 | "Token truy cập không hợp lệ hoặc đã hết hạn. Lấy token mới rồi gửi lại." | UC-10-10 E1, UC-10-15 E1 |
-| ERR-10-102 | 403 | "Client không có quyền {phát hoặc nhận} trên topic {tên} hoặc quan hệ đang không hoạt động." | UC-10-10 E2, E9; UC-10-15 E2 |
-| ERR-10-103 | 404 | "Topic {tên} không tồn tại hoặc không nhận sự kiện." | UC-10-10 E3 |
-| ERR-10-104 | 400 | "Sự kiện không đúng CloudEvents 1.0 hoặc source không thuộc bên phát." | UC-10-10 E4 |
-| ERR-10-105 | 422 | "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}." | UC-10-10 E5 |
-| ERR-10-106 | 413 | "Sự kiện hoặc lô vượt kích thước tối đa {n} byte." | UC-10-10 E6 |
-| ERR-10-107 | 429 | "Vượt hạn mức {phát hoặc kéo}. Thử lại sau {giây} giây." | UC-10-10 E7, UC-10-15 E5 |
-| ERR-10-108 | 503 | "Cụm chưa đủ bản sao đồng bộ nên chưa ghi sự kiện. Thử lại sau {giây} giây." | UC-10-10 E8, UC-10-11 E2 |
-| ERR-10-109 | 409 | "Cursor hết hiệu lực hoặc không khớp lease. Kéo lại từ vị trí đã xác nhận." | UC-10-15 E4 |
-| ERR-10-110 | 409 | "Đăng ký nhận {mã} không ở trạng thái hoạt động." | UC-10-15 E3 |
-| ERR-10-118 | — | "Cầu nối không chuyển được bản tin sang lược đồ đích; bản tin vào DLQ của cầu nối." (MH §18.4 mới ghi "Chỉ ở DLQ của cầu nối") | UC-10-27 E3 |
-| ERR-10-121 | 503 | "Dịch vụ runtime {tên} tạm thời không khả dụng. Thử lại sau {giây} giây." | UC-10-19 E8 |
+| ERR-10-102 | 403 | "Token chưa có quyền {publish hoặc subscribe} trên topic {tên}, hoặc publication, subscription không ở trạng thái hoạt động." | UC-10-10 E2, E9; UC-10-15 E2 |
+| ERR-10-103 | 404 | "Topic {tên} không tồn tại, không nhận sự kiện ở trạng thái hiện tại hoặc thuộc tenant khác." | UC-10-10 E3 |
+| ERR-10-104 | 400 | "Sự kiện không đúng CloudEvents 1.0 ({thuộc tính}) hoặc source không thuộc hệ thống của token." | UC-10-10 E4 |
+| ERR-10-105 | 422 | "Dữ liệu sự kiện không khớp lược đồ phiên bản {n} ở trường {đường dẫn}, hoặc thiếu khóa phân vùng bắt buộc." | UC-10-10 E5 |
+| ERR-10-106 | 413 | "Sự kiện hoặc lô vượt kích thước cho phép ({giới hạn})." | UC-10-10 E6 |
+| ERR-10-107 | 429 | "Vượt hạn mức phát hoặc kéo. Thử lại sau {Retry-After} giây." | UC-10-10 E7, UC-10-15 E5 |
+| ERR-10-108 | 503 | "Cụm sự kiện tạm thời không đủ bản sao để ghi an toàn; sự kiện chưa được nhận. Thử lại sau." | UC-10-10 E8, UC-10-11 E2 |
+| ERR-10-109 | 409 | "Con trỏ xác nhận đã hết hiệu lực hoặc không khớp lượt kéo hiện tại. Kéo lại rồi xác nhận." | UC-10-15 E4 |
+| ERR-10-110 | 409 | "Đăng ký nhận {mã} đang không hoạt động ({trạng thái}); chưa kéo được sự kiện." | UC-10-15 E3 |
+| ERR-10-118 | — | "Cầu nối không chuyển được." (MH §18.4 mới ghi "Chỉ ở DLQ của cầu nối") | UC-10-27 E3 |
+| ERR-10-121 | 503 | "Dịch vụ phụ trợ của cổng sự kiện ({tên}) tạm thời không khả dụng. Thử lại sau {Retry-After} giây." | UC-10-19 E8 |
 
 : Câu thông báo đề xuất cho các mã lỗi chưa có ở bảng thông báo của tập màn hình
 

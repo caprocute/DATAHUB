@@ -603,45 +603,45 @@ Bảng sau liệt kê 76 chức năng của PH-10 theo thứ tự đặc tả �
 | FR-10-008 | Tạo topic và gửi duyệt | M | MVP | UC-10-02 | UI-10-03, 07 | API-10-009, 011, 012 |
 | FR-10-009 | Duyệt tạo topic và cấp phát trên cụm | M | MVP | UC-10-03 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
 | FR-10-010 | Theo dõi cấp phát và xử lý cấp phát thất bại | M | MVP | UC-10-03 | UI-10-06 | API-10-013, 014 |
-| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | M | MVP | UC-10-04 | UI-10-06, 13 | API-10-015 |
-| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | M | MVP | UC-10-04 | UI-10-06 | API-10-015 |
-| FR-10-013 | Chế độ định tuyến và khóa phân vùng | M | MVP | UC-10-02, 04 | UI-10-06 | API-10-015 |
-| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | M | MVP | UC-10-05 | UI-10-06 | API-10-011, 016, 017 |
-| FR-10-015 | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | M | MVP | UC-10-05 | UI-10-06 | API-10-018 |
+| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | M | MVP | UC-10-04 | UI-10-06, 13 | API-10-015, 059 |
+| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | M | MVP | UC-10-04 | UI-10-06, 13 | API-10-015, 059 |
+| FR-10-013 | Chế độ định tuyến và khóa phân vùng | M | MVP | UC-10-02, 04 | UI-10-06, 07 | API-10-015, 059 |
+| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | M | MVP | UC-10-05 | UI-10-06, 13 | API-10-011, 016, 017, 059 |
+| FR-10-015 | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | M | MVP | UC-10-05 | UI-10-06, 13 | API-10-018, 059 |
 | FR-10-016 | Theo dõi chuyển đổi bên nhận sang phiên bản topic mới | S | MVP | UC-10-05 | UI-10-01, 06 | API-10-019 |
 | FR-10-017 | Soạn và kiểm tra lược đồ | M | MVP | UC-10-02, 06 | UI-10-07, 08 | API-10-023, 025, 026 |
 | FR-10-018 | Kiểm tra tương thích với các phiên bản đã có | M | MVP | UC-10-06 | UI-10-08 | API-10-026 |
 | FR-10-019 | Gửi duyệt và duyệt phiên bản lược đồ | M | MVP | UC-10-06 | UI-10-08, 13 | API-10-027, 057, 058, 059, 101, 102 |
-| FR-10-020 | Xem lịch sử phiên bản, so sánh và tải lược đồ | M | MVP | UC-10-06 | UI-10-08 | API-10-021, 022, 024, 030 |
-| FR-10-021 | Đặt mức tương thích của lược đồ | M | MVP | UC-10-04 | UI-10-08 | API-10-015 |
-| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | S | MVP | UC-10-06 | UI-10-08 | API-10-028, 029 |
-| FR-10-023 | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | S | MVP | UC-10-11 | — | API-10-031 |
+| FR-10-020 | Xem lịch sử phiên bản, so sánh và tải lược đồ | M | MVP | UC-10-06 | UI-10-06, 08 | API-10-021, 022, 024, 030 |
+| FR-10-021 | Đặt mức tương thích của lược đồ | M | MVP | UC-10-04 | UI-10-08, 13 | API-10-015, 059 |
+| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | S | MVP | UC-10-06 | UI-10-08, 13 | API-10-028, 029, 059 |
+| FR-10-023 | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | S | MVP | UC-10-11 | UI-10-06 | API-10-031 |
 | FR-10-024 | Cung cấp tra cứu lược đồ cho bên ngoài | S | MVP | UC-10-10 | UI-10-06 | API-10-020, 084 |
 | FR-10-025 | Liệt kê bên phát và bên nhận | M | MVP | UC-10-07 | UI-10-09, 10 | API-10-032, 034, 037, 039 |
 | FR-10-026 | Đăng ký bên phát | M | MVP | UC-10-07 | UI-10-09 | API-10-033 |
 | FR-10-027 | Đăng ký bên nhận | M | MVP | UC-10-07 | UI-10-10 | API-10-038 |
 | FR-10-028 | Sửa, tạm ngừng, tiếp tục và ngừng dùng bên phát, bên nhận | M | MVP | UC-10-08 | UI-10-09, 10 | API-10-035, 036, 040, 041, 092, 093, 094, 095 |
-| FR-10-029 | Đồng bộ trạng thái với PH-01 và PH-04 | M | MVP | UC-10-08 | — | — |
-| FR-10-030 | Đề nghị publication | M | MVP | UC-10-09 | UI-10-09 | API-10-042, 043, 044 |
+| FR-10-029 | Đồng bộ trạng thái với PH-01 và PH-04 | M | MVP | UC-10-08 | UI-10-09, 10 | — |
+| FR-10-030 | Đề nghị publication | M | MVP | UC-10-09 | UI-10-06, 09 | API-10-042, 043, 044 |
 | FR-10-031 | Duyệt publication, cấp scope OAuth và ACL Kafka | M | MVP | UC-10-09 | UI-10-13 | API-10-057, 058, 059, 101, 102 |
-| FR-10-032 | Tạm ngừng, tiếp tục và thu hồi publication | M | MVP | UC-10-11 | UI-10-09 | API-10-045, 096, 097 |
-| FR-10-033 | Phát sự kiện qua API phát | M | MVP | UC-10-10 | — | API-10-079 |
-| FR-10-034 | Phát sự kiện trực tiếp qua Kafka | M | MVP | UC-10-11 | — | API-10-020 |
+| FR-10-032 | Tạm ngừng, tiếp tục và thu hồi publication | M | MVP | UC-10-11 | UI-10-06, 09 | API-10-045, 096, 097 |
+| FR-10-033 | Phát sự kiện qua API phát | M | MVP | UC-10-10 | UI-10-06 | API-10-079 |
+| FR-10-034 | Phát sự kiện trực tiếp qua Kafka | M | MVP | UC-10-11 | UI-10-06 | API-10-020 |
 | FR-10-035 | Đề nghị subscription | M | MVP | UC-10-12 | UI-10-11 | API-10-046, 047, 048 |
 | FR-10-036 | Xác minh endpoint webhook | M | MVP | UC-10-12 | UI-10-11 | API-10-051, 091 |
 | FR-10-037 | Duyệt subscription và cấp phát nhóm tiêu thụ | M | MVP | UC-10-13 | UI-10-13 | API-10-057, 058, 059, 101, 102, 120 |
-| FR-10-038 | Giao nhận ĐẨY: webhook ký HMAC | M | MVP | UC-10-14 | — | API-10-073 |
-| FR-10-039 | Thử lại giãn dần và chính sách khi thất bại | M | MVP | UC-10-14 | — | API-10-086, 119 |
-| FR-10-040 | Điểm bắt đầu và offset bắt đầu | M | MVP | UC-10-12 | UI-10-11 | — |
+| FR-10-038 | Giao nhận ĐẨY: webhook ký HMAC | M | MVP | UC-10-14 | UI-10-12 | API-10-073, 085 |
+| FR-10-039 | Thử lại giãn dần và chính sách khi thất bại | M | MVP | UC-10-14 | UI-10-12 | API-10-086, 119 |
+| FR-10-040 | Điểm bắt đầu và offset bắt đầu | M | MVP | UC-10-12 | UI-10-11 | API-10-047 |
 | FR-10-041 | Tạm dừng, tiếp tục subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 098 |
 | FR-10-042 | Xoay khóa ký webhook | M | MVP | UC-10-17 | UI-10-12 | API-10-054, 100, 120 |
 | FR-10-043 | Giao nhận KÉO qua API | M | MVP | UC-10-15 | — | API-10-073, 080, 081, 082 |
-| FR-10-044 | Giao nhận KÉO qua Kafka listener ngoài | S | MVP | UC-10-15 | — | API-10-083 |
-| FR-10-045 | Giao nhận nội bộ cho luồng và DU | M | MVP | UC-10-25 | — | — |
-| FR-10-046 | Sửa tham số subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-049 |
+| FR-10-044 | Giao nhận KÉO qua Kafka listener ngoài | S | MVP | UC-10-15 | UI-10-06 | API-10-020, 083 |
+| FR-10-045 | Giao nhận nội bộ cho luồng và DU | M | MVP | UC-10-25 | UI-10-14, 17 | — |
+| FR-10-046 | Sửa tham số subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-049, 059 |
 | FR-10-047 | Thu hồi subscription | M | MVP | UC-10-16 | UI-10-12 | API-10-050, 099 |
-| FR-10-048 | Lọc sự kiện và gộp lô khi đẩy | C | Đợt sau | — | — | — |
-| FR-10-049 | Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện | M | MVP | UC-10-14 | UI-10-15 | — |
+| FR-10-048 | Lọc sự kiện và gộp lô khi đẩy | C | Đợt sau | — | UI-10-12 | API-10-049 |
+| FR-10-049 | Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện | M | MVP | UC-10-14 | UI-10-15 | API-10-083 |
 | FR-10-050 | Tra cứu, xem và loại bỏ mục DLQ | M | MVP | UC-10-18 | UI-10-15 | API-10-060, 061, 062, 103 |
 | FR-10-051 | Đề nghị và duyệt phát lại theo khoảng offset hoặc thời gian | M | MVP | UC-10-19 | UI-10-13, 16 | API-10-057, 058, 059, 064, 101, 102 |
 | FR-10-052 | Thực thi, theo dõi và hủy lượt phát lại | M | MVP | UC-10-19 | UI-10-16 | API-10-063, 065, 087, 088, 104 |
@@ -650,7 +650,7 @@ Bảng sau liệt kê 76 chức năng của PH-10 theo thứ tự đặc tả �
 | FR-10-055 | Cảnh báo lag và nhóm tiêu thụ ngừng tiến | M | MVP | UC-10-20 | UI-10-12, 17 | API-10-056 |
 | FR-10-056 | Thống kê giao nhận và lượt giao gần đây | M | MVP | UC-10-16 | UI-10-12 | API-10-048, 052, 053, 085 |
 | FR-10-057 | Dashboard sự kiện | M | MVP | UC-10-21 | UI-10-01 | API-10-066 |
-| FR-10-058 | Sơ đồ kết nối tương tác | M | MVP | UC-10-21 | UI-10-14 | API-10-007 |
+| FR-10-058 | Sơ đồ kết nối tương tác | M | MVP | UC-10-21 | UI-10-03, 14 | API-10-007 |
 | FR-10-059 | Xuất số liệu sang PH-13 | M | MVP | UC-10-20 | — | — |
 | FR-10-060 | Danh mục kiểu giao tiếp | M | MVP | UC-10-22 | UI-10-18 | API-10-067, 105 |
 | FR-10-061 | Danh mục chế độ định tuyến | M | MVP | UC-10-22 | UI-10-18 | API-10-068, 106 |
@@ -5558,8 +5558,8 @@ Control plane `/api/event/v1` (qua BFF và `apisix-int`); data plane `/event/v1`
 | API-10-055 | `GET /subscriptions/{subscriptionCode}/lag` | 054 |
 | API-10-056 | `POST /subscriptions/{subscriptionCode}/lag-alerts:acknowledge` | 055 |
 | API-10-057 | `GET /approval-requests` | 009, 019, 031, 037, 051 |
-| API-10-058 | `GET /approval-requests/{requestCode}` | như trên |
-| API-10-059 | `POST /approval-requests/{requestCode}:approve` · `:reject` · `:withdraw` | như trên |
+| API-10-058 | `GET /approval-requests/{requestCode}` | 009, 019, 031, 037, 051 |
+| API-10-059 | `POST /approval-requests/{requestCode}:approve` · `:reject` · `:withdraw` | 009, 019, 031, 037, 051 |
 | API-10-060 | `GET /dlq-entries` | 050 |
 | API-10-061 | `GET /dlq-entries/{dlqEntryId}` (siêu dữ liệu), `GET /dlq-entries/{dlqEntryId}/payload` | 050 |
 | API-10-062 | `POST /dlq-entries:discard` | 050 |
