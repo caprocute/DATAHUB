@@ -27,6 +27,7 @@ Repo DATAHUB đã có 22 ADR trong `docs/05-adr`. Bộ tài liệu này độc l
 | ADR-040 … 049 | Thanh toán | Luồng PH-19 |
 | ADR-050 … 059 | Danh mục dùng chung và các phân hệ khác | Luồng PH-07 và các phân hệ |
 | ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
+| ADR-070 … 074 | Sự kiện (PH-10) | Luồng PH-10 |
 
 ## 4. Danh sách ADR
 
@@ -90,6 +91,10 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-067](adr/ADR-067-truy-cap-csdl-truc-tiep-co-kiem-soat.md) | Truy cập CSDL trực tiếp có kiểm soát (Q359) | Chấp nhận (25/11/2026) | PH-04, PH-05 |
 | [ADR-068](adr/ADR-068-kho-cau-hinh-git-theo-tenant.md) | Kho cấu hình luồng theo tenant, nhánh theo môi trường | Đề xuất | PH-04 |
 | [ADR-069](adr/ADR-069-may-trang-thai-phien-ban-va-bon-mat.md) | Máy trạng thái phiên bản luồng, bốn mắt chốt ở máy chủ | Đề xuất | PH-04 |
+| [ADR-070](adr/ADR-070-tuong-thich-luoc-do-va-phien-ban-topic.md) | Tương thích lược đồ sự kiện mặc định BACKWARD, PH-10 duy nhất ghi Apicurio, thay đổi phá vỡ tạo topic `.v{n+1}` | Đề xuất | PH-10 |
+| [ADR-071](adr/ADR-071-giao-nhan-day-keo-qua-dh-runtime.md) | Giao nhận đẩy (webhook ký HMAC) và kéo (API, Kafka ngoài) qua mô-đun của dh-runtime | Đề xuất | PH-10 |
+| [ADR-072](adr/ADR-072-cap-phat-topic-acl-qua-gitops.md) | Cấp phát topic, ACL, hạn mức Kafka bằng tài nguyên Strimzi trong kho GitOps của tenant | Đề xuất | PH-10 |
+| [ADR-073](adr/ADR-073-cau-noi-di-tru-pulsar.md) | Di trú Hub Pulsar bằng cầu nối hai chiều tạm thời trên dh-runtime | Đề xuất | PH-10 |
 
 ## 5. Nhật ký quyết định của chủ đầu tư
 
