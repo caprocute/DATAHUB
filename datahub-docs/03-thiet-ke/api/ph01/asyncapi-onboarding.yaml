@@ -1,0 +1,1514 @@
+# D03-04-PH01 · AsyncAPI PH-01. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-01 Kết nạp hệ thống thông tin — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-01-01…15 (D03-04-PH01 §4, D02-03-PH01 §9.3), miền `connect` của `dh-connect`.
+
+
+    Mọi sự kiện ghi vào `ph01_onboarding.outbox` cùng giao dịch với thay đổi (ADR-042), Debezium (hoặc `OutboxRelay` ở `QM-NHO`) đưa lên Kafka,
+    CloudEvents 1.0 chế độ nhị phân; khóa bản ghi là `systemCode` (trừ EVT-01-12 khóa mã kỳ, EVT-01-14 khóa mã tổ chức) nên mọi thay đổi của một
+    HTTT đến đúng thứ tự. Không sự kiện nào mang giá trị bí mật, `secret_ref`, liên kết bàn giao hay dữ liệu liên hệ cá nhân (kiểm thử canary
+    `DH-CANARY-…`, NFR-01-009). Người nhận xử lý lũy đẳng theo `(systemCode, updatedAt)` hoặc `version`, bỏ qua bản cũ hơn bản đang giữ. Tương
+    thích: chỉ thêm trường tùy chọn trong `v1`.
+
+
+    PH-01 cũng tiêu thụ ba loại sự kiện của phân hệ khác (tài khoản đầu mối bị vô hiệu hoặc đổi tổ chức của PH-12, thư bị trả lại của PH-18, tenant
+    tạm ngừng của PH-20); tên topic của chúng do phân hệ phát chốt ở D03-04 của phân hệ đó (Q01-13) nên chưa có kênh `receive` ở tệp này. Dữ liệu
+    ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố tenant.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  systemSubmitted:
+    address: '{tenant}.connect.system.submitted.v1'
+    title: EVT-01-01
+    description: Hồ sơ được nộp hoặc nộp lại (FR-01-012).
+    messages:
+      systemSubmitted:
+        $ref: '#/components/messages/systemSubmitted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.system.submitted.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  reviewDecided:
+    address: '{tenant}.connect.review.decided.v1'
+    title: EVT-01-02
+    description: Bước thẩm định hoàn tất, phân công, tham vấn, trả bổ sung, phê duyệt hoặc từ chối (FR-01-013…018).
+    messages:
+      reviewDecided:
+        $ref: '#/components/messages/reviewDecided'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.review.decided.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  systemStateChanged:
+    address: '{tenant}.connect.system.state-changed.v1'
+    title: EVT-01-03
+    description: Mọi chuyển trạng thái HTTT; ảnh chụp đối chiếu hằng giờ có `snapshot = true` (FR-01-037). Có hiệu lực ở bên nhận trong ≤ 60 giây
+      (NFR-01-008).
+    messages:
+      systemStateChanged:
+        $ref: '#/components/messages/systemStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.system.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  systemUpdated:
+    address: '{tenant}.connect.system.updated.v1'
+    title: EVT-01-04
+    description: 'Đổi thuộc tính: cấp độ ATTT, địa chỉ, IP, chủ quản, vai trò (FR-01-034).'
+    messages:
+      systemUpdated:
+        $ref: '#/components/messages/systemUpdated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.system.updated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  credentialIssued:
+    address: '{tenant}.connect.credential.issued.v1'
+    title: EVT-01-05
+    description: Cấp định danh SANDBOX, PRODUCTION (FR-01-020, 024). Không có `secret_ref`, không có bí mật.
+    messages:
+      credentialIssued:
+        $ref: '#/components/messages/credentialIssued'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.credential.issued.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  credentialRotated:
+    address: '{tenant}.connect.credential.rotated.v1'
+    title: EVT-01-06
+    description: Bắt đầu, kết thúc xoay vòng; đăng ký khóa mới (FR-01-021, 025).
+    messages:
+      credentialRotated:
+        $ref: '#/components/messages/credentialRotated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.credential.rotated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  credentialRevoked:
+    address: '{tenant}.connect.credential.revoked.v1'
+    title: EVT-01-07
+    description: Thu hồi, hết hạn, tự vô hiệu (FR-01-026, 027, 029, 036). `reversible` cho biết có bật lại được không.
+    messages:
+      credentialRevoked:
+        $ref: '#/components/messages/credentialRevoked'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.credential.revoked.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  credentialExpiring:
+    address: '{tenant}.connect.credential.expiring.v1'
+    title: EVT-01-08
+    description: Còn 30, 14, 7 ngày tới hạn (FR-01-027).
+    messages:
+      credentialExpiring:
+        $ref: '#/components/messages/credentialExpiring'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.credential.expiring.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  handoverOpened:
+    address: '{tenant}.connect.handover.opened.v1'
+    title: EVT-01-09
+    description: Đầu mối mở liên kết bàn giao thành công (FR-01-022).
+    messages:
+      handoverOpened:
+        $ref: '#/components/messages/handoverOpened'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.handover.opened.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  handoverSecurityAlert:
+    address: '{tenant}.connect.handover.security-alert.v1'
+    title: EVT-01-10
+    description: Sai người mở liên kết, mở sai nhiều lần, liên kết bị khóa (FR-01-022).
+    messages:
+      handoverSecurityAlert:
+        $ref: '#/components/messages/handoverSecurityAlert'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.handover.security-alert.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  scopeCeilingChanged:
+    address: '{tenant}.connect.scope-ceiling.changed.v1'
+    title: EVT-01-11
+    description: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt
+      trần.
+    messages:
+      scopeCeilingChanged:
+        $ref: '#/components/messages/scopeCeilingChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.scope-ceiling.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  accessReviewCompleted:
+    address: '{tenant}.connect.access-review.completed.v1'
+    title: EVT-01-12
+    description: Kỳ rà soát quyền đóng (FR-01-042).
+    messages:
+      accessReviewCompleted:
+        $ref: '#/components/messages/accessReviewCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.access-review.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  contactChanged:
+    address: '{tenant}.connect.contact.changed.v1'
+    title: EVT-01-13
+    description: Thêm, sửa, thay thế, vô hiệu đầu mối. **Không kèm dữ liệu liên hệ cá nhân**, chỉ mã HTTT, loại, mã đầu mối (FR-01-008).
+    messages:
+      contactChanged:
+        $ref: '#/components/messages/contactChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.contact.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  directoryGapDetected:
+    address: '{tenant}.connect.directory.gap-detected.v1'
+    title: EVT-01-14
+    description: Phát hiện tổ chức thiếu đầu mối kỹ thuật (FR-01-046).
+    messages:
+      directoryGapDetected:
+        $ref: '#/components/messages/directoryGapDetected'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.directory.gap-detected.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  emergencyActionRecorded:
+    address: '{tenant}.connect.emergency-action.recorded.v1'
+    title: EVT-01-15
+    description: Thao tác khẩn của SO, xác nhận, quá hạn xác nhận (FR-01-032). Sự kiện an ninh.
+    messages:
+      emergencyActionRecorded:
+        $ref: '#/components/messages/emergencyActionRecorded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.emergency-action.recorded.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+operations:
+  sendSystemSubmitted:
+    action: send
+    channel:
+      $ref: '#/channels/systemSubmitted'
+    title: EVT-01-01 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/systemSubmitted/messages/systemSubmitted'
+  receiveSystemSubmitted:
+    action: receive
+    channel:
+      $ref: '#/channels/systemSubmitted'
+    title: PH-13, PH-18 nhận
+  sendReviewDecided:
+    action: send
+    channel:
+      $ref: '#/channels/reviewDecided'
+    title: EVT-01-02 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/reviewDecided/messages/reviewDecided'
+  receiveReviewDecided:
+    action: receive
+    channel:
+      $ref: '#/channels/reviewDecided'
+    title: PH-13, PH-18 nhận
+  sendSystemStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/systemStateChanged'
+    title: EVT-01-03 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/systemStateChanged/messages/systemStateChanged'
+  receiveSystemStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/systemStateChanged'
+    title: PH-10, PH-02, PH-04, PH-05, PH-03, PH-13 nhận
+  sendSystemUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/systemUpdated'
+    title: EVT-01-04 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/systemUpdated/messages/systemUpdated'
+  receiveSystemUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/systemUpdated'
+    title: PH-10, PH-04, PH-05, PH-03 nhận
+  sendCredentialIssued:
+    action: send
+    channel:
+      $ref: '#/channels/credentialIssued'
+    title: EVT-01-05 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/credentialIssued/messages/credentialIssued'
+  receiveCredentialIssued:
+    action: receive
+    channel:
+      $ref: '#/channels/credentialIssued'
+    title: PH-03, PH-10, PH-13 nhận
+  sendCredentialRotated:
+    action: send
+    channel:
+      $ref: '#/channels/credentialRotated'
+    title: EVT-01-06 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/credentialRotated/messages/credentialRotated'
+  receiveCredentialRotated:
+    action: receive
+    channel:
+      $ref: '#/channels/credentialRotated'
+    title: PH-03, PH-10 nhận
+  sendCredentialRevoked:
+    action: send
+    channel:
+      $ref: '#/channels/credentialRevoked'
+    title: EVT-01-07 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/credentialRevoked/messages/credentialRevoked'
+  receiveCredentialRevoked:
+    action: receive
+    channel:
+      $ref: '#/channels/credentialRevoked'
+    title: PH-03, PH-10, PH-13 nhận
+  sendCredentialExpiring:
+    action: send
+    channel:
+      $ref: '#/channels/credentialExpiring'
+    title: EVT-01-08 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/credentialExpiring/messages/credentialExpiring'
+  receiveCredentialExpiring:
+    action: receive
+    channel:
+      $ref: '#/channels/credentialExpiring'
+    title: PH-13, PH-18 nhận
+  sendHandoverOpened:
+    action: send
+    channel:
+      $ref: '#/channels/handoverOpened'
+    title: EVT-01-09 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/handoverOpened/messages/handoverOpened'
+  receiveHandoverOpened:
+    action: receive
+    channel:
+      $ref: '#/channels/handoverOpened'
+    title: PH-13 nhận
+  sendHandoverSecurityAlert:
+    action: send
+    channel:
+      $ref: '#/channels/handoverSecurityAlert'
+    title: EVT-01-10 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/handoverSecurityAlert/messages/handoverSecurityAlert'
+  receiveHandoverSecurityAlert:
+    action: receive
+    channel:
+      $ref: '#/channels/handoverSecurityAlert'
+    title: PH-13, SO nhận
+  sendScopeCeilingChanged:
+    action: send
+    channel:
+      $ref: '#/channels/scopeCeilingChanged'
+    title: EVT-01-11 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/scopeCeilingChanged/messages/scopeCeilingChanged'
+  receiveScopeCeilingChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/scopeCeilingChanged'
+    title: PH-02, PH-12, PH-13 nhận
+  sendAccessReviewCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/accessReviewCompleted'
+    title: EVT-01-12 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/accessReviewCompleted/messages/accessReviewCompleted'
+  receiveAccessReviewCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/accessReviewCompleted'
+    title: PH-13, PH-18 nhận
+  sendContactChanged:
+    action: send
+    channel:
+      $ref: '#/channels/contactChanged'
+    title: EVT-01-13 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/contactChanged/messages/contactChanged'
+  receiveContactChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/contactChanged'
+    title: PH-18, PH-13 nhận
+  sendDirectoryGapDetected:
+    action: send
+    channel:
+      $ref: '#/channels/directoryGapDetected'
+    title: EVT-01-14 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/directoryGapDetected/messages/directoryGapDetected'
+  receiveDirectoryGapDetected:
+    action: receive
+    channel:
+      $ref: '#/channels/directoryGapDetected'
+    title: PH-13, PH-18 nhận
+  sendEmergencyActionRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/emergencyActionRecorded'
+    title: EVT-01-15 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/emergencyActionRecorded/messages/emergencyActionRecorded'
+  receiveEmergencyActionRecorded:
+    action: receive
+    channel:
+      $ref: '#/channels/emergencyActionRecorded'
+    title: PH-13, TA, PO nhận
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`).
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    systemSubmitted:
+      name: systemSubmitted
+      title: EVT-01-01
+      summary: Hồ sơ được nộp hoặc nộp lại (FR-01-012).
+      payload:
+        $ref: '#/components/schemas/SystemSubmitted'
+      headers: &id001
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: ULID/UUID duy nhất của sự kiện; bên nhận lũy đẳng theo `(systemCode, updatedAt)`.
+          ce_source:
+            type: string
+            description: '`/tenants/{tenant}/onboarding`'
+          ce_type:
+            type: string
+            description: '`vn.datahub.connect.{thực-thể}.{sự-kiện}.v1`'
+          ce_time: &id003
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Mã HTTT (hoặc mã kỳ, mã tổ chức).
+          ce_datacontenttype:
+            type: string
+            const: application/json
+          traceparent:
+            type: string
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          applicationNo: KN-2026-000123
+          ownerOrgId: SO-TUPHAP
+          revisionNo: 1
+          resubmitted: false
+          submittedBy: an.nv
+          submittedAt: '2026-11-26T09:00:00Z'
+          steps:
+          - stepType: TECHNICAL
+            dueAt: '2026-11-30T10:00:00Z'
+          - stepType: SECURITY
+            dueAt: '2026-11-30T10:00:00Z'
+    reviewDecided:
+      name: reviewDecided
+      title: EVT-01-02
+      summary: Bước thẩm định hoàn tất, phân công, tham vấn, trả bổ sung, phê duyệt hoặc từ chối (FR-01-013…018).
+      payload:
+        $ref: '#/components/schemas/ReviewDecided'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          applicationNo: KN-2026-000123
+          revisionNo: 1
+          kind: STEP_DONE
+          stepType: TECHNICAL
+          result: PASS
+          assigneeId: ie.tranb
+          actor:
+            userId: ie.tranb
+            type: USER
+          at: '2026-11-27T03:00:00Z'
+    systemStateChanged:
+      name: systemStateChanged
+      title: EVT-01-03
+      summary: Mọi chuyển trạng thái HTTT; ảnh chụp đối chiếu hằng giờ có `snapshot = true` (FR-01-037). Có hiệu lực ở bên nhận trong ≤ 60 giây
+        (NFR-01-008).
+      payload:
+        $ref: '#/components/schemas/SystemStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          name: Hệ thống quản lý hộ tịch
+          ownerOrgId: SO-TUPHAP
+          from: ACTIVE
+          to: SUSPENDED
+          reviewStage: null
+          provisionStage: null
+          reasonCode: OVERLOAD
+          reason: Tăng đột biến lưu lượng làm quá tải cổng
+          emergency: false
+          snapshot: false
+          roles:
+          - CONSUMER
+          - PROVIDER
+          securityLevel: L3
+          group: 1
+          ceilingDataTypes:
+          - THONG_TIN_CONG_DAN
+          version: 14
+          updatedAt: '2026-12-12T02:00:00Z'
+          actor: &id002
+            userId: an.nv
+            type: USER
+    systemUpdated:
+      name: systemUpdated
+      title: EVT-01-04
+      summary: 'Đổi thuộc tính: cấp độ ATTT, địa chỉ, IP, chủ quản, vai trò (FR-01-034).'
+      payload:
+        $ref: '#/components/schemas/SystemUpdated'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          changedFields:
+          - baseUrls
+          - ipAllowlist
+          securityLevel: L3
+          ownerOrgId: SO-TUPHAP
+          roles:
+          - CONSUMER
+          - PROVIDER
+          baseUrls:
+          - https://hotich.tinh.example.gov.vn/api/v2
+          ipAllowlist:
+          - 10.20.0.0/24
+          - 10.20.1.0/24
+          version: 15
+          updatedAt: '2026-12-13T02:00:00Z'
+          actor: *id002
+    credentialIssued:
+      name: credentialIssued
+      title: EVT-01-05
+      summary: Cấp định danh SANDBOX, PRODUCTION (FR-01-020, 024). Không có `secret_ref`, không có bí mật.
+      payload:
+        $ref: '#/components/schemas/CredentialIssued'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          environment: SANDBOX
+          authMethod: PRIVATE_KEY_JWT
+          clientId: t68-ht-tuphap-sbx
+          expiresAt: '2027-11-26T00:00:00Z'
+          issuedAt: '2026-11-27T04:00:20Z'
+          actor:
+            userId: system:onboarding
+            type: SYSTEM
+    credentialRotated:
+      name: credentialRotated
+      title: EVT-01-06
+      summary: Bắt đầu, kết thúc xoay vòng; đăng ký khóa mới (FR-01-021, 025).
+      payload:
+        $ref: '#/components/schemas/CredentialRotated'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          environment: PRODUCTION
+          phase: STARTED
+          rotationEndsAt: '2026-12-05T00:00:00Z'
+          kid: null
+          certFingerprint: null
+          incident: false
+          at: '2026-11-28T04:10:00Z'
+          actor: *id002
+    credentialRevoked:
+      name: credentialRevoked
+      title: EVT-01-07
+      summary: Thu hồi, hết hạn, tự vô hiệu (FR-01-026, 027, 029, 036). `reversible` cho biết có bật lại được không.
+      payload:
+        $ref: '#/components/schemas/CredentialRevoked'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          environment: PRODUCTION
+          to: REVOKED
+          reason: EMERGENCY
+          reversible: false
+          at: '2026-11-29T02:00:00Z'
+          actor: *id002
+    credentialExpiring:
+      name: credentialExpiring
+      title: EVT-01-08
+      summary: Còn 30, 14, 7 ngày tới hạn (FR-01-027).
+      payload:
+        $ref: '#/components/schemas/CredentialExpiring'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          environment: PRODUCTION
+          expiresAt: '2027-01-05T00:00:00Z'
+          daysLeft: 30
+    handoverOpened:
+      name: handoverOpened
+      title: EVT-01-09
+      summary: Đầu mối mở liên kết bàn giao thành công (FR-01-022).
+      payload:
+        $ref: '#/components/schemas/HandoverOpened'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          handoverId: 0194f2c7-4e50-7044-8d88-5b6c7d8e9fa0
+          openedBy: an.nv
+          openedAt: '2026-11-27T05:30:00Z'
+    handoverSecurityAlert:
+      name: handoverSecurityAlert
+      title: EVT-01-10
+      summary: Sai người mở liên kết, mở sai nhiều lần, liên kết bị khóa (FR-01-022).
+      payload:
+        $ref: '#/components/schemas/HandoverSecurityAlert'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          credentialId: cr-0194f2c6
+          handoverId: 0194f2c7-4e50-7044-8d88-5b6c7d8e9fa0
+          alertType: WRONG_RECIPIENT
+          failedAttempts: 1
+          attemptedBy: user.khac
+          locked: false
+          at: '2026-11-27T05:20:00Z'
+    scopeCeilingChanged:
+      name: scopeCeilingChanged
+      title: EVT-01-11
+      summary: Trần phạm vi tạo, mở rộng, thu hẹp, tạm ngừng, thu hồi (FR-01-018, 031, 035, 042, 043). PH-12 gỡ scope, PH-02 hủy đăng ký vượt
+        trần.
+      payload:
+        $ref: '#/components/schemas/ScopeCeilingChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          change: CREATED
+          ceiling:
+          - dataType: THONG_TIN_CONG_DAN
+            scopeApproved: Chỉ tra cứu phục vụ giải quyết TTHC
+            classification: RESTRICTED
+            validUntil: null
+          reason: null
+          version: 1
+          at: '2026-11-27T04:00:00Z'
+          actor: *id002
+    accessReviewCompleted:
+      name: accessReviewCompleted
+      title: EVT-01-12
+      summary: Kỳ rà soát quyền đóng (FR-01-042).
+      payload:
+        $ref: '#/components/schemas/AccessReviewCompleted'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Mã kỳ `RS-…`
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          cycleCode: RS-2026-02
+          kind: PERIODIC
+          itemCount: 118
+          kept: 90
+          narrowed: 20
+          revoked: 8
+          noResponseOrgs: 2
+          evidenceHash: 4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce
+          closedAt: '2026-12-20T09:00:00Z'
+          closedBy: ta.lethi
+    contactChanged:
+      name: contactChanged
+      title: EVT-01-13
+      summary: Thêm, sửa, thay thế, vô hiệu đầu mối. **Không kèm dữ liệu liên hệ cá nhân**, chỉ mã HTTT, loại, mã đầu mối (FR-01-008).
+      payload:
+        $ref: '#/components/schemas/ContactChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          contactId: 0194f2c4-2c30-7e22-9b66-3f4a5b6c7d8e
+          contactType: TECHNICAL
+          change: ADDED
+          orgId: SO-TUPHAP
+          at: '2026-11-26T09:00:00Z'
+    directoryGapDetected:
+      name: directoryGapDetected
+      title: EVT-01-14
+      summary: Phát hiện tổ chức thiếu đầu mối kỹ thuật (FR-01-046).
+      payload:
+        $ref: '#/components/schemas/DirectoryGapDetected'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Mã tổ chức
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          orgId: UBND-XA-A
+          systemCodes:
+          - HT-XA-A
+          missing: TECHNICAL_CONTACT
+          detectedAt: '2026-12-01T01:00:00Z'
+    emergencyActionRecorded:
+      name: emergencyActionRecorded
+      title: EVT-01-15
+      summary: Thao tác khẩn của SO, xác nhận, quá hạn xác nhận (FR-01-032). Sự kiện an ninh.
+      payload:
+        $ref: '#/components/schemas/EmergencyActionRecorded'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`systemCode`'
+      examples:
+      - name: Ví dụ giả lập
+        payload:
+          tenantId: T68
+          systemCode: HT-TUPHAP
+          actionId: 0194f2c9-6070-7266-8faa-7d8e9fa0b1c2
+          stage: PERFORMED
+          mode: SUSPEND
+          performedBy: so.phamc
+          confirmBy: '2026-11-30T02:00:00Z'
+          confirmedBy: null
+          incidentRef: INC-2026-0412
+          at: '2026-11-29T02:00:00Z'
+  schemas:
+    Actor:
+      type: object
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+          - USER
+          - SYSTEM
+      required:
+      - userId
+      - type
+    SystemSubmitted:
+      type: object
+      properties:
+        tenantId: &id004
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant, ví dụ `T68`.
+        systemCode: &id005
+          type: string
+          maxLength: 64
+          pattern: ^[A-Z][A-Z0-9-]{2,63}$
+          description: Mã HTTT.
+        applicationNo:
+          type: string
+        ownerOrgId:
+          type: string
+        revisionNo:
+          type: integer
+          minimum: 1
+        resubmitted: &id008
+          type: boolean
+        submittedBy:
+          type: string
+        submittedAt: *id003
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              stepType: &id006
+                type: string
+                enum:
+                - TECHNICAL
+                - LEGAL
+                - SECURITY
+              dueAt: *id003
+            required:
+            - stepType
+            - dueAt
+      required:
+      - tenantId
+      - systemCode
+      - applicationNo
+      - revisionNo
+      - submittedAt
+      - steps
+    ReviewDecided:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        applicationNo:
+          type: string
+        revisionNo: &id009
+          type: integer
+        kind:
+          type: string
+          enum:
+          - STEP_DONE
+          - ASSIGNED
+          - CONSULTED
+          - RESUMED
+          - RETURNED
+          - APPROVED
+          - REJECTED
+        stepType:
+          oneOf:
+          - *id006
+          - type: 'null'
+        result:
+          oneOf:
+          - type: string
+            enum:
+            - PASS
+            - FAIL
+          - type: 'null'
+        assigneeId:
+          type:
+          - string
+          - 'null'
+        actor:
+          $ref: '#/components/schemas/Actor'
+        at: *id003
+      required:
+      - tenantId
+      - systemCode
+      - kind
+      - actor
+      - at
+    SystemStateChanged:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        name:
+          type: string
+        ownerOrgId:
+          type: string
+        from:
+          oneOf:
+          - &id007
+            type: string
+            enum:
+            - DRAFT
+            - SUBMITTED
+            - APPROVED
+            - ACTIVE
+            - SUSPENDED
+            - TERMINATED
+            - REJECTED
+          - type: 'null'
+        to: *id007
+        reviewStage:
+          type:
+          - string
+          - 'null'
+        provisionStage:
+          type:
+          - string
+          - 'null'
+        reasonCode:
+          type:
+          - string
+          - 'null'
+        reason:
+          type:
+          - string
+          - 'null'
+          maxLength: 1000
+        emergency: *id008
+        snapshot: *id008
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - CONSUMER
+            - PROVIDER
+            - PUBLISHER
+            - SUBSCRIBER
+        securityLevel: &id010
+          type: string
+          enum:
+          - L1
+          - L2
+          - L3
+          - L4
+          - L5
+        group:
+          type:
+          - integer
+          - 'null'
+        ceilingDataTypes:
+          type: array
+          items:
+            type: string
+          description: Để bên nhận phát hiện lệch với EVT-01-11.
+        version: *id009
+        updatedAt: *id003
+        actor:
+          oneOf:
+          - $ref: '#/components/schemas/Actor'
+          - type: 'null'
+      required:
+      - tenantId
+      - systemCode
+      - to
+      - snapshot
+      - version
+      - updatedAt
+    SystemUpdated:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        changedFields:
+          type: array
+          items:
+            type: string
+            enum:
+            - securityLevel
+            - baseUrls
+            - ipAllowlist
+            - ownerOrgId
+            - roles
+            - name
+          minItems: 1
+        securityLevel: *id010
+        ownerOrgId:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        baseUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+        ipAllowlist:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: Danh sách CIDR đầy đủ khi `ipAllowlist` nằm trong `changedFields`.
+        version: *id009
+        updatedAt: *id003
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - systemCode
+      - changedFields
+      - version
+      - updatedAt
+    CredentialIssued:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        environment: &id011
+          type: string
+          enum:
+          - SANDBOX
+          - PRODUCTION
+        authMethod:
+          type: string
+          enum:
+          - CLIENT_SECRET
+          - PRIVATE_KEY_JWT
+          - MTLS
+          - API_KEY
+        clientId:
+          type: string
+        expiresAt: *id003
+        issuedAt: *id003
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - systemCode
+      - credentialId
+      - environment
+      - authMethod
+      - clientId
+      - issuedAt
+    CredentialRotated:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        environment: *id011
+        phase:
+          type: string
+          enum:
+          - STARTED
+          - FINISHED
+          - KEY_REGISTERED
+        rotationEndsAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        kid:
+          type:
+          - string
+          - 'null'
+        certFingerprint:
+          type:
+          - string
+          - 'null'
+        incident: *id008
+        at: *id003
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - systemCode
+      - credentialId
+      - environment
+      - phase
+      - at
+    CredentialRevoked:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        environment: *id011
+        to:
+          type: string
+          enum:
+          - REVOKED
+          - EXPIRED
+          - DISABLED
+        reason:
+          type: string
+          enum:
+          - MANUAL
+          - SYSTEM_SUSPENDED
+          - SYSTEM_TERMINATED
+          - EMERGENCY
+          - EXPIRED
+          - INACTIVE
+          - ROTATION_FORCED
+        reversible: *id008
+        at: *id003
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - systemCode
+      - credentialId
+      - environment
+      - to
+      - reason
+      - reversible
+      - at
+    CredentialExpiring:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        environment: *id011
+        expiresAt: *id003
+        daysLeft:
+          type: integer
+          enum:
+          - 30
+          - 14
+          - 7
+      required:
+      - tenantId
+      - systemCode
+      - credentialId
+      - expiresAt
+      - daysLeft
+    HandoverOpened:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        handoverId:
+          type: string
+          format: uuid
+        openedBy:
+          type: string
+        openedAt: *id003
+      required:
+      - tenantId
+      - systemCode
+      - handoverId
+      - openedBy
+      - openedAt
+    HandoverSecurityAlert:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        credentialId:
+          type: string
+        handoverId:
+          type: string
+          format: uuid
+        alertType:
+          type: string
+          enum:
+          - WRONG_RECIPIENT
+          - REPEATED_FAILURE
+          - LOCKED
+        failedAttempts: *id009
+        attemptedBy:
+          type: string
+        locked: *id008
+        at: *id003
+      required:
+      - tenantId
+      - systemCode
+      - handoverId
+      - alertType
+      - failedAttempts
+      - locked
+      - at
+    ScopeCeilingChanged:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        change:
+          type: string
+          enum:
+          - CREATED
+          - EXPANDED
+          - NARROWED
+          - SUSPENDED
+          - REVOKED
+          - CLOSED
+        ceiling:
+          type: array
+          items:
+            type: object
+            properties:
+              dataType:
+                type: string
+              scopeApproved:
+                type: string
+                maxLength: 200
+              classification:
+                type: string
+                enum:
+                - PUBLIC
+                - INTERNAL
+                - RESTRICTED
+                - SENSITIVE
+              validUntil:
+                type:
+                - string
+                - 'null'
+                format: date
+            required:
+            - dataType
+            - scopeApproved
+        reason:
+          type:
+          - string
+          - 'null'
+          maxLength: 1000
+        version: *id009
+        at: *id003
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - systemCode
+      - change
+      - ceiling
+      - version
+      - at
+    AccessReviewCompleted:
+      type: object
+      properties:
+        tenantId: *id004
+        cycleCode:
+          type: string
+          pattern: ^RS-[0-9]{4}-[0-9]{2}$
+        kind:
+          type: string
+          enum:
+          - PERIODIC
+          - TOPIC
+        itemCount: *id009
+        kept: *id009
+        narrowed: *id009
+        revoked: *id009
+        noResponseOrgs: *id009
+        evidenceHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        closedAt: *id003
+        closedBy:
+          type: string
+      required:
+      - tenantId
+      - cycleCode
+      - itemCount
+      - evidenceHash
+      - closedAt
+    ContactChanged:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        contactId:
+          type: string
+          format: uuid
+        contactType:
+          type: string
+          enum:
+          - BUSINESS
+          - TECHNICAL
+          - SECURITY
+        change:
+          type: string
+          enum:
+          - ADDED
+          - UPDATED
+          - REPLACED
+          - DEACTIVATED
+        orgId:
+          type: string
+        at: *id003
+      required:
+      - tenantId
+      - systemCode
+      - contactType
+      - change
+      - at
+    DirectoryGapDetected:
+      type: object
+      properties:
+        tenantId: *id004
+        orgId:
+          type: string
+        systemCodes:
+          type: array
+          items: *id005
+          minItems: 1
+        missing:
+          type: string
+          enum:
+          - TECHNICAL_CONTACT
+        detectedAt: *id003
+      required:
+      - tenantId
+      - orgId
+      - systemCodes
+      - missing
+      - detectedAt
+    EmergencyActionRecorded:
+      type: object
+      properties:
+        tenantId: *id004
+        systemCode: *id005
+        actionId:
+          type: string
+          format: uuid
+        stage:
+          type: string
+          enum:
+          - PERFORMED
+          - CONFIRMED
+          - OVERDUE
+        mode:
+          type: string
+          enum:
+          - SUSPEND
+          - TERMINATE
+        performedBy:
+          type: string
+        confirmBy: *id003
+        confirmedBy:
+          type:
+          - string
+          - 'null'
+        incidentRef:
+          type:
+          - string
+          - 'null'
+        at: *id003
+      required:
+      - tenantId
+      - systemCode
+      - actionId
+      - stage
+      - mode
+      - performedBy
+      - confirmBy
+      - at

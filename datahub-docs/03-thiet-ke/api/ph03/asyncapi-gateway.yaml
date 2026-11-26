@@ -1,0 +1,1137 @@
+# D03-04-PH03 · AsyncAPI PH-03. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-03 Cổng API, sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-03-01…12 (D03-04-PH03 §4, FRS §9.3).
+
+
+    Mọi sự kiện, trừ nhánh gateway của EVT-03-09, do `dh-connect` ghi vào `ph03_gateway.outbox` cùng giao dịch với thay đổi trạng thái; Debezium
+    outbox đưa lên Kafka (ADR-042), CloudEvents 1.0 chế độ nhị phân, khóa phân vùng là mã đối tượng nên sự kiện của một đối tượng giữ thứ tự.
+    EVT-03-09 do APISIX phát qua plugin `kafka-logger` (không giao dịch, giao ít nhất một lần) và do `dh-connect` phát khi tạm ngừng khẩn cấp.
+    Không sự kiện nào mang bí mật, thân yêu cầu hay giá trị tiêu đề xác thực. Người nhận xử lý lũy đẳng theo `ce_id`. Tương thích BACKWARD ở Apicurio
+    (ADR-070): chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố tenant.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  snapshotPublished:
+    address: '{tenant}.gateway.snapshot.published.v1'
+    title: EVT-03-01
+    description: Ảnh chụp cấu hình được phát (FR-03-042).
+    messages:
+      snapshotPublished:
+        $ref: '#/components/messages/snapshotPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.snapshot.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  snapshotRolledBack:
+    address: '{tenant}.gateway.snapshot.rolled-back.v1'
+    title: EVT-03-02
+    description: Quay lui cấu hình bằng ảnh chụp mới (FR-03-044).
+    messages:
+      snapshotRolledBack:
+        $ref: '#/components/messages/snapshotRolledBack'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.snapshot.rolled-back.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  routeStateChanged:
+    address: '{tenant}.gateway.route.state-changed.v1'
+    title: EVT-03-03
+    description: Route dừng, mở, tạm ngừng, SUNSET, RETIRED hoặc đổi cửa vào (FR-03-035, 036, 038, 047).
+    messages:
+      routeStateChanged:
+        $ref: '#/components/messages/routeStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.route.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  consumerStateChanged:
+    address: '{tenant}.gateway.consumer.state-changed.v1'
+    title: EVT-03-04
+    description: Consumer tạo, đổi, tạm ngừng, gỡ (FR-03-046, 047).
+    messages:
+      consumerStateChanged:
+        $ref: '#/components/messages/consumerStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.consumer.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  wafExceptionChanged:
+    address: '{tenant}.gateway.waf-exception.changed.v1'
+    title: EVT-03-05
+    description: Ngoại lệ WAF được đề nghị, duyệt, từ chối, thu hồi, hết hạn (FR-03-007).
+    messages:
+      wafExceptionChanged:
+        $ref: '#/components/messages/wafExceptionChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.waf-exception.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  wafExceptionExpiring:
+    address: '{tenant}.gateway.waf-exception.expiring.v1'
+    title: EVT-03-06
+    description: Ngoại lệ WAF còn 7 ngày hết hạn (FR-03-007).
+    messages:
+      wafExceptionExpiring:
+        $ref: '#/components/messages/wafExceptionExpiring'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.waf-exception.expiring.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  quotaThresholdReached:
+    address: '{tenant}.gateway.quota.threshold-reached.v1'
+    title: EVT-03-07
+    description: HTTT đạt 80% hoặc 100% hạn ngạch; tenant sắp chạm hạn mức (FR-03-022, 023).
+    messages:
+      quotaThresholdReached:
+        $ref: '#/components/messages/quotaThresholdReached'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.quota.threshold-reached.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  certificateExpiring:
+    address: '{tenant}.gateway.certificate.expiring.v1'
+    title: EVT-03-08
+    description: Chứng thư biên còn dưới 30 ngày (FR-03-049).
+    messages:
+      certificateExpiring:
+        $ref: '#/components/messages/certificateExpiring'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.certificate.expiring.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  securityAlertRaised:
+    address: '{tenant}.gateway.security.alert-raised.v1'
+    title: EVT-03-09
+    description: 'Sự kiện an ninh, vận hành của gateway (FR-03-004, 005, 006, 013, 014, 026, 027, 031, 047, 053, 054). Hai nguồn phát: APISIX
+      qua `kafka-logger` và `dh-connect` qua outbox.'
+    messages:
+      securityAlertRaised:
+        $ref: '#/components/messages/securityAlertRaised'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.security.alert-raised.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  tenantRedirectChanged:
+    address: '{tenant}.gateway.tenant-redirect.changed.v1'
+    title: EVT-03-10
+    description: Chuyển tiếp tenant sáp nhập bắt đầu, kết thúc (FR-03-037).
+    messages:
+      tenantRedirectChanged:
+        $ref: '#/components/messages/tenantRedirectChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.tenant-redirect.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  limitChanged:
+    address: '{tenant}.gateway.limit.changed.v1'
+    title: EVT-03-11
+    description: Hạn mức toàn tenant, ghi đè hạn mức hoặc tham số hạn mức đổi (FR-03-023, 024, 056).
+    messages:
+      limitChanged:
+        $ref: '#/components/messages/limitChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.limit.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  snapshotRejected:
+    address: '{tenant}.gateway.snapshot.rejected.v1'
+    title: EVT-03-12
+    description: Ảnh chụp bị từ chối khi kiểm tra hợp lệ, kèm danh sách lỗi (FR-03-040).
+    messages:
+      snapshotRejected:
+        $ref: '#/components/messages/snapshotRejected'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.gateway.snapshot.rejected.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+operations:
+  sendSnapshotPublished:
+    action: send
+    channel:
+      $ref: '#/channels/snapshotPublished'
+    title: 'EVT-03-01: dh-connect phát'
+    messages:
+    - $ref: '#/channels/snapshotPublished/messages/snapshotPublished'
+  receiveSnapshotPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/snapshotPublished'
+    title: PH-02, PH-13 nhận
+  sendSnapshotRolledBack:
+    action: send
+    channel:
+      $ref: '#/channels/snapshotRolledBack'
+    title: 'EVT-03-02: dh-connect phát'
+    messages:
+    - $ref: '#/channels/snapshotRolledBack/messages/snapshotRolledBack'
+  receiveSnapshotRolledBack:
+    action: receive
+    channel:
+      $ref: '#/channels/snapshotRolledBack'
+    title: PH-02, PH-13 nhận
+  sendRouteStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/routeStateChanged'
+    title: 'EVT-03-03: dh-connect phát'
+    messages:
+    - $ref: '#/channels/routeStateChanged/messages/routeStateChanged'
+  receiveRouteStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/routeStateChanged'
+    title: PH-02, PH-13, PH-15 nhận
+  sendConsumerStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/consumerStateChanged'
+    title: 'EVT-03-04: dh-connect phát'
+    messages:
+    - $ref: '#/channels/consumerStateChanged/messages/consumerStateChanged'
+  receiveConsumerStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/consumerStateChanged'
+    title: PH-01, PH-13 nhận
+  sendWafExceptionChanged:
+    action: send
+    channel:
+      $ref: '#/channels/wafExceptionChanged'
+    title: 'EVT-03-05: dh-connect phát'
+    messages:
+    - $ref: '#/channels/wafExceptionChanged/messages/wafExceptionChanged'
+  receiveWafExceptionChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/wafExceptionChanged'
+    title: PH-13, thông báo SO nhận
+  sendWafExceptionExpiring:
+    action: send
+    channel:
+      $ref: '#/channels/wafExceptionExpiring'
+    title: 'EVT-03-06: dh-connect phát'
+    messages:
+    - $ref: '#/channels/wafExceptionExpiring/messages/wafExceptionExpiring'
+  receiveWafExceptionExpiring:
+    action: receive
+    channel:
+      $ref: '#/channels/wafExceptionExpiring'
+    title: Thông báo SO, TA nhận
+  sendQuotaThresholdReached:
+    action: send
+    channel:
+      $ref: '#/channels/quotaThresholdReached'
+    title: 'EVT-03-07: dh-connect (đọc luồng sự kiện hạn ngạch ở Valkey) phát'
+    messages:
+    - $ref: '#/channels/quotaThresholdReached/messages/quotaThresholdReached'
+  receiveQuotaThresholdReached:
+    action: receive
+    channel:
+      $ref: '#/channels/quotaThresholdReached'
+    title: PH-02, thông báo đầu mối HTTT, TA nhận
+  sendCertificateExpiring:
+    action: send
+    channel:
+      $ref: '#/channels/certificateExpiring'
+    title: 'EVT-03-08: dh-connect phát'
+    messages:
+    - $ref: '#/channels/certificateExpiring/messages/certificateExpiring'
+  receiveCertificateExpiring:
+    action: receive
+    channel:
+      $ref: '#/channels/certificateExpiring'
+    title: PH-13, PA nhận
+  sendSecurityAlertRaised:
+    action: send
+    channel:
+      $ref: '#/channels/securityAlertRaised'
+    title: 'EVT-03-09: apisix (kafka-logger), dh-connect phát'
+    messages:
+    - $ref: '#/channels/securityAlertRaised/messages/securityAlertRaised'
+  receiveSecurityAlertRaised:
+    action: receive
+    channel:
+      $ref: '#/channels/securityAlertRaised'
+    title: PH-13 (SIEM) nhận
+  sendTenantRedirectChanged:
+    action: send
+    channel:
+      $ref: '#/channels/tenantRedirectChanged'
+    title: 'EVT-03-10: dh-connect phát'
+    messages:
+    - $ref: '#/channels/tenantRedirectChanged/messages/tenantRedirectChanged'
+  receiveTenantRedirectChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/tenantRedirectChanged'
+    title: PH-20, PH-13 nhận
+  sendLimitChanged:
+    action: send
+    channel:
+      $ref: '#/channels/limitChanged'
+    title: 'EVT-03-11: dh-connect phát'
+    messages:
+    - $ref: '#/channels/limitChanged/messages/limitChanged'
+  receiveLimitChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/limitChanged'
+    title: PH-13, PH-20 nhận
+  sendSnapshotRejected:
+    action: send
+    channel:
+      $ref: '#/channels/snapshotRejected'
+    title: 'EVT-03-12: dh-connect phát'
+    messages:
+    - $ref: '#/channels/snapshotRejected/messages/snapshotRejected'
+  receiveSnapshotRejected:
+    action: receive
+    channel:
+      $ref: '#/channels/snapshotRejected'
+    title: PH-02, thông báo người phát hành nhận
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`) hoặc `common`.
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    snapshotPublished:
+      name: snapshotPublished
+      title: EVT-03-01
+      summary: Ảnh chụp cấu hình được phát (FR-03-042).
+      payload:
+        $ref: '#/components/schemas/SnapshotPublished'
+      headers: &id001
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+            description: UUID v7, khóa lũy đẳng của người tiêu thụ.
+          ce_source:
+            type: string
+            const: /datahub/dh-connect/gateway
+            description: 'Theo CC-API-04: `/datahub/{du}/{module}`.'
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.gateway\.[a-z-]+\.[a-z-]+\.v1$
+            description: '`vn.datahub.gateway.{thực-thể}.{sự-kiện}.v1`'
+          ce_time: &id004
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Mã đối tượng.
+          ce_dhtenant: &id002
+            type: string
+            pattern: ^(T[0-9]{2}|COMMON)$
+            description: Mã tenant; `COMMON` cho phần dùng chung toàn nền tảng.
+          ce_dataschema:
+            type: string
+            format: uri
+            description: Lược đồ ở Apicurio.
+          ce_datacontenttype:
+            type: string
+            const: application/json
+          traceparent:
+            type: string
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - ce_dhtenant
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`scope` (mã tenant hoặc `COMMON`)'
+    snapshotRolledBack:
+      name: snapshotRolledBack
+      title: EVT-03-02
+      summary: Quay lui cấu hình bằng ảnh chụp mới (FR-03-044).
+      payload:
+        $ref: '#/components/schemas/SnapshotRolledBack'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`scope`'
+    routeStateChanged:
+      name: routeStateChanged
+      title: EVT-03-03
+      summary: Route dừng, mở, tạm ngừng, SUNSET, RETIRED hoặc đổi cửa vào (FR-03-035, 036, 038, 047).
+      payload:
+        $ref: '#/components/schemas/RouteStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{routeCode}`'
+    consumerStateChanged:
+      name: consumerStateChanged
+      title: EVT-03-04
+      summary: Consumer tạo, đổi, tạm ngừng, gỡ (FR-03-046, 047).
+      payload:
+        $ref: '#/components/schemas/ConsumerStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{consumerCode}`'
+    wafExceptionChanged:
+      name: wafExceptionChanged
+      title: EVT-03-05
+      summary: Ngoại lệ WAF được đề nghị, duyệt, từ chối, thu hồi, hết hạn (FR-03-007).
+      payload:
+        $ref: '#/components/schemas/WafExceptionChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{exceptionId}`'
+    wafExceptionExpiring:
+      name: wafExceptionExpiring
+      title: EVT-03-06
+      summary: Ngoại lệ WAF còn 7 ngày hết hạn (FR-03-007).
+      payload:
+        $ref: '#/components/schemas/WafExceptionExpiring'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{exceptionId}`'
+    quotaThresholdReached:
+      name: quotaThresholdReached
+      title: EVT-03-07
+      summary: HTTT đạt 80% hoặc 100% hạn ngạch; tenant sắp chạm hạn mức (FR-03-022, 023).
+      payload:
+        $ref: '#/components/schemas/QuotaThresholdReached'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{consumerCode}` hoặc `TENANT`'
+    certificateExpiring:
+      name: certificateExpiring
+      title: EVT-03-08
+      summary: Chứng thư biên còn dưới 30 ngày (FR-03-049).
+      payload:
+        $ref: '#/components/schemas/CertificateExpiring'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`{certCode}`'
+    securityAlertRaised:
+      name: securityAlertRaised
+      title: EVT-03-09
+      summary: 'Sự kiện an ninh, vận hành của gateway (FR-03-004, 005, 006, 013, 014, 026, 027, 031, 047, 053, 054). Hai nguồn phát: APISIX qua
+        `kafka-logger` và `dh-connect` qua outbox.'
+      payload:
+        $ref: '#/components/schemas/SecurityAlertRaised'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`routeCode`, nếu không gắn route thì `node`'
+    tenantRedirectChanged:
+      name: tenantRedirectChanged
+      title: EVT-03-10
+      summary: Chuyển tiếp tenant sáp nhập bắt đầu, kết thúc (FR-03-037).
+      payload:
+        $ref: '#/components/schemas/TenantRedirectChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`fromTenant`'
+    limitChanged:
+      name: limitChanged
+      title: EVT-03-11
+      summary: Hạn mức toàn tenant, ghi đè hạn mức hoặc tham số hạn mức đổi (FR-03-023, 024, 056).
+      payload:
+        $ref: '#/components/schemas/LimitChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`scopeKey` (mã đối tượng hoặc khóa `gw.*`)'
+    snapshotRejected:
+      name: snapshotRejected
+      title: EVT-03-12
+      summary: Ảnh chụp bị từ chối khi kiểm tra hợp lệ, kèm danh sách lỗi (FR-03-040).
+      payload:
+        $ref: '#/components/schemas/SnapshotRejected'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`scope`'
+  schemas:
+    Actor:
+      type: object
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+          - USER
+          - SYSTEM
+      required:
+      - userId
+      - type
+    SnapshotPublished:
+      type: object
+      properties:
+        tenantId: *id002
+        snapshotVersion: &id003
+          type: integer
+        site:
+          type: string
+        scope: *id002
+        contentHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        signatureKeyId:
+          type: string
+        trigger:
+          type: string
+          enum:
+          - AUTO
+          - MANUAL
+          - ROLLBACK
+          - IMPORT
+          - RECONCILE
+        builtFrom:
+          type: array
+          items:
+            type: object
+            properties:
+              source:
+                type: string
+              cursor:
+                type: string
+            required:
+            - source
+        routes:
+          type: object
+          properties:
+            added: *id003
+            changed: *id003
+            removed: *id003
+        gitPending: &id006
+          type: boolean
+        publishedAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - snapshotVersion
+      - site
+      - scope
+      - contentHash
+      - trigger
+      - publishedAt
+      examples:
+      - tenantId: T68
+        snapshotVersion: 48213
+        site: dc1
+        scope: T68
+        contentHash: 9f2c5a0e7d4b3c1a8e6f0b2d4c6a8e0f1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f0a
+        signatureKeyId: dh-gateway-snapshot:3
+        trigger: AUTO
+        builtFrom:
+        - source: catalog
+          cursor: e-1204455
+        routes:
+          added: 2
+          changed: 1
+          removed: 0
+        gitPending: false
+        publishedAt: '2026-11-26T09:14:08+07:00'
+        actor:
+          userId: system:dh-connect
+          type: SYSTEM
+    SnapshotRolledBack:
+      type: object
+      properties:
+        tenantId: *id002
+        snapshotVersion: *id003
+        targetVersion: *id003
+        site:
+          type: string
+        scope: *id002
+        holdUntil: *id004
+        reason:
+          type: string
+          maxLength: 500
+        rolledBackAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - snapshotVersion
+      - targetVersion
+      - scope
+      - reason
+      - rolledBackAt
+    RouteStateChanged:
+      type: object
+      properties:
+        tenantId: *id002
+        routeCode:
+          type: string
+        apiCode:
+          type: string
+        apiVersion:
+          type: string
+        from: &id005
+          type: string
+          enum:
+          - PENDING
+          - ACTIVE
+          - STOPPED
+          - SUSPENDED
+          - SUNSET
+          - RETIRED
+        to: *id005
+        exposure:
+          type: string
+          enum:
+          - INT
+          - EXT
+        exposureChangedFrom:
+          type: string
+          enum:
+          - INT
+          - EXT
+        reason:
+          type: string
+          maxLength: 500
+        sunsetAt: *id004
+        occurredAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - routeCode
+      - to
+      - occurredAt
+      examples:
+      - tenantId: T68
+        routeCode: tra-cuu-ho-tich.v1
+        apiCode: tra-cuu-ho-tich
+        apiVersion: v1
+        from: ACTIVE
+        to: STOPPED
+        exposure: INT
+        reason: Backend nâng cấp cơ sở dữ liệu
+        occurredAt: '2026-11-26T10:02:11+07:00'
+        actor:
+          userId: an.nv
+          type: USER
+    ConsumerStateChanged:
+      type: object
+      properties:
+        tenantId: *id002
+        consumerCode:
+          type: string
+        systemCode:
+          type: string
+        change:
+          type: string
+          enum:
+          - CREATED
+          - UPDATED
+          - SUSPENDED
+          - RESUMED
+          - REMOVED
+        state:
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - REMOVED
+        authMethod:
+          type: string
+          enum:
+          - OAUTH2
+          - MTLS
+          - API_KEY
+        reason:
+          type: string
+          maxLength: 500
+        occurredAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - consumerCode
+      - change
+      - state
+      - occurredAt
+      examples:
+      - tenantId: T68
+        consumerCode: ht-qlvb
+        systemCode: HT-QLVB
+        change: CREATED
+        state: ACTIVE
+        authMethod: MTLS
+        occurredAt: '2026-11-26T09:14:03+07:00'
+        actor:
+          userId: system:dh-connect
+          type: SYSTEM
+    WafExceptionChanged:
+      type: object
+      properties:
+        tenantId: *id002
+        exceptionId:
+          type: string
+          format: uuid
+        routeCode:
+          type: string
+        ruleId:
+          type: string
+          pattern: ^9[0-9]{5}$
+        change:
+          type: string
+          enum:
+          - REQUESTED
+          - APPROVED
+          - REJECTED
+          - REVOKED
+          - EXPIRED
+        expiresAt: *id004
+        requestedBy:
+          type: string
+        decidedBy:
+          type: string
+        occurredAt: *id004
+      required:
+      - tenantId
+      - exceptionId
+      - routeCode
+      - ruleId
+      - change
+      - occurredAt
+      examples:
+      - tenantId: T68
+        exceptionId: 0193a1f2-6c1e-7b3a-9d51-3a1f0c2b7e44
+        routeCode: tra-cuu-ho-tich.v1
+        ruleId: '942100'
+        change: APPROVED
+        expiresAt: '2027-01-20T00:00:00+07:00'
+        requestedBy: an.nv
+        decidedBy: tuan.lm
+        occurredAt: '2026-11-26T11:20:00+07:00'
+    WafExceptionExpiring:
+      type: object
+      properties:
+        tenantId: *id002
+        exceptionId:
+          type: string
+          format: uuid
+        routeCode:
+          type: string
+        ruleId:
+          type: string
+        expiresAt: *id004
+        daysLeft: *id003
+        requestedBy:
+          type: string
+      required:
+      - tenantId
+      - exceptionId
+      - routeCode
+      - ruleId
+      - expiresAt
+      - daysLeft
+    QuotaThresholdReached:
+      type: object
+      properties:
+        tenantId: *id002
+        kind:
+          type: string
+          enum:
+          - CONSUMER_QUOTA
+          - TENANT_LIMIT
+        consumerCode:
+          type: string
+        routeCode:
+          type: string
+        period:
+          type: string
+          enum:
+          - HOUR
+          - DAY
+          - MONTH
+          - SECOND
+        percent:
+          type: integer
+          enum:
+          - 80
+          - 100
+          description: 'Ngưỡng đạt: 80% hoặc 100%.'
+        limit: *id003
+        used: *id003
+        resetAt: *id004
+        occurredAt: *id004
+      required:
+      - tenantId
+      - kind
+      - percent
+      - limit
+      - used
+      - occurredAt
+      examples:
+      - tenantId: T68
+        kind: CONSUMER_QUOTA
+        consumerCode: ht-qlvb
+        routeCode: tra-cuu-ho-tich.v1
+        period: DAY
+        percent: 80
+        limit: 200000
+        used: 160002
+        resetAt: '2026-11-27T00:00:00+07:00'
+        occurredAt: '2026-11-26T15:41:09+07:00'
+    CertificateExpiring:
+      type: object
+      properties:
+        tenantId: *id002
+        certCode:
+          type: string
+        hosts:
+          type: array
+          items:
+            type: string
+        notAfter: *id004
+        daysLeft: *id003
+        severity:
+          type: string
+          enum:
+          - HIGH
+          - CRITICAL
+          description: '`CRITICAL` khi còn dưới 7 ngày.'
+        autoRenew: *id006
+        renewalState:
+          type: string
+      required:
+      - tenantId
+      - certCode
+      - hosts
+      - notAfter
+      - daysLeft
+      - severity
+    SecurityAlertRaised:
+      type: object
+      properties:
+        tenantId: *id002
+        alertId:
+          type: string
+          format: uuid
+        ruleCode:
+          type: string
+          pattern: ^GW-A(0[1-9]|1[0-3])$
+        severity:
+          type: string
+          enum:
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        source:
+          type: string
+          enum:
+          - GATEWAY
+          - CONTROL_PLANE
+        kind:
+          type: string
+          description: Loại sự kiện chi tiết, ví dụ `IP_AUTO_BLOCK`, `CROSS_TENANT`, `WAF_AUTO_DEGRADE`, `VALKEY_DOWN`, `BREAKER_OPEN`, `EMERGENCY_SUSPEND`.
+        routeCode:
+          type: string
+        consumerCode:
+          type: string
+        node:
+          type: string
+        srcIp:
+          type: string
+          description: Địa chỉ nguồn, chỉ cho SIEM; không có nội dung yêu cầu.
+        count: *id003
+        windowSeconds: *id003
+        detail:
+          type: string
+          maxLength: 1000
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        occurredAt: *id004
+      required:
+      - tenantId
+      - alertId
+      - ruleCode
+      - severity
+      - source
+      - kind
+      - occurredAt
+      examples:
+      - tenantId: T68
+        alertId: 0193a1f2-8a77-7c0d-8e22-5b9d6e1f4a10
+        ruleCode: GW-A03
+        severity: CRITICAL
+        source: GATEWAY
+        kind: CROSS_TENANT
+        routeCode: tra-cuu-ho-tich.v1
+        consumerCode: ht-qlvb
+        node: apisix-int-2
+        srcIp: 10.20.30.40
+        count: 1
+        windowSeconds: 60
+        detail: Token của tenant T71 gọi route của tenant T68
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        occurredAt: '2026-11-26T14:03:55+07:00'
+    TenantRedirectChanged:
+      type: object
+      properties:
+        tenantId: *id002
+        redirectId:
+          type: string
+          format: uuid
+        fromTenant: *id002
+        toTenant: *id002
+        change:
+          type: string
+          enum:
+          - STARTED
+          - ENDED
+        startAt: *id004
+        endAt: *id004
+        routeCount: *id003
+        occurredAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - redirectId
+      - fromTenant
+      - toTenant
+      - change
+      - occurredAt
+    LimitChanged:
+      type: object
+      properties:
+        tenantId: *id002
+        scope:
+          type: string
+          enum:
+          - TENANT
+          - CONSUMER_ROUTE
+          - ROUTE
+          - CONSUMER
+          - PARAM
+        scopeKey:
+          type: string
+          description: Mã đối tượng hoặc khóa tham số `gw.*`.
+        before: {}
+        after: {}
+        changeRequestId:
+          type: string
+          format: uuid
+        occurredAt: *id004
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - scope
+      - scopeKey
+      - after
+      - occurredAt
+    SnapshotRejected:
+      type: object
+      properties:
+        tenantId: *id002
+        scope: *id002
+        candidateVersion: *id003
+        triggeredBy:
+          type: string
+          enum:
+          - AUTO
+          - MANUAL
+          - IMPORT
+          - RECONCILE
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              checkId:
+                type: string
+                pattern: ^CHK-[0-9]{2}$
+              severity:
+                type: string
+                enum:
+                - ERROR
+                - WARNING
+              objectType:
+                type: string
+              objectCode:
+                type: string
+              message:
+                type: string
+                maxLength: 500
+            required:
+            - checkId
+            - severity
+            - message
+        rejectedAt: *id004
+      required:
+      - tenantId
+      - scope
+      - triggeredBy
+      - findings
+      - rejectedAt
+      examples:
+      - tenantId: T68
+        scope: T68
+        triggeredBy: AUTO
+        findings:
+        - checkId: CHK-02
+          severity: ERROR
+          objectType: ROUTE
+          objectCode: tra-cuu-ho-tich.v2
+          message: Route thiếu lược đồ OpenAPI đã duyệt.
+        rejectedAt: '2026-11-26T09:14:05+07:00'

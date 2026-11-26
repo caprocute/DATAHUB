@@ -195,6 +195,14 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-02-operate | Start/Stop API | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-03-read | Xem cấu hình gateway, trạng thái nút | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-03-admin | Quản lý chính sách gateway | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-limit | Đặt hạn mức toàn tenant, ghi đè hạn mức theo route | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf-request | Đề nghị ngoại lệ luật WAF; xem sự kiện chặn của WAF | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf-approve | Duyệt, từ chối ngoại lệ luật WAF | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf | Đổi chế độ WAF, luật vá ảo, chặn và bỏ chặn địa chỉ, đổi mức hoang tưởng | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-operate | Dừng, mở API; tạm ngừng khẩn cấp route và consumer; quay lui; xác nhận cảnh báo; gia hạn chứng thư | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-publish | Kiểm tra, xây và phát ảnh chụp cấu hình thủ công | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-approve | Duyệt yêu cầu thay đổi gateway có bốn mắt (cửa ngoài, hạ hạn mức tenant, đổi chế độ WAF) | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-log-read | Xem nhật ký lượt gọi chi tiết (có định danh HTTT, đã che dữ liệu nhạy cảm), xuất nhật ký | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-04-read | Xem luồng | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | ● | ● |
 | PERM-04-create / update | Thiết kế luồng, chạy thử | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-04-submit | Gửi duyệt phát hành | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
@@ -226,6 +234,20 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-10-admin | Tham số `10.*`, danh mục kiểu giao tiếp và chế độ định tuyến, hạn mức, Kafka ngoài, di trú Pulsar, topic nền tảng `dh.` (chỉ PA) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-user-admin | Quản lý người dùng, gán vai trò | ● (PLATFORM) | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-read | Xem người dùng, quyền hiệu lực | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-12-user-lock | Khóa, mở khóa, vô hiệu, kích hoạt lại tài khoản; buộc đăng xuất; thu hồi truy cập tức thời của người dùng hoặc client; tạm ngừng, tiếp tục client | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-mfa-reset | Đặt lại yếu tố thứ hai của người dùng cấp dưới (quản trị cấp trên) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-sod-exception | Đề nghị ngoại lệ tách nhiệm vụ có thời hạn | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-approve | Duyệt, từ chối, thu hồi ngoại lệ tách nhiệm vụ; duyệt kích hoạt liên kết định danh ngoài (LDAP/AD, SAML, VNeID); duyệt đặt lại yếu tố thứ hai của tài khoản quản trị | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-client | Xem chi tiết, sửa, xoay bí mật, đăng ký chứng thư và khóa công khai của client; xem scope | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-policy-edit | Soạn, kiểm thử, chạy khô, gửi duyệt chính sách (PA: chính sách nền tảng; SO: chính sách của tỉnh) | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-policy-approve | Duyệt, từ chối, thu hồi, quay lui chính sách (khác người soạn) | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-decision-read | Tra cứu nhật ký quyết định ủy quyền và sự kiện an ninh (PO chỉ trong phạm vi quyền có thời hạn) | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-12-jit-request | Đề nghị quyền có thời hạn cho vai trò đặc quyền hoặc truy cập tenant khác | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-jit-approve | Duyệt, từ chối, thu hồi quyền có thời hạn (người thứ hai) | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-recert | Mở, theo dõi, đóng chiến dịch rà soát quyền | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-alert | Xem, xác nhận cảnh báo an ninh; tinh chỉnh ngưỡng quy tắc phát hiện trong miền cho phép | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-admin | Tham số phân hệ `12.*` trong trần của nền tảng; khai báo liên kết LDAP/AD, SAML, VNeID của tenant | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-realm-admin | Xem trạng thái, đối chiếu, tạm ngừng, khôi phục realm của tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-dashboard | Xem bảng điều khiển giám sát | ● | ● | ● | ● | ● | ● | ● | ○ | — | — | — | — | — | ● | ● |
 | PERM-13-logs | Tra log, trace | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
 | PERM-13-audit-read | Xem nhật ký kiểm toán | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
@@ -233,6 +255,16 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-13-alert-admin | Cấu hình cảnh báo | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-read | Xem danh mục dịch vụ quốc gia | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | — | — | — | ● | ● |
 | PERM-14-admin | Cấu hình kết nối NDXP | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-service | Khai báo, sửa dịch vụ, hợp đồng, đặc tả, cung cấp lại, đối chiếu danh mục dịch vụ | ● | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-14-route | Tạo, sửa luật định tuyến, gửi duyệt | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-14-approve | Duyệt bật nền tảng, luật định tuyến, hạn mức PROD, kích hoạt chứng thư | ● | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-14-cert | Nạp, yêu cầu kích hoạt, thu hồi chứng thư; làm mới chuỗi tin cậy, danh sách thu hồi | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-quota | Khai báo hạn mức, phân bổ hạn mức nội bộ theo HTTT | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-operate | Tạm ngừng, tiếp tục nền tảng, dịch vụ; vô hiệu đệm; ngắt mạch tay; thử kết nối; xoay thông tin xác thực; xử lý sự cố chữ ký | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-sync | Cấu hình, chạy, thử lại đồng bộ danh mục dịch vụ, dữ liệu chủ, dữ liệu mở | ● | — | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-audit-read | Tra giao dịch, nhật ký khai thác, báo cáo sử dụng, cảnh báo bất thường (nội dung đã che) | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-14-audit-reveal | Xem nội dung bản tin đầy đủ có lý do, xuất bằng chứng | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-invoke | Gọi dịch vụ quốc gia đã cung cấp lại (chỉ client máy, theo scope) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-18-dlq | Xem, xử lý lại, bỏ bản tin lỗi | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-18-config | Sửa tham số cấu hình | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-18-migration | Chạy công cụ di trú | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -278,6 +310,11 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-11-model | Thiết kế, phát hành mô hình quy trình | TA, IA |
 | PERM-11-task | Xử lý việc được giao trong quy trình | Mọi người dùng được giao việc |
 | PERM-15-portal-admin | Quản trị nội dung cổng nhà phát triển | TA, CA |
+| PERM-15-content-write | Soạn, sửa, gửi duyệt trang nội dung cổng; nhập từ Git | TA, CA, SV (○) |
+| PERM-15-content-publish | Duyệt, đăng, gỡ trang nội dung cổng (người soạn không tự duyệt) | TA, CA |
+| PERM-15-support | Xử lý hỏi đáp, phiếu hỗ trợ của dịch vụ trên cổng | TA, CA, SV (○) |
+| PERM-15-dev-approve | Duyệt, từ chối, khóa, mở khóa tài khoản `dh-dev` và ứng dụng sandbox | TA, SO, PA |
+| PERM-15-audit-read | Xem nhật ký truy cập, thử API và báo cáo sử dụng cổng | TA, SO, AU, PA |
 | PERM-16-read | Xem báo cáo chỉ tiêu | TA, VW, AU |
 | PERM-16-admin | Định nghĩa chỉ tiêu | TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
