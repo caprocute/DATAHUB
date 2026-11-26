@@ -616,3 +616,264 @@ Ràng buộc không hai chiều cùng lúc (BR-10-033) kiểm bằng chỉ mục
 ### 4.17. Xuất, nhập khai báo
 
 `ManifestExporter` (FR-10-070) xuất YAML theo dự án gồm dự án, topic, lược đồ, bên phát, bên nhận, publication, subscription; không bao giờ chứa bí mật ký, `clientId` chỉ là tham chiếu (BR-10-027). `ManifestImportJob` (FR-10-071, Đợt sau) đi qua `VALIDATING`, `PREVIEW`, `APPLYING`, `APPLIED` hoặc `FAILED`, `CANCELLED`; mỗi dòng xem trước có `changeKind` `CREATE`, `UPDATE`, `UNCHANGED`, `CONFLICT`, `SKIP`; áp dụng chỉ tạo đối tượng ở trạng thái chờ duyệt, không bao giờ `ACTIVE` trực tiếp (BR-10-032).
+
+## 5. Biểu đồ tuần tự
+
+### 5.1. Tạo topic có duyệt và cấp phát (FR-10-008, 009, 010)
+
+```mermaid
+sequenceDiagram
+  actor IE as IE
+  actor IA as IA
+  participant API as event.web
+  participant SVC as TopicService
+  participant APC as Apicurio
+  participant GIT as dh-config-tenant
+  participant STZ as Argo CD, Strimzi
+  participant REC as ProvisioningReconciler
+  IE->>API: POST /topics (submit=true, Idempotency-Key)
+  API->>SVC: tạo topic
+  SVC->>APC: kiểm lược đồ dryRun
+  APC-->>SVC: hợp lệ, báo cáo tương thích
+  SVC->>SVC: Topic PENDING_APPROVAL, ApprovalRequest TOPIC_CREATE PENDING
+  API-->>IE: 201 kèm approvalRequestCode
+  IA->>API: POST /approval-requests/{requestCode}:approve
+  API->>SVC: FourEyesGuard, kiểm lại hạn mức và tên
+  SVC->>APC: tạo artifact groupId tenant, quy tắc, phiên bản 1
+  APC-->>SVC: globalId, contentId
+  SVC->>GIT: commit KafkaTopic topic và DLQ
+  GIT-->>SVC: commit hash
+  SVC->>SVC: Topic PROVISIONING, SchemaVersion ENABLED, outbox EVT-10-05
+  STZ->>GIT: đồng bộ
+  REC->>STZ: đọc status.conditions mỗi 10 giây
+  STZ-->>REC: Ready=True
+  REC->>SVC: Topic ACTIVE, outbox EVT-10-01
+```
+
+Ghi Apicurio và commit Git nằm ngoài giao dịch CSDL. Commit Git lỗi sau khi artifact đã tạo thì dịch vụ xóa bù artifact, trả ERR-10-029 và yêu cầu vẫn `PENDING` (FR-10-009). Strimzi không báo `Ready` trong `10.provisioning.timeout-minutes` phút thì topic `FAILED` với `provisioningError`; thử lại (API-10-013) sinh commit mới, hủy (API-10-014) đưa topic về `DRAFT`.
+
+### 5.2. Đăng ký phiên bản lược đồ (FR-10-017, 018, 019)
+
+```mermaid
+sequenceDiagram
+  actor IE as IE
+  actor IA as IA
+  participant API as event.web
+  participant SCH as SchemaService
+  participant APC as Apicurio
+  participant RT as dh-runtime
+  IE->>API: POST /topics/{topicName}/schema/versions
+  API->>SCH: SchemaVersion DRAFT, contentHash
+  IE->>API: POST .../versions/{versionNo}:submit
+  SCH->>APC: thêm phiên bản dryRun
+  APC-->>SCH: tương thích hoặc danh sách vi phạm
+  SCH->>SCH: kiểm partitionKeyField, PiiScanner
+  SCH->>SCH: PENDING_APPROVAL, ApprovalRequest SCHEMA_VERSION
+  IA->>API: approve
+  SCH->>APC: dryRun lần cuối rồi thêm phiên bản thật
+  APC-->>SCH: globalId, contentId
+  SCH->>SCH: SchemaVersion ENABLED và outbox EVT-10-05 cùng giao dịch
+  SCH-->>RT: EVT-10-05 qua Kafka
+  RT->>RT: làm mới danh sách phiên bản hợp lệ
+```
+
+Kiểm tra chạy lại khi duyệt vì phiên bản khác có thể đã bật trong lúc chờ. Không đạt mức tương thích trả ERR-10-016 kèm `compatibilityReport`; giao diện hướng dẫn tạo phiên bản topic mới (API-10-018). Phiên bản đã có ở Apicurio mà ghi CSDL lỗi thì `SchemaCompensator` xử lý theo §4.3.
+
+### 5.3. Phát sự kiện qua API (FR-10-033)
+
+```mermaid
+sequenceDiagram
+  participant H as HTTT phát
+  participant AX as APISIX, OPA
+  participant GW as event-gateway
+  participant VK as Valkey
+  participant K as Kafka
+  H->>AX: POST /event/v1/topics/{topicName}/events
+  AX->>AX: token, scope publish, dữ liệu OPA, limit-count
+  AX->>GW: chuyển tiếp kèm X-Dh-Client-Id, X-Dh-Tenant qua mTLS
+  GW->>GW: TenantGuard, topic ACTIVE hoặc DEPRECATED
+  GW->>GW: kiểm phong bì, kiểm data theo lược đồ, tính khóa
+  GW->>VK: SET NX khóa chống trùng PENDING
+  VK-->>GW: mới
+  GW->>K: produce acks=all, idempotent
+  K-->>GW: partition, offset
+  GW->>VK: khóa chống trùng DONE
+  GW-->>H: 202 results
+```
+
+APISIX từ chối với ERR-10-101, 102, 107; cổng từ chối với ERR-10-103…106, 108. Lỗi `NOT_ENOUGH_REPLICAS` làm cổng xóa khóa chống trùng để lượt gửi lại được ghi (BR-10-007).
+
+### 5.4. Subscription PUSH: xác minh, duyệt, cấp phát (FR-10-035, 036, 037, 040, 042)
+
+```mermaid
+sequenceDiagram
+  actor IE as IE
+  actor IA as IA
+  participant API as event.web
+  participant SUB as SubscriptionService
+  participant DSP as event-dispatcher
+  participant EP as Endpoint HTTT
+  participant BAO as OpenBao
+  participant ADM as Kafka Admin
+  IE->>API: POST /endpoint-verifications
+  API->>DSP: yêu cầu xác minh
+  DSP->>EP: OPTIONS, WebHook-Request-Origin
+  EP-->>DSP: 200, WebHook-Allowed-Origin
+  DSP-->>API: PASSED, endpointVerifiedAt
+  IE->>API: POST /subscriptions deliveryMode PUSH
+  API->>SUB: kiểm tổ hợp, workerCount, startAt, ApprovalRequest SUBSCRIPTION
+  IA->>API: approve
+  SUB->>SUB: PROVISIONING
+  SUB->>BAO: ghi khóa ký, chính sách chỉ ghi
+  SUB->>ADM: alterConsumerGroupOffsets theo startPosition
+  ADM-->>SUB: đã đặt vị trí
+  SUB->>SUB: ACTIVE, outbox EVT-10-08
+  API-->>IE: bí mật ký hiển thị một lần
+  DSP->>API: GET /runtime/subscriptions
+  DSP->>DSP: SlotAllocator mở worker
+```
+
+Vị trí đọc đặt bằng Admin API trước khi worker đầu tiên tham gia nhóm nên không đua với `auto.offset.reset` (BR-10-022). Endpoint xác minh quá 24 giờ khi duyệt trả ERR-10-027. Bước nào lỗi thì subscription `FAILED`; các bước đã xong ghi ở `ApprovalRequest.checks` để thử lại không lặp.
+
+### 5.5. Giao PUSH có ký, thử lại và DLQ (FR-10-038, 039, 049)
+
+```mermaid
+sequenceDiagram
+  participant K as Kafka
+  participant W as PartitionWorker
+  participant EP as Endpoint HTTT
+  participant DLQ as topic .dlq
+  participant ING as DlqIngestor
+  participant PG as ph10_event
+  K->>W: poll bản tin offset n
+  W->>W: giải tuần tự, dựng CloudEvents, ký HMAC, ghim IP
+  W->>EP: POST, X-Datahub-Attempt 1
+  EP-->>W: 503
+  W->>W: pause phân vùng, chờ giãn dần
+  W->>EP: POST, X-Datahub-Attempt 2
+  EP-->>W: 503
+  Note over W: hết maxRetries, failurePolicy DEAD_LETTER
+  W->>DLQ: bản tin gốc và tiêu đề dh_dlq, acks=all
+  DLQ-->>W: xác nhận
+  W->>K: commit offset n
+  DLQ->>ING: tiêu thụ
+  ING->>PG: DlqEntry NEW, dlq_payload, outbox EVT-10-11 gộp 1 phút
+```
+
+Offset `n` chỉ commit sau khi topic DLQ xác nhận (BR-10-024). Với `BLOCK`, bước ghi DLQ thay bằng lệnh tạm ngừng subscription, không commit, nên bản tin được giao lại từ vị trí cũ khi TO tiếp tục.
+
+### 5.6. Kéo PULL_API có lease và cursor (FR-10-043)
+
+```mermaid
+sequenceDiagram
+  participant H as HTTT nhận
+  participant AX as APISIX, OPA
+  participant GW as event-gateway
+  participant VK as Valkey
+  participant K as Kafka
+  H->>AX: GET /event/v1/subscriptions/{code}/events?max=100&waitSeconds=20
+  AX->>GW: scope subscribe, client khớp bên nhận
+  GW->>VK: đọc lease
+  VK-->>GW: không có
+  GW->>K: assign, seek offset đã commit, poll
+  K-->>GW: 100 bản tin
+  GW->>VK: SET NX lease kèm khoảng offset, PX leaseSeconds
+  GW-->>H: 200 events, cursor ký, leaseExpiresAt
+  H->>AX: POST .../events:ack với cursor
+  AX->>GW: chuyển tiếp
+  GW->>GW: kiểm HMAC cursor, leaseId
+  GW->>K: commitSync offset theo phân vùng
+  GW->>VK: xóa lease
+  GW-->>H: 204
+```
+
+Kéo lại khi lease còn hạn trả đúng lô cũ bằng cách đọc lại khoảng offset của lease. Lease hết hạn chưa ack thì lô trả ở lượt kéo sau. Cursor sai hoặc của lease cũ trả ERR-10-109.
+
+### 5.7. Phát lại mục DLQ (FR-10-051, 052, 053)
+
+```mermaid
+sequenceDiagram
+  actor TO as TO
+  actor IA as IA
+  participant API as event.web
+  participant RPL as ReplayService
+  participant DSP as ReplayRunner
+  participant EP as Endpoint HTTT
+  TO->>API: POST /replays replayMode DLQ_ENTRIES, dlqEntryIds, reason
+  API->>RPL: kiểm mục NEW, ERR-10-035, ước lượng
+  RPL->>RPL: ReplayRequest PENDING_APPROVAL, ApprovalRequest REPLAY
+  IA->>API: approve
+  RPL->>RPL: APPROVED, mục DLQ sang REPLAY_PENDING
+  DSP->>API: nhận việc, RUNNING
+  loop lô 100 mục, giới hạn ratePerSecond
+    DSP->>API: lấy nội dung mục bằng scope event:replay
+    DSP->>EP: POST, X-Datahub-Replay, cùng Webhook-Id
+    EP-->>DSP: 2xx hoặc lỗi
+    DSP->>API: báo kết quả từng mục
+    API->>RPL: REPLAYED hoặc NEW với attempts tăng
+  end
+  RPL->>RPL: COMPLETED hoặc FAILED, outbox EVT-10-12
+```
+
+`REDELIVER_RANGE` theo cùng khung nhưng đọc topic gốc bằng consumer `assign`. `RESET_OFFSET` không qua bộ giao nhận: `ReplayService` đặt vị trí nhóm bằng Admin API khi subscription còn `PAUSED` và lưu `previousOffsets` để hoàn tác.
+
+### 5.8. CDC hộ PH-05, tự duyệt (FR-10-066, 068)
+
+```mermaid
+sequenceDiagram
+  participant P5 as PH-05 adapter
+  participant REG as TopicRegistrationService
+  participant PW as ProvisioningWorker
+  participant APC as Apicurio
+  participant GIT as dh-config-tenant
+  participant REC as ProvisioningReconciler
+  P5->>REG: register topicKind CDC, onBehalfOf, sourceRef
+  REG->>REG: scope event:topic-register, tiền tố, idempotent theo topicName
+  REG->>REG: AutoApprovalPolicy đạt, ApprovalRequest APPROVED autoApproved
+  REG->>REG: Topic PROVISIONING, Publication ACTIVE cho dh-cdc
+  REG-->>P5: 202 PROVISIONING
+  PW->>APC: artifact và phiên bản 1
+  PW->>GIT: commit KafkaTopic
+  REC->>REC: Ready, Topic ACTIVE, EVT-10-01
+  Note over P5,REC: sau đó lược đồ nguồn đổi tương thích
+  P5->>REG: registerSchemaVersion
+  REG->>APC: dryRun
+  APC-->>REG: tương thích
+  REG->>REG: SchemaVersion ENABLED tự duyệt, EVT-10-05
+```
+
+Tự duyệt tắt thì yêu cầu vào hộp việc của IA; PH-05 vẫn nhận `202` với `PENDING_APPROVAL`. Lược đồ không tương thích trả ERR-10-016 để PH-05 dừng CDC và xử lý như thay đổi phá vỡ.
+
+### 5.9. Cầu nối Pulsar và chuyển hẳn (FR-10-073, 075)
+
+```mermaid
+sequenceDiagram
+  actor TA as TA
+  actor IA as IA
+  participant MIG as MigrationService
+  participant RT as dh-runtime legacy-jvm
+  participant PS as Pulsar cũ
+  participant K as Kafka
+  participant RC as MigrationReconciler
+  TA->>MIG: POST /migrations/bridges PULSAR_TO_KAFKA
+  MIG->>MIG: ánh xạ PLANNED, kiểm ERR-10-042, ApprovalRequest BRIDGE
+  IA->>MIG: approve
+  MIG->>MIG: Publisher LEGACY_BRIDGE, Publication tự duyệt
+  MIG->>RT: triển khai luồng cầu nối
+  RT->>PS: subscribe Failover dh-bridge
+  PS-->>RT: bản tin
+  RT->>K: produce CloudEvents acks=all
+  K-->>RT: xác nhận
+  RT->>PS: ack
+  MIG->>MIG: MigrationBridge RUNNING, LegacyMapping BRIDGING
+  loop mỗi giờ
+    RC->>PS: stats theo khoảng giờ
+    RC->>K: đếm theo source cầu nối
+    RC->>MIG: báo cáo chênh lệch
+  end
+  TA->>MIG: cut-over, IA duyệt CUTOVER
+  MIG->>RT: dừng cầu nối
+  MIG->>MIG: LegacyMapping CUT_OVER, EVT-10-15
+```
+
+Ack Pulsar chỉ sau khi Kafka xác nhận, nên dừng giữa chừng chỉ gây trùng (chống trùng theo `id` lấy từ `messageId`), không mất. Quay lui trong `10.migration.rollback-window-days` triển khai lại cầu nối chiều cũ và chuyển ánh xạ `ROLLED_BACK`.
