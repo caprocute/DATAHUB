@@ -493,9 +493,9 @@ Khi publication, subscription chuyển `ACTIVE`, `AccessGrantService` chạy cá
 3. `EnvelopeValidator` kiểm CloudEvents 1.0, `source` thuộc HTTT của client (bảng `source` cho phép đi kèm `RuntimeTopic.publishers[]`), ghi đè `dhtenant`, bổ sung `time`, `traceparent` (ERR-10-104).
 4. `SchemaCache` chọn phiên bản theo `dataschema` hoặc phiên bản `ENABLED` mới nhất, kiểm `data` theo lược đồ (ERR-10-105). Đệm lược đồ theo `contentId`, bất biến nên không cần hết hạn; danh sách phiên bản hợp lệ làm mới bằng EVT-10-05, EVT-10-02.
 5. `PartitionKeyResolver` lấy khóa theo `routingMode`: `KEY_HASH` đọc `partitionKeyField` (hoặc `ce_subject` khi `$subject`), thiếu khóa khi bắt buộc thì ERR-10-105; `ROUND_ROBIN` khóa rỗng, bộ chia phân vùng mặc định của client; `SINGLE_PARTITION` ghi phân vùng 0.
-6. `PublishDeduplicator` đặt `SET NX` khóa `dh:{tenant}:evt:dedup:{publicationCode}:{id}` giá trị `PENDING`, TTL 24 giờ. Có giá trị `DONE:{partition}:{offset}` thì trả kết quả cũ; có `PENDING` trẻ hơn 30 giây thì chờ tối đa 2 giây để lấy kết quả của lượt đang chạy rồi trả `202` với kết quả đó; `PENDING` cũ hơn 30 giây (lượt trước đã chết giữa chừng) thì ghi lại (chấp nhận khả năng trùng hiếm, bên nhận chống trùng theo `id`, BR-10-009).
+6. `PublishDeduplicator` đặt `SET NX` khóa `dh:{tenant}:evt:dedup:{publicationCode}:{id}` giá trị `pending`, TTL 24 giờ. Có giá trị `done:{partition}:{offset}` thì trả kết quả cũ; có `pending` trẻ hơn 30 giây thì chờ tối đa 2 giây để lấy kết quả của lượt đang chạy rồi trả `202` với kết quả đó; `pending` cũ hơn 30 giây (lượt trước đã chết giữa chừng) thì ghi lại (chấp nhận khả năng trùng hiếm, bên nhận chống trùng theo `id`, BR-10-009).
 7. `TenantProducerPool` ghi với `acks=all`, `enable.idempotence=true`, `max.in.flight.requests.per.connection=5`, `delivery.timeout.ms=10000`. Lỗi `NOT_ENOUGH_REPLICAS` hoặc quá thời gian thì ERR-10-108, xóa khóa chống trùng.
-8. Cập nhật khóa chống trùng thành `DONE`, trả `202` với `results[]`.
+8. Cập nhật khóa chống trùng thành `done:{partition}:{offset}`, trả `202` với `results[]`.
 
 Lô (`application/cloudevents-batch+json`) được kiểm toàn bộ ở bước 3–5 trước khi ghi bất kỳ bản tin nào; ghi bằng một giao dịch Kafka (`transactional.id = dh-gw-{tenant}-{pod}-{n}`) để lô là tất cả hoặc không. Sự kiện đơn không dùng giao dịch để giữ p99 ≤ 50 ms (NFR-10-002). Bản tin trên Kafka theo định dạng §4.9 FRS: tiêu đề `ce_*`, giá trị có tiền tố định danh lược đồ kiểu Confluent (byte 0 và 4 byte `contentId`, ADR-070).
 
@@ -534,7 +534,7 @@ Bộ giao nhận là StatefulSet; mỗi bản sao có số thứ tự `i` trong 
 5. Gửi với thời gian chờ `timeoutMs`. Phân loại kết quả theo bảng §8.5.
 6. Thành công: đánh dấu offset đã xử lý; commit theo lô mỗi 1 giây hoặc mỗi 100 bản tin cho từng phân vùng (chỉ offset liên tục đã xong). Thất bại tạm thời: `RetryPolicy`. Thất bại vĩnh viễn hoặc hết lượt: `DlqWriter`.
 
-`RetryPolicy` tính lần chờ thứ k là `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2, dùng `Retry-After` nếu nhỏ hơn `maxMs` (FR-10-039). Trong lúc chờ, worker `pause()` riêng phân vùng đó và tiếp tục `poll()` để giữ tư cách thành viên nhóm (không vượt `max.poll.interval.ms`); các phân vùng khác vẫn chạy. Hết `maxRetries`: `DEAD_LETTER` thì ghi DLQ rồi đi tiếp; `BLOCK` thì gửi lệnh tạm ngừng về control plane (API nội bộ `POST /runtime/subscriptions/{subscriptionCode}:suspend` với `suspendSource = CIRCUIT_BREAKER`, §13.4 mục 5), dừng mọi worker của subscription, không commit.
+`RetryPolicy` tính lần chờ thứ k là `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2, dùng `Retry-After` nếu nhỏ hơn `maxMs` (FR-10-039). Trong lúc chờ, worker `pause()` riêng phân vùng đó và tiếp tục `poll()` để giữ tư cách thành viên nhóm (không vượt `max.poll.interval.ms`); các phân vùng khác vẫn chạy. Hết `maxRetries`: `DEAD_LETTER` thì ghi DLQ rồi đi tiếp; `BLOCK` thì gửi lệnh tạm ngừng về control plane (API nội bộ `POST /runtime/subscriptions/{subscriptionCode}:suspend` với `suspendSource = CIRCUIT_BREAKER` và `suspendReason` ghi "đầu nhận lỗi, failurePolicy BLOCK", §13.4 mục 5), dừng mọi worker của subscription, không commit. Trường hợp này không có worker thăm dò tự tiếp tục: FR-10-039 đòi TO khắc phục rồi tiếp tục. A.2.5 chưa có giá trị `suspendSource` riêng cho `BLOCK` nên thiết kế phân biệt bằng `suspendReason` (§13.4 mục 2).
 
 `SubscriptionBreaker` đếm theo cửa sổ trượt 1 phút: tỷ lệ lỗi ≥ 50% liên tục trong `10.push.suspend-after-failures-minutes` phút thì báo control plane đặt `SUSPENDED` với `suspendSource = CIRCUIT_BREAKER`. Ở trạng thái này bộ giao nhận vẫn giữ một worker thăm dò: mỗi 5 phút gửi đúng bản tin đầu tiên chưa commit; thành công thì báo control plane đưa về `ACTIVE` (chỉ khi `suspendSource = CIRCUIT_BREAKER`), tiếp tục giao.
 
@@ -693,11 +693,11 @@ sequenceDiagram
   AX->>GW: chuyển tiếp kèm X-Dh-Client-Id, X-Dh-Tenant qua mTLS
   GW->>GW: TenantGuard, topic ACTIVE hoặc DEPRECATED
   GW->>GW: kiểm phong bì, kiểm data theo lược đồ, tính khóa
-  GW->>VK: SET NX khóa chống trùng PENDING
+  GW->>VK: SET NX khóa chống trùng pending
   VK-->>GW: mới
   GW->>K: produce acks=all, idempotent
   K-->>GW: partition, offset
-  GW->>VK: khóa chống trùng DONE
+  GW->>VK: khóa chống trùng done
   GW-->>H: 202 results
 ```
 
@@ -877,3 +877,340 @@ sequenceDiagram
 ```
 
 Ack Pulsar chỉ sau khi Kafka xác nhận, nên dừng giữa chừng chỉ gây trùng (chống trùng theo `id` lấy từ `messageId`), không mất. Quay lui trong `10.migration.rollback-window-days` triển khai lại cầu nối chiều cũ và chuyển ánh xạ `ROLLED_BACK`.
+
+## 6. Đa tenant trong mã nguồn
+
+Mọi bảng `ph10_event` có `tenant_id` và `FORCE ROW LEVEL SECURITY`; `TenantContextFilter` của `dh-integration` đặt `SET LOCAL app.tenant_id` đầu mỗi giao dịch từ token (D03-10, SEC-80, SEC-81). Tác vụ nền (đối soát, thu lag, ingestor DLQ) lặp theo tenant và đặt ngữ cảnh cho từng vòng; không truy vấn nào chạy không có ngữ cảnh (kiểm bằng `RlsGuardTest` chạy với vai trò CSDL không có `BYPASSRLS`). Topic nền tảng `dh.` thuộc tenant `COMMON`; chính sách RLS cho đọc `tenant_id IN (current, 'COMMON')` ở bảng `topic`, `event_schema`, `schema_version`, ghi chỉ `current`.
+
+Tenant của bản tin luôn lấy từ tiền tố topic (BR-10-001, FR-10-064). Trên cụm, cách ly theo bảng sau (SEC-82):
+
+| Lớp | Cơ chế | Nơi kiểm |
+|---|---|---|
+| Tên topic, nhóm | Tiền tố `{tenant}.` và `dh-*-{tenant}-*` theo Phụ lục A.8 | `TopicNamePolicy`; Kyverno từ chối `KafkaTopic`, `KafkaUser` trong kho `dh-config-{tenant}` mà tên, ACL không mang tiền tố tenant của kho (ADR-072) |
+| ACL | Principal nội bộ `User:CN=dh-runtime-{tenant}`, `User:CN=dh-cdc-{tenant}`: ACL `prefixed` trên `{tenant}.` và nhóm `dh-*-{tenant}-`; principal HTTT: ACL `literal` theo topic và nhóm | `AclRenderer`; kiểm thử rò rỉ |
+| Hạn mức | `quotas` theo `KafkaUser`, tổng ≤ trần tenant | `QuotaAllocator` (SEC-86) |
+| Lược đồ | `groupId = {tenant}`; `RegistryProxy` lọc theo scope của token, chỉ trả artifact của topic mà client có publication hoặc subscription `ACTIVE` | Cổng sự kiện |
+| Bí mật | OpenBao theo tiền tố `kv/dh/{tenant}/event/`, transit `dh-{tenant}-event-dlq`; ServiceAccount của `dh-rt-{tenant}` chỉ đọc tiền tố của nó | Chính sách OpenBao (SEC-88) |
+| Valkey | Khóa `dh:{tenant}:evt:*`, ACL Valkey theo người dùng của từng namespace | Cấu hình Valkey |
+| Quan sát | Nhãn `tenant` bắt buộc; Grafana lọc theo tenant (SEC-84) | `EventMetrics` |
+
+`LeakProbeScheduler` chạy mỗi ngày và sau mỗi lần phát hành: principal kiểm thử của T90 thử `DESCRIBE`, `READ`, `WRITE` topic và nhóm của T91, đọc artifact `groupId = t91`, gọi API phát, kéo với `subscriptionCode` của T91; mọi lượt phải bị từ chối, kết quả gửi PH-13 (SEC-87, NFR-10-017).
+
+## 7. Bảo mật
+
+| Vấn đề | Biện pháp | SEC |
+|---|---|---|
+| Giả mạo bên phát | Token client credentials, scope `topic:{topicName}:publish` và dữ liệu OPA mỗi lượt; `source` phải thuộc HTTT; `dhtenant` ghi đè | SEC-24, SEC-25, SEC-26 |
+| Tạm ngừng chậm có hiệu lực | Gỡ dữ liệu OPA trước, không đợi token hết hạn | SEC-25, SEC-26 |
+| Giả mạo, phát lại webhook | HMAC-SHA256 theo ADR-044, `Webhook-Timestamp`, `Webhook-Id`, hướng dẫn bên nhận kiểm độ lệch `10.push.signature-tolerance-seconds` | SEC-47 |
+| Lộ khóa ký | Sinh trong `dh-integration`, ghi thẳng OpenBao, hiển thị một lần; không lưu CSDL, không log, không xuất; canary NFR-10-016 | SEC-33, SEC-32 |
+| SSRF, DNS rebinding qua `endpointUrl` | HTTPS, FQDN trong danh sách egress, chặn dải riêng, ghim IP, không theo chuyển hướng | SEC-16, SEC-43 |
+| TLS yếu ở đầu nhận | TLS ≥ 1.2, kho CA nền tảng, ERR-10-114 | SEC-12 |
+| Lộ dữ liệu cá nhân qua sự kiện | `PiiScanner`, chính sách `10.schema.pii-check-mode`, sự kiện chỉ mang định danh (BR-10-014) | SEC-37 |
+| Lộ nội dung DLQ | Mã hóa transit theo tenant cho `RESTRICTED`, `SENSITIVE`; xem nội dung cần `PERM-10-operate`, lý do, kiểm toán | SEC-31, SEC-60 |
+| Cursor bị giả | HMAC phía máy chủ, gắn `leaseId` và `subscriptionCode` | SEC-43 |
+| Sửa cụm ngoài quy trình | Git là nguồn sự thật, Kyverno, đối chiếu lệch mỗi 10 phút | SEC-07, SEC-59, SEC-65 |
+| Kết nối Kafka ngoài | Chỉ khi PA bật; SASL OAUTHBEARER hoặc mTLS; nhóm đúng tên được cấp | SEC-13, SEC-24 |
+| Hàng xóm ồn ào | Hạn mức Kafka theo principal, `limit-count` APISIX, trần worker | SEC-86 |
+| Lạm dụng phát lại | Duyệt bốn mắt, lý do, nhật ký 3 năm | SEC-60 |
+
+Quyền kiểm ở máy chủ: `@PreAuthorize` theo `PERM-10-read`, `PERM-10-create`, `PERM-10-update`, `PERM-10-subscribe`, `PERM-10-approve`, `PERM-10-operate`, `PERM-10-admin` ở lớp `web` theo ma trận FRS §3.2; phạm vi tổ chức (○) và bốn mắt kiểm trong dịch vụ, aggregate (ERR-10-044, 008). Scope máy `event:topic-register`, `event:permission-check`, `event:runtime-config`, `event:dlq-read`, `event:replay`, `event:metrics-read` chỉ cấp cho tài khoản dịch vụ; endpoint nội bộ `/runtime/**` chỉ mở trên `apisix-int`.
+
+## 8. Máy trạng thái, xử lý lỗi, thử lại và tính nhất quán
+
+### 8.1. Bảng chuyển trạng thái
+
+Mỗi chuyển là một phương thức của aggregate; trạng thái nguồn không hợp lệ trả ERR-10-006. Sơ đồ trạng thái ở FRS §4.3…4.8.
+
+| Đối tượng | Từ | Lệnh | Sang | Kiểm ở máy chủ |
+|---|---|---|---|---|
+| EventProject | ACTIVE | archive | ARCHIVED | Không còn topic PENDING_APPROVAL, PROVISIONING, ACTIVE, DEPRECATED (ERR-10-010) |
+| EventProject | ARCHIVED | restore | ACTIVE | |
+| Topic | DRAFT | submit | PENDING_APPROVAL | Lược đồ v1 đạt kiểm tra |
+| Topic | PENDING_APPROVAL | reject, withdraw | DRAFT | |
+| Topic | PENDING_APPROVAL | approve | PROVISIONING | Bốn mắt, hạn mức, tên; artifact và commit thành công |
+| Topic | DRAFT | (tự duyệt máy) | PROVISIONING | `AutoApprovalPolicy` |
+| Topic | PROVISIONING | (đối soát) | ACTIVE, FAILED | `Ready`, quá hạn |
+| Topic | FAILED | retry-provisioning | PROVISIONING | `PERM-10-update` |
+| Topic | FAILED | cancel-provisioning | DRAFT | Xóa artifact khi chưa có bản tin |
+| Topic | ACTIVE | deprecate | DEPRECATED | Có `successorTopic` hoặc lý do, `sunsetAt` |
+| Topic | ACTIVE, DEPRECATED | retire | RETIRED | Không còn subscription chưa REVOKED, hoặc đã tới `sunsetAt` (thu hồi hết) |
+| SchemaVersion | DRAFT | submit | PENDING_APPROVAL | Tương thích, khóa phân vùng, PII |
+| SchemaVersion | PENDING_APPROVAL | withdraw, reject, approve | DRAFT, REJECTED, ENABLED | Bốn mắt khi duyệt |
+| SchemaVersion | ENABLED, DEPRECATED | deprecate, (bỏ) | DEPRECATED, ENABLED | |
+| SchemaVersion | DEPRECATED | disable | DISABLED | Không còn bản tin trong lưu giữ, không phải bản mới nhất (BR-10-015) |
+| Publisher, Subscriber | ACTIVE | suspend | SUSPENDED | Ghi `suspendSource` |
+| Publisher, Subscriber | SUSPENDED | resume | ACTIVE | Chỉ nguồn tương ứng (PH01 chỉ khi HTTT ACTIVE) |
+| Publisher, Subscriber | ACTIVE, SUSPENDED | retire | RETIRED | Thu hồi quan hệ |
+| Publication | PENDING_APPROVAL | approve, reject | ACTIVE, REJECTED | Bốn mắt, scope, ACL, hạn mức |
+| Publication | ACTIVE | suspend | SUSPENDED | Gỡ OPA, ACL |
+| Publication | SUSPENDED | resume | ACTIVE | Đúng `suspendSource` |
+| Publication | ACTIVE, SUSPENDED | revoke | REVOKED | |
+| Subscription | PENDING_APPROVAL | approve, reject | PROVISIONING, REJECTED | Bốn mắt, endpoint xác minh 24 giờ |
+| Subscription | PROVISIONING | (cấp phát) | ACTIVE, FAILED | |
+| Subscription | FAILED | retry | PROVISIONING | |
+| Subscription | ACTIVE | pause, resume | PAUSED, ACTIVE | `PERM-10-operate`, lý do |
+| Subscription | ACTIVE | suspend (SO, PH-01, ngắt mạch, `BLOCK`) | SUSPENDED | `suspendSource` `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `MANUAL` |
+| Subscription | SUSPENDED | resume | ACTIVE | Lý do khắc phục; ngắt mạch có thể tự về |
+| Subscription | ACTIVE, PAUSED, SUSPENDED | revoke | REVOKED | Hủy lượt phát lại đang chạy |
+| SigningKey | ACTIVE | rotate | PREVIOUS | Sinh khóa ACTIVE mới |
+| SigningKey | PREVIOUS | (hết `previousUntil`) | REVOKED | Xóa khỏi OpenBao |
+| SigningKey | ACTIVE | revoke khẩn | REVOKED | Sinh khóa mới, không chồng lấn |
+| ApprovalRequest | PENDING | approve, reject, withdraw, (hết hạn) | APPROVED, REJECTED, WITHDRAWN, EXPIRED | Bốn mắt; hết hạn đưa đối tượng về trạng thái trước |
+| ReplayRequest | PENDING_APPROVAL | approve, reject, cancel | APPROVED, REJECTED, CANCELLED | |
+| ReplayRequest | APPROVED | (nhận việc), cancel, (24 giờ) | RUNNING, CANCELLED | |
+| ReplayRequest | RUNNING | (xong), (lỗi), cancel | COMPLETED, FAILED, CANCELLED | |
+| DlqEntry | NEW | replay, discard | REPLAY_PENDING, DISCARDED | ERR-10-036 nếu đã xử lý |
+| DlqEntry | REPLAY_PENDING | (kết quả) | REPLAYED, NEW | |
+| DlqEntry | REPLAYED, DISCARDED | (hết giữ) | PURGED | |
+| MigrationBridge | PENDING_APPROVAL | approve | RUNNING | |
+| MigrationBridge | RUNNING | stop, (lỗi), (hết hạn) | STOPPED, ERROR, EXPIRED | |
+| MigrationBridge | STOPPED, ERROR | resume | RUNNING | Chưa quá `expiresAt` |
+| LegacyMapping | PROPOSED | (lập kế hoạch) | PLANNED, SKIPPED | |
+| LegacyMapping | PLANNED | (cầu nối RUNNING) | BRIDGING | |
+| LegacyMapping | BRIDGING | cut-over | CUT_OVER | Điều kiện FR-10-075, duyệt CUTOVER |
+| LegacyMapping | CUT_OVER | rollback, (hết cửa sổ) | ROLLED_BACK, CLOSED | |
+| ManifestImportJob | VALIDATING | (xong) | PREVIEW, FAILED | |
+| ManifestImportJob | PREVIEW | apply, cancel | APPLYING, CANCELLED | |
+| ManifestImportJob | APPLYING | (xong) | APPLIED, FAILED | |
+
+Ba chuyển chưa có tên ở FRS được đặt ở dạng mô tả trong ngoặc: `LegacyMapping` từ `ROLLED_BACK` đi đâu, `MigrationBridge` từ `PENDING_APPROVAL` khi bị từ chối, và `ManifestImportJob` khi hủy ở `VALIDATING`; ghi ở §13.4 mục 2.
+
+### 8.2. Outbox
+
+Sự kiện EVT-10-01…15 ghi vào `outbox_event` cùng giao dịch với thay đổi trạng thái; Debezium outbox của `pg-core` (cơ chế chung với PH-04, PH-05) đẩy lên `{tenant}.event.{thực-thể}.{sự-kiện}.v1` với khóa theo cột "Khóa" FRS §8.2 và `ce_type = vn.datahub.event.{thực-thể}.{sự-kiện}`. `ce_id` là ULID sinh khi ghi outbox, nên Debezium phát lại sau sự cố vẫn mang cùng `id`. Bản ghi kiểm toán đi cùng outbox sang PH-13 (FR-10-065), không ghi trực tiếp. Riêng EVT-10-11 được `DlqAlertAggregator` gộp: mỗi phút một bản ghi outbox cho mỗi subscription có mục mới.
+
+### 8.3. Inbox và idempotency
+
+| Đầu vào | Cơ chế | Khóa |
+|---|---|---|
+| Lệnh ghi qua `/api/event/v1` | `IdempotencyFilter`: lưu (tenant, chủ thể, `Idempotency-Key`, băm thân, phản hồi) 24 giờ; trùng khóa khác băm trả ERR-10-037 | `Idempotency-Key` 16…128 ký tự |
+| Đăng ký máy (FR-10-066, 067), `ensure-party` | Idempotent tự nhiên theo `topicName`, (`flowCode`, `topicName`, `action`) | Mã nghiệp vụ |
+| Sự kiện tiêu thụ (EVT-05-11, EVT-04-09, PH-01, PH-20) | Bảng inbox (§13.4 mục 1): ghi `ce_id` và xử lý trong một giao dịch, trùng thì bỏ qua | `ce_id` |
+| Bản tin DLQ | Chỉ mục duy nhất theo nguồn và `attempts` (§4.9) | Nguồn |
+| Báo cáo giao nhận | Ghi đè theo (`subscriptionCode`, `windowStart`) | Cửa sổ |
+| Lệnh hệ thống từ `dh-runtime` (tạm ngừng do ngắt mạch, kết quả phát lại) | Mang `configVersion`; bỏ qua khi cũ hơn | `version` |
+| API phát | Chống trùng (bên phát, `id`) 24 giờ ở Valkey (§4.6) | `id` CloudEvents |
+
+### 8.4. Thời gian chờ, thử lại, ngắt mạch
+
+| Lời gọi | Thời gian chờ | Thử lại | Ngắt mạch, khi lỗi |
+|---|---|---|---|
+| Apicurio từ `dh-integration` | 3 giây | 2 lần, 200 ms, 800 ms | 50% trên 10 lượt, nửa mở 30 giây; ERR-10-029 |
+| Apicurio từ `dh-runtime` (đọc) | 2 giây | 2 lần | Dùng đệm theo `contentId` (bất biến) |
+| Git push | 15 giây | 5 lần với kéo lại | ERR-10-029, yêu cầu giữ `PENDING` |
+| Kubernetes API (đọc CR) | 5 giây | Vòng sau | Không đổi trạng thái khi không đọc được |
+| Kafka Admin | 10 giây | 3 lần | ERR-10-029; bộ thu lag bỏ chu kỳ |
+| Keycloak Admin API | 5 giây | 2 lần | ERR-10-029 |
+| OpenBao (ghi khóa ký) | 2 giây | 2 lần | ERR-10-029 |
+| OpenBao (đọc khóa từ runtime) | 1 giây | 2 lần | Đệm 10 phút rồi ERR-10-117 |
+| PH-01 bản sao đọc, PH-04 `FlowQueryApi` | Trong tiến trình hoặc 2 giây | Không | ERR-10-021, 022 khi không có; ERR-10-029 khi lỗi |
+| Webhook tới HTTT | `timeoutMs` | Theo FR-10-039 | `SubscriptionBreaker` |
+| Produce từ cổng | `delivery.timeout.ms` 10 giây | Client Kafka tự thử lại idempotent | ERR-10-108 |
+
+### 8.5. Ánh xạ lỗi
+
+Control plane ánh xạ ngoại lệ miền sang ProblemDetail RFC 9457 bằng `EventProblemMapper`; `type` là URI của mã lỗi, `code` là ERR-10-0xx.
+
+| Ngoại lệ hoặc tình huống | Mã |
+|---|---|
+| `NotFoundOrForeignTenant` | ERR-10-001 |
+| Vi phạm ràng buộc duy nhất mã, tên | ERR-10-002 |
+| Kiểm tra Bean Validation, trường bất biến, tổ hợp sai | ERR-10-003 |
+| `TopicNamePolicy` từ chối, tiền tố khác tenant | ERR-10-004, 005 |
+| `IllegalTransition` | ERR-10-006 |
+| `OptimisticLockException`, `If-Match` sai | ERR-10-007 |
+| `FourEyesViolation` | ERR-10-008 |
+| Thiếu lý do, ý kiến, `acknowledgePii`, `acknowledgeDuplicates` | ERR-10-009 |
+| Còn đối tượng phụ thuộc | ERR-10-010 |
+| `QuotaGuard` | ERR-10-011 |
+| Ngoài miền tham số | ERR-10-012 |
+| Giảm phân vùng, chưa xác nhận thứ tự | ERR-10-013, 014 |
+| Lược đồ: cú pháp, không tương thích, khóa phân vùng, PII, mức, định dạng | ERR-10-015…020 |
+| PH-01, PH-04, DU không hợp lệ | ERR-10-021…023 |
+| Quan hệ trùng, không ở trạng thái nhận | ERR-10-024, 025 |
+| Endpoint không hợp lệ, xác minh lỗi, Kafka ngoài chưa bật | ERR-10-026…028 |
+| `DependencyUnavailable` (Apicurio, Git, Admin, Keycloak, OpenBao, PH-01, PH-04) | ERR-10-029 |
+| Worker, `startAt`, `RESET_OFFSET` chưa `PAUSED` | ERR-10-030…032 |
+| Phát lại: khoảng, trần, đang có lượt, mục đã xử lý | ERR-10-033…036 |
+| Idempotency trùng khác thân | ERR-10-037 |
+| Cấp phát lỗi hoặc chưa xong | ERR-10-038 |
+| Tenant tạm ngừng hoặc đóng băng | ERR-10-039 |
+| Nhập khai báo, ánh xạ, cầu nối | ERR-10-040…042, 050 |
+| Tắt danh mục đang dùng, ngoài tổ chức, topic máy | ERR-10-043…045 |
+| Định tuyến, phiên bản topic, compaction, tham số truy vấn | ERR-10-046…049 |
+
+Data plane phân loại kết quả giao bằng `DeliveryOutcomeClassifier`; `failureClass` ghi vào `delivery_failure` và quyết định nhánh xử lý:
+
+| Kết quả | Mã | `failureClass` | Xử lý |
+|---|---|---|---|
+| Quá `timeoutMs`, lỗi mạng | ERR-10-111 | `TRANSIENT` | Thử lại giãn dần |
+| `5xx`, `408`, `425`, `429` | ERR-10-112 | `TRANSIENT` | Thử lại, tôn trọng `Retry-After` |
+| `4xx` khác, nack của bên nhận | ERR-10-113 | `PERMANENT` | DLQ ngay; `410` thêm tạm ngừng subscription |
+| Lỗi TLS, chứng thư | ERR-10-114 | `SECURITY` | Thử lại như tạm thời (chứng thư có thể đang thay), cảnh báo TO |
+| Địa chỉ bị chặn | ERR-10-115 | `SECURITY` | DLQ, cảnh báo SO |
+| Không giải tuần tự | ERR-10-116 | `DESERIALIZATION` | DLQ ngay |
+| Không đọc khóa ký | ERR-10-117 | `SECURITY` | Tạm dừng phân vùng, không gửi |
+| Cầu nối không chuyển được | ERR-10-118 | `PERMANENT` | DLQ của cầu nối |
+| Bản tin thiếu định danh lược đồ (tuân thủ) | ERR-10-119 | `DESERIALIZATION` | Đếm vi phạm theo publication |
+| Kafka từ chối ACL, hạn mức | ERR-10-120 | `SECURITY` | Chỉ số theo principal |
+
+## 9. Cấu hình và cờ tính năng theo tenant
+
+Tham số `10.*` đầy đủ ở Phụ lục A.5 FRS; module `settings` đọc qua `ParameterApi` của PH-18 với đệm 5 phút và làm mới khi PH-18 báo đổi. Nơi dùng:
+
+| Nhóm tham số | Đọc ở | Áp dụng |
+|---|---|---|
+| `10.topic.*`, `10.schema.*`, `10.provisioning.timeout-minutes` | `TopicConfigPolicy`, `CompatibilityChecker`, `PiiScanner`, `ProvisioningReconciler` | Đối tượng tạo mới |
+| `10.approval.*` | `AutoApprovalPolicy`, `ApprovalExpirer` | Ngay |
+| `10.publish.max-batch`, `10.pull.*` | Cổng sự kiện qua `RuntimeConfigCache` | Ngay sau làm mới cấu hình |
+| `10.push.*` | Giá trị mặc định khi tạo subscription; trần kiểm khi tạo, sửa; `10.push.suspend-after-failures-minutes`, `10.push.key-*` đọc ở bộ giao nhận và `RotationScheduler` | Mặc định cho đối tượng mới; trần ngay |
+| `10.lag.*` | `LagCollector`, `AlertEvaluator` | Ngay (ngưỡng mặc định áp cho subscription không đặt riêng) |
+| `10.dlq.*`, `10.replay.*` | `DlqPurger`, `ReplayService`, `ReplayRunner` | Ngay |
+| `10.compliance.*` | `ComplianceSampler` | Ngay |
+| `10.graph.max-nodes` | `GraphBuilder` | Ngay |
+| `10.quota.*` | `QuotaGuard`, `QuotaAllocator` | Ngay ở control plane; Kafka sau commit Git |
+| `10.migration.*` | `MigrationService`, `BridgeMonitor`, `CutOverService` | Ngay |
+
+Ba tham số đóng vai cờ tính năng: `10.external-kafka.enabled` (chỉ PA đặt; bật thì sinh route listener `external` cho tenant và cho phép `KAFKA_NATIVE`, `PULL_KAFKA`), `10.approval.auto-approve-machine`, `10.approval.auto-approve-internal`. Danh mục `comm_type_setting`, `routing_mode_setting` bật tắt từng mã theo tenant (FR-10-060, 061). Không có cờ tính năng nào ngoài các tham số này; FR-10-048 (lọc, gộp lô) và FR-10-071 (nhập khai báo) ở Đợt sau được tắt bằng cấu hình build `dh.event.features.*` của DU, không phải tham số tenant.
+
+## 10. Quan sát
+
+| Chỉ số | Kiểu | Nhãn (ngoài `tenant`) | Nguồn |
+|---|---|---|---|
+| `dh_event_published_total` | counter | `topic`, `publication` | Cổng |
+| `dh_event_publish_rejected_total` | counter | `topic`, `reason` (mã ERR) | Cổng |
+| `dh_event_publish_duration_seconds` | histogram | `topic` | Cổng (NFR-10-002) |
+| `dh_event_pull_requests_total` | counter | `subscription`, `result` | Cổng |
+| `dh_event_dedup_bypass_total` | counter | | Cổng |
+| `dh_event_delivery_total` | counter | `subscription`, `result` (`success`, `transient`, `permanent`, `dead_letter`) | Bộ giao nhận |
+| `dh_event_delivery_duration_seconds` | histogram | `subscription` | Bộ giao nhận (NFR-10-003, 005) |
+| `dh_event_delivery_retry_total` | counter | `subscription` | Bộ giao nhận |
+| `dh_event_dispatcher_workers` | gauge | `replica` | `SlotAllocator` |
+| `dh_event_consumer_lag_records`, `dh_event_consumer_lag_seconds` | gauge | `topic`, `subscription`, `partition` | Bộ thu lag |
+| `dh_event_dlq_entries` | gauge | `subscription`, `status` | Control plane |
+| `dh_event_replay_records_total` | counter | `replay`, `result` | Bộ phát lại |
+| `dh_event_compliance_violation_total` | counter | `publication`, `reason` | Bộ giám sát tuân thủ |
+| `dh_event_provisioning_state` | gauge | `kind`, `state` | Bộ đối soát |
+| `dh_event_quota_usage_ratio` | gauge | `kind` | `QuotaAllocator` |
+| `dh_event_runtime_config_age_seconds` | gauge | `role` | `RuntimeConfigCache` |
+| `dh_event_stats_dropped_total` | counter | | Bộ giao nhận |
+| `dh_event_bridge_lag_seconds`, `dh_event_bridge_messages_total` | gauge, counter | `bridge` | Cầu nối |
+
+Bảy chỉ số đầu của FR-10-059 giữ đúng tên; các chỉ số còn lại là chỉ số vận hành của thiết kế, cùng tiền tố `dh_event_` và nhãn `tenant` (Phụ lục A.8). Nhãn `partition` chỉ có ở hai chỉ số lag; `ce_subject` và mọi giá trị nghiệp vụ không bao giờ là nhãn.
+
+Vết: cổng tạo span `event.publish` nối tiếp `traceparent` của HTTT, ghi `traceparent` vào tiêu đề bản tin; bộ giao nhận tạo span `event.deliver` liên kết (span link) tới span phát, gửi `traceparent` mới cho đầu nhận. Thuộc tính `dh.topic`, `dh.subscription`, `messaging.kafka.partition`, `messaging.kafka.offset`, `http.response.status_code`, `dh.attempt`. Control plane có span cho Apicurio, Git, Keycloak, OpenBao. Log JSON có `tenant`, `topic`, `subscription`, `traceId`, `ce_id`; không có thân bản tin, không có bí mật, `responseSnippet` đã qua bộ che (SEC-32).
+
+## 11. Hiệu năng và vận hành
+
+**Định cỡ cho tỉnh vừa** (giả định, cơ sở GĐ-07 và GĐ-10-01, 02): 150 topic nghiệp vụ, 400 subscription (240 `PUSH`, 140 `PULL_API`, 20 `PULL_KAFKA`), 2 triệu sự kiện mỗi ngày, trung bình 23 sự kiện/giây, cao điểm khoảng 70 sự kiện/giây. Mỗi topic trung bình 2,7 bên nhận, nên số lượt giao đẩy khoảng 3,2 triệu mỗi ngày, cao điểm khoảng 110 lượt/giây.
+
+| Thành phần | Định cỡ | Cơ sở |
+|---|---|---|
+| `dh-runtime-event-gateway` | 2 bản sao, 0,5 vCPU, 512 MiB | 70 sự kiện/giây là 4% NFR-10-004; bản sao thứ hai cho sẵn sàng |
+| `dh-runtime-event-dispatcher` | 2 bản sao, 1 vCPU, 1 GiB; KEDA tới 6 | 110 lượt/giây so với 200 lượt/giây mỗi bản sao (NFR-10-005); 360 consumer, `fetch.max.bytes` 1 MiB |
+| Module `event` trong `dh-integration` | Thêm khoảng 0,5 vCPU, 512 MiB | Bộ thu lag 400 nhóm mỗi 30 giây, ingestor DLQ |
+| Kafka | 1.800 phân vùng (150 topic và 150 DLQ, 6 phân vùng) cộng topic CDC, `SYSTEM`; khoảng 85 GB đĩa (2 KB × 2 triệu × 7 ngày × 3 bản sao) cộng 30% dự phòng | Đề nghị thêm vào D03-09 (FRS §10.4) |
+| `pg-core` `ph10_event` | `delivery_stat` khoảng 350 nghìn dòng/ngày (chỉ ghi phút có lượt), 90 ngày; `lag_sample` khoảng 7 triệu dòng/ngày, 48 giờ; cả hai phân vùng theo ngày | §7.2 FRS |
+| Valkey | Dưới 200 MiB: khóa chống trùng 24 giờ (2 triệu × khoảng 80 byte), lease, ảnh chụp cấu hình | |
+
+**Đường nóng.** Cổng giữ p99 ≤ 50 ms nhờ: kiểm lược đồ trên đệm `contentId` (không gọi mạng), một lượt Valkey `SET NX` (khoảng 1 ms), producer `linger.ms = 2`, `acks=all` (khoảng 5–15 ms trong một TTDL). Bộ giao nhận không chặn luồng nền khi chờ mạng nhờ luồng ảo và client HTTP không đồng bộ, giới hạn đồng thời mỗi bản sao bằng tổng phân vùng được gán.
+
+**Vận hành** (sổ tay D06-03): xử lý topic `FAILED` và lệch cấu hình; thay số bản sao bộ giao nhận; đặt lại vị trí bằng `RESET_OFFSET` thay cho thao tác tay; khôi phục mục DLQ khi `pg-core` ngừng lâu hơn lưu giữ topic DLQ; dọn nhóm tiêu thụ mồ côi (so `dh-sub-*`, `dh-ext-*` trên cụm với `subscription`); DR: Argo CD dựng lại topic, ACL ở site DR từ cùng kho Git, MirrorMaker 2 sao bản tin và offset nhóm (NFR-10-019); sau chuyển site, bộ giao nhận đọc offset đã dịch và có thể giao trùng trong cửa sổ RPO.
+
+## 12. Kiểm thử
+
+| Mức | Nội dung | Công cụ |
+|---|---|---|
+| Đơn vị | Invariant aggregate, `TopicNamePolicy`, `CommTypeMatrix`, `RetryPolicy`, `WebhookSigner` (vector thử ADR-044), `CursorCodec`, `QuotaAllocator`, `AlertEvaluator`, `KafkaManifestRenderer` (so tệp vàng) | JUnit 5, jqwik |
+| Kiến trúc | Luật Modulith, cấm log `SigningSecret`, chỉ `provisioning` dùng client Kubernetes | ArchUnit |
+| Tích hợp control plane | PostgreSQL với RLS, Apicurio 3, Keycloak, OpenBao dev, Gitea thay kho Git, Kafka | Testcontainers |
+| Tích hợp data plane | Cổng và bộ giao nhận với Kafka, Apicurio, Valkey, WireMock làm đầu nhận (lỗi, chậm, `410`, TLS sai, chuyển hướng, DNS rebinding) | `@QuarkusTest`, chạy native ở CI ban đêm |
+| Cấp phát | Strimzi và Argo CD trên kind, Kyverno từ chối tên sai tiền tố | kind, chạy ban đêm |
+| Hỗn loạn | Giết broker, bộ giao nhận, cổng giữa chừng với 1 triệu sự kiện: 0 mất, trùng ≤ 0,1% (NFR-10-006, 007) | Chaos Mesh |
+| Hiệu năng | Phát 500 sự kiện/giây 2 KB (NFR-10-002), giao 200 lượt/giây mỗi bản sao (NFR-10-005) | Gatling, k6 |
+| Hợp đồng | OpenAPI, AsyncAPI của D03-04-PH10; hợp đồng với PH-04, PH-05 | Spectral, oasdiff (CI-5) |
+| Bảo mật | Canary bí mật ký (NFR-10-016), rò rỉ chéo tenant (NFR-10-017), SSRF, cursor giả | D05-02-PH10, D05-04 |
+
+## 13. Lộ trình hiện thực, rủi ro và câu hỏi mở
+
+### 13.1. Lộ trình
+
+| Bước | Nội dung | FR |
+|---|---|---|
+| 1 | Module `event`: dự án, topic, lược đồ, Apicurio, duyệt, GitOps, đối soát | 001…022, 060, 061 |
+| 2 | Bên phát, bên nhận, publication, cổng sự kiện (API phát), scope và OPA | 025…033 |
+| 3 | Subscription, bộ giao nhận (đẩy, thử lại, ngắt mạch), khóa ký, xác minh endpoint | 035…042, 046, 047 |
+| 4 | API kéo, Kafka ngoài, nội bộ; VR-10 cho PH-04; đăng ký máy cho PH-05, DU | 034, 043…045, 066…069 |
+| 5 | DLQ, phát lại, lag, cảnh báo, thống kê, dashboard, sơ đồ, hạn mức, kiểm thử rò rỉ | 049…059, 062…065, 023 |
+| 6 | Xuất khai báo, di trú Pulsar, cầu nối, đối chiếu, chuyển hẳn | 070, 072…076 |
+| Đợt sau | Lọc và gộp lô khi đẩy, nhập khai báo | 048, 071 |
+
+Bước 1–4 nằm trong W2–W4 của kế hoạch phát triển (song song PH-04, PH-05 vì PH-05 CDC cần bước 4); bước 5–6 ở W5–W6.
+
+### 13.2. Truy vết hệ cũ
+
+| Mã hệ cũ | Thành phần hiện thực |
+|---|---|
+| LGC-HUB-001…004 | `DashboardQuery` (§4.15) |
+| LGC-HUB-005, 006 | Liên kết sang PH-13 |
+| LGC-HUB-007 | `GraphBuilder`, `LagCollector` |
+| LGC-HUB-008 | `project` |
+| LGC-HUB-009 | `topic`, `schema`, `provisioning` |
+| LGC-HUB-010, 011 | `party`, `PartySyncConsumer` |
+| LGC-HUB-012 | `publication`, `access`, cổng sự kiện |
+| LGC-HUB-013 | `subscription`, `signing`, bộ giao nhận, cổng kéo, `dlq`, `replay` |
+| LGC-HUB-014 | `catalog` |
+| LGC-TOOL-010 | `machine`, Kamelet `dh-kafka-source`, `dh-kafka-sink` |
+| LGC-BUS-039 | Cổng sự kiện, bộ giao nhận |
+
+### 13.3. Rủi ro
+
+| Rủi ro | Ảnh hưởng | Giảm thiểu |
+|---|---|---|
+| Cấp phát qua GitOps chậm hơn kỳ vọng của người dùng | PH-05 và IE chờ phút | Trả `202`, hiển thị tiến độ, NFR-10-008 đo ở CI |
+| Số consumer lớn khi tenant có nhiều subscription đẩy | Bộ nhớ và tải nhóm của broker | Trần `10.quota.max-push-workers-total`, `fetch.max.bytes` nhỏ, KEDA |
+| Endpoint HTTT chậm kéo dài làm tồn đọng | Lag, hết lưu giữ | Ngắt mạch, cảnh báo thời gian còn lại, `CRITICAL` khi dưới 24 giờ |
+| Valkey ngừng | Mất chống trùng, API kéo ngừng | Phát vẫn chạy (bỏ chống trùng); kéo trả `503` ngắn; Valkey HA của nền tảng |
+| Bên phát Kafka trực tiếp ghi sai lược đồ | Bên nhận nhận bản tin lỗi | Giám sát tuân thủ, DLQ ERR-10-116, tạm ngừng publication |
+| Chuyển nội dung ở cầu nối Pulsar sai | Bản tin lỗi trong giai đoạn song song | DLQ cầu nối, đối chiếu mỗi giờ, quay lui |
+
+### 13.4. Đề nghị bổ sung cho FRS
+
+| Mục | Chỗ thiếu ở Phụ lục A | Thiết kế đang dùng | Đề nghị |
+|---|---|---|---|
+| 1 | Bảng lưu khóa idempotency và inbox sự kiện tiêu thụ | Mô tả ở §8.3, chưa đặt tên bảng | Thêm vào A.3 hai bảng hạ tầng (ví dụ `idempotency_record`, `inbox_event`) để tập CSDL dùng chung tên |
+| 2 | Giá trị `suspendSource` cho tạm ngừng do `failurePolicy = BLOCK` (khác ngắt mạch vì không tự tiếp tục). Chuyển trạng thái: `LegacyMapping` sau `ROLLED_BACK`; `MigrationBridge` khi yêu cầu `BRIDGE` bị từ chối; `ManifestImportJob` hủy ở `VALIDATING` | Ghi trong ngoặc ở §8.1 | Bổ sung chuyển ở A.2.13, A.2.14 (đề xuất `ROLLED_BACK` sang `BRIDGING` khi bật lại cầu nối; cầu nối bị từ chối không tạo bản ghi `RUNNING`) |
+| 3 | Đường dẫn OpenBao cho khóa ký cursor của API kéo | §4.7 | Thêm vào A.8 một đường dẫn dạng `kv/dh/{tenant}/event/runtime/cursor` |
+| 4 | Tiêu đề DLQ mang `origin` | §4.9 suy từ đường ghi | Thêm `dh_dlq_origin` vào A.8 |
+| 5 | API nội bộ cho `dh-runtime`: báo cáo giao nhận, tạm ngừng do ngắt mạch hoặc `BLOCK`, nhận việc và báo kết quả phát lại, lấy nội dung mục DLQ | §4.8, 4.10, 4.11 | Thêm mã API kế tiếp từ API-10-085 ở FRS §8.3 (tập API cấp) |
+| 6 | Mã lỗi data plane cho phụ thuộc runtime không khả dụng (Valkey, Apicurio khi đệm rỗng) | §4.7 trả `503` không mã riêng | Thêm một mã trong dải 121…199 |
+| 7 | Thực thể lưu báo cáo đối chiếu di trú, kết quả xác minh endpoint, xác nhận cảnh báo lag | §4.16, FR-10-036, FR-10-055 | Thêm trường hoặc bảng vào A.3 (`endpointVerification` hiện chỉ có enum `result`) |
+
+### 13.5. Câu hỏi mở
+
+> **Câu hỏi mở Q10-20:** Ảnh chụp cấu hình runtime đặt ở Valkey (§4.12) làm data plane phụ thuộc thêm Valkey khi khởi động lúc control plane ngừng. Phương án khác là topic compacted riêng cho cấu hình runtime, cần FRS cấp tên topic. Đề xuất giữ Valkey ở MVP.
+
+> **Câu hỏi mở Q10-21:** Chia worker bằng `SlotAllocator` theo số thứ tự StatefulSet (§4.8) hay để mỗi bản sao chạy đủ `workerCount` consumer và dựa vào Kafka chia phân vùng (đơn giản hơn, tốn consumer nhàn rỗi). Đề xuất `SlotAllocator`, đo lại ở W4.
+
+> **Câu hỏi mở Q10-22:** Khóa ký cursor dùng chung cho mọi bản sao cổng của tenant; xoay khóa làm cursor đang mở mất hiệu lực (ERR-10-109). Có chấp nhận được không, hay giữ hai khóa trong thời gian bằng `10.pull.lease-seconds`.
+
+> **Câu hỏi mở Q10-23:** Khi Valkey ngừng, API phát bỏ chống trùng thay vì từ chối (§4.6). Cần ý kiến về việc ưu tiên sẵn sàng hơn chống trùng phía cổng, khi bên nhận đã bắt buộc chống trùng (BR-10-009).
+
+> **Câu hỏi mở Q10-24:** Nội dung DLQ lưu trong `pg-core` (`dlq_payload`) tới 1 MiB mỗi mục, trần 100.000 mục mỗi subscription, có thể chiếm hàng chục GB. Có chuyển nội dung lớn hơn 64 KiB sang Ceph RGW (bucket riêng, mã hóa) không.
+
+> **Câu hỏi mở Q10-25:** Đọc một bản tin mỗi phân vùng có lag để tính `lagSeconds` mỗi 30 giây có thể tốn khi tenant có hàng nghìn phân vùng tồn đọng. Có chấp nhận ước lượng `lagSeconds` theo tốc độ tiêu thụ cho phân vùng lag ổn định không.
+
+> **Câu hỏi mở Q10-26:** Strimzi Topic Operator chế độ một chiều có giới hạn thực tế về số `KafkaTopic` mỗi namespace `dh-kafka` khi nhiều tenant dùng chung cụm (NFR-10-014: 1.000 topic, cộng DLQ là 2.000). Cần đo với phiên bản Strimzi chốt ở D03-09.
+
+> **Câu hỏi mở Q10-27:** Chính sách Kyverno kiểm tiền tố tenant cho `KafkaTopic`, `KafkaUser` do PH-10 hay đội nền tảng (D03-09) sở hữu và kiểm thử.
+
+> **Câu hỏi mở Q10-28:** Tenant nhỏ có cần cổng sự kiện và bộ giao nhận riêng trong `dh-rt-{tenant}` (tối thiểu 4 pod) không, hay dùng chung một cụm cho nhiều tenant nhỏ với principal theo tenant. Ảnh hưởng tới cách ly (SEC-83) và chi phí.
+
+> **Câu hỏi mở Q10-29:** Hủy cấp phát (FR-10-010) xóa artifact Apicurio "nếu chưa có bản tin". Kiểm điều kiện này bằng offset cuối của topic trên cụm; khi topic chưa từng tạo được trên cụm thì xóa luôn. Cần xác nhận không có trường hợp bên phát Kafka trực tiếp đã đọc lược đồ và giữ `contentId`.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người soạn |
+|---|---|---|---|
+| 0.1 | 2026-11-26 | Bản đầu: kiến trúc, cấu trúc mã, thành phần, chín sequence, máy trạng thái, lỗi, quan sát, định cỡ, câu hỏi mở Q10-20…29 | Nhóm thiết kế Datahub |
