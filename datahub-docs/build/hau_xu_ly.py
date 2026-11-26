@@ -229,6 +229,34 @@ def dien_so_trang(path, txt):
     print(f"  mục lục: {i} mục có số trang")
 
 
+def co_khoi_ma(d):
+    """Khối mã: căn trái, không giãn chữ; dòng dài (wireframe) thu nhỏ cỡ chữ để không xuống dòng trong 16 cm."""
+    from docx.shared import Pt
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    for p in d.paragraphs:
+        if p.style is None or p.style.name != "Source Code":
+            continue
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        dong, cur = [], ""
+        for r in p.runs:
+            for node in r._r:
+                if node.tag == qn("w:br"):
+                    dong.append(cur)
+                    cur = ""
+                elif node.tag == qn("w:t"):
+                    cur += node.text or ""
+                elif node.tag == qn("w:tab"):
+                    cur += "    "
+        dong.append(cur)
+        dai = max((len(x) for x in dong), default=0)
+        if dai <= 80:
+            continue
+        # chữ đơn cách rộng khoảng 0,6 em; vùng chữ 16 cm = 453 pt
+        co = max(5.5, min(9.5, 453 / (dai * 0.6)))
+        for r in p.runs:
+            r.font.size = Pt(round(co * 2) / 2)
+
+
 def main():
     if sys.argv[1] == "--so-trang":
         dien_so_trang(sys.argv[2], sys.argv[3])
@@ -238,6 +266,7 @@ def main():
     STYLE_IDS.update(s.style_id for s in d.styles)
     chuyen_muc_luc(d)
     dinh_dang_bang(d)
+    co_khoi_ma(d)
     dau_chan_trang(d, ma, ten)
     cap_nhat_truong(d)
     d.core_properties.title = ten
