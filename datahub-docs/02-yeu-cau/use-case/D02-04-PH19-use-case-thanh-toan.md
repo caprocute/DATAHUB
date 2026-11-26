@@ -323,7 +323,7 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 1. UI-19-06 bước 3 hiển thị checklist bốn mục đều đạt kèm liên kết bằng chứng (API-19-011).
 2. ADM nhập ghi chú, bấm "Gửi duyệt" (API-19-012, `action = ACTIVATE`).
-3. Hệ thống kiểm tra lại checklist, chuyển NCC `PENDING_ACTIVATION`, tạo `approval_request` loại `PROVIDER_ACTIVATION` kèm ảnh chụp checklist, thông báo nhóm APR.
+3. Hệ thống kiểm tra lại checklist, chuyển NCC `PENDING_ACTIVATION`, tạo `approval_request` loại `PROVIDER_ACTIVATE` kèm ảnh chụp checklist, thông báo nhóm APR.
 4. APR (Trần Thị Bình) mở UI-19-13 (API-19-048), xem bằng chứng trong ngăn kéo (API-19-049).
 5. APR chọn "Duyệt" (API-19-050).
 6. Hệ thống kiểm tra người duyệt ≠ người lập, kiểm tra lại checklist tại thời điểm duyệt, chuyển NCC `ACTIVE`, ghi `activated_at`, phát EVT-19-01, bắt đầu giám sát sức khỏe (UC-19-06).
@@ -365,7 +365,7 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 **Luồng thay thế**
 
-- **1a. Ngừng hẳn.** ADM chọn "Ngừng hẳn" (API-19-012, `action = RETIRE`); hệ thống kiểm tra BR-19-027 (không còn giao dịch `CREATED`/`PENDING`, yêu cầu hoàn dở, phiên đối soát chưa chốt), tạo đề nghị `PROVIDER_RETIREMENT`; APR duyệt ở UI-19-13; NCC `RETIRED`, dữ liệu giữ nguyên.
+- **1a. Ngừng hẳn.** ADM chọn "Ngừng hẳn" (API-19-012, `action = RETIRE`); hệ thống kiểm tra BR-19-027 (không còn giao dịch `CREATED`/`PENDING`, yêu cầu hoàn dở, phiên đối soát chưa chốt), tạo đề nghị `PROVIDER_RETIRE`; APR duyệt ở UI-19-13; NCC `RETIRED`, dữ liệu giữ nguyên.
 - **1b. Xóa NCC `DRAFT` chưa từng có giao dịch.** API-19-005; bản ghi bị xóa cứng cùng tham chiếu bí mật (bí mật trong OpenBao do SEC thu hồi).
 
 **Luồng ngoại lệ**
@@ -539,7 +539,7 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 1. ADM nhập mã `MCDT-T68`, tên, cơ quan chủ quản (mã PH-07), đầu mối nghiệp vụ, kỹ thuật, danh sách tên miền quay về được phép (`https://dichvucong.t68.gov.vn`), mã ứng dụng ở hệ cũ `legacyAppCode` (API-19-030).
 2. Hệ thống kiểm tra, ghi đối tác `DRAFT`.
 3. ADM cấp client, gán dịch vụ, cấu hình webhook (UC-19-10), rồi bấm "Gửi duyệt" (API-19-033, `action = ONBOARD`).
-4. Hệ thống kiểm tra điều kiện gửi duyệt (có ít nhất một client, một dịch vụ được gán, một đầu nhận webhook đã gửi thử thành công), chuyển `PENDING_APPROVAL`, tạo đề nghị `PARTNER_ONBOARDING`.
+4. Hệ thống kiểm tra điều kiện gửi duyệt (có ít nhất một client, một dịch vụ được gán, một đầu nhận webhook đã gửi thử thành công), chuyển `PENDING_APPROVAL`, tạo đề nghị `PARTNER_ONBOARD`.
 5. APR duyệt ở UI-19-13; hệ thống chuyển đối tác `ACTIVE`, phát EVT-19-04.
 
 **Luồng thay thế**
@@ -976,7 +976,7 @@ sequenceDiagram
 
 1. 06:00 ngày 27/11/2026, hệ thống tạo phiên (`PAYGOV-T68`, 26/11/2026) `SCHEDULED` → `COLLECTING`; adapter khai `reconSource = FILE_UPLOAD` nên phiên chuyển `WAITING_DATA`, nhắc ACC.
 2. ACC tải tệp đối soát PayGov ngày 26/11 ở UI-19-20 (API-19-065).
-3. Hệ thống lưu tệp gốc vào `dh-T68-payment` (chuẩn hóa chữ thường `dh-t68-payment`), tính SHA-256, adapter kiểm tra cấu trúc, mã đơn vị, ngày; chuẩn hóa 19.842 dòng.
+3. Hệ thống lưu tệp gốc vào bucket `dh-t68-payment` (tên bucket viết thường mã tenant), tính SHA-256, adapter kiểm tra cấu trúc, mã đơn vị, ngày; chuẩn hóa 19.842 dòng.
 4. Phiên `MATCHING`; hệ thống ghép theo `providerReference`, phân loại theo bảng FR-19-044: 19.839 `MATCHED`, 2 `MISSING_AT_DATAHUB`, 1 `AMOUNT_MISMATCH`.
 5. Hệ thống ghi dòng đối soát theo lô 5.000, tính tổng hai phía, sinh 3 chênh lệch `OPEN` (EVT-19-17), cập nhật `recon_status` từng giao dịch; phiên `IN_REVIEW`; EVT-19-15.
 
@@ -1034,7 +1034,7 @@ sequenceDiagram
 
 **Luồng chính (thiếu ở Datahub)**
 
-1. ACC (Lê Văn Cường) mở UI-19-21 lọc `OPEN`, nhận chênh lệch `MISSING_AT_DATAHUB` của giao dịch `T68261126P3R8...` (API-19-072 `CLAIM`) → `INVESTIGATING`.
+1. ACC (Lê Văn Cường) mở UI-19-21 lọc `OPEN`, nhận chênh lệch `MISSING_AT_DATAHUB` của giao dịch `T68261126P3R8M2KD7Q` (API-19-072 `CLAIM`) → `INVESTIGATING`.
 2. ACC mở UI-19-22 (API-19-074): phía PayGov thành công 200.000 đ lúc 23:58:41 ngày 26/11; phía Datahub giao dịch `EXPIRED` với `needs_reconciliation`; IPN liên quan: không có.
 3. ACC chạy "Đồng bộ với NCC" (UC-19-16 luồng 1a) hoặc dùng kết quả truy vấn gần nhất làm bằng chứng; truy vấn xác nhận thành công.
 4. ACC đề xuất `UPDATE_STATUS_FROM_PROVIDER`, `targetStatus = SUCCEEDED`, ghi chú, bằng chứng (API-19-073) → `PROPOSED`, đề nghị `DISCREPANCY_RESOLUTION`.
@@ -1073,3 +1073,376 @@ sequenceDiagram
   H->>D: so version; giao dịch SUCCEEDED; chênh lệch RESOLVED; outbox EVT-19-07, EVT-19-18
 ```
 
+### 6.21. UC-19-21 · Chốt, mở lại phiên đối soát và xuất biên bản
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-21 |
+| Mục tiêu | Kết quả đối soát một ngày được chốt bất biến, có biên bản để ký và lưu, và chỉ mở lại khi có lý do được duyệt |
+| Tác nhân chính | ACC (`PERM-19-recon-close`, `PERM-19-report-export`) |
+| Tác nhân phụ | APR (`PERM-19-recon-reopen-approve`); HTTT đối tác (`PERM-19-partner-recon-read`, Đ2b) |
+| Mức ưu tiên, phát hành | M · MVP (chốt, mở lại, biên bản); Đ2b (đối tác tải kết quả) |
+| FR hiện thực | FR-19-047, 048 |
+| Tiền điều kiện | Phiên `READY_TO_CLOSE` |
+| Điều kiện kích hoạt | Chênh lệch cuối cùng của phiên được `RESOLVED` |
+| Đảm bảo tối thiểu | Phiên `CLOSED` và dữ liệu của nó không sửa được; biên bản lưu WORM với mã băm in trên biên bản; mở lại không xóa kết quả cũ |
+| Đảm bảo thành công | Phiên `CLOSED`, biên bản PDF và XLSX có trong bucket `dh-t68-payment-worm`; EVT-19-16 phát |
+
+**Luồng chính**
+
+1. ACC mở UI-19-20 của phiên ngày 26/11, kiểm tra tổng hai phía và danh sách chênh lệch đã xử lý; bấm "Chốt phiên" (API-19-068, `If-Match`).
+2. Hệ thống kiểm tra mọi chênh lệch `RESOLVED`; sinh biên bản PDF (thể thức NĐ 30/2020) và XLSX, tính SHA-256, lưu bucket WORM với `retention_until` 10 năm; phiên `CLOSED`, `closed_by`, `closed_at`; EVT-19-16.
+3. ACC tải biên bản (API-19-088), in, trình ký theo quy trình của đơn vị (ký ngoài hệ thống, OQ-19-24).
+
+**Luồng thay thế**
+
+- **1a. Mở lại.** Một tuần sau PayGov gửi bản đính chính; ACC (Bùi Văn Minh) lập đề nghị mở lại với lý do (API-19-069) → `REOPEN_PENDING`; APR khác người lập và khác người đã chốt duyệt → `IN_REVIEW` với `run_no = 2`; biên bản cũ được đánh dấu `superseded_by` khi chốt lại.
+- **3a. Đối tác tải kết quả (Đ2b).** HTTT đối tác gọi API-19-107 `?date=2026-11-26`; nhận phần giao dịch của mình.
+
+**Luồng ngoại lệ**
+
+- **E1. Còn chênh lệch chưa xử lý.** ERR-19-042. **E2. Ghi lên phiên đã chốt.** ERR-19-043.
+- **E3. Người duyệt mở lại trùng người lập hoặc người chốt.** ERR-19-033.
+- **E4. Đối tác tải kết quả của phiên chưa chốt.** ERR-19-020.
+
+**Quy tắc:** BR-19-011, 028, 030; NFR-19-014, 016; KPI-95. **Tần suất:** 1 lần mỗi phiên; mở lại hiếm.
+
+### 6.22. UC-19-22 · Tra cứu và xuất danh sách giao dịch
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-22 |
+| Mục tiêu | Cán bộ tìm nhanh giao dịch theo mã hoặc theo bộ lọc như màn tra cứu của hệ cũ, và xuất kết quả khi cần |
+| Tác nhân chính | OPR (`PERM-19-transaction-read`) |
+| Tác nhân phụ | ACC, AUD (`PERM-19-transaction-export`) |
+| Mức ưu tiên, phát hành | M · MVP (tra cứu); S · Đ2b (xuất danh sách) |
+| FR hiện thực | FR-19-049, 050, 052 |
+| Tiền điều kiện | Người dùng có vai trò thanh toán của tenant |
+| Điều kiện kích hoạt | Công dân gọi tổng đài hỏi về khoản đã nộp |
+| Đảm bảo tối thiểu | Dữ liệu người nộp che theo quyền; tìm theo người nộp chỉ khớp nguyên giá trị (băm), không liệt kê được |
+| Đảm bảo thành công | Danh sách đúng bộ lọc, trang đầu ≤ 1,5 giây (NFR-19-007) |
+
+**Luồng chính**
+
+1. OPR mở UI-19-14, nhập mã hồ sơ `000.00.12.H68-261126-0042` vào ô tìm (API-19-051 `q=`).
+2. Hệ thống khớp tuyệt đối với `partner_order_id`, trả hai lượt giao dịch (một `EXPIRED`, một `SUCCEEDED`).
+3. OPR mở lượt `SUCCEEDED` (UC-19-23).
+
+**Luồng thay thế**
+
+- **1a. Tra cứu nâng cao.** OPR mở bộ lọc: lĩnh vực "Tư pháp", trạng thái `SUCCEEDED`, `REFUNDED`, mẫu "30 ngày", NCC `PAYGOV-T68`; hệ thống mã hóa bộ lọc vào URL để chia sẻ.
+- **1b. Tìm theo số điện thoại người nộp.** Hệ thống tính băm HMAC của số đã chuẩn hóa, khớp `payer_search_hash`.
+- **3a. Xuất (Đ2b).** ACC chọn "Xuất XLSX" (API-19-083); tác vụ nền; tải qua API-19-084 trong 24 giờ.
+
+**Luồng ngoại lệ**
+
+- **E1. Khoảng thời gian > 400 ngày, bộ lọc sai.** ERR-19-001. **E2. Kết quả xuất > 1.000.000 dòng.** ERR-19-047. **E3. Thiếu quyền xuất.** ERR-19-046.
+
+**Quy tắc:** BR-19-031; NFR-19-007, 009. **Tần suất:** vài trăm lượt tra cứu mỗi ngày.
+
+### 6.23. UC-19-23 · Xem chi tiết giao dịch
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-23 |
+| Mục tiêu | Cán bộ thấy toàn bộ câu chuyện của một giao dịch để trả lời công dân hoặc điều tra sự cố |
+| Tác nhân chính | OPR (`PERM-19-transaction-read`; `PERM-19-transaction-read-pii` để xem đầy đủ) |
+| Tác nhân phụ | PH-09 (chính sách che), PH-13 (vết) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-051, 055 |
+| Tiền điều kiện | Giao dịch thuộc tenant |
+| Điều kiện kích hoạt | OPR mở một dòng ở UI-19-14 |
+| Đảm bảo tối thiểu | Mỗi lần hiện dữ liệu đầy đủ của người nộp đều có lý do và được kiểm toán |
+| Đảm bảo thành công | UI-19-15 hiển thị đủ bảy tab |
+
+**Luồng chính**
+
+1. Hệ thống trả chi tiết (API-19-052) với dữ liệu người nộp đã che (`Nguyễn V*** A**`, `****5678`).
+2. OPR xem tab "Dòng thời gian" (API-19-054): `CREATED` 09:12:03, `PENDING` 09:12:04, `SUCCEEDED` 09:15:47 nguồn `IPN`.
+3. OPR xem tab IPN (một IPN hợp lệ), tab Webhook (một lượt `DELIVERED` lần thử 1), tab Hoàn tiền (trống).
+4. OPR bấm "Mở vết" để xem vết OpenTelemetry ở PH-13 theo `trace_id`.
+
+**Luồng thay thế**
+
+- **1a. Hiện đầy đủ.** OPR có `transaction-read-pii` bấm "Hiện đầy đủ", nhập lý do "Xác minh theo yêu cầu công dân qua tổng đài"; hệ thống giải mã, ghi kiểm toán `PII_VIEW`.
+
+**Luồng ngoại lệ**
+
+- **E1. Giao dịch không thuộc tenant.** ERR-19-020 (404). **E2. Thiếu lý do khi hiện đầy đủ.** ERR-19-001.
+
+**Quy tắc:** BR-19-031, 032; NFR-19-024, 026. **Tần suất:** vài trăm lượt mỗi ngày.
+
+### 6.24. UC-19-24 · Xem nhật ký kiểm toán và nhật ký tích hợp
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-24 |
+| Mục tiêu | Kiểm toán viên và cán bộ tra cứu chứng minh được ai đã làm gì, hệ thống đã trao đổi gì với PayGov và đối tác |
+| Tác nhân chính | AUD (`PERM-19-log-read`; nhật ký kiểm toán xem ở PH-13) |
+| Tác nhân phụ | OPR; PH-13 |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-053, 054, 055 |
+| Tiền điều kiện | — |
+| Điều kiện kích hoạt | Thanh tra, kiểm toán định kỳ; sự cố |
+| Đảm bảo tối thiểu | Nhật ký không chứa bí mật, số thẻ, số tài khoản đầy đủ, OTP; nhật ký kiểm toán không sửa, không xóa được |
+| Đảm bảo thành công | Kiểm toán viên lọc được theo thao tác, đối tượng, người dùng, thời gian và xuất bằng chứng |
+
+**Luồng chính**
+
+1. AUD mở UI-19-23, lọc `direction = OUT_PROVIDER`, `operation = REFUND`, tháng 11/2026 (API-19-075).
+2. Hệ thống trả danh sách lượt trao đổi; AUD mở một lượt (API-19-076) xem yêu cầu, phản hồi đã che, độ trễ, `trace_id`.
+3. AUD chuyển sang màn kiểm toán của PH-13, lọc `objectType = refund_request`, xem chuỗi `REFUND_CREATE` → `APPROVAL_DECISION` → `REFUND_CONFIRM_MANUAL` với người thực hiện khác nhau.
+
+**Luồng ngoại lệ**
+
+- **E1. Khoảng thời gian > 31 ngày.** ERR-19-001.
+
+**Quy tắc:** BR-19-030, 032; NFR-19-014, 015, 016. **Tần suất:** hằng tháng; khi có sự cố.
+
+### 6.25. UC-19-25 · Giám sát qua dashboard và cảnh báo
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-25 |
+| Mục tiêu | Cán bộ và lãnh đạo nắm tình hình thu trong ngày, phát hiện kênh có vấn đề trước khi công dân phản ánh |
+| Tác nhân chính | OPR (`PERM-19-dashboard-read`) |
+| Tác nhân phụ | Lãnh đạo (xem); PH-13 (cảnh báo) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-056, 057, 059 |
+| Tiền điều kiện | — |
+| Điều kiện kích hoạt | Đầu ca làm việc; nhận cảnh báo |
+| Đảm bảo tối thiểu | Giao dịch thử, bóng không vào số liệu; số liệu trễ ≤ 60 giây (NFR-19-006) |
+| Đảm bảo thành công | Hai dashboard hiển thị đủ khối của hệ cũ và khối mới |
+
+**Luồng chính**
+
+1. OPR mở UI-19-01 (API-19-080): 214 dịch vụ hoạt động, 27 hệ thống áp dụng, 18.904 giao dịch trong ngày, tổng thu 2.613.400.000 đ, tỷ lệ thành công 91,2%, 3 giao dịch treo, 3 chênh lệch mở.
+2. OPR thấy biểu đồ theo dịch vụ giảm dần, bảng 20 giao dịch mới nhất; nhấp một dòng mở UI-19-15.
+3. OPR mở UI-19-02 (API-19-081): thẻ `PAYGOV-T68` sức khỏe `HEALTHY`, p95 1,4 giây, chứng thư còn 212 ngày, biểu đồ 30 ngày.
+
+**Luồng thay thế**
+
+- **1a. Nhận cảnh báo** `payment_pending_age_seconds > 30 phút` từ PH-13; OPR mở UI-19-01, lọc giao dịch treo, chạy đồng bộ (UC-19-16).
+
+**Quy tắc:** BR-19-033; NFR-19-006. **Tần suất:** liên tục trong giờ làm việc.
+
+### 6.26. UC-19-26 · Lập và xuất báo cáo định kỳ
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-26 |
+| Mục tiêu | Kế toán có báo cáo thu theo dịch vụ, đối tác, NCC, hoàn tiền, đối soát cho kỳ ngày, tháng, quý |
+| Tác nhân chính | ACC (`PERM-19-report-read`, `PERM-19-report-export`) |
+| Tác nhân phụ | AUD |
+| Mức ưu tiên, phát hành | S · Đ2b |
+| FR hiện thực | FR-19-058 |
+| Tiền điều kiện | Có phiên đối soát đã chốt trong kỳ |
+| Điều kiện kích hoạt | Cuối tháng, cuối quý |
+| Đảm bảo tối thiểu | Số liệu kỳ có phiên chưa chốt được đánh dấu "tạm tính" |
+| Đảm bảo thành công | Báo cáo XLSX, PDF theo thể thức hành chính |
+
+**Luồng chính**
+
+1. ACC mở UI-19-25, chọn `RPT-19-01`, kỳ `MONTH` `2026-11` (API-19-082).
+2. Hệ thống tổng hợp từ `payment_stats_hourly` và phiên `CLOSED`; hiển thị bảng và biểu đồ.
+3. ACC xuất PDF (API-19-083, 084).
+
+**Luồng ngoại lệ**
+
+- **E1. Kỳ sai định dạng.** ERR-19-001. **E2. Thiếu quyền xuất.** ERR-19-046.
+
+**Tần suất:** vài lần mỗi tháng.
+
+### 6.27. UC-19-27 · Thông báo kết quả cho đối tác
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-27 |
+| Mục tiêu | HTTT đối tác biết kết quả thanh toán, hoàn tiền nhanh, đúng thứ tự, kiểm chứng được nguồn gửi |
+| Tác nhân chính | Bộ gửi webhook |
+| Tác nhân phụ | HTTT đối tác; OPR (`PERM-19-webhook-read`, `PERM-19-webhook-resend`); PH-10 (Kafka) |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-060, 061, 062 |
+| Tiền điều kiện | Đối tác có đầu nhận webhook `ACTIVE` đăng ký loại sự kiện |
+| Điều kiện kích hoạt | Giao dịch hoặc yêu cầu hoàn đạt trạng thái cuối (outbox) |
+| Đảm bảo tối thiểu | Không mất thông báo: webhook lỡ vẫn kéo được qua API-19-109 trong 7 ngày; thông báo của một giao dịch đi theo `sequence` tăng dần |
+| Đảm bảo thành công | Lượt gửi `DELIVERED` trong p95 ≤ 5 giây từ khi đạt trạng thái cuối (NFR-19-005) |
+
+**Luồng chính**
+
+1. Bộ gửi đọc `outbox_event` EVT-19-07, tạo `webhook_delivery` `PENDING` cho đầu nhận của `MCDT-T68`.
+2. Bộ gửi chuyển `SENDING`, gửi CloudEvents JSON ký `X-Datahub-Signature: t=…,v1=…` qua cửa ra `apisix-int`.
+3. Đối tác kiểm tra chữ ký, lệch thời gian ≤ 5 phút, `id` chưa xử lý, `sequence` lớn hơn bản đã xử lý; cập nhật hồ sơ "Đã nộp lệ phí"; trả 200.
+4. Lượt gửi `DELIVERED`; mỗi lần thử ghi `integration_log`.
+
+**Luồng thay thế**
+
+- **3a. Đối tác trả 503.** `RETRY_SCHEDULED` theo lịch 10 giây, 30 giây, 1 phút… (BR-19-020).
+- **3b. Hết lượt (khoảng 16 giờ).** `EXHAUSTED`, cảnh báo; OPR mở UI-19-24 xem các lần thử, sau khi đối tác khắc phục thì "Gửi lại" (API-19-078) → `PENDING`.
+- **3c. Đối tác kéo bù** bằng API-19-109 `?after=<con trỏ>` sau sự cố của mình.
+- **1a. Phát Kafka.** Bộ phát đẩy sự kiện lên `t68.payment.transaction.succeeded.v1` cho PH-16 và hệ khác tiêu thụ (khóa phân vùng `transactionId`).
+
+**Luồng ngoại lệ**
+
+- **E1. Đối tác trả 4xx khác 408, 425, 429.** `EXHAUSTED` ngay (lỗi phía đối tác, không thử lại vô ích).
+- **E2. Gửi lại lượt không `EXHAUSTED`.** ERR-19-021.
+
+**Quy tắc:** BR-19-020, 021; NFR-19-005, 013, 021. **Tần suất:** 1–2 lượt mỗi giao dịch.
+
+### 6.28. UC-19-28 · Cấu hình và khởi tạo phân hệ theo tenant
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-28 |
+| Mục tiêu | Một tỉnh bắt đầu dùng PH-19 với cấu hình mặc định an toàn và chỉnh được tham số theo quy định của tỉnh |
+| Tác nhân chính | TEN qua PH-20 (bật, tắt); ADM (`PERM-19-config-write`) |
+| Tác nhân phụ | PH-20, PH-13, OpenBao, Strimzi, Garage, Ceph RGW, APISIX |
+| Mức ưu tiên, phát hành | M · MVP |
+| FR hiện thực | FR-19-063, 064 |
+| Tiền điều kiện | Tenant tồn tại ở PH-20 |
+| Điều kiện kích hoạt | TEN bật mô-đun "Thanh toán" cho tenant |
+| Đảm bảo tối thiểu | Khởi tạo lũy đẳng, chạy lại được từ bước dở; tắt không xóa dữ liệu và không chặn việc dở |
+| Đảm bảo thành công | `tenant_payment_config` phiên bản 1, topic, bucket, đường bí mật, luật cảnh báo, tuyến APISIX, bảng ánh xạ PayGov mặc định đều sẵn sàng |
+
+**Luồng chính**
+
+1. TEN (Đỗ Quang Khải) bật mô-đun ở PH-20; PH-20 phát `tenant.module-enabled.v1`.
+2. Hệ thống chạy các bước khởi tạo của FR-19-064, ghi `provisioning_state` từng bước; hoàn tất thì `module_enabled = true`.
+3. ADM mở UI-19-26 (API-19-085), đổi `19.refund.two-level-threshold` từ 5.000.000 lên 10.000.000 đ theo văn bản của Sở Tài chính, hiệu lực từ 01/12/2026, nhập lý do (API-19-086).
+4. Hệ thống kiểm tra miền, tạo phiên bản 2 hẹn giờ, thông báo nhóm APR; tới thời điểm hiệu lực, mọi pod nạp lại trong ≤ 60 giây.
+
+**Luồng thay thế**
+
+- **2a. Một bước lỗi** (ví dụ Strimzi chưa sẵn sàng): `provisioning_state` dừng ở bước đó, thử lại theo lịch giãn dần; PH-20 hiển thị "Đang khởi tạo".
+- **1a. Tắt mô-đun.** API tạo mới trả ERR-19-049; việc dở tiếp tục (FR-19-064).
+
+**Luồng ngoại lệ**
+
+- **E1. Giá trị ngoài miền.** ERR-19-001 kèm khóa. **E2. Sửa phiên bản đã có hiệu lực.** ERR-19-021.
+
+**Quy tắc:** BR-19-023; FRS §7.1. **Tần suất:** khởi tạo một lần; sửa cấu hình vài lần mỗi năm.
+
+### 6.29. UC-19-29 · Di trú từ hệ cũ và chạy song song
+
+| Mục | Nội dung |
+|---|---|
+| Mã | UC-19-29 |
+| Mục tiêu | Chuyển từng đối tác từ hệ Payment cũ sang Datahub không mất dữ liệu lịch sử, có giai đoạn chạy bóng chứng minh kết quả khớp, và quay lui được |
+| Tác nhân chính | ADM (`PERM-19-migration-run`, `PERM-19-migration-switch`) |
+| Tác nhân phụ | APR (`PERM-19-migration-switch`, người khác người lập); ACC (đối chiếu); hệ Payment cũ; PH-03; PH-05 |
+| Mức ưu tiên, phát hành | M · MVP (FR-19-065, 066, 068); C · Sau (FR-19-067) |
+| FR hiện thực | FR-19-065, 066, 067, 068 |
+| Tiền điều kiện | Có kết nối chỉ đọc tới CSDL hệ cũ khai báo ở PH-05 (A-19-12), hoặc tệp CSV theo mẫu D06-01 |
+| Điều kiện kích hoạt | Kế hoạch chuyển đổi D06-01 tới mốc của đối tác |
+| Đảm bảo tối thiểu | Nhập chạy lại không sinh trùng (`legacy_mapping`); giao dịch nhập không phát sự kiện, không gửi webhook; quay lui về `LEGACY` luôn được phép |
+| Đảm bảo thành công | Đối tác ở `DATAHUB`; dữ liệu lịch sử tra cứu được ở Datahub; đối chiếu `PASSED` lưu làm bằng chứng |
+
+**Luồng chính**
+
+1. ADM chạy `IMPORT_CATALOG` với `dryRun = true` (API-19-089); xem báo cáo lỗi dòng (ví dụ 3 dịch vụ thiếu ánh xạ loại phí); sửa bảng ánh xạ; chạy thật.
+2. ADM chạy `IMPORT_TRANSACTIONS` cho 2021–2026 theo lô 10.000; hệ thống chuyển kiểu số tiền, ngày, trạng thái theo khung §7.4, ghi `legacy_mapping`.
+3. ACC chạy `COMPARE` `HISTORICAL` theo tháng (API-19-089): số lượng, tổng tiền, phân bố trạng thái khớp → `PASSED`.
+4. ADM lập đề nghị chuyển `MCDT-T68` `LEGACY` → `SHADOW` (API-19-047); APR (người khác) duyệt; PH-03 bắt đầu nhân bản yêu cầu của đối tác sang Datahub.
+5. Sau 7 ngày bóng, ACC chạy `COMPARE` `SHADOW`: 0 lệch số lượng, 0 đ lệch tổng tiền → `PASSED`.
+6. ADM lập đề nghị `SHADOW` → `DATAHUB` kèm `migrationRunId` của lần đối chiếu; APR duyệt; EVT-19-04; PH-03 chuyển tuyến trong ≤ 60 giây; đối tác bắt đầu nhận kết quả từ Datahub.
+
+**Luồng thay thế**
+
+- **6a. Quay lui.** Sự cố sau chuyển đổi: ADM lập đề nghị `DATAHUB` → `LEGACY`, duyệt nhanh một cấp; giao dịch đang dở trên Datahub tiếp tục tới kết thúc.
+- **4a. Lớp tương thích API hệ cũ (Sau).** Chỉ khi OQ-19-17 xác nhận có đối tác không sửa được mã: đối tác gọi API-19-110 theo hợp đồng cũ, nhận tiêu đề `Deprecation`, `Sunset`.
+
+**Luồng ngoại lệ**
+
+- **E1. Chuyển `SHADOW` → `DATAHUB` khi đối chiếu gần nhất không `PASSED` hoặc quá 7 ngày.** ERR-19-035.
+- **E2. Chuyển chế độ không cho phép (ví dụ `LEGACY` → `DATAHUB` trực tiếp).** ERR-19-021.
+- **E3. Người duyệt trùng người lập.** ERR-19-033.
+
+**Quy tắc:** BR-19-011, 034; ADR-049. **Tần suất:** một lần cho mỗi đối tác; nhập lịch sử 1–3 lần (thử, thật, bù).
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor ADM as Quản trị thanh toán
+  actor APR as Người phê duyệt
+  participant H as dh-payment
+  participant L as Hệ Payment cũ (chỉ đọc)
+  participant G as APISIX (PH-03)
+  participant P as HTTT đối tác
+  ADM->>H: migration-runs IMPORT_CATALOG, IMPORT_TRANSACTIONS
+  H->>L: đọc theo lô
+  H->>H: chuyển kiểu, ghi legacy_mapping
+  ADM->>H: migration-runs COMPARE HISTORICAL → PASSED
+  ADM->>H: routing-mode-requests SHADOW
+  APR->>H: duyệt
+  H-->>G: EVT-19-04 (SHADOW)
+  P->>G: tạo giao dịch
+  G->>L: xử lý thật
+  G->>H: bản sao (is_shadow)
+  ADM->>H: COMPARE SHADOW (≥ 7 ngày) → PASSED
+  ADM->>H: routing-mode-requests DATAHUB (migrationRunId)
+  APR->>H: duyệt
+  H-->>G: EVT-19-04 (DATAHUB)
+  P->>G: tạo giao dịch
+  G->>H: xử lý thật
+```
+
+## 7. Luồng phụ dùng chung
+
+### 7.1. Quyết định một đề nghị phê duyệt
+
+Mọi loại đề nghị (`PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBOARD`, `PARTNER_TERMINATE`, `REFUND`, `DISCREPANCY_RESOLUTION`, `RECON_REOPEN`, `ROUTING_MODE_CHANGE`, `RESULT_MAPPING_CHANGE`) dùng một luồng:
+
+1. Người duyệt mở UI-19-13 (API-19-048, mặc định lọc "Chờ tôi quyết định", không gồm đề nghị do chính mình lập).
+2. Mở ngăn kéo bằng chứng (API-19-049): đối tượng, ảnh chụp dữ liệu lúc lập, bảng so sánh, tệp đính kèm, người lập, thời hạn.
+3. Chọn "Duyệt" hoặc "Từ chối" (bắt buộc ghi chú khi từ chối) (API-19-050, `If-Match`).
+4. Hệ thống kiểm tra quyền theo loại (API-19-050), tách nhiệm (khung §13.4), trạng thái `PENDING` (ERR-19-034), kiểm tra lại điều kiện nghiệp vụ tại thời điểm duyệt; áp quyết định trong một giao dịch CSDL; ghi kiểm toán `APPROVAL_DECISION`.
+
+Đề nghị không được quyết định trong 7 ngày tự chuyển `EXPIRED`, đối tượng về trạng thái trước (BR-19-011).
+
+### 7.2. Tải tệp đính kèm
+
+Tệp chứng từ, bằng chứng được tải trước qua API-19-087 với `purpose` (`ATTACHMENT`, `REFUND_VOUCHER`, `RECON_SOURCE`, `EVIDENCE`), giới hạn 20 MB mỗi tệp (100 MB với `RECON_SOURCE`), kiểu cho phép PDF, PNG, JPEG, XLSX, CSV; hệ thống quét mã độc (ClamAV ở D03-07), tính SHA-256, trả `fileId`; tệp không được gắn vào đối tượng nào trong 24 giờ bị xóa.
+
+## 8. Tổng hợp mã mới và đối chiếu
+
+### 8.1. Ma trận use case và quy tắc nghiệp vụ
+
+| BR | Use case |
+|---|---|
+| BR-19-001…007 | UC-19-11 |
+| BR-19-008, 009 | UC-19-08 |
+| BR-19-010 | UC-19-02, 03 |
+| BR-19-011 | UC-19-03, 04, 09, 18, 20, 21, 29; §7.1 |
+| BR-19-012, 013 | UC-19-06, 11 |
+| BR-19-014 | UC-19-12, 13, 20 |
+| BR-19-015…019 | UC-19-13, 14, 16 |
+| BR-19-020, 021 | UC-19-27 |
+| BR-19-022…024 | UC-19-17, 18 |
+| BR-19-025, 028 | UC-19-19, 20, 21 |
+| BR-19-026 | UC-19-01, 05, 06 |
+| BR-19-027 | UC-19-04, 08 |
+| BR-19-029 | UC-19-24 (mọi use case có thao tác ghi) |
+| BR-19-030 | UC-19-20, 21, 24 |
+| BR-19-031, 032 | UC-19-22, 23, 24 |
+| BR-19-033 | UC-19-02, 17, 25 |
+| BR-19-034 | UC-19-29 |
+
+### 8.2. Mã mới đề xuất ngoài FRS
+
+| Mã | Nội dung | Use case |
+|---|---|---|
+| `purpose = EVIDENCE` | Mục đích tệp bằng chứng xử lý chênh lệch | UC-19-20, §7.2 |
+| `PASSED_WITHOUT_IPN` | Kết quả `check_run` khi giao dịch thử thành công qua truy vấn nhưng không nhận IPN | UC-19-02 |
+
+## 9. Câu hỏi mở
+
+| Mã | Câu hỏi | Use case | Phương án đang dùng |
+|---|---|---|---|
+| OQ-19-25 | Trang kết quả UI-19-28 có cần hiển thị biên lai điện tử (liên kết) không, hay chỉ trạng thái | UC-19-12 | Chỉ trạng thái; biên lai do đối tác phát hành (OQ-19-14) |
+| OQ-19-26 | Trong chế độ `SHADOW`, PH-03 nhân bản cả IPN của PayGov sang Datahub hay chỉ yêu cầu tạo giao dịch | UC-19-29 | Chỉ yêu cầu tạo; kết quả bóng so với hệ cũ qua đối chiếu `SHADOW` |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người thực hiện |
+|---|---|---|---|
+| 0.1 | 26/11/2026 | Bản đầu: 29 use case, sáu sơ đồ tuần tự, luồng phụ phê duyệt và tải tệp, ma trận BR | Nhóm phân hệ PH-19 |
