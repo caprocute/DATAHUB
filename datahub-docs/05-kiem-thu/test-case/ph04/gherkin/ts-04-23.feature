@@ -5,7 +5,7 @@ Tính năng: TS-04-23 · Ngữ cảnh tenant và rò rỉ chéo tenant
 
   @TC-04-139 @P1 @Bảo @mật
   Kịch bản: TC-04-139 Mọi API đọc theo mã trùng giữa hai tenant
-    # Truy vết: FR-04-073, 001, 002 · API-04-010, 012, 020, 024, 025, 026, 041, 042, 044, 054, 060, 062, 063, 091 · ERR-04-001
+    # Truy vết: FR-04-073, 001, 002 · API-04-010, 012, 020, 024, 025, 026, 041, 042, 044, 054, 060, 062, 063, 091 · ERR-04-001.
     Biết F-HT ở T68 và F-T01 ở T01 cùng mã `tra-cuu-ho-tich`; mỗi bên có phiên bản, lần chạy, ca, triển khai.
     Khi U-T68-TA gọi lần lượt mọi API đọc trong cột truy vết với mã `tra-cuu-ho-tich`.
     Và dùng `runId`, `deploymentId`, `commandId` của T01 trong đường dẫn với token T68.
@@ -13,7 +13,7 @@ Tính năng: TS-04-23 · Ngữ cảnh tenant và rò rỉ chéo tenant
 
   @TC-04-140 @P1 @Bảo @mật
   Kịch bản: TC-04-140 RLS chặn ở CSDL kể cả khi ứng dụng sai
-    # Truy vết: FR-04-073
+    # Truy vết: FR-04-073.
     Biết kết nối vai trò `ph04_app`, `SET app.tenant_id = 'T68'`.
     Khi `SELECT count(*)` trên 26 bảng của `ph04` với điều kiện `tenant_id = 'T01'`.
     Và `INSERT` một dòng `flow` với `tenant_id = 'T01'`.
@@ -23,7 +23,7 @@ Tính năng: TS-04-23 · Ngữ cảnh tenant và rò rỉ chéo tenant
 
   @TC-04-141 @P1 @Dương @Âm @Bảo
   Kịch bản: TC-04-141 Bản tin mang tiêu đề tenant giả
-    # Truy vết: FR-04-073, 061 · BR-04-010 · ERR-04-112
+    # Truy vết: FR-04-073, 061 · BR-04-010 · ERR-04-112.
     Biết MSG-TENANT.
     Khi gọi F-HT T68 với tiêu đề `dh-tenant: T01`.
     Và một chặng trong luồng thử (vượt qua kiểm tra tĩnh) đặt `dh-tenant = T01` giữa đường.
@@ -31,7 +31,7 @@ Tính năng: TS-04-23 · Ngữ cảnh tenant và rò rỉ chéo tenant
 
   @TC-04-142 @P1 @Bảo @mật
   Kịch bản: TC-04-142 Runtime, topic, kho cấu hình tách theo tenant
-    # Truy vết: FR-04-073, 042
+    # Truy vết: FR-04-073, 042.
     Biết SIT có `dh-rt-t68`, `dh-rt-t01`.
     Khi từ pod `dh-rt-t68`, thử đọc ConfigMap của `dh-rt-t01`.
     Và từ pod `dh-rt-t68`, thử tiêu thụ `t01.hotich.yeucau.v1`.

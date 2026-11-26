@@ -56,6 +56,8 @@ paths:
       - FR-04-007
       x-datahub-permission:
         permission: PERM-04-read
+      description: Trả mọi không gian làm việc của tenant mà người gọi thấy được, kèm `myAccess` (mức của người gọi) và `flowCount`. Danh sách
+        nhỏ nên trả trọn, không phân trang.
       parameters:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -66,6 +68,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkspaceList'
+              example:
+                items:
+                - id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a01
+                  code: ho-tich
+                  name: Hộ tịch
+                  ownerOrgCode: STP-T68
+                  status: ACTIVE
+                  flowCount: 12
+                  myAccess: MAINTAIN
+                  allowedActions: &id001
+                  - update
+                  - archive
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -90,6 +104,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WorkspaceCreate'
+            example:
+              code: dat-dai
+              name: Đất đai
+              ownerOrgCode: STNMT-T68
       responses:
         '201':
           description: Thành công.
@@ -97,6 +115,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Workspace'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a02
+                code: dat-dai
+                name: Đất đai
+                ownerOrgCode: STNMT-T68
+                status: ACTIVE
+                flowCount: 0
+                myAccess: MAINTAIN
+                allowedActions: *id001
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -115,6 +142,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-admin
         workspaceLevel: MAINTAIN
+      description: Đổi tên, mô tả, đơn vị chủ quản. Mã không gian không đổi được. Không gian không tồn tại ERR-04-027.
       parameters:
       - $ref: '#/components/parameters/WorkspacePath'
       - $ref: '#/components/parameters/IfMatch'
@@ -126,6 +154,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WorkspaceUpdate'
+            example:
+              name: Hộ tịch và chứng thực
       responses:
         '200':
           description: Thành công.
@@ -133,6 +163,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Workspace'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a01
+                code: ho-tich
+                name: Hộ tịch và chứng thực
+                ownerOrgCode: STP-T68
+                status: ACTIVE
+                flowCount: 12
+                myAccess: MAINTAIN
+                allowedActions: *id001
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -167,6 +206,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Workspace'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a01
+                code: ho-tich
+                name: Hộ tịch
+                ownerOrgCode: STP-T68
+                status: ARCHIVED
+                flowCount: 12
+                myAccess: MAINTAIN
+                allowedActions: []
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -189,6 +237,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Trả danh sách người dùng và nhóm cùng mức truy cập VIEW, EDIT, MAINTAIN (FR-04-007).
       parameters:
       - $ref: '#/components/parameters/WorkspacePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -200,6 +249,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkspaceMembers'
+              example:
+                members:
+                - principalType: USER
+                  principalId: an.nv
+                  displayName: Nguyễn Văn An
+                  accessLevel: MAINTAIN
+                - principalType: GROUP
+                  principalId: tt-cntt-t68
+                  accessLevel: EDIT
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -227,6 +285,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WorkspaceMembers'
+            example:
+              members:
+              - principalType: USER
+                principalId: an.nv
+                accessLevel: MAINTAIN
+              - principalType: USER
+                principalId: binh.tt
+                accessLevel: EDIT
       responses:
         '200':
           description: Thành công.
@@ -234,6 +300,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkspaceMembers'
+              example:
+                members:
+                - principalType: USER
+                  principalId: an.nv
+                  accessLevel: MAINTAIN
+                - principalType: USER
+                  principalId: binh.tt
+                  accessLevel: EDIT
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -280,10 +354,13 @@ paths:
             $ref: '#/components/schemas/FlowStatus'
         style: form
         explode: false
+        example:
+        - ACTIVE
       - name: environment
         in: query
         schema:
           $ref: '#/components/schemas/Environment'
+        example: PROD
       - name: health
         in: query
         schema:
@@ -320,6 +397,62 @@ paths:
         style: form
         explode: true
         description: '`khóa:giá-trị`.'
+      - name: sourceSystem
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        style: form
+        explode: false
+        description: Mã HTTT nguồn.
+      - name: targetSystem
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        style: form
+        explode: false
+        description: Mã HTTT đích.
+      - name: transport
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transport'
+        style: form
+        explode: false
+      - name: namespace
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+        description: '`dh-runtime` hoặc `dh-rt-{tenant}`; thay cho tìm theo host của hệ cũ.'
+      - name: hasOpenVersion
+        in: query
+        schema:
+          type: boolean
+        description: Chỉ luồng có phiên bản mở.
+      - name: pendingMyReview
+        in: query
+        schema:
+          type: boolean
+        description: Chỉ luồng có phiên bản chờ người dùng hiện tại duyệt.
+      - name: updatedFrom
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Ngày sửa cuối từ (gồm).
+      - name: updatedTo
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Ngày sửa cuối đến (gồm).
       - name: sort
         in: query
         schema:
@@ -337,6 +470,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowPage'
+              example:
+                items:
+                - id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+                  code: tra-cuu-ho-tich
+                  name: Tra cứu hộ tịch qua NDXP
+                  workspaceCode: ho-tich
+                  resourceKind: ROUTE
+                  transport: SYNC
+                  exposure: EXTERNAL
+                  status: ACTIVE
+                  sourceSystem: DVC-T68
+                  targetSystems: &id002
+                  - NDXP
+                  environments: &id003
+                  - environment: PROD
+                    versionNo: 2
+                    syncStatus: SYNCED
+                    healthStatus: HEALTHY
+                  allowedActions: &id004
+                  - update
+                  - clone
+                  - retire
+                page:
+                  next: eyJrIjoyNX0
+                  hasMore: true
+                facets:
+                  status:
+                    ACTIVE: 18
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -366,6 +527,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FlowCreate'
+            example:
+              code: tra-cuu-ho-tich
+              name: Tra cứu hộ tịch qua NDXP
+              workspaceCode: ho-tich
+              resourceKind: ROUTE
+              origin: TEMPLATE
+              templateCode: tpl-rest-proxy
+              templateParams:
+                upstream: ndxp-ho-tich
+              sourceSystem: DVC-T68
+              targetSystems:
+              - NDXP
       responses:
         '201':
           description: Thành công.
@@ -373,11 +546,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowDetail'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+                code: tra-cuu-ho-tich
+                name: Tra cứu hộ tịch qua NDXP
+                workspaceCode: ho-tich
+                resourceKind: ROUTE
+                transport: SYNC
+                exposure: EXTERNAL
+                status: DRAFT
+                sourceSystem: DVC-T68
+                targetSystems: *id002
+                environments: []
+                allowedActions:
+                - update
+                - retire
+                origin: TEMPLATE
+                routes: &id005
+                - routeId: tra-cuu
+                  stepCount: 9
+                openVersionNo: 1
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -402,6 +596,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Trả thông tin luồng, route, trạng thái theo môi trường và `allowedActions`. Luồng của tenant khác hoặc ngoài phạm vi không
+        gian trả ERR-04-001 (404).
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -413,11 +609,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowDetail'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+                code: tra-cuu-ho-tich
+                name: Tra cứu hộ tịch qua NDXP
+                workspaceCode: ho-tich
+                resourceKind: ROUTE
+                transport: SYNC
+                exposure: EXTERNAL
+                status: ACTIVE
+                sourceSystem: DVC-T68
+                targetSystems: *id002
+                environments: *id003
+                allowedActions: *id004
+                origin: TEMPLATE
+                routes: *id005
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -445,6 +657,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FlowUpdate'
+            example:
+              labels:
+                linh-vuc: ho-tich
       responses:
         '200':
           description: Thành công.
@@ -452,11 +667,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowDetail'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+                code: tra-cuu-ho-tich
+                name: Tra cứu hộ tịch qua NDXP
+                workspaceCode: ho-tich
+                resourceKind: ROUTE
+                transport: SYNC
+                exposure: EXTERNAL
+                status: ACTIVE
+                sourceSystem: DVC-T68
+                targetSystems: *id002
+                environments: *id003
+                allowedActions: *id004
+                origin: TEMPLATE
+                routes: *id005
+                labels:
+                  linh-vuc: ho-tich
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -481,6 +714,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-create
         workspaceLevel: EDIT
+      description: Tạo luồng mới với phiên bản 1 `DRAFT` sao từ phiên bản nguồn (mặc định mới nhất), kèm ca kiểm thử nếu chọn. Mã trùng ERR-04-002.
+        Phát EVT-04-01 với `origin = CLONE`.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
@@ -493,6 +728,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CloneRequest'
+            example:
+              code: tra-cuu-ho-tich-v2
+              name: Tra cứu hộ tịch (bản 2)
+              sourceVersionNo: 2
       responses:
         '201':
           description: Thành công.
@@ -500,6 +739,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowDetail'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a11
+                code: tra-cuu-ho-tich-v2
+                name: Tra cứu hộ tịch (bản 2)
+                workspaceCode: ho-tich
+                resourceKind: ROUTE
+                transport: SYNC
+                exposure: EXTERNAL
+                status: DRAFT
+                sourceSystem: DVC-T68
+                targetSystems: *id002
+                environments: []
+                allowedActions: *id004
+                origin: CLONE
+                routes: *id005
+                clonedFrom: tra-cuu-ho-tich
+                openVersionNo: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -532,6 +788,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RetireRequest'
+            example:
+              reason: Thay bằng luồng tra-cuu-ho-tich-v2 theo kế hoạch của Sở Tư pháp.
       responses:
         '202':
           description: Thành công.
@@ -539,11 +797,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowDetail'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+                code: tra-cuu-ho-tich
+                name: Tra cứu hộ tịch qua NDXP
+                workspaceCode: ho-tich
+                resourceKind: ROUTE
+                transport: SYNC
+                exposure: EXTERNAL
+                status: ACTIVE
+                sourceSystem: DVC-T68
+                targetSystems: *id002
+                environments: *id003
+                allowedActions: []
+                origin: TEMPLATE
+                routes: *id005
+                disabledReasons:
+                  update: Luồng đang được gỡ.
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a55
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -569,6 +845,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Liệt kê phụ thuộc cứng (API công bố PH-02, luồng gọi luồng con) và mềm (ca kiểm thử, bản nháp, topic, kết nối). Phụ thuộc cứng
+        chặn gỡ (ERR-04-017).
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -580,6 +858,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Dependencies'
+              example:
+                hard:
+                - type: API
+                  hard: true
+                  ref: api-ho-tich-tra-cuu
+                  label: API tra cứu hộ tịch
+                  environment: PROD
+                soft:
+                - type: TEST_CASE
+                  hard: false
+                  ref: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
+                  label: Tra cứu thành công
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -596,6 +886,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Trả mọi phiên bản của luồng, mới nhất trước, kèm môi trường đang chạy từng phiên bản. Không phân trang vì số phiên bản có giới
+        hạn tự nhiên.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -607,6 +899,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionList'
+              example:
+                items:
+                - versionNo: 3
+                  status: DRAFT
+                  contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                  createdBy: an.nv
+                - versionNo: 2
+                  status: APPROVED
+                  contentHash: sha256:8b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e1
+                  approvedBy: binh.tt
+                  environments:
+                  - TEST
+                  - STAGING
+                  - PROD
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -635,6 +941,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewVersionRequest'
+            example:
+              baseVersionNo: 2
       responses:
         '201':
           description: Thành công.
@@ -642,11 +950,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetail'
+              example: &id006
+                versionNo: 3
+                status: DRAFT
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                createdBy: an.nv
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                canvasLayout: &id011 {}
+                samples: &id012 {}
+                allowedActions: &id013
+                - saveDraft
+                - submit
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -680,11 +1000,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetail'
+              example: *id006
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -717,6 +1039,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/DraftUpdate'
+            example:
+              definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+              canvasLayout:
+                n1:
+                  x: 120
+                  y: 80
+              samples: {}
+              catalogVersion: camel-quarkus-3.33.2
       responses:
         '200':
           description: Thành công.
@@ -724,11 +1054,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DraftSaved'
+              example: &id007
+                versionNo: 3
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                savedAt: '2026-11-26T09:03:00+07:00'
+                validation: &id008
+                  level: DESIGN
+                  errorCount: 0
+                  warnCount: 1
+                  findings:
+                  - rule: VR-12
+                    severity: WARN
+                    nodeId: n7
+                    message: Chặng gọi hệ đích chưa đặt thời gian chờ; mặc định 30 giây.
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -759,6 +1103,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Hủy phiên bản đang `DRAFT` hoặc `CHANGES_REQUESTED`; phiên bản chuyển `DISCARDED`, giải phóng chỗ cho phiên bản mở mới (BR-04-016).
+        Trạng thái khác ERR-04-005.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -772,6 +1118,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionSummary'
+              example:
+                versionNo: 3
+                status: DISCARDED
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                createdBy: an.nv
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -794,6 +1145,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: So sánh theo chặng (`nodes`) và theo dòng YAML (`yamlUnifiedDiff`) với phiên bản gốc. Người duyệt gọi với `markViewed = true`
+        để thỏa điều kiện đã xem khác biệt trước khi duyệt.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -803,12 +1156,14 @@ paths:
           type: integer
           minimum: 1
         description: 'Mặc định: phiên bản đang chạy ở PROD.'
+        example: 2
       - name: markViewed
         in: query
         schema:
           type: boolean
           default: false
         description: Người duyệt ghi nhận đã xem khác biệt (review.action = DIFF_VIEWED).
+        example: true
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -818,6 +1173,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DiffResult'
+              example:
+                baseVersionNo: 2
+                versionNo: 3
+                nodes:
+                - nodeId: n5
+                  change: ADDED
+                - nodeId: n7
+                  change: MODIFIED
+                  fields:
+                  - parameters.timeout
+                summary:
+                  added: 1
+                  removed: 0
+                  modified: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -834,6 +1203,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Tải YAML triển khai (`yaml`), YAML kèm bố cục (`yaml+layout`) hoặc gói ZIP gồm YAML, ánh xạ, ca kiểm thử (`bundle`). Không
+        bao giờ chứa giá trị bí mật.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -846,6 +1217,7 @@ paths:
           - yaml+layout
           - bundle
         required: true
+        example: yaml
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -855,6 +1227,7 @@ paths:
             application/yaml:
               schema:
                 type: string
+              example: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
             application/zip:
               schema:
                 type: string
@@ -875,6 +1248,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Thay định nghĩa của bản nháp bằng YAML tải lên; giữ bố cục cho chặng có `id` trùng khi `keepLayout`. Cú pháp lỗi ERR-04-008,
+        bí mật ERR-04-010, vượt 512 KiB ERR-04-033.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -887,6 +1262,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ImportYamlRequest'
+            example:
+              yaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+              keepLayout: true
       responses:
         '200':
           description: Thành công.
@@ -894,11 +1272,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DraftSaved'
+              example: *id007
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -951,6 +1331,10 @@ paths:
                   type: string
                   maxLength: 20000
                   description: 'JSON: mã kết nối cũ → mã kết nối PH-05.'
+            example:
+              file: (nội dung tệp context-hotich.xml)
+              workspaceCode: ho-tich
+              connectionMap: '{"dsHoTich": "pg-ho-tich"}'
       responses:
         '202':
           description: Thành công.
@@ -958,11 +1342,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LegacyImportJob'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
+                status: RUNNING
+                fileName: context-hotich.xml
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/legacy-imports/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -984,13 +1373,16 @@ paths:
       - FR-04-082
       x-datahub-permission:
         permission: PERM-04-read
+      description: 'Trả trạng thái tác vụ chuyển XML cũ và báo cáo: số route, số chặng chuyển được, chặng cần làm tay, thành phần bị cấm, kết
+        nối cần khai ở PH-05, luồng đã tạo.'
       parameters:
       - name: jobId
         in: path
         required: true
-        schema: &id001
+        schema:
           type: string
           format: uuid
+        example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -1000,6 +1392,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LegacyImportJob'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
+                status: COMPLETED
+                fileName: context-hotich.xml
+                report:
+                  routes: 3
+                  stepsConverted: 41
+                  stepsManual: 2
+                  forbiddenComponents:
+                  - exec
+                  connectionsToDeclare:
+                  - pg-ho-tich
+                createdFlows:
+                - ht-dong-bo-khai-sinh
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1030,6 +1436,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionState'
+              example:
+                others:
+                - userId: binh.tt
+                  displayName: Trần Thị Bình
+                  since: '2026-11-26T09:00:00+07:00'
+                catalogVersion: camel-quarkus-3.33.2
+                expiresInSeconds: 120
+                freeze:
+                  active: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1046,6 +1461,7 @@ paths:
       - FR-04-024
       x-datahub-permission:
         permission: PERM-04-update
+      description: 'Rời trình thiết kế: xóa người gọi khỏi danh sách phiên soạn để người khác không còn thấy cảnh báo.'
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -1072,6 +1488,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Chạy kiểm tra hợp lệ ở mức yêu cầu (`DESIGN`, `SUBMIT`, `PUBLISH`) trên phiên bản đã lưu và ghi kết quả vào `lastValidation`.
+        Không đổi trạng thái phiên bản.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -1083,6 +1501,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ValidateRequest'
+            example:
+              level: SUBMIT
+              targetEnvironment: PROD
       responses:
         '200':
           description: Thành công.
@@ -1090,6 +1511,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationResult'
+              example:
+                level: SUBMIT
+                errorCount: 1
+                warnCount: 0
+                findings:
+                - rule: VR-05
+                  severity: ERROR
+                  nodeId: n6
+                  message: 'Luồng đối ngoại thiếu chặng chuẩn: audit.'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1118,6 +1548,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/StatelessValidateRequest'
+            example:
+              yaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+              resourceKind: ROUTE
+              exposure: EXTERNAL
       responses:
         '200':
           description: Thành công.
@@ -1125,6 +1559,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationResult'
+              example: *id008
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1153,6 +1588,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ExpressionCheckRequest'
+            example:
+              language: simple
+              expression: ${header.dh-tenant} == 'T68'
+              predicate: true
+              evaluate: true
+              sample:
+                headers:
+                  dh-tenant: T68
       responses:
         '200':
           description: Thành công.
@@ -1160,6 +1603,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExpressionCheckResult'
+              example:
+                valid: true
+                result: true
+                resultType: java.lang.Boolean
+                simulated: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1191,6 +1639,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/MappingPreviewRequest'
+            example:
+              mapping:
+                name: ket-qua-tra-cuu
+                dhmap:
+                  format: dhmap/1
+                  fields:
+                  - to: hoTen
+                    from: $.fullName
+              sample:
+                body: '{"fullName": "Nguyễn Văn A"}'
       responses:
         '200':
           description: Thành công.
@@ -1198,6 +1656,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MappingPreviewResult'
+              example:
+                jq: '{hoTen: .fullName}'
+                output:
+                  hoTen: Nguyễn Văn A
+                targetValid: true
+                findings: []
+                simulated: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1236,6 +1701,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TestRunRequest'
+            example:
+              mode: MOCK
+              body: '{"soDinhDanh": "068000000001"}'
+              timeoutSeconds: 30
+              assertions:
+              - kind: STATUS
+                expected: 200
       responses:
         '202':
           description: Thành công.
@@ -1243,11 +1715,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRun'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                versionNo: 3
+                definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                mode: MOCK
+                status: QUEUED
+                matchesCurrentHash: true
+                allowedActions:
+                - cancel
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/test-runs/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1274,6 +1756,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Lịch sử chạy thử của luồng, lọc theo phiên bản, trạng thái, ca kiểm thử; mỗi lần chạy có `matchesCurrentHash` để biết còn dùng
+        được cho BR-04-004 không.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - name: versionNo
@@ -1281,6 +1765,7 @@ paths:
         schema:
           type: integer
           minimum: 1
+        example: 3
       - name: status
         in: query
         schema:
@@ -1291,7 +1776,9 @@ paths:
         explode: false
       - name: testCaseId
         in: query
-        schema: *id001
+        schema:
+          type: string
+          format: uuid
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
@@ -1303,6 +1790,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRunPage'
+              example:
+                items:
+                - id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                  versionNo: 3
+                  definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                  mode: MOCK
+                  status: PASSED
+                  durationMs: 412
+                  matchesCurrentHash: true
+                  allowedActions: &id009
+                  - rerun
+                page:
+                  next: null
+                  hasMore: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1319,6 +1820,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: 'Trả kết quả lần chạy: trạng thái, khẳng định, danh sách chặng (thân đã che, xem trước ≤ 64 KiB). Dùng để hỏi lại khi SSE mất
+        kết nối.'
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/RunIdPath'
@@ -1331,6 +1834,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRun'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                versionNo: 3
+                definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                mode: MOCK
+                status: PASSED
+                durationMs: 412
+                matchesCurrentHash: true
+                allowedActions: *id009
+                steps:
+                - seqNo: 4
+                  nodeId: n4
+                  routeId: tra-cuu
+                  stage: transform
+                  status: OK
+                  offsetMs: 96
+                  durationMs: 12
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1357,11 +1877,26 @@ paths:
       responses:
         '200':
           description: Thành công.
-          content: &id003
+          content:
             text/event-stream:
-              schema:
+              schema: &id015
                 type: string
                 description: 'Luồng sự kiện SSE; mỗi sự kiện `event: <tên>` và `data: <JSON>`.'
+              example: 'event: status
+
+                data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "status": "RUNNING"}
+
+
+                event: step
+
+                data: {"seqNo": 4, "nodeId": "n4", "status": "OK", "durationMs": 12}
+
+
+                event: completed
+
+                data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "status": "PASSED", "durationMs": 412}
+
+                '
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1388,6 +1923,7 @@ paths:
         schema:
           type: integer
           minimum: 0
+        example: 4
       - name: side
         in: query
         required: true
@@ -1396,6 +1932,7 @@ paths:
           enum:
           - in
           - out
+        example: out
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -1404,6 +1941,9 @@ paths:
           content:
             application/json:
               schema: {}
+              example:
+                hoTen: Nguyễn Văn A
+                soDinhDanh: 068******001
             text/plain:
               schema:
                 type: string
@@ -1423,6 +1963,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Hủy lần chạy đang `QUEUED` hoặc `RUNNING`; sandbox đóng `CamelContext` của lần chạy. Lần chạy đã kết thúc ERR-04-005.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/RunIdPath'
@@ -1435,6 +1976,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRun'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                versionNo: 3
+                definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                mode: MOCK
+                status: CANCELLED
+                durationMs: 412
+                matchesCurrentHash: true
+                allowedActions:
+                - rerun
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1455,6 +2006,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Danh sách ca kiểm thử của luồng kèm kết quả lần chạy gần nhất và cờ `onCurrentHash`.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -1466,6 +2018,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestCaseList'
+              example:
+                items:
+                - name: Tra cứu thành công
+                  mode: MOCK
+                  body: '{"soDinhDanh": "068000000001"}'
+                  assertions: &id010
+                  - kind: STATUS
+                    expected: 200
+                  - kind: STEP_VISITED
+                    nodeId: n7
+                  timeoutSeconds: 30
+                  active: true
+                  id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
+                  lastResult:
+                    status: PASSED
+                    runId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+                    onCurrentHash: true
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1481,6 +2050,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Tạo ca kiểm thử (1…20 khẳng định, thân ≤ 256 KiB). Ca mới làm điều kiện gửi duyệt cần thêm một lần chạy đạt của ca này (BR-04-004).
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
@@ -1493,6 +2063,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TestCase'
+            example:
+              name: Tra cứu thành công
+              mode: MOCK
+              body: '{"soDinhDanh": "068000000001"}'
+              assertions: *id010
+              timeoutSeconds: 30
+              active: true
       responses:
         '201':
           description: Thành công.
@@ -1500,11 +2077,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestCase'
+              example:
+                name: Tra cứu thành công
+                mode: MOCK
+                body: '{"soDinhDanh": "068000000001"}'
+                assertions: *id010
+                timeoutSeconds: 30
+                active: true
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1529,6 +2115,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Sửa ca kiểm thử; kết quả cũ của ca không còn tính cho BR-04-004 cho tới khi chạy lại.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/CaseIdPath'
@@ -1541,6 +2128,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TestCase'
+            example:
+              name: Tra cứu thành công
+              mode: MOCK
+              body: '{"soDinhDanh": "068000000001"}'
+              assertions: *id010
+              timeoutSeconds: 20
+              active: true
       responses:
         '200':
           description: Thành công.
@@ -1548,11 +2142,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestCase'
+              example:
+                name: Tra cứu thành công
+                mode: MOCK
+                body: '{"soDinhDanh": "068000000001"}'
+                assertions: *id010
+                timeoutSeconds: 20
+                active: true
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1574,6 +2177,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-update
         workspaceLevel: EDIT
+      description: Ngừng dùng ca kiểm thử (`active = false`); lịch sử lần chạy theo ca vẫn giữ.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/CaseIdPath'
@@ -1617,6 +2221,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SubmitRequest'
+            example:
+              changeNote: Thêm chặng che số định danh theo yêu cầu ATTT.
+              suggestedReviewers:
+              - binh.tt
       responses:
         '200':
           description: Thành công.
@@ -1624,11 +2232,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetail'
+              example:
+                versionNo: 3
+                status: PENDING_REVIEW
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                createdBy: an.nv
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                canvasLayout: *id011
+                samples: *id012
+                allowedActions:
+                - withdraw
+                submittedBy: an.nv
+                submittedAt: '2026-11-26T09:30:00+07:00'
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1657,6 +2278,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-submit
         workspaceLevel: EDIT
+      description: Người gửi rút yêu cầu duyệt khi chưa có quyết định; phiên bản về `DRAFT`. Thiếu lý do ERR-04-025.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/VersionNoPath'
@@ -1669,6 +2291,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/WithdrawRequest'
+            example:
+              reason: Cần bổ sung ca kiểm thử lỗi hệ đích.
       responses:
         '200':
           description: Thành công.
@@ -1676,11 +2300,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetail'
+              example:
+                versionNo: 3
+                status: DRAFT
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                createdBy: an.nv
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                canvasLayout: *id011
+                samples: *id012
+                allowedActions: *id013
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1718,6 +2352,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReviewDecision'
+            example:
+              decision: APPROVE
+              comment: Đã xem khác biệt, che dữ liệu đúng.
+              checklist:
+                diff-viewed: true
+                pii-purpose: true
+              publishTo: TEST
       responses:
         '200':
           description: Thành công.
@@ -1725,11 +2366,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionDetail'
+              example:
+                versionNo: 3
+                status: APPROVED
+                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+                createdBy: an.nv
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                canvasLayout: *id011
+                samples: *id012
+                allowedActions:
+                - release
+                approvedBy: binh.tt
+                approvedAt: '2026-11-26T10:00:00+07:00'
           headers:
             ETag:
               schema:
                 type: string
               description: W/"{version}-{contentHash[0..8]}"
+              example: W/"3-3f9a1c2e"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1753,6 +2407,8 @@ paths:
       - FR-04-041
       x-datahub-permission:
         permission: PERM-04-publish
+      description: Hàng đợi phiên bản `PENDING_REVIEW` mà người gọi được duyệt, kèm số giờ chờ, cờ quá hạn và `canDecide` (sai khi người gọi là
+        người tạo, đóng góp hoặc gửi).
       parameters:
       - name: workspace
         in: query
@@ -1764,12 +2420,14 @@ paths:
         explode: false
       - name: overdue
         in: query
-        schema: &id002
+        schema:
           type: boolean
       - name: mine
         in: query
-        schema: *id002
+        schema:
+          type: boolean
         description: Chỉ yêu cầu gợi ý tôi duyệt.
+        example: true
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
@@ -1781,6 +2439,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReviewQueue'
+              example:
+                items:
+                - flowCode: tra-cuu-ho-tich
+                  flowName: Tra cứu hộ tịch qua NDXP
+                  workspaceCode: ho-tich
+                  versionNo: 3
+                  submittedBy: an.nv
+                  submittedAt: '2026-11-26T09:30:00+07:00'
+                  waitingHours: 2.5
+                  overdue: false
+                  exposure: EXTERNAL
+                  canDecide: true
+                page:
+                  next: null
+                  hasMore: false
         '401':
           $ref: '#/components/responses/Unauthorized'
   /flows/{flowCode}/deployments:
@@ -1795,12 +2468,14 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Lịch sử triển khai của luồng theo môi trường, mới nhất trước; bản ghi `current = true` là triển khai đang có hiệu lực.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - name: environment
         in: query
         schema:
           $ref: '#/components/schemas/Environment'
+        example: PROD
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -1810,6 +2485,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeploymentList'
+              example:
+                items:
+                - id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a53
+                  versionNo: 2
+                  environment: PROD
+                  kind: RELEASE
+                  desiredState: RUNNING
+                  syncStatus: SYNCED
+                  requestedBy: binh.tt
+                  requestedAt: '2026-11-26T10:00:00+07:00'
+                  allowedActions: &id014 []
+                  healthStatus: HEALTHY
+                  current: true
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1840,6 +2528,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReleaseRequest'
+            example:
+              versionNo: 3
+              environment: TEST
+              note: Phát hành thử nghiệm chặng che dữ liệu.
       responses:
         '202':
           description: Thành công.
@@ -1847,11 +2539,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Deployment'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
+                versionNo: 3
+                environment: TEST
+                kind: RELEASE
+                desiredState: RUNNING
+                syncStatus: PENDING
+                requestedBy: binh.tt
+                requestedAt: '2026-11-26T10:00:00+07:00'
+                allowedActions: *id014
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1878,6 +2581,7 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Trả trạng thái đồng bộ, sức khỏe, commit Git và mã lỗi (nếu có) của một lần triển khai. Dùng để hỏi lại khi SSE mất kết nối.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/DeploymentIdPath'
@@ -1890,6 +2594,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Deployment'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
+                versionNo: 3
+                environment: TEST
+                kind: RELEASE
+                desiredState: RUNNING
+                syncStatus: SYNCED
+                requestedBy: binh.tt
+                requestedAt: '2026-11-26T10:00:00+07:00'
+                allowedActions: *id014
+                healthStatus: HEALTHY
+                gitCommit: 9c1e4b7
+                syncedAt: '2026-11-26T10:03:00+07:00'
+                current: true
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1915,7 +2633,24 @@ paths:
       responses:
         '200':
           description: Thành công.
-          content: *id003
+          content:
+            text/event-stream:
+              schema: *id015
+              example: 'event: status
+
+                data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "syncStatus": "SYNCING"}
+
+
+                event: replica
+
+                data: {"replica": "dh-rt-t68-core-7c9d-x2k4p", "contentHash": "sha256:3f9a1c2e…"}
+
+
+                event: completed
+
+                data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "syncStatus": "SYNCED"}
+
+                '
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1944,6 +2679,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RollbackRequest'
+            example:
+              environment: PROD
+              targetVersionNo: 2
+              reason: Phiên bản 3 tăng lỗi 504 khi gọi NDXP.
       responses:
         '202':
           description: Thành công.
@@ -1951,11 +2690,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Deployment'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a56
+                versionNo: 2
+                environment: PROD
+                kind: ROLLBACK
+                desiredState: RUNNING
+                syncStatus: PENDING
+                requestedBy: binh.tt
+                requestedAt: '2026-11-26T10:00:00+07:00'
+                allowedActions: *id014
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a56
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1992,6 +2742,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PromoteRequest'
+            example:
+              versionNo: 3
+              fromEnvironment: STAGING
+              toEnvironment: PROD
       responses:
         '202':
           description: Thành công.
@@ -1999,11 +2753,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Deployment'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a57
+                versionNo: 3
+                environment: PROD
+                kind: PROMOTE
+                desiredState: RUNNING
+                syncStatus: PENDING
+                requestedBy: binh.tt
+                requestedAt: '2026-11-26T10:00:00+07:00'
+                allowedActions: *id014
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a57
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2030,6 +2795,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: 'Tình trạng runtime theo môi trường: phiên bản đang chạy, bản sao sẵn sàng, trạng thái từng route và số liệu một phút, tính
+        từ nhịp tim EVT-04-12.'
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/Traceparent'
@@ -2041,6 +2808,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RuntimeStatus'
+              example:
+                environments:
+                - environment: PROD
+                  versionNo: 2
+                  syncStatus: SYNCED
+                  healthStatus: HEALTHY
+                  desiredState: RUNNING
+                  readyReplicas: 3
+                  replicas: 3
+                  runtimeProfile: core-native
+                  routes:
+                  - routeId: tra-cuu
+                    state: Started
+                    exchanges1m: 42
+                    failures1m: 0
+                    p95ms: 180
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2070,6 +2853,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CommandRequest'
+            example:
+              environment: PROD
+              action: PAUSE
+              scope: FLOW
+              reason: Hệ đích NDXP bảo trì từ 22 giờ đến 23 giờ ngày 26/11.
+              drain: true
       responses:
         '202':
           description: Thành công.
@@ -2077,11 +2866,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Command'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+                environment: PROD
+                action: PAUSE
+                scope: FLOW
+                status: ISSUED
+                expectedReplicas: 3
+                ackedReplicas: 0
+                issuedBy: cuong.lv
+                issuedAt: '2026-11-26T21:55:00+07:00'
+                expiresAt: '2026-11-26T21:56:00+07:00'
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/runtime/commands/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2104,6 +2905,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Trả trạng thái lệnh và xác nhận theo từng bản sao (`acks`). `PARTIAL` sau 30 giây khi chưa đủ xác nhận; lý do từ chối nằm ở
+        `acks[].reason`.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - $ref: '#/components/parameters/CommandIdPath'
@@ -2116,6 +2919,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Command'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+                environment: PROD
+                action: PAUSE
+                scope: FLOW
+                status: ACKNOWLEDGED
+                expectedReplicas: 3
+                ackedReplicas: 3
+                issuedBy: cuong.lv
+                issuedAt: '2026-11-26T21:55:00+07:00'
+                expiresAt: '2026-11-26T21:56:00+07:00'
+                acks:
+                - replica: dh-rt-t68-core-7c9d-x2k4p
+                  result: APPLIED
+                  ackedAt: '2026-11-26T21:55:02+07:00'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2144,11 +2962,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Command'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a62
+                environment: PROD
+                action: PAUSE
+                scope: FLOW
+                status: ISSUED
+                expectedReplicas: 3
+                ackedReplicas: 0
+                issuedBy: cuong.lv
+                issuedAt: '2026-11-26T21:55:00+07:00'
+                expiresAt: '2026-11-26T21:56:00+07:00'
           headers:
             Location:
               schema:
                 type: string
               description: Tài nguyên theo dõi tiến trình.
+              example: /api/integration/v1/flows/tra-cuu-ho-tich/runtime/commands/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a62
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2169,12 +2999,14 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Liệt kê điểm vào, điểm ra của luồng (URI đã che tham số nhạy cảm, kết nối, topic) kèm số liệu một giờ.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - name: environment
         in: query
         schema:
           $ref: '#/components/schemas/Environment'
+        example: PROD
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2184,6 +3016,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EndpointList'
+              example:
+                items:
+                - nodeId: n1
+                  direction: IN
+                  scheme: platform-http
+                  httpMethod: POST
+                  httpPath: /ho-tich/tra-cuu
+                  metrics:
+                    exchanges1h: 2480
+                    failures1h: 3
+                    p95ms: 190
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2200,6 +3043,8 @@ paths:
       x-datahub-permission:
         permission: PERM-04-read
         workspaceLevel: VIEW
+      description: Chuỗi số liệu (số trao đổi, lỗi, p95, DLQ) của luồng ở một môi trường, đọc từ PH-13 và lọc sẵn theo tenant. PH-13 không sẵn
+        sàng ERR-04-047.
       parameters:
       - $ref: '#/components/parameters/FlowCodePath'
       - name: environment
@@ -2207,20 +3052,26 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Environment'
+        example: PROD
       - name: from
         in: query
-        schema: &id004
+        schema:
           type: string
           format: date-time
+        example: '2026-11-26T09:00:00+07:00'
       - name: to
         in: query
-        schema: *id004
+        schema:
+          type: string
+          format: date-time
+        example: '2026-11-26T10:00:00+07:00'
       - name: step
         in: query
         schema:
           type: string
           pattern: ^[0-9]+[smh]$
           default: 1m
+        example: 30m
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2230,6 +3081,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FlowMetrics'
+              example:
+                environment: PROD
+                step: 30m
+                series:
+                - name: exchanges
+                  points:
+                  - - 1795744800
+                    - 1210
+                  - - 1795746600
+                    - 1270
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2255,6 +3116,7 @@ paths:
         schema:
           type: string
           maxLength: 128
+        example: W/"camel-quarkus-3.33.2.p17.r4"
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2264,10 +3126,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogIndex'
+              example:
+                catalogVersion: camel-quarkus-3.33.2
+                runtime: quarkus
+                paletteRulesVersion: 4
+                entries:
+                - kind: COMPONENT
+                  name: http
+                  titleVi: Gọi HTTP
+                  groups:
+                  - deliver
+                  policy: ALLOWED
+                  needsConnection: true
           headers:
             ETag:
               schema:
                 type: string
+              example: W/"camel-quarkus-3.33.2.p17.r4"
         '304':
           $ref: '#/components/responses/NotModified'
         '401':
@@ -2298,17 +3173,20 @@ paths:
           - dataformats
           - languages
           - beans
+        example: components
       - name: name
         in: path
         required: true
         schema:
           type: string
           maxLength: 128
+        example: http
       - name: catalogVersion
         in: query
         schema:
           type: string
           maxLength: 64
+        example: camel-quarkus-3.33.2
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2318,6 +3196,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComponentSchema'
+              example:
+                entry:
+                  kind: COMPONENT
+                  name: http
+                  policy: ALLOWED
+                syntax: http:httpUri
+                properties:
+                - name: connectTimeout
+                  kind: parameter
+                  type: duration
+                  required: false
+                  default: 30s
+                  secret: false
+                flowsUsing: 14
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2333,6 +3225,7 @@ paths:
       - FR-04-080
       x-datahub-permission:
         permission: PERM-04-read
+      description: 'Chính sách thành phần hiệu lực: tầng nền (PLATFORM) và tầng tỉnh (TENANT) kèm `policyVersion`.'
       parameters:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -2343,6 +3236,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PolicyList'
+              example:
+                items:
+                - &id016
+                  kind: components
+                  name: exec
+                  decision: DENIED
+                  scope: PLATFORM
+                  policyVersion: 7
+                policyVersion: 7
         '401':
           $ref: '#/components/responses/Unauthorized'
     patch:
@@ -2367,6 +3269,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PolicyUpdate'
+            example:
+              changes:
+              - kind: components
+                name: ftp
+                decision: PER_FLOW
+                reason: Chỉ cho luồng nhận tệp từ hệ thống hộ tịch cũ.
       responses:
         '200':
           description: Thành công.
@@ -2374,6 +3282,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PolicyList'
+              example:
+                items:
+                - *id016
+                - kind: components
+                  name: ftp
+                  decision: PER_FLOW
+                  scope: TENANT
+                  policyVersion: 8
+                policyVersion: 8
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2394,6 +3311,7 @@ paths:
       - FR-04-075
       x-datahub-permission:
         permission: PERM-04-read
+      description: Phiên bản catalog của tenant, các hồ sơ runtime (Quarkus, Camel Quarkus, thư viện nền, ảnh) và đợt nâng cấp đang chờ.
       parameters:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -2404,6 +3322,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CatalogVersions'
+              example:
+                tenantCatalogVersion: camel-quarkus-3.33.2
+                match: true
+                profiles:
+                - profile: core-native
+                  quarkusVersion: 3.28.4
+                  camelQuarkusVersion: 3.33.2
+                  libVersion: dh-lib 1.4.0
         '401':
           $ref: '#/components/responses/Unauthorized'
   /catalog/proposals:
@@ -2417,6 +3343,7 @@ paths:
       - FR-04-080
       x-datahub-permission:
         permission: PERM-04-read
+      description: Danh sách đề xuất cho phép hoặc bổ sung thành phần, lọc theo trạng thái.
       parameters:
       - name: status
         in: query
@@ -2427,6 +3354,7 @@ paths:
           - ACCEPTED
           - REJECTED
           - WITHDRAWN
+        example: OPEN
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2436,6 +3364,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProposalList'
+              example:
+                items:
+                - &id017
+                  id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a74
+                  kind: components
+                  name: jt400
+                  type: NEW_COMPONENT
+                  status: OPEN
+                  createdBy: an.nv
+                  createdAt: '2026-11-26T08:00:00+07:00'
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -2448,6 +3386,8 @@ paths:
       - FR-04-080
       x-datahub-permission:
         permission: PERM-04-read
+      description: Người thiết kế đề xuất cho phép thành phần đang bị cấm hoặc bổ sung thành phần mới, kèm lý do ≥ 20 ký tự. Đề xuất mở trùng
+        thành phần ERR-04-005.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2459,6 +3399,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProposalCreate'
+            example:
+              kind: components
+              name: jt400
+              type: NEW_COMPONENT
+              justification: Hệ thống hộ tịch cũ chạy trên IBM i, cần đọc hàng đợi dữ liệu.
       responses:
         '201':
           description: Thành công.
@@ -2466,6 +3411,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Proposal'
+              example: *id017
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2483,11 +3429,16 @@ paths:
       - FR-04-080
       x-datahub-permission:
         permission: PERM-04-catalog-admin
+      description: PA quyết định đề xuất (cần ý kiến SO theo FR-04-080); chấp nhận kèm mức chính sách `ALLOWED` hoặc `PER_FLOW`. Đề xuất đã đóng
+        ERR-04-005.
       parameters:
       - name: proposalId
         in: path
         required: true
-        schema: *id001
+        schema:
+          type: string
+          format: uuid
+        example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a74
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       requestBody:
@@ -2496,6 +3447,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProposalDecision'
+            example:
+              decision: ACCEPTED
+              note: Đồng ý, chỉ cho từng luồng có SO duyệt.
+              policyDecision: PER_FLOW
       responses:
         '200':
           description: Thành công.
@@ -2503,6 +3458,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Proposal'
+              example:
+                id: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a74
+                kind: components
+                name: jt400
+                type: NEW_COMPONENT
+                status: ACCEPTED
+                createdBy: an.nv
+                createdAt: '2026-11-26T08:00:00+07:00'
+                decidedBy: pa.admin
+                decisionNote: Đồng ý, chỉ cho từng luồng có SO duyệt.
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2522,11 +3487,13 @@ paths:
       - FR-04-025
       x-datahub-permission:
         permission: PERM-04-read
+      description: Khuôn mẫu nền và khuôn của tỉnh đang dùng được, lọc theo loại tài nguyên.
       parameters:
       - name: resourceKind
         in: query
         schema:
           $ref: '#/components/schemas/ResourceKind'
+        example: ROUTE
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2536,6 +3503,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateList'
+              example:
+                items:
+                - code: tpl-rest-proxy
+                  name: Chuyển tiếp REST chín chặng
+                  category: rest
+                  resourceKind: ROUTE
+                  scope: PLATFORM
+                  status: ACTIVE
+                  catalogVersion: camel-quarkus-3.33.2
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -2548,6 +3524,7 @@ paths:
       - FR-04-025
       x-datahub-permission:
         permission: PERM-04-admin
+      description: Tạo khuôn của tỉnh từ phiên bản luồng đã duyệt, kèm lược đồ tham số. Mã khuôn trùng ERR-04-005; phiên bản chưa duyệt ERR-04-005.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -2559,6 +3536,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TemplateCreate'
+            example:
+              code: tpl-t68-tra-cuu
+              name: Tra cứu qua NDXP của tỉnh
+              fromFlow: tra-cuu-ho-tich
+              fromVersionNo: 2
+              paramSchema:
+                type: object
+                required:
+                - upstream
       responses:
         '201':
           description: Thành công.
@@ -2566,6 +3552,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateDetail'
+              example:
+                code: tpl-t68-tra-cuu
+                name: Tra cứu qua NDXP của tỉnh
+                category: rest
+                resourceKind: ROUTE
+                scope: TENANT
+                status: ACTIVE
+                catalogVersion: camel-quarkus-3.33.2
+                bodyYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2587,6 +3582,8 @@ paths:
       - FR-04-025
       x-datahub-permission:
         permission: PERM-04-read
+      description: 'Chi tiết khuôn: YAML thân, lược đồ tham số (JSON Schema) để dựng biểu mẫu tạo luồng, bố cục xem trước. Khuôn không tồn tại
+        ERR-04-039.'
       parameters:
       - name: templateCode
         in: path
@@ -2594,6 +3591,7 @@ paths:
         schema:
           type: string
           maxLength: 64
+        example: tpl-rest-proxy
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -2603,6 +3601,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TemplateDetail'
+              example:
+                code: tpl-rest-proxy
+                name: Chuyển tiếp REST chín chặng
+                category: rest
+                resourceKind: ROUTE
+                scope: PLATFORM
+                status: ACTIVE
+                catalogVersion: camel-quarkus-3.33.2
+                bodyYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                paramSchema:
+                  type: object
+                  required:
+                  - upstream
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2618,6 +3629,7 @@ paths:
       - FR-04-025
       x-datahub-permission:
         permission: PERM-04-admin
+      description: Ngừng dùng khuôn của tỉnh; luồng đã tạo từ khuôn không bị ảnh hưởng. Khuôn nền không ngừng được ở đây (403).
       parameters:
       - name: templateCode
         in: path
@@ -2625,6 +3637,7 @@ paths:
         schema:
           type: string
           maxLength: 64
+        example: tpl-rest-proxy
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
@@ -2635,6 +3648,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Template'
+              example:
+                code: tpl-t68-tra-cuu
+                name: Tra cứu qua NDXP của tỉnh
+                category: rest
+                resourceKind: ROUTE
+                scope: TENANT
+                status: DEPRECATED
+                catalogVersion: camel-quarkus-3.33.2
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2663,6 +3684,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Settings'
+              example:
+                params:
+                - key: 04.test.max-concurrent
+                  value: 5
+                  default: 5
+                envVars:
+                - &id018
+                  name: ndxp-base-path
+                  description: Đường gốc API NDXP theo môi trường.
+                  values:
+                    TEST: /sandbox/v1
+                    STAGING: /uat/v1
+                    PROD: /v1
+                  usedBy: 4
         '401':
           $ref: '#/components/responses/Unauthorized'
   /settings/env-vars:
@@ -2687,6 +3722,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EnvVarList'
+            example:
+              items:
+              - *id018
       responses:
         '200':
           description: Thành công.
@@ -2694,6 +3732,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EnvVarList'
+              example:
+                items:
+                - *id018
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2726,6 +3767,8 @@ paths:
             maxLength: 64
         style: form
         explode: false
+        example:
+        - INT_VERSION_APPROVE
       - name: actor
         in: query
         schema:
@@ -2742,6 +3785,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HistoryPage'
+              example:
+                items:
+                - at: '2026-11-26T10:00:00+07:00'
+                  action: INT_VERSION_APPROVE
+                  actor: binh.tt
+                  versionNo: 3
+                  traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+                page:
+                  next: null
+                  hasMore: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2765,6 +3818,7 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/FlowCode'
+      example: tra-cuu-ho-tich
     VersionNoPath:
       name: versionNo
       in: path
@@ -2772,32 +3826,46 @@ components:
       schema:
         type: integer
         minimum: 1
+      example: 3
     WorkspacePath:
       name: workspaceCode
       in: path
       required: true
       schema:
         $ref: '#/components/schemas/WorkspaceCode'
+      example: ho-tich
     RunIdPath:
       name: runId
       in: path
       required: true
-      schema: *id001
+      schema:
+        type: string
+        format: uuid
+      example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
     CaseIdPath:
       name: caseId
       in: path
       required: true
-      schema: *id001
+      schema:
+        type: string
+        format: uuid
+      example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
     DeploymentIdPath:
       name: deploymentId
       in: path
       required: true
-      schema: *id001
+      schema:
+        type: string
+        format: uuid
+      example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
     CommandIdPath:
       name: commandId
       in: path
       required: true
-      schema: *id001
+      schema:
+        type: string
+        format: uuid
+      example: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
     Cursor:
       name: cursor
       in: query
@@ -2822,6 +3890,7 @@ components:
         type: string
         maxLength: 128
       description: ETag hiện tại; thiếu trả ERR-04-007 (428), lệch trả ERR-04-006 (412).
+      example: W/"3-3f9a1c2e"
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -2831,6 +3900,7 @@ components:
         maxLength: 128
         minLength: 16
       description: 16…128 ký tự, lưu 24 giờ; cùng khóa khác nội dung trả ERR-04-018.
+      example: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
     Traceparent:
       name: traceparent
       in: header
@@ -2848,103 +3918,103 @@ components:
         - en
   responses:
     BadRequest:
-      description: Tham số hoặc thân yêu cầu không hợp lệ (gồm ERR-04-025 thiếu lý do, ERR-04-026 vượt kích thước trang).
+      description: Tham số hoặc thân sai (ERR-04-049; thiếu lý do ERR-04-025; trang quá 100 ERR-04-026).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-049
-            title: Tham số hoặc thân yêu cầu không hợp lệ
+            title: Tham số hoặc thân sai
             status: 400
             code: ERR-04-049
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unauthorized:
-      description: Thiếu token hoặc token hết hạn.
+      description: Thiếu hoặc hết hạn token (ERR-04-044).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-044
-            title: Thiếu token hoặc token hết hạn
+            title: Thiếu hoặc hết hạn token
             status: 401
             code: ERR-04-044
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Forbidden:
-      description: Không đủ quyền chức năng hoặc phạm vi không gian làm việc (gồm ERR-04-003, ERR-04-015).
+      description: Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-045
-            title: Không đủ quyền chức năng hoặc phạm vi không gian làm việc
+            title: Thiếu quyền
             status: 403
             code: ERR-04-045
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     NotFound:
-      description: Không tìm thấy hoặc không có quyền xem (không phân biệt).
+      description: Không tìm thấy hoặc không được xem (ERR-04-001).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-001
-            title: Không tìm thấy hoặc không có quyền xem
+            title: Không tìm thấy hoặc không được xem
             status: 404
             code: ERR-04-001
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Conflict:
-      description: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ (mã cụ thể trong `code`).
+      description: Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-005
-            title: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ
+            title: Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code`
             status: 409
             code: ERR-04-005
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PreconditionFailed:
-      description: ETag không khớp; kèm `currentEtag`, `savedBy`, `savedAt`.
+      description: ETag lệch (ERR-04-006).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-006
-            title: ETag không khớp
+            title: ETag lệch
             status: 412
             code: ERR-04-006
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PreconditionRequired:
-      description: Thiếu tiêu đề If-Match.
+      description: Thiếu If-Match (ERR-04-007).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-007
-            title: Thiếu tiêu đề If-Match
+            title: Thiếu If-Match
             status: 428
             code: ERR-04-007
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PayloadTooLarge:
-      description: Thân vượt giới hạn (định nghĩa 512 KiB ERR-04-033, bản tin 256 KiB ERR-04-021).
+      description: Thân quá lớn (ERR-04-033; bản tin ERR-04-021).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-033
-            title: Thân vượt giới hạn
+            title: Thân quá lớn
             status: 413
             code: ERR-04-033
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     UnsupportedMediaType:
-      description: Kiểu nội dung không hỗ trợ.
+      description: Kiểu nội dung không hỗ trợ (ERR-04-046).
       content:
         application/problem+json:
           schema:
@@ -2956,43 +4026,43 @@ components:
             code: ERR-04-046
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unprocessable:
-      description: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu; kèm `findings`.
+      description: Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings` (ERR-04-009).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-009
-            title: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu
+            title: Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings`
             status: 422
             code: ERR-04-009
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Locked:
-      description: Đang trong khoảng đóng băng thay đổi (BR-04-022).
+      description: Đóng băng thay đổi (ERR-04-041).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-041
-            title: Đang trong khoảng đóng băng thay đổi
+            title: Đóng băng thay đổi
             status: 423
             code: ERR-04-041
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     TooManyRequests:
-      description: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời; kèm `retryAfterSeconds`.
+      description: Vượt tần suất (ERR-04-048) hoặc hạn mức chạy thử (ERR-04-019).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-048
-            title: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời
+            title: Vượt tần suất
             status: 429
             code: ERR-04-048
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     BadGateway:
-      description: Không ghi được kho cấu hình.
+      description: Không ghi được kho cấu hình (ERR-04-022).
       content:
         application/problem+json:
           schema:
@@ -3004,14 +4074,14 @@ components:
             code: ERR-04-022
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     ServiceUnavailable:
-      description: Phân hệ phụ thuộc chưa sẵn sàng (gồm ERR-04-019 sandbox).
+      description: Phụ thuộc chưa sẵn sàng (ERR-04-047; sandbox ERR-04-019).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-047
-            title: Phân hệ phụ thuộc chưa sẵn sàng
+            title: Phụ thuộc chưa sẵn sàng
             status: 503
             code: ERR-04-047
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
@@ -3188,7 +4258,8 @@ components:
           - string
           - 'null'
           maxLength: 2048
-        hasMore: *id002
+        hasMore:
+          type: boolean
       additionalProperties: false
       required:
       - hasMore
@@ -3241,7 +4312,9 @@ components:
           type: string
         savedBy:
           type: string
-        savedAt: *id004
+        savedAt:
+          type: string
+          format: date-time
         retryAfterSeconds:
           type: integer
         dependencies:
@@ -3267,7 +4340,7 @@ components:
         message:
           type: string
           description: Câu tiếng Việt đã điền tham số; không lặp giá trị bí mật.
-        args: &id005
+        args:
           type: object
           additionalProperties: true
       additionalProperties: false
@@ -3280,7 +4353,9 @@ components:
       properties:
         level:
           $ref: '#/components/schemas/ValidationLevel'
-        validatedAt: *id004
+        validatedAt:
+          type: string
+          format: date-time
         catalogVersion:
           type: string
           maxLength: 64
@@ -3302,38 +4377,50 @@ components:
       - findings
       - errorCount
     Workspace:
-      allOf:
-      - type: object
-        properties:
-          id: *id001
-          code:
-            $ref: '#/components/schemas/WorkspaceCode'
-          name:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/WorkspaceCode'
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 4000
+        ownerOrgCode:
+          type: string
+          maxLength: 64
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - ARCHIVED
+        flowCount:
+          type: integer
+        myAccess:
+          $ref: '#/components/schemas/AccessLevel'
+        updatedAt:
+          type: string
+          format: date-time
+        allowedActions:
+          type: array
+          items:
             type: string
-            maxLength: 255
-          description:
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
             type: string
-            maxLength: 4000
-          ownerOrgCode:
-            type: string
-            maxLength: 64
-          status:
-            type: string
-            enum:
-            - ACTIVE
-            - ARCHIVED
-          flowCount:
-            type: integer
-          myAccess:
-            $ref: '#/components/schemas/AccessLevel'
-          updatedAt: *id004
-        additionalProperties: false
-        required:
-        - id
-        - code
-        - name
-        - status
-      - $ref: '#/components/schemas/AllowedActions'
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+      required:
+      - id
+      - code
+      - name
+      - status
     WorkspaceCreate:
       type: object
       properties:
@@ -3430,61 +4517,76 @@ components:
           type: integer
         replicas:
           type: integer
-        lastHeartbeatAt: *id004
-        emergency: *id002
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+        emergency:
+          type: boolean
       additionalProperties: false
       required:
       - environment
     FlowSummary:
-      allOf:
-      - type: object
-        properties:
-          id: *id001
-          code:
-            $ref: '#/components/schemas/FlowCode'
-          name:
-            type: string
-            maxLength: 255
-          workspaceCode:
-            $ref: '#/components/schemas/WorkspaceCode'
-          resourceKind:
-            $ref: '#/components/schemas/ResourceKind'
-          transport:
-            $ref: '#/components/schemas/Transport'
-          exposure:
-            $ref: '#/components/schemas/Exposure'
-          status:
-            $ref: '#/components/schemas/FlowStatus'
-          sourceSystem:
-            type: string
-            maxLength: 64
-          targetSystems:
-            type: array
-            items:
-              type: string
-              maxLength: 64
-          labels:
-            $ref: '#/components/schemas/Labels'
-          openVersionNo:
-            type:
-            - integer
-            - 'null'
-          environments:
-            type: array
-            items:
-              $ref: '#/components/schemas/EnvState'
-          updatedAt: *id004
-          updatedBy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/FlowCode'
+        name:
+          type: string
+          maxLength: 255
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        transport:
+          $ref: '#/components/schemas/Transport'
+        exposure:
+          $ref: '#/components/schemas/Exposure'
+        status:
+          $ref: '#/components/schemas/FlowStatus'
+        sourceSystem:
+          type: string
+          maxLength: 64
+        targetSystems:
+          type: array
+          items:
             type: string
             maxLength: 64
-        additionalProperties: false
-        required:
-        - id
-        - code
-        - name
-        - status
-        - resourceKind
-      - $ref: '#/components/schemas/AllowedActions'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        openVersionNo:
+          type:
+          - integer
+          - 'null'
+        environments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvState'
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          maxLength: 64
+        allowedActions:
+          type: array
+          items:
+            type: string
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
+            type: string
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+      required:
+      - id
+      - code
+      - name
+      - status
+      - resourceKind
     FlowPage:
       type: object
       properties:
@@ -3511,49 +4613,109 @@ components:
       - items
       - page
     FlowDetail:
-      allOf:
-      - $ref: '#/components/schemas/FlowSummary'
-      - type: object
-        properties:
-          description:
-            type: string
-            maxLength: 4000
-          legalBasisRef:
-            type: string
-            maxLength: 128
-          origin:
-            $ref: '#/components/schemas/FlowOrigin'
-          templateCode:
-            type: string
-            maxLength: 64
-          clonedFrom:
-            type: string
-          routes:
-            type: array
-            items:
-              type: object
-              properties:
-                routeId:
-                  type: string
-                  maxLength: 128
-                fromUri:
-                  type: string
-                  maxLength: 2048
-                description:
-                  type: string
-                  maxLength: 1000
-                stepCount:
-                  type: integer
-              additionalProperties: false
-          createdAt: *id004
-          createdBy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/FlowCode'
+        name:
+          type: string
+          maxLength: 255
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        transport:
+          $ref: '#/components/schemas/Transport'
+        exposure:
+          $ref: '#/components/schemas/Exposure'
+        status:
+          $ref: '#/components/schemas/FlowStatus'
+        sourceSystem:
+          type: string
+          maxLength: 64
+        targetSystems:
+          type: array
+          items:
             type: string
             maxLength: 64
-          retiredAt: *id004
-          retireReason:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        openVersionNo:
+          type:
+          - integer
+          - 'null'
+        environments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvState'
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          maxLength: 64
+        allowedActions:
+          type: array
+          items:
             type: string
-            maxLength: 1000
-        additionalProperties: false
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
+            type: string
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+        description:
+          type: string
+          maxLength: 4000
+        legalBasisRef:
+          type: string
+          maxLength: 128
+        origin:
+          $ref: '#/components/schemas/FlowOrigin'
+        templateCode:
+          type: string
+          maxLength: 64
+        clonedFrom:
+          type: string
+        routes:
+          type: array
+          items:
+            type: object
+            properties:
+              routeId:
+                type: string
+                maxLength: 128
+              fromUri:
+                type: string
+                maxLength: 2048
+              description:
+                type: string
+                maxLength: 1000
+              stepCount:
+                type: integer
+            additionalProperties: false
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          maxLength: 64
+        retiredAt:
+          type: string
+          format: date-time
+        retireReason:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - id
+      - code
+      - name
+      - status
+      - resourceKind
     FlowCreate:
       type: object
       properties:
@@ -3576,7 +4738,9 @@ components:
           type: string
           maxLength: 64
           pattern: ^tpl-[a-z0-9-]{2,60}$
-        templateParams: *id005
+        templateParams:
+          type: object
+          additionalProperties: true
         apiRef:
           type: string
           maxLength: 255
@@ -3678,7 +4842,8 @@ components:
           - DRAFT_FLOW
           - TOPIC
           - CONNECTION
-        hard: *id002
+        hard:
+          type: boolean
         ref:
           type: string
           maxLength: 255
@@ -3716,8 +4881,12 @@ components:
         displayName:
           type: string
           maxLength: 255
-        firstAt: *id004
-        lastAt: *id004
+        firstAt:
+          type: string
+          format: date-time
+        lastAt:
+          type: string
+          format: date-time
       additionalProperties: false
     VersionSummary:
       type: object
@@ -3738,15 +4907,21 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt:
+          type: string
+          format: date-time
         submittedBy:
           type: string
           maxLength: 64
-        submittedAt: *id004
+        submittedAt:
+          type: string
+          format: date-time
         approvedBy:
           type: string
           maxLength: 64
-        approvedAt: *id004
+        approvedAt:
+          type: string
+          format: date-time
         environments:
           type: array
           items:
@@ -3766,40 +4941,89 @@ components:
       required:
       - items
     VersionDetail:
-      allOf:
-      - $ref: '#/components/schemas/VersionSummary'
-      - type: object
-        properties:
-          definitionYaml:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/VersionStatus'
+        contentHash:
+          $ref: '#/components/schemas/ContentHash'
+        catalogVersion:
+          type: string
+          maxLength: 64
+        changeNote:
+          type: string
+          maxLength: 2000
+        createdBy:
+          type: string
+          maxLength: 64
+        createdAt:
+          type: string
+          format: date-time
+        submittedBy:
+          type: string
+          maxLength: 64
+        submittedAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+          maxLength: 64
+        approvedAt:
+          type: string
+          format: date-time
+        environments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Environment'
+        definitionYaml:
+          type: string
+          maxLength: 524288
+        canvasLayout:
+          type: object
+          additionalProperties: true
+        samples:
+          type: object
+          additionalProperties: true
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingDoc'
+        contributors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contributor'
+        lastValidation:
+          $ref: '#/components/schemas/ValidationResult'
+        needsRevalidation:
+          type: boolean
+        lastPassedTestRunId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        runtimeProfile:
+          type: string
+          maxLength: 32
+        allowedActions:
+          type: array
+          items:
             type: string
-            maxLength: 524288
-          canvasLayout: *id005
-          samples: *id005
-          mappings:
-            type: array
-            items:
-              $ref: '#/components/schemas/MappingDoc'
-          contributors:
-            type: array
-            items:
-              $ref: '#/components/schemas/Contributor'
-          lastValidation:
-            $ref: '#/components/schemas/ValidationResult'
-          needsRevalidation: *id002
-          lastPassedTestRunId:
-            type:
-            - string
-            - 'null'
-            format: uuid
-          runtimeProfile:
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
             type: string
-            maxLength: 32
-        additionalProperties: false
-        required:
-        - definitionYaml
-        - canvasLayout
-        - samples
-      - $ref: '#/components/schemas/AllowedActions'
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+      required:
+      - versionNo
+      - status
+      - definitionYaml
+      - canvasLayout
+      - samples
     MappingDoc:
       type: object
       properties:
@@ -3839,8 +5063,12 @@ components:
         definitionYaml:
           type: string
           maxLength: 524288
-        canvasLayout: *id005
-        samples: *id005
+        canvasLayout:
+          type: object
+          additionalProperties: true
+        samples:
+          type: object
+          additionalProperties: true
         catalogVersion:
           type: string
           maxLength: 64
@@ -3862,7 +5090,9 @@ components:
           type: integer
         contentHash:
           $ref: '#/components/schemas/ContentHash'
-        savedAt: *id004
+        savedAt:
+          type: string
+          format: date-time
         validation:
           $ref: '#/components/schemas/ValidationResult'
       additionalProperties: false
@@ -3927,7 +5157,9 @@ components:
     LegacyImportJob:
       type: object
       properties:
-        id: *id001
+        id:
+          type: string
+          format: uuid
         status:
           type: string
           enum:
@@ -4011,8 +5243,10 @@ components:
         expression:
           type: string
           maxLength: 20000
-        predicate: *id002
-        evaluate: *id002
+        predicate:
+          type: boolean
+        evaluate:
+          type: boolean
         sample:
           $ref: '#/components/schemas/SampleMessage'
       additionalProperties: false
@@ -4022,7 +5256,8 @@ components:
     ExpressionCheckResult:
       type: object
       properties:
-        valid: *id002
+        valid:
+          type: boolean
         error:
           type: object
           properties:
@@ -4036,7 +5271,8 @@ components:
         result: {}
         resultType:
           type: string
-        simulated: *id002
+        simulated:
+          type: boolean
       additionalProperties: false
       required:
       - valid
@@ -4052,7 +5288,9 @@ components:
           additionalProperties:
             type: string
             maxLength: 8192
-        properties: *id005
+        properties:
+          type: object
+          additionalProperties: true
       additionalProperties: false
     MappingPreviewRequest:
       type: object
@@ -4071,12 +5309,14 @@ components:
         jq:
           type: string
         output: {}
-        targetValid: *id002
+        targetValid:
+          type: boolean
         findings:
           type: array
           items:
             $ref: '#/components/schemas/Finding'
-        simulated: *id002
+        simulated:
+          type: boolean
       additionalProperties: false
       required:
       - jq
@@ -4094,7 +5334,9 @@ components:
               displayName:
                 type: string
                 maxLength: 255
-              since: *id004
+              since:
+                type: string
+                format: date-time
             additionalProperties: false
         catalogVersion:
           type: string
@@ -4104,8 +5346,11 @@ components:
         freeze:
           type: object
           properties:
-            active: *id002
-            until: *id004
+            active:
+              type: boolean
+            until:
+              type: string
+              format: date-time
           additionalProperties: false
       additionalProperties: false
       required:
@@ -4151,7 +5396,9 @@ components:
       properties:
         mode:
           $ref: '#/components/schemas/TestMode'
-        testCaseId: *id001
+        testCaseId:
+          type: string
+          format: uuid
         body:
           type: string
           maxLength: 262144
@@ -4205,14 +5452,17 @@ components:
           type: integer
         durationMs:
           type: integer
-        headers: *id005
+        headers:
+          type: object
+          additionalProperties: true
         bodyInPreview:
           type: string
           maxLength: 65536
         bodyOutPreview:
           type: string
           maxLength: 65536
-        bodyAvailable: *id002
+        bodyAvailable:
+          type: boolean
         errorClass:
           type: string
           maxLength: 16
@@ -4225,71 +5475,89 @@ components:
       - nodeId
       - status
     TestRun:
-      allOf:
-      - type: object
-        properties:
-          id: *id001
-          versionNo:
-            type: integer
-          testCaseId:
-            type:
-            - string
-            - 'null'
-            format: uuid
-          definitionHash:
-            $ref: '#/components/schemas/ContentHash'
-          mode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+        testCaseId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        definitionHash:
+          $ref: '#/components/schemas/ContentHash'
+        mode:
+          type: string
+          enum:
+          - MOCK
+          - SANDBOX_LIVE
+          - SIMULATED
+        status:
+          $ref: '#/components/schemas/TestRunStatus'
+        durationMs:
+          type: integer
+        traceId:
+          type: string
+        errorCode:
+          type: string
+        errorSummary:
+          type: string
+          maxLength: 1000
+        hungNodeId:
+          type: string
+          maxLength: 128
+        assertionResults:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              kind:
+                type: string
+              passed:
+                type: boolean
+              actual: {}
+              message:
+                type: string
+            additionalProperties: false
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestRunStep'
+        runBy:
+          type: string
+          maxLength: 64
+        queuedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        matchesCurrentHash:
+          type: boolean
+        allowedActions:
+          type: array
+          items:
             type: string
-            enum:
-            - MOCK
-            - SANDBOX_LIVE
-            - SIMULATED
-          status:
-            $ref: '#/components/schemas/TestRunStatus'
-          durationMs:
-            type: integer
-          traceId:
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
             type: string
-          errorCode:
-            type: string
-          errorSummary:
-            type: string
-            maxLength: 1000
-          hungNodeId:
-            type: string
-            maxLength: 128
-          assertionResults:
-            type: array
-            items:
-              type: object
-              properties:
-                index:
-                  type: integer
-                kind:
-                  type: string
-                passed: *id002
-                actual: {}
-                message:
-                  type: string
-              additionalProperties: false
-          steps:
-            type: array
-            items:
-              $ref: '#/components/schemas/TestRunStep'
-          runBy:
-            type: string
-            maxLength: 64
-          queuedAt: *id004
-          startedAt: *id004
-          finishedAt: *id004
-          matchesCurrentHash: *id002
-        additionalProperties: false
-        required:
-        - id
-        - status
-        - mode
-        - definitionHash
-      - $ref: '#/components/schemas/AllowedActions'
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+      required:
+      - id
+      - status
+      - mode
+      - definitionHash
     TestRunPage:
       type: object
       properties:
@@ -4306,7 +5574,9 @@ components:
     TestCase:
       type: object
       properties:
-        id: *id001
+        id:
+          type: string
+          format: uuid
         name:
           type: string
           maxLength: 255
@@ -4318,11 +5588,15 @@ components:
         body:
           type: string
           maxLength: 262144
-        headers: *id005
+        headers:
+          type: object
+          additionalProperties: true
         fromNodeId:
           type: string
           maxLength: 128
-        mocks: *id005
+        mocks:
+          type: object
+          additionalProperties: true
         assertions:
           type: array
           items:
@@ -4333,14 +5607,18 @@ components:
           type: integer
           minimum: 1
           maximum: 120
-        active: *id002
+        active:
+          type: boolean
         lastResult:
           type: object
           properties:
             status:
               $ref: '#/components/schemas/TestRunStatus'
-            runId: *id001
-            onCurrentHash: *id002
+            runId:
+              type: string
+              format: uuid
+            onCurrentHash:
+              type: boolean
           additionalProperties: false
       additionalProperties: false
       required:
@@ -4394,7 +5672,8 @@ components:
           maxLength: 4000
         checklist:
           type: object
-          additionalProperties: *id002
+          additionalProperties:
+            type: boolean
           description: Khóa theo 04.review.checklist.
         nodeComments:
           type: array
@@ -4434,10 +5713,13 @@ components:
         submittedBy:
           type: string
           maxLength: 64
-        submittedAt: *id004
+        submittedAt:
+          type: string
+          format: date-time
         waitingHours:
           type: number
-        overdue: *id002
+        overdue:
+          type: boolean
         exposure:
           $ref: '#/components/schemas/Exposure'
         changeSummary:
@@ -4450,7 +5732,8 @@ components:
             modified:
               type: integer
           additionalProperties: false
-        canDecide: *id002
+        canDecide:
+          type: boolean
       additionalProperties: false
       required:
       - flowCode
@@ -4521,57 +5804,72 @@ components:
       - targetVersionNo
       - reason
     Deployment:
-      allOf:
-      - type: object
-        properties:
-          id: *id001
-          versionNo:
-            type: integer
-          environment:
-            $ref: '#/components/schemas/Environment'
-          kind:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+        environment:
+          $ref: '#/components/schemas/Environment'
+        kind:
+          type: string
+          enum:
+          - RELEASE
+          - PROMOTE
+          - ROLLBACK
+          - RETIRE
+        desiredState:
+          type: string
+          enum:
+          - RUNNING
+          - PAUSED
+          - REMOVED
+        syncStatus:
+          $ref: '#/components/schemas/SyncStatus'
+        healthStatus:
+          $ref: '#/components/schemas/HealthStatus'
+        runtimeProfile:
+          type: string
+          maxLength: 32
+        replicas:
+          type: integer
+        gitCommit:
+          type: string
+          maxLength: 40
+        requestedBy:
+          type: string
+          maxLength: 64
+        requestedAt:
+          type: string
+          format: date-time
+        syncedAt:
+          type: string
+          format: date-time
+        current:
+          type: boolean
+        errorCode:
+          type: string
+        note:
+          type: string
+          maxLength: 1000
+        allowedActions:
+          type: array
+          items:
             type: string
-            enum:
-            - RELEASE
-            - PROMOTE
-            - ROLLBACK
-            - RETIRE
-          desiredState:
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
             type: string
-            enum:
-            - RUNNING
-            - PAUSED
-            - REMOVED
-          syncStatus:
-            $ref: '#/components/schemas/SyncStatus'
-          healthStatus:
-            $ref: '#/components/schemas/HealthStatus'
-          runtimeProfile:
-            type: string
-            maxLength: 32
-          replicas:
-            type: integer
-          gitCommit:
-            type: string
-            maxLength: 40
-          requestedBy:
-            type: string
-            maxLength: 64
-          requestedAt: *id004
-          syncedAt: *id004
-          current: *id002
-          errorCode:
-            type: string
-          note:
-            type: string
-            maxLength: 1000
-        additionalProperties: false
-        required:
-        - id
-        - versionNo
-        - environment
-        - syncStatus
-      - $ref: '#/components/schemas/AllowedActions'
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+      required:
+      - id
+      - versionNo
+      - environment
+      - syncStatus
     DeploymentList:
       type: object
       properties:
@@ -4617,7 +5915,9 @@ components:
         pausedBy:
           type: string
           maxLength: 64
-        pausedAt: *id004
+        pausedAt:
+          type: string
+          format: date-time
         pauseReason:
           type: string
           maxLength: 1000
@@ -4628,24 +5928,47 @@ components:
         environments:
           type: array
           items:
-            allOf:
-            - $ref: '#/components/schemas/EnvState'
-            - type: object
-              properties:
-                routes:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/RouteState'
-                loadError:
-                  type: string
-                  maxLength: 1000
-                runtimeProfile:
-                  type: string
-                  maxLength: 32
-                namespace:
-                  type: string
-                  maxLength: 63
-              additionalProperties: false
+            type: object
+            properties:
+              environment:
+                $ref: '#/components/schemas/Environment'
+              versionNo:
+                type: integer
+              syncStatus:
+                $ref: '#/components/schemas/SyncStatus'
+              healthStatus:
+                $ref: '#/components/schemas/HealthStatus'
+              desiredState:
+                type: string
+                enum:
+                - RUNNING
+                - PAUSED
+                - REMOVED
+              readyReplicas:
+                type: integer
+              replicas:
+                type: integer
+              lastHeartbeatAt:
+                type: string
+                format: date-time
+              emergency:
+                type: boolean
+              routes:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RouteState'
+              loadError:
+                type: string
+                maxLength: 1000
+              runtimeProfile:
+                type: string
+                maxLength: 32
+              namespace:
+                type: string
+                maxLength: 63
+            additionalProperties: false
+            required:
+            - environment
       additionalProperties: false
       required:
       - environments
@@ -4684,7 +6007,9 @@ components:
     Command:
       type: object
       properties:
-        id: *id001
+        id:
+          type: string
+          format: uuid
         environment:
           $ref: '#/components/schemas/Environment'
         action:
@@ -4717,14 +6042,22 @@ components:
               reason:
                 type: string
                 maxLength: 32
-              ackedAt: *id004
+              ackedAt:
+                type: string
+                format: date-time
             additionalProperties: false
         issuedBy:
           type: string
           maxLength: 64
-        issuedAt: *id004
-        expiresAt: *id004
-        reconciledAt: *id004
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        reconciledAt:
+          type: string
+          format: date-time
       additionalProperties: false
       required:
       - id
@@ -4784,8 +6117,12 @@ components:
       properties:
         environment:
           $ref: '#/components/schemas/Environment'
-        from: *id004
-        to: *id004
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
         step:
           type: string
         series:
@@ -4827,7 +6164,9 @@ components:
           type: string
         camelVersion:
           type: string
-        generatedAt: *id004
+        generatedAt:
+          type: string
+          format: date-time
         sha256:
           type: string
           maxLength: 64
@@ -4891,9 +6230,12 @@ components:
           - ALLOWED
           - PER_FLOW
           - DENIED
-        needsConnection: *id002
-        consumerOnly: *id002
-        producerOnly: *id002
+        needsConnection:
+          type: boolean
+        consumerOnly:
+          type: boolean
+        producerOnly:
+          type: boolean
         source:
           type: string
           enum:
@@ -4934,17 +6276,20 @@ components:
                 type: string
               type:
                 type: string
-              required: *id002
+              required:
+                type: boolean
               default: {}
               enum:
                 type: array
                 items: {}
-              secret: *id002
+              secret:
+                type: boolean
               description:
                 type: string
               descriptionVi:
                 type: string
-              deprecated: *id002
+              deprecated:
+                type: boolean
             additionalProperties: false
         flowsUsing:
           type: integer
@@ -4980,7 +6325,9 @@ components:
           maxLength: 64
         policyVersion:
           type: integer
-        updatedAt: *id004
+        updatedAt:
+          type: string
+          format: date-time
       additionalProperties: false
       required:
       - kind
@@ -5063,7 +6410,8 @@ components:
               extensions:
                 type: integer
             additionalProperties: false
-        match: *id002
+        match:
+          type: boolean
         pendingUpgrade:
           type: object
           properties:
@@ -5081,7 +6429,9 @@ components:
     Proposal:
       type: object
       properties:
-        id: *id001
+        id:
+          type: string
+          format: uuid
         kind:
           type: string
           maxLength: 12
@@ -5106,7 +6456,9 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id004
+        createdAt:
+          type: string
+          format: date-time
         decidedBy:
           type: string
           maxLength: 64
@@ -5212,16 +6564,50 @@ components:
       - name
       - scope
     TemplateDetail:
-      allOf:
-      - $ref: '#/components/schemas/Template'
-      - type: object
-        properties:
-          bodyYaml:
-            type: string
-            maxLength: 524288
-          paramSchema: *id005
-          previewLayout: *id005
-        additionalProperties: false
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: ^tpl-[a-z0-9-]{2,60}$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 4000
+        category:
+          type: string
+          maxLength: 32
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        scope:
+          type: string
+          enum:
+          - PLATFORM
+          - TENANT
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - DEPRECATED
+        catalogVersion:
+          type: string
+          maxLength: 64
+        bodyYaml:
+          type: string
+          maxLength: 524288
+        paramSchema:
+          type: object
+          additionalProperties: true
+        previewLayout:
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - scope
     TemplateList:
       type: object
       properties:
@@ -5253,7 +6639,9 @@ components:
         fromVersionNo:
           type: integer
           minimum: 1
-        paramSchema: *id005
+        paramSchema:
+          type: object
+          additionalProperties: true
       additionalProperties: false
       required:
       - code
@@ -5279,15 +6667,21 @@ components:
               updatedBy:
                 type: string
                 maxLength: 64
-              updatedAt: *id004
+              updatedAt:
+                type: string
+                format: date-time
             additionalProperties: false
         freezeWindows:
           type: array
           items:
             type: object
             properties:
-              from: *id004
-              to: *id004
+              from:
+                type: string
+                format: date-time
+              to:
+                type: string
+                format: date-time
               reason:
                 type: string
                 maxLength: 500
@@ -5345,7 +6739,9 @@ components:
     HistoryEntry:
       type: object
       properties:
-        at: *id004
+        at:
+          type: string
+          format: date-time
         action:
           type: string
           maxLength: 64

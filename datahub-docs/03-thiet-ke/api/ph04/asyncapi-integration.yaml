@@ -428,7 +428,7 @@ components:
             description: '`/tenants/{tenant}/integration`'
           ce_type:
             type: string
-          ce_time: &id004
+          ce_time: &id005
             type: string
             format: date-time
           ce_subject:
@@ -450,6 +450,28 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-003
+      - FR-04-005
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-13 (ghi kiểm toán, mở bảng theo dõi luồng)
+      - PH-18 (thông báo chủ quản không gian)
+      examples:
+      - name: EVT-04-01-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          name: Tra cứu hộ tịch qua NDXP
+          resourceKind: ROUTE
+          origin: TEMPLATE
+          transport: SYNC
+          exposure: EXTERNAL
+          actor: &id002
+            userId: an.nv
+            type: USER
     flowUpdated:
       name: flowUpdated
       title: EVT-04-02
@@ -462,6 +484,22 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-004
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-02 (đồng bộ nhãn, chủ quản của API công bố)
+      examples:
+      - name: EVT-04-02-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          changedFields:
+          - labels
+          - targetSystems
+          actor: *id002
     versionSubmitted:
       name: versionSubmitted
       title: EVT-04-03
@@ -474,6 +512,23 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-040
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-18 (thông báo người duyệt được gợi ý và hàng đợi duyệt)
+      examples:
+      - name: EVT-04-03-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          versionNo: 3
+          contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+          status: PENDING_REVIEW
+          changeNote: Thêm chặng che số định danh.
+          actor: *id002
     versionApproved:
       name: versionApproved
       title: EVT-04-04
@@ -486,6 +541,28 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-041
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-18 (thông báo người soạn)
+      - PH-02 (chuẩn bị bản API công bố mới)
+      examples:
+      - name: EVT-04-04-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          versionNo: 3
+          contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+          status: APPROVED
+          comment: Đạt.
+          contributors:
+          - an.nv
+          actor:
+            userId: binh.tt
+            type: USER
     versionChangesRequested:
       name: versionChangesRequested
       title: EVT-04-05
@@ -498,6 +575,26 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-041
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-18 (thông báo người soạn kèm số bình luận)
+      examples:
+      - name: EVT-04-05-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          versionNo: 3
+          contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+          status: CHANGES_REQUESTED
+          comment: Thiếu ca lỗi hệ đích.
+          nodeCommentCount: 2
+          actor:
+            userId: binh.tt
+            type: USER
     deploymentRequested:
       name: deploymentRequested
       title: EVT-04-06
@@ -510,6 +607,30 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-042
+      - FR-04-044
+      - FR-04-045
+      - FR-04-006
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-13 (ghi mốc triển khai lên biểu đồ giám sát)
+      examples:
+      - name: EVT-04-06-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          deploymentId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
+          versionNo: 3
+          environment: TEST
+          kind: RELEASE
+          contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+          runtimeProfile: core-native
+          actor:
+            userId: binh.tt
+            type: USER
     deploymentStatusChanged:
       name: deploymentStatusChanged
       title: EVT-04-07
@@ -522,6 +643,27 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-042
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-02 (bật, tắt API công bố theo trạng thái)
+      - PH-13 (cảnh báo triển khai lỗi)
+      - PH-18 (thông báo người phát hành)
+      examples:
+      - name: EVT-04-07-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          deploymentId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
+          versionNo: 3
+          environment: TEST
+          from: SYNCING
+          to: SYNCED
+          healthStatus: HEALTHY
+          gitCommit: 9c1e4b7
     flowRuntimeStateChanged:
       name: flowRuntimeStateChanged
       title: EVT-04-08
@@ -534,6 +676,27 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-02 (đánh dấu API tạm ngừng)
+      - PH-13 (ghi sự cố, mốc vận hành)
+      examples:
+      - name: EVT-04-08-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          environment: PROD
+          commandId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+          action: PAUSE
+          state: PAUSED
+          reason: Hệ đích NDXP bảo trì.
+          actor:
+            userId: cuong.lv
+            type: USER
     flowRetired:
       name: flowRetired
       title: EVT-04-09
@@ -546,6 +709,23 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-006
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-02 (gỡ API công bố)
+      - PH-10 (thu hồi nhóm tiêu thụ của luồng)
+      examples:
+      - name: EVT-04-09-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          reason: Thay bằng luồng tra-cuu-ho-tich-v2.
+          actor:
+            userId: ta.t68
+            type: USER
     testRunCompleted:
       name: testRunCompleted
       title: EVT-04-10
@@ -558,6 +738,25 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowId}` để giữ thứ tự theo luồng.'
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - PH-18 (thông báo người chạy khi đã rời trang)
+      examples:
+      - name: EVT-04-10-vi-du
+        payload:
+          tenantId: T68
+          flowId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a10
+          flowCode: tra-cuu-ho-tich
+          workspaceCode: ho-tich
+          runId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41
+          versionNo: 3
+          definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+          mode: MOCK
+          status: PASSED
+          testCaseId: null
+          durationMs: 412
     runtimeCommand:
       name: runtimeCommand
       title: EVT-04-11
@@ -577,6 +776,27 @@ components:
           key:
             type: string
             description: '`{tenant}:{environment}`'
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-sender: dh-integration
+      x-datahub-receivers:
+      - dh-runtime (mọi bản sao của tenant và môi trường, kiểm chữ ký rồi thi hành)
+      examples:
+      - name: EVT-04-11-vi-du
+        payload:
+          commandId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+          tenantId: T68
+          environment: PROD
+          flowCode: tra-cuu-ho-tich
+          action: PAUSE
+          routeIds: []
+          drain: true
+          issuedBy: cuong.lv
+          issuedAt: '2026-11-26T14:55:00Z'
+          expiresAt: '2026-11-26T14:56:00Z'
+          resendOf: null
+          keyId: dh-runtime-cmd:3
+          signature: MEUCIQ…giả-lập
     runtimeHeartbeat:
       name: runtimeHeartbeat
       title: EVT-04-12
@@ -596,6 +816,31 @@ components:
           key:
             type: string
             description: '`{replica}`'
+      x-datahub-fr:
+      - FR-04-051
+      - FR-04-042
+      x-datahub-sender: dh-runtime
+      x-datahub-receivers:
+      - 'dh-integration (Reconciler: so băm, cập nhật SYNCED, trạng thái route)'
+      examples:
+      - name: EVT-04-12-vi-du
+        payload:
+          replica: dh-rt-t68-core-7c9d-x2k4p
+          tenantId: T68
+          environment: PROD
+          profile: core-native
+          catalogVersion: camel-quarkus-3.33.2
+          libVersion: 1.4.0
+          sentAt: '2026-11-26T14:55:30Z'
+          flows:
+          - flowCode: tra-cuu-ho-tich
+            versionNo: 2
+            contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
+            loaded: true
+            routes:
+            - routeId: tra-cuu
+              state: Started
+              inflight: 1
     runtimeCommandAck:
       name: runtimeCommandAck
       title: EVT-04-13
@@ -615,6 +860,20 @@ components:
           key:
             type: string
             description: '`{commandId}`'
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-sender: dh-runtime
+      x-datahub-receivers:
+      - 'dh-integration (Reconciler: đếm xác nhận, đặt ACKNOWLEDGED, PARTIAL, REJECTED)'
+      examples:
+      - name: EVT-04-13-vi-du
+        payload:
+          commandId: 0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+          replica: dh-rt-t68-core-7c9d-x2k4p
+          tenantId: T68
+          environment: PROD
+          result: APPLIED
+          ackedAt: '2026-11-26T14:55:02Z'
     connectionLog:
       name: connectionLog
       title: EVT-04-14
@@ -634,6 +893,29 @@ components:
           key:
             type: string
             description: '`{tenant}:{flowCode}`'
+      x-datahub-fr:
+      - FR-04-074
+      x-datahub-sender: dh-runtime
+      x-datahub-receivers:
+      - PH-13 (lưu nhật ký kết nối theo NĐ 278/2025, online 12 tháng, WORM 5 năm)
+      examples:
+      - name: EVT-04-14-vi-du
+        payload:
+          tenantId: T68
+          flowCode: tra-cuu-ho-tich
+          versionNo: 2
+          routeId: tra-cuu
+          environment: PROD
+          traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+          sourceSystem: DVC-T68
+          targetSystem: NDXP
+          httpStatus: 200
+          outcome: SUCCESS
+          receivedAt: '2026-11-26T14:40:11Z'
+          durationMs: 184
+          legalBasisRef: ND-278-2025
+          maskedFields:
+          - soDinhDanh
   schemas:
     FlowRef:
       type: object
@@ -708,7 +990,7 @@ components:
       - $ref: '#/components/schemas/FlowRef'
       - type: object
         properties:
-          versionNo: &id002
+          versionNo: &id003
             type: integer
           contentHash:
             type: string
@@ -723,7 +1005,7 @@ components:
           comment:
             type: string
             maxLength: 4000
-          nodeCommentCount: *id002
+          nodeCommentCount: *id003
           contributors:
             type: array
             items:
@@ -740,8 +1022,8 @@ components:
           deploymentId:
             type: string
             format: uuid
-          versionNo: *id002
-          environment: &id003
+          versionNo: *id003
+          environment: &id004
             type: string
             enum:
             - TEST
@@ -773,8 +1055,8 @@ components:
           deploymentId:
             type: string
             format: uuid
-          versionNo: *id002
-          environment: *id003
+          versionNo: *id003
+          environment: *id004
           from:
             type: string
           to:
@@ -800,7 +1082,7 @@ components:
       - $ref: '#/components/schemas/FlowRef'
       - type: object
         properties:
-          environment: *id003
+          environment: *id004
           commandId:
             type: string
             format: uuid
@@ -849,7 +1131,7 @@ components:
           runId:
             type: string
             format: uuid
-          versionNo: *id002
+          versionNo: *id003
           definitionHash:
             type: string
           mode:
@@ -870,7 +1152,7 @@ components:
             - string
             - 'null'
             format: uuid
-          durationMs: *id002
+          durationMs: *id003
         required:
         - runId
         - versionNo
@@ -885,7 +1167,7 @@ components:
         tenantId:
           type: string
           pattern: ^T[0-9]{2}$
-        environment: *id003
+        environment: *id004
         flowCode:
           type: string
         action:
@@ -898,12 +1180,12 @@ components:
           type: array
           items:
             type: string
-        drain: &id005
+        drain: &id006
           type: boolean
         issuedBy:
           type: string
-        issuedAt: *id004
-        expiresAt: *id004
+        issuedAt: *id005
+        expiresAt: *id005
         resendOf:
           type:
           - string
@@ -932,7 +1214,7 @@ components:
           type: string
         tenantId:
           type: string
-        environment: *id003
+        environment: *id004
         profile:
           type: string
           enum:
@@ -944,7 +1226,7 @@ components:
           type: string
         libVersion:
           type: string
-        sentAt: *id004
+        sentAt: *id005
         flows:
           type: array
           items:
@@ -952,14 +1234,14 @@ components:
             properties:
               flowCode:
                 type: string
-              versionNo: *id002
+              versionNo: *id003
               contentHash:
                 type: string
-              loaded: *id005
+              loaded: *id006
               loadError:
                 type: string
                 maxLength: 1000
-              localOverride: *id005
+              localOverride: *id006
               routes:
                 type: array
                 items:
@@ -973,7 +1255,7 @@ components:
                       - Started
                       - Suspended
                       - Stopped
-                    inflight: *id002
+                    inflight: *id003
                   required:
                   - routeId
                   - state
@@ -998,7 +1280,7 @@ components:
           type: string
         tenantId:
           type: string
-        environment: *id003
+        environment: *id004
         result:
           type: string
           enum:
@@ -1014,7 +1296,7 @@ components:
           - UNKNOWN_ROUTE
           - DUPLICATE
           - INTERNAL
-        ackedAt: *id004
+        ackedAt: *id005
       required:
       - commandId
       - replica
@@ -1027,10 +1309,10 @@ components:
           type: string
         flowCode:
           type: string
-        versionNo: *id002
+        versionNo: *id003
         routeId:
           type: string
-        environment: *id003
+        environment: *id004
         traceId:
           type: string
           pattern: ^[0-9a-f]{32}$
@@ -1044,7 +1326,7 @@ components:
           type: string
         operation:
           type: string
-        httpStatus: *id002
+        httpStatus: *id003
         outcome:
           type: string
           enum:
@@ -1055,14 +1337,14 @@ components:
         errorCode:
           type: string
           pattern: ^ERR-04-1[0-9]{2}$
-        receivedAt: *id004
-        respondedAt: *id004
-        durationMs: *id002
-        requestBytes: *id002
-        responseBytes: *id002
+        receivedAt: *id005
+        respondedAt: *id005
+        durationMs: *id003
+        requestBytes: *id003
+        responseBytes: *id003
         legalBasisRef:
           type: string
-        dataSubjectsCount: *id002
+        dataSubjectsCount: *id003
         maskedFields:
           type: array
           items:

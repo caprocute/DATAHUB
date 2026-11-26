@@ -5,7 +5,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-029 @P1 @Dương
   Kịch bản: TC-04-029 Lưu nháp và tính lại băm
-    # Truy vết: FR-04-024, 010 · API-04-020, 022 · BR-04-007
+    # Truy vết: FR-04-024, 010 · API-04-020, 022 · BR-04-007.
     Biết F-HT v4 `DRAFT`; IE1 lấy ETag ở `GET /flows/tra-cuu-ho-tich/versions/4`.
     Khi gọi `PUT .../versions/4/draft` chỉ đổi `canvasLayout` (kéo một chặng).
     Và gọi `PUT .../draft` đổi `samples`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-030 @P1 @Âm
   Kịch bản: TC-04-030 Lưu nháp sai điều kiện
-    # Truy vết: FR-04-024 · API-04-022 · ERR-04-004, 006, 007, 033, 008, 010
+    # Truy vết: FR-04-024 · API-04-022 · ERR-04-004, 006, 007, 033, 008, 010.
     Biết F-HT v4 `DRAFT`.
     Khi lưu `versions/9` (không tồn tại).
     Và lưu không có `If-Match`.
@@ -25,7 +25,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-031 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-031 Phiên bản đã gửi duyệt là bất biến
-    # Truy vết: FR-04-011, 040 · BR-04-016 · API-04-022 · ERR-04-005
+    # Truy vết: FR-04-011, 040 · BR-04-016 · API-04-022 · ERR-04-005.
     Biết phiên bản `PENDING_REVIEW` và v3 `APPROVED` của F-HT.
     Khi gọi `PUT .../draft` trên phiên bản `PENDING_REVIEW` với ETag đúng.
     Và gọi `PUT .../draft` trên v3.
@@ -34,7 +34,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-032 @P1 @Dương @Âm
   Kịch bản: TC-04-032 Tạo phiên bản mới khi đã có phiên bản mở
-    # Truy vết: FR-04-011 · BR-04-016 · API-04-021, 024 · ERR-04-016, 004
+    # Truy vết: FR-04-011 · BR-04-016 · API-04-021, 024 · ERR-04-016, 004.
     Biết F-DD v1 `APPROVED`, không có phiên bản mở.
     Khi IE2 gọi `POST /flows/dong-bo-dat-dai/versions` với `{}`.
     Và IE3 gọi lại.
@@ -44,7 +44,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-033 @P1 @Dương
   Kịch bản: TC-04-033 Hai người cùng sửa: phát hiện, xung đột, gộp ba bên
-    # Truy vết: FR-04-024, 010 · API-04-022, 034 · UI-04-04 · UC-04-04 · ERR-04-006
+    # Truy vết: FR-04-024, 010 · API-04-022, 034 · UI-04-04 · UC-04-04 · ERR-04-006.
     Biết IE1 và IE2 cùng mở F-HT v4 trên hai trình duyệt.
     Khi cả hai mở trình thiết kế.
     Và IE2 đổi `timeout` của chặng `deliver`, chờ tự lưu.
@@ -55,7 +55,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-034 @P2 @Khả @dụng
   Kịch bản: TC-04-034 Mất kết nối khi đang soạn, khôi phục phiên nháp
-    # Truy vết: FR-04-024 · UI-04-04 · NFR-04-015
+    # Truy vết: FR-04-024 · UI-04-04 · NFR-04-015.
     Biết IE1 mở F-HT v4.
     Khi playwright đặt `context.setOffline(true)`, IE1 thêm hai chặng.
     Và đóng tab, mở lại trang khi vẫn ngoại tuyến.
@@ -64,7 +64,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-035 @P3 @Biên
   Kịch bản: TC-04-035 Phiên soạn hết hạn và catalog đổi khi đang mở
-    # Truy vết: FR-04-010, 081 · API-04-034 · UI-04-04
+    # Truy vết: FR-04-010, 081 · API-04-034 · UI-04-04.
     Biết IE1 mở F-HT v4.
     Khi IE2 gọi `PUT .../session` một lần rồi ngừng.
     Và sau 125 giây IE1 gọi `PUT .../session`.
@@ -73,7 +73,7 @@ Tính năng: TS-04-05 · Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba
 
   @TC-04-036 @P3 @Âm
   Kịch bản: TC-04-036 Lưu nháp trong khoảng đóng băng cả việc soạn
-    # Truy vết: FR-04-024, 084 · BR-04-022 · API-04-022 · ERR-04-041
+    # Truy vết: FR-04-024, 084 · BR-04-022 · API-04-022 · ERR-04-041.
     Biết TA đặt khoảng đóng băng có cờ "khóa cả soạn thảo" từ bây giờ tới 2 giờ sau.
     Khi IE1 lưu nháp F-HT v4.
     Và TA đặt lại khoảng đóng băng không có cờ, IE1 lưu lại.
