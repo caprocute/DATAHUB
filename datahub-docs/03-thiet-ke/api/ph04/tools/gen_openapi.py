@@ -5,7 +5,9 @@ Chạy: python3 tools/gen_openapi.py   (từ thư mục api/ph04)
 Sau khi sinh, kiểm tra bằng openapi-spec-validator (CI-5 dùng Spectral).
 Tệp YAML sinh ra là hợp đồng; sửa tệp này rồi sinh lại, không sửa tay YAML.
 """
-import os, yaml
+import copy, os, sys, yaml
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bo_sung as BS
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 R = lambda n: {"$ref": f"#/components/schemas/{n}"}
@@ -457,9 +459,40 @@ ep("get", "/flows/{flowCode}/history", "API-04-091", "getFlowHistory", "Tham s�
    params=[F, {"name": "action", "in": "query", "schema": arr(STR(64)), "style": "form", "explode": False}, {"name": "actor", "in": "query", "schema": STR(64)}, "Cursor", "Limit"],
    ok=(200, "HistoryPage"), errs=["NotFound", "ServiceUnavailable"], desc="`before`, `after` chỉ trả cho AU, SO, TA.")
 
+def flatten(x, schemas):
+    """Gộp allOf thành một đối tượng phẳng: các phần đều đóng (additionalProperties: false) nên allOf
+    nguyên dạng sẽ từ chối mọi bản ghi hợp lệ. Gộp properties, required; giữ additionalProperties: false."""
+    if isinstance(x, list): return [flatten(i, schemas) for i in x]
+    if not isinstance(x, dict): return x
+    if "allOf" in x and len(x) == 1:
+        props, req, extra = {}, [], {}
+        for part in x["allOf"]:
+            if "$ref" in part: part = schemas[part["$ref"].split("/")[-1]]
+            part = flatten(part, schemas)
+            props.update(part.get("properties", {}))
+            req += [r for r in part.get("required", []) if r not in req]
+            if part.get("description"): extra["description"] = part["description"]
+        d = {"type": "object", "properties": props, "additionalProperties": False}
+        if req: d["required"] = req
+        d.update(extra); return d
+    return {k: flatten(v, schemas) for k, v in x.items()}
+
+def ex_param(p, ex):
+    """Gắn ví dụ cho tham số: đường dẫn theo BS.PATH_EX, truy vấn theo ex['q'], tiêu đề theo BS.HDR_EX."""
+    p = copy.deepcopy(p)
+    n = p["name"]
+    if p["in"] == "path" and n in BS.PATH_EX: p["example"] = BS.PATH_EX[n]
+    if p["in"] == "query" and n in ex.get("q", {}): p["example"] = ex["q"][n]
+    if p["in"] == "header" and n in BS.HDR_EX: p["example"] = BS.HDR_EX[n]
+    return p
+
 def build():
     paths = {}
+    for k in ("FlowCodePath", "VersionNoPath", "WorkspacePath", "RunIdPath", "CaseIdPath", "DeploymentIdPath", "CommandIdPath", "IfMatch", "IdempotencyKey"):
+        PARAMS[k] = ex_param(PARAMS[k], {})
     for e in E:
+        ex = BS.EX.get(e["op"], {})
+        if not e["desc"]: e["desc"] = BS.DESC.get(e["op"])
         op = {"tags": [e["tag"]], "operationId": e["op"], "summary": e["summary"],
               "x-datahub-id": e["aid"], "x-datahub-fr": e["fr"],
               "x-datahub-permission": {"permission": e["perm"], **({"workspaceLevel": e["ws"]} if e["ws"] else {})}}
@@ -467,30 +500,30 @@ def build():
         if e["idem"]: op["x-datahub-idempotent"] = True
         params = []
         for p in e["params"]:
-            params.append(P(p) if isinstance(p, str) else p)
+            params.append(P(p) if isinstance(p, str) else ex_param(p, ex))
         if e["idem"]: params.append(P("IdempotencyKey"))
         params += [P("Traceparent"), P("AcceptLanguage")]
         op["parameters"] = params
         if e["body"]:
-            op["requestBody"] = {"required": True, "content": J(e["body"])}
+            op["requestBody"] = {"required": True, "content": J(e["body"], ex.get("req"))}
         elif e["op"] == "startLegacyImport":
             op["requestBody"] = {"required": True, "content": {"multipart/form-data": {"schema": {"type": "object", "required": ["file", "workspaceCode"],
                 "properties": {"file": {"type": "string", "contentEncoding": "binary"}, "workspaceCode": R("WorkspaceCode"),
-                               "connectionMap": STR(20000, description="JSON: mã kết nối cũ → mã kết nối PH-05.")}}}}}
+                               "connectionMap": STR(20000, description="JSON: mã kết nối cũ → mã kết nối PH-05.")}}, "example": ex.get("req")}}}
         code, sch = e["ok"]
         okr = {"description": "Thành công."}
         if e["sse"]:
-            okr["content"] = SSE
+            okr["content"] = {"text/event-stream": {**SSE["text/event-stream"], "example": ex.get("res")}}
         elif e["op"] == "downloadVersion":
-            okr["content"] = {"application/yaml": {"schema": STR()}, "application/zip": {"schema": {"type": "string", "contentEncoding": "binary"}}}
+            okr["content"] = {"application/yaml": {"schema": STR(), "example": ex.get("res")}, "application/zip": {"schema": {"type": "string", "contentEncoding": "binary"}}}
         elif e["op"] == "getTestRunBody":
-            okr["content"] = {"application/json": {"schema": {}}, "text/plain": {"schema": STR()}}
+            okr["content"] = {"application/json": {"schema": {}, "example": ex.get("res")}, "text/plain": {"schema": STR()}}
         elif sch:
-            okr["content"] = J(sch)
+            okr["content"] = J(sch, ex.get("res"))
         hdr = {}
-        if e["etag_out"]: hdr["ETag"] = {"schema": STR(), "description": "W/\"{version}-{contentHash[0..8]}\""}
-        if code == 202: hdr["Location"] = {"schema": STR(), "description": "Tài nguyên theo dõi tiến trình."}
-        if e["op"] == "getCatalogIndex": hdr["ETag"] = {"schema": STR()}
+        if e["etag_out"]: hdr["ETag"] = {"schema": STR(), "description": "W/\"{version}-{contentHash[0..8]}\"", "example": BS.ETAG}
+        if code == 202: hdr["Location"] = {"schema": STR(), "description": "Tài nguyên theo dõi tiến trình.", "example": ex.get("loc", "")}
+        if e["op"] == "getCatalogIndex": hdr["ETag"] = {"schema": STR(), "example": BS.HDR_EX["If-None-Match"]}
         if hdr: okr["headers"] = hdr
         resps = {str(code): okr}
         if e["op"] == "getCatalogIndex": resps["304"] = RESP("NotModified")
@@ -521,7 +554,7 @@ def build():
         "securitySchemes": {"oauth2User": {"type": "oauth2", "description": "Keycloak realm dh-{tenant}; vai trò ánh xạ PERM-04-* (D02-08).",
             "flows": {"authorizationCode": {"authorizationUrl": "https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/auth",
                                             "tokenUrl": "https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token", "scopes": {}}}}},
-        "parameters": PARAMS, "responses": RESPONSES, "schemas": SCHEMAS}}
+        "parameters": PARAMS, "responses": RESPONSES, "schemas": {k: flatten(v, SCHEMAS) for k, v in SCHEMAS.items()}}}
     return doc
 
 if __name__ == "__main__":
