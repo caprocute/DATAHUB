@@ -169,13 +169,32 @@ paths:
           maxLength: 32
       - name: secretOverdue
         in: query
-        schema: &id002
+        schema: &id001
           type: boolean
+      - name: protocolGroup
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProtocolGroup'
+        style: form
+        explode: false
+      - name: grantedTo
+        in: query
+        schema:
+          type: string
+          maxLength: 63
+        description: Mã không gian làm việc hoặc luồng được cấp.
+      - name: owner
+        in: query
+        schema:
+          type: string
+          maxLength: 64
       - name: sort
         in: query
         schema:
           type: string
-          pattern: ^-?(code|name|updatedAt|health)$
+          pattern: ^-?(code|name|updatedAt|health|usageCount|secretAgeDays)$
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
@@ -472,7 +491,8 @@ paths:
       - FR-05-005
       x-datahub-permission:
         permission: PERM-05-connection
-      description: 'Sai lược đồ ERR-05-003; khóa bí mật ERR-05-006; vượt trần ERR-05-030; đích ngoài egress cho phép ERR-05-027. PROD đang ENABLED:
+      description: 'Sai lược đồ ERR-05-003; khóa bí mật ERR-05-006; vượt trần ERR-05-030; `db-flow` trỏ CSDL control plane hoặc `pg-payment` ERR-05-016;
+        đích ngoài egress: lưu kèm `warnings[]` và đề nghị bổ sung egress cho TA, bật môi trường bị chặn tới khi có (BR-05-013). PROD đang ENABLED:
         lưu bản chờ (BR-05-010).'
       parameters:
       - $ref: '#/components/parameters/ConnectionCodePath'
@@ -736,8 +756,8 @@ paths:
       - FR-05-010
       x-datahub-permission:
         permission: PERM-05-test
-      description: 'Chạy ở bộ chạy `probe-jvm` vùng Z4. Đang chạy cho cùng giá trị ERR-05-018; quá 10 lần/5 phút ERR-05-019. Theo dõi qua API-05-019
-        hoặc SSE (`Accept: text/event-stream`).'
+      description: 'Chạy ở bộ chạy `probe-jvm` vùng Z4. Đang chạy cho cùng giá trị ERR-05-018; quá 20 lần mỗi giờ cho một kết nối (`05.test.max-per-hour`)
+        ERR-05-019. Theo dõi qua API-05-019 hoặc SSE (`Accept: text/event-stream`).'
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/ConnectionCodePath'
@@ -1125,12 +1145,53 @@ paths:
         schema:
           type: string
           maxLength: 100
+          minLength: 2
       - name: status
         in: query
         schema:
           type: array
           items:
             $ref: '#/components/schemas/ConnectionStatus'
+        style: form
+        explode: false
+      - name: typeCode
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeCode'
+        style: form
+        explode: false
+      - name: systemCode
+        in: query
+        schema:
+          $ref: '#/components/schemas/SystemCode'
+      - name: health
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthLevel'
+        style: form
+        explode: false
+      - name: env
+        in: query
+        schema:
+          $ref: '#/components/schemas/Environment'
+      - name: label
+        in: query
+        schema:
+          type: string
+          maxLength: 32
+      - name: secretOverdue
+        in: query
+        schema: *id001
+      - name: protocolGroup
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProtocolGroup'
         style: form
         explode: false
       - $ref: '#/components/parameters/Traceparent'
@@ -1155,8 +1216,8 @@ paths:
       - FR-05-018
       x-datahub-permission:
         permission: PERM-05-connection
-      description: multipart/form-data `file` (XML Context, ZIP gói xuất Bus, .properties; ≤ 10 MiB). Sai định dạng ERR-05-024. Không thực thi,
-        không lưu tệp; bí mật thay bằng vị trí (BR-05-025).
+      description: multipart/form-data `file` (XML Context, ZIP gói xuất Bus, .properties; ≤ 20 MiB, quá lớn ERR-05-024 với 413). Sai định dạng
+        ERR-05-024. Không thực thi, không lưu tệp; bí mật thay bằng vị trí (BR-05-025).
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -1608,7 +1669,9 @@ paths:
       x-datahub-fr:
       - FR-05-028
       x-datahub-permission:
-        permission: PERM-05-connection
+        anyOf:
+        - PERM-05-connection
+        - PERM-05-operate
       description: Xóa role, thu hồi lease; tài khoản động bị xóa ở CSDL nguồn ≤ 60 giây (NFR-05-007).
       parameters:
       - $ref: '#/components/parameters/ConnectionCodePath'
@@ -1699,12 +1762,12 @@ paths:
           $ref: '#/components/schemas/ConnectionCode'
       - name: from
         in: query
-        schema: &id001
+        schema: &id002
           type: string
           format: date-time
       - name: to
         in: query
-        schema: *id001
+        schema: *id002
       - name: outcome
         in: query
         schema:
@@ -1803,7 +1866,11 @@ paths:
         explode: false
       - name: hasPendingSchemaChange
         in: query
-        schema: *id002
+        schema: *id001
+      - name: hasPendingVersion
+        in: query
+        schema: *id001
+        description: Có phiên bản DRAFT hoặc SUBMITTED.
       - name: sort
         in: query
         schema:
@@ -2135,7 +2202,8 @@ paths:
       - FR-05-043
       x-datahub-permission:
         permission: PERM-05-test
-      description: Chạy ở TEST hoặc STAGING, không bao giờ PROD. Kết quả hiệu lực 24 giờ cho gửi duyệt.
+      description: Chạy ở TEST hoặc STAGING, không bao giờ PROD; thao tác ghi cần `confirmWriteOnTest = true` (BR-05-030). Kết quả hiệu lực 24
+        giờ cho gửi duyệt.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/AdapterCodePath'
@@ -2301,7 +2369,7 @@ paths:
       - FR-05-044
       x-datahub-permission:
         permission: PERM-05-approve
-      description: Bốn mắt. Sinh Kamelet theo thao tác (FR-05-047), phát EVT-05-07, EVT-05-09; phiên bản trước SUPERSEDED.
+      description: Bốn mắt (ERR-05-011). Sinh Kamelet theo thao tác (FR-05-047), phát EVT-05-07, EVT-05-09; phiên bản trước SUPERSEDED.
       parameters:
       - $ref: '#/components/parameters/AdapterCodePath'
       - $ref: '#/components/parameters/VersionPath'
@@ -2666,7 +2734,8 @@ paths:
       - FR-05-046
       x-datahub-permission:
         permission: PERM-05-adapter
-      description: Nhận `specUrl` (tải qua egress của tenant) hoặc multipart `file`. Không phân tích được ERR-05-023.
+      description: Nhận `specUrl` (tải qua egress của tenant) hoặc multipart `file`. Không phân tích được ERR-05-023; tệp vượt 5 MiB (OpenAPI)
+        hoặc 10 MiB (WSDL ZIP) ERR-05-024 với 413.
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/IfMatch'
@@ -3178,7 +3247,7 @@ paths:
           maxLength: 32
       - name: generated
         in: query
-        schema: *id002
+        schema: *id001
       - $ref: '#/components/parameters/Cursor'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Traceparent'
@@ -3423,7 +3492,7 @@ paths:
       - FR-05-057
       x-datahub-permission:
         permission: PERM-05-kamelet-approve
-      description: 'TENANT: IA; COMMON: PA kèm ý kiến SO (`soOpinion` bắt buộc). Bốn mắt. Phát EVT-05-09.'
+      description: 'TENANT: IA; COMMON: PA kèm ý kiến SO (`soOpinion` bắt buộc). Bốn mắt (ERR-05-011). Phát EVT-05-09.'
       parameters:
       - $ref: '#/components/parameters/KameletNamePath'
       - $ref: '#/components/parameters/VersionPath'
@@ -3839,7 +3908,7 @@ paths:
         explode: false
       - name: since
         in: query
-        schema: *id001
+        schema: *id002
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       responses:
@@ -4157,8 +4226,8 @@ components:
       pattern: ^[a-z][a-z0-9-]{1,40}$
     KameletName:
       type: string
-      maxLength: 100
-      pattern: ^[a-z][a-z0-9-]{2,90}-(sink|source|action)$
+      maxLength: 63
+      pattern: ^[a-z][a-z0-9-]{2,62}-(sink|source|action)$
     TypeCode:
       type: string
       maxLength: 32
@@ -4208,7 +4277,7 @@ components:
       enum:
       - HTTP
       - SOAP
-      - JDBC
+      - DATABASE
       - FILE
       - MESSAGING
       - MAIL
@@ -4290,9 +4359,9 @@ components:
       - BINARY
     Reason:
       type: string
-      maxLength: 1000
+      maxLength: 500
       minLength: 10
-      description: Lý do 10…1.000 ký tự (ERR-05-038 khi thiếu).
+      description: Lý do 10…500 ký tự (ERR-05-038 khi thiếu).
     AllowedActions:
       type: object
       properties:
@@ -4315,7 +4384,7 @@ components:
           - string
           - 'null'
           maxLength: 2048
-        hasMore: *id002
+        hasMore: *id001
       additionalProperties: false
       required:
       - hasMore
@@ -4409,8 +4478,8 @@ components:
           items:
             type: string
             maxLength: 16
-        enabledForTenant: *id002
-        blockNew: *id002
+        enabledForTenant: *id001
+        blockNew: *id001
         ceilings: &id004
           type: object
           additionalProperties: true
@@ -4449,7 +4518,7 @@ components:
           $ref: '#/components/schemas/EnvStatus'
         secretVersion:
           type: integer
-        hasPendingChange: *id002
+        hasPendingChange: *id001
         lastPassedAt:
           type:
           - string
@@ -4498,7 +4567,7 @@ components:
             type: integer
           secretAgeDays:
             type: integer
-          updatedAt: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - code
@@ -4543,14 +4612,14 @@ components:
           legacyRef:
             type: string
             maxLength: 255
-          createdAt: *id001
+          createdAt: *id002
           createdBy:
             type: string
             maxLength: 64
           statusReason:
             type: string
             maxLength: 1000
-          retiredAt: *id001
+          retiredAt: *id002
           grantsCount:
             type: integer
           flowAccountsCount:
@@ -4593,7 +4662,7 @@ components:
       examples:
       - connectionCode: ndxp-ho-tich
         name: NDXP tra cứu hộ tịch
-        typeCode: http-rest
+        typeCode: oauth2-client
         systemCode: NDXP
         purpose: READ
         description: Kết nối tới Nền tảng chia sẻ, điều phối dữ liệu quốc gia cho nghiệp vụ hộ tịch.
@@ -4658,17 +4727,17 @@ components:
         secretWrittenBy:
           type: string
           maxLength: 64
-        secretWrittenAt: *id001
+        secretWrittenAt: *id002
         lastPassedTestId: *id003
-        lastPassedAt: *id001
-        testValidUntil: *id001
+        lastPassedAt: *id002
+        testValidUntil: *id002
         requestedBy:
           type: string
           maxLength: 64
         approvedBy:
           type: string
           maxLength: 64
-        approvedAt: *id001
+        approvedAt: *id002
       additionalProperties: false
       required:
       - env
@@ -4756,11 +4825,11 @@ components:
         transitionMinutes:
           type: integer
           minimum: 5
-          maximum: 10080
-          default: 1440
+          maximum: 1440
+          default: 60
         reason:
           type: string
-          maxLength: 1000
+          maxLength: 500
       additionalProperties: false
       required:
       - secrets
@@ -4782,12 +4851,12 @@ components:
           - COMPLETED
           - FAILED
         testId: *id003
-        transitionUntil: *id001
-        completedAt: *id001
+        transitionUntil: *id002
+        completedAt: *id002
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id001
+        createdAt: *id002
       additionalProperties: false
       required:
       - id
@@ -4874,9 +4943,9 @@ components:
         paramsHash:
           type: string
           maxLength: 64
-        startedAt: *id001
-        finishedAt: *id001
-        expiresAt: *id001
+        startedAt: *id002
+        finishedAt: *id002
+        expiresAt: *id002
         runBy:
           type: string
           maxLength: 64
@@ -4924,7 +4993,7 @@ components:
         createdBy:
           type: string
           maxLength: 64
-        createdAt: *id001
+        createdAt: *id002
       additionalProperties: false
       required:
       - id
@@ -4986,7 +5055,7 @@ components:
           maxLength: 63
         env:
           $ref: '#/components/schemas/Environment'
-        deployed: *id002
+        deployed: *id001
         keysUsed:
           type: array
           items:
@@ -5011,7 +5080,7 @@ components:
     HistoryEntry:
       type: object
       properties:
-        at: *id001
+        at: *id002
         action:
           type: string
           maxLength: 64
@@ -5116,8 +5185,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConnectionCode'
-        startedAt: *id001
-        finishedAt: *id001
+        startedAt: *id002
+        finishedAt: *id002
       additionalProperties: false
       required:
       - id
@@ -5226,7 +5295,7 @@ components:
     VerifyResult:
       type: object
       properties:
-        allOk: *id002
+        allOk: *id001
         results:
           type: array
           items:
@@ -5276,7 +5345,7 @@ components:
           maxLength: 16
         env:
           $ref: '#/components/schemas/Environment'
-        generatedAt: *id001
+        generatedAt: *id002
         configVersion:
           type: integer
         connections:
@@ -5422,8 +5491,8 @@ components:
         reasonDetail:
           type: string
           maxLength: 1000
-        since: *id001
-        evaluatedAt: *id001
+        since: *id002
+        evaluatedAt: *id002
         metrics:
           type: object
           properties:
@@ -5437,7 +5506,7 @@ components:
               type: integer
             poolWaitP95Ms:
               type: integer
-            lastProbeOk: *id002
+            lastProbeOk: *id001
           additionalProperties: false
       additionalProperties: false
       required:
@@ -5476,7 +5545,7 @@ components:
             items:
               type: object
               properties:
-                at: *id001
+                at: *id002
                 from:
                   $ref: '#/components/schemas/HealthLevel'
                 to:
@@ -5572,7 +5641,7 @@ components:
           approvedBy:
             type: string
             maxLength: 64
-          revokedAt: *id001
+          revokedAt: *id002
           lastPrivilegeTest:
             $ref: '#/components/schemas/PrivilegeReport'
         additionalProperties: false
@@ -5672,7 +5741,7 @@ components:
     PrivilegeReport:
       type: object
       properties:
-        testedAt: *id001
+        testedAt: *id002
         username:
           type: string
           maxLength: 128
@@ -5696,7 +5765,7 @@ components:
               privilege:
                 type: string
                 maxLength: 32
-              expected: *id002
+              expected: *id001
             additionalProperties: false
         attributes:
           type: array
@@ -5712,7 +5781,7 @@ components:
       type: object
       properties:
         eventId: *id003
-        occurredAt: *id001
+        occurredAt: *id002
         connectionCode:
           type: string
           maxLength: 63
@@ -5804,7 +5873,7 @@ components:
             type:
             - string
             - 'null'
-          hasDraft: *id002
+          hasDraft: *id001
           health:
             $ref: '#/components/schemas/HealthLevel'
           p95Ms1h:
@@ -5818,7 +5887,7 @@ components:
             - 'null'
           pendingSchemaChanges:
             type: integer
-          updatedAt: *id001
+          updatedAt: *id002
         additionalProperties: false
         required:
         - code
@@ -5904,6 +5973,17 @@ components:
         owner:
           type: string
           maxLength: 64
+        maxConcurrency:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 20
+        labels:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          maxItems: 10
       additionalProperties: false
       required:
       - adapterCode
@@ -5985,7 +6065,7 @@ components:
               hash:
                 type: string
                 maxLength: 64
-              fetchedAt: *id001
+              fetchedAt: *id002
               downloadUrl:
                 type: string
                 format: uri
@@ -6004,11 +6084,11 @@ components:
           submittedBy:
             type: string
             maxLength: 64
-          submittedAt: *id001
+          submittedAt: *id002
           approvedBy:
             type: string
             maxLength: 64
-          approvedAt: *id001
+          approvedAt: *id002
           rejectReason:
             type: string
             maxLength: 2000
@@ -6033,7 +6113,7 @@ components:
                 $ref: '#/components/schemas/VersionStatus'
               operations:
                 type: integer
-              approvedAt: *id001
+              approvedAt: *id002
               approvedBy:
                 type: string
                 maxLength: 64
@@ -6125,7 +6205,7 @@ components:
               sourceFormat:
                 type: string
                 maxLength: 64
-              required: *id002
+              required: *id001
               missingValues:
                 type: array
                 items:
@@ -6201,7 +6281,7 @@ components:
           type: integer
           minimum: 100
           maximum: 120000
-        idempotent: *id002
+        idempotent: *id001
         sideEffect:
           type: string
           enum:
@@ -6270,6 +6350,10 @@ components:
         inputs:
           type: object
           additionalProperties: *id004
+        confirmWriteOnTest:
+          type: boolean
+          default: false
+          description: Bắt buộc `true` khi có thao tác `sideEffect = WRITE` (BR-05-030); thiếu thì ERR-05-003.
       additionalProperties: false
       required:
       - env
@@ -6333,12 +6417,12 @@ components:
                   additionalProperties: false
                 maxItems: 20
             additionalProperties: false
-        startedAt: *id001
-        finishedAt: *id001
+        startedAt: *id002
+        finishedAt: *id002
         runBy:
           type: string
           maxLength: 64
-        validUntil: *id001
+        validUntil: *id002
       additionalProperties: false
       required:
       - id
@@ -6420,12 +6504,12 @@ components:
         sampleRatePercent:
           type: integer
           minimum: 1
-          maximum: 20
+          maximum: 10
           default: 5
         durationMinutes:
           type: integer
           minimum: 5
-          maximum: 1440
+          maximum: 120
           default: 60
         ignorePaths:
           type: array
@@ -6475,8 +6559,8 @@ components:
                 maxLength: 2000
             additionalProperties: false
           maxItems: 100
-        startedAt: *id001
-        finishedAt: *id001
+        startedAt: *id002
+        finishedAt: *id002
       additionalProperties: false
       required:
       - id
@@ -6580,7 +6664,7 @@ components:
           lastPosition:
             type: string
             maxLength: 255
-          positionAt: *id001
+          positionAt: *id002
           lagSeconds:
             type: integer
           snapshotProgress: *id007
@@ -6609,7 +6693,7 @@ components:
                     d:
                       type: integer
                   additionalProperties: false
-                lastEventAt: *id001
+                lastEventAt: *id002
               additionalProperties: false
           prerequisites:
             $ref: '#/components/schemas/ConnectionTest'
@@ -6625,6 +6709,13 @@ components:
       properties:
         env:
           $ref: '#/components/schemas/Environment'
+        engine:
+          type: string
+          enum:
+          - POSTGRESQL
+          - MYSQL
+          - ORACLE
+          - SQLSERVER
         tables:
           type: array
           items:
@@ -6632,6 +6723,11 @@ components:
             maxLength: 127
           minItems: 1
           maxItems: 500
+        columnsInclude:
+          type: array
+          items:
+            type: string
+            maxLength: 255
         columnExcludes:
           type: array
           items:
@@ -6648,12 +6744,27 @@ components:
           - INITIAL
           - NO_DATA
           - WHEN_NEEDED
+        topicPrefix:
+          type: string
+          maxLength: 200
+        heartbeatSeconds:
+          type: integer
+          minimum: 5
+          maximum: 3600
+          default: 30
+        schemaChangePolicy:
+          type: string
+          enum:
+          - PAUSE_ON_BREAKING
+          - ACCEPT_COMPATIBLE_ONLY
       additionalProperties: false
       required:
       - env
+      - engine
       - tables
       examples:
       - env: PROD
+        engine: ORACLE
         tables:
         - QLDD.THUA_DAT
         - QLDD.CHU_SU_DUNG
@@ -6721,7 +6832,7 @@ components:
             items:
               type: string
               maxLength: 63
-          detectedAt: *id001
+          detectedAt: *id002
           status:
             type: string
             enum:
@@ -6738,7 +6849,7 @@ components:
           resolvedBy:
             type: string
             maxLength: 64
-          resolvedAt: *id001
+          resolvedAt: *id002
         additionalProperties: false
         required:
         - id
@@ -6805,9 +6916,9 @@ components:
           - integer
           - long
           - binary
-        required: *id002
+        required: *id001
         default: {}
-        secret: *id002
+        secret: *id001
         description:
           type: string
           maxLength: 1000
@@ -6836,7 +6947,7 @@ components:
             maxLength: 20
           status:
             $ref: '#/components/schemas/KameletStatus'
-          generated: *id002
+          generated: *id001
           owner:
             type: string
             maxLength: 64
@@ -6903,7 +7014,7 @@ components:
                 approvedBy:
                   type: string
                   maxLength: 64
-                approvedAt: *id001
+                approvedAt: *id002
               additionalProperties: false
           parameters:
             type: array
@@ -7045,8 +7156,8 @@ components:
     StaticCheckResult:
       type: object
       properties:
-        passed: *id002
-        checkedAt: *id001
+        passed: *id001
+        checkedAt: *id002
         camelVersion:
           type: string
           maxLength: 16
@@ -7096,8 +7207,8 @@ components:
     ConnectionTypeSetting:
       type: object
       properties:
-        enabled: *id002
-        blockNew: *id002
+        enabled: *id001
+        blockNew: *id001
         ceilings: *id004
       additionalProperties: false
       required:

@@ -10,18 +10,18 @@ Tính năng: TS-05-03 · Kiểm tra kết nối
     Khi mở UI-05-02, chọn "Kiểm tra ▾ TEST".
     Và theo dõi drawer UI-05-04 tới khi xong.
     Và `GET …/tests/{testId}`.
-    Thì bước 1 gọi `POST …/environments/TEST/tests` trả `202`, `Location`. Drawer hiện lần lượt các bước DNS, TCP, TLS, xác thực (lấy token OAuth2), gọi thăm dò; mỗi bước ✓ kèm thời lượng. Tổng ≤ 15 giây. Bước 3: `result = PASSED`, `validUntil = startedAt + 24h`, `paramsHash`, `secretVersion = 1`. SIM-HTTP chỉ nhận yêu cầu `GET /health` và yêu cầu token, không có yêu cầu ghi. KT: có (`CONNECTION_TEST`).
+    Thì bước 1 gọi `POST …/environments/TEST/tests` trả `202`, `Location`. Drawer hiện lần lượt các bước DNS, TCP, TLS, xác thực (lấy token OAuth2), gọi thăm dò; mỗi bước ✓ kèm thời lượng. Tổng ≤ 15 giây. Bước 3: `status = PASSED`, `expiresAt = startedAt + 24h`, `paramsHash`, `secretVersion = 1`. SIM-HTTP chỉ nhận yêu cầu `GET /health` và yêu cầu token, không có yêu cầu ghi. KT: có (`CONNECTION_TEST`).
 
   @TC-05-012 @P1 @Âm
   Kịch bản: TC-05-012 Kiểm tra không đạt theo từng nguyên nhân
     # Truy vết: FR-05-010 · API-05-017, 019 · UI-05-04 · ERR-05-102, 103, 104, 119 · BR-05-011
     Biết U-T68-IE1; `tc-ndxp-moi` TEST.
-    Thì mỗi lần `result = FAILED` và bước lỗi đúng: 1 DNS `cause = DNS_NXDOMAIN`; 2 TCP `CONNECTION_REFUSED`; 3 TLS `UNTRUSTED_CERT`; 4 TLS `TLS_VERSION` (BR-05-011); 5 xác thực `AUTH_REJECTED`; 6 gọi thăm dò `TIMEOUT` kết thúc ≤ 10 giây. Mọi bước sau bước lỗi `SKIPPED`. `hint` tiếng Việt khớp bảng nguyên nhân FRS §5.2.1. Không bước nào ghi giá trị bí mật vào `detail`.
+    Thì mỗi lần `status = FAILED` và bước lỗi đúng: 1 DNS `cause = DNS_NXDOMAIN`; 2 TCP `TCP_REFUSED`; 3 TLS `TLS_UNTRUSTED`; 4 TLS `TLS_VERSION` (BR-05-011); 5 xác thực `AUTH_TOKEN_URL` (endpoint token trả 401); 6 gọi thăm dò hết thời gian chờ, kết thúc ≤ 10 giây với `PROBE_HTTP_STATUS` hoặc `TCP_TIMEOUT` tùy tầng chặn (ghi rõ trong báo cáo). Mọi bước sau bước lỗi `SKIPPED`. `hint` tiếng Việt khớp bảng nguyên nhân FRS §5.2.1. Không bước nào ghi giá trị bí mật vào `detail`.
 
   @TC-05-013 @P2 @Âm @Biên
   Kịch bản: TC-05-013 Kiểm tra trùng lúc và vượt hạn mức
     # Truy vết: FR-05-010 · API-05-017 · ERR-05-018, 019
-    Biết U-T68-IE1; `05.test.rate-per-hour = 20`.
+    Biết U-T68-IE1; `05.test.max-per-hour = 20`.
     Khi gửi hai `POST …/TEST/tests` cách nhau 100 ms khi SIM-HTTP chậm 5 giây.
     Và gửi 21 lần trong một giờ.
     Thì bước 1 lần hai `409` ERR-05-018 với `testId` của lần đang chạy. Bước 2 lần 21 `429` ERR-05-019, `retryAfterSeconds` > 0.

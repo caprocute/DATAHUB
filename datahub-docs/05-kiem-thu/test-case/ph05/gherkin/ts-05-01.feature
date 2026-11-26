@@ -8,8 +8,8 @@ Tính năng: TS-05-01 · Loại kết nối và khai báo kết nối
     # Truy vết: FR-05-001 · API-05-001, 002 · UI-05-03
     Biết U-T68-IE1; U-T68-TA đã tắt loại `ldap` ở T68.
     Khi `GET /connection-types`.
-    Và `GET /connection-types/http-rest`.
-    Thì bước 1 trả `200`, có `http-rest`, `soap`, `db-flow`, `sftp`, `amqp`, `smtp`, `cdc-debezium`; `ldap` có `enabled = false`. Bước 2 trả `paramsSchema` (JSON Schema có `if/then` theo `auth`), `secretKeys` gồm `clientSecret`, `password`, `apiKey`, `clientKey`; `paramsSchema` không chứa khóa nào trong `secretKeys`.
+    Và `GET /connection-types/oauth2-client`.
+    Thì bước 1 trả `200`, có đủ các mã ở FRS FR-05-001 (`http-none`, `http-basic`, `http-apikey`, `oauth2-client`, `http-mtls`, `soap-wss`, `jdbc-*`, `db-flow`, `sftp`, `amqp-1`, `smtp`, `cdc-debezium`…); `ldap` có `enabled = false`. Bước 2 trả `paramsSchema` có `tokenUrl`, `clientId`, `scope`, `authMethod`, `secretKeys` gồm `clientSecret`, `privateKeyPem`; `paramsSchema` không chứa khóa nào trong `secretKeys`.
 
   @TC-05-002 @P1 @Dương
   Kịch bản: TC-05-002 Tạo kết nối REST hợp lệ ở trạng thái Nháp
@@ -17,7 +17,7 @@ Tính năng: TS-05-01 · Loại kết nối và khai báo kết nối
     Biết U-T68-IE1; HTTT `HT-NDXP` `ACTIVE`.
     Khi mở UI-05-03, chọn loại REST/HTTP, nhập mã `tc-ndxp-moi`, tên, HTTT `HT-NDXP`, mục đích Chỉ đọc; bấm "Tạo".
     Và `GET /connections/tc-ndxp-moi`.
-    Thì bước 1 gọi `POST /connections` trả `201`, `Location`, `ETag`; màn sang bước 3. Bước 2: `status = DRAFT`, `environments` rỗng, `allowedActions` có `EDIT`, `CONFIGURE_ENV`; `disabledReasons` không rỗng cho `ENABLE`. KT: có (`CONNECTION_CREATE`). EVT: không.
+    Thì bước 1 gọi `POST /connections` trả `201`, `Location`, `ETag`; màn sang bước 3. Bước 2: `status = DRAFT`, `environments` rỗng, `allowedActions` có `updateConnection`, `putEnvironmentParams`; `disabledReasons` không rỗng cho `enableEnvironment`. KT: có (`CONNECTION_CREATE`). EVT: không.
 
   @TC-05-003 @P1 @Âm
   Kịch bản: TC-05-003 Tạo kết nối sai mã, trùng mã, HTTT không hoạt động, loại tắt

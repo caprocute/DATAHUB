@@ -57,7 +57,7 @@ Tính năng: TS-05-11 · Tài khoản CSDL chỉ đọc theo luồng
     Biết U-T68-IE1; SIM-PG có role quản trị `dh_vault_admin` để OpenBao tạo tài khoản động.
     Khi tạo kết nối `tc-db-ok` loại `db-flow`, PostgreSQL, mục đích Chỉ đọc, `allowedSchemas = ["dkkd"]`.
     Và khai `TEST` (`jdbcUrl` SIM-PG, `maxRows = 10000`), ghi bí mật tài khoản quản trị; kiểm tra.
-    Thì bước 1 `201`. Bước 2 kiểm tra đạt gồm bước "OpenBao tạo được tài khoản thử và xóa ngay"; vai trò `dh-t68-*-test` mẫu được tạo và hủy; tài khoản quản trị chỉ nằm ở OpenBao.
+    Thì bước 1 `201`. Bước 2 kiểm tra đạt gồm bước "OpenBao tạo được tài khoản thử và xóa ngay"; role OpenBao mẫu `dh-t68-{flowCode}-test` (SDD §5, FlowAccountService) được tạo và hủy; tài khoản quản trị chỉ nằm ở OpenBao.
 
   @TC-05-150 @P2 @Âm
   Kịch bản: TC-05-150 Thu hồi lặp, thiếu lý do, thiếu quyền

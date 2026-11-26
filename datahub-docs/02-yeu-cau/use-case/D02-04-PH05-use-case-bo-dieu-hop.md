@@ -805,8 +805,8 @@ Sơ đồ gom use case theo bốn nhóm nghiệp vụ. Kỹ sư tích hợp là 
 
 **Luồng thay thế**
 
-- **3a. Chấp nhận lược đồ mới.** An chọn `ACCEPT_NEW_SCHEMA`; PH-10 đăng ký topic `.v2`; các luồng tiêu thụ `.v1` được thông báo.
-- **1a. Thay đổi tương thích** (thêm cột có thể null): ghi `INFO`, không dừng.
+- **3a. Chấp nhận lược đồ mới.** An chọn `ACCEPT`; PH-10 đăng ký topic `.v2`; các luồng tiêu thụ `.v1` được thông báo.
+- **1a. Thay đổi tương thích** (thêm cột có thể null): ghi `COMPATIBLE`, không dừng.
 
 **Luồng ngoại lệ**
 
@@ -865,7 +865,7 @@ Sơ đồ gom use case theo bốn nhóm nghiệp vụ. Kỹ sư tích hợp là 
 
 1. Hà mở UI-05-15 của `common-sms-sink`, tab Nơi dùng (API-05-087): 14 luồng.
 2. Hà bấm "Thu hồi", nhập lý do "Lộ khóa API trong tiêu đề khi lỗi, CVE nội bộ DH-2026-07", để trống "Dừng luồng đang chạy".
-3. Hệ thống gọi API-05-086; phát EVT-05-10 tới mọi tenant; gửi cảnh báo mức cao tới chủ sở hữu 14 luồng và TO của 5 tenant.
+3. Hệ thống gọi API-05-086; phát EVT-05-10 trên topic `{tenant}.adapter.kamelet.lifecycle-changed.v1` của từng tenant có luồng dùng; gửi cảnh báo mức cao tới chủ sở hữu 14 luồng và TO của 5 tenant.
 4. PH-04 chặn phát hành mới của các luồng dùng phiên bản này (ERR-05-120 qua xác minh).
 
 **Luồng thay thế**

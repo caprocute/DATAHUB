@@ -6,15 +6,15 @@ Tính năng: TS-05-30 · Tham số phân hệ và báo cáo sử dụng
   @TC-05-117 @P2 @Dương @Âm
   Kịch bản: TC-05-117 Bật, tắt loại kết nối; tắt khi còn dùng bị chặn
     # Truy vết: FR-05-061 · API-05-090, 091 · ERR-05-010, 004 · UC-05-26
-    Biết U-T68-TA; loại `ldap` không dùng; `http-rest` đang dùng.
+    Biết U-T68-TA; loại `ldap` không dùng; `oauth2-client` đang dùng.
     Khi `PUT /settings/connection-types/ldap` `enabled = true`.
-    Và `PUT /settings/connection-types/http-rest` `enabled = false`.
+    Và `PUT /settings/connection-types/oauth2-client` `enabled = false`.
     Thì bước 1 `200`, tạo kết nối LDAP được. Bước 2 `409` ERR-05-010 với số kết nối đang dùng.
 
   @TC-05-118 @P2 @Biên
   Kịch bản: TC-05-118 Trần tham số tenant được áp
     # Truy vết: FR-05-061 · API-05-091, 011 · ERR-05-030
-    Biết U-T68-TA đặt trần `timeoutMs = 30000` cho `http-rest`; U-T68-IE1.
+    Biết U-T68-TA đặt trần `timeoutMs = 30000` cho `oauth2-client`; U-T68-IE1.
     Thì `422` ERR-05-030 nêu trần.
 
   @TC-05-119 @P3 @Dương

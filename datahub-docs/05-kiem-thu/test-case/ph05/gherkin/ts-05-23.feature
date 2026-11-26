@@ -12,5 +12,5 @@ Tính năng: TS-05-23 · Sinh bộ điều hợp từ OpenAPI, WSDL
   @TC-05-091 @P2 @Dương @Âm
   Kịch bản: TC-05-091 Sinh từ WSDL ZIP; đặc tả hỏng hoặc quá lớn
     # Truy vết: FR-05-046 · API-05-065 · ERR-05-023, 035
-    Biết F-WSDL; YAML OpenAPI hỏng ở dòng 40; OpenAPI 6 MiB.
-    Thì F-WSDL `200` với thao tác SOAP và XSD nhập kèm. YAML hỏng `422` ERR-05-023 có dòng 40. Tệp 6 MiB `413` ERR-05-035.
+    Biết F-WSDL; YAML OpenAPI hỏng ở dòng 40; OpenAPI 6 MiB (trần 5 MiB).
+    Thì F-WSDL `200` với thao tác SOAP và XSD nhập kèm. YAML hỏng `422` ERR-05-023 có dòng 40. Tệp 6 MiB `413` ERR-05-024.

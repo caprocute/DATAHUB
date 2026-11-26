@@ -14,5 +14,5 @@ Tính năng: TS-05-13 · Nhật ký truy cập CSDL của luồng
   @TC-05-053 @P1 @Âm @Bảo @mật
   Kịch bản: TC-05-053 Chỉ SO, AU xem nhật ký; tenant khác không thấy
     # Truy vết: FR-05-027 · API-05-041 · ERR-05-012 · BR-05-002
-    Biết U-T68-IE1; U-T01-IE.
-    Thì IE1 403-PQ. U-T01-IE (có quyền ở T01) `200` với 0 dòng của T68.
+    Biết U-T68-IE1; U-T01-AU.
+    Thì IE1 403-PQ. U-T01-AU (AU ở T01) `200` với 0 dòng của T68.

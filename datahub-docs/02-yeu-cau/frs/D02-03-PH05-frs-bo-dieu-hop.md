@@ -182,7 +182,7 @@ Ma trận dưới đây dùng ký hiệu của D02-08 §3. Quyền `PERM-05-read
 | PERM-05-audit-read | Xem nhật ký truy cập CSDL của luồng, lịch sử xoay bí mật chi tiết | — | — | — | ● | — | — | — | ● |
 | PERM-05-admin | Tham số phân hệ, bật tắt loại kết nối, trần tham số theo tenant | ● | ● | — | — | — | — | — | — |
 
-Tách nhiệm vụ: IE và IA đã là cặp loại trừ ở D02-08 §4. Ngoài ra nguyên tắc bốn mắt (FR-00-071) áp dụng cho từng đối tượng: người khai báo bí mật PROD hoặc gửi duyệt không được tự duyệt (BR-05-009). `PERM-05-operate` của SO chỉ dùng cho tạm ngừng khi có sự cố (FR-05-008), không dùng cho xoay bí mật hay CDC.
+Tách nhiệm vụ: IE và IA đã là cặp loại trừ ở D02-08 §4. Ngoài ra nguyên tắc bốn mắt (FR-00-071) áp dụng cho từng đối tượng: người khai báo bí mật PROD hoặc gửi duyệt không được tự duyệt (BR-05-009). `PERM-05-operate` của SO chỉ dùng khi có sự cố: tạm ngừng kết nối (FR-05-008), tắt giá trị môi trường (FR-05-007), tạm dừng bộ điều hợp (FR-05-044), thu hồi tài khoản CSDL (FR-05-028); không dùng cho xoay bí mật, CDC hay so sánh phiên bản.
 
 **Máy gọi máy.** `dh-integration` của PH-04 gọi API nội bộ bằng token dịch vụ có scope `adapter:verify`; `dh-runtime` dùng scope `adapter:runtime-config`; PH-13 dùng `adapter:health-read`. Scope này cấp cho tài khoản dịch vụ khi triển khai, không cấp cho người.
 
@@ -343,7 +343,7 @@ Mỗi FR theo mẫu D00-01 §4.3. FR có nhiều bước hoặc thay đổi tr�
 | Truy vết | REQ-05; LGC-BUS-040, LGC-TOOL-008, 009, 010 |
 | Tác nhân, quyền | Mọi vai trò có `PERM-05-read`; PH-04 (trình thiết kế) |
 | Tiền điều kiện | Đã đăng nhập, chọn tenant (FR-00-004) |
-| Đầu vào | `protocolGroup` (lọc: `HTTP`, `SOAP`, `DATABASE`, `FILE`, `MESSAGING`, `MAIL`, `DIRECTORY`), `includeDisabled` (mặc định `false`) |
+| Đầu vào | `protocolGroup` (lọc: `HTTP`, `SOAP`, `DATABASE`, `FILE`, `MESSAGING`, `MAIL`, `DIRECTORY`, `CDC`), `includeDisabled` (mặc định `false`) |
 | Đầu ra | Danh sách loại: `typeCode`, tên, nhóm, mức hỗ trợ (`STABLE`, `PREVIEW`, `DEPRECATED`), `enabledInTenant`, lược đồ tham số (JSON Schema 2020-12), `secretKeys[]`, Kamelet giao thức, các bước kiểm tra, trần tham số của tenant |
 | Hậu điều kiện, sự kiện, kiểm toán | Không đổi dữ liệu; không sự kiện; không kiểm toán |
 
@@ -381,9 +381,9 @@ Danh mục loại kết nối ban đầu (bản 0.1) gồm 24 loại dưới đ�
 | Mức ưu tiên | M |
 | Truy vết | REQ-05; LGC-BUS-040 |
 | Tác nhân, quyền | `PERM-05-read` |
-| Đầu vào | `q` (tìm không dấu trên mã, tên, `systemCode`, máy chủ), `typeCode`, `protocolGroup`, `systemCode`, `status`, `health`, `env` (có giá trị `ENABLED` ở môi trường), `grantedTo` (mã không gian làm việc), `owner`, `label`, phân trang `page`, `size` (≤ 200), `sort` (`code`, `name`, `updatedAt`, `health`) |
+| Đầu vào | `q` (tìm không dấu trên mã, tên, `systemCode`, máy chủ), `typeCode`, `protocolGroup`, `systemCode`, `status`, `health`, `env` (có giá trị `ENABLED` ở môi trường), `grantedTo` (mã không gian làm việc), `owner`, `label`, phân trang con trỏ `cursor`, `limit` (mặc định 25, ≤ 100), `sort` (`code`, `name`, `updatedAt`, `health`) |
 | Xử lý | 1. Kiểm tra tham số; sai miền trả ERR-05-003. 2. Truy vấn trong tenant hiện hành (RLS). 3. Kết nối `UNHEALTHY` luôn xếp đầu khi `sort` không chỉ định (BR-05-014). 4. Trả kèm khối `facets` đếm theo loại, trạng thái, sức khỏe. |
-| Đầu ra | `items[]`: mã, tên, loại, HTTT, trạng thái, môi trường `ENABLED`, sức khỏe từng môi trường, số nơi dùng, cập nhật lần cuối; `page`, `size`, `totalElements`, `facets` |
+| Đầu ra | `items[]`: mã, tên, loại, HTTT, trạng thái, môi trường `ENABLED`, sức khỏe từng môi trường, số nơi dùng, cập nhật lần cuối; `page` (`nextCursor`, `limit`), `facets` |
 | Hậu điều kiện, sự kiện, kiểm toán | Không đổi dữ liệu; không sự kiện; không kiểm toán |
 
 #### FR-05-003 · Xem chi tiết kết nối nguồn
@@ -417,7 +417,7 @@ Danh mục loại kết nối ban đầu (bản 0.1) gồm 24 loại dưới đ�
 | `description` | T-TEXT | Không | ≤ 2.000 ký tự | |
 | `owner` | T-CODE | Không | Mã người dùng; mặc định người tạo | |
 | `labels` | mảng T-CODE | Không | ≤ 10 | `["van-ban"]` |
-| `Idempotency-Key` | tiêu đề | Có | UUID | |
+| `Idempotency-Key` | tiêu đề | Có | 16…128 ký tự, giữ 24 giờ (khuyến nghị UUID) | |
 
 | Trường | Nội dung |
 |---|---|
@@ -531,7 +531,7 @@ FR-05-008 (M; LGC-BUS-009, 010). **Tạm ngừng** (TO, TA, SO với `PERM-05-op
 
 #### FR-05-011 · Bảo vệ bí mật: ghi một chiều, không hiển thị, không ghi log
 
-FR-05-011 (M; LGC-BUS-041, LGC-TOOL-008; SEC-24, SEC-32 của D03-07). Yêu cầu xuyên suốt: (1) bí mật chỉ nhận qua API-05-012 và chỉ lưu ở OpenBao; (2) không API nào trả giá trị bí mật, kể cả cho PA; giao diện chỉ hiện "Đã đặt, phiên bản n, cập nhật lúc…"; (3) mọi trường tên khớp mẫu bí mật của D03-02-PH04 (`pass`, `secret`, `token`, `apiKey`, `privateKey`, `credential`, `authorization`) ở API tham số không bí mật bị từ chối bằng ERR-05-006; (4) log ứng dụng, vết OpenTelemetry, thông báo lỗi và kết quả kiểm tra đi qua bộ lọc che bí mật của thư viện nền; (5) `dh-integration` chỉ có chính sách ghi trên `kv/dh/+/conn/*`, chỉ `dh-runtime` của đúng tenant có chính sách đọc (BR-05-003). Kiểm thử bằng ca rò rỉ ở D05-02.
+FR-05-011 (M; LGC-BUS-041, LGC-TOOL-008; SEC-24, SEC-32 của D03-07). Yêu cầu xuyên suốt: (1) bí mật chỉ nhận qua API-05-012 (ghi) và API-05-020 (xoay vòng) và chỉ lưu ở OpenBao; (2) không API nào trả giá trị bí mật, kể cả cho PA; giao diện chỉ hiện "Đã đặt, phiên bản n, cập nhật lúc…"; (3) mọi trường tên khớp mẫu bí mật của D03-02-PH04 (`pass`, `secret`, `token`, `apiKey`, `privateKey`, `credential`, `authorization`) ở API tham số không bí mật bị từ chối bằng ERR-05-006; (4) log ứng dụng, vết OpenTelemetry, thông báo lỗi và kết quả kiểm tra đi qua bộ lọc che bí mật của thư viện nền; (5) `dh-integration` chỉ có chính sách ghi trên `kv/dh/+/conn/*`, chỉ `dh-runtime` của đúng tenant có chính sách đọc (BR-05-003). Kiểm thử bằng ca rò rỉ ở D05-02.
 
 #### FR-05-012 · Xoay vòng bí mật không gián đoạn
 
@@ -539,7 +539,7 @@ FR-05-011 (M; LGC-BUS-041, LGC-TOOL-008; SEC-24, SEC-32 của D03-07). Yêu cầ
 |---|---|
 | Mức ưu tiên | M |
 | Truy vết | REQ-05; LGC-BUS-041; SEC-24 |
-| Tác nhân, quyền | TO, TA, SO (`PERM-05-operate`); tự động theo lịch |
+| Tác nhân, quyền | TO, TA (`PERM-05-operate`); tự động theo lịch. SO không xoay bí mật (§3.2) |
 | Tiền điều kiện | Giá trị môi trường `ENABLED`; không có lần xoay đang ở `TRANSITION` (ERR-05-036) |
 | Đầu vào | `mode`: `MANUAL` (người dùng nhập bí mật mới qua API-05-012 rồi gọi xoay) hoặc `GENERATED` (với `oauth2-client` có API đổi khóa phía đối tác, hoặc `db-flow` mà OpenBao quản lý mật khẩu gốc); `transitionMinutes` (mặc định 60, 5…1.440); `reason` |
 | Xử lý | 1. Ghi bí mật mới thành phiên bản `n+1` ở OpenBao, giữ phiên bản `n`. 2. Chạy kiểm tra (FR-05-010) với phiên bản mới; thất bại thì hủy phiên bản mới, lần xoay `FAILED`, giữ nguyên. 3. Đạt: lần xoay `TRANSITION`, phát EVT-05-03; runtime nạp phiên bản mới, nếu lượt gọi với phiên bản mới bị từ chối xác thực thì dùng lại phiên bản `n` trong thời gian chuyển tiếp (BR-05-007). 4. Hết thời gian chuyển tiếp: hủy phiên bản `n`, lần xoay `COMPLETED`. 5. PROD: không cần duyệt lại vì tham số không đổi và đã kiểm tra đạt; kiểm toán ghi rõ. 6. Lịch xoay mặc định theo tham số `05.secret.max-age-days` (90 ngày, theo TCVN 14423:2026 cấp độ 3); kết nối quá hạn bị cảnh báo ở UI-05-07 và gửi việc cho chủ sở hữu 14 ngày trước hạn. |
@@ -562,7 +562,7 @@ FR-05-013 (M; LGC-BUS-010 phần kiểm tra phụ thuộc). `PERM-05-read`. Tr�
 | Tác nhân, quyền | `dh-integration` của PH-04 (scope `adapter:verify`) |
 | Đầu vào | `tenant` (từ token dịch vụ, không từ thân), `workspaceCode`, `flowCode`, `flowVersion`, `stage` (`DESIGN`, `SUBMIT`, `PUBLISH`), `targetEnv`, `references[]` (`connectionCode`, `keysUsed[]`, `kameletName`, `adapterCode`, `operationCode`, `accessMode` `READ` hoặc `WRITE`) |
 | Xử lý | Với từng tham chiếu, kiểm tra theo thứ tự và dừng ở lỗi đầu tiên: 1. tồn tại trong tenant; 2. không `SUSPENDED`, `RETIRED`; 3. được cấp cho không gian hoặc luồng; 4. có giá trị `ENABLED` cho `targetEnv` (ở `DESIGN` chỉ cảnh báo); 5. khóa dùng có trong lược đồ của loại; 6. `accessMode = WRITE` thì kết nối `READ_WRITE` và có tài khoản ghi `ISSUED` cho luồng; 7. Kamelet `APPROVED` hoặc `DEPRECATED` (`WITHDRAWN` là lỗi); 8. bộ điều hợp `ACTIVE` và thao tác có trong phiên bản hiệu lực. Lưu chỉ mục nơi dùng khi `stage = PUBLISH`. |
-| Đầu ra | `results[]` với `status` (`OK`, `WARNING`, `ERROR`), `code` (ERR-05-001, 008, 013, 014, 003, 017, 120…), thông điệp; `allOk` |
+| Đầu ra | `results[]` với `status` (`OK`; cảnh báo `DEPRECATED`; lỗi `NOT_FOUND`, `NOT_GRANTED`, `NOT_ENABLED`, `SUSPENDED`, `UNKNOWN_KEY`, `MODE_MISMATCH`, `WITHDRAWN`), `code` (mã đối tượng), thông điệp nêu mã lỗi tương ứng (ERR-05-001, 013, 014, 118, 003, 017, 120); `allOk` |
 | Ngoại lệ | Thân sai: ERR-05-003, 400 · Token không có scope: ERR-05-012, 403. Lỗi từng tham chiếu nằm trong `results`, HTTP vẫn 200 |
 | Hậu điều kiện | Chỉ mục nơi dùng cập nhật khi phát hành |
 | Sự kiện, kiểm toán | Không sự kiện; không kiểm toán (PH-04 kiểm toán lệnh gốc) |
@@ -606,7 +606,7 @@ FR-05-020 (M). Kamelet giao thức phát chỉ số theo kết nối và thao t�
 
 #### FR-05-021 · Cảnh báo và phát sự kiện khi đổi mức sức khỏe
 
-FR-05-021 (M). Khi mức đổi, `dh-integration` ghi `HealthState` mới kèm lý do, phát EVT-05-06 (khóa phân vùng `connectionCode`) và cập nhật API-05-093. Chống dao động: chỉ đổi mức khi điều kiện mới giữ ít nhất 2 chu kỳ đánh giá liên tiếp; về `HEALTHY` cần 3 chu kỳ. PH-04 dùng sự kiện để mở sớm ngắt mạch của chặng `deliver` cho đích `UNHEALTHY` và hiển thị cảnh báo trên luồng; PH-13 tạo cảnh báo: `UNHEALTHY` ở PROD mức cao gửi TO và chủ sở hữu kết nối, kèm thông báo cho đầu mối kỹ thuật của HTTT (lấy từ PH-01) khi tham số `05.health.notify-system-contact` bật; `DEGRADED` mức trung bình chỉ hiện ở bảng. Kiểm toán: không (sự kiện vận hành); lịch sử mức giữ 90 ngày.
+FR-05-021 (M). Khi mức đổi, `dh-integration` ghi `HealthState` mới kèm lý do, phát EVT-05-06 (khóa phân vùng `{kind}:{code}`) và cập nhật API-05-093. Chống dao động: chỉ đổi mức khi điều kiện mới giữ ít nhất 2 chu kỳ đánh giá liên tiếp; về `HEALTHY` cần 3 chu kỳ. PH-04 dùng sự kiện để mở sớm ngắt mạch của chặng `deliver` cho đích `UNHEALTHY` và hiển thị cảnh báo trên luồng; PH-13 tạo cảnh báo: `UNHEALTHY` ở PROD mức cao gửi TO và chủ sở hữu kết nối, kèm thông báo cho đầu mối kỹ thuật của HTTT (lấy từ PH-01) khi tham số `05.health.notify-system-contact` bật; `DEGRADED` mức trung bình chỉ hiện ở bảng. Kiểm toán: không (sự kiện vận hành); lịch sử mức giữ 90 ngày.
 
 #### FR-05-022 · Tổng quan sức khỏe
 
@@ -646,7 +646,7 @@ FR-05-025 (M; Q359 lớp chốt chặn thật). `PERM-05-test`. Với giá trị
 | Truy vết | REQ-05; Q359 khoản 6, ADR-067 khoản 6, BR-04-015 |
 | Tác nhân, quyền | Đề nghị: IE, TA (`PERM-05-connection`). Đồng ý: SO (`PERM-05-db-write-consent`). Duyệt: IA (`PERM-05-approve`) |
 | Tiền điều kiện | Kết nối `purpose = READ_WRITE`; CSDL đích là CSDL của HTTT thành viên, không phải CSDL của Datahub (BR-05-017) |
-| Đầu vào | Như FR-05-024 với `accessMode = WRITE`, cộng `tables[]` bắt buộc, `operations[]` (`INSERT`, `UPDATE`; `DELETE` chỉ khi có văn bản đồng ý của đơn vị chủ quản, đính kèm số văn bản), `validUntil` (≤ 90 ngày), `justification` (≥ 30 ký tự), `ownerConsentRef` (số, ngày văn bản đồng ý của đơn vị chủ quản CSDL) |
+| Đầu vào | Như FR-05-024 với `accessMode = WRITE`, cộng `tables[]` bắt buộc, `operations[]` (`INSERT`, `UPDATE`; `DELETE` chỉ khi có văn bản đồng ý của đơn vị chủ quản, đính kèm số văn bản), `validUntil` (≤ 90 ngày), `justification` (≥ 30 ký tự), `ownerConsentRef` (bắt buộc khi `accessMode = WRITE`: số, ngày văn bản đồng ý của đơn vị chủ quản CSDL; thiếu thì ERR-05-003) |
 | Xử lý | 1. Tạo tài khoản `REQUESTED`, giao việc cho SO. 2. SO xem phạm vi, lý do, văn bản; đồng ý thì `CONSENTED` và giao việc cho IA; từ chối thì `REJECTED` có lý do. 3. IA duyệt (khác người đề nghị, ERR-05-011): `ISSUED`, OpenBao role mẫu ghi chỉ có các quyền trong `operations[]` trên `tables[]`. 4. Hết `validUntil`: `EXPIRED`, xóa role, phát EVT-05-15; 14 ngày trước hạn gửi việc gia hạn cho người đề nghị. 5. Gia hạn là một đề nghị mới, đi lại bước 1–3. |
 | Đầu ra | Tài khoản với trạng thái |
 | Ngoại lệ | Kết nối chỉ đọc: ERR-05-017, 409 · CSDL của Datahub: ERR-05-016, 422 · Quá 90 ngày: ERR-05-037, 422 · Duyệt khi chưa có SO đồng ý: ERR-05-017, 409 · Bốn mắt: ERR-05-011, 403 |
@@ -683,7 +683,7 @@ FR-05-030 (M; LGC-BUS-006, LGC-BUS-020). `PERM-05-read`. Trả thông tin chung,
 
 | Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
 |---|---|---|---|---|
-| `adapterCode` | T-CODE chữ thường | Có | `^[a-z][a-z0-9-]{2,50}$`, duy nhất trong tenant; dùng làm tiền tố Kamelet sinh | `qlvb-soap` |
+| `adapterCode` | T-CODE chữ thường | Có | `^[a-z][a-z0-9-]{2,39}$`, duy nhất trong tenant; dùng làm tiền tố Kamelet sinh và topic CDC | `qlvb-soap` |
 | `name` | T-NAME | Có | | `Bộ điều hợp QLVB` |
 | `systemCode` | T-CODE | Có | HTTT `ACTIVE` | `HT-QLVB` |
 | `systemGroup` | số nguyên | Có | 1…4 | `2` |
@@ -863,7 +863,7 @@ FR-05-047 (M; FR-04-012, ADR-061). Khi một phiên bản được duyệt, mỗ
 | Truy vết | REQ-05; LGC-BUS-040 (CSDL); repo FR-05-009; ADR-059 |
 | Tác nhân, quyền | IE, TA (`PERM-05-adapter`) |
 | Tiền điều kiện | Bộ điều hợp `protocol = CDC`, `systemGroup` 3 hoặc 4; kết nối loại `cdc-debezium` có giá trị `ENABLED` |
-| Đầu vào | `engine` (`postgresql` ≥ 12, `mysql` ≥ 8.0, `oracle` ≥ 19c, `sqlserver` ≥ 2019), `tables[]` (schema, bảng, cột khóa nếu bảng không có khóa chính, `columnsInclude` hoặc `columnsExclude`, cột nhạy cảm cần băm hoặc bỏ), `snapshotMode` (`INITIAL`, `NO_DATA` chỉ thay đổi từ nay, `WHEN_NEEDED`), `topicPrefix` (mặc định `{tenant}.cdc.{adapterCode}`), `heartbeatSeconds` (mặc định 30), `schemaChangePolicy` (`PAUSE_ON_BREAKING` mặc định, không cho chọn bỏ qua với bảng có trường bắt buộc) |
+| Đầu vào | `engine` (`POSTGRESQL` ≥ 12, `MYSQL` ≥ 8.0, `ORACLE` ≥ 19c, `SQLSERVER` ≥ 2019), `tables[]` (schema, bảng, cột khóa nếu bảng không có khóa chính, `columnsInclude` hoặc `columnsExclude`, cột nhạy cảm cần băm hoặc bỏ), `snapshotMode` (`INITIAL`, `NO_DATA` chỉ thay đổi từ nay, `WHEN_NEEDED`), `topicPrefix` (mặc định `{tenant}.cdc.{adapterCode}`), `heartbeatSeconds` (mặc định 30), `schemaChangePolicy` (`PAUSE_ON_BREAKING` mặc định, không cho chọn bỏ qua với bảng có trường bắt buộc) |
 | Xử lý | 1. Kiểm tra bảng thuộc `allowedSchemas` của kết nối (ERR-05-027). 2. Kiểm tra tổng số bảng ≤ `05.cdc.max-tables` (mặc định 50). 3. Xin PH-10 đăng ký topic `{topicPrefix}.{schema}.{table}.v1` (một topic mỗi bảng, khóa phân vùng = khóa chính, lưu giữ 7 ngày) và lược đồ Avro tương ứng ở Apicurio; PH-10 không khả dụng thì ERR-05-029. 4. Lưu cấu hình, trạng thái CDC `STOPPED`. 5. Sinh đặc tả `KafkaConnector` (Strimzi) vào kho GitOps của tenant ở nhánh môi trường; chỉ áp dụng khi chạy (FR-05-050). |
 | Đầu ra | Cấu hình CDC, danh sách topic |
 | Ngoại lệ | ERR-05-027, 029, 030 |
@@ -884,7 +884,7 @@ FR-05-050 (M). TO, TA (`PERM-05-operate`). **Chạy**: điều kiện CDC đạt
 | Mức ưu tiên | M |
 | Truy vết | REQ-05; repo FR-05-009 bước 4 và E2 |
 | Tác nhân, quyền | Hệ thống phát hiện; IE, TA (`PERM-05-adapter`) xử lý; TO được thông báo |
-| Xử lý | 1. `dh-integration` tiêu thụ topic lịch sử lược đồ của connector và sự kiện thay đổi cấu trúc; so với lược đồ Avro đã đăng ký của bảng. 2. Phân loại: **tương thích** (thêm cột có thể null, mở rộng độ dài) → ghi `CdcSchemaChange` mức `INFO`, cập nhật lược đồ theo chế độ BACKWARD của PH-10, CDC tiếp tục; **phá vỡ** (xóa cột, đổi tên, đổi kiểu, thêm cột `NOT NULL` không mặc định, đổi khóa chính) → mức `BREAKING`, tạm dừng connector trước khi phát bản ghi theo lược đồ mới, trạng thái `PAUSED_SCHEMA`, cảnh báo mức cao (BR-05-022). 3. Người xử lý chọn cho từng thay đổi: `ACCEPT_NEW_SCHEMA` (đăng ký lược đồ phiên bản chính mới, topic mới `.v2`, thông báo các luồng tiêu thụ `.v1`), `MAP_COLUMN` (khai báo cột cũ ↔ cột mới), `EXCLUDE_COLUMN`, `STOP_TABLE`; kèm ghi chú. 4. Khi không còn thay đổi `BREAKING` chờ, cho phép tiếp tục (FR-05-050). |
+| Xử lý | 1. `dh-integration` tiêu thụ topic lịch sử lược đồ của connector và sự kiện thay đổi cấu trúc; so với lược đồ Avro đã đăng ký của bảng. 2. Phân loại: **tương thích** (thêm cột có thể null, mở rộng độ dài) → ghi `CdcSchemaChange` mức `COMPATIBLE`, cập nhật lược đồ theo chế độ BACKWARD của PH-10, CDC tiếp tục; **phá vỡ** (xóa cột, đổi tên, đổi kiểu, thêm cột `NOT NULL` không mặc định, đổi khóa chính) → mức `BREAKING`, tạm dừng connector trước khi phát bản ghi theo lược đồ mới, trạng thái `PAUSED_SCHEMA`, cảnh báo mức cao (BR-05-022). 3. Người xử lý chọn cho từng thay đổi: `ACCEPT` (đăng ký lược đồ phiên bản chính mới, topic mới `.v2`, thông báo các luồng tiêu thụ `.v1`), `MAP_COLUMN` (khai báo cột cũ ↔ cột mới qua `columnMap`), `EXCLUDE_TABLE` (bỏ bảng khỏi CDC), `RESNAPSHOT` (xếp lịch chụp ảnh lại, FR-05-053); kèm ghi chú ≥ 10 ký tự. Loại một cột khỏi CDC làm bằng `columnExcludes` của cấu hình (API-05-068). 4. Khi không còn thay đổi `BREAKING` chờ, cho phép tiếp tục (FR-05-050). |
 | Đầu ra | Danh sách thay đổi chờ (API-05-074), trạng thái sau xử lý |
 | Ngoại lệ | Tiếp tục khi còn thay đổi chờ: ERR-05-026, 409 |
 | Sự kiện phát ra | EVT-05-11 khi phát hiện, EVT-05-12 khi trạng thái CDC đổi |
@@ -915,9 +915,9 @@ FR-05-055 (M). `PERM-05-read`. Trả: mô tả, tham số (tên, tiêu đề, ki
 | Mức ưu tiên | M |
 | Truy vết | REQ-05; LGC-TOOL-027 (thay thế); FR-04-018; SEC-46 |
 | Tác nhân, quyền | IE, TA (`PERM-05-kamelet-submit`) |
-| Đầu vào | YAML Kamelet (≤ 256 KiB) theo FR-04-018 (tên `^[a-z][a-z0-9-]{2,62}-(source|sink|action)$`, `spec.definition`, `spec.template`), nguồn (`DESIGNER` khi gửi từ trình thiết kế PH-04, `UPLOAD`), ghi chú phát hành, `version` (SemVer; mới thì `1.0.0`) |
-| Xử lý | 1. Tên không trùng Kamelet nền, `COMMON` hay Kamelet khác của tenant (ERR-05-002). 2. **Kiểm tra tĩnh** (API-05-081, chạy lại khi gửi): YAML hợp lệ với lược đồ Kamelet của Camel 4.18; mọi thành phần, ngôn ngữ biểu thức trong `template` thuộc danh mục được phép của FR-04-080 cho tenant; không `#class:`, không `bean` ngoài danh sách, không ngôn ngữ kịch bản (`groovy`, `js`, `python`, `mvel`, `ognl`); không URI kết nối ra ngoài trực tiếp mà phải qua Kamelet nền giao thức hoặc tham số kết nối (`{{conn:…}}`, CC-CAMEL-07); tham số nhạy cảm có `x-descriptors: urn:camel:group:credentials`; không có chuỗi giống bí mật (quét entropy và mẫu); các thành phần có ở runtime theo `runtime-manifest.json` (ERR-05-021); với phiên bản mới của Kamelet đã có, số phụ phải tương thích ngược (không bỏ tham số, không thêm tham số bắt buộc không mặc định), ngược lại phải tăng số chính (ERR-05-022). 3. Lưu phiên bản `DRAFT` kèm báo cáo kiểm tra; gửi thì `SUBMITTED`. 4. Nguồn `DESIGNER`: khi luồng loại `KAMELET` của PH-04 được duyệt phát hành bởi IA (FR-04-018), PH-04 gọi API-05-079 và API-05-082 kèm mã quyết định duyệt; PH-05 ghi nhận duyệt đó và chuyển thẳng `APPROVED` nếu kiểm tra tĩnh đạt (BR-05-027), không duyệt hai lần. |
-| Đầu ra | Phiên bản Kamelet và báo cáo kiểm tra: `violations[]` (mã quy tắc, dòng, cột, thông điệp) |
+| Đầu vào | YAML Kamelet (≤ 256 KiB) theo FR-04-018 (tên `^[a-z][a-z0-9-]{2,62}-(source|sink|action)$`, `spec.definition`, `spec.template`), nguồn `origin` (`EDITOR` khi soạn hoặc tải tệp ở UI-05-16, `DESIGNER` khi gửi từ trình thiết kế PH-04; `GENERATED`, `PLATFORM` do hệ thống đặt cho Kamelet sinh và Kamelet nền), ghi chú phát hành, `version` (SemVer; mới thì `1.0.0`) |
+| Xử lý | 1. Tên không trùng Kamelet nền, `COMMON` hay Kamelet khác của tenant (ERR-05-002). 2. **Kiểm tra tĩnh** (API-05-081, chạy lại khi gửi): YAML hợp lệ với lược đồ Kamelet của Camel 4.18; mọi thành phần, ngôn ngữ biểu thức trong `template` thuộc danh mục được phép của FR-04-080 cho tenant; không `#class:`, không `bean` ngoài danh sách, không ngôn ngữ kịch bản (`groovy`, `js`, `python`, `mvel`, `ognl`, `spel`); không URI kết nối ra ngoài trực tiếp mà phải qua Kamelet nền giao thức hoặc tham số kết nối (`{{conn:…}}`, CC-CAMEL-07); tham số nhạy cảm có `x-descriptors: urn:camel:group:credentials`; không có chuỗi giống bí mật (quét entropy và mẫu); các thành phần có ở runtime theo `runtime-manifest.json` (ERR-05-021); với phiên bản mới của Kamelet đã có, số phụ phải tương thích ngược (không bỏ tham số, không thêm tham số bắt buộc không mặc định), ngược lại phải tăng số chính (ERR-05-022). 3. Lưu phiên bản `DRAFT` kèm báo cáo kiểm tra; gửi thì `SUBMITTED`. 4. Nguồn `DESIGNER`: khi luồng loại `KAMELET` của PH-04 được duyệt phát hành bởi IA (FR-04-018), PH-04 gọi API-05-079 và API-05-082 kèm mã quyết định duyệt; PH-05 ghi nhận duyệt đó và chuyển thẳng `APPROVED` nếu kiểm tra tĩnh đạt (BR-05-027), không duyệt hai lần. |
+| Đầu ra | Phiên bản Kamelet và báo cáo kiểm tra: `findings[]` (mã quy tắc, mức, dòng, cột, thông điệp) |
 | Ngoại lệ | ERR-05-002, 020, 021, 022 |
 | Hậu điều kiện | `SUBMITTED` nằm trong hộp việc của IA |
 | Sự kiện, kiểm toán | Không sự kiện; kiểm toán có |
@@ -1016,10 +1016,11 @@ FR-05-062 (S; LGC-BUS-014). `PERM-05-read`. Báo cáo theo tháng: số HTTT có
 | `05.health.notify-system-contact` | `false` | | Báo đầu mối kỹ thuật HTTT khi `UNHEALTHY` |
 | `05.secret.max-age-days` | 90 | 30…365 | Hạn xoay bí mật |
 | `05.test.max-per-hour` | 20 | 5…100 | Số lần kiểm tra mỗi kết nối mỗi giờ |
-| `05.adapter.max-concurrency` | 100 | 1…1.000 | Trần `maxConcurrency` |
-| `05.adapter.max-pages` | 500 | 10…5.000 | Trần `maxPages` |
+| `05.adapter.max-concurrency` | 100 | 1…500 | Trần `maxConcurrency` |
+| `05.adapter.max-pages` | 500 | 10…500 | Trần `maxPages` |
 | `05.dbflow.allow-workspace-scope` | `false` | | Cho cấp `db-flow` theo không gian làm việc |
-| `05.dbflow.max-rows` | 100.000 | 1…1.000.000 | Trần `maxRows` |
+| `05.dbflow.max-rows` | 100.000 | 1…100.000 |
+| `05.dbflow.ttl-seconds` | 3.600 | 300…86.400 | Thời gian sống tài khoản CSDL động | Trần `maxRows` |
 | `05.dbflow.write-max-days` | 90 | 1…90 | Thời hạn tối đa tài khoản ghi |
 | `05.cdc.max-tables` | 50 | 1…500 | Số bảng tối đa mỗi tenant |
 | `05.cdc.lag-alert-seconds` | 300 | 30…3.600 | Ngưỡng độ trễ CDC |

@@ -23,7 +23,7 @@ CREATE FUNCTION pg_temp.id(text) RETURNS uuid LANGUAGE sql AS $$ SELECT v FROM i
 -- ---------- Dữ liệu T68 ----------
 SET app.tenant_id = 'T68';
 INSERT INTO ph05_adapter.connection (id, tenant_id, code, name, type_code, system_code, purpose, owner, created_by, updated_by)
-VALUES (pg_temp.id('c68'), 'T68', 'ndxp-ho-tich', 'NDXP hộ tịch', 'http-rest', 'NDXP', 'READ', 'an', 'an', 'an');
+VALUES (pg_temp.id('c68'), 'T68', 'ndxp-ho-tich', 'NDXP hộ tịch', 'oauth2-client', 'NDXP', 'READ', 'an', 'an', 'an');
 INSERT INTO ph05_adapter.connection_environment (id, tenant_id, connection_id, env, params, params_hash, secret_version, secret_written_by, created_by, updated_by)
 VALUES (pg_temp.id('e68'), 'T68', pg_temp.id('c68'), 'PROD', '{"baseUrl":"https://ndxp.gov.vn"}', repeat('a', 64), 1, 'an', 'an', 'an');
 INSERT INTO ph05_adapter.connection_test (id, tenant_id, connection_id, env, status, params_hash, secret_version, finished_at, expires_at, run_by)
@@ -40,7 +40,7 @@ VALUES (gen_random_uuid(), 'T68', 'dkkd-db', 'dkkd-dong-bo', 1, 'PROD', 'v-dh-T6
 -- ---------- Dữ liệu T01 ----------
 SET app.tenant_id = 'T01';
 INSERT INTO ph05_adapter.connection (id, tenant_id, code, name, type_code, system_code, purpose, owner, created_by, updated_by)
-VALUES (pg_temp.id('c01'), 'T01', 'ndxp-ho-tich', 'NDXP hộ tịch T01', 'http-rest', 'NDXP', 'READ', 'lan', 'lan', 'lan');
+VALUES (pg_temp.id('c01'), 'T01', 'ndxp-ho-tich', 'NDXP hộ tịch T01', 'oauth2-client', 'NDXP', 'READ', 'lan', 'lan', 'lan');
 
 -- 1. Cô lập đọc
 DO $$ DECLARE n int; BEGIN
@@ -53,7 +53,7 @@ END $$;
 -- 2. Cô lập ghi: T01 chèn dòng T68
 DO $$ BEGIN
   INSERT INTO ph05_adapter.connection (id, tenant_id, code, name, type_code, system_code, purpose, owner, created_by, updated_by)
-  VALUES (gen_random_uuid(), 'T68', 'gia-mao', 'x', 'http-rest', 'X', 'READ', 'lan', 'lan', 'lan');
+  VALUES (gen_random_uuid(), 'T68', 'gia-mao', 'x', 'oauth2-client', 'X', 'READ', 'lan', 'lan', 'lan');
   RAISE 'FAIL 2';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS 2 chặn chèn chéo tenant';
 END $$;

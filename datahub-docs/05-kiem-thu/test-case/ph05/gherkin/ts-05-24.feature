@@ -12,7 +12,7 @@ Tính năng: TS-05-24 · Kamelet sinh và đồng bộ catalog
   @TC-05-093 @P3 @Biên
   Kịch bản: TC-05-093 Tên Kamelet sinh dài được rút gọn có băm
     # Truy vết: FR-05-047
-    Biết mã bộ điều hợp 50 ký tự, mã thao tác 40 ký tự.
+    Biết mã bộ điều hợp 39 ký tự (tối đa), mã thao tác 40 ký tự.
     Thì tên Kamelet ≤ 63 ký tự, có băm 6 ký tự, vẫn khớp mẫu `-(source|sink|action)$`; hai thao tác khác nhau không trùng tên.
 
   @TC-05-094 @P2 @Dương

@@ -773,7 +773,7 @@ CREATE TABLE ph05_adapter.kamelet (
   CONSTRAINT pk_kamelet PRIMARY KEY (id),
   CONSTRAINT uq_kamelet_id_tenant UNIQUE (id, tenant_id),
   CONSTRAINT uq_kamelet_name UNIQUE (tenant_id, name),
-  CONSTRAINT ck_kamelet_name CHECK (name ~ '^[a-z][a-z0-9-]{2,90}-(sink|source|action)$'),
+  CONSTRAINT ck_kamelet_name CHECK (name ~ '^[a-z][a-z0-9-]{2,62}-(sink|source|action)$'),
   CONSTRAINT ck_kamelet_name_type CHECK (name LIKE '%-' || type),
   CONSTRAINT ck_kamelet_scope CHECK (scope IN ('BASE', 'COMMON', 'TENANT')),
   CONSTRAINT ck_kamelet_type CHECK (type IN ('source', 'sink', 'action')),
@@ -968,7 +968,7 @@ RESET ROLE;
 -- @file 05-9000-migrate-w1.sql
 -- @changeset ph05-9000-migrate-w1 context:migrate-w1 splitStatements:false
 -- Chuyển bảng ph05.adapter (apps/adapter-mgr, W1) sang kết nối nháp của tenant mặc định.
--- Mỗi dòng cũ thành một connection DRAFT loại http-rest; vault_path cũ không dùng
+-- Mỗi dòng cũ thành một connection DRAFT loại http-none; vault_path cũ không dùng
 -- (đường dẫn mới suy từ mã); người dùng khai lại bí mật và kiểm tra trước khi bật.
 DO $mig$
 DECLARE
@@ -982,7 +982,7 @@ BEGIN
   INSERT INTO ph05_adapter.connection (id, tenant_id, code, name, type_code, system_code, purpose, description, owner, legacy_ref, created_by, updated_by)
   SELECT md5('w1:' || a.id)::uuid, v_tenant,
          left(regexp_replace(lower(a.id), '[^a-z0-9-]', '-', 'g'), 63),
-         a.name, 'http-rest', 'CHUA-GAN', 'READ',
+         a.name, 'http-none', 'CHUA-GAN', 'READ',
          'Chuyển từ ph05.adapter W1 (type=' || a.type || ')', 'system:migrate', 'w1:ph05.adapter/' || a.id,
          'system:migrate', 'system:migrate'
     FROM ph05.adapter a

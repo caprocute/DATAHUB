@@ -15,7 +15,7 @@ Tính năng: TS-05-27 · Kamelet của tỉnh: soạn, kiểm tra tĩnh, duyệt
     Biết U-T68-IE1, U-T68-IA1; F-KAM-OK.
     Khi Ở UI-05-16 dán F-KAM-OK, bấm "Kiểm tra tĩnh", "Gửi duyệt".
     Và IA1 duyệt ở UI-05-17.
-    Thì bước 1 `violations` rỗng (có thể có cảnh báo KR-12, KR-13); `SUBMITTED`. Bước 2 `APPROVED`; EVT: `kamelet.published` trên `t68.adapter.kamelet.published.v1`; có trong catalog T68, không có ở T01.
+    Thì bước 1 `findings` không có mục mức lỗi (có thể có cảnh báo KR-12, KR-13); `SUBMITTED`. Bước 2 `APPROVED`; EVT: `kamelet.published` trên `t68.adapter.kamelet.published.v1`; có trong catalog T68, không có ở T01.
 
   @TC-05-107 @P1 @Âm @Bảo @mật
   Kịch bản: TC-05-107 Kiểm tra tĩnh chặn ngôn ngữ kịch bản, #class, URI trực tiếp, bí mật cứng

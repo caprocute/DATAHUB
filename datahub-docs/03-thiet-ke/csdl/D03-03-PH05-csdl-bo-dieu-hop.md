@@ -422,7 +422,7 @@ EN-05-11 Phiên bản bộ điều hợp (FR-05-043, 044). Một bản nháp (DR
 
 ### 3.14. `adapter_operation`
 
-EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-036…041). Bất biến theo phiên bản cha: dịch vụ từ chối sửa khi phiên bản không ở DRAFT (ERR-05-017).
+EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-032…041). Bất biến theo phiên bản cha: dịch vụ từ chối sửa khi phiên bản không ở DRAFT (ERR-05-008).
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -455,7 +455,7 @@ EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-036…041). Bấ
 
 ### 3.15. `adapter_test`
 
-EN-05-13 Kiểm thử bộ điều hợp và so sánh hai phiên bản (FR-05-045, 046). Không chạy ở PROD. results: mỗi thao tác {operation, status, latencyMs, outputPreview đã che, errors[]}. Giữ 90 ngày.
+EN-05-13 Kiểm thử bộ điều hợp và so sánh hai phiên bản (FR-05-043, 045). Không chạy ở PROD. results: mỗi thao tác {operation, status, latencyMs, outputPreview đã che, errors[]}. Giữ 90 ngày.
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -600,7 +600,7 @@ Chỉ mục nơi dùng (FR-05-013): dựng từ API-05-031 (xác minh của PH-0
 
 ### 3.21. `legacy_import_job`
 
-EN-05-18 Nhập kết nối hệ cũ (FR-05-016). Tệp gốc không lưu; findings giữ vị trí {file, line, column, key} thay cho giá trị bí mật (BR-05-025). Giữ 1 năm.
+EN-05-18 Nhập kết nối hệ cũ (FR-05-018). Tệp gốc không lưu; findings giữ vị trí {file, line, column, key} thay cho giá trị bí mật (BR-05-025). Giữ 1 năm.
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -619,7 +619,7 @@ EN-05-18 Nhập kết nối hệ cũ (FR-05-016). Tệp gốc không lưu; findi
 
 ### 3.22. `outbox`
 
-Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09, 10 của Kamelet dùng chung, topic common.adapter.*. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.
+Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09 của Kamelet dùng chung, topic `common.adapter.kamelet.published.v1`. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -709,7 +709,7 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 |---|---|---|
 | `kv/dh/{tenant}/conn/{code}/{env}` (KV v2, giữ 5 phiên bản) | Khóa bí mật theo `secretKeys` của loại | `dh-integration` ghi; runtime, `probe-jvm` của tenant đọc |
 | `database/config/dh-{tenant}-{code}-{env}` | Cấu hình kết nối quản trị cho database engine | `dh-integration` ghi khi bật `db-flow` |
-| `database/roles/dh-{tenant}-{flow}-{env}` | Câu lệnh tạo, thu hồi tài khoản, TTL 1 giờ (`05.dbflow.ttl`) | `dh-integration` ghi; runtime đọc `database/creds/…` |
+| `database/roles/dh-{tenant}-{flow}-{env}` | Câu lệnh tạo, thu hồi tài khoản, TTL 1 giờ (`05.dbflow.ttl-seconds`) | `dh-integration` ghi; runtime đọc `database/creds/…` |
 | `pki-tenant-{tenant}/issue/conn-*` | Chứng thư mTLS máy khách | Runtime cấp |
 | `kv/dh/{tenant}/cdc/{adapter}` | Thông tin đăng nhập CDC, muối băm cột | `dh-integration` ghi; External Secrets cấp cho Kafka Connect |
 
@@ -717,12 +717,12 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 
 | Topic | Chủ | Phân vùng, giữ | Khóa | Nội dung |
 |---|---|---|---|---|
-| `{tenant}.adapter.*.v1` (EVT-05-01…12, 15); `common.adapter.kamelet.*.v1` cho Kamelet dùng chung | `dh-integration` qua outbox | 3, giữ 7 ngày | `connectionCode`, `adapterCode` | Sự kiện miền, không bí mật |
+| `{tenant}.adapter.*.v1` (EVT-05-01…12, 15); `common.adapter.kamelet.published.v1` cho Kamelet dùng chung | `dh-integration` qua outbox | 3, giữ 7 ngày (EVT-05-11 giữ 30 ngày) | `connectionCode`, `adapterCode` | Sự kiện miền, không bí mật |
 | `{tenant}.adapter.db.access-recorded.v1` (EVT-05-14) | `dh-runtime` | 6, giữ 3 ngày | `flowCode` | Bản ghi truy cập CSDL |
 | `{tenant}.adapter.probe.command.v1`, `….probe.result.v1` | `dh-integration`, `probe-jvm` | 3, giữ 1 ngày | `connectionCode` | Lệnh, kết quả kiểm tra; không bí mật |
-| `{tenant}.adapter.cdc.gate.v1` | `SchemaWatcher` | 1, nén (`compact`) | `tableName` | Danh sách bảng bị chặn cho `DhSchemaGate` |
+| `{tenant}.adapter.cdc.gate.v1` (nội bộ, ngoài hợp đồng AsyncAPI) | `SchemaWatcher` | 1, nén (`compact`) | `tableName` | Danh sách bảng bị chặn cho `DhSchemaGate` |
 | `{tenant}.cdc.{adapter}.{schema}.{table}.v1` (EVT-05-13) | PH-10 đăng ký, Kafka Connect ghi | Theo PH-10 (mặc định 7 ngày) | Khóa chính | Bản ghi thay đổi Avro |
-| `{tenant}.cdc.{adapter}._schema-history` | Debezium | 1, giữ vĩnh viễn | — | Lịch sử DDL nguồn |
+| `{tenant}.cdc.{adapter}._schema-history` (nội bộ Debezium, ngoài hợp đồng AsyncAPI) | Debezium | 1, giữ vĩnh viễn | — | Lịch sử DDL nguồn |
 
 ### 6.3. Kho đối tượng
 
@@ -763,7 +763,7 @@ Lược đồ chi tiết của Bus cũ chưa có trong tài liệu được cung
 |---|---|---|
 | `ph05.adapter.id` | `connection.code` (chuẩn hóa chữ thường, ký tự lạ thành `-`), `id = md5('w1:' || id)` | Tất định, chạy lại không nhân đôi |
 | `name` | `connection.name` | |
-| `type` (`HTTP_MOCK`) | `connection.type_code = 'http-rest'`, ghi `type` cũ vào `description` | `HTTP_MOCK` không là loại kết nối thật |
+| `type` (`HTTP_MOCK`) | `connection.type_code = 'http-none'`, ghi `type` cũ vào `description` | `HTTP_MOCK` không là loại kết nối thật |
 | `endpoint_url` | `connection_environment.params.baseUrl` ở `TEST` | Không tạo PROD |
 | `vault_path` | Không chuyển | Đường dẫn mới suy từ mã; bí mật cũ ở `secret/data/lgsp/…` phải khai lại |
 | `created_at` | Không chuyển | Dòng mới mang thời điểm di trú |

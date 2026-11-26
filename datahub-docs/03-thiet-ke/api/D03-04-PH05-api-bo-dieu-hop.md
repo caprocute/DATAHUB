@@ -154,7 +154,7 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-036 | `POST /connections/{connectionCode}/flow-accounts` | Yêu cầu cấp tài khoản CSDL cho luồng | 024, 026 | `PERM-05-connection` | có | 201 |
 | API-05-037 | `POST /connections/{connectionCode}/flow-accounts/{accountId}:consent` | Cán bộ ATTT đồng ý mục đích ghi | 026 | `PERM-05-db-write-consent` |  | 200 |
 | API-05-038 | `POST /connections/{connectionCode}/flow-accounts/{accountId}:approve` | Duyệt tài khoản ghi | 026 | `PERM-05-approve` |  | 200 |
-| API-05-039 | `POST /connections/{connectionCode}/flow-accounts/{accountId}:revoke` | Thu hồi tài khoản CSDL | 028 | `PERM-05-connection` |  | 200 |
+| API-05-039 | `POST /connections/{connectionCode}/flow-accounts/{accountId}:revoke` | Thu hồi tài khoản CSDL | 028 | `PERM-05-connection` hoặc `PERM-05-operate` |  | 200 |
 | API-05-040 | `POST /connections/{connectionCode}/environments/{env}:inspect-privileges` | Kiểm tra quyền thực tế của tài khoản CSDL | 025 | `PERM-05-test` |  | 200 |
 | API-05-041 | `GET /db-access-logs` | Tra nhật ký truy cập CSDL của luồng | 027 | `PERM-05-audit-read` |  | 200 |
 
@@ -267,7 +267,7 @@ POST /api/adapter/v1/connections
 Idempotency-Key: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
 Content-Type: application/json
 
-{"connectionCode": "ndxp-ho-tich", "name": "NDXP tra cứu hộ tịch", "typeCode": "http-rest",
+{"connectionCode": "ndxp-ho-tich", "name": "NDXP tra cứu hộ tịch", "typeCode": "oauth2-client",
  "systemCode": "NDXP", "purpose": "READ", "owner": "an.nv", "labels": ["ndxp", "ho-tich"]}
 ```
 
@@ -276,7 +276,7 @@ HTTP/1.1 201 Created
 ETag: W/"0"
 Location: /api/adapter/v1/connections/ndxp-ho-tich
 
-{"code": "ndxp-ho-tich", "name": "NDXP tra cứu hộ tịch", "typeCode": "http-rest", "systemCode": "NDXP",
+{"code": "ndxp-ho-tich", "name": "NDXP tra cứu hộ tịch", "typeCode": "oauth2-client", "systemCode": "NDXP",
  "systemName": "Nền tảng NDXP", "purpose": "READ", "status": "DRAFT", "environments": [], "usageCount": 0,
  "configVersion": 1, "allowedActions": ["putEnvironmentParams", "retireConnection"],
  "disabledReasons": {"suspendConnection": "Kết nối chưa có môi trường nào được bật."}}
@@ -367,7 +367,7 @@ Content-Type: application/problem+json
 ```json
 {"tenant": "T68", "env": "PROD", "generatedAt": "2026-11-26T03:12:00Z", "configVersion": 418,
  "connections": [
-  {"code": "ndxp-ho-tich", "typeCode": "http-rest", "status": "ENABLED",
+  {"code": "ndxp-ho-tich", "typeCode": "oauth2-client", "status": "ENABLED",
    "params": {"baseUrl": "https://ndxp.example.gov.vn/api", "auth": "OAUTH2_CLIENT_CREDENTIALS", "timeoutMs": 10000},
    "secretPath": "kv/dh/T68/conn/ndxp-ho-tich/PROD", "secretVersion": 2, "fallbackSecretVersion": 1,
    "limits": {"maxConcurrencyPerReplica": 5, "acquireTimeoutMs": 2000}},
@@ -416,7 +416,7 @@ Topic theo `{tenant}.adapter.{thực-thể}.{sự-kiện}.v1` (D00-04 §4). Lư�
 Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.adapter.connection.enabled.v1`, `ce_subject` = mã). Người nhận lũy đẳng theo `configVersion` hoặc `secretVersion`: runtime bỏ qua sự kiện có số nhỏ hơn số đang giữ. Ví dụ EVT-05-03:
 
 ```json
-{"tenantId": "T68", "connectionCode": "ndxp-ho-tich", "typeCode": "http-rest", "configVersion": 419,
+{"tenantId": "T68", "connectionCode": "ndxp-ho-tich", "typeCode": "oauth2-client", "configVersion": 419,
  "env": "PROD", "secretVersion": 2, "fallbackVersion": 1, "transitionUntil": "2026-11-27T03:15:00Z", "phase": "TRANSITION"}
 ```
 
@@ -453,12 +453,12 @@ Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.
 | ERR-05-008 | 409 | Chuyển trạng thái không hợp lệ | 004, 006, 007, 008, 009, 013, 014, 015 và 38 API khác |
 | ERR-05-009 | 409 | Chưa có kiểm tra hoặc kiểm thử đạt trong 24 giờ | 013, 015, 055 |
 | ERR-05-010 | 409 | Còn nơi đang dùng | 006, 009, 060, 091 |
-| ERR-05-011 | 403 | Vi phạm bốn mắt | 008, 015, 038 |
+| ERR-05-011 | 403 | Vi phạm bốn mắt | 008, 015, 038, 056, 083 |
 | ERR-05-012 | 403 | Không có quyền | Chung |
 | ERR-05-013 | 422 | Kết nối chưa được cấp cho không gian làm việc hoặc luồng | 044 |
 | ERR-05-014 | 422 | Môi trường chưa có giá trị hoặc thiếu bí mật bắt buộc | 013 |
 | ERR-05-015 | 422 | Tài khoản khai báo chỉ đọc nhưng có quyền ghi | 040 |
-| ERR-05-016 | 422 | Phạm vi trỏ tới CSDL control plane hoặc `pg-payment` | 036 |
+| ERR-05-016 | 422 | Phạm vi trỏ tới CSDL control plane hoặc `pg-payment` | 011, 036 |
 | ERR-05-017 | 409 | Mục đích ghi chưa được phép (kết nối chỉ đọc hoặc chưa có SO đồng ý) | 036, 050 |
 | ERR-05-018 | 409 | Đang có lần kiểm tra chạy cho cùng giá trị | 017 |
 | ERR-05-019 | 429 | Vượt số lần kiểm tra cho phép | 017 |
@@ -466,10 +466,10 @@ Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.
 | ERR-05-021 | 422 | Kamelet dùng thành phần không có ở runtime | Chung |
 | ERR-05-022 | 422 | Phiên bản Kamelet không tương thích ngược với số phụ | Chung |
 | ERR-05-023 | 422 | Không phân tích hoặc không tải được OpenAPI, WSDL | 065 |
-| ERR-05-024 | 400 | Tệp nhập sai định dạng hoặc quá lớn (413 khi quá lớn) | 028 |
+| ERR-05-024 | 400 | Tệp nhập sai định dạng hoặc quá lớn (413 khi quá lớn) | 028, 065 |
 | ERR-05-025 | 422 | CSDL nguồn không đáp ứng điều kiện (CDC hoặc tạo tài khoản động) | 070 |
 | ERR-05-026 | 409 | Còn thay đổi lược đồ chưa xử lý | 072 |
-| ERR-05-027 | 422 | Bảng hoặc schema ngoài phạm vi cho phép | 011, 036, 068 |
+| ERR-05-027 | 422 | Bảng hoặc schema ngoài phạm vi cho phép | 036, 068 |
 | ERR-05-028 | 503 | OpenBao không khả dụng | Chung |
 | ERR-05-029 | 503 | Phân hệ hoặc dịch vụ phụ thuộc không khả dụng (PH-01, PH-04, PH-10, Kafka Connect, bộ chạy kiểm tra) | 012, 017, 020, 026, 031, 036, 038, 040 và 4 API khác |
 | ERR-05-030 | 422 | Vượt trần tham số của tenant | 011, 068, 091 |
@@ -521,7 +521,7 @@ Không trả qua API này; Kamelet giao thức ném ngoại lệ mang mã, PH-04
 | ERR-05-009 | `lastPassedAt` | "Chưa có kiểm tra đạt trong 24 giờ trên đúng tham số và bí mật hiện tại." |
 | ERR-05-010 | `usages[]` | "Kết nối đang dùng ở 2 nơi." |
 | ERR-05-011 | — | Nêu vai trò bị trùng (người xin, người ghi bí mật, người đồng ý), không nêu thêm dữ liệu cá nhân |
-| ERR-05-019 | `retryAfterSeconds` | "Đã chạy 10 lần kiểm tra trong 5 phút. Thử lại sau 3 phút." |
+| ERR-05-019 | `retryAfterSeconds` | "Đã chạy 20 lần kiểm tra trong một giờ cho kết nối này. Thử lại sau 12 phút." |
 | ERR-05-020…022 | `findings[]` (`rule` KR-nn, `line`) | "KR-04 dòng 18: không dùng ngôn ngữ `groovy`." |
 | ERR-05-028 | `retryAfterSeconds` | "Kho bí mật tạm thời không khả dụng; dữ liệu chưa được ghi." |
 

@@ -94,7 +94,7 @@ Như PH-04: không có quyền thì ẩn; có quyền nhưng trạng thái chưa
 | Không hiện lại | `CMP-SecretField` chế độ chỉ ghi: sau lưu, ô trống với nhãn phụ "Đã khai · phiên bản 2 · An (IE) · 26/11/2026 10:12"; nhập lại là ghi phiên bản mới |
 | Không lưu ở trình duyệt | Ô bí mật `autocomplete="off"`, không vào bản nháp cục bộ, không vào `sessionStorage`; rời trang khi đã gõ bí mật thì hỏi "Bỏ bí mật chưa lưu?" |
 | Không lộ qua sao chép | Ô bí mật chặn sao chép ra (`copy` bị hủy), không có nút hiện |
-| Gửi ngay | Bí mật gửi bằng API-05-012 riêng, không gộp vào biểu mẫu tham số; biểu mẫu trạng thái giữ trong bộ nhớ bị xóa sau gửi |
+| Gửi ngay | Bí mật gửi bằng API-05-012 (ghi) hoặc API-05-020 (xoay vòng) riêng, không gộp vào biểu mẫu tham số; biểu mẫu trạng thái giữ trong bộ nhớ bị xóa sau gửi |
 | Che khi chia sẻ màn hình | Không áp dụng vì không có giá trị nào để che |
 
 ### 2.6. Giữ trạng thái trên URL
@@ -213,7 +213,7 @@ Môi trường hiển thị bằng `CMP-Tag` cố định màu theo D03-06-00 (T
 | ERR-05-006 | "Trường {tên} là bí mật. Khai ở mục Bí mật bên dưới." | Dưới trường; tự chuyển con trỏ tới ô bí mật |
 | ERR-05-009 | "Chưa có kiểm tra đạt trong 24 giờ trên đúng tham số và bí mật hiện tại." kèm nút "Chạy kiểm tra" | `CMP-Alert` trong hộp bật |
 | ERR-05-010 | "Còn {n} nơi đang dùng." kèm danh sách liên kết | `CMP-Modal` |
-| ERR-05-011 | Câu nêu vai trò trùng (xem D03-04-PH05 §3.1) | `CMP-Alert` trong hộp duyệt |
+| ERR-05-011 | Câu nêu vai trò trùng (xem D03-04-PH05 §6.3) | `CMP-Alert` trong hộp duyệt |
 | ERR-05-015 | "Tài khoản khai là chỉ đọc nhưng có quyền ghi trên {bảng}. Đề nghị đơn vị chủ quản thu hồi quyền trước khi bật." | Kết quả kiểm tra quyền |
 | ERR-05-017 | "Kết nối chỉ đọc không cho thao tác ghi. Đổi mục đích kết nối hoặc yêu cầu tài khoản ghi." | Dưới trường Tác dụng phụ |
 | ERR-05-018 | "Đang có lần kiểm tra chạy cho môi trường này." kèm liên kết mở lần đó | Toast |
@@ -332,7 +332,7 @@ Mọi màn áp ST-01 (đang tải lần đầu), ST-02 (đang tải lại), ST-0
 
 ### 8.4. Hộp xoay bí mật
 
-`CMP-Modal` gồm: chọn môi trường; các ô `CMP-SecretField` theo `secretKeys`; thời gian chuyển tiếp (`CMP-Select`: 1 giờ, 24 giờ mặc định, 7 ngày); lý do. Giải thích cố định: "Bí mật mới được kiểm tra trước. Trong thời gian chuyển tiếp, luồng vẫn dùng được bí mật cũ nếu HTTT chưa nhận bí mật mới." Gửi → API-05-020; drawer UI-05-04 mở theo lần kiểm tra `ROTATION`; thất bại thì hộp hiện nguyên nhân và nói rõ "Bí mật cũ vẫn đang dùng, không có gì thay đổi".
+`CMP-Modal` gồm: chọn môi trường; các ô `CMP-SecretField` theo `secretKeys`; thời gian chuyển tiếp (`CMP-Select`: 15 phút, 1 giờ mặc định, 24 giờ; trong khoảng 5…1.440 phút theo FR-05-012); lý do. Giải thích cố định: "Bí mật mới được kiểm tra trước. Trong thời gian chuyển tiếp, luồng vẫn dùng được bí mật cũ nếu HTTT chưa nhận bí mật mới." Gửi → API-05-020; drawer UI-05-04 mở theo lần kiểm tra `ROTATION`; thất bại thì hộp hiện nguyên nhân và nói rõ "Bí mật cũ vẫn đang dùng, không có gì thay đổi".
 
 ### 8.5. Trạng thái màn
 
@@ -360,24 +360,27 @@ Mọi màn áp ST-01 (đang tải lần đầu), ST-02 (đang tải lại), ST-0
 
 Bước 2 lưu kết nối ngay để bí mật ở bước 3 có chỗ ghi; rời trình hướng dẫn sau bước 2 để lại kết nối `DRAFT` có thể tiếp tục từ UI-05-02. Chế độ sửa bỏ bước 1, mã, loại, HTTT chỉ đọc.
 
-### 9.2. Trường bước 3 cho loại `http-rest` (ví dụ)
+### 9.2. Trường bước 3 cho nhóm HTTP (ví dụ)
 
-| Nhãn | Trường | Kiểu | Bắt buộc | Kiểm tra | Bí mật |
+Kiểu xác thực là chính loại kết nối chọn ở bước 1 (`http-none`, `http-basic`, `http-apikey`, `oauth2-client`, `http-mtls`, FR-05-001), nên bước 3 không có ô chọn xác thực. Bảng dưới gộp các trường của năm loại; cột "Loại" cho biết trường xuất hiện ở loại nào.
+
+| Nhãn | Trường | Kiểu | Loại | Kiểm tra | Bí mật |
 |---|---|---|---|---|---|
-| Địa chỉ gốc | `baseUrl` | URL | Có | `https://`; máy chủ không thuộc dải nội bộ cấm (SSRF); có trong danh sách egress của tenant, nếu không hiện cảnh báo "Cần mở egress cho {máy chủ}" | |
-| Kiểu xác thực | `auth` | Chọn | Có | `NONE`, `BASIC`, `API_KEY`, `OAUTH2_CLIENT_CREDENTIALS`, `MTLS` | |
-| Địa chỉ cấp token | `tokenUrl` | URL | Khi OAuth2 | `https://` | |
-| Phạm vi | `scope` | Chuỗi | | | |
-| Tên tiêu đề khóa API | `apiKeyHeader` | Chuỗi | Khi API_KEY | Mặc định `X-API-Key` | |
-| Đường dẫn thăm dò | `probe` | Đường dẫn | Có | Bắt đầu `/`; chỉ GET, HEAD, OPTIONS | |
-| Thời gian chờ | `timeoutMs` | Số | | 1.000…60.000, trần tenant | |
-| TLS tối thiểu | `tlsMin` | Chọn | | `TLSv1.2` (mặc định), `TLSv1.3` | |
-| Mã khách, khóa bí mật | `clientId`, `clientSecret` | Bí mật | Khi OAuth2 | | Có |
-| Tên, mật khẩu | `username`, `password` | Bí mật | Khi BASIC | | Có |
-| Khóa API | `apiKey` | Bí mật | Khi API_KEY | | Có |
-| Chứng thư, khóa riêng máy khách | `clientCert`, `clientKey` | Bí mật (tải tệp PEM) | Khi MTLS | PEM hợp lệ, khóa khớp chứng thư; kiểm ở máy chủ | Có |
+| Địa chỉ gốc | `baseUrl` | URL | Mọi loại | `https://`; máy chủ không thuộc dải nội bộ cấm (SSRF); ngoài danh sách egress của tenant thì cảnh báo "Cần mở egress cho {máy chủ}" (BR-05-013) | |
+| Thời gian chờ | `timeoutMs` | Số | Mọi loại | 1.000…60.000, trần tenant (ERR-05-030) | |
+| TLS tối thiểu | `tlsMinVersion` | Chọn | Mọi loại | `TLSv1.2` (mặc định), `TLSv1.3` | |
+| Kho CA tin cậy | `caBundleRef` | Chọn | Mọi loại | Mã chuỗi CA đã tải lên tenant | |
+| Đường dẫn thăm dò | `probe` | Đường dẫn | Mọi loại | Bắt đầu `/`; chỉ GET, HEAD, OPTIONS | |
+| Tên người dùng | `username` | Chuỗi | `http-basic` | | |
+| Tên tiêu đề hoặc tham số khóa | `headerName` hoặc `queryName` | Chuỗi | `http-apikey` | Một trong hai | |
+| Địa chỉ cấp token, mã khách, phạm vi, cách xác thực | `tokenUrl`, `clientId`, `scope`, `authMethod` | URL, chuỗi, chọn | `oauth2-client` | `authMethod`: `client_secret_post`, `client_secret_basic`, `private_key_jwt` | |
+| Chứng thư máy khách | `clientCertRef` | Chọn | `http-mtls` | Mã chứng thư ở OpenBao PKI | |
+| Mật khẩu | `password` | Bí mật | `http-basic` | | Có |
+| Khóa API | `apiKey` | Bí mật | `http-apikey` | | Có |
+| Khóa bí mật khách hoặc khóa riêng | `clientSecret` hoặc `privateKeyPem` | Bí mật | `oauth2-client` | Theo `authMethod` | Có |
+| Khóa riêng máy khách | `clientKeyPem` | Bí mật (tải tệp PEM) | `http-mtls` | PEM hợp lệ, khớp chứng thư; kiểm ở máy chủ | Có |
 
-Trường hiện, ẩn theo `auth` dựa trên `if/then` của JSON Schema; giao diện không giữ quy tắc riêng.
+Biểu mẫu sinh từ `paramsSchema` và `secretKeys` của loại (API-05-002); giao diện không giữ quy tắc riêng.
 
 ### 9.3. Trạng thái
 
@@ -453,7 +456,7 @@ Không có quyền chạy: nút "Chạy lại" ẩn, xem lịch sử vẫn đư�
 | Thao tác ghi | `CMP-Checkbox` INSERT, UPDATE, DELETE | Khi Ghi; DELETE có cảnh báo đỏ |
 | Hạn | `CMP-DatePicker` | Khi Ghi; ≤ 90 ngày (ERR-05-037) |
 | Lý do | `CMP-TextArea` | ≥ 30 ký tự |
-| Văn bản đồng ý của đơn vị chủ quản | `CMP-Input` số hiệu | Khi Ghi, tùy chọn |
+| Văn bản đồng ý của đơn vị chủ quản | `CMP-Input` số hiệu, ngày | Bắt buộc khi Ghi (BR-05-020) |
 
 Khối xem trước câu lệnh cấp quyền (chỉ đọc, `CMP-CodeBlock`) sinh từ lựa chọn để người yêu cầu và SO thấy chính xác quyền sẽ cấp.
 
@@ -469,7 +472,7 @@ Khối xem trước câu lệnh cấp quyền (chỉ đọc, `CMP-CodeBlock`) si
 
 | Bước | Nội dung |
 |---|---|
-| Tải lên | `CMP-FileDropzone` nhận `.xml`, `.zip`, `.properties` ≤ 10 MiB. Dòng giải thích: "Tệp chỉ được đọc để tìm thông tin kết nối, không được lưu và không chạy. Mật khẩu trong tệp bị bỏ, bạn sẽ khai lại." |
+| Tải lên | `CMP-FileDropzone` nhận `.xml`, `.zip`, `.properties` ≤ 20 MiB. Dòng giải thích: "Tệp chỉ được đọc để tìm thông tin kết nối, không được lưu và không chạy. Mật khẩu trong tệp bị bỏ, bạn sẽ khai lại." |
 | Xem đề xuất | Bảng đề xuất: loại, mã gợi ý (sửa được tại chỗ), tham số tìm được, số lần xuất hiện, vị trí trong tệp, HTTT (bắt buộc chọn), môi trường đích; bảng phát hiện riêng (bí mật đã bỏ, URI có mật khẩu nhúng, scheme không hỗ trợ) với `CMP-Tag` mức |
 | Xác nhận | Tóm tắt số kết nối sẽ tạo; nút "Tạo kết nối nháp" → API-05-030; kết quả liệt kê kết nối kèm liên kết, nút "Tải bảng ánh xạ kết nối" (JSON `connectionMap` dùng cho FR-04-082 của PH-04) |
 
@@ -540,7 +543,7 @@ Trạng thái rỗng (mọi thứ tốt): "Mọi kết nối và bộ điều h�
 | HTTT | `CMP-ResourceSelect` PH-01 (`ACTIVE`) | ERR-05-005; tự điền nhóm HTTT |
 | Giao thức | `CMP-RadioCard` REST, SOAP, MESSAGING, FILE, DATABASE, MAIL, DIRECTORY, CDC | |
 | Kết nối | `CMP-ConnectionSelect` lọc theo HTTT và nhóm giao thức; CDC lọc loại `cdc-debezium` | ERR-05-003 giao thức không khớp |
-| Mã, tên | `CMP-Input` | Mã `^[a-z][a-z0-9-]{2,50}$`, gợi ý `{httt}-{giao thức}` |
+| Mã, tên | `CMP-Input` | Mã `^[a-z][a-z0-9-]{2,39}$`, gợi ý `{httt}-{giao thức}` |
 | Giới hạn đồng thời | `CMP-NumberInput` | 1…trần tenant, mặc định 20; trợ giúp "Tổng trên mọi bản sao runtime tới HTTT này" |
 
 "Tạo" gọi API-05-044, chuyển thẳng tới UI-05-10 phiên bản 1.
@@ -560,7 +563,7 @@ Rỗng lần đầu: "Chưa có bộ điều hợp. Bộ điều hợp đóng g�
 ├ Tổng quan │ Thao tác (6) │ Kiểm thử │ Phiên bản │ Sức khỏe │ Nơi dùng (9) │ Lịch sử ─────────┤
 │ Mã thao tác       Hướng    Định dạng gốc  Tác dụng phụ  Kamelet sinh                         │
 │ lay-van-ban-den   Gọi ra   SOAP           Không         qlvb-soap-lay-van-ban-den-v1-action  │
-│ gui-van-ban       Gọi ra   SOAP           Ghi           qlvb-soap-gui-van-ban-v1-sink        │
+│ gui-van-ban       Gọi ra   SOAP           Ghi           qlvb-soap-gui-van-ban-v1-action      │
 └──────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -572,7 +575,7 @@ Rỗng lần đầu: "Chưa có bộ điều hợp. Bộ điều hợp đóng g�
 | Tạo bản nháp mới | `PERM-05-adapter` | Đã có bản nháp (ERR-05-008) | API-05-048 → UI-05-10 |
 | Kiểm thử | `PERM-05-test` | Bản nháp rỗng thao tác | Chạy API-05-052 trên TEST; tiến độ ở tab Kiểm thử |
 | Gửi duyệt | `PERM-05-adapter` | Chưa có kiểm thử đạt sau lần sửa cuối | API-05-055 |
-| So sánh trên lưu lượng thật | `PERM-05-test` | Không có bản hiệu lực; thao tác có `sideEffect = WRITE` | API-05-063, kết quả ở tab Phiên bản |
+| So sánh trên lưu lượng thật | `PERM-05-operate` | Không có bản hiệu lực; thao tác có `sideEffect = WRITE` | API-05-063, kết quả ở tab Phiên bản |
 | Tạm dừng, tiếp tục | `PERM-05-operate` | Theo trạng thái | `CMP-ReasonDialog` → API-05-058, 059 |
 | Ngừng dùng | `PERM-05-adapter` | Còn nơi dùng | `CMP-ReasonDialog` gõ lại mã → API-05-060 |
 | Giám sát CDC | `PERM-05-read` | Không phải CDC | UI-05-12 |
@@ -619,7 +622,7 @@ Màn 1280…1439 px: R4 mặc định ẩn, mở thành ngăn kéo phủ trên R
 │ ← qlvb-soap · v4 [Nháp]  Đã lưu 10:41 ✓ │ [Hoàn tác][Làm lại] │ [Kiểm thử TEST ▾] [Gửi duyệt] [⋯] │
 ├R2──────────────┬R3──────────────────────────────────────────────────────┬R4──────────────────────────┤
 │ Thao tác (6) + │ lay-van-ban-den · Lấy văn bản đến            [Xóa ⋯] │ Xem trước  [Phản hồi|Yêu cầu]│
-│ [Lọc…       ]  │ ┌ Nhóm ─────────────────────────────────────────────┐ │ Mẫu: [mẫu-1 ▾] [Chạy ⟳]     │
+│ [Lọc…       ]  │ ┌ Nhóm ─────────────────────────────────────────────┐ │ Nguồn: [Mẫu ▾] [Chạy ⟳]     │
 │ ▸ Gọi ra       │ │ Chung │ Giao thức │ Định dạng │ Chuẩn hóa │ Phân   │ │ ┌ Gốc (SOAP) ┬ JSON chuẩn ┐│
 │  ● lay-van-…  ✓│ │ trang │ Giới hạn, thử lại │ Bảo mật │ Mẫu       │ │ │ <soap:Env… │ {           ││
 │  ○ gui-van-ban⚠│ └────────────────────────────────────────────────────┘ │ │  <VanBan>  │  "vanBan":[ ││
@@ -718,7 +721,7 @@ Dòng đầu bảng là quy tắc chung "Mọi trường" không xóa được. 
 
 #### 16.6.5. Nhóm Phân trang
 
-Chỉ với REST và DATABASE. `mode` (`CMP-RadioCard` NONE, PAGE_NUMBER, OFFSET_LIMIT, CURSOR, LINK_HEADER, mỗi thẻ có sơ đồ nhỏ). Trường theo chế độ: `pageParam`, `startAt`, `sizeParam`, `offsetParam`, `limitParam`, `cursorParam`, `cursorPath`, `itemsPath`, `hasMorePath`, `maxPages` (`CMP-NumberInput` 1…500, mặc định 50). Câu cố định dưới ô `maxPages`: "Vượt số trang tối đa sẽ báo lỗi ERR-05-110, không trả kết quả thiếu."
+Chỉ với REST và DATABASE. `mode` (`CMP-RadioCard` NONE, PAGE_NUMBER, OFFSET_LIMIT, CURSOR, LINK_HEADER, mỗi thẻ có sơ đồ nhỏ). Trường theo chế độ: `pageParam`, `startAt`, `sizeParam`, `pageSize` (1…1.000), `cursorParam`, `cursorPath`, `itemsPath`, `hasMorePath`, `maxPages` (`CMP-NumberInput` 1…500, mặc định 50). Câu cố định dưới ô `maxPages`: "Vượt số trang tối đa sẽ báo lỗi ERR-05-110, không trả kết quả thiếu."
 
 #### 16.6.6. Nhóm Giới hạn và thử lại
 
@@ -743,7 +746,7 @@ Chỉ đọc phần lớn: kiểu xác thực lấy từ kết nối (liên kế
 
 | Phần tử | Hành vi |
 |---|---|
-| Danh sách mẫu | Tối đa 5 mẫu mỗi thao tác, mỗi mẫu ≤ 1 MiB (ERR-05-035); tên mẫu |
+| Số mẫu | Mỗi thao tác một mẫu yêu cầu (`sampleRequest`) và một mẫu phản hồi (`sampleResponse`), mỗi mẫu ≤ 1 MiB (ERR-05-035) |
 | Mẫu yêu cầu | `CMP-CodeEditor` theo `requestFormat`, hoặc biểu mẫu tham số Kamelet |
 | Mẫu phản hồi | `CMP-CodeEditor` theo `responseFormat`; nút "Lấy từ lần kiểm thử gần nhất" (dữ liệu đã che theo phân loại) |
 | Cảnh báo dữ liệu cá nhân | Khi máy chủ phát hiện mẫu chứa số định danh, số điện thoại: `CMP-Alert` "Mẫu có vẻ chứa dữ liệu cá nhân thật. Dùng dữ liệu giả." Mẫu vẫn lưu được nhưng ghi kiểm toán |
@@ -754,7 +757,7 @@ Chỉ đọc phần lớn: kiểu xác thực lấy từ kết nối (liên kế
 | # | Phần tử | `CMP-*` | Hành vi |
 |---|---|---|---|
 | 4.1 | Chọn hướng | `CMP-SegmentedControl` Phản hồi, Yêu cầu | `xem-truoc` trên URL |
-| 4.2 | Chọn mẫu | `CMP-Select` | Mẫu của thao tác đang mở |
+| 4.2 | Nguồn dữ liệu | `CMP-Select` | "Mẫu đã lưu" hoặc "Phản hồi của lần kiểm thử gần nhất" (đã che) |
 | 4.3 | Chạy | `CMP-Button` + tự chạy | Tự gọi API-05-054 sau 800 ms ngừng gõ ở nhóm Định dạng, Chuẩn hóa, Mẫu; hủy yêu cầu cũ khi có yêu cầu mới; nút chạy tay luôn có |
 | 4.4 | Hai khung | `CMP-Splitter` dọc: `CMP-CodeEditor` chỉ đọc (gốc) và `CMP-JsonTree` (JSON chuẩn) | Chọn nút trong JSON tô sáng đoạn gốc tương ứng (bản đồ vị trí trả về từ máy chủ) và ngược lại |
 | 4.5 | Cảnh báo | Danh sách | Mỗi cảnh báo: đường dẫn, giá trị gốc, giá trị sau, quy tắc gây ra; bấm nhảy tới dòng quy tắc ở R3 |
@@ -789,11 +792,11 @@ Giao thức, kết nối và trạng thái TEST của kết nối (bấm mở UI
 
 ### 16.11. Kiểm thử tại chỗ
 
-Bấm "Kiểm thử" (R1.5) gọi API-05-052, R5 chuyển tab Kết quả kiểm thử, tiến độ hỏi API-05-053 mỗi 2 giây. Thao tác `sideEffect = WRITE`: trước khi chạy hiện `CMP-ConfirmDialog` với ô tích bắt buộc "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử" (BR-05-030); STAGING không cho chạy thao tác ghi. Cho tham số tùy biến: `CMP-Popover` biểu mẫu tham số Kamelet điền sẵn từ mẫu yêu cầu. Kết quả đạt gắn ✓ vào mục R2; mọi sửa đổi sau đó xóa ✓ (máy chủ xóa kết quả kiểm thử, FR-05-032 bước 4).
+Bấm "Kiểm thử" (R1.5) gọi API-05-052, R5 chuyển tab Kết quả kiểm thử, tiến độ hỏi API-05-053 mỗi 2 giây. Thao tác `sideEffect = WRITE`: trước khi chạy hiện `CMP-ConfirmDialog` với ô tích bắt buộc "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử" (BR-05-030); trên STAGING câu xác nhận đổi thành "môi trường STAGING"; PROD không bao giờ có trong danh sách. Cho tham số tùy biến: `CMP-Popover` biểu mẫu tham số Kamelet điền sẵn từ mẫu yêu cầu. Kết quả đạt gắn ✓ vào mục R2; mọi sửa đổi sau đó xóa ✓ (máy chủ xóa kết quả kiểm thử, FR-05-032 bước 4).
 
 ### 16.12. Gửi duyệt
 
-`CMP-Modal` gồm: tóm tắt thay đổi so với phiên bản hiệu lực (thao tác thêm, sửa, xóa; nhãn "Không tương thích" kèm lý do), kết quả kiểm thử từng thao tác, ghi chú phát hành (bắt buộc ≥ 20 ký tự), danh sách nơi đang dùng phiên bản hiệu lực sẽ bị ảnh hưởng (với thay đổi không tương thích: luồng phải chủ động nâng, không tự đổi). "Gửi" gọi API-05-055; xong chuyển UI-05-09 tab Phiên bản.
+`CMP-Modal` gồm: tóm tắt thay đổi so với phiên bản hiệu lực (thao tác thêm, sửa, xóa; nhãn "Không tương thích" kèm lý do), kết quả kiểm thử từng thao tác, ghi chú phát hành (bắt buộc ≥ 10 ký tự), danh sách nơi đang dùng phiên bản hiệu lực sẽ bị ảnh hưởng (với thay đổi không tương thích: luồng phải chủ động nâng, không tự đổi). "Gửi" gọi API-05-055; xong chuyển UI-05-09 tab Phiên bản.
 
 ### 16.13. Trạng thái màn
 
@@ -932,7 +935,7 @@ Lỗi cú pháp đặc tả: ERR-05-023 kèm dòng, cột. Đặc tả lớn đa
 |---|---|---|
 | Khác biệt cột | `CMP-DiffViewer` dạng bảng | Cột, kiểu, null, mặc định, khóa; ký hiệu +, −, ≠ ngoài màu |
 | Ảnh hưởng | `CMP-DataTable` gọn | Luồng tiêu thụ topic của bảng (từ PH-10 và PH-04), phiên bản lược đồ Avro sẽ đăng ký |
-| Quyết định | `CMP-DecisionPanel` | `ACCEPT` (đăng ký lược đồ mới, luồng tự lo tương thích), `MAP_COLUMN` (bảng ánh xạ cột bắt buộc, `columnMap`), `EXCLUDE_TABLE`, `RESNAPSHOT` (xếp lịch chụp ảnh lại); lý do ≥ 20 ký tự |
+| Quyết định | `CMP-DecisionPanel` | `ACCEPT` (đăng ký lược đồ mới, luồng tự lo tương thích), `MAP_COLUMN` (bảng ánh xạ cột bắt buộc, `columnMap`), `EXCLUDE_TABLE`, `RESNAPSHOT` (xếp lịch chụp ảnh lại); lý do ≥ 10 ký tự |
 | Sau xác nhận | `CMP-Toast` | "Đã xử lý. Còn {n} thay đổi chờ." Khi n = 0 với CDC `PAUSED_SCHEMA`: nút "Tiếp tục CDC" ngay trong toast (cần `PERM-05-operate`) |
 
 Rỗng: "Không có thay đổi lược đồ chờ xử lý."
@@ -1015,23 +1018,23 @@ Bốn mắt: người tạo yêu cầu hoặc người ghi bí mật liên quan 
 
 X: thao tác đầy đủ; X\*: theo phạm vi hoặc chỉ một phần; R: chỉ xem; trống: không thấy.
 
-| Màn | IE | IA | TO | SO | TA | PA | AU |
-|---|---|---|---|---|---|---|---|
-| UI-05-01 | X | R | R | R | X | R | R |
-| UI-05-02 | X | X\* (duyệt PROD) | X\* (tạm ngừng, xoay) | X\* (tiếp tục sau sự cố) | X | R | R |
-| UI-05-03 | X | | | | X | | |
-| UI-05-04 | X | R | X | R | X | R | R |
-| UI-05-05 | X\* (yêu cầu) | X\* (duyệt) | R | X\* (đồng ý, nhật ký) | X | | X\* (nhật ký) |
-| UI-05-06 | X | | | | X | | |
-| UI-05-07 | R | R | X | R | R | R | R |
-| UI-05-08, 09 | X | X\* (duyệt) | X\* (tạm dừng) | R | X | R | R |
-| UI-05-10 | X | R | R | | X | R | |
-| UI-05-11 | X | | | | X | | |
-| UI-05-12 | X | R | X | R | X | R | R |
-| UI-05-13 | X | R | R | R | X | | |
-| UI-05-14, 15 | X\* (đề xuất) | X\* (duyệt `TENANT`) | R | R | X\* | X\* (duyệt `COMMON`) | R |
-| UI-05-16 | X | | | | X | | |
-| UI-05-17 | | X | | X | | X | |
+| Màn | IE | IA | TO | SO | TA | PA | AU | VW |
+|---|---|---|---|---|---|---|---|---|
+| UI-05-01 | X | R | R | R | X | R | R | R |
+| UI-05-02 | X | X\* (duyệt PROD) | X\* (tạm ngừng, xoay) | X\* (tạm ngừng, tắt khẩn, tiếp tục sau sự cố) | X | R | R | R |
+| UI-05-03 | X | | | | X | | | |
+| UI-05-04 | X | X\* (kiểm thử) | X | R | X | R | R | R |
+| UI-05-05 | X\* (yêu cầu) | X\* (duyệt) | R | X\* (đồng ý, thu hồi, nhật ký) | X | R | X\* (nhật ký) | |
+| UI-05-06 | X | | | | X | | | |
+| UI-05-07 | R | R | X | R | R | R | R | R |
+| UI-05-08, 09 | X | X\* (duyệt) | X\* (tạm dừng) | R | X | R | R | R |
+| UI-05-10 | X | X\* (kiểm thử) | X\* (kiểm thử) | R | X | R | R | |
+| UI-05-11 | X | | | | X | | | |
+| UI-05-12 | X\* (cấu hình, không chạy) | X\* (kiểm thử) | X | R | X | R | R | R |
+| UI-05-13 | X | R | R | R | X | R | R | |
+| UI-05-14, 15 | X\* (đề xuất) | X\* (duyệt `TENANT`) | R | R | X\* | X\* (duyệt `COMMON`) | R | R |
+| UI-05-16 | X | | | | X | | | |
+| UI-05-17 | | X | | X | | X | | |
 
 Tên vai trò theo D02-08; quyền chi tiết theo nhóm `PERM-05-*` ở D02-08 §PH-05.
 

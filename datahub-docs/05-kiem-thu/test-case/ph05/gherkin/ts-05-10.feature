@@ -10,7 +10,7 @@ Tính năng: TS-05-10 · Sức khỏe kết nối và bộ điều hợp
     Khi ngắt SIM-HTTP lúc t0.
     Và theo dõi `GET …/ndxp-ho-tich/health?env=PROD`.
     Và bật lại SIM-HTTP.
-    Thì trạng thái `UNHEALTHY` ≤ t0 + 3 phút; EVT: `health.changed` một lần mỗi lần đổi mức (không lặp mỗi chu kỳ); TO nhận cảnh báo PH-13. Bước 3 về `HEALTHY` sau hai chu kỳ đạt, EVT lần nữa.
+    Thì trạng thái `UNHEALTHY` ≤ t0 + 3 phút; EVT: `health.changed` một lần mỗi lần đổi mức (không lặp mỗi chu kỳ); TO nhận cảnh báo PH-13. Bước 3 về `HEALTHY` sau ba chu kỳ đạt (FR-05-021), EVT lần nữa.
 
   @TC-05-039 @P2 @Dương
   Kịch bản: TC-05-039 Suy giảm thụ động theo p95 so với nền

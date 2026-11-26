@@ -8,7 +8,7 @@ Tính năng: TS-05-07 · Danh sách, chi tiết, lịch sử, xuất
     # Truy vết: FR-05-002 · API-05-003 · UI-05-01 · BR-05-014
     Biết U-T68-VW; 40 kết nối thử, 2 `UNHEALTHY`, 3 `DEGRADED` ở PROD.
     Khi `GET /connections` không sắp xếp.
-    Và `GET /connections?q=ndxp&typeCode=http-rest&health=UNHEALTHY&env=PROD`.
+    Và `GET /connections?q=ndxp&typeCode=oauth2-client&health=UNHEALTHY&env=PROD`.
     Và mở UI-05-01, bấm bộ lọc nhanh "Bí mật quá hạn".
     Thì bước 1: 2 mục đầu `UNHEALTHY`, rồi 3 `DEGRADED`; có `facets`. Bước 2 chỉ mục khớp. Bước 3 URL có `secretOverdue=true`, bảng chỉ còn kết nối có tuổi bí mật ≥ 90 ngày.
 
@@ -16,7 +16,7 @@ Tính năng: TS-05-07 · Danh sách, chi tiết, lịch sử, xuất
   Kịch bản: TC-05-028 Chi tiết kết nối trả allowedActions theo người xem
     # Truy vết: FR-05-003 · API-05-005 · UI-05-02
     Biết U-T68-VW, U-T68-IE1; C-NDXP.
-    Thì cả hai `200`; với VW `allowedActions` rỗng; với IE1 có `EDIT`, `TEST`. Không trường nào chứa giá trị bí mật.
+    Thì cả hai `200`; với VW `allowedActions` rỗng; với IE1 có `updateConnection`, `startConnectionTest`. Không trường nào chứa giá trị bí mật.
 
   @TC-05-029 @P1 @Âm @Bảo @mật
   Kịch bản: TC-05-029 Chi tiết kết nối của tenant khác trả 404-ẩn
@@ -42,6 +42,6 @@ Tính năng: TS-05-07 · Danh sách, chi tiết, lịch sử, xuất
   Kịch bản: TC-05-147 Lọc sai, lịch sử của đối tượng không tồn tại
     # Truy vết: FR-05-002, 016, 029 · API-05-003, 026, 043, 066 · ERR-05-003, 001
     Biết U-T68-VW; U-T01-IE.
-    Khi `GET /connections?q=a`; `GET /connections?status=XYZ`; `GET /adapters?systemGroup=7`; `GET /connections?limit=500`.
+    Khi `GET /connections?q=a`; `GET /connections?status=XYZ`; `GET /adapters?systemGroup=7`; `GET /connections?limit=101`.
     Và U-T01-IE `GET /connections/tc-chi-t68/history`; `GET /adapters/khong-co/history`.
-    Thì bước 1 mỗi lệnh `400` ERR-05-003 chỉ đúng tham số (tìm cần ≥ 2 ký tự, `limit` ≤ 200). Bước 2 404-ẩn.
+    Thì bước 1 mỗi lệnh `400` ERR-05-003 chỉ đúng tham số (tìm cần ≥ 2 ký tự, `limit` ≤ 100). Bước 2 404-ẩn.

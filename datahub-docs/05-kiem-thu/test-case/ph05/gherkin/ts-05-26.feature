@@ -7,7 +7,7 @@ Tính năng: TS-05-26 · Thay đổi lược đồ và chụp ảnh lại
   Kịch bản: TC-05-101 Thêm cột có thể null: tiếp tục, ghi nhận mức thông tin
     # Truy vết: FR-05-051 · EVT-05-11 · API-05-074
     Biết CDC `STREAMING`.
-    Thì `cdc_schema_change` mức `INFO`; lược đồ Avro mới tương thích BACKWARD; CDC giữ `STREAMING`; bản ghi mới có trường `ghi_chu`.
+    Thì `cdc_schema_change` mức `COMPATIBLE`; lược đồ Avro mới tương thích BACKWARD; CDC giữ `STREAMING`; bản ghi mới có trường `ghi_chu`.
 
   @TC-05-102 @P1 @Âm
   Kịch bản: TC-05-102 Đổi tên cột: CDC dừng trước khi phát

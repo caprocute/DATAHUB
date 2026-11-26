@@ -14,7 +14,7 @@ Tính năng: TS-05-33 · Phân quyền và tách nhiệm
     # Truy vết: BR-05-009 · ERR-05-011 · API-05-015, 038, 056, 083
     Biết U-T68-IA2; U-T68-IE2 sửa nội dung gần nhất của yêu cầu IA1 sắp duyệt.
     Khi IA2 gửi một yêu cầu, IE2 (cùng nhóm) sửa nội dung, IA2 duyệt.
-    Và IE2 sửa nội dung yêu cầu do IE1 gửi; IE2 được gán thêm vai trò IA rồi duyệt.
+    Và IE2 sửa nội dung yêu cầu do IE1 gửi; IE2 được gán thêm vai trò IA (cấu hình sai có chủ đích, chỉ ở SIT, như U-T68-IA2) rồi duyệt.
     Và gọi API duyệt bằng tài khoản dịch vụ S-INT.
     Thì bước 1, 2 `403` ERR-05-011 (người đề nghị, người sửa gần nhất). Bước 3 403-PQ (tài khoản dịch vụ không có quyền duyệt).
 

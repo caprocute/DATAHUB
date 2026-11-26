@@ -17,11 +17,11 @@ Tính năng: TS-05-02 · Giá trị môi trường và bí mật
   @TC-05-008 @P2 @Âm
   Kịch bản: TC-05-008 Thiếu khóa bí mật bắt buộc, khóa lạ
     # Truy vết: FR-05-005 · API-05-012 · ERR-05-003, 014
-    Biết U-T68-IE1; `tc-ndxp-moi` TEST có tham số `auth = BASIC`.
+    Biết U-T68-IE1; kết nối `tc-basic-moi` loại `http-basic`, TEST đã có tham số.
     Khi `PUT …/TEST/secret` với chỉ `username`.
     Và `PUT …/TEST/secret` với `{"username":"a","password":"b","extra":"c"}`.
     Và `POST …/environments/TEST:enable` khi chưa có bí mật.
-    Thì bước 1 `400` ERR-05-003 (`password` bắt buộc). Bước 2 `400` ERR-05-003 (khóa không có trong `secretKeys`). Bước 3 `409` ERR-05-014.
+    Thì bước 1 `400` ERR-05-003 (`password` bắt buộc). Bước 2 `400` ERR-05-003 (khóa không có trong `secretKeys`). Bước 3 `422` ERR-05-014.
 
   @TC-05-009 @P1 @Bảo @mật
   Kịch bản: TC-05-009 dh-integration chỉ ghi được bí mật, không đọc được

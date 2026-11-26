@@ -130,24 +130,25 @@ Tên nhân vật trùng D02-04-PH05. Mọi người dùng vai trò TA, SO, IA, P
 | U-T68-IE1 | T68 | IE | Nguyễn Văn An | Người khai báo chính |
 | U-T68-IE2 | T68 | IE | Trần Thị Bình | Người thứ hai, xung đột đồng thời |
 | U-T68-IA1 | T68 | IA | Lê Văn Cường | Người duyệt chính |
-| U-T68-IA2 | T68 | IA + IE | Đặng Thị Mai | Vừa khai vừa duyệt, kiểm bốn mắt |
+| U-T68-IA2 | T68 | IA + IE (cố ý cấu hình sai, chỉ có ở SIT) | Đặng Thị Mai | Vi phạm tách nhiệm D02-08 §4 có chủ đích, để kiểm lớp bốn mắt độc lập với lớp tách vai trò; không tạo ở UAT, PROD |
 | U-T68-TO | T68 | TO | Vũ Minh Tuấn | Vận hành, sức khỏe, CDC |
 | U-T68-SO | T68 | SO | Phạm Thu Dung | Đồng ý ghi CSDL, nhật ký truy cập, tạm ngừng ATTT |
 | U-T68-AU | T68 | AU | — | Kiểm toán, chỉ đọc |
+| U-T01-AU | T01 | AU | — | Kiểm toán T01, đối chứng nhật ký khác tenant |
 | U-T68-VW | T68 | VW (chỉ `PERM-05-read`) | — | Chỉ đọc |
 | U-T01-IE | T01 | IE | — | Đối chứng rò rỉ |
 | S-RT-T68, S-RT-T01 | — | Tài khoản dịch vụ `dh-runtime` | — | API nội bộ, scope `adapter:runtime-config` |
-| S-INT | — | Tài khoản dịch vụ PH-04 | — | Scope `adapter:verify`, `adapter:health-read` |
+| S-INT | — | Tài khoản dịch vụ PH-04 | — | Scope `adapter:verify`, `adapter:health-read`, `adapter:runtime-config` |
 
 ### 2.3. Kết nối, bộ điều hợp, Kamelet mẫu
 
 | Mã | Loại, mục đích | HTTT | Trạng thái nạp sẵn | Dùng cho |
 |---|---|---|---|---|
-| C-NDXP (`ndxp-ho-tich`) | `http-rest`, OAuth2, chỉ đọc | `HT-NDXP` | `ACTIVE`; TEST, PROD bật | Đa số ca REST, sức khỏe |
-| C-QLVB (`qlvb-soap`) | `soap`, WS-Security UsernameToken | `HT-QLVB` | `ACTIVE`; TEST bật | SOAP |
+| C-NDXP (`ndxp-ho-tich`) | `oauth2-client`, chỉ đọc | `HT-NDXP` | `ACTIVE`; TEST, PROD bật | Đa số ca REST, sức khỏe |
+| C-QLVB (`qlvb-soap`) | `soap-wss`, `wssMode = USERNAME_TOKEN` | `HT-QLVB` | `ACTIVE`; TEST bật | SOAP |
 | C-DKKD (`dkkd-db`) | `db-flow` PostgreSQL, đọc ghi, `allowedSchemas = dkkd, dm` | `HT-DKKD` | `ACTIVE`; TEST, PROD bật | Tài khoản CSDL |
 | C-SFTP (`bhxh-sftp`) | `sftp`, khóa SSH | `HT-BHXH` | `ACTIVE`; TEST bật | Tệp |
-| C-MQ (`tnmt-amqp`) | `amqp` | `HT-TNMT` | `ACTIVE`; TEST bật | Hàng đợi |
+| C-MQ (`tnmt-amqp`) | `amqp-1` | `HT-TNMT` | `ACTIVE`; TEST bật | Hàng đợi |
 | C-MAIL (`mot-cua-mail`) | `smtp`, `imap` | `HT-MOTCUA` | `ACTIVE`; TEST bật | Thư |
 | C-CDC (`dkkd-cdc`) | `cdc-debezium` PostgreSQL | `HT-DKKD` | `ACTIVE`; TEST bật | CDC |
 | C-NEW | Chưa có, tạo trong ca | `HT-NDXP` | — | Tạo mới |
@@ -260,8 +261,8 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T68-TA đã tắt loại `ldap` ở T68.
 - **Bước**
   1. `GET /connection-types`.
-  2. `GET /connection-types/http-rest`.
-- **Mong đợi** Bước 1 trả `200`, có `http-rest`, `soap`, `db-flow`, `sftp`, `amqp`, `smtp`, `cdc-debezium`; `ldap` có `enabled = false`. Bước 2 trả `paramsSchema` (JSON Schema có `if/then` theo `auth`), `secretKeys` gồm `clientSecret`, `password`, `apiKey`, `clientKey`; `paramsSchema` không chứa khóa nào trong `secretKeys`.
+  2. `GET /connection-types/oauth2-client`.
+- **Mong đợi** Bước 1 trả `200`, có đủ các mã ở FRS FR-05-001 (`http-none`, `http-basic`, `http-apikey`, `oauth2-client`, `http-mtls`, `soap-wss`, `jdbc-*`, `db-flow`, `sftp`, `amqp-1`, `smtp`, `cdc-debezium`…); `ldap` có `enabled = false`. Bước 2 trả `paramsSchema` có `tokenUrl`, `clientId`, `scope`, `authMethod`, `secretKeys` gồm `clientSecret`, `privateKeyPem`; `paramsSchema` không chứa khóa nào trong `secretKeys`.
 
 #### TC-05-002 · Tạo kết nối REST hợp lệ ở trạng thái Nháp <!--k:conn-create-->
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -270,7 +271,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Bước**
   1. Mở UI-05-03, chọn loại REST/HTTP, nhập mã `tc-ndxp-moi`, tên, HTTT `HT-NDXP`, mục đích Chỉ đọc; bấm "Tạo".
   2. `GET /connections/tc-ndxp-moi`.
-- **Mong đợi** Bước 1 gọi `POST /connections` trả `201`, `Location`, `ETag`; màn sang bước 3. Bước 2: `status = DRAFT`, `environments` rỗng, `allowedActions` có `EDIT`, `CONFIGURE_ENV`; `disabledReasons` không rỗng cho `ENABLE`. KT: có (`CONNECTION_CREATE`). EVT: không.
+- **Mong đợi** Bước 1 gọi `POST /connections` trả `201`, `Location`, `ETag`; màn sang bước 3. Bước 2: `status = DRAFT`, `environments` rỗng, `allowedActions` có `updateConnection`, `putEnvironmentParams`; `disabledReasons` không rỗng cho `enableEnvironment`. KT: có (`CONNECTION_CREATE`). EVT: không.
 
 #### TC-05-003 · Tạo kết nối sai mã, trùng mã, HTTT không hoạt động, loại tắt <!--k:conn-create-neg-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
@@ -343,12 +344,12 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-008 · Thiếu khóa bí mật bắt buộc, khóa lạ <!--k:env-secret-neg-->
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-005 · API-05-012 · ERR-05-003, 014
-- **Tiền điều kiện / dữ liệu** U-T68-IE1; `tc-ndxp-moi` TEST có tham số `auth = BASIC`.
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; kết nối `tc-basic-moi` loại `http-basic`, TEST đã có tham số.
 - **Bước**
   1. `PUT …/TEST/secret` với chỉ `username`.
   2. `PUT …/TEST/secret` với `{"username":"a","password":"b","extra":"c"}`.
   3. `POST …/environments/TEST:enable` khi chưa có bí mật.
-- **Mong đợi** Bước 1 `400` ERR-05-003 (`password` bắt buộc). Bước 2 `400` ERR-05-003 (khóa không có trong `secretKeys`). Bước 3 `409` ERR-05-014.
+- **Mong đợi** Bước 1 `400` ERR-05-003 (`password` bắt buộc). Bước 2 `400` ERR-05-003 (khóa không có trong `secretKeys`). Bước 3 `422` ERR-05-014.
 
 #### TC-05-009 · dh-integration chỉ ghi được bí mật, không đọc được <!--k:bao-policy-->
 - **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** IT
@@ -384,7 +385,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
   1. Mở UI-05-02, chọn "Kiểm tra ▾ TEST".
   2. Theo dõi drawer UI-05-04 tới khi xong.
   3. `GET …/tests/{testId}`.
-- **Mong đợi** Bước 1 gọi `POST …/environments/TEST/tests` trả `202`, `Location`. Drawer hiện lần lượt các bước DNS, TCP, TLS, xác thực (lấy token OAuth2), gọi thăm dò; mỗi bước ✓ kèm thời lượng. Tổng ≤ 15 giây. Bước 3: `result = PASSED`, `validUntil = startedAt + 24h`, `paramsHash`, `secretVersion = 1`. SIM-HTTP chỉ nhận yêu cầu `GET /health` và yêu cầu token, không có yêu cầu ghi. KT: có (`CONNECTION_TEST`).
+- **Mong đợi** Bước 1 gọi `POST …/environments/TEST/tests` trả `202`, `Location`. Drawer hiện lần lượt các bước DNS, TCP, TLS, xác thực (lấy token OAuth2), gọi thăm dò; mỗi bước ✓ kèm thời lượng. Tổng ≤ 15 giây. Bước 3: `status = PASSED`, `expiresAt = startedAt + 24h`, `paramsHash`, `secretVersion = 1`. SIM-HTTP chỉ nhận yêu cầu `GET /health` và yêu cầu token, không có yêu cầu ghi. KT: có (`CONNECTION_TEST`).
 
 #### TC-05-012 · Kiểm tra không đạt theo từng nguyên nhân <!--k:test-causes-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
@@ -397,12 +398,12 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
   4. Máy chủ chỉ chấp nhận TLS 1.0.
   5. Endpoint token trả 401.
   6. `/health` chậm 30 giây (`timeoutMs = 5000`).
-- **Mong đợi** Mỗi lần `result = FAILED` và bước lỗi đúng: 1 DNS `cause = DNS_NXDOMAIN`; 2 TCP `CONNECTION_REFUSED`; 3 TLS `UNTRUSTED_CERT`; 4 TLS `TLS_VERSION` (BR-05-011); 5 xác thực `AUTH_REJECTED`; 6 gọi thăm dò `TIMEOUT` kết thúc ≤ 10 giây. Mọi bước sau bước lỗi `SKIPPED`. `hint` tiếng Việt khớp bảng nguyên nhân FRS §5.2.1. Không bước nào ghi giá trị bí mật vào `detail`.
+- **Mong đợi** Mỗi lần `status = FAILED` và bước lỗi đúng: 1 DNS `cause = DNS_NXDOMAIN`; 2 TCP `TCP_REFUSED`; 3 TLS `TLS_UNTRUSTED`; 4 TLS `TLS_VERSION` (BR-05-011); 5 xác thực `AUTH_TOKEN_URL` (endpoint token trả 401); 6 gọi thăm dò hết thời gian chờ, kết thúc ≤ 10 giây với `PROBE_HTTP_STATUS` hoặc `TCP_TIMEOUT` tùy tầng chặn (ghi rõ trong báo cáo). Mọi bước sau bước lỗi `SKIPPED`. `hint` tiếng Việt khớp bảng nguyên nhân FRS §5.2.1. Không bước nào ghi giá trị bí mật vào `detail`.
 
 #### TC-05-013 · Kiểm tra trùng lúc và vượt hạn mức <!--k:test-concurrent-->
 - **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-010 · API-05-017 · ERR-05-018, 019
-- **Tiền điều kiện / dữ liệu** U-T68-IE1; `05.test.rate-per-hour = 20`.
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; `05.test.max-per-hour = 20`.
 - **Bước**
   1. Gửi hai `POST …/TEST/tests` cách nhau 100 ms khi SIM-HTTP chậm 5 giây.
   2. Gửi 21 lần trong một giờ.
@@ -556,7 +557,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Tiền điều kiện / dữ liệu** U-T68-VW; 40 kết nối thử, 2 `UNHEALTHY`, 3 `DEGRADED` ở PROD.
 - **Bước**
   1. `GET /connections` không sắp xếp.
-  2. `GET /connections?q=ndxp&typeCode=http-rest&health=UNHEALTHY&env=PROD`.
+  2. `GET /connections?q=ndxp&typeCode=oauth2-client&health=UNHEALTHY&env=PROD`.
   3. Mở UI-05-01, bấm bộ lọc nhanh "Bí mật quá hạn".
 - **Mong đợi** Bước 1: 2 mục đầu `UNHEALTHY`, rồi 3 `DEGRADED`; có `facets`. Bước 2 chỉ mục khớp. Bước 3 URL có `secretOverdue=true`, bảng chỉ còn kết nối có tuổi bí mật ≥ 90 ngày.
 
@@ -565,7 +566,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Truy vết** FR-05-003 · API-05-005 · UI-05-02
 - **Tiền điều kiện / dữ liệu** U-T68-VW, U-T68-IE1; C-NDXP.
 - **Bước** VW và IE1 cùng `GET /connections/ndxp-ho-tich`.
-- **Mong đợi** Cả hai `200`; với VW `allowedActions` rỗng; với IE1 có `EDIT`, `TEST`. Không trường nào chứa giá trị bí mật.
+- **Mong đợi** Cả hai `200`; với VW `allowedActions` rỗng; với IE1 có `updateConnection`, `startConnectionTest`. Không trường nào chứa giá trị bí mật.
 
 #### TC-05-029 · Chi tiết kết nối của tenant khác trả 404-ẩn <!--k:conn-404-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
@@ -587,7 +588,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Loại** Dương, Bảo mật · **Ưu tiên** P3 · **Tự động** API
 - **Truy vết** FR-05-017 · API-05-027 · UI-05-01
 - **Tiền điều kiện / dữ liệu** U-T68-IE1.
-- **Bước** `GET /connections:export?typeCode=http-rest`.
+- **Bước** `GET /connections:export?typeCode=oauth2-client`.
 - **Mong đợi** `200` `text/csv; charset=utf-8` có BOM; chỉ dòng REST; cột không có giá trị bí mật; mồi sạch trong tệp. KT: có (`CONNECTION_EXPORT`).
 
 #### TC-05-147 · Lọc sai, lịch sử của đối tượng không tồn tại <!--k:list-history-neg-->
@@ -595,9 +596,9 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Truy vết** FR-05-002, 016, 029 · API-05-003, 026, 043, 066 · ERR-05-003, 001
 - **Tiền điều kiện / dữ liệu** U-T68-VW; U-T01-IE.
 - **Bước**
-  1. `GET /connections?q=a`; `GET /connections?status=XYZ`; `GET /adapters?systemGroup=7`; `GET /connections?limit=500`.
+  1. `GET /connections?q=a`; `GET /connections?status=XYZ`; `GET /adapters?systemGroup=7`; `GET /connections?limit=101`.
   2. U-T01-IE `GET /connections/tc-chi-t68/history`; `GET /adapters/khong-co/history`.
-- **Mong đợi** Bước 1 mỗi lệnh `400` ERR-05-003 chỉ đúng tham số (tìm cần ≥ 2 ký tự, `limit` ≤ 200). Bước 2 404-ẩn.
+- **Mong đợi** Bước 1 mỗi lệnh `400` ERR-05-003 chỉ đúng tham số (tìm cần ≥ 2 ký tự, `limit` ≤ 100). Bước 2 404-ẩn.
 
 ### TS-05-08 · Cấp sử dụng và nơi dùng
 
@@ -644,7 +645,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Bước**
   1. Tải F-CTX ở UI-05-06.
   2. Chờ `CMP-JobProgress` xong; `GET /connections/legacy-imports/{jobId}`.
-- **Mong đợi** `proposals` có 6 kết nối (HTTP, SOAP, JDBC, SFTP, JMS) với tham số tìm được và vị trí trong tệp; `findings` có 2 mục `EMBEDDED_PASSWORD` (chỉ vị trí, không giá trị) và 1 `UNSUPPORTED_SCHEME` (`jt400`). Chuỗi mật khẩu trong F-CTX không có ở phản hồi, log, bảng `legacy_import_job`. Tệp gốc không còn ở kho sau khi phân tích.
+- **Mong đợi** `proposals` có 6 kết nối (HTTP, SOAP, JDBC, SFTP, JMS) với tham số tìm được và vị trí trong tệp; `findings` có 2 mục `INLINE_PASSWORD_URI` (chỉ vị trí, không giá trị) và 1 `UNKNOWN_SCHEME` (`jt400`). Chuỗi mật khẩu trong F-CTX không có ở phản hồi, log, bảng `legacy_import_job`. Tệp gốc không còn ở kho sau khi phân tích.
 
 #### TC-05-036 · Tạo kết nối nháp từ đề xuất và tải bảng ánh xạ <!--k:legacy-commit-->
 - **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
@@ -656,7 +657,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-037 · Tệp sai định dạng, quá lớn, có mã độc <!--k:legacy-neg-->
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-018 · API-05-028 · ERR-05-024, 034
-- **Tiền điều kiện / dữ liệu** U-T68-IE1; tệp `.xml` hỏng; ZIP 11 MiB; F-EICAR trong ZIP.
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; tệp `.xml` hỏng; ZIP 21 MiB (trần 20 MiB); F-EICAR trong ZIP.
 - **Bước** Tải từng tệp.
 - **Mong đợi** Hỏng `400` ERR-05-024; quá lớn `413` ERR-05-024; mã độc `422` ERR-05-034. Không job nào ở trạng thái thành công.
 
@@ -674,7 +675,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
   1. Ngắt SIM-HTTP lúc t0.
   2. Theo dõi `GET …/ndxp-ho-tich/health?env=PROD`.
   3. Bật lại SIM-HTTP.
-- **Mong đợi** Trạng thái `UNHEALTHY` ≤ t0 + 3 phút; EVT: `health.changed` một lần mỗi lần đổi mức (không lặp mỗi chu kỳ); TO nhận cảnh báo PH-13. Bước 3 về `HEALTHY` sau hai chu kỳ đạt, EVT lần nữa.
+- **Mong đợi** Trạng thái `UNHEALTHY` ≤ t0 + 3 phút; EVT: `health.changed` một lần mỗi lần đổi mức (không lặp mỗi chu kỳ); TO nhận cảnh báo PH-13. Bước 3 về `HEALTHY` sau ba chu kỳ đạt (FR-05-021), EVT lần nữa.
 
 #### TC-05-039 · Suy giảm thụ động theo p95 so với nền <!--k:health-degraded-->
 - **Loại** Dương · **Ưu tiên** P2 · **Tự động** RT, API
@@ -776,7 +777,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Bước**
   1. Tạo kết nối `tc-db-ok` loại `db-flow`, PostgreSQL, mục đích Chỉ đọc, `allowedSchemas = ["dkkd"]`.
   2. Khai `TEST` (`jdbcUrl` SIM-PG, `maxRows = 10000`), ghi bí mật tài khoản quản trị; kiểm tra.
-- **Mong đợi** Bước 1 `201`. Bước 2 kiểm tra đạt gồm bước "OpenBao tạo được tài khoản thử và xóa ngay"; vai trò `dh-t68-*-test` mẫu được tạo và hủy; tài khoản quản trị chỉ nằm ở OpenBao.
+- **Mong đợi** Bước 1 `201`. Bước 2 kiểm tra đạt gồm bước "OpenBao tạo được tài khoản thử và xóa ngay"; role OpenBao mẫu `dh-t68-{flowCode}-test` (SDD §5, FlowAccountService) được tạo và hủy; tài khoản quản trị chỉ nằm ở OpenBao.
 
 #### TC-05-150 · Thu hồi lặp, thiếu lý do, thiếu quyền <!--k:dbflow-revoke-neg-->
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
@@ -847,9 +848,9 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-053 · Chỉ SO, AU xem nhật ký; tenant khác không thấy <!--k:dbaudit-perm-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
 - **Truy vết** FR-05-027 · API-05-041 · ERR-05-012 · BR-05-002
-- **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T01-IE.
-- **Bước** IE1 và U-T01-IE `GET /db-access-logs`.
-- **Mong đợi** IE1 403-PQ. U-T01-IE (có quyền ở T01) `200` với 0 dòng của T68.
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T01-AU.
+- **Bước** IE1 và U-T01-AU `GET /db-access-logs`.
+- **Mong đợi** IE1 403-PQ. U-T01-AU (AU ở T01) `200` với 0 dòng của T68.
 
 ### TS-05-14 · Bộ điều hợp: tạo, danh sách, chi tiết
 
@@ -1134,17 +1135,17 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Bước**
   1. Ở UI-05-10 chọn "Kiểm thử ▾ Tất cả thao tác".
   2. Ở hộp xác nhận ghi thử, tích "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử".
-- **Mong đợi** `202`; R5 tab Kết quả kiểm thử hiện từng thao tác với các bước kết nối, gọi, chuyển đổi, chuẩn hóa, so lược đồ; 6 mục R2 có ✓. `GET …/tests/{id}` `result = PASSED`.
+- **Mong đợi** `202`; R5 tab Kết quả kiểm thử hiện từng thao tác với các bước kết nối, gọi, chuyển đổi, chuẩn hóa, so lược đồ; 6 mục R2 có ✓. `GET …/tests/{id}` `status = PASSED`.
 
-#### TC-05-082 · Thao tác ghi không chạy trên STAGING, PROD; thiếu xác nhận <!--k:adapter-test-write-neg-->
+#### TC-05-082 · Thao tác ghi không chạy trên PROD; thiếu xác nhận <!--k:adapter-test-write-neg-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
 - **Truy vết** FR-05-043 · BR-05-030 · API-05-052 · ERR-05-003
 - **Tiền điều kiện / dữ liệu** U-T68-IE1; A-QLVB v4.
 - **Bước**
   1. `POST …/versions/4/tests` với `env = PROD`.
-  2. Với `env = STAGING`, `operations = ["gui-van-ban"]` (`WRITE`).
+  2. Với `env = STAGING`, `operations = ["gui-van-ban"]` (`WRITE`), có `confirmWriteOnTest = true`.
   3. Với `env = TEST`, thao tác `WRITE`, không `confirmWriteOnTest`.
-- **Mong đợi** Bước 1 `400` ERR-05-003 (`env` chỉ `TEST`, `STAGING`). Bước 2, 3 `400` ERR-05-003; SIM-SOAP không nhận yêu cầu ghi.
+- **Mong đợi** Bước 1 `400` ERR-05-003 (`env` chỉ `TEST`, `STAGING`). Bước 2 `202`, SIM-SOAP STAGING nhận đúng một yêu cầu ghi, kiểm toán ghi xác nhận (BR-05-030). Bước 3 `400` ERR-05-003; SIM-SOAP TEST không nhận yêu cầu ghi.
 
 #### TC-05-083 · Gửi duyệt khi sửa sau kiểm thử bị chặn <!--k:adapter-submit-neg-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -1228,9 +1229,9 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-091 · Sinh từ WSDL ZIP; đặc tả hỏng hoặc quá lớn <!--k:spec-neg-->
 - **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-046 · API-05-065 · ERR-05-023, 035
-- **Tiền điều kiện / dữ liệu** F-WSDL; YAML OpenAPI hỏng ở dòng 40; OpenAPI 6 MiB.
+- **Tiền điều kiện / dữ liệu** F-WSDL; YAML OpenAPI hỏng ở dòng 40; OpenAPI 6 MiB (trần 5 MiB).
 - **Bước** Gửi ba tệp.
-- **Mong đợi** F-WSDL `200` với thao tác SOAP và XSD nhập kèm. YAML hỏng `422` ERR-05-023 có dòng 40. Tệp 6 MiB `413` ERR-05-035.
+- **Mong đợi** F-WSDL `200` với thao tác SOAP và XSD nhập kèm. YAML hỏng `422` ERR-05-023 có dòng 40. Tệp 6 MiB `413` ERR-05-024.
 
 ### TS-05-24 · Kamelet sinh và đồng bộ catalog
 
@@ -1248,7 +1249,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-093 · Tên Kamelet sinh dài được rút gọn có băm <!--k:catalog-name-->
 - **Loại** Biên · **Ưu tiên** P3 · **Tự động** UT
 - **Truy vết** FR-05-047
-- **Tiền điều kiện / dữ liệu** Mã bộ điều hợp 50 ký tự, mã thao tác 40 ký tự.
+- **Tiền điều kiện / dữ liệu** Mã bộ điều hợp 39 ký tự (tối đa), mã thao tác 40 ký tự.
 - **Bước** Duyệt phiên bản.
 - **Mong đợi** Tên Kamelet ≤ 63 ký tự, có băm 6 ký tự, vẫn khớp mẫu `-(source|sink|action)$`; hai thao tác khác nhau không trùng tên.
 
@@ -1279,7 +1280,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
 - **Truy vết** FR-05-048 · API-05-067, 068 · UI-05-12 · UC-05-19
 - **Tiền điều kiện / dữ liệu** U-T68-IE1; A-CDC; C-CDC TEST; PH-10 SIT.
-- **Bước** `PUT /adapters/dkkd-cdc/cdc` với `engine = postgresql`, 2 bảng, cột `so_dien_thoai` băm, `snapshotMode = INITIAL`.
+- **Bước** `PUT /adapters/dkkd-cdc/cdc` với `engine = POSTGRESQL`, 2 bảng, cột `so_dien_thoai` băm, `snapshotMode = INITIAL`.
 - **Mong đợi** `200`, trạng thái `STOPPED`; topic `t68.cdc.dkkd-cdc.dkkd.doanh_nghiep.v1` và lược đồ Avro có ở PH-10, Apicurio; đặc tả `KafkaConnector` ở nhánh môi trường của kho GitOps, chưa áp.
 
 #### TC-05-096 · Bảng ngoài phạm vi, PH-10 không khả dụng, vượt trần bảng <!--k:cdc-config-neg-->
@@ -1345,7 +1346,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Truy vết** FR-05-051 · EVT-05-11 · API-05-074
 - **Tiền điều kiện / dữ liệu** CDC `STREAMING`.
 - **Bước** `ALTER TABLE dkkd.doanh_nghiep ADD COLUMN ghi_chu text`; ghi một dòng.
-- **Mong đợi** `cdc_schema_change` mức `INFO`; lược đồ Avro mới tương thích BACKWARD; CDC giữ `STREAMING`; bản ghi mới có trường `ghi_chu`.
+- **Mong đợi** `cdc_schema_change` mức `COMPATIBLE`; lược đồ Avro mới tương thích BACKWARD; CDC giữ `STREAMING`; bản ghi mới có trường `ghi_chu`.
 
 #### TC-05-102 · Đổi tên cột: CDC dừng trước khi phát <!--k:schema-breaking-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
@@ -1393,7 +1394,7 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Bước**
   1. Ở UI-05-16 dán F-KAM-OK, bấm "Kiểm tra tĩnh", "Gửi duyệt".
   2. IA1 duyệt ở UI-05-17.
-- **Mong đợi** Bước 1 `violations` rỗng (có thể có cảnh báo KR-12, KR-13); `SUBMITTED`. Bước 2 `APPROVED`; EVT: `kamelet.published` trên `t68.adapter.kamelet.published.v1`; có trong catalog T68, không có ở T01.
+- **Mong đợi** Bước 1 `findings` không có mục mức lỗi (có thể có cảnh báo KR-12, KR-13); `SUBMITTED`. Bước 2 `APPROVED`; EVT: `kamelet.published` trên `t68.adapter.kamelet.published.v1`; có trong catalog T68, không có ở T01.
 
 #### TC-05-107 · Kiểm tra tĩnh chặn ngôn ngữ kịch bản, #class, URI trực tiếp, bí mật cứng <!--k:kamelet-static-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** UT, API
@@ -1504,16 +1505,16 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 #### TC-05-117 · Bật, tắt loại kết nối; tắt khi còn dùng bị chặn <!--k:settings-type-->
 - **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-061 · API-05-090, 091 · ERR-05-010, 004 · UC-05-26
-- **Tiền điều kiện / dữ liệu** U-T68-TA; loại `ldap` không dùng; `http-rest` đang dùng.
+- **Tiền điều kiện / dữ liệu** U-T68-TA; loại `ldap` không dùng; `oauth2-client` đang dùng.
 - **Bước**
   1. `PUT /settings/connection-types/ldap` `enabled = true`.
-  2. `PUT /settings/connection-types/http-rest` `enabled = false`.
+  2. `PUT /settings/connection-types/oauth2-client` `enabled = false`.
 - **Mong đợi** Bước 1 `200`, tạo kết nối LDAP được. Bước 2 `409` ERR-05-010 với số kết nối đang dùng.
 
 #### TC-05-118 · Trần tham số tenant được áp <!--k:settings-cap-->
 - **Loại** Biên · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-05-061 · API-05-091, 011 · ERR-05-030
-- **Tiền điều kiện / dữ liệu** U-T68-TA đặt trần `timeoutMs = 30000` cho `http-rest`; U-T68-IE1.
+- **Tiền điều kiện / dữ liệu** U-T68-TA đặt trần `timeoutMs = 30000` cho `oauth2-client`; U-T68-IE1.
 - **Bước** IE1 `PUT …/environments/TEST` với `timeoutMs = 45000`.
 - **Mong đợi** `422` ERR-05-030 nêu trần.
 
@@ -1611,7 +1612,7 @@ Các kịch bản dưới đây chạy lại ở mỗi đợt phát hành; TS-05
 - **Tiền điều kiện / dữ liệu** U-T68-IA2; U-T68-IE2 sửa nội dung gần nhất của yêu cầu IA1 sắp duyệt.
 - **Bước**
   1. IA2 gửi một yêu cầu, IE2 (cùng nhóm) sửa nội dung, IA2 duyệt.
-  2. IE2 sửa nội dung yêu cầu do IE1 gửi; IE2 được gán thêm vai trò IA rồi duyệt.
+  2. IE2 sửa nội dung yêu cầu do IE1 gửi; IE2 được gán thêm vai trò IA (cấu hình sai có chủ đích, chỉ ở SIT, như U-T68-IA2) rồi duyệt.
   3. Gọi API duyệt bằng tài khoản dịch vụ S-INT.
 - **Mong đợi** Bước 1, 2 `403` ERR-05-011 (người đề nghị, người sửa gần nhất). Bước 3 403-PQ (tài khoản dịch vụ không có quyền duyệt).
 
@@ -1976,7 +1977,7 @@ Mỗi ca tự động mang thẻ mã ca (`@Tag("TC-05-nnn")`, `test('TC-05-nnn �
 @Tag("canary") @Tag("TC-05-120")
 @Test void canaryNeverLeavesOpenBao() {
   var canary = "DH-CANARY-L1-" + UUID.randomUUID();
-  var c = fixtures.connection("tc-canary", "http-rest");
+  var c = fixtures.connection("tc-canary", "oauth2-client");
   api.as(U_T68_IE1).body(Map.of("clientId", "tc", "clientSecret", canary))
      .put(c.url() + "/environments/TEST/secret").then().statusCode(204);
   api.as(U_T68_IE1).post(c.url() + "/environments/TEST/tests").then().statusCode(202);
@@ -1997,7 +1998,7 @@ Mỗi ca tự động mang thẻ mã ca (`@Tag("TC-05-nnn")`, `test('TC-05-nnn �
             "jt400.yaml,KR-08", "too-big.yaml,KR-10"})
 void staticCheckRejects(String file, String rule) {
   var report = checker.check(Fixtures.kamelet(file), Catalog.forTenant("T68", "core-native"));
-  assertThat(report.violations()).extracting(Violation::rule).contains(rule);
+  assertThat(report.findings()).extracting(Finding::rule).contains(rule);
   assertThat(report.blocking()).isTrue();
 }
 ```

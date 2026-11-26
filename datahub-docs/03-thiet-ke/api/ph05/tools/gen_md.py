@@ -10,6 +10,7 @@ for code, method, path, summary, fr, perm, idem, success, group in spec.OPS:
         cur = group
         rows.append(f"\n**{g.TAGS[group]}**\n\n| Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |\n|---|---|---|---|---|---|---|")
     p = f"`{g.SERVICE_SCOPE[code]}` (dịch vụ)" if perm == "service" else f"`PERM-05-{perm}`"
+    if code in g.ANY_PERM: p = " hoặc ".join(f"`{x}`" for x in g.ANY_PERM[code])
     rows.append(f"| API-05-{code} | `{method} {path}` | {summary} | {fr} | {p} | {'có' if idem else ''} | {success} |")
 block = "<!-- gen:endpoints:start -->\n" + "\n".join(rows).lstrip("\n") + "\n<!-- gen:endpoints:end -->"
 s = open(DOC, encoding="utf-8").read()
