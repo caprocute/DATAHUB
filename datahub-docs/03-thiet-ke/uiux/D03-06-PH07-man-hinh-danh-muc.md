@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-PH07
 ten: Thiết kế giao diện màn hình phân hệ Danh mục dùng chung
-phien_ban: 0.2
-ngay: 2026-11-25
+phien_ban: 0.3
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện, Thiết kế UX/UI, Phân tích nghiệp vụ, Kiểm thử, Kiến trúc sư
 phan_he: PH-07
@@ -72,7 +72,7 @@ Các tài liệu dưới đây là nguồn của những mã được dẫn chi�
 | Quy tắc UI CRUD hiện có | `../../../docs/ui_ux_rule.md` | Chuẩn CRUD-UI, CRUD-FLT, CRUD-TBL… đang áp dụng |
 | Mockup hiện có | `../../../mockup/pages/reference.html` | Bản phác cũ của màn danh mục |
 
-Tại thời điểm viết, tài liệu D03-05 và ADR-020 (Liquid Glass trên antd v6) chưa có trong `datahub-docs/`. Tài liệu này dùng tên thành phần `CMP-` và token `TKN-` theo giả định hợp lý, và tổng hợp ở Phụ lục A danh sách đề nghị D03-05 bổ sung. Khi D03-05 ban hành, nhóm PH-07 đối chiếu và đổi tên nếu khác.
+Bản 0.1 viết khi D03-05 chưa có nên dùng tên `CMP-` và token `TKN-` giả định. Bản 0.3 (26/11/2026) đã đối chiếu với D03-05-01…04 và D03-06-00: token dùng tên chuẩn của D03-05-02 (bỏ tiền tố `TKN-`), thành phần dùng tên chuẩn của D03-05-03/04 (bảng bí danh ở D03-05-04 §14.2), mẫu bố cục dùng PTN-01…14 của D03-06-00, route và tham số URL theo D03-06-00 §2.4. Phụ lục A ghi cách xử lý từng đề nghị. Khi có khác biệt về giá trị thị giác, D03-05-02 thắng; về cách dùng trong màn, D03-06-00 thắng.
 
 ## 2. Nguyên tắc thiết kế áp dụng cho PH-07
 
@@ -84,16 +84,17 @@ Design system của Datahub dùng vật liệu kính mờ (Liquid Glass) với `
 
 | Lớp | Thành phần | Vật liệu | Token nền |
 |---|---|---|---|
-| Lớp điều hướng | Thanh trên của `CMP-AppShell`, thanh bên, breadcrumb | Glass thường | `TKN-color-surface-glass-regular` |
-| Lớp nổi | `CMP-Drawer`, `Modal`, `Popover`, `Dropdown`, thanh thao tác hàng loạt nổi, khay tác vụ nền | Glass dày (độ mờ cao hơn, nền gần đặc) | `TKN-color-surface-glass-thick` |
-| Thanh công cụ dính (sticky) | Thanh công cụ trên bảng, chân trình hướng dẫn | Glass mỏng có lớp phủ đặc 88% | `TKN-color-surface-glass-toolbar` |
-| Lớp nội dung | Bảng bản ghi, trình sửa ô, biểu mẫu, bảng khác biệt, cây, khung mã JSON | **Nền đặc** | `TKN-color-surface-solid`, `TKN-color-surface-solid-raised` |
+| Lớp điều hướng | `CMP-Topbar`, `CMP-Sidebar` của `CMP-AppShell` (breadcrumb nằm trong Topbar) | Glass chrome | `glass-chrome`, khi cuộn `glass-chrome-scrolled` |
+| Lớp nổi | `CMP-Popover`, `CMP-Dropdown`, `CMP-Tooltip`, khay tác vụ nền `CMP-BackgroundTaskTray` | Glass overlay | `glass-overlay` |
+| Hộp thoại | `CMP-Modal`, `CMP-Drawer`, `CMP-CommandPalette` | Glass modal: viền và đầu hộp là kính, **giếng nội dung đặc** | `glass-modal` + giếng `color-surface-solid` |
+| Thanh công cụ dính (sticky) | Thanh công cụ trên bảng, thanh thao tác hàng loạt của bảng, chân trình hướng dẫn | **Nền đặc** (bản 0.1 đề xuất kính mỏng phủ 88%; D03-05-01 §3.1 không chấp nhận vì nằm trong lớp nội dung) | `color-surface-solid`, viền trên `color-border-subtle` |
+| Lớp nội dung | Bảng bản ghi, trình sửa ô, biểu mẫu, bảng khác biệt, cây, khung mã JSON | **Nền đặc** | `color-surface-solid`, `color-surface-solid-2` |
 
-Lý do chọn nền đặc cho lớp nội dung: văn bản trong bảng có cỡ chữ nhỏ (13–14 px) nên cần tương phản ổn định 4,5:1 theo NFR-00-041; màu nền của dòng khác biệt (xanh, vàng, đỏ nhạt) phải đọc chính xác, không bị pha bởi hình nền phía sau; và việc cuộn bảng ảo hóa với hàng nghìn dòng trên nền `backdrop-filter` gây giật trên máy văn phòng cấu hình trung bình (NFR-00-005, INP ≤ 200 ms). Khi người dùng bật "Giảm trong suốt" (`prefers-reduced-transparency` hoặc công tắc trong cài đặt, NFR-00-043), mọi lớp glass chuyển sang nền đặc tương ứng `TKN-color-surface-solid-*`; giao diện PH-07 không được có chỗ nào phụ thuộc vào hiệu ứng trong suốt để truyền đạt thông tin.
+Lý do chọn nền đặc cho lớp nội dung: văn bản trong bảng có cỡ chữ nhỏ (13–14 px) nên cần tương phản ổn định 4,5:1 theo NFR-00-041; màu nền của dòng khác biệt (xanh, vàng, đỏ nhạt) phải đọc chính xác, không bị pha bởi hình nền phía sau; và việc cuộn bảng ảo hóa với hàng nghìn dòng trên nền `backdrop-filter` gây giật trên máy văn phòng cấu hình trung bình (NFR-00-005, INP ≤ 200 ms). Khi người dùng bật "Giảm trong suốt" (`prefers-reduced-transparency` hoặc công tắc trong cài đặt, NFR-00-043), mọi lớp glass chuyển sang nền đặc tương ứng `color-surface-solid-*`; giao diện PH-07 không được có chỗ nào phụ thuộc vào hiệu ứng trong suốt để truyền đạt thông tin.
 
 ### 2.2. Mật độ thông tin
 
-Người dùng PH-07 là cán bộ quản lý danh mục làm việc nhiều giờ với bảng dữ liệu. PH-07 dùng mật độ "gọn" (`TKN-density-compact`, tương ứng `size="small"` của antd: dòng bảng cao 32 px, ô nhập cao 28 px) cho bảng bản ghi, bảng khác biệt, bảng lỗi nhập; dùng mật độ "thường" (`TKN-density-default`, dòng 40 px) cho danh sách danh mục, biểu mẫu thông tin và các hộp thoại. Người dùng có thể đổi mật độ bảng bằng nút "Mật độ hiển thị" trên thanh công cụ bảng (Gọn, Thường, Thoáng); lựa chọn được lưu theo người dùng trong `localStorage` với khóa `dh.rdm.density.{tableId}`. Lý do: một màn hình 1366×768 với mật độ gọn hiển thị được khoảng 16 dòng bản ghi cùng thanh công cụ, đủ để rà soát mà không cuộn liên tục.
+Người dùng PH-07 là cán bộ quản lý danh mục làm việc nhiều giờ với bảng dữ liệu. PH-07 dùng mật độ "gọn" (thuộc tính `data-density="compact"` của D03-05-02 §12.4, tương ứng `size="small"` của antd: dòng bảng cao 32 px, ô nhập cao 28 px) cho bảng bản ghi, bảng khác biệt, bảng lỗi nhập; dùng mật độ "thường" (`data-density="default"`, dòng 40 px) cho danh sách danh mục, biểu mẫu thông tin và các hộp thoại. Người dùng có thể đổi mật độ bảng bằng nút "Mật độ hiển thị" trên thanh công cụ bảng (Gọn, Thường, Thoáng); lựa chọn được lưu theo người dùng trong `localStorage` với khóa `dh.rdm.density.{tableId}`. Lý do: một màn hình 1366×768 với mật độ gọn hiển thị được khoảng 16 dòng bản ghi cùng thanh công cụ, đủ để rà soát mà không cuộn liên tục.
 
 ### 2.3. Ngôn ngữ, định dạng ngày giờ và số
 
@@ -111,7 +112,7 @@ Quy ước hiển thị khi hành động không khả dụng: nếu người d�
 
 ### 2.5. Danh mục chỉ đọc: COMMON và NATIONAL
 
-Danh mục có `tenant_id = 'COMMON'` chỉ tenant `PLATFORM` được ghi; danh mục `source_type = NATIONAL` chỉ cập nhật qua đồng bộ (BR-07-009). Với người dùng tenant tỉnh, các danh mục này hiện ở chế độ chỉ đọc với ba dấu hiệu nhất quán: biểu tượng khóa cạnh tên kèm nhãn "Dùng chung toàn quốc" hoặc "Nguồn quốc gia"; một `Alert` loại thông tin ở đầu màn chi tiết giải thích vì sao không sửa được và chỉ cách mở rộng (tạo danh mục HYBRID); các nút sửa, nhập, tạo bản nháp bị ẩn. Danh mục HYBRID hiển thị bản ghi kế thừa từ danh mục gốc ở chế độ chỉ đọc (chữ màu `TKN-color-text-secondary`, biểu tượng mắt xích) và bản ghi bổ sung địa phương sửa được.
+Danh mục có `tenant_id = 'COMMON'` chỉ tenant `PLATFORM` được ghi; danh mục `source_type = NATIONAL` chỉ cập nhật qua đồng bộ (BR-07-009). Với người dùng tenant tỉnh, các danh mục này hiện ở chế độ chỉ đọc với ba dấu hiệu nhất quán: biểu tượng khóa cạnh tên kèm nhãn "Dùng chung toàn quốc" hoặc "Nguồn quốc gia"; một `Alert` loại thông tin ở đầu màn chi tiết giải thích vì sao không sửa được và chỉ cách mở rộng (tạo danh mục HYBRID); các nút sửa, nhập, tạo bản nháp bị ẩn. Danh mục HYBRID hiển thị bản ghi kế thừa từ danh mục gốc ở chế độ chỉ đọc (chữ màu `color-text-secondary`, biểu tượng mắt xích) và bản ghi bổ sung địa phương sửa được.
 
 ### 2.6. Không chỉ dùng màu
 
@@ -127,19 +128,21 @@ Bộ lọc, sắp xếp, trang, tab đang mở, phiên bản đang xem, chế đ
 
 ## 3. Mẫu bố cục màn hình (PTN) dùng trong PH-07
 
-Mã `PTN-nn` là mẫu bố cục màn hình do bộ D03-06 quy định. Do tài liệu mẫu bố cục chung chưa ban hành, PH-07 dùng bảy mẫu dưới đây; bảng mô tả cấu trúc vùng để đội phát triển dựng `layout` dùng lại được giữa các màn.
+Mã `PTN-nn` là mẫu bố cục màn hình do D03-06-00 §4 quy định. Bản 0.1 dùng bảy mẫu đề xuất riêng của PH-07; bản 0.3 đổi sang mã chung theo bảng dưới đây; bảng mô tả cấu trúc vùng để đội phát triển dựng `layout` dùng lại được giữa các màn.
 
-| Mã | Tên mẫu | Cấu trúc | Màn PH-07 dùng |
-|---|---|---|---|
-| PTN-01 | Danh sách có cây phân loại | Tiêu đề trang, thẻ đếm, vùng hai cột: cây bên trái (rộng 280 px, thu gọn được), bảng bên phải gồm bộ lọc, thanh công cụ, bảng, phân trang | UI-07-01 |
-| PTN-02 | Danh sách đơn | Tiêu đề trang, bộ lọc, thanh công cụ, bảng, phân trang | UI-07-08, UI-07-09 (tab), UI-07-10 (danh sách hệ thống mã) |
-| PTN-03 | Chi tiết có tab | Tiêu đề đối tượng kèm nhãn trạng thái và nút hành động, dải thông tin tóm tắt, thanh tab, nội dung tab | UI-07-02 |
-| PTN-04 | Trình hướng dẫn nhiều bước | Tiêu đề, `Steps`, nội dung bước, chân dính với nút Quay lại, Tiếp tục, Hủy | UI-07-03, UI-07-06 |
-| PTN-05 | Không gian soạn thảo | Tiêu đề kèm dải trạng thái bản nháp, thanh công cụ, vùng làm việc chiếm toàn chiều cao (bảng hoặc cây chia đôi với biểu mẫu), chân trạng thái | UI-07-04, UI-07-05 |
-| PTN-06 | So sánh và quyết định | Tiêu đề kèm bộ chọn hai phiên bản, thẻ tóm tắt, cảnh báo, bảng khác biệt, ngăn quyết định dính bên phải hoặc chân | UI-07-07, chi tiết lần đồng bộ ở UI-07-09 |
-| PTN-07 | Công cụ chia khung | Tiêu đề, vùng tham số bên trái hoặc trên, vùng kết quả bên phải hoặc dưới, có thể đổi kích thước khung | UI-07-11 (tab chuyển mã), UI-07-12 |
+| Mã D03-06-00 | Tên mẫu chung | Mã PH-07 bản 0.1 | Cách PH-07 dùng | Màn PH-07 |
+|---|---|---|---|---|
+| PTN-08 | Cây + bảng | PTN-01 | Cây nhóm danh mục bên trái (rộng 280 px, thu gọn được), bảng danh mục bên phải gồm bộ lọc, thanh công cụ, bảng, phân trang; thẻ đếm `CMP-KpiCard` biến thể `filter` trên đầu | UI-07-01 |
+| PTN-01 | Danh sách | PTN-02 | Tiêu đề trang, bộ lọc, thanh công cụ, bảng, phân trang | UI-07-08, UI-07-09 (tab), UI-07-10 (danh sách hệ thống mã) |
+| PTN-02 | Chi tiết | PTN-03 | Tiêu đề đối tượng kèm nhãn trạng thái và nút hành động, dải thông tin tóm tắt, thanh tab, nội dung tab; biến thể công cụ chia khung dùng `CMP-Splitter` cho UI-07-11, UI-07-12 | UI-07-02, UI-07-11, UI-07-12 |
+| PTN-03 | Biểu mẫu trang | PTN-04 (phần sửa) | Biểu mẫu một trang chia khu, chân dính | UI-07-03 (sửa) |
+| PTN-05 | Wizard | PTN-04 | `CMP-Wizard`: tiêu đề, `Steps`, nội dung bước, chân dính với nút Quay lại, Tiếp tục, Hủy | UI-07-03 (tạo) |
+| PTN-09 | Nhập có xem trước | PTN-04 | Bốn bước Chọn tệp, Ghép cột, Xem trước, Kết quả; khay tác vụ nền | UI-07-06 |
+| PTN-07 | Designer, biến thể soạn thảo bảng | PTN-05 | Dải trạng thái bản nháp (`CMP-SaveIndicator`), thanh công cụ, vùng làm việc chiếm toàn chiều cao (bảng hoặc cây chia đôi với biểu mẫu), thanh trạng thái; không có canvas | UI-07-04, UI-07-05, UI-07-10 (bảng ánh xạ) |
+| PTN-10 | Hộp việc và duyệt, biến thể so sánh | PTN-06 | Tiêu đề kèm bộ chọn hai phiên bản, thẻ tóm tắt, cảnh báo, `CMP-DiffTable`, `CMP-DecisionPanel` dính bên phải hoặc chân | UI-07-07, UI-07-09 (chi tiết lần chạy) |
+| PTN-02 (biến thể chia khung) | Chi tiết | PTN-07 | Vùng tham số bên trái hoặc trên, vùng kết quả bên phải hoặc dưới, đổi kích thước bằng `CMP-Splitter` | UI-07-11 (tab chuyển mã), UI-07-12 |
 
-> **Câu hỏi mở Q07-67:** Số hiệu `PTN-01…07` ở đây là đề xuất của PH-07. Khi tài liệu mẫu bố cục chung của bộ D03-06 ban hành với số hiệu khác, PH-07 sẽ đổi theo. Cần xác nhận ai giữ danh sách PTN chung.
+> **Câu hỏi mở Q07-67 (đã đóng ở bản 0.3):** D03-06-00 đã ban hành bộ mẫu chung PTN-01…14. Bảng trên đổi mã bảy mẫu đề xuất của bản 0.1 sang mã chung; mọi bảng "Mẫu bố cục" trong tài liệu đã dùng mã mới. Biến thể "soạn thảo bảng" và "so sánh" được D03-06-00 §4 chấp nhận là biến thể của PTN-07 và PTN-10.
 
 ## 4. Điều hướng
 
@@ -149,31 +152,31 @@ Sơ đồ dưới đây thể hiện các trang của PH-07 trong `dh-console` v
 
 ```mermaid
 flowchart TB
-    MENU["Menu: Danh mục dùng chung"] --> L["UI-07-01 Danh sách danh mục<br/>/rdm/catalogs"]
-    MENU --> J["UI-07-08 Tác vụ nhập xuất<br/>/rdm/jobs"]
-    MENU --> S["UI-07-09 Đồng bộ quốc gia<br/>/rdm/sync"]
-    MENU --> M["UI-07-10 Ánh xạ mã<br/>/rdm/mappings"]
-    MENU --> A["UI-07-11 Đơn vị hành chính<br/>/rdm/admin-units"]
-    MENU --> Q["UI-07-12 Thử truy vấn API<br/>/rdm/query-playground"]
+    MENU["Menu: Danh mục dùng chung"] --> L["UI-07-01 Danh sách danh mục<br/>/du-lieu/danh-muc"]
+    MENU --> J["UI-07-08 Tác vụ nhập xuất<br/>/du-lieu/danh-muc/tac-vu"]
+    MENU --> S["UI-07-09 Đồng bộ quốc gia<br/>/du-lieu/dong-bo-quoc-gia"]
+    MENU --> M["UI-07-10 Ánh xạ mã<br/>/du-lieu/danh-muc/anh-xa"]
+    MENU --> A["UI-07-11 Đơn vị hành chính<br/>/du-lieu/danh-muc/don-vi-hanh-chinh"]
+    MENU --> Q["UI-07-12 Thử truy vấn API<br/>/du-lieu/danh-muc/thu-truy-van"]
     MENU --> P["UI-07-13 Tham số PH-07<br/>/ops/parameters?ns=07.rdm"]
 
-    L --> N["UI-07-03 Tạo danh mục<br/>/rdm/catalogs/new"]
-    L --> NF["UI-07-06 Tạo danh mục từ tệp<br/>/rdm/import/new?mode=CREATE_CATALOG"]
-    L --> D["UI-07-02 Chi tiết danh mục<br/>/rdm/catalogs/:code/:tab"]
+    L --> N["UI-07-03 Tạo danh mục<br/>/du-lieu/danh-muc/moi"]
+    L --> NF["UI-07-06 Tạo danh mục từ tệp<br/>/du-lieu/danh-muc/nhap?che-do=tao-danh-muc"]
+    L --> D["UI-07-02 Chi tiết danh mục<br/>/du-lieu/danh-muc/:ma/:tab"]
     N --> D
-    D --> E3["UI-07-03 Sửa thông tin<br/>/rdm/catalogs/:code/settings"]
-    D --> SC["UI-07-04 Sửa lược đồ<br/>/rdm/catalogs/:code/versions/:v/schema"]
-    D --> ED["UI-07-05 Sửa bản ghi<br/>/rdm/catalogs/:code/versions/:v/edit"]
-    D --> CP["UI-07-07 So sánh và duyệt<br/>/rdm/catalogs/:code/versions/:v/compare"]
-    ED --> IM["UI-07-06 Nhập tệp<br/>/rdm/catalogs/:code/import/new"]
-    IM --> IJ["UI-07-06 Theo dõi tác vụ nhập<br/>/rdm/import/:jobId"]
+    D --> E3["UI-07-03 Sửa thông tin<br/>/du-lieu/danh-muc/:ma/sua"]
+    D --> SC["UI-07-04 Sửa lược đồ<br/>/du-lieu/danh-muc/:ma/phien-ban/:v/luoc-do"]
+    D --> ED["UI-07-05 Sửa bản ghi<br/>/du-lieu/danh-muc/:ma/phien-ban/:v/sua-ban-ghi"]
+    D --> CP["UI-07-07 So sánh và duyệt<br/>/du-lieu/danh-muc/:ma/phien-ban/:v/so-sanh"]
+    ED --> IM["UI-07-06 Nhập tệp<br/>/du-lieu/danh-muc/:ma/nhap"]
+    IM --> IJ["UI-07-06 Theo dõi tác vụ nhập<br/>/du-lieu/danh-muc/nhap/:ma-tac-vu"]
     NF --> IJ
     J --> IJ
     ED --> CP
     SC --> ED
-    S --> SR["UI-07-09 Chi tiết lần đồng bộ<br/>/rdm/sync/runs/:runId"]
+    S --> SR["UI-07-09 Chi tiết lần đồng bộ<br/>/du-lieu/dong-bo-quoc-gia/lan-chay/:ma-lan-chay"]
     SR --> CP
-    M --> MC["UI-07-10 Bảng ánh xạ<br/>/rdm/mappings/:csCode?catalog=:code"]
+    M --> MC["UI-07-10 Bảng ánh xạ<br/>/du-lieu/danh-muc/anh-xa/:ma-he-ma?danh-muc=:ma"]
     D --> MC
     A --> D
 ```
@@ -184,28 +187,28 @@ Sơ đồ cho thấy UI-07-02 Chi tiết danh mục là trung tâm của phân h
 
 Ứng dụng dùng React Router 7 ở chế độ dữ liệu (data router). Mọi route PH-07 được khai báo trong `src/features/rdm/routes.tsx` và nạp lười (`lazy`) theo từng màn để giảm kích thước gói tải ban đầu. Bảng sau liệt kê route, màn hình, tham số đường dẫn và tham số truy vấn được giữ trên URL.
 
-| Route | Màn | Tham số đường dẫn | Tham số truy vấn (giữ trạng thái) | Quyền tối thiểu |
-|---|---|---|---|---|
-| `/rdm` | Chuyển hướng tới `/rdm/catalogs` | — | — | `PERM-07-read` |
-| `/rdm/catalogs` | UI-07-01 | — | `q`, `group`, `source`, `status`, `cls`, `owner`, `scope` (`all`/`tenant`/`common`), `page`, `size`, `sort` | `PERM-07-read` |
-| `/rdm/catalogs/new` | UI-07-03 (tạo) | — | `step` (1–3), `group` (nhóm định sẵn) | `PERM-07-create` |
-| `/rdm/catalogs/:code` | Chuyển hướng tới `/rdm/catalogs/:code/overview` | `code` | — | `PERM-07-read` |
-| `/rdm/catalogs/:code/:tab` | UI-07-02 | `code`, `tab` ∈ `overview`, `items`, `attributes`, `versions`, `mappings`, `sync`, `access`, `history` | Tab `items`: `v`, `view` (`table`/`tree`), `q`, `status`, `parent`, `page`, `size`, `sort`, `node`; tab `versions`: `status`; tab `history`: `from`, `to`, `action`, `page` | `PERM-07-read` |
-| `/rdm/catalogs/:code/settings` | UI-07-03 (sửa) | `code` | `section` | `PERM-07-update` |
-| `/rdm/catalogs/:code/versions/:v/schema` | UI-07-04 | `code`, `v` (số phiên bản hoặc `draft`) | `attr` (thuộc tính đang mở) | `PERM-07-read` (chỉ đọc), `PERM-07-update` (sửa) |
-| `/rdm/catalogs/:code/versions/:v/edit` | UI-07-05 | `code`, `v` | `view`, `q`, `status`, `dirty` (`1` lọc dòng chưa lưu), `invalid` (`1`), `item`, `node`, `page`, `size`, `sort` | `PERM-07-update` |
-| `/rdm/catalogs/:code/versions/:v/compare` | UI-07-07 | `code`, `v` | `against` (số phiên bản hoặc `current`), `type` (`added`/`changed`/`deprecated`/`breaking`), `q`, `page` | `PERM-07-read` |
-| `/rdm/catalogs/:code/import/new` | UI-07-06 bước 1–2 | `code` | `mode` | `PERM-07-update` |
-| `/rdm/import/new` | UI-07-06 bước 1–2, tạo danh mục từ tệp | — | `mode=CREATE_CATALOG`, `group` | `PERM-07-create` |
-| `/rdm/import/:jobId` | UI-07-06 bước 3–4 | `jobId` | `filter` (`all`/`invalid`/`insert`/`update`/`deprecate`), `page`, `size` | `PERM-07-update` |
-| `/rdm/jobs` | UI-07-08 | — | `type`, `status`, `catalog`, `mine`, `from`, `to`, `page`, `size` | `PERM-07-read` |
-| `/rdm/sync` | UI-07-09 | — | `tab` (`sources`/`runs`/`discover`), `status`, `page` | `PERM-07-read` |
-| `/rdm/sync/runs/:runId` | UI-07-09 chi tiết lần chạy | `runId` | `type`, `breaking`, `page` | `PERM-07-read` |
-| `/rdm/mappings` | UI-07-10 danh sách hệ thống mã | — | `q`, `status`, `page` | `PERM-07-read` |
-| `/rdm/mappings/:csCode` | UI-07-10 bảng ánh xạ | `csCode` | `catalog` (bắt buộc), `q`, `relation`, `provisional`, `unmapped`, `page` | `PERM-07-read` |
-| `/rdm/admin-units` | UI-07-11 | — | `tab` (`tree`/`timeline`/`convert`), `at`, `node`, `event`, `from`, `to`, `province` | `PERM-07-read` |
-| `/rdm/query-playground` | UI-07-12 | — | `catalog`, `q` (DSL nén base64url, tùy chọn) | `PERM-07-read` |
-| `/ops/parameters` | UI-07-13 (route của PH-18) | — | `ns=07.rdm` | `PERM-07-configure` (đề xuất bổ sung D02-08) |
+| Route | Màn | Tham số đường dẫn | Tham số truy vấn (giữ trạng thái) | Quyền tối thiểu | Route cũ (chuyển hướng) |
+|---|---|---|---|---|---|
+| `/du-lieu/danh-muc` | UI-07-01 | — | `q`, `nhom`, `nguon`, `trang-thai`, `phan-loai`, `co-quan`, `pham-vi` (`tat-ca`/`tinh`/`dung-chung`), `trang`, `co`, `sap-xep`, `bo-loc` | `PERM-07-read` | `/rdm`, `/rdm/catalogs` |
+| `/du-lieu/danh-muc/moi` | UI-07-03 (tạo) | — | `buoc` (1–3), `nhom` (nhóm định sẵn) | `PERM-07-create` | `/rdm/catalogs/new` |
+| `/du-lieu/danh-muc/:ma` | Chuyển hướng tới `/du-lieu/danh-muc/:ma/tong-quan` | `ma` | — | `PERM-07-read` | `/rdm/catalogs/:code` |
+| `/du-lieu/danh-muc/:ma/:tab` | UI-07-02 | `ma`, `tab` ∈ `tong-quan`, `ban-ghi`, `thuoc-tinh`, `phien-ban`, `anh-xa`, `dong-bo`, `quyen-truy-cap`, `lich-su` | Tab `ban-ghi`: `phien-ban`, `kieu-xem` (`bang`/`cay`), `q`, `trang-thai`, `cha`, `trang`, `co`, `sap-xep`, `nut`; tab `phien-ban`: `trang-thai`; tab `lich-su`: `tu`, `den`, `hanh-dong`, `trang` | `PERM-07-read` | `/rdm/catalogs/:code/:tab` (tab cũ `overview`, `items`, `attributes`, `versions`, `mappings`, `sync`, `access`, `history` ánh xạ theo thứ tự) |
+| `/du-lieu/danh-muc/:ma/sua` | UI-07-03 (sửa) | `ma` | `muc` (nhóm trường đang mở) | `PERM-07-update` | `/rdm/catalogs/:code/settings` |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/luoc-do` | UI-07-04 | `ma`, `v` (số phiên bản hoặc `nhap`) | `thuoc-tinh` (thuộc tính đang mở) | `PERM-07-read` (chỉ đọc), `PERM-07-update` (sửa) | `/rdm/catalogs/:code/versions/:v/schema` |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/sua-ban-ghi` | UI-07-05 | `ma`, `v` | `kieu-xem`, `q`, `trang-thai`, `chua-luu` (`1` lọc dòng chưa lưu), `loi` (`1`), `chon`, `nut`, `trang`, `co`, `sap-xep` | `PERM-07-update` | `/rdm/catalogs/:code/versions/:v/edit` |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/so-sanh` | UI-07-07 | `ma`, `v` | `so-voi` (số phiên bản hoặc `hien-hanh`), `loai` (`them`/`sua`/`ngung`/`pha-vo`), `q`, `trang` | `PERM-07-read` | `/rdm/catalogs/:code/versions/:v/compare` |
+| `/du-lieu/danh-muc/:ma/nhap` | UI-07-06 bước 1–2 | `ma` | `che-do` | `PERM-07-update` | `/rdm/catalogs/:code/import/new` |
+| `/du-lieu/danh-muc/nhap` | UI-07-06 bước 1–2, tạo danh mục từ tệp | — | `che-do=tao-danh-muc`, `nhom` | `PERM-07-create` | `/rdm/import/new` |
+| `/du-lieu/danh-muc/nhap/:ma-tac-vu` | UI-07-06 bước 3–4 | `ma-tac-vu` | `loc` (`tat-ca`/`loi`/`them`/`sua`/`ngung`), `trang`, `co` | `PERM-07-update` | `/rdm/import/:jobId` |
+| `/du-lieu/danh-muc/tac-vu` | UI-07-08 | — | `loai`, `trang-thai`, `danh-muc`, `cua-toi`, `tu`, `den`, `trang`, `co` | `PERM-07-read` | `/rdm/jobs` |
+| `/du-lieu/dong-bo-quoc-gia` | UI-07-09 | — | `tab` (`nguon`/`lan-chay`/`kham-pha`), `trang-thai`, `trang` | `PERM-07-read` | `/rdm/sync` |
+| `/du-lieu/dong-bo-quoc-gia/lan-chay/:ma-lan-chay` | UI-07-09 chi tiết lần chạy | `ma-lan-chay` | `loai`, `pha-vo`, `trang` | `PERM-07-read` | `/rdm/sync/runs/:runId` |
+| `/du-lieu/danh-muc/anh-xa` | UI-07-10 danh sách hệ thống mã | — | `q`, `trang-thai`, `trang` | `PERM-07-read` | `/rdm/mappings` |
+| `/du-lieu/danh-muc/anh-xa/:ma-he-ma` | UI-07-10 bảng ánh xạ | `ma-he-ma` | `danh-muc` (bắt buộc), `q`, `quan-he`, `tam-thoi`, `chua-anh-xa`, `trang` | `PERM-07-read` | `/rdm/mappings/:csCode` |
+| `/du-lieu/danh-muc/don-vi-hanh-chinh` | UI-07-11 | — | `tab` (`cay`/`dong-thoi-gian`/`quy-doi`), `tai-ngay`, `nut`, `su-kien`, `tu`, `den`, `tinh` | `PERM-07-read` | `/rdm/admin-units` |
+| `/du-lieu/danh-muc/thu-truy-van` | UI-07-12 | — | `danh-muc`, `truy-van` (DSL nén base64url, tùy chọn) | `PERM-07-read` | `/rdm/query-playground` |
+
+**Quy ước tham số và chuyển hướng (bản 0.3).** Đường dẫn và tham số theo quy tắc URL của D03-06-00 §2.4: đoạn tiếng Việt không dấu `kebab-case`, `trang` bắt đầu từ 1, `co` thuộc 10/20/50/100, `sap-xep=truong:tang|giam`, giá trị lọc là mã giá trị `kebab-case` (ví dụ `trang-thai=phat-hanh`). Tham số API giữ nguyên tên tiếng Anh của D03-03-PH07 (`page`, `size`, `sort`, `status`…); hook `useDhListParams` ánh xạ hai chiều (D03-05-04 §8.1). Các route `/rdm/...` của bản 0.1 và 0.2 được chuyển hướng phía client (`replace`) sang route mới trong hai đợt phát hành, đổi cả tên tham số, để liên kết đã chia sẻ không hỏng. Mục 5.1 và các mục màn hình bên dưới dùng route mới; tên tham số tiếng Anh còn xuất hiện ở ví dụ gọi API là tham số API, không phải tham số URL. Thư mục mã `src/features/rdm/` giữ nguyên tên vì là không gian tên mã nguồn.
 
 Mọi route nằm dưới `CMP-AppShell` và được bọc bởi `RequirePermission`. Người dùng không đủ quyền tối thiểu nhận trang 403 của `CMP-AppShell` (mục 6.4) thay vì bị chuyển về trang chủ, để họ biết đường dẫn đúng nhưng thiếu quyền. Tham số `code` trong URL được chuẩn hóa chữ hoa (T-CODE); nếu người dùng gõ chữ thường, router thay thế URL bằng bản chữ hoa mà không thêm mục lịch sử.
 
@@ -215,15 +218,15 @@ Thanh bên của `dh-console` có nhóm "Danh mục dùng chung" với biểu t�
 
 | Thứ tự | Nhãn menu | Route | Biểu tượng (`@ant-design/icons`) | Hiển thị khi |
 |---|---|---|---|---|
-| 1 | Danh mục | `/rdm/catalogs` | `UnorderedListOutlined` | Có `PERM-07-read` |
-| 2 | Tác vụ nhập xuất | `/rdm/jobs` | `CloudSyncOutlined` | Có `PERM-07-create`, `PERM-07-update` hoặc `PERM-07-export` |
-| 3 | Đồng bộ quốc gia | `/rdm/sync` | `SyncOutlined` | Có `PERM-07-sync`, hoặc có `PERM-07-read` và vai trò `ROLE-DATA_STEWARD` (xem chỉ đọc) |
-| 4 | Ánh xạ mã | `/rdm/mappings` | `NodeIndexOutlined` | Có `PERM-07-read` |
-| 5 | Đơn vị hành chính | `/rdm/admin-units` | `ApartmentOutlined` | Có `PERM-07-read` |
-| 6 | Thử truy vấn API | `/rdm/query-playground` | `ExperimentOutlined` | Có `PERM-07-read` và vai trò `ROLE-INTEGRATION_ENGINEER`, `ROLE-DEVELOPER`, `ROLE-DATA_STEWARD`, `ROLE-TENANT_ADMIN` hoặc `ROLE-PLATFORM_ADMIN` |
+| 1 | Danh mục | `/du-lieu/danh-muc` | `UnorderedListOutlined` | Có `PERM-07-read` |
+| 2 | Tác vụ nhập xuất | `/du-lieu/danh-muc/tac-vu` | `CloudSyncOutlined` | Có `PERM-07-create`, `PERM-07-update` hoặc `PERM-07-export` |
+| 3 | Đồng bộ quốc gia | `/du-lieu/dong-bo-quoc-gia` | `SyncOutlined` | Có `PERM-07-sync`, hoặc có `PERM-07-read` và vai trò `ROLE-DATA_STEWARD` (xem chỉ đọc) |
+| 4 | Ánh xạ mã | `/du-lieu/danh-muc/anh-xa` | `NodeIndexOutlined` | Có `PERM-07-read` |
+| 5 | Đơn vị hành chính | `/du-lieu/danh-muc/don-vi-hanh-chinh` | `ApartmentOutlined` | Có `PERM-07-read` |
+| 6 | Thử truy vấn API | `/du-lieu/danh-muc/thu-truy-van` | `ExperimentOutlined` | Có `PERM-07-read` và vai trò `ROLE-INTEGRATION_ENGINEER`, `ROLE-DEVELOPER`, `ROLE-DATA_STEWARD`, `ROLE-TENANT_ADMIN` hoặc `ROLE-PLATFORM_ADMIN` |
 | 7 | Tham số phân hệ | `/ops/parameters?ns=07.rdm` | `SettingOutlined` | Có `PERM-07-configure` |
 
-Mục menu đang chọn được xác định theo tiền tố route dài nhất khớp; ví dụ `/rdm/catalogs/DM_DAN_TOC/items` làm sáng mục "Danh mục". Nhóm menu hiện huy hiệu số (badge) cạnh mục "Đồng bộ quốc gia" bằng số lần đồng bộ ở trạng thái `PENDING_CONFIRMATION`, lấy từ API-07-059 với `status=PENDING_CONFIRMATION&size=0` (chỉ đọc tổng), làm mới 5 phút một lần; huy hiệu chỉ hiện với người có `PERM-07-sync`. Mục "Thử truy vấn API" bị giới hạn theo vai trò vì đây là công cụ kỹ thuật, hiện với cán bộ nghiệp vụ thuần túy chỉ gây rối menu; người dùng khác vẫn mở được bằng đường dẫn trực tiếp nếu có `PERM-07-read`.
+Mục menu đang chọn được xác định theo tiền tố route dài nhất khớp; ví dụ `/du-lieu/danh-muc/DM_DAN_TOC/ban-ghi` làm sáng mục "Danh mục". Nhóm menu hiện huy hiệu số (badge) cạnh mục "Đồng bộ quốc gia" bằng số lần đồng bộ ở trạng thái `PENDING_CONFIRMATION`, lấy từ API-07-059 với `status=PENDING_CONFIRMATION&size=0` (chỉ đọc tổng), làm mới 5 phút một lần; huy hiệu chỉ hiện với người có `PERM-07-sync`. Mục "Thử truy vấn API" bị giới hạn theo vai trò vì đây là công cụ kỹ thuật, hiện với cán bộ nghiệp vụ thuần túy chỉ gây rối menu; người dùng khác vẫn mở được bằng đường dẫn trực tiếp nếu có `PERM-07-read`.
 
 > **Câu hỏi mở Q07-68:** D02-08 chỉ cấp `PERM-07-sync` cho PLATFORM_ADMIN, TENANT_ADMIN và DATA_APPROVER, trong khi khung chung PH-07 §4 ghi DATA_STEWARD có quyền đồng bộ. Tài liệu này theo D02-08 (cán bộ quản lý danh mục chỉ xem trang đồng bộ, không chạy, không xác nhận). Cần nhóm lõi xác nhận có bổ sung `PERM-07-sync` cho DATA_STEWARD không.
 
@@ -233,19 +236,19 @@ Breadcrumb là thành phần của `CMP-PageHeader`, luôn bắt đầu bằng "
 
 | Route | Breadcrumb |
 |---|---|
-| `/rdm/catalogs` | Trang chủ › Danh mục dùng chung › Danh mục |
-| `/rdm/catalogs/new` | Trang chủ › Danh mục dùng chung › Danh mục › Tạo danh mục |
-| `/rdm/catalogs/:code/:tab` | Trang chủ › Danh mục dùng chung › Danh mục › {Tên danh mục} |
-| `/rdm/catalogs/:code/settings` | … › {Tên danh mục} › Sửa thông tin |
-| `/rdm/catalogs/:code/versions/:v/schema` | … › {Tên danh mục} › Phiên bản {v} › Lược đồ thuộc tính |
-| `/rdm/catalogs/:code/versions/:v/edit` | … › {Tên danh mục} › Phiên bản {v} › Sửa bản ghi |
-| `/rdm/catalogs/:code/versions/:v/compare` | … › {Tên danh mục} › Phiên bản {v} › So sánh với {against} |
-| `/rdm/catalogs/:code/import/new`, `/rdm/import/:jobId` | … › {Tên danh mục} › Nhập tệp (khi tạo từ tệp: … › Danh mục › Tạo danh mục từ tệp) |
-| `/rdm/jobs` | Trang chủ › Danh mục dùng chung › Tác vụ nhập xuất |
-| `/rdm/sync`, `/rdm/sync/runs/:runId` | … › Đồng bộ quốc gia (› Lần đồng bộ {thời điểm bắt đầu}) |
-| `/rdm/mappings`, `/rdm/mappings/:csCode` | … › Ánh xạ mã (› {Tên hệ thống mã}) |
-| `/rdm/admin-units` | … › Đơn vị hành chính |
-| `/rdm/query-playground` | … › Thử truy vấn API |
+| `/du-lieu/danh-muc` | Trang chủ › Danh mục dùng chung › Danh mục |
+| `/du-lieu/danh-muc/moi` | Trang chủ › Danh mục dùng chung › Danh mục › Tạo danh mục |
+| `/du-lieu/danh-muc/:ma/:tab` | Trang chủ › Danh mục dùng chung › Danh mục › {Tên danh mục} |
+| `/du-lieu/danh-muc/:ma/sua` | … › {Tên danh mục} › Sửa thông tin |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/luoc-do` | … › {Tên danh mục} › Phiên bản {v} › Lược đồ thuộc tính |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/sua-ban-ghi` | … › {Tên danh mục} › Phiên bản {v} › Sửa bản ghi |
+| `/du-lieu/danh-muc/:ma/phien-ban/:v/so-sanh` | … › {Tên danh mục} › Phiên bản {v} › So sánh với {against} |
+| `/du-lieu/danh-muc/:ma/nhap`, `/du-lieu/danh-muc/nhap/:ma-tac-vu` | … › {Tên danh mục} › Nhập tệp (khi tạo từ tệp: … › Danh mục › Tạo danh mục từ tệp) |
+| `/du-lieu/danh-muc/tac-vu` | Trang chủ › Danh mục dùng chung › Tác vụ nhập xuất |
+| `/du-lieu/dong-bo-quoc-gia`, `/du-lieu/dong-bo-quoc-gia/lan-chay/:ma-lan-chay` | … › Đồng bộ quốc gia (› Lần đồng bộ {thời điểm bắt đầu}) |
+| `/du-lieu/danh-muc/anh-xa`, `/du-lieu/danh-muc/anh-xa/:ma-he-ma` | … › Ánh xạ mã (› {Tên hệ thống mã}) |
+| `/du-lieu/danh-muc/don-vi-hanh-chinh` | … › Đơn vị hành chính |
+| `/du-lieu/danh-muc/thu-truy-van` | … › Thử truy vấn API |
 
 Phiên bản trong breadcrumb hiển thị dạng "v3" với phiên bản số, "Bản nháp" với `draft`. Khi người dùng bấm "Danh mục" trong breadcrumb từ một trang con, router khôi phục bộ lọc UI-07-01 gần nhất đã lưu trong `sessionStorage` (khóa `dh.rdm.catalogs.lastSearch`), đáp ứng CRUD-FLT-07 và CRUD-C-07.
 
@@ -257,37 +260,37 @@ Mọi trạng thái được hiển thị bằng `CMP-StatusTag`, một thành p
 
 | Đối tượng | Giá trị | Nhãn | Token màu | Biểu tượng |
 |---|---|---|---|---|
-| Danh mục | `DRAFT` | Chưa phát hành | `TKN-color-status-neutral` | `EditOutlined` |
-| Danh mục | `ACTIVE` | Đang hoạt động | `TKN-color-status-success` | `CheckCircleOutlined` |
-| Danh mục | `RETIRED` | Ngừng hiệu lực | `TKN-color-status-inactive` | `StopOutlined` |
-| Phiên bản | `DRAFT` | Bản nháp | `TKN-color-status-info` | `EditOutlined` |
-| Phiên bản | `IN_REVIEW` | Chờ duyệt | `TKN-color-status-warning` | `ClockCircleOutlined` |
-| Phiên bản | `APPROVED` | Đã duyệt, chờ phát hành | `TKN-color-status-processing` | `SafetyCertificateOutlined` |
-| Phiên bản | `PUBLISHED` | Đã phát hành | `TKN-color-status-success` | `CheckCircleOutlined` |
-| Phiên bản | `DISCARDED` | Đã hủy | `TKN-color-status-inactive` | `DeleteOutlined` |
-| Hiệu lực (tính) | khoảng chứa hôm nay | Đang hiệu lực | `TKN-color-status-success` (viền) | `FieldTimeOutlined` |
-| Hiệu lực (tính) | `effective_from` > hôm nay | Sắp hiệu lực | `TKN-color-status-info` (viền) | `FieldTimeOutlined` |
-| Hiệu lực (tính) | `effective_to` ≤ hôm nay | Hết hiệu lực | `TKN-color-status-inactive` (viền) | `FieldTimeOutlined` |
-| Bản ghi | `ACTIVE` | Đang dùng | `TKN-color-status-success` | không biểu tượng (giảm nhiễu trong bảng dày) |
-| Bản ghi | `DEPRECATED` | Ngừng dùng | `TKN-color-status-danger` | `MinusCircleOutlined` |
-| Nguồn | `LOCAL` | Địa phương | `TKN-color-source-local` | `HomeOutlined` |
-| Nguồn | `NATIONAL` | Quốc gia | `TKN-color-source-national` | `LockOutlined` |
-| Nguồn | `HYBRID` | Mở rộng | `TKN-color-source-hybrid` | `BranchesOutlined` |
-| Phạm vi | `tenant_id = COMMON` | Dùng chung toàn quốc | `TKN-color-source-common` | `GlobalOutlined` |
-| Phân loại | `PUBLIC` | Công khai | `TKN-color-status-neutral` | không |
-| Phân loại | `INTERNAL` | Nội bộ | `TKN-color-status-info` | `EyeInvisibleOutlined` |
-| Phân loại | `RESTRICTED` | Hạn chế | `TKN-color-status-warning` | `SafetyOutlined` |
-| Tác vụ | `UPLOADED`, `QUEUED`, `SCANNING`, `PARSING`, `VALIDATING`, `COMMITTING`, `RUNNING` | Đã tải lên, Đang chờ, Đang quét an toàn, Đang đọc tệp, Đang kiểm tra, Đang ghi, Đang chạy | `TKN-color-status-processing` | `LoadingOutlined` (dừng xoay khi giảm chuyển động) |
-| Tác vụ | `VALIDATED` | Chờ xác nhận ghi | `TKN-color-status-warning` | `ExclamationCircleOutlined` |
-| Tác vụ | `COMMITTED`, `COMPLETED` | Đã ghi, Hoàn thành | `TKN-color-status-success` | `CheckCircleOutlined` |
-| Tác vụ | `FAILED` | Lỗi | `TKN-color-status-danger` | `CloseCircleOutlined` |
-| Tác vụ | `CANCELLED`, `EXPIRED` | Đã hủy, Hết hạn | `TKN-color-status-inactive` | `StopOutlined` |
-| Lần đồng bộ | `RUNNING` | Đang chạy | `TKN-color-status-processing` | `LoadingOutlined` |
-| Lần đồng bộ | `NO_CHANGE` | Không thay đổi | `TKN-color-status-neutral` | `MinusOutlined` |
-| Lần đồng bộ | `APPLIED` | Đã áp dụng | `TKN-color-status-success` | `CheckCircleOutlined` |
-| Lần đồng bộ | `PENDING_CONFIRMATION` | Chờ xác nhận | `TKN-color-status-warning` | `WarningOutlined` |
-| Lần đồng bộ | `REJECTED` | Đã từ chối | `TKN-color-status-inactive` | `CloseOutlined` |
-| Lần đồng bộ | `FAILED` | Lỗi | `TKN-color-status-danger` | `CloseCircleOutlined` |
+| Danh mục | `DRAFT` | Chưa phát hành | `color-neutral` | `EditOutlined` |
+| Danh mục | `ACTIVE` | Đang hoạt động | `color-success` | `CheckCircleOutlined` |
+| Danh mục | `RETIRED` | Ngừng hiệu lực | `color-neutral` | `StopOutlined` |
+| Phiên bản | `DRAFT` | Bản nháp | `color-info` | `EditOutlined` |
+| Phiên bản | `IN_REVIEW` | Chờ duyệt | `color-warning` | `ClockCircleOutlined` |
+| Phiên bản | `APPROVED` | Đã duyệt, chờ phát hành | `color-info` | `SafetyCertificateOutlined` |
+| Phiên bản | `PUBLISHED` | Đã phát hành | `color-success` | `CheckCircleOutlined` |
+| Phiên bản | `DISCARDED` | Đã hủy | `color-neutral` | `DeleteOutlined` |
+| Hiệu lực (tính) | khoảng chứa hôm nay | Đang hiệu lực | `color-success` (viền) | `FieldTimeOutlined` |
+| Hiệu lực (tính) | `effective_from` > hôm nay | Sắp hiệu lực | `color-info` (viền) | `FieldTimeOutlined` |
+| Hiệu lực (tính) | `effective_to` ≤ hôm nay | Hết hiệu lực | `color-neutral` (viền) | `FieldTimeOutlined` |
+| Bản ghi | `ACTIVE` | Đang dùng | `color-success` | không biểu tượng (giảm nhiễu trong bảng dày) |
+| Bản ghi | `DEPRECATED` | Ngừng dùng | `color-error` | `MinusCircleOutlined` |
+| Nguồn | `LOCAL` | Địa phương | `color-source-local` | `HomeOutlined` |
+| Nguồn | `NATIONAL` | Quốc gia | `color-source-national` | `LockOutlined` |
+| Nguồn | `HYBRID` | Mở rộng | `color-source-hybrid` | `BranchesOutlined` |
+| Phạm vi | `tenant_id = COMMON` | Dùng chung toàn quốc | `color-source-common` | `GlobalOutlined` |
+| Phân loại | `PUBLIC` | Công khai | `color-neutral` | không |
+| Phân loại | `INTERNAL` | Nội bộ | `color-info` | `EyeInvisibleOutlined` |
+| Phân loại | `RESTRICTED` | Hạn chế | `color-warning` | `SafetyOutlined` |
+| Tác vụ | `UPLOADED`, `QUEUED`, `SCANNING`, `PARSING`, `VALIDATING`, `COMMITTING`, `RUNNING` | Đã tải lên, Đang chờ, Đang quét an toàn, Đang đọc tệp, Đang kiểm tra, Đang ghi, Đang chạy | `color-info` | `LoadingOutlined` (dừng xoay khi giảm chuyển động) |
+| Tác vụ | `VALIDATED` | Chờ xác nhận ghi | `color-warning` | `ExclamationCircleOutlined` |
+| Tác vụ | `COMMITTED`, `COMPLETED` | Đã ghi, Hoàn thành | `color-success` | `CheckCircleOutlined` |
+| Tác vụ | `FAILED` | Lỗi | `color-error` | `CloseCircleOutlined` |
+| Tác vụ | `CANCELLED`, `EXPIRED` | Đã hủy, Hết hạn | `color-neutral` | `StopOutlined` |
+| Lần đồng bộ | `RUNNING` | Đang chạy | `color-info` | `LoadingOutlined` |
+| Lần đồng bộ | `NO_CHANGE` | Không thay đổi | `color-neutral` | `MinusOutlined` |
+| Lần đồng bộ | `APPLIED` | Đã áp dụng | `color-success` | `CheckCircleOutlined` |
+| Lần đồng bộ | `PENDING_CONFIRMATION` | Chờ xác nhận | `color-warning` | `WarningOutlined` |
+| Lần đồng bộ | `REJECTED` | Đã từ chối | `color-neutral` | `CloseOutlined` |
+| Lần đồng bộ | `FAILED` | Lỗi | `color-error` | `CloseCircleOutlined` |
 
 > **Câu hỏi mở Q07-69 (đã đóng 25/11/2026):** Tập trạng thái tác vụ được chốt theo FRS §4.14: nhập gồm `UPLOADED`, `SCANNING`, `PARSING`, `VALIDATING`, `VALIDATED`, `COMMITTING`, `COMMITTED`, `FAILED`, `CANCELLED`, `EXPIRED`; xuất gồm `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `EXPIRED`. D03-03-PH07 (`ck_import_job_status`) và OpenAPI (`ImportJobStatus`, `ExportJobStatus`) dùng đúng tập này.
 
@@ -297,13 +300,13 @@ Bảng khác biệt (UI-07-07, chi tiết lần đồng bộ UI-07-09, xem trư�
 
 | Loại | Nhãn | Nền dòng | Viền trái, chữ nhãn | Biểu tượng |
 |---|---|---|---|---|
-| Thêm mới (`ADDED`, `INSERT`) | Thêm mới | `TKN-color-diff-added-bg` | `TKN-color-diff-added-fg` | `PlusOutlined` |
-| Sửa đổi (`CHANGED`, `UPDATE`) | Sửa đổi | `TKN-color-diff-changed-bg` | `TKN-color-diff-changed-fg` | `EditOutlined` |
-| Ngừng dùng (`DEPRECATED`, `REMOVED`, `DEPRECATE`) | Ngừng dùng | `TKN-color-diff-removed-bg` | `TKN-color-diff-removed-fg` | `MinusOutlined` |
-| Không đổi (`UNCHANGED`) | Không đổi | nền đặc thường | `TKN-color-text-secondary` | không |
-| Phá vỡ (cờ bổ sung) | Phá vỡ | giữ nền theo loại | `Tag` màu `TKN-color-status-danger` đặc | `ThunderboltOutlined` |
+| Thêm mới (`ADDED`, `INSERT`) | Thêm mới | `color-diff-added-bg` | `color-diff-added-text` | `PlusOutlined` |
+| Sửa đổi (`CHANGED`, `UPDATE`) | Sửa đổi | `color-diff-changed-bg` | `color-diff-changed-text` | `EditOutlined` |
+| Ngừng dùng (`DEPRECATED`, `REMOVED`, `DEPRECATE`) | Ngừng dùng | `color-diff-removed-bg` | `color-diff-removed-text` | `MinusOutlined` |
+| Không đổi (`UNCHANGED`) | Không đổi | nền đặc thường | `color-text-secondary` | không |
+| Phá vỡ (cờ bổ sung) | Phá vỡ | giữ nền theo loại | `Tag` màu `color-error` đặc | `ThunderboltOutlined` |
 
-Trong ô bị sửa, giá trị cũ hiển thị gạch ngang với `<del>` và giá trị mới với `<ins>`, kèm văn bản ẩn cho trình đọc màn hình "Giá trị cũ:", "Giá trị mới:". Tương phản giữa chữ `TKN-color-diff-*-fg` và nền `TKN-color-diff-*-bg` phải đạt 4,5:1 ở cả chế độ sáng và tối (kiểm tra ở mục 13.3).
+Trong ô bị sửa, giá trị cũ hiển thị gạch ngang với `<del>` và giá trị mới với `<ins>`, kèm văn bản ẩn cho trình đọc màn hình "Giá trị cũ:", "Giá trị mới:". Tương phản giữa chữ `color-diff-*-text` và nền `color-diff-*-bg` phải đạt 4,5:1 ở cả chế độ sáng và tối (kiểm tra ở mục 13.3).
 
 ### 5.3. Bảng thông điệp lỗi chính thức ERR-07 sang câu hiển thị
 
@@ -328,7 +331,7 @@ Giao diện không bao giờ hiển thị `detail` thô của máy chủ. Hàm `
 | ERR-07-015 | `rdm.err.015` | Bạn không được duyệt hoặc phát hành phiên bản do chính mình trình hoặc sửa lần cuối. | Nhờ một người duyệt khác thực hiện (nguyên tắc bốn mắt). | `alert` trong ngăn quyết định |
 | ERR-07-016 | `rdm.err.016` | Phiên bản có thay đổi lớn ({percent}% bản ghi) hoặc thay đổi phá vỡ nên phải qua duyệt. | Bấm "Trình duyệt" thay cho "Phát hành". | `alert` trong ngăn quyết định |
 | ERR-07-017 | `rdm.err.017` | Ngày hiệu lực không hợp lệ. | Ngày hiệu lực phải sau ngày hiệu lực của phiên bản trước ({prevFrom}) và không sớm hơn hôm nay, trừ phiên bản đồng bộ quốc gia hoặc di trú có lý do. | `inline` tại trường Ngày hiệu lực |
-| ERR-07-018 | `rdm.err.018` | Dữ liệu đã được người khác cập nhật trong lúc bạn đang sửa. | Xem khác biệt rồi chọn "Ghi đè" hoặc "Tải lại". | `modal` `CMP-ConflictDialog` (mục 6.5) |
+| ERR-07-018 | `rdm.err.018` | Dữ liệu đã được người khác cập nhật trong lúc bạn đang sửa. | Xem khác biệt rồi chọn "Ghi đè" hoặc "Tải lại". | `modal` `CMP-DiffViewer` (mục 6.5) |
 | ERR-07-019 | `rdm.err.019` | Tệp không hợp lệ: {reason}. | Kiểm tra định dạng (xlsx, csv), mã hóa (UTF-8, UTF-16), kích thước (≤ 50 MB), số dòng (≤ 200.000) và các cột bắt buộc, hoặc tải tệp mẫu. | `alert` trong bước 1 nhập tệp |
 | ERR-07-020 | `rdm.err.020` | Tác vụ nhập không còn ghi được ({reason}). | Kết quả xem trước chỉ giữ 24 giờ và bản nháp không được sửa trong lúc chờ. Hãy nhập lại tệp. | `alert` kèm nút "Nhập lại tệp này" |
 | ERR-07-021 | `rdm.err.021` | Tệp còn {errorRows} dòng lỗi. | Sửa tệp và nhập lại, hoặc chọn "Bỏ qua dòng lỗi" để chỉ ghi {validRows} dòng hợp lệ. | `alert` tại bước 4 |
@@ -385,7 +388,7 @@ Có hai mức. Mức trang: route yêu cầu quyền người dùng không có, 
 
 ### 6.5. Xung đột ETag (FR-00-052)
 
-Mọi thao tác sửa gửi `If-Match` với ETag đã nhận. Khi máy chủ trả 412 với `ERR-07-018`, giao diện mở `CMP-ConflictDialog` gồm: câu giải thích "Dữ liệu đã được {updatedBy} cập nhật lúc {updatedAt} trong lúc bạn đang sửa."; bảng ba cột "Trường", "Giá trị của bạn", "Giá trị hiện tại trên máy chủ" chỉ liệt kê các trường khác nhau (dùng `CMP-DiffViewer` chế độ trường); và ba nút. Nút "Tải lại" (mặc định, có focus) bỏ thay đổi của người dùng, nạp bản mới. Nút "Ghi đè" gửi lại thay đổi với ETag mới vừa đọc, yêu cầu xác nhận lần hai bằng câu "Thay đổi của {updatedBy} sẽ bị thay thế. Tiếp tục?". Nút "Sao chép thay đổi của tôi" lưu giá trị của người dùng vào bộ nhớ tạm dạng JSON để không mất công sức. Hộp thoại không tự đóng khi bấm ngoài. Lý do chọn "Tải lại" làm mặc định: ghi đè có thể xóa mất công việc của đồng nghiệp, nên phải là lựa chọn chủ động.
+Mọi thao tác sửa gửi `If-Match` với ETag đã nhận. Khi máy chủ trả 412 với `ERR-07-018`, giao diện mở `CMP-DiffViewer` gồm: câu giải thích "Dữ liệu đã được {updatedBy} cập nhật lúc {updatedAt} trong lúc bạn đang sửa."; bảng ba cột "Trường", "Giá trị của bạn", "Giá trị hiện tại trên máy chủ" chỉ liệt kê các trường khác nhau (dùng `CMP-DiffViewer` chế độ trường); và ba nút. Nút "Tải lại" (mặc định, có focus) bỏ thay đổi của người dùng, nạp bản mới. Nút "Ghi đè" gửi lại thay đổi với ETag mới vừa đọc, yêu cầu xác nhận lần hai bằng câu "Thay đổi của {updatedBy} sẽ bị thay thế. Tiếp tục?". Nút "Sao chép thay đổi của tôi" lưu giá trị của người dùng vào bộ nhớ tạm dạng JSON để không mất công sức. Hộp thoại không tự đóng khi bấm ngoài. Lý do chọn "Tải lại" làm mặc định: ghi đè có thể xóa mất công việc của đồng nghiệp, nên phải là lựa chọn chủ động.
 
 Riêng trình sửa bản ghi UI-07-05, xung đột xử lý theo từng dòng (mục 11.7) để một xung đột không chặn việc lưu các dòng khác.
 
@@ -410,8 +413,8 @@ Màn có biểu mẫu hoặc trình sửa (UI-07-03, 04, 05, 10) dùng `useBlock
 | Mục đích | Cho người dùng tìm, lọc, đếm và mở danh mục; điểm khởi đầu tạo danh mục mới bằng tay hoặc từ tệp |
 | Người dùng | Mọi vai trò có `PERM-07-read`; thao tác tạo cho người có `PERM-07-create` |
 | FR, UC | FR-07-001, FR-07-003, FR-07-009, FR-07-010, FR-07-022, FR-07-024, FR-07-048; UC-07-01, UC-07-04, UC-07-14 |
-| Route | `/rdm/catalogs` |
-| Mẫu bố cục | PTN-01 Danh sách có cây phân loại |
+| Route | `/du-lieu/danh-muc` |
+| Mẫu bố cục | PTN-08 Cây + bảng (D03-06-00 §4.11) |
 | API | API-07-001, API-07-005, API-07-006, API-07-007…010, API-07-038 |
 
 ### 7.2. Bố cục
@@ -456,8 +459,8 @@ Bảng sau liệt kê thành phần của màn, nhãn, kiểu dữ liệu, quy t
 | STT | Tên | Loại (CMP / antd) | Nhãn tiếng Việt | Kiểu dữ liệu | Bắt buộc | Kiểm tra hợp lệ | Mặc định | Nguồn |
 |---|---|---|---|---|---|---|---|---|
 | 1 | Tiêu đề trang | `CMP-PageHeader` | Danh mục | — | — | — | — | — |
-| 2 | Thẻ đếm | `CMP-StatCard` × 5, dạng nút bật tắt | Tổng · Địa phương · Quốc gia · Mở rộng · Chờ duyệt | số nguyên | — | — | — | API-07-001 `facets.sourceType`, `facets.openVersionStatus.IN_REVIEW`, `total` |
-| 3 | Cây nhóm danh mục | `CMP-TreeView` trên `Tree` antd, có ô lọc | Nhóm danh mục | cây `CatalogGroup` | — | — | "Tất cả" | API-07-007 `items[].{id,code,name,parentId,catalogCount}` |
+| 2 | Thẻ đếm | `CMP-KpiCard` × 5, dạng nút bật tắt | Tổng · Địa phương · Quốc gia · Mở rộng · Chờ duyệt | số nguyên | — | — | — | API-07-001 `facets.sourceType`, `facets.openVersionStatus.IN_REVIEW`, `total` |
+| 3 | Cây nhóm danh mục | `CMP-Tree` trên `Tree` antd, có ô lọc | Nhóm danh mục | cây `CatalogGroup` | — | — | "Tất cả" | API-07-007 `items[].{id,code,name,parentId,catalogCount}` |
 | 4 | Ô tìm kiếm | `Input.Search` trong `CMP-FilterBar` | Tìm theo mã, tên | chuỗi | Không | Cắt khoảng trắng; tối đa 100 ký tự; không phân biệt hoa thường, dấu (FR-00-020) | rỗng | tham số `q` |
 | 5 | Lọc nguồn | `Select mode="multiple"` | Nguồn | `LOCAL`/`NATIONAL`/`HYBRID` | Không | — | tất cả | `sourceType` |
 | 6 | Lọc trạng thái | `Select mode="multiple"` | Trạng thái | `DRAFT`/`ACTIVE`/`RETIRED` | Không | — | `DRAFT`, `ACTIVE` (ẩn ngừng hiệu lực) | `status` |
@@ -472,15 +475,15 @@ Bảng sau liệt kê thành phần của màn, nhãn, kiểu dữ liệu, quy t
 | 15 | Bảng danh mục | `CMP-DataTable` | — | `CatalogSummary[]` | — | — | — | API-07-001 `items[]` |
 | 16 | Phân trang | `Pagination` trong `CMP-DataTable` | Tổng {total} danh mục | — | — | Trang 1…ceil(total/size) | 20 / trang | `page`, `size` |
 | 17 | Nút Xuất | `Dropdown.Button` | Xuất ▾ (Excel danh sách, CSV danh sách) | — | — | — | — | Xuất danh sách danh mục theo bộ lọc phía máy chủ (Q07-70) |
-| 18 | Nút Tạo từ tệp | `Button` | Tạo từ tệp | — | — | — | — | điều hướng `/rdm/import/new?mode=CREATE_CATALOG` |
-| 19 | Nút Tạo danh mục | `Button type="primary"` | Tạo danh mục | — | — | — | — | điều hướng `/rdm/catalogs/new?group={nhóm đang chọn}` |
+| 18 | Nút Tạo từ tệp | `Button` | Tạo từ tệp | — | — | — | — | điều hướng `/du-lieu/danh-muc/nhap?che-do=tao-danh-muc` |
+| 19 | Nút Tạo danh mục | `Button type="primary"` | Tạo danh mục | — | — | — | — | điều hướng `/du-lieu/danh-muc/moi?nhom={mã nhóm đang chọn}` |
 
 Cột của bảng danh mục được đặc tả riêng vì đây là nơi người dùng nhìn nhiều nhất.
 
 | Cột | Trường | Hiển thị | Sắp xếp | Rộng | Ghi chú |
 |---|---|---|---|---|---|
 | Chọn | — | `Checkbox` | — | 40 px | Chỉ hiện khi người dùng có quyền thao tác hàng loạt |
-| Mã | `code` | Chữ đơn cách `TKN-font-mono`, là liên kết mở chi tiết; biểu tượng 🌐 nếu COMMON, 🔒 nếu NATIONAL; dòng phụ cảnh báo "Chờ duyệt", "Chờ xác nhận đồng bộ" nếu có | Có | 200 px, cố định trái | Liên kết dạng `<a href>` để mở tab mới bằng Ctrl+bấm |
+| Mã | `code` | Chữ đơn cách `font-mono`, là liên kết mở chi tiết; biểu tượng 🌐 nếu COMMON, 🔒 nếu NATIONAL; dòng phụ cảnh báo "Chờ duyệt", "Chờ xác nhận đồng bộ" nếu có | Có | 200 px, cố định trái | Liên kết dạng `<a href>` để mở tab mới bằng Ctrl+bấm |
 | Tên | `name` | Chữ thường, cắt `…` kèm tooltip (CRUD-TBL-07); dòng phụ nhóm | Có | linh hoạt, tối thiểu 220 px | |
 | Đơn vị chủ quản | `ownerOrgName` | Chữ | Có | 180 px | API trả tên đã phân giải (Q07-70) |
 | Nguồn | `sourceType` | `CMP-StatusTag` | Không | 110 px | |
@@ -549,8 +552,8 @@ Thứ tự focus: liên kết "Bỏ qua tới nội dung" của `CMP-AppShell` �
 | Mục đích | Xem toàn bộ thông tin một danh mục: thông tin chung, bản ghi (bảng, cây), thuộc tính, phiên bản, ánh xạ, đồng bộ, quyền khai thác, lịch sử; điểm xuất phát mọi thao tác soạn thảo |
 | Người dùng | Mọi vai trò có `PERM-07-read`; tab "Quyền khai thác" với người có `PERM-07-grant`; tab "Lịch sử" với mọi người có quyền đọc (FR-00-043), đặc biệt `ROLE-AUDITOR` |
 | FR, UC | FR-07-002, 004, 009, 011, 017, 018, 019, 024, 029, 035, 041, 047, 048, 050, 052; UC-07-02, 06, 07, 08, 14, 17 |
-| Route | `/rdm/catalogs/:code/:tab` |
-| Mẫu bố cục | PTN-03 Chi tiết có tab |
+| Route | `/du-lieu/danh-muc/:ma/:tab` |
+| Mẫu bố cục | PTN-02 Chi tiết (D03-06-00 §4.5) |
 | API | API-07-003, 004, 006, 011, 012, 013, 015, 022, 026, 038, 044, 045, 050, 055, 058, 067, 071, 072, 075 |
 
 ### 8.2. Bố cục
@@ -628,12 +631,12 @@ Tab bản ghi phục vụ xem và tìm, không sửa (sửa ở UI-07-05). Thàn
 | 4 | Lọc trạng thái | `Select multiple` | Trạng thái bản ghi | `ACTIVE`/`DEPRECATED` | `ACTIVE` | `status` |
 | 5 | Lọc cấp | `Select` | Cấp | tên cấp từ `levelNames` | tất cả | `depth` |
 | 6 | Bảng bản ghi | `CMP-DataTable` ảo hóa | — | `CatalogItem[]` | — | API-07-026 |
-| 7 | Cây bản ghi | `CMP-TreeView` nạp lười | — | nút cây | mở cấp 1 | API-07-044 (phiên bản phát hành) hoặc API-07-026 `parentCode` (bản nháp) |
+| 7 | Cây bản ghi | `CMP-Tree` nạp lười | — | nút cây | mở cấp 1 | API-07-044 (phiên bản phát hành) hoặc API-07-026 `parentCode` (bản nháp) |
 | 8 | Ngăn chi tiết bản ghi | `CMP-Drawer` (chế độ bảng) hoặc khung phải (chế độ cây) | Chi tiết bản ghi | — | — | dòng đã chọn + API-07-050 |
 
 Cột bảng: Mã (đơn cách, cố định trái), Tên, Mã cha, Cấp (`levelName`), Thứ tự, Trạng thái, Mã thay thế (danh sách liên kết, chỉ với `DEPRECATED`), Hiệu lực từ, Hiệu lực đến, sau đó một cột cho mỗi thuộc tính `ACTIVE` theo `sortOrder` (thuộc tính `HIDDEN` không hiện), giá trị hiển thị theo kiểu (BOOLEAN thành "Có"/"Không", DATE theo `dd/MM/yyyy`, CATALOG_REF thành "{mã} · {tên}" nếu API trả nhãn). Phân trang máy chủ, mặc định 50 dòng, chọn 20/50/100/200 (giới hạn `size` ≤ 200 của API quản trị). Khi người dùng chọn 200 dòng hoặc khi số cột thuộc tính lớn hơn 12, bảng bật ảo hóa cột ngang. Bản ghi kế thừa trong danh mục HYBRID có biểu tượng mắt xích và chữ màu phụ, bộ lọc thêm "Nguồn bản ghi: Tất cả / Kế thừa / Bổ sung địa phương".
 
-Chế độ cây dùng `CMP-TreeView` với nạp lười từng nhánh: mở một nút gọi API-07-044 `root={code}&depth=1&at` với phiên bản phát hành, hoặc API-07-026 `parentCode={code}&size=200` với bản nháp. Nút có hơn 200 con hiện nút "Tải thêm {n} bản ghi" ở cuối nhánh. Ô tìm kiếm ở chế độ cây gọi API-07-045 rồi mở đường dẫn tới bản ghi tìm được bằng `path` (danh sách mã tổ tiên), cuộn tới và đánh dấu.
+Chế độ cây dùng `CMP-Tree` với nạp lười từng nhánh: mở một nút gọi API-07-044 `root={code}&depth=1&at` với phiên bản phát hành, hoặc API-07-026 `parentCode={code}&size=200` với bản nháp. Nút có hơn 200 con hiện nút "Tải thêm {n} bản ghi" ở cuối nhánh. Ô tìm kiếm ở chế độ cây gọi API-07-045 rồi mở đường dẫn tới bản ghi tìm được bằng `path` (danh sách mã tổ tiên), cuộn tới và đánh dấu.
 
 Ngăn chi tiết bản ghi hiện toàn bộ trường, thuộc tính, và khối "Dòng lịch sử" (FR-07-047) từ API-07-050 dạng `Timeline` dọc: mỗi mục là một phiên bản có thay đổi, ghi loại thay đổi, ngày hiệu lực và liên kết tới bản ghi kế thừa hoặc thay thế.
 
@@ -649,7 +652,7 @@ Tab liệt kê phiên bản (API-07-011) theo thứ tự số phiên bản giả
 
 ### 8.9. Tab Ánh xạ
 
-Tab tóm tắt ánh xạ của danh mục với từng hệ thống mã (API-07-067 nhóm theo `codeSystem`, API-07-071 độ phủ): bảng gồm Hệ thống mã, Chủ sở hữu, Số ánh xạ, Số ánh xạ tạm thời, Độ phủ (thanh `Progress` kèm phần trăm), Cập nhật cuối, và nút "Mở bảng ánh xạ" dẫn tới UI-07-10 `/rdm/mappings/{csCode}?catalog={code}`. Nút "Thêm ánh xạ với hệ thống mã khác" hiện với `PERM-07-mapping`.
+Tab tóm tắt ánh xạ của danh mục với từng hệ thống mã (API-07-067 nhóm theo `codeSystem`, API-07-071 độ phủ): bảng gồm Hệ thống mã, Chủ sở hữu, Số ánh xạ, Số ánh xạ tạm thời, Độ phủ (thanh `Progress` kèm phần trăm), Cập nhật cuối, và nút "Mở bảng ánh xạ" dẫn tới UI-07-10 `/du-lieu/danh-muc/anh-xa/{csCode}?catalog={code}`. Nút "Thêm ánh xạ với hệ thống mã khác" hiện với `PERM-07-mapping`.
 
 ### 8.10. Tab Đồng bộ
 
@@ -680,8 +683,8 @@ Thanh tab dùng `Tabs` của antd với vai trò `tablist`; phím mũi tên trá
 | Mục đích | Tạo danh mục mới cùng bản nháp phiên bản 1 và các thuộc tính ban đầu (chế độ tạo); sửa thông tin danh mục (chế độ sửa) |
 | Người dùng | `ROLE-DATA_STEWARD` (○ tổ chức mình), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON) |
 | FR, UC | FR-07-003, 004, 005, 007, 008, 010; UC-07-01, UC-07-17 |
-| Route | `/rdm/catalogs/new` (tạo), `/rdm/catalogs/:code/settings` (sửa) |
-| Mẫu bố cục | PTN-04 Trình hướng dẫn (tạo); biểu mẫu một trang chia khu (sửa) |
+| Route | `/du-lieu/danh-muc/moi` (tạo), `/du-lieu/danh-muc/:ma/sua` (sửa) |
+| Mẫu bố cục | PTN-05 Wizard (tạo); PTN-03 Biểu mẫu trang (sửa) |
 | API | API-07-002, 003, 004, 007, API-07-001 (chọn danh mục gốc, danh mục tham chiếu), API tổ chức PH-20 |
 
 Chế độ tạo dùng trình hướng dẫn ba bước vì việc tạo một danh mục gồm ba nhóm quyết định có thứ tự phụ thuộc: thông tin chung, rồi nguồn và cấu trúc phân cấp (quyết định cột `MA_CHA` và dải mã), rồi lược đồ thuộc tính (phụ thuộc phân cấp). Chế độ sửa không dùng trình hướng dẫn vì người sửa thường chỉ đổi một trường; biểu mẫu một trang với các khu tương ứng ba bước giúp sửa nhanh hơn. Hệ cũ Aita chỉ có tên danh mục và tên thuộc tính; các trường mới (nguồn, phân loại, phân cấp, chính sách duyệt) đều có giá trị mặc định hợp lý để người dùng quen hệ cũ vẫn tạo được nhanh.
@@ -766,7 +769,7 @@ Chế độ sửa hiển thị một biểu mẫu chia bốn khu bằng `Card`: 
 | Dải mã không biên dịch được | (phía client) | "Biểu thức chính quy không hợp lệ: {thông điệp trình duyệt rút gọn}." |
 | Danh mục gốc không còn hoạt động | ERR-07-031 | "Danh mục gốc đã ngừng hiệu lực, không mở rộng được." |
 | Thuộc tính có dấu hiệu dữ liệu cá nhân | ERR-07-036 | Theo bảng 5.3 |
-| Xung đột khi lưu chế độ sửa | ERR-07-018 | `CMP-ConflictDialog` |
+| Xung đột khi lưu chế độ sửa | ERR-07-018 | `CMP-DiffViewer` |
 
 `Steps` có `aria-current="step"` cho bước hiện tại; khi chuyển bước, focus chuyển tới tiêu đề bước (`h2` có `tabIndex=-1`) và vùng `role="status"` đọc "Bước 2 trên 3: Nguồn và phân cấp". Thẻ chọn nguồn là `radiogroup` đúng chuẩn, di chuyển bằng mũi tên. Thông điệp lỗi trường liên kết bằng `aria-describedby` và trường lỗi có `aria-invalid="true"` (FR-00-081).
 
@@ -779,8 +782,8 @@ Chế độ sửa hiển thị một biểu mẫu chia bốn khu bằng `Card`: 
 | Mục đích | Khai báo, sửa, ẩn, xóa, sắp thứ tự thuộc tính của bản nháp, có kiểm tra tương thích và đánh dấu thay đổi phá vỡ |
 | Người dùng | `ROLE-DATA_STEWARD` (○), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON); vai trò khác xem chỉ đọc |
 | FR, UC, BR | FR-07-005, 006; UC-07-01; BR-07-013, BR-07-025 |
-| Route | `/rdm/catalogs/:code/versions/:v/schema` |
-| Mẫu bố cục | PTN-05 Không gian soạn thảo |
+| Route | `/du-lieu/danh-muc/:ma/phien-ban/:v/luoc-do` |
+| Mẫu bố cục | PTN-07 Designer, biến thể soạn thảo bảng (khung chia đôi, không có canvas) |
 | API | API-07-022, 023, 024, 025, 048; API-07-022 của phiên bản hiện hành để so sánh |
 
 ### 10.2. Bố cục
@@ -852,7 +855,7 @@ Kiểm tra dữ liệu cá nhân (BR-07-025): khi mã hoặc nhãn khớp danh s
 | Ẩn, hiện | Như trên | API-07-024 `status` | Không | Cập nhật tại chỗ |
 | Xóa thuộc tính | Như trên | API-07-025 | Nguy hiểm: "Xóa thuộc tính "{label}"? Giá trị của {n} bản ghi sẽ bị bỏ khỏi phiên bản này." kèm nhãn "Phá vỡ" nếu thuộc tính có trong phiên bản phát hành; gợi ý "Ẩn thay vì xóa" | "Đã xóa thuộc tính." |
 | Sắp thứ tự | Kéo tay nắm ⠿ hoặc Alt+↑/Alt+↓ | API-07-024 `sortOrder` cho các thuộc tính đổi chỗ (tuần tự) | Không | Lưu ngay, hoàn tác bằng thông báo "Đã đổi thứ tự. [Hoàn tác]" |
-| Xem JSON Schema | Luôn | API-07-048 `version={v}` | Không | Ngăn kéo `CMP-CodeBlock` JSON, nút Sao chép |
+| Xem JSON Schema | Luôn | API-07-048 `version={v}` | Không | Ngăn kéo `CMP-CodeEditor` JSON, nút Sao chép |
 | Sửa bản ghi | Có quyền | — | Không | Mở UI-07-05 |
 
 ### 10.6. Trạng thái, thông điệp, khả năng truy cập
@@ -868,8 +871,8 @@ Phiên bản đã phát hành mở màn này ở chế độ chỉ đọc (khôn
 | Mục đích | Không gian làm việc chính để thêm, sửa, ngừng dùng, xóa (bản ghi mới trong nháp) bản ghi của bản nháp; xem dạng bảng sửa trực tiếp hoặc cây kết hợp biểu mẫu; kiểm tra hợp lệ toàn bản nháp; chuyển sang so sánh và trình duyệt |
 | Người dùng | `ROLE-DATA_STEWARD` (○), `ROLE-TENANT_ADMIN`, `ROLE-PLATFORM_ADMIN` (COMMON) |
 | FR, UC, BR | FR-07-012, 013, 018, 019, 017; UC-07-02; BR-07-002, 003, 004, 010, 014 |
-| Route | `/rdm/catalogs/:code/versions/:v/edit` (`v` là số phiên bản nháp hoặc `draft`) |
-| Mẫu bố cục | PTN-05 Không gian soạn thảo |
+| Route | `/du-lieu/danh-muc/:ma/phien-ban/:v/sua-ban-ghi` (`v` là số phiên bản nháp hoặc `draft`) |
+| Mẫu bố cục | PTN-07 Designer, biến thể soạn thảo bảng (khung chia đôi, không có canvas) |
 | API | API-07-013, 014, 016, 022, 026, 027, 028, 029, 030, 031, 045, 048, 015 |
 
 Màn này là nơi cán bộ quản lý danh mục ngồi lâu nhất, nên được thiết kế như một bảng tính (spreadsheet) có kiểm soát: thao tác bàn phím đầy đủ, sửa tại ô, lỗi hiện tại ô, nhưng mỗi dòng vẫn được kiểm tra theo lược đồ và lưu có kiểm soát phiên bản. Lý do không dùng mô hình "mở hộp thoại cho từng bản ghi" như hệ cũ Aita: với danh mục vài nghìn bản ghi, việc mở, sửa, đóng hộp thoại cho từng dòng chậm hơn nhiều lần so với sửa tại ô. Tuy vậy, biểu mẫu đầy đủ vẫn có (ngăn kéo bản ghi) cho bản ghi có nhiều thuộc tính hoặc giá trị văn bản dài.
@@ -940,8 +943,8 @@ Chế độ cây kết hợp cây bên trái với biểu mẫu động bên ph�
 | 7 | Lọc dòng lỗi | `Button` bật tắt có đếm | Chỉ dòng lỗi ({n}) | — | — | — | tắt | kết quả kiểm tra client + API-07-016 |
 | 8 | Hoàn tác, Làm lại | `Button` | Hoàn tác (Ctrl+Z), Làm lại (Ctrl+Y) | — | — | Ngăn xếp 100 thao tác chưa lưu | — | cục bộ |
 | 9 | Lưu tất cả | `Button type="primary"` có đếm | Lưu tất cả ({n}) | — | — | Vô hiệu khi còn dòng lỗi client trong số dòng chưa lưu; tooltip nêu số dòng lỗi | — | API-07-028, 027 |
-| 10 | Lưới sửa | `CMP-EditableGrid` | — | `CatalogItem[]` | — | Mục 11.6 | — | API-07-026 |
-| 11 | Cây | `CMP-TreeView` | Cây bản ghi | — | — | — | — | API-07-026 `parentCode` (Phụ lục B, B-04) |
+| 10 | Lưới sửa | `CMP-EditableTable` | — | `CatalogItem[]` | — | Mục 11.6 | — | API-07-026 |
+| 11 | Cây | `CMP-Tree` | Cây bản ghi | — | — | — | — | API-07-026 `parentCode` (Phụ lục B, B-04) |
 | 12 | Biểu mẫu bản ghi | `CMP-DynamicForm` (trong ngăn kéo hoặc khung phải) | Bản ghi {mã} | `CatalogItem` | — | Mục 11.6 | — | API-07-048 JSON Schema + API-07-022 |
 | 13 | Hộp ngừng dùng | `Modal` | Ngừng dùng bản ghi | — | — | Mục 11.8 | — | — |
 | 14 | Chân trạng thái | `CMP-StatusBar` | — | — | — | — | — | API-07-013 `stats`, `itemCount`; trạng thái cục bộ |
@@ -967,7 +970,7 @@ Các trường cố định của bản ghi trong biểu mẫu và lưới như 
 
 **Sắp xếp và lọc.** Sắp xếp phía máy chủ theo Mã, Tên, Thứ tự, Trạng thái và thuộc tính `queryable`; mặc định theo `path` rồi `sortOrder` để cha đứng trước con. Bộ lọc gửi máy chủ, trừ "Chỉ dòng chưa lưu" và "Chỉ dòng lỗi" là lọc trên tập dòng đang có thay đổi cục bộ (không nhiều, giữ trong bộ nhớ). Bộ lọc, sắp xếp, chế độ xem, bản ghi đang chọn được giữ trên URL.
 
-**Sửa trực tiếp ô.** Mô hình sửa theo kiểu bảng tính: một ô hoạt động (active cell) có viền focus `TKN-focus-ring`; bấm đúp, Enter hoặc F2 vào chế độ sửa; gõ ký tự in được cũng vào chế độ sửa và thay giá trị; Enter xác nhận và chuyển xuống ô dưới; Tab xác nhận và sang ô phải; Shift+Tab sang trái; Esc hủy sửa ô. Điều khiển trong ô là phiên bản gọn của điều khiển ở mục 11.5. Giá trị xác nhận được kiểm tra hợp lệ ngay (mục 11.6); ô lỗi có nền `TKN-color-danger-bg`, viền đỏ, biểu tượng ⚠ và tooltip thông điệp. Ô TEXT dài mở `Popover` có `TextArea` thay vì sửa trong ô một dòng. Ô của bản ghi kế thừa (HYBRID) và ô Mã của bản ghi đã phát hành không vào được chế độ sửa; bấm Enter ở đó hiện tooltip giải thích.
+**Sửa trực tiếp ô.** Mô hình sửa theo kiểu bảng tính: một ô hoạt động (active cell) có viền focus `color-focus-ring`; bấm đúp, Enter hoặc F2 vào chế độ sửa; gõ ký tự in được cũng vào chế độ sửa và thay giá trị; Enter xác nhận và chuyển xuống ô dưới; Tab xác nhận và sang ô phải; Shift+Tab sang trái; Esc hủy sửa ô. Điều khiển trong ô là phiên bản gọn của điều khiển ở mục 11.5. Giá trị xác nhận được kiểm tra hợp lệ ngay (mục 11.6); ô lỗi có nền `color-error-bg`, viền đỏ, biểu tượng ⚠ và tooltip thông điệp. Ô TEXT dài mở `Popover` có `TextArea` thay vì sửa trong ô một dòng. Ô của bản ghi kế thừa (HYBRID) và ô Mã của bản ghi đã phát hành không vào được chế độ sửa; bấm Enter ở đó hiện tooltip giải thích.
 
 **Dán từ bảng tính.** Ctrl+V tại một ô dán khối dữ liệu dạng TSV từ Excel: giao diện tách theo tab và xuống dòng, dán vào các ô bắt đầu từ ô hoạt động, tạo dòng mới nếu vượt cuối, chạy kiểm tra hợp lệ cho mọi ô bị dán. Dán hơn 500 ô hiện hộp xác nhận và gợi ý dùng "Nhập tệp" cho khối lớn. Ctrl+C sao chép vùng chọn ra TSV.
 
@@ -1029,7 +1032,7 @@ Thay đổi được giữ cục bộ theo dòng trong một kho trạng thái (
 
 Lưu xảy ra khi: người dùng rời một dòng đã sửa và dòng hợp lệ (tự lưu dòng, có thể tắt bằng công tắc "Tự lưu khi rời dòng" ở menu "⋯" của thanh công cụ, mặc định bật); bấm "Lưu tất cả" hoặc Ctrl+S; bấm "Lưu" trong biểu mẫu. Dòng mới gọi API-07-027 với `Idempotency-Key` gắn với dòng (tạo một lần, giữ khi thử lại); dòng sửa gọi API-07-028 với `If-Match` là ETag của dòng, chỉ gửi các trường thay đổi (JSON Merge Patch). "Lưu tất cả" gửi song song tối đa 4 yêu cầu một lúc; nếu số dòng chưa lưu lớn hơn 50, giao diện dùng API-07-031 (lô) chia thành các lô 500 thao tác để giảm số lượt gọi. Kết quả trả về theo từng dòng: dòng thành công về `clean` và nhận ETag mới; dòng lỗi về `error` với lỗi tại ô.
 
-Xung đột ETag xử lý theo dòng: dòng nhận 412 (ERR-07-018) chuyển `conflict`, ô có ký hiệu ⚠ ở cột trạng thái, và thanh thông báo trên lưới ghi "{n} dòng bị xung đột do người khác vừa sửa. [Xem và xử lý]". Bấm xử lý mở `CMP-ConflictDialog` cho từng dòng lần lượt, với ba cột "Trường", "Của bạn", "Hiện tại" và ba lựa chọn "Giữ của tôi (ghi đè)", "Lấy bản hiện tại", "Gộp" (gộp chỉ khả dụng khi hai bên sửa các trường khác nhau: lấy trường của bạn chồng lên bản hiện tại rồi lưu với ETag mới). Một xung đột không chặn việc lưu các dòng khác.
+Xung đột ETag xử lý theo dòng: dòng nhận 412 (ERR-07-018) chuyển `conflict`, ô có ký hiệu ⚠ ở cột trạng thái, và thanh thông báo trên lưới ghi "{n} dòng bị xung đột do người khác vừa sửa. [Xem và xử lý]". Bấm xử lý mở `CMP-DiffViewer` cho từng dòng lần lượt, với ba cột "Trường", "Của bạn", "Hiện tại" và ba lựa chọn "Giữ của tôi (ghi đè)", "Lấy bản hiện tại", "Gộp" (gộp chỉ khả dụng khi hai bên sửa các trường khác nhau: lấy trường của bạn chồng lên bản hiện tại rồi lưu với ETag mới). Một xung đột không chặn việc lưu các dòng khác.
 
 > **Câu hỏi mở Q07-72:** Khi giao diện dùng API-07-031 để lưu lô, mỗi thao tác trong lô có mang được ETag riêng (`ifMatch` trong phần tử) và lô có trả kết quả từng phần (thành công một phần) không? Nếu lô là "tất cả hoặc không", giao diện sẽ chỉ dùng lô khi không có dòng sửa (chỉ thêm mới) và lưu dòng sửa bằng API-07-028. Câu hỏi này cũng được ghi ở Phụ lục B (B-09).
 
@@ -1103,11 +1106,11 @@ Lưới dùng mẫu `grid` của WAI-ARIA (không phải `table`) vì có điề
 | Mục đích | Nhập hàng loạt bản ghi từ Excel hoặc CSV vào bản nháp, hoặc tạo danh mục mới từ tệp (kể cả tệp xuất từ Aita), có xem trước và báo lỗi theo dòng, cột trước khi ghi |
 | Người dùng | DS (○), TA, PA (`COMMON`) với `PERM-07-update`; chế độ tạo danh mục cần `PERM-07-create` |
 | FR, UC | FR-07-020, FR-07-021, FR-07-022, FR-07-025; UC-07-03, UC-07-04 |
-| Route | `/rdm/catalogs/:code/import/new` (bước 1–2), `/rdm/import/new?mode=CREATE_CATALOG` (bước 1–2), `/rdm/import/:jobId` (bước 3–4) |
-| Mẫu bố cục | PTN-04 Trình hướng dẫn nhiều bước |
+| Route | `/du-lieu/danh-muc/:ma/nhap` (bước 1–2), `/du-lieu/danh-muc/nhap?che-do=tao-danh-muc` (bước 1–2), `/du-lieu/danh-muc/nhap/:ma-tac-vu` (bước 3–4) |
+| Mẫu bố cục | PTN-09 Nhập có xem trước |
 | API | API-07-032 (tải khuôn), API-07-033 (tải tệp), API-07-034 (trạng thái, tóm tắt), API-07-035 (dòng xem trước, báo cáo lỗi), API-07-036 (ghi), API-07-037 (hủy) |
 
-Trình hướng dẫn có bốn bước: **Chọn tệp**, **Ghép cột**, **Xem trước**, **Kết quả**. Bước 1 và 2 chạy trên trình duyệt trước khi tải lên toàn bộ; từ bước 3, tác vụ nhập đã có `jobId` nên URL đổi sang `/rdm/import/:jobId`, người dùng có thể đóng trang và quay lại từ UI-07-08 hoặc từ thông báo.
+Trình hướng dẫn có bốn bước: **Chọn tệp**, **Ghép cột**, **Xem trước**, **Kết quả**. Bước 1 và 2 chạy trên trình duyệt trước khi tải lên toàn bộ; từ bước 3, tác vụ nhập đã có `jobId` nên URL đổi sang `/du-lieu/danh-muc/nhap/:ma-tac-vu`, người dùng có thể đóng trang và quay lại từ UI-07-08 hoặc từ thông báo.
 
 ### 12.2. Bố cục
 
@@ -1151,7 +1154,7 @@ Bước 3 đặt thẻ tóm tắt trên cùng vì quyết định "ghi hay sửa
 
 | STT | Tên | Loại | Nhãn | Kiểu | Bắt buộc | Kiểm tra hợp lệ | Mặc định | Nguồn |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Vùng thả tệp | `Upload.Dragger` (`CMP-FileDrop`) | Kéo thả tệp vào đây hoặc Chọn tệp | T-FILE | Có | Phần mở rộng `.xlsx`, `.csv`; ≤ `07.rdm.import-max-mb` MB; một tệp | — | `file` của API-07-033 |
+| 1 | Vùng thả tệp | `Upload.Dragger` (`CMP-Upload`) | Kéo thả tệp vào đây hoặc Chọn tệp | T-FILE | Có | Phần mở rộng `.xlsx`, `.csv`; ≤ `07.rdm.import-max-mb` MB; một tệp | — | `file` của API-07-033 |
 | 2 | Chọn sheet | `Select` | Sheet dữ liệu | chuỗi | Khi xlsx có nhiều sheet | Sheet tồn tại | `DuLieu`, không có thì sheet đầu | đọc phía client bằng SheetJS trong Web Worker (chỉ danh sách sheet và 20 dòng đầu) |
 | 3 | Khuôn tệp | `Radio.Group` | Khuôn tệp: Tự nhận · Khuôn Datahub · Khuôn Aita | `AUTO`/`STANDARD`/`LEGACY_AITA` | Có | Khuôn Aita chỉ hiện khi cờ `07.rdm.feature.aita-template` bật | `AUTO` | `template` |
 | 4 | Chế độ nhập | `Radio.Group` có mô tả | Thêm và cập nhật · Thay thế toàn bộ · Chỉ thêm mới | `UPSERT`/`REPLACE`/`APPEND` | Có | Ẩn khi tạo danh mục từ tệp | `UPSERT` | `mode` |
@@ -1190,7 +1193,7 @@ Khi `VALIDATED`, bước 3 hiển thị:
 
 | STT | Tên | Loại | Nhãn | Nguồn |
 |---|---|---|---|---|
-| 1 | Thẻ tóm tắt | `CMP-StatCard` × 7, bấm để lọc | Tổng · Hợp lệ · Lỗi · Thêm · Cập nhật · Ngừng dùng · Giữ nguyên (và Xóa khỏi nháp với `REPLACE`) | API-07-034 `summary` |
+| 1 | Thẻ tóm tắt | `CMP-KpiCard` × 7, bấm để lọc | Tổng · Hợp lệ · Lỗi · Thêm · Cập nhật · Ngừng dùng · Giữ nguyên (và Xóa khỏi nháp với `REPLACE`) | API-07-034 `summary` |
 | 2 | Cảnh báo thay đổi lớn | `Alert` vàng | "Lần nhập này thay đổi {r}% bản ghi, vượt ngưỡng {t}%. Phiên bản sẽ phải qua duyệt." | `summary` so với `07.rdm.large-change-threshold-percent` |
 | 3 | Cảnh báo ngừng dùng hàng loạt | `Alert` đỏ | "{n} bản ghi đã từng phát hành sẽ bị ngừng dùng vì không có trong tệp." | `summary.deprecate` khi `REPLACE` |
 | 4 | Bộ lọc hành động | `Select` | Hiển thị: Tất cả · Chỉ dòng lỗi · Thêm · Cập nhật · Ngừng dùng · Xóa khỏi nháp | `filter` → `action`, `valid` của API-07-035 |
@@ -1242,8 +1245,8 @@ Sau khi ghi thành công (`COMMITTED`), bước 4 hiển thị `Result` thành c
 | Mục đích | Cho người soạn rà khác biệt trước khi trình, cho người duyệt xem đúng những gì thay đổi để quyết định, và cho người phát hành chọn ngày hiệu lực, căn cứ pháp lý |
 | Người dùng | Người soạn (`PERM-07-submit`), người duyệt và phát hành (`PERM-07-publish`, DA, PA với `COMMON`); mọi người có `PERM-07-read` xem so sánh |
 | FR, UC | FR-07-014, FR-07-015, FR-07-016, FR-07-017; UC-07-06, UC-07-07 |
-| Route | `/rdm/catalogs/:code/versions/:v/compare?against=current` |
-| Mẫu bố cục | PTN-06 So sánh và quyết định |
+| Route | `/du-lieu/danh-muc/:ma/phien-ban/:v/so-sanh?so-voi=hien-hanh` |
+| Mẫu bố cục | PTN-10 Hộp việc và duyệt, biến thể so sánh (ngăn quyết định `CMP-DecisionPanel`) |
 | API | API-07-013 (chi tiết phiên bản, `allowedActions`), API-07-021 (khác biệt), API-07-016 (kiểm tra toàn bản nháp), API-07-017 (trình, rút lại), API-07-018 (duyệt, thu hồi duyệt), API-07-019 (từ chối), API-07-020 (phát hành), API-07-015 (hủy bản nháp) |
 
 ### 13.2. Bố cục
@@ -1276,7 +1279,7 @@ Bảng khác biệt nằm bên trái và chiếm phần lớn chiều rộng vì
 | STT | Tên | Loại | Nhãn | Nguồn |
 |---|---|---|---|---|
 | 1 | Bộ chọn phiên bản đối chiếu | `Select` | So sánh với: v{n} (hiện hành) · v{n-1} · … · Phiên bản hiệu lực tại ngày… | API-07-011; tham số `against` |
-| 2 | Thẻ tóm tắt khác biệt | `CMP-StatCard` × 5, bấm để lọc | Thêm · Sửa · Ngừng dùng · Phá vỡ · Lược đồ | API-07-021 `stats` |
+| 2 | Thẻ tóm tắt khác biệt | `CMP-KpiCard` × 5, bấm để lọc | Thêm · Sửa · Ngừng dùng · Phá vỡ · Lược đồ | API-07-021 `stats` |
 | 3 | Tỷ lệ thay đổi | chữ | Tỷ lệ thay đổi {r}% | `stats.changeRatio` |
 | 4 | Cảnh báo phá vỡ | `Alert` vàng, liệt kê ≤ 5 mục kèm "Xem tất cả" | Có {n} thay đổi phá vỡ: … | `breaking[]` |
 | 5 | Cảnh báo ngưỡng | `Alert` thông tin | Vượt ngưỡng thay đổi lớn {t}%: bắt buộc qua duyệt. | `approvalReasons` |
@@ -1342,8 +1345,8 @@ Bảng khác biệt theo mẫu bảng khác biệt ở mục 20.3: mỗi dòng c
 | Mục đích | Xem lịch sử và trạng thái mọi tác vụ nhập, xuất, di trú của tenant; tải tệp xuất, báo cáo lỗi; mở lại tác vụ dở dang |
 | Người dùng | Người có `PERM-07-create`, `PERM-07-update` hoặc `PERM-07-export`; TA, PA xem mọi tác vụ, người khác mặc định xem tác vụ của mình |
 | FR, UC | FR-07-024, FR-07-025, FR-07-051 (báo cáo chạy thử di trú); UC-07-08, UC-07-16 |
-| Route | `/rdm/jobs` |
-| Mẫu bố cục | PTN-02 Danh sách đơn |
+| Route | `/du-lieu/danh-muc/tac-vu` |
+| Mẫu bố cục | PTN-01 Danh sách |
 | API | API-07-040 (danh sách), API-07-034, API-07-039 (chi tiết), API-07-035 (báo cáo lỗi), API-07-037 (hủy) |
 
 ### 14.2. Bố cục
@@ -1397,8 +1400,8 @@ Bảng có `aria-label="Tác vụ nhập xuất"`; trạng thái đang xử lý 
 | Mục đích | Cấu hình nguồn đồng bộ danh mục từ Nền tảng chia sẻ, điều phối dữ liệu quốc gia, xem lịch sử lần chạy, xác nhận hoặc từ chối thay đổi phá vỡ, khám phá danh mục quốc gia để đăng ký |
 | Người dùng | TA, DA, PA với `PERM-07-sync`; DS xem chỉ đọc (Q07-68) |
 | FR, UC | FR-07-035, FR-07-036, FR-07-037, FR-07-038; UC-07-11 |
-| Route | `/rdm/sync?tab=sources|runs|discover`, `/rdm/sync/runs/:runId` |
-| Mẫu bố cục | PTN-02 (ba tab), PTN-06 (chi tiết lần chạy) |
+| Route | `/du-lieu/dong-bo-quoc-gia?tab=nguon|lan-chay|kham-pha`, `/du-lieu/dong-bo-quoc-gia/lan-chay/:ma-lan-chay` |
+| Mẫu bố cục | PTN-01 (ba tab), PTN-10 biến thể so sánh (chi tiết lần chạy) |
 | API | API-07-055…063 |
 
 ### 15.2. Bố cục
@@ -1414,7 +1417,7 @@ Bảng có `aria-label="Tác vụ nhập xuất"`; trạng thái đang xử lý 
 │ DM_TON_GIAO 🔒  │TONGIAO      │Thứ 2 hằng tuần │Có        │⛔ Lỗi          │10/11 01:00 ⚠15n│⋯│
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 
-CHI TIẾT LẦN CHẠY (/rdm/sync/runs/:runId)
+CHI TIẾT LẦN CHẠY (/du-lieu/dong-bo-quoc-gia/lan-chay/:ma-lan-chay)
 │ Lần đồng bộ LOAI_HINH_QG · 25/11/2026 01:00 · [Chờ xác nhận]                              │
 │ ┌Thêm 3┐┌Sửa 12┐┌Gỡ khỏi nguồn 1 ⚠┐┌Lỗi 0┐   Phiên bản nguồn: 2026-11-24T17:00Z          │
 │ ⚠ 1 thay đổi phá vỡ: mã "55" không còn trên nguồn quốc gia.                              │
@@ -1467,8 +1470,8 @@ CHI TIẾT LẦN CHẠY (/rdm/sync/runs/:runId)
 | Mục đích | Khai báo hệ thống mã của HTTT ngoài, quản lý bảng ánh xạ mã danh mục ↔ mã ngoài theo thời gian hiệu lực, theo dõi độ phủ |
 | Người dùng | Người có `PERM-07-mapping` (sửa); mọi người có `PERM-07-read` (xem) |
 | FR, UC | FR-07-040, FR-07-041, FR-07-042, FR-07-043; UC-07-13 |
-| Route | `/rdm/mappings`, `/rdm/mappings/:csCode?catalog=:code` |
-| Mẫu bố cục | PTN-02 (danh sách hệ thống mã), PTN-05 (bảng ánh xạ) |
+| Route | `/du-lieu/danh-muc/anh-xa`, `/du-lieu/danh-muc/anh-xa/:ma-he-ma?danh-muc=:ma` |
+| Mẫu bố cục | PTN-01 (danh sách hệ thống mã), PTN-07 biến thể soạn thảo bảng (bảng ánh xạ) |
 | API | API-07-064…071 |
 
 ### 16.2. Bố cục bảng ánh xạ
@@ -1495,12 +1498,12 @@ CHI TIẾT LẦN CHẠY (/rdm/sync/runs/:runId)
 | 2 | Biểu mẫu hệ thống mã | `Modal` + `Form` | Mã (T-CODE), Tên, HTTT sở hữu (chọn từ PH-01), Mô tả | Mã duy nhất (ERR-07-002) | API-07-065, 066 |
 | 3 | Chọn danh mục | `Select showSearch` | Danh mục | Bắt buộc | `catalog` |
 | 4 | Ngày xem | `DatePicker` | Tại ngày | — | `at` |
-| 5 | Thẻ độ phủ | `CMP-StatCard` có thanh tiến độ | Độ phủ · Chưa ánh xạ · Tạm thời · Trỏ tới mã ngừng dùng | — | API-07-071 |
-| 6 | Bảng ánh xạ | `CMP-EditableGrid` | Mã danh mục · Tên · Mã ngoài · Nhãn ngoài · Quan hệ · Hiệu lực từ · đến · Tạm thời · Lý do | Mã danh mục tồn tại tại ngày hiệu lực; mã ngoài không trùng trong khoảng giao nhau (BR-07-023); tạm thời thì lý do bắt buộc (BR-07-024) | API-07-067 |
+| 5 | Thẻ độ phủ | `CMP-KpiCard` có thanh tiến độ | Độ phủ · Chưa ánh xạ · Tạm thời · Trỏ tới mã ngừng dùng | — | API-07-071 |
+| 6 | Bảng ánh xạ | `CMP-EditableTable` | Mã danh mục · Tên · Mã ngoài · Nhãn ngoài · Quan hệ · Hiệu lực từ · đến · Tạm thời · Lý do | Mã danh mục tồn tại tại ngày hiệu lực; mã ngoài không trùng trong khoảng giao nhau (BR-07-023); tạm thời thì lý do bắt buộc (BR-07-024) | API-07-067 |
 | 7 | Quan hệ | `Select` trong ô | Tương đương · Rộng hơn · Hẹp hơn · Liên quan | — | `relation` ∈ `EQUAL`, `BROADER`, `NARROWER`, `RELATED` |
 | 8 | Nhập từ tệp | `Button` | Nhập từ tệp | — | UI-07-06 với `mode = MAPPING` |
 
-Lưới ánh xạ dùng cùng `CMP-EditableGrid` với UI-07-05 nhưng lưu theo lô: "Lưu" gửi API-07-068 `mode = MERGE` với các dòng đã đổi kèm `If-Match` của bảng; lỗi trả theo từng dòng được gắn về ô. Lý do lưu theo lô thay vì từng dòng: ràng buộc BR-07-023 xét trên nhiều dòng cùng lúc (đổi mã ngoài của hai dòng hoán đổi nhau chỉ hợp lệ khi lưu cùng nhau).
+Lưới ánh xạ dùng cùng `CMP-EditableTable` với UI-07-05 nhưng lưu theo lô: "Lưu" gửi API-07-068 `mode = MERGE` với các dòng đã đổi kèm `If-Match` của bảng; lỗi trả theo từng dòng được gắn về ô. Lý do lưu theo lô thay vì từng dòng: ràng buộc BR-07-023 xét trên nhiều dòng cùng lúc (đổi mã ngoài của hai dòng hoán đổi nhau chỉ hợp lệ khi lưu cùng nhau).
 
 ### 16.4. Thông điệp riêng
 
@@ -1519,8 +1522,8 @@ Lưới ánh xạ dùng cùng `CMP-EditableGrid` với UI-07-05 nhưng lưu theo
 | Mục đích | Tra cứu ĐVHC theo ngày, xem dòng thời gian các đợt sắp xếp, chuyển mã cũ sang mới theo lô; với PA, soạn sự kiện sắp xếp trên bản nháp ĐVHC |
 | Người dùng | Mọi người có `PERM-07-read`; PA ghi sự kiện sắp xếp (`PERM-07-update` trên `COMMON`) |
 | FR, UC | FR-07-044, FR-07-045, FR-07-046, FR-07-047; UC-07-12 |
-| Route | `/rdm/admin-units?tab=tree|timeline|convert&at=…` |
-| Mẫu bố cục | PTN-07 Công cụ chia khung |
+| Route | `/du-lieu/danh-muc/don-vi-hanh-chinh?tab=cay|dong-thoi-gian|quy-doi&tai-ngay=…` |
+| Mẫu bố cục | PTN-02 Chi tiết, biến thể công cụ chia khung (`CMP-Splitter`) |
 | API | API-07-041, 044 (cây tại ngày), API-07-050 (dòng lịch sử), API-07-051 (chuyển mã), API-07-052…054 (sự kiện sắp xếp) |
 
 ### 17.2. Bố cục
@@ -1554,9 +1557,9 @@ TAB CHUYỂN MÃ
 | STT | Tên | Loại | Nhãn | Kiểm tra | Nguồn |
 |---|---|---|---|---|---|
 | 1 | Ngày xem | `DatePicker` + hai nút nhanh | Xem tại ngày · Trước sắp xếp 2025 (30/06/2025) · Hiện tại | — | `at` |
-| 2 | Cây đơn vị | `CMP-TreeView` nạp lười theo nhánh | Cây đơn vị hành chính | — | API-07-044 `root`, `depth=1`, `at` |
+| 2 | Cây đơn vị | `CMP-Tree` nạp lười theo nhánh | Cây đơn vị hành chính | — | API-07-044 `root`, `depth=1`, `at` |
 | 3 | Thẻ chi tiết đơn vị | `Descriptions` | Cấp · Trực thuộc · Hiệu lực · Hình thành từ · Căn cứ | — | API-07-042, API-07-050 |
-| 4 | Dòng lịch sử | `CMP-LineageTimeline` | Dòng lịch sử | — | API-07-050 `depth=3` |
+| 4 | Dòng lịch sử | `CMP-Timeline` | Dòng lịch sử | — | API-07-050 `depth=3` |
 | 5 | Dòng thời gian sắp xếp | `Timeline` nhóm theo ngày hiệu lực, lọc theo tỉnh, loại | Dòng thời gian sắp xếp | — | API-07-052 các phiên bản đã phát hành |
 | 6 | Ô mã cần chuyển | `Input.TextArea` | Danh sách mã (mỗi dòng một mã) | ≤ 1.000 mã; mỗi mã chỉ chữ số | `codes` |
 | 7 | Tải tệp CSV | `Upload` | Tải tệp CSV | Cột đầu là mã | đọc phía client |
@@ -1580,8 +1583,8 @@ Cây dùng mẫu tree ở mục 20.2. Dòng thời gian có bảng thay thế �
 | Mục đích | Cho kỹ sư tích hợp, lập trình viên HTTT và cán bộ danh mục thử truy vấn danh mục bằng DSL JSON (ADR-054), xem kết quả, thời gian, và sao chép lệnh gọi API tương ứng |
 | Người dùng | Người có `PERM-07-read`; menu chỉ hiện với các vai trò ở mục 4.3 |
 | FR, UC | FR-07-026…033; UC-07-09, UC-07-10 |
-| Route | `/rdm/query-playground?catalog=…&q=…` |
-| Mẫu bố cục | PTN-07 Công cụ chia khung |
+| Route | `/du-lieu/danh-muc/thu-truy-van?danh-muc=…&truy-van=…` |
+| Mẫu bố cục | PTN-02 Chi tiết, biến thể công cụ chia khung (`CMP-Splitter`) |
 | API | API-07-048 (lược đồ, thuộc tính truy vấn được), API-07-047 (truy vấn), API-07-042, 043, 044, 045, 046 (các mẫu tra cứu khác) |
 
 ### 18.2. Bố cục
@@ -1719,9 +1722,9 @@ Phiên bản đã phát hành là bất biến (ADR-051), nên dữ liệu của
 |---|---|---|
 | `CMP-DiffTable` | UI-07-06, 07, 09 | Bảng khác biệt ảo hóa theo mục 20.3, gộp nhóm theo mã |
 | `CMP-DecisionPanel` | UI-07-07, 09 | Ngăn quyết định theo trạng thái và `allowedActions` |
-| `CMP-EditableGrid` | UI-07-05, 10 | Lưới sửa được theo mục 20.1, ảo hóa dòng và cột |
+| `CMP-EditableTable` | UI-07-05, 10 | Lưới sửa được theo mục 20.1, ảo hóa dòng và cột |
 | `CMP-CronPicker` | UI-07-09, 13 | Chọn lịch dạng thân thiện, sinh cron 6 trường, xem trước lần chạy kế tiếp |
-| `CMP-LineageTimeline` | UI-07-02, 11 | Dòng lịch sử bản ghi, có bảng thay thế |
+| `CMP-Timeline` | UI-07-02, 11 | Dòng lịch sử bản ghi, có bảng thay thế |
 | `CMP-CodeEditor` | UI-07-12 | Monaco nạp lười, nền đặc, kiểm tra theo JSON Schema |
 | `CMP-BackgroundTaskTray` | Mọi màn | Khay tác vụ nền trên thanh trên |
 
@@ -1855,15 +1858,15 @@ Chromatic (hoặc Playwright `toHaveScreenshot` khi chạy hoàn toàn trên h�
 
 ## Phụ lục A. Đề nghị bổ sung cho design system D03-05
 
-| Mã | Đề nghị | Lý do |
-|---|---|---|
-| A-01 | Token nền `TKN-color-surface-glass-regular`, `-thick`, `-toolbar`, `TKN-color-surface-solid`, `-solid-raised` | Phân lớp vật liệu ở mục 2.1 |
-| A-02 | Token màu nguồn `TKN-color-source-local`, `-national`, `-hybrid`, `-common` | Nhãn nguồn ở mục 5.1 |
-| A-03 | Token ba màu khác biệt `TKN-color-diff-added`, `-changed`, `-removed` (nền, viền, chữ) đạt tương phản 4,5:1 trên nền đặc | Mục 5.2 |
-| A-04 | Token mật độ `TKN-density-compact`, `-default`, `-comfortable` | Mục 2.2 |
-| A-05 | Thành phần `CMP-EditableGrid`, `CMP-DiffTable`, `CMP-DecisionPanel`, `CMP-CronPicker`, `CMP-LineageTimeline`, `CMP-CodeEditor`, `CMP-BackgroundTaskTray`, `CMP-FileDrop` | Mục 21.4; nếu D03-05 không nhận, PH-07 giữ trong `features/rdm/components` |
-| A-06 | Mẫu bố cục PTN-01…07 | Mục 3, Q07-67 |
-| A-07 | Hành vi chung khi `prefers-reduced-transparency` | Mục 20.5 |
+| Mã | Đề nghị | Lý do | Xử lý ở bản 0.3 |
+|---|---|---|---|
+| A-01 | Token nền glass thường, dày, thanh công cụ; nền đặc và nền đặc nổi | Phân lớp vật liệu ở mục 2.1 | Đã xử lý: dùng `glass-chrome`, `glass-overlay`, `glass-modal` (D03-05-01 §2); thanh công cụ dính là nền đặc; `color-surface-solid`, `color-surface-solid-2` |
+| A-02 | Token màu nguồn `color-source-local`, `-national`, `-hybrid`, `-common` | Nhãn nguồn ở mục 5.1 | Đã xử lý: D03-05-02 §4.6 thêm `color-source-local`, `-national`, `-hybrid`, `-common` |
+| A-03 | Token ba màu khác biệt `color-diff-added`, `-changed`, `-removed` (nền, viền, chữ) đạt tương phản 4,5:1 trên nền đặc | Mục 5.2 | Đã xử lý: D03-05-02 §4.6 thêm `color-diff-added`, `-changed`, `-removed`, `-moved` (cặp `-bg`, `-text`) |
+| A-04 | Token mật độ `compact`, `default`, `comfortable` | Mục 2.2 | Đã xử lý: thuộc tính `data-density` của D03-05-02 §12.4 |
+| A-05 | Thành phần `CMP-EditableTable`, `CMP-DiffTable`, `CMP-DecisionPanel`, `CMP-CronPicker`, `CMP-Timeline`, `CMP-CodeEditor`, `CMP-BackgroundTaskTray`, `CMP-Upload` | Mục 21.4; nếu D03-05 không nhận, PH-07 giữ trong `features/rdm/components` | Đã xử lý: `CMP-EditableTable`, `CMP-DiffTable`, `CMP-DecisionPanel`, `CMP-BackgroundTaskTray` ở D03-05-04; `CMP-CronPicker` ở D03-05-03 §7.15; `CMP-Timeline`, `CMP-CodeEditor`, `CMP-Upload` biến thể `dropzone` đã có |
+| A-06 | Mẫu bố cục PTN-01…07 | Mục 3, Q07-67 | Đã xử lý: PTN-01…14 của D03-06-00 §4 |
+| A-07 | Hành vi chung khi `prefers-reduced-transparency` | Mục 20.5 | Đã xử lý: D03-05-01 §6 (nền đặc thay kính khi `prefers-reduced-transparency`) |
 
 ## Phụ lục B. Đề nghị bổ sung API cho giao diện
 
