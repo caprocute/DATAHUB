@@ -8,7 +8,7 @@ Tính năng: TS-16-30 · Tham số, lưu giữ dữ liệu và nhật ký kiểm
     # Truy vết: FR-16-055 · API-16-128, 127 · UI-16-19 · NFR-16-020
     Biết T90; U-T90-TA1.
     Khi `GET /settings`
-    Và `PATCH /settings` `{settings: [{key: "16.export.link-hours", value: 48}, {key: "16.period.close-day", value: 7}]}` kèm `If-Match`
+    Và `PATCH /settings` mảng `settings` đặt `16.export.link-hours` = 48 và `16.period.close-day` = 7 kèm `If-Match`
     Và tạo xuất mới và kiểm `expiresAt`
     Và `GET /settings`
     Thì bước 1 25 khóa `16.*` kèm `default`, `ceiling`, `scope`. Bước 2 `200`. Bước 3 `expiresAt` = tạo + 48 giờ, áp dụng ≤ 60 giây, không cần khởi động lại. Bước 4 giá trị mới, `updatedBy`. Thêm chỉ tiêu, nguồn, mẫu gói cũng không cần phát hành.

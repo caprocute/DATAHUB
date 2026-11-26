@@ -3094,7 +3094,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 **Các bước.**
 
 1. `GET /settings`
-2. `PATCH /settings` `{settings: [{key: "16.export.link-hours", value: 48}, {key: "16.period.close-day", value: 7}]}` kèm `If-Match`
+2. `PATCH /settings` mảng `settings` đặt `16.export.link-hours` = 48 và `16.period.close-day` = 7 kèm `If-Match`
 3. Tạo xuất mới và kiểm `expiresAt`
 4. `GET /settings`
 
