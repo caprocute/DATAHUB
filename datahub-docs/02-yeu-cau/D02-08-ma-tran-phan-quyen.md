@@ -339,8 +339,20 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-15-support | Xử lý hỏi đáp, phiếu hỗ trợ của dịch vụ trên cổng | TA, CA, SV (○) |
 | PERM-15-dev-approve | Duyệt, từ chối, khóa, mở khóa tài khoản `dh-dev` và ứng dụng sandbox | TA, SO, PA |
 | PERM-15-audit-read | Xem nhật ký truy cập, thử API và báo cáo sử dụng cổng | TA, SO, AU, PA |
-| PERM-16-read | Xem báo cáo chỉ tiêu | TA, VW, AU |
-| PERM-16-admin | Định nghĩa chỉ tiêu | TA |
+| PERM-16-read | Xem bảng điều khiển, chỉ tiêu, báo cáo chỉ tiêu đã công bố, sổ kiến trúc | PA, TA, TO, SO, DS, AU, VW, PU |
+| PERM-16-admin | Soạn định nghĩa chỉ tiêu, nhóm, mục tiêu, ngưỡng, mẫu báo cáo, gửi duyệt | PA (mẫu `COMMON`), TA |
+| PERM-16-approve | Duyệt định nghĩa chỉ tiêu và báo cáo, công bố, đính chính, rút (người lập không tự duyệt) | TA |
+| PERM-16-source | Đăng ký, sửa, tạm dừng nguồn số liệu và hợp đồng chỉ số | TA, TO |
+| PERM-16-manual | Nhập số liệu tay kèm bằng chứng, gửi xác nhận (người nhập không tự xác nhận) | TO, DS, SO |
+| PERM-16-run | Chạy tổng hợp, tính lại, chốt và mở lại kỳ | TA, TO |
+| PERM-16-report | Lập bản nháp báo cáo, viết thuyết minh, gửi duyệt | TA, TO |
+| PERM-16-export | Xuất PDF, XLSX, CSV, JSON; quản lý danh sách phân phối | TA, TO, AU |
+| PERM-16-arch | Sửa sổ kiến trúc: thành phần, phiên bản, phụ thuộc | PA, TA, TO |
+| PERM-16-arch-assess | Đánh giá tuân thủ kiến trúc, miễn trừ có hạn | TA, SO |
+| PERM-16-national | Lập, gửi, gửi lại gói báo cáo và sổ kiến trúc quốc gia qua PH-14 | TA |
+| PERM-16-compare | So sánh chỉ tiêu liên tenant đã ẩn danh | PA, PU |
+| PERM-16-config | Tham số phân hệ `16.*` | PA, TA |
+| PERM-16-audit-read | Xem nhật ký kiểm toán PH-16 | AU, PU, TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
 | PERM-17-admin | Bật tắt, cấu hình trợ lý theo tenant | TA |
 | PERM-17-model | Khai báo nhà cung cấp, mô hình, phiên bản; bật mô hình cho tenant; tắt khẩn nền tảng | PA, TA (của tenant) |
