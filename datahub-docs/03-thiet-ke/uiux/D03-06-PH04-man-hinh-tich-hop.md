@@ -411,7 +411,7 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-042 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | "Mở trình thiết kế" (mục 10.17) |
 | ERR-04-043 | HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT. | Bảng Vấn đề; "Xem HTTT ở PH-01" |
 | ERR-04-044 | Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục. | Hộp thoại đăng nhập lại |
-| ERR-04-045 | Bạn không có quyền thực hiện thao tác này. | — |
+| ERR-04-045 | Bạn chưa có quyền thực hiện thao tác này. | — |
 | ERR-04-046 | Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ. | Thông báo nổi, ô tải tệp |
 | ERR-04-047 | Chưa lấy được dữ liệu từ {phân hệ}. Thử lại sau. | Khối dữ liệu phụ thuộc (kết nối, số liệu, lịch sử); "Thử lại" |
 | ERR-04-048 | Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây. | Thông báo nổi |
