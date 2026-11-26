@@ -813,7 +813,7 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 - **Độ trễ thêm** (NFR-05-001): Kamelet nền chỉ thêm semaphore, chỉ số và phân loại lỗi; đo bằng JMH cho `dhAdapterEnter`, `dhAdapterExit` và Gatling cho đường đầy đủ.
 - **Tệp lớn** (NFR-05-008): đọc theo khối, không giữ cả tệp; `BATCH` 500 bản ghi mỗi exchange.
 - **Vận hành**: sổ tay ở D06-03 gồm: xoay khóa quản trị của OpenBao database engine; xử lý `PAUSED_SCHEMA`; chụp ảnh lại; dọn replication slot mồ côi ở PostgreSQL nguồn (truy vấn `pg_replication_slots` theo tiền tố `dh_`); kiểm tra bí mật mồ côi ở OpenBao so với `ph05_adapter` (tác vụ đêm, báo cáo).
-- **Đề nghị đồng bộ D03-09**: thêm cụm Kafka Connect `dh-cdc-{tenant}` và Deployment `probe-jvm` vào sơ đồ triển khai, định cỡ ở trên.
+- **Đồng bộ D03-09**: đã thêm namespace `dh-probe`, `dh-cdc` (D03-09 §4.2) và hai dòng định cỡ `probe-jvm`, Kafka Connect CDC (D03-09 §5.3).
 
 ## 12. Kiểm thử
 
