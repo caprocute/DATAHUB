@@ -1,23 +1,106 @@
 ---
 ma_tai_lieu: D00-02
 ten: Sổ quyết định kiến trúc (ADR)
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, Đội kỹ thuật, Hội đồng thẩm định
+mo_ta: Sổ chỉ mục các quyết định kiến trúc của Datahub, gồm dải số cấp theo nhóm, danh sách 60 ADR với trạng thái và nhật ký quyết định của chủ đầu tư.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước §9.2; D03-01 SAD; D03-07 Thiết kế ATTT; D03-09 Hạ tầng và DR; thư mục adr/
 ---
 
 # D00-02 · Sổ quyết định kiến trúc (ADR)
 
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Sổ ADR là chỉ mục của mọi quyết định kiến trúc có ảnh hưởng lâu dài của Datahub: công nghệ, mô hình dữ liệu, cách cách ly tenant, cách triển khai. Mỗi quyết định nêu bối cảnh, phương án đã cân nhắc, lý do chọn và hệ quả, để hội đồng thẩm định đánh giá được tính hợp lý của lựa chọn và đội kỹ thuật không phải tranh luận lại.
+
+**Phạm vi.** Tài liệu gồm quan hệ với 22 ADR cũ trong `docs/05-adr` của repo, bảng dải số cấp trước cho các luồng viết song song, danh sách 60 ADR kèm trạng thái và nhóm phụ trách, và nhật ký quyết định của chủ đầu tư. Nội dung từng ADR nằm ở file riêng trong thư mục `adr/`, không lặp lại ở đây.
+
+**Căn cứ.** Khung MADR rút gọn theo D00-01 §9.2. Các ADR về an toàn thông tin viện dẫn CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026/NĐ-CP, TCVN 14423:2026), ví dụ ADR-030 chọn cấp độ 3 sẵn sàng cấp độ 4; các ADR về dữ liệu cá nhân viện dẫn CMP-LAW-04 và CMP-LAW-05.
+
+**Những điểm hội đồng cần lưu ý.** (1) Trong 60 ADR, 6 ADR đã được chấp nhận ngày 25/11/2026 (ADR-004, 005, 030, 033, 061, 067) và 54 ADR ở trạng thái đề xuất, chờ duyệt ở cổng G1. (2) Bộ tài liệu độc lập với repo (quyết định Q11) nên đánh số lại, nhưng mỗi ADR ghi ADR tương ứng của repo trong mục Truy vết. (3) ADR-020 (Liquid Glass) thay ADR-016 của repo; ADR-003 bổ sung mô hình đa tenant; Backstage chưa được chọn làm cổng nhà phát triển. (4) Mỗi ADR một file, nên mọi thay đổi quyết định để lại dấu vết riêng và bảng này chỉ cần cập nhật trạng thái.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| ADR đã ghi | 60 |
+| ADR đã chấp nhận | 6 (ngày 25/11/2026) |
+| ADR đề xuất | 54 |
+| Dải số cấp trước | 7 |
+| ADR cũ của repo được đối chiếu | 22 |
+| Dòng nhật ký quyết định chủ đầu tư | 5 |
+
+: Con số chính của sổ quyết định kiến trúc
+
+Các con số trên được đếm từ bảng ở mục 3, 4 và 5; trạng thái cập nhật tới ngày 26/11/2026.
+
 ## 1. Mục đích
 
 Sổ ADR ghi lại mọi quyết định kiến trúc có ảnh hưởng lâu dài: chọn công nghệ, chọn mô hình dữ liệu, chọn cách cách ly, chọn cách triển khai. Mỗi quyết định nêu bối cảnh, các phương án đã cân nhắc, lý do chọn và hệ quả, để hội đồng thẩm định đánh giá được tính hợp lý của lựa chọn và để đội kỹ thuật về sau không phải tranh luận lại. Mỗi ADR nằm trong một file riêng ở thư mục `adr/`, theo khung MADR rút gọn (D00-01 §9.2).
+
+### 1.1. Phạm vi
+
+Sổ này chỉ là chỉ mục và nhật ký; phần lập luận của từng quyết định nằm ở file ADR. Bảng dưới phân định phần thuộc sổ này và phần thuộc tài liệu khác.
+
+| Thuộc tài liệu này | Nằm ở tài liệu khác |
+|---|---|
+| Dải số ADR, danh sách và trạng thái | Nội dung từng ADR: `adr/ADR-{nnn}-*.md` |
+| Nhật ký quyết định của chủ đầu tư | Khung MADR, cách đặt tên file: D00-01 §9.2 |
+| Quan hệ với ADR của repo | Hiện thực kiến trúc theo quyết định: D03-01 SAD và các tài liệu thiết kế |
+
+: Phân định phạm vi giữa D00-02 và các tài liệu khác
+
+### 1.2. Người đọc
+
+Bảng dưới gợi ý phần cần đọc theo vai trò.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, mục 4, 5 | Đánh giá các quyết định đã chốt và đang đề xuất |
+| Kiến trúc sư | Mục 3, 4 và các file ADR | Tra quyết định, xin số ADR mới trong dải của luồng mình |
+| Đội kỹ thuật, người viết tài liệu phân hệ | Mục 4 | Biết quyết định nào ràng buộc thiết kế của mình |
+
+: Người đọc D00-02 và phần cần đọc theo vai trò
+
+### 1.3. Thuật ngữ và chữ viết tắt
+
+Sổ này không có thuật ngữ riêng. Thuật ngữ chung theo D00-01 §2; riêng ADR (Architecture Decision Record) là bản ghi một quyết định kiến trúc và MADR (Markdown Architectural Decision Records) là khung trình bày của bản ghi đó.
+
+### 1.4. Tài liệu tham chiếu
+
+Các tài liệu dưới đây được dẫn chiếu trong D00-02.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| D00-01 | Thuật ngữ và quy ước chung | Mục 9.2: khung MADR rút gọn và cách đặt tên file |
+| D03-01 | Thiết kế kiến trúc tổng thể (SAD) | Nơi các quyết định được hiện thực |
+| D03-07, D03-09 | Thiết kế ATTT, hạ tầng và DR | Nhận các quyết định ADR-030 đến ADR-038 |
+| `docs/05-adr` | 22 ADR của repo DATAHUB | Nguồn đối chiếu, ghi ở mục Truy vết từng ADR |
+
+: Tài liệu tham chiếu của D00-02
+
+### 1.5. Cấu trúc tài liệu
+
+Bảng dưới tóm tắt từng chương.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 2 | Quan hệ với ADR của repo | Hội đồng, kiến trúc sư |
+| 3 | Dải số cấp trước theo nhóm | Kiến trúc sư, người viết |
+| 4 | Danh sách ADR, trạng thái, nhóm | Mọi người đọc |
+| 5 | Nhật ký quyết định của chủ đầu tư | Hội đồng, quản lý dự án |
+
+: Cấu trúc chương của D00-02
 
 ## 2. Quan hệ với ADR trong `docs/05-adr` của repo
 
 Repo DATAHUB đã có 22 ADR trong `docs/05-adr`. Bộ tài liệu này độc lập (quyết định Q11) nên đánh số lại, nhưng mỗi ADR ở đây ghi rõ ADR tương ứng của repo trong mục Truy vết. Những điểm khác biệt có chủ đích so với repo: ADR-003 bổ sung mô hình đa tenant; ADR-020 (luồng giao diện) thay ADR-016 của repo, đổi phong cách shadcn sang Liquid Glass; Backstage (ADR-006 của repo) chưa được chọn làm cổng nhà phát triển, sẽ quyết định ở dải 050–059 khi viết PH-15.
 
 ## 3. Dải số
+
+Bảng dưới cấp trước dải số ADR cho từng luồng viết, để các nhóm viết song song không trùng số.
 
 | Dải | Chủ đề | Nhóm phụ trách |
 |---|---|---|
@@ -29,7 +112,7 @@ Repo DATAHUB đã có 22 ADR trong `docs/05-adr`. Bộ tài liệu này độc l
 | ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
 | ADR-070 … 074 | Sự kiện (PH-10) | Luồng PH-10 |
 
-: Dải số
+: Dải số ADR cấp trước cho từng luồng viết
 
 ## 4. Danh sách ADR
 
@@ -98,9 +181,11 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-072](adr/ADR-072-cap-phat-topic-acl-qua-gitops.md) | Cấp phát topic, ACL, hạn mức Kafka bằng tài nguyên Strimzi trong kho GitOps của tenant | Đề xuất | PH-10 |
 | [ADR-073](adr/ADR-073-cau-noi-di-tru-pulsar.md) | Di trú Hub Pulsar bằng cầu nối hai chiều tạm thời trên dh-runtime | Đề xuất | PH-10 |
 
-: Danh sách ADR
+: Danh sách 60 ADR kèm trạng thái và nhóm phụ trách
 
 ## 5. Nhật ký quyết định của chủ đầu tư
+
+Bảng dưới ghi các quyết định của chủ đầu tư ảnh hưởng tới kiến trúc theo thứ tự ngày, kèm tài liệu chịu ảnh hưởng.
 
 | Ngày | Nội dung | Ảnh hưởng |
 |---|---|---|
@@ -110,4 +195,11 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | 25/11/2026 | Q300 hệ mới · Q306 Ceph RGW cho WORM · Q311/Q323(b) mỗi tỉnh chủ quản tenant · Q340 tách `pg-payment` · Q341, Q347 WORM và sao lưu chung hệ Ceph RGW, tách bucket · Q350 bản đồ DU theo SAD · Q353 GitHub khi phát triển, GitLab on-prem khi bàn giao · Q05 chủ quản CNTT là tham số theo tỉnh | Các tài liệu chứa câu hỏi tương ứng |
 | 25/11/2026 | Q359: luồng Camel được truy cập trực tiếp CSDL có kiểm soát (tài khoản chỉ đọc, khai báo ở PH-05, ghi kiểm toán) · Catalog trình thiết kế phải khớp đúng phiên bản Camel Quarkus của runtime (hiện 3.33.2) | D04-01, PH-04, PH-05 |
 
-: Nhật ký quyết định của chủ đầu tư
+: Nhật ký quyết định của chủ đầu tư theo ngày
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: quan hệ với ADR của repo, dải số, danh sách ADR, nhật ký quyết định của chủ đầu tư |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 đến 1.5 (phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho mục 3 và 5; viết lại chú thích bảng cho cụ thể |

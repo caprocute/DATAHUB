@@ -1,14 +1,45 @@
 ---
 ma_tai_lieu: D03-06-00
 ten: Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhà thiết kế giao diện, Kỹ sư giao diện, Kiểm thử viên, Chuyên viên phân tích nghiệp vụ, AI agent sinh mã
 nguoi_lap: Luồng giao diện
+mo_ta: Kiến trúc thông tin hai ứng dụng, khung bố cục CMP-AppShell và 14 mẫu màn hình chuẩn PTN cùng vi văn bản và nghiệm thu chung cho mọi màn hình Datahub.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D02-02 SRS; D03-01 SAD; D03-05 Design system; D03-06-PH{nn} Tập UI phân hệ; D05-02 Kịch bản kiểm thử
 ---
 
 # D03-06-00 · Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Chốt một lần cách người dùng tìm thấy màn hình (kiến trúc thông tin), khung chứa màn hình (bố cục) và khuôn dựng màn hình (14 mẫu PTN), để hơn hai trăm màn hình của hai mươi phân hệ nhất quán và kỹ sư hay AI agent dựng màn mới không phải tự thiết kế lại.
+
+**Phạm vi.** Hai ứng dụng web `dh-console` và `dh-portal`. Không gồm trang đăng nhập do Keycloak phục vụ, thư điện tử thông báo và báo cáo xuất tệp.
+
+**Căn cứ.** Yêu cầu giao diện dùng chung FR-00-001…082 và NFR-00-003, NFR-00-005, NFR-00-040…045 của D02-02; chuẩn WCAG 2.2 mức AA (STD trong D00-01 §7); quyết định Q4 giữ màn hệ cũ có giá trị vận hành.
+
+**Những điểm hội đồng cần lưu ý.**
+
+(1) Kiến trúc thông tin chia menu theo nhóm người dùng và hiển thị, ẩn theo quyền (§2.6, §2.13), không theo cấu trúc kỹ thuật.
+(2) Khung bố cục tuân thủ quy tắc không đặt kính chồng kính; vùng nội dung không bao giờ dùng vật liệu kính (§3.3).
+(3) Mỗi màn chỉ chọn một mẫu PTN và chỉ mô tả phần khác biệt (§1.3, §4).
+(4) Mọi màn đều phải xử lý bộ trạng thái chuẩn ST-01…ST-13 (§4.2) và đạt checklist nghiệm thu chung (§6).
+(5) Các màn hệ cũ có giá trị vận hành được giữ và ánh xạ sang mẫu mới (§7).
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Ứng dụng web | 2 (`dh-console`, `dh-portal`) |
+| Nhóm menu cấp 1 của `dh-console` | 10 |
+| Mục menu cấp 2 | 46 |
+| Mẫu màn hình chuẩn | 14 (PTN-01…14) |
+| Trạng thái chuẩn dùng chung | 13 (ST-01…13) |
+| Mục hệ cũ được phủ ở §7 | 46 |
+
+: Các con số chính của tài liệu, lấy từ §2.3.2, §4 và §7
 
 ## 1. Mục đích, phạm vi và cách dùng
 
@@ -79,6 +110,70 @@ Bảng khai báo trên có bốn quy tắc đi kèm. Thứ nhất, trường "M�
 
 Tài liệu áp dụng cho hai ứng dụng web của Datahub là `dh-console` (giao diện quản trị cho mọi phân hệ) và `dh-portal` (cổng nhà phát triển của PH-15). Tài liệu không áp dụng cho trang đăng nhập (do Keycloak phục vụ theo FR-00-001, giao diện trang đăng nhập được tùy biến bằng chủ đề Keycloak dùng chung token ở D03-05-02 nhưng nằm ngoài bố cục mô tả ở đây), cho thư điện tử thông báo và cho báo cáo xuất tệp.
 
+### 1.5. Người đọc
+
+Mỗi nhóm người đọc cần một phần khác nhau của tài liệu, nên bảng dưới đây chỉ ra đọc phần nào trước.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Nhà thiết kế giao diện | §2 (kiến trúc thông tin), §3 (khung), §4 (mẫu), §5 (vi văn bản) |
+| Kỹ sư giao diện | §2.3.2, §2.4 (menu và URL), §3.4 (responsive), §4 (mẫu), §6 (nghiệm thu) |
+| Kiểm thử viên | §4.2 (trạng thái chuẩn), §6 (nghiệm thu chung), §2.6 (hiển thị theo quyền) |
+| Chuyên viên phân tích nghiệp vụ | §1.3 (khối đặc tả màn), §2.13, §7 (màn hệ cũ được giữ) |
+| AI agent sinh mã | Toàn bộ, nhất là §1.3, §4 và §6 |
+| Hội đồng thẩm định | Tóm tắt, §1, §3.3, §8 |
+
+: Bảng người đọc và phần cần đọc
+
+### 1.6. Thuật ngữ và chữ viết tắt
+
+Thuật ngữ chung dùng theo D00-01 §2. Bảng dưới đây chỉ liệt kê các thuật ngữ riêng của tài liệu này.
+
+| Thuật ngữ | Nghĩa |
+|---|---|
+| IA | Kiến trúc thông tin (information architecture), cách tổ chức menu, URL và lối vào màn hình |
+| PTN | Mẫu màn hình chuẩn (screen pattern), mã `PTN-{nn}` |
+| ST | Trạng thái chuẩn dùng chung của màn hình, mã `ST-{nn}` (§4.2) |
+| `UI-{PH}-{nn}` | Mã một màn hình trong tập UI của phân hệ |
+| Khung (shell) | `CMP-AppShell`, gồm sidebar, thanh trên và vùng `main` |
+| Vi văn bản | Chữ ngắn trên giao diện như nhãn nút, thông báo, trạng thái rỗng (§5) |
+
+: Thuật ngữ và chữ viết tắt riêng của tài liệu
+
+### 1.7. Tài liệu tham chiếu
+
+Bảng dưới đây liệt kê các tài liệu mà thiết kế màn hình dựa vào, ngoài các tài liệu đã nêu ở mục 1.2.
+
+| Tài liệu | Nội dung dùng |
+|---|---|
+| D00-01 | Thuật ngữ, quy ước mã |
+| D02-02 SRS | FR-00 và NFR-00 của giao diện dùng chung |
+| D03-01 SAD | Bảng phân hệ và đợt triển khai (§4.1) |
+| D03-05 | Token, vật liệu Liquid Glass, thành phần `CMP-*` |
+| D03-06-PH{nn} | Tập UI từng phân hệ dùng các mẫu ở đây |
+| D05-02 | Kịch bản kiểm thử giao diện, tham chiếu §6 |
+| `docs/ui_ux_rule.md` | Bộ quy tắc CRUD cũ được kế thừa |
+
+: Tài liệu tham chiếu của D03-06-00
+
+### 1.8. Cấu trúc tài liệu
+
+Tài liệu gồm chín chương, đi từ kiến trúc thông tin tới khung, mẫu, vi văn bản và nghiệm thu.
+
+| Chương | Nội dung |
+|---|---|
+| 1 | Mục đích, phạm vi, cách dùng |
+| 2 | Kiến trúc thông tin: menu, URL, quyền, tìm kiếm, thông báo, tenant |
+| 3 | Khung bố cục `CMP-AppShell`, lưới, responsive, truy cập |
+| 4 | Mười bốn mẫu màn hình chuẩn và trạng thái dùng chung |
+| 5 | Vi văn bản tiếng Việt |
+| 6 | Nghiệm thu chung cho mọi màn hình |
+| 7 | Màn hệ cũ được giữ và mẫu tương ứng |
+| 8 | Truy vết tới yêu cầu |
+| 9 | Đề xuất bổ sung |
+
+: Cấu trúc tài liệu theo chương
+
 ## 2. Kiến trúc thông tin
 
 ### 2.1. Hai ứng dụng và lý do tách
@@ -114,9 +209,9 @@ Menu của `dh-console` được chia theo **nhóm nhiệm vụ của người d
 
 #### 2.3.1. Sơ đồ tổng quát
 
-Sơ đồ dưới đây thể hiện mười hai nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
+Sơ đồ dưới đây thể hiện mười nhóm cấp 1 của sidebar và các mục cấp 2. Mục có hậu tố "(Đ2)" hoặc "(Đ3)" thuộc đợt 2 hoặc đợt 3 theo bảng phân hệ của D03-01 §4.1; các mục còn lại thuộc MVP.
 
-```{.mermaid caption="Sơ đồ tổng quát"}
+```{.mermaid caption="Cây điều hướng dh-console, mười nhóm cấp 1 và mục cấp 2"}
 flowchart LR
     ROOT(["dh-console"])
     ROOT --> N0["Tổng quan"]
@@ -575,7 +670,7 @@ Bốn hành vi dưới đây xuất hiện ở nhiều mẫu nên được quy �
 
 **Ví dụ trong Datahub.** Danh sách API (PH-02, `/ket-noi/api`), danh sách giao dịch thanh toán (PH-19, `/thanh-toan/giao-dich`), danh sách HTTT thành viên (PH-01), danh sách luồng (PH-04), danh sách người dùng (PH-12), hàng đợi lỗi DLQ (PH-18).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -659,7 +754,7 @@ Sơ đồ cho thấy toàn bộ bộ lọc, bảng và phân trang nằm trong *
 
 **Ví dụ trong Datahub.** Chi tiết API (PH-02, `/ket-noi/api/{ma-api}` với tab Tổng quan, Phiên bản, Gói sử dụng, Đăng ký, Thống kê, Lịch sử); chi tiết HTTT thành viên (PH-01, tab Hồ sơ, Ứng dụng và thông tin xác thực, Đầu mối, API đang dùng, Lịch sử); chi tiết giao dịch (PH-19); chi tiết danh mục (PH-07, tab Mục, Thuộc tính, Phiên bản, Lịch sử).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -731,7 +826,7 @@ Sơ đồ có hai cột ở tab Tổng quan: cột chính 8/12 chứa các khố
 
 **Ví dụ trong Datahub.** Tạo/sửa gói sử dụng (PH-02, kiểu xác thực, rate limit, quota, danh sách đường dẫn); tạo dịch vụ thu (PH-19); sửa hồ sơ HTTT (PH-01); tạo chính sách cổng API (PH-03); tạo quy tắc chất lượng (PH-08).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -788,7 +883,7 @@ Biểu mẫu chia thành các khối đặc theo nhóm nghiệp vụ; mỗi kh�
 
 **Ví dụ trong Datahub.** Thêm mục danh mục (PH-07, Drawer); thêm đầu mối kỹ thuật cho HTTT (PH-01, Drawer); xoay vòng bí mật ứng dụng (PH-01, Modal, hiện bí mật một lần); yêu cầu quyền từ trang 403 (Modal); tạo topic nhanh (PH-10, Drawer).
 
-**Sơ đồ vùng (Drawer).**
+**Sơ đồ vùng (Drawer).** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
                               ┌ Drawer glass-modal, size-drawer-md, radius-xl cạnh hở ┐
@@ -835,7 +930,7 @@ Khung Drawer là vật liệu `glass-modal`, cách mép phải và mép trên/d�
 
 **Ví dụ trong Datahub.** Kết nạp HTTT thành viên (PH-01: thông tin hệ thống → đầu mối → hồ sơ pháp lý → rà soát → gửi duyệt); đăng ký API từ OpenAPI (PH-02: tải đặc tả → kiểm tra và xem trước endpoint → phân loại → gói sử dụng → rà soát); kích hoạt dịch vụ thu có giao dịch thử (PH-19); chạy di trú hệ cũ (PH-18: chọn nguồn → chọn phạm vi → chạy thử đối chiếu → chạy thật → báo cáo FR-00-092); khởi tạo tenant (PH-20).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -881,7 +976,7 @@ Khung Drawer là vật liệu `glass-modal`, cách mép phải và mép trên/d�
 
 **Ví dụ trong Datahub.** Tổng quan (`/tong-quan`, thẻ lắp theo quyền); bảng giám sát PH-13 (lượt gọi API, tỷ lệ lỗi, độ trễ p95, luồng lỗi, DLQ tồn); dashboard kênh thanh toán PH-19 (giao dịch theo kênh, tỷ lệ thành công); điểm chất lượng dữ liệu PH-08; báo cáo chỉ tiêu PH-16.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -940,7 +1035,7 @@ Sơ đồ đi từ tổng quát tới cụ thể: hàng KPI trả lời "mọi t
 
 **Ví dụ trong Datahub.** Thiết kế luồng tích hợp PH-04 (`/tich-hop/luong/{ma}/thiet-ke`, đồng bộ Camel YAML DSL theo ADR-010); sơ đồ kết nối topic PH-10 (`/tich-hop/so-do`, chế độ chỉ xem, publisher → topic → subscriber); mô hình quy trình BPMN PH-11 (Đợt 2).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng, không lề dưới, cao = viewport − topbar) ───────────────┐
@@ -995,7 +1090,7 @@ Designer chiếm toàn bộ vùng nội dung, không cuộn trang; mỗi vùng t
 
 **Ví dụ trong Datahub.** Danh mục dùng chung PH-07 (`/du-lieu/danh-muc`: cây nhóm danh mục trái, bảng danh mục phải; trong chi tiết một danh mục phân cấp như đơn vị hành chính: cây mục trái, chi tiết mục phải); nhóm dịch vụ thu PH-19; nhóm và vai trò PH-12 (cây nhóm trái, danh sách thành viên và quyền phải).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -1046,7 +1141,7 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 
 **Ví dụ trong Datahub.** Nhập danh mục từ Excel PH-07 (`/du-lieu/danh-muc/{ma}/nhap`, 100.000 dòng trong ≤ 2 phút theo NFR-00-008); nhập danh sách HTTT từ hệ cũ PH-01; nhập tệp đối soát PH-19; nhập người dùng hàng loạt PH-12.
 
-**Sơ đồ vùng.** PTN-09 là một wizard ba bước chuyên biệt (kế thừa khung PTN-05).
+**Sơ đồ vùng.** PTN-09 là một wizard ba bước chuyên biệt (kế thừa khung PTN-05). Wireframe dưới đây cho thấy vùng xem trước nằm giữa hai nút chuyển bước, và được giữ dạng chữ theo quy ước K-MH.
 
 ```text
 ┌ main ─────────────────────────────────────────────────────────────────────────┐
@@ -1100,7 +1195,7 @@ Hai khối đặc tách nhau bằng tay nắm kéo giãn (┊) có phương án 
 
 **Ví dụ trong Datahub.** `/viec-cua-toi` gồm: duyệt kết nạp HTTT, duyệt phát hành API, duyệt đăng ký sử dụng, duyệt phát hành luồng, duyệt công bố danh mục, chấp thuận khai thác dữ liệu, duyệt hoàn tiền, việc BPMN.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -1157,7 +1252,7 @@ Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: 
 
 **Ví dụ trong Datahub.** Tra log PH-13 (`/giam-sat/log`); truy vết theo `trace_id` (`/giam-sat/truy-vet/{trace-id}` với biểu đồ dải thời gian các span); nhật ký kiểm toán (`/giam-sat/kiem-toan`, xuất bằng chứng); nút gateway PH-03.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (toàn chiều rộng) ───────────────────────────────────────────────────────┐
@@ -1210,7 +1305,7 @@ Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: 
 
 **Khi dùng.** Cài đặt cá nhân (`/ca-nhan/cai-dat`: giao diện, kính, mật độ, giảm chuyển động, kênh thông báo FR-00-061, phím tắt); tham số hệ thống PH-18 (`/van-hanh/tham-so`, mỗi phân hệ một không gian tên như `07.rdm.*`, `04.flow.*`); cài đặt tỉnh PH-20 (`/quan-tri/cai-dat-tinh`: tên hiển thị, logo, chủ quản CNTT, ngưỡng mật khẩu và phiên trong giới hạn nền tảng); quản trị cổng nhà phát triển PH-15; tài khoản trên `dh-portal`. **Khi không dùng.** Cấu hình có vòng đời và phiên bản (chính sách gateway, khuôn luồng): dùng PTN-02 + PTN-03 vì cần duyệt và lịch sử như đối tượng nghiệp vụ.
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
@@ -1267,7 +1362,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 
 **Hai cách hiển thị.** *Trong khung* (`in-shell`): giữ `CMP-AppShell`, sidebar và thanh trên, thay `main` bằng `CMP-ResultPage`; dùng cho 403, 404, 410, lỗi tải trang chính, để người dùng vẫn điều hướng được. *Toàn trang* (`standalone`): không có khung, nền `color-canvas`; dùng khi khung không dựng được (500 lúc khởi động, bảo trì toàn hệ thống, trình duyệt không hỗ trợ, chọn tenant).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ main (in-shell) hoặc viewport (standalone) ──────────────────────────────────┐
@@ -1326,7 +1421,7 @@ Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là s
 
 **Khi dùng.** Tài liệu một API theo phiên bản (`/api/{ma-api}/{phien-ban}`), bài hướng dẫn (`/huong-dan/{bai}`: xác thực, mã lỗi, giới hạn, sự kiện), trang chủ cổng (biến thể trang chào). **Khi không dùng.** Quản trị API trong `dh-console` (PTN-02 của PH-02).
 
-**Sơ đồ vùng.**
+**Sơ đồ vùng.** Wireframe dưới đây là bố cục chuẩn của mẫu, người đọc cần thấy vị trí các vùng chức năng và thứ tự từ trên xuống; đây là quy ước K-MH nên được giữ dạng chữ.
 
 ```text
 ┌ Thanh trên dh-portal (glass-chrome → glass-chrome-scrolled) ─────────────────────┐
@@ -1384,6 +1479,8 @@ Giọng văn của Datahub là **lịch sự, trực tiếp, trung tính**: nói
 
 ### 5.2. Quy tắc chính tả và trình bày
 
+Bảng dưới đây nêu các quy tắc chính tả và cách trình bày chữ trên giao diện, mỗi quy tắc kèm ví dụ đúng và sai.
+
 | Quy tắc | Đúng | Sai |
 |---|---|---|
 | Viết hoa chữ đầu câu, không viết hoa mỗi từ | "Thêm dịch vụ thu" | "Thêm Dịch Vụ Thu" |
@@ -1433,6 +1530,8 @@ Nút có dấu "…" ở cuối khi bấm sẽ mở hộp thoại cần thêm th
 Tiêu đề trang là danh từ nghiệp vụ số nhiều ngầm, không có động từ: "Danh mục dùng chung", "Giao dịch". Tiêu đề trang tạo, sửa: "Thêm dịch vụ thu", "Sửa dịch vụ thu {tên}". Chữ giữ chỗ chỉ là ví dụ định dạng, không thay nhãn và không chứa hướng dẫn bắt buộc ("Ví dụ: DM_GIOI_TINH"); hướng dẫn đặt ở chữ trợ giúp dưới trường. Chữ trợ giúp tối đa hai dòng; dài hơn thì đặt liên kết "Tìm hiểu thêm" tới HDSD (FR-00-082).
 
 ### 5.5. Thông báo theo loại
+
+Thông báo được viết theo khuôn riêng cho từng loại để người dùng nhận ra ngay mức độ và việc cần làm tiếp.
 
 | Loại | Khuôn | Ví dụ |
 |---|---|---|
@@ -1546,6 +1645,8 @@ Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có m�
 
 ## 8. Truy vết
 
+Bảng dưới đây ánh xạ các yêu cầu giao diện dùng chung tới mục của tài liệu đáp ứng chúng.
+
 | Yêu cầu | Đáp ứng tại |
 |---|---|
 | FR-00-001…005 đăng nhập, phiên | §1.4, §2.3.3, ST-14 (§4.2) |
@@ -1568,6 +1669,17 @@ Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có m�
 
 ## 9. Đề xuất bổ sung
 
+Các đề xuất dưới đây cần chủ sở hữu các tài liệu liên quan xem xét, tài liệu này không tự sửa chéo.
+
 1. **D00-01 §9 (quy ước tên file).** Như D03-05 §9: tài liệu chia phần dùng `{mã-tài-liệu}-{nn}-{tên}.md`; tập UI phân hệ dùng `D03-06-PH{nn}-{tên}.md`.
 2. **D05-02.** Mục 6 của tài liệu này là phần chung của mọi ca kiểm thử giao diện; mỗi tập D05-02 phân hệ tham chiếu thay vì chép lại.
 3. **Route của tập PH-07.** Bản 0.3 của D03-06-PH07 đã chuyển route `/rdm/...` và tham số truy vấn tiếng Anh sang quy tắc URL ở §2.4 (đường dẫn `/du-lieu/danh-muc`, tham số `trang`, `co`, `sap-xep`); đường dẫn cũ được chuyển hướng phía client trong hai đợt phát hành để liên kết đã chia sẻ không hỏng.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.2 | 26/11/2026 | Luồng giao diện | Bản dự thảo trước khi áp chuẩn trình bày kết hợp |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm metadata `mo_ta` và `tai_lieu_lien_quan`, Tóm tắt cho hội đồng thẩm định, các mục 1.5 đến 1.8 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu), đoạn mở cho §5.2, §5.5, §8, §9, đoạn dẫn cho 15 wireframe |
+
+: Lịch sử phiên bản của D03-06-00
