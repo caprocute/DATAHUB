@@ -1,0 +1,174 @@
+{
+  "phan_he": "PH-03",
+  "phien": [
+    {
+      "tap": "frs",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 5.3925,
+      "so_luot": 63,
+      "phut": 29.5,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 102,
+        "output_tokens": 278712,
+        "cache_read_input_tokens": 14529035,
+        "cache_creation_input_tokens": 460765
+      },
+      "tom_tat": "4 đã làm. CI sẽ đỏ cho tới khi đợt đồng bộ thêm tám quyền vào D02-08 hoặc ghi chúng vào danh sách ngoại lệ.\n\n**Nội dung:**\n- **FR:** 59 FR trong bảy nhóm A–G, mọi FR là khối `::: dac-ta` đủ 17 mục theo đúng thứ tự (đã kiểm tự động). Có 47 mức M, 11 mức S, 1 mức C; 51 FR ở MVP, 7 ở Đợt 2, 1 ở Đợt 3.\n- **Các mã khác:** 30 BR, 27 NFR, 18 UI, 96 API (API-03-001…096), 12 sự kiện (EVT-03-01…12), 57 mã lỗi (27 ERR-03-001…027 cho control plane, 30 ERR-03-101…130 gateway trả bên gọi).\n- **Sơ đồ Mermaid:** 19 hình gồm vị trí kiến trúc, trình tự, bốn máy trạng thái và quan hệ từng nhóm. Tôi không kiểm tra được cú pháp bằng trình vẽ vì máy không có `mmdc`.\n- **Truy vết:** phủ đủ 9 hàng `LGC` có PH-03 trong D00-03 phần A (LGC-BUS-041, LGC-APIM-005; 011…015, 022, 023), kèm 7 hàng liên quan. Có ba bảng ánh xạ mã cũ sang mã mới cho 17 FR, 28 NFR và 12 BR của SRS cũ.\n- **Ảnh giao diện:** chưa gắn ảnh hi-fi vì tập màn hình chưa có; mục 10.2 mô tả bố cục hai màn và ghi đường dẫn dự kiến.\n\n**Câu hỏi mở thêm:** 12 câu, Q03-01…Q03-12. Hai điểm hội đồng nên cho ý kiến sớm:\n- Q03-03: khi mọi backend hỏng, hệ mới trả `503` nhanh thay vì giữ backend ít lỗi nhất như SRS cũ.\n- Q03-02: tenant chỉ có một Cán bộ ATTT thì không thể duyệt ngoại lệ WAF theo bốn mắt.\n\n\"Đề nghị đồng bộ\" cuối tập còn gồm ba đề xuất ADR (plugin APISIX do Datahub viết, kênh nhanh Valkey cho thu hồi token, mảnh tenant và bản ghép cấu hình) và các việc cho D03-01, D03-07, D03-09, D03-10, D03-06-00 cùng tập của PH-01, 02, 12, 13, 20.",
+      "kiem_tra_ma": [
+        "Tổng: 136 tệp, 3945 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 96, ERR 62, EVT 12, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "uc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 3.0517,
+      "so_luot": 71,
+      "phut": 14.2,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 70,
+        "output_tokens": 138391,
+        "cache_read_input_tokens": 7462727,
+        "cache_creation_input_tokens": 368429
+      },
+      "tom_tat": "pandoc`, nên bốn sơ đồ Mermaid mới chỉ được rà bằng mắt.\n\n**Kiểm tra đã chạy**\n- `kiem_tra_ma.py` không báo lỗi nào từ tệp này và liên kết hỏng bằng 0.\n- 8 lỗi mới còn lại nằm ở tệp FRS PH-03: các `PERM-03-*` chưa có trong D02-08. FRS đã ghi việc này ở mục \"Đề nghị đồng bộ\".\n- Một script riêng xác nhận danh sách FR trong từng khối UC khớp với bảng 5.1 và bảng ngược ở chương 8. Cả 59 FR đều nằm trong ít nhất một UC.\n- Mọi bảng đều có chú thích, trừ bảng Lịch sử phiên bản (theo mẫu PH-05).\n\n**Nội dung**\n- **Khung tài liệu:** gồm metadata, tóm tắt cho hội đồng, chương 1 đến 9, mục \"Đề nghị đồng bộ\" và lịch sử phiên bản 0.1.\n- **UC:** 31 use case (27 mức M, 4 mức S), mỗi UC một khối 15 mục. Luồng ngoại lệ dùng mã `ERR-03-nnn` và câu thông báo lấy từ FRS.\n- **Sơ đồ:** 4 hình use case tổng, chia theo nhóm để đọc được trên A4.\n- **Truy vết:** ba bảng UC với FR, UI/API, REQ/BP/LGC, cộng một bảng ngược từ 59 FR sang UC ở chương 8.\n- **Luồng phụ dùng chung:** 5 luồng, `LP-03-01` đến `LP-03-05`.\n- **Câu hỏi mở:** 5 câu, `Q03-45` đến `Q03-49`.\n\n**Điểm cần người đọc lưu ý**\n- Tôi viết thêm 9 câu thông báo chưa có ở FRS §9.2, ví dụ lỗi thiếu quyền và \"Không tìm thấy nút…\". Chúng được liệt kê ở chương 8 để đưa vào D03-06-PH03 §5.2 sau này.\n- FR-03-004 trong FRS tự mâu thuẫn: phần mô tả nói \"không rộng hơn /24\", câu thông báo nói \"hẹp hơn /24\". Tôi ghi vào \"Đề nghị đồng bộ\" và UC-03-12 dùng dải `/26` nên không bị ảnh hưởng.\n- Theo yêu cầu, tôi không sửa tài liệu dùng chung và không dùng git.",
+      "kiem_tra_ma": [
+        "Tổng: 137 tệp, 3976 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 96, ERR 62, EVT 12, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "sdd",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 4.6769,
+      "so_luot": 75,
+      "phut": 23.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 124,
+        "output_tokens": 201476,
+        "cache_read_input_tokens": 16089051,
+        "cache_creation_input_tokens": 421041
+      },
+      "tom_tat": "ợng |\n|---|---|\n| Thành phần (khối đặc tả 10 mục) | 16 |\n| Biểu đồ tuần tự | 11 |\n| Máy trạng thái có bảng chuyển trạng thái | 11 |\n| Biểu đồ khác | 3 (thành phần, chuỗi chốt, miền) |\n| Chỉ số Prometheus | 46 ở mặt phẳng dữ liệu, 25 ở control plane |\n| Luật cảnh báo | 13 (GW-A01…A13) |\n| Điều cần xác minh với APISIX 3.11 | 7 (X1…X7, tự đặt trong tài liệu, không phải mã dải đã cấp) |\n\nTôi không tạo mã mới ngoài các câu hỏi mở. Tài liệu tham chiếu lại các mã FR, BR, NFR, ERR, API, EVT, SEC, ADR đã có.\n\n**Câu hỏi mở đã thêm:** 8 câu, Q03-20…Q03-27.\n- Q03-20: nâng cấp APISIX cuốn chiếu cần hai ảnh chụp song song.\n- Q03-21: mô hình hai chặng so với \"ext chạy đủ chuỗi\" ở D03-09 §4.4 và FR-03-038.\n- Q03-22: `dh-sync` viết bằng Go.\n- Q03-23: thay plugin dựng sẵn bằng Lua.\n- Q03-24: kích thước ảnh chụp ở hồ sơ `QM-CHUNG`.\n- Q03-25: lấy số bản sao từ `EndpointSlice`.\n- Q03-26: địa chỉ CRL của CA khách.\n- Q03-27: độ trễ hết hạn ngoại lệ WAF.\n\n**Kiểm tra**\n- `kiem_tra_ma.py`: tệp này không gây lỗi mới. Có 8 lỗi mới đã tồn tại sẵn từ tập FRS (các `PERM-03-*` chưa có ở D02-08), tôi không sửa vì ngoài phạm vi.\n- 14 sơ đồ Mermaid đều qua bộ phân tích cú pháp.\n- Môi trường không có pandoc nên tôi chưa thử xuất .docx.\n- Hội đồng cần cho ý kiến về hai điểm lệch so với FRS và SAD: thiết kế thêm 4 plugin Lua (`dh-auth`, `dh-limit`, `dh-edge`, `dh-problem`) và dùng mô hình hai chặng.\n\n\"Đề nghị đồng bộ\" ghi 4 ADR đề xuất và việc cần sửa ở D03-01, D03-09, D03-07, FRS, tập CSDL, tập API và D04-01/02.",
+      "kiem_tra_ma": [
+        "Tổng: 138 tệp, 3976 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 96, ERR 62, EVT 12, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "csdl",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 5.069,
+      "so_luot": 71,
+      "phut": 24.3,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 114,
+        "output_tokens": 247137,
+        "cache_read_input_tokens": 15248920,
+        "cache_creation_input_tokens": 428864
+      },
+      "tom_tat": ": các `PERM-03-*` chưa có trong D02-08.\n\n**Kết quả chạy thử (PostgreSQL 16.16)**\n- Bài kiểm có 80 phép kiểm ở 40 nhóm: cô lập đọc/ghi/sửa giữa tenant, bốn mắt, máy trạng thái, mã bất biến, không lưu bí mật, bảng chỉ thêm, quyền theo vai trò.\n- Bài kiểm tìm ra hai lỗi trong DDL bản nháp, đã sửa:\n  - `CHECK` dùng `char_length(NULL)` cho kết quả NULL nên lý do rỗng lọt qua.\n  - Cột `tenant_redirect.state` rộng 5 ký tự không chứa được `ACTIVE`.\n- Chưa làm: sinh changelog Liquibase (công cụ PH-07 gắn cứng tên `ph07`, đã ghi vào đề nghị đồng bộ) và kiểm thử tải trên dữ liệu cỡ `QM-CHUNG`.\n\n**Điểm lệch so với tài liệu đã có**\n- Nút gateway (EN-03-10) không có bảng, theo SDD §4.16; FRS vẫn liệt kê nó là thực thể.\n- Bản này có 11 máy trạng thái lưu ở PostgreSQL, SDD §8.1 chỉ liệt kê 8. Ba máy thêm là `WAF_PATCH`, `TENANT_HOLD`, `IMPORT_JOB`.\n- Hai cặp chuyển trạng thái mở rộng so với FRS (`ROUTE PENDING→RETIRED`, `SNAPSHOT PUBLISHED→SUPERSEDED`) để tránh trạng thái kẹt, đang chờ xác nhận ở Q03-51.\n\n**Câu hỏi mở đã thêm (5)**\n- Q03-50: lược đồ APIM hệ cũ chưa có, chỉ ánh xạ được ở mức khái niệm.\n- Q03-51: hai cặp chuyển trạng thái mở rộng.\n- Q03-52: tenant `COMMON` ở `route`, `upstream`, `edge_host`.\n- Q03-53: khóa duy nhất toàn cục của host và vân tay chứng thư, rủi ro lộ sự tồn tại và HTTT cấp quốc gia.\n- Q03-54: `ip_block.source = AUTO` chưa có đường ghi.\n\nTôi không dùng git và không sửa tài liệu dùng chung hay phân hệ khác; các việc cần đồng bộ nằm ở mục \"Đề nghị đồng bộ\" cuối tập.",
+      "kiem_tra_ma": [
+        "Tổng: 139 tệp, 3976 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 96, ERR 62, EVT 12, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "api",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 6.0552,
+      "so_luot": 103,
+      "phut": 24.9,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 182,
+        "output_tokens": 228402,
+        "cache_read_input_tokens": 26731988,
+        "cache_creation_input_tokens": 438897
+      },
+      "tom_tat": "PI-03-001…096), 24 nhóm, 125 lược đồ; 33 có `If-Match`, 17 bắt buộc `Idempotency-Key`, 4 dùng token dịch vụ.\n- **Sự kiện:** 12 (EVT-03-01…12), 12 kênh AsyncAPI.\n- **Lỗi:** 57 mã ERR-03 (27 điều khiển, 30 do cổng trả cho bên gọi).\n- **Phủ FR:** 57 trong 59 FR có API; FR-03-013 và FR-03-032 chỉ nằm ở mặt phẳng dữ liệu.\n- **Danh mục khớp FRS §9.4, §9.3, §9.1** từng dòng (`check_contracts.py` kiểm tự động).\n- **Kết quả kiểm:**\n  - OpenAPI hợp lệ (`openapi-spec-validator`).\n  - Spectral (kèm OWASP): 0 lỗi, 270 cảnh báo mức thấp.\n  - AsyncAPI parser: 0 lỗi.\n  - 59 ví dụ khớp lược đồ (35 trong OpenAPI, 15 khối JSON trong tài liệu, 9 ví dụ sự kiện).\n- **UI, TC:** tập API không tạo mã mới.\n\n**Câu hỏi mở đã thêm: 5** (Q03-55…59)\n- Q03-55: mã lỗi cho `401` và `500` ở mặt phẳng điều khiển.\n- Q03-56: phân trang nhật ký lượt gọi trên ClickHouse.\n- Q03-57: `If-Match` tùy chọn và `trustedSource` ở hợp đồng với PH-01.\n- Q03-58: phạm vi scope `gateway:read-state` cho PH-13.\n- Q03-59: nơi lưu và thời hạn tệp xuất nhật ký.\n\n**Chưa chạy hoặc còn tồn tại**\n- **`kiem_tra_ma.py`:** tệp của tôi không gây lỗi mới. Còn 8 lỗi mới do tám mã `PERM-03-*` chưa có ở D02-08, đã nằm sẵn ở tập FRS và đã ghi vào Đề nghị đồng bộ.\n- **`oasdiff`, Apicurio, kiểm thử hợp đồng hai phía:** chưa chạy được ở giai đoạn này (cần nhánh chính có hợp đồng, kho Apicurio và mã `dh-connect`); §7.3 nêu rõ.\n- **Khác với CSDL §6.4:** khóa phân vùng của EVT-03-01, 02, 11, 12 tôi chọn khác, lý do ở §4.2 và đã ghi vào Đề nghị đồng bộ.",
+      "kiem_tra_ma": [
+        "Tổng: 140 tệp, 3976 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "mh",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 3.3275,
+      "so_luot": 68,
+      "phut": 17.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 104,
+        "output_tokens": 158991,
+        "cache_read_input_tokens": 9673595,
+        "cache_creation_input_tokens": 307847
+      },
+      "tom_tat": "s`, `shot.js`, cùng 18 tệp `.html` và 18 ảnh `.png` (`ui-03-01` đến `ui-03-18`). Tôi đã mở xem sáu ảnh, thấy đúng bố cục; 12 ảnh còn lại chưa xem.\n\n**Số mã chính**\n- 18 màn `UI-03-01…18`, dùng 8 mẫu `PTN`, không tạo mẫu mới.\n- Các màn gọi 91 trong 96 API (`API-03-001…096`). Năm API còn lại là API nội bộ cho PH-01, PH-12 hoặc danh sách upstream không cần màn: 005, 013, 014, 015, 053.\n- Bảng thông điệp phủ đủ 27 mã `ERR-03-001…027`, cộng 12 mã gateway hay gặp ở nhật ký lượt gọi.\n- Ma trận vai trò theo màn, truy vết đủ 59 FR sang màn, 3 phụ lục (A: đề nghị bổ sung D03-05, B: đề nghị bổ sung API, C: danh sách kiểm tra khi dựng màn).\n- Tôi không viết mã `TC`: ca kiểm thử giao diện để cho D05-02-PH03.\n\n**Câu hỏi mở đã thêm:** 5, từ `Q03-30` đến `Q03-34`.\n- Q03-30: nhóm menu 14 mục có quá dài không.\n- Q03-31: tải của chế độ theo dõi trực tiếp lên ClickHouse.\n- Q03-32: địa chỉ nguồn có là dữ liệu cá nhân không.\n- Q03-33: hộp việc chung có hỗ trợ lọc `ph03.*` không.\n- Q03-34: cập nhật trạng thái bằng polling hay kênh đẩy.\n\n**Quyết định cần anh chị biết**\n- **Route:** tôi dùng `/cong-api/...` theo đề nghị của FRS. D03-06-00 hiện chỉ có `/ket-noi/chinh-sach` và `/ket-noi/gateway`, nên tập này giữ hai đường đó làm đường chuyển hướng. Phần sửa D03-06-00 ghi ở \"Đề nghị đồng bộ\".\n- **Phụ lục B:** chín chỗ giao diện cần API mà D03-04 bản 0.1 chưa có. Hai chỗ quan trọng nhất: \"Thử khô\" luật vá ảo và \"Bỏ giữ\" sau quay lui chưa có API.\n- **Ngoài phạm vi:** tôi không sửa tài liệu dùng chung nào.",
+      "kiem_tra_ma": [
+        "Tổng: 141 tệp, 3976 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "tc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.5319,
+      "so_luot": 51,
+      "phut": 13.4,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 84,
+        "output_tokens": 129124,
+        "cache_read_input_tokens": 6442871,
+        "cache_creation_input_tokens": 238350
+      },
+      "tom_tat": "ch bản phi chức năng và xuyên suốt TS-03-26…32.\n- **UAT:** 11 (UAT-01…11), tương đương API Management cũ (Gravitee) và Bus cũ. Phủ 9 mục `LGC` mà PH-03 là phân hệ đích, thêm LGC-APIM-002…004, 009, 010, 016, 021, 026 lấy từ FRS, cộng LGC-NFR-006.\n- **Độ phủ theo ma trận sinh tự động:** mọi FR mức M có ca dương và ca âm, và mọi BR, ERR-03-001…027, ERR-03-101…130, NFR, UC, UI, API, EVT đều có ít nhất một ca. Hai chỗ ma trận cho kết quả sạch nhưng tôi phải giải thích:\n  - Một ca định dạng lỗi chung ban đầu viết `ERR-03-101…130` trong truy vết nên làm 30 mã lỗi gateway trông như đã phủ; tôi bỏ khoảng mã đó để ma trận phản ánh ca riêng của từng mã.\n  - 11 ca cũ ban đầu chỉ ghi một loại (dương hoặc âm), trong khi bước của ca thực sự gồm cả hai. Tôi bổ sung nhãn loại cho các ca đó để ma trận khớp, ví dụ TC-03-011 (hạn mức theo địa chỉ nguồn) và TC-03-046 (hạn ngạch).\n- Ca rò rỉ chéo tenant cho mọi API đọc gom vào một ca tham số hóa (TS-03-27). Truy vết của ca chỉ liệt kê 11 API đại diện; phần còn lại được phủ bằng bước \"với từng API danh sách\" và \"lặp cho `PUT`, `DELETE`, `POST …:{động từ}`\".\n\n**Câu hỏi mở đã thêm:** Q03-40…44.\n- Q03-40: ngưỡng WAF chặn nhầm.\n- Q03-41: ca mất một vùng sẵn sàng cần hạ tầng hai vùng thật.\n- Q03-42: cần gói cấu hình Gravitee thật của tỉnh thí điểm.\n- Q03-43: cần dải địa chỉ nguồn giả lập, gồm IPv6.\n- Q03-44: các ca dùng đồng hồ giả lập chỉ chạy lần chạy đêm.\n\n**Đề nghị đồng bộ** (cuối tập) gồm D00-04 §2, D05-01, D04-02 và D02-08 §3.1. Không đề xuất ADR.",
+      "kiem_tra_ma": [
+        "Tổng: 142 tệp, 4144 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "ra-soat",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 1.888,
+      "so_luot": 81,
+      "phut": 6.6,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 158,
+        "output_tokens": 56077,
+        "cache_read_input_tokens": 8903984,
+        "cache_creation_input_tokens": 174505
+      },
+      "tom_tat": " của tập API.\n- **Test case:**\n  - Khoảng 22 câu thông báo lỗi `ERR-03-1xx` đã viết lại theo FRS §9.2. Riêng ERR-03-110 trước đây lộ \"địa chỉ của bạn đang bị chặn\", nay là \"Yêu cầu bị từ chối\".\n  - Chương 0 tách thành 0.1–0.5 (mục đích, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu).\n\n**Đã đối chiếu và không thấy lỗi:**\n- **FRS:** đủ 59 khối FR, đúng 17 mục theo thứ tự; số lượng 59 FR, 31 UC, 96 API, 18 UI, 136 TC, 57 ERR, 12 EVT, 35 bảng khớp giữa các tập.\n- **UC:** đủ 31 khối UC, đúng 15 mục. Bảng UC → FR khớp chi tiết; bảng ngược FR → UC khớp chi tiết, mỗi FR có ít nhất một UC.\n- **Hai chiều giữa các tập:** FR ↔ API và FR ↔ UI khớp, trừ ba cặp FR-UI là chú thích \"không có màn hình riêng\". Các ca kiểm thử nhắc API/UI/UC đúng với FR của chúng, trừ vài ca dùng làm phương tiện kiểm tra (đã xem, chấp nhận).\n- **Ma trận §8 của TC:** sinh lại bằng `gen_matrix.py` cho kết quả trùng khớp, không có BR/ERR/NFR nào thiếu ca. Mã HTTP của ERR khớp ở FRS, API, SDD.\n- **Hình và bảng:** mọi bảng dữ liệu có chú thích, chỉ còn bảng Lịch sử phiên bản không có. Mọi Mermaid có `caption` và không có `;` trong thông điệp sequence.\n\n**Chưa kiểm được:** runner không có `mmdc` nên Mermaid mới chỉ soát cú pháp bằng script, chưa dựng hình. Cần chạy `DH_PDF=1 build/build-docx.sh` ở đợt xuất. Lưu ý này và việc câu thông báo trong FRS/UC là câu theo ngữ cảnh, còn bảng ở API và màn hình là câu chung của mã, đều đã ghi ở \"Đề nghị đồng bộ\" của FRS.\n\nKhông thêm mã mới và không thêm câu hỏi mở.",
+      "kiem_tra_ma": [
+        "Tổng: 142 tệp, 4144 mã khác nhau. Trùng 20, thiếu 32, liên kết hỏng 0 (mới 8, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    }
+  ],
+  "tong_usd": 31.9927
+}

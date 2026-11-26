@@ -195,6 +195,14 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-02-operate | Start/Stop API | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
 | PERM-03-read | Xem cấu hình gateway, trạng thái nút | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-03-admin | Quản lý chính sách gateway | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-limit | Đặt hạn mức toàn tenant, ghi đè hạn mức theo route | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf-request | Đề nghị ngoại lệ luật WAF; xem sự kiện chặn của WAF | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf-approve | Duyệt, từ chối ngoại lệ luật WAF | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-waf | Đổi chế độ WAF, luật vá ảo, chặn và bỏ chặn địa chỉ, đổi mức hoang tưởng | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-operate | Dừng, mở API; tạm ngừng khẩn cấp route và consumer; quay lui; xác nhận cảnh báo; gia hạn chứng thư | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-publish | Kiểm tra, xây và phát ảnh chụp cấu hình thủ công | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-approve | Duyệt yêu cầu thay đổi gateway có bốn mắt (cửa ngoài, hạ hạn mức tenant, đổi chế độ WAF) | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-03-log-read | Xem nhật ký lượt gọi chi tiết (có định danh HTTT, đã che dữ liệu nhạy cảm), xuất nhật ký | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-04-read | Xem luồng | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | ● | ● |
 | PERM-04-create / update | Thiết kế luồng, chạy thử | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-04-submit | Gửi duyệt phát hành | — | — | — | — | — | ● | — | — | — | — | — | — | — | — | — |
