@@ -5,7 +5,7 @@ Tính năng: TS-04-09 · Trình ánh xạ dữ liệu
 
   @TC-04-054 @P1 @Dương
   Kịch bản: TC-04-054 Ánh xạ trường, hàm và chuyển mã
-    # Truy vết: FR-04-020, 065 · API-04-033 · UI-04-07 · UC-04-06 · LGC-TOOL-008
+    # Truy vết: FR-04-020, 065 · API-04-033 · UI-04-07 · UC-04-06 · LGC-TOOL-008.
     Biết lược đồ nguồn `hotich-yeucau-v1`, đích CDM `cdm-cong-dan-v1`; bảng chuyển mã PH-07 `GIOI_TINH` (giả lập).
     Khi trên UI-04-07, kéo `hoTen` → `ten.day_du`, `ngaySinh` → `ngay_sinh` với hàm "Định dạng ngày", `gioiTinh` → `gioi_tinh` với "Chuyển mã danh mục GIOI_TINH".
     Và gọi `POST /mappings:preview` với `sample` = MSG-OK có `gioiTinh = "1"`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-09 · Trình ánh xạ dữ liệu
 
   @TC-04-055 @P1 @Âm
   Kịch bản: TC-04-055 Ánh xạ không hợp lệ
-    # Truy vết: FR-04-020 · API-04-033 · ERR-04-038, 021
+    # Truy vết: FR-04-020 · API-04-033 · ERR-04-038, 021.
     Biết như ca trên.
     Khi xem trước với ánh xạ tới `ten.khong_co`.
     Và xem trước với hai trường suy ra lẫn nhau (vòng).
@@ -23,8 +23,17 @@ Tính năng: TS-04-09 · Trình ánh xạ dữ liệu
 
   @TC-04-056 @P3 @Biên
   Kịch bản: TC-04-056 Trường bắt buộc của đích chưa ánh xạ
-    # Truy vết: FR-04-020, 084 · API-04-030
+    # Truy vết: FR-04-020, 084 · API-04-030.
     Biết ánh xạ thiếu `so_dinh_danh` (bắt buộc ở đích).
     Khi `:validate` mức `SUBMIT` với `04.mapping.require-all-required = false`.
     Và bật tham số, kiểm lại.
     Thì bước 1: finding mức `WARN`. Bước 2: finding mức `ERROR`.
+
+  @TC-04-190 @P2 @Âm @Khả @dụng
+  Kịch bản: TC-04-190 Sandbox không sẵn sàng khi xem trước ánh xạ
+    # Truy vết: FR-04-020 · UC-04-06 · API-04-033 · UI-04-07 · ERR-04-019.
+    Biết U-T68-IE1; F-HT v4 có chặng ánh xạ "Chuẩn hóa hồ sơ" dùng bảng mã `gioi-tinh-ht-ndxp` của PH-07; sandbox thu về 0 bản sao.
+    Khi mở UI-04-07, bấm "Thử trên bản tin mẫu" với MSG-OK.
+    Và gọi thẳng `POST /mappings:preview`.
+    Và bấm "Lưu" ánh xạ.
+    Thì bước 2 trả `503` ERR-04-019. Bước 1: xem trước cục bộ có nhãn "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime"; trường dùng hàm `dh_map` hiện "Chưa xem trước được" vì cần runtime. Bước 3: lưu thành công (`200`), JQ sinh từ dhmap không đổi so với khi sandbox sẵn sàng (so băm). Dữ liệu xem trước vẫn được che theo BR-04-013.

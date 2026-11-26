@@ -5,7 +5,7 @@ Tính năng: TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
 
   @TC-04-057 @P2 @Dương
   Kịch bản: TC-04-057 Soạn Kamelet tự viết và dùng trong luồng
-    # Truy vết: FR-04-018 · UI-04-08 · UC-04-07
+    # Truy vết: FR-04-018 · UI-04-08 · UC-04-07.
     Biết F-KAM v1 `DRAFT`, tham số `pattern` và `maskChar`.
     Khi trên UI-04-08, khai báo tham số, đánh dấu không nhạy cảm, lưu.
     Và đưa F-KAM qua duyệt và phát hành TEST.
@@ -14,7 +14,7 @@ Tính năng: TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
 
   @TC-04-058 @P2 @Âm
   Kịch bản: TC-04-058 Kamelet sai
-    # Truy vết: FR-04-018 · ERR-04-036, 029 · BR-04-003
+    # Truy vết: FR-04-018 · ERR-04-036, 029 · BR-04-003.
     Biết IE1.
     Khi tạo Kamelet tên `dh-receive-action` (trùng Kamelet nền).
     Và tạo Kamelet có tham số `apiKey` không đánh dấu `format: password`.
@@ -23,7 +23,7 @@ Tính năng: TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
 
   @TC-04-059 @P3 @Dương @Âm
   Kịch bản: TC-04-059 Soạn Pipe
-    # Truy vết: FR-04-019 · UI-04-09
+    # Truy vết: FR-04-019 · UI-04-09.
     Biết kamelet `kafka-source`, F-KAM (`action`), `http-sink`.
     Khi tạo Pipe `source: kafka-source`, `steps: [F-KAM]`, `sink: http-sink`.
     Và đặt `http-sink` vào `source`.
@@ -31,7 +31,7 @@ Tính năng: TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
 
   @TC-04-060 @P3 @Dương @Âm
   Kịch bản: TC-04-060 Bean khai báo và cấu hình cấp tệp
-    # Truy vết: FR-04-021 · UI-04-10 · ERR-04-011
+    # Truy vết: FR-04-021 · UI-04-10 · ERR-04-011.
     Biết danh sách lớp bean cho phép có `vn.datahub.runtime.beans.VietnameseNormalizer`.
     Khi khai báo bean lớp được phép, dùng `#normalizer` ở chặng `transform`.
     Và khai báo bean `java.lang.ProcessBuilder`.
@@ -39,8 +39,19 @@ Tính năng: TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
 
   @TC-04-061 @P3 @Dương
   Kịch bản: TC-04-061 Ghi chú dán và luồng con
-    # Truy vết: FR-04-026 · BR-04-007 · UI-04-04
+    # Truy vết: FR-04-026 · BR-04-007 · UI-04-04.
     Biết F-HT v4.
     Khi thêm hai ghi chú dán màu khác nhau.
     Và chọn ba chặng, "Tách thành luồng con".
     Thì bước 1: ghi chú lưu ở bố cục, không có trong YAML (BR-04-007). Bước 2: sinh route `direct:{flow}-sub-1` trong cùng tệp, chỗ cũ thay bằng `to: direct:…`; quay vòng YAML giữ nguyên băm sau khi tách.
+
+  @TC-04-191 @P2 @Dương @Âm
+  Kịch bản: TC-04-191 Trạng thái màn và câu chặn của Trình soạn Pipe
+    # Truy vết: FR-04-019 · UI-04-09 · ERR-04-001, 011.
+    Biết U-T68-IE1; Pipe mới `tc-pipe`; Pipe `sftp-bhxh-to-kafka` v3 `APPROVED`; Kamelet `dh-csv-to-json` bị cấm sau khi dùng; U-T68-VW.
+    Khi IE1 tạo Pipe `tc-pipe` và mở UI-04-09.
+    Và kéo thành phần thô `http` vào ô Bước; kéo Kamelet `dh-kafka-sink` vào ô Nguồn.
+    Và thêm bước thứ 21.
+    Và mở `sftp-bhxh-to-kafka` v2 có bước `dh-csv-to-json`.
+    Và VW mở `sftp-bhxh-to-kafka` v3.
+    Thì bước 1: ba ô rỗng nét đứt "Chọn nguồn", "Thêm bước (tùy chọn)", "Chọn đích"; skeleton ba ô trong lúc tải. Bước 2: không thả được, chú thích "Pipe chỉ dùng Kamelet. Muốn dùng thành phần http, tạo luồng loại route." và "Ô Nguồn chỉ nhận Kamelet loại source." (VR-15). Bước 3: "Pipe có tối đa 20 bước. Tách thành hai Pipe nối qua topic." Bước 4: ô có huy hiệu "Không còn được phép" (ERR-04-011). Bước 5: ST-07 chỉ đọc, bảng Kamelet ẩn.
