@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D03-03-PH07
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-07 Danh mục dùng chung
-phien_ban: 0.1
-ngay: 2026-11-25
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kiến trúc sư, lập trình viên L-DATA, quản trị CSDL, đội di trú dữ liệu, kiểm thử viên
 phan_he: PH-07
 nguoi_lap: Nhóm phân hệ PH-07
+mo_ta: Lược đồ dữ liệu schema ph07_rdm gồm 20 bảng có bảng đặc tả 10 mục trích từ DDL, sơ đồ thực thể quan hệ, cách ly tenant bằng RLS, kho ngoài, sao lưu và ánh xạ CSDL Aita
+tai_lieu_lien_quan: D02-03-PH07 FRS; D03-02-PH07 SDD; D03-10; D02-07
 ---
 
 # D03-03-PH07 · Thiết kế cơ sở dữ liệu phân hệ PH-07 Danh mục dùng chung
@@ -26,7 +28,27 @@ Hợp đồng máy đọc được của tài liệu này:
 | [`ph07/seed/`](ph07/seed/) | Dữ liệu nền S01 (nhóm danh mục), S02 (giới tính), S03 (khung ĐVHC) |
 | [`ph07/tools/gen_liquibase.py`](ph07/tools/gen_liquibase.py) | Công cụ sinh changelog |
 
+: Tóm tắt cho hội đồng thẩm định
+
 Ngày 25/11/2026, DDL, changelog sinh ra và dữ liệu nền đã được chạy thử thành công trên PostgreSQL 16 (CSDL trống, `ON_ERROR_STOP`); đích chính thức là PostgreSQL 18 qua CloudNativePG (ADR-006).
+
+## 0. Giới thiệu
+
+Tài liệu đặc tả lược đồ dữ liệu của PH-07 trong schema `ph07_rdm`: chiến lược lưu trữ và cách ly tenant (chương 1), sơ đồ thực thể – quan hệ (chương 2), đặc tả 20 bảng (chương 3, mỗi bảng một bảng đặc tả 10 mục trích từ DDL rồi đến bảng cột, ràng buộc, chỉ mục), DDL và changelog Liquibase (chương 4), dữ liệu khởi tạo (chương 5), kho lưu trữ ngoài PostgreSQL (chương 6), sao lưu, mã hóa, lưu giữ (chương 7), ánh xạ CSDL hệ cũ Aita (chương 8) và câu hỏi mở (chương 9).
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Lập trình viên `dh-data` | Chương 1, 2, 3, 4 |
+| Quản trị CSDL, vận hành | Chương 1, 4, 6, 7 |
+| An toàn thông tin | Mục 1.2, chương 7 |
+| Đội di trú dữ liệu | Chương 8 |
+| Hội đồng thẩm định | Tóm tắt, chương 2, 8 |
+
+: Người đọc và phần cần đọc
+
+Thuật ngữ dùng chung với [D02-03-PH07](../../02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md) §1.4 và D00-01 (kiểu dữ liệu chuẩn ở D00-01 §5, cột ngữ cảnh ở D00-01 §5.1). Tài liệu tham chiếu: D02-03-PH07 (FRS, nguồn của EN-07 và BR-07 có lớp CSDL), D03-02-PH07 (SDD), D03-10 (thiết kế đa tenant), D02-07 (từ điển dữ liệu chung: DD-07, DD-11, DD-12, DD-14).
+
+Mười mục của bảng đặc tả mỗi bảng: Mục đích · FR phục vụ · Khóa chính · Duy nhất · Khóa ngoại · Ràng buộc CHECK · Chỉ mục · Cách ly tenant · Phân vùng, chỉ thêm · Ghi chú. Bảng đặc tả được công cụ `ph07/tools/them_dac_ta_bang.py` trích từ phần ràng buộc, chỉ mục, RLS do `gen_csdl_doc.py` sinh từ DDL, nên luôn khớp DDL.
 
 ## 1. Chiến lược lưu trữ
 
@@ -43,6 +65,8 @@ Mọi bảng nghiệp vụ có cột `tenant_id` (`T{nn}`, `COMMON`; `PLATFORM` 
 | S (dùng chung) | Tenant phiên hoặc `COMMON` | Tenant phiên là tỉnh và dòng của chính tỉnh đó; hoặc dòng `COMMON` khi tenant phiên là `PLATFORM` | Nhóm, danh mục, phiên bản, thuộc tính, bản ghi, sự kiện sắp xếp, hệ thống mã, ánh xạ |
 | P (riêng) | Như ghi | Như mẫu S | Dữ liệu tác nghiệp: tác vụ nhập, dòng tạm, đồng bộ, cấp quyền khai thác, outbox, nhật ký duyệt |
 
+: Cách ly tenant
+
 Khóa ngoại giữa các bảng mẫu S mang cả `tenant_id` (ví dụ `(catalog_id, tenant_id)`), nên một dòng của tỉnh không thể trỏ sang danh mục của tỉnh khác. Danh mục của tỉnh được phép trỏ tới danh mục `COMMON` ở đúng hai chỗ có chủ đích: `extends_catalog_id` của danh mục HYBRID và `ref_catalog_code` của thuộc tính `CATALOG_REF`; hai chỗ này kiểm tra bằng trigger chứ không bằng khóa ngoại hai cột.
 
 Tuỳ chọn tách cơ sở dữ liệu riêng cho tỉnh lớn (D03-10) không đổi thiết kế bảng: CSDL riêng vẫn có schema `ph07_rdm` giống hệt, chứa dữ liệu của một tỉnh và bản sao danh mục `COMMON` được đồng bộ từ cụm trung tâm qua sự kiện EVT-07-05.
@@ -55,7 +79,7 @@ Mọi bảng nghiệp vụ theo D00-01 §5.1: khóa chính `id uuid` (UUID v7 si
 
 Sơ đồ dưới đây chỉ thể hiện khóa ngoại thật trong DDL (sinh từ catalog của PostgreSQL). Bảng `outbox`, `idempotency_key`, `shedlock` không có khóa ngoại nên không xuất hiện.
 
-```mermaid
+```{.mermaid caption="Sơ đồ thực thể – quan hệ schema ph07_rdm"}
 erDiagram
     admin_unit ||--o{ admin_unit : "admin_unit_parent"
     catalog_version ||--o{ attribute_def : "attribute_def_version"
@@ -113,9 +137,32 @@ Bảng dưới đây liệt kê các bảng, mã thực thể, mẫu RLS và mô
 | EN-07-19 | `file_object` | Tệp (theo DD-12): siêu dữ liệu tệp nhập, tệp xuất, báo cáo lỗi, ảnh chụp; nội dung ở Garage. Mẫu RLS P. |
 | — | `shedlock` | Khóa ShedLock cho tác vụ định kỳ của PH-07 (quét lịch đồng bộ, dọn bảng tạm, hết hạn tác vụ, tự chuyển hiệu lực). Không chứa dữ liệu nghiệp vụ. |
 
+: Đặc tả bảng
+
 ### 3.1. `catalog_group` (EN-07-01)
 
-EN-07-01 Nhóm danh mục: cây phân loại danh mục (FR-07-010). Mẫu RLS S: nhóm COMMON dùng chung, tenant thêm nhóm riêng.
+::: dac-ta
+**Mục đích.** EN-07-01 Nhóm danh mục: cây phân loại danh mục (FR-07-010). Mẫu RLS S: nhóm COMMON dùng chung, tenant thêm nhóm riêng.
+
+**FR phục vụ.** FR-07-010.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_catalog_group_code` (tenant_id, code).
+
+**Khóa ngoại.** (parent_id, tenant_id) → `catalog_group`.
+
+**Ràng buộc CHECK.** `ck_catalog_group_code`, `ck_catalog_group_name_nfc`, `ck_catalog_group_not_self`, `ck_catalog_group_tenant`.
+
+**Chỉ mục.** `ix_catalog_group_parent`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_catalog_group_delete` (DELETE), `rls_catalog_group_insert` (INSERT), `rls_catalog_group_select` (SELECT), `rls_catalog_group_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -132,7 +179,7 @@ EN-07-01 Nhóm danh mục: cây phân loại danh mục (FR-07-010). Mẫu RLS S
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `catalog_group`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -145,17 +192,40 @@ Ràng buộc:
 | `uq_catalog_group_code` | Duy nhất | `UNIQUE (tenant_id, code)` |
 | `uq_catalog_group_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `catalog_group`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_catalog_group_parent` | `CREATE INDEX ix_catalog_group_parent ON ph07_rdm.catalog_group USING btree (tenant_id, parent_id, sort_order)` |
 
+: Chỉ mục của bảng `catalog_group`
+
 Chính sách RLS: `rls_catalog_group_delete` (DELETE), `rls_catalog_group_insert` (INSERT), `rls_catalog_group_select` (SELECT), `rls_catalog_group_update` (UPDATE).
 
 ### 3.2. `catalog` (EN-07-02)
 
-EN-07-02 Danh mục: định nghĩa một danh mục (FR-07-001…009, 048). Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-02 Danh mục: định nghĩa một danh mục (FR-07-001…009, 048). Mẫu RLS S.
+
+**FR phục vụ.** FR-07-001…009, 048.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_catalog_tenant_code`.
+
+**Khóa ngoại.** (current_version_id, tenant_id) → `catalog_version`, (extends_catalog_id) → `catalog`, (group_id) → `catalog_group`.
+
+**Ràng buộc CHECK.** `ck_catalog_classification`, `ck_catalog_code`, `ck_catalog_hybrid`, `ck_catalog_level_names`, `ck_catalog_max_depth`, `ck_catalog_name_nfc`, `ck_catalog_soft_delete`, `ck_catalog_source_type`, `ck_catalog_status`, `ck_catalog_tenant`.
+
+**Chỉ mục.** `ix_catalog_extends`, `ix_catalog_group`, `ix_catalog_name_trgm`, `ix_catalog_status`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_catalog_delete` (DELETE), `rls_catalog_insert` (INSERT), `rls_catalog_select` (SELECT), `rls_catalog_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -184,7 +254,7 @@ EN-07-02 Danh mục: định nghĩa một danh mục (FR-07-001…009, 048). M�
 | `version` | `integer` | Có | `0` |  |
 | `deleted_at` | `timestamp with time zone` |  |  |  |
 
-Ràng buộc:
+: Cột của bảng `catalog`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -204,7 +274,7 @@ Ràng buộc:
 | `pk_catalog` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_catalog_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `catalog`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -214,11 +284,34 @@ Chỉ mục:
 | `ix_catalog_status` | `CREATE INDEX ix_catalog_status ON ph07_rdm.catalog USING btree (tenant_id, status, source_type) WHERE (deleted_at IS NULL)` |
 | `uq_catalog_tenant_code` | `CREATE UNIQUE INDEX uq_catalog_tenant_code ON ph07_rdm.catalog USING btree (tenant_id, code) WHERE (deleted_at IS NULL)` |
 
+: Chỉ mục của bảng `catalog`
+
 Chính sách RLS: `rls_catalog_delete` (DELETE), `rls_catalog_insert` (INSERT), `rls_catalog_select` (SELECT), `rls_catalog_update` (UPDATE).
 
 ### 3.3. `catalog_version` (EN-07-03)
 
-EN-07-03 Phiên bản danh mục: ảnh chụp đầy đủ, bất biến khi PUBLISHED (ADR-051). Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-03 Phiên bản danh mục: ảnh chụp đầy đủ, bất biến khi PUBLISHED (ADR-051). Mẫu RLS S.
+
+**FR phục vụ.** FR-07-011…017.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_catalog_version_no` (catalog_id, version_no), `uq_catalog_version_open`.
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`.
+
+**Ràng buộc CHECK.** `ck_catalog_version_item_count`, `ck_catalog_version_no`, `ck_catalog_version_origin`, `ck_catalog_version_published`, `ck_catalog_version_range`, `ck_catalog_version_stats`, `ck_catalog_version_status`, `ck_catalog_version_tenant`.
+
+**Chỉ mục.** `ix_catalog_version_catalog`, `ix_catalog_version_review`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_catalog_version_delete` (DELETE), `rls_catalog_version_insert` (INSERT), `rls_catalog_version_select` (SELECT), `rls_catalog_version_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Bất biến khi `PUBLISHED` (trigger chặn sửa, BR-07-006); khoảng hiệu lực không chồng lấn (ràng buộc loại trừ, BR-07-007). Ràng buộc khác: `ex_catalog_version_no_overlap`.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -250,7 +343,7 @@ EN-07-03 Phiên bản danh mục: ảnh chụp đầy đủ, bất biến khi PU
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` | Khóa lạc quan của cả bản nháp: ứng dụng tăng mỗi khi nội dung bản nháp đổi; tác vụ nhập so sánh khi commit (BR-07-016). |
 
-Ràng buộc:
+: Cột của bảng `catalog_version`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -268,7 +361,7 @@ Ràng buộc:
 | `uq_catalog_version_no` | Duy nhất | `UNIQUE (catalog_id, version_no)` |
 | `ex_catalog_version_no_overlap` | Loại trừ | `EXCLUDE USING gist (catalog_id WITH =, daterange(effective_from, effective_to, '[)'::text) WITH &&) WHERE (((status)::text = 'PUBLISHED'::text))` |
 
-Chỉ mục:
+: Ràng buộc của bảng `catalog_version`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -276,11 +369,34 @@ Chỉ mục:
 | `ix_catalog_version_review` | `CREATE INDEX ix_catalog_version_review ON ph07_rdm.catalog_version USING btree (tenant_id, submitted_at) WHERE ((status)::text = 'IN_REVIEW'::text)` |
 | `uq_catalog_version_open` | `CREATE UNIQUE INDEX uq_catalog_version_open ON ph07_rdm.catalog_version USING btree (catalog_id) WHERE ((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'IN_REVIEW'::character varying, 'APPROVED'::character varying])::text[]))` |
 
+: Chỉ mục của bảng `catalog_version`
+
 Chính sách RLS: `rls_catalog_version_delete` (DELETE), `rls_catalog_version_insert` (INSERT), `rls_catalog_version_select` (SELECT), `rls_catalog_version_update` (UPDATE).
 
 ### 3.4. `attribute_def` (EN-07-04)
 
-EN-07-04 Định nghĩa thuộc tính động theo phiên bản (ADR-050). Giá trị lưu ở catalog_item.attrs. Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-04 Định nghĩa thuộc tính động theo phiên bản (ADR-050). Giá trị lưu ở catalog_item.attrs. Mẫu RLS S.
+
+**FR phục vụ.** FR-07-005, 006.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_attribute_def_code`.
+
+**Khóa ngoại.** (version_id, tenant_id) → `catalog_version`.
+
+**Ràng buộc CHECK.** `ck_attribute_def_classification`, `ck_attribute_def_code`, `ck_attribute_def_enum`, `ck_attribute_def_label_nfc`, `ck_attribute_def_length`, `ck_attribute_def_minmax`, `ck_attribute_def_query`, `ck_attribute_def_ref`, `ck_attribute_def_reserved`, `ck_attribute_def_status`, `ck_attribute_def_tenant`, `ck_attribute_def_type`.
+
+**Chỉ mục.** `ix_attribute_def_order`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_attribute_def_delete` (DELETE), `rls_attribute_def_insert` (INSERT), `rls_attribute_def_select` (SELECT), `rls_attribute_def_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -312,7 +428,7 @@ EN-07-04 Định nghĩa thuộc tính động theo phiên bản (ADR-050). Giá 
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `attribute_def`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -331,18 +447,41 @@ Ràng buộc:
 | `fk_attribute_def_version` | Khóa ngoại | `FOREIGN KEY (version_id, tenant_id) REFERENCES ph07_rdm.catalog_version(id, tenant_id) ON DELETE CASCADE` |
 | `pk_attribute_def` | Khóa chính | `PRIMARY KEY (id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `attribute_def`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_attribute_def_order` | `CREATE INDEX ix_attribute_def_order ON ph07_rdm.attribute_def USING btree (version_id, sort_order)` |
 | `uq_attribute_def_code` | `CREATE UNIQUE INDEX uq_attribute_def_code ON ph07_rdm.attribute_def USING btree (version_id, lower((code)::text))` |
 
+: Chỉ mục của bảng `attribute_def`
+
 Chính sách RLS: `rls_attribute_def_delete` (DELETE), `rls_attribute_def_insert` (INSERT), `rls_attribute_def_select` (SELECT), `rls_attribute_def_update` (UPDATE).
 
 ### 3.5. `catalog_item` (EN-07-05)
 
-EN-07-05 Bản ghi danh mục trong một phiên bản (ảnh chụp copy-on-write). Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-05 Bản ghi danh mục trong một phiên bản (ảnh chụp copy-on-write). Mẫu RLS S.
+
+**FR phục vụ.** FR-07-012, 013, 018, 019, 026…031.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_catalog_item_code` (version_id, code).
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`, (version_id, tenant_id) → `catalog_version`.
+
+**Ràng buộc CHECK.** `ck_catalog_item_attrs`, `ck_catalog_item_code`, `ck_catalog_item_code_upper`, `ck_catalog_item_depth`, `ck_catalog_item_name_nfc`, `ck_catalog_item_parent`, `ck_catalog_item_replaced`, `ck_catalog_item_status`, `ck_catalog_item_tenant`, `ck_catalog_item_valid`.
+
+**Chỉ mục.** `ix_catalog_item_attrs`, `ix_catalog_item_catalog`, `ix_catalog_item_name_trgm`, `ix_catalog_item_order`, `ix_catalog_item_parent`, `ix_catalog_item_path`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_catalog_item_delete` (DELETE), `rls_catalog_item_insert` (INSERT), `rls_catalog_item_select` (SELECT), `rls_catalog_item_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Thuộc tính động lưu ở `attrs jsonb`, kiểm theo JSON Schema của phiên bản (ADR-050); mã duy nhất không phân biệt hoa thường trong phiên bản (BR-07-002).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -371,7 +510,7 @@ EN-07-05 Bản ghi danh mục trong một phiên bản (ảnh chụp copy-on-wri
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `catalog_item`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -390,7 +529,7 @@ Ràng buộc:
 | `pk_catalog_item` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_catalog_item_code` | Duy nhất | `UNIQUE (version_id, code)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `catalog_item`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -401,11 +540,34 @@ Chỉ mục:
 | `ix_catalog_item_parent` | `CREATE INDEX ix_catalog_item_parent ON ph07_rdm.catalog_item USING btree (version_id, parent_code, sort_order, code)` |
 | `ix_catalog_item_path` | `CREATE INDEX ix_catalog_item_path ON ph07_rdm.catalog_item USING gin (path)` |
 
+: Chỉ mục của bảng `catalog_item`
+
 Chính sách RLS: `rls_catalog_item_delete` (DELETE), `rls_catalog_item_insert` (INSERT), `rls_catalog_item_select` (SELECT), `rls_catalog_item_update` (UPDATE).
 
 ### 3.6. `item_succession` (EN-07-06)
 
-EN-07-06 Sự kiện kế thừa bản ghi (sắp xếp ĐVHC): nhiều-nhiều, có căn cứ pháp lý và ngày hiệu lực (FR-07-045, ADR-055). Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-06 Sự kiện kế thừa bản ghi (sắp xếp ĐVHC): nhiều-nhiều, có căn cứ pháp lý và ngày hiệu lực (FR-07-045, ADR-055). Mẫu RLS S.
+
+**FR phục vụ.** FR-07-045.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`, (version_id, tenant_id) → `catalog_version`.
+
+**Ràng buộc CHECK.** `ck_item_succession_cardinality`, `ck_item_succession_legal`, `ck_item_succession_tenant`, `ck_item_succession_type`.
+
+**Chỉ mục.** `ix_item_succession_catalog`, `ix_item_succession_from`, `ix_item_succession_to`, `ix_item_succession_version`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_item_succession_delete` (DELETE), `rls_item_succession_insert` (INSERT), `rls_item_succession_select` (SELECT), `rls_item_succession_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -425,7 +587,7 @@ EN-07-06 Sự kiện kế thừa bản ghi (sắp xếp ĐVHC): nhiều-nhiều,
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `item_succession`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -437,7 +599,7 @@ Ràng buộc:
 | `fk_item_succession_version` | Khóa ngoại | `FOREIGN KEY (version_id, tenant_id) REFERENCES ph07_rdm.catalog_version(id, tenant_id) ON DELETE CASCADE` |
 | `pk_item_succession` | Khóa chính | `PRIMARY KEY (id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `item_succession`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -446,11 +608,34 @@ Chỉ mục:
 | `ix_item_succession_to` | `CREATE INDEX ix_item_succession_to ON ph07_rdm.item_succession USING gin (to_codes)` |
 | `ix_item_succession_version` | `CREATE INDEX ix_item_succession_version ON ph07_rdm.item_succession USING btree (version_id, effective_date)` |
 
+: Chỉ mục của bảng `item_succession`
+
 Chính sách RLS: `rls_item_succession_delete` (DELETE), `rls_item_succession_insert` (INSERT), `rls_item_succession_select` (SELECT), `rls_item_succession_update` (UPDATE).
 
 ### 3.7. `version_review` (EN-07-07)
 
-EN-07-07 Nhật ký duyệt phiên bản (chỉ-thêm). Mẫu RLS P: lời phê duyệt COMMON chỉ PLATFORM thấy.
+::: dac-ta
+**Mục đích.** EN-07-07 Nhật ký duyệt phiên bản (chỉ-thêm). Mẫu RLS P: lời phê duyệt COMMON chỉ PLATFORM thấy.
+
+**FR phục vụ.** FR-07-015, 016, 050.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (version_id, tenant_id) → `catalog_version`.
+
+**Ràng buộc CHECK.** `ck_version_review_action`, `ck_version_review_reject_reason`, `ck_version_review_tenant`.
+
+**Chỉ mục.** `ix_version_review_version`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_version_review_insert` (INSERT), `rls_version_review_select` (SELECT).
+
+**Phân vùng, chỉ thêm.** Chỉ thêm (không sửa, không xóa).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -463,7 +648,7 @@ EN-07-07 Nhật ký duyệt phiên bản (chỉ-thêm). Mẫu RLS P: lời phê 
 | `diff_stats` | `jsonb` |  |  |  |
 | `at` | `timestamp with time zone` | Có | `now()` |  |
 
-Ràng buộc:
+: Cột của bảng `version_review`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -473,17 +658,40 @@ Ràng buộc:
 | `fk_version_review_version` | Khóa ngoại | `FOREIGN KEY (version_id, tenant_id) REFERENCES ph07_rdm.catalog_version(id, tenant_id) ON DELETE CASCADE` |
 | `pk_version_review` | Khóa chính | `PRIMARY KEY (id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `version_review`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_version_review_version` | `CREATE INDEX ix_version_review_version ON ph07_rdm.version_review USING btree (version_id, at)` |
 
+: Chỉ mục của bảng `version_review`
+
 Chính sách RLS: `rls_version_review_insert` (INSERT), `rls_version_review_select` (SELECT).
 
 ### 3.8. `import_job` (EN-07-08)
 
-EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên danh mục COMMON mang tenant_id COMMON do PLATFORM thực hiện.
+::: dac-ta
+**Mục đích.** EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên danh mục COMMON mang tenant_id COMMON do PLATFORM thực hiện.
+
+**FR phục vụ.** FR-07-020…025.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_import_job_idem`.
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`, (file_id, tenant_id) → `file_object`, (result_file_id, tenant_id) → `file_object`, (version_id, tenant_id) → `catalog_version`.
+
+**Ràng buộc CHECK.** `ck_import_job_catalog`, `ck_import_job_encoding`, `ck_import_job_file`, `ck_import_job_format`, `ck_import_job_lease`, `ck_import_job_mode`, `ck_import_job_rows`, `ck_import_job_status`, `ck_import_job_template`, `ck_import_job_tenant`, `ck_import_job_type`.
+
+**Chỉ mục.** `ix_import_job_catalog`, `ix_import_job_expires`, `ix_import_job_history`, `ix_import_job_queue`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_import_job_delete` (DELETE), `rls_import_job_insert` (INSERT), `rls_import_job_select` (SELECT), `rls_import_job_update` (UPDATE), `rls_import_job_worker_select` (SELECT), `rls_import_job_worker_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -520,7 +728,7 @@ EN-07-08 Tác vụ nhập/xuất tệp (ADR-056). Mẫu RLS P; tác vụ trên d
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `import_job`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -542,7 +750,7 @@ Ràng buộc:
 | `pk_import_job` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_import_job_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `import_job`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -552,11 +760,34 @@ Chỉ mục:
 | `ix_import_job_queue` | `CREATE INDEX ix_import_job_queue ON ph07_rdm.import_job USING btree (created_at) WHERE ((status)::text = ANY ((ARRAY['UPLOADED'::character varying, 'SCANNING'::character varying, 'PARSING'::character varying, 'VALIDATING'::character varying, 'COMMITTING'::character varying, 'QUEUED'::character varying, 'RUNNING'::character varying])::text[]))` |
 | `uq_import_job_idem` | `CREATE UNIQUE INDEX uq_import_job_idem ON ph07_rdm.import_job USING btree (tenant_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)` |
 
+: Chỉ mục của bảng `import_job`
+
 Chính sách RLS: `rls_import_job_delete` (DELETE), `rls_import_job_insert` (INSERT), `rls_import_job_select` (SELECT), `rls_import_job_update` (UPDATE), `rls_import_job_worker_select` (SELECT), `rls_import_job_worker_update` (UPDATE).
 
 ### 3.9. `import_row` (EN-07-09)
 
-EN-07-09 Dòng tạm của tác vụ nhập (xem trước, lỗi theo dòng). Phân vùng RANGE theo ngày; giữ 7 ngày. Mẫu RLS P. Phân vùng con không cấp quyền cho ph07_app nên không truy cập trực tiếp được (RLS chỉ áp qua bảng cha). Bảng phân vùng.
+::: dac-ta
+**Mục đích.** EN-07-09 Dòng tạm của tác vụ nhập (xem trước, lỗi theo dòng). Phân vùng RANGE theo ngày; giữ 7 ngày. Mẫu RLS P. Phân vùng con không cấp quyền cho ph07_app nên không truy cập trực tiếp được (RLS chỉ áp qua bảng cha). Bảng phân vùng.
+
+**FR phục vụ.** FR-07-021, 022.
+
+**Khóa chính.** `(id, created_at)`.
+
+**Duy nhất.** `uq_import_row_no` (job_id, row_no, created_at).
+
+**Khóa ngoại.** (job_id, tenant_id) → `import_job`.
+
+**Ràng buộc CHECK.** `ck_import_row_action`, `ck_import_row_errors`, `ck_import_row_tenant`, `ck_import_row_valid`.
+
+**Chỉ mục.** `ix_import_row_invalid`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_import_row_delete` (DELETE), `rls_import_row_insert` (INSERT), `rls_import_row_select` (SELECT), `rls_import_row_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo ngày; giữ 7 ngày.
+
+**Ghi chú.** Bảng tạm, phân vùng theo ngày, xóa phân vùng sau 7 ngày.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -571,7 +802,7 @@ EN-07-09 Dòng tạm của tác vụ nhập (xem trước, lỗi theo dòng). Ph
 | `errors` | `jsonb` |  |  | Mảng lỗi [{"column":"…","code":"ERR-07-009","message":"…"}]. |
 | `created_at` | `timestamp with time zone` | Có |  | Bằng import_job.created_at; là khóa phân vùng. |
 
-Ràng buộc:
+: Cột của bảng `import_row`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -583,17 +814,40 @@ Ràng buộc:
 | `pk_import_row` | Khóa chính | `PRIMARY KEY (id, created_at)` |
 | `uq_import_row_no` | Duy nhất | `UNIQUE (job_id, row_no, created_at)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `import_row`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_import_row_invalid` | `CREATE INDEX ix_import_row_invalid ON ONLY ph07_rdm.import_row USING btree (job_id, row_no) WHERE (NOT valid)` |
 
+: Chỉ mục của bảng `import_row`
+
 Chính sách RLS: `rls_import_row_delete` (DELETE), `rls_import_row_insert` (INSERT), `rls_import_row_select` (SELECT), `rls_import_row_update` (UPDATE).
 
 ### 3.10. `sync_source` (EN-07-10)
 
-EN-07-10 Nguồn đồng bộ danh mục quốc gia qua PH-14 (ADR-057). Mẫu RLS P.
+::: dac-ta
+**Mục đích.** EN-07-10 Nguồn đồng bộ danh mục quốc gia qua PH-14 (ADR-057). Mẫu RLS P.
+
+**FR phục vụ.** FR-07-035, 038.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_sync_source_catalog` (catalog_id, provider).
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`, (last_run_id, tenant_id) → `sync_run`.
+
+**Ràng buộc CHECK.** `ck_sync_source_mapping`, `ck_sync_source_provider`, `ck_sync_source_tenant`.
+
+**Chỉ mục.** `ix_sync_source_enabled`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_sync_source_delete` (DELETE), `rls_sync_source_insert` (INSERT), `rls_sync_source_select` (SELECT), `rls_sync_source_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -616,7 +870,7 @@ EN-07-10 Nguồn đồng bộ danh mục quốc gia qua PH-14 (ADR-057). Mẫu R
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `sync_source`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -629,17 +883,40 @@ Ràng buộc:
 | `uq_sync_source_catalog` | Duy nhất | `UNIQUE (catalog_id, provider)` |
 | `uq_sync_source_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `sync_source`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_sync_source_enabled` | `CREATE INDEX ix_sync_source_enabled ON ph07_rdm.sync_source USING btree (tenant_id) WHERE enabled` |
 
+: Chỉ mục của bảng `sync_source`
+
 Chính sách RLS: `rls_sync_source_delete` (DELETE), `rls_sync_source_insert` (INSERT), `rls_sync_source_select` (SELECT), `rls_sync_source_update` (UPDATE).
 
 ### 3.11. `sync_run` (EN-07-11)
 
-EN-07-11 Một lần chạy đồng bộ quốc gia. Mẫu RLS P.
+::: dac-ta
+**Mục đích.** EN-07-11 Một lần chạy đồng bộ quốc gia. Mẫu RLS P.
+
+**FR phục vụ.** FR-07-036, 037.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_sync_run_running`.
+
+**Khóa ngoại.** (result_version_id, tenant_id) → `catalog_version`, (source_id, tenant_id) → `sync_source`.
+
+**Ràng buộc CHECK.** `ck_sync_run_failed`, `ck_sync_run_finished`, `ck_sync_run_status`, `ck_sync_run_tenant`, `ck_sync_run_trigger`.
+
+**Chỉ mục.** `ix_sync_run_pending`, `ix_sync_run_source`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_sync_run_delete` (DELETE), `rls_sync_run_insert` (INSERT), `rls_sync_run_select` (SELECT), `rls_sync_run_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -663,7 +940,7 @@ EN-07-11 Một lần chạy đồng bộ quốc gia. Mẫu RLS P.
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `sync_run`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -677,7 +954,7 @@ Ràng buộc:
 | `pk_sync_run` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_sync_run_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `sync_run`
 
 | Tên | Định nghĩa |
 |---|---|
@@ -685,11 +962,34 @@ Chỉ mục:
 | `ix_sync_run_source` | `CREATE INDEX ix_sync_run_source ON ph07_rdm.sync_run USING btree (source_id, started_at DESC)` |
 | `uq_sync_run_running` | `CREATE UNIQUE INDEX uq_sync_run_running ON ph07_rdm.sync_run USING btree (source_id) WHERE ((status)::text = 'RUNNING'::text)` |
 
+: Chỉ mục của bảng `sync_run`
+
 Chính sách RLS: `rls_sync_run_delete` (DELETE), `rls_sync_run_insert` (INSERT), `rls_sync_run_select` (SELECT), `rls_sync_run_update` (UPDATE).
 
 ### 3.12. `sync_change` (EN-07-12)
 
-EN-07-12 Chi tiết khác biệt của một lần đồng bộ. Mẫu RLS P. Giữ 3 năm.
+::: dac-ta
+**Mục đích.** EN-07-12 Chi tiết khác biệt của một lần đồng bộ. Mẫu RLS P. Giữ 3 năm.
+
+**FR phục vụ.** FR-07-036, 037.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (run_id, tenant_id) → `sync_run`.
+
+**Ràng buộc CHECK.** `ck_sync_change_item`, `ck_sync_change_tenant`, `ck_sync_change_type`.
+
+**Chỉ mục.** `ix_sync_change_run`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_sync_change_delete` (DELETE), `rls_sync_change_insert` (INSERT), `rls_sync_change_select` (SELECT).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -703,7 +1003,7 @@ EN-07-12 Chi tiết khác biệt của một lần đồng bộ. Mẫu RLS P. Gi
 | `after` | `jsonb` |  |  |  |
 | `created_at` | `timestamp with time zone` | Có | `now()` |  |
 
-Ràng buộc:
+: Cột của bảng `sync_change`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -713,17 +1013,40 @@ Ràng buộc:
 | `fk_sync_change_run` | Khóa ngoại | `FOREIGN KEY (run_id, tenant_id) REFERENCES ph07_rdm.sync_run(id, tenant_id) ON DELETE CASCADE` |
 | `pk_sync_change` | Khóa chính | `PRIMARY KEY (id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `sync_change`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_sync_change_run` | `CREATE INDEX ix_sync_change_run ON ph07_rdm.sync_change USING btree (run_id, breaking DESC, item_code)` |
 
+: Chỉ mục của bảng `sync_change`
+
 Chính sách RLS: `rls_sync_change_delete` (DELETE), `rls_sync_change_insert` (INSERT), `rls_sync_change_select` (SELECT).
 
 ### 3.13. `code_system` (EN-07-13)
 
-EN-07-13 Hệ thống mã ngoài (bộ mã riêng của một HTTT hoặc cơ quan). Mẫu RLS S: hệ thống mã toàn quốc lưu COMMON.
+::: dac-ta
+**Mục đích.** EN-07-13 Hệ thống mã ngoài (bộ mã riêng của một HTTT hoặc cơ quan). Mẫu RLS S: hệ thống mã toàn quốc lưu COMMON.
+
+**FR phục vụ.** FR-07-040.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_code_system_code` (tenant_id, code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_code_system_code`, `ck_code_system_name_nfc`, `ck_code_system_status`, `ck_code_system_tenant`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_code_system_delete` (DELETE), `rls_code_system_insert` (INSERT), `rls_code_system_select` (SELECT), `rls_code_system_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -741,7 +1064,7 @@ EN-07-13 Hệ thống mã ngoài (bộ mã riêng của một HTTT hoặc cơ qu
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `code_system`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -752,11 +1075,34 @@ Ràng buộc:
 | `pk_code_system` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_code_system_code` | Duy nhất | `UNIQUE (tenant_id, code)` |
 
+: Ràng buộc của bảng `code_system`
+
 Chính sách RLS: `rls_code_system_delete` (DELETE), `rls_code_system_insert` (INSERT), `rls_code_system_select` (SELECT), `rls_code_system_update` (UPDATE).
 
 ### 3.14. `code_mapping` (EN-07-14)
 
-EN-07-14 Ánh xạ mã danh mục ↔ mã ngoài, có khoảng hiệu lực (FR-07-041…043). Mẫu RLS S.
+::: dac-ta
+**Mục đích.** EN-07-14 Ánh xạ mã danh mục ↔ mã ngoài, có khoảng hiệu lực (FR-07-041…043). Mẫu RLS S.
+
+**FR phục vụ.** FR-07-041…043.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (catalog_id) → `catalog`, (code_system_id) → `code_system`.
+
+**Ràng buộc CHECK.** `ck_code_mapping_item`, `ck_code_mapping_reason`, `ck_code_mapping_relation`, `ck_code_mapping_tenant`, `ck_code_mapping_valid`.
+
+**Chỉ mục.** `ix_code_mapping_item`, `ix_code_mapping_system`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và dòng `COMMON`; ghi dòng của tenant phiên, dòng `COMMON` chỉ khi tenant phiên là `PLATFORM` (mục 1.2). Chính sách: `rls_code_mapping_delete` (DELETE), `rls_code_mapping_insert` (INSERT), `rls_code_mapping_select` (SELECT), `rls_code_mapping_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag. Ràng buộc khác: `ex_code_mapping_external`.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -778,7 +1124,7 @@ EN-07-14 Ánh xạ mã danh mục ↔ mã ngoài, có khoảng hiệu lực (FR-
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `code_mapping`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -792,18 +1138,41 @@ Ràng buộc:
 | `pk_code_mapping` | Khóa chính | `PRIMARY KEY (id)` |
 | `ex_code_mapping_external` | Loại trừ | `EXCLUDE USING gist (tenant_id WITH =, catalog_id WITH =, code_system_id WITH =, external_code WITH =, daterange(valid_from, valid_to, '[)'::text) WITH &&)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `code_mapping`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_code_mapping_item` | `CREATE INDEX ix_code_mapping_item ON ph07_rdm.code_mapping USING btree (catalog_id, code_system_id, item_code)` |
 | `ix_code_mapping_system` | `CREATE INDEX ix_code_mapping_system ON ph07_rdm.code_mapping USING btree (code_system_id)` |
 
+: Chỉ mục của bảng `code_mapping`
+
 Chính sách RLS: `rls_code_mapping_delete` (DELETE), `rls_code_mapping_insert` (INSERT), `rls_code_mapping_select` (SELECT), `rls_code_mapping_update` (UPDATE).
 
 ### 3.15. `catalog_access_grant` (EN-07-15)
 
-EN-07-15 Cấp quyền khai thác danh mục RESTRICTED cho HTTT (FR-07-052, BR-07-019). Mẫu RLS P.
+::: dac-ta
+**Mục đích.** EN-07-15 Cấp quyền khai thác danh mục RESTRICTED cho HTTT (FR-07-052, BR-07-019). Mẫu RLS P.
+
+**FR phục vụ.** FR-07-052.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_catalog_access_grant` (catalog_id, member_system_id).
+
+**Khóa ngoại.** (catalog_id, tenant_id) → `catalog`.
+
+**Ràng buộc CHECK.** `ck_catalog_access_grant_scopes`, `ck_catalog_access_grant_tenant`.
+
+**Chỉ mục.** `ix_catalog_access_grant_member`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_catalog_access_grant_delete` (DELETE), `rls_catalog_access_grant_insert` (INSERT), `rls_catalog_access_grant_select` (SELECT), `rls_catalog_access_grant_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -820,7 +1189,7 @@ EN-07-15 Cấp quyền khai thác danh mục RESTRICTED cho HTTT (FR-07-052, BR-
 | `updated_by` | `uuid` | Có |  |  |
 | `version` | `integer` | Có | `0` |  |
 
-Ràng buộc:
+: Cột của bảng `catalog_access_grant`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -830,17 +1199,40 @@ Ràng buộc:
 | `pk_catalog_access_grant` | Khóa chính | `PRIMARY KEY (id)` |
 | `uq_catalog_access_grant` | Duy nhất | `UNIQUE (catalog_id, member_system_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `catalog_access_grant`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_catalog_access_grant_member` | `CREATE INDEX ix_catalog_access_grant_member ON ph07_rdm.catalog_access_grant USING btree (member_system_id)` |
 
+: Chỉ mục của bảng `catalog_access_grant`
+
 Chính sách RLS: `rls_catalog_access_grant_delete` (DELETE), `rls_catalog_access_grant_insert` (INSERT), `rls_catalog_access_grant_select` (SELECT), `rls_catalog_access_grant_update` (UPDATE).
 
 ### 3.16. `idempotency_key` (EN-07-16)
 
-EN-07-16 Khóa Idempotency-Key của lệnh tạo (16…128 ký tự, giữ 24 giờ); cùng khóa khác request_hash trả ERR-07-022. Dọn theo expires_at mỗi giờ. RLS theo đúng tenant phiên (kể cả PLATFORM).
+::: dac-ta
+**Mục đích.** EN-07-16 Khóa Idempotency-Key của lệnh tạo (16…128 ký tự, giữ 24 giờ); cùng khóa khác request_hash trả ERR-07-022. Dọn theo expires_at mỗi giờ. RLS theo đúng tenant phiên (kể cả PLATFORM).
+
+**FR phục vụ.** Mọi lệnh tạo (FR-00 quy ước Idempotency-Key).
+
+**Khóa chính.** `(tenant_id, principal, operation, key)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_idempotency_key_body`, `ck_idempotency_key_hash`, `ck_idempotency_key_len`, `ck_idempotency_key_op`, `ck_idempotency_key_status`, `ck_idempotency_key_tenant`.
+
+**Chỉ mục.** `ix_idempotency_key_expires`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_idempotency_key_all` (ALL).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -856,7 +1248,7 @@ EN-07-16 Khóa Idempotency-Key của lệnh tạo (16…128 ký tự, giữ 24 g
 | `created_at` | `timestamp with time zone` | Có | `now()` |  |
 | `expires_at` | `timestamp with time zone` | Có | `(now() + '24:00:00'::interval)` |  |
 
-Ràng buộc:
+: Cột của bảng `idempotency_key`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -868,17 +1260,40 @@ Ràng buộc:
 | `ck_idempotency_key_tenant` | Kiểm tra | `CHECK (((tenant_id)::text ~ '^(T[0-9]{2}\|COMMON\|PLATFORM)$'::text))` |
 | `pk_idempotency_key` | Khóa chính | `PRIMARY KEY (tenant_id, principal, operation, key)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `idempotency_key`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_idempotency_key_expires` | `CREATE INDEX ix_idempotency_key_expires ON ph07_rdm.idempotency_key USING btree (expires_at)` |
 
+: Chỉ mục của bảng `idempotency_key`
+
 Chính sách RLS: `rls_idempotency_key_all` (ALL).
 
 ### 3.17. `outbox` (EN-07-17)
 
-EN-07-17 Outbox giao dịch (DD-11, SAD §7.3); Debezium EventRouter phát lên Kafka. Mẫu RLS P. Dọn dòng quá 3 ngày.
+::: dac-ta
+**Mục đích.** EN-07-17 Outbox giao dịch (DD-11, SAD §7.3); Debezium EventRouter phát lên Kafka. Mẫu RLS P. Dọn dòng quá 3 ngày.
+
+**FR phục vụ.** FR-07-034.
+
+**Khóa chính.** `(event_id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_outbox_tenant`, `ck_outbox_topic`, `ck_outbox_topic_tenant`, `ck_outbox_trace`, `ck_outbox_type`.
+
+**Chỉ mục.** `ix_outbox_occurred`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_outbox_delete` (DELETE), `rls_outbox_insert` (INSERT), `rls_outbox_select` (SELECT).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Debezium EventRouter đọc WAL và phát lên Kafka; dọn dòng quá 3 ngày.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -892,7 +1307,7 @@ EN-07-17 Outbox giao dịch (DD-11, SAD §7.3); Debezium EventRouter phát lên 
 | `trace_id` | `character(32)` | Có |  |  |
 | `occurred_at` | `timestamp with time zone` | Có | `now()` |  |
 
-Ràng buộc:
+: Cột của bảng `outbox`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -903,17 +1318,40 @@ Ràng buộc:
 | `ck_outbox_type` | Kiểm tra | `CHECK (((event_type)::text ~ '^vn\.datahub\.rdm\.[a-z]+\.[a-z]+\.v[0-9]+$'::text))` |
 | `pk_outbox` | Khóa chính | `PRIMARY KEY (event_id)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `outbox`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_outbox_occurred` | `CREATE INDEX ix_outbox_occurred ON ph07_rdm.outbox USING btree (occurred_at)` |
 
+: Chỉ mục của bảng `outbox`
+
 Chính sách RLS: `rls_outbox_delete` (DELETE), `rls_outbox_insert` (INSERT), `rls_outbox_select` (SELECT).
 
 ### 3.18. `admin_unit` (EN-07-18)
 
-EN-07-18 = DD-07 Đơn vị hành chính: bảng chiếu định danh ổn định từ danh mục DVHC, làm mới trong giao dịch phát hành (f_refresh_admin_unit). Chỉ COMMON; chỉ PLATFORM ghi.
+::: dac-ta
+**Mục đích.** EN-07-18 = DD-07 Đơn vị hành chính: bảng chiếu định danh ổn định từ danh mục DVHC, làm mới trong giao dịch phát hành (f_refresh_admin_unit). Chỉ COMMON; chỉ PLATFORM ghi.
+
+**FR phục vụ.** FR-07-044…047.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (parent_id) → `admin_unit`.
+
+**Ràng buộc CHECK.** `ck_admin_unit_code`, `ck_admin_unit_level`, `ck_admin_unit_name_nfc`, `ck_admin_unit_range`, `ck_admin_unit_successors`, `ck_admin_unit_tenant`, `ck_admin_unit_type`.
+
+**Chỉ mục.** `ix_admin_unit_current`, `ix_admin_unit_parent`.
+
+**Cách ly tenant.** Chỉ dòng `COMMON`; mọi tenant đọc, chỉ phiên `PLATFORM` ghi. Chính sách: `rls_admin_unit_delete` (DELETE), `rls_admin_unit_insert` (INSERT), `rls_admin_unit_select` (SELECT), `rls_admin_unit_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Bảng chiếu làm mới trong giao dịch phát hành danh mục `DVHC` (`f_refresh_admin_unit`). Ràng buộc khác: `ex_admin_unit_code`.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -935,7 +1373,7 @@ EN-07-18 = DD-07 Đơn vị hành chính: bảng chiếu định danh ổn đị
 | `version` | `integer` | Có | `0` |  |
 | `deleted_at` | `timestamp with time zone` |  |  |  |
 
-Ràng buộc:
+: Cột của bảng `admin_unit`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -950,18 +1388,41 @@ Ràng buộc:
 | `pk_admin_unit` | Khóa chính | `PRIMARY KEY (id)` |
 | `ex_admin_unit_code` | Loại trừ | `EXCLUDE USING gist (code WITH =, daterange(effective_from, effective_to, '[)'::text) WITH &&) WHERE ((deleted_at IS NULL))` |
 
-Chỉ mục:
+: Ràng buộc của bảng `admin_unit`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_admin_unit_current` | `CREATE INDEX ix_admin_unit_current ON ph07_rdm.admin_unit USING btree (level, code) WHERE ((effective_to IS NULL) AND (deleted_at IS NULL))` |
 | `ix_admin_unit_parent` | `CREATE INDEX ix_admin_unit_parent ON ph07_rdm.admin_unit USING btree (parent_id)` |
 
+: Chỉ mục của bảng `admin_unit`
+
 Chính sách RLS: `rls_admin_unit_delete` (DELETE), `rls_admin_unit_insert` (INSERT), `rls_admin_unit_select` (SELECT), `rls_admin_unit_update` (UPDATE).
 
 ### 3.19. `file_object` (EN-07-19)
 
-EN-07-19 Tệp (theo DD-12): siêu dữ liệu tệp nhập, tệp xuất, báo cáo lỗi, ảnh chụp; nội dung ở Garage. Mẫu RLS P.
+::: dac-ta
+**Mục đích.** EN-07-19 Tệp (theo DD-12): siêu dữ liệu tệp nhập, tệp xuất, báo cáo lỗi, ảnh chụp; nội dung ở Garage. Mẫu RLS P.
+
+**FR phục vụ.** FR-07-021, 022, 024, 028.
+
+**Khóa chính.** `(id)`.
+
+**Duy nhất.** `uq_file_object_key` (bucket, object_key).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_file_object_purpose`, `ck_file_object_scan`, `ck_file_object_sha`, `ck_file_object_size`, `ck_file_object_tenant`.
+
+**Chỉ mục.** `ix_file_object_expires`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên (mục 1.2). Chính sách: `rls_file_object_delete` (DELETE), `rls_file_object_insert` (INSERT), `rls_file_object_select` (SELECT), `rls_file_object_update` (UPDATE).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -984,7 +1445,7 @@ EN-07-19 Tệp (theo DD-12): siêu dữ liệu tệp nhập, tệp xuất, báo 
 | `version` | `integer` | Có | `0` |  |
 | `deleted_at` | `timestamp with time zone` |  |  |  |
 
-Ràng buộc:
+: Cột của bảng `file_object`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
@@ -997,17 +1458,40 @@ Ràng buộc:
 | `uq_file_object_id_tenant` | Duy nhất | `UNIQUE (id, tenant_id)` |
 | `uq_file_object_key` | Duy nhất | `UNIQUE (bucket, object_key)` |
 
-Chỉ mục:
+: Ràng buộc của bảng `file_object`
 
 | Tên | Định nghĩa |
 |---|---|
 | `ix_file_object_expires` | `CREATE INDEX ix_file_object_expires ON ph07_rdm.file_object USING btree (expires_at) WHERE ((expires_at IS NOT NULL) AND (deleted_at IS NULL))` |
 
+: Chỉ mục của bảng `file_object`
+
 Chính sách RLS: `rls_file_object_delete` (DELETE), `rls_file_object_insert` (INSERT), `rls_file_object_select` (SELECT), `rls_file_object_update` (UPDATE).
 
 ### 3.20. `shedlock` (—)
 
-Khóa ShedLock cho tác vụ định kỳ của PH-07 (quét lịch đồng bộ, dọn bảng tạm, hết hạn tác vụ, tự chuyển hiệu lực). Không chứa dữ liệu nghiệp vụ.
+::: dac-ta
+**Mục đích.** Khóa ShedLock cho tác vụ định kỳ của PH-07 (quét lịch đồng bộ, dọn bảng tạm, hết hạn tác vụ, tự chuyển hiệu lực). Không chứa dữ liệu nghiệp vụ.
+
+**FR phục vụ.** FR-07-016 (tự chuyển hiệu lực), FR-07-036 (lịch đồng bộ).
+
+**Khóa chính.** `(name)`.
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** Không áp dụng (bảng kỹ thuật dùng chung cho tác vụ định kỳ).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Bảng kỹ thuật của thư viện ShedLock, không chứa dữ liệu nghiệp vụ.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1016,11 +1500,13 @@ Khóa ShedLock cho tác vụ định kỳ của PH-07 (quét lịch đồng bộ
 | `locked_at` | `timestamp with time zone` | Có |  |  |
 | `locked_by` | `character varying(255)` | Có |  |  |
 
-Ràng buộc:
+: Cột của bảng `shedlock`
 
 | Tên | Loại | Định nghĩa |
 |---|---|---|
 | `pk_shedlock` | Khóa chính | `PRIMARY KEY (name)` |
+
+: Ràng buộc của bảng `shedlock`
 
 ## 4. DDL và changelog Liquibase
 
@@ -1031,6 +1517,8 @@ Tệp `ph07/ddl/ph07_rdm.sql` là nguồn duy nhất. Tệp được chia thành
 | `bootstrap` | Vai trò nhóm, extension `unaccent`, `pg_trgm`, `btree_gist`, schema | Lần đầu trên mỗi CSDL, bởi chủ CSDL |
 | (không context) | Hàm, bảng, chỉ mục, RLS, trigger bảo vệ, quyền | Mọi lần triển khai |
 | `seed-common` | Dữ liệu nền S01…S03 của tenant `COMMON` | Chỉ cụm có tenant `PLATFORM` (cụm trung tâm); idempotent, chạy lại khi tệp đổi |
+
+: DDL và changelog Liquibase
 
 Quy tắc thay đổi lược đồ theo D04-01: changeset đã phát hành không được sửa; thay đổi mới là changeset mới; thay đổi phải tương thích ngược ít nhất một phiên bản ứng dụng (thêm cột cho phép rỗng hoặc có mặc định, không đổi tên cột trực tiếp mà qua ba bước thêm, chép, bỏ). Mỗi changeset có `--rollback`; các changeset không thể hoàn tác an toàn (vai trò, extension) ghi rõ `--rollback empty` kèm lý do trong DDL.
 
@@ -1057,6 +1545,8 @@ Topic do PH-10 tạo bằng Strimzi `KafkaTopic` theo khai báo trong `asyncapi-
 | `{tenant}.rdm.sync.completed.v1` | EVT-07-09 | 6, 3 | 7 ngày |
 | `common.rdm.adminunit.reorganized.v1` | EVT-07-10 | 6, 3 | 7 ngày |
 
+: Kafka
+
 Khóa bản tin là `{tenant}:{catalogCode}`. Debezium đọc bảng `ph07_rdm.outbox` bằng slot logic riêng của `dh-data`, dùng Outbox Event Router với `route.by.field = topic`; dòng outbox được dọn sau 3 ngày bởi tác vụ định kỳ (Debezium đã đọc từ WAL, không cần giữ lâu).
 
 ### 6.2. Valkey
@@ -1073,6 +1563,8 @@ Valkey là bộ đệm tầng 2 (ADR-053, D03-02-PH07 §4.9). Mọi khóa có ti
 | `{t68}:rdm:lock:ver:{versionId}` | Khóa chống dồn tải khi nạp bộ đệm | 10 giây |
 | Kênh pub/sub `rdm:invalidate` | Thông báo vô hiệu bộ đệm L1 giữa các pod | — |
 
+: Valkey
+
 Valkey không phải nơi lưu bền: mất toàn bộ Valkey chỉ làm tăng tải đọc PostgreSQL và ảnh chụp, không mất dữ liệu.
 
 ### 6.3. Kho đối tượng (Garage, giao diện S3)
@@ -1084,6 +1576,8 @@ Mỗi tenant có một bucket `dh-{tenant}-rdm` (COMMON là `dh-common-rdm`) v�
 | `snapshots/{catalogCode}/{versionNo}.json.gz`, `.csv.gz` | Ảnh chụp bất biến của phiên bản đã phát hành (ADR-051, ADR-053) | Như phiên bản (vĩnh viễn) |
 | `imports/{jobId}/{sha256}.{ext}` | Tệp người dùng tải lên, chỉ phân tích khi quét sạch (BR-07-041) | 7 ngày |
 | `exports/{jobId}/…` | Tệp xuất, báo cáo lỗi, kết quả chuyển mã | 24 giờ |
+
+: Kho đối tượng (Garage, giao diện S3)
 
 Vòng đời được đặt bằng lifecycle rule của bucket và đồng thời bằng cột `file_object.expires_at` (tác vụ dọn dẹp xóa cả đối tượng và dòng). Bucket ảnh chụp bật khóa đối tượng (object lock) chế độ governance để chống ghi đè.
 
@@ -1110,6 +1604,8 @@ Mục này là đầu vào của D06-01 (kế hoạch di trú). Công cụ di tr
 | (không có) | `code_mapping` với hệ thống mã `AITA_{tenant}` | Chỉ khi danh mục Aita được gộp vào danh mục `COMMON` mà mã khác nhau |
 | (không có) | `sync_source` | Chỉ khi `category.is_update = 1`: đề xuất đăng ký đồng bộ quốc gia |
 
+: Ánh xạ bảng
+
 ### 8.2. Ánh xạ cột
 
 | Cột Aita | Cột Datahub | Quy tắc |
@@ -1131,6 +1627,8 @@ Mục này là đầu vào của D06-01 (kế hoạch di trú). Công cụ di tr
 | (không có) | `catalog_item.status` | `ACTIVE` cho mọi bản ghi; hệ cũ không có trạng thái ngừng dùng |
 | (không có) | `catalog_version.effective_from` | Ngày ban hành danh mục do cán bộ cung cấp, hoặc ngày chuyển đổi |
 
+: Ánh xạ cột
+
 ### 8.3. Lỗi thiết kế hệ cũ được sửa khi chuyển
 
 | Lỗi ở Aita | Hệ quả | Cách sửa khi chuyển |
@@ -1141,6 +1639,8 @@ Mục này là đầu vào của D06-01 (kế hoạch di trú). Công cụ di tr
 | Không có phiên bản, ngày hiệu lực | Không tra được quá khứ | Phiên bản 1 hiệu lực từ ngày ban hành; lịch sử trước di trú không khôi phục được (ghi rõ trong biên bản) |
 | Danh mục quốc gia bị sao chép tay vào từng tỉnh | Lệch chuẩn quốc gia | Gộp vào `COMMON` hoặc HYBRID kèm ánh xạ |
 | Có thể chứa dữ liệu cá nhân trong danh mục | Vi phạm BR-07-025 | Thuộc tính gợi ý dữ liệu cá nhân bị đánh dấu và đề xuất loại bỏ |
+
+: Lỗi thiết kế hệ cũ được sửa khi chuyển
 
 ### 8.4. Đối soát sau di trú
 
@@ -1154,3 +1654,11 @@ Biên bản đối soát so sánh theo từng danh mục: số danh mục theo q
 | Q07-104 | Có cần CSDL riêng cho tỉnh lớn ngay ở MVP | Không; dùng chung cụm với RLS, tách khi một tỉnh vượt 20% tải |
 | Q07-105 | Thời gian giữ trực tuyến bản ghi của phiên bản đã hết hiệu lực | 5 năm như Q07-10 của FRS |
 
+: Câu hỏi mở
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 2026-11-25 | Nhóm phân hệ PH-07 | Bản đầu sinh từ DDL đã chạy thử |
+| 0.2 | 2026-11-26 | Nhóm phân hệ PH-07 | Chuẩn trình bày: bảng đặc tả 10 mục cho 20 bảng (công cụ them_dac_ta_bang.py), chương Giới thiệu, chú thích bảng và hình |
