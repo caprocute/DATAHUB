@@ -1,13 +1,38 @@
 ---
 ma_tai_lieu: D03-08
 ten: Hồ sơ đề xuất cấp độ và phương án bảo vệ (bản mẫu)
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Cơ quan chủ quản, Bộ phận chuyên trách an ninh mạng, Đơn vị thẩm định, Hội đồng thẩm định, Đơn vị vận hành, Nhà cung cấp nền tảng
+mo_ta: Bản mẫu hồ sơ đề xuất cấp độ và phương án bảo vệ cho hệ thống Datahub theo Nghị định 331/2026/NĐ-CP, gồm thông tin chung, mô tả hệ thống, thuyết minh cấp độ 3, phương án bảo vệ, lộ trình cấp độ 4 và kế hoạch kiểm tra, để mỗi tỉnh hoặc nền tảng dùng chung điền và trình thẩm định.
+tai_lieu_lien_quan: D03-07 Thiết kế ATTT; D03-09 Hạ tầng, triển khai, DR; D03-01 SAD; D03-10 Thiết kế đa tenant; D05-01 Kế hoạch kiểm thử tổng thể; D05-04 Kế hoạch kiểm thử bảo mật
 ---
 
 # D03-08 · Hồ sơ đề xuất cấp độ và phương án bảo vệ (bản mẫu)
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Tài liệu là bản mẫu hồ sơ đề xuất cấp độ an ninh mạng và phương án bảo vệ cho hệ thống thông tin Datahub. Mỗi tỉnh tự vận hành, hoặc đơn vị vận hành nền tảng dùng chung, sao bản mẫu, điền chỗ trống và trình thẩm định theo Nghị định 331/2026/NĐ-CP. Hồ sơ đề xuất **cấp độ 3** và chứng minh Datahub sẵn sàng nâng lên cấp độ 4 khi điều kiện kích hoạt xảy ra.
+
+**Phạm vi.** Hai hồ sơ triển khai: `HT-A` (tỉnh độc lập tại trung tâm dữ liệu của tỉnh) và `HT-B` (nền tảng dùng chung trên cloud Chính phủ, kèm hồ sơ rút gọn cho từng tỉnh). Phần thiết kế kỹ thuật chi tiết không chép lại mà dẫn chiếu D03-07, D03-09, D05-01 và nộp kèm.
+
+**Căn cứ pháp lý.** CMP-LAW-16 (Luật An ninh mạng 116/2025/QH15); CMP-LAW-17 (Nghị định 331/2026/NĐ-CP, Điều 8, 25, 30, 31, 39); STD-06 (TCVN 14423:2026, chương 5 cho cấp độ 3, Phụ lục A cho hạ tầng vật lý); CMP-LAW-05 và CMP-LAW-18 (Luật BVDLCN 91/2025/QH15 và Nghị định 356/2025/NĐ-CP, căn cứ ước tính số chủ thể dữ liệu cá nhân); CMP-LAW-01 (Luật Dữ liệu 60/2024/QH15).
+
+**Những điểm hội đồng cần lưu ý.** (1) Thành phần chính xác của hồ sơ theo Điều 25 và mẫu biểu kèm theo chưa đối chiếu toàn văn (Q320); cấu trúc bản mẫu theo thông lệ và sẽ chỉnh khi có văn bản. (2) Kết luận cấp độ 3 dựa chắc chắn vào ngưỡng số chủ thể dữ liệu cá nhân (TCD-01, TCD-02); với `HT-B` là đề xuất có điều kiện vì phạm vi liên tỉnh có thể đòi cấp độ 4 (Q323). (3) Datahub được xem là một hệ thống duy nhất, không chia nhỏ để hạ cấp (Điều 8). (4) Sáu yếu tố `CD4-nn` được theo dõi để đánh giá lại cấp độ. (5) Ba câu hỏi Q320, Q321, Q323 chặn việc trình hồ sơ và cần trả lời trước. (6) Số liệu quy mô trong bản mẫu là ước tính từ D03-09 và phải thay bằng số khảo sát của tỉnh trước khi trình.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Cấp độ đề xuất | 3 (`HT-A`); 3 có điều kiện (`HT-B`) |
+| Tiêu chí xác định cấp độ được áp dụng | 7 (TCD-01…TCD-07) |
+| Yếu tố có thể đẩy lên cấp độ 4 | 6 (CD4-01…06) |
+| Trường thông tin cần điền | 24 trường `TT-nn` ở Phụ lục C (TT-01…TT-52) |
+| Câu hỏi mở | 10 trong dải Q320…Q329, ba câu chặn trình hồ sơ |
+| Hồ sơ triển khai | 2 (`HT-A`, `HT-B`) |
+
+: Con số chính của bản mẫu hồ sơ đề xuất cấp độ
 
 ## 1. Mục đích và cách dùng bản mẫu
 
@@ -54,6 +79,75 @@ Trong toàn bản mẫu, đoạn chỉ áp dụng cho một hồ sơ được m�
 ### 1.4. Quy ước chỗ điền
 
 Chỗ điền được viết trong ngoặc vuông, ví dụ `[Tên tỉnh]`, `[Cơ quan chủ quản]`, `[Số dân]`. Mỗi chỗ điền có một mã `TT-nn` (trường thông tin) tổng hợp ở Phụ lục C, kèm nguồn số liệu và người chịu trách nhiệm cung cấp. Số liệu ước tính trong bản mẫu (lấy từ hồ sơ quy mô D03-09) được đánh dấu "ước tính" và **phải được thay bằng số liệu khảo sát của tỉnh** trước khi trình; đơn vị thẩm định có quyền yêu cầu giải trình phương pháp tính. Bản mẫu không chứa địa chỉ IP, tên máy chủ hay bí mật thật; dải địa chỉ trong sơ đồ là ví dụ giả lập.
+
+### 1.5. Người đọc và cách đọc
+
+Bản mẫu có hai nhóm người dùng: người lập hồ sơ (điền, rút gọn, trình) và người thẩm định, phê duyệt (đọc để kết luận). Bảng dưới đây gợi ý từng nhóm đọc phần nào.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Đơn vị lập hồ sơ (đơn vị vận hành, nhà cung cấp) | Chương 1, Phụ lục C | Chọn nhánh `HT-A` hoặc `HT-B`, điền các trường `TT-nn`, bỏ đoạn không áp dụng |
+| Cơ quan chủ quản | Chương 2, 5, 7 | Ký đề nghị, chấp nhận cấp độ, quyết định chấp nhận rủi ro và điều kiện nâng cấp |
+| Bộ phận chuyên trách an ninh mạng | Chương 5, 6, 8 | Rà soát lập luận cấp độ, phương án bảo vệ và kế hoạch kiểm tra |
+| Đơn vị thẩm định, hội đồng thẩm định | Tóm tắt, chương 3 đến 6, 13 | Kiểm tra hệ thống, quy mô dữ liệu, lý do cấp độ và các câu hỏi còn mở |
+| Đơn vị vận hành, nhà cung cấp nền tảng | Chương 6, 8, 9 | Biết biện pháp phải triển khai và bằng chứng phải có trước vận hành |
+
+: Người đọc và phần cần đọc của bản mẫu hồ sơ
+
+### 1.6. Thuật ngữ và chữ viết tắt
+
+Bảng dưới đây giải thích các thuật ngữ riêng của bản mẫu; thuật ngữ chung xem D00-01.
+
+| Thuật ngữ, viết tắt | Giải thích |
+|---|---|
+| `HT-A`, `HT-B` | Hồ sơ triển khai tỉnh độc lập on-prem; hồ sơ nền tảng dùng chung trên cloud Chính phủ (mục 1.3) |
+| `QM-NHO`, `QM-VUA`, `QM-LON`, `QM-CHUNG` | Hồ sơ quy mô dùng để ước tính tài nguyên và số chủ thể dữ liệu (D03-09 §2.2) |
+| Chủ quản | Cơ quan, tổ chức chịu trách nhiệm cuối cùng về an ninh mạng của hệ thống, phê duyệt cấp độ |
+| Bộ phận chuyên trách ANM | Đơn vị giúp chủ quản quản lý an ninh mạng, rà soát hồ sơ trước khi trình |
+| TTDL | Trung tâm dữ liệu |
+| DLCN | Dữ liệu cá nhân |
+| `TCD-nn`, `CD4-nn`, `TT-nn` | Mã tiêu chí cấp độ, yếu tố có thể đẩy lên cấp độ 4, trường thông tin cần điền (mục 11) |
+| Hồ sơ nền tảng, hồ sơ rút gọn của tỉnh | Hồ sơ cấp độ của nền tảng dùng chung; hồ sơ cho phần sử dụng của một tỉnh (mục 5.6) |
+| Cổng `RG-4` | Cổng phát hành cuối trước vận hành chính thức (D05-01) |
+
+: Thuật ngữ và chữ viết tắt của bản mẫu hồ sơ
+
+### 1.7. Tài liệu tham chiếu
+
+Bảng dưới đây liệt kê các tài liệu mà hồ sơ dẫn chiếu hoặc nộp kèm. Văn bản pháp lý đầy đủ ở Phụ lục B.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| CMP-LAW-17 | Nghị định 331/2026/NĐ-CP | Căn cứ chính: tiêu chí cấp độ, hồ sơ, thẩm định, phê duyệt |
+| STD-06 | TCVN 14423:2026 | Yêu cầu cơ bản theo nhóm cho cấp độ 3 và 4 (chương 5 và 6) |
+| D03-07 | Thiết kế an toàn thông tin | Nguồn của phương án bảo vệ: biện pháp `SEC-nn`, ma trận tuân thủ, lộ trình cấp độ 4 |
+| D03-09 | Thiết kế hạ tầng, triển khai, DR | Sơ đồ vật lý, hồ sơ quy mô, sao lưu và khôi phục |
+| D03-01 | Kiến trúc tổng thể (SAD) | Thuyết minh kiến trúc nộp kèm |
+| D03-10 | Thiết kế đa tenant | Cách ly tenant của hồ sơ nền tảng |
+| D05-01, D05-04 | Kế hoạch kiểm thử tổng thể; kế hoạch kiểm thử bảo mật | Kế hoạch kiểm tra trước vận hành (mục 8) |
+| D00-01 | Quy ước mã và thuật ngữ | Mã mới đề xuất ở mục 11 |
+
+: Tài liệu tham chiếu của bản mẫu hồ sơ
+
+### 1.8. Cấu trúc tài liệu
+
+Cấu trúc bám thành phần hồ sơ ở mục 1.2. Bảng dưới đây cho biết nội dung từng chương và người đọc chính.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 1 | Mục đích, thành phần hồ sơ, hai hồ sơ triển khai, quy ước điền, cách đọc | Đơn vị lập hồ sơ |
+| 2 | Văn bản đề nghị thẩm định (mẫu văn bản hành chính) | Chủ quản, đơn vị thẩm định |
+| 3 | Thông tin chung về hệ thống, vai trò các bên | Đơn vị thẩm định |
+| 4 | Mô tả hệ thống: kiến trúc, sơ đồ vật lý, thành phần, kết nối, dữ liệu | Đơn vị thẩm định, chuyên trách ANM |
+| 5 | Thuyết minh đề xuất cấp độ, trình tự thẩm định và phê duyệt | Hội đồng thẩm định, chủ quản |
+| 6 | Phương án bảo vệ theo nhóm yêu cầu | Chuyên trách ANM, vận hành |
+| 7 | Lộ trình đáp ứng cấp độ 4 | Chủ quản |
+| 8 | Kế hoạch kiểm tra, đánh giá trước vận hành | Chuyên trách ANM, vận hành |
+| 9 | Chuyển tiếp từ LGSP cũ | Chủ quản, thẩm định |
+| 10 | Phụ lục A, B, C: tài sản, văn bản viện dẫn, bảng điền | Đơn vị lập hồ sơ |
+| 11 đến 13 | Mã mới, truy vết, câu hỏi mở | Người điều phối tài liệu, hội đồng |
+
+: Cấu trúc tài liệu và người đọc chính của từng chương
 
 ## 2. Văn bản đề nghị thẩm định (mẫu)
 
@@ -146,8 +240,8 @@ Công dân không đăng nhập Datahub; dữ liệu của họ chỉ đi qua ho
 
 Sơ đồ dưới đây là kiến trúc logic của Datahub, thể hiện các vùng tin cậy `Z0`…`Z7` (D03-07 §3.3) và các thành phần chính trong từng vùng. Mũi tên là chiều khởi tạo kết nối được phép.
 
-```{.mermaid caption="Kiến trúc logic"}
-flowchart LR
+```{.mermaid caption="Sơ đồ kiến trúc logic theo các vùng tin cậy Z0…Z7"}
+flowchart TB
   subgraph Z0["Z0 Bên ngoài"]
     U["Cán bộ, kỹ sư tích hợp"]
     H["HTTT thành viên"]
@@ -209,11 +303,11 @@ Sơ đồ vật lý chi tiết, dải địa chỉ và quy tắc tường lửa 
 | Vùng quản trị | Z7; OpenBao niêm phong và kho sao lưu thuộc Z6 | `dh-obs`, `dh-system`, `dh-secrets` (Z6), `istio-system`, `kube-system` | Bastion, Harbor, Git, OpenBao niêm phong, kho sao lưu S3 bất biến, NTP, DNS |
 | Liên site | — | — | Sao chép CSDL, Kafka MirrorMaker 2, Garage, Harbor, Git |
 
-: Sơ đồ vật lý và phân vùng mạng
+: Đối chiếu vùng mạng hạ tầng với vùng tin cậy logic, namespace và thành phần
 
 **[HT-A]** Sơ đồ dưới đây là bản rút gọn của D03-09 §3.1 cho hồ sơ tỉnh độc lập, đủ để đơn vị thẩm định thấy vị trí hệ thống trong TTDL tỉnh.
 
-```{.mermaid caption="Sơ đồ vật lý và phân vùng mạng"}
+```{.mermaid caption="Sơ đồ vật lý và phân vùng mạng của hồ sơ tỉnh độc lập HT-A"}
 flowchart TB
   subgraph NGOAI["Internet"]
     DEV["Nhà phát triển"]
@@ -256,7 +350,7 @@ Hồ sơ tỉnh độc lập có hai cửa vào tách biệt: cửa ngoài trong
 
 **[HT-B]** Nền tảng dùng chung có cấu trúc tương tự nhưng hiện thực bằng mạng ảo và nhóm bảo mật của cloud, mỗi vùng cloud có một cụm workload và một cụm quản trị, tenant ở chế độ `SHARED` được xếp vào các ô CSDL (mỗi ô khoảng 8–10 tenant) và tenant có yêu cầu cao hơn dùng `DEDICATED_DB` (D03-09 §3.2, D03-10). Sơ đồ dưới đây chỉ thể hiện các điểm khác `HT-A` có ý nghĩa với hồ sơ cấp độ.
 
-```{.mermaid caption="Sơ đồ vật lý và phân vùng mạng"}
+```{.mermaid caption="Sơ đồ phân lớp trách nhiệm và vùng mạng của nền tảng dùng chung HT-B"}
 flowchart TB
   subgraph TINH["Các tỉnh tham gia"]
     T1["HTTT, cán bộ tỉnh 1"]
@@ -439,8 +533,8 @@ Bản mẫu chọn **phương án A** làm mặc định. Theo đó, hồ sơ n�
 
 Trình tự dưới đây dựng theo Điều 25 Nghị định 331/2026 ở mức đã tra (phê duyệt cấp độ lần đầu dựa trên hồ sơ đề xuất cấp độ và phương án bảo vệ); các bước và thời hạn cụ thể chờ Q320, Q321.
 
-```{.mermaid caption="Trình tự thẩm định và phê duyệt"}
-flowchart LR
+```{.mermaid caption="Sơ đồ quy trình thẩm định, phê duyệt cấp độ và vận hành"}
+flowchart TB
   A["Đơn vị vận hành lập hồ sơ<br/>theo bản mẫu D03-08"] --> B["Bộ phận chuyên trách ANM<br/>rà soát nội bộ"]
   B --> C{"Cấp độ đề xuất"}
   C -->|Cấp độ 3| D["Đơn vị thẩm định cấp độ 3<br/>(Q321)"]
@@ -450,7 +544,7 @@ flowchart LR
   G --> H["Vận hành chính thức<br/>sau cổng RG-4"]
 ```
 
-Sơ đồ thể hiện hai điểm. Hồ sơ được phê duyệt **trước** khi vận hành chính thức, vì BRD đặt phê duyệt cấp độ là điều kiện nghiệm thu (KPI-08) và D05-01 đặt "hồ sơ cấp độ có bằng chứng kiểm thử" là tiêu chí ra của cổng `RG-4`. Bước kiểm tra trước vận hành nằm sau phê duyệt phương án nhưng trước vận hành chính thức, để bằng chứng kiểm tra phản ánh hệ thống thật đã triển khai.
+Sơ đồ thể hiện ba điểm. Thứ nhất, ở cấp độ 3, bộ phận chuyên trách ANM rà soát nội bộ, đơn vị thẩm định kiểm tra hồ sơ rồi chủ quản phê duyệt cấp độ và phương án bảo vệ (đơn vị thẩm định cụ thể chờ Q321); ở cấp độ 4 Bộ Công an chủ trì thẩm định. Hồ sơ được phê duyệt **trước** khi vận hành chính thức, vì BRD đặt phê duyệt cấp độ là điều kiện nghiệm thu (KPI-08) và D05-01 đặt "hồ sơ cấp độ có bằng chứng kiểm thử" là tiêu chí ra của cổng `RG-4`. Bước kiểm tra trước vận hành nằm sau phê duyệt phương án nhưng trước vận hành chính thức, để bằng chứng kiểm tra phản ánh hệ thống thật đã triển khai.
 
 ## 6. Phương án bảo vệ
 
@@ -673,3 +767,10 @@ Danh sách dưới đây tổng hợp câu hỏi mở của tài liệu (dải Q
 | Q329 | Cấp độ yêu cầu của hạ tầng cloud và hình thức kế thừa biện pháp theo Điều 30 | 4.2, 6.4 | Nhà cung cấp cloud, Bộ Công an |
 
 : Câu hỏi mở
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: bản mẫu hồ sơ đề xuất cấp độ theo Nghị định 331/2026/NĐ-CP gồm văn bản đề nghị, thông tin chung, mô tả hệ thống, thuyết minh cấp độ 3, phương án bảo vệ, lộ trình cấp độ 4, kế hoạch kiểm tra, chuyển tiếp từ LGSP cũ, phụ lục |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Giữ nguyên cấu trúc mẫu hồ sơ và văn bản đề nghị; thêm Tóm tắt cho hội đồng thẩm định, người đọc (1.5), thuật ngữ (1.6), tài liệu tham chiếu (1.7), cấu trúc tài liệu (1.8); viết lại chú thích bảng và hình, tách ba chú thích trùng; đổi ba sơ đồ sang chiều dọc; bổ sung thuyết minh sơ đồ thẩm định, phê duyệt cấp độ 3 |
