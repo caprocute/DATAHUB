@@ -30,13 +30,15 @@ for t in tcs:
     if not lgc:  # suy từ FR
         lgc = sorted({l for r in t['refs'] if r in frs for l in frs[r]['lgc'] if len(frs[r]['lgc']) < 5})
     other = ', '.join(sorted(r for r in t['refs'] if not r.startswith(('FR-10', 'LGC'))))
-    rows.append([t['id'], f"{t['ts']} · {tsn.get(t['ts'], '')}", t['name'], t['type'], t['prio'], t['auto'], fr,
-                 ', '.join(lgc), other, t['data'], t['steps'], t['expect'], '', '', '', ''])
-sheet(ws, ['Mã TC', 'Kịch bản', 'Tên ca', 'Loại', 'Ưu tiên', 'Tự động', 'FR', 'LGC', 'Truy vết khác', 'Tiền điều kiện / dữ liệu',
-           'Bước', 'Mong đợi', 'Kết quả', 'Người chạy', 'Ngày chạy', 'Mã lỗi theo dõi'],
-      rows, [12, 30, 40, 14, 8, 14, 18, 18, 28, 40, 60, 70, 12, 14, 12, 16])
+    rows.append([t['id'], f"{t['ts']} · {tsn.get(t['ts'], '')}", t['name'], t.get('purpose', ''), t['type'], t['prio'],
+                 t['auto'], fr, ', '.join(lgc), other, t['data'], t['steps'], t['expect'], t.get('notice', ''),
+                 t.get('post', ''), '', '', '', ''])
+sheet(ws, ['Mã TC', 'Kịch bản', 'Tên ca', 'Mục đích', 'Loại', 'Ưu tiên', 'Tự động', 'FR', 'LGC', 'Truy vết khác',
+           'Tiền điều kiện, dữ liệu', 'Các bước', 'Kết quả mong đợi', 'Thông báo hiển thị', 'Hậu điều kiện',
+           'Kết quả', 'Người chạy', 'Ngày chạy', 'Mã lỗi theo dõi'],
+      rows, [12, 30, 40, 40, 14, 8, 14, 18, 18, 28, 40, 60, 70, 50, 40, 12, 14, 12, 16])
 dv = DataValidation(type='list', formula1='"Đạt,Không đạt,Chặn,Chưa chạy"', allow_blank=True)
-ws.add_data_validation(dv); dv.add(f'M2:M{len(rows)+1}')
+ws.add_data_validation(dv); dv.add(f'P2:P{len(rows)+1}')
 
 ws2 = wb.create_sheet('UAT')
 sheet(ws2, ['Mã', 'Việc cán bộ làm', 'Chức năng hệ cũ', 'Mong đợi', 'FR', 'TC liên quan', 'Kết quả', 'Cán bộ thực hiện', 'Ngày', 'Ghi chú'],
@@ -53,9 +55,9 @@ for f, v in frs.items():
 sheet(ws3, ['FR', 'Tên', 'Mức', 'LGC', 'Ca dương', 'Ca âm', 'Đạt quy tắc M'], r3, [12, 50, 6, 24, 40, 40, 10])
 
 ws4 = wb.create_sheet('HuongDan')
-for line in ['Tệp sinh tự động từ D05-02-PH10 bằng ph10/tools/gen_xlsx.py. Không sửa tay các cột A–L.',
+for line in ['Tệp sinh tự động từ D05-02-PH10 bằng ph10/tools/gen_xlsx.py. Không sửa tay các cột A–O.',
              'Cột Kết quả chọn: Đạt, Không đạt, Chặn, Chưa chạy. Ghi mã lỗi theo dõi khi Không đạt.',
-             'Quy ước 403-PQ, 404-ẩn, KT, EVT xem mục 1.5 của tài liệu.',
+             'Quy ước 403-PQ, 401-XT, 403-TC, 404-ẩn, KT, EVT và các trường của khối đặc tả xem mục 1.5 của tài liệu.',
              f'Tổng số ca: {len(tcs)}; số kịch bản: {len(tsn)}.']:
     ws4.append([line])
 ws4.column_dimensions['A'].width = 120

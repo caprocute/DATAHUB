@@ -32,11 +32,14 @@ for ts, items in by_ts.items():
         tags = ' '.join([f"@{t['id']}", f"@{t['prio']}"] + [f'@{x}' for x in re.findall(r'[A-Za-zÀ-ỹ]+', t['type'])[:3]])
         L += [f'  {tags}', f"  Kịch bản: {t['id']} {clean(t['name'])}",
               f"    # Truy vết: {clean(t['trace'])}",
+              *([f"    # Mục đích: {clean(t['purpose'])}"] if t.get('purpose') else []),
               f"    Biết {lc(clean(t['data'])) if clean(t['data']) not in ('', '—') else 'bộ dữ liệu chuẩn mục 2 đã nạp'}"]
         st = steps(t['steps'])
         for i, s in enumerate(st):
             L.append(f"    {'Khi' if i == 0 else 'Và'} {lc(s)}")
         L.append(f"    Thì {lc(clean(t['expect']))}")
+        if t.get('post'):
+            L.append(f"    # Hậu điều kiện: {clean(t['post'])}")
         L.append('')
     (OUT / f'{slug}.feature').write_text('\n'.join(L), encoding='utf-8')
 

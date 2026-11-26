@@ -36,6 +36,7 @@ for f, v in frs.items():
     ok = 'Có' if (b['pos'] and b['neg']) or v['prio'] != 'M' else '**Không**'
     lg = ', '.join(v['lgc'][:3]) + ('…' if len(v['lgc']) > 3 else '') if v['lgc'] else 'mới'
     O.append(f"| {f} | {v['name'][:60]} | {v['prio']} | {lg} | {short(b['pos'])} | {short(b['neg'])} | {short(other, 6)} | {ok} |")
+O.append('\n: Yêu cầu chức năng tới ca dương, ca âm')
 
 O.append('\n### 8.2. Chức năng hệ cũ → yêu cầu → test case\n')
 O.append('Mỗi chức năng của Hub Pulsar (`LGC-HUB`), nhóm Message Broker của Tooling (`LGC-TOOL-010`) và event message của Bus (`LGC-BUS-039`) được truy tới FR mới và tới ca tự động, ca nghiệm thu; LGC-HUB-005, 006 chuyển PH-13. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
@@ -50,6 +51,7 @@ lgcs = sorted(set(l for v in frs.values() for l in v['lgc']) | set(uat))
 for l in lgcs:
     fr = [f for f, v in frs.items() if l in v['lgc']]
     O.append(f"| {l} | {', '.join(x[-3:] for x in fr) or '—'} | {short(by[l]['all'] + [i for f in fr if len(frs[f]['lgc']) < 5 for i in by[f]['pos']], 8)} | {', '.join(uat[l]) or '—'} |")
+O.append('\n: Chức năng hệ cũ tới FR, ca tự động và UAT')
 
 missing = {}
 for pre, title in (('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NFR', 'Yêu cầu phi chức năng')):
@@ -61,6 +63,7 @@ for pre, title in (('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NF
         rows.append(f'| {k} | {short(by[k]["all"], 10)} |')
         if not by[k]['all']: missing.setdefault(pre, []).append(k)
     O += rows
+    O.append(f'\n: {title} tới test case')
 print('\n'.join(O))
 for f, v in frs.items():
     if v['prio'] == 'M' and not (by[f]['pos'] and by[f]['neg']):

@@ -19,6 +19,7 @@ for ts, name in tsn.items():
     goal = goal.split('. ')[0].rstrip('.')
     rows.append(f'| {ts} | {name} | {uc} | {cnt[ts]} |')
 rows.append(f'| **Tổng** | | | **{len(tcs)}** ({p1} ca P1) |')
+rows += ['', f': Danh sách {len(tsn)} kịch bản kèm use case và số ca']
 def put(tag, body, s):
     return re.sub(rf'(<!--gen:{tag}-->).*?(<!--/gen-->)', lambda m: m.group(1) + body + m.group(2), s, flags=re.S)
 doc = put('ts-table', '\n' + '\n'.join(rows) + '\n', doc)
