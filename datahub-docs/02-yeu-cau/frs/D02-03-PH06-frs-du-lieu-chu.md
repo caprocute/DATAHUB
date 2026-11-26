@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH06
 ten: Đặc tả yêu cầu chức năng phân hệ PH-06 Dữ liệu chủ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, người quản lý dữ liệu, kỹ sư dh-data, kiểm thử viên
@@ -36,8 +36,10 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH06 Use case; D03-02-PH06 Thiết kế c
 | Quy tắc nghiệp vụ | 33 (BR-06-001…033) |
 | Yêu cầu phi chức năng | 20 (NFR-06-001…020) |
 | Màn hình | 18 (UI-06-01…18) |
-| API | 96 operation dự kiến (API-06-001…096), 15 sự kiện (EVT-06-01…15) |
-| Mã lỗi | 50 control (ERR-06-001…050), 14 job và đồng bộ (ERR-06-101…114) |
+| API | 125 operation dự kiến (API-06-001…125: 96 gốc, 24 mã tách từ dòng gộp, 5 mã mới), 15 sự kiện (EVT-06-01…15) |
+| Mã lỗi | 53 control (ERR-06-001…053), 14 job và đồng bộ (ERR-06-101…114); lỗi `401`, `403`, `428` dùng mã nền ERR-00-401, 403, 428 |
+| Thực thể mức logic | 34 (EN-06-01…34) |
+| Tham số theo tenant | 22 khóa (mục 8.2) |
 | Chức năng hệ cũ được phủ | Hệ cũ không có MDM; 3 nhóm `LGC` liên quan gián tiếp (NGSP-003, NGSP-005, DMDC) |
 | Đợt | Đợt 3 cho toàn bộ phân hệ |
 
@@ -224,7 +226,7 @@ Hình cho thấy PH-06 không gọi thẳng CSDL quốc gia mà luôn qua PH-14 
 | `mdm-golden` | Sống sót, bản ghi vàng, hợp nhất, tách, hoàn tác, lịch sử | PostgreSQL, ảnh chụp JSONB, khóa lạc quan `version` |
 | `mdm-serve` | Tra cứu, resolve, tìm kiếm, xuất, che | REST, OPA, PH-09 policy, mã hóa envelope (ADR-032) |
 | `mdm-sync` | Đồng bộ với CSDL quốc gia qua PH-14 | Kafka, API nội bộ PH-14 |
-| `mdm-ops` | Lịch job, chỉ số, nhật ký, lưu giữ | Quartz cluster, Micrometer, Prometheus |
+| `mdm-ops` | Lịch job, chỉ số, nhật ký, lưu giữ | ShedLock cộng bảng `job_schedule`, Micrometer, Prometheus |
 
 : Thành phần của PH-06
 
@@ -345,6 +347,8 @@ Hệ cũ không có chức năng dữ liệu chủ (D02-02 ghi LGC "—" cho PH-
 
 : Ma trận quyền của PH-06
 
+AU xem cấu hình, bản ghi vàng đã che bằng `PERM-06-read` và xem nhật ký truy cập bằng `PERM-06-audit-read`; không có quyền khác của PH-06. Thiếu quyền chức năng trả `403` với mã nền ERR-00-403, chưa xác thực trả `401` với ERR-00-401, thiếu `If-Match` trả `428` với ERR-00-428; các mã này do khung lỗi chung cấp và áp cho mọi API của PH-06.
+
 Xem giá trị đầy đủ của thuộc tính `SENSITIVE` cần thêm `PERM-09-unmask` và nêu lý do (D02-08 §3.1); không có thì giá trị luôn bị che, kể cả với DS.
 
 ### 3.3. Tách nhiệm vụ và tài khoản máy
@@ -399,6 +403,19 @@ Thực thể mức logic; bảng vật lý ở D03-03-PH06. Mọi bảng trong s
 | EN-06-19 | `export_request` | Yêu cầu xuất có duyệt | Mới |
 | EN-06-20 | `subject_request` | Yêu cầu của chủ thể dữ liệu | Mới |
 | EN-06-21 | `access_log` | Nhật ký truy cập dữ liệu chủ (ai, tra ai, mục đích) | Mới |
+| EN-06-22 | `source_priority_proposal` | Đề nghị thứ tự ưu tiên nguồn chờ duyệt, kèm căn cứ phê duyệt | Mới |
+| EN-06-23 | `evaluation_report` | Báo cáo đánh giá precision, recall theo phiên bản bộ quy tắc và tập nhãn | Mới |
+| EN-06-24 | `job_schedule` | Lịch job nền: loại job, cron, bật tắt, tham số | Mới |
+| EN-06-25 | `candidate_file` | Tệp lô nạp: pha xử lý, ánh xạ cột, kết quả xem trước | Mới |
+| EN-06-26 | `source_record_head` | Phiên bản nguồn mới nhất theo `(sourceCode, sourceKey)`, phục vụ chống trùng và thứ tự | Mới |
+| EN-06-27 | `match_staging` | Bảng staging cho job Splink (cột `job_id`), thuộc tính chuẩn hóa và HMAC, xóa sau job | Mới |
+| EN-06-28 | `golden_identifier` | Khóa định danh của bản ghi vàng ở dạng HMAC, phục vụ tra theo khóa | Mới |
+| EN-06-29 | `national_sync_state` | Trạng thái đồng bộ quốc gia (`RUNNING`, `PAUSED`), nguyên nhân, lượt gần nhất | Mới |
+| EN-06-30 | `national_discrepancy` | Lệch với dữ liệu quốc gia: mức, trạng thái, cách xử lý | Mới |
+| EN-06-31 | `source_correction` | Yêu cầu sửa tại nguồn phát sinh từ yêu cầu của chủ thể dữ liệu | Mới |
+| EN-06-32 | `processing_log` | Nhật ký xử lý nền với mức `INFO`, `WARN`, `ERROR` | Mới |
+| EN-06-33 | `retention_policy` | Chính sách lưu giữ theo loại đối tượng, giữ pháp lý | Mới |
+| EN-06-34 | `tenant_setting` | Giá trị tham số theo tenant (mục 8.2) | Mới |
 
 : Thực thể mức logic của PH-06
 
@@ -427,7 +444,7 @@ Hình cho thấy ứng viên không ghi thẳng vào bản ghi vàng mà qua k�
 stateDiagram-v2
   [*] --> ACTIVE: Tạo (NO_MATCH, nạp quốc gia)
   ACTIVE --> LOCKED: Thao tác chờ duyệt, yêu cầu chủ thể hạn chế
-  LOCKED --> ACTIVE: Duyệt xong, hết hạn chế
+  LOCKED --> ACTIVE: Duyệt xong, gỡ hạn chế (FR-06-058)
   ACTIVE --> MERGED: Bị hợp nhất vào bản khác
   MERGED --> ACTIVE: Tách, hoàn tác hợp nhất
   ACTIVE --> RETIRED: Ngừng (không còn liên kết hiệu lực)
@@ -458,11 +475,12 @@ stateDiagram-v2
   PENDING_APPROVAL --> RESOLVED: DA duyệt
   PENDING_APPROVAL --> ASSIGNED: DA từ chối
   ASSIGNED --> RESOLVED: Quyết định MATCH rủi ro thấp, NO_MATCH
+  RESOLVED --> ASSIGNED: Mở lại trong 24 giờ, chưa có thao tác phụ thuộc
   OPEN --> CANCELLED: Dữ liệu đổi, mục lỗi thời
   ASSIGNED --> CANCELLED: Dữ liệu đổi, mục lỗi thời
 ```
 
-`RESOLVED` và `CANCELLED` là trạng thái cuối. Mục `CANCELLED` do dữ liệu đổi sinh lại mục mới nếu cặp vẫn nằm trong vùng xem xét.
+`CANCELLED` là trạng thái cuối; `RESOLVED` chỉ mở lại được một lần trong `06.queue.reopen-hours` (mặc định 24 giờ) khi chưa có thao tác phụ thuộc (FR-06-030), sau đó dùng hoàn tác (FR-06-039). Mục `CANCELLED` do dữ liệu đổi sinh lại mục mới nếu cặp vẫn nằm trong vùng xem xét.
 
 ### 4.5. Máy trạng thái job đối sánh
 
@@ -742,7 +760,7 @@ Chuỗi soạn, kiểm tra tương thích, duyệt bảo đảm mô hình đang 
 
 **Kích hoạt.** Tab "Khóa định danh" của UI-06-07; nút "Thử kiểm tra".
 
-**Đầu vào.** `identifierType` (enum `IdentifierType`), `attribute`, `validator` (`CCCD_12`, `CMND_9`, `MST_10_13`, `MSDN`, `MA_BHXH_10`, `DVHC_CODE`, `REGEX`), `pattern` (khi `REGEX`), `deterministic` (T-BOOL), `uniqueAmongActive` (T-BOOL). Thử: `values[]` ≤ 50.
+**Đầu vào.** `identifierType` (enum `IdentifierType`), `attribute`, `validator` (enum `IdentifierValidator`: `CCCD_12`, `CMND_9`, `MST_10_13`, `MSDN`, `MA_BHXH_10`, `DVHC_CODE`, `REGEX`), `pattern` (khi `REGEX`), `deterministic` (T-BOOL), `uniqueAmongActive` (T-BOOL). Thử: `values[]` ≤ 50.
 
 **Luồng xử lý chính.**
 
@@ -758,6 +776,7 @@ Chuỗi soạn, kiểm tra tương thích, duyệt bảo đảm mô hình đang 
 - Thuộc tính không phải `IDENTIFIER`: ERR-06-009 (422); "Thuộc tính {tên} phải có kiểu Định danh để làm khóa."
 - Biểu thức không an toàn hoặc sai cú pháp: ERR-06-003 (400); "Biểu thức kiểm tra không hợp lệ hoặc có nguy cơ chạy quá lâu."
 - Hai khóa cùng loại trong một domain: ERR-06-002 (409); "Domain đã có khóa loại {loại}."
+- Khai `CMND_9` với `deterministic = true`: ERR-06-052 (422); "Số CMND 9 chữ số chỉ dùng để so sánh, không dùng làm khóa xác định."
 
 **Đầu ra.** `200`; danh sách khóa; với thử: `results[]` gồm `value` (đã che, giữ 3 số cuối), `verdict`, `reason`.
 
@@ -927,7 +946,7 @@ Ghi chú: quy tắc chữ số kiểm tra MST theo Thông tư hướng dẫn đ�
 
 **Quy tắc nghiệp vụ.** BR-06-016; BR-06-017.
 
-**Màn hình, API.** UI-06-07; API-06-008, API-06-009, API-06-010, API-06-011.
+**Màn hình, API.** UI-06-07; API-06-008, API-06-009, API-06-010, API-06-011, API-06-097, API-06-098.
 :::
 
 ```{.mermaid caption="Trình tự gửi duyệt và kích hoạt phiên bản mô hình domain"}
@@ -969,7 +988,7 @@ Trình tự cho thấy PH-09 được hỏi trước khi giao việc cho DA, nê
 **Luồng xử lý chính.**
 
 1. Hệ thống đọc gói nền ở tenant `COMMON` theo phiên bản.
-2. Với từng domain chưa có ở tenant, hệ thống tạo domain phiên bản 1 `ACTIVE` không qua duyệt (gói nền đã được PA duyệt ở `COMMON`), kèm bộ quy tắc đối sánh mặc định ở trạng thái `DRAFT` và quy tắc sống sót mặc định ở `DRAFT`.
+2. Với từng domain chưa có ở tenant, hệ thống tạo domain phiên bản 1 `ACTIVE` không qua bốn mắt (gói nền đã được PA duyệt ở `COMMON`; ngoại lệ của BR-06-004 ghi ở kiểm toán với tham chiếu gói), kèm bộ quy tắc đối sánh mặc định ở trạng thái `DRAFT` và quy tắc sống sót mặc định ở `DRAFT`.
 3. Domain đã có thì bỏ qua và ghi vào báo cáo (không ghi đè cấu hình tỉnh).
 4. Hệ thống trả báo cáo nạp và tạo việc cho TA "Duyệt thứ tự ưu tiên nguồn, bộ quy tắc trước khi nhận dữ liệu".
 
@@ -1091,7 +1110,7 @@ stateDiagram-v2
 
 **Quy tắc nghiệp vụ.** BR-06-004; BR-06-032.
 
-**Màn hình, API.** UI-06-08; API-06-014, API-06-015, API-06-016, API-06-017.
+**Màn hình, API.** UI-06-08; API-06-014, API-06-015, API-06-016, API-06-017, API-06-099, API-06-100.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -1121,7 +1140,7 @@ stateDiagram-v2
 
 **Kích hoạt.** Tab "Ưu tiên nguồn" ở UI-06-08: kéo thả thứ tự, bấm "Đề nghị áp dụng".
 
-**Đầu vào.** `entries[]` gồm `sourceCode`, `attribute` (rỗng là mọi thuộc tính), `priority` (1 cao nhất…99); `approvalRef` (số, ngày văn bản phê duyệt, bắt buộc); `justification`.
+**Đầu vào.** `entries[]` gồm `sourceCode`, `attribute` (`*` là mọi thuộc tính; không để rỗng), `priority` (1 cao nhất…99); `approvalRef` (số, ngày văn bản phê duyệt, bắt buộc); `justification`.
 
 **Luồng xử lý chính.**
 
@@ -1151,7 +1170,7 @@ stateDiagram-v2
 
 **Quy tắc nghiệp vụ.** BR-06-003; BR-06-004.
 
-**Màn hình, API.** UI-06-08; API-06-018, API-06-019, API-06-020.
+**Màn hình, API.** UI-06-08; API-06-018, API-06-019, API-06-020, API-06-101.
 :::
 
 | Mức | Nguồn mặc định | Cơ sở |
@@ -1383,7 +1402,7 @@ sequenceDiagram
 
 **Kích hoạt.** UI-06-11, nút "Nhập tệp".
 
-**Đầu vào.** Tệp `.xlsx` hoặc `.csv` UTF-8 ≤ 50 MB và ≤ 200.000 dòng; `sourceCode`; `domainCode`; ánh xạ cột (tự nhận theo tiêu đề tệp mẫu).
+**Đầu vào.** Tệp `.xlsx` hoặc `.csv` UTF-8 ≤ `06.ingest.max-file-mb` (mặc định 50 MB) và ≤ `06.ingest.max-rows` (mặc định 200.000 dòng); `sourceCode`; `domainCode`; ánh xạ cột (tự nhận theo tiêu đề tệp mẫu).
 
 **Luồng xử lý chính.**
 
@@ -1397,11 +1416,11 @@ sequenceDiagram
 
 **Luồng ngoại lệ.**
 
-- Tệp quá lớn: ERR-06-018 (413); "Tệp vượt 50 MB hoặc 200.000 dòng. Chia tệp nhỏ hơn."
+- Tệp quá lớn: ERR-06-018 (413); "Tệp vượt {n} dòng hoặc {m} MB. Chia tệp nhỏ hơn." ({n}, {m} lấy từ hai tham số trên)
 - Sai khuôn: ERR-06-019 (422); "Tệp không đúng khuôn mẫu của domain {mã}: thiếu cột {cột}."
 - Tệp có công thức, macro: ERR-06-019 (422); "Tệp chứa công thức hoặc macro. Lưu lại dạng giá trị rồi tải lên."
 
-**Đầu ra.** `202`; `fileId`, trạng thái pha, `report` (tải được), `jobId` sau xác nhận.
+**Đầu ra.** `202`; `fileId`, `phase` (enum `FilePhase`), `report` (tải được), `jobId` sau xác nhận.
 
 **Kết quả.** Người dùng thấy trước dữ liệu sẽ vào ra sao và chỉ ghi khi đã xác nhận.
 
@@ -1549,7 +1568,7 @@ sequenceDiagram
 2. Hệ thống tra `(sourceCode, sourceKey, sourceVersion)`: đã có thì ứng viên `DUPLICATE`.
 3. `sourceVersion` nhỏ hơn bản đã nhận cho `sourceKey`: ứng viên `SUPERSEDED`, không đối sánh, không ghi đè.
 4. `operation = DELETE`: hệ thống đánh dấu liên kết chéo của `sourceKey` `DETACHED` với lý do `SOURCE_DELETED`, tính lại sống sót cho bản ghi vàng bỏ giá trị của nguồn đó; bản ghi vàng hết liên kết hiệu lực thì đề nghị ngừng ở hàng đợi (lý do `ORPHANED`), không tự ngừng.
-5. Hệ thống tăng chỉ số `mdm_candidate_total{source,status}`.
+5. Hệ thống tăng chỉ số `datahub_mdm_candidate_total{source,status}`.
 
 **Luồng thay thế.** Nguồn không có số phiên bản: dùng `sourceUpdatedAt` làm phiên bản; trùng thời điểm thì so băm nội dung.
 
@@ -1615,7 +1634,7 @@ sequenceDiagram
 
 **Quy tắc nghiệp vụ.** BR-06-010; BR-06-008.
 
-**Màn hình, API.** UI-06-11; API-06-026, API-06-027, API-06-028.
+**Màn hình, API.** UI-06-11; API-06-026, API-06-027, API-06-028, API-06-102.
 :::
 
 ### 6.4. Nhóm C · Đối sánh
@@ -1685,7 +1704,7 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 
 **Quy tắc nghiệp vụ.** BR-06-006; BR-06-020; BR-06-021.
 
-**Màn hình, API.** UI-06-09; API-06-030, API-06-031, API-06-032, API-06-035.
+**Màn hình, API.** UI-06-09; API-06-030, API-06-031, API-06-032, API-06-035, API-06-103, API-06-104.
 :::
 
 | Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
@@ -1731,9 +1750,9 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 1. Người dùng khai 1…5 khóa; hệ thống kiểm biểu thức dùng hàm cho phép (`prefix`, `year`, `soundexVn`, `hmac`, `concat`) và thuộc tính `SENSITIVE` chỉ qua `hmac` (ERR-06-022).
 2. Hệ thống tính thống kê trên mẫu 100.000 bản ghi vàng: kích thước khối trung bình, p99, số khối > 500.
 3. Hệ thống đo độ phủ gom nhóm trên tập nhãn: tỷ lệ cặp `MATCH` có chung ít nhất một khóa (mục tiêu ≥ 99,5%).
-4. Hệ thống lưu khóa vào bản nháp và hiển thị cảnh báo nếu khối trung bình > 50 (NFR-06-006) hoặc độ phủ < 99,5%.
+4. Hệ thống lưu khóa vào bản nháp; khi kích hoạt, giá trị khóa của từng bản ghi vàng lưu ở `golden_record.block_keys` (mảng, chỉ mục GIN) để đối sánh trực tuyến tra khối nhanh (khóa trên thuộc tính `SENSITIVE` chỉ dạng `hmac`). Hệ thống hiển thị cảnh báo nếu khối trung bình > 50 (NFR-06-006) hoặc độ phủ < 99,5%.
 
-**Luồng thay thế.** Khối quá lớn (> 2.000 bản ghi, ví dụ "Nguyễn Văn" + năm phổ biến): đối sánh trực tuyến lấy 200 ứng viên giống nhất theo `pg_trgm` trong khối thay vì cả khối, ghi chỉ số `mdm_block_truncated_total`.
+**Luồng thay thế.** Khối quá lớn (> 2.000 bản ghi, ví dụ "Nguyễn Văn" + năm phổ biến): đối sánh trực tuyến lấy 200 ứng viên giống nhất theo `pg_trgm` trong khối thay vì cả khối, ghi chỉ số `datahub_mdm_block_truncated_total`.
 
 **Luồng ngoại lệ.**
 
@@ -1822,7 +1841,7 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 
 1. Hệ thống đếm thuộc tính `matchable` có giá trị; dưới `minAttributes` thì kết luận `POSSIBLE_MATCH` lý do `INSUFFICIENT_ATTRIBUTES` nếu có ứng viên trong khối, ngược lại `NO_MATCH` (BR-06-015).
 2. Hệ thống lấy tập ứng viên là hợp các khối theo khóa gom nhóm (tối đa 200, xếp theo `similarity(nameAscii)`).
-3. Với từng ứng viên, hệ thống tính điểm từng thuộc tính theo hàm so sánh, điểm tổng có trọng số (thuộc tính thiếu ở một bên: trọng số chia lại cho thuộc tính có mặt), áp quy tắc loại trừ (loại trừ thì điểm 0, kết luận `NO_MATCH` với cặp đó).
+3. Với từng ứng viên, hệ thống tính điểm từng thuộc tính theo hàm so sánh, điểm tổng theo mô hình Fellegi–Sunter (thuộc tính thiếu ở một bên rơi vào mức `MISSING` có trọng số 0 trong tổng, nên không làm tăng hay giảm điểm; tổng được đổi sang xác suất `P`), áp quy tắc loại trừ (loại trừ thì điểm 0, kết luận `NO_MATCH` với cặp đó).
 4. Hệ thống áp ngưỡng (FR-06-023) cho ứng viên điểm cao nhất: `MATCH`, `POSSIBLE_MATCH` hoặc `NO_MATCH`.
 5. Hai ứng viên trở lên cùng vượt `autoMergeThreshold` hoặc chênh nhau < 0,03: hạ thành `POSSIBLE_MATCH` lý do `MULTIPLE_CANDIDATES`.
 6. Hệ thống lưu `match_result` với điểm từng thuộc tính và 5 ứng viên đầu.
@@ -1831,7 +1850,7 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 
 **Luồng ngoại lệ.**
 
-- Truy vấn vượt 800 ms: ngắt, kết luận `POSSIBLE_MATCH` lý do `TIMEOUT`, ghi `mdm_match_timeout_total`; vận hành thấy cảnh báo khi tỷ lệ > 1% ở UI-06-01 "Đối sánh trực tuyến chậm: {tỷ lệ}% lượt quá giờ."
+- Truy vấn vượt `06.match.timeout-ms` (mặc định 800 ms): ngắt, kết luận `POSSIBLE_MATCH` lý do `TIMEOUT`, ghi `datahub_mdm_match_timeout_total`; vận hành thấy cảnh báo khi tỷ lệ > 1% ở UI-06-01 "Đối sánh trực tuyến chậm: {tỷ lệ}% lượt quá giờ."
 
 **Đầu ra.** `match_result` nội bộ.
 
@@ -1868,10 +1887,10 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 **Luồng xử lý chính.**
 
 1. Hệ thống tạo job `QUEUED`; trùng job đang chạy trả ERR-06-025.
-2. `PREPARING`: hệ thống xuất bản ghi trong phạm vi sang bảng staging `ph06_mdm.stg_match_{jobId}` (chỉ thuộc tính `matchable` đã chuẩn hóa, trường `SENSITIVE` dạng HMAC), không xuất giá trị rõ.
-3. `RUNNING`: hệ thống khởi Job K8s `mdm-splink` (Python, Splink trên DuckDB; > 5 triệu bản ghi dùng Spark nhỏ) với tài khoản CSDL chỉ đọc staging, chỉ ghi bảng kết quả.
-4. Job ước lượng tham số m, u bằng EM (nếu `trainOnly` hoặc lịch huấn luyện), chấm điểm cặp trong khối, ghi `stg_match_result_{jobId}` (cặp, điểm, điểm từng thuộc tính).
-5. Hệ thống đọc kết quả, phân ba vùng; nếu số cặp `MATCH` > 5% số bản ghi vào (BR-06-022) thì `AWAITING_CONFIRMATION` và giao việc DA.
+2. `PREPARING`: hệ thống xuất bản ghi trong phạm vi sang bảng staging `ph06_mdm.match_staging` (cột `job_id` phân biệt job; chỉ thuộc tính `matchable` đã chuẩn hóa, trường `SENSITIVE` dạng HMAC), không xuất giá trị rõ.
+3. `RUNNING`: hệ thống khởi Job K8s `mdm-splink` (Python, Splink trên DuckDB; > 5 triệu bản ghi dùng Spark nhỏ) với vai CSDL `ph06_splink` chỉ `SELECT` bảng `match_staging` và chỉ `INSERT` bảng `match_result`.
+4. Job ước lượng tham số m, u bằng EM (nếu `trainOnly` hoặc lịch huấn luyện), chấm điểm cặp trong khối, ghi `match_result` kèm `job_id` (cặp, điểm, điểm từng thuộc tính).
+5. Hệ thống đọc kết quả, phân ba vùng; nếu số cặp `MATCH` > 5% số bản ghi vào (BR-06-022) thì `AWAITING_CONFIRMATION` và giao việc DA; DA `APPROVE` thì sang `APPLYING`, `REJECT` thì job `CANCELLED`, không áp cặp nào (API-06-106, trường `decision`).
 6. `APPLYING`: hệ thống áp từng cặp trong giao dịch riêng: `MATCH` hợp nhất (FR-06-034, phương thức `PROBABILISTIC_BATCH`), `POSSIBLE_MATCH` tạo mục hàng đợi; bỏ qua cặp đã có quyết định thủ công (BR-06-023) hoặc bản ghi đã đổi sau thời điểm xuất (ERR-06-104).
 7. Job `SUCCEEDED` hoặc `PARTIALLY_SUCCEEDED`, xóa staging, phát EVT-06-09.
 
@@ -1881,7 +1900,7 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 
 - Job trùng: ERR-06-025 (409); "Domain {mã} đang có job đối sánh {jobId} chạy."
 - Job K8s lỗi đọc staging: ERR-06-101, job `FAILED`; vận hành thấy ở UI-06-12 "Job {id} lỗi khi đọc dữ liệu: {chi tiết}. Không bản ghi vàng nào bị đổi."
-- Quá giờ (mặc định 4 giờ): ERR-06-102, job `FAILED`.
+- Quá `06.batch.max-hours` (mặc định 4 giờ, `activeDeadlineSeconds` của Job K8s): ERR-06-102, job `FAILED`.
 - Hết bộ nhớ: ERR-06-103, job `FAILED`, gợi ý chuyển chế độ Spark.
 - Vượt ngưỡng an toàn: ERR-06-105, job `AWAITING_CONFIRMATION`.
 
@@ -1897,7 +1916,7 @@ Mọi đường đối sánh trả cùng bốn kết luận của enum `MatchOut
 
 **Quy tắc nghiệp vụ.** BR-06-022; BR-06-023.
 
-**Màn hình, API.** UI-06-12; API-06-041, API-06-042, API-06-043.
+**Màn hình, API.** UI-06-12; API-06-041, API-06-042, API-06-043, API-06-105, API-06-106.
 :::
 
 ```{.mermaid caption="Trình tự job đối sánh theo lô bằng Splink"}
@@ -2048,12 +2067,13 @@ Job Splink không bao giờ ghi thẳng vào bảng bản ghi vàng; mọi thay 
 3. Với cặp lấy mẫu, hệ thống giao cho hai DS khác nhau gán độc lập; hai nhãn khác nhau thì cặp chờ DA phân xử.
 4. Hệ thống tính thống kê: số cặp, tỷ lệ `MATCH`, phân bố theo khoảng điểm, độ đồng thuận giữa người gán.
 
-**Luồng thay thế.** Khóa tập (`locked`) khi dùng cho đánh giá chính thức; thêm cặp sau đó tạo phiên bản tập mới.
+**Luồng thay thế.** Khóa tập (`locked`) khi dùng cho đánh giá chính thức (API-06-123, người có `PERM-06-steward`, ghi kiểm toán); khóa rồi không mở lại, thêm cặp sau đó tạo phiên bản tập mới.
 
 **Luồng ngoại lệ.**
 
 - Mã trùng: ERR-06-002 (409); "Mã tập nhãn {mã} đã được dùng."
 - Tập đã khóa: ERR-06-006 (409); "Tập nhãn {mã} đã khóa. Tạo phiên bản mới để thêm cặp."
+- Cặp nhãn không hợp lệ (nhãn ngoài `MATCH`, `NO_MATCH`, hai tham chiếu trùng nhau hoặc không tồn tại, cặp đã có): ERR-06-051 (422); "Cặp nhãn thứ {n} không hợp lệ: {lý do}."
 
 **Đầu ra.** `201`; tập kèm `stats`.
 
@@ -2067,7 +2087,7 @@ Job Splink không bao giờ ghi thẳng vào bảng bản ghi vàng; mọi thay 
 
 **Quy tắc nghiệp vụ.** BR-06-021.
 
-**Màn hình, API.** UI-06-13; API-06-037, API-06-038, API-06-039.
+**Màn hình, API.** UI-06-13; API-06-037, API-06-038, API-06-039, API-06-123.
 :::
 
 #### FR-06-026 · Đo precision, recall và chặn kích hoạt quy tắc kém
@@ -2093,7 +2113,7 @@ Job Splink không bao giờ ghi thẳng vào bảng bản ghi vàng; mọi thay 
 2. Job chấm điểm từng cặp theo bộ quy tắc, áp ngưỡng.
 3. Hệ thống tính: precision = TP / (TP + FP) chỉ trên kết luận `MATCH`; recall = TP / (TP + FN) với FN là cặp nhãn `MATCH` mà kết luận `NO_MATCH`; tỷ lệ vào hàng đợi; tách theo nguồn và theo khoảng điểm.
 4. Hệ thống so với ngưỡng BR-06-021 (precision ≥ 99,9%, recall ≥ 98%), lưu báo cáo gắn phiên bản quy tắc, đánh dấu `PASSED` hoặc `FAILED`.
-5. Bộ quy tắc `ACTIVE` đánh giá tháng bị `FAILED`: cảnh báo DA và TA, tự tắt `autoMergeEnabled` nếu tham số `06.match.auto-disable-on-fail = true`.
+5. Bộ quy tắc `ACTIVE` đánh giá tháng bị `FAILED`: hệ thống cảnh báo DA và TA (PH-13) và, nếu `06.match.auto-disable-on-fail = true`, đặt `autoMergeEnabled = false` cho phiên bản đó. Từ lúc tắt, kết luận `MATCH` của đối sánh trực tuyến và lô đều hạ thành `POSSIBLE_MATCH` vào hàng đợi (trừ khóa định danh xác định, BR-06-006); bộ quy tắc vẫn `ACTIVE`; ghi kiểm toán người dùng "Hệ thống", lý do, báo cáo. Bật lại chỉ khi có đánh giá `PASSED` mới và DA duyệt; `false` thì chỉ cảnh báo, không tắt.
 
 **Luồng thay thế.** Xem danh sách cặp FP, FN (che DLCN) để phân tích nguyên nhân.
 
@@ -2196,12 +2216,12 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 
 **Kích hoạt.** UI-06-04; "Nhận việc tiếp theo".
 
-**Đầu vào.** Lọc `domainCode`, `reason[]`, `status[]`, `assignee`, `riskLevel`, `overdue`, `sourceCode[]`; thao tác `claim`, `release`, `assign` (`assigneeId`).
+**Đầu vào.** Lọc `domainCode`, `reason[]`, `status[]`, `assignee`, `partition` (`mine`, `unclaimed`, `overdue`, `pending-approval`), `riskLevel`, `overdue`, `sourceCode[]`; thao tác `claim`, `claim-next`, `release`, `assign` (`assigneeId`).
 
 **Luồng xử lý chính.**
 
 1. Hệ thống liệt kê mục theo `priority` giảm dần, hạn SLA tăng dần; mặc định chỉ mục `OPEN` và mục của người dùng; cột: domain, lý do, điểm, hai tên hiển thị (che theo phân loại), nguồn, tuổi, hạn.
-2. "Nhận việc tiếp theo": hệ thống chọn mục `OPEN` ưu tiên cao nhất người dùng được xem (theo tổ chức với DS ○), gán `ASSIGNED` có hạn giữ 30 phút, gia hạn mỗi lần thao tác.
+2. "Nhận việc tiếp theo" (API-06-124, một lệnh nguyên tử): hệ thống chọn mục `OPEN` có `priority` cao nhất, hạn SLA sớm nhất, tạo sớm nhất, trong phạm vi người dùng được xem (theo tổ chức với DS ○) và khớp bộ lọc nếu có; bỏ qua mục đang giữ bởi người khác (`SKIP LOCKED`); gán `ASSIGNED` có hạn giữ `06.queue.hold-minutes` (30 phút), gia hạn mỗi lần thao tác. Hết mục phù hợp thì trả `204`, không lỗi.
 3. Hệ thống dùng khóa lạc quan; hai người nhận cùng lúc thì người sau nhận ERR-06-027 và được chọn mục kế tiếp.
 4. "Trả lại" đưa mục về `OPEN`; hết hạn giữ hệ thống tự trả.
 5. DA, TA phân công mục cho DS cụ thể; hệ thống giao việc vào "Việc của tôi" của người nhận.
@@ -2225,7 +2245,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 
 **Quy tắc nghiệp vụ.** BR-06-019.
 
-**Màn hình, API.** UI-06-04; API-06-045, API-06-047.
+**Màn hình, API.** UI-06-04; API-06-045, API-06-047, API-06-107, API-06-108, API-06-124.
 :::
 
 #### FR-06-029 · So sánh cạnh nhau hai bản ghi
@@ -2253,7 +2273,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 4. Khóa định danh hai bên khác nhau: hệ thống hiện nhãn "Hai số định danh khác nhau" và vô hiệu nút "Cùng một thực thể" (BR-06-006).
 5. Hệ thống ghi nhật ký truy cập (FR-06-057) trước khi trả dữ liệu; không ghi được thì từ chối (ERR-06-039).
 
-**Luồng thay thế.** Xem đầy đủ thuộc tính `SENSITIVE`: người dùng có `PERM-09-unmask` nhập lý do; hệ thống hỏi PH-09, ghi nhật ký riêng, trả giá trị rõ cho phiên đó.
+**Luồng thay thế.** Xem đầy đủ thuộc tính `SENSITIVE`: người dùng có `PERM-09-unmask` nhập lý do; hệ thống hỏi PH-09, ghi nhật ký riêng, trả giá trị rõ cho phiên đó, tự che lại sau `06.mask.reveal-seconds` (mặc định 60 giây) hoặc khi rời màn. Hỗ trợ thao tác nhanh: (1) Ô lý do có mẫu câu bấm chèn, TA cấu hình ở `06.queue.reason-templates`; bốn câu mặc định: "Trùng họ tên, ngày sinh và địa chỉ; các nguồn mô tả cùng một người."; "Khác ngày sinh và nơi cư trú, đây là hai người khác nhau."; "Thiếu dữ liệu để kết luận, hoãn chờ xác minh với đơn vị nguồn."; "Dữ liệu nguồn nhập sai, đã đối chiếu và xác định cùng một thực thể."; bấm mẫu không ghi đè chữ đã gõ. (2) Phím tắt chỉ chọn, không tự gửi: `M` cùng một thực thể, `K` khác nhau, `H` hoãn, `Ctrl+Enter` gửi khi lý do hợp lệ. (3) Hiển thị thời gian giữ mục còn lại (`06.queue.hold-minutes`, mặc định 30 phút), hết giờ thì mục về `OPEN` và màn báo "Mục đã trả về hàng đợi" kèm "Nhận lại".
 
 **Luồng ngoại lệ.**
 
@@ -2288,7 +2308,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 
 **Tiền điều kiện.** Mục `ASSIGNED` cho người dùng, còn hiệu lực.
 
-**Kích hoạt.** Nút "Cùng một thực thể", "Khác nhau", "Hoãn" ở UI-06-05; phím tắt M, N, H.
+**Kích hoạt.** Nút "Cùng một thực thể", "Khác nhau", "Hoãn" ở UI-06-05; phím tắt M, K, H (FR-06-029).
 
 **Đầu vào.** `decision` (enum `StewardDecision`), `reason` (≥ 20 ký tự, chọn nhanh từ mẫu câu), `survivorId` (khi hợp nhất hai bản ghi vàng), `deferUntil` (khi hoãn, ≤ 30 ngày), `addToLabelSet` (mặc định có).
 
@@ -2300,7 +2320,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 4. `DEFER`: mục `DEFERRED` tới `deferUntil`, sau đó về người đã nhận.
 5. Hệ thống thêm cặp vào tập nhãn `TRAINING` (FR-06-025), chuyển người dùng sang mục kế tiếp, hiện số mục còn lại.
 
-**Luồng thay thế.** Sửa quyết định trong 24 giờ (khi chưa có thao tác phụ thuộc): mở lại mục từ lịch sử, quyết định lại; sau 24 giờ dùng hoàn tác (FR-06-039).
+**Luồng thay thế.** Sửa quyết định trong `06.queue.reopen-hours` (mặc định 24 giờ), khi mục `RESOLVED` và chưa có thao tác phụ thuộc (bản ghi vàng liên quan chưa đổi thêm, không có thao tác chờ duyệt): người đã quyết hoặc DA gọi API-06-121 `POST /stewardship/items/{itemId}:reopen` kèm `reason` (≥ 20 ký tự) và `If-Match`. Hệ thống hoàn tác thay đổi bản ghi vàng của quyết định cũ theo FR-06-039, đưa mục về `ASSIGNED` cho người mở lại để quyết định lại; quyết định cũ vẫn lưu ở lịch sử và cặp nhãn cũ được cập nhật theo quyết định mới. Quá hạn hoặc có thao tác phụ thuộc thì dùng hoàn tác (FR-06-039), không mở lại.
 
 **Luồng ngoại lệ.**
 
@@ -2308,6 +2328,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 - Hai số định danh khác nhau: ERR-06-029 (422); "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn."
 - Mục lỗi thời: ERR-06-030 (409); "Dữ liệu của cặp đã thay đổi. Xem lại trước khi quyết định."
 - Bản ghi vàng đang khóa: ERR-06-031 (409); "Bản ghi vàng {id} đang có thao tác chờ duyệt."
+- Mở lại quá hạn hoặc có thao tác phụ thuộc: ERR-06-053 (409); "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác."
 
 **Đầu ra.** `200`; mục kèm `status`, `operationId` (nếu có thay đổi bản ghi vàng), `nextItemId`.
 
@@ -2321,7 +2342,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 
 **Quy tắc nghiệp vụ.** BR-06-006; BR-06-008; BR-06-019; BR-06-023.
 
-**Màn hình, API.** UI-06-05; API-06-048.
+**Màn hình, API.** UI-06-05; API-06-048, API-06-121.
 :::
 
 #### FR-06-031 · Duyệt bốn mắt hợp nhất rủi ro cao
@@ -2369,7 +2390,7 @@ Mọi quyết định đều chảy về tập nhãn, nên hàng đợi vừa gi
 
 **Quy tắc nghiệp vụ.** BR-06-019.
 
-**Màn hình, API.** UI-06-05; API-06-049, API-06-061.
+**Màn hình, API.** UI-06-05; API-06-049, API-06-061, API-06-109, API-06-112.
 :::
 
 ```{.mermaid caption="Trình tự quyết định và duyệt bốn mắt hợp nhất rủi ro cao"}
@@ -2415,7 +2436,7 @@ Trong lúc chờ, hai bản ghi vàng ở `LOCKED`: vẫn tra cứu được, v�
 2. Mục quá hạn SLA: cộng 20 điểm ưu tiên (tối đa 100), gắn `overdue`, thông báo người nhận và DA.
 3. Mục quá `escalate-after-days` (mặc định 14): giao DA phân công lại.
 4. Số mục mở > `max-open` hoặc số mục mới trong 24 giờ > 15% số ứng viên: cảnh báo quá tải gửi PH-13 kèm phân tích theo nguồn và lý do.
-5. Hệ thống cập nhật chỉ số `mdm_queue_open`, `mdm_queue_overdue`, `mdm_queue_age_seconds` cho dashboard.
+5. Hệ thống cập nhật chỉ số `datahub_mdm_queue_open`, `datahub_mdm_queue_overdue`, `datahub_mdm_queue_age_seconds` cho dashboard.
 
 **Luồng thay thế.** Không.
 
@@ -2504,7 +2525,7 @@ FR-06-039 hoàn tác được mọi thao tác của FR-06-034, 036, 037, 038, 04
 
 **Quy tắc nghiệp vụ.** BR-06-003; BR-06-004; BR-06-025.
 
-**Màn hình, API.** UI-06-10; API-06-051, API-06-052, API-06-053.
+**Màn hình, API.** UI-06-10; API-06-051, API-06-052, API-06-053, API-06-110, API-06-111.
 :::
 
 | Chiến lược | Cách chọn giá trị thắng | Dùng khi |
@@ -2589,10 +2610,10 @@ FR-06-039 hoàn tác được mọi thao tác của FR-06-034, 036, 037, 038, 04
 
 1. Hệ thống tải bản ghi vàng; `MERGED` thì hiện thông báo và nút "Mở bản ghi sống sót".
 2. Hệ thống ghi nhật ký truy cập trước khi trả (ERR-06-039).
-3. Hệ thống trả tab "Thuộc tính" (giá trị, nhãn nguồn, `sourceUpdatedAt`, chiến lược đã thắng, độ tin cậy với chấm màu cao ≥ 0,9, trung bình 0,7–0,9, thấp < 0,7), "Nguồn liên kết" (FR-06-044), "Nguồn gốc" (FR-06-043), "Lịch sử" (FR-06-041), "Thao tác" (thao tác chờ duyệt, hoàn tác được).
+3. Hệ thống trả tab "Thuộc tính" (giá trị, nhãn nguồn, `sourceUpdatedAt`, chiến lược đã thắng, độ tin cậy với chấm màu cao ≥ 0,9, trung bình 0,7–0,9, thấp < 0,7), "Nguồn liên kết" (FR-06-044), "Nguồn gốc" (FR-06-043), "Lịch sử" (FR-06-041), "Thao tác" (thao tác chờ duyệt, hoàn tác được; danh sách theo bản ghi qua API-06-122).
 4. Hệ thống chỉ hiện hành động hợp lệ ở trạng thái hiện tại (FR-00-053).
 
-**Luồng thay thế.** Xem đầy đủ trường `SENSITIVE` như FR-06-029 luồng thay thế.
+**Luồng thay thế.** Xem đầy đủ trường `SENSITIVE` như FR-06-029 luồng thay thế; giá trị rõ chỉ tồn tại trong phiên và tự che lại sau `06.mask.reveal-seconds` (mặc định 60 giây, miền 15…300) hoặc khi rời màn, mỗi lần xem ghi nhật ký riêng.
 
 **Luồng ngoại lệ.**
 
@@ -2611,7 +2632,7 @@ FR-06-039 hoàn tác được mọi thao tác của FR-06-034, 036, 037, 038, 04
 
 **Quy tắc nghiệp vụ.** BR-06-009; BR-06-010; BR-06-026.
 
-**Màn hình, API.** UI-06-03; API-06-056.
+**Màn hình, API.** UI-06-03; API-06-056, API-06-122.
 :::
 
 ```json
@@ -2719,7 +2740,7 @@ FR-06-039 hoàn tác được mọi thao tác của FR-06-034, 036, 037, 038, 04
 
 **Quy tắc nghiệp vụ.** BR-06-006; BR-06-008; BR-06-019.
 
-**Màn hình, API.** UI-06-06; API-06-058, API-06-061.
+**Màn hình, API.** UI-06-06; API-06-058, API-06-061, API-06-112.
 :::
 
 #### FR-06-038 · Tách bản ghi vàng
@@ -2767,7 +2788,7 @@ FR-06-039 hoàn tác được mọi thao tác của FR-06-034, 036, 037, 038, 04
 
 **Quy tắc nghiệp vụ.** BR-06-008; BR-06-019; BR-06-023.
 
-**Màn hình, API.** UI-06-06; API-06-059, API-06-061.
+**Màn hình, API.** UI-06-06; API-06-059, API-06-061, API-06-112.
 :::
 
 ```{.mermaid caption="Trình tự tách bản ghi vàng hợp nhất nhầm"}
@@ -2832,7 +2853,7 @@ HTTT đã lưu `goldenId` G1 nhận sự kiện tách và tra lại các bản g
 
 **Quy tắc nghiệp vụ.** BR-06-005; BR-06-024.
 
-**Màn hình, API.** UI-06-03; UI-06-06; API-06-060, API-06-061.
+**Màn hình, API.** UI-06-03; UI-06-06; API-06-060, API-06-061, API-06-112, API-06-122.
 :::
 
 #### FR-06-040 · Ngừng và khôi phục bản ghi vàng
@@ -2877,7 +2898,7 @@ HTTT đã lưu `goldenId` G1 nhận sự kiện tách và tra lại các bản g
 
 **Quy tắc nghiệp vụ.** BR-06-007; BR-06-008.
 
-**Màn hình, API.** UI-06-03; API-06-062.
+**Màn hình, API.** UI-06-03; API-06-062, API-06-113.
 :::
 
 #### FR-06-041 · Xem lịch sử phiên bản và so sánh hai phiên bản
@@ -3088,9 +3109,9 @@ Lineage nằm ở cấp thuộc tính, liên kết chéo nằm ở cấp bản g
 
 **Tiền điều kiện.** Nguồn của bên gọi `ACTIVE`; tra chiều vàng sang nguồn khác cần mục đích PH-09 cho phép biết sự tồn tại của bản ghi ở hệ khác.
 
-**Kích hoạt.** API-06-068 (một khóa), API-06-069 (lô ≤ 500).
+**Kích hoạt.** API-06-068 (một khóa), API-06-069 (lô ≤ `06.xref.batch-max`).
 
-**Đầu vào.** `sourceCode` + `sourceKey`, hoặc `goldenId` + `targetSources[]`; tiêu đề `X-Purpose`.
+**Đầu vào.** `sourceCode` + `sourceKey`, hoặc `goldenId` + `targetSources[]`; tiêu đề `X-Purpose`; lô ≤ `06.xref.batch-max` cặp (mặc định 500).
 
 **Luồng xử lý chính.**
 
@@ -3105,7 +3126,7 @@ Lineage nằm ở cấp thuộc tính, liên kết chéo nằm ở cấp bản g
 
 - Không có liên kết: ERR-06-050 (404); "Không có bản ghi vàng cho {nguồn}/{khóa}."
 - Thiếu mục đích: ERR-06-037 (403); "Yêu cầu thiếu mục đích khai thác được chấp thuận cho dữ liệu này."
-- Lô quá lớn: ERR-06-018 (413); "Mỗi lần tra tối đa 500 khóa."
+- Lô quá lớn: ERR-06-018 (413); "Mỗi lần tra tối đa {n} khóa." ({n} = `06.xref.batch-max`)
 
 **Đầu ra.** `200`; `items[]` gồm `sourceCode`, `sourceKey`, `goldenId`, `status`, `redirectedFrom`, `links[]`.
 
@@ -3352,7 +3373,7 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 
 **Quy tắc nghiệp vụ.** BR-06-013; BR-06-027.
 
-**Màn hình, API.** UI-06-15; API-06-073, API-06-074, API-06-075, API-06-076.
+**Màn hình, API.** UI-06-15; API-06-073, API-06-074, API-06-075, API-06-076, API-06-114.
 :::
 
 #### FR-06-050 · Phát sự kiện thay đổi bản ghi vàng
@@ -3377,7 +3398,7 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 1. Bộ chuyển outbox đọc bản ghi theo thứ tự, phát lên topic tương ứng, khóa phân vùng `goldenId` (hợp nhất dùng `survivorId`).
 2. Thân sự kiện theo CloudEvents, lược đồ đăng ký ở PH-10, không chứa giá trị thuộc tính (BR-06-012).
 3. Phát thành công: đánh dấu outbox đã gửi; lỗi thì thử lại giãn dần.
-4. Hệ thống ghi chỉ số `mdm_event_published_total{type}`, độ trễ commit tới phát (NFR-06-014).
+4. Hệ thống ghi chỉ số `datahub_mdm_event_published_total{type}`, độ trễ commit tới phát (NFR-06-014).
 
 **Luồng thay thế.** Áp lại hàng loạt: gộp tối đa 500 `goldenId` mỗi sự kiện `updated` với `changeType = SURVIVORSHIP_REAPPLY`.
 
@@ -3453,7 +3474,7 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 
 **Quy tắc nghiệp vụ.** BR-06-012; BR-06-026.
 
-**Màn hình, API.** UI-06-15; API-06-077, API-06-078, API-06-079.
+**Màn hình, API.** UI-06-15; API-06-077, API-06-078, API-06-079, API-06-115, API-06-116, API-06-117.
 :::
 
 #### FR-06-052 · Che dữ liệu theo phân loại và mục đích PH-09
@@ -3528,7 +3549,7 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 5. Chiều lên: job `NATIONAL_SYNC_UP` gửi qua PH-14 các thuộc tính trong danh mục "được gửi lên" (tham số `06.sync.up-attributes`, mặc định rỗng tới khi có quy định, Q06-02), không gửi thuộc tính thẩm quyền quốc gia (ERR-06-045).
 6. Hệ thống ghi nhật ký đồng bộ, cập nhật `nationalSyncedAt`, phát EVT-06-12 khi có lệch mới.
 
-**Luồng thay thế.** "Tiếp tục" sau tạm dừng: DS, DA xác nhận đã điều tra, chọn áp hoặc bỏ các lệch của lượt bị dừng.
+**Luồng thay thế.** "Tiếp tục" sau tạm dừng (API-06-118): DS, DA xác nhận đã điều tra, bắt buộc ghi `cause` (nguyên nhân đã điều tra, ≥ 20 ký tự; thiếu thì ERR-06-007), chọn áp hoặc bỏ các lệch của lượt bị dừng; `cause` lưu ở `national_sync_state` và kiểm toán, đưa vào EVT-06-13.
 
 **Luồng ngoại lệ.**
 
@@ -3546,11 +3567,11 @@ Nếu nhật ký truy cập không xác nhận, `dh-data` không trả bản ghi
 
 **Sự kiện phát ra.** EVT-06-02; EVT-06-12; EVT-06-13.
 
-**Kiểm toán.** Có: lượt chạy, người chạy tay, tạm dừng, tiếp tục.
+**Kiểm toán.** Có: lượt chạy, người chạy tay, tạm dừng, tiếp tục kèm nguyên nhân đã điều tra.
 
 **Quy tắc nghiệp vụ.** BR-06-003; BR-06-011; BR-06-032.
 
-**Màn hình, API.** UI-06-14; API-06-080, API-06-081, API-06-082.
+**Màn hình, API.** UI-06-14; API-06-080, API-06-081, API-06-082, API-06-118.
 :::
 
 ```{.mermaid caption="Trình tự đối chiếu với CSDL quốc gia và tạm dừng khi lệch vượt ngưỡng"}
@@ -3618,7 +3639,7 @@ Tỷ lệ lệch cao bất thường thường là lỗi ánh xạ, lỗi kết 
 
 **Quy tắc nghiệp vụ.** BR-06-003; BR-06-014.
 
-**Màn hình, API.** UI-06-14; API-06-083, API-06-084.
+**Màn hình, API.** UI-06-14; API-06-083, API-06-084, API-06-118.
 :::
 
 ### 6.9. Nhóm H · Vận hành
@@ -3683,14 +3704,14 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 
 | Chỉ số | Định nghĩa | Tên Prometheus |
 |---|---|---|
-| Số bản ghi vàng | Theo domain, trạng thái | `mdm_golden_total{domain,status}` |
-| Tỷ lệ trùng | 1 − (số bản ghi vàng `ACTIVE` / số bản ghi nguồn liên kết hiệu lực) | `mdm_duplicate_ratio{domain}` |
-| Tỷ lệ tự động | Ứng viên `LINKED` không qua người / ứng viên đã xử lý | `mdm_auto_rate{domain}` |
-| Hàng đợi | Mở, quá hạn, tuổi trung vị | `mdm_queue_open`, `mdm_queue_overdue`, `mdm_queue_age_seconds` |
-| Độ chính xác | Precision, recall lần đánh giá gần nhất | `mdm_precision`, `mdm_recall` |
-| Đối sánh | Lượt, thời gian xử lý theo phương thức, kết luận | `mdm_match_total{method,outcome}`, `mdm_match_duration_seconds` |
-| Đồng bộ quốc gia | Tỷ lệ lệch lượt gần nhất, trạng thái | `mdm_sync_discrepancy_ratio`, `mdm_sync_paused` |
-| Chất lượng nguồn | Tỷ lệ ứng viên `REJECTED`, định danh sai theo nguồn | `mdm_candidate_total{source,status}` |
+| Số bản ghi vàng | Theo domain, trạng thái | `datahub_mdm_golden_total{domain,status}` |
+| Tỷ lệ trùng | 1 − (số bản ghi vàng `ACTIVE` / số bản ghi nguồn liên kết hiệu lực) | `datahub_mdm_duplicate_ratio{domain}` |
+| Tỷ lệ tự động | Ứng viên `LINKED` không qua người / ứng viên đã xử lý | `datahub_mdm_auto_rate{domain}` |
+| Hàng đợi | Mở, quá hạn, tuổi trung vị | `datahub_mdm_queue_open`, `datahub_mdm_queue_overdue`, `datahub_mdm_queue_age_seconds` |
+| Độ chính xác | Precision, recall lần đánh giá gần nhất | `datahub_mdm_precision`, `datahub_mdm_recall` |
+| Đối sánh | Lượt, thời gian xử lý theo phương thức, kết luận | `datahub_mdm_match_total{method,outcome}`, `datahub_mdm_match_duration_seconds` |
+| Đồng bộ quốc gia | Tỷ lệ lệch lượt gần nhất, trạng thái | `datahub_mdm_sync_discrepancy_ratio`, `datahub_mdm_sync_paused` |
+| Chất lượng nguồn | Tỷ lệ ứng viên `REJECTED`, định danh sai theo nguồn | `datahub_mdm_candidate_total{source,status}` |
 
 : Chỉ số của dashboard dữ liệu chủ
 
@@ -3718,7 +3739,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 3. Chạy lại job `FAILED`: hệ thống tạo job mới tham chiếu job cũ; `fromStep = APPLYING` chỉ khi bảng kết quả còn (giữ 72 giờ).
 4. Hủy job `QUEUED`, `RUNNING`: hệ thống dừng Job K8s, chuyển `CANCELLED`; cặp đã áp trước khi hủy giữ nguyên và hoàn tác được bằng `batchOperationId`.
 
-**Luồng thay thế.** Quartz chạy cụm, một job một lúc theo domain; lịch trùng giờ thì xếp hàng.
+**Luồng thay thế.** Lịch lưu ở bảng `job_schedule`; nhiều bản sao `dh-data` chạy đồng thời thì ShedLock bảo đảm một job một lúc theo domain; lịch trùng giờ thì xếp hàng.
 
 **Luồng ngoại lệ.**
 
@@ -3737,7 +3758,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 
 **Quy tắc nghiệp vụ.** BR-06-022.
 
-**Màn hình, API.** UI-06-12; API-06-041, API-06-044, API-06-086, API-06-087.
+**Màn hình, API.** UI-06-12; API-06-041, API-06-044, API-06-086, API-06-087, API-06-105, API-06-106.
 :::
 
 #### FR-06-057 · Nhật ký xử lý và nhật ký truy cập
@@ -3810,6 +3831,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 3. `ACCESS`: hệ thống lập báo cáo gồm thuộc tính đang giữ (giá trị rõ cho chính chủ thể), nguồn của từng thuộc tính, danh sách HTTT, mục đích đã truy cập 12 tháng (FR-06-057); DS duyệt nội dung rồi `COMPLETED`.
 4. `RECTIFICATION`: hệ thống xác định nguồn của thuộc tính bị khiếu nại qua lineage; thuộc tính thẩm quyền quốc gia thì hướng dẫn chủ thể tới cơ quan đăng ký; thuộc tính khác thì tạo yêu cầu sửa tại nguồn (EVT-06-15), có thể sửa tay tạm (FR-06-036, loại `DSR_CORRECTION`); trạng thái `FORWARDED_TO_SOURCE` tới khi nguồn xác nhận.
 5. `RESTRICTION`: hệ thống chuyển bản ghi `LOCKED` với cờ `restricted`, PH-09 cập nhật chính sách để chỉ mục đích bắt buộc theo luật còn truy cập được.
+5a. Gỡ hạn chế (hết thời hạn, chủ thể rút yêu cầu hoặc cơ quan có thẩm quyền cho phép): DS, SO, TA (`PERM-06-dsr`) gọi API-06-125 `POST /subject-requests/{requestId}:lift-restriction` kèm `reason` (≥ 20 ký tự, nêu căn cứ); hệ thống bỏ cờ `restricted`, đưa bản ghi từ `LOCKED` về `ACTIVE` (nếu còn thao tác chờ duyệt thì giữ `LOCKED` vì lý do khác), PH-09 khôi phục chính sách, phát EVT-06-02, kiểm toán người gỡ, căn cứ và thời điểm; yêu cầu `RESTRICTION` giữ nguyên `COMPLETED`.
 6. Hệ thống báo kết quả cho PH-09 để trả lời chủ thể; quá hạn 2 ngày trước SLA thì cảnh báo SO.
 
 **Luồng thay thế.** Yêu cầu xóa: PH-06 không xóa dữ liệu chủ có nguồn thẩm quyền; trả lời căn cứ pháp lý giữ dữ liệu, chuyển PH-09 xử lý theo luật.
@@ -3817,6 +3839,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 **Luồng ngoại lệ.**
 
 - Chưa xác minh danh tính: ERR-06-046 (422); "Yêu cầu chưa có thông tin xác minh danh tính của chủ thể dữ liệu."
+- Gỡ hạn chế khi bản ghi không có cờ `restricted`: ERR-06-006 (409); "Bản ghi {id} không ở trạng thái hạn chế xử lý."
 - Không tìm thấy bản ghi: trả lời "không xử lý dữ liệu chủ về chủ thể", `COMPLETED`.
 
 **Đầu ra.** `201`; yêu cầu kèm `status`, `dueAt`; báo cáo tải được (mã hóa).
@@ -3831,7 +3854,7 @@ Dọn dữ liệu theo lưu giữ là một loại job của FR-06-056, nên đ�
 
 **Quy tắc nghiệp vụ.** BR-06-014; BR-06-030.
 
-**Màn hình, API.** UI-06-16; API-06-090, API-06-091, API-06-092.
+**Màn hình, API.** UI-06-16; API-06-090, API-06-091, API-06-092, API-06-119, API-06-120, API-06-125.
 :::
 
 ```{.mermaid caption="Trình tự xử lý yêu cầu sửa dữ liệu của chủ thể"}
@@ -4011,22 +4034,24 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-06. BR-06-001…015 k�
 | NFR-06-004 | Thông lượng nạp ứng viên | ≥ 1.000 bản ghi mỗi giây duy trì 10 phút, không dồn hàng chờ quá 5 phút | Kiểm thử tải |
 | NFR-06-005 | Dung lượng | ≥ 10 triệu bản ghi vàng mỗi tenant vẫn đạt NFR-06-001 | Kiểm thử dung lượng |
 | NFR-06-006 | Hiệu quả gom nhóm | Trung bình ≤ 50 ứng viên mỗi lượt xác suất; độ phủ cặp đúng ≥ 99,5% | Thống kê FR-06-019 |
-| NFR-06-007 | Tỷ lệ tự động | ≥ 85% ứng viên xử lý không qua người; ≤ 15% vào hàng đợi | `mdm_auto_rate` 30 ngày |
+| NFR-06-007 | Tỷ lệ tự động | ≥ 85% ứng viên xử lý không qua người; ≤ 15% vào hàng đợi | `datahub_mdm_auto_rate` 30 ngày |
 | NFR-06-008 | Hợp nhất sai | ≤ 0,1% (precision ≥ 99,9%) | Tập nhãn ≥ 10.000 cặp |
 | NFR-06-009 | Bỏ sót | ≤ 2% (recall ≥ 98%) | Cùng tập nhãn |
 | NFR-06-010 | Độ chính xác đối sánh xác định | 100% trên khóa hợp lệ | Ca kiểm thử khóa |
 | NFR-06-011 | Sẵn sàng dịch vụ tra cứu, resolve | ≥ 99,9% mỗi tháng | PH-13 |
 | NFR-06-012 | Khôi phục | RPO ≤ 15 phút, RTO ≤ 30 phút (theo ADR-034) | Diễn tập DR |
 | NFR-06-013 | Job đối sánh lô | 1,2 triệu bản ghi `CITIZEN` ≤ 2 giờ trên Job 8 vCPU, 32 GB (giả định theo số đo công bố của Splink trên DuckDB) | Đo khi nghiệm thu |
-| NFR-06-014 | Độ trễ sự kiện | Commit tới sự kiện trên Kafka p95 ≤ 5 giây | `mdm_event_lag_seconds` |
+| NFR-06-014 | Độ trễ sự kiện | Commit tới sự kiện trên Kafka p95 ≤ 5 giây | `datahub_mdm_event_lag_seconds` |
 | NFR-06-015 | Ghi vết truy cập | 100% lượt trả dữ liệu có bản ghi `access_log`; số bản ghi khớp số lượt ở cổng | Đối chiếu APISIX và `access_log` |
 | NFR-06-016 | Mã hóa | 100% thuộc tính `SENSITIVE` mã hóa envelope khi lưu, kể cả ở ứng viên và lịch sử | Quét CSDL tìm giá trị đánh dấu |
 | NFR-06-017 | Năng suất hàng đợi | Trung vị thời gian quyết định một mục ≤ 60 giây ở UI-06-05; giả định ≤ 200 mục mỗi ngày | Đo thao tác |
-| NFR-06-018 | Quan sát | Phát đủ chỉ số ở bảng FR-06-055 và `mdm_event_lag_seconds`, `mdm_match_timeout_total`, `mdm_block_truncated_total` | Kiểm Prometheus |
+| NFR-06-018 | Quan sát | Phát đủ chỉ số ở bảng FR-06-055 và `datahub_mdm_event_lag_seconds`, `datahub_mdm_match_timeout_total`, `datahub_mdm_block_truncated_total` | Kiểm Prometheus |
 | NFR-06-019 | Cảnh báo | Hàng đợi > 500; tự động < 80% trong 24 giờ; lệch quốc gia > 5%; mục chờ > 7 ngày; job thất bại; ghi vết lỗi; quét bất thường truy cập | Quy tắc cảnh báo PH-13 |
 | NFR-06-020 | Đồng bộ chiều xuống | Thay đổi PH-14 nhận được áp vào bản ghi vàng p95 ≤ 15 phút | Đối chiếu thời điểm |
 
 : Yêu cầu phi chức năng của PH-06
+
+Ghi chú đo. (1) NFR-06-008 đo precision chỉ trên các cặp có kết luận `MATCH` của đường tự hợp nhất (điểm ≥ ngưỡng tự hợp nhất hoặc khóa xác định); cặp vùng `POSSIBLE_MATCH` đi qua người nên không tính vào precision mà tính vào `reviewRate`, và recall tính cả cặp nhãn `MATCH` mà kết luận `NO_MATCH` hoặc `POSSIBLE_MATCH` chưa được người duyệt (FR-06-026). (2) NFR-06-017 đo từ lần mở mục đầu tiên (API-06-046) tới khi gửi quyết định thành công (API-06-048), trung vị theo từng DS trên ít nhất 200 mục, không tính mục chờ duyệt bốn mắt và thời gian giữa hai mục. (3) Giá trị lưu giữ mặc định của từng loại đối tượng theo bảng ở FR-06-059.
 
 ### 8.2. Tham số theo tenant
 
@@ -4036,7 +4061,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-06. BR-06-001…015 k�
 | `06.queue.max-open` | 500 | 100…10.000 | Ngưỡng cảnh báo quá tải |
 | `06.queue.escalate-after-days` | 14 | 3…60 | Giao DA phân công lại |
 | `06.queue.hold-minutes` | 30 | 10…120 | Thời gian giữ mục đã nhận |
-| `06.match.auto-disable-on-fail` | `true` | `true`, `false` | Tắt tự hợp nhất khi đánh giá tháng không đạt |
+| `06.match.auto-disable-on-fail` | `true` | `true`, `false` | Tắt tự hợp nhất khi đánh giá tháng không đạt (FR-06-026 bước 5) |
 | `06.batch.safety-ratio` | 0,05 | 0,01…0,20 | Ngưỡng an toàn job lô (BR-06-022) |
 | `06.undo.window-days` | 90 | 30…365 | Hạn hoàn tác không cần duyệt |
 | `06.export.max-rows` | 100.000 | 1.000…1.000.000 (trần PA) | Giới hạn một lần xuất |
@@ -4045,6 +4070,15 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-06. BR-06-001…015 k�
 | `06.sync.pause-ratio` | 0,05 | 0,01…0,20 | Ngưỡng tạm dừng đồng bộ (BR-06-011) |
 | `06.sync.up-attributes` | rỗng | Thuộc tính không thẩm quyền quốc gia | Thuộc tính gửi lên CSDL quốc gia |
 | `06.dsr.sla-days` | 10 ngày làm việc (giả định) | 1…30 | Hạn trả lời yêu cầu chủ thể (Q06-01) |
+| `06.mask.reveal-seconds` | 60 | 15…300 | Thời gian giữ giá trị `SENSITIVE` đã bỏ che trên màn |
+| `06.ingest.max-file-mb` | 50 | 5…200 (trần PA) | Dung lượng tối đa tệp nhập (FR-06-013) |
+| `06.ingest.max-rows` | 200.000 | 10.000…1.000.000 | Số dòng tối đa một tệp nhập |
+| `06.batch.max-hours` | 4 | 1…12 | Thời gian tối đa job lô (`activeDeadlineSeconds`) |
+| `06.match.timeout-ms` | 800 | 200…3.000 | Hạn đối sánh xác suất trực tuyến (FR-06-021) |
+| `06.sync.reconcile-batch-size` | 1.000 | 100…10.000 | Số khóa mỗi lô đối chiếu qua PH-14 |
+| `06.xref.batch-max` | 500 | 50…1.000 | Số khóa tối đa một lần tra lô (FR-06-045) |
+| `06.queue.reopen-hours` | 24 | 1…72 | Thời hạn sửa quyết định hàng đợi bằng `:reopen` |
+| `06.queue.reason-templates` | bốn câu ở FR-06-029 | ≤ 10 câu, mỗi câu 20…500 ký tự | Mẫu câu lý do ở UI-06-05 |
 
 : Tham số theo tenant của PH-06
 
@@ -4052,7 +4086,7 @@ Bảng dưới gom mọi quy tắc nghiệp vụ của PH-06. BR-06-001…015 k�
 
 ### 9.1. Mã lỗi
 
-Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; định nghĩa đầy đủ ở D03-04-PH06. Dải 001–099 cho control, 101–199 cho job đối sánh, đồng bộ và xử lý nền (không trả cho người gọi API, hiển thị cho vận hành).
+Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; định nghĩa đầy đủ ở D03-04-PH06. Lỗi `401` (chưa xác thực), `403` do thiếu quyền chức năng và `428` (thiếu `If-Match`) dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428 của khung lỗi chung, không cấp mã ERR-06 riêng; `403` do phạm vi dữ liệu hoặc nghiệp vụ giữ mã ERR-06 (005, 014, 028, 034, 037, 038). Dải 001–099 cho control, 101–199 cho job đối sánh, đồng bộ và xử lý nền (không trả cho người gọi API, hiển thị cho vận hành).
 
 | Mã | HTTP | Ý nghĩa |
 |---|---|---|
@@ -4060,10 +4094,10 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-06-002 | 409 | Mã đã tồn tại (domain, thuộc tính, nguồn, khóa, tập nhãn) |
 | ERR-06-003 | 400 | Dữ liệu không hợp lệ theo lược đồ hoặc tham chiếu không tồn tại |
 | ERR-06-004 | 409 | Xung đột phiên bản (`If-Match` không khớp `ETag`) |
-| ERR-06-005 | 403 | Vi phạm bốn mắt: người đề nghị tự duyệt |
+| ERR-06-005 | 403 | Vi phạm bốn mắt: người đề nghị, gửi duyệt hoặc quyết định bước trước tự duyệt, chấp thuận |
 | ERR-06-006 | 409 | Trạng thái hiện tại không cho thao tác |
 | ERR-06-007 | 422 | Thiếu lý do hoặc lý do < 20 ký tự |
-| ERR-06-008 | 422 | Thay đổi phá vỡ trên mô hình cần phiên bản mới (dành cho kiểm tra phía máy chủ khi sửa trực tiếp phiên bản) |
+| ERR-06-008 | 422 | Thay đổi phá vỡ trên mô hình cần phiên bản mới (trả khi `PUT` sửa trực tiếp phiên bản nháp, API-06-006) |
 | ERR-06-009 | 422 | Mô hình thiếu khóa định danh hoặc tổ hợp đối sánh; thuộc tính khóa sai kiểu |
 | ERR-06-010 | 422 | Thuộc tính DLCN chưa có phân loại PH-09 xác nhận |
 | ERR-06-011 | 422 | Ngừng domain còn bản ghi vàng hoạt động |
@@ -4106,6 +4140,9 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-06-048 | 429 | Vượt hạn mức gọi |
 | ERR-06-049 | 422 | Thời hạn lưu giữ dưới mức tối thiểu |
 | ERR-06-050 | 404 | Không có bản ghi vàng khớp khóa, liên kết hoặc resolve `NO_MATCH` |
+| ERR-06-051 | 422 | Cặp nhãn không hợp lệ (nhãn sai, hai tham chiếu trùng hoặc không tồn tại, cặp đã có) |
+| ERR-06-052 | 422 | Khóa định danh `CMND_9` khai xác định (`deterministic = true`) |
+| ERR-06-053 | 409 | Quyết định hàng đợi quá hạn mở lại hoặc đã có thao tác phụ thuộc |
 | ERR-06-101 | — | Job Splink lỗi đọc staging |
 | ERR-06-102 | — | Job quá thời gian tối đa |
 | ERR-06-103 | — | Job hết bộ nhớ, tài nguyên |
@@ -4125,28 +4162,49 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 
 ### 9.2. Thông báo hiển thị cho người dùng
 
-Các câu dưới là nguồn cho D03-06-PH06; lỗi không có trong bảng hiển thị theo FR-00-080 (câu từ `detail`, mã lỗi, nút "Sao chép mã truy vết").
+Các câu dưới là nguồn cho D03-06-PH06; mọi mã ERR-06 có người dùng nhìn thấy đều có câu ở bảng này; lỗi không có trong bảng (như ERR-06-003, 006, 015) hiển thị theo ngữ cảnh ở D03-06-PH06 §5.3 hoặc theo FR-00-080 (câu từ `detail`, mã lỗi, nút "Sao chép mã truy vết").
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
-| ERR-06-005 | "Anh/chị là người đề nghị nên không được tự duyệt." | Hộp cảnh báo trên nút Duyệt |
+| ERR-06-001 | "Không tìm thấy bản ghi vàng {id}." (410: "Bản ghi vàng {id} đã ngừng: {lý do}.") | `ST-08` UI-06-03 |
+| ERR-06-004 | "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới." | Hộp thoại xung đột (`ST-13`) |
+| ERR-06-005 | "Anh/chị là người {vai trò} nên không được tự {hành động}." Vai trò: gửi duyệt, đề nghị, đề nghị hợp nhất, xác nhận bước trước; hành động: duyệt, chấp thuận. | Hộp cảnh báo trên nút Duyệt |
 | ERR-06-007 | "Nhập lý do (tối thiểu 20 ký tự)." | Dưới ô lý do |
+| ERR-06-009 | "Mô hình cần ít nhất một khóa định danh và một tổ hợp đối sánh." | Băng đầu UI-06-07 |
 | ERR-06-010 | "Thuộc tính {tên} là dữ liệu cá nhân nhưng chưa có phân loại được PH-09 xác nhận." | Dòng thuộc tính, UI-06-07 |
+| ERR-06-011 | "Domain còn {n} bản ghi vàng hoạt động nên chưa ngừng được." | Hộp thoại ngừng domain |
+| ERR-06-012 | "HTTT chưa hoạt động ở PH-01 nên chưa đăng ký làm nguồn được." | Dưới ô chọn HTTT, UI-06-08 |
 | ERR-06-013 | "Nhập số, ngày văn bản phê duyệt thứ tự ưu tiên nguồn." | Dưới ô căn cứ, UI-06-08 |
 | ERR-06-014 | "Hệ thống {mã} chưa được đăng ký làm nguồn cho domain {domain}." | Phản hồi API |
 | ERR-06-017 | "Bản ghi không đúng mô hình {domain} phiên bản {n}: {danh sách trường}." | Báo cáo lỗi, UI-06-11 |
+| ERR-06-018 | "Tệp vượt {n} dòng hoặc {m} MB." | Vùng thả tệp, UI-06-11 |
+| ERR-06-019 | "Tệp có công thức hoặc macro nên không nhập được." | Báo cáo lỗi nhập tệp, UI-06-11 |
 | ERR-06-023 | "Ngưỡng tự hợp nhất phải từ 0,90 trở lên và cao hơn ngưỡng xem xét ít nhất 0,10." | Dưới thanh trượt, UI-06-09 |
 | ERR-06-024 | "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." | Hộp cảnh báo đầu UI-06-09 |
+| ERR-06-025 | "Đã có job {loại} đang chạy cho {domain}." | Thông báo nổi, UI-06-12 |
+| ERR-06-026 | "Tập nhãn còn {n} cặp, cần ít nhất {m} để đánh giá." | Dưới nút Đánh giá, UI-06-13 |
 | ERR-06-027 | "Mục này vừa được {người} nhận. Hệ thống chuyển anh/chị sang mục kế tiếp." | Thông báo nổi, UI-06-05 |
 | ERR-06-029 | "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn." | Chú thích cạnh nút bị vô hiệu |
 | ERR-06-030 | "Dữ liệu của cặp đã thay đổi. Xem lại trước khi quyết định." | Băng cảnh báo, UI-06-05 |
 | ERR-06-031 | "Bản ghi vàng {id} đang có thao tác chờ duyệt." | Băng cảnh báo, UI-06-03 |
 | ERR-06-033 | "Có {n} thao tác sau phụ thuộc vào thao tác này. Xem danh sách và xác nhận để hoàn tác cả chuỗi." | Hộp thoại hoàn tác |
+| ERR-06-034 | "Đã quá {n} ngày, thao tác hoàn tác cần người duyệt dữ liệu chấp thuận." | Hộp thoại hoàn tác |
 | ERR-06-035 | "Thuộc tính {tên} chỉ được sửa tại CSDL quốc gia. Hướng dẫn công dân liên hệ cơ quan đăng ký." | Hộp thoại sửa |
+| ERR-06-036 | "Bản ghi còn {n} liên kết hiệu lực nên chưa ngừng được." | Hộp thoại ngừng bản ghi, UI-06-03 |
+| ERR-06-037 | "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này." | Băng đầu trang |
 | ERR-06-038 | "Anh/chị đã xem quá {n} bản ghi trong {phút} phút. Truy cập hàng loạt cần phê duyệt." | Trang kết quả tìm kiếm |
 | ERR-06-039 | "Chưa ghi được nhật ký truy cập nên không hiển thị dữ liệu. Thử lại sau ít phút." | Thay nội dung chi tiết |
 | ERR-06-040 | "Nhập thêm tiêu chí: họ tên cần đi kèm ngày sinh, năm sinh hoặc xã." | Dưới ô tìm, UI-06-02 |
+| ERR-06-041 | "Số bản ghi {n} vượt giới hạn {m} một lần xuất. Thu hẹp bộ lọc." | Dưới ô bộ lọc, UI-06-15 |
+| ERR-06-042 | "Tệp xuất đã hết hạn tải. Gửi đề nghị mới." | Dòng đề nghị, UI-06-15 |
+| ERR-06-043 | "Hệ thống {mã} chưa có mục đích khai thác được chấp thuận nên chưa đăng ký nhận cập nhật được." | Dưới ô mục đích, UI-06-15 |
 | ERR-06-044 | "Đồng bộ quốc gia đang tạm dừng do lệch vượt ngưỡng." | Băng đỏ, UI-06-14 |
+| ERR-06-046 | "Chưa xác minh danh tính chủ thể nên chưa tiếp nhận được yêu cầu." | Dưới ô xác minh, UI-06-16 |
+| ERR-06-047 | "Giá trị ngoài miền cho phép {min}…{max}." | Dưới ô tham số, UI-06-17 |
+| ERR-06-049 | "Thời hạn lưu giữ thấp hơn mức tối thiểu {n} ngày." | Dưới ô lưu giữ, UI-06-17 |
+| ERR-06-051 | "Cặp nhãn thứ {n} không hợp lệ: {lý do}." | Báo cáo nhập cặp, UI-06-13 |
+| ERR-06-052 | "Số CMND 9 chữ số chỉ dùng để so sánh, không dùng làm khóa xác định." | Dòng khóa, UI-06-07 |
+| ERR-06-053 | "Quyết định đã quá {n} giờ hoặc đã có thao tác phụ thuộc nên không mở lại được. Dùng hoàn tác." | Hộp thoại sửa quyết định, UI-06-05 |
 | ERR-06-107 | "Đồng bộ tự động đã tạm dừng: tỷ lệ lệch {x}% vượt 5%. Điều tra trước khi tiếp tục." | Băng đỏ, UI-06-14, UI-06-01 |
 | ERR-06-112 | "Phát hiện {n} bản ghi vàng cùng số định danh. Cần xử lý ngay." | Thẻ cảnh báo, UI-06-01 |
 
@@ -4178,7 +4236,7 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 
 ### 9.4. Danh mục API
 
-Định nghĩa đầy đủ ở D03-04-PH06 (sẽ viết). Tiền tố `/api/mdm/v1`; API nội bộ có tiền tố `/internal` chỉ mở trong mạng nội bộ.
+Định nghĩa đầy đủ ở D03-04-PH06 và `openapi-mdm.yaml`. Mã API-06-001…096 giữ nguyên; dòng gộp nhiều hành động ghi hành động đầu, các hành động còn lại có mã riêng API-06-097…120 (khớp D03-04-PH06 mục 3.1). Mã API-06-121…125 là API mới của bản 0.2, chưa có trong OpenAPI. Tiền tố `/api/mdm/v1`; API nội bộ có tiền tố `/internal` chỉ mở trong mạng nội bộ.
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4192,16 +4250,16 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-008 | `POST /domains/{domainCode}/model-versions/{version}:submit` | 006 |
 | API-06-009 | `POST /domains/{domainCode}/model-versions/{version}:approve` | 006 |
 | API-06-010 | `POST /domains/{domainCode}/model-versions/{version}:reject` | 006 |
-| API-06-011 | `POST /domains/{domainCode}:{suspend,resume,retire}` | 006 |
+| API-06-011 | `POST /domains/{domainCode}:suspend` | 006 |
 | API-06-012 | `POST /domains:install-baseline` | 007 |
 | API-06-013 | `POST /identifier-rules:test` | 003 |
 | API-06-014 | `GET /sources` | 008 |
 | API-06-015 | `POST /sources` | 008 |
 | API-06-016 | `PATCH /sources/{sourceCode}` | 008, 012 |
-| API-06-017 | `POST /sources/{sourceCode}:{suspend,resume,retire}` | 008 |
+| API-06-017 | `POST /sources/{sourceCode}:suspend` | 008 |
 | API-06-018 | `GET /domains/{domainCode}/source-priorities` | 009 |
 | API-06-019 | `POST /domains/{domainCode}/source-priorities:propose` | 009 |
-| API-06-020 | `POST /source-priority-proposals/{proposalId}:{approve,reject}` | 009 |
+| API-06-020 | `POST /source-priority-proposals/{proposalId}:approve` | 009 |
 | API-06-021 | `POST /domains/{domainCode}/candidates` | 010, 016 |
 | API-06-022 | `POST /internal/domains/{domainCode}/candidates` | 011, 016, 053 |
 | API-06-023 | `POST /domains/{domainCode}/candidate-files` | 013 |
@@ -4209,14 +4267,14 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-025 | `GET /candidate-files/{fileId}` | 013 |
 | API-06-026 | `GET /domains/{domainCode}/candidates` | 017 |
 | API-06-027 | `GET /domains/{domainCode}/candidates/{candidateId}` | 014, 017 |
-| API-06-028 | `POST /domains/{domainCode}/candidates:{reprocess,discard}` | 017 |
+| API-06-028 | `POST /domains/{domainCode}/candidates:reprocess` | 017 |
 | API-06-029 | `POST /normalization:preview` | 014, 015 |
 | API-06-030 | `GET /domains/{domainCode}/rule-sets` | 018 |
 | API-06-031 | `POST /domains/{domainCode}/rule-sets` | 018 |
 | API-06-032 | `PUT /domains/{domainCode}/rule-sets/{version}` | 018, 019, 023 |
 | API-06-033 | `POST /domains/{domainCode}/rule-sets/{version}:dry-run` | 024 |
 | API-06-034 | `POST /domains/{domainCode}/rule-sets/{version}:evaluate` | 026 |
-| API-06-035 | `POST /domains/{domainCode}/rule-sets/{version}:{submit,approve,reject}` | 018 |
+| API-06-035 | `POST /domains/{domainCode}/rule-sets/{version}:submit` | 018 |
 | API-06-036 | `GET /domains/{domainCode}/rule-sets/{version}/blocking-stats` | 019 |
 | API-06-037 | `GET /domains/{domainCode}/label-sets` | 025 |
 | API-06-038 | `POST /domains/{domainCode}/label-sets` | 025 |
@@ -4225,16 +4283,16 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-041 | `GET /match-jobs` | 022, 056 |
 | API-06-042 | `POST /domains/{domainCode}/match-jobs` | 022 |
 | API-06-043 | `GET /match-jobs/{jobId}` | 022 |
-| API-06-044 | `POST /match-jobs/{jobId}:{cancel,rerun,confirm}` | 022, 056 |
+| API-06-044 | `POST /match-jobs/{jobId}:cancel` | 022, 056 |
 | API-06-045 | `GET /stewardship/items` | 028 |
 | API-06-046 | `GET /stewardship/items/{itemId}` | 029 |
-| API-06-047 | `POST /stewardship/items/{itemId}:{claim,release,assign}` | 028 |
+| API-06-047 | `POST /stewardship/items/{itemId}:claim` | 028 |
 | API-06-048 | `POST /stewardship/items/{itemId}:decide` | 030 |
-| API-06-049 | `POST /stewardship/items/{itemId}:{approve,reject}` | 031 |
+| API-06-049 | `POST /stewardship/items/{itemId}:approve` | 031 |
 | API-06-050 | `GET /stewardship/stats` | 032 |
 | API-06-051 | `GET /domains/{domainCode}/survivorship-rules` | 033 |
 | API-06-052 | `PUT /domains/{domainCode}/survivorship-rules` | 033 |
-| API-06-053 | `POST /domains/{domainCode}/survivorship-rules:{submit,approve,reject}` | 033 |
+| API-06-053 | `POST /domains/{domainCode}/survivorship-rules:submit` | 033 |
 | API-06-054 | `POST /domains/{domainCode}/survivorship-rules:impact` | 042 |
 | API-06-055 | `POST /domains/{domainCode}/survivorship-rules:reapply` | 042 |
 | API-06-056 | `GET /domains/{domainCode}/golden-records/{goldenId}` | 035, 046 |
@@ -4242,8 +4300,8 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-058 | `POST /domains/{domainCode}/golden-records:merge` | 037 |
 | API-06-059 | `POST /domains/{domainCode}/golden-records/{goldenId}:split` | 038 |
 | API-06-060 | `POST /operations/{operationId}:undo` | 039 |
-| API-06-061 | `POST /operations/{operationId}:{approve,reject}` | 031, 037, 038, 039 |
-| API-06-062 | `POST /domains/{domainCode}/golden-records/{goldenId}:{retire,restore}` | 040 |
+| API-06-061 | `POST /operations/{operationId}:approve` | 031, 037, 038, 039 |
+| API-06-062 | `POST /domains/{domainCode}/golden-records/{goldenId}:retire` | 040 |
 | API-06-063 | `GET /domains/{domainCode}/golden-records/{goldenId}/history` | 041 |
 | API-06-064 | `GET /domains/{domainCode}/golden-records/{goldenId}/history/{version}` | 041 |
 | API-06-065 | `GET /domains/{domainCode}/golden-records/{goldenId}/lineage` | 043 |
@@ -4256,14 +4314,14 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-072 | `POST /domains/{domainCode}/golden-records:search` | 048 |
 | API-06-073 | `POST /domains/{domainCode}/exports` | 049 |
 | API-06-074 | `GET /exports/{exportId}` | 049 |
-| API-06-075 | `POST /exports/{exportId}:{approve,reject}` | 049 |
+| API-06-075 | `POST /exports/{exportId}:approve` | 049 |
 | API-06-076 | `GET /exports/{exportId}/file` | 049 |
 | API-06-077 | `GET /update-subscriptions` | 051 |
 | API-06-078 | `POST /update-subscriptions` | 051 |
-| API-06-079 | `POST /update-subscriptions/{subscriptionId}:{approve,suspend,resume,revoke}` | 051 |
+| API-06-079 | `POST /update-subscriptions/{subscriptionId}:approve` | 051 |
 | API-06-080 | `GET /national-sync/status` | 053 |
 | API-06-081 | `POST /national-sync/runs` | 053 |
-| API-06-082 | `POST /national-sync:{pause,resume}` | 053, 054 |
+| API-06-082 | `POST /national-sync:pause` | 053, 054 |
 | API-06-083 | `GET /national-sync/discrepancies` | 054 |
 | API-06-084 | `POST /national-sync/discrepancies:resolve` | 054 |
 | API-06-085 | `GET /dashboard/metrics` | 055 |
@@ -4273,13 +4331,44 @@ Topic theo quy ước `{tenant}.mdm.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | API-06-089 | `GET /access-logs` | 057 |
 | API-06-090 | `POST /subject-requests` | 058 |
 | API-06-091 | `GET /subject-requests/{requestId}` | 058 |
-| API-06-092 | `POST /subject-requests/{requestId}:{complete,forward,reject}` | 058 |
+| API-06-092 | `POST /subject-requests/{requestId}:complete` | 058 |
 | API-06-093 | `GET /retention-policies` | 059 |
 | API-06-094 | `PUT /retention-policies/{objectType}` | 059 |
 | API-06-095 | `GET /settings` | 060 |
 | API-06-096 | `PUT /settings` | 060 |
+| API-06-097 | `POST /domains/{domainCode}:resume` | 006 |
+| API-06-098 | `POST /domains/{domainCode}:retire` | 006 |
+| API-06-099 | `POST /sources/{sourceCode}:resume` | 008 |
+| API-06-100 | `POST /sources/{sourceCode}:retire` | 008 |
+| API-06-101 | `POST /source-priority-proposals/{proposalId}:reject` | 009 |
+| API-06-102 | `POST /domains/{domainCode}/candidates:discard` | 017 |
+| API-06-103 | `POST /domains/{domainCode}/rule-sets/{version}:approve` | 018 |
+| API-06-104 | `POST /domains/{domainCode}/rule-sets/{version}:reject` | 018 |
+| API-06-105 | `POST /match-jobs/{jobId}:rerun` | 022, 056 |
+| API-06-106 | `POST /match-jobs/{jobId}:confirm` | 022, 056 |
+| API-06-107 | `POST /stewardship/items/{itemId}:release` | 028 |
+| API-06-108 | `POST /stewardship/items/{itemId}:assign` | 028 |
+| API-06-109 | `POST /stewardship/items/{itemId}:reject` | 031 |
+| API-06-110 | `POST /domains/{domainCode}/survivorship-rules:approve` | 033 |
+| API-06-111 | `POST /domains/{domainCode}/survivorship-rules:reject` | 033 |
+| API-06-112 | `POST /operations/{operationId}:reject` | 031, 037, 038, 039 |
+| API-06-113 | `POST /domains/{domainCode}/golden-records/{goldenId}:restore` | 040 |
+| API-06-114 | `POST /exports/{exportId}:reject` | 049 |
+| API-06-115 | `POST /update-subscriptions/{subscriptionId}:suspend` | 051 |
+| API-06-116 | `POST /update-subscriptions/{subscriptionId}:resume` | 051 |
+| API-06-117 | `POST /update-subscriptions/{subscriptionId}:revoke` | 051 |
+| API-06-118 | `POST /national-sync:resume` | 053, 054 |
+| API-06-119 | `POST /subject-requests/{requestId}:forward` | 058 |
+| API-06-120 | `POST /subject-requests/{requestId}:reject` | 058 |
+| API-06-121 | `POST /stewardship/items/{itemId}:reopen` | 030 |
+| API-06-122 | `GET /domains/{domainCode}/golden-records/{goldenId}/operations` | 035, 039 |
+| API-06-123 | `POST /label-sets/{labelSetCode}:lock` | 025 |
+| API-06-124 | `POST /stewardship/items:claim-next` | 028 |
+| API-06-125 | `POST /subject-requests/{requestId}:lift-restriction` | 058 |
 
 : Danh mục API dự kiến của PH-06
+
+Tiêu đề bắt buộc: `X-Purpose` ở API-06-068…072 (thiếu thì ERR-06-037); `X-Unmask-Reason` (≥ 20 ký tự) khi xem bản ghi vàng có `unmask` (API-06-056, API-06-046); `Idempotency-Key` ở API nạp (API-06-021, 022); `If-Match` ở thao tác ghi (thiếu thì `428`, ERR-00-428). API-06-106 (`:confirm`) nhận `decision` (`ApprovalDecision`): `REJECT` chuyển job `AWAITING_CONFIRMATION` sang `CANCELLED`. API-06-118 (`:resume`) nhận `cause`. API-06-047 chỉ nhận mục theo `itemId`; "Nhận việc tiếp theo" dùng API-06-124. API-06-045 hỗ trợ lọc `partition`.
 
 Ghi chú: API-06-068 đặt `sourceKey` trên đường dẫn vì khóa nguồn không phải DLCN; khóa định danh cá nhân luôn gửi trong thân (`POST`, API-06-070) để không lọt vào log của cổng. FR-06-012, 050, 052 không có API riêng.
 
@@ -4301,7 +4390,7 @@ PH-06 có 18 màn hình dưới gốc `/du-lieu/du-lieu-chu` (menu mục 21 củ
 | UI-06-08 | Nguồn và ưu tiên nguồn (`/du-lieu/du-lieu-chu/cau-hinh/nguon`, PTN-01) | TA, DS, DA | Danh sách nguồn, kéo thả ưu tiên, căn cứ, xem trước tác động | 008, 009, 012 |
 | UI-06-09 | Quy tắc đối sánh (`/du-lieu/du-lieu-chu/cau-hinh/quy-tac`, PTN-03) | TA, DS, DA | Quy tắc, gom nhóm, ngưỡng có biểu đồ, chạy thử, đánh giá | 018, 019, 023, 024, 026 |
 | UI-06-10 | Quy tắc sống sót (`/du-lieu/du-lieu-chu/cau-hinh/song-sot`, PTN-03) | TA, DS, DA | Chiến lược theo thuộc tính, xem trước, áp lại | 033, 042 |
-| UI-06-11 | Ứng viên và nạp tệp (`/du-lieu/du-lieu-chu/{ma-domain}/ung-vien`, `/nhap`, PTN-01, PTN-09) | DS, TO | Lọc ứng viên, xem chuẩn hóa, xử lý lại, nhập tệp có xem trước | 013…015, 017 |
+| UI-06-11 | Ứng viên và nạp tệp, hai route: danh sách ứng viên (`/du-lieu/du-lieu-chu/{ma-domain}/ung-vien`, PTN-01, `PERM-06-read`) và nhập tệp (`…/ung-vien/nhap`, PTN-09, `PERM-06-ingest`) | DS, TO | Lọc ứng viên, xem chuẩn hóa, xử lý lại; nhập tệp có xem trước | 013…015, 017 |
 | UI-06-12 | Job và lịch (`/du-lieu/du-lieu-chu/job`, PTN-11) | TA, TO | Danh sách job, tiến độ, chạy, chạy lại, hủy, lịch | 022, 056, 059 |
 | UI-06-13 | Độ chính xác và tập nhãn (`/du-lieu/du-lieu-chu/do-chinh-xac`, PTN-06) | DS, DA | Báo cáo precision, recall, cặp FP, FN, gán nhãn | 025, 026 |
 | UI-06-14 | Đồng bộ quốc gia (`/du-lieu/du-lieu-chu/dong-bo-quoc-gia`, PTN-11) | DS, DA, TA | Trạng thái, tỷ lệ lệch theo thời gian, danh sách lệch, tạm dừng, tiếp tục | 053, 054 |
@@ -4323,6 +4412,20 @@ Màn tổng quan dữ liệu chủ (UI-06-01, ảnh `ui-06-01.png`) là trang đ
 Màn so sánh và quyết định (UI-06-05, ảnh `ui-06-05.png`) là màn quan trọng nhất của phân hệ. Hai cột bản ghi đặt cạnh nhau, mỗi thuộc tính một dòng có điểm riêng và tô màu theo mức so sánh (token `color-diff-*`); thanh điểm tổng nổi bật ở đầu. Cột phải là ngữ cảnh: các bản ghi nguồn của mỗi bên, thời điểm, quyết định tương tự trước đây. Ba nút "Cùng một thực thể", "Khác nhau", "Hoãn" ở chân, ô lý do bắt buộc có mẫu câu chọn nhanh; khi hai số định danh khác nhau, nút "Cùng một thực thể" bị vô hiệu kèm chú thích. Góc phải hiện số mục còn lại; sau quyết định màn tự chuyển sang mục kế tiếp.
 
 ![UI-06-05 So sánh và quyết định](../../03-thiet-ke/uiux/ph06/hifi/ui-06-05.png)
+
+### 10.3. Quy ước tab con và query của route
+
+Mọi màn giữ route gốc ở 10.1; trạng thái xem đặt ở đoạn tab con hoặc query để liên kết được và dùng được nút Quay lại. Chi tiết từng màn ở D03-06-PH06 §4.2.
+
+| Quy ước | Nội dung |
+|---|---|
+| Tab con | Đoạn đường dẫn sau mã màn: UI-06-03 `/nguon-lien-ket`, `/nguon-goc`, `/lich-su`, `/thao-tac`; UI-06-07 `/thuoc-tinh`, `/khoa`, `/phien-ban`; UI-06-09 `/khoa-gom-nhom`, `/nguong`; UI-06-17 `/hang-doi`, `/doi-sanh`, `/truy-cap`, `/dong-bo`, `/chu-the`, `/luu-giu` |
+| Query lọc | Tên không dấu, chữ thường: `domain`, `trang-thai`, `ly-do`, `rui-ro`, `phan-vung` (`cua-toi`, `chua-nhan`, `qua-han`, `cho-duyet`), `nguon`, `tu`, `den`, `sap-xep`, `trang`, `co`; `?tiep=1` ở UI-06-05 nhận mục kế tiếp (API-06-124) |
+| Chọn dòng | `chon={id}` mở bảng bên phải mà không đổi màn |
+| Dữ liệu cá nhân | Không đưa số định danh, họ tên, điện thoại vào đường dẫn hay query; tiêu chí tìm theo cá nhân gửi bằng `POST` (FR-06-048) |
+| Mã domain trên đường dẫn | Chữ thường (`citizen`, `organization`, `address`); domain tỉnh tự tạo dùng `kebab-case` |
+
+: Quy ước tab con và query của route
 
 ## 11. Truy vết
 
@@ -4451,6 +4554,12 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 
 > **Câu hỏi mở Q06-08:** Có cung cấp `goldenId` cho HTTT làm khóa liên kết lâu dài không, vì nó có thể trở thành một định danh mới của công dân; đề xuất cung cấp kèm cam kết không dùng ngoài mục đích, và tách bản ghi phát sự kiện để HTTT cập nhật.
 
+> **Câu hỏi mở Q06-10:** Truy cập hàng loạt vượt ngưỡng (BR-06-013, ERR-06-038) có cần API đề nghị phê duyệt ngay trên màn tìm kiếm (đề nghị B7 của D03-06-PH06) hay xử lý ngoài hệ thống qua DA; đề xuất để sau Đợt 3, hiện chỉ chặn và cảnh báo.
+
+> **Câu hỏi mở Q06-11:** Mẫu câu lý do ở UI-06-05 cấu hình bằng tham số `06.queue.reason-templates` (bản này) hay API riêng `reason-templates` (đề nghị B9 của D03-06-PH06); đề xuất giữ tham số cho tới khi có nhu cầu dùng chung cho màn khác.
+
+> **Câu hỏi mở Q06-12:** Gỡ hạn chế xử lý (FR-06-058 bước 5a) có cần bốn mắt như khi đặt hạn chế không; bản này giả định không, chỉ cần lý do và căn cứ, kiểm toán đầy đủ; cần ý kiến SO và pháp chế.
+
 > **Câu hỏi mở Q06-09:** Thuật toán chữ số kiểm tra MST và cấu trúc 6 số đầu CCCD cần đối chiếu văn bản hiện hành của Bộ Tài chính, Bộ Công an trước khi khóa bộ kiểm tra (FR-06-003).
 
 ## 14. Tiêu chí chấp nhận cấp phân hệ
@@ -4468,9 +4577,60 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 11. Bảng thứ tự ưu tiên nguồn của T01 có văn bản phê duyệt và được nhập qua FR-06-009; đồng bộ hai chiều với CSDL quốc gia qua PH-14 chạy thành công ít nhất một lượt (chiều lên khi Q06-02 có câu trả lời).
 12. Mọi mục ở 11.1 có kết luận; quy trình xử lý khiếu nại và yêu cầu chủ thể (FR-06-058) được tỉnh ban hành.
 
+## 15. Nhật ký hấp thụ đề nghị
+
+Bản 0.2 hấp thụ đề nghị từ sáu tập PH-06 đã viết (UC, MH, SDD, CSDL, API, TC). Mỗi dòng ghi cách xử lý: Đã áp, Không áp kèm lý do, hoặc Chuyển câu hỏi mở.
+
+| Đề nghị | Nguồn | Xử lý |
+|---|---|---|
+| ĐN-UC-01 sửa quyết định trong 24 giờ | UC §8.2; TC ĐN-TC-03 | Đã áp: FR-06-030 (luồng thay thế), API-06-121 `:reopen`, ERR-06-053, 4.4, `06.queue.reopen-hours` |
+| ĐN-UC-02 API liệt kê thao tác theo bản ghi | UC §8.2 | Đã áp: API-06-122; FR-06-035, FR-06-039 |
+| ĐN-UC-03 API khóa tập nhãn | UC §8.2 | Đã áp: API-06-123; FR-06-025 |
+| ĐN-UC-04 `:confirm` có `decision` | UC §8.2 | Đã áp: API-06-106 nhận `ApprovalDecision`; FR-06-022 bước 5; 9.4 |
+| ĐN-UC-05 gỡ hạn chế xử lý | UC §8.2; TC ĐN-TC-06 | Đã áp: FR-06-058 bước 5a, API-06-125, 4.3; hỏi bốn mắt chuyển Q06-12 |
+| ĐN-UC-06 một câu tham số hóa cho ERR-06-005 | UC §8.2 | Đã áp: 9.2 (mẫu có vai trò và hành động); câu ở từng FR là biến thể của mẫu |
+| ĐN-UC-07 tự tắt tự hợp nhất khi đánh giá tháng không đạt | UC §8.2; TC ĐN-TC-04 | Đã áp: FR-06-026 bước 5 mở rộng (hệ quả, kiểm toán, cách bật lại) |
+| C1 câu hiển thị cho 18 mã lỗi | MH Phụ lục C | Đã áp: 9.2, thêm câu cho ERR-06-051…053 |
+| C2 quy ước tab con và query | MH Phụ lục C; §4.2 | Đã áp: 10.3 |
+| C3 mẫu câu lý do, phím tắt, thời gian giữ | MH Phụ lục C | Đã áp: FR-06-029 (thao tác nhanh), FR-06-030 (phím M, K, H sửa từ M, N, H), `06.queue.reason-templates` |
+| C4 "Nhận việc tiếp theo" | MH Phụ lục C; B2 | Đã áp: FR-06-028 bước 2, API-06-124 |
+| C5 tự che lại sau 60 giây | MH Phụ lục C | Đã áp: FR-06-029, FR-06-035, `06.mask.reveal-seconds` |
+| C6 AU thuộc `PERM-06-audit-read` | MH Phụ lục C | Đã áp: ghi chú dưới ma trận 3.2 |
+| C7 UI-06-11 hai route | MH Phụ lục C | Đã áp: 10.1 ghi rõ hai route và quyền; không thêm mã UI-06-11b để giữ 18 màn |
+| C8 giới hạn tệp nhập | MH Phụ lục C | Đã áp: `06.ingest.max-file-mb`, `06.ingest.max-rows`; FR-06-013, ERR-06-018 |
+| C9 và B8 nguyên nhân khi tiếp tục đồng bộ | MH Phụ lục C | Đã áp: FR-06-053, API-06-118 nhận `cause` |
+| B1 `partition` của hàng đợi | MH Phụ lục B | Đã áp: FR-06-028 đầu vào, 9.4; số đếm từng phân vùng nằm ở D03-04 |
+| B3, B4, B5, B6 trường phản hồi chi tiết | MH Phụ lục B | Không áp: thuộc bảng dữ liệu ra của D03-04, đã nêu ở Phụ lục B |
+| B7 API đề nghị truy cập hàng loạt | MH Phụ lục B | Chuyển câu hỏi mở: Q06-10 |
+| B9 API `reason-templates` | MH Phụ lục B | Chuyển câu hỏi mở: Q06-11; tạm dùng `06.queue.reason-templates` |
+| "Quartz cluster" sang ShedLock và `job_schedule` | SDD §13.5 | Đã áp: 2.4, FR-06-056 |
+| "Trọng số chia lại" sang mức `MISSING` trọng số 0 | SDD §13.5 | Đã áp: FR-06-021 bước 3 |
+| Chỉ số `mdm_*` sang `datahub_mdm_*` | SDD §13.5 | Đã áp: NFR-06-007, 014, 018; FR-06-019, 021, 027, 032, 050, 055 |
+| Khóa `06.batch.max-hours`, `06.match.timeout-ms`, `06.sync.reconcile-batch-size` | SDD §13.5 | Đã áp: 8.2, FR-06-021, FR-06-022 |
+| `stg_match_{jobId}` sang `match_staging` | SDD §13.5; CSDL §9.2 | Đã áp: FR-06-022 |
+| `golden_record.block_keys` cộng GIN; vai `ph06_splink` | SDD §13.5 | Đã áp: FR-06-019, FR-06-022 |
+| `ResourceQuota`, SEC-53, Debezium, PH-09 | SDD §13.5 | Không áp vào FR: ngoài phạm vi FRS, ghi ở Phụ lục B |
+| ĐN-TC-01 mã nền thiếu quyền, chưa xác thực; mã nhãn không hợp lệ | TC §10.1 | Đã áp: ERR-00-401, 403, 428 (9.1); ERR-06-051 |
+| ĐN-TC-02 `CMND_9` với `deterministic = true` | TC §10.1 | Đã áp: FR-06-003, ERR-06-052 |
+| ĐN-TC-05 giới hạn tra lô 1.000 | TC §10.1 | Không áp: FRS đã chốt 500; thành tham số `06.xref.batch-max` (mặc định 500), TC sửa theo |
+| ĐN-TC-07 vùng MATCH cho precision, NFR thời gian quyết định | TC §10.1 | Đã áp: ghi chú đo ở 8.1 |
+| Tách 15 dòng gộp thành API-06-097…120 | API §10.2 mục 1; CSDL §9.2 | Đã áp: 9.4 theo D03-04 mục 3.1 |
+| Mã lỗi 401, 403, 428 | API §10.2 mục 2 | Đã áp: dùng mã nền, 9.1 và 3.2 |
+| `X-Purpose`, `X-Unmask-Reason`; ERR-06-008 gắn API-06-006 | API §10.2 mục 3, 7 | Đã áp: 9.4 (tiêu đề bắt buộc), 9.1 |
+| `validator` có `REGEX`; `attribute = *`; gói nền không qua bốn mắt | API §10.2 mục 4 đến 6; CSDL §9.2 | Đã áp: FR-06-003, FR-06-009, FR-06-007, Phụ lục A |
+| 13 bảng bổ sung | CSDL §9.2 mục 1 | Đã áp: EN-06-22…34 ở 4.2 |
+| Enum `IdentifierValidator`, `DeliveryMode`, `RetentionObjectType`, `LogLevel`, `FilePhase` | CSDL §9.2 mục 2, 3, 5; API §10.1 | Đã áp: Phụ lục A |
+| Giá trị lưu giữ mặc định | CSDL §9.2 mục 4 | Đã áp: đã có ở bảng FR-06-059, thêm dẫn chiếu ở 8.1 |
+| `display_name`, `name_norm` phụ thuộc phân loại họ tên | CSDL §9.2 mục 6 | Chuyển câu hỏi mở: Q06-53 của tập CSDL; ghi Phụ lục B (PH-09) |
+| Trường phản hồi chỉ có ở API | API §10.1 | Không áp: trường kỹ thuật, nguồn chuẩn là OpenAPI; D03-04 giữ |
+
+: Nhật ký hấp thụ đề nghị của bản 0.2
+
+Mã mới của bản 0.2: API-06-121…125; ERR-06-051…053; EN-06-22…34; tham số `06.mask.reveal-seconds`, `06.ingest.max-file-mb`, `06.ingest.max-rows`, `06.batch.max-hours`, `06.match.timeout-ms`, `06.sync.reconcile-batch-size`, `06.xref.batch-max`, `06.queue.reopen-hours`, `06.queue.reason-templates`; Q06-10…12; enum mới ở Phụ lục A.
+
 ## Phụ lục A. Nguồn chuẩn giá trị liệt kê
 
-Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API, MH, TC). Tập sau dùng đúng tên và giá trị; thêm giá trị phải sửa bảng này trước.
+Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API, MH, TC). Tập sau dùng đúng tên và giá trị; thêm giá trị phải sửa bảng này trước. Quy ước: `attribute = *` ở ưu tiên nguồn nghĩa là mọi thuộc tính.
 
 | Enum | Giá trị | Dùng ở |
 |---|---|---|
@@ -4526,6 +4686,11 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 | `DsrType` | `ACCESS`, `RECTIFICATION`, `RESTRICTION` | FR-06-058 |
 | `DsrStatus` | `RECEIVED`, `IN_PROGRESS`, `FORWARDED_TO_SOURCE`, `COMPLETED`, `REJECTED` | FR-06-058 |
 | `RetentionAction` | `DELETE`, `ANONYMIZE`, `ARCHIVE_COLD` | FR-06-059 |
+| `IdentifierValidator` | `CCCD_12`, `CMND_9`, `MST_10_13`, `MSDN`, `MA_BHXH_10`, `DVHC_CODE`, `REGEX` | FR-06-003 |
+| `DeliveryMode` | `PUSH`, `PULL` | FR-06-051 |
+| `RetentionObjectType` | `candidate_record`, `match_result`, `match_staging`, `golden_history`, `attribute_lineage`, `access_log`, `processing_log`, `export_request`, `subject_request`, `steward_item` | FR-06-059 |
+| `LogLevel` | `INFO`, `WARN`, `ERROR` | FR-06-057 (`processing_log`) |
+| `FilePhase` | `UPLOADED`, `PREVIEWED`, `CONFIRMED`, `INGESTING`, `DONE`, `FAILED` | FR-06-013 (`candidate_file`) |
 
 : Nguồn chuẩn giá trị liệt kê của PH-06
 
@@ -4544,6 +4709,14 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 | PH-09 (khi viết) | Nhận đăng ký phân loại trường `ph06_mdm.*`, mục đích khai thác dữ liệu chủ, kênh tiếp nhận yêu cầu chủ thể chuyển sang PH-06 |
 | PH-14 (khi viết) | Dịch vụ tra lô, nhận thông báo thay đổi dân cư, ĐKDN, gửi lên dữ liệu địa phương cho PH-06 |
 | D03-05 | Token `color-diff-*` đủ năm mức `ComparisonLevel` cho UI-06-05 |
+| D03-04-PH06, `openapi-mdm.yaml` | Thêm API-06-121…125 (mục 9.4); `decision` ở API-06-106, `cause` ở API-06-118, bộ lọc `partition` và số đếm ở API-06-045; đưa trường phản hồi kỹ thuật (API §10.1, MH Phụ lục B mục B3 đến B6) vào bảng dữ liệu ra |
+| D03-03-PH06, D03-06-PH06, D05-02-PH06, D02-04-PH06 | Đồng bộ mã mới: EN-06-22…34, ERR-06-051…053, tham số mục 8.2, enum Phụ lục A; TC thay ký hiệu 403-PQ, 401-XT bằng ERR-00-403, ERR-00-401; UC bỏ đề nghị đã áp ở mục 15 |
+| D03-07 | Xác nhận ngoại lệ `Role` tạo `Job` của `ServiceAccount dh-data` so với SEC-53 (Q06-24) |
+| D03-09 | `ResourceQuota` và `PriorityClass dh-batch-low` cho Job ở `dh-control`; cân nhắc node pool `batch` (Q06-25) |
+| PH-09 (bổ sung) | Họ tên (`display_name`, `name_norm`) lưu rõ có chỉ mục để tra gần đúng: cần phân loại họ tên của PH-09 chấp nhận (Q06-53); API chính sách che trả lời ≤ 50 ms cho ngân sách resolve |
+| PH-10 (bổ sung) | Debezium Outbox Event Router cho `ph06_mdm.outbox_event`; kênh `PUSH` của đăng ký nhận cập nhật dùng kênh PH-10 (Q06-58) |
+| PH-14 (bổ sung) | `reconcile-batch-size` mặc định 1.000 khóa mỗi lô (`06.sync.reconcile-batch-size`), cần PH-14 xác nhận trần |
+| Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-06 đang dẫn |
 | D00-04 §3.2 | Chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận tập này |
 
 : Đề nghị đồng bộ với tài liệu khác
@@ -4552,4 +4725,5 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ đề nghị của sáu tập (UC, MH, SDD, CSDL, API, TC): thêm API-06-121…125 và cập nhật 9.4 theo bảng tách API-06-097…120; ERR-06-051…053 và dùng mã nền ERR-00-401, 403, 428; EN-06-22…34; chín tham số mới ở 8.2; câu hiển thị 9.2 đủ mã; quy ước route 10.3; sửa FR-06-003, 007, 019, 021, 022, 025, 026, 028, 029, 030, 035, 045, 053, 056, 058, 013; ghi chú đo 8.1; enum mới Phụ lục A; mục 15 nhật ký hấp thụ; Q06-10…12 |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 60 FR đủ 17 mục chia tám nhóm, mở rộng từ 13 FR của SRS cũ; bốn máy trạng thái; 33 BR, 20 NFR, 64 mã lỗi, 15 sự kiện, 96 API dự kiến, 18 màn hình; Phụ lục A nguồn chuẩn enum; truy vết LGC gián tiếp và ánh xạ mã cũ |
