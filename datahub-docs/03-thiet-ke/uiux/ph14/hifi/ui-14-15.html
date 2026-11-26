@@ -1,0 +1,18 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=1440">
+<title>UI-14-15 · Cắt chuyển từ hệ cũ</title><link rel="stylesheet" href="hifi.css"><style>
+.bar{position:relative;height:10px;border-radius:5px;background:#e8ecf2;min-width:140px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;background:#2f6fe4}
+.bar.w i{background:#e0a100}.bar.e i{background:#c62828}
+.bar:before,.bar:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:rgba(0,0,0,.35);z-index:2}
+.bar:before{left:70%}.bar:after{left:95%}
+.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.cards3 .card h3{margin:0 0 6px;font-size:15px}.cards3 .card p{margin:3px 0;font-size:13px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.dot.g{background:#0b6b3a}.dot.y{background:#d08a00}.dot.r{background:#a11a1a}
+.warn{margin-bottom:8px}
+.legend{font-size:12px;color:#5b6573;margin-top:6px}
+</style></head><body>
+<div class="shell"><header class="top"><div class="logo"><b>Datahub</b> · Kết nối quốc gia</div><div class="search">Tìm dịch vụ, giao dịch, chứng thư…  ⌘K</div><div class="sp"></div>
+<span class="tray">Tỉnh mẫu T68</span><span class="tray">Môi trường: PROD</span><div class="avatar">AN</div></header>
+<nav class="side" aria-label="Điều hướng chính"><div class="grp">Kết nối quốc gia</div><a class="" href="#">Tổng quan </a><a class="" href="#">Nền tảng quốc gia </a><a class="" href="#">Dịch vụ quốc gia </a><a class="" href="#">Đối chiếu danh mục </a><a class="" href="#">Bảng định tuyến <span class='tag t-info'>2</span></a><a class="" href="#">Chứng thư số <span class='tag t-warn'>1</span></a><a class="" href="#">Sự cố chữ ký <span class='tag t-err'>1</span></a><a class="" href="#">Hạn mức và đệm </a><a class="" href="#">Điểm cuối chiều vào </a><a class="" href="#">Đồng bộ </a><a class="" href="#">Giao dịch, đối soát </a><a class="" href="#">Nhật ký khai thác </a><a class="on" href="#">Cắt chuyển từ hệ cũ </a><a class="" href="#">Cài đặt phân hệ </a><div class="grp">Cá nhân</div><a href="#">Việc của tôi <span class="tag t-info">3</span></a></nav>
+<main><div class="crumb">Tích hợp / Kết nối quốc gia / Cắt chuyển từ hệ cũ</div><div class="head"><h1>Cắt chuyển từ kết nối NGSP cũ</h1><div class="sp"></div><span class="btn">Nhập phụ lục NGSP</span><span class="btn pri">+ Phiên chạy song song</span></div><div class="tabs" role="tablist"><span class="">Nhập cấu hình</span><span class="on">Chạy song song</span><span class="">Xác nhận thu hồi khóa cũ</span></div><div class="card"><table aria-label="Chạy song song" style=""><thead><tr><th>Dịch vụ</th><th>Phiên</th><th>Mẫu</th><th>Tỷ lệ khớp</th><th>Số ngày đạt</th><th>Sẵn sàng cắt chuyển</th></tr></thead><tbody><tr><td>bhxh-tra-ho</td><td><span class='mono'>pr-014</span></td><td>12.480 / 1.000</td><td>99,6% (≥ 99%)</td><td>9 / 7</td><td><span class='tag t-ok'>Sẵn sàng</span></td></tr><tr><td>lltp-tra-trang-thai</td><td><span class='mono'>pr-015</span></td><td>3.102 / 1.000</td><td>98,1% (< 99%)</td><td>2 / 7</td><td><span class='tag t-warn'>Chưa đạt</span></td></tr><tr><td>dkdn-moi-nhat</td><td><span class='mono'>pr-016</span></td><td>880 / 1.000</td><td>99,8%</td><td>4 / 7</td><td><span class='tag t-warn'>Chưa đủ mẫu</span></td></tr></tbody></table><div class="alert w" role="alert"><span>Dịch vụ ghi (đăng ký hộ tịch, nhận hồ sơ) <b>không chạy song song</b> (ERR-14-033); cắt chuyển một lần theo kế hoạch.</span></div></div></main></div><div class="hint">Bản hi-fi minh họa · D02-03-PH14 · UI-14-15</div></body></html>

@@ -29,4 +29,9 @@ regexes = [
   '''x\(87, 'Gửi đăng ký sử dụng API production', 'PERM-02-subscribe'''',
   # Mã quyền trong tài liệu (PERM-{PH}-{động-từ}), không phải bí mật
   '''PERM-[0-9]{2}-[a-z-]+''',
+  # PH-09: khóa tham số 09.*, tên topic privacy.*.v1, trạng thái SUBMITTED_A05, tên khóa OpenBao giả trong bài kiểm; không phải bí mật (henry duyệt 26/11/2026)
+  '''09\.[a-z]+\.[a-z0-9-]+''',
+  '''privacy\.[a-z-]+\.[a-z-]+\.v1''',
+  '''SUBMITTED_A05''',
+  '''dh-t90-pseudo-[a-z0-9-]+''',
 ]

@@ -3203,9 +3203,6 @@ paths:
             examples:
               thay: { $ref: '#/components/examples/AccessGrantPutExample' }
             schema: { $ref: '#/components/schemas/AccessGrantPut' }
-            example:
-              grants:
-                - { memberSystemId: "01933b6e-6c1a-7d2e-9a10-2f5c3e8b9a01", scopes: ["rdm.read", "rdm.query"], expiresAt: "2027-12-31T17:00:00Z" }
       responses:
         '200':
           description: Danh sách mới.
@@ -4083,7 +4080,6 @@ components:
           minLength: 10
           maxLength: 1000
           description: Bắt buộc khi `effectiveFrom` trước hôm nay (chỉ phiên bản `origin` SYNC, MIGRATION; BR-07-027).
-        retroactiveReason: { type: string, maxLength: 1000 }
     ValidationReport:
       type: object
       required: [valid, errorCount, warningCount]
@@ -4556,7 +4552,7 @@ components:
             rowCount: { type: [integer, 'null'] }
             fileName: { type: [string, 'null'] }
             fileSize: { type: [integer, 'null'] }
-            downloadUrl: { type: [string, 'null'], format: uri, description: URL ký sẵn, hạn 24 giờ. }
+            downloadUrl: { type: [string, 'null'], format: uri, description: 'URL ký sẵn, hạn 24 giờ.' }
             expiresAt: { type: [string, 'null'], format: date-time }
             errorMessage: { type: [string, 'null'] }
             startedAt: { $ref: '#/components/schemas/TTs' }
@@ -4685,7 +4681,7 @@ components:
               - type: object
                 properties:
                   matchType: { type: string, enum: [CODE_EXACT, CODE_PREFIX, NAME_PREFIX, NAME_WORD, ATTRIBUTE] }
-                  path: { type: array, items: { type: string }, description: Tên các cấp cha, để hiển thị gợi ý. }
+                  path: { type: array, items: { type: string }, description: 'Tên các cấp cha, để hiển thị gợi ý.' }
     ChangesResponse:
       type: object
       required: [catalogCode, fromVersion, toVersion, schemaChanged, changes, cursor]
@@ -4721,7 +4717,7 @@ components:
       properties:
         field: { type: string, description: 'Trường hệ thống hoặc `attrs.{code}` có `queryable = true`.' }
         op: { type: string, enum: [eq, ne, in, nin, lt, lte, gt, gte, between, contains, startsWith, isNull, isNotNull] }
-        value: { description: Vô hướng, mảng hoặc vắng mặt tùy toán tử. }
+        value: { description: 'Vô hướng, mảng hoặc vắng mặt tùy toán tử.' }
         and: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/QueryCondition' } }
         or: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/QueryCondition' } }
         not: { $ref: '#/components/schemas/QueryCondition' }
@@ -4742,7 +4738,7 @@ components:
               field: { type: string }
               dir: { type: string, enum: [asc, desc], default: asc }
         limit: { type: integer, minimum: 1, maximum: 1000, default: 100 }
-        cursor: { type: string, description: Con trỏ ký HMAC, gắn với băm của filter và sort. }
+        cursor: { type: string, description: 'Con trỏ ký HMAC, gắn với băm của filter và sort.' }
         includeDeprecated: { type: boolean, default: false }
     QueryResponse:
       type: object
@@ -4963,7 +4959,7 @@ components:
     SyncRunRequest:
       type: object
       properties:
-        force: { type: boolean, default: false, description: Bỏ qua so sánh remoteVersion, ép tính lại khác biệt. }
+        force: { type: boolean, default: false, description: 'Bỏ qua so sánh remoteVersion, ép tính lại khác biệt.' }
     SyncRun:
       type: object
       required: [id, sourceId, catalogCode, status, trigger, startedAt]

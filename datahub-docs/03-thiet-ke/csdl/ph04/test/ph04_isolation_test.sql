@@ -217,6 +217,8 @@ RESET ROLE;
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dh_report_ro') THEN
     CREATE ROLE dh_report_ro LOGIN NOBYPASSRLS IN ROLE ph04_readonly;
+  ELSE
+    GRANT ph04_readonly TO dh_report_ro;
   END IF;
 END $$;
 SET ROLE dh_report_ro;

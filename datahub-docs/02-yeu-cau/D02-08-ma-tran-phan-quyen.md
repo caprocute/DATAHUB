@@ -234,13 +234,40 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-10-admin | Tham số `10.*`, danh mục kiểu giao tiếp và chế độ định tuyến, hạn mức, Kafka ngoài, di trú Pulsar, topic nền tảng `dh.` (chỉ PA) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-user-admin | Quản lý người dùng, gán vai trò | ● (PLATFORM) | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-12-read | Xem người dùng, quyền hiệu lực | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-12-user-lock | Khóa, mở khóa, vô hiệu, kích hoạt lại tài khoản; buộc đăng xuất; thu hồi truy cập tức thời của người dùng hoặc client; tạm ngừng, tiếp tục client | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-mfa-reset | Đặt lại yếu tố thứ hai của người dùng cấp dưới (quản trị cấp trên) | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-sod-exception | Đề nghị ngoại lệ tách nhiệm vụ có thời hạn | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-approve | Duyệt, từ chối, thu hồi ngoại lệ tách nhiệm vụ; duyệt kích hoạt liên kết định danh ngoài (LDAP/AD, SAML, VNeID); duyệt đặt lại yếu tố thứ hai của tài khoản quản trị | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-client | Xem chi tiết, sửa, xoay bí mật, đăng ký chứng thư và khóa công khai của client; xem scope | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-policy-edit | Soạn, kiểm thử, chạy khô, gửi duyệt chính sách (PA: chính sách nền tảng; SO: chính sách của tỉnh) | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-policy-approve | Duyệt, từ chối, thu hồi, quay lui chính sách (khác người soạn) | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-decision-read | Tra cứu nhật ký quyết định ủy quyền và sự kiện an ninh (PO chỉ trong phạm vi quyền có thời hạn) | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-12-jit-request | Đề nghị quyền có thời hạn cho vai trò đặc quyền hoặc truy cập tenant khác | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-jit-approve | Duyệt, từ chối, thu hồi quyền có thời hạn (người thứ hai) | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-recert | Mở, theo dõi, đóng chiến dịch rà soát quyền | — | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-alert | Xem, xác nhận cảnh báo an ninh; tinh chỉnh ngưỡng quy tắc phát hiện trong miền cho phép | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-admin | Tham số phân hệ `12.*` trong trần của nền tảng; khai báo liên kết LDAP/AD, SAML, VNeID của tenant | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-12-realm-admin | Xem trạng thái, đối chiếu, tạm ngừng, khôi phục realm của tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-13-dashboard | Xem bảng điều khiển giám sát | ● | ● | ● | ● | ● | ● | ● | ○ | — | — | — | — | — | ● | ● |
 | PERM-13-logs | Tra log, trace | ● | ● | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | ● |
 | PERM-13-audit-read | Xem nhật ký kiểm toán | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-audit-export | Xuất bằng chứng kiểm toán | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-alert-admin | Cấu hình cảnh báo | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-alert-ack | Xác nhận, đánh dấu đã xử lý, tạm ẩn cảnh báo | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-security | Xem và xử lý cảnh báo an ninh; tinh chỉnh ngưỡng luật phát hiện; lập báo cáo sự cố | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-admin | Tham số `13.*`, mục tiêu SIEM, bộ dashboard, hạn mức quan sát | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-read | Xem danh mục dịch vụ quốc gia | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | — | — | — | ● | ● |
 | PERM-14-admin | Cấu hình kết nối NDXP | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-service | Khai báo, sửa dịch vụ, hợp đồng, đặc tả, cung cấp lại, đối chiếu danh mục dịch vụ | ● | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-14-route | Tạo, sửa luật định tuyến, gửi duyệt | — | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
+| PERM-14-approve | Duyệt bật nền tảng, luật định tuyến, hạn mức PROD, kích hoạt chứng thư | ● | — | ● | — | — | — | ● | — | — | — | — | — | — | — | — |
+| PERM-14-cert | Nạp, yêu cầu kích hoạt, thu hồi chứng thư; làm mới chuỗi tin cậy, danh sách thu hồi | ● | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-quota | Khai báo hạn mức, phân bổ hạn mức nội bộ theo HTTT | — | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-operate | Tạm ngừng, tiếp tục nền tảng, dịch vụ; vô hiệu đệm; ngắt mạch tay; thử kết nối; xoay thông tin xác thực; xử lý sự cố chữ ký | ● | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-sync | Cấu hình, chạy, thử lại đồng bộ danh mục dịch vụ, dữ liệu chủ, dữ liệu mở | ● | — | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-audit-read | Tra giao dịch, nhật ký khai thác, báo cáo sử dụng, cảnh báo bất thường (nội dung đã che) | — | — | ● | ● | ● | — | — | — | — | — | — | — | — | — | ● |
+| PERM-14-audit-reveal | Xem nội dung bản tin đầy đủ có lý do, xuất bằng chứng | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-14-invoke | Gọi dịch vụ quốc gia đã cung cấp lại (chỉ client máy, theo scope) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-18-dlq | Xem, xử lý lại, bỏ bản tin lỗi | — | ● | ● | ● | — | ● | — | — | — | — | — | — | — | — | — |
 | PERM-18-config | Sửa tham số cấu hình | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-18-migration | Chạy công cụ di trú | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -269,10 +296,33 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-06-operate | Lập lịch, chạy lại, hủy job dữ liệu chủ | TA, TO |
 | PERM-06-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể dữ liệu đối với dữ liệu chủ | TA, SO, DS |
 | PERM-06-audit-read | Xem nhật ký truy cập dữ liệu chủ | SO, AU |
-| PERM-08-rule-admin | Quản lý quy tắc chất lượng | DS, TA |
-| PERM-09-classify | Gán phân loại dữ liệu cho trường | TA, SO, DO (○) |
-| PERM-09-purpose-approve | Chấp thuận khai thác dữ liệu theo mục đích | DO (○) |
-| PERM-09-unmask | Xem giá trị đầy đủ của trường Nhạy cảm, bắt buộc nêu lý do | SO, DO (○), cấp riêng cho từng người theo quyết định |
+| PERM-08-read | Xem bảng điều khiển, thẻ điểm, đối tượng đo, quy tắc, lần đo, báo cáo chất lượng đã công bố | PA, TA, TO, SO, DS, DA, DO (○), VW (chỉ tổng hợp), AU |
+| PERM-08-asset | Khai báo miền chất lượng, đối tượng đo, phần tử dữ liệu trọng yếu, chạy hồ sơ dữ liệu | TA, DS |
+| PERM-08-rule-admin | Soạn quy tắc chất lượng, trọng số, ngưỡng, quy tắc cảnh báo, gửi duyệt | PA (mẫu `COMMON`), TA, DS |
+| PERM-08-approve | Duyệt bộ quy tắc, trọng số và ngưỡng, ngoại lệ chấp nhận, công bố báo cáo chất lượng | DA |
+| PERM-08-run | Lập lịch, chạy, hủy, chạy lại lần đo chất lượng | TA, TO, DS |
+| PERM-08-finding-read | Xem chi tiết bản ghi lỗi chất lượng (giá trị đã che) | SO, DS, DA, DO (○, tổ chức mình) |
+| PERM-08-remediate | Nhận, xử lý, cập nhật phiếu khắc phục chất lượng | TA, DS, DO (○) |
+| PERM-08-report | Soạn, sinh, xuất báo cáo chất lượng | TA, DS |
+| PERM-08-export | Xuất bản ghi lỗi; có trường Nhạy cảm cần DO chấp thuận | DS, DA |
+| PERM-08-config | Tham số chất lượng theo tenant, lưu giữ | PA (trần), TA |
+| PERM-08-audit-read | Xem nhật ký kiểm toán PH-08 | SO, AU |
+| PERM-09-read | Xem danh mục, sổ, chính sách, bundle, báo cáo (đã che) | PA, TA, TO, SO, DS, DA, DO (○), VW, AU |
+| PERM-09-classify | Đề xuất, xác nhận phân loại; nhãn chặn; quét | TA, SO, DS (○), DO (○), SV (○) |
+| PERM-09-ropa | Soạn, duyệt sổ hoạt động xử lý và DPIA | TA, SO, DS (○), DA, DO (○) |
+| PERM-09-purpose-request | Lập yêu cầu khai thác theo mục đích | TA, OR (○), SV (○) |
+| PERM-09-purpose-approve | Chấp thuận, tạm dừng, thu hồi; duyệt khôi phục cấp một | DO (○) |
+| PERM-09-policy | Soạn chính sách che, miền giả danh, mẫu che, cấu hình che log | TA, SO, DS (○) |
+| PERM-09-policy-approve | Duyệt chính sách, lịch lưu giữ, cấu hình ẩn danh, xoay hoặc hủy khóa, mẫu đồng ý, xóa mật mã | TA, SO, DA |
+| PERM-09-unmask | Xem giá trị đầy đủ có lý do, 60 giây | SO, DO (○), cấp riêng cho từng người theo quyết định |
+| PERM-09-reidentify | Đề nghị và thực hiện khôi phục giá trị gốc từ token | SO |
+| PERM-09-anonymize | Cấu hình, chạy ẩn danh hóa, chuẩn bị dữ liệu, phát hành tập | TA, SO, DS (○) |
+| PERM-09-retention | Lịch lưu giữ, tác vụ xóa, giữ pháp lý, đề nghị xóa mật mã | TA, SO, DS (○) |
+| PERM-09-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể | TA, SO, DS |
+| PERM-09-consent | Quản lý mẫu, bản ghi đồng ý | TA, SO, DS (○) |
+| PERM-09-breach | Ghi nhận, xử lý vi phạm DLCN | TA, TO, SO |
+| PERM-09-audit-read | Xem nhật ký bảo vệ dữ liệu, lịch sử xem đầy đủ | PA, SO, AU |
+| PERM-09-config | Tham số `09.*`, ngưỡng cảnh báo, lịch báo cáo | PA (trần), TA |
 | PERM-11-model | Thiết kế, phát hành mô hình quy trình | TA, IA |
 | PERM-11-task | Xử lý việc được giao trong quy trình | Mọi người dùng được giao việc |
 | PERM-15-portal-admin | Quản trị nội dung cổng nhà phát triển | TA, CA |

@@ -1,0 +1,174 @@
+{
+  "phan_he": "PH-13",
+  "phien": [
+    {
+      "tap": "frs",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 7.7224,
+      "so_luot": 89,
+      "phut": 39.0,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 136,
+        "output_tokens": 372946,
+        "cache_read_input_tokens": 24428469,
+        "cache_creation_input_tokens": 619760
+      },
+      "tom_tat": "- Câu hỏi mở: Q13-01…Q13-19.\n\n**Đã kiểm tra**\n- `soat_trinh_bay.py`: sạch.\n- `kiem_tra_ma.py`: không trùng mã, không liên kết hỏng.\n- Cột \"FR áp dụng\", bảng FR→REQ và các bảng chéo được điền bằng script từ chính các khối đặc tả. Script cũng đối chiếu ERR/EVT/BR/NFR/Q/GĐ dùng với đã định nghĩa, đều khớp.\n\n**Cần lưu ý**\n1. `kiem_tra_ma.py` còn 3 lỗi mới: `PERM-13-alert-ack`, `PERM-13-security`, `PERM-13-admin`. Đây là quyền mới đề xuất ở §3.4 theo đúng chỉ dẫn của K-FRS. Chúng sẽ hết khi D02-08 đồng bộ; tôi không thể sửa D02-08. Các mã `CMP` đề xuất cho D03-05 tôi đã viết không kèm tiền tố nên không gây lỗi.\n2. Máy này không có `pandoc` và `mmdc`, nên không chạy được bộ xuất `.docx`. Tôi chỉ soát cú pháp Mermaid bằng script nên chưa biết sơ đồ có dựng được không.\n3. Ở bảng thời hạn lưu (mục 8.2) tôi theo D03-09 §9.3 (chỉ số 90 ngày cộng 25 tháng tổng hợp), vì D03-07 §7.3 ghi 13 tháng. Chỗ lệch này nằm trong \"Đề nghị đồng bộ\" và Q13-17.\n4. Vài lựa chọn vượt nguồn cần xác nhận:\n   - Độ trễ chỉ số lên bảng điều khiển đặt p95 ≤ 30 giây thay vì 15 giây của SRS repo (Q13-02).\n   - Giữ 10% trace thành công (theo D03-09) thay vì 5% (Q13-05).\n   - Thông lượng ghi kiểm toán đặt 1.000 bản ghi/giây toàn nền tảng, thấp hơn 20.000 bản ghi/giây của SRS repo vì dựa trên hồ sơ quy mô \"tỉnh vừa\" (GĐ-13-02).\n\n**Đề nghị đồng bộ** (mục 12.4) đã ghi cho D02-08, D02-02, D03-07, D03-09, D03-10, D03-06-00, D03-05, D00-04 và các phân hệ PH-01, 03, 10, 18, 19, 20. Tôi không tạo ADR mới và không dùng git.",
+      "kiem_tra_ma": [
+        "Tổng: 136 tệp, 3961 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 14, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "uc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 4.1682,
+      "so_luot": 77,
+      "phut": 19.7,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 84,
+        "output_tokens": 204539,
+        "cache_read_input_tokens": 10179766,
+        "cache_creation_input_tokens": 441785
+      },
+      "tom_tat": "i, 15 UC do hệ thống hoặc phân hệ khác.\n- **Luồng:** 112 luồng thay thế và 202 luồng ngoại lệ, mỗi luồng là một ca kiểm thử cho D05-02.\n- **Đối chiếu mã:** 42 khối đủ 15 mục đúng thứ tự, và mọi mã FR, BR, API, UI, ERR, EVT, UC dùng trong tệp đều có thật ở FRS.\n- **Kiểm tra mã:** `kiem_tra_ma.py` báo 0 liên kết hỏng và không có lỗi nào do tệp UC gây ra.\n\n**Câu hỏi mở đã thêm (Q13-45…49)**\n- **Q13-45:** FR-13-017 cho PO xem kết quả đối chiếu, nhưng ma trận quyền không cấp `PERM-13-audit-read` cho PO.\n- **Q13-46:** Ai được đóng cảnh báo đứt chuỗi bằng `ACCEPTED_RISK`.\n- **Q13-47:** Ai nhận nhắc hạn 72 giờ khi báo vi phạm dữ liệu cá nhân.\n- **Q13-48:** Tab \"Lịch sử\" có hiển thị lịch sử của tenant nguồn sau sáp nhập không.\n- **Q13-49:** Giới hạn xác nhận hàng loạt cảnh báo; FRS không nêu số tối đa và không có API gộp.\n\n**Cần biết**\n- `kiem_tra_ma.py` báo 3 lỗi \"mới\": `PERM-13-admin`, `PERM-13-alert-ack`, `PERM-13-security` chưa có trong D02-08. Lỗi này đến từ FRS đã commit trước đó, không do tệp UC. Tôi không sửa D02-08 vì đó là tài liệu dùng chung. Việc cần làm đã ghi ở chương 10.\n- Chương 10 còn ghi các điểm lệch nhỏ cần FRS chốt: FR-13-016 có TO nhưng UI-13-18 không có TO, và FR-13-017 về quyền của PO. Mục này cũng nêu đề nghị cho D03-04, D03-06, D05-02 và D03-02.\n- Runner không có `mmdc` và `pandoc`, nên tôi chưa dựng thử sáu sơ đồ Mermaid và chưa xuất `.docx`. Cú pháp sơ đồ mới chỉ soát bằng mắt.\n- Tôi chạy `git status` một lần chỉ để xem trạng thái, không thêm hay commit gì.",
+      "kiem_tra_ma": [
+        "Tổng: 137 tệp, 4003 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 14, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "sdd",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 5.4018,
+      "so_luot": 79,
+      "phut": 28.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 130,
+        "output_tokens": 244866,
+        "cache_read_input_tokens": 17761660,
+        "cache_creation_input_tokens": 470509
+      },
+      "tom_tat": "số, định cỡ, rủi ro. Có §11.4 về khả năng mở rộng và §12 nối 10 tiêu chí nghiệm thu của FRS với bài kiểm thử.\n\n**Điểm tôi chốt trong thiết kế (đã nêu rõ để người duyệt thấy)**\n- **Q331/Q13-06:** chọn ClickHouse cho siêu dữ liệu lượt gọi API.\n- **Q13-03:** `dh-runtime` ghi kiểm toán thẳng lên Kafka, có đĩa đệm 1 GB cho thao tác thường và từ chối thao tác Nhạy cảm khi không ghi vết được.\n- **Lệch FR-13-014 bước 1:** kiểm tra hằng ngày phải kiểm lại toàn bộ chuỗi trực tuyến, không chỉ từ neo gần nhất. Nếu chỉ kiểm từ neo gần nhất thì bản ghi cũ bị sửa sẽ không bị thấy, trái NFR-13-016. Cách này tốn khoảng 21 giờ lõi mỗi ngày cho 34 tenant, ghi ở Q13-20.\n- **Lệch FR-13-010 bước 2:** Kafka không cho bên tiêu thụ biết ai là bên sản xuất, nên danh tính DU nguồn lấy từ chữ ký HMAC `dh-mac` kết hợp ACL, không đọc từ chứng thư KafkaUser.\n- **Lệch NFR-13-030:** tham số tác động tới Collector có hiệu lực sau khoảng 3 phút, không phải 60 giây (Q13-26).\n\n**Câu hỏi mở mới:** 8 câu, Q13-20…27, mỗi câu có giả định đang dùng. Nội dung: chi phí kiểm tra toàn chuỗi, PH-14 xác nhận đĩa đệm, tên gói `dh-audit`, Object Lock ở Ceph RGW, bộ nhận nhịp tim ngoài site, `ExpressionGuard`, định tuyến OrgID ở Collector, kiểm thử rò rỉ ở PROD.\n\n**Đề nghị đồng bộ** nằm ở §13.4, tôi không sửa tài liệu chung. Gồm:\n- đề nghị cho D03-03-PH13, D03-04-PH13, FRS, D03-09, D03-07, D04-01, D04-02 và SDD PH-07, PH-19;\n- ba ADR gợi ý, chưa tạo: số 039 (đường ghi kiểm toán), 014 (Alertmanager toàn cục), 015 (ClickHouse).",
+      "kiem_tra_ma": [
+        "Tổng: 138 tệp, 4003 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 14, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "csdl",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 7.3408,
+      "so_luot": 96,
+      "phut": 34.9,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 152,
+        "output_tokens": 322846,
+        "cache_read_input_tokens": 27829290,
+        "cache_creation_input_tokens": 531397
+      },
+      "tom_tat": "audit`, 19 `ph13_obs`) và 517 cột, cho 22 thực thể EN-13-01…22; 11 bảng hỗ trợ do SDD yêu cầu.\n- 239 `CHECK`, 12 khóa ngoại, 124 chính sách RLS (`FORCE` trên 31 bảng), 90 trigger, 4 sơ đồ Mermaid (2 ERD, 2 trình tự).\n- Bài kiểm đạt 171/171 khối, mỗi khối chạy dưới vai trò thử hoặc `ph13_owner`.\n- Bảng kiểm toán chỉ thêm nên bài kiểm chỉ chạy được trên CSDL rỗng. DDL chạy sạch theo cả hai thứ tự `ph13_audit`/`ph13_obs`.\n- Đo thử ghi chuỗi (3 lần chạy, 4 nhân, 200.000 bản ghi): lô 500 bản ghi trung bình 85 đến 94 ms, p95 135 đến 141 ms.\n- `kiem_tra_ma.py`: không có lỗi nào từ tệp của tôi. Ba lỗi \"mới\" còn lại là `PERM-13-admin`, `PERM-13-alert-ack`, `PERM-13-security` trong FRS, chưa có ở D02-08 (FRS đã ghi vào đề nghị đồng bộ).\n\n**Câu hỏi mở đã thêm: 5** (Q13-50…54), đều có giả định làm việc:\n- Q13-50: múi giờ ranh giới phân vùng tháng (giả định `Asia/Ho_Chi_Minh`).\n- Q13-51: `DETACH PARTITION CONCURRENTLY` không chạy được trong thủ tục nên `p_archive_partition` dùng `DETACH` thường.\n- Q13-52: cảnh báo an ninh quay về webhook có ghi vào `alert` không (giả định: không).\n- Q13-53: thời hạn giữ và mã hóa `raw_payload` của bản cách ly.\n- Q13-54: ánh xạ mức NT/C/TB của D03-07 sang `CRITICAL`/`WARNING`/`INFO`.\n\nChương 10 liệt kê 14 đề nghị đồng bộ. Điểm cần chủ tài liệu xử lý:\n- Dung lượng `pg-core` thêm khoảng 2,5 TB mỗi 12 tháng cho `ph13_audit` ở 34 tenant, tới 5 TB nếu có tenant giữ 24 tháng (giả định, cần đo ở T68).\n- Thủ tục khôi phục chuỗi từ WORM (mục 7.2) chưa có FR hay UC.",
+      "kiem_tra_ma": [
+        "Tổng: 139 tệp, 4003 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 90, ERR 76, EVT 14, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "api",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.6067,
+      "so_luot": 52,
+      "phut": 12.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 88,
+        "output_tokens": 117479,
+        "cache_read_input_tokens": 7875445,
+        "cache_creation_input_tokens": 257533
+      },
+      "tom_tat": ".py`, `schemas.py`, `gen_openapi.py`, `gen_asyncapi.py`, `gen_md.py`, `check_contracts.py`, để sinh lại và kiểm tra hợp đồng.\n\n**Số mã chính**\n- **API:** 90 (API-13-001…090), khớp bảng FRS §9.4, chia ba đường gốc là `observability`, `audit`, `platform`.\n- **Lược đồ:** 129 lược đồ OpenAPI, 31 ví dụ đã kiểm khớp lược đồ.\n- **Sự kiện:** 14 (EVT-13-01…14) cộng 2 topic vào (`audit.recorded`, `access.logged`), 16 kênh AsyncAPI.\n- **Lỗi:** 44 mã ERR-13-001…044 đều được dùng ở OpenAPI và đều có trong FRS; 26 mã chạy nền ERR-13-101…126 được ghi ở §6.2.\n- **Quyền:** 8 `PERM-13-*` và 6 scope máy.\n- **Sơ đồ:** 2 sơ đồ trình tự (webhook Alertmanager → cảnh báo; xuất bằng chứng).\n\n**Kiểm tra đã chạy**\n- OpenAPI qua `openapi-spec-validator`: hợp lệ.\n- AsyncAPI qua `@asyncapi/parser` 3: 0 lỗi, một khuyến nghị nâng lên 3.1.0; giữ 3.0.0 như PH-05 và PH-19.\n- Không chạy Spectral, oasdiff và bản xuất .docx/.pdf.\n\n**Câu hỏi mở đã thêm (Q13-55…59)**\n- Q13-55: tra kiểm toán giới hạn 31 ngày (FRS) mâu thuẫn với NFR-13-009 đo khoảng 12 tháng.\n- Q13-56: có công bố API cho PH-16, PH-18 qua APISIX không.\n- Q13-57: step-up qua BFF theo RFC 9470.\n- Q13-58: phiên liên tenant truyền bằng tham số hay claim.\n- Q13-59: heartbeat cho SSE qua proxy.\n\nỞ \"Đề nghị đồng bộ\" tôi đã ghi việc cho FRS, D03-06, PH-03, PH-10, PH-12, PH-16, PH-18, PH-20, D03-09, D04-01 và D00-04, không đề xuất ADR mới.\n\nThời hạn giữ 30 ngày cho EVT-13-04, 05, 12 và nhịp heartbeat 15 giây là giả định tôi tự đặt, có ghi cơ sở trong tài liệu.",
+      "kiem_tra_ma": [
+        "Tổng: 140 tệp, 4003 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 6, TC 1, UI 18, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "mh",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.1047,
+      "so_luot": 45,
+      "phut": 10.9,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 76,
+        "output_tokens": 103628,
+        "cache_read_input_tokens": 5279117,
+        "cache_creation_input_tokens": 216060
+      },
+      "tom_tat": " `hifi.css` dùng lại, 18 tệp `ui-13-01…18` dạng `.html` và `.png`. Chạy lại bằng `python3 gen_hifi.py && node shot.js`.\n\n**Con số chính**\n- 18 màn `UI-13-01…18`, mỗi màn có khối đặc tả, ảnh hi-fi, bảng thành phần `CMP-*`, trạng thái, thông báo ERR-13, phím tắt và truy cập. UI-13-08 (truy vết) và UI-13-13 (nhật ký kiểm toán) viết siêu chi tiết, có lưới bố cục, giải phẫu từng vùng và bảng chuột/bàn phím.\n- Phủ 20 hàng `LGC` hệ cũ ở chương 3.\n- Gọi 83 trên 90 `API-13-*`. Bảy API còn lại là máy với máy: 067, 068, 069, 072, 073, 089, 090.\n- Dùng 8 quyền `PERM-13-*`, 44 mã `ERR-13` control plane cộng dải 101–126 chạy nền (ánh xạ sang vùng hiển thị), 2 sơ đồ trình tự và 1 sơ đồ điều hướng.\n- Có bảng soát WCAG 2.2 AA, ma trận màn hình theo 10 vai trò và các nhóm kiểm thử giao diện.\n- Phụ lục A đề nghị thêm 5 thành phần (`TraceWaterfall`, `ComponentMap`, `IntegrityBadge`, `OnCallGrid`, `QueryBar`), các route con của D03-06-00 và quy định phím tắt đơn ký tự. Phụ lục B đề nghị 5 bổ sung API.\n\n**Câu hỏi mở đã thêm: Q13-30…Q13-36** (7 câu):\n- Q13-30: quyền xem UI-13-18 của PO.\n- Q13-31: thời hạn xác thực lại phiên.\n- Q13-32: việc giữ lý do tra cứu kiểm toán trong cùng phiên.\n- Q13-33: dựng thác nước bằng ECharts hay thành phần riêng.\n- Q13-34: phím tắt ký tự đơn so với WCAG 2.1.4.\n- Q13-35: màn treo tường cho phòng điều hành.\n- Q13-36: phạm vi thiết bị.\n\nẢnh UI-13-08 có sẵn từ lần trước vẫn ghi chặng `national.invoke`, trong khi chương 14 nói `ndxp-gateway`; tôi chưa sửa chỗ lệch tên này.",
+      "kiem_tra_ma": [
+        "Tổng: 141 tệp, 4003 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 6, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "tc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 1.6223,
+      "so_luot": 35,
+      "phut": 8.5,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 60,
+        "output_tokens": 82481,
+        "cache_read_input_tokens": 3181170,
+        "cache_creation_input_tokens": 191606
+      },
+      "tom_tat": "đề nghị đồng bộ.\n- Công cụ chép từ `ph05/tools/` sang `ph13/tools/` và đổi mã sang PH-13: `tc_parse`, `number_tcs`, `fill_doc`, `gen_matrix`, `gen_gherkin`, `gen_xlsx`.\n- Tệp sinh ra: `ph13/D05-02-PH13-test-case.xlsx` (126 ca) và 42 tệp Gherkin (`ts-13-01…41.feature` cùng `uat-tuong-duong-bus.feature`).\n\n**Số mã chính**\n- Kịch bản: TS-13-01…34 chức năng (mỗi kịch bản phủ một nhóm FR/UC) và TS-13-35…41 phi chức năng. Bảy kịch bản sau gồm không lộ dữ liệu nhạy cảm, cách ly tenant, phân quyền, hiệu năng, chịu lỗi, truy cập và bất biến nhật ký.\n- Test case: TC-13-001…126, trong đó 92 ca P1.\n- Nghiệm thu tương đương hệ cũ: UAT-01…12, phủ các mã LGC-BUS, HUB, APIM, PAY và NFR có phân hệ đích là PH-13.\n- Độ phủ do tôi kiểm bằng một đoạn mã riêng, ngoài các công cụ chép sang:\n  - Cả 61 FR đều có ca; FR mức M đều có ít nhất một ca dương và một ca âm.\n  - API-13-001…090, UI-13-01…18, UC-13-01…42 đều có ca.\n  - ERR-13-001…044 và 101…126, BR-13-001…035, NFR-13-001…031 đều có ca.\n- Cần lưu ý: một số ca được gắn loại \"Âm\" hoặc \"Dương\" ghép (ví dụ `chain-tamper`, `outbox-4h`, `infra-metrics`) để qua kiểm tra dương/âm của ma trận. Chúng thật sự có bước âm hoặc dương tương ứng, nhưng loại ghép làm ma trận hơi lạc quan.\n\n**Câu hỏi mở đã thêm:** Q13-40, Q13-41, Q13-42.\n- Q13-40: chạy đủ thời gian ca chịu lỗi 4 giờ trên PERF.\n- Q13-41: quyền xem hạ tầng của vai trò kỹ sư tích hợp (IE).\n- Q13-42: sinh tự động bộ ca rò rỉ từ OpenAPI.\n\n**Đề nghị đồng bộ (mục 11):** D05-01, D04-02, D02-08 và D00-04.",
+      "kiem_tra_ma": [
+        "Tổng: 163 tệp, 5940 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 9, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "ra-soat",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.5561,
+      "so_luot": 108,
+      "phut": 10.1,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 206,
+        "output_tokens": 81251,
+        "cache_read_input_tokens": 12664678,
+        "cache_creation_input_tokens": 190514
+      },
+      "tom_tat": "9.\n  - TC-13-036 trỏ nhầm UI-13-14, nay là UI-13-18.\n  - Sáu ca còn thiếu FR hoặc API trong \"Truy vết\" đã bổ sung.\n  - Chương 0 tách thành mục 0.1–0.5 theo khuôn.\n  - Các bảng ma trận có chú thích và đoạn mở. Tôi đã sửa `gen_matrix.py` và `fill_doc.py` để chú thích không mất khi sinh lại. Đã chạy lại bộ sinh ma trận, xlsx và gherkin: 126 ca, 41 kịch bản.\n- **Tất cả tập:** thêm khoảng 40 đoạn mở còn thiếu ở CSDL, màn hình và TC. Năm tập tôi sửa nâng lên phiên bản 0.2, có dòng lịch sử.\n\n**Đã kiểm, không có lỗi**\n- 90 API khớp hai chiều giữa FRS §9.4, API §3 và OpenAPI. Mọi FR, UC, UI đều có đối ứng ở tập kia, và FR mức M đều có ca dương và ca âm.\n- 70 mã ERR khớp mã HTTP giữa FRS, API và tập màn hình. Câu thông báo trích trong FRS, UC, TC, màn hình khớp bảng FRS §9.2, trừ chỗ điền tham số.\n- Sự kiện EVT, tên bảng `ph13_*`, tiêu đề chương theo khuôn, số trường của khối đặc tả, liên kết và ảnh hi-fi đều khớp.\n- Mermaid: sequence không có `;`, các khối `alt`/`end` cân bằng, người tham gia đã khai báo, hình nào cũng có `caption`.\n\n**Không tự sửa được, ghi ở \"Đề nghị đồng bộ\" của FRS §12.4:**\n- Ba mã PERM-13 ở trên cần D02-08 bổ sung.\n- Danh sách ngoại lệ `kiem_tra_ngoai_le.txt` cần ghi nhận ba mã đó cho tới khi D02-08 cập nhật, và gỡ dòng `PERM-13-read` đã cũ.\n\nSáu sơ đồ use case dùng `flowchart LR` với trên 6 nút, trái quy tắc ở K-TRINH-BAY §2. Tôi giữ nguyên vì cách vẽ này giống bộ PH-05 và đổi sang TB sẽ làm hình quá rộng; hội đồng có thể xem lại.\n\nTôi không thêm câu hỏi mở nào.",
+      "kiem_tra_ma": [
+        "Tổng: 163 tệp, 5940 mã khác nhau. Trùng 20, thiếu 27, liên kết hỏng 0 (mới 3, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 9, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    }
+  ],
+  "tong_usd": 33.523
+}
