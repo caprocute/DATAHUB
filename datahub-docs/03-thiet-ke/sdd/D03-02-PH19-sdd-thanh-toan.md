@@ -661,3 +661,222 @@ Mọi bảng có `tenant_id` và chính sách RLS `USING (tenant_id = current_se
 ### 9.6. Kiểm toán
 
 Danh mục hành động (`action`) gửi PH-13: `PROVIDER_CREATE`, `PROVIDER_UPDATE`, `PROVIDER_DELETE`, `CREDENTIAL_BIND`, `CREDENTIAL_ROTATE`, `CONNECTION_TEST`, `TEST_TRANSACTION`, `PROVIDER_SUSPEND`, `PROVIDER_RESUME`, `RESULT_MAPPING_CHANGE_REQUEST`, `RESULT_MAPPING_APPLIED`, `SERVICE_GROUP_*`, `SERVICE_*`, `PARTNER_*`, `PARTNER_CLIENT_ISSUE`, `PARTNER_CLIENT_REVOKE`, `SERVICE_GRANT_SET`, `WEBHOOK_ENDPOINT_*`, `WEBHOOK_SECRET_ROTATE`, `ROUTING_MODE_REQUEST`, `TRANSACTION_CANCEL`, `TRANSACTION_SYNC`, `CALLBACK_REPLAY`, `PII_VIEW`, `REFUND_CREATE`, `REFUND_EXECUTE`, `REFUND_CONFIRM_MANUAL`, `RECON_SESSION_CREATE`, `RECON_FILE_UPLOAD`, `RECON_RERUN`, `RECON_CLOSE`, `RECON_REOPEN_REQUEST`, `DISCREPANCY_ASSIGN`, `DISCREPANCY_ESCALATE`, `DISCREPANCY_NOTE`, `DISCREPANCY_PROPOSE`, `DISCREPANCY_RESOLVE`, `APPROVAL_DECISION`, `APPROVAL_WITHDRAW`, `EXPORT_CREATE`, `EXPORT_DOWNLOAD`, `CONFIG_VERSION_CREATE`, `MIGRATION_RUN`, `WEBHOOK_RESEND`, `ACCESS_DENIED`. `AuditWriter` loại giá trị bí mật và che dữ liệu cá nhân trong `before`, `after`. Không ghi được outbox thì thao tác bị hủy (ERR-19-050, BR-19-029).
+
+## 10. Hoàn tiền
+
+### 10.1. Lập và duyệt
+
+`RefundService.create` khóa hàng giao dịch, kiểm tra BR-19-022 (gồm tổng `amount` của yêu cầu chưa kết thúc), xác định `required_approvals` theo `19.refund.two-level-threshold` của phiên bản cấu hình hiện hành, ghi `refund_request` và `approval_request` (loại `REFUND`) trong một giao dịch CSDL. Mã `refund_code` = `R` + 10 ký tự cuối của mã giao dịch + 4 ký tự Base32 ngẫu nhiên. Với đối tác, `partner_refund_id` duy nhất trong đối tác và đi cùng `Idempotency-Key` như §5.2.
+
+`ApprovalDecided` (sự kiện miền đồng bộ) gọi `RefundService.onDecision`: cấp 1 với `required_approvals = 2` → `PENDING_SECOND_APPROVAL` và mở lượt duyệt thứ hai trên cùng `approval_request`; cấp cuối → `APPROVED` rồi `RefundExecutor.start`.
+
+### 10.2. Thực thi
+
+```java
+void start(RefundRequest r) {
+  var mode = resolveMode(r);                        // BR-19-024: API nếu capabilities.refund && tenant cho phép
+  if (mode == MANUAL) { r.toAwaitingManual(); reminders.schedule(r, Duration.ofDays(1)); return; }
+  r.toProcessing(r.executionCount() + 1);           // cam kết trước khi gọi NCC
+  tx.commit();
+  var res = port.refund(cfg, new RefundRequest(r.refundCode() + "-" + r.executionCount(), ...));
+  var outcome = mapper.map(provider, REFUND, res.providerCode(), res.transportOk());
+  switch (outcome.kind()) {
+    case SUCCEEDED -> complete(r);                  // §10.3
+    case FAILED    -> r.toFailed(outcome.reasonCode());
+    case PENDING, UNKNOWN -> r.scheduleQuery();     // chờ REFUND_IPN hoặc truy vấn, trần 72 giờ
+  }
+}
+```
+
+Khóa lũy đẳng gửi NCC gồm `refundCode` và `executionCount` nên một lần thực thi không bao giờ gửi hai lệnh, còn lần thực thi lại (sau `FAILED`) là lệnh mới có chủ đích. Ghi nhận thủ công (`CONFIRM_MANUAL`) kiểm tra người xác nhận không thuộc tập người đã duyệt, tệp chứng từ đã quét mã độc và gắn `stored_file` mục đích `REFUND_VOUCHER`.
+
+### 10.3. Hoàn tất
+
+`complete(r)` trong một giao dịch CSDL: khóa hàng giao dịch gốc; `refunded_amount += r.amount`; gọi `TransactionStateMachine.apply(→ PARTIALLY_REFUNDED | REFUNDED, REFUND)`; `r.toSucceeded()`; outbox EVT-19-13 với khóa phân vùng `transactionId`. Kiểm tra bất biến `refunded_amount ≤ amount` bằng `CHECK` trên bảng làm lớp cuối.
+
+## 11. Đối soát
+
+### 11.1. Lập lịch và thu thập
+
+`SessionScheduler` (cron theo `19.recon.cutoff-time` của từng tenant, ShedLock theo tenant) tạo phiên `INSERT … ON CONFLICT (tenant_id, provider_id, business_date) DO NOTHING`. `Collector` gọi `fetchRecon` hoặc chờ tải tệp theo `reconSource`; tệp gốc luôn lưu Garage trước (`stored_file` mục đích `RECON_SOURCE`, SHA-256), rồi `parseRecon` trả luồng `ReconLine` (`kind`, `providerReference`, `transactionCode`, `amount`, `providerStatusCode`, `paidAt`). Dòng chuẩn hóa ghi vào bảng tạm `recon_provider_line` gắn `session_id`, `run_no`.
+
+### 11.2. So khớp
+
+`Matcher` chạy bằng SQL trên bản chính trong một giao dịch đọc nhất quán (`REPEATABLE READ`):
+
+```sql
+-- Tập phía Datahub của ngày T (giờ Việt Nam), loại thử và bóng
+WITH dh AS (
+  SELECT id, transaction_code, provider_reference, amount, status
+  FROM ph19_payment.payment_transaction
+  WHERE tenant_id = :tenant AND provider_id = :provider
+    AND NOT is_test AND NOT is_shadow
+    AND ( (paid_at >= :dayStartUtc AND paid_at < :dayEndUtc AND status IN ('SUCCEEDED','PARTIALLY_REFUNDED','REFUNDED'))
+       OR (needs_reconciliation AND created_at >= :dayStartUtc AND created_at < :dayEndUtc) )
+),
+pv AS (SELECT * FROM ph19_payment.recon_provider_line WHERE session_id = :session AND run_no = :run AND kind = 'PAYMENT')
+SELECT dh.id AS txn_id, pv.id AS line_id,
+       CASE
+         WHEN pv.id IS NULL THEN 'MISSING_PROVIDER'
+         WHEN dh.id IS NULL THEN 'MISSING_DH'
+         WHEN dh.amount <> pv.amount THEN 'AMOUNT_MISMATCH'
+         WHEN (dh.status IN ('SUCCEEDED','PARTIALLY_REFUNDED','REFUNDED')) <> (pv.outcome = 'SUCCEEDED') THEN 'STATUS_MISMATCH'
+         ELSE 'MATCHED' END AS result
+FROM dh FULL OUTER JOIN pv
+  ON pv.provider_reference = dh.provider_reference
+  OR (pv.provider_reference IS NULL AND pv.transaction_code = dh.transaction_code);
+```
+
+Trùng tham chiếu phía NCC được phát hiện trước bằng `GROUP BY provider_reference HAVING count(*) > 1` (loại `DUPLICATE`). Phía hoàn tiền so tương tự trên `refund_request` `SUCCEEDED` với `completed_at` trong ngày. Kết quả ghi `reconciliation_item` theo lô 5.000 bằng `COPY`; chênh lệch mới được tạo, chênh lệch cũ đã khớp được đóng `AUTO_MATCHED` (FR-19-044 bước 4). 100.000 dòng mỗi phía ≤ 10 phút (NFR-19-008): truy vấn chạy trên chỉ mục `(tenant_id, provider_id, paid_at)` của phân vùng tháng và chỉ mục `(session_id, run_no, provider_reference)` của bảng tạm.
+
+### 11.3. Chênh lệch và xử lý
+
+`DiscrepancyService` hiện thực máy trạng thái khung §7.7; ghi chú là bảng `discrepancy_note` chỉ-ghi-thêm. `ResolutionExecutor` thực thi cách xử lý đã duyệt theo bảng FR-19-046, luôn kiểm tra `version` của giao dịch bằng với giá trị ghi lúc đề xuất. Cách `ACCEPT_PROVIDER_FIGURE` ghi bản ghi bù `transaction_adjustment` (`transaction_id`, `kind`, `amount_delta`, `discrepancy_id`), không sửa số tiền gốc (BR-19-030).
+
+### 11.4. Chốt và biên bản
+
+`MinutesGenerator` sinh XLSX bằng Apache POI (luồng SXSSF) và PDF bằng OpenPDF theo mẫu thể thức NĐ 30/2020 (phông Times New Roman nhúng, khổ A4), tính SHA-256 của PDF, in mã băm ở chân trang, tải lên bucket WORM `dh-{tenant}-payment-worm` (Ceph RGW Object Lock chế độ `COMPLIANCE`, `RetainUntilDate` = ngày chốt + `19.retention.transaction-years`). Phiên chỉ chuyển `CLOSED` sau khi biên bản đã lưu thành công; với phiên lớn, việc sinh chạy bằng `background_job` loại `RECON_MINUTES` và phiên ở trạng thái con `CLOSING` (cột `closing_job_id`) cho tới khi xong.
+
+### 11.5. Mở lại
+
+Mở lại tạo `approval_request` loại `RECON_REOPEN`; khi duyệt, `run_no + 1`, phiên `IN_REVIEW`, chạy lại so khớp; biên bản cũ giữ nguyên trong WORM, biên bản mới tham chiếu `supersedes_file_id`.
+
+### 11.6. Lưu tệp
+
+| Bucket | Hệ lưu trữ | Nội dung | Khóa đối tượng | Giữ |
+|---|---|---|---|---|
+| `dh-{tenant}-payment` | Garage | Tệp đối soát gốc, tệp đính kèm, chứng từ hoàn, kết quả xuất | `{purpose}/{yyyy}/{MM}/{fileId}` | Đính kèm, chứng từ: theo đối tượng; xuất: 7 ngày |
+| `dh-{tenant}-payment-worm` | Ceph RGW Object Lock | Biên bản đối soát, bản sao tệp đối soát gốc của phiên đã chốt | `recon/{providerCode}/{businessDate}/{runNo}/…` | ≥ 10 năm (NFR-19-014) |
+
+## 12. Phê duyệt bốn mắt (ADR-046)
+
+### 12.1. Mô hình
+
+`approval_request` (EN-19-16): `approval_type`, `target_type`, `target_id`, `requested_by`, `requested_at`, `required_approvals` (1 hoặc 2), `first_approver_id`, `first_decided_at`, `second_approver_id`, `second_decided_at`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, `EXPIRED`), `snapshot` (T-JSON, ảnh chụp bằng chứng lúc lập), `expires_at` (lập + 7 ngày), `version`. Các loại: `PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBOARD`, `PARTNER_TERMINATE`, `REFUND`, `DISCREPANCY_RESOLUTION`, `RECON_REOPEN`, `ROUTING_MODE_CHANGE`, `RESULT_MAPPING_CHANGE` (đề xuất).
+
+### 12.2. Quyền và tách nhiệm theo loại
+
+| Loại | Quyền lập | Quyền quyết định | Tách nhiệm bổ sung |
+|---|---|---|---|
+| `PROVIDER_ACTIVATE`, `PROVIDER_RETIRE` | `provider-write`, `provider-delete` | `provider-activate` | — |
+| `PARTNER_ONBOARD`, `PARTNER_TERMINATE` | `partner-write` | `partner-approve` | — |
+| `REFUND` | `refund-create`, `partner-refund-create` | `refund-approve` | Cấp 2 ≠ cấp 1; người xác nhận chứng từ ∉ người duyệt |
+| `DISCREPANCY_RESOLUTION` | `discrepancy-handle` | `discrepancy-approve` | Nếu tạo hoàn: người duyệt hoàn ≠ người duyệt chênh lệch |
+| `RECON_REOPEN` | `recon-close` | `recon-reopen-approve` | ≠ người đã chốt phiên |
+| `ROUTING_MODE_CHANGE` | `migration-switch` | `migration-switch` | — |
+| `RESULT_MAPPING_CHANGE` | `provider-write` | `provider-activate` | — |
+
+Mọi loại: người quyết định ≠ `requested_by` (BR-19-011). `FourEyesGuard.check(type, request, actor)` hiện thực bảng trên; CSDL có `CHECK (first_approver_id IS DISTINCT FROM requested_by AND second_approver_id IS DISTINCT FROM requested_by AND second_approver_id IS DISTINCT FROM first_approver_id)` và chỉ mục duy nhất một phần cho mỗi đối tượng chỉ có một đề nghị `PENDING` cùng loại.
+
+### 12.3. Quyết định
+
+`ApprovalService.decide(id, decision, note, ifMatch)`: khóa hàng đề nghị, kiểm tra `PENDING` (ERR-19-034), ETag (ERR-19-045), quyền theo loại (ERR-19-046), tách nhiệm (ERR-19-033); ghi cấp quyết định; phát `ApprovalDecided(type, targetId, level, decision)` đồng bộ để module chủ đối tượng kiểm tra lại điều kiện nghiệp vụ và áp thay đổi **trong cùng giao dịch CSDL**; nếu module chủ từ chối (điều kiện không còn đúng), toàn bộ giao dịch quay lui và người duyệt nhận mã lỗi của module (ví dụ ERR-19-035). `ApprovalExpiryJob` mỗi 10 phút chuyển đề nghị quá hạn sang `EXPIRED` và phát `ApprovalDecided(EXPIRED)`.
+
+## 13. Di trú và strangler (ADR-049)
+
+### 13.1. Nhập dữ liệu
+
+`LegacyReader` có hai hiện thực: `JdbcLegacyReader` (kết nối chỉ đọc khai báo ở PH-05, Q359) và `CsvLegacyReader` (mẫu tệp ở D06-01). `ImportRunner` đọc theo khóa tăng dần, lô 10.000, mỗi lô một giao dịch CSDL; `LegacyStatusMapper` theo khung §7.4; `legacy_mapping (tenant_id, legacy_table, legacy_id) UNIQUE` bảo đảm chạy lại cập nhật thay vì chèn trùng. Giao dịch nhập có `is_migrated = true`, `TransitionSource.MIGRATION`, không ghi outbox nghiệp vụ (chỉ ghi kiểm toán tổng hợp của lần chạy).
+
+### 13.2. Chế độ định tuyến
+
+PH-03 giữ bảng tuyến theo đối tác: `LEGACY` → upstream hệ cũ; `SHADOW` → upstream hệ cũ, plugin `proxy-mirror` nhân bản yêu cầu tạo giao dịch sang `dh-payment` với tiêu đề `X-Datahub-Shadow: 1`; `DATAHUB` → `dh-payment`. PH-03 cập nhật tuyến khi nhận EVT-19-04 (≤ 60 giây). Callback của PayGov (một địa chỉ đăng ký, A-19-07) được PH-03 định tuyến theo tiền tố mã giao dịch: mã theo mẫu BR-19-002 đi Datahub, còn lại đi hệ cũ.
+
+### 13.3. Đối chiếu
+
+`ShadowComparer` ghép giao dịch bóng với giao dịch hệ cũ theo (`legacyAppCode` của đối tác, `partnerOrderId`, số tiền) trong cửa sổ ±1 ngày; `HistoricalComparer` so tổng theo tháng và theo đối tác qua `legacy_mapping`. Kết quả ghi `background_job.result` (T-JSON) và tệp CSV bản ghi lệch; `PASSED` khi đạt ngưỡng BR-19-034.
+
+## 14. Xử lý lỗi, chịu lỗi và nhất quán
+
+| Tình huống | Hành vi | Bảo đảm |
+|---|---|---|
+| Pod `api` chết sau tx1, trước khi gọi PayGov | Giao dịch `CREATED` không có tham chiếu; truy vấn bù sau 2 phút; PayGov "không tồn tại" → giao dịch vẫn mở tới hạn rồi `EXPIRED` | Không mất, không trùng (đối tác gửi lại cùng khóa nhận cùng giao dịch) |
+| Pod chết sau khi PayGov khởi tạo, trước tx2 | Truy vấn bù tìm thấy giao dịch ở PayGov → `PENDING` hoặc kết quả cuối | Không trùng |
+| PayGov chậm, timeout | `init_uncertain`, ERR-19-019 cho đối tác | Không báo sai "thất bại" |
+| `pg-payment` chuyển nút chính | CNPG tự chuyển trong ≤ 30 giây; ứng dụng thử lại giao dịch CSDL bị hủy (tối đa 3 lần, chỉ với thao tác lũy đẳng); API trả 503 trong lúc chuyển | RPO = 0 (đồng bộ) |
+| Valkey ngừng | Lũy đẳng rơi về PostgreSQL; hạn mức rơi về bảng; nonce rơi về ràng buộc duy nhất | Chậm hơn, vẫn đúng |
+| Kafka ngừng | Outbox tích lũy; webhook vẫn gửi; cảnh báo tồn đọng | Không mất sự kiện |
+| OpenBao ngừng | Bí mật đệm trong bộ nhớ (≤ 1 giờ) tiếp tục dùng; ký qua transit thất bại → khởi tạo trả ERR-19-017 cho NCC đó | Không dùng khóa sai |
+| PH-07 ngừng | Mã danh mục đệm; thao tác ghi cần kiểm tra mới bị chặn ERR-19-039 | Đường thu tiền không bị ảnh hưởng |
+| Đồng hồ lệch | NTP; kiểm tra lệch ±5 phút của IPN dựa trên đồng hồ đã đồng bộ | NFR-19-028 |
+
+Mọi lỗi trả RFC 9457 `application/problem+json` với `type = https://datahub.gov.vn/errors/ERR-19-nnn`, `code`, `title` tiếng Việt, `detail` không lộ nội bộ, `traceId`, `errors[]` cho lỗi trường (D03-04-PH19 §6).
+
+## 15. Cấu hình, quan sát, dung lượng
+
+### 15.1. Cấu hình ứng dụng
+
+| Khóa (`application.yaml`) | Mặc định | Ghi chú |
+|---|---|---|
+| `dh.payment.role` | `api` | `api`, `callback`, `worker` |
+| `dh.payment.datasource.primary.url` | `jdbc:postgresql://pg-payment-rw:5432/datahub` | |
+| `dh.payment.datasource.replica.url` | `jdbc:postgresql://pg-payment-ro:5432/datahub` | |
+| `dh.payment.provider.bulkhead.max-concurrent` | 50 | Mỗi NCC mỗi pod |
+| `dh.payment.provider.timeout.initiate` | `PT10S` | |
+| `dh.payment.inbox.batch-size` | 100 | |
+| `dh.payment.outbox.relay.enabled` | `false` | `true` khi không có Debezium |
+| `dh.payment.webhook.max-in-flight-per-endpoint` | 4 | Thứ tự theo giao dịch vẫn giữ |
+| `dh.payment.export.max-concurrent-per-user` | 3 | FR-19-052 |
+
+Tham số nghiệp vụ theo tenant (`19.*`) nằm ở `tenant_payment_config` (FRS §7.1), đọc qua `TenantPaymentConfigService` có đệm 60 giây và làm mới khi có sự kiện phiên bản mới.
+
+### 15.2. Quan sát
+
+Chỉ số theo FRS FR-19-059; vết OpenTelemetry với span cho mỗi lời gọi NCC (`payment.provider.initiate` với thuộc tính `provider.code`, `outcome`, không có dữ liệu cá nhân), mỗi lần xử lý inbox, mỗi lượt webhook; log JSON có `trace_id`, `tenant_id`, `transaction_code` (không có dữ liệu người nộp). Bảng điều khiển Grafana "PH-19 Thanh toán" gồm: giao dịch theo trạng thái, độ trễ NCC, tồn đọng inbox/outbox/webhook, mạch, chênh lệch mở, tuổi giao dịch treo.
+
+### 15.3. Dung lượng ước tính (QM-VUA, giả định A-19-19)
+
+| Bảng | Dòng mỗi năm | Kích thước một dòng | Mỗi năm | Ghi chú |
+|---|---|---|---|---|
+| `payment_transaction` | 7,3 triệu | ~1,2 KB (gồm mã hóa) | ~9 GB | Phân vùng tháng |
+| `transaction_event` | ~22 triệu | ~0,3 KB | ~7 GB | |
+| `callback_inbox` | ~8,5 triệu | ~2 KB | ~17 GB | Nguyên văn |
+| `integration_log` | ~30 triệu | ~3 KB | ~90 GB | Online 12 tháng rồi nén ra kho đối tượng |
+| `reconciliation_item` | ~7,3 triệu | ~0,3 KB | ~2,2 GB | |
+| `webhook_delivery` | ~8 triệu | ~0,5 KB | ~4 GB | |
+
+Tổng trực tuyến năm đầu khoảng 130 GB cộng chỉ mục (~40%), phù hợp định cỡ Q340 (`pg-iam` cộng 100 GB) cho năm đầu; từ năm thứ hai cần tăng theo D03-09 §8 hoặc rút ngắn thời gian nhật ký tích hợp trực tuyến (câu hỏi OQ-19-27).
+
+## 16. Kiểm thử
+
+| Mức | Nội dung | Công cụ |
+|---|---|---|
+| Đơn vị | `TransactionStateMachine` (mọi cặp trạng thái × nguồn), `ResultMapper`, `PaymentValidator` 15 bước, `FourEyesGuard`, `Redactor`, `Money` | JUnit 5, jqwik |
+| Kiến trúc | Modulith `verify()`, ArchUnit (không `double` trong tiền, adapter chỉ dùng `spi`) | Spring Modulith, ArchUnit |
+| Tích hợp | Repository, RLS (`TenantIsolationIT`), outbox, inbox với PostgreSQL thật | Testcontainers PostgreSQL 18, Valkey, Kafka |
+| Hợp đồng | OpenAPI ba nhóm, AsyncAPI; ví dụ trong D03-04-PH19 chạy như ca kiểm thử | Spring Cloud Contract hoặc Schemathesis |
+| Adapter | Bộ giả lập PayGov (WireMock + kịch bản) tái hiện khởi tạo, IPN lặp, IPN sai chữ ký, truy vấn, đối soát (NFR-19-032) | WireMock |
+| Đồng thời | 1.000 yêu cầu cùng khóa, 1.000 IPN trùng song song (AC-19-04) | k6, JUnit `@RepeatedTest` song song |
+| Hiệu năng | 200 giao dịch/giây 15 phút (NFR-19-002), đối soát 100.000 dòng | k6, Gatling |
+| Chịu lỗi | Tắt Valkey, Kafka, chuyển nút `pg-payment`, tắt control plane (AC-19-13) | Chaos Mesh |
+| An toàn | ZAP quét API, kiểm thử SSRF webhook, giả mạo IPN | OWASP ZAP, ca D05-02-PH19 |
+
+Ca kiểm thử chi tiết ở D05-02-PH19 (TS-19-01…34).
+
+## 17. Lộ trình hiện thực và MVP
+
+| Bước | Nội dung | FR | Điều kiện xong |
+|---|---|---|---|
+| 1 | Khung DU, schema, RLS, `TenantSession`, outbox, kiểm toán, mock adapter | FR-19-053, 061, 064 | `TenantIsolationIT` xanh |
+| 2 | NCC, thông tin xác thực, kiểm tra kết nối, giao dịch thử, kích hoạt, bảng ánh xạ | FR-19-001…011, 069 | Kích hoạt NCC mock qua bốn mắt |
+| 3 | Dịch vụ, đối tác, client, hạn mức, webhook | FR-19-013…021 | Đối tác gửi thử webhook thành công |
+| 4 | Tạo giao dịch, lũy đẳng, chống trùng, callback, inbox, truy vấn bù, hết hạn, webhook | FR-19-022…025, 027…031, 033…036, 060, 062 | AC-19-02 với mock; AC-19-03, 04, 05 |
+| 5 | Adapter PayGov theo tài liệu VPCP | FR-19-024, 029 | Giao dịch thử thật với PayGov môi trường thử |
+| 6 | Hoàn tiền thủ công, đối soát tải tệp, chênh lệch, chốt, biên bản | FR-19-038…048 | AC-19-07 |
+| 7 | Tra cứu, chi tiết, nhật ký, dashboard, chỉ số | FR-19-049…051, 054…057, 059 | Màn UI-19-01, 02, 14, 15 |
+| 8 | Cấu hình tenant, di trú, chạy bóng, chuyển chế độ | FR-19-063, 065, 066, 068 | AC-19-11 |
+| Đ2b | Xoay khóa có chuyển tiếp, hủy chủ động, xử lý lại IPN, đồng bộ thủ công, hoàn qua API, xuất danh sách, báo cáo, API đối soát cho đối tác | FR-19-012, 026, 032 (phần), 037, 040 (phần), 048 (phần), 052, 058 | — |
+
+## 18. Câu hỏi mở
+
+| Mã | Câu hỏi | Ảnh hưởng | Phương án đang dùng |
+|---|---|---|---|
+| OQ-19-27 | Nhật ký tích hợp trực tuyến 12 tháng (NFR-19-015) làm `pg-payment` vượt định cỡ Q340 từ năm thứ hai; có chấp nhận rút còn 6 tháng trực tuyến cộng bản nén ở kho đối tượng không | §15.3, D03-09 | Giữ 12 tháng, theo dõi dung lượng, đề xuất lại khi đạt 70% |
+| OQ-19-28 | PayGov có chấp nhận chữ ký do OpenBao transit tạo (định dạng ASN.1 DER hay thô) không | §9.4 | Thiết kế dùng transit; dự phòng `kv` với khóa trong bộ nhớ có hạn |
+| OQ-19-29 | Cụm có Debezium ở QM-NHO không | §6.4 | `OutboxRelay` quét theo lô |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người thực hiện |
+|---|---|---|---|
+| 0.1 | 26/11/2026 | Bản đầu: kiến trúc DU ba vai trò, cổng NCC và adapter PayGov giả định, giao dịch, lũy đẳng, inbox, outbox, webhook, bảng ánh xạ mã mặc định, phía đọc, bảo mật, hoàn tiền, đối soát, phê duyệt, di trú, chịu lỗi, dung lượng, kiểm thử, lộ trình | Nhóm phân hệ PH-19 |
