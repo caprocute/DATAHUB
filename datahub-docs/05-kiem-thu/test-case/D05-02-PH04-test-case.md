@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D05-02-PH04
 ten: Kịch bản và test case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.1
-ngay: 2026-11-25
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội kiểm thử, Đội phát triển PH-04 (L-INT, frontend console), Kiến trúc sư, ATTT, Vận hành, Cán bộ nghiệm thu, Chủ đầu tư
 phan_he: PH-04
 nguoi_lap: Nhóm phân hệ PH-04
+mo_ta: Kịch bản và test case của phân hệ Lõi tích hợp và trình thiết kế luồng, chạy được ngay trên SIT với bộ dữ liệu mẫu, kèm nghiệm thu tương đương Bus và Tooling cũ, ma trận truy vết sinh tự động, tệp Gherkin và bảng tính ghi kết quả.
+tai_lieu_lien_quan: D05-01 Kế hoạch kiểm thử tổng thể; D02-03-PH04 FRS; D02-04-PH04 Use case; D03-02-PH04 SDD; D03-03-PH04 CSDL; D03-04-PH04 API; D03-06-PH04 Màn hình; D02-08 Ma trận phân quyền
 ---
 
 # D05-02-PH04 · Kịch bản và test case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
@@ -19,13 +21,13 @@ nguoi_lap: Nhóm phân hệ PH-04
 - Lõi không làm mất chức năng của Bus tích hợp và công cụ kéo thả Productivity Tooling đang vận hành.
 - Không có đường nào để một luồng chưa được duyệt, hoặc một luồng của tỉnh này, chạm vào dữ liệu của tỉnh khác.
 
-**Phạm vi.** Gồm 32 kịch bản (TS-04-01…32) với 186 test case (TC-04-001…186; 111 ca P1) và 12 kịch bản nghiệm thu người dùng (UAT-04-01…12). Phạm vi phủ:
+**Phạm vi.** Gồm <!--gen:so-ts-->32<!--/gen--> kịch bản (TS-04-01…32) với <!--gen:so-tc-->202 test case (TC-04-001…202; 119 ca P1)<!--/gen--> và 12 kịch bản nghiệm thu người dùng (UAT-01…12). Phạm vi phủ:
 
-- Ở control plane: không gian làm việc, luồng, phiên bản, trình thiết kế, kiểm tra hợp lệ, chạy thử, duyệt bốn mắt, phát hành GitOps, lệnh runtime, catalog.
+- Ở control plane: không gian làm việc, luồng, phiên bản, trình thiết kế, kiểm tra hợp lệ, chạy thử, duyệt bốn mắt, phát hành GitOps, lệnh runtime, catalog, di trú dữ liệu W2.
 - Ở data plane: chín chặng chuẩn, Kafka, xử lý lỗi, truy cập CSDL có kiểm soát theo Q359.
 - Các yêu cầu phi chức năng: hiệu năng, bảo mật theo OWASP ASVS 5.0, khả dụng, truy cập theo WCAG 2.2 AA.
 
-Mỗi yêu cầu mức bắt buộc (M) có ít nhất một ca dương tính và một ca âm tính. Ma trận truy vết ở mục 8 được sinh tự động từ chính tài liệu này.
+Mỗi yêu cầu mức bắt buộc (M) có ít nhất một ca dương tính và một ca âm tính. Bốn trình tự chính của SDD (phát hành tới `SYNCED`, chạy thử `MOCK`, gửi duyệt và duyệt bốn mắt, dừng khẩn) có ca đầu cuối riêng. Ma trận truy vết ở mục 8 được sinh tự động từ chính tài liệu này.
 
 **Căn cứ.** Gồm:
 
@@ -45,25 +47,73 @@ Hiện mã đang chạy (W2) mới chạy thử **giả lập**, chưa có sandb
 
 ## 0. Giới thiệu
 
+Chương này nói tài liệu dùng để làm gì, cho ai, phủ đến đâu và đọc theo thứ tự nào. Người chỉ cần kết luận đọc phần tóm tắt ở trên và mục 7, 8; người viết hoặc chạy ca đọc thêm mục 1, 2 rồi vào thẳng chương 4, 5.
+
+### 0.1. Mục đích
+
 Tài liệu này là đặc tả kiểm thử của PH-04, lập theo ISO/IEC/IEEE 29119-3, gồm ba phần:
 
 - đặc tả thiết kế kiểm thử: các kịch bản `TS-04-nn`;
-- đặc tả ca kiểm thử: các test case `TC-04-nnn`;
+- đặc tả ca kiểm thử: các test case `TC-04-nnn`, mỗi ca một khối đặc tả hai cột;
 - đặc tả thủ tục kiểm thử: các bước trong từng ca, cùng thủ tục thủ công ở mục 6 và mẫu tự động hóa ở mục 9.
 
-Kế hoạch kiểm thử tổng thể ở D05-01. Tài liệu này kế thừa mọi quy định chung từ đó và theo đúng độ sâu của mẫu D05-02-PH07.
+Ca được viết để kiểm thử viên chạy được ngay trên SIT với bộ dữ liệu mục 2, không cần hỏi lại người viết; kỹ sư dùng cùng ca đó làm tiêu chí nghiệm thu khi viết mã.
+
+### 0.2. Phạm vi
 
 PH-04 có hai phần chạy rất khác nhau, nên được kiểm thử theo hai trục:
 
 - **Control plane** `dh-integration`, module `flow`: API REST `/api/integration/v1` (API-04-001…091) và giao diện UI-04-01…21. Rủi ro chính là phân quyền, bốn mắt, xung đột soạn đồng thời, mất dữ liệu khi quay vòng YAML, và triển khai phiên bản chưa duyệt.
 - **Data plane** `dh-runtime` và `dh-runtime-sandbox`: các luồng Camel đã phát hành. Rủi ro chính là rò rỉ tenant, lộ dữ liệu cá nhân trong log, ghi CSDL nguồn, nhận lệnh giả mạo, và mất bản tin.
 
-Dẫn chiếu:
+Kế hoạch kiểm thử tổng thể ở D05-01. Tài liệu này kế thừa mọi quy định chung từ đó và theo đúng độ sâu của mẫu D05-02-PH07, D05-02-PH05. Thành phần ngoài phạm vi chỉ được giả lập, liệt kê ở mục 1.1.
+
+### 0.3. Người đọc
+
+| Người đọc | Dùng tài liệu để | Đọc trước |
+|---|---|---|
+| Hội đồng thẩm định, chủ đầu tư | Đánh giá độ phủ và điều kiện phát hành | Tóm tắt, mục 7, 8 |
+| Kiểm thử viên | Chạy ca, ghi kết quả vào bảng tính | Mục 1, 2, chương 4, 5 |
+| Kỹ sư PH-04 (L-INT, frontend console) | Viết ca tự động, lấy ca làm tiêu chí nghiệm thu | Mục 1.2, 1.4, chương 4, mục 9 |
+| Cán bộ ATTT | Soát ca tenant, bốn mắt, lệnh có ký, bảo mật | TS-04-15, 18, 22, 23, 24, 30 |
+| Vận hành | Diễn tập sự cố, ca hỗn loạn | TS-04-18, 31, mục 6.3 |
+| Cán bộ vận hành Bus cũ của tỉnh thí điểm | Nghiệm thu tương đương hệ cũ | Mục 7 |
+
+: Người đọc và cách dùng tài liệu
+
+### 0.4. Thuật ngữ và viết tắt
+
+Thuật ngữ chung dùng theo D00-01 và D02-03-PH04 §1.4. Bảng dưới chỉ nêu những từ hay gặp trong tài liệu này.
+
+| Thuật ngữ | Nghĩa |
+|---|---|
+| Kịch bản (TS) | Nhóm ca cùng mục tiêu kiểm thử, thường ứng với một use case |
+| Test case, ca (TC) | Một phép kiểm có dữ liệu, bước, kết quả mong đợi xác định |
+| Ca dương, ca âm | Ca chứng minh hệ làm đúng khi đầu vào hợp lệ; ca chứng minh hệ từ chối đúng khi đầu vào sai hoặc thiếu quyền |
+| UAT | Nghiệm thu người dùng (User Acceptance Test), do người dùng nghiệp vụ tự thực hiện |
+| SIT, PERF, UAT | Môi trường kiểm thử tích hợp, hiệu năng, nghiệm thu (mục 1.3) |
+| MOCK, SANDBOX_LIVE, SIMULATED | Chế độ chạy thử: đích mô phỏng; đích thật môi trường TEST; mô phỏng tĩnh của mã W2 (không tính cho gửi duyệt) |
+| GitOps | Cách phát hành bằng ghi cấu hình vào kho Git, Argo CD đồng bộ xuống cụm |
+| SYNCED, OUT_OF_SYNC | Trạng thái triển khai: runtime đã báo đúng phiên bản, băm; lệch so với Git |
+| Bốn mắt | Người duyệt phải khác người tạo, người đóng góp, người gửi duyệt |
+| DLQ | Hàng bản tin lỗi (Dead Letter Queue) của PH-18 |
+| W2 | Đợt mã hiện có trước bản thiết kế này (bảng `route*`, chạy thử giả lập) |
+| 403-PQ, 404-ẩn, KT, EVT, Git | Ký hiệu rút gọn trong kết quả mong đợi (mục 1.6) |
+
+: Thuật ngữ và viết tắt
+
+### 0.5. Tài liệu tham chiếu
 
 - Tài liệu PH-04: [FRS](../../02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md), [Use case](../../02-yeu-cau/use-case/D02-04-PH04-use-case-tich-hop.md), [SDD](../../03-thiet-ke/sdd/D03-02-PH04-sdd-tich-hop.md), [CSDL](../../03-thiet-ke/csdl/D03-03-PH04-csdl-tich-hop.md), [API](../../03-thiet-ke/api/D03-04-PH04-api-tich-hop.md), [Màn hình](../../03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md).
 - Tài liệu nền: [D02-08](../../02-yeu-cau/D02-08-ma-tran-phan-quyen.md), [D03-10](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md), [D04-02](../../04-lap-trinh/D04-02-quy-trinh-ky-thuat.md), [D05-01](../D05-01-master-test-plan.md).
+- Tệp đi kèm sinh từ tài liệu này: bảng tính [D05-02-PH04-test-case.xlsx](ph04/D05-02-PH04-test-case.xlsx), Gherkin `ph04/gherkin/*.feature`.
+- Chuẩn: ISO/IEC/IEEE 29119-3, OWASP ASVS 5.0, WCAG 2.2.
 
-Khi kỳ vọng phân quyền mâu thuẫn, D02-08 được ưu tiên.
+Khi kỳ vọng phân quyền mâu thuẫn, D02-08 được ưu tiên. Câu thông báo người dùng nhìn thấy lấy từ D03-06-PH04 §5 và D02-03-PH04; câu chưa có ở đó ghi ở mục 11.
+
+### 0.6. Cấu trúc tài liệu
+
+Mục 1 nêu đối tượng, mức, môi trường, công cụ, tiêu chí và quy ước. Mục 2 là bộ dữ liệu kiểm thử có tên. Mục 3 là bảng danh sách kịch bản, máy trạng thái và bảng danh sách mọi test case. Chương 4 đặc tả các ca chức năng theo kịch bản, chương 5 các ca phi chức năng. Mục 6 là thủ tục thủ công, mục 7 nghiệm thu người dùng, mục 8 ma trận truy vết sinh tự động, mục 9 tự động hóa và tệp đi kèm, mục 10 câu hỏi mở, mục 11 đề nghị đồng bộ cho tập khác.
 
 ## 1. Phạm vi, chiến lược và tổ chức kiểm thử
 
@@ -77,6 +127,8 @@ Khi kỳ vọng phân quyền mâu thuẫn, D02-08 được ưu tiên.
 | Sandbox | `dh-runtime-sandbox` (namespace `dh-sandbox`, Q04-20) | Nhận lần chạy thử từ Valkey Stream `dh:int:testrun:queue` |
 | Giao diện | `dh-console` (React, antd v6, Liquid Glass) | UI-04-01…21, đặc biệt trình thiết kế UI-04-04 và các cửa sổ 05…10 |
 | Kho cấu hình | `dh-flows-{tenant}` + Argo CD ApplicationSet | Nhánh `env/test`, `env/staging`, `env/prod` |
+
+: Đối tượng kiểm thử
 
 Ngoài phạm vi, chỉ được giả lập:
 
@@ -99,6 +151,8 @@ Ngoài phạm vi, chỉ được giả lập:
 | Bảo mật (SEC) | Kiểm soát truy cập, injection, chuỗi cung ứng | ASVS 5.0 V4, V5, V8, V10, V12, V14 | OWASP ZAP, REST Assured, bộ YAML độc tự sinh, Trivy, Cosign verify | Kỹ sư ATTT | Hằng tuần; trước phát hành |
 | Nghiệm thu (UAT) | Tương đương Bus và Tooling | Mục 7 | Thủ công trên UAT | Cán bộ vận hành Bus cũ của tỉnh thí điểm | Trước nghiệm thu |
 
+: Mức kiểm thử
+
 ### 1.3. Môi trường kiểm thử
 
 | Môi trường | Thành phần | Ghi chú |
@@ -107,6 +161,8 @@ Ngoài phạm vi, chỉ được giả lập:
 | SIT | k3d 3 nút; Argo CD; Gitea với kho `dh-flows-t68`, `dh-flows-t01`; Keycloak realm `dh-t68`, `dh-t01`, `dh-platform`; APISIX `apisix-int`; OPA; `dh-integration` 2 bản sao; `dh-runtime` hồ sơ `core-native` 2 bản sao, `soap-jvm` 1 bản sao cho mỗi tenant; `dh-runtime-sandbox` 2 bản sao; Kafka 3 broker; Debezium; Ceph RGW (hoặc MinIO tương thích S3); PostgreSQL nguồn giả lập cho Q359 | Nạp lại bộ dữ liệu mục 2 mỗi đêm |
 | PERF | Như SIT; `dh-runtime` native 4 bản sao, mỗi bản sao 1 vCPU, 512 MiB; WireMock đích trả trong 20 ms | Quy mô theo GĐ: 300 luồng mỗi tenant, 3 tenant |
 | UAT | Như SIT; luồng chuyển từ gói XML Bus cũ của tỉnh thí điểm, đã gỡ mật khẩu (Q04-49) | Cán bộ vận hành Bus cũ thao tác |
+
+: Môi trường kiểm thử
 
 ### 1.4. Công cụ
 
@@ -123,6 +179,8 @@ Ngoài phạm vi, chỉ được giả lập:
 | OWASP ZAP | Quét động | Ngữ cảnh xác thực theo vai trò |
 | WireMock | Hệ đích, PH-05, PH-02, PH-10 | Kịch bản có trạng thái: `OK`, `SLOW_5S`, `HTTP_500`, `TIMEOUT`, `FLAKY_50` |
 | Gitea | Kho cấu hình | Webhook giả lập merge request cho `env/prod` |
+
+: Công cụ kiểm thử
 
 ### 1.5. Tiêu chí vào và ra
 
@@ -176,6 +234,8 @@ Quy ước rút gọn trong phần mong đợi:
 | EVT: không | Sau 10 giây không có dòng mới trong `ph04.outbox` và không có bản tin trên topic liên quan |
 | Git: không | Không có commit mới trên mọi nhánh `env/*` của kho tenant |
 
+: Ký hiệu rút gọn trong kết quả mong đợi
+
 ### 1.7. Quản lý lỗi và báo cáo
 
 Lỗi ghi vào hệ thống quản lý lỗi với nhãn `PH-04`, mã test case, mức nghiêm trọng và `traceId`. Các lỗi sau luôn xếp mức Nghiêm trọng:
@@ -202,6 +262,8 @@ Mọi dữ liệu là giả lập. Mọi số định danh, tên người, cơ q
 | `T01` | Tỉnh đối chứng rò rỉ | `dh-t01` | `dh-flows-t01` | Có luồng **trùng mã** `tra-cuu-ho-tich` với T68 nhưng khác nội dung, để phát hiện trả nhầm |
 | `PLATFORM` | Quản trị nền tảng | `dh-platform` | — | Chính sách thành phần nền, khuôn nền |
 
+: Tenant kiểm thử
+
 ### 2.2. Người dùng
 
 Tên nhân vật trùng với use case D02-04-PH04 để người đọc dễ đối chiếu. Vai trò theo D02-08.
@@ -222,6 +284,8 @@ Tên nhân vật trùng với use case D02-04-PH04 để người đọc dễ đ
 | U-T01-IE | T01 | IE | DEFAULT `EDIT` | — | Đối chứng rò rỉ |
 | U-T01-TA | T01 | TA | — | — | Đối chứng rò rỉ |
 
+: Người dùng kiểm thử theo vai trò
+
 Mọi người dùng có vai trò TA, SO, IA, PA đã đăng ký TOTP thử trong realm SIT, để không vướng FR-00-002 và để kiểm thử xác thực lại (`auth_time`).
 
 ### 2.3. Không gian làm việc
@@ -232,6 +296,8 @@ Mọi người dùng có vai trò TA, SO, IA, PA đã đăng ký TOTP thử tron
 | WS-DATDAI | T68 | IE2, IE3 `EDIT` | Mã `dat-dai` |
 | WS-ARCH | T68 | — | Đã lưu trữ, không chọn được khi tạo luồng |
 | DEFAULT | T68, T01 | — | Không gian mặc định khi `04.workspace.enforce = false` |
+
+: Không gian làm việc mẫu
 
 ### 2.4. Luồng mẫu
 
@@ -244,6 +310,8 @@ Mọi người dùng có vai trò TA, SO, IA, PA đã đăng ký TOTP thử tron
 | F-NEW | (tạo trong ca) | T68 | — | — | Mã do ca đặt, tiền tố `tc-` |
 | F-KAM | `dh-ma-hoa-cccd-action` | T68, WS-HOTICH | KAMELET | v1 `DRAFT` | Kamelet tự viết che số định danh |
 | F-T01 | `tra-cuu-ho-tich` | T01, DEFAULT | ROUTE | v1 `APPROVED`, PROD | Đối chứng: trả trường `tinh = "T01"` |
+
+: Luồng mẫu dùng trong ca
 
 ### 2.5. Kết nối, topic, khuôn mẫu
 
@@ -259,6 +327,8 @@ Mọi người dùng có vai trò TA, SO, IA, PA đã đăng ký TOTP thử tron
 | TOPIC-T01 | PH-10 | `t01.hotich.yeucau.v1` | Topic của tenant khác |
 | TPL-REST | Khuôn nền | `tpl-rest-proxy-9-chang` | Có `paramSchema` gồm `path`, `connection`, `schemaRef` |
 | TPL-KAFKA | Khuôn nền | `tpl-kafka-cdm` | |
+
+: Kết nối, topic, khuôn mẫu
 
 ### 2.6. Bản tin và tệp mẫu
 
@@ -279,6 +349,8 @@ Mọi người dùng có vai trò TA, SO, IA, PA đã đăng ký TOTP thử tron
 | XML-EXEC | Camel XML có `exec:` | |
 | XML-BAD | Tệp không phải Camel XML | |
 
+: Bản tin và tệp mẫu
+
 ### 2.7. Nguyên tắc dữ liệu
 
 Ca không phụ thuộc thứ tự chạy, trừ khi ghi rõ "sau TC-…". Ca tạo dữ liệu dùng mã tiền tố `tc-{số ca}` và tự dọn bằng API gỡ. Ca hiệu năng dùng bộ dữ liệu sinh riêng ở PERF. Không ca nào dùng dữ liệu cá nhân thật. Bản tin mẫu có dạng số định danh đều là giá trị thử.
@@ -287,40 +359,47 @@ Ca không phụ thuộc thứ tự chạy, trừ khi ghi rõ "sau TC-…". Ca t�
 
 ### 3.1. Danh sách kịch bản
 
-| Kịch bản | Tên | FR chính | UC |
-|---|---|---|---|
-| TS-04-01 | Không gian làm việc và thành viên | 007 | 01 |
-| TS-04-02 | Danh sách, tìm kiếm, chi tiết luồng | 001, 002 | 02 |
-| TS-04-03 | Tạo luồng từ luồng trống, khuôn, API, YAML | 003, 025 | 03 |
-| TS-04-04 | Sửa thông tin, nhân bản, hủy nháp, gỡ luồng | 004, 005, 006 | 16 |
-| TS-04-05 | Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba bên | 010, 011, 024 | 04 |
-| TS-04-06 | Trình thiết kế: bảng thành phần, sơ đồ, cấu hình chặng | 012, 013, 014 | 04, 05 |
-| TS-04-07 | Quay vòng YAML, tải xuống, nhập YAML | 017, 027 | 04 |
-| TS-04-08 | Biểu thức, kết nối, bí mật, bản tin mẫu | 015, 016, 022 | 05 |
-| TS-04-09 | Trình ánh xạ dữ liệu | 020 | 06 |
-| TS-04-10 | Kamelet, Pipe, bean, ghi chú, luồng con | 018, 019, 021, 026 | 07 |
-| TS-04-11 | Kiểm tra hợp lệ VR-01…20 | 023 | 04 |
-| TS-04-12 | Chạy thử trên sandbox | 030, 032, 033 | 08 |
-| TS-04-13 | Ca kiểm thử của luồng | 031 | 09 |
-| TS-04-14 | Gửi duyệt, rút lại | 040 | 10 |
-| TS-04-15 | Duyệt bốn mắt và so sánh phiên bản | 041, 043 | 11 |
-| TS-04-16 | Phát hành GitOps và nâng môi trường | 042, 045 | 12 |
-| TS-04-17 | Quay lui | 044 | 13 |
-| TS-04-18 | Lệnh runtime có ký: tạm dừng, tiếp tục, dừng khẩn, đối soát | 050 | 14, 15 |
-| TS-04-19 | Tình trạng runtime, điểm kết nối, giám sát, lịch sử | 051, 052, 053, 083 | 02 |
-| TS-04-20 | Data plane đồng bộ qua chín chặng | 060, 061, 063…068 | 17 |
-| TS-04-21 | Data plane bất đồng bộ, xử lý lỗi, chống trùng | 062, 069, 070, 071 | 18 |
-| TS-04-22 | Truy cập CSDL có kiểm soát (Q359) | 072 | 19 |
-| TS-04-23 | Ngữ cảnh tenant và rò rỉ chéo tenant | 073 | 17, 18 |
-| TS-04-24 | Ma trận phân quyền và phạm vi không gian làm việc | 007, mọi FR | — |
-| TS-04-25 | Catalog, chính sách thành phần, hồ sơ runtime | 075, 080, 081 | 21, 22 |
-| TS-04-26 | Chuyển Camel XML của Bus cũ | 082 | 20 |
-| TS-04-27 | Tham số PH-04 và đóng băng thay đổi | 084 | 7.1 |
-| TS-04-28 | Sự kiện, outbox và hợp đồng API | 074, mọi EVT | — |
-| TS-04-29 | Hiệu năng | NFR-04-001…013 | — |
-| TS-04-30 | Bảo mật (ASVS) | — | — |
-| TS-04-31 | Khả dụng và hỗn loạn | NFR-04-014 | — |
-| TS-04-32 | Truy cập, bàn phím và bề rộng màn hình | NFR-04-015…017 | — |
+Mỗi kịch bản gom các ca cùng mục tiêu, thường ứng với một use case. Cột "FR chính" và "UC" ghi ba chữ số cuối của mã; cột "Số ca" do `ph04/tools/fill_doc.py` đếm lại từ chương 4, 5 nên luôn khớp.
+
+<!--gen:ts-table-->
+| Kịch bản | Tên | FR chính | UC | Số ca |
+|---|---|---|---|---|
+| TS-04-01 | Không gian làm việc và thành viên | 007 | 01 | 7 |
+| TS-04-02 | Danh sách, tìm kiếm, chi tiết luồng | 001, 002 | 02 | 6 |
+| TS-04-03 | Tạo luồng từ luồng trống, khuôn, API, YAML | 003, 025 | 03 | 9 |
+| TS-04-04 | Sửa thông tin, nhân bản, hủy nháp, gỡ luồng | 004, 005, 006 | 16 | 8 |
+| TS-04-05 | Phiên bản, lưu nháp, ETag, phiên soạn, gộp ba bên | 010, 011, 024 | 04 | 8 |
+| TS-04-06 | Trình thiết kế: bảng thành phần, sơ đồ, cấu hình chặng | 012, 013, 014 | 04, 05 | 6 |
+| TS-04-07 | Quay vòng YAML, tải xuống, nhập YAML | 017, 027 | 04 | 5 |
+| TS-04-08 | Biểu thức, kết nối, bí mật, bản tin mẫu | 015, 016, 022 | 05 | 7 |
+| TS-04-09 | Trình ánh xạ dữ liệu | 020 | 06 | 4 |
+| TS-04-10 | Kamelet, Pipe, bean, ghi chú, luồng con | 018, 019, 021, 026 | 07 | 6 |
+| TS-04-11 | Kiểm tra hợp lệ VR-01…20 | 023 | 04 | 9 |
+| TS-04-12 | Chạy thử trên sandbox | 030, 032, 033 | 08 | 10 |
+| TS-04-13 | Ca kiểm thử của luồng | 031 | 09 | 2 |
+| TS-04-14 | Gửi duyệt, rút lại | 040 | 10 | 6 |
+| TS-04-15 | Duyệt bốn mắt và so sánh phiên bản | 041, 043 | 11 | 10 |
+| TS-04-16 | Phát hành GitOps và nâng môi trường | 042, 045 | 12 | 10 |
+| TS-04-17 | Quay lui | 044 | 13 | 4 |
+| TS-04-18 | Lệnh runtime có ký: tạm dừng, tiếp tục, dừng khẩn, đối soát | 050 | 14, 15 | 11 |
+| TS-04-19 | Tình trạng runtime, điểm kết nối, giám sát, lịch sử | 051, 052, 053, 083 | 02 | 4 |
+| TS-04-20 | Data plane đồng bộ qua chín chặng | 060, 061, 063…068 | 17 | 10 |
+| TS-04-21 | Data plane bất đồng bộ, xử lý lỗi, chống trùng | 062, 069, 070, 071 | 18 | 5 |
+| TS-04-22 | Truy cập CSDL có kiểm soát (Q359) | 072 | 19 | 4 |
+| TS-04-23 | Ngữ cảnh tenant và rò rỉ chéo tenant | 073 | 17, 18 | 4 |
+| TS-04-24 | Ma trận phân quyền và phạm vi không gian làm việc | 007, mọi FR | — | 3 |
+| TS-04-25 | Catalog, chính sách thành phần, hồ sơ runtime | 075, 080, 081 | 21, 22 | 6 |
+| TS-04-26 | Chuyển Camel XML của Bus cũ | 082 | 20 | 3 |
+| TS-04-27 | Tham số PH-04 và đóng băng thay đổi | 084 | 7.1 | 3 |
+| TS-04-28 | Sự kiện, outbox và hợp đồng API | 074, mọi EVT | — | 4 |
+| TS-04-29 | Hiệu năng | NFR-04-001…013 | — | 14 |
+| TS-04-30 | Bảo mật (ASVS) | — | — | 6 |
+| TS-04-31 | Khả dụng và hỗn loạn | NFR-04-014 | — | 4 |
+| TS-04-32 | Truy cập, bàn phím và bề rộng màn hình | NFR-04-015…017 | — | 4 |
+| **Tổng** | | | | **202** (119 ca P1) |
+
+: Danh sách kịch bản kiểm thử
+<!--/gen-->
 
 ### 3.2. Máy trạng thái được kiểm thử
 
@@ -328,13 +407,230 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 
 | Máy | Chuyển hợp lệ (ca) | Chuyển bị cấm (ca) |
 |---|---|---|
-| Phiên bản | DRAFT → PENDING_REVIEW (TC-04-082); PENDING_REVIEW → DRAFT khi rút (TC-04-086); PENDING_REVIEW → APPROVED (TC-04-088); PENDING_REVIEW → CHANGES_REQUESTED (TC-04-089); CHANGES_REQUESTED → PENDING_REVIEW (TC-04-090); DRAFT → DISCARDED (TC-04-024); APPROVED → SUPERSEDED (TC-04-097); SUPERSEDED → ROLLED_BACK ngược (TC-04-104) | Sửa PENDING_REVIEW, APPROVED (TC-04-031, TC-04-087); duyệt DRAFT (TC-04-092); phát hành DRAFT (TC-04-099) |
-| Triển khai | PENDING → SYNCING → SYNCED (TC-04-096); PENDING → FAILED do Git (TC-04-100); SYNCING → FAILED do quá hạn (TC-04-101); SYNCED → OUT_OF_SYNC → SYNCED khi lệch băm (TC-04-103) | Lên môi trường sau khi môi trường trước chưa đạt (TC-04-098) |
-| Lệnh | ISSUED → ACKNOWLEDGED (TC-04-108); ISSUED → PARTIAL → ACKNOWLEDGED khi gửi lại (TC-04-112); ISSUED → REJECTED (TC-04-113, TC-04-115); ACKNOWLEDGED → RECONCILED (TC-04-111) | Lệnh hết hạn hoặc phát lại được thực thi (TC-04-114) |
-| Lần chạy thử | QUEUED → RUNNING → PASSED, FAILED (TC-04-071, TC-04-072); RUNNING → TIMED_OUT (TC-04-074); QUEUED → CANCELLED (TC-04-076) | Mô phỏng được tính cho gửi duyệt (TC-04-084) |
-| Luồng | ACTIVE → PAUSED → ACTIVE (TC-04-108, TC-04-109); ACTIVE → RETIRED (TC-04-026) | Sửa luồng RETIRED (TC-04-028) |
+| Phiên bản | DRAFT → PENDING_REVIEW (TC-04-082); PENDING_REVIEW → DRAFT khi rút (TC-04-086); PENDING_REVIEW → APPROVED (TC-04-088, đầu cuối TC-04-193); PENDING_REVIEW → CHANGES_REQUESTED (TC-04-089); CHANGES_REQUESTED → PENDING_REVIEW (TC-04-090); DRAFT → DISCARDED (TC-04-024); APPROVED → SUPERSEDED (TC-04-097); SUPERSEDED → ROLLED_BACK ngược (TC-04-104) | Sửa PENDING_REVIEW, APPROVED (TC-04-031, TC-04-087); duyệt DRAFT (TC-04-092); phát hành DRAFT (TC-04-099) |
+| Triển khai | PENDING → SYNCING → SYNCED (TC-04-096, PROD đầu cuối TC-04-196); PENDING → FAILED do Git (TC-04-100); SYNCING → FAILED do quá hạn (TC-04-101); SYNCED → OUT_OF_SYNC → SYNCED khi lệch băm (TC-04-103) | Lên môi trường sau khi môi trường trước chưa đạt (TC-04-098) |
+| Lệnh | ISSUED → ACKNOWLEDGED (TC-04-108); ISSUED → PARTIAL → ACKNOWLEDGED khi gửi lại (TC-04-112); ISSUED → REJECTED (TC-04-113, TC-04-115); ACKNOWLEDGED → RECONCILED (TC-04-111, dừng khẩn đầu cuối TC-04-197) | Lệnh hết hạn hoặc phát lại được thực thi (TC-04-114) |
+| Lần chạy thử | QUEUED → RUNNING → PASSED, FAILED (TC-04-071, TC-04-072, đầu cuối TC-04-192); RUNNING → TIMED_OUT (TC-04-074); QUEUED → CANCELLED (TC-04-076) | Mô phỏng được tính cho gửi duyệt (TC-04-084, dữ liệu di trú W2 TC-04-202) |
+| Luồng | ACTIVE → PAUSED → ACTIVE (TC-04-108, TC-04-109, TC-04-198); ACTIVE → RETIRED (TC-04-026) | Sửa luồng RETIRED (TC-04-028) |
+
+: Máy trạng thái được kiểm thử
+
+### 3.3. Danh sách test case
+
+Bảng liệt kê mọi test case theo mã, trước phần đặc tả chi tiết ở chương 4 và 5. Cột "Kịch bản" ghi hai chữ số cuối của `TS-04-nn`. Bảng do `ph04/tools/fill_doc.py` sinh từ các khối đặc tả nên không sửa tay; ca mới có số lớn hơn 186 nằm trong kịch bản đúng chủ đề chứ không ở cuối.
+
+<!--gen:tc-table-->
+| Ca | Tên | Kịch bản | Loại | Ưu tiên | Tự động |
+|---|---|---|---|---|---|
+| TC-04-001 | Liệt kê, tạo và sửa không gian làm việc | 01 | Dương | P2 | API, E2E |
+| TC-04-002 | Tạo không gian trùng mã, sửa không gian không tồn tại | 01 | Âm | P2 | API |
+| TC-04-003 | Thay danh sách thành viên và hiệu lực ngay | 01 | Dương | P1 | API |
+| TC-04-004 | Thành viên mức VIEW và người ngoài không gian | 01 | Âm, Bảo mật | P1 | API |
+| TC-04-005 | Tắt giới hạn không gian làm việc | 01 | Dương | P2 | API |
+| TC-04-006 | Lưu trữ không gian còn luồng | 01 | Dương, Âm | P3 | API, E2E |
+| TC-04-007 | Liệt kê luồng có lọc, đếm theo trạng thái | 02 | Dương | P1 | API, E2E |
+| TC-04-008 | Tìm theo endpoint | 02 | Dương | P2 | API |
+| TC-04-009 | Tham số danh sách không hợp lệ | 02 | Âm, Biên | P2 | API |
+| TC-04-010 | Chi tiết luồng đầy đủ | 02 | Dương | P1 | API, E2E |
+| TC-04-011 | Chi tiết luồng không tồn tại hoặc ở tenant khác | 02 | Âm, Bảo mật | P1 | API |
+| TC-04-012 | Phụ thuộc của luồng | 02 | Dương | P2 | API |
+| TC-04-013 | Tạo luồng trống | 03 | Dương | P1 | API, E2E |
+| TC-04-014 | Tạo luồng từ khuôn có tham số | 03 | Dương | P2 | API, E2E |
+| TC-04-015 | Tạo luồng từ OpenAPI của API công bố | 03 | Dương | P2 | API |
+| TC-04-016 | Tạo luồng từ tệp YAML | 03 | Dương | P2 | API |
+| TC-04-017 | Mã luồng sai định dạng hoặc trùng | 03 | Âm, Biên | P1 | API |
+| TC-04-018 | Tạo luồng với nội dung không hợp lệ | 03 | Âm | P1 | API |
+| TC-04-019 | Chống trùng khi tạo luồng | 03 | Âm, Biên | P2 | API |
+| TC-04-020 | Bắt buộc căn cứ pháp lý cho luồng đối ngoại | 03 | Âm, Dương | P3 | API, E2E |
+| TC-04-021 | Sửa thông tin luồng | 04 | Dương | P1 | API |
+| TC-04-022 | Sửa thông tin luồng: khóa lạc quan và quyền | 04 | Âm | P1 | API |
+| TC-04-023 | Nhân bản luồng | 04 | Dương | P2 | API, E2E |
+| TC-04-024 | Hủy bản nháp | 04 | Dương | P2 | API |
+| TC-04-025 | Hủy bản nháp không đúng trạng thái | 04 | Âm | P2 | API |
+| TC-04-026 | Gỡ luồng đã phát hành, rút theo thứ tự môi trường | 04 | Dương | P1 | API, GO |
+| TC-04-027 | Gỡ luồng còn phụ thuộc, thiếu lý do | 04 | Âm | P1 | API |
+| TC-04-028 | Luồng đã gỡ chỉ đọc | 04 | Âm | P2 | API |
+| TC-04-029 | Lưu nháp và tính lại băm | 05 | Dương | P1 | API |
+| TC-04-030 | Lưu nháp sai điều kiện | 05 | Âm | P1 | API |
+| TC-04-031 | Phiên bản đã gửi duyệt là bất biến | 05 | Âm, Bảo mật | P1 | API, IT |
+| TC-04-032 | Tạo phiên bản mới khi đã có phiên bản mở | 05 | Dương, Âm | P1 | API |
+| TC-04-033 | Hai người cùng sửa: phát hiện, xung đột, gộp ba bên | 05 | Dương | P1 | E2E |
+| TC-04-034 | Mất kết nối khi đang soạn, khôi phục phiên nháp | 05 | Khả dụng | P2 | E2E |
+| TC-04-035 | Phiên soạn hết hạn và catalog đổi khi đang mở | 05 | Biên | P3 | API, E2E |
+| TC-04-036 | Lưu nháp trong khoảng đóng băng cả việc soạn | 05 | Âm | P3 | API |
+| TC-04-037 | Bảng thành phần chỉ hiện thành phần được phép | 06 | Dương | P1 | E2E, API |
+| TC-04-038 | Thao tác sơ đồ bằng chuột | 06 | Dương | P1 | E2E |
+| TC-04-039 | Thao tác không hợp lệ trên sơ đồ | 06 | Âm | P2 | E2E |
+| TC-04-040 | Cấu hình chặng bằng biểu mẫu sinh từ catalog | 06 | Dương | P1 | E2E, API |
+| TC-04-041 | Lược đồ thành phần không có trong catalog | 06 | Âm | P3 | API |
+| TC-04-042 | Thành phần đã dùng nhưng sau đó bị cấm | 06 | Âm | P2 | E2E |
+| TC-04-043 | Quay vòng không sửa giữ nguyên băm | 07 | Dương | P1 | UT, E2E |
+| TC-04-044 | Sửa trong YAML phản ánh lên sơ đồ | 07 | Dương, Âm | P1 | E2E |
+| TC-04-045 | YAML triển khai không chứa bố cục, bản tin mẫu, ghi chú | 07 | Dương, Bảo mật | P1 | IT, GO |
+| TC-04-046 | Nhập YAML thay định nghĩa | 07 | Dương | P2 | API |
+| TC-04-047 | Nhập YAML không hợp lệ | 07 | Âm, Bảo mật | P1 | API |
+| TC-04-048 | Kiểm tra và xem trước biểu thức | 08 | Dương | P1 | API, E2E |
+| TC-04-049 | Biểu thức lỗi | 08 | Âm | P1 | API, E2E |
+| TC-04-050 | Chọn kết nối PH-05 thay vì nhập thông tin đăng nhập | 08 | Dương | P1 | E2E, API |
+| TC-04-051 | Phát hiện bí mật mọi chỗ trong định nghĩa | 08 | Âm, Bảo mật | P1 | UT, API |
+| TC-04-052 | Kết nối không hợp lệ | 08 | Âm | P1 | API |
+| TC-04-053 | Ghim bản tin mẫu theo chặng và cảnh báo dữ liệu cá nhân | 08 | Dương, Âm, Bảo mật | P2 | E2E |
+| TC-04-054 | Ánh xạ trường, hàm và chuyển mã | 09 | Dương | P1 | E2E, API, RT |
+| TC-04-055 | Ánh xạ không hợp lệ | 09 | Âm | P1 | API |
+| TC-04-056 | Trường bắt buộc của đích chưa ánh xạ | 09 | Biên | P3 | API |
+| TC-04-057 | Soạn Kamelet tự viết và dùng trong luồng | 10 | Dương | P2 | API, E2E |
+| TC-04-058 | Kamelet sai | 10 | Âm | P2 | API |
+| TC-04-059 | Soạn Pipe | 10 | Dương, Âm | P3 | API, E2E |
+| TC-04-060 | Bean khai báo và cấu hình cấp tệp | 10 | Dương, Âm | P3 | API, E2E |
+| TC-04-061 | Ghi chú dán và luồng con | 10 | Dương | P3 | E2E |
+| TC-04-062 | Ma trận mức nghiêm trọng theo mức kiểm tra | 11 | Dương | P1 | UT |
+| TC-04-063 | Chín chặng chuẩn với luồng đối ngoại và nội bộ | 11 | Âm | P1 | API |
+| TC-04-064 | Trùng mã route, trùng đường dẫn HTTP | 11 | Âm | P1 | API |
+| TC-04-065 | Topic chưa đăng ký hoặc không có quyền | 11 | Âm | P1 | API |
+| TC-04-066 | Thiếu xử lý lỗi và DLQ | 11 | Âm | P1 | API |
+| TC-04-067 | Đặt tiêu đề tenant sai chỗ | 11 | Âm, Bảo mật | P1 | API |
+| TC-04-068 | Thành phần nguy hiểm và chỉ chạy JVM | 11 | Âm, Bảo mật | P1 | API |
+| TC-04-069 | HTTT đích chưa kết nạp và catalog cũ | 11 | Âm | P2 | API |
+| TC-04-070 | Kiểm tra trình duyệt và máy chủ cho cùng kết quả | 11 | Dương | P2 | UT |
+| TC-04-071 | Chạy thử MOCK đạt | 12 | Dương | P1 | API, E2E |
+| TC-04-072 | Chạy thử không đạt và chặng lỗi | 12 | Âm | P1 | API, E2E |
+| TC-04-073 | Chạy thử với định nghĩa lỗi, kết nối thiếu TEST, bản tin lớn | 12 | Âm | P1 | API |
+| TC-04-074 | Quá thời gian và chặng treo | 12 | Biên | P2 | API |
+| TC-04-075 | Hạn mức chạy thử đồng thời | 12 | Biên | P2 | API |
+| TC-04-076 | Hủy lần chạy thử | 12 | Dương, Âm | P3 | API |
+| TC-04-077 | Sandbox không sẵn sàng và chế độ mô phỏng | 12 | Khả dụng | P1 | API |
+| TC-04-078 | Nhật ký chạy thử: xem lại, so sánh, dọn | 12 | Dương | P2 | API, E2E |
+| TC-04-079 | Chạy thử SANDBOX_LIVE gọi đích TEST | 12 | Dương | P2 | API |
+| TC-04-080 | Tạo ca kiểm thử và chạy tất cả | 13 | Dương | P2 | API, E2E |
+| TC-04-081 | Ca kiểm thử sai và kết quả cũ hết hiệu lực | 13 | Âm | P2 | API |
+| TC-04-082 | Gửi duyệt thành công | 14 | Dương | P1 | API, E2E |
+| TC-04-083 | Gửi duyệt khi chưa chạy thử đạt trên đúng băm | 14 | Âm | P1 | API |
+| TC-04-084 | Lần chạy mô phỏng không được tính | 14 | Âm, Bảo mật | P1 | API, IT |
+| TC-04-085 | Gửi duyệt sai trạng thái, thiếu ghi chú, còn lỗi | 14 | Âm | P1 | API |
+| TC-04-086 | Rút lại yêu cầu duyệt | 14 | Dương | P2 | API |
+| TC-04-087 | Phiên bản đã gửi duyệt không sửa được qua mọi kênh | 14 | Âm, Bảo mật | P1 | API |
+| TC-04-088 | Duyệt phiên bản | 15 | Dương | P1 | API, E2E |
+| TC-04-089 | Yêu cầu sửa có ý kiến theo chặng | 15 | Dương | P1 | API, E2E |
+| TC-04-090 | Gửi duyệt lại sau khi sửa | 15 | Dương | P2 | API |
+| TC-04-091 | Tự duyệt bị chặn với người tạo, người đóng góp, người gửi | 15 | Âm, Bảo mật | P1 | API |
+| TC-04-092 | Duyệt khi chưa xem so sánh, thiếu checklist, sai trạng thái | 15 | Âm | P1 | API |
+| TC-04-093 | Duyệt bởi người ngoài không gian hoặc thiếu quyền | 15 | Âm, Bảo mật | P1 | API |
+| TC-04-094 | Xác thực lại khi duyệt | 15 | Bảo mật | P2 | API, E2E |
+| TC-04-095 | So sánh hai phiên bản bất kỳ | 15 | Dương | P1 | API, E2E |
+| TC-04-096 | Phát hành lên TEST tới SYNCED | 16 | Dương | P1 | API, GO, E2E |
+| TC-04-097 | Nâng TEST → STAGING → PROD theo thứ tự | 16 | Dương | P1 | API, GO |
+| TC-04-098 | Sai thứ tự môi trường, chưa ổn định | 16 | Âm | P1 | API |
+| TC-04-099 | Chỉ phiên bản đã duyệt được phát hành | 16 | Âm, Bảo mật | P1 | API, GO |
+| TC-04-100 | Lỗi ghi Git | 16 | Âm, Khả dụng | P1 | API, GO |
+| TC-04-101 | Quá hạn đồng bộ | 16 | Âm | P2 | GO |
+| TC-04-102 | Phát hành trong khoảng đóng băng, không có hồ sơ runtime | 16 | Âm | P1 | API |
+| TC-04-103 | Lệch băm sau khi đồng bộ | 16 | Bảo mật | P2 | GO |
+| TC-04-104 | Quay lui PROD về phiên bản trước | 17 | Dương | P1 | API, GO |
+| TC-04-105 | Quay lui trong khoảng đóng băng | 17 | Dương | P2 | API |
+| TC-04-106 | Quay lui về phiên bản dùng thành phần nay bị cấm, thiếu lý do | 17 | Âm | P1 | API |
+| TC-04-107 | Gợi ý quay lui khi tỷ lệ lỗi tăng | 17 | Dương | P3 | E2E |
+| TC-04-108 | Tạm dừng một route ở PROD | 18 | Dương | P1 | API, GO |
+| TC-04-109 | Tiếp tục route | 18 | Dương | P1 | API |
+| TC-04-110 | Dừng khẩn đi trước Git | 18 | Dương | P1 | API, GO |
+| TC-04-111 | Đối soát hoàn tất | 18 | Dương | P1 | GO |
+| TC-04-112 | Một bản sao không xác nhận, gửi lại | 18 | Âm, Khả dụng | P1 | API, Chaos |
+| TC-04-113 | Lệnh có chữ ký sai | 18 | Bảo mật | P1 | IT |
+| TC-04-114 | Lệnh hết hạn và lệnh phát lại | 18 | Bảo mật | P1 | IT |
+| TC-04-115 | Lệnh mang tenant khác hoặc luồng không tồn tại | 18 | Bảo mật | P1 | IT |
+| TC-04-116 | Lệnh thiếu lý do, sai quyền, môi trường chưa triển khai | 18 | Âm | P1 | API |
+| TC-04-117 | Tiếp tục sau dừng khẩn chỉ SO hoặc TA | 18 | Âm | P2 | API |
+| TC-04-118 | Tình trạng runtime theo môi trường và bản sao | 19 | Dương | P1 | API, E2E |
+| TC-04-119 | Lỗi nạp luồng hiển thị cho người vận hành | 19 | Âm | P2 | GO |
+| TC-04-120 | Điểm kết nối và số liệu theo điểm | 19 | Dương, Âm | P2 | API |
+| TC-04-121 | Số liệu và lịch sử khi PH-13 không sẵn sàng | 19 | Dương, Âm | P2 | API |
+| TC-04-122 | Bản tin hợp lệ đi qua đủ chín chặng | 20 | Dương | P1 | RT, API |
+| TC-04-123 | Sai lược đồ và vượt kích thước | 20 | Âm | P1 | RT, API |
+| TC-04-124 | OPA từ chối hoặc không trả lời | 20 | Âm, Bảo mật | P1 | RT |
+| TC-04-125 | Lỗi chuyển đổi và làm giàu | 20 | Âm | P1 | RT |
+| TC-04-126 | Che dữ liệu cá nhân ở phản hồi và log | 20 | Dương, Âm, Bảo mật | P1 | RT, IT |
+| TC-04-127 | Đích quá thời gian, lỗi, ngắt mạch | 20 | Dương, Âm, Khả dụng | P1 | RT |
+| TC-04-128 | Đường dẫn không khớp route | 20 | Âm | P3 | RT |
+| TC-04-129 | Lỗi nội bộ không lộ chi tiết | 20 | Âm, Bảo mật | P2 | RT |
+| TC-04-130 | SOAP qua hồ sơ JVM | 20 | Dương | P2 | RT |
+| TC-04-131 | Nhận sự kiện Kafka, chuyển CDM, phát sự kiện | 21 | Dương | P1 | RT |
+| TC-04-132 | Bản tin lỗi vào DLQ | 21 | Âm | P1 | RT |
+| TC-04-133 | Chống trùng bản tin | 21 | Dương, Âm | P1 | RT |
+| TC-04-134 | Topic không có quyền ở runtime | 21 | Bảo mật | P1 | RT, IT |
+| TC-04-135 | Đọc theo lịch với tham số hóa | 22 | Dương | P1 | RT, IT |
+| TC-04-136 | Chính sách SQL chặn câu ghi và câu nguy hiểm | 22 | Âm, Bảo mật | P1 | UT, API |
+| TC-04-137 | Kết nối không phải chỉ đọc | 22 | Âm, Bảo mật | P1 | API, RT |
+| TC-04-138 | Quá thời gian, vượt số dòng | 22 | Biên | P2 | RT |
+| TC-04-139 | Mọi API đọc theo mã trùng giữa hai tenant | 23 | Bảo mật | P1 | API |
+| TC-04-140 | RLS chặn ở CSDL kể cả khi ứng dụng sai | 23 | Bảo mật | P1 | IT |
+| TC-04-141 | Bản tin mang tiêu đề tenant giả | 23 | Dương, Âm, Bảo mật | P1 | RT |
+| TC-04-142 | Runtime, topic, kho cấu hình tách theo tenant | 23 | Bảo mật | P1 | GO, IT |
+| TC-04-143 | Ma trận vai trò × thao tác | 24 | Dương, Âm, Bảo mật | P1 | API |
+| TC-04-144 | Quyền đối tượng không lộ qua danh sách và tìm kiếm | 24 | Bảo mật | P1 | API |
+| TC-04-145 | Giao diện ẩn và giải thích hành động bị khóa | 24 | Dương | P2 | E2E |
+| TC-04-146 | Đề xuất cho phép thành phần và quyết định | 25 | Dương | P2 | API, E2E |
+| TC-04-147 | Tỉnh chỉ thu hẹp được chính sách | 25 | Âm, Bảo mật | P1 | API, IT |
+| TC-04-148 | Khớp phiên bản catalog với runtime | 25 | Dương, Âm | P1 | API, CI |
+| TC-04-149 | Nâng catalog: luồng soạn trên catalog cũ | 25 | Âm | P2 | API |
+| TC-04-150 | Ảnh native khởi động và nạp luồng | 25 | Hiệu năng | P2 | CI |
+| TC-04-151 | Chuyển gói XML ba route | 26 | Dương | P1 | API, E2E |
+| TC-04-152 | Tệp XML không hợp lệ hoặc nguy hiểm | 26 | Âm, Bảo mật | P1 | API |
+| TC-04-153 | Đọc tham số và đặt khoảng đóng băng | 27 | Dương | P2 | API, E2E |
+| TC-04-154 | Tham số ngoài miền và ràng buộc không tắt được | 27 | Âm | P2 | API |
+| TC-04-155 | Biến môi trường không chứa bí mật | 27 | Dương, Âm | P2 | API |
+| TC-04-156 | Outbox ghi cùng giao dịch, không phát khi lỗi | 28 | Dương, Âm | P1 | IT |
+| TC-04-157 | Lược đồ mọi sự kiện khớp AsyncAPI | 28 | Dương | P2 | IT |
+| TC-04-158 | Hợp đồng OpenAPI khớp máy chủ | 28 | Dương | P1 | API, CI |
+| TC-04-159 | Mở bảng thành phần với toàn bộ catalog | 29 | Hiệu năng | P2 | k6 |
+| TC-04-160 | Gõ tìm trong bảng thành phần | 29 | Hiệu năng | P2 | k6 |
+| TC-04-161 | Kéo chặng trên sơ đồ 200 chặng | 29 | Hiệu năng | P2 | k6 |
+| TC-04-162 | Mở trình thiết kế với luồng 200 chặng | 29 | Hiệu năng | P2 | k6 |
+| TC-04-163 | Sinh lại YAML sau một thay đổi | 29 | Hiệu năng | P2 | k6 |
+| TC-04-164 | Mở cửa sổ cấu hình chặng 154 thuộc tính | 29 | Hiệu năng | P2 | k6 |
+| TC-04-165 | Kiểm tra hợp lệ mức SUBMIT | 29 | Hiệu năng | P1 | k6 |
+| TC-04-166 | Chạy thử MOCK luồng chín chặng | 29 | Hiệu năng | P1 | k6 |
+| TC-04-167 | Từ nâng PROD tới SYNCED | 29 | Hiệu năng | P1 | k6 |
+| TC-04-168 | Lệnh tạm dừng tới đủ xác nhận | 29 | Hiệu năng | P1 | k6 |
+| TC-04-169 | Độ trễ thêm của khung chín chặng | 29 | Hiệu năng | P1 | k6 |
+| TC-04-170 | Thông lượng một vCPU runtime native | 29 | Hiệu năng | P1 | k6 |
+| TC-04-171 | Khởi động pod runtime native | 29 | Hiệu năng | P1 | k6 |
+| TC-04-172 | Danh sách luồng với 300 luồng mỗi tenant | 29 | Hiệu năng | P2 | k6 |
+| TC-04-173 | Quét động có xác thực | 30 | Bảo mật | P1 | ZAP |
+| TC-04-174 | Chèn mã qua nội dung luồng và hiển thị | 30 | Bảo mật | P1 | E2E, API |
+| TC-04-175 | Biểu thức không thoát được khỏi sandbox | 30 | Bảo mật | P1 | API, RT |
+| TC-04-176 | Lệnh điều khiển chỉ từ control plane | 30 | Bảo mật | P1 | IT |
+| TC-04-177 | Chuỗi cung ứng ảnh và kho cấu hình | 30 | Bảo mật | P2 | CI |
+| TC-04-178 | Giới hạn tần suất API điều khiển | 30 | Bảo mật | P3 | k6 |
+| TC-04-179 | Mất control plane không ảnh hưởng data plane | 31 | Khả dụng | P1 | Chaos |
+| TC-04-180 | Mất một bản sao runtime | 31 | Khả dụng | P1 | Chaos |
+| TC-04-181 | Mất Kafka tạm thời | 31 | Khả dụng | P2 | Chaos |
+| TC-04-182 | Git không sẵn sàng khi đang có lệnh khẩn | 31 | Khả dụng | P2 | Chaos, GO |
+| TC-04-183 | Tạo luồng ba chặng chỉ bằng bàn phím | 32 | Truy cập | P1 | E2E, Thủ công |
+| TC-04-184 | Quét axe-core trên mọi màn UI-04 | 32 | Truy cập | P1 | E2E |
+| TC-04-185 | Bề rộng màn hình | 32 | Truy cập | P2 | E2E |
+| TC-04-186 | Phóng to 200% và giảm chuyển động | 32 | Truy cập | P3 | E2E, Thủ công |
+| TC-04-187 | Trạng thái màn Không gian làm việc | 01 | Dương, Âm | P3 | E2E |
+| TC-04-188 | Trạng thái màn Thư viện khuôn mẫu | 03 | Dương, Âm | P3 | E2E |
+| TC-04-189 | Sandbox không sẵn sàng khi xem trước biểu thức | 08 | Âm, Khả dụng | P2 | E2E, API |
+| TC-04-190 | Sandbox không sẵn sàng khi xem trước ánh xạ | 09 | Âm, Khả dụng | P2 | E2E, API |
+| TC-04-191 | Trạng thái màn và câu chặn của Trình soạn Pipe | 10 | Dương, Âm | P2 | E2E |
+| TC-04-192 | Đầu cuối một lần chạy thử MOCK theo trình tự SDD | 12 | Dương | P1 | IT, E2E |
+| TC-04-193 | Đầu cuối gửi duyệt và duyệt bốn mắt theo trình tự SDD | 15 | Dương, Âm | P1 | API, IT |
+| TC-04-194 | Trạng thái màn So sánh phiên bản | 15 | Dương, Âm | P3 | E2E |
+| TC-04-195 | Phát hành khi kiểm tra mức PUBLISH còn lỗi hoặc catalog cũ | 16 | Âm | P1 | API, E2E |
+| TC-04-196 | Đầu cuối phát hành lên PROD tới SYNCED theo trình tự SDD | 16 | Dương | P1 | GO |
+| TC-04-197 | Đầu cuối dừng khẩn ở PROD theo trình tự SDD | 18 | Dương | P1 | GO, RT |
+| TC-04-198 | Gọi đồng bộ khi luồng hoặc route đang tạm dừng | 20 | Âm | P1 | RT, API |
+| TC-04-199 | Lỗi nghiệp vụ, dữ liệu ở luồng bất đồng bộ vào DLQ không thử lại | 21 | Âm | P1 | RT |
+| TC-04-200 | Trạng thái màn Danh mục thành phần | 25 | Dương, Âm | P3 | E2E |
+| TC-04-201 | Trạng thái màn Nhập luồng hệ cũ | 26 | Dương, Âm | P3 | E2E |
+| TC-04-202 | Di trú dữ liệu W2 khi schema do tài khoản khác sở hữu | 28 | Dương, Biên | P1 | IT |
+
+: Danh sách test case
+<!--/gen-->
 
 ## 4. Kịch bản và test case chức năng
+
+Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ tự vòng đời của luồng: không gian làm việc, tạo và soạn, kiểm tra, chạy thử, duyệt, phát hành, vận hành, rồi data plane và các mặt xuyên suốt (tenant, phân quyền, catalog, sự kiện). Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ; mỗi ca là một khối đặc tả theo mục 1.6.
 
 ### TS-04-01 · Không gian làm việc và thành viên
 
@@ -475,6 +771,29 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 3. IE1 gọi `POST /flows` với `workspaceCode = "tc-thue"`.
 
 **Kết quả mong đợi.** Bước 1 trả `200`, `status = ARCHIVED`, luồng cũ vẫn xem được. Bước 2 không có `tc-thue` trong danh sách. Bước 3 trả `409` ERR-04-005 với `detail` "Không gian làm việc đã lưu trữ". KT: có (`INT_WORKSPACE_ARCHIVE`).
+:::
+
+#### TC-04-187 · Trạng thái màn Không gian làm việc <!--k:ui-ws-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P3.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-007 · UI-04-21 · ERR-04-017, 027, 028, 045.
+
+**Tiền điều kiện, dữ liệu.** U-T68-TA; tenant T90 chưa có không gian nào ngoài DEFAULT; U-T68-IE1.
+
+**Các bước.**
+
+1. TA ở T90 mở UI-04-21.
+2. TA ở T68 mở UI-04-21, giả lập API-04-001 chậm 2 giây rồi trả `500`.
+3. TA bấm "Lưu trữ" ở không gian `ho-tich` (còn luồng).
+4. IE1 mở thẳng URL của UI-04-21.
+
+**Kết quả mong đợi.** Bước 1: trạng thái rỗng "Tỉnh chưa có không gian làm việc nào. Tạo không gian để giới hạn ai sửa luồng nào." kèm nút "Tạo không gian"; phím `N` mở biểu mẫu tạo. Bước 2: skeleton 6 dòng trong lúc chờ, sau đó ST-05 có mã truy vết. Bước 3: hộp thoại nêu ERR-04-017 và số luồng còn lại, không gian không đổi trạng thái. Bước 4: mục menu không hiện với IE1; vào bằng URL nhận ST-06 (ERR-04-045). Dải thông báo "Giới hạn theo không gian làm việc đang bật" hiện khi `04.workspace.enforce = true`.
 :::
 
 ### TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
@@ -798,6 +1117,29 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 2. Tạo lại có `legalBasisRef = "ND-278-2025"`.
 
 **Kết quả mong đợi.** Bước 1 trả `422` ERR-04-009 với finding "Luồng đối ngoại phải khai căn cứ pháp lý". Bước 2 trả `201`. Trên UI-04-03 ô căn cứ hiện dấu bắt buộc khi tham số bật.
+:::
+
+#### TC-04-188 · Trạng thái màn Thư viện khuôn mẫu <!--k:ui-template-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P3.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-025 · UI-04-19 · ERR-04-039, 045.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1; T68 chưa có khuôn của tỉnh; khuôn `tpl-cu` của tỉnh đã bị gỡ.
+
+**Các bước.**
+
+1. IE1 mở UI-04-19.
+2. Lọc nhóm "Tệp" và gõ tìm "khong-co".
+3. Mở URL chi tiết của `tpl-cu`.
+4. U-T68-VW mở URL của UI-04-19.
+
+**Kết quả mong đợi.** Bước 1: lưới 6 thẻ skeleton rồi đủ tám khuôn nền (`tpl-standard-9`, `tpl-sync-lookup`, …), không có khuôn của tỉnh nhưng không hiện trạng thái rỗng. Bước 2: ST-04 có nút "Xóa bộ lọc". Bước 3: ST-05 với câu "Khuôn mẫu "tpl-cu" không tồn tại hoặc không được phép dùng trong tỉnh." (ERR-04-039). Bước 4: ST-06. Phím `/` đặt con trỏ vào ô tìm; mũi tên chuyển thẻ theo lưới; `Enter` mở chi tiết.
 :::
 
 ### TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồng
@@ -1559,6 +1901,29 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** Bước 1: chặng sau dùng bản tin của chặng trước gần nhất (hiện nhãn "kế thừa từ Tiếp nhận"). Bước 2: cảnh báo "Bản tin mẫu có dấu hiệu chứa dữ liệu cá nhân (số điện thoại, thư điện tử)", nút "Thay bằng dữ liệu giả" và không có "Vẫn dùng". Bước 3: lưu được; KT: có (`INT_SAMPLE_PII_OVERRIDE`).
 :::
 
+#### TC-04-189 · Sandbox không sẵn sàng khi xem trước biểu thức <!--k:expr-sandbox-down-->
+
+::: dac-ta
+**Loại.** Âm, Khả dụng.
+
+**Ưu tiên.** P2.
+
+**Tự động.** E2E, API.
+
+**Truy vết.** FR-04-015 · UC-04-05 · API-04-032 · UI-04-06 · ERR-04-019.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1 mở F-HT v4 `DRAFT` trên UI-04-04; `dh-runtime-sandbox` thu về 0 bản sao; bản tin mẫu MSG-OK đã ghim.
+
+**Các bước.**
+
+1. Mở trình soạn biểu thức (UI-04-06) của chặng `transform`, nhập `${body.soDinhDanh}` ngôn ngữ `simple`, bấm "Thử".
+2. Đổi sang `jq` với `.hoTen`, bấm "Thử".
+3. Đổi sang `xpath`, bấm "Thử".
+4. Gọi thẳng `POST /expressions:check` với `evaluate = true`.
+
+**Kết quả mong đợi.** Bước 4 trả `503` ERR-04-019. Bước 1, 2: giao diện không hiện hộp lỗi mà chuyển sang nhánh 6a của UC-04-05: đánh giá cục bộ trên trình duyệt, kết quả đúng giá trị của MSG-OK và **bắt buộc** gắn nhãn "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime". Bước 3: hiện "Chưa xem trước được" (ngôn ngữ không có bộ đánh giá cục bộ). Kiểm tra cú pháp (biên dịch) vẫn chạy, gạch sóng vẫn hiện khi gõ sai. Không có lần chạy thử nào được tạo; KT: không.
+:::
+
 ### TS-04-09 · Trình ánh xạ dữ liệu
 
 **Mục tiêu.** Xác nhận trình ánh xạ sinh JQ đúng, chạy được trên runtime và chuyển mã qua PH-07 bằng hàm `dh_map`.
@@ -1628,6 +1993,28 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 2. Bật tham số, kiểm lại.
 
 **Kết quả mong đợi.** Bước 1: finding mức `WARN`. Bước 2: finding mức `ERROR`.
+:::
+
+#### TC-04-190 · Sandbox không sẵn sàng khi xem trước ánh xạ <!--k:mapper-sandbox-down-->
+
+::: dac-ta
+**Loại.** Âm, Khả dụng.
+
+**Ưu tiên.** P2.
+
+**Tự động.** E2E, API.
+
+**Truy vết.** FR-04-020 · UC-04-06 · API-04-033 · UI-04-07 · ERR-04-019.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1; F-HT v4 có chặng ánh xạ "Chuẩn hóa hồ sơ" dùng bảng mã `gioi-tinh-ht-ndxp` của PH-07; sandbox thu về 0 bản sao.
+
+**Các bước.**
+
+1. Mở UI-04-07, bấm "Thử trên bản tin mẫu" với MSG-OK.
+2. Gọi thẳng `POST /mappings:preview`.
+3. Bấm "Lưu" ánh xạ.
+
+**Kết quả mong đợi.** Bước 2 trả `503` ERR-04-019. Bước 1: xem trước cục bộ có nhãn "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime"; trường dùng hàm `dh_map` hiện "Chưa xem trước được" vì cần runtime. Bước 3: lưu thành công (`200`), JQ sinh từ dhmap không đổi so với khi sandbox sẵn sàng (so băm). Dữ liệu xem trước vẫn được che theo BR-04-013.
 :::
 
 ### TS-04-10 · Kamelet, Pipe, bean, ghi chú, luồng con
@@ -1739,6 +2126,30 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 2. Chọn ba chặng, "Tách thành luồng con".
 
 **Kết quả mong đợi.** Bước 1: ghi chú lưu ở bố cục, không có trong YAML (BR-04-007). Bước 2: sinh route `direct:{flow}-sub-1` trong cùng tệp, chỗ cũ thay bằng `to: direct:…`; quay vòng YAML giữ nguyên băm sau khi tách.
+:::
+
+#### TC-04-191 · Trạng thái màn và câu chặn của Trình soạn Pipe <!--k:ui-pipe-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P2.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-019 · UI-04-09 · ERR-04-001, 011.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1; Pipe mới `tc-pipe`; Pipe `sftp-bhxh-to-kafka` v3 `APPROVED`; Kamelet `dh-csv-to-json` bị cấm sau khi dùng; U-T68-VW.
+
+**Các bước.**
+
+1. IE1 tạo Pipe `tc-pipe` và mở UI-04-09.
+2. Kéo thành phần thô `http` vào ô Bước; kéo Kamelet `dh-kafka-sink` vào ô Nguồn.
+3. Thêm bước thứ 21.
+4. Mở `sftp-bhxh-to-kafka` v2 có bước `dh-csv-to-json`.
+5. VW mở `sftp-bhxh-to-kafka` v3.
+
+**Kết quả mong đợi.** Bước 1: ba ô rỗng nét đứt "Chọn nguồn", "Thêm bước (tùy chọn)", "Chọn đích"; skeleton ba ô trong lúc tải. Bước 2: không thả được, chú thích "Pipe chỉ dùng Kamelet. Muốn dùng thành phần http, tạo luồng loại route." và "Ô Nguồn chỉ nhận Kamelet loại source." (VR-15). Bước 3: "Pipe có tối đa 20 bước. Tách thành hai Pipe nối qua topic." Bước 4: ô có huy hiệu "Không còn được phép" (ERR-04-011). Bước 5: ST-07 chỉ đọc, bảng Kamelet ẩn.
 :::
 
 ### TS-04-11 · Kiểm tra hợp lệ VR-01…20
@@ -2129,6 +2540,30 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** `PASSED`; WireMock ghi nhận đúng một lệnh gọi tới URL TEST; không lệnh gọi nào tới URL PROD (kiểm bằng WireMock PROD không nhận yêu cầu). Sandbox chỉ đọc được giá trị TEST của kết nối (OpenBao policy).
 :::
 
+#### TC-04-192 · Đầu cuối một lần chạy thử MOCK theo trình tự SDD <!--k:e2e-run-mock-->
+
+::: dac-ta
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** IT, E2E.
+
+**Truy vết.** FR-04-030, 032 · UC-04-08 · API-04-040, 042 · UI-04-11 · EVT-04-10 · NFR-04-008.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1; F-HT v4 `DRAFT`, `captureBodies = true`; WireMock CONN-HT đếm lượt gọi; theo dõi Valkey Stream `dh:int:testrun:queue`, Ceph RGW `dh-int-testrun`, nhật ký truy cập của sandbox (D03-02-PH04 §8.2, hình chạy thử MOCK).
+
+**Các bước.**
+
+1. IE1 bấm "Chạy thử" với MSG-OK ở UI-04-04 (`mode = MOCK`).
+2. Đọc hàng đợi Valkey và bảng `test_run`.
+3. Theo dõi lượt gọi của sandbox tới `dh-integration`.
+4. Theo dõi SSE tới khi `completed`.
+5. Đọc `s3://dh-int-testrun/T68/{runId}/`.
+
+**Kết quả mong đợi.** Bước 1 trả `202` có `runId`, SSE mở ngay. Bước 2: `test_run` ở `QUEUED` và đúng một việc trong hàng đợi theo hồ sơ. Bước 3: sandbox chỉ gọi hai API nội bộ (lấy gói chạy qua mTLS, `POST /internal/v1/testruns/{id}/steps` theo lô khoảng 200 ms); không có lượt nào tới WireMock CONN-HT (endpoint ra đã thay bằng `mock:`). Bước 4: sự kiện `step` mang thân đã che (không có `soDinhDanh` rõ), rồi `completed` với `PASSED` sau khi chạy khẳng định; EVT-04-10 phát. Bước 5: có tệp `{nodeId}-in.json`, `{nodeId}-out.json` mã hóa phía máy chủ. Toàn trình p95 < 5 giây.
+:::
+
 ### TS-04-13 · Ca kiểm thử của luồng
 
 **Phủ.** FR-04-031; BR-04-004; UC-04-09; API-04-044; UI-04-13; ERR-04-030.
@@ -2488,6 +2923,52 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** Bước 1: `nodes[]` có `ADDED`, `REMOVED`, `MODIFIED` (kèm `fields`), `MOVED` khi chỉ đổi vị trí trong route; khác biệt bố cục không tính. Bước 2: sơ đồ tô xanh, đỏ, vàng; YAML hai cột cuộn đồng bộ. Bước 3 trả `404` ERR-04-004.
 :::
 
+#### TC-04-193 · Đầu cuối gửi duyệt và duyệt bốn mắt theo trình tự SDD <!--k:e2e-review-4eyes-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API, IT.
+
+**Truy vết.** FR-04-040, 041 · BR-04-004 · UC-04-10, 11 · API-04-050, 052 · EVT-04-03, 04 · ERR-04-015.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1 tạo F-HT v4 và có lần chạy `PASSED` trên `contentHash` hiện tại, mọi ca kiểm thử đạt; U-T68-IA2 là người đóng góp của v4; U-T68-IA1 (D03-02-PH04 §9.1, hình gửi duyệt và duyệt bốn mắt).
+
+**Các bước.**
+
+1. IE1 gọi `:submit` với ghi chú.
+2. Đọc `flow_version` và `ph04.outbox`.
+3. IA2 mở so sánh rồi gọi `:review` `APPROVE` có đủ checklist.
+4. IA1 mở so sánh (`markViewed=true`) rồi gọi `:review` `APPROVE` có đủ checklist.
+
+**Kết quả mong đợi.** Bước 1 trả `200` sau khi kiểm mức `SUBMIT`. Bước 2: `status = PENDING_REVIEW`, `submitted_hash` bằng `contentHash` của lần chạy đạt, một dòng outbox EVT-04-03. Bước 3 trả `403` ERR-04-015 ("Bạn đã tạo, đóng góp hoặc gửi duyệt phiên bản này nên không thể tự duyệt. Cần một người duyệt khác."), phiên bản giữ `PENDING_REVIEW`, không có EVT-04-04. Bước 4 trả `200`, `APPROVED`: máy chủ so băm hiện tại với `submitted_hash`, cập nhật có điều kiện `status = PENDING_REVIEW`, ghi `review`, phát EVT-04-04. Ba chốt ở máy chủ được chứng minh: lần chạy gắn đúng băm, người duyệt ngoài tập người đã chạm phiên bản, băm lúc duyệt bằng băm lúc gửi.
+:::
+
+#### TC-04-194 · Trạng thái màn So sánh phiên bản <!--k:ui-diff-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P3.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-043 · UI-04-16 · ERR-04-001, 004.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IA1; F-HT v3 và bản sao giống hệt v3 là v5 (tạo trong ca); YAML-200 làm v6; U-T01-IE.
+
+**Các bước.**
+
+1. IA1 mở UI-04-16 với Từ v3, Đến v5.
+2. Chọn Đến v99.
+3. Chọn Từ v3, Đến v6.
+4. U-T01-IE mở URL so sánh của F-HT ở T68.
+
+**Kết quả mong đợi.** Bước 1: trạng thái rỗng "Hai phiên bản giống hệt nhau." Bước 2: ST-05 với câu "Không tìm thấy phiên bản v99 của luồng." (ERR-04-004). Bước 3: khác biệt hơn 500 dòng YAML nên mặc định chế độ Tóm tắt kèm cảnh báo hiệu năng; skeleton hai canvas và dải tổng "—" trong lúc tải. Bước 4: ST-05 với ERR-04-001, giống hệt trường hợp không tồn tại.
+:::
+
 ### TS-04-16 · Phát hành GitOps và nâng môi trường
 
 **Mục tiêu.** Chỉ phiên bản `APPROVED` đi vào runtime, và chỉ qua Git. Thứ tự môi trường được giữ. `SYNCED` chỉ khi mọi bản sao báo đúng băm. Nhóm ca bắt buộc 100%.
@@ -2665,6 +3146,52 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 2. Chờ 2 nhịp tim.
 
 **Kết quả mong đợi.** Argo CD tự đưa ConfigMap về bản Git (self-heal). Trong lúc lệch, triển khai `OUT_OF_SYNC`, EVT-04-07 phát; khi khớp lại thì về `SYNCED`. Cảnh báo PH-13 "Cấu hình runtime bị sửa ngoài GitOps".
+:::
+
+#### TC-04-195 · Phát hành khi kiểm tra mức PUBLISH còn lỗi hoặc catalog cũ <!--k:deploy-vr-catalog-->
+
+::: dac-ta
+**Loại.** Âm.
+
+**Ưu tiên.** P1.
+
+**Tự động.** API, E2E.
+
+**Truy vết.** FR-04-042, 081 · UC-04-12 · API-04-054 · UI-04-15 · ERR-04-009, 042.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IA1; F-HT v4 `APPROVED` nhưng chặng `deliver` dùng topic vừa bị thu hồi quyền (VR-05 mức `PUBLISH` thành `ERROR`); F-SOAP v3 `APPROVED` soạn trên `cv-1` trong khi catalog hiện hành là `cv-2`.
+
+**Các bước.**
+
+1. Gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"TEST"}`.
+2. Gọi `POST /flows/bhxh-soap/deployments` với `{"versionNo":3,"environment":"TEST"}`.
+3. Lặp bước 1 trên UI-04-15.
+
+**Kết quả mong đợi.** Bước 1 trả `422` ERR-04-009, `findings[]` chỉ chặng `deliver`. Bước 2 trả `409` ERR-04-042, kiểm catalog trước khi chạy đủ quy tắc. Bước 3: hộp thoại "Luồng còn 1 lỗi cần sửa trước khi phát hành." kèm "Mở bảng Vấn đề". Không tạo bản ghi `deployment`. Git: không. EVT: không.
+:::
+
+#### TC-04-196 · Đầu cuối phát hành lên PROD tới SYNCED theo trình tự SDD <!--k:e2e-deploy-synced-->
+
+::: dac-ta
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** GO.
+
+**Truy vết.** FR-04-042, 045 · BR-04-012 · UC-04-12 · API-04-054 · EVT-04-06, 07, 12 · NFR-04-009.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IA1; F-HT v4 `APPROVED`, đã `SYNCED`, `HEALTHY` ở TEST và STAGING đủ thời gian ổn định; nhánh `env/prod` của `dh-flows-t68` được bảo vệ; có thể giữ nhịp tim của runtime PROD 60 giây (D03-02-PH04 §5.5, hình phát hành tới SYNCED).
+
+**Các bước.**
+
+1. Gọi `POST /flows/tra-cuu-ho-tich/deployments` với `{"versionNo":4,"environment":"PROD"}` và `Idempotency-Key`.
+2. Đọc `deployment`, `ph04.outbox` ngay sau phản hồi.
+3. Theo dõi Gitea: nhánh `release/tra-cuu-ho-tich-v4`, yêu cầu gộp, CI của kho.
+4. Khi Argo CD báo Application đồng bộ, giữ nhịp tim 60 giây rồi thả.
+5. Đọc lại `deployment`.
+
+**Kết quả mong đợi.** Bước 1 trả `202` có `deploymentId`. Bước 2: `deployment` ở `PENDING`, một dòng outbox EVT-04-06 trong cùng giao dịch. Bước 3: commit có chữ ký, tác giả `dh-integration[bot]`, trailer `Dh-Published-By` và `Dh-Deployment: {id}`; yêu cầu gộp vào `env/prod` tự gộp sau khi CI chạy lại VR mức `PUBLISH` và ca kiểm thử. Bước 4: trong lúc giữ nhịp tim, triển khai chỉ ở `SYNCING` dù Argo CD đã báo đồng bộ. Bước 5: sau khi đủ bản sao báo `version = 4` và đúng `contentHash`, triển khai `SYNCED`, phát EVT-04-07. Từ gửi tới `SYNCED` (trừ 60 giây giữ) p95 < 3 phút. KT: có (`INT_DEPLOY`).
 :::
 
 ### TS-04-17 · Quay lui
@@ -2973,6 +3500,30 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** Bước 1 trả 403-PQ với `detail` "Luồng đang dừng khẩn; chỉ cán bộ ATTT hoặc quản trị tenant tiếp tục được" (Q04-47). Bước 2 trả `202`.
 :::
 
+#### TC-04-197 · Đầu cuối dừng khẩn ở PROD theo trình tự SDD <!--k:e2e-estop-->
+
+::: dac-ta
+**Loại.** Dương.
+
+**Ưu tiên.** P1.
+
+**Tự động.** GO, RT.
+
+**Truy vết.** FR-04-050 · BR-04-018 · UC-04-15 · API-04-061 · EVT-04-08, 11, 13 · NFR-04-010.
+
+**Tiền điều kiện, dữ liệu.** U-T68-SO; F-HT PROD hai bản sao, đang có 20 bản tin xử lý dở (WireMock CONN-HT trả chậm 5 giây); theo dõi OpenBao transit, Kafka, `runtime_command`, DLQ PH-18 (D03-02-PH04 §10.2, hình dừng khẩn).
+
+**Các bước.**
+
+1. SO gửi `POST /flows/tra-cuu-ho-tich/runtime/commands` với `{"type":"EMERGENCY_STOP","scope":"FLOW","reason":"Nghi lộ dữ liệu","incidentRef":"SC-2026-002"}`.
+2. Đối chiếu thứ tự: lời gọi `transit/sign`, bản tin EVT-04-11, dòng `runtime_command`.
+3. Đọc EVT-04-13 của từng bản sao và trạng thái lệnh.
+4. Đọc DLQ.
+5. Chờ đối soát, đọc `flow.dh.yaml` ở `env/prod`.
+
+**Kết quả mong đợi.** Bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_RUNTIME_ESTOP`).
+:::
+
 ### TS-04-19 · Tình trạng runtime, điểm kết nối, giám sát, lịch sử
 
 **Phủ.** FR-04-051, 052, 053, 083; API-04-060, 062, 063, 091; UI-04-02; ERR-04-047; LGC-BUS-007, 014…019, 030, 033.
@@ -3258,9 +3809,33 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** `200`; bản tin SOAP đúng XSD; mật khẩu WS-Security không có trong log. Pod `soap-jvm` tách khỏi pod `core-native`.
 :::
 
+#### TC-04-198 · Gọi đồng bộ khi luồng hoặc route đang tạm dừng <!--k:rt-paused-sync-->
+
+::: dac-ta
+**Loại.** Âm.
+
+**Ưu tiên.** P1.
+
+**Tự động.** RT, API.
+
+**Truy vết.** FR-04-050, 061 · UC-04-17 · ERR-04-110.
+
+**Tiền điều kiện, dữ liệu.** F-HT PROD; route `tra-cuu` tạm dừng bằng lệnh `PAUSE` (`scope = ROUTES`), route `kiem-tra-trang-thai` của cùng luồng vẫn chạy; WireMock CONN-HT đếm lượt gọi.
+
+**Các bước.**
+
+1. Gọi `POST /ho-tich/tra-cuu` qua `apisix-int` với MSG-OK.
+2. Gọi điểm vào của route `kiem-tra-trang-thai`.
+3. Gửi lệnh `RESUME`, đợi `ACKNOWLEDGED`, lặp bước 1.
+
+**Kết quả mong đợi.** Bước 1 trả `503` ERR-04-110 (RFC 9457, `title` "Luồng hoặc route đang tạm dừng"; câu hiển thị "Dịch vụ đang tạm dừng. Thử lại sau."); không có lượt gọi tới WireMock, bản tin không vào DLQ, nhật ký kết nối ghi lượt bị từ chối. Bước 2 trả `200`. Bước 3 trả `200` do v hiện hành sinh.
+:::
+
 ### TS-04-21 · Data plane bất đồng bộ, xử lý lỗi, chống trùng
 
-**Phủ.** FR-04-062, 069, 070, 071; BR-04-008, 009; UC-04-18; ERR-04-101, 106; LGC-BUS-039.
+**Mục tiêu.** Xác nhận luồng nhận sự kiện Kafka xử lý ít nhất một lần, chống trùng cho kết quả nghiệp vụ một lần, và bản tin lỗi vào DLQ đúng phân loại mà không làm tắc phân vùng.
+
+**Phủ.** FR-04-062, 065, 069, 070, 071; BR-04-008, 009; UC-04-18; ERR-04-101, 106, 108, 109; LGC-BUS-039.
 
 #### TC-04-131 · Nhận sự kiện Kafka, chuyển CDM, phát sự kiện <!--k:rt-async-ok-->
 
@@ -3344,6 +3919,27 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 1. Kích hoạt lần gửi.
 
 **Kết quả mong đợi.** Kafka từ chối do ACL theo principal của runtime tenant; bản tin vào DLQ với ERR-04-109; cảnh báo PH-13. Chứng minh ràng buộc có hai lớp: kiểm tra tĩnh và ACL Kafka.
+:::
+
+#### TC-04-199 · Lỗi nghiệp vụ, dữ liệu ở luồng bất đồng bộ vào DLQ không thử lại <!--k:rt-async-business-err-->
+
+::: dac-ta
+**Loại.** Âm.
+
+**Ưu tiên.** P1.
+
+**Tự động.** RT.
+
+**Truy vết.** FR-04-062, 065, 070 · UC-04-18 · BR-04-008 · ERR-04-108, 109.
+
+**Tiền điều kiện, dữ liệu.** F-DD PROD; một bản tin có mã loại đất không có trong bảng ánh xạ PH-07 (cấu hình `FAIL`); một bản tin làm bộ chuẩn hóa CDM ném lỗi không phân loại.
+
+**Các bước.**
+
+1. Gửi hai bản tin vào `t68.datdai.thua-dat.changed.v1`, tiếp theo 10 bản tin hợp lệ.
+2. Đọc `t68.ops.dlq.v1` và chỉ số `dh_flow_failures_total`.
+
+**Kết quả mong đợi.** Hai bản tin vào DLQ với `dh-attempts = 1` (không thử lại): tiêu đề `dh-error-code` lần lượt ERR-04-108 và ERR-04-109, kèm `dh-flow`, `dh-version`, `traceparent`; trường nhạy cảm đã mã hóa. 10 bản tin hợp lệ vẫn ra `t68.cdm.thua-dat.v1` (không tắc phân vùng). ERR-04-109 sinh cảnh báo PH-13; người vận hành thấy cả hai ở màn DLQ của PH-18.
 :::
 
 ### TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
@@ -3726,6 +4322,28 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** Bước 1 < 1 giây. Bước 2 < 5 giây. Ảnh có chữ ký Cosign, SBOM, không có lỗ hổng mức Cao theo Trivy.
 :::
 
+#### TC-04-200 · Trạng thái màn Danh mục thành phần <!--k:ui-catalog-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P3.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-080 · UI-04-17 · ERR-04-025, 045.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1 (không có quyền quản lý chính sách); U-T68-TA.
+
+**Các bước.**
+
+1. IE1 mở UI-04-17, lọc "Native: Không" và tìm "khong-co".
+2. IE1 chọn dòng `exec`.
+3. TA mở drawer `sftp`, đặt "Không được phép" mà để trống lý do, bấm "Lưu".
+
+**Kết quả mong đợi.** Bước 1: skeleton cây 10 dòng, bảng 8 dòng; sau lọc là ST-04. Bước 2: cột "Được phép" hiện chữ, nút quản lý ẩn; drawer mở bằng `Enter`, đóng bằng `Esc`, `F6` chuyển giữa cây và bảng. Bước 3: ERR-04-025 tại trường lý do, chính sách không đổi. Dòng chân trang hiện phiên bản catalog và "khớp runtime".
+:::
+
 ### TS-04-26 · Chuyển Camel XML của Bus cũ
 
 **Phủ.** FR-04-082; UC-04-20; API-04-028; UI-04-18; ERR-04-032; LGC-BUS-020…029, LGC-TOOL-001.
@@ -3770,6 +4388,30 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 1. Tải lần lượt từng tệp.
 
 **Kết quả mong đợi.** XML-BAD trả `422` ERR-04-032. XML-EXEC: chuyển được nhưng `report.forbiddenComponents = ["exec"]`, chặng bị thay bằng giữ chỗ. XXE: `422` ERR-04-032, không đọc tệp hệ thống (parser tắt DTD). 3 MiB trả `413` ERR-04-033. `.exe` trả `415` ERR-04-046.
+:::
+
+#### TC-04-201 · Trạng thái màn Nhập luồng hệ cũ <!--k:ui-legacy-states-->
+
+::: dac-ta
+**Loại.** Dương, Âm.
+
+**Ưu tiên.** P3.
+
+**Tự động.** E2E.
+
+**Truy vết.** FR-04-082 · UI-04-18 · ERR-04-032.
+
+**Tiền điều kiện, dữ liệu.** U-T68-IE1; gói XML-OK nén `.zip`; XML-BAD; U-T68-VW.
+
+**Các bước.**
+
+1. IE1 mở UI-04-18 bước ①.
+2. Thả gói `.zip` và chờ phân tích.
+3. Rời trang giữa lúc phân tích, mở lại từ khay nền.
+4. Thả XML-BAD.
+5. VW mở URL của UI-04-18.
+
+**Kết quả mong đợi.** Bước 1: dropzone "Kéo tệp XML hoặc ZIP vào đây". Bước 2: "Đang phân tích {k}/{n} route" rồi bảng ba nhóm Tự động, Cần chỉnh, Không chuyển được. Bước 3: ST-10 hỏi trước khi rời, tác vụ vẫn chạy và mở lại đúng kết quả. Bước 4: ST-05 với ERR-04-032. Bước 5: ST-06. Phím `Enter` tiếp tục, `Alt+←` quay lại.
 :::
 
 ### TS-04-27 · Tham số PH-04 và đóng băng thay đổi
@@ -3843,7 +4485,9 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 
 ### TS-04-28 · Sự kiện, outbox và hợp đồng API
 
-**Phủ.** FR-04-074 và các FR phát sự kiện; EVT-04-01…14; D03-04-PH04 §4, §7.
+**Mục tiêu.** Xác nhận sự kiện chỉ phát khi giao dịch thành công, mọi sự kiện và API khớp hợp đồng, và dữ liệu W2 được di trú đúng kể cả khi schema có chủ sở hữu khác.
+
+**Phủ.** FR-04-074 và các FR phát sự kiện; EVT-04-01…14; D03-04-PH04 §4, §7; D03-03-PH04 §4.2 (di trú W2).
 
 #### TC-04-156 · Outbox ghi cùng giao dịch, không phát khi lỗi <!--k:outbox-->
 
@@ -3907,11 +4551,39 @@ Mỗi chuyển trạng thái hợp lệ có ít nhất một ca dương tính. M
 **Kết quả mong đợi.** Không phản hồi nào sai lược đồ, không mã HTTP ngoài khai báo, không lỗi 500. `oasdiff` không báo thay đổi phá vỡ trong `v1`.
 :::
 
+#### TC-04-202 · Di trú dữ liệu W2 khi schema do tài khoản khác sở hữu <!--k:migrate-w2-owner-->
+
+::: dac-ta
+**Loại.** Dương, Biên.
+
+**Ưu tiên.** P1.
+
+**Tự động.** IT.
+
+**Truy vết.** FR-04-011, 030 · BR-04-004 · ERR-04-014 · D03-03-PH04 §4.2.
+
+**Tiền điều kiện, dữ liệu.** Testcontainers PostgreSQL (bản của CI và bản 16.15 như lần chạy thử ở D03-03-PH04 §4.2); schema `ph04` tạo sẵn do `postgres` sở hữu, có bốn bảng W2: một `route` `PUBLISHED`, hai `route_version` `PUBLISHED` và `TESTING`, một `route_test_run`; tài khoản `ph04_owner` không phải chủ schema.
+
+**Các bước.**
+
+1. Chạy changelog Liquibase của `ph04` dưới `ph04_owner`.
+2. Đọc `flow`, `flow_version`, `test_run`, danh sách bảng của schema.
+3. Chạy lại changelog lần hai.
+4. Dưới `ph04_app`, thử cập nhật lần chạy di trú sang `PASSED` và gửi duyệt phiên bản 2.
+5. Chạy changelog trên CSDL trống để đối chứng.
+
+**Kết quả mong đợi.** Bước 1: changeset `ph04-0004-legacy-owner` chuyển quyền sở hữu schema và bốn bảng cũ cho `ph04_owner`; không có lỗi "permission denied for schema ph04". Bước 2: luồng `APPROVED`; phiên bản 1 `APPROVED` (người duyệt `system:migrate`), phiên bản 2 `DRAFT`; cả hai `needs_revalidation = true`; lần chạy `mode = SIMULATED`; bốn bảng cũ đổi tên `*_legacy_w2`. Bước 3: không áp thêm changeset, dữ liệu không đổi. Bước 4: ràng buộc chặn `SIMULATED` thành `PASSED`; gửi duyệt trả `409` ERR-04-014 vì chưa có lần chạy thật (BR-04-004). Bước 5: 26 bảng, 25 bảng bật RLS, 100 chính sách.
+:::
+
 ## 5. Kịch bản kiểm thử phi chức năng
 
-Ngưỡng theo FRS §7.2. Mỗi ca đo hai lần liên tiếp trên PERF; đạt khi cả hai lần đạt. Kết quả ghi vào báo cáo hiệu năng của đợt kèm cấu hình phần cứng.
+Chương này gom bốn kịch bản phi chức năng: hiệu năng, bảo mật, khả dụng, truy cập. Ngưỡng theo FRS §7.2. Mỗi ca đo hai lần liên tiếp trên PERF; đạt khi cả hai lần đạt. Kết quả ghi vào báo cáo hiệu năng của đợt kèm cấu hình phần cứng.
 
 ### TS-04-29 · Hiệu năng
+
+**Mục tiêu.** Chứng minh NFR-04-001…013 ở cấu hình PERF (mục 1.3) với dữ liệu quy mô GĐ; ca có NFR-04-007…013 là P1.
+
+**Phủ.** NFR-04-001…013; FR-04-001, 012, 013, 014, 017, 060, 075.
 
 #### TC-04-159 · Mở bảng thành phần với toàn bộ catalog <!--k:perf-palette-->
 
@@ -4565,9 +5237,13 @@ Cán bộ vận hành Bus cũ của tỉnh thí điểm tự thực hiện trên
 | UAT-11 | Xóa chương trình không còn dùng | LGC-BUS-010 | Hệ thống chặn khi còn phụ thuộc và nói rõ phụ thuộc | FR-04-006 | TS-04-04 |
 | UAT-12 | Chuyển một chương trình Camel XML cũ sang hệ mới | LGC-BUS-020…029 | Có báo cáo chặng chuyển được và chặng cần làm tay | FR-04-082 | TS-04-26 |
 
+: Kịch bản nghiệm thu UAT-01…12 tương đương Bus và Tooling
+
 ## 8. Ma trận truy vết
 
-<!-- gen:matrix:start -->
+Ma trận chứng minh độ phủ theo năm chiều: FR, chức năng hệ cũ, quy tắc nghiệp vụ, mã lỗi và yêu cầu phi chức năng. Toàn bộ mục này do `fill_doc.py` gọi `gen_matrix.py` sinh lại; quy tắc "mỗi FR mức M có ca dương và ca âm" được kiểm ở cột cuối bảng 8.1.
+
+<!--gen:matrix-->
 ### 8.1. Yêu cầu chức năng → test case
 
 Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-04. FR mức M phải có ít nhất một ca ở mỗi cột; bảng này được sinh tự động bằng `ph04/tools/gen_matrix.py` nên luôn khớp với mục 4 và 5.
@@ -4580,60 +5256,62 @@ Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-04. FR mức
 | FR-04-004 | Cập nhật thông tin luồng | M | LGC-BUS-006, LGC-BUS-011 | 021 | 022, 028 | — | Có |
 | FR-04-005 | Nhân bản luồng | S | mới | 023 | — | — | Có |
 | FR-04-006 | Gỡ bỏ luồng có kiểm tra phụ thuộc, xóa bản nháp | M | LGC-BUS-010, LGC-TOOL-016 | 012, 024, 026, 143 | 025, 027, 028, 143 | — | Có |
-| FR-04-007 | Quản lý không gian làm việc và thành viên | S | LGC-BUS-032 | 001, 003, 005, 006, 143 | 002, 004, 006, 093, 143 | 144 | Có |
+| FR-04-007 | Quản lý không gian làm việc và thành viên | S | LGC-BUS-032 | 001, 003, 005, 006, 143, 187 | 002, 004, 006, 093, 143, 187 | 144 | Có |
 | FR-04-010 | Mở trình thiết kế, phiên soạn thảo và cảnh báo người khác đa | M | LGC-TOOL-001, LGC-TOOL-029 | 029, 033 | 004 | 035 | Có |
-| FR-04-011 | Tạo phiên bản mới từ phiên bản đã có | M | LGC-BUS-011 | 032 | 031, 032 | — | Có |
+| FR-04-011 | Tạo phiên bản mới từ phiên bản đã có | M | LGC-BUS-011 | 032, 202 | 031, 032 | — | Có |
 | FR-04-012 | Bảng thành phần theo danh mục được phép, tìm kiếm và lọc the | M | LGC-TOOL-003, LGC-TOOL-004, LGC-TOOL-005… | 037 | 042 | 160 | Có |
 | FR-04-013 | Thao tác trên sơ đồ: thêm, chèn, xóa, nối, rẽ nhánh, chọn nh | M | LGC-TOOL-013, LGC-TOOL-017, LGC-TOOL-018… | 038 | 039 | 161, 174, 183 | Có |
 | FR-04-014 | Cấu hình chặng bằng biểu mẫu sinh từ catalog, khôi phục giá  | M | LGC-TOOL-019, LGC-TOOL-020 | 040 | 041 | 164, 174 | Có |
-| FR-04-015 | Trình soạn biểu thức có gợi ý, kiểm tra cú pháp và xem trước | M | mới | 048 | 049 | 175 | Có |
+| FR-04-015 | Trình soạn biểu thức có gợi ý, kiểm tra cú pháp và xem trước | M | mới | 048 | 049, 189 | 175 | Có |
 | FR-04-016 | Chọn kết nối PH-05 và tham chiếu bí mật thay vì nhập bí mật | M | LGC-BUS-041, LGC-TOOL-008 | 050 | 051, 052 | — | Có |
 | FR-04-017 | Đồng bộ hai chiều giữa sơ đồ, thuộc tính và YAML, không mất  | M | LGC-TOOL-021, LGC-TOOL-026 | 043, 044, 045 | 044 | 163 | Có |
 | FR-04-018 | Soạn Kamelet và gửi đăng ký Kamelet tự viết | S | mới | 057 | 058 | — | Có |
-| FR-04-019 | Soạn Pipe | S | mới | 059 | 059 | — | Có |
-| FR-04-020 | Trình ánh xạ dữ liệu sinh biểu thức JQ | M | LGC-BUS-036, LGC-TOOL-007, LGC-TOOL-028 | 054 | 055 | 056 | Có |
+| FR-04-019 | Soạn Pipe | S | mới | 059, 191 | 059, 191 | — | Có |
+| FR-04-020 | Trình ánh xạ dữ liệu sinh biểu thức JQ | M | LGC-BUS-036, LGC-TOOL-007, LGC-TOOL-028 | 054 | 055, 190 | 056 | Có |
 | FR-04-021 | Bean, cấu hình cấp tệp và metadata | S | mới | 060 | 060 | — | Có |
 | FR-04-022 | Ghim bản tin mẫu theo chặng | M | mới | 045, 053 | 053 | — | Có |
 | FR-04-023 | Kiểm tra hợp lệ định nghĩa luồng | M | mới | 062, 070 | 051, 052, 063, 064, 065, 066, 067, 068, 069, 136 | — | Có |
 | FR-04-024 | Lưu bản nháp tự động, phát hiện xung đột, khôi phục phiên nh | M | LGC-TOOL-014, LGC-TOOL-029 | 029, 033, 143 | 030, 036, 143 | 034, 173, 178 | Có |
-| FR-04-025 | Thư viện khuôn mẫu luồng | S | LGC-BUS-013 | 014 | — | — | Có |
+| FR-04-025 | Thư viện khuôn mẫu luồng | S | LGC-BUS-013 | 014, 188 | 188 | — | Có |
 | FR-04-026 | Ghi chú dán và luồng con dùng lại | C | mới | 045, 061 | — | — | Có |
 | FR-04-027 | Tải xuống, nhập YAML và xuất gói luồng | M | LGC-TOOL-015 | 016, 046 | 047 | — | Có |
-| FR-04-030 | Chạy thử luồng trên sandbox với đích mô phỏng | M | LGC-BUS-013 | 071, 076, 079 | 072, 073, 076, 084 | 074, 075, 077, 173, 175 | Có |
+| FR-04-030 | Chạy thử luồng trên sandbox với đích mô phỏng | M | LGC-BUS-013 | 071, 076, 079, 192, 202 | 072, 073, 076, 084 | 074, 075, 077, 173, 175 | Có |
 | FR-04-031 | Ca kiểm thử của luồng và bộ chạy | S | mới | 080 | 081 | — | Có |
-| FR-04-032 | Nhật ký chạy thử, xem lại, so sánh hai lần chạy, dọn nhật ký | M | mới | 078 | 072 | — | Có |
+| FR-04-032 | Nhật ký chạy thử, xem lại, so sánh hai lần chạy, dọn nhật ký | M | mới | 078, 192 | 072 | — | Có |
 | FR-04-033 | Phủ kết quả chạy thử và số liệu chạy thật lên sơ đồ | M | LGC-BUS-022 | 071 | 072 | — | Có |
-| FR-04-040 | Gửi duyệt phiên bản | M | mới | 082, 086, 090, 143 | 031, 083, 084, 085, 087, 143 | — | Có |
-| FR-04-041 | Duyệt bốn mắt với so sánh YAML và so sánh sơ đồ | M | mới | 088, 089, 090, 143 | 091, 092, 093, 143 | 094 | Có |
-| FR-04-042 | Phát hành qua GitOps và theo dõi tình trạng triển khai | M | LGC-BUS-033, LGC-BUS-034 | 096, 143 | 098, 099, 100, 101, 102, 143 | 103, 142, 177 | Có |
-| FR-04-043 | So sánh hai phiên bản bất kỳ | M | LGC-BUS-023 | 095 | 092 | — | Có |
+| FR-04-040 | Gửi duyệt phiên bản | M | mới | 082, 086, 090, 143, 193 | 031, 083, 084, 085, 087, 143, 193 | — | Có |
+| FR-04-041 | Duyệt bốn mắt với so sánh YAML và so sánh sơ đồ | M | mới | 088, 089, 090, 143, 193 | 091, 092, 093, 143, 193 | 094 | Có |
+| FR-04-042 | Phát hành qua GitOps và theo dõi tình trạng triển khai | M | LGC-BUS-033, LGC-BUS-034 | 096, 143, 196 | 098, 099, 100, 101, 102, 143, 195 | 103, 142, 177 | Có |
+| FR-04-043 | So sánh hai phiên bản bất kỳ | M | LGC-BUS-023 | 095, 194 | 092, 194 | — | Có |
 | FR-04-044 | Quay lui về phiên bản trước | M | mới | 104, 105, 107 | 106 | — | Có |
-| FR-04-045 | Thăng cấp phiên bản qua các môi trường | S | mới | 097, 143 | 098, 143 | — | Có |
-| FR-04-050 | Kích hoạt, tạm dừng, tiếp tục luồng và từng route có lý do | M | LGC-BUS-009, LGC-BUS-012, LGC-BUS-026 | 108, 109, 110, 111, 143 | 112, 116, 117, 143 | 113, 114, 115, 176, 182 | Có |
+| FR-04-045 | Thăng cấp phiên bản qua các môi trường | S | mới | 097, 143, 196 | 098, 143 | — | Có |
+| FR-04-050 | Kích hoạt, tạm dừng, tiếp tục luồng và từng route có lý do | M | LGC-BUS-009, LGC-BUS-012, LGC-BUS-026 | 108, 109, 110, 111, 143, 197 | 112, 116, 117, 143, 198 | 113, 114, 115, 176, 182 | Có |
 | FR-04-051 | Xem tình trạng runtime của luồng | M | LGC-BUS-014, LGC-BUS-015, LGC-BUS-017… | 107, 118 | 119 | 103, 180 | Có |
 | FR-04-052 | Danh sách điểm kết nối của luồng và số liệu theo điểm kết nố | M | LGC-BUS-020, LGC-BUS-027, LGC-BUS-028 | 120 | 120 | — | Có |
 | FR-04-053 | Giám sát theo luồng nhúng từ PH-13 | S | LGC-BUS-007, LGC-BUS-015, LGC-BUS-016… | 121 | 121 | — | Có |
 | FR-04-060 | Khung chín chặng chuẩn và thư viện nền | M | LGC-BUS-035, LGC-BUS-036, LGC-BUS-037… | 122 | 063 | 169 | Có |
-| FR-04-061 | Tiếp nhận đồng bộ HTTP và SOAP qua APISIX | M | LGC-BUS-039 | 122, 130, 141 | 123, 128, 141 | 179 | Có |
-| FR-04-062 | Tiếp nhận bất đồng bộ từ Kafka | M | LGC-BUS-039 | 131 | 132 | 181 | Có |
+| FR-04-061 | Tiếp nhận đồng bộ HTTP và SOAP qua APISIX | M | LGC-BUS-039 | 122, 130, 141 | 123, 128, 141, 198 | 179 | Có |
+| FR-04-062 | Tiếp nhận bất đồng bộ từ Kafka | M | LGC-BUS-039 | 131 | 132, 199 | 181 | Có |
 | FR-04-063 | Kiểm tra lược đồ bản tin | M | LGC-BUS-036 | 122 | 123 | — | Có |
 | FR-04-064 | Ủy quyền qua OPA | M | LGC-BUS-041 | 122 | 124 | — | Có |
-| FR-04-065 | Chuyển đổi, chuẩn hóa về CDM và chuyển mã qua PH-07 | M | LGC-BUS-036 | 054, 122 | 125 | — | Có |
+| FR-04-065 | Chuyển đổi, chuẩn hóa về CDM và chuyển mã qua PH-07 | M | LGC-BUS-036 | 054, 122 | 125, 199 | — | Có |
 | FR-04-066 | Làm giàu bản tin | M | mới | 122 | 125 | — | Có |
 | FR-04-067 | Che, giả danh dữ liệu cá nhân theo chính sách PH-09 | M | LGC-TOOL-012 | 126 | 126 | — | Có |
 | FR-04-068 | Định tuyến theo nội dung, tách, gộp, gọi song song, gửi đích | M | LGC-BUS-035 | 122, 127 | 069, 127 | — | Có |
 | FR-04-069 | Phát sự kiện ra Kafka | M | LGC-BUS-039 | 131 | 065 | 134, 181 | Có |
-| FR-04-070 | Xử lý lỗi chuẩn: phân loại, thử lại, ngắt mạch, DLQ, dự phòn | M | LGC-BUS-037 | 127 | 066, 127, 129, 132 | 181 | Có |
+| FR-04-070 | Xử lý lỗi chuẩn: phân loại, thử lại, ngắt mạch, DLQ, dự phòn | M | LGC-BUS-037 | 127 | 066, 127, 129, 132, 199 | 181 | Có |
 | FR-04-071 | Chống trùng bản tin | M | mới | 133 | 133 | — | Có |
 | FR-04-072 | Truy cập CSDL trực tiếp có kiểm soát (Q359) | M | LGC-BUS-040, LGC-TOOL-008 | 135 | 136, 137 | 138 | Có |
 | FR-04-073 | Ngữ cảnh tenant trên mỗi bản tin | M | mới | 141 | 067, 141 | 115, 139, 140, 142 | Có |
 | FR-04-074 | Vết, chỉ số, log và nhật ký kết nối | M | LGC-BUS-030, LGC-BUS-038 | 122, 126 | 126 | — | Có |
-| FR-04-075 | Hồ sơ runtime, biên dịch native và chế độ JVM | M | mới | 130 | 068 | 150, 170, 171, 177 | Có |
-| FR-04-080 | Danh mục thành phần và chính sách thành phần được phép | M | LGC-BUS-034, LGC-BUS-040 | 037, 143, 146 | 042, 143, 147 | — | Có |
-| FR-04-081 | Khớp phiên bản catalog với runtime | M | mới | 148 | 069, 148, 149 | 035 | Có |
-| FR-04-082 | Chuyển luồng Camel XML của Bus cũ sang YAML | M | LGC-BUS-033, LGC-TOOL-015 | 151 | 152 | — | Có |
+| FR-04-075 | Hồ sơ runtime, biên dịch native và chế độ JVM | M | LGC-BUS-034 | 130 | 068 | 150, 170, 171, 177 | Có |
+| FR-04-080 | Danh mục thành phần và chính sách thành phần được phép | M | LGC-BUS-034, LGC-BUS-040 | 037, 143, 146, 200 | 042, 143, 147, 200 | — | Có |
+| FR-04-081 | Khớp phiên bản catalog với runtime | M | mới | 148 | 069, 148, 149, 195 | 035 | Có |
+| FR-04-082 | Chuyển luồng Camel XML của Bus cũ sang YAML | M | LGC-BUS-033, LGC-TOOL-015 | 151, 201 | 152, 201 | — | Có |
 | FR-04-083 | Lịch sử thao tác và kiểm toán của luồng | M | LGC-BUS-032, LGC-BUS-033 | 121 | 121 | — | Có |
 | FR-04-084 | Tham số PH-04 theo tenant và đóng băng thay đổi | S | LGC-BUS-031 | 005, 020, 105, 153, 155 | 020, 036, 102, 154, 155 | 056, 075, 094, 138 | Có |
+
+: Ma trận yêu cầu chức năng → test case
 
 ### 8.2. Chức năng hệ cũ → yêu cầu → test case
 
@@ -4649,11 +5327,11 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | LGC-BUS-006 | 002, 004 | 010, 021 | UAT-02 |
 | LGC-BUS-007 | 053 | 121 | UAT-10 |
 | LGC-BUS-008 | 002 | 010 | UAT-02 |
-| LGC-BUS-009 | 050 | 108, 109, 110, 111, 143 | UAT-08 |
+| LGC-BUS-009 | 050 | 108, 109, 110, 111, 143, 197 | UAT-08 |
 | LGC-BUS-010 | 006 | 012, 024, 026, 143 | UAT-11 |
-| LGC-BUS-011 | 004, 011 | 021, 032 | — |
-| LGC-BUS-012 | 050 | 026, 108, 109, 110, 111, 143 | UAT-07 |
-| LGC-BUS-013 | 003, 025, 030 | 013, 014, 015, 016, 020, 071, 076, 079 (+1) | UAT-03 |
+| LGC-BUS-011 | 004, 011 | 021, 032, 202 | — |
+| LGC-BUS-012 | 050 | 026, 108, 109, 110, 111, 143, 197 | UAT-07 |
+| LGC-BUS-013 | 003, 025, 030 | 013, 014, 015, 016, 020, 071, 076, 079 (+4) | UAT-03 |
 | LGC-BUS-014 | 051 | 118 | UAT-10 |
 | LGC-BUS-015 | 051, 053 | 118 | UAT-10 |
 | LGC-BUS-016 | 053 | — | — |
@@ -4663,24 +5341,24 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | LGC-BUS-020 | 002, 052 | 120 | UAT-12 |
 | LGC-BUS-021 | 002 | — | UAT-12 |
 | LGC-BUS-022 | 002, 033 | 071 | UAT-12 |
-| LGC-BUS-023 | 002, 043 | 095 | UAT-12 |
+| LGC-BUS-023 | 002, 043 | 095, 194 | UAT-12 |
 | LGC-BUS-024 | 002 | — | UAT-12 |
 | LGC-BUS-025 | 001, 002, 051 | — | UAT-12 |
-| LGC-BUS-026 | 050 | 108, 109, 110, 111, 143 | UAT-12 |
+| LGC-BUS-026 | 050 | 108, 109, 110, 111, 143, 197 | UAT-12 |
 | LGC-BUS-027 | 052 | 120 | UAT-12 |
 | LGC-BUS-028 | 051, 052 | 120 | UAT-12 |
 | LGC-BUS-029 | 053 | — | UAT-12 |
 | LGC-BUS-030 | 074 | 122, 126 | — |
 | LGC-BUS-031 | 084 | 005, 020, 105, 153, 155 | — |
-| LGC-BUS-032 | 007, 083 | 001, 003, 005, 006, 121, 143 | — |
-| LGC-BUS-033 | 042, 082, 083 | 096, 121, 143, 151 | UAT-10 |
-| LGC-BUS-034 | 042, 080 | 037, 096, 143, 146 | — |
+| LGC-BUS-032 | 007, 083 | 001, 003, 005, 006, 121, 143, 187 | — |
+| LGC-BUS-033 | 042, 082, 083 | 096, 121, 143, 151, 196, 201 | UAT-10 |
+| LGC-BUS-034 | 042, 075, 080 | 037, 096, 130, 143, 146, 196, 200 | — |
 | LGC-BUS-035 | 060, 068 | 122, 127 | — |
 | LGC-BUS-036 | 020, 060, 063, 065 | 054, 122, 130 | — |
 | LGC-BUS-037 | 060, 070 | 127 | — |
 | LGC-BUS-038 | 060, 074 | 122, 126 | — |
 | LGC-BUS-039 | 060, 061, 062, 069 | 122, 130, 131, 141 | — |
-| LGC-BUS-040 | 072, 080 | 037, 135, 143, 146 | — |
+| LGC-BUS-040 | 072, 080 | 037, 135, 143, 146, 200 | — |
 | LGC-BUS-041 | 016, 064 | 050, 122, 124 | — |
 | LGC-TOOL-001 | 001, 010 | 029, 033 | UAT-03 |
 | LGC-TOOL-002 | 003 | 013, 014, 015, 016, 020, 037, 143 | UAT-04 |
@@ -4696,7 +5374,7 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | LGC-TOOL-012 | 012, 067 | 126 | — |
 | LGC-TOOL-013 | 013 | — | — |
 | LGC-TOOL-014 | 024 | 029, 033, 143 | — |
-| LGC-TOOL-015 | 027, 082 | 016, 046, 151 | — |
+| LGC-TOOL-015 | 027, 082 | 016, 046, 151, 201 | — |
 | LGC-TOOL-016 | 006 | 012, 024, 026, 143 | — |
 | LGC-TOOL-017 | 013 | — | — |
 | LGC-TOOL-018 | 013 | — | — |
@@ -4710,6 +5388,8 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | LGC-TOOL-028 | 020 | 054 | — |
 | LGC-TOOL-029 | 010, 024 | 029, 033, 143 | — |
 
+: Ma trận chức năng hệ cũ → yêu cầu → test case
+
 ### 8.3. Quy tắc nghiệp vụ → test case
 
 | Mã | Test case |
@@ -4717,75 +5397,77 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | BR-04-001 | 017 |
 | BR-04-002 | 039, 063, 122 |
 | BR-04-003 | 018, 050, 051, 058 |
-| BR-04-004 | 077, 082, 083, 084 |
+| BR-04-004 | 077, 082, 083, 084, 193, 202 |
 | BR-04-005 | 088, 091 |
 | BR-04-006 | 043 |
 | BR-04-007 | 029, 045, 053, 061 |
-| BR-04-008 | 066, 132 |
+| BR-04-008 | 066, 132, 199 |
 | BR-04-009 | 065, 131, 134 |
 | BR-04-010 | 067, 141 |
 | BR-04-011 | 023, 064 |
-| BR-04-012 | 096, 099 |
+| BR-04-012 | 096, 099, 196 |
 | BR-04-013 | 053, 078, 126 |
 | BR-04-014 | 037, 042, 068, 147 |
 | BR-04-015 | 135, 136, 137 |
 | BR-04-016 | 024, 031, 032, 082, 087 |
 | BR-04-017 | 026, 027, 085, 086, 092, 116 |
-| BR-04-018 | 101, 103, 110, 111, 182 |
+| BR-04-018 | 101, 103, 110, 111, 182, 197 |
 | BR-04-019 | 097, 098 |
 | BR-04-020 | 069, 148, 149 |
 | BR-04-021 | 003, 004, 005, 093, 144 |
 | BR-04-022 | 036, 102, 105 |
 
+: Ma trận quy tắc nghiệp vụ → test case
+
 ### 8.4. Mã lỗi → test case
 
 | Mã | Test case |
 |---|---|
-| ERR-04-001 | 011, 139 |
+| ERR-04-001 | 011, 139, 191, 194 |
 | ERR-04-002 | 017 |
 | ERR-04-003 | 004, 022, 093 |
-| ERR-04-004 | 030, 032, 106 |
+| ERR-04-004 | 030, 032, 106, 194 |
 | ERR-04-005 | 025, 027, 031, 076, 085, 092, 099 |
 | ERR-04-006 | 022, 030, 033, 081 |
 | ERR-04-007 | 022, 030 |
 | ERR-04-008 | 018, 030, 047 |
-| ERR-04-009 | 018, 047, 073, 085 |
+| ERR-04-009 | 018, 047, 073, 085, 195 |
 | ERR-04-010 | 018, 030, 051, 155 |
-| ERR-04-011 | 042, 060, 068 |
+| ERR-04-011 | 042, 060, 068, 191 |
 | ERR-04-012 | 063 |
 | ERR-04-013 | 052, 073, 137 |
-| ERR-04-014 | 083, 084 |
-| ERR-04-015 | 091 |
+| ERR-04-014 | 083, 084, 202 |
+| ERR-04-015 | 091, 193 |
 | ERR-04-016 | 032 |
-| ERR-04-017 | 006, 027 |
+| ERR-04-017 | 006, 027, 187 |
 | ERR-04-018 | 019 |
-| ERR-04-019 | 049, 075, 077 |
+| ERR-04-019 | 049, 075, 077, 189, 190 |
 | ERR-04-020 | 074 |
 | ERR-04-021 | 049, 055, 073 |
 | ERR-04-022 | 100 |
 | ERR-04-023 | 098, 116 |
 | ERR-04-024 | 112, 113 |
-| ERR-04-025 | 027, 085, 092, 106, 116 |
+| ERR-04-025 | 027, 085, 092, 106, 116, 200 |
 | ERR-04-026 | 009 |
-| ERR-04-027 | 002, 006, 018 |
-| ERR-04-028 | 002 |
+| ERR-04-027 | 002, 006, 018, 187 |
+| ERR-04-028 | 002, 187 |
 | ERR-04-029 | 058, 068, 102 |
 | ERR-04-030 | 081 |
 | ERR-04-031 | 136 |
-| ERR-04-032 | 152 |
+| ERR-04-032 | 152, 201 |
 | ERR-04-033 | 018, 030, 047 |
 | ERR-04-034 | 028 |
 | ERR-04-035 | 041 |
 | ERR-04-036 | 058 |
 | ERR-04-037 | 049 |
 | ERR-04-038 | 055 |
-| ERR-04-039 | 018 |
+| ERR-04-039 | 018, 188 |
 | ERR-04-040 | 106 |
 | ERR-04-041 | 036, 102 |
-| ERR-04-042 | 069, 149 |
+| ERR-04-042 | 069, 149, 195 |
 | ERR-04-043 | 069 |
 | ERR-04-044 | 094 |
-| ERR-04-045 | 093, 116 |
+| ERR-04-045 | 093, 116, 187, 188, 200 |
 | ERR-04-046 | 152 |
 | ERR-04-047 | 121 |
 | ERR-04-048 | 178 |
@@ -4797,11 +5479,13 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | ERR-04-105 | 127 |
 | ERR-04-106 | 133 |
 | ERR-04-107 | 123 |
-| ERR-04-108 | 125, 138 |
-| ERR-04-109 | 129 |
-| ERR-04-110 | 108 |
+| ERR-04-108 | 125, 138, 199 |
+| ERR-04-109 | 129, 199 |
+| ERR-04-110 | 108, 198 |
 | ERR-04-111 | 128 |
 | ERR-04-112 | 141 |
+
+: Ma trận mã lỗi → test case
 
 ### 8.5. Yêu cầu phi chức năng → test case
 
@@ -4814,9 +5498,9 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | NFR-04-005 | 163 |
 | NFR-04-006 | 164 |
 | NFR-04-007 | 070, 165 |
-| NFR-04-008 | 071, 166 |
-| NFR-04-009 | 097, 167 |
-| NFR-04-010 | 108, 110, 168 |
+| NFR-04-008 | 071, 166, 192 |
+| NFR-04-009 | 097, 167, 196 |
+| NFR-04-010 | 108, 110, 168, 197 |
 | NFR-04-011 | 169 |
 | NFR-04-012 | 170 |
 | NFR-04-013 | 150, 171 |
@@ -4824,9 +5508,13 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | NFR-04-015 | 034, 183 |
 | NFR-04-016 | 184, 186 |
 | NFR-04-017 | 185 |
-<!-- gen:matrix:end -->
 
-## 9. Tự động hóa
+: Ma trận yêu cầu phi chức năng → test case
+<!--/gen-->
+
+## 9. Tự động hóa và tệp đi kèm
+
+Chương này nói ca tự động nằm ở đâu, gắn với mã ca thế nào, đưa ba mẫu mã cho nhóm ca bắt buộc và cách sinh lại ma trận, Gherkin, bảng tính từ tài liệu.
 
 ### 9.1. Tổ chức mã kiểm thử
 
@@ -4839,6 +5527,8 @@ Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`
 | `e2e/integration/*.spec.ts` | Playwright; tệp theo kịch bản `ts-04-nn.spec.ts` |
 | `perf/integration/*.js` | k6 |
 | `datahub-docs/05-kiem-thu/test-case/ph04/gherkin/` | Gherkin sinh từ tài liệu này |
+
+: Thư mục mã kiểm thử
 
 Mỗi ca tự động mang thẻ mã ca (`@Tag("TC-04-031")`, `test('TC-04-031 …')`) để báo cáo đối chiếu với ma trận.
 
@@ -4894,14 +5584,15 @@ test('TC-04-038 chèn chặng log giữa transform và enrich', async ({ page })
 
 ### 9.5. Sinh ma trận, Gherkin, bảng tính
 
-`ph04/tools/` có bốn script, chạy từ thư mục `05-kiem-thu/test-case/ph04/tools`:
+`ph04/tools/` có năm script, chạy từ thư mục `05-kiem-thu/test-case/ph04/tools` theo thứ tự:
 
-- `number_tcs.py`: cấp số TC-04-nnn cho ca mới (viết tạm là `TC-04-` và ba dấu thăng) theo thứ tự xuất hiện. Thay mọi tham chiếu `[[tc:khóa]]` bằng số. Số đã cấp không đổi.
-- `gen_matrix.py`: sinh mục 8.
-- `gen_gherkin.py`: sinh `ph04/gherkin/*.feature`.
-- `gen_xlsx.py`: sinh `ph04/D05-02-PH04-test-case.xlsx` cho đội kiểm thử ghi kết quả.
+1. `number_tcs.py`: cấp số TC-04-nnn cho ca mới (viết tạm là `TC-04-` và ba dấu thăng, kèm khóa `<!--k:…-->`) theo thứ tự xuất hiện. Thay mọi tham chiếu `[[tc:khóa]]` bằng số. Số đã cấp không đổi.
+2. `fill_doc.py`: ghi số kịch bản, số ca ở phần tóm tắt, cột "Số ca" của bảng 3.1, bảng danh sách test case 3.3 và toàn bộ mục 8 (gọi `gen_matrix.py`).
+3. `gen_matrix.py`: sinh mục 8; in ra stderr BR, ERR, NFR chưa có ca.
+4. `gen_gherkin.py`: sinh `ph04/gherkin/*.feature`.
+5. `gen_xlsx.py`: sinh `ph04/D05-02-PH04-test-case.xlsx` cho đội kiểm thử ghi kết quả.
 
-Các script dùng chung `tc_parse.py`, cùng cách làm với PH-07.
+Các script dùng chung `tc_parse.py`, đọc được cả khối đặc tả `::: dac-ta` (bản 0.2) và dạng gạch đầu dòng cũ (bản 0.1), cùng cách làm với PH-05, PH-07.
 
 ## 10. Câu hỏi mở
 
@@ -4913,8 +5604,25 @@ Các script dùng chung `tc_parse.py`, cùng cách làm với PH-07.
 | Q04-43 | Có cần ca kiểm thử với NDXP môi trường thử nghiệm thật (liên quan Q04-48) | Chưa; dùng WireMock tới khi NDXP cấp môi trường thử cho tỉnh |
 | Q04-44 | Ngưỡng thông lượng NFR-04-012 đo với luồng nào là "chuyển đổi JSON chuẩn" | Luồng mẫu `perf-json-transform` trong `apps/runtime/src/test/resources/flows/`: nhận REST, JQ 20 trường, gửi WireMock |
 
+: Câu hỏi mở về kiểm thử PH-04
+
+## 11. Đề nghị đồng bộ
+
+Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở tập khác trong đợt gom cuối. Tập này đã viết ca theo phương án ở cột "Đề nghị".
+
+| Tập | Chỗ | Vấn đề | Đề nghị |
+|---|---|---|---|
+| D03-02-PH04 SDD | §10.2, hình "Trình tự dừng khẩn một luồng ở PROD" | Tác nhân là "Vận hành u.to01", trong khi D02-08 và TC-04-143 chỉ cho TA, SO dừng khẩn (`PERM-04-emergency-stop`) | Đổi tác nhân thành SO hoặc TA; ca đầu cuối TC-04-197 dùng U-T68-SO |
+| D02-04-PH04 UC | §8.4, ERR-04-042 | Câu đề nghị "Phiên bản được soạn trên danh mục thành phần cũ…" khác câu ở bảng thông báo D02-03-PH04 "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại." | Chọn một câu, ghi vào D03-06-PH04 §5.3; ca TC-04-195 chỉ kiểm mã |
+| D03-06-PH04 Màn hình | §5.3 | Chưa có câu cho ERR-04-110 (thân lỗi runtime), FRS dùng "Dịch vụ đang tạm dừng. Thử lại sau." | Thêm câu này vào bảng thông báo runtime; ca TC-04-198 kiểm câu đó |
+| D02-04-PH04 UC | §8.4, câu cuối | Đề nghị thêm ca cho UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2 | Đã thêm: TC-04-189, TC-04-190, TC-04-195, TC-04-198, TC-04-199; có thể ghi số ca vào UC khi gom |
+| D03-03-PH04 CSDL | §4.2 | Kết quả chạy thử di trú W2 chưa có ca tự động dẫn chiếu | Dẫn chiếu TC-04-202 |
+
+: Đề nghị đồng bộ cho tập khác
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-25 | Bản đầu: 32 kịch bản, 186 ca, 12 UAT, mẫu tự động hóa, công cụ sinh ma trận |
+| 0.2 | 2026-11-26 | Theo chuẩn trình bày D00-04-KTB: Giới thiệu đủ sáu mục; bảng danh sách test case 3.3; chuyển 186 ca (kể cả 14 ca hiệu năng) sang khối đặc tả, giữ nguyên dữ liệu, bước, mong đợi, truy vết; thêm 16 ca (TC-04-187…202): ngoại lệ UC-04-05 E5, 06 E4, 12 E1, 17 E7, 18 E2; ca đầu cuối cho bốn trình tự SDD; di trú W2 khi schema có chủ khác; trạng thái màn UI-04-09, 16, 17, 18, 19, 21; `fill_doc.py`, chú thích bảng ở ma trận; mục 11 đề nghị đồng bộ |

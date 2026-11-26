@@ -37,6 +37,7 @@ for f, v in frs.items():
     lg = ', '.join(v['lgc'][:3]) + ('…' if len(v['lgc']) > 3 else '') if v['lgc'] else 'mới'
     O.append(f"| {f} | {v['name'][:60]} | {v['prio']} | {lg} | {short(b['pos'])} | {short(b['neg'])} | {short(other, 6)} | {ok} |")
 
+O.append('\n: Ma trận yêu cầu chức năng → test case')
 O.append('\n### 8.2. Chức năng hệ cũ → yêu cầu → test case\n')
 O.append('Mỗi chức năng của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`LGC-TOOL`) được truy tới FR mới và tới ca tự động, ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
 O.append('| LGC | FR | TC tự động | UAT |')
@@ -51,6 +52,7 @@ for l in lgcs:
     fr = [f for f, v in frs.items() if l in v['lgc']]
     O.append(f"| {l} | {', '.join(x[-3:] for x in fr) or '—'} | {short(by[l]['all'] + [i for f in fr if len(frs[f]['lgc']) < 5 for i in by[f]['pos']], 8)} | {', '.join(uat[l]) or '—'} |")
 
+O.append('\n: Ma trận chức năng hệ cũ → yêu cầu → test case')
 missing = {}
 for pre, title in (('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NFR', 'Yêu cầu phi chức năng')):
     ks = known(pre)
@@ -61,6 +63,7 @@ for pre, title in (('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NF
         rows.append(f'| {k} | {short(by[k]["all"], 10)} |')
         if not by[k]['all']: missing.setdefault(pre, []).append(k)
     O += rows
+    O.append(f'\n: Ma trận {title.lower()} → test case')
 print('\n'.join(O))
 for k, v in missing.items():
     print(k, 'chưa có ca:', ' '.join(v), file=sys.stderr)

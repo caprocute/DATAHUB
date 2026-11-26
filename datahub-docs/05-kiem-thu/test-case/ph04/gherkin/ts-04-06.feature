@@ -5,7 +5,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-037 @P1 @Dương
   Kịch bản: TC-04-037 Bảng thành phần chỉ hiện thành phần được phép
-    # Truy vết: FR-04-012, 080 · BR-04-014 · API-04-070 · UI-04-04 · LGC-TOOL-002
+    # Truy vết: FR-04-012, 080 · BR-04-014 · API-04-070 · UI-04-04 · LGC-TOOL-002.
     Biết chính sách nền cấm `exec`, `ssh`; T68 thu hẹp cấm `ftp`. IE1 mở F-HT v4.
     Khi gọi `GET /catalog`.
     Và gọi lại với `If-None-Match` bằng ETag bước 1.
@@ -15,7 +15,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-038 @P1 @Dương
   Kịch bản: TC-04-038 Thao tác sơ đồ bằng chuột
-    # Truy vết: FR-04-013 · UI-04-04 · UC-04-04 · LGC-TOOL-003, 004
+    # Truy vết: FR-04-013 · UI-04-04 · UC-04-04 · LGC-TOOL-003, 004.
     Biết IE1 mở `tc-trong` v1.
     Khi kéo `log` từ bảng thành phần vào giữa chặng `transform` và `enrich`.
     Và kéo `choice` vào sau `route`, thêm hai nhánh `when` và một `otherwise`.
@@ -26,7 +26,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-039 @P2 @Âm
   Kịch bản: TC-04-039 Thao tác không hợp lệ trên sơ đồ
-    # Truy vết: FR-04-013 · BR-04-002 · UI-04-04
+    # Truy vết: FR-04-013 · BR-04-002 · UI-04-04.
     Biết IE1 mở `tc-trong` v1 (đối ngoại).
     Khi kéo `kafka` (consumer) vào giữa route như một chặng thường.
     Và kéo thả chặng `otherwise` ra ngoài `choice`.
@@ -35,7 +35,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-040 @P1 @Dương
   Kịch bản: TC-04-040 Cấu hình chặng bằng biểu mẫu sinh từ catalog
-    # Truy vết: FR-04-014 · API-04-071 · UI-04-05 · UC-04-05
+    # Truy vết: FR-04-014 · API-04-071 · UI-04-05 · UC-04-05.
     Biết IE1 mở F-HT v4, chọn chặng gửi đích `http`.
     Khi gọi `GET /catalog/components/http`.
     Và mở UI-04-05 của chặng; mở nhóm "Nâng cao".
@@ -45,7 +45,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-041 @P3 @Âm
   Kịch bản: TC-04-041 Lược đồ thành phần không có trong catalog
-    # Truy vết: FR-04-014 · API-04-071 · ERR-04-035
+    # Truy vết: FR-04-014 · API-04-071 · ERR-04-035.
     Biết U-T68-IE1.
     Khi gọi `GET /catalog/components/khong-co`.
     Và gọi `GET /catalog/components/http?catalogVersion=0.0.0`.
@@ -53,7 +53,7 @@ Tính năng: TS-04-06 · Trình thiết kế: bảng thành phần, sơ đồ, c
 
   @TC-04-042 @P2 @Âm
   Kịch bản: TC-04-042 Thành phần đã dùng nhưng sau đó bị cấm
-    # Truy vết: FR-04-012, 080 · BR-04-014 · UI-04-04 · ERR-04-011
+    # Truy vết: FR-04-012, 080 · BR-04-014 · UI-04-04 · ERR-04-011.
     Biết `tc-ftp` dùng `sftp`; TA thu hẹp chính sách cấm `sftp`.
     Khi IE1 mở `tc-ftp`.
     Và gửi duyệt.

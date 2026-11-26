@@ -5,7 +5,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-108 @P1 @Dương
   Kịch bản: TC-04-108 Tạm dừng một route ở PROD
-    # Truy vết: FR-04-050 · API-04-061 · UC-04-14 · EVT-04-08, 11, 13 · ERR-04-110 · NFR-04-010 · LGC-BUS-009
+    # Truy vết: FR-04-050 · API-04-061 · UC-04-14 · EVT-04-08, 11, 13 · ERR-04-110 · NFR-04-010 · LGC-BUS-009.
     Biết F-HT v4 chạy PROD, 2 bản sao; U-T68-TO.
     Khi gọi `POST /flows/tra-cuu-ho-tich/runtime/commands` với `{"environment":"PROD","action":"PAUSE","scope":"ROUTES","routeIds":["tra-cuu-ho-tich-main"],"reason":"Bảo trì HTTT hộ tịch 22:00–23:00","drain":true}`.
     Và theo dõi `GET .../commands/{id}`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-109 @P1 @Dương
   Kịch bản: TC-04-109 Tiếp tục route
-    # Truy vết: FR-04-050 · API-04-061 · LGC-BUS-012
+    # Truy vết: FR-04-050 · API-04-061 · LGC-BUS-012.
     Biết route đã tạm dừng ở ca trên.
     Khi TO gửi `RESUME` cùng phạm vi.
     Và gọi luồng.
@@ -22,7 +22,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-110 @P1 @Dương
   Kịch bản: TC-04-110 Dừng khẩn đi trước Git
-    # Truy vết: FR-04-050 · BR-04-018 · API-04-061 · UC-04-15 · NFR-04-010
+    # Truy vết: FR-04-050 · BR-04-018 · API-04-061 · UC-04-15 · NFR-04-010.
     Biết F-HT PROD; U-T68-SO; Gitea bị làm chậm 30 giây mỗi lệnh đẩy.
     Khi SO gửi `EMERGENCY_STOP`, `scope = FLOW`, `drain = false`, `incidentRef = "SC-2026-001"`.
     Và đo thời gian tới khi cả hai bản sao xác nhận.
@@ -31,7 +31,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-111 @P1 @Dương
   Kịch bản: TC-04-111 Đối soát hoàn tất
-    # Truy vết: FR-04-050 · BR-04-018
+    # Truy vết: FR-04-050 · BR-04-018.
     Biết lệnh `ACKNOWLEDGED` từ ca tạm dừng.
     Khi đọc `GET .../commands/{id}` sau 5 phút.
     Và đọc `flow.dh.yaml` trên `env/prod`.
@@ -39,7 +39,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-112 @P1 @Âm @Khả @dụng
   Kịch bản: TC-04-112 Một bản sao không xác nhận, gửi lại
-    # Truy vết: FR-04-050 · API-04-061 · ERR-04-024
+    # Truy vết: FR-04-050 · API-04-061 · ERR-04-024.
     Biết chaos Mesh cắt mạng Kafka của bản sao thứ hai.
     Khi TO gửi `PAUSE`.
     Và sau 30 giây đọc lệnh.
@@ -48,7 +48,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-113 @P1 @Bảo @mật
   Kịch bản: TC-04-113 Lệnh có chữ ký sai
-    # Truy vết: FR-04-050 · EVT-04-11, 13 · ERR-04-024
+    # Truy vết: FR-04-050 · EVT-04-11, 13 · ERR-04-024.
     Biết client Kafka thử có quyền ghi `dh.integration.runtime.command.v1` (giả định kẻ tấn công vượt được ACL).
     Khi gửi lệnh `EMERGENCY_STOP` với chữ ký Ed25519 sai.
     Và gửi lệnh đúng chữ ký nhưng sửa `flowCode` sau khi ký.
@@ -56,7 +56,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-114 @P1 @Bảo @mật
   Kịch bản: TC-04-114 Lệnh hết hạn và lệnh phát lại
-    # Truy vết: FR-04-050 · EVT-04-11, 13
+    # Truy vết: FR-04-050 · EVT-04-11, 13.
     Biết một lệnh hợp lệ đã thực thi lúc T; bản ghi Kafka của nó.
     Khi phát lại bản tin lệnh đó lúc T + 90 giây.
     Và phát lại lúc T + 20 giây.
@@ -64,14 +64,14 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-115 @P1 @Bảo @mật
   Kịch bản: TC-04-115 Lệnh mang tenant khác hoặc luồng không tồn tại
-    # Truy vết: FR-04-050, 073 · EVT-04-13
+    # Truy vết: FR-04-050, 073 · EVT-04-13.
     Biết lệnh ký đúng khóa nhưng `tenantId = T01` gửi tới runtime namespace `dh-rt-t68`; lệnh cho `flowCode = khong-co`.
     Khi gửi hai lệnh.
     Thì lần lượt `REJECTED` với `TENANT_MISMATCH`, `UNKNOWN_FLOW`. Runtime T68 không thay đổi.
 
   @TC-04-116 @P1 @Âm
   Kịch bản: TC-04-116 Lệnh thiếu lý do, sai quyền, môi trường chưa triển khai
-    # Truy vết: FR-04-050 · BR-04-017 · API-04-061 · ERR-04-025, 023, 045
+    # Truy vết: FR-04-050 · BR-04-017 · API-04-061 · ERR-04-025, 023, 045.
     Biết F-SQL chỉ chạy TEST; TO (không có `PERM-04-emergency-stop`); IE1.
     Khi TO `PAUSE` F-HT với `reason = "bảo trì"`.
     Và TO `PAUSE` F-SQL ở PROD.
@@ -81,8 +81,19 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
 
   @TC-04-117 @P2 @Âm
   Kịch bản: TC-04-117 Tiếp tục sau dừng khẩn chỉ SO hoặc TA
-    # Truy vết: FR-04-050 · UC-04-15
+    # Truy vết: FR-04-050 · UC-04-15.
     Biết F-HT đang dừng khẩn.
     Khi TO gửi `RESUME`.
     Và TA gửi `RESUME`.
     Thì bước 1 trả 403-PQ với `detail` "Luồng đang dừng khẩn; chỉ cán bộ ATTT hoặc quản trị tenant tiếp tục được" (Q04-47). Bước 2 trả `202`.
+
+  @TC-04-197 @P1 @Dương
+  Kịch bản: TC-04-197 Đầu cuối dừng khẩn ở PROD theo trình tự SDD
+    # Truy vết: FR-04-050 · BR-04-018 · UC-04-15 · API-04-061 · EVT-04-08, 11, 13 · NFR-04-010.
+    Biết U-T68-SO; F-HT PROD hai bản sao, đang có 20 bản tin xử lý dở (WireMock CONN-HT trả chậm 5 giây); theo dõi OpenBao transit, Kafka, `runtime_command`, DLQ PH-18 (D03-02-PH04 §10.2, hình dừng khẩn).
+    Khi SO gửi `POST /flows/tra-cuu-ho-tich/runtime/commands` với `{"type":"EMERGENCY_STOP","scope":"FLOW","reason":"Nghi lộ dữ liệu","incidentRef":"SC-2026-002"}`.
+    Và đối chiếu thứ tự: lời gọi `transit/sign`, bản tin EVT-04-11, dòng `runtime_command`.
+    Và đọc EVT-04-13 của từng bản sao và trạng thái lệnh.
+    Và đọc DLQ.
+    Và chờ đối soát, đọc `flow.dh.yaml` ở `env/prod`.
+    Thì bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_RUNTIME_ESTOP`).
