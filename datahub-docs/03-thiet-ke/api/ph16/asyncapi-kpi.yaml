@@ -1,0 +1,3330 @@
+# D03-04-PH16 · AsyncAPI PH-16. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: '3.0.0'
+info:
+  title: 'Datahub PH-16 Báo cáo chỉ tiêu và sổ kiến trúc: sự kiện'
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-16-01…13 phát ra và 18 sự kiện tiêu thụ của PH-01, 02, 04, 05, 07, 08, 10, 14, 19 (D03-04-PH16 mục 4, FRS 9.3). Ghi vào `ph16_kpi.outbox_event`
+    cùng giao dịch nghiệp vụ, Debezium Outbox Event Router đưa lên Kafka; CloudEvents 1.0 dạng cấu trúc. Không sự kiện nào mang nội dung báo cáo hay bằng chứng: chỉ
+    mã đối tượng, trạng thái, số tổng hợp. Lưu giữ 7 ngày; ít nhất một lần, bên nhận khử trùng theo `id`. Tương thích BACKWARD: chỉ thêm trường tùy chọn trong `v1`.
+    Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  contact:
+    name: Nhóm phân hệ PH-16
+  tags:
+  - name: kpi
+  - name: arch
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU, `dh-runtime`, Kafka Connect; mTLS, ACL theo tiền tố tenant.'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  indicatorActivated:
+    address: '{tenant}.kpi.indicator.activated.v1'
+    title: EVT-16-01
+    description: 'Phiên bản định nghĩa `ACTIVE`. Bên tiêu thụ: PH-13, PH-17.'
+    messages:
+      indicatorActivated:
+        $ref: '#/components/messages/indicatorActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.indicator.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  indicatorRetired:
+    address: '{tenant}.kpi.indicator.retired.v1'
+    title: EVT-16-02
+    description: 'Chỉ tiêu ngừng, thay thế. Bên tiêu thụ: PH-13, PH-17.'
+    messages:
+      indicatorRetired:
+        $ref: '#/components/messages/indicatorRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.indicator.retired.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  sourceStateChanged:
+    address: '{tenant}.kpi.source.state-changed.v1'
+    title: EVT-16-03
+    description: 'Nguồn `ACTIVE`, `STALE`, `FAILED`, `PAUSED`, `RETIRED`. Bên tiêu thụ: PH-13, PH-18.'
+    messages:
+      sourceStateChanged:
+        $ref: '#/components/messages/sourceStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.source.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  manualValueDecided:
+    address: '{tenant}.kpi.manual-value.decided.v1'
+    title: EVT-16-04
+    description: 'Số liệu tay `ACCEPTED` hoặc `REJECTED`. Bên tiêu thụ: PH-18.'
+    messages:
+      manualValueDecided:
+        $ref: '#/components/messages/manualValueDecided'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.manual-value.decided.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  periodComputed:
+    address: '{tenant}.kpi.period.computed.v1'
+    title: EVT-16-05
+    description: 'Lần tổng hợp kết thúc (kèm `completeness`, `flags`). Bên tiêu thụ: PH-13, PH-18.'
+    messages:
+      periodComputed:
+        $ref: '#/components/messages/periodComputed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.period.computed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  indicatorStatusChanged:
+    address: '{tenant}.kpi.indicator.status-changed.v1'
+    title: EVT-16-06
+    description: 'Chỉ tiêu chuyển `AT_RISK`, `OFF_TRACK` hoặc về `ON_TRACK`. Bên tiêu thụ: PH-13 (thông báo lãnh đạo).'
+    messages:
+      indicatorStatusChanged:
+        $ref: '#/components/messages/indicatorStatusChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.indicator.status-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  reportSubmitted:
+    address: '{tenant}.kpi.report.submitted.v1'
+    title: EVT-16-07
+    description: 'Báo cáo gửi duyệt. Bên tiêu thụ: PH-18.'
+    messages:
+      reportSubmitted:
+        $ref: '#/components/messages/reportSubmitted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.report.submitted.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  reportPublished:
+    address: '{tenant}.kpi.report.published.v1'
+    title: EVT-16-08
+    description: 'Báo cáo `PUBLISHED`. Bên tiêu thụ: PH-13, PH-17, `kpi-export` (phân phối).'
+    messages:
+      reportPublished:
+        $ref: '#/components/messages/reportPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.report.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  reportStateChanged:
+    address: '{tenant}.kpi.report.state-changed.v1'
+    title: EVT-16-09
+    description: '`CHANGES_REQUESTED`, `SUPERSEDED`, `WITHDRAWN`. Bên tiêu thụ: PH-13, PH-18.'
+    messages:
+      reportStateChanged:
+        $ref: '#/components/messages/reportStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.report.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  archComponentChanged:
+    address: '{tenant}.kpi.arch-component.changed.v1'
+    title: EVT-16-10
+    description: 'Thành phần tạo, đổi vòng đời, phiên bản, `opsStatus`. Bên tiêu thụ: PH-13, PH-15.'
+    messages:
+      archComponentChanged:
+        $ref: '#/components/messages/archComponentChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.arch-component.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  archComplianceAssessed:
+    address: '{tenant}.kpi.arch-compliance.assessed.v1'
+    title: EVT-16-11
+    description: 'Đánh giá `CONFIRMED`, miễn trừ, hết hạn miễn trừ. Bên tiêu thụ: PH-13.'
+    messages:
+      archComplianceAssessed:
+        $ref: '#/components/messages/archComplianceAssessed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.arch-compliance.assessed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  nationalSubmissionStateChanged:
+    address: '{tenant}.kpi.national-submission.state-changed.v1'
+    title: EVT-16-12
+    description: 'Gói quốc gia đổi trạng thái. Bên tiêu thụ: PH-13, PH-14.'
+    messages:
+      nationalSubmissionStateChanged:
+        $ref: '#/components/messages/nationalSubmissionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.national-submission.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  exportCompleted:
+    address: '{tenant}.kpi.export.completed.v1'
+    title: EVT-16-13
+    description: 'Xuất xong hoặc lỗi. Bên tiêu thụ: Người yêu cầu (qua PH-13).'
+    messages:
+      exportCompleted:
+        $ref: '#/components/messages/exportCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.kpi.export.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  inConnectSystemStateChanged:
+    address: '{tenant}.connect.system.state-changed.v1'
+    title: EVT-01-03
+    description: 'PH-16 tiêu thụ: Quan sát `ph01.httt.*` từ ảnh chụp giờ (KPI-01, 05); tự đăng ký thành phần `HTTT`.'
+    messages:
+      inConnectSystemStateChanged:
+        $ref: '#/components/messages/inConnectSystemStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.connect.system.state-changed.v1'
+  inCatalogVersionPublished:
+    address: '{tenant}.catalog.version.published.v1'
+    title: EVT-02-05
+    description: 'PH-16 tiêu thụ: Quan sát số API công bố (`api-cong-bo`); đăng ký thành phần `API`.'
+    messages:
+      inCatalogVersionPublished:
+        $ref: '#/components/messages/inCatalogVersionPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.published.v1'
+  inCatalogVersionStateChanged:
+    address: '{tenant}.catalog.version.state-changed.v1'
+    title: EVT-02-06
+    description: 'PH-16 tiêu thụ: Cập nhật vòng đời thành phần `API`.'
+    messages:
+      inCatalogVersionStateChanged:
+        $ref: '#/components/messages/inCatalogVersionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.state-changed.v1'
+  inCatalogSlaPeriodClosed:
+    address: '{tenant}.catalog.sla.period-closed.v1'
+    title: EVT-02-13
+    description: 'PH-16 tiêu thụ: Quan sát tỷ lệ API đạt SLA (`api-dat-sla-ty-le`).'
+    messages:
+      inCatalogSlaPeriodClosed:
+        $ref: '#/components/messages/inCatalogSlaPeriodClosed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.sla.period-closed.v1'
+  inIntegrationFlowCreated:
+    address: '{tenant}.integration.flow.created.v1'
+    title: EVT-04-01
+    description: 'PH-16 tiêu thụ: Đăng ký thành phần `FLOW`; mốc đầu của thời gian xây luồng (KPI-06).'
+    messages:
+      inIntegrationFlowCreated:
+        $ref: '#/components/messages/inIntegrationFlowCreated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.created.v1'
+  inIntegrationDeploymentStatusChanged:
+    address: '{tenant}.integration.deployment.status-changed.v1'
+    title: EVT-04-07
+    description: 'PH-16 tiêu thụ: Mốc cuối của thời gian xây luồng khi triển khai xong (KPI-06); cập nhật vòng đời `FLOW`.'
+    messages:
+      inIntegrationDeploymentStatusChanged:
+        $ref: '#/components/messages/inIntegrationDeploymentStatusChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.deployment.status-changed.v1'
+  inIntegrationFlowRetired:
+    address: '{tenant}.integration.flow.retired.v1'
+    title: EVT-04-09
+    description: 'PH-16 tiêu thụ: Chuyển thành phần `FLOW` sang `RETIRED`.'
+    messages:
+      inIntegrationFlowRetired:
+        $ref: '#/components/messages/inIntegrationFlowRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.integration.flow.retired.v1'
+  inAdapterAdapterStateChanged:
+    address: '{tenant}.adapter.adapter.state-changed.v1'
+    title: EVT-05-08
+    description: 'PH-16 tiêu thụ: Cập nhật vòng đời thành phần `ADAPTER`.'
+    messages:
+      inAdapterAdapterStateChanged:
+        $ref: '#/components/messages/inAdapterAdapterStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.adapter.adapter.state-changed.v1'
+  inRdmCatalogPublished:
+    address: '{tenant}.rdm.catalog.published.v1'
+    title: EVT-07-05
+    description: 'PH-16 tiêu thụ: Quan sát số danh mục quản lý tập trung (KPI-10).'
+    messages:
+      inRdmCatalogPublished:
+        $ref: '#/components/messages/inRdmCatalogPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.published.v1'
+  inRdmSyncCompleted:
+    address: '{tenant}.rdm.sync.completed.v1'
+    title: EVT-07-09
+    description: 'PH-16 tiêu thụ: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11).'
+    messages:
+      inRdmSyncCompleted:
+        $ref: '#/components/messages/inRdmSyncCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.sync.completed.v1'
+  inDqKpiPublished:
+    address: '{tenant}.dq.kpi.published.v1'
+    title: EVT-08-14
+    description: 'PH-16 tiêu thụ: Quan sát `diem-chat-luong-du-lieu`; khử trùng theo `snapshotId`.'
+    messages:
+      inDqKpiPublished:
+        $ref: '#/components/messages/inDqKpiPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.kpi.published.v1'
+  inEventTopicActivated:
+    address: '{tenant}.event.topic.activated.v1'
+    title: EVT-10-01
+    description: 'PH-16 tiêu thụ: Đăng ký thành phần `TOPIC`; quan sát số topic.'
+    messages:
+      inEventTopicActivated:
+        $ref: '#/components/messages/inEventTopicActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.activated.v1'
+  inEventTopicRetired:
+    address: '{tenant}.event.topic.retired.v1'
+    title: EVT-10-04
+    description: 'PH-16 tiêu thụ: Chuyển thành phần `TOPIC` sang `RETIRED`.'
+    messages:
+      inEventTopicRetired:
+        $ref: '#/components/messages/inEventTopicRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.topic.retired.v1'
+  inEventPublicationActivated:
+    address: '{tenant}.event.publication.activated.v1'
+    title: EVT-10-06
+    description: 'PH-16 tiêu thụ: Quan sát số publication.'
+    messages:
+      inEventPublicationActivated:
+        $ref: '#/components/messages/inEventPublicationActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.event.publication.activated.v1'
+  inNationalPlatformChanged:
+    address: '{tenant}.national.platform.changed.v1'
+    title: EVT-14-01
+    description: 'PH-16 tiêu thụ: Cập nhật thành phần `NATIONAL_LINK`.'
+    messages:
+      inNationalPlatformChanged:
+        $ref: '#/components/messages/inNationalPlatformChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.platform.changed.v1'
+  inNationalTransactionRecorded:
+    address: '{tenant}.national.transaction.recorded.v1'
+    title: EVT-14-11
+    description: 'PH-16 tiêu thụ: Quan sát giao dịch quốc gia.'
+    messages:
+      inNationalTransactionRecorded:
+        $ref: '#/components/messages/inNationalTransactionRecorded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.transaction.recorded.v1'
+  inNationalSyncRunFinished:
+    address: '{tenant}.national.sync.run-finished.v1'
+    title: EVT-14-12
+    description: 'PH-16 tiêu thụ: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11).'
+    messages:
+      inNationalSyncRunFinished:
+        $ref: '#/components/messages/inNationalSyncRunFinished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.sync.run-finished.v1'
+  inPaymentTransactionSucceeded:
+    address: '{tenant}.payment.transaction.succeeded.v1'
+    title: EVT-19-07
+    description: 'PH-16 tiêu thụ: Quan sát `giao-dich-thanh-toan-truc-tuyen` (lọc `isTest = true`).'
+    messages:
+      inPaymentTransactionSucceeded:
+        $ref: '#/components/messages/inPaymentTransactionSucceeded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.succeeded.v1'
+operations:
+  sendIndicatorActivated:
+    action: send
+    channel:
+      $ref: '#/channels/indicatorActivated'
+    title: EVT-16-01
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-01'
+    description: Phiên bản định nghĩa `ACTIVE`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/indicatorActivated/messages/indicatorActivated'
+  sendIndicatorRetired:
+    action: send
+    channel:
+      $ref: '#/channels/indicatorRetired'
+    title: EVT-16-02
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-02'
+    description: Chỉ tiêu ngừng, thay thế. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/indicatorRetired/messages/indicatorRetired'
+  sendSourceStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/sourceStateChanged'
+    title: EVT-16-03
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-03'
+    description: Nguồn `ACTIVE`, `STALE`, `FAILED`, `PAUSED`, `RETIRED`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/sourceStateChanged/messages/sourceStateChanged'
+  sendManualValueDecided:
+    action: send
+    channel:
+      $ref: '#/channels/manualValueDecided'
+    title: EVT-16-04
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-04'
+    description: Số liệu tay `ACCEPTED` hoặc `REJECTED`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/manualValueDecided/messages/manualValueDecided'
+  sendPeriodComputed:
+    action: send
+    channel:
+      $ref: '#/channels/periodComputed'
+    title: EVT-16-05
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-05'
+    description: Lần tổng hợp kết thúc (kèm `completeness`, `flags`). Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/periodComputed/messages/periodComputed'
+  sendIndicatorStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/indicatorStatusChanged'
+    title: EVT-16-06
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-06'
+    description: Chỉ tiêu chuyển `AT_RISK`, `OFF_TRACK` hoặc về `ON_TRACK`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/indicatorStatusChanged/messages/indicatorStatusChanged'
+  sendReportSubmitted:
+    action: send
+    channel:
+      $ref: '#/channels/reportSubmitted'
+    title: EVT-16-07
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-07'
+    description: Báo cáo gửi duyệt. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/reportSubmitted/messages/reportSubmitted'
+  sendReportPublished:
+    action: send
+    channel:
+      $ref: '#/channels/reportPublished'
+    title: EVT-16-08
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-08'
+    description: Báo cáo `PUBLISHED`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/reportPublished/messages/reportPublished'
+  sendReportStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/reportStateChanged'
+    title: EVT-16-09
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-09'
+    description: '`CHANGES_REQUESTED`, `SUPERSEDED`, `WITHDRAWN`. Ghi vào outbox cùng giao dịch nghiệp vụ.'
+    messages:
+    - $ref: '#/channels/reportStateChanged/messages/reportStateChanged'
+  sendArchComponentChanged:
+    action: send
+    channel:
+      $ref: '#/channels/archComponentChanged'
+    title: EVT-16-10
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-10'
+    description: Thành phần tạo, đổi vòng đời, phiên bản, `opsStatus`. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/archComponentChanged/messages/archComponentChanged'
+  sendArchComplianceAssessed:
+    action: send
+    channel:
+      $ref: '#/channels/archComplianceAssessed'
+    title: EVT-16-11
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-11'
+    description: Đánh giá `CONFIRMED`, miễn trừ, hết hạn miễn trừ. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/archComplianceAssessed/messages/archComplianceAssessed'
+  sendNationalSubmissionStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/nationalSubmissionStateChanged'
+    title: EVT-16-12
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-12'
+    description: Gói quốc gia đổi trạng thái. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/nationalSubmissionStateChanged/messages/nationalSubmissionStateChanged'
+  sendExportCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/exportCompleted'
+    title: EVT-16-13
+    summary: '`dh-platform` (module `kpi`, `arch`) phát EVT-16-13'
+    description: Xuất xong hoặc lỗi. Ghi vào outbox cùng giao dịch nghiệp vụ.
+    messages:
+    - $ref: '#/channels/exportCompleted/messages/exportCompleted'
+  receiveInConnectSystemStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inConnectSystemStateChanged'
+    title: EVT-01-03
+    summary: '`dh-platform` (module `kpi`) nhận EVT-01-03, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát `ph01.httt.*` từ ảnh chụp giờ (KPI-01, 05); tự đăng ký thành phần `HTTT`.'
+    messages:
+    - $ref: '#/channels/inConnectSystemStateChanged/messages/inConnectSystemStateChanged'
+  receiveInCatalogVersionPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/inCatalogVersionPublished'
+    title: EVT-02-05
+    summary: '`dh-platform` (module `kpi`) nhận EVT-02-05, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát số API công bố (`api-cong-bo`); đăng ký thành phần `API`.'
+    messages:
+    - $ref: '#/channels/inCatalogVersionPublished/messages/inCatalogVersionPublished'
+  receiveInCatalogVersionStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inCatalogVersionStateChanged'
+    title: EVT-02-06
+    summary: '`dh-platform` (module `kpi`) nhận EVT-02-06, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Cập nhật vòng đời thành phần `API`.'
+    messages:
+    - $ref: '#/channels/inCatalogVersionStateChanged/messages/inCatalogVersionStateChanged'
+  receiveInCatalogSlaPeriodClosed:
+    action: receive
+    channel:
+      $ref: '#/channels/inCatalogSlaPeriodClosed'
+    title: EVT-02-13
+    summary: '`dh-platform` (module `kpi`) nhận EVT-02-13, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát tỷ lệ API đạt SLA (`api-dat-sla-ty-le`).'
+    messages:
+    - $ref: '#/channels/inCatalogSlaPeriodClosed/messages/inCatalogSlaPeriodClosed'
+  receiveInIntegrationFlowCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/inIntegrationFlowCreated'
+    title: EVT-04-01
+    summary: '`dh-platform` (module `kpi`) nhận EVT-04-01, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Đăng ký thành phần `FLOW`; mốc đầu của thời gian xây luồng (KPI-06).'
+    messages:
+    - $ref: '#/channels/inIntegrationFlowCreated/messages/inIntegrationFlowCreated'
+  receiveInIntegrationDeploymentStatusChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inIntegrationDeploymentStatusChanged'
+    title: EVT-04-07
+    summary: '`dh-platform` (module `kpi`) nhận EVT-04-07, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Mốc cuối của thời gian xây luồng khi triển khai xong (KPI-06); cập nhật vòng đời `FLOW`.'
+    messages:
+    - $ref: '#/channels/inIntegrationDeploymentStatusChanged/messages/inIntegrationDeploymentStatusChanged'
+  receiveInIntegrationFlowRetired:
+    action: receive
+    channel:
+      $ref: '#/channels/inIntegrationFlowRetired'
+    title: EVT-04-09
+    summary: '`dh-platform` (module `kpi`) nhận EVT-04-09, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Chuyển thành phần `FLOW` sang `RETIRED`.'
+    messages:
+    - $ref: '#/channels/inIntegrationFlowRetired/messages/inIntegrationFlowRetired'
+  receiveInAdapterAdapterStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inAdapterAdapterStateChanged'
+    title: EVT-05-08
+    summary: '`dh-platform` (module `kpi`) nhận EVT-05-08, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Cập nhật vòng đời thành phần `ADAPTER`.'
+    messages:
+    - $ref: '#/channels/inAdapterAdapterStateChanged/messages/inAdapterAdapterStateChanged'
+  receiveInRdmCatalogPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/inRdmCatalogPublished'
+    title: EVT-07-05
+    summary: '`dh-platform` (module `kpi`) nhận EVT-07-05, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát số danh mục quản lý tập trung (KPI-10).'
+    messages:
+    - $ref: '#/channels/inRdmCatalogPublished/messages/inRdmCatalogPublished'
+  receiveInRdmSyncCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/inRdmSyncCompleted'
+    title: EVT-07-09
+    summary: '`dh-platform` (module `kpi`) nhận EVT-07-09, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11).'
+    messages:
+    - $ref: '#/channels/inRdmSyncCompleted/messages/inRdmSyncCompleted'
+  receiveInDqKpiPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/inDqKpiPublished'
+    title: EVT-08-14
+    summary: '`dh-platform` (module `kpi`) nhận EVT-08-14, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát `diem-chat-luong-du-lieu`; khử trùng theo `snapshotId`.'
+    messages:
+    - $ref: '#/channels/inDqKpiPublished/messages/inDqKpiPublished'
+  receiveInEventTopicActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/inEventTopicActivated'
+    title: EVT-10-01
+    summary: '`dh-platform` (module `kpi`) nhận EVT-10-01, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Đăng ký thành phần `TOPIC`; quan sát số topic.'
+    messages:
+    - $ref: '#/channels/inEventTopicActivated/messages/inEventTopicActivated'
+  receiveInEventTopicRetired:
+    action: receive
+    channel:
+      $ref: '#/channels/inEventTopicRetired'
+    title: EVT-10-04
+    summary: '`dh-platform` (module `kpi`) nhận EVT-10-04, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Chuyển thành phần `TOPIC` sang `RETIRED`.'
+    messages:
+    - $ref: '#/channels/inEventTopicRetired/messages/inEventTopicRetired'
+  receiveInEventPublicationActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/inEventPublicationActivated'
+    title: EVT-10-06
+    summary: '`dh-platform` (module `kpi`) nhận EVT-10-06, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát số publication.'
+    messages:
+    - $ref: '#/channels/inEventPublicationActivated/messages/inEventPublicationActivated'
+  receiveInNationalPlatformChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inNationalPlatformChanged'
+    title: EVT-14-01
+    summary: '`dh-platform` (module `kpi`) nhận EVT-14-01, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Cập nhật thành phần `NATIONAL_LINK`.'
+    messages:
+    - $ref: '#/channels/inNationalPlatformChanged/messages/inNationalPlatformChanged'
+  receiveInNationalTransactionRecorded:
+    action: receive
+    channel:
+      $ref: '#/channels/inNationalTransactionRecorded'
+    title: EVT-14-11
+    summary: '`dh-platform` (module `kpi`) nhận EVT-14-11, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát giao dịch quốc gia.'
+    messages:
+    - $ref: '#/channels/inNationalTransactionRecorded/messages/inNationalTransactionRecorded'
+  receiveInNationalSyncRunFinished:
+    action: receive
+    channel:
+      $ref: '#/channels/inNationalSyncRunFinished'
+    title: EVT-14-12
+    summary: '`dh-platform` (module `kpi`) nhận EVT-14-12, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11).'
+    messages:
+    - $ref: '#/channels/inNationalSyncRunFinished/messages/inNationalSyncRunFinished'
+  receiveInPaymentTransactionSucceeded:
+    action: receive
+    channel:
+      $ref: '#/channels/inPaymentTransactionSucceeded'
+    title: EVT-19-07
+    summary: '`dh-platform` (module `kpi`) nhận EVT-19-07, khử trùng theo `id` ở `ph16_kpi.inbox_event`'
+    description: 'PH-16 tiêu thụ: Quan sát `giao-dich-thanh-toan-truc-tuyen` (lọc `isTest = true`).'
+    messages:
+    - $ref: '#/channels/inPaymentTransactionSucceeded/messages/inPaymentTransactionSucceeded'
+components:
+  securitySchemes:
+    mtls:
+      type: X509
+      description: mTLS, ACL theo CN và tiền tố tenant.
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  messages:
+    indicatorActivated:
+      name: indicatorActivated
+      title: EVT-16-01
+      summary: Phiên bản định nghĩa `ACTIVE`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/indicatorActivatedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `indicatorCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000001
+          type: vn.datahub.kpi.indicator.activated.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            indicatorCode: httt-ket-noi-ty-le
+            version: 3
+            supersededVersion: 2
+            groupCode: KET_NOI
+            measurement: AUTO
+            mandatory: true
+            scope: TENANT
+            effectiveFrom: '2026-12-01'
+    indicatorRetired:
+      name: indicatorRetired
+      title: EVT-16-02
+      summary: Chỉ tiêu ngừng, thay thế
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/indicatorRetiredEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `indicatorCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000002
+          type: vn.datahub.kpi.indicator.retired.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            indicatorCode: httt-ket-noi-ty-le
+            replacedBy: httt-ket-noi-ty-le-v2
+            effectivePeriod: M-2027-01
+    sourceStateChanged:
+      name: sourceStateChanged
+      title: EVT-16-03
+      summary: Nguồn `ACTIVE`, `STALE`, `FAILED`, `PAUSED`, `RETIRED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/sourceStateChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `sourceCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000003
+          type: vn.datahub.kpi.source.state-changed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            sourceCode: ph08-dq-kpi
+            sourceType: EVENT
+            fromState: ACTIVE
+            toState: STALE
+            errorCode: ERR-16-107
+            lastObservedAt: '2026-11-26T08:00:00+07:00'
+            ageHours: 30.5
+    manualValueDecided:
+      name: manualValueDecided
+      title: EVT-16-04
+      summary: Số liệu tay `ACCEPTED` hoặc `REJECTED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/manualValueDecidedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `indicatorCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000004
+          type: vn.datahub.kpi.manual-value.decided.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            manualId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            indicatorCode: httt-ket-noi-ty-le
+            periodCode: Q-2026-Q3
+            decision: ACCEPTED
+            enteredBy: nguyen.thi.lan
+            decidedBy: tran.van.nam
+    periodComputed:
+      name: periodComputed
+      title: EVT-16-05
+      summary: Lần tổng hợp kết thúc (kèm `completeness`, `flags`)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/periodComputedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `periodCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000005
+          type: vn.datahub.kpi.period.computed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            runId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            periodCode: M-2026-10
+            trigger: SCHEDULE
+            state: SUCCEEDED
+            completeness: 0.92
+            flags:
+            - MANUAL_PENDING
+            indicatorTotal: 24
+            indicatorComputed: 22
+    indicatorStatusChanged:
+      name: indicatorStatusChanged
+      title: EVT-16-06
+      summary: Chỉ tiêu chuyển `AT_RISK`, `OFF_TRACK` hoặc về `ON_TRACK`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/indicatorStatusChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `indicatorCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000006
+          type: vn.datahub.kpi.indicator.status-changed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            indicatorCode: httt-ket-noi-ty-le
+            periodCode: M-2026-10
+            groupCode: VAN_HANH
+            fromStatus: ON_TRACK
+            toStatus: AT_RISK
+            value: 82.5
+            unit: '%'
+            runId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+    reportSubmitted:
+      name: reportSubmitted
+      title: EVT-16-07
+      summary: Báo cáo gửi duyệt
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/reportSubmittedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `reportCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000007
+          type: vn.datahub.kpi.report.submitted.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            reportCode: bc-thang-2026-10
+            version: 1
+            reportType: PERIODIC
+            periodCode: M-2026-10
+            submittedBy: nguyen.thi.lan
+    reportPublished:
+      name: reportPublished
+      title: EVT-16-08
+      summary: Báo cáo `PUBLISHED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/reportPublishedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `reportCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000008
+          type: vn.datahub.kpi.report.published.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            reportCode: bc-thang-2026-10
+            version: 1
+            reportType: PERIODIC
+            periodCode: M-2026-10
+            publishedAt: '2026-11-26T08:00:00+07:00'
+            contentHash: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+            correctionOf: 1
+    reportStateChanged:
+      name: reportStateChanged
+      title: EVT-16-09
+      summary: '`CHANGES_REQUESTED`, `SUPERSEDED`, `WITHDRAWN`'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/reportStateChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `reportCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000009
+          type: vn.datahub.kpi.report.state-changed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            reportCode: bc-thang-2026-10
+            version: 1
+            fromState: PUBLISHED
+            toState: WITHDRAWN
+            actor: tran.van.nam
+    archComponentChanged:
+      name: archComponentChanged
+      title: EVT-16-10
+      summary: Thành phần tạo, đổi vòng đời, phiên bản, `opsStatus`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/archComponentChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `componentCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000010
+          type: vn.datahub.kpi.arch-component.changed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            componentCode: httt-qlvb
+            componentType: HTTT
+            change: CREATED
+            lifecycle: ACTIVE
+            opsStatus: UP
+            version: '2.3.0'
+            origin: AUTO
+    archComplianceAssessed:
+      name: archComplianceAssessed
+      title: EVT-16-11
+      summary: Đánh giá `CONFIRMED`, miễn trừ, hết hạn miễn trừ
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/archComplianceAssessedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `componentCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000011
+          type: vn.datahub.kpi.arch-compliance.assessed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            componentCode: httt-qlvb
+            kind: CONFIRMED
+            complianceLevel: PARTIAL
+            previousLevel: NOT_ASSESSED
+            assessmentId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            waiverId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            validTo: '2027-03-31'
+    nationalSubmissionStateChanged:
+      name: nationalSubmissionStateChanged
+      title: EVT-16-12
+      summary: Gói quốc gia đổi trạng thái
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/nationalSubmissionStateChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `submissionId`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000012
+          type: vn.datahub.kpi.national-submission.state-changed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            submissionId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            submissionType: KPI_REPORT
+            fromState: SENDING
+            toState: ACKNOWLEDGED
+            reportCode: bc-thang-2026-10
+            version: 1
+            componentCount: 12
+            attemptCount: 1
+            receiptNo: BN-2026-001234
+            errorCode: ERR-16-117
+    exportCompleted:
+      name: exportCompleted
+      title: EVT-16-13
+      summary: Xuất xong hoặc lỗi
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/exportCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `exportId`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000013
+          type: vn.datahub.kpi.export.completed.v1
+          source: dh-platform/kpi/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            exportId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            subject: REPORT
+            format: PDF
+            state: SUCCEEDED
+            requestedBy: nguyen.thi.lan
+            rowCount: 24
+            expiresAt: '2026-11-26T08:00:00+07:00'
+            errorCode: ERR-16-115
+    inConnectSystemStateChanged:
+      name: inConnectSystemStateChanged
+      title: EVT-01-03
+      summary: Quan sát `ph01.httt.*` từ ảnh chụp giờ (KPI-01, 05); tự đăng ký thành phần `HTTT`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inConnectSystemStateChangedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000001
+          type: vn.datahub.connect.system.state-changed.v1
+          source: dh-platform/connect/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            systemCode: httt-qlvb
+            name: Hệ thống quản lý văn bản tỉnh
+            ownerOrgId: org-vp-ubnd
+            from: REVIEWING
+            to: ACTIVE
+            snapshot: false
+            securityLevel: 3
+    inCatalogVersionPublished:
+      name: inCatalogVersionPublished
+      title: EVT-02-05
+      summary: Quan sát số API công bố (`api-cong-bo`); đăng ký thành phần `API`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inCatalogVersionPublishedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000002
+          type: vn.datahub.catalog.version.published.v1
+          source: dh-platform/catalog/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            apiCode: api-tra-cuu-ho-tich
+            versionNo: 1
+            major: 1
+            environment: PROD
+            visibility: INTERNAL
+    inCatalogVersionStateChanged:
+      name: inCatalogVersionStateChanged
+      title: EVT-02-06
+      summary: Cập nhật vòng đời thành phần `API`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inCatalogVersionStateChangedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000003
+          type: vn.datahub.catalog.version.state-changed.v1
+          source: dh-platform/catalog/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            apiCode: api-tra-cuu-ho-tich
+            versionNo: 1
+            from: PUBLISHED
+            to: DEPRECATED
+            sunsetAt: '2026-11-26T08:00:00+07:00'
+    inCatalogSlaPeriodClosed:
+      name: inCatalogSlaPeriodClosed
+      title: EVT-02-13
+      summary: Quan sát tỷ lệ API đạt SLA (`api-dat-sla-ty-le`)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inCatalogSlaPeriodClosedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000004
+          type: vn.datahub.catalog.sla.period-closed.v1
+          source: dh-platform/catalog/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            apiCode: api-tra-cuu-ho-tich
+            versionNo: 1
+            period: '2026-10'
+            status: MET
+            consecutiveBreaches: 0
+    inIntegrationFlowCreated:
+      name: inIntegrationFlowCreated
+      title: EVT-04-01
+      summary: Đăng ký thành phần `FLOW`; mốc đầu của thời gian xây luồng (KPI-06)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inIntegrationFlowCreatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000005
+          type: vn.datahub.integration.flow.created.v1
+          source: dh-platform/integration/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            flowCode: tra-cuu-ho-tich
+            flowId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            workspaceCode: ho-tich
+    inIntegrationDeploymentStatusChanged:
+      name: inIntegrationDeploymentStatusChanged
+      title: EVT-04-07
+      summary: Mốc cuối của thời gian xây luồng khi triển khai xong (KPI-06); cập nhật vòng đời `FLOW`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inIntegrationDeploymentStatusChangedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000006
+          type: vn.datahub.integration.deployment.status-changed.v1
+          source: dh-platform/integration/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            flowCode: tra-cuu-ho-tich
+            deploymentId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            environment: PROD
+            from: SYNCING
+            to: SYNCED
+            versionNo: 3
+            healthStatus: HEALTHY
+    inIntegrationFlowRetired:
+      name: inIntegrationFlowRetired
+      title: EVT-04-09
+      summary: Chuyển thành phần `FLOW` sang `RETIRED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inIntegrationFlowRetiredEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000007
+          type: vn.datahub.integration.flow.retired.v1
+          source: dh-platform/integration/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            flowCode: tra-cuu-ho-tich
+            flowId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            workspaceCode: ho-tich
+    inAdapterAdapterStateChanged:
+      name: inAdapterAdapterStateChanged
+      title: EVT-05-08
+      summary: Cập nhật vòng đời thành phần `ADAPTER`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inAdapterAdapterStateChangedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000008
+          type: vn.datahub.adapter.adapter.state-changed.v1
+          source: dh-platform/adapter/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            adapterCode: bo-dieu-hop-ho-tich
+            from: ACTIVE
+            to: PAUSED
+            reason: Bảo trì
+    inRdmCatalogPublished:
+      name: inRdmCatalogPublished
+      title: EVT-07-05
+      summary: Quan sát số danh mục quản lý tập trung (KPI-10)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inRdmCatalogPublishedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000009
+          type: vn.datahub.rdm.catalog.published.v1
+          source: dh-platform/rdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            catalogCode: DM_DAN_TOC
+            versionNo: 3
+            effectiveFrom: '2026-12-01'
+            breaking: false
+    inRdmSyncCompleted:
+      name: inRdmSyncCompleted
+      title: EVT-07-09
+      summary: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inRdmSyncCompletedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000010
+          type: vn.datahub.rdm.sync.completed.v1
+          source: dh-platform/rdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            runId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            catalogCode: DM_DAN_TOC
+            status: SUCCEEDED
+            hasBreaking: false
+    inDqKpiPublished:
+      name: inDqKpiPublished
+      title: EVT-08-14
+      summary: Quan sát `diem-chat-luong-du-lieu`; khử trùng theo `snapshotId`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inDqKpiPublishedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000011
+          type: vn.datahub.dq.kpi.published.v1
+          source: dh-platform/dq/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            kind: SCAN_SNAPSHOT
+            kpiSchemaVersion: 1
+            snapshotId: snap-2026-10-31-T68
+            periodCode: '2026-10'
+            tenantScore: 92.5
+            domainScores:
+            - domainCode: HO_TICH
+              score: 91.0
+            official: false
+    inEventTopicActivated:
+      name: inEventTopicActivated
+      title: EVT-10-01
+      summary: Đăng ký thành phần `TOPIC`; quan sát số topic
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inEventTopicActivatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000012
+          type: vn.datahub.event.topic.activated.v1
+          source: dh-platform/event/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            topicName: t68.dq.kpi.published.v1
+            projectCode: du-an-ho-tich
+            topicKind: BUSINESS
+            activatedAt: '2026-11-26T08:00:00+07:00'
+            retiredAt: '2026-11-26T08:00:00+07:00'
+    inEventTopicRetired:
+      name: inEventTopicRetired
+      title: EVT-10-04
+      summary: Chuyển thành phần `TOPIC` sang `RETIRED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inEventTopicRetiredEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000013
+          type: vn.datahub.event.topic.retired.v1
+          source: dh-platform/event/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            topicName: t68.dq.kpi.published.v1
+            projectCode: du-an-ho-tich
+            topicKind: BUSINESS
+            activatedAt: '2026-11-26T08:00:00+07:00'
+            retiredAt: '2026-11-26T08:00:00+07:00'
+    inEventPublicationActivated:
+      name: inEventPublicationActivated
+      title: EVT-10-06
+      summary: Quan sát số publication
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inEventPublicationActivatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000014
+          type: vn.datahub.event.publication.activated.v1
+          source: dh-platform/event/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            publicationCode: pub-ho-tich
+            publisherCode: httt-ho-tich
+            topicName: t68.dq.kpi.published.v1
+    inNationalPlatformChanged:
+      name: inNationalPlatformChanged
+      title: EVT-14-01
+      summary: Cập nhật thành phần `NATIONAL_LINK`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inNationalPlatformChangedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000015
+          type: vn.datahub.national.platform.changed.v1
+          source: dh-platform/national/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            platformCode: ndop
+            from: ACTIVE
+            to: SECURITY_HOLD
+    inNationalTransactionRecorded:
+      name: inNationalTransactionRecorded
+      title: EVT-14-11
+      summary: Quan sát giao dịch quốc gia
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inNationalTransactionRecordedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000016
+          type: vn.datahub.national.transaction.recorded.v1
+          source: dh-platform/national/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            transactionCode: GD-2026-000123
+            direction: OUTBOUND
+            serviceCode: tra-cuu-ho-tich
+            platformCode: ndxp
+            state: SUCCEEDED
+            errorCode: 'E000'
+            fromCache: false
+            durationMs: 420
+    inNationalSyncRunFinished:
+      name: inNationalSyncRunFinished
+      title: EVT-14-12
+      summary: Quan sát độ trễ đồng bộ danh mục quốc gia (KPI-11)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inNationalSyncRunFinishedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000017
+          type: vn.datahub.national.sync.run-finished.v1
+          source: dh-platform/national/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            runId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            objectType: CATALOG
+            status: SUCCEEDED
+            finishedAt: '2026-11-26T08:00:00+07:00'
+    inPaymentTransactionSucceeded:
+      name: inPaymentTransactionSucceeded
+      title: EVT-19-07
+      summary: Quan sát `giao-dich-thanh-toan-truc-tuyen` (lọc `isTest = true`)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/inPaymentTransactionSucceededEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000018
+          type: vn.datahub.payment.transaction.succeeded.v1
+          source: dh-platform/payment/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            transactionId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            transactionCode: TT-2026-000456
+            partnerCode: so-tu-phap
+            serviceCode: le-phi-ho-tich
+            amount: 150000
+            paidAt: '2026-11-26T08:00:00+07:00'
+            channelCode: QR
+            isTest: true
+  schemas:
+    ComplianceLevel:
+      type: string
+      enum:
+      - NOT_ASSESSED
+      - COMPLIANT
+      - PARTIAL
+      - NON_COMPLIANT
+      - EXEMPTED
+    ComponentType:
+      type: string
+      enum:
+      - HTTT
+      - API
+      - FLOW
+      - TOPIC
+      - ADAPTER
+      - PLATFORM_SERVICE
+      - NATIONAL_LINK
+    ExportSubject:
+      type: string
+      enum:
+      - REPORT
+      - INDICATOR_VALUES
+      - OBSERVATIONS
+      - ARCH_REGISTRY
+      - ARCH_GRAPH
+    Format:
+      type: string
+      enum:
+      - PDF
+      - XLSX
+      - CSV
+      - JSON
+    GroupCode:
+      type: string
+      enum:
+      - KET_NOI
+      - CHIA_SE
+      - DU_LIEU
+      - VAN_HANH
+      - KIEN_TRUC
+    IndicatorScope:
+      type: string
+      enum:
+      - TENANT
+      - COMMON
+    Lifecycle:
+      type: string
+      enum:
+      - PLANNED
+      - ACTIVE
+      - DEPRECATED
+      - RETIRED
+    Measurement:
+      type: string
+      enum:
+      - AUTO
+      - MANUAL
+      - MIXED
+    OpsStatus:
+      type: string
+      enum:
+      - UP
+      - DEGRADED
+      - DOWN
+      - UNKNOWN
+    Origin:
+      type: string
+      enum:
+      - AUTO
+      - MANUAL
+    ReportType:
+      type: string
+      enum:
+      - PERIODIC
+      - AD_HOC
+      - NATIONAL
+    RunFlag:
+      type: string
+      enum:
+      - MISSING_SOURCE
+      - STALE_SOURCE
+      - MANUAL_PENDING
+      - FORMULA_ERROR
+    RunTrigger:
+      type: string
+      enum:
+      - SCHEDULE
+      - MANUAL
+      - RECOMPUTE
+      - LATE_DATA
+    SourceState:
+      type: string
+      enum:
+      - ACTIVE
+      - STALE
+      - FAILED
+      - PAUSED
+      - RETIRED
+    SourceType:
+      type: string
+      enum:
+      - EVENT
+      - PULL_API
+      - PUSH_API
+      - MANUAL
+    SubmissionState:
+      type: string
+      enum:
+      - PENDING
+      - SENDING
+      - SENT
+      - ACKNOWLEDGED
+      - REJECTED
+      - FAILED
+    SubmissionType:
+      type: string
+      enum:
+      - KPI_REPORT
+      - ARCH_REGISTRY
+    ValueStatus:
+      type: string
+      enum:
+      - ON_TRACK
+      - AT_RISK
+      - OFF_TRACK
+      - NO_DATA
+    IndicatorActivatedData:
+      type: object
+      description: Phiên bản định nghĩa `ACTIVE` (FR-16-005).
+      properties:
+        indicatorCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        version:
+          type: integer
+        supersededVersion:
+          type: integer
+        groupCode:
+          $ref: '#/components/schemas/GroupCode'
+        measurement:
+          $ref: '#/components/schemas/Measurement'
+        mandatory:
+          type: boolean
+        scope:
+          $ref: '#/components/schemas/IndicatorScope'
+        effectiveFrom:
+          type: string
+          format: date
+      required:
+      - indicatorCode
+      - version
+      - groupCode
+      - measurement
+      - mandatory
+      - scope
+      - effectiveFrom
+    IndicatorRetiredData:
+      type: object
+      description: Chỉ tiêu ngừng hoặc được thay thế (FR-16-006).
+      properties:
+        indicatorCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        replacedBy:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        effectivePeriod:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+      required:
+      - indicatorCode
+      - effectivePeriod
+    SourceStateChangedData:
+      type: object
+      description: Nguồn đổi trạng thái (FR-16-013).
+      properties:
+        sourceCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        sourceType:
+          $ref: '#/components/schemas/SourceType'
+        fromState:
+          $ref: '#/components/schemas/SourceState'
+        toState:
+          $ref: '#/components/schemas/SourceState'
+        errorCode:
+          type: string
+          pattern: ^ERR-16-[0-9]{3}$
+        lastObservedAt:
+          type: string
+          format: date-time
+        ageHours:
+          type: number
+      required:
+      - sourceCode
+      - sourceType
+      - toState
+    ManualValueDecidedData:
+      type: object
+      description: Số liệu tay được quyết định (FR-16-015); chỉ mã, không kèm giá trị bằng chứng.
+      properties:
+        manualId:
+          type: string
+          format: uuid
+        indicatorCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        periodCode:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+        decision:
+          type: string
+          enum:
+          - ACCEPTED
+          - REJECTED
+        enteredBy:
+          type: string
+        decidedBy:
+          type: string
+      required:
+      - manualId
+      - indicatorCode
+      - periodCode
+      - decision
+      - decidedBy
+    PeriodComputedData:
+      type: object
+      description: Lần tổng hợp kết thúc (FR-16-018, 020).
+      properties:
+        runId:
+          type: string
+          format: uuid
+        periodCode:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+        trigger:
+          $ref: '#/components/schemas/RunTrigger'
+        state:
+          type: string
+          enum:
+          - SUCCEEDED
+          - PARTIAL
+          - FAILED
+        completeness:
+          type: number
+          minimum: 0
+          maximum: 1
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunFlag'
+        indicatorTotal:
+          type: integer
+        indicatorComputed:
+          type: integer
+      required:
+      - runId
+      - periodCode
+      - trigger
+      - state
+      - completeness
+      - flags
+    IndicatorStatusChangedData:
+      type: object
+      description: Chỉ tiêu đổi trạng thái so mục tiêu (FR-16-021).
+      properties:
+        indicatorCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        periodCode:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+        groupCode:
+          $ref: '#/components/schemas/GroupCode'
+        fromStatus:
+          $ref: '#/components/schemas/ValueStatus'
+        toStatus:
+          $ref: '#/components/schemas/ValueStatus'
+        value:
+          type: number
+        unit:
+          type: string
+        runId:
+          type: string
+          format: uuid
+      required:
+      - indicatorCode
+      - periodCode
+      - toStatus
+    ReportSubmittedData:
+      type: object
+      description: Báo cáo gửi duyệt (FR-16-028).
+      properties:
+        reportCode:
+          type: string
+          pattern: ^bc-[a-z0-9-]{2,60}$
+        version:
+          type: integer
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        periodCode:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+        submittedBy:
+          type: string
+      required:
+      - reportCode
+      - version
+      - reportType
+      - submittedBy
+    ReportPublishedData:
+      type: object
+      description: Báo cáo `PUBLISHED` (FR-16-029); không mang nội dung báo cáo.
+      properties:
+        reportCode:
+          type: string
+          pattern: ^bc-[a-z0-9-]{2,60}$
+        version:
+          type: integer
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        periodCode:
+          type: string
+          pattern: ^(M|Q|Y)-[0-9]{4}(-[0-9]{2}|-Q[1-4])?$
+        publishedAt:
+          type: string
+          format: date-time
+        contentHash:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        correctionOf:
+          type: integer
+      required:
+      - reportCode
+      - version
+      - reportType
+      - publishedAt
+      - contentHash
+    ReportStateChangedData:
+      type: object
+      description: Báo cáo về `CHANGES_REQUESTED`, `SUPERSEDED` hoặc `WITHDRAWN` (FR-16-028, 030).
+      properties:
+        reportCode:
+          type: string
+          pattern: ^bc-[a-z0-9-]{2,60}$
+        version:
+          type: integer
+        fromState:
+          type: string
+          enum:
+          - IN_REVIEW
+          - PUBLISHED
+        toState:
+          type: string
+          enum:
+          - CHANGES_REQUESTED
+          - SUPERSEDED
+          - WITHDRAWN
+        actor:
+          type: string
+      required:
+      - reportCode
+      - version
+      - toState
+    ArchComponentChangedData:
+      type: object
+      description: Thành phần kiến trúc đổi (FR-16-044, 045, 046).
+      properties:
+        componentCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        componentType:
+          $ref: '#/components/schemas/ComponentType'
+        change:
+          type: string
+          enum:
+          - CREATED
+          - LIFECYCLE_CHANGED
+          - VERSION_ADDED
+          - OPS_STATUS_CHANGED
+        lifecycle:
+          $ref: '#/components/schemas/Lifecycle'
+        opsStatus:
+          $ref: '#/components/schemas/OpsStatus'
+        version:
+          type: string
+        origin:
+          $ref: '#/components/schemas/Origin'
+      required:
+      - componentCode
+      - componentType
+      - change
+    ArchComplianceAssessedData:
+      type: object
+      description: Đánh giá `CONFIRMED`, miễn trừ cấp hoặc hết hạn (FR-16-047).
+      properties:
+        componentCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        kind:
+          type: string
+          enum:
+          - CONFIRMED
+          - WAIVER_GRANTED
+          - WAIVER_EXPIRED
+        complianceLevel:
+          $ref: '#/components/schemas/ComplianceLevel'
+        previousLevel:
+          $ref: '#/components/schemas/ComplianceLevel'
+        assessmentId:
+          type: string
+          format: uuid
+        waiverId:
+          type: string
+          format: uuid
+        validTo:
+          type: string
+          format: date
+      required:
+      - componentCode
+      - kind
+      - complianceLevel
+    NationalSubmissionStateChangedData:
+      type: object
+      description: Gói quốc gia đổi trạng thái (FR-16-051…053).
+      properties:
+        submissionId:
+          type: string
+          format: uuid
+        submissionType:
+          $ref: '#/components/schemas/SubmissionType'
+        fromState:
+          $ref: '#/components/schemas/SubmissionState'
+        toState:
+          $ref: '#/components/schemas/SubmissionState'
+        reportCode:
+          type: string
+          pattern: ^bc-[a-z0-9-]{2,60}$
+        version:
+          type: integer
+        componentCount:
+          type: integer
+        attemptCount:
+          type: integer
+        receiptNo:
+          type: string
+        errorCode:
+          type: string
+          pattern: ^ERR-16-[0-9]{3}$
+      required:
+      - submissionId
+      - submissionType
+      - toState
+    ExportCompletedData:
+      type: object
+      description: Việc xuất xong hoặc lỗi (FR-16-033).
+      properties:
+        exportId:
+          type: string
+          format: uuid
+        subject:
+          $ref: '#/components/schemas/ExportSubject'
+        format:
+          $ref: '#/components/schemas/Format'
+        state:
+          type: string
+          enum:
+          - SUCCEEDED
+          - FAILED
+        requestedBy:
+          type: string
+        rowCount:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        errorCode:
+          type: string
+          pattern: ^ERR-16-[0-9]{3}$
+      required:
+      - exportId
+      - subject
+      - format
+      - state
+      - requestedBy
+    SystemStateChangedIn:
+      type: object
+      description: HTTT đổi trạng thái hoặc ảnh chụp giờ (EVT-01-03).
+      properties:
+        systemCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        ownerOrgId:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        snapshot:
+          type: boolean
+        securityLevel:
+          type: integer
+      required:
+      - systemCode
+      - to
+      additionalProperties: true
+    CatalogVersionPublishedIn:
+      type: object
+      description: Phiên bản API sang `PUBLISHED` (EVT-02-05).
+      properties:
+        apiCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        major:
+          type: integer
+        environment:
+          type: string
+        visibility:
+          type: string
+      required:
+      - apiCode
+      - versionNo
+      additionalProperties: true
+    CatalogVersionStateChangedIn:
+      type: object
+      description: Phiên bản API đổi trạng thái (EVT-02-06).
+      properties:
+        apiCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        from:
+          type: string
+        to:
+          type: string
+        sunsetAt:
+          type: string
+          format: date-time
+      required:
+      - apiCode
+      - versionNo
+      - to
+      additionalProperties: true
+    SlaPeriodClosedIn:
+      type: object
+      description: Chốt kỳ tuân thủ SLA (EVT-02-13).
+      properties:
+        apiCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        period:
+          type: string
+        status:
+          type: string
+        consecutiveBreaches:
+          type: integer
+      required:
+      - apiCode
+      - versionNo
+      - period
+      - status
+      additionalProperties: true
+    FlowEventIn:
+      type: object
+      description: Luồng được tạo hoặc gỡ (EVT-04-01, EVT-04-09).
+      properties:
+        flowCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        flowId:
+          type: string
+          format: uuid
+        workspaceCode:
+          type: string
+      required:
+      - flowCode
+      additionalProperties: true
+    DeploymentStatusChangedIn:
+      type: object
+      description: Trạng thái triển khai đổi (EVT-04-07).
+      properties:
+        flowCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        deploymentId:
+          type: string
+          format: uuid
+        environment:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        versionNo:
+          type: integer
+        healthStatus:
+          type: string
+      required:
+      - flowCode
+      - to
+      additionalProperties: true
+    AdapterStateChangedIn:
+      type: object
+      description: Bộ điều hợp đổi trạng thái (EVT-05-08).
+      properties:
+        adapterCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        from:
+          type: string
+        to:
+          type: string
+        reason:
+          type: string
+      required:
+      - adapterCode
+      - to
+      additionalProperties: true
+    RdmCatalogPublishedIn:
+      type: object
+      description: Danh mục phát hành phiên bản (EVT-07-05).
+      properties:
+        catalogCode:
+          type: string
+        versionNo:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date
+        breaking:
+          type: boolean
+      required:
+      - catalogCode
+      - versionNo
+      additionalProperties: true
+    RdmSyncCompletedIn:
+      type: object
+      description: Phiên đồng bộ danh mục quốc gia xong (EVT-07-09).
+      properties:
+        runId:
+          type: string
+          format: uuid
+        catalogCode:
+          type: string
+        status:
+          type: string
+        hasBreaking:
+          type: boolean
+      required:
+      - runId
+      - status
+      additionalProperties: true
+    DqKpiPublishedIn:
+      type: object
+      description: Bản tin KPI chất lượng dữ liệu (EVT-08-14); `snapshotId` làm `idempotencyRef`.
+      properties:
+        kind:
+          type: string
+        kpiSchemaVersion:
+          type: integer
+        snapshotId:
+          type: string
+        periodCode:
+          type: string
+        tenantScore:
+          type: number
+        domainScores:
+          type: array
+          items:
+            type: object
+        official:
+          type: boolean
+      required:
+      - kind
+      - kpiSchemaVersion
+      additionalProperties: true
+    TopicEventIn:
+      type: object
+      description: Topic `ACTIVE` hoặc `RETIRED` (EVT-10-01, EVT-10-04).
+      properties:
+        topicName:
+          type: string
+        projectCode:
+          type: string
+        topicKind:
+          type: string
+        activatedAt:
+          type: string
+          format: date-time
+        retiredAt:
+          type: string
+          format: date-time
+      required:
+      - topicName
+      additionalProperties: true
+    PublicationActivatedIn:
+      type: object
+      description: Publication `ACTIVE` (EVT-10-06).
+      properties:
+        publicationCode:
+          type: string
+        publisherCode:
+          type: string
+        topicName:
+          type: string
+      required:
+      - publicationCode
+      additionalProperties: true
+    NationalPlatformChangedIn:
+      type: object
+      description: Nền tảng quốc gia đổi trạng thái (EVT-14-01).
+      properties:
+        platformCode:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+      required:
+      - platformCode
+      - to
+      additionalProperties: true
+    NationalTransactionRecordedIn:
+      type: object
+      description: Giao dịch quốc gia kết thúc, siêu dữ liệu (EVT-14-11).
+      properties:
+        transactionCode:
+          type: string
+        direction:
+          type: string
+        serviceCode:
+          type: string
+        platformCode:
+          type: string
+        state:
+          type: string
+        errorCode:
+          type: string
+        fromCache:
+          type: boolean
+        durationMs:
+          type: integer
+      required:
+      - transactionCode
+      - state
+      additionalProperties: true
+    NationalSyncRunFinishedIn:
+      type: object
+      description: Phiên đồng bộ hoặc đối chiếu quốc gia kết thúc (EVT-14-12).
+      properties:
+        runId:
+          type: string
+          format: uuid
+        objectType:
+          type: string
+        status:
+          type: string
+        finishedAt:
+          type: string
+          format: date-time
+      required:
+      - runId
+      - status
+      additionalProperties: true
+    PaymentTransactionSucceededIn:
+      type: object
+      description: Giao dịch thanh toán thành công (EVT-19-07); PH-16 lọc `isTest = true`.
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+        transactionCode:
+          type: string
+        partnerCode:
+          type: string
+        serviceCode:
+          type: string
+        amount:
+          type: integer
+        paidAt:
+          type: string
+          format: date-time
+        channelCode:
+          type: string
+        isTest:
+          type: boolean
+      required:
+      - transactionId
+      additionalProperties: true
+    indicatorActivatedEvent:
+      type: object
+      description: EVT-16-01 · CloudEvents 1.0 dạng cấu trúc. Phiên bản định nghĩa `ACTIVE`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.indicator.activated.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IndicatorActivatedData'
+    indicatorRetiredEvent:
+      type: object
+      description: EVT-16-02 · CloudEvents 1.0 dạng cấu trúc. Chỉ tiêu ngừng, thay thế.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.indicator.retired.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IndicatorRetiredData'
+    sourceStateChangedEvent:
+      type: object
+      description: EVT-16-03 · CloudEvents 1.0 dạng cấu trúc. Nguồn `ACTIVE`, `STALE`, `FAILED`, `PAUSED`, `RETIRED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.source.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SourceStateChangedData'
+    manualValueDecidedEvent:
+      type: object
+      description: EVT-16-04 · CloudEvents 1.0 dạng cấu trúc. Số liệu tay `ACCEPTED` hoặc `REJECTED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.manual-value.decided.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ManualValueDecidedData'
+    periodComputedEvent:
+      type: object
+      description: EVT-16-05 · CloudEvents 1.0 dạng cấu trúc. Lần tổng hợp kết thúc (kèm `completeness`, `flags`).
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.period.computed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/PeriodComputedData'
+    indicatorStatusChangedEvent:
+      type: object
+      description: EVT-16-06 · CloudEvents 1.0 dạng cấu trúc. Chỉ tiêu chuyển `AT_RISK`, `OFF_TRACK` hoặc về `ON_TRACK`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.indicator.status-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IndicatorStatusChangedData'
+    reportSubmittedEvent:
+      type: object
+      description: EVT-16-07 · CloudEvents 1.0 dạng cấu trúc. Báo cáo gửi duyệt.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.report.submitted.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ReportSubmittedData'
+    reportPublishedEvent:
+      type: object
+      description: EVT-16-08 · CloudEvents 1.0 dạng cấu trúc. Báo cáo `PUBLISHED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.report.published.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ReportPublishedData'
+    reportStateChangedEvent:
+      type: object
+      description: EVT-16-09 · CloudEvents 1.0 dạng cấu trúc. `CHANGES_REQUESTED`, `SUPERSEDED`, `WITHDRAWN`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.report.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ReportStateChangedData'
+    archComponentChangedEvent:
+      type: object
+      description: EVT-16-10 · CloudEvents 1.0 dạng cấu trúc. Thành phần tạo, đổi vòng đời, phiên bản, `opsStatus`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.arch-component.changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ArchComponentChangedData'
+    archComplianceAssessedEvent:
+      type: object
+      description: EVT-16-11 · CloudEvents 1.0 dạng cấu trúc. Đánh giá `CONFIRMED`, miễn trừ, hết hạn miễn trừ.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.arch-compliance.assessed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ArchComplianceAssessedData'
+    nationalSubmissionStateChangedEvent:
+      type: object
+      description: EVT-16-12 · CloudEvents 1.0 dạng cấu trúc. Gói quốc gia đổi trạng thái.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.national-submission.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/NationalSubmissionStateChangedData'
+    exportCompletedEvent:
+      type: object
+      description: EVT-16-13 · CloudEvents 1.0 dạng cấu trúc. Xuất xong hoặc lỗi.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.kpi.export.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/kpi/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ExportCompletedData'
+    inConnectSystemStateChangedEvent:
+      type: object
+      description: EVT-01-03 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.connect.system.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/connect/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SystemStateChangedIn'
+    inCatalogVersionPublishedEvent:
+      type: object
+      description: EVT-02-05 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.catalog.version.published.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/catalog/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/CatalogVersionPublishedIn'
+    inCatalogVersionStateChangedEvent:
+      type: object
+      description: EVT-02-06 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.catalog.version.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/catalog/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/CatalogVersionStateChangedIn'
+    inCatalogSlaPeriodClosedEvent:
+      type: object
+      description: EVT-02-13 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.catalog.sla.period-closed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/catalog/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/SlaPeriodClosedIn'
+    inIntegrationFlowCreatedEvent:
+      type: object
+      description: EVT-04-01 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.integration.flow.created.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/integration/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/FlowEventIn'
+    inIntegrationDeploymentStatusChangedEvent:
+      type: object
+      description: EVT-04-07 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.integration.deployment.status-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/integration/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/DeploymentStatusChangedIn'
+    inIntegrationFlowRetiredEvent:
+      type: object
+      description: EVT-04-09 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.integration.flow.retired.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/integration/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/FlowEventIn'
+    inAdapterAdapterStateChangedEvent:
+      type: object
+      description: EVT-05-08 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.adapter.adapter.state-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/adapter/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/AdapterStateChangedIn'
+    inRdmCatalogPublishedEvent:
+      type: object
+      description: EVT-07-05 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.rdm.catalog.published.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/rdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RdmCatalogPublishedIn'
+    inRdmSyncCompletedEvent:
+      type: object
+      description: EVT-07-09 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.rdm.sync.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/rdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RdmSyncCompletedIn'
+    inDqKpiPublishedEvent:
+      type: object
+      description: EVT-08-14 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.kpi.published.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/DqKpiPublishedIn'
+    inEventTopicActivatedEvent:
+      type: object
+      description: EVT-10-01 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.event.topic.activated.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/event/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TopicEventIn'
+    inEventTopicRetiredEvent:
+      type: object
+      description: EVT-10-04 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.event.topic.retired.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/event/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/TopicEventIn'
+    inEventPublicationActivatedEvent:
+      type: object
+      description: EVT-10-06 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.event.publication.activated.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/event/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/PublicationActivatedIn'
+    inNationalPlatformChangedEvent:
+      type: object
+      description: EVT-14-01 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.national.platform.changed.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/national/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/NationalPlatformChangedIn'
+    inNationalTransactionRecordedEvent:
+      type: object
+      description: EVT-14-11 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.national.transaction.recorded.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/national/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/NationalTransactionRecordedIn'
+    inNationalSyncRunFinishedEvent:
+      type: object
+      description: EVT-14-12 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.national.sync.run-finished.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/national/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/NationalSyncRunFinishedIn'
+    inPaymentTransactionSucceededEvent:
+      type: object
+      description: EVT-19-07 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát. PH-16 đọc `data` của dạng cấu trúc, hoặc thân
+        của dạng nhị phân.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.payment.transaction.succeeded.v1
+        source:
+          type: string
+          examples:
+          - dh-platform/payment/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/PaymentTransactionSucceededIn'
