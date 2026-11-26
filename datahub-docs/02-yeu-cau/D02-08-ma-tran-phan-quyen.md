@@ -55,6 +55,8 @@ Bảng dưới đây liệt kê vai trò chuẩn được tạo tự động cho
 | ROLE-VIEWER | Người xem | Tenant | Không | Xem bảng điều khiển và báo cáo, không xem dữ liệu HC/NC |
 | ROLE-AUDITOR | Kiểm toán, thanh tra tỉnh | Tenant, chỉ-đọc | Có | Xem nhật ký kiểm toán, xuất bằng chứng |
 
+: Danh mục vai trò
+
 ## 3. Danh mục quyền và ma trận
 
 Quyền viết theo dạng `PERM-{PH}-{động từ}`. Các động từ chuẩn: `read` (xem), `create`, `update`, `delete`, `submit` (gửi duyệt), `approve` (duyệt hoặc từ chối), `publish` (phát hành, công bố), `operate` (kích hoạt, tạm dừng, xử lý lại), `export` (xuất dữ liệu), `admin` (cấu hình phân hệ). Quyền đặc thù được liệt kê riêng.
@@ -124,6 +126,8 @@ Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi
 | PERM-20-admin | Khởi tạo, cấu hình, tạm ngừng, sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-read | Xem thông tin, hạn mức tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | ● |
 
+: Phân hệ MVP
+
 Khi khai thác dữ liệu Nhạy cảm, mọi vai trò cần thêm `PERM-09-unmask` (mục 3.2) để xem giá trị đầy đủ; nếu không, giá trị luôn bị che kể cả với vai trò có quyền `read`.
 
 ### 3.2. Phân hệ đợt 2 và đợt 3
@@ -142,6 +146,8 @@ Khi khai thác dữ liệu Nhạy cảm, mọi vai trò cần thêm `PERM-09-unm
 | PERM-16-admin | Định nghĩa chỉ tiêu | TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
 | PERM-17-admin | Bật tắt, cấu hình trợ lý theo tenant | TA |
+
+: Phân hệ đợt 2 và đợt 3
 
 ### 3.3. Thanh toán (PH-19)
 
@@ -198,12 +204,16 @@ Bốn mươi tám quyền và ma trận dưới đây lấy nguyên từ khung t
 | PERM-19-migration-run | Chạy di trú, đối chiếu: lô nhập, đối chiếu sau di trú, xem kết quả | 065, 068 | — | — | ● | — | ● | — | — | — | — |
 | PERM-19-migration-switch | Đổi chế độ định tuyến: lập và quyết định đề nghị `ROUTING_MODE_CHANGE` (người lập ≠ người duyệt) | 066 | — | — | ● | ● | — | — | — | — | — |
 
+: Thanh toán (PH-19)
+
 ### 3.4. Nhà phát triển
 
 | Quyền | Mô tả | DEVELOPER |
 |---|---|---|
 | PERM-15-app | Quản lý ứng dụng sandbox, xem thông tin xác thực của ứng dụng được giao | ● |
 | PERM-15-try | Thử API trên sandbox | ● |
+
+: Nhà phát triển
 
 ## 4. Tách nhiệm vụ
 
@@ -218,6 +228,8 @@ Bảng dưới đây liệt kê các cặp vai trò không được gán cùng l
 | TENANT_ADMIN | AUDITOR | Người quản trị không tự kiểm toán mình |
 | PAYMENT_ADMIN | PAYMENT_APPROVER | Người cấu hình kênh không duyệt kích hoạt kênh (như dòng trên) |
 | AUDITOR | mọi vai trò có quyền ghi của PH-19 | Độc lập kiểm toán (khung PH-19 §13.4 quy tắc 7) |
+
+: Tách nhiệm vụ
 
 Ngoài tách vai trò, nguyên tắc bốn mắt (FR-00-071) vẫn áp dụng cho từng đối tượng.
 
@@ -234,6 +246,8 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | `rdm:read` | Tra cứu danh mục dùng chung | Mặc định cho mọi HTTT `ACTIVE` |
 | `payment:create` | Tạo yêu cầu thanh toán | HTTT được khai báo là đối tác ở PH-19 |
 
+: Quyền của HTTT thành viên (máy)
+
 ## 6. Ánh xạ từ quyền của hệ cũ
 
 | Hệ cũ | Datahub |
@@ -241,6 +255,8 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | `Project_group.access_level` (Bus) | Phạm vi không gian làm việc PH-04 với INTEGRATION_ENGINEER / VIEWER |
 | Plan "Define: nhóm được phép truy cập" (APIM) | Điều kiện đăng ký sử dụng của gói (PH-02) |
 | Vai trò Keycloak tự đặt ở từng khối | Vai trò chuẩn ở mục 2, gán lại khi di trú người dùng |
+
+: Ánh xạ từ quyền của hệ cũ
 
 ## 7. Kiểm thử
 

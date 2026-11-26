@@ -58,6 +58,8 @@ Bảng dưới đây gom các yêu cầu phi chức năng trong SRS (D02-02) mà
 | NFR-00-061 | Gấp đôi tài nguyên data plane cho ≥ 1,8 lần thông lượng | Data plane không trạng thái, mở rộng ngang; Kafka phân vùng theo tenant | 5.8 |
 | NFR-00-062 | 5 triệu bản ghi siêu dữ liệu lượt gọi/ngày/tenant, lưu 12 tháng truy vấn được | Kho cột ClickHouse cho siêu dữ liệu lượt gọi, giữ 12 tháng | 2.4, 5 |
 
+: Các yêu cầu phi chức năng chi phối hạ tầng
+
 Một điểm cần lưu ý ngay từ đầu là ranh giới giữa control plane và data plane trong NFR-00-012. Lượt gọi API giữa hai HTTT cần token truy cập do Keycloak phát hành, và theo SAD §9 token cho máy chỉ có hiệu lực 5 phút. Như vậy nếu Keycloak ngừng thì sau tối đa 5 phút các HTTT không lấy được token mới và data plane thực chất ngừng phục vụ, dù APISIX vẫn chạy. Tương tự, APISIX cần quyết định ủy quyền của OPA và bộ đếm hạn mức trong Valkey; `dh-runtime` và `dh-payment` cần bí mật và khóa ký trong OpenBao. Vì vậy tài liệu này xếp Keycloak, OPA, Valkey, OpenBao, Kafka, Apicurio (cho tuần tự hóa sự kiện) và kho đối tượng chứa gói chính sách vào nhóm **phụ thuộc data plane**, được định cỡ và bảo vệ cùng tầng với data plane (`TPH-0`, mục 7.1). Phép thử NFR-00-012 ở mục 7.9 chỉ tắt các DU control plane (`dh-connect`, `dh-integration`, `dh-data`, `dh-platform`, `dh-assist`, giao diện) và CSDL nghiệp vụ `pg-core`, không tắt nhóm phụ thuộc data plane. Đề xuất ghi rõ định nghĩa này vào SAD và SRS (mục 16.3).
 
 ### 2.2. Định nghĩa hồ sơ quy mô
@@ -75,6 +77,8 @@ Datahub được bán cho nhiều tỉnh có quy mô khác nhau, và sau sáp nh
 | Sự kiện Kafka nghiệp vụ/ngày | 0,3 triệu | 2 triệu | 6 triệu | 70 triệu |
 | Người dùng giao diện đồng thời | 50 | 200 | 500 | 3.000 |
 | Tài khoản người dùng | 500 | 2.000 | 6.000 | ~70.000 |
+
+: Định nghĩa hồ sơ quy mô
 
 Cột `QM-CHUNG` được tính như sau. Giả định cơ cấu 34 tỉnh gồm 6 tỉnh lớn, 16 tỉnh vừa và 12 tỉnh nhỏ thì tổng lượt gọi là 6 × 15 + 16 × 5 + 12 × 1 = 182 triệu lượt/ngày, gần với con số 170 triệu suy từ NFR-00-062; tài liệu dùng 170 triệu làm cơ sở và chừa 10% dự phòng trong định cỡ. Tổng cao điểm của từng tỉnh nếu cộng thẳng là 6 × 1.000 + 16 × 300 + 12 × 80 ≈ 11.800 lượt/giây, nhưng cao điểm các tỉnh không trùng hoàn toàn (giờ hành chính giống nhau nhưng các loại nghiệp vụ cao điểm khác nhau), nên áp hệ số đồng thời 0,5 và được khoảng 6.000 lượt/giây. Con số này cũng xấp xỉ ba lần lưu lượng trung bình (170 triệu / 86.400 ≈ 1.970 lượt/giây), phù hợp với hệ số cao điểm thường gặp của lưu lượng hành chính.
 
@@ -97,6 +101,8 @@ Các giả định dưới đây dùng xuyên suốt mục 5. Chúng được ch
 | Bản ghi kiểm toán | ~100.000 bản ghi/ngày cho `QM-VUA`, ~1,5 KB/bản ghi | Thao tác quản trị, duyệt, xem dữ liệu Nhạy cảm, xuất; không gồm lượt gọi data plane |
 | Chuỗi chỉ số hoạt động (active series) | ~250.000 cho `QM-VUA` | Khoảng 150 nhóm chỉ số × nhãn tenant, route, consumer có giới hạn số lượng nhãn |
 
+: Giả định lưu lượng
+
 ### 2.4. Dung lượng dữ liệu
 
 Bảng dưới đây ước tính dung lượng dữ liệu sau 12 tháng vận hành cho từng hồ sơ quy mô, trước khi nhân hệ số nhân bản. Mỗi dòng có thuyết minh cách tính ở đoạn sau bảng.
@@ -113,6 +119,8 @@ Bảng dưới đây ước tính dung lượng dữ liệu sau 12 tháng vận 
 | Chỉ số (Mimir) | 90 ngày đầy đủ; 25 tháng dạng tổng hợp SLO | 40 GB | 110 GB | 300 GB | 2 TB |
 | Kho WORM kiểm toán và bằng chứng (hệ lưu trữ riêng, tách Garage) | 5 năm, tối thiểu 3 năm (ADR-031) | 20 GB/năm | 60 GB/năm | 180 GB/năm | 2 TB/năm |
 | Kho ảnh container Harbor | 10 bản phát hành gần nhất | 150 GB | 150 GB | 150 GB | 300 GB |
+
+: Dung lượng dữ liệu
 
 **Siêu dữ liệu lượt gọi.** NFR-00-062 đòi 5 triệu bản ghi mỗi ngày mỗi tenant, giữ 12 tháng và truy vấn được, tức 1,825 tỷ bản ghi/tenant/năm và khoảng 62 tỷ bản ghi/năm trên nền tảng dùng chung. PostgreSQL, kể cả có TimescaleDB, không phải lựa chọn hợp lý ở quy mô này; SAD §6 đã đề xuất ClickHouse khi lưu lượng vượt 50 triệu lượt/tháng, và `QM-VUA` đã ở mức 150 triệu lượt/tháng. Với bảng `ReplicatedMergeTree` sắp xếp theo `(tenant_id, route_id, ts)`, mã hóa `LowCardinality` cho chuỗi lặp và nén ZSTD, một bản ghi khoảng 1 KB thô nén còn khoảng 60–80 byte; tài liệu dùng 70 byte. `QM-VUA`: 1,825 tỷ × 70 byte ≈ 128 GB. `QM-CHUNG`: 62 tỷ × 70 byte ≈ 4,35 TB. Đường đi dữ liệu là APISIX ghi bản ghi qua plugin `kafka-logger` (sau bộ che dữ liệu) vào topic `{tenant}.obs.access.logged.v1`, ClickHouse tiêu thụ bằng bảng động cơ Kafka và view vật chất hóa. Nhờ vậy log truy cập không đi vào Loki, tránh lưu trùng.
 
@@ -143,11 +151,13 @@ Hai hồ sơ dùng cùng gói phân phối, cùng manifest Kustomize và chart H
 | Mở niêm phong OpenBao | Transit seal từ cụm OpenBao niêm phong riêng; HSM khi lên cấp độ 4 | KMS của cloud nếu được chứng nhận và đặt trong nước, nếu không thì như `HT-A` |
 | Tenant | 1–3, chế độ `DEDICATED_CLUSTER` | 34+, `SHARED` hoặc `DEDICATED_DB` |
 
+: Hai hồ sơ triển khai
+
 ### 3.1. Hồ sơ `HT-A`: tỉnh độc lập tại TTDL tỉnh
 
 Sơ đồ dưới đây cho thấy cách Datahub đặt trong TTDL tỉnh, các vùng mạng và các kết nối ra ngoài. Mỗi khung là một vùng mạng được ngăn bởi tường lửa của TTDL; mũi tên là luồng được phép theo chiều khởi tạo kết nối.
 
-```mermaid
+```{.mermaid caption="Hồ sơ HT-A: tỉnh độc lập tại TTDL tỉnh"}
 flowchart TB
   subgraph INET["Internet"]
     DEV["Nhà phát triển, công dân<br/>cổng nhà phát triển"]
@@ -209,6 +219,8 @@ Sơ đồ thể hiện ba quyết định quan trọng. Thứ nhất, Datahub c�
 | Vùng quản trị | 10.40.0.0/24 | Bastion, Harbor, kho Git, OpenBao niêm phong, kho sao lưu cục bộ, máy chủ NTP và DNS nội bộ | SSH/RDP từ mạng quản trị riêng của TTDL có MFA | 6443 tới API server; 443 tới site DR để sao chép |
 | Liên site | Kênh riêng hoặc VPN IPsec giữa hai TTDL | Sao chép PostgreSQL, Kafka MirrorMaker 2, Garage, Harbor, Git, OpenBao snapshot | Chỉ giữa địa chỉ được liệt kê, mã hóa | — |
 
+: Hồ sơ HT-A: tỉnh độc lập tại TTDL tỉnh: Vùng, Ví dụ dải
+
 Trong cụm Kubernetes, vùng ứng dụng và vùng dữ liệu là các node pool khác nhau đặt trên các dải nút khác nhau. Điều này cho phép tường lửa của TTDL cũng chặn được luồng ở tầng nút (ví dụ nút stateful không bao giờ nhận kết nối từ DMZ), tạo hai lớp phòng thủ độc lập với network policy trong cụm.
 
 **Mô hình trách nhiệm ở `HT-A`.** Bảng RACI rút gọn sau phân định ai làm gì. R là người thực hiện, A là người chịu trách nhiệm cuối cùng, C là người được hỏi ý kiến.
@@ -224,6 +236,8 @@ Trong cụm Kubernetes, vùng ứng dụng và vùng dữ liệu là các node p
 | Vá hệ điều hành nút, nâng cấp Kubernetes | R, A | C (xác nhận tương thích) | — |
 | Sao lưu, diễn tập DR | R | C | A |
 | Hồ sơ cấp độ ATTT, phê duyệt | C | C | R, A |
+
+: Hồ sơ HT-A: tỉnh độc lập tại TTDL tỉnh: Hạng mục, TTDL tỉnh
 
 **Điều kiện tiên quyết của hạ tầng tỉnh.** Tỉnh chọn `HT-A` phải có những điều kiện dưới đây trước khi tính mốc ba ngày của NFR-00-056. Bộ kiểm tra tiền điều kiện ở mục 11.3 kiểm tra tự động các điều kiện kỹ thuật.
 
@@ -242,7 +256,7 @@ Trong cụm Kubernetes, vùng ứng dụng và vùng dữ liệu là các node p
 
 Sơ đồ dưới đây cho thấy nền tảng dùng chung ở một vùng cloud. Vùng thứ hai có cấu trúc giống hệt và đóng vai site DR (mục 7.2). Khác với `HT-A`, mỗi vùng có hai cụm: cụm workload chạy Datahub cho mọi tenant, và cụm quản trị chạy công cụ vận hành dùng chung.
 
-```mermaid
+```{.mermaid caption="Hồ sơ HT-B: nền tảng dùng chung trên cloud Chính phủ"}
 flowchart TB
   subgraph TINH["34 tỉnh"]
     H["HTTT các tỉnh<br/>qua mạng TSLCD"]
@@ -311,6 +325,8 @@ Datahub có bốn loại kết nối ra ngoài cụm, mỗi loại có đường
 | PayGov chuyển hướng và callback | Vào và ra | Trình duyệt công dân → VIP ngoài → APISIX → `dh-payment`; `dh-payment` → egress → PayGov | Callback có chữ ký, khóa ký trong OpenBao transit | Callback là luồng duy nhất từ Internet vào data plane ngoài cổng nhà phát triển |
 | Gửi nhật ký an ninh | Ra | OTel Collector hoặc Vector → hệ giám sát ATTT tỉnh hoặc quốc gia | Syslog TLS (RFC 5425) hoặc OTLP qua mTLS | IF-08, nhóm SEC-60–69 |
 
+: Kết nối với NDXP, PayGov và các HTTT
+
 > **Câu hỏi mở Q334:** Cần biết NDXP và PayGov có yêu cầu địa chỉ IP nguồn cố định, chứng thư khách (mTLS) hay kênh kết nối riêng (qua mạng TSLCD thay vì Internet) đối với LGSP cấp tỉnh hay không, và yêu cầu này có khác nhau giữa `HT-A` và `HT-B` (một nền tảng gọi thay nhiều tỉnh) hay không.
 
 ### 3.4. Điều kiện mạng và thời gian
@@ -331,6 +347,8 @@ Các nút của cụm workload được chia thành năm node pool theo hồ sơ
 | Data plane | `dataplane` | `dh.gov.vn/pool=dataplane:NoSchedule` | APISIX + OPA, `dh-runtime`, Keycloak, Valkey | Chỉ thành phần `TPH-0`; có HPA và KEDA nên chừa 30% dung lượng trống |
 | Dữ liệu (stateful) | `data` | `dh.gov.vn/pool=data:NoSchedule` | PostgreSQL, Kafka, ClickHouse, Garage | Đĩa NVMe cục bộ; không có pod không trạng thái |
 | Giám sát | `observability` | `dh.gov.vn/pool=observability:NoSchedule` | OTel Collector dạng gateway, Mimir, Loki, Tempo, Grafana, Alertmanager | Ở `HT-B` nằm ở cụm quản trị |
+
+: Node pool
 
 Các tác tử chạy trên mọi nút (DaemonSet) như Cilium, ztunnel của Istio ambient, OTel Collector dạng tác tử, tác tử nút của Velero và CSI có toleration với mọi taint. Mỗi pod của Datahub khai báo `nodeSelector` theo nhãn pool và toleration tương ứng; Kyverno có chính sách từ chối pod của namespace `dh-*` không có `nodeSelector` hợp lệ, để không có pod nào lạc sang pool dữ liệu.
 
@@ -360,6 +378,8 @@ Bảng sau liệt kê namespace của cụm workload. Namespace là đơn vị �
 | `dh-system` | Kyverno, cert-manager, các operator, Argo CD, Argo Rollouts, KEDA, Velero | Nền tảng | Z7 | Có thể tách tiếp theo operator |
 | `istio-system`, `kube-system` | Istio ambient, Cilium, CSI | Nền tảng | Z7 | |
 
+: Namespace
+
 Bảng trên là danh sách namespace chuẩn, được D03-07 (SEC-13) dẫn chiếu. Việc chia mịn theo từng loại kho giúp áp hạn mức tài nguyên, PodDisruptionBudget và quyền vận hành riêng cho từng loại. Mỗi namespace mang nhãn `dh.gov.vn/zone` bằng mã vùng ở cột trên. Network policy và chính sách Kyverno được viết theo nhãn vùng, nhờ đó khớp với mô hình tám vùng của D03-07.
 
 ### 4.3. Phân bố pod: topology spread, PodDisruptionBudget, priority class
@@ -378,6 +398,8 @@ Bảng trên là danh sách namespace chuẩn, được D03-07 (SEC-13) dẫn ch
 | OpenBao, ClickHouse Keeper, etcd | 3 hoặc 5 | `maxUnavailable: 1` (giữ đa số) |
 | Garage | 3 | `maxUnavailable: 1` |
 | DU control plane | 2 | `minAvailable: 1` |
+
+: Phân bố pod: topology spread, PodDisruptionBudget, priority class
 
 **Priority class.** Khi cụm thiếu tài nguyên (ví dụ mất một nút trong lúc tải cao), bộ lập lịch phải ưu tiên giữ data plane. Datahub định nghĩa năm priority class: `dh-critical-data` (1.000.000) cho Kafka, PostgreSQL, OpenBao; `dh-critical-dataplane` (900.000) cho APISIX, OPA, `dh-runtime`, Keycloak, Valkey; `dh-control` (500.000) cho DU control plane; `dh-observability` (300.000) cho bộ giám sát; `dh-batch` (100.000, không chiếm chỗ pod khác) cho tác vụ lô, kiểm tra khôi phục. Hệ quả có chủ đích là khi thiếu tài nguyên, bộ giám sát và tác vụ lô bị đẩy ra trước data plane.
 
@@ -400,6 +422,8 @@ Datahub dùng ba StorageClass có tên cố định để manifest không đổi
 | `dh-local-nvme` | PostgreSQL, Kafka, ClickHouse, Garage, OpenBao, Loki và Mimir ingester (WAL) | TopoLVM trên nhóm đĩa NVMe cục bộ, `volumeBindingMode: WaitForFirstConsumer`, mở rộng trực tuyến | Ổ khối hiệu năng cao của cloud, gắn theo vùng sẵn sàng | LUKS ở tầng đĩa hoặc mã hóa của cloud bằng khóa do đơn vị vận hành quản lý |
 | `dh-replicated` | Volume nhỏ không tự nhân bản: kho Git, Grafana, Harbor jobservice | Ceph RBD (Rook) nếu TTDL đã có Ceph, nếu không thì Longhorn với 3 bản sao | Ổ khối tiêu chuẩn của cloud có nhân bản | Như trên |
 | `dh-scratch` | Thư mục tạm của tác vụ lô, kiểm tra khôi phục | Đĩa cục bộ, xóa khi pod kết thúc | Ổ khối tiêu chuẩn | Như trên |
+
+: Lưu trữ: StorageClass
 
 Kho đối tượng S3 (Garage) phục vụ cả tệp nghiệp vụ lẫn kho phía sau của Mimir, Loki, Tempo và Harbor. Kho sao lưu bất biến không phải Garage mà là kho S3 có khóa đối tượng ở vị trí khác (ADR-035, mục 8).
 
@@ -424,6 +448,8 @@ cert-manager cấp và gia hạn mọi chứng thư TLS trong cụm. Có ba ngu�
 | C. **Transit seal từ một cụm OpenBao niêm phong riêng** | Cụm OpenBao nhỏ (3 nút) đặt ở vùng quản trị, trên máy khác cụm workload, chỉ có một engine transit giữ khóa bọc; cụm chính gọi cụm niêm phong để giải bọc khóa gốc khi khởi động. Cụm niêm phong tự nó mở bằng Shamir thủ công | **Chọn cho cấp độ 3.** Cụm niêm phong rất ít khi khởi động lại (không chạy ứng dụng, không nâng cấp thường xuyên), nên mở thủ công chấp nhận được; khóa không bao giờ nằm trên cụm workload |
 | D. **HSM qua PKCS#11** | Khóa bọc nằm trong HSM của TTDL | **Chọn khi lên cấp độ 4** (nhóm SEC-90–99) hoặc khi TTDL đã có HSM; cần xác minh bản OpenBao đang dùng hỗ trợ seal PKCS#11 |
 | E. KMS của cloud | Dịch vụ quản lý khóa của nhà cung cấp cloud | Dùng ở `HT-B` chỉ khi KMS được chứng nhận theo tiêu chí cloud Chính phủ và đặt trong nước; nếu không, dùng phương án C trong cụm quản trị |
+
+: Bí mật: External Secrets và OpenBao HA
 
 Cụm OpenBao niêm phong có quy trình riêng: mảnh khóa Shamir 3/5 giao cho năm người thuộc hai đơn vị (TTDL và chủ quản), mỗi lần mở niêm phong được ghi biên bản; khóa transit của nó được sao lưu bằng chức năng sao lưu khóa của engine transit, mã hóa bằng khóa công khai của chủ quản, cất ngoại tuyến, vì mất khóa này đồng nghĩa không mở được cụm chính lẫn bản snapshot của cụm chính. Site DR có cụm niêm phong riêng được nạp cùng khóa (mục 7.4). Mảnh khóa khôi phục (recovery key) của cụm chính cũng được chia Shamir và cất như trên.
 
@@ -456,6 +482,8 @@ Kyverno thực thi chính sách nhập (admission) trên cụm, là hiện thự
 | Đa tenant | Pod trong `dh-rt-{tenant}` phải mang nhãn `dh.gov.vn/tenant` khớp tên namespace; cấm `hostPath`, `hostNetwork` (nhóm SEC-80–89) |
 | Thay đổi | Cấm `kubectl exec` vào pod ở `dh-payment` và `dh-secrets` trừ vai trò ứng cứu sự cố; mọi thay đổi tài nguyên không qua Argo CD ở PROD bị ghi cảnh báo |
 
+: Chính sách: Kyverno
+
 ## 5. Định cỡ tài nguyên
 
 ### 5.1. Phương pháp tính
@@ -476,6 +504,8 @@ Kyverno thực thi chính sách nhập (admission) trên cụm, là hiện thự
 | PostgreSQL | CPU theo số kết nối hoạt động; bộ nhớ đệm chung 25% RAM | PgBouncer giữ số kết nối thực ≤ 200 |
 | Kafka broker | ~50 MB/giây ghi mỗi broker với RF=3 trên NVMe, 4 vCPU | Page cache quan trọng hơn heap: heap 6 GiB, phần còn lại cho page cache |
 | ClickHouse | ~200.000 bản ghi/giây chèn mỗi vCPU theo lô; truy vấn 12 tháng một tenant < 3 giây với 8 vCPU | |
+
+: Hệ số năng lực tham chiếu
 
 ### 5.3. Bảng định cỡ chi tiết theo thành phần
 
@@ -519,6 +549,8 @@ Bảng dưới đây là kết quả định cỡ cho môi trường PROD ở si
 | Tempo (tổng) | 1/2, 4, 20 | 3/6, 8, 40 | 5/10, 16, 60 | (cụm quản trị) 12/24, 48, 200 |
 | Grafana, Alertmanager | 1/2, 2 | 1,5/3, 3 | 2/4, 4 | (cụm quản trị) 4/8, 8 |
 
+: Bảng định cỡ chi tiết theo thành phần
+
 Một số con số cần giải thích. **APISIX `QM-VUA`**: 3 bản sao × 1 vCPU × 1.000 lượt/giây = 3.000 lượt/giây danh định, gấp 10 lần cao điểm 300 lượt/giây và gấp 3 lần chỉ tiêu NFR-00-002; khi mất một vùng còn 2.000 lượt/giây. Dư nhiều vì APISIX rẻ, còn độ trễ p99 của gateway tăng mạnh khi CPU trên 60%. **APISIX `QM-CHUNG`**: 6.000 lượt/giây cao điểm cần 6 vCPU danh định; nhân 2 cho khoảng trống CPU dưới 50%, cộng N+1 vùng (mất một trong ba vùng còn 2/3) cần khoảng 18 vCPU, làm tròn 16 bản sao × 2 vCPU = 32 vCPU để có chỗ cho các tenant lớn bùng phát đồng thời. **Kafka `QM-CHUNG`**: lưu lượng ghi trung bình 270 GB/ngày ≈ 3,1 MB/giây, cao điểm ×3 ≈ 10 MB/giây, nhân RF 3 = 30 MB/giây ghi đĩa toàn cụm, xa dưới năng lực 6 broker; số broker do dung lượng quyết định: 1,9 TB × 3 = 5,7 TB cộng 100% dự phòng chia 6 broker ≈ 2 TB mỗi broker. **ClickHouse `QM-CHUNG`**: 4,4 TB nén mỗi bản sao chia 3 shard ≈ 1,5 TB, cộng 100% cho gộp phần (merge) và tăng trưởng được 3 TB mỗi nút. **Garage `QM-VUA`**: tệp nghiệp vụ 200 GB + Loki 50 GB + Tempo 15 GB + Mimir 110 GB + Harbor 150 GB ≈ 525 GB, nhân hệ số nhân bản 3 ≈ 1,6 TB thô, cộng 50% dự phòng chia 3 nút được khoảng 800 GB mỗi nút; làm tròn 1,5 TB vì tăng trưởng năm thứ hai. **Garage `QM-CHUNG`**: tệp 6 TB + Loki 1,2 TB + Mimir 2 TB + Tempo 0,3 TB + dư cho Harbor ≈ 10 TB, × 3 = 30 TB, cộng 40% chia 6 nút ≈ 7 TB mỗi nút.
 
 ### 5.4. Yêu cầu IOPS và độ trễ đĩa
@@ -534,6 +566,8 @@ Bảng sau ghi yêu cầu tối thiểu mỗi volume cho các kho nhạy với �
 | Garage dữ liệu và siêu dữ liệu | 1.000 / 3.000 / 5.000 / 10.000 (siêu dữ liệu trên NVMe) | ≤ 5 ms siêu dữ liệu | ≥ 200 MB/giây |
 | OpenBao, etcd | 1.000 | ≤ 2 ms (etcd đòi ≤ 10 ms tuyệt đối) | — |
 
+: Yêu cầu IOPS và độ trễ đĩa
+
 ### 5.5. Tổng hợp nút và máy chủ cho `HT-A`
 
 Từ bảng 5.3 cộng chi phí mỗi nút, bảng dưới đây đề xuất cấu hình nút (máy ảo hoặc máy vật lý) cho môi trường PROD ở site chính. Tổng vCPU và bộ nhớ ghi ở dòng cuối là tổng cấu hình nút, không phải tổng `requests`; chênh lệch là khoảng trống N+1 và bùng phát.
@@ -548,6 +582,8 @@ Từ bảng 5.3 cộng chi phí mỗi nút, bảng dưới đây đề xuất c�
 | Giám sát | — | 3 × 8 vCPU, 32 GiB | 3 × 16 vCPU, 64 GiB |
 | Vùng quản trị (Harbor, Git, OpenBao niêm phong, bastion) | 3 × 4 vCPU, 8 GiB + 500 GB | 3 × 4 vCPU, 16 GiB + 1 TB | 3 × 8 vCPU, 16 GiB + 1 TB |
 | **Tổng** | **12 nút; 96 vCPU; 384 GiB; ~11,5 TB NVMe thô** | **18 nút; 156 vCPU; 720 GiB; ~23 TB NVMe thô** | **21 nút; 368 vCPU; 1.584 GiB; ~77 TB NVMe thô** |
+
+: Tổng hợp nút và máy chủ cho HT-A
 
 Pool dữ liệu `QM-LON` có 5 nút thay vì 3 vì Kafka, PostgreSQL và ClickHouse cùng ba bản sao trên ba nút sẽ dồn quá nhiều vào mỗi nút; 5 nút cho phép trải các kho lệch nhau (Garage 4 nút, ClickHouse 2 nút khác nút primary PostgreSQL).
 
@@ -570,6 +606,8 @@ Với nền tảng dùng chung, bảng dưới đây ghi tổng tài nguyên cho
 | Quản trị: giám sát, Argo CD, Harbor, Git, OpenBao niêm phong | 6 × 16 vCPU, 64 GiB + 3 × 4 vCPU, 8 GiB | 108 vCPU, 408 GiB |
 | **Tổng một vùng** | **45 nút** | **~790 vCPU, ~3,9 TiB RAM, ~184 TB NVMe thô + lưu trữ khối cho cụm quản trị ~10 TB** |
 
+: Tổng hợp tài nguyên cho HT-B
+
 Kafka, ClickHouse, Garage và bốn ô CSDL được trải trên 12 nút dữ liệu theo nguyên tắc mỗi nút chạy tối đa một bản sao của mỗi kho và một primary PostgreSQL. Bốn ô CSDL `SHARED` mỗi ô chứa khoảng 8–9 tenant (khoảng 1,6 TB dữ liệu), còn dư chỗ cho 2–3 cụm `DEDICATED_DB`. Khi số tenant hoặc dung lượng một ô vượt 80% ngưỡng, ô mới được dựng sẵn và tenant mới được xếp vào ô mới; di chuyển tenant giữa các ô dùng cùng công cụ xuất nhập theo tenant ở mục 8.5.
 
 ### 5.7. Môi trường DEV, TEST, STAGING
@@ -582,6 +620,8 @@ Ba môi trường không phải PROD dùng cùng manifest với lớp phủ thu 
 | TEST | Kiểm thử tự động, kiểm thử chức năng, kiểm thử rò rỉ chéo tenant | Như DEV, thêm 2 tenant giả lập để chạy kiểm thử chéo tenant; ClickHouse 1 bản sao | 4 nút × 8 vCPU, 32 GiB; 1 TB |
 | STAGING | Diễn tập nâng cấp, kiểm thử tải thu nhỏ, kiểm thử hỗn loạn, diễn tập khôi phục | Đủ HA như `QM-NHO`: 3 bản sao `TPH-0`, CNPG 3 instance, Kafka 3+3, OpenBao 3 nút với transit seal riêng | Bằng `QM-NHO` (12 nút) |
 | Kiểm thử tải (theo đợt) | Đo chỉ tiêu NFR-00-001…008 | Dựng tạm bằng cấu hình `QM-VUA` | Bằng `QM-VUA`, chỉ trong thời gian đo |
+
+: Môi trường DEV, TEST, STAGING
 
 Dữ liệu ở DEV, TEST và STAGING là dữ liệu giả lập; không sao chép dữ liệu PROD xuống các môi trường này. Khi cần dữ liệu giống thật để tái hiện lỗi, dùng bản xuất theo tenant đã qua bộ che dữ liệu của PH-09.
 
@@ -673,6 +713,8 @@ Bảng dưới đây tổng hợp hành vi của từng thành phần, là căn 
 | DU control plane | Còn 1/2 bản sao, lập lịch lại | Như trên | ≤ 2 phút |
 | Bộ giám sát | Ingester còn 2/3 | Có thể mất truy vấn tạm thời | Vài phút |
 
+: Hành vi khi mất một nút và mất một vùng
+
 Mất hai vùng cùng lúc trong một site vượt quá thiết kế HA: các kho đồng thuận mất đa số và ngừng. Tình huống này được xử lý bằng chuyển sang site DR (mục 7).
 
 ## 7. Khôi phục sau thảm họa và liên tục hoạt động
@@ -688,6 +730,8 @@ NFR-00-014 đặt RPO ≤ 15 phút, RTO ≤ 1 giờ cho data plane và ≤ 4 gi�
 | `TPH-2` dữ liệu phân tích và giám sát | ClickHouse siêu dữ liệu lượt gọi, Mimir, Loki, Tempo | ≤ 24 giờ (siêu dữ liệu có thể nạp lại từ Kafka trong 3 ngày) | ≤ 24 giờ | Sao lưu hằng ngày; DR chạy bộ giám sát rỗng ngay để có giám sát mới |
 | `TPH-3` công cụ phát triển | Môi trường DEV, TEST, công cụ CI | ≤ 24 giờ | ≤ 5 ngày làm việc | Dựng lại từ Git và gói phân phối |
 
+: Tầng phục hồi và mục tiêu RPO/RTO
+
 Phần dữ liệu của `TPH-0` và `TPH-1` có RPO thực tế cỡ giây vì nhân bản liên tục, chặt hơn nhiều so với 15 phút; con số ≤ 15 phút là trần áp dụng cho trường hợp kênh liên site đã gián đoạn trước khi thảm họa xảy ra (khi đó dữ liệu chưa sang được DR sẽ mất), và là căn cứ đặt ngưỡng cảnh báo độ trễ nhân bản ở mục 9.2: độ trễ nhân bản liên site vượt 5 phút là cảnh báo, vượt 10 phút là sự cố.
 
 ### 7.2. Mô hình hai site active–standby
@@ -696,7 +740,7 @@ Datahub dùng mô hình hai site active–standby (ADR-034): site chính phục 
 
 Ở `HT-A`, site DR là TTDL dự phòng của tỉnh (nếu có) hoặc vùng cloud Chính phủ đặt trong nước; trong giai đoạn đầu khi tỉnh chưa có site DR, yêu cầu tối thiểu là kho sao lưu bất biến ở vị trí vật lý khác (mục 8), khi đó RTO là thời gian dựng lại từ sao lưu (ước tính 1–2 ngày) và tỉnh phải chấp nhận bằng văn bản là chưa đạt NFR-00-014. Ở `HT-B`, site DR là vùng cloud thứ hai có cấu hình như mục 5.6.
 
-```mermaid
+```{.mermaid caption="Mô hình hai site active–standby"}
 flowchart LR
   subgraph A["Site chính - active"]
     A_GW["APISIX, runtime<br/>đủ bản sao"]
@@ -748,6 +792,8 @@ Bảng dưới đây mô tả cơ chế sao chép, độ trễ mục tiêu và c
 | ClickHouse, Mimir, Loki, Tempo | Không sao chép liên tục; sao lưu hằng ngày ra kho sao lưu (`TPH-2`) | 24 giờ | Kiểm tra khôi phục hằng tháng |
 | Valkey | Không sao chép | — | — |
 
+: Cơ chế sao chép từng kho
+
 Hai điểm cần làm rõ. Thứ nhất, OpenBao bản mã nguồn mở không có nhân bản DR như bản thương mại của Vault, nên RPO của OpenBao là 15 phút (chu kỳ snapshot). Mất 15 phút thay đổi bí mật là chấp nhận được vì bí mật thay đổi ít, mọi thay đổi có nhật ký kiểm toán và bí mật xoay vòng có thể được cấp lại; bí mật động cho CSDL được cấp lại tự động sau chuyển site. Thứ hai, khi MirrorMaker 2 dùng `IdentityReplicationPolicy`, không được chạy nhân bản hai chiều cùng lúc (sẽ tạo vòng lặp); chiều nhân bản chỉ được đảo khi quay về site chính (mục 7.7).
 
 > **Câu hỏi mở Q339:** Nếu hai TTDL của tỉnh (site chính và DR) cùng thành phố với độ trễ khứ hồi ≤ 5 ms, có thể cân nhắc kéo giãn một cụm Garage qua hai site (vùng thứ ba đặt ở site DR) thay vì đồng bộ bằng tác vụ định kỳ. Cần số liệu độ trễ và băng thông liên site của tỉnh thí điểm.
@@ -778,6 +824,8 @@ Runbook dưới đây có ngân sách thời gian cộng lại ≤ 60 phút cho 
 | 12 (TPH-1) | Thông báo các tỉnh và HTTT: thời điểm chuyển, dữ liệu có thể mất (khoảng thời gian), việc HTTT cần làm (gửi lại giao dịch sau thời điểm X nếu không nhận được phản hồi) | 15 phút | 2 giờ 15 phút |
 | 13 (TPH-2) | Dựng ClickHouse và bộ giám sát từ sao lưu hoặc chạy rỗng; nạp lại siêu dữ liệu lượt gọi từ Kafka DR (3 ngày gần nhất) | theo nền | ≤ 24 giờ |
 | 14 | Lập báo cáo sự cố sơ bộ; ghi lại thời gian thực tế từng bước để cải tiến runbook | — | — |
+
+: Runbook chuyển sang site DR (RBK-01)
 
 Giao dịch thanh toán cần xử lý đặc biệt ở bước 10: giao dịch ở trạng thái chờ kết quả tại thời điểm chuyển được `dh-payment` truy vấn trạng thái lại với PayGov theo mã giao dịch (idempotency) thay vì giả định, để không có giao dịch bị ghi nhận hai lần hoặc mất.
 
@@ -822,6 +870,8 @@ NFR-00-014 đòi diễn tập hằng quý. Bốn quý xoay vòng bốn kịch b�
 | Q3 | Mã độc tống tiền: giả định cụm site chính và bản sao trực tuyến đều không tin cậy; khôi phục từ kho sao lưu bất biến vào cụm sạch (RBK-03, mục 8.4) | STAGING hoặc cụm tạm | Khôi phục đủ `TPH-0`, `TPH-1` trong ≤ 24 giờ; kiểm tra toàn vẹn chuỗi băm kiểm toán đạt |
 | Q4 | Khôi phục một tenant riêng lẻ về thời điểm quá khứ (RBK-04, mục 8.5) cộng phép thử 24 giờ NFR-00-012 (7.9) | STAGING | Khôi phục tenant ≤ 4 giờ, không ảnh hưởng tenant khác; NFR-00-012 đạt |
 
+: Diễn tập DR hằng quý
+
 Mỗi lần diễn tập có biên bản ghi: thời gian thực tế từng bước, sai lệch so với runbook, dữ liệu mất đo được, các cải tiến. Biên bản là bằng chứng cho hồ sơ cấp độ (D03-08) và cho nhóm biện pháp SEC-70–79.
 
 ### 7.11. Kế hoạch liên tục hoạt động khi mất cả hai site
@@ -845,6 +895,8 @@ Bảng sau quy định ai được thông báo, khi nào, qua kênh nào. Danh s
 | Lộ lọt dữ liệu cá nhân | Thêm bộ phận bảo vệ dữ liệu cá nhân | ≤ 72 giờ tới cơ quan có thẩm quyền theo Luật 91/2025/QH15 | Theo D03-07 | Theo D03-07 |
 | SEV-2 (control plane ngừng, data plane bình thường) | Người trực, quản trị các tỉnh | 30 phút | Trang trạng thái, thư điện tử | Chức năng bị ảnh hưởng, ước lượng |
 | HTTT và người dùng cuối | Đầu mối kỹ thuật HTTT | Sau quyết định chuyển site và khi khôi phục | Trang trạng thái tĩnh đặt ngoài hai site, thư điện tử | Thời điểm, việc HTTT cần làm |
+
+: Kế hoạch liên lạc khi sự cố
 
 Trang trạng thái là một trang tĩnh đặt ở hạ tầng độc lập với hai site (ví dụ cổng thông tin điện tử của tỉnh), cập nhật thủ công bởi người trực.
 
@@ -877,6 +929,8 @@ Bảng dưới đây là danh mục đầy đủ đối tượng sao lưu. Cột
 | ClickHouse | `clickhouse-backup` ra S3 | Hằng ngày (tăng dần), hằng tuần (đầy đủ) | 35 ngày | Kho sao lưu (không cần bất biến) | Như trên | Hằng tháng |
 | Mimir, Loki, Tempo | Không sao lưu riêng; dữ liệu nằm trong Garage, tác vụ đồng bộ Garage mục 7.4 không áp dụng cho bucket giám sát | — | — | — | — | — |
 | Nhật ký kiểm toán: bản WORM | `dh-platform` (PH-13) ghi lô hằng giờ có chuỗi băm sang kho WORM (ADR-031) | Hằng giờ | Theo ADR-031 | Kho WORM, có thể trùng kho sao lưu bất biến với bucket riêng | Như trên | Hằng tháng: kiểm tra toàn vẹn chuỗi băm từ đầu |
+
+: Bảng đối tượng sao lưu
 
 Valkey không được sao lưu vì là dữ liệu có thể mất (mục 6.7). Kafka không sao lưu nội dung vì mọi sự kiện nghiệp vụ có nguồn sự thật ở bảng outbox của PostgreSQL hoặc ở HTTT nguồn; khi khôi phục từ sao lưu, topic được tạo lại và các luồng cần phát lại sẽ đọc từ nguồn.
 
@@ -927,6 +981,8 @@ Mục tiêu mức dịch vụ (SLO) được đo bằng chỉ số mức dịch 
 | Độ trễ nhân bản DR | Độ trễ nhân bản lớn nhất trong các kho `TPH-0`, `TPH-1` | ≤ 5 phút trong 99% thời gian | — | Chỉ số CNPG, MirrorMaker 2, tác vụ đồng bộ |
 | Sao lưu | Tỷ lệ bản sao lưu theo lịch thành công và kiểm tra khôi phục đạt | 100% | 0 | Bảng điều khiển sao lưu |
 
+: SLI và SLO
+
 ### 9.2. Cảnh báo cốt lõi
 
 Cảnh báo theo SLO dùng cách đốt ngân sách lỗi đa cửa sổ (multi-window burn rate): đốt 14,4 lần trong 1 giờ và 5 phút thì gọi người trực ngay; 6 lần trong 6 giờ và 30 phút thì gọi người trực; 1 lần trong 3 ngày thì tạo phiếu. Cách này đạt MTTD ≤ 5 phút (KPI-15) cho sự cố lớn mà không gây báo động giả. Ngoài cảnh báo SLO, các cảnh báo nguyên nhân sau là bắt buộc, kèm runbook trong D06-03.
@@ -947,6 +1003,8 @@ Cảnh báo theo SLO dùng cách đốt ngân sách lỗi đa cửa sổ (multi-
 | Pod `TPH-0` khởi động lại lặp (CrashLoopBackOff) | > 3 lần trong 10 phút | SEV-2 |
 | Network policy chặn bất thường (Hubble) | Tăng gấp 10 lần mức nền | SEV-3, chuyển SIEM |
 
+: Cảnh báo cốt lõi
+
 Kênh cảnh báo SEV-1 và SEV-2 phải có ít nhất hai đường độc lập (ví dụ ứng dụng nhắn tin và gọi điện tự động), một đường không phụ thuộc hạ tầng của site.
 
 ### 9.3. Giữ dữ liệu quan sát
@@ -962,6 +1020,8 @@ Bảng sau tổng hợp thời hạn giữ dữ liệu quan sát, đồng bộ v
 | Chỉ số chi tiết | Mimir | 90 ngày | Tổng hợp SLO 25 tháng | Đề xuất, Q332 |
 | Trace | Tempo | 14 ngày | Không | Đề xuất, Q332 |
 | Nhật ký kiểm toán Kubernetes API | Loki (tenant `security`) và kho WORM | 12 tháng | Kho WORM theo ADR-031 | D03-07, nhóm SEC-60–69 |
+
+: Giữ dữ liệu quan sát
 
 > **Q347 (đã chốt 25/11/2026):** kho WORM nhật ký kiểm toán và kho sao lưu bất biến dùng chung một hệ Ceph RGW, nhưng tách bucket, khóa, tài khoản quản trị và chính sách lưu giữ; thời hạn lưu kiểm toán giữ 5 năm. *Câu hỏi gốc:* ADR-031 và D03-07 đặt thời hạn lưu kiểm toán dài hạn 5 năm (tối thiểu 3 năm) trên kho WORM riêng có khóa đối tượng chế độ tuân thủ; sản phẩm kho WORM còn mở ở Q306 của D03-07. Cần chốt việc kho WORM và kho sao lưu bất biến (mục 8.1) có dùng chung một thiết bị với bucket, chính sách riêng hay phải là hai hệ tách biệt.
 
@@ -988,6 +1048,8 @@ Tài liệu chọn **Argo Rollouts** cho các thành phần data plane. Lý do l
 | Keycloak | Cập nhật cuốn chiếu | Keycloak nâng phiên bản chính cần dừng toàn cụm theo hướng dẫn của Keycloak nếu thay đổi bộ nhớ đệm; làm trong cửa sổ bảo trì |
 | Kho dữ liệu | Theo operator | Mục 10.3 |
 
+: Chiến lược phát hành
+
 ### 10.3. Nâng cấp không gián đoạn
 
 NFR-00-013 đòi nâng cấp không gây lượt gọi lỗi ở data plane. Bảng sau mô tả cách nâng cấp từng lớp hạ tầng.
@@ -1000,6 +1062,8 @@ NFR-00-013 đòi nâng cấp không gây lượt gọi lỗi ở data plane. B�
 | Kafka | Strimzi khởi động lại broker cuốn chiếu, chờ hết phân vùng dưới ISR trước broker kế; nâng `metadata.version` của KRaft sau khi toàn cụm chạy phiên bản mới | Không, nhờ RF=3, `min.insync.replicas=2`, producer thử lại |
 | Istio ambient, Cilium | Cập nhật DaemonSet cuốn chiếu; ztunnel thay thế giữ kết nối hiện có | Không đáng kể (kiểm chứng ở STAGING) |
 | OpenBao | Nâng nút dự phòng trước, sau đó chuyển lãnh đạo | Vài giây với thao tác transit |
+
+: Nâng cấp không gián đoạn
 
 ### 10.4. Chính sách vòng đời phiên bản
 
@@ -1027,6 +1091,8 @@ TTDL tỉnh thường không cho cụm truy cập Internet (SRS §2.2), nên Dat
 | Tùy chọn: gói Kubernetes | Gói cài RKE2 không mạng cho tỉnh chưa có cụm (không tính vào mốc 3 ngày) |
 | Tài liệu | Ghi chú phát hành, hướng dẫn nâng cấp từ phiên bản trước, bảng tương thích |
 
+: Gói air-gapped
+
 Gói được ký tổng (tệp kê khai có tổng kiểm tra SHA-256 cho từng artifact, ký bằng khóa của nhà cung cấp lưu trong HSM của nhà cung cấp). Khi nhận gói, `dhctl` kiểm tra chữ ký tổng, sau đó đẩy artifact vào Harbor của tỉnh bằng `oras`/`skopeo`, giữ nguyên chữ ký; Kyverno trên cụm kiểm tra chữ ký từng ảnh bằng khóa công khai đã nạp (xác minh có khóa, không dùng chế độ không khóa vì cần mạng). Gói vá chỉ chứa các ảnh thay đổi cùng tệp kê khai mới.
 
 ### 11.2. Bộ cài và kiểm tra tiền điều kiện
@@ -1040,6 +1106,8 @@ Gói được ký tổng (tệp kê khai có tổng kiểm tra SHA-256 cho từn
 | Ngày 1 | Chạy `dhctl preflight` và khắc phục điểm nhỏ; nạp gói vào Harbor; sinh kho cấu hình site từ mẫu hồ sơ quy mô; cài Argo CD; đồng bộ lớp 0–1 (operator, cert-manager, Kyverno, ESO, Istio); dựng cụm OpenBao niêm phong và cụm chính, mở niêm phong lần đầu có biên bản | Nền tảng cụm sẵn sàng, Kyverno chặn ảnh không ký |
 | Ngày 2 | Đồng bộ lớp 2–4: PostgreSQL, Kafka, Garage, ClickHouse, Valkey, Keycloak, Apicurio, APISIX, DU; khởi tạo tenant của tỉnh bằng saga PH-20; cấu hình sao lưu và kiểm tra bản sao lưu đầu tiên | Datahub chạy, tenant `ACTIVE`, sao lưu đầu tiên đạt |
 | Ngày 3 | Kết nối NDXP và PayGov (môi trường thử); kết nối hệ giám sát ATTT của tỉnh; chạy bộ kiểm thử khói và kiểm thử mất một nút; cấu hình site DR nếu có; bàn giao tài khoản quản trị, biên bản | Biên bản nghiệm thu cài đặt |
+
+: Kế hoạch dựng trong 3 ngày làm việc
 
 Mốc 3 ngày không gồm việc di trú dữ liệu từ LGSP cũ và kết nối HTTT thực tế, hai việc thuộc D06-01.
 
@@ -1078,6 +1146,8 @@ Bảng dưới đây so sánh tài nguyên tương đối giữa các hồ sơ, 
 | `QM-CHUNG`, hai vùng | 10,2 | 10,8 | 16,0 | |
 | Kho sao lưu bất biến `QM-VUA` | — | — | ~2 TB HDD/năm | Bản sao cơ sở 35 ngày, WAL, xuất theo tenant, tệp |
 
+: Chi phí và dung lượng tương đối
+
 Phép so sánh cho thấy nền tảng dùng chung hai vùng tốn khoảng 10 đơn vị cho 34 tỉnh, tức khoảng 0,3 đơn vị mỗi tỉnh, so với 2,0 đơn vị nếu mỗi tỉnh `QM-VUA` tự dựng hai site. Đây là lập luận kinh tế chính cho `HT-B`; `HT-A` vẫn cần cho tỉnh có yêu cầu tự chủ hạ tầng hoặc yêu cầu cách ly cấp độ 4.
 
 ## 14. Rủi ro hạ tầng
@@ -1096,6 +1166,8 @@ Bảng sau đề xuất các rủi ro hạ tầng để luồng quản lý dự 
 | RSK-H08 | Thành phần bên thứ ba ngừng phát triển hoặc đổi giấy phép (như Ingress NGINX, MinIO bản cộng đồng) | Phải thay gấp | Chính sách vòng đời 10.4; chỉ dùng giao thức chuẩn (S3, OpenAPI, OIDC); rà soát nửa năm |
 | RSK-H09 | Bộ chuyển đổi APISIX sang chế độ standalone không đáp ứng số route lớn ở `QM-CHUNG` | Độ trễ nạp cấu hình, tăng bộ nhớ | Kiểm thử với 70.000 route trước cổng G2; phương án dự phòng chia APISIX theo nhóm tenant (Q338) |
 | RSK-H10 | Chứng thư hết hạn ở đường kết nối NDXP, PayGov hoặc biên | Ngừng dịch vụ | cert-manager, cảnh báo 21 ngày, danh mục chứng thư ngoài do tỉnh cấp |
+
+: Rủi ro hạ tầng
 
 > **Câu hỏi mở Q346:** Kinh phí và thời điểm có site DR cho từng tỉnh `HT-A` cần được chủ đầu tư xác định; tài liệu này giả định giai đoạn đầu có thể chỉ có kho sao lưu ngoài site (RSK-H01).
 
@@ -1140,6 +1212,8 @@ Bảng dưới đây ánh xạ yêu cầu và quyết định kiến trúc tới
 | LGC-NFR-* (hệ cũ) | Yêu cầu phi chức năng hệ cũ về sẵn sàng, sao lưu | Kế thừa qua NFR-00-010…015; ánh xạ chi tiết ở D00-03 |
 | SEC-10–19, 30–39, 50–59, 60–69, 70–79, 80–89, 90–99 | Nhóm biện pháp ATTT do hạ tầng hiện thực | 3.1, 4.4–4.10, 8, 9, 12 |
 
+: Truy vết
+
 ## 16. Mã, thuật ngữ mới và đề xuất sửa tài liệu khác
 
 ### 16.1. Mã truy vết mới đề xuất bổ sung D00-01 §3.1
@@ -1151,6 +1225,8 @@ Bảng dưới đây ánh xạ yêu cầu và quyết định kiến trúc tới
 | `TPH-{n}` | Tầng phục hồi | D03-09 §7.1 | `TPH-0` |
 | `RBK-{nn}` | Runbook vận hành, DR, khôi phục | D03-09 (khung), D06-03 (chi tiết) | `RBK-04` |
 | `RSK-H{nn}` | Rủi ro hạ tầng (cùng kiểu `RSK-A{nn}` của SAD) | D03-09 §14, D01-02 | `RSK-H05` |
+
+: Mã truy vết mới đề xuất bổ sung D00-01 §3.1
 
 ### 16.2. Thuật ngữ mới đề xuất bổ sung D00-01 §2.2
 
@@ -1164,6 +1240,8 @@ Bảng dưới đây ánh xạ yêu cầu và quyết định kiến trúc tới
 | Kho sao lưu bất biến | Immutable backup store | Kho S3 có khóa đối tượng chế độ tuân thủ, ngoài cụm, quản trị bởi tài khoản khác |
 | Quy tắc 3-2-1-1-0 | 3-2-1-1-0 rule | 3 bản, 2 loại phương tiện, 1 ngoài site, 1 bất biến hoặc ngoại tuyến, 0 lỗi khi kiểm tra khôi phục |
 | RPO, RTO theo tầng | — | Mục tiêu phục hồi áp cho từng tầng phục hồi `TPH-n` |
+
+: Thuật ngữ mới đề xuất bổ sung D00-01 §2.2
 
 Từ viết tắt mới: BCP (Business Continuity Plan), GSLB (Global Server Load Balancing), HA (High Availability), HSM (Hardware Security Module), KMS (Key Management Service), PITR (Point-In-Time Recovery), SLI/SLO (Service Level Indicator/Objective), WORM (Write Once Read Many), SBOM (Software Bill of Materials).
 
@@ -1205,3 +1283,5 @@ Danh sách dưới đây tập hợp các câu hỏi mở của tài liệu, d�
 | Q347 | Thời hạn lưu trữ dài hạn nhật ký kiểm toán (ADR-031) | 9.3 |
 | Q348 | Chỉ tiêu độ trễ đầu cuối tính cả lớp biên | 4.4 |
 | Q349 | Máy chủ Git cho kho cấu hình | 4.9 |
+
+: Câu hỏi mở

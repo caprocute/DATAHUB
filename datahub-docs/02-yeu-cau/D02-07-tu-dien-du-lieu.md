@@ -24,7 +24,7 @@ Quy tắc sử dụng:
 
 Sơ đồ dưới đây cho thấy quan hệ giữa các thực thể dùng chung. Thực thể tô đậm trong lời dẫn là thực thể gốc mà hầu hết dữ liệu nghiệp vụ tham chiếu tới.
 
-```mermaid
+```{.mermaid caption="Tổng quan"}
 erDiagram
   TENANT ||--o{ ORGANIZATION : "có"
   TENANT ||--o{ MEMBER_SYSTEM : "có"
@@ -62,6 +62,8 @@ Thực thể gốc là **Tenant** (DD-01), **Tổ chức** (DD-02) và **HTTT th
 | DD-13 | Thông báo | `ph18_ops.notification` | PH-18 | |
 | DD-14 | Tham số cấu hình | `ph18_ops.config_param` | PH-18 | Theo tenant, có phiên bản |
 
+: Danh sách thực thể dùng chung
+
 ## 4. Đặc tả thực thể
 
 ### DD-01 · Tenant
@@ -80,6 +82,8 @@ Thực thể gốc là **Tenant** (DD-01), **Tổ chức** (DD-02) và **HTTT th
 | `realm` | T-CODE | Có | `dh-{code thường}` | NB | Realm Keycloak |
 | `activated_at` | T-TS | Không | | NB | |
 
+: DD-01 · Tenant
+
 ### DD-02 · Tổ chức
 
 Cơ quan, đơn vị trong tỉnh: UBND tỉnh, sở, ban, ngành, UBND cấp xã, đơn vị sự nghiệp. Tổ chức là chủ quản của HTTT, là nơi công tác của người dùng, là chủ quản dữ liệu.
@@ -95,6 +99,8 @@ Cơ quan, đơn vị trong tỉnh: UBND tỉnh, sở, ban, ngành, UBND cấp x�
 | `is_data_owner` | T-BOOL | Có | Mặc định `false` | NB | Có là chủ quản dữ liệu (SH-08) |
 | `effective_from` / `effective_to` | T-DATE | `from` bắt buộc | `to` ≥ `from` | CK | Hiệu lực, phục vụ sắp xếp bộ máy |
 | `successor_id` | T-ID | Không | FK DD-02 | CK | Tổ chức kế thừa khi giải thể, sáp nhập |
+
+: DD-02 · Tổ chức
 
 ### DD-03 · HTTT thành viên
 
@@ -116,6 +122,8 @@ Một hệ thống thông tin được kết nạp vào Datahub. Đây là chủ
 | `ip_allowlist` | T-JSON | Không | Mảng CIDR | HC | |
 | `legacy_ref` | T-TEXT | Không | | NB | Mã ở hệ cũ, phục vụ di trú |
 
+: DD-03 · HTTT thành viên
+
 ### DD-04 · Đầu mối liên hệ
 
 | Thuộc tính | Kiểu | Bắt buộc | Ràng buộc | PL | Mô tả |
@@ -126,6 +134,8 @@ Một hệ thống thông tin được kết nạp vào Datahub. Đây là chủ
 | `email` | T-EMAIL | Có | | HC | |
 | `phone` | T-PHONE | Không | | HC | |
 | `user_account_id` | T-ID | Không | FK DD-06 | NB | Liên kết tài khoản nếu đầu mối có tài khoản |
+
+: DD-04 · Đầu mối liên hệ
 
 ### DD-05 · Định danh ứng dụng
 
@@ -142,6 +152,8 @@ Thông tin xác thực mà HTTT dùng để gọi Datahub. Bí mật (client sec
 | `status` | T-ENUM | Có | `ACTIVE`, `ROTATING`, `REVOKED`, `EXPIRED` | NB | |
 | `expires_at` | T-TS | Có | Tối đa 12 tháng từ khi cấp | NB | |
 | `last_used_at` | T-TS | Không | | NB | |
+
+: DD-05 · Định danh ứng dụng
 
 ### DD-06 · Tài khoản người dùng
 
@@ -160,6 +172,8 @@ Keycloak là nguồn sự thật cho xác thực. Bảng này là bản chiếu 
 | `mfa_enrolled` | T-BOOL | Có | | NB | |
 | `last_login_at` | T-TS | Không | | NB | |
 
+: DD-06 · Tài khoản người dùng
+
 ### DD-07 · Đơn vị hành chính
 
 Danh mục đơn vị hành chính cấp tỉnh và cấp xã, có lịch sử hiệu lực để xử lý sáp nhập. Dữ liệu thuộc tenant `COMMON`, đồng bộ từ danh mục quốc gia qua PH-07 và PH-14.
@@ -175,6 +189,8 @@ Danh mục đơn vị hành chính cấp tỉnh và cấp xã, có lịch sử h
 | `successor_ids` | T-JSON | Không | Mảng T-ID | CK | Đơn vị kế thừa khi sáp nhập, chia tách |
 | `source_version` | T-TEXT | Có | | CK | Phiên bản danh mục quốc gia |
 
+: DD-07 · Đơn vị hành chính
+
 ### DD-08 · Mức phân loại dữ liệu
 
 | Thuộc tính | Kiểu | Bắt buộc | Ràng buộc | PL | Mô tả |
@@ -186,6 +202,8 @@ Danh mục đơn vị hành chính cấp tỉnh và cấp xã, có lịch sử h
 | `display_policy` | T-ENUM | Có | `FULL`, `MASK_BY_ROLE`, `MASK_DEFAULT` | NB | |
 | `encrypt_at_app` | T-BOOL | Có | | NB | |
 
+: DD-08 · Mức phân loại dữ liệu
+
 ### DD-09 · Phân loại trường dữ liệu
 
 | Thuộc tính | Kiểu | Bắt buộc | Ràng buộc | PL | Mô tả |
@@ -195,6 +213,8 @@ Danh mục đơn vị hành chính cấp tỉnh và cấp xã, có lịch sử h
 | `data_class_id` | T-ID | Có | FK DD-08 | NB | |
 | `personal_data_type` | T-ENUM | Không | `BASIC`, `SENSITIVE` theo pháp luật về dữ liệu cá nhân | NB | |
 | `mask_pattern` | T-TEXT | Không | Ví dụ `keep-last-3` | NB | |
+
+: DD-09 · Phân loại trường dữ liệu
 
 ### DD-10 · Bản ghi kiểm toán
 
@@ -217,6 +237,8 @@ Danh mục đơn vị hành chính cấp tỉnh và cấp xã, có lịch sử h
 | `trace_id` | T-TRACE | Có | | NB | |
 | `prev_hash` / `hash` | T-TEXT | Có | SHA-256, hex | NB | |
 
+: DD-10 · Bản ghi kiểm toán
+
 Bản ghi kiểm toán không có `updated_at`, `updated_by`, `version`, `deleted_at` (ngoại lệ có chủ đích với D00-01 §5.1).
 
 ### DD-11 · Sự kiện outbox
@@ -233,6 +255,8 @@ Cấu trúc thống nhất cho bảng outbox của mọi phân hệ (D03-01 §7.
 | `trace_id` | T-TRACE | Có | |
 | `occurred_at` | T-TS | Có | |
 
+: DD-11 · Sự kiện outbox
+
 ### DD-12 · Tệp
 
 | Thuộc tính | Kiểu | Bắt buộc | Mô tả |
@@ -246,6 +270,8 @@ Cấu trúc thống nhất cho bảng outbox của mọi phân hệ (D03-01 §7.
 | `data_class_id` | T-ID | Có | FK DD-08 |
 | `expires_at` | T-TS | Không | Tệp tạm (tệp xuất) |
 
+: DD-12 · Tệp
+
 ### DD-13 · Thông báo
 
 | Thuộc tính | Kiểu | Bắt buộc | Mô tả |
@@ -257,6 +283,8 @@ Cấu trúc thống nhất cho bảng outbox của mọi phân hệ (D03-01 §7.
 | `read_at` | T-TS | Không | |
 | `channels_sent` | T-JSON | Có | Kênh đã gửi |
 
+: DD-13 · Thông báo
+
 ### DD-14 · Tham số cấu hình
 
 | Thuộc tính | Kiểu | Bắt buộc | Mô tả |
@@ -266,6 +294,8 @@ Cấu trúc thống nhất cho bảng outbox của mọi phân hệ (D03-01 §7.
 | `schema` | T-JSON | Có | JSON Schema của giá trị |
 | `scope` | T-ENUM | Có | `PLATFORM` (mặc định toàn nền tảng) hoặc `TENANT` (ghi đè) |
 | `effective_from` | T-TS | Có | |
+
+: DD-14 · Tham số cấu hình
 
 ## 5. Ánh xạ từ dữ liệu hệ cũ
 
@@ -280,3 +310,5 @@ Bảng dưới đây ánh xạ các bảng của hệ cũ sang thực thể dùn
 | `subscriber` | Hub | DD-03 (vai trò `SUBSCRIBER`) | `is_integration_flow = true` thì ánh xạ thành luồng PH-04 |
 | `payment_partner` | Payment | DD-03 (HTTT gọi thanh toán) | Đối tác là HTTT dịch vụ công |
 | Tài khoản Keycloak cũ | Chung | DD-06 | Xuất người dùng, không xuất thông tin xác thực |
+
+: Ánh xạ từ dữ liệu hệ cũ

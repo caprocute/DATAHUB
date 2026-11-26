@@ -27,6 +27,8 @@ Mỗi tenant có một **chế độ cách ly**:
 | `DEDICATED_DB` | Cụm PostgreSQL riêng; các tầng khác dùng chung | Tỉnh có yêu cầu riêng về CSDL hoặc chuẩn bị lên cấp độ 4 |
 | `DEDICATED_CLUSTER` | Một cụm Kubernetes riêng, toàn bộ thành phần riêng | Tỉnh tự vận hành on-prem; cấp độ 4 |
 
+: Khái niệm
+
 Ở chế độ `DEDICATED_CLUSTER`, phần mềm vẫn chạy ở chế độ đa tenant (thường chỉ có một hoặc vài tenant), nhờ đó chỉ có một bộ mã cho mọi hồ sơ triển khai (RB-07).
 
 ## 3. Xác định tenant trong mỗi yêu cầu
@@ -39,7 +41,7 @@ Nguồn sự thật duy nhất về tenant của một yêu cầu là **token đ
 4. Sự kiện Kafka mang tenant trong header CloudEvents `dhtenant` và trong tên topic; consumer kiểm tra hai giá trị khớp nhau, không khớp thì chuyển vào DLQ và cảnh báo an ninh.
 5. Tác vụ nền (lịch, xử lý lô) chạy lặp theo từng tenant, đặt `TenantContext` tường minh; không có tác vụ nào chạy "không tenant" trừ tác vụ của tenant `PLATFORM`.
 
-```mermaid
+```{.mermaid caption="Xác định tenant trong mỗi yêu cầu"}
 sequenceDiagram
   participant C as Client
   participant G as APISIX
@@ -73,6 +75,8 @@ Bảng dưới đây là phần cốt lõi của tài liệu: với mỗi tầng
 | Quan sát | Nhãn `tenant` bắt buộc trên metric, log, trace; Grafana tách tổ chức (organization) theo tenant cho quản trị tỉnh | Quản trị tỉnh chỉ thấy dữ liệu tỉnh mình trên Grafana |
 | Nhật ký kiểm toán | Cột `tenant_id`, RLS như CSDL; kho WORM tách tiền tố theo tenant | |
 
+: Cách ly theo từng tầng
+
 **Chính sách RLS mẫu.** Mọi bảng nghiệp vụ dùng cùng mẫu dưới đây. Migration Liquibase của mỗi phân hệ phải có changeset tạo chính sách ngay sau khi tạo bảng; công cụ lint migration chặn bảng không có chính sách.
 
 ```sql
@@ -92,7 +96,7 @@ Tham số `false` ở `current_setting` làm truy vấn **lỗi** (thay vì tr�
 
 ### 5.1. Máy trạng thái
 
-```mermaid
+```{.mermaid caption="Máy trạng thái"}
 stateDiagram-v2
   [*] --> PROVISIONING: Khai báo
   PROVISIONING --> ACTIVE: Khởi tạo thành công
@@ -116,6 +120,8 @@ stateDiagram-v2
 | `MERGED` | Đã sáp nhập; mọi yêu cầu được định tuyến sang tenant đích trong thời gian chuyển tiếp | Chuyển tiếp | Chỉ-đọc, phục vụ tra cứu lịch sử |
 | `DECOMMISSIONED` | Đã chấm dứt; dữ liệu đã được xuất bàn giao và xóa theo chính sách | Không | Không |
 
+: Máy trạng thái
+
 ### 5.2. Khởi tạo tenant
 
 Khởi tạo tenant là một saga do PH-20 điều phối. Mỗi bước idempotent và có thao tác bù trừ; nếu một bước lỗi, saga dừng ở `FAILED` và cho phép thử lại từ bước lỗi.
@@ -133,6 +139,8 @@ Khởi tạo tenant là một saga do PH-20 điều phối. Mỗi bước idempo
 | 9 | Chạy kiểm tra khói: đăng nhập tài khoản quản trị, gọi API mẫu, phát và nhận một sự kiện mẫu | — |
 | 10 | Chuyển `ACTIVE`, gửi thông báo cho đầu mối | — |
 
+: Khởi tạo tenant
+
 Mục tiêu thời gian của saga ở chế độ `SHARED` là ≤ 1 giờ (NFR-00-057).
 
 ### 5.3. Hạn mức theo tenant
@@ -147,6 +155,8 @@ Hạn mức bảo vệ các tenant khỏi ảnh hưởng lẫn nhau trên nền 
 | Dung lượng kho đối tượng | 500 GB | Kiểm tra khi tải lên; cảnh báo ở 80% |
 | Dung lượng CSDL | 200 GB | Giám sát, cảnh báo ở 80% |
 | Số người dùng | 2.000 | PH-12 |
+
+: Hạn mức theo tenant
 
 ### 5.4. Sáp nhập tenant
 
@@ -179,3 +189,5 @@ Các quy tắc sau được kiểm tra tự động trong CI hoặc bằng kiể
 | FR-00-010, FR-00-011, FR-00-012 | Mục 3, 4, 6 |
 | NFR-00-057, NFR-00-060 | Mục 5.2, 5.3 |
 | ADR-003 | Mục 2, 4 |
+
+: Truy vết

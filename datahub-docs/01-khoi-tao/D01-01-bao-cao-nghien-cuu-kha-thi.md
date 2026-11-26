@@ -35,6 +35,8 @@ Bảng dưới đây tóm tắt các thông tin định danh của dự án. Cá
 | Nhóm dự án | Xác định theo tổng mức đầu tư tại Chương 8 và tiêu chí phân loại của Luật Đầu tư công (mục 1.1.1) |
 | Thời gian thực hiện | 18 tháng kể từ T0 (ngày khởi động hợp đồng thực hiện), bảo hành 12 tháng; mốc ghi tương đối theo T0, xem Chương 9 |
 
+: Thông tin chung về dự án
+
 #### 1.1.1. Nhóm dự án và thẩm quyền
 
 Luật Đầu tư công phân dự án thành nhóm A, B, C theo tính chất và tổng mức đầu tư, và khoản 4 Điều 65 Nghị định 224/2026/NĐ-CP dẫn chiếu cách phân loại này để xác định thẩm quyền quyết định đầu tư đối với dự án chuyển đổi số. Báo cáo chưa xác minh được ngưỡng tổng mức đầu tư cụ thể của từng nhóm sau khi Luật Đầu tư công số 58/2024/QH15 được sửa đổi bởi Luật số 90/2025/QH15. Vì vậy báo cáo không tự kết luận nhóm dự án ở chương này mà để Chương 8 so tổng mức đầu tư với ngưỡng được chủ đầu tư xác nhận (Q-D0101-11). Theo hiểu biết trước đây, dự án công nghệ thông tin cấp tỉnh có quy mô như Datahub thường rơi vào nhóm B hoặc nhóm C; nếu là nhóm B, dự án phải có quyết định chủ trương đầu tư của cấp có thẩm quyền theo Luật Đầu tư công trước khi lập báo cáo này, và giai đoạn chuẩn bị đầu tư ở Chương 9 đã chừa bước này từ T0 − 7 đến T0 − 6 tháng.
@@ -59,6 +61,8 @@ Các bảng dưới đây liệt kê văn bản làm căn cứ lập báo cáo, 
 | CMP-LAW-16 | Luật An ninh mạng số 116/2025/QH15, ngày 10/12/2025 | 01/7/2026 | Phân loại 5 cấp độ hệ thống thông tin (Điều 8), nghĩa vụ chủ quản (Điều 10, 11), lưu trữ dữ liệu trong nước; thay Luật An toàn thông tin mạng 86/2015/QH13 và Luật An ninh mạng 24/2018/QH14 | Đã xác minh ([hethongphapluat](https://hethongphapluat.com/law-no-116-2025-qh15-dated-december-10-2025-on-cybersecurity.html)) |
 | CMP-LAW-95 | Luật Giao dịch điện tử số 20/2023/QH15 | 01/7/2024 | Luật gốc của Nghị định 194/2025/NĐ-CP về kết nối, chia sẻ dữ liệu | Chưa xác minh |
 
+: Luật
+
 #### 1.2.2. Nghị định
 
 | Mã | Văn bản | Ngày hiệu lực | Vai trò đối với dự án | Trạng thái xác minh, nguồn |
@@ -74,6 +78,8 @@ Các bảng dưới đây liệt kê văn bản làm căn cứ lập báo cáo, 
 | (kế thừa) | Nghị định 85/2016/NĐ-CP về bảo đảm an toàn hệ thống thông tin theo cấp độ | Được thay bởi Nghị định 331/2026/NĐ-CP | Chỉ dùng ở cột kế thừa, chuyển tiếp; Datahub là hệ mới nên không lập hồ sơ theo văn bản này | Theo D00-01 §7 |
 | CMP-LAW-15 | Nghị định 30/2020/NĐ-CP về công tác văn thư | Chưa xác minh | Thể thức văn bản điện tử, trình bày hồ sơ | Chưa xác minh |
 
+: Nghị định
+
 #### 1.2.3. Thông tư và tiêu chuẩn, quy chuẩn
 
 | Mã | Văn bản | Ngày hiệu lực | Vai trò đối với dự án | Trạng thái xác minh, nguồn |
@@ -86,6 +92,8 @@ Các bảng dưới đây liệt kê văn bản làm căn cứ lập báo cáo, 
 | CMP-LAW-08 | TCVN 14423:2026 về yêu cầu bảo đảm an toàn hệ thống thông tin theo cấp độ (thay TCVN 14423:2025 và TCVN 11930:2017) | 2026 | Khung yêu cầu cho Chương 7 và D03-08: chương 3 đến 7 của tiêu chuẩn tương ứng cấp độ 1 đến 5; cấp độ 3 gồm 18 nhóm yêu cầu (5.1 đến 5.18) | Đã đối chiếu nguồn thứ cấp, chưa đối chiếu Công báo |
 | (tham khảo) | QĐ 671/QĐ-BTTTT ngày 26/4/2024 hướng dẫn xác định chi phí phần mềm nội bộ | Từ ngày ký | Phương pháp điểm trường hợp sử dụng (Chương 8) | Nội dung đã xác minh; hiệu lực sau 01/7/2026 chưa xác minh vì căn cứ ban hành đã hết hiệu lực |
 
+: Thông tư và tiêu chuẩn, quy chuẩn
+
 #### 1.2.4. Quyết định, khung kiến trúc và văn bản kỹ thuật chuyên ngành
 
 | Mã | Văn bản | Vai trò đối với dự án | Trạng thái xác minh |
@@ -95,6 +103,8 @@ Các bảng dưới đây liệt kê văn bản làm căn cứ lập báo cáo, 
 | CMP-LAW-09 | Công văn 631/THH-THHT ngày 21/5/2020 hướng dẫn yêu cầu chức năng, tính năng kỹ thuật của nền tảng chia sẻ, tích hợp dùng chung cấp bộ, cấp tỉnh | Đối chiếu chức năng LGSP | Đã đối chiếu với repo |
 | (chưa có mã) | Kế hoạch chuyển đổi số 5 năm và hằng năm của tỉnh thí điểm | Điều 45 khoản 1 Nghị định 224/2026/NĐ-CP yêu cầu thuyết minh sự phù hợp | **[ĐIỀN]** số, ngày của kế hoạch |
 | (chưa có mã) | Văn bản hướng dẫn kết nối NDXP, NDOP, nền tảng thanh toán PayGov | Đặc tả kết nối của PH-14, PH-19 | Chưa xác minh văn bản hiện hành |
+
+: Quyết định, khung kiến trúc và văn bản kỹ thuật chuyên ngành
 
 #### 1.2.5. Tiêu chuẩn kỹ thuật quốc tế
 
@@ -145,6 +155,8 @@ Bảng dưới đây là công cụ để cơ quan thẩm định kiểm tra tí
 | Rủi ro và biện pháp quản lý (bổ sung) | Phục vụ thẩm định | Chương 11 |
 | Kết luận, kiến nghị | Thông lệ hồ sơ trình | Chương 13 |
 
+: Bảng ánh xạ nội dung bắt buộc với các chương của báo cáo
+
 ### 1.5. Tác động môi trường và giải phóng mặt bằng
 
 **Đánh giá tác động môi trường.** Dự án không xây dựng công trình, không thay đổi mục đích sử dụng đất và không tạo chất thải công nghiệp trong quá trình thực hiện. Thiết bị được lắp đặt trong phòng máy hiện có của Trung tâm dữ liệu tỉnh (phương án H1) hoặc không có thiết bị mới tại tỉnh (phương án H2). Tác động duy nhất đáng ghi nhận là điện năng tiêu thụ của 9 máy chủ vật lý cùng thiết bị mạng và lưu trữ đi kèm (Chương 6 mục 6.7.1), vốn nằm trong công suất thiết kế của trung tâm dữ liệu và không làm thay đổi phạm vi đánh giá môi trường của trung tâm. Vì vậy báo cáo kết luận dự án không thuộc diện phải lập báo cáo đánh giá tác động môi trường; chủ đầu tư xác nhận lại với cơ quan quản lý môi trường của tỉnh nếu có yêu cầu riêng (Q-D0101-12). Chương 12 mục 12.5 trình bày thêm về tiêu thụ điện và xử lý thiết bị cũ.
@@ -168,6 +180,8 @@ Trình tự dưới đây là tổng hợp từ Luật Đầu tư công, Nghị 
 | 9 | Kiểm thử phần mềm nội bộ, vận hành thử | Điều 10 Thông tư 41/2026/TT-BKHCN; điểm a khoản 7 Điều 65 Nghị định 224/2026/NĐ-CP | Trong từng wave, trước mỗi cổng |
 | 10 | Nghiệm thu, bàn giao, quyết toán | Nghị định 224/2026/NĐ-CP (điều khoản nghiệm thu chưa đối chiếu) | Theo cổng G0 đến G5, hoàn thành tại T0+18 |
 | 11 | Quản trị, vận hành, bảo trì sau đầu tư | Nghị định 224/2026/NĐ-CP; Thông tư 39/2026/TT-BKHCN (chi phí vận hành) | Từ G3, chính thức sau G5 |
+
+: Trình tự thủ tục đầu tư áp dụng
 
 Bước 8 đặt việc lập hồ sơ đề xuất cấp độ trong giai đoạn thực hiện chứ không trong giai đoạn chuẩn bị, vì hồ sơ cấp độ cần thiết kế chi tiết và cấu hình hạ tầng thật. Kế hoạch dự án đặt mốc nộp hồ sơ tại T0+8 và mục tiêu có quyết định phê duyệt tại T0+10, muộn nhất T0+12 (D01-02 §4.2, M-09 và M-12), trước khi đưa hệ thống vào vận hành chính thức ở cổng G3.
 
@@ -237,7 +251,7 @@ Việc khảo sát có ba giới hạn cần hội đồng lưu ý. Một là, h
 
 Sơ đồ dưới đây thể hiện các khối của hệ cũ, quan hệ giữa chúng và với các hệ thống bên ngoài, theo đúng mô tả trong hồ sơ thiết kế.
 
-```mermaid
+```{.mermaid caption="Kiến trúc tổng thể của hệ cũ"}
 flowchart TB
     subgraph NGUOIDUNG["Người dùng và hệ thống bên ngoài"]
         QT["Cán bộ quản trị, vận hành"]
@@ -319,6 +333,8 @@ Bảng dưới đây tổng hợp số chức năng theo khối và theo kết l
 | NFR | Phi chức năng, vận hành | 14 | 3 | 8 | 2 | 0 | 1 |
 | **Tổng** | | **183** | **85** | **69** | **25** | **3** | **1** |
 
+: Năm khối chức năng
+
 Năm khối nghiệp vụ chiếm 153 trên 183 mục; 30 mục còn lại là các năng lực xuyên khối. Trong 183 mục, có 85 mục được giữ nguyên hành vi, 69 mục được nâng cấp, 25 mục được thay bằng cơ chế khác do thay đổi công nghệ, và chỉ 3 mục được đề xuất loại bỏ vì lý do an toàn thông tin (người dùng tự sửa tệp pom, nhập thành phần từ tệp JAR, đăng nhập bằng tài khoản mạng xã hội). Tỷ lệ 94 mục phải nâng cấp hoặc thay thế trên 183 mục, tương đương 51%, cho thấy hơn một nửa chức năng của hệ cũ không còn đáp ứng nếu giữ nguyên trạng.
 
 #### 2.2.4. Công nghệ và phiên bản
@@ -340,6 +356,8 @@ Bảng sau liệt kê các công nghệ nền của hệ cũ theo đúng những
 | Định danh | Keycloak, không ghi phiên bản; đường dẫn lấy token có tiền tố `/auth/realms` | Hướng dẫn lấy token | Tiền tố `/auth` là đặc trưng của bản Keycloak chạy trên WildFly (bản 16 trở về trước), đã kết thúc hỗ trợ từ năm 2022 |
 | Quản lý log, số liệu | Graylog, Metricbeat, Tracer, Jolokia | Thiết kế tổng thể; thiết kế chi tiết | Không ghi phiên bản; mô hình thu số liệu qua JMX không còn là hướng phát triển của Camel |
 | Đăng nhập màn quản trị Bus | SAML của midPoint | Thiết kế tổng thể | Tồn tại song song với Keycloak, tạo hai cơ chế đăng nhập |
+
+: Công nghệ và phiên bản
 
 Điểm đáng chú ý nhất của bảng là ba thành phần (Angular 7, CentOS 6, Zuul) đã hết vòng đời ngay tại thời điểm hệ cũ được đưa vào sử dụng năm 2021, và tới năm 2026 thì không còn thành phần nền nào trong danh sách còn được nhà phát hành hỗ trợ ở phiên bản ghi trong hồ sơ. Ngoài ra, hồ sơ có hai điểm không nhất quán: hướng dẫn cài đặt ghi Tomcat 8.5.31 trong khi hướng dẫn vận hành ghi Tomcat 9.0.46, và phân tích yêu cầu ghi máy chủ tối thiểu 8 GB bộ nhớ với cổng mạng 10 Gbps trong khi hướng dẫn cài đặt ghi 32 GB với cổng mạng 1 Gbps. Sự thiếu nhất quán này tự nó là một rủi ro vận hành, vì đội tiếp nhận không thể dựa vào hồ sơ để dựng lại hệ thống.
 
@@ -401,6 +419,8 @@ Từ khi hệ cũ được thiết kế năm 2021, khung pháp lý và tổ ch�
 | Chức năng, tính năng kỹ thuật của LGSP | CMP-LAW-09 | Có trục tích hợp, quản lý API, nhắn tin; thiếu giám sát tập trung, cổng nhà phát triển, quản lý quy trình | Đáp ứng một phần |
 | An toàn hệ thống thông tin cấp độ 3 | CMP-LAW-06, CMP-LAW-07, CMP-LAW-08 | Xem mục 2.3.3 | Không đủ điều kiện kỹ thuật để lập hồ sơ cấp độ 3 |
 
+: Khả năng đáp ứng yêu cầu mới
+
 Riêng về thanh toán, cơ sở dữ liệu của khối Payment lưu số tiền bằng kiểu số nguyên giới hạn ở khoảng 2,1 tỷ đồng (xem D00-01 §5, kiểu `T-MONEY`). Một giao dịch nộp thuế, phí hoặc tiền sử dụng đất vượt ngưỡng này sẽ không lưu được đúng giá trị. Kết hợp với việc không có đối soát, tỉnh hiện không có công cụ để phát hiện chênh lệch giữa số tiền người dân đã nộp và số tiền hệ thống nghiệp vụ ghi nhận.
 
 Về multi-tenant, khoảng trống mang tính kiến trúc. Không bảng dữ liệu nào của hệ cũ có trường xác định tỉnh sở hữu, không khối nào có khái niệm cấu hình theo tỉnh, và mỗi lần triển khai cho một tỉnh là một lần cài đặt thủ công theo quy trình ở mục 2.2.5. Một tỉnh mới hình thành từ ba tỉnh cũ, nếu cả ba đều đang dùng hệ cũ, sẽ có ba bản cài không thể gộp lại bằng cấu hình.
@@ -439,6 +459,8 @@ Từ các đánh giá trên, báo cáo tổng hợp 14 điểm nghẽn. Mỗi đ
 | ĐN-12 | Thanh toán thiếu đối soát, hoàn tiền; giới hạn số tiền | Chỉ PayGov; kiểu số nguyên 10 chữ số; không mô tả bảo mật bản tin trả kết quả | Yêu cầu mới | Cao | PH-19 |
 | ĐN-13 | Không hỗ trợ nhiều tỉnh; ba mô hình định danh HTTT rời nhau | Không có trường tỉnh trong dữ liệu; application, publisher, partner khai báo riêng | Yêu cầu mới, mở rộng | Cao | PH-01, PH-20 |
 | ĐN-14 | Phụ thuộc nhà cung cấp, hồ sơ không đủ để tự vận hành | Thư viện và tiêu chuẩn nội bộ; hướng dẫn vận hành dẫn chiếu tài liệu không được bàn giao; hỗ trợ 2 tháng (LGC-NFR-011) | Phụ thuộc, chi phí | Trung bình | Toàn bộ; D06-02, D06-03, D06-04 |
+
+: Bảng tổng hợp điểm nghẽn
 
 Trong 14 điểm nghẽn, 12 điểm ở mức Cao. Sáu điểm (ĐN-01, ĐN-02, ĐN-05, ĐN-09, ĐN-13 và một phần ĐN-07) có nguyên nhân từ kiến trúc, tức là không thể khắc phục bằng cách bổ sung chức năng hay vá lỗi trên nền hiện có. Nhận định này là cơ sở để Chương phân tích phương án đánh giá phương án PA1 (nâng cấp hệ cũ) so với PA2 và PA3.
 
@@ -564,6 +586,8 @@ Bảng sau tổng hợp 9 mục tiêu nghiệp vụ và 18 chỉ số đo. Cột
 | BO-09 | Người vận hành dùng một giao diện thống nhất | KPI-17 | Số giao diện quản trị riêng biệt phải dùng | 5 | 1 | Từ nghiệm thu | ĐN-13 |
 | | | KPI-18 | Điểm hài lòng của người dùng nội bộ theo thang SUS | Chưa đo | ≥ 75 | Sau kiểm thử chấp nhận | |
 
+: Bảng mục tiêu và chỉ số
+
 Định nghĩa chính thức của toàn bộ BO và KPI trong bảng tại D02-01.
 
 Ba chỉ số cần được hội đồng lưu ý vì chúng mang ý nghĩa quyết định đối với hiệu quả đầu tư. KPI-03 thể hiện bước thay đổi về chất lượng dịch vụ: mức 90% mỗi năm của hệ cũ cho phép ngừng tới 36,5 ngày, còn mức 99,9% mỗi tháng chỉ cho phép ngừng khoảng 43 phút trong một tháng, tương đương khoảng 8,8 giờ trong một năm. Chỉ tiêu này được đặc tả kỹ thuật tại NFR-00-010 của D02-02 và được kiểm chứng bằng kiểm tra tổng hợp mỗi phút. KPI-05 và KPI-06 là cơ sở định lượng cho lợi ích giảm chi phí tích hợp ở Chương 10, vì thời gian kết nạp và thời gian dựng luồng quyết định trực tiếp số ngày công mà tỉnh và các nhà thầu của sở phải bỏ ra. KPI-12 là chỉ số chứng minh tính sản phẩm của Datahub: nếu khởi tạo một tỉnh mới mất không quá một ngày làm việc thì chi phí nhân rộng cho tỉnh thứ hai trở đi chủ yếu còn là hạ tầng, di trú và đào tạo, như phân tích ở mục 10.2.5.
@@ -572,7 +596,7 @@ Ba chỉ số cần được hội đồng lưu ý vì chúng mang ý nghĩa quy
 
 Sơ đồ sau thể hiện chuỗi lập luận từ điểm nghẽn ở Chương 2, qua mục tiêu nghiệp vụ, tới nhóm phân hệ chịu trách nhiệm hiện thực. Mục đích của sơ đồ là để hội đồng kiểm tra rằng không có mục tiêu nào thiếu phân hệ hiện thực và không có phân hệ nào được đầu tư mà không phục vụ một mục tiêu.
 
-```mermaid
+```{.mermaid caption="Quan hệ giữa điểm nghẽn, mục tiêu và phân hệ"}
 flowchart LR
     subgraph DN["Điểm nghẽn, Chương 2"]
         D1["ĐN-01 đến ĐN-06<br/>vòng đời, mở rộng, ATTT"]
@@ -643,6 +667,8 @@ Việc phân đợt theo nguyên tắc: đợt đầu (MVP) phải đủ để t
 | Đợt 2 | PH-19, PH-15, PH-09, PH-11 | 4 | Thay khối Payment; bổ sung cổng nhà phát triển, bảo vệ dữ liệu cá nhân, điều phối quy trình | G4, T0+15 |
 | Đợt 3 | PH-06, PH-08, PH-16, PH-17 | 4 | Bổ sung dữ liệu chủ, chất lượng dữ liệu, báo cáo chỉ tiêu, trợ lý AI | G5, T0+18 |
 
+: Quy mô chức năng
+
 Trong MVP, yêu cầu tối thiểu về che dữ liệu cá nhân trong nhật ký và kiểm soát truy cập theo vai trò vẫn được hiện thực ở PH-03, PH-12 và PH-13, để tỉnh không phải chờ PH-09 ở đợt 2 mới đáp ứng các yêu cầu cơ bản về bảo vệ dữ liệu cá nhân. Khối Payment của hệ cũ tiếp tục chạy song song cho tới khi PH-19 vận hành ổn định 30 ngày.
 
 Về khối lượng kế thừa, Datahub phải bảo toàn 179 chức năng của hệ cũ (85 giữ nguyên hành vi, 69 nâng cấp, 25 thay bằng cơ chế khác), loại bỏ 3 chức năng vì lý do an toàn thông tin theo chấp thuận của chủ đầu tư, và xử lý riêng 1 mục phi chức năng, theo kiểm kê tại D00-03 §5. Đây là phần "giữ nguyên giá trị đã đầu tư"; phần còn lại của quy mô chức năng là năng lực mới.
@@ -662,6 +688,8 @@ Nền tảng được thiết kế theo ba cỡ tham chiếu, để một bản 
 | Giao dịch thanh toán mỗi tháng | 100 nghìn | 400 nghìn | 1,2 triệu |
 | Sẵn sàng tầng xử lý dữ liệu | 99,9% | 99,9% | 99,95% |
 | RPO / RTO | 15 phút / 1 giờ data plane, 4 giờ control plane | 15 phút / 1 giờ data plane, 4 giờ control plane | 5 phút / 1 giờ data plane, 2 giờ control plane |
+
+: Quy mô phục vụ
 
 Tỉnh thí điểm được giả định ở cỡ M. Giả định này chưa dựa trên số liệu vận hành thực của hệ cũ, vì hồ sơ hệ cũ không có số liệu giao dịch. Nếu số liệu thực tế do chủ đầu tư cung cấp cho thấy tỉnh thuộc cỡ S hoặc cỡ L, phần chi phí hạ tầng ở Chương 8 sẽ thay đổi theo bảng cấu hình tương ứng, còn phần phần mềm không thay đổi vì cùng một bản sản phẩm phục vụ cả ba cỡ. Cách thiết kế theo cỡ cũng giải quyết trực tiếp tình trạng của hệ cũ, nơi cam kết hiệu năng chỉ là 10 người dùng đồng thời với 1.000 bản ghi.
 
@@ -686,6 +714,8 @@ Datahub được thiết kế là sản phẩm đa tenant: mỗi tỉnh là mộ
 | Bên ràng buộc, cùng hưởng lợi | SH-06 Cơ quan quản lý NDXP và các cơ sở dữ liệu quốc gia; SH-07 Cơ quan chuyên trách an toàn thông tin; SH-09 Cổng thanh toán và đơn vị cung cấp dịch vụ thanh toán | Tỉnh kết nối đúng chuẩn, có nhật ký, có hồ sơ cấp độ, đối soát khớp |
 | Hưởng lợi gián tiếp | SH-10 Người dân và doanh nghiệp | Không phải nộp lại giấy tờ cơ quan nhà nước đã có, dịch vụ công ít gián đoạn, dữ liệu cá nhân được bảo vệ, thanh toán minh bạch |
 | Bên cung cấp, chuyển giao | SH-11 Đơn vị cung cấp sản phẩm Datahub; SH-12 Đơn vị vận hành hệ LGSP cũ | Sản phẩm nhân rộng được; chuyển giao an toàn, không mất dữ liệu |
+
+: Đối tượng hưởng lợi
 
 Ngoài tỉnh thí điểm, các tỉnh khác cũng là đối tượng hưởng lợi tiềm năng, vì sản phẩm được thiết kế để triển khai lại với chi phí biên thấp. Lợi ích này không được tính vào hiệu quả của dự án ở mức cam kết, mà chỉ được trình bày như một kịch bản tại mục 10.2.5.
 
@@ -720,6 +750,8 @@ Các nội dung sau không thuộc dự án. Việc xác định rõ phạm vi n
 | Chỉnh sửa phía các HTTT của sở để chuyển sang kết nối qua Datahub | Thuộc trách nhiệm của chủ quản từng HTTT | Datahub cung cấp đặc tả, môi trường thử và giữ tương thích với giao diện cũ trong thời gian chuyển đổi |
 | Ba chức năng hệ cũ được loại bỏ (LGC-TOOL-022, LGC-TOOL-027, LGC-IAM-007) | Rủi ro an toàn thông tin, theo D00-03 §5.1; chủ đầu tư đã chấp thuận | Ghi vào biên bản nghiệm thu |
 | Triển khai cho tỉnh thứ ba trở đi | Thuộc dự án hoặc hợp đồng dịch vụ riêng | Sản phẩm v1.0 và quy trình khởi tạo tenant sẵn sàng để dùng lại |
+
+: Phạm vi ngoài dự án
 
 Nội dung "chỉnh sửa phía các HTTT của sở" cần được chủ đầu tư lưu ý đặc biệt. Nếu các sở không bố trí kinh phí và nhà thầu để chuyển kết nối, chỉ số KPI-01 và KPI-02 khó đạt dù nền tảng đã sẵn sàng. Báo cáo đề xuất UBND tỉnh giao nhiệm vụ này cho các sở bằng một văn bản chỉ đạo song song với quyết định đầu tư; rủi ro tương ứng được theo dõi trong sổ rủi ro tại D01-02.
 
@@ -804,6 +836,8 @@ Mười tiêu chí dưới đây được chọn từ ba nguồn: mục tiêu ng
 | TC-10 | Nhân lực | 5 | Có đủ nhân lực trong nước để phát triển và vận hành? | RSK-A01 |
 | | **Tổng** | **100** | | |
 
+: Tiêu chí và trọng số đánh giá
+
 Ba tiêu chí đầu chiếm 39% trọng số vì chúng là điều kiện cần: một phương án không đáp ứng chức năng, không tuân thủ hoặc không đạt cấp độ an toàn thông tin thì dù rẻ cũng không dùng được. Chi phí vòng đời nhận 12% chứ không cao hơn, vì Chương 8 sẽ cho thấy chênh lệch chi phí giữa các phương án nằm chủ yếu ở bản quyền định kỳ và ở chi phí nhân rộng, tức là đã được phản ánh một phần qua TC-6, TC-7 và TC-9. Thời gian đưa vào sử dụng có trọng số vừa phải (7%) vì hệ cũ vẫn chạy song song trong suốt quá trình chuyển đổi, nên chậm hơn vài tháng không làm gián đoạn dịch vụ công.
 
 ### 4.4. Bảng điểm và giải thích
@@ -823,6 +857,8 @@ Bảng dưới đây trình bày điểm từng phương án trên từng tiêu 
 | TC-9 Khóa nhà cung cấp | 7 | 2 | 1 | 1 | 5 |
 | TC-10 Nhân lực | 5 | 3 | 4 | 2 | 3 |
 | **Điểm tổng (thang 100)** | **100** | **44,2** | **61,4** | **46,0** | **85,0** |
+
+: Bảng điểm và giải thích
 
 **TC-1 Đáp ứng chức năng.** PA3 đạt 5 vì phạm vi 20 phân hệ được thiết kế đúng theo yêu cầu (D02-01, D02-02). PA2b đạt 4 vì sản phẩm quốc tế mạnh về tích hợp, quản lý API và giám sát, nhưng thiếu phần nghiệp vụ Việt Nam. PA2a đạt 3 vì sản phẩm trong nước mạnh về kết nối quốc gia nhưng thường thiếu dữ liệu chủ, chất lượng dữ liệu, bảo vệ dữ liệu cá nhân và đa tenant. PA1 đạt 2 vì hệ cũ thiếu toàn bộ lớp dữ liệu dùng chung và đối soát thanh toán (ĐN-09, ĐN-12), phần bổ sung phải xây trên nền kiến trúc cũ.
 
@@ -846,7 +882,7 @@ Bảng dưới đây trình bày điểm từng phương án trên từng tiêu 
 
 Biểu đồ dưới đây tóm tắt logic sàng lọc phía sau bảng điểm: các phương án lần lượt được kiểm tra qua bốn câu hỏi có tính quyết định, và chỉ PA3 vượt qua cả bốn.
 
-```mermaid
+```{.mermaid caption="Bảng điểm và giải thích"}
 flowchart TD
     Q1{"Đáp ứng đủ 20 phân hệ<br/>và lớp dữ liệu dùng chung?"}
     Q2{"Làm chủ mã nguồn,<br/>không khóa nhà cung cấp?"}
@@ -878,6 +914,8 @@ Sơ đồ đơn giản hóa bảng điểm thành các câu hỏi có hoặc kh�
 | Ưu tiên nhanh và ít rủi ro | 49,0 | 66,8 | 47,2 | 78,0 | 11,2 |
 | Ưu tiên chi phí | 47,2 | 62,6 | 42,6 | 82,8 | 20,2 |
 
+: Kiểm tra độ nhạy và kết luận
+
 PA3 giữ vị trí thứ nhất ở cả ba bộ trọng số. Khoảng cách thu hẹp nhất ở bộ "ưu tiên nhanh và ít rủi ro" (11,2 điểm), đúng như dự đoán vì đó là hai tiêu chí PA2a mạnh nhất. Để PA2a vượt PA3, người đánh giá phải đồng thời giảm mạnh trọng số làm chủ mã nguồn, nhân rộng và khóa nhà cung cấp, tức là từ bỏ mục tiêu sản phẩm dùng chung cho nhiều tỉnh (BO-06), một mục tiêu cốt lõi của dự án.
 
 **Kết luận.** Báo cáo đề xuất chọn **PA3: xây mới Datahub trên nền mã nguồn mở theo mô hình sản phẩm đa tenant, di trú theo chiến lược thay thế dần**. Hai nhược điểm của PA3 được xử lý trong thiết kế dự án như sau. Nhược điểm thời gian được giảm bằng cách phát hành MVP 12 phân hệ trước, thay thế ngay các khối Bus, Hub, API Management, danh mục dùng chung và kết nối quốc gia, trong khi hệ cũ vẫn phục vụ phần chưa chuyển. Nhược điểm rủi ro xây dựng được giảm bằng các cổng nghiệm thu G0 đến G5, bằng việc dùng thành phần mã nguồn mở trưởng thành cho mọi phần lõi, và bằng sổ rủi ro tại D01-02 (dẫn chiếu RSK-A01 đến RSK-A05 của D03-01).
@@ -907,6 +945,8 @@ Bảng dưới đây so sánh ba phương án hạ tầng trên các tiêu chí 
 | Hồ sơ cấp độ ATTT | Tỉnh lập cho toàn bộ hệ thống | Phân định trách nhiệm với nhà cung cấp cloud | Đơn vị cung cấp lập, tỉnh xác nhận phần của mình |
 | Phù hợp với tỉnh thí điểm | Phù hợp nếu TTDL tỉnh đủ điều kiện | Phù hợp, đặc biệt cho DR và môi trường phụ | Chưa khả thi trong dự án này vì chưa có nền tảng dùng chung vận hành |
 
+: So sánh
+
 #### 4.6.3. Khuyến nghị
 
 Báo cáo khuyến nghị một tổ hợp phương án thay vì một phương án thuần, vì mỗi môi trường có yêu cầu khác nhau về vị trí dữ liệu, thời điểm cần có và vòng đời.
@@ -918,7 +958,7 @@ Báo cáo khuyến nghị một tổ hợp phương án thay vì một phương 
 
 Trường hợp trung tâm dữ liệu tỉnh không đủ điều kiện, toàn bộ PROD, STAGING và DR chuyển sang H2 mà không phải thay đổi phần mềm; Chương 6 có bảng quy đổi sang tài nguyên cloud.
 
-```mermaid
+```{.mermaid caption="Khuyến nghị"}
 flowchart TD
     A{"TTDL tỉnh đủ điều kiện<br/>không gian, điện, ATTT cấp độ 3?"}
     B{"Tỉnh có site thứ hai<br/>cách xa site chính?"}
@@ -952,13 +992,15 @@ Datahub là sản phẩm phục vụ nhiều tỉnh, và mỗi tỉnh là một 
 | Schema hoặc CSDL riêng | Mỗi tenant một schema hoặc một cụm CSDL riêng; các tầng khác dùng chung | Cách ly dữ liệu mạnh hơn | Số đối tượng bùng nổ (20 phân hệ nhân 34 tỉnh); vận hành nhiều cụm CSDL |
 | Cụm riêng | Mỗi tỉnh một cụm Kubernetes đầy đủ | Cách ly vật lý hoàn toàn; tỉnh tự vận hành | Chi phí hạ tầng và vận hành cao nhất cho mỗi tỉnh |
 
+: Mô hình tenant
+
 D03-10 và ADR-003 đã chốt mô hình kết hợp, và chương này khuyến nghị giữ nguyên quyết định đó. Mã nguồn luôn chạy ở chế độ đa tenant với RLS bắt buộc trên mọi bảng nghiệp vụ, còn hồ sơ triển khai chọn một trong ba chế độ cách ly của D03-10: `SHARED` (mặc định trên nền tảng dùng chung), `DEDICATED_DB` (cụm PostgreSQL riêng cho tỉnh có yêu cầu riêng hoặc chuẩn bị lên cấp độ 4) và `DEDICATED_CLUSTER` (cụm Kubernetes riêng cho tỉnh tự vận hành tại chỗ). Điểm quan trọng là cả ba chế độ dùng chung một bộ mã, nên tỉnh có thể chuyển chế độ khi điều kiện thay đổi mà không phải chờ một phiên bản phần mềm khác.
 
 Áp vào phương án hạ tầng đã khuyến nghị, **tỉnh thí điểm chạy ở chế độ `DEDICATED_CLUSTER`**: cụm PROD tại trung tâm dữ liệu tỉnh chứa tenant của tỉnh thí điểm (và tenant `PLATFORM` để quản trị). RLS vẫn bật đầy đủ như ở nền tảng dùng chung; việc này có hai tác dụng. Thứ nhất, nó là lớp phòng thủ chiều sâu, vì lỗi cấu hình ở tầng ứng dụng vẫn không làm lộ dữ liệu. Thứ hai, nó bảo đảm cụm của tỉnh có thể tiếp nhận thêm tenant sau sắp xếp đơn vị hành chính (sáp nhập theo D03-10 §5.4) hoặc chuyển sang nền tảng dùng chung mà không cần di trú dữ liệu.
 
 Tỉnh thứ hai (nhân rộng ở W5) có thể được triển khai theo một trong hai cách: một cụm riêng theo cỡ quy mô của tỉnh đó (Chương 6 có cấu hình S, M, L), hoặc một tenant `SHARED` trên cụm của tỉnh thí điểm nếu hai tỉnh thỏa thuận dùng chung và hạ tầng được mở rộng tương ứng. Lựa chọn này phụ thuộc thỏa thuận giữa hai tỉnh và được ghi thành câu hỏi mở Q-D0101-43.
 
-```mermaid
+```{.mermaid caption="Mô hình tenant"}
 flowchart LR
     CODE["Một bộ mã nguồn Datahub<br/>RLS bắt buộc mọi bảng"]
     SH["SHARED<br/>nền tảng dùng chung<br/>nhiều tỉnh cỡ nhỏ"]
@@ -992,7 +1034,7 @@ Báo cáo chọn **thay thế dần** vì bốn lý do gắn với đặc điể
 
 Chi phí của lựa chọn này là thời gian vận hành song song (tối đa đến G5 theo bộ giả định nền) và khối lượng xây dựng lớp định tuyến, công cụ đối soát. Cả hai đã được tính trong kế hoạch: lớp định tuyến chính là cổng API APISIX (PH-03) sẵn có trong MVP, còn công cụ di trú và đối soát thuộc PH-18. Cơ chế kỹ thuật chi tiết của chiến lược thay thế dần được trình bày ở mục 5.9.
 
-```mermaid
+```{.mermaid caption="Lựa chọn"}
 flowchart LR
     subgraph BB["Chuyển đổi một lần"]
         B1["Xây xong toàn bộ"] --> B2["Dừng hệ cũ<br/>một thời điểm"] --> B3["Mọi HTTT đổi kết nối"] --> B4{"Sự cố?"}
@@ -1044,6 +1086,8 @@ Khoản 2 Điều 46 Nghị định 224/2026/NĐ-CP liệt kê nội dung bắt 
 | e) Khối lượng sơ bộ đào tạo, tập huấn | Mục 6.12 |
 | g) Yêu cầu bảo đảm an ninh mạng | Mục 5.10, Chương 7 |
 
+: Phạm vi thiết kế cơ sở và cách đọc
+
 Thiết kế cơ sở ở đây là bản tóm lược có định lượng của bộ tài liệu thiết kế đã có trong dự án: thiết kế kiến trúc tổng thể D03-01, đặc tả yêu cầu cấp hệ thống D02-02, thiết kế đa tenant D03-10 và sổ quyết định kiến trúc D00-02. Khi có khác biệt, các tài liệu đó là nguồn chi tiết; chương này không đặt quyết định mới trái với chúng. Các thông số chủ yếu, chức năng và tính năng chính được nêu đủ để xác định tổng mức đầu tư như điểm c và d khoản 1 Điều 46 yêu cầu; chi tiết thiết kế từng phân hệ thuộc bước thiết kế chi tiết (D03-02 đến D03-04).
 
 ### 5.2. Mô tả yêu cầu
@@ -1067,6 +1111,8 @@ Hai mươi phân hệ được nhóm thành sáu nhóm chức năng. Bảng dư�
 | Định danh, giám sát, vận hành | PH-12 Định danh và phân quyền, PH-13 Giám sát và kiểm toán, PH-18 Vận hành và xử lý lỗi | Người dùng, vai trò, chính sách, MFA; bảng điều khiển, cảnh báo, truy vết, nhật ký kiểm toán WORM; hàng đợi lỗi, xử lý lại, tham số, công cụ di trú | Keycloak, Graylog của hệ cũ |
 | Quản trị sản phẩm | PH-16 Báo cáo chỉ tiêu, PH-17 Trợ lý AI, PH-20 Quản trị tenant | KPI chuyển đổi số về chia sẻ dữ liệu; tìm dịch vụ, gợi ý ánh xạ, giải thích sự cố; khởi tạo tỉnh, hạn mức, sáp nhập | Mới |
 
+: Yêu cầu chức năng theo nhóm phân hệ
+
 Hệ cũ có 183 chức năng đã được kiểm kê thành các mục `LGC` tại D00-03, mỗi mục được ánh xạ tới phân hệ và yêu cầu chức năng của Datahub với kết luận giữ nguyên, nâng cấp, thay thế hoặc loại bỏ. Nhờ ánh xạ này, yêu cầu "không mất chức năng đang dùng" được kiểm chứng bằng số liệu: tiêu chí bàn giao là 100% mục có kết luận và có bằng chứng kiểm thử.
 
 #### 5.2.3. Yêu cầu phi chức năng
@@ -1077,7 +1123,7 @@ Yêu cầu phi chức năng cấp hệ thống được định nghĩa chính th
 
 Mô hình tổng thể thể hiện Datahub trong môi trường của nó: các tác nhân bên ngoài, các lớp bên trong và các luồng chính. Sơ đồ dưới đây được vẽ theo lớp, từ trên xuống: người dùng và hệ thống bên ngoài, lớp biên, data plane, control plane, lớp dịch vụ dùng chung, lớp nền tảng.
 
-```mermaid
+```{.mermaid caption="Mô hình tổng thể"}
 flowchart TB
     subgraph EXT["Bên ngoài tỉnh"]
         NDXP["NDXP<br/>trục quốc gia"]
@@ -1177,6 +1223,8 @@ Hai mươi phân hệ không được triển khai thành hai mươi dịch vụ
 | `dh-assist` | PH-17 | Control | Spring Boot 4, pgvector | Tùy chọn bật tắt theo tỉnh |
 | `dh-console`, `dh-portal` | Giao diện mọi phân hệ, PH-15 | Control | React 19, Ant Design 6, Liquid Glass | Tệp tĩnh, tải thấp |
 
+: Đơn vị triển khai
+
 Bảng cho thấy chỉ ba đơn vị (`apisix`, `dh-runtime`, `kafka`) quyết định quy mô hạ tầng theo lưu lượng; các DU control plane có tải gần như cố định theo số người dùng quản trị. Đó là lý do bảng cấu hình ở Chương 6 tách nhóm máy "worker tích hợp" và "worker biên" khỏi nhóm "worker ứng dụng".
 
 #### 5.4.3. Đường đi của một lượt gọi
@@ -1211,6 +1259,8 @@ Bảng dưới đây liệt kê công nghệ đã chốt theo tầng, giấy ph�
 | Triển khai | Kubernetes, Argo CD, Kustomize, Helm, Harbor, Trivy, KEDA | K8s ≥ 1.31 | Apache 2.0 | ADR-009 |
 | Quan sát | OpenTelemetry, Prometheus hoặc Mimir, Loki, Tempo, Grafana | — | Apache 2.0; AGPLv3 (Grafana, Loki, Tempo, Mimir) | ADR-011 |
 | Lưu trữ nhật ký, thống kê | OpenSearch (tìm kiếm nhật ký); ClickHouse (thống kê lưu lượng, đề xuất) | OpenSearch 2.x | Apache 2.0 | Quyết định ở SDD PH-02, PH-13 |
+
+: Bảng công nghệ chốt
 
 Bảng có ba điểm hội đồng thẩm định nên lưu ý. Điểm thứ nhất là các thành phần giấy phép AGPLv3 (Garage, Grafana, Loki, Tempo, Mimir): Datahub dùng chúng nguyên bản như dịch vụ độc lập qua giao thức chuẩn, không sửa mã nguồn và không nhúng vào sản phẩm, nên nghĩa vụ công bố mã nguồn của AGPL không phát sinh; nếu sau này cần sửa mã các thành phần này thì phần sửa phải được công bố, và việc này phải được ghi thành ADR. Điểm thứ hai là Vault từ năm 2023 chuyển sang giấy phép BUSL 1.1, không phải giấy phép mã nguồn mở theo định nghĩa của tổ chức mã nguồn mở, vì vậy ADR-012 ưu tiên OpenBao là nhánh mã nguồn mở tương thích. Điểm thứ ba là Garage chưa hỗ trợ đầy đủ khóa đối tượng (object lock) theo chuẩn S3, nên ADR-008 quy định dùng Ceph RGW với Object Lock cho bằng chứng kiểm toán cần lưu bất biến, và cùng hệ Ceph RGW đó giữ bản sao lưu bất biến ở bucket riêng (ADR-035); Chương 6 tính dung lượng cho cả hai kho.
 
@@ -1260,6 +1310,8 @@ Thiết kế cơ sở phải tuân thủ tiêu chuẩn, quy chuẩn và quy đ�
 | Đặc tả, kiểm thử | ISO/IEC/IEEE 29148; ISO/IEC/IEEE 29119-3 | Bộ tài liệu yêu cầu và kiểm thử |
 | Container, triển khai | Đặc tả ảnh OCI; Kubernetes API; SBOM định dạng SPDX hoặc CycloneDX | Đóng gói, triển khai, chuỗi cung ứng |
 
+: Danh mục tiêu chuẩn, quy chuẩn kỹ thuật áp dụng
+
 Danh mục này có hai lớp. Lớp thứ nhất là tiêu chuẩn bắt buộc theo văn bản nhà nước (kết nối CSDL quốc gia, yêu cầu LGSP, an toàn hệ thống theo cấp độ); Datahub phải chứng minh tuân thủ bằng bằng chứng kiểm thử tại D00-03. Lớp thứ hai là tiêu chuẩn kỹ thuật quốc tế được chọn để bảo đảm khả năng tương tác và không khóa nhà cung cấp; chúng là ràng buộc thiết kế được kiểm tra trong cổng CI (ví dụ hợp đồng OpenAPI phải hợp lệ trước khi mã được hợp nhất).
 
 ### 5.7. Sự phù hợp với khung kiến trúc
@@ -1278,6 +1330,8 @@ Bảng dưới đây ánh xạ các thành phần Datahub vào các lớp và n�
 | Quản trị, giám sát | PH-13, PH-16, PH-18 | Giám sát xuyên suốt, chỉ số chia sẻ dữ liệu |
 | Hạ tầng (TTDL tỉnh, cloud chính phủ, mạng truyền số liệu chuyên dùng) | Chương 6 | Kubernetes chuẩn, chạy trên H1 hoặc H2 |
 
+: Sự phù hợp với khung kiến trúc
+
 Hai nguyên tắc của khung kiến trúc được Datahub thực hiện bằng cơ chế kỹ thuật kiểm chứng được. Nguyên tắc chia sẻ dữ liệu qua nền tảng thay vì kết nối điểm tới điểm được thực hiện bằng việc mọi dịch vụ chỉ được khai thác qua cổng API với đăng ký sử dụng và nhật ký; KPI-01 đo tỷ lệ HTTT kết nối qua Datahub. Nguyên tắc dùng chuẩn mở, tái sử dụng được thực hiện bằng hợp đồng OpenAPI, AsyncAPI cho mọi dịch vụ và bằng mô hình sản phẩm dùng chung nhiều tỉnh.
 
 ### 5.8. Giải pháp kết nối, liên thông và chia sẻ dữ liệu
@@ -1294,6 +1348,8 @@ Datahub kết nối với năm nhóm hệ thống bên ngoài tỉnh. Bảng dư
 | VNeID | Định danh, xác thực người dùng là công dân hoặc cán bộ | OIDC | Liên kết danh tính trong Keycloak | PH-12 |
 | PayGov và kênh thanh toán | Tạo giao dịch, nhận kết quả, đối soát, hoàn tiền | REST, webhook có chữ ký, tệp đối soát SFTP hoặc S3 | HMAC hoặc chữ ký số, chống phát lại | PH-19 |
 
+: Kết nối với các nền tảng quốc gia
+
 #### 5.8.2. Kết nối với hệ thống thông tin của tỉnh
 
 Các HTTT của sở, ngành, cấp xã kết nối với Datahub theo bốn kiểu, chọn theo khả năng của từng hệ thống. Kiểu thứ nhất là gọi và cung cấp API REST qua cổng API, áp dụng cho hệ có khả năng tích hợp hiện đại. Kiểu thứ hai là phát và nhận sự kiện qua Kafka hoặc qua webhook đẩy có chữ ký HMAC-SHA256, áp dụng khi cần thông báo thay đổi mà không phụ thuộc trực tiếp. Kiểu thứ ba là bộ điều hợp PH-05 cho hệ chưa có API chuẩn (SOAP, tệp, đọc thay đổi CSDL bằng CDC), giúp tỉnh không phải sửa ngay các hệ cũ. Kiểu thứ tư, chỉ trong giai đoạn chuyển đổi, là giữ nguyên địa chỉ và giao diện của hệ LGSP cũ cho HTTT chưa chuyển, với cổng API làm lớp tương thích (mục 5.14). Quy trình kết nạp một HTTT mới do PH-01 điều phối, mục tiêu không quá 5 ngày làm việc từ khi nộp hồ sơ tới khi gọi được API ở môi trường thật (KPI-05).
@@ -1309,6 +1365,8 @@ Các HTTT của sở, ngành, cấp xã kết nối với Datahub theo bốn ki�
 | CSDL danh mục dịch vụ chia sẻ (PH-02) | API và dịch vụ dữ liệu được công bố, điều kiện sử dụng | HTTT của tỉnh, nhà phát triển; hệ thống quản lý dịch vụ chia sẻ dữ liệu cấp quốc gia nếu có yêu cầu đồng bộ | Cổng nhà phát triển, API danh mục | OpenAPI 3.1 |
 | CSDL giao dịch thanh toán (PH-19) | Giao dịch, đối soát, hoàn tiền | Cổng dịch vụ công, cơ quan tài chính của tỉnh | API, tệp đối soát, sự kiện | Định dạng của kênh thanh toán |
 | Nhật ký khai thác dữ liệu (PH-13) | Siêu dữ liệu từng lượt khai thác: chủ thể, dữ liệu, mục đích, thời điểm | Cơ quan thanh tra, kiểm tra; chủ thể dữ liệu theo quy định bảo vệ dữ liệu cá nhân | Báo cáo, API chỉ-đọc có kiểm toán | Định dạng nhật ký thống nhất D03-04 |
+
+: Hạng mục kết nối, chia sẻ cơ sở dữ liệu
 
 Mỗi cơ sở dữ liệu trên có chủ sở hữu dữ liệu là cơ quan được tỉnh giao (dự kiến là đơn vị chủ trì quản lý dữ liệu của tỉnh), có phân loại dữ liệu ở mức trường (công khai, nội bộ, hạn chế, nhạy cảm theo D03-01 §8.2) và có chính sách khai thác gắn với mục đích (PH-09). Đây là điều kiện để việc chia sẻ đáp ứng Luật Dữ liệu (CMP-LAW-01) và quy định bảo vệ dữ liệu cá nhân (CMP-LAW-04, CMP-LAW-05).
 
@@ -1358,6 +1416,8 @@ Bảng dưới đây trình bày chỉ tiêu phi chức năng quan trọng nhấ
 | Siêu dữ liệu lượt gọi truy vấn được | 12 tháng | 12 tháng | 12 tháng | NFR-00-062 |
 | Mở rộng tuyến tính | Gấp đôi tài nguyên data plane cho ≥ 1,8 lần thông lượng | như S | như S | NFR-00-061 |
 
+: Yêu cầu phi chức năng chính theo cỡ quy mô
+
 Bảng dùng RTO 1 giờ cho data plane và 4 giờ cho control plane theo D02-02 (NFR-00-014) và D03-01 §10. Thời hạn lưu nhật ký chia ba loại: nhật ký vận hành 90 ngày (NFR-00-028); nhật ký kiểm toán và siêu dữ liệu lượt gọi trực tuyến 12 tháng (NFR-00-027, NFR-00-062); bản WORM của nhật ký kiểm toán giữ 5 năm trên Ceph RGW (ADR-031). Chương 6 tính dung lượng cho cả ba loại. Ngoài ra, NFR-00-062 đặt quy mô 5 triệu bản ghi mỗi ngày mỗi tenant, thấp hơn 10 triệu giao dịch mỗi ngày của cỡ M; Chương 6 tính theo 10 triệu.
 
 ### 5.12. Đa tenant
@@ -1404,7 +1464,7 @@ Chương 4 đã chọn chiến lược thay thế dần (strangler). Mục này 
 
 Cơ chế gồm năm thành phần. **Thành phần thứ nhất là lớp định tuyến**: APISIX được cấu hình route cho mọi điểm cuối của hệ cũ (API Management kiểu Gravitee, các agent Bus, Hub), lúc đầu chỉ chuyển tiếp nguyên trạng tới hệ cũ. HTTT được đổi địa chỉ một lần, từ hệ cũ sang Datahub, hoặc tỉnh đổi bản ghi DNS của tên miền hệ cũ để trỏ về Datahub, khi đó HTTT không phải đổi gì. **Thành phần thứ hai là lớp tương thích**: với dịch vụ mà giao diện của Datahub khác hệ cũ, một luồng Camel chuyển đổi yêu cầu và phản hồi để HTTT cũ tiếp tục gọi theo giao diện cũ. **Thành phần thứ ba là đồng bộ dữ liệu hai chiều trong giai đoạn chuyển tiếp**: danh mục dùng chung của Aita được đọc thay đổi bằng Debezium từ CSDL PostgreSQL của hệ cũ để giữ Datahub đồng bộ cho tới khi danh mục được cắt chuyển; sự kiện từ Pulsar của Hub được cầu nối sang Kafka để subscriber đã chuyển vẫn nhận được sự kiện do publisher chưa chuyển phát ra. **Thành phần thứ tư là chạy song song và đối soát**: trong giai đoạn bóng (shadow), APISIX sao một phần lượt gọi sang Datahub, kết quả của Datahub được so sánh với hệ cũ nhưng không trả cho người gọi; công cụ đối soát của PH-18 báo cáo tỷ lệ khớp. **Thành phần thứ năm là cắt chuyển theo trọng số và quay lui**: khi tỷ lệ khớp đạt ngưỡng, trọng số định tuyến chuyển dần (ví dụ 10%, 50%, 100%) sang Datahub; nếu chỉ số lỗi hoặc độ trễ vượt ngưỡng, trọng số được trả về hệ cũ trong vài giây bằng một thay đổi cấu hình.
 
-```mermaid
+```{.mermaid caption="Cơ chế kỹ thuật"}
 flowchart LR
     HTTT["HTTT sở, ngành<br/>giữ nguyên giao diện cũ"]
     DNS["Tên miền hệ cũ<br/>trỏ về Datahub"]
@@ -1439,7 +1499,7 @@ Sơ đồ thể hiện trạng thái giữa chừng của quá trình chuyển �
 
 Đơn vị chuyển đổi là nhóm dịch vụ, tức là tập dịch vụ có cùng chủ quản hoặc cùng phụ thuộc dữ liệu, được chuyển cùng nhau. Danh sách nhóm và thứ tự chuyển được lập ở giai đoạn khảo sát dựa trên lưu lượng thực tế và mức độ rủi ro; nguyên tắc chung là chuyển nhóm có lưu lượng thấp và ít phụ thuộc trước để kiểm chứng quy trình, nhóm có lưu lượng cao và nhạy cảm (dân cư, dịch vụ công trực tuyến) sau, thanh toán cuối cùng ở đợt 2. Mỗi nhóm đi qua các trạng thái dưới đây, và chỉ chuyển trạng thái khi đạt tiêu chí định lượng.
 
-```mermaid
+```{.mermaid caption="Vòng đời chuyển đổi của một nhóm dịch vụ"}
 stateDiagram-v2
     [*] --> ChuanBi: Lập ánh xạ và luồng
     ChuanBi --> Bong: Kiểm thử STAGING đạt
@@ -1460,6 +1520,8 @@ Sơ đồ trạng thái có ba nhánh quay lui rõ ràng: từ giai đoạn bón
 | Cắt chuyển dần sang Đã chuyển | Mỗi bậc trọng số giữ tối thiểu 2 ngày làm việc; tỷ lệ lỗi do nền tảng < 0,1%; độ trễ trong chỉ tiêu mục 5.11 |
 | Đã chuyển sang Đóng hệ cũ | 30 ngày không có sự cố mức nghiêm trọng liên quan nhóm dịch vụ; HTTT đã được cấp lại thông tin xác thực mới |
 
+: Vòng đời chuyển đổi của một nhóm dịch vụ
+
 Thời gian gián đoạn mỗi lần cắt chuyển một nhóm được giới hạn ở mức không quá 15 phút (đề xuất của D01-02), và trên thực tế thường bằng không vì cắt chuyển chỉ là thay đổi trọng số định tuyến. Toàn bộ khóa và mật khẩu kết nối của hệ cũ được cấp lại khi chuyển, không sao chép sang Datahub, để khắc phục điểm nghẽn ĐN-04 (bí mật ở dạng rõ).
 
 ### Câu hỏi mở
@@ -1479,7 +1541,7 @@ Thời gian gián đoạn mỗi lần cắt chuyển một nhóm được giới
 
 Hệ LGSP cũ đặt tại trung tâm dữ liệu tỉnh thí điểm. Theo hồ sơ cài đặt (Chương 2 mục 2.1.2 và 2.2.5), mỗi khối chức năng được cài trên một máy chủ riêng cấu hình tối thiểu Intel Xeon E5-2670 v3, 32 GB RAM, một ổ SSD 120 GB và hai ổ SATA 1 TB, hai cổng mạng 1 Gbps, hệ điều hành CentOS 6, Tomcat và PostgreSQL 13 cài chung trên máy. Hồ sơ hàm ý tối thiểu sáu máy chủ ứng dụng, chưa kể các máy chủ cho Pulsar, cổng API, Keycloak và Graylog; số máy thực tế, vị trí tủ rack, đường truyền và năng lực còn trống của trung tâm dữ liệu chưa được khảo sát (Q-D0101-21, Q-D0101-23 tại Chương 2). Sơ đồ sơ bộ dưới đây dựng lại hiện trạng từ hồ sơ để làm căn cứ cho phương án chuyển đổi; nó sẽ được thay bằng sơ đồ khảo sát thực tế ở bước thiết kế chi tiết.
 
-```mermaid
+```{.mermaid caption="Hiện trạng hạ tầng"}
 flowchart LR
     subgraph NGOAI["Bên ngoài"]
         NGSP["NGSP, nay là NDXP"]
@@ -1513,7 +1575,7 @@ Sơ đồ cho thấy ba đặc điểm hạ tầng mà giải pháp mới phải
 
 Mô hình vật lý theo phương án khuyến nghị ở Chương 4 mục 4.6.3 gồm ba địa điểm: site chính tại trung tâm dữ liệu tỉnh chứa PROD và STAGING; site dự phòng chứa DR (trung tâm dữ liệu thứ hai của tỉnh, hoặc một vùng cloud chính phủ nếu tỉnh không có site thứ hai); và cloud chính phủ chứa DEV, TEST. Sơ đồ dưới đây thể hiện các địa điểm, các cụm Kubernetes và các đường kết nối chính.
 
-```mermaid
+```{.mermaid caption="Mô hình triển khai vật lý"}
 flowchart TB
     subgraph NET["Mạng bên ngoài"]
         INET["Internet<br/>hai nhà cung cấp"]
@@ -1572,6 +1634,8 @@ Datahub dùng năm môi trường theo bộ giả định nền §4. Bảng dư�
 | PROD | Vận hành chính thức | H1 site chính | 100% | T0+9 (cài đặt trước W3 ở T0+10) | Thật |
 | DR | Dự phòng thảm họa, ấm (warm standby) | H1 site thứ hai hoặc H2 vùng khác | Khoảng 50–60% PROD | T0+11 (trước cắt chuyển nhóm dịch vụ lớn đầu tiên) | Bản sao thật |
 
+: Các môi trường
+
 Môi trường phụ (DEV, TEST, STAGING) có cấu hình cố định đối với DEV, TEST vì tải của chúng phụ thuộc đội phát triển chứ không phụ thuộc quy mô tỉnh; STAGING thay đổi theo cỡ vì phải tái hiện cấu trúc PROD đủ để kiểm thử hiệu năng có ý nghĩa. Kiểm thử hiệu năng chạy trên STAGING ở khoảng một nửa quy mô và được ngoại suy dựa trên chỉ tiêu mở rộng tuyến tính (NFR-00-061); trước vận hành chính thức có một lần kiểm thử ở quy mô đầy đủ trên PROD khi PROD chưa nhận lưu lượng thật. Sau giai đoạn bảo hành, DEV và TEST có thể thu gọn về một cụm duy nhất phục vụ bảo trì; Chương 8 nên tính kịch bản này từ Năm 3.
 
 ### 6.4. Phương pháp tính quy mô
@@ -1593,6 +1657,8 @@ Bảng dưới đây là ví dụ của bước thứ nhất cho cỡ M, nhóm t
 | Worker tích hợp | `dh-runtime` đồng bộ 9 × (2; 2), bất đồng bộ 6 × (2; 2), kết nối quốc gia 3 × (2; 2), runtime bộ điều hợp 4 × (1; 2), Kafka Connect và Debezium 3 × (2; 4), dự trữ KEDA 11 vCPU, 11 GB | 57 vCPU; 67 GB | 16 vCPU; 32 GB | 5 | 76% / 45% |
 | Quan sát và quản trị | OpenSearch 3 × (4; 16), Prometheus hoặc Mimir 2 × (2; 8), Loki 3 × (2; 4), Tempo 2 × (1; 4), Grafana 3 × (0,5; 1), OTel Collector 3 × (1; 2), Argo CD 1 × (4; 8), Harbor và Trivy 1 × (4; 8), các operator 1 × (3; 6) | 39,5 vCPU; 115 GB | 16 vCPU; 64 GB | 4 | 66% / 46% |
 
+: Tài nguyên yêu cầu theo thành phần, cỡ M
+
 Mức dùng khi đủ node được giữ ở 57–77%, nghĩa là khi một máy chủ vật lý hỏng và các node trên đó mất đi, các node còn lại vẫn chứa được toàn bộ bản sao với mức dùng khoảng 85–95%, đáp ứng yêu cầu "một nút hỏng không mất dịch vụ" (NFR-00-015). Nhóm worker biên có RAM dùng thấp vì APISIX nặng về CPU; cấu hình 8 vCPU, 16 GB là cấu hình nhỏ nhất hợp lý cho node Kubernetes trong vùng biên.
 
 PostgreSQL, Kafka và kho đối tượng chạy trên nhóm node dữ liệu riêng (có taint để chỉ thành phần dữ liệu được đặt lên), vì chúng cần ổ SSD cục bộ hiệu năng cao và không được chia sẻ CPU với ứng dụng. Cỡ M dùng 3 node PostgreSQL 16 vCPU, 64 GB (một primary, hai standby đồng bộ), 3 broker Kafka 8 vCPU, 32 GB, và 4 node kho đối tượng.
@@ -1613,6 +1679,8 @@ Bảng dưới đây trình bày căn cứ tính dung lượng cho cỡ M. Các 
 | Bản tin lớn lưu tạm (claim check), hàng đợi lỗi | 2% giao dịch × 500 KB × 7 ngày | 0,7 TB khả dụng | Garage |
 | Nhật ký vận hành 90 ngày (NFR-00-028) | Khoảng 20 GB/ngày trước nén, nén khoảng 5 lần | 0,36 TB khả dụng | Garage (Loki) |
 | Truy vết, ảnh container, tệp nghiệp vụ | Truy vết lấy mẫu 14 ngày, kho ảnh, tệp nhập danh mục và đối soát | Khoảng 0,9 TB khả dụng | Garage |
+
+: Dung lượng lưu trữ
 
 Tổng dung lượng khả dụng cần trên kho đối tượng cỡ M là khoảng 6,3 TB; với hệ số nhân bản 3 của Garage và của Ceph RGW, dung lượng thô cần khoảng 19 TB, tức 59% của 32 TB HDD thô bố trí cho 4 node kho đối tượng PROD, phần còn lại dành cho tăng trưởng trong vòng đời năm năm. Nhóm node quan sát cỡ M có 4,8 TB SSD, mức dùng dự kiến khoảng 88% nếu chạy đồng thời kho tìm kiếm nhật ký 90 ngày và kho siêu dữ liệu 12 tháng; đây là điểm cần theo dõi, và quyết định ở SDD PH-13 về việc chọn một kho chính (OpenSearch hay ClickHouse) có thể giảm đáng kể mức này. Nếu SDD giữ cả hai, cần bổ sung khoảng 1 TB SSD cho mỗi node quan sát từ Năm 2.
 
@@ -1638,6 +1706,8 @@ Mục này là đầu vào chính cho Chương 8. Mỗi dòng là một vai trò
 | Node quan sát và quản trị | 4 × (8; 32; 0,4) | 4 × (16; 64; 1,2) | 6 × (16; 64; 2,1) |
 | **Tổng PROD** | **26 node; 216 vCPU; 568 GB; 5,9 TB SSD; 9 TB HDD** | **30 node; 360 vCPU; 1.024 GB; 13,2 TB SSD; 32 TB HDD** | **46 node; 664 vCPU; 2.240 GB; 30,5 TB SSD; 72 TB HDD** |
 
+: PROD
+
 Từ S lên L, thành phần tăng mạnh nhất là worker tích hợp (từ 3 lên 10 node) và worker biên (từ 3 lên 6), phản ánh đúng việc lưu lượng tăng 10 lần; các DU control plane chỉ tăng nhẹ. Node PostgreSQL ở cỡ L được tăng cấu hình theo chiều dọc (32 vCPU, 128 GB) thay vì tăng số node, vì CSDL quản trị của Datahub có tải ghi thấp và lợi ích của bản sao đọc thêm không lớn.
 
 #### 6.5.2. DR
@@ -1656,6 +1726,8 @@ Site DR ở trạng thái ấm: data plane (worker biên, worker tích hợp) v�
 | Node quan sát và quản trị | 2 × (8; 32; 0,2) | 2 × (16; 64; 0,5) | 3 × (16; 64; 1) |
 | **Tổng DR** | **19 node; 140 vCPU; 368 GB; 3,8 TB SSD; 9 TB HDD** | **19 node; 204 vCPU; 608 GB; 7,5 TB SSD; 24 TB HDD** | **29 node; 416 vCPU; 1.392 GB; 14,4 TB SSD; 48 TB HDD** |
 
+: DR
+
 Ở cỡ M, DR có 4 worker ứng dụng và tích hợp (64 vCPU) so với 10 ở PROD; với mức dùng thực tế của PROD khoảng 70–76% ở đỉnh, DR phục vụ được khoảng 60% lưu lượng đỉnh cỡ M mà không cần tăng tài nguyên, đủ cho lưu lượng giờ thường và cho nhóm dịch vụ thiết yếu ở giờ cao điểm. Nếu chủ đầu tư yêu cầu DR chịu 100% tải đỉnh, nhóm worker DR phải bằng PROD (thêm khoảng 96 vCPU, 192 GB cho cỡ M); báo cáo không khuyến nghị vì chi phí tăng khoảng một phần ba cho một tình huống hiếm (Q-D0101-50).
 
 #### 6.5.3. Môi trường phụ
@@ -1669,6 +1741,8 @@ STAGING tái hiện đủ các vai trò của PROD ở quy mô nhỏ hơn; TEST 
 | DEV | 5 node; 36 vCPU; 136 GB; 1,2 TB SSD; 1 TB HDD | như S | như S |
 | **Tổng môi trường phụ** | **37 node; 250 vCPU; 768 GB; 7 TB SSD; 7 TB HDD** | **39 node; 302 vCPU; 896 GB; 8,8 TB SSD; 10 TB HDD** | **42 node; 400 vCPU; 1.312 GB; 12,2 TB SSD; 16 TB HDD** |
 
+: Môi trường phụ
+
 Chi tiết vai trò của từng môi trường phụ có trong tệp CSV. TEST gồm 3 node control plane (4; 8), 3 worker ứng dụng (8; 32), 2 worker tích hợp (8; 16), 3 node dữ liệu gộp (8; 32; 0,5 SSD; 1 HDD) và 1 node quan sát (8; 32; 0,5); DEV gồm 1 node control plane, 3 worker và 1 node dữ liệu gộp.
 
 #### 6.5.4. Tổng hợp
@@ -1680,6 +1754,8 @@ Chi tiết vai trò của từng môi trường phụ có trong tệp CSV. TEST 
 | Môi trường phụ | 37 node; 250 vCPU; 768 GB; 7 TB SSD; 7 TB HDD | 39 node; 302 vCPU; 896 GB; 8,8 TB SSD; 10 TB HDD | 42 node; 400 vCPU; 1.312 GB; 12,2 TB SSD; 16 TB HDD |
 | **Tổng cộng** | **82 node; 606 vCPU; 1.704 GB; 16,7 TB SSD; 25 TB HDD** | **88 node; 866 vCPU; 2.528 GB; 29,5 TB SSD; 66 TB HDD** | **117 node; 1.480 vCPU; 4.944 GB; 57,1 TB SSD; 136 TB HDD** |
 
+: Tổng hợp
+
 Từ S lên M, tổng vCPU tăng 43% trong khi lưu lượng tăng 5 lần, và từ M lên L tăng 71% cho lưu lượng gấp 3 lần. Nguyên nhân là phần cố định (control plane Kubernetes, quan sát, môi trường phụ, số bản sao tối thiểu cho sẵn sàng cao) chiếm tỷ trọng lớn ở cỡ nhỏ. Hệ quả cho chiến lược nhân rộng là các tỉnh cỡ S có chi phí hạ tầng trên mỗi giao dịch cao nhất, và chính họ được lợi nhiều nhất từ nền tảng dùng chung ở chế độ `SHARED` (Chương 4 mục 4.7).
 
 ### 6.6. Mạng, phân vùng và kết nối
@@ -1688,7 +1764,7 @@ Từ S lên M, tổng vCPU tăng 43% trong khi lưu lượng tăng 5 lần, và 
 
 Mạng của mỗi site được chia thành các vùng theo chức năng và mức tin cậy, mỗi vùng là một VLAN hoặc dải mạng riêng, giữa các vùng có tường lửa với chính sách từ chối mặc định. Bên trong cụm Kubernetes, ranh giới vùng được thực thi thêm bằng nhóm node có taint, namespace và chính sách mạng Cilium, cùng mTLS của Istio ambient. Chính sách cụ thể giữa các vùng do Chương 7 quy định; sơ đồ dưới đây là sơ đồ kết nối sơ bộ.
 
-```mermaid
+```{.mermaid caption="Phân vùng mạng"}
 flowchart LR
     subgraph Z0["Vùng ngoài"]
         I1["Internet"]
@@ -1754,6 +1830,8 @@ Bảng dưới đây nêu đường truyền khuyến nghị cho từng cỡ, d�
 | Internet và mạng chuyên dùng tại site DR | Như site chính | Như site chính | Như site chính | Có thể ở trạng thái chờ với cam kết nâng băng thông khi kích hoạt |
 | Kênh riêng site chính tới site DR | 200 Mbps | 500 Mbps | 1 Gbps | Nhân bản CSDL, Kafka, kho đối tượng |
 
+: Kết nối diện rộng
+
 Kênh riêng sang DR được tính theo hai yêu cầu. Yêu cầu thường xuyên ở cỡ M là khoảng 50 Mbps ở đỉnh (WAL PostgreSQL khoảng 20 GB mỗi ngày, Kafka 60 GB mỗi ngày qua MirrorMaker 2, đồng bộ kho đối tượng khoảng 10 GB mỗi ngày). Yêu cầu bất thường là đồng bộ lại sau khi kênh bị gián đoạn hoặc sau diễn tập: với 500 Mbps, 1 TB dữ liệu được đồng bộ lại trong khoảng 4,5 giờ, phù hợp cửa sổ khôi phục. Độ trễ kênh không ảnh hưởng hiệu năng ứng dụng vì nhân bản sang DR là bất đồng bộ.
 
 ### 6.7. Quy đổi sang máy chủ vật lý và cloud chính phủ
@@ -1770,6 +1848,8 @@ Các node trong bảng cấu hình là máy ảo chạy trên nền ảo hóa c�
 | DEV và TEST (nếu đặt tại chỗ thay vì thuê) | 2 máy | 2 máy | 2 máy |
 | Mức dùng CPU PROD khi đủ máy | 61% | 75% | 79% |
 
+: Quy đổi sang máy chủ vật lý (H1)
+
 Tất cả máy chủ có thêm 2 ổ SSD 480 GB gương cho hệ điều hành nền ảo hóa, 2 cổng 25 GbE (10 GbE cho S), 1 cổng BMC, nguồn kép. Ổ NVMe cấu hình RAID 10 ở mức máy chủ: ví dụ máy PROD cỡ M có 7,68 TB khả dụng, bốn máy là 30,7 TB, so với 13,2 TB SSD cần cho PROD cỡ M, tức 43% ở năm đầu; phần dư dành cho tăng trưởng dữ liệu và cho khả năng chuyển node khi một máy hỏng. Với cỡ M, mất một máy chủ PROD thì ba máy còn lại vẫn có 360 luồng khả dụng, đúng bằng tổng vCPU của PROD; do các node chỉ dùng khoảng 70–76% tài nguyên, toàn bộ bản sao vẫn được xếp lại. Ở trạng thái vận hành theo phương án khuyến nghị, tỉnh cỡ M cần 9 máy chủ (4 PROD, 3 DR, 2 STAGING), tổng 576 nhân vật lý, 4.608 GB RAM.
 
 #### 6.7.2. Quy đổi sang cloud chính phủ (H2)
@@ -1785,6 +1865,8 @@ Khi đặt trên cloud chính phủ, mỗi node quy đổi thành một máy ả
 | DEV | 5 | 36 | 136 | 1,2 | — | 1 |
 | **Tổng H2 toàn phần** | **78** | **832** | **2.392** | **27,8** | **21** | **4** |
 | Trong đó thuê theo phương án khuyến nghị (DEV, TEST) | 17 | 120 | 416 | 4 | — | 4 |
+
+: Quy đổi sang cloud chính phủ (H2)
 
 Ngoài tài nguyên tính toán và lưu trữ, thuê cloud cần tính thêm địa chỉ IP công cộng (IPv4 và IPv6), băng thông Internet theo mục 6.6.4, dịch vụ cân bằng tải và tường lửa của nhà cung cấp, kết nối tới mạng truyền số liệu chuyên dùng. Nếu DR đặt ở cloud trong khi PROD tại chỗ, kênh riêng sang DR được thay bằng kết nối riêng tới cloud của nhà cung cấp với băng thông như mục 6.6.4. Kubernetes trên cloud chính phủ phải là bản chuẩn đạt kiểm tra tương thích của cộng đồng (conformance), để giữ nguyên tắc không phụ thuộc dịch vụ độc quyền (NT-09).
 
@@ -1810,6 +1892,8 @@ Bảng dưới đây là danh mục hạ tầng cho tỉnh thí điểm cỡ M t
 | 14 | Nền ảo hóa | Xem mục 6.9 | Theo số máy chủ | Theo số máy chủ | Theo số máy chủ |
 | 15 | Mô-đun bảo mật phần cứng (HSM) | Chỉ khi nâng cấp độ 4 hoặc khi Chương 7 yêu cầu cho khóa ký | Tùy chọn | Tùy chọn | Tùy chọn |
 
+: Danh mục thiết bị, dịch vụ hạ tầng cần đầu tư
+
 Trong cột số lượng, "a + b" là số thiết bị ở site chính và site DR. Ước tính công suất điện để tỉnh kiểm tra năng lực trung tâm dữ liệu (Q-D0101-42 tại Chương 4): với cỡ M, site chính có 6 máy chủ, mỗi máy khoảng 0,8–1 kW khi tải cao, cộng thiết bị mạng khoảng 0,6 kW, tổng khoảng 6–7 kW và 2 tủ rack; site DR khoảng 3,5–4 kW và 1 tủ rack.
 
 ### 6.9. Phần mềm nền
@@ -1824,6 +1908,8 @@ Phần mềm nền là phần mềm nằm giữa phần cứng và Datahub. Báo
 | Lưu trữ cho container | Ổ cục bộ cho CSDL, Kafka (CloudNativePG và Strimzi khuyến nghị ổ cục bộ); trình điều khiển CSI | Trình cấp phát ổ cục bộ | Không cần |
 | Sao lưu | Sao lưu CSDL liên tục, sao lưu tài nguyên Kubernetes, sao chép sang thiết bị độc lập | Công cụ sao lưu tích hợp của CloudNativePG, Velero | Phần mềm sao lưu tỉnh đã có |
 | Giám sát phần cứng | Thu thập trạng thái máy chủ qua BMC vào hệ thống quan sát | Bộ thu thập chỉ số phần cứng mã nguồn mở | Phần mềm quản lý của hãng máy chủ |
+
+: Phần mềm nền
 
 Chương 8 tính chi phí phần mềm nền theo hai kịch bản: kịch bản cơ sở toàn mã nguồn mở (bản quyền bằng 0, chỉ tính nhân công vận hành), kịch bản có hỗ trợ thương mại cho hệ điều hành, Kubernetes và nền ảo hóa. Số đơn vị tính bản quyền thường là số bộ xử lý vật lý (cỡ M: 18 bộ xử lý trên 9 máy chủ) hoặc số node (cỡ M: 71 node trên H1, chưa tính DEV, TEST).
 
@@ -1844,9 +1930,11 @@ Mục tiêu khôi phục theo NFR-00-014 và bộ giả định nền đã cập
 | Bí mật | OpenBao HA 3 node | Bản sao hiệu năng hoặc ảnh chụp mã hóa sang DR | Ảnh chụp mã hóa hằng ngày, khóa mở do người giữ khóa quản lý | ≤ 15 phút |
 | Tài nguyên Kubernetes | Khai báo trong Git | Như trên | Velero hằng ngày | Bằng 0 |
 
+: Cơ chế theo thành phần
+
 #### 6.10.3. Quy trình chuyển sang DR
 
-```mermaid
+```{.mermaid caption="Quy trình chuyển sang DR"}
 sequenceDiagram
     participant MON as Giám sát
     participant OPS as Trực vận hành
@@ -1887,6 +1975,8 @@ Bảng dưới đây nêu chỉ tiêu kỹ thuật phải đạt khi lắp đặ
 | DR | Diễn tập chuyển sang DR đạt RPO ≤ 15 phút, RTO data plane ≤ 1 giờ, control plane ≤ 4 giờ | Diễn tập theo mục 6.10.3 |
 | Hiệu năng | PROD đạt chỉ tiêu cỡ M ở mục 5.11 trong kiểm thử tải trước vận hành chính thức | Kiểm thử tải |
 
+: Chỉ tiêu kiểm tra
+
 #### 6.11.2. Thống kê khối lượng lắp đặt, cài đặt
 
 Bảng dưới đây thống kê khối lượng chính cho tỉnh thí điểm cỡ M theo phương án khuyến nghị, làm căn cứ ước tính chi phí lắp đặt, cài đặt ở Chương 8 và khối lượng công việc ở WBS của D01-02 (phần tử 1.26).
@@ -1906,6 +1996,8 @@ Bảng dưới đây thống kê khối lượng chính cho tỉnh thí điểm 
 | Kiểm thử theo mục 6.11.1 | bộ kiểm tra | 13 hạng mục cho PROD; 9 cho DR; 7 cho STAGING | |
 | Diễn tập DR trong dự án | lần | 2 | W3, W5 |
 
+: Thống kê khối lượng lắp đặt, cài đặt
+
 ### 6.12. Khối lượng sơ bộ đào tạo, tập huấn
 
 Điểm e khoản 2 Điều 46 yêu cầu thiết kế cơ sở nêu khối lượng sơ bộ đào tạo, tập huấn. Bảng dưới đây nêu đối tượng, số học viên, số lớp và thời lượng cho tỉnh thí điểm cỡ M và tỉnh thứ hai. Số học viên đầu mối HTTT lấy theo quy mô cỡ M (khoảng 200 HTTT, mỗi HTTT một đầu mối). Nội dung chương trình và lộ trình chuyển giao cho đội vận hành ở D01-02 (WBS 1.27, chương nhân sự mục 6.8); đào tạo nội bộ cho đội nhà thầu không tính vào đây.
@@ -1924,6 +2016,8 @@ Bảng dưới đây thống kê khối lượng chính cho tỉnh thí điểm 
 | Tỉnh thứ hai: vận hành | Vận hành cụm hoặc tenant theo phương án tỉnh 2 | 4 | 1 | 5 | 20 |
 | Tỉnh thứ hai: đầu mối HTTT | Kết nạp và kết nối | 40 | 1 | 1 | 40 |
 | **Tổng** | | **377** | **17** | **53,5 ngày lớp** | **706** |
+
+: Khối lượng sơ bộ đào tạo, tập huấn
 
 Đào tạo được tổ chức tại tỉnh trên môi trường thực hành riêng (một tenant thực hành trên STAGING hoặc TEST), mỗi khóa có bài kiểm tra cuối khóa với tiêu chí ít nhất 90% học viên đạt (WBS 1.27.2). Lớp cho đầu mối HTTT có thể tổ chức trực tuyến để giảm chi phí đi lại cho cấp xã.
 
@@ -2021,13 +2115,15 @@ Bảng dưới đây liệt kê 20 nhóm biện pháp chính, đánh mã cục b
 | NB-19 · SEC-08, SEC-42 | Kiểm thử an toàn | Kiểm tra | ASVS mức 2, kiểm thử xâm nhập độc lập trước G2 và G4 | Kiểm thử xâm nhập định kỳ 6 tháng, diễn tập tấn công (red team) |
 | NB-20 · SEC-01, SEC-03, SEC-72 | Quy chế, đào tạo, ứng phó sự cố | Quản lý | Quy chế ATTT, đào tạo, quy trình sự cố bốn mức, diễn tập trước G3 | Đội ứng phó sự cố trực 24/7 |
 
+: Bảng biện pháp chính
+
 Bảng cho thấy phần lớn chi phí bổ sung của cấp độ 4 nằm ở thiết bị (HSM, tường lửa bổ sung, site thứ hai hoạt động song song) và nhân lực giám sát 24/7, không nằm ở phần mềm. Đây là kết quả của việc chọn kiến trúc đa tenant với ba chế độ cách ly ngay từ đầu.
 
 ### 7.5. Sơ đồ phân vùng và lớp bảo vệ
 
 Sơ đồ dưới đây ghép phân vùng mạng của Chương 6 với các lớp bảo vệ. Một lượt gọi từ hệ thống thông tin bên ngoài phải đi qua lần lượt lớp biên, lớp định danh và ủy quyền, rồi mới tới ứng dụng và dữ liệu; mọi lớp đều ghi nhật ký về lớp giám sát.
 
-```mermaid
+```{.mermaid caption="Sơ đồ phân vùng và lớp bảo vệ"}
 flowchart TB
     subgraph NGOAI["Vùng ngoài"]
         HT["HTTT sở ngành, xã"]
@@ -2155,6 +2251,8 @@ Bảng sau tập hợp các đơn giá chính. Mỗi đơn giá là một ô tha
 | Thuê lưu trữ đối tượng S3 | 0,8 triệu đồng/TB-tháng | 0,6 – 1,0 | Dung lượng khả dụng |
 | Giá điện | 2.800 đồng/kWh | | PUE 1,6, tải trung bình 70% công suất đỉnh |
 
+: Đơn giá tham khảo
+
 Đơn giá nhân công 40 triệu đồng/người-tháng là con số quan trọng nhất của chương vì gần một nửa tổng mức đầu tư phụ thuộc trực tiếp vào nó. Báo cáo đề xuất mức này vì ba lý do. Thứ nhất, theo cách tính của Quyết định 671/QĐ-BTTTT, giá trị phần mềm bằng chi phí lao động trực tiếp cộng chi phí chung 65% và thu nhập chịu thuế tính trước 6%, tức hệ số khoảng 1,75 trên chi phí lao động trực tiếp; một kỹ sư có chi phí lao động trực tiếp khoảng 23 triệu đồng/tháng (lương, phụ cấp, bảo hiểm của kỹ sư phần mềm có kinh nghiệm tại Việt Nam) cho ra khoảng 40 triệu đồng/người-tháng. Thứ hai, cơ cấu đội ngũ ở giả định nền §5 nghiêng về kỹ sư có kinh nghiệm (kiến trúc sư, kỹ sư tích hợp Camel và Quarkus native, SRE, ATTT chiếm khoảng một phần ba nỗ lực), nên mức bình quân không thể thấp như dự án nhập liệu hay phát triển ứng dụng đơn giản. Thứ ba, Chương 8 của D01-02 (quản lý rủi ro) đã dùng 40 triệu đồng/người-tháng để quy đổi giá trị kỳ vọng rủi ro; giữ cùng đơn giá giúp khoản dự phòng rủi ro ở D01-02 chuyển thẳng vào G(DP) mà không phải quy đổi lại.
 
 ### 8.2. Chi phí phần mềm nội bộ
@@ -2174,6 +2272,8 @@ Không phải toàn bộ 458,5 người-tháng là "phần mềm nội bộ" the
 | Hồ sơ đề xuất cấp độ, đánh giá tác động DLCN | 1.25.2, 1.25.5 | 6 | 240 |
 | **Cộng giai đoạn thực hiện** | | **458,5** | **18.340** |
 | Bảo hành 12 tháng | 1.29 | 60 | 2.400 |
+
+: Cách thứ nhất: người-tháng theo WBS
 
 Phần quản lý dự án của nhà thầu (1.21) được xếp vào phần mềm nội bộ vì đây là chi phí của nhà thầu nằm trong giá gói thầu, khác với G(QLDA) là chi phí của chủ đầu tư. Bảo hành được tính thành dòng riêng trong G(TB) và trả theo quý trong 12 tháng bảo hành thay vì ẩn trong đơn giá, vì 60 người-tháng là khối lượng đáng kể (khoảng 13% nỗ lực thực hiện) và D01-02 chương 2 đã đề nghị tính riêng; cách làm này cũng giúp chủ đầu tư so sánh với phương án chuyển phần bảo hành sang hợp đồng hỗ trợ kỹ thuật từ chi thường xuyên (Q-D0101-84).
 
@@ -2196,6 +2296,8 @@ Vì D02-02 (SRS) hiện chỉ đặc tả các yêu cầu chức năng dùng chu
 | PH-09 | 2 | 4 | 2 | 80 | | PH-19 | 3 | 6 | 4 | 135 |
 | PH-10 | 2 | 3 | 2 | 70 | | PH-20 | 3 | 4 | 2 | 85 |
 
+: Cách thứ hai: điểm trường hợp sử dụng: Phân hệ, Đơn giản
+
 Tổng cộng có 174 trường hợp sử dụng với UUCW = 1.705 điểm. Phân hệ có điểm cao nhất là PH-04 (190 điểm, do trình thiết kế luồng, chạy thử, quản lý phiên bản luồng đều là giao dịch nhiều bước) và PH-19 (135 điểm, do đối soát và hoàn tiền có nhiều nhánh nghiệp vụ). Điểm tác nhân UAW = 38, gồm 8 tác nhân người dùng qua giao diện (quản trị tenant, quản trị tích hợp, cán bộ vận hành, cán bộ sở ngành, nhà phát triển, kiểm toán viên, người phụ trách bảo vệ dữ liệu cá nhân, quản trị hệ thống; trọng số 3), 4 tác nhân hệ thống qua giao thức (NDXP, NDOP, PayGov, VNeID; trọng số 2) và 6 tác nhân hệ thống qua API đơn giản (HTTT sở ngành, nhà cung cấp thanh toán, ngân hàng, dịch vụ mô hình ngôn ngữ, cổng thư điện tử và tin nhắn, hệ LGSP cũ; trọng số 1).
 
 Hệ số kỹ thuật TCF = 0,6 + 0,01 × 59,5 = 1,195, cao vì Datahub là hệ phân tán (giá trị 5), yêu cầu xử lý đồng thời lớn, an toàn thông tin cấp độ 3, cho bên thứ ba truy cập và phải tái sử dụng cho nhiều tỉnh (đều ở giá trị 5). Hệ số môi trường EF = 1,4 − 0,03 × 16 = 0,92, phản ánh đội có kinh nghiệm hướng đối tượng và động lực tốt nhưng yêu cầu chưa ổn định (giá trị 2) và ngôn ngữ, khung công nghệ khó (Camel Quarkus native, giá trị 3). Từ đó AUCP = 1.743 × 1,195 × 0,92 = 1.916,3 điểm và E = 3.193,8. Với P = 20 giờ/điểm (mức ứng với đội có độ ổn định kinh nghiệm cao theo cách nội suy của Quyết định 671, cần đối chiếu) và H = 110.000 đồng/giờ (giá trị tham khảo), bảng sau là kết quả.
@@ -2208,6 +2310,8 @@ Hệ số kỹ thuật TCF = 0,6 + 0,01 × 59,5 = 1,195, cao vì Datahub là h�
 | **Giá trị phần mềm nội bộ trước thuế** | G + C + TL | **17.205** |
 | Đối chiếu: cách người-tháng (399,5 người-tháng × 40) | | 15.980 |
 | Chênh lệch | | +7,7% |
+
+: Cách thứ hai: điểm trường hợp sử dụng: Thành phần, Công thức
 
 #### 8.2.3. Đối chiếu hai cách và lựa chọn cơ sở
 
@@ -2235,6 +2339,8 @@ Theo kịch bản cơ sở của Chương 4 mục 4.6.3 và Chương 6 mục 6.8
 | Lắp đặt, cấu hình, vận chuyển (3%) | | | 303 |
 | **Cộng thiết bị H1** | | | **10.403** (khoảng 8.096 – 13.575) |
 
+: Phương án H1: mua sắm thiết bị tại trung tâm dữ liệu tỉnh
+
 Nền ảo hóa, hệ điều hành và Kubernetes dùng bản mã nguồn mở theo Chương 6 mục 6.9 nên chi phí bản quyền bằng 0. Máy chủ được mua kèm bảo hành 5 năm của hãng, nên trong cửa sổ TCO không phát sinh chi phí bảo trì phần cứng; nếu chỉ mua bảo hành 3 năm thì giá máy chủ giảm khoảng 8% nhưng Năm 4 và Năm 5 phải thêm khoảng 8% giá trị thiết bị mỗi năm cho gia hạn bảo hành. Theo dõi kế toán, thiết bị được khấu hao đều 5 năm, khoảng 2.081 triệu đồng mỗi năm; TCO trong chương tính theo dòng tiền (ghi chi phí khi thanh toán) nên khấu hao chỉ để tham khảo cho báo cáo tài sản. Chi phí vận hành riêng của H1 gồm điện khoảng 282 triệu đồng/năm (khoảng 7,2 kW tải trung bình của hai site, PUE 1,6) và đường truyền khoảng 55 triệu đồng/tháng (Internet hai nhà cung cấp tại hai site, kênh riêng 500 Mbps sang DR theo Chương 6 mục 6.6.4; mạng truyền số liệu chuyên dùng giả định không thu phí). DEV và TEST thuê cloud (120 vCPU, 416 GB RAM, 4 TB SSD, 4 TB HDD) khoảng 84,7 triệu đồng/tháng.
 
 #### 8.3.2. Phương án H2: thuê cloud chính phủ
@@ -2248,6 +2354,8 @@ Với H2, mọi môi trường thuê theo bảng quy đổi ở Chương 6 mục
 | STAGING | 176 vCPU, 456 GB, 4,5 TB SSD, 2 TB S3 | 96,3 | 71,5 – 122,1 | T0+6 |
 | DEV và TEST | 120 vCPU, 416 GB, 4 TB SSD, 4 TB HDD | 84,7 | 62,8 – 107,6 | T0 |
 | **Cộng khi đủ môi trường** | | **552,2** | **405,2 – 711,2** | |
+
+: Phương án H2: thuê cloud chính phủ
 
 Một năm thuê đủ môi trường khoảng 6.626 triệu đồng, gần bằng hai phần ba giá trị toàn bộ thiết bị H1. Đây là lý do H2 có tổng mức đầu tư thấp hơn nhưng TCO năm năm cao hơn: thuê cloud phù hợp với tải biến động, trong khi tải của Datahub là tải nền ổn định chạy 24/7. Giá cloud chính phủ có thể giảm 15% đến 30% nếu ký cam kết nhiều năm; phân tích độ nhạy ở mục 8.9 cho thấy kể cả khi giá giảm 25%, TCO của H2 vẫn cao hơn H1 khoảng 4 tỷ đồng. Đường truyền ngoài phần do cloud cung cấp (kết nối mạng chuyên dùng, kênh tới các sở) khoảng 25 triệu đồng/tháng. H2 giảm đội vận hành tỉnh từ 5,5 xuống 4,5 FTE (bớt một kỹ sư hạ tầng, D01-02 §6.5.2).
 
@@ -2276,6 +2384,8 @@ Chi phí tư vấn G(TV) tính theo người-tháng chuyên gia, vì khối lư�
 | Tư vấn giám sát triển khai 18 tháng | 27 người-tháng (1,5 FTE) | 945 | T0 đến T0+18 |
 | **Cộng G(TV)** | 51 người-tháng | **1.785** | |
 
+: Tư vấn
+
 #### 8.5.3. Chi phí khác
 
 Chi phí khác G(K) gồm các khoản Thông tư 39/2026 liệt kê (thẩm định, bảo hiểm, kiểm thử, vận hành thử, kiểm toán) và hai khoản đặc thù của dự án thay thế hệ đang chạy. Kiểm thử phần mềm độc lập là yêu cầu của Thông tư 41/2026/TT-BKHCN (phần mềm nội bộ phải được kiểm thử) và được tách khỏi kiểm thử của nhà thầu để bảo đảm khách quan. Kiểm thử xâm nhập và đánh giá an toàn thông tin độc lập thực hiện hai đợt, trước G2 (trước khi MVP vào PROD) và trước G4 (sau khi thêm phân hệ thanh toán và bảo vệ dữ liệu cá nhân). Khoản hỗ trợ của nhà cung cấp hệ cũ chi trả cho việc trích xuất dữ liệu, cấu hình và phối hợp cắt chuyển, gắn trực tiếp với RSK-17 (rủi ro lớn nhất trong sổ rủi ro); có ngân sách sẵn giúp đàm phán phụ lục bàn giao trước T0.
@@ -2288,6 +2398,8 @@ Chi phí khác G(K) gồm các khoản Thông tư 39/2026 liệt kê (thẩm đ�
 | Hỗ trợ của nhà cung cấp hệ cũ | 500 | Trích xuất, phối hợp cắt chuyển (RSK-17) |
 | Bảo hiểm thiết bị, kiểm toán độc lập, thẩm tra quyết toán, hội nghị nghiệm thu | 261 | H2: 240 (không có bảo hiểm thiết bị) |
 | **Cộng G(K)** | **1.631** | H2: 1.610 |
+
+: Chi phí khác
 
 Chi phí chạy song song hệ cũ (gia hạn hợp đồng vận hành hệ LGSP cũ đến G5) không cộng vào tổng mức đầu tư vì đây là chi thường xuyên tỉnh đang chi; điểm quan trọng là PA3 cho phép chấm dứt khoản này từ T0+18, trong khi PA1 phải duy trì nó suốt vòng đời. Hồ sơ đề xuất cấp độ do nhà thầu lập (đã tính trong G(TB)); việc thẩm định hồ sơ của cơ quan chuyên trách không thu phí theo hiểu biết hiện tại.
 
@@ -2321,9 +2433,11 @@ Bảng dưới đây là tổng mức đầu tư sơ bộ của PA3 cho tỉnh t
 | | Thuế GTGT ước tính (10% trên thiết bị, G(DV), G(TV), G(K)) | 1.534 | 942 |
 | | **Tổng mức đầu tư gồm thuế GTGT (ước tính)** | **42.236** | **34.401** |
 
+: Bảng tổng mức đầu tư
+
 Ở mức khoảng 40 đến 42 tỷ đồng, dự án nằm dưới ngưỡng dự án nhóm B theo hiểu biết hiện tại về Luật Đầu tư công (nhóm C dưới 60 tỷ đồng cho lĩnh vực này), nhưng ngưỡng sau sửa đổi năm 2025 và ngưỡng thiết kế một bước của Nghị định 224/2026 chưa được xác minh (tóm tắt pháp lý phần C, Q-D0101-87). Cơ cấu tổng mức đầu tư H1 được thể hiện ở biểu đồ sau.
 
-```mermaid
+```{.mermaid caption="Bảng tổng mức đầu tư"}
 pie showData
     title "Cơ cấu tổng mức đầu tư PA3 x H1 (triệu đồng, trước thuế)"
     "Phần mềm nội bộ" : 15980
@@ -2361,6 +2475,8 @@ Chi phí vận hành bắt đầu khi PROD vào vận hành (T0+10) và kéo dà
 | Đào tạo duy trì | 60/năm từ Năm 3 | 65 | 65 |
 | **Cộng** | | **6.130** | **11.179** |
 
+: Chi phí vận hành hằng năm
+
 Khoản hỗ trợ kỹ thuật của nhà thầu tương đương khoảng **7,5% giá trị phần mềm nội bộ mỗi năm** (1.200 triệu đồng trước trượt giá trên 15.980 triệu đồng), thấp hơn một chút so với khoảng 8% đến 15% thường dùng để lập kế hoạch bảo trì phần mềm. Báo cáo chọn cách tính theo FTE thay vì theo phần trăm vì nhu cầu bảo trì của Datahub do nhịp nâng phiên bản khoảng hai mươi thành phần nguồn mở quyết định (D01-02 §6.10), không tỷ lệ với giá trị phần mềm. Nghị định 224/2026 cho phép chỉ định chính doanh nghiệp đã phát triển phần mềm làm quản trị, vận hành, nên hợp đồng này có thể ký tiếp với nhà thầu phát triển. Khi Datahub được nhiều tỉnh dùng, khoản hỗ trợ sản phẩm được chia cho các tỉnh (mục 8.10), còn nhân sự vận hành, SOC và hạ tầng là chi phí riêng của từng tỉnh.
 
 Tần suất đánh giá an toàn thông tin định kỳ với hệ thống cấp độ 3 được giả định là hằng năm; quy định cụ thể phụ thuộc vào văn bản hướng dẫn Luật An ninh mạng 116/2025 đang được xác minh (tóm tắt pháp lý phần E mục 5), nếu là hai năm một lần thì chi phí vận hành giảm khoảng 135 triệu đồng/năm.
@@ -2386,9 +2502,11 @@ TCO được tính theo dòng tiền từng tháng, gồm toàn bộ tổng mứ
 | **Cộng H1** | **28.407** | **15.268** | **6.470** | **6.130** | **6.375** | **62.651** | |
 | **Cộng H2** | 18.616 | 19.523 | 11.325 | 11.179 | 11.627 | | **72.271** |
 
+: TCO của PA3 với H1 và H2
+
 Sau năm năm, H1 rẻ hơn H2 khoảng **9.620 triệu đồng** (13%). Đường lũy kế của hai phương án cắt nhau trong Năm 3: đến hết Năm 2, H1 đã chi 43.675 triệu đồng còn H2 chi 38.139 triệu đồng; đến hết Năm 3, H1 là 50.145 còn H2 là 49.464 triệu đồng, gần bằng nhau; từ Năm 4, mỗi năm H2 đắt hơn khoảng 5 tỷ đồng. Biểu đồ sau so sánh chi phí từng năm.
 
-```mermaid
+```{.mermaid caption="TCO của PA3 với H1 và H2"}
 xychart-beta
     title "Chi phí theo năm của PA3, H1 và H2 (triệu đồng)"
     x-axis ["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Năm 5"]
@@ -2417,6 +2535,8 @@ Phân tích độ nhạy thay đổi từng biến một quanh kịch bản cơ 
 | Giá cloud | −25% | 40.343 | 61.397 | 32.105 | 65.384 |
 | Giá cloud | +25% | 41.060 | 63.905 | 34.815 | 79.157 |
 
+: Phân tích độ nhạy
+
 Đơn giá nhân công là biến nhạy nhất với tổng mức đầu tư (±5,2 tỷ đồng, khoảng ±12,7%), tiếp theo là khối lượng (±3,5 tỷ đồng). Với TCO của H2, giá cloud lại là biến nhạy nhất (±6,9 tỷ đồng), vì gần 43% TCO của H2 là tiền thuê cloud. Kết luận chọn H1 giữ nguyên trong mọi trường hợp đơn biến; chỉ khi giá cloud giảm khoảng 40% so với trung vị (tức khoảng 0,12 triệu đồng/vCPU-tháng) thì TCO hai phương án mới bằng nhau. Nếu tổng mức đầu tư vượt trần được duyệt do đơn giá hoặc khối lượng tăng, đòn bẩy điều chỉnh đầu tiên là thu hẹp các phân hệ đợt 3 (PH-06, PH-08, PH-16, PH-17 theo phân đợt của D02-01), như D01-02 chương 2 đã nêu.
 
 ### 8.10. So sánh TCO giữa các phương án đầu tư
@@ -2436,6 +2556,8 @@ Bảng sau là kết quả TCO năm năm cho một tỉnh và cho hai tỉnh. C�
 | PA2b Nền tảng quốc tế | 83.536 | 68.866 – 101.238 | khoảng 132.500 | Bản quyền theo nhân xử lý |
 | **PA3 Xây mới Datahub** | **62.651** | 56.445 – 70.116 | **72.812** | Chi phí biên tỉnh 2 thấp |
 
+: So sánh TCO giữa các phương án đầu tư
+
 Kết quả cần được đọc thẳng thắn. Với một tỉnh, PA3 và PA2a có TCO gần như bằng nhau (chênh khoảng 1,3%, nhỏ hơn nhiều so với độ bất định), PA1 đắt hơn khoảng 9% và PA2b đắt hơn khoảng 33%. Lợi thế chi phí của PA3 chỉ hiện rõ khi tính nhân rộng: với hai tỉnh, PA3 rẻ hơn PA1 và PA2a khoảng 27 tỷ đồng, vì tỉnh thứ hai chỉ cần mở rộng hạ tầng và triển khai, không phải trả bản quyền và không phải dựng cụm riêng. Ngoài ra, các phương án PA2 không làm chủ mã nguồn và có rủi ro tăng giá thuê khi gia hạn, điều mà bảng TCO năm năm không phản ánh hết. Vì vậy chi phí không phải lý do duy nhất chọn PA3 khi chỉ xét tỉnh thí điểm, nhưng là lý do mạnh khi xét mục tiêu sản phẩm cho nhiều tỉnh (BO-06, KPI-12 tại D02-01). Điểm TC-4 ở Chương 4 (PA3 đạt 4, PA2a đạt 3) vẫn phù hợp với số liệu này vì tiêu chí đã tính cả nhân rộng.
 
 ### 8.11. Nhân rộng: chi phí biên của tỉnh thứ 2 đến n
@@ -2451,6 +2573,8 @@ Chi phí biên là chi phí tăng thêm để đưa một tỉnh mới cỡ M v�
 | Vận hành hằng năm của tỉnh | 900 (2 FTE vận hành, SOC và đường truyền tăng thêm) | 2.992 | 7.660 |
 | **Chi phí 5 năm (một lần + 4 năm vận hành)** | **10.161** | **25.648** | **34.665** |
 
+: Nhân rộng: chi phí biên của tỉnh thứ 2 đến n: Thành phần (tỉnh cỡ M), Dùng chung trên cụm sẵn có (SHARED)
+
 Chi phí biên **tỉnh thứ hai** theo chế độ dùng chung là khoảng **6.417 triệu đồng một lần và 900 triệu đồng mỗi năm**, chưa tính phần chia khoản hỗ trợ kỹ thuật sản phẩm (1.200 triệu đồng/năm chia đều cho các tỉnh dùng). Khối lượng 45 người-tháng gồm khởi tạo tenant và cấu hình (3), di trú từ hệ cũ của tỉnh đó với công cụ đã có (18), kết nạp HTTT các sở (10), đào tạo (4), quản lý (5), UAT (3) và cập nhật hồ sơ cấp độ (2); phần tử WBS 1.26.6 của dự án đã có 5 người-tháng cho tỉnh 2, nên nếu tỉnh 2 được thực hiện ngay ở W5 thì chi phí biên giảm tương ứng khoảng 200 triệu đồng. Bảng sau cho TCO năm năm bình quân mỗi tỉnh khi số tỉnh tăng, với giả định các tỉnh sau đều cỡ M và dùng chung.
 
 | Số tỉnh | TCO 5 năm toàn bộ | Bình quân mỗi tỉnh |
@@ -2460,6 +2584,8 @@ Chi phí biên **tỉnh thứ hai** theo chế độ dùng chung là khoảng **
 | 3 | 82.973 | 27.658 |
 | 5 | 103.295 | 20.659 |
 | 10 | 154.100 | 15.410 |
+
+: Nhân rộng: chi phí biên của tỉnh thứ 2 đến n: Số tỉnh, TCO 5 năm toàn bộ
 
 Từ tỉnh thứ ba, bình quân mỗi tỉnh đã thấp hơn một nửa chi phí của một tỉnh đơn lẻ. Giới hạn thực tế của chế độ dùng chung là năng lực của cụm và yêu cầu cách ly: tỉnh cỡ L hoặc tỉnh muốn tự vận hành nên dùng cụm riêng (25,6 tỷ đồng năm năm với H1), vẫn rẻ hơn nhiều so với xây mới. Cơ chế pháp lý để tỉnh thứ hai dùng mã nguồn và hạ tầng do tỉnh thí điểm đầu tư, và cách chia chi phí giữa các tỉnh, chưa được xác lập (RSK-39, Q-D0101-43); đây là điều kiện để các con số trên thành hiện thực.
 
@@ -2502,6 +2628,8 @@ Bảng dưới đây nêu định biên Ban quản lý dự án phía chủ đ�
 | Văn thư, tổng hợp | 0,5 | Hồ sơ, biên bản, lưu trữ theo yêu cầu quản lý dự án |
 | **Cộng** | **3,5** | |
 
+: Cơ cấu Ban quản lý dự án
+
 Tư vấn giám sát triển khai (1,5 FTE trong 18 tháng, 945 triệu đồng ở G(TV)) là đơn vị độc lập với nhà thầu EP. Tư vấn giám sát kiểm tra chất lượng sản phẩm từng wave theo kế hoạch kiểm thử D05-01, xác nhận khối lượng trước mỗi cổng và lập báo cáo giám sát theo Thông tư 41/2026/TT-BKHCN (đề xuất CMP-LAW-24).
 
 ### 9.2. Trách nhiệm của các chủ thể
@@ -2521,6 +2649,8 @@ Dự án có mười nhóm chủ thể. Bảng dưới đây nêu trách nhiệm
 | Sở, ngành, UBND cấp xã có HTTT | Bên kết nối và khai thác | Cử đầu mối kỹ thuật; chuyển kết nối khỏi hệ cũ theo lịch cắt chuyển; tham gia UAT |
 | Nhà cung cấp hệ LGSP cũ | Phối hợp chuyển tiếp | Cung cấp cấu hình, dữ liệu, quyền truy cập trong giai đoạn chạy song song (RSK-17); duy trì hệ cũ đến khi tắt |
 
+: Trách nhiệm của các chủ thể
+
 Hai trách nhiệm cần chủ đầu tư lưu ý vì nằm trên đường găng. Một là văn bản chỉ đạo của UBND tỉnh yêu cầu sở, ngành chuyển kết nối phải ban hành trước W3, nếu không lịch cắt chuyển ở D01-02 §4.5 phụ thuộc vào thiện chí của từng đơn vị. Hai là hợp đồng với nhà cung cấp hệ cũ phải có điều khoản phối hợp chuyển tiếp trước T0+8, khi nhóm di trú bắt đầu trích xuất cấu hình.
 
 ### 9.3. Tiến độ và các mốc chính
@@ -2536,6 +2666,8 @@ Mọi mốc ghi tương đối theo T0, ngày khởi động hợp đồng EP, t
 | Thẩm định, phê duyệt dự án | T0 − 4 → T0 − 3 tháng | Quyết định phê duyệt dự án |
 | Thiết kế chi tiết, dự toán; thẩm định, phê duyệt | T0 − 3 → T0 − 2 tháng | Thiết kế chi tiết hạng mục thiết bị; khung thiết kế chi tiết phần mềm (phần còn lại do nhà thầu EP lập theo wave) |
 | Lựa chọn nhà thầu | T0 − 2 → T0 | Hợp đồng EP, hợp đồng thiết bị |
+
+: Giai đoạn chuẩn bị đầu tư
 
 Với gói EP, thiết kế chi tiết phần mềm nội bộ được nhà thầu lập theo từng wave và trình duyệt trước khi bắt đầu wave đó, như Chương 1 mục 1.7 đã phân tích. Vì vậy bước thiết kế chi tiết trước T0 chỉ cần hoàn tất cho hạng mục thiết bị và cho khung yêu cầu phần mềm (bộ tài liệu D02, D03 hiện có), không phải cho toàn bộ 20 phân hệ.
 
@@ -2553,9 +2685,11 @@ Giai đoạn thực hiện gồm sáu wave, mỗi wave gồm các sprint hai tu�
 | W5 | T0+15 → T0+18 | Đợt 3: PH-06, PH-08, PH-16, PH-17; đóng gói phát hành v1.0; nhân rộng sang tỉnh thứ hai; tắt hệ cũ | G5 Nghiệm thu hoàn thành dự án |
 | Bảo hành | T0+18 → T0+30 | Sửa lỗi, nâng bản vá bảo mật, hỗ trợ tỉnh thứ hai | Kết thúc bảo hành |
 
+: Giai đoạn thực hiện
+
 Biểu đồ dưới đây thể hiện cùng lịch đó cho giai đoạn thực hiện và bảo hành, với W3 và W4 chạy chồng lấn bằng hai đội riêng; giai đoạn chuẩn bị đầu tư ở bảng mục 9.3.1.
 
-```mermaid
+```{.mermaid caption="Giai đoạn thực hiện"}
 gantt
     title Tiến độ thực hiện Datahub, đơn vị tháng tính từ T0
     dateFormat X
@@ -2599,6 +2733,8 @@ Bảng dưới đây là kế hoạch lựa chọn nhà thầu sơ bộ. Giá tr
 | Tư vấn giám sát triển khai | 945 | Chỉ định thầu hoặc chào hàng (tùy hạn mức) | Theo quy định | Theo thời gian | T0 − 1 → T0 | T0 → T0+18 |
 | Kiểm thử độc lập, kiểm thử xâm nhập | Theo Chương 8 mục 8.5.3 | Chỉ định thầu hoặc chào hàng | Theo quy định | Trọn gói theo đợt | T0+7 → T0+8 | Trước G2 và trước G4 |
 | Hỗ trợ chuyển tiếp của nhà cung cấp hệ cũ | 500 | Chỉ định thầu (nhà cung cấp duy nhất nắm cấu hình) | Theo quy định | Theo sự kiện | T0+6 → T0+8 | T0+8 → T0+18 |
+
+: Kế hoạch lựa chọn nhà thầu theo phương án GT-A
 
 Gói thiết bị được phép lùi một tháng so với gói EP vì W0 chạy trên cloud DEV, TEST; nhưng nghiệm thu lắp đặt phải xong trước T0+6, khi STAGING cần cho kiểm thử hiệu năng của W2. Với phương án hạ tầng H2, gói thiết bị được thay bằng hợp đồng thuê cloud chính phủ cho mọi môi trường và áp dụng QĐ 8297/QĐ-BCA-A05 (CMP-LAW-20).
 
@@ -2671,7 +2807,7 @@ Lợi ích được đo bằng ngày công hoặc người-tháng thay vì tiề
 
 Sơ đồ dưới đây thể hiện chuỗi kết quả (logic model) từ đầu tư tới tác động. Mỗi mắt xích ở cột "kết quả trực tiếp" gắn với một chỉ số KPI, nên hiệu quả trong chương này được theo dõi bằng chính các chỉ số dùng để nghiệm thu dự án.
 
-```mermaid
+```{.mermaid caption="Chuỗi kết quả"}
 flowchart LR
     subgraph DV["Đầu vào"]
         I1["Khoảng 455 người-tháng<br/>18 tháng thực hiện"]
@@ -2739,6 +2875,8 @@ Bảng sau tập hợp các tham số dùng trong mục 10.2. Các tham số l�
 | TS-14 | Tổng nỗ lực xây dựng sản phẩm và thí điểm | 455 người-tháng | Bộ giả định nền §5 |
 | TS-15 | Nỗ lực triển khai cho một tỉnh cỡ M từ tỉnh thứ hai trở đi | 20–40 người-tháng | [GĐ], xem mục 10.2.5 |
 
+: Bảng tham số giả định
+
 ### 10.2. Hiệu quả định lượng
 
 #### 10.2.1. Giảm chi phí tích hợp điểm tới điểm
@@ -2795,6 +2933,8 @@ Kịch bản so sánh là mỗi tỉnh tự đầu tư một nền tảng có ph
 | 10 | 4.550 | 635 – 815 | 82% – 86% |
 | 34 | 15.470 | 1.115 – 1.775 | 89% – 93% |
 
+: Chi phí nhân rộng biên cho tỉnh thứ hai trở đi
+
 Bảng cho thấy lợi ích của mô hình sản phẩm xuất hiện ngay từ tỉnh thứ hai và tăng nhanh theo số tỉnh. Với phạm vi cam kết của dự án (một tỉnh thí điểm và một tỉnh thứ hai được khởi tạo), tổng nỗ lực tiết kiệm so với hai tỉnh tự đầu tư riêng là khoảng 415 đến 435 người-tháng. Lợi ích này kèm theo ba lưu ý mà hội đồng cần cân nhắc. Thứ nhất, bảng chỉ tính nỗ lực phát triển và triển khai; chi phí hạ tầng của mỗi tỉnh vẫn phát sinh riêng, trừ khi tỉnh dùng chế độ tenant dùng chung trên một cụm, và chi phí hạ tầng theo cỡ S, M, L được tính tại Chương 8. Thứ hai, sau khi phát hành v1.0, sản phẩm cần chi phí bảo trì và phát triển phiên bản mới; nếu nhiều tỉnh dùng chung thì chi phí này được chia sẻ, nhưng cần một cơ chế chia sẻ chi phí và một đơn vị làm chủ sản phẩm (Q-D0101-93). Thứ ba, lợi ích chỉ hiện thực hóa khi quyền sử dụng và quyền triển khai sản phẩm cho tỉnh khác được bảo đảm trong hợp đồng (Q-D0101-34 tại Chương 3).
 
 Ngoài nỗ lực ban đầu, mô hình dùng chung còn tạo lợi ích tiếp diễn: một bản vá an toàn thông tin hay một thay đổi do văn bản pháp luật mới chỉ phải phát triển một lần rồi phát hành cho mọi tỉnh qua cùng một quy trình, thay vì mỗi tỉnh tự xử lý trên một nền tảng khác nhau.
@@ -2823,6 +2963,8 @@ Bảng sau tổng hợp các lợi ích định lượng ở mục 10.2.1 đến
 | Nhân rộng năm tỉnh | Giảm 73% – 76% tổng nỗ lực | KPI-12 | Có, ở kịch bản nhân rộng |
 | Giảm gián đoạn dịch vụ | Từ tối đa 876 giờ/năm xuống khoảng 8,8 giờ/năm (theo cam kết) | KPI-03, KPI-15, KPI-16 | Không, định tính có số |
 | Đối soát tự động | Tối đa khoảng 2.000 giao dịch/tháng cần xem thủ công | KPI-13, KPI-14 | Có, khi có số liệu nền |
+
+: Tổng hợp hiệu quả định lượng
 
 ### 10.3. Hiệu quả định tính
 
@@ -2904,6 +3046,8 @@ Bảng dưới đây liệt kê 12 rủi ro cấp dự án, sắp theo điểm. 
 | RSK-36 | Rò rỉ dữ liệu chéo tenant | 2 × 5 | 10 | Cách ly nhiều lớp theo ADR-003 và D03-10; kiểm thử cách ly là điều kiện G2 | 5 |
 | RSK-41 | Không bố trí được kinh phí vận hành sau dự án | 3 × 4 | 12 | Trình bày chi phí vòng đời 5 năm; đưa vào kế hoạch tài chính trung hạn; chia sẻ chi phí giữa các tỉnh | 8 |
 
+: Các rủi ro cấp dự án
+
 Hai rủi ro cuối không có điểm cao nhất nhưng được đưa vào vì lý do thẩm định. RSK-36 có tác động không bù được (lộ dữ liệu của tỉnh này cho tỉnh khác) và là rủi ro đặc trưng của mô hình sản phẩm đa tenant mà báo cáo đề xuất, nên hội đồng cần thấy nó được xử lý thế nào. RSK-41 quyết định lợi ích đầu tư có được duy trì sau 5 năm hay không, liên quan trực tiếp tới phân tích hiệu quả ở Chương 10.
 
 Bảy trong mười rủi ro điểm cao có nguyên nhân nằm ở phía cơ quan nhà nước hoặc bên thứ ba: nhà cung cấp hệ cũ, cơ quan thẩm định, các sở, ngành, cơ quan quản lý NDXP, gói hạ tầng, đơn vị vận hành. Điều này có nghĩa là biện pháp hiệu quả nhất là những việc chủ đầu tư làm trước T0 với chi phí thấp, gồm ký phụ lục bàn giao với nhà cung cấp hệ cũ, khởi động đăng ký kết nối NDXP, chuẩn bị văn bản giao việc cho sở, ngành và lập lịch gói hạ tầng. Báo cáo đề nghị đưa bốn việc này vào quyết định phê duyệt dự án như nhiệm vụ của chủ đầu tư.
@@ -2920,6 +3064,8 @@ Bảng dưới đây so sánh mức rủi ro của ba phương án ở Chương 
 | Tuân thủ pháp lý, ATTT | **Cao.** Thiết kế cũ khó đạt cấp độ 3, thông tin xác thực lưu dạng văn bản (Chương 2) | **Trung bình.** Phụ thuộc hồ sơ của sản phẩm; nền tảng quốc tế có thể vướng lưu trữ trong nước | **Trung bình.** Thiết kế cho cấp độ 3 từ đầu, nhưng hồ sơ phải được phê duyệt đúng hạn (RSK-26) |
 | Nhân rộng nhiều tỉnh | **Cao.** Mỗi tỉnh một bản cài đặt | **Trung bình.** Tùy mô hình cấp phép của hãng | **Thấp đến trung bình.** Thiết kế đa tenant; rủi ro còn lại là rò rỉ chéo tenant (RSK-36) và cơ chế pháp lý cho tỉnh thứ hai (RSK-39) |
 | Nhân lực | **Trung bình.** Cần người hiểu hệ cũ | **Trung bình (PA2a) đến cao (PA2b).** Chuyên gia nền tảng quốc tế hiếm, đắt | **Trung bình.** Thiếu kỹ sư Camel (RSK-30) và vận hành Kubernetes (RSK-33), giảm bằng đào tạo và hợp đồng vận hành |
+
+: So sánh mức rủi ro giữa các phương án
 
 Lập luận tổng hợp như sau. PA2a có rủi ro xây dựng thấp nhất, và nếu chỉ xét rủi ro thực hiện trong 18 tháng thì PA2a nhỉnh hơn PA3. Tuy nhiên PA2a chuyển rủi ro từ giai đoạn xây dựng sang vòng đời: tỉnh phụ thuộc một hãng về giá, lộ trình sản phẩm và khả năng nhân rộng, và những rủi ro này kéo dài suốt 5 năm của cửa sổ TCO chứ không kết thúc ở G5. PA1 có rủi ro cao ở hầu hết các nhóm và không giải quyết được nguyên nhân gốc của các điểm nghẽn ở Chương 2. PA3 chấp nhận rủi ro xây dựng cao hơn đổi lấy rủi ro vòng đời thấp hơn, và rủi ro xây dựng là loại rủi ro mà kế hoạch dự án có công cụ kiểm soát trực tiếp (phát hành theo đợt, cổng nghiệm thu, quay lui từng nhóm dịch vụ). Vì vậy phân tích rủi ro củng cố, chứ không đảo ngược, kết luận chọn PA3 ở Chương 4.
 
@@ -2972,6 +3118,8 @@ Bảng dưới đây là ma trận tuân thủ cấp dự án. Ma trận chi ti�
 | Chi phí theo định mức hiện hành | CMP-LAW-23 | Cơ cấu G(TB/DV), G(QLDA), G(TV), G(K), G(DP) theo Thông tư 39/2026 | Chương 8 | Có điều kiện (Q-D0101-81) |
 | Kiểm thử, vận hành thử, nghiệm thu | CMP-LAW-24 | Sáu cổng G0 đến G5, kiểm thử độc lập trước G2 và G4 | Chương 9 mục 9.3.3; D01-02 §4, §13; D05-01 | Đáp ứng |
 | Thuê dịch vụ công nghệ số: chất lượng, sở hữu dữ liệu, chuyển giao | Khoản 3 Điều 45 NĐ 224/2026 | DEV, TEST thuê cloud; lựa chọn thuê dịch vụ hỗ trợ sau bảo hành giữ quyền sở hữu dữ liệu và mã nguồn của tỉnh | Chương 4 mục 4.6; Chương 9 mục 9.5.3, 9.5.4 | Đáp ứng |
+
+: Ma trận tuân thủ
 
 Hai điểm "có điều kiện" có ảnh hưởng tới hồ sơ trình. Một là kế hoạch chuyển đổi số của tỉnh: nếu dự án chưa có tên trong kế hoạch, chủ đầu tư cần bổ sung trước khi trình thẩm định. Hai là Khung kiến trúc tổng thể quốc gia số: nếu khung chưa được ban hành chính thức, báo cáo dùng Khung Kiến trúc Chính phủ điện tử 3.0 làm căn cứ tạm thời và ánh xạ ở Chương 5 mục 5.7 đã được viết để đổi khung mà không đổi thiết kế.
 
