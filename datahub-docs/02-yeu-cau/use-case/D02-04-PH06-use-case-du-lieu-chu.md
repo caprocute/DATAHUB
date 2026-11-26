@@ -488,9 +488,9 @@ Tỉnh thêm thuộc tính địa phương (ví dụ `ethnicity`, `occupation`) 
 - **E2. Danh mục chưa phát hành (bước 2).** ERR-06-003 (400): "Danh mục {mã} chưa phát hành ở PH-07."
 - **E3. Khóa không phải kiểu `IDENTIFIER` (bước 3).** ERR-06-009 (422): "Thuộc tính {tên} phải có kiểu Định danh để làm khóa."
 - **E4. Biểu thức kiểm tra không an toàn (bước 3).** ERR-06-003 (400): "Biểu thức kiểm tra không hợp lệ hoặc có nguy cơ chạy quá lâu."
-- **E5. Thiếu khóa và tổ hợp đối sánh (bước 6).** ERR-06-009 (422): "Domain cần ít nhất một khóa định danh hoặc ba thuộc tính dùng được cho đối sánh."
+- **E5. Thiếu khóa và tổ hợp đối sánh (bước 6).** ERR-06-009 (422): "Mô hình cần ít nhất một khóa định danh và một tổ hợp đối sánh."
 - **E6. Thuộc tính DLCN chưa phân loại (bước 6).** ERR-06-010 (422): "Thuộc tính {tên} là dữ liệu cá nhân nhưng chưa có phân loại được PH-09 xác nhận."
-- **E7. Đã có nháp khác hoặc sửa đồng thời (bước 1, 2).** ERR-06-006 (409): "Domain {mã} đang có bản nháp phiên bản {n} do {người} tạo."; ERR-06-004 (409): "Bản nháp đã được người khác sửa. Tải lại để xem thay đổi."
+- **E7. Đã có nháp khác hoặc sửa đồng thời (bước 1, 2).** ERR-06-006 (409): "Domain {mã} đang có bản nháp phiên bản {n} do {người} tạo."; ERR-06-004 (409): "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
 - **E8. PH-09 không khả dụng (bước 4).** ERR-06-021 (503): "Chưa kết nối được phân hệ Quyền riêng tư. Lưu nháp được, gửi duyệt sau."
 
 **Quy tắc áp dụng.** BR-06-001, BR-06-016, BR-06-017.
@@ -536,8 +536,8 @@ Tỉnh thêm thuộc tính địa phương (ví dụ `ethnicity`, `occupation`) 
 
 **Luồng ngoại lệ.**
 - **E1. Hùng là người gửi duyệt (bước 3).** ERR-06-005 (403): "Anh/chị là người gửi duyệt nên không được tự duyệt."
-- **E2. Từ chối không lý do (3a).** ERR-06-007 (422): "Nhập lý do từ chối (tối thiểu 20 ký tự)."
-- **E3. Ngừng domain còn bản ghi vàng (1a).** ERR-06-011 (422): "Domain còn {n} bản ghi vàng đang hoạt động, không ngừng được."
+- **E2. Từ chối không lý do (3a).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
+- **E3. Ngừng domain còn bản ghi vàng (1a).** ERR-06-011 (422): "Domain còn {n} bản ghi vàng hoạt động nên chưa ngừng được."
 - **E4. Trạng thái không cho thao tác (bước 1, 3).** ERR-06-006 (409): "Phiên bản đang ở trạng thái {trạng thái}, không thực hiện được thao tác này."
 - **E5. Thuộc tính DLCN chưa phân loại (bước 1).** ERR-06-010 (422); câu như UC-06-02 E6.
 
@@ -738,7 +738,7 @@ Hệ thống đưa giá trị về dạng chuẩn (tên Việt có và không d�
 - **E2. Mã ĐVHC không tồn tại (bước 2).** ERR-06-020, cảnh báo trên ứng viên: "Mã ĐVHC {mã} không có trong danh mục tại ngày {ngày}."
 - **E3. PH-07 không khả dụng (bước 2).** ERR-06-021 (503); ứng viên `NORMALIZATION_PENDING`, thử lại mỗi 5 phút tối đa 24 giờ; vận hành thấy ở UI-06-01: "Chuẩn hóa địa chỉ đang chờ phân hệ Danh mục: {n} bản ghi."
 - **E4. Ứng viên không xử lý lại được (bước 5).** ERR-06-006 (409): "Ứng viên {id} đang ở trạng thái {trạng thái}, không xử lý lại được."
-- **E5. Thiếu lý do loại bỏ (5a).** ERR-06-007 (422): "Nhập lý do loại bỏ (tối thiểu 20 ký tự)."
+- **E5. Thiếu lý do loại bỏ (5a).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
 
 **Quy tắc áp dụng.** BR-06-001, BR-06-008, BR-06-015, BR-06-033.
 
@@ -785,7 +785,7 @@ Bộ quy tắc là cấu hình có phiên bản, không sửa mã. Ba ranh giớ
 **Luồng ngoại lệ.**
 - **E1. Quy tắc hoặc khóa gom nhóm sai (bước 2, 3).** ERR-06-022 (422): "Bộ quy tắc không hợp lệ: {chi tiết}."; "Khóa gom nhóm {biểu thức} không hợp lệ: thuộc tính nhạy cảm phải dùng hmac()."
 - **E2. Ngưỡng ngoài miền (bước 4).** ERR-06-023 (422): "Ngưỡng tự hợp nhất phải từ 0,90 trở lên và cao hơn ngưỡng xem xét ít nhất 0,10."
-- **E3. Sửa đồng thời.** ERR-06-004 (409): "Bản nháp đã được người khác sửa. Tải lại để xem thay đổi."
+- **E3. Sửa đồng thời.** ERR-06-004 (409): "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
 
 **Quy tắc áp dụng.** BR-06-001, BR-06-006, BR-06-016, BR-06-020.
 
@@ -1120,7 +1120,7 @@ Hợp nhất có hậu quả lớn chỉ có hiệu lực khi người thứ hai
 
 **Luồng ngoại lệ.**
 - **E1. Tự duyệt (bước 2).** ERR-06-005 (403): "Anh/chị là người đề nghị hợp nhất nên không được tự duyệt."
-- **E2. Từ chối thiếu ý kiến (2a).** ERR-06-007 (422): "Nhập lý do từ chối (tối thiểu 20 ký tự)."
+- **E2. Từ chối thiếu ý kiến (2a).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
 - **E3. Bản ghi đổi trong lúc chờ (bước 2, 3).** ERR-06-030 (409): "Một trong hai bản ghi đã thay đổi trong lúc chờ duyệt. Yêu cầu người đề nghị xem lại."
 
 **Quy tắc áp dụng.** BR-06-005, BR-06-019, BR-06-023.
@@ -1280,7 +1280,7 @@ Sửa trên bản ghi vàng chỉ là biện pháp tạm, có hạn, luôn kèm 
 - **E1. Thuộc tính thẩm quyền quốc gia (bước 2).** ERR-06-035 (422): "Thuộc tính {tên} chỉ được sửa tại CSDL quốc gia. Hướng dẫn công dân liên hệ cơ quan đăng ký."
 - **E2. Thiếu lý do (bước 2, 4).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
 - **E3. Bản ghi đang khóa (bước 2).** ERR-06-031 (409): "Bản ghi vàng {id} đang có thao tác chờ duyệt."
-- **E4. Sửa đồng thời (bước 2).** ERR-06-004 (409): "Bản ghi đã được cập nhật. Tải lại để xem giá trị mới."
+- **E4. Sửa đồng thời (bước 2).** ERR-06-004 (409): "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
 - **E5. Ngừng khi còn liên kết hiệu lực (bước 4).** ERR-06-036 (422): "Bản ghi còn {n} nguồn liên kết hiệu lực. Gỡ liên kết hoặc chọn lý do có căn cứ từ nguồn thẩm quyền."
 
 **Quy tắc áp dụng.** BR-06-005, BR-06-007, BR-06-008, BR-06-014, BR-06-025.
@@ -1326,7 +1326,7 @@ Dùng khi người quản lý phát hiện trùng ngoài hàng đợi, ví dụ 
 - **6a. HTTT tra `goldenId` cũ.** Nhận `200` kèm `mergedInto` (chuyển hướng).
 
 **Luồng ngoại lệ.**
-- **E1. Khóa định danh khác nhau (bước 2).** ERR-06-029 (422): "Hai bản ghi có số định danh khác nhau nên không được hợp nhất."
+- **E1. Khóa định danh khác nhau (bước 2).** ERR-06-029 (422): "Hai bản ghi có số định danh khác nhau nên không được hợp nhất. Kiểm tra lại dữ liệu nguồn."
 - **E2. Bản ghi không còn `ACTIVE` (bước 2).** ERR-06-006 (409): "Bản ghi {id} đang ở trạng thái {trạng thái}."
 - **E3. Khác domain (bước 2).** ERR-06-003 (400): "Chỉ hợp nhất được bản ghi cùng domain."
 - **E4. Thiếu lý do (bước 2).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
@@ -1442,7 +1442,7 @@ Hoàn tác là thao tác mới, không xóa lịch sử (BR-06-024); là biện 
 
 **Luồng ngoại lệ.**
 - **E1. Có thao tác phụ thuộc, chưa xác nhận (bước 3).** ERR-06-033 (409): "Có {n} thao tác sau phụ thuộc vào thao tác này. Xem danh sách và xác nhận để hoàn tác cả chuỗi."
-- **E2. Quá hạn (3b).** ERR-06-034 (403): "Thao tác đã quá {n} ngày. Đề nghị hoàn tác đã được gửi người duyệt dữ liệu."
+- **E2. Quá hạn (3b).** ERR-06-034 (403): "Đã quá {n} ngày, thao tác hoàn tác cần người duyệt dữ liệu chấp thuận."
 - **E3. Đã hoàn tác (bước 2).** ERR-06-006 (409): "Thao tác này đã được hoàn tác."
 - **E4. Tự duyệt (3b).** ERR-06-005 (403): "Anh/chị là người đề nghị nên không được tự duyệt."
 
@@ -1508,12 +1508,12 @@ Cửa khai thác dữ liệu chủ cho HTTT và người dùng. Mọi lượt tr
 
 **Luồng ngoại lệ.**
 - **E1. Không có liên kết hoặc bản ghi (bước 1, 3).** ERR-06-050 (404): "Không có bản ghi vàng cho {nguồn}/{khóa}."; "Không có bản ghi vàng khớp khóa đã gửi."
-- **E2. Thiếu mục đích (bước 2).** ERR-06-037 (403): "Yêu cầu thiếu mục đích khai thác được chấp thuận cho dữ liệu này."
-- **E3. Đã ngừng (3b).** ERR-06-001 (410): "Bản ghi vàng {id} đã ngừng sử dụng: {lý do}."
+- **E2. Thiếu mục đích (bước 2).** ERR-06-037 (403): "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này."
+- **E3. Đã ngừng (3b).** ERR-06-001 (410): "Bản ghi vàng {id} đã ngừng: {lý do}."
 - **E4. Lô quá lớn (1a).** ERR-06-018 (413): "Mỗi lần tra tối đa 500 khóa."
 - **E5. Tìm quá rộng (bước 4).** ERR-06-040 (422): "Nhập thêm tiêu chí: họ tên cần đi kèm ngày sinh, năm sinh hoặc xã."
 - **E6. Vượt ngưỡng hàng loạt (bước 4).** ERR-06-038 (403): "Anh/chị đã xem quá {n} bản ghi trong {phút} phút. Truy cập hàng loạt cần phê duyệt."
-- **E7. Không ghi được nhật ký (bước 5).** ERR-06-039 (503): "Chưa ghi được nhật ký truy cập nên không trả dữ liệu."
+- **E7. Không ghi được nhật ký (bước 5).** ERR-06-039 (503): "Chưa ghi được nhật ký truy cập nên không hiển thị dữ liệu. Thử lại sau ít phút."
 
 **Quy tắc áp dụng.** BR-06-010, BR-06-013, BR-06-018, BR-06-026, LP-06-04.
 
@@ -1559,8 +1559,8 @@ Luồng PH-04 làm giàu bản tin hoặc HTTT kiểm tra trùng trước khi t�
 **Luồng ngoại lệ.**
 - **E1. Thiếu thuộc tính tối thiểu (bước 2).** ERR-06-003 (400): "Cần ít nhất {n} thuộc tính để đối sánh: {danh sách}."
 - **E2. Vượt hạn mức (bước 1).** ERR-06-048 (429): "Vượt hạn mức {n} lượt mỗi phút."
-- **E3. Thiếu mục đích (bước 2).** ERR-06-037 (403): "Yêu cầu thiếu mục đích khai thác được chấp thuận cho dữ liệu này."
-- **E4. Không ghi được nhật ký (bước 5).** ERR-06-039 (503): "Chưa ghi được nhật ký truy cập nên không trả dữ liệu."
+- **E3. Thiếu mục đích (bước 2).** ERR-06-037 (403): "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này."
+- **E4. Không ghi được nhật ký (bước 5).** ERR-06-039 (503): "Chưa ghi được nhật ký truy cập nên không hiển thị dữ liệu. Thử lại sau ít phút."
 
 **Quy tắc áp dụng.** BR-06-002, BR-06-010, BR-06-026.
 
@@ -1622,7 +1622,7 @@ Hình cho thấy dữ liệu chỉ rời `dh-data` sau khi mục đích được
 
 **Luồng ngoại lệ.**
 - **E1. Vượt giới hạn hoặc chưa duyệt (bước 1, 4).** ERR-06-041 (422): "Yêu cầu xuất vượt {n} bản ghi hoặc chưa được chấp thuận."
-- **E2. Tệp hết hạn (bước 4).** ERR-06-042 (410): "Tệp xuất đã hết hạn tải. Tạo đề nghị mới nếu còn cần."
+- **E2. Tệp hết hạn (bước 4).** ERR-06-042 (410): "Tệp xuất đã hết hạn tải. Gửi đề nghị mới."
 - **E3. Tự chấp thuận (bước 2).** ERR-06-005 (403): "Anh/chị là người đề nghị nên không được tự chấp thuận."
 
 **Quy tắc áp dụng.** BR-06-013, BR-06-026, BR-06-027, LP-06-01.
@@ -1666,7 +1666,7 @@ Hình cho thấy dữ liệu chỉ rời `dh-data` sau khi mục đích được
 - **4b. Kafka không khả dụng.** Outbox giữ; quá 50 lần thử ERR-06-109, UI-06-18: "Có {n} sự kiện dữ liệu chủ chưa phát được quá {phút} phút."
 
 **Luồng ngoại lệ.**
-- **E1. HTTT thiếu mục đích hoặc thỏa thuận (bước 1).** ERR-06-043 (422): "HTTT {mã} chưa có mục đích khai thác dữ liệu chủ được chấp thuận."
+- **E1. HTTT thiếu mục đích hoặc thỏa thuận (bước 1).** ERR-06-043 (422): "Hệ thống {mã} chưa có mục đích khai thác được chấp thuận nên chưa đăng ký nhận cập nhật được."
 - **E2. Tự chấp thuận (bước 2).** ERR-06-005 (403): "Anh/chị là người đề nghị nên không được tự chấp thuận."
 
 **Quy tắc áp dụng.** BR-06-012, BR-06-026.
@@ -1719,7 +1719,7 @@ CSDL quốc gia là chuẩn cho thuộc tính thẩm quyền (BR-06-003); Datahu
 - **E4. Chạy khi đang tạm dừng (bước 1).** ERR-06-044 (409): "Đồng bộ quốc gia đang tạm dừng do lệch vượt ngưỡng."
 - **E5. Gửi lên thuộc tính không được phép (1a).** ERR-06-045 (422): "Thuộc tính {tên} không thuộc danh mục được gửi lên CSDL quốc gia."
 - **E6. Giữ địa phương cho thuộc tính thẩm quyền (bước 4).** ERR-06-035 (422): "Thuộc tính {tên} thuộc thẩm quyền CSDL quốc gia, không giữ giá trị địa phương được."
-- **E7. Bỏ qua thiếu lý do (4a).** ERR-06-007 (422): "Nhập lý do bỏ qua lệch (tối thiểu 20 ký tự)."
+- **E7. Bỏ qua thiếu lý do (4a).** ERR-06-007 (422): "Nhập lý do (tối thiểu 20 ký tự)."
 
 **Quy tắc áp dụng.** BR-06-003, BR-06-011, BR-06-014, BR-06-025, BR-06-032.
 
@@ -1874,9 +1874,9 @@ Hình cho thấy quyết định tạm dừng nằm ở `dh-data` sau khi so sá
 - **3a. "Đặt lại mặc định"** cho một tham số.
 
 **Luồng ngoại lệ.**
-- **E1. Dưới mức tối thiểu (bước 2).** ERR-06-049 (422): "Thời hạn lưu {loại} không được thấp hơn {n} ngày."
+- **E1. Dưới mức tối thiểu (bước 2).** ERR-06-049 (422): "Thời hạn lưu giữ thấp hơn mức tối thiểu {n} ngày."
 - **E2. Giá trị ngoài miền (bước 4).** ERR-06-047 (422): "Giá trị {giá trị} của {khóa} ngoài miền {miền}."
-- **E3. Sửa đồng thời (bước 4).** ERR-06-004 (409): "Tham số đã được người khác sửa. Tải lại để xem giá trị mới."
+- **E3. Sửa đồng thời (bước 4).** ERR-06-004 (409): "Dữ liệu đã được người khác thay đổi. Tải lại để xem bản mới."
 - **E4. Dọn gặp đối tượng giữ pháp lý (bước 5).** ERR-06-114; UI-06-12: "bỏ qua {n} đối tượng do giữ pháp lý".
 
 **Quy tắc áp dụng.** BR-06-007, BR-06-020, BR-06-031.

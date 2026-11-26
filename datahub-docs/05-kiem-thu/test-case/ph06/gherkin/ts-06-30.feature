@@ -15,7 +15,7 @@ Tính năng: TS-06-30 · Phân quyền theo ma trận PERM-06 và bốn mắt
 
   @TC-06-127 @P1 @Âm @Bảo @mật
   Kịch bản: TC-06-127 Mọi điểm bốn mắt
-    # Truy vết: BR-06-004, 019, 024, 027 · ERR-06-005 · FR-06-006, 009, 018, 031, 033, 039, 042, 049
+    # Truy vết: BR-06-004, 019, 024, 027 · ERR-06-005 · FR-06-006, 009, 018, 031, 033, 039, 042, 049 · API-06-103
     # Mục đích: Chứng minh người đề nghị không tự duyệt ở tám điểm bốn mắt của FRS §3.3, kể cả TA có cả hai quyền.
     Biết U-T90-TA (soạn và duyệt, chỉ SIT), DS1, DA1.
     Khi tại từng điểm: kích hoạt mô hình, bộ quy tắc, ưu tiên nguồn, quy tắc sống sót, hợp nhất rủi ro cao, hoàn tác quá hạn, xuất, áp lại, người đề nghị gọi `:approve`.

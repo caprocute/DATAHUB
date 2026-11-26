@@ -15,7 +15,7 @@ Tính năng: TS-06-27 · Yêu cầu của chủ thể dữ liệu
 
   @TC-06-116 @P1 @Dương
   Kịch bản: TC-06-116 Yêu cầu sửa (RECTIFICATION)
-    # Truy vết: FR-06-058 · BR-06-014, 025 · API-06-092 · EVT-06-15
+    # Truy vết: FR-06-058 · BR-06-014, 025 · API-06-092, 119 · EVT-06-15
     # Mục đích: Chứng minh sửa tại nguồn, không sửa ở bản ghi vàng, theo BR-06-014.
     Biết hai yêu cầu: thuộc tính `phone` (nguồn `HT-YTE`) và `dateOfBirth` (thẩm quyền quốc gia).
     Khi `POST /subject-requests` cho `phone`; `:forward`.
@@ -25,7 +25,7 @@ Tính năng: TS-06-27 · Yêu cầu của chủ thể dữ liệu
 
   @TC-06-117 @P2 @Dương
   Kịch bản: TC-06-117 Yêu cầu hạn chế xử lý (RESTRICTION)
-    # Truy vết: FR-06-058 · API-06-092 · BR-06-026
+    # Truy vết: FR-06-058 · API-06-092, 120 · BR-06-026
     # Mục đích: Chứng minh hạn chế đưa bản ghi vàng sang `LOCKED` có cờ `restricted`, theo FR-06-058.
     Biết bản ghi vàng Bình; DS1.
     Khi `POST` `RESTRICTION`; `:complete`.

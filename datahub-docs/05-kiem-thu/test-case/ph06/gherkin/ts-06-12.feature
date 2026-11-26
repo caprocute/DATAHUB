@@ -15,7 +15,7 @@ Tính năng: TS-06-12 · Hàng đợi người quản lý dữ liệu
 
   @TC-06-058 @P1 @Dương
   Kịch bản: TC-06-058 Liệt kê, nhận việc, phân công, nhả
-    # Truy vết: FR-06-028 · API-06-045, 047 · UI-06-04 · PERM-06-steward
+    # Truy vết: FR-06-028 · API-06-045, 047, 107, 108 · UI-06-04 · PERM-06-steward
     # Mục đích: Chứng minh lọc, sắp theo ưu tiên, nhận việc, giữ 30 phút, phân công bởi DA, theo FR-06-028.
     Biết bảy mục của q-create; DS1, DS2, DA1.
     Khi DS1 `GET /stewardship/items?status=OPEN&sort=priority,desc`.

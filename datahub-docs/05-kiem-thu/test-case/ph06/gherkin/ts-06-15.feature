@@ -5,7 +5,7 @@ Tính năng: TS-06-15 · Quy tắc sống sót, xem trước tác động và á
 
   @TC-06-068 @P1 @Dương @Âm
   Kịch bản: TC-06-068 Cấu hình, duyệt quy tắc sống sót và chặn sai
-    # Truy vết: FR-06-033 · BR-06-003, 004 · API-06-051, 052, 053 · ERR-06-005, 013, 022 · PERM-06-config
+    # Truy vết: FR-06-033 · BR-06-003, 004 · API-06-051, 052, 053, 110, 111 · ERR-06-005, 013, 022 · PERM-06-config
     # Mục đích: Chứng minh cấu hình `SurvivorshipStrategy` theo thuộc tính, có căn cứ, bốn mắt, theo FR-06-033.
     Biết CITIZEN ACTIVE; DS1, DA1.
     Khi `PUT .../survivorship-rules` đặt `dateOfBirth` `NATIONAL_AUTHORITY`, `phone` `MOST_RECENT`, `address` `SOURCE_PRIORITY`.

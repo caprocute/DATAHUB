@@ -42,6 +42,8 @@ Trong phạm vi: 18 màn của FRS §10.1 trong ứng dụng `dh-console`, gồm
 
 ### 1.3. Tài liệu liên quan
 
+Tài liệu này bám theo FRS, khung giao diện chung và các tập thiết kế khác; bảng dưới ghi từng tài liệu và nội dung màn hình lấy từ đó.
+
 | Tài liệu | Dùng để |
 |---|---|
 | D02-03-PH06 FRS | Chức năng, mã lỗi, thông báo (§9.2), danh sách màn (§10), enum (Phụ lục A) |
@@ -54,6 +56,8 @@ Trong phạm vi: 18 màn của FRS §10.1 trong ứng dụng `dh-console`, gồm
 : Tài liệu liên quan của tập màn PH-06
 
 ### 1.4. Thuật ngữ và viết tắt
+
+Bảng dưới giải thích các thuật ngữ và viết tắt theo nghĩa người dùng thấy trên giao diện, để nhãn hiển thị ở mọi màn dùng thống nhất.
 
 | Thuật ngữ | Nghĩa trên giao diện |
 |---|---|
@@ -96,11 +100,21 @@ Bảng dưới là 18 màn theo FRS §10.1 kèm mẫu bố cục, mức chi ti�
 
 Ảnh hi-fi của mọi màn được sinh từ HTML tĩnh bằng bộ công cụ ở `ph06/hifi/` (`gen_hifi.py` sinh HTML, `shot.js` chụp bằng Playwright khung rộng 1440, `nen.py` nén mỗi ảnh dưới 400 KB). Ảnh minh họa bố cục, vật liệu, mật độ; đặc tả chữ là nguồn chuẩn.
 
+### 1.6. Người đọc
+
+Kỹ sư giao diện `dh-console` đọc chương 4 đến 6 để nắm điều hướng, quy ước hiển thị và trạng thái chung, rồi mỗi chương màn khi dựng màn tương ứng. Thiết kế UX/UI đọc chương 2, 5 và các wireframe. Người quản lý dữ liệu và kiểm thử viên đọc mục thành phần, hành động, trạng thái và ma trận vai trò (chương 26). Hội đồng thẩm định đọc phần Tóm tắt, chương 3 và chương 27.
+
+### 1.7. Cấu trúc tài liệu
+
+Chương 2 đến 6 nêu nguyên tắc, màn hệ cũ được giữ lại, điều hướng, quy ước hiển thị và trạng thái dùng chung. Chương 7 đến 24 đặc tả 18 màn UI-06-01 đến UI-06-18, mỗi chương gồm khối đặc tả, wireframe, thành phần, trường, hành động và trạng thái. Chương 25 đến 27 trình bày mẫu truy cập, ma trận vai trò và kiểm thử. Ba phụ lục ghi đề nghị đồng bộ cho D03-05, API và FRS.
+
 ## 2. Nguyên tắc thiết kế áp dụng cho PH-06
 
 Chương này nêu các lựa chọn thiết kế riêng cho nghiệp vụ dữ liệu chủ: màn đông chữ và số, người dùng là cán bộ dữ liệu làm việc cả ngày, dữ liệu cá nhân hiện khắp nơi.
 
 ### 2.1. Bản đồ vật liệu
+
+Bảng dưới cho biết mỗi vùng giao diện của PH-06 dùng vật liệu nào, kính mờ cho điều hướng hay nền đặc cho nội dung, và lý do chọn.
 
 | Vùng | Thành phần | Vật liệu | Lý do |
 |---|---|---|---|
@@ -131,6 +145,8 @@ Nút chỉ hiện khi người dùng có quyền và trạng thái đối tượ
 
 ### 2.5. Dữ liệu cá nhân trên giao diện
 
+Vì màn hình hiển thị dữ liệu cá nhân, các quy tắc dưới đây quy định việc che giá trị nhạy cảm, nội dung URL, khóa nguồn và dấu vết khi chụp hoặc in màn hình.
+
 1. Giá trị `SENSITIVE` hiển thị `CMP-MaskedValue`; nút "Hiện…" chỉ có khi người dùng có `PERM-09-unmask`, mở `CMP-ReasonDialog` (lý do từ 20 ký tự), giá trị rõ chỉ tồn tại trong phiên và tự che lại sau 60 giây hoặc khi rời màn.
 2. Không đưa số định danh, họ tên, ngày sinh, điện thoại lên URL; URL chỉ chứa `goldenId`, `itemId` (mã không mang nghĩa).
 3. Khóa nguồn (`sourceKey`) che một phần theo FRS (hai ký tự cuối). Số định danh trên ô tìm kiếm là trường mật khẩu dạng văn bản che, không lưu trong bộ nhớ trình duyệt, không ghi vào lịch sử gợi ý.
@@ -153,6 +169,8 @@ Số theo `vi-VN` (dấu chấm ngăn nghìn, dấu phẩy thập phân): điể
 Hệ cũ (Viettel 2021) không có MDM nên không có màn `LGC` nào của PH-06 (D02-02 ghi "—"). Căn cứ duy nhất là sáu màn mockup `mdm.html` của SRS cũ trong repo (`docs/07-srs/SRS-PH-06-mdm.md` §6). Bảng dưới nêu từng màn cũ đi đâu.
 
 ### 3.1. Màn mockup cũ và màn mới
+
+Bảng dưới đối chiếu từng màn của bản mockup cũ với màn mới và nêu quyết định giữ, tách hay thiết kế lại cùng lý do.
 
 | Màn cũ (SRS repo) | Màn mới | Quyết định | Ghi chú |
 |---|---|---|---|
@@ -178,6 +196,8 @@ LGC-NGSP-003 (BHXH hộ gia đình), LGC-NGSP-005 (ĐKKD), LGC-DMDC-015, LGC-DMD
 PH-06 chiếm mục menu số 21 "Dữ liệu chủ" (nhóm "Dữ liệu dùng chung") của D03-06-00 §2.3.2, route gốc `/du-lieu/du-lieu-chu`. Các màn con vào từ hàng tab phụ của trang, không có mục menu riêng.
 
 ### 4.1. Sơ đồ điều hướng
+
+Sơ đồ dưới cho thấy từ menu Dữ liệu chủ người dùng đi tới 18 màn PH-06 theo những đường nào, ví dụ từ Tổng quan sang Hàng đợi hay từ Tìm kiếm sang Chi tiết.
 
 ```{.mermaid caption="Sơ đồ điều hướng từ menu Dữ liệu chủ tới 18 màn PH-06"}
 flowchart TB
@@ -239,6 +259,8 @@ Route chính lấy đúng FRS §10.1. Đoạn tab con và query là quy ước c
 
 ### 4.3. Menu và phân quyền hiển thị
 
+Bảng dưới ghi điều kiện quyền để mỗi mục menu và huy hiệu số xuất hiện, nên người thiếu quyền không thấy mục mình không dùng được.
+
 | Phần tử | Điều kiện hiện |
 |---|---|
 | Mục menu "Dữ liệu chủ" | `PERM-06-read` |
@@ -258,6 +280,8 @@ Route chính lấy đúng FRS §10.1. Đoạn tab con và query là quy ước c
 DO chỉ thấy đối tượng thuộc tổ chức của mình (`○`); máy chủ lọc, giao diện không lọc lại. Đối tượng ngoài phạm vi trả ERR-06-028, hiện `ST-07`.
 
 ### 4.4. Breadcrumb và tiêu đề tab
+
+Bảng dưới ghi breadcrumb và tiêu đề tab trình duyệt của từng màn, trong đó không chứa dữ liệu cá nhân.
 
 | Màn | Breadcrumb | `document.title` |
 |---|---|---|
@@ -296,6 +320,8 @@ Mọi trạng thái hiển thị bằng `CMP-StatusTag` có biểu tượng và 
 
 ### 5.2. Nhãn enum khác
 
+Ngoài trạng thái bản ghi vàng, giao diện còn hiển thị nhãn cho mức so sánh, lý do vào hàng đợi và nhiều enum khác; bảng dưới ghi nhãn tiếng Việt của từng giá trị để mọi màn dùng thống nhất.
+
 | Enum | Hiển thị |
 |---|---|
 | `ComparisonLevel` | `EXACT` Trùng, `FUZZY_HIGH` Gần giống cao, `FUZZY_LOW` Gần giống thấp, `DIFFERENT` Khác, `MISSING` Thiếu |
@@ -328,7 +354,7 @@ Bảng dưới lấy nguyên câu của FRS §9.2 (bản 0.2 đã đủ câu cho
 | ERR-06-013 | "Nhập số, ngày văn bản phê duyệt thứ tự ưu tiên nguồn." | Dưới ô căn cứ, UI-06-08 |
 | ERR-06-014 | "Hệ thống {mã} chưa được đăng ký làm nguồn cho domain {domain}." | Phản hồi API; UI-06-08 hiển thị khi đăng ký |
 | ERR-06-017 | "Bản ghi không đúng mô hình {domain} phiên bản {n}: {danh sách trường}." | Báo cáo lỗi, UI-06-11 |
-| ERR-06-018 | "Tệp vượt giới hạn {n} dòng hoặc {m} MB." | Vùng thả tệp, UI-06-11 |
+| ERR-06-018 | "Tệp vượt {n} dòng hoặc {m} MB." | Vùng thả tệp, UI-06-11 |
 | ERR-06-019 | "Tệp có công thức hoặc macro nên không nhập được." | Báo cáo lỗi nhập tệp |
 | ERR-06-023 | "Ngưỡng tự hợp nhất phải từ 0,90 trở lên và cao hơn ngưỡng xem xét ít nhất 0,10." | Dưới thanh trượt, UI-06-09 |
 | ERR-06-024 | "Phiên bản {n} chưa đạt: precision {p}%, recall {r}%." | Hộp cảnh báo đầu UI-06-09 |
@@ -363,6 +389,8 @@ Bảng dưới lấy nguyên câu của FRS §9.2 (bản 0.2 đã đủ câu cho
 : Thông điệp hiển thị theo mã lỗi của PH-06
 
 ### 5.4. Dải thông báo dùng chung
+
+Bảng dưới ghi các dải thông báo dùng chung, gồm tình huống kích hoạt, màu dải và nội dung, để cảnh báo nghiêm trọng hiện giống nhau ở mọi màn.
 
 | Tình huống | Dải | Nội dung |
 |---|---|---|
@@ -422,28 +450,32 @@ Mọi màn xử lý bộ `ST-01…ST-15` của D03-06-00 §4.2; từng màn ch�
 
 ### 7.1. Wireframe
 
+Hình dưới là bố cục màn Tổng quan: hai băng cảnh báo ở đầu, thẻ chỉ số, biểu đồ xu hướng, hàng đợi theo lý do và chất lượng theo nguồn.
+
 ```text
-┌ Dữ liệu chủ ───────────────────────────────────────────────────────────────────────────────┐
-│ [Tổng quan][Bản ghi][Ứng viên][Hàng đợi][Cấu hình][Job][Độ chính xác][Đồng bộ QG]…         │
-│ ✕ ① Phát hiện 2 bản ghi vàng cùng số định danh. Cần xử lý ngay.            [Xem 2 bản ghi] │
-│ ⚠ ② Đồng bộ quốc gia đang chạy, lệch 0,4% (ngưỡng tạm dừng 5%).                            │
-│ Tổng quan dữ liệu chủ     Domain: Tất cả ▾  (24 giờ)(7 ngày)(●30 ngày)(90 ngày)  Cập nhật 14:02│
-├────────────┬────────────┬────────────┬────────────────┬────────────────┐
-│③ Bản ghi   │④ Tỷ lệ tự  │⑤ Hàng đợi  │⑥ Precision ·   │⑦ Đồng bộ       │
-│ vàng       │ động 30 ng │ mở         │ Recall         │ quốc gia       │
-│ 1.623.590  │ 88% ● Đạt  │ 142        │ 99,93% · 98,4% │ Đang chạy      │
-│ theo domain│            │ ⚠ 3 quá hạn│ lần 01/11      │ lệch 0,4%      │
-├────────────┴────────────┴────────────┴─┬──────────────┴────────────────┤
-│ ⑧ Xu hướng 12 tuần: tự động, trùng     │ ⑨ Hàng đợi theo lý do         │
-│  ───── tự động   - - - trùng còn lại   │  Có thể khớp ████████ 71      │
-│                                        │  Nhiều ứng viên ████ 37 …     │
-├────────────────────────────────────────┴───────────────────────────────┤
-│ ⑩ Chất lượng theo nguồn: nguồn · loại · nhận · từ chối · định danh sai │
-│    · trùng · đóng góp · việc cần làm                                    │
-└─────────────────────────────────────────────────────────────────────────┘
+| Dữ liệu chủ -------------------------------------------------------------------------------|
+| [Tổng quan][Bản ghi][Ứng viên][Hàng đợi][Cấu hình][Job][Độ chính xác][Đồng bộ QG]…         |
+| ✕ ① Phát hiện 2 bản ghi vàng cùng số định danh. Cần xử lý ngay.            [Xem 2 bản ghi] |
+| ⚠ ② Đồng bộ quốc gia đang chạy, lệch 0,4% (ngưỡng tạm dừng 5%).                            |
+| Tổng quan dữ liệu chủ     Domain: Tất cả ▾  (24 giờ)(7 ngày)(●30 ngày)(90 ngày)  Cập nhật 14:02|
+|------------|------------|------------|----------------|----------------|
+|③ Bản ghi   |④ Tỷ lệ tự  |⑤ Hàng đợi  |⑥ Precision ·   |⑦ Đồng bộ       |
+| vàng       | động 30 ng | mở         | Recall         | quốc gia       |
+| 1.623.590  | 88% ● Đạt  | 142        | 99,93% · 98,4% | Đang chạy      |
+| theo domain|            | ⚠ 3 quá hạn| lần 01/11      | lệch 0,4%      |
+|------------|------------|------------|-|--------------|----------------|
+| ⑧ Xu hướng 12 tuần: tự động, trùng     | ⑨ Hàng đợi theo lý do         |
+|  ----- tự động   - - - trùng còn lại   |  Có thể khớp ████████ 71      |
+|                                        |  Nhiều ứng viên ████ 37 …     |
+|----------------------------------------|-------------------------------|
+| ⑩ Chất lượng theo nguồn: nguồn · loại · nhận · từ chối · định danh sai |
+|    · trùng · đóng góp · việc cần làm                                    |
+|-------------------------------------------------------------------------|
 ```
 
 ### 7.2. Thành phần
+
+Bảng dưới đánh số các thành phần trong bố cục trên, kèm thành phần giao diện, điều kiện hiển thị và nguồn dữ liệu của từng phần.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn | Ghi chú |
 |---|---|---|---|---|---|
@@ -462,6 +494,8 @@ Mọi màn xử lý bộ `ST-01…ST-15` của D03-06-00 §4.2; từng màn ch�
 : UI-06-01 Tổng quan dữ liệu chủ, thành phần
 
 ### 7.3. Trạng thái màn
+
+Bảng dưới ghi màn Tổng quan hiển thị ra sao khi đang tải, khi chưa có domain nào, khi lỗi và các tình huống khác.
 
 | Trạng thái | Hiển thị |
 |---|---|
@@ -512,23 +546,27 @@ Thứ tự focus: băng cảnh báo, bộ lọc, thẻ trái sang phải, biểu
 
 ### 8.1. Wireframe
 
+Hình dưới là bố cục màn Tìm kiếm: chọn domain và cách tìm, nhập tiêu chí, bảng kết quả có chọn dòng để hợp nhất và cảnh báo khi xem quá nhiều bản ghi.
+
 ```text
-┌ Bản ghi vàng ───────────────────────────────────────── [Tra theo ID nguồn][Hợp nhất 2 đã chọn]┐
-│ Domain: (●CITIZEN)(ORGANIZATION)(ADDRESS)                                                      │
-├────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ Tìm theo: (●Họ tên)(Số định danh)(ID vàng)(ID nguồn)   Mục đích: [Giải quyết khiếu nại ▾]      │
-│ [Nguyễn Văn An   ] [Ngày/năm sinh: 1985] [Xã, phường ▾] [Trạng thái ▾]            [Tìm]       │
-│ ⓘ Họ tên cần đi kèm ngày sinh, năm sinh hoặc xã. Giá trị nhạy cảm luôn che.                     │
-├───┬──────────────┬──────────────┬─────────────┬──────────┬──────────┬─────┬────────┬───────────┤
-│☑ │ ID vàng      │ Họ tên       │ Số định danh│ Ngày sinh│ Địa chỉ  │Nguồn│Tin cậy │ Trạng thái│
-│☑ │ 0193a0c2…    │ Nguyễn Văn An│ *********345│ 12/03/85 │ …        │ 3   │● 0,96  │ ● Hoạt động│
-│… │              │              │             │          │          │     │        │            │
-├───┴──────────────┴──────────────┴─────────────┴──────────┴──────────┴─────┴────────┴───────────┤
-│ ⚠ Anh/chị đã xem 74 bản ghi trong 10 phút. Ngưỡng 100.            5 kết quả · đã chọn 2        │
-└────────────────────────────────────────────────────────────────────────────────────────────────┘
+| Bản ghi vàng ----------------------------------------- [Tra theo ID nguồn][Hợp nhất 2 đã chọn]|
+| Domain: (●CITIZEN)(ORGANIZATION)(ADDRESS)                                                      |
+|------------------------------------------------------------------------------------------------|
+| Tìm theo: (●Họ tên)(Số định danh)(ID vàng)(ID nguồn)   Mục đích: [Giải quyết khiếu nại ▾]      |
+| [Nguyễn Văn An   ] [Ngày/năm sinh: 1985] [Xã, phường ▾] [Trạng thái ▾]            [Tìm]       |
+| ⓘ Họ tên cần đi kèm ngày sinh, năm sinh hoặc xã. Giá trị nhạy cảm luôn che.                     |
+|---|--------------|--------------|-------------|----------|----------|-----|--------|-----------|
+|☑ | ID vàng      | Họ tên       | Số định danh| Ngày sinh| Địa chỉ  |Nguồn|Tin cậy | Trạng thái|
+|☑ | 0193a0c2…    | Nguyễn Văn An| *********345| 12/03/85 | …        | 3   |● 0,96  | ● Hoạt động|
+|… |              |              |             |          |          |     |        |            |
+|---|--------------|--------------|-------------|----------|----------|-----|--------|-----------|
+| ⚠ Anh/chị đã xem 74 bản ghi trong 10 phút. Ngưỡng 100.            5 kết quả · đã chọn 2        |
+|------------------------------------------------------------------------------------------------|
 ```
 
 ### 8.2. Thành phần, trường và cột
+
+Bảng dưới đánh số các ô chọn, trường nhập và cột của màn Tìm kiếm, kèm kiểm tra và API tương ứng.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
 |---|---|---|---|---|
@@ -567,6 +605,8 @@ Thứ tự focus: băng cảnh báo, bộ lọc, thẻ trái sang phải, biểu
 : UI-06-02 Cột kết quả
 
 ### 8.3. Hành động và trạng thái
+
+Bảng dưới ghi điều gì xảy ra khi người dùng tìm, chưa tìm, không có kết quả hay bị chặn, và màn hiển thị gì trong từng trường hợp.
 
 | Hành động, trạng thái | Hiển thị |
 |---|---|
@@ -616,25 +656,29 @@ Thứ tự focus: băng cảnh báo, bộ lọc, thẻ trái sang phải, biểu
 
 ### 9.1. Wireframe tab "Thuộc tính"
 
+Hình dưới là bố cục tab Thuộc tính của bản ghi vàng: đầu trang có trạng thái và các nút thao tác, bảng thuộc tính che giá trị nhạy cảm, và khung truy nguồn gốc của thuộc tính đang chọn.
+
 ```text
-┌ Dữ liệu chủ › CITIZEN › 0193a0c2 ───────────────────────────────────────────────────────────┐
-│ ① Nguyễn Văn An  [● Hoạt động]  CITIZEN · v7 · tin cậy 0,96   [Sửa tay][Hợp nhất…][Tách…]… │
-│    ID vàng 0193a0c2-…  [Sao chép] · Đồng bộ QG 25/11 06:00 · 3 nguồn liên kết               │
-│ ② [Thuộc tính][Nguồn liên kết 3][Nguồn gốc][Lịch sử 7][Thao tác 0]                          │
-├────────────────────────────────────────────────────────────┬────────────────────────────────┤
-│ ③ Thuộc tính | Giá trị | Phân loại | Nguồn | Chiến lược |  │ ④ Nguồn gốc · Ngày sinh        │
-│   Tin cậy | Cập nhật nguồn |                               │ Giá trị hiện tại 12/03/1985 từ  │
-│  Số định danh  *********345 [Hiện…] SENSITIVE QG-DANCU    │ QG-DANCU theo NATIONAL_AUTHORITY│
-│   NATIONAL_AUTHORITY  ● 1,0  26/06/2026                    │ Giá trị theo từng nguồn:        │
-│  Họ tên        Nguyễn Văn An  INTERNAL QG-DANCU …          │  QG-DANCU 12/03/1985 ✓ đang dùng│
-│  Ngày sinh     12/03/1985 … ◀ đang chọn                    │  HT-YTE   12/03/1986 ≠ khác     │
-│  Điện thoại    091*****78  HT-YTE MOST_RECENT ● 0,75       │  HT-BHXH  12/03/1985 ✓ trùng    │
-│  …                                                         │ Lịch sử giá trị (dòng thời gian)│
-│ Chú giải: ● cao ≥ 0,9 · TB 0,7–0,9 · thấp < 0,7            │ [Đề nghị sửa tại nguồn HT-YTE]  │
-└────────────────────────────────────────────────────────────┴────────────────────────────────┘
+| Dữ liệu chủ › CITIZEN › 0193a0c2 -----------------------------------------------------------|
+| ① Nguyễn Văn An  [● Hoạt động]  CITIZEN · v7 · tin cậy 0,96   [Sửa tay][Hợp nhất…][Tách…]… |
+|    ID vàng 0193a0c2-…  [Sao chép] · Đồng bộ QG 25/11 06:00 · 3 nguồn liên kết               |
+| ② [Thuộc tính][Nguồn liên kết 3][Nguồn gốc][Lịch sử 7][Thao tác 0]                          |
+|------------------------------------------------------------|--------------------------------|
+| ③ Thuộc tính | Giá trị | Phân loại | Nguồn | Chiến lược |  | ④ Nguồn gốc · Ngày sinh        |
+|   Tin cậy | Cập nhật nguồn |                               | Giá trị hiện tại 12/03/1985 từ  |
+|  Số định danh  *********345 [Hiện…] SENSITIVE QG-DANCU    | QG-DANCU theo NATIONAL_AUTHORITY|
+|   NATIONAL_AUTHORITY  ● 1,0  26/06/2026                    | Giá trị theo từng nguồn:        |
+|  Họ tên        Nguyễn Văn An  INTERNAL QG-DANCU …          |  QG-DANCU 12/03/1985 ✓ đang dùng|
+|  Ngày sinh     12/03/1985 … < đang chọn                    |  HT-YTE   12/03/1986 ≠ khác     |
+|  Điện thoại    091*****78  HT-YTE MOST_RECENT ● 0,75       |  HT-BHXH  12/03/1985 ✓ trùng    |
+|  …                                                         | Lịch sử giá trị (dòng thời gian)|
+| Chú giải: ● cao ≥ 0,9 · TB 0,7–0,9 · thấp < 0,7            | [Đề nghị sửa tại nguồn HT-YTE]  |
+|------------------------------------------------------------|--------------------------------|
 ```
 
 ### 9.2. Giải phẫu đầu trang và tab
+
+Bảng dưới đánh số các phần của đầu trang và hàng tab chi tiết, kèm thành phần giao diện và kiểm tra.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Ghi chú |
 |---|---|---|---|---|
@@ -684,6 +728,8 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 
 ### 9.5. Các tab còn lại
 
+Ngoài tab Thuộc tính, bản ghi vàng còn các tab Nguồn liên kết, Nguồn gốc, Lịch sử và Thao tác; bảng dưới ghi nội dung và hành động của từng tab.
+
 | Tab | Nội dung | Hành động |
 |---|---|---|
 | Nguồn liên kết | Bảng xref: nguồn, khóa nguồn che một phần, `XrefStatus`, cách khớp (`MatchMethod`), điểm, ngày liên kết, người xác nhận | "Gỡ liên kết…" (`PERM-06-update`): hộp thoại chọn `RelinkMode` (`NEW_GOLDEN` tạo bản ghi vàng mới, `REMATCH` đối sánh lại) và lý do ≥ 20 ký tự; liên kết do người xác nhận hiện nhãn "đã xác nhận bởi người" (BR-06-023) |
@@ -693,6 +739,8 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 : UI-06-03 Các tab Nguồn liên kết, Lịch sử, Thao tác
 
 ### 9.6. Hộp thoại thao tác
+
+Bảng dưới ghi các hộp thoại thao tác trên bản ghi vàng như bỏ che, sửa tay, ngừng và gỡ liên kết, cùng trường nhập, kiểm tra và thông điệp.
 
 | Hộp thoại | `CMP-*` | Trường | Kiểm tra | Thông điệp |
 |---|---|---|---|---|
@@ -707,6 +755,8 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 
 ### 9.7. Trạng thái bản ghi và hành động hiện
 
+Hành động hiện ra phụ thuộc vào trạng thái bản ghi; bảng dưới ghi với mỗi `GoldenStatus` giao diện trông thế nào và những nút nào được hiện.
+
 | `GoldenStatus` | Giao diện | Hành động hiện |
 |---|---|---|
 | `ACTIVE` | Bình thường | Sửa tay, Hợp nhất, Tách (≥ 2 liên kết), Hoàn tác (có thao tác hoàn tác được), Ngừng, Gỡ liên kết |
@@ -717,6 +767,8 @@ Thuộc tính thẩm quyền quốc gia hiện biểu tượng "quốc gia" cạ
 : UI-06-03 Hành động theo trạng thái bản ghi
 
 ### 9.8. Trạng thái màn
+
+Bảng dưới ghi màn chi tiết khi đang tải, khi không ghi được nhật ký truy cập, và các tình huống lỗi khác, kèm nội dung thông báo.
 
 | Trạng thái | Hiển thị |
 |---|---|
@@ -772,15 +824,17 @@ Biến thể thứ hai là tab "Nguồn gốc" mở rộng: danh sách thuộc t
 :::
 
 ```text
-┌ Hàng đợi người quản lý dữ liệu ──────────────────────── [Nhận việc tiếp theo ⏎][Phân công…] ┐
-│ Đang mở 142 │ Của tôi 9 (1 chờ duyệt) │ Quá hạn 3 ⚠ │ Hôm nay xử lý 37 (TB 44 giây/mục)     │
-│ (●Của tôi 9)(Chưa nhận 118)(Quá hạn 3)(Chờ duyệt 4)(Tất cả 142)   Domain▾ Lý do▾ Rủi ro▾     │
-│ ☐ Ưu tiên  Domain  Lý do  Điểm  Cặp bản ghi  Tuổi  SLA  Người nhận  Trạng thái               │
-│ ☐ Cao 92   CITIZEN Mâu thuẫn định danh 0,93 Nguyễn Văn An · Nguyễn V. An  9 ng  Quá hạn 2 ng │
-└────────────────────────────────────────────────────────────────────────────────────────────┘
+| Hàng đợi người quản lý dữ liệu ------------------------ [Nhận việc tiếp theo ⏎][Phân công…] |
+| Đang mở 142 | Của tôi 9 (1 chờ duyệt) | Quá hạn 3 ⚠ | Hôm nay xử lý 37 (TB 44 giây/mục)     |
+| (●Của tôi 9)(Chưa nhận 118)(Quá hạn 3)(Chờ duyệt 4)(Tất cả 142)   Domain▾ Lý do▾ Rủi ro▾     |
+| ☐ Ưu tiên  Domain  Lý do  Điểm  Cặp bản ghi  Tuổi  SLA  Người nhận  Trạng thái               |
+| ☐ Cao 92   CITIZEN Mâu thuẫn định danh 0,93 Nguyễn Văn An · Nguyễn V. An  9 ng  Quá hạn 2 ng |
+|--------------------------------------------------------------------------------------------|
 ```
 
 ### 10.1. Thành phần, cột và hành động
+
+Bảng dưới đánh số các thành phần của màn Hàng đợi, gồm thẻ chỉ số, phân vùng, bảng mục, cột và các hành động nhận việc, phân công.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
@@ -855,22 +909,24 @@ Bàn phím: `J`, `K`, `Enter`, `N`, `Space` chọn dòng, `?` mở `CMP-Shortcut
 Màn dùng khung toàn trang (không Drawer), ba vùng: thanh điểm tổng (cao 72 px, cố định dưới thanh tab), vùng giữa gồm bảng so sánh (cột rộng) và cột ngữ cảnh (rộng 330 px), thanh quyết định cố định ở chân (`glass-overlay`, cao 96 px). Thứ tự thị giác: điểm tổng, các dòng khác nhau, quyết định. Bảng so sánh sắp theo trọng số thuộc tính giảm dần (khóa định danh, họ tên, ngày sinh, rồi các thuộc tính còn lại); dòng `DIFFERENT` và `FUZZY_LOW` không bị ẩn khi bật "Chỉ hiện dòng khác" nhưng dòng `EXACT` có thể thu gọn.
 
 ```text
-┌ So sánh và quyết định  [Đã nhận · giữ còn 24 phút]        Mục 3/9 của tôi · còn 142   [‹][›] ┐
-│ ① Điểm tổng 0,91 ▕░░░░░░░░░░░░░░░░░░░░░▏ vùng xem xét 0,80–0,95 · Có thể khớp · Rủi ro: Cao    │
-├──────────────────────────────────────────────────────────────┬─────────────────────────────────┤
-│ ② Thuộc tính │ Bản ghi A │ Bản ghi B │ Mức so sánh │ Điểm   │ ③ Ngữ cảnh                      │
-│ Số định danh │ ****345   │ — (thiếu) │ Thiếu       │ —      │ Bản ghi nguồn của A:            │
-│ Họ tên       │ Nguyễn Văn An │ Nguyễn V. An │ Gần giống cao │ 0,94 │  QG-DANCU …8812 · 15/06/2026 │
-│ Ngày sinh    │ 12/03/1985│ 12/03/1985│ Trùng       │ 1,00   │  HT-BHXH …3390 · 03/09/2026     │
-│ Địa chỉ      │ Số 15 …   │ 15 …      │ Gần giống thấp│ 0,72 │ Bản ghi nguồn của B: HT-YTE …0041│
-│ Nơi sinh     │ Đà Nẵng   │ Quảng Nam │ Khác        │ 0,00   │ Cảnh báo chuẩn hóa: ĐVHC chuyển đổi│
-├──────────────────────────────────────────────────────────────┴─────────────────────────────────┤
-│ ④ Lý do * [____________________________________] 0/500    [Cùng một thực thể] [Khác nhau] [Hoãn]│
-│    Mẫu: (Trùng ngày sinh, điện thoại)(Cùng người, viết tắt tên)(Khác nơi sinh…)(Cần xác minh)   │
-└────────────────────────────────────────────────────────────────────────────────────────────────┘
+| So sánh và quyết định  [Đã nhận · giữ còn 24 phút]        Mục 3/9 của tôi · còn 142   [‹][›] |
+| ① Điểm tổng 0,91 ▕░░░░░░░░░░░░░░░░░░░░░▏ vùng xem xét 0,80–0,95 · Có thể khớp · Rủi ro: Cao    |
+|--------------------------------------------------------------|---------------------------------|
+| ② Thuộc tính | Bản ghi A | Bản ghi B | Mức so sánh | Điểm   | ③ Ngữ cảnh                      |
+| Số định danh | ****345   | — (thiếu) | Thiếu       | —      | Bản ghi nguồn của A:            |
+| Họ tên       | Nguyễn Văn An | Nguyễn V. An | Gần giống cao | 0,94 |  QG-DANCU …8812 · 15/06/2026 |
+| Ngày sinh    | 12/03/1985| 12/03/1985| Trùng       | 1,00   |  HT-BHXH …3390 · 03/09/2026     |
+| Địa chỉ      | Số 15 …   | 15 …      | Gần giống thấp| 0,72 | Bản ghi nguồn của B: HT-YTE …0041|
+| Nơi sinh     | Đà Nẵng   | Quảng Nam | Khác        | 0,00   | Cảnh báo chuẩn hóa: ĐVHC chuyển đổi|
+|--------------------------------------------------------------|---------------------------------|
+| ④ Lý do * [____________________________________] 0/500    [Cùng một thực thể] [Khác nhau] [Hoãn]|
+|    Mẫu: (Trùng ngày sinh, điện thoại)(Cùng người, viết tắt tên)(Khác nơi sinh…)(Cần xác minh)   |
+|------------------------------------------------------------------------------------------------|
 ```
 
 ### 11.2. Giải phẫu từng vùng
+
+Bảng dưới đánh số các vùng của màn So sánh và quyết định, từ thanh điểm tổng, bảng so sánh thuộc tính, ngữ cảnh nguồn đến ô lý do, kèm kiểm tra và nguồn dữ liệu.
 
 | # | Vùng, thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
 |---|---|---|---|---|
@@ -888,6 +944,8 @@ Màn dùng khung toàn trang (không Drawer), ba vùng: thanh điểm tổng (ca
 
 ### 11.3. Thanh quyết định
 
+Bảng dưới ghi hành vi của thanh quyết định, gồm ô lý do bắt buộc, mẫu câu lý do và ba nút Cùng một thực thể, Khác nhau, Hoãn.
+
 | Phần tử | Hành vi |
 |---|---|
 | Ô lý do | `CMP-TextArea` 20 đến 500 ký tự, bắt buộc với cả ba quyết định (BR-06-008); đếm ký tự; lỗi "Nhập lý do (tối thiểu 20 ký tự)." (ERR-06-007) |
@@ -902,6 +960,8 @@ Màn dùng khung toàn trang (không Drawer), ba vùng: thanh điểm tổng (ca
 : UI-06-05 Hành vi thanh quyết định
 
 ### 11.4. Bàn phím
+
+Người xử lý hàng đợi có thể dùng phím tắt thay chuột; bảng dưới ghi từng phím và tác dụng.
 
 | Phím | Tác dụng |
 |---|---|
@@ -919,6 +979,8 @@ Màn dùng khung toàn trang (không Drawer), ba vùng: thanh điểm tổng (ca
 Phím chữ chỉ hoạt động khi focus không ở ô nhập; hiển thị trong tooltip nút bằng `CMP-Kbd`. Phím tắt chỉ chọn, không tự gửi, tránh quyết định nhầm.
 
 ### 11.5. Trạng thái màn
+
+Bảng dưới ghi màn So sánh khi đang tải, khi mục đã lỗi thời hoặc hết hạn giữ, kèm cách hệ thống xử lý và giữ lại lý do đã gõ.
 
 | Trạng thái | Hiển thị |
 |---|---|
@@ -973,6 +1035,8 @@ Biến thể thứ hai thể hiện ca định danh khác nhau: dòng "Số đ�
 
 ### 12.1. Hợp nhất (bốn bước)
 
+Hợp nhất thủ công đi qua bốn bước; bảng dưới ghi nội dung, kiểm tra và thông điệp của từng bước, từ chọn bản ghi đến gửi duyệt hoặc thực hiện.
+
 | Bước | Nội dung | Kiểm tra | Thông điệp |
 |---|---|---|---|
 | 1. Chọn bản ghi | Danh sách hai đến mười bản ghi đã chọn từ UI-06-02 (có thể thêm bằng ID vàng); mỗi dòng ID, tên rút gọn, số liên kết | Cùng domain, đều `ACTIVE`; không cặp nào có khóa định danh xác định khác nhau | ERR-06-003 "Chỉ hợp nhất được bản ghi cùng domain."; ERR-06-006; ERR-06-029 |
@@ -986,6 +1050,8 @@ Rủi ro cao khi: hai bản ghi cùng có ≥ 3 liên kết, có thuộc tính q
 
 ### 12.2. Tách (ba bước)
 
+Tách bản ghi đi qua ba bước; bảng dưới ghi nội dung và kiểm tra của từng bước, từ chọn bản ghi, phân bổ liên kết cho các nhóm đến xác nhận.
+
 | Bước | Nội dung | Kiểm tra |
 |---|---|---|
 | 1. Chọn bản ghi | Bản ghi hiện tại và danh sách liên kết hiệu lực (có ít nhất 2) | "Bản ghi chỉ có một nguồn liên kết, không có gì để tách." (ERR-06-032) |
@@ -997,6 +1063,8 @@ Rủi ro cao khi: hai bản ghi cùng có ≥ 3 liên kết, có thuộc tính q
 Kéo thả luôn có phương án bàn phím tương đương (WCAG 2.5.7): chọn liên kết bằng `Space`, nút "Chuyển sang nhóm {n}" hoặc `Alt+1`, `Alt+2`.
 
 ### 12.3. Trạng thái màn
+
+Bảng dưới ghi màn Hợp nhất và Tách khi bản ghi bị khóa, khi thao tác chờ duyệt và các tình huống khác.
 
 | Trạng thái | Hiển thị |
 |---|---|
@@ -1046,18 +1114,20 @@ Biến thể thứ hai là bước phân bổ của tách: nhóm 1 ở lại b�
 :::
 
 ```text
-┌ Mô hình domain ───────────────────────────────── [Nạp gói domain nền][+ Tạo domain][Gửi duyệt] ┐
-│ ⚠ Phiên bản 4 đang chờ duyệt (người gửi: Lê Thị Thu).                                          │
-├───────────────────┬────────────────────────────────────────────────────────────────────────────┤
-│ ① CITIZEN ACTIVE  │ [Thuộc tính][Khóa định danh][Phiên bản][So sánh v3→v4]                      │
-│    v3 · v4 chờ    │ Mã │ Nhãn │ Kiểu │ Bắt buộc │ Khóa │ Phân loại PH-09 │ Chuẩn hóa │ Đổi v4  │
-│   ORGANIZATION    │ nationalId  IDENTIFIER  Có  CCCD_12 xác định  SENSITIVE ✓  …               │
-│   ADDRESS         │ ethnicity   CODE_REF    Không  —   SENSITIVE PROPOSED   + Mới               │
-│   CAN-BO (nháp)   │ ✕ Thuộc tính Dân tộc chưa có phân loại PH-09 xác nhận (ERR-06-010)          │
-└───────────────────┴────────────────────────────────────────────────────────────────────────────┘
+| Mô hình domain --------------------------------- [Nạp gói domain nền][+ Tạo domain][Gửi duyệt] |
+| ⚠ Phiên bản 4 đang chờ duyệt (người gửi: Lê Thị Thu).                                          |
+|-------------------|----------------------------------------------------------------------------|
+| ① CITIZEN ACTIVE  | [Thuộc tính][Khóa định danh][Phiên bản][So sánh v3→v4]                      |
+|    v3 · v4 chờ    | Mã | Nhãn | Kiểu | Bắt buộc | Khóa | Phân loại PH-09 | Chuẩn hóa | Đổi v4  |
+|   ORGANIZATION    | nationalId  IDENTIFIER  Có  CCCD_12 xác định  SENSITIVE ✓  …               |
+|   ADDRESS         | ethnicity   CODE_REF    Không  —   SENSITIVE PROPOSED   + Mới               |
+|   CAN-BO (nháp)   | ✕ Thuộc tính Dân tộc chưa có phân loại PH-09 xác nhận (ERR-06-010)          |
+|-------------------|----------------------------------------------------------------------------|
 ```
 
 ### 13.1. Thành phần và trường
+
+Bảng dưới đánh số các thành phần của màn Mô hình domain, gồm cây domain và phiên bản, bảng thuộc tính, khóa định danh và so sánh phiên bản, kèm kiểm tra.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
@@ -1115,6 +1185,8 @@ Bản `ACTIVE` chỉ đọc (BR-06-017); sửa tạo phiên bản nháp mới. T
 
 ### 14.1. Thành phần và trường
 
+Bảng dưới đánh số các thành phần của màn Nguồn và ưu tiên nguồn, gồm bảng nguồn, drawer đăng ký và bảng thứ tự ưu tiên, kèm trường và kiểm tra.
+
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
 | 1 | Bảng nguồn | `CMP-DataTable` | Mã nguồn, HTTT, `SourceKind`, `IngestChannel`, domain, `SourceStatus`, nạp 24 giờ, tỷ lệ từ chối |
@@ -1169,6 +1241,8 @@ Người đề nghị không tự duyệt (ERR-06-005). Nguồn `TEP-LO` (tệp 
 :::
 
 ### 15.1. Thành phần và trường
+
+Bảng dưới đánh số các thành phần của màn Quy tắc đối sánh, gồm chọn phiên bản, bảng quy tắc, hai ngưỡng và chạy thử, kèm trường và kiểm tra.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
@@ -1228,6 +1302,8 @@ Tập nhãn và đánh giá chi tiết ở UI-06-13. Biểu đồ phân bố có
 
 ### 16.1. Thành phần và trường
 
+Bảng dưới đánh số các thành phần của màn Quy tắc sống sót, gồm bảng chiến lược theo thuộc tính và tham số của từng chiến lược.
+
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
 | 1 | Bảng chiến lược | `CMP-EditableTable` | Thuộc tính, `SurvivorshipStrategy` (`CMP-Select`), tham số, thẩm quyền quốc gia, thay đổi, tác động ước tính; thuộc tính thẩm quyền quốc gia khóa `NATIONAL_AUTHORITY` (BR-06-025) |
@@ -1265,12 +1341,14 @@ Trạng thái: rỗng dùng mặc định gói nền; xem trước đang tính (
 
 **Trạng thái.** `CandidateStatus`; tệp đang kiểm tra; tệp quá giới hạn; có công thức; không quyền.
 
-**Thông báo.** "Bản ghi không đúng mô hình {domain} phiên bản {n}: {danh sách trường}."; "Tệp vượt giới hạn {n} dòng hoặc {m} MB."; "Tệp có công thức hoặc macro nên không nhập được."
+**Thông báo.** "Bản ghi không đúng mô hình {domain} phiên bản {n}: {danh sách trường}."; "Tệp vượt {n} dòng hoặc {m} MB."; "Tệp có công thức hoặc macro nên không nhập được."
 
 **Đợt, mức chi tiết.** Đợt 3; đầy đủ.
 :::
 
 ### 17.1. Danh sách ứng viên
+
+Bảng dưới đánh số các thành phần của danh sách ứng viên, gồm phân vùng, bộ lọc và bảng, kèm cột hiển thị.
 
 | # | Thành phần | `CMP-*` | Nội dung |
 |---|---|---|---|
@@ -1284,6 +1362,8 @@ Trạng thái: rỗng dùng mặc định gói nền; xem trước đang tính (
 Ứng viên `REJECTED` có lý do bằng chữ; "Xử lý lại" chỉ cho ứng viên lỗi có thể sửa sau khi đổi cấu hình (ví dụ mô hình mới). Giá trị DLCN trong Drawer dùng `CMP-MaskedValue`.
 
 ### 17.2. Nhập tệp lô (PTN-09)
+
+Nhập tệp lô đi qua nhiều bước từ chọn tệp, ánh xạ cột đến gửi; bảng dưới ghi nội dung và kiểm tra của từng bước.
 
 | Bước | Nội dung | Kiểm tra |
 |---|---|---|
@@ -1332,6 +1412,8 @@ Trạng thái: rỗng "Chưa có ứng viên nào. Ứng viên xuất hiện khi
 
 ### 18.1. Thành phần và cột
 
+Bảng dưới đánh số các thành phần của màn Job và lịch, gồm băng chờ xác nhận, bảng job với tiến độ và các hành động trên job.
+
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
 | 1 | Băng chờ xác nhận | `CMP-Banner` cảnh báo | Job `AWAITING_CONFIRMATION`; nút "Xem kết quả", "Xác nhận áp dụng" (BR-06-022) |
@@ -1376,6 +1458,8 @@ Cột "Kết quả" của job lỗi hiện câu theo mã: 101 "Job đọc dữ l
 
 ### 19.1. Thành phần
 
+Bảng dưới đánh số các thành phần của màn Độ chính xác, gồm thẻ precision và recall so với ngưỡng, biểu đồ theo tháng và bảng tập nhãn.
+
 | # | Thành phần | `CMP-*` | Nội dung |
 |---|---|---|---|
 | 1 | Thẻ chỉ số | `CMP-KpiCard` ×4 | Precision, recall (kèm "đạt" hoặc "chưa đạt" và ngưỡng 99,9%, 98%), tập nhãn, kết luận `EvaluationVerdict` |
@@ -1419,6 +1503,8 @@ Tập `EVALUATION` và `TRAINING` tách bạch; một cặp không nằm ở c�
 :::
 
 ### 20.1. Thành phần
+
+Bảng dưới đánh số các thành phần của màn Đồng bộ quốc gia, gồm băng đỏ khi tạm dừng, thẻ chỉ số về tỷ lệ lệch và danh sách các điểm lệch.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
@@ -1465,6 +1551,8 @@ Khi tạm dừng, nút "Tiếp tục" vô hiệu cho tới khi người có `PER
 :::
 
 ### 21.1. Thành phần và trường
+
+Bảng dưới đánh số các thành phần của màn Xuất và đăng ký nhận cập nhật, gồm bảng đề nghị xuất và drawer đề nghị, kèm trường và kiểm tra.
 
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
@@ -1523,6 +1611,8 @@ Trạng thái: rỗng "Chưa có đề nghị xuất nào."; tệp `EXPIRED` ẩ
 
 ### 22.1. Thành phần và trường
 
+Bảng dưới đánh số các thành phần của màn Yêu cầu của chủ thể dữ liệu, gồm thẻ số lượng, bảng yêu cầu với hạn xử lý và các hành động xử lý.
+
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
 | 1 | Thẻ | `CMP-StatCard` ×3 | Đang xử lý, sắp đến hạn (≤ 2 ngày, kèm biểu tượng), hoàn thành trong tháng theo `DsrType` |
@@ -1578,6 +1668,8 @@ Trạng thái: rỗng "Chưa có đề nghị xuất nào."; tệp `EXPIRED` ẩ
 
 ### 23.1. Thành phần
 
+Bảng dưới đánh số các thành phần của màn Cài đặt và lưu giữ, gồm cây nhóm tham số và bảng tham số với miền giá trị và mặc định.
+
 | # | Thành phần | `CMP-*` | Nội dung, kiểm tra |
 |---|---|---|---|
 | 1 | Điều hướng nhóm | `CMP-Tree` | Hàng đợi, Đối sánh, Hoàn tác, Truy cập và xuất, Đồng bộ quốc gia, Yêu cầu chủ thể, Lưu giữ |
@@ -1622,6 +1714,8 @@ Trạng thái: có thay đổi chưa lưu hiện chấm cạnh tên nhóm và h�
 
 ### 24.1. Thành phần và cột
 
+Bảng dưới đánh số các thành phần của màn Nhật ký, gồm ba tab nhật ký truy cập, nhật ký xử lý, cảnh báo bất thường và băng cảnh báo truy cập quá nhiều.
+
 | # | Thành phần | `CMP-*` | Nội dung |
 |---|---|---|---|
 | 1 | Hàng tab | `CMP-Tabs` | Nhật ký truy cập, Nhật ký xử lý, Cảnh báo bất thường (huy hiệu số) |
@@ -1652,6 +1746,8 @@ Chương này mô tả cách các màn phối hợp trong ba luồng chính, và
 
 ### 25.1. Mẫu truy cập dữ liệu
 
+Bảng dưới ghi cách giao diện truy cập dữ liệu, từ gọi API, bộ nhớ đệm đến xử lý lỗi, trong đó dữ liệu bản ghi vàng không được lưu đệm.
+
 | Việc | Cách làm |
 |---|---|
 | Gọi API | Tầng `mdmApi` sinh từ OpenAPI D03-04-PH06; mọi lỗi theo RFC 9457 sang `ST-11`, `ST-12`, `ST-13` |
@@ -1664,6 +1760,8 @@ Chương này mô tả cách các màn phối hợp trong ba luồng chính, và
 : Mẫu truy cập dữ liệu và tổ chức mã giao diện
 
 ### 25.2. Luồng chính: xử lý hàng đợi
+
+Sơ đồ dưới cho thấy luồng chính xử lý một mục hàng đợi: DS nhận việc, so sánh và quyết định, rủi ro cao thì chờ DA duyệt còn rủi ro thấp thì hoàn tất ngay.
 
 ```{.mermaid caption="Luồng xử lý một mục hàng đợi và duyệt bốn mắt"}
 sequenceDiagram
@@ -1729,6 +1827,8 @@ Ghi chú: VW chỉ thấy số tổng hợp ở UI-06-01, không thấy liên k�
 
 ### 27.1. Kiểm thử giao diện
 
+Bảng dưới ghi các nhóm kiểm thử giao diện, nội dung kiểm tra và công cụ, chẳng hạn hiển thị theo quyền và không để dữ liệu cá nhân lộ ra URL.
+
 | Nhóm kiểm thử | Nội dung | Công cụ |
 |---|---|---|
 | Hiển thị theo quyền | Mỗi tổ hợp vai trò trong ma trận mục 26 mở màn: có hoặc không thấy nút; mở route trực tiếp khi thiếu quyền hiện `ST-07` | Playwright, tài khoản kiểm thử `T90…T99` |
@@ -1744,6 +1844,8 @@ Ghi chú: VW chỉ thấy số tổng hợp ở UI-06-01, không thấy liên k�
 Ca kiểm thử chi tiết ở D05-02-PH06 (TC-06-xxx), ánh xạ màn sang ca theo bảng truy vết của tập đó.
 
 ### 27.2. Danh sách ảnh hi-fi
+
+Bảng dưới liệt kê ảnh hi-fi của từng màn và điểm nổi bật cần kiểm tra trên mỗi ảnh.
 
 | Ảnh | Màn | Nội dung nổi bật |
 |---|---|---|
@@ -1762,6 +1864,8 @@ Ca kiểm thử chi tiết ở D05-02-PH06 (TC-06-xxx), ánh xạ màn sang ca t
 Ảnh dựng bằng `ph06/hifi/gen_hifi.py` (HTML tĩnh theo token D03-05) và `shot.js` (Playwright, 1440 rộng, `deviceScaleFactor` 1), rồi `nen.py` nén dưới 400 KB mỗi ảnh. Chạy lại: `python3 gen_hifi.py && node shot.js && python3 nen.py`. Dữ liệu là giả định của tỉnh thí điểm T68: người, số định danh, tổ chức đều là dữ liệu giả, số định danh luôn che.
 
 ## Phụ lục A. Đề nghị bổ sung cho D03-05
+
+Bảng dưới ghi các thành phần giao diện mới mà PH-06 đề nghị bổ sung vào bộ chung D03-05, kèm lý do và nơi dùng.
 
 | # | Đề nghị | Lý do, nơi dùng |
 |---|---|---|

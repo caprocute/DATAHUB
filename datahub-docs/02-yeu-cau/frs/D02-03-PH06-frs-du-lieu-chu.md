@@ -87,6 +87,8 @@ Những việc dưới đây liên quan nhưng không thuộc PH-06; tài liệu
 
 ### 1.3. Đối tượng sử dụng và cách đọc
 
+Mỗi nhóm người đọc có một lối vào riêng; bảng dưới chỉ rõ từng nhóm nên đọc chương nào và để làm gì, để không phải đọc hết tài liệu.
+
 | Người đọc | Đọc phần | Mục đích |
 |---|---|---|
 | Hội đồng thẩm định | Tóm tắt, chương 2, 5, 11, 14 | Sự cần thiết, tuân thủ pháp lý, ranh giới với CSDL quốc gia |
@@ -101,6 +103,8 @@ Những việc dưới đây liên quan nhưng không thuộc PH-06; tài liệu
 Chức năng dùng chung (đăng nhập, chọn tenant, danh sách chuẩn, kiểm toán chung, "Việc của tôi", bốn mắt, hiển thị lỗi) theo nhóm FR-00 của D02-02 và không lặp lại.
 
 ### 1.4. Thuật ngữ và chữ viết tắt
+
+Tài liệu dùng nhiều thuật ngữ về dữ liệu chủ, đối sánh và hợp nhất; bảng dưới giải thích từng thuật ngữ và chữ viết tắt để mọi chương hiểu thống nhất.
 
 | Thuật ngữ, viết tắt | Giải thích |
 |---|---|
@@ -130,6 +134,8 @@ Chức năng dùng chung (đăng nhập, chọn tenant, danh sách chuẩn, ki�
 : Thuật ngữ và chữ viết tắt của PH-06
 
 ### 1.5. Tài liệu tham chiếu
+
+Các yêu cầu trong tài liệu bám vào văn bản pháp lý và tài liệu thiết kế khác; bảng dưới ghi mã, tên và phần nội dung PH-06 dùng từng tài liệu.
 
 | Mã | Tài liệu | Dùng cho |
 |---|---|---|
@@ -170,6 +176,8 @@ Mỗi HTTT của tỉnh giữ bản sao riêng về công dân, doanh nghiệp, 
 : Hạn chế hiện nay và cách PH-06 khắc phục
 
 ### 2.2. Mục tiêu của phân hệ
+
+Phân hệ được nghiệm thu theo năm mục tiêu đo được dưới đây, mỗi mục gắn với một yêu cầu phi chức năng để kiểm chứng.
 
 1. Tỷ lệ bản ghi ứng viên được xử lý tự động ≥ 85%, hàng đợi thủ công ≤ 15% (NFR-06-007).
 2. Hợp nhất sai ≤ 0,1%, bỏ sót ≤ 2% trên tập nhãn ≥ 10.000 cặp (NFR-06-008, NFR-06-009).
@@ -214,6 +222,8 @@ flowchart TB
 Hình cho thấy PH-06 không gọi thẳng CSDL quốc gia mà luôn qua PH-14 (BR-06-032), không tự giữ danh mục mà tra PH-07, và không tự quyết chính sách che mà hỏi PH-09. Job Splink không gọi API nghiệp vụ; nó chỉ đọc bảng staging và ghi bảng kết quả trong `ph06_mdm`, `dh-data` áp kết quả.
 
 ### 2.4. Kiến trúc thành phần và công nghệ
+
+Phân hệ gồm một số thành phần nội bộ, mỗi thành phần có trách nhiệm và công nghệ riêng; bảng dưới giúp người đọc biết một việc nằm ở thành phần nào.
 
 | Thành phần | Trách nhiệm | Công nghệ |
 |---|---|---|
@@ -309,6 +319,8 @@ Hệ cũ không có chức năng dữ liệu chủ (D02-02 ghi LGC "—" cho PH-
 
 ### 3.1. Tác nhân
 
+Bảng dưới liệt kê người và hệ thống tương tác với PH-06, kèm vai trò và việc chính của từng bên, để các yêu cầu sau gán đúng tác nhân.
+
 | Tác nhân | Loại | Mô tả | Tương tác chính |
 |---|---|---|---|
 | Người quản lý dữ liệu (DS, ROLE-DATA_STEWARD) | Người | Cán bộ chuyên trách dữ liệu của Sở hoặc trung tâm dữ liệu tỉnh | Xử lý hàng đợi, hợp nhất, tách, sửa tay, nạp tệp, xem lineage |
@@ -360,6 +372,8 @@ HTTT và phân hệ gọi PH-06 bằng token dịch vụ. Scope: `mdm:ingest` (n
 ## 4. Khái niệm và mô hình nghiệp vụ
 
 ### 4.1. Khái niệm nghiệp vụ
+
+Bảng dưới định nghĩa các khái niệm nghiệp vụ như mô hình domain, thuộc tính quan trọng và nguồn dữ liệu chủ, để các yêu cầu sau dùng đúng một nghĩa.
 
 | Khái niệm | Định nghĩa |
 |---|---|
@@ -440,6 +454,8 @@ Hình cho thấy ứng viên không ghi thẳng vào bản ghi vàng mà qua k�
 
 ### 4.3. Máy trạng thái bản ghi vàng
 
+Bản ghi vàng đi qua bốn trạng thái (đang dùng, bị khóa, đã hợp nhất, đã ngừng); sơ đồ dưới cho thấy điều kiện chuyển giữa các trạng thái.
+
 ```{.mermaid caption="Vòng đời bản ghi vàng"}
 stateDiagram-v2
   [*] --> ACTIVE: Tạo (NO_MATCH, nạp quốc gia)
@@ -450,6 +466,8 @@ stateDiagram-v2
   ACTIVE --> RETIRED: Ngừng (không còn liên kết hiệu lực)
   RETIRED --> ACTIVE: Khôi phục
 ```
+
+Bảng dưới cho biết ý nghĩa của từng trạng thái bản ghi vàng và kết quả mà API tra cứu trả về ở trạng thái đó.
 
 | Trạng thái | Ý nghĩa | Tra cứu trả về |
 |---|---|---|
@@ -463,6 +481,8 @@ stateDiagram-v2
 Không có trạng thái xóa (BR-06-007). Trạng thái `SUSPENDED`, `ARCHIVED` của SRS cũ được thay bằng `LOCKED`, `RETIRED`.
 
 ### 4.4. Máy trạng thái mục hàng đợi
+
+Mục hàng đợi đi từ mở, nhận việc, chờ duyệt đến giải quyết hoặc hủy; sơ đồ dưới cho thấy các bước chuyển, kể cả hoãn, trả lại và mở lại.
 
 ```{.mermaid caption="Vòng đời mục hàng đợi người quản lý dữ liệu"}
 stateDiagram-v2
@@ -484,6 +504,8 @@ stateDiagram-v2
 
 ### 4.5. Máy trạng thái job đối sánh
 
+Job đối sánh theo lô chỉ ghi vào bản ghi vàng ở bước áp kết quả; sơ đồ dưới cho thấy các trạng thái từ xếp hàng đến hoàn tất, hủy hoặc lỗi, và điểm chờ DA xác nhận.
+
 ```{.mermaid caption="Vòng đời job đối sánh theo lô"}
 stateDiagram-v2
   [*] --> QUEUED: Lịch, yêu cầu tay
@@ -504,6 +526,8 @@ stateDiagram-v2
 Job `FAILED` không đổi bản ghi vàng nào vì chỉ bước `APPLYING` ghi vào bản ghi vàng và từng cặp được áp trong giao dịch riêng. `AWAITING_CONFIRMATION` là cơ chế an toàn của BR-06-022.
 
 ### 4.6. Máy trạng thái mô hình domain và bộ quy tắc
+
+Phiên bản mô hình và bộ quy tắc chỉ có hiệu lực sau khi được duyệt; sơ đồ dưới cho thấy các bước từ nháp, chạy thử, chờ duyệt đến kích hoạt hoặc bị thay thế.
 
 ```{.mermaid caption="Vòng đời phiên bản mô hình domain và bộ quy tắc"}
 stateDiagram-v2
@@ -1341,6 +1365,8 @@ sequenceDiagram
   R->>D: Bản ghi REJECTED vào DLQ
 ```
 
+Sơ đồ trên cho thấy luồng PH-04 đọc thay đổi từ hệ cũ, ánh xạ về mô hình CITIZEN, gửi lô 500 bản ghi vào PH-06 và đưa bản ghi bị từ chối vào DLQ.
+
 #### FR-06-012 · Nạp bản ghi ứng viên qua sự kiện PH-10
 
 ::: dac-ta
@@ -1544,6 +1570,8 @@ sequenceDiagram
   N->>V: Lưu bộ đệm 1 giờ
   N->>N: adminUnitCode 00004, legacyAdminUnitCode 00031
 ```
+
+Sơ đồ trên cho thấy khi mã ĐVHC của nguồn đã ngừng hiệu lực, bộ chuẩn hóa tra PH-07, chuyển sang mã mới 00004 và lưu bộ đệm, đồng thời giữ mã cũ ở `legacyAdminUnitCode`.
 
 #### FR-06-016 · Chống trùng, thứ tự phiên bản nguồn và xóa từ nguồn
 
@@ -4055,6 +4083,8 @@ Ghi chú đo. (1) NFR-06-008 đo precision chỉ trên các cặp có kết lu�
 
 ### 8.2. Tham số theo tenant
 
+Các tham số dưới đây do từng tỉnh tự chỉnh; bảng ghi giá trị mặc định, miền cho phép và ý nghĩa để quản trị tenant biết có thể đổi những gì.
+
 | Khóa | Mặc định | Miền | Ý nghĩa |
 |---|---|---|---|
 | `06.queue.sla-days` | 7 | 1…30 | Hạn xử lý mục hàng đợi |
@@ -4496,6 +4526,8 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 
 ### 12.1. Phụ thuộc
 
+Bảng dưới phân biệt phụ thuộc cứng và mềm, và ghi PH-06 ứng xử thế nào khi từng phụ thuộc không khả dụng.
+
 | Phụ thuộc | Loại | Hành vi khi không khả dụng |
 |---|---|---|
 | `pg-core` (PostgreSQL, `pg_trgm`) | Cứng | Không tra cứu, không nạp, không đối sánh |
@@ -4512,6 +4544,8 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 
 ### 12.2. Giả định
 
+Các giả định dưới đây là cơ sở để dựng quy mô và tải; bảng ghi giả định, căn cứ và những điểm cần xác nhận khi nạp thử.
+
 | Mã | Giả định | Cơ sở |
 |---|---|---|
 | GĐ-06-01 | T01 có khoảng 1,2 triệu dân, 25.000 tổ chức, 5 triệu bản ghi nguồn từ khoảng 20 nguồn | GĐ-06 tỉnh vừa sau sáp nhập; GĐ-04 200 HTTT |
@@ -4523,6 +4557,8 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 : Giả định của PH-06
 
 ### 12.3. Ràng buộc
+
+Các ràng buộc dưới đây giới hạn cách thiết kế phân hệ; bảng ghi nội dung từng ràng buộc và văn bản hay quyết định làm căn cứ.
 
 | Mã | Ràng buộc | Nguồn |
 |---|---|---|
@@ -4563,6 +4599,8 @@ Mã màn hình, thực thể của SRS cũ đổi nghĩa ở bản này; bảng 
 > **Câu hỏi mở Q06-09:** Thuật toán chữ số kiểm tra MST và cấu trúc 6 số đầu CCCD cần đối chiếu văn bản hiện hành của Bộ Tài chính, Bộ Công an trước khi khóa bộ kiểm tra (FR-06-003).
 
 ## 14. Tiêu chí chấp nhận cấp phân hệ
+
+Phân hệ được coi là đạt khi thỏa các tiêu chí dưới đây, gồm độ chính xác đối sánh, tính toàn vẹn khi hợp nhất, tách và nhật ký truy cập.
 
 1. Mọi FR mức M có ít nhất một ca dương và một ca âm đạt ở D05-02-PH06; ca rò rỉ chéo tenant cho mọi API đọc đạt.
 2. Trên tập nhãn ≥ 10.000 cặp của T01: hợp nhất sai ≤ 0,1%, bỏ sót ≤ 2% (NFR-06-008, 009); tỷ lệ tự động ≥ 85% trên 30 ngày nạp thử (NFR-06-007).
@@ -4680,6 +4718,8 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 | `SubscriptionStatus` | `PENDING_APPROVAL`, `ACTIVE`, `SUSPENDED`, `REVOKED` | FR-06-051 |
 | `SyncDirection` | `DOWN`, `UP`, `RECONCILE` | FR-06-053 |
 | `SyncState` | `RUNNING`, `PAUSED` | FR-06-053 |
+| `DryRunSampleMode` | `RANDOM`, `RECENT_CANDIDATES`, `QUEUE_HISTORY` | FR-06-024 |
+| `SyncPauseReason` | `RATIO_EXCEEDED`, `MANUAL`, `RESUMED` (mã lý do trong payload EVT-06-13) | FR-06-054 |
 | `DiscrepancySeverity` | `CRITICAL`, `MAJOR`, `MINOR` | FR-06-053, 054 |
 | `DiscrepancyStatus` | `OPEN`, `ACCEPTED_NATIONAL`, `KEPT_LOCAL`, `REPORTED_TO_NATIONAL`, `IGNORED` | FR-06-054 |
 | `DiscrepancyResolution` | `ACCEPT_NATIONAL`, `KEEP_LOCAL`, `REPORT_TO_NATIONAL`, `IGNORE` | FR-06-054 |
@@ -4695,6 +4735,8 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-06 (UC, SDD, CSDL, API,
 : Nguồn chuẩn giá trị liệt kê của PH-06
 
 ## Phụ lục B. Đề nghị đồng bộ
+
+PH-06 kéo theo thay đổi ở các tài liệu khác; bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị để hai bên khớp nhau.
 
 | Tài liệu | Đề nghị |
 |---|---|

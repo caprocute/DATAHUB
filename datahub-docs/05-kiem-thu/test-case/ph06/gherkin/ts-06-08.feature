@@ -5,7 +5,7 @@ Tính năng: TS-06-08 · Bộ quy tắc đối sánh, khóa gom nhóm và ngư�
 
   @TC-06-033 @P1 @Dương
   Kịch bản: TC-06-033 Soạn bộ quy tắc xác định, xác suất, loại trừ
-    # Truy vết: FR-06-018 · API-06-030, 031, 032 · UI-06-09 · PERM-06-config
+    # Truy vết: FR-06-018 · API-06-030, 031, 032, 104 · UI-06-09 · PERM-06-config
     # Mục đích: Chứng minh bộ quy tắc có đủ ba `MatchRuleType` và các `Comparator`, theo FR-06-018.
     Biết CITIZEN `ACTIVE`; DS1.
     Khi `POST .../rule-sets` phiên bản 1 `DRAFT`.

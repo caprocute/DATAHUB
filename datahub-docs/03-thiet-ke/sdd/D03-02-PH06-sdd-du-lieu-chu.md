@@ -31,7 +31,7 @@ Tập nêu năm ADR đề xuất (số 080 đến 084), mười câu hỏi mở 
 
 Tài liệu này là thiết kế phần mềm ở mức đủ để kỹ sư viết mã và kiểm thử viên viết ca kiểm thử mà không phải đoán: cấu trúc gói, lớp chính, thuật toán, giao dịch, khóa, tên chỉ số. Phạm vi gồm 11 thành phần của `mdm` và job `mdm-splink`. Ngoài phạm vi: lược đồ bảng (D03-03-PH06), hợp đồng API (D03-04-PH06), màn hình (D03-06-PH06), quy tắc phân loại dữ liệu và chính sách che (PH-09), kết nối CSDL quốc gia (PH-14).
 
-### 1.2. Đối tượng đọc
+### 1.2. Người đọc
 
 Kỹ sư `dh-data` đọc chương 3, 4, 5, 8; kỹ sư dữ liệu và học máy đọc 4.4 đến 4.6; kiến trúc sư và ATTT đọc 2, 6, 7, 4.14; SRE đọc 9 đến 11; hội đồng thẩm định đọc phần Tóm tắt và chương 13.
 
@@ -40,6 +40,8 @@ Kỹ sư `dh-data` đọc chương 3, 4, 5, 8; kỹ sư dữ liệu và học m�
 Mã `FR-06-nnn`, `BR-06-nnn`, `NFR-06-nnn`, `ERR-06-nnn`, `EVT-06-nn`, `API-06-nnn` lấy từ FRS; tên bảng lấy từ DDL `ph06_mdm.sql` của D03-03-PH06. Tên chỉ số quan sát có tiền tố `datahub_mdm_` (FRS viết rút gọn `mdm_`, xem §13.5). Mã `PERM-06-*` ngoài ba quyền sẵn có ở D02-08 là các quyền FRS Phụ lục B đề nghị bổ sung. Số liệu giả định ghi "giả định" kèm cơ sở: tenant T01 khoảng 1,2 triệu dân, 25.000 tổ chức, 5 triệu bản ghi nguồn từ 20 nguồn (GĐ-06-01 của FRS).
 
 ### 1.4. Thuật ngữ và chữ viết tắt
+
+Tập thiết kế dùng nhiều thuật ngữ như bản ghi vàng, ứng viên và blocking; bảng dưới giải thích từng thuật ngữ, kèm tên bảng dữ liệu tương ứng khi có.
 
 | Thuật ngữ | Giải thích |
 |---|---|
@@ -62,6 +64,8 @@ Mã `FR-06-nnn`, `BR-06-nnn`, `NFR-06-nnn`, `ERR-06-nnn`, `EVT-06-nn`, `API-06-n
 Chương 2 và 3 nói vị trí và cấu trúc mã; chương 4 là mô hình miền và 11 thành phần; chương 5 là bảy sơ đồ trình tự; chương 6 đến 12 là đa tenant, bảo mật, trạng thái và lỗi, cấu hình, quan sát, vận hành, kiểm thử; chương 13 là lộ trình, rủi ro, ADR đề xuất, câu hỏi mở.
 
 ### 1.6. Tài liệu liên quan và quyết định kiến trúc
+
+Thiết kế dựa trên FRS, thiết kế CSDL, kiến trúc tổng thể và các quyết định kiến trúc; bảng dưới ghi từng tài liệu và phần nội dung mà tập này lấy từ đó.
 
 | Tài liệu hoặc ADR | Nội dung dùng ở tập này |
 |---|---|
@@ -86,6 +90,8 @@ Chương 2 và 3 nói vị trí và cấu trúc mã; chương 4 là mô hình mi
 `mdm` là một module của DU `dh-data`, chạy ở namespace `dh-control` (vùng Z3) cùng PH-07, PH-08, PH-09 (D03-09 §4). Job `mdm-splink` cũng chạy ở `dh-control` nhưng là pod riêng, tài khoản dịch vụ riêng, mạng chỉ mở tới PgBouncer của `pg-core` (Z5) và Garage (Z5); không mở ra Internet, không tới Kafka, OpenBao hay API nghiệp vụ. Lưu lượng vào đi qua APISIX (Z2) với OIDC và OPA (SEC-21, 26); lưu lượng sự kiện đi qua Kafka (Z5) bằng Debezium Outbox Event Router của nền tảng (không phải mã của `dh-data`).
 
 ### 2.2. Sơ đồ thành phần
+
+Sơ đồ dưới cho thấy các module của PH-06 bên trong `dh-data`, Job Splink chạy riêng, và các hệ lân cận như APISIX, luồng PH-04, `pg-core`, Kafka, Valkey và OpenBao.
 
 ```{.mermaid caption="Sơ đồ thành phần của PH-06 trong dh-data và các hệ lân cận"}
 flowchart TB
@@ -150,6 +156,8 @@ Sơ đồ cho thấy ba đường. Đường nạp đi từ nguồn qua `ingest`
 
 ### 2.3. Phụ thuộc với module và phân hệ khác
 
+PH-06 gọi hoặc tiêu thụ sự kiện từ các phân hệ khác; bảng dưới ghi cách phụ thuộc vào từng phân hệ và hành vi khi phân hệ đó không khả dụng.
+
 | Phân hệ, hệ thống | Chiều | Cách phụ thuộc | Khi không khả dụng |
 |---|---|---|---|
 | PH-07 Danh mục, ĐVHC | `mdm` gọi | `RdmLookupApi` (module cùng DU), đệm Valkey 1 giờ | ERR-06-021, ứng viên `NORMALIZATION_PENDING` |
@@ -174,36 +182,36 @@ Module nằm ở `apps/data/src/main/java/vn/datahub/data/mdm`, theo `CC-MOD-01�
 
 ```text
 vn/datahub/data/mdm/
-├── package-info.java          @ApplicationModule(allowedDependencies = {"rdm::api","privacy::api","shared"})
-├── api/                       MdmResolveApi, MdmGoldenLookupApi, dto/ (GoldenView, ResolveResult, ...)
-├── events/                    GoldenCreated, GoldenUpdated, GoldenMerged, GoldenSplit, GoldenRetired,
-│                              GoldenRestored, XrefChanged, JobFinished, ... (EVT-06-01…15)
-└── internal/
-    ├── model/        DomainService, ModelVersionService, IdentifierValidator, CompatibilityChecker,
-    │                 ClassificationGate, BaselinePackInstaller, SchemaCompiler
-    ├── source/       SourceService, SourcePriorityService, ApprovalGuard
-    ├── ingest/       CandidateIngestService, IdempotencyGuard, VersionOrderGuard, FileIngestJob,
-    │                 InternalIngestController, SourceEventConsumer, CandidateReprocessor
-    ├── normalize/    NormalizationPipeline, VietnameseNameNormalizer, DateNormalizer, IdentifierNormalizer,
-    │                 PhoneEmailNormalizer, AddressNormalizer, OrgNameNormalizer, AdminUnitClient, BlockKeyGenerator
-    ├── matching/
-    │   ├── online/   MatchOrchestrator, DeterministicMatcher, CandidateRetriever, FellegiSunterScorer,
-    │   │             Comparators, ExclusionRuleEngine, ThresholdClassifier
-    │   ├── rules/    RuleSetService, RuleSetEvaluator, LabelSetService, DryRunService
-    │   └── batch/    BatchJobService, StagingExporter, SplinkJobLauncher, ResultApplier, BatchSafetyGate, JobWatchdog
-    ├── steward/      QueueItemFactory, PriorityCalculator, ClaimService, DecisionService, ApprovalService, SlaMonitor
-    ├── golden/       GoldenWriter, SurvivorshipEngine, SnapshotWriter, MergeService, SplitService, UndoService,
-    │                 ManualEditService, RetireService, ReapplyJob, ClusterLock, RiskClassifier
-    ├── lineage/      LineageRecorder, XrefService, XrefLookup
-    ├── serve/        GoldenQueryService, ResolveService, SearchService, MaskingFilter, AccessLogWriter,
-    │                 ExportService, ExportFileWriter, UpdateSubscriptionService, EventPublisher
-    ├── sync/         NationalSyncService, NationalChangeConsumer, ReconcileJob, UpSyncJob, DiscrepancyService, SyncBreaker
-    ├── ops/          DashboardMetrics, JobScheduler, ProcessingLogService, SubjectRequestService,
-    │                 RetentionPurger, TenantSettingService
-    ├── crypto/       MdmCrypto (bọc dh-crypto), HmacKeyProvider, DekCache
-    ├── web/          *Controller (REST /api/mdm/v1), MdmExceptionHandler, EtagSupport, IdempotencyFilter
-    ├── persistence/  *Repository (Spring Data JPA), GoldenJdbcDao, TenantSession, OutboxWriter, InboxStore
-    └── config/       MdmProperties (@ConfigurationProperties "datahub.mdm"), MdmCacheConfig, MdmKafkaConfig
+|-- package-info.java          @ApplicationModule(allowedDependencies = {"rdm::api","privacy::api","shared"})
+|-- api/                       MdmResolveApi, MdmGoldenLookupApi, dto/ (GoldenView, ResolveResult, ...)
+|-- events/                    GoldenCreated, GoldenUpdated, GoldenMerged, GoldenSplit, GoldenRetired,
+|                              GoldenRestored, XrefChanged, JobFinished, ... (EVT-06-01…15)
+|-- internal/
+    |-- model/        DomainService, ModelVersionService, IdentifierValidator, CompatibilityChecker,
+    |                 ClassificationGate, BaselinePackInstaller, SchemaCompiler
+    |-- source/       SourceService, SourcePriorityService, ApprovalGuard
+    |-- ingest/       CandidateIngestService, IdempotencyGuard, VersionOrderGuard, FileIngestJob,
+    |                 InternalIngestController, SourceEventConsumer, CandidateReprocessor
+    |-- normalize/    NormalizationPipeline, VietnameseNameNormalizer, DateNormalizer, IdentifierNormalizer,
+    |                 PhoneEmailNormalizer, AddressNormalizer, OrgNameNormalizer, AdminUnitClient, BlockKeyGenerator
+    |-- matching/
+    |   |-- online/   MatchOrchestrator, DeterministicMatcher, CandidateRetriever, FellegiSunterScorer,
+    |   |             Comparators, ExclusionRuleEngine, ThresholdClassifier
+    |   |-- rules/    RuleSetService, RuleSetEvaluator, LabelSetService, DryRunService
+    |   |-- batch/    BatchJobService, StagingExporter, SplinkJobLauncher, ResultApplier, BatchSafetyGate, JobWatchdog
+    |-- steward/      QueueItemFactory, PriorityCalculator, ClaimService, DecisionService, ApprovalService, SlaMonitor
+    |-- golden/       GoldenWriter, SurvivorshipEngine, SnapshotWriter, MergeService, SplitService, UndoService,
+    |                 ManualEditService, RetireService, ReapplyJob, ClusterLock, RiskClassifier
+    |-- lineage/      LineageRecorder, XrefService, XrefLookup
+    |-- serve/        GoldenQueryService, ResolveService, SearchService, MaskingFilter, AccessLogWriter,
+    |                 ExportService, ExportFileWriter, UpdateSubscriptionService, EventPublisher
+    |-- sync/         NationalSyncService, NationalChangeConsumer, ReconcileJob, UpSyncJob, DiscrepancyService, SyncBreaker
+    |-- ops/          DashboardMetrics, JobScheduler, ProcessingLogService, SubjectRequestService,
+    |                 RetentionPurger, TenantSettingService
+    |-- crypto/       MdmCrypto (bọc dh-crypto), HmacKeyProvider, DekCache
+    |-- web/          *Controller (REST /api/mdm/v1), MdmExceptionHandler, EtagSupport, IdempotencyFilter
+    |-- persistence/  *Repository (Spring Data JPA), GoldenJdbcDao, TenantSession, OutboxWriter, InboxStore
+    |-- config/       MdmProperties (@ConfigurationProperties "datahub.mdm"), MdmCacheConfig, MdmKafkaConfig
 ```
 
 Mã Python của job nằm ngoài cây Java: `apps/data/jobs/mdm-splink/` gồm `mdm_splink/settings.py` (dựng cấu hình Splink từ bộ quy tắc), `train.py`, `predict.py`, `manifest.py`, `requirements.lock` (ghim Splink 4.x, DuckDB), `Dockerfile` (ảnh tối giản, người dùng không phải root, ký cosign theo SEC-56).
@@ -213,6 +221,8 @@ Mã Python của job nằm ngoài cây Java: `apps/data/jobs/mdm-splink/` gồm 
 Ba luật ArchUnit riêng của module, ngoài bộ chung của D04-01: (1) `internal.serve`, `internal.sync` và `internal.web` ghi bản ghi vàng chỉ qua `GoldenWriter`; không gói nào khác import `GoldenRecordEntity` để ghi; (2) không lớp nào ngoài `internal.crypto` import `dh-crypto` hay gọi OpenBao; (3) không lớp nào trong `internal.matching.batch` import `internal.golden` trừ `ResultApplier`. Luật (1) bảo vệ BR-06-005: không có đường ghi nào bỏ qua ảnh chụp.
 
 ### 3.3. Giao diện công bố
+
+Các module khác của `dh-data` chỉ được dùng PH-06 qua các giao diện công bố; bảng dưới ghi giao diện, bên dùng và phương thức chính của từng giao diện.
 
 | Giao diện | Dùng bởi | Phương thức chính |
 |---|---|---|
@@ -826,6 +836,8 @@ Khóa HMAC của tenant được sinh một lần, cất ở OpenBao KV (`secret
 
 ### 4.15. Bộ đệm
 
+Bảng dưới ghi từng loại bộ đệm, nơi đặt, dạng khóa, thời hạn và điều kiện xóa, để biết dữ liệu nào có thể cũ và cũ trong bao lâu.
+
 | Bộ đệm | Nơi | Khóa | Hạn | Xóa khi |
 |---|---|---|---|---|
 | Mô hình domain biên dịch, bộ quy tắc, cấu hình sống sót | Caffeine mỗi bản sao | `(tenant, domain, version)` | Đến khi đổi | Nhận EVT-06-10, EVT-06-11, lệnh Valkey pub/sub |
@@ -845,6 +857,8 @@ Hai nguyên tắc: **không đệm kết quả resolve hay giá trị thuộc t�
 Bảy sơ đồ phủ các luồng nhiều bước hoặc nhiều thành phần của FRS; mỗi sơ đồ ghi FR liên quan và một đoạn nói điểm cần chú ý.
 
 ### 5.1. Nạp, chuẩn hóa, đối sánh, sống sót, phát sự kiện (FR-06-010, 014, 015, 016, 020, 021, 034, 050)
+
+Sơ đồ dưới cho thấy đường đi của một ứng viên từ lúc nguồn gửi đến khi có bản ghi vàng và sự kiện trên Kafka: lưu `RECEIVED`, chuẩn hóa, đối sánh, sống sót rồi ghi outbox.
 
 ```{.mermaid caption="Nạp ứng viên đến bản ghi vàng và sự kiện outbox (FR-06-010, 014, 015, 016, 020, 021, 034, 050)"}
 sequenceDiagram
@@ -877,6 +891,8 @@ sequenceDiagram
 Điểm cần chú ý: ứng viên được chốt ở trạng thái `RECEIVED` trước khi chuẩn hóa nên không mất dữ liệu; bản ghi vàng, lịch sử và sự kiện cùng một giao dịch nên không có sự kiện "ma" (không bản ghi) hay bản ghi không sự kiện. `POSSIBLE_MATCH` rẽ sang `steward` thay vì `GoldenWriter` (xem §4.7).
 
 ### 5.2. Job đối sánh theo lô bằng Splink (FR-06-022, 056)
+
+Sơ đồ dưới cho thấy job đối sánh theo lô: dữ liệu được đưa vào bảng staging, Job Splink chấm cặp, rồi bộ áp kết quả ghi từng cặp vào bản ghi vàng, có bước DA xác nhận nếu số MATCH vượt ngưỡng.
 
 ```{.mermaid caption="Job đối sánh theo lô và áp kết quả (FR-06-022, 056)"}
 sequenceDiagram
@@ -915,6 +931,8 @@ sequenceDiagram
 
 ### 5.3. Hợp nhất rủi ro cao có duyệt bốn mắt (FR-06-030, 031, 037)
 
+Sơ đồ dưới cho thấy một quyết định MATCH rủi ro cao chưa hợp nhất ngay mà khóa bản ghi chờ DA duyệt, và chỉ thi hành khi người duyệt khác người đề nghị.
+
 ```{.mermaid caption="Hợp nhất rủi ro cao có duyệt bốn mắt (FR-06-030, 031, 037)"}
 sequenceDiagram
   actor DS
@@ -943,6 +961,8 @@ sequenceDiagram
 
 ### 5.4. Tách bản ghi vàng (FR-06-038)
 
+Sơ đồ dưới cho thấy việc tách một bản ghi vàng thành nhiều bản ghi: lưu ảnh chụp bản gốc, chia lại liên kết nguồn, tính lại sống sót và ghi `negativeLink` giữa các nhóm.
+
 ```{.mermaid caption="Tách bản ghi vàng thành nhiều bản ghi (FR-06-038)"}
 sequenceDiagram
   actor DS
@@ -964,6 +984,8 @@ sequenceDiagram
 Điểm cần chú ý: `negativeLink` giữa các nhóm ngăn job lô đề xuất gộp lại ở lần chạy sau (BR-06-023).
 
 ### 5.5. Hoàn tác thao tác (FR-06-039)
+
+Sơ đồ dưới cho thấy hoàn tác khôi phục trạng thái từ ảnh chụp trước thao tác, nhưng chặn khi có thao tác thủ công phụ thuộc chưa xác nhận hoặc đã quá 90 ngày thì chờ DA.
 
 ```{.mermaid caption="Hoàn tác thao tác trên bản ghi vàng (FR-06-039)"}
 sequenceDiagram
@@ -990,6 +1012,8 @@ sequenceDiagram
 Điểm cần chú ý: bước "phát lại cập nhật nguồn đến sau" bảo đảm hoàn tác không làm mất dữ liệu mới của nguồn; hoàn tác là một thao tác mới, không xóa dòng lịch sử.
 
 ### 5.6. Resolve trực tuyến cho luồng PH-04 (FR-06-047, 052, 057)
+
+Sơ đồ dưới cho thấy một lượt resolve trực tuyến từ luồng PH-04: lấy thuộc tính được phép từ PH-09, đối sánh, che dữ liệu theo mục đích và ghi nhật ký truy cập trước khi trả kết quả.
 
 ```{.mermaid caption="Resolve trực tuyến có che và nhật ký truy cập (FR-06-047, 052, 057)"}
 sequenceDiagram
@@ -1020,6 +1044,8 @@ sequenceDiagram
 Điểm cần chú ý: thứ tự "ghi nhật ký rồi mới trả" là bất biến (BR-06-010); `202` nghĩa là chưa có kết luận và bên gọi không được ghi dữ liệu theo kết quả đó.
 
 ### 5.7. Đồng bộ quốc gia và tự dừng khi lệch (FR-06-053, 054)
+
+Sơ đồ dưới cho thấy thay đổi từ PH-14 vào PH-06 như ứng viên mức 1, job đối chiếu hằng đêm so với giá trị quốc gia, và bộ ngắt tự dừng đồng bộ khi tỷ lệ lệch vượt 5%.
 
 ```{.mermaid caption="Đồng bộ quốc gia chiều xuống, đối chiếu và tự dừng (FR-06-053, 054)"}
 sequenceDiagram
@@ -1127,6 +1153,8 @@ Mỗi thay đổi nghiệp vụ ghi một dòng `outbox_event` **trong cùng gia
 
 ### 8.4. Thời gian chờ, thử lại, ngắt mạch
 
+Bảng dưới ghi thời gian chờ, số lần thử lại, ngắt mạch và cách xử lý khi hết lượt cho từng phụ thuộc, để biết PH-06 suy giảm thế nào khi một phụ thuộc chậm hoặc lỗi.
+
 | Phụ thuộc | Thời gian chờ | Thử lại | Ngắt mạch | Khi hết lượt |
 |---|---|---|---|---|
 | `pg-core` truy vấn trực tuyến | `statement_timeout` 800 ms | Không (trực tuyến) | Không | `POSSIBLE_MATCH` lý do `TIMEOUT` |
@@ -1192,6 +1220,8 @@ Mười ba tham số của FRS 8.2 lưu ở `tenant_setting`, đọc qua `MdmPro
 : Tham số theo tenant và thành phần đọc
 
 ### 9.2. Cờ tính năng
+
+Bảng dưới ghi các cờ tính năng, giá trị mặc định và tác dụng, để vận hành biết cờ nào bật hoặc tắt từng phần của phân hệ khi triển khai.
 
 | Cờ | Mặc định | Tác dụng |
 |---|---|---|
@@ -1281,6 +1311,8 @@ Chỉ số phát ra qua Micrometer, tiền tố `datahub_mdm_`, nhãn có bậc 
 
 ## 12. Kiểm thử
 
+Chiến lược kiểm thử chia theo lớp; bảng dưới ghi nội dung mỗi lớp và ví dụ ca, từ hàm thuần, so sánh Java với Splink đến tích hợp với PostgreSQL và Kafka.
+
 | Lớp | Nội dung | Ví dụ ca |
 |---|---|---|
 | Đơn vị | Hàm thuần: `VietnameseNameNormalizer`, `DateNormalizer`, `IdentifierValidator`, `Comparators`, `FellegiSunterScorer`, `SurvivorshipEngine`, `RiskClassifier` | Bảng 300 tên: "NGUYEN VAN A", "Nguyễn  Văn A", "Văn A Nguyễn" cho cùng `nameAscii`; tên một tiếng, họ kép; ngày giả `01/01/1900` thành `MISSING`; hai lần `survive` cùng đầu vào cùng kết quả |
@@ -1331,6 +1363,8 @@ FR của SRS cũ (FR-06-001…013 ở `docs/07-srs`) được ánh xạ sang 60 
 
 ### 13.3. Rủi ro
 
+Bảng dưới ghi các rủi ro kỹ thuật và nghiệp vụ của thiết kế, mức độ và cách giảm thiểu, để người duyệt biết điểm nào cần theo dõi.
+
 | Rủi ro | Mức | Giảm thiểu |
 |---|---|---|
 | Hợp nhất nhầm hai công dân | Cao | Ngưỡng đo trên tập nhãn; bốn mắt; hoàn tác 90 ngày; `negativeLink` |
@@ -1357,6 +1391,8 @@ Dải ADR 080 đến 084 dành cho PH-06 (D00-04 §3.1). Tập này chỉ nêu n
 : Quyết định kiến trúc đề xuất cho PH-06
 
 ### 13.5. Đề nghị bổ sung cho FRS và tài liệu khác
+
+Quá trình thiết kế phát hiện vài chỗ FRS và tài liệu khác cần sửa; bảng dưới ghi từng đề nghị bổ sung kèm lý do để các tập khớp nhau.
 
 | Tài liệu | Đề nghị | Lý do |
 |---|---|---|

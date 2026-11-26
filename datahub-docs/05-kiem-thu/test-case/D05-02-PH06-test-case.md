@@ -532,7 +532,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-004, 006 · BR-06-016 · API-06-008 · ERR-06-010, 021.
+**Truy vết.** FR-06-004, 006 · BR-06-016 · API-06-008, 098 · ERR-06-010, 021.
 
 **Tiền điều kiện, dữ liệu.** DEMO-CANBO có thuộc tính `ngaySinh` `PROPOSED`.
 
@@ -670,7 +670,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-006 · API-06-011 · ERR-06-006, 011 · BR-06-007.
+**Truy vết.** FR-06-006 · API-06-011, 097 · ERR-06-006, 011 · BR-06-007.
 
 **Tiền điều kiện, dữ liệu.** DEMO-CANBO `ACTIVE` không có bản ghi vàng; CITIZEN `ACTIVE` có bản ghi vàng.
 
@@ -702,7 +702,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-008 · API-06-014, 015, 016 · UI-06-08 · PERM-06-config.
+**Truy vết.** FR-06-008 · API-06-014, 015, 016, 099, 100 · UI-06-08 · PERM-06-config.
 
 **Tiền điều kiện, dữ liệu.** T90; HTTT `HT-YTE`, `HT-GIAODUC` `ACTIVE` ở PH-01; TA.
 
@@ -754,7 +754,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-009 · BR-06-003, 004 · API-06-018, 019, 020 · UI-06-08 · PERM-06-approve.
+**Truy vết.** FR-06-009 · BR-06-003, 004 · API-06-018, 019, 020, 101 · UI-06-08 · PERM-06-approve.
 
 **Tiền điều kiện, dữ liệu.** Nguồn `QG-DANCU`, `HT-YTE`, `HT-GIAODUC` ACTIVE; DS1 đề nghị, DA1 duyệt.
 
@@ -1166,7 +1166,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-017 · BR-06-008, 010 · API-06-026, 027, 028 · ERR-06-007 · PERM-06-update.
+**Truy vết.** FR-06-017 · BR-06-008, 010 · API-06-026, 027, 028, 102 · ERR-06-007 · PERM-06-update.
 
 **Tiền điều kiện, dữ liệu.** T90 có 5 ứng viên `REJECTED`, 3 cảnh báo; DS1.
 
@@ -1198,7 +1198,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-018 · API-06-030, 031, 032 · UI-06-09 · PERM-06-config.
+**Truy vết.** FR-06-018 · API-06-030, 031, 032, 104 · UI-06-09 · PERM-06-config.
 
 **Tiền điều kiện, dữ liệu.** CITIZEN `ACTIVE`; DS1.
 
@@ -1859,7 +1859,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** Chaos.
 
-**Truy vết.** FR-06-022 · BR-06-005, 023 · ERR-06-103.
+**Truy vết.** FR-06-022 · API-06-105 · BR-06-005, 023 · ERR-06-103.
 
 **Tiền điều kiện, dữ liệu.** T95; job `APPLYING` 5.000 cặp.
 
@@ -1915,7 +1915,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-06-028 · API-06-045, 047 · UI-06-04 · PERM-06-steward.
+**Truy vết.** FR-06-028 · API-06-045, 047, 107, 108 · UI-06-04 · PERM-06-steward.
 
 **Tiền điều kiện, dữ liệu.** Bảy mục của q-create; DS1, DS2, DA1.
 
@@ -2214,7 +2214,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, E2E.
 
-**Truy vết.** FR-06-031 · API-06-049, 061 · BR-06-019 · EVT-06-03 · PERM-06-approve.
+**Truy vết.** FR-06-031 · API-06-049, 061, 109, 112 · BR-06-019 · EVT-06-03 · PERM-06-approve.
 
 **Tiền điều kiện, dữ liệu.** Thao tác (a), (b) của risk-classify; DS1 đề nghị, DA1.
 
@@ -2274,7 +2274,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-033 · BR-06-003, 004 · API-06-051, 052, 053 · ERR-06-005, 013, 022 · PERM-06-config.
+**Truy vết.** FR-06-033 · BR-06-003, 004 · API-06-051, 052, 053, 110, 111 · ERR-06-005, 013, 022 · PERM-06-config.
 
 **Tiền điều kiện, dữ liệu.** CITIZEN ACTIVE; DS1, DA1.
 
@@ -2570,7 +2570,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-040 · BR-06-007 · API-06-062 · EVT-06-05, 06 · PERM-06-merge.
+**Truy vết.** FR-06-040 · BR-06-007 · API-06-062, 113 · EVT-06-05, 06 · PERM-06-merge.
 
 **Tiền điều kiện, dữ liệu.** Bản ghi vàng TEST_DATA không còn liên kết hiệu lực; DS1.
 
@@ -2924,7 +2924,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Kết quả mong đợi.** Bước 1 `404` ERR-06-050. Bước 2 `403` ERR-06-037. Bước 3 ERR-00-403. Không dòng `access_log` trả dữ liệu cho bước 2, 3.
 
-**Thông báo hiển thị.** ERR-06-037 "Yêu cầu thiếu mục đích khai thác được chấp thuận cho dữ liệu này."
+**Thông báo hiển thị.** ERR-06-037 "Anh/chị chưa có mục đích khai thác được chấp thuận cho thao tác này."
 
 **Hậu điều kiện.** Không đổi.
 :::
@@ -3292,7 +3292,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API, KT.
 
-**Truy vết.** FR-06-051 · API-06-077, 078, 079 · UI-06-15 · BR-06-026 · PERM-06-export.
+**Truy vết.** FR-06-051 · API-06-077, 078, 079, 115, 117 · UI-06-15 · BR-06-026 · PERM-06-export.
 
 **Tiền điều kiện, dữ liệu.** HTTT `HT-YTE` có mục đích PH-09; DO1, DA1.
 
@@ -3318,7 +3318,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-051 · API-06-078, 079 · ERR-06-005, 006, 043.
+**Truy vết.** FR-06-051 · API-06-078, 079, 116 · ERR-06-005, 006, 043.
 
 **Tiền điều kiện, dữ liệu.** HTTT `HT-MOI` chưa có mục đích; đăng ký `REVOKED`.
 
@@ -3619,7 +3619,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-058 · BR-06-014, 025 · API-06-092 · EVT-06-15.
+**Truy vết.** FR-06-058 · BR-06-014, 025 · API-06-092, 119 · EVT-06-15.
 
 **Tiền điều kiện, dữ liệu.** Hai yêu cầu: thuộc tính `phone` (nguồn `HT-YTE`) và `dateOfBirth` (thẩm quyền quốc gia).
 
@@ -3644,7 +3644,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** FR-06-058 · API-06-092 · BR-06-026.
+**Truy vết.** FR-06-058 · API-06-092, 120 · BR-06-026.
 
 **Tiền điều kiện, dữ liệu.** Bản ghi vàng Bình; DS1.
 
@@ -3894,7 +3894,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** KT, IT.
 
-**Truy vết.** EVT-06-01…15 · BR-06-012 · FR-06-050, 049.
+**Truy vết.** EVT-06-01…15 · BR-06-012 · FR-06-050, 049 · API-06-114.
 
 **Tiền điều kiện, dữ liệu.** Principal T90, T91; tệp tạm và tệp xuất T90.
 
@@ -3951,7 +3951,7 @@ Mỗi kịch bản mở bằng mục tiêu và phạm vi phủ, sau đó là cá
 
 **Tự động.** API.
 
-**Truy vết.** BR-06-004, 019, 024, 027 · ERR-06-005 · FR-06-006, 009, 018, 031, 033, 039, 042, 049.
+**Truy vết.** BR-06-004, 019, 024, 027 · ERR-06-005 · FR-06-006, 009, 018, 031, 033, 039, 042, 049 · API-06-103.
 
 **Tiền điều kiện, dữ liệu.** U-T90-TA (soạn và duyệt, chỉ SIT), DS1, DA1.
 
@@ -4982,30 +4982,30 @@ Cột "Test case" liệt kê ba chữ số cuối của mã TC-06 phủ api này
 | API-06-094 | 119, 133 |
 | API-06-095 | 120, 121, 133 |
 | API-06-096 | 120, 133 |
-| API-06-097 | — |
-| API-06-098 | — |
-| API-06-099 | — |
-| API-06-100 | — |
-| API-06-101 | — |
-| API-06-102 | — |
-| API-06-103 | — |
-| API-06-104 | — |
-| API-06-105 | — |
+| API-06-097 | 014 |
+| API-06-098 | 009 |
+| API-06-099 | 015 |
+| API-06-100 | 015 |
+| API-06-101 | 017 |
+| API-06-102 | 032 |
+| API-06-103 | 127 |
+| API-06-104 | 033 |
+| API-06-105 | 056 |
 | API-06-106 | 053 |
-| API-06-107 | — |
-| API-06-108 | — |
-| API-06-109 | — |
-| API-06-110 | — |
-| API-06-111 | — |
-| API-06-112 | — |
-| API-06-113 | — |
-| API-06-114 | — |
-| API-06-115 | — |
-| API-06-116 | — |
-| API-06-117 | — |
+| API-06-107 | 058 |
+| API-06-108 | 058 |
+| API-06-109 | 066 |
+| API-06-110 | 068 |
+| API-06-111 | 068 |
+| API-06-112 | 066 |
+| API-06-113 | 078 |
+| API-06-114 | 125 |
+| API-06-115 | 104 |
+| API-06-116 | 105 |
+| API-06-117 | 104 |
 | API-06-118 | 108 |
-| API-06-119 | — |
-| API-06-120 | — |
+| API-06-119 | 116 |
+| API-06-120 | 117 |
 | API-06-121 | 155, 156 |
 | API-06-122 | 157 |
 | API-06-123 | 037, 152 |

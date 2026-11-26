@@ -14,7 +14,7 @@ Tính năng: TS-06-14 · Duyệt bốn mắt hợp nhất rủi ro cao
 
   @TC-06-066 @P1 @Dương
   Kịch bản: TC-06-066 DA khác duyệt và từ chối
-    # Truy vết: FR-06-031 · API-06-049, 061 · BR-06-019 · EVT-06-03 · PERM-06-approve
+    # Truy vết: FR-06-031 · API-06-049, 061, 109, 112 · BR-06-019 · EVT-06-03 · PERM-06-approve
     # Mục đích: Chứng minh duyệt thực hiện thao tác trong một giao dịch và từ chối trả về người đề nghị, theo FR-06-031.
     Biết thao tác (a), (b) của risk-classify; DS1 đề nghị, DA1.
     Khi DA1 `:approve` (a).

@@ -57,7 +57,7 @@ Tính năng: TS-06-07 · Chuẩn hóa ứng viên và xử lý ứng viên lỗi
 
   @TC-06-032 @P2 @Dương @Âm
   Kịch bản: TC-06-032 Xem, xử lý lại và loại bỏ ứng viên lỗi
-    # Truy vết: FR-06-017 · BR-06-008, 010 · API-06-026, 027, 028 · ERR-06-007 · PERM-06-update
+    # Truy vết: FR-06-017 · BR-06-008, 010 · API-06-026, 027, 028, 102 · ERR-06-007 · PERM-06-update
     # Mục đích: Chứng minh lọc, xem ứng viên, xử lý lại, loại bỏ có lý do, theo FR-06-017.
     Biết T90 có 5 ứng viên `REJECTED`, 3 cảnh báo; DS1.
     Khi `GET .../candidates?status=REJECTED&page=0&size=3`.

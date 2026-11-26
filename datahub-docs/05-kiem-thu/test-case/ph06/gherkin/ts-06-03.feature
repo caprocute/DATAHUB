@@ -27,7 +27,7 @@ Tính năng: TS-06-03 · Gửi duyệt, kích hoạt, tạm ngừng và ngừng 
 
   @TC-06-014 @P2 @Dương @Âm
   Kịch bản: TC-06-014 Tạm ngừng, tiếp tục, ngừng; ngừng khi còn bản ghi vàng
-    # Truy vết: FR-06-006 · API-06-011 · ERR-06-006, 011 · BR-06-007
+    # Truy vết: FR-06-006 · API-06-011, 097 · ERR-06-006, 011 · BR-06-007
     # Mục đích: Chứng minh chuyển trạng thái domain hợp lệ và chặn chuyển cấm, theo FR-06-006.
     Biết DEMO-CANBO `ACTIVE` không có bản ghi vàng; CITIZEN `ACTIVE` có bản ghi vàng.
     Khi `POST /domains/DEMO-CANBO:suspend`, nạp ứng viên, `:resume`.

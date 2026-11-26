@@ -55,7 +55,7 @@ Tính năng: TS-06-11 · Job đối sánh theo lô bằng Splink
 
   @TC-06-056 @P1 @Chịu @lỗi
   Kịch bản: TC-06-056 Job thất bại giữa chừng chỉ để lại cặp đã áp
-    # Truy vết: FR-06-022 · BR-06-005, 023 · ERR-06-103
+    # Truy vết: FR-06-022 · API-06-105 · BR-06-005, 023 · ERR-06-103
     # Mục đích: Chứng minh tiêu chí chấp nhận 9: không đổi bản ghi vàng ngoài các cặp đã áp có `batchOperationId`.
     Biết T95; job `APPLYING` 5.000 cặp.
     Khi xóa pod Job khi đã áp khoảng 2.000 cặp.

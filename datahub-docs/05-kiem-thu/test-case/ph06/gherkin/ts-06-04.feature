@@ -5,7 +5,7 @@ Tính năng: TS-06-04 · Nguồn và ưu tiên nguồn
 
   @TC-06-015 @P1 @Dương
   Kịch bản: TC-06-015 Đăng ký nguồn gắn HTTT và kênh nạp
-    # Truy vết: FR-06-008 · API-06-014, 015, 016 · UI-06-08 · PERM-06-config
+    # Truy vết: FR-06-008 · API-06-014, 015, 016, 099, 100 · UI-06-08 · PERM-06-config
     # Mục đích: Chứng minh đăng ký `QG-DANCU` kiểu `NATIONAL_DB` qua kênh `NATIONAL_SYNC` và `HT-YTE` qua `API`, `FLOW`, theo FR-06-008.
     Biết T90; HTTT `HT-YTE`, `HT-GIAODUC` `ACTIVE` ở PH-01; TA.
     Khi `POST /sources` mã `HT-YTE`, `SourceKind = SECTOR_RELATED`, kênh `API`, `FLOW`.
@@ -27,7 +27,7 @@ Tính năng: TS-06-04 · Nguồn và ưu tiên nguồn
 
   @TC-06-017 @P1 @Dương
   Kịch bản: TC-06-017 Đề xuất và duyệt thứ tự ưu tiên có văn bản
-    # Truy vết: FR-06-009 · BR-06-003, 004 · API-06-018, 019, 020 · UI-06-08 · PERM-06-approve
+    # Truy vết: FR-06-009 · BR-06-003, 004 · API-06-018, 019, 020, 101 · UI-06-08 · PERM-06-approve
     # Mục đích: Chứng minh thứ tự ưu tiên chỉ có hiệu lực khi có căn cứ và DA khác duyệt, và `QG-DANCU` mức 1 cho thuộc tính thẩm quyền, theo FR-06-009.
     Biết nguồn `QG-DANCU`, `HT-YTE`, `HT-GIAODUC` ACTIVE; DS1 đề nghị, DA1 duyệt.
     Khi `POST /domains/CITIZEN/source-priorities:propose` đặt `QG-DANCU` 1, `HT-YTE` 2, `HT-GIAODUC` 3, kèm số, ngày văn bản `12/QĐ-SKHCN`.

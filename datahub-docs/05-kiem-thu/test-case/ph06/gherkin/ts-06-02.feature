@@ -61,7 +61,7 @@ Tính năng: TS-06-02 · Soạn mô hình domain, khóa định danh và phân l
 
   @TC-06-009 @P1 @Âm
   Kịch bản: TC-06-009 Kích hoạt khi DLCN chưa xác nhận; PH-09 ngừng
-    # Truy vết: FR-06-004, 006 · BR-06-016 · API-06-008 · ERR-06-010, 021
+    # Truy vết: FR-06-004, 006 · BR-06-016 · API-06-008, 098 · ERR-06-010, 021
     # Mục đích: Chứng minh không gửi duyệt được mô hình còn thuộc tính DLCN chưa xác nhận, theo FR-06-004.
     Biết DEMO-CANBO có thuộc tính `ngaySinh` `PROPOSED`.
     Khi `POST .../model-versions/1:submit`.

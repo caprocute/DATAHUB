@@ -5929,7 +5929,7 @@ paths:
                   - dateOfBirth
                   format: CSV
                   purposeCode: TK-THONG-KE
-                  legalBasis: Nghị định 47/2020/NĐ-CP
+                  legalBasis: Nghị định 278/2025/NĐ-CP
                   recipient: Sở Kế hoạch và Đầu tư
                   pseudonymize: true
       responses:

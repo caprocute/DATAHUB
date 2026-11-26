@@ -45,7 +45,7 @@ Tính năng: TS-06-29 · Cô lập tenant: API, RLS, Kafka, kho tệp
 
   @TC-06-125 @P1 @Bảo @mật
   Kịch bản: TC-06-125 Cô lập topic và tệp theo tenant
-    # Truy vết: EVT-06-01…15 · BR-06-012 · FR-06-050, 049
+    # Truy vết: EVT-06-01…15 · BR-06-012 · FR-06-050, 049 · API-06-114
     # Mục đích: Chứng minh ACL tiền tố `t90.mdm.` và tiền tố kho tệp.
     Biết principal T90, T91; tệp tạm và tệp xuất T90.
     Khi principal T91 đọc, ghi `t90.mdm.golden.updated.v1`.

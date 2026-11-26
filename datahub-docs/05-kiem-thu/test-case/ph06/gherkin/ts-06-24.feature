@@ -16,7 +16,7 @@ Tính năng: TS-06-24 · Phát sự kiện thay đổi và đăng ký nhận c�
 
   @TC-06-104 @P2 @Dương
   Kịch bản: TC-06-104 Đăng ký nhận cập nhật LINKED_ONLY được DO duyệt
-    # Truy vết: FR-06-051 · API-06-077, 078, 079 · UI-06-15 · BR-06-026 · PERM-06-export
+    # Truy vết: FR-06-051 · API-06-077, 078, 079, 115, 117 · UI-06-15 · BR-06-026 · PERM-06-export
     # Mục đích: Chứng minh HTTT nhận sự kiện của bản ghi vàng đã liên kết với nguồn của mình, theo FR-06-051.
     Biết HTTT `HT-YTE` có mục đích PH-09; DO1, DA1.
     Khi `POST /update-subscriptions` `SubscriptionScope = LINKED_ONLY`.
@@ -27,7 +27,7 @@ Tính năng: TS-06-24 · Phát sự kiện thay đổi và đăng ký nhận c�
 
   @TC-06-105 @P2 @Âm
   Kịch bản: TC-06-105 Đăng ký thiếu mục đích, tự duyệt, đã thu hồi
-    # Truy vết: FR-06-051 · API-06-078, 079 · ERR-06-005, 006, 043
+    # Truy vết: FR-06-051 · API-06-078, 079, 116 · ERR-06-005, 006, 043
     # Mục đích: Chứng minh chặn đăng ký không có mục đích và dùng lại đăng ký đã thu hồi, theo FR-06-051.
     Biết HTTT `HT-MOI` chưa có mục đích; đăng ký `REVOKED`.
     Khi `POST /update-subscriptions` cho `HT-MOI`.

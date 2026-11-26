@@ -444,7 +444,7 @@ obj("SearchHit", "Kết quả rút gọn.", ("goldenId!", "uuid"), ("displayName
 obj("SearchResult", "Trang kết quả; tổng số giới hạn hiển thị.", ("items!", "[$SearchHit]"), ("page!", "int", 0), ("size!", "int", 20), ("totalElements!", "int", 1), ("totalCapped", "bool", False))
 # --- cung cấp
 obj("ExportCreate", "Đề nghị xuất (FR-06-049).", ("domainCode!", "dcode"), ("filter", "obj", {"adminUnitCode": "79"}), ("fields!", "[acode]", ["fullName", "dateOfBirth"]), ("format!", "E:ExportFormat", "CSV"),
-    ("purposeCode!", "code", "TK-THONG-KE"), ("legalBasis!", "str", "Nghị định 47/2020/NĐ-CP"), ("recipient!", "str", "Sở Kế hoạch và Đầu tư"), ("pseudonymize", "bool", True))
+    ("purposeCode!", "code", "TK-THONG-KE"), ("legalBasis!", "str", "Nghị định 278/2025/NĐ-CP"), ("recipient!", "str", "Sở Kế hoạch và Đầu tư"), ("pseudonymize", "bool", True))
 obj("Export", "Yêu cầu xuất.", ("exportId!", "uuid"), ("status!", "E:ExportStatus", "PENDING_APPROVAL"), ("format", "E:ExportFormat", "CSV"), ("rowCount", "int", 12000), ("downloadUrl", "str", "https://console.t68.datahub.example.vn/api/mdm/v1/exports/0193/file"), ("expiresAt", "ts"), *AUD)
 obj("SubscriptionCreate", "Đăng ký nhận cập nhật (FR-06-051).", ("systemCode!", "str", "SYT-HSSK"), ("domainCode!", "dcode"), ("scope!", "E:SubscriptionScope", "LINKED_ONLY"),
     ("eventTypes!", "[str]", ["golden.updated"]), ("delivery!", "str", "PUSH", {"enum": ["PUSH", "PULL"]}), ("purposeCode!", "code", "TK-THONG-KE"))

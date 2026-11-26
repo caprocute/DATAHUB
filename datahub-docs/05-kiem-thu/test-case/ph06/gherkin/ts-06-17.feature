@@ -27,7 +27,7 @@ Tính năng: TS-06-17 · Sửa tay, ngừng và khôi phục bản ghi vàng
 
   @TC-06-078 @P1 @Dương
   Kịch bản: TC-06-078 Ngừng và khôi phục bản ghi vàng
-    # Truy vết: FR-06-040 · BR-06-007 · API-06-062 · EVT-06-05, 06 · PERM-06-merge
+    # Truy vết: FR-06-040 · BR-06-007 · API-06-062, 113 · EVT-06-05, 06 · PERM-06-merge
     # Mục đích: Chứng minh ngừng chỉ chuyển `RETIRED`, không xóa, và khôi phục được, theo BR-06-007.
     Biết bản ghi vàng TEST_DATA không còn liên kết hiệu lực; DS1.
     Khi `POST .../{id}:retire` `RetireReason = TEST_DATA`, lý do 25 ký tự.
