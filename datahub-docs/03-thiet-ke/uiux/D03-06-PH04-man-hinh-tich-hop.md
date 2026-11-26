@@ -1340,9 +1340,31 @@ Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiệ
 
 ## 12. UI-04-06 Trình soạn biểu thức
 
-**Mục đích.** Viết, kiểm tra biểu thức `simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery` (và `groovy`, `js`, `python` chỉ khi PA cho phép trong chính sách thành phần của tenant) với gợi ý và xem trước trên bản tin mẫu. FR-04-015. **API.** API-04-032.
+Trình soạn biểu thức là lớp nổi nhỏ neo vào trường, cho viết, kiểm tra và xem trước biểu thức mà không rời ngữ cảnh chặng.
+
+::: dac-ta
+**Mục đích.** Viết, kiểm tra biểu thức `simple`, `constant`, `header`, `exchangeProperty`, `jq`, `jsonpath`, `xpath`, `xquery` (và `groovy`, `js`, `python` chỉ khi PA cho phép trong chính sách thành phần của tenant) với gợi ý và xem trước trên bản tin mẫu.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-015.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=bieu-thuc`.
+
 **Mở bằng.** Nút ƒx trên trường biểu thức, nhấp đúp nhãn `when`, `Ctrl+E` khi focus trong trường biểu thức.
-**Dạng.** `CMP-Popover` neo vào trường khi đủ chỗ (640 × 420, khung `glass-overlay`, vùng soạn đặc); tự chuyển thành `CMP-Modal` 960 × 640 khi bấm ⤢ hoặc màn hẹp.
+
+**Mẫu, vật liệu.** `CMP-Popover` neo vào trường khi đủ chỗ (640 × 420, khung `glass-overlay`, vùng soạn đặc); tự chuyển thành `CMP-Modal` 960 × 640 khi bấm ⤢ hoặc màn hẹp.
+
+**Quyền.** `PERM-04-update` (gọi API-04-032); người chỉ đọc mở được ở chế độ xem, nút "Áp dụng" ẩn.
+
+**API.** API-04-032.
+
+**Trạng thái màn.** Đang kiểm tra, biên dịch được, lỗi tại vị trí, xem trước mô phỏng, chưa xem trước được (mục 12.2).
+
+**Thông báo.** ERR-04-037 (lỗi biểu thức), 019 (sandbox bận), 021 (dữ liệu thử quá lớn).
+:::
 
 ### 12.1. Wireframe
 
@@ -1377,9 +1399,31 @@ Cùng bộ trường và quy tắc với Inspector (mục 10.11.2) nhưng: hiệ
 
 ## 13. UI-04-07 Trình ánh xạ dữ liệu
 
-**Mục đích.** Ánh xạ trực quan từ cấu trúc nguồn sang cấu trúc đích, sinh JQ (ADR-066), lưu thành tệp `*.dhmap.json` cạnh YAML, dùng trong chặng `dh-stage-transform` hoặc `setBody`. Hỗ trợ chuyển mã qua bảng ánh xạ mã PH-07 bằng hàm `dh_map`. Thay màn Data mapping của Tooling (LGC-TOOL-007, 028; LGC-BUS-036). FR-04-020. **API.** API-04-033 (xem trước JQ trên sandbox).
-**Mở bằng.** Nút "Mở trình ánh xạ" ở Inspector của chặng ánh xạ, `Ctrl+M`, nhấp đúp chặng ánh xạ. URL `lop=anh-xa`.
-**Dạng.** `CMP-Modal` toàn màn (96 % × 94 %), khung `glass-modal`, nội dung đặc.
+Trình ánh xạ là lớp nổi toàn màn ba cột, nơi kỹ sư nối trường nguồn sang trường đích, thêm hàm và chuyển mã mà không viết JQ tay.
+
+::: dac-ta
+**Mục đích.** Ánh xạ trực quan từ cấu trúc nguồn sang cấu trúc đích, sinh JQ (ADR-066), lưu thành tệp `*.dhmap.json` cạnh YAML, dùng trong chặng `dh-stage-transform` hoặc `setBody`. Hỗ trợ chuyển mã qua bảng ánh xạ mã PH-07 bằng hàm `dh_map`.
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-020.
+
+**Thay hệ cũ.** Màn Data mapping của Tooling (LGC-TOOL-007, 028; LGC-BUS-036).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=anh-xa`.
+
+**Mở bằng.** Nút "Mở trình ánh xạ" ở Inspector của chặng ánh xạ, `Ctrl+M`, nhấp đúp chặng ánh xạ.
+
+**Mẫu, vật liệu.** `CMP-Modal` toàn màn (96 % × 94 %), khung `glass-modal`, nội dung đặc.
+
+**Quyền.** `PERM-04-update` + mức `EDIT` để sửa; người chỉ đọc xem ánh xạ và JQ.
+
+**API.** API-04-033 (xem trước JQ trên sandbox); PH-06 (lược đồ), PH-07 (bảng ánh xạ mã).
+
+**Trạng thái màn.** Chưa chọn nguồn, đích; lược đồ có phiên bản mới; bảng mã PH-07 không truy cập được; cây quá lớn (mục 13.6).
+
+**Thông báo.** ERR-04-038 (ánh xạ không hợp lệ), 021 (tài liệu mẫu quá 1 MiB), 019 (sandbox); LINT-04-05 (trường bắt buộc chưa ánh xạ).
+:::
 
 ### 13.1. Wireframe
 
@@ -1444,9 +1488,31 @@ Thanh dưới chạy JQ thật trên sandbox (API-04-033, có hàm `dh_map`) v�
 
 ## 14. UI-04-08 Trình soạn Kamelet
 
-**Mục đích.** Soạn Kamelet tự viết của tỉnh (`source`, `sink`, `action`) để đóng gói một cách kết nối dùng lại, thay việc nhập JAR component của Tooling (LGC-TOOL-027 bị loại vì ATTT). FR-04-018 (mức S).
+Trình soạn Kamelet là một chế độ của UI-04-04 cho tài nguyên loại `KAMELET`, có ba tab cố định thay cho canvas route.
+
+::: dac-ta
+**Mục đích.** Soạn Kamelet tự viết của tỉnh (`source`, `sink`, `action`) để đóng gói một cách kết nối dùng lại.
+
+**Người dùng chính.** IE; PA, SO duyệt khi đề nghị dùng chung toàn quốc.
+
+**FR hiện thực.** FR-04-018 (mức S).
+
+**Thay hệ cũ.** Thay việc nhập JAR component của Tooling (LGC-TOOL-027 bị loại vì ATTT).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/thiet-ke` của luồng loại `KAMELET`.
+
 **Mở bằng.** Tạo luồng loại `KAMELET` (UI-04-03) hoặc mở luồng loại đó. Cùng khung UI-04-04; thanh thực thể có ba tab cố định: **Đặc tả**, **Mẫu (template)**, **Phụ thuộc**.
+
+**Mẫu.** PTN-07, chế độ Kamelet.
+
 **Quyền.** IE (`PERM-04-update`). Kamelet phát hành trong tenant xuất hiện ở đầu cách xem Kamelet của bảng thành phần với huy hiệu "Của tỉnh". Dùng chung toàn quốc phải qua quy trình đăng ký Kamelet của PH-05 (PA và SO duyệt); nút "Đề nghị dùng chung toàn quốc" mở quy trình đó.
+
+**API.** API-04-011, 020, 022 với `resourceKind = KAMELET`; 030 (kiểm tra), 040 (chạy thử bọc).
+
+**Trạng thái màn.** Như UI-04-04 (ST-01, 07, 08, 09); tab Phụ thuộc rỗng khi Kamelet chưa phát hành.
+
+**Thông báo.** ERR-04-036 (trùng tên), 029 (không hồ sơ runtime đủ thành phần); VR-02, VR-15; LINT-04-04.
+:::
 
 ### 14.1. Tab Đặc tả
 
@@ -1478,15 +1544,144 @@ Chạy thử bọc Kamelet trong route thử sinh tự động (`from: direct:te
 
 ## 15. UI-04-09 Trình soạn Pipe
 
-**Mục đích.** Nối nhanh source → các action → sink bằng Kamelet, không cần viết route, cho tích hợp một chiều đơn giản (ví dụ đọc tệp SFTP định kỳ rồi đẩy lên Kafka). FR-04-019 (mức S).
+Trình soạn Pipe là chế độ của UI-04-04 cho tài nguyên loại `PIPE`: một dải ô tuyến tính thay cho canvas tự do, để tích hợp một chiều không cần hiểu route Camel.
+
+::: dac-ta
+**Mục đích.** Nối nhanh source → các action → sink bằng Kamelet, không cần viết route, cho tích hợp một chiều đơn giản (ví dụ đọc tệp SFTP định kỳ rồi đẩy lên Kafka).
+
+**Người dùng chính.** IE; TO xem tình trạng như luồng thường.
+
+**FR hiện thực.** FR-04-019 (mức S).
+
+**Thay hệ cũ.** Không có (màn mới); thay một phần routing đơn giản của Bus (LGC-BUS-035).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/thiet-ke` của luồng loại `PIPE`; `chang` nhận `source`, `step-{n}`, `sink`.
+
+**Mẫu.** PTN-07, chế độ Pipe.
+
+**Quyền.** Xem `PERM-04-read`; sửa `PERM-04-update` + mức `EDIT`; gửi duyệt `PERM-04-submit`.
+
+**API.** API-04-011, 020, 022 với `resourceKind = PIPE`; 030 (kiểm tra), 040…043 (chạy thử), 050 (gửi duyệt), 070 (Kamelet được phép); PH-10 (topic).
+
+**Trạng thái đối tượng.** Như phiên bản luồng (mục 5.1).
+
+**Trạng thái màn.** ST-01 (skeleton ba ô), ô rỗng, ô lỗi, ST-05, ST-07 chỉ đọc, ST-08, ST-09 (mục 15.5).
+
+**Thông báo.** VR-15 (Kamelet sai loại), ERR-04-009, 011, 013, 014; câu chặn thả thành phần thô (mục 15.6).
+:::
+
 **Bố cục.** Cùng khung UI-04-04, canvas tuyến tính cố định trái sang phải: Nguồn (một ô: Kamelet `source` hoặc tham chiếu topic), Bước xử lý (danh sách ô Kamelet `action`, kéo đổi thứ tự), Đích (một ô: Kamelet `sink` hoặc topic); dưới là ô `errorHandler` (ghi nhật ký, DLQ tới PH-18, không). Thao tác rẽ nhánh bị khóa.
 **Thả từ bảng thành phần.** Bảng ③ chỉ hiện Kamelet đúng loại cho ô đang chèn. Thả thành phần Camel thô không được: chú thích "Pipe chỉ dùng Kamelet. Muốn dùng thành phần {x}, tạo luồng loại route." Pipe dùng Kamelet sai loại là lỗi VR-15.
 **Inspector.** Tham số Kamelet của ô chọn, sinh từ `spec.definition`, như mục 10.11.
 
+### 15.1. Wireframe
+
+```
+┌① ‹ sftp-bhxh-to-kafka  v3 [Bản nháp] ▾  ✓ Đã lưu 09:41 │ ↶ ↷ │ [Sơ đồ|YAML] │ ✓ Hợp lệ │ ▶ Chạy thử ▾ │ ⇪ Gửi duyệt ┐
+├② [⇄ pipe: sftp-bhxh-to-kafka]                                                                         ┤
+├③ Kamelet (280) ─────┬④ Dải Pipe (đặc solid-2) ───────────────────────────────────┬⑤ Inspector (360) ──┤
+│ 🔍 Tìm Kamelet…     │ ┌ NGUỒN ──────────┐   ┌ BƯỚC 1 ────────┐   ┌ ĐÍCH ─────────┐ │ ⬡ Đọc SFTP định kỳ │
+│ Đang hiện: source   │ │⬡ dh-sftp-source │ → │⬡ dh-csv-to-json│ → │⬡ dh-kafka-sink│ │ Kết nối *          │
+│ ⬡ dh-sftp-source    │ │ bhxh-sftp · 5 ph│   │ phân cách ";"  │   │ t68.bhxh.hs.v1│ │ [bhxh-sftp ▾] PH-05│
+│ ⬡ dh-sql-ro-source  │ └─────────────────┘   └────────────────┘ ⊕ └───────────────┘ │ Thư mục *          │
+│ ⬡ dh-rest-poll-src  │ ┌ Xử lý lỗi (errorHandler) ─────────────────────────────┐  │ [/out/ho-so    ]   │
+│ ⬡ Của tỉnh: …       │ │ (•) DLQ tới PH-18   ( ) Ghi nhật ký   ( ) Không        │  │ Chu kỳ  [5 phút ▾] │
+├⑥ [Vấn đề 0] [Kết quả chạy] [Nhật ký]                                         ⌄ Thu gọn ┤
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 15.2. Thành phần
+
+| # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
+|---|---|---|---|---|
+| 1 | Thanh công cụ ① | `CMP-DesignerToolbar` | Như mục 10.4; menu Xem không có "Hướng sơ đồ", "Tự sắp xếp" | API-04-020 |
+| 2 | Bảng Kamelet ③ | `CMP-NodePalette` | Chỉ Kamelet đúng loại của ô đang chọn (source, action, sink); Kamelet "Của tỉnh" ở đầu | API-04-070 |
+| 3 | Ô Nguồn | `CMP-FlowNode` biến thể `slot` | Đúng một Kamelet `source` hoặc tham chiếu topic PH-10 | `spec.source` |
+| 4 | Ô Bước xử lý | `CMP-FlowNode` biến thể `slot`, kéo đổi thứ tự | 0…20 Kamelet `action` | `spec.steps[]` |
+| 5 | Ô Đích | `CMP-FlowNode` biến thể `slot` | Đúng một Kamelet `sink` hoặc topic | `spec.sink` |
+| 6 | Nút ⊕ giữa các ô | `CMP-QuickInsert` | Chèn Kamelet `action` tại vị trí | API-04-070 |
+| 7 | Khối xử lý lỗi | `CMP-RadioGroup` | DLQ tới PH-18 (mặc định), Ghi nhật ký, Không (cảnh báo VR-11 ở mức gửi duyệt) | `spec.errorHandler` |
+| 8 | Inspector ⑤ | `CMP-Inspector` | Tham số Kamelet của ô chọn (mục 10.11.2) | API-04-071 |
+| 9 | Bảng dưới ⑥ | `CMP-BottomPanel` | Vấn đề, Kết quả chạy, Nhật ký (không có Lịch sử sửa riêng) | API-04-030, 042 |
+
+: UI-04-09 · Thành phần
+
+### 15.3. Trường của ô
+
+| Ô | Nhận | Bắt buộc | Kiểm tra | Ghi vào YAML |
+|---|---|---|---|---|
+| Nguồn | Kamelet `source` hoặc topic `t68.*` | Có | Đúng loại (VR-15); topic tồn tại ở PH-10 | `spec.source.ref` |
+| Bước {n} | Kamelet `action` | Không | Đúng loại; tối đa 20 bước | `spec.steps[n].ref` |
+| Đích | Kamelet `sink` hoặc topic | Có | Đúng loại; topic cho phép ghi | `spec.sink.ref` |
+| Tham số ô | Theo `spec.definition` của Kamelet | Theo Kamelet | Như Inspector; tham số "Nhạy cảm" chỉ nhận tham chiếu kết nối | `…properties` |
+| Xử lý lỗi | Một trong ba giá trị | Có | Không chọn "Không" cho luồng đối ngoại (VR-11) | `spec.errorHandler` |
+
+: UI-04-09 · Trường của ô Pipe
+
+### 15.4. Hành động
+
+| Hành động | Cách làm | Kết quả |
+|---|---|---|
+| Đặt Kamelet vào ô | Kéo từ ③ thả vào ô, hoặc chọn ô rồi `Enter` trên mục ③ | Ô nhận Kamelet, Inspector mở tham số, focus trường bắt buộc đầu |
+| Thêm bước | ⊕ giữa hai ô, hoặc `A` khi chọn ô | Bảng chọn nhanh chỉ có Kamelet `action` |
+| Đổi thứ tự bước | Kéo ô bước, hoặc `Alt+←`, `Alt+→` | Thứ tự `spec.steps` đổi, hoàn tác được |
+| Xóa bước | `Delete` hoặc ⋯ › Xóa | Ô Nguồn, Đích không xóa được, chỉ "Thay bằng…" |
+| Chạy thử | `F5` hoặc "Chạy thử" | Như UI-04-11; nguồn được thay bằng bản tin mẫu |
+| Chuyển thành route | Menu Tệp › "Chuyển thành luồng route…" | Tạo luồng loại `ROUTE` mới tương đương, không sửa Pipe cũ |
+
+: UI-04-09 · Hành động
+
+### 15.5. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton ba ô nối nhau, ③ 8 dòng |
+| Pipe mới | Ba ô rỗng nét đứt: "Chọn nguồn", "Thêm bước (tùy chọn)", "Chọn đích" |
+| Ô lỗi | Viền 2 px `color-error-text`, huy hiệu ✕{n} như mục 10.7.3 |
+| Lỗi tải | ST-05 với ERR-04-001 hoặc 004 |
+| Không có quyền sửa, phiên bản không phải nháp | ST-07, ③ ẩn |
+| Kamelet của ô bị cấm sau đó | Huy hiệu "Không còn được phép", ERR-04-011 |
+
+: UI-04-09 · Trạng thái màn
+
+### 15.6. Thông điệp
+
+- Thả thành phần Camel thô: "Pipe chỉ dùng Kamelet. Muốn dùng thành phần {x}, tạo luồng loại route."
+- Thả Kamelet sai loại: "Ô {Nguồn, Đích} chỉ nhận Kamelet loại {source, sink}." (VR-15).
+- Thêm bước thứ 21: "Pipe có tối đa 20 bước. Tách thành hai Pipe nối qua topic."
+- Chọn "Không" ở xử lý lỗi: cảnh báo "Bản tin lỗi sẽ bị bỏ. Luồng đối ngoại phải có DLQ khi gửi duyệt."
+
+### 15.7. Bàn phím và trợ năng
+
+`←`, `→` chuyển ô; `Enter` mở Inspector ô; `A` thêm bước sau; `Alt+←`, `Alt+→` đổi chỗ bước; `Delete` xóa bước; các phím chung ở mục 10.13. Dải Pipe có `role="list"`, mỗi ô `role="listitem"` với `aria-label` "Bước 1 trên 3, dh-csv-to-json, hợp lệ"; mỗi thay đổi thứ tự đọc qua vùng `aria-live`.
+
 ## 16. UI-04-10 Cấu hình cấp tệp và bean
 
-**Mục đích.** Bean, `routeConfiguration`, metadata cấp tệp và biến môi trường. FR-04-021 (mức S), FR-04-084 (biến môi trường).
+Màn này gom các phần của tệp luồng không vẽ được trên canvas: bean, `routeConfiguration`, metadata và biến môi trường.
+
+::: dac-ta
+**Mục đích.** Bean, `routeConfiguration`, metadata cấp tệp và biến môi trường.
+
+**Người dùng chính.** IE; TA khai báo giá trị biến môi trường ở UI-04-20.
+
+**FR hiện thực.** FR-04-021 (mức S), FR-04-084 (biến môi trường).
+
+**Thay hệ cũ.** Error handling của Bus (LGC-BUS-037) qua `routeConfiguration`.
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=cap-tep` khi mở dạng drawer, `thuc-the` khi mở dạng tab.
+
 **Mở bằng.** Tab "beans", "routeConfiguration", "Thuộc tính tệp" trên thanh thực thể hoặc "Tệp › Thuộc tính tệp". Mở như tab trên vùng canvas, hoặc `CMP-Drawer` phải 640 px khi gọi từ Inspector.
+
+**Mẫu.** Tab trên PTN-07 hoặc drawer.
+
+**Quyền.** `PERM-04-update` + mức `EDIT` để sửa; `dh-default-config` luôn chỉ xem.
+
+**API.** API-04-020, 022 (cùng định nghĩa), 090 (giá trị biến môi trường), 030 (kiểm tra).
+
+**Trạng thái màn.** Rỗng: "Luồng chưa khai bean nào." kèm "Thêm bean"; đang tải và lỗi theo UI-04-04; chỉ đọc theo mục 10.15.
+
+**Thông báo.** ERR-04-010 (bí mật), 011 (lớp bean không được phép); VR-11 (thiếu xử lý lỗi nền); biến chưa khai báo cho môi trường đích ở mức `PUBLISH`.
+:::
 
 ### 16.1. Thuộc tính tệp và biến môi trường
 
