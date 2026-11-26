@@ -12,7 +12,7 @@ phan_he: PH-{nn}
 
 # D02-03-PH{nn} · Đặc tả yêu cầu chức năng {Tên}
 
-> Trình bày, văn phong, khối đặc tả và mức sàn theo [K-TRINH-BAY](K-TRINH-BAY.md). Tài liệu mẫu theo khuôn này: `02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md` bản 0.2 (chương 1–6.3).
+> Trình bày, văn phong, khối đặc tả và mức sàn theo [K-TRINH-BAY](K-TRINH-BAY.md). Tài liệu mẫu theo khuôn này: `02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md` bản 0.3.
 
 ## Tóm tắt cho hội đồng thẩm định  [BB]
 Mục tiêu, phạm vi, căn cứ pháp lý (`CMP-LAW-*`), những điểm hội đồng cần lưu ý (3–5 ý), bảng con số chính (số FR theo M/S/C, BR, NFR, UI, API, LGC được phủ).
@@ -45,7 +45,7 @@ Khái niệm nghiệp vụ; thực thể `EN-{nn}-..` mức logic; máy trạng 
 Bảng Mã | Nhóm | Chức năng | Mức | Đợt | Màn hình, chú thích "Danh sách chức năng của PH-{nn}".
 
 ## 6. Đặc tả chi tiết chức năng  [BB]
-6.1 Cách đọc bảng đặc tả (bảng 14 mục). Mỗi nhóm một mục `### 6.k. Nhóm X · Tên`, mở bằng đoạn văn và sơ đồ quan hệ chức năng trong nhóm. Mỗi FR: `#### FR-{nn}-nnn · {động từ + đối tượng}` + khối `::: dac-ta` đủ 14 mục + bảng "Dữ liệu vào" khi ≥ 5 trường + sơ đồ trình tự khi có ≥ 3 thành phần hoặc duyệt bốn mắt.
+6.1 Cách đọc bảng đặc tả (bảng 17 mục kèm cột Nguồn, chép từ D00-01 §4.3). Mỗi nhóm một mục `### 6.k. Nhóm X · Tên`, mở bằng đoạn văn và sơ đồ quan hệ chức năng trong nhóm. Mỗi FR: `#### FR-{nn}-nnn · {động từ + đối tượng}` + khối `::: dac-ta` đủ 17 mục + bảng "Dữ liệu vào" khi ≥ 5 trường + sơ đồ trình tự khi có ≥ 3 thành phần hoặc duyệt bốn mắt.
 
 ## 7. Quy tắc nghiệp vụ  [BB]
 Bảng `BR-{nn}-nnn | Quy tắc | FR áp dụng`.
@@ -97,7 +97,7 @@ Xử lý: 1. Kiểm tra tham số; sai miền trả `400`. 2. Truy vấn tenant 
 ```
 
 ### Tự soát
-- [ ] Mỗi FR dùng khối `::: dac-ta` đủ 14 mục (K-TRINH-BAY §4), có `LGC` nếu thay chức năng cũ; ngoại lệ có câu thông báo hiển thị.
+- [ ] Mỗi FR dùng khối `::: dac-ta` đủ 17 mục (K-TRINH-BAY §4), có `LGC` nếu thay chức năng cũ; ngoại lệ có câu thông báo hiển thị.
 - [ ] Mọi bảng có chú thích, mọi sơ đồ có `caption`; có ít nhất hai ảnh giao diện tiêu biểu.
 - [ ] Mỗi `LGC` của phân hệ có đúng một kết luận ở §9.
 - [ ] Mã mới lấy số kế tiếp ở D00-04 §3.2; `kiem_tra_ma.py` sạch.

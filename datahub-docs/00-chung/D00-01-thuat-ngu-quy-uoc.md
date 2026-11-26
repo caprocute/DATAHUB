@@ -178,20 +178,29 @@ Những điểm chưa có thông tin không được viết chung chung. Ngườ
 
 ### 4.3. Mẫu đặc tả một FR
 
-| Trường | Nội dung |
-|---|---|
-| Mã, tên | `FR-{PH}-{nnn}` · tên động từ + đối tượng |
-| Mức ưu tiên | M / S / C |
-| Truy vết | REQ, LGC |
-| Tác nhân, quyền | Vai trò và `PERM` cần có |
-| Tiền điều kiện | Trạng thái hệ thống trước khi thực hiện |
-| Đầu vào | Bảng trường: tên, kiểu chuẩn, bắt buộc, ràng buộc, ví dụ |
-| Xử lý | Các bước đánh số; mỗi bước một hành vi kiểm chứng được |
-| Đầu ra | Kết quả trả về, dữ liệu thay đổi |
-| Ngoại lệ | Mỗi ngoại lệ: điều kiện, mã lỗi `ERR`, mã HTTP, hành vi |
-| Hậu điều kiện | Trạng thái sau khi thực hiện thành công |
-| Sự kiện phát ra | `EVT` nếu có |
-| Kiểm toán | Có ghi nhật ký kiểm toán hay không, các trường được ghi |
+Từ 26/11/2026, mỗi FR được đặc tả bằng bảng hai cột 17 mục theo thứ tự cố định dưới đây (chuẩn kết hợp). Chuẩn này giữ 12 trường kỹ thuật cũ của mục này (để kỹ sư, kiểm thử viên dùng ngay) và thêm các mục của mẫu thuyết minh đặc tả chức năng (để hội đồng và người dùng nghiệp vụ đọc được). Cách viết trong Markdown, mức sàn và ví dụ ở [K-TRINH-BAY](khuon/K-TRINH-BAY.md) §4. Tiêu đề `#### FR-{PH}-{nnn} · {động từ + đối tượng}` thay cho trường "Mã, tên".
+
+| Mục | Nội dung | Nguồn |
+|---|---|---|
+| Mục đích | Chức năng giúp ai làm được việc gì, vì sao cần (1–3 câu) | Mẫu thuyết minh |
+| Tác nhân, quyền | Vai trò thực hiện và `PERM` cần có | Trường cũ "Tác nhân, quyền" |
+| Mức ưu tiên, đợt | M / S / C · đợt phát hành | Trường cũ "Mức ưu tiên" + mẫu |
+| Truy vết | REQ, LGC, Q, ADR | Trường cũ "Truy vết" |
+| Tiền điều kiện | Trạng thái hệ thống trước khi thực hiện | Trường cũ |
+| Kích hoạt | Thao tác người dùng (nút, màn) hoặc sự kiện, lịch khởi động chức năng | Mẫu thuyết minh |
+| Đầu vào | Tham số, trường nhập: tên, kiểu chuẩn, bắt buộc, ràng buộc, ví dụ; từ 5 trường thì bảng riêng "Dữ liệu vào của FR-…" | Trường cũ |
+| Luồng xử lý chính | Các bước đánh số, chủ ngữ là tác nhân hoặc "Hệ thống"; bước kiểm tra ghi mã lỗi khi không đạt | Trường cũ "Xử lý" + mẫu |
+| Luồng thay thế | Nhánh hợp lệ khác của luồng chính, hoặc "Không" | Mẫu thuyết minh |
+| Luồng ngoại lệ | Mỗi ngoại lệ: điều kiện, mã `ERR`, mã HTTP, hành vi, câu thông báo người dùng nhìn thấy | Trường cũ "Ngoại lệ" + mẫu |
+| Đầu ra | Mã HTTP, trường trả về, tiêu đề, dữ liệu thay đổi | Trường cũ |
+| Kết quả | Điều người dùng nhận được, nói theo góc nhìn người dùng | Mẫu thuyết minh |
+| Hậu điều kiện | Trạng thái sau khi thực hiện thành công | Trường cũ |
+| Sự kiện phát ra | `EVT` nếu có, hoặc "Không" | Trường cũ |
+| Kiểm toán | Có ghi nhật ký kiểm toán hay không, các trường được ghi | Trường cũ |
+| Quy tắc nghiệp vụ | Mã `BR` áp dụng | Mẫu thuyết minh |
+| Màn hình, API | `UI` (kèm tab, bước) và `API` hiện thực chức năng | Mẫu thuyết minh |
+
+: Mẫu đặc tả một FR (chuẩn kết hợp 17 mục)
 
 ## 5. Kiểu dữ liệu chuẩn
 

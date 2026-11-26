@@ -1,9 +1,9 @@
 ---
 ma_tai_lieu: D02-03-PH05
 ten: Đặc tả yêu cầu chức năng phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
-trang_thai: Dự thảo để xem trước mức chi tiết mới
+trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư tích hợp, kỹ sư dh-integration và dh-runtime, kiểm thử viên
 phan_he: PH-05
 mo_ta: Đặc tả hành vi của phân hệ quản lý kết nối nguồn, bí mật, bộ điều hợp theo giao thức, CDC cho hệ di sản và danh mục Kamelet được duyệt, làm căn cứ thiết kế chi tiết, lập trình và kiểm thử.
@@ -4311,3 +4311,4 @@ Các mục `LGC-BUS-006`, `LGC-BUS-009`, `LGC-BUS-010`, `LGC-BUS-012`, `LGC-BUS-
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu, viết theo quy tắc tối ưu token: sổ tra cứu D00-04, khuôn K-FRS, nguồn yêu cầu từ SRS-PH-05 của repo, Q359, ADR-067 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Nâng mức chi tiết theo khuôn trình bày mới: thêm chương Giới thiệu (thuật ngữ, tài liệu tham chiếu, cấu trúc), mục tiêu và kiến trúc thành phần, sơ đồ trình tự, danh sách chức năng, bảng đặc tả đầy đủ cho nhóm A, B (luồng chính, luồng thay thế, ngoại lệ kèm thông báo, kết quả, màn hình), bảng thông báo hiển thị, giao diện tiêu biểu. Nhóm C–H giữ nội dung 0.1, viết lại sau khi duyệt mẫu |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn đặc tả kết hợp 17 mục cho đủ 62 FR: giữ toàn bộ trường kỹ thuật của D00-01 §4.3 (đầu vào, đầu ra, mã lỗi theo bước, sự kiện, kiểm toán) và thêm các mục của mẫu thuyết minh (mục đích, kích hoạt, luồng thay thế, câu thông báo, kết quả, màn hình và API). Thêm bảng dữ liệu vào cho FR-05-023, 026, 031, 032, 036, 048; bảng ngưỡng sức khỏe, quy tắc kiểm tra tĩnh Kamelet; sơ đồ đánh giá sức khỏe, vòng đời tài khoản CSDL, bộ điều hợp, CDC, Kamelet; trình tự duyệt quyền ghi CSDL, lượt gọi bộ điều hợp, duyệt phiên bản, xử lý thay đổi lược đồ |

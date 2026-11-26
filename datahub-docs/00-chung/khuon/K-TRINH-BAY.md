@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D00-04-KTB
 ten: Quy chuẩn trình bày và mức chi tiết cho mọi tài liệu datahub-docs
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo chờ duyệt
 nguoi_doc: Người viết tài liệu phân hệ
@@ -9,7 +9,7 @@ nguoi_doc: Người viết tài liệu phân hệ
 
 # D00-04-KTB · Quy chuẩn trình bày và mức chi tiết
 
-Quy chuẩn này áp dụng cho mọi tài liệu của bộ datahub-docs, cùng với khuôn riêng của từng loại tập (K-FRS, K-UC, K-SDD, K-CSDL, K-API, K-MH, K-TC). Mục tiêu: bản .docx xuất ra đọc như một hồ sơ thiết kế chuẩn của ngành CNTT (bìa, thông tin tài liệu, mục lục, bảng và hình có đánh số, đặc tả chức năng dạng bảng), và nội dung đủ sâu để hội đồng thẩm định, kỹ sư, kiểm thử viên dùng ngay. Mẫu đối chiếu: "Thiết kế các hệ thống dùng chung, Quyển 1. Thuyết minh kiến trúc và đặc tả chức năng" do henry cung cấp ngày 26/11/2026. Tài liệu viết thử theo quy chuẩn: D02-03-PH05 bản 0.2.
+Quy chuẩn này áp dụng cho mọi tài liệu của bộ datahub-docs, cùng với khuôn riêng của từng loại tập (K-FRS, K-UC, K-SDD, K-CSDL, K-API, K-MH, K-TC). Mục tiêu: bản .docx xuất ra đọc như một hồ sơ thiết kế chuẩn của ngành CNTT (bìa, thông tin tài liệu, mục lục, bảng và hình có đánh số, đặc tả chức năng dạng bảng), và nội dung đủ sâu để hội đồng thẩm định, kỹ sư, kiểm thử viên dùng ngay. Mẫu đối chiếu: "Thiết kế các hệ thống dùng chung, Quyển 1. Thuyết minh kiến trúc và đặc tả chức năng" do henry cung cấp ngày 26/11/2026. Tài liệu mẫu theo quy chuẩn: D02-03-PH05 bản 0.3 (đủ 62 FR theo chuẩn kết hợp).
 
 ## 1. Metadata và phần đầu tài liệu
 
@@ -53,9 +53,16 @@ Sơ đồ ngang (`flowchart LR`) chỉ dùng khi có ít hơn sáu nút; nhiều
 5. Số liệu có đơn vị và điều kiện đo; thiếu số thật thì ghi "giả định" kèm cơ sở (không hỏi người dùng).
 6. Không dồn một chức năng thành một đoạn văn dài; mọi chức năng dùng khối đặc tả đầy đủ (mục 4).
 
-## 4. Khối đặc tả chức năng
+## 4. Khối đặc tả chức năng (chuẩn kết hợp 17 mục)
 
-Mỗi FR viết bằng khối `::: dac-ta`. Mỗi mục là một đoạn bắt đầu bằng nhãn in đậm kết thúc bằng dấu chấm; nội dung của mục có thể là câu, danh sách đánh số hoặc gạch đầu dòng. Bộ xuất dựng thành bảng hai cột, cột nhãn tô nền.
+Mỗi FR viết bằng khối `::: dac-ta`. Chuẩn kết hợp hai mức, không mức nào thay mức nào:
+
+- **Mức kỹ thuật** (12 trường của D00-01 §4.3): tác nhân và `PERM`, truy vết `REQ`/`LGC`, tiền điều kiện, đầu vào có kiểu và ràng buộc, các bước xử lý kèm mã lỗi, đầu ra có mã HTTP và trường trả về, hậu điều kiện, sự kiện, kiểm toán. Đây là phần kỹ sư và kiểm thử viên dùng để viết mã và ca kiểm thử.
+- **Mức thuyết minh** (mẫu do henry cung cấp): mục đích, kích hoạt, luồng chính theo tác nhân, luồng thay thế, câu thông báo người dùng nhìn thấy, kết quả theo góc nhìn người dùng, quy tắc nghiệp vụ, màn hình liên quan. Đây là phần hội đồng thẩm định và người dùng nghiệp vụ đọc.
+
+17 mục theo đúng thứ tự (định nghĩa ở D00-01 §4.3): Mục đích · Tác nhân, quyền · Mức ưu tiên, đợt · Truy vết · Tiền điều kiện · Kích hoạt · Đầu vào · Luồng xử lý chính · Luồng thay thế · Luồng ngoại lệ · Đầu ra · Kết quả · Hậu điều kiện · Sự kiện phát ra · Kiểm toán · Quy tắc nghiệp vụ · Màn hình, API.
+
+Mỗi mục là một đoạn bắt đầu bằng nhãn in đậm kết thúc bằng dấu chấm; nội dung có thể là câu, danh sách đánh số hoặc gạch đầu dòng. Bộ xuất dựng thành bảng hai cột, cột nhãn tô nền.
 
 ```markdown
 #### FR-05-004 · Tạo kết nối nguồn
@@ -63,20 +70,22 @@ Mỗi FR viết bằng khối `::: dac-ta`. Mỗi mục là một đoạn bắt 
 ::: dac-ta
 **Mục đích.** Chức năng giúp ai làm được gì, vì sao cần (1–3 câu).
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-011.
 
-**Điều kiện trước.** HTTT `ACTIVE` ở PH-01; loại kết nối được bật.
+**Tiền điều kiện.** HTTT `ACTIVE` ở PH-01; loại kết nối được bật.
 
 **Kích hoạt.** Người dùng bấm "+ Tạo kết nối" ở UI-05-01.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-004 dưới đây; `Idempotency-Key`.
 
 **Luồng xử lý chính.**
 
 1. Người dùng … rồi bấm "Tiếp tục".
-2. Hệ thống kiểm tra …
+2. Hệ thống kiểm tra mã theo mẫu và chưa dùng (sai mẫu: ERR-05-003; trùng: ERR-05-002).
 3. Hệ thống tạo … ở trạng thái `DRAFT`, ghi kiểm toán.
 
 **Luồng thay thế.** Nhánh hợp lệ khác, hoặc "Không".
@@ -85,13 +94,17 @@ Mỗi FR viết bằng khối `::: dac-ta`. Mỗi mục là một đoạn bắt 
 
 - Mã đã dùng: ERR-05-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
 
-**Quy tắc nghiệp vụ.** BR-05-001; BR-05-004.
+**Đầu ra.** `201`, chi tiết kết nối; tiêu đề `Location`, `ETag`.
 
 **Kết quả.** Điều người dùng nhận được, nói theo góc nhìn người dùng.
 
 **Hậu điều kiện.** Trạng thái dữ liệu sau khi xong.
 
-**Sự kiện, kiểm toán.** EVT-…; dữ liệu ghi kiểm toán.
+**Sự kiện phát ra.** EVT-05-01, hoặc "Không".
+
+**Kiểm toán.** Có: các trường được ghi.
+
+**Quy tắc nghiệp vụ.** BR-05-001; BR-05-004.
 
 **Màn hình, API.** UI-05-03 bước 1–2; API-05-004.
 :::
@@ -103,7 +116,14 @@ Mỗi FR viết bằng khối `::: dac-ta`. Mỗi mục là một đoạn bắt 
 : Dữ liệu vào của FR-05-004
 ```
 
-**Mức sàn cho mọi FR (kể cả mức S, C):** đủ 14 mục; luồng chính tối thiểu 3 bước; luồng ngoại lệ nêu mã lỗi, mã HTTP và **câu thông báo người dùng nhìn thấy** trong ngoặc kép (lấy từ bảng thông báo của tập màn hình hoặc viết mới rồi ghi vào đề nghị đồng bộ); mục không áp dụng ghi "Không". FR có từ năm trường nhập trở lên có bảng "Dữ liệu vào". FR có trao đổi giữa từ ba thành phần trở lên, hoặc có duyệt bốn mắt, có sơ đồ trình tự Mermaid.
+**Mức sàn cho mọi FR (kể cả mức S, C):**
+
+1. Đủ 17 mục, đúng thứ tự; mục không áp dụng ghi "Không" để người đọc biết đã được xét.
+2. Luồng chính tối thiểu 3 bước; bước kiểm tra ghi mã lỗi khi không đạt.
+3. Luồng ngoại lệ nêu mã lỗi, mã HTTP và câu thông báo người dùng nhìn thấy trong ngoặc kép (lấy từ bảng thông báo của tập màn hình hoặc viết mới rồi ghi vào đề nghị đồng bộ). Lỗi runtime không có người nhìn trực tiếp thì nêu nơi hiển thị cho người vận hành.
+4. Không bỏ chi tiết kỹ thuật khi chuyển sang khối đặc tả: tham số, ngưỡng, tên chỉ số, ví dụ mã, ghi chú lý do đều giữ (ví dụ JSON để ngay sau khối, ghi chú bằng đoạn "Ghi chú:" sau khối).
+5. FR có từ năm trường nhập trở lên có bảng "Dữ liệu vào của FR-…"; quy tắc dạng danh sách dài (kiểm tra tĩnh, ngưỡng) tách thành bảng riêng có chú thích.
+6. FR có trao đổi giữa từ ba thành phần trở lên, hoặc có duyệt bốn mắt, có sơ đồ trình tự Mermaid; đối tượng có vòng đời có sơ đồ trạng thái ở đầu nhóm.
 
 ## 5. Phần bắt buộc theo loại tập
 
@@ -124,6 +144,15 @@ Ngoài các mục [BB] trong khuôn riêng, mỗi tập phân hệ có:
 
 - [ ] Metadata đủ trường bắt buộc; có `mo_ta`.
 - [ ] Mọi bảng có dòng `: chú thích` (hoặc là bảng đặc tả); mọi khối Mermaid có `caption`.
-- [ ] Mọi FR (UC, endpoint, màn hình) dùng khối đặc tả đủ mục; không còn FR viết thành một đoạn văn.
+- [ ] Mọi FR dùng khối đặc tả đủ 17 mục đúng thứ tự (UC, endpoint, màn hình dùng khối đặc tả của khuôn riêng); không còn FR viết thành một đoạn văn hay bảng "Trường | Nội dung" cũ.
 - [ ] `python3 build/tools/kiem_tra_ma.py` sạch lỗi mới.
 - [ ] `DH_PDF=1 build/build-docx.sh <tệp>` chạy không cảnh báo "Không vẽ được sơ đồ"; mở PDF xem bìa, mục lục, vài trang đặc tả.
+
+## 7. Đầu ra bàn giao
+
+Mỗi tài liệu bàn giao đồng thời hai dạng, theo yêu cầu của henry ngày 26/11/2026:
+
+1. **Nguồn `.md`** trong repo (nguồn chuẩn, để đọc, sửa, so sánh phiên bản và để người hoặc công cụ khác chạy lại bộ xuất).
+2. **Bản `.docx`** xuất bằng `DH_PDF=1 build/build-docx.sh <tệp>` (kèm `.pdf` để xem nhanh), theo thể thức ở mục 1–2.
+
+Cả ba tệp được chép vào `/mnt/project-files/datahub-docs-docx/` cùng tên gốc, và đính kèm khi báo xong.
