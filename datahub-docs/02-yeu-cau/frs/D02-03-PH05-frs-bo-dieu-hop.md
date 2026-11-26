@@ -2131,22 +2131,179 @@ sequenceDiagram
 
 ### 6.6. Nhóm E · Bộ điều hợp theo giao thức
 
+Bộ điều hợp là lớp nằm giữa luồng PH-04 và HTTT: nó biết giao thức, xác thực, phân trang, định dạng của HTTT, và trả cho luồng một bản tin JSON chuẩn. Nhóm E gồm vòng đời bộ điều hợp (FR-05-029…032, 043…047), bảy giao thức (FR-05-033…039), chuyển đổi và chuẩn hóa dữ liệu (FR-05-040, 041) và giới hạn đồng thời để không làm sập HTTT (FR-05-042).
+
+```{.mermaid caption="Vòng đời phiên bản bộ điều hợp"}
+stateDiagram-v2
+  [*] --> DRAFT: tạo (FR-05-031) hoặc sinh từ đặc tả (FR-05-046)
+  DRAFT --> SUBMITTED: gửi duyệt, kiểm thử đạt 24 giờ (FR-05-044)
+  SUBMITTED --> DRAFT: từ chối
+  SUBMITTED --> APPROVED: IA duyệt, sinh Kamelet (FR-05-047)
+  APPROVED --> SUPERSEDED: phiên bản mới được duyệt
+  SUPERSEDED --> [*]
+```
+
+Bộ điều hợp chỉ xuất hiện trong trình thiết kế luồng khi có phiên bản `APPROVED`. Sửa thao tác luôn đi qua phiên bản nháp mới (FR-05-045), nên luồng đang chạy không bị đổi ngầm.
+
+```{.mermaid caption="Trình tự một lượt gọi qua bộ điều hợp"}
+sequenceDiagram
+  participant F as Luồng PH-04
+  participant K as Kamelet sinh
+  participant B as Kamelet nền giao thức
+  participant OB as OpenBao
+  participant H as HTTT
+  F->>K: tham số thao tác
+  K->>B: tham số cố định + tham số mở
+  B->>OB: lấy bí mật (đệm)
+  B->>H: yêu cầu (giới hạn đồng thời FR-05-042)
+  H-->>B: phản hồi gốc
+  B->>B: chuyển JSON chuẩn, chuẩn hóa (FR-05-040, 041)
+  B-->>F: JSON chuẩn hoặc lỗi đã phân loại
+```
+
 #### FR-05-029 · Liệt kê bộ điều hợp kèm sức khỏe
 
-FR-05-029 (M; LGC-BUS-001 phần kết nối, LGC-BUS-015). `PERM-05-read`. Lọc theo `q` (mã, tên, HTTT), `systemCode`, `systemGroup` (1–4), `protocol` (`REST`, `SOAP`, `MESSAGING`, `FILE`, `DATABASE`, `MAIL`, `DIRECTORY`, `CDC`), `status`, `versionStatus`, `health`, `hasPendingSchemaChange`. Mỗi dòng: mã, tên, HTTT, nhóm, giao thức, phiên bản hiệu lực, có bản nháp hay không, sức khỏe, độ trễ p95 và tỷ lệ lỗi 1 giờ, lượt gọi 24 giờ, độ trễ CDC (nếu là CDC), số thay đổi lược đồ chờ. Bộ điều hợp `UNHEALTHY` xếp đầu khi không chỉ định sắp xếp (BR-05-014). Kèm `facets` và bốn thẻ tổng: tổng, đang hoạt động, suy giảm, mất kết nối.
+::: dac-ta
+**Mục đích.** Cho kỹ sư và cán bộ vận hành tìm nhanh bộ điều hợp của một HTTT, thấy ngay bộ nào đang hỏng, chậm, hoặc có thay đổi lược đồ chờ xử lý.
+
+**Tác nhân, quyền.** IE, TO, TA, IA (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-001 (phần kết nối), LGC-BUS-015.
+
+**Tiền điều kiện.** Người dùng đăng nhập vào tenant.
+
+**Kích hoạt.** Người dùng mở UI-05-08 từ menu "Kết nối · Bộ điều hợp".
+
+**Đầu vào.** Bộ lọc `q` (mã, tên, HTTT), `systemCode`, `systemGroup` (1–4), `protocol` (`REST`, `SOAP`, `MESSAGING`, `FILE`, `DATABASE`, `MAIL`, `DIRECTORY`, `CDC`), `status`, `versionStatus`, `health`, `hasPendingSchemaChange`; phân trang, sắp xếp.
+
+**Luồng xử lý chính.**
+
+1. Người dùng mở màn hoặc đổi bộ lọc.
+2. Hệ thống trả danh sách bộ điều hợp thuộc tenant theo bộ lọc.
+3. Mỗi dòng có: mã, tên, HTTT, nhóm, giao thức, phiên bản hiệu lực, có bản nháp hay không, sức khỏe, p95 độ trễ và tỷ lệ lỗi 1 giờ, lượt gọi 24 giờ, độ trễ CDC (nếu là CDC), số thay đổi lược đồ chờ.
+4. Khi người dùng không chọn sắp xếp, hệ thống xếp bộ điều hợp `UNHEALTHY` lên đầu.
+5. Hệ thống trả kèm `facets` và bốn thẻ tổng: tổng, đang hoạt động, suy giảm, mất kết nối.
+
+**Luồng thay thế.** Người dùng bấm một thẻ tổng: hệ thống áp bộ lọc tương ứng (ví dụ `health = UNHEALTHY`).
+
+**Luồng ngoại lệ.** Tham số lọc sai: ERR-05-003 (400); "Bộ lọc {tên} không hợp lệ."
+
+**Đầu ra.** `200`, trang kết quả, `facets`, bốn thẻ tổng.
+
+**Kết quả.** Người dùng thấy bộ điều hợp cần xử lý trước ở đầu danh sách.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-014.
+
+**Màn hình, API.** UI-05-08; API-05-043.
+:::
 
 #### FR-05-030 · Xem chi tiết bộ điều hợp và phiên bản
 
-FR-05-030 (M; LGC-BUS-006, LGC-BUS-020). `PERM-05-read`. Trả thông tin chung, phiên bản hiệu lực, bản nháp (nếu có), danh sách thao tác với tham số giao thức, định dạng, quy tắc chuẩn hóa, phân trang, giới hạn đồng thời, kết nối dùng và trạng thái của nó, tệp đặc tả đệm (OpenAPI, WSDL) kèm băm và ngày tải, kiểm thử gần nhất, sức khỏe, nơi dùng. Xem một phiên bản cũ cụ thể ở chế độ chỉ đọc; so sánh hai phiên bản theo từng thao tác (khác biệt dạng cây). Bộ điều hợp của tenant khác trả ERR-05-001.
+::: dac-ta
+**Mục đích.** Cho một nơi xem đầy đủ bộ điều hợp: đang chạy phiên bản nào, có những thao tác gì, dùng kết nối nào, kiểm thử gần nhất ra sao, ai đang dùng; và so được hai phiên bản trước khi duyệt.
+
+**Tác nhân, quyền.** IE, TO, IA, TA (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-006, LGC-BUS-020.
+
+**Tiền điều kiện.** Bộ điều hợp thuộc tenant của người dùng.
+
+**Kích hoạt.** Người dùng bấm một dòng ở UI-05-08, hoặc liên kết từ luồng, cảnh báo, việc duyệt.
+
+**Đầu vào.** `adapterCode`; tùy chọn `version` (xem phiên bản cũ), cặp `from`, `to` (so sánh).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống trả thông tin chung, phiên bản hiệu lực và bản nháp (nếu có).
+2. Hệ thống trả danh sách thao tác kèm tham số giao thức, định dạng, quy tắc chuẩn hóa, phân trang, giới hạn đồng thời.
+3. Hệ thống trả kết nối dùng và trạng thái của nó, tệp đặc tả đệm (OpenAPI, WSDL) kèm băm và ngày tải.
+4. Hệ thống trả kiểm thử gần nhất, sức khỏe và nơi dùng.
+5. Người dùng chuyển giữa các tab Tổng quan, Thao tác, Kiểm thử, Phiên bản, Sức khỏe, Nơi dùng, Lịch sử.
+
+**Luồng thay thế.**
+
+- Xem phiên bản cũ: hệ thống trả phiên bản đó ở chế độ chỉ đọc.
+- So sánh hai phiên bản: hệ thống trả khác biệt theo từng thao tác, dạng cây.
+
+**Luồng ngoại lệ.** Bộ điều hợp không tồn tại hoặc của tenant khác: ERR-05-001 (404); "Không tìm thấy bộ điều hợp {mã}."
+
+**Đầu ra.** `200`, chi tiết kèm `ETag`.
+
+**Kết quả.** Người duyệt thấy chính xác thay đổi giữa hai phiên bản; cán bộ vận hành thấy ai bị ảnh hưởng nếu tạm dừng.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-016.
+
+**Màn hình, API.** UI-05-09; API-05-045, 047, 049, 062, 066.
+:::
 
 #### FR-05-031 · Tạo và sửa bộ điều hợp
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-040, LGC-BUS-013; repo FR-05-001 |
-| Tác nhân, quyền | IE, TA (`PERM-05-adapter`) |
-| Tiền điều kiện | HTTT `ACTIVE` ở PH-01; kết nối dùng thuộc tenant, không `RETIRED`, cùng HTTT (BR-05-015) |
+::: dac-ta
+**Mục đích.** Khai báo một bộ điều hợp cho một HTTT trên một kết nối đã có, làm khung để khai báo thao tác.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-adapter`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040, LGC-BUS-013; repo FR-05-001.
+
+**Tiền điều kiện.** HTTT `ACTIVE` ở PH-01; kết nối dùng thuộc tenant, không `RETIRED`, cùng HTTT (BR-05-015).
+
+**Kích hoạt.** Người dùng bấm "+ Tạo bộ điều hợp" ở UI-05-08 (sửa: "Sửa thông tin" ở UI-05-09).
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-031 dưới đây; sửa cần `If-Match`.
+
+**Luồng xử lý chính.**
+
+1. Người dùng nhập mã, tên, HTTT, nhóm HTTT, giao thức, kết nối, giới hạn đồng thời rồi bấm "Tạo".
+2. Hệ thống kiểm tra mã theo mẫu và chưa dùng trong tenant (sai mẫu: ERR-05-003; trùng: ERR-05-002).
+3. Hệ thống kiểm tra HTTT `ACTIVE` ở PH-01 (ERR-05-005).
+4. Hệ thống kiểm tra kết nối cùng HTTT và giao thức khớp nhóm giao thức của loại kết nối (ERR-05-003).
+5. Hệ thống tạo bộ điều hợp `DRAFT` cùng phiên bản 1 `DRAFT` chưa có thao tác, ghi kiểm toán.
+
+**Luồng thay thế.**
+
+- Sửa (`PATCH`): chỉ sửa được tên, mô tả, nhãn, chủ sở hữu. Đổi kết nối, giới hạn đồng thời, thao tác phải qua phiên bản nháp (FR-05-032, FR-05-045).
+- CDC dùng kết nối `cdc-debezium`: không cần `connectionCode` riêng.
+
+**Luồng ngoại lệ.**
+
+- Mã đã dùng: ERR-05-002 (409); "Mã {mã} đã được dùng (kể cả đối tượng đã ngừng dùng). Chọn mã khác."
+- HTTT không hợp lệ: ERR-05-005 (422); "HTTT {mã} không tồn tại hoặc chưa ở trạng thái hoạt động trong danh mục HTTT."
+- Giao thức không khớp loại kết nối: ERR-05-003 (400); "Giao thức {giao thức} không dùng được với kết nối loại {loại}."
+- Vượt trần đồng thời: ERR-05-030 (422); "Giới hạn đồng thời vượt trần {trần} của tỉnh."
+- Sửa khi bản đã đổi: ERR-05-007 (412); "Bộ điều hợp vừa được người khác sửa. Tải lại để xem bản mới."
+
+**Đầu ra.** `201` chi tiết bộ điều hợp, tiêu đề `Location`, `ETag`; sửa `200`.
+
+**Kết quả.** Có khung bộ điều hợp để khai báo thao tác; chưa ảnh hưởng luồng nào.
+
+**Hậu điều kiện.** Bộ điều hợp `DRAFT`, chưa xuất hiện trong trình thiết kế.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: người tạo hoặc sửa, giá trị trước và sau.
+
+**Quy tắc nghiệp vụ.** BR-05-015.
+
+**Màn hình, API.** UI-05-08; UI-05-09; API-05-044, 046.
+:::
 
 | Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
 |---|---|---|---|---|
@@ -2159,42 +2316,128 @@ FR-05-030 (M; LGC-BUS-006, LGC-BUS-020). `PERM-05-read`. Trả thông tin chung,
 | `maxConcurrency` | số nguyên | Không | 1…trần tenant (mặc định 20) | `10` |
 | `description`, `labels` | | Không | | |
 
-| Trường | Nội dung |
-|---|---|
-| Xử lý | 1. Kiểm tra mã (ERR-05-002), HTTT (ERR-05-005), kết nối và giao thức khớp (ERR-05-003). 2. Tạo bộ điều hợp `DRAFT` cùng phiên bản 1 `DRAFT` rỗng thao tác. 3. Sửa (`PATCH`) chỉ trường thông tin chung (tên, mô tả, nhãn, chủ sở hữu); đổi kết nối, giới hạn đồng thời, thao tác phải qua phiên bản nháp (FR-05-032, FR-05-045). |
-| Đầu ra | `201`, chi tiết bộ điều hợp |
-| Ngoại lệ | Như FR-05-004 · Giao thức không khớp loại kết nối: ERR-05-003, 400 |
-| Hậu điều kiện | Bộ điều hợp `DRAFT`, chưa xuất hiện trong trình thiết kế |
-| Sự kiện, kiểm toán | Không sự kiện; kiểm toán có |
+: Dữ liệu vào của FR-05-031
 
 #### FR-05-032 · Khai báo thao tác của bộ điều hợp
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-020, LGC-TOOL-009, 010 |
-| Tác nhân, quyền | IE, TA (`PERM-05-adapter`) |
-| Tiền điều kiện | Phiên bản ở `DRAFT` |
-| Đầu vào | `operationCode` (`^[a-z][a-z0-9-]{1,40}$`), `title`, `direction` (`OUTBOUND`: luồng gọi ra; `INBOUND`: bộ điều hợp nhận vào và đẩy cho luồng), `protocolSpec` (theo giao thức, xem FR-05-033…039), `requestFormat`, `responseFormat` (`JSON`, `XML`, `SOAP`, `CSV`, `FIXED_WIDTH`, `TEXT`, `BINARY`), `requestSchemaRef`, `responseSchemaRef` (lược đồ JSON chuẩn ở Apicurio, tùy chọn), `normalization` (FR-05-041), `timeoutMs`, `idempotent` (khai báo thao tác an toàn để PH-04 thử lại), `sideEffect` (`NONE`, `WRITE`), `sampleRequest`, `sampleResponse` (≤ 1 MiB, dùng cho xem trước và kiểm thử) |
-| Xử lý | 1. Kiểm tra `protocolSpec` theo lược đồ của giao thức (ERR-05-032). 2. Kiểm tra thao tác `sideEffect = WRITE` chỉ khi kết nối `READ_WRITE` (ERR-05-017). 3. Quét mã độc dữ liệu mẫu (ERR-05-034). 4. Lưu vào phiên bản nháp; xóa kết quả kiểm thử của phiên bản. |
-| Đầu ra | Thao tác đã lưu; cảnh báo nếu thiếu lược đồ phản hồi |
-| Ngoại lệ | Phiên bản không phải `DRAFT`: ERR-05-008, 409 · Đặc tả giao thức sai: ERR-05-032, 422 · Dữ liệu mẫu quá lớn: ERR-05-035, 413 |
-| Hậu điều kiện | Phiên bản nháp có thao tác mới, cần kiểm thử lại |
-| Sự kiện, kiểm toán | Không sự kiện; kiểm toán có |
+::: dac-ta
+**Mục đích.** Mô tả từng việc luồng có thể làm với HTTT (tra cứu hồ sơ, gửi kết quả…): gọi thế nào, nhận gì, an toàn để thử lại hay không. Mỗi thao tác sau khi duyệt thành một Kamelet trong trình thiết kế.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-adapter`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-020, LGC-TOOL-009, LGC-TOOL-010.
+
+**Tiền điều kiện.** Phiên bản ở `DRAFT`.
+
+**Kích hoạt.** Người dùng bấm "+ Thao tác" ở UI-05-10.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-032 dưới đây.
+
+**Luồng xử lý chính.**
+
+1. Người dùng chọn chiều, nhập tham số giao thức, định dạng, lược đồ, dữ liệu mẫu rồi bấm "Lưu".
+2. Hệ thống kiểm tra `protocolSpec` theo lược đồ của giao thức (ERR-05-032).
+3. Hệ thống kiểm tra thao tác `sideEffect = WRITE` chỉ được khai trên kết nối `READ_WRITE` (ERR-05-017).
+4. Hệ thống quét mã độc dữ liệu mẫu (ERR-05-034) và kiểm tra kích thước (ERR-05-035).
+5. Hệ thống lưu thao tác vào phiên bản nháp và xóa kết quả kiểm thử cũ của phiên bản.
+
+**Luồng thay thế.** Xóa thao tác khỏi bản nháp: người dùng bấm "Xóa"; hệ thống xóa và xóa kết quả kiểm thử của phiên bản.
+
+**Luồng ngoại lệ.**
+
+- Phiên bản không phải `DRAFT`: ERR-05-008 (409); "Phiên bản {n} đã gửi duyệt hoặc đã duyệt. Tạo phiên bản nháp mới để sửa."
+- Đặc tả giao thức sai: ERR-05-032 (422); "Đặc tả thao tác không hợp lệ: {danh sách trường sai}."
+- Kết nối chỉ đọc mà thao tác ghi: ERR-05-017 (409); "Kết nối chỉ đọc không cho thao tác ghi. Đổi mục đích kết nối hoặc yêu cầu tài khoản ghi."
+- Dữ liệu mẫu có mã độc: ERR-05-034 (422); "Dữ liệu mẫu bị chặn vì có dấu hiệu mã độc."
+- Dữ liệu mẫu quá lớn: ERR-05-035 (413); "Dữ liệu mẫu vượt 1 MiB."
+
+**Đầu ra.** `200` thao tác đã lưu; cảnh báo nếu thiếu lược đồ phản hồi.
+
+**Kết quả.** Thao tác sẵn sàng để kiểm thử (FR-05-043).
+
+**Hậu điều kiện.** Phiên bản nháp có thao tác mới, cần kiểm thử lại trước khi gửi duyệt.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: thao tác, người sửa, khác biệt.
+
+**Quy tắc nghiệp vụ.** BR-05-006; BR-05-016.
+
+**Màn hình, API.** UI-05-10; API-05-050, 051.
+:::
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc |
+|---|---|---|---|
+| `operationCode` | chuỗi | Có | `^[a-z][a-z0-9-]{1,40}$` |
+| `title` | T-NAME | Có | Tiêu đề tiếng Việt hiện trong trình thiết kế |
+| `direction` | enum | Có | `OUTBOUND` (luồng gọi ra), `INBOUND` (bộ điều hợp nhận vào và đẩy cho luồng) |
+| `protocolSpec` | đối tượng | Có | Theo giao thức, xem FR-05-033…039 |
+| `requestFormat`, `responseFormat` | enum | Có | `JSON`, `XML`, `SOAP`, `CSV`, `FIXED_WIDTH`, `TEXT`, `BINARY` |
+| `requestSchemaRef`, `responseSchemaRef` | tham chiếu | Không | Lược đồ JSON chuẩn ở Apicurio |
+| `normalization` | đối tượng | Không | FR-05-041 |
+| `timeoutMs` | số nguyên | Không | Thời gian chờ của thao tác |
+| `idempotent` | logic | Có | Khai báo thao tác an toàn để PH-04 thử lại |
+| `sideEffect` | enum | Có | `NONE`, `WRITE` |
+| `sampleRequest`, `sampleResponse` | tệp | Không | ≤ 1 MiB; dùng cho xem trước và kiểm thử |
+
+: Dữ liệu vào của FR-05-032
 
 #### FR-05-033 · Bộ điều hợp REST/HTTP
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-040 (HTTP), LGC-TOOL-009; CMP-LAW-09; repo FR-05-005 |
-| Tác nhân, quyền | Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04 qua Kamelet sinh |
-| Đầu vào (`protocolSpec`) | `method`, `pathTemplate` (ví dụ `/api/ho-so/{maHoSo}`), `query` (ánh xạ từ tham số Kamelet), `headers` (không chứa bí mật), `bodyTemplate` hoặc truyền thân, `pagination` (`NONE`, `PAGE_NUMBER`, `OFFSET_LIMIT`, `CURSOR`, `LINK_HEADER`; tên tham số; đường dẫn tới danh sách và cờ còn trang; `maxPages` mặc định 50, trần 500), `rateLimit` (`respectRemoteHeaders` mặc định `true`, `maxRps` phía Datahub), `successStatuses` (mặc định 2xx) |
-| Xử lý | 1. Dựng yêu cầu từ mẫu; giá trị đưa vào đường dẫn được mã hóa URL, không ghép thô. 2. Áp xác thực theo loại kết nối: Basic, khóa API, Bearer từ OAuth2 (token đệm trong bộ nhớ, làm mới khi còn 60 giây hoặc khi nhận 401 lần đầu), mTLS. 3. Gửi qua nhóm kết nối dùng lại có giới hạn (FR-05-042). 4. Phân trang tự động tới hết hoặc tới `maxPages`; vượt thì lỗi ERR-05-110, không trả kết quả thiếu im lặng (BR-05-021). 5. Tôn trọng hạn mức phía đối tác: đọc `Retry-After`, `RateLimit-*` hoặc `X-RateLimit-*`; còn ≤ 5% hạn mức thì giãn nhịp. 6. Chuyển phản hồi về JSON chuẩn (FR-05-040) và chuẩn hóa (FR-05-041). 7. Phân loại lỗi để PH-04 xử lý theo FR-04-070: `429` → tạm thời, chờ `Retry-After` tối đa 30 giây rồi ERR-05-106; `4xx` khác → nghiệp vụ, không thử lại; `5xx`, quá hạn → tạm thời (ERR-05-104); phản hồi sai định dạng → dữ liệu (ERR-05-108), đưa DLQ kèm phản hồi gốc đã mã hóa. |
-| Đầu ra | Thân JSON chuẩn; tiêu đề `dh-adapter-status`, `dh-adapter-pages` |
-| Ngoại lệ | ERR-05-101…106, 108, 110, 118, 119 |
-| Hậu điều kiện | Không đổi trạng thái ở control plane |
-| Sự kiện, kiểm toán | Chỉ số `dh_adapter_calls_total`; nhật ký kết nối do chặng `audit` của PH-04 ghi |
+::: dac-ta
+**Mục đích.** Gọi API REST của HTTT một cách an toàn: dựng yêu cầu không ghép chuỗi thô, tự xác thực, tự phân trang tới hết, tôn trọng hạn mức của đối tác, và phân loại lỗi để PH-04 biết khi nào được thử lại.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04 qua Kamelet sinh.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (HTTP), LGC-TOOL-009; CMP-LAW-09; repo FR-05-005.
+
+**Tiền điều kiện.** Phiên bản bộ điều hợp `APPROVED`; kết nối loại HTTP có giá trị `ENABLED` ở môi trường chạy.
+
+**Kích hoạt.** Luồng đi tới chặng dùng Kamelet sinh của thao tác.
+
+**Đầu vào.** `protocolSpec`: `method`, `pathTemplate` (ví dụ `/api/ho-so/{maHoSo}`), `query` (ánh xạ từ tham số Kamelet), `headers` (không chứa bí mật), `bodyTemplate` hoặc truyền thân, `pagination` (`NONE`, `PAGE_NUMBER`, `OFFSET_LIMIT`, `CURSOR`, `LINK_HEADER`; tên tham số; đường dẫn tới danh sách và cờ còn trang; `maxPages` mặc định 50, trần 500), `rateLimit` (`respectRemoteHeaders` mặc định `true`, `maxRps` phía Datahub), `successStatuses` (mặc định 2xx).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống dựng yêu cầu từ mẫu; giá trị đưa vào đường dẫn được mã hóa URL, không ghép thô.
+2. Hệ thống áp xác thực theo loại kết nối: Basic, khóa API, Bearer từ OAuth2 (token đệm trong bộ nhớ, làm mới khi còn 60 giây hoặc khi nhận 401 lần đầu), mTLS.
+3. Hệ thống gửi qua nhóm kết nối dùng lại có giới hạn (FR-05-042).
+4. Hệ thống phân trang tự động tới hết hoặc tới `maxPages`.
+5. Hệ thống tôn trọng hạn mức phía đối tác: đọc `Retry-After`, `RateLimit-*` hoặc `X-RateLimit-*`; còn ≤ 5% hạn mức thì giãn nhịp.
+6. Hệ thống chuyển phản hồi về JSON chuẩn (FR-05-040) và chuẩn hóa (FR-05-041), trả cho luồng.
+
+**Luồng thay thế.** Nhận `401` lần đầu với OAuth2: hệ thống làm mới token một lần rồi gửi lại.
+
+**Luồng ngoại lệ.** Hệ thống phân loại lỗi để PH-04 xử lý theo FR-04-070:
+
+- `429`: tạm thời; chờ `Retry-After` tối đa 30 giây, quá thì ERR-05-106.
+- `4xx` khác: lỗi nghiệp vụ, không thử lại; trả mã và thân lỗi của HTTT.
+- `5xx`, quá hạn: tạm thời, ERR-05-104.
+- Phản hồi sai định dạng: lỗi dữ liệu, ERR-05-108; đưa DLQ kèm phản hồi gốc đã mã hóa.
+- Vượt `maxPages`: ERR-05-110; không trả kết quả thiếu một cách im lặng (BR-05-021).
+- Không lấy được bí mật, xác thực bị từ chối, không tới được hệ đích: ERR-05-101, 102, 103.
+- Kết nối hoặc bộ điều hợp đang bị chặn: ERR-05-118. TLS dưới 1.2 hoặc chứng thư không tin cậy: ERR-05-119.
+
+Các lỗi runtime hiện cho người vận hành ở UI-05-09 tab Sức khỏe và ở lượt chạy của PH-04 kèm mã truy vết.
+
+**Đầu ra.** Thân JSON chuẩn; tiêu đề `dh-adapter-status`, `dh-adapter-pages`.
+
+**Kết quả.** Luồng nhận đủ dữ liệu của mọi trang, hoặc một lỗi rõ ràng; không bao giờ nhận dữ liệu thiếu mà không biết.
+
+**Hậu điều kiện.** Không đổi trạng thái ở control plane.
+
+**Sự kiện phát ra.** Không; chỉ số `dh_adapter_calls_total`.
+
+**Kiểm toán.** Nhật ký kết nối do chặng `audit` của PH-04 ghi.
+
+**Quy tắc nghiệp vụ.** BR-05-021.
+
+**Màn hình, API.** Khai báo ở UI-05-10; kiểm thử API-05-052; catalog API-05-089.
+:::
 
 Ví dụ thao tác `tra-cuu-ho-so` của bộ điều hợp `dvc-rest` (HTTT nhóm 1):
 
@@ -2217,108 +2460,711 @@ Ví dụ thao tác `tra-cuu-ho-so` của bộ điều hợp `dvc-rest` (HTTT nh�
 
 #### FR-05-034 · Bộ điều hợp SOAP
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-040 (SOAP), LGC-BUS-041 (WS-Security), LGC-TOOL-012; CMP-LAW-09; repo FR-05-006 |
-| Đầu vào (`protocolSpec`) | `wsdlRef` (WSDL đã tải và đệm ở kho đối tượng, kèm băm), `service`, `port`, `operation`, `soapAction`, `bodyTemplate` (XML có chỗ trống `${…}` được mã hóa XML) hoặc `jsonToXml: true`, `faultMapping[]` (mã `faultcode` hoặc phần tử chi tiết → lớp lỗi `BUSINESS`, `TRANSIENT`, `DATA`) |
-| Xử lý | 1. Khi khai báo: tải WSDL qua kết nối, phân tích (bộ phân tích XML an toàn, cấm XXE theo CC-SEC-13), đệm bản WSDL và các XSD nhập kèm; liệt kê dịch vụ, cổng, thao tác. 2. Khi chạy: dựng phong bì SOAP 1.1 hoặc 1.2, thêm `SOAPAction`, áp WS-Security (`UsernameToken` có `Nonce`, `Created`; hoặc chữ ký XML với khóa của kết nối). 3. Tách phần thân phản hồi, chuyển về JSON chuẩn (FR-05-040). 4. `SOAP Fault` được trích mã, mô tả và phân loại theo `faultMapping`; không có trong bảng thì `BUSINESS` (ERR-05-107). 5. WSDL không tải được khi khai báo hoặc làm mới: dùng bản đệm; không có bản đệm thì ERR-05-023. 6. **Phát hiện lệch WSDL**: mỗi lần kiểm thử và mỗi 24 giờ, tải WSDL hiện hành, so với bản đệm; khác ở thao tác đang dùng (đổi tên, đổi kiểu, thêm phần tử bắt buộc) thì ghi cảnh báo chi tiết theo thao tác và chuyển sức khỏe `DEGRADED` lý do `WSDL_DRIFT` (BR-05-023). Phản hồi thực tế lệch WSDL (phần tử không khai báo) được ghi cảnh báo mẫu, không làm hỏng lượt gọi nếu chuyển đổi vẫn thành công. |
-| Đầu ra | Thân JSON chuẩn |
-| Ngoại lệ | ERR-05-101…104, 107, 108, 119; ERR-05-023 khi khai báo |
-| Sự kiện, kiểm toán | Như FR-05-033 |
+::: dac-ta
+**Mục đích.** Gọi dịch vụ SOAP của các HTTT thế hệ cũ (phổ biến ở hệ một cửa, quản lý văn bản) mà luồng chỉ phải làm việc với JSON, và phát hiện sớm khi bên kia đổi WSDL.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04 qua Kamelet sinh.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (SOAP), LGC-BUS-041 (WS-Security), LGC-TOOL-012; CMP-LAW-09; repo FR-05-006.
+
+**Tiền điều kiện.** Như FR-05-033, kết nối loại SOAP.
+
+**Kích hoạt.** Khai báo: người dùng tải WSDL ở UI-05-10. Chạy: luồng đi tới chặng dùng Kamelet sinh.
+
+**Đầu vào.** `protocolSpec`: `wsdlRef` (WSDL đã tải và đệm ở kho đối tượng, kèm băm), `service`, `port`, `operation`, `soapAction`, `bodyTemplate` (XML có chỗ trống `${…}` được mã hóa XML) hoặc `jsonToXml: true`, `faultMapping[]` (mã `faultcode` hoặc phần tử chi tiết → lớp lỗi `BUSINESS`, `TRANSIENT`, `DATA`).
+
+**Luồng xử lý chính.**
+
+1. Khi khai báo, hệ thống tải WSDL qua kết nối, phân tích bằng bộ phân tích XML an toàn (cấm XXE theo CC-SEC-13), đệm bản WSDL và các XSD nhập kèm, rồi liệt kê dịch vụ, cổng, thao tác để người dùng chọn.
+2. Khi chạy, hệ thống dựng phong bì SOAP 1.1 hoặc 1.2, thêm `SOAPAction`.
+3. Hệ thống áp WS-Security: `UsernameToken` có `Nonce`, `Created`; hoặc chữ ký XML với khóa của kết nối.
+4. Hệ thống tách phần thân phản hồi và chuyển về JSON chuẩn (FR-05-040).
+5. Mỗi lần kiểm thử và mỗi 24 giờ, hệ thống tải WSDL hiện hành và so với bản đệm (phát hiện lệch WSDL).
+
+**Luồng thay thế.**
+
+- WSDL không tải được khi khai báo hoặc làm mới: hệ thống dùng bản đệm.
+- Phản hồi thực tế có phần tử không khai báo trong WSDL: hệ thống ghi cảnh báo mẫu, không làm hỏng lượt gọi nếu chuyển đổi vẫn thành công.
+
+**Luồng ngoại lệ.**
+
+- `SOAP Fault`: hệ thống trích mã, mô tả, phân loại theo `faultMapping`; không có trong bảng thì `BUSINESS`, ERR-05-107.
+- WSDL lệch ở thao tác đang dùng (đổi tên, đổi kiểu, thêm phần tử bắt buộc): ghi cảnh báo chi tiết theo thao tác, sức khỏe `DEGRADED` lý do `WSDL_DRIFT` (BR-05-023); UI-05-09 hiện "WSDL của HTTT đã đổi ở thao tác {mã}. Xem khác biệt và cập nhật phiên bản nháp."
+- WSDL không tải được và không có bản đệm: ERR-05-023 (422); "Không tải hoặc không phân tích được WSDL: {lý do, dòng, cột}."
+- Lỗi runtime chung: ERR-05-101…104, 108, 119 như FR-05-033.
+
+**Đầu ra.** Thân JSON chuẩn.
+
+**Kết quả.** Luồng gọi dịch vụ SOAP như gọi một API JSON; IE biết ngay khi HTTT đổi WSDL.
+
+**Hậu điều kiện.** Không đổi trạng thái ở control plane (trừ đánh dấu sức khỏe khi lệch WSDL).
+
+**Sự kiện phát ra.** EVT-05-06 khi đổi sức khỏe do `WSDL_DRIFT`.
+
+**Kiểm toán.** Như FR-05-033.
+
+**Quy tắc nghiệp vụ.** BR-05-023.
+
+**Màn hình, API.** UI-05-10; UI-05-09 tab Sức khỏe; API-05-050, 052.
+:::
 
 #### FR-05-035 · Bộ điều hợp hàng đợi bản tin (JMS, AMQP, MQTT, Kafka ngoài)
 
-FR-05-035 (M; LGC-BUS-040 message broker, LGC-TOOL-010; CMP-LAW-09; repo FR-05-007). `protocolSpec`: `destination` (hàng đợi hoặc chủ đề), `destinationType`, `role` (`CONSUMER` cho `INBOUND`, `PRODUCER` cho `OUTBOUND`), `ackMode` (xác nhận sau khi luồng xử lý xong; MQTT QoS ≥ 1 với dữ liệu quan trọng, mặc định 1), `concurrentConsumers` (≤ `maxConcurrency`), `messageFormat`, `propertiesMap` (thuộc tính bản tin ↔ tiêu đề `dh-*`: `traceparent`, `correlationId`). Hành vi: tự kết nối lại khi mất kết nối với giãn cách lũy thừa 1…60 giây, cảnh báo nếu mất quá 5 phút (ERR-05-114); bản tin không giải mã được chuyển hàng đợi lỗi của môi giới nếu có, ngược lại DLQ của PH-04; hàng đợi phía đối tác đầy (từ chối gửi) thì tạm dừng phát, trả lỗi tạm thời và cảnh báo. Thao tác `INBOUND` của hàng đợi chỉ chạy khi một luồng PH-04 đã phát hành dùng Kamelet nguồn của thao tác đó; bộ điều hợp không tự tiêu thụ khi không có luồng (BR-05-024). Kafka ngoài (`kafka-external`) chỉ dùng cho cụm Kafka của bên thứ ba; Kafka nội bộ đi qua PH-10.
+::: dac-ta
+**Mục đích.** Nhận bản tin từ, hoặc gửi bản tin tới, môi giới bản tin của HTTT hay bên thứ ba, với bảo đảm không mất bản tin và không tiêu thụ khi chưa có luồng xử lý.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (message broker), LGC-TOOL-010; CMP-LAW-09; repo FR-05-007.
+
+**Tiền điều kiện.** Như FR-05-033, kết nối loại JMS, AMQP, MQTT hoặc `kafka-external`.
+
+**Kích hoạt.** `INBOUND`: luồng PH-04 đã phát hành dùng Kamelet nguồn của thao tác. `OUTBOUND`: luồng đi tới chặng gửi.
+
+**Đầu vào.** `protocolSpec`: `destination` (hàng đợi hoặc chủ đề), `destinationType`, `role` (`CONSUMER` cho `INBOUND`, `PRODUCER` cho `OUTBOUND`), `ackMode` (xác nhận sau khi luồng xử lý xong; MQTT QoS ≥ 1 với dữ liệu quan trọng, mặc định 1), `concurrentConsumers` (≤ `maxConcurrency`), `messageFormat`, `propertiesMap` (thuộc tính bản tin ↔ tiêu đề `dh-*`: `traceparent`, `correlationId`).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kết nối tới môi giới bằng bí mật của kết nối.
+2. Với `CONSUMER`: hệ thống nhận bản tin, ánh xạ thuộc tính sang tiêu đề `dh-*`, chuyển JSON chuẩn và đẩy cho luồng.
+3. Hệ thống chỉ xác nhận (ack) sau khi luồng xử lý xong.
+4. Với `PRODUCER`: hệ thống chuyển JSON chuẩn về `messageFormat`, gắn thuộc tính và gửi.
+
+**Luồng thay thế.**
+
+- Không có luồng đã phát hành dùng Kamelet nguồn: bộ điều hợp không tự tiêu thụ (BR-05-024).
+- Kafka ngoài (`kafka-external`) chỉ dùng cho cụm Kafka của bên thứ ba; Kafka nội bộ đi qua PH-10.
+
+**Luồng ngoại lệ.**
+
+- Mất kết nối: tự kết nối lại với giãn cách lũy thừa 1…60 giây; mất quá 5 phút thì cảnh báo, ERR-05-114.
+- Bản tin không giải mã được: chuyển hàng đợi lỗi của môi giới nếu có, ngược lại DLQ của PH-04.
+- Hàng đợi phía đối tác đầy (từ chối gửi): tạm dừng phát, trả lỗi tạm thời và cảnh báo.
+
+**Đầu ra.** Bản tin JSON chuẩn kèm tiêu đề `dh-*` (`INBOUND`); xác nhận gửi (`OUTBOUND`).
+
+**Kết quả.** Bản tin không mất khi luồng lỗi giữa chừng, vì chỉ xác nhận sau khi xử lý xong.
+
+**Hậu điều kiện.** Không đổi trạng thái ở control plane.
+
+**Sự kiện phát ra.** Không; chỉ số `dh_adapter_calls_total`.
+
+**Kiểm toán.** Như FR-05-033.
+
+**Quy tắc nghiệp vụ.** BR-05-024.
+
+**Màn hình, API.** UI-05-10; API-05-050, 052.
+:::
 
 #### FR-05-036 · Bộ điều hợp tệp và SFTP, FTPS, thư mục chia sẻ
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Đọc và ghi tệp trao đổi (CSV, cố định độ rộng, XML, JSON) với các HTTT chỉ trao đổi bằng tệp, bảo đảm không đọc tệp ghi dở, không xử lý trùng, không mất tệp khi đứt kết nối.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (FTP, File), LGC-TOOL-009, LGC-TOOL-011; repo FR-05-008.
+
+**Tiền điều kiện.** Như FR-05-033, kết nối loại SFTP, FTPS hoặc thư mục chia sẻ.
+
+**Kích hoạt.** `POLL`: theo `schedule` hoặc `pollIntervalSeconds`. `WRITE`: luồng đi tới chặng ghi tệp.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-036 dưới đây.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống quét theo lịch; mỗi lượt chỉ một bản sao giữ khóa lượt quét của bộ điều hợp (khóa phân tán qua Kubernetes Lease hoặc bảng khóa, BR-05-026).
+2. Hệ thống chỉ nhận tệp đã ghi xong theo `readyStrategy`.
+3. Hệ thống khóa tệp bằng đổi tên sang `.dh-processing-{uuid}` trước khi đọc, nên hai bản sao không cùng xử lý một tệp.
+4. Hệ thống đọc theo luồng (streaming), không nạp cả tệp vào bộ nhớ.
+5. Hệ thống phân tích theo `format`; bản ghi lỗi được gom (số dòng, lý do), các bản ghi còn lại vẫn xử lý.
+6. Xử lý xong, hệ thống chuyển tệp sang `archiveDirectory` kèm dấu thời gian.
+7. Với `WRITE`, hệ thống ghi tệp tạm rồi đổi tên, không để đích thấy tệp ghi dở.
+
+**Luồng thay thế.** Tệp chưa sẵn sàng: bỏ qua lượt này, ghi ERR-05-112 mức thông tin, xét lại ở lượt sau.
+
+**Luồng ngoại lệ.**
+
+- Tệp vượt `maxFileSizeMb`: chuyển `errorDirectory`.
+- Tỷ lệ bản ghi lỗi vượt `maxErrorRatio` (mặc định 10%): cả tệp lỗi, ERR-05-113.
+- Tệp sai định dạng hoàn toàn: chuyển `errorDirectory` kèm tệp `.error.json` mô tả lỗi, ERR-05-113.
+- Mất kết nối giữa chừng: không xóa, không chuyển tệp nguồn; trả tên về như cũ ở lượt kế tiếp và xử lý lại từ đầu; phía luồng dùng khóa chống trùng theo tên tệp và số dòng (FR-04-071).
+- Lỗi kết nối chung: ERR-05-101…104.
+
+**Đầu ra.** Bản tin JSON chuẩn theo `recordMode`; tiêu đề `dh-file-name`, `dh-file-record`, `dh-file-checksum`.
+
+**Kết quả.** Mỗi tệp được xử lý đúng một lần về mặt nghiệp vụ; tệp lỗi nằm ở thư mục lỗi kèm lý do để đơn vị gửi sửa.
+
+**Hậu điều kiện.** Tệp nguồn ở `archiveDirectory` hoặc `errorDirectory`.
+
+**Sự kiện phát ra.** Không; chỉ số `dh_adapter_files_total{result}`, `dh_adapter_file_records_total{result}`.
+
+**Kiểm toán.** Như FR-05-033.
+
+**Quy tắc nghiệp vụ.** BR-05-026.
+
+**Màn hình, API.** UI-05-10; API-05-050, 052.
+:::
+
+| Trường | Ràng buộc, mặc định |
 |---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-040 (FTP, File), LGC-TOOL-009, 011; repo FR-05-008 |
-| Đầu vào (`protocolSpec`) | `role` (`POLL` cho `INBOUND`, `WRITE` cho `OUTBOUND`), `directory`, `includePattern` (glob, ví dụ `BC_*.csv`), `schedule` (cron, tối thiểu mỗi phút) hoặc `pollIntervalSeconds`, `readyStrategy` (`STABLE_SIZE` với `stableSeconds` mặc định 30, `DONE_MARKER` với hậu tố `.done`, `RENAME_PREFIX`), `archiveDirectory`, `errorDirectory`, `format` (`CSV` với `delimiter`, `quote`, `header`, `encoding`; `FIXED_WIDTH` với bảng cột vị trí, độ dài; `XML`, `JSON` theo bản ghi), `recordMode` (`WHOLE_FILE`, `PER_RECORD`, `BATCH` với `batchSize`), `maxFileSizeMb` (mặc định 200), `writeMode` (`TEMP_THEN_RENAME` mặc định) |
-| Xử lý | 1. Quét theo lịch; mỗi lượt chỉ một bản sao giữ khóa lượt quét của bộ điều hợp (khóa phân tán qua Kubernetes Lease hoặc bảng khóa, BR-05-026). 2. Chỉ nhận tệp đã ghi xong theo `readyStrategy`; tệp chưa sẵn sàng bỏ qua lượt này (ERR-05-112 mức thông tin). 3. Khóa tệp bằng đổi tên sang `.dh-processing-{uuid}` trước khi đọc, nên hai bản sao không cùng xử lý một tệp. 4. Đọc theo luồng (streaming), không nạp cả tệp vào bộ nhớ; tệp vượt `maxFileSizeMb` chuyển thư mục lỗi. 5. Phân tích theo `format`; bản ghi lỗi được gom (số dòng, lý do), các bản ghi còn lại vẫn xử lý; tỷ lệ bản ghi lỗi vượt `maxErrorRatio` (mặc định 10%) thì cả tệp lỗi. 6. Xử lý xong chuyển tệp sang `archiveDirectory` kèm dấu thời gian; tệp sai định dạng hoàn toàn sang `errorDirectory` kèm tệp `.error.json` mô tả lỗi (ERR-05-113). 7. Mất kết nối giữa chừng: không xóa, không chuyển tệp nguồn; trả tên về như cũ ở lượt kế tiếp và xử lý lại từ đầu; phía luồng dùng khóa chống trùng theo tên tệp và số dòng (FR-04-071). 8. Ghi tệp `OUTBOUND`: ghi tệp tạm rồi đổi tên, không để đích thấy tệp ghi dở. |
-| Đầu ra | Bản tin JSON chuẩn theo `recordMode`, tiêu đề `dh-file-name`, `dh-file-record`, `dh-file-checksum` |
-| Ngoại lệ | ERR-05-101…104, 112, 113 |
-| Sự kiện, kiểm toán | Chỉ số `dh_adapter_files_total{result}`, `dh_adapter_file_records_total{result}` |
+| `role` | `POLL` cho `INBOUND`, `WRITE` cho `OUTBOUND` |
+| `directory`, `includePattern` | Thư mục; glob, ví dụ `BC_*.csv` |
+| `schedule` hoặc `pollIntervalSeconds` | Cron, tối thiểu mỗi phút |
+| `readyStrategy` | `STABLE_SIZE` (`stableSeconds` mặc định 30), `DONE_MARKER` (hậu tố `.done`), `RENAME_PREFIX` |
+| `archiveDirectory`, `errorDirectory` | Bắt buộc với `POLL` |
+| `format` | `CSV` (`delimiter`, `quote`, `header`, `encoding`); `FIXED_WIDTH` (bảng cột vị trí, độ dài); `XML`, `JSON` theo bản ghi |
+| `recordMode` | `WHOLE_FILE`, `PER_RECORD`, `BATCH` (`batchSize`) |
+| `maxFileSizeMb` | Mặc định 200 |
+| `maxErrorRatio` | Mặc định 10% |
+| `writeMode` | `TEMP_THEN_RENAME` (mặc định) |
+
+: Dữ liệu vào của FR-05-036
 
 #### FR-05-037 · Bộ điều hợp thư điện tử
 
-FR-05-037 (S; LGC-BUS-040; CMP-LAW-09 yêu cầu POP, IMAP, SMTP; repo FR-05-010). **Gửi** (`smtp`): mẫu thư (tiêu đề, thân HTML hoặc văn bản có chỗ trống), tệp đính kèm từ thân bản tin hoặc kho đối tượng (≤ 10 MiB tổng), địa chỉ nhận lấy từ bản tin nhưng phải khớp danh sách miền cho phép của bộ điều hợp (chống lạm dụng gửi thư ra ngoài, BR-05-028); máy chủ từ chối tạm thời thì thử lại theo giãn cách. **Nhận** (`imap`; POP3 chỉ hỗ trợ đọc và xóa sau khi xử lý, không khuyến nghị): quét thư mục theo lịch, lọc theo người gửi, tiêu đề; trích nội dung và đính kèm; **mọi đính kèm được quét mã độc trước khi đưa vào luồng** (DD-12); có mã độc thì chặn, chuyển thư sang thư mục cách ly, phát cảnh báo an ninh (ERR-05-115); thư đã xử lý được đánh dấu và chuyển thư mục. Đợt 3.
+::: dac-ta
+**Mục đích.** Gửi thư thông báo từ luồng và nhận thư có đính kèm từ các đơn vị chỉ trao đổi qua thư, mà không biến Datahub thành kênh gửi thư rác hay đường đưa mã độc vào.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04.
+
+**Mức ưu tiên, đợt.** S · Đợt 3.
+
+**Truy vết.** REQ-05; LGC-BUS-040; CMP-LAW-09 (POP, IMAP, SMTP); repo FR-05-010.
+
+**Tiền điều kiện.** Như FR-05-033, kết nối loại `smtp` hoặc `imap`.
+
+**Kích hoạt.** Gửi: luồng đi tới chặng gửi thư. Nhận: theo lịch quét.
+
+**Đầu vào.** Gửi: mẫu thư (tiêu đề, thân HTML hoặc văn bản có chỗ trống), đính kèm từ thân bản tin hoặc kho đối tượng (≤ 10 MiB tổng), địa chỉ nhận lấy từ bản tin, danh sách miền cho phép của bộ điều hợp. Nhận: thư mục, lịch, bộ lọc người gửi, tiêu đề.
+
+**Luồng xử lý chính.**
+
+1. Gửi: hệ thống dựng thư từ mẫu, kiểm tra mọi địa chỉ nhận khớp danh sách miền cho phép (BR-05-028), rồi gửi qua SMTP.
+2. Nhận (`imap`): hệ thống quét thư mục theo lịch, lọc theo người gửi, tiêu đề.
+3. Hệ thống trích nội dung và đính kèm.
+4. Hệ thống quét mã độc mọi đính kèm trước khi đưa vào luồng (DD-12).
+5. Hệ thống đánh dấu thư đã xử lý và chuyển thư mục.
+
+**Luồng thay thế.** POP3: chỉ hỗ trợ đọc và xóa sau khi xử lý; không khuyến nghị.
+
+**Luồng ngoại lệ.**
+
+- Địa chỉ nhận ngoài miền cho phép: lỗi nghiệp vụ, không gửi; ERR-05-003; "Địa chỉ {địa chỉ} không thuộc miền được phép của bộ điều hợp."
+- Máy chủ thư từ chối tạm thời: thử lại theo giãn cách.
+- Đính kèm có mã độc: chặn, chuyển thư sang thư mục cách ly, phát cảnh báo an ninh, ERR-05-115.
+
+**Đầu ra.** Gửi: mã thư của máy chủ. Nhận: bản tin JSON chuẩn có nội dung và tham chiếu đính kèm.
+
+**Kết quả.** Luồng trao đổi được qua thư mà không có đính kèm độc hại lọt vào.
+
+**Hậu điều kiện.** Thư đã xử lý nằm ở thư mục đã xử lý hoặc cách ly.
+
+**Sự kiện phát ra.** Cảnh báo an ninh qua PH-13 khi có mã độc.
+
+**Kiểm toán.** Như FR-05-033.
+
+**Quy tắc nghiệp vụ.** BR-05-028.
+
+**Màn hình, API.** UI-05-10; API-05-050, 052.
+:::
 
 #### FR-05-038 · Bộ điều hợp CSDL theo truy vấn khai báo
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05, REQ-04; LGC-TOOL-008, LGC-BUS-040; Q359, ADR-067; repo FR-05-011 (nâng từ S lên M theo Q359) |
-| Đầu vào (`protocolSpec`) | `statement` (một câu `SELECT` hoặc `WITH … SELECT` với tham số ràng buộc `:#ten`), `parameters[]` (tên, kiểu, bắt buộc), `maxRows` (≤ `maxRows` của kết nối), `fetchSize`, `pagingKey` (cột khóa tăng dần cho đọc định kỳ khối lượng lớn), `schedule` (với `INBOUND` đọc định kỳ), `watermarkStore` (`CONTROL` lưu mốc ở `dh-integration`), hoặc với thao tác ghi: `statement` `INSERT`, `UPDATE` khai báo trước trên bảng trong phạm vi tài khoản ghi |
-| Xử lý | 1. Khi khai báo: phân tích câu lệnh bằng bộ phân tích SQL (cùng bộ của VR-13 PH-04), chặn câu không phải đọc với kết nối chỉ đọc, nhiều câu trong một chuỗi, hàm có tác dụng phụ trong danh sách cấm, schema ngoài phạm vi (ERR-05-032). 2. Không nhận câu lệnh động từ bên gọi; luồng chỉ truyền giá trị tham số (chống chèn mã SQL: không ghép chuỗi, BR-05-019). 3. Khi chạy: Kamelet `dh-sql-ro-source` hoặc `dh-sql-ro-action` lấy tài khoản động của luồng (FR-05-024), mở giao dịch chỉ đọc, đặt `statement_timeout` và `SET LOCAL` tenant (nếu có RLS), chạy câu lệnh, đọc tối đa `maxRows + 1` dòng. 4. Vượt `maxRows` thì trả `maxRows` dòng kèm tiêu đề `dh-truncated: true` và cảnh báo (ERR-05-111 mức cảnh báo) hoặc lỗi nếu thao tác khai báo `onTruncate: FAIL`. 5. Quá thời gian: hủy câu lệnh ở CSDL (`pg_cancel_backend` qua driver), trả ERR-05-111. 6. Đọc định kỳ theo `pagingKey`: lưu mốc sau mỗi lô thành công. 7. Phát EVT-05-14 (FR-05-027). |
-| Đầu ra | Mảng bản ghi JSON (tên cột chữ thường), tiêu đề `dh-rows`, `dh-truncated` |
-| Ngoại lệ | ERR-05-101, 103, 104, 105, 111 |
-| Sự kiện, kiểm toán | EVT-05-14 mỗi câu lệnh |
+::: dac-ta
+**Mục đích.** Cho luồng đọc CSDL của HTTT bằng câu SQL khai báo trước và đã kiểm tra, chạy dưới tài khoản riêng của luồng (Q359), để không có đường cho câu lệnh động hay chèn mã SQL.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04 qua `dh-sql-ro-source`, `dh-sql-ro-action`.
+
+**Mức ưu tiên, đợt.** M · MVP (nâng từ S theo Q359).
+
+**Truy vết.** REQ-05, REQ-04; LGC-TOOL-008, LGC-BUS-040; Q359, ADR-067; repo FR-05-011.
+
+**Tiền điều kiện.** Kết nối `db-flow` (FR-05-023); luồng có tài khoản `ISSUED` (FR-05-024).
+
+**Kích hoạt.** Khai báo: ở UI-05-10. Chạy: luồng gọi thao tác, hoặc theo `schedule` với `INBOUND` đọc định kỳ.
+
+**Đầu vào.** `protocolSpec`: `statement` (một câu `SELECT` hoặc `WITH … SELECT` với tham số ràng buộc `:#ten`), `parameters[]` (tên, kiểu, bắt buộc), `maxRows` (≤ `maxRows` của kết nối), `fetchSize`, `pagingKey` (cột khóa tăng dần cho đọc định kỳ khối lượng lớn), `schedule`, `watermarkStore` (`CONTROL` lưu mốc ở `dh-integration`), `onTruncate`; thao tác ghi: `statement` `INSERT`, `UPDATE` khai báo trước trên bảng trong phạm vi tài khoản ghi.
+
+**Luồng xử lý chính.**
+
+1. Khi khai báo, hệ thống phân tích câu lệnh bằng bộ phân tích SQL (cùng bộ của VR-13 PH-04), chặn: câu không phải đọc với kết nối chỉ đọc, nhiều câu trong một chuỗi, hàm có tác dụng phụ trong danh sách cấm, schema ngoài phạm vi.
+2. Khi chạy, Kamelet lấy tài khoản động của luồng (FR-05-024), mở giao dịch chỉ đọc, đặt `statement_timeout` và `SET LOCAL` tenant (nếu có RLS).
+3. Hệ thống chạy câu lệnh với giá trị tham số do luồng truyền, đọc tối đa `maxRows + 1` dòng.
+4. Hệ thống trả mảng bản ghi JSON, tên cột chữ thường.
+5. Hệ thống phát EVT-05-14 (FR-05-027).
+
+**Luồng thay thế.**
+
+- Đọc định kỳ theo `pagingKey`: hệ thống lưu mốc sau mỗi lô thành công.
+- Vượt `maxRows` với `onTruncate` mặc định: trả `maxRows` dòng, tiêu đề `dh-truncated: true` và cảnh báo ERR-05-111 mức cảnh báo.
+
+**Luồng ngoại lệ.**
+
+- Câu lệnh sai khi khai báo: ERR-05-032 (422); "Câu lệnh không được phép: {lý do}. Chỉ dùng một câu SELECT với tham số :#tên."
+- Vượt `maxRows` khi `onTruncate: FAIL`: ERR-05-111.
+- Quá thời gian: hủy câu lệnh ở CSDL (`pg_cancel_backend` qua driver), ERR-05-111.
+- Lỗi kết nối, xác thực, nhóm cạn: ERR-05-101, 103, 104, 105.
+
+**Đầu ra.** Mảng bản ghi JSON; tiêu đề `dh-rows`, `dh-truncated`.
+
+**Kết quả.** Luồng đọc được dữ liệu cần mà bên gọi không bao giờ đưa được câu lệnh của riêng mình vào.
+
+**Hậu điều kiện.** Mốc đọc cập nhật (nếu đọc định kỳ).
+
+**Sự kiện phát ra.** EVT-05-14 mỗi câu lệnh.
+
+**Kiểm toán.** Qua EVT-05-14 (FR-05-027).
+
+**Quy tắc nghiệp vụ.** BR-05-019 (không ghép chuỗi, không nhận câu lệnh động từ bên gọi).
+
+**Màn hình, API.** UI-05-10; API-05-050, 052.
+:::
 
 #### FR-05-039 · Bộ điều hợp LDAP
 
-FR-05-039 (C; LGC-BUS-040 LDAP). Thao tác tra cứu (`search`) với `baseDn`, `filterTemplate` (giá trị được thoát theo RFC 4515, không ghép thô), `attributes[]`, `scope`, `sizeLimit` (≤ 1.000); chỉ đọc, không có thao tác ghi. Dùng cho HTTT chỉ công bố danh bạ cán bộ qua LDAP. Đợt 3.
+::: dac-ta
+**Mục đích.** Tra cứu danh bạ cán bộ của HTTT chỉ công bố qua LDAP, ở chế độ chỉ đọc, không có đường chèn bộ lọc.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: luồng PH-04.
+
+**Mức ưu tiên, đợt.** C · Đợt 3.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (LDAP).
+
+**Tiền điều kiện.** Như FR-05-033, kết nối loại LDAP.
+
+**Kích hoạt.** Luồng đi tới chặng tra cứu.
+
+**Đầu vào.** `protocolSpec`: `baseDn`, `filterTemplate`, `attributes[]`, `scope`, `sizeLimit` (≤ 1.000).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống dựng bộ lọc từ `filterTemplate`; giá trị được thoát theo RFC 4515, không ghép thô.
+2. Hệ thống gửi thao tác `search` với `baseDn`, `scope`, `attributes[]`, `sizeLimit`.
+3. Hệ thống chuyển kết quả về mảng JSON chuẩn.
+
+**Luồng thay thế.** Không. Bộ điều hợp không có thao tác ghi.
+
+**Luồng ngoại lệ.**
+
+- Khai báo thao tác ghi: ERR-05-032 (422); "Bộ điều hợp LDAP chỉ hỗ trợ tra cứu."
+- Vượt `sizeLimit`: ERR-05-110.
+- Lỗi kết nối, xác thực: ERR-05-101…104.
+
+**Đầu ra.** Mảng bản ghi JSON.
+
+**Kết quả.** Luồng lấy được thông tin cán bộ từ danh bạ của HTTT.
+
+**Hậu điều kiện.** Không đổi trạng thái.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Như FR-05-033.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-10; API-05-050, 052.
+:::
 
 #### FR-05-040 · Chuyển đổi định dạng về JSON chuẩn
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-036 (phần định dạng), LGC-TOOL-007; CMP-LAW-09 (JSON, XML, SOAP); repo FR-05-012 |
-| Tác nhân, quyền | Khai báo trong thao tác; xem trước: `PERM-05-test` (API-05-054) |
-| Đầu vào | Bản tin định dạng gốc; quy tắc định dạng của thao tác |
-| Xử lý | 1. XML, SOAP → JSON theo quy ước cố định của nền tảng: phần tử thành khóa, thuộc tính thành khóa tiền tố `@`, nội dung văn bản kèm thuộc tính thành `#text`, phần tử lặp thành mảng theo XSD (không đoán theo số lần xuất hiện), không gian tên bỏ tiền tố theo bảng ánh xạ của thao tác. 2. CSV, cố định độ rộng → mảng đối tượng theo tiêu đề hoặc bảng cột; mã hóa ký tự khai báo (`UTF-8`, `windows-1258`, `TCVN3` qua bảng chuyển, `VNI` không hỗ trợ: ERR-05-032). 3. JSON → JSON giữ nguyên cấu trúc, chỉ chuẩn hóa kiểu. 4. Chiều ngược (JSON chuẩn → XML, SOAP, CSV) dùng mẫu hoặc quy ước ngược. 5. Chuẩn hóa kiểu cơ bản theo khai báo trường: ngày về ISO 8601 (`dd/MM/yyyy`, `yyyyMMdd`, `yyyy-MM-dd'T'HH:mm:ss` có múi giờ mặc định `+07:00`), số thập phân dấu chấm, cắt khoảng trắng, chuẩn hóa Unicode NFC. 6. Kiểm tra kết quả theo `responseSchemaRef` nếu có; lỗi trả danh sách tối đa 20 trường sai (ERR-05-108). 7. Ánh xạ sang lược đồ dữ liệu dùng chung và chuyển mã danh mục là việc của chặng `transform` ở PH-04 (ADR-066, FR-04-066), không làm ở đây (BR-05-005). |
-| Đầu ra | JSON chuẩn; với xem trước: hai cột gốc và JSON, danh sách cảnh báo |
-| Ngoại lệ | ERR-05-108 (runtime); ERR-05-032 (khai báo) |
-| Sự kiện, kiểm toán | Không |
+::: dac-ta
+**Mục đích.** Mọi luồng nhận cùng một dạng dữ liệu (JSON chuẩn) bất kể HTTT trả XML, SOAP, CSV hay cố định độ rộng, để chặng `transform` của PH-04 chỉ phải làm ánh xạ nghiệp vụ.
+
+**Tác nhân, quyền.** Khai báo trong thao tác: IE (`PERM-05-adapter`). Xem trước: IE (`PERM-05-test`). Chạy: Hệ thống.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-036 (phần định dạng), LGC-TOOL-007; CMP-LAW-09 (JSON, XML, SOAP); repo FR-05-012.
+
+**Tiền điều kiện.** Thao tác có `responseFormat` (và `requestFormat` với chiều ngược).
+
+**Kích hoạt.** Mỗi phản hồi của thao tác; hoặc người dùng bấm "Xem trước chuyển đổi" ở UI-05-10.
+
+**Đầu vào.** Bản tin định dạng gốc; quy tắc định dạng của thao tác.
+
+**Luồng xử lý chính.**
+
+1. XML, SOAP → JSON theo quy ước cố định: phần tử thành khóa, thuộc tính thành khóa tiền tố `@`, nội dung văn bản kèm thuộc tính thành `#text`, phần tử lặp thành mảng theo XSD (không đoán theo số lần xuất hiện), không gian tên bỏ tiền tố theo bảng ánh xạ của thao tác.
+2. CSV, cố định độ rộng → mảng đối tượng theo tiêu đề hoặc bảng cột; mã hóa ký tự theo khai báo (`UTF-8`, `windows-1258`, `TCVN3` qua bảng chuyển).
+3. JSON → JSON giữ nguyên cấu trúc, chỉ chuẩn hóa kiểu.
+4. Hệ thống chuẩn hóa kiểu cơ bản theo khai báo trường: ngày về ISO 8601 (`dd/MM/yyyy`, `yyyyMMdd`, `yyyy-MM-dd'T'HH:mm:ss`, múi giờ mặc định `+07:00`), số thập phân dấu chấm, cắt khoảng trắng, chuẩn hóa Unicode NFC.
+5. Hệ thống kiểm tra kết quả theo `responseSchemaRef` nếu có.
+
+**Luồng thay thế.** Chiều ngược (JSON chuẩn → XML, SOAP, CSV): dùng mẫu hoặc quy ước ngược.
+
+**Luồng ngoại lệ.**
+
+- Khai mã hóa `VNI`: không hỗ trợ, ERR-05-032 (422); "Mã hóa VNI không được hỗ trợ. Đề nghị HTTT xuất UTF-8."
+- Kết quả sai lược đồ khi chạy: ERR-05-108, kèm tối đa 20 trường sai.
+- Khi xem trước, lỗi hiện ngay dưới cột JSON: "Trường {đường dẫn}: {lý do}."
+
+**Đầu ra.** JSON chuẩn; với xem trước: hai cột gốc và JSON, danh sách cảnh báo.
+
+**Kết quả.** Người thiết kế luồng làm việc với một dạng dữ liệu duy nhất, đã đúng kiểu ngày, số và Unicode.
+
+**Hậu điều kiện.** Không đổi trạng thái.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-005 (ánh xạ sang lược đồ dùng chung và chuyển mã danh mục là việc của chặng `transform` ở PH-04, ADR-066, FR-04-066; không làm ở đây).
+
+**Màn hình, API.** UI-05-10 khối Xem trước chuyển đổi; API-05-054.
+:::
 
 #### FR-05-041 · Chuẩn hóa giá trị thiếu và giá trị đặc biệt
 
-FR-05-041 (M; repo FR-05-013). Mỗi thao tác có bảng quy tắc theo đường dẫn trường: danh sách giá trị coi là thiếu (mặc định chung `""`, `"null"`, `"NULL"`, `"N/A"`, `"-"`; theo trường có thể thêm `0`, `01/01/1900`, `1900-01-01`), hành vi khi thiếu với trường bắt buộc (`DEFAULT:<giá trị>`, `REJECT`, `PASS_NULL`), giá trị mặc định. Bản ghi bị `REJECT` không đi tiếp: với bản tin đơn lẻ trả ERR-05-109 (lớp dữ liệu, DLQ), với tệp theo bản ghi được gom vào danh sách lỗi (FR-05-036 bước 5). Bộ điều hợp phát chỉ số `dh_adapter_missing_values_total{field}` để PH-08 đánh giá chất lượng nguồn (Đợt 3) và để UI-05-09 hiện tỷ lệ thiếu theo trường.
+::: dac-ta
+**Mục đích.** Thống nhất các cách HTTT cũ biểu diễn "không có dữ liệu" (`""`, `"N/A"`, `01/01/1900`…) để luồng không xử lý giá trị giả như dữ liệu thật, và đo được chất lượng nguồn.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`). Chạy: Hệ thống.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-013.
+
+**Tiền điều kiện.** Thao tác có bảng quy tắc `normalization`.
+
+**Kích hoạt.** Sau bước chuyển đổi định dạng (FR-05-040), mỗi bản ghi.
+
+**Đầu vào.** Bảng quy tắc theo đường dẫn trường: danh sách giá trị coi là thiếu (mặc định chung `""`, `"null"`, `"NULL"`, `"N/A"`, `"-"`; theo trường có thể thêm `0`, `01/01/1900`, `1900-01-01`); hành vi khi thiếu với trường bắt buộc (`DEFAULT:<giá trị>`, `REJECT`, `PASS_NULL`); giá trị mặc định.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống so từng trường với danh sách giá trị coi là thiếu; khớp thì đổi thành `null`.
+2. Với trường bắt buộc đang `null`, hệ thống áp hành vi: `DEFAULT` điền giá trị mặc định, `PASS_NULL` giữ `null`, `REJECT` loại bản ghi.
+3. Hệ thống phát chỉ số `dh_adapter_missing_values_total{field}`.
+
+**Luồng thay thế.** Tệp theo bản ghi: bản ghi bị `REJECT` được gom vào danh sách lỗi của tệp (FR-05-036 bước 5), các bản ghi khác vẫn đi tiếp.
+
+**Luồng ngoại lệ.** Bản tin đơn lẻ bị `REJECT`: ERR-05-109 (lớp dữ liệu, đưa DLQ).
+
+**Đầu ra.** Bản ghi đã chuẩn hóa; chỉ số thiếu theo trường.
+
+**Kết quả.** UI-05-09 hiện tỷ lệ thiếu theo trường; PH-08 dùng chỉ số để đánh giá chất lượng nguồn (Đợt 3).
+
+**Hậu điều kiện.** Không đổi trạng thái.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-10 khối Chuẩn hóa; UI-05-09 tab Sức khỏe; API-05-050.
+:::
 
 #### FR-05-042 · Nhóm kết nối và giới hạn đồng thời theo HTTT
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; repo FR-05-015 |
-| Đầu vào | `maxConcurrency` của phiên bản bộ điều hợp (mặc định 20, trần tenant `05.adapter.max-concurrency` mặc định 100); `poolMinIdle` (mặc định 1); `idleTimeoutSeconds` (300); `acquireTimeoutMs` (3.000) |
-| Xử lý | 1. Giới hạn là **tổng trên mọi bản sao** `dh-runtime` của tenant tới một HTTT, không phải mỗi bản sao (BR-05-029): khi hồ sơ runtime có `n` bản sao, mỗi bản sao nhận hạn mức `ceil(maxConcurrency / n)` từ tệp kê khai (FR-05-015) và được cập nhật khi số bản sao đổi (KEDA hoặc HPA báo qua `dh-integration`). 2. Mỗi bản sao giữ nhóm kết nối riêng cho bộ điều hợp (HTTP: nhóm kết nối của client; JDBC: Agroal; JMS: phiên được nhóm), kích thước tối đa bằng hạn mức của nó, cộng vách ngăn (bulkhead) Resilience4j cùng kích thước. 3. Kiểm tra kết nối còn sống trước khi dùng lại (JDBC `isValid`, HTTP keep-alive có hạn). 4. Đóng kết nối nhàn rỗi quá `idleTimeoutSeconds`. 5. Nhóm cạn: chờ tối đa `acquireTimeoutMs`, rồi trả ERR-05-105 (lỗi tạm thời) cho PH-04, không xếp hàng vô hạn. 6. Kết nối lỗi khi lấy ra bị loại và tạo kết nối mới. |
-| Đầu ra | Chỉ số `dh_adapter_pool_active`, `dh_adapter_pool_wait_seconds`, `dh_adapter_pool_exhausted_total` |
-| Ngoại lệ | ERR-05-105 |
-| Ghi chú | Nhiều HTTT cũ chỉ chịu vài chục kết nối đồng thời. Nếu không giới hạn tổng, khi runtime mở rộng lên 20 bản sao mà mỗi bản sao mở 50 kết nối, Datahub có thể làm sập chính HTTT đang tích hợp |
+::: dac-ta
+**Mục đích.** Không để Datahub làm sập HTTT đang tích hợp: giới hạn tổng số kết nối đồng thời tới mỗi HTTT trên mọi bản sao runtime, và trả lỗi tạm thời rõ ràng thay vì xếp hàng vô hạn.
+
+**Tác nhân, quyền.** Khai báo: IE (`PERM-05-adapter`) qua phiên bản bộ điều hợp. Chạy: Hệ thống.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-015.
+
+**Tiền điều kiện.** Phiên bản bộ điều hợp `APPROVED` có `maxConcurrency`.
+
+**Kích hoạt.** Mỗi lượt gọi qua bộ điều hợp; mỗi khi số bản sao `dh-runtime` đổi.
+
+**Đầu vào.** `maxConcurrency` (mặc định 20; trần tenant `05.adapter.max-concurrency` mặc định 100), `poolMinIdle` (mặc định 1), `idleTimeoutSeconds` (300), `acquireTimeoutMs` (3.000).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống áp giới hạn là tổng trên mọi bản sao `dh-runtime` của tenant tới một HTTT (BR-05-029): khi có `n` bản sao, mỗi bản sao nhận hạn mức `ceil(maxConcurrency / n)` từ tệp kê khai (FR-05-015), cập nhật khi KEDA hoặc HPA đổi số bản sao (báo qua `dh-integration`).
+2. Mỗi bản sao giữ nhóm kết nối riêng cho bộ điều hợp (HTTP: nhóm kết nối của client; JDBC: Agroal; JMS: phiên được nhóm), kích thước tối đa bằng hạn mức, cộng vách ngăn (bulkhead) Resilience4j cùng kích thước.
+3. Hệ thống kiểm tra kết nối còn sống trước khi dùng lại (JDBC `isValid`, HTTP keep-alive có hạn).
+4. Hệ thống đóng kết nối nhàn rỗi quá `idleTimeoutSeconds`.
+
+**Luồng thay thế.** Kết nối lỗi khi lấy ra: hệ thống loại kết nối đó và tạo kết nối mới.
+
+**Luồng ngoại lệ.** Nhóm cạn: chờ tối đa `acquireTimeoutMs` rồi trả ERR-05-105 (lỗi tạm thời) cho PH-04, không xếp hàng vô hạn.
+
+**Đầu ra.** Chỉ số `dh_adapter_pool_active`, `dh_adapter_pool_wait_seconds`, `dh_adapter_pool_exhausted_total`.
+
+**Kết quả.** HTTT không bao giờ nhận quá số kết nối đã thỏa thuận, kể cả khi runtime tự mở rộng.
+
+**Hậu điều kiện.** Không đổi trạng thái ở control plane.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không; đổi `maxConcurrency` được kiểm toán qua phiên bản (FR-05-044).
+
+**Quy tắc nghiệp vụ.** BR-05-029.
+
+**Màn hình, API.** UI-05-10 khối Giới hạn; UI-05-09 tab Sức khỏe; API-05-061.
+:::
+
+Ghi chú: nhiều HTTT cũ chỉ chịu vài chục kết nối đồng thời. Nếu không giới hạn tổng, khi runtime mở rộng lên 20 bản sao mà mỗi bản sao mở 50 kết nối, Datahub có thể làm sập chính HTTT đang tích hợp.
 
 #### FR-05-043 · Kiểm thử bộ điều hợp
 
-FR-05-043 (M; LGC-BUS-013; repo FR-05-002). `PERM-05-test`. Chạy trên môi trường `TEST` (mặc định) hoặc `STAGING`, cho từng thao tác hoặc tất cả: kiểm tra kết nối (FR-05-010); với thao tác không tác dụng phụ (`sideEffect = NONE`), gọi thật với `sampleRequest` hoặc tham số người dùng nhập; với thao tác `WRITE`, chỉ chạy khi người dùng tích "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử" và không bao giờ trên PROD (BR-05-030); chuyển đổi định dạng và chuẩn hóa trên phản hồi thật; kiểm tra lược đồ. Kết quả theo thao tác: kết nối, xác thực, gọi, chuyển đổi, lược đồ, độ trễ, số trang; mỗi bước có hướng dẫn khắc phục như bảng nguyên nhân ở FR-05-010. Kết quả hiển thị hai cột: phản hồi gốc (đã che trường được đánh dấu nhạy cảm) và JSON chuẩn. Kiểm thử đạt mọi thao tác trong 24 giờ là điều kiện gửi duyệt (BR-05-006). Kiểm toán: có (người, môi trường, thao tác, kết quả).
+::: dac-ta
+**Mục đích.** Chứng minh từng thao tác chạy đúng với HTTT thật trước khi gửi duyệt: tới được, xác thực được, gọi được, chuyển đổi đúng, khớp lược đồ, mà không ghi bừa vào HTTT.
+
+**Tác nhân, quyền.** IE, TA, IA (`PERM-05-test`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-013; repo FR-05-002.
+
+**Tiền điều kiện.** Phiên bản có ít nhất một thao tác; kết nối có giá trị ở môi trường kiểm thử.
+
+**Kích hoạt.** Người dùng bấm "Kiểm thử" (một thao tác hoặc tất cả) ở UI-05-09 tab Kiểm thử hoặc UI-05-10.
+
+**Đầu vào.** `environment` (`TEST` mặc định, hoặc `STAGING`), `operations[]`, tham số người dùng nhập hoặc `sampleRequest`, xác nhận ghi thử (với `WRITE`).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm tra kết nối (như FR-05-010).
+2. Với thao tác `sideEffect = NONE`, hệ thống gọi thật với `sampleRequest` hoặc tham số người dùng nhập.
+3. Hệ thống chạy chuyển đổi định dạng, chuẩn hóa và kiểm tra lược đồ trên phản hồi thật.
+4. Hệ thống trả kết quả theo thao tác: kết nối, xác thực, gọi, chuyển đổi, lược đồ, độ trễ, số trang; mỗi bước lỗi có hướng dẫn khắc phục như bảng nguyên nhân ở FR-05-010.
+5. Hệ thống hiển thị hai cột: phản hồi gốc (đã che trường đánh dấu nhạy cảm) và JSON chuẩn.
+
+**Luồng thay thế.** Thao tác `WRITE`: chỉ chạy khi người dùng tích "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử"; không bao giờ chạy trên PROD (BR-05-030).
+
+**Luồng ngoại lệ.**
+
+- Chọn PROD: ERR-05-003 (400); "Không kiểm thử bộ điều hợp trên môi trường PROD."
+- Thao tác `WRITE` chưa xác nhận: ERR-05-003 (400); "Cần xác nhận môi trường TEST của HTTT cho phép ghi thử."
+- Đang có lần kiểm thử chạy: ERR-05-018 (409); "Đang có lần kiểm tra chạy cho môi trường này."
+- Vượt số lần: ERR-05-019 (429); "Đã chạy quá số lần kiểm tra cho phép. Thử lại sau {n} phút."
+
+**Đầu ra.** `202` kèm `testId`; kết quả đọc ở API-05-053.
+
+**Kết quả.** IE biết thao tác nào đạt, thao tác nào hỏng và phải sửa gì; kiểm thử đạt mọi thao tác trong 24 giờ là điều kiện gửi duyệt (BR-05-006).
+
+**Hậu điều kiện.** Kết quả kiểm thử gắn với phiên bản.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: người, môi trường, thao tác, kết quả.
+
+**Quy tắc nghiệp vụ.** BR-05-006; BR-05-030.
+
+**Màn hình, API.** UI-05-09 tab Kiểm thử; UI-05-10; API-05-052, 053.
+:::
 
 #### FR-05-044 · Gửi duyệt, duyệt phiên bản; tạm dừng, tiếp tục, ngừng dùng bộ điều hợp
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-009, 010, 012 (phần bộ điều hợp); repo FR-05-003 |
-| Tác nhân, quyền | Gửi duyệt, ngừng dùng: IE, TA (`PERM-05-adapter`). Duyệt, từ chối: IA (`PERM-05-approve`). Tạm dừng, tiếp tục: TO, TA, SO (`PERM-05-operate`) |
-| Xử lý | **Gửi duyệt**: phiên bản `DRAFT` có ít nhất một thao tác, mọi thao tác kiểm thử đạt trong 24 giờ (ERR-05-009), kết nối có giá trị `ENABLED` ở PROD hoặc đang chờ duyệt cùng lúc; chuyển `SUBMITTED`, tạo việc cho IA kèm khác biệt với phiên bản hiệu lực. **Duyệt**: người duyệt khác người gửi và khác người sửa thao tác gần nhất (ERR-05-011); phiên bản `APPROVED`, phiên bản cũ `SUPERSEDED`; lần đầu thì bộ điều hợp `ACTIVE`; sinh Kamelet cho từng thao tác (FR-05-047); phát EVT-05-07. **Từ chối**: về `DRAFT` có lý do. **Tạm dừng**: `ACTIVE` → `SUSPENDED`, lý do bắt buộc; runtime ngừng nhận lượt mới qua bộ điều hợp sau tối đa 30 giây, lượt đang xử lý được hoàn tất trong tối đa 30 giây rồi bị ngắt (NFR-05-006); thao tác `INBOUND` dừng tiêu thụ, quét; phát EVT-05-08. **Tiếp tục**: về `ACTIVE`. **Ngừng dùng**: chỉ khi không còn luồng đang chạy dùng (ERR-05-010 kèm danh sách); Kamelet sinh chuyển `WITHDRAWN`. |
-| Ngoại lệ | ERR-05-008, 009, 010, 011, 038 |
-| Sự kiện phát ra | EVT-05-07, EVT-05-08 |
-| Kiểm toán | Có: hành động, phiên bản, người, lý do |
+::: dac-ta
+**Mục đích.** Bảo đảm không thao tác nào tới được luồng PROD khi chưa có người thứ hai duyệt, và cho cán bộ vận hành dừng nhanh một bộ điều hợp đang gây sự cố.
+
+**Tác nhân, quyền.** Gửi duyệt, ngừng dùng: IE, TA (`PERM-05-adapter`). Duyệt, từ chối: IA (`PERM-05-approve`). Tạm dừng, tiếp tục: TO, TA, SO (`PERM-05-operate`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-009, LGC-BUS-010, LGC-BUS-012 (phần bộ điều hợp); repo FR-05-003.
+
+**Tiền điều kiện.** Gửi duyệt: phiên bản `DRAFT`. Duyệt: `SUBMITTED`. Tạm dừng: bộ điều hợp `ACTIVE`.
+
+**Kích hoạt.** Các nút "Gửi duyệt", "Tạm dừng", "Tiếp tục", "Ngừng dùng" ở UI-05-09; "Duyệt", "Từ chối" ở UI-05-17.
+
+**Đầu vào.** `version`; `reason` (bắt buộc khi từ chối, tạm dừng, ngừng dùng); `If-Match`.
+
+**Luồng xử lý chính.**
+
+1. Gửi duyệt: hệ thống kiểm tra phiên bản có ít nhất một thao tác, mọi thao tác kiểm thử đạt trong 24 giờ (ERR-05-009), kết nối có giá trị `ENABLED` ở PROD hoặc đang chờ duyệt cùng lúc; chuyển `SUBMITTED`, tạo việc cho IA kèm khác biệt với phiên bản hiệu lực.
+2. Duyệt: hệ thống kiểm tra người duyệt khác người gửi và khác người sửa thao tác gần nhất (ERR-05-011); chuyển phiên bản `APPROVED`, phiên bản cũ `SUPERSEDED`; lần đầu thì bộ điều hợp `ACTIVE`.
+3. Hệ thống sinh Kamelet cho từng thao tác (FR-05-047) và phát EVT-05-07.
+4. Tạm dừng: `ACTIVE` → `SUSPENDED`; runtime ngừng nhận lượt mới qua bộ điều hợp sau tối đa 30 giây, lượt đang xử lý được hoàn tất trong tối đa 30 giây rồi bị ngắt (NFR-05-006); thao tác `INBOUND` dừng tiêu thụ, quét; phát EVT-05-08.
+5. Tiếp tục: về `ACTIVE`, phát EVT-05-08.
+
+**Luồng thay thế.**
+
+- Từ chối: phiên bản về `DRAFT` kèm lý do.
+- Ngừng dùng: chỉ khi không còn luồng đang chạy dùng; Kamelet sinh chuyển `WITHDRAWN`.
+
+**Luồng ngoại lệ.**
+
+- Chuyển trạng thái không hợp lệ: ERR-05-008 (409); "Không thể {thao tác} khi phiên bản đang ở {trạng thái}."
+- Chưa kiểm thử đạt: ERR-05-009 (409); "Chưa có kiểm thử đạt trong 24 giờ cho thao tác {mã}." kèm nút "Chạy kiểm thử".
+- Còn luồng dùng khi ngừng dùng: ERR-05-010 (409); "Còn {n} nơi đang dùng." kèm danh sách liên kết.
+- Bốn mắt: ERR-05-011 (403); "Anh/chị là người gửi duyệt hoặc sửa thao tác gần nhất nên không được tự duyệt."
+- Thiếu lý do: ERR-05-038 (400); "Nhập lý do."
+- Đóng băng PROD: ERR-05-031 (423); "Đang trong khoảng đóng băng thay đổi PROD tới {thời điểm}."
+
+**Đầu ra.** `200`, phiên bản hoặc bộ điều hợp với trạng thái mới.
+
+**Kết quả.** Sau khi duyệt, thao tác xuất hiện trong trình thiết kế; khi tạm dừng, luồng ngừng gọi HTTT trong 30 giây.
+
+**Hậu điều kiện.** Trạng thái phiên bản, bộ điều hợp và Kamelet sinh khớp nhau.
+
+**Sự kiện phát ra.** EVT-05-07, EVT-05-08.
+
+**Kiểm toán.** Có: hành động, phiên bản, người, lý do.
+
+**Quy tắc nghiệp vụ.** BR-05-006; BR-05-027.
+
+**Màn hình, API.** UI-05-09; UI-05-17; API-05-055…060.
+:::
+
+```{.mermaid caption="Trình tự gửi duyệt và duyệt phiên bản bộ điều hợp"}
+sequenceDiagram
+  actor IE
+  actor IA
+  participant DI as dh-integration
+  participant RT as dh-runtime
+  IE->>DI: Gửi duyệt (API-05-055)
+  DI->>DI: Kiểm tra kiểm thử đạt 24 giờ
+  DI-->>IA: Việc duyệt kèm khác biệt
+  IA->>DI: Duyệt (API-05-056), kiểm tra bốn mắt
+  DI->>DI: APPROVED, sinh Kamelet (FR-05-047)
+  DI-->>RT: EVT-05-07, cập nhật catalog
+```
 
 #### FR-05-045 · Phiên bản bộ điều hợp và chế độ so sánh
 
-FR-05-045 (S; repo FR-05-014). Tạo phiên bản nháp mới sao chép từ phiên bản hiệu lực (API-05-048); chỉ một bản nháp tại một thời điểm (ERR-05-008). Thay đổi tương thích (thêm thao tác, thêm trường tùy chọn ở phản hồi) tăng số phụ; thay đổi phá vỡ (xóa thao tác, đổi tham số bắt buộc, đổi cấu trúc phản hồi) tăng số chính, và Kamelet sinh mang hậu tố phiên bản chính để luồng cũ không bị đổi ngầm (BR-05-016). **Chế độ so sánh** (TO, TA với `PERM-05-operate`): với thao tác không tác dụng phụ, runtime gửi bản sao lượt gọi thật ở STAGING hoặc PROD tới phiên bản nháp đã duyệt kỹ thuật (kiểm thử đạt), trong `durationMinutes` (≤ 120) và tỷ lệ mẫu `sampleRate` (≤ 10%); so JSON chuẩn của hai phiên bản, bỏ qua trường khai báo `ignorePaths`; báo cáo tỷ lệ khớp, mẫu khác biệt (đã che dữ liệu nhạy cảm). Kết quả phiên bản nháp không bao giờ trả cho luồng. Tỷ lệ khác vượt `05.compare.max-diff-ratio` (mặc định 1%) thì cảnh báo, người duyệt phải xác nhận thủ công trước khi duyệt. Đợt 3.
+::: dac-ta
+**Mục đích.** Cho sửa bộ điều hợp mà không đổi ngầm hành vi của luồng đang chạy, và đo được phiên bản mới có trả kết quả giống phiên bản cũ trên lưu lượng thật hay không trước khi duyệt.
+
+**Tác nhân, quyền.** Tạo phiên bản: IE, TA (`PERM-05-adapter`). Chế độ so sánh: TO, TA (`PERM-05-operate`).
+
+**Mức ưu tiên, đợt.** S · Đợt 3.
+
+**Truy vết.** REQ-05; repo FR-05-014.
+
+**Tiền điều kiện.** Bộ điều hợp có phiên bản hiệu lực; với so sánh, bản nháp đã kiểm thử đạt.
+
+**Kích hoạt.** Người dùng bấm "Tạo phiên bản mới" hoặc "So sánh trên lưu lượng thật" ở UI-05-09 tab Phiên bản.
+
+**Đầu vào.** Tạo: không. So sánh: `environment` (STAGING hoặc PROD), `durationMinutes` (≤ 120), `sampleRate` (≤ 10%), `ignorePaths[]`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống tạo phiên bản nháp sao chép từ phiên bản hiệu lực.
+2. Khi lưu, hệ thống xếp loại thay đổi: tương thích (thêm thao tác, thêm trường tùy chọn ở phản hồi) tăng số phụ; phá vỡ (xóa thao tác, đổi tham số bắt buộc, đổi cấu trúc phản hồi) tăng số chính.
+3. Với thay đổi phá vỡ, Kamelet sinh mang hậu tố phiên bản chính mới để luồng cũ không bị đổi ngầm (BR-05-016).
+4. Chế độ so sánh: với thao tác không tác dụng phụ, runtime gửi bản sao lượt gọi thật tới phiên bản nháp theo `sampleRate` trong `durationMinutes`.
+5. Hệ thống so JSON chuẩn của hai phiên bản, bỏ qua `ignorePaths`, báo tỷ lệ khớp và mẫu khác biệt (đã che dữ liệu nhạy cảm).
+
+**Luồng thay thế.** Tỷ lệ khác vượt `05.compare.max-diff-ratio` (mặc định 1%): hệ thống cảnh báo; người duyệt phải xác nhận thủ công trước khi duyệt.
+
+**Luồng ngoại lệ.**
+
+- Đã có bản nháp: ERR-05-008 (409); "Bộ điều hợp đã có phiên bản nháp {n}. Mở bản đó để sửa."
+- So sánh thao tác có tác dụng phụ: ERR-05-003 (400); "Chỉ so sánh được thao tác không ghi dữ liệu."
+- Vượt thời lượng hoặc tỷ lệ mẫu: ERR-05-030 (422).
+
+**Đầu ra.** `201` phiên bản nháp; so sánh `202` kèm `comparisonId`, kết quả ở API-05-064.
+
+**Kết quả.** Người duyệt có số liệu khớp thật thay vì chỉ đọc khác biệt cấu hình.
+
+**Hậu điều kiện.** Kết quả của phiên bản nháp không bao giờ trả cho luồng.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: tạo phiên bản, chạy so sánh, người xác nhận khi vượt ngưỡng.
+
+**Quy tắc nghiệp vụ.** BR-05-016.
+
+**Màn hình, API.** UI-05-09 tab Phiên bản; API-05-048, 063, 064.
+:::
 
 #### FR-05-046 · Sinh bộ điều hợp nháp từ OpenAPI hoặc WSDL
 
-FR-05-046 (S; repo FR-05-018). `PERM-05-adapter`. Đầu vào: tệp OpenAPI 3.0, 3.1 (JSON, YAML ≤ 5 MiB) hoặc WSDL 1.1 (kèm XSD, ZIP ≤ 10 MiB), hoặc URL tải qua kết nối đã khai báo. Hệ thống phân tích (lỗi cú pháp trả ERR-05-023 kèm dòng, cột), liệt kê thao tác; cán bộ chọn thao tác cần dùng; hệ thống sinh bộ điều hợp `DRAFT` với `protocolSpec`, lược đồ phản hồi (đăng ký nháp ở Apicurio), dữ liệu mẫu từ `examples` nếu có, phân trang đoán từ tên tham số (`page`, `size`, `offset`, `limit`, `cursor`) ở trạng thái **đề xuất**, cần cán bộ xác nhận. Không tự sinh ánh xạ ngữ nghĩa; gợi ý ánh xạ trường là việc của DataMapper PH-04. Tệp đặc tả được đệm cùng phiên bản (băm SHA-256).
+::: dac-ta
+**Mục đích.** Rút ngắn thời gian khai báo với HTTT đã có đặc tả máy đọc được: hệ thống đọc OpenAPI hoặc WSDL và đề xuất sẵn thao tác, lược đồ, phân trang để IE chỉ việc chọn và xác nhận.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-adapter`).
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-018.
+
+**Tiền điều kiện.** HTTT `ACTIVE`; có kết nối (nếu tải đặc tả qua URL).
+
+**Kích hoạt.** Người dùng bấm "Tạo từ đặc tả" ở UI-05-08, mở UI-05-11.
+
+**Đầu vào.** Tệp OpenAPI 3.0, 3.1 (JSON, YAML ≤ 5 MiB) hoặc WSDL 1.1 (kèm XSD, ZIP ≤ 10 MiB), hoặc URL tải qua kết nối đã khai báo; mã bộ điều hợp, HTTT.
+
+**Luồng xử lý chính.**
+
+1. Người dùng tải tệp hoặc nhập URL.
+2. Hệ thống phân tích và liệt kê thao tác.
+3. Người dùng chọn thao tác cần dùng.
+4. Hệ thống sinh bộ điều hợp `DRAFT` với `protocolSpec`, lược đồ phản hồi (đăng ký nháp ở Apicurio), dữ liệu mẫu từ `examples` nếu có.
+5. Hệ thống đoán phân trang từ tên tham số (`page`, `size`, `offset`, `limit`, `cursor`) ở trạng thái đề xuất; người dùng xác nhận hoặc sửa.
+6. Hệ thống đệm tệp đặc tả cùng phiên bản (băm SHA-256).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Lỗi cú pháp hoặc không tải được: ERR-05-023 (422) kèm dòng, cột; "Không phân tích được đặc tả ở dòng {d}, cột {c}: {lý do}."
+- Tệp quá lớn: ERR-05-024 (413); "Tệp vượt {n} MiB."
+- Tệp có mã độc: ERR-05-034 (422).
+
+**Đầu ra.** `201`, bộ điều hợp nháp với danh sách đề xuất cần xác nhận.
+
+**Kết quả.** IE có bộ điều hợp nháp đủ thao tác trong vài phút, chỉ cần kiểm thử và gửi duyệt.
+
+**Hậu điều kiện.** Bộ điều hợp `DRAFT`; không tự sinh ánh xạ ngữ nghĩa (gợi ý ánh xạ trường là việc của DataMapper PH-04).
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: tệp (băm), thao tác chọn, người.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-11; API-05-065.
+:::
 
 #### FR-05-047 · Đưa bộ điều hợp vào bảng thành phần của trình thiết kế
 
-FR-05-047 (M; FR-04-012, ADR-061). Khi một phiên bản được duyệt, mỗi thao tác sinh một Kamelet phạm vi `TENANT` tên `{adapterCode}-{operationCode}-v{major}-{sink|source|action}` (rút gọn nếu quá 63 ký tự, có băm 6 ký tự), loại: `OUTBOUND` với phản hồi → `action`; `OUTBOUND` không phản hồi → `sink`; `INBOUND` → `source`. Kamelet sinh là lớp mỏng gọi Kamelet nền giao thức với tham số cố định của thao tác; tham số mở cho người thiết kế là tham số khai báo của thao tác (ví dụ `tuNgay`, `denNgay`), có tiêu đề tiếng Việt, kiểu, bắt buộc. Kamelet sinh được đánh dấu "Sinh từ bộ điều hợp", không sửa tay được, tự qua kiểm tra tĩnh và không cần duyệt riêng (vì phiên bản bộ điều hợp đã duyệt, BR-05-027). API-05-089 trả Kamelet sinh trong catalog của tenant; trình thiết kế hiển thị trong nhóm "Bộ điều hợp của tỉnh" theo HTTT.
+::: dac-ta
+**Mục đích.** Biến mỗi thao tác đã duyệt thành một khối kéo thả trong trình thiết kế luồng, có tên và tham số tiếng Việt, để người thiết kế không phải biết giao thức bên dưới.
+
+**Tác nhân, quyền.** Hệ thống (khi duyệt phiên bản). Người thiết kế luồng thấy kết quả trong PH-04.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; FR-04-012; ADR-061.
+
+**Tiền điều kiện.** Phiên bản bộ điều hợp vừa chuyển `APPROVED` (FR-05-044).
+
+**Kích hoạt.** Sự kiện duyệt phiên bản.
+
+**Đầu vào.** Danh sách thao tác của phiên bản, tham số khai báo của từng thao tác.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống sinh mỗi thao tác một Kamelet phạm vi `TENANT` tên `{adapterCode}-{operationCode}-v{major}-{sink|source|action}`; quá 63 ký tự thì rút gọn kèm băm 6 ký tự.
+2. Hệ thống chọn loại: `OUTBOUND` có phản hồi → `action`; `OUTBOUND` không phản hồi → `sink`; `INBOUND` → `source`.
+3. Kamelet sinh là lớp mỏng gọi Kamelet nền giao thức với tham số cố định của thao tác; tham số mở cho người thiết kế là tham số khai báo của thao tác (ví dụ `tuNgay`, `denNgay`), có tiêu đề tiếng Việt, kiểu, bắt buộc.
+4. Hệ thống đánh dấu "Sinh từ bộ điều hợp", tự qua kiểm tra tĩnh, không cần duyệt riêng (BR-05-027).
+5. API-05-089 trả Kamelet sinh trong catalog của tenant; trình thiết kế hiện trong nhóm "Bộ điều hợp của tỉnh" theo HTTT.
+
+**Luồng thay thế.** Phiên bản số phụ: Kamelet giữ tên (cùng `v{major}`), cập nhật định nghĩa.
+
+**Luồng ngoại lệ.** Sinh Kamelet thất bại kiểm tra tĩnh (lỗi nội bộ): phiên bản vẫn `APPROVED` nhưng catalog không cập nhật; hệ thống cảnh báo TA và IE: "Không sinh được thành phần cho thao tác {mã}. Liên hệ quản trị."
+
+**Đầu ra.** Kamelet sinh trong catalog.
+
+**Kết quả.** Người thiết kế kéo thao tác "Tra cứu hồ sơ" của HTTT vào luồng như mọi thành phần khác.
+
+**Hậu điều kiện.** Kamelet sinh không sửa tay được.
+
+**Sự kiện phát ra.** EVT-05-07 (phát ở FR-05-044).
+
+**Kiểm toán.** Có, cùng bản ghi duyệt phiên bản.
+
+**Quy tắc nghiệp vụ.** BR-05-016; BR-05-027.
+
+**Màn hình, API.** UI-05-09 tab Thao tác; UI-05-14; API-05-089.
+:::
 
 ### 6.7. Nhóm F · CDC cho hệ di sản
 
