@@ -12,6 +12,13 @@ paths = [
 ]
 regexTarget = "line"
 regexes = [
+  # Giá trị Idempotency-Key giả trong test lát cắt PH-07 (datahub/), không phải bí mật
+  '''khoa-chong-trung-0001''',
+  '''phat-lai-0123456789''',
+  '''het-han-0123456789ab''',
+  '''giu-nguyen-0123456''',
+  # Tên sản phẩm Keycloak trong văn xuôi số đo lát cắt PH-07
+  '''Keycloak/OPA thật''',
   # Ví dụ khóa idempotency (UUID) trong tài liệu API, không phải bí mật
   '''Idempotency-Key: [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
   '''lgsp_dev_change_me''',

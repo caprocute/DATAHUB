@@ -75,16 +75,16 @@ class CrossTenantLeakIT extends GroupApiTestSupport {
   @Test
   @DisplayName("Nhóm tạo bởi T68 không hiện với T01 và Idempotency-Key không dùng chung giữa tenant")
   void createdGroupAndIdempotencyAreScoped() {
-    String key = "khoa-chong-trung-0001";
+    String idem = "khoa-chong-trung-0001";
     String body = "{\"code\":\"CHI_T68\",\"name\":\"Chỉ T68\"}";
     Reply first =
         api.send("POST", "/catalog-groups", tokenFor("TA", "T68"),
-            java.util.Map.of("Content-Type", "application/json", "Idempotency-Key", key), body);
+            java.util.Map.of("Content-Type", "application/json", "Idempotency-Key", idem), body);
     assertThat(first.status()).isEqualTo(201);
     assertThat(codes(api.get("/catalog-groups?flat=true", tokenFor("TA", "T01")))).doesNotContain("CHI_T68");
     Reply other =
         api.send("POST", "/catalog-groups", tokenFor("TA", "T01"),
-            java.util.Map.of("Content-Type", "application/json", "Idempotency-Key", key), body);
+            java.util.Map.of("Content-Type", "application/json", "Idempotency-Key", idem), body);
     assertThat(other.status()).isEqualTo(201);
     assertThat(other.header("idempotent-replayed")).isNull();
     assertThat(Db.count("select count(*) from ph07_rdm.catalog_group where code = 'CHI_T68'")).isEqualTo(2);

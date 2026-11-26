@@ -48,7 +48,7 @@ Hơn 40 ca phá ngoài Gherkin (JWT giả, `alg: none`, header tenant giả, `Id
 4. **Gói đặc tả nhỏ đủ dùng.** Tác nhân viết chỉ cần 146 dòng tóm tắt + 13 quyết định + lát cắt 616 dòng + Gherkin; không phải đọc FRS 470 KB. Không có câu hỏi nào vào `hang-cho.md`.
 5. **Rào chắn hoạt động cả với chính quy trình.** Bộ phân loại quyền chặn tác nhân đánh giá tự lật cờ `passes` (lý do "làm suy yếu giám sát"). Nghĩa là trong cấu hình hiện tại, cờ `passes` chỉ nên được lật bởi người (G6) hoặc bởi workflow CI sau khi mọi cổng xanh, không bởi tác nhân trong phiên. Khuôn đã ghi theo hướng này.
 6. **Cổng phải phân biệt "không chạy được" với "đạt"/"trượt"** (G5 Semgrep). Cổng im lặng khi hỏng còn tệ hơn không có cổng.
-7. **Phạm vi chưa phủ** của lát cắt này: APISIX, Keycloak/OPA thật, Kafka/Debezium (mới tới outbox), Helm, bảng danh mục F-07-001. Lát cắt tiếp theo nên là F-07-001/003 (danh sách, tạo danh mục) để phủ bảng ProTable và luồng nhiều bước.
+7. **Phạm vi chưa phủ** của lát cắt này: APISIX, máy chủ định danh và OPA thật, Kafka và Debezium (mới tới outbox), Helm, bảng danh mục F-07-001. Lát cắt tiếp theo nên là F-07-001/003 (danh sách, tạo danh mục) để phủ bảng ProTable và luồng nhiều bước.
 
 ## 5. Ước tính khi nhân rộng (giả định, hiệu chỉnh sau 3–5 tính năng)
 

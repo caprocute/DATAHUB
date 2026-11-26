@@ -253,8 +253,8 @@ class GroupApiIT extends GroupApiTestSupport {
     assertThat(bad.status()).isEqualTo(422);
     assertThat(subCodes(bad)).isEqualTo("Idempotency-Key:PATTERN");
 
-    String key = "phat-lai-0123456789";
-    Map<String, String> headers = Map.of("Content-Type", "application/json", "Idempotency-Key", key);
+    String idem = "phat-lai-0123456789";
+    Map<String, String> headers = Map.of("Content-Type", "application/json", "Idempotency-Key", idem);
     String token = ta();
     Reply first = api.send("POST", "/catalog-groups", token, headers, "{\"code\":\"PL\",\"name\":\"Phát lại\"}");
     Reply second = api.send("POST", "/catalog-groups", token, headers, "{\"name\":\"Phát lại\",\"code\":\"pl\"}");
@@ -270,8 +270,8 @@ class GroupApiIT extends GroupApiTestSupport {
   @Test
   @DisplayName("Khóa hết hạn được dùng lại như khóa mới")
   void expiredKeyIsReusable() {
-    String key = "het-han-0123456789ab";
-    Map<String, String> headers = Map.of("Content-Type", "application/json", "Idempotency-Key", key);
+    String idem = "het-han-0123456789ab";
+    Map<String, String> headers = Map.of("Content-Type", "application/json", "Idempotency-Key", idem);
     String token = ta();
     assertThat(api.send("POST", "/catalog-groups", token, headers, "{\"code\":\"HH1\",\"name\":\"Một\"}").status()).isEqualTo(201);
     Db.execute("update ph07_rdm.idempotency_key set expires_at = now() - interval '1 hour'");

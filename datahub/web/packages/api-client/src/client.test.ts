@@ -32,9 +32,10 @@ describe('api-client', () => {
 
   it('middleware không đè khóa do người gọi đặt, không gắn khóa cho GET, bỏ Bearer khi chưa có token', async () => {
     const mw = requestHeaders({ getToken: () => undefined });
-    const post = new Request('http://x/a', { method: 'POST', headers: { 'Idempotency-Key': 'giu-nguyen-0123456', traceparent: 'tp' } });
+    const idem = 'giu-nguyen-0123456';
+    const post = new Request('http://x/a', { method: 'POST', headers: { 'Idempotency-Key': idem, traceparent: 'tp' } });
     await mw.onRequest?.({ request: post } as never);
-    expect(post.headers.get('Idempotency-Key')).toBe('giu-nguyen-0123456');
+    expect(post.headers.get('Idempotency-Key')).toBe(idem);
     expect(post.headers.get('traceparent')).toBe('tp');
     expect(post.headers.has('Authorization')).toBe(false);
     const get = new Request('http://x/a');
