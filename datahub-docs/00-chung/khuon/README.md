@@ -13,7 +13,8 @@ Mỗi phân hệ có bảy tập. Thay vì nạp nguyên bộ PH-07 (khoảng 1,
 
 | Khuôn | Tập | Mẫu đầy đủ khi cần xem thêm |
 |---|---|---|
-| [K-FRS](K-FRS.md) | D02-03 Đặc tả yêu cầu chức năng | `02-yeu-cau/frs/D02-03-PH07-frs-danh-muc.md` §5 |
+| [K-TRINH-BAY](K-TRINH-BAY.md) | Mọi tập: metadata bìa, chú thích bảng và hình, văn phong, khối đặc tả `::: dac-ta`, mức sàn | `02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md` bản 0.2 |
+| [K-FRS](K-FRS.md) | D02-03 Đặc tả yêu cầu chức năng | `02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md` bản 0.2 §1–§6.3 |
 | [K-UC](K-UC.md) | D02-04 Đặc tả use case | `02-yeu-cau/use-case/D02-04-PH07-use-case-danh-muc.md` §6.3 |
 | [K-SDD](K-SDD.md) | D03-02 Thiết kế chi tiết | `03-thiet-ke/sdd/D03-02-PH07-sdd-danh-muc.md` |
 | [K-CSDL](K-CSDL.md) | D03-03 Thiết kế CSDL | `03-thiet-ke/csdl/D03-03-PH04-csdl-tich-hop.md` §3 |
@@ -30,5 +31,8 @@ Mỗi phân hệ có bảy tập. Thay vì nạp nguyên bộ PH-07 (khoảng 1,
 5. Cuối phân hệ: một lượt soát chéo bằng subagent Sonnet. Sửa chéo tài liệu cũ (đổi tên token, route, quyền ở D02-08…) gom vào đợt đồng bộ cuối, ghi vào mục "Đề nghị đồng bộ" của tập.
 
 ## Mục chung cho mọi tập
+
+Từ 26/11/2026 mọi tập theo thêm [K-TRINH-BAY](K-TRINH-BAY.md): chương Giới thiệu đầy đủ, bảng danh sách trước phần chi tiết, khối đặc tả hai cột cho từng phần tử, chú thích cho mọi bảng và hình, kiểm tra bản xuất bằng `DH_PDF=1 build/build-docx.sh`.
+
 
 Mọi tập mở bằng khối metadata sáu trường và trường `phan_he`, tiêu đề cấp 1 `# D0x-0y-PH{nn} · {tên}`, rồi mục **Tóm tắt cho hội đồng thẩm định** (mục tiêu, phạm vi, căn cứ pháp lý, con số chính). Mọi tập kết thúc bằng **Câu hỏi mở** (mã `Q{nn}-..` theo dải ở D00-04 §3.1) và **Lịch sử phiên bản**. Không còn "TBD" ngoài danh sách câu hỏi mở; thiếu số liệu thật thì dùng giả định có ghi "giả định" kèm cơ sở.

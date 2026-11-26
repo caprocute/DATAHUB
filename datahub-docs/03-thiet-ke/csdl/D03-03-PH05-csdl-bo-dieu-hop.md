@@ -1,11 +1,13 @@
 ---
 ma_tai_lieu: D03-03-PH05
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
 phan_he: PH-05
+mo_ta: Thiết kế cơ sở dữ liệu của phân hệ Bộ điều hợp và kết nối gồm 23 bảng, ràng buộc, RLS theo tenant, DDL đã chạy thử, sao lưu và ánh xạ dữ liệu hệ cũ.
+tai_lieu_lien_quan: D03-02-PH05 SDD; D02-03-PH05 FRS; D03-10 Đa tenant; D02-07 Từ điển dữ liệu
 ---
 
 # D03-03-PH05 · Thiết kế CSDL Bộ điều hợp và kết nối
@@ -19,6 +21,21 @@ Schema `ph05_adapter` trên cụm `pg-core` có 23 bảng cho 18 thực thể c�
 3. **Cô lập tenant bằng `FORCE ROW LEVEL SECURITY`** trên mọi bảng nghiệp vụ; Kamelet nền và dùng chung nằm ở tenant `COMMON`, tỉnh đọc được nhưng không ghi được.
 
 DDL [`ph05/ddl/ph05_adapter.sql`](ph05/ddl/ph05_adapter.sql) đã chạy thử trên PostgreSQL 16 sạch; bài kiểm [`ph05/test/ph05_isolation_test.sql`](ph05/test/ph05_isolation_test.sql) đạt 23/23 khối (§4.2).
+
+## 0. Giới thiệu
+
+Tài liệu đặc tả lược đồ dữ liệu của PH-05 trong schema `ph05_adapter` của `pg-core`: chiến lược lưu trữ và cách ly tenant (chương 1), sơ đồ thực thể – quan hệ (chương 2), đặc tả 23 bảng (chương 3), DDL và changelog (chương 4), dữ liệu khởi tạo, kho ngoài PostgreSQL, sao lưu và ánh xạ dữ liệu hệ cũ. Mỗi bảng ở chương 3 mở đầu bằng một bảng đặc tả 10 mục (Mục đích, FR phục vụ, Khóa chính, Duy nhất, Khóa ngoại, Ràng buộc CHECK, Chỉ mục, Cách ly tenant, Phân vùng và chỉ thêm, Ghi chú) trích từ DDL đã chạy thử, rồi đến danh sách cột.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Kỹ sư `dh-integration` | Chương 1, 3, 4 |
+| DBA, vận hành | Chương 1, 4, 6, 7 |
+| ATTT | Chương 1.2, 1.4, 3.10, 3.11, 7 |
+| Hội đồng thẩm định | Tóm tắt, chương 2, 8 |
+
+: Người đọc và phần cần đọc
+
+Thuật ngữ dùng chung với [D02-03-PH05](../../02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md) §1.4 và D00-01 (kiểu dữ liệu chuẩn ở D00-01 §5). Tài liệu tham chiếu: D02-03-PH05 (FRS), D03-02-PH05 (SDD), D03-10 (thiết kế đa tenant, mẫu RLS P và S), D02-07 (từ điển dữ liệu).
 
 ## 1. Chiến lược lưu trữ
 
@@ -39,6 +56,8 @@ Mọi bảng nghiệp vụ có `tenant_id varchar(16)` và bật `FORCE ROW LEVE
 | P (riêng) | Dòng của tenant phiên | Dòng của tenant phiên (tỉnh) | 20 bảng tác nghiệp |
 | S (dùng chung) | Dòng của tenant phiên và `COMMON` | Dòng tỉnh khi phiên là tỉnh; dòng `COMMON` khi phiên là `PLATFORM` | `kamelet`, `kamelet_version` |
 
+: Cách ly tenant
+
 Kamelet `BASE` (đóng cùng ảnh runtime) và `COMMON` (dùng chung, PA duyệt) lưu với `tenant_id = 'COMMON'`; ràng buộc `ck_kamelet_scope_tenant` bảo đảm phạm vi khớp tenant. Biến phiên `app.tenant_id` đặt đầu mỗi giao dịch bằng `TenantAwareTransactionManager`; tác vụ nền liên tenant (đánh giá sức khỏe, hết hạn tài khoản) lặp từng tenant. `shedlock` là bảng kỹ thuật không có `tenant_id`.
 
 ### 1.3. Quy ước bảng
@@ -52,6 +71,8 @@ Theo D00-01 §5.1: `id uuid` (UUID v7 sinh ở ứng dụng), `created_*`, `upda
 | `db_access_record` | Khóa `(event_id, occurred_at)`, chỉ thêm (trigger `tg_append_only`) | Nhật ký kiểm toán, phân vùng tháng |
 | `cdc_schema_change` | Không có `version`; chỉ cột xử lý được cập nhật (quyền theo cột) | Bản ghi giữ vĩnh viễn |
 | `outbox` | Khóa `event_id` | DD-11 |
+
+: Quy ước bảng
 
 Trạng thái dùng `varchar` + `CHECK` liệt kê đúng FRS §4.3–4.7; thêm giá trị là một changeset mới.
 
@@ -71,9 +92,11 @@ Trạng thái dùng `varchar` + `CHECK` liệt kê đúng FRS §4.3–4.7; thêm
 | `ck_kamelet_base_prefix`, `ck_kamelet_reserved_prefix` | Tiền tố `dh-` dành riêng cho Kamelet nền | FR-05-055 |
 | `ck_kamelet_version_submit` | Chỉ gửi duyệt khi kiểm tra tĩnh đạt | FR-05-056 |
 
+: Quy tắc nghiệp vụ chốt ở CSDL
+
 ## 2. Sơ đồ thực thể – quan hệ
 
-```mermaid
+```{.mermaid caption="Sơ đồ thực thể – quan hệ"}
 erDiagram
   connection ||--o{ connection_environment : "0..3 môi trường"
   connection ||--o{ connection_grant : cấp
@@ -104,7 +127,28 @@ Phần dưới sinh bằng [`ph05/tools/gen_tables_md.py`](ph05/tools/gen_tables
 <!-- gen:tables:start -->
 ### 3.1. `connection_type_setting`
 
-EN-05-01 phần tenant: bật, tắt loại kết nối và trần tham số (FR-05-061). Danh mục loại đóng gói trong dh-integration (classpath conntypes/*.json), không lưu ở CSDL.
+::: dac-ta
+**Mục đích.** EN-05-01 · phần tenant: bật, tắt loại kết nối và trần tham số.
+
+**FR phục vụ.** FR-05-061.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_connection_type_setting` (tenant_id, type_code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_connection_type_setting_tenant`, `ck_connection_type_setting_code`, `ck_connection_type_setting_ceilings`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Danh mục loại đóng gói trong dh-integration (classpath conntypes/*.json), không lưu ở CSDL.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -120,9 +164,32 @@ EN-05-01 phần tenant: bật, tắt loại kết nối và trần tham số (FR
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `connection_type_setting`
+
 ### 3.2. `connection`
 
-EN-05-02 Kết nối nguồn (FR-05-004). Mã bất biến, không dùng lại kể cả khi RETIRED (BR-05-004). Bí mật ở OpenBao kv/dh/{tenant}/conn/{code}/{env}.
+::: dac-ta
+**Mục đích.** EN-05-02 · Kết nối nguồn.
+
+**FR phục vụ.** FR-05-004.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_connection_id_tenant` (id, tenant_id); `uq_connection_code` (tenant_id, code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_connection_tenant`, `ck_connection_code`, `ck_connection_purpose`, `ck_connection_status`, `ck_connection_labels`, `ck_connection_retired`.
+
+**Chỉ mục.** `ix_connection_system`, `ix_connection_type_status`, `ix_connection_name_trgm`, `ix_connection_secret_destroy`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Mã bất biến, không dùng lại kể cả khi RETIRED (BR-05-004). Bí mật ở OpenBao kv/dh/{tenant}/conn/{code}/{env}.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -149,9 +216,32 @@ EN-05-02 Kết nối nguồn (FR-05-004). Mã bất biến, không dùng lại k
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `connection`
+
 ### 3.3. `connection_environment`
 
-EN-05-03 Giá trị môi trường (FR-05-005, 006, 007). Tối đa ba dòng mỗi kết nối. Giá trị PROD đang ENABLED khi sửa giữ bản chờ ở pending_* (BR-05-010).
+::: dac-ta
+**Mục đích.** EN-05-03 · Giá trị môi trường.
+
+**FR phục vụ.** FR-05-005, 006, 007.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_connection_environment` (tenant_id, connection_id, env).
+
+**Khóa ngoại.** `fk_connection_environment_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_connection_environment_env`, `ck_connection_environment_status`, `ck_connection_environment_params`, `ck_connection_environment_secret`, `ck_connection_environment_enabled`, `ck_connection_environment_prod_approval`, `ck_connection_environment_four_eyes`, `ck_connection_environment_no_secret_in_params`.
+
+**Chỉ mục.** `ix_connection_environment_status`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Tối đa ba dòng mỗi kết nối. Giá trị PROD đang ENABLED khi sửa giữ bản chờ ở pending_* (BR-05-010).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -182,9 +272,32 @@ EN-05-03 Giá trị môi trường (FR-05-005, 006, 007). Tối đa ba dòng m�
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `connection_environment`
+
 ### 3.4. `connection_grant`
 
-EN-05-04 Cấp kết nối cho không gian làm việc hoặc luồng PH-04 (FR-05-009). Thu hồi giữ dòng (revoked_at) để kiểm toán.
+::: dac-ta
+**Mục đích.** EN-05-04 · Cấp kết nối cho không gian làm việc hoặc luồng PH-04.
+
+**FR phục vụ.** FR-05-009.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_connection_grant_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_connection_grant_scope`, `ck_connection_grant_envs`.
+
+**Chỉ mục.** `uq_connection_grant_active` (duy nhất), `ix_connection_grant_target`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Thu hồi giữ dòng (revoked_at) để kiểm toán.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -204,9 +317,32 @@ EN-05-04 Cấp kết nối cho không gian làm việc hoặc luồng PH-04 (FR-
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `connection_grant`
+
 ### 3.5. `connection_test`
 
-EN-05-05 Lần kiểm tra kết nối (FR-05-010, 025, 049). Giữ 1 năm (NFR-05-015), ConnectionTestRetentionJob dọn. Không có version: chỉ ProbeResultConsumer đổi trạng thái RUNNING → kết quả.
+::: dac-ta
+**Mục đích.** EN-05-05 · Lần kiểm tra kết nối.
+
+**FR phục vụ.** FR-05-010, 025, 049.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_connection_test_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_connection_test_env`, `ck_connection_test_kind`, `ck_connection_test_status`, `ck_connection_test_finished`, `ck_connection_test_expires`, `ck_connection_test_steps`.
+
+**Chỉ mục.** `ix_connection_test_conn`, `ix_connection_test_running`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Giữ 1 năm (NFR-05-015), ConnectionTestRetentionJob dọn. Không có version: chỉ ProbeResultConsumer đổi trạng thái RUNNING → kết quả.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -226,9 +362,32 @@ EN-05-05 Lần kiểm tra kết nối (FR-05-010, 025, 049). Giữ 1 năm (NFR-0
 | `expires_at` | `timestamptz` |  |  |  |
 | `run_by` | `varchar(64)` | x |  |  |
 
+: Cột của bảng `connection_test`
+
 ### 3.6. `secret_rotation`
 
-EN-05-07 Lần xoay bí mật (FR-05-012). Chỉ một lần mở mỗi (kết nối, môi trường): uq_secret_rotation_open hiện thực ERR-05-036.
+::: dac-ta
+**Mục đích.** EN-05-07 · Lần xoay bí mật.
+
+**FR phục vụ.** FR-05-012.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_secret_rotation_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_secret_rotation_status`, `ck_secret_rotation_versions`, `ck_secret_rotation_transition`.
+
+**Chỉ mục.** `uq_secret_rotation_open` (duy nhất), `ix_secret_rotation_due`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Chỉ một lần mở mỗi (kết nối, môi trường): uq_secret_rotation_open hiện thực ERR-05-036.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -249,9 +408,32 @@ EN-05-07 Lần xoay bí mật (FR-05-012). Chỉ một lần mở mỗi (kết n
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `secret_rotation`
+
 ### 3.7. `health_sample`
 
-EN-05-06 Mẫu sức khỏe mỗi phút (FR-05-019, 020). Sau 7 ngày gộp thành granularity HOUR; giữ 90 ngày (NFR-05-015), dọn bằng DETACH phân vùng tháng.
+::: dac-ta
+**Mục đích.** EN-05-06 · Mẫu sức khỏe mỗi phút.
+
+**FR phục vụ.** FR-05-019, 020.
+
+**Khóa chính.** (tenant_id, object_kind, object_code, env, granularity, sampled_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_health_sample_kind`, `ck_health_sample_gran`, `ck_health_sample_level`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Theo RANGE trên `sampled_at`, phân vùng tháng.
+
+**Ghi chú.** Sau 7 ngày gộp thành granularity HOUR; giữ 90 ngày (NFR-05-015), dọn bằng DETACH phân vùng tháng.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -268,9 +450,32 @@ EN-05-06 Mẫu sức khỏe mỗi phút (FR-05-019, 020). Sau 7 ngày gộp thà
 | `pool_wait_p95_ms` | `integer` |  |  |  |
 | `level` | `varchar(10)` | x |  |  |
 
+: Cột của bảng `health_sample`
+
 ### 3.8. `health_state`
 
-EN-05-06 Mức sức khỏe hiện tại (FR-05-021); candidate_* hiện thực chống dao động 2 chu kỳ (3 về HEALTHY). Lịch sử mức là sự kiện EVT-05-06.
+::: dac-ta
+**Mục đích.** EN-05-06 · Mức sức khỏe hiện tại.
+
+**FR phục vụ.** FR-05-021.
+
+**Khóa chính.** (tenant_id, object_kind, object_code, env).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_health_state_kind`, `ck_health_state_level`, `ck_health_state_candidate`.
+
+**Chỉ mục.** `ix_health_state_level`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** ; candidate_* hiện thực chống dao động 2 chu kỳ (3 về HEALTHY). Lịch sử mức là sự kiện EVT-05-06.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -287,9 +492,32 @@ EN-05-06 Mức sức khỏe hiện tại (FR-05-021); candidate_* hiện thực 
 | `evaluated_at` | `timestamptz` | x | `now()` |  |
 | `consecutive_probe_failures` | `smallint` | x | `0` |  |
 
+: Cột của bảng `health_state`
+
 ### 3.9. `health_baseline`
 
-Đường nền p95 7 ngày, tính lại 01:00 hằng đêm từ health_sample (FR-05-020: DEGRADED khi p95 > 2 lần đường nền).
+::: dac-ta
+**Mục đích.** Đường nền p95 7 ngày, tính lại 01:00 hằng đêm từ health_sample (FR-05-020: DEGRADED khi p95 > 2 lần đường nền).
+
+**FR phục vụ.** Xem đoạn mô tả.
+
+**Khóa chính.** (tenant_id, object_kind, object_code, env).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Đường nền p95 7 ngày, tính lại 01:00 hằng đêm từ health_sample (FR-05-020: DEGRADED khi p95 > 2 lần đường nền).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -300,9 +528,32 @@ EN-05-06 Mức sức khỏe hiện tại (FR-05-021); candidate_* hiện thực 
 | `p95_ms_7d` | `integer` | x |  |  |
 | `computed_at` | `timestamptz` | x |  |  |
 
+: Cột của bảng `health_baseline`
+
 ### 3.10. `flow_db_account`
 
-EN-05-08 Tài khoản CSDL cho luồng (FR-05-023…028, ADR-067, Q359). Ghi cần SO đồng ý rồi IA duyệt, tối đa 90 ngày (BR-05-020).
+::: dac-ta
+**Mục đích.** EN-05-08 · Tài khoản CSDL cho luồng.
+
+**FR phục vụ.** FR-05-023…028, ADR-067, Q359.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_flow_db_account_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_flow_db_account_env`, `ck_flow_db_account_mode`, `ck_flow_db_account_prov`, `ck_flow_db_account_status`, `ck_flow_db_account_ops`, `ck_flow_db_account_read_ops`, `ck_flow_db_account_write_tables`, `ck_flow_db_account_write_until`, `ck_flow_db_account_write_consent`, `ck_flow_db_account_four_eyes`.
+
+**Chỉ mục.** `uq_flow_db_account_live` (duy nhất), `ix_flow_db_account_flow`, `ix_flow_db_account_expiry`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Ghi cần SO đồng ý rồi IA duyệt, tối đa 90 ngày (BR-05-020).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -336,9 +587,32 @@ EN-05-08 Tài khoản CSDL cho luồng (FR-05-023…028, ADR-067, Q359). Ghi c�
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `flow_db_account`
+
 ### 3.11. `db_access_record`
 
-EN-05-09 Bản ghi truy cập CSDL từ runtime qua EVT-05-14 (FR-05-027). Chỉ thêm; 12 tháng trực tuyến, bản WORM 5 năm ở PH-13. Không có câu lệnh đầy đủ, chỉ băm.
+::: dac-ta
+**Mục đích.** EN-05-09 · Bản ghi truy cập CSDL từ runtime qua EVT-05-14.
+
+**FR phục vụ.** FR-05-027.
+
+**Khóa chính.** (event_id, occurred_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_db_access_record_kind`, `ck_db_access_record_outcome`.
+
+**Chỉ mục.** `ix_db_access_record_flow`, `ix_db_access_record_conn`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Theo RANGE trên `occurred_at`, phân vùng tháng; chỉ thêm (trigger `tg_append_only`).
+
+**Ghi chú.** Chỉ thêm; 12 tháng trực tuyến, bản WORM 5 năm ở PH-13. Không có câu lệnh đầy đủ, chỉ băm.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -358,9 +632,32 @@ EN-05-09 Bản ghi truy cập CSDL từ runtime qua EVT-05-14 (FR-05-027). Chỉ
 | `occurred_at` | `timestamptz` | x |  |  |
 | `received_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `db_access_record`
+
 ### 3.12. `adapter`
 
-EN-05-10 Bộ điều hợp (FR-05-029…035). Kết nối phải cùng system_code (BR-05-015, kiểm ở dịch vụ).
+::: dac-ta
+**Mục đích.** EN-05-10 · Bộ điều hợp.
+
+**FR phục vụ.** FR-05-029…035.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_adapter_id_tenant` (id, tenant_id); `uq_adapter_code` (tenant_id, code).
+
+**Khóa ngoại.** `fk_adapter_conn` → `connection`.
+
+**Ràng buộc CHECK.** `ck_adapter_tenant`, `ck_adapter_code`, `ck_adapter_group`, `ck_adapter_protocol`, `ck_adapter_status`, `ck_adapter_cdc_group`, `ck_adapter_active_version`.
+
+**Chỉ mục.** `ix_adapter_system`, `ix_adapter_conn`, `ix_adapter_protocol_status`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Kết nối phải cùng system_code (BR-05-015, kiểm ở dịch vụ).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -384,9 +681,32 @@ EN-05-10 Bộ điều hợp (FR-05-029…035). Kết nối phải cùng system_c
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `adapter`
+
 ### 3.13. `adapter_version`
 
-EN-05-11 Phiên bản bộ điều hợp (FR-05-043, 044). Một bản nháp (DRAFT hoặc SUBMITTED) và một bản APPROVED mỗi bộ điều hợp (BR-05-016). Bất biến sau duyệt: trigger tg_adapter_version_frozen.
+::: dac-ta
+**Mục đích.** EN-05-11 · Phiên bản bộ điều hợp.
+
+**FR phục vụ.** FR-05-043, 044.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_adapter_version_id_tenant` (id, tenant_id); `uq_adapter_version_no` (tenant_id, adapter_id, major, minor).
+
+**Khóa ngoại.** `fk_adapter_version_adapter` → `adapter`.
+
+**Ràng buộc CHECK.** `ck_adapter_version_status`, `ck_adapter_version_no`, `ck_adapter_version_conc`, `ck_adapter_version_spec`, `ck_adapter_version_four_eyes`, `ck_adapter_version_approved`.
+
+**Chỉ mục.** `uq_adapter_version_one_draft` (duy nhất), `uq_adapter_version_one_approved` (duy nhất).
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Một bản nháp (DRAFT hoặc SUBMITTED) và một bản APPROVED mỗi bộ điều hợp (BR-05-016). Bất biến sau duyệt: trigger tg_adapter_version_frozen.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -420,9 +740,32 @@ EN-05-11 Phiên bản bộ điều hợp (FR-05-043, 044). Một bản nháp (DR
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `adapter_version`
+
 ### 3.14. `adapter_operation`
 
-EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-032…041). Bất biến theo phiên bản cha: dịch vụ từ chối sửa khi phiên bản không ở DRAFT (ERR-05-008).
+::: dac-ta
+**Mục đích.** EN-05-12 · Thao tác của phiên bản bộ điều hợp.
+
+**FR phục vụ.** FR-05-032…041.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_adapter_operation_code` (tenant_id, adapter_version_id, code).
+
+**Khóa ngoại.** `fk_adapter_operation_version` → `adapter_version`.
+
+**Ràng buộc CHECK.** `ck_adapter_operation_code`, `ck_adapter_operation_dir`, `ck_adapter_operation_fmt`, `ck_adapter_operation_timeout`, `ck_adapter_operation_side`, `ck_adapter_operation_spec`, `ck_adapter_operation_samples`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Bất biến theo phiên bản cha: dịch vụ từ chối sửa khi phiên bản không ở DRAFT (ERR-05-008).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -453,9 +796,32 @@ EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-032…041). Bấ
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 | `AND` | `response_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'TEXT', 'BINARY'))` |  |  |  |
 
+: Cột của bảng `adapter_operation`
+
 ### 3.15. `adapter_test`
 
-EN-05-13 Kiểm thử bộ điều hợp và so sánh hai phiên bản (FR-05-043, 045). Không chạy ở PROD. results: mỗi thao tác {operation, status, latencyMs, outputPreview đã che, errors[]}. Giữ 90 ngày.
+::: dac-ta
+**Mục đích.** EN-05-13 · Kiểm thử bộ điều hợp và so sánh hai phiên bản.
+
+**FR phục vụ.** FR-05-043, 045.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_adapter_test_version` → `adapter_version`.
+
+**Ràng buộc CHECK.** `ck_adapter_test_env`, `ck_adapter_test_mode`, `ck_adapter_test_compare`, `ck_adapter_test_status`, `ck_adapter_test_results`.
+
+**Chỉ mục.** `ix_adapter_test_version`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Không chạy ở PROD. results: mỗi thao tác {operation, status, latencyMs, outputPreview đã che, errors[]}. Giữ 90 ngày.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -472,9 +838,32 @@ EN-05-13 Kiểm thử bộ điều hợp và so sánh hai phiên bản (FR-05-04
 | `finished_at` | `timestamptz` |  |  |  |
 | `run_by` | `varchar(64)` | x |  |  |
 
+: Cột của bảng `adapter_test`
+
 ### 3.16. `cdc_config`
 
-EN-05-14 Cấu hình CDC (FR-05-048…053, ADR-059). Trần số bảng theo 05.cdc.max-tables kiểm ở dịch vụ; CHECK 500 là trần cứng.
+::: dac-ta
+**Mục đích.** EN-05-14 · Cấu hình CDC.
+
+**FR phục vụ.** FR-05-048…053, ADR-059.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_cdc_config_id_tenant` (id, tenant_id); `uq_cdc_config` (tenant_id, adapter_id, env); `uq_cdc_config_connector` (connector_name).
+
+**Khóa ngoại.** `fk_cdc_config_adapter` → `adapter`.
+
+**Ràng buộc CHECK.** `ck_cdc_config_env`, `ck_cdc_config_engine`, `ck_cdc_config_snapshot`, `ck_cdc_config_state`, `ck_cdc_config_tables`, `ck_cdc_config_topic`, `ck_cdc_config_topic_tenant`.
+
+**Chỉ mục.** `ix_cdc_config_state`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Trần số bảng theo 05.cdc.max-tables kiểm ở dịch vụ; CHECK 500 là trần cứng.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -503,9 +892,32 @@ EN-05-14 Cấu hình CDC (FR-05-048…053, ADR-059). Trần số bảng theo 05.
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `cdc_config`
+
 ### 3.17. `cdc_schema_change`
 
-EN-05-15 Thay đổi lược đồ CDC (FR-05-051). Giữ vĩnh viễn; chỉ cột status, resolution*, resolved_* được cập nhật (quyền cột ở tệp 05-0900-grants). COMPATIBLE ghi status AUTO.
+::: dac-ta
+**Mục đích.** EN-05-15 · Thay đổi lược đồ CDC.
+
+**FR phục vụ.** FR-05-051.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** `fk_cdc_schema_change_cfg` → `cdc_config`.
+
+**Ràng buộc CHECK.** `ck_cdc_schema_change_kind`, `ck_cdc_schema_change_sev`, `ck_cdc_schema_change_status`, `ck_cdc_schema_change_res`, `ck_cdc_schema_change_resolved`.
+
+**Chỉ mục.** `ix_cdc_schema_change_pending`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Giữ vĩnh viễn; chỉ cột status, resolution*, resolved_* được cập nhật (quyền cột ở tệp 05-0900-grants). COMPATIBLE ghi status AUTO.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -526,9 +938,32 @@ EN-05-15 Thay đổi lược đồ CDC (FR-05-051). Giữ vĩnh viễn; chỉ c�
 | `resolved_by` | `varchar(64)` |  |  |  |
 | `resolved_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `cdc_schema_change`
+
 ### 3.18. `kamelet`
 
-EN-05-16 Kamelet (FR-05-054…060). BASE và COMMON nằm ở tenant COMMON, đọc được từ mọi tỉnh (RLS mẫu S); tỉnh chỉ ghi TENANT. Tên duy nhất trên BASE ∪ COMMON ∪ TENANT kiểm ở dịch vụ (KR-02) vì khác tenant_id.
+::: dac-ta
+**Mục đích.** EN-05-16 · Kamelet.
+
+**FR phục vụ.** FR-05-054…060.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_kamelet_id_tenant` (id, tenant_id); `uq_kamelet_name` (tenant_id, name).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_kamelet_name`, `ck_kamelet_name_type`, `ck_kamelet_scope`, `ck_kamelet_type`, `ck_kamelet_scope_tenant`, `ck_kamelet_base_prefix`, `ck_kamelet_reserved_prefix`, `ck_kamelet_generated`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu S: dòng của tenant phiên và dòng `COMMON` (chỉ đọc với tỉnh).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** BASE và COMMON nằm ở tenant COMMON, đọc được từ mọi tỉnh (RLS mẫu S); tỉnh chỉ ghi TENANT. Tên duy nhất trên BASE ∪ COMMON ∪ TENANT kiểm ở dịch vụ (KR-02) vì khác tenant_id.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -548,9 +983,32 @@ EN-05-16 Kamelet (FR-05-054…060). BASE và COMMON nằm ở tenant COMMON, đ�
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `kamelet`
+
 ### 3.19. `kamelet_version`
 
-EN-05-17 Phiên bản Kamelet (FR-05-055…058). YAML bất biến sau SUBMITTED (dịch vụ), băm duy nhất theo tenant để runtime tải theo băm (§5.5 SDD).
+::: dac-ta
+**Mục đích.** EN-05-17 · Phiên bản Kamelet.
+
+**FR phục vụ.** FR-05-055…058.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_kamelet_version` (tenant_id, kamelet_id, semver); `uq_kamelet_version_hash` (tenant_id, yaml_hash).
+
+**Khóa ngoại.** `fk_kamelet_version_kamelet` → `kamelet`.
+
+**Ràng buộc CHECK.** `ck_kamelet_version_semver`, `ck_kamelet_version_status`, `ck_kamelet_version_size`, `ck_kamelet_version_origin`, `ck_kamelet_version_profiles`, `ck_kamelet_version_submit`, `ck_kamelet_version_four_eyes`.
+
+**Chỉ mục.** `ix_kamelet_version_status`.
+
+**Cách ly tenant.** RLS mẫu S: dòng của tenant phiên và dòng `COMMON` (chỉ đọc với tỉnh).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** YAML bất biến sau SUBMITTED (dịch vụ), băm duy nhất theo tenant để runtime tải theo băm (§5.5 SDD).
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -582,9 +1040,32 @@ EN-05-17 Phiên bản Kamelet (FR-05-055…058). YAML bất biến sau SUBMITTED
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 | `AND` | `runtime_profiles <@ ARRAY['core-native', 'files-native', 'soap-jvm', 'legacy-jvm', 'probe-jvm']::varchar(16)[])` |  |  |  |
 
+: Cột của bảng `kamelet_version`
+
 ### 3.20. `usage_ref`
 
-Chỉ mục nơi dùng (FR-05-013): dựng từ API-05-031 (xác minh của PH-04) và sự kiện triển khai, phục vụ chặn ngừng dùng (ERR-05-010) và UI "Nơi dùng". Tính lại được hoàn toàn.
+::: dac-ta
+**Mục đích.** Chỉ mục nơi dùng (FR-05-013): dựng từ API-05-031 (xác minh của PH-04) và sự kiện triển khai, phục vụ chặn ngừng dùng (ERR-05-010) và UI "Nơi dùng".
+
+**FR phục vụ.** Xem đoạn mô tả.
+
+**Khóa chính.** (tenant_id, object_kind, object_code, flow_code, flow_version).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_usage_ref_kind`.
+
+**Chỉ mục.** `ix_usage_ref_flow`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Chỉ mục nơi dùng (FR-05-013): dựng từ API-05-031 (xác minh của PH-04) và sự kiện triển khai, phục vụ chặn ngừng dùng (ERR-05-010) và UI "Nơi dùng". Tính lại được hoàn toàn.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -598,9 +1079,32 @@ Chỉ mục nơi dùng (FR-05-013): dựng từ API-05-031 (xác minh của PH-0
 | `deployed` | `boolean` | x | `false` |  |
 | `refreshed_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `usage_ref`
+
 ### 3.21. `legacy_import_job`
 
-EN-05-18 Nhập kết nối hệ cũ (FR-05-018). Tệp gốc không lưu; findings giữ vị trí {file, line, column, key} thay cho giá trị bí mật (BR-05-025). Giữ 1 năm.
+::: dac-ta
+**Mục đích.** EN-05-18 · Nhập kết nối hệ cũ.
+
+**FR phục vụ.** FR-05-018.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_legacy_import_job_status`.
+
+**Chỉ mục.** `ix_legacy_import_job_tenant`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Tệp gốc không lưu; findings giữ vị trí {file, line, column, key} thay cho giá trị bí mật (BR-05-025). Giữ 1 năm.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -617,9 +1121,32 @@ EN-05-18 Nhập kết nối hệ cũ (FR-05-018). Tệp gốc không lưu; findi
 | `finished_at` | `timestamptz` |  |  |  |
 | `run_by` | `varchar(64)` | x |  |  |
 
+: Cột của bảng `legacy_import_job`
+
 ### 3.22. `outbox`
 
-Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09 của Kamelet dùng chung, topic `common.adapter.kamelet.published.v1`. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.
+::: dac-ta
+**Mục đích.** Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13.
+
+**FR phục vụ.** Xem đoạn mô tả.
+
+**Khóa chính.** (event_id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_outbox_tenant`, `ck_outbox_type`, `ck_outbox_topic`, `ck_outbox_topic_tenant`, `ck_outbox_trace`, `ck_outbox_no_secret`.
+
+**Chỉ mục.** `ix_outbox_occurred`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09 của Kamelet dùng chung, topic `common.adapter.kamelet.published.v1`. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -633,9 +1160,32 @@ Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant
 | `trace_id` | `char(32)` | x |  |  |
 | `occurred_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `outbox`
+
 ### 3.23. `shedlock`
 
-Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, FlowAccountExpiryJob, PartitionMaintenanceJob); bảng kỹ thuật không có tenant_id.
+::: dac-ta
+**Mục đích.** Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, FlowAccountExpiryJob, PartitionMaintenanceJob); bảng kỹ thuật không có tenant_id.
+
+**FR phục vụ.** Xem đoạn mô tả.
+
+**Khóa chính.** (name).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** Không RLS (bảng kỹ thuật dùng chung).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, FlowAccountExpiryJob, PartitionMaintenanceJob); bảng kỹ thuật không có tenant_id.
+:::
+
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -643,6 +1193,8 @@ Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, Flow
 | `lock_until` | `timestamptz` | x |  |  |
 | `locked_at` | `timestamptz` | x |  |  |
 | `locked_by` | `varchar(255)` | x |  |  |
+
+: Cột của bảng `shedlock`
 <!-- gen:tables:end -->
 
 ### 3.24. Truy vấn chính và chỉ mục phục vụ
@@ -659,6 +1211,8 @@ Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, Flow
 | Tài khoản ghi hết hạn | `FlowAccountExpiryJob` 00:15 | `ix_flow_db_account_expiry` |
 | Thay đổi lược đồ chờ | UI-05-13 | `ix_cdc_schema_change_pending` |
 | Bí mật đến hạn hủy | `SecretDestroyJob` 03:00 | `ix_connection_secret_destroy` |
+
+: Truy vấn chính và chỉ mục phục vụ
 
 ## 4. DDL và changelog Liquibase
 
@@ -681,6 +1235,8 @@ Khóa tác vụ nền (HealthEvaluator, RotationFinisher, SecretDestroyJob, Flow
 | `05-0900-grants.sql` | Quyền, chạy lại mỗi lần |
 | `05-9000-migrate-w1.sql` | Di trú `ph05.adapter` (context `migrate-w1`) |
 
+: Tệp
+
 ### 4.2. Kết quả chạy thử
 
 Chạy ngày 26/11/2026 trên PostgreSQL 16 cài sạch, dữ liệu giả:
@@ -699,6 +1255,8 @@ Bài kiểm thử `TenantIsolationIT` (D03-02-PH05 §12) tự động hóa các 
 | Loại kết nối | Không lưu | Đóng trong `classpath:conntypes/*.json`; tenant chỉ có `connection_type_setting` khi đổi mặc định | SDD §4.2 |
 | Tham số `05.*` | PH-18 | Mặc định ở FRS §7.2 | FR-05-061 |
 
+: Dữ liệu khởi tạo
+
 Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO UPDATE`).
 
 ## 6. Kho lưu trữ ngoài PostgreSQL
@@ -713,6 +1271,8 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 | `pki-tenant-{tenant}/issue/conn-*` | Chứng thư mTLS máy khách | Runtime cấp |
 | `kv/dh/{tenant}/cdc/{adapter}` | Thông tin đăng nhập CDC, muối băm cột | `dh-integration` ghi; External Secrets cấp cho Kafka Connect |
 
+: OpenBao
+
 ### 6.2. Kafka
 
 | Topic | Chủ | Phân vùng, giữ | Khóa | Nội dung |
@@ -723,6 +1283,8 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 | `{tenant}.adapter.cdc.gate.v1` (nội bộ, ngoài hợp đồng AsyncAPI) | `SchemaWatcher` | 1, nén (`compact`) | `tableName` | Danh sách bảng bị chặn cho `DhSchemaGate` |
 | `{tenant}.cdc.{adapter}.{schema}.{table}.v1` (EVT-05-13) | PH-10 đăng ký, Kafka Connect ghi | Theo PH-10 (mặc định 7 ngày) | Khóa chính | Bản ghi thay đổi Avro |
 | `{tenant}.cdc.{adapter}._schema-history` (nội bộ Debezium, ngoài hợp đồng AsyncAPI) | Debezium | 1, giữ vĩnh viễn | — | Lịch sử DDL nguồn |
+
+: Kafka
 
 ### 6.3. Kho đối tượng
 
@@ -741,6 +1303,8 @@ Bucket `dh-adapter-spec` trên Ceph RGW (không WORM): tệp OpenAPI, WSDL, XSD 
 | `outbox` | 3 ngày | Sau khi Debezium đã gửi |
 | OpenBao | Snapshot Raft hằng giờ, mã hóa, sang site DR (D03-09) | Bí mật của kết nối `RETIRED` hủy sau 30 ngày |
 
+: Sao lưu, khôi phục, mã hóa và lưu giữ
+
 Khôi phục `ph05_adapter` về thời điểm cũ hơn OpenBao: `secret_version` có thể thấp hơn phiên bản thật; tác vụ đối soát 5 phút (SDD §4.3) đọc metadata OpenBao và sửa. Khôi phục OpenBao về thời điểm cũ hơn CSDL: phiên bản ở CSDL không tồn tại, kiểm tra kết nối báo `SECRET_VERSION_MISSING`, người dùng khai lại; sổ tay DR ghi rõ khôi phục OpenBao trước, CSDL sau.
 
 ## 8. Ánh xạ dữ liệu hệ cũ sang thiết kế mới
@@ -757,6 +1321,8 @@ Lược đồ chi tiết của Bus cũ chưa có trong tài liệu được cung
 | `Endpoint` của Bus (danh sách điểm cuối JMX) | `usage_ref` tạm cho báo cáo đối soát | Không chuyển thành kết nối nếu không có trong XML |
 | Thư viện thành phần (`Dependency`) | `kamelet` loại `TENANT` (đề xuất) | Thành phần tự viết không có tương ứng thành đề xuất Kamelet để IE soạn lại |
 
+: Bus và Productivity Tooling
+
 ### 8.2. Bảng của mã hiện tại (`apps/adapter-mgr`, W1)
 
 | Cột hiện tại | Đích | Ghi chú |
@@ -767,6 +1333,8 @@ Lược đồ chi tiết của Bus cũ chưa có trong tài liệu được cung
 | `endpoint_url` | `connection_environment.params.baseUrl` ở `TEST` | Không tạo PROD |
 | `vault_path` | Không chuyển | Đường dẫn mới suy từ mã; bí mật cũ ở `secret/data/lgsp/…` phải khai lại |
 | `created_at` | Không chuyển | Dòng mới mang thời điểm di trú |
+
+: Bảng của mã hiện tại (apps/adapter-mgr, W1)
 
 Changeset đặt `system_code = 'CHUA-GAN'` và `status = 'DRAFT'`; IE gán HTTT thật và kiểm tra trước khi bật.
 
@@ -782,8 +1350,11 @@ Changeset đặt `system_code = 'CHUA-GAN'` và `status = 'DRAFT'`; IE gán HTTT
 | Q05-51 | `db_access_record` 12 tháng ở `pg-core` có quá tải với luồng đọc tần suất cao (mỗi giây) | Ước 2,6 triệu dòng mỗi luồng mỗi tháng; nếu vượt 50 triệu dòng mỗi tháng thì chuyển sang ClickHouse của PH-13, giữ ở `pg-core` 30 ngày |
 | Q05-52 | Có cần lưu lịch sử mức sức khỏe dạng bảng (ngoài sự kiện) cho báo cáo FR-05-062 | Không; báo cáo đọc `health_sample` gộp giờ |
 
+: Câu hỏi mở
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-CSDL; DDL chạy thử, kiểm cô lập 23/23 | Nhóm viết tài liệu (Claude) |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, bảng đặc tả 10 mục cho 23 bảng trích từ DDL, chú thích mọi bảng và hình |

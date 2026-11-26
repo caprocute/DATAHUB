@@ -1,11 +1,13 @@
 ---
 ma_tai_lieu: D03-04-PH05
 ten: Đặc tả API và sự kiện phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; ATTT; hội đồng thẩm định
 phan_he: PH-05
+mo_ta: Đặc tả 92 endpoint REST, sự kiện Kafka và mã lỗi của phân hệ Bộ điều hợp và kết nối, sinh từ OpenAPI và AsyncAPI đã kiểm tra trong CI.
+tai_lieu_lien_quan: D02-03-PH05 FRS; D03-02-PH05 SDD; D03-03-PH05 CSDL; D03-06-PH05 Màn hình; D04-01 Quy ước mã
 ---
 
 # D03-04-PH05 · Đặc tả API và sự kiện Bộ điều hợp và kết nối
@@ -22,6 +24,21 @@ Cả hai sinh từ bảng mã [`ph05/tools/spec.py`](ph05/tools/spec.py) bằng 
 1. **Không API nào trả giá trị bí mật.** Bí mật chỉ đi vào qua hai lược đồ chỉ ghi (`SecretPayload`, `RotateRequest`, `writeOnly`); kiểm tra hợp đồng chặn trường `secrets` ở mọi lược đồ khác.
 2. **API nội bộ cho PH-04 và runtime dùng token dịch vụ với scope riêng** (`adapter:verify`, `adapter:runtime-config`, `adapter:health-read`), tách khỏi quyền người dùng `PERM-05-*`.
 3. **Mọi lệnh đổi trạng thái có `If-Match`, mọi lệnh tạo có `Idempotency-Key`**, giống PH-04 và PH-19.
+
+## 0. Giới thiệu
+
+Tài liệu đặc tả giao diện lập trình của PH-05: 92 endpoint REST ở mặt phẳng điều khiển và nội bộ, các sự kiện Kafka, hợp đồng với phân hệ khác, bảng mã lỗi ERR-05. Nguồn chuẩn là hai tệp máy đọc được [`openapi-adapter.yaml`](ph05/openapi-adapter.yaml) và [`asyncapi-adapter.yaml`](ph05/asyncapi-adapter.yaml); bảng danh mục ở chương 3 và chương 10 (đặc tả từng endpoint, mỗi endpoint một bảng 10 mục) đều sinh từ OpenAPI nên không lệch nhau.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Kỹ sư `dh-integration`, giao diện | Chương 1, 2, 3, 10 |
+| Kỹ sư PH-04, `dh-runtime` | Chương 4, 5 |
+| Kiểm thử viên | Chương 6, 7, 10 |
+| ATTT, hội đồng thẩm định | Tóm tắt, chương 2, 5 |
+
+: Người đọc và phần cần đọc
+
+Thuật ngữ dùng chung với [D02-03-PH05](../../02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md) §1.4 và D00-01. Câu thông báo người dùng thấy theo từng mã lỗi ở FRS §9.2. Tài liệu tham chiếu: D02-03-PH05 (FRS), D03-02-PH05 (SDD), D03-03-PH05 (CSDL), D03-06-PH05 (màn hình), D04-01 (quy ước API, RFC 9457).
 
 ## 1. Quy ước chung
 
@@ -41,6 +58,8 @@ Cả hai sinh từ bảng mã [`ph05/tools/spec.py`](ph05/tools/spec.py) bằng 
 | Ngôn ngữ | `Accept-Language: vi` (mặc định) hoặc `en` cho `title`, `detail`, `hint` |
 | Tiến trình dài | Kiểm tra kết nối, kiểm thử bộ điều hợp, nhập hệ cũ, so sánh, chụp ảnh lại trả 202 kèm `Location`; kiểm tra có thêm SSE (`Accept: text/event-stream`) |
 
+: Quy ước chung
+
 ## 2. Xác thực và phân quyền
 
 | Bên gọi | Luồng OAuth | Kiểm quyền |
@@ -49,6 +68,8 @@ Cả hai sinh từ bảng mã [`ph05/tools/spec.py`](ph05/tools/spec.py) bằng 
 | Module `flow` PH-04 | Gọi trong tiến trình qua `AdapterReferenceApi`; khi tách DU dùng `client_credentials` + mTLS, scope `adapter:verify`, `adapter:runtime-config` | API-05-031, 089 |
 | `dh-runtime` của tenant | `client_credentials` + `private_key_jwt`, client `dh-runtime-{tenant}` | API-05-032, 089 (`adapter:runtime-config`); token gắn tenant, gọi tenant khác trả 404 |
 | PH-13 | `client_credentials`, scope `adapter:health-read` | API-05-093 |
+
+: Xác thực và phân quyền
 
 Bảng quyền theo operation nằm ở cột "Quyền" của §3. Một số quy tắc vượt quyền chức năng:
 
@@ -69,6 +90,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-001 | `GET /connection-types` | Danh sách loại kết nối được hỗ trợ | 001 | `PERM-05-read` |  | 200 |
 | API-05-002 | `GET /connection-types/{typeCode}` | Lược đồ tham số của một loại kết nối | 001 | `PERM-05-read` |  | 200 |
 
+: Danh mục endpoint · Loại kết nối
+
 **Kết nối nguồn**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
@@ -80,6 +103,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-007 | `POST /connections/{connectionCode}:suspend` | Tạm ngừng kết nối | 008 | `PERM-05-operate` |  | 200 |
 | API-05-008 | `POST /connections/{connectionCode}:resume` | Tiếp tục kết nối | 008 | `PERM-05-operate` |  | 200 |
 | API-05-009 | `POST /connections/{connectionCode}:retire` | Ngừng dùng kết nối | 008 | `PERM-05-connection` |  | 200 |
+
+: Danh mục endpoint · Kết nối nguồn
 
 **Giá trị môi trường và bí mật**
 
@@ -93,6 +118,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-015 | `POST /connections/{connectionCode}/environments/{env}:approve` | Duyệt bật giá trị PROD | 007 | `PERM-05-approve` |  | 200 |
 | API-05-016 | `POST /connections/{connectionCode}/environments/{env}:reject` | Từ chối bật giá trị PROD | 007 | `PERM-05-approve` |  | 200 |
 
+: Danh mục endpoint · Giá trị môi trường và bí mật
+
 **Kiểm tra kết nối**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
@@ -101,12 +128,16 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-018 | `GET /connections/{connectionCode}/tests` | Lịch sử kiểm tra kết nối | 010 | `PERM-05-read` |  | 200 |
 | API-05-019 | `GET /connections/{connectionCode}/tests/{testId}` | Kết quả một lần kiểm tra | 010 | `PERM-05-read` |  | 200 |
 
+: Danh mục endpoint · Kiểm tra kết nối
+
 **Giá trị môi trường và bí mật**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
 |---|---|---|---|---|---|---|
 | API-05-020 | `POST /connections/{connectionCode}/environments/{env}:rotate-secret` | Xoay vòng bí mật | 012 | `PERM-05-operate` | có | 202 |
 | API-05-021 | `GET /connections/{connectionCode}/rotations` | Lịch sử xoay vòng bí mật | 012 | `PERM-05-read` |  | 200 |
+
+: Danh mục endpoint · Giá trị môi trường và bí mật
 
 **Cấp kết nối**
 
@@ -116,6 +147,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-023 | `POST /connections/{connectionCode}/grants` | Cấp quyền sử dụng cho không gian làm việc hoặc luồng | 009 | `PERM-05-connection` | có | 201 |
 | API-05-024 | `DELETE /connections/{connectionCode}/grants/{grantId}` | Thu hồi quyền sử dụng | 009 | `PERM-05-connection` |  | 204 |
 
+: Danh mục endpoint · Cấp kết nối
+
 **Kết nối nguồn**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
@@ -123,6 +156,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-025 | `GET /connections/{connectionCode}/usages` | Nơi đang dùng kết nối | 013 | `PERM-05-read` |  | 200 |
 | API-05-026 | `GET /connections/{connectionCode}/history` | Lịch sử thay đổi kết nối | 016 | `PERM-05-read` |  | 200 |
 | API-05-027 | `GET /connections:export` | Xuất danh sách kết nối (CSV, không bí mật) | 017 | `PERM-05-read` |  | 200 |
+
+: Danh mục endpoint · Kết nối nguồn
 
 **Nhập hệ cũ**
 
@@ -132,6 +167,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-029 | `GET /connections/legacy-imports/{jobId}` | Kết quả phân tích gói hệ cũ | 018 | `PERM-05-read` |  | 200 |
 | API-05-030 | `POST /connections/legacy-imports/{jobId}:commit` | Tạo kết nối nháp từ gói hệ cũ | 018 | `PERM-05-connection` | có | 200 |
 
+: Danh mục endpoint · Nhập hệ cũ
+
 **Nội bộ (PH-04, runtime)**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
@@ -139,12 +176,16 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-031 | `POST /internal/connection-references:verify` | Xác minh tham chiếu kết nối cho PH-04 | 014 | `adapter:verify` (dịch vụ) |  | 200 |
 | API-05-032 | `GET /internal/runtime/connections` | Cấu hình kết nối không bí mật cho runtime | 015 | `adapter:runtime-config` (dịch vụ) |  | 200 |
 
+: Danh mục endpoint · Nội bộ (PH-04, runtime)
+
 **Sức khỏe**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
 |---|---|---|---|---|---|---|
 | API-05-033 | `GET /health/overview` | Tổng quan sức khỏe kết nối và bộ điều hợp | 022 | `PERM-05-read` |  | 200 |
 | API-05-034 | `GET /connections/{connectionCode}/health` | Sức khỏe một kết nối | 019, 020 | `PERM-05-read` |  | 200 |
+
+: Danh mục endpoint · Sức khỏe
 
 **Tài khoản CSDL cho luồng**
 
@@ -157,6 +198,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-039 | `POST /connections/{connectionCode}/flow-accounts/{accountId}:revoke` | Thu hồi tài khoản CSDL | 028 | `PERM-05-connection` hoặc `PERM-05-operate` |  | 200 |
 | API-05-040 | `POST /connections/{connectionCode}/environments/{env}:inspect-privileges` | Kiểm tra quyền thực tế của tài khoản CSDL | 025 | `PERM-05-test` |  | 200 |
 | API-05-041 | `GET /db-access-logs` | Tra nhật ký truy cập CSDL của luồng | 027 | `PERM-05-audit-read` |  | 200 |
+
+: Danh mục endpoint · Tài khoản CSDL cho luồng
 
 **Bộ điều hợp**
 
@@ -181,11 +224,15 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-059 | `POST /adapters/{adapterCode}:resume` | Tiếp tục bộ điều hợp | 044 | `PERM-05-operate` |  | 200 |
 | API-05-060 | `POST /adapters/{adapterCode}:retire` | Ngừng dùng bộ điều hợp | 044 | `PERM-05-adapter` |  | 200 |
 
+: Danh mục endpoint · Bộ điều hợp
+
 **Sức khỏe**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
 |---|---|---|---|---|---|---|
 | API-05-061 | `GET /adapters/{adapterCode}/health` | Sức khỏe bộ điều hợp | 019, 020 | `PERM-05-read` |  | 200 |
+
+: Danh mục endpoint · Sức khỏe
 
 **Bộ điều hợp**
 
@@ -196,6 +243,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-064 | `GET /adapters/{adapterCode}/comparisons/{comparisonId}` | Kết quả so sánh phiên bản | 045 | `PERM-05-read` |  | 200 |
 | API-05-065 | `POST /adapter-drafts:from-spec` | Sinh bộ điều hợp nháp từ OpenAPI hoặc WSDL | 046 | `PERM-05-adapter` | có | 201 |
 | API-05-066 | `GET /adapters/{adapterCode}/history` | Lịch sử thay đổi bộ điều hợp | 016 | `PERM-05-read` |  | 200 |
+
+: Danh mục endpoint · Bộ điều hợp
 
 **CDC**
 
@@ -210,6 +259,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-073 | `POST /adapters/{adapterCode}/cdc:resnapshot` | Chụp ảnh lại dữ liệu nguồn | 053 | `PERM-05-operate` | có | 202 |
 | API-05-074 | `GET /cdc/schema-changes` | Thay đổi lược đồ chờ xử lý | 051 | `PERM-05-read` |  | 200 |
 | API-05-075 | `POST /cdc/schema-changes/{changeId}:resolve` | Xử lý một thay đổi lược đồ | 051 | `PERM-05-adapter` |  | 200 |
+
+: Danh mục endpoint · CDC
 
 **Kamelet**
 
@@ -229,11 +280,15 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-087 | `GET /kamelets/{kameletName}/usages` | Nơi đang dùng Kamelet | 055, 058 | `PERM-05-read` |  | 200 |
 | API-05-088 | `POST /kamelets/{kameletName}:propose-common` | Đề xuất Kamelet tỉnh thành dùng chung | 060 | `PERM-05-kamelet-submit` |  | 200 |
 
+: Danh mục endpoint · Kamelet
+
 **Nội bộ (PH-04, runtime)**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
 |---|---|---|---|---|---|---|
 | API-05-089 | `GET /internal/catalog/kamelets` | Danh mục Kamelet cho trình thiết kế và runtime | 047, 059 | `adapter:runtime-config` (dịch vụ) |  | 200 |
+
+: Danh mục endpoint · Nội bộ (PH-04, runtime)
 
 **Tham số và báo cáo**
 
@@ -243,11 +298,15 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | API-05-091 | `PUT /settings/connection-types/{typeCode}` | Bật, tắt loại kết nối và trần tham số | 061 | `PERM-05-admin` |  | 200 |
 | API-05-092 | `GET /reports/usage` | Báo cáo sử dụng kết nối và bộ điều hợp | 062 | `PERM-05-read` |  | 200 |
 
+: Danh mục endpoint · Tham số và báo cáo
+
 **Nội bộ (PH-04, runtime)**
 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền | Chống trùng | Thành công |
 |---|---|---|---|---|---|---|
 | API-05-093 | `GET /internal/health/states` | Trạng thái sức khỏe cho PH-04 và PH-13 | 021 | `adapter:health-read` (dịch vụ) |  | 200 |
+
+: Danh mục endpoint · Nội bộ (PH-04, runtime)
 <!-- gen:endpoints:end -->
 
 **Mã dự trữ**
@@ -255,6 +314,8 @@ Mỗi operation một mã. Cột FR là số FR-05; chi tiết tham số, lượ
 | Mã | Nội dung | Ghi chú |
 |---|---|---|
 | API-05-042 | Dự phòng: nhận bản ghi truy cập CSDL qua HTTP khi hồ sơ HT-B không cho runtime ghi Kafka chung | Để trống tới khi chốt Q05-08 của FRS; không có trong OpenAPI |
+
+: Danh mục endpoint · Mã dự trữ
 
 ### 3.1. Ví dụ yêu cầu và phản hồi
 
@@ -413,6 +474,8 @@ Topic theo `{tenant}.adapter.{thực-thể}.{sự-kiện}.v1` (D00-04 §4). Lư�
 | EVT-05-15 | `{tenant}.adapter.flow-account.changed.v1` | outbox | `{connectionCode}:{flowCode}` | 7 ngày | PH-04, PH-13 |
 | Nội bộ | `{tenant}.adapter.probe.command.v1`, `….probe.result.v1` | `dh-integration`, `probe-jvm` | `connectionCode`, `testId` | 1 ngày | Bộ chạy kiểm tra |
 
+: Danh mục sự kiện
+
 Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.adapter.connection.enabled.v1`, `ce_subject` = mã). Người nhận lũy đẳng theo `configVersion` hoặc `secretVersion`: runtime bỏ qua sự kiện có số nhỏ hơn số đang giữ. Ví dụ EVT-05-03:
 
 ```json
@@ -433,6 +496,8 @@ Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.
 | OpenBao | PH-05 ghi; runtime đọc | KV v2, database engine, PKI (D03-03-PH05 §6.1) | Không qua API này |
 | Kafka Connect | PH-05 → Kafka Connect | CRD `KafkaConnector` qua GitOps; REST `pause`, `resume`, `status` | SDD §4.12 |
 | HTTT thành viên, NDXP, NGSP | Runtime → HTTT | Qua Kamelet giao thức, không qua API này | Hợp đồng của HTTT do bộ điều hợp mô tả |
+
+: Hợp đồng với phân hệ khác và bên ngoài
 
 ## 6. Bảng mã lỗi ERR-05
 
@@ -484,6 +549,8 @@ Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.
 | ERR-05-039 | 422 | `Idempotency-Key` đã dùng với thân khác | Chung |
 | ERR-05-040 | 403 | Thao tác ghi trên đối tượng `COMMON` từ tenant tỉnh | 079 |
 
+: Lỗi API điều khiển (ERR-05-001…040)
+
 ### 6.2. Lỗi runtime (ERR-05-101…120)
 
 Không trả qua API này; Kamelet giao thức ném ngoại lệ mang mã, PH-04 ánh xạ sang lớp lỗi và ERR-04-1xx trả cho bên gọi luồng.
@@ -510,6 +577,8 @@ Không trả qua API này; Kamelet giao thức ném ngoại lệ mang mã, PH-04
 | ERR-05-118 | Kết nối, giá trị môi trường hoặc bộ điều hợp đang bị chặn (tạm ngừng, tắt) | Nghiệp vụ, không thử lại |
 | ERR-05-119 | TLS dưới 1.2 hoặc chứng thư không tin cậy | Nghiệp vụ, sự kiện an ninh |
 | ERR-05-120 | Kamelet đã bị thu hồi | Nghiệp vụ, không thử lại |
+
+: Lỗi runtime (ERR-05-101…120)
 <!-- gen:errors:end -->
 
 ### 6.3. Thông điệp và trường bổ sung
@@ -525,6 +594,8 @@ Không trả qua API này; Kamelet giao thức ném ngoại lệ mang mã, PH-04
 | ERR-05-020…022 | `findings[]` (`rule` KR-nn, `line`) | "KR-04 dòng 18: không dùng ngôn ngữ `groovy`." |
 | ERR-05-028 | `retryAfterSeconds` | "Kho bí mật tạm thời không khả dụng; dữ liệu chưa được ghi." |
 
+: Thông điệp và trường bổ sung
+
 Không thông điệp nào lặp lại giá trị bí mật hay chuỗi kết nối có mật khẩu; bộ lọc che ở `ProblemDetailsFactory` áp lên `detail` trước khi trả.
 
 ## 7. Kiểm tra hợp đồng trong CI
@@ -539,6 +610,8 @@ Không thông điệp nào lặp lại giá trị bí mật hay chuỗi kết n�
 | Tệp sinh khớp nguồn | Chạy lại `gen_openapi.py`, `gen_asyncapi.py`, `gen_md.py` rồi `git diff --exit-code` | CI-5 |
 | Mã API, EVT, ERR khớp FRS | `build/tools/kiem_tra_ma.py` | CI-1 |
 
+: Kiểm tra hợp đồng trong CI
+
 Kết quả ngày 26/11/2026: OpenAPI hợp lệ, 11 ví dụ khớp; AsyncAPI hợp lệ, 0 cảnh báo.
 
 ## 8. Ánh xạ từ hệ cũ và mã đang chạy
@@ -551,6 +624,8 @@ Kết quả ngày 26/11/2026: OpenAPI hợp lệ, 11 ví dụ khớp; AsyncAPI h
 | Productivity Tooling: thành phần tự viết | API-05-079…086 | Kamelet có kiểm tra tĩnh, duyệt |
 | `apps/adapter-mgr` `GET /api/v1/adapters`, `GET /api/v1/adapters/{id}` | API-05-003, 005 | Đường dẫn mới, có quyền, tenant; route cũ gỡ cùng ứng dụng (SDD §2.4) |
 
+: Ánh xạ từ hệ cũ và mã đang chạy
+
 ## 9. Câu hỏi mở
 
 | Mã | Câu hỏi | Đề xuất tạm |
@@ -559,8 +634,2253 @@ Kết quả ngày 26/11/2026: OpenAPI hợp lệ, 11 ví dụ khớp; AsyncAPI h
 | Q05-61 | Có công bố API-05-031 qua APISIX cho PH-04 khi tách DU không | Không; gọi trong cụm, mTLS mesh, không qua biên |
 | Q05-62 | SSE của API-05-019 qua BFF có cần giữ kết nối khi tab ẩn | Không; giao diện đóng SSE khi tab ẩn và hỏi lại API-05-019 khi hiện |
 
+: Câu hỏi mở
+
+## 10. Đặc tả từng endpoint
+
+Chương này sinh tự động từ OpenAPI bằng `build/tools/sinh_dac_ta_api.py`; sửa OpenAPI rồi chạy lại, không sửa tay. Mỗi endpoint một bảng đặc tả 10 mục.
+
+<!-- gen:dac-ta-api:start -->
+
+### Loại kết nối
+
+#### API-05-001 · Danh sách loại kết nối được hỗ trợ
+
+::: dac-ta
+**Mục đích.** Danh sách loại kết nối được hỗ trợ.
+
+**Phương thức, đường dẫn.** `GET /connection-types`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-001.
+
+**Tham số.** `group` (query, ProtocolGroup, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionTypeList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-002 · Lược đồ tham số của một loại kết nối
+
+::: dac-ta
+**Mục đích.** Lược đồ tham số của một loại kết nối.
+
+**Phương thức, đường dẫn.** `GET /connection-types/{typeCode}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-001.
+
+**Tham số.** `typeCode` (path, TypeCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionTypeDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Trả `paramsSchema` (JSON Schema 2020-12) để giao diện dựng biểu mẫu; trần đã áp theo tenant.
+:::
+
+### Kết nối nguồn
+
+#### API-05-003 · Danh sách, tìm kiếm kết nối nguồn
+
+::: dac-ta
+**Mục đích.** Danh sách, tìm kiếm kết nối nguồn.
+
+**Phương thức, đường dẫn.** `GET /connections`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-002.
+
+**Tham số.** `q` (query, string, tùy chọn); `status` (query, array, tùy chọn); `typeCode` (query, array, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `health` (query, array, tùy chọn); `env` (query, Environment, tùy chọn); `label` (query, string, tùy chọn); `secretOverdue` (query, boolean, tùy chọn); `protocolGroup` (query, array, tùy chọn); `grantedTo` (query, string, tùy chọn); `owner` (query, string, tùy chọn); `sort` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Kèm `facets`. Kết nối có môi trường UNHEALTHY xếp đầu khi không chỉ định `sort` (BR-05-014).
+:::
+
+#### API-05-004 · Tạo kết nối nguồn
+
+::: dac-ta
+**Mục đích.** Tạo kết nối nguồn.
+
+**Phương thức, đường dẫn.** `POST /connections`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-004.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ConnectionCreate`; trường bắt buộc: `connectionCode`, `name`, `typeCode`, `systemCode`, `purpose`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `ConnectionDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Mã trùng ERR-05-002; loại tắt ERR-05-004; HTTT không ACTIVE ERR-05-005. Trạng thái DRAFT.
+:::
+
+#### API-05-005 · Chi tiết kết nối
+
+::: dac-ta
+**Mục đích.** Chi tiết kết nối.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-003.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-006 · Sửa thông tin kết nối
+
+::: dac-ta
+**Mục đích.** Sửa thông tin kết nối.
+
+**Phương thức, đường dẫn.** `PATCH /connections/{connectionCode}`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-006.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ConnectionUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Đổi mục đích sang READ khi còn tài khoản ghi hiệu lực trả ERR-05-010.
+:::
+
+#### API-05-007 · Tạm ngừng kết nối
+
+::: dac-ta
+**Mục đích.** Tạm ngừng kết nối.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}:suspend`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-008.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Phát EVT-05-04; runtime từ chối lượt gọi mới bằng ERR-05-118.
+:::
+
+#### API-05-008 · Tiếp tục kết nối
+
+::: dac-ta
+**Mục đích.** Tiếp tục kết nối.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}:resume`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-008.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Kết nối do SO tạm ngừng chỉ SO tiếp tục (ERR-05-011).
+:::
+
+#### API-05-009 · Ngừng dùng kết nối
+
+::: dac-ta
+**Mục đích.** Ngừng dùng kết nối.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}:retire`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-008.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Còn nơi dùng trả ERR-05-010 kèm `usages`. Thu hồi cấp, tài khoản CSDL; hủy bí mật sau 30 ngày.
+:::
+
+#### API-05-025 · Nơi đang dùng kết nối
+
+::: dac-ta
+**Mục đích.** Nơi đang dùng kết nối.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/usages`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-013.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `UsageList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-026 · Lịch sử thay đổi kết nối
+
+::: dac-ta
+**Mục đích.** Lịch sử thay đổi kết nối.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/history`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-016.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HistoryPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Đọc từ PH-13; `before`, `after` không bao giờ chứa bí mật.
+:::
+
+#### API-05-027 · Xuất danh sách kết nối (CSV, không bí mật)
+
+::: dac-ta
+**Mục đích.** Xuất danh sách kết nối (CSV, không bí mật).
+
+**Phương thức, đường dẫn.** `GET /connections:export`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-017.
+
+**Tham số.** `q` (query, string, tùy chọn); `status` (query, array, tùy chọn); `typeCode` (query, array, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `health` (query, array, tùy chọn); `env` (query, Environment, tùy chọn); `label` (query, string, tùy chọn); `secretOverdue` (query, boolean, tùy chọn); `protocolGroup` (query, array, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, string.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** CSV UTF-8 có BOM, không có bí mật; cùng bộ lọc với API-05-003.
+:::
+
+### Giá trị môi trường và bí mật
+
+#### API-05-010 · Giá trị kết nối theo môi trường
+
+::: dac-ta
+**Mục đích.** Giá trị kết nối theo môi trường.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/environments`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-005.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `EnvironmentList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-011 · Khai báo tham số không bí mật cho môi trường
+
+::: dac-ta
+**Mục đích.** Khai báo tham số không bí mật cho môi trường.
+
+**Phương thức, đường dẫn.** `PUT /connections/{connectionCode}/environments/{env}`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-005.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `EnvironmentParams`; trường bắt buộc: `params`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Environment_`; trường bắt buộc: `env`, `status`, `params`, `secretVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039); `423` Đang đóng băng thay đổi PROD.
+
+**Ghi chú.** Sai lược đồ ERR-05-003; khóa bí mật ERR-05-006; vượt trần ERR-05-030; `db-flow` trỏ CSDL control plane hoặc `pg-payment` ERR-05-016; đích ngoài egress: lưu kèm `warnings[]` và đề nghị bổ sung egress cho TA, bật môi trường bị chặn tới khi có (BR-05-013). PROD đang ENABLED: lưu bản chờ (BR-05-010).
+:::
+
+#### API-05-012 · Ghi bí mật một chiều cho môi trường
+
+::: dac-ta
+**Mục đích.** Ghi bí mật một chiều cho môi trường.
+
+**Phương thức, đường dẫn.** `PUT /connections/{connectionCode}/environments/{env}/secret`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-005, FR-05-011.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SecretPayload`; trường bắt buộc: `secrets`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039); `423` Đang đóng băng thay đổi PROD; `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Ghi một chiều vào OpenBao (cas theo phiên bản). Khóa ngoài `secretKeys` ERR-05-003. Trả 204, không trả giá trị; ghi giá trị trùng phiên bản hiện tại vẫn tạo phiên bản mới.
+:::
+
+#### API-05-013 · Bật giá trị môi trường (PROD tạo đề nghị duyệt)
+
+::: dac-ta
+**Mục đích.** Bật giá trị môi trường (PROD tạo đề nghị duyệt).
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:enable`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-007.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `EnableRequest`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Environment_`; trường bắt buộc: `env`, `status`, `params`, `secretVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Không có kiểm tra đạt 24 giờ khớp tham số và bí mật ERR-05-009; thiếu bí mật ERR-05-014. PROD chuyển PENDING_APPROVAL và tạo việc cho IA.
+:::
+
+#### API-05-014 · Tắt giá trị môi trường
+
+::: dac-ta
+**Mục đích.** Tắt giá trị môi trường.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:disable`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-007.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Environment_`; trường bắt buộc: `env`, `status`, `params`, `secretVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-015 · Duyệt bật giá trị PROD
+
+::: dac-ta
+**Mục đích.** Duyệt bật giá trị PROD.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:approve`.
+
+**Quyền.** `PERM-05-approve`.
+
+**FR hiện thực.** FR-05-007.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ApprovalDecision`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Environment_`; trường bắt buộc: `env`, `status`, `params`, `secretVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Bốn mắt: người duyệt khác người yêu cầu và người ghi bí mật (ERR-05-011, 403). Kiểm tra hết hạn trong lúc chờ trả ERR-05-009.
+:::
+
+#### API-05-016 · Từ chối bật giá trị PROD
+
+::: dac-ta
+**Mục đích.** Từ chối bật giá trị PROD.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:reject`.
+
+**Quyền.** `PERM-05-approve`.
+
+**FR hiện thực.** FR-05-007.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RejectRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Environment_`; trường bắt buộc: `env`, `status`, `params`, `secretVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-020 · Xoay vòng bí mật
+
+::: dac-ta
+**Mục đích.** Xoay vòng bí mật.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:rotate-secret`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-012.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RotateRequest`; trường bắt buộc: `secrets`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `Rotation`; trường bắt buộc: `id`, `env`, `status`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Đang có lần xoay mở ERR-05-036. Kiểm tra phiên bản mới thất bại thì hủy phiên bản mới, lần xoay FAILED.
+:::
+
+#### API-05-021 · Lịch sử xoay vòng bí mật
+
+::: dac-ta
+**Mục đích.** Lịch sử xoay vòng bí mật.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/rotations`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-012.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (query, Environment, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RotationList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+### Kiểm tra kết nối
+
+#### API-05-017 · Chạy kiểm tra kết nối
+
+::: dac-ta
+**Mục đích.** Chạy kiểm tra kết nối.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}/tests`.
+
+**Quyền.** `PERM-05-test`.
+
+**FR hiện thực.** FR-05-010.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TestRequest`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `ConnectionTest`; trường bắt buộc: `id`, `env`, `status`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `429` Vượt số lần kiểm tra cho phép; kèm `retryAfterSeconds`; `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Chạy ở bộ chạy `probe-jvm` vùng Z4. Đang chạy cho cùng giá trị ERR-05-018; quá 20 lần mỗi giờ cho một kết nối (`05.test.max-per-hour`) ERR-05-019. Theo dõi qua API-05-019 hoặc SSE (`Accept: text/event-stream`).
+:::
+
+#### API-05-018 · Lịch sử kiểm tra kết nối
+
+::: dac-ta
+**Mục đích.** Lịch sử kiểm tra kết nối.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/tests`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-010.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (query, Environment, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionTestPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-019 · Kết quả một lần kiểm tra
+
+::: dac-ta
+**Mục đích.** Kết quả một lần kiểm tra.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/tests/{testId}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-010.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `testId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionTest`; trường bắt buộc: `id`, `env`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Với `Accept: text/event-stream` trả sự kiện `step` và `completed`.
+:::
+
+### Cấp kết nối
+
+#### API-05-022 · Danh sách cấp quyền sử dụng
+
+::: dac-ta
+**Mục đích.** Danh sách cấp quyền sử dụng.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/grants`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-009.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `GrantList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-023 · Cấp quyền sử dụng cho không gian làm việc hoặc luồng
+
+::: dac-ta
+**Mục đích.** Cấp quyền sử dụng cho không gian làm việc hoặc luồng.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/grants`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-009.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `GrantCreate`; trường bắt buộc: `scope`, `targetCode`, `environments`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Grant`; trường bắt buộc: `id`, `scope`, `targetCode`, `environments`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Không gian hoặc luồng không tồn tại ở PH-04 ERR-05-033. Phát EVT-05-05.
+:::
+
+#### API-05-024 · Thu hồi quyền sử dụng
+
+::: dac-ta
+**Mục đích.** Thu hồi quyền sử dụng.
+
+**Phương thức, đường dẫn.** `DELETE /connections/{connectionCode}/grants/{grantId}`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-009.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `grantId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Luồng đang chạy dùng cấp này được cảnh báo; thu hồi có hiệu lực ở lần phát hành kế tiếp của luồng.
+:::
+
+### Nhập hệ cũ
+
+#### API-05-028 · Tải gói kết nối hệ cũ để phân tích
+
+::: dac-ta
+**Mục đích.** Tải gói kết nối hệ cũ để phân tích.
+
+**Phương thức, đường dẫn.** `POST /connections/legacy-imports`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-018.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** multipart/form-data: object.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `LegacyImportJob`; trường bắt buộc: `id`, `status`; tiêu đề `Location`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `413` Dữ liệu mẫu vượt 1 MiB hoặc tệp nhập quá lớn (ERR-05-024); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** multipart/form-data `file` (XML Context, ZIP gói xuất Bus, .properties; ≤ 20 MiB, quá lớn ERR-05-024 với 413). Sai định dạng ERR-05-024. Không thực thi, không lưu tệp; bí mật thay bằng vị trí (BR-05-025).
+:::
+
+#### API-05-029 · Kết quả phân tích gói hệ cũ
+
+::: dac-ta
+**Mục đích.** Kết quả phân tích gói hệ cũ.
+
+**Phương thức, đường dẫn.** `GET /connections/legacy-imports/{jobId}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-018.
+
+**Tham số.** `jobId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `LegacyImportJob`; trường bắt buộc: `id`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-030 · Tạo kết nối nháp từ gói hệ cũ
+
+::: dac-ta
+**Mục đích.** Tạo kết nối nháp từ gói hệ cũ.
+
+**Phương thức, đường dẫn.** `POST /connections/legacy-imports/{jobId}:commit`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-018.
+
+**Tham số.** `jobId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `LegacyCommit`; trường bắt buộc: `items`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `200` thành công, `LegacyImportJob`; trường bắt buộc: `id`, `status`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Tạo kết nối DRAFT; người dùng khai lại bí mật.
+:::
+
+### Nội bộ (PH-04, runtime)
+
+#### API-05-031 · Xác minh tham chiếu kết nối cho PH-04
+
+::: dac-ta
+**Mục đích.** Xác minh tham chiếu kết nối cho PH-04.
+
+**Phương thức, đường dẫn.** `POST /internal/connection-references:verify`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-05-014.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** application/json: `VerifyRequest`; trường bắt buộc: `workspaceCode`, `flowCode`, `stage`, `references`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `VerifyResult`; trường bắt buộc: `allOk`, `results`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Gọi bởi PH-04 ở mức DESIGN, SUBMIT, PUBLISH (VR-07). Không ném lỗi nghiệp vụ theo từng tham chiếu; cập nhật chỉ mục nơi dùng.
+:::
+
+#### API-05-032 · Cấu hình kết nối không bí mật cho runtime
+
+::: dac-ta
+**Mục đích.** Cấu hình kết nối không bí mật cho runtime.
+
+**Phương thức, đường dẫn.** `GET /internal/runtime/connections`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-05-015.
+
+**Tham số.** `env` (query, Environment, tùy chọn); `If-None-Match` (header, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `RuntimeConfig`; trường bắt buộc: `tenant`, `env`, `configVersion`, `connections`; tiêu đề `ETag`; `304` không đổi.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Gọi bởi `dh-runtime` của tenant (scope `adapter:runtime-config`). Có `ETag`; `If-None-Match` khớp trả 304.
+:::
+
+#### API-05-089 · Danh mục Kamelet cho trình thiết kế và runtime
+
+::: dac-ta
+**Mục đích.** Danh mục Kamelet cho trình thiết kế và runtime.
+
+**Phương thức, đường dẫn.** `GET /internal/catalog/kamelets`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-05-047, FR-05-059.
+
+**Tham số.** `runtimeProfile` (query, string, tùy chọn); `If-None-Match` (header, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletCatalog`; trường bắt buộc: `items`, `catalogHash`; tiêu đề `ETag`; `304` không đổi.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Gọi bởi PH-04 và runtime; có `ETag`.
+:::
+
+#### API-05-093 · Trạng thái sức khỏe cho PH-04 và PH-13
+
+::: dac-ta
+**Mục đích.** Trạng thái sức khỏe cho PH-04 và PH-13.
+
+**Phương thức, đường dẫn.** `GET /internal/health/states`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-05-021.
+
+**Tham số.** `env` (query, Environment, tùy chọn); `level` (query, array, tùy chọn); `since` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HealthStateList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Gọi bởi PH-04, PH-13 (scope `adapter:health-read`).
+:::
+
+### Sức khỏe
+
+#### API-05-033 · Tổng quan sức khỏe kết nối và bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Tổng quan sức khỏe kết nối và bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /health/overview`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-022.
+
+**Tham số.** `env` (query, Environment, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HealthOverview`; trường bắt buộc: `totals`, `attention`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-034 · Sức khỏe một kết nối
+
+::: dac-ta
+**Mục đích.** Sức khỏe một kết nối.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/health`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-019, FR-05-020.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (query, Environment, tùy chọn); `window` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HealthDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-061 · Sức khỏe bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Sức khỏe bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/health`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-019, FR-05-020.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `env` (query, Environment, tùy chọn); `window` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HealthDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+### Tài khoản CSDL cho luồng
+
+#### API-05-035 · Tài khoản CSDL theo luồng
+
+::: dac-ta
+**Mục đích.** Tài khoản CSDL theo luồng.
+
+**Phương thức, đường dẫn.** `GET /connections/{connectionCode}/flow-accounts`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-024.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `flowCode` (query, string, tùy chọn); `status` (query, array, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `FlowAccountList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-036 · Yêu cầu cấp tài khoản CSDL cho luồng
+
+::: dac-ta
+**Mục đích.** Yêu cầu cấp tài khoản CSDL cho luồng.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/flow-accounts`.
+
+**Quyền.** `PERM-05-connection`.
+
+**FR hiện thực.** FR-05-024, FR-05-026.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `FlowAccountRequest`; trường bắt buộc: `flowCode`, `environments`, `schemas`, `accessMode`, `justification`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `FlowAccountList`; trường bắt buộc: `items`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Một dòng mỗi môi trường. READ: cấp ngay (ISSUED) với kết nối `db-flow` DYNAMIC. WRITE: REQUESTED, tạo việc cho SO. Kết nối READ mà xin WRITE ERR-05-017; phạm vi CSDL control plane ERR-05-016; ngoài `allowedSchemas` ERR-05-027; hạn > 90 ngày ERR-05-037.
+:::
+
+#### API-05-037 · Cán bộ ATTT đồng ý mục đích ghi
+
+::: dac-ta
+**Mục đích.** Cán bộ ATTT đồng ý mục đích ghi.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/flow-accounts/{accountId}:consent`.
+
+**Quyền.** `PERM-05-db-write-consent`.
+
+**FR hiện thực.** FR-05-026.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `accountId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ConsentRequest`; trường bắt buộc: `opinion`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `FlowAccount`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Chỉ SO (`PERM-05-db-write-consent`).
+:::
+
+#### API-05-038 · Duyệt tài khoản ghi
+
+::: dac-ta
+**Mục đích.** Duyệt tài khoản ghi.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/flow-accounts/{accountId}:approve`.
+
+**Quyền.** `PERM-05-approve`.
+
+**FR hiện thực.** FR-05-026.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `accountId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ApprovalDecision`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `FlowAccount`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** IA khác người yêu cầu và SO (ERR-05-011). Ghi role OpenBao, ISSUED.
+:::
+
+#### API-05-039 · Thu hồi tài khoản CSDL
+
+::: dac-ta
+**Mục đích.** Thu hồi tài khoản CSDL.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/flow-accounts/{accountId}:revoke`.
+
+**Quyền.** Token dịch vụ.
+
+**FR hiện thực.** FR-05-028.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `accountId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `FlowAccount`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Xóa role, thu hồi lease; tài khoản động bị xóa ở CSDL nguồn ≤ 60 giây (NFR-05-007).
+:::
+
+#### API-05-040 · Kiểm tra quyền thực tế của tài khoản CSDL
+
+::: dac-ta
+**Mục đích.** Kiểm tra quyền thực tế của tài khoản CSDL.
+
+**Phương thức, đường dẫn.** `POST /connections/{connectionCode}/environments/{env}:inspect-privileges`.
+
+**Quyền.** `PERM-05-test`.
+
+**FR hiện thực.** FR-05-025.
+
+**Tham số.** `connectionCode` (path, ConnectionCode, bắt buộc); `env` (path, Environment, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `PrivilegeReport`; trường bắt buộc: `verdict`, `grants`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Tài khoản khai chỉ đọc mà có quyền ghi trả 200 với `verdict = EXCESSIVE` và chặn bật môi trường (ERR-05-015).
+:::
+
+#### API-05-041 · Tra nhật ký truy cập CSDL của luồng
+
+::: dac-ta
+**Mục đích.** Tra nhật ký truy cập CSDL của luồng.
+
+**Phương thức, đường dẫn.** `GET /db-access-logs`.
+
+**Quyền.** `PERM-05-audit-read`.
+
+**FR hiện thực.** FR-05-027.
+
+**Tham số.** `flowCode` (query, string, tùy chọn); `connectionCode` (query, ConnectionCode, tùy chọn); `from` (query, string, tùy chọn); `to` (query, string, tùy chọn); `outcome` (query, array, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `DbAccessPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Khoảng thời gian tối đa 31 ngày mỗi truy vấn.
+:::
+
+### Bộ điều hợp
+
+#### API-05-043 · Danh sách bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Danh sách bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-029.
+
+**Tham số.** `q` (query, string, tùy chọn); `systemCode` (query, SystemCode, tùy chọn); `systemGroup` (query, array, tùy chọn); `protocol` (query, array, tùy chọn); `status` (query, array, tùy chọn); `versionStatus` (query, array, tùy chọn); `health` (query, array, tùy chọn); `hasPendingSchemaChange` (query, boolean, tùy chọn); `hasPendingVersion` (query, boolean, tùy chọn); `sort` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Kèm `facets`, `cards`. UNHEALTHY xếp đầu khi không chỉ định `sort`.
+:::
+
+#### API-05-044 · Tạo bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Tạo bộ điều hợp.
+
+**Phương thức, đường dẫn.** `POST /adapters`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-031.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `AdapterCreate`; trường bắt buộc: `adapterCode`, `name`, `systemCode`, `systemGroup`, `protocol`, `connectionCode`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Tạo bộ điều hợp DRAFT và phiên bản 1.0 DRAFT. Kết nối khác HTTT ERR-05-013 (BR-05-015).
+:::
+
+#### API-05-045 · Chi tiết bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Chi tiết bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-030.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-046 · Sửa thông tin chung bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Sửa thông tin chung bộ điều hợp.
+
+**Phương thức, đường dẫn.** `PATCH /adapters/{adapterCode}`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-031.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `AdapterUpdate`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-047 · Danh sách phiên bản
+
+::: dac-ta
+**Mục đích.** Danh sách phiên bản.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/versions`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-045.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersionList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-048 · Tạo phiên bản nháp mới
+
+::: dac-ta
+**Mục đích.** Tạo phiên bản nháp mới.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-045.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `NewVersionRequest`; trường bắt buộc: `bump`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `AdapterVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036).
+
+**Ghi chú.** Đã có bản nháp ERR-05-008 (BR-05-016). MAJOR khi đổi không tương thích; giao diện gợi ý theo khác biệt.
+:::
+
+#### API-05-049 · Chi tiết một phiên bản
+
+::: dac-ta
+**Mục đích.** Chi tiết một phiên bản.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/versions/{version}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-030.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersion`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-050 · Khai báo hoặc sửa thao tác
+
+::: dac-ta
+**Mục đích.** Khai báo hoặc sửa thao tác.
+
+**Phương thức, đường dẫn.** `PUT /adapters/{adapterCode}/versions/{version}/operations/{operationCode}`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-032, FR-05-033, FR-05-034, FR-05-035, FR-05-036, FR-05-037, FR-05-038, FR-05-039, FR-05-040, FR-05-041.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `operationCode` (path, OperationCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `Operation`; trường bắt buộc: `operationCode`, `title`, `direction`, `protocolSpec`, `requestFormat`, `responseFormat`, `timeoutMs`, `sideEffect`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `413` Dữ liệu mẫu vượt 1 MiB hoặc tệp nhập quá lớn (ERR-05-024); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Chỉ ở DRAFT. `sideEffect = WRITE` với kết nối READ ERR-05-017. Câu lệnh SQL ghép chuỗi, phương thức không hợp lệ, mã hóa VNI trả ERR-05-032; mẫu có mã độc ERR-05-034.
+:::
+
+#### API-05-051 · Xóa thao tác khỏi bản nháp
+
+::: dac-ta
+**Mục đích.** Xóa thao tác khỏi bản nháp.
+
+**Phương thức, đường dẫn.** `DELETE /adapters/{adapterCode}/versions/{version}/operations/{operationCode}`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-032.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `operationCode` (path, OperationCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-052 · Chạy kiểm thử bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Chạy kiểm thử bộ điều hợp.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}/tests`.
+
+**Quyền.** `PERM-05-test`.
+
+**FR hiện thực.** FR-05-043.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `AdapterTestRequest`; trường bắt buộc: `env`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `AdapterTest`; trường bắt buộc: `id`, `status`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Chạy ở TEST hoặc STAGING, không bao giờ PROD; thao tác ghi cần `confirmWriteOnTest = true` (BR-05-030). Kết quả hiệu lực 24 giờ cho gửi duyệt.
+:::
+
+#### API-05-053 · Kết quả kiểm thử bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Kết quả kiểm thử bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/tests/{testId}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-043.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `testId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterTest`; trường bắt buộc: `id`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-054 · Chạy thử chuyển đổi định dạng với dữ liệu mẫu
+
+::: dac-ta
+**Mục đích.** Chạy thử chuyển đổi định dạng với dữ liệu mẫu.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}:preview-transform`.
+
+**Quyền.** `PERM-05-test`.
+
+**FR hiện thực.** FR-05-040, FR-05-041.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `TransformPreviewRequest`; trường bắt buộc: `operationCode`, `sample`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `TransformPreview`; trường bắt buộc: `output`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `413` Dữ liệu mẫu vượt 1 MiB hoặc tệp nhập quá lớn (ERR-05-024); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Không gọi hệ đích; chạy chuyển đổi trên dữ liệu mẫu trong tiến trình cô lập, ≤ 2 giây.
+:::
+
+#### API-05-055 · Gửi duyệt phiên bản
+
+::: dac-ta
+**Mục đích.** Gửi duyệt phiên bản.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}:submit`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SubmitRequest`; trường bắt buộc: `changeNote`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Mọi thao tác có kiểm thử đạt 24 giờ trên đúng băm nội dung (ERR-05-009).
+:::
+
+#### API-05-056 · Duyệt phiên bản
+
+::: dac-ta
+**Mục đích.** Duyệt phiên bản.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}:approve`.
+
+**Quyền.** `PERM-05-approve`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ApprovalDecision`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Bốn mắt (ERR-05-011). Sinh Kamelet theo thao tác (FR-05-047), phát EVT-05-07, EVT-05-09; phiên bản trước SUPERSEDED.
+:::
+
+#### API-05-057 · Từ chối phiên bản
+
+::: dac-ta
+**Mục đích.** Từ chối phiên bản.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}:reject`.
+
+**Quyền.** `PERM-05-approve`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RejectRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-058 · Tạm dừng bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Tạm dừng bộ điều hợp.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}:suspend`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Phát EVT-05-08.
+:::
+
+#### API-05-059 · Tiếp tục bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Tiếp tục bộ điều hợp.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}:resume`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-060 · Ngừng dùng bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Ngừng dùng bộ điều hợp.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}:retire`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-044.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Còn nơi dùng ERR-05-010. Kamelet sinh chuyển DEPRECATED.
+:::
+
+#### API-05-062 · Nơi đang dùng bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Nơi đang dùng bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/usages`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-013.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `UsageList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-063 · Chạy so sánh phiên bản trên lưu lượng thật
+
+::: dac-ta
+**Mục đích.** Chạy so sánh phiên bản trên lưu lượng thật.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/versions/{version}:compare`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-045.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CompareRequest`; trường bắt buộc: `baseVersion`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `Comparison`; trường bắt buộc: `id`, `status`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Chế độ bóng: sao chép lượt gọi thật của phiên bản hiệu lực sang phiên bản ứng viên với thao tác `sideEffect = NONE`; thao tác ghi bị loại (cờ `adapter.compare.enabled`).
+:::
+
+#### API-05-064 · Kết quả so sánh phiên bản
+
+::: dac-ta
+**Mục đích.** Kết quả so sánh phiên bản.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/comparisons/{comparisonId}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-045.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `comparisonId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Comparison`; trường bắt buộc: `id`, `status`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-065 · Sinh bộ điều hợp nháp từ OpenAPI hoặc WSDL
+
+::: dac-ta
+**Mục đích.** Sinh bộ điều hợp nháp từ OpenAPI hoặc WSDL.
+
+**Phương thức, đường dẫn.** `POST /adapter-drafts:from-spec`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-046.
+
+**Tham số.** `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `FromSpecRequest`; trường bắt buộc: `adapterCode`, `name`, `systemCode`, `systemGroup`, `connectionCode`, `specKind`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `AdapterDetail`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `413` Dữ liệu mẫu vượt 1 MiB hoặc tệp nhập quá lớn (ERR-05-024); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Nhận `specUrl` (tải qua egress của tenant) hoặc multipart `file`. Không phân tích được ERR-05-023; tệp vượt 5 MiB (OpenAPI) hoặc 10 MiB (WSDL ZIP) ERR-05-024 với 413.
+:::
+
+#### API-05-066 · Lịch sử thay đổi bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Lịch sử thay đổi bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/history`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-016.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `HistoryPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Không.
+:::
+
+### CDC
+
+#### API-05-067 · Cấu hình và trạng thái CDC
+
+::: dac-ta
+**Mục đích.** Cấu hình và trạng thái CDC.
+
+**Phương thức, đường dẫn.** `GET /adapters/{adapterCode}/cdc`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-052.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `env` (query, Environment, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CdcConfig`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-068 · Khai báo cấu hình CDC
+
+::: dac-ta
+**Mục đích.** Khai báo cấu hình CDC.
+
+**Phương thức, đường dẫn.** `PUT /adapters/{adapterCode}/cdc`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-048.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CdcConfigUpdate`; trường bắt buộc: `env`, `engine`, `tables`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CdcConfig`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Bảng ngoài `allowedSchemas` ERR-05-027; vượt `05.cdc.max-tables` ERR-05-030; PH-10 không khả dụng ERR-05-029. Chỉ sửa khi STOPPED.
+:::
+
+#### API-05-069 · Kiểm tra điều kiện CDC ở CSDL nguồn
+
+::: dac-ta
+**Mục đích.** Kiểm tra điều kiện CDC ở CSDL nguồn.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/cdc:check-prerequisites`.
+
+**Quyền.** `PERM-05-test`.
+
+**FR hiện thực.** FR-05-049.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `env` (query, Environment, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionTest`; trường bắt buộc: `id`, `env`, `status`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `503` Phụ thuộc chưa sẵn sàng (gồm ERR-05-028 OpenBao).
+
+**Ghi chú.** Kết quả kiểm từng mục theo engine (FR-05-049).
+:::
+
+#### API-05-070 · Chạy CDC
+
+::: dac-ta
+**Mục đích.** Chạy CDC.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/cdc:start`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-050.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CdcAction`; trường bắt buộc: `env`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `CdcConfig`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Điều kiện chưa đạt 24 giờ ERR-05-025; chưa có phiên bản APPROVED ERR-05-008.
+:::
+
+#### API-05-071 · Tạm dừng CDC
+
+::: dac-ta
+**Mục đích.** Tạm dừng CDC.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/cdc:pause`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-050.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CdcAction`; trường bắt buộc: `env`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CdcConfig`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-072 · Tiếp tục CDC
+
+::: dac-ta
+**Mục đích.** Tiếp tục CDC.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/cdc:resume`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-050, FR-05-051.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CdcAction`; trường bắt buộc: `env`, `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `CdcConfig`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Từ PAUSED_SCHEMA còn thay đổi chưa xử lý ERR-05-026.
+:::
+
+#### API-05-073 · Chụp ảnh lại dữ liệu nguồn
+
+::: dac-ta
+**Mục đích.** Chụp ảnh lại dữ liệu nguồn.
+
+**Phương thức, đường dẫn.** `POST /adapters/{adapterCode}/cdc:resnapshot`.
+
+**Quyền.** `PERM-05-operate`.
+
+**FR hiện thực.** FR-05-053.
+
+**Tham số.** `adapterCode` (path, AdapterCode, bắt buộc); `If-Match` (header, string, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `CdcAction`; trường bắt buộc: `env`, `reason`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `CdcConfig`; tiêu đề `Location`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Từ FAILED hoặc theo yêu cầu; bảng đích nhận lại toàn bộ dữ liệu (phía tiêu thụ phải lũy đẳng theo khóa).
+:::
+
+#### API-05-074 · Thay đổi lược đồ chờ xử lý
+
+::: dac-ta
+**Mục đích.** Thay đổi lược đồ chờ xử lý.
+
+**Phương thức, đường dẫn.** `GET /cdc/schema-changes`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-051.
+
+**Tham số.** `adapterCode` (query, AdapterCode, tùy chọn); `status` (query, array, tùy chọn); `severity` (query, array, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaChangePage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-075 · Xử lý một thay đổi lược đồ
+
+::: dac-ta
+**Mục đích.** Xử lý một thay đổi lược đồ.
+
+**Phương thức, đường dẫn.** `POST /cdc/schema-changes/{changeId}:resolve`.
+
+**Quyền.** `PERM-05-adapter`.
+
+**FR hiện thực.** FR-05-051.
+
+**Tham số.** `changeId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `SchemaResolve`; trường bắt buộc: `resolution`, `comment`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `SchemaChange`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** MAP_COLUMN cần `columnMap`; RESNAPSHOT xếp lịch chụp ảnh lại.
+:::
+
+### Kamelet
+
+#### API-05-076 · Danh mục Kamelet
+
+::: dac-ta
+**Mục đích.** Danh mục Kamelet.
+
+**Phương thức, đường dẫn.** `GET /kamelets`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-054.
+
+**Tham số.** `q` (query, string, tùy chọn); `scope` (query, array, tùy chọn); `type` (query, array, tùy chọn); `status` (query, array, tùy chọn); `group` (query, string, tùy chọn); `generated` (query, boolean, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletPage`; trường bắt buộc: `items`, `page`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-077 · Chi tiết Kamelet
+
+::: dac-ta
+**Mục đích.** Chi tiết Kamelet.
+
+**Phương thức, đường dẫn.** `GET /kamelets/{kameletName}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-055.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletDetail`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-078 · Định nghĩa YAML một phiên bản
+
+::: dac-ta
+**Mục đích.** Định nghĩa YAML một phiên bản.
+
+**Phương thức, đường dẫn.** `GET /kamelets/{kameletName}/versions/{version}`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-055.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Với `Accept: application/yaml` trả YAML thô (runtime tải theo băm).
+:::
+
+#### API-05-079 · Tạo bản nháp Kamelet hoặc phiên bản mới
+
+::: dac-ta
+**Mục đích.** Tạo bản nháp Kamelet hoặc phiên bản mới.
+
+**Phương thức, đường dẫn.** `POST /kamelets`.
+
+**Quyền.** `PERM-05-kamelet-submit`.
+
+**FR hiện thực.** FR-05-056.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `KameletCreate`; trường bắt buộc: `name`, `version`, `yaml`, `runtimeProfiles`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Tên trùng trên BASE ∪ COMMON ∪ TENANT ERR-05-002; tiền tố `dh-` dành riêng ERR-05-003; tỉnh tạo ở phạm vi COMMON ERR-05-040. Chạy kiểm tra tĩnh ngay, lưu kết quả.
+:::
+
+#### API-05-080 · Sửa bản nháp Kamelet
+
+::: dac-ta
+**Mục đích.** Sửa bản nháp Kamelet.
+
+**Phương thức, đường dẫn.** `PUT /kamelets/{kameletName}/versions/{version}`.
+
+**Quyền.** `PERM-05-kamelet-submit`.
+
+**FR hiện thực.** FR-05-056.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `KameletDraftUpdate`; trường bắt buộc: `yaml`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Chỉ ở DRAFT.
+:::
+
+#### API-05-081 · Kiểm tra tĩnh Kamelet
+
+::: dac-ta
+**Mục đích.** Kiểm tra tĩnh Kamelet.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:validate`.
+
+**Quyền.** `PERM-05-kamelet-submit`.
+
+**FR hiện thực.** FR-05-056.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `StaticCheckResult`; trường bắt buộc: `passed`, `findings`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Chạy KR-01…14 (SDD §4.9); không đổi trạng thái.
+:::
+
+#### API-05-082 · Gửi duyệt Kamelet
+
+::: dac-ta
+**Mục đích.** Gửi duyệt Kamelet.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:submit`.
+
+**Quyền.** `PERM-05-kamelet-submit`.
+
+**FR hiện thực.** FR-05-056.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Kiểm tra tĩnh còn lỗi ERR-05-020…022.
+:::
+
+#### API-05-083 · Duyệt Kamelet
+
+::: dac-ta
+**Mục đích.** Duyệt Kamelet.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:approve`.
+
+**Quyền.** `PERM-05-kamelet-approve`.
+
+**FR hiện thực.** FR-05-057.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `KameletDecision`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** TENANT: IA; COMMON: PA kèm ý kiến SO (`soOpinion` bắt buộc). Bốn mắt (ERR-05-011). Phát EVT-05-09.
+:::
+
+#### API-05-084 · Từ chối Kamelet
+
+::: dac-ta
+**Mục đích.** Từ chối Kamelet.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:reject`.
+
+**Quyền.** `PERM-05-kamelet-approve`.
+
+**FR hiện thực.** FR-05-057.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `RejectRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-085 · Đánh dấu ngừng khuyến nghị
+
+::: dac-ta
+**Mục đích.** Đánh dấu ngừng khuyến nghị.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:deprecate`.
+
+**Quyền.** `PERM-05-kamelet-approve`.
+
+**FR hiện thực.** FR-05-058.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Phát EVT-05-10.
+:::
+
+#### API-05-086 · Thu hồi phiên bản Kamelet
+
+::: dac-ta
+**Mục đích.** Thu hồi phiên bản Kamelet.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}/versions/{version}:withdraw`.
+
+**Quyền.** `PERM-05-kamelet-approve`.
+
+**FR hiện thực.** FR-05-058.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `version` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `StateChangeRequest`; trường bắt buộc: `reason`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Chặn ở lần phát hành luồng kế tiếp; cảnh báo cao cho mọi luồng đang dùng (BR-05-027).
+:::
+
+#### API-05-087 · Nơi đang dùng Kamelet
+
+::: dac-ta
+**Mục đích.** Nơi đang dùng Kamelet.
+
+**Phương thức, đường dẫn.** `GET /kamelets/{kameletName}/usages`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-055, FR-05-058.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `UsageList`; trường bắt buộc: `items`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn; `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt).
+
+**Ghi chú.** Không.
+:::
+
+#### API-05-088 · Đề xuất Kamelet tỉnh thành dùng chung
+
+::: dac-ta
+**Mục đích.** Đề xuất Kamelet tỉnh thành dùng chung.
+
+**Phương thức, đường dẫn.** `POST /kamelets/{kameletName}:propose-common`.
+
+**Quyền.** `PERM-05-kamelet-submit`.
+
+**FR hiện thực.** FR-05-060.
+
+**Tham số.** `kameletName` (path, KameletName, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ProposeCommon`; trường bắt buộc: `justification`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `KameletVersion`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`.
+
+**Ghi chú.** Chỉ Kamelet TENANT đã APPROVED; tạo bản sao ở COMMON trạng thái SUBMITTED cho PA (cờ `adapter.kamelet.common-proposal`).
+:::
+
+### Tham số và báo cáo
+
+#### API-05-090 · Tham số phân hệ của tenant
+
+::: dac-ta
+**Mục đích.** Tham số phân hệ của tenant.
+
+**Phương thức, đường dẫn.** `GET /settings`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-061.
+
+**Tham số.** Không.
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Settings`; trường bắt buộc: `params`, `connectionTypes`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** Chỉ đọc; sửa tham số qua PH-18.
+:::
+
+#### API-05-091 · Bật, tắt loại kết nối và trần tham số
+
+::: dac-ta
+**Mục đích.** Bật, tắt loại kết nối và trần tham số.
+
+**Phương thức, đường dẫn.** `PUT /settings/connection-types/{typeCode}`.
+
+**Quyền.** `PERM-05-admin`.
+
+**FR hiện thực.** FR-05-061.
+
+**Tham số.** `typeCode` (path, TypeCode, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ConnectionTypeSetting`; trường bắt buộc: `enabled`.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `ConnectionType`; trường bắt buộc: `typeCode`, `title`, `group`, `secretKeys`.
+
+**Lỗi.** `400` Dữ liệu không hợp lệ theo lược đồ; kèm `errors` theo trường (gồm ERR-05-038 thiếu lý do); `401` Thiếu token hoặc token hết hạn; `403` Không đủ quyền (gồm ERR-05-011 vi phạm bốn mắt, ERR-05-040 ghi đối tượng COMMON); `404` Không tìm thấy hoặc thuộc tenant khác (không phân biệt); `409` Trạng thái không cho phép; mã cụ thể trong `code` (ERR-05-002, 009, 010, 017, 018, 026, 036); `412` ETag không khớp; kèm `currentEtag`; `422` Lỗi nghiệp vụ dạng dữ liệu; mã cụ thể trong `code` (ERR-05-004…006, 013…016, 020…023, 025, 027, 030, 033, 034, 037, 039).
+
+**Ghi chú.** Tắt loại còn kết nối ACTIVE ERR-05-010 trừ khi `blockNew`; trần chỉ thu hẹp (ERR-05-030).
+:::
+
+#### API-05-092 · Báo cáo sử dụng kết nối và bộ điều hợp
+
+::: dac-ta
+**Mục đích.** Báo cáo sử dụng kết nối và bộ điều hợp.
+
+**Phương thức, đường dẫn.** `GET /reports/usage`.
+
+**Quyền.** `PERM-05-read`.
+
+**FR hiện thực.** FR-05-062.
+
+**Tham số.** `month` (query, string, tùy chọn).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `UsageReport`; trường bắt buộc: `month`; tiêu đề `ETag`.
+
+**Lỗi.** `401` Thiếu token hoặc token hết hạn.
+
+**Ghi chú.** `Accept: text/csv` hoặc XLSX để xuất.
+:::
+
+<!-- gen:dac-ta-api:end -->
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API; OpenAPI, AsyncAPI sinh từ bảng mã, đã kiểm | Nhóm viết tài liệu (Claude) |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu, chương 10 đặc tả từng endpoint (92 bảng 10 mục sinh từ OpenAPI bằng build/tools/sinh_dac_ta_api.py), chú thích mọi bảng |

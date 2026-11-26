@@ -25,8 +25,16 @@ def refs(text):
         r.update(expand(k, a, rest))
     return r
 
+ALIAS = {'Tiền điều kiện / dữ liệu': 'Tiền điều kiện, dữ liệu', 'Mong đợi': 'Kết quả mong đợi', 'Bước': 'Các bước'}
+
+
 def field(block, name):
+    """Đọc trường ở dạng cũ (`- **Tên** giá trị`) hoặc khối đặc tả (`**Tên.** giá trị`)."""
     m = re.search(r'- \*\*' + name + r'\*\*\s*(.*)', block)
+    if m:
+        return m.group(1).strip()
+    ten = ALIAS.get(name.replace('\\', ''), name)
+    m = re.search(r'^\*\*' + re.escape(ten) + r'\.\*\*\s*(.*)$', block, re.M)
     return m.group(1).strip() if m else ''
 
 def parse():
@@ -51,13 +59,13 @@ def parse():
         name = re.sub(r'\s*<!--.*?-->', '', name)
         body = body.split('\n> ')[0]
         meta = field(body, 'Loại')
-        typ = meta.split('·')[0].strip()
-        prio = re.search(r'\*\*Ưu tiên\*\*\s*(P\d)', body)
-        auto = re.search(r'\*\*Tự động\*\*\s*([^·\n]+)', body)
-        steps = re.search(r'- \*\*Bước\*\*\n((?:  .*\n?)+)', body)
+        typ = meta.split('·')[0].strip().rstrip('.')
+        prio = re.search(r'\*\*Ưu tiên\.?\*\*\s*(P\d)', body)
+        auto = re.search(r'\*\*Tự động\.?\*\*\s*([^·\n]+)', body)
+        steps = re.search(r'- \*\*Bước\*\*\n((?:  .*\n?)+)', body) or re.search(r'\*\*Các bước\.\*\*\n\n((?:\d+\. .*\n?)+)', body)
         tv = field(body, 'Truy vết')
         tcs.append(dict(id=tid, ts=ts, name=name, type=typ, prio=prio.group(1) if prio else '',
-                        auto=auto.group(1).strip() if auto else '', trace=tv, refs=refs(tv),
+                        auto=auto.group(1).strip().rstrip('.') if auto else '', trace=tv, refs=refs(tv),
                         data=field(body, r'Tiền điều kiện / dữ liệu'),
                         steps='\n'.join(s.strip() for s in steps.group(1).splitlines()) if steps else '',
                         expect=field(body, 'Mong đợi')))
@@ -67,8 +75,9 @@ def fr_catalog():
     t = FRS.read_text(encoding='utf-8')
     res = {}
     for m in re.finditer(r'^#### (FR-05-\d{3}) · ([^\n]*)\n(.*?)(?=^#{2,4} )', t, re.M | re.S):
-        pr = re.search(r'\| Mức ưu tiên \| (\w+)', m.group(3)) or re.search(m.group(1) + r' \((\w)', m.group(3))
-        tv = re.search(r'\| Truy vết \| ([^|]+)', m.group(3))
+        pr = (re.search(r'\| Mức ưu tiên \| (\w+)', m.group(3)) or re.search(r'\*\*Mức ưu tiên, đợt\.\*\* (\w+)', m.group(3))
+              or re.search(m.group(1) + r' \((\w)', m.group(3)))
+        tv = re.search(r'\| Truy vết \| ([^|]+)', m.group(3)) or re.search(r'\*\*Truy vết\.\*\* ([^\n]+)', m.group(3))
         res[m.group(1)] = dict(name=m.group(2).strip(), prio=pr.group(1) if pr else '',
                                lgc=sorted(r for r in refs(tv.group(1) if tv else m.group(3)[:600]) if r.startswith('LGC')))
     return res

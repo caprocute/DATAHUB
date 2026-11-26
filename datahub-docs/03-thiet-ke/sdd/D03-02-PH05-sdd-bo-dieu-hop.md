@@ -1,11 +1,13 @@
 ---
 ma_tai_lieu: D03-02-PH05
 ten: Thiết kế chi tiết phần mềm phân hệ PH-05 Bộ điều hợp và kết nối
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, ATTT, hội đồng thẩm định
 phan_he: PH-05
+mo_ta: Thiết kế chi tiết phần mềm của phân hệ Bộ điều hợp và kết nối gồm thành phần, cấu trúc mã, trình tự xử lý, máy trạng thái, bảo mật, quan sát, đủ để lập trình và kiểm thử.
+tai_lieu_lien_quan: D03-01 SAD; D02-03-PH05 FRS; D03-03-PH05 CSDL; D03-04-PH05 API; D03-07 ATTT; D04-01 Quy ước mã
 ---
 
 # D03-02-PH05 · Thiết kế chi tiết Bộ điều hợp và kết nối
@@ -21,7 +23,9 @@ Tài liệu mô tả cách hiện thực 62 FR của [D02-03-PH05](../../02-yeu-
 
 Phân hệ là module `adapter` của `dh-integration` (Spring Boot 4, Spring Modulith) và thư viện `vn.datahub.runtime.adapter` cùng bộ Kamelet giao thức của `dh-runtime` (Camel Quarkus 3.33.x). Thiết kế thêm một ADR (ADR-059) và một hồ sơ runtime (`probe-jvm`).
 
-## 1. Phạm vi và cách đọc
+## 1. Giới thiệu
+
+### 1.1. Phạm vi và cách đọc
 
 Tài liệu đi từ vị trí trong kiến trúc (§2), cấu trúc mã (§3), từng thành phần (§4), sequence của FR phức tạp (§5) tới đa tenant, bảo mật, máy trạng thái, cấu hình, quan sát, hiệu năng. Mã ERR, BR, NFR là của FRS; mã EVT, API là của [D03-04-PH05](../api/D03-04-PH05-api-bo-dieu-hop.md); bảng CSDL ở [D03-03-PH05](../csdl/D03-03-PH05-csdl-bo-dieu-hop.md). Biện pháp ATTT dẫn mã `SEC-*` đã có ở D03-07, không tạo mới.
 
@@ -38,6 +42,22 @@ Tài liệu đi từ vị trí trong kiến trúc (§2), cấu trúc mã (§3), 
 | ADR-067 | Truy cập CSDL trực tiếp có kiểm soát |
 | ADR-059 (mới) | CDC bằng Debezium trên Kafka Connect |
 
+: ADR áp dụng cho PH-05
+
+### 1.2. Người đọc và tài liệu tham chiếu
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Kỹ sư `dh-integration` | Chương 3, 4, 6, 8, 9 |
+| Kỹ sư `dh-runtime` và Kamelet | Chương 4.4, 4.7…4.12, 5, 8.3, 8.4 |
+| ATTT | Chương 4.3, 4.6, 4.9, 7 |
+| Vận hành | Chương 10, 11 |
+| Hội đồng thẩm định | Tóm tắt, chương 2, 5 |
+
+: Người đọc và phần cần đọc
+
+Thuật ngữ và chữ viết tắt dùng chung với [D02-03-PH05](../../02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md) §1.4 và D00-01. Mỗi thành phần ở chương 4 mở đầu bằng một bảng đặc tả 10 mục (Mục đích, Lớp chính, Đơn vị chạy, FR hiện thực, Giao diện vào, Phụ thuộc ra, Dữ liệu, Sự kiện, Lỗi và xử lý, Quan sát), sau đó là chi tiết thiết kế.
+
 ## 2. Vị trí trong kiến trúc
 
 ### 2.1. Đơn vị triển khai và vùng mạng
@@ -51,11 +71,13 @@ Tài liệu đi từ vị trí trong kiến trúc (§2), cấu trúc mã (§3), 
 | OpenBao | Nền tảng | Z5 | KV v2 `kv/dh/{tenant}/conn/*`, database engine `database/`, PKI `pki-tenant-{tenant}` |
 | `pg-core` schema `ph05_adapter` | Nền tảng | Z5 | Cụm CNPG chung control plane |
 
+: Đơn vị triển khai và vùng mạng
+
 Lưu lượng tới HTTT đi từ Z4 qua egress gateway với `ServiceEntry` theo FQDN (SEC-16). Bộ chạy `probe-jvm` có cùng chính sách egress với runtime của tenant, nên kết quả kiểm tra phản ánh đúng đường mạng thật của luồng.
 
 ### 2.2. Sơ đồ thành phần
 
-```mermaid
+```{.mermaid caption="Sơ đồ thành phần"}
 flowchart TB
   subgraph DI["dh-integration · module adapter"]
     WEB["web<br/>REST /api/adapter/v1"]
@@ -114,6 +136,8 @@ Sơ đồ cho thấy ba đường. Đường quản lý: giao diện gọi REST,
 | PH-13 | PH-05 gửi | Chỉ số Prometheus, sự kiện | Cảnh báo |
 | Hộp việc chung (FR-00-070) | PH-05 gửi | `TaskInboxApi` | Việc duyệt |
 
+: Phụ thuộc với module và phân hệ khác
+
 Hai module `flow` và `adapter` nằm cùng `dh-integration` nên gọi nhau trong tiến trình qua gói `api` công bố. Luật Modulith: `adapter` không import `flow.internal`; `flow` chỉ import `adapter.api`. ArchUnit kiểm ở CI (CI-3).
 
 ### 2.4. Hiện trạng mã và đường chuyển
@@ -125,6 +149,8 @@ Hai module `flow` và `adapter` nằm cùng `dh-integration` nên gọi nhau tro
 | `camel/dancu` datasource dùng chung tài khoản `lgsp` | `dh-sql-ro-source` với tài khoản động | GAP-05-03 (trùng GAP-04-10, xử lý ở PH-05) |
 | Không có kiểm tra kết nối, sức khỏe | `ProbeWorker`, `HealthEvaluator` | GAP-05-04 |
 | `lgsp-echo-source.kamelet.yaml` thử nghiệm | Bộ Kamelet giao thức §4.7 | GAP-05-05 |
+
+: Hiện trạng mã và đường chuyển
 
 ## 3. Cấu trúc mã nguồn
 
@@ -241,7 +267,7 @@ public record FlowAccountRequest(@NotBlank String flowCode, @NotEmpty Set<Enviro
 
 ### 4.1. Mô hình miền
 
-```mermaid
+```{.mermaid caption="Mô hình miền PH-05"}
 classDiagram
   class Connection {
     +UUID id
@@ -337,11 +363,61 @@ Ba aggregate chính là `Connection`, `Adapter`, `Kamelet`; `CdcConfig` thuộc 
 | `Adapter` | Một phiên bản `DRAFT` tối đa; một phiên bản `APPROVED` hiệu lực; kết nối cùng `systemCode` | 015, 016 |
 | `Kamelet` | Tên duy nhất trên `BASE` ∪ `COMMON` ∪ `TENANT` của tenant; số phụ tương thích ngược | 004, 016 |
 
+: Invariant của các aggregate
+
 ### 4.2. Danh mục loại kết nối
+
+::: dac-ta
+**Mục đích.** Một nguồn sự thật cho các loại kết nối được hỗ trợ, cùng phiên bản với Kamelet giao thức.
+
+**Lớp chính.** `ConnectionTypeRegistry`.
+
+**Đơn vị chạy.** `dh-integration` (module `adapter`).
+
+**FR hiện thực.** FR-05-001, 002, 003, 061.
+
+**Giao diện vào.** API-05-001, 002, 091.
+
+**Phụ thuộc ra.** `runtime-manifest.json` của các hồ sơ runtime.
+
+**Dữ liệu.** `classpath:conntypes/*.json` (chỉ đọc); bảng `connection_type_setting`.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** Loại có Kamelet ngoài mọi hồ sơ: `PREVIEW`, không bật được; tắt loại đang dùng: ERR-05-010.
+
+**Quan sát.** Nhật ký khởi động liệt kê loại `PREVIEW`.
+:::
+
+Chi tiết thiết kế:
 
 Loại kết nối là dữ liệu nền tảng, đóng trong `dh-integration` ở `classpath:conntypes/{typeCode}.json`, mỗi tệp gồm `paramsSchema` (JSON Schema 2020-12), `secretKeys`, `kamelets`, `probeSteps`, `egressFrom` (tên tham số chứa máy chủ để kiểm egress), `ceilings` mặc định. `ConnectionTypeRegistry` nạp khi khởi động và kiểm chéo với `runtime-manifest.json`: loại có Kamelet không nằm trong hồ sơ nào bị đánh dấu `PREVIEW` và không bật được. Tenant chỉ ghi bảng `connection_type_setting` (bật, tắt, trần). Cách này giữ một nguồn sự thật cho loại kết nối và Kamelet giao thức cùng phiên bản phát hành.
 
 ### 4.3. Ghi bí mật và xoay vòng
+
+::: dac-ta
+**Mục đích.** Ghi bí mật vào OpenBao mà `dh-integration` không bao giờ đọc lại được giá trị, và xoay bí mật không gián đoạn luồng.
+
+**Lớp chính.** `SecretWriter`, `RotationService`, `RotationFinisher`, `SecretVersionSelector` (runtime).
+
+**Đơn vị chạy.** `dh-integration`; `SecretVersionSelector` ở `dh-runtime`.
+
+**FR hiện thực.** FR-05-005, 012; NFR về bí mật.
+
+**Giao diện vào.** API-05-012, 020, 021.
+
+**Phụ thuộc ra.** OpenBao KV v2 (xác thực Kubernetes).
+
+**Dữ liệu.** `connection_environment` (`secret_version`, `fallback_version`), `secret_rotation`.
+
+**Sự kiện.** EVT-05-03.
+
+**Lỗi và xử lý.** PostgreSQL lỗi sau khi OpenBao đã ghi: đối soát 5 phút theo metadata OpenBao; OpenBao không khả dụng: ERR-05-028; ghi đè đồng thời: CAS theo `secretVersion`.
+
+**Quan sát.** `dh_adapter_secret_fallback_total`.
+:::
+
+Chi tiết thiết kế:
 
 `SecretWriter` dùng token OpenBao lấy qua xác thực Kubernetes của service account `dh-integration`, chính sách:
 
@@ -365,6 +441,30 @@ Xoay vòng (FR-05-012): `RotationService` ghi phiên bản `n+1` → gửi lện
 
 ### 4.4. Kiểm tra kết nối và thăm dò
 
+::: dac-ta
+**Mục đích.** Chạy kiểm tra kết nối từng bước, không tác dụng phụ, trả nguyên nhân và hướng dẫn khắc phục.
+
+**Lớp chính.** `ProbeDispatcher`, `ProbeWorker`, `ProbeResultConsumer`, `CauseCatalog`, `HealthGuard`.
+
+**Đơn vị chạy.** `dh-integration` (gửi lệnh); `dh-probe` (`probe-jvm`, chạy bước).
+
+**FR hiện thực.** FR-05-010, 019, 025.
+
+**Giao diện vào.** API-05-017, 018, 019, 040.
+
+**Phụ thuộc ra.** Kafka (`{tenant}.adapter.probe.command.v1`, `.result.v1`); OpenBao; HTTT.
+
+**Dữ liệu.** `connection_test`, `health_sample`.
+
+**Sự kiện.** Tiến độ qua SSE của BFF.
+
+**Lỗi và xử lý.** Quá hạn 15 giây cộng thời gian chờ: `FAILED` bước `TIMEOUT`; hai lần `AUTH_FAILED`: bỏ bước xác thực (BR-05-008).
+
+**Quan sát.** `dh_adapter_probe_duration_seconds`, `dh_adapter_probe_failures_total`.
+:::
+
+Chi tiết thiết kế:
+
 `ProbeDispatcher` tạo `connection_test` (`RUNNING`), gửi lệnh `ProbeCommand` (tenant, kết nối, môi trường, `secretVersion`, `paramsHash`, bước, `probe`, hạn chờ) vào topic `{tenant}.adapter.probe.command.v1` khóa theo `connectionCode`. `ProbeWorker` ở `probe-jvm` tiêu thụ, chạy từng `ProbeStep`, phát `ProbeStepResult` (để giao diện hiện tiến độ qua SSE) và `ProbeResult` cuối vào `{tenant}.adapter.probe.result.v1`. Hạn chờ tổng 15 giây cộng thời gian chờ khai báo; quá hạn thì `ProbeResultConsumer` đóng lần kiểm tra `FAILED` với bước đang chạy `TIMEOUT`.
 
 | Nhóm | `ProbeStep` sau TLS và xác thực | Không tác dụng phụ vì |
@@ -378,15 +478,65 @@ Xoay vòng (FR-05-012): `RotationService` ghi phiên bản `n+1` → gửi lện
 | IMAP | `LOGIN`, `EXAMINE folder` (chỉ đọc), `LOGOUT` | `EXAMINE` không đổi cờ |
 | LDAP | Bind, tìm `baseDn` phạm vi `base` | Chỉ đọc |
 
+: Kiểm tra kết nối và thăm dò
+
 `CauseCatalog` ánh xạ ngoại lệ sang `causeCode` của FRS §5.2.1: `UnknownHostException` → `DNS_NXDOMAIN`; `ConnectException` → `TCP_REFUSED`, hoặc `EGRESS_DENIED` khi egress gateway trả `403` với tiêu đề `x-envoy-…` của Istio; `SSLHandshakeException` phân tích theo nguyên nhân (`protocol_version`, `PKIX path`, `hostname`); lỗi xác thực theo nhóm giao thức (HTTP 401, 403 ở bước xác thực; JDBC SQLState `28xxx`; SFTP `Auth fail`). Mỗi `causeCode` có mẫu câu tiếng Việt với chỗ trống được điền giá trị không bí mật.
 
 Thăm dò định kỳ (FR-05-019) dùng cùng `ProbeWorker` nhưng với lệnh `HEALTH`, không chạy lại bước xác thực OAuth nếu token còn hạn trong đệm của worker, và có `HealthGuard`: sau hai lần `AUTH_FAILED` liên tiếp, worker bỏ bước xác thực tới khi `secretVersion` đổi (BR-05-008).
 
 ### 4.5. Đánh giá sức khỏe
 
+::: dac-ta
+**Mục đích.** Xếp mức sức khỏe từ thăm dò và lưu lượng thật, có chống dao động.
+
+**Lớp chính.** `HealthEvaluator`, `HysteresisWindow`.
+
+**Đơn vị chạy.** `dh-integration` (ShedLock một bản sao).
+
+**FR hiện thực.** FR-05-020, 021, 022.
+
+**Giao diện vào.** API-05-033, 034, 061, 093.
+
+**Phụ thuộc ra.** Prometheus (PromQL gộp theo tenant).
+
+**Dữ liệu.** `health_sample`, `health_state`, `health_baseline`.
+
+**Sự kiện.** EVT-05-06 qua outbox.
+
+**Lỗi và xử lý.** Prometheus không trả lời: giữ mức, sau 15 phút `UNKNOWN`.
+
+**Quan sát.** `dh_adapter_health_state`.
+:::
+
+Chi tiết thiết kế:
+
 `HealthEvaluator` chạy mỗi phút (ShedLock để một bản sao chạy), với mỗi `(tenant, đối tượng, env)` đọc ba nguồn: kết quả thăm dò 5 phút gần nhất (bảng `health_sample`), chỉ số Prometheus `dh_adapter_calls_total`, `dh_adapter_call_duration_seconds`, `dh_adapter_pool_wait_seconds` qua truy vấn PromQL theo nhãn `tenant`, `connection`, `adapter`, và đường nền p95 7 ngày (bảng `health_baseline`, tính lại mỗi đêm). Kết quả thô qua `HysteresisWindow`: mức mới phải giữ 2 lần liên tiếp (3 lần nếu là `HEALTHY`) mới được ghi vào `health_state` và phát EVT-05-06. Truy vấn Prometheus gộp theo tenant để mỗi phút chỉ có một truy vấn cho mỗi chỉ số mỗi tenant.
 
 ### 4.6. Tài khoản CSDL cho luồng
+
+::: dac-ta
+**Mục đích.** Cấp, kiểm tra quyền, thu hồi tài khoản CSDL riêng cho từng luồng và ghi nhật ký truy cập.
+
+**Lớp chính.** `FlowAccountService`, `GrantTemplateRenderer`, `DbAccessRecorder` (runtime), `DbAccessLogConsumer`.
+
+**Đơn vị chạy.** `dh-integration`; `DbAccessRecorder` trong Kamelet SQL ở `dh-runtime`.
+
+**FR hiện thực.** FR-05-023…028.
+
+**Giao diện vào.** API-05-035…041.
+
+**Phụ thuộc ra.** OpenBao database secrets engine; CSDL nguồn; Kafka.
+
+**Dữ liệu.** `flow_db_account`, `db_access_record` (phân vùng tháng).
+
+**Sự kiện.** EVT-05-14, EVT-05-15.
+
+**Lỗi và xử lý.** Đệm kiểm toán 10.000 bản ghi đầy: chỉ số và cảnh báo mức cao (mất kiểm toán là sự cố ATTT); CSDL từ chối tạo role: ERR-05-025.
+
+**Quan sát.** `dh_adapter_dbaudit_dropped_total`.
+:::
+
+Chi tiết thiết kế:
 
 `FlowAccountService` sinh tên role OpenBao `dh-{tenant}-{flowCode}-{env}` (cắt và thêm băm 6 ký tự nếu quá 63 ký tự) và ghi `database/roles/{role}` với `db_name` là cấu hình kết nối của OpenBao `dh-{tenant}-{connectionCode}-{env}` (tạo khi giá trị môi trường `db-flow` được bật, dùng `adminUsername`, `adminPassword`). Câu lệnh tạo tài khoản sinh từ mẫu theo engine, chỉ từ danh sách schema và bảng đã kiểm (tên được trích dẫn bằng `quote_ident`, không ghép giá trị người dùng nhập ngoài danh sách đã kiểm với `information_schema`):
 
@@ -424,6 +574,30 @@ Nhật ký truy cập (FR-05-027): `DbAccessRecorder` trong Kamelet SQL tính `S
 
 ### 4.7. Kamelet nền giao thức
 
+::: dac-ta
+**Mục đích.** Cung cấp Kamelet nền cho từng giao thức với cùng ba bước bao: giới hạn đồng thời, chỉ số, phân loại lỗi.
+
+**Lớp chính.** Kamelet `dh-*`; `dhAdapterEnter`, `dhAdapterExit`, `AdapterErrorClassifier`, `FlowDataSourceRegistry`.
+
+**Đơn vị chạy.** `dh-runtime` (hồ sơ core-native, soap-jvm, files-native, legacy-jvm).
+
+**FR hiện thực.** FR-05-033…039, 042.
+
+**Giao diện vào.** Tham số Kamelet từ luồng PH-04.
+
+**Phụ thuộc ra.** HTTT theo giao thức; OpenBao.
+
+**Dữ liệu.** Không lưu trạng thái.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** Lỗi phân loại `TRANSIENT`, `BUSINESS`, `DATA` cho PH-04 theo FR-04-070 (ERR-05-101…120).
+
+**Quan sát.** `dh_adapter_calls_total`, `dh_adapter_call_duration_seconds`, span `adapter.call`.
+:::
+
+Chi tiết thiết kế:
+
 | Kamelet | Loại | Hồ sơ | Tham số chính | Thư viện |
 |---|---|---|---|---|
 | `dh-http-sink` | sink, action | core-native | `connection`, `method`, `path`, `query`, `timeoutMs`, `pagination`, `rateLimit` | `http.AuthApplier`, `Paginator`, `RateLimitGovernor` |
@@ -440,6 +614,8 @@ Nhật ký truy cập (FR-05-027): `DbAccessRecorder` trong Kamelet SQL tính `S
 | `dh-mail-sink` | sink | core-native | `connection`, `template`, `allowedDomains` | |
 | `dh-imap-source` | source | legacy-jvm | `connection`, `folder`, `filter` | quét mã độc qua DD-12 |
 | `dh-ldap-action` | action | legacy-jvm | `connection`, `filterTemplate`, `attributes` | |
+
+: Kamelet nền giao thức
 
 Mỗi Kamelet giao thức có cùng ba bước bao: `dhAdapterEnter` (lấy chỗ trong `TenantBulkhead` theo `connection`, đặt tiêu đề `dh-connection`, bắt đầu span `adapter.call`), lời gọi giao thức, `dhAdapterExit` (ghi chỉ số, phân loại lỗi qua `AdapterErrorClassifier`, giải phóng chỗ). Ví dụ rút gọn `dh-sql-ro-action`:
 
@@ -471,9 +647,57 @@ spec:
 
 ### 4.8. Sinh Kamelet từ bộ điều hợp
 
+::: dac-ta
+**Mục đích.** Biến mỗi thao tác đã duyệt thành một Kamelet mỏng cho trình thiết kế.
+
+**Lớp chính.** `KameletGenerator`.
+
+**Đơn vị chạy.** `dh-integration`.
+
+**FR hiện thực.** FR-05-047.
+
+**Giao diện vào.** Sự kiện duyệt phiên bản bộ điều hợp.
+
+**Phụ thuộc ra.** `StaticChecker`.
+
+**Dữ liệu.** `kamelet`, `kamelet_version` (`generated = true`, `source_adapter_version_id`).
+
+**Sự kiện.** EVT-05-07.
+
+**Lỗi và xử lý.** Sinh không qua kiểm tra tĩnh: phiên bản giữ `APPROVED`, cảnh báo TA và IE.
+
+**Quan sát.** Nhật ký sinh kèm băm YAML.
+:::
+
+Chi tiết thiết kế:
+
 `KameletGenerator` nhận phiên bản `APPROVED` và sinh cho mỗi thao tác một YAML: tên theo FR-05-047, `spec.definition.properties` từ tham số khai báo của thao tác (tiêu đề tiếng Việt, kiểu, bắt buộc), `template` gọi Kamelet nền với tham số cố định (`connection`, đường dẫn, phân trang, định dạng) nhúng dạng hằng. YAML được chuẩn hóa (sắp khóa) rồi băm SHA-256; Kamelet sinh có `generated = true`, `source_adapter_version_id`. Vì nội dung hoàn toàn sinh từ dữ liệu đã kiểm và được duyệt, Kamelet sinh vẫn qua `StaticChecker` như một lớp an toàn nhưng không có bước duyệt riêng (BR-05-027).
 
 ### 4.9. Kiểm tra tĩnh Kamelet
+
+::: dac-ta
+**Mục đích.** Chặn Kamelet chạy mã tùy ý, kết nối ra ngoài trái phép hay chứa bí mật trước khi duyệt.
+
+**Lớp chính.** `StaticChecker` (quy tắc KR-01…14).
+
+**Đơn vị chạy.** `dh-integration`.
+
+**FR hiện thực.** FR-05-056, 059.
+
+**Giao diện vào.** API-05-081, 082.
+
+**Phụ thuộc ra.** `camel-yaml-dsl` chế độ phân tích; `runtime-manifest.json`.
+
+**Dữ liệu.** `kamelet_version.static_check`, `static_check_passed`.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** ERR-05-020, 021, 022 kèm `findings[]` (dòng, cột).
+
+**Quan sát.** Số vi phạm theo quy tắc.
+:::
+
+Chi tiết thiết kế:
 
 `StaticChecker` chạy trên AST YAML (SnakeYAML an toàn, cấm thẻ tùy chỉnh) và mô hình route của Camel (`camel-yaml-dsl` ở chế độ chỉ phân tích, không tạo `CamelContext` chạy):
 
@@ -494,15 +718,89 @@ spec:
 | KR-13 | Có `title`, `description` tiếng Việt | Cảnh báo |
 | KR-14 | Không tham chiếu `{{vault:…}}` ngoài `kv/dh/{tenant}/flow/` | ERR-05-020 |
 
+: Kiểm tra tĩnh Kamelet
+
 ### 4.10. Chuyển đổi định dạng
+
+::: dac-ta
+**Mục đích.** Đưa mọi định dạng của HTTT về JSON chuẩn, đúng kiểu ngày, số, Unicode.
+
+**Lớp chính.** `XmlToJson`, `CsvToJson`, `TypeNormalizer`, `MissingValuePolicy`.
+
+**Đơn vị chạy.** `dh-runtime`; xem trước ở `dh-integration`.
+
+**FR hiện thực.** FR-05-040, 041.
+
+**Giao diện vào.** API-05-054 (xem trước); bản tin trong Kamelet.
+
+**Phụ thuộc ra.** XSD đệm từ WSDL.
+
+**Dữ liệu.** Không.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** Sai lược đồ: ERR-05-108; thiếu bắt buộc: ERR-05-109.
+
+**Quan sát.** `dh_adapter_missing_values_total`.
+:::
+
+Chi tiết thiết kế:
 
 `XmlToJson` đọc XSD từ WSDL đệm để biết phần tử nào `maxOccurs > 1` (thành mảng dù chỉ có một), kiểu đơn giản (số, boolean, ngày thành kiểu JSON tương ứng). Không có XSD thì phần tử lặp ≥ 2 lần trong bản tin mới thành mảng và thao tác bị cảnh báo "Nên cung cấp XSD để mảng ổn định". `CsvToJson` dùng bộ đọc theo luồng (univocity), đọc theo khối 64 KiB; mã hóa `TCVN3` qua bảng chuyển 134 ký tự sang Unicode. `TypeNormalizer` chạy theo bảng quy tắc của thao tác; ngày không múi giờ gắn `+07:00`. `MissingValuePolicy` áp sau chuẩn hóa kiểu.
 
 ### 4.11. Nhóm kết nối và giới hạn tổng
 
+::: dac-ta
+**Mục đích.** Giới hạn tổng kết nối đồng thời tới mỗi HTTT trên mọi bản sao runtime.
+
+**Lớp chính.** `PoolSizer`, `TenantBulkhead`.
+
+**Đơn vị chạy.** `dh-runtime`.
+
+**FR hiện thực.** FR-05-042.
+
+**Giao diện vào.** Tệp kê khai (`replicas`, `maxConcurrency`).
+
+**Phụ thuộc ra.** KEDA qua Kubernetes API (báo số bản sao).
+
+**Dữ liệu.** Không.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** Nhóm cạn sau `acquireTimeoutMs`: ERR-05-105.
+
+**Quan sát.** `dh_adapter_pool_active`, `dh_adapter_pool_wait_seconds`, `dh_adapter_pool_exhausted_total`.
+:::
+
+Chi tiết thiết kế:
+
 `PoolSizer` ở runtime nhận `replicas` của hồ sơ từ tệp kê khai (do `dh-integration` cập nhật khi nhận sự kiện co giãn của KEDA qua Kubernetes API) và tính hạn mức `ceil(maxConcurrency / replicas)`. `TenantBulkhead` là `Semaphore` công bằng mỗi `(connection hoặc adapter)`; `acquire` chờ tối đa `acquireTimeoutMs`. Khi tổng hạn mức các bản sao vượt `maxConcurrency` do làm tròn lên, sai số tối đa là `replicas − 1` lượt, được chấp nhận và ghi trong FRS FR-05-042 như hành vi định nghĩa. Nhóm HTTP dùng Vert.x client của Quarkus với `maxPoolSize` bằng hạn mức; JDBC dùng Agroal `maxSize` bằng hạn mức và `CONNECTION LIMIT` ở role.
 
 ### 4.12. CDC
+
+::: dac-ta
+**Mục đích.** Khai báo, chạy và giám sát CDC Debezium, dừng ngay khi lược đồ nguồn đổi phá vỡ.
+
+**Lớp chính.** `CdcService`, `ConnectorSpecRenderer`, `SchemaWatcher`, `KafkaConnectClient`, SMT `DhSchemaGate`.
+
+**Đơn vị chạy.** `dh-integration`; Kafka Connect `dh-cdc-{tenant}`.
+
+**FR hiện thực.** FR-05-048…053.
+
+**Giao diện vào.** API-05-067…075.
+
+**Phụ thuộc ra.** PH-10 (topic, Apicurio); kho GitOps `dh-config-{tenant}`; Kafka Connect REST.
+
+**Dữ liệu.** `cdc_config`, `cdc_schema_change`.
+
+**Sự kiện.** EVT-05-11, EVT-05-12.
+
+**Lỗi và xử lý.** Thay đổi `BREAKING`: pause qua REST ngay, commit `state: paused`; mất nhật ký: `FAILED`, ERR-05-117.
+
+**Quan sát.** `dh_cdc_lag_seconds`, `dh_cdc_events_total`, `dh_cdc_schema_pause_latency_seconds`.
+:::
+
+Chi tiết thiết kế:
 
 `CdcService` lưu cấu hình, gọi PH-10 đăng ký topic, rồi `ConnectorSpecRenderer` sinh `KafkaConnector` và commit vào kho `dh-config-{tenant}` thư mục `cdc/{adapterCode}.yaml` ở nhánh môi trường (ADR-068). Ví dụ rút gọn cho Oracle:
 
@@ -544,13 +842,37 @@ Muối băm cột nhạy cảm là bí mật của tenant (OpenBao), không ph�
 
 ### 4.13. Nhập kết nối hệ cũ
 
+::: dac-ta
+**Mục đích.** Trích kết nối từ gói Bus cũ mà không làm lộ bí mật.
+
+**Lớp chính.** `CamelXmlScanner`.
+
+**Đơn vị chạy.** `dh-integration`.
+
+**FR hiện thực.** FR-05-018.
+
+**Giao diện vào.** API-05-028, 029, 030.
+
+**Phụ thuộc ra.** Kho đối tượng (tệp tải lên), quét mã độc DD-12.
+
+**Dữ liệu.** `legacy_import_job`.
+
+**Sự kiện.** Không.
+
+**Lỗi và xử lý.** Tệp sai hoặc quá lớn: ERR-05-024; bí mật được thay bằng dấu vị trí trước khi tạo đối tượng (BR-05-025).
+
+**Quan sát.** Số đề xuất, số bí mật đã che.
+:::
+
+Chi tiết thiết kế:
+
 `CamelXmlScanner` phân tích XML bằng StAX an toàn (cấm DTD, thực thể ngoài), không tạo bean, không chạy Camel. Nó trích: phần tử `<bean class="…DataSource">` với `property` url, username, password; URI trong `from`, `to`, `toD`, `enrich`, `pollEnrich`; tệp `.properties`. Giá trị thuộc tính có tên khớp mẫu bí mật được thay ngay bằng dấu vị trí `{tệp, dòng, cột, tên khóa}` trước khi bất kỳ đối tượng nào được tạo; chuỗi giá trị không đi qua log hay CSDL (BR-05-025). Gom đề xuất theo khóa `(scheme, host, port, database hoặc baseDir, username)`.
 
 ## 5. Biểu đồ tuần tự
 
 ### 5.1. Khai báo bí mật, kiểm tra và bật PROD (FR-05-005, 010, 007)
 
-```mermaid
+```{.mermaid caption="Khai báo bí mật, kiểm tra và bật PROD (FR-05-005, 010, 007)"}
 sequenceDiagram
   autonumber
   actor IE as An (IE)
@@ -588,7 +910,7 @@ Bí mật chỉ đi một chiều từ BFF qua `dh-integration` tới OpenBao, k
 
 ### 5.2. Runtime phân giải và gọi HTTT có xoay bí mật giữa chừng (FR-05-015, 012, 033)
 
-```mermaid
+```{.mermaid caption="Runtime phân giải và gọi HTTT có xoay bí mật giữa chừng (FR-05-015, 012, 033)"}
 sequenceDiagram
   autonumber
   participant RT as dh-runtime T68
@@ -615,7 +937,7 @@ Sequence minh họa vì sao chuyển tiếp xoay bí mật cần giữ phiên b�
 
 ### 5.3. Cấp tài khoản CSDL động và luồng đọc (FR-05-024, 038, 027)
 
-```mermaid
+```{.mermaid caption="Cấp tài khoản CSDL động và luồng đọc (FR-05-024, 038, 027)"}
 sequenceDiagram
   autonumber
   actor IE as An
@@ -642,7 +964,7 @@ Tài khoản thật ở CSDL nguồn chỉ tồn tại trong thời gian sống 
 
 ### 5.4. CDC dừng khi lược đồ đổi (FR-05-051)
 
-```mermaid
+```{.mermaid caption="CDC dừng khi lược đồ đổi (FR-05-051)"}
 sequenceDiagram
   autonumber
   participant SRC as Oracle QLDD
@@ -672,7 +994,7 @@ Hai lớp dừng là có chủ đích: lệnh `pause` có độ trễ (REST, l�
 
 ### 5.5. Phiên bản bộ điều hợp được duyệt tới bảng thành phần (FR-05-044, 047, 059)
 
-```mermaid
+```{.mermaid caption="Phiên bản bộ điều hợp được duyệt tới bảng thành phần (FR-05-044, 047, 059)"}
 sequenceDiagram
   autonumber
   actor IA as Bình
@@ -713,6 +1035,8 @@ Mọi bảng `ph05_adapter` có `tenant_id` và `FORCE ROW LEVEL SECURITY` (D03-
 | Truy cập CSDL không truy vết được | Tài khoản theo luồng, pgaudit, EVT-05-14 | SEC-61 |
 | Lạm dụng gửi thư | Danh sách miền cho phép | SEC-44 |
 
+: Bảo mật
+
 Quyền kiểm ở máy chủ: `@PreAuthorize` theo `PERM-05-*` ở lớp `web`, kiểm bốn mắt và trạng thái trong aggregate. Giao diện ẩn nút chỉ là tiện ích, không là lớp bảo vệ.
 
 ## 8. Máy trạng thái, xử lý lỗi, thử lại và tính nhất quán
@@ -741,6 +1065,8 @@ Quyền kiểm ở máy chủ: `@PreAuthorize` theo `PERM-05-*` ở lớp `web`,
 | FlowDbAccount | REQUESTED | consent (WRITE) | CONSENTED | Quyền SO |
 | FlowDbAccount | CONSENTED | approve | ISSUED | Bốn mắt, ≤ 90 ngày |
 
+: Bảng chuyển trạng thái
+
 Mỗi aggregate có cột `version` (khóa lạc quan); lệnh từ API có `If-Match`, lệnh hệ thống (CDC, hết hạn) dùng thử lại tối đa 3 lần khi xung đột.
 
 ### 8.2. Outbox và sự kiện
@@ -759,6 +1085,8 @@ Sự kiện EVT-05-01…12, 15 ghi vào bảng `outbox` cùng giao dịch với 
 | HTTT từ Kamelet | `timeoutMs` của thao tác | Do PH-04 quyết định theo lớp lỗi | Chặng `deliver` của PH-04; PH-05 cấp tín hiệu sức khỏe |
 | Lệnh kiểm tra | 15 giây + `timeoutMs` | Không | — |
 
+: Thử lại, thời gian chờ, ngắt mạch
+
 Kamelet giao thức không tự thử lại lỗi tạm thời (để tránh nhân lượt thử với chính sách của PH-04), trừ hai ngoại lệ có giới hạn: chờ `Retry-After` một lần với `429` (≤ 30 giây) và làm mới token OAuth một lần khi `401` ở lần gọi đầu sau khi token hết hạn.
 
 ### 8.4. Phân loại lỗi runtime
@@ -775,6 +1103,8 @@ Kamelet giao thức không tự thử lại lỗi tạm thời (để tránh nh�
 | 116, 117 | (CDC) | Cảnh báo, trạng thái CDC |
 | 118, 120 | `BusinessException` | Không thử lại |
 
+: Phân loại lỗi runtime
+
 ## 9. Cấu hình và cờ tính năng theo tenant
 
 Tham số `05.*` ở FRS §7.2, đọc qua `ParameterApi` (PH-18) có đệm 60 giây. Cờ tính năng (OpenFeature, cùng nhà cung cấp với PH-04):
@@ -787,6 +1117,8 @@ Tham số `05.*` ở FRS §7.2, đọc qua `ParameterApi` (PH-18) có đệm 60 
 | `adapter.ldap.enabled` | `false` | Bật bộ điều hợp LDAP (Đợt 3) |
 | `adapter.kamelet.common-proposal` | `false` | Bật đề xuất dùng chung (Đợt 3) |
 | `adapter.legacy-import.enabled` | `true` | Nhập kết nối hệ cũ trong giai đoạn strangler |
+
+: Cấu hình và cờ tính năng theo tenant
 
 ## 10. Quan sát
 
@@ -804,6 +1136,8 @@ Tham số `05.*` ở FRS §7.2, đọc qua `ParameterApi` (PH-18) có đệm 60 
 | `dh_adapter_health_state` | gauge (0…3) | `tenant`, `kind`, `code`, `env` | `HealthEvaluator` |
 | `dh_cdc_lag_seconds`, `dh_cdc_events_total`, `dh_cdc_schema_pause_latency_seconds` | gauge, counter, histogram | `tenant`, `adapter`, `table` | Debezium exporter, `SchemaWatcher` |
 | `dh_adapter_runtime_config_requests_total` | counter | `tenant`, `status` | API-05-032 |
+
+: Quan sát
 
 Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị mỗi thao tác để tránh bùng nổ chuỗi thời gian. Vết: span `adapter.call` với thuộc tính `dh.connection`, `dh.adapter`, `dh.operation`, `net.peer.name`, `http.status_code` hoặc `db.system`; không ghi câu lệnh SQL đầy đủ, chỉ băm. Log JSON có `tenant`, `connection`, `adapter`, `traceId`; không có thân bản tin, không có bí mật.
 
@@ -827,6 +1161,8 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 | Hợp đồng | OpenAPI, AsyncAPI | Spectral, oasdiff (CI-5) |
 | Bảo mật | Canary bí mật, chéo tenant, SSRF, XXE, SQL injection | D05-02-PH05, D05-04 |
 
+: Kiểm thử
+
 ## 13. Lộ trình hiện thực, rủi ro và câu hỏi mở
 
 ### 13.1. Lộ trình
@@ -841,6 +1177,8 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 | 6 | CDC (Kafka Connect, `SchemaWatcher`, `DhSchemaGate`) | PH-10, ADR-059 |
 | 7 | Đợt 3: thư, LDAP, chế độ so sánh, đề xuất dùng chung | |
 
+: Lộ trình
+
 ### 13.2. Rủi ro
 
 | Rủi ro | Mức | Giảm thiểu |
@@ -850,6 +1188,8 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 | Debezium Oracle cần quyền rộng (Q05-07) | Trung bình | Thỏa thuận với đơn vị thẩm định; truy vấn đọc định kỳ thay thế |
 | Giới hạn đồng thời làm tròn lên vượt trần | Thấp | Sai số ≤ số bản sao − 1, ghi rõ; `CONNECTION LIMIT` ở role chặn cứng phía CSDL |
 | Mất bản ghi kiểm toán khi Kafka đầy | Trung bình | Đệm, chỉ số, cảnh báo cao; NFR theo dõi |
+
+: Rủi ro
 
 ### 13.3. Câu hỏi mở
 
@@ -864,3 +1204,4 @@ Nhãn `field` của chỉ số giá trị thiếu giới hạn 50 giá trị m�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-SDD |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp quy chuẩn trình bày K-TRINH-BAY: chương Giới thiệu (người đọc, tài liệu tham chiếu), bảng đặc tả 10 mục cho 12 thành phần ở chương 4, chú thích mọi bảng và hình |
