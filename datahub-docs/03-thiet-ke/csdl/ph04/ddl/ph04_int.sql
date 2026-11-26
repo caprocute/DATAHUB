@@ -1,6 +1,7 @@
 -- =============================================================================
 -- D03-03-PH04 · DDL schema ph04 — PH-04 Lõi tích hợp và trình thiết kế luồng
--- Phiên bản 0.1 · 2026-11-25 · Dự thảo · Nhóm phân hệ PH-04
+-- Phiên bản 0.2 · 2026-11-26 · Dự thảo · Nhóm phân hệ PH-04
+-- 0.2: thêm changeset ph04-0003 (pg_trgm) và ph04-0004 (chủ sở hữu schema, bảng W2); xem D03-03-PH04 §4.2.
 --
 -- Mục đích: tạo đầy đủ schema ph04 trên pg-core (PostgreSQL 18, tương thích 16).
 -- Chạy độc lập (phát triển):  psql -v ON_ERROR_STOP=1 -U postgres -d datahub -f ph04_int.sql
@@ -37,6 +38,31 @@ CREATE SCHEMA IF NOT EXISTS ph04 AUTHORIZATION ph04_owner;
 COMMENT ON SCHEMA ph04 IS 'PH-04 Lõi tích hợp: không gian làm việc, luồng, phiên bản, chạy thử, duyệt, triển khai, lệnh runtime, chính sách thành phần. Chủ ph04_owner; dh-integration kết nối bằng dh_integration_app (thành viên ph04_app, không BYPASSRLS).';
 GRANT USAGE ON SCHEMA ph04 TO ph04_app, ph04_readonly;
 -- @rollback DROP SCHEMA IF EXISTS ph04 CASCADE;
+
+-- @changeset ph04-0003-extensions context:bootstrap
+-- Sửa 26/11/2026 (bản 0.2): chỉ mục ix_flow_search, ix_endpoint_index_uri dùng
+-- public.gin_trgm_ops nhưng bản 0.1 không tạo extension, chạy trên CSDL sạch lỗi.
+-- pg_trgm là extension "trusted" từ PostgreSQL 13 (như PH-07).
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+-- @rollback -- Không gỡ extension: có thể đang được schema khác dùng.
+
+-- @changeset ph04-0004-legacy-owner splitStatements:false context:bootstrap
+-- Sửa 26/11/2026 (bản 0.2): trên CSDL W2, schema ph04 và bốn bảng route* đã có sẵn do
+-- tài khoản migrator của apps/control sở hữu; CREATE SCHEMA IF NOT EXISTS bỏ qua nên
+-- ph04_owner không tạo được bảng và không đổi tên được bảng cũ ở ph04-9000.
+-- Chuyển quyền sở hữu schema và bảng cũ (nếu có) cho ph04_owner trước SET ROLE.
+DO $own$
+DECLARE t text;
+BEGIN
+  EXECUTE 'ALTER SCHEMA ph04 OWNER TO ph04_owner';
+  FOREACH t IN ARRAY ARRAY['route', 'route_version', 'route_test_run', 'route_test_run_stage'] LOOP
+    IF to_regclass('ph04.' || t) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE ph04.%I OWNER TO ph04_owner', t);
+    END IF;
+  END LOOP;
+END
+$own$;
+-- @rollback -- Không trả quyền sở hữu.
 
 SET ROLE ph04_owner;
 

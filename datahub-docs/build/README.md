@@ -20,7 +20,7 @@ Quy chuẩn viết nguồn Markdown để bản xuất đúng khuôn (chú thíc
 ```bash
 # Cài công cụ (một lần)
 sudo apt-get install -y pandoc libreoffice && pip install python-docx
-npm install -g @mermaid-js/mermaid-cli   # vẽ sơ đồ; trong container dùng Chromium sẵn có qua PUPPETEER_EXECUTABLE_PATH
+npm install -g @mermaid-js/mermaid-cli@11   # vẽ sơ đồ (bản 12 bỏ tham số -w nên không dùng được); trong container dùng Chromium sẵn có qua PUPPETEER_EXECUTABLE_PATH
 
 # Xuất toàn bộ
 datahub-docs/build/build-docx.sh

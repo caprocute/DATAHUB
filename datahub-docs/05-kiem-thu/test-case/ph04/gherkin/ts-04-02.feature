@@ -5,7 +5,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-007 @P1 @Dương
   Kịch bản: TC-04-007 Liệt kê luồng có lọc, đếm theo trạng thái
-    # Truy vết: FR-04-001 · API-04-010 · UI-04-01 · LGC-BUS-001, 003, 004, 005
+    # Truy vết: FR-04-001 · API-04-010 · UI-04-01 · LGC-BUS-001, 003, 004, 005.
     Biết T68 có F-HT, F-DD, F-SQL, F-SOAP, F-KAM; người gọi U-T68-TA.
     Khi gọi `GET /flows?limit=25`.
     Và gọi `GET /flows?status=ACTIVE&environment=PROD`.
@@ -16,7 +16,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-008 @P2 @Dương
   Kịch bản: TC-04-008 Tìm theo endpoint
-    # Truy vết: FR-04-001 · API-04-010 · LGC-BUS-002
+    # Truy vết: FR-04-001 · API-04-010 · LGC-BUS-002.
     Biết F-HT có điểm vào `platform-http:/ho-tich/tra-cuu` và điểm ra qua CONN-HT.
     Khi gọi `GET /flows?endpoint=/ho-tich/`.
     Và gọi `GET /flows?endpoint=CONN-HT`.
@@ -25,7 +25,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-009 @P2 @Âm @Biên
   Kịch bản: TC-04-009 Tham số danh sách không hợp lệ
-    # Truy vết: FR-04-001 · API-04-010 · ERR-04-026, 049
+    # Truy vết: FR-04-001 · API-04-010 · ERR-04-026, 049.
     Biết U-T68-VW.
     Khi gọi `GET /flows?limit=100`.
     Và gọi `GET /flows?limit=101`.
@@ -37,7 +37,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-010 @P1 @Dương
   Kịch bản: TC-04-010 Chi tiết luồng đầy đủ
-    # Truy vết: FR-04-002 · API-04-012, 024, 054, 060 · UI-04-02 · LGC-BUS-006, 008, 017, 018
+    # Truy vết: FR-04-002 · API-04-012, 024, 054, 060 · UI-04-02 · LGC-BUS-006, 008, 017, 018.
     Biết F-HT; người gọi U-T68-VW.
     Khi gọi `GET /flows/tra-cuu-ho-tich`.
     Và mở UI-04-02, lần lượt các tab Tổng quan, Sơ đồ (chỉ đọc), YAML, Phiên bản, Triển khai, Điểm kết nối, Lịch sử.
@@ -45,7 +45,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-011 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-011 Chi tiết luồng không tồn tại hoặc ở tenant khác
-    # Truy vết: FR-04-002 · API-04-012 · ERR-04-001
+    # Truy vết: FR-04-002 · API-04-012 · ERR-04-001.
     Biết U-T68-VW; F-T01 chỉ có ở T01.
     Khi gọi `GET /flows/khong-co`.
     Và U-T01-IE tạo luồng `tc-chi-t01`; U-T68-VW gọi `GET /flows/tc-chi-t01`.
@@ -53,7 +53,7 @@ Tính năng: TS-04-02 · Danh sách, tìm kiếm, chi tiết luồng
 
   @TC-04-012 @P2 @Dương
   Kịch bản: TC-04-012 Phụ thuộc của luồng
-    # Truy vết: FR-04-002, 006 · API-04-016
+    # Truy vết: FR-04-002, 006 · API-04-016.
     Biết F-HT được API `ho-tich-tra-cuu` của PH-02 dùng (stub), được ca kiểm thử của chính nó dùng, và F-DD gọi `direct:` tới nó (giả lập).
     Khi gọi `GET /flows/tra-cuu-ho-tich/dependencies`.
     Thì `200`; `hard` có `API` (PH-02) và `FLOW` (F-DD); `soft` có `TEST_CASE`. PH-02 không trả lời trong 5 giây thì `503` ERR-04-047, không trả danh sách thiếu.

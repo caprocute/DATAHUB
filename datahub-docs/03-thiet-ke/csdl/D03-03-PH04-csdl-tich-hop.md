@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D03-03-PH04
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.1
-ngay: 2026-11-25
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư dữ liệu, DBA, lập trình viên L-INT, kiểm thử viên, nhóm vận hành
 phan_he: PH-04
 nguoi_lap: Nhóm phân hệ PH-04
+mo_ta: Thiết kế cơ sở dữ liệu của phân hệ Lõi tích hợp và trình thiết kế luồng gồm 26 bảng schema ph04, ràng buộc, RLS theo tenant, DDL và bài kiểm thử đã chạy trên PostgreSQL 16, kho ngoài PostgreSQL, sao lưu và ánh xạ dữ liệu hệ cũ.
+tai_lieu_lien_quan: D02-03-PH04 FRS; D03-02-PH04 SDD; D03-04-PH04 API; D03-10 Đa tenant; D02-07 Từ điển dữ liệu; D03-09 Hạ tầng
 ---
 
 # D03-03-PH04 · Thiết kế cơ sở dữ liệu phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
@@ -17,13 +19,44 @@ PH-04 lưu dữ liệu quản trị của luồng tích hợp: không gian làm 
 
 Ba điểm thiết kế chính:
 
-1. **Cách ly tỉnh bằng CSDL.** 25 bảng nghiệp vụ trong schema `ph04` có `tenant_id` và `FORCE ROW LEVEL SECURITY`; khóa ngoại mang cả `tenant_id` nên một bản ghi của tỉnh không trỏ được sang tỉnh khác. Đã chạy thử: tỉnh T01 không thấy, không ghi được dữ liệu của T68; tỉnh không tự mở rộng được chính sách thành phần nền (§3, §9.1).
+1. **Cách ly tỉnh bằng CSDL.** 25 trong 26 bảng của schema `ph04` (mọi bảng trừ `shedlock`) có `tenant_id` và `FORCE ROW LEVEL SECURITY`; khóa ngoại mang cả `tenant_id` nên một bản ghi của tỉnh không trỏ được sang tỉnh khác. Đã chạy thử: tỉnh T01 không thấy, không ghi được dữ liệu của T68; tỉnh không tự mở rộng được chính sách thành phần nền (§3.27, §4.2).
 2. **Quy tắc nghiệp vụ quan trọng chốt ở CSDL, không chỉ ở ứng dụng.** Một luồng chỉ có một phiên bản mở (BR-04-016, chỉ mục duy nhất có điều kiện); nội dung phiên bản đã gửi duyệt là bất biến (trigger); phiên bản đã duyệt phải có người duyệt và băm khớp băm gửi duyệt; mỗi môi trường chỉ có một triển khai hiện hành; nhật ký duyệt chỉ thêm (§3.27).
 3. **Thay thế bảng của mã hiện tại có kịch bản di trú.** Bốn bảng `ph04.route*` của `apps/control` (không có `tenant_id`) được chuyển sang thiết kế mới bằng changeset `ph04-9000`; lần chạy thử cũ (mô phỏng) được đánh dấu `SIMULATED` để không bao giờ thỏa điều kiện gửi duyệt (§8).
 
-Nguồn duy nhất của DDL là [`ph04/ddl/ph04_int.sql`](ph04/ddl/ph04_int.sql) (918 dòng), đã chạy trên PostgreSQL 16 sạch và trên CSDL có bảng W2 cũ ngày 25/11/2026. Bảng cột ở §3 sinh từ DDL bằng [`ph04/tools/gen_tables_md.py`](ph04/tools/gen_tables_md.py).
+Nguồn duy nhất của DDL là [`ph04/ddl/ph04_int.sql`](ph04/ddl/ph04_int.sql) (945 dòng), đã chạy trên PostgreSQL 16 sạch và trên CSDL có bảng W2 cũ ngày 25/11/2026, chạy lại ngày 26/11/2026 sau khi sửa hai lỗi khởi tạo (§4.2); bài kiểm [`ph04/test/ph04_isolation_test.sql`](ph04/test/ph04_isolation_test.sql) đạt 23/23 khối. Danh sách bảng, bảng đặc tả và bảng cột ở §3 sinh từ DDL bằng [`ph04/tools/gen_tables_md.py`](ph04/tools/gen_tables_md.py).
+
+## 0. Giới thiệu
+
+Tài liệu đặc tả lược đồ dữ liệu của PH-04 trong schema `ph04` của cụm `pg-core`, cùng các kho ngoài PostgreSQL mà phân hệ dùng. Mục đích là cho kỹ sư `dh-integration` và DBA một nguồn duy nhất về bảng, cột, ràng buộc, cách ly tenant, di trú và sao lưu, khớp tuyệt đối với DDL đã chạy thử. Phạm vi gồm 26 bảng của schema `ph04`, schema `ph04_rt` của runtime (§6.4), topic Kafka, khóa Valkey và bucket Ceph RGW; không gồm dữ liệu nghiệp vụ đi qua luồng (PH-04 không lưu) và không gồm bảng của PH-05, PH-10 cùng DU.
+
+Chương 1 nói chiến lược lưu trữ và cách ly tenant; chương 2 là sơ đồ thực thể – quan hệ; chương 3 có danh sách bảng rồi, với mỗi bảng, một bảng đặc tả 10 mục (Mục đích, FR phục vụ, Khóa chính, Duy nhất, Khóa ngoại, Ràng buộc CHECK, Chỉ mục, Cách ly tenant, Phân vùng và chỉ thêm, Ghi chú) trích từ DDL và danh sách cột; chương 4 là DDL, changelog và kết quả chạy thử; chương 5 tới 8 là dữ liệu khởi tạo, kho ngoài PostgreSQL, sao lưu và ánh xạ hệ cũ; chương 9 là câu hỏi mở và đề nghị đồng bộ.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Lập trình viên L-INT | Chương 1, 3, 4 |
+| DBA, vận hành | Chương 1, 4, 6, 7 |
+| ATTT | Chương 1.2, 3.27, 7 |
+| Đội di trú | Chương 4, 8 |
+| Hội đồng thẩm định | Tóm tắt, chương 2, 3.27, 8 |
+
+: Người đọc và phần cần đọc
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| RLS mẫu P, S | Row-Level Security theo D03-10: P (riêng) chỉ dòng của tenant phiên; S (dùng chung) đọc thêm dòng `COMMON`, chỉ `PLATFORM` ghi dòng `COMMON` |
+| `app.tenant_id` | Biến phiên đặt đầu mỗi giao dịch; giá trị `T{nn}` cho tỉnh, `PLATFORM` cho tác vụ nền tảng |
+| Changeset | Đơn vị thay đổi Liquibase, đánh dấu trong DDL bằng `-- @changeset` |
+| W2 | Đợt mã hiện có `apps/control` với bốn bảng `ph04.route*` cần di trú |
+| EN-04-xx | Mã thực thể của FRS D02-03-PH04 §4 |
+| Băm nội dung | `content_hash`, `sha256:` + 64 ký tự hex của YAML chuẩn hóa và `*.jq` |
+
+: Thuật ngữ riêng của tài liệu CSDL
+
+Kiểu dữ liệu chuẩn và cột ngữ cảnh theo D00-01 §5. Tài liệu tham chiếu: D02-03-PH04 (FRS, thực thể EN-04 và quy tắc BR-04), D03-02-PH04 (SDD, cách dùng bảng), D03-04-PH04 (API, sự kiện EVT-04), D03-10 (đa tenant, mẫu RLS), D03-09 (hạ tầng, sao lưu), D02-07 (từ điển dữ liệu).
 
 ## 1. Chiến lược lưu trữ
+
+Chương này nói dữ liệu PH-04 nằm ở đâu, ai được truy cập bằng vai trò nào, và cơ chế nào bảo đảm tỉnh này không đọc, không ghi được dữ liệu của tỉnh khác.
 
 ### 1.1. Schema, vai trò và kết nối
 
@@ -42,6 +75,8 @@ Mọi bảng nghiệp vụ có `tenant_id varchar(16)` (`T{nn}` theo D00-01 `T-T
 | P (riêng) | Dòng của tenant phiên | Dòng của tenant phiên (tỉnh) | 21 bảng tác nghiệp |
 | S (dùng chung) | Dòng của tenant phiên và `COMMON` | Dòng của tỉnh khi phiên là tỉnh; dòng `COMMON` khi phiên là `PLATFORM` | `component_policy`, `template`, `palette_group_rule`, `catalog_change` |
 
+: Hai mẫu RLS của schema `ph04`
+
 Biến phiên `app.tenant_id` đặt ở đầu mỗi giao dịch bằng `TenantAwareTransactionManager` (D03-02-PH07 §6.2); quên đặt thì câu lệnh lỗi do `current_setting('app.tenant_id', false)`. Tác vụ nền liên tenant lặp từng tenant (D03-02-PH04 §11.3). Riêng `shedlock` là bảng kỹ thuật không có `tenant_id`.
 
 ### 1.3. Quy ước bảng
@@ -55,11 +90,15 @@ Theo D00-01 §5.1: khóa chính `id uuid` (UUID v7 sinh ở ứng dụng), `crea
 | `test_run`, `runtime_command`, `legacy_import_job` | Không có `version` | Chỉ máy chủ đổi trạng thái theo điều kiện trạng thái cũ, không có sửa đồng thời từ người dùng |
 | `outbox` | Khóa `event_id` | DD-11 |
 
+: Ngoại lệ có chủ đích với quy ước cột D00-01
+
 Ràng buộc `CHECK` liệt kê giá trị trạng thái đúng như FRS §4.9–4.13; thêm giá trị là một changeset mới.
 
 ## 2. Sơ đồ thực thể – quan hệ
 
-```mermaid
+Sơ đồ dưới chỉ vẽ các bảng có khóa ngoại với nhau, quanh hai trục: luồng và phiên bản (định nghĩa, duyệt, chạy thử) và triển khai (môi trường, lệnh, xác nhận). Năm bảng chính có liệt kê cột tiêu biểu.
+
+```{.mermaid caption="Sơ đồ thực thể – quan hệ của schema ph04"}
 erDiagram
     workspace ||--o{ workspace_member : "có"
     workspace ||--o{ flow : "chứa"
@@ -118,16 +157,69 @@ erDiagram
     }
 ```
 
-Bảng không nằm trong sơ đồ vì không có khóa ngoại tới bảng khác: `heartbeat_latest` (khóa theo mã luồng để nhận nhịp tim kể cả khi CSDL chưa có triển khai tương ứng, phục vụ phát hiện băm lạ), `component_policy`, `component_proposal`, `template`, `palette_group_rule`, `catalog_change`, `external_system`, `outbox`, `shedlock`.
+Mọi đường trong hình là khóa ngoại thật mang kèm `tenant_id` (`FOREIGN KEY (x_id, tenant_id)`), nên không có quan hệ nào trỏ chéo tenant. `flow_version` là tâm của sơ đồ: chạy thử, duyệt, chỉ mục và triển khai đều gắn với một phiên bản cụ thể, đúng nguyên tắc "mọi thứ truy được về một phiên bản đã duyệt". Bảng không nằm trong sơ đồ vì không có khóa ngoại tới bảng khác: `heartbeat_latest` (khóa theo mã luồng để nhận nhịp tim kể cả khi CSDL chưa có triển khai tương ứng, phục vụ phát hiện băm lạ), `component_policy`, `component_proposal`, `template`, `palette_group_rule`, `catalog_change`, `external_system`, `outbox`, `shedlock`.
 
 ## 3. Đặc tả bảng
 
-Bảng cột dưới đây sinh từ DDL; giá trị kiểm tra (`CHECK`), chỉ mục và khóa ngoại xem trực tiếp trong DDL. Mỗi bảng ghi mã thực thể EN-04 (FRS §4) trong chú thích bảng.
+Toàn bộ phần giữa hai dấu `gen:tables` sinh bằng [`ph04/tools/gen_tables_md.py`](ph04/tools/gen_tables_md.py) `--write` từ DDL: khóa, ràng buộc, chỉ mục, mẫu RLS, trigger và quyền chỉ thêm đọc trực tiếp từ câu lệnh; mục đích lấy từ `COMMENT ON TABLE`; FR phục vụ và lưu giữ lấy từ bảng `META` của công cụ. Sửa ở DDL hoặc `META` rồi sinh lại, không sửa tay. Giá trị cụ thể của từng `CHECK` xem trong DDL; các ràng buộc mang quy tắc nghiệp vụ được tóm ở §3.27.
+
+Bảng dưới là danh sách 26 bảng theo thứ tự trong DDL; cột "RLS" ghi mẫu P, S của §1.2.
 
 <!-- gen:tables:start -->
+| TT | Bảng | Thực thể | RLS | Số cột | FR phục vụ |
+|---|---|---|---|---|---|
+| 1 | `workspace` | EN-04-01 | P | 13 | FR-04-007 |
+| 2 | `workspace_member` | EN-04-12 | P | 11 | FR-04-007; BR-04-021 |
+| 3 | `flow` | EN-04-02 | P | 28 | FR-04-001…006 |
+| 4 | `flow_version` | EN-04-03 | P | 28 | FR-04-010, 011, 017, 024, 027, 040…045 |
+| 5 | `flow_version_contributor` | EN-04-13 | P | 6 | FR-04-024, 041; BR-04-005 |
+| 6 | `flow_mapping` | EN-04-14 | P | 12 | FR-04-020 |
+| 7 | `flow_route_index` | EN-04-04a | P | 7 | FR-04-001, 002, 023 (VR-08) |
+| 8 | `flow_endpoint_index` | EN-04-04b | P | 10 | FR-04-001, 023 (VR-18), 052 |
+| 9 | `flow_reference` | EN-04-04c | P | 5 | FR-04-006 |
+| 10 | `review` | EN-04-05 | P | 12 | FR-04-040, 041, 043 |
+| 11 | `deployment` | EN-04-06 | P | 27 | FR-04-042, 044, 045, 050, 051 |
+| 12 | `test_case` | EN-04-15 | P | 18 | FR-04-031 |
+| 13 | `test_run` | EN-04-07 | P | 25 | FR-04-030, 032, 040 (BR-04-004) |
+| 14 | `test_run_step` | EN-04-08 | P | 15 | FR-04-030, 032, 033 |
+| 15 | `runtime_command` | EN-04-10 | P | 22 | FR-04-050 |
+| 16 | `command_ack` | EN-04-16 | P | 6 | FR-04-050, 051 |
+| 17 | `heartbeat_latest` | EN-04-17 | P | 14 | FR-04-051, 052 |
+| 18 | `component_policy` | EN-04-11 | S | 13 | FR-04-080 |
+| 19 | `component_proposal` | EN-04-18 | P | 15 | FR-04-080 |
+| 20 | `template` | EN-04-19 | S | 16 | FR-04-003, 025 |
+| 21 | `palette_group_rule` | EN-04-20 | S | 10 | FR-04-012 |
+| 22 | `catalog_change` | EN-04-21 | S | 10 | FR-04-081 |
+| 23 | `external_system` | EN-04-22 | P | 7 | FR-04-003, 023 |
+| 24 | `legacy_import_job` | EN-04-23 | P | 12 | FR-04-082 |
+| 25 | `outbox` | EN-04-24 | P | 9 | FR-04-083; EVT-04-01…10 |
+| 26 | `shedlock` | Kỹ thuật | Không | 4 | Không (kỹ thuật cho tác vụ nền) |
+
+: Danh sách bảng của schema `ph04`
+
 ### 3.1. `workspace`
 
-EN-04-01 Không gian làm việc (FR-04-007); thay Project của Bus cũ. Mỗi tenant có sẵn DEFAULT.
+::: dac-ta
+**Mục đích.** EN-04-01 · Không gian làm việc (FR-04-007); thay Project của Bus cũ. Mỗi tenant có sẵn DEFAULT.
+
+**FR phục vụ.** FR-04-007.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_workspace_id_tenant` (id, tenant_id); `uq_workspace_code` (tenant_id, code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_workspace_tenant`, `ck_workspace_code`, `ck_workspace_status`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: suốt vòng đời tenant; không xóa khi còn luồng, chuyển `ARCHIVED`. Trigger: `tg_workspace_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -145,9 +237,31 @@ EN-04-01 Không gian làm việc (FR-04-007); thay Project của Bus cũ. Mỗi 
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `workspace`
+
 ### 3.2. `workspace_member`
 
-EN-04-12 Thành viên không gian: người dùng hoặc nhóm PH-12 với mức VIEW, EDIT, MAINTAIN; thay Project_group.access_level.
+::: dac-ta
+**Mục đích.** EN-04-12 · Thành viên không gian: người dùng hoặc nhóm PH-12 với mức VIEW, EDIT, MAINTAIN; thay Project_group.access_level.
+
+**FR phục vụ.** FR-04-007; BR-04-021.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_workspace_member` (tenant_id, workspace_id, principal_type, principal_id).
+
+**Khóa ngoại.** `fk_workspace_member_ws` (workspace_id, tenant_id) → `workspace`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_workspace_member_type`, `ck_workspace_member_level`.
+
+**Chỉ mục.** `ix_workspace_member_principal`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: xóa khi gỡ thành viên hoặc xóa không gian (CASCADE). Trigger: `tg_workspace_member_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -163,9 +277,31 @@ EN-04-12 Thành viên không gian: người dùng hoặc nhóm PH-12 với mức
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `workspace_member`
+
 ### 3.3. `flow`
 
-EN-04-02 Luồng tích hợp (FR-04-001…006); thay Context của Bus cũ.
+::: dac-ta
+**Mục đích.** EN-04-02 · Luồng tích hợp (FR-04-001…006); thay Context của Bus cũ.
+
+**FR phục vụ.** FR-04-001…006.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_flow_id_tenant` (id, tenant_id); `uq_flow_code_live` (tenant_id, code) có điều kiện.
+
+**Khóa ngoại.** `fk_flow_workspace` (workspace_id, tenant_id) → `workspace`.
+
+**Ràng buộc CHECK.** `ck_flow_tenant`, `ck_flow_code`, `ck_flow_kind`, `ck_flow_transport`, `ck_flow_exposure`, `ck_flow_status`, `ck_flow_origin`, `ck_flow_labels`, `ck_flow_targets`, `ck_flow_retired`.
+
+**Chỉ mục.** `ix_flow_workspace`, `ix_flow_updated`, `ix_flow_search` (GIN), `ix_flow_labels` (GIN).
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: suốt vòng đời luồng và 5 năm sau khi gỡ. Trigger: `tg_flow_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -198,9 +334,31 @@ EN-04-02 Luồng tích hợp (FR-04-001…006); thay Context của Bus cũ.
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `flow`
+
 ### 3.4. `flow_version`
 
-EN-04-03 Phiên bản luồng (FR-04-010, 011, 024; ADR-069). Nội dung bất biến từ PENDING_REVIEW (trigger tg_flow_version_immutable).
+::: dac-ta
+**Mục đích.** EN-04-03 · Phiên bản luồng (FR-04-010, 011, 024; ADR-069). Nội dung bất biến từ PENDING_REVIEW (trigger tg_flow_version_immutable).
+
+**FR phục vụ.** FR-04-010, 011, 017, 024, 027, 040…045.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_flow_version_id_tenant` (id, tenant_id); `uq_flow_version_no` (tenant_id, flow_id, version_no); `uq_flow_version_open` (tenant_id, flow_id) có điều kiện.
+
+**Khóa ngoại.** `fk_flow_version_flow` (flow_id, tenant_id) → `flow`.
+
+**Ràng buộc CHECK.** `ck_flow_version_status`, `ck_flow_version_no`, `ck_flow_version_size`, `ck_flow_version_samples_size`, `ck_flow_version_hash`, `ck_flow_version_submitted`, `ck_flow_version_approved`.
+
+**Chỉ mục.** `ix_flow_version_review` có điều kiện, `ix_flow_version_components` (GIN), `ix_flow_version_revalidate` có điều kiện.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: suốt vòng đời luồng và 5 năm sau khi gỡ; `ph04_readonly` chỉ đọc cột siêu dữ liệu. Trigger: `tg_flow_version_touch`, `tg_flow_version_immutable`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -233,9 +391,31 @@ EN-04-03 Phiên bản luồng (FR-04-010, 011, 024; ADR-069). Nội dung bất b
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `flow_version`
+
 ### 3.5. `flow_version_contributor`
 
-EN-04-13 Người đóng góp phiên bản; dùng cho bốn mắt (BR-04-005, GAP-04-06). Ngoại lệ D00-01: khóa tự nhiên, không có id.
+::: dac-ta
+**Mục đích.** EN-04-13 · Người đóng góp phiên bản; dùng cho bốn mắt (BR-04-005, GAP-04-06). Ngoại lệ D00-01: khóa tự nhiên, không có id.
+
+**FR phục vụ.** FR-04-024, 041; BR-04-005.
+
+**Khóa chính.** (tenant_id, flow_version_id, user_id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_contributor_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo phiên bản (CASCADE).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -246,9 +426,31 @@ EN-04-13 Người đóng góp phiên bản; dùng cho bốn mắt (BR-04-005, GA
 | `last_at` | `timestamptz` | x | `now()` |  |
 | `save_count` | `integer` | x | `1` |  |
 
+: Cột của bảng `flow_version_contributor`
+
 ### 3.6. `flow_mapping`
 
-EN-04-14 Ánh xạ dữ liệu *.dhmap.json và JQ sinh ra (FR-04-020, ADR-066). Chỉ jq vào kho cấu hình.
+::: dac-ta
+**Mục đích.** EN-04-14 · Ánh xạ dữ liệu *.dhmap.json và JQ sinh ra (FR-04-020, ADR-066). Chỉ jq vào kho cấu hình.
+
+**FR phục vụ.** FR-04-020.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_flow_mapping_name` (tenant_id, flow_version_id, name).
+
+**Khóa ngoại.** `fk_flow_mapping_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_flow_mapping_name`, `ck_flow_mapping_format`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo phiên bản (CASCADE). Trigger: `tg_flow_mapping_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -265,9 +467,31 @@ EN-04-14 Ánh xạ dữ liệu *.dhmap.json và JQ sinh ra (FR-04-020, ADR-066).
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `flow_mapping`
+
 ### 3.7. `flow_route_index`
 
-EN-04-04a Chỉ mục route tính khi lưu (FR-04-001, 002; VR-08). URI đã che tham số nhạy cảm.
+::: dac-ta
+**Mục đích.** EN-04-04a · Chỉ mục route tính khi lưu (FR-04-001, 002; VR-08). URI đã che tham số nhạy cảm.
+
+**FR phục vụ.** FR-04-001, 002, 023 (VR-08).
+
+**Khóa chính.** (tenant_id, flow_version_id, route_id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_route_index_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** `ix_route_index_route`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: tính lại toàn bộ mỗi lần lưu; theo phiên bản (CASCADE).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -279,9 +503,31 @@ EN-04-04a Chỉ mục route tính khi lưu (FR-04-001, 002; VR-08). URI đã che
 | `description` | `varchar(1000)` |  |  |  |
 | `step_count` | `integer` | x |  |  |
 
+: Cột của bảng `flow_route_index`
+
 ### 3.8. `flow_endpoint_index`
 
-EN-04-04b Chỉ mục điểm kết nối (FR-04-001 lọc endpoint, FR-04-052; VR-18; FlowQueryApi.flowsUsingConnection, flowsUsingTopic).
+::: dac-ta
+**Mục đích.** EN-04-04b · Chỉ mục điểm kết nối (FR-04-001 lọc endpoint, FR-04-052; VR-18; FlowQueryApi.flowsUsingConnection, flowsUsingTopic).
+
+**FR phục vụ.** FR-04-001, 023 (VR-18), 052.
+
+**Khóa chính.** (tenant_id, flow_version_id, node_id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_endpoint_index_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_endpoint_direction`.
+
+**Chỉ mục.** `ix_endpoint_index_uri` (GIN), `ix_endpoint_index_path` có điều kiện, `ix_endpoint_index_conn` có điều kiện, `ix_endpoint_index_topic` có điều kiện.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: tính lại toàn bộ mỗi lần lưu; theo phiên bản (CASCADE).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -296,9 +542,31 @@ EN-04-04b Chỉ mục điểm kết nối (FR-04-001 lọc endpoint, FR-04-052; 
 | `connection_code` | `varchar(64)` |  |  |  |
 | `topic` | `varchar(249)` |  |  |  |
 
+: Cột của bảng `flow_endpoint_index`
+
 ### 3.9. `flow_reference`
 
-EN-04-04c Tham chiếu ra ngoài của phiên bản; tính phụ thuộc (API-04-016), chặn gỡ khi còn phụ thuộc cứng (FR-04-006).
+::: dac-ta
+**Mục đích.** EN-04-04c · Tham chiếu ra ngoài của phiên bản; tính phụ thuộc (API-04-016), chặn gỡ khi còn phụ thuộc cứng (FR-04-006).
+
+**FR phục vụ.** FR-04-006.
+
+**Khóa chính.** (tenant_id, flow_version_id, ref_type, ref_key).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_flow_reference_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_flow_reference_type`.
+
+**Chỉ mục.** `ix_flow_reference_key`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: tính lại toàn bộ mỗi lần lưu; theo phiên bản (CASCADE).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -308,9 +576,31 @@ EN-04-04c Tham chiếu ra ngoài của phiên bản; tính phụ thuộc (API-04
 | `ref_key` | `varchar(255)` | x |  |  |
 | `hard` | `boolean` | x |  |  |
 
+: Cột của bảng `flow_reference`
+
 ### 3.10. `review`
 
-EN-04-05 Nhật ký gửi, rút, duyệt, yêu cầu sửa của phiên bản (FR-04-040, 041, 043). Chỉ thêm, không sửa; ngoại lệ D00-01: không có updated_*.
+::: dac-ta
+**Mục đích.** EN-04-05 · Nhật ký gửi, rút, duyệt, yêu cầu sửa của phiên bản (FR-04-040, 041, 043). Chỉ thêm, không sửa; ngoại lệ D00-01: không có updated_*.
+
+**FR phục vụ.** FR-04-040, 041, 043.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_review_version` (flow_version_id, tenant_id) → `flow_version`.
+
+**Ràng buộc CHECK.** `ck_review_action`, `ck_review_comment`.
+
+**Chỉ mục.** `ix_review_version`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng; chỉ thêm (`ph04_app` bị thu hồi UPDATE, DELETE).
+
+**Ghi chú.** Lưu giữ: suốt vòng đời luồng và 5 năm sau khi gỡ.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -327,9 +617,31 @@ EN-04-05 Nhật ký gửi, rút, duyệt, yêu cầu sửa của phiên bản (F
 | `reauth_at` | `timestamptz` |  |  |  |
 | `occurred_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `review`
+
 ### 3.11. `deployment`
 
-EN-04-06 Triển khai phiên bản lên môi trường (FR-04-042, 044, 045); trạng thái mong muốn của lệnh điều khiển (FR-04-050).
+::: dac-ta
+**Mục đích.** EN-04-06 · Triển khai phiên bản lên môi trường (FR-04-042, 044, 045); trạng thái mong muốn của lệnh điều khiển (FR-04-050).
+
+**FR phục vụ.** FR-04-042, 044, 045, 050, 051.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_deployment_id_tenant` (id, tenant_id); `uq_deployment_current` (tenant_id, flow_id, environment) có điều kiện.
+
+**Khóa ngoại.** `fk_deployment_flow` (flow_id, tenant_id) → `flow`; `fk_deployment_version` (flow_version_id, tenant_id) → `flow_version`.
+
+**Ràng buộc CHECK.** `ck_deployment_env`, `ck_deployment_kind`, `ck_deployment_desired`, `ck_deployment_sync`, `ck_deployment_health`, `ck_deployment_replicas`, `ck_deployment_reason`.
+
+**Chỉ mục.** `ix_deployment_flow`, `ix_deployment_pending` có điều kiện.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: suốt vòng đời luồng và 5 năm sau khi gỡ. Trigger: `tg_deployment_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -361,9 +673,31 @@ EN-04-06 Triển khai phiên bản lên môi trường (FR-04-042, 044, 045); tr
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `deployment`
+
 ### 3.12. `test_case`
 
-EN-04-15 Ca kiểm thử của luồng (FR-04-031); đi cùng luồng qua các phiên bản, ghi vào kho cấu hình tests/cases.dh.yaml. VR-20: ≥ 1 khẳng định.
+::: dac-ta
+**Mục đích.** EN-04-15 · Ca kiểm thử của luồng (FR-04-031); đi cùng luồng qua các phiên bản, ghi vào kho cấu hình tests/cases.dh.yaml. VR-20: ≥ 1 khẳng định.
+
+**FR phục vụ.** FR-04-031.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_test_case_id_tenant` (id, tenant_id); `uq_test_case_name` (tenant_id, flow_id, name).
+
+**Khóa ngoại.** `fk_test_case_flow` (flow_id, tenant_id) → `flow`.
+
+**Ràng buộc CHECK.** `ck_test_case_mode`, `ck_test_case_body`, `ck_test_case_assert`, `ck_test_case_timeout`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo luồng; ngừng dùng bằng `active = false`. Trigger: `tg_test_case_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -386,9 +720,31 @@ EN-04-15 Ca kiểm thử của luồng (FR-04-031); đi cùng luồng qua các p
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `test_case`
+
 ### 3.13. `test_run`
 
-EN-04-07 Lần chạy thử (FR-04-030, 032). Giữ 04.test.retention-days (90); thân bản tin ở Ceph RGW dh-int-testrun, xóa sau 04.test.body-retention-days (7).
+::: dac-ta
+**Mục đích.** EN-04-07 · Lần chạy thử (FR-04-030, 032). Giữ 04.test.retention-days (90); thân bản tin ở Ceph RGW dh-int-testrun, xóa sau 04.test.body-retention-days (7).
+
+**FR phục vụ.** FR-04-030, 032, 040 (BR-04-004).
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_test_run_id_tenant` (id, tenant_id).
+
+**Khóa ngoại.** `fk_test_run_version` (flow_version_id, tenant_id) → `flow_version`, xóa theo; `fk_test_run_case` (test_case_id, tenant_id) → `test_case`, xóa thì đặt NULL (test_case_id).
+
+**Ràng buộc CHECK.** `ck_test_run_mode`, `ck_test_run_status`, `ck_test_run_sim`, `ck_test_run_timeout`.
+
+**Chỉ mục.** `ix_test_run_version`, `ix_test_run_passed` có điều kiện, `ix_test_run_active` có điều kiện, `ix_test_run_retention`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: 90 ngày (`04.test.retention-days`), `TestRunRetentionJob` 02:30 hằng ngày.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -418,9 +774,31 @@ EN-04-07 Lần chạy thử (FR-04-030, 032). Giữ 04.test.retention-days (90);
 | `finished_at` | `timestamptz` |  |  |  |
 | `bodies_expire_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `test_run`
+
 ### 3.14. `test_run_step`
 
-EN-04-08 Vết từng chặng của lần chạy thử, kể cả SKIPPED (FR-04-030). Xem trước thân đã che, ≤ 64 KiB (BR-04-013).
+::: dac-ta
+**Mục đích.** EN-04-08 · Vết từng chặng của lần chạy thử, kể cả SKIPPED (FR-04-030). Xem trước thân đã che, ≤ 64 KiB (BR-04-013).
+
+**FR phục vụ.** FR-04-030, 032, 033.
+
+**Khóa chính.** (tenant_id, test_run_id, seq_no).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_test_run_step_run` (test_run_id, tenant_id) → `test_run`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_test_run_step_status`, `ck_test_run_step_stage`, `ck_test_run_step_preview`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo lần chạy (CASCADE); `ph04_readonly` không đọc được.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -440,9 +818,31 @@ EN-04-08 Vết từng chặng của lần chạy thử, kể cả SKIPPED (FR-04
 | `error_class` | `varchar(16)` |  |  |  |
 | `error_text` | `varchar(1000)` |  |  |  |
 
+: Cột của bảng `test_run_step`
+
 ### 3.15. `runtime_command`
 
-EN-04-10 Lệnh điều khiển runtime có ký Ed25519 (FR-04-050, ADR-065). Lý do chỉ lưu ở đây và kiểm toán, không đi lên topic.
+::: dac-ta
+**Mục đích.** EN-04-10 · Lệnh điều khiển runtime có ký Ed25519 (FR-04-050, ADR-065). Lý do chỉ lưu ở đây và kiểm toán, không đi lên topic.
+
+**FR phục vụ.** FR-04-050.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_runtime_command_id_tenant` (id, tenant_id).
+
+**Khóa ngoại.** `fk_runtime_command_flow` (flow_id, tenant_id) → `flow`; `fk_runtime_command_dep` (deployment_id, tenant_id) → `deployment`.
+
+**Ràng buộc CHECK.** `ck_runtime_command_action`, `ck_runtime_command_scope`, `ck_runtime_command_routes`, `ck_runtime_command_status`, `ck_runtime_command_reason`, `ck_runtime_command_expiry`.
+
+**Chỉ mục.** `ix_runtime_command_flow`, `ix_runtime_command_open` có điều kiện.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: suốt vòng đời luồng và 5 năm sau khi gỡ.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -469,9 +869,31 @@ EN-04-10 Lệnh điều khiển runtime có ký Ed25519 (FR-04-050, ADR-065). L�
 | `git_commit` | `char(40)` |  |  |  |
 | `reconciled_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `runtime_command`
+
 ### 3.16. `command_ack`
 
-EN-04-16 Xác nhận lệnh từ từng bản sao runtime (EVT-04-13).
+::: dac-ta
+**Mục đích.** EN-04-16 · Xác nhận lệnh từ từng bản sao runtime (EVT-04-13).
+
+**FR phục vụ.** FR-04-050, 051.
+
+**Khóa chính.** (tenant_id, command_id, replica).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_command_ack_cmd` (command_id, tenant_id) → `runtime_command`, xóa theo.
+
+**Ràng buộc CHECK.** `ck_command_ack_result`, `ck_command_ack_reason`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo lệnh (CASCADE).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -482,9 +904,31 @@ EN-04-16 Xác nhận lệnh từ từng bản sao runtime (EVT-04-13).
 | `reason` | `varchar(32)` |  |  |  |
 | `acked_at` | `timestamptz` | x |  |  |
 
+: Cột của bảng `command_ack`
+
 ### 3.17. `heartbeat_latest`
 
-EN-04-17 Nhịp tim mới nhất của mỗi bản sao cho mỗi luồng (EVT-04-12); chỉ giữ bản mới nhất (UPSERT), lịch sử ở Prometheus. Dòng quá 10 phút bị dọn.
+::: dac-ta
+**Mục đích.** EN-04-17 · Nhịp tim mới nhất của mỗi bản sao cho mỗi luồng (EVT-04-12); chỉ giữ bản mới nhất (UPSERT), lịch sử ở Prometheus. Dòng quá 10 phút bị dọn.
+
+**FR phục vụ.** FR-04-051, 052.
+
+**Khóa chính.** (tenant_id, flow_code, environment, replica).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_heartbeat_env`, `ck_heartbeat_state`.
+
+**Chỉ mục.** `ix_heartbeat_seen`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: chỉ bản mới nhất (UPSERT); dòng quá 10 phút bị dọn.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -503,9 +947,31 @@ EN-04-17 Nhịp tim mới nhất của mỗi bản sao cho mỗi luồng (EVT-04
 | `lib_version` | `varchar(32)` |  |  |  |
 | `seen_at` | `timestamptz` | x |  |  |
 
+: Cột của bảng `heartbeat_latest`
+
 ### 3.18. `component_policy`
 
-EN-04-11 Chính sách thành phần: dòng COMMON là chính sách nền do PA đặt; dòng của tỉnh chỉ thu hẹp (PER_FLOW, DENIED). Không có dòng nghĩa là theo mặc định của nhóm (FR-04-080).
+::: dac-ta
+**Mục đích.** EN-04-11 · Chính sách thành phần: dòng COMMON là chính sách nền do PA đặt; dòng của tỉnh chỉ thu hẹp (PER_FLOW, DENIED). Không có dòng nghĩa là theo mặc định của nhóm (FR-04-080).
+
+**FR phục vụ.** FR-04-080.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_component_policy` (tenant_id, component_kind, component_name).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_component_policy_tenant`, `ck_component_policy_kind`, `ck_component_policy_decision`, `ck_component_policy_narrow`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và `COMMON`; ghi `COMMON` chỉ dưới `PLATFORM`.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: theo phiên bản chính sách; không xóa cứng. Trigger: `tg_component_policy_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -523,9 +989,31 @@ EN-04-11 Chính sách thành phần: dòng COMMON là chính sách nền do PA �
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `component_policy`
+
 ### 3.19. `component_proposal`
 
-EN-04-18 Đề xuất cho phép, bổ sung thành phần (API-04-074). PA đọc liên tenant qua hàng đợi của PH-18 (sự kiện), không qua bảng.
+::: dac-ta
+**Mục đích.** EN-04-18 · Đề xuất cho phép, bổ sung thành phần (API-04-074). PA đọc liên tenant qua hàng đợi của PH-18 (sự kiện), không qua bảng.
+
+**FR phục vụ.** FR-04-080.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_component_proposal_type`, `ck_component_proposal_status`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: không xóa; kết thúc bằng trạng thái cuối. Trigger: `tg_component_proposal_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -545,9 +1033,31 @@ EN-04-18 Đề xuất cho phép, bổ sung thành phần (API-04-074). PA đọc
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `component_proposal`
+
 ### 3.20. `template`
 
-EN-04-19 Khuôn mẫu luồng (FR-04-025): tám khuôn nền COMMON (tpl-standard-9…) và khuôn riêng của tỉnh.
+::: dac-ta
+**Mục đích.** EN-04-19 · Khuôn mẫu luồng (FR-04-025): tám khuôn nền COMMON (tpl-standard-9…) và khuôn riêng của tỉnh.
+
+**FR phục vụ.** FR-04-003, 025.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_template_code` (tenant_id, code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_template_tenant`, `ck_template_code`, `ck_template_status`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và `COMMON`; ghi `COMMON` chỉ dưới `PLATFORM`.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: ngừng dùng bằng `DEPRECATED`. Trigger: `tg_template_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -568,9 +1078,31 @@ EN-04-19 Khuôn mẫu luồng (FR-04-025): tám khuôn nền COMMON (tpl-standar
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `template`
+
 ### 3.21. `palette_group_rule`
 
-EN-04-20 Tài liệu palette-groups.json (D03-02-PH04 §6.3); một bản active.
+::: dac-ta
+**Mục đích.** EN-04-20 · Tài liệu palette-groups.json (D03-02-PH04 §6.3); một bản active.
+
+**FR phục vụ.** FR-04-012.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_palette_group_rule` (tenant_id, rules_version); `uq_palette_active` (tenant_id) có điều kiện.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_palette_tenant`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và `COMMON`; ghi `COMMON` chỉ dưới `PLATFORM`.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: giữ mọi bản; một bản `active`. Trigger: `tg_palette_touch`.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -585,9 +1117,31 @@ EN-04-20 Tài liệu palette-groups.json (D03-02-PH04 §6.3); một bản active
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `palette_group_rule`
+
 ### 3.22. `catalog_change`
 
-EN-04-21 Khác biệt catalog giữa hai phiên bản runtime (FR-04-081, UC-04-22).
+::: dac-ta
+**Mục đích.** EN-04-21 · Khác biệt catalog giữa hai phiên bản runtime (FR-04-081, UC-04-22).
+
+**FR phục vụ.** FR-04-081.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_catalog_change_tenant`, `ck_catalog_change_type`.
+
+**Chỉ mục.** `ix_catalog_change_ver`.
+
+**Cách ly tenant.** RLS mẫu S (FORCE): đọc dòng của tenant phiên và `COMMON`; ghi `COMMON` chỉ dưới `PLATFORM`.
+
+**Phân vùng, chỉ thêm.** Không phân vùng; chỉ thêm (`ph04_app` chỉ có INSERT).
+
+**Ghi chú.** Lưu giữ: không xóa, để tra lịch sử nâng catalog.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -602,9 +1156,31 @@ EN-04-21 Khác biệt catalog giữa hai phiên bản runtime (FR-04-081, UC-04-
 | `detail` | `jsonb` |  |  |  |
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 
+: Cột của bảng `catalog_change`
+
 ### 3.23. `external_system`
 
-EN-04-22 Bản sao đọc HTTT đã kết nạp của PH-01 (sự kiện); xác định luồng đối ngoại, kiểm ERR-04-043.
+::: dac-ta
+**Mục đích.** EN-04-22 · Bản sao đọc HTTT đã kết nạp của PH-01 (sự kiện); xác định luồng đối ngoại, kiểm ERR-04-043.
+
+**FR phục vụ.** FR-04-003, 023.
+
+**Khóa chính.** (tenant_id, code).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: cập nhật theo sự kiện PH-01; không xóa cứng.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -616,9 +1192,31 @@ EN-04-22 Bản sao đọc HTTT đã kết nạp của PH-01 (sự kiện); xác 
 | `source_event_id` | `uuid` | x |  |  |
 | `synced_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `external_system`
+
 ### 3.24. `legacy_import_job`
 
-EN-04-23 Lượt chuyển Camel XML của Bus cũ (FR-04-082). Tệp gốc không lưu sau khi chuyển; báo cáo không chứa mật khẩu.
+::: dac-ta
+**Mục đích.** EN-04-23 · Lượt chuyển Camel XML của Bus cũ (FR-04-082). Tệp gốc không lưu sau khi chuyển; báo cáo không chứa mật khẩu.
+
+**FR phục vụ.** FR-04-082.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** `fk_legacy_import_ws` (workspace_id, tenant_id) → `workspace`.
+
+**Ràng buộc CHECK.** `ck_legacy_import_status`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: giữ hết giai đoạn di trú; tệp gốc không lưu.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -635,9 +1233,31 @@ EN-04-23 Lượt chuyển Camel XML của Bus cũ (FR-04-082). Tệp gốc khôn
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 | `finished_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `legacy_import_job`
+
 ### 3.25. `outbox`
 
-EN-04-24 Outbox (DD-11) cho EVT-04-01…10 và kiểm toán gửi PH-13; Debezium EventRouter. Dọn sau 3 ngày.
+::: dac-ta
+**Mục đích.** EN-04-24 · Outbox (DD-11) cho EVT-04-01…10 và kiểm toán gửi PH-13; Debezium EventRouter. Dọn sau 3 ngày.
+
+**FR phục vụ.** FR-04-083; EVT-04-01…10.
+
+**Khóa chính.** (event_id).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_outbox_tenant`, `ck_outbox_type`, `ck_outbox_topic`, `ck_outbox_topic_tenant`, `ck_outbox_trace`.
+
+**Chỉ mục.** `ix_outbox_occurred`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): chỉ dòng của tenant phiên.
+
+**Phân vùng, chỉ thêm.** Không phân vùng; chỉ thêm (`ph04_app` bị thu hồi UPDATE).
+
+**Ghi chú.** Lưu giữ: 3 ngày, dọn sau khi Debezium đã gửi.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -651,9 +1271,31 @@ EN-04-24 Outbox (DD-11) cho EVT-04-01…10 và kiểm toán gửi PH-13; Debeziu
 | `trace_id` | `char(32)` | x |  |  |
 | `occurred_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `outbox`
+
 ### 3.26. `shedlock`
 
-Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, không chứa dữ liệu nghiệp vụ.
+::: dac-ta
+**Mục đích.** Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, không chứa dữ liệu nghiệp vụ.
+
+**FR phục vụ.** Không (kỹ thuật cho tác vụ nền).
+
+**Khóa chính.** (name).
+
+**Duy nhất.** Không ngoài khóa chính.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** Không RLS; bảng kỹ thuật không có `tenant_id`, không chứa dữ liệu nghiệp vụ.
+
+**Phân vùng, chỉ thêm.** Không phân vùng.
+
+**Ghi chú.** Lưu giữ: ghi đè theo tên khóa.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -661,9 +1303,13 @@ Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, khô
 | `lock_until` | `timestamptz` | x |  |  |
 | `locked_at` | `timestamptz` | x |  |  |
 | `locked_by` | `varchar(255)` | x |  |  |
+
+: Cột của bảng `shedlock`
 <!-- gen:tables:end -->
 
 ### 3.27. Quy tắc nghiệp vụ chốt ở CSDL
+
+Các quy tắc dưới đây được CSDL tự chặn, nên một lỗi ở ứng dụng cũng không phá được chúng; bài kiểm §4.2 thử từng quy tắc.
 
 | Quy tắc | Cơ chế CSDL | Đối tượng |
 |---|---|---|
@@ -680,7 +1326,11 @@ Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, khô
 | Nhật ký duyệt chỉ thêm | Thu hồi `UPDATE`, `DELETE` của `ph04_app` | `review` |
 | Kích thước | `CHECK octet_length(definition_yaml) <= 524288`, bản tin ca ≤ 256 KiB, xem trước ≤ 64 KiB | nhiều bảng |
 
+: Quy tắc nghiệp vụ chốt ở CSDL
+
 ### 3.28. Truy vấn chính và chỉ mục phục vụ
+
+Mỗi chỉ mục phụ có ít nhất một truy vấn dùng nó; bảng dưới nối truy vấn, API gọi và chỉ mục.
 
 | Truy vấn | API | Chỉ mục |
 |---|---|---|
@@ -697,13 +1347,17 @@ Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, khô
 | Lệnh chưa đối soát | `Reconciler` | `ix_runtime_command_open` |
 | Luồng dùng thành phần (khi chính sách đổi) | `CatalogService` | `ix_flow_version_components` (GIN mảng) |
 
+: Truy vấn chính và chỉ mục phục vụ
+
 ## 4. DDL và changelog Liquibase
+
+### 4.1. Tệp
 
 [`ph04/ddl/ph04_int.sql`](ph04/ddl/ph04_int.sql) là nguồn duy nhất, chia tệp changeset bằng dấu `-- @file`, `-- @changeset`, `-- @rollback` như PH-07; changelog Liquibase sinh bằng công cụ của PH-07 (`../ph07/tools/gen_liquibase.py`) sau khi tham số hóa tên phân hệ (việc của bước 1 lộ trình D03-02-PH04 §15). Thứ tự tệp:
 
 | Tệp | Nội dung |
 |---|---|
-| `04-0000-bootstrap.sql` | Vai trò, schema, biến phiên migration |
+| `04-0000-bootstrap.sql` | Vai trò, schema, extension `pg_trgm` (ph04-0003), chủ sở hữu schema và bảng W2 (ph04-0004), biến phiên migration |
 | `04-0001-functions.sql` | `tg_touch`, `p_enable_rls` |
 | `04-0010-workspace.sql` | `workspace`, `workspace_member` |
 | `04-0020-flow.sql` | `flow`, `flow_version` + trigger bất biến, `flow_version_contributor`, `flow_mapping` |
@@ -717,9 +1371,32 @@ Khóa tác vụ nền (ShedLock); bảng kỹ thuật không có tenant_id, khô
 | `04-0900-grants.sql` | Quyền (chạy lại mỗi lần) |
 | `04-9000-migrate-legacy-tables.sql` | Di trú bảng W2 (context `migrate-w2`) |
 
+: Thứ tự tệp changeset
+
+### 4.2. Kết quả chạy thử
+
 Kiểm tra đã làm ngày 25/11/2026 (PostgreSQL 16.x, dữ liệu giả): chạy trên CSDL trống không lỗi; chạy trên CSDL có bốn bảng W2 với một luồng hai phiên bản và một lần chạy thử, kết quả luồng `APPROVED`, phiên bản 1 `APPROVED` (người duyệt `system:migrate`), phiên bản 2 `DRAFT`, lần chạy thử `SIMULATED`, bảng cũ đổi tên `*_legacy_w2`; tài khoản `ph04_app` với `app.tenant_id = 'T01'` thấy 0 dòng của T68 và bị chặn khi chèn dòng T68; tỉnh chèn chính sách `ALLOWED` bị `ck_component_policy_narrow` chặn. Bài kiểm thử `TenantIsolationIT` (D03-02-PH04 §14) tự động hóa các ca này cho mọi bảng.
 
+Chạy lại ngày 26/11/2026 trên PostgreSQL 16.15 cài sạch (bản 0.2), phát hiện và sửa hai lỗi của DDL bản 0.1:
+
+| Lỗi | Hiện tượng | Sửa |
+|---|---|---|
+| Thiếu extension `pg_trgm` | `ix_flow_search`, `ix_endpoint_index_uri` dùng `public.gin_trgm_ops`; trên CSDL chưa có extension, câu `CREATE INDEX` lỗi "operator class does not exist" | Thêm changeset `ph04-0003-extensions` (`CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public`) như PH-07 |
+| Schema W2 có sẵn do tài khoản khác sở hữu | Trên CSDL W2, `CREATE SCHEMA IF NOT EXISTS ph04 AUTHORIZATION ph04_owner` bỏ qua; `ph04_owner` bị "permission denied for schema ph04" và không đổi tên được bảng `route*` | Thêm changeset `ph04-0004-legacy-owner` chuyển quyền sở hữu schema và bốn bảng cũ (nếu có) cho `ph04_owner` |
+
+: Lỗi DDL phát hiện khi chạy thử bản 0.2
+
+Sau khi sửa:
+
+- DDL chạy không lỗi trên CSDL trống: 26 bảng, 25 bảng bật RLS, 100 chính sách (4 mỗi bảng).
+- Trên CSDL giả lập W2 (schema `ph04` do `postgres` sở hữu, một `route` `PUBLISHED`, hai `route_version` `PUBLISHED` và `TESTING`, một `route_test_run`): luồng `APPROVED`, phiên bản 1 `APPROVED` (`system:migrate`), phiên bản 2 `DRAFT`, cả hai `needs_revalidation = true`, lần chạy thử `SIMULATED`, bốn bảng cũ đổi tên `*_legacy_w2`.
+- [`ph04/test/ph04_isolation_test.sql`](ph04/test/ph04_isolation_test.sql) dưới tài khoản `dh_integration_app` (thành viên `ph04_app`) đạt 23 khối: T01 không đọc, không chèn, không sửa được dòng T68; khóa ngoại không trỏ chéo tenant; tỉnh không đặt `ALLOWED`, không ghi dòng `COMMON` nhưng đọc được; phiên bản mở thứ hai bị chặn; duyệt sai băm hoặc thiếu người duyệt bị chặn; sửa nội dung phiên bản `PENDING_REVIEW` bị chặn; triển khai hiện hành thứ hai, quay lui thiếu lý do bị chặn; lần chạy `SIMULATED` không thể `PASSED`; ca không có khẳng định bị chặn; lệnh hạn quá 5 phút, phạm vi `ROUTES` thiếu route bị chặn; sửa `review` bị chặn; yêu cầu sửa thiếu ý kiến bị chặn; outbox sai tenant bị chặn; mã luồng trùng bị chặn; `ph04_readonly` không đọc được `definition_yaml` nhưng đọc được cột siêu dữ liệu.
+
+Lỗi thứ hai (schema do tài khoản khác sở hữu) có ca tự động dẫn chiếu là TC-04-202 ở D05-02-PH04 (Testcontainers PostgreSQL, schema `ph04` tạo sẵn do `postgres` sở hữu, bốn bảng W2); ca kiểm lại kết quả sau khi chạy `ph04-9000` như liệt kê ở trên.
+
 ## 5. Dữ liệu khởi tạo
+
+Dữ liệu khởi tạo chỉ gồm danh mục nền dùng chung và không gian mặc định; không có dữ liệu nghiệp vụ mẫu ở môi trường thật.
 
 | Dữ liệu | Tenant | Nội dung | Nguồn |
 |---|---|---|---|
@@ -728,9 +1405,13 @@ Kiểm tra đã làm ngày 25/11/2026 (PostgreSQL 16.x, dữ liệu giả): ch�
 | Tám khuôn mẫu nền | `COMMON` | `tpl-standard-9`, `tpl-sync-lookup`, `tpl-soap-to-rest`, `tpl-db-poll-to-kafka`, `tpl-kafka-to-rest`, `tpl-sftp-to-kafka`, `tpl-ndxp-proxy`, `tpl-cdm-normalize`; thân YAML đóng gói cùng `dh-integration` (`classpath:templates/`), seed đồng bộ theo băm | FR-04-025 |
 | Quy tắc nhóm bảng thành phần | `COMMON` | `palette-groups.json` bản 1, `active = true` | D03-02-PH04 §6.3 |
 
+: Dữ liệu khởi tạo
+
 Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO UPDATE` theo mã khi băm nội dung khác).
 
 ## 6. Kho lưu trữ ngoài PostgreSQL
+
+Ngoài schema `ph04`, PH-04 dùng Kafka cho sự kiện và kênh runtime, Valkey cho dữ liệu ngắn hạn, Ceph RGW cho thân bản tin chạy thử và một schema riêng của runtime cho EIP `aggregate`. Không kho nào trong số này là nguồn sự thật duy nhất của dữ liệu quản trị.
 
 ### 6.1. Kafka
 
@@ -743,6 +1424,8 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 | `{tenant}.audit.connection-log.v1` (EVT-04-14) | PH-13 (chủ), `dh-runtime` ghi | Theo PH-13 | `traceId` | Nhật ký kết nối NĐ 278/2025 |
 | `{tenant}.ops.dlq.v1` | PH-18 (chủ), `dh-runtime` ghi | Theo PH-18 | `flow` | Bản tin lỗi đã mã hóa trường nhạy cảm |
 
+: Topic Kafka của PH-04
+
 Topic hệ thống `dh.*` dùng chung mọi tenant vì runtime trong namespace dùng chung phục vụ nhiều tenant; thông điệp mang `tenant` và runtime kiểm khớp nhãn luồng (D03-02-PH04 §10.1). Thông điệp không chứa dữ liệu nghiệp vụ.
 
 ### 6.2. Valkey
@@ -751,10 +1434,12 @@ Topic hệ thống `dh.*` dùng chung mọi tenant vì runtime trong namespace d
 |---|---|---|---|
 | `dh:int:edit:{tenant}:{flowId}:{versionNo}` | Hash, TTL theo trường | 120 s mỗi trường | Phiên soạn (EN-04-09) |
 | `dh:int:idem:api:{tenant}:{key}` | String (băm thân + kết quả) | 24 giờ | `Idempotency-Key` của API |
-| `dh:int:testrun:queue` | Stream, nhóm theo hồ sơ | — | Hàng đợi chạy thử |
+| `dh:int:testrun:queue` | Stream, nhóm theo hồ sơ | Không TTL | Hàng đợi chạy thử |
 | `dh:int:testrun:active:{tenant}` | Sorted set (runId, hạn) | 2 × thời hạn | Hạn mức đồng thời |
 | `dh:int:catalog:{tenant}:{catalogVersion}` | String (JSON nén) | 24 giờ | Chỉ mục catalog đã lọc chính sách |
 | `dh:int:idem:{tenant}:{flow}:{key}` | String | `04.runtime.idempotency-ttl-hours` | Chống trùng bản tin ở runtime (FR-04-071), do `dh-runtime` dùng trên Valkey data plane |
+
+: Khóa Valkey của PH-04
 
 Valkey mất dữ liệu không làm sai nghiệp vụ: phiên soạn chỉ là thông tin, hạn mức chạy thử dự phòng bằng `ix_test_run_active`, hàng đợi chạy thử dựng lại từ `test_run` trạng thái `QUEUED`.
 
@@ -768,6 +1453,8 @@ Kho tổng hợp bền vững (`JdbcAggregationRepository`) cho EIP `aggregate` 
 
 ## 7. Sao lưu, khôi phục, mã hóa và lưu giữ
 
+Bảng dưới nói mỗi nhóm dữ liệu được sao lưu thế nào, giữ bao lâu và ai dọn. Dữ liệu có thể dựng lại (nhịp tim, outbox đã gửi) giữ ngắn; dữ liệu phục vụ kiểm toán thay đổi giữ suốt vòng đời luồng và 5 năm sau khi gỡ.
+
 | Đối tượng | Sao lưu | Lưu giữ | Ghi chú |
 |---|---|---|---|
 | Schema `ph04` | Theo `pg-core`: WAL liên tục + base backup hằng ngày lên Ceph RGW, RPO 5 phút (D03-09) | Theo bảng | Mã hóa lưu trữ ở mức ổ đĩa và bản sao lưu |
@@ -777,9 +1464,13 @@ Kho tổng hợp bền vững (`JdbcAggregationRepository`) cho EIP `aggregate` 
 | `flow_version`, `review`, `deployment`, `runtime_command` | Như trên | Suốt vòng đời luồng + 5 năm sau khi gỡ | Kiểm toán thay đổi; bản ghi kiểm toán gốc ở PH-13 (WORM 5 năm) |
 | Kho `dh-flows-{tenant}` | Mirror sang site DR, sao lưu Git hằng ngày (ADR-068, D03-09) | Không xóa lịch sử | Là nguồn sự thật triển khai; khôi phục DR nạp lại runtime từ Git |
 
+: Sao lưu và lưu giữ theo đối tượng
+
 Khôi phục `ph04` về thời điểm trước kho Git: `Reconciler` phát hiện triển khai có ở Git mà không có ở CSDL (băm lạ, §10.3 SDD) và báo động; quy trình DR (D03-09) quy định đồng bộ lại `deployment` từ `flow.dh.yaml` của các nhánh môi trường.
 
 ## 8. Ánh xạ dữ liệu hệ cũ sang thiết kế mới
+
+Chương này là đầu vào cho kế hoạch di trú D06-01: bảng của Bus và Productivity Tooling (hệ cũ của tỉnh) và bảng của mã hiện tại W2 đi về bảng nào của thiết kế mới, cột nào không chuyển và vì sao.
 
 ### 8.1. Bus và Productivity Tooling
 
@@ -796,6 +1487,8 @@ Lược đồ chi tiết của Bus cũ chưa có trong bộ tài liệu được
 | `Dependency`, `Builder` | Không chuyển; báo cáo trong `legacy_import_job.report` | Thay bằng hồ sơ runtime và chính sách thành phần (LGC-BUS-034); thành phần thiếu thành đề xuất `component_proposal` |
 | `draft_session` | IndexedDB phía trình duyệt + `flow_version` `DRAFT` | Không chuyển dữ liệu (phiên nháp cũ đã hết hạn) |
 
+: Ánh xạ bảng Bus và Productivity Tooling
+
 ### 8.2. Bảng của mã hiện tại (`apps/control`, W2)
 
 | Bảng, cột hiện tại | Đích | Ghi chú |
@@ -810,11 +1503,15 @@ Lược đồ chi tiết của Bus cũ chưa có trong bộ tài liệu được
 | `route_test_run_stage.*` | Không chuyển | Waterfall giả (GAP-04-04) |
 | Chú thích `# @lgsp-canvas-v1:` trong YAML | `flow_version.canvas_layout` | `dh-integration` tách khi lưu lần đầu sau di trú |
 
+: Ánh xạ bảng của mã hiện tại W2
+
 ### 8.3. Đối soát sau di trú
 
 Sau di trú, `dh-integration` chạy `LegacyReconcileReport`: số luồng, phiên bản, lần chạy thử trước và sau; luồng có phiên bản `APPROVED` nhưng chưa có triển khai (cần phát hành lại); phiên bản có `needs_revalidation`. Báo cáo là đầu vào nghiệm thu bước 1 lộ trình D03-02-PH04 §15.
 
 ## 9. Câu hỏi mở
+
+Các câu hỏi dưới đây có đề xuất tạm nên không chặn việc viết mã và DDL.
 
 | Mã | Câu hỏi | Đề xuất tạm |
 |---|---|---|
@@ -824,8 +1521,24 @@ Sau di trú, `dh-integration` chạy `LegacyReconcileReport`: số luồng, phi�
 | Q04-53 | Có tách `definition_yaml` sang bảng riêng để giảm kích thước dòng `flow_version`? | Không ở MVP; PostgreSQL TOAST xử lý, truy vấn danh sách không chọn cột lớn |
 | Q04-54 | Schema `ph04_rt` dùng `pg-core` hay cụm riêng cho data plane? | Cụm riêng `pg-runtime` khi có luồng `aggregate` ở PROD; MVP chưa cần |
 
+: Câu hỏi mở của CSDL PH-04
+
+### 9.1. Đề nghị đồng bộ
+
+Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
+
+| Tập | Đề nghị | Trạng thái |
+|---|---|---|
+| D03-02-PH04 SDD §14 | `TenantIsolationIT` lấy 23 khối của `ph04/test/ph04_isolation_test.sql` làm ca tối thiểu | Đã hấp thụ (0.2): SDD §14, dòng Cách ly tenant |
+| D05-02-PH04 Ca kiểm thử | Thêm ca di trú W2 khi schema `ph04` do tài khoản khác sở hữu (lỗi thứ hai ở §4.2) | Đã hấp thụ (0.2): TC-04-202 |
+| D03-09 Hạ tầng | Ghi `pg_trgm` vào danh sách extension bắt buộc của cụm `pg-core` | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
+| D03-04-PH04 API | Khóa Valkey `dh:int:testrun:queue` không có TTL; giữ thống nhất khi mô tả hàng đợi chạy thử | Đã hấp thụ (0.2): API §5 và hình kiến trúc dùng đúng khóa này, không nêu TTL nên không mâu thuẫn |
+
+: Đề nghị đồng bộ với tập khác
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu: 26 bảng, RLS, di trú W2, đã chạy thử | Nhóm phân hệ PH-04 |
+| 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-CSDL: chương Giới thiệu, ERD có chú thích và thuyết minh, danh sách bảng, bảng đặc tả 10 mục cho 26 bảng sinh từ DDL (công cụ `gen_tables_md.py` mở rộng), chú thích mọi bảng; chạy lại DDL trên PostgreSQL 16.15, sửa hai lỗi (thiếu `pg_trgm`, chủ sở hữu schema W2), thêm bài kiểm `ph04_isolation_test.sql` 23 khối; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |

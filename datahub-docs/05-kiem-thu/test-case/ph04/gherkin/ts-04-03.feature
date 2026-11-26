@@ -5,7 +5,7 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-013 @P1 @Dương
   Kịch bản: TC-04-013 Tạo luồng trống
-    # Truy vết: FR-04-003 · API-04-011 · UI-04-03 · UC-04-03 · EVT-04-01 · LGC-BUS-013
+    # Truy vết: FR-04-003 · API-04-011 · UI-04-03 · UC-04-03 · EVT-04-01 · LGC-BUS-013.
     Biết U-T68-IE1; mã `tc-trong`.
     Khi gọi `POST /flows` với `{"code":"tc-trong","name":"Thử luồng trống","workspaceCode":"ho-tich","resourceKind":"ROUTE","origin":"BLANK"}` và `Idempotency-Key`.
     Và gọi `GET /flows/tc-trong/versions/1`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-014 @P2 @Dương
   Kịch bản: TC-04-014 Tạo luồng từ khuôn có tham số
-    # Truy vết: FR-04-003, 025 · API-04-080, 081, 011 · UI-04-19 · UC-04-03
+    # Truy vết: FR-04-003, 025 · API-04-080, 081, 011 · UI-04-19 · UC-04-03.
     Biết TPL-REST.
     Khi gọi `GET /templates?resourceKind=ROUTE`.
     Và gọi `GET /templates/tpl-rest-proxy-9-chang`.
@@ -23,14 +23,14 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-015 @P2 @Dương
   Kịch bản: TC-04-015 Tạo luồng từ OpenAPI của API công bố
-    # Truy vết: FR-04-003 · API-04-011
+    # Truy vết: FR-04-003 · API-04-011.
     Biết PH-02 stub trả OpenAPI có 3 operation.
     Khi gọi `POST /flows` với `origin = OPENAPI`, `apiRef = "ho-tich-tra-cuu"`.
     Thì `201`; YAML có khối `rest` với 3 operation, mỗi operation một route `direct:` có khung chín chặng; `transport = SYNC`, `exposure = EXTERNAL`.
 
   @TC-04-016 @P2 @Dương
   Kịch bản: TC-04-016 Tạo luồng từ tệp YAML
-    # Truy vết: FR-04-003, 027 · API-04-031, 011
+    # Truy vết: FR-04-003, 027 · API-04-031, 011.
     Biết YAML-OK đổi mã route và đường dẫn sang `tc-`.
     Khi gọi `POST /validation:check` với YAML.
     Và gọi `POST /flows` với `origin = YAML_FILE`, `yaml`.
@@ -38,7 +38,7 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-017 @P1 @Âm @Biên
   Kịch bản: TC-04-017 Mã luồng sai định dạng hoặc trùng
-    # Truy vết: FR-04-003 · BR-04-001 · API-04-011 · ERR-04-002, 049
+    # Truy vết: FR-04-003 · BR-04-001 · API-04-011 · ERR-04-002, 049.
     Biết U-T68-IE1; luồng `tc-da-go` đã gỡ 10 ngày trước; luồng `tc-go-cu` đã gỡ 31 ngày trước.
     Khi tạo với `code = "tra-cuu-ho-tich"`.
     Và tạo với `code = "Tra_Cuu"`, `"ab"`, chuỗi 64 ký tự.
@@ -48,7 +48,7 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-018 @P1 @Âm
   Kịch bản: TC-04-018 Tạo luồng với nội dung không hợp lệ
-    # Truy vết: FR-04-003 · BR-04-003 · API-04-011 · ERR-04-008, 009, 010, 027, 033, 039
+    # Truy vết: FR-04-003 · BR-04-003 · API-04-011 · ERR-04-008, 009, 010, 027, 033, 039.
     Biết YAML-SECRET, YAML-BIG; YAML cú pháp hỏng; YAML Kamelet nhưng `resourceKind = ROUTE`.
     Khi tạo `origin = YAML_FILE` với YAML cú pháp hỏng.
     Và tạo với YAML Kamelet, `resourceKind = ROUTE`.
@@ -60,7 +60,7 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-019 @P2 @Âm @Biên
   Kịch bản: TC-04-019 Chống trùng khi tạo luồng
-    # Truy vết: FR-04-003 · API-04-011 · ERR-04-018
+    # Truy vết: FR-04-003 · API-04-011 · ERR-04-018.
     Biết khóa `tc-idem-0000000001`.
     Khi tạo `tc-idem` với khóa.
     Và gửi lại cùng khóa, cùng thân.
@@ -71,8 +71,18 @@ Tính năng: TS-04-03 · Tạo luồng từ luồng trống, khuôn, API, YAML
 
   @TC-04-020 @P3 @Âm @Dương
   Kịch bản: TC-04-020 Bắt buộc căn cứ pháp lý cho luồng đối ngoại
-    # Truy vết: FR-04-003, 084 · API-04-011 · UI-04-03
+    # Truy vết: FR-04-003, 084 · API-04-011 · UI-04-03.
     Biết `04.flow.require-legal-basis = true`.
     Khi tạo luồng `origin = OPENAPI` (đối ngoại) không có `legalBasisRef`.
     Và tạo lại có `legalBasisRef = "ND-278-2025"`.
     Thì bước 1 trả `422` ERR-04-009 với finding "Luồng đối ngoại phải khai căn cứ pháp lý". Bước 2 trả `201`. Trên UI-04-03 ô căn cứ hiện dấu bắt buộc khi tham số bật.
+
+  @TC-04-188 @P3 @Dương @Âm
+  Kịch bản: TC-04-188 Trạng thái màn Thư viện khuôn mẫu
+    # Truy vết: FR-04-025 · UI-04-19 · ERR-04-039, 045.
+    Biết U-T68-IE1; T68 chưa có khuôn của tỉnh; khuôn `tpl-cu` của tỉnh đã bị gỡ.
+    Khi IE1 mở UI-04-19.
+    Và lọc nhóm "Tệp" và gõ tìm "khong-co".
+    Và mở URL chi tiết của `tpl-cu`.
+    Và U-T68-VW mở URL của UI-04-19.
+    Thì bước 1: lưới 6 thẻ skeleton rồi đủ tám khuôn nền (`tpl-standard-9`, `tpl-sync-lookup`, …), không có khuôn của tỉnh nhưng không hiện trạng thái rỗng. Bước 2: ST-04 có nút "Xóa bộ lọc". Bước 3: ST-05 với câu "Khuôn mẫu "tpl-cu" không tồn tại hoặc không được phép dùng trong tỉnh." (ERR-04-039). Bước 4: ST-06. Phím `/` đặt con trỏ vào ô tìm; mũi tên chuyển thẻ theo lưới; `Enter` mở chi tiết.

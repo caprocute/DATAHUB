@@ -5,7 +5,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-021 @P1 @Dương
   Kịch bản: TC-04-021 Sửa thông tin luồng
-    # Truy vết: FR-04-004 · API-04-013 · EVT-04-02 · LGC-BUS-006, 011
+    # Truy vết: FR-04-004 · API-04-013 · EVT-04-02 · LGC-BUS-006, 011.
     Biết U-T68-IE1; F-HT, `ETag` hiện tại.
     Khi gọi `PATCH /flows/tra-cuu-ho-tich` với `If-Match`, đổi `name`, thêm nhãn `muc-do:cao`.
     Và gọi `PATCH` có `code` trong thân.
@@ -13,7 +13,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-022 @P1 @Âm
   Kịch bản: TC-04-022 Sửa thông tin luồng: khóa lạc quan và quyền
-    # Truy vết: FR-04-004 · API-04-013 · ERR-04-003, 006, 007
+    # Truy vết: FR-04-004 · API-04-013 · ERR-04-003, 006, 007.
     Biết IE1, IE3; F-HT.
     Khi IE1 gọi `PATCH` không có `If-Match`.
     Và IE1 gọi `PATCH` với ETag cũ.
@@ -23,7 +23,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-023 @P2 @Dương
   Kịch bản: TC-04-023 Nhân bản luồng
-    # Truy vết: FR-04-005 · BR-04-011 · API-04-014 · UC-04-16 · EVT-04-01
+    # Truy vết: FR-04-005 · BR-04-011 · API-04-014 · UC-04-16 · EVT-04-01.
     Biết F-HT v3; IE1.
     Khi gọi `POST /flows/tra-cuu-ho-tich:clone` với `{"code":"tc-ban-sao","name":"Bản sao","sourceVersionNo":3,"includeTestCases":true}`.
     Và gọi `GET /flows/tc-ban-sao/versions/1`.
@@ -31,7 +31,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-024 @P2 @Dương
   Kịch bản: TC-04-024 Hủy bản nháp
-    # Truy vết: FR-04-006 · BR-04-016 · API-04-023, 021
+    # Truy vết: FR-04-006 · BR-04-016 · API-04-023, 021.
     Biết F-HT v4 `DRAFT`.
     Khi IE1 gọi `POST /flows/tra-cuu-ho-tich/versions/4:discard` có `If-Match`.
     Và gọi `POST /flows/tra-cuu-ho-tich/versions`.
@@ -39,7 +39,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-025 @P2 @Âm
   Kịch bản: TC-04-025 Hủy bản nháp không đúng trạng thái
-    # Truy vết: FR-04-006 · API-04-023 · ERR-04-005
+    # Truy vết: FR-04-006 · API-04-023 · ERR-04-005.
     Biết F-HT v3 `APPROVED`; phiên bản đang `PENDING_REVIEW` ở luồng khác.
     Khi gọi `:discard` trên v3.
     Và gọi `:discard` trên phiên bản `PENDING_REVIEW`.
@@ -47,7 +47,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-026 @P1 @Dương
   Kịch bản: TC-04-026 Gỡ luồng đã phát hành, rút theo thứ tự môi trường
-    # Truy vết: FR-04-006 · BR-04-017 · API-04-015 · EVT-04-06, 09 · UC-04-16 · LGC-BUS-010, 012
+    # Truy vết: FR-04-006 · BR-04-017 · API-04-015 · EVT-04-06, 09 · UC-04-16 · LGC-BUS-010, 012.
     Biết luồng `tc-go` đã chạy ở TEST và PROD, không có phụ thuộc cứng; U-T68-TA.
     Khi gọi `POST /flows/tc-go:retire` với `{"reason":"Thay bằng luồng mới theo Quyết định thử"}` và `If-Match`.
     Và theo dõi `GET /flows/tc-go/deployments`.
@@ -55,7 +55,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-027 @P1 @Âm
   Kịch bản: TC-04-027 Gỡ luồng còn phụ thuộc, thiếu lý do
-    # Truy vết: FR-04-006 · BR-04-017 · API-04-015 · ERR-04-017, 025, 005
+    # Truy vết: FR-04-006 · BR-04-017 · API-04-015 · ERR-04-017, 025, 005.
     Biết F-HT có phụ thuộc cứng (ca TC phụ thuộc ở TS-04-02); `tc-go2` đang có lần chạy thử `RUNNING`.
     Khi TA gỡ F-HT có lý do hợp lệ.
     Và TA gỡ `tc-go2` với `reason = "gỡ"` (4 ký tự).
@@ -65,7 +65,7 @@ Tính năng: TS-04-04 · Sửa thông tin, nhân bản, hủy nháp, gỡ luồn
 
   @TC-04-028 @P2 @Âm
   Kịch bản: TC-04-028 Luồng đã gỡ chỉ đọc
-    # Truy vết: FR-04-006, 004 · API-04-013, 021 · ERR-04-034
+    # Truy vết: FR-04-006, 004 · API-04-013, 021 · ERR-04-034.
     Biết `tc-go` đã `RETIRED` (sau ca gỡ).
     Khi gọi `PATCH /flows/tc-go`.
     Và gọi `POST /flows/tc-go/versions`.

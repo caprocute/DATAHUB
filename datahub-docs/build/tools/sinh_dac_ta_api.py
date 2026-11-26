@@ -1,13 +1,22 @@
 """Sinh chương đặc tả từng endpoint (khối ::: dac-ta) từ OpenAPI có x-datahub-id.
 
-Chạy: python3 build/tools/sinh_dac_ta_api.py <openapi.yaml> <tệp.md>
+Chạy: python3 build/tools/sinh_dac_ta_api.py <openapi.yaml> <tệp.md> [--vi-du]
 Nội dung nằm giữa <!-- gen:dac-ta-api:start --> và <!-- gen:dac-ta-api:end -->;
-chưa có cặp đánh dấu thì chèn trước "## Lịch sử phiên bản" dưới tiêu đề chương mới."""
+chưa có cặp đánh dấu thì chèn trước "## Lịch sử phiên bản" dưới tiêu đề chương mới.
+
+--vi-du: sau mỗi khối in "Ví dụ yêu cầu và phản hồi" (hai khối HTTP), dựng từ `example` của tham số,
+thân yêu cầu, thân và tiêu đề phản hồi thành công trong OpenAPI (không có cờ thì đầu ra như cũ).
+Dòng `Content-Type` chỉ in khi khác `application/json` (mặc định của API) để ví dụ gọn.
+Khi nhiều operation dùng chung một mã API (hợp đồng cũ), mã chỉ nằm ở một tiêu đề `####`, mỗi operation
+là một tiêu đề `#####` theo phương thức và đường dẫn, để kiem_tra_ma.py không báo trùng."""
+import json
 import re
 import sys
 
 import yaml
 
+VI_DU = '--vi-du' in sys.argv
+sys.argv = [a for a in sys.argv if a != '--vi-du']
 oa, md = sys.argv[1], sys.argv[2]
 d = yaml.safe_load(open(oa, encoding='utf-8'))
 C = d.get('components', {})
@@ -83,6 +92,99 @@ def resp(rs):
     return ok, loi
 
 
+TRANG_THAI = {'200': 'OK', '201': 'Created', '202': 'Accepted', '204': 'No Content', '304': 'Not Modified'}
+RONG = 92
+
+
+def gon(v, thut=0):
+    """JSON gọn: một dòng nếu vừa RONG ký tự, không thì xếp các phần tử cấp ngoài thành nhiều dòng."""
+    mot = json.dumps(v, ensure_ascii=False)
+    if len(mot) + thut <= RONG or not isinstance(v, (dict, list)) or not v:
+        return mot
+    mo, dong = ('{', '}') if isinstance(v, dict) else ('[', ']')
+    if isinstance(v, dict):
+        cap = [(json.dumps(k, ensure_ascii=False) + ': ', x) for k, x in v.items()]
+    else:
+        cap = [('', x) for x in v]
+    dong_ra, cur = [], mo
+    for i, (k, x) in enumerate(cap):
+        t = k + gon(x, thut + 1)
+        t += ', ' if i < len(cap) - 1 else ''
+        dau = t.split('\n')[0]
+        if cur.strip() != mo and len(cur) + len(dau) > RONG:
+            dong_ra.append(cur.rstrip())
+            cur = ' ' * (thut + 1)
+        if '\n' in t:
+            phan = t.split('\n')
+            dong_ra.append(cur + phan[0])
+            dong_ra += phan[1:-1]
+            cur = phan[-1]
+        else:
+            cur += t
+    dong_ra.append(cur.rstrip() + dong)
+    return '\n'.join(dong_ra)
+
+
+def tim_tham_so(op):
+    out = []
+    for p in op.get('parameters') or []:
+        if '$ref' in p:
+            p = C['parameters'][ref_name(p['$ref'])]
+        out.append(p)
+    return out
+
+
+def vi_du(m, path, op):
+    base = re.sub(r'^https?://[^/]+', '', (d.get('servers') or [{}])[-1].get('url', ''))
+    ps = tim_tham_so(op)
+    url = path
+    for p in ps:
+        if p['in'] == 'path' and 'example' in p:
+            url = url.replace('{' + p['name'] + '}', str(p['example']))
+    q = []
+    for p in ps:
+        if p['in'] == 'query' and 'example' in p:
+            v = p['example']
+            if isinstance(v, list) and p.get('explode', True):
+                q += [f"{p['name']}={x}" for x in v]
+                continue
+            if isinstance(v, list):
+                v = ','.join(map(str, v))
+            q.append(f"{p['name']}={str(v).lower() if isinstance(v, bool) else v}")
+    yc = [f"{m} {base}{url}" + ('?' + '&'.join(q) if q else '')]
+    if op.get('responses', {}).get('200', {}).get('content', {}).get('text/event-stream'):
+        yc.append('Accept: text/event-stream')
+    for p in ps:
+        if p['in'] == 'header' and 'example' in p:
+            yc.append(f"{p['name']}: {p['example']}")
+    for ct, c in (op.get('requestBody') or {}).get('content', {}).items():
+        if c.get('example') is not None:
+            ex = c['example']
+            if ct.startswith('multipart/'):
+                yc += [f'Content-Type: {ct}; boundary=ranh-gioi', '']
+                for k, v in ex.items():
+                    yc += ['--ranh-gioi', f'Content-Disposition: form-data; name="{k}"', '', str(v)]
+                yc.append('--ranh-gioi--')
+            else:
+                yc += ([] if ct == 'application/json' else [f'Content-Type: {ct}']) + ['', gon(ex)]
+        break
+    ph = []
+    for code, r in op.get('responses', {}).items():
+        if not str(code).startswith('2'):
+            continue
+        ph.append(f"HTTP/1.1 {code} {TRANG_THAI.get(str(code), '')}".rstrip())
+        for h, hv in (r.get('headers') or {}).items():
+            if hv.get('example'):
+                ph.append(f"{h}: {hv['example']}")
+        for ct, c in (r.get('content') or {}).items():
+            if c.get('example') is not None:
+                ex = c['example']
+                ph += ([] if ct == 'application/json' else [f'Content-Type: {ct}']) + ['', ex.rstrip('\n') if isinstance(ex, str) else gon(ex)]
+                break
+        break
+    return ['**Ví dụ yêu cầu và phản hồi.**', '', '```http', *yc, '```', '', '```http', *ph, '```', '']
+
+
 def loi_txt(op, loi):
     # OpenAPI có x-datahub-errors (mã lỗi riêng của thao tác) thì chỉ liệt kê mã HTTP và các mã đó,
     # tránh chép mọi mã của phản hồi lỗi dùng chung.
@@ -103,7 +205,7 @@ L = ['<!-- gen:dac-ta-api:start -->', '']
 da_gap = set()  # một mã dùng cho nhiều phương thức trên cùng tài nguyên (vd GET và PUT)
 for tag, ops in nhom.items():
     L += [f'### {tag}', '']
-    for aid, m, path, op in sorted(ops):
+    for aid, m, path, op in sorted(ops, key=lambda x: x[:3]):
         ps, idem = tham_so(op.get('parameters'))
         ok, loi = resp(op.get('responses', {}))
         quyen = (op.get('x-datahub-permission') or {}).get('permission', 'Token dịch vụ')
@@ -120,6 +222,8 @@ for tag, ops in nhom.items():
         L += [f"**{a}.** {b.rstrip('.')}.\n" for a, b in rows]
         L[-1] = L[-1].rstrip('\n')
         L += [':::', '']
+        if VI_DU:
+            L += vi_du(m, path, op)
 L += ['<!-- gen:dac-ta-api:end -->']
 gen = '\n'.join(L)
 s = open(md, encoding='utf-8').read()

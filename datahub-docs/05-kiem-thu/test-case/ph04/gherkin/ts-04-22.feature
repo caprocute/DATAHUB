@@ -5,7 +5,7 @@ Tính năng: TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
 
   @TC-04-135 @P1 @Dương
   Kịch bản: TC-04-135 Đọc theo lịch với tham số hóa
-    # Truy vết: FR-04-072 · BR-04-015 · UC-04-19
+    # Truy vết: FR-04-072 · BR-04-015 · UC-04-19.
     Biết F-SQL TEST; CSDL nguồn giả lập có 2.500 dòng `dkkd.doanh_nghiep`.
     Khi kích hoạt lịch.
     Và đọc `pg_stat_activity` và nhật ký kiểm toán.
@@ -13,7 +13,7 @@ Tính năng: TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
 
   @TC-04-136 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-136 Chính sách SQL chặn câu ghi và câu nguy hiểm
-    # Truy vết: FR-04-072, 023 · BR-04-015 · ERR-04-031
+    # Truy vết: FR-04-072, 023 · BR-04-015 · ERR-04-031.
     Biết 18 câu lệnh: `INSERT`, `UPDATE`, `DELETE`, `MERGE`, `TRUNCATE`, `DROP`, `COPY … TO PROGRAM`, `SELECT pg_sleep(100)`, `SELECT … FOR UPDATE`, `SELECT dblink(…)`, `SELECT lo_import(…)`, hai câu nối bằng `;`, CTE có `DELETE … RETURNING`, câu tham chiếu `ph04.flow`, `SELECT … ${header.x}` (nối chuỗi), `CALL proc()`, `SET ROLE`; và 6 câu hợp lệ (`SELECT`, `WITH … SELECT`, có `$1`).
     Khi chạy `SqlPolicy` (JSqlParser) trên từng câu.
     Và lưu nháp luồng chứa từng câu, `:validate` mức `DESIGN`.
@@ -21,7 +21,7 @@ Tính năng: TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
 
   @TC-04-137 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-137 Kết nối không phải chỉ đọc
-    # Truy vết: FR-04-072 · BR-04-015 · ERR-04-013
+    # Truy vết: FR-04-072 · BR-04-015 · ERR-04-013.
     Biết `tc-sql-rw` dùng CONN-DKKD-RW.
     Khi `:validate` mức `SUBMIT`.
     Và Ở RT, cấu hình bỏ qua kiểm tra tĩnh, chạy `SELECT` qua kết nối có `INSERT`, rồi thử `INSERT` bằng cách lồng trong hàm do CSDL nguồn định nghĩa.
@@ -29,7 +29,7 @@ Tính năng: TS-04-22 · Truy cập CSDL có kiểm soát (Q359)
 
   @TC-04-138 @P2 @Biên
   Kịch bản: TC-04-138 Quá thời gian, vượt số dòng
-    # Truy vết: FR-04-072, 084 · ERR-04-108
+    # Truy vết: FR-04-072, 084 · ERR-04-108.
     Biết `04.sql.max-rows = 1000`; bảng 2.500 dòng; một câu `SELECT` trên bảng không có chỉ mục chạy 15 giây.
     Khi chạy câu trả 2.500 dòng.
     Và chạy câu 15 giây.

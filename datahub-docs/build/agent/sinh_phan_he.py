@@ -188,7 +188,7 @@ def loi_nhac(nn: str, tap: str) -> str:
     return "\n\n".join(p)
 
 
-async def chay_tap(nn: str, tap: str, model: str, ngan_sach: float, effort: str) -> dict:
+async def chay_tap(nn: str, tap: str, model: str, ngan_sach: float, effort: str, bo_sung: bool = False) -> dict:
     opts = ClaudeAgentOptions(
         system_prompt={"type": "preset", "preset": "claude_code", "append": HE_THONG.replace("{nn}", nn)},
         allowed_tools=["Read", "Write", "Edit", "Glob", "Grep", "Bash", "TodoWrite"],
@@ -203,7 +203,12 @@ async def chay_tap(nn: str, tap: str, model: str, ngan_sach: float, effort: str)
     )
     bat_dau = time.time()
     kq: ResultMessage | None = None
-    async for m in query(prompt=loi_nhac(nn, tap), options=opts):
+    nhac = loi_nhac(nn, tap)
+    if bo_sung:
+        nhac += ("\n\nLƯỢT BỔ SUNG: tệp chính đã có nhưng còn mỏng so với mẫu PH-05. Đối chiếu với khuôn và mẫu, "
+                 "bổ sung phần thiếu (ví dụ với test case: mỗi FR mức M có ít nhất một ca dương và một ca âm, mỗi ERR "
+                 "có ca, phủ UI và API), giữ nguyên mã đã cấp, rồi chạy lại công cụ sinh ma trận/xlsx/Gherkin.")
+    async for m in query(prompt=nhac, options=opts):
         if isinstance(m, AssistantMessage):
             for b in m.content:
                 if isinstance(b, ToolUseBlock):
@@ -233,6 +238,8 @@ def main() -> None:
     ap.add_argument("--effort", default="high")
     ap.add_argument("--ngan-sach-usd", type=float, default=25.0, help="trần chi phí cho cả phân hệ")
     ap.add_argument("--nhanh", default=None)
+    ap.add_argument("--lam-lai", default="", help="tập chạy lại dù đã xong (bổ sung phần còn mỏng)")
+    ap.add_argument("--du-tru-moi-tap", type=float, default=3.0, help="US$ giữ lại cho mỗi tập sau")
     a = ap.parse_args()
     nn = a.ph.zfill(2)
     if nn not in PHAN_HE:
@@ -241,10 +248,12 @@ def main() -> None:
         raise SystemExit("! Thiếu ANTHROPIC_API_KEY.")
 
     cp = doc_chi_phi(nn)
-    xong = {p["tap"] for p in cp["phien"] if p["ket_thuc"] == "success"}
+    lam_lai = {t for t in a.lam_lai.split(",") if t}
+    xong = {p["tap"] for p in cp["phien"] if p["ket_thuc"] == "success"} - lam_lai
     tom_tat(f"### PH-{nn} {PHAN_HE[nn][0]}\n")
     tom_tat("| Tập | Model | Chi phí US$ | Lượt | Phút | Kết thúc |\n|---|---|---|---|---|---|")
-    for tap in [t for t in THU_TU if t in a.tap.split(",")]:
+    chay = [t for t in THU_TU if t in a.tap.split(",")]
+    for i, tap in enumerate(chay):
         if tap in xong:
             tom_tat(f"| {tap} | — | — | — | — | đã xong trước đó |")
             continue
@@ -253,9 +262,12 @@ def main() -> None:
         if con < 1:
             tom_tat(f"| {tap} | — | — | — | — | dừng: hết ngân sách ({da_tieu:.2f}/{a.ngan_sach_usd}) |")
             break
+        # Giữ phần dự trữ cho các tập sau để tập cuối (test case, rà chéo) không bị đói ngân sách.
+        sau = len([t for t in chay[i + 1:] if t not in xong])
+        tran = max(2.0, con - a.du_tru_moi_tap * sau)
         model = a.model_ra_soat if tap == "ra-soat" else a.model
-        print(f"== PH-{nn} tập {tap} ({model}, còn {con:.2f} US$)", flush=True)
-        r = asyncio.run(chay_tap(nn, tap, model, con, a.effort))
+        print(f"== PH-{nn} tập {tap} ({model}, trần phiên {tran:.2f}, còn {con:.2f} US$)", flush=True)
+        r = asyncio.run(chay_tap(nn, tap, model, tran, a.effort, bo_sung=tap in lam_lai))
         km = sh("python3", "datahub-docs/build/tools/kiem_tra_ma.py", check=False)
         r["kiem_tra_ma"] = (km.stdout.strip().splitlines() or [""])[-3:]
         cp["phien"].append(r)
