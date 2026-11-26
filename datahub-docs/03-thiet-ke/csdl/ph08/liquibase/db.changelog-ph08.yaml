@@ -1,0 +1,37 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_data_migrator (thành viên ph08_owner), defaultSchemaName=ph08_dq.
+# Context: bootstrap (vai trò, schema). Bộ quy tắc mẫu COMMON nạp bằng changeset ph08-0930; khởi tạo tenant bằng thủ tục p_seed_tenant (08-0090-seed.sql).
+databaseChangeLog:
+  - include:
+      file: changes/08-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0010-asset.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0020-rule.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0030-scan.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0040-finding.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0050-issue.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0060-alert-report.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0070-ops.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0090-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/08-0900-grants.sql
+      relativeToChangelogFile: true
