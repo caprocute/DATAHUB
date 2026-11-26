@@ -530,24 +530,27 @@ PH-05 có 62 chức năng chia tám nhóm. Bảng dưới liệt kê toàn bộ 
 
 ### 6.1. Cách đọc bảng đặc tả
 
-Mỗi chức năng được đặc tả bằng một bảng hai cột với các mục cố định dưới đây. Mục không áp dụng ghi "Không" để người đọc biết đã được xét, không bị bỏ sót.
+Mỗi chức năng được đặc tả bằng một bảng hai cột gồm 17 mục cố định. Chuẩn này kết hợp hai nguồn: 12 trường kỹ thuật của mẫu FR ở D00-01 §4.3 (đầu vào, đầu ra, mã lỗi, sự kiện, kiểm toán) để kỹ sư và kiểm thử viên dùng ngay, và các mục của mẫu thuyết minh đặc tả chức năng (mục đích, kích hoạt, luồng theo tác nhân, thông báo, kết quả, màn hình) để hội đồng và người dùng nghiệp vụ đọc được. Mục không áp dụng ghi "Không" để người đọc biết đã được xét, không bị bỏ sót.
 
-| Mục | Nội dung |
-|---|---|
-| Mục đích | Chức năng giúp ai làm được việc gì, vì sao cần |
-| Tác nhân | Vai trò thực hiện và quyền cần có |
-| Mức ưu tiên, đợt | M (bắt buộc), S (nên có), C (có thì tốt); đợt phát hành |
-| Truy vết | Yêu cầu nguồn (REQ), chức năng hệ cũ (LGC), quyết định (Q, ADR) |
-| Điều kiện trước | Trạng thái phải đúng trước khi chức năng chạy |
-| Kích hoạt | Thao tác hoặc sự kiện khởi động chức năng |
-| Luồng xử lý chính | Các bước theo thứ tự, chủ ngữ là tác nhân hoặc hệ thống, kiểm chứng được |
-| Luồng thay thế | Nhánh hợp lệ khác của luồng chính |
-| Luồng ngoại lệ | Tình huống lỗi, cách hệ thống xử lý, thông báo người dùng nhìn thấy, mã lỗi |
-| Quy tắc nghiệp vụ | Quy tắc áp dụng (mã BR ở chương 7) |
-| Kết quả | Điều người dùng nhận được khi chức năng thành công |
-| Hậu điều kiện | Trạng thái dữ liệu sau khi chức năng kết thúc |
-| Sự kiện, kiểm toán | Sự kiện phát ra (EVT), dữ liệu ghi vào nhật ký kiểm toán |
-| Màn hình, API | Màn hình (UI) và API hiện thực chức năng |
+| Mục | Nội dung | Nguồn |
+|---|---|---|
+| Mục đích | Chức năng giúp ai làm được việc gì, vì sao cần | Mẫu thuyết minh |
+| Tác nhân, quyền | Vai trò thực hiện và `PERM` cần có | D00-01 §4.3 |
+| Mức ưu tiên, đợt | M (bắt buộc), S (nên có), C (có thì tốt); đợt phát hành | D00-01 §4.3, mẫu |
+| Truy vết | REQ, LGC, Q, ADR | D00-01 §4.3 |
+| Tiền điều kiện | Trạng thái phải đúng trước khi chức năng chạy | D00-01 §4.3 |
+| Kích hoạt | Thao tác hoặc sự kiện khởi động chức năng | Mẫu thuyết minh |
+| Đầu vào | Tham số, trường nhập: tên, kiểu chuẩn, bắt buộc, ràng buộc (bảng riêng khi từ 5 trường) | D00-01 §4.3 |
+| Luồng xử lý chính | Các bước đánh số, chủ ngữ là tác nhân hoặc hệ thống; bước kiểm tra ghi mã lỗi khi không đạt | Cả hai |
+| Luồng thay thế | Nhánh hợp lệ khác của luồng chính | Mẫu thuyết minh |
+| Luồng ngoại lệ | Điều kiện, mã lỗi `ERR`, mã HTTP, hành vi, câu thông báo người dùng nhìn thấy | Cả hai |
+| Đầu ra | Mã HTTP, các trường trả về, tiêu đề | D00-01 §4.3 |
+| Kết quả | Điều người dùng nhận được khi thành công | Mẫu thuyết minh |
+| Hậu điều kiện | Trạng thái dữ liệu sau khi kết thúc | D00-01 §4.3 |
+| Sự kiện phát ra | `EVT` nếu có | D00-01 §4.3 |
+| Kiểm toán | Có ghi kiểm toán không, các trường được ghi | D00-01 §4.3 |
+| Quy tắc nghiệp vụ | Mã `BR` áp dụng (chương 7) | Cả hai |
+| Màn hình, API | `UI` và `API` hiện thực chức năng | Mẫu thuyết minh |
 
 : Các mục của bảng đặc tả chức năng
 
@@ -560,15 +563,17 @@ Ví dụ trong chương này dùng tenant `T68`, HTTT `HT-TUPHAP` (Sở Tư phá
 ::: dac-ta
 **Mục đích.** Cho kỹ sư tích hợp và trình thiết kế luồng biết Datahub hỗ trợ những cách kết nối nào, mỗi cách cần khai báo những tham số gì và bí mật gì, để màn hình tạo kết nối tự dựng biểu mẫu đúng theo loại mà không phải viết riêng cho từng giao thức.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`; PH-04 (trình thiết kế luồng) bằng token dịch vụ.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`; PH-04 (trình thiết kế luồng) bằng token dịch vụ.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-040, LGC-TOOL-008, 009, 010.
 
-**Điều kiện trước.** Người dùng đã đăng nhập và chọn tenant làm việc (FR-00-004).
+**Tiền điều kiện.** Người dùng đã đăng nhập và chọn tenant làm việc (FR-00-004).
 
 **Kích hoạt.** Người dùng mở bước "Chọn loại" của màn tạo kết nối, hoặc trình thiết kế nạp danh sách loại khi khởi động.
+
+**Đầu vào.** `protocolGroup` (lọc theo nhóm giao thức, tùy chọn); `includeDisabled` (mặc định `false`, chỉ có tác dụng với `PERM-05-admin`); hoặc `typeCode` khi lấy một loại.
 
 **Luồng xử lý chính.**
 
@@ -585,13 +590,17 @@ Ví dụ trong chương này dùng tenant `T68`, HTTT `HT-TUPHAP` (Sở Tư phá
 - Mã loại không tồn tại khi gọi theo `typeCode`: trả ERR-05-001, màn hình báo "Không tìm thấy loại kết nối {mã}."
 - Tham số lọc sai miền giá trị: trả ERR-05-003 kèm tên tham số sai.
 
-**Quy tắc nghiệp vụ.** Loại kết nối chỉ thêm mới qua bản phát hành nền tảng, vì mỗi loại cần Kamelet giao thức và bước kiểm tra đã được kiểm thử; tenant chỉ bật, tắt và đặt trần (FR-05-061).
+**Đầu ra.** `200`; danh sách loại: `typeCode`, tên, nhóm, mức hỗ trợ (`STABLE`, `PREVIEW`, `DEPRECATED`), `enabledInTenant`, lược đồ tham số (JSON Schema 2020-12), `secretKeys[]`, Kamelet giao thức, các bước kiểm tra, trần tham số của tenant.
 
 **Kết quả.** Người dùng thấy đúng các loại được phép dùng ở tỉnh mình, với biểu mẫu tham số tương ứng.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không phát sự kiện; không ghi kiểm toán (thao tác chỉ đọc, không có dữ liệu nhạy cảm).
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không (thao tác chỉ đọc, không có dữ liệu nhạy cảm).
+
+**Quy tắc nghiệp vụ.** Loại kết nối chỉ thêm mới qua bản phát hành nền tảng, vì mỗi loại cần Kamelet giao thức và bước kiểm tra đã được kiểm thử; tenant chỉ bật, tắt và đặt trần (FR-05-061).
 
 **Màn hình, API.** UI-05-03 bước 1; API-05-001, API-05-002.
 :::
@@ -648,15 +657,17 @@ flowchart TB
 ::: dac-ta
 **Mục đích.** Giúp kỹ sư và cán bộ vận hành tìm nhanh một kết nối trong vài trăm kết nối của tỉnh, và thấy ngay kết nối nào đang hỏng, bí mật nào sắp quá hạn xoay, kết nối nào đang chờ duyệt.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-040.
 
-**Điều kiện trước.** Đã đăng nhập, chọn tenant.
+**Tiền điều kiện.** Đã đăng nhập, chọn tenant.
 
 **Kích hoạt.** Người dùng mở menu Tích hợp › Kết nối nguồn, hoặc thay đổi ô tìm kiếm, bộ lọc, trang.
+
+**Đầu vào.** `q`, `typeCode`, `protocolGroup`, `systemCode`, `status`, `health`, `env` (có giá trị `ENABLED` ở môi trường), `grantedTo` (mã không gian làm việc), `owner`, `label`; `cursor`, `limit` (mặc định 25, ≤ 100); `sort` (`code`, `name`, `updatedAt`, `health`).
 
 **Luồng xử lý chính.**
 
@@ -674,13 +685,17 @@ flowchart TB
 - Tham số sai miền (ví dụ `limit` > 100): trả ERR-05-003; màn hình giữ bộ lọc cũ và báo "Giá trị lọc không hợp lệ: {tên tham số}."
 - Không có kết quả: màn hình hiện trạng thái rỗng "Không có kết nối khớp bộ lọc" kèm nút "Xóa bộ lọc"; nếu tenant chưa có kết nối nào thì hiện hướng dẫn "Tạo kết nối đầu tiên" hoặc "Nhập từ hệ cũ".
 
-**Quy tắc nghiệp vụ.** BR-05-014 (đối tượng mất kết nối đứng đầu); BR-05-002 (cô lập tenant).
+**Đầu ra.** `200`; `items[]`: mã, tên, loại, HTTT, trạng thái, môi trường `ENABLED`, sức khỏe từng môi trường, số nơi dùng, tuổi bí mật, cập nhật lần cuối; `page` (`nextCursor`, `limit`); `facets` đếm theo loại, trạng thái, sức khỏe.
 
 **Kết quả.** Người dùng tìm được kết nối cần xem trong một hoặc hai thao tác và nhận diện ngay các kết nối có vấn đề.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-014 (đối tượng mất kết nối đứng đầu); BR-05-002 (cô lập tenant).
 
 **Màn hình, API.** UI-05-01; API-05-003.
 :::
@@ -690,15 +705,17 @@ flowchart TB
 ::: dac-ta
 **Mục đích.** Cho người dùng thấy toàn bộ thông tin của một kết nối trên một màn: thông tin chung, giá trị từng môi trường, ai được dùng, kết quả kiểm tra, sức khỏe, nơi đang dùng và lịch sử, mà không bao giờ thấy giá trị bí mật.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-006 (phần thông tin kết nối).
 
-**Điều kiện trước.** Kết nối thuộc tenant hiện hành.
+**Tiền điều kiện.** Kết nối thuộc tenant hiện hành.
 
 **Kích hoạt.** Người dùng bấm vào một dòng ở danh sách, hoặc mở liên kết từ luồng, cảnh báo, việc chờ duyệt.
+
+**Đầu vào.** `connectionCode` (đường dẫn).
 
 **Luồng xử lý chính.**
 
@@ -714,13 +731,17 @@ flowchart TB
 
 - Kết nối không tồn tại hoặc thuộc tenant khác: trả ERR-05-001 với cùng một thân phản hồi cho cả hai trường hợp, để không lộ sự tồn tại của kết nối ở tỉnh khác; màn hình báo "Không tìm thấy kết nối {mã}."
 
-**Quy tắc nghiệp vụ.** BR-05-001 (không bao giờ trả giá trị bí mật); BR-05-002 (đối tượng của tenant khác coi như không tồn tại).
+**Đầu ra.** `200`; thông tin chung; ba giá trị môi trường với tham số không bí mật, `secretSet`, `secretVersion`, `secretUpdatedAt`, trạng thái, lần kiểm tra gần nhất; danh sách cấp; sức khỏe; số nơi dùng; tiêu đề `ETag`. Không bao giờ có giá trị bí mật.
 
 **Kết quả.** Người dùng nắm được tình trạng đầy đủ của kết nối và các thao tác có thể làm tiếp.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-001 (không bao giờ trả giá trị bí mật); BR-05-002 (đối tượng của tenant khác coi như không tồn tại).
 
 **Màn hình, API.** UI-05-02; API-05-005, API-05-010.
 :::
@@ -730,24 +751,26 @@ flowchart TB
 ::: dac-ta
 **Mục đích.** Khai báo một kết nối mới tới HTTT thành viên theo một loại kết nối, làm điểm tựa duy nhất cho mọi luồng sau này dùng tới HTTT đó. Ở bước này chỉ khai thông tin chung; tham số và bí mật theo môi trường khai ở FR-05-005.
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-011, LGC-BUS-013, LGC-TOOL-008, 009.
 
-**Điều kiện trước.** HTTT chủ quản ở trạng thái `ACTIVE` trong danh mục HTTT của PH-01; loại kết nối đang được bật ở tenant.
+**Tiền điều kiện.** HTTT chủ quản ở trạng thái `ACTIVE` trong danh mục HTTT của PH-01; loại kết nối đang được bật ở tenant.
 
 **Kích hoạt.** Người dùng bấm "+ Tạo kết nối" ở UI-05-01, chọn loại ở bước 1 và điền bước 2 "Thông tin chung" của trình hướng dẫn UI-05-03.
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-004 dưới đây.
 
 **Luồng xử lý chính.**
 
 1. Người dùng chọn loại kết nối (FR-05-001), nhập mã, tên, HTTT chủ quản, mục đích (chỉ đọc hoặc đọc ghi), mô tả, chủ sở hữu, nhãn theo bảng dữ liệu vào dưới đây, rồi bấm "Tiếp tục".
-2. Hệ thống kiểm tra quyền và khóa chống gửi trùng `Idempotency-Key`; cùng khóa với cùng nội dung thì trả lại kết quả lần trước.
-3. Hệ thống kiểm tra mã theo mẫu `^[a-z][a-z0-9-]{2,62}$` và chưa từng dùng trong tenant, kể cả kết nối đã ngừng dùng.
-4. Hệ thống kiểm tra loại kết nối đang được bật ở tenant.
-5. Hệ thống kiểm tra HTTT tồn tại và ở trạng thái `ACTIVE` trong bản sao danh mục HTTT của PH-01.
-6. Hệ thống từ chối nếu thân yêu cầu có trường trùng tên với khóa bí mật của loại (ví dụ `password`), để bí mật không bao giờ đi qua đường lưu tham số thường.
+2. Hệ thống kiểm tra quyền và khóa chống gửi trùng `Idempotency-Key`; cùng khóa với cùng nội dung thì trả lại kết quả lần trước, cùng khóa khác nội dung thì từ chối (ERR-05-039).
+3. Hệ thống kiểm tra mã theo mẫu `^[a-z][a-z0-9-]{2,62}$` (sai mẫu: ERR-05-003) và chưa từng dùng trong tenant, kể cả kết nối đã ngừng dùng (trùng: ERR-05-002).
+4. Hệ thống kiểm tra loại kết nối đang được bật ở tenant (ERR-05-004).
+5. Hệ thống kiểm tra HTTT tồn tại và ở trạng thái `ACTIVE` trong bản sao danh mục HTTT của PH-01 (ERR-05-005).
+6. Hệ thống từ chối nếu thân yêu cầu có trường trùng tên với khóa bí mật của loại (ví dụ `password`), để bí mật không bao giờ đi qua đường lưu tham số thường (ERR-05-006, BR-05-001).
 7. Hệ thống tạo kết nối ở trạng thái `DRAFT` (bản nháp), chưa có giá trị môi trường nào, ghi kiểm toán.
 8. Màn hình chuyển sang bước 3 "Tham số và bí mật theo môi trường" (FR-05-005).
 
@@ -762,13 +785,17 @@ flowchart TB
 - Có bí mật trong thân: ERR-05-006 (422); "Trường {tên} là bí mật. Khai ở mục Bí mật bên dưới." và con trỏ chuyển tới ô bí mật.
 - Khóa chống gửi trùng đã dùng với nội dung khác: ERR-05-039 (422).
 
-**Quy tắc nghiệp vụ.** BR-05-001 (bí mật chỉ qua đường ghi bí mật); BR-05-004 (mã bất biến, không dùng lại).
+**Đầu ra.** `201`; thân như FR-05-003; tiêu đề `Location`, `ETag`.
 
 **Kết quả.** Kết nối nháp xuất hiện trong danh sách với nhãn "Bản nháp"; người dùng tiếp tục khai báo môi trường.
 
 **Hậu điều kiện.** Kết nối ở `DRAFT`; chưa dùng được trong luồng ngoài chế độ thiết kế.
 
-**Sự kiện, kiểm toán.** Không phát sự kiện (sự kiện chỉ phát khi một môi trường được bật, EVT-05-01). Kiểm toán: người tạo, mã, loại, HTTT, mục đích.
+**Sự kiện phát ra.** Không (sự kiện chỉ phát khi một môi trường được bật, EVT-05-01).
+
+**Kiểm toán.** Có: người tạo, mã, loại, HTTT, mục đích.
+
+**Quy tắc nghiệp vụ.** BR-05-001 (bí mật chỉ qua đường ghi bí mật); BR-05-004 (mã bất biến, không dùng lại).
 
 **Màn hình, API.** UI-05-03 bước 1–2; API-05-004.
 :::
@@ -792,21 +819,23 @@ flowchart TB
 ::: dac-ta
 **Mục đích.** Cho phép một kết nối có tham số và bí mật riêng ở TEST, STAGING, PROD, để cùng một luồng chạy được ở cả ba môi trường mà không sửa luồng, và để bí mật đi thẳng vào kho bí mật theo một chiều, không ai đọc lại được.
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-011, LGC-BUS-041, LGC-TOOL-008, 012.
 
-**Điều kiện trước.** Kết nối không ở `RETIRED`; môi trường thuộc `TEST`, `STAGING`, `PROD`.
+**Tiền điều kiện.** Kết nối không ở `RETIRED`; môi trường thuộc `TEST`, `STAGING`, `PROD`.
 
 **Kích hoạt.** Người dùng điền bước 3 của trình hướng dẫn tạo kết nối, hoặc bấm "Sửa" trên một môi trường ở tab Môi trường của UI-05-02.
+
+**Đầu vào.** Hai lệnh tách biệt. (a) Tham số không bí mật: đối tượng theo lược đồ của loại, kèm `If-Match`. (b) Bí mật: đối tượng chỉ gồm các khóa trong `secretKeys` của loại, chỉ qua HTTPS, kích thước ≤ 16 KiB.
 
 **Luồng xử lý chính.**
 
 1. Màn hình dựng biểu mẫu theo lược đồ của loại kết nối: phần tham số không bí mật (ví dụ `endpointUrl`, `timeoutMs`) và phần bí mật tách riêng (ví dụ `wssPassword`). Ô bí mật là ô mật khẩu, không có nút hiện, không tự điền.
-2. Người dùng nhập tham số và bấm "Lưu tham số". Hệ thống kiểm tra theo JSON Schema của loại và trả tối đa 20 lỗi kèm đường dẫn trường.
-3. Hệ thống kiểm tra tham số không vượt trần của tenant (ví dụ `maxPoolSize`, `timeoutMs`).
+2. Người dùng nhập tham số và bấm "Lưu tham số". Hệ thống kiểm tra theo JSON Schema của loại và trả tối đa 20 lỗi kèm đường dẫn trường (ERR-05-003).
+3. Hệ thống kiểm tra tham số không vượt trần của tenant (ví dụ `maxPoolSize`, `timeoutMs`; ERR-05-030).
 4. Hệ thống kiểm tra `baseUrl`, `host` không trỏ vào dải địa chỉ nội bộ của nền tảng (danh sách cấm ở D03-07) và tên máy chủ đích có trong danh sách egress của tenant; nếu chưa có, hệ thống tạo đề nghị bổ sung egress gửi TA và cảnh báo người dùng.
 5. Người dùng nhập bí mật và bấm "Ghi bí mật". Hệ thống ghi thẳng vào OpenBao tại `kv/dh/{tenant}/conn/{connectionCode}/{env}` bằng token dịch vụ chỉ có quyền ghi; PostgreSQL chỉ lưu số phiên bản bí mật, thời điểm và người ghi. Ô bí mật trên màn hình được xóa ngay sau khi gửi.
 6. Hệ thống đặt giá trị môi trường về `CONFIGURED`. Nếu là PROD đang `ENABLED`, thay đổi được lưu thành bản chờ duyệt, bản đang chạy giữ nguyên.
@@ -824,13 +853,17 @@ flowchart TB
 - Kết nối đã ngừng dùng: ERR-05-008 (409).
 - Đang đóng băng thay đổi PROD: ERR-05-031 (423); "Đang trong khoảng đóng băng thay đổi PROD tới {thời điểm}."
 
-**Quy tắc nghiệp vụ.** BR-05-001 (bí mật chỉ ở OpenBao); BR-05-010 (sửa PROD không gián đoạn); BR-05-011 (TLS ≥ 1.2); BR-05-013 (đích phải có trong egress).
+**Đầu ra.** (a) `200` kèm giá trị môi trường mới; (b) `204` không thân.
 
 **Kết quả.** Môi trường có đủ tham số và bí mật, sẵn sàng để kiểm tra.
 
 **Hậu điều kiện.** Giá trị môi trường ở `CONFIGURED`; phải kiểm tra đạt trước khi bật.
 
-**Sự kiện, kiểm toán.** EVT-05-02 khi tham số của giá trị đang bật ở TEST, STAGING thay đổi. Kiểm toán: môi trường, khóa tham số thay đổi (giá trị cũ và mới với tham số không bí mật), tên khóa bí mật thay đổi, phiên bản bí mật; không bao giờ ghi giá trị bí mật.
+**Sự kiện phát ra.** EVT-05-02 khi tham số của giá trị đang bật ở TEST, STAGING thay đổi.
+
+**Kiểm toán.** Có: môi trường, khóa tham số thay đổi (giá trị cũ và mới với tham số không bí mật), tên khóa bí mật thay đổi, `secretVersion`; không bao giờ ghi giá trị bí mật.
+
+**Quy tắc nghiệp vụ.** BR-05-001 (bí mật chỉ ở OpenBao); BR-05-010 (sửa PROD không gián đoạn); BR-05-011 (TLS ≥ 1.2); BR-05-013 (đích phải có trong egress).
 
 **Màn hình, API.** UI-05-03 bước 3; UI-05-02 tab Môi trường; API-05-011 (tham số), API-05-012 (bí mật).
 :::
@@ -860,15 +893,17 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Cập nhật thông tin mô tả của kết nối (tên, mô tả, chủ sở hữu, nhãn, mục đích) mà không ảnh hưởng tới tham số kỹ thuật, và cho người sửa thấy trước luồng nào bị ảnh hưởng.
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-011.
 
-**Điều kiện trước.** Kết nối không ở `RETIRED`.
+**Tiền điều kiện.** Kết nối không ở `RETIRED`.
 
 **Kích hoạt.** Người dùng bấm "Sửa" ở tab Tổng quan của UI-05-02.
+
+**Đầu vào.** `name`, `description`, `owner`, `labels`, `purpose` (`PATCH`); tiêu đề `If-Match`.
 
 **Luồng xử lý chính.**
 
@@ -885,13 +920,17 @@ sequenceDiagram
 - Sửa mã, loại hoặc HTTT: ERR-05-003 (400); "Không sửa được mã, loại, HTTT của kết nối. Tạo kết nối mới nếu cần đổi."
 - Xung đột phiên bản: ERR-05-007 (412).
 
-**Quy tắc nghiệp vụ.** BR-05-004 (mã bất biến).
+**Đầu ra.** `200`; kết nối sau khi sửa; `affectedUsages[]` (nơi dùng bị ảnh hưởng, FR-05-013); `ETag` mới.
 
 **Kết quả.** Thông tin kết nối được cập nhật; người dùng biết các luồng đang dùng kết nối.
 
 **Hậu điều kiện.** Phiên bản cấu hình của kết nối tăng một.
 
-**Sự kiện, kiểm toán.** EVT-05-02. Kiểm toán: trường cũ và mới.
+**Sự kiện phát ra.** EVT-05-02.
+
+**Kiểm toán.** Có: trường cũ và mới.
+
+**Quy tắc nghiệp vụ.** BR-05-004 (mã bất biến).
 
 **Màn hình, API.** UI-05-02 tab Tổng quan; API-05-006.
 :::
@@ -901,24 +940,26 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Đưa một môi trường của kết nối vào sử dụng sau khi đã kiểm tra đạt, với môi trường thật (PROD) cần người thứ hai duyệt; và cho phép tắt nhanh một môi trường khi có sự cố.
 
-**Tác nhân.** Bật TEST, STAGING và xin bật PROD: IE, TA (`PERM-05-connection`). Duyệt, từ chối PROD: IA (`PERM-05-approve`). Tắt: TO, TA, SO (`PERM-05-operate`).
+**Tác nhân, quyền.** Bật TEST, STAGING và xin bật PROD: IE, TA (`PERM-05-connection`). Duyệt, từ chối PROD: IA (`PERM-05-approve`). Tắt: TO, TA, SO (`PERM-05-operate`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-009, 012 (phần kết nối).
 
-**Điều kiện trước.** Giá trị môi trường ở `CONFIGURED` hoặc `DISABLED`; có lần kiểm tra đạt trong 24 giờ trên đúng phiên bản tham số và bí mật hiện tại.
+**Tiền điều kiện.** Giá trị môi trường ở `CONFIGURED` hoặc `DISABLED`; có lần kiểm tra đạt trong 24 giờ trên đúng phiên bản tham số và bí mật hiện tại.
 
 **Kích hoạt.** Người dùng bấm "Bật" hoặc "Xin bật PROD" ở tab Môi trường; IA mở việc "Duyệt bật PROD" trong "Việc của tôi"; người vận hành bấm "Tắt".
+
+**Đầu vào.** `env`; `reason` (bắt buộc khi tắt và khi từ chối, 10…500 ký tự); `comment` khi duyệt.
 
 **Luồng xử lý chính.**
 
 1. Người dùng bấm "Bật" trên một môi trường.
-2. Hệ thống kiểm tra trạng thái và có lần kiểm tra đạt trong 24 giờ đúng phiên bản tham số, bí mật hiện tại.
+2. Hệ thống kiểm tra trạng thái và có lần kiểm tra đạt trong 24 giờ đúng phiên bản tham số, bí mật hiện tại (ERR-05-008, ERR-05-009).
 3. Với TEST, STAGING: hệ thống chuyển `ENABLED`, phát EVT-05-01; runtime của môi trường đó nạp kết nối.
 4. Với PROD: hệ thống chuyển `PENDING_APPROVAL` và tạo việc trong hộp "Việc của tôi" của IA, kèm kết quả kiểm tra và khác biệt so với giá trị đang chạy (nếu có).
 5. IA mở việc, xem khác biệt và kết quả kiểm tra, bấm "Duyệt" kèm ý kiến.
-6. Hệ thống kiểm tra người duyệt khác người xin bật và khác người ghi bí mật gần nhất; chuyển `ENABLED`; nếu đây là môi trường đầu tiên được bật thì kết nối chuyển từ `DRAFT` sang `ACTIVE`; phát EVT-05-01.
+6. Hệ thống kiểm tra người duyệt khác người xin bật và khác người ghi bí mật gần nhất (ERR-05-011); chuyển `ENABLED`; nếu đây là môi trường đầu tiên được bật thì kết nối chuyển từ `DRAFT` sang `ACTIVE`; phát EVT-05-01.
 7. Hệ thống ghi kiểm toán và thông báo người xin bật.
 
 **Luồng thay thế.**
@@ -934,13 +975,17 @@ sequenceDiagram
 - Thiếu lý do khi tắt hoặc từ chối: ERR-05-038 (400).
 - Đang đóng băng thay đổi PROD: ERR-05-031 (423).
 
-**Quy tắc nghiệp vụ.** BR-05-006 (cần kiểm tra đạt 24 giờ); BR-05-009 (bốn mắt); BR-05-010 (bản PROD đang chạy giữ nguyên tới khi bản mới được duyệt).
+**Đầu ra.** `200`; giá trị môi trường với trạng thái mới (`ENABLED`, `PENDING_APPROVAL`, `CONFIGURED`, `DISABLED`).
 
 **Kết quả.** Môi trường được bật và luồng ở môi trường đó dùng được kết nối; hoặc môi trường bị tắt ngay khi có sự cố.
 
 **Hậu điều kiện.** Giá trị `ENABLED` dùng được ở runtime trong môi trường đó; hoặc `DISABLED` và mọi lượt gọi mới bị từ chối.
 
-**Sự kiện, kiểm toán.** EVT-05-01 (bật), EVT-05-04 (tắt). Kiểm toán: hành động, môi trường, người xin, người duyệt, lý do.
+**Sự kiện phát ra.** EVT-05-01 (bật), EVT-05-04 (tắt, có `env`).
+
+**Kiểm toán.** Có: hành động, môi trường, người xin, người duyệt, lý do.
+
+**Quy tắc nghiệp vụ.** BR-05-006 (cần kiểm tra đạt 24 giờ); BR-05-009 (bốn mắt); BR-05-010 (bản PROD đang chạy giữ nguyên tới khi bản mới được duyệt).
 
 **Màn hình, API.** UI-05-02 tab Môi trường; UI-05-17; API-05-013, 014, 015, 016.
 :::
@@ -971,22 +1016,24 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Cho phép chặn ngay mọi lượt dùng một kết nối khi HTTT bảo trì hoặc có sự cố an toàn thông tin, mở lại khi xong; và cho phép ngừng dùng hẳn một kết nối không còn cần, có kiểm tra không làm đứt luồng nào.
 
-**Tác nhân.** Tạm ngừng, tiếp tục: TO, TA, SO (`PERM-05-operate`). Ngừng dùng: IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** Tạm ngừng, tiếp tục: TO, TA, SO (`PERM-05-operate`). Ngừng dùng: IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-009, 010.
 
-**Điều kiện trước.** Tạm ngừng: kết nối `ACTIVE`. Tiếp tục: kết nối `SUSPENDED`. Ngừng dùng: kết nối `DRAFT`, `ACTIVE` hoặc `SUSPENDED`.
+**Tiền điều kiện.** Tạm ngừng: kết nối `ACTIVE`. Tiếp tục: kết nối `SUSPENDED`. Ngừng dùng: kết nối `DRAFT`, `ACTIVE` hoặc `SUSPENDED`.
 
 **Kích hoạt.** Người dùng bấm "Tạm ngừng", "Tiếp tục" hoặc "Ngừng dùng" ở thanh tiêu đề UI-05-02.
+
+**Đầu vào.** `reason` (bắt buộc, 10…500 ký tự).
 
 **Luồng xử lý chính.**
 
 1. Người dùng bấm "Tạm ngừng" và nhập lý do (bắt buộc).
 2. Hệ thống chuyển kết nối sang `SUSPENDED`, chặn mọi môi trường, dừng kiểm tra sức khỏe, phát EVT-05-04; runtime từ chối lượt gọi mới bằng ERR-05-118 trong tối đa 30 giây.
 3. Khi sự cố xong, người dùng bấm "Tiếp tục"; hệ thống đưa kết nối về `ACTIVE`, các môi trường trở lại đúng trạng thái trước khi tạm ngừng, phát EVT-05-04.
-4. Khi không còn cần kết nối, IE bấm "Ngừng dùng" và nhập lý do. Hệ thống kiểm tra không còn nơi dùng ở phiên bản luồng đang chạy hoặc phiên bản bộ điều hợp đang hiệu lực (FR-05-013).
+4. Khi không còn cần kết nối, IE bấm "Ngừng dùng" và nhập lý do. Hệ thống kiểm tra không còn nơi dùng ở phiên bản luồng đang chạy hoặc phiên bản bộ điều hợp đang hiệu lực (FR-05-013); còn nơi dùng thì từ chối (ERR-05-010).
 5. Hệ thống chuyển kết nối sang `RETIRED`, thu hồi mọi cấp sử dụng, thu hồi tài khoản CSDL (FR-05-028), lên lịch hủy bí mật sau 30 ngày, phát EVT-05-04, ghi kiểm toán.
 
 **Luồng thay thế.** Nếu SO là người tạm ngừng, chỉ SO (hoặc TA cùng SO) được tiếp tục, để kết nối không bị mở lại khi sự cố ATTT chưa xử lý xong.
@@ -997,13 +1044,17 @@ sequenceDiagram
 - Chuyển trạng thái không hợp lệ (ví dụ tạm ngừng kết nối nháp): ERR-05-008 (409).
 - Thiếu lý do: ERR-05-038 (400).
 
-**Quy tắc nghiệp vụ.** BR-05-004 (mã không dùng lại sau ngừng dùng); BR-05-012 (bí mật hủy sau 30 ngày, khôi phục trong 30 ngày cần TA và SO).
+**Đầu ra.** `200`; kết nối với trạng thái mới. Ngừng dùng còn nơi dùng: `409` kèm danh sách nơi dùng.
 
 **Kết quả.** Kết nối bị chặn ngay khi cần, mở lại an toàn, hoặc được rút khỏi sử dụng mà không làm hỏng luồng.
 
 **Hậu điều kiện.** Trạng thái kết nối mới; runtime đã nhận sự kiện.
 
-**Sự kiện, kiểm toán.** EVT-05-04. Kiểm toán: hành động, lý do, người thực hiện.
+**Sự kiện phát ra.** EVT-05-04.
+
+**Kiểm toán.** Có: hành động, lý do, người thực hiện.
+
+**Quy tắc nghiệp vụ.** BR-05-004 (mã không dùng lại sau ngừng dùng); BR-05-012 (bí mật hủy sau 30 ngày, khôi phục trong 30 ngày cần TA và SO).
 
 **Màn hình, API.** UI-05-02; API-05-007, 008, 009.
 :::
@@ -1013,20 +1064,22 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Giới hạn kết nối chỉ được dùng bởi đúng không gian làm việc (nhóm dự án tích hợp) hoặc đúng luồng cần nó, để một nhóm không tự ý dùng kết nối tới CSDL của sở khác.
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-032 (phân quyền theo nhóm của Bus).
 
-**Điều kiện trước.** Kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04.
+**Tiền điều kiện.** Kết nối không `RETIRED`; không gian làm việc hoặc luồng tồn tại ở PH-04.
 
 **Kích hoạt.** Người dùng bấm "+ Cấp" ở tab Cấp sử dụng của UI-05-02, hoặc ở bước 5 của trình hướng dẫn tạo kết nối.
+
+**Đầu vào.** `scope` (`WORKSPACE`, `FLOW`), `workspaceCode` hoặc `flowCode`, `environments[]` (mặc định cả ba), `validUntil` (tùy chọn), `Idempotency-Key`. Thu hồi: `grantId`.
 
 **Luồng xử lý chính.**
 
 1. Người dùng chọn phạm vi (không gian làm việc hoặc luồng), chọn mã không gian hoặc luồng, chọn các môi trường được phép (mặc định cả ba) và thời hạn (tùy chọn).
-2. Hệ thống kiểm tra không gian hoặc luồng tồn tại ở PH-04.
+2. Hệ thống kiểm tra không gian hoặc luồng tồn tại ở PH-04 (ERR-05-033; PH-04 không trả lời: ERR-05-029).
 3. Với kết nối loại CSDL cho luồng (`db-flow`), hệ thống chỉ cho cấp theo luồng, trừ khi TA đã bật tham số `05.dbflow.allow-workspace-scope`.
 4. Hệ thống tạo cấp sử dụng; nếu đã có cấp giống hệt thì trả cấp cũ, không tạo trùng.
 5. Hệ thống phát EVT-05-05; trình thiết kế của không gian thấy kết nối trong ô chọn kết nối.
@@ -1039,13 +1092,17 @@ sequenceDiagram
 - Phạm vi không hợp lệ với loại kết nối: ERR-05-003 (400); "Kết nối CSDL cho luồng chỉ cấp được cho từng luồng."
 - PH-04 không khả dụng: ERR-05-029 (503); "Chưa kiểm tra được không gian làm việc. Thử lại sau."
 
-**Quy tắc nghiệp vụ.** BR-05-018.
+**Đầu ra.** `201` cấp mới hoặc `200` cấp sẵn có; thu hồi `204`, kèm danh sách luồng bị ảnh hưởng.
 
 **Kết quả.** Đúng nhóm hoặc đúng luồng dùng được kết nối, ở đúng môi trường được phép.
 
 **Hậu điều kiện.** Có bản ghi cấp sử dụng; trình thiết kế của không gian thấy kết nối (FR-04-016).
 
-**Sự kiện, kiểm toán.** EVT-05-05. Kiểm toán: có.
+**Sự kiện phát ra.** EVT-05-05.
+
+**Kiểm toán.** Có: kết nối, phạm vi, mã không gian hoặc luồng, môi trường, người cấp hoặc thu hồi.
+
+**Quy tắc nghiệp vụ.** BR-05-018.
 
 **Màn hình, API.** UI-05-02 tab Cấp sử dụng; UI-05-03 bước 5; API-05-022, 023, 024.
 :::
@@ -1055,20 +1112,22 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Trả lời ba câu hỏi trước khi đưa kết nối vào dùng: có tới được HTTT không, nếu không thì hỏng ở bước nào, và phải làm gì để sửa. Kiểm tra không được làm thay đổi dữ liệu của HTTT.
 
-**Tác nhân.** IE, TA, TO, IA (`PERM-05-test`).
+**Tác nhân, quyền.** IE, TA, TO, IA (`PERM-05-test`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-013.
 
-**Điều kiện trước.** Giá trị môi trường đã khai báo tham số; bí mật đã ghi nếu loại có khóa bí mật bắt buộc.
+**Tiền điều kiện.** Giá trị môi trường đã khai báo tham số; bí mật đã ghi nếu loại có khóa bí mật bắt buộc.
 
 **Kích hoạt.** Người dùng bấm "Kiểm tra kết nối" ở UI-05-02 hoặc ở bước 4 của trình hướng dẫn tạo kết nối.
+
+**Đầu vào.** `env`; `Idempotency-Key`; `probe` tùy chọn (với HTTP: đường dẫn kiểm tra chỉ dùng `GET`, `HEAD`, `OPTIONS`).
 
 **Luồng xử lý chính.**
 
 1. Người dùng chọn môi trường và bấm "Kiểm tra kết nối"; với HTTP có thể nhập đường dẫn kiểm tra chỉ dùng `GET`, `HEAD`, `OPTIONS`.
-2. Hệ thống kiểm tra không có lần kiểm tra khác đang chạy cho cùng môi trường và chưa vượt 20 lần mỗi giờ mỗi kết nối.
+2. Hệ thống kiểm tra không có lần kiểm tra khác đang chạy cho cùng môi trường (ERR-05-018) và chưa vượt 20 lần mỗi giờ mỗi kết nối (ERR-05-019); có đủ bí mật bắt buộc (ERR-05-014).
 3. Hệ thống tạo bản ghi kiểm tra `RUNNING`, trả ngay mã lần kiểm tra; màn hình mở ngăn kéo "Kiểm tra kết nối" và nhận tiến độ từng bước qua kênh đẩy SSE.
 4. Bộ chạy kiểm tra (hồ sơ `probe` của `dh-runtime`) đọc bí mật từ OpenBao và chạy lần lượt năm bước: phân giải tên miền (DNS) → kết nối TCP → bắt tay TLS (phiên bản ≥ 1.2, chuỗi chứng thư, tên máy chủ) → xác thực → thao tác thử không tác dụng phụ.
 5. Thao tác thử tùy nhóm giao thức: HTTP gửi `HEAD` hoặc `GET` tới đường dẫn kiểm tra; SOAP tải WSDL và đếm thao tác; JDBC chạy `SELECT 1` trong giao dịch chỉ đọc và kiểm tra quyền (FR-05-025 với `db-flow`); SFTP, FTPS, SMB liệt kê thư mục gốc không đọc nội dung; JMS, AMQP, MQTT mở kết nối và phiên, không gửi bản tin; SMTP `EHLO` và xác thực, không gửi thư; IMAP mở thư mục ở chế độ chỉ đọc; LDAP bind và tìm trong phạm vi `base`.
@@ -1086,13 +1145,17 @@ sequenceDiagram
 - Bộ chạy kiểm tra không khả dụng: ERR-05-029 (503).
 - Kết quả "Không đạt" không phải lỗi API: phản hồi vẫn thành công, kết quả nằm trong từng bước.
 
-**Quy tắc nghiệp vụ.** BR-05-001 (không đưa bí mật, chuỗi kết nối đầy đủ hay nội dung phản hồi có dữ liệu vào kết quả; với lỗi xác thực chỉ ghi mã của hệ đích); BR-05-008 (lỗi xác thực không thử lại trong cùng lần kiểm tra để hệ đích không khóa tài khoản); BR-05-011; BR-05-013.
+**Đầu ra.** `202` kèm `testId`; kết quả (API-05-019, SSE): `PASSED` hoặc `FAILED`; `steps[]` (`name`, `status`, `durationMs`, `causeCode`, `hint`); `latencyMs`; `secretVersion` đã dùng; `expiresAt` (24 giờ sau).
 
 **Kết quả.** Người dùng biết chắc kết nối dùng được, hoặc biết chính xác bước hỏng và cách khắc phục để gửi đơn vị chủ quản HTTT.
 
 **Hậu điều kiện.** Lần kiểm tra đạt là điều kiện để bật môi trường (FR-05-007) trong 24 giờ; kết quả lưu 1 năm.
 
-**Sự kiện, kiểm toán.** Không phát sự kiện (kết quả đẩy tới giao diện qua SSE). Kiểm toán: người chạy, môi trường, kết quả, phiên bản bí mật đã dùng.
+**Sự kiện phát ra.** Không (kết quả đẩy tới giao diện qua SSE của BFF).
+
+**Kiểm toán.** Có: người chạy, môi trường, kết quả, `secretVersion`.
+
+**Quy tắc nghiệp vụ.** BR-05-001 (không đưa bí mật, chuỗi kết nối đầy đủ hay nội dung phản hồi có dữ liệu vào kết quả; với lỗi xác thực chỉ ghi mã của hệ đích); BR-05-008 (lỗi xác thực không thử lại trong cùng lần kiểm tra để hệ đích không khóa tài khoản); BR-05-011; BR-05-013.
 
 **Màn hình, API.** UI-05-04; API-05-017, 018, 019.
 :::
@@ -1137,15 +1200,17 @@ flowchart LR
 ::: dac-ta
 **Mục đích.** Bảo đảm bí mật của HTTT không bao giờ bị lộ qua bất kỳ kênh nào của Datahub, kể cả với quản trị viên cao nhất, đáp ứng yêu cầu quản lý thông tin xác thực của TCVN 14423:2026 cấp độ 3. Đây là yêu cầu xuyên suốt, áp dụng cho mọi chức năng có chạm tới bí mật.
 
-**Tác nhân.** Hệ thống (áp dụng cho mọi tác nhân).
+**Tác nhân, quyền.** Hệ thống (áp dụng cho mọi tác nhân).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-041, LGC-TOOL-008; SEC-24, SEC-32 (D03-07).
 
-**Điều kiện trước.** Không.
+**Tiền điều kiện.** Không.
 
 **Kích hoạt.** Mọi lệnh ghi, đọc, kiểm tra, xuất, nhập có liên quan tới kết nối.
+
+**Đầu vào.** Không áp dụng (yêu cầu xuyên suốt).
 
 **Luồng xử lý chính.**
 
@@ -1162,13 +1227,17 @@ flowchart LR
 - Bí mật gửi qua trường thường: ERR-05-006 (422).
 - Phát hiện bí mật trong log ở ca kiểm thử rò rỉ: lỗi chặn phát hành (NFR-05-011).
 
-**Quy tắc nghiệp vụ.** BR-05-001, BR-05-003.
+**Đầu ra.** Không áp dụng.
 
 **Kết quả.** Không ai, kể cả quản trị viên, lấy lại được bí mật từ Datahub; lộ bí mật chỉ có thể xảy ra ở phía HTTT.
 
 **Hậu điều kiện.** Không áp dụng.
 
-**Sự kiện, kiểm toán.** Mọi lệnh ghi, xoay bí mật đều ghi kiểm toán tên khóa và phiên bản, không ghi giá trị.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Mọi lệnh ghi, xoay bí mật ghi tên khóa và phiên bản, không ghi giá trị.
+
+**Quy tắc nghiệp vụ.** BR-05-001, BR-05-003.
 
 **Màn hình, API.** Áp dụng cho UI-05-02, 03, 04, 06; API-05-004, 011, 012, 017, 020, 027, 028.
 :::
@@ -1178,20 +1247,22 @@ flowchart LR
 ::: dac-ta
 **Mục đích.** Thay mật khẩu, khóa của kết nối định kỳ (90 ngày theo TCVN 14423:2026 cấp độ 3) hoặc khi nghi lộ, mà các luồng đang chạy không bị lỗi xác thực trong lúc chuyển.
 
-**Tác nhân.** TO, TA (`PERM-05-operate`); hệ thống tự động theo lịch. SO không xoay bí mật (mục 3.3).
+**Tác nhân, quyền.** TO, TA (`PERM-05-operate`); hệ thống tự động theo lịch. SO không xoay bí mật (mục 3.3).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-041; SEC-24.
 
-**Điều kiện trước.** Giá trị môi trường `ENABLED`; không có lần xoay khác đang trong thời gian chuyển tiếp.
+**Tiền điều kiện.** Giá trị môi trường `ENABLED`; không có lần xoay khác đang trong thời gian chuyển tiếp.
 
 **Kích hoạt.** Người dùng bấm "Xoay bí mật" ở UI-05-02; hoặc lịch xoay tới hạn.
+
+**Đầu vào.** `env`; `mode` (`MANUAL`, `GENERATED`); `transitionMinutes` (mặc định 60, 5…1.440); `reason`.
 
 **Luồng xử lý chính.**
 
 1. Người dùng chọn môi trường, chọn cách xoay: nhập bí mật mới (`MANUAL`) hoặc để hệ thống sinh (`GENERATED`, với OAuth2 có API đổi khóa phía đối tác, hoặc CSDL cho luồng mà OpenBao quản lý mật khẩu gốc); nhập thời gian chuyển tiếp (mặc định 60 phút, 5…1.440) và lý do.
-2. Hệ thống ghi bí mật mới thành phiên bản n+1 ở OpenBao, giữ phiên bản n.
+2. Hệ thống kiểm tra không có lần xoay đang chuyển tiếp (ERR-05-036), ghi bí mật mới thành phiên bản n+1 ở OpenBao (không khả dụng: ERR-05-028), giữ phiên bản n.
 3. Hệ thống chạy kiểm tra (FR-05-010) với phiên bản mới. Không đạt thì hủy phiên bản mới, lần xoay `FAILED`, giữ nguyên bí mật cũ.
 4. Đạt thì lần xoay sang `TRANSITION`, phát EVT-05-03; runtime nạp phiên bản mới.
 5. Trong thời gian chuyển tiếp, nếu lượt gọi với bí mật mới bị hệ đích từ chối xác thực, runtime dùng lại bí mật cũ và ghi chỉ số `dh_adapter_secret_fallback_total`.
@@ -1207,13 +1278,17 @@ flowchart LR
 - Thiếu lý do: ERR-05-038 (400).
 - Bí mật mới không qua kiểm tra: lần xoay `FAILED`, màn hình hiện bước lỗi như FR-05-010; bí mật cũ vẫn dùng.
 
-**Quy tắc nghiệp vụ.** BR-05-007 (dùng bí mật cũ trong chuyển tiếp); BR-05-008.
+**Đầu ra.** `202`; bản ghi lần xoay (`rotationId`, trạng thái, phiên bản cũ và mới, thời điểm kết thúc chuyển tiếp).
 
 **Kết quả.** Bí mật mới có hiệu lực, bí mật cũ bị hủy, không lượt gọi nào thất bại vì đổi bí mật.
 
 **Hậu điều kiện.** Phiên bản bí mật hiện hành tăng một; tuổi bí mật về 0.
 
-**Sự kiện, kiểm toán.** EVT-05-03. Kiểm toán: người, môi trường, phiên bản cũ và mới, kết quả kiểm tra.
+**Sự kiện phát ra.** EVT-05-03.
+
+**Kiểm toán.** Có: người, môi trường, phiên bản cũ và mới, kết quả kiểm tra.
+
+**Quy tắc nghiệp vụ.** BR-05-007 (dùng bí mật cũ trong chuyển tiếp); BR-05-008.
 
 **Màn hình, API.** UI-05-02 hộp Xoay bí mật; API-05-020, 021.
 :::
@@ -1233,15 +1308,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Trước khi sửa, tạm ngừng hay ngừng dùng một kết nối, người dùng cần biết luồng nào, bộ điều hợp nào, môi trường nào sẽ bị ảnh hưởng.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-010 (phần kiểm tra phụ thuộc).
 
-**Điều kiện trước.** Kết nối thuộc tenant hiện hành.
+**Tiền điều kiện.** Kết nối thuộc tenant hiện hành.
 
 **Kích hoạt.** Người dùng mở tab "Nơi dùng" ở UI-05-02; hoặc hệ thống tự gọi khi sửa (FR-05-006), ngừng dùng (FR-05-008).
+
+**Đầu vào.** `connectionCode` (đường dẫn).
 
 **Luồng xử lý chính.**
 
@@ -1255,13 +1332,17 @@ stateDiagram-v2
 
 - PH-04 không trả lời trong 2 giây: phản hồi có cờ `partial: true`; màn hình cảnh báo "Danh sách luồng có thể chưa đủ" thay vì báo lỗi.
 
-**Quy tắc nghiệp vụ.** Không.
+**Đầu ra.** `200`; `items[]` (loại nơi dùng, mã, phiên bản, môi trường, liên kết); `partial` (`true` khi PH-04 không trả lời trong 2 giây).
 
 **Kết quả.** Người dùng thấy đầy đủ phạm vi ảnh hưởng trước khi thay đổi.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** Không.
 
 **Màn hình, API.** UI-05-02 tab Nơi dùng; API-05-025.
 :::
@@ -1271,15 +1352,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Cho PH-04 kiểm tra mọi kết nối, Kamelet, bộ điều hợp mà một luồng tham chiếu có hợp lệ không, vào ba thời điểm: khi lưu thiết kế, khi gửi duyệt và khi phát hành. Nhờ đó luồng không thể phát hành với kết nối chưa được cấp, chưa bật hoặc đã bị thu hồi.
 
-**Tác nhân.** `dh-integration` của PH-04 (token dịch vụ, scope `adapter:verify`).
+**Tác nhân, quyền.** `dh-integration` của PH-04 (token dịch vụ, scope `adapter:verify`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; FR-04-016, FR-04-072; quy tắc VR-07 của D03-04-PH04 §5.
 
-**Điều kiện trước.** Token dịch vụ hợp lệ; tenant lấy từ token, không từ thân yêu cầu.
+**Tiền điều kiện.** Token dịch vụ hợp lệ; tenant lấy từ token, không từ thân yêu cầu.
 
 **Kích hoạt.** PH-04 lưu, gửi duyệt hoặc phát hành một phiên bản luồng.
+
+**Đầu vào.** `tenant` (từ token dịch vụ, không từ thân), `workspaceCode`, `flowCode`, `flowVersion`, `stage` (`DESIGN`, `SUBMIT`, `PUBLISH`), `targetEnv`, `references[]` (`connectionCode`, `keysUsed[]`, `kameletName`, `adapterCode`, `operationCode`, `accessMode`).
 
 **Luồng xử lý chính.**
 
@@ -1297,13 +1380,17 @@ stateDiagram-v2
 - Token không có scope: ERR-05-012 (403).
 - Lỗi của từng tham chiếu nằm trong kết quả, phản hồi HTTP vẫn 200.
 
-**Quy tắc nghiệp vụ.** BR-05-018, BR-05-027.
+**Đầu ra.** `200`; `results[]` (`status`, `code`, thông điệp nêu mã lỗi tương ứng ERR-05-001, 013, 014, 118, 003, 017, 120); `allOk`.
 
 **Kết quả.** Luồng chỉ phát hành được khi mọi kết nối nó dùng hợp lệ ở môi trường đích.
 
 **Hậu điều kiện.** Chỉ mục nơi dùng được cập nhật khi phát hành.
 
-**Sự kiện, kiểm toán.** Không phát sự kiện; không kiểm toán (PH-04 kiểm toán lệnh gốc).
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không (PH-04 kiểm toán lệnh gốc).
+
+**Quy tắc nghiệp vụ.** BR-05-018, BR-05-027.
 
 **Màn hình, API.** Không có màn riêng (kết quả hiện trong trình thiết kế PH-04); API-05-031.
 :::
@@ -1313,15 +1400,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Cho runtime biết các kết nối đang dùng được ở môi trường của nó cùng tham số không bí mật, để phân giải tham chiếu `{{conn:mã.khóa}}` trong luồng mà không phải hỏi mặt phẳng điều khiển ở mỗi lượt gọi, và tiếp tục chạy được khi mặt phẳng điều khiển gián đoạn.
 
-**Tác nhân.** `dh-runtime` (token dịch vụ, scope `adapter:runtime-config`).
+**Tác nhân, quyền.** `dh-runtime` (token dịch vụ, scope `adapter:runtime-config`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** ADR-013, ADR-063.
 
-**Điều kiện trước.** Không.
+**Tiền điều kiện.** Không.
 
 **Kích hoạt.** Runtime khởi động; nhận EVT-05-01, 02, 03, 04; hoặc mỗi 5 phút.
+
+**Đầu vào.** Tiêu đề `If-None-Match` (ETag lần trước); tenant và môi trường lấy từ token dịch vụ.
 
 **Luồng xử lý chính.**
 
@@ -1336,13 +1425,17 @@ stateDiagram-v2
 
 - Token không có scope: ERR-05-012 (403).
 
-**Quy tắc nghiệp vụ.** BR-05-003 (tệp kê khai không có bí mật).
+**Đầu ra.** `200` tệp kê khai (mã, loại, tham số không bí mật, đường dẫn và phiên bản bí mật, giới hạn đồng thời, sức khỏe, cờ `blocked`) kèm `ETag`; hoặc `304`.
 
 **Kết quả.** Luồng dùng được kết nối ngay sau khi bật, và nhận thay đổi trong vài giây.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không kiểm toán từng lần đọc; chỉ số `dh_adapter_runtime_config_requests_total`.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không kiểm toán từng lần đọc; chỉ số `dh_adapter_runtime_config_requests_total`.
+
+**Quy tắc nghiệp vụ.** BR-05-003 (tệp kê khai không có bí mật).
 
 **Màn hình, API.** Không có màn; API-05-032.
 :::
@@ -1352,15 +1445,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Trả lời câu hỏi "ai đã đổi gì, lúc nào, vì sao" với một kết nối hoặc bộ điều hợp, phục vụ điều tra sự cố và thanh tra.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`; `PERM-05-audit-read` xem thêm địa chỉ IP và phiên đăng nhập.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`; `PERM-05-audit-read` xem thêm địa chỉ IP và phiên đăng nhập.
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05; LGC-BUS-006.
 
-**Điều kiện trước.** Đối tượng thuộc tenant hiện hành.
+**Tiền điều kiện.** Đối tượng thuộc tenant hiện hành.
 
 **Kích hoạt.** Người dùng mở tab "Lịch sử" ở UI-05-02 hoặc UI-05-09.
+
+**Đầu vào.** Mã đối tượng; lọc `from`, `to`, `actor`, `action`; phân trang.
 
 **Luồng xử lý chính.**
 
@@ -1372,13 +1467,17 @@ stateDiagram-v2
 
 **Luồng ngoại lệ.** Không có ngoài lỗi chung (FR-00-080).
 
-**Quy tắc nghiệp vụ.** BR-05-001.
+**Đầu ra.** `200`; `items[]`: thời điểm, người, hành động, trường đổi (cũ, mới), lý do; thêm IP, phiên với `PERM-05-audit-read`.
 
 **Kết quả.** Người dùng truy được nguồn gốc mọi thay đổi.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Không.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-001.
 
 **Màn hình, API.** UI-05-02 tab Lịch sử; API-05-026.
 :::
@@ -1388,15 +1487,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Cho phép tải danh sách kết nối ra tệp để báo cáo, đối chiếu với đơn vị chủ quản HTTT hoặc lập hồ sơ kiểm tra ATTT.
 
-**Tác nhân.** Mọi vai trò có `PERM-05-read`.
+**Tác nhân, quyền.** Mọi vai trò có `PERM-05-read`.
 
 **Mức ưu tiên, đợt.** S · MVP.
 
 **Truy vết.** REQ-05.
 
-**Điều kiện trước.** Không.
+**Tiền điều kiện.** Không.
 
 **Kích hoạt.** Người dùng bấm "Xuất CSV" ở UI-05-01.
+
+**Đầu vào.** Bộ lọc như FR-05-002.
 
 **Luồng xử lý chính.**
 
@@ -1411,13 +1512,17 @@ stateDiagram-v2
 
 - Vượt 10.000 dòng: hệ thống từ chối và báo "Danh sách quá lớn. Thu hẹp bộ lọc dưới 10.000 dòng."
 
-**Quy tắc nghiệp vụ.** BR-05-001.
+**Đầu ra.** `200` tệp `text/csv; charset=utf-8` có BOM, ≤ 10.000 dòng, tên `ket-noi-nguon-{tenant}-{yyyyMMdd}.csv`.
 
 **Kết quả.** Người dùng có tệp danh sách kết nối không chứa bí mật.
 
 **Hậu điều kiện.** Không thay đổi dữ liệu.
 
-**Sự kiện, kiểm toán.** Kiểm toán: có (xuất dữ liệu cấu hình, FR-00-052).
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có (xuất dữ liệu cấu hình, FR-00-052): người xuất, bộ lọc, số dòng.
+
+**Quy tắc nghiệp vụ.** BR-05-001.
 
 **Màn hình, API.** UI-05-01; API-05-027.
 :::
@@ -1427,15 +1532,17 @@ stateDiagram-v2
 ::: dac-ta
 **Mục đích.** Rút ngắn việc chuyển từ Bus cũ: thay vì gõ lại hàng trăm kết nối, kỹ sư tải gói cấu hình của Bus lên để hệ thống đề xuất kết nối nháp, đồng thời phát hiện mật khẩu đang để dạng rõ trong gói để xử lý lộ lọt.
 
-**Tác nhân.** IE, TA (`PERM-05-connection`).
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
 **Truy vết.** REQ-05, REQ-04; LGC-BUS-011, LGC-BUS-033, LGC-BUS-040; FR-04-082.
 
-**Điều kiện trước.** Có gói xuất từ Bus cũ (bảng `Context`, `Context_file`) hoặc tệp `datasource.properties`.
+**Tiền điều kiện.** Có gói xuất từ Bus cũ (bảng `Context`, `Context_file`) hoặc tệp `datasource.properties`.
 
 **Kích hoạt.** Người dùng bấm "Nhập từ hệ cũ" ở UI-05-01.
+
+**Đầu vào.** Tệp ZIP (≤ 20 MiB) gồm tệp Camel XML của Bus cũ (bảng `Context`, `Context_file` đã xuất) hoặc `datasource.properties`; `defaultSystemCode`. Bước xác nhận: danh sách đề xuất đã chỉnh.
 
 **Luồng xử lý chính.**
 
@@ -1454,84 +1561,573 @@ stateDiagram-v2
 - Tệp sai định dạng: ERR-05-024 (400); quá lớn: 413; "Tệp không đúng định dạng gói Bus hoặc vượt 20 MiB."
 - Có mã độc: ERR-05-034 (422); tác vụ `FAILED`, tệp bị hủy.
 
-**Quy tắc nghiệp vụ.** BR-05-025 (bí mật dạng rõ không lưu, không hiển thị).
+**Đầu ra.** `202` kèm `jobId`; kết quả phân tích (đề xuất, vị trí bí mật dạng rõ); sau xác nhận: danh sách kết nối nháp và tệp `connectionMap.json`.
 
 **Kết quả.** Có danh sách kết nối nháp tương ứng với Bus cũ và bảng ánh xạ để chuyển luồng; Cán bộ ATTT có danh sách vị trí lộ bí mật cần xử lý.
 
 **Hậu điều kiện.** Kết nối nháp cần khai báo bí mật, kiểm tra, bật như kết nối mới.
 
-**Sự kiện, kiểm toán.** Không phát sự kiện. Kiểm toán: băm tệp, số đề xuất, số kết nối tạo, số bí mật dạng rõ phát hiện.
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: băm tệp, số đề xuất, số kết nối tạo, số bí mật dạng rõ phát hiện.
+
+**Quy tắc nghiệp vụ.** BR-05-025 (bí mật dạng rõ không lưu, không hiển thị).
 
 **Màn hình, API.** UI-05-06; API-05-028, 029, 030.
 :::
 
 ### 6.4. Nhóm C · Sức khỏe kết nối
 
+Nhóm C trả lời câu hỏi vận hành hằng ngày: kết nối nào đang hỏng, từ lúc nào, vì sao. Sức khỏe được đánh giá từ hai nguồn: thăm dò chủ động theo chu kỳ (FR-05-019) và lưu lượng thật của luồng (FR-05-020). Kết quả gộp lại thành một mức duy nhất, có chống dao động, rồi phát sự kiện cho PH-04 và PH-13 (FR-05-021) và hiển thị trên bảng tổng quan (FR-05-022).
+
+```{.mermaid caption="Đánh giá và phát tín hiệu sức khỏe kết nối"}
+flowchart TB
+  P["probe trong dh-runtime<br/>(FR-05-019)"] -->|mẫu thăm dò| M[(Prometheus)]
+  K["Kamelet giao thức<br/>(lưu lượng thật)"] -->|dh_adapter_calls_total| M
+  M --> E["Bộ đánh giá ở dh-integration<br/>(FR-05-020)"]
+  E -->|đổi mức, chống dao động| H["HealthState + EVT-05-06<br/>(FR-05-021)"]
+  H --> F["PH-04: mở sớm ngắt mạch"]
+  H --> A["PH-13: cảnh báo"]
+  H --> U["UI-05-07 tổng quan<br/>(FR-05-022)"]
+```
+
+Hình trên cho thấy bộ đánh giá không gọi hệ đích trực tiếp; nó chỉ đọc chỉ số. Nhờ vậy, việc đánh giá không tạo thêm tải cho HTTT ngoài thao tác thăm dò nhẹ đã khai báo.
+
 #### FR-05-019 · Kiểm tra sức khỏe chủ động
 
-FR-05-019 (M; LGC-BUS-014, 015 phần kết nối; LGC-TOOL-011). Với mỗi giá trị môi trường `ENABLED`, bộ chạy `probe` của `dh-runtime` chạy thao tác thử nhẹ của loại (như bước 4 FR-05-010, không chạy lại xác thực OAuth nếu token còn hạn) theo chu kỳ `05.health.interval-seconds` (mặc định 60 giây ở PROD, 300 giây ở TEST, STAGING; tối thiểu 30 giây). Mỗi lần ghi một mẫu: kết quả, độ trễ, nguyên nhân. Hệ đích không cho phép thao tác thử (khai báo `probe: NONE`) chỉ dùng đánh giá thụ động (FR-05-020) và giao diện ghi rõ "Chỉ theo dõi thụ động". Kiểm tra sức khỏe không bao giờ thử lại xác thực khi lỗi `AUTH_FAILED` lần thứ hai liên tiếp; nó chuyển `UNHEALTHY` và dừng thăm dò xác thực tới khi bí mật đổi (BR-05-008). Chỉ số `dh_adapter_probe_duration_seconds`, `dh_adapter_probe_failures_total`.
+::: dac-ta
+**Mục đích.** Phát hiện kết nối hỏng trước khi luồng thật gọi tới, kể cả khi lúc đó không có lưu lượng (ban đêm, ngày nghỉ), để cán bộ vận hành xử lý sớm.
+
+**Tác nhân, quyền.** Hệ thống (bộ chạy `probe` của `dh-runtime`). Người dùng chỉ xem kết quả (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-014, LGC-BUS-015 (phần kết nối); LGC-TOOL-011.
+
+**Tiền điều kiện.** Giá trị môi trường ở trạng thái `ENABLED`; loại kết nối có thao tác thử (`probe` khác `NONE`).
+
+**Kích hoạt.** Theo chu kỳ `05.health.interval-seconds`: mặc định 60 giây ở PROD, 300 giây ở TEST và STAGING, tối thiểu 30 giây.
+
+**Đầu vào.** Danh sách giá trị môi trường `ENABLED` của tenant và thao tác thử của từng loại kết nối (lấy từ API-05-032).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống chọn các giá trị môi trường đến hạn thăm dò.
+2. Hệ thống chạy thao tác thử nhẹ của loại, như bước 4 của FR-05-010; không chạy lại xác thực OAuth nếu token còn hạn.
+3. Hệ thống ghi một mẫu: kết quả, độ trễ, mã nguyên nhân (`causeCode` theo bảng ở FR-05-010).
+4. Hệ thống phát chỉ số `dh_adapter_probe_duration_seconds` và `dh_adapter_probe_failures_total` để bộ đánh giá (FR-05-020) xếp mức.
+
+**Luồng thay thế.** Hệ đích không cho phép thao tác thử (khai báo `probe: NONE`): hệ thống bỏ qua thăm dò, chỉ dùng đánh giá thụ động (FR-05-020); giao diện ghi rõ "Chỉ theo dõi thụ động".
+
+**Luồng ngoại lệ.**
+
+- Lỗi `AUTH_FAILED` lần thứ hai liên tiếp: hệ thống không thử xác thực lại, chuyển `UNHEALTHY` và dừng thăm dò xác thực tới khi bí mật đổi (BR-05-008). Trên UI-05-02 hiện: "Xác thực thất bại hai lần liên tiếp. Đã tạm dừng thăm dò để tránh khóa tài khoản; cập nhật bí mật rồi chạy kiểm tra."
+- Bộ chạy `probe` không khả dụng: không có mẫu mới; sau 15 phút mức thành `UNKNOWN` (FR-05-020).
+
+**Đầu ra.** Mẫu thăm dò (kết quả, độ trễ, nguyên nhân) và hai chỉ số trên.
+
+**Kết quả.** Cán bộ vận hành thấy kết nối hỏng trong vòng một đến hai chu kỳ, kể cả khi không có luồng nào chạy.
+
+**Hậu điều kiện.** Có mẫu thăm dò mới cho bộ đánh giá; không thay đổi dữ liệu ở HTTT.
+
+**Sự kiện phát ra.** Không trực tiếp; đổi mức do FR-05-021 phát EVT-05-06.
+
+**Kiểm toán.** Không (hoạt động vận hành tự động).
+
+**Quy tắc nghiệp vụ.** BR-05-008.
+
+**Màn hình, API.** UI-05-02 tab Sức khỏe; UI-05-07; API-05-034.
+:::
 
 #### FR-05-020 · Đánh giá sức khỏe thụ động từ lưu lượng thật
 
-FR-05-020 (M). Kamelet giao thức phát chỉ số theo kết nối và thao tác (`dh_adapter_calls_total{result}`, `dh_adapter_call_duration_seconds`, `dh_adapter_pool_wait_seconds`). Bộ đánh giá ở `dh-integration` đọc từ Prometheus mỗi phút và xếp mức theo cửa sổ 5 phút: `UNHEALTHY` khi tỷ lệ lỗi tạm thời ≥ 50% trên ≥ 20 lượt hoặc thăm dò chủ động thất bại 3 lần liên tiếp; `DEGRADED` khi tỷ lệ lỗi ≥ 5%, hoặc p95 độ trễ > 2 lần đường nền 7 ngày, hoặc thời gian chờ nhóm kết nối p95 > 500 ms; `HEALTHY` khi không vi phạm; `UNKNOWN` khi chưa có mẫu trong 15 phút. Ngưỡng là tham số theo tenant (FR-05-061). Lỗi nghiệp vụ 4xx từ hệ đích không tính vào tỷ lệ lỗi.
+::: dac-ta
+**Mục đích.** Xếp mức sức khỏe theo trải nghiệm thật của luồng (lỗi, độ trễ, chờ nhóm kết nối), vì thăm dò chủ động có thể đạt trong khi lượt gọi thật vẫn chậm hoặc lỗi.
+
+**Tác nhân, quyền.** Hệ thống (bộ đánh giá ở `dh-integration`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-015.
+
+**Tiền điều kiện.** Kamelet giao thức phát chỉ số theo kết nối và thao tác: `dh_adapter_calls_total{result}`, `dh_adapter_call_duration_seconds`, `dh_adapter_pool_wait_seconds`.
+
+**Kích hoạt.** Mỗi phút.
+
+**Đầu vào.** Chỉ số Prometheus cửa sổ 5 phút; mẫu thăm dò (FR-05-019); đường nền độ trễ 7 ngày; ngưỡng theo tenant (FR-05-061).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống đọc chỉ số của từng kết nối và bộ điều hợp trong cửa sổ 5 phút.
+2. Hệ thống loại lỗi nghiệp vụ 4xx từ hệ đích khỏi tỷ lệ lỗi.
+3. Hệ thống xếp `UNHEALTHY` khi tỷ lệ lỗi tạm thời ≥ 50% trên ≥ 20 lượt, hoặc thăm dò chủ động thất bại 3 lần liên tiếp.
+4. Nếu chưa `UNHEALTHY`, hệ thống xếp `DEGRADED` khi tỷ lệ lỗi ≥ 5%, hoặc p95 độ trễ > 2 lần đường nền 7 ngày, hoặc p95 thời gian chờ nhóm kết nối > 500 ms.
+5. Không vi phạm ngưỡng nào: `HEALTHY`.
+6. Hệ thống chuyển mức đề xuất cho FR-05-021 để quyết định có đổi mức hay không.
+
+**Luồng thay thế.** Chưa có mẫu nào (thăm dò hay lưu lượng) trong 15 phút: mức `UNKNOWN`.
+
+**Luồng ngoại lệ.** Prometheus không trả lời: hệ thống giữ mức hiện tại, ghi cảnh báo nội bộ; sau 15 phút không đọc được, mức thành `UNKNOWN` và UI-05-07 hiện "Chưa đánh giá được sức khỏe: hệ thống giám sát không phản hồi."
+
+**Đầu ra.** Mức đề xuất kèm lý do (chỉ số và ngưỡng bị vi phạm).
+
+**Kết quả.** Mức sức khỏe phản ánh đúng việc luồng có gọi được HTTT hay không.
+
+**Hậu điều kiện.** Không đổi trạng thái lưu trữ; đổi mức do FR-05-021 thực hiện.
+
+**Sự kiện phát ra.** Không trực tiếp.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-014 (xếp hỏng lên đầu danh sách dùng mức này).
+
+**Màn hình, API.** UI-05-07; UI-05-02 và UI-05-09 tab Sức khỏe; API-05-034, 061.
+:::
+
+| Mức | Điều kiện (cửa sổ 5 phút) | Ghi chú |
+|---|---|---|
+| `UNHEALTHY` | Lỗi tạm thời ≥ 50% trên ≥ 20 lượt, hoặc thăm dò thất bại 3 lần liên tiếp | Lỗi 4xx nghiệp vụ không tính |
+| `DEGRADED` | Lỗi ≥ 5%, hoặc p95 độ trễ > 2 lần đường nền 7 ngày, hoặc p95 chờ nhóm kết nối > 500 ms | |
+| `HEALTHY` | Không vi phạm ngưỡng nào | |
+| `UNKNOWN` | Chưa có mẫu trong 15 phút | |
+
+: Ngưỡng mặc định xếp mức sức khỏe (tham số theo tenant, FR-05-061)
 
 #### FR-05-021 · Cảnh báo và phát sự kiện khi đổi mức sức khỏe
 
-FR-05-021 (M). Khi mức đổi, `dh-integration` ghi `HealthState` mới kèm lý do, phát EVT-05-06 (khóa phân vùng `{kind}:{code}`) và cập nhật API-05-093. Chống dao động: chỉ đổi mức khi điều kiện mới giữ ít nhất 2 chu kỳ đánh giá liên tiếp; về `HEALTHY` cần 3 chu kỳ. PH-04 dùng sự kiện để mở sớm ngắt mạch của chặng `deliver` cho đích `UNHEALTHY` và hiển thị cảnh báo trên luồng; PH-13 tạo cảnh báo: `UNHEALTHY` ở PROD mức cao gửi TO và chủ sở hữu kết nối, kèm thông báo cho đầu mối kỹ thuật của HTTT (lấy từ PH-01) khi tham số `05.health.notify-system-contact` bật; `DEGRADED` mức trung bình chỉ hiện ở bảng. Kiểm toán: không (sự kiện vận hành); lịch sử mức giữ 90 ngày.
+::: dac-ta
+**Mục đích.** Báo cho đúng người và đúng phân hệ khi một kết nối đổi mức, mà không gây bão cảnh báo khi chỉ số dao động quanh ngưỡng.
+
+**Tác nhân, quyền.** Hệ thống (`dh-integration`). Người nhận: TO, chủ sở hữu kết nối, đầu mối kỹ thuật của HTTT.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-015.
+
+**Tiền điều kiện.** FR-05-020 trả mức đề xuất khác mức hiện tại.
+
+**Kích hoạt.** Mỗi chu kỳ đánh giá (1 phút).
+
+**Đầu vào.** Mức hiện tại, mức đề xuất, số chu kỳ liên tiếp mức đề xuất đã giữ.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống chỉ đổi mức khi điều kiện mới giữ ít nhất 2 chu kỳ đánh giá liên tiếp; riêng về `HEALTHY` cần 3 chu kỳ.
+2. Hệ thống ghi `HealthState` mới kèm lý do và thời điểm.
+3. Hệ thống phát EVT-05-06 với khóa phân vùng `{kind}:{code}` và cập nhật API-05-093.
+4. PH-04 tiêu thụ sự kiện để mở sớm ngắt mạch của chặng `deliver` với đích `UNHEALTHY` và hiện cảnh báo trên luồng.
+5. PH-13 tạo cảnh báo: `UNHEALTHY` ở PROD mức cao gửi TO và chủ sở hữu kết nối; `DEGRADED` mức trung bình, chỉ hiện ở bảng.
+
+**Luồng thay thế.** Tham số `05.health.notify-system-contact` bật: PH-13 gửi thêm thông báo cho đầu mối kỹ thuật của HTTT lấy từ PH-01.
+
+**Luồng ngoại lệ.** Kafka không nhận sự kiện: hệ thống ghi `HealthState` trước, đưa sự kiện vào hộp thư đi (outbox) và phát lại khi Kafka khả dụng; API-05-093 vẫn trả mức mới.
+
+**Đầu ra.** `HealthState` mới; EVT-05-06.
+
+**Kết quả.** TO nhận một cảnh báo khi kết nối PROD hỏng thật, không nhận hàng chục cảnh báo khi chỉ số chập chờn.
+
+**Hậu điều kiện.** Lịch sử mức được giữ 90 ngày.
+
+**Sự kiện phát ra.** EVT-05-06.
+
+**Kiểm toán.** Không (sự kiện vận hành).
+
+**Quy tắc nghiệp vụ.** BR-05-014.
+
+**Màn hình, API.** UI-05-07; UI-05-02 tab Sức khỏe; API-05-093.
+:::
 
 #### FR-05-022 · Tổng quan sức khỏe
 
-FR-05-022 (M; LGC-BUS-014, 015). `PERM-05-read`. Trả và hiển thị (UI-05-07): số kết nối, bộ điều hợp theo mức sức khỏe và môi trường; danh sách `UNHEALTHY`, `DEGRADED` xếp theo thời gian ở mức hiện tại; lưới nhiệt 24 giờ theo HTTT; kết nối có bí mật sắp quá hạn xoay; CDC có độ trễ vượt ngưỡng; thay đổi lược đồ chờ xử lý. Lọc theo môi trường, HTTT, nhóm giao thức. Bảng số liệu chi tiết theo luồng thuộc PH-13; màn này liên kết sang.
+::: dac-ta
+**Mục đích.** Cho cán bộ vận hành một màn hình duy nhất để biết toàn bộ kết nối và bộ điều hợp của tỉnh đang ổn hay không, và việc nào cần làm trước.
+
+**Tác nhân, quyền.** TO, IE, TA (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-014, LGC-BUS-015.
+
+**Tiền điều kiện.** Người dùng đăng nhập vào tenant.
+
+**Kích hoạt.** Người dùng mở UI-05-07 từ menu "Kết nối · Sức khỏe"; màn tự làm mới mỗi 60 giây.
+
+**Đầu vào.** Bộ lọc: `environment`, `systemCode`, `protocolGroup`.
+
+**Luồng xử lý chính.**
+
+1. Người dùng mở màn hoặc đổi bộ lọc.
+2. Hệ thống trả số kết nối và bộ điều hợp theo mức sức khỏe và môi trường.
+3. Hệ thống trả danh sách `UNHEALTHY`, `DEGRADED` xếp theo thời gian đã ở mức hiện tại (lâu nhất lên đầu).
+4. Hệ thống trả lưới nhiệt 24 giờ theo HTTT, kết nối có bí mật sắp quá hạn xoay, CDC có độ trễ vượt ngưỡng và thay đổi lược đồ chờ xử lý.
+5. Người dùng bấm một dòng để mở chi tiết kết nối (UI-05-02) hoặc bộ điều hợp (UI-05-09).
+
+**Luồng thay thế.** Người dùng bấm "Xem theo luồng": hệ thống mở bảng số liệu theo luồng của PH-13 (số liệu chi tiết theo luồng thuộc PH-13, không ở màn này).
+
+**Luồng ngoại lệ.** Không đọc được trạng thái sức khỏe: ERR-05-029 (503); "Chưa tải được trạng thái sức khỏe. Số liệu hiện là của lần tải trước lúc {thời điểm}."
+
+**Đầu ra.** `200`, các khối số liệu nêu trên, kèm `asOf`.
+
+**Kết quả.** Cán bộ vận hành biết ngay kết nối nào hỏng, hỏng bao lâu và việc tồn đọng (bí mật, CDC, lược đồ).
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-014.
+
+**Màn hình, API.** UI-05-07; API-05-033.
+:::
 
 ### 6.5. Nhóm D · CSDL cho luồng (Q359)
 
+Nhóm D hiện thực quyết định Q359: luồng được đọc CSDL của HTTT trực tiếp bằng SQL, nhưng chỉ qua tài khoản riêng của từng luồng, có phạm vi hẹp, có kiểm tra quyền thực tế, có kiểm toán từng câu lệnh, và không bao giờ chạm CSDL control plane của Datahub. Ghi vào CSDL là ngoại lệ, cần SO đồng ý và IA duyệt.
+
+```{.mermaid caption="Vòng đời tài khoản CSDL theo luồng"}
+stateDiagram-v2
+  [*] --> REQUESTED: đề nghị ghi (FR-05-026)
+  [*] --> ISSUED: cấp chỉ đọc (FR-05-024)
+  REQUESTED --> CONSENTED: SO đồng ý
+  REQUESTED --> REJECTED: SO từ chối
+  CONSENTED --> ISSUED: IA duyệt
+  CONSENTED --> REJECTED: IA từ chối
+  ISSUED --> EXPIRED: hết validUntil
+  ISSUED --> REVOKED: thu hồi (FR-05-028)
+  EXPIRED --> [*]
+  REVOKED --> [*]
+  REJECTED --> [*]
+```
+
+Tài khoản chỉ đọc đi thẳng tới `ISSUED`; tài khoản ghi đi qua hai lần duyệt của hai người khác nhau. Mọi nhánh kết thúc đều xóa role ở OpenBao.
+
 #### FR-05-023 · Khai báo kết nối CSDL cho luồng
 
-FR-05-023 (M; LGC-TOOL-008, LGC-BUS-040; Q359, ADR-067). Kết nối loại `db-flow` khai báo như FR-05-004, FR-05-005 với các ràng buộc riêng: `allowedSchemas[]` bắt buộc, không rỗng; không được chứa schema của control plane (`ph01`…`ph20`, `public` của `pg-core`) hay CSDL `pg-payment`, kể cả khi máy chủ là CSDL của Datahub (ERR-05-016, BR-05-017); `maxRows` mặc định 10.000, trần 100.000; `statementTimeoutMs` mặc định 10.000, trần 60.000; `provisioning = DYNAMIC` bắt buộc với PostgreSQL, MySQL, SQL Server (OpenBao database secrets engine), `STATIC` cho phép với Oracle khi đơn vị chủ quản không cấp được tài khoản quản trị cho OpenBao (khi đó mỗi luồng một tài khoản tĩnh, xoay 90 ngày). Bí mật `adminUsername`, `adminPassword` là tài khoản mà OpenBao dùng để tạo tài khoản luồng; tài khoản này chỉ có quyền `CREATE ROLE` và cấp `SELECT` trên các schema được phép, do đơn vị chủ quản tạo theo kịch bản mẫu ở D03-03-PH05. Với CSDL có RLS theo tenant, `rlsTenantSetting` (mặc định `app.tenant_id`) được Kamelet `dh-sql-ro-source` đặt bằng `SET LOCAL` trong mỗi giao dịch (FR-04-072 bước 4).
+::: dac-ta
+**Mục đích.** Cho kỹ sư khai báo một CSDL của HTTT mà luồng được phép đọc, với phạm vi schema, trần số dòng và thời gian chạy, sao cho Datahub tự cấp được tài khoản riêng cho từng luồng.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-TOOL-008, LGC-BUS-040; Q359, ADR-067.
+
+**Tiền điều kiện.** Như FR-05-004; đơn vị chủ quản CSDL đã tạo tài khoản quản trị cho OpenBao theo kịch bản mẫu ở D03-03-PH05 (với `DYNAMIC`).
+
+**Kích hoạt.** Người dùng chọn loại "CSDL cho luồng (`db-flow`)" ở bước 1 của UI-05-03.
+
+**Đầu vào.** Như FR-05-004, FR-05-005, cộng `allowedSchemas[]`, `maxRows`, `statementTimeoutMs`, `provisioning`, `rlsTenantSetting`; bí mật `adminUsername`, `adminPassword`. Chi tiết ở bảng dưới.
+
+**Luồng xử lý chính.**
+
+1. Người dùng nhập thông tin chung và tham số như FR-05-004, rồi khai `allowedSchemas[]`.
+2. Hệ thống kiểm tra `allowedSchemas[]` không rỗng và không chứa schema của control plane (`ph01`…`ph20`, `public` của `pg-core`) hay CSDL `pg-payment`, kể cả khi máy chủ là CSDL của Datahub (ERR-05-016).
+3. Hệ thống kiểm tra `maxRows` và `statementTimeoutMs` trong trần (ERR-05-030).
+4. Hệ thống kiểm tra `provisioning`: `DYNAMIC` bắt buộc với PostgreSQL, MySQL, SQL Server (OpenBao database secrets engine).
+5. Người dùng ghi bí mật tài khoản quản trị như FR-05-005; tài khoản này chỉ có quyền `CREATE ROLE` và cấp `SELECT` trên các schema được phép.
+6. Hệ thống lưu kết nối `DRAFT`; kiểm tra (FR-05-010) và kiểm tra quyền (FR-05-025) là điều kiện bật môi trường.
+
+**Luồng thay thế.** Oracle khi đơn vị chủ quản không cấp được tài khoản quản trị cho OpenBao: cho phép `provisioning = STATIC`; mỗi luồng một tài khoản tĩnh, xoay 90 ngày.
+
+**Luồng ngoại lệ.**
+
+- Phạm vi chứa CSDL của Datahub: ERR-05-016 (422); "Không được cấp quyền đọc CSDL quản trị của Datahub ({schema}). Bỏ schema này khỏi phạm vi."
+- Vượt trần: ERR-05-030 (422); "Giá trị {tên} vượt trần {trần} của tỉnh."
+- `STATIC` với loại CSDL khác Oracle: ERR-05-003 (400); "Chỉ CSDL Oracle được dùng tài khoản tĩnh."
+
+**Đầu ra.** `201`, kết nối `db-flow` như FR-05-004.
+
+**Kết quả.** Kết nối sẵn sàng để cấp tài khoản theo luồng (FR-05-024).
+
+**Hậu điều kiện.** Kết nối `DRAFT`; với CSDL có RLS theo tenant, Kamelet `dh-sql-ro-source` sẽ đặt `rlsTenantSetting` bằng `SET LOCAL` trong mỗi giao dịch (FR-04-072 bước 4).
+
+**Sự kiện phát ra.** Như FR-05-004.
+
+**Kiểm toán.** Có: như FR-05-004, cộng phạm vi schema.
+
+**Quy tắc nghiệp vụ.** BR-05-017; BR-05-019.
+
+**Màn hình, API.** UI-05-03; UI-05-05; API-05-004, 005 (như FR-05-004, FR-05-005).
+:::
+
+| Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `allowedSchemas[]` | danh sách chuỗi | Có | Không rỗng; không chứa schema control plane, `pg-payment` | `["hotich", "baocao"]` |
+| `maxRows` | số nguyên | Không | Mặc định 10.000; trần 100.000 | `5000` |
+| `statementTimeoutMs` | số nguyên | Không | Mặc định 10.000; trần 60.000 | `15000` |
+| `provisioning` | enum | Có | `DYNAMIC` (PostgreSQL, MySQL, SQL Server); `STATIC` chỉ Oracle | `DYNAMIC` |
+| `rlsTenantSetting` | chuỗi | Không | Mặc định `app.tenant_id` | `app.tenant_id` |
+| `adminUsername`, `adminPassword` | bí mật | Có với `DYNAMIC` | Chỉ quyền `CREATE ROLE` và cấp `SELECT` | |
+
+: Dữ liệu vào riêng của FR-05-023
 
 #### FR-05-024 · Cấp tài khoản CSDL chỉ đọc theo luồng
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05, REQ-04; LGC-TOOL-008; Q359, ADR-067 |
-| Tác nhân, quyền | IE, TA (`PERM-05-connection`) |
-| Tiền điều kiện | Kết nối `db-flow` có giá trị `ENABLED` ở môi trường yêu cầu; luồng tồn tại ở PH-04 và kết nối đã cấp cho luồng (FR-05-009) |
-| Đầu vào | `flowCode`, `environments[]`, `schemas[]` (tập con của `allowedSchemas`), `tables[]` (tùy chọn, thu hẹp tới bảng hoặc view), `accessMode` (`READ` mặc định, `WRITE` xem FR-05-026), `justification` (bắt buộc với `WRITE`) |
-| Xử lý | 1. Kiểm tra phạm vi là tập con (ERR-05-027). 2. `READ` với `DYNAMIC`: tạo role OpenBao `dh-{tenant}-{flowCode}-{env}` với câu lệnh tạo tài khoản sinh từ mẫu chỉ có `CONNECT`, `USAGE` trên schema và `SELECT` trên bảng được liệt kê (hoặc mọi bảng của schema nếu không liệt kê), `default_ttl` 1 giờ, `max_ttl` 24 giờ; tài khoản ở trạng thái `ISSUED`. 3. `READ` với `STATIC`: tạo bản ghi chờ đơn vị chủ quản cấp tài khoản theo kịch bản; khi IE ghi bí mật tài khoản và kiểm tra quyền đạt (FR-05-025) thì `ISSUED`. 4. Ghi chính sách OpenBao cho phép đúng service account của `dh-runtime` tenant đó đọc `database/creds/dh-{tenant}-{flowCode}-{env}`. 5. Phát EVT-05-15. |
-| Đầu ra | `201`, tài khoản với trạng thái, cơ chế, phạm vi, tên role OpenBao |
-| Ngoại lệ | Phạm vi vượt: ERR-05-027, 422 · Chưa cấp kết nối cho luồng: ERR-05-013, 422 · OpenBao không khả dụng: ERR-05-028, 503 · CSDL nguồn từ chối tạo role (thiếu quyền tài khoản quản trị): ERR-05-025, 422 kèm hướng dẫn |
-| Hậu điều kiện | Luồng dùng `dh-sql-ro-source` với kết nối này nhận thông tin đăng nhập động lúc chạy |
-| Sự kiện phát ra | EVT-05-15 |
-| Kiểm toán | Có: luồng, môi trường, phạm vi, cơ chế |
+::: dac-ta
+**Mục đích.** Mỗi luồng đọc CSDL bằng tài khoản riêng, quyền hẹp tới đúng bảng cần, thời hạn ngắn, để khi một luồng bị lạm dụng thì không lộ cả CSDL và truy được luồng nào đã đọc gì.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05, REQ-04; LGC-TOOL-008; Q359, ADR-067.
+
+**Tiền điều kiện.** Kết nối `db-flow` có giá trị `ENABLED` ở môi trường yêu cầu; luồng tồn tại ở PH-04 và kết nối đã cấp cho luồng (FR-05-009).
+
+**Kích hoạt.** Người dùng bấm "Yêu cầu tài khoản chỉ đọc" ở UI-05-05.
+
+**Đầu vào.** `flowCode`, `environments[]`, `schemas[]` (tập con của `allowedSchemas`), `tables[]` (tùy chọn, thu hẹp tới bảng hoặc view), `accessMode` (`READ` mặc định; `WRITE` xem FR-05-026), `justification` (bắt buộc với `WRITE`).
+
+**Luồng xử lý chính.**
+
+1. Người dùng chọn luồng, môi trường, schema và (tùy chọn) bảng, rồi bấm "Gửi".
+2. Hệ thống kiểm tra phạm vi là tập con của `allowedSchemas` (ERR-05-027) và kết nối đã cấp cho luồng (ERR-05-013).
+3. Với `DYNAMIC`: hệ thống tạo role OpenBao `dh-{tenant}-{flowCode}-{env}` với câu lệnh tạo tài khoản sinh từ mẫu, chỉ có `CONNECT`, `USAGE` trên schema và `SELECT` trên bảng được liệt kê (hoặc mọi bảng của schema nếu không liệt kê); `default_ttl` 1 giờ, `max_ttl` 24 giờ.
+4. Hệ thống ghi chính sách OpenBao cho phép đúng service account của `dh-runtime` tenant đó đọc `database/creds/dh-{tenant}-{flowCode}-{env}`.
+5. Hệ thống chuyển tài khoản sang `ISSUED` và phát EVT-05-15.
+
+**Luồng thay thế.** Với `STATIC`: hệ thống tạo bản ghi chờ đơn vị chủ quản cấp tài khoản theo kịch bản; khi IE ghi bí mật tài khoản và kiểm tra quyền đạt (FR-05-025) thì tài khoản sang `ISSUED`.
+
+**Luồng ngoại lệ.**
+
+- Phạm vi vượt: ERR-05-027 (422); "Bảng hoặc schema {tên} nằm ngoài phạm vi cho phép của kết nối."
+- Chưa cấp kết nối cho luồng: ERR-05-013 (422); "Kết nối chưa được cấp cho luồng {mã}. Cấp ở tab Cấp sử dụng trước."
+- OpenBao không khả dụng: ERR-05-028 (503); "Kho bí mật tạm thời không khả dụng; tài khoản chưa được cấp. Thử lại sau."
+- CSDL nguồn từ chối tạo role (tài khoản quản trị thiếu quyền): ERR-05-025 (422) kèm hướng dẫn; "CSDL nguồn từ chối tạo tài khoản. Đề nghị đơn vị chủ quản chạy lại kịch bản cấp quyền cho tài khoản quản trị."
+
+**Đầu ra.** `201`, tài khoản kèm trạng thái, cơ chế, phạm vi, tên role OpenBao.
+
+**Kết quả.** Luồng đọc được đúng bảng đã xin, không cần ai nhập mật khẩu CSDL vào luồng.
+
+**Hậu điều kiện.** Luồng dùng `dh-sql-ro-source` với kết nối này nhận thông tin đăng nhập động lúc chạy.
+
+**Sự kiện phát ra.** EVT-05-15.
+
+**Kiểm toán.** Có: luồng, môi trường, phạm vi, cơ chế.
+
+**Quy tắc nghiệp vụ.** BR-05-017; BR-05-019.
+
+**Màn hình, API.** UI-05-05; API-05-035, 036.
+:::
 
 #### FR-05-025 · Kiểm tra quyền thực tế của tài khoản CSDL
 
-FR-05-025 (M; Q359 lớp chốt chặn thật). `PERM-05-test`. Với giá trị môi trường của kết nối `db-flow` hoặc JDBC mục đích `READ`, bộ chạy `probe` đăng nhập bằng tài khoản (tĩnh, hoặc một tài khoản động cấp tạm 5 phút) và truy vấn từ điển hệ thống: PostgreSQL `information_schema.role_table_grants`, `has_schema_privilege`, thuộc tính `rolsuper`, `rolcreaterole`, `rolbypassrls`; Oracle `USER_TAB_PRIVS`, `USER_SYS_PRIVS`, `SESSION_ROLES`; MySQL `SHOW GRANTS`; SQL Server `fn_my_permissions`. Kết quả liệt kê quyền theo đối tượng. Có bất kỳ quyền `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, DDL, `EXECUTE` trên thủ tục ngoài danh sách cho phép, `BYPASSRLS`, quyền quản trị, hoặc quyền trên schema ngoài `allowedSchemas` thì kết quả `FAILED` với `causeCode = DB_PRIVILEGE_WRITE` hoặc `DB_SCOPE`, giá trị môi trường không bật được (BR-05-019). Chạy lại tự động mỗi 24 giờ với giá trị đã bật; phát hiện quyền mới vượt phạm vi thì chuyển sức khỏe `UNHEALTHY` với lý do `PRIVILEGE_DRIFT` và cảnh báo SO.
+::: dac-ta
+**Mục đích.** Không tin vào khai báo: đăng nhập bằng chính tài khoản luồng sẽ dùng và đọc từ điển hệ thống để xác nhận nó thật sự chỉ đọc và chỉ thấy đúng phạm vi. Đây là chốt chặn thật của Q359.
+
+**Tác nhân, quyền.** IE, TA, SO (`PERM-05-test`); Hệ thống chạy lại tự động.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; Q359 (lớp chốt chặn thật); ADR-067.
+
+**Tiền điều kiện.** Giá trị môi trường của kết nối `db-flow` hoặc JDBC mục đích `READ` đã có bí mật.
+
+**Kích hoạt.** Người dùng bấm "Kiểm tra quyền" ở UI-05-05; bước bắt buộc trước khi bật môi trường; tự động mỗi 24 giờ với giá trị đã bật.
+
+**Đầu vào.** `connectionCode`, `env`; tài khoản tĩnh hoặc một tài khoản động cấp tạm 5 phút.
+
+**Luồng xử lý chính.**
+
+1. Bộ chạy `probe` đăng nhập bằng tài khoản cần kiểm tra.
+2. Hệ thống truy vấn từ điển hệ thống theo loại CSDL: PostgreSQL `information_schema.role_table_grants`, `has_schema_privilege`, thuộc tính `rolsuper`, `rolcreaterole`, `rolbypassrls`; Oracle `USER_TAB_PRIVS`, `USER_SYS_PRIVS`, `SESSION_ROLES`; MySQL `SHOW GRANTS`; SQL Server `fn_my_permissions`.
+3. Hệ thống liệt kê quyền theo đối tượng.
+4. Hệ thống so với phạm vi: không có quyền vượt thì kết quả `PASSED`.
+5. Hệ thống lưu kết quả; tài khoản động cấp tạm bị thu hồi ngay.
+
+**Luồng thay thế.** Lần chạy tự động 24 giờ phát hiện quyền mới vượt phạm vi: hệ thống chuyển sức khỏe `UNHEALTHY` lý do `PRIVILEGE_DRIFT` và cảnh báo SO.
+
+**Luồng ngoại lệ.**
+
+- Có quyền `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, DDL, `EXECUTE` trên thủ tục ngoài danh sách cho phép, `BYPASSRLS` hoặc quyền quản trị: kết quả `FAILED`, `causeCode = DB_PRIVILEGE_WRITE`, ERR-05-015 (422); "Tài khoản khai là chỉ đọc nhưng có quyền ghi trên {bảng}. Đề nghị đơn vị chủ quản thu hồi quyền trước khi bật."
+- Có quyền trên schema ngoài `allowedSchemas`: `FAILED`, `causeCode = DB_SCOPE`, ERR-05-027 (422); "Tài khoản thấy được schema {tên} ngoài phạm vi."
+- Không đăng nhập được: như bảng nguyên nhân của FR-05-010.
+
+**Đầu ra.** Kết quả `PASSED` hoặc `FAILED`, danh sách quyền theo đối tượng, các quyền vi phạm.
+
+**Kết quả.** SO có bằng chứng tài khoản luồng chỉ đọc đúng phạm vi; giá trị môi trường không bật được nếu tài khoản có quyền vượt.
+
+**Hậu điều kiện.** Kết quả kiểm tra quyền gắn với giá trị môi trường; `FAILED` chặn bật môi trường.
+
+**Sự kiện phát ra.** EVT-05-06 khi đổi sức khỏe do `PRIVILEGE_DRIFT`.
+
+**Kiểm toán.** Có: người hoặc hệ thống chạy, môi trường, kết quả, quyền vi phạm.
+
+**Quy tắc nghiệp vụ.** BR-05-019.
+
+**Màn hình, API.** UI-05-05; UI-05-04; API-05-040.
+:::
 
 #### FR-05-026 · Đề nghị, đồng ý và duyệt mục đích ghi vào CSDL
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; Q359 khoản 6, ADR-067 khoản 6, BR-04-015 |
-| Tác nhân, quyền | Đề nghị: IE, TA (`PERM-05-connection`). Đồng ý: SO (`PERM-05-db-write-consent`). Duyệt: IA (`PERM-05-approve`) |
-| Tiền điều kiện | Kết nối `purpose = READ_WRITE`; CSDL đích là CSDL của HTTT thành viên, không phải CSDL của Datahub (BR-05-017) |
-| Đầu vào | Như FR-05-024 với `accessMode = WRITE`, cộng `tables[]` bắt buộc, `operations[]` (`INSERT`, `UPDATE`; `DELETE` chỉ khi có văn bản đồng ý của đơn vị chủ quản, đính kèm số văn bản), `validUntil` (≤ 90 ngày), `justification` (≥ 30 ký tự), `ownerConsentRef` (bắt buộc khi `accessMode = WRITE`: số, ngày văn bản đồng ý của đơn vị chủ quản CSDL; thiếu thì ERR-05-003) |
-| Xử lý | 1. Tạo tài khoản `REQUESTED`, giao việc cho SO. 2. SO xem phạm vi, lý do, văn bản; đồng ý thì `CONSENTED` và giao việc cho IA; từ chối thì `REJECTED` có lý do. 3. IA duyệt (khác người đề nghị, ERR-05-011): `ISSUED`, OpenBao role mẫu ghi chỉ có các quyền trong `operations[]` trên `tables[]`. 4. Hết `validUntil`: `EXPIRED`, xóa role, phát EVT-05-15; 14 ngày trước hạn gửi việc gia hạn cho người đề nghị. 5. Gia hạn là một đề nghị mới, đi lại bước 1–3. |
-| Đầu ra | Tài khoản với trạng thái |
-| Ngoại lệ | Kết nối chỉ đọc: ERR-05-017, 409 · CSDL của Datahub: ERR-05-016, 422 · Quá 90 ngày: ERR-05-037, 422 · Duyệt khi chưa có SO đồng ý: ERR-05-017, 409 · Bốn mắt: ERR-05-011, 403 |
-| Hậu điều kiện | Luồng được liệt kê có thể dùng `dh-sql-write-sink` với kết nối này (FR-05-014 bước 6) |
-| Sự kiện phát ra | EVT-05-15 |
-| Kiểm toán | Có: người đề nghị, SO, IA, phạm vi, văn bản đồng ý, thời hạn |
+::: dac-ta
+**Mục đích.** Cho phép ngoại lệ có kiểm soát khi một luồng buộc phải ghi vào CSDL của HTTT thành viên: có văn bản đồng ý của chủ quản, SO đồng ý, IA duyệt, quyền hẹp tới bảng và thao tác, và có hạn.
+
+**Tác nhân, quyền.** Đề nghị: IE, TA (`PERM-05-connection`). Đồng ý: SO (`PERM-05-db-write-consent`). Duyệt: IA (`PERM-05-approve`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; Q359 khoản 6; ADR-067 khoản 6; BR-04-015.
+
+**Tiền điều kiện.** Kết nối `purpose = READ_WRITE`; CSDL đích là CSDL của HTTT thành viên, không phải CSDL của Datahub (BR-05-017).
+
+**Kích hoạt.** IE bấm "Đề nghị quyền ghi" ở UI-05-05; SO và IA xử lý ở UI-05-17.
+
+**Đầu vào.** Như FR-05-024 với `accessMode = WRITE`, cộng `tables[]`, `operations[]`, `validUntil`, `justification`, `ownerConsentRef`. Chi tiết ở bảng dưới.
+
+**Luồng xử lý chính.**
+
+1. IE gửi đề nghị; hệ thống tạo tài khoản `REQUESTED` và giao việc cho SO.
+2. SO xem phạm vi, lý do, văn bản đồng ý; bấm "Đồng ý": tài khoản `CONSENTED`, hệ thống giao việc cho IA.
+3. IA (khác người đề nghị) bấm "Duyệt": tài khoản `ISSUED`; role mẫu OpenBao chỉ có các quyền trong `operations[]` trên `tables[]`.
+4. Hệ thống phát EVT-05-15.
+5. 14 ngày trước `validUntil`, hệ thống gửi việc gia hạn cho người đề nghị; hết hạn thì `EXPIRED`, xóa role, phát EVT-05-15.
+
+**Luồng thay thế.**
+
+- SO hoặc IA từ chối: `REJECTED` có lý do (ERR-05-038 nếu thiếu lý do).
+- Gia hạn: là một đề nghị mới, đi lại bước 1–3.
+
+**Luồng ngoại lệ.**
+
+- Kết nối chỉ đọc: ERR-05-017 (409); "Kết nối chỉ đọc không cho thao tác ghi. Đổi mục đích kết nối hoặc yêu cầu tài khoản ghi."
+- CSDL của Datahub: ERR-05-016 (422); "Không được ghi vào CSDL của Datahub."
+- Thiếu văn bản đồng ý: ERR-05-003 (400); "Cần số, ngày văn bản đồng ý của đơn vị chủ quản CSDL."
+- Quá 90 ngày: ERR-05-037 (422); "Thời hạn quyền ghi tối đa 90 ngày."
+- IA duyệt khi SO chưa đồng ý: ERR-05-017 (409); "Cần cán bộ ATTT đồng ý trước khi duyệt."
+- Bốn mắt: ERR-05-011 (403); "Anh/chị là người đề nghị nên không được tự duyệt."
+
+**Đầu ra.** Tài khoản kèm trạng thái sau mỗi bước.
+
+**Kết quả.** Luồng ghi được đúng bảng, đúng thao tác, trong thời hạn đã duyệt; hết hạn thì tự mất quyền.
+
+**Hậu điều kiện.** Luồng được liệt kê có thể dùng `dh-sql-write-sink` với kết nối này (FR-05-014 bước 6).
+
+**Sự kiện phát ra.** EVT-05-15.
+
+**Kiểm toán.** Có: người đề nghị, SO, IA, phạm vi, văn bản đồng ý, thời hạn.
+
+**Quy tắc nghiệp vụ.** BR-05-017; BR-04-015.
+
+**Màn hình, API.** UI-05-05; UI-05-17; API-05-036, 037, 038.
+:::
+
+| Trường | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `tables[]` | danh sách chuỗi | Có | Bảng trong `allowedSchemas` | `["hotich.ket_qua_dong_bo"]` |
+| `operations[]` | danh sách enum | Có | `INSERT`, `UPDATE`; `DELETE` chỉ khi văn bản đồng ý ghi rõ | `["INSERT"]` |
+| `validUntil` | ngày | Có | ≤ 90 ngày kể từ ngày duyệt | `2027-02-20` |
+| `justification` | chuỗi | Có | ≥ 30 ký tự | |
+| `ownerConsentRef` | chuỗi | Có | Số, ngày văn bản đồng ý của đơn vị chủ quản | `125/STP-VP ngày 18/11/2026` |
+
+: Dữ liệu vào riêng của FR-05-026
+
+```{.mermaid caption="Trình tự đề nghị và duyệt quyền ghi CSDL"}
+sequenceDiagram
+  actor IE
+  actor SO
+  actor IA
+  participant DI as dh-integration
+  participant OB as OpenBao
+  IE->>DI: Đề nghị ghi (API-05-036)
+  DI-->>SO: Việc cần đồng ý
+  SO->>DI: Đồng ý (API-05-037)
+  DI-->>IA: Việc cần duyệt
+  IA->>DI: Duyệt (API-05-038)
+  DI->>OB: Tạo role chỉ quyền operations[] trên tables[]
+  DI-->>IE: ISSUED, EVT-05-15
+```
 
 #### FR-05-027 · Kiểm toán truy cập CSDL của luồng
 
-FR-05-027 (M; ADR-067 khoản 5; SEC-61). Kamelet `dh-sql-ro-source`, `dh-sql-ro-action`, `dh-sql-write-sink` phát EVT-05-14 sau mỗi câu lệnh: tenant, luồng, phiên bản, môi trường, kết nối, tài khoản (tên role động), băm SHA-256 của câu lệnh đã chuẩn hóa, loại câu lệnh, số dòng đọc hoặc ghi, thời lượng, `traceId`; không có giá trị tham số và dữ liệu. `dh-integration` tiêu thụ, lưu 12 tháng trực tuyến ở bảng phân vùng theo tháng, chuyển WORM theo chính sách chung (5 năm). SO, AU (`PERM-05-audit-read`) tra cứu theo luồng, kết nối, khoảng thời gian, `traceId` (API-05-041). Đối chiếu với pgaudit của CSDL nguồn khi đơn vị chủ quản cung cấp: tài liệu D03-02-PH05 mô tả mẫu cấu hình pgaudit lớp `READ`, `WRITE` cho role `dh-*`. Mẫu bất thường (số dòng đọc trong một giờ vượt 10 lần trung bình 7 ngày của luồng) tạo cảnh báo an ninh mức trung bình cho SO.
+::: dac-ta
+**Mục đích.** Trả lời được "luồng nào, lúc nào, bằng tài khoản nào, đã đọc hoặc ghi bao nhiêu dòng ở CSDL nào", mà không lưu dữ liệu cá nhân trong nhật ký.
+
+**Tác nhân, quyền.** Ghi: Hệ thống (Kamelet SQL, `dh-integration`). Tra cứu: SO, AU (`PERM-05-audit-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; ADR-067 khoản 5; SEC-61.
+
+**Tiền điều kiện.** Luồng dùng `dh-sql-ro-source`, `dh-sql-ro-action` hoặc `dh-sql-write-sink`.
+
+**Kích hoạt.** Sau mỗi câu lệnh (ghi); người dùng mở tab Nhật ký truy cập ở UI-05-05 (tra cứu).
+
+**Đầu vào.** Ghi: ngữ cảnh lượt chạy. Tra cứu: `flowCode`, `connectionCode`, khoảng thời gian, `traceId`.
+
+**Luồng xử lý chính.**
+
+1. Kamelet phát EVT-05-14 sau mỗi câu lệnh: tenant, luồng, phiên bản, môi trường, kết nối, tài khoản (tên role động), băm SHA-256 của câu lệnh đã chuẩn hóa, loại câu lệnh, số dòng đọc hoặc ghi, thời lượng, `traceId`; không có giá trị tham số và dữ liệu.
+2. `dh-integration` tiêu thụ và lưu 12 tháng trực tuyến ở bảng phân vùng theo tháng.
+3. Hệ thống chuyển bản ghi sang WORM theo chính sách chung (5 năm).
+4. SO, AU tra cứu theo luồng, kết nối, khoảng thời gian, `traceId`.
+5. Hệ thống phát hiện mẫu bất thường: số dòng đọc trong một giờ vượt 10 lần trung bình 7 ngày của luồng thì tạo cảnh báo an ninh mức trung bình cho SO.
+
+**Luồng thay thế.** Đơn vị chủ quản cung cấp pgaudit của CSDL nguồn: SO đối chiếu theo `traceId` và tên role; D03-02-PH05 mô tả mẫu cấu hình pgaudit lớp `READ`, `WRITE` cho role `dh-*`.
+
+**Luồng ngoại lệ.** Kafka không nhận EVT-05-14: Kamelet đệm cục bộ và phát lại; đệm đầy thì lượt chạy lỗi tạm thời, không chạy câu lệnh không được kiểm toán.
+
+**Đầu ra.** Tra cứu: `200`, danh sách bản ghi có phân trang.
+
+**Kết quả.** SO và kiểm toán viên truy được mọi lần luồng chạm CSDL của HTTT.
+
+**Hậu điều kiện.** Bản ghi bất biến, giữ 12 tháng trực tuyến và 5 năm WORM.
+
+**Sự kiện phát ra.** EVT-05-14.
+
+**Kiểm toán.** Bản thân chức năng là nhật ký kiểm toán; việc tra cứu được ghi kiểm toán.
+
+**Quy tắc nghiệp vụ.** BR-05-019.
+
+**Màn hình, API.** UI-05-05 tab Nhật ký truy cập; API-05-041.
+:::
 
 #### FR-05-028 · Thu hồi tài khoản CSDL
 
-FR-05-028 (M). Tài khoản bị thu hồi khi: người có `PERM-05-connection` hoặc SO (`PERM-05-operate`) thu hồi thủ công kèm lý do; luồng ngừng dùng ở PH-04 (tiêu thụ sự kiện ngừng dùng luồng); kết nối ngừng dùng; quyền ghi hết hạn. Thu hồi xóa role OpenBao và gọi thu hồi mọi lease đang mở (`sys/leases/revoke-prefix`), nên tài khoản động bị xóa ở CSDL nguồn trong vòng 60 giây (NFR-05-007). Tài khoản tĩnh chuyển `REVOKED` và tạo việc cho IE đề nghị đơn vị chủ quản xóa tài khoản. Kiểm toán: có. Sự kiện: EVT-05-15.
+::: dac-ta
+**Mục đích.** Bảo đảm tài khoản CSDL mất hiệu lực ngay khi không còn lý do tồn tại, kể cả khi không ai nhớ thu hồi.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-connection`); SO (`PERM-05-operate`); Hệ thống (tự động).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; Q359; ADR-067.
+
+**Tiền điều kiện.** Tài khoản ở `ISSUED`.
+
+**Kích hoạt.** Một trong bốn: người dùng bấm "Thu hồi" ở UI-05-05; luồng ngừng dùng ở PH-04 (tiêu thụ sự kiện ngừng dùng luồng); kết nối ngừng dùng; quyền ghi hết hạn.
+
+**Đầu vào.** `accountId`, `reason` (bắt buộc khi thu hồi thủ công).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống xác định tài khoản cần thu hồi theo nguồn kích hoạt.
+2. Hệ thống xóa role OpenBao.
+3. Hệ thống gọi thu hồi mọi lease đang mở (`sys/leases/revoke-prefix`); tài khoản động bị xóa ở CSDL nguồn trong vòng 60 giây (NFR-05-007).
+4. Hệ thống chuyển tài khoản `REVOKED` và phát EVT-05-15.
+
+**Luồng thay thế.** Tài khoản tĩnh: hệ thống chuyển `REVOKED` và tạo việc cho IE đề nghị đơn vị chủ quản xóa tài khoản ở CSDL.
+
+**Luồng ngoại lệ.**
+
+- Thiếu lý do khi thu hồi thủ công: ERR-05-038 (400); "Nhập lý do thu hồi."
+- OpenBao không khả dụng: ERR-05-028 (503); hệ thống đưa việc thu hồi vào hàng đợi, thử lại mỗi phút và cảnh báo SO nếu sau 15 phút chưa xong; "Đã chặn tài khoản; việc xóa ở kho bí mật sẽ hoàn tất khi kho khả dụng."
+
+**Đầu ra.** `200`, tài khoản `REVOKED`.
+
+**Kết quả.** Luồng không còn đọc hoặc ghi được CSDL bằng tài khoản đó.
+
+**Hậu điều kiện.** Không còn lease mở; tài khoản động không còn ở CSDL nguồn.
+
+**Sự kiện phát ra.** EVT-05-15.
+
+**Kiểm toán.** Có: người hoặc nguồn kích hoạt, lý do, thời điểm xóa lease.
+
+**Quy tắc nghiệp vụ.** BR-05-017.
+
+**Màn hình, API.** UI-05-05; API-05-039.
+:::
 
 ### 6.6. Nhóm E · Bộ điều hợp theo giao thức
 
