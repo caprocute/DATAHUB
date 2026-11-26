@@ -26,7 +26,7 @@ Tính năng: TS-07-17 · ĐVHC: sắp xếp, chuyển mã, tra theo thời đi�
   @TC-07-202 @P1 @Âm @Bảo @mật
   Kịch bản: TC-07-202 Chỉ PLATFORM ghi được ĐVHC; không xóa sự kiện của phiên bản đã phát hành
     # Truy vết: FR-07-044, 045 · API-07-054 · ERR-07-003, 004
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi U-T68-TA ghi sự kiện vào `DVHC`.
     Và U-PA xóa một sự kiện của v2 (đã phát hành).
     Và U-PA xóa sự kiện TC-07-200 trong bản nháp.
@@ -74,7 +74,7 @@ Tính năng: TS-07-17 · ĐVHC: sắp xếp, chuyển mã, tra theo thời đi�
   @TC-07-208 @P2 @Âm @Biên
   Kịch bản: TC-07-208 Giới hạn lô và không có phiên bản tại thời điểm
     # Truy vết: FR-07-046 · ERR-07-006, 026
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi gửi 1.000 mã (biên), rồi 1.001 mã.
     Và gửi `at = 2019-01-01` (trước v1).
     Thì 1.000 mã trả `200` với p95 ≤ 300 ms ở môi trường PERF; 1.001 mã `400` `ERR-07-026`. Bước 2 `404` `ERR-07-006`.

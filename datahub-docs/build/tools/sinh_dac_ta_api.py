@@ -90,6 +90,7 @@ for path, item in d['paths'].items():
             continue
         nhom.setdefault((op.get('tags') or ['Khác'])[0], []).append((op['x-datahub-id'], m.upper(), path, op))
 L = ['<!-- gen:dac-ta-api:start -->', '']
+da_gap = set()  # một mã dùng cho nhiều phương thức trên cùng tài nguyên (vd GET và PUT)
 for tag, ops in nhom.items():
     L += [f'### {tag}', '']
     for aid, m, path, op in sorted(ops):
@@ -103,7 +104,9 @@ for tag, ops in nhom.items():
                 ('FR hiện thực', fr), ('Tham số', '; '.join(ps) or 'Không'), ('Thân yêu cầu', body(op.get('requestBody'))),
                 ('Chống trùng', 'Có, tiêu đề `Idempotency-Key`' if idem else 'Không'), ('Phản hồi thành công', '; '.join(ok) or 'Không'),
                 ('Lỗi', '; '.join(loi) or 'Không'), ('Ghi chú', mota or 'Không')]
-        L += [f'#### {aid} · {muc}', '', '::: dac-ta']
+        tieu_de = f'#### {aid} · {muc}' if aid not in da_gap else f'#### {muc} ({aid}, {m})'
+        da_gap.add(aid)
+        L += [tieu_de, '', '::: dac-ta']
         L += [f"**{a}.** {b.rstrip('.')}.\n" for a, b in rows]
         L[-1] = L[-1].rstrip('\n')
         L += [':::', '']

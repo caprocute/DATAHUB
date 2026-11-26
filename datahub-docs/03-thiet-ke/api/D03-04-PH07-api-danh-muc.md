@@ -2079,7 +2079,7 @@ Mỗi endpoint một khối 10 mục, sinh từ `ph07/openapi-rdm.yaml` bằng `
 **Ghi chú.** Áp dụng cho danh mục `RESTRICTED` (bắt buộc để HTTT khai thác) và cho danh mục bất kỳ khi cần cấp scope `rdm.write` cho HTTT làm nguồn cập nhật.
 :::
 
-#### API-07-075 · Thay toàn bộ danh sách cấp quyền khai thác
+#### Thay toàn bộ danh sách cấp quyền khai thác (API-07-075, PUT)
 
 ::: dac-ta
 **Mục đích.** Thay toàn bộ danh sách cấp quyền khai thác.
