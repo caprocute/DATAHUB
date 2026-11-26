@@ -77,11 +77,9 @@ paths:
                   status: ACTIVE
                   flowCount: 12
                   myAccess: MAINTAIN
-                  updatedAt: '2026-11-26T08:15:00+07:00'
                   allowedActions: &id001
                   - update
                   - archive
-                  - members
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -125,7 +123,6 @@ paths:
                 status: ACTIVE
                 flowCount: 0
                 myAccess: MAINTAIN
-                updatedAt: '2026-11-26T08:15:00+07:00'
                 allowedActions: *id001
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -174,7 +171,6 @@ paths:
                 status: ACTIVE
                 flowCount: 12
                 myAccess: MAINTAIN
-                updatedAt: '2026-11-26T08:15:00+07:00'
                 allowedActions: *id001
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -218,7 +214,6 @@ paths:
                 status: ARCHIVED
                 flowCount: 12
                 myAccess: MAINTAIN
-                updatedAt: '2026-11-26T08:15:00+07:00'
                 allowedActions: []
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -432,13 +427,11 @@ paths:
                   sourceSystem: DVC-T68
                   targetSystems: &id002
                   - NDXP
-                  openVersionNo: 3
                   environments: &id003
                   - environment: PROD
                     versionNo: 2
                     syncStatus: SYNCED
                     healthStatus: HEALTHY
-                  updatedAt: '2026-11-26T09:02:00+07:00'
                   allowedActions: &id004
                   - update
                   - clone
@@ -508,19 +501,15 @@ paths:
                 status: DRAFT
                 sourceSystem: DVC-T68
                 targetSystems: *id002
-                openVersionNo: 1
                 environments: []
-                updatedAt: '2026-11-26T09:02:00+07:00'
                 allowedActions:
                 - update
                 - retire
                 origin: TEMPLATE
-                templateCode: tpl-rest-proxy
-                createdBy: an.nv
                 routes: &id005
                 - routeId: tra-cuu
-                  fromUri: platform-http:/ho-tich/tra-cuu
                   stepCount: 9
+                openVersionNo: 1
           headers:
             ETag:
               schema:
@@ -575,13 +564,9 @@ paths:
                 status: ACTIVE
                 sourceSystem: DVC-T68
                 targetSystems: *id002
-                openVersionNo: 3
                 environments: *id003
-                updatedAt: '2026-11-26T09:02:00+07:00'
                 allowedActions: *id004
                 origin: TEMPLATE
-                templateCode: tpl-rest-proxy
-                createdBy: an.nv
                 routes: *id005
           headers:
             ETag:
@@ -637,13 +622,9 @@ paths:
                 status: ACTIVE
                 sourceSystem: DVC-T68
                 targetSystems: *id002
-                openVersionNo: 3
                 environments: *id003
-                updatedAt: '2026-11-26T09:02:00+07:00'
                 allowedActions: *id004
                 origin: TEMPLATE
-                templateCode: tpl-rest-proxy
-                createdBy: an.nv
                 routes: *id005
                 labels:
                   linh-vuc: ho-tich
@@ -713,15 +694,12 @@ paths:
                 status: DRAFT
                 sourceSystem: DVC-T68
                 targetSystems: *id002
-                openVersionNo: 1
                 environments: []
-                updatedAt: '2026-11-26T09:02:00+07:00'
                 allowedActions: *id004
                 origin: CLONE
-                templateCode: tpl-rest-proxy
-                createdBy: an.nv
                 routes: *id005
                 clonedFrom: tra-cuu-ho-tich
+                openVersionNo: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -774,13 +752,9 @@ paths:
                 status: ACTIVE
                 sourceSystem: DVC-T68
                 targetSystems: *id002
-                openVersionNo: 3
                 environments: *id003
-                updatedAt: '2026-11-26T09:02:00+07:00'
                 allowedActions: []
                 origin: TEMPLATE
-                templateCode: tpl-rest-proxy
-                createdBy: an.nv
                 routes: *id005
                 disabledReasons:
                   update: Luồng đang được gỡ.
@@ -874,9 +848,7 @@ paths:
                 - versionNo: 3
                   status: DRAFT
                   contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                  catalogVersion: camel-quarkus-3.33.2
                   createdBy: an.nv
-                  createdAt: '2026-11-26T08:00:00+07:00'
                 - versionNo: 2
                   status: APPROVED
                   contentHash: sha256:8b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e18b04d7e1
@@ -926,21 +898,12 @@ paths:
                 versionNo: 3
                 status: DRAFT
                 contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                catalogVersion: camel-quarkus-3.33.2
                 createdBy: an.nv
-                createdAt: '2026-11-26T08:00:00+07:00'
-                definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet:\
-                  \ dh-receive-action\n"
-                canvasLayout: &id011
-                  n1:
-                    x: 120
-                    y: 80
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
+                canvasLayout: &id011 {}
                 samples: &id012 {}
-                needsRevalidation: false
                 allowedActions: &id013
                 - saveDraft
-                - validate
-                - testRun
                 - submit
           headers:
             ETag:
@@ -1021,8 +984,7 @@ paths:
             schema:
               $ref: '#/components/schemas/DraftUpdate'
             example:
-              definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet:\
-                \ dh-receive-action\n"
+              definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
               canvasLayout:
                 n1:
                   x: 120
@@ -1042,8 +1004,6 @@ paths:
                 savedAt: '2026-11-26T09:03:00+07:00'
                 validation: &id008
                   level: DESIGN
-                  validatedAt: '2026-11-26T09:03:00+07:00'
-                  contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
                   errorCount: 0
                   warnCount: 1
                   findings:
@@ -1106,9 +1066,7 @@ paths:
                 versionNo: 3
                 status: DISCARDED
                 contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                catalogVersion: camel-quarkus-3.33.2
                 createdBy: an.nv
-                createdAt: '2026-11-26T08:00:00+07:00'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1213,7 +1171,7 @@ paths:
             application/yaml:
               schema:
                 type: string
-              example: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+              example: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
             application/zip:
               schema:
                 type: string
@@ -1249,7 +1207,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ImportYamlRequest'
             example:
-              yaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+              yaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
               keepLayout: true
       responses:
         '200':
@@ -1499,8 +1457,6 @@ paths:
                 $ref: '#/components/schemas/ValidationResult'
               example:
                 level: SUBMIT
-                validatedAt: '2026-11-26T09:03:00+07:00'
-                contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
                 errorCount: 1
                 warnCount: 0
                 findings:
@@ -1537,7 +1493,7 @@ paths:
             schema:
               $ref: '#/components/schemas/StatelessValidateRequest'
             example:
-              yaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+              yaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
               resourceKind: ROUTE
               exposure: EXTERNAL
       responses:
@@ -1709,7 +1665,6 @@ paths:
                 definitionHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
                 mode: MOCK
                 status: QUEUED
-                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
                 matchesCurrentHash: true
                 allowedActions:
                 - cancel
@@ -1787,11 +1742,9 @@ paths:
                   mode: MOCK
                   status: PASSED
                   durationMs: 412
-                  traceId: 4bf92f3577b34da6a3ce929d0e0e4736
                   matchesCurrentHash: true
                   allowedActions: &id009
                   - rerun
-                  - saveAsCase
                 page:
                   next: null
                   hasMore: false
@@ -1832,7 +1785,6 @@ paths:
                 mode: MOCK
                 status: PASSED
                 durationMs: 412
-                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
                 matchesCurrentHash: true
                 allowedActions: *id009
                 steps:
@@ -1975,7 +1927,6 @@ paths:
                 mode: MOCK
                 status: CANCELLED
                 durationMs: 412
-                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
                 matchesCurrentHash: true
                 allowedActions:
                 - rerun
@@ -2229,14 +2180,10 @@ paths:
                 versionNo: 3
                 status: PENDING_REVIEW
                 contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                catalogVersion: camel-quarkus-3.33.2
                 createdBy: an.nv
-                createdAt: '2026-11-26T08:00:00+07:00'
-                definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet:\
-                  \ dh-receive-action\n"
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
                 canvasLayout: *id011
                 samples: *id012
-                needsRevalidation: false
                 allowedActions:
                 - withdraw
                 submittedBy: an.nv
@@ -2301,14 +2248,10 @@ paths:
                 versionNo: 3
                 status: DRAFT
                 contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                catalogVersion: camel-quarkus-3.33.2
                 createdBy: an.nv
-                createdAt: '2026-11-26T08:00:00+07:00'
-                definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet:\
-                  \ dh-receive-action\n"
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
                 canvasLayout: *id011
                 samples: *id012
-                needsRevalidation: false
                 allowedActions: *id013
           headers:
             ETag:
@@ -2359,8 +2302,6 @@ paths:
               checklist:
                 diff-viewed: true
                 pii-purpose: true
-                error-dlq: true
-                connections: true
               publishTo: TEST
       responses:
         '200':
@@ -2373,14 +2314,10 @@ paths:
                 versionNo: 3
                 status: APPROVED
                 contentHash: sha256:3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e3f9a1c2e
-                catalogVersion: camel-quarkus-3.33.2
                 createdBy: an.nv
-                createdAt: '2026-11-26T08:00:00+07:00'
-                definitionYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet:\
-                  \ dh-receive-action\n"
+                definitionYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
                 canvasLayout: *id011
                 samples: *id012
-                needsRevalidation: false
                 allowedActions:
                 - release
                 approvedBy: binh.tt
@@ -3034,11 +2971,6 @@ paths:
                     exchanges1h: 2480
                     failures1h: 3
                     p95ms: 190
-                - nodeId: n7
-                  direction: OUT
-                  scheme: https
-                  uri: https://ndxp.example.vn/v1/ho-tich?apiKey=***
-                  connectionCode: ndxp-ho-tich
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -3572,7 +3504,7 @@ paths:
                 scope: TENANT
                 status: ACTIVE
                 catalogVersion: camel-quarkus-3.33.2
-                bodyYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+                bodyYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -3621,7 +3553,7 @@ paths:
                 scope: PLATFORM
                 status: ACTIVE
                 catalogVersion: camel-quarkus-3.33.2
-                bodyYaml: "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+                bodyYaml: "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
                 paramSchema:
                   type: object
                   required:
@@ -3701,10 +3633,6 @@ paths:
                 - key: 04.test.max-concurrent
                   value: 5
                   default: 5
-                freezeWindows:
-                - from: '2026-12-28T00:00:00+07:00'
-                  to: '2027-01-03T23:59:00+07:00'
-                  reason: Đóng băng cuối năm.
                 envVars:
                 - &id018
                   name: ndxp-base-path
@@ -3934,103 +3862,103 @@ components:
         - en
   responses:
     BadRequest:
-      description: Tham số hoặc thân yêu cầu không hợp lệ (gồm ERR-04-025 thiếu lý do, ERR-04-026 vượt kích thước trang).
+      description: Tham số hoặc thân sai (ERR-04-049; thiếu lý do ERR-04-025; trang quá 100 ERR-04-026).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-049
-            title: Tham số hoặc thân yêu cầu không hợp lệ
+            title: Tham số hoặc thân sai
             status: 400
             code: ERR-04-049
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unauthorized:
-      description: Thiếu token hoặc token hết hạn.
+      description: Thiếu hoặc hết hạn token (ERR-04-044).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-044
-            title: Thiếu token hoặc token hết hạn
+            title: Thiếu hoặc hết hạn token
             status: 401
             code: ERR-04-044
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Forbidden:
-      description: Không đủ quyền chức năng hoặc phạm vi không gian làm việc (gồm ERR-04-003, ERR-04-015).
+      description: Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-045
-            title: Không đủ quyền chức năng hoặc phạm vi không gian làm việc
+            title: Thiếu quyền
             status: 403
             code: ERR-04-045
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     NotFound:
-      description: Không tìm thấy hoặc không có quyền xem (không phân biệt).
+      description: Không tìm thấy hoặc không được xem (ERR-04-001).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-001
-            title: Không tìm thấy hoặc không có quyền xem
+            title: Không tìm thấy hoặc không được xem
             status: 404
             code: ERR-04-001
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Conflict:
-      description: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ (mã cụ thể trong `code`).
+      description: Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-005
-            title: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ
+            title: Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code`
             status: 409
             code: ERR-04-005
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PreconditionFailed:
-      description: ETag không khớp; kèm `currentEtag`, `savedBy`, `savedAt`.
+      description: ETag lệch (ERR-04-006).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-006
-            title: ETag không khớp
+            title: ETag lệch
             status: 412
             code: ERR-04-006
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PreconditionRequired:
-      description: Thiếu tiêu đề If-Match.
+      description: Thiếu If-Match (ERR-04-007).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-007
-            title: Thiếu tiêu đề If-Match
+            title: Thiếu If-Match
             status: 428
             code: ERR-04-007
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     PayloadTooLarge:
-      description: Thân vượt giới hạn (định nghĩa 512 KiB ERR-04-033, bản tin 256 KiB ERR-04-021).
+      description: Thân quá lớn (ERR-04-033; bản tin ERR-04-021).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-033
-            title: Thân vượt giới hạn
+            title: Thân quá lớn
             status: 413
             code: ERR-04-033
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     UnsupportedMediaType:
-      description: Kiểu nội dung không hỗ trợ.
+      description: Kiểu nội dung không hỗ trợ (ERR-04-046).
       content:
         application/problem+json:
           schema:
@@ -4042,43 +3970,43 @@ components:
             code: ERR-04-046
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unprocessable:
-      description: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu; kèm `findings`.
+      description: Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings` (ERR-04-009).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-009
-            title: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu
+            title: Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings`
             status: 422
             code: ERR-04-009
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Locked:
-      description: Đang trong khoảng đóng băng thay đổi (BR-04-022).
+      description: Đóng băng thay đổi (ERR-04-041).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-041
-            title: Đang trong khoảng đóng băng thay đổi
+            title: Đóng băng thay đổi
             status: 423
             code: ERR-04-041
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     TooManyRequests:
-      description: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời; kèm `retryAfterSeconds`.
+      description: Vượt tần suất (ERR-04-048) hoặc hạn mức chạy thử (ERR-04-019).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-048
-            title: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời
+            title: Vượt tần suất
             status: 429
             code: ERR-04-048
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     BadGateway:
-      description: Không ghi được kho cấu hình.
+      description: Không ghi được kho cấu hình (ERR-04-022).
       content:
         application/problem+json:
           schema:
@@ -4090,14 +4018,14 @@ components:
             code: ERR-04-022
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     ServiceUnavailable:
-      description: Phân hệ phụ thuộc chưa sẵn sàng (gồm ERR-04-019 sandbox).
+      description: Phụ thuộc chưa sẵn sàng (ERR-04-047; sandbox ERR-04-019).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
             type: https://datahub.gov.vn/problems/integration/err-04-047
-            title: Phân hệ phụ thuộc chưa sẵn sàng
+            title: Phụ thuộc chưa sẵn sàng
             status: 503
             code: ERR-04-047
             traceId: 4bf92f3577b34da6a3ce929d0e0e4736

@@ -13,7 +13,7 @@ T = lambda h, m=0: f"2026-11-26T{h:02d}:{m:02d}:00+07:00"
 BASE = "/api/integration/v1"
 F = "tra-cuu-ho-tich"
 FP = f"{BASE}/flows/{F}"
-YAML = "- route:\n    id: tra-cuu\n    from:\n      uri: platform-http:/ho-tich/tra-cuu\n      steps:\n        - kamelet: dh-receive-action\n"
+YAML = "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"
 ETAG = 'W/"3-3f9a1c2e"'
 
 PATH_EX = {"flowCode": F, "versionNo": 3, "workspaceCode": "ho-tich", "runId": U(41), "caseId": U(44),
@@ -23,21 +23,19 @@ HDR_EX = {"If-Match": ETAG, "Idempotency-Key": "6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e
           "If-None-Match": 'W/"camel-quarkus-3.33.2.p17.r4"'}
 
 WS = {"id": U(1), "code": "ho-tich", "name": "Hộ tịch", "ownerOrgCode": "STP-T68", "status": "ACTIVE",
-      "flowCount": 12, "myAccess": "MAINTAIN", "updatedAt": T(8, 15), "allowedActions": ["update", "archive", "members"]}
+      "flowCount": 12, "myAccess": "MAINTAIN", "allowedActions": ["update", "archive"]}
 ENV_PROD = {"environment": "PROD", "versionNo": 2, "syncStatus": "SYNCED", "healthStatus": "HEALTHY"}
 FLOW = {"id": U(10), "code": F, "name": "Tra cứu hộ tịch qua NDXP", "workspaceCode": "ho-tich", "resourceKind": "ROUTE",
         "transport": "SYNC", "exposure": "EXTERNAL", "status": "ACTIVE", "sourceSystem": "DVC-T68", "targetSystems": ["NDXP"],
-        "openVersionNo": 3, "environments": [ENV_PROD], "updatedAt": T(9, 2), "allowedActions": ["update", "clone", "retire"]}
-FLOW_D = {**FLOW, "origin": "TEMPLATE", "templateCode": "tpl-rest-proxy", "createdBy": "an.nv",
-          "routes": [{"routeId": "tra-cuu", "fromUri": "platform-http:/ho-tich/tra-cuu", "stepCount": 9}]}
-VER = {"versionNo": 3, "status": "DRAFT", "contentHash": H, "catalogVersion": "camel-quarkus-3.33.2", "createdBy": "an.nv", "createdAt": T(8)}
-VER_D = {**VER, "definitionYaml": YAML, "canvasLayout": {"n1": {"x": 120, "y": 80}}, "samples": {},
-         "needsRevalidation": False, "allowedActions": ["saveDraft", "validate", "testRun", "submit"]}
-VALID = {"level": "DESIGN", "validatedAt": T(9, 3), "contentHash": H, "errorCount": 0, "warnCount": 1,
+        "environments": [ENV_PROD], "allowedActions": ["update", "clone", "retire"]}
+FLOW_D = {**FLOW, "origin": "TEMPLATE", "routes": [{"routeId": "tra-cuu", "stepCount": 9}]}
+VER = {"versionNo": 3, "status": "DRAFT", "contentHash": H, "createdBy": "an.nv"}
+VER_D = {**VER, "definitionYaml": YAML, "canvasLayout": {}, "samples": {}, "allowedActions": ["saveDraft", "submit"]}
+VALID = {"level": "DESIGN", "errorCount": 0, "warnCount": 1,
          "findings": [{"rule": "VR-12", "severity": "WARN", "nodeId": "n7", "message": "Chặng gọi hệ đích chưa đặt thời gian chờ; mặc định 30 giây."}]}
 SAVED = {"versionNo": 3, "contentHash": H, "savedAt": T(9, 3), "validation": VALID}
 RUN = {"id": U(41), "versionNo": 3, "definitionHash": H, "mode": "MOCK", "status": "PASSED", "durationMs": 412,
-       "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "matchesCurrentHash": True, "allowedActions": ["rerun", "saveAsCase"]}
+       "matchesCurrentHash": True, "allowedActions": ["rerun"]}
 STEP = {"seqNo": 4, "nodeId": "n4", "routeId": "tra-cuu", "stage": "transform", "status": "OK", "offsetMs": 96, "durationMs": 12}
 CASE = {"name": "Tra cứu thành công", "mode": "MOCK", "body": "{\"soDinhDanh\": \"068000000001\"}",
         "assertions": [{"kind": "STATUS", "expected": 200}, {"kind": "STEP_VISITED", "nodeId": "n7"}], "timeoutSeconds": 30, "active": True}
@@ -173,7 +171,7 @@ EX = {
                     "res": {**VER_D, "status": "PENDING_REVIEW", "submittedBy": "an.nv", "submittedAt": T(9, 30), "allowedActions": ["withdraw"]}},
   "withdrawVersion": {"req": {"reason": "Cần bổ sung ca kiểm thử lỗi hệ đích."}, "res": {**VER_D, "status": "DRAFT"}},
   "reviewVersion": {"req": {"decision": "APPROVE", "comment": "Đã xem khác biệt, che dữ liệu đúng.",
-                            "checklist": {"diff-viewed": True, "pii-purpose": True, "error-dlq": True, "connections": True}, "publishTo": "TEST"},
+                            "checklist": {"diff-viewed": True, "pii-purpose": True}, "publishTo": "TEST"},
                     "res": {**VER_D, "status": "APPROVED", "approvedBy": "binh.tt", "approvedAt": T(10), "allowedActions": ["release"]}},
   "listReviewQueue": {"q": {"mine": True},
                       "res": {"items": [{"flowCode": F, "flowName": "Tra cứu hộ tịch qua NDXP", "workspaceCode": "ho-tich", "versionNo": 3, "submittedBy": "an.nv",
@@ -197,8 +195,7 @@ EX = {
   "resendCommand": {"res": {**CMD, "id": U(62)}, "loc": f"{FP}/runtime/commands/{U(62)}"},
   "listEndpoints": {"q": {"environment": "PROD"},
                     "res": {"items": [{"nodeId": "n1", "direction": "IN", "scheme": "platform-http", "httpMethod": "POST", "httpPath": "/ho-tich/tra-cuu",
-                                       "metrics": {"exchanges1h": 2480, "failures1h": 3, "p95ms": 190}},
-                                      {"nodeId": "n7", "direction": "OUT", "scheme": "https", "uri": "https://ndxp.example.vn/v1/ho-tich?apiKey=***", "connectionCode": "ndxp-ho-tich"}]}},
+                                       "metrics": {"exchanges1h": 2480, "failures1h": 3, "p95ms": 190}}]}},
   "getFlowMetrics": {"q": {"environment": "PROD", "from": "2026-11-26T09:00:00+07:00", "to": "2026-11-26T10:00:00+07:00", "step": "30m"},
                      "res": {"environment": "PROD", "step": "30m", "series": [{"name": "exchanges", "points": [[1795744800, 1210], [1795746600, 1270]]}]}},
   "getCatalogIndex": {"res": {"catalogVersion": "camel-quarkus-3.33.2", "runtime": "quarkus", "paletteRulesVersion": 4,
@@ -223,7 +220,6 @@ EX = {
                      "res": {**TPL, "code": "tpl-t68-tra-cuu", "name": "Tra cứu qua NDXP của tỉnh", "scope": "TENANT", "bodyYaml": YAML}},
   "deprecateTemplate": {"res": {**TPL, "code": "tpl-t68-tra-cuu", "name": "Tra cứu qua NDXP của tỉnh", "scope": "TENANT", "status": "DEPRECATED"}},
   "getSettings": {"res": {"params": [{"key": "04.test.max-concurrent", "value": 5, "default": 5}],
-                          "freezeWindows": [{"from": "2026-12-28T00:00:00+07:00", "to": "2027-01-03T23:59:00+07:00", "reason": "Đóng băng cuối năm."}],
                           "envVars": [ENVVAR]}},
   "replaceEnvVars": {"req": {"items": [ENVVAR]}, "res": {"items": [ENVVAR]}},
   "getFlowHistory": {"q": {"action": ["INT_VERSION_APPROVE"], "limit": 20},

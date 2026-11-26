@@ -84,15 +84,15 @@ for key, code, addr, payload, summ, ten, days, parts in ga.EV:
     ch, msg = a["channels"][key], a["components"]["messages"][key]
     req, props = truong(payload)
     khoa = msg["bindings"]["kafka"]["key"]["description"]
-    hdr = "CloudEvents 1.0 nhị phân: " + ", ".join(f"`{h}`" for h in ga.CE_HEADERS["required"]) + f"; `ce_type = vn.datahub.integration.{key}.v1`" \
+    hdr = f"CloudEvents 1.0 nhị phân (`ce_*`, §4.1), `ce_type = vn.datahub.integration.{key}.v1`" \
         if ten and key != "connectionLog" else "`traceparent`, `ce_id` (không qua outbox, không theo CloudEvents đầy đủ)"
-    nguon = "Outbox `ph04.outbox`, Debezium đưa lên Kafka" if ten and key != "connectionLog" else (
-        "Ghi trực tiếp sau khi lưu `runtime_command` (độ trễ < 5 giây, NFR-04-010)" if key == "runtimeCommand" else "Phát trực tiếp từ runtime")
+    nguon = "qua outbox `ph04.outbox`, Debezium đưa lên Kafka" if ten and key != "connectionLog" else (
+        "ghi trực tiếp sau khi lưu `runtime_command` (độ trễ < 5 giây, NFR-04-010)" if key == "runtimeCommand" else "phát trực tiếp từ runtime")
     rows = [
         ("Mục đích", summ),
-        ("Kênh, topic", f"`{addr}`" + (" (tenant chữ thường, ví dụ `t68`)" if ten else " (topic hệ thống, ACL chỉ `dh-integration`, `dh-runtime`)")),
+        ("Kênh, topic", f"`{addr}`" + ("" if ten else " (topic hệ thống, ACL chỉ `dh-integration`, `dh-runtime`)")),
         ("Khóa phân vùng", khoa),
-        ("Lược đồ", f"`{payload}` trong `asyncapi-integration.yaml`; trường bắt buộc: " + ", ".join(f"`{x}`" for x in req) + f"; tổng {len(props)} trường"),
+        ("Lược đồ", f"`{payload}`; trường bắt buộc: " + ", ".join(f"`{x}`" for x in req) + f"; tổng {len(props)} trường"),
         ("Tiêu đề", hdr),
         ("Phân vùng, thời gian giữ", f"{parts} phân vùng, 3 bản sao; giữ {days} ngày; `cleanup.policy = delete`"),
         ("Bên phát", f"`{msg['x-datahub-sender']}`; {nguon}"),

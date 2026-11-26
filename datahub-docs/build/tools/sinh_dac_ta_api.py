@@ -4,8 +4,9 @@ Chạy: python3 build/tools/sinh_dac_ta_api.py <openapi.yaml> <tệp.md> [--vi-d
 Nội dung nằm giữa <!-- gen:dac-ta-api:start --> và <!-- gen:dac-ta-api:end -->;
 chưa có cặp đánh dấu thì chèn trước "## Lịch sử phiên bản" dưới tiêu đề chương mới.
 
---vi-du: sau mỗi khối in "Ví dụ yêu cầu" và "Ví dụ phản hồi" dạng HTTP, dựng từ `example` của tham số,
+--vi-du: sau mỗi khối in "Ví dụ yêu cầu và phản hồi" (hai khối HTTP), dựng từ `example` của tham số,
 thân yêu cầu, thân và tiêu đề phản hồi thành công trong OpenAPI (không có cờ thì đầu ra như cũ).
+Dòng `Content-Type` chỉ in khi khác `application/json` (mặc định của API) để ví dụ gọn.
 Khi nhiều operation dùng chung một mã API (hợp đồng cũ), mã chỉ nằm ở một tiêu đề `####`, mỗi operation
 là một tiêu đề `#####` theo phương thức và đường dẫn, để kiem_tra_ma.py không báo trùng."""
 import json
@@ -165,7 +166,7 @@ def vi_du(m, path, op):
                     yc += ['--ranh-gioi', f'Content-Disposition: form-data; name="{k}"', '', str(v)]
                 yc.append('--ranh-gioi--')
             else:
-                yc += [f'Content-Type: {ct}', '', gon(ex)]
+                yc += ([] if ct == 'application/json' else [f'Content-Type: {ct}']) + ['', gon(ex)]
         break
     ph = []
     for code, r in op.get('responses', {}).items():
@@ -178,10 +179,10 @@ def vi_du(m, path, op):
         for ct, c in (r.get('content') or {}).items():
             if c.get('example') is not None:
                 ex = c['example']
-                ph += [f'Content-Type: {ct}', '', ex.rstrip('\n') if isinstance(ex, str) else gon(ex)]
+                ph += ([] if ct == 'application/json' else [f'Content-Type: {ct}']) + ['', ex.rstrip('\n') if isinstance(ex, str) else gon(ex)]
                 break
         break
-    return ['**Ví dụ yêu cầu.**', '', '```http', *yc, '```', '', '**Ví dụ phản hồi.**', '', '```http', *ph, '```', '']
+    return ['**Ví dụ yêu cầu và phản hồi.**', '', '```http', *yc, '```', '', '```http', *ph, '```', '']
 
 
 nhom = {}
@@ -214,8 +215,7 @@ for tag, ops in nhom.items():
         else:
             if aid not in da_mo:
                 da_mo.add(aid)
-                L += [f'#### {aid} · ' + '; '.join(o.get('summary', '') for a, _, _, o in ops if a == aid), '',
-                      f'Mã {aid} dùng chung cho {dem[aid]} operation dưới đây (hợp đồng bản 0.1); mỗi operation một bảng đặc tả.', '']
+                L += [f'#### {aid} · ' + '; '.join(o.get('summary', '') for a, _, _, o in ops if a == aid), '']
             L += [f'##### {m} {path} · {muc}', '']
         L += ['::: dac-ta']
         L += [f"**{a}.** {b.rstrip('.')}.\n" for a, b in rows]
