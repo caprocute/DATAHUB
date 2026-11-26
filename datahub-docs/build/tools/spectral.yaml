@@ -1,0 +1,13 @@
+# Bộ luật Spectral cho cổng CI "đặc tả API hợp lệ" (datahub-docs/03-thiet-ke/api/**).
+# Lỗi (error) làm đỏ CI: sai cấu trúc OpenAPI 3.1 / AsyncAPI 3.0, $ref hỏng, ví dụ trái schema...
+# Cảnh báo (warn) chỉ in ra, không chặn.
+extends:
+  - [spectral:oas, recommended]
+  - [spectral:asyncapi, recommended]
+overrides:
+  # Ví dụ phản hồi là mô tả thành phần Camel, có khóa `type`/`default` giống schema nên luật
+  # oas3-valid-schema-example tưởng là schema. Không phải lỗi đặc tả.
+  - files:
+      - "../../03-thiet-ke/api/ph04/openapi-integration.yaml#/paths/~1catalog~1%7Bkind%7D~1%7Bname%7D/get/responses/200/content/application~1json/example"
+    rules:
+      oas3-valid-schema-example: "off"

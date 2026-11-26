@@ -61,7 +61,7 @@ Bảng chốt nơi đặt dữ liệu và quyền.
 
 : Cụm, schema, vai trò và kết nối
 
-Tiện ích `unaccent` cài trong schema phục vụ tìm kiếm dự phòng PG FTS không dấu (`15.search.engine = PG_FTS`); mặc định tìm ở OpenSearch (§6.4).
+Tiện ích `unaccent` cài ở schema `public` của cụm `pg-core`, dùng chung với các phân hệ khác (cài vào schema riêng sẽ bị bỏ qua khi phân hệ khác đã cài trước), phục vụ tìm kiếm dự phòng PG FTS không dấu (`15.search.engine = PG_FTS`); mặc định tìm ở OpenSearch (§6.4).
 
 ### 1.2. Cách ly tenant
 

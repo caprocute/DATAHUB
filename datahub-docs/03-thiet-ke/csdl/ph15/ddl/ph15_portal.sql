@@ -36,8 +36,8 @@ GRANT USAGE ON SCHEMA ph15_portal TO ph15_app, ph15_readonly;
 -- @rollback DROP SCHEMA IF EXISTS ph15_portal CASCADE;
 
 -- @changeset ph15-0002-unaccent context:bootstrap
-CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA ph15_portal;
--- @rollback DROP EXTENSION IF EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;  -- dùng chung cụm pg-core với các phân hệ khác
+-- @rollback -- Không gỡ extension dùng chung.
 
 -- Phiên migration: tạo đối tượng dưới ph15_owner; app.tenant_id đặt giá trị giữ chỗ vì FORCE RLS áp cả cho chủ bảng
 -- khi ALTER TABLE ... ADD CONSTRAINT quét bảng. Chạy lại mỗi lần (runAlways), cùng kết nối với các changeset sau.
@@ -132,7 +132,7 @@ COMMENT ON PROCEDURE ph15_portal.p_ensure_month_partitions(regclass, date, integ
 -- @changeset ph15-0016-fn-unaccent splitStatements:false
 CREATE OR REPLACE FUNCTION ph15_portal.f_unaccent(p_text text) RETURNS text
   LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT AS
-$f$ SELECT ph15_portal.unaccent('ph15_portal.unaccent'::regdictionary, p_text) $f$;
+$f$ SELECT public.unaccent('public.unaccent'::regdictionary, p_text) $f$;
 COMMENT ON FUNCTION ph15_portal.f_unaccent(text) IS 'Bỏ dấu tiếng Việt, đánh dấu IMMUTABLE để dùng được trong trigger tsvector và chỉ mục (dự phòng PG FTS, tham số 15.search.engine).';
 -- @rollback DROP FUNCTION IF EXISTS ph15_portal.f_unaccent(text);
 

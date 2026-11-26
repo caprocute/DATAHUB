@@ -8246,7 +8246,7 @@ components:
         email: an.nguyen@example.gov.vn
         fullName: Nguyễn Văn An
         orgName: Sở Tài nguyên và Môi trường
-        phone: 0900000123
+        phone: '0900000123'
         lang: vi
         notifyChannels:
         - IN_APP
@@ -8261,7 +8261,7 @@ components:
     MeUpdate:
       value:
         fullName: Nguyễn Văn An
-        phone: 0900000124
+        phone: '0900000124'
         lang: vi
         notifyChannels:
         - IN_APP
@@ -8281,7 +8281,7 @@ components:
         orgName: Công ty Giải pháp Số Việt
         contractNo: HD-2026-045
         sponsorOrg: Sở Thông tin và Truyền thông
-        phone: 0900000456
+        phone: '0900000456'
         tenant: T68
         termsVersion: 2026-10
         termsAccepted: true
@@ -9105,7 +9105,7 @@ components:
         tagline: Kết nối dữ liệu liên thông cấp tỉnh
         logoUrl: /static/branding/t68/logo.png
         supportEmail: hotro@example.gov.vn
-        supportPhone: 0900000789
+        supportPhone: '0900000789'
         footerLinks: &id036
         - label: Chính sách bảo mật
           url: https://t68.datahub.example.vn/bao-mat
@@ -9116,7 +9116,7 @@ components:
         portalName: Cổng nhà phát triển Datahub T68
         tagline: Kết nối dữ liệu liên thông cấp tỉnh
         supportEmail: hotro@example.gov.vn
-        supportPhone: 0900000789
+        supportPhone: '0900000789'
         footerLinks: *id036
         welcomeText: Chào mừng đến với cổng.
     LogoUpload:
@@ -9347,7 +9347,7 @@ components:
         tagline: Kết nối dữ liệu liên thông cấp tỉnh
         logoUrl: /static/branding/t68/logo.png
         supportEmail: hotro@example.gov.vn
-        supportPhone: 0900000789
+        supportPhone: '0900000789'
         footerLinks: *id036
         welcomeText: Chào mừng đến với cổng.
     UnreadCount:

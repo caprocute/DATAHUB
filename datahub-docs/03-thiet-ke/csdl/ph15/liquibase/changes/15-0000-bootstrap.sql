@@ -25,11 +25,11 @@ GRANT USAGE ON SCHEMA ph15_portal TO ph15_app, ph15_readonly;
 --rollback DROP SCHEMA IF EXISTS ph15_portal CASCADE;
 
 --changeset ph15:ph15-0002-unaccent context:bootstrap
-CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA ph15_portal;
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;  -- dùng chung cụm pg-core với các phân hệ khác
 
 -- Phiên migration: tạo đối tượng dưới ph15_owner; app.tenant_id đặt giá trị giữ chỗ vì FORCE RLS áp cả cho chủ bảng
 -- khi ALTER TABLE ... ADD CONSTRAINT quét bảng. Chạy lại mỗi lần (runAlways), cùng kết nối với các changeset sau.
---rollback DROP EXTENSION IF EXISTS unaccent;
+--rollback -- Không gỡ extension dùng chung.
 
 --changeset ph15:ph15-0003-session runAlways:true context:bootstrap
 SET ROLE ph15_owner;
