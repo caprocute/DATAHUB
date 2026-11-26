@@ -574,7 +574,7 @@ Quy tắc đặc biệt ở `ExpiryScheduler`: với thao tác `QUERY`, mã lý 
 
 ### 7.4. Đổi bảng ánh xạ
 
-API-19-092 nhận danh sách thay đổi; `ResultMappingService` tạo bản nháp phiên bản `n+1` = phiên bản hiện hành + thay đổi, kiểm tra ràng buộc, tạo `approval_request` loại `RESULT_MAPPING_CHANGE` với `snapshot` là bảng khác biệt. Khi duyệt (§12), phiên bản `n+1` thành hiện hành trong một giao dịch CSDL, sự kiện nội bộ `ResultMappingActivated` làm mới đệm ở mọi pod (≤ 10 giây qua kênh Valkey pub/sub `{tenant}:payment:mapping-changed`). Bản ghi IPN và `transaction_event` lưu `mapping_version` đã dùng.
+API-19-092 nhận danh sách thay đổi; `ResultMappingService` tạo bản nháp phiên bản `n+1` = phiên bản hiện hành + thay đổi, kiểm tra ràng buộc, tạo `approval_request` loại `RESULT_MAPPING_CHANGE` với `payload` là bảng khác biệt. Khi duyệt (§12), phiên bản `n+1` thành hiện hành trong một giao dịch CSDL, sự kiện nội bộ `ResultMappingActivated` làm mới đệm ở mọi pod (≤ 10 giây qua kênh Valkey pub/sub `{tenant}:payment:mapping-changed`). Bản ghi IPN và `transaction_event` lưu `mapping_version` đã dùng.
 
 ## 8. Phía đọc: tra cứu, dashboard, báo cáo
 
@@ -739,7 +739,7 @@ Trùng tham chiếu phía NCC được phát hiện trước bằng `GROUP BY pr
 
 ### 11.5. Mở lại
 
-Mở lại tạo `approval_request` loại `RECON_REOPEN`; khi duyệt, `run_no + 1`, phiên `IN_REVIEW`, chạy lại so khớp; biên bản cũ giữ nguyên trong WORM, biên bản mới tham chiếu `supersedes_file_id`.
+Mở lại tạo `approval_request` loại `RECON_REOPEN`; khi duyệt, `run_no + 1`, phiên `IN_REVIEW`, chạy lại so khớp; biên bản cũ giữ nguyên trong WORM, biên bản cũ được gắn `stored_file.superseded_by` trỏ tới biên bản mới.
 
 ### 11.6. Lưu tệp
 
@@ -752,7 +752,7 @@ Mở lại tạo `approval_request` loại `RECON_REOPEN`; khi duyệt, `run_no 
 
 ### 12.1. Mô hình
 
-`approval_request` (EN-19-16): `approval_type`, `target_type`, `target_id`, `requested_by`, `requested_at`, `required_approvals` (1 hoặc 2), `first_approver_id`, `first_decided_at`, `second_approver_id`, `second_decided_at`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, `EXPIRED`), `snapshot` (T-JSON, ảnh chụp bằng chứng lúc lập), `expires_at` (lập + 7 ngày), `version`. Các loại: `PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBOARD`, `PARTNER_TERMINATE`, `REFUND`, `DISCREPANCY_RESOLUTION`, `RECON_REOPEN`, `ROUTING_MODE_CHANGE`, `RESULT_MAPPING_CHANGE` (đề xuất).
+`approval_request` (EN-19-16): `approval_type`, `target_type`, `target_id`, `requested_by`, `requested_at`, `required_approvals` (1 hoặc 2), `first_approver_id`, `first_decided_at`, `second_approver_id`, `second_decided_at`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, `EXPIRED`), `payload` (T-JSON, nội dung đề nghị và ảnh chụp bằng chứng lúc lập), `expires_at` (lập + 7 ngày), `version`. Các loại: `PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBOARD`, `PARTNER_TERMINATE`, `REFUND`, `DISCREPANCY_RESOLUTION`, `RECON_REOPEN`, `ROUTING_MODE_CHANGE`, `RESULT_MAPPING_CHANGE` (đề xuất).
 
 ### 12.2. Quyền và tách nhiệm theo loại
 
