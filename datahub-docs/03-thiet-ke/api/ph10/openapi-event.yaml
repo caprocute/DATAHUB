@@ -103,8 +103,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -141,8 +141,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -206,8 +206,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-044
       responses:
@@ -250,8 +250,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -317,8 +317,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -383,8 +383,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -468,8 +468,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -563,8 +563,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -609,8 +609,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -706,8 +706,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -750,8 +750,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -821,8 +821,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-007
       - ERR-10-039
@@ -880,8 +880,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-007
       - ERR-10-039
@@ -941,8 +941,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-007
       - ERR-10-039
@@ -1005,8 +1005,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-037
@@ -1089,8 +1089,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1159,8 +1159,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1237,8 +1237,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1316,8 +1316,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -1361,8 +1361,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -1403,8 +1403,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -1456,8 +1456,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -1504,8 +1504,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-037
@@ -1588,8 +1588,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -1635,8 +1635,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1708,8 +1708,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-039
       - ERR-10-015
@@ -1762,8 +1762,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-007
       - ERR-10-039
@@ -1822,8 +1822,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1890,8 +1890,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -1964,8 +1964,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -2017,8 +2017,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -2098,8 +2098,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -2137,8 +2137,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -2206,8 +2206,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-044
       responses:
@@ -2249,8 +2249,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2315,8 +2315,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2381,8 +2381,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2447,8 +2447,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2546,8 +2546,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -2584,8 +2584,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -2653,8 +2653,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-044
       responses:
@@ -2696,8 +2696,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2762,8 +2762,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2827,8 +2827,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2893,8 +2893,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -2979,8 +2979,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -3018,8 +3018,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -3086,8 +3086,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -3130,8 +3130,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3196,8 +3196,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3265,8 +3265,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3368,8 +3368,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -3401,15 +3401,16 @@ paths:
       - oauth2User: []
       description: '`PUSH` cần endpoint đã xác minh trong 24 giờ (chưa có thì chạy xác minh, lỗi ERR-10-027); `PULL_KAFKA` khi tenant chưa bật
         ERR-10-028; `workerCount` vượt phân vùng ERR-10-030; `startAt` ngoài lưu giữ ERR-10-031; topic `RESTRICTED`, `SENSITIVE` bắt buộc `legalBasis`.
-        Gán `consumerGroup` theo A.8.'
+        Gán `consumerGroup` theo A.8. Không gửi `failurePolicy` thì mặc định `BLOCK` với topic `orderingRequired`, `DEAD_LETTER` với topic còn
+        lại; `lagWarnSeconds` phải nhỏ hơn `lagCriticalSeconds` (ERR-10-012).'
       x-datahub-idempotent: required
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -3482,8 +3483,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-044
       responses:
@@ -3528,8 +3529,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3600,8 +3601,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3669,8 +3670,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3738,8 +3739,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3804,8 +3805,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-039
       - ERR-10-026
@@ -3865,8 +3866,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -3940,8 +3941,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -4003,8 +4004,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -4050,8 +4051,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4127,8 +4128,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4206,8 +4207,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-007
       - ERR-10-039
@@ -4277,8 +4278,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-049
       responses:
@@ -4324,8 +4325,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4433,8 +4434,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -4475,8 +4476,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -4524,8 +4525,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4604,8 +4605,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4679,8 +4680,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -4800,8 +4801,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -4844,8 +4845,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -4894,8 +4895,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-009
       - ERR-10-029
@@ -4945,8 +4946,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-007
       - ERR-10-037
@@ -5030,8 +5031,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -5079,8 +5080,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -5165,8 +5166,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -5209,8 +5210,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -5281,8 +5282,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -5322,8 +5323,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -5358,8 +5359,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -5421,8 +5422,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -5457,8 +5458,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -5520,8 +5521,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -5558,8 +5559,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-007
       - ERR-10-039
@@ -5619,8 +5620,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -5658,8 +5659,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-007
       - ERR-10-039
@@ -5720,8 +5721,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-029
       requestBody:
@@ -5778,8 +5779,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-037
@@ -5844,8 +5845,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -5899,8 +5900,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -5941,8 +5942,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-039
       - ERR-10-049
@@ -5999,8 +6000,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -6076,8 +6077,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       responses:
         '200':
@@ -6123,8 +6124,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-037
       - ERR-10-039
@@ -6161,6 +6162,60 @@ paths:
           $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/Unprocessable'
+        '423':
+          $ref: '#/components/responses/Locked'
+  /imports/{jobCode}:cancel:
+    post:
+      tags:
+      - Xuất nhập, di trú Pulsar
+      operationId: cancelImport
+      summary: Hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (người tạo)
+      x-datahub-id: API-10-121
+      x-datahub-fr:
+      - FR-10-071
+      x-datahub-permission:
+        permission: PERM-10-create
+      security:
+      - oauth2User: []
+      description: Chỉ người tạo tác vụ, khi `VALIDATING` hoặc `PREVIEW` (A.2.13); trạng thái khác ERR-10-006. Không tạo đối tượng nào.
+      parameters:
+      - $ref: '#/components/parameters/JobCodePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      x-datahub-errors:
+      - ERR-10-053
+      - ERR-10-054
+      - ERR-10-001
+      - ERR-10-007
+      - ERR-10-039
+      - ERR-10-006
+      - ERR-10-008
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestImportJob'
+              examples:
+                vi-du:
+                  $ref: '#/components/examples/ManifestImportJob'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: '`W/"{version}"`.'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
         '423':
           $ref: '#/components/responses/Locked'
   /migrations/mappings:
@@ -6211,8 +6266,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -6249,8 +6304,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -6334,8 +6389,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -6374,8 +6429,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-037
       - ERR-10-039
@@ -6444,8 +6499,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -6511,8 +6566,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -6579,8 +6634,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -6649,8 +6704,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-007
@@ -6727,8 +6782,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-049
       responses:
         '200':
@@ -6764,8 +6819,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       responses:
         '200':
           description: Thành công.
@@ -7170,8 +7225,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       requestBody:
         required: true
@@ -7214,8 +7269,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-006
@@ -7276,8 +7331,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-006
@@ -7338,8 +7393,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-006
@@ -7401,8 +7456,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-006
@@ -7463,8 +7518,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-003
       - ERR-10-029
       requestBody:
@@ -7518,8 +7573,8 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
-      - ERR-10-101
-      - ERR-10-102
+      - ERR-10-053
+      - ERR-10-054
       - ERR-10-001
       - ERR-10-003
       - ERR-10-006
@@ -7813,22 +7868,30 @@ components:
                 code: ERR-10-104
                 traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Unauthorized:
-      description: 'Lỗi 401: ERR-10-101.'
+      description: 'Lỗi 401: ERR-10-053, ERR-10-101.'
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           examples:
+            ERR_10_053:
+              summary: 'Control plane: token thiếu, không hợp lệ hoặc hết hạn'
+              value:
+                type: https://datahub.gov.vn/errors/ERR-10-053
+                title: 'Control plane: token thiếu, không hợp lệ hoặc hết hạn'
+                status: 401
+                code: ERR-10-053
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
             ERR_10_101:
-              summary: Token không hợp lệ hoặc hết hạn
+              summary: 'Data plane: token không hợp lệ hoặc hết hạn'
               value:
                 type: https://datahub.gov.vn/errors/ERR-10-101
-                title: Token không hợp lệ hoặc hết hạn
+                title: 'Data plane: token không hợp lệ hoặc hết hạn'
                 status: 401
                 code: ERR-10-101
                 traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Forbidden:
-      description: 'Lỗi 403: ERR-10-008, ERR-10-044, ERR-10-102.'
+      description: 'Lỗi 403: ERR-10-008, ERR-10-044, ERR-10-054, ERR-10-102.'
       content:
         application/problem+json:
           schema:
@@ -7850,11 +7913,20 @@ components:
                 status: 403
                 code: ERR-10-044
                 traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR_10_054:
+              summary: 'Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm
+                vi tổ chức)'
+              value:
+                type: https://datahub.gov.vn/errors/ERR-10-054
+                title: 'Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác'
+                status: 403
+                code: ERR-10-054
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
             ERR_10_102:
-              summary: Thiếu scope hoặc quan hệ phát, nhận không `ACTIVE`
+              summary: 'Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE`'
               value:
                 type: https://datahub.gov.vn/errors/ERR-10-102
-                title: Thiếu scope hoặc quan hệ phát, nhận không `ACTIVE`
+                title: 'Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE`'
                 status: 403
                 code: ERR-10-102
                 traceId: 4bf92f3577b34da6a3ce929d0e0e4736
@@ -11967,7 +12039,7 @@ components:
           $ref: '#/components/schemas/TopicName'
         windowStart: *id002
         windowEnd: *id002
-        sampleRatio: &id011
+        sampleRatio: &id012
           type: number
         items:
           type: array
@@ -12330,7 +12402,10 @@ components:
           type: integer
           minimum: 100
           maximum: 60000
-        multiplier: *id011
+        multiplier:
+          type: number
+          minimum: 1
+          maximum: 5
         maxMs:
           type: integer
           minimum: 1000
@@ -12340,6 +12415,7 @@ components:
       - initialMs
       - multiplier
       - maxMs
+      description: Giãn cách thử lại (FR-10-035, 039); `maxMs` ≥ `initialMs`, sai trả ERR-10-012.
     VerificationStep:
       type: object
       properties:
@@ -12662,8 +12738,8 @@ components:
           minLength: 10
         legalBasis:
           type: string
-          maxLength: 2000
-          minLength: 5
+          maxLength: 1000
+          minLength: 10
         startPosition:
           $ref: '#/components/schemas/StartPosition'
         startAt: *id002
@@ -13467,9 +13543,9 @@ components:
           - object
           - 'null'
           properties:
-            inPerMinute: &id012
+            inPerMinute: &id011
               type: number
-            outPerMinute: *id012
+            outPerMinute: *id011
             topTopics:
               type: array
               items:
@@ -13477,7 +13553,7 @@ components:
                 properties:
                   topicName:
                     $ref: '#/components/schemas/TopicName'
-                  inPerMinute: *id012
+                  inPerMinute: *id011
                 additionalProperties: false
               maxItems: 10
           additionalProperties: false
@@ -13543,7 +13619,7 @@ components:
             $ref: '#/components/schemas/TopicName'
         quotaUsage:
           type: object
-          additionalProperties: *id011
+          additionalProperties: *id012
           description: Tỷ lệ dùng 0…1 theo khóa của TenantEventQuota.
         generatedAt: *id002
       additionalProperties: false

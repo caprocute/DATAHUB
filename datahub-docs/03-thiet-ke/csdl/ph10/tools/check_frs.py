@@ -95,7 +95,7 @@ ENUMS = [
 ]
 # JSON trong cột: kiểm bằng chuỗi có mặt trong DDL
 JSON_ENUMS = [row_values(7, "push.failurePolicy"), row_values(7, "push.payloadFormat"),
-              row_values(7, "endpointVerification.result"), row_values(4, "piiFindings[].severity"),
+              row_values(7, "push.lastVerification.result"), row_values(4, "piiFindings[].severity"),
               row_values(13, "changeKind")]
 
 tables = {m.group(1): m.group(2) for m in re.finditer(r"CREATE TABLE ph10_event\.(\w+) \((.*?)\n\)( PARTITION BY [^;]+)?;", sql, re.S)}

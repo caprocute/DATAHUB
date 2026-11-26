@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-04-PH10
 ten: Đặc tả API và sự kiện phân hệ PH-10 Sự kiện
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration, dh-runtime, giao diện; đơn vị kết nối HTTT; ATTT; hội đồng thẩm định
@@ -12,13 +12,13 @@ phan_he: PH-10
 
 ## Tóm tắt cho hội đồng thẩm định
 
-Tập này là hợp đồng giao tiếp của phân hệ PH-10 Sự kiện, phân hệ thay Hub Apache Pulsar của hệ cũ bằng trục sự kiện Kafka có đăng ký lược đồ, duyệt bốn mắt và giao nhận có ký. PH-10 công bố **120 operation REST** chia ba mặt:
+Tập này là hợp đồng giao tiếp của phân hệ PH-10 Sự kiện, phân hệ thay Hub Apache Pulsar của hệ cũ bằng trục sự kiện Kafka có đăng ký lược đồ, duyệt bốn mắt và giao nhận có ký. PH-10 công bố **121 operation REST** chia ba mặt:
 
 - **Control plane** `/api/event/v1` (module `event` của `dh-integration`): 99 operation cho dự án, topic, lược đồ, bên phát, bên nhận, publication, subscription, duyệt, DLQ, phát lại, danh mục, hạn mức, tham số, xuất nhập và di trú Pulsar, cộng 4 operation máy với máy cho PH-04 và `dh-runtime`.
 - **Data plane** `/event/v1` (cổng sự kiện của `dh-runtime`, qua `apisix-ext` và `apisix-int`): 6 operation cho HTTT phát, kéo, xác nhận, báo lỗi và tra lược đồ chỉ đọc.
 - **API nội bộ cho `dh-runtime`** (API-10-085…090 và mã tách 119): 7 operation báo giao nhận, ngắt mạch, phát lại, cầu nối; chỉ qua `apisix-int` với mTLS và token máy, không hiện ở BFF.
 
-Mã API-10-001…091 giữ đúng thứ tự gợi ý của FRS §8.3. 18 dòng gộp nhiều hành động ở FRS được tách thành operation riêng, cấp mã mới **API-10-092…119** (28 mã, bảng §3.1). Thêm **API-10-120** (nhận khóa ký đầu tiên) theo đề nghị B7 của tập màn hình D03-06-PH10 (§10.3). Sự kiện gồm **EVT-10-01…16** theo CloudEvents 1.0, kênh **giao ĐẨY webhook ký HMAC** theo ADR-044 và ADR-071 (dạng có cấu trúc, dạng nhị phân, bắt tay xác minh) và hai **kênh mẫu** cho topic nghiệp vụ `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` và topic DLQ `{topicName}.dlq`.
+Mã API-10-001…091 giữ đúng thứ tự gợi ý của FRS §8.3. 18 dòng gộp nhiều hành động ở FRS được tách thành operation riêng, cấp mã mới **API-10-092…119** (28 mã, bảng §3.1). Thêm **API-10-120** (nhận khóa ký đầu tiên) theo đề nghị B7 của tập màn hình D03-06-PH10 (§10.3) và **API-10-121** (hủy tác vụ nhập) theo FRS 0.3. Từ FRS 0.3, §8.3 liệt kê đủ 121 mã. Sự kiện gồm **EVT-10-01…16** theo CloudEvents 1.0, kênh **giao ĐẨY webhook ký HMAC** theo ADR-044 và ADR-071 (dạng có cấu trúc, dạng nhị phân, bắt tay xác minh) và hai **kênh mẫu** cho topic nghiệp vụ `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` và topic DLQ `{topicName}.dlq`.
 
 Hợp đồng máy đọc được, sinh từ một nguồn và đã kiểm:
 
@@ -101,7 +101,7 @@ Quy tắc vượt quyền chức năng, máy chủ kiểm:
 | `topic:{topicName}:publish` | Client của HTTT có publication `ACTIVE` | API-10-079, 084 | Cấp ở Keycloak khi duyệt (FR-10-031), gỡ khi tạm ngừng, thu hồi; dữ liệu OPA gỡ trước ≤ 60 giây |
 | `topic:{topicName}:subscribe` | Client của HTTT có subscription `ACTIVE` | API-10-080…084 | Client của token phải là client của bên nhận |
 
-Mã lỗi xác thực, quyền chung dùng ERR-10-101 (401) và ERR-10-102 (403) cho cả control plane và data plane, vì FRS chưa có mã chung trong dải 001…099; ghi đề nghị ở §10.2. Mọi operation đều có thể trả hai mã này nên bảng §3 không nhắc lại.
+Mã lỗi xác thực, quyền chung theo FRS 0.3: control plane (`/api/event/v1`, kể cả API nội bộ `runtime`) dùng ERR-10-053 (401) và ERR-10-054 (403 thiếu `PERM-10-*` hoặc scope dịch vụ); data plane (`/event/v1`) dùng ERR-10-101 (401) và ERR-10-102 (403). Mọi operation đều có thể trả hai mã của mặt mình nên bảng §3 không nhắc lại.
 
 ## 3. Danh mục endpoint
 
@@ -274,6 +274,7 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-075 | `POST /imports` | Tải tệp khai báo hoặc kiểm kê Pulsar để kiểm tra | 071, 072 | `PERM-10-create` hoặc `PERM-10-admin` | bắt buộc | 202 | 040, 050 |
 | API-10-110 | `GET /imports/{jobCode}` | Trạng thái, xem trước tác vụ nhập | 071, 072 | `PERM-10-read` |  | 200 |  |
 | API-10-111 | `POST /imports/{jobCode}:apply` | Áp dụng tác vụ nhập (tạo đối tượng ở trạng thái đầu) | 071, 072 | `PERM-10-create` | bắt buộc | 202 | 006, 040, 041, 050 |
+| API-10-121 | `POST /imports/{jobCode}:cancel` | Hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (người tạo) | 071 | `PERM-10-create` |  | 200 | 006, 008 |
 | API-10-076 | `GET /migrations/mappings` | Danh sách ánh xạ di trú Pulsar | 072 | `PERM-10-read` |  | 200 | 049 |
 | API-10-112 | `PATCH /migrations/mappings/{mappingId}` | Sửa đích hoặc bỏ qua một ánh xạ | 072 | `PERM-10-admin` |  | 200 | 006, 041 |
 | API-10-077 | `GET /migrations/bridges` | Danh sách cầu nối di trú | 073, 074 | `PERM-10-read` |  | 200 | 049 |
@@ -656,18 +657,18 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 Ý nghĩa và HTTP theo FRS §8.1 (nạp tự động từ FRS khi sinh, không chép tay). Cột "API phát sinh" sinh từ `x-datahub-errors` của OpenAPI; mã chung (001, 003, 007, 037, 039, 049, 101, 102) ghi số lượng.
 
 <!-- gen:errors:start -->
-### 6.1. Control plane (ERR-10-001…052)
+### 6.1. Control plane (ERR-10-001…054)
 
 | Mã | HTTP | Ý nghĩa | API phát sinh (API-10-) |
 |---|---|---|---|
-| ERR-10-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant khác | 77 API |
+| ERR-10-001 | 404 | Không tìm thấy đối tượng hoặc đối tượng thuộc tenant khác | 78 API |
 | ERR-10-002 | 409 | Mã hoặc tên đã tồn tại (kể cả đối tượng đã lưu trữ, ngừng dùng) | 002, 009, 033, 038 |
 | ERR-10-003 | 400 | Dữ liệu yêu cầu không hợp lệ (mẫu mã, từ dành riêng, trường bất biến, tổ hợp không hợp lệ) | 65 API |
 | ERR-10-004 | 422 | Tên topic sai quy ước hoặc dùng miền dành riêng | 009 |
 | ERR-10-005 | 422 | Tiền tố tenant của topic không khớp tenant ngữ cảnh | 009 |
-| ERR-10-006 | 409 | Chuyển trạng thái không hợp lệ với trạng thái hiện tại | 53 API |
+| ERR-10-006 | 409 | Chuyển trạng thái không hợp lệ với trạng thái hiện tại | 54 API |
 | ERR-10-007 | 412 | Xung đột phiên bản (`If-Match`) | Chung |
-| ERR-10-008 | 403 | Vi phạm bốn mắt | 059, 101 |
+| ERR-10-008 | 403 | Vi phạm bốn mắt | 059, 101, 121 |
 | ERR-10-009 | 400 | Thiếu lý do, ý kiến hoặc xác nhận bắt buộc | 34 API |
 | ERR-10-010 | 409 | Còn đối tượng phụ thuộc (topic trong dự án, subscription trên topic) | 005, 017 |
 | ERR-10-011 | 422 | Vượt hạn mức tenant | 002, 009, 012, 015, 018, 043, 047, 059, 107 |
@@ -698,7 +699,7 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 | ERR-10-036 | 409 | Mục DLQ đã được xử lý | 062, 064 |
 | ERR-10-037 | 422 | Khóa idempotency trùng với thân khác | 17 API |
 | ERR-10-038 | 409 | Cấp phát thất bại hoặc chưa hoàn tất | 013, 014, 059 |
-| ERR-10-039 | 423 | Tenant đang tạm ngừng hoặc đóng băng thay đổi | 63 API |
+| ERR-10-039 | 423 | Tenant đang tạm ngừng hoặc đóng băng thay đổi | 64 API |
 | ERR-10-040 | 422 | Tệp nhập sai cấu trúc hoặc phiên bản định dạng | 075, 111 |
 | ERR-10-041 | 422 | Ánh xạ di trú không hợp lệ | 078, 111, 112, 113 |
 | ERR-10-042 | 409 | Đã có cầu nối cho topic hoặc cầu nối ngược chiều | 113, 115, 116 |
@@ -712,6 +713,8 @@ Kênh `deadLetterTopic` (`{topicName}.dlq`) giữ bản tin gốc nguyên vẹn 
 | ERR-10-050 | 422 | Đối tượng tham chiếu trong tệp nhập không tồn tại ở tenant đích | 075, 111 |
 | ERR-10-051 | 422 | Bên phát, bên nhận chưa đạt cấp độ ATTT yêu cầu cho topic `RESTRICTED`, `SENSITIVE` (BR-10-019) | 043, 047, 059 |
 | ERR-10-052 | 422 | Thao tác không áp dụng cho chế độ giao nhận của subscription (tạm dừng, tiếp tục subscription `INTERNAL`) | 050, 098 |
+| ERR-10-053 | 401 | Control plane: token thiếu, không hợp lệ hoặc hết hạn | 115 API |
+| ERR-10-054 | 403 | Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm vi tổ chức) | 115 API |
 
 ### 6.2. Data plane và runtime (ERR-10-101…121)
 
@@ -719,8 +722,8 @@ Mã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có 
 
 | Mã | HTTP | Ý nghĩa | Nơi phát sinh |
 |---|---|---|---|
-| ERR-10-101 | 401 | Token không hợp lệ hoặc hết hạn | 120 API |
-| ERR-10-102 | 403 | Thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` | 120 API |
+| ERR-10-101 | 401 | Data plane: token không hợp lệ hoặc hết hạn | 079, 080, 081, 082, 083, 084 |
+| ERR-10-102 | 403 | Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` | 079, 080, 081, 082, 083, 084 |
 | ERR-10-103 | 404 | Topic không tồn tại, không `ACTIVE`, `DEPRECATED` hoặc khác tenant | 079, 084 |
 | ERR-10-104 | 400 | Sự kiện không phải CloudEvents 1.0 hợp lệ hoặc `source` không thuộc bên phát | 079 |
 | ERR-10-105 | 422 | Dữ liệu không khớp lược đồ, thiếu khóa khi bắt buộc | 079 |
@@ -773,7 +776,7 @@ Kết quả chạy ngày 26/11/2026 trên máy viết tài liệu:
 
 | Kiểm | Kết quả |
 |---|---|
-| `check_contracts.py` | OpenAPI hợp lệ, 120 operation, 120 mã; 264 ví dụ khớp; AsyncAPI 20 kênh, 38 operation, 21 thông điệp, 44 ví dụ khớp; 0 lỗi |
+| `check_contracts.py` | OpenAPI hợp lệ, 121 operation, 121 mã; 267 ví dụ khớp; AsyncAPI 20 kênh, 38 operation, 21 thông điệp, 44 ví dụ khớp; 0 lỗi |
 | `@redocly/cli` 1.25 `lint` | Hợp lệ; 1 cảnh báo `no-server-example.com` (máy chủ `localhost` cho phát triển cục bộ, giữ chủ ý) |
 | `@asyncapi/parser` 3.3 | 0 lỗi, 0 cảnh báo |
 | Spectral | Không cài trong môi trường viết; chạy ở CI-5 |
@@ -903,7 +906,7 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 | FR-10-068 | Xử lý thông báo thay đổi lược đồ CDC | 018, 023 |
 | FR-10-069 | Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trình thiết kế | 008, 071, 072, 109 |
 | FR-10-070 | Xuất khai báo | 074 |
-| FR-10-071 | Nhập khai báo có xem trước | 075, 110, 111 |
+| FR-10-071 | Nhập khai báo có xem trước | 075, 110, 111, 121 |
 | FR-10-072 | Nhập kiểm kê Pulsar và lập ánh xạ | 075, 076, 110, 111, 112 |
 | FR-10-073 | Cầu nối Pulsar sang Kafka tạm thời | 077, 090, 113, 114, 115 |
 | FR-10-074 | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | 077, 090, 113, 114, 115 |
@@ -915,120 +918,15 @@ Mỗi FR-10 có ít nhất một API, một kênh AsyncAPI hoặc ghi rõ nơi x
 
 ### 10.1. Trường và enum chỉ có ở API
 
-Bảng dưới sinh bằng `gen_md.py`: tên trường, giá trị enum dùng trong OpenAPI, AsyncAPI mà không xuất hiện ở FRS 0.2. Phần lớn là trường cấu trúc phản hồi (bao, đếm, chuỗi thời gian, cấu hình mẫu) và trường sự kiện (`previousStatus`, `changedFields`, `configVersion`). Tập này không thêm vào Phụ lục A; đề nghị FRS hấp thụ vào A.3 (bảng "trường chỉ ở API") hoặc A.2.15 (enum chỉ ở API) ở bản 0.3. `doi_chieu_frs.py` báo lỗi nếu có trường mới mà bảng này chưa liệt kê.
+Bảng dưới sinh bằng `gen_md.py`: tên trường, giá trị enum dùng trong OpenAPI, AsyncAPI mà không xuất hiện ở FRS. Bản 0.1 liệt kê 91 trường và 6 giá trị enum (trường cấu trúc phản hồi, trường sự kiện như `previousStatus`, `changedFields`, `configVersion`); đã xử lý ở FRS bản 0.3: FRS hấp thụ nguyên tên vào A.3 (bảng "Trường chỉ ở API") và A.2.15, nên bảng hiện trống. `doi_chieu_frs.py` báo lỗi nếu có trường mới mà bảng này chưa liệt kê.
 
 <!-- gen:proposals:start -->
-| Loại | Tên | Lược đồ dùng | Đề nghị |
-|---|---|---|---|
-| enum | `1h` | DeliveryStats | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `24h` | DeliveryStats | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `7d` | DeliveryStats | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `ADDED` | SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `CHANGED` | SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `HANDSHAKE` | VerificationStep | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `MTLS` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `REMOVED` | SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| enum | `TEST_EVENT` | VerificationStep | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `allowedActions` | ApprovalRequest, PartyBase, Project, Publication … | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `approvalRequest` | TopicChangeResult | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `approvalRequestCodes` | EnsurePartyResponse | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `availableRange` | ProblemDetails, ReplayEstimate | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `before` | SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `breaking` | SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `byAlertState` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `changedFields` | SubscriptionStateChanged, TopicChanged | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `changes` | SchemaDiff | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `committedOffsets` | WorkerState | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `comparedVersions` | CompatibilityReport | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `compatible` | CompatibilityReport, SchemaDiff | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `configVersion` | RuntimeConfig, RuntimeSubscription, RuntimeTopic, SubscriptionActivated … | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `consumerGroupTemplate` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `counts` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `currentEtag` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `dataBase64` | DlqPayload | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `datacontenttype` | CloudEvent, CloudEventStructured | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `day` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `dependents` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `deprecatedSoon` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `detail` | ProblemDetails, VerificationStep | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `difference` | Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `dlqNewCount` | GraphEdge, GraphNode | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `enabledVersions` | RuntimeTopic, TopicChanged | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `errorCodes` | DeadLettered | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `errors` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `estimatedDurationSeconds` | ReplayEstimate | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `failedIndex` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `failedTopics` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `field` | PiiFinding, ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `full` | RuntimeConfig | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `generatedAt` | Dashboard, Graph, RuntimeConfig | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `httpPublishUrl` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `httpPullUrlTemplate` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `impactedSubscriptions` | TopicChangeResult | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `inPerMinute` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `instance` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `inUseCount` | CommType, RoutingMode | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `kafkaBootstrap` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `kafkaCount` | Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `kafkaListener` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `lastDeliveredAt` | WorkerState | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `lastErrorCode` | ComplianceItem, ComplianceViolated | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `lastReconciliation` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `lastViolationAt` | ComplianceItem | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `legacySystems` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `mappingsByStatus` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `masked` | DlqPayload | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `messages` | CompatibilityReport | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `metricsCollectedAt` | Graph | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `newByTopic` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `newEntryCount` | DeadLettered | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `outPerMinute` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `params` | Settings, SettingsUpdate | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `path` | ManifestImportJob, SchemaDiffChange | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `pendingApprovals` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `plannedShutdownAt` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `previousAlertState` | LagAlerted | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `previousKeyId` | SigningKeyRotated | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `previousStatus` | BridgeStateChanged, PublicationStateChanged, SubscriptionStateChanged | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `probeEventId` | RuntimeResumeRequest | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `projectCodes` | ExportRequest | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `publicationCounts` | Publisher | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `publishesViaPulsar` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `pulsarCount` | Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `quotaUsage` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `registryUrl` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `reportRef` | Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `retentionRemainingSeconds` | Lag | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `retryAfterSeconds` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `rule` | PiiFinding, ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `runner` | ReplayStartRequest | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `sampleConfigs` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `sampledCount` | ComplianceItem | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `sampleMismatches` | Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `sampleRatio` | Compliance | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `saslMechanism` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `series` | Lag | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `signingKeyPending` | Subscription | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `signingKeys` | RuntimeSubscription, Subscription | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `sources` | RuntimeTopic | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `subscribesViaPulsar` | MigrationProgress | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `subscriptionCounts` | Subscriber | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `successorStatus` | MigrationStatusItem | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `successorSubscriptionCode` | MigrationStatusItem | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `title` | ProblemDetails | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `tokenUrl` | ConnectionInfo | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `top` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `topicNames` | ExportRequest | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `topTopics` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `traffic` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `trend7d` | Dashboard | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `usage` | TenantEventQuota | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `validUntil` | EndpointVerification | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `violationCount` | ComplianceItem, ComplianceViolated | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
-| trường | `windowEnd` | Compliance, ComplianceViolated, Reconciliation | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |
+Không còn trường, enum nào chỉ có ở API: FRS bản 0.3 đã hấp thụ đủ vào A.2.15, A.3.
 <!-- gen:proposals:end -->
 
 ### 10.2. Đề nghị khác
+
+Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS bản 0.3 (D02-03-PH10 §14); tập này đã sửa theo: ERR-10-053, 054 thay 101, 102 ở control plane; API-10-121 hủy tác vụ nhập; `legalBasis` 10…1.000 ký tự; miền `retryBackoff.multiplier` 1…5; mặc định `failurePolicy` theo `orderingRequired`. Mục 4 (loại bỏ DLQ theo bộ lọc) để Đợt sau, MVP giữ danh sách ≤ 1.000 mục.
 
 | Số | Đề nghị | Lý do | Nơi sửa |
 |---|---|---|---|
@@ -1045,6 +943,8 @@ Bảng dưới sinh bằng `gen_md.py`: tên trường, giá trị enum dùng tr
 | 11 | Thêm `Cache-Control: no-store` bắt buộc cho phản hồi API-10-054, 100 vào BR-10-027 | Khóa ký chỉ hiển thị một lần | FRS BR-10-027 |
 
 ### 10.3. Đề nghị của tập màn hình D03-06-PH10 (Phụ lục B)
+
+Đã xử lý ở FRS bản 0.3: các trường mới dưới đây vào FRS A.3, `dryRun` vào A.3, enum bước xác minh vào A.2.15.
 
 | Số | Đề nghị | Xử lý ở tập này |
 |---|---|---|
@@ -1078,3 +978,4 @@ Tham số `dryRun` và các trường mới (`allowedActions`, `signingKeyPendin
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-API trên FRS 0.2: 120 operation (API-10-001…091 theo FRS, 092…119 tách dòng gộp, 120 theo đề nghị của tập màn hình), EVT-10-01…16, kênh webhook PUSH ký HMAC, kênh mẫu topic nghiệp vụ và DLQ; OpenAPI 3.1, AsyncAPI 3.0 sinh từ bảng mã, đã kiểm hợp đồng và đối chiếu FRS | Nhóm viết tài liệu (Claude) |
+| 0.2 | 26/11/2026 | Theo FRS 0.3: ERR-10-053, 054 cho 401, 403 control plane (data plane giữ 101, 102); API-10-121 `POST /imports/{jobCode}:cancel`; `legalBasis` 10…1.000 ký tự, `multiplier` 1…5, mặc định `failurePolicy` theo `orderingRequired`, ràng buộc ngưỡng lag; §10.1 trống vì FRS đã hấp thụ 91 trường, 6 enum; sinh lại OpenAPI, AsyncAPI và bảng, kiểm hợp đồng và đối chiếu FRS sạch | Nhóm viết tài liệu (Claude) |

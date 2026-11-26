@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH10
 ten: Thiết kế giao diện màn hình phân hệ PH-10 Sự kiện
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, kỹ sư tích hợp, vận hành, ATTT, kiểm thử viên, hội đồng thẩm định
@@ -1191,7 +1191,7 @@ Thẻ "Từ dữ liệu cũ nhất" hiện ước lượng "Khoảng {n} bản t
 | Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi |
 |---|---|---|---|---|---|
 | Mục đích nhận dữ liệu | `purpose` | `CMP-TextArea` | Có | 10…500 ký tự | ERR-10-003 |
-| Căn cứ pháp lý hoặc văn bản đồng ý | `legalBasis` | `CMP-TextArea` | Khi topic `RESTRICTED`, `SENSITIVE` | Không rỗng; độ dài theo Phụ lục C | ERR-10-009 |
+| Căn cứ pháp lý hoặc văn bản đồng ý | `legalBasis` | `CMP-TextArea` | Khi topic `RESTRICTED`, `SENSITIVE` | 10…1.000 ký tự (FR-10-035) | ERR-10-009 |
 | Mã đăng ký nhận | `subscriptionCode` | `CMP-Input` `font-mono`, có nút "Dùng mã gợi ý" | Không | `^[a-z][a-z0-9-]{2,62}$`; gợi ý `{subscriberCode}-{entity}-{eventName}` cắt về 63 ký tự | ERR-10-002, 003 |
 
 Mã ảnh hưởng tên nhóm tiêu thụ (`dh-sub-{tenant}-{subscriptionCode}` hoặc `dh-ext-…`), nên ô hiện dòng phụ "Nhóm tiêu thụ sẽ là …" cập nhật khi gõ.
@@ -1878,6 +1878,8 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục B. Đề nghị bổ sung API (cho D03-04-PH10)
 
+Đã xử lý ở FRS bản 0.3 (D02-03-PH10 §14) theo cách D03-04-PH10 §10.3 nhận: tên chốt là `signingKeyPending` (thay `signingSecretPending`), `metricsCollectedAt` (thay `stats.collectedAt`), dashboard không có cờ `available` (chỉ `traffic` rỗng khi PH-13 lỗi), không có trạng thái worker riêng (tab Worker dùng API-10-055, 052), miễn xác minh làm sau khi tạo qua API-10-091.
+
 | # | API | Đề nghị | Màn |
 |---|---|---|---|
 | B1 | Mọi `GET` chi tiết | Trả `allowedActions` theo quyền, trạng thái, bốn mắt | Mọi màn chi tiết |
@@ -1893,6 +1895,8 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 ## Phụ lục C. Đề nghị bổ sung cho FRS
 
+Đã xử lý ở FRS bản 0.3 (§14): C1 vào A.6; C2, C3, C5 vào bảng tham số FR-10-035; C4 vào quy ước đầu §5 (10…500 ký tự); C6 chấp nhận, mặc định `BLOCK` cho topic `orderingRequired` và đóng Q10-15. Phụ lục A được chép sang FRS §10.4 cho D03-05.
+
 | # | Mục FRS | Đề nghị |
 |---|---|---|
 | C1 | A.6 | Ghi đoạn tab con của trang chi tiết (`/cau-hinh`, `/quyen-phat`, `/dang-ky-nhan-ds`, `/ket-noi`, `/chuyen-doi`, `/lich-su` cho topic; `/giao-nhan`, `/do-tre`, `/luot-loi`, `/worker`, `/khoa-ky`, `/cau-hinh`, `/phat-lai`, `/lich-su` cho subscription; `/topic`, `/ben-tham-gia`, `/so-do`, `/lich-su` cho dự án; `/anh-xa`, `/cau-noi`, `/doi-chieu`, `/tien-do` cho di trú) và tham số query của sơ đồ (`du-an`, `topic`, `httt`, `lop-phu`, `ca-ngung`, `che-do`) |
@@ -1906,7 +1910,7 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 
 > **Câu hỏi mở Q10-30:** Sơ đồ "Toàn tenant" khi tenant vượt `10.graph.max-nodes` có nên gợi ý gom nút theo dự án (`CMP-GroupNode` thu gọn) thay vì báo lỗi? Đề xuất: Đợt sau, MVP giữ ERR-10-049 kèm lối thu hẹp.
 
-> **Câu hỏi mở Q10-31:** Miễn xác minh endpoint (API-10-091) cho HTTT cũ làm ở bước nào: trong trình hướng dẫn đăng ký nhận hay chỉ sau khi đã tạo subscription? Tài liệu này chọn sau khi tạo; chờ tập API (Phụ lục B9).
+> **Câu hỏi mở Q10-31:** Miễn xác minh endpoint (API-10-091) cho HTTT cũ làm ở bước nào: trong trình hướng dẫn đăng ký nhận hay chỉ sau khi đã tạo subscription? Tài liệu này chọn sau khi tạo. **Đã trả lời:** D03-04-PH10 §10.3 B9 và FRS 0.3 xác nhận miễn chỉ làm sau khi tạo (API-10-091).
 
 > **Câu hỏi mở Q10-32:** Vị trí nút do người dùng kéo trên sơ đồ có cần lưu bền theo người dùng hoặc theo dự án (chia sẻ cho cả nhóm) không? MVP chỉ giữ trong phiên.
 
@@ -1929,3 +1933,4 @@ Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 76
 | Phiên bản | Ngày | Nội dung |
 |---|---|---|
 | 0.1 | 2026-11-26 | Bản đầu: 20 màn UI-10-01…20, sơ đồ kết nối siêu chi tiết, đăng ký nhận và chi tiết subscription rất chi tiết, ánh xạ màn Hub cũ, đề nghị bổ sung D03-05, API, FRS, câu hỏi mở Q10-30…39 |
+| 0.2 | 2026-11-26 | Theo FRS 0.3 và D03-04-PH10 0.2: Phụ lục B, C đã xử lý; `legalBasis` 10…1.000 ký tự; `signingKeyPending`, `metricsCollectedAt` theo tên API; Q10-31 đã trả lời (miễn xác minh sau khi tạo) |
