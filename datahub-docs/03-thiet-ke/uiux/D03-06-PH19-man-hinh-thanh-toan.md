@@ -130,9 +130,9 @@ Bảng dưới là danh mục 28 màn của PH-19 theo khung truy vết §11, k�
 | Mã | Tên | Vai trò | FR | API |
 |---|---|---|---|---|
 | UI-19-01 | Dashboard tổng quan thanh toán | Giám sát tổng quan | FR-19-056, 059, 011 | API-19-080 |
-| UI-19-02 | Dashboard kênh thanh toán | Giám sát kênh | FR-19-057, 003 (hiển thị), 023 | API-19-081, 003 |
+| UI-19-02 | Dashboard kênh thanh toán | Giám sát kênh | FR-19-057, 003 (hiển thị), 011, 023 | API-19-081, 003 |
 | UI-19-03 | Danh sách nhà cung cấp | Danh sách | FR-19-007, 010 | API-19-001, 005 |
-| UI-19-04 | Chi tiết nhà cung cấp | Chi tiết, vòng đời | FR-19-008, 002, 006, 010, 011, 012, 069 | API-19-003, 006, 007, 008, 011, 012, 013, 014, 091, 092 |
+| UI-19-04 | Chi tiết nhà cung cấp | Chi tiết, vòng đời | FR-19-008, 002, 003, 006, 010, 011, 012, 069 | API-19-003, 006, 007, 008, 011, 012, 013, 014, 091, 092 |
 | UI-19-05 | Biểu mẫu thêm, sửa nhà cung cấp | Biểu mẫu | FR-19-001, 009 | API-19-002, 004 |
 | UI-19-06 | Trình hướng dẫn kích hoạt nhà cung cấp | Trình hướng dẫn | FR-19-003, 004, 005 | API-19-009, 010, 011, 012 |
 | UI-19-07 | Danh sách nhóm dịch vụ | Danh sách | FR-19-013 | API-19-015, 019 |
@@ -679,7 +679,7 @@ Thẻ số tiền hiện đầy đủ đến đồng; khi chiều rộng thẻ k
 
 **Người dùng, quyền.** ADM, APR, ACC, OPR, AUD, SEC có `PERM-19-dashboard-read`. Màn chỉ đọc.
 
-**FR, UC hiện thực.** FR-19-057, 003 (hiển thị), 023; UC-19-25, UC-19-06.
+**FR, UC hiện thực.** FR-19-057, 003 (hiển thị), 011, 023; UC-19-25, UC-19-06.
 
 **Truy vết hệ cũ.** LGC-PAY-003, 020, 023.
 
@@ -815,7 +815,7 @@ Không có chọn nhiều và thao tác hàng loạt trên NCC (số lượng í
 
 **Người dùng, quyền.** Xem: `PERM-19-provider-read`. Tab thông tin xác thực: `PERM-19-credential-manage` (ADM, SEC) để gắn hoặc xoay khóa. Tạm dừng: `PERM-19-provider-suspend`. Đề nghị ngừng hẳn: `PERM-19-provider-delete`.
 
-**FR, UC hiện thực.** FR-19-008, 002, 006, 010, 011, 012, 069; UC-19-01, 04, 05, 06.
+**FR, UC hiện thực.** FR-19-008, 002, 003, 006, 010, 011, 012, 069; UC-19-01, 04, 05, 06.
 
 **Truy vết hệ cũ.** LGC-PAY-003, 005, 008, 009.
 

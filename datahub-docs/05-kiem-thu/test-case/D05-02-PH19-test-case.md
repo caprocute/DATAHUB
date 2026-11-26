@@ -697,7 +697,7 @@ Chương này đặc tả 29 kịch bản chức năng TS-19-01…29, cùng số
 
 **Các bước.**
 
-1. Gửi đề nghị `ACTIVATE` cho từng bản.
+1. Gửi đề nghị `PROVIDER_ACTIVATE` cho từng bản.
 
 **Kết quả mong đợi.** Mỗi lần trả `422` ERR-19-035 với `detail` liệt kê đúng một mục thiếu; trạng thái giữ `DRAFT`; không tạo `approval_request`. Nút "Gửi đề nghị" ở UI-19-06 vô hiệu với tooltip nêu đúng mục thiếu.
 :::
@@ -858,7 +858,7 @@ Chương này đặc tả 29 kịch bản chức năng TS-19-01…29, cùng số
 
 **Các bước.**
 
-1. Gửi đề nghị `RETIRE` cho PV-PG.
+1. Gửi đề nghị `PROVIDER_RETIRE` cho PV-PG.
 2. Gọi `DELETE /providers/{PV-PG}`.
 
 **Kết quả mong đợi.** Bước 1 trả `409` ERR-19-036 với `pendingTransactions`, `openSessions` đúng số. Bước 2 trả `409` ERR-19-037. Dữ liệu không đổi.
@@ -3772,7 +3772,7 @@ Năm kịch bản TS-19-30…34 kiểm các yêu cầu phi chức năng NFR-19-0
 
 **Truy vết.** FR-19-029 · NFR-19-020 · API-19-201 · ERR-19-024 · LGC-PAY-010.
 
-**Tiền điều kiện, dữ liệu.** TX `PENDING`; chứng thư cũ của PV-PG đã chuyển `REVOKED`.
+**Tiền điều kiện, dữ liệu.** TX `PENDING`; chứng thư cũ của PV-PG đã chuyển `RETIRED`.
 
 **Các bước.**
 

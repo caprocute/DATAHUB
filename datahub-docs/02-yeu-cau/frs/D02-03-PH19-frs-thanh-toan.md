@@ -1425,7 +1425,7 @@ sequenceDiagram
 ::: dac-ta
 **Mục đích.** Chức năng giúp quản trị thanh toán dọn bản nháp nhà cung cấp chưa dùng, và đưa một kênh đã dùng ra khỏi vận hành qua phê duyệt mà vẫn giữ đủ dữ liệu để tra cứu, đối soát lịch sử. Nâng cấp chức năng "Xóa nhà cung cấp" của hệ cũ (LGC-PAY-005): chỉ xóa cứng bản nháp chưa từng có giao dịch; NCC đã dùng chỉ được ngừng hẳn qua phê duyệt, dữ liệu giữ nguyên để tra cứu và đối soát lịch sử.
 
-**Tác nhân, quyền.** Quản trị thanh toán · `provider-delete` (xóa, lập đề nghị `RETIRE`); người phê duyệt · `provider-activate` (quyết định).
+**Tác nhân, quyền.** Quản trị thanh toán · `provider-delete` (xóa, lập đề nghị `PROVIDER_RETIRE`); người phê duyệt · `provider-activate` (quyết định).
 
 **Mức ưu tiên, đợt.** M · MVP.
 
@@ -1987,7 +1987,7 @@ flowchart TB
 
 **Luồng xử lý chính.**
 
-1. Người dùng chọn thao tác vòng đời ở UI-19-12, nhập ghi chú hoặc lý do và xác nhận; giao diện gọi API-19-033 (đề nghị `ONBOARD`, `TERMINATE`), API-19-034 (tạm dừng) hoặc API-19-035 (mở lại).
+1. Người dùng chọn thao tác vòng đời ở UI-19-12, nhập ghi chú hoặc lý do và xác nhận; giao diện gọi API-19-033 (đề nghị `PARTNER_ONBOARD`, `PARTNER_TERMINATE`), API-19-034 (tạm dừng) hoặc API-19-035 (mở lại).
 2. `ONBOARD`: kiểm tra đối tác `DRAFT`, đã có `memberSystemId`, có ít nhất một đầu mối, có ít nhất một dịch vụ được gán (FR-19-020); thiếu trả ERR-19-035. Tạo đề nghị `PARTNER_ONBOARD`, chuyển `PENDING_APPROVAL`.
 3. Duyệt: người duyệt ≠ người lập; kiểm tra lại điều kiện bước 1; chuyển `ACTIVE`. Từ chối, rút, hết hạn: về `DRAFT`.
 4. Tạm dừng: chuyển `SUSPENDED` ngay, xóa bộ đệm đối tác; mở lại chuyển `ACTIVE`.
@@ -2565,13 +2565,13 @@ Sơ đồ cho thấy adapter không tự diễn giải mã của PayGov mà tra 
 4. Nếu NCC không có năng lực hủy: chuyển `CANCELLED` cục bộ; kết quả thành công đến sau được áp theo BR-19-018 (thanh toán muộn).
 5. Hệ thống ghi `transaction_event` (nguồn `PARTNER_API` hoặc `USER`), outbox, kiểm toán.
 
-**Luồng thay thế.** NCC báo giao dịch đã được thanh toán khi nhận lệnh hủy: hệ thống áp kết quả thành công như IPN và trả ERR-19-021 kèm trạng thái mới. NCC không xác định: trả 202 `CANCELLATION_REQUESTED` để truy vấn chủ động quyết định. NCC không có năng lực hủy: hủy cục bộ, kết quả thành công đến sau áp như thanh toán muộn (BR-19-018).
+**Luồng thay thế.** NCC báo giao dịch đã được thanh toán khi nhận lệnh hủy: hệ thống áp kết quả thành công như IPN và trả ERR-19-021 kèm trạng thái mới. NCC không xác định: trả 200, giao dịch giữ `PENDING` để truy vấn chủ động (FR-19-036) quyết định. NCC không có năng lực hủy: hủy cục bộ, kết quả thành công đến sau áp như thanh toán muộn (BR-19-018).
 
 **Luồng ngoại lệ.**
 
 - Thao tác không được máy trạng thái (khung §7) cho phép ở trạng thái hiện tại: ERR-19-021 (409); từ chối, không thay đổi dữ liệu. "{object} đang ở trạng thái "{statusLabel}" nên không thể {actionLabel}."
 
-**Đầu ra.** Giao dịch `CANCELLED`, hoặc 202 `CANCELLATION_REQUESTED` khi đang chờ NCC xác nhận.
+**Đầu ra.** Giao dịch `CANCELLED`, hoặc 200 với giao dịch giữ `PENDING` khi đang chờ NCC xác nhận.
 
 **Kết quả.** Giao dịch hiện "Đã hủy" và đối tác nhận webhook `transaction.cancelled`; nếu người nộp đã kịp trả tiền thì giao dịch được ghi nhận thành công thay vì bị hủy.
 
@@ -4631,7 +4631,7 @@ Webhook và sự kiện Kafka cùng xuất phát từ bảng outbox nhưng đi h
 
 **Truy vết.** REQ-94; LGC-PAY-012; NFR-19-005, 021; ADR-044; UC-19-27; EN-19-09, 20; TS-19-27.
 
-**Tiền điều kiện.** Đối tác có đầu nhận webhook `ENABLED` đăng ký loại sự kiện tương ứng; bí mật ký có ở OpenBao.
+**Tiền điều kiện.** Đối tác có đầu nhận webhook `ACTIVE` đăng ký loại sự kiện tương ứng; bí mật ký có ở OpenBao.
 
 **Kích hoạt.** Bản ghi mới trong `outbox_event` thuộc loại sự kiện mà đầu nhận của đối tác đăng ký; lịch thử lại `next_attempt_at`.
 
@@ -4875,7 +4875,7 @@ Khởi tạo phân hệ tạo cấu hình mặc định; sau đó quản trị t
 
 **Đầu ra.** `tenant_payment_config` với `module_enabled` và `provisioning_state`; tài nguyên hạ tầng của tenant.
 
-**Kết quả.** Quản trị tenant thấy menu "Thanh toán" xuất hiện khi bật; khi tắt, mọi màn có dải cảnh báo "Phân hệ thanh toán đang tạm ngừng cho tỉnh, chỉ xem được dữ liệu" và nút ghi bị ẩn.
+**Kết quả.** Quản trị tenant thấy menu "Thanh toán" xuất hiện khi bật; khi tắt, mọi màn có dải cảnh báo "Phân hệ thanh toán đang tạm ngừng cho tỉnh." và nút ghi bị ẩn.
 
 **Hậu điều kiện.** Bật: tenant có đủ tài nguyên của PH-19 và cấu hình mặc định. Tắt: dữ liệu giữ nguyên theo thời hạn lưu, chỉ chặn tạo mới.
 
@@ -5868,8 +5868,10 @@ Câu hỏi OQ-19-01…20 của khung truy vết §15.1 vẫn mở. Theo quy tắ
 | OQ-19-22 | Thay đổi ngưỡng duyệt hai cấp, hạn hoàn, bật tắt hoàn tiền có cần phê duyệt bốn mắt không | Sở Tài chính | FR-19-063 | Chỉ cần lý do, kiểm toán, thông báo người phê duyệt |
 | OQ-19-23 | Với IPN thành công cho giao dịch đã bị đối tác hủy (thanh toán muộn), có cần chặn đối tác ghi nhận hồ sơ cho tới khi kế toán quyết định không | Chủ đầu tư, đối tác | BR-19-018, FR-19-031 | Webhook mang `latePaid = true`; đối tác tự quyết định theo nghiệp vụ |
 | OQ-19-24 | Biên bản đối soát có cần ký số của cả hai bên (đơn vị chủ trì và NCC) trên hệ thống không | Sở Tài chính, VPCP | FR-19-048 | Biên bản PDF có mã băm, ký ngoài hệ thống; ký số trên hệ thống là mở rộng sau |
+| OQ-19-44 | Giao dịch thử có số tiền ngoài khoảng 1.000…100.000 đ nên trả ERR-19-010 (số tiền không hợp lệ) hay ERR-19-011 (ngoài khoảng cho phép) | Nhóm phân hệ PH-19 | FR-19-004 | Giữ ERR-19-010; xem lại trong đợt đồng bộ cuối cùng với câu thông báo của ERR-19-011 |
+| OQ-19-45 | Rà soát chéo 0.2 thấy một số cặp FR ↔ API chỉ ghi một chiều (ví dụ FR-19-008 dẫn API-19-006, 011, 091 nhưng `x-datahub-fr` của ba API không ghi FR-19-008) | Nhóm phân hệ PH-19 | FRS chương 6, OpenAPI | Sửa trong đợt đồng bộ cuối: bổ sung `x-datahub-fr` qua khung truy vết §10 rồi sinh lại OpenAPI và chương 10 của D03-04-PH19 |
 
-: Câu hỏi mở
+: Câu hỏi mở của FRS PH-19
 
 ## 14. Tiêu chí chấp nhận cấp phân hệ
 

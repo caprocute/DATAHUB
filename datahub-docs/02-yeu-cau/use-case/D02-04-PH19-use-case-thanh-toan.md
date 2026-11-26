@@ -501,7 +501,7 @@ Use case này cho quản trị thanh toán bằng chứng kỹ thuật rằng nh
 
 **Quy tắc áp dụng.** BR-19-010, BR-19-033.
 
-**Màn hình, API.** UI-19-02, 06; API-19-009…011; kịch bản kiểm thử TS-19-02.
+**Màn hình, API.** UI-19-04, 06; API-19-009…011; kịch bản kiểm thử TS-19-02.
 
 :::
 
@@ -588,7 +588,7 @@ Use case gom ba thao tác thu hẹp hoạt động của nhà cung cấp: tạm 
 **Luồng chính.** Kịch bản tạm dừng rồi mở lại.
 
 1. PayGov thông báo bảo trì 2 giờ; ADM mở UI-19-04, chọn "Tạm dừng", nhập lý do (API-19-013, `If-Match`).
-2. Hệ thống chuyển NCC `SUSPENDED`, phát EVT-19-01; yêu cầu tạo giao dịch mới cho dịch vụ của NCC trả ERR-19-008 kèm thông điệp "Kênh thanh toán tạm ngừng".
+2. Hệ thống chuyển NCC `SUSPENDED`, phát EVT-19-01; yêu cầu tạo giao dịch mới cho dịch vụ của NCC trả ERR-19-017 (503) kèm thông điệp "Kênh thanh toán "{provider}" tạm thời không khả dụng."
 3. Hết bảo trì, ADM chạy "Kiểm tra kết nối" (UC-19-02 bước 1–2) rồi chọn "Mở lại" (API-19-014).
 4. Hệ thống kiểm tra có `check_run` kết nối `PASSED` trong 1 giờ, chuyển `ACTIVE`, phát EVT-19-01.
 
@@ -712,7 +712,7 @@ Use case chạy nền, không có người khởi xướng: bộ lập lịch th
 
 **Quy tắc áp dụng.** BR-19-013, BR-19-026.
 
-**Màn hình, API.** UI-19-01, 04; API-19-003, 008; kịch bản kiểm thử TS-19-06.
+**Màn hình, API.** UI-19-02, 04; API-19-003, 008; kịch bản kiểm thử TS-19-06.
 
 :::
 
@@ -765,7 +765,7 @@ Nhóm dịch vụ tương ứng "lĩnh vực giao dịch" của hệ cũ (LGC-PA
 
 **Quy tắc áp dụng.** BR-19-009 (mã danh mục PH-07 còn hiệu lực, qua FR-19-016); không có quy tắc riêng khác.
 
-**Màn hình, API.** UI-19-07…10; API-19-015…019, 021, 023, 028; kịch bản kiểm thử TS-19-07.
+**Màn hình, API.** UI-19-07, 08; API-19-015…019, 021, 023, 028; kịch bản kiểm thử TS-19-07.
 
 :::
 
@@ -820,7 +820,7 @@ Dịch vụ thanh toán là một khoản thu cụ thể (phí, lệ phí) gắn
 
 **Quy tắc áp dụng.** BR-19-008, BR-19-009, BR-19-027.
 
-**Màn hình, API.** UI-19-08…10; API-19-016, 018, 020…028; kịch bản kiểm thử TS-19-08.
+**Màn hình, API.** UI-19-09, 10; API-19-016, 018, 020…028; kịch bản kiểm thử TS-19-08.
 
 :::
 
@@ -1367,7 +1367,7 @@ Hoàn tiền được tách thành hai use case: lập yêu cầu (use case này
 
 **Quy tắc áp dụng.** BR-19-022, 023, 033.
 
-**Màn hình, API.** UI-19-18; API-19-059, 087, 105; kịch bản kiểm thử TS-19-17.
+**Màn hình, API.** UI-19-17, 18; API-19-059, 087, 105; kịch bản kiểm thử TS-19-17.
 
 :::
 
@@ -1760,7 +1760,7 @@ Màn chi tiết kể lại toàn bộ câu chuyện của một giao dịch trê
 
 **Quy tắc áp dụng.** BR-19-031, 032.
 
-**Màn hình, API.** UI-19-15, 23; API-19-052, 054, 076; kịch bản kiểm thử TS-19-23.
+**Màn hình, API.** UI-19-15; API-19-052, 054, 076; kịch bản kiểm thử TS-19-23.
 
 :::
 
