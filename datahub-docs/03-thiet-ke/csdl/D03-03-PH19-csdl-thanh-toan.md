@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D03-03-PH19
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư dữ liệu, DBA, lập trình viên L-PAY, kiểm thử viên, nhóm vận hành, kiểm toán nội bộ
 phan_he: PH-19
 nguoi_lap: Nhóm phân hệ PH-19
+mo_ta: Thiết kế 38 bảng của schema ph19_payment trên cụm pg-payment, gồm khóa, ràng buộc, RLS theo tenant, phân vùng tháng, bảng bất biến, mã hóa dữ liệu cá nhân, sao lưu và ánh xạ dữ liệu hệ cũ, trích từ DDL đã chạy thử.
+tai_lieu_lien_quan: D02-03-PH19 FRS; D02-03-PH19-00 Khung truy vết; D03-02-PH19 SDD; D03-04-PH19 API; D03-10 Thiết kế đa tenant; D05-02-PH19 Test case
 ---
 
 # D03-03-PH19 · Thiết kế cơ sở dữ liệu phân hệ PH-19 Thanh toán điện tử
@@ -22,7 +24,62 @@ Bốn điểm thiết kế chính:
 3. **Cách ly tỉnh bằng CSDL.** 36 bảng có `tenant_id` và `FORCE ROW LEVEL SECURITY`; mọi khóa ngoại mang kèm `tenant_id`; bảng duy nhất không có RLS là bảng định tuyến callback `callback_route`, chỉ chứa băm. Đã chạy thử ngày 26/11/2026 trên PostgreSQL 16.15: 25 ca kiểm thử của [`ph19/test/ph19_isolation_test.sql`](ph19/test/ph19_isolation_test.sql) đều đạt, gồm đọc chéo, ghi chéo, khóa ngoại chéo tỉnh, tách nhiệm người lập, người duyệt (§4).
 4. **Chịu được 10 triệu giao dịch.** Bốn bảng lớn phân vùng theo tháng (ADR-047); mã giao dịch duy nhất toàn cục nhờ bảng mỏ neo không phân vùng `transaction_code_index`; dữ liệu cá nhân người nộp được mã hóa từng giao dịch và tìm bằng băm HMAC (ADR-048).
 
-Nguồn duy nhất của DDL là [`ph19/ddl/ph19_payment.sql`](ph19/ddl/ph19_payment.sql). Bảng cột ở §3 sinh từ DDL bằng [`ph19/tools/gen_tables_md.py`](ph19/tools/gen_tables_md.py). Mã thực thể EN-19-01…25 theo khung truy vết (D02-03-PH19-00 §9.3); bảng kỹ thuật thêm ở bản này được đánh dấu "đề xuất" trong §1.4.
+Nguồn duy nhất của DDL là [`ph19/ddl/ph19_payment.sql`](ph19/ddl/ph19_payment.sql). Bảng cột ở §3 sinh từ DDL bằng [`ph19/tools/gen_tables_md.py`](ph19/tools/gen_tables_md.py), khối đặc tả 10 mục của từng bảng bằng [`ph19/tools/them_dac_ta_bang.py`](ph19/tools/them_dac_ta_bang.py). Mã thực thể EN-19-01…25 theo khung truy vết (D02-03-PH19-00 §9.3); bảng kỹ thuật thêm ở bản này được đánh dấu "đề xuất" trong §1.4.
+
+## 0. Giới thiệu
+
+### 0.1. Mục đích và phạm vi
+
+Tài liệu đặc tả cơ sở dữ liệu của PH-19 ở mức đủ để DBA tạo lược đồ, lập trình viên L-PAY viết tầng truy cập dữ liệu và kiểm thử viên viết ca kiểm thử cách ly tenant, toàn vẹn và bất biến. Phạm vi gồm 38 bảng của schema `ph19_payment` trên cụm `pg-payment`, các thủ tục và trigger đi kèm, dữ liệu khởi tạo, kho lưu trữ ngoài PostgreSQL (Kafka, Valkey, bucket WORM), sao lưu, khôi phục, lưu giữ và ánh xạ năm bảng hệ cũ. Ngoài phạm vi: lược đồ của phân hệ khác (PH-13 kiểm toán, PH-20 tenant) và mô hình dữ liệu của lớp dữ liệu dùng chung.
+
+Nguồn chuẩn là tệp DDL [`ph19/ddl/ph19_payment.sql`](ph19/ddl/ph19_payment.sql). Bảng cột và khối đặc tả 10 mục của từng bảng ở chương 3 đều trích tự động từ DDL, nên tài liệu không lệch DDL.
+
+### 0.2. Người đọc và cách đọc
+
+| Người đọc | Phần cần đọc | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định, kiểm toán nội bộ | Tóm tắt, chương 1.2, 5, 8 | Đánh giá cách ly dữ liệu giữa các tỉnh, bảo vệ dữ liệu cá nhân, lưu giữ chứng cứ |
+| Kiến trúc sư dữ liệu, DBA | Chương 1, 2, 4, 7, 8 | Dựng cụm, phân quyền vai trò, phân vùng, sao lưu |
+| Lập trình viên L-PAY | Chương 1.3, 2, 3, 5, 6 | Ánh xạ thực thể, viết truy vấn đúng chỉ mục, xử lý ràng buộc |
+| Kiểm thử viên | Chương 3.39, 4.2, 9 | Ca kiểm thử ràng buộc, RLS, di trú |
+| Đội di trú | Chương 9 | Ánh xạ bảng, cột hệ cũ sang bảng mới |
+
+: Người đọc và phần cần đọc của tập CSDL PH-19
+
+### 0.3. Thuật ngữ và chữ viết tắt
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| RLS | Row Level Security, chính sách lọc dòng của PostgreSQL; ở đây lọc theo `tenant_id = app.tenant_id` |
+| FORCE RLS | Bắt buộc RLS cả với chủ bảng, để không vai trò ứng dụng nào vượt qua được |
+| Mẫu P | Mẫu RLS của D03-10 cho bảng chỉ có dữ liệu riêng của tenant (PH-19 không có dữ liệu dùng chung `COMMON`) |
+| Phân vùng RANGE | Chia một bảng lớn thành bảng con theo khoảng thời gian (mỗi tháng một phân vùng) |
+| Bảng chỉ thêm, bất biến | Bảng có trigger chặn `UPDATE`, `DELETE`; dùng cho chứng cứ |
+| Bảng mỏ neo | `transaction_code_index`, bảng không phân vùng giữ mã giao dịch duy nhất toàn cục làm đích khóa ngoại |
+| Outbox | Bảng `outbox_event`, nơi ghi sự kiện và kiểm toán cùng giao dịch CSDL để Debezium phát lên Kafka |
+| WORM | Write Once Read Many, lưu trữ không sửa được (Ceph RGW Object Lock) |
+| DEK, KEK | Khóa mã hóa dữ liệu và khóa bọc khóa, dùng mã hóa trường dữ liệu cá nhân (ADR-048) |
+| DDL, changeset | Câu lệnh định nghĩa lược đồ; đơn vị thay đổi của Liquibase |
+
+: Thuật ngữ và chữ viết tắt của tập CSDL PH-19
+
+### 0.4. Tài liệu tham chiếu
+
+| Tài liệu | Nội dung dùng ở tập này |
+|---|---|
+| D02-03-PH19-00 Khung truy vết §9 | Mã thực thể EN-19-01…25 |
+| D02-03-PH19 FRS | FR được mỗi bảng phục vụ, quy tắc nghiệp vụ BR-19 |
+| D03-02-PH19 SDD | Thành phần ghi đọc từng bảng |
+| D03-04-PH19 API | Ánh xạ trường JSON camelCase với cột snake_case |
+| D03-10 Thiết kế đa tenant | Mẫu RLS, khóa ngoại kép có `tenant_id` |
+| D03-09 Hạ tầng triển khai, DR | Cụm `pg-payment`, sao lưu, hai site |
+| ADR-003, ADR-042, ADR-045, ADR-047, ADR-048 | RLS, inbox, `connectionKey`, phân vùng, mã hóa trường |
+
+: Tài liệu tham chiếu của tập CSDL PH-19
+
+### 0.5. Cấu trúc tài liệu
+
+Chương 1 nêu chiến lược lưu trữ: cụm, schema, vai trò, cách ly tenant, quy ước bảng, danh mục 38 bảng và quyền của vai trò ứng dụng. Chương 2 là ba sơ đồ thực thể quan hệ theo vùng nghiệp vụ. Chương 3 đặc tả từng bảng, mỗi bảng một khối 10 mục (mục đích, FR phục vụ, khóa chính, duy nhất, khóa ngoại, ràng buộc CHECK, chỉ mục, cách ly tenant, phân vùng và chỉ thêm, ghi chú) và bảng cột, cùng quy tắc nghiệp vụ chốt ở CSDL và truy vấn chính. Chương 4 là DDL, changelog Liquibase và kết quả chạy thử. Chương 5 nói về mã hóa và dữ liệu cá nhân. Chương 6 là dữ liệu khởi tạo. Chương 7 là kho lưu trữ ngoài PostgreSQL. Chương 8 là sao lưu, khôi phục và lưu giữ. Chương 9 ánh xạ dữ liệu hệ cũ. Chương 10 là câu hỏi mở.
 
 ## 1. Chiến lược lưu trữ
 
@@ -36,6 +93,8 @@ Nguồn duy nhất của DDL là [`ph19/ddl/ph19_payment.sql`](ph19/ddl/ph19_pay
 | Migration | `dh_payment_migrator`, thành viên `ph19_owner`, chỉ chạy trong Job Liquibase | §5 |
 | Bảo trì | `dh_payment_maint`, thành viên `ph19_owner`, chỉ dùng cho `PartitionMaintenanceJob` (tạo, tách phân vùng) | §7 |
 | Đọc báo cáo, kiểm toán | `ph19_readonly`: đọc mọi bảng trừ `provider_credential`, `idempotency_record`, `shedlock`, `callback_route`; cột mã hóa đọc được nhưng không giải mã được (không có quyền OpenBao transit) | D03-07 SEC-30…39 |
+
+: Cụm, schema, vai trò và kết nối
 
 Không phân hệ nào khác kết nối `pg-payment`. PH-13, PH-16 nhận dữ liệu qua sự kiện Kafka (outbox), lớp dữ liệu dùng chung nhận qua sự kiện EVT-19-05, 07, 13 (khung §10.4). Truy vấn SQL trực tiếp có kiểm soát theo Q359 chỉ áp cho nguồn dữ liệu của tỉnh khai báo ở PH-05, không áp cho `pg-payment`.
 
@@ -57,6 +116,8 @@ Theo D00-01 §5.1: khóa chính `id uuid` (UUID v7 sinh ở ứng dụng), `crea
 | `transaction_event`, `integration_log`, `reconciliation_item`, `transaction_adjustment`, `provider_check_run`, `transaction_code_index`, `tenant_payment_config`, `provider_result_mapping` | Không có `updated_*`, `version` | Chỉ-ghi-thêm |
 | `partner_quota_usage`, `payment_stats_hourly`, `stats_cursor`, `legacy_mapping`, `transaction_order_guard`, `provider_unmapped_code`, `callback_nonce`, `callback_route`, `idempotency_record` | Khóa tự nhiên, không có `id` | Bảng đếm, chỉ mục hoặc khóa chống trùng |
 | `approval_request`, `refund_request`, `discrepancy`, `reconciliation_session` | Không có `created_by`/`updated_by` riêng | Người lập là `requested_by`; người đổi trạng thái ghi ở `transaction_event`, `approval_request` và kiểm toán PH-13 |
+
+: Quy ước bảng
 
 Giá trị `CHECK` của trạng thái, loại, nguồn chuyển trạng thái đúng như khung §7 và §9.3; thêm giá trị là một changeset mới.
 
@@ -102,6 +163,8 @@ Giá trị `CHECK` của trạng thái, loại, nguồn chuyển trạng thái �
 | Kỹ thuật (đề xuất) | `callback_route` | Định tuyến callback, không RLS | — | FR-19-029, ADR-045 |
 | Kỹ thuật | `shedlock` | Khóa tác vụ | — | SDD §3 |
 
+: Danh mục 38 bảng của schema ph19_payment
+
 Tổng 38 bảng: 25 thực thể khung, 1 thực thể đề xuất EN-19-26, 12 bảng kỹ thuật.
 
 ### 1.5. Quyền của vai trò ứng dụng
@@ -112,13 +175,15 @@ Tổng 38 bảng: 25 thực thể khung, 1 thực thể đề xuất EN-19-26, 1
 | `SELECT`, `INSERT`, `UPDATE` (không `DELETE`) | `payment_transaction`, `callback_inbox`, `discrepancy`, `legacy_mapping`, `approval_request`, `refund_request`, `payment_provider`, `payment_partner` |
 | Đủ DML (vẫn chịu trigger) | Các bảng còn lại; `provider_result_mapping` chỉ xóa được bản nháp, `transaction_order_guard` xóa dòng khi giao dịch kết thúc không thành công |
 
+: Quyền của vai trò ứng dụng
+
 Hai lớp chặn độc lập: thu hồi quyền (lỗi `insufficient_privilege`) và trigger `tg_append_only` (lỗi `P1930`, ánh xạ ERR-19-050 ở ứng dụng). Dọn dữ liệu hết hạn của bảng chỉ-ghi-thêm dùng `DETACH PARTITION` dưới `dh_payment_maint`, không dùng `DELETE` (§7).
 
 ## 2. Sơ đồ thực thể – quan hệ
 
 ### 2.1. Danh mục và cấu hình
 
-```mermaid
+```{.mermaid caption="Sơ đồ thực thể quan hệ vùng danh mục và cấu hình"}
 erDiagram
     payment_provider ||--o{ provider_credential : "có"
     payment_provider ||--o{ provider_check_run : "được kiểm tra"
@@ -160,9 +225,11 @@ erDiagram
     }
 ```
 
+Hình cho thấy nhà cung cấp là gốc của mọi cấu hình kết nối (thông tin xác thực, lần kiểm tra, bảng ánh xạ mã), dịch vụ thuộc nhóm dịch vụ và gắn một nhà cung cấp, đối tác được cấp client, dịch vụ và đầu nhận webhook. Mọi khóa ngoại đều mang kèm `tenant_id`.
+
 ### 2.2. Giao dịch, hoàn tiền, thông báo
 
-```mermaid
+```{.mermaid caption="Sơ đồ thực thể quan hệ vùng giao dịch, hoàn tiền và thông báo"}
 erDiagram
     transaction_code_index ||--|| payment_transaction : "mỏ neo"
     transaction_code_index ||--o{ transaction_event : "lịch sử"
@@ -203,11 +270,13 @@ erDiagram
     }
 ```
 
+Hình cho thấy giao dịch là trung tâm, nối với lịch sử trạng thái, bản ghi bù, yêu cầu hoàn và webhook; mọi bảng tham chiếu giao dịch đi qua bảng mỏ neo `transaction_code_index` vì bảng giao dịch phân vùng theo tháng.
+
 Bảng phân vùng không làm đích khóa ngoại theo `id` được; mọi bảng tham chiếu giao dịch trỏ tới `transaction_code_index (id, tenant_id)`. Dòng mỏ neo được chèn cùng giao dịch CSDL với dòng giao dịch, và `payment_transaction` có khóa ngoại ngược tới mỏ neo nên không thể có giao dịch thiếu mỏ neo. `callback_inbox.transaction_id`, `integration_log.*_id`, `webhook_delivery.transaction_id`, `notification_feed.transaction_id` là liên kết mềm (không khóa ngoại) để ghi nhận được cả bản ghi của giao dịch không tồn tại (IPN mồ côi) và để `DETACH` phân vùng không vướng ràng buộc.
 
 ### 2.3. Đối soát, phê duyệt, tác vụ
 
-```mermaid
+```{.mermaid caption="Sơ đồ thực thể quan hệ vùng đối soát, phê duyệt và tác vụ"}
 erDiagram
     payment_provider ||--o{ reconciliation_session : "đối soát"
     reconciliation_session ||--o{ recon_provider_line : "dòng NCC"
@@ -245,6 +314,8 @@ erDiagram
     }
 ```
 
+Hình cho thấy mỗi phiên đối soát gom dòng dữ liệu của nhà cung cấp, kết quả so khớp và bản ghi chênh lệch; đề nghị phê duyệt bốn mắt dùng chung cho mọi loại đối tượng, tác vụ nền và tệp lưu trữ phục vụ nhiều chức năng.
+
 `approval_request.target_id` là liên kết đa hình (theo `target_type`) nên không có khóa ngoại; tính toàn vẹn do `ApprovalService` bảo đảm và được kiểm bằng truy vấn đối chiếu trong `DataIntegrityJob` hằng ngày (§3.40).
 
 ## 3. Đặc tả bảng
@@ -254,7 +325,27 @@ Bảng cột dưới đây sinh từ DDL. Giá trị kiểm tra (`CHECK`), chỉ
 <!-- gen:tables:start -->
 ### 3.1. `payment_provider`
 
-EN-19-01 Nhà cung cấp thanh toán (FR-19-001…011). Hệ cũ: payment_provider.
+::: dac-ta
+**Mục đích.** EN-19-01 Nhà cung cấp thanh toán (FR-19-001…011). Hệ cũ: payment_provider.
+
+**FR phục vụ.** FR-19-001…012.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_payment_provider_code` (tenant_id, code), `uq_payment_provider_conn_key` (connection_key_hash).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_payment_provider_tenant`, `ck_payment_provider_code`, `ck_payment_provider_adapter`, `ck_payment_provider_status`, `ck_payment_provider_health`, `ck_payment_provider_circuit`, `ck_payment_provider_refund`, `ck_payment_provider_url`, `ck_payment_provider_caps`, `ck_payment_provider_active`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_provider_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -290,9 +381,31 @@ EN-19-01 Nhà cung cấp thanh toán (FR-19-001…011). Hệ cũ: payment_provid
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `payment_provider`
+
 ### 3.2. `callback_route`
 
-Bảng định tuyến callback (ADR-045): sha256(connectionKey) → tenant, NCC. KHÔNG bật RLS vì phải tra trước khi biết tenant; chỉ chứa băm, không chứa dữ liệu nghiệp vụ. Xoay khóa: khóa cũ có valid_until = lúc xoay + 7 ngày.
+::: dac-ta
+**Mục đích.** Bảng định tuyến callback (ADR-045): sha256(connectionKey) → tenant, NCC. KHÔNG bật RLS vì phải tra trước khi biết tenant; chỉ chứa băm, không chứa dữ liệu nghiệp vụ. Xoay khóa: khóa cũ có valid_until = lúc xoay + 7 ngày.
+
+**FR phục vụ.** FR-19-001, 012, 029.
+
+**Khóa chính.** (connection_key_hash).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider` xóa theo.
+
+**Ràng buộc CHECK.** `ck_callback_route_hash`.
+
+**Chỉ mục.** `ix_callback_route_provider`.
+
+**Cách ly tenant.** Không bật RLS. Không bật RLS vì phải tra trước khi biết tenant (ADR-045); chỉ chứa băm `connectionKey`, không chứa dữ liệu nghiệp vụ.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Xem mục Cách ly tenant.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -303,9 +416,32 @@ Bảng định tuyến callback (ADR-045): sha256(connectionKey) → tenant, NCC
 | `valid_until` | `timestamptz` |  |  |  |
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 
+: Cột của bảng `callback_route`
+
 ### 3.3. `provider_credential`
 
-EN-19-02 Tham chiếu bí mật NCC theo môi trường, mục đích; không chứa giá trị bí mật (NFR-19-022, FR-19-002, 012).
+::: dac-ta
+**Mục đích.** EN-19-02 Tham chiếu bí mật NCC theo môi trường, mục đích; không chứa giá trị bí mật (NFR-19-022, FR-19-002, 012).
+
+**FR phục vụ.** FR-19-002, 012.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_provider_credential_current` (tenant_id, provider_id, environment, purpose, credential_status)
+  WHERE credential_status IN ('ACTIVE', 'NEXT').
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider` xóa theo.
+
+**Ràng buộc CHECK.** `ck_provider_credential_env`, `ck_provider_credential_purpose`, `ck_provider_credential_status`, `ck_provider_credential_ref`, `ck_provider_credential_valid`.
+
+**Chỉ mục.** `ix_provider_credential_expiry`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_provider_credential_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -327,9 +463,31 @@ EN-19-02 Tham chiếu bí mật NCC theo môi trường, mục đích; không ch
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `provider_credential`
+
 ### 3.4. `provider_check_run`
 
-EN-19-03 Lần kiểm tra kết nối, giao dịch thử; bằng chứng checklist kích hoạt BR-19-010.
+::: dac-ta
+**Mục đích.** EN-19-03 Lần kiểm tra kết nối, giao dịch thử; bằng chứng checklist kích hoạt BR-19-010.
+
+**FR phục vụ.** FR-19-003, 004, 005, 011.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider` xóa theo.
+
+**Ràng buộc CHECK.** `ck_provider_check_run_type`, `ck_provider_check_run_env`, `ck_provider_check_run_result`, `ck_provider_check_run_steps`.
+
+**Chỉ mục.** `ix_provider_check_run_latest`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_provider_check_run_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -346,9 +504,31 @@ EN-19-03 Lần kiểm tra kết nối, giao dịch thử; bằng chứng checkli
 | `started_by` | `varchar(64)` | x |  |  |
 | `trace_id` | `char(32)` | x |  |  |
 
+: Cột của bảng `provider_check_run`
+
 ### 3.5. `provider_result_mapping`
 
-EN-19-26 (đề xuất) Bảng ánh xạ mã kết quả NCC → kết cục nội bộ, có phiên bản (FR-19-069, GĐ-03). Mỗi phiên bản là bộ dòng đầy đủ; nội dung bất biến, chỉ trạng thái đi DRAFT → ACTIVE → RETIRED; bản nháp bị từ chối được xóa.
+::: dac-ta
+**Mục đích.** EN-19-26 (đề xuất) Bảng ánh xạ mã kết quả NCC → kết cục nội bộ, có phiên bản (FR-19-069, GĐ-03). Mỗi phiên bản là bộ dòng đầy đủ; nội dung bất biến, chỉ trạng thái đi DRAFT → ACTIVE → RETIRED; bản nháp bị từ chối được xóa.
+
+**FR phục vụ.** FR-19-069, 030, 036.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_provider_result_mapping` (tenant_id, provider_id, mapping_version, operation, provider_code).
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider` xóa theo.
+
+**Ràng buộc CHECK.** `ck_provider_result_mapping_op`, `ck_provider_result_mapping_outcome`, `ck_provider_result_mapping_final`, `ck_provider_result_mapping_version`, `ck_provider_result_mapping_status`.
+
+**Chỉ mục.** `ix_provider_result_mapping_active`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_provider_result_mapping_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Bản ánh xạ `ACTIVE` không sửa được, chỉ thay bằng phiên bản mới qua phê duyệt (trigger `tg_result_mapping_guard`, FR-19-069).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -366,9 +546,31 @@ EN-19-26 (đề xuất) Bảng ánh xạ mã kết quả NCC → kết cục n�
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
+: Cột của bảng `provider_result_mapping`
+
 ### 3.6. `provider_unmapped_code`
 
-Mã kết quả đã gặp nhưng chưa có trong bảng ánh xạ hiện hành (UI-19-04 tab Ánh xạ mã).
+::: dac-ta
+**Mục đích.** Mã kết quả đã gặp nhưng chưa có trong bảng ánh xạ hiện hành (UI-19-04 tab Ánh xạ mã).
+
+**FR phục vụ.** FR-19-069, 031.
+
+**Khóa chính.** (tenant_id, provider_id, operation, provider_code).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider` xóa theo.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_provider_unmapped_code_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -381,9 +583,31 @@ Mã kết quả đã gặp nhưng chưa có trong bảng ánh xạ hiện hành 
 | `last_seen_at` | `timestamptz` | x | `now()` |  |
 | `sample_message` | `varchar(500)` |  |  |  |
 
+: Cột của bảng `provider_unmapped_code`
+
 ### 3.7. `payment_service_group`
 
-EN-19-04 Nhóm dịch vụ (FR-19-013). Hệ cũ: payment_service_group (lĩnh vực giao dịch).
+::: dac-ta
+**Mục đích.** EN-19-04 Nhóm dịch vụ (FR-19-013). Hệ cũ: payment_service_group (lĩnh vực giao dịch).
+
+**FR phục vụ.** FR-19-013.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_payment_service_group_code` (tenant_id, code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_payment_service_group_code`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_service_group_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -402,9 +626,31 @@ EN-19-04 Nhóm dịch vụ (FR-19-013). Hệ cũ: payment_service_group (lĩnh v
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `payment_service_group`
+
 ### 3.8. `payment_service`
 
-EN-19-05 Dịch vụ thanh toán (FR-19-014…016). Một dịch vụ gắn đúng một NCC (BR-19-008).
+::: dac-ta
+**Mục đích.** EN-19-05 Dịch vụ thanh toán (FR-19-014…016). Một dịch vụ gắn đúng một NCC (BR-19-008).
+
+**FR phục vụ.** FR-19-014…016.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_payment_service_code` (tenant_id, code).
+
+**Khóa ngoại.** (group_id, tenant_id) → `payment_service_group`, (provider_id, tenant_id) → `payment_provider`.
+
+**Ràng buộc CHECK.** `ck_payment_service_code`, `ck_payment_service_status`, `ck_payment_service_amount`, `ck_payment_service_expiry`.
+
+**Chỉ mục.** `ix_payment_service_group`, `ix_payment_service_provider`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_service_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -430,9 +676,31 @@ EN-19-05 Dịch vụ thanh toán (FR-19-014…016). Một dịch vụ gắn đú
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `payment_service`
+
 ### 3.9. `payment_partner`
 
-EN-19-06 Đối tác (HTTT thu tiền qua PH-19) (FR-19-017, 018, 066). Hệ cũ: payment_partner. Đối tác ẩn __TEST__ chứa giao dịch thử (BR-19-033).
+::: dac-ta
+**Mục đích.** EN-19-06 Đối tác (HTTT thu tiền qua PH-19) (FR-19-017, 018, 066). Hệ cũ: payment_partner. Đối tác ẩn __TEST__ chứa giao dịch thử (BR-19-033).
+
+**FR phục vụ.** FR-19-017, 018.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_payment_partner_code` (tenant_id, code), `uq_payment_partner_legacy` (tenant_id, legacy_app_code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_payment_partner_code`, `ck_payment_partner_status`, `ck_payment_partner_routing`, `ck_payment_partner_urls`, `ck_payment_partner_test`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_partner_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -460,9 +728,31 @@ EN-19-06 Đối tác (HTTT thu tiền qua PH-19) (FR-19-017, 018, 066). Hệ cũ
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `payment_partner`
+
 ### 3.10. `partner_client`
 
-EN-19-07 Client máy-máy tại PH-12 của đối tác (FR-19-019).
+::: dac-ta
+**Mục đích.** EN-19-07 Client máy-máy tại PH-12 của đối tác (FR-19-019).
+
+**FR phục vụ.** FR-19-019.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_partner_client` (tenant_id, idp_client_id).
+
+**Khóa ngoại.** (partner_id, tenant_id) → `payment_partner`.
+
+**Ràng buộc CHECK.** `ck_partner_client_method`, `ck_partner_client_mtls`.
+
+**Chỉ mục.** `ix_partner_client_partner`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_partner_client_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -478,9 +768,31 @@ EN-19-07 Client máy-máy tại PH-12 của đối tác (FR-19-019).
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
+: Cột của bảng `partner_client`
+
 ### 3.11. `partner_service_grant`
 
-EN-19-08 Gán dịch vụ và hạn mức cho đối tác (FR-19-020, BR-19-005).
+::: dac-ta
+**Mục đích.** EN-19-08 Gán dịch vụ và hạn mức cho đối tác (FR-19-020, BR-19-005).
+
+**FR phục vụ.** FR-19-020.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_partner_service_grant` (tenant_id, partner_id, service_id).
+
+**Khóa ngoại.** (partner_id, tenant_id) → `payment_partner` xóa theo, (service_id, tenant_id) → `payment_service`.
+
+**Ràng buộc CHECK.** `ck_partner_service_grant_limits`, `ck_partner_service_grant_valid`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_partner_service_grant_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -499,9 +811,31 @@ EN-19-08 Gán dịch vụ và hạn mức cho đối tác (FR-19-020, BR-19-005)
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `partner_service_grant`
+
 ### 3.12. `partner_webhook_endpoint`
 
-EN-19-09 Đầu nhận webhook của đối tác (FR-19-021). Địa chỉ nội bộ bị chặn ở ứng dụng (ERR-19-044).
+::: dac-ta
+**Mục đích.** EN-19-09 Đầu nhận webhook của đối tác (FR-19-021). Địa chỉ nội bộ bị chặn ở ứng dụng (ERR-19-044).
+
+**FR phục vụ.** FR-19-021, 060, 062.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (partner_id, tenant_id) → `payment_partner` xóa theo.
+
+**Ràng buộc CHECK.** `ck_partner_webhook_endpoint_url`, `ck_partner_webhook_endpoint_types`, `ck_partner_webhook_endpoint_status`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_partner_webhook_endpoint_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -521,9 +855,31 @@ EN-19-09 Đầu nhận webhook của đối tác (FR-19-021). Địa chỉ nội
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `partner_webhook_endpoint`
+
 ### 3.13. `partner_quota_usage`
 
-Bộ đếm hạn mức ngày dự phòng và đối chiếu của bộ đếm Valkey (BR-19-005, SDD §5.5).
+::: dac-ta
+**Mục đích.** Bộ đếm hạn mức ngày dự phòng và đối chiếu của bộ đếm Valkey (BR-19-005, SDD §5.5).
+
+**FR phục vụ.** FR-19-020, 023.
+
+**Khóa chính.** (tenant_id, partner_id, service_id, business_date).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_partner_quota_usage_nonneg`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_partner_quota_usage_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -535,9 +891,31 @@ Bộ đếm hạn mức ngày dự phòng và đối chiếu của bộ đếm V
 | `amount_total` | `numeric(19,0)` | x | `0` |  |
 | `reconciled_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `partner_quota_usage`
+
 ### 3.14. `transaction_code_index`
 
-Mỏ neo không phân vùng của giao dịch: mã duy nhất toàn cục (BR-19-002) và đích khóa ngoại cho bảng khác (bảng giao dịch phân vùng không làm đích FK theo id được).
+::: dac-ta
+**Mục đích.** Mỏ neo không phân vùng của giao dịch: mã duy nhất toàn cục (BR-19-002) và đích khóa ngoại cho bảng khác (bảng giao dịch phân vùng không làm đích FK theo id được).
+
+**FR phục vụ.** FR-19-022, 035, 051.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_transaction_code_index_code` (transaction_code).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_transaction_code_index_code`.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_transaction_code_index_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_transaction_code_index_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -546,9 +924,31 @@ Mỏ neo không phân vùng của giao dịch: mã duy nhất toàn cục (BR-19
 | `transaction_code` | `varchar(32)` | x |  |  |
 | `created_at` | `timestamptz` | x |  | Thời điểm tạo. |
 
+: Cột của bảng `transaction_code_index`
+
 ### 3.15. `payment_transaction`
 
-EN-19-10 Giao dịch thanh toán, phân vùng tháng theo created_at (ADR-047). Hệ cũ: payment_transaction (amount int(10), pay_date chuỗi).
+::: dac-ta
+**Mục đích.** EN-19-10 Giao dịch thanh toán, phân vùng tháng theo created_at (ADR-047). Hệ cũ: payment_transaction (amount int(10), pay_date chuỗi).
+
+**FR phục vụ.** FR-19-022…028, 030, 035…037, 049…052.
+
+**Khóa chính.** (id, created_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (id, tenant_id) → `transaction_code_index`, (partner_id, tenant_id) → `payment_partner`, (service_id, tenant_id) → `payment_service`, (provider_id, tenant_id) → `payment_provider`.
+
+**Ràng buộc CHECK.** `ck_payment_transaction_status`, `ck_payment_transaction_recon`, `ck_payment_transaction_amount`, `ck_payment_transaction_refunded`, `ck_payment_transaction_refund_status`, `ck_payment_transaction_currency`, `ck_payment_transaction_paid`, `ck_payment_transaction_return`, `ck_payment_transaction_meta`, `ck_payment_transaction_flags`.
+
+**Chỉ mục.** `ix_payment_transaction_code`, `ix_payment_transaction_order`, `ix_payment_transaction_provider_ref`, `ix_payment_transaction_poll`, `ix_payment_transaction_created`, `ix_payment_transaction_status`, `ix_payment_transaction_service`, `ix_payment_transaction_paid`, `ix_payment_transaction_payer_name`, `ix_payment_transaction_payer_phone`, `ix_payment_transaction_payer_id`, `ix_payment_transaction_recon`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_transaction_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `created_at` (thủ tục `p_ensure_month_partitions`); dọn dữ liệu hết hạn bằng DETACH PARTITION.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 Phân vùng: `RANGE (created_at)` theo tháng, tên phân vùng `payment_transaction_YYYYMM`.
 
@@ -607,9 +1007,31 @@ Phân vùng: `RANGE (created_at)` theo tháng, tên phân vùng `payment_transac
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 | `AND` | `(status <> 'PARTIALLY_REFUNDED' OR (refunded_amount > 0 AND refunded_amount < amount)))` |  |  |  |
 
+: Cột của bảng `payment_transaction`
+
 ### 3.16. `transaction_order_guard`
 
-BR-19-007: mỗi mã hồ sơ của đối tác có tối đa một giao dịch CREATED, PENDING, SUCCEEDED, PARTIALLY_REFUNDED, REFUNDED. Dòng bị xóa khi giao dịch về FAILED, EXPIRED, CANCELLED (SDD §5.3).
+::: dac-ta
+**Mục đích.** BR-19-007: mỗi mã hồ sơ của đối tác có tối đa một giao dịch CREATED, PENDING, SUCCEEDED, PARTIALLY_REFUNDED, REFUNDED. Dòng bị xóa khi giao dịch về FAILED, EXPIRED, CANCELLED (SDD §5.3).
+
+**FR phục vụ.** FR-19-034.
+
+**Khóa chính.** (tenant_id, partner_id, partner_order_id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (transaction_id, tenant_id) → `transaction_code_index`.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_transaction_order_guard_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -619,9 +1041,31 @@ BR-19-007: mỗi mã hồ sơ của đối tác có tối đa một giao dịch 
 | `transaction_id` | `uuid` | x |  |  |
 | `guarded_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `transaction_order_guard`
+
 ### 3.17. `transaction_event`
 
-EN-19-11 Lịch sử trạng thái giao dịch, bất biến (FR-19-028, BR-19-030), phân vùng tháng.
+::: dac-ta
+**Mục đích.** EN-19-11 Lịch sử trạng thái giao dịch, bất biến (FR-19-028, BR-19-030), phân vùng tháng.
+
+**FR phục vụ.** FR-19-028.
+
+**Khóa chính.** (id, occurred_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (transaction_id, tenant_id) → `transaction_code_index`.
+
+**Ràng buộc CHECK.** `ck_transaction_event_source`, `ck_transaction_event_to`.
+
+**Chỉ mục.** `ix_transaction_event_txn`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_transaction_event_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `occurred_at` (thủ tục `p_ensure_month_partitions`); dọn dữ liệu hết hạn bằng DETACH PARTITION; Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_transaction_event_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 Phân vùng: `RANGE (occurred_at)` theo tháng, tên phân vùng `transaction_event_YYYYMM`.
 
@@ -642,9 +1086,31 @@ Phân vùng: `RANGE (occurred_at)` theo tháng, tên phân vùng `transaction_ev
 | `occurred_at` | `timestamptz` | x | `now()` |  |
 | `trace_id` | `char(32)` | x |  |  |
 
+: Cột của bảng `transaction_event`
+
 ### 3.18. `idempotency_record`
 
-EN-19-12 Kết quả yêu cầu ghi có Idempotency-Key (BR-19-006, ADR-041); giữ 24 giờ.
+::: dac-ta
+**Mục đích.** EN-19-12 Kết quả yêu cầu ghi có Idempotency-Key (BR-19-006, ADR-041); giữ 24 giờ.
+
+**FR phục vụ.** FR-19-033.
+
+**Khóa chính.** (tenant_id, client_id, request_method, request_path, idempotency_key).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_idempotency_record_key`, `ck_idempotency_record_state`, `ck_idempotency_record_done`.
+
+**Chỉ mục.** `ix_idempotency_record_expiry`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_idempotency_record_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -662,9 +1128,31 @@ EN-19-12 Kết quả yêu cầu ghi có Idempotency-Key (BR-19-006, ADR-041); gi
 | `completed_at` | `timestamptz` |  |  |  |
 | `expires_at` | `timestamptz` | x |  |  |
 
+: Cột của bảng `idempotency_record`
+
 ### 3.19. `transaction_adjustment`
 
-Bản ghi bù khi chấp nhận số liệu NCC (FR-19-046 ACCEPT_PROVIDER_FIGURE, BR-19-030); số tiền gốc không sửa.
+::: dac-ta
+**Mục đích.** Bản ghi bù khi chấp nhận số liệu NCC (FR-19-046 ACCEPT_PROVIDER_FIGURE, BR-19-030); số tiền gốc không sửa.
+
+**FR phục vụ.** FR-19-046.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (transaction_id, tenant_id) → `transaction_code_index`.
+
+**Ràng buộc CHECK.** `ck_transaction_adjustment_kind`.
+
+**Chỉ mục.** `ix_transaction_adjustment_txn`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_transaction_adjustment_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_transaction_adjustment_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -678,9 +1166,31 @@ Bản ghi bù khi chấp nhận số liệu NCC (FR-19-046 ACCEPT_PROVIDER_FIGUR
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
+: Cột của bảng `transaction_adjustment`
+
 ### 3.20. `callback_inbox`
 
-EN-19-13 Hộp nhận IPN, kể cả bị từ chối (FR-19-029…032, ADR-042). Phần nguyên văn bất biến; phần xử lý cập nhật được.
+::: dac-ta
+**Mục đích.** EN-19-13 Hộp nhận IPN, kể cả bị từ chối (FR-19-029…032, ADR-042). Phần nguyên văn bất biến; phần xử lý cập nhật được.
+
+**FR phục vụ.** FR-19-029…032.
+
+**Khóa chính.** (id, received_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider`.
+
+**Ràng buộc CHECK.** `ck_callback_inbox_type`, `ck_callback_inbox_verify`, `ck_callback_inbox_status`, `ck_callback_inbox_quarantine`, `ck_callback_inbox_reason`, `ck_callback_inbox_rejected`.
+
+**Chỉ mục.** `ix_callback_inbox_work`, `ix_callback_inbox_txn`, `ix_callback_inbox_nonce`, `ix_callback_inbox_list`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_callback_inbox_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `received_at` (thủ tục `p_ensure_month_partitions`); dọn dữ liệu hết hạn bằng DETACH PARTITION.
+
+**Ghi chú.** Lưu nguyên văn thông báo của nhà cung cấp trước khi xử lý (ADR-042); chỉ cho đổi các cột trạng thái xử lý (trigger `tg_callback_inbox_guard`).
+:::
 
 Phân vùng: `RANGE (received_at)` theo tháng, tên phân vùng `callback_inbox_YYYYMM`.
 
@@ -711,9 +1221,31 @@ Phân vùng: `RANGE (received_at)` theo tháng, tên phân vùng `callback_inbox
 | `refund_request_id` | `uuid` |  |  |  |
 | `trace_id` | `char(32)` | x |  |  |
 
+: Cột của bảng `callback_inbox`
+
 ### 3.21. `callback_nonce`
 
-Lớp chống phát lại thứ hai (sau Valkey) cho nonce IPN; giữ 7 ngày (FR-19-029 bước 5).
+::: dac-ta
+**Mục đích.** Lớp chống phát lại thứ hai (sau Valkey) cho nonce IPN; giữ 7 ngày (FR-19-029 bước 5).
+
+**FR phục vụ.** FR-19-029.
+
+**Khóa chính.** (tenant_id, provider_id, nonce).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** `ix_callback_nonce_seen`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_callback_nonce_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -723,9 +1255,31 @@ Lớp chống phát lại thứ hai (sau Valkey) cho nonce IPN; giữ 7 ngày (F
 | `raw_hash` | `varchar(64)` | x |  |  |
 | `seen_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `callback_nonce`
+
 ### 3.22. `integration_log`
 
-EN-19-14 Nhật ký tích hợp (FR-19-054): online 12 tháng rồi DETACH, nén, chuyển kho đối tượng giữ 5 năm (NFR-19-015).
+::: dac-ta
+**Mục đích.** EN-19-14 Nhật ký tích hợp (FR-19-054): online 12 tháng rồi DETACH, nén, chuyển kho đối tượng giữ 5 năm (NFR-19-015).
+
+**FR phục vụ.** FR-19-054, 055.
+
+**Khóa chính.** (id, occurred_at).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_integration_log_dir`, `ck_integration_log_op`, `ck_integration_log_latency`.
+
+**Chỉ mục.** `ix_integration_log_list`, `ix_integration_log_txn`, `ix_integration_log_trace`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_integration_log_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Phân vùng RANGE theo tháng trên `occurred_at` (thủ tục `p_ensure_month_partitions`); dọn dữ liệu hết hạn bằng DETACH PARTITION; Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_integration_log_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 Phân vùng: `RANGE (occurred_at)` theo tháng, tên phân vùng `integration_log_YYYYMM`.
 
@@ -751,9 +1305,31 @@ Phân vùng: `RANGE (occurred_at)` theo tháng, tên phân vùng `integration_lo
 | `occurred_at` | `timestamptz` | x | `now()` |  |
 | `trace_id` | `char(32)` | x |  |  |
 
+: Cột của bảng `integration_log`
+
 ### 3.23. `background_job`
 
-EN-19-24 Tác vụ nền: xuất giao dịch, xuất báo cáo, biên bản đối soát, nhập và đối chiếu di trú (FR-19-048, 052, 058, 065, 068). Bộ chạy lấy việc bằng FOR UPDATE SKIP LOCKED.
+::: dac-ta
+**Mục đích.** EN-19-24 Tác vụ nền: xuất giao dịch, xuất báo cáo, biên bản đối soát, nhập và đối chiếu di trú (FR-19-048, 052, 058, 065, 068). Bộ chạy lấy việc bằng FOR UPDATE SKIP LOCKED.
+
+**FR phục vụ.** FR-19-003, 042, 043, 048, 052, 058, 065.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_background_job_type`, `ck_background_job_status`, `ck_background_job_progress`, `ck_background_job_params`.
+
+**Chỉ mục.** `ix_background_job_queue`, `ix_background_job_list`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_background_job_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -775,9 +1351,31 @@ EN-19-24 Tác vụ nền: xuất giao dịch, xuất báo cáo, biên bản đ�
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `background_job`
+
 ### 3.24. `stored_file`
 
-EN-19-23 Siêu dữ liệu tệp trong dh-{tenant}-payment (Garage) hoặc dh-{tenant}-payment-worm (Ceph RGW Object Lock).
+::: dac-ta
+**Mục đích.** EN-19-23 Siêu dữ liệu tệp trong dh-{tenant}-payment (Garage) hoặc dh-{tenant}-payment-worm (Ceph RGW Object Lock).
+
+**FR phục vụ.** FR-19-040, 043, 045, 048, 052, 058, 065.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_stored_file_object` (bucket, object_key).
+
+**Khóa ngoại.** (superseded_by, tenant_id) → `stored_file`.
+
+**Ràng buộc CHECK.** `ck_stored_file_purpose`, `ck_stored_file_bucket`, `ck_stored_file_size`, `ck_stored_file_sha`, `ck_stored_file_scan`, `ck_stored_file_worm`.
+
+**Chỉ mục.** `ix_stored_file_owner`, `ix_stored_file_expiry`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_stored_file_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -800,9 +1398,31 @@ EN-19-23 Siêu dữ liệu tệp trong dh-{tenant}-payment (Garage) hoặc dh-{t
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
+: Cột của bảng `stored_file`
+
 ### 3.25. `approval_request`
 
-EN-19-16 Đề nghị phê duyệt bốn mắt dùng chung (ADR-046, BR-19-011). Tách nhiệm được CHECK ở CSDL, ngoài kiểm tra ở ứng dụng (ERR-19-033).
+::: dac-ta
+**Mục đích.** EN-19-16 Đề nghị phê duyệt bốn mắt dùng chung (ADR-046, BR-19-011). Tách nhiệm được CHECK ở CSDL, ngoài kiểm tra ở ứng dụng (ERR-19-033).
+
+**FR phục vụ.** FR-19-005, 018, 039, 046, 047, 066, 069.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_approval_request_pending` (tenant_id, target_type, target_id, approval_type).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_approval_request_type`, `ck_approval_request_status`, `ck_approval_request_levels`, `ck_approval_request_payload`, `ck_approval_request_sod1`, `ck_approval_request_sod2`, `ck_approval_request_order`, `ck_approval_request_approved`, `ck_approval_request_reject_note`.
+
+**Chỉ mục.** `ix_approval_request_inbox`, `ix_approval_request_expiry`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_approval_request_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -830,9 +1450,32 @@ EN-19-16 Đề nghị phê duyệt bốn mắt dùng chung (ADR-046, BR-19-011).
 | `OR` | `(required_approvals = 1 AND first_approver_id IS)` | x |  |  |
 | `OR` | `(required_approvals = 2 AND second_approver_id IS))` | x |  |  |
 
+: Cột của bảng `approval_request`
+
 ### 3.26. `refund_request`
 
-EN-19-15 Yêu cầu hoàn tiền (FR-19-038…041). Tối đa một yêu cầu chưa kết thúc mỗi giao dịch (BR-19-022); FAILED tính là kết thúc tạm, thực thi lại thì mở lại qua kiểm tra ở ứng dụng.
+::: dac-ta
+**Mục đích.** EN-19-15 Yêu cầu hoàn tiền (FR-19-038…041). Tối đa một yêu cầu chưa kết thúc mỗi giao dịch (BR-19-022); FAILED tính là kết thúc tạm, thực thi lại thì mở lại qua kiểm tra ở ứng dụng.
+
+**FR phục vụ.** FR-19-038…041.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_refund_request_code` (refund_code), `uq_refund_request_open` (tenant_id, transaction_id)
+  WHERE status NOT IN ('SUCCEEDED', 'REJECTED', 'CANCELLED', 'FAILED'), `uq_refund_request_partner_ref` (tenant_id, partner_id, partner_refund_id).
+
+**Khóa ngoại.** (transaction_id, tenant_id) → `transaction_code_index`, (partner_id, tenant_id) → `payment_partner`, (approval_id, tenant_id) → `approval_request`, (voucher_file_id, tenant_id) → `stored_file`.
+
+**Ràng buộc CHECK.** `ck_refund_request_code`, `ck_refund_request_by`, `ck_refund_request_partner_id`, `ck_refund_request_amount`, `ck_refund_request_status`, `ck_refund_request_mode`, `ck_refund_request_exec`, `ck_refund_request_voucher`, `ck_refund_request_done`.
+
+**Chỉ mục.** `ix_refund_request_list`, `ix_refund_request_done`, `ix_refund_request_provider_ref`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_refund_request_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -867,9 +1510,31 @@ EN-19-15 Yêu cầu hoàn tiền (FR-19-038…041). Tối đa một yêu cầu c
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `refund_request`
+
 ### 3.27. `reconciliation_session`
 
-EN-19-17 Phiên đối soát một NCC một ngày giao dịch giờ Việt Nam (FR-19-042, 043, 047, 048, BR-19-025). closing_job_id khác NULL khi đang sinh biên bản (trạng thái con CLOSING).
+::: dac-ta
+**Mục đích.** EN-19-17 Phiên đối soát một NCC một ngày giao dịch giờ Việt Nam (FR-19-042, 043, 047, 048, BR-19-025). closing_job_id khác NULL khi đang sinh biên bản (trạng thái con CLOSING).
+
+**FR phục vụ.** FR-19-042, 047, 048.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_reconciliation_session_day` (tenant_id, provider_id, business_date).
+
+**Khóa ngoại.** (provider_id, tenant_id) → `payment_provider`, (source_file_id, tenant_id) → `stored_file`, (minutes_file_id, tenant_id) → `stored_file`, (closing_job_id, tenant_id) → `background_job`.
+
+**Ràng buộc CHECK.** `ck_reconciliation_session_status`, `ck_reconciliation_session_source`, `ck_reconciliation_session_run`, `ck_reconciliation_session_closed`.
+
+**Chỉ mục.** `ix_reconciliation_session_list`, `ix_reconciliation_session_work`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_reconciliation_session_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -898,9 +1563,31 @@ EN-19-17 Phiên đối soát một NCC một ngày giao dịch giờ Việt Nam 
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `reconciliation_session`
+
 ### 3.28. `recon_provider_line`
 
-Dòng phía NCC đã chuẩn hóa của một lần chạy (SDD §11.1). Bảng làm việc: xóa lần chạy cũ sau khi phiên CLOSED 90 ngày; nguồn gốc vẫn ở tệp RECON_SOURCE trong WORM.
+::: dac-ta
+**Mục đích.** Dòng phía NCC đã chuẩn hóa của một lần chạy (SDD §11.1). Bảng làm việc: xóa lần chạy cũ sau khi phiên CLOSED 90 ngày; nguồn gốc vẫn ở tệp RECON_SOURCE trong WORM.
+
+**FR phục vụ.** FR-19-043, 044.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_recon_provider_line` (session_id, run_no, line_no).
+
+**Khóa ngoại.** (session_id, tenant_id) → `reconciliation_session` xóa theo.
+
+**Ràng buộc CHECK.** `ck_recon_provider_line_kind`, `ck_recon_provider_line_outcome`, `ck_recon_provider_line_ref`.
+
+**Chỉ mục.** `ix_recon_provider_line_ref`, `ix_recon_provider_line_code`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_recon_provider_line_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -918,9 +1605,31 @@ Dòng phía NCC đã chuẩn hóa của một lần chạy (SDD §11.1). Bảng 
 | `outcome` | `varchar(10)` | x |  |  |
 | `paid_at` | `timestamptz` |  |  |  |
 
+: Cột của bảng `recon_provider_line`
+
 ### 3.29. `discrepancy`
 
-EN-19-19 Bản ghi chênh lệch (FR-19-031, 044, 045, 046, BR-19-028). Không xóa; ghi chú chỉ nối thêm.
+::: dac-ta
+**Mục đích.** EN-19-19 Bản ghi chênh lệch (FR-19-031, 044, 045, 046, BR-19-028). Không xóa; ghi chú chỉ nối thêm.
+
+**FR phục vụ.** FR-19-044…046.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_discrepancy_code` (tenant_id, discrepancy_code).
+
+**Khóa ngoại.** (session_id, tenant_id) → `reconciliation_session`, (transaction_id, tenant_id) → `transaction_code_index`, (refund_request_id, tenant_id) → `refund_request`, (approval_id, tenant_id) → `approval_request`.
+
+**Ràng buộc CHECK.** `ck_discrepancy_type`, `ck_discrepancy_status`, `ck_discrepancy_resolution`, `ck_discrepancy_resolved`, `ck_discrepancy_noaction`, `ck_discrepancy_notes`.
+
+**Chỉ mục.** `ix_discrepancy_session`, `ix_discrepancy_open`, `ix_discrepancy_txn`, `ix_discrepancy_assignee`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_discrepancy_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không cho xóa dòng (trigger `tg_discrepancy_no_delete`, BR-19-030).
+
+**Ghi chú.** Ghi chú xử lý chỉ được nối thêm (trigger `tg_discrepancy_notes_guard`); không xóa dòng.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -950,9 +1659,31 @@ EN-19-19 Bản ghi chênh lệch (FR-19-031, 044, 045, 046, BR-19-028). Không x
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 | `AND` | `coalesce(proposed_resolution, 'X') <> 'AUTO_MATCHED')` |  |  |  |
 
+: Cột của bảng `discrepancy`
+
 ### 3.30. `reconciliation_item`
 
-EN-19-18 Dòng so khớp của một lần chạy (FR-19-044); chỉ-ghi-thêm theo run_no. match_result MISMATCHED gom AMOUNT_MISMATCH, STATUS_MISMATCH; loại chi tiết nằm ở discrepancy.type.
+::: dac-ta
+**Mục đích.** EN-19-18 Dòng so khớp của một lần chạy (FR-19-044); chỉ-ghi-thêm theo run_no. match_result MISMATCHED gom AMOUNT_MISMATCH, STATUS_MISMATCH; loại chi tiết nằm ở discrepancy.type.
+
+**FR phục vụ.** FR-19-044, 048.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (session_id, tenant_id) → `reconciliation_session`, (discrepancy_id, tenant_id) → `discrepancy`.
+
+**Ràng buộc CHECK.** `ck_reconciliation_item_kind`, `ck_reconciliation_item_result`, `ck_reconciliation_item_side`.
+
+**Chỉ mục.** `ix_reconciliation_item_run`, `ix_reconciliation_item_txn`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_reconciliation_item_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_reconciliation_item_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -974,9 +1705,31 @@ EN-19-18 Dòng so khớp của một lần chạy (FR-19-044); chỉ-ghi-thêm t
 | `discrepancy_id` | `uuid` |  |  |  |
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 
+: Cột của bảng `reconciliation_item`
+
 ### 3.31. `outbox_event`
 
-EN-19-21 Transactional outbox (ADR-042): sự kiện Kafka, bản ghi kiểm toán. Debezium đọc WAL (publication ph19_outbox) hoặc OutboxRelay đọc SKIP LOCKED; xóa sau 7 ngày kể từ published_at.
+::: dac-ta
+**Mục đích.** EN-19-21 Transactional outbox (ADR-042): sự kiện Kafka, bản ghi kiểm toán. Debezium đọc WAL (publication ph19_outbox) hoặc OutboxRelay đọc SKIP LOCKED; xóa sau 7 ngày kể từ published_at.
+
+**FR phục vụ.** FR-19-053, 061.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_outbox_event_topic`, `ck_outbox_event_payload`.
+
+**Chỉ mục.** `ix_outbox_event_unpublished`, `ix_outbox_event_published`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_outbox_event_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Debezium EventRouter đọc WAL và phát lên Kafka; cũng là nơi ghi bản ghi kiểm toán cùng giao dịch (BR-19-029).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -994,9 +1747,31 @@ EN-19-21 Transactional outbox (ADR-042): sự kiện Kafka, bản ghi kiểm to�
 | `publish_attempts` | `integer` | x | `0` |  |
 | `last_error` | `varchar(1000)` |  |  |  |
 
+: Cột của bảng `outbox_event`
+
 ### 3.32. `webhook_delivery`
 
-EN-19-20 Gửi một sự kiện tới một đầu nhận (FR-19-060, 062). Gửi lại thủ công đưa EXHAUSTED về PENDING trên chính dòng này, giữ event_id. Giữ 90 ngày.
+::: dac-ta
+**Mục đích.** EN-19-20 Gửi một sự kiện tới một đầu nhận (FR-19-060, 062). Gửi lại thủ công đưa EXHAUSTED về PENDING trên chính dòng này, giữ event_id. Giữ 90 ngày.
+
+**FR phục vụ.** FR-19-060, 062.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_webhook_delivery_event` (tenant_id, endpoint_id, event_id).
+
+**Khóa ngoại.** (endpoint_id, tenant_id) → `partner_webhook_endpoint`.
+
+**Ràng buộc CHECK.** `ck_webhook_delivery_status`, `ck_webhook_delivery_done`, `ck_webhook_delivery_attempts`.
+
+**Chỉ mục.** `ix_webhook_delivery_due`, `ix_webhook_delivery_list`, `ix_webhook_delivery_txn`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_webhook_delivery_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1020,9 +1795,31 @@ EN-19-20 Gửi một sự kiện tới một đầu nhận (FR-19-060, 062). G�
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
 
+: Cột của bảng `webhook_delivery`
+
 ### 3.33. `notification_feed`
 
-Luồng thông báo kéo cho đối tác (API-19-109, A-19-10). id là UUIDv7 nên tăng theo thời gian, dùng làm con trỏ after; giữ 7 ngày.
+::: dac-ta
+**Mục đích.** Luồng thông báo kéo cho đối tác (API-19-109, A-19-10). id là UUIDv7 nên tăng theo thời gian, dùng làm con trỏ after; giữ 7 ngày.
+
+**FR phục vụ.** FR-19-060, 035.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** `ix_notification_feed_cursor`, `ix_notification_feed_age`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_notification_feed_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1034,9 +1831,31 @@ Luồng thông báo kéo cho đối tác (API-19-109, A-19-10). id là UUIDv7 n�
 | `payload` | `jsonb` | x |  |  |
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 
+: Cột của bảng `notification_feed`
+
 ### 3.34. `tenant_payment_config`
 
-EN-19-22 Phiên bản cấu hình thanh toán của tenant (FR-19-063, 064). Bất biến; phiên bản hiệu lực là effective_from lớn nhất ≤ now(). Khóa settings là tham số 19.* của FRS §7.1.
+::: dac-ta
+**Mục đích.** EN-19-22 Phiên bản cấu hình thanh toán của tenant (FR-19-063, 064). Bất biến; phiên bản hiệu lực là effective_from lớn nhất ≤ now(). Khóa settings là tham số 19.* của FRS §7.1.
+
+**FR phục vụ.** FR-19-063, 064.
+
+**Khóa chính.** (id).
+
+**Duy nhất.** `uq_tenant_payment_config_version` (tenant_id, config_version).
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_tenant_payment_config_version`, `ck_tenant_payment_config_settings`.
+
+**Chỉ mục.** `ix_tenant_payment_config_effective`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_tenant_payment_config_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Chỉ thêm, chặn UPDATE và DELETE (trigger `tg_tenant_payment_config_ro`, BR-19-030).
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1050,9 +1869,31 @@ EN-19-22 Phiên bản cấu hình thanh toán của tenant (FR-19-063, 064). B�
 | `created_at` | `timestamptz` | x | `now()` | Thời điểm tạo. |
 | `created_by` | `varchar(64)` | x |  | Người tạo (mã người dùng hoặc `system:*`). |
 
+: Cột của bảng `tenant_payment_config`
+
 ### 3.35. `payment_stats_hourly`
 
-Số liệu tổng hợp theo giờ Việt Nam (SDD §8.3, NFR-19-006). StatsAggregator cộng dồn bằng INSERT … ON CONFLICT DO UPDATE; không tính giao dịch thử, bóng.
+::: dac-ta
+**Mục đích.** Số liệu tổng hợp theo giờ Việt Nam (SDD §8.3, NFR-19-006). StatsAggregator cộng dồn bằng INSERT … ON CONFLICT DO UPDATE; không tính giao dịch thử, bóng.
+
+**FR phục vụ.** FR-19-056…058.
+
+**Khóa chính.** (tenant_id, hour_vn, provider_id, service_id, partner_id, status).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** `ck_payment_stats_hourly_hour`.
+
+**Chỉ mục.** `ix_payment_stats_hourly_range`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_payment_stats_hourly_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1067,9 +1908,31 @@ Số liệu tổng hợp theo giờ Việt Nam (SDD §8.3, NFR-19-006). StatsAgg
 | `refunded_amount` | `numeric(21,0)` | x | `0` |  |
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 
+: Cột của bảng `payment_stats_hourly`
+
 ### 3.36. `stats_cursor`
 
-Con trỏ outbox cuối StatsAggregator đã cộng dồn.
+::: dac-ta
+**Mục đích.** Con trỏ outbox cuối StatsAggregator đã cộng dồn.
+
+**FR phục vụ.** FR-19-056…058.
+
+**Khóa chính.** (tenant_id).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_stats_cursor_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Cột ngữ cảnh theo D00-01 §5.1; `version` (nếu có) là khóa lạc quan, thành phần của ETag.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1078,9 +1941,31 @@ Con trỏ outbox cuối StatsAggregator đã cộng dồn.
 | `last_occurred_at` | `timestamptz` |  |  |  |
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 
+: Cột của bảng `stats_cursor`
+
 ### 3.37. `legacy_mapping`
 
-EN-19-25 Ánh xạ khóa hệ cũ → bản ghi mới (FR-19-065, 068). Chạy lại: cùng khóa thì cập nhật source_hash, last_imported_at, job_id; không bao giờ đổi đích.
+::: dac-ta
+**Mục đích.** EN-19-25 Ánh xạ khóa hệ cũ → bản ghi mới (FR-19-065, 068). Chạy lại: cùng khóa thì cập nhật source_hash, last_imported_at, job_id; không bao giờ đổi đích.
+
+**FR phục vụ.** FR-19-065…068.
+
+**Khóa chính.** (tenant_id, legacy_table, legacy_key).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** (job_id, tenant_id) → `background_job`.
+
+**Ràng buộc CHECK.** `ck_legacy_mapping_table`, `ck_legacy_mapping_target`.
+
+**Chỉ mục.** `ix_legacy_mapping_target`.
+
+**Cách ly tenant.** RLS mẫu P (FORCE): mọi thao tác chỉ thấy dòng có `tenant_id = app.tenant_id` của phiên; chính sách `rls_legacy_mapping_all` (mục 1.2).
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Ánh xạ định danh hệ cũ sang hệ mới phục vụ di trú và strangler (ADR-049); chỉ cho đổi cột trạng thái (trigger `tg_legacy_mapping_guard`).
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1094,9 +1979,31 @@ EN-19-25 Ánh xạ khóa hệ cũ → bản ghi mới (FR-19-065, 068). Chạy l
 | `first_imported_at` | `timestamptz` | x | `now()` |  |
 | `last_imported_at` | `timestamptz` | x | `now()` |  |
 
+: Cột của bảng `legacy_mapping`
+
 ### 3.38. `shedlock`
 
-Khóa tác vụ lịch của ShedLock. Không có tenant_id (tên khóa chứa mã tenant, ví dụ recon-session:T68); không bật RLS.
+::: dac-ta
+**Mục đích.** Khóa tác vụ lịch của ShedLock. Không có tenant_id (tên khóa chứa mã tenant, ví dụ recon-session:T68); không bật RLS.
+
+**FR phục vụ.** FR-19-027, 036, 042, 058 (tác vụ định kỳ).
+
+**Khóa chính.** (name).
+
+**Duy nhất.** Không.
+
+**Khóa ngoại.** Không.
+
+**Ràng buộc CHECK.** Không.
+
+**Chỉ mục.** Chỉ khóa chính và khóa duy nhất.
+
+**Cách ly tenant.** Không bật RLS. Bảng kỹ thuật của thư viện ShedLock, không chứa dữ liệu nghiệp vụ.
+
+**Phân vùng, chỉ thêm.** Không.
+
+**Ghi chú.** Xem mục Cách ly tenant.
+:::
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -1104,6 +2011,8 @@ Khóa tác vụ lịch của ShedLock. Không có tenant_id (tên khóa chứa m
 | `lock_until` | `timestamptz` | x |  |  |
 | `locked_at` | `timestamptz` | x |  |  |
 | `locked_by` | `varchar(255)` | x |  |  |
+
+: Cột của bảng `shedlock`
 <!-- gen:tables:end -->
 
 ### 3.39. Quy tắc nghiệp vụ chốt ở CSDL
@@ -1131,6 +2040,8 @@ Khóa tác vụ lịch của ShedLock. Không có tenant_id (tên khóa chứa m
 | NFR-19-022 bí mật chỉ ở OpenBao | `CHECK secret_ref` theo mẫu đường OpenBao; không có cột giá trị bí mật | `ck_provider_credential_ref` |
 | Biên bản WORM có hạn giữ | `CHECK` tệp WORM phải có `retention_until`; tên bucket đúng mẫu | `ck_stored_file_worm`, `ck_stored_file_bucket` |
 
+: Quy tắc nghiệp vụ chốt ở CSDL
+
 Các quy tắc còn lại (giới hạn số tiền theo dịch vụ và theo gán, máy trạng thái, số lượt thực thi lại hoàn tiền ≤ 3, thời hạn giao dịch) được ứng dụng kiểm, CSDL chỉ chặn giá trị ngoài miền.
 
 ### 3.40. Truy vấn chính và chỉ mục phục vụ
@@ -1154,6 +2065,8 @@ Các quy tắc còn lại (giới hạn số tiền theo dịch vụ và theo g�
 | Nhật ký tích hợp theo giao dịch, theo vết | API-19-075, 076 | `ix_integration_log_txn`, `ix_integration_log_trace` |
 | Luồng thông báo kéo | API-19-109 | `ix_notification_feed_cursor` |
 | Chứng chỉ, bí mật sắp hết hạn | `CredentialExpiryJob` | `ix_provider_credential_expiry` |
+
+: Truy vấn chính và chỉ mục phục vụ
 
 Chỉ mục trên bảng phân vùng được tạo ở bảng cha và tự sinh cho từng phân vùng. Với 10 triệu giao dịch (NFR-19-007), truy vấn danh sách có điều kiện khoảng thời gian chỉ quét các phân vùng tháng liên quan (cắt tỉa phân vùng); tìm theo mã giao dịch không có khoảng thời gian đi qua `transaction_code_index` lấy `created_at` rồi truy cập đúng một phân vùng.
 
@@ -1182,6 +2095,8 @@ Chỉ mục trên bảng phân vùng được tạo ở bảng cha và tự sinh
 | `19-0110-seed.sql` | `seed_paygov_mapping` |
 | `19-0120-grants.sql` | Quyền (chạy lại mỗi lần, `runOnChange`) |
 
+: Tệp và thứ tự changeset
+
 Phân vùng ban đầu: `payment_transaction`, `transaction_event` từ 01/2021 (đủ cho dữ liệu di trú hệ cũ triển khai năm 2021) tới 04/2027; `callback_inbox`, `integration_log` từ 01/2026 (hệ cũ không có dữ liệu tương ứng để di trú) tới 04/2027. `PartitionMaintenanceJob` chạy 01:00 hằng ngày, luôn giữ đủ 3 tháng tới. Bảng phân vùng không có phân vùng `DEFAULT` để dòng sai thời điểm lỗi ngay thay vì lặng lẽ dồn vào một phân vùng lớn.
 
 ### 4.2. Kết quả chạy thử
@@ -1206,6 +2121,8 @@ Ngày 26/11/2026, PostgreSQL 16.15, CSDL trống: [`ph19_payment.sql`](ph19/ddl/
 | 15a–15b | Định tuyến callback không cần tenant; không trỏ chéo tenant | Đạt | TS-19-30 |
 | 14 | Mọi bảng có `tenant_id` (trừ `callback_route`) đều `FORCE RLS` | Đạt (36 bảng) | TS-19-31 |
 
+: Kết quả chạy thử DDL và ca cách ly trên PostgreSQL 16
+
 Bài kiểm thử tích hợp `TenantIsolationIT` (SDD §16) chạy lại các ca này trên Testcontainers PostgreSQL 18 ở mỗi lần build, cộng ca sinh tự động: với mỗi bảng có RLS, chèn dòng tenant A, đọc bằng tenant B phải 0 dòng.
 
 ## 5. Mã hóa và dữ liệu cá nhân
@@ -1219,6 +2136,8 @@ Bài kiểm thử tích hợp `TenantIsolationIT` (SDD §16) chạy lại các c
 | Nguyên văn IPN | `callback_inbox.raw_body` | Lọc trường theo BR-19-032 trước khi ghi; mã hóa ổ đĩa | Quản trị PH-19, kiểm toán |
 | Thân trao đổi | `integration_log.*_masked` | Che theo danh sách trường của adapter, cắt ở 64 KB | Quản trị PH-19 |
 
+: Mã hóa và dữ liệu cá nhân
+
 Xóa dữ liệu cá nhân theo yêu cầu chủ thể (Luật BVDLCN 91/2025) không xóa giao dịch (nghĩa vụ lưu chứng từ kế toán): `dh-payment` hủy DEK đã bọc (`payer_dek_wrapped = NULL`) và xóa bản che, băm; giao dịch còn lại không còn dữ liệu nhận diện. Thao tác này là `UPDATE` được phép trên `payment_transaction` và ghi kiểm toán.
 
 ## 6. Dữ liệu khởi tạo
@@ -1229,6 +2148,8 @@ Xóa dữ liệu cá nhân theo yêu cầu chủ thể (Luật BVDLCN 91/2025) k
 | Đối tác ẩn `__TEST__` | Như trên | Chứa giao dịch thử của kiểm tra kết nối | BR-19-033 |
 | Nhóm dịch vụ mặc định | Như trên | Theo `DM_LINH_VUC_TTHC` của PH-07 nếu tỉnh chọn nạp | FR-19-013 |
 | Bảng ánh xạ mã PayGov phiên bản 1 | Tạo NCC adapter `PAYGOV` | 31 dòng của SDD §7.3 qua `seed_paygov_mapping` (**giả định**, thay khi có trả lời OQ-19-05) | FR-19-069 |
+
+: Dữ liệu khởi tạo
 
 Mọi seed chạy dưới `app.tenant_id` của tenant đích, lũy đẳng (bỏ qua khi đã có).
 
@@ -1249,6 +2170,8 @@ Mỗi sự kiện một topic theo mẫu `{tenant}.payment.{thực-thể}.{sự-
 | `t68.payment.reconciliation.{matched,closed}.v1`, `…discrepancy.{detected,resolved}.v1` | EVT-19-15…18 | 3, 30 ngày | `sessionId`, `discrepancyId` | PH-13, PH-16, PH-18 |
 | `t68.audit.recorded.v1` | Kiểm toán (FR-19-053) | Theo PH-13 | `traceId` | PH-13 |
 
+: Topic Kafka của PH-19
+
 Khóa phân vùng của sự kiện giao dịch và hoàn tiền là `transactionId`; vì mỗi sự kiện một topic, bên đọc cần thứ tự dùng `sequence` (BR-19-021) để sắp lại. Sự kiện không chứa dữ liệu cá nhân người nộp; AsyncAPI ở D03-04-PH19. Webhook tới đối tác **không** đi qua Kafka (NFR-19-013): `WebhookDispatcher` đọc `outbox_event` và ghi `webhook_delivery` trong cùng `pg-payment`.
 
 ### 7.2. Valkey
@@ -1263,6 +2186,8 @@ Khóa phân vùng của sự kiện giao dịch và hoàn tiền là `transactio
 | `{tenant}:payment:ryw:{userId}` | String | 5 giây | Đọc bản chính ngay sau khi ghi | Đọc bản sao, trễ < 1 giây |
 | `{tenant}:payment:export:{userId}` | Set | 2 giờ | Tối đa 3 tác vụ xuất đồng thời | Đếm từ `background_job` |
 
+: Khóa Valkey của PH-19
+
 Ví dụ khóa thực tế viết thường: `t68:payment:quota:018f…:018f…:20261126`. Valkey không chứa dữ liệu cá nhân, không chứa bí mật.
 
 ### 7.3. Kho đối tượng
@@ -1272,6 +2197,8 @@ Ví dụ khóa thực tế viết thường: `t68:payment:quota:018f…:018f…:
 | `dh-t68-payment` | Garage | `{purpose}/{yyyy}/{MM}/{fileId}` | Tệp đối soát gốc (khi chưa chốt), đính kèm chênh lệch, chứng từ hoàn, tệp xuất, báo cáo, báo cáo lỗi di trú | Xuất, báo cáo: 7 ngày (`expires_at`); đính kèm, chứng từ: theo đối tượng (≥ 10 năm) |
 | `dh-t68-payment-worm` | Ceph RGW Object Lock `COMPLIANCE` | `recon/{providerCode}/{businessDate}/{runNo}/…` | Biên bản đối soát PDF, XLSX; bản sao tệp đối soát gốc của phiên đã chốt | `retention_until` = ngày chốt + `19.retention.transaction-years` (mặc định 10) |
 | `dh-t68-payment-archive` | Ceph RGW (không WORM) | `integration_log/{yyyy}/{MM}.parquet.zst` | Phân vùng nhật ký tích hợp đã tách, nén | 5 năm (NFR-19-015) |
+
+: Bucket kho đối tượng của PH-19
 
 Tải lên luôn ghi `stored_file` sau khi đối tượng đã lưu và băm SHA-256 khớp; tệp người dùng tải lên được quét mã độc (`scan_status`) trước khi dùng. WORM và sao lưu dùng chung hạ tầng Ceph RGW, tách bucket (Q347).
 
@@ -1299,6 +2226,8 @@ Sau khôi phục về thời điểm trước sự cố, giao dịch phát sinh 
 | `recon_provider_line` | 90 ngày sau khi phiên `CLOSED` | Xóa; tệp gốc vẫn ở WORM | `RetentionCleanupJob` |
 | `stored_file` loại `EXPORT`, `REPORT` | 7 ngày (`expires_at`) | Xóa đối tượng và dòng | `RetentionCleanupJob` |
 
+: Thời hạn lưu giữ dữ liệu PH-19
+
 Bảng chỉ-ghi-thêm chỉ bị dọn bằng `DETACH PARTITION` dưới `dh_payment_maint`; trước khi `DROP`, tác vụ kiểm số dòng và băm của tệp Parquet đã xuất, ghi kiểm toán `PARTITION_ARCHIVED`.
 
 ## 9. Ánh xạ dữ liệu hệ cũ sang thiết kế mới
@@ -1315,6 +2244,8 @@ Lược đồ hệ cũ dựa trên năm bảng mô tả ở D00-03 §4.6 và BRD
 | `payment_partner` | `payment_partner` (`routing_mode = LEGACY`) | `legacy_app_code` giữ mã ứng dụng cũ để định tuyến strangler (ADR-049) | `PARTNER` |
 | `payment_transaction` | `transaction_code_index` + `payment_transaction` (`is_migrated = true`) + `transaction_event` (`source = MIGRATION`) + `refund_request` khi có hoàn | Bảng ánh xạ trạng thái §9.2; `amount int(10)` → `numeric(19,0)`; `pay_date` chuỗi → `paid_at` (giờ Việt Nam sang UTC); dữ liệu người nộp mã hóa như giao dịch mới; mã cũ giữ ở `legacy_code`, mã mới sinh theo BR-19-002 với ngày của `created_at` cũ | `TRANSACTION`, `REFUND` |
 
+: Ánh xạ bảng Payment hệ cũ sang bảng PH-19
+
 ### 9.2. Ánh xạ trạng thái giao dịch
 
 | Trạng thái hệ cũ | `payment_transaction.status` | Bản ghi kèm theo |
@@ -1326,6 +2257,8 @@ Lược đồ hệ cũ dựa trên năm bảng mô tả ở D00-03 §4.6 và BRD
 | `REFUND_PENDING` | `SUCCEEDED` | `refund_request` `PROCESSING` |
 | `REFUND_SUCCESS` | `REFUNDED`, `refunded_amount = amount` | `refund_request` `SUCCEEDED`, `is_migrated = true` |
 | `REFUND_FAILED` | `SUCCEEDED` | `refund_request` `FAILED` |
+
+: Ánh xạ trạng thái giao dịch
 
 Giao dịch di trú không phát sự kiện nghiệp vụ, không gửi webhook, không cộng vào `partner_quota_usage`; `StatsAggregator` dựng `payment_stats_hourly` cho dữ liệu cũ bằng một lần tính lại theo lô sau khi nhập (FR-19-065 bước 6).
 
@@ -1344,8 +2277,11 @@ Giao dịch di trú không phát sự kiện nghiệp vụ, không gửi webhook
 | OQ-19-32 | Tên cột và kiểu chính xác của năm bảng hệ cũ; định dạng `pay_date` | Giả định theo D00-03 §4.6; đối chiếu bản xuất CSDL của tỉnh khi di trú |
 | OQ-19-33 | Có cần phân vùng con theo tenant khi `pg-payment` ở HT-B dùng chung nhiều tỉnh | Không ở QM-VUA; xem lại khi một cụm phục vụ > 5 tỉnh hoặc > 50 triệu giao dịch |
 
+: Câu hỏi mở của tập CSDL PH-19
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 38 bảng, RLS, phân vùng tháng, bất biến, seed ánh xạ PayGov giả định, ánh xạ hệ cũ; đã chạy thử 25 ca trên PostgreSQL 16 | Nhóm phân hệ PH-19 |
+| 0.2 | 26/11/2026 | Nâng theo quy chuẩn trình bày K-TRINH-BAY: chương 0 Giới thiệu; khối đặc tả 10 mục cho 38 bảng trích từ DDL (công cụ `ph19/tools/them_dac_ta_bang.py`); chú thích bảng, hình, thuyết minh sơ đồ ERD | Nhóm phân hệ PH-19 |
