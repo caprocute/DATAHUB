@@ -157,6 +157,36 @@ def part_ui():
                      "Giữ, nâng cấp" if legacy.get(r["Mã"]) else "Mới"])
     table(["Mã", "Màn hình", "FR", "Màn, chức năng hệ cũ được giữ", "Loại"], rows)
 
+def part_uc():
+    fr_uc = defaultdict(set)
+    for code, r in FR.items():
+        for u in expand(r["UC"], "UC-19"):
+            fr_uc[code].add(u)
+    def per_uc(rows, col="FR"):
+        d = defaultdict(list)
+        for r in rows:
+            for f in expand(r[col], "FR-19"):
+                for u in fr_uc[f]:
+                    d[u].append(r["Mã"])
+        return d
+    uis = per_uc(list(k.tables("11")[1]["rows"]))
+    apis = per_uc(list(api_rows()))
+    ts = {}
+    for r in k.rows("14"):
+        for u in expand(r["UC"], "UC-19"):
+            ts.setdefault(u, r["Mã"])
+    a = [["UC", "Tên", "Tác nhân chính", "FR", "BP"]]
+    b = [["UC", "Màn hình", "API", "Kịch bản kiểm thử"]]
+    for r in k.rows("8.1"):
+        u = r["Mã"]
+        fr = r["FR"] + (", 069" if u == "UC-19-05" else "")
+        a.append([u, r["Tên use case"], r["Tác nhân chính"], fr, r["BP"]])
+        b.append([u, short(uis.get(u, []), "UI-19"), short(apis.get(u, []), "API-19"), ts.get(u, "—")])
+    print("### 5.1. Use case và yêu cầu chức năng\n")
+    table(a[0], a[1:])
+    print("\n### 5.2. Use case, màn hình, API và kiểm thử\n")
+    table(b[0], b[1:])
+
 if __name__ == "__main__":
     {"br": part_br, "nfr": part_nfr, "map": part_map, "lgc": part_lgc,
-     "trace": part_trace, "mvp": part_mvp, "ui": part_ui}[sys.argv[1]]()
+     "trace": part_trace, "mvp": part_mvp, "ui": part_ui, "uc": part_uc}[sys.argv[1]]()

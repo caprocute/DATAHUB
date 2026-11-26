@@ -1827,7 +1827,7 @@ Nhãn không chứa mã giao dịch hay dữ liệu cá nhân (giới hạn số
 
 Nội dung webhook theo CloudEvents 1.0 dạng cấu trúc JSON: `id` (UUIDv7, duy nhất), `type` (ví dụ `vn.datahub.payment.transaction.succeeded.v1`), `source` (`/t68/payment`), `time`, `subject` (`transactionCode` hoặc `refundCode`), `datacontenttype`, `data` (dữ liệu của EVT tương ứng, không có dữ liệu cá nhân của người nộp), phần mở rộng `sequence` và `traceparent`. Tiêu đề ký: `X-Datahub-Signature: t={unix},v1={hex(HMAC-SHA256(secret, t + "." + body))}`; trong thời gian xoay bí mật có hai giá trị `v1` (ADR-044). Đối tác kiểm tra lệch thời gian ≤ 5 phút.
 
-Xử lý: tác vụ gửi đọc `outbox_event` đã phát, tạo `webhook_delivery` `PENDING`, gửi ngay; lỗi thì đặt `next_attempt_at` theo BR-19-020. Gửi đi từ vùng Z2 qua `apisix-int` cửa ra, chỉ tới địa chỉ HTTPS đã đăng ký và đã qua kiểm tra chống SSRF (FR-19-021). Các lượt gửi tới cùng một địa chỉ cho cùng một giao dịch đi tuần tự theo `sequence`.
+Xử lý: bộ gửi đọc trực tiếp `outbox_event` trong DU `dh-payment` (không phụ thuộc Kafka, ADR-042), tạo `webhook_delivery` `PENDING`, chuyển `SENDING` và gửi ngay; nhận 2xx thì `DELIVERED`; lỗi thì đặt `next_attempt_at` theo BR-19-020. Gửi đi từ vùng Z2 qua `apisix-int` cửa ra, chỉ tới địa chỉ HTTPS đã đăng ký và đã qua kiểm tra chống SSRF (FR-19-021). Các lượt gửi tới cùng một địa chỉ cho cùng một giao dịch đi tuần tự theo `sequence`.
 
 #### FR-19-061 · Phát sự kiện qua outbox
 
@@ -1846,11 +1846,11 @@ Xử lý: mọi thay đổi trạng thái ghi `outbox_event` trong cùng giao d�
 | Mức ưu tiên, phát hành | S · MVP |
 | Truy vết | REQ-94; LGC-PAY-012; BR-19-020; UC-19-27; API-19-077, 078, 079, 109; UI-19-24; EN-19-20; TS-19-27 |
 | Tác nhân, quyền | Cán bộ tra cứu · `webhook-read`, `webhook-resend`; đối tác kéo thông báo · `partner-pay-read` |
-| Đầu vào (lọc) | `status[]` (`PENDING`, `RETRYING`, `SUCCEEDED`, `EXHAUSTED`), `partnerId`, `eventType`, khoảng thời gian, `transactionCode` |
+| Đầu vào (lọc) | `status[]` (`PENDING`, `SENDING`, `RETRY_SCHEDULED`, `DELIVERED`, `EXHAUSTED`, `CANCELLED`), `partnerId`, `eventType`, khoảng thời gian, `transactionCode` |
 | Đầu ra | Danh sách; chi tiết từng lần thử (thời điểm, mã HTTP, độ trễ, 2 KB đầu của phản hồi, lỗi mạng) |
 | Sự kiện, kiểm toán | Kiểm toán `WEBHOOK_RESEND` |
 
-Xử lý: gửi lại chỉ áp dụng cho lượt `EXHAUSTED` (ERR-19-021 nếu khác); tạo một lượt mới cùng `id` sự kiện (để đối tác chống trùng) với chữ ký mới. Gửi lại hàng loạt theo bộ lọc tối đa 500 lượt một lần. Đối tác dự phòng bằng API-19-109: kéo thông báo đã phát sau con trỏ `after` (giữ 7 ngày), tối đa 100 thông báo một trang.
+Xử lý: gửi lại chỉ áp dụng cho lượt `EXHAUSTED` (ERR-19-021 nếu khác); lượt chuyển `EXHAUSTED` → `PENDING` (khung §7.8), số thứ tự lần thử tiếp tục tăng, `id` sự kiện giữ nguyên để đối tác chống trùng, chữ ký tính lại theo thời điểm gửi. Gửi lại hàng loạt theo bộ lọc tối đa 500 lượt một lần. Đối tác dự phòng bằng API-19-109: kéo thông báo đã phát sau con trỏ `after` (giữ 7 ngày), tối đa 100 thông báo một trang.
 
 ### 5.14. Nhóm N — Cấu hình tenant
 
@@ -1900,7 +1900,7 @@ Nhóm O hiện thực chiến lược strangler theo từng đối tác (ADR-049
 | `payment_provider` | `payment_provider` | `adapter_type = PAYGOV`; trạng thái → `DRAFT` (phải kích hoạt lại theo FR-19-005); không chuyển mật khẩu, khóa |
 | `payment_service_group`, `payment_service` | `payment_service_group`, `payment_service` | Lĩnh vực, loại phí ánh xạ sang mã PH-07; thiếu ánh xạ thì ghi lỗi dòng |
 | `payment_partner` | `payment_partner` | `routing_mode = LEGACY`; client tạo mới ở PH-09, không chuyển bí mật |
-| `payment_transaction` | `payment_transaction` | Số tiền chuỗi → T-MONEY (bỏ dấu phân cách, lỗi nếu có phần lẻ); ngày thanh toán chuỗi `dd/MM/yyyy HH:mm:ss` giờ Việt Nam → T-TS UTC; trạng thái theo bảng ở D06-01 (giả định: `SUCCESS` → `SUCCEEDED`, `FAILED` → `FAILED`, `PENDING` quá 72 giờ → `EXPIRED` với `needs_reconciliation`, `REFUND_SUCCESS` → `REFUNDED`); `is_migrated = true`; `transaction_code` mới, mã cũ lưu `legacy_code` |
+| `payment_transaction` | `payment_transaction` | Số tiền chuỗi → T-MONEY (bỏ dấu phân cách, lỗi nếu có phần lẻ); ngày thanh toán chuỗi `dd/MM/yyyy HH:mm:ss` giờ Việt Nam → T-TS UTC; trạng thái theo khung §7.4 (`NEW` → `CREATED`, `PENDING` → `PENDING`, `SUCCESS` → `SUCCEEDED`, `FAILED` → `FAILED`, `REFUND_PENDING` → `SUCCEEDED` kèm yêu cầu hoàn `PROCESSING`, `REFUND_SUCCESS` → `REFUNDED`, `REFUND_FAILED` → `SUCCEEDED` kèm yêu cầu hoàn `FAILED`); giao dịch `CREATED`, `PENDING` nhập vào đi tiếp lịch truy vấn bù của BR-19-016, 017; `is_migrated = true`; `transaction_code` mới, mã cũ lưu `legacy_code` |
 | (mọi bảng) | `legacy_mapping` | (`legacy_table`, `legacy_id`) → (`entity_type`, `entity_id`), khóa duy nhất bảo đảm chạy lại không trùng |
 
 Xử lý: chạy theo lô 10.000 dòng, mỗi lô một giao dịch CSDL; lỗi một dòng không dừng lô (ghi báo cáo). `dryRun = true` chỉ kiểm tra và báo cáo. Giao dịch nhập không phát sự kiện, không gửi webhook, không tính hạn mức. Dữ liệu người nộp được mã hóa khi nhập (ADR-048).
@@ -2492,3 +2492,9 @@ PH-19 được nghiệm thu khi đạt đồng thời các tiêu chí dưới đ
 | Tiêu chí | AC-19-01…13 | Tiêu chí chấp nhận cấp phân hệ | Mục 13 |
 | Giả định | A-19-15…20 | Mục 10.2 | |
 | Câu hỏi | OQ-19-21…24 | Mục 11 | |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung | Người thực hiện |
+|---|---|---|---|
+| 0.1 | 26/11/2026 | Bản đầu: 69 FR (68 FR của khung và FR-19-069 đề xuất), 34 BR, 32 NFR, tham số `19.*`, ánh xạ GĐ-03, ma trận truy vết, phạm vi MVP, AC-19-01…13 | Nhóm phân hệ PH-19 |
