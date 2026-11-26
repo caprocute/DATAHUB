@@ -1,0 +1,40 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_portal_migrator (thành viên ph15_owner), defaultSchemaName=ph15_portal.
+# Context: bootstrap (vai trò, extension, schema). Dữ liệu nền theo tenant nằm trong hàm seed_tenant (15-0090-seed.sql).
+databaseChangeLog:
+  - include:
+      file: changes/15-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0010-catalog.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0020-content.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0030-account.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0040-app.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0050-try.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0060-notify-support.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0070-admin-sync.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0080-messaging.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0090-seed.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/15-0100-grants.sql
+      relativeToChangelogFile: true

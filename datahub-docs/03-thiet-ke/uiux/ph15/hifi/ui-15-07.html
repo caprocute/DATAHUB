@@ -1,0 +1,13 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI-15-07 · Hướng dẫn, hỏi đáp, thông báo</title><link rel="stylesheet" href="hifi.css"></head><body>
+<header class="pt"><span class="burger" aria-label="Mở menu">☰</span><div class="logo"><b>Cổng API</b> Tỉnh T68</div><nav aria-label="Điều hướng chính"><a class="" href="#">Dịch vụ</a><a class="" href="#">Sự kiện</a><a class="on" href="#">Hướng dẫn</a><a class="" href="#">Hỏi đáp</a><a class="" href="#">Ứng dụng của tôi</a><a class="" href="#">Hỗ trợ</a></nav><div class="sp"></div>
+<div class="search input">Tìm dịch vụ, hướng dẫn…  Ctrl K</div><span class="tray hide-m">🔔 3</span><span class="tray hide-m">T68</span><div class="avatar" aria-label="Menu tài khoản">AN</div></header>
+<main class="page">
+<div class="tabs" role="tablist"><span class="on">Hướng dẫn</span><span class="">Hỏi đáp</span><span class="">Thông báo</span></div>
+<div class="lay2"><nav class="toc"><div class="input" style="margin-bottom:8px">🔍 Tìm hướng dẫn</div><div>Bắt đầu nhanh</div><div class="on">Kết nối mTLS tới cổng API</div><div>Lấy token client_credentials</div><div>Xử lý lỗi RFC 9457</div><div>Danh sách kiểm tra tích hợp</div></nav>
+<div class="doc"><div class="muted">Cập nhật 12/11/2026 · phiên bản 3 · Sở KH&CN</div><h2>Kết nối mTLS tới cổng API</h2><p>Hướng dẫn cấu hình chứng thư máy khách để gọi API qua kênh mTLS.</p>
+<h3>1. Chuẩn bị chứng thư</h3><p>Tạo khóa riêng và yêu cầu ký chứng thư (CSR). Không gửi khóa riêng qua thư điện tử.</p><div class="code"><b>openssl</b> req -new -newkey rsa:3072 -nodes -keyout client.key -out client.csr</div>
+<h3>2. Gọi thử</h3><p>Dùng <span class="mono">curl --cert client.pem --key client.key</span> tới địa chỉ sandbox.</p>
+<div class="foot" style="justify-content:flex-start;align-items:center"><span class="muted">Trang này có hữu ích không?</span><span class="btn">👍 Có</span><span class="btn">👎 Chưa</span><span class="btn">Báo lỗi tài liệu</span></div></div></div></main>
+<footer class="pf"><span>Điều khoản sử dụng</span><span>Chính sách bảo vệ dữ liệu cá nhân</span><span>Hỗ trợ: hotro@t68.datahub.gov.vn</span><span>Cổng v1.0</span></footer>
+<div class="hint">Bản hi-fi minh họa · D03-06-PH15 · UI-15-07 · dữ liệu giả định</div></body></html>
