@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-03-PH19-00
 ten: Khung truy vết phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích, thiết kế, kiểm thử PH-19; luồng lõi (D00-03, D02-01, D02-07, D02-08)
 nguoi_lap: Nhóm phân tích thiết kế
@@ -1819,7 +1819,7 @@ Tách nhiệm có hai lớp. Lớp **động** được kiểm tra ở mỗi tha
 
 ## 14. Kịch bản kiểm thử (`TS-19-nn`, `TC-19-nnn`)
 
-D05-02-PH19 đặc tả 34 kịch bản kiểm thử: 29 kịch bản theo use case (TS-19-01…29, cùng số với UC-19-01…29) và 5 kịch bản xuyên suốt cho bảo mật, cách ly tenant, hiệu năng, phân quyền và chịu lỗi (TS-19-30…34). Để các luồng viết song song không trùng mã ca kiểm thử, mỗi kịch bản được cấp sẵn một dải 25 số TC liên tiếp: TS-19-nn dùng TC-19-(25×(nn−1)+1) đến TC-19-(25×nn). Cột "TC dự kiến" là số ca tối thiểu luồng kiểm thử phải viết; phần còn lại của dải để dự phòng và không được dùng cho kịch bản khác.
+D05-02-PH19 đặc tả 34 kịch bản kiểm thử: 29 kịch bản theo use case (TS-19-01…29, cùng số với UC-19-01…29) và 5 kịch bản xuyên suốt cho bảo mật, cách ly tenant, hiệu năng, phân quyền và chịu lỗi (TS-19-30…34). Để các luồng viết song song không trùng mã ca kiểm thử, mỗi kịch bản được cấp sẵn một dải 25 số TC liên tiếp: TS-19-nn dùng TC-19-(25×(nn−1)+1) đến TC-19-(25×nn). Cột "TC dự kiến" là ước lượng số phép kiểm (bước có mong đợi riêng) của kịch bản; một ca TC được phép gộp nhiều phép kiểm cùng tiền điều kiện, và D05-02-PH19 §3.1 báo cả số ca lẫn số bước kiểm thực tế. Phần còn lại của dải để dự phòng và không được dùng cho kịch bản khác.
 
 Quy tắc phủ bắt buộc, theo D00-01 §3.2: mỗi FR mức **M** có ít nhất **một ca dương tính và một ca âm tính**; mỗi quy tắc BR có ít nhất một ca kiểm chứng; mỗi chuyển trạng thái ở mục 7 có ít nhất một ca, và mỗi trạng thái có ít nhất một ca thử chuyển trạng thái không hợp lệ (ERR-19-021); mỗi mã lỗi ERR-19-001…050 xuất hiện ở ít nhất một ca âm; mỗi NFR có ít nhất một ca hoặc một phép đo ở TS-19-30…34. Ca dùng adapter giả lập PayGov (NFR-19-032) trừ khi ghi rõ môi trường thử thật của PayGov. Ca tự động hóa được viết thành tệp `.feature` (Gherkin) theo mục 16.
 
@@ -2066,3 +2066,10 @@ Cột API ghi dấu "—" kèm lý do khi FR là tác vụ nền hoặc phản �
 | FR-19-066 | REQ-99 | Đ2 | 19-047, 19-048 | UI-19-12, UI-19-13, UI-19-27 | TS-19-29 |
 | FR-19-067 | REQ-99 | Sau (chỉ làm khi OQ-19-17 xác nhận cần) | 19-110 | — (không tương tác người dùng) | TS-19-29 |
 | FR-19-068 | REQ-99 | Đ2 | 19-089, 19-090 | UI-19-27 | TS-19-29 |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung |
+|---|---|---|
+| 0.1 | 2026-11-21 | Bản đầu: mã FR, NFR, BR, ERR, API, UI, TS, ma trận quyền, máy trạng thái |
+| 0.2 | 2026-11-26 | Thêm API-19-205 (trang kết quả thăm dò trạng thái, thay chuyển hướng 302 của API-19-202 để trang kết quả hiển thị đúng FRS); UI-19-28 dẫn API-19-202, 205; làm rõ cột "TC dự kiến" của §14 là số phép kiểm |
