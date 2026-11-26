@@ -103,7 +103,7 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 03 | Cổng API | `apisix`, `dh-connect` | MVP | chưa |
 | 04 | Lõi tích hợp, trình thiết kế luồng | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.2 |
 | 05 | Bộ điều hợp | `dh-integration`, `dh-runtime` | MVP | đủ bảy tập 0.1 |
-| 06 | Dữ liệu chủ | `dh-data` | Đợt 3 | chưa |
+| 06 | Dữ liệu chủ | `dh-data` | Đợt 3 | đủ bảy tập (FRS 0.2) |
 | 07 | Danh mục dùng chung | `dh-data` | MVP | đủ bảy tập 0.3 (mẫu) |
 | 08 | Chất lượng dữ liệu | `dh-data` | Đợt 3 | chưa |
 | 09 | Quyền riêng tư | `dh-data` | Đợt 2 | chưa |
@@ -129,7 +129,7 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 
 | Họ | Dải | Ghi chú |
 |---|---|---|
-| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
+| ADR | 001–019 lõi · 020–029 giao diện · 030–039 ATTT, hạ tầng · 040–049 PH-19 · 050–059 PH-07 và khác · 060–069 PH-04, PH-05 · 070–074 PH-10 · 080–084 PH-06 (đề xuất, chưa có tệp) | 014–019, 024–029, 039, 074 còn trống. ADR-016 là mã cũ của repo (shadcn), đã bị ADR-020 thay |
 | SEC | 01–09 quản trị · 10–19 mạng · 20–29 IAM · 30–39 dữ liệu · 40–49 ứng dụng · 50–59 nền tảng · 60–67 giám sát · 70–75 sự cố · 80–88 tenant · 90–99 cấp độ 4 | Định nghĩa ở D03-07; tập phân hệ chỉ tham chiếu, không tạo mới |
 | ERR-{PH} | 001–099 control plane · 101–199 runtime/data plane | Theo cách PH-04 (ERR-04-001…049, 101…112) |
 | Câu hỏi mở | `Q{PH}-nn` theo tập: 01–19 FRS · 20–29 SDD · 30–39 màn hình · 40–44 test · 45–49 UC · 50–54 CSDL · 55–59 API | Theo cách PH-04. Câu hỏi cấp hệ thống: Q300–313 D03-07, Q320–329 D03-08, Q330–349 D03-09, Q350–359 D04, Q360–369 D05-01 |

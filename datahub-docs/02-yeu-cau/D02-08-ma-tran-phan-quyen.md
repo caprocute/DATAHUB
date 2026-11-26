@@ -249,7 +249,18 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 
 | Quyền | Mô tả | Vai trò được phép |
 |---|---|---|
-| PERM-06-read / update / merge | Xem, sửa, hợp nhất dữ liệu chủ | DS (○), TA; merge cần DA |
+| PERM-06-read | Xem domain, nguồn, quy tắc, bản ghi vàng (đã che), ứng viên, nguồn gốc, dashboard dữ liệu chủ | PA, TA, TO, SO, DS, DA, DO (○), VW, AU |
+| PERM-06-update | Sửa tay thuộc tính bản ghi vàng, xử lý ứng viên lỗi, gỡ liên kết | TA, DS (○) |
+| PERM-06-merge | Hợp nhất, tách, hoàn tác, ngừng, khôi phục bản ghi vàng; hợp nhất rủi ro cao cần DA duyệt | TA, DS (○), DA |
+| PERM-06-config | Soạn mô hình domain, nguồn, ưu tiên nguồn, quy tắc đối sánh và sống sót, gửi duyệt | PA (gói nền), TA, DS (○) |
+| PERM-06-approve | Duyệt mô hình, quy tắc, ưu tiên nguồn, hợp nhất rủi ro cao, hoàn tác quá hạn | DA |
+| PERM-06-steward | Nhận, xử lý, phân công mục hàng đợi dữ liệu chủ; quản lý tập nhãn | TA, DS, DA |
+| PERM-06-ingest | Nạp tệp lô, chạy lại xử lý ứng viên | TA, DS (○) |
+| PERM-06-export | Đề nghị xuất dữ liệu chủ; DO, DA chấp thuận | TA, DS (○), DA, DO (○) |
+| PERM-06-sync | Chạy, tạm dừng đồng bộ quốc gia, xử lý lệch | TA, DS, DA |
+| PERM-06-operate | Lập lịch, chạy lại, hủy job dữ liệu chủ | TA, TO |
+| PERM-06-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể dữ liệu đối với dữ liệu chủ | TA, SO, DS |
+| PERM-06-audit-read | Xem nhật ký truy cập dữ liệu chủ | SO, AU |
 | PERM-08-rule-admin | Quản lý quy tắc chất lượng | DS, TA |
 | PERM-09-classify | Gán phân loại dữ liệu cho trường | TA, SO, DO (○) |
 | PERM-09-purpose-approve | Chấp thuận khai thác dữ liệu theo mục đích | DO (○) |
@@ -340,7 +351,7 @@ Bảng dưới đây liệt kê các cặp vai trò không được gán cùng l
 |---|---|---|
 | INTEGRATION_ENGINEER | INTEGRATION_APPROVER | Người thiết kế không tự duyệt phát hành |
 | SERVICE_OWNER | CATALOG_APPROVER | Chủ dịch vụ không tự duyệt công bố |
-| DATA_STEWARD | DATA_APPROVER | Người soạn danh mục không tự duyệt phát hành |
+| DATA_STEWARD | DATA_APPROVER | Người soạn danh mục không tự duyệt phát hành; người quản lý dữ liệu chủ không tự duyệt hợp nhất rủi ro cao, quy tắc đối sánh (PH-06) |
 | PAYMENT_ACCOUNTANT | PAYMENT_APPROVER | Người lập hoàn tiền, đề xuất xử lý chênh lệch không tự duyệt (tỉnh thiếu người được gán kèm cảnh báo, quy tắc động vẫn chặn, khung PH-19 §13.4) |
 | TENANT_ADMIN | AUDITOR | Người quản trị không tự kiểm toán mình |
 | PAYMENT_ADMIN | PAYMENT_APPROVER | Người cấu hình kênh không duyệt kích hoạt kênh (như dòng trên) |
