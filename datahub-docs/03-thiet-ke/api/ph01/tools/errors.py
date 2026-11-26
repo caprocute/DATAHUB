@@ -1,0 +1,66 @@
+"""Bảng mã lỗi ERR-01 (nguồn chuẩn cho OpenAPI và D03-04-PH01 §6).
+
+001…050 theo D02-03-PH01 §9.1 (giữ nguyên mã, HTTP, ý nghĩa; check_contracts.py đối chiếu với FRS).
+051…054 do tập API thêm: xác thực chung, lũy đẳng, callback saga.
+Mỗi dòng: (mã, HTTP, ý nghĩa, tiêu đề ngắn của `title`).
+"""
+
+ERRORS = [
+    ("001", "404", "Không tìm thấy đối tượng, đối tượng thuộc tenant khác hoặc ngoài phạm vi vai trò", "Không tìm thấy"),
+    ("002", "409", "Mã HTTT đã dùng (kể cả HTTT đã chấm dứt hoặc bị từ chối)", "Mã HTTT đã dùng"),
+    ("003", "400", "Dữ liệu không hợp lệ theo lược đồ, kèm danh sách lỗi theo trường", "Dữ liệu không hợp lệ"),
+    ("004", "422", "Tổ chức chủ quản không có hoặc không hoạt động ở danh mục tổ chức", "Tổ chức chủ quản không hợp lệ"),
+    ("005", "409", "Chuyển trạng thái, thao tác không hợp lệ với trạng thái hiện tại", "Trạng thái không cho phép"),
+    ("006", "403", "Người nộp không thuộc tổ chức đã khai báo", "Người nộp không thuộc tổ chức"),
+    ("007", "412", "Hồ sơ đã được người khác sửa (`If-Match` không khớp)", "Hồ sơ đã bị sửa"),
+    ("008", "422", "Hồ sơ chưa đủ điều kiện nộp, kèm danh sách đầy đủ thiếu sót", "Hồ sơ chưa đủ điều kiện nộp"),
+    ("009", "409", "Đã có hồ sơ khác đang xử lý cho cùng HTTT", "Đã có hồ sơ đang xử lý"),
+    ("010", "422", "Tổ chức còn HTTT thiếu đầu mối kỹ thuật đang hoạt động", "Thiếu đầu mối kỹ thuật"),
+    ("011", "422", "Thư điện tử đầu mối không thuộc miền công vụ được phép", "Thư điện tử ngoài miền công vụ"),
+    ("012", "413", "Tệp vượt cỡ cho phép", "Tệp quá lớn"),
+    ("013", "415", "Định dạng tệp không được phép", "Định dạng tệp không được phép"),
+    ("014", "422", "Tệp bị loại do quét mã độc", "Tệp bị loại do mã độc"),
+    ("015", "422", "Mục nhu cầu khai thác thiếu căn cứ pháp lý", "Thiếu căn cứ pháp lý"),
+    ("016", "422", "Dữ liệu thuộc danh mục bí mật nhà nước, không kết nối", "Dữ liệu bí mật nhà nước"),
+    ("017", "403", "Vi phạm bốn mắt (người xử lý là người lập, nộp, thẩm định hoặc đề nghị)", "Vi phạm bốn mắt"),
+    ("018", "422", "Còn mục nhu cầu chưa được đánh giá", "Còn mục chưa đánh giá"),
+    ("019", "422", "Thiếu ý kiến, phạm vi được duyệt hoặc nhóm xác nhận bắt buộc", "Thiếu nội dung thẩm định bắt buộc"),
+    ("020", "409", "Hồ sơ, bước hoặc kỳ không ở giai đoạn xử lý tương ứng", "Sai giai đoạn xử lý"),
+    ("021", "503", "PH-12 không khả dụng khi cấp, thu hồi định danh", "Dịch vụ định danh không khả dụng"),
+    ("022", "409", "Client trùng ở PH-12", "Client trùng ở PH-12"),
+    ("023", "503", "Kho bí mật không khả dụng", "Kho bí mật không khả dụng"),
+    ("024", "410", "Liên kết bàn giao đã dùng, hết hạn hoặc bị hủy", "Liên kết không còn hiệu lực"),
+    ("025", "403", "Người mở liên kết không phải đối tượng được nhận (đầu mối, tổ chức)", "Không phải người nhận"),
+    ("026", "429", "Mở liên kết sai quá số lần cho phép, liên kết bị khóa", "Liên kết bị khóa"),
+    ("027", "422", "Khóa công khai không hợp lệ", "Khóa công khai không hợp lệ"),
+    ("028", "422", "Yêu cầu chứng thư hoặc chứng thư không hợp lệ", "Chứng thư không hợp lệ"),
+    ("029", "409", "Định danh đang trong thời gian chuyển tiếp xoay vòng", "Đang chuyển tiếp xoay vòng"),
+    ("030", "409", "Định danh không ở trạng thái cho phép thao tác", "Định danh không ở trạng thái cho phép"),
+    ("031", "422", "Chưa đủ kiểm thử SANDBOX đạt", "Chưa đủ kiểm thử SANDBOX"),
+    ("032", "422", "Chưa đủ điều kiện kích hoạt hoặc khôi phục", "Chưa đủ điều kiện kích hoạt"),
+    ("033", "400", "Thiếu lý do hoặc nội dung bắt buộc", "Thiếu lý do"),
+    ("034", "409", "Cần xác nhận tác động phụ thuộc trước khi tiếp tục", "Cần xác nhận tác động"),
+    ("035", "403", "Cần xác thực lại hai yếu tố cho thao tác nhạy cảm", "Cần xác thực lại hai yếu tố"),
+    ("036", "409", "Thao tác khẩn đã được xử lý, hoặc khôi phục khi chưa có đồng ý của Cán bộ ATTT", "Thao tác khẩn chưa hợp lệ"),
+    ("037", "422", "Mở rộng phạm vi phải qua thẩm định pháp lý lại", "Mở rộng phạm vi cần thẩm định lại"),
+    ("038", "409", "Đã có yêu cầu thay đổi chờ duyệt", "Đã có yêu cầu thay đổi chờ duyệt"),
+    ("039", "409", "Đã có kỳ rà soát đang mở", "Đã có kỳ rà soát đang mở"),
+    ("040", "410", "Phiếu xác nhận rà soát hết hạn hoặc đã trả lời", "Phiếu xác nhận không còn hiệu lực"),
+    ("041", "422", "Quyết định rà soát không hợp lệ", "Quyết định rà soát không hợp lệ"),
+    ("042", "400", "Tệp nhập hệ cũ sai cấu trúc", "Tệp nhập sai cấu trúc"),
+    ("043", "409", "Bản ghi nhập trùng HTTT đã có", "Bản ghi nhập trùng"),
+    ("044", "422", "Tham số hoặc dữ liệu vượt miền, vượt trần cho phép", "Vượt miền hoặc trần cho phép"),
+    ("045", "429", "Vượt giới hạn tốc độ tra cứu danh bạ", "Vượt giới hạn tra cứu"),
+    ("046", "503", "Phụ thuộc không khả dụng (danh mục tổ chức, PH-02, PH-13, PH-14, kho tệp, quét mã độc)", "Phụ thuộc không khả dụng"),
+    ("047", "422", "Cấp độ ATTT hoặc phương thức xác thực thấp hơn yêu cầu của mức phân loại dữ liệu", "Cấp độ ATTT chưa đủ"),
+    ("048", "409", "HTTT đang tạm ngừng, không thực hiện được thao tác", "HTTT đang tạm ngừng"),
+    ("049", "422", "Địa chỉ cơ sở không phải `https` hoặc dải IP sai dạng", "Địa chỉ hoặc dải IP sai dạng"),
+    ("050", "409", "HTTT phải còn ít nhất một đầu mối kỹ thuật", "Phải còn một đầu mối kỹ thuật"),
+    # Mã do tập API thêm (D03-04-PH01), dải 051…099
+    ("051", "409", "`Idempotency-Key` đã dùng với thân yêu cầu khác (type `idempotency-mismatch`)", "Idempotency-Key trùng khác thân"),
+    ("052", "401, 403", "Thiếu hoặc hết hạn thông tin xác thực, hoặc người gọi, token dịch vụ không đủ quyền hay scope", "Không đủ quyền truy cập"),
+    ("053", "409", "Bước saga không ở trạng thái chờ kết quả bất đồng bộ (không phải `ACCEPTED`) hoặc cờ `onboarding.saga.async-callback` đang tắt", "Callback saga không hợp lệ"),
+    ("054", "409", "Yêu cầu cùng `Idempotency-Key` đang được xử lý, thử lại sau", "Yêu cầu đang được xử lý"),
+]
+ERR = {c: (h, m, t) for c, h, m, t in ERRORS}
+NEW_CODES = {"051", "052", "053", "054"}
