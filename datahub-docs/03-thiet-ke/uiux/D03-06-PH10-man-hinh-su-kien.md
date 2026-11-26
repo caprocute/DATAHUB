@@ -920,3 +920,468 @@ Mở từ UI-10-06 "Tạo phiên bản mới": bước 1 khóa miền, thực th
 ### 14.6. Bản hi-fi
 
 Ba cột trên `color-surface-solid`, ngăn bằng `CMP-Splitter` 1 px `color-border-subtle`; trình soạn nền `color-surface-solid-2`, chữ `font-mono-sm`. Dòng thêm, bớt trong so sánh dùng `color-diff-added`, `color-diff-removed` kèm ký hiệu `+`, `−` ở rãnh. Nhóm kiểm tra dùng `CMP-StatusTag` (✓ success, ⚠ warning, ✕ error) để không chỉ dựa vào màu.
+
+## 15. UI-10-09 Bên phát
+
+**Mục đích.** Liệt kê, đăng ký, sửa, tạm ngừng, tiếp tục, ngừng dùng bên phát; xem quyền phát của từng bên. Thay LGC-HUB-010, 012. **Đường dẫn.** `/tich-hop/topic/ben-phat`, `/tich-hop/topic/ben-phat/{ma}`. **Mẫu.** PTN-01, PTN-02. **Quyền.** `PERM-10-read`; đăng ký `PERM-10-create`; sửa, ngừng dùng `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`; thu hồi quyền phát `PERM-10-update`. **API.** API-10-032, 033, 034, 035, 036 (`:suspend` và các hành động tách ở D03-04-PH10), API-10-042, 043, 044, 045.
+
+### 15.1. Wireframe danh sách
+
+```text
+┌ Topic sự kiện › Bên phát ─────────────────────────────── [+ Đăng ký bên phát] ┐
+│ [Tìm mã, tên, khóa tham chiếu, HTTT…] [Loại ▾] [Kiểu giao tiếp ▾] [Trạng thái ▾]│
+├────────────────────────┬──────────┬───────────────┬──────────┬──────┬────────┬─┤
+│ Mã · Tên               │ Loại     │ Gắn với       │ Giao tiếp│Q.phát│Hoạt động│⋯│
+├────────────────────────┼──────────┼───────────────┼──────────┼──────┼────────┼─┤
+│ ht-dkkd                │ HTTT     │ HT-DKKD ●     │ API HTTP │ 3 ●  │ 2 ph   │⋯│
+│ HTTT đăng ký kinh doanh│          │               │          │      │        │ │
+│ dkkd-dong-bo-thue      │ Luồng    │ luồng PH-04 ● │Kafka n.bộ│ 1 ●  │ 10 g   │⋯│
+└────────────────────────┴──────────┴───────────────┴──────────┴──────┴────────┴─┘
+```
+
+### 15.2. Cột, lọc
+
+| Cột | Trường | Ghi chú |
+|---|---|---|
+| Mã · Tên | `publisherCode`, `name` | Liên kết chi tiết |
+| Loại | `partyType` | `LEGACY_BRIDGE` có `CMP-Tag` "Hệ cũ" |
+| Gắn với | `systemCode`, `flowCode` hoặc `serviceCode` kèm `CMP-StatusDot` trạng thái ở phân hệ nguồn | Liên kết PH-01, PH-04 khi có quyền |
+| Kiểu giao tiếp | `commType` | Tooltip `legacyCode` |
+| Khóa tham chiếu | `referenceKey` | Ẩn mặc định |
+| Quyền phát | Số publication theo trạng thái | |
+| Trạng thái | `status`, `suspendSource` ở dòng phụ | `CMP-StatusTag` |
+| Hoạt động gần nhất | `lastActiveAt` | `CMP-Timestamp` |
+
+Lọc: `q`, `partyType`, `commType`, `status`, `systemCode`, `projectCode` (FR-10-025). OR chỉ thấy bên của tổ chức mình.
+
+### 15.3. Drawer "Đăng ký bên phát"
+
+| Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi |
+|---|---|---|---|---|---|
+| Loại | `partyType` | `CMP-RadioCard` ba thẻ HTTT, Luồng tích hợp, Dịch vụ nội bộ | Có | `LEGACY_BRIDGE` không có (chỉ do UI-10-20 tạo) | |
+| HTTT | `systemCode` | `CMP-ResourceSelect` HTTT `ACTIVE` của PH-01 | Khi `SYSTEM` | | ERR-10-021 |
+| Luồng | `flowCode` | `CMP-ResourceSelect` luồng PH-04 không `RETIRED` | Khi `FLOW` | Gợi ý "Bên phát luồng thường do trình thiết kế PH-04 tạo tự động." | ERR-10-022 |
+| Dịch vụ | `serviceCode` | `CMP-Select` danh sách A.2.12 | Khi `INTERNAL_SERVICE` | | ERR-10-023 |
+| Kiểu giao tiếp | `commType` | `CMP-Select` chỉ mục chiều phát được bật và hợp `partyType` theo A.2.8 | Có | `KAFKA_NATIVE` vô hiệu kèm lý do khi tenant chưa bật Kafka ngoài | ERR-10-028, ERR-10-024 |
+| Mã | `publisherCode` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{2,62}$`, gợi ý từ mã HTTT | ERR-10-002, 003 |
+| Tên | `name` | `CMP-Input` | Có | 3…255 ký tự | |
+| Khóa tham chiếu | `referenceKey` | `CMP-Input` | Không | ≤ 100 ký tự | ERR-10-002 |
+| Mô tả | `description` | `CMP-TextArea` | Không | ≤ 2.000 ký tự | |
+
+Sau khi tạo, trang chi tiết hiện `kafkaPrincipal`, `clientId` (chỉ đọc, `CMP-CodeText`) và câu "Bên phát chưa có quyền phát trên topic nào. Đề nghị quyền phát." kèm nút.
+
+### 15.4. Chi tiết bên phát
+
+Tiêu đề: tên, `CMP-StatusTag`, mã; hành động: Đề nghị quyền phát, Sửa, ⋯ Tạm ngừng, Tiếp tục, Ngừng dùng. Tab: Tổng quan (`CMP-DescriptionList` mọi trường A.3 `Publisher`), Quyền phát `/quyen-phat` (bảng publication: topic, trạng thái, mục đích, lưu lượng dự kiến, hạn mức, người duyệt; menu dòng Tạm ngừng, Tiếp tục, Thu hồi), Lịch sử. Tạm ngừng dùng `CMP-ReasonDialog` có thêm câu "Mọi quyền phát đang hiệu lực của bên này sẽ tạm ngừng." SO chỉ thấy "Tiếp tục" khi chính SO đã tạm ngừng (`suspendSource = SECURITY`). Bảng vi phạm tuân thủ lược đồ (FR-10-023, API-10-031) hiện ở tab Tổng quan khi bên có `commType = KAFKA_NATIVE` hoặc `INTERNAL_KAFKA`.
+
+### 15.5. Trạng thái, bàn phím
+
+Rỗng: "Chưa có bên phát. Bên phát là HTTT, luồng hoặc dịch vụ được phép phát sự kiện lên topic." Bàn phím như UI-10-02. Không có quyền: ST-07; ngoài tổ chức: ERR-10-044.
+
+## 16. UI-10-10 Bên nhận
+
+**Mục đích.** Như UI-10-09 cho bên nhận, kèm danh sách đăng ký nhận của bên. Thay LGC-HUB-011 ("đánh dấu là luồng" thành `partyType = FLOW`). **Đường dẫn.** `/tich-hop/topic/ben-nhan`, `/tich-hop/topic/ben-nhan/{ma}`. **Mẫu.** PTN-01, PTN-02. **Quyền.** `PERM-10-read`; đăng ký `PERM-10-create` hoặc `PERM-10-subscribe` (OR với HTTT của tổ chức mình); sửa, ngừng dùng `PERM-10-update`; tạm ngừng, tiếp tục `PERM-10-operate`. **API.** API-10-037, 038, 039, 040, 041, API-10-046 (`subscriberCode`).
+
+Khác biệt với UI-10-09:
+
+| Điểm | Bên nhận |
+|---|---|
+| Kiểu giao tiếp | Chỉ chiều nhận: `WEBHOOK_PUSH`, `HTTP_PULL`, `KAFKA_NATIVE`, `INTERNAL_KAFKA` (A.2.8) |
+| Cột "Loại" | `FLOW` hiện "Luồng tích hợp" kèm biểu tượng luồng; cột ẩn `isFlow` không cần vì đã có loại |
+| Tab con | `/dang-ky-nhan-ds`: bảng subscription của bên (topic, chế độ, trạng thái, `alertState`, lag, DLQ mới) có nút "Đăng ký nhận topic khác" mở `CMP-TopicSelect` rồi UI-10-11 |
+| Drawer đăng ký | Có thêm câu ở thẻ Luồng tích hợp: "Chỉ nhận bằng chế độ Nội bộ, nhóm tiêu thụ `dh-flow-{tenant}-{luồng}`." |
+| Tạm ngừng | Câu xác nhận "Mọi đăng ký nhận đang hiệu lực của bên này sẽ tạm ngừng; bộ giao nhận dừng gửi." |
+
+Trạng thái rỗng: "Chưa có bên nhận. Bên nhận là HTTT, luồng hoặc dịch vụ đăng ký nhận sự kiện từ topic."
+
+## 17. UI-10-11 Đăng ký nhận sự kiện
+
+**Mục đích.** Cho kỹ sư tích hợp hoặc đầu mối tổ chức đăng ký một bên nhận nhận sự kiện của một topic bằng một trong bốn chế độ giao nhận, cấu hình đầy đủ tham số, xác minh endpoint webhook và gửi duyệt. Thay và nâng cấp LGC-HUB-013 (URI nhận, số worker, số lần thử lại, thời điểm bắt đầu). **Đường dẫn.** `/tich-hop/topic/{ten-topic}/dang-ky-nhan` (`?ben-nhan=` điền sẵn, `?buoc=`). **Mẫu.** PTN-05. **Quyền.** `PERM-10-subscribe` (OR trong phạm vi tổ chức). **API.** API-10-010 (topic), API-10-037 (bên nhận), API-10-046 (kiểm tra cặp đã có), API-10-070 (tham số mặc định `10.push.*`, `10.pull.*`, `10.lag.*`, `10.external-kafka.enabled`), API-10-069 (hạn mức còn lại), API-10-067 (kiểu giao tiếp), API-10-051 (xác minh endpoint), API-10-020 (thông tin kết nối cho mã mẫu), API-10-047 (gửi).
+
+### 17.1. Các bước
+
+| Bước | Tên | Mục đích | Chặn sang bước sau khi |
+|---|---|---|---|
+| 1 | Bên nhận | Chọn bên nhận, xem tóm tắt topic | Chưa chọn; topic không `ACTIVE` (ERR-10-025); cặp đã có (ERR-10-024) |
+| 2 | Chế độ giao nhận | Chọn `PUSH`, `PULL_API`, `PULL_KAFKA` hoặc `INTERNAL` | Chưa chọn; chế độ không hợp `commType` (BR-10-017) |
+| 3 | Cấu hình giao nhận | Biểu mẫu theo chế độ (17.4 đến 17.7) | Lỗi trường; `PUSH` chưa xác minh đạt trong 24 giờ |
+| 4 | Điểm bắt đầu và cảnh báo | `startPosition`, `startAt`, ngưỡng lag | Lỗi trường (ERR-10-031) |
+| 5 | Mục đích và căn cứ | `purpose`, `legalBasis`, `subscriptionCode` | Lỗi trường |
+| 6 | Rà soát và gửi | Tóm tắt, cảnh báo tác động, gửi duyệt | |
+
+Bước 3 đổi nội dung theo chế độ đã chọn ở bước 2; đổi chế độ sau khi đã qua bước 3 làm `CMP-Steps` đánh dấu bước 3 "Cần xem lại" và giữ giá trị của chế độ cũ trong bộ nhớ biểu mẫu tới khi gửi (người dùng quay lại không mất dữ liệu).
+
+### 17.2. Bước 1 Bên nhận
+
+```text
+┌ Đăng ký nhận · t68.dkkd.doanh-nghiep.da-cap-phep.v1 ──────────────────────────┐
+│ (1 Bên nhận)──(2 Chế độ)──(3 Cấu hình)──(4 Bắt đầu)──(5 Mục đích)──(6 Gửi)     │
+├────────────────────────────────────────────────────────────────────────────────┤
+│ Topic   ● Đang hoạt động · 🔒 Nội bộ · 6 phân vùng · lưu 7 ngày ·              │
+│         Theo khóa maDoanhNghiep · Giữ thứ tự · Lược đồ v3                      │
+│ Bên nhận * [ht-thue · HTTT thuế tỉnh (Nhận đẩy webhook) ▾]                    │
+│            Không thấy bên nhận? [Đăng ký bên nhận mới]                        │
+│ ⓘ HT-THUE đã có 2 đăng ký nhận trên topic khác của dự án này.                 │
+├────────────────────────────────────────────────────────────────────────────────┤
+│ [Hủy]                                                  [Tiếp tục ›]           │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+| Nhãn | Trường | Thành phần | Kiểm tra |
+|---|---|---|---|
+| Topic | `topicName` (từ route) | `CMP-DescriptionList` một dòng: `status`, `dataClass`, `partitions`, `retentionHours`, `routingMode`, `partitionKeyField`, `orderingRequired`, `latestSchemaVersion` | Topic không `ACTIVE`: cả trình hướng dẫn thay bằng `CMP-ResultPage` "Topic {trạng thái}, không nhận đăng ký mới." (BR-10-016) |
+| Bên nhận | `subscriberCode` | `CMP-ResourceSelect` bên nhận `ACTIVE`; mỗi mục hiện mã, tên, `partyType`, `commType` | OR chỉ thấy bên của tổ chức mình; cặp (bên nhận, topic) đã có subscription chưa `REVOKED`, `REJECTED` thì mục hiện "Đã đăng ký" và vô hiệu, kèm liên kết UI-10-12 (ERR-10-024) |
+| Đăng ký bên nhận mới | | Nút mở Drawer của UI-10-10 | Sau khi tạo, bên mới được chọn sẵn |
+
+Topic `RESTRICTED`, `SENSITIVE`: dưới ô chọn hiện `CMP-Alert` "Topic {phân loại}: bên nhận phải là HTTT đạt cấp độ ATTT yêu cầu và phải ghi căn cứ pháp lý ở bước 5." Bên chưa đạt cấp độ thì máy chủ trả ERR-10-051 khi gửi; giao diện không tự suy cấp độ.
+
+### 17.3. Bước 2 Chế độ giao nhận
+
+```text
+┌───────────────────────────┬───────────────────────────┬───────────────────────────┬───────────────────────────┐
+│ ◉ Đẩy webhook   Khuyến nghị│ ○ Kéo qua API             │ ○ Kéo qua Kafka           │ ○ Nội bộ                  │
+│ Datahub gửi từng sự kiện  │ HTTT tự gọi API lấy lô sự │ HTTT dùng consumer Kafka  │ Cho luồng PH-04 và dịch vụ│
+│ tới URL của HTTT, có chữ  │ kiện và xác nhận. Không   │ chuẩn qua cổng ngoài, tự  │ nội bộ. Không cần endpoint│
+│ ký HMAC, thử lại và DLQ.  │ cần mở cổng phía HTTT.    │ quản lý offset.           │ hay khóa.                 │
+│ Cần URL HTTPS mở từ egress│ Cần token có scope nhận.  │ ⊘ Tenant chưa bật Kafka   │ ⊘ Chỉ cho bên Luồng hoặc  │
+│                           │                           │   ngoài                   │   Dịch vụ nội bộ          │
+└───────────────────────────┴───────────────────────────┴───────────────────────────┴───────────────────────────┘
+```
+
+`CMP-RadioCard` bốn thẻ, giá trị `deliveryMode`. Điều kiện bật từng thẻ:
+
+| Thẻ | Giá trị | Bật khi | Lý do vô hiệu hiện trong thẻ |
+|---|---|---|---|
+| Đẩy webhook | `PUSH` | Bên nhận `SYSTEM` có `commType = WEBHOOK_PUSH`; mục danh mục bật | "Bên nhận dùng kiểu giao tiếp {nhãn}; chế độ Đẩy cần bên nhận kiểu Nhận đẩy webhook." |
+| Kéo qua API | `PULL_API` | `SYSTEM` với `HTTP_PULL` | Tương tự |
+| Kéo qua Kafka | `PULL_KAFKA` | `SYSTEM` với `KAFKA_NATIVE` và `10.external-kafka.enabled = true` | "Tenant chưa bật Kafka ngoài." (ERR-10-028) hoặc câu về kiểu giao tiếp |
+| Nội bộ | `INTERNAL` | `FLOW` hoặc `INTERNAL_SERVICE` với `INTERNAL_KAFKA` hoặc `PULSAR_BRIDGE` | "Chỉ cho bên Luồng tích hợp hoặc Dịch vụ nội bộ." |
+
+Vì một bên nhận chỉ có một `commType`, thông thường chỉ một thẻ bật và được chọn sẵn; bước 2 vẫn hiện đủ bốn thẻ để người dùng hiểu vì sao các chế độ khác không có, và có liên kết "Đăng ký bên nhận khác với kiểu giao tiếp {nhãn}" mở Drawer UI-10-10 với `systemCode` điền sẵn. Thẻ "Khuyến nghị" chỉ là gợi ý mặc định cho HTTT (`PUSH`), không phải ràng buộc.
+
+### 17.4. Bước 3 khi chọn Đẩy webhook (`PUSH`)
+
+#### 17.4.1. Wireframe
+
+```text
+┌ (3 Cấu hình giao nhận · Đẩy webhook) ───────────────────────────────────────────────────────┐
+│ ĐỊA CHỈ NHẬN                                                                                │
+│ URL nhận *   [https://thue.t68.gov.vn/hooks/dh                              ] [Xác minh]    │
+│ ┌ Xác minh lúc 14:05 · ✓ Đạt ─────────────────────────────────────────────────────────────┐ │
+│ │ ✓ Phân giải DNS: 10.68.4.21 không thuộc dải nội bộ nền tảng                              │ │
+│ │ ✓ TLS 1.3, chứng thư hợp lệ tới 03/2027                                                  │ │
+│ │ ✓ Bắt tay OPTIONS: 204, WebHook-Allowed-Origin: event.t68.datahub                        │ │
+│ │ ✓ Trong danh sách egress                                                                 │ │
+│ └──────────────────────────────────────────────────────────────────────────────────────────┘ │
+│ SONG SONG VÀ THỜI GIAN CHỜ                                                                  │
+│ Số worker      [ 3 ] (1…6: tối đa bằng số phân vùng 6 và trần 16)   Thời gian chờ [10000] ms │
+│ THỬ LẠI                                                                                     │
+│ Số lần thử lại [ 8 ] (0…20)  Giãn cách đầu [1000] ms  Hệ số [2]  Giãn cách tối đa [300000] ms│
+│ Lịch thử lại: 1 g · 2 g · 4 g · 8 g · 16 g · 32 g · 64 g · 128 g  ≈ tổng 4 ph 15 g (±20%)   │
+│ ▁▁▂▃▅█ (biểu đồ cột thời điểm từng lần)                                                     │
+│ KHI HẾT LƯỢT THỬ                                                                            │
+│ ◉ Dừng lại chờ khắc phục (Khuyến nghị cho topic giữ thứ tự)  ○ Chuyển vào DLQ và giao tiếp  │
+│ ĐỊNH DẠNG                                                                                   │
+│ ◉ CloudEvents có cấu trúc   ○ CloudEvents nhị phân      [Xem mẫu yêu cầu ▾]                 │
+│ HẠN MỨC                                                                                     │
+│ Hạn mức tiêu thụ [   ] KiB/giây (để trống: chia đều phần còn lại; còn 13,2 MiB/giây)        │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 17.4.2. Trường
+
+| Nhóm | Nhãn | Trường | Thành phần | Bắt buộc | Mặc định | Kiểm tra phía giao diện | Lỗi máy chủ |
+|---|---|---|---|---|---|---|---|
+| Địa chỉ | URL nhận | `push.endpointUrl` | `CMP-Input` kiểu URL, `font-mono` | Có | | Bắt đầu `https://`; có tên miền (không phải IP); không có thông tin đăng nhập trong URL; ≤ 2.048 ký tự; cảnh báo mềm khi có query chứa từ "token", "key" | ERR-10-026 |
+| Địa chỉ | Xác minh | (hành động) | `CMP-Button` + khối kết quả | Có kết quả `PASSED` hoặc `WAIVED` trong 24 giờ | | Đổi URL xóa kết quả cũ | ERR-10-027 |
+| Song song | Số worker | `push.workerCount` | `CMP-NumberInput` | Không | `10.push.default-workers` | 1…min(`partitions`, `10.push.max-workers`); dòng phụ nêu rõ hai giới hạn | ERR-10-030 |
+| Song song | Thời gian chờ | `push.timeoutMs` | `CMP-NumberInput` hậu tố ms | Không | `10.push.timeout-ms` | 1.000…30.000 | ERR-10-012 |
+| Thử lại | Số lần thử lại | `push.maxRetries` | `CMP-NumberInput` | Không | `10.push.max-retries` | 0…`10.push.max-retries-ceiling` | ERR-10-012 |
+| Thử lại | Giãn cách đầu | `push.retryBackoff.initialMs` | `CMP-NumberInput` | Không | `10.push.backoff-initial-ms` | 100…60.000 | ERR-10-012 |
+| Thử lại | Hệ số | `push.retryBackoff.multiplier` | `CMP-NumberInput` bước 0,5 | Không | `10.push.backoff-multiplier` | 1…5 | ERR-10-012 |
+| Thử lại | Giãn cách tối đa | `push.retryBackoff.maxMs` | `CMP-NumberInput` | Không | `10.push.backoff-max-ms` | 1.000…3.600.000; ≥ giãn cách đầu | ERR-10-012 |
+| Khi hết lượt | Chính sách | `push.failurePolicy` | `CMP-RadioCard` hai thẻ | Không | `DEAD_LETTER`; chọn sẵn `BLOCK` khi topic `orderingRequired` (Q10-15) | | |
+| Định dạng | Định dạng | `push.payloadFormat` | `CMP-Radio` + `CMP-CodeBlock` mẫu | Không | `CLOUDEVENTS_STRUCTURED` | | |
+| Hạn mức | Hạn mức tiêu thụ | `quotaBytesPerSecond` | `CMP-NumberInput` hậu tố KiB/giây | Không | Trống | ≥ 256 KiB/giây khi nhập (FR-10-062); ≤ phần còn lại | ERR-10-011 |
+
+Miền 100…60.000, 1…5, 1.000…3.600.000 của nhóm thử lại lấy từ miền tham số `10.push.backoff-*` (A.5); FR-10-035 chỉ ghi "mặc định theo `10.push.backoff-*`", nên ràng buộc trên từng subscription là đề nghị ở Phụ lục C.
+
+#### 17.4.3. Xác minh endpoint
+
+1. Bấm "Xác minh" (hoặc `Enter` trong ô URL) gọi API-10-051 với `endpointUrl` và `subscriberCode`. Nút chuyển `loading` với nhãn "Đang xác minh…"; thời gian chờ tối đa bằng `push.timeoutMs` cộng 5 giây.
+2. Kết quả hiện trong `CMP-Card` đặc ngay dưới ô: tiêu đề "Xác minh lúc {giờ}" kèm `CMP-StatusTag` theo `result`; danh sách bước từ `steps[]` (phân giải DNS và kiểm tra dải địa chỉ, TLS và chứng thư, bắt tay `OPTIONS` với `WebHook-Request-Origin: event.{tenant}.datahub`, danh sách egress), mỗi bước một `CMP-StatusTag` và một dòng chi tiết.
+3. Bước không đạt hiện hướng dẫn khắc phục bằng tiếng Việt lấy từ `detail` của bước (ví dụ "Endpoint chưa trả lời OPTIONS. Bật xử lý OPTIONS và trả tiêu đề WebHook-Allowed-Origin." hoặc "Mở tường lửa từ địa chỉ egress {danh sách}."), cùng nút "Sao chép hướng dẫn" để gửi đơn vị chủ quản HTTT.
+4. Kết quả có hiệu lực 24 giờ: dòng phụ đếm ngược "Hiệu lực tới {giờ}". Hết hiệu lực trước khi gửi thì bước 6 hiện `CMP-Alert` và nút "Xác minh lại".
+5. Đổi URL sau khi xác minh: khối kết quả mờ đi, kèm "URL đã đổi, cần xác minh lại", nút "Tiếp tục" vô hiệu.
+6. **Miễn xác minh.** Khi kết quả `FAILED` ở bước bắt tay và người dùng có `PERM-10-admin` (TA), hiện liên kết "HTTT cũ không trả lời được bắt tay? Bật miễn xác minh có thời hạn". Vì API-10-091 thao tác trên subscription đã có (`/subscriptions/{subscriptionCode}/endpoint-verification:waive`), miễn xác minh chỉ làm được sau khi gửi: trình hướng dẫn cho gửi với cờ "Đề nghị miễn xác minh" và ghi chú, rồi UI-10-12 hiện nút "Miễn xác minh" cho TA. Luồng này cần tập API xác nhận (Phụ lục B); Q10-31.
+7. Máy chủ chạy lại xác minh khi gửi nếu kết quả cũ quá 24 giờ (FR-10-035 bước 3); ERR-10-027 khi đó hiện ở bước 6.
+
+#### 17.4.4. Lịch thử lại vẽ trước
+
+Dưới nhóm Thử lại có một khối tính phía trình duyệt, không gọi API: với lần thứ k (1 tới `maxRetries`) thời gian chờ là min(`maxMs`, `initialMs` nhân `multiplier` mũ k trừ 1), hiện dạng chuỗi thời lượng và `CMP-Chart` cột nhỏ cao 64 px (màu `color-chart-1`), cùng tổng thời gian ước lượng kèm "±20%" (nhiễu 0,8…1,2 của FR-10-039). Khi tổng vượt 1 giờ, khối hiện cảnh báo "Một bản tin lỗi có thể giữ phân vùng tới {tổng}; các bản tin sau cùng phân vùng phải chờ." vì trong lúc thử lại phân vùng đó không giao bản tin kế tiếp. Biểu đồ có bảng thay thế `aria-describedby` đọc danh sách thời điểm.
+
+#### 17.4.5. Chính sách khi hết lượt thử
+
+| Thẻ | Giá trị | Mô tả trong thẻ |
+|---|---|---|
+| Chuyển vào DLQ và giao tiếp | `DEAD_LETTER` | "Bản tin lỗi vào hàng đợi lỗi để xử lý sau; bản tin kế tiếp vẫn được giao. Thứ tự của cùng khóa có thể bị phá." |
+| Dừng lại chờ khắc phục | `BLOCK` | "Đăng ký nhận tạm ngừng khi một bản tin hết lượt thử; người vận hành tiếp tục sau khi khắc phục, bản tin được giao lại từ vị trí cũ." |
+
+Topic `orderingRequired = true`: thẻ `BLOCK` có nhãn "Khuyến nghị" và được chọn sẵn; chọn `DEAD_LETTER` hiện `CMP-Alert` cảnh báo về thứ tự (FR-10-039). Mặc định theo FRS vẫn là `DEAD_LETTER`; việc chọn sẵn `BLOCK` cho topic giữ thứ tự chờ Q10-15.
+
+#### 17.4.6. Mẫu yêu cầu
+
+"Xem mẫu yêu cầu" mở `CMP-Popover` rộng chứa `CMP-CodeBlock` cho định dạng đang chọn: dòng `POST {endpointUrl}`, các tiêu đề `Webhook-Id`, `Webhook-Timestamp`, `X-Datahub-Signature: t=…,v1=…`, `X-Datahub-Subscription`, `X-Datahub-Attempt`, `X-Datahub-Key-Id`, `traceparent` (A.8), và thân `application/cloudevents+json` hoặc thân `data` với tiêu đề `ce-*`. Giá trị là giả lập; có liên kết "Mã mẫu xác minh chữ ký" tới tài liệu hướng dẫn tích hợp (Java, .NET, Python, Node.js, PHP).
+
+### 17.5. Bước 3 khi chọn Kéo qua API (`PULL_API`)
+
+```text
+┌ (3 Cấu hình giao nhận · Kéo qua API) ───────────────────────────────────────────────────────┐
+│ Kích thước lô tối đa [100] sự kiện (1…500)      Thời gian thuê [60] giây (10…300)            │
+│ ⓘ Mỗi đăng ký nhận có một lượt thuê tại một thời điểm. Kéo lại khi chưa xác nhận và chưa hết │
+│   thời gian thuê sẽ nhận lại đúng lô cũ.                                                     │
+│ CÁCH GỌI                                                                                    │
+│ [Java][.NET][Python][Node.js][curl]                                                         │
+│ GET  /event/v1/subscriptions/{mã}/events?max=100&waitSeconds=30                              │
+│ POST /event/v1/subscriptions/{mã}/events:ack   {"cursor": "…"}                              │
+│ POST /event/v1/subscriptions/{mã}/events:nack  {"cursor":"…","eventIds":[…],"reason":"…"}   │
+│ Token: client credentials của HTTT, scope topic:{tên topic}:subscribe (cấp khi được duyệt)  │
+│ Hạn mức tiêu thụ [   ] KiB/giây                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+| Nhãn | Trường | Thành phần | Bắt buộc | Mặc định | Kiểm tra | Lỗi |
+|---|---|---|---|---|---|---|
+| Kích thước lô tối đa | `pull.maxBatch` | `CMP-NumberInput` | Không | `10.pull.max-batch` | 1…`10.pull.max-batch` | ERR-10-012 |
+| Thời gian thuê | `pull.leaseSeconds` | `CMP-NumberInput` hậu tố giây | Không | `10.pull.lease-seconds` | 10…300 | ERR-10-012 |
+| Hạn mức tiêu thụ | `quotaBytesPerSecond` | `CMP-NumberInput` | Không | Trống | Như 17.4.2 | ERR-10-011 |
+
+Khối "Cách gọi" là `CMP-CodeBlock` trong `CMP-Tabs` theo ngôn ngữ, sinh từ API-10-020 với mã subscription dự kiến (hoặc chữ giữ chỗ `{mã}` khi người dùng chưa đặt ở bước 5). Đoạn mã nêu rõ: chờ dài tối đa `10.pull.long-poll-max-seconds` giây; xử lý xong mới `ack`; lỗi một sự kiện thì `nack` kèm `eventIds` (sự kiện vào DLQ, phần còn lại coi như đã xác nhận); `409` (ERR-10-109) thì kéo lại. Có `CMP-Alert` thông tin "Giao ít nhất một lần: HTTT phải xử lý trùng theo id của sự kiện." (BR-10-009).
+
+### 17.6. Bước 3 khi chọn Kéo qua Kafka (`PULL_KAFKA`)
+
+| Mục | Nội dung | Thành phần |
+|---|---|---|
+| Nhóm tiêu thụ | `dh-ext-{tenant}-{subscriptionCode}`, chỉ đọc, cập nhật theo mã ở bước 5 | `CMP-Identifier`, `CMP-CopyButton` |
+| Địa chỉ listener ngoài | Từ API-10-020 | `CMP-CodeText` |
+| Xác thực | Hai cách: SASL OAUTHBEARER (token client credentials, principal theo `azp`) hoặc mTLS (chứng thư do CA nội bộ cấp qua PH-12); hiện principal sẽ được cấp ACL | `CMP-DescriptionList` |
+| Lược đồ | Serde Apicurio đọc lược đồ qua đường chỉ đọc API-10-084 | `CMP-CodeBlock` cấu hình consumer mẫu |
+| Hạn mức tiêu thụ | `quotaBytesPerSecond` | `CMP-NumberInput` |
+| Lưu ý | "Bên nhận tự commit offset và tự xử lý lỗi; Datahub không có DLQ cho chế độ này. Có thể báo sự kiện lỗi qua API dead-letters để PH-18 theo dõi." | `CMP-Alert` thông tin |
+
+Chế độ này không có tham số giao nhận riêng ở FR-10-035; bước 3 chủ yếu là thông tin để HTTT chuẩn bị, chỉ có ô hạn mức.
+
+### 17.7. Bước 3 khi chọn Nội bộ (`INTERNAL`)
+
+Hiện `CMP-Alert` thông tin "Đăng ký nhận nội bộ thường do PH-04 tạo khi luồng có điểm vào Kafka. Tạo tay chỉ khi cần ghi nhận quan hệ cho dịch vụ nội bộ." và `CMP-DescriptionList`: nhóm tiêu thụ `dh-flow-{tenant}-{flow}` (bên `FLOW`) hoặc `dh-svc-{service}-{tenant}` (bên `INTERNAL_SERVICE`, A.8), listener `internal` mTLS, "DLQ do PH-04 quản lý" với bên luồng. Không có trường nhập ở bước này. Subscription của bên `INTERNAL_SERVICE` trên topic của chính DU được tự duyệt (BR-10-031), bước 6 ghi rõ "Sẽ được tự duyệt".
+
+### 17.8. Bước 4 Điểm bắt đầu và cảnh báo
+
+| Nhãn | Trường | Thành phần | Bắt buộc | Mặc định | Kiểm tra | Lỗi |
+|---|---|---|---|---|---|---|
+| Bắt đầu nhận từ | `startPosition` | `CMP-RadioCard` ba thẻ: Từ bây giờ, Từ dữ liệu cũ nhất còn giữ, Từ một thời điểm | Không | `LATEST` | | |
+| Thời điểm | `startAt` | `CMP-DatePicker` có giờ, múi +07:00 | Khi `TIMESTAMP` | | Từ hiện tại trừ `retentionHours` tới hiện tại; ngày ngoài khoảng bị khóa trên lịch | ERR-10-031 |
+| Ngưỡng cảnh báo | `lagWarnSeconds` | `CMP-NumberInput` có bộ chọn đơn vị giây, phút, giờ | Không | `10.lag.warn-seconds` | 30…86.400 (miền tham số A.5) | ERR-10-012 |
+| Ngưỡng nghiêm trọng | `lagCriticalSeconds` | Như trên | Không | `10.lag.critical-seconds` | 60…604.800; cảnh báo mềm khi không lớn hơn ngưỡng cảnh báo | ERR-10-012 |
+
+Thẻ "Từ dữ liệu cũ nhất" hiện ước lượng "Khoảng {n} bản tin, giao hết trong khoảng {t} với {workerCount} worker" lấy từ số liệu 24 giờ của topic (API-10-010) nhân số ngày lưu giữ; đây là ước lượng thô phía giao diện, có chữ "ước lượng" (FR-10-040). Dòng phụ chung: "Điểm bắt đầu chỉ áp dụng lần đầu; đổi sau này phải qua lượt phát lại có duyệt." Với `PULL_KAFKA`, điểm bắt đầu vẫn do PH-10 khởi tạo cho nhóm `dh-ext-…` trước khi HTTT kết nối (BR-10-022).
+
+### 17.9. Bước 5 Mục đích và căn cứ
+
+| Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi |
+|---|---|---|---|---|---|
+| Mục đích nhận dữ liệu | `purpose` | `CMP-TextArea` | Có | 10…500 ký tự | ERR-10-003 |
+| Căn cứ pháp lý hoặc văn bản đồng ý | `legalBasis` | `CMP-TextArea` | Khi topic `RESTRICTED`, `SENSITIVE` | Không rỗng; độ dài theo Phụ lục C | ERR-10-009 |
+| Mã đăng ký nhận | `subscriptionCode` | `CMP-Input` `font-mono`, có nút "Dùng mã gợi ý" | Không | `^[a-z][a-z0-9-]{2,62}$`; gợi ý `{subscriberCode}-{entity}-{eventName}` cắt về 63 ký tự | ERR-10-002, 003 |
+
+Mã ảnh hưởng tên nhóm tiêu thụ (`dh-sub-{tenant}-{subscriptionCode}` hoặc `dh-ext-…`), nên ô hiện dòng phụ "Nhóm tiêu thụ sẽ là …" cập nhật khi gõ.
+
+### 17.10. Bước 6 Rà soát và gửi
+
+`CMP-DescriptionList` theo nhóm (Bên nhận và topic, Chế độ, Cấu hình, Điểm bắt đầu, Mục đích) có liên kết "Sửa" về bước. Khối "Điều sẽ xảy ra" liệt kê bằng chữ: tạo yêu cầu duyệt `SUBSCRIPTION` cho IA hoặc TA khác người gửi; khi duyệt, với `PUSH` sinh khóa ký và hiện một lần cho người gửi; với `PULL_API` gắn scope `topic:{tên topic}:subscribe` cho client HTTT; với `PULL_KAFKA` cấp ACL đọc topic và nhóm; điểm bắt đầu được khởi tạo; sự kiện bắt đầu tới trong khoảng 2 phút sau khi duyệt (NFR-10-008). Nút "Gửi duyệt" gọi API-10-047; thành công điều hướng UI-10-12 (trạng thái `PENDING_APPROVAL`) với Toast "Đã gửi đăng ký nhận {mã}, chờ duyệt." và mã yêu cầu. Lỗi tổng hợp từ máy chủ (ERR-10-024, 025, 026, 027, 028, 030, 031, 044, 051) hiện `CMP-Alert` đầu bước 6 có liên kết "Sửa" tới đúng bước.
+
+### 17.11. Trạng thái, bàn phím, truy cập, responsive
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải topic, tham số | Skeleton bước 1 |
+| Thiếu quyền `PERM-10-subscribe` | ST-07 |
+| Topic không `ACTIVE` | `CMP-ResultPage` như 17.2 |
+| Hết hạn mức `maxSubscriptions` | `CMP-Alert` ở bước 1 (ERR-10-011), vẫn cho soạn để người dùng biết cần gì |
+| Hết phiên | ST-14; khôi phục mọi trường trừ kết quả xác minh |
+
+`Ctrl+Enter` tiếp tục; trong bước 2 mũi tên chuyển thẻ, `Space` chọn. Khối kết quả xác minh có `aria-live="polite"` đọc "Xác minh đạt" hoặc "Xác minh không đạt ở bước bắt tay". Mọi ô số có nhãn đơn vị trong `aria-label` ("Thời gian chờ, mili giây"). Dưới `bp-lg` bốn thẻ chế độ xếp hai cột, dưới `bp-md` một cột; nhóm thử lại xếp một cột.
+
+### 17.12. Bản hi-fi
+
+Biểu mẫu trên `CMP-Card` đặc `color-surface-solid`, rộng tối đa `size-form-max`, nhóm trường ngăn bằng tiêu đề nhóm `font-footnote` chữ hoa `color-text-secondary` và `space-6` phía trên. Khối xác minh nền `color-surface-solid-2`, bo `radius-md`, các dòng bước dùng `CMP-StatusTag` cỡ nhỏ. Thanh hành động dính đáy theo `CMP-Wizard`, bóng `shadow-2` khi nội dung cuộn dưới.
+
+## 18. UI-10-12 Chi tiết subscription
+
+**Mục đích.** Theo dõi và vận hành một đăng ký nhận: trạng thái, lag theo phân vùng, thống kê giao nhận, lượt lỗi, worker, khóa ký; tạm dừng, tiếp tục, sửa, xoay khóa, đề nghị phát lại, thu hồi. Thay LGC-HUB-013. **Đường dẫn.** `/tich-hop/topic/dang-ky/{ma-subscription}` và tab con. **Mẫu.** PTN-02. **Quyền.** Theo bảng 18.2. **API.** API-10-048, 049, 050 (`:pause` và các hành động tách ở D03-04-PH10), API-10-051, 052, 053, 054, 055, 056, 060, 063, 091.
+
+### 18.1. Wireframe
+
+```text
+┌ … › t68.dkkd.doanh-nghiep.da-cap-phep.v1 › ht-thue-dn-cap-phep ─────────────────────────────┐
+│ [‹] ht-thue-dn-cap-phep  ● Đang nhận  Đẩy webhook  ⚠ Cảnh báo lag                            │
+│     Bên nhận: HTTT thuế tỉnh (ht-thue) · Nhóm: dh-sub-t68-ht-thue-dn-cap-phep ⧉              │
+│     [Tạm dừng] [Sửa tham số] [Đề nghị phát lại] [⋯]                                          │
+│ [Tổng quan][Giao nhận][Độ trễ][Lượt lỗi 12][Worker][Khóa ký][Cấu hình][Phát lại][Lịch sử]    │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ┌ Độ trễ ───────┐ ┌ Tồn ───────┐ ┌ Thời gian còn lại ┐ ┌ Giao 1 giờ ─┐ ┌ DLQ mới ┐            │
+│ │ 12 ph 30 g ⚠  │ │ 4.210      │ │ 6 ng 23 g         │ │ 98,7% đạt   │ │ 37      │            │
+│ └───────────────┘ └────────────┘ └───────────────────┘ └─────────────┘ └─────────┘            │
+│ ⚠ Cảnh báo từ 13:52: độ trễ vượt 5 phút.  [Xác nhận cảnh báo]                                │
+│ Độ trễ 24 giờ  ▁▁▁▁▂▂▁▁▁▂▃▅▇██  ── ngưỡng cảnh báo ┄┄ ngưỡng nghiêm trọng                    │
+│ URL nhận https://thue.t68.gov.vn/hooks/dh · Xác minh ✓ 14:05 · Khóa ký k_2026_11 (Đang dùng) │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 18.2. Thanh hành động
+
+| Nút | Quyền | Trạng thái | Hộp | API |
+|---|---|---|---|---|
+| Tạm dừng | `PERM-10-operate` | `ACTIVE`; không `INTERNAL` | `CMP-ReasonDialog` | API-10-050 `:pause` |
+| Tiếp tục | `PERM-10-operate` | `PAUSED`; `SUSPENDED` (lý do khắc phục bắt buộc); không `INTERNAL` | `CMP-ReasonDialog` | API-10-050 `:resume` |
+| Sửa tham số | `PERM-10-subscribe` | `ACTIVE`, `PAUSED`, `SUSPENDED` | Drawer 18.6 | API-10-049 |
+| Đề nghị phát lại | `PERM-10-operate` | `ACTIVE`, `PAUSED`, `SUSPENDED`; chế độ `PUSH`, `PULL_API` | UI-10-16 `/phat-lai/moi?dang-ky=` | API-10-064 |
+| ⋯ Xoay khóa ký | `PERM-10-operate` hoặc `PERM-10-subscribe` | `PUSH`, chưa `REVOKED` | `CMP-ConfirmDialog` rồi `CMP-SecretField` chế độ `issue` | API-10-054 `:rotate` |
+| ⋯ Thu hồi khóa khẩn | SO, TA (`PERM-10-operate`) | `PUSH` | `CMP-ReasonDialog` màu phá hủy, rồi `CMP-SecretField` | API-10-054 `:revoke` |
+| ⋯ Xác minh lại endpoint | `PERM-10-subscribe` | `PUSH` | Khối xác minh như 17.4.3 | API-10-051 |
+| ⋯ Miễn xác minh | `PERM-10-admin` | `PUSH`, xác minh `FAILED` | `CMP-ReasonDialog` thêm `CMP-DatePicker` "Miễn tới" (≤ 180 ngày) | API-10-091 |
+| ⋯ Thu hồi | `PERM-10-subscribe` | Chưa `REVOKED` | `CMP-ReasonDialog` màu phá hủy, liệt kê hậu quả | API-10-050 `:revoke` |
+| Xác nhận cảnh báo | `PERM-10-operate` | `alertState` khác `OK` | `CMP-ReasonDialog` ghi chú tùy chọn | API-10-056 |
+
+SO chỉ thấy Tạm dừng (dùng khi sự cố ATTT) và Thu hồi khóa khẩn; không thấy phát lại, DLQ (D02-03-PH10 §3.2). Subscription `INTERNAL` ẩn Tạm dừng, Tiếp tục và hiện `CMP-Alert` "Điều khiển ở luồng PH-04." kèm liên kết (ERR-10-052).
+
+Hộp Thu hồi nêu: dừng giao nhận, gỡ scope, xóa ACL, thu hồi mọi khóa ký, xóa nhóm tiêu thụ sau `10.subscription.group-delete-delay-hours` giờ, mục DLQ mới giữ lại nhưng không phát lại được, lượt phát lại đang chạy bị hủy (FR-10-047).
+
+### 18.3. Các tab
+
+| Tab | Đoạn route | Nội dung | Thành phần | API |
+|---|---|---|---|---|
+| Tổng quan | (mặc định) | Năm thẻ số (độ trễ, tồn, thời gian còn lại, tỷ lệ giao đạt 1 giờ, DLQ mới), dải cảnh báo lag, biểu đồ độ trễ 24 giờ có hai đường ngưỡng, tóm tắt cấu hình | `CMP-StatCard`, `CMP-Alert`, `CMP-Chart`, `CMP-DescriptionList` | API-10-048, 055, 060 |
+| Giao nhận | `/giao-nhan` | Biểu đồ theo `khoang` 1 giờ, 24 giờ, 7 ngày: giao thành công, lỗi tạm thời, thử lại, vào DLQ (cột chồng), độ trễ đầu nhận p50, p95 (đường) | `CMP-Chart`, `CMP-SegmentedControl` | API-10-052 |
+| Độ trễ | `/do-tre` | Bảng theo phân vùng: `partition`, `committedOffset`, `endOffset`, `lagRecords`, `lagSeconds`; biểu đồ xu hướng | `CMP-DataTable`, `CMP-Chart` | API-10-055 |
+| Lượt lỗi | `/luot-loi` | Bảng mục 18.4 | `CMP-DataTable` | API-10-053 |
+| Worker | `/worker` | Chỉ `PUSH`: mỗi worker, phân vùng đang giữ, offset, lần giao cuối | `CMP-DataTable` | API-10-048 (Phụ lục B) |
+| Khóa ký | `/khoa-ky` | Chỉ `PUSH`: bảng `keyId`, `status`, `activatedAt`, `previousUntil`, `revokedAt`; nhắc xoay khi khóa quá `10.push.key-max-age-days` | `CMP-DataTable`, `CMP-Alert` | API-10-048 |
+| Cấu hình | `/cau-hinh` | Mọi trường A.3 `Subscription` theo chế độ, `push.lastVerification`, `consumerGroup`, `startPosition`, `startAt`, `legalBasis`, người duyệt | `CMP-DescriptionList` | API-10-048 |
+| Phát lại | `/phat-lai` | Bảng lượt phát lại của subscription | `CMP-DataTable` | API-10-063 |
+| Lịch sử | `/lich-su` | Kiểm toán | `CMP-AuditTimeline` | FR-00-043 |
+
+### 18.4. Bảng lượt lỗi
+
+| Cột | Trường | Ghi chú |
+|---|---|---|
+| Thời điểm | `occurredAt` | |
+| Phân vùng, offset | `partition`, `offset` | `CMP-CodeText` |
+| Mã sự kiện | `eventId` | `CMP-Identifier` có sao chép |
+| HTTP | `httpStatus` | Trống khi lỗi trước khi có phản hồi |
+| Mã lỗi | `errorCode` | Nhãn theo bảng dưới |
+| Phân loại | `failureClass` | `CMP-Tag` |
+| Lần thử | `attempt` | |
+| Phản hồi | `responseSnippet` | Tối đa 512 byte đã che, mở trong `CMP-Popover` `font-mono` |
+
+| Mã | Nhãn trong bảng | Gợi ý cho người vận hành |
+|---|---|---|
+| ERR-10-111 | Quá thời gian chờ | "Đầu nhận chậm; tăng thời gian chờ hoặc giảm số worker." |
+| ERR-10-112 | Đầu nhận lỗi tạm thời (5xx, 408, 425, 429) | "Kiểm tra tình trạng HTTT nhận." |
+| ERR-10-113 | Đầu nhận từ chối | "Đầu nhận trả 4xx hoặc bên nhận báo lỗi; xem nội dung phản hồi." |
+| ERR-10-114 | Lỗi TLS, chứng thư | "Chứng thư đầu nhận hết hạn hoặc không tin cậy." |
+| ERR-10-115 | Địa chỉ đích bị chặn | "Tên miền phân giải ra địa chỉ bị chặn; kiểm tra DNS." |
+| ERR-10-116 | Không giải được bản tin | "Bản tin không khớp lược đồ; báo bên phát." |
+| ERR-10-117 | Không đọc được khóa ký | "Sự cố kho bí mật; giao nhận phân vùng tạm dừng." |
+| ERR-10-118 | Cầu nối không chuyển được | Chỉ ở DLQ của cầu nối |
+| ERR-10-119 | Bản tin không có định danh lược đồ | Chỉ ở giám sát tuân thủ |
+| ERR-10-120 | Kafka từ chối do ACL, hạn mức | "Kiểm tra quyền và hạn mức của principal." |
+
+### 18.5. Dải trạng thái theo tình huống
+
+| Tình huống | Dải | Hành động trong dải |
+|---|---|---|
+| `PENDING_APPROVAL` | `CMP-Banner` thông tin "Chờ duyệt, yêu cầu {requestCode}." | "Rút yêu cầu" (người gửi, API-10-059 `:withdraw`) |
+| `PROVISIONING` | Mục 6 điểm 1 | |
+| `FAILED` | `CMP-Alert` lỗi kèm lỗi cấp phát | "Thử lại" theo `allowedActions` |
+| Vừa `ACTIVE`, `PUSH`, người xem là người đề nghị, khóa đầu chưa xem | `CMP-Alert` cảnh báo "Khóa ký đã sẵn sàng. Chỉ xem được một lần." | "Xem khóa ký" mở `CMP-SecretField` chế độ `issue` (cách lấy khóa: Phụ lục B) |
+| `SUSPENDED` do `CIRCUIT_BREAKER` | `CMP-Alert` cảnh báo "Ngắt mạch tự động lúc {giờ} vì tỷ lệ lỗi ≥ 50% trong {n} phút. Hệ thống thăm dò mỗi 5 phút và tự tiếp tục khi đầu nhận hồi phục." | "Tiếp tục ngay" |
+| `SUSPENDED` do `DELIVERY_BLOCKED` | `CMP-Alert` lỗi "Dừng do chính sách chặn: bản tin tại phân vùng {p}, offset {o} hết lượt thử." | "Xem lượt lỗi", "Tiếp tục" |
+| `SUSPENDED` do `SECURITY`, `PH01`, `MANUAL` | `CMP-Alert` cảnh báo nêu nguồn và lý do | "Tiếp tục" khi được phép |
+| Thời gian còn lại dưới 24 giờ | `CMP-Alert` lỗi "Bản tin chưa đọc sẽ bị xóa khỏi topic sau {t}." | |
+| Xác minh hết hạn hoặc đang miễn | `CMP-Alert` cảnh báo với `verificationWaiverUntil`, `verificationWaiverReason` | "Xác minh lại" |
+| Khóa ký quá tuổi | `CMP-Alert` thông tin "Khóa ký đã dùng {n} ngày; nên xoay." | "Xoay khóa ký" |
+
+### 18.6. Drawer "Sửa tham số"
+
+Drawer `size-drawer-lg` chia hai nhóm rõ ràng bằng tiêu đề và `CMP-Tag`:
+
+| Nhóm | Trường (theo chế độ) | Nhãn nhóm | Ghi chú |
+|---|---|---|---|
+| Áp dụng ngay | `push.workerCount`, `push.maxRetries`, `push.retryBackoff`, `push.timeoutMs`, `push.payloadFormat`, `pull.maxBatch`, `pull.leaseSeconds`, `lagWarnSeconds`, `lagCriticalSeconds` | "Áp dụng trong khoảng 60 giây, không cần duyệt" | Kiểm tra như 17.4.2, 17.5, 17.8; đổi worker hiện câu "Tái cân bằng không mất bản tin." |
+| Cần duyệt lại | `push.endpointUrl` (xác minh trước), `push.failurePolicy` | "Tạo yêu cầu duyệt; đăng ký nhận chạy với tham số cũ tới khi duyệt" | Đổi URL hiện khối xác minh 17.4.3 |
+| Không sửa được | `deliveryMode`, `topicName`, `subscriberCode`, `startPosition` | Chữ mờ kèm hướng dẫn | Đổi chế độ: "Tạo đăng ký nhận mới với chế độ khác rồi thu hồi đăng ký này." kèm nút mở UI-10-11; đổi điểm đọc: "Dùng phát lại kiểu đặt lại vị trí." |
+
+Chân Drawer hiện `CMP-DiffTable` cũ và mới, nút "Lưu" (chỉ nhóm áp dụng ngay) hoặc "Lưu và gửi duyệt" (có trường nhóm cần duyệt). PATCH có `If-Match`; ST-13 khi xung đột. Lỗi ERR-10-030, 026, 027 hiện tại trường.
+
+### 18.7. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton tiêu đề, năm thẻ, biểu đồ |
+| Số liệu lag chưa có (mới `ACTIVE`) | Thẻ hiện "Chưa có số liệu" và dòng phụ "Số liệu đầu tiên sau khoảng {10.lag.collect-interval-seconds} giây" |
+| Không tồn tại | ST-08 "Không tìm thấy đăng ký nhận {mã}" |
+| Không có quyền | ST-07; OR ngoài tổ chức ERR-10-044 |
+| `REVOKED` | `CMP-Banner` "Đã thu hồi ngày {revokedAt}." mọi nút ghi ẩn, tab DLQ vẫn xem được |
+
+### 18.8. Bàn phím, truy cập, responsive
+
+`1`…`9` chuyển tab; `P` tạm dừng hoặc tiếp tục (mở hộp, không thực hiện ngay); `R` đề nghị phát lại; `A` xác nhận cảnh báo. Thẻ số đọc kèm trạng thái ("Độ trễ 12 phút 30 giây, mức Cảnh báo"). Biểu đồ độ trễ có hai đường ngưỡng nét liền và nét đứt (không chỉ khác màu) và bảng thay thế. Thay đổi `alertState` khi đang xem đọc qua `aria-live="polite"` một lần. Dưới `bp-lg` năm thẻ xếp hai hàng, hàng tab cuộn ngang.
+
+### 18.9. Bản hi-fi
+
+Thẻ số `CMP-StatCard` nền `color-surface-solid`, số `font-title-1` `font-feature-tabular`; thẻ độ trễ có viền trái 3 px theo sắc thái `alertState` (`color-warning-solid` khi `WARNING`) kèm biểu tượng, không tô cả thẻ. Biểu đồ độ trễ: đường chính `color-chart-1`, ngưỡng cảnh báo `color-warning-solid` nét liền 1 px, ngưỡng nghiêm trọng `color-error-solid` nét đứt 1 px; vùng vượt ngưỡng tô `color-warning-bg`. Dải trạng thái theo mục 18.5 đặt ngay dưới `CMP-PageHeader`, cách `space-4`.
+
+## 19. UI-10-13 Duyệt yêu cầu sự kiện
+
+**Mục đích.** Cho IA, TA duyệt chín loại yêu cầu của PH-10 trong hộp việc chung: xem khác biệt, kết quả kiểm tra, tác động; quyết định có ý kiến. **Đường dẫn.** `/viec-cua-toi?phan-he=10` (`loai`, `chon`). **Mẫu.** PTN-10. **Quyền.** `PERM-10-approve`; người gửi xem yêu cầu của mình với `PERM-10-read` và rút được. **API.** API-10-057, 058, 059 (`:approve` và các hành động tách ở D03-04-PH10).
+
+### 19.1. Wireframe
+
+```text
+┌ Việc của tôi · Sự kiện ───────────────────────────────────────────────────────────────────┐
+│ Loại: [Tất cả ▾]  (Tạo topic 3)(Quyền phát 2)(Đăng ký nhận 2)          Sắp xếp: Hạn gần ▾ │
+├ Danh sách ──────────────────────┬ Chi tiết yêu cầu apr-01jd… ─────────────────────────────┤
+│ ▸ Tạo topic                     │ Tạo topic t68.dkkd.doanh-nghiep.da-cap-phep.v1           │
+│   t68.dkkd.doanh-nghiep…v1      │ Gửi bởi An · 25/11 09:12 · Hạn 25/12 (còn 29 ngày)       │
+│   An · 1 ngày                   │ [Khác biệt][Kiểm tra][Tác động][Lịch sử]                 │
+│ ▸ Đăng ký nhận                  │ Cấu hình: 6 phân vùng · lưu 7 ngày · theo khóa …         │
+│   ht-thue-dn-cap-phep           │ Lược đồ v1 (Avro) ▸ xem                                  │
+│   Bình · 3 giờ                  │ ⚠ Dữ liệu cá nhân: trường 'soDienThoai' (Cảnh báo)       │
+│ ▸ Phát lại                      │ ☐ Tôi đã xem các cảnh báo dữ liệu cá nhân *              │
+│   rpl-01jd…                     │ Ý kiến * [                                           ]   │
+│                                 │                          [Từ chối]  [Duyệt]              │
+└─────────────────────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+### 19.2. Nội dung theo loại yêu cầu
+
+| `requestType` | Tab Khác biệt | Tab Kiểm tra | Trường quyết định thêm | FR |
+|---|---|---|---|---|
+| `TOPIC_CREATE` | Cấu hình, lược đồ phiên bản 1 (`CMP-CodeBlock`) | `piiFindings`, kết quả cú pháp, quy ước | `acknowledgePii` (bắt buộc khi có `WARNING`) | FR-10-009 |
+| `TOPIC_CHANGE` | `payloadDiff` bằng `CMP-DiffTable` | Subscription bị ảnh hưởng (lag lớn hơn lưu giữ mới), tác động thứ tự | `acknowledgeDataLoss` khi danh sách ảnh hưởng khác rỗng | FR-10-011, 012, 013, 021 |
+| `TOPIC_RETIRE` | Danh sách quan hệ sẽ thu hồi | Subscription còn hiệu lực | | FR-10-014 |
+| `SCHEMA_VERSION` | `CMP-DiffViewer` so với phiên bản mới nhất | `compatibilityReport`, `piiFindings`, bên nhận hiện có | `acknowledgePii` khi có `WARNING` | FR-10-019 |
+| `PUBLICATION` | Bên phát, topic, mục đích, lưu lượng | Cấp độ ATTT (topic hạn chế, nhạy cảm), hạn mức còn lại | `quotaBytesPerSecond` (người duyệt giảm được) | FR-10-031 |
+| `SUBSCRIPTION` | Bên nhận, chế độ, tham số, `legalBasis` | Kết quả xác minh endpoint còn hiệu lực, cấp độ ATTT, hạn mức worker | Giảm `push.workerCount`, `quotaBytesPerSecond` | FR-10-037 |
+| `REPLAY` | Khoảng, chế độ, ước lượng số bản tin, thời gian chạy | Tác động: nhận lại hoặc bỏ qua sự kiện | | FR-10-051 |
+| `BRIDGE` | Topic Pulsar, topic Kafka, `startFrom`, `expiresAt` | Ánh xạ, kết nối nguồn | | FR-10-073 |
+| `CUTOVER` | Ánh xạ, kết quả đối chiếu 72 giờ, số ngày song song | Điều kiện FR-10-075 đạt hay không, từng điều kiện một dòng | | FR-10-075 |
+
+### 19.3. Hành vi quyết định
+
+`CMP-DecisionPanel` dính đáy cột phải. "Duyệt" chỉ bật khi đã nhập ý kiến và đánh dấu đủ ô xác nhận bắt buộc; "Từ chối" đòi ý kiến ≥ 10 ký tự (FR-10-009). Người xem là người tạo hoặc người gửi: cả hai nút vô hiệu, `CMP-Alert` thông tin "Bạn đã gửi yêu cầu này nên không được duyệt (bốn mắt)." (BR-10-010, ERR-10-008). Yêu cầu `autoApproved = true` hiện thẻ "Tự duyệt bởi hệ thống" và không có nút. Yêu cầu `EXPIRED`: dải "Hết hạn sau {10.approval.expire-days} ngày; đối tượng đã về trạng thái trước khi gửi." Sau quyết định, mục rời danh sách, focus chuyển sang mục kế tiếp và Toast nêu kết quả; lỗi ERR-10-029 (Apicurio, Git, Keycloak không khả dụng) giữ yêu cầu `PENDING` và hiện `CMP-Alert` "Chưa duyệt được vì {dịch vụ} không khả dụng; yêu cầu vẫn chờ."
+
+### 19.4. Trạng thái, bàn phím
+
+Rỗng: "Không có yêu cầu sự kiện nào chờ bạn duyệt." `J`, `K` chuyển mục; `A` mở xác nhận duyệt; `X` từ chối; `Ctrl+Enter` gửi quyết định khi focus trong ô ý kiến. Dưới `bp-lg` danh sách và chi tiết chuyển thành hai trang nối nhau.
