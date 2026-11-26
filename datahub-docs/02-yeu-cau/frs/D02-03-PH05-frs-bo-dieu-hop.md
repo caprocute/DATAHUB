@@ -3168,98 +3168,774 @@ sequenceDiagram
 
 ### 6.7. Nhóm F · CDC cho hệ di sản
 
+CDC (Change Data Capture, bắt thay đổi dữ liệu) dùng cho HTTT nhóm 3 và 4: hệ không có API hay chỉ có API rất hạn chế. Debezium đọc nhật ký giao dịch của CSDL nguồn và phát từng thay đổi lên Kafka qua PH-10, không cần sửa ứng dụng của HTTT. Rủi ro chính là thay đổi lược đồ ở nguồn và việc giữ nhật ký quá lâu ở CSDL nguồn; nhóm F xử lý cả hai.
+
+```{.mermaid caption="Trạng thái CDC của một bộ điều hợp"}
+stateDiagram-v2
+  [*] --> STOPPED: khai báo (FR-05-048)
+  STOPPED --> SNAPSHOTTING: chạy, snapshotMode INITIAL
+  STOPPED --> STREAMING: chạy, NO_DATA
+  SNAPSHOTTING --> STREAMING: chụp ảnh xong
+  STREAMING --> PAUSED: tạm dừng, Kafka mất
+  PAUSED --> STREAMING: tiếp tục
+  STREAMING --> PAUSED_SCHEMA: thay đổi lược đồ phá vỡ (FR-05-051)
+  PAUSED_SCHEMA --> STREAMING: xử lý xong, tiếp tục
+  STREAMING --> FAILED: mất nhật ký chưa đọc
+  FAILED --> SNAPSHOTTING: chụp ảnh lại (FR-05-053)
+  STREAMING --> STOPPED: dừng hẳn
+  PAUSED --> STOPPED: dừng hẳn
+```
+
+CDC chỉ dừng tự động vì hai lý do: thay đổi lược đồ phá vỡ (`PAUSED_SCHEMA`) và mất nhật ký (`FAILED`). Mọi trường hợp khác (mất kết nối CSDL, Kafka tạm mất) đều giữ vị trí đọc và tự tiếp tục.
+
 #### FR-05-048 · Khai báo cấu hình CDC
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Khai báo những bảng nào của CSDL nguồn được bắt thay đổi, cột nào bỏ hoặc băm, và topic đích, để phát dữ liệu của hệ di sản lên Kafka mà không phải sửa HTTT.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-adapter`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040 (CSDL); repo FR-05-009; ADR-059.
+
+**Tiền điều kiện.** Bộ điều hợp `protocol = CDC`, `systemGroup` 3 hoặc 4; kết nối loại `cdc-debezium` có giá trị `ENABLED`.
+
+**Kích hoạt.** Người dùng mở tab CDC ở UI-05-12 và bấm "Lưu cấu hình".
+
+**Đầu vào.** Theo bảng dữ liệu vào của FR-05-048 dưới đây.
+
+**Luồng xử lý chính.**
+
+1. Người dùng chọn engine, bảng, cột, chế độ chụp ảnh rồi bấm "Lưu cấu hình".
+2. Hệ thống kiểm tra bảng thuộc `allowedSchemas` của kết nối (ERR-05-027) và tổng số bảng ≤ `05.cdc.max-tables` (mặc định 50; ERR-05-030).
+3. Hệ thống xin PH-10 đăng ký topic `{topicPrefix}.{schema}.{table}.v1` (một topic mỗi bảng, khóa phân vùng là khóa chính, lưu giữ 7 ngày) và lược đồ Avro tương ứng ở Apicurio.
+4. Hệ thống lưu cấu hình, trạng thái CDC `STOPPED`.
+5. Hệ thống sinh đặc tả `KafkaConnector` (Strimzi) vào kho GitOps của tenant ở nhánh môi trường; chỉ áp dụng khi chạy (FR-05-050).
+
+**Luồng thay thế.** Sửa cấu hình khi CDC đang chạy: hệ thống lưu bản mới, yêu cầu tạm dừng rồi tiếp tục để áp dụng; bảng mới thêm được chụp ảnh tăng dần (FR-05-053).
+
+**Luồng ngoại lệ.**
+
+- Bảng ngoài phạm vi: ERR-05-027 (422); "Bảng {tên} nằm ngoài phạm vi cho phép của kết nối."
+- Quá số bảng: ERR-05-030 (422); "Vượt số bảng CDC tối đa {n} của tỉnh."
+- PH-10 không khả dụng: ERR-05-029 (503); "Chưa đăng ký được topic với phân hệ Sự kiện. Thử lại sau."
+
+**Đầu ra.** `200`, cấu hình CDC kèm danh sách topic.
+
+**Kết quả.** Có cấu hình CDC sẵn sàng chạy; luồng PH-04 thấy trước các topic để thiết kế tiêu thụ.
+
+**Hậu điều kiện.** CDC `STOPPED`; topic và lược đồ đã đăng ký ở PH-10.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: bảng, cột loại trừ hoặc băm, người.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-12; API-05-067, 068.
+:::
+
+| Trường | Ràng buộc, mặc định |
 |---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-BUS-040 (CSDL); repo FR-05-009; ADR-059 |
-| Tác nhân, quyền | IE, TA (`PERM-05-adapter`) |
-| Tiền điều kiện | Bộ điều hợp `protocol = CDC`, `systemGroup` 3 hoặc 4; kết nối loại `cdc-debezium` có giá trị `ENABLED` |
-| Đầu vào | `engine` (`POSTGRESQL` ≥ 12, `MYSQL` ≥ 8.0, `ORACLE` ≥ 19c, `SQLSERVER` ≥ 2019), `tables[]` (schema, bảng, cột khóa nếu bảng không có khóa chính, `columnsInclude` hoặc `columnsExclude`, cột nhạy cảm cần băm hoặc bỏ), `snapshotMode` (`INITIAL`, `NO_DATA` chỉ thay đổi từ nay, `WHEN_NEEDED`), `topicPrefix` (mặc định `{tenant}.cdc.{adapterCode}`), `heartbeatSeconds` (mặc định 30), `schemaChangePolicy` (`PAUSE_ON_BREAKING` mặc định, không cho chọn bỏ qua với bảng có trường bắt buộc) |
-| Xử lý | 1. Kiểm tra bảng thuộc `allowedSchemas` của kết nối (ERR-05-027). 2. Kiểm tra tổng số bảng ≤ `05.cdc.max-tables` (mặc định 50). 3. Xin PH-10 đăng ký topic `{topicPrefix}.{schema}.{table}.v1` (một topic mỗi bảng, khóa phân vùng = khóa chính, lưu giữ 7 ngày) và lược đồ Avro tương ứng ở Apicurio; PH-10 không khả dụng thì ERR-05-029. 4. Lưu cấu hình, trạng thái CDC `STOPPED`. 5. Sinh đặc tả `KafkaConnector` (Strimzi) vào kho GitOps của tenant ở nhánh môi trường; chỉ áp dụng khi chạy (FR-05-050). |
-| Đầu ra | Cấu hình CDC, danh sách topic |
-| Ngoại lệ | ERR-05-027, 029, 030 |
-| Sự kiện, kiểm toán | Không sự kiện; kiểm toán có |
+| `engine` | `POSTGRESQL` ≥ 12, `MYSQL` ≥ 8.0, `ORACLE` ≥ 19c, `SQLSERVER` ≥ 2019 |
+| `tables[]` | Schema, bảng; cột khóa nếu bảng không có khóa chính; `columnsInclude` hoặc `columnsExclude`; cột nhạy cảm cần băm hoặc bỏ |
+| `snapshotMode` | `INITIAL`, `NO_DATA` (chỉ thay đổi từ nay), `WHEN_NEEDED` |
+| `topicPrefix` | Mặc định `{tenant}.cdc.{adapterCode}` |
+| `heartbeatSeconds` | Mặc định 30 |
+| `schemaChangePolicy` | `PAUSE_ON_BREAKING` (mặc định); không cho chọn bỏ qua với bảng có trường bắt buộc |
+
+: Dữ liệu vào của FR-05-048
 
 #### FR-05-049 · Kiểm tra điều kiện CDC ở CSDL nguồn
 
-FR-05-049 (M). `PERM-05-test`. Bộ chạy `probe` kiểm tra theo engine và trả từng mục đạt, không đạt kèm hướng dẫn gửi đơn vị chủ quản: PostgreSQL `wal_level = logical`, quyền `REPLICATION` hoặc vai trò `rds_replication`, publication được tạo sẵn cho đúng bảng (tài khoản CDC không được tự tạo publication cho mọi bảng), `max_replication_slots` còn chỗ; MySQL `binlog_format = ROW`, `binlog_row_image = FULL`, `gtid_mode = ON`, quyền `REPLICATION SLAVE`, `REPLICATION CLIENT`, `SELECT`; Oracle `ARCHIVELOG`, supplemental logging mức CSDL và mức bảng, quyền LogMiner (`LOGMINING`, `SELECT ANY TRANSACTION` theo kịch bản mẫu); SQL Server CDC bật ở CSDL và bảng. Ngoài ra kiểm tra thời gian giữ nhật ký ≥ `05.cdc.min-log-retention-hours` (mặc định 24 giờ) để giảm rủi ro mất nhật ký khi CDC dừng qua đêm. Không đạt thì không chạy được CDC (ERR-05-025).
+::: dac-ta
+**Mục đích.** Biết trước CSDL nguồn đã cấu hình đủ cho CDC chưa và thiếu gì, kèm hướng dẫn gửi đơn vị chủ quản, thay vì để connector lỗi khó hiểu khi chạy.
+
+**Tác nhân, quyền.** IE, TA, TO (`PERM-05-test`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-009; ADR-059.
+
+**Tiền điều kiện.** Cấu hình CDC đã lưu (FR-05-048).
+
+**Kích hoạt.** Người dùng bấm "Kiểm tra điều kiện" ở UI-05-12; bắt buộc trong 24 giờ trước khi chạy.
+
+**Đầu vào.** `adapterCode`, `environment`.
+
+**Luồng xử lý chính.**
+
+1. Bộ chạy `probe` đăng nhập CSDL nguồn bằng tài khoản CDC.
+2. Hệ thống kiểm tra theo engine:
+   - PostgreSQL: `wal_level = logical`; quyền `REPLICATION` hoặc vai trò `rds_replication`; publication được tạo sẵn cho đúng bảng (tài khoản CDC không được tự tạo publication cho mọi bảng); `max_replication_slots` còn chỗ.
+   - MySQL: `binlog_format = ROW`, `binlog_row_image = FULL`, `gtid_mode = ON`; quyền `REPLICATION SLAVE`, `REPLICATION CLIENT`, `SELECT`.
+   - Oracle: `ARCHIVELOG`; supplemental logging mức CSDL và mức bảng; quyền LogMiner (`LOGMINING`, `SELECT ANY TRANSACTION` theo kịch bản mẫu).
+   - SQL Server: CDC bật ở CSDL và ở bảng.
+3. Hệ thống kiểm tra thời gian giữ nhật ký ≥ `05.cdc.min-log-retention-hours` (mặc định 24 giờ), để giảm rủi ro mất nhật ký khi CDC dừng qua đêm.
+4. Hệ thống trả từng mục đạt hoặc không đạt, kèm hướng dẫn và nút "Sao chép để gửi" đơn vị chủ quản.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.** Có mục không đạt: kết quả `FAILED`, không chạy được CDC (ERR-05-025, 422); "CSDL nguồn chưa đáp ứng điều kiện CDC: {mục}. Gửi hướng dẫn cho đơn vị chủ quản."
+
+**Đầu ra.** `200`, danh sách mục kiểm tra với kết quả và hướng dẫn.
+
+**Kết quả.** IE có văn bản cụ thể để đề nghị đơn vị chủ quản cấu hình CSDL.
+
+**Hậu điều kiện.** Kết quả kiểm tra gắn với cấu hình CDC, có hiệu lực 24 giờ.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: người, kết quả.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-12; API-05-069.
+:::
 
 #### FR-05-050 · Chạy, tạm dừng, tiếp tục và dừng CDC
 
-FR-05-050 (M). TO, TA (`PERM-05-operate`). **Chạy**: điều kiện CDC đạt trong 24 giờ, bộ điều hợp có phiên bản `APPROVED`; áp `KafkaConnector` qua GitOps (ADR-009), trạng thái `SNAPSHOTTING` hoặc `STREAMING` theo `snapshotMode`. **Tạm dừng**: đặt connector `paused`, giữ vị trí đọc (offset ở topic nội bộ của Kafka Connect); trạng thái `PAUSED`. Kafka không khả dụng cũng đưa về `PAUSED` tự động và tiếp tục khi Kafka trở lại. **Tiếp tục**: từ `PAUSED`, hoặc từ `PAUSED_SCHEMA` khi mọi thay đổi lược đồ đã xử lý (ERR-05-026). **Dừng hẳn**: xóa connector, giữ offset 7 ngày; với PostgreSQL xóa replication slot sau khi xác nhận để không giữ WAL vô hạn ở CSDL nguồn (BR-05-022). Mất kết nối CSDL: Debezium thử lại, giữ vị trí; quá 5 phút thì cảnh báo. Mọi hành động có lý do, kiểm toán, phát EVT-05-12.
+::: dac-ta
+**Mục đích.** Điều khiển CDC an toàn: không mất thay đổi khi tạm dừng, không giữ nhật ký vô hạn ở CSDL nguồn khi dừng hẳn.
+
+**Tác nhân, quyền.** TO, TA (`PERM-05-operate`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-009; ADR-009, ADR-059.
+
+**Tiền điều kiện.** Chạy: điều kiện CDC đạt trong 24 giờ (FR-05-049); bộ điều hợp có phiên bản `APPROVED`.
+
+**Kích hoạt.** Các nút "Chạy", "Tạm dừng", "Tiếp tục", "Dừng hẳn" ở UI-05-12.
+
+**Đầu vào.** `reason` (bắt buộc với mọi hành động).
+
+**Luồng xử lý chính.**
+
+1. Chạy: hệ thống áp `KafkaConnector` qua GitOps (ADR-009); trạng thái `SNAPSHOTTING` hoặc `STREAMING` theo `snapshotMode`.
+2. Tạm dừng: hệ thống đặt connector `paused`, giữ vị trí đọc (offset ở topic nội bộ của Kafka Connect); trạng thái `PAUSED`.
+3. Tiếp tục: từ `PAUSED`, hoặc từ `PAUSED_SCHEMA` khi mọi thay đổi lược đồ đã xử lý.
+4. Dừng hẳn: hệ thống xóa connector, giữ offset 7 ngày; với PostgreSQL, xóa replication slot sau khi người dùng xác nhận, để không giữ WAL vô hạn ở CSDL nguồn (BR-05-022).
+5. Mỗi hành động, hệ thống ghi lý do, kiểm toán và phát EVT-05-12.
+
+**Luồng thay thế.**
+
+- Kafka không khả dụng: hệ thống tự đưa về `PAUSED` và tự tiếp tục khi Kafka trở lại.
+- Mất kết nối CSDL: Debezium thử lại, giữ vị trí; quá 5 phút thì cảnh báo.
+
+**Luồng ngoại lệ.**
+
+- Chưa kiểm tra điều kiện đạt: ERR-05-009 (409); "Chưa có kiểm tra điều kiện CDC đạt trong 24 giờ." kèm nút "Kiểm tra điều kiện".
+- Tiếp tục khi còn thay đổi lược đồ chờ: ERR-05-026 (409); "Còn {n} thay đổi lược đồ chưa xử lý." kèm liên kết UI-05-13.
+- Thiếu lý do: ERR-05-038 (400). Kafka Connect không khả dụng: ERR-05-029 (503).
+
+**Đầu ra.** `202`, trạng thái CDC mới (khi connector xác nhận).
+
+**Kết quả.** TO dừng hoặc chạy lại CDC mà không mất thay đổi nào đã xảy ra ở nguồn trong thời gian dừng (trong giới hạn giữ nhật ký).
+
+**Hậu điều kiện.** Trạng thái CDC và connector khớp nhau.
+
+**Sự kiện phát ra.** EVT-05-12.
+
+**Kiểm toán.** Có: hành động, lý do, người.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-12; API-05-070, 071, 072.
+:::
 
 #### FR-05-051 · Giám sát và xử lý thay đổi lược đồ
 
-| Trường | Nội dung |
-|---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; repo FR-05-009 bước 4 và E2 |
-| Tác nhân, quyền | Hệ thống phát hiện; IE, TA (`PERM-05-adapter`) xử lý; TO được thông báo |
-| Xử lý | 1. `dh-integration` tiêu thụ topic lịch sử lược đồ của connector và sự kiện thay đổi cấu trúc; so với lược đồ Avro đã đăng ký của bảng. 2. Phân loại: **tương thích** (thêm cột có thể null, mở rộng độ dài) → ghi `CdcSchemaChange` mức `COMPATIBLE`, cập nhật lược đồ theo chế độ BACKWARD của PH-10, CDC tiếp tục; **phá vỡ** (xóa cột, đổi tên, đổi kiểu, thêm cột `NOT NULL` không mặc định, đổi khóa chính) → mức `BREAKING`, tạm dừng connector trước khi phát bản ghi theo lược đồ mới, trạng thái `PAUSED_SCHEMA`, cảnh báo mức cao (BR-05-022). 3. Người xử lý chọn cho từng thay đổi: `ACCEPT` (đăng ký lược đồ phiên bản chính mới, topic mới `.v2`, thông báo các luồng tiêu thụ `.v1`), `MAP_COLUMN` (khai báo cột cũ ↔ cột mới qua `columnMap`), `EXCLUDE_TABLE` (bỏ bảng khỏi CDC), `RESNAPSHOT` (xếp lịch chụp ảnh lại, FR-05-053); kèm ghi chú ≥ 10 ký tự. Loại một cột khỏi CDC làm bằng `columnExcludes` của cấu hình (API-05-068). 4. Khi không còn thay đổi `BREAKING` chờ, cho phép tiếp tục (FR-05-050). |
-| Đầu ra | Danh sách thay đổi chờ (API-05-074), trạng thái sau xử lý |
-| Ngoại lệ | Tiếp tục khi còn thay đổi chờ: ERR-05-026, 409 |
-| Sự kiện phát ra | EVT-05-11 khi phát hiện, EVT-05-12 khi trạng thái CDC đổi |
-| Kiểm toán | Có: thay đổi, quyết định, người |
+::: dac-ta
+**Mục đích.** Không để thay đổi cấu trúc bảng ở nguồn âm thầm làm hỏng dữ liệu của các luồng tiêu thụ: thay đổi tương thích tự áp dụng, thay đổi phá vỡ dừng CDC chờ người quyết định.
+
+**Tác nhân, quyền.** Hệ thống phát hiện; IE, TA (`PERM-05-adapter`) xử lý; TO được thông báo.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-009 bước 4 và E2.
+
+**Tiền điều kiện.** CDC đang `SNAPSHOTTING` hoặc `STREAMING`.
+
+**Kích hoạt.** Connector ghi bản ghi lịch sử lược đồ hoặc sự kiện thay đổi cấu trúc; người xử lý mở UI-05-13.
+
+**Đầu vào.** Xử lý: `changeId`, `decision` (`ACCEPT`, `MAP_COLUMN`, `EXCLUDE_TABLE`, `RESNAPSHOT`), `columnMap` (với `MAP_COLUMN`), `note` (≥ 10 ký tự).
+
+**Luồng xử lý chính.**
+
+1. `dh-integration` tiêu thụ topic lịch sử lược đồ của connector và sự kiện thay đổi cấu trúc; so với lược đồ Avro đã đăng ký của bảng.
+2. Thay đổi tương thích (thêm cột có thể null, mở rộng độ dài): hệ thống ghi `CdcSchemaChange` mức `COMPATIBLE`, cập nhật lược đồ theo chế độ BACKWARD của PH-10, CDC tiếp tục.
+3. Thay đổi phá vỡ (xóa cột, đổi tên, đổi kiểu, thêm cột `NOT NULL` không mặc định, đổi khóa chính): hệ thống ghi mức `BREAKING`, tạm dừng connector trước khi phát bản ghi theo lược đồ mới, trạng thái `PAUSED_SCHEMA`, cảnh báo mức cao (BR-05-022), phát EVT-05-11.
+4. Người xử lý chọn cho từng thay đổi: `ACCEPT` (đăng ký lược đồ phiên bản chính mới, topic mới `.v2`, thông báo các luồng tiêu thụ `.v1`), `MAP_COLUMN` (khai báo cột cũ ↔ cột mới), `EXCLUDE_TABLE` (bỏ bảng khỏi CDC), `RESNAPSHOT` (xếp lịch chụp ảnh lại, FR-05-053).
+5. Khi không còn thay đổi `BREAKING` chờ, hệ thống cho phép tiếp tục (FR-05-050).
+
+**Luồng thay thế.** Loại một cột khỏi CDC: sửa `columnExcludes` trong cấu hình (API-05-068) thay vì xử lý từng thay đổi.
+
+**Luồng ngoại lệ.**
+
+- Tiếp tục khi còn thay đổi chờ: ERR-05-026 (409); "Còn {n} thay đổi lược đồ chưa xử lý." kèm liên kết UI-05-13.
+- Ghi chú ngắn: ERR-05-003 (400); "Ghi chú tối thiểu 10 ký tự."
+
+**Đầu ra.** Danh sách thay đổi chờ (API-05-074); trạng thái sau xử lý.
+
+**Kết quả.** Luồng tiêu thụ không bao giờ nhận bản ghi theo lược đồ mới mà chưa có người quyết định.
+
+**Hậu điều kiện.** Lược đồ ở PH-10 khớp nguồn; topic `.v2` (nếu `ACCEPT`) đã đăng ký.
+
+**Sự kiện phát ra.** EVT-05-11 khi phát hiện; EVT-05-12 khi trạng thái CDC đổi.
+
+**Kiểm toán.** Có: thay đổi, quyết định, người.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-13; UI-05-12; API-05-074, 075.
+:::
+
+```{.mermaid caption="Trình tự xử lý thay đổi lược đồ phá vỡ"}
+sequenceDiagram
+  participant DB as CSDL nguồn
+  participant DZ as Debezium
+  participant DI as dh-integration
+  participant PH10 as PH-10
+  actor IE
+  DB->>DZ: ALTER TABLE (đổi kiểu cột)
+  DZ->>DI: bản ghi lịch sử lược đồ
+  DI->>DI: so lược đồ Avro: BREAKING
+  DI->>DZ: tạm dừng connector (PAUSED_SCHEMA)
+  DI-->>IE: cảnh báo, EVT-05-11
+  IE->>DI: ACCEPT (API-05-075)
+  DI->>PH10: đăng ký lược đồ, topic .v2
+  IE->>DI: tiếp tục (API-05-072)
+  DI->>DZ: resume
+```
 
 #### FR-05-052 · Theo dõi trạng thái CDC
 
-FR-05-052 (M). `PERM-05-read`. Trả và hiển thị (UI-05-12): trạng thái, engine, vị trí đọc (LSN, GTID, SCN), thời điểm cập nhật vị trí, độ trễ (thời gian từ commit ở nguồn tới khi bản ghi có ở Kafka, từ chỉ số `MilliSecondsBehindSource`), tiến độ chụp ảnh (số dòng, phần trăm theo ước lượng thống kê bảng), theo từng bảng: số sự kiện 24 giờ theo loại `c`, `u`, `d`, sự kiện cuối; số thay đổi lược đồ chờ; kích thước WAL hoặc slot giữ lại ở nguồn (PostgreSQL). Độ trễ vượt `05.cdc.lag-alert-seconds` (mặc định 300) chuyển sức khỏe `DEGRADED`; vượt 4 lần ngưỡng là `UNHEALTHY`.
+::: dac-ta
+**Mục đích.** Cho cán bộ vận hành biết CDC đang chạy tới đâu, trễ bao nhiêu, và CSDL nguồn đang phải giữ bao nhiêu nhật ký vì CDC.
+
+**Tác nhân, quyền.** TO, IE (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-009.
+
+**Tiền điều kiện.** Bộ điều hợp có cấu hình CDC.
+
+**Kích hoạt.** Người dùng mở UI-05-12; màn tự làm mới mỗi 30 giây.
+
+**Đầu vào.** `adapterCode`.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống trả trạng thái, engine, vị trí đọc (LSN, GTID, SCN) và thời điểm cập nhật vị trí.
+2. Hệ thống trả độ trễ (từ commit ở nguồn tới khi bản ghi có ở Kafka, chỉ số `MilliSecondsBehindSource`) và tiến độ chụp ảnh (số dòng, phần trăm theo ước lượng thống kê bảng).
+3. Theo từng bảng, hệ thống trả số sự kiện 24 giờ theo loại `c`, `u`, `d`, sự kiện cuối.
+4. Hệ thống trả số thay đổi lược đồ chờ và kích thước WAL hoặc slot giữ lại ở nguồn (PostgreSQL).
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.**
+
+- Độ trễ vượt `05.cdc.lag-alert-seconds` (mặc định 300): sức khỏe `DEGRADED`; vượt 4 lần ngưỡng: `UNHEALTHY`.
+- Kafka Connect không trả lời: ERR-05-029 (503); "Chưa lấy được trạng thái CDC. Số liệu là của lần tải trước lúc {thời điểm}."
+
+**Đầu ra.** `200`, các khối số liệu nêu trên.
+
+**Kết quả.** TO thấy CDC trễ trước khi người dùng nghiệp vụ phàn nàn dữ liệu cũ.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** EVT-05-06 khi sức khỏe đổi do độ trễ.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-12; UI-05-07; API-05-067.
+:::
 
 #### FR-05-053 · Chụp ảnh lại dữ liệu nguồn
 
-FR-05-053 (S). TO, TA (`PERM-05-operate`), lý do bắt buộc, chạy khi CDC `FAILED` do mất nhật ký hoặc khi người dùng cần nạp lại một số bảng. Chụp ảnh lại dùng tín hiệu chụp ảnh tăng dần của Debezium (incremental snapshot) cho các bảng chọn, không khóa bảng nguồn lâu; bản ghi chụp ảnh mang `op = r` để luồng tiêu thụ phân biệt. Bảng > 10 triệu dòng (theo thống kê) phải được xác nhận lịch chạy ngoài giờ hành chính. Phát EVT-05-12; kiểm toán có.
+::: dac-ta
+**Mục đích.** Nạp lại dữ liệu của một số bảng khi CDC mất nhật ký hoặc khi luồng cần dữ liệu đầy đủ, mà không khóa bảng nguồn lâu.
+
+**Tác nhân, quyền.** TO, TA (`PERM-05-operate`).
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-009; ADR-059.
+
+**Tiền điều kiện.** CDC `FAILED` do mất nhật ký (ERR-05-117), hoặc `STREAMING` khi người dùng cần nạp lại một số bảng.
+
+**Kích hoạt.** Người dùng bấm "Chụp ảnh lại" ở UI-05-12, hoặc chọn `RESNAPSHOT` ở FR-05-051.
+
+**Đầu vào.** `tables[]`, `reason` (bắt buộc), `scheduledAt` (bắt buộc với bảng lớn).
+
+**Luồng xử lý chính.**
+
+1. Người dùng chọn bảng, nhập lý do.
+2. Hệ thống ước lượng số dòng theo thống kê bảng.
+3. Hệ thống gửi tín hiệu chụp ảnh tăng dần của Debezium (incremental snapshot) cho các bảng chọn.
+4. Bản ghi chụp ảnh mang `op = r` để luồng tiêu thụ phân biệt với thay đổi thật.
+5. Hệ thống phát EVT-05-12 khi bắt đầu và khi xong.
+
+**Luồng thay thế.** Bảng > 10 triệu dòng: hệ thống yêu cầu xác nhận lịch chạy ngoài giờ hành chính và chạy theo `scheduledAt`.
+
+**Luồng ngoại lệ.**
+
+- Thiếu lý do: ERR-05-038 (400); "Nhập lý do chụp ảnh lại."
+- Bảng lớn chưa có lịch ngoài giờ: ERR-05-003 (400); "Bảng {tên} khoảng {n} dòng. Chọn lịch chạy ngoài giờ hành chính."
+
+**Đầu ra.** `202`, tiến độ chụp ảnh ở FR-05-052.
+
+**Kết quả.** Luồng tiêu thụ có lại đủ dữ liệu của bảng mà HTTT không bị khóa bảng.
+
+**Hậu điều kiện.** CDC về `STREAMING` sau khi chụp ảnh xong.
+
+**Sự kiện phát ra.** EVT-05-12.
+
+**Kiểm toán.** Có: bảng, lý do, lịch, người.
+
+**Quy tắc nghiệp vụ.** BR-05-022.
+
+**Màn hình, API.** UI-05-12; API-05-073.
+:::
 
 ### 6.8. Nhóm G · Danh mục Kamelet được duyệt
 
+Kamelet là khối thành phần dựng sẵn mà trình thiết kế luồng PH-04 dùng. PH-05 giữ danh mục Kamelet của tenant và của nền tảng, kiểm tra tĩnh mọi Kamelet trước khi duyệt (chống chèn mã, chống kết nối ra ngoài không qua kết nối đã khai báo), và đồng bộ danh mục với runtime. Có bốn phạm vi: nền (`BASE`), dùng chung (`COMMON`), của tỉnh (`TENANT`), và Kamelet sinh từ bộ điều hợp.
+
+```{.mermaid caption="Vòng đời phiên bản Kamelet"}
+stateDiagram-v2
+  [*] --> DRAFT: soạn (FR-05-056)
+  DRAFT --> SUBMITTED: kiểm tra tĩnh đạt, gửi
+  SUBMITTED --> APPROVED: duyệt (FR-05-057)
+  SUBMITTED --> DRAFT: từ chối
+  APPROVED --> DEPRECATED: ngừng khuyến nghị (FR-05-058)
+  APPROVED --> WITHDRAWN: thu hồi
+  DEPRECATED --> WITHDRAWN: thu hồi
+  WITHDRAWN --> [*]
+```
+
 #### FR-05-054 · Liệt kê danh mục Kamelet
 
-FR-05-054 (M; LGC-BUS-040, LGC-TOOL-008…011; FR-04-012). `PERM-05-read`. Danh mục gồm Kamelet nền (`BASE`, giao thức và chặng chuẩn), dùng chung (`COMMON`), của tỉnh (`TENANT`) và Kamelet sinh từ bộ điều hợp. Lọc theo `scope`, `type`, nhóm (`HTTP`, `SOAP`, `DATABASE`, `FILE`, `MESSAGING`, `MAIL`, `STAGE`, `ADAPTER`), trạng thái phiên bản, `q`. Mỗi mục: tên, tiêu đề tiếng Việt, phạm vi, loại, phiên bản mới nhất được duyệt, trạng thái, số nơi dùng, mức native (`SUPPORTED`, `JVM_ONLY`), huy hiệu "Của tỉnh", "Dùng chung", "Sinh từ bộ điều hợp". Kamelet `WITHDRAWN` chỉ hiện khi chọn lọc trạng thái đó.
+::: dac-ta
+**Mục đích.** Cho kỹ sư biết có những thành phần nào dùng được trong luồng của tỉnh, ở phạm vi nào, có chạy native được không, và đang được dùng ở bao nhiêu nơi.
+
+**Tác nhân, quyền.** IE, IA, PA (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-040, LGC-TOOL-008…011; FR-04-012.
+
+**Tiền điều kiện.** Người dùng đăng nhập vào tenant.
+
+**Kích hoạt.** Người dùng mở UI-05-14 từ menu "Kết nối · Kamelet".
+
+**Đầu vào.** Bộ lọc `scope`, `type`, nhóm (`HTTP`, `SOAP`, `DATABASE`, `FILE`, `MESSAGING`, `MAIL`, `STAGE`, `ADAPTER`), trạng thái phiên bản, `q`.
+
+**Luồng xử lý chính.**
+
+1. Người dùng mở màn hoặc đổi bộ lọc.
+2. Hệ thống trả Kamelet nền, `COMMON`, `TENANT` và Kamelet sinh từ bộ điều hợp theo bộ lọc.
+3. Mỗi mục có: tên, tiêu đề tiếng Việt, phạm vi, loại, phiên bản mới nhất được duyệt, trạng thái, số nơi dùng, mức native (`SUPPORTED`, `JVM_ONLY`), huy hiệu "Của tỉnh", "Dùng chung", "Sinh từ bộ điều hợp".
+4. Người dùng bấm một mục để mở chi tiết (FR-05-055).
+
+**Luồng thay thế.** Kamelet `WITHDRAWN` chỉ hiện khi người dùng chọn lọc trạng thái đó.
+
+**Luồng ngoại lệ.** Bộ lọc sai: ERR-05-003 (400).
+
+**Đầu ra.** `200`, trang kết quả kèm `facets`.
+
+**Kết quả.** Kỹ sư chọn đúng thành phần trước khi thiết kế luồng, tránh tạo Kamelet trùng.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-14; API-05-076.
+:::
 
 #### FR-05-055 · Xem chi tiết Kamelet
 
-FR-05-055 (M). `PERM-05-read`. Trả: mô tả, tham số (tên, tiêu đề, kiểu, mặc định, bắt buộc, `x-descriptors`), kiểu dữ liệu vào ra, YAML theo phiên bản (chỉ đọc, tô cú pháp), lịch sử phiên bản và trạng thái, người gửi, người duyệt, kết quả kiểm tra tĩnh, phụ thuộc thành phần Camel, nơi dùng (luồng, phiên bản, môi trường; từ chỉ mục FR-05-014), ghi chú phát hành, khác biệt giữa hai phiên bản. Kamelet nền có thêm liên kết tài liệu ở D03-02-PH05.
+::: dac-ta
+**Mục đích.** Cho người dùng và người duyệt xem đủ một Kamelet: tham số, định nghĩa YAML, ai gửi, ai duyệt, kết quả kiểm tra tĩnh, đang dùng ở đâu.
+
+**Tác nhân, quyền.** IE, IA, PA (`PERM-05-read`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; FR-04-012.
+
+**Tiền điều kiện.** Kamelet khả dụng với tenant.
+
+**Kích hoạt.** Người dùng bấm một mục ở UI-05-14, hoặc liên kết từ trình thiết kế, việc duyệt.
+
+**Đầu vào.** `kameletName`; tùy chọn `version`, cặp phiên bản để so sánh.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống trả mô tả, tham số (tên, tiêu đề, kiểu, mặc định, bắt buộc, `x-descriptors`), kiểu dữ liệu vào ra.
+2. Hệ thống trả YAML theo phiên bản (chỉ đọc, tô cú pháp), lịch sử phiên bản và trạng thái, người gửi, người duyệt, kết quả kiểm tra tĩnh, phụ thuộc thành phần Camel, ghi chú phát hành.
+3. Hệ thống trả nơi dùng (luồng, phiên bản, môi trường) từ chỉ mục FR-05-014.
+
+**Luồng thay thế.** So sánh hai phiên bản: hệ thống trả khác biệt YAML và khác biệt tham số. Kamelet nền có thêm liên kết tài liệu ở D03-02-PH05.
+
+**Luồng ngoại lệ.** Không tìm thấy hoặc không khả dụng với tenant: ERR-05-001 (404); "Không tìm thấy Kamelet {tên}."
+
+**Đầu ra.** `200`, chi tiết; YAML ở API-05-078.
+
+**Kết quả.** Người duyệt và người dùng thấy cùng một nguồn sự thật về Kamelet.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-15; API-05-077, 078, 087.
+:::
 
 #### FR-05-056 · Soạn, kiểm tra tĩnh và gửi đăng ký Kamelet
 
-| Trường | Nội dung |
+::: dac-ta
+**Mục đích.** Cho tỉnh tự tạo thành phần dùng lại được, nhưng chỉ khi nó vượt qua kiểm tra tĩnh nghiêm ngặt: không chạy mã tùy ý, không kết nối ra ngoài trái phép, không chứa bí mật.
+
+**Tác nhân, quyền.** IE, TA (`PERM-05-kamelet-submit`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-TOOL-027 (thay thế); FR-04-018; SEC-46.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** Người dùng soạn hoặc tải YAML ở UI-05-16 rồi bấm "Kiểm tra" và "Gửi duyệt"; hoặc PH-04 gửi từ trình thiết kế.
+
+**Đầu vào.** YAML Kamelet (≤ 256 KiB) theo FR-04-018 (tên `^[a-z][a-z0-9-]{2,62}-(source|sink|action)$`, `spec.definition`, `spec.template`); `origin` (`EDITOR` khi soạn hoặc tải tệp ở UI-05-16, `DESIGNER` khi gửi từ trình thiết kế PH-04; `GENERATED`, `PLATFORM` do hệ thống đặt cho Kamelet sinh và Kamelet nền); ghi chú phát hành; `version` (SemVer; mới thì `1.0.0`).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống kiểm tra tên không trùng Kamelet nền, `COMMON` hay Kamelet khác của tenant (ERR-05-002).
+2. Hệ thống chạy kiểm tra tĩnh (chạy lại khi gửi) theo các quy tắc ở bảng dưới.
+3. Hệ thống lưu phiên bản `DRAFT` kèm báo cáo kiểm tra.
+4. Người dùng bấm "Gửi duyệt": hệ thống chạy lại kiểm tra, chuyển `SUBMITTED` và đưa vào hộp việc của IA.
+
+**Luồng thay thế.** Nguồn `DESIGNER`: khi luồng loại `KAMELET` của PH-04 được IA duyệt phát hành (FR-04-018), PH-04 gọi API-05-079 và API-05-082 kèm mã quyết định duyệt; PH-05 ghi nhận duyệt đó và chuyển thẳng `APPROVED` nếu kiểm tra tĩnh đạt (BR-05-027), không duyệt hai lần.
+
+**Luồng ngoại lệ.**
+
+- Tên trùng: ERR-05-002 (409); "Tên {tên} đã được dùng. Chọn tên khác."
+- Vi phạm chính sách tĩnh: ERR-05-020 (422); "Kamelet vi phạm {n} quy tắc. Xem từng dòng trong báo cáo kiểm tra."
+- Thành phần không có ở runtime: ERR-05-021 (422); "Thành phần {tên} không có trong runtime hiện hành."
+- Không tương thích ngược ở số phụ: ERR-05-022 (422); "Thay đổi này phá vỡ tương thích. Tăng số chính của phiên bản."
+
+**Đầu ra.** Phiên bản Kamelet và báo cáo kiểm tra: `findings[]` (mã quy tắc, mức, dòng, cột, thông điệp).
+
+**Kết quả.** IE biết chính xác dòng nào vi phạm quy tắc nào và sửa ngay trong trình soạn.
+
+**Hậu điều kiện.** `SUBMITTED` nằm trong hộp việc của IA.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có: người, phiên bản, kết quả kiểm tra.
+
+**Quy tắc nghiệp vụ.** BR-05-027.
+
+**Màn hình, API.** UI-05-16; API-05-079, 080, 081, 082.
+:::
+
+| Quy tắc kiểm tra tĩnh | Lỗi khi vi phạm |
 |---|---|
-| Mức ưu tiên | M |
-| Truy vết | REQ-05; LGC-TOOL-027 (thay thế); FR-04-018; SEC-46 |
-| Tác nhân, quyền | IE, TA (`PERM-05-kamelet-submit`) |
-| Đầu vào | YAML Kamelet (≤ 256 KiB) theo FR-04-018 (tên `^[a-z][a-z0-9-]{2,62}-(source|sink|action)$`, `spec.definition`, `spec.template`), nguồn `origin` (`EDITOR` khi soạn hoặc tải tệp ở UI-05-16, `DESIGNER` khi gửi từ trình thiết kế PH-04; `GENERATED`, `PLATFORM` do hệ thống đặt cho Kamelet sinh và Kamelet nền), ghi chú phát hành, `version` (SemVer; mới thì `1.0.0`) |
-| Xử lý | 1. Tên không trùng Kamelet nền, `COMMON` hay Kamelet khác của tenant (ERR-05-002). 2. **Kiểm tra tĩnh** (API-05-081, chạy lại khi gửi): YAML hợp lệ với lược đồ Kamelet của Camel 4.18; mọi thành phần, ngôn ngữ biểu thức trong `template` thuộc danh mục được phép của FR-04-080 cho tenant; không `#class:`, không `bean` ngoài danh sách, không ngôn ngữ kịch bản (`groovy`, `js`, `python`, `mvel`, `ognl`, `spel`); không URI kết nối ra ngoài trực tiếp mà phải qua Kamelet nền giao thức hoặc tham số kết nối (`{{conn:…}}`, CC-CAMEL-07); tham số nhạy cảm có `x-descriptors: urn:camel:group:credentials`; không có chuỗi giống bí mật (quét entropy và mẫu); các thành phần có ở runtime theo `runtime-manifest.json` (ERR-05-021); với phiên bản mới của Kamelet đã có, số phụ phải tương thích ngược (không bỏ tham số, không thêm tham số bắt buộc không mặc định), ngược lại phải tăng số chính (ERR-05-022). 3. Lưu phiên bản `DRAFT` kèm báo cáo kiểm tra; gửi thì `SUBMITTED`. 4. Nguồn `DESIGNER`: khi luồng loại `KAMELET` của PH-04 được duyệt phát hành bởi IA (FR-04-018), PH-04 gọi API-05-079 và API-05-082 kèm mã quyết định duyệt; PH-05 ghi nhận duyệt đó và chuyển thẳng `APPROVED` nếu kiểm tra tĩnh đạt (BR-05-027), không duyệt hai lần. |
-| Đầu ra | Phiên bản Kamelet và báo cáo kiểm tra: `findings[]` (mã quy tắc, mức, dòng, cột, thông điệp) |
-| Ngoại lệ | ERR-05-002, 020, 021, 022 |
-| Hậu điều kiện | `SUBMITTED` nằm trong hộp việc của IA |
-| Sự kiện, kiểm toán | Không sự kiện; kiểm toán có |
+| YAML hợp lệ với lược đồ Kamelet của Camel 4.18 | ERR-05-020 |
+| Mọi thành phần, ngôn ngữ biểu thức trong `template` thuộc danh mục được phép của FR-04-080 cho tenant | ERR-05-020 |
+| Không `#class:`, không `bean` ngoài danh sách, không ngôn ngữ kịch bản (`groovy`, `js`, `python`, `mvel`, `ognl`, `spel`) | ERR-05-020 |
+| Không URI kết nối ra ngoài trực tiếp; phải qua Kamelet nền giao thức hoặc tham số kết nối (`{{conn:…}}`, CC-CAMEL-07) | ERR-05-020 |
+| Tham số nhạy cảm có `x-descriptors: urn:camel:group:credentials` | ERR-05-020 |
+| Không có chuỗi giống bí mật (quét entropy và mẫu) | ERR-05-020 |
+| Thành phần có ở runtime theo `runtime-manifest.json` | ERR-05-021 |
+| Phiên bản số phụ tương thích ngược (không bỏ tham số, không thêm tham số bắt buộc không mặc định) | ERR-05-022 |
+
+: Quy tắc kiểm tra tĩnh Kamelet
 
 #### FR-05-057 · Duyệt hoặc từ chối Kamelet
 
-FR-05-057 (M; SEC-46). Kamelet `TENANT`: IA của tenant (`PERM-05-kamelet-approve`). Kamelet `COMMON` và Kamelet nền: PA, có SO của tenant đề xuất hoặc SO nền tảng đồng ý ghi trong ý kiến (FR-04-018 quy tắc 3). Người duyệt xem YAML, báo cáo kiểm tra tĩnh, khác biệt với phiên bản trước, danh sách thành phần dùng; người duyệt khác người gửi (ERR-05-011). Duyệt thì `APPROVED`, phát EVT-05-09, catalog của tenant (hoặc mọi tenant với `COMMON`) được làm mới (FR-05-059). Từ chối có lý do, về `DRAFT`. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Người thứ hai có thẩm quyền xem lại Kamelet trước khi nó vào bảng thành phần, với Kamelet dùng chung thì cần thêm ý kiến an ninh.
+
+**Tác nhân, quyền.** Kamelet `TENANT`: IA của tenant (`PERM-05-kamelet-approve`). Kamelet `COMMON` và Kamelet nền: PA, có SO của tenant đề xuất hoặc SO nền tảng đồng ý ghi trong ý kiến (FR-04-018 quy tắc 3).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; SEC-46; FR-04-018.
+
+**Tiền điều kiện.** Phiên bản `SUBMITTED`.
+
+**Kích hoạt.** Người duyệt mở việc ở UI-05-17.
+
+**Đầu vào.** `decision` (`APPROVE`, `REJECT`), `comment` (bắt buộc khi từ chối).
+
+**Luồng xử lý chính.**
+
+1. Người duyệt xem YAML, báo cáo kiểm tra tĩnh, khác biệt với phiên bản trước, danh sách thành phần dùng.
+2. Hệ thống kiểm tra người duyệt khác người gửi (ERR-05-011).
+3. Duyệt: phiên bản `APPROVED`, hệ thống phát EVT-05-09.
+4. Hệ thống làm mới catalog của tenant, hoặc của mọi tenant với `COMMON` (FR-05-059).
+
+**Luồng thay thế.** Từ chối: phiên bản về `DRAFT` kèm lý do.
+
+**Luồng ngoại lệ.**
+
+- Bốn mắt: ERR-05-011 (403); "Anh/chị là người gửi Kamelet này nên không được tự duyệt."
+- Kamelet `COMMON` chưa có ý kiến SO: ERR-05-017 (409); "Cần ý kiến đồng ý của cán bộ ATTT trước khi duyệt Kamelet dùng chung."
+- Thiếu lý do từ chối: ERR-05-038 (400).
+
+**Đầu ra.** `200`, phiên bản với trạng thái mới.
+
+**Kết quả.** Kamelet được duyệt xuất hiện trong trình thiết kế của tỉnh (hoặc mọi tỉnh với `COMMON`).
+
+**Hậu điều kiện.** Catalog đã làm mới.
+
+**Sự kiện phát ra.** EVT-05-09.
+
+**Kiểm toán.** Có: quyết định, người, ý kiến.
+
+**Quy tắc nghiệp vụ.** BR-05-027.
+
+**Màn hình, API.** UI-05-17; API-05-083, 084.
+:::
 
 #### FR-05-058 · Ngừng khuyến nghị và thu hồi Kamelet
 
-FR-05-058 (M; repo FR-05-017 E1). Người có `PERM-05-kamelet-approve` ở phạm vi tương ứng. **Ngừng khuyến nghị** (`DEPRECATED`): ẩn khỏi bảng thành phần, luồng đang dùng vẫn chạy và trình thiết kế hiện cảnh báo vàng kèm Kamelet thay thế gợi ý. **Thu hồi** (`WITHDRAWN`, dùng khi có lỗi bảo mật hoặc lỗi nghiêm trọng): lý do bắt buộc; PH-04 chặn lần phát hành kế tiếp của mọi luồng dùng Kamelet đó (FR-05-014 bước 7); hệ thống phát EVT-05-10, gửi cảnh báo mức cao tới chủ sở hữu mọi luồng đang dùng và tới TO; luồng đang chạy không bị dừng tự động trừ khi người thu hồi chọn `stopRunningFlows` (khi đó gửi yêu cầu tạm dừng sang PH-04, cần TO xác nhận). Thu hồi Kamelet `COMMON` thông báo mọi tenant. Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Rút một Kamelet khỏi dùng mới khi có bản tốt hơn (ngừng khuyến nghị), hoặc chặn nó ngay khi có lỗi bảo mật (thu hồi), và báo cho mọi chủ sở hữu luồng bị ảnh hưởng.
+
+**Tác nhân, quyền.** Người có `PERM-05-kamelet-approve` ở phạm vi tương ứng.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; repo FR-05-017 E1.
+
+**Tiền điều kiện.** Phiên bản `APPROVED` (ngừng khuyến nghị) hoặc `APPROVED`, `DEPRECATED` (thu hồi).
+
+**Kích hoạt.** Người dùng bấm "Ngừng khuyến nghị" hoặc "Thu hồi" ở UI-05-15.
+
+**Đầu vào.** `replacement` (tùy chọn, Kamelet thay thế gợi ý), `reason` (bắt buộc khi thu hồi), `stopRunningFlows` (tùy chọn khi thu hồi).
+
+**Luồng xử lý chính.**
+
+1. Ngừng khuyến nghị: hệ thống chuyển `DEPRECATED`, ẩn khỏi bảng thành phần; luồng đang dùng vẫn chạy và trình thiết kế hiện cảnh báo vàng kèm Kamelet thay thế gợi ý.
+2. Thu hồi: hệ thống chuyển `WITHDRAWN`; PH-04 chặn lần phát hành kế tiếp của mọi luồng dùng Kamelet đó (FR-05-014 bước 7).
+3. Hệ thống phát EVT-05-10, gửi cảnh báo mức cao tới chủ sở hữu mọi luồng đang dùng và tới TO.
+4. Thu hồi Kamelet `COMMON`: hệ thống thông báo mọi tenant.
+
+**Luồng thay thế.** Người thu hồi chọn `stopRunningFlows`: hệ thống gửi yêu cầu tạm dừng các luồng đang chạy sang PH-04, cần TO xác nhận. Mặc định luồng đang chạy không bị dừng tự động.
+
+**Luồng ngoại lệ.**
+
+- Thiếu lý do: ERR-05-038 (400); "Nhập lý do thu hồi."
+- Tenant tỉnh thao tác trên Kamelet `COMMON`: ERR-05-040 (403); "Kamelet dùng chung chỉ quản trị nền tảng được thu hồi."
+- Chuyển trạng thái không hợp lệ: ERR-05-008 (409).
+
+**Đầu ra.** `200`, phiên bản với trạng thái mới, số luồng bị ảnh hưởng.
+
+**Kết quả.** Không luồng mới nào dùng được Kamelet lỗi; chủ sở hữu luồng cũ biết phải đổi.
+
+**Hậu điều kiện.** Runtime báo ERR-05-120 khi nạp luồng dùng Kamelet đã thu hồi.
+
+**Sự kiện phát ra.** EVT-05-10.
+
+**Kiểm toán.** Có: hành động, lý do, người, số luồng ảnh hưởng.
+
+**Quy tắc nghiệp vụ.** BR-05-027.
+
+**Màn hình, API.** UI-05-15; API-05-085, 086, 087.
+:::
 
 #### FR-05-059 · Đồng bộ danh mục Kamelet với catalog trình thiết kế và runtime
 
-FR-05-059 (M; ADR-061, FR-04-081). API-05-089 trả cho `dh-integration` của PH-04 danh sách Kamelet khả dụng cho tenant: Kamelet nền theo `runtime-manifest.json` của hồ sơ runtime mặc định, `COMMON` và `TENANT` ở trạng thái `APPROVED` (và `DEPRECATED` với cờ ẩn), Kamelet sinh từ bộ điều hợp; mỗi mục có YAML, băm, mức native. PH-04 gộp vào catalog của trình thiết kế. Khi nền tảng nâng runtime, PH-05 chạy lại kiểm tra tĩnh mọi Kamelet `COMMON` và `TENANT` với catalog mới; Kamelet không còn hợp lệ được đánh dấu `NEEDS_REVIEW` (thuộc tính, không phải trạng thái) và báo chủ sở hữu, nhưng không tự thu hồi. Kamelet được đóng vào ảnh runtime ở bước nạp YAML lúc chạy (ADR-063): runtime tải YAML Kamelet theo băm từ API-05-089 khi nạp luồng; Kamelet nền nằm sẵn trong ảnh.
+::: dac-ta
+**Mục đích.** Trình thiết kế và runtime luôn thấy cùng một danh mục Kamelet đã duyệt, và nâng phiên bản runtime không làm Kamelet cũ hỏng âm thầm.
+
+**Tác nhân, quyền.** Hệ thống (`dh-integration` của PH-04 và PH-05, runtime); token dịch vụ.
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; ADR-061, ADR-063; FR-04-081.
+
+**Tiền điều kiện.** Có hồ sơ runtime mặc định và `runtime-manifest.json`.
+
+**Kích hoạt.** Kamelet đổi trạng thái (EVT-05-09, EVT-05-10); PH-04 nạp catalog; runtime nạp luồng; nền tảng nâng runtime.
+
+**Đầu vào.** Tenant; phiên bản catalog runtime.
+
+**Luồng xử lý chính.**
+
+1. API-05-089 trả danh sách Kamelet khả dụng cho tenant: Kamelet nền theo `runtime-manifest.json` của hồ sơ runtime mặc định; `COMMON` và `TENANT` ở `APPROVED` (và `DEPRECATED` với cờ ẩn); Kamelet sinh từ bộ điều hợp. Mỗi mục có YAML, băm, mức native.
+2. PH-04 gộp vào catalog của trình thiết kế.
+3. Runtime tải YAML Kamelet theo băm từ API-05-089 khi nạp luồng (ADR-063); Kamelet nền nằm sẵn trong ảnh.
+
+**Luồng thay thế.** Nền tảng nâng runtime: PH-05 chạy lại kiểm tra tĩnh mọi Kamelet `COMMON` và `TENANT` với catalog mới; Kamelet không còn hợp lệ được đánh dấu `NEEDS_REVIEW` (thuộc tính, không phải trạng thái) và báo chủ sở hữu, không tự thu hồi.
+
+**Luồng ngoại lệ.**
+
+- Runtime yêu cầu băm không có: `404`, runtime từ chối nạp luồng và báo lỗi cấu hình.
+- Kamelet đã thu hồi: ERR-05-120.
+
+**Đầu ra.** Danh mục Kamelet có băm.
+
+**Kết quả.** Không có Kamelet chưa duyệt nào chạy được ở runtime.
+
+**Hậu điều kiện.** Catalog trình thiết kế và runtime khớp nhau theo băm.
+
+**Sự kiện phát ra.** Không (tiêu thụ EVT-05-09, EVT-05-10).
+
+**Kiểm toán.** Không.
+
+**Quy tắc nghiệp vụ.** BR-05-027.
+
+**Màn hình, API.** Không có màn riêng; API-05-089.
+:::
 
 #### FR-05-060 · Đề xuất Kamelet của tỉnh thành dùng chung
 
-FR-05-060 (S). IE, TA (`PERM-05-kamelet-submit`) đề xuất một phiên bản `APPROVED` của Kamelet `TENANT` lên `COMMON`: hệ thống tạo bản sao ở tenant `COMMON` trạng thái `SUBMITTED`, kèm thông tin tỉnh đề xuất, số luồng đang dùng, thời gian chạy ổn định; PA duyệt theo FR-05-057. Khi được duyệt, Kamelet ở tỉnh đề xuất được gợi ý chuyển sang bản `COMMON` (không tự đổi luồng). Tên ở `COMMON` không trùng tên Kamelet `TENANT` nào của mọi tenant; trùng thì PA đặt tên mới và ghi bí danh. Đợt 3.
+::: dac-ta
+**Mục đích.** Cho Kamelet tốt của một tỉnh được dùng lại ở mọi tỉnh, qua duyệt của quản trị nền tảng.
+
+**Tác nhân, quyền.** Đề xuất: IE, TA (`PERM-05-kamelet-submit`). Duyệt: PA theo FR-05-057.
+
+**Mức ưu tiên, đợt.** S · Đợt 3.
+
+**Truy vết.** REQ-05; FR-04-018.
+
+**Tiền điều kiện.** Phiên bản `APPROVED` của Kamelet `TENANT`.
+
+**Kích hoạt.** Người dùng bấm "Đề xuất dùng chung" ở UI-05-15.
+
+**Đầu vào.** `kameletName`, `version`, ghi chú đề xuất.
+
+**Luồng xử lý chính.**
+
+1. Hệ thống tạo bản sao ở tenant `COMMON` trạng thái `SUBMITTED`.
+2. Hệ thống kèm thông tin tỉnh đề xuất, số luồng đang dùng, thời gian chạy ổn định.
+3. PA duyệt theo FR-05-057.
+4. Khi được duyệt, hệ thống gợi ý tỉnh đề xuất chuyển luồng sang bản `COMMON` (không tự đổi luồng).
+
+**Luồng thay thế.** Tên trùng một Kamelet `TENANT` của tenant khác: PA đặt tên mới và ghi bí danh.
+
+**Luồng ngoại lệ.** Phiên bản chưa `APPROVED`: ERR-05-008 (409); "Chỉ đề xuất được phiên bản đã duyệt."
+
+**Đầu ra.** `202`, bản sao `SUBMITTED` ở `COMMON`.
+
+**Kết quả.** Các tỉnh khác dùng được Kamelet mà không phải viết lại.
+
+**Hậu điều kiện.** Kamelet ở tỉnh đề xuất giữ nguyên tới khi chủ sở hữu chủ động chuyển.
+
+**Sự kiện phát ra.** EVT-05-09 khi được duyệt.
+
+**Kiểm toán.** Có: đề xuất, người, quyết định.
+
+**Quy tắc nghiệp vụ.** BR-05-027.
+
+**Màn hình, API.** UI-05-15; UI-05-17; API-05-088.
+:::
 
 ### 6.9. Nhóm H · Quản trị
 
+Nhóm H cho quản trị tenant điều chỉnh phân hệ theo điều kiện của tỉnh và lấy số liệu báo cáo.
+
 #### FR-05-061 · Tham số phân hệ theo tenant
 
-FR-05-061 (M; LGC-BUS-031). TA, PA (`PERM-05-admin`). Tham số nhóm `05.*` lưu ở PH-18 (cấu hình theo tenant có phiên bản), PH-05 đọc với bản đệm 60 giây. Ngoài tham số ở mục 8.2, TA bật, tắt từng loại kết nối cho tenant (chỉ thu hẹp danh mục nền tảng, không thêm) và đặt trần tham số (API-05-091). Tắt một loại đang có kết nối `ACTIVE` bị từ chối (ERR-05-010) trừ khi chọn `blockNew` (chỉ chặn tạo mới). Kiểm toán: có.
+::: dac-ta
+**Mục đích.** Cho mỗi tỉnh đặt ngưỡng, trần và loại kết nối được dùng theo điều kiện riêng, trong giới hạn của nền tảng.
+
+**Tác nhân, quyền.** TA, PA (`PERM-05-admin`).
+
+**Mức ưu tiên, đợt.** M · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-031.
+
+**Tiền điều kiện.** Không.
+
+**Kích hoạt.** Người dùng mở trang Tham số PH-05 ở cấu hình tenant (PH-18).
+
+**Đầu vào.** Tham số nhóm `05.*` (mục 8.2); bật, tắt từng loại kết nối; trần tham số theo loại; `blockNew` khi tắt loại đang dùng.
+
+**Luồng xử lý chính.**
+
+1. TA sửa tham số; hệ thống lưu ở PH-18 (cấu hình theo tenant có phiên bản).
+2. TA bật, tắt loại kết nối; chỉ thu hẹp danh mục nền tảng, không thêm.
+3. TA đặt trần tham số theo loại (API-05-091).
+4. PH-05 đọc tham số với bản đệm 60 giây.
+
+**Luồng thay thế.** Tắt loại đang có kết nối `ACTIVE` với `blockNew`: chỉ chặn tạo mới, kết nối cũ chạy tiếp.
+
+**Luồng ngoại lệ.** Tắt loại đang có kết nối `ACTIVE` mà không chọn `blockNew`: ERR-05-010 (409); "Còn {n} kết nối đang dùng loại này. Chọn 'Chỉ chặn tạo mới' hoặc ngừng dùng các kết nối trước."
+
+**Đầu ra.** `200`, tham số mới kèm phiên bản cấu hình.
+
+**Kết quả.** Tham số có hiệu lực trong tối đa 60 giây.
+
+**Hậu điều kiện.** Có phiên bản cấu hình mới ở PH-18.
+
+**Sự kiện phát ra.** Không (PH-18 phát sự kiện đổi cấu hình).
+
+**Kiểm toán.** Có: tham số, giá trị trước và sau, người.
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** Trang cấu hình tenant của PH-18; API-05-090, 091.
+:::
 
 #### FR-05-062 · Báo cáo sử dụng kết nối và bộ điều hợp
 
-FR-05-062 (S; LGC-BUS-014). `PERM-05-read`. Báo cáo theo tháng: số HTTT có kết nối theo nhóm 1–4, số kết nối và bộ điều hợp theo giao thức, trạng thái; số lượt gọi, tỷ lệ lỗi, thời gian ở mức `UNHEALTHY` theo HTTT; bí mật quá hạn xoay; tài khoản ghi CSDL đang hiệu lực; Kamelet theo phạm vi. Xuất CSV, XLSX. Phục vụ chỉ tiêu GĐ-04 (số HTTT kết nối) ở PH-16.
+::: dac-ta
+**Mục đích.** Cho lãnh đạo và quản trị tỉnh số liệu hằng tháng về mức độ kết nối HTTT, phục vụ chỉ tiêu GĐ-04 (số HTTT kết nối) ở PH-16.
+
+**Tác nhân, quyền.** TA, TO, lãnh đạo có `PERM-05-read`.
+
+**Mức ưu tiên, đợt.** S · MVP.
+
+**Truy vết.** REQ-05; LGC-BUS-014; GĐ-04.
+
+**Tiền điều kiện.** Có dữ liệu sử dụng của tháng.
+
+**Kích hoạt.** Người dùng mở báo cáo ở UI-05-07 ("Báo cáo tháng") hoặc PH-16 gọi API.
+
+**Đầu vào.** `month`, `format` (`JSON`, `CSV`, `XLSX`).
+
+**Luồng xử lý chính.**
+
+1. Hệ thống tổng hợp số HTTT có kết nối theo nhóm 1–4; số kết nối và bộ điều hợp theo giao thức, trạng thái.
+2. Hệ thống tổng hợp số lượt gọi, tỷ lệ lỗi, thời gian ở mức `UNHEALTHY` theo HTTT.
+3. Hệ thống tổng hợp bí mật quá hạn xoay, tài khoản ghi CSDL đang hiệu lực, Kamelet theo phạm vi.
+4. Hệ thống trả báo cáo hoặc tệp xuất.
+
+**Luồng thay thế.** Không.
+
+**Luồng ngoại lệ.** Tháng chưa có dữ liệu: `200` với số liệu rỗng và ghi chú "Chưa có dữ liệu cho tháng {tháng}."
+
+**Đầu ra.** `200` báo cáo; tệp CSV, XLSX.
+
+**Kết quả.** Có số liệu chính thức để báo cáo tiến độ kết nối HTTT của tỉnh.
+
+**Hậu điều kiện.** Không đổi dữ liệu.
+
+**Sự kiện phát ra.** Không.
+
+**Kiểm toán.** Có (xuất tệp).
+
+**Quy tắc nghiệp vụ.** Không.
+
+**Màn hình, API.** UI-05-07; API-05-092.
+:::
 
 ## 7. Quy tắc nghiệp vụ
 
