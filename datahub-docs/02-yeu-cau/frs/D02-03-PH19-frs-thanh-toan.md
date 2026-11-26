@@ -1217,3 +1217,429 @@ Xử lý gồm các bước sau.
 3. Vai trò CSDL của ứng dụng chỉ có quyền `INSERT`, `SELECT` trên `transaction_event`; trigger từ chối `UPDATE`, `DELETE` kể cả với chủ sở hữu bảng (NFR-19-016).
 4. Chuỗi băm hằng ngày của các dòng phát sinh được tính và lưu kho WORM theo ADR-031 (mục 1.5 điểm 4).
 
+### 5.5. Nhóm E — Nhận kết quả thanh toán (IPN)
+
+#### FR-19-029 · Tiếp nhận và xác minh IPN
+
+Nâng cấp chức năng "Nhận kết quả thanh toán từ nhà cung cấp" của hệ cũ (LGC-PAY-010), vốn không xác minh nguồn, chữ ký hay chống phát lại (điểm yếu 3). Endpoint nhận chỉ làm hai việc: xác minh và ghi nguyên văn; việc đổi trạng thái do FR-19-030 làm bất đồng bộ, để trả lời NCC nhanh (NFR-19-003) và để không mất IPN khi xử lý lỗi.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94, REQ-98; LGC-PAY-010; BR-19-030, 032; NFR-19-003, 020; UC-19-13; API-19-201, 203, 204; EN-19-13, 14; TS-19-13, 30 |
+| Tác nhân, quyền | PayGov (máy chủ); công khai, xác minh bốn lớp |
+| Đầu vào | Yêu cầu HTTP của NCC: header, thân nguyên văn (giới hạn 256 KB), IP nguồn do PH-03 chuyển trong header tin cậy `X-Forwarded-For` đã ký nội bộ |
+| Đầu ra | Phản hồi cho NCC theo đặc tả NCC (giả định: HTTP 200 với thân xác nhận; OQ-19-03); bản ghi `callback_inbox` |
+| Hậu điều kiện | Mọi IPN, kể cả bị từ chối, có một dòng `callback_inbox` với `verification_result`; IPN `VERIFIED` ở `processing_status = RECEIVED` chờ xử lý |
+| Sự kiện, kiểm toán | IPN bị từ chối: sự kiện an ninh tới PH-13, metric `payment_callback_rejected_total{reason}`; nhật ký tích hợp `IN_PROVIDER`/`IPN` |
+
+Bốn lớp xác minh chạy theo thứ tự (NFR-19-020); lớp nào thất bại thì dừng, ghi inbox với kết quả tương ứng:
+
+| Lớp | Kiểm tra | Kết quả khi sai | Mã lỗi nội bộ |
+|---|---|---|---|
+| 0 | `connectionKey` tồn tại, NCC không `RETIRED` (ADR-045); đặt `TenantContext` từ NCC trước khi mở giao dịch CSDL | `SOURCE_DENIED` (không ghi inbox vì chưa có tenant; ghi log an ninh cấp nền tảng) | ERR-19-027 |
+| 1 | Nguồn: IP thuộc danh sách cho phép của NCC (PH-03 chặn trước, PH-19 kiểm tra lại); chứng thư mTLS của NCC nếu NCC hỗ trợ | `SOURCE_DENIED` | ERR-19-027 |
+| 2 | Cú pháp: thân phân tích được theo đặc tả adapter; có mã giao dịch hoặc mã tham chiếu NCC | `MALFORMED` | ERR-19-001 |
+| 3 | Chữ ký số hợp lệ với chứng thư `VERIFY_CERT` ở trạng thái `ACTIVE` hoặc `NEXT` (FR-19-012) | `BAD_SIGNATURE` | ERR-19-024 |
+| 4 | Dấu thời gian trong nội dung đã ký lệch ≤ ±5 phút so với đồng hồ hệ thống | `EXPIRED` | ERR-19-025 |
+| 5 | Nonce chưa gặp: kiểm tra Valkey `{tenant}:payment:nonce:{providerId}:{nonce}` (TTL 24 giờ) rồi ràng buộc duy nhất CSDL. Đã gặp với cùng `raw_hash` → IPN lặp hợp lệ; đã gặp với nội dung khác → phát lại | `VERIFIED` + `DUPLICATE` (lặp); `REPLAYED` (phát lại) | — ; ERR-19-026 |
+| 6 | Mã đơn vị kết nối trong nội dung đã ký (nếu có) khớp `merchant_ref` của NCC (kiểm tra chéo ADR-045) | `SOURCE_DENIED` | ERR-19-027 |
+
+Xử lý gồm các bước sau.
+
+1. Đo thời điểm nhận; chạy các lớp 0…6.
+2. Adapter lọc trường cấm lưu (BR-19-032) khỏi bản sao `raw_body` lưu inbox; giữ `raw_hash` của **thân gốc chưa lọc** để chứng minh toàn vẹn với NCC.
+3. Ghi `callback_inbox` trong một giao dịch CSDL ngắn (không khóa giao dịch thanh toán). Trích `transaction_code`, `provider_reference` vào cột riêng.
+4. Trả lời NCC: `VERIFIED` (kể cả `DUPLICATE`) → phản hồi "đã nhận" theo đặc tả NCC; bị từ chối ở lớp 1…6 → phản hồi lỗi theo đặc tả NCC (giả định HTTP 401/403; OQ-19-03). Không bao giờ đưa thông tin nội bộ vào phản hồi.
+5. Kích hoạt xử lý (FR-19-030) qua hàng đợi nội bộ; nếu tiến trình dừng ngay sau khi trả lời, tác vụ quét inbox mỗi 10 giây sẽ xử lý bản ghi `RECEIVED` còn sót.
+6. IPN loại `REFUND` (API-19-203) và `RECON_NOTICE` (API-19-204) đi cùng đường xác minh; khác ở bước xử lý.
+
+#### FR-19-030 · Xử lý IPN đúng một lần
+
+Nâng cấp LGC-PAY-010 với bảo đảm "đúng một lần" (điểm yếu 4).
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; LGC-PAY-010; BR-19-014, 015, 021; NFR-19-003; UC-19-13; EN-19-10, 11, 13, 21, 26; EVT-19-07, 08; TS-19-13 |
+| Tác nhân, quyền | Hệ thống |
+| Đầu vào | Bản ghi `callback_inbox` `VERIFIED`, `processing_status = RECEIVED` |
+| Đầu ra | Inbox `PROCESSED`, `DUPLICATE`, `QUARANTINED` hoặc `FAILED`; giao dịch chuyển trạng thái khi hợp lệ |
+| Sự kiện, kiểm toán | EVT-19-07 hoặc 08; webhook (FR-19-060) qua outbox |
+
+Xử lý gồm các bước sau.
+
+1. Bộ xử lý lấy bản ghi inbox bằng `FOR UPDATE SKIP LOCKED`, tăng `attempt_count`.
+2. Adapter dịch nội dung thành **kết quả chuẩn**: `transactionCode`, `providerReference`, `amount`, `paidAt` (chuyển về UTC, giả định nội dung có múi giờ hoặc là giờ Việt Nam, A-19-14), `channelCode`, `bankCode`, mã kết quả NCC. Mã kết quả tra bảng ánh xạ thao tác `IPN` (FR-19-069) ra kết cục nội bộ. Mã kênh, ngân hàng của NCC được chuyển sang mã `DM_KENH_THANH_TOAN`, `DM_NGAN_HANG` qua bảng ánh xạ mã của PH-07; không chuyển được thì lưu mã gốc ở trường phụ và để trống mã chuẩn.
+3. Tìm giao dịch theo `transaction_code` (dự phòng theo `provider_reference`) và khóa hàng `FOR UPDATE`. Không thấy → cách ly `ORPHAN_CALLBACK` (FR-19-031).
+4. Áp BR-19-015 theo bảng dưới; mọi nhánh ghi `transaction_event`, outbox, cập nhật inbox trong **một** giao dịch CSDL.
+5. Thành công: ghi `paid_at`, `channel_code`, `bank_code`, `provider_reference` (nếu chưa có), `finalized_at` (nếu lần đầu), tăng `sequence`, đặt `next_poll_at = null`.
+6. Lỗi kỹ thuật (CSDL, giải mã): inbox giữ `RECEIVED`, thử lại sau 10 giây, 1 phút, 5 phút; quá 5 lần → `FAILED`, chuyển bản tin tới DLQ của PH-18 và cảnh báo.
+
+| Trạng thái hiện tại | Kết cục IPN | Số tiền, tham chiếu | Hành động | Inbox |
+|---|---|---|---|---|
+| `PENDING`, `CREATED` (`init_uncertain`) | `SUCCEEDED` | Khớp | → `SUCCEEDED` | `PROCESSED` |
+| `PENDING`, `CREATED` (`init_uncertain`) | `FAILED` | Khớp tham chiếu | → `FAILED` | `PROCESSED` |
+| `PENDING`, `CREATED` | `PENDING` | — | Không đổi; ghi nhận | `PROCESSED` |
+| Mọi trạng thái | `UNKNOWN` | — | Không đổi; `needs_reconciliation = true`; cảnh báo mã chưa biết | `QUARANTINED` (ERR-19-028) |
+| Mọi trạng thái | `SUCCEEDED` | Số tiền khác (dung sai 0 đ) hoặc tham chiếu khác | Không đổi; chênh lệch `AMOUNT_MISMATCH` | `QUARANTINED` |
+| `SUCCEEDED` (hoặc sau hoàn) | `SUCCEEDED` | Khớp | Không đổi (IPN lặp nội dung khác nonce) | `DUPLICATE` |
+| `SUCCEEDED` | `FAILED` | — | Không đổi; chênh lệch `STATUS_MISMATCH` | `QUARANTINED` |
+| `FAILED` | `SUCCEEDED` | Khớp | Không đổi; chênh lệch `STATUS_MISMATCH` (chỉ xử lý chênh lệch mới đổi được) | `QUARANTINED` |
+| `CANCELLED`, `EXPIRED` | `SUCCEEDED` | Khớp | → `SUCCEEDED`, `late_paid = true`; chênh lệch `LATE_PAYMENT` (BR-19-018) | `PROCESSED` |
+| `CANCELLED`, `EXPIRED`, `FAILED` | `FAILED` | — | Không đổi | `DUPLICATE` |
+| Giao dịch `is_shadow` | Mọi | — | Không đổi (giao dịch bóng không có IPN thật; nếu có là định tuyến sai) | `QUARANTINED`, cảnh báo |
+
+#### FR-19-031 · Cách ly IPN bất thường
+
+Nâng cấp LGC-PAY-010: không IPN hợp lệ nào bị bỏ qua lặng lẽ.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94, REQ-95; LGC-PAY-010; BR-19-015, 018; UC-19-13; EN-19-13, 19; EVT-19-17; TS-19-13 |
+| Tác nhân, quyền | Hệ thống |
+| Hậu điều kiện | Inbox `QUARANTINED` với `processing_error`; bản ghi chênh lệch `OPEN` gắn phiên đối soát của ngày giao dịch (tạo phiên `SCHEDULED` nếu chưa có); phiên đang `READY_TO_CLOSE` quay về `IN_REVIEW` |
+| Sự kiện, kiểm toán | EVT-19-17; cảnh báo PH-13 mức cao với `AMOUNT_MISMATCH`, `ORPHAN_CALLBACK` |
+
+Xử lý: với mỗi trường hợp cách ly ở bảng của FR-19-030 và trường hợp không tìm thấy giao dịch, hệ thống tạo một chênh lệch với loại tương ứng (`AMOUNT_MISMATCH`, `STATUS_MISMATCH`, `LATE_PAYMENT`, `ORPHAN_CALLBACK`), `callback_id`, số tiền hai phía, `due_at` theo BR-19-028, ngày giao dịch lấy theo `paidAt` của IPN (nếu không có thì theo thời điểm nhận). Một IPN chỉ sinh tối đa một chênh lệch (khóa duy nhất theo `callback_id`). IPN `UNKNOWN` không sinh chênh lệch ngay; giao dịch được đánh dấu `needs_reconciliation` và phiên đối soát sẽ sinh chênh lệch nếu hai phía lệch.
+
+#### FR-19-032 · Xem và xử lý lại IPN
+
+Năng lực mới cho cán bộ hỗ trợ, thay việc phải đề nghị NCC gửi lại.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | S · Đ2b cho xử lý lại; xem danh sách và chi tiết thuộc MVP |
+| Truy vết | REQ-94; LGC-PAY-010; UC-19-16; API-19-056…058; UI-19-16; EN-19-13; TS-19-16 |
+| Tác nhân, quyền | Cán bộ tra cứu, kế toán, kiểm toán viên, cán bộ ATTT · `callback-read`; cán bộ tra cứu · `callback-replay` |
+| Đầu vào | Lọc: `providerId`, `callbackType`, `verificationResult[]`, `processingStatus[]`, `receivedFrom`, `receivedTo`, `transactionCode`, `providerReference`. Xử lý lại: `reason` |
+| Đầu ra | Danh sách; chi tiết gồm header và thân nguyên văn đã che (giá trị chữ ký rút gọn, dữ liệu cá nhân che theo BR-19-031), các lần xử lý, liên kết giao dịch, chênh lệch |
+| Sự kiện, kiểm toán | Xem nguyên văn: kiểm toán `CALLBACK_RAW_VIEW`. Xử lý lại: kiểm toán `CALLBACK_REPLAY` |
+
+Xử lý lại: chỉ áp cho inbox `VERIFIED` ở `FAILED` hoặc `QUARANTINED` loại `ORPHAN_CALLBACK` (khi giao dịch đã được di trú về sau); không bao giờ xác minh lại chữ ký với khóa khác và không áp cho IPN bị từ chối ở lớp xác minh (ERR-19-021). Hệ thống đặt lại `processing_status = RECEIVED` và chạy FR-19-030; kết quả xử lý lại mang `source = IPN` và `reason = REPLAY:{người thực hiện}`.
+
+### 5.6. Nhóm F — Lũy đẳng và chống trùng
+
+#### FR-19-033 · Bảo đảm idempotency theo `Idempotency-Key`
+
+Năng lực mới (điểm yếu 4).
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; LGC-PAY-024; BR-19-006; UC-19-11; API-19-101, 104, 105; EN-19-12; TS-19-11; ADR-041 |
+| Tác nhân, quyền | HTTT đối tác · `partner-pay-create`, `partner-refund-create` |
+| Hậu điều kiện | Mỗi bộ (tenant, client, method, path, key) có tối đa một bản ghi trong 24 giờ |
+
+Xử lý gồm các bước sau.
+
+1. Tính `request_hash` = SHA-256 của thân yêu cầu đã chuẩn hóa JSON theo RFC 8785 (sắp khóa, chuẩn hóa số và chuỗi).
+2. Đặt khóa nhanh Valkey `SET NX` `{tenant}:payment:idem:{clientId}:{method}:{pathHash}:{key}` TTL 60 giây để chặn hai yêu cầu đồng thời; không đặt được → đọc bản ghi CSDL.
+3. Trong CSDL (nguồn sự thật, ADR-041): `INSERT … ON CONFLICT DO NOTHING` bản ghi `IN_PROGRESS`. Xung đột → đọc bản ghi hiện có:
+   - `COMPLETED`, cùng `request_hash` → trả lại `response_status`, `response_body` cũ kèm `Idempotent-Replayed: true`;
+   - `IN_PROGRESS` → ERR-19-004 (409) kèm `Retry-After: 1`;
+   - khác `request_hash` → ERR-19-003 (422).
+4. Ngoại lệ cho tạo giao dịch khi phản hồi cũ là ERR-19-019 (khởi tạo không xác định): trả lại thông tin **mới nhất** của giao dịch đã tạo (trạng thái có thể đã là `PENDING` hoặc `SUCCEEDED`), không trả lại lỗi 504 cũ, để đối tác thử lại an toàn mà không tạo giao dịch thứ hai.
+5. Lỗi kiểm tra hợp lệ (4xx ở FR-19-023) không ghi bản ghi lũy đẳng. Lỗi hệ thống (5xx khác ERR-19-019) xóa bản ghi `IN_PROGRESS` để cho phép thử lại.
+6. Tác vụ dọn xóa bản ghi quá `expires_at` (24 giờ) mỗi giờ.
+
+#### FR-19-034 · Chống trùng theo mã đơn hàng của đối tác
+
+Năng lực mới, chốt chặn thứ hai sau lũy đẳng: kể cả khi đối tác dùng khóa lũy đẳng khác cho cùng hồ sơ, người nộp không bị tạo hai yêu cầu đang mở.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; LGC-PAY-024; BR-19-007; UC-19-11; API-19-101, 103; EN-19-10; TS-19-11 |
+| Tác nhân, quyền | Hệ thống |
+
+Xử lý: chỉ mục duy nhất có điều kiện trên (`tenant_id`, `partner_id`, `partner_order_id`) với `status IN (CREATED, PENDING, SUCCEEDED, PARTIALLY_REFUNDED, REFUNDED)` và `is_shadow = false`. Vi phạm (bước 14 của FR-19-023, hoặc lỗi ràng buộc khi ghi do yêu cầu đồng thời) trả ERR-19-015 kèm `existingTransactionCode` và `existingStatus` để đối tác dẫn người nộp tới giao dịch hiện có. Khi mọi giao dịch trước của mã đã `FAILED`, `CANCELLED` hoặc `EXPIRED`, đối tác được tạo giao dịch mới; API-19-103 trả mọi lượt giao dịch của mã theo thứ tự thời gian. Vì phân vùng theo tháng, ràng buộc duy nhất được bảo đảm bằng bảng khóa phụ không phân vùng `transaction_order_guard` (D03-03-PH19), không bằng chỉ mục trên bảng phân vùng.
+
+### 5.7. Nhóm G — Truy vấn và đồng bộ trạng thái
+
+#### FR-19-035 · Đối tác truy vấn trạng thái giao dịch
+
+Năng lực mới, kênh dự phòng khi đối tác chưa nhận webhook.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-93, REQ-94; NFR-19-004; UC-19-15; API-19-102, 103, 108, 109; EN-19-10; TS-19-15, 31 |
+| Tác nhân, quyền | HTTT đối tác · `partner-pay-read` |
+| Đầu vào | `{transactionCode}`, hoặc `partnerOrderId` (truy vấn danh sách) |
+| Đầu ra | `transactionCode`, `partnerOrderId`, `serviceCode`, `status`, `reconStatus`, `amount`, `refundedAmount`, `currency`, `createdAt`, `expiresAt`, `paidAt`, `providerCode`, `providerReference`, `channelCode`, `bankCode`, `latePaid`, `failureReasonCode`, `sequence`, `metadata`, danh sách yêu cầu hoàn rút gọn; không có dữ liệu cá nhân người nộp |
+
+Xử lý: hệ thống lấy `partner_id` từ client, tìm giao dịch trong tenant và của chính đối tác; không thấy hoặc của đối tác khác trả ERR-19-020 (không phân biệt). Kết quả đọc thẳng CSDL (bản sao đọc đồng bộ của CNPG khi tải cao), không đọc bộ đệm, để luôn phản ánh trạng thái mới nhất. Truy vấn không kích hoạt truy vấn NCC. API-19-109 (kéo thông báo) thuộc FR-19-060.
+
+#### FR-19-036 · Chủ động truy vấn nhà cung cấp cho giao dịch treo
+
+Năng lực mới, cùng FR-19-027 bảo đảm không giao dịch nào treo mãi khi IPN bị lỡ.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; BR-19-016, 017; UC-19-16; EN-19-10, 14; TS-19-16 |
+| Tác nhân, quyền | Hệ thống (tác vụ mỗi 30 giây) |
+| Hậu điều kiện | Kết quả truy vấn được áp như IPN (bảng của FR-19-030) với `source = POLL` |
+
+Xử lý gồm các bước sau.
+
+1. Tác vụ chọn giao dịch `PENDING` hoặc `CREATED` có `init_uncertain`, `next_poll_at ≤ now`, `is_shadow = false`, theo thứ tự `next_poll_at`, tối đa 200 mỗi lượt mỗi NCC, `SKIP LOCKED`.
+2. Gọi `PaymentProviderPort.query()` timeout 5 giây trong bulkhead truy vấn riêng, tôn trọng giới hạn tần suất của NCC (`capabilities.queryRateLimitPerSecond`, OQ-19-04) bằng bộ giới hạn token dùng chung qua Valkey.
+3. Dịch kết quả qua bảng ánh xạ thao tác `QUERY`; áp như IPN trong một giao dịch CSDL có khóa hàng.
+4. Đặt `next_poll_at` kế tiếp theo lịch BR-19-016 (2, 5, 10, 15 phút; 30 phút, 1, 2, 4 giờ; rồi 6 giờ tới 72 giờ). Hết lịch mà vẫn chưa có kết quả → FR-19-027 bước 3.
+5. NCC không có năng lực truy vấn (A-19-03 sai): tác vụ bỏ qua; giao dịch chỉ được xác định qua đối soát; FR-19-027 dùng mốc 72 giờ.
+
+#### FR-19-037 · Đồng bộ trạng thái thủ công
+
+Năng lực mới cho cán bộ hỗ trợ khi người dân phản ánh đã trả tiền nhưng hồ sơ chưa ghi nhận.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | S · Đ2b (MVP dựa vào truy vấn tự động và đối soát) |
+| Truy vết | REQ-94, REQ-97; BR-19-016; UC-19-16; API-19-053; UI-19-15; EN-19-10, 14; TS-19-16 |
+| Tác nhân, quyền | Cán bộ tra cứu, kế toán · `transaction-sync` |
+| Đầu vào | `reason` (bắt buộc, 10…500 ký tự) |
+| Đầu ra | Kết quả truy vấn đã dịch (kết cục, mã NCC, số tiền, thời điểm), trạng thái giao dịch trước và sau |
+| Sự kiện, kiểm toán | Kiểm toán `TRANSACTION_MANUAL_SYNC`; `transaction_event` nguồn `MANUAL_SYNC` khi trạng thái đổi |
+
+Xử lý: hệ thống kiểm tra giới hạn tần suất (1 lần mỗi 60 giây, 10 lần mỗi ngày cho mỗi giao dịch; ERR-19-023), gọi truy vấn như FR-19-036 bước 2–3 và trả kết quả đồng bộ (timeout 5 giây; quá hạn trả 202 và kết quả hiện ở tab "Truy vấn NCC" của UI-19-15). Áp được cho mọi trạng thái trừ `REFUNDED`; với trạng thái kết thúc, kết quả khác chỉ sinh chênh lệch, không đổi trạng thái (BR-19-015).
+
+### 5.8. Nhóm H — Hoàn tiền
+
+Nhóm H thay ba trạng thái `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` của hệ cũ, vốn chỉ có trạng thái mà không có chức năng sinh ra chúng (LGC-PAY-025 đề xuất). Ở MVP, hoàn tiền chạy ở chế độ `MANUAL` (tiền được hoàn ngoài hệ thống, kế toán ghi nhận chứng từ) vì chưa biết PayGov có API hoàn hay không (OQ-19-06); chế độ `API` được bật ở Đ2b khi adapter khai năng lực hoàn. Hai chế độ dùng chung một máy trạng thái (khung §7.5) nên việc bật `API` không đổi quy trình phê duyệt.
+
+#### FR-19-038 · Lập yêu cầu hoàn tiền
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-96; LGC-PAY-025; BR-19-022, 033; UC-19-17; API-19-059, 105, 087; UI-19-18; EN-19-15, 16, 23; EVT-19-11; TS-19-17 |
+| Tác nhân, quyền | Kế toán · `refund-create`; HTTT đối tác · `partner-refund-create` |
+| Tiền điều kiện | Tenant bật hoàn tiền (`19.refund.enabled = true`); giao dịch `SUCCEEDED` hoặc `PARTIALLY_REFUNDED`, `is_test = false`, `is_shadow = false`, còn trong hạn hoàn |
+| Đầu ra | Yêu cầu hoàn `PENDING_APPROVAL` với `refundCode` (mẫu `R` + mã giao dịch rút gọn + 4 ký tự, duy nhất toàn cục), `approvalLevel` cần (1 hoặc 2), `mode` dự kiến |
+| Sự kiện, kiểm toán | EVT-19-11; kiểm toán `REFUND_CREATE` (khi kế toán lập) |
+
+| Trường đầu vào | Kiểu | Bắt buộc | Ràng buộc |
+|---|---|---|---|
+| `transactionId` (quản trị) hoặc `transactionCode` (đối tác) | T-ID / T-TXN-CODE | Có | Giao dịch của tenant; với đối tác, của chính đối tác |
+| `amount` | T-MONEY | Có | > 0; `amount + refunded_amount + tổng hoàn đang xử lý ≤ amount gốc` |
+| `reasonCode` | T-CODE | Có | `DM_LY_DO_HOAN_TIEN` (ví dụ `THU_TRUNG`, `THU_SAI_SO_TIEN`, `HO_SO_BI_TU_CHOI`, `KHAC`) |
+| `reasonText` | T-TEXT | Có khi `reasonCode = KHAC` | 10…1.000 ký tự |
+| `attachmentFileIds` | T-ID[] | Không | Tệp đã tải qua API-19-087, mục đích `ATTACHMENT`; tối đa 5 tệp |
+| `partnerRefundId` | T-ORDER-ID | Có với đối tác | Duy nhất trong đối tác; cùng `Idempotency-Key` |
+| `Idempotency-Key` | T-IDEM-KEY | Có với đối tác | BR-19-006 |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra tenant bật hoàn tiền (ERR-19-032).
+2. Khóa hàng giao dịch; kiểm tra trạng thái, cờ thử, cờ bóng và yêu cầu hoàn chưa kết thúc khác (ERR-19-029); kiểm tra hạn hoàn tính từ `paid_at` theo `19.refund.window-days` (mặc định 180, ERR-19-031); kiểm tra số tiền (ERR-19-030).
+3. Xác định `required_approvals`: 2 nếu `amount ≥ 19.refund.two-level-threshold` (mặc định 5.000.000 đ), ngược lại 1 (BR-19-023). Xác định `mode` dự kiến theo BR-19-024.
+4. Trong một giao dịch CSDL: ghi `refund_request` `PENDING_APPROVAL`, `approval_request` loại `REFUND` (`requested_by` là người dùng, hoặc định danh client với đối tác), outbox EVT-19-11, kiểm toán.
+5. Đối tác nhận 201 với `refundCode`, `status`; kết quả cuối báo qua webhook `refund.*` hoặc API-19-106.
+6. Người lập rút yêu cầu khi còn chờ duyệt (API-19-050 `WITHDRAW`): yêu cầu chuyển `CANCELLED`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Tenant tắt hoàn tiền | ERR-19-032 | 422 |
+| Giao dịch không đủ điều kiện | ERR-19-029 | 409 |
+| Số tiền vượt số còn được hoàn | ERR-19-030 | 422 |
+| Quá hạn hoàn | ERR-19-031 | 422 |
+| Đối tác không hoạt động | ERR-19-005 | 403 |
+
+#### FR-19-039 · Phê duyệt hoặc từ chối hoàn tiền
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-96; LGC-PAY-025; BR-19-011, 023; UC-19-18; API-19-048…050; UI-19-13, UI-19-18; EN-19-15, 16; EVT-19-12; TS-19-18, 33 |
+| Tác nhân, quyền | Người phê duyệt · `refund-approve` |
+| Đầu vào | `decision` (`APPROVE`, `REJECT`), `note` (bắt buộc khi `REJECT`), `If-Match` của đề nghị |
+| Hậu điều kiện | Một cấp: `APPROVED`. Hai cấp: cấp 1 → `PENDING_SECOND_APPROVAL`, cấp 2 → `APPROVED`. Từ chối ở cấp nào → `REJECTED`. Quá 7 ngày → `REJECTED` (đề nghị `EXPIRED`) |
+| Sự kiện, kiểm toán | EVT-19-12 khi `APPROVED` hoặc `REJECTED`; kiểm toán `APPROVAL_DECISION` mỗi cấp |
+
+Xử lý: hệ thống kiểm tra người quyết định ≠ người lập; ở cấp 2, ≠ cả người duyệt cấp 1 (ERR-19-033); kiểm tra lại điều kiện của BR-19-022 tại thời điểm duyệt (giao dịch có thể đã bị đảo trạng thái qua xử lý chênh lệch), không đạt thì từ chối quyết định với ERR-19-029. Khi `APPROVED`, hệ thống chuyển ngay sang FR-19-040.
+
+#### FR-19-040 · Thực thi hoàn tiền
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP với chế độ `MANUAL`; chế độ `API` thuộc Đ2b khi OQ-19-06 xác nhận |
+| Truy vết | REQ-96; LGC-PAY-025; BR-19-024; UC-19-18; API-19-062, 087; UI-19-18; EN-19-15, 23; TS-19-18 |
+| Tác nhân, quyền | Hệ thống (chế độ `API`); kế toán · `refund-execute` |
+| Đầu vào (API-19-062) | `action` ∈ {`RETRY`, `SWITCH_TO_MANUAL`, `CONFIRM_MANUAL`}; với `CONFIRM_MANUAL`: `voucherNo` (≤ 64 ký tự), `voucherDate` (T-DATE, không sau hôm nay, không trước `paid_at`), `voucherFileId` (mục đích `REFUND_VOUCHER`, bắt buộc), `bankCode` (tùy chọn), `note` |
+| Hậu điều kiện | Xem bảng dưới |
+| Sự kiện, kiểm toán | Kiểm toán `REFUND_EXECUTE`, `REFUND_CONFIRM_MANUAL`; nhật ký tích hợp `OUT_PROVIDER`/`REFUND` |
+
+| Chế độ, hành động | Điều kiện | Kết quả |
+|---|---|---|
+| `API`, hệ thống tự gửi sau duyệt | Adapter có `capabilities.refund`; giao dịch có `provider_reference` | `APPROVED` → `PROCESSING`; gọi `PaymentProviderPort.refund()` với mã `refundCode` làm khóa lũy đẳng phía NCC; `execution_count + 1` |
+| `MANUAL`, hệ thống sau duyệt | Không có năng lực hoàn hoặc tenant cấu hình thủ công | `APPROVED` → `AWAITING_MANUAL`; nhắc kế toán mỗi ngày tới khi ghi nhận |
+| `RETRY` | `FAILED`, `execution_count < 3`, chế độ `API` | `FAILED` → `PROCESSING` |
+| `SWITCH_TO_MANUAL` | `FAILED` | `FAILED` → `AWAITING_MANUAL`, `mode = MANUAL` |
+| `CONFIRM_MANUAL` | `AWAITING_MANUAL`; người xác nhận ≠ mọi người đã duyệt (khung §13.4 quy tắc 3) | → `SUCCEEDED`; cập nhật giao dịch gốc theo FR-19-041 |
+
+Xử lý chế độ `API`: lời gọi hoàn timeout 10 giây; kết cục `ACCEPTED` giữ `PROCESSING` chờ IPN hoàn (API-19-203) hoặc truy vấn (lịch như BR-19-016); `REJECTED` → `FAILED`; `UNCERTAIN` giữ `PROCESSING` và truy vấn. Quá 72 giờ không có kết quả → `FAILED` kèm cảnh báo (khung §7.5). Không bao giờ gửi lệnh hoàn lần hai cho cùng `execution_count`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Hành động không hợp lệ ở trạng thái hiện tại | ERR-19-021 | 409 |
+| Hết lượt thực thi lại | ERR-19-021 | 409 |
+| Thiếu chứng từ khi ghi nhận thủ công | ERR-19-001 | 400 |
+| Người xác nhận trùng người duyệt | ERR-19-033 | 403 |
+| `RETRY` ở chế độ `MANUAL` | ERR-19-032 | 422 |
+
+#### FR-19-041 · Theo dõi kết quả hoàn tiền
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-96; LGC-PAY-025; UC-19-18; API-19-060, 061, 106, 203; UI-19-17, UI-19-18; EN-19-10, 15; EVT-19-13, 14; TS-19-18 |
+| Tác nhân, quyền | Kế toán, người phê duyệt, cán bộ tra cứu, kiểm toán viên · `refund-read`; đối tác · `partner-pay-read` |
+| Đầu ra | Danh sách lọc theo `status[]`, `mode`, `reasonCode`, khoảng ngày lập, khoảng số tiền, `transactionCode`, người lập; chi tiết gồm giao dịch gốc, các cấp duyệt, các lần thực thi, chứng từ, nhật ký trao đổi |
+
+Xử lý khi yêu cầu hoàn đạt `SUCCEEDED` (từ IPN hoàn, truy vấn hoặc ghi nhận thủ công), trong một giao dịch CSDL có khóa hàng giao dịch gốc:
+
+1. Cộng `refund_request.amount` vào `payment_transaction.refunded_amount`.
+2. Chuyển giao dịch gốc `SUCCEEDED`/`PARTIALLY_REFUNDED` → `PARTIALLY_REFUNDED` nếu tổng hoàn < số tiền gốc, → `REFUNDED` nếu bằng; ghi `transaction_event` nguồn `REFUND`.
+3. Ghi `completed_at`, outbox EVT-19-13 (khóa phân vùng `transactionId` để cùng thứ tự với sự kiện giao dịch).
+
+Khi yêu cầu `FAILED`: outbox EVT-19-14; giao dịch gốc không đổi. Hoàn tiền thủ công cũng đi vào đối soát: dòng hoàn của NCC (nếu NCC có ghi nhận) so với yêu cầu hoàn `SUCCEEDED` (FR-19-044, loại `REFUND_MISMATCH`).
+
+### 5.9. Nhóm I — Đối soát và chênh lệch
+
+Nhóm I là năng lực mới hoàn toàn (hệ cũ không đối soát, điểm yếu 1), hiện thực REQ-95 và các chỉ số KPI-13, KPI-14, KPI-94…96.
+
+#### FR-19-042 · Lập lịch và khởi tạo phiên đối soát
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-025; UC-19-19; API-19-063, 064; UI-19-19; EN-19-17; TS-19-19 |
+| Tác nhân, quyền | Hệ thống; kế toán · `recon-run` (tạo thủ công) |
+| Đầu vào (thủ công) | `providerId`, `businessDate` (T-DATE, trước hôm nay, không trước ngày kích hoạt NCC) |
+| Đầu ra | Phiên `SCHEDULED` với `run_no = 1`, `next_collect_at` |
+| Sự kiện, kiểm toán | Kiểm toán `RECON_SESSION_CREATE` (thủ công) |
+
+Xử lý: tác vụ chạy lúc `19.recon.cutoff-time` (mặc định 06:00 giờ Việt Nam) hằng ngày tạo phiên cho mỗi NCC `ACTIVE`, `SUSPENDED` cho ngày T−1, rồi chuyển ngay sang thu thập (FR-19-043). Phiên đã tồn tại cho (NCC, ngày) thì bỏ qua (tự động) hoặc trả ERR-19-040 (thủ công). Ngày nào NCC không có giao dịch nào ở cả hai phía vẫn có phiên để chứng minh "0 giao dịch, 0 đồng". Tác vụ chạy lại được an toàn (ràng buộc duy nhất).
+
+#### FR-19-043 · Thu thập dữ liệu đối soát của nhà cung cấp
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-025; NFR-19-008; UC-19-19; API-19-065, 066, 204; UI-19-20; EN-19-17, 23; TS-19-19 |
+| Tác nhân, quyền | Hệ thống; kế toán · `recon-upload` (tải tệp), `recon-run` (thu thập lại) |
+| Đầu vào (tải tệp) | Tệp CSV/XLSX hoặc định dạng do adapter khai (≤ 100 MB), `sha256` do người tải khai báo (tùy chọn, đối chiếu với tệp), `note` |
+| Đầu ra | Tệp gốc lưu `dh-{tenant}-payment` (Garage) với `stored_file` mục đích `RECON_SOURCE`; tập dòng chuẩn hóa của NCC |
+| Hậu điều kiện | Hợp lệ → `MATCHING`; NCC chưa có dữ liệu, tệp sai định dạng, sai mã băm, sai NCC, sai ngày → `WAITING_DATA` kèm lỗi; lỗi kỹ thuật 3 lần → `FAILED` |
+| Sự kiện, kiểm toán | Kiểm toán `RECON_FILE_UPLOAD`; nhật ký tích hợp `RECON_FETCH` |
+
+Xử lý gồm các bước sau.
+
+1. `SCHEDULED` → `COLLECTING`. Theo `capabilities.reconSource` của adapter: `API` (gọi API lấy dữ liệu ngày), `FILE_FETCH` (tải tệp từ NCC, ví dụ SFTP), hoặc `FILE_UPLOAD` (chờ kế toán tải; giả định khi OQ-19-07 chưa trả lời).
+2. Adapter đọc dữ liệu, kiểm tra cấu trúc, mã NCC, ngày, chữ ký hoặc mã băm do NCC cung cấp (nếu có); chuyển mỗi dòng thành **dòng đối soát chuẩn**: loại (`PAYMENT`, `REFUND`), `providerReference`, `transactionCode` (nếu có), số tiền, trạng thái NCC đã ánh xạ (thao tác `RECON`), thời điểm thanh toán; bỏ qua dòng thử.
+3. Tệp gốc được lưu trước khi phân tích, với SHA-256; phiên trỏ `source_file_id`. Tệp trùng mã băm với tệp đã nạp của cùng phiên được nhận diện và không nạp lại.
+4. Không có dữ liệu: `WAITING_DATA`, `next_collect_at = now + 30 phút`; tới `19.recon.collect-deadline` (mặc định 12:00) vẫn chưa có thì cảnh báo kế toán và ngừng tự thu thập, chờ tải tệp.
+5. Thông báo dữ liệu sẵn sàng (API-19-204, nếu NCC hỗ trợ) đặt `next_collect_at = now`.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Tệp sai định dạng, sai mã băm, sai NCC, sai ngày | ERR-19-041 | 422 (phiên về `WAITING_DATA`) |
+| Phiên đã `CLOSED` | ERR-19-043 | 409 |
+| Tải tệp khi phiên không ở `WAITING_DATA`, `SCHEDULED`, `FAILED` | ERR-19-021 | 409 |
+
+#### FR-19-044 · So khớp tự động
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-028; NFR-19-008; KPI-94; UC-19-19; API-19-066, 067, 070; UI-19-20; EN-19-10, 15, 17, 18, 19; EVT-19-15, 17, 18; TS-19-19, 32 |
+| Tác nhân, quyền | Hệ thống; kế toán chạy lại · `recon-run` |
+| Đầu ra | Các dòng `reconciliation_item` của lần chạy; tổng số lượng và tổng tiền hai phía; chênh lệch mới; `recon_status` của giao dịch |
+| Hậu điều kiện | 0 dòng lệch → `READY_TO_CLOSE`; có dòng lệch → `IN_REVIEW` |
+| Sự kiện, kiểm toán | EVT-19-15 khi so khớp xong; EVT-19-17 cho mỗi chênh lệch mới; EVT-19-18 cho chênh lệch tự khớp |
+
+Xử lý gồm các bước sau.
+
+1. **Tập phía Datahub** của ngày T: giao dịch có `paid_at` thuộc ngày T giờ Việt Nam (BR-19-025), trạng thái `SUCCEEDED`, `PARTIALLY_REFUNDED`, `REFUNDED`, của NCC, `is_test = false`, `is_shadow = false`; cộng giao dịch có `needs_reconciliation = true` với `created_at` thuộc ngày T; cộng yêu cầu hoàn `SUCCEEDED` có `completed_at` thuộc ngày T.
+2. **Ghép** theo `providerReference`; dòng NCC không có tham chiếu thì ghép theo `transactionCode`. Ghép là quan hệ một-một; dòng NCC thứ hai cho cùng tham chiếu là `DUPLICATE`.
+3. **Phân loại** mỗi cặp hoặc dòng lẻ:
+
+| Phía Datahub | Phía NCC | Điều kiện | `match_result` | Loại chênh lệch |
+|---|---|---|---|---|
+| Có, thành công | Có, thành công | Số tiền bằng nhau | `MATCHED` | — |
+| Có | Có | Số tiền khác | `MISMATCHED` | `AMOUNT_MISMATCH` |
+| Có, thành công | Có, thất bại hoặc chưa thanh toán | | `MISMATCHED` | `STATUS_MISMATCH` |
+| Có, thành công | Không có | | `MISSING_PROVIDER` | `MISSING_AT_PROVIDER` |
+| Không có, hoặc chưa ở `SUCCEEDED` | Có, thành công | | `MISSING_DH` | `MISSING_AT_DATAHUB` |
+| Một | Hai dòng thành công cùng tham chiếu | | `MISMATCHED` | `DUPLICATE` |
+| Hoàn `SUCCEEDED` | Hoàn khác số tiền, khác trạng thái, hoặc không có | | `MISMATCHED` | `REFUND_MISMATCH` |
+
+4. Với lần chạy thứ hai trở đi (`run_no > 1`), chênh lệch cũ chưa `RESOLVED` mà dòng tương ứng nay `MATCHED` được đóng `RESOLVED` với `AUTO_MATCHED`; chênh lệch cũ vẫn lệch được giữ và liên kết dòng mới, không sinh bản trùng.
+5. Ghi dòng đối soát theo lô 5.000; tính tổng; cập nhật `recon_status` của giao dịch (`MATCHED` hoặc `MISMATCHED`).
+6. Mục tiêu tỷ lệ khớp tự động ≥ 99,9% mỗi phiên (KPI-94) được đo từ `matched_count / (matched_count + discrepancy_count)`; dưới mục tiêu thì cảnh báo kế toán trưởng.
+
+#### FR-19-045 · Quản lý bản ghi chênh lệch
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-028; KPI-96; UC-19-20; API-19-071, 072, 074, 087; UI-19-21, UI-19-22; EN-19-19, 23; TS-19-20 |
+| Tác nhân, quyền | Kế toán · `discrepancy-handle`; người phê duyệt, cán bộ tra cứu, kiểm toán viên · `discrepancy-read` |
+| Đầu vào (API-19-072) | `action` ∈ {`ASSIGN`, `CLAIM`, `ESCALATE`, `PROVIDER_RESPONDED`, `ADD_NOTE`}; `assigneeId` (với `ASSIGN`, người có `discrepancy-handle`); `escalationRef` (với `ESCALATE`, mã yêu cầu hỗ trợ đã gửi NCC); `note` (≤ 2.000 ký tự); `attachmentFileIds` |
+| Đầu ra | Danh sách lọc theo `type[]`, `status[]`, `providerId`, `businessDate` (khoảng), tuổi (ngày làm việc), `assigneeId`, `overdue`; chi tiết gồm dữ liệu hai phía, dòng đối soát, giao dịch, IPN liên quan, ghi chú theo thời gian, đề xuất và quyết định |
+| Sự kiện, kiểm toán | Kiểm toán theo hành động |
+
+Xử lý: chuyển trạng thái theo khung §7.7 (`OPEN` → `INVESTIGATING` khi giao hoặc nhận; `INVESTIGATING` ⇄ `ESCALATED`); ghi chú là danh sách chỉ thêm, không sửa, không xóa. Tác vụ hằng ngày tính tuổi theo ngày làm việc (lịch ngày nghỉ: giả định cấu hình theo tenant, OQ-19-16): quá `due_at` (mặc định 3 ngày làm việc) thì nhắc người phụ trách; quá 10 ngày làm việc thì chuyển cấp tới nhóm người phê duyệt (thông báo, không đổi trạng thái).
+
+#### FR-19-046 · Đề xuất và phê duyệt xử lý chênh lệch
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-011, 014, 015, 028; UC-19-20; API-19-073, 048…050; UI-19-22, UI-19-13; EN-19-10, 15, 16, 19; EVT-19-18; TS-19-20, 33 |
+| Tác nhân, quyền | Kế toán · `discrepancy-handle` (đề xuất); người phê duyệt · `discrepancy-approve` |
+| Đầu vào | `resolutionType` ∈ {`UPDATE_STATUS_FROM_PROVIDER`, `CREATE_REFUND`, `ACCEPT_PROVIDER_FIGURE`, `NO_ACTION`}; `note` (bắt buộc, bắt buộc ≥ 30 ký tự với `NO_ACTION`); `evidenceFileIds`; với `UPDATE_STATUS_FROM_PROVIDER`: `targetStatus` (`SUCCEEDED` hoặc `FAILED`) và bằng chứng xác minh với NCC (kết quả truy vấn gần nhất hoặc văn bản của NCC); với `CREATE_REFUND`: `refundAmount`, `reasonCode` |
+| Hậu điều kiện | Duyệt → hệ thống thực thi cách xử lý trong một giao dịch CSDL, chênh lệch `RESOLVED`; phiên `IN_REVIEW` → `READY_TO_CLOSE` khi chênh lệch cuối cùng đóng |
+| Sự kiện, kiểm toán | EVT-19-18; kiểm toán `DISCREPANCY_PROPOSE`, `APPROVAL_DECISION`, `DISCREPANCY_RESOLVE` |
+
+Cách xử lý được phép theo loại chênh lệch:
+
+| Loại | Cách xử lý được phép | Hệ quả khi thực thi |
+|---|---|---|
+| `MISSING_AT_DATAHUB`, `STATUS_MISMATCH` (NCC thành công) | `UPDATE_STATUS_FROM_PROVIDER` (`SUCCEEDED`), `NO_ACTION` | Giao dịch → `SUCCEEDED` nguồn `DISCREPANCY_RESOLUTION`; webhook `transaction.succeeded`. Nếu NCC có giao dịch mà PH-19 không có bản ghi nào: tạo giao dịch bù gắn đối tác theo `transactionCode` của dòng NCC (nếu có), không thì `NO_ACTION` kèm biên bản |
+| `MISSING_AT_PROVIDER`, `STATUS_MISMATCH` (NCC thất bại) | `UPDATE_STATUS_FROM_PROVIDER` (`FAILED`), `NO_ACTION` | Giao dịch → `FAILED`; webhook `transaction.failed` kèm `reasonCode = RECON_REVERSAL` |
+| `AMOUNT_MISMATCH` | `ACCEPT_PROVIDER_FIGURE`, `CREATE_REFUND`, `NO_ACTION` | `ACCEPT_PROVIDER_FIGURE`: ghi bản ghi bù có tham chiếu (BR-19-030), số tiền gốc không sửa; báo cáo dùng số đã điều chỉnh |
+| `DUPLICATE` | `CREATE_REFUND`, `NO_ACTION` | `CREATE_REFUND`: tạo yêu cầu hoàn `PENDING_APPROVAL`, đi tiếp quy trình duyệt hoàn riêng với người duyệt khác người đề xuất chênh lệch (khung §13.4 quy tắc 4) |
+| `LATE_PAYMENT` | `NO_ACTION` (giữ khoản thu), `CREATE_REFUND` | Như trên |
+| `REFUND_MISMATCH` | `ACCEPT_PROVIDER_FIGURE`, `NO_ACTION` | Điều chỉnh `refunded_amount` bằng bản ghi bù |
+| `ORPHAN_CALLBACK` | `NO_ACTION`, `UPDATE_STATUS_FROM_PROVIDER` (khi đã tìm được giao dịch sau di trú) | |
+
+Xử lý: đề xuất chuyển chênh lệch `INVESTIGATING` → `PROPOSED` và tạo `approval_request` loại `DISCREPANCY_RESOLUTION`; người duyệt ≠ người đề xuất (ERR-19-033); từ chối hoặc hết hạn → `INVESTIGATING`. Khi duyệt, hệ thống kiểm tra lại trạng thái giao dịch không đổi kể từ lúc đề xuất (so `version`), khác thì từ chối với ERR-19-045 để kế toán đề xuất lại.
+
+#### FR-19-047 · Chốt và mở lại phiên đối soát
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-95; BR-19-011, 028, 030; KPI-95; UC-19-21; API-19-068, 069, 050; UI-19-20, UI-19-13; EN-19-16, 17, 23; EVT-19-16; TS-19-21 |
+| Tác nhân, quyền | Kế toán · `recon-close`; người phê duyệt · `recon-reopen-approve` |
+| Đầu vào | Chốt: `note`, `If-Match`. Mở lại: `reason` (≥ 30 ký tự) |
+| Hậu điều kiện | Chốt: phiên `CLOSED` bất biến, sinh biên bản (FR-19-048). Mở lại được duyệt: phiên `IN_REVIEW`, `run_no + 1`, biên bản cũ đánh dấu `superseded_by` |
+| Sự kiện, kiểm toán | EVT-19-16 khi chốt; kiểm toán theo hành động |
+
+Xử lý: chốt chỉ khi phiên `READY_TO_CLOSE` và mọi chênh lệch `RESOLVED` (ERR-19-042); ghi `closed_at`, `closed_by`; sinh biên bản đồng bộ (≤ 30 giây với phiên 100.000 dòng; dài hơn thì sinh bằng tác vụ nền và phiên chỉ chuyển `CLOSED` khi biên bản đã lưu). Mọi thao tác ghi lên phiên `CLOSED` và dòng, chênh lệch của nó trả ERR-19-043. Mở lại: phiên `CLOSED` → `REOPEN_PENDING`, tạo đề nghị `RECON_REOPEN`; người duyệt ≠ người lập và ≠ người đã chốt phiên (khung §13.4 quy tắc 5); duyệt thì phiên `IN_REVIEW` với lần chạy mới; kết quả cũ không bị xóa.
+
+#### FR-19-048 · Xuất biên bản và cung cấp kết quả đối soát
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | S · MVP cho biên bản; API tải kết quả của đối tác (API-19-107) thuộc Đ2b |
+| Truy vết | REQ-95; CMP-LAW-15, CMP-LAW-95 (đề xuất); UC-19-21; API-19-083, 084, 088, 107; UI-19-20; EN-19-17, 23, 24; TS-19-21 |
+| Tác nhân, quyền | Kế toán, kiểm toán viên · `report-export`; đối tác · `partner-recon-read` |
+| Đầu ra | Biên bản PDF (theo thể thức NĐ 30/2020, có ô ký của bên lập, bên kiểm tra, đại diện đơn vị chủ trì đối soát theo OQ-19-18) và XLSX (chi tiết dòng); mã băm SHA-256 in trên biên bản; tệp lưu bucket WORM với `retention_until` theo NFR-19-014 |
+
+Nội dung biên bản: thông tin phiên (NCC, ngày giao dịch, lần chạy, thời điểm chốt, người chốt), tổng hợp hai phía (số giao dịch, tổng tiền thu, số khoản hoàn, tổng tiền hoàn), số dòng khớp, danh sách chênh lệch và cách xử lý đã duyệt, phần tổng hợp theo đối tác và theo dịch vụ. Kết quả cho đối tác (API-19-107) chỉ gồm giao dịch của đối tác đó, trạng thái đối soát từng giao dịch và tổng; chỉ có sau khi phiên `CLOSED`, ngược lại trả ERR-19-020.
+
