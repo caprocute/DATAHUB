@@ -1,6 +1,6 @@
 -- @file 16-0090-seed.sql
 -- @changeset ph16-0910-fn-seed-tenant splitStatements:false
--- Khởi tạo tenant: 18 tham số 16.*, năm nhóm chỉ tiêu, bộ tiêu chí tuân thủ tối thiểu và mẫu báo cáo mặc định, sao chép từ COMMON. Chỉ tiêu mẫu do người dùng kế thừa (FR-16-008), không seed.
+-- Khởi tạo tenant: 25 tham số 16.*, năm nhóm chỉ tiêu, bộ tiêu chí tuân thủ tối thiểu và mẫu báo cáo mặc định, sao chép từ COMMON. Chỉ tiêu mẫu do người dùng kế thừa (FR-16-008), không seed.
 CREATE OR REPLACE PROCEDURE ph16_kpi.p_seed_tenant(p_tenant text)
   LANGUAGE plpgsql AS $p$
 BEGIN
@@ -25,7 +25,7 @@ BEGIN
   ON CONFLICT (tenant_id, template_code, version_no) DO NOTHING;
 END
 $p$;
-COMMENT ON PROCEDURE ph16_kpi.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 18 tham số 16.*, 5 nhóm chỉ tiêu, 6 tiêu chí tuân thủ, 1 mẫu báo cáo sao chép từ COMMON. Chạy lại không nhân bản.';
+COMMENT ON PROCEDURE ph16_kpi.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 25 tham số 16.*, 5 nhóm chỉ tiêu, 6 tiêu chí tuân thủ, 1 mẫu báo cáo sao chép từ COMMON. Chạy lại không nhân bản.';
 -- @rollback DROP PROCEDURE IF EXISTS ph16_kpi.p_seed_tenant(text);
 
 -- @changeset ph16-0920-fn-seed-common splitStatements:false
@@ -36,7 +36,7 @@ CREATE OR REPLACE PROCEDURE ph16_kpi.p_seed_common()
 BEGIN
   PERFORM set_config('app.tenant_id', 'PLATFORM', true);
   INSERT INTO ph16_kpi.kpi_indicator_group (id, tenant_id, group_code, name, description, weight, display_order, created_by, updated_by)
-  SELECT md5('ph16-group:COMMON:' || g.c)::uuid, 'COMMON', g.c, g.n, g.d, 0.2000, g.o, 'system:seed', 'system:seed'
+  SELECT md5('ph16-group:COMMON:' || g.c)::uuid, 'COMMON', g.c, g.n, g.d, 20.00, g.o, 'system:seed', 'system:seed'
   FROM (VALUES @@GRP@@) AS g(c, n, d, o)
   ON CONFLICT (tenant_id, group_code) DO NOTHING;
   INSERT INTO ph16_kpi.kpi_indicator (id, tenant_id, indicator_code, group_code, name, kind, direction, measurement, unit, aggregation, scope, mandatory, brd_ref, display_order, created_by, updated_by)

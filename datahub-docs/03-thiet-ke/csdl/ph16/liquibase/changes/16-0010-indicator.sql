@@ -9,7 +9,7 @@ CREATE TABLE ph16_kpi.kpi_indicator_group (
   group_code    varchar(16) NOT NULL,
   name          varchar(255) NOT NULL,
   description   varchar(2000),
-  weight        numeric(5,4) NOT NULL DEFAULT 0.2000,
+  weight        numeric(5,2) NOT NULL DEFAULT 20.00,
   display_order smallint NOT NULL DEFAULT 0,
   enabled       boolean NOT NULL DEFAULT true,
   created_at    timestamptz NOT NULL DEFAULT now(),
@@ -21,14 +21,14 @@ CREATE TABLE ph16_kpi.kpi_indicator_group (
   CONSTRAINT ck_kpi_indicator_group_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT uq_kpi_indicator_group_code UNIQUE (tenant_id, group_code),
   CONSTRAINT ck_kpi_indicator_group_code CHECK (group_code IN ('KET_NOI', 'CHIA_SE', 'DU_LIEU', 'VAN_HANH', 'KIEN_TRUC')),
-  CONSTRAINT ck_kpi_indicator_group_weight CHECK (weight >= 0 AND weight <= 1)
+  CONSTRAINT ck_kpi_indicator_group_weight CHECK (weight >= 0 AND weight <= 100)
 );
 CREATE TRIGGER tg_kpi_indicator_group_touch BEFORE UPDATE ON ph16_kpi.kpi_indicator_group FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_indicator_group_immutable BEFORE UPDATE ON ph16_kpi.kpi_indicator_group FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'group_code');
 CALL ph16_kpi.p_enable_rls_shared('ph16_kpi.kpi_indicator_group');
 COMMENT ON TABLE ph16_kpi.kpi_indicator_group IS 'EN-16-01 Nhóm chỉ tiêu: năm nhóm KET_NOI, CHIA_SE, DU_LIEU, VAN_HANH, KIEN_TRUC kế thừa năm nhóm KPI của SRS cũ, có trọng số tính điểm nhóm (FR-16-007). Dòng tenant COMMON do PLATFORM quản, mọi tenant đọc được (mẫu RLS S); tenant nhận bản sao khi khởi tạo.';
 COMMENT ON COLUMN ph16_kpi.kpi_indicator_group.tenant_id IS 'Dạng Tnn hoặc COMMON (bộ mẫu dùng chung).';
-COMMENT ON COLUMN ph16_kpi.kpi_indicator_group.weight IS 'Trọng số điểm nhóm; tổng trọng số các nhóm đang bật bằng 1 do dịch vụ kiểm (FR-16-007).';
+COMMENT ON COLUMN ph16_kpi.kpi_indicator_group.weight IS 'Trọng số điểm nhóm thang 0…100; tổng trọng số các nhóm đang bật bằng 100 do dịch vụ kiểm (BR-16-016, ERR-16-012, FR-16-007).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_indicator_group CASCADE;
 
 --changeset ph16:ph16-0110-kpi-indicator
@@ -48,8 +48,8 @@ CREATE TABLE ph16_kpi.kpi_indicator (
   mandatory                     boolean NOT NULL DEFAULT false,
   brd_ref                       varchar(8),
   template_code                 varchar(63),
-  status                        varchar(8) NOT NULL DEFAULT 'ACTIVE',
-  status_reason                 varchar(2000),
+  state                         varchar(8) NOT NULL DEFAULT 'DRAFT',
+  state_reason                  varchar(2000),
   replaced_by_code              varchar(63),
   template_version_no           integer,
   template_dismissed_version_no integer,
@@ -70,14 +70,14 @@ CREATE TABLE ph16_kpi.kpi_indicator (
   CONSTRAINT ck_kpi_indicator_measurement CHECK (measurement IN ('AUTO', 'MANUAL', 'MIXED')),
   CONSTRAINT ck_kpi_indicator_aggregation CHECK (aggregation IN ('LAST', 'SUM', 'AVG', 'P95', 'MAX', 'MIN')),
   CONSTRAINT ck_kpi_indicator_scope CHECK (scope IN ('TENANT', 'COMMON') AND (scope = 'COMMON') = (tenant_id = 'COMMON')),
-  CONSTRAINT ck_kpi_indicator_status CHECK (status IN ('ACTIVE', 'RETIRED')),
+  CONSTRAINT ck_kpi_indicator_state CHECK (state IN ('DRAFT', 'ACTIVE', 'RETIRED')),
   CONSTRAINT ck_kpi_indicator_brd_ref CHECK (brd_ref IS NULL OR brd_ref ~ '^KPI-[0-9]{2}$'),
   CONSTRAINT ck_kpi_indicator_template CHECK (template_code IS NULL OR (scope = 'TENANT' AND template_code ~ '^[a-z][a-z0-9-]{2,62}$')),
-  CONSTRAINT ck_kpi_indicator_replaced CHECK (replaced_by_code IS NULL OR (replaced_by_code <> indicator_code AND status = 'RETIRED')),
-  CONSTRAINT ck_kpi_indicator_reason CHECK (status <> 'RETIRED' OR COALESCE(char_length(status_reason) >= 20, false))
+  CONSTRAINT ck_kpi_indicator_replaced CHECK (replaced_by_code IS NULL OR (replaced_by_code <> indicator_code AND state = 'RETIRED')),
+  CONSTRAINT ck_kpi_indicator_reason CHECK (state <> 'RETIRED' OR COALESCE(char_length(state_reason) >= 20, false))
 );
-CREATE INDEX ix_kpi_indicator_group ON ph16_kpi.kpi_indicator (tenant_id, group_code, status, display_order);
-CREATE INDEX ix_kpi_indicator_measure ON ph16_kpi.kpi_indicator (tenant_id, measurement, status);
+CREATE INDEX ix_kpi_indicator_group ON ph16_kpi.kpi_indicator (tenant_id, group_code, state, display_order);
+CREATE INDEX ix_kpi_indicator_measure ON ph16_kpi.kpi_indicator (tenant_id, measurement, state);
 CREATE TRIGGER tg_kpi_indicator_touch BEFORE UPDATE ON ph16_kpi.kpi_indicator FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_indicator_immutable BEFORE UPDATE ON ph16_kpi.kpi_indicator FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'indicator_code', 'scope');
 CALL ph16_kpi.p_enable_rls_shared('ph16_kpi.kpi_indicator');

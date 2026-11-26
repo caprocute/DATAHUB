@@ -3,14 +3,14 @@
 -- TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
 
 --changeset ph16:ph16-0910-fn-seed-tenant splitStatements:false
--- Khởi tạo tenant: 18 tham số 16.*, năm nhóm chỉ tiêu, bộ tiêu chí tuân thủ tối thiểu và mẫu báo cáo mặc định, sao chép từ COMMON. Chỉ tiêu mẫu do người dùng kế thừa (FR-16-008), không seed.
+-- Khởi tạo tenant: 25 tham số 16.*, năm nhóm chỉ tiêu, bộ tiêu chí tuân thủ tối thiểu và mẫu báo cáo mặc định, sao chép từ COMMON. Chỉ tiêu mẫu do người dùng kế thừa (FR-16-008), không seed.
 CREATE OR REPLACE PROCEDURE ph16_kpi.p_seed_tenant(p_tenant text)
   LANGUAGE plpgsql AS $p$
 BEGIN
   PERFORM set_config('app.tenant_id', p_tenant, true);
   INSERT INTO ph16_kpi.kpi_tenant_setting (id, tenant_id, param_code, value, created_by, updated_by)
   SELECT md5('ph16-setting:' || p_tenant || ':' || s.k)::uuid, p_tenant, s.k, s.v::jsonb, 'system:seed', 'system:seed'
-  FROM (VALUES ('16.period.types', '"MONTH,QUARTER,YEAR"'), ('16.period.close-day', '5'), ('16.aggregate.cron', '"0 30 1 * * *"'), ('16.aggregate.timeout-minutes', '15'), ('16.source.stale-hours', '26'), ('16.source.fail-after', '3'), ('16.late-data.recompute', 'true'), ('16.manual.evidence-required', 'true'), ('16.report.four-eyes', 'true'), ('16.report.signing', 'true'), ('16.report.retention-years', '10'), ('16.observation.retention-months', '36'), ('16.export.link-hours', '24'), ('16.export.max-rows', '100000'), ('16.national.enabled', 'false'), ('16.national.retry-max', '5'), ('16.compare.min-tenants', '3'), ('16.compliance.waiver-max-days', '180')) AS s(k, v)
+  FROM (VALUES ('16.period.types', '"MONTH,QUARTER,YEAR"'), ('16.period.close-day', '5'), ('16.period.auto-close', 'true'), ('16.aggregate.cron', '"0 30 1 * * *"'), ('16.aggregate.timeout-minutes', '15'), ('16.aggregate.formula-timeout-ms', '50'), ('16.source.stale-hours', '26'), ('16.source.fail-after', '3'), ('16.late-data.recompute', 'true'), ('16.late-data.debounce-minutes', '5'), ('16.manual.evidence-required', 'true'), ('16.manual.max-file-mb', '20'), ('16.report.four-eyes', 'true'), ('16.report.signing', 'true'), ('16.report.retention-years', '10'), ('16.report.auto-draft', 'true'), ('16.observation.retention-months', '36'), ('16.export.link-hours', '24'), ('16.export.max-rows', '100000'), ('16.national.enabled', 'false'), ('16.national.retry-max', '5'), ('16.national.arch-schedule', '"0 0 3 1 * ?"'), ('16.compare.min-tenants', '3'), ('16.compliance.waiver-max-days', '180'), ('16.overview.pinned-indicators', '""')) AS s(k, v)
   ON CONFLICT (tenant_id, param_code) DO NOTHING;
   INSERT INTO ph16_kpi.kpi_indicator_group (id, tenant_id, group_code, name, description, weight, display_order, enabled, created_by, updated_by)
   SELECT md5('ph16-group:' || p_tenant || ':' || g.group_code)::uuid, p_tenant, g.group_code, g.name, g.description, g.weight, g.display_order, g.enabled, 'system:seed', 'system:seed'
@@ -28,7 +28,7 @@ BEGIN
   ON CONFLICT (tenant_id, template_code, version_no) DO NOTHING;
 END
 $p$;
-COMMENT ON PROCEDURE ph16_kpi.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 18 tham số 16.*, 5 nhóm chỉ tiêu, 6 tiêu chí tuân thủ, 1 mẫu báo cáo sao chép từ COMMON. Chạy lại không nhân bản.';
+COMMENT ON PROCEDURE ph16_kpi.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 25 tham số 16.*, 5 nhóm chỉ tiêu, 6 tiêu chí tuân thủ, 1 mẫu báo cáo sao chép từ COMMON. Chạy lại không nhân bản.';
 --rollback DROP PROCEDURE IF EXISTS ph16_kpi.p_seed_tenant(text);
 
 --changeset ph16:ph16-0920-fn-seed-common splitStatements:false
@@ -39,7 +39,7 @@ CREATE OR REPLACE PROCEDURE ph16_kpi.p_seed_common()
 BEGIN
   PERFORM set_config('app.tenant_id', 'PLATFORM', true);
   INSERT INTO ph16_kpi.kpi_indicator_group (id, tenant_id, group_code, name, description, weight, display_order, created_by, updated_by)
-  SELECT md5('ph16-group:COMMON:' || g.c)::uuid, 'COMMON', g.c, g.n, g.d, 0.2000, g.o, 'system:seed', 'system:seed'
+  SELECT md5('ph16-group:COMMON:' || g.c)::uuid, 'COMMON', g.c, g.n, g.d, 20.00, g.o, 'system:seed', 'system:seed'
   FROM (VALUES ('KET_NOI', 'Kết nối, tích hợp', 'Mức độ HTTT kết nối, tốc độ kết nạp và xây luồng.', 1), ('CHIA_SE', 'Chia sẻ, khai thác dữ liệu', 'Số API công bố, lượt khai thác, nhật ký, đối soát.', 2), ('DU_LIEU', 'Chất lượng, danh mục dữ liệu', 'Điểm chất lượng, quản lý danh mục tập trung.', 3), ('VAN_HANH', 'Vận hành, an toàn', 'Sẵn sàng, độ trễ, sự cố, hồ sơ cấp độ, bí mật ngoài kho.', 4), ('KIEN_TRUC', 'Tuân thủ kiến trúc, triển khai', 'Khởi tạo tenant, giao diện quản trị, hài lòng người dùng, thành phần đã đánh giá.', 5)) AS g(c, n, d, o)
   ON CONFLICT (tenant_id, group_code) DO NOTHING;
   INSERT INTO ph16_kpi.kpi_indicator (id, tenant_id, indicator_code, group_code, name, kind, direction, measurement, unit, aggregation, scope, mandatory, brd_ref, display_order, created_by, updated_by)

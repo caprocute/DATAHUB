@@ -22,7 +22,7 @@ $f$;
 COMMENT ON FUNCTION ph16_kpi.f_submission_gate() IS 'Cổng gửi quốc gia: tham số 16.national.enabled bật, gói mới ở PENDING, báo cáo phải PUBLISHED (FR-16-051).';
 --rollback DROP FUNCTION IF EXISTS ph16_kpi.f_submission_gate();
 
---changeset ph16:ph16-0400-kpi-national-template
+--changeset ph16:ph16-0440-kpi-national-template
 CREATE TABLE ph16_kpi.kpi_national_template (
   id              uuid NOT NULL,
   tenant_id       varchar(16) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE ph16_kpi.kpi_national_template (
   version_no      integer NOT NULL DEFAULT 1,
   submission_type varchar(13) NOT NULL,
   name            varchar(255) NOT NULL,
-  state           varchar(8) NOT NULL DEFAULT 'DRAFT',
+  state           varchar(10) NOT NULL DEFAULT 'DRAFT',
   mapping         jsonb NOT NULL DEFAULT '{}',
   schema_ref      varchar(255),
   channel_ref     varchar(64) NOT NULL DEFAULT 'PH-14',
@@ -50,21 +50,21 @@ CREATE TABLE ph16_kpi.kpi_national_template (
   CONSTRAINT ck_kpi_national_template_code CHECK (template_code ~ '^[a-z][a-z0-9-]{2,62}$'),
   CONSTRAINT ck_kpi_national_template_no CHECK (version_no >= 1),
   CONSTRAINT ck_kpi_national_template_type CHECK (submission_type IN ('KPI_REPORT', 'ARCH_REGISTRY')),
-  CONSTRAINT ck_kpi_national_template_state CHECK (state IN ('DRAFT', 'ACTIVE', 'RETIRED')),
+  CONSTRAINT ck_kpi_national_template_state CHECK (state IN ('DRAFT', 'ACTIVE', 'SUPERSEDED')),
   CONSTRAINT ck_kpi_national_template_mapping CHECK (jsonb_typeof(mapping) = 'object'),
   CONSTRAINT ck_kpi_national_template_active CHECK (state = 'DRAFT' OR (activated_at IS NOT NULL AND approved_by IS NOT NULL))
 );
 CREATE UNIQUE INDEX uq_kpi_national_template_active ON ph16_kpi.kpi_national_template (tenant_id, template_code) WHERE state = 'ACTIVE';
 CREATE TRIGGER tg_kpi_national_template_touch BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_national_template_immutable BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'template_code', 'version_no', 'submission_type');
-CREATE TRIGGER tg_kpi_national_template_frozen BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'ACTIVE,RETIRED', 'mapping', 'schema_ref', 'channel_ref', 'effective_from');
-CREATE TRIGGER tg_kpi_national_template_transition BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["ACTIVE","RETIRED"],"ACTIVE":["RETIRED"]}');
+CREATE TRIGGER tg_kpi_national_template_frozen BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'ACTIVE,SUPERSEDED', 'mapping', 'schema_ref', 'channel_ref', 'effective_from');
+CREATE TRIGGER tg_kpi_national_template_transition BEFORE UPDATE ON ph16_kpi.kpi_national_template FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["ACTIVE"],"ACTIVE":["SUPERSEDED"]}');
 CALL ph16_kpi.p_enable_rls_shared('ph16_kpi.kpi_national_template');
 COMMENT ON TABLE ph16_kpi.kpi_national_template IS 'EN-16-34 Mẫu gói quốc gia có phiên bản: cách ánh xạ chỉ tiêu hoặc sổ kiến trúc sang lược đồ của nền tảng quốc gia, là cấu hình ngoài vì khung quốc gia chưa ban hành (CMP-LAW-11 dự thảo, ADR đề xuất dải 160…164); kênh gửi là PH-14 (FR-16-050). ACTIVE bất biến, mỗi mã một phiên bản ACTIVE. Dòng COMMON do PLATFORM quản, mọi tenant đọc được (mẫu RLS S).';
 COMMENT ON COLUMN ph16_kpi.kpi_national_template.mapping IS 'Ánh xạ trường nội bộ sang lược đồ nền tảng quốc gia; thay đổi khi khung ban hành chỉ cần phiên bản mẫu mới, không đổi mã.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_national_template CASCADE;
 
---changeset ph16:ph16-0410-kpi-national-submission
+--changeset ph16:ph16-0450-kpi-national-submission
 CREATE TABLE ph16_kpi.kpi_national_submission (
   id                   uuid NOT NULL,
   tenant_id            varchar(16) NOT NULL,
@@ -120,7 +120,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_national_submission.channel_ref IS 'Mã giao dị
 COMMENT ON COLUMN ph16_kpi.kpi_national_submission.attempt_count IS 'Số lần gửi; không vượt 16.national.retry-max + 1 do dịch vụ kiểm.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_national_submission CASCADE;
 
---changeset ph16:ph16-0420-kpi-national-submission-log
+--changeset ph16:ph16-0460-kpi-national-submission-log
 CREATE TABLE ph16_kpi.kpi_national_submission_log (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,

@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH16
 ten: Đặc tả use case phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, lãnh đạo UBND và sở ngành, quản trị tỉnh, cán bộ tổng hợp, kỹ sư dh-platform, kiểm thử viên
@@ -72,7 +72,7 @@ Mỗi use case dùng một khối `::: dac-ta` 15 mục theo thứ tự của K-
 
 Luồng chính đánh số 1, 2, 3. Luồng thay thế ghi `số bước + chữ` (3a rẽ tại bước 3). Luồng ngoại lệ ghi `E1`, `E2` kèm bước, mã `ERR-16-nnn`, mã HTTP trong ngoặc và câu thông báo trong ngoặc kép, nguyên văn FRS §9.2 (dấu `{…}` do máy chủ điền; ngưỡng số như "tối thiểu {n} ký tự" lấy theo FR tương ứng và ghi trong ngoặc đơn sau câu). Mã ERR-16-101…125 là lỗi chạy nền, không có người nhìn trực tiếp; người vận hành thấy ở UI-16-05, 06, 09, 12, 13, 14, 15, 17, 19 hoặc PH-13. Luồng phụ dùng chung ghi `LP-16-nn`, đặc tả một lần ở chương 7.
 
-Quy ước chung không nhắc lại từng use case: lệnh ghi qua `/api/kpi/v1` mang `Idempotency-Key`, lệnh sửa mang `If-Match` (sai phiên bản: ERR-16-004, 409; thiếu: ERR-00-428); đối tượng của tenant khác trả như không tồn tại (ERR-16-001, 404); thiếu quyền chức năng trả ERR-00-403, chưa đăng nhập ERR-00-401; truy vấn chạy dưới RLS theo `tenant_id`; mọi thao tác ghi sinh kiểm toán chuyển sang PH-13 (UC-16-30). Dữ liệu ví dụ giả lập, tenant `T68`, kỳ `M-2026-10`.
+Quy ước chung không nhắc lại từng use case: lệnh ghi qua `/api/kpi/v1` mang `Idempotency-Key` (dùng lại với thân khác: ERR-16-058, 409), lệnh sửa mang `If-Match` (sai phiên bản: ERR-16-004, 409; thiếu: ERR-00-428); đối tượng của tenant khác trả như không tồn tại (ERR-16-001, 404); thiếu quyền chức năng trả ERR-00-403, chưa đăng nhập ERR-00-401; truy vấn chạy dưới RLS theo `tenant_id`; mọi thao tác ghi sinh kiểm toán chuyển sang PH-13 (UC-16-30). Dữ liệu ví dụ giả lập, tenant `T68`, kỳ `M-2026-10`.
 
 | Vai | Người hoặc đối tượng | Ghi chú |
 |---|---|---|
@@ -402,7 +402,7 @@ Bộ chỉ tiêu là danh mục mà mọi báo cáo dựa vào. Người dùng t
 - **4a. Trọng số bằng 0.** Nhóm vẫn hiển thị nhưng không tham gia điểm tổng.
 
 **Luồng ngoại lệ.**
-- **E1. Bộ lọc sai miền (bước 2).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
+- **E1. Bộ lọc sai miền (bước 2).** ERR-16-057 (400): "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên trường lọc, {lý do} = giá trị ngoài miền ở Phụ lục A)
 - **E2. Tổng trọng số khác 100 (bước 5).** ERR-16-012 (422): "Tổng trọng số năm nhóm đang là {tổng}. Điều chỉnh cho bằng 100."
 
 **Quy tắc áp dụng.** BR-16-016, BR-16-018, BR-16-033.
@@ -448,9 +448,9 @@ Một chỉ tiêu mới hoặc một phiên bản mới của chỉ tiêu có s�
 - **5a. Mục tiêu tương đối.** Chọn `targetMode = RELATIVE_TO_BASELINE` (ví dụ KPI-02 giảm từ 80% so với nền): hệ thống quy đổi ngưỡng tuyệt đối từ giá trị nền khi tính.
 
 **Luồng ngoại lệ.**
-- **E1. Mã đã dùng (bước 2).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
-- **E2. Mã sai mẫu hoặc tổ hợp thuộc tính sai (bước 2).** ERR-16-003 (400): "Mã chỉ tiêu chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự."
-- **E3. Đã có phiên bản đang soạn (1a) hoặc phiên bản không ở `DRAFT` (bước 3 đến 6).** ERR-16-006 (409): "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}."
+- **E1. Mã đã dùng (bước 2).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Chỉ tiêu)
+- **E2. Mã sai mẫu hoặc tổ hợp thuộc tính sai (bước 2).** ERR-16-003 (400): "{Trường} chưa hợp lệ: {yêu cầu}." ({Trường} = Mã chỉ tiêu, {yêu cầu} = chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự; tổ hợp thuộc tính sai thì {yêu cầu} nêu tổ hợp được phép)
+- **E3. Đã có phiên bản đang soạn (1a) hoặc phiên bản không ở `DRAFT` (bước 3 đến 6).** ERR-16-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = mở phiên bản mới hoặc sửa, {đối tượng} = phiên bản {n} của chỉ tiêu {mã})
 - **E4. Sửa chỉ tiêu mẫu trực tiếp (1a).** ERR-16-014 (403): "Chỉ tiêu mẫu dùng chung không sửa trực tiếp được. Tạo phiên bản tùy biến của tỉnh."
 - **E5. Công thức sai cú pháp hoặc kiểu (bước 4).** ERR-16-008 (422): "Công thức chưa đúng ở vị trí {dòng}:{cột}: {mô tả}."
 - **E6. Biến chưa có nguồn (bước 4).** ERR-16-009 (422): "Biến {metricCode} chưa có nguồn số liệu nào. Đăng ký nguồn trước khi dùng." Chỉ tiêu `MANUAL` bỏ qua kiểm tra này.
@@ -501,8 +501,8 @@ Một chỉ tiêu mới hoặc một phiên bản mới của chỉ tiêu có s�
 
 **Luồng ngoại lệ.**
 - **E1. Chưa thử tính nội dung hiện tại (bước 1).** ERR-16-011 (422): "Thử tính phiên bản sau lần sửa cuối trước khi gửi duyệt."
-- **E2. Tự duyệt (bước 4).** ERR-16-005 (403): "Anh/chị là người lập hoặc gửi nên không được tự duyệt."
-- **E3. Thiếu ý kiến, lý do (4a, 6a).** ERR-16-007 (422): "Nhập lý do (tối thiểu {n} ký tự)." (n = 20)
+- **E2. Tự duyệt (bước 4).** ERR-16-005 (403): "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = soạn hoặc gửi duyệt, {thao tác} = tự duyệt)
+- **E3. Thiếu ý kiến, lý do (4a, 6a).** ERR-16-007 (422): "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = ý kiến hoặc lý do, {n} = 20)
 - **E5. Còn báo cáo đang duyệt dùng chỉ tiêu (6a).** ERR-16-013 (409): "Chỉ tiêu {mã} đang có trong {n} báo cáo chờ duyệt. Hoàn tất các báo cáo này trước khi ngừng."
 - **E6. Chỉ tiêu thay không hợp lệ (6b).** ERR-16-054 (422): "Chỉ tiêu thay thế {mã} phải đang hiệu lực và cùng loại giá trị."
 
@@ -568,7 +568,7 @@ Tenant mới không bắt đầu từ trang trắng: PH-20 kích hoạt việc k
 - **4b. Xung đột tùy biến.** Tenant đã sửa công thức mà mẫu cũng đổi trường đó: Mai chọn giữ bản của tỉnh hay của mẫu cho từng trường rồi mới nhận được.
 
 **Luồng ngoại lệ.**
-- **E1. Chỉ tiêu đã kế thừa (bước 1).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
+- **E1. Chỉ tiêu đã kế thừa (bước 1).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Chỉ tiêu)
 - **E2. Xung đột tùy biến chưa giải quyết (4b).** ERR-16-055 (409): "Trường {trường} đã được tỉnh tùy biến và mẫu cũng thay đổi. Chọn giữ bản nào."
 
 **Quy tắc áp dụng.** BR-16-018.
@@ -631,7 +631,7 @@ Mọi biến trong công thức phải có nguồn. Cán bộ đăng ký nguồn
 - **7b. Ngừng hẳn.** Mai bấm "Ngừng" (API-16-028): chỉ được khi nguồn không còn là nguồn duy nhất của biến thuộc chỉ tiêu `ACTIVE`; nguồn chuyển `RETIRED`.
 
 **Luồng ngoại lệ.**
-- **E1. Mã trùng (bước 2).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
+- **E1. Mã trùng (bước 2).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Nguồn)
 - **E3. Cấu hình thiếu theo loại (bước 2).** ERR-16-015 (422): "Nguồn loại {loại} cần {trường}. Bổ sung trước khi lưu."
 - **E4. Thử thất bại (bước 3).** ERR-16-016 (422): "Không đọc được dữ liệu từ nguồn {mã}: {lý do}. Kiểm tra quyền và cấu hình."
 - **E5. Nguồn quá hạn (bước 5, chạy nền).** ERR-16-107: "Nguồn {mã} không có số mới từ {thời điểm}." Hiện ở UI-16-05 và thông báo PH-13.
@@ -764,8 +764,8 @@ Bản tin bị loại không biến mất: cán bộ tra được vì sao, sửa
 - **3a. Bản tin xung đột.** Với bản tin bị loại do cùng `idempotencyRef` khác giá trị, Chi chọn "Giữ giá trị cũ" (đóng) hoặc "Nhận giá trị mới" (cần `PERM-16-run`); chọn nhận thì quan sát cũ đánh dấu bị thay và kỳ được tính lại.
 
 **Luồng ngoại lệ.**
-- **E1. Khoảng tra vượt 36 tháng (bước 1).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
-- **E2. Bản tin đã xử lý (bước 3).** ERR-16-006 (409): "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}."
+- **E1. Khoảng tra vượt 36 tháng (bước 1).** ERR-16-060 (400): "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 36)
+- **E2. Bản tin đã xử lý (bước 3).** ERR-16-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = xử lý lại, {đối tượng} = bản tin {mã}, {trạng thái} = `REPROCESSED`)
 
 **Quy tắc áp dụng.** BR-16-012.
 
@@ -816,8 +816,8 @@ Chỉ tiêu không đo tự động được (ví dụ KPI-08 hồ sơ cấp đ�
 - **E3. Tệp nhập sai mẫu hoặc quá 2.000 dòng (1a).** ERR-16-020 (422): "Tệp không đúng mẫu nhập số liệu hoặc vượt 2.000 dòng. Tải mẫu mới nhất."
 - **E4. Thiếu bằng chứng (bước 3).** ERR-16-018 (422): "Số liệu tay cần ít nhất một bằng chứng (tệp hoặc số văn bản)."
 - **E5. Đã có số được xác nhận (bước 3).** ERR-16-021 (409): "Kỳ {kỳ} đã có số được xác nhận cho chỉ tiêu này. Tạo bản đính chính."
-- **E7. Tự xác nhận hoặc không đúng vai trò (bước 5).** ERR-16-005 (403): "Anh/chị là người lập hoặc gửi nên không được tự duyệt."
-- **E8. Từ chối thiếu lý do (6a).** ERR-16-007 (422): "Nhập lý do (tối thiểu {n} ký tự)." (n = 20)
+- **E7. Tự xác nhận hoặc không đúng vai trò (bước 5).** ERR-16-005 (403): "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = nhập, {thao tác} = tự xác nhận); ERR-16-059 (403): "Anh/chị không thuộc vai trò được giao xác nhận {đối tượng} này." ({đối tượng} = số liệu của chỉ tiêu {mã})
+- **E8. Từ chối thiếu lý do (6a).** ERR-16-007 (422): "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do từ chối, {n} = 20)
 
 **Quy tắc áp dụng.** BR-16-005, BR-16-006, BR-16-035.
 
@@ -874,19 +874,19 @@ Kỳ là khung thời gian của mọi con số. Hệ thống tự sinh kỳ; qu
 2. Đến 01:30 ngày đầu kỳ sau, lần tổng hợp đầu được xếp (UC-16-10); kỳ chuyển `COMPUTED`.
 3. Mai kiểm kết quả ở UI-16-08 rồi bấm "Chốt kỳ" (API-16-057).
 4. Hệ thống kiểm lần tổng hợp gần nhất đã kết thúc, không còn số tay `SUBMITTED`, không có quan sát mới chưa tính.
-5. Hệ thống chuyển `CLOSED`, ghi `closedAt`, `closedBy`, kiểm toán.
+5. Hệ thống chuyển `CLOSED`, ghi `closedAt`, `closedBy`, kiểm toán, phát EVT-16-14 để PH-13, PH-17 biết số chính thức đã sẵn sàng.
 
 **Luồng thay thế.**
 - **1a. Kỳ bổ sung.** Chi bấm "+ Kỳ" (API-16-047) để tạo kỳ quá khứ cho báo cáo nền; kỳ quá khứ tạo ở `COLLECTING`.
 - **3a. Tự chốt.** Ngày 5 lúc 23:00 hệ thống tự chốt khi đủ điều kiện; không đủ thì tạo việc cho Mai "Kỳ {kỳ} chưa chốt được" kèm lý do.
 - **4a. Còn chỉ tiêu `PARTIAL`.** Mai đặt `confirmPartial = true`; nhãn `PARTIAL` giữ trên số chốt.
-- **5a. Mở lại.** Mai bấm "Mở lại" kèm lý do (API-16-058): kỳ `REOPENED`; chốt lại mà giá trị của báo cáo `PUBLISHED` đổi thì báo cáo đó bị gắn cờ "cần đính chính" (UC-16-16).
+- **5a. Mở lại.** Mai bấm "Mở lại" kèm lý do (API-16-058): kỳ `REOPENED`, phát EVT-16-14 kèm lý do; chốt lại mà giá trị của báo cáo `PUBLISHED` đổi thì báo cáo đó bị gắn cờ "cần đính chính" (UC-16-16).
 
 **Luồng ngoại lệ.**
 - **E1. Mã kỳ sai, trùng hoặc ở tương lai (1a).** ERR-16-024 (422): "Kỳ {mã} không hợp lệ hoặc đã có. Mã kỳ có dạng M-2026-10, Q-2026-Q3, Y-2026."
 - **E2. Chưa đủ điều kiện chốt (bước 4).** ERR-16-025 (422): "Chưa chốt được kỳ {kỳ}: {lý do}." (ví dụ còn 2 số liệu tay chờ xác nhận)
 - **E3. Còn báo cáo đang duyệt (5a).** ERR-16-026 (409): "Kỳ {kỳ} có báo cáo đang duyệt. Trả báo cáo về nháp trước khi mở lại kỳ."
-- **E4. Mở lại thiếu lý do (5a).** ERR-16-007 (422): "Nhập lý do (tối thiểu {n} ký tự)." (n = 50)
+- **E4. Mở lại thiếu lý do (5a).** ERR-16-007 (422): "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do mở lại, {n} = 50)
 
 **Quy tắc áp dụng.** BR-16-011, BR-16-013, BR-16-033.
 
@@ -1038,7 +1038,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 
 **Luồng ngoại lệ.**
 - **E1. Mẫu không hợp lệ (bước 2).** ERR-16-027 (422): "Mẫu chưa hợp lệ: {phần} {lý do}."
-- **E2. Mã đã dùng (bước 2).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
+- **E2. Mã đã dùng (bước 2).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Mẫu báo cáo)
 
 **Quy tắc áp dụng.** BR-16-027.
 
@@ -1072,7 +1072,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 1. Chi bấm "+ Báo cáo", chọn mẫu, kỳ `M-2026-10`, mã `bc-thang-2026-10` (API-16-065).
 2. Hệ thống kiểm mã, mẫu, kỳ đã có kết quả tổng hợp; tạo báo cáo `DRAFT`, chép bố cục mẫu, liên kết lần tổng hợp hiện hành.
 3. Hệ thống dựng bản xem trước (API-16-070), đánh dấu chỉ tiêu `OFF_TRACK`, chỉ tiêu bắt buộc `PARTIAL`, `NO_DATA` cần thuyết minh.
-4. Chi viết thuyết minh, giải trình cạnh từng chỉ tiêu chệch (API-16-067, API-16-068); hệ thống lưu tự động mỗi 30 giây.
+4. Chi viết thuyết minh, giải trình cạnh từng chỉ tiêu chệch (API-16-067, API-16-068), nhập số ký hiệu `documentNumber` và nơi nhận `recipientsNote` của báo cáo chính thức; hệ thống lưu tự động mỗi 30 giây.
 5. Khi kỳ được tính lại, bản nháp hiện dải thông báo; Chi bấm "Làm mới số" (API-16-069) để lấy lần tổng hợp mới.
 
 **Luồng thay thế.**
@@ -1080,7 +1080,7 @@ Hình cho thấy kết quả tổng hợp được báo cho PH-13, PH-18 qua s�
 
 **Luồng ngoại lệ.**
 - **E1. Kỳ chưa có kết quả (bước 2).** ERR-16-028 (422): "Kỳ {kỳ} chưa có kết quả tổng hợp hoặc chưa chốt. Hoàn tất trước khi lập hoặc gửi báo cáo."
-- **E2. Mã đã dùng (bước 1).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
+- **E2. Mã đã dùng (bước 1).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Báo cáo)
 - **E3. Sửa đồng thời (bước 4).** ERR-16-004 (409): "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi."
 - **E5. Khoảng đột xuất sai hoặc quá 24 tháng (1a).** ERR-16-033 (422): "Khoảng báo cáo từ {từ} đến {đến} không hợp lệ hoặc vượt 24 tháng."
 
@@ -1112,10 +1112,10 @@ Báo cáo chính thức không đi tiếp nếu thiếu số bắt buộc hay th
 
 **Đảm bảo tối thiểu.** Không gửi duyệt khi thiếu số bắt buộc hay giải trình; không ai tự duyệt báo cáo mình lập hoặc gửi.
 
-**Đảm bảo thành công.** Báo cáo `APPROVED` (hoặc `CHANGES_REQUESTED` kèm ý kiến), nội dung khóa trong lúc `IN_REVIEW`.
+**Đảm bảo thành công.** Báo cáo `APPROVED` (hoặc `CHANGES_REQUESTED` kèm ý kiến, kể cả khi trả về từ `APPROVED`), nội dung khóa trong lúc `IN_REVIEW`.
 
 **Luồng chính.**
-1. Chi bấm "Gửi duyệt" (API-16-071); hệ thống kiểm kỳ đã chốt, không còn giải trình thiếu, chỉ tiêu `mandatory` không `NO_DATA`.
+1. Chi bấm "Gửi duyệt" (API-16-071); hệ thống kiểm kỳ đã chốt, không còn giải trình thiếu, chỉ tiêu `mandatory` không `NO_DATA`, báo cáo `PERIODIC`, `NATIONAL` có số ký hiệu và nơi nhận.
 2. Hệ thống chuyển `IN_REVIEW`, khóa nội dung, phát EVT-16-07; PH-18 tạo việc cho người có `PERM-16-approve`.
 3. Mai mở UI-16-12 (API-16-078), xem PDF xem trước, bảng số, thuyết minh.
 4. Hệ thống kiểm Mai khác người lập và người gửi.
@@ -1123,14 +1123,16 @@ Báo cáo chính thức không đi tiếp nếu thiếu số bắt buộc hay th
 
 **Luồng thay thế.**
 - **5a. Yêu cầu sửa.** Mai chọn "Yêu cầu sửa" kèm ý kiến (API-16-073): báo cáo `CHANGES_REQUESTED`, phát EVT-16-09, Chi sửa tiếp ở `DRAFT` (UC-16-13).
+- **5b. Trả về soạn.** Báo cáo `APPROVED` chưa công bố cần sửa (ký số lỗi kéo dài, sai số phát hiện trước công bố, cần mở lại kỳ theo ERR-16-026): Mai chọn "Trả về soạn" kèm ý kiến (API-16-073); báo cáo `CHANGES_REQUESTED`, phát EVT-16-09, Chi sửa tiếp ở `DRAFT`.
 - **1a. Báo cáo đột xuất nội bộ.** Khi `16.report.four-eyes = false`, người lập có `PERM-16-approve` tự duyệt; kiểm toán ghi "không bốn mắt"; không áp dụng cho `PERIODIC`, `NATIONAL`.
 
 **Luồng ngoại lệ.**
 - **E1. Kỳ chưa chốt (bước 1).** ERR-16-028 (422): "Kỳ {kỳ} chưa có kết quả tổng hợp hoặc chưa chốt. Hoàn tất trước khi lập hoặc gửi báo cáo."
 - **E2. Thiếu chỉ tiêu bắt buộc (bước 1).** ERR-16-029 (422): "Chỉ tiêu bắt buộc {danh sách} chưa có số liệu. Báo cáo chính thức chưa gửi duyệt được."
 - **E3. Thiếu giải trình (bước 1).** ERR-16-030 (422): "Còn {n} chỉ tiêu chệch hoặc thiếu số chưa có giải trình."
-- **E4. Tự duyệt (bước 4).** ERR-16-005 (403): "Anh/chị là người lập hoặc gửi nên không được tự duyệt."
-- **E5. Thiếu ý kiến (5a).** ERR-16-007 (422): "Nhập lý do (tối thiểu {n} ký tự)." (n = 20)
+- **E3b. Thiếu số ký hiệu hoặc nơi nhận (bước 1).** ERR-16-061 (422): "Báo cáo chính thức cần số ký hiệu và nơi nhận trước khi gửi duyệt."
+- **E4. Tự duyệt (bước 4).** ERR-16-005 (403): "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập hoặc gửi báo cáo, {thao tác} = tự duyệt)
+- **E5. Thiếu ý kiến (5a, 5b).** ERR-16-007 (422): "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = ý kiến, {n} = 20)
 
 **Quy tắc áp dụng.** BR-16-004, BR-16-008, BR-16-029.
 
@@ -1189,8 +1191,8 @@ Công bố biến báo cáo đã duyệt thành bản không thể sửa: chụp
 **Luồng thay thế.** Không.
 
 **Luồng ngoại lệ.**
-- **E1. Người công bố là người lập (bước 1).** ERR-16-005 (403): "Anh/chị là người lập hoặc gửi nên không được tự duyệt."
-- **E2. Kỳ đã bị mở lại (bước 1).** ERR-16-006 (409): "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}."
+- **E1. Người công bố là người lập (bước 1).** ERR-16-005 (403): "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập báo cáo, {thao tác} = công bố)
+- **E2. Kỳ đã bị mở lại (bước 1).** ERR-16-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = công bố, {đối tượng} = kỳ {mã}, {trạng thái} = `REOPENED`)
 - **E3. Dựng PDF lỗi (bước 3).** ERR-16-113: "Không dựng được tệp báo cáo: {lý do}."
 - **E4. Ký số không sẵn sàng (bước 4).** ERR-16-031 (503): "Dịch vụ ký số đang gián đoạn. Báo cáo vẫn ở trạng thái Đã duyệt, thử công bố lại sau."
 - **E5. Lưu WORM lỗi (bước 4).** ERR-16-114: "Không lưu được bản công bố vào kho lưu trữ. Báo cáo chưa được công bố."
@@ -1252,8 +1254,8 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 - **1a. Rút.** Quang chọn "Rút" kèm lý do (API-16-076): báo cáo `WITHDRAWN`, ẩn khỏi người có `PERM-16-read` trừ TA, AU, phát EVT-16-09.
 
 **Luồng ngoại lệ.**
-- **E1. Thiếu lý do (1a).** ERR-16-007 (422): "Nhập lý do (tối thiểu {n} ký tự)." (n = 50)
-- **E2. Báo cáo không ở `PUBLISHED` (bước 1).** ERR-16-006 (409): "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}."
+- **E1. Thiếu lý do (1a).** ERR-16-007 (422): "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do, {n} = 50)
+- **E2. Báo cáo không ở `PUBLISHED` (bước 1).** ERR-16-006 (409): "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = đính chính hoặc rút, {đối tượng} = báo cáo {mã})
 - **E3. Sửa trực tiếp bản đã công bố.** ERR-16-032 (409): "Báo cáo đã công bố không sửa được. Dùng chức năng đính chính."
 
 **Quy tắc áp dụng.** BR-16-009, BR-16-010.
@@ -1295,8 +1297,8 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 - **4a. Băm hoặc chữ ký không khớp.** Hệ thống vẫn trả gói với `verified = false` và phát cảnh báo an ninh sang PH-13 để SO xử lý.
 
 **Luồng ngoại lệ.**
-- **E1. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
-- **E2. Không có quyền xem trạng thái hoặc báo cáo không tồn tại (bước 3).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc."
+- **E1. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên trường lọc, {lý do} = giá trị ngoài miền ở Phụ lục A)
+- **E2. Không có quyền xem trạng thái hoặc báo cáo không tồn tại (bước 3).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = báo cáo)
 - **E3. Bằng chứng không khớp (4a).** ERR-16-124: "Bản lưu hoặc biên nhận của {mã} không khớp mã băm đã ghi. Đã báo cán bộ an toàn thông tin."
 
 **Quy tắc áp dụng.** BR-16-009, BR-16-010.
@@ -1338,7 +1340,7 @@ Hình cho thấy `PUBLISHED` chỉ đặt sau khi ký số và lưu WORM thành 
 **Luồng thay thế.**
 
 **Luồng ngoại lệ.**
-- **E1. Xuất vượt giới hạn (bước 1).** ERR-16-034 (422): "Dữ liệu xuất vượt {n} dòng. Thu hẹp bộ lọc." (n = 100000)
+- **E1. Xuất vượt giới hạn (bước 1).** ERR-16-034 (422): "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." ({n} = `16.export.max-rows` (mặc định 100000), {đơn vị} = dòng)
 - **E2. Không đủ quyền với đối tượng (bước 1).** ERR-16-037 (403): "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này."
 - **E3. Liên kết hết hạn (bước 3).** ERR-16-035 (410): "Liên kết tải đã hết hạn. Tạo lại yêu cầu xuất."
 - **E4. Xuất lỗi (bước 2, chạy nền).** ERR-16-115: "Xuất {tên} không thành công: {lý do}."
@@ -1392,7 +1394,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 **Luồng chính.**
 1. PH-17 gọi `/feed/indicator-values` với `onlyOfficial = true` (API-16-086); hệ thống kiểm token, scope, tenant.
 2. Hệ thống chỉ trả giá trị của kỳ `CLOSED` thuộc báo cáo `PUBLISHED`, kèm trạng thái, độ đầy đủ, phiên bản định nghĩa, mã báo cáo nguồn.
-3. Khi Hùng mở `/tong-quan`, trang gọi `/cards` (API-16-089); hệ thống chọn chỉ tiêu theo cấu hình "ghim" của tenant, không có thì lấy điểm tổng và chỉ tiêu `OFF_TRACK` có trọng số nhóm cao nhất.
+3. Khi Hùng mở `/tong-quan`, trang gọi `/cards` (API-16-089); hệ thống chọn chỉ tiêu theo tham số `16.overview.pinned-indicators` của tenant, không có thì lấy điểm tổng và chỉ tiêu `OFF_TRACK` có trọng số nhóm cao nhất.
 4. Hệ thống trả giá trị kỳ tháng gần nhất đã tính, trạng thái, xu hướng, liên kết tới UI-16-02.
 
 **Luồng thay thế.**
@@ -1401,7 +1403,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 
 **Luồng ngoại lệ.**
 - **E1. Thiếu scope hoặc tenant khác (bước 1).** ERR-16-037 (403): "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này." (thiếu scope: ERR-00-403)
-- **E2. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
+- **E2. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên tham số, {lý do} = giá trị ngoài miền)
 - **E3. Người dùng không có quyền (bước 3).** Thẻ không hiển thị, không có thông báo lỗi.
 
 **Quy tắc áp dụng.** BR-16-007, BR-16-009, BR-16-026.
@@ -1444,8 +1446,8 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 - **5a. Định nghĩa đổi giữa hai kỳ.** Chỉ tiêu gắn nhãn "định nghĩa khác nhau".
 
 **Luồng ngoại lệ.**
-- **E1. Kỳ hoặc chỉ tiêu không tồn tại (bước 1, 3).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc."
-- **E2. Hai kỳ khác loại hoặc khoảng tra quá dài (bước 3, 5).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn." (khoảng tối đa 36 tháng)
+- **E1. Kỳ hoặc chỉ tiêu không tồn tại (bước 1, 3).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = kỳ hoặc chỉ tiêu)
+- **E2. Hai kỳ khác loại hoặc khoảng tra quá dài (bước 3, 5).** ERR-16-057 (400): "Tham số {trường} không hợp lệ: {lý do}." ({trường} = kỳ so sánh, {lý do} = hai kỳ phải cùng loại); ERR-16-060 (400): "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 36)
 
 **Quy tắc áp dụng.** BR-16-001, BR-16-002, BR-16-007, BR-16-016.
 
@@ -1524,7 +1526,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 - **1a. PO xem toàn nền tảng.** Tuấn chọn một tenant hoặc xem tất cả, hủy lần tổng hợp treo (UC-16-10).
 
 **Luồng ngoại lệ.**
-- **E1. PO chọn tenant không tồn tại (bước 1).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc."
+- **E1. PO chọn tenant không tồn tại (bước 1).** ERR-16-001 (404): "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = tỉnh)
 
 **Quy tắc áp dụng.** BR-16-030.
 
@@ -1564,8 +1566,8 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 - **3a. Xuất sổ.** Mai bấm "Xuất sổ" ở UI-16-14: xuất toàn bộ danh sách theo bộ lọc.
 
 **Luồng ngoại lệ.**
-- **E1. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
-- **E2. Sơ đồ hoặc tệp quá lớn (bước 4).** ERR-16-034 (422): "Dữ liệu xuất vượt {n} dòng. Thu hẹp bộ lọc." (sơ đồ vượt 500 nút: giảm độ sâu)
+- **E1. Bộ lọc sai (bước 1).** ERR-16-057 (400): "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên trường lọc, {lý do} = giá trị ngoài miền ở Phụ lục A)
+- **E2. Sơ đồ hoặc tệp quá lớn (bước 4).** ERR-16-034 (422): "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." ({n} = 500, {đơn vị} = thành phần; giảm độ sâu hoặc chọn thành phần gốc khác)
 - **E3. Xuất lỗi (bước 4, chạy nền).** ERR-16-115: "Xuất {tên} không thành công: {lý do}."
 
 **Quy tắc áp dụng.** BR-16-023, BR-16-026.
@@ -1612,7 +1614,7 @@ Hình cho thấy việc xuất chạy nền và người yêu cầu được bá
 - **E2. API đăng ký sai lược đồ (bước 1).** ERR-16-039 (422): "Thành phần {mã} thiếu trường {trường} hoặc loại không hợp lệ."
 - **E3. Mất tin trạng thái (3a).** ERR-16-121: "Chưa nhận trạng thái vận hành của {mã} từ {thời điểm}."
 - **E4. Phát hiện lệch (bước 4).** ERR-16-120: "{n} thành phần lệch với {phân hệ}."
-- **E5. Đang có lần đối chiếu (bước 4).** ERR-16-056 (409): "Đã có lần đối chiếu đang chạy. Chờ lần này xong."
+- **E5. Đang có lần đối chiếu (bước 4).** ERR-16-056 (409): "Đã có lần {việc} đang chạy. Chờ lần này xong." ({việc} = đối chiếu)
 
 **Quy tắc áp dụng.** BR-16-023, BR-16-025.
 
@@ -1668,7 +1670,7 @@ Hình cho thấy sổ kiến trúc do sự kiện nuôi, người chỉ bổ sun
 - **4a. Ngừng.** Chuyển `RETIRED` thay cho xóa.
 
 **Luồng ngoại lệ.**
-- **E1. Mã đã dùng (bước 1).** ERR-16-002 (409): "Mã {mã} đã được dùng. Chọn mã khác."
+- **E1. Mã đã dùng (bước 1).** ERR-16-002 (409): "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Thành phần)
 - **E2. Thiếu trường hoặc loại sai (bước 1).** ERR-16-039 (422): "Thành phần {mã} thiếu trường {trường} hoặc loại không hợp lệ."
 - **E3. Sửa trường do nguồn quản lý (1a).** ERR-16-040 (409): "Trường {trường} do {phân hệ} cập nhật tự động, không sửa tay được."
 - **E4. Phụ thuộc vòng hoặc tới thành phần ngừng (bước 3).** ERR-16-041 (422): "Phụ thuộc tới {mã} tạo vòng hoặc thành phần đó đã ngừng."
@@ -1715,7 +1717,7 @@ Hình cho thấy sổ kiến trúc do sự kiện nuôi, người chỉ bổ sun
 
 **Luồng ngoại lệ.**
 - **E1. Thiếu kết quả hoặc ghi chú (bước 2).** ERR-16-043 (422): "Còn {n} tiêu chí bắt buộc chưa có kết quả hoặc tiêu chí không đạt chưa có ghi chú."
-- **E2. Tự xác nhận (bước 4).** ERR-16-005 (403): "Anh/chị là người lập hoặc gửi nên không được tự duyệt."
+- **E2. Tự xác nhận (bước 4).** ERR-16-005 (403): "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập đánh giá, {thao tác} = tự xác nhận)
 - **E3. Miễn trừ quá hạn tối đa (4b).** ERR-16-044 (422): "Miễn trừ tối đa {n} ngày." (n = 180)
 - **E4. Bộ tiêu chí sai (1a).** ERR-16-045 (422): "Bộ tiêu chí chưa hợp lệ: {lý do}."
 
@@ -1817,7 +1819,7 @@ Hình cho thấy mức tuân thủ chỉ đổi sau khi người thứ hai xác 
 - **E1. Gửi quốc gia đang tắt (bước 1).** ERR-16-046 (409): "Chức năng gửi quốc gia chưa được bật cho tỉnh."
 - **E2. Báo cáo chưa công bố (bước 1).** ERR-16-052 (422): "Chỉ gửi được báo cáo đã công bố."
 - **E3. Gói sai lược đồ (bước 2).** ERR-16-048 (422): "Gói chưa đạt mẫu {mã}: {trường} {lý do}."
-- **E4. Đã nộp (bước 3, 1a).** ERR-16-049 (409): "Nội dung này đã được nộp ngày {ngày}, mã biên nhận {mã}."
+- **E4. Đã nộp (bước 3, 1a).** ERR-16-049 (409): "{Nội dung} đã được nộp ngày {ngày} (mã biên nhận {biên nhận}) và chưa thay đổi." ({Nội dung} = Báo cáo {mã} phiên bản {n} hoặc Sổ kiến trúc)
 - **E5. Hệ quốc gia từ chối (bước 5).** ERR-16-117: "Hệ quốc gia từ chối gói: {mã lý do} {mô tả}."
 - **E6. Lỗi kênh PH-14 (bước 4, chạy nền).** ERR-16-118: "Gửi qua PH-14 không thành công, sẽ thử lại lần {n}."
 
@@ -1882,7 +1884,7 @@ Hình cho thấy PH-16 không gọi thẳng hệ quốc gia: gói đi qua outbox
 - **E1. Gửi lại không cho phép (bước 4).** ERR-16-050 (409): "Gói {mã} đang ở trạng thái {trạng thái} hoặc đã gửi lại tối đa {n} lần."
 - **E2. Biên nhận không khớp mã băm (bước 2).** ERR-16-124: "Bản lưu hoặc biên nhận của {mã} không khớp mã băm đã ghi. Đã báo cán bộ an toàn thông tin." Gói giữ `SENT`.
 - **E3. Kênh lỗi (bước 3, chạy nền).** ERR-16-118: "Gửi qua PH-14 không thành công, sẽ thử lại lần {n}."
-- **E4. Đang có lần đối soát (bước 5).** ERR-16-056 (409): "Đã có lần đối chiếu đang chạy. Chờ lần này xong."
+- **E4. Đang có lần đối soát (bước 5).** ERR-16-056 (409): "Đã có lần {việc} đang chạy. Chờ lần này xong." ({việc} = đối soát)
 
 **Quy tắc áp dụng.** BR-16-021, BR-16-022.
 
@@ -1942,7 +1944,7 @@ Hình cho thấy biên nhận chỉ được nhận khi mã băm khớp và mọ
 **Luồng ngoại lệ.**
 - **E1. Giá trị ngoài miền hoặc vượt trần (bước 1).** ERR-16-051 (422): "Giá trị {giá trị} của {khóa} nằm ngoài miền cho phép ({miền})."
 - **E2. Sửa đồng thời (bước 1).** ERR-16-004 (409): "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi."
-- **E3. Khoảng tra quá 12 tháng (bước 5).** ERR-16-057 (400): "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
+- **E3. Khoảng tra quá 12 tháng (bước 5).** ERR-16-060 (400): "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 12)
 - **E4. Dọn dữ liệu lỗi (bước 2, chạy nền).** ERR-16-122: "Lần dọn dữ liệu ngày {ngày} lỗi: {lý do}."
 - **E5. Kiểm toán tồn đọng (bước 4, chạy nền).** ERR-16-123: "Kiểm toán PH-16 tồn {n} bản ghi chưa chuyển." Hiện ở PH-13 khi tồn quá 5 phút.
 
@@ -1971,7 +1973,7 @@ Năm luồng dưới được nhiều use case dùng lại; use case chỉ ghi "
 
 Tài liệu không tạo mã `FR`, `API`, `ERR`, `EVT`, `UI`, `BR` mới: mọi mã lấy từ FRS. Mã mới duy nhất là `UC-16-01…30` và `LP-16-01…05`; kịch bản `TS-16-nn` ở mục "Màn hình, API" là chỗ giữ, đánh số theo UC và sẽ được xác nhận khi viết D05-02-PH16.
 
-Dải đã dùng: UC-16-01…30; LP-16-01…05; FR-16-001…058 (cả 58 FR thuộc ít nhất một UC, bảng 5.4); ERR-16-002…057 và 101…125 với câu thông báo nguyên văn FRS §9.2 (ERR-00-401, 403, 428 dùng khung chung); EVT-16-01…13; UI-16-01…20; API-16-001…130 (bảng 5.2).
+Dải đã dùng: UC-16-01…30; LP-16-01…05; FR-16-001…058 (cả 58 FR thuộc ít nhất một UC, bảng 5.4); ERR-16-001…061 và 101…125 với câu thông báo nguyên văn FRS §9.2 kèm giá trị tham số (ERR-00-401, 403, 428 dùng khung chung); EVT-16-01…14; UI-16-01…20; API-16-001…130 (bảng 5.2).
 
 ### 8.2. Độ phủ và mức ưu tiên
 
@@ -1984,31 +1986,31 @@ Các câu hỏi phát sinh khi viết use case, đánh số Q16-45…49 theo d�
 | Mã | Câu hỏi | Tạm dùng |
 |---|---|---|
 | Q16-45 | Báo cáo chính thức do lãnh đạo UBND hay sở ký: use case có cần một bước phê duyệt thứ hai của lãnh đạo sau TA (liên quan Q16-04 của FRS) | TA duyệt và công bố (UC-16-14, 15), ký số bằng chứng thư cơ quan; lãnh đạo xem bằng VW |
-| Q16-46 | Khi mở lại kỳ (ERR-16-026), báo cáo `IN_REVIEW`, `APPROVED` được trả về nháp bằng thao tác nào; FRS chưa có hành động cho báo cáo `APPROVED` | TA dùng "Yêu cầu sửa" cho cả báo cáo `APPROVED` (đề nghị mở rộng FR-16-028, A-08) |
-| Q16-47 | Cấu hình "ghim lên Tổng quan" (FR-16-037) nằm ở đâu: màn nào, tham số hay API nào | Giả định tham số tenant `16.overview.pinned`, sửa ở UI-16-19 |
-| Q16-48 | Số ký hiệu, nơi nhận của PDF báo cáo (BR-16-027, Q16-17 của FRS) nhập ở bước lập hay bước công bố | Nhập ở UC-16-13 trước khi gửi duyệt, khóa cùng nội dung |
+| Q16-46 | Khi mở lại kỳ (ERR-16-026), báo cáo `IN_REVIEW`, `APPROVED` được trả về nháp bằng thao tác nào; FRS chưa có hành động cho báo cáo `APPROVED` | Đã trả lời ở FRS 0.2 (FR-16-028): "Trả về soạn" qua API-16-073, `APPROVED` → `CHANGES_REQUESTED` → `DRAFT` | Đóng |
+| Q16-47 | Cấu hình "ghim lên Tổng quan" (FR-16-037) nằm ở đâu: màn nào, tham số hay API nào | Đã trả lời ở FRS 0.2 (FR-16-037, mục 8.2): tham số tenant `16.overview.pinned-indicators` | Đóng |
+| Q16-48 | Số ký hiệu, nơi nhận của PDF báo cáo (BR-16-027, Q16-17 của FRS) nhập ở bước lập hay bước công bố | Đã trả lời ở FRS 0.2 (FR-16-027, 028): nhập ở UC-16-13, bắt buộc khi gửi duyệt (ERR-16-061) | Đóng |
 | Q16-49 | Gói quốc gia `REJECTED` vì sai số liệu thì sửa thế nào: đính chính báo cáo (UC-16-16) rồi gửi lại, hay chỉ lập gói mới từ cùng báo cáo | Sai do mẫu hoặc ánh xạ: gói mới từ cùng báo cáo; sai do số liệu: đính chính báo cáo trước |
 
 : Câu hỏi mở của tập use case PH-16
 
 ## Phụ lục A. Đề nghị đồng bộ cho FRS
 
-Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS, các dòng dưới dồn vào Phụ lục C của FRS ở bản kế tiếp. Dòng A-01…A-07 là lệch giữa câu thông báo của từng FR và FRS §9.2 (use case dùng câu §9.2); A-08…A-12 là thiếu hụt.
+Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này không sửa FRS, các dòng dưới dồn vào Phụ lục C của FRS ở bản kế tiếp. Dòng A-01…A-07 là lệch giữa câu thông báo của từng FR và FRS §9.2 (use case dùng câu §9.2); A-08…A-12 là thiếu hụt. Cột "Kết quả" ghi quyết định của FRS 0.2 (Phụ lục C của FRS, ngày 26/11/2026).
 
-| Mã | Vị trí ở FRS | Đề nghị |
-|---|---|---|
-| A-01 | §9.2 ERR-16-057 | Một mã mà FR dùng cho nhiều câu (lọc, khoảng tra tối đa 36 tháng ở FR-016, 039, đọc bù tối đa 12 tháng ở FR-011, kiểm toán tối đa 12 tháng ở FR-056, hai kỳ khác loại ở FR-040, tham số `kpi.read` ở FR-035). Đề nghị thêm các biến thể vào §9.2 hoặc tách một mã mới cho "khoảng thời gian ngoài miền" |
-| A-02 | §9.2 ERR-16-003 | Câu chỉ nói về mã chỉ tiêu nhưng FR-007 (mã nhóm), FR-009 (mã nguồn), FR-045 (mã thành phần) cũng dùng. Đề nghị câu chung "Mã {đối tượng} chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự." và thêm câu cho mã nhóm lạ |
-| A-03 | §9.2 ERR-16-005 | Một câu "người lập hoặc gửi nên không được tự duyệt" nhưng FR-005, 015, 029, 047 có bốn câu khác nhau (soạn, nhập, công bố, lập đánh giá). Đề nghị tham số hóa theo vai ("người {vai}") |
-| A-04 | §9.2 ERR-16-006, 007 | FR dùng câu theo đối tượng và ngưỡng `n` khác nhau (20 ký tự cho ý kiến, lý do; 50 ký tự khi mở lại kỳ, đính chính, rút). Đề nghị ghi bảng ngưỡng `n` theo FR vào §9.2 |
-| A-05 | §9.2 ERR-16-034 | FR-049 dùng cùng mã cho "sơ đồ vượt 500 thành phần" nhưng câu §9.2 nói "dòng". Đề nghị thêm câu cho sơ đồ |
-| A-06 | §9.2 ERR-16-049 | FR-052 dùng "Sổ kiến trúc không thay đổi từ lần nộp {ngày}." khác câu §9.2. Đề nghị thêm biến thể |
-| A-07 | §9.2 ERR-16-056 | Câu nói "đối chiếu" nhưng FR-054 là đối soát gói quốc gia. Đề nghị thêm câu "Đã có lần đối soát đang chạy" |
-| A-08 | FR-028, API-16-073 | ERR-16-026 yêu cầu "trả báo cáo về nháp" nhưng chỉ có "Yêu cầu sửa" cho báo cáo `IN_REVIEW`; báo cáo `APPROVED` (ví dụ ký số lỗi, ERR-16-031) chưa có hành động quay về `DRAFT` (Q16-46) |
-| A-09 | FR-037, §8 tham số | Cấu hình "ghim lên Tổng quan" chưa có tham số hay API (Q16-47) |
-| A-10 | FR-026, 029, API-16-067 | BR-16-027 cần số ký hiệu, nơi nhận nhưng chưa có trường nhập trong báo cáo (Q16-48) |
-| A-11 | FR-016, §3.2 | Nhánh "Nhận giá trị mới" cần `PERM-16-run` nhưng FR-016 chỉ nêu `PERM-16-source`. Đề nghị ghi vào ma trận quyền |
-| A-12 | §9.3 sự kiện | Chưa có sự kiện khi kỳ `CLOSED` hoặc `REOPENED` để PH-13, PH-17 biết số chính thức sẵn sàng hay bị đổi. Đề nghị thêm EVT-16-14 `period.state-changed` |
+| Mã | Vị trí ở FRS | Đề nghị | Kết quả |
+|---|---|---|---|
+| A-01 | §9.2 ERR-16-057 | Một mã mà FR dùng cho nhiều câu (lọc, khoảng tra tối đa 36 tháng ở FR-016, 039, đọc bù tối đa 12 tháng ở FR-011, kiểm toán tối đa 12 tháng ở FR-056, hai kỳ khác loại ở FR-040, tham số `kpi.read` ở FR-035). Đề nghị thêm các biến thể vào §9.2 hoặc tách một mã mới cho "khoảng thời gian ngoài miền" | Đã hấp thụ (HT-01): khoảng thời gian vượt tối đa tách thành ERR-16-060 |
+| A-02 | §9.2 ERR-16-003 | Câu chỉ nói về mã chỉ tiêu nhưng FR-007 (mã nhóm), FR-009 (mã nguồn), FR-045 (mã thành phần) cũng dùng. Đề nghị câu chung "Mã {đối tượng} chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự." và thêm câu cho mã nhóm lạ | Đã hấp thụ (HT-02): câu chung "{Trường} chưa hợp lệ: {yêu cầu}." |
+| A-03 | §9.2 ERR-16-005 | Một câu "người lập hoặc gửi nên không được tự duyệt" nhưng FR-005, 015, 029, 047 có bốn câu khác nhau (soạn, nhập, công bố, lập đánh giá). Đề nghị tham số hóa theo vai ("người {vai}") | Đã hấp thụ (HT-03): tham số `{vai}`, `{thao tác}`; không thuộc vai trò xác nhận tách ERR-16-059 |
+| A-04 | §9.2 ERR-16-006, 007 | FR dùng câu theo đối tượng và ngưỡng `n` khác nhau (20 ký tự cho ý kiến, lý do; 50 ký tự khi mở lại kỳ, đính chính, rút). Đề nghị ghi bảng ngưỡng `n` theo FR vào §9.2 | Đã hấp thụ (HT-04): bảng ngưỡng `{n}` ở FRS §9.2 |
+| A-05 | §9.2 ERR-16-034 | FR-049 dùng cùng mã cho "sơ đồ vượt 500 thành phần" nhưng câu §9.2 nói "dòng". Đề nghị thêm câu cho sơ đồ | Đã hấp thụ (HT-05): tham số `{đơn vị}` |
+| A-06 | §9.2 ERR-16-049 | FR-052 dùng "Sổ kiến trúc không thay đổi từ lần nộp {ngày}." khác câu §9.2. Đề nghị thêm biến thể | Đã hấp thụ (HT-06): tham số `{Nội dung}`, `{biên nhận}` |
+| A-07 | §9.2 ERR-16-056 | Câu nói "đối chiếu" nhưng FR-054 là đối soát gói quốc gia. Đề nghị thêm câu "Đã có lần đối soát đang chạy" | Đã hấp thụ (HT-07): tham số `{việc}` |
+| A-08 | FR-028, API-16-073 | ERR-16-026 yêu cầu "trả báo cáo về nháp" nhưng chỉ có "Yêu cầu sửa" cho báo cáo `IN_REVIEW`; báo cáo `APPROVED` (ví dụ ký số lỗi, ERR-16-031) chưa có hành động quay về `DRAFT` (Q16-46) | Đã hấp thụ (HT-08): "Trả về soạn" qua API-16-073 |
+| A-09 | FR-037, §8 tham số | Cấu hình "ghim lên Tổng quan" chưa có tham số hay API (Q16-47) | Đã hấp thụ (HT-09): `16.overview.pinned-indicators` |
+| A-10 | FR-026, 029, API-16-067 | BR-16-027 cần số ký hiệu, nơi nhận nhưng chưa có trường nhập trong báo cáo (Q16-48) | Đã hấp thụ (HT-10): `documentNumber`, `recipientsNote`, ERR-16-061 |
+| A-11 | FR-016, §3.2 | Nhánh "Nhận giá trị mới" cần `PERM-16-run` nhưng FR-016 chỉ nêu `PERM-16-source`. Đề nghị ghi vào ma trận quyền | Đã hấp thụ (HT-11): ghi chú `PERM-16-run` ở FRS §3.2 |
+| A-12 | §9.3 sự kiện | Chưa có sự kiện khi kỳ `CLOSED` hoặc `REOPENED` để PH-13, PH-17 biết số chính thức sẵn sàng hay bị đổi. Đề nghị thêm EVT-16-14 `period.state-changed` | Đã hấp thụ (HT-12): EVT-16-14 |
 
 : Đề nghị đồng bộ cho FRS PH-16
 
@@ -2017,5 +2019,6 @@ Khi viết use case phát hiện chỗ FRS thiếu hoặc lệch; tập này kh�
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Claude | Bản đầu: 30 use case phủ 58 FR, 13 sơ đồ trình tự, năm luồng phụ, câu hỏi mở Q16-45…49, 12 đề nghị đồng bộ cho FRS |
+| 0.2 | 2026-11-26 | Claude | Đồng bộ với FRS 0.2: câu thông báo theo câu chuẩn có tham số của FRS §9.2 kèm giá trị biến; ERR-16-059 (UC-16-08), ERR-16-060 (UC-16-07, 20, 30), ERR-16-061 và luồng "Trả về soạn" (UC-16-14), EVT-16-14 (UC-16-09), ERR-16-058 ở quy ước chung, `16.overview.pinned-indicators` (UC-16-19), số ký hiệu và nơi nhận (UC-16-13); đóng Q16-46…48; ghi kết quả hấp thụ A-01…A-12 |
 
 : Lịch sử phiên bản

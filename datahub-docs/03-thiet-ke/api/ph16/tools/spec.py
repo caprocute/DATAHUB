@@ -39,13 +39,14 @@ ALIAS = {
     "AssessmentState": "compliance_assessment.state", "CriteriaSetState": "compliance_criteria_set.state", "ReconItemKind": "arch_reconciliation.itemKind",
     "SubmissionType": "national_submission.submissionType", "SubmissionState": "national_submission.state", "SubmissionMode": "national_submission.mode",
     "NationalTemplateState": "national_template.state", "CommonDecisionState": "common_update.decision", "SettingScope": "kpi_setting.scope",
+    "DashboardView": "dashboard.view", "ReviewItemType": "review_item.type", "ArchIngestStatus": "arch_ingest.status", "NationalReconScope": "national_recon.scope",
+    "RecipientType": "distribution.recipientType", "ReceiptStatus": "national_receipt.status", "DependencyType": "arch_dependency.dependencyType",
+    "ObservationChannel": "observation.channel", "LineageSourceKind": "value_lineage.sourceKind", "WaiverState": "compliance_waiver.state",
+    "ArchChange": "arch_component.change", "ComplianceEventKind": "arch_compliance.eventKind", "ReconState": "arch_reconciliation.state", "ReconResolution": "arch_reconciliation.resolution", "SubmissionLogEvent": "national_submission_log.event",
 }
-# giá trị ở dòng `decision` (Phụ lục A) và giá trị cục bộ của API (không có dòng riêng ở Phụ lục A, ghi ở Phụ lục A của tập này)
+# dòng `decision` của Phụ lục A gộp ba tập giá trị theo ngữ cảnh; tách ở đây và kiểm lại với dòng đó trong check_contracts.py
 LOCAL = {
     "DefinitionDecision": ["APPROVE", "REQUEST_CHANGES"], "ManualDecision": ["ACCEPT", "REJECT"], "CommonDecision": ["ACCEPT", "DISMISS"],
-    "DashboardView": ["OFFICIAL", "LATEST"], "ReviewItemType": ["INDICATOR_VERSION", "MANUAL_VALUE", "REPORT"],
-    "ArchIngestStatus": ["CREATED", "UPDATED", "UNCHANGED", "REJECTED"], "NationalReconScope": ["ARCH", "KPI", "ALL"],
-    "RecipientType": ["USER", "GROUP", "EMAIL"], "ReceiptStatus": ["ACKNOWLEDGED", "REJECTED", "FAILED"],
 }
 
 
@@ -393,14 +394,14 @@ obj("PullRequest", "Đọc bù khi lỡ sự kiện; bỏ trống thân là kéo
 obj("IngestTask", "Việc kéo hoặc đọc bù đã nhận.", ("ingestLogId!", "uuid"), SC_, ("state!", "E:RunState", "QUEUED"), ("requestedAt", "ts"))
 obj("Observation", "Quan sát đã chuẩn hóa (kpi_observation).", ("id!", "uuid"), SC_, ("metricCode!", "mcode"), ("value!", "num", 92.5), ("unit", "str", "điểm"), ("periodStart!", "date", "2026-10-01"),
     ("periodEnd!", "date", "2026-10-31"), ("dimensions", "obj", {"don-vi": "so-tttt"}), ("sourceRef", "str", "t68.dq.kpi.published.v1/0/1842"), ("idempotencyRef!", "str", "snap-2026-10-31-T68"),
-    ("channel", "E:SourceType", "EVENT"), ("late", "bool", False), ("receivedAt", "ts"))
+    ("channel", "E:ObservationChannel", "EVENT"), ("late", "bool", False), ("receivedAt", "ts"))
 page("ObservationPage", "Observation")
 obj("ObservationIn", "Một quan sát đẩy vào (FR-16-012).", ("metricCode!", "mcode"), ("value!", "num", 92.5), ("periodStart!", "date", "2026-10-01"), ("periodEnd!", "date", "2026-10-31"),
     ("dimensions", "obj", {"don-vi": "so-tttt"}), ("idempotencyRef!", "str", "snap-2026-10-31-T68", {"minLength": 1, "maxLength": 200}))
 obj("ObservationBatch", "Lô quan sát từ phân hệ nguồn; scope `kpi.ingest`.", SC_, ("observations!", "[$ObservationIn]", None, {"minItems": 1, "maxItems": 500}))
 obj("IngestItemResult", "Kết quả từng quan sát.", ("index!", "int", 0), ("status!", "E:IngestOutcome", "ACCEPTED"), ("code", "str", "ERR-16-101", {"pattern": "^ERR-16-[0-9]{3}$"}))
 obj("IngestBatchResult", "Kết quả lô: `202` khi mọi phần tử được nhận, `207` khi có phần tử lỗi.", ("accepted!", "int", 1), ("duplicate!", "int", 0), ("rejected!", "int", 0), ("results!", "[$IngestItemResult]", [{"index": 0, "status": "ACCEPTED"}]))
-obj("IngestLog", "Dòng nhật ký tiếp nhận (kpi_ingest_log).", ("id!", "uuid"), SC_, ("channel", "E:SourceType", "EVENT"), ("result!", "E:IngestOutcome", "ACCEPTED"), ("metricCode", "mcode"),
+obj("IngestLog", "Dòng nhật ký tiếp nhận (kpi_ingest_log).", ("id!", "uuid"), SC_, ("channel", "E:ObservationChannel", "EVENT"), ("result!", "E:IngestOutcome", "ACCEPTED"), ("metricCode", "mcode"),
     ("idempotencyRef", "str", "snap-2026-10-31-T68"), ("code", "str", "ERR-16-101"), ("detail", "str", "Thiếu trường periodEnd."), ("receivedAt!", "ts"))
 page("IngestLogPage", "IngestLog")
 obj("RejectedObservation", "Quan sát bị loại, chờ xử lý lại (FR-16-016).", ("id!", "uuid"), SC_, ("metricCode", "mcode"), ("idempotencyRef", "str", "snap-2026-10-31-T68"),
@@ -443,7 +444,7 @@ obj("IndicatorValue", "Giá trị chỉ tiêu trong kỳ (kpi_indicator_value)."
     ("versionUsed!", "int", 2), ("status!", "E:ValueStatus", "AT_RISK"), ("completeness!", "E:Completeness", "COMPLETE"), ("flags", "[E:RunFlag]", []), ("missingMetrics", "[mcode]", []),
     ("threshold", "E:ThresholdLevel", "AMBER"), ("delta", "num", -3.5), ("deltaYoY", "num", 12.0), ("trend", "E:Trend", "DOWN"), ("runId", "uuid"), ("computedAt", "ts"), ("provisional", "bool", False))
 page("ValuePage", "IndicatorValue")
-obj("LineageInput", "Một đầu vào của giá trị.", ("variable!", "str", "tong"), ("sourceKind!", "str", "OBSERVATION", {"description": "`OBSERVATION`, `MANUAL` hoặc `INDICATOR`."}),
+obj("LineageInput", "Một đầu vào của giá trị.", ("variable!", "str", "tong"), ("sourceKind!", "E:LineageSourceKind", "OBSERVATION"),
     ("metricCode", "mcode", "ph01.httt.total"), ("observationId", "uuid"), ("manualId", "uuid"), ("value!", "num", 200))
 obj("Lineage", "Dòng truy nguồn của một giá trị (FR-16-019).", ("valueId!", "uuid"), IND, ("versionUsed!", "int", 2), ("formula!", "str", 'obs("ph01.httt.connected") / obs("ph01.httt.total") * 100'), ("inputs!", "[$LineageInput]"))
 obj("StatusChange", "Đổi trạng thái chỉ tiêu trong kỳ.", IND, PC, ("from", "E:ValueStatus", "ON_TRACK"), ("to!", "E:ValueStatus", "AT_RISK"), ("runId", "uuid"), ("at!", "ts"), ("value", "num", 82.5))
@@ -473,14 +474,15 @@ obj("Report", "Báo cáo (kpi_report và phiên bản hiện hành).", RC, ("tit
     ("publishedVersion", "int", 1), ("runId", "uuid"), ("completeness", "E:Completeness", "COMPLETE"), ("requiredExplanations", "[code]", ["api-dat-sla-ty-le"]), ("missingExplanations", "[code]", []),
     ("sections", "[$ReportSectionText]"), ("explanations", "[$Explanation]"), ("preparedBy", "str", "nguyen.thi.lan"), ("submittedBy", "str", "nguyen.thi.lan"), ("reviewedBy", "str", "tran.van.nam"),
     ("comment", "str", "Đồng ý công bố."), ("publishedAt", "ts"), ("contentHash", "sha"), ("signature", "$Signature"), ("wormRef", "str", "kpi-reports/t68/bc-thang-2026-10/v1.pdf"),
-    ("needsCorrection", "bool", False), *AUD)
+    ("documentNumber", "str", "125/BC-STTTT", {"maxLength": 64}), ("recipientsNote", "str", "UBND tỉnh; Bộ KH&CN.", {"maxLength": 2000}), ("needsCorrection", "bool", False), *AUD)
 obj("ReportSummary", "Dòng danh sách báo cáo.", RC, ("title!", "str", "Báo cáo chỉ tiêu tháng 10/2026"), ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode"),
     ("state!", "E:ReportState", "PUBLISHED"), ("latestVersion!", "int", 1), ("publishedAt", "ts"), ("needsCorrection", "bool", False))
 page("ReportPage", "ReportSummary")
 obj("ReportCreate", "Lập bản nháp báo cáo định kỳ (FR-16-026) hoặc đột xuất (FR-16-032, `reportType = AD_HOC`).", ("reportCode!", "rcode"), ("templateCode", "code", "bao-cao-thang-mau"),
     ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode", "M-2026-10"), ("title!", "str", "Báo cáo chỉ tiêu tháng 10/2026", {"maxLength": 255}),
     ("from", "date", "2026-05-01"), ("to", "date", "2026-10-31"), ("indicatorCodes", "[code]", ["httt-ket-noi-ty-le", "mttd"], {"minItems": 1, "maxItems": 50}))
-obj("ReportPatch", "Sửa báo cáo `DRAFT` hoặc `CHANGES_REQUESTED` (FR-16-027); báo cáo đã công bố trả ERR-16-032.", ("title", "str", "Báo cáo chỉ tiêu tháng 10/2026"), ("sections", "[$ReportSectionText]"))
+obj("ReportPatch", "Sửa báo cáo `DRAFT` hoặc `CHANGES_REQUESTED` (FR-16-027); báo cáo đã công bố trả ERR-16-032.", ("title", "str", "Báo cáo chỉ tiêu tháng 10/2026"), ("sections", "[$ReportSectionText]"),
+    ("documentNumber", "str", "125/BC-STTTT", {"maxLength": 64}), ("recipientsNote", "str", "UBND tỉnh; Bộ KH&CN.", {"maxLength": 2000}))
 obj("ExplanationPut", "Lưu giải trình (FR-16-027).", ("cause!", "str", "Hai HTTT chưa hoàn tất nâng cấp giao thức kết nối.", {"minLength": 1, "maxLength": 2000}),
     ("action!", "str", "Hoàn tất nâng cấp trước ngày 15/12.", {"minLength": 1, "maxLength": 2000}), ("dueDate", "date", "2026-12-15"))
 obj("ExplanationResult", "Giải trình đã lưu và danh sách còn thiếu.", ("explanation!", "$Explanation"), ("missingExplanations!", "[code]", []))
@@ -545,7 +547,7 @@ obj("NationalTally", "Số đếm gói quốc gia.", ("pending", "int", 0), ("fa
 obj("OpsOverview", "Tình trạng thu thập, tính toán (FR-16-042).", ("sources!", "$StatusTally"), ("runs!", "[$Run]"), ("exports", "$ExportTally"), ("national", "$NationalTally"), ("outboxLagSeconds!", "int", 2))
 
 # --- sổ kiến trúc (nhóm G)
-obj("DependencyRef", "Phụ thuộc của thành phần.", CC, ("kind", "E:DependencyKind", "MANUAL"))
+obj("DependencyRef", "Phụ thuộc của thành phần.", CC, ("dependencyType!", "E:DependencyType", "CALLS"), ("kind", "E:DependencyKind", "MANUAL"))
 obj("ComponentVersion", "Phiên bản thành phần.", ("version!", "str", "2.3.0", {"description": "Nhãn phiên bản (`version_label`)."}), ("lifecycle", "E:Lifecycle", "ACTIVE"), ("releasedOn", "date", "2026-10-15"),
     ("specRef", "str", "https://git.t68.example.vn/specs/qlvb"), ("contentHash", "sha"), ("origin", "E:Origin", "AUTO"), ("changeNote", "str", "Nâng cấp giao thức kết nối."))
 obj("ArchComponent", "Thành phần kiến trúc (kpi_arch_component).", CC, ("name!", "str", "Hệ thống quản lý văn bản tỉnh"), ("componentType!", "E:ComponentType", "HTTT"), ("lifecycle!", "E:Lifecycle", "ACTIVE"),
@@ -584,12 +586,12 @@ obj("AssessmentPatch", "Sửa đánh giá `DRAFT`; thiếu kết quả tiêu ch�
 obj("WaiverCreate", "Miễn trừ có hạn (FR-16-047); quá `16.compliance.waiver-max-days` trả ERR-16-044.", ("criterionCode", "str", "KT-ATTT-01"), ("reason!", "str", "Hệ thống sẽ ngừng ngày 30/06/2027, không nâng cấp để đạt tiêu chí này.", R50),
     ("until!", "date", "2027-03-31"), ("planNote", "str", "Chuyển sang hệ thống mới trước hạn."))
 obj("Waiver", "Miễn trừ (kpi_compliance_waiver).", ("waiverId!", "uuid"), CC, ("criterionCode", "str", "KT-ATTT-01"), ("reason!", "str", "Hệ thống sẽ ngừng ngày 30/06/2027."), ("until!", "date", "2027-03-31"),
-    ("planNote", "str", "Chuyển sang hệ thống mới trước hạn."), ("approvedBy", "str", "tran.van.nam"), ("approvedAt", "ts"))
+    ("planNote", "str", "Chuyển sang hệ thống mới trước hạn."), ("state!", "E:WaiverState", "ACTIVE"), ("approvedBy", "str", "tran.van.nam"), ("approvedAt", "ts"))
 obj("ReconRequest", "Đối chiếu sổ với phân hệ nguồn (FR-16-048); để trống là mọi loại.", ("componentTypes", "[E:ComponentType]", ["HTTT", "API"]))
 obj("ReconItem", "Một mục lệch.", ("itemId!", "uuid"), ("kind!", "E:ReconItemKind", "MISSING"), CC, ("sourceRef", "str", "ph02:api-tra-cuu-ho-tich"), ("diff", "obj", {"version": {"registry": "1.3.0", "source": "1.4.0"}}),
-    ("resolution", "str", "Đã bổ sung vào sổ."))
-obj("Reconciliation", "Lần đối chiếu sổ kiến trúc.", ("reconId!", "uuid"), ("state!", "E:RunState", "SUCCEEDED"), ("items", "[$ReconItem]"), ("itemCount", "int", 1), ("requestedAt", "ts"), ("finishedAt", "ts"))
-obj("ReconResolve", "Xử lý một mục lệch: nhận vào sổ, đánh dấu mồ côi, bỏ qua có lý do.", ("resolution!", "str", "Nhận thành phần vào sổ theo dữ liệu của PH-02.", R20))
+    ("resolution!", "E:ReconResolution", "OPEN"), ("resolutionReason", "str", "Đã bổ sung vào sổ."))
+obj("Reconciliation", "Lần đối chiếu sổ kiến trúc.", ("reconId!", "uuid"), ("state!", "E:ReconState", "SUCCEEDED"), ("items", "[$ReconItem]"), ("itemCount", "int", 1), ("requestedAt", "ts"), ("finishedAt", "ts"))
+obj("ReconResolve", "Xử lý một mục lệch (FR-16-048 bước 4); `IGNORED` cần `reason` từ 20 ký tự.", ("resolution!", "E:ReconResolution", "REGISTERED"), ("reason", "str", "Nhận thành phần vào sổ theo dữ liệu của PH-02.", R20))
 
 # --- gửi quốc gia (nhóm H)
 obj("NationalTemplate", "Mẫu gói quốc gia có phiên bản (kpi_national_template).", ("templateCode!", "code", "goi-bao-cao-chi-tieu"), ("submissionType!", "E:SubmissionType", "KPI_REPORT"), ("version!", "int", 1),
@@ -605,7 +607,7 @@ obj("Submission", "Gói gửi quốc gia (kpi_national_submission).", ("submissi
     ("attemptCount", "int", 0), ("channelRef", "str", "ndop-bao-cao"), ("receiptNo", "str", "BN-2026-001234"), ("sentAt", "ts"), ("ackAt", "ts"), ("lastErrorCode", "str", "ERR-16-117", {"pattern": "^ERR-16-[0-9]{3}$"}),
     ("lastErrorDetail", "str", "Hệ quốc gia từ chối: thiếu trường chiSo03."), *AUD)
 page("SubmissionPage", "Submission")
-obj("SubmissionLog", "Dòng nhật ký nộp (kpi_national_submission_log).", ("at!", "ts"), ("action!", "str", "SEND"), ("channelMessageId", "str", "msg-0001"), ("status", "E:SubmissionState", "SENDING"), ("code", "str", "ERR-16-118"))
+obj("SubmissionLog", "Dòng nhật ký nộp (kpi_national_submission_log).", ("at!", "ts"), ("event!", "E:SubmissionLogEvent", "SENDING"), ("channelMessageId", "str", "msg-0001"), ("status", "E:SubmissionState", "SENDING"), ("code", "str", "ERR-16-118"))
 page("SubmissionLogPage", "SubmissionLog")
 obj("ReceiptIn", "Biên nhận PH-14 trả về (FR-16-053).", ("submissionId!", "uuid"), ("channelMessageId!", "str", "msg-0001"), ("status!", "E:ReceiptStatus", "ACKNOWLEDGED"), ("receiptNo", "str", "BN-2026-001234"),
     ("contentHash", "sha"), ("rejectCode", "str", "E102"), ("rejectMessage", "str", "Thiếu trường chiSo03."))

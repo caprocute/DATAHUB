@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-02-PH16
 ten: Thiết kế chi tiết phần mềm phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-platform, kiến trúc sư, ATTT, SRE, kiểm thử viên, hội đồng thẩm định
@@ -70,7 +70,7 @@ Thiết kế dựa trên FRS, thiết kế CSDL, kiến trúc tổng thể và c
 
 | Tài liệu hoặc ADR | Nội dung dùng ở tập này |
 |---|---|
-| D02-03-PH16 FRS 0.1 | 58 FR, 35 BR, 22 NFR, 24 tham số, 13 sự kiện, mã lỗi, Phụ lục A enum |
+| D02-03-PH16 FRS 0.2 | 58 FR, 35 BR, 22 NFR, 25 tham số, 14 sự kiện, mã lỗi, Phụ lục A enum |
 | D03-03-PH16 CSDL 0.1 | Schema `ph16_kpi`: 36 bảng, RLS, phân vùng tháng, DDL chạy thử |
 | D03-02-PH08 | Mẫu thành phần, họ ADR 085 (CEL), sự kiện KPI `EVT-08-14` |
 | D03-02-PH14 | Kênh gửi quốc gia và nhận biên nhận |
@@ -185,7 +185,7 @@ Hai mô-đun theo khuôn `api / internal / events` của K-SDD; mỗi thành ph�
 ```text
 vn.datahub.platform.kpi
   api/            # DTO và interface công khai, ví dụ IndicatorReadApi, ReportReadApi
-  events/         # lược đồ EVT-16-01…13, ghi qua outbox
+  events/         # lược đồ EVT-16-01…14, ghi qua outbox
   internal/
     catalog/      # chỉ tiêu, phiên bản, mục tiêu, ngưỡng, nhóm, kế thừa COMMON (FR-001…008)
     ingestevent/  # tiêu thụ Kafka, API đẩy, chuẩn hóa, bị loại (FR-010, 012, 016)
@@ -349,7 +349,7 @@ Bộ tiêu thụ đăng ký một nhóm `kpi-ingest` trên các topic trong hợ
 
 `ObservationNormalizer` giải mã theo `schemaRef` và `schemaVersion` của hợp đồng, quy đơn vị về đơn vị của chỉ số, quy thời gian về `Asia/Ho_Chi_Minh` và xác định kỳ theo `periodEnd` (BR-16-013). `ContractChecker` kiểm `metricCode` thuộc hợp đồng của nguồn (ngoài: ERR-16-102), `tenantId` bản tin khớp tiền tố topic (lệch: ERR-16-101), `dimensions` không chứa khóa nghi định danh cá nhân (`cccd`, `hoTen`, `soDienThoai`, BR-16-028). Quan sát hợp lệ chèn bằng `INSERT … ON CONFLICT (tenant_id, source_id, idempotency_ref, period_start) DO NOTHING`; nếu trùng `idempotencyRef` mà khác giá trị thì không ghi đè mà chuyển sang bảng bị loại với ERR-16-103 (BR-16-012). Bản tin hỏng lược đồ vào bị loại với ERR-16-105 chứ không chặn partition.
 
-`LateDataMarker` đặt `late = true` khi kỳ của quan sát đã `COLLECTING` và hết thời hạn nhận kỳ, hoặc `CLOSED` (ERR-16-104, chỉ lưu); với kỳ `COMPUTED` chưa chốt và `16.late-data.recompute = true`, nó gọi `RecomputeDebouncer.request(period)` (§4.7). API đẩy dùng cùng đường chuẩn hóa, xử lý theo lô ≤ 100 quan sát mỗi lệnh, trả phản hồi từng phần tử với `result` `ACCEPTED`, `DUPLICATE`, `REJECTED`; lô trả 200 kèm kết quả từng dòng chứ không thất bại cả lô. Xử lý lại quan sát bị loại (FR-16-016) chạy lại `ContractChecker` rồi chèn như thường, ghi `reprocess = DONE`.
+`LateDataMarker` đặt `late = true` khi kỳ của quan sát đã `COLLECTING` và hết thời hạn nhận kỳ, hoặc `CLOSED` (ERR-16-104, chỉ lưu); với kỳ `COMPUTED` chưa chốt và `16.late-data.recompute = true`, nó gọi `RecomputeDebouncer.request(period)` (§4.7). API đẩy dùng cùng đường chuẩn hóa, xử lý theo lô 1…500 quan sát mỗi lệnh, trả phản hồi từng phần tử với `result` `ACCEPTED`, `DUPLICATE`, `REJECTED`; lô trả `202` khi mọi phần tử được nhận, `207` khi có phần tử lỗi, không thất bại cả lô. Xử lý lại quan sát bị loại (FR-16-016) chạy lại `ContractChecker` rồi chèn như thường; bản tin đạt chuyển `outcome` `REJECTED` → `REPROCESSED`, giữ mã lỗi cũ.
 
 ### 4.4. Nguồn số liệu, kéo API và độ tươi (`ingestpull`)
 
@@ -377,7 +377,7 @@ Bộ tiêu thụ đăng ký một nhóm `kpi-ingest` trên các topic trong hợ
 
 Chi tiết thiết kế:
 
-`PullScheduler` chạy mỗi phút, chọn nguồn `PULL_API` tới lịch bằng `SELECT … FOR UPDATE SKIP LOCKED` theo từng tenant dưới khóa ShedLock `kpi-pull-{tenant}`. `PullClient` lấy token máy theo scope của nguồn, gọi API với tham số kỳ, thời gian chờ 30 giây, phân trang tới hết; `idempotencyRef = {sourceCode}:{metricCode}:{periodCode}:{dimensions-hash}` nên kéo lại cùng kỳ không nhân đôi (BR-16-012). Lỗi gọi (hết thời gian, 5xx) thử lại ba lần cách 1, 2, 4 phút; hết lượt thì tăng `failCount` (ERR-16-106) và đủ `16.source.fail-after` lần liên tiếp nguồn thành `FAILED` (ERR-16-108). Đọc bù (`BackfillService`) dùng `backfillEndpoint` của nguồn `EVENT` (ví dụ API-08-122) cho khoảng `from…to` tối đa 12 tháng, chạy khi kỳ chuyển `COLLECTING` mà biến chưa có quan sát hoặc khi người dùng bấm.
+`PullScheduler` chạy mỗi phút, chọn nguồn `PULL_API` tới lịch bằng `SELECT … FOR UPDATE SKIP LOCKED` theo từng tenant dưới khóa ShedLock `kpi-pull-{tenant}`. `PullClient` lấy token máy theo scope của nguồn, gọi API với tham số kỳ, thời gian chờ 30 giây, phân trang tới hết; `idempotencyRef = {sourceCode}:{metricCode}:{periodCode}:{dimensions-hash}` nên kéo lại cùng kỳ không nhân đôi (BR-16-012). Lỗi gọi (hết thời gian, 5xx) thử lại ba lần cách 1, 2, 4 phút; hết lượt thì tăng `failCount` (ERR-16-106) và đủ `16.source.fail-after` lần liên tiếp nguồn thành `FAILED` (ERR-16-108). Đọc bù (`BackfillService`) dùng `backfillEndpoint` của nguồn `EVENT` (ví dụ API-08-122) cho khoảng `from…to` tối đa 12 tháng (vượt: ERR-16-060), chạy khi kỳ chuyển `COLLECTING` mà biến chưa có quan sát hoặc khi người dùng bấm.
 
 `FreshnessWatcher` quét 10 phút một lần: nguồn `ACTIVE` không có quan sát quá `16.source.stale-hours` (mặc định 26, ghi đè theo nguồn) thành `STALE` (ERR-16-107) và có thông báo ≤ 15 phút (NFR-16-014); có quan sát mới thì về `ACTIVE`. `PAUSED` không tính là lỗi. `InternalMetricPuller` gọi `ArchMetricsApi` trong tiến trình mỗi ngày để sinh quan sát `ph16.arch.assessed-ratio`; đây là nguồn nội bộ nên không qua Kafka (Q16-21). Nhiều nguồn cùng `metricCode` trong kỳ: `engine` chọn nguồn `priority` cao nhất có số (BR-16-014); `ingestpull` không tự chọn. Chặn ngừng nguồn là nguồn duy nhất của chỉ tiêu đang hiệu lực (ERR-16-017).
 
@@ -409,7 +409,7 @@ Chi tiết thiết kế:
 
 Biểu mẫu và tệp XLSX cùng đi qua `ManualRangeValidator` (giá trị trong miền theo `kind` và `unit` của chỉ tiêu, ERR-16-019). Bằng chứng là tệp (≤ `16.manual.max-file-mb`, loại PDF, DOCX, XLSX, JPG, PNG, quét kiểm tra phần mở rộng và dấu hiệu tệp) hoặc số văn bản; khi `16.manual.evidence-required = true` thiếu cả hai trả ERR-16-018. Tệp lưu ở `kpi-evidence/{tenant}/{manualId}/{sha256}` với băm ghi vào hàng bằng chứng. Nhập hàng loạt hai pha: `:import` đọc tệp XLSX, kiểm từng dòng (`VALID`, `INVALID`) và lưu kết quả xem trước ở đối tượng tạm `kpi-evidence/imports/{importId}.json` hết hạn sau 24 giờ; `:commit` chỉ ghi các dòng `VALID` thành bản `DRAFT` (xem đề nghị lưu bảng ở §13.6).
 
-Người nhập chỉ gửi xác nhận (`DRAFT → SUBMITTED`); người xác nhận phải khác người nhập và thuộc `confirmerRoles` của chỉ tiêu (ERR-16-005). `ACCEPTED` ghi trong một giao dịch với outbox EVT-16-04 và yêu cầu tính lại kỳ; mỗi (chỉ tiêu, kỳ) chỉ có một bản `ACCEPTED` (ERR-16-021). Với chỉ tiêu `MIXED`, số tự động chỉ có hiệu lực khi có xác nhận tay cùng kỳ, còn số tay chỉ thay số tự động khi số tự động `NO_DATA` (BR-16-035); `engine` đọc hai nguồn và áp quy tắc này, `manual` chỉ cung cấp trạng thái xác nhận.
+Người nhập chỉ gửi xác nhận (`DRAFT → SUBMITTED`); người xác nhận phải khác người nhập (ERR-16-005) và thuộc `confirmerRoles` của chỉ tiêu (ERR-16-059). `ACCEPTED` ghi trong một giao dịch với outbox EVT-16-04 và yêu cầu tính lại kỳ; mỗi (chỉ tiêu, kỳ) chỉ có một bản `ACCEPTED` (ERR-16-021). Với chỉ tiêu `MIXED`, số tự động chỉ có hiệu lực khi có xác nhận tay cùng kỳ, còn số tay chỉ thay số tự động khi số tự động `NO_DATA` (BR-16-035); `engine` đọc hai nguồn và áp quy tắc này, `manual` chỉ cung cấp trạng thái xác nhận.
 
 ### 4.6. Bộ tính chỉ tiêu CEL (`engine`)
 
@@ -456,9 +456,9 @@ Bốn lớp tính và ghi được tách để kiểm thử riêng: `IndicatorEv
 
 **Phụ thuộc ra.** `engine` (tính), `ingestpull` (đọc bù khi kỳ `COLLECTING`), `manual` (trạng thái xác nhận), PH-18 (nhắc chốt kỳ).
 
-**Dữ liệu.** `kpi_reporting_period`, `kpi_aggregation_run`, cộng `shedlock` (đề nghị §13.6).
+**Dữ liệu.** `kpi_reporting_period` (cột `recompute_requested_at`), `kpi_aggregation_run`, cộng `shedlock` (đề nghị §13.6).
 
-**Sự kiện.** EVT-16-05 khi lần tổng hợp kết thúc; EVT-16-06 khi trạng thái chỉ tiêu đổi.
+**Sự kiện.** EVT-16-05 khi lần tổng hợp kết thúc; EVT-16-06 khi trạng thái chỉ tiêu đổi; EVT-16-14 khi kỳ `CLOSED` hoặc `REOPENED` (`PeriodCloser`, cùng giao dịch outbox).
 
 **Lỗi và xử lý.** ERR-16-022, 023, 024, 025, 026, 110; ERR-16-125 khi phân vùng chưa tạo.
 
@@ -499,7 +499,7 @@ Chi tiết thiết kế:
 
 `ReportComposer` đọc giá trị và điểm nhóm của lần tổng hợp chính thức của kỳ (lần `SUCCEEDED` hoặc `PARTIAL` mới nhất của kỳ `CLOSED` cho báo cáo `PERIODIC` và `NATIONAL`; kỳ bất kỳ cho `AD_HOC`) và ghi vào cột `snapshot` của phiên bản `DRAFT`. `:refresh` làm mới ảnh chụp khi kỳ đã tính lại; bản nháp hiện dải "Số liệu kỳ đã được tính lại" (FR-16-023). Gửi duyệt qua `MandatoryChecker`: chỉ tiêu `mandatory` `NO_DATA` thì chặn (ERR-16-029); chỉ tiêu `OFF_TRACK` hoặc `mandatory` `PARTIAL` thiếu thuyết minh thì chặn (ERR-16-030, BR-16-029).
 
-`ReportWorkflow` là một máy trạng thái bảng chuyển (§8.1) với mọi chuyển bằng `UPDATE … WHERE state = :expected`. Người duyệt, công bố, rút khác người lập và người gửi (ERR-16-005); riêng `16.report.four-eyes = false` chỉ áp cho báo cáo `AD_HOC` (BR-16-004). Sau `PUBLISHED` mọi lệnh sửa trả ERR-16-032 và trigger CSDL từ chối cập nhật cột nội dung (NFR-16-013). Đính chính tạo `report_version` mới với `correction_of_version_no` và lý do, đi lại vòng duyệt; khi bản mới `PUBLISHED`, bản cũ thành `SUPERSEDED` trong cùng giao dịch. Kỳ bị mở lại và chốt lại làm đổi số của báo cáo đã công bố thì `ReportWorkflow` gắn cờ cần đính chính (BR-16-011).
+`ReportWorkflow` là một máy trạng thái bảng chuyển (§8.1) với mọi chuyển bằng `UPDATE … WHERE state = :expected`. Người duyệt, công bố, rút khác người lập và người gửi (ERR-16-005); riêng `16.report.four-eyes = false` chỉ áp cho báo cáo `AD_HOC` (BR-16-004). Sau `PUBLISHED` mọi lệnh sửa trả ERR-16-032 và trigger CSDL từ chối cập nhật cột nội dung (NFR-16-013). Đính chính tạo `report_version` mới với `correction_of_version_no` và lý do, đi lại vòng duyệt; khi bản mới `PUBLISHED`, bản cũ thành `SUPERSEDED` trong cùng giao dịch. Gửi duyệt báo cáo `PERIODIC`, `NATIONAL` cần `document_number` và `recipients_note` (ERR-16-061). Báo cáo `APPROVED` chưa công bố được trả về soạn qua API-16-073 (`APPROVED` → `CHANGES_REQUESTED`, phát EVT-16-09), dùng khi ký số lỗi kéo dài hoặc cần mở lại kỳ (ERR-16-026). Kỳ bị mở lại và chốt lại làm đổi số của báo cáo đã công bố thì `ReportWorkflow` gắn cờ cần đính chính (BR-16-011).
 
 ### 4.9. Dựng PDF, ký số, lưu WORM (`rendersign`)
 
@@ -1018,12 +1018,13 @@ FRS mô tả sáu máy trạng thái (4.3 đến 4.9, cộng đánh giá tuân t
 | | `ACTIVE`, `STALE` → `FAILED` | Lỗi kéo liên tiếp `16.source.fail-after` | `PullScheduler` |
 | Số liệu tay | `SUBMITTED` → `ACCEPTED` | Người xác nhận khác người nhập, đúng `confirmerRoles` | `ManualConfirmationService` |
 | Kỳ | `OPEN` → `COLLECTING` | Qua `endDate` | `PeriodStateAdvancer` |
-| | `COMPUTED` → `CLOSED` | Có lần thành công, mandatory không `MANUAL_PENDING` (ERR-16-025) | `PeriodCloser` |
-| | `CLOSED` → `REOPENED` | TA, lý do ≥ 50 ký tự, không báo cáo đang duyệt (ERR-16-026) | `PeriodCloser` |
+| | `COMPUTED` → `CLOSED` | Có lần thành công, mandatory không `MANUAL_PENDING` (ERR-16-025); phát EVT-16-14 | `PeriodCloser` |
+| | `CLOSED` → `REOPENED` | TA, lý do ≥ 50 ký tự, không báo cáo đang duyệt (ERR-16-026); phát EVT-16-14 | `PeriodCloser` |
 | Lần tổng hợp | `QUEUED` → `RUNNING` | `SKIP LOCKED`; tối đa một lần hoạt động mỗi kỳ | `RunCoordinator` |
 | | `RUNNING` → `FAILED` | Lỗi hệ thống hoặc quá `16.aggregate.timeout-minutes` (ERR-16-110) | `RunWatchdog` |
-| Báo cáo | `DRAFT` → `IN_REVIEW` | Mandatory có số (ERR-16-029), có thuyết minh (ERR-16-030) | `ReportWorkflow` |
+| Báo cáo | `DRAFT` → `IN_REVIEW` | Mandatory có số (ERR-16-029), có thuyết minh (ERR-16-030), số ký hiệu và nơi nhận (ERR-16-061) | `ReportWorkflow` |
 | | `IN_REVIEW` → `APPROVED` | Người duyệt khác người lập, gửi | `ReportWorkflow` |
+| | `APPROVED` → `CHANGES_REQUESTED` | Trả về soạn trước công bố, ý kiến ≥ 20 ký tự | `ReportWorkflow` |
 | | `APPROVED` → `PUBLISHED` | Khác người lập; ký và lưu WORM thành công; băm khớp | `PublishTransaction` |
 | Đánh giá tuân thủ | `SUBMITTED` → `CONFIRMED` | Người xác nhận khác người lập (ERR-16-005) | `AssessmentService` |
 | Gói quốc gia | `PENDING` → `SENDING` | `16.national.enabled`, không trùng (ERR-16-046, 049) | `SubmissionService` |
@@ -1033,7 +1034,7 @@ FRS mô tả sáu máy trạng thái (4.3 đến 4.9, cộng đánh giá tuân t
 
 ### 8.2. Outbox
 
-Mọi sự kiện EVT-16-01…13 và bản ghi kiểm toán ghi vào `outbox_event` cùng giao dịch với thay đổi nghiệp vụ (ADR-042), nên không có sự kiện "ma" hay thay đổi không sự kiện; thứ tự theo đối tượng giữ nhờ khóa thông điệp `aggregate_id`. Debezium Outbox Event Router đẩy lên Kafka; mục tiêu trễ p95 ≤ 5 giây (NFR-16-017). Sự kiện mang mã, trạng thái, số tổng hợp, không mang nội dung báo cáo hay bằng chứng. `trace_id` ghi vào outbox để nối vết sang PH-13 và PH-17.
+Mọi sự kiện EVT-16-01…14 và bản ghi kiểm toán ghi vào `outbox_event` cùng giao dịch với thay đổi nghiệp vụ (ADR-042), nên không có sự kiện "ma" hay thay đổi không sự kiện; thứ tự theo đối tượng giữ nhờ khóa thông điệp `aggregate_id`. Debezium Outbox Event Router đẩy lên Kafka; mục tiêu trễ p95 ≤ 5 giây (NFR-16-017). Sự kiện mang mã, trạng thái, số tổng hợp, không mang nội dung báo cáo hay bằng chứng. `trace_id` ghi vào outbox để nối vết sang PH-13 và PH-17.
 
 ### 8.3. Inbox và idempotency
 
@@ -1250,14 +1251,14 @@ Mười câu hỏi sau chưa có trả lời; thiết kế dùng phương án n�
 
 ### 13.6. Đề nghị đồng bộ
 
-Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS Phụ lục A) và các đề nghị với tài liệu khác. Mỗi đề nghị do chủ tài liệu tương ứng nhận ở bản kế tiếp; SDD không tự sửa tài liệu ngoài phạm vi.
+Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS Phụ lục A) và các đề nghị với tài liệu khác. Mỗi đề nghị do chủ tài liệu tương ứng nhận ở bản kế tiếp; SDD không tự sửa tài liệu ngoài phạm vi. Ba dòng đầu và dòng FRS đã được FRS 0.2, CSDL 0.2 xử lý ở đợt đồng bộ 26/11/2026 (FRS Phụ lục C, HT-13…18); kết quả ghi cuối ô đề nghị.
 
 | Tài liệu | Đề nghị | Mục SDD |
 |---|---|---|
-| D03-03-PH16 (enum lệch FRS) | `kpi_compliance_item.result` dùng `PASS, PARTIAL, FAIL, NOT_APPLICABLE` còn FRS `PASS, FAIL, NA`; `kpi_compliance_criterion.state` và `kpi_national_template.state` dùng `RETIRED` còn FRS `SUPERSEDED`; `kpi_export_job.subject` (`REPORT_VERSION, INDICATOR_TABLE, ARCH_REGISTRY`) lệch FRS (`REPORT, INDICATOR_VALUES, OBSERVATIONS, ARCH_REGISTRY, ARCH_GRAPH`); `kpi_indicator.status` (`ACTIVE, RETIRED`) thiếu `DRAFT` của `indicator.state`; `ingest.result` thêm `REPROCESSED` (CSDL dùng cột `reprocess`); `kpi_arch_dependency` có `type` (`CALLS, PUBLISHES, SUBSCRIBES, HOSTS, DEPENDS_ON`) cùng `origin` còn FRS chỉ `kind = AUTO, MANUAL`; `kpi_national_submission.mode` (`FULL, DELTA`) cần kiểm có cột | §4.10, 4.13, 4.14 |
-| D03-03-PH16 (giá trị lệch BR) | Trọng số nhóm lưu 0…1 (tổng 1) còn BR-16-016 và ERR-16-012 nói tổng 100: thống nhất thang; `reopen_reason` kiểm ≥ 20 ký tự còn BR-16-011 đòi ≥ 50 | §4.2, 4.7 |
-| D03-03-PH16 (bảng và cột thiếu) | Thêm `shedlock`; cột `recompute_requested_at` ở `kpi_reporting_period`; bảng `kpi_arch_reconciliation` và mục lệch (EN-16-33, FR-16-048 cần xử lý từng mục); bảng lưu xem trước nhập XLSX (EN-16-13) hoặc quy ước đối tượng tạm 24 giờ; `kpi_indicator_value.lineage_truncated`, `lineage_count` cho chỉ tiêu `SUM`; trọng số biến cho gộp quý, năm (Q16-24) | §4.4, 4.5, 4.7, 4.12, 4.16 |
-| D02-03-PH16 FRS | NFR-16-019: đổi tiền tố chỉ số `kpi_` thành `dh_kpi_` và thêm `dh_arch_*`; ghi hạ tầng dùng chung `platform.shared`; ghi `16.national.enabled` là cờ chính; thêm hạn `16.late-data` khớp bảng tham số; nhận Q16-20…29 | §10, 9 |
+| D03-03-PH16 (enum lệch FRS) | `kpi_compliance_item.result` dùng `PASS, PARTIAL, FAIL, NOT_APPLICABLE` còn FRS `PASS, FAIL, NA`; `kpi_compliance_criterion.state` và `kpi_national_template.state` dùng `RETIRED` còn FRS `SUPERSEDED`; `kpi_export_job.subject` (`REPORT_VERSION, INDICATOR_TABLE, ARCH_REGISTRY`) lệch FRS (`REPORT, INDICATOR_VALUES, OBSERVATIONS, ARCH_REGISTRY, ARCH_GRAPH`); `kpi_indicator.status` (`ACTIVE, RETIRED`) thiếu `DRAFT` của `indicator.state`; `ingest.result` thêm `REPROCESSED` (CSDL dùng cột `reprocess`); `kpi_arch_dependency` có `type` (`CALLS, PUBLISHES, SUBSCRIBES, HOSTS, DEPENDS_ON`) cùng `origin` còn FRS chỉ `kind = AUTO, MANUAL`; `kpi_national_submission.mode` (`FULL, DELTA`) cần kiểm có cột. Đã hấp thụ (HT-14): CSDL 0.2 dùng đúng Phụ lục A, `kpi_indicator.state`, `outcome` `REPROCESSED` | §4.10, 4.13, 4.14 |
+| D03-03-PH16 (giá trị lệch BR) | Trọng số nhóm lưu 0…1 (tổng 1) còn BR-16-016 và ERR-16-012 nói tổng 100: thống nhất thang; `reopen_reason` kiểm ≥ 20 ký tự còn BR-16-011 đòi ≥ 50. Đã hấp thụ (CSDL 0.2): trọng số thang 0…100, `reopen_reason` ≥ 50 ký tự | §4.2, 4.7 |
+| D03-03-PH16 (bảng và cột thiếu) | Thêm `shedlock`; cột `recompute_requested_at` ở `kpi_reporting_period`; bảng `kpi_arch_reconciliation` và mục lệch (EN-16-33, FR-16-048 cần xử lý từng mục); bảng lưu xem trước nhập XLSX (EN-16-13) hoặc quy ước đối tượng tạm 24 giờ; `kpi_indicator_value.lineage_truncated`, `lineage_count` cho chỉ tiêu `SUM`; trọng số biến cho gộp quý, năm (Q16-24). Đã hấp thụ một phần (CSDL 0.2, HT-19): `recompute_requested_at`, `kpi_arch_reconciliation`, `kpi_arch_recon_item`, `kpi_manual_import`, `kpi_manual_import_row`; `shedlock`, `lineage_truncated`, trọng số biến còn mở | §4.4, 4.5, 4.7, 4.12, 4.16 |
+| D02-03-PH16 FRS | NFR-16-019: đổi tiền tố chỉ số `kpi_` thành `dh_kpi_` và thêm `dh_arch_*`; ghi hạ tầng dùng chung `platform.shared`; ghi `16.national.enabled` là cờ chính; thêm hạn `16.late-data` khớp bảng tham số; nhận Q16-20…29. Kết quả FRS 0.2: nhận tiền tố `dh_kpi_`, `dh_arch_` (HT-13); không nhận `platform.shared`, cờ `16.national.enabled`, hạn `16.late-data`, Q16-20…29 (HT-15…18) | §10, 9 |
 | D02-08 | 14 quyền `PERM-16-*` (đọc, quản trị, duyệt, nguồn, nhập tay, chạy, báo cáo, xuất, sổ kiến trúc, đánh giá, quốc gia, so sánh, cấu hình, đọc kiểm toán) và hai scope máy `kpi.ingest`, `arch.register`, `kpi.read`; scope gọi đi `dq.read`, `catalog:metrics-read` | §7 |
 | D03-02-PH14, D02-03-PH14 | Loại nền tảng mới nhận gói báo cáo và gói sổ kiến trúc từ PH-16 qua outbox, trả biên nhận cho API-16-124 hoặc sự kiện; PH-16 không giữ thông tin xác thực | §4.14 |
 | D03-02-PH13, PH-20 | Hợp đồng chỉ số theo kỳ: sẵn sàng tháng, MTTD, MTTR, tỷ lệ nhật ký đủ (PH-13); thời gian khởi tạo tenant (PH-20); API liệt kê đối tượng cho phân hệ có thành phần kiến trúc | §4.4, 4.12 |
@@ -1272,3 +1273,4 @@ Bảng dưới gộp các điểm lệch giữa CSDL 0.1 và FRS (SDD theo FRS P
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-SDD và K-TRINH-BAY: hai mô-đun `kpi` và `arch` với 14 thành phần có khối đặc tả 10 mục, bộ tính CEL, tiếp nhận quan sát idempotent, tổng hợp fail-soft, công bố bốn mắt ký số WORM, sổ kiến trúc tự đăng ký, gói quốc gia qua PH-14, bảy sơ đồ trình tự, thuật toán độ đầy đủ, trạng thái, điểm nhóm, ngân sách hiệu năng, năm ADR đề xuất 160…164, mười câu hỏi mở Q16-20…29 và phụ lục đề nghị đồng bộ các điểm lệch CSDL 0.1 với FRS |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với FRS 0.2, CSDL 0.2: EVT-16-14 ở `PeriodCloser`; ERR-16-059 khi xác nhận số tay; ERR-16-061 và chuyển `APPROVED` → `CHANGES_REQUESTED` của báo cáo; API đẩy trả `202`, `207`, lô 1…500; xử lý lại ghi `REPROCESSED`; ghi kết quả hấp thụ ở §13.6 |

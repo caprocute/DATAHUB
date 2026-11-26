@@ -2,7 +2,7 @@
 -- Nguồn: ddl/ph16_kpi.sql · 16-0050-arch.sql
 -- TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
 
---changeset ph16:ph16-0330-kpi-arch-component
+--changeset ph16:ph16-0350-kpi-arch-component
 CREATE TABLE ph16_kpi.kpi_arch_component (
   id                    uuid NOT NULL,
   tenant_id             varchar(16) NOT NULL,
@@ -54,7 +54,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_arch_component.orphaned IS 'Đối chiếu với 
 COMMENT ON COLUMN ph16_kpi.kpi_arch_component.compliance_level IS 'Bản sao mức của đánh giá CONFIRMED mới nhất hoặc EXEMPTED khi có miễn trừ hiệu lực; nguồn chuẩn ở `kpi_compliance_assessment`.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_arch_component CASCADE;
 
---changeset ph16:ph16-0340-kpi-arch-component-version
+--changeset ph16:ph16-0360-kpi-arch-component-version
 CREATE TABLE ph16_kpi.kpi_arch_component_version (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,
@@ -87,7 +87,7 @@ CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_arch_component_version');
 COMMENT ON TABLE ph16_kpi.kpi_arch_component_version IS 'EN-16-27 Phiên bản thành phần kiến trúc: nhãn phiên bản, trạng thái vòng đời của phiên bản, ngày phát hành, mã băm nội dung mô tả dùng cho gói gửi quốc gia (FR-16-045, 052).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_arch_component_version CASCADE;
 
---changeset ph16:ph16-0350-kpi-arch-dependency
+--changeset ph16:ph16-0370-kpi-arch-dependency
 CREATE TABLE ph16_kpi.kpi_arch_dependency (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -118,7 +118,82 @@ CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_arch_dependency');
 COMMENT ON TABLE ph16_kpi.kpi_arch_dependency IS 'EN-16-28 Phụ thuộc giữa hai thành phần: gọi, phát, đăng ký nhận, chạy trên, phụ thuộc; phục vụ sơ đồ phụ thuộc và phân tích ảnh hưởng (FR-16-045, 049). Gỡ phụ thuộc bằng cờ `removed`, không xóa dòng.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_arch_dependency CASCADE;
 
---changeset ph16:ph16-0360-kpi-compliance-criterion
+--changeset ph16:ph16-0380-kpi-arch-reconciliation
+CREATE TABLE ph16_kpi.kpi_arch_reconciliation (
+  id              uuid NOT NULL,
+  tenant_id       varchar(16) NOT NULL,
+  state           varchar(9) NOT NULL DEFAULT 'RUNNING',
+  component_types text[] NOT NULL DEFAULT '{}',
+  started_by      varchar(64) NOT NULL,
+  started_at      timestamptz NOT NULL DEFAULT now(),
+  finished_at     timestamptz,
+  item_count      integer NOT NULL DEFAULT 0,
+  skipped_phases  text[] NOT NULL DEFAULT '{}',
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  created_by      varchar(64) NOT NULL,
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+  updated_by      varchar(64) NOT NULL,
+  version         integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_kpi_arch_reconciliation PRIMARY KEY (id),
+  CONSTRAINT uq_kpi_arch_reconciliation_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_kpi_arch_reconciliation_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT ck_kpi_arch_reconciliation_state CHECK (state IN ('RUNNING', 'SUCCEEDED', 'PARTIAL', 'FAILED')),
+  CONSTRAINT ck_kpi_arch_reconciliation_types CHECK (component_types <@ ARRAY['HTTT', 'API', 'FLOW', 'TOPIC', 'ADAPTER', 'PLATFORM_SERVICE', 'NATIONAL_LINK']::text[]),
+  CONSTRAINT ck_kpi_arch_reconciliation_finished CHECK ((state = 'RUNNING') = (finished_at IS NULL)),
+  CONSTRAINT ck_kpi_arch_reconciliation_partial CHECK (state <> 'PARTIAL' OR cardinality(skipped_phases) >= 1),
+  CONSTRAINT ck_kpi_arch_reconciliation_count CHECK (item_count >= 0)
+);
+CREATE UNIQUE INDEX uq_kpi_arch_reconciliation_running ON ph16_kpi.kpi_arch_reconciliation (tenant_id) WHERE state = 'RUNNING';
+CREATE INDEX ix_kpi_arch_reconciliation_time ON ph16_kpi.kpi_arch_reconciliation (tenant_id, started_at DESC);
+CREATE TRIGGER tg_kpi_arch_reconciliation_touch BEFORE UPDATE ON ph16_kpi.kpi_arch_reconciliation FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
+CREATE TRIGGER tg_kpi_arch_reconciliation_immutable BEFORE UPDATE ON ph16_kpi.kpi_arch_reconciliation FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'component_types', 'started_by', 'started_at');
+CREATE TRIGGER tg_kpi_arch_reconciliation_transition BEFORE UPDATE ON ph16_kpi.kpi_arch_reconciliation FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"RUNNING":["SUCCEEDED","PARTIAL","FAILED"]}');
+CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_arch_reconciliation');
+COMMENT ON TABLE ph16_kpi.kpi_arch_reconciliation IS 'EN-16-33 Lần đối chiếu sổ kiến trúc với phân hệ nguồn (hằng tuần hoặc chạy tay): RUNNING, SUCCEEDED, PARTIAL (có phân hệ không trả lời), FAILED; mỗi tenant tối đa một lần đang chạy (ERR-16-056) (FR-16-048).';
+--rollback DROP TABLE IF EXISTS ph16_kpi.kpi_arch_reconciliation CASCADE;
+
+--changeset ph16:ph16-0390-kpi-arch-recon-item
+CREATE TABLE ph16_kpi.kpi_arch_recon_item (
+  id                uuid NOT NULL,
+  tenant_id         varchar(16) NOT NULL,
+  recon_id          uuid NOT NULL,
+  item_kind         varchar(8) NOT NULL,
+  component_code    varchar(63) NOT NULL,
+  component_id      uuid,
+  source_phase      varchar(5) NOT NULL,
+  source_ref        varchar(255),
+  diff              jsonb NOT NULL DEFAULT '{}',
+  resolution        varchar(10) NOT NULL DEFAULT 'OPEN',
+  resolution_reason varchar(2000),
+  resolved_by       varchar(64),
+  resolved_at       timestamptz,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  created_by        varchar(64) NOT NULL,
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  updated_by        varchar(64) NOT NULL,
+  version           integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_kpi_arch_recon_item PRIMARY KEY (id),
+  CONSTRAINT ck_kpi_arch_recon_item_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT uq_kpi_arch_recon_item UNIQUE (tenant_id, recon_id, item_kind, component_code),
+  CONSTRAINT fk_kpi_arch_recon_item_recon FOREIGN KEY (tenant_id, recon_id) REFERENCES ph16_kpi.kpi_arch_reconciliation (tenant_id, id),
+  CONSTRAINT fk_kpi_arch_recon_item_component FOREIGN KEY (tenant_id, component_id) REFERENCES ph16_kpi.kpi_arch_component (tenant_id, id),
+  CONSTRAINT ck_kpi_arch_recon_item_kind CHECK (item_kind IN ('MISSING', 'ORPHAN', 'MISMATCH')),
+  CONSTRAINT ck_kpi_arch_recon_item_resolution CHECK (resolution IN ('OPEN', 'REGISTERED', 'RETIRED', 'UPDATED', 'IGNORED')),
+  CONSTRAINT ck_kpi_arch_recon_item_phase CHECK (source_phase ~ '^PH-[0-9]{2}$'),
+  CONSTRAINT ck_kpi_arch_recon_item_orphan CHECK (item_kind = 'MISSING' OR component_id IS NOT NULL),
+  CONSTRAINT ck_kpi_arch_recon_item_diff CHECK (jsonb_typeof(diff) = 'object'),
+  CONSTRAINT ck_kpi_arch_recon_item_resolved CHECK ((resolution = 'OPEN') = (resolved_by IS NULL AND resolved_at IS NULL)),
+  CONSTRAINT ck_kpi_arch_recon_item_ignored CHECK (resolution <> 'IGNORED' OR COALESCE(char_length(resolution_reason) >= 20, false))
+);
+CREATE INDEX ix_kpi_arch_recon_item_open ON ph16_kpi.kpi_arch_recon_item (tenant_id, recon_id) WHERE resolution = 'OPEN';
+CREATE TRIGGER tg_kpi_arch_recon_item_touch BEFORE UPDATE ON ph16_kpi.kpi_arch_recon_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
+CREATE TRIGGER tg_kpi_arch_recon_item_immutable BEFORE UPDATE ON ph16_kpi.kpi_arch_recon_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'recon_id', 'item_kind', 'component_code', 'source_phase', 'source_ref', 'diff');
+CREATE TRIGGER tg_kpi_arch_recon_item_transition BEFORE UPDATE ON ph16_kpi.kpi_arch_recon_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('resolution', '{"OPEN":["REGISTERED","RETIRED","UPDATED","IGNORED"]}');
+CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_arch_recon_item');
+COMMENT ON TABLE ph16_kpi.kpi_arch_recon_item IS 'EN-16-33 Mục lệch của lần đối chiếu: MISSING (nguồn có, sổ không), ORPHAN (sổ có, nguồn không), MISMATCH (vòng đời, phiên bản khác); xử lý OPEN, REGISTERED, RETIRED, UPDATED hoặc IGNORED kèm lý do (FR-16-048, ERR-16-120).';
+--rollback DROP TABLE IF EXISTS ph16_kpi.kpi_arch_recon_item CASCADE;
+
+--changeset ph16:ph16-0400-kpi-compliance-criterion
 CREATE TABLE ph16_kpi.kpi_compliance_criterion (
   id             uuid NOT NULL,
   tenant_id      varchar(16) NOT NULL,
@@ -130,7 +205,7 @@ CREATE TABLE ph16_kpi.kpi_compliance_criterion (
   mandatory      boolean NOT NULL DEFAULT false,
   weight         numeric(5,4) NOT NULL DEFAULT 1.0000,
   framework_ref  varchar(64),
-  state          varchar(8) NOT NULL DEFAULT 'DRAFT',
+  state          varchar(10) NOT NULL DEFAULT 'DRAFT',
   activated_at   timestamptz,
   created_at     timestamptz NOT NULL DEFAULT now(),
   created_by     varchar(64) NOT NULL,
@@ -145,20 +220,20 @@ CREATE TABLE ph16_kpi.kpi_compliance_criterion (
   CONSTRAINT ck_kpi_compliance_criterion_no CHECK (version_no >= 1),
   CONSTRAINT ck_kpi_compliance_criterion_applies CHECK (cardinality(applies_to) >= 1 AND applies_to <@ ARRAY['HTTT', 'API', 'FLOW', 'TOPIC', 'ADAPTER', 'PLATFORM_SERVICE', 'NATIONAL_LINK']::text[]),
   CONSTRAINT ck_kpi_compliance_criterion_weight CHECK (weight >= 0 AND weight <= 1),
-  CONSTRAINT ck_kpi_compliance_criterion_state CHECK (state IN ('DRAFT', 'ACTIVE', 'RETIRED')),
+  CONSTRAINT ck_kpi_compliance_criterion_state CHECK (state IN ('DRAFT', 'ACTIVE', 'SUPERSEDED')),
   CONSTRAINT ck_kpi_compliance_criterion_active CHECK (state = 'DRAFT' OR activated_at IS NOT NULL)
 );
 CREATE UNIQUE INDEX uq_kpi_compliance_criterion_active ON ph16_kpi.kpi_compliance_criterion (tenant_id, criterion_code) WHERE state = 'ACTIVE';
 CREATE TRIGGER tg_kpi_compliance_criterion_touch BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_compliance_criterion_immutable BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'criterion_code', 'version_no');
-CREATE TRIGGER tg_kpi_compliance_criterion_frozen BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'ACTIVE,RETIRED', 'applies_to', 'mandatory', 'weight', 'framework_ref');
-CREATE TRIGGER tg_kpi_compliance_criterion_transition BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["ACTIVE","RETIRED"],"ACTIVE":["RETIRED"]}');
+CREATE TRIGGER tg_kpi_compliance_criterion_frozen BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'ACTIVE,SUPERSEDED', 'applies_to', 'mandatory', 'weight', 'framework_ref');
+CREATE TRIGGER tg_kpi_compliance_criterion_transition BEFORE UPDATE ON ph16_kpi.kpi_compliance_criterion FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["ACTIVE"],"ACTIVE":["SUPERSEDED"]}');
 CALL ph16_kpi.p_enable_rls_shared('ph16_kpi.kpi_compliance_criterion');
 COMMENT ON TABLE ph16_kpi.kpi_compliance_criterion IS 'EN-16-29, EN-16-30 Tiêu chí tuân thủ kiến trúc: bộ tiêu chí cấu hình có phiên bản, áp cho loại thành phần, có trọng số và cờ bắt buộc; bộ mẫu COMMON theo Khung kiến trúc CPĐT 3.0 (CMP-LAW-10) và dự thảo Khung kiến trúc tổng thể quốc gia số (CMP-LAW-11) khi ban hành (FR-16-047). ACTIVE bất biến, mỗi mã một phiên bản ACTIVE. Dòng COMMON mọi tenant đọc được (mẫu RLS S).';
 COMMENT ON COLUMN ph16_kpi.kpi_compliance_criterion.framework_ref IS 'Mã CMP-LAW hoặc điều khoản khung kiến trúc nếu có; để NULL khi tiêu chí tối thiểu của sổ chưa đối chiếu khung (Q16-53).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_compliance_criterion CASCADE;
 
---changeset ph16:ph16-0370-kpi-compliance-assessment
+--changeset ph16:ph16-0410-kpi-compliance-assessment
 CREATE TABLE ph16_kpi.kpi_compliance_assessment (
   id                   uuid NOT NULL,
   tenant_id            varchar(16) NOT NULL,
@@ -202,13 +277,13 @@ CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_compliance_assessment');
 COMMENT ON TABLE ph16_kpi.kpi_compliance_assessment IS 'EN-16-31 Đánh giá tuân thủ một thành phần (hoặc một phiên bản) theo bộ tiêu chí: DRAFT, SUBMITTED, CONFIRMED, REJECTED, kết quả COMPLIANT, PARTIAL, NON_COMPLIANT; người xác nhận khác người đánh giá (FR-16-047). CONFIRMED và REJECTED không đổi nội dung.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_compliance_assessment CASCADE;
 
---changeset ph16:ph16-0380-kpi-compliance-item
+--changeset ph16:ph16-0420-kpi-compliance-item
 CREATE TABLE ph16_kpi.kpi_compliance_item (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,
   assessment_id uuid NOT NULL,
   criterion_id  uuid NOT NULL,
-  result        varchar(14) NOT NULL,
+  result        varchar(4) NOT NULL,
   evidence_ref  varchar(512),
   note          varchar(2000),
   item_score    numeric(5,2),
@@ -222,18 +297,18 @@ CREATE TABLE ph16_kpi.kpi_compliance_item (
   CONSTRAINT uq_kpi_compliance_item UNIQUE (tenant_id, assessment_id, criterion_id),
   CONSTRAINT fk_kpi_compliance_item_assessment FOREIGN KEY (tenant_id, assessment_id) REFERENCES ph16_kpi.kpi_compliance_assessment (tenant_id, id),
   CONSTRAINT fk_kpi_compliance_item_criterion FOREIGN KEY (tenant_id, criterion_id) REFERENCES ph16_kpi.kpi_compliance_criterion (tenant_id, id),
-  CONSTRAINT ck_kpi_compliance_item_result CHECK (result IN ('PASS', 'PARTIAL', 'FAIL', 'NOT_APPLICABLE')),
+  CONSTRAINT ck_kpi_compliance_item_result CHECK (result IN ('PASS', 'FAIL', 'NA')),
   CONSTRAINT ck_kpi_compliance_item_score CHECK (item_score IS NULL OR (item_score >= 0 AND item_score <= 100)),
-  CONSTRAINT ck_kpi_compliance_item_note CHECK (result NOT IN ('FAIL', 'NOT_APPLICABLE') OR COALESCE(char_length(note) >= 20, false))
+  CONSTRAINT ck_kpi_compliance_item_note CHECK (result NOT IN ('FAIL', 'NA') OR COALESCE(char_length(note) >= 20, false))
 );
 CREATE TRIGGER tg_kpi_compliance_item_touch BEFORE UPDATE ON ph16_kpi.kpi_compliance_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_compliance_item_immutable BEFORE UPDATE ON ph16_kpi.kpi_compliance_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'assessment_id', 'criterion_id');
 CREATE TRIGGER tg_kpi_compliance_item_child_frozen BEFORE INSERT OR UPDATE OR DELETE ON ph16_kpi.kpi_compliance_item FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_child_frozen('kpi_compliance_assessment', 'assessment_id', 'DRAFT');
 CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_compliance_item');
-COMMENT ON TABLE ph16_kpi.kpi_compliance_item IS 'EN-16-31 Mục đánh giá: kết quả từng tiêu chí của một đánh giá (đạt, một phần, không đạt, không áp dụng) kèm bằng chứng và ghi chú (FR-16-047). Chỉ sửa khi đánh giá còn DRAFT.';
+COMMENT ON TABLE ph16_kpi.kpi_compliance_item IS 'EN-16-31 Mục đánh giá: kết quả từng tiêu chí của một đánh giá PASS (đạt), FAIL (không đạt), NA (không áp dụng) kèm bằng chứng và ghi chú (FR-16-047). Chỉ sửa khi đánh giá còn DRAFT.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_compliance_item CASCADE;
 
---changeset ph16:ph16-0390-kpi-compliance-waiver
+--changeset ph16:ph16-0430-kpi-compliance-waiver
 CREATE TABLE ph16_kpi.kpi_compliance_waiver (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -259,7 +334,7 @@ CREATE TABLE ph16_kpi.kpi_compliance_waiver (
   CONSTRAINT fk_kpi_compliance_waiver_criterion FOREIGN KEY (tenant_id, criterion_id) REFERENCES ph16_kpi.kpi_compliance_criterion (tenant_id, id),
   CONSTRAINT ck_kpi_compliance_waiver_state CHECK (state IN ('PENDING_APPROVAL', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REJECTED')),
   CONSTRAINT ck_kpi_compliance_waiver_period CHECK (valid_to > valid_from AND valid_to - valid_from <= 366),
-  CONSTRAINT ck_kpi_compliance_waiver_reason CHECK (char_length(reason) >= 20),
+  CONSTRAINT ck_kpi_compliance_waiver_reason CHECK (char_length(reason) >= 50),
   CONSTRAINT ck_kpi_compliance_waiver_four_eyes CHECK (approved_by IS NULL OR requested_by IS NULL OR approved_by <> requested_by),
   CONSTRAINT ck_kpi_compliance_waiver_active CHECK (state NOT IN ('ACTIVE', 'EXPIRED', 'REVOKED') OR (approved_by IS NOT NULL AND approved_at IS NOT NULL)),
   CONSTRAINT ck_kpi_compliance_waiver_decision CHECK (state NOT IN ('REJECTED', 'REVOKED') OR COALESCE(char_length(decision_comment) >= 20, false))
@@ -271,5 +346,5 @@ CREATE TRIGGER tg_kpi_compliance_waiver_immutable BEFORE UPDATE ON ph16_kpi.kpi_
 CREATE TRIGGER tg_kpi_compliance_waiver_frozen BEFORE UPDATE ON ph16_kpi.kpi_compliance_waiver FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'ACTIVE,EXPIRED,REVOKED,REJECTED', 'reason', 'valid_from', 'valid_to');
 CREATE TRIGGER tg_kpi_compliance_waiver_transition BEFORE UPDATE ON ph16_kpi.kpi_compliance_waiver FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"PENDING_APPROVAL":["ACTIVE","REJECTED"],"ACTIVE":["EXPIRED","REVOKED"]}');
 CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_compliance_waiver');
-COMMENT ON TABLE ph16_kpi.kpi_compliance_waiver IS 'EN-16-32 Miễn trừ có hạn: miễn một tiêu chí (hoặc toàn bộ) cho một thành phần, lý do từ 20 ký tự, hạn không quá 366 ngày (tham số 16.compliance.waiver-max-days mặc định 180 ngày do dịch vụ kiểm), người duyệt khác người đề nghị (FR-16-047). PENDING_APPROVAL, ACTIVE, EXPIRED, REVOKED, REJECTED.';
+COMMENT ON TABLE ph16_kpi.kpi_compliance_waiver IS 'EN-16-32 Miễn trừ có hạn: miễn một tiêu chí (hoặc toàn bộ) cho một thành phần, lý do từ 50 ký tự, hạn không quá 366 ngày (tham số 16.compliance.waiver-max-days mặc định 180 ngày do dịch vụ kiểm), người duyệt khác người đề nghị (FR-16-047). PENDING_APPROVAL, ACTIVE, EXPIRED, REVOKED, REJECTED.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_compliance_waiver CASCADE;

@@ -155,7 +155,7 @@ CREATE TABLE ph16_kpi.kpi_ingest_log (
   tenant_id       varchar(16) NOT NULL,
   source_id       uuid NOT NULL,
   channel         varchar(8) NOT NULL,
-  outcome         varchar(9) NOT NULL,
+  outcome         varchar(11) NOT NULL,
   metric_code     varchar(128),
   idempotency_ref varchar(128),
   payload_hash    bytea,
@@ -164,7 +164,6 @@ CREATE TABLE ph16_kpi.kpi_ingest_log (
   detail          varchar(2000),
   observation_id  uuid,
   received_at     timestamptz NOT NULL DEFAULT now(),
-  reprocess_state varchar(7) NOT NULL DEFAULT 'NONE',
   reprocessed_at  timestamptz,
   reprocessed_by  varchar(64),
   created_at      timestamptz NOT NULL DEFAULT now(),
@@ -176,23 +175,23 @@ CREATE TABLE ph16_kpi.kpi_ingest_log (
   CONSTRAINT ck_kpi_ingest_log_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_kpi_ingest_log_source FOREIGN KEY (tenant_id, source_id) REFERENCES ph16_kpi.kpi_data_source (tenant_id, id),
   CONSTRAINT ck_kpi_ingest_log_channel CHECK (channel IN ('EVENT', 'PULL_API', 'PUSH_API')),
-  CONSTRAINT ck_kpi_ingest_log_outcome CHECK (outcome IN ('ACCEPTED', 'DUPLICATE', 'REJECTED')),
+  CONSTRAINT ck_kpi_ingest_log_outcome CHECK (outcome IN ('ACCEPTED', 'DUPLICATE', 'REJECTED', 'REPROCESSED')),
   CONSTRAINT ck_kpi_ingest_log_hash CHECK (payload_hash IS NULL OR octet_length(payload_hash) = 32),
   CONSTRAINT ck_kpi_ingest_log_reject CHECK (reject_code IS NULL OR reject_code ~ '^ERR-16-1[0-9]{2}$'),
-  CONSTRAINT ck_kpi_ingest_log_rejected CHECK ((outcome = 'REJECTED') = (reject_code IS NOT NULL) AND (outcome <> 'REJECTED' OR payload IS NOT NULL)),
+  CONSTRAINT ck_kpi_ingest_log_rejected CHECK ((outcome IN ('REJECTED', 'REPROCESSED')) = (reject_code IS NOT NULL) AND (outcome <> 'REJECTED' OR payload IS NOT NULL)),
   CONSTRAINT ck_kpi_ingest_log_payload CHECK (payload IS NULL OR octet_length(payload::text) <= 65536),
-  CONSTRAINT ck_kpi_ingest_log_accepted CHECK (outcome <> 'ACCEPTED' OR observation_id IS NOT NULL),
-  CONSTRAINT ck_kpi_ingest_log_reprocess CHECK (reprocess_state IN ('NONE', 'PENDING', 'DONE') AND (reprocess_state = 'NONE' OR outcome = 'REJECTED')),
-  CONSTRAINT ck_kpi_ingest_log_reprocessed CHECK (reprocess_state <> 'DONE' OR (reprocessed_at IS NOT NULL AND reprocessed_by IS NOT NULL))
+  CONSTRAINT ck_kpi_ingest_log_accepted CHECK (outcome NOT IN ('ACCEPTED', 'REPROCESSED') OR observation_id IS NOT NULL),
+  CONSTRAINT ck_kpi_ingest_log_reprocessed CHECK (outcome <> 'REPROCESSED' OR (reprocessed_at IS NOT NULL AND reprocessed_by IS NOT NULL))
 ) PARTITION BY RANGE (received_at);
 CALL ph16_kpi.p_ensure_partitions('ph16_kpi.kpi_ingest_log', date '2026-01-01', 24);
 CREATE INDEX ix_kpi_ingest_log_source ON ph16_kpi.kpi_ingest_log (tenant_id, source_id, received_at DESC);
 CREATE INDEX ix_kpi_ingest_log_rejected ON ph16_kpi.kpi_ingest_log (tenant_id, received_at DESC) WHERE outcome = 'REJECTED';
 CREATE INDEX ix_kpi_ingest_log_ref ON ph16_kpi.kpi_ingest_log (tenant_id, source_id, idempotency_ref);
 CREATE TRIGGER tg_kpi_ingest_log_touch BEFORE UPDATE ON ph16_kpi.kpi_ingest_log FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
-CREATE TRIGGER tg_kpi_ingest_log_immutable BEFORE UPDATE ON ph16_kpi.kpi_ingest_log FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'source_id', 'channel', 'outcome', 'metric_code', 'idempotency_ref', 'payload_hash', 'payload', 'reject_code', 'detail', 'observation_id', 'received_at');
+CREATE TRIGGER tg_kpi_ingest_log_immutable BEFORE UPDATE ON ph16_kpi.kpi_ingest_log FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'source_id', 'channel', 'metric_code', 'idempotency_ref', 'payload_hash', 'payload', 'reject_code', 'received_at');
+CREATE TRIGGER tg_kpi_ingest_log_transition BEFORE UPDATE ON ph16_kpi.kpi_ingest_log FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('outcome', '{"REJECTED":["REPROCESSED"]}');
 CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_ingest_log');
-COMMENT ON TABLE ph16_kpi.kpi_ingest_log IS 'EN-16-09, EN-16-10 Nhật ký tiếp nhận và loại bỏ: mỗi lần nhận quan sát ghi kết quả ACCEPTED, DUPLICATE hoặc REJECTED kèm mã lỗi ERR-16-101…199 và băm thân yêu cầu; quan sát bị loại có thể xử lý lại (FR-16-010, 016). Phân vùng tháng theo `received_at`.';
+COMMENT ON TABLE ph16_kpi.kpi_ingest_log IS 'EN-16-09, EN-16-10 Nhật ký tiếp nhận và loại bỏ: mỗi lần nhận quan sát ghi kết quả ACCEPTED, DUPLICATE hoặc REJECTED kèm mã lỗi ERR-16-101…199 và băm thân yêu cầu; bản tin bị loại xử lý lại đạt thì chuyển REPROCESSED, giữ mã lỗi cũ làm lịch sử (FR-16-010, 016). Phân vùng tháng theo `received_at`.';
 COMMENT ON COLUMN ph16_kpi.kpi_ingest_log.payload_hash IS 'SHA-256 của thân yêu cầu (32 byte).';
 COMMENT ON COLUMN ph16_kpi.kpi_ingest_log.payload IS 'Bản tin quan sát đã tổng hợp, chỉ giữ với dòng REJECTED (tối đa 64 KB) để xử lý lại sau khi sửa hợp đồng; không chứa bản ghi giao dịch hay dữ liệu cá nhân (BR-16-028).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_ingest_log CASCADE;

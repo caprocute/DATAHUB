@@ -28,16 +28,16 @@ STATUS = {400: ("BadRequest", "Dữ liệu không hợp lệ", "ERR-16-003"), 40
           403: ("Forbidden", "Không đủ quyền", "ERR-00-403"), 404: ("NotFound", "Không tìm thấy", "ERR-16-001"),
           409: ("Conflict", "Xung đột", "ERR-16-006"), 410: ("Gone", "Đã không còn", "ERR-16-035"),
           422: ("Unprocessable", "Không xử lý được", "ERR-16-007"), 503: ("ServiceUnavailable", "Dịch vụ phụ thuộc không khả dụng", "ERR-16-031")}
-GET_ERRS = {"ERR-16-001", "ERR-16-035", "ERR-16-037", "ERR-16-038", "ERR-16-057"}
+GET_ERRS = {"ERR-16-001", "ERR-16-035", "ERR-16-037", "ERR-16-038", "ERR-16-057", "ERR-16-060"}
 # mã lỗi của FR gộp không áp cho operation này (FR có nhiều bước hoặc nhiều operation, operation chỉ thực hiện một bước)
 DROP = {}
 # mã lỗi bổ sung cho operation (mã nêu ở FRS nhưng FR không gắn)
 ADD = {}
 OWN = {"002": "002", "005": "006 014", "007": "006 008 009 010 014", "008": "008 009", "009": "008 009", "011": "007 011", "012": "005", "013": "005 007", "014": "007",
-       "015": "007 013 054", "017": "012", "018": "002", "020": "055", "022": "002 015", "024": "015 016", "025": "015 016", "026": "007", "027": "", "028": "007 017", "029": "006",
-       "030": "101 102 103 104", "032": "019 021 022", "034": "019 022", "035": "053 022", "037": "020 022", "038": "021 022", "039": "018 019 022", "040": "005 021", "041": "005 007",
+       "015": "007 013 054", "017": "012", "018": "002", "020": "055", "022": "002 015", "024": "015 016", "025": "015 016", "026": "007", "027": "", "028": "007 017", "029": "006 060",
+       "030": "101 102 103 104", "032": "019 021 022", "034": "019 022", "035": "053 022", "037": "020 022", "038": "021 022", "039": "018 019 022", "040": "005 059 021", "041": "005 059 007",
        "045": "006", "047": "024", "050": "022 023", "052": "007", "055": "007 022 023", "057": "025", "058": "007 026", "060": "002 027", "062": "027", "063": "027",
-       "065": "002 028 033", "067": "032", "068": "032", "069": "022 023 028", "071": "029 030", "072": "005", "073": "005 007", "074": "005 031", "075": "006 007", "076": "007",
+       "065": "002 028 033", "067": "032", "068": "032", "069": "022 023 028", "071": "029 030 061", "072": "005", "073": "005 007", "074": "005 031", "075": "006 007", "076": "007",
        "079": "034 037", "083": "036", "084": "036", "095": "002 039 041", "097": "040", "098": "002", "099": "041", "100": "042", "101": "039", "103": "045", "104": "045",
        "105": "", "106": "", "107": "043", "108": "005 043", "109": "005 007", "110": "044 007", "111": "056", "113": "", "115": "047", "117": "047", "118": "046 048 049 052",
        "121": "046", "122": "050 007", "124": "001 003 006", "125": "056", "128": "051"}
@@ -45,7 +45,7 @@ KEEP001 = {"090", "093"}
 EX_STATUS = {"011": "PENDING_APPROVAL", "012": "ACTIVE", "013": "CHANGES_REQUESTED", "014": "DRAFT", "015": "RETIRED", "026": "PAUSED", "027": "ACTIVE", "028": "RETIRED",
              "029": "QUEUED", "039": "SUBMITTED", "040": "ACCEPTED", "041": "REJECTED", "050": "QUEUED", "052": "CANCELLED", "055": "QUEUED", "057": "CLOSED", "058": "REOPENED",
              "069": "QUEUED", "071": "IN_REVIEW", "072": "APPROVED", "073": "CHANGES_REQUESTED", "074": "PUBLISHED", "075": "DRAFT", "076": "WITHDRAWN", "079": "QUEUED",
-             "100": "DEPRECATED", "107": "SUBMITTED", "108": "CONFIRMED", "109": "REJECTED", "111": "QUEUED", "121": "SENDING", "122": "SENDING", "125": "QUEUED"}
+             "100": "DEPRECATED", "107": "SUBMITTED", "108": "CONFIRMED", "109": "REJECTED", "111": "RUNNING", "121": "SENDING", "122": "SENDING", "125": "QUEUED"}
 NOTE = {
     "002": "Tạo chỉ tiêu `scope = TENANT` và phiên bản 1 `DRAFT` chưa có công thức. `BOOLEAN` chỉ đi với `TARGET_RANGE` và `LAST`; `RATIO` có đơn vị `%` (ERR-16-003).",
     "007": "Chỉ sửa được phiên bản `DRAFT` hoặc `CHANGES_REQUESTED`. Sửa chỉ tiêu mẫu `COMMON` trực tiếp trả ERR-16-014. Sửa công thức làm mất kết quả thử tính cũ (ERR-16-011 khi gửi duyệt).",
@@ -67,8 +67,8 @@ NOTE = {
     "036": "Trả tệp XLSX mẫu mới nhất của các chỉ tiêu `MANUAL`, `MIXED`.",
     "037": "`multipart/form-data`, tối đa 2.000 dòng và 10 MB; sai mẫu trả ERR-16-020. Chưa ghi số liệu: trả bản xem trước theo dòng.",
     "038": "Ghi các dòng `VALID` thành số liệu `DRAFT`; dòng `INVALID` bị bỏ.",
-    "040": "Người xác nhận khác người nhập (ERR-16-005); đã có số liệu `ACCEPTED` cho chỉ tiêu và kỳ trả ERR-16-021. Phát EVT-16-04.",
-    "041": "Từ chối bắt buộc lý do từ 20 ký tự (ERR-16-007). Phát EVT-16-04.",
+    "040": "Người xác nhận khác người nhập (ERR-16-005) và thuộc `confirmerRoles` của chỉ tiêu (ERR-16-059); đã có số liệu `ACCEPTED` cho chỉ tiêu và kỳ trả ERR-16-021. Phát EVT-16-04.",
+    "041": "Người từ chối thuộc `confirmerRoles` của chỉ tiêu (ERR-16-059); lý do từ 20 ký tự (ERR-16-007). Phát EVT-16-04.",
     "042": "Nhật ký theo lô, theo sự kiện và theo lần kéo; không chứa nội dung quan sát nhạy cảm.",
     "045": "Chỉ quan sát bị loại do lỗi sửa được (ví dụ thiếu hợp đồng chỉ số); xử lý lại tối đa 500 mỗi lần.",
     "050": "`trigger` chỉ nhận `MANUAL`; `SCHEDULE`, `LATE_DATA` do hệ thống đặt, `RECOMPUTE` qua API-16-055. Mỗi kỳ một lần chạy tại một thời điểm (ERR-16-023); kỳ `CLOSED` trả ERR-16-022. Lần chạy bắt đầu ở `QUEUED`, theo dõi ở API-16-051; phát EVT-16-05 khi xong.",
@@ -81,9 +81,9 @@ NOTE = {
     "065": "`PERIODIC` và `NATIONAL` cần kỳ đã tính và chốt khi báo cáo chính thức (ERR-16-028); `AD_HOC` dùng `from`, `to` tối đa 24 tháng (ERR-16-033) và `indicatorCodes` 1…50. Trả danh sách `requiredExplanations`.",
     "068": "Giải trình cho chỉ tiêu `AT_RISK`, `OFF_TRACK` hoặc thiếu số; báo cáo đã công bố trả ERR-16-032.",
     "069": "Nạp lại số liệu của lần tổng hợp mới nhất vào bản nháp; có thể tạo lần tổng hợp mới (`202`).",
-    "071": "Thiếu số chỉ tiêu bắt buộc trả ERR-16-029; còn chỉ tiêu chệch chưa giải trình trả ERR-16-030. Phát EVT-16-07.",
+    "071": "Thiếu số chỉ tiêu bắt buộc trả ERR-16-029; còn chỉ tiêu chệch chưa giải trình trả ERR-16-030; báo cáo chính thức thiếu `documentNumber` hoặc `recipientsNote` trả ERR-16-061. Phát EVT-16-07.",
     "072": "Người duyệt khác người lập, gửi (bốn mắt, ERR-16-005; `16.report.four-eyes` chỉ ảnh hưởng báo cáo `AD_HOC`).",
-    "073": "Báo cáo về `CHANGES_REQUESTED`, người lập sửa rồi gửi lại. Phát EVT-16-09.",
+    "073": "Báo cáo `IN_REVIEW` (yêu cầu sửa) hoặc `APPROVED` chưa công bố (trả về soạn) chuyển `CHANGES_REQUESTED`; lý do từ 20 ký tự. Người lập sửa rồi gửi lại. Phát EVT-16-09.",
     "074": "Chụp bất biến, dựng PDF, ký số, lưu WORM rồi mới chuyển `PUBLISHED`. Ký số lỗi trả ERR-16-031 (báo cáo vẫn `APPROVED`). Phát EVT-16-08.",
     "075": "Tạo phiên bản mới `DRAFT` mang `correctionNote`; bản cũ chuyển `SUPERSEDED` khi bản mới được công bố.",
     "076": "Báo cáo chuyển `WITHDRAWN`, vẫn tra được; phát EVT-16-09.",
@@ -150,7 +150,7 @@ ETAGGED = {"Indicator", "IndicatorVersion", "DataSource", "ManualValue", "Report
 def build():
     params = {
         "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string", "format": "uuid"}, "example": "0193b1d4-0000-7000-8000-0000000000a1",
-                           "description": "UUID do bên gọi sinh; cùng khóa cùng thân trả lại phản hồi cũ, dùng lại với thân khác trả ERR-16-004 (409). Lưu 24 giờ."},
+                           "description": "UUID do bên gọi sinh; cùng khóa cùng thân trả lại phản hồi cũ, dùng lại với thân khác trả ERR-16-058 (409). Lưu 24 giờ."},
         "IfMatch": {"name": "If-Match", "in": "header", "required": True, "schema": {"type": "string"}, "example": "W/\"3\"",
                     "description": "`ETag` của tài nguyên (`W/\"{n}\"`); không khớp trả ERR-16-004. Thiếu tiêu đề trả 428 (ERR-00-428)."},
         "Traceparent": {"name": "traceparent", "in": "header", "required": False, "schema": {"type": "string"}, "description": "W3C Trace Context."},
@@ -224,7 +224,9 @@ def build():
             for f in frs_:
                 for e, st in spec.FRERR.get(f, []):
                     if m == "get" and e not in GET_ERRS:
-                        continue  # GET chỉ giữ mã liên quan đọc; lỗi ghi của FR không áp cho lệnh đọc
+                        continue
+                    if m == "get" and e == "ERR-16-060" and not any(q.startswith(("from:", "to:")) for q in o["query"]):
+                        continue  # giới hạn khoảng thời gian chỉ áp cho lệnh đọc có from, to  # GET chỉ giữ mã liên quan đọc; lỗi ghi của FR không áp cho lệnh đọc
                     if m == "get" and not pnames and e == "ERR-16-001" and code not in KEEP001:
                         continue
                     add(e, st)
@@ -234,8 +236,10 @@ def build():
             add("ERR-16-003")
         if filt:
             add("ERR-16-057")
-        if ifm or idem:
+        if ifm:
             add("ERR-16-004")
+        if idem:
+            add("ERR-16-058")
         if pnames:
             add("ERR-16-001")
         if act and "noifm" not in fl:
@@ -321,7 +325,7 @@ def build():
             "oauth2User": {"type": "oauth2", "description": "Người dùng qua Keycloak; quyền `PERM-16-*`.", "flows": {"authorizationCode": {"authorizationUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/auth", "tokenUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/token", "scopes": {"openid": "Định danh người dùng"}}}},
             "oauth2Machine": {"type": "oauth2", "description": "Máy với máy (PH-17, cổng tỉnh, HTTT, phân hệ nguồn, CI/GitOps, PH-14).", "flows": {"clientCredentials": {"tokenUrl": "https://sso.datahub.example.vn/realms/datahub/protocol/openid-connect/token", "scopes": {
                 "kpi.read": "Đọc chỉ tiêu, báo cáo đã công bố (PH-17, cổng tỉnh, HTTT được cấp)", "kpi.ingest": "Đẩy quan sát (phân hệ nguồn)", "arch.register": "Tự đăng ký thành phần kiến trúc (PH-01, PH-02, PH-04, PH-10, CI/GitOps)",
-                "kpi.national-receipt": "Nhận biên nhận gói quốc gia (PH-14; đề nghị bổ sung)"}}}}},
+                "kpi.national-receipt": "Nhận biên nhận gói quốc gia (PH-14)"}}}}},
             "parameters": params, "responses": responses, "schemas": schemas}}
     return d
 

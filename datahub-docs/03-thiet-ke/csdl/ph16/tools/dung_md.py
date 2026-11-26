@@ -108,7 +108,7 @@ def khoi(t):
     b = bodies[t]
     mo_ta = tcomment[t].replace("''", "'").strip().rstrip(".")
     pk = [d for _, d in con(b, "PRIMARY KEY")]
-    uq = ["`%s` %s" % (n, d) for n, d in con(b, "UNIQUE")]
+    uq = ["`%s` %s" % (n, d) for n, d in con(b, "UNIQUE") if not n.endswith("_tid")]  # uq_*_tid (tenant_id, id) có ở mọi bảng là đích khóa ngoại, nêu ở 1.2
     uq += ["`%s` %s%s" % (m.group(1), m.group(2), " có điều kiện" if m.group(3) else "") for m in re.finditer(
         r"CREATE UNIQUE INDEX (\w+) ON %s\.%s (?:USING \w+ )?(\([^;]*?\))( WHERE [^;]*)?;" % (S, t), sql)]
     fk = []
@@ -119,9 +119,9 @@ def khoi(t):
     ck = [n[len(pre):] if n.startswith(pre) else n for n, _ in con(b, "CHECK")]
     ix = ["`%s`" % m.group(1) for m in re.finditer(r"CREATE INDEX (\w+) ON %s\.%s\b" % (S, t), sql)]
     if re.search(r"CALL %s\.p_enable_rls_shared\('%s\.%s'\)" % (S, S, t), sql):
-        cl = "RLS FORCE, mẫu S: mọi tenant đọc được dòng `COMMON`, chỉ phiên PLATFORM ghi `COMMON`."
+        cl = "Mẫu S (1.2): đọc thêm dòng `COMMON`."
     elif re.search(r"CALL %s\.p_enable_rls\('%s\.%s'\)" % (S, S, t), sql):
-        cl = "RLS FORCE, mẫu P: chỉ thấy và ghi dòng của tenant phiên."
+        cl = "Mẫu P (1.2)."
     else:
         cl = "Không bật RLS. " + GHI_CHU.get(t, "Bảng kỹ thuật không chứa dữ liệu nghiệp vụ.")
     pv = []
@@ -129,7 +129,7 @@ def khoi(t):
         pv.append("Phân vùng tháng theo `%s`" % part[t])
     im = re.search(r"CREATE TRIGGER (tg_%s_immutable) BEFORE UPDATE ON %s\.%s FOR EACH ROW EXECUTE FUNCTION %s\.tg_immutable\(([^)]*)\)" % (t, S, t, S), sql)
     if im:
-        pv.append("Bất biến: %s (`%s`)" % (", ".join("`%s`" % c.strip(" '") for c in im.group(2).split(",")), im.group(1)))
+        pv.append("Bất biến: %s" % ", ".join("`%s`" % c.strip(" '") for c in im.group(2).split(",")))
     other = sorted(set(re.findall(r"CREATE TRIGGER (\w+) BEFORE [^;]*? ON %s\.%s " % (S, t), sql)) - {"tg_%s_touch" % t, "tg_%s_immutable" % t})
     if other:
         pv.append("Trigger: " + ", ".join("`%s`" % x for x in other))
@@ -139,12 +139,12 @@ def khoi(t):
     if ens:
         fr += "; " + ", ".join(ens)
     if re.search(r"(?m)^\s+version\s+integer", b):
-        gc = GHI_CHU.get(t, "ETag là `version`.")
+        gc = GHI_CHU.get(t, "ETag `version`.")
     else:
         gc = GHI_CHU.get(t, "Không có `version`.")
     muc = [("Mục đích", mo_ta), ("FR phục vụ", fr), ("Khóa chính", ", ".join(pk) or "Không"), ("Duy nhất", ", ".join(uq) or "Không"),
            ("Khóa ngoại", ", ".join(fk) or "Không"), ("Ràng buộc CHECK", ("`ck_%s_` + " % t + ", ".join("`%s`" % x for x in ck)) if ck else "Không"),
-           ("Chỉ mục", ", ".join(ix) if ix else "Chỉ khóa chính và khóa duy nhất"), ("Cách ly tenant", cl), ("Phân vùng, bất biến", "; ".join(pv) or "Không"), ("Ghi chú", gc)]
+           ("Chỉ mục", ", ".join(ix) if ix else "Không thêm"), ("Cách ly tenant", cl), ("Phân vùng, bất biến", "; ".join(pv) or "Không"), ("Ghi chú", gc)]
     o = ["::: dac-ta"]
     for k, v in muc:
         v = v.strip()
@@ -198,10 +198,10 @@ NHOM = {"A Bộ chỉ tiêu": range(1, 9), "B Nguồn số liệu": range(9, 17)
 
 
 def fr():
-    L = ["| Nhóm | FR | Bảng hiện thực |", "|---|---|---|"]
+    L = ["| FR | Bảng hiện thực |", "|---|---|"]
     for g, rg in NHOM.items():
         for n in rg:
-            L.append(f"| {g} | FR-16-{n:03d} | {code(fr_tables[n])} |")
+            L.append(f"| FR-16-{n:03d} ({g[0]}) | {code(fr_tables[n])} |")
     L += ["", ": Ma trận FR-16 sang bảng", ""]
     return "\n".join(L)
 

@@ -62,7 +62,7 @@ $f$;
 COMMENT ON FUNCTION ph16_kpi.f_approval_gate() IS 'Cặp loại trừ: người lập báo cáo khác người duyệt cùng báo cáo (D02-08).';
 --rollback DROP FUNCTION IF EXISTS ph16_kpi.f_approval_gate();
 
---changeset ph16:ph16-0250-kpi-report-template
+--changeset ph16:ph16-0270-kpi-report-template
 CREATE TABLE ph16_kpi.kpi_report_template (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,
@@ -101,7 +101,7 @@ CALL ph16_kpi.p_enable_rls_shared('ph16_kpi.kpi_report_template');
 COMMENT ON TABLE ph16_kpi.kpi_report_template IS 'EN-16-19 Mẫu báo cáo có phiên bản: bố cục phần (SUMMARY, GROUP, INDICATOR_TABLE, CHART, NARRATIVE, ANNEX), định dạng xuất (PDF, XLSX, CSV, JSON) và cấu hình bố cục (FR-16-025). Dòng COMMON do PLATFORM quản, mọi tenant đọc được (mẫu RLS S). ACTIVE bất biến, mỗi mã một phiên bản ACTIVE.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_report_template CASCADE;
 
---changeset ph16:ph16-0260-kpi-report
+--changeset ph16:ph16-0280-kpi-report
 CREATE TABLE ph16_kpi.kpi_report (
   id                   uuid NOT NULL,
   tenant_id            varchar(16) NOT NULL,
@@ -142,7 +142,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_report.state IS 'Bản sao trạng thái của ph
 COMMENT ON COLUMN ph16_kpi.kpi_report.published_version_no IS 'Phiên bản đang PUBLISHED (NULL nếu chưa công bố hoặc đã SUPERSEDED, WITHDRAWN).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_report CASCADE;
 
---changeset ph16:ph16-0270-kpi-report-version
+--changeset ph16:ph16-0290-kpi-report-version
 CREATE TABLE ph16_kpi.kpi_report_version (
   id                       uuid NOT NULL,
   tenant_id                varchar(16) NOT NULL,
@@ -168,6 +168,8 @@ CREATE TABLE ph16_kpi.kpi_report_version (
   correction_of_version_no integer,
   correction_reason        varchar(2000),
   decision_comment         varchar(2000),
+  document_number          varchar(64),
+  recipients_note          varchar(2000),
   withdrawn_by             varchar(64),
   withdrawn_at             timestamptz,
   withdraw_reason          varchar(2000),
@@ -193,8 +195,8 @@ CREATE TABLE ph16_kpi.kpi_report_version (
   CONSTRAINT ck_kpi_report_version_published CHECK (state NOT IN ('PUBLISHED', 'SUPERSEDED') OR (published_by IS NOT NULL AND published_at IS NOT NULL AND content_hash IS NOT NULL AND object_ref IS NOT NULL AND retain_until IS NOT NULL)),
   CONSTRAINT ck_kpi_report_version_mandatory CHECK (state <> 'PUBLISHED' OR NOT missing_mandatory),
   CONSTRAINT ck_kpi_report_version_correction CHECK ((correction_of_version_no IS NULL) = (correction_reason IS NULL) AND (correction_of_version_no IS NULL OR correction_of_version_no < version_no)),
-  CONSTRAINT ck_kpi_report_version_correction_reason CHECK (correction_reason IS NULL OR char_length(correction_reason) >= 20),
-  CONSTRAINT ck_kpi_report_version_withdrawn CHECK (state <> 'WITHDRAWN' OR (withdrawn_by IS NOT NULL AND withdrawn_at IS NOT NULL AND COALESCE(char_length(withdraw_reason) >= 20, false))),
+  CONSTRAINT ck_kpi_report_version_correction_reason CHECK (correction_reason IS NULL OR char_length(correction_reason) >= 50),
+  CONSTRAINT ck_kpi_report_version_withdrawn CHECK (state <> 'WITHDRAWN' OR (withdrawn_by IS NOT NULL AND withdrawn_at IS NOT NULL AND COALESCE(char_length(withdraw_reason) >= 50, false))),
   CONSTRAINT ck_kpi_report_version_changes CHECK (state <> 'CHANGES_REQUESTED' OR COALESCE(char_length(decision_comment) >= 20, false))
 );
 CREATE UNIQUE INDEX uq_kpi_report_version_published ON ph16_kpi.kpi_report_version (tenant_id, report_id) WHERE state = 'PUBLISHED';
@@ -202,9 +204,9 @@ CREATE INDEX ix_kpi_report_version_inbox ON ph16_kpi.kpi_report_version (tenant_
 CREATE INDEX ix_kpi_report_version_published ON ph16_kpi.kpi_report_version (tenant_id, published_at DESC) WHERE state = 'PUBLISHED';
 CREATE TRIGGER tg_kpi_report_version_touch BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
 CREATE TRIGGER tg_kpi_report_version_immutable BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'report_id', 'version_no', 'prepared_by');
-CREATE TRIGGER tg_kpi_report_version_frozen_review BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'IN_REVIEW,APPROVED', 'template_id', 'run_id', 'snapshot', 'narrative', 'completeness', 'missing_mandatory');
-CREATE TRIGGER tg_kpi_report_version_frozen BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'PUBLISHED,SUPERSEDED,WITHDRAWN', 'template_id', 'run_id', 'snapshot', 'narrative', 'completeness', 'missing_mandatory', 'submitted_at', 'approved_by', 'approved_at', 'published_by', 'published_at', 'content_hash', 'object_ref', 'retain_until', 'correction_of_version_no', 'correction_reason');
-CREATE TRIGGER tg_kpi_report_version_transition BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["IN_REVIEW"],"IN_REVIEW":["APPROVED","CHANGES_REQUESTED"],"CHANGES_REQUESTED":["DRAFT"],"APPROVED":["PUBLISHED","DRAFT"],"PUBLISHED":["SUPERSEDED","WITHDRAWN"]}');
+CREATE TRIGGER tg_kpi_report_version_frozen_review BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'IN_REVIEW,APPROVED', 'template_id', 'run_id', 'snapshot', 'narrative', 'completeness', 'missing_mandatory', 'document_number', 'recipients_note');
+CREATE TRIGGER tg_kpi_report_version_frozen BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_frozen('state', 'PUBLISHED,SUPERSEDED,WITHDRAWN', 'template_id', 'run_id', 'snapshot', 'narrative', 'completeness', 'missing_mandatory', 'submitted_at', 'approved_by', 'approved_at', 'published_by', 'published_at', 'content_hash', 'object_ref', 'retain_until', 'correction_of_version_no', 'correction_reason', 'document_number', 'recipients_note');
+CREATE TRIGGER tg_kpi_report_version_transition BEFORE UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('state', '{"DRAFT":["IN_REVIEW"],"IN_REVIEW":["APPROVED","CHANGES_REQUESTED"],"CHANGES_REQUESTED":["DRAFT"],"APPROVED":["PUBLISHED","CHANGES_REQUESTED"],"PUBLISHED":["SUPERSEDED","WITHDRAWN"]}');
 CREATE TRIGGER tg_kpi_report_version_no_delete BEFORE DELETE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_no_delete_state('state', 'APPROVED,PUBLISHED,SUPERSEDED,WITHDRAWN');
 CREATE TRIGGER tg_kpi_report_version_gate BEFORE INSERT OR UPDATE ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.f_report_version_gate();
 CREATE TRIGGER tg_kpi_report_version_sync AFTER INSERT OR UPDATE OF state ON ph16_kpi.kpi_report_version FOR EACH ROW EXECUTE FUNCTION ph16_kpi.f_report_sync();
@@ -218,7 +220,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_report_version.prepared_by IS 'Người lập; `a
 COMMENT ON COLUMN ph16_kpi.kpi_report_version.missing_mandatory IS 'Còn chỉ tiêu bắt buộc thiếu nguồn: CHECK ck_kpi_report_version_mandatory chặn công bố.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_report_version CASCADE;
 
---changeset ph16:ph16-0280-kpi-report-approval
+--changeset ph16:ph16-0300-kpi-report-approval
 CREATE TABLE ph16_kpi.kpi_report_approval (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -246,7 +248,7 @@ CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_report_approval');
 COMMENT ON TABLE ph16_kpi.kpi_report_approval IS 'EN-16-21 Nhật ký duyệt báo cáo: mỗi hành động SUBMIT, REQUEST_CHANGES, APPROVE, PUBLISH, WITHDRAW, CORRECT của một phiên bản, kèm người làm và ý kiến (FR-16-028, 029, 030). Chỉ thêm. Người lập báo cáo không ghi được APPROVE cho báo cáo của mình khi 16.report.four-eyes bật.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_report_approval CASCADE;
 
---changeset ph16:ph16-0290-kpi-report-signature
+--changeset ph16:ph16-0310-kpi-report-signature
 CREATE TABLE ph16_kpi.kpi_report_signature (
   id                 uuid NOT NULL,
   tenant_id          varchar(16) NOT NULL,
@@ -277,7 +279,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_report_signature.signature_ref IS 'Đối tượn
 COMMENT ON COLUMN ph16_kpi.kpi_report_signature.certificate_serial IS 'Số sê-ri chứng thư số của người ký (ký số theo NĐ 30/2020 do PH-12 thực hiện).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_report_signature CASCADE;
 
---changeset ph16:ph16-0300-kpi-distribution
+--changeset ph16:ph16-0320-kpi-distribution
 CREATE TABLE ph16_kpi.kpi_distribution (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -311,7 +313,7 @@ COMMENT ON TABLE ph16_kpi.kpi_distribution IS 'EN-16-24 Danh sách phân phối 
 COMMENT ON COLUMN ph16_kpi.kpi_distribution.recipients IS 'Mảng {type: USER|GROUP|EMAIL, ref}; thư điện tử chỉ địa chỉ công vụ; gửi qua PH-13, PH-16 không giữ cấu hình thư.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_distribution CASCADE;
 
---changeset ph16:ph16-0310-kpi-delivery
+--changeset ph16:ph16-0330-kpi-delivery
 CREATE TABLE ph16_kpi.kpi_delivery (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -350,11 +352,11 @@ CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_delivery');
 COMMENT ON TABLE ph16_kpi.kpi_delivery IS 'EN-16-25 Lần giao báo cáo: mỗi người nhận, định dạng của một phiên bản đã công bố qua một danh sách phân phối; theo dõi PENDING, SENT, FAILED và số lần thử (FR-16-034).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_delivery CASCADE;
 
---changeset ph16:ph16-0320-kpi-export-job
+--changeset ph16:ph16-0340-kpi-export-job
 CREATE TABLE ph16_kpi.kpi_export_job (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
-  subject_type      varchar(15) NOT NULL,
+  subject_type      varchar(16) NOT NULL,
   report_version_id uuid,
   period_id         uuid,
   format            varchar(4) NOT NULL,
@@ -379,7 +381,7 @@ CREATE TABLE ph16_kpi.kpi_export_job (
   CONSTRAINT ck_kpi_export_job_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_kpi_export_job_version FOREIGN KEY (tenant_id, report_version_id) REFERENCES ph16_kpi.kpi_report_version (tenant_id, id),
   CONSTRAINT fk_kpi_export_job_period FOREIGN KEY (tenant_id, period_id) REFERENCES ph16_kpi.kpi_reporting_period (tenant_id, id),
-  CONSTRAINT ck_kpi_export_job_subject CHECK (subject_type IN ('REPORT_VERSION', 'INDICATOR_TABLE', 'ARCH_REGISTRY') AND (subject_type <> 'REPORT_VERSION' OR report_version_id IS NOT NULL) AND (subject_type <> 'INDICATOR_TABLE' OR period_id IS NOT NULL)),
+  CONSTRAINT ck_kpi_export_job_subject CHECK (subject_type IN ('REPORT', 'INDICATOR_VALUES', 'OBSERVATIONS', 'ARCH_REGISTRY', 'ARCH_GRAPH') AND (subject_type <> 'REPORT' OR report_version_id IS NOT NULL) AND (subject_type NOT IN ('INDICATOR_VALUES', 'OBSERVATIONS') OR period_id IS NOT NULL)),
   CONSTRAINT ck_kpi_export_job_format CHECK (format IN ('PDF', 'XLSX', 'CSV', 'JSON')),
   CONSTRAINT ck_kpi_export_job_state CHECK (state IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'EXPIRED')),
   CONSTRAINT ck_kpi_export_job_rows CHECK (row_count IS NULL OR row_count >= 0),

@@ -241,7 +241,7 @@ paths:
       x-datahub-errors:
       - ERR-16-002
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -573,7 +573,7 @@ paths:
       - ERR-16-006
       - ERR-16-014
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -1760,7 +1760,7 @@ paths:
       x-datahub-errors:
       - ERR-16-002
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -2015,7 +2015,7 @@ paths:
       - ERR-16-002
       - ERR-16-015
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -2580,8 +2580,9 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-006
+      - ERR-16-060
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -2643,7 +2644,7 @@ paths:
       - ERR-16-103
       - ERR-16-104
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -2808,7 +2809,7 @@ paths:
       - ERR-16-021
       - ERR-16-022
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -3046,7 +3047,7 @@ paths:
       - ERR-16-053
       - ERR-16-022
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -3170,7 +3171,7 @@ paths:
       - ERR-16-020
       - ERR-16-022
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -3346,7 +3347,8 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Người xác nhận khác người nhập (ERR-16-005); đã có số liệu `ACCEPTED` cho chỉ tiêu và kỳ trả ERR-16-021. Phát EVT-16-04.
+      description: Người xác nhận khác người nhập (ERR-16-005) và thuộc `confirmerRoles` của chỉ tiêu (ERR-16-059); đã có số liệu `ACCEPTED` cho chỉ tiêu và kỳ trả
+        ERR-16-021. Phát EVT-16-04.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ManualId'
@@ -3354,6 +3356,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-005
+      - ERR-16-059
       - ERR-16-021
       - ERR-16-003
       - ERR-16-004
@@ -3427,7 +3430,7 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Từ chối bắt buộc lý do từ 20 ký tự (ERR-16-007). Phát EVT-16-04.
+      description: Người từ chối thuộc `confirmerRoles` của chỉ tiêu (ERR-16-059); lý do từ 20 ký tự (ERR-16-007). Phát EVT-16-04.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ManualId'
@@ -3435,6 +3438,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-005
+      - ERR-16-059
       - ERR-16-007
       - ERR-16-003
       - ERR-16-004
@@ -3558,6 +3562,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-16-060
       - ERR-16-057
       - ERR-16-001
       responses:
@@ -3651,6 +3656,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-16-060
       - ERR-16-057
       responses:
         '200':
@@ -3745,6 +3751,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-16-060
       - ERR-16-057
       responses:
         '200':
@@ -3920,7 +3927,7 @@ paths:
       x-datahub-errors:
       - ERR-16-024
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -4149,7 +4156,7 @@ paths:
       - ERR-16-022
       - ERR-16-023
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -4424,7 +4431,6 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-001
-      - ERR-16-057
       responses:
         '200':
           description: Thành công.
@@ -4444,8 +4450,6 @@ paths:
                   observationId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                   manualId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                   value: 200
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -4477,7 +4481,7 @@ paths:
       - ERR-16-022
       - ERR-16-023
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -4858,7 +4862,7 @@ paths:
       - ERR-16-002
       - ERR-16-027
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -5268,7 +5272,7 @@ paths:
       - ERR-16-028
       - ERR-16-033
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -5329,6 +5333,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -5419,6 +5425,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -5471,6 +5479,8 @@ paths:
               sections:
               - sectionId: s1
                 content: Trong tháng 10, số HTTT kết nối tăng 6 hệ thống.
+              documentNumber: 125/BC-STTTT
+              recipientsNote: UBND tỉnh; Bộ KH&CN.
       responses:
         '200':
           description: Thành công.
@@ -5514,6 +5524,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -5628,6 +5640,7 @@ paths:
       - ERR-16-028
       - ERR-16-003
       - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       - ERR-16-006
       requestBody:
@@ -5730,7 +5743,8 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Thiếu số chỉ tiêu bắt buộc trả ERR-16-029; còn chỉ tiêu chệch chưa giải trình trả ERR-16-030. Phát EVT-16-07.
+      description: Thiếu số chỉ tiêu bắt buộc trả ERR-16-029; còn chỉ tiêu chệch chưa giải trình trả ERR-16-030; báo cáo chính thức thiếu `documentNumber` hoặc `recipientsNote`
+        trả ERR-16-061. Phát EVT-16-07.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ReportCode'
@@ -5739,6 +5753,7 @@ paths:
       x-datahub-errors:
       - ERR-16-029
       - ERR-16-030
+      - ERR-16-061
       - ERR-16-003
       - ERR-16-004
       - ERR-16-001
@@ -5794,6 +5809,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -5896,6 +5913,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -5933,7 +5952,8 @@ paths:
       security:
       - oauth2User: []
       x-datahub-if-match: required
-      description: Báo cáo về `CHANGES_REQUESTED`, người lập sửa rồi gửi lại. Phát EVT-16-09.
+      description: Báo cáo `IN_REVIEW` (yêu cầu sửa) hoặc `APPROVED` chưa công bố (trả về soạn) chuyển `CHANGES_REQUESTED`; lý do từ 20 ký tự. Người lập sửa rồi gửi
+        lại. Phát EVT-16-09.
       parameters:
       - $ref: '#/components/parameters/IfMatch'
       - $ref: '#/components/parameters/ReportCode'
@@ -5997,6 +6017,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -6100,6 +6122,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -6152,6 +6176,7 @@ paths:
       - ERR-16-007
       - ERR-16-003
       - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -6205,6 +6230,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -6312,6 +6339,8 @@ paths:
                   certificateSerial: 5F3A9C01
                   format: PAdES-B-LT
                 wormRef: kpi-reports/t68/bc-thang-2026-10/v1.pdf
+                documentNumber: 125/BC-STTTT
+                recipientsNote: UBND tỉnh; Bộ KH&CN.
                 needsCorrection: false
                 createdAt: '2026-11-26T08:00:00+07:00'
                 createdBy: nguyen.thi.lan
@@ -6483,7 +6512,7 @@ paths:
       - ERR-16-034
       - ERR-16-037
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -6710,7 +6739,7 @@ paths:
       x-datahub-errors:
       - ERR-16-036
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -7346,6 +7375,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-001
+      - ERR-16-060
       - ERR-16-057
       responses:
         '200':
@@ -7659,6 +7689,7 @@ paths:
                     changeNote: Nâng cấp giao thức kết nối.
                   dependencies:
                   - componentCode: httt-qlvb
+                    dependencyType: CALLS
                     kind: MANUAL
                   lastSyncedAt: '2026-11-26T08:00:00+07:00'
                   createdAt: '2026-11-26T08:00:00+07:00'
@@ -7708,7 +7739,7 @@ paths:
       - ERR-16-039
       - ERR-16-041
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -7758,6 +7789,7 @@ paths:
                   changeNote: Nâng cấp giao thức kết nối.
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
                 lastSyncedAt: '2026-11-26T08:00:00+07:00'
                 createdAt: '2026-11-26T08:00:00+07:00'
@@ -7841,6 +7873,7 @@ paths:
                   changeNote: Nâng cấp giao thức kết nối.
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
                 lastSyncedAt: '2026-11-26T08:00:00+07:00'
                 createdAt: '2026-11-26T08:00:00+07:00'
@@ -7929,6 +7962,7 @@ paths:
                   changeNote: Nâng cấp giao thức kết nối.
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
                 lastSyncedAt: '2026-11-26T08:00:00+07:00'
                 createdAt: '2026-11-26T08:00:00+07:00'
@@ -7976,7 +8010,7 @@ paths:
       x-datahub-errors:
       - ERR-16-002
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -8023,6 +8057,7 @@ paths:
                   changeNote: Nâng cấp giao thức kết nối.
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
                 lastSyncedAt: '2026-11-26T08:00:00+07:00'
                 createdAt: '2026-11-26T08:00:00+07:00'
@@ -8084,6 +8119,7 @@ paths:
             example:
               dependsOn:
               - componentCode: httt-qlvb
+                dependencyType: CALLS
                 kind: MANUAL
       responses:
         '200':
@@ -8096,6 +8132,7 @@ paths:
                 componentCode: httt-qlvb
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -8179,6 +8216,7 @@ paths:
                   changeNote: Nâng cấp giao thức kết nối.
                 dependencies:
                 - componentCode: httt-qlvb
+                  dependencyType: CALLS
                   kind: MANUAL
                 lastSyncedAt: '2026-11-26T08:00:00+07:00'
                 createdAt: '2026-11-26T08:00:00+07:00'
@@ -8229,7 +8267,7 @@ paths:
       x-datahub-errors:
       - ERR-16-039
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -8360,7 +8398,7 @@ paths:
       x-datahub-errors:
       - ERR-16-045
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -8514,7 +8552,7 @@ paths:
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -8928,7 +8966,7 @@ paths:
       - ERR-16-044
       - ERR-16-007
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       - ERR-16-001
       requestBody:
         required: true
@@ -8955,6 +8993,7 @@ paths:
                 reason: Hệ thống sẽ ngừng ngày 30/06/2027.
                 until: '2027-03-31'
                 planNote: Chuyển sang hệ thống mới trước hạn.
+                state: ACTIVE
                 approvedBy: tran.van.nam
                 approvedAt: '2026-11-26T08:00:00+07:00'
         '400':
@@ -8991,7 +9030,7 @@ paths:
       x-datahub-errors:
       - ERR-16-056
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -9011,7 +9050,7 @@ paths:
                 $ref: '#/components/schemas/Reconciliation'
               example:
                 reconId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
-                state: QUEUED
+                state: RUNNING
                 items:
                 - itemId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
                   kind: MISSING
@@ -9021,7 +9060,8 @@ paths:
                     version:
                       registry: '1.3.0'
                       source: '1.4.0'
-                  resolution: Đã bổ sung vào sổ.
+                  resolution: OPEN
+                  resolutionReason: Đã bổ sung vào sổ.
                 itemCount: 1
                 requestedAt: '2026-11-26T08:00:00+07:00'
                 finishedAt: '2026-11-26T08:00:00+07:00'
@@ -9085,7 +9125,8 @@ paths:
                     version:
                       registry: '1.3.0'
                       source: '1.4.0'
-                  resolution: Đã bổ sung vào sổ.
+                  resolution: OPEN
+                  resolutionReason: Đã bổ sung vào sổ.
                 itemCount: 1
                 requestedAt: '2026-11-26T08:00:00+07:00'
                 finishedAt: '2026-11-26T08:00:00+07:00'
@@ -9124,7 +9165,8 @@ paths:
             schema:
               $ref: '#/components/schemas/ReconResolve'
             example:
-              resolution: Nhận thành phần vào sổ theo dữ liệu của PH-02.
+              resolution: REGISTERED
+              reason: Nhận thành phần vào sổ theo dữ liệu của PH-02.
       responses:
         '200':
           description: Thành công.
@@ -9144,7 +9186,8 @@ paths:
                     version:
                       registry: '1.3.0'
                       source: '1.4.0'
-                  resolution: Đã bổ sung vào sổ.
+                  resolution: OPEN
+                  resolutionReason: Đã bổ sung vào sổ.
                 itemCount: 1
                 requestedAt: '2026-11-26T08:00:00+07:00'
                 finishedAt: '2026-11-26T08:00:00+07:00'
@@ -9251,7 +9294,7 @@ paths:
       x-datahub-errors:
       - ERR-16-047
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -9472,7 +9515,7 @@ paths:
       - ERR-16-049
       - ERR-16-052
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -9896,7 +9939,7 @@ paths:
               example:
                 items:
                 - at: '2026-11-26T08:00:00+07:00'
-                  action: SEND
+                  event: SENDING
                   channelMessageId: msg-0001
                   status: SENDING
                   code: ERR-16-118
@@ -9982,7 +10025,7 @@ paths:
       x-datahub-errors:
       - ERR-16-056
       - ERR-16-003
-      - ERR-16-004
+      - ERR-16-058
       requestBody:
         required: true
         content:
@@ -10229,6 +10272,7 @@ paths:
       - $ref: '#/components/parameters/Traceparent'
       - $ref: '#/components/parameters/AcceptLanguage'
       x-datahub-errors:
+      - ERR-16-060
       - ERR-16-057
       responses:
         '200':
@@ -10317,7 +10361,7 @@ components:
             kpi.read: Đọc chỉ tiêu, báo cáo đã công bố (PH-17, cổng tỉnh, HTTT được cấp)
             kpi.ingest: Đẩy quan sát (phân hệ nguồn)
             arch.register: Tự đăng ký thành phần kiến trúc (PH-01, PH-02, PH-04, PH-10, CI/GitOps)
-            kpi.national-receipt: Nhận biên nhận gói quốc gia (PH-14; đề nghị bổ sung)
+            kpi.national-receipt: Nhận biên nhận gói quốc gia (PH-14)
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -10327,7 +10371,7 @@ components:
         type: string
         format: uuid
       example: 0193b1d4-0000-7000-8000-0000000000a1
-      description: UUID do bên gọi sinh; cùng khóa cùng thân trả lại phản hồi cũ, dùng lại với thân khác trả ERR-16-004 (409). Lưu 24 giờ.
+      description: UUID do bên gọi sinh; cùng khóa cùng thân trả lại phản hồi cũ, dùng lại với thân khác trả ERR-16-058 (409). Lưu 24 giờ.
     IfMatch:
       name: If-Match
       in: header
@@ -11564,7 +11608,7 @@ components:
         idempotencyRef:
           type: string
         channel:
-          $ref: '#/components/schemas/SourceType'
+          $ref: '#/components/schemas/ObservationChannel'
         late:
           type: boolean
         receivedAt:
@@ -11684,7 +11728,7 @@ components:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
         channel:
-          $ref: '#/components/schemas/SourceType'
+          $ref: '#/components/schemas/ObservationChannel'
         result:
           $ref: '#/components/schemas/IngestOutcome'
         metricCode:
@@ -12294,8 +12338,7 @@ components:
         variable:
           type: string
         sourceKind:
-          type: string
-          description: '`OBSERVATION`, `MANUAL` hoặc `INDICATOR`.'
+          $ref: '#/components/schemas/LineageSourceKind'
         metricCode:
           type: string
           pattern: ^ph[0-9]{2}(\.[a-z0-9-]+){2,}$
@@ -12701,6 +12744,12 @@ components:
           $ref: '#/components/schemas/Signature'
         wormRef:
           type: string
+        documentNumber:
+          type: string
+          maxLength: 64
+        recipientsNote:
+          type: string
+          maxLength: 2000
         needsCorrection:
           type: boolean
         createdAt:
@@ -12812,6 +12861,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReportSectionText'
+        documentNumber:
+          type: string
+          maxLength: 64
+        recipientsNote:
+          type: string
+          maxLength: 2000
     ExplanationPut:
       type: object
       description: Lưu giải trình (FR-16-027).
@@ -13668,10 +13723,13 @@ components:
         componentCode:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
+        dependencyType:
+          $ref: '#/components/schemas/DependencyType'
         kind:
           $ref: '#/components/schemas/DependencyKind'
       required:
       - componentCode
+      - dependencyType
     ComponentVersion:
       type: object
       description: Phiên bản thành phần.
@@ -14160,6 +14218,8 @@ components:
           format: date
         planNote:
           type: string
+        state:
+          $ref: '#/components/schemas/WaiverState'
         approvedBy:
           type: string
         approvedAt:
@@ -14170,6 +14230,7 @@ components:
       - componentCode
       - reason
       - until
+      - state
     ReconRequest:
       type: object
       description: Đối chiếu sổ với phân hệ nguồn (FR-16-048); để trống là mọi loại.
@@ -14195,11 +14256,14 @@ components:
         diff:
           type: object
         resolution:
+          $ref: '#/components/schemas/ReconResolution'
+        resolutionReason:
           type: string
       required:
       - itemId
       - kind
       - componentCode
+      - resolution
     Reconciliation:
       type: object
       description: Lần đối chiếu sổ kiến trúc.
@@ -14208,7 +14272,7 @@ components:
           type: string
           format: uuid
         state:
-          $ref: '#/components/schemas/RunState'
+          $ref: '#/components/schemas/ReconState'
         items:
           type: array
           items:
@@ -14226,9 +14290,11 @@ components:
       - state
     ReconResolve:
       type: object
-      description: 'Xử lý một mục lệch: nhận vào sổ, đánh dấu mồ côi, bỏ qua có lý do.'
+      description: Xử lý một mục lệch (FR-16-048 bước 4); `IGNORED` cần `reason` từ 20 ký tự.
       properties:
         resolution:
+          $ref: '#/components/schemas/ReconResolution'
+        reason:
           type: string
           minLength: 20
           maxLength: 2000
@@ -14425,8 +14491,8 @@ components:
         at:
           type: string
           format: date-time
-        action:
-          type: string
+        event:
+          $ref: '#/components/schemas/SubmissionLogEvent'
         channelMessageId:
           type: string
         status:
@@ -14435,7 +14501,7 @@ components:
           type: string
       required:
       - at
-      - action
+      - event
     SubmissionLogPage:
       type: object
       description: Trang kết quả.
@@ -14747,6 +14813,14 @@ components:
       enum:
       - AUTO
       - MANUAL
+    DependencyType:
+      type: string
+      enum:
+      - CALLS
+      - PUBLISHES
+      - SUBSCRIBES
+      - HOSTS
+      - DEPENDS_ON
     Direction:
       type: string
       enum:
@@ -14828,6 +14902,13 @@ components:
       - ACTIVE
       - DEPRECATED
       - RETIRED
+    LineageSourceKind:
+      type: string
+      enum:
+      - OBSERVATION
+      - MANUAL_VALUE
+      - INDICATOR
+      - PERIOD_VALUE
     ManualState:
       type: string
       enum:
@@ -14853,6 +14934,12 @@ components:
       - DRAFT
       - ACTIVE
       - SUPERSEDED
+    ObservationChannel:
+      type: string
+      enum:
+      - EVENT
+      - PULL_API
+      - PUSH_API
     OpsStatus:
       type: string
       enum:
@@ -14897,6 +14984,21 @@ components:
       - MISSING
       - ORPHAN
       - MISMATCH
+    ReconResolution:
+      type: string
+      enum:
+      - OPEN
+      - REGISTERED
+      - RETIRED
+      - UPDATED
+      - IGNORED
+    ReconState:
+      type: string
+      enum:
+      - RUNNING
+      - SUCCEEDED
+      - PARTIAL
+      - FAILED
     ReportState:
       type: string
       enum:
@@ -14971,6 +15073,16 @@ components:
       - PULL_API
       - PUSH_API
       - MANUAL
+    SubmissionLogEvent:
+      type: string
+      enum:
+      - CREATED
+      - SENDING
+      - SENT
+      - ACKNOWLEDGED
+      - REJECTED
+      - FAILED
+      - RETRY
     SubmissionMode:
       type: string
       enum:
@@ -14998,6 +15110,7 @@ components:
     TemplateState:
       type: string
       enum:
+      - DRAFT
       - ACTIVE
       - RETIRED
     ThresholdLevel:
@@ -15028,3 +15141,11 @@ components:
       - ACTIVE
       - SUPERSEDED
       - RETIRED
+    WaiverState:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - ACTIVE
+      - EXPIRED
+      - REVOKED
+      - REJECTED

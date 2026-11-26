@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sinh asyncapi-kpi.yaml (AsyncAPI 3.0) cho EVT-16-01…13 (phát) và 18 kênh tiêu thụ từ FRS 9.3 và spec.py.
+"""Sinh asyncapi-kpi.yaml (AsyncAPI 3.0) cho EVT-16-01…14 (phát) và 18 kênh tiêu thụ từ FRS 9.3 và spec.py.
 Chạy từ api/ph16:  python3 tools/gen_asyncapi.py
 CloudEvents 1.0 dạng cấu trúc (JSON). Sự kiện không mang giá trị dữ liệu hay khóa bản ghi cá nhân, chỉ mã đối tượng, số đếm, điểm."""
 import os, re, sys
@@ -27,18 +27,21 @@ obj("IndicatorStatusChangedData", "Chỉ tiêu đổi trạng thái so mục ti�
 obj("ReportSubmittedData", "Báo cáo gửi duyệt (FR-16-028).", ("reportCode!", "rcode"), ("version!", "int", 1), ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode", "M-2026-10"), ("submittedBy!", "str", "nguyen.thi.lan"))
 obj("ReportPublishedData", "Báo cáo `PUBLISHED` (FR-16-029); không mang nội dung báo cáo.", ("reportCode!", "rcode"), ("version!", "int", 1), ("reportType!", "E:ReportType", "PERIODIC"), ("periodCode", "pcode", "M-2026-10"),
     ("publishedAt!", "ts"), ("contentHash!", "sha"), ("correctionOf", "int", 1))
-obj("ReportStateChangedData", "Báo cáo về `CHANGES_REQUESTED`, `SUPERSEDED` hoặc `WITHDRAWN` (FR-16-028, 030).", ("reportCode!", "rcode"), ("version!", "int", 1), STR("fromState", "PUBLISHED", "IN_REVIEW", "PUBLISHED"),
+obj("ReportStateChangedData", "Báo cáo về `CHANGES_REQUESTED` (từ `IN_REVIEW` hoặc `APPROVED`), `SUPERSEDED` hoặc `WITHDRAWN` (FR-16-028, 030).", ("reportCode!", "rcode"), ("version!", "int", 1), STR("fromState", "PUBLISHED", "IN_REVIEW", "APPROVED", "PUBLISHED"),
     STR("toState!", "WITHDRAWN", "CHANGES_REQUESTED", "SUPERSEDED", "WITHDRAWN"), ("actor", "str", "tran.van.nam"))
 obj("ArchComponentChangedData", "Thành phần kiến trúc đổi (FR-16-044, 045, 046).", ("componentCode!", "code", "httt-qlvb"), ("componentType!", "E:ComponentType", "HTTT"),
-    STR("change!", "CREATED", "CREATED", "LIFECYCLE_CHANGED", "VERSION_ADDED", "OPS_STATUS_CHANGED"), ("lifecycle", "E:Lifecycle", "ACTIVE"), ("opsStatus", "E:OpsStatus", "UP"),
+    ("change!", "E:ArchChange", "CREATED"), ("lifecycle", "E:Lifecycle", "ACTIVE"), ("opsStatus", "E:OpsStatus", "UP"),
     ("version", "str", "2.3.0"), ("origin", "E:Origin", "AUTO"))
-obj("ArchComplianceAssessedData", "Đánh giá `CONFIRMED`, miễn trừ cấp hoặc hết hạn (FR-16-047).", ("componentCode!", "code", "httt-qlvb"), STR("kind!", "CONFIRMED", "CONFIRMED", "WAIVER_GRANTED", "WAIVER_EXPIRED"),
+obj("ArchComplianceAssessedData", "Đánh giá `CONFIRMED`, miễn trừ cấp hoặc hết hạn (FR-16-047).", ("componentCode!", "code", "httt-qlvb"), ("kind!", "E:ComplianceEventKind", "CONFIRMED"),
     ("complianceLevel!", "E:ComplianceLevel", "PARTIAL"), ("previousLevel", "E:ComplianceLevel", "NOT_ASSESSED"), ("assessmentId", "uuid"), ("waiverId", "uuid"), ("validTo", "date", "2027-03-31"))
 obj("NationalSubmissionStateChangedData", "Gói quốc gia đổi trạng thái (FR-16-051…053).", ("submissionId!", "uuid"), ("submissionType!", "E:SubmissionType", "KPI_REPORT"),
     ("fromState", "E:SubmissionState", "SENDING"), ("toState!", "E:SubmissionState", "ACKNOWLEDGED"), ("reportCode", "rcode"), ("version", "int", 1), ("componentCount", "int", 12),
     ("attemptCount", "int", 1), ("receiptNo", "str", "BN-2026-001234"), ("errorCode", "str", "ERR-16-117", {"pattern": "^ERR-16-[0-9]{3}$"}))
 obj("ExportCompletedData", "Việc xuất xong hoặc lỗi (FR-16-033).", ("exportId!", "uuid"), ("subject!", "E:ExportSubject", "REPORT"), ("format!", "E:Format", "PDF"),
     STR("state!", "SUCCEEDED", "SUCCEEDED", "FAILED"), ("requestedBy!", "str", "nguyen.thi.lan"), ("rowCount", "int", 24), ("expiresAt", "ts"), ("errorCode", "str", "ERR-16-115", {"pattern": "^ERR-16-[0-9]{3}$"}))
+obj("PeriodStateChangedData", "Kỳ `CLOSED` (số chính thức sẵn sàng) hoặc `REOPENED` (số có thể đổi) (FR-16-024).", ("periodCode!", "pcode", "M-2026-10"),
+    ("periodType!", "E:PeriodType", "MONTH"), ("fromState", "E:PeriodState", "COMPUTED"), STR("toState!", "CLOSED", "CLOSED", "REOPENED"), ("officialRunId", "uuid"),
+    ("reason", "str", "Phát hiện số liệu trễ của PH-19 ảnh hưởng chỉ tiêu bắt buộc, cần tính lại trước khi công bố.", {"maxLength": 2000}), ("actor", "str", "le.van.hung"))
 # --- sự kiện tiêu thụ (chỉ khai trường PH-16 dùng; bên phát giữ hợp đồng gốc ở tập API của họ)
 OPEN = {"additionalProperties": True}
 obj("SystemStateChangedIn", "HTTT đổi trạng thái hoặc ảnh chụp giờ (EVT-01-03).", ("systemCode!", "code", "httt-qlvb"), ("name", "str", "Hệ thống quản lý văn bản tỉnh"), ("ownerOrgId", "str", "org-vp-ubnd"),
@@ -67,8 +70,8 @@ for n in sorted(spec.ENUMS):
     SCH.setdefault(n, spec.enum_schema(n))
 
 DATA = ["IndicatorActivatedData", "IndicatorRetiredData", "SourceStateChangedData", "ManualValueDecidedData", "PeriodComputedData", "IndicatorStatusChangedData", "ReportSubmittedData",
-        "ReportPublishedData", "ReportStateChangedData", "ArchComponentChangedData", "ArchComplianceAssessedData", "NationalSubmissionStateChangedData", "ExportCompletedData"]
-KEY = ["indicatorCode", "indicatorCode", "sourceCode", "indicatorCode", "periodCode", "indicatorCode", "reportCode", "reportCode", "reportCode", "componentCode", "componentCode", "submissionId", "exportId"]
+        "ReportPublishedData", "ReportStateChangedData", "ArchComponentChangedData", "ArchComplianceAssessedData", "NationalSubmissionStateChangedData", "ExportCompletedData", "PeriodStateChangedData"]
+KEY = ["indicatorCode", "indicatorCode", "sourceCode", "indicatorCode", "periodCode", "indicatorCode", "reportCode", "reportCode", "reportCode", "componentCode", "componentCode", "submissionId", "exportId", "periodCode"]
 # (mã, topic, dữ liệu, hành động của PH-16)
 IN = [("EVT-01-03", "{tenant}.connect.system.state-changed.v1", "SystemStateChangedIn", "Quan sát `ph01.httt.*` từ ảnh chụp giờ (KPI-01, 05); tự đăng ký thành phần `HTTT`"),
       ("EVT-02-05", "{tenant}.catalog.version.published.v1", "CatalogVersionPublishedIn", "Quan sát số API công bố (`api-cong-bo`); đăng ký thành phần `API`"),
@@ -156,7 +159,7 @@ def build():
         todo += list(refs(schemas[n]))
     schemas = {k: v for k, v in schemas.items() if k in keep}
     return {"asyncapi": "3.0.0", "info": {"title": "Datahub PH-16 Báo cáo chỉ tiêu và sổ kiến trúc: sự kiện", "version": "1.0.0-draft",
-            "description": "Hợp đồng sự kiện EVT-16-01…13 phát ra và 18 sự kiện tiêu thụ của PH-01, 02, 04, 05, 07, 08, 10, 14, 19 (D03-04-PH16 mục 4, FRS 9.3). Ghi vào `ph16_kpi.outbox_event` cùng giao dịch nghiệp vụ, Debezium Outbox Event Router đưa lên Kafka; CloudEvents 1.0 dạng cấu trúc. "
+            "description": "Hợp đồng sự kiện EVT-16-01…14 phát ra và 18 sự kiện tiêu thụ của PH-01, 02, 04, 05, 07, 08, 10, 14, 19 (D03-04-PH16 mục 4, FRS 9.3). Ghi vào `ph16_kpi.outbox_event` cùng giao dịch nghiệp vụ, Debezium Outbox Event Router đưa lên Kafka; CloudEvents 1.0 dạng cấu trúc. "
                            "Không sự kiện nào mang nội dung báo cáo hay bằng chứng: chỉ mã đối tượng, trạng thái, số tổng hợp. Lưu giữ 7 ngày; ít nhất một lần, bên nhận khử trùng theo `id`. "
                            "Tương thích BACKWARD: chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.",
             "contact": {"name": "Nhóm phân hệ PH-16"}, "tags": [{"name": "kpi"}, {"name": "arch"}], "license": {"name": "Tài liệu nội bộ dự án Datahub (dự thảo)"}},

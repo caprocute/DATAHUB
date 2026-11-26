@@ -41,25 +41,26 @@ COMMENT ON FUNCTION ph16_kpi.f_manual_gate() IS 'Số liệu tay: tạo ở DRAF
 
 --changeset ph16:ph16-0180-kpi-reporting-period
 CREATE TABLE ph16_kpi.kpi_reporting_period (
-  id             uuid NOT NULL,
-  tenant_id      varchar(16) NOT NULL,
-  period_code    varchar(16) NOT NULL,
-  period_type    varchar(8) NOT NULL,
-  start_date     date NOT NULL,
-  end_date       date NOT NULL,
-  state          varchar(10) NOT NULL DEFAULT 'OPEN',
-  close_due_date date,
-  closed_by      varchar(64),
-  closed_at      timestamptz,
-  reopen_reason  varchar(2000),
-  reopened_by    varchar(64),
-  reopened_at    timestamptz,
-  reopen_count   smallint NOT NULL DEFAULT 0,
-  created_at     timestamptz NOT NULL DEFAULT now(),
-  created_by     varchar(64) NOT NULL,
-  updated_at     timestamptz NOT NULL DEFAULT now(),
-  updated_by     varchar(64) NOT NULL,
-  version        integer NOT NULL DEFAULT 0,
+  id                     uuid NOT NULL,
+  tenant_id              varchar(16) NOT NULL,
+  period_code            varchar(16) NOT NULL,
+  period_type            varchar(8) NOT NULL,
+  start_date             date NOT NULL,
+  end_date               date NOT NULL,
+  state                  varchar(10) NOT NULL DEFAULT 'OPEN',
+  close_due_date         date,
+  closed_by              varchar(64),
+  closed_at              timestamptz,
+  reopen_reason          varchar(2000),
+  reopened_by            varchar(64),
+  reopened_at            timestamptz,
+  reopen_count           smallint NOT NULL DEFAULT 0,
+  recompute_requested_at timestamptz,
+  created_at             timestamptz NOT NULL DEFAULT now(),
+  created_by             varchar(64) NOT NULL,
+  updated_at             timestamptz NOT NULL DEFAULT now(),
+  updated_by             varchar(64) NOT NULL,
+  version                integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_kpi_reporting_period PRIMARY KEY (id),
   CONSTRAINT uq_kpi_reporting_period_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_kpi_reporting_period_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
@@ -69,7 +70,7 @@ CREATE TABLE ph16_kpi.kpi_reporting_period (
   CONSTRAINT ck_kpi_reporting_period_dates CHECK (end_date >= start_date),
   CONSTRAINT ck_kpi_reporting_period_state CHECK (state IN ('OPEN', 'COLLECTING', 'COMPUTED', 'CLOSED', 'REOPENED')),
   CONSTRAINT ck_kpi_reporting_period_closed CHECK (state <> 'CLOSED' OR (closed_by IS NOT NULL AND closed_at IS NOT NULL)),
-  CONSTRAINT ck_kpi_reporting_period_reopened CHECK (state <> 'REOPENED' OR (COALESCE(char_length(reopen_reason) >= 20, false) AND reopened_by IS NOT NULL AND reopened_at IS NOT NULL AND reopen_count >= 1))
+  CONSTRAINT ck_kpi_reporting_period_reopened CHECK (state <> 'REOPENED' OR (COALESCE(char_length(reopen_reason) >= 50, false) AND reopened_by IS NOT NULL AND reopened_at IS NOT NULL AND reopen_count >= 1))
 );
 CREATE INDEX ix_kpi_reporting_period_start ON ph16_kpi.kpi_reporting_period (tenant_id, period_type, start_date DESC);
 CREATE TRIGGER tg_kpi_reporting_period_touch BEFORE UPDATE ON ph16_kpi.kpi_reporting_period FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
@@ -78,6 +79,8 @@ CREATE TRIGGER tg_kpi_reporting_period_transition BEFORE UPDATE ON ph16_kpi.kpi_
 CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_reporting_period');
 COMMENT ON TABLE ph16_kpi.kpi_reporting_period IS 'EN-16-14 Kỳ báo cáo tháng, quý, năm mã `M-2026-10`, `Q-2026-Q3`, `Y-2026`; vòng đời OPEN, COLLECTING, COMPUTED, CLOSED, REOPENED. Kỳ CLOSED không nhận giá trị mới; mở lại phải có lý do và người mở (FR-16-017, 024).';
 COMMENT ON COLUMN ph16_kpi.kpi_reporting_period.close_due_date IS 'Ngày dự kiến chốt, theo tham số 16.period.close-day (mặc định ngày 5 của tháng sau).';
+COMMENT ON COLUMN ph16_kpi.kpi_reporting_period.reopen_reason IS 'Lý do mở lại từ 50 ký tự (BR-16-011, ERR-16-007).';
+COMMENT ON COLUMN ph16_kpi.kpi_reporting_period.recompute_requested_at IS 'Mốc yêu cầu tính lại đầu tiên trong cửa sổ 16.late-data.debounce-minutes; bộ quét tạo lần LATE_DATA khi quá cửa sổ rồi đặt về NULL (FR-16-023).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_reporting_period CASCADE;
 
 --changeset ph16:ph16-0190-kpi-manual-value
@@ -160,7 +163,79 @@ COMMENT ON TABLE ph16_kpi.kpi_manual_evidence IS 'EN-16-12 Bằng chứng của 
 COMMENT ON COLUMN ph16_kpi.kpi_manual_evidence.object_ref IS 'Đường dẫn đối tượng trên Ceph RGW (bucket kpi-evidence); không lưu tệp trong PostgreSQL.';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_manual_evidence CASCADE;
 
---changeset ph16:ph16-0210-kpi-aggregation-run
+--changeset ph16:ph16-0210-kpi-manual-import
+CREATE TABLE ph16_kpi.kpi_manual_import (
+  id             uuid NOT NULL,
+  tenant_id      varchar(16) NOT NULL,
+  file_name      varchar(255) NOT NULL,
+  object_ref     varchar(512) NOT NULL,
+  content_hash   bytea NOT NULL,
+  row_total      integer NOT NULL,
+  valid_count    integer NOT NULL DEFAULT 0,
+  invalid_count  integer NOT NULL DEFAULT 0,
+  imported_count integer NOT NULL DEFAULT 0,
+  uploaded_by    varchar(64) NOT NULL,
+  expires_at     timestamptz NOT NULL,
+  committed_by   varchar(64),
+  committed_at   timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  created_by     varchar(64) NOT NULL,
+  updated_at     timestamptz NOT NULL DEFAULT now(),
+  updated_by     varchar(64) NOT NULL,
+  version        integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_kpi_manual_import PRIMARY KEY (id),
+  CONSTRAINT uq_kpi_manual_import_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_kpi_manual_import_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT ck_kpi_manual_import_rows CHECK (row_total BETWEEN 1 AND 2000 AND valid_count >= 0 AND invalid_count >= 0 AND valid_count + invalid_count <= row_total AND imported_count BETWEEN 0 AND valid_count),
+  CONSTRAINT ck_kpi_manual_import_hash CHECK (content_hash IS NULL OR octet_length(content_hash) = 32),
+  CONSTRAINT ck_kpi_manual_import_expiry CHECK (expires_at > created_at AND expires_at <= created_at + interval '24 hours'),
+  CONSTRAINT ck_kpi_manual_import_committed CHECK ((committed_at IS NULL) = (committed_by IS NULL) AND (committed_at IS NULL OR imported_count >= 1))
+);
+CREATE INDEX ix_kpi_manual_import_expiry ON ph16_kpi.kpi_manual_import (expires_at) WHERE committed_at IS NULL;
+CREATE TRIGGER tg_kpi_manual_import_touch BEFORE UPDATE ON ph16_kpi.kpi_manual_import FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
+CREATE TRIGGER tg_kpi_manual_import_immutable BEFORE UPDATE ON ph16_kpi.kpi_manual_import FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'file_name', 'object_ref', 'content_hash', 'row_total', 'uploaded_by', 'expires_at');
+CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_manual_import');
+COMMENT ON TABLE ph16_kpi.kpi_manual_import IS 'EN-16-13 Lần nhập số liệu tay từ tệp XLSX theo mẫu (≤ 2.000 dòng): tệp gốc, mã băm, số dòng hợp lệ, lỗi, đã ghi; bản xem trước giữ 24 giờ rồi dọn (FR-16-014). Ghi các dòng hợp lệ tạo số liệu tay DRAFT.';
+COMMENT ON COLUMN ph16_kpi.kpi_manual_import.object_ref IS 'Tệp XLSX gốc trên Ceph RGW (bucket kpi-evidence, tiền tố imports/); xóa cùng bản ghi khi quá expires_at.';
+--rollback DROP TABLE IF EXISTS ph16_kpi.kpi_manual_import CASCADE;
+
+--changeset ph16:ph16-0220-kpi-manual-import-row
+CREATE TABLE ph16_kpi.kpi_manual_import_row (
+  id              uuid NOT NULL,
+  tenant_id       varchar(16) NOT NULL,
+  import_id       uuid NOT NULL,
+  row_no          integer NOT NULL,
+  indicator_code  varchar(63),
+  period_code     varchar(16),
+  value           numeric(24,6),
+  row_status      varchar(8) NOT NULL,
+  error_code      varchar(11),
+  detail          varchar(500),
+  manual_value_id uuid,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  created_by      varchar(64) NOT NULL,
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+  updated_by      varchar(64) NOT NULL,
+  version         integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_kpi_manual_import_row PRIMARY KEY (id),
+  CONSTRAINT ck_kpi_manual_import_row_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT uq_kpi_manual_import_row_no UNIQUE (tenant_id, import_id, row_no),
+  CONSTRAINT fk_kpi_manual_import_row_import FOREIGN KEY (tenant_id, import_id) REFERENCES ph16_kpi.kpi_manual_import (tenant_id, id) ON DELETE CASCADE,
+  CONSTRAINT fk_kpi_manual_import_row_manual FOREIGN KEY (tenant_id, manual_value_id) REFERENCES ph16_kpi.kpi_manual_value (tenant_id, id),
+  CONSTRAINT ck_kpi_manual_import_row_no CHECK (row_no BETWEEN 1 AND 2000),
+  CONSTRAINT ck_kpi_manual_import_row_status CHECK (row_status IN ('VALID', 'INVALID', 'IMPORTED')),
+  CONSTRAINT ck_kpi_manual_import_row_invalid CHECK ((row_status = 'INVALID') = (error_code IS NOT NULL)),
+  CONSTRAINT ck_kpi_manual_import_row_imported CHECK ((row_status = 'IMPORTED') = (manual_value_id IS NOT NULL)),
+  CONSTRAINT ck_kpi_manual_import_row_error CHECK (error_code IS NULL OR error_code ~ '^ERR-16-[0-9]{3}$')
+);
+CREATE TRIGGER tg_kpi_manual_import_row_touch BEFORE UPDATE ON ph16_kpi.kpi_manual_import_row FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_touch();
+CREATE TRIGGER tg_kpi_manual_import_row_immutable BEFORE UPDATE ON ph16_kpi.kpi_manual_import_row FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_immutable('tenant_id', 'import_id', 'row_no', 'indicator_code', 'period_code', 'value');
+CREATE TRIGGER tg_kpi_manual_import_row_transition BEFORE UPDATE ON ph16_kpi.kpi_manual_import_row FOR EACH ROW EXECUTE FUNCTION ph16_kpi.tg_transition('row_status', '{"VALID":["IMPORTED"]}');
+CALL ph16_kpi.p_enable_rls('ph16_kpi.kpi_manual_import_row');
+COMMENT ON TABLE ph16_kpi.kpi_manual_import_row IS 'EN-16-13 Dòng của lần nhập tệp: chỉ tiêu, kỳ, giá trị đọc được, kết quả kiểm VALID, INVALID (kèm mã lỗi) hoặc IMPORTED khi đã thành số liệu tay (FR-16-014). Bản xem trước UI-16-07 đọc bảng này.';
+--rollback DROP TABLE IF EXISTS ph16_kpi.kpi_manual_import_row CASCADE;
+
+--changeset ph16:ph16-0230-kpi-aggregation-run
 CREATE TABLE ph16_kpi.kpi_aggregation_run (
   id                 uuid NOT NULL,
   tenant_id          varchar(16) NOT NULL,
@@ -215,7 +290,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_aggregation_run.flags IS 'Cờ: MISSING_SOURCE, S
 COMMENT ON COLUMN ph16_kpi.kpi_aggregation_run.completeness IS 'Tỷ lệ chỉ tiêu có số trên tổng số chỉ tiêu đang ACTIVE của kỳ (0…1).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_aggregation_run CASCADE;
 
---changeset ph16:ph16-0220-kpi-indicator-value
+--changeset ph16:ph16-0240-kpi-indicator-value
 CREATE TABLE ph16_kpi.kpi_indicator_value (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -271,7 +346,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_indicator_value.period_start IS 'Khóa phân vùn
 COMMENT ON COLUMN ph16_kpi.kpi_indicator_value.missing_variables IS 'Tên biến thiếu quan sát khi PARTIAL (fail-soft, không bịa số).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_indicator_value CASCADE;
 
---changeset ph16:ph16-0230-kpi-value-lineage
+--changeset ph16:ph16-0250-kpi-value-lineage
 CREATE TABLE ph16_kpi.kpi_value_lineage (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -314,7 +389,7 @@ COMMENT ON COLUMN ph16_kpi.kpi_value_lineage.observation_id IS 'Quan sát `kpi_o
 COMMENT ON COLUMN ph16_kpi.kpi_value_lineage.ref_value_id IS 'Giá trị chỉ tiêu của kỳ con (tháng) dùng để gộp lên kỳ quý, năm (tham chiếu logic).';
 --rollback DROP TABLE IF EXISTS ph16_kpi.kpi_value_lineage CASCADE;
 
---changeset ph16:ph16-0240-kpi-group-score
+--changeset ph16:ph16-0260-kpi-group-score
 CREATE TABLE ph16_kpi.kpi_group_score (
   id                   uuid NOT NULL,
   tenant_id            varchar(16) NOT NULL,
@@ -322,7 +397,7 @@ CREATE TABLE ph16_kpi.kpi_group_score (
   run_id               uuid NOT NULL,
   group_code           varchar(16) NOT NULL,
   score                numeric(6,2),
-  weight               numeric(5,4) NOT NULL,
+  weight               numeric(5,2) NOT NULL,
   indicator_total      smallint NOT NULL,
   indicator_with_value smallint NOT NULL,
   completeness         varchar(9) NOT NULL,
@@ -341,7 +416,7 @@ CREATE TABLE ph16_kpi.kpi_group_score (
   CONSTRAINT fk_kpi_group_score_run FOREIGN KEY (tenant_id, run_id) REFERENCES ph16_kpi.kpi_aggregation_run (tenant_id, id),
   CONSTRAINT fk_kpi_group_score_group FOREIGN KEY (tenant_id, group_code) REFERENCES ph16_kpi.kpi_indicator_group (tenant_id, group_code),
   CONSTRAINT ck_kpi_group_score_score CHECK (score IS NULL OR (score >= 0 AND score <= 100)),
-  CONSTRAINT ck_kpi_group_score_weight CHECK (weight >= 0 AND weight <= 1),
+  CONSTRAINT ck_kpi_group_score_weight CHECK (weight >= 0 AND weight <= 100),
   CONSTRAINT ck_kpi_group_score_counts CHECK (indicator_total >= 0 AND indicator_with_value >= 0 AND indicator_with_value <= indicator_total),
   CONSTRAINT ck_kpi_group_score_completeness CHECK (completeness IN ('COMPLETE', 'PARTIAL', 'NO_DATA')),
   CONSTRAINT ck_kpi_group_score_complete CHECK ((completeness = 'COMPLETE') = (indicator_with_value = indicator_total AND indicator_total > 0) AND (completeness = 'NO_DATA') = (score IS NULL)),

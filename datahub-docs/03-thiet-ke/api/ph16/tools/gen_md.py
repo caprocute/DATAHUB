@@ -20,7 +20,7 @@ OPS = {}
 for path, item in oa["paths"].items():
     for m, o in item.items():
         OPS[o["x-datahub-id"][-3:]] = (m.upper(), path, o)
-GENERIC = {"ERR-16-001", "ERR-16-003", "ERR-16-004", "ERR-16-006", "ERR-16-057"}  # mã chung, nêu ở mục 1 thay vì lặp ở từng endpoint
+GENERIC = {"ERR-16-001", "ERR-16-003", "ERR-16-004", "ERR-16-006", "ERR-16-057", "ERR-16-058"}  # mã chung, nêu ở mục 1 thay vì lặp ở từng endpoint
 NO_API = {10: "Hệ thống tiêu thụ sự kiện Kafka, ghi nhật ký tiếp nhận; xem qua API-16-042, 043, 044", 46: "Hệ thống tiêu thụ trạng thái từ PH-13; xem qua API-16-096", 58: "Chỉ số Prometheus ở `/actuator/prometheus`, ngoài `/api/kpi/v1`"}
 
 
@@ -233,7 +233,7 @@ def api_only():
     walk(aa["components"]["schemas"])
     np_ = sorted(k for k in props if k not in toks and k not in ign)
     ne = sorted(v for v in enums if v not in toks and v not in {"vi", "en"})
-    return "Trường: " + ", ".join(f"`{k}`" for k in np_) + ".\n\nGiá trị liệt kê: " + ", ".join(f"`{k}`" for k in ne) + "."
+    return "Trường: " + ", ".join(f"`{k}`" for k in np_) + ".\n\nGiá trị liệt kê: " + (", ".join(f"`{k}`" for k in ne) + "." if ne else "không có, mọi giá trị đều ở FRS Phụ lục A.")
 
 
 BLOCKS = {"api-only": api_only, "flows": flows, "endpoints": endpoints, "events": events, "errors": errors, "fr": fr}

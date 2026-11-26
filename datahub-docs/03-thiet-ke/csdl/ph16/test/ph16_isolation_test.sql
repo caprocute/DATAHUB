@@ -54,7 +54,7 @@ CREATE FUNCTION pg_temp.h(text) RETURNS bytea LANGUAGE sql AS $$ SELECT sha256(c
 SET app.tenant_id = 'T90';
 CALL ph16_kpi.p_seed_tenant('T90');
 CALL ph16_kpi.p_seed_tenant('T90');
-SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_tenant_setting), 18, 'seed T90: 18 tham số 16.*, chạy lại không nhân bản');
+SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_tenant_setting), 25, 'seed T90: 25 tham số 16.* của FRS §8.2, chạy lại không nhân bản');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_indicator_group WHERE tenant_id = 'T90'), 5, 'seed T90: năm nhóm chỉ tiêu');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_compliance_criterion WHERE tenant_id = 'T90'), 6, 'seed T90: sáu tiêu chí tuân thủ tối thiểu');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_report_template WHERE tenant_id = 'T90' AND state = 'ACTIVE'), 1, 'seed T90: một mẫu báo cáo ACTIVE');
@@ -79,7 +79,7 @@ SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_indicator (id, tenant_id, indic
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_indicator SET indicator_code = 'doi-ma-khac' WHERE id = pg_temp.id('i1')$$, '55000', 'mã chỉ tiêu bất biến');
 UPDATE ph16_kpi.kpi_indicator SET template_version_no = 1, template_dismissed_version_no = 2 WHERE id = pg_temp.id('i1');
 SELECT pg_temp.eq((SELECT template_dismissed_version_no FROM ph16_kpi.kpi_indicator WHERE id = pg_temp.id('i1')), 2, 'ghi nhận quyết định bỏ qua cập nhật chỉ tiêu mẫu COMMON (nhận mẫu phiên bản 1, bỏ qua phiên bản 2)');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_indicator SET status = 'RETIRED', status_reason = 'ngắn' WHERE id = pg_temp.id('i2')$$, '23514', 'ngừng chỉ tiêu cần lý do từ 20 ký tự');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_indicator SET state = 'RETIRED', state_reason = 'ngắn' WHERE id = pg_temp.id('i2')$$, '23514', 'ngừng chỉ tiêu cần lý do từ 20 ký tự');
 SELECT pg_temp.expect($$DELETE FROM ph16_kpi.kpi_indicator WHERE id = pg_temp.id('i2')$$, '42501', 'ứng dụng không xóa cứng chỉ tiêu');
 
 INSERT INTO ph16_kpi.kpi_indicator_version (id, tenant_id, indicator_id, version_no, state, formula_cel, variables, target_value, target_due, created_by, updated_by)
@@ -162,11 +162,11 @@ SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_ingest_log (id, tenant_id, sour
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_ingest_log (id, tenant_id, source_id, channel, outcome, reject_code, payload, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('s1'), 'EVENT', 'REJECTED', 'ERR-16-001', '{}', 'a', 'a')$$, '23514', 'mã lỗi tiếp nhận thuộc dải ERR-16-101…199');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_ingest_log (id, tenant_id, source_id, channel, outcome, reject_code, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('s1'), 'EVENT', 'REJECTED', 'ERR-16-102', 'a', 'a')$$, '23514', 'dòng REJECTED phải giữ bản tin để xử lý lại');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_ingest_log (id, tenant_id, source_id, channel, outcome, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('s1'), 'EVENT', 'ACCEPTED', 'a', 'a')$$, '23514', 'dòng ACCEPTED phải trỏ tới quan sát');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_ingest_log SET outcome = 'ACCEPTED' WHERE id = pg_temp.id('lg1')$$, '55000', 'kết quả tiếp nhận bất biến');
-UPDATE ph16_kpi.kpi_ingest_log SET reprocess_state = 'PENDING' WHERE id = pg_temp.id('lg1');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_ingest_log SET reprocess_state = 'DONE' WHERE id = pg_temp.id('lg1')$$, '23514', 'xử lý lại xong phải có người và thời điểm');
-UPDATE ph16_kpi.kpi_ingest_log SET reprocess_state = 'DONE', reprocessed_at = now(), reprocessed_by = 'an' WHERE id = pg_temp.id('lg1');
-SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_ingest_log WHERE outcome = 'REJECTED' AND reprocess_state = 'DONE'), 1, 'xử lý lại quan sát bị loại ghi vào chính dòng nhật ký');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_ingest_log SET outcome = 'ACCEPTED' WHERE id = pg_temp.id('lg1')$$, '55000', 'REJECTED chỉ chuyển được sang REPROCESSED');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_ingest_log SET reject_code = 'ERR-16-101' WHERE id = pg_temp.id('lg1')$$, '55000', 'mã lỗi tiếp nhận bất biến, giữ làm lịch sử');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_ingest_log SET outcome = 'REPROCESSED', observation_id = pg_temp.id('o1') WHERE id = pg_temp.id('lg1')$$, '23514', 'xử lý lại xong phải có người và thời điểm');
+UPDATE ph16_kpi.kpi_ingest_log SET outcome = 'REPROCESSED', observation_id = pg_temp.id('o1'), reprocessed_at = now(), reprocessed_by = 'an' WHERE id = pg_temp.id('lg1');
+SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_ingest_log WHERE outcome = 'REPROCESSED' AND reject_code = 'ERR-16-105'), 1, 'xử lý lại đạt: dòng nhật ký chuyển REPROCESSED, giữ mã lỗi cũ (ingest.result)');
 
 -- ---------- 4. Kỳ báo cáo, số liệu tay và bằng chứng, lần tổng hợp ----------
 INSERT INTO ph16_kpi.kpi_reporting_period (id, tenant_id, period_code, period_type, start_date, end_date, created_by, updated_by)
@@ -249,15 +249,15 @@ VALUES (gen_random_uuid(), 'T90', pg_temp.id('val2'), '2026-10-01', pg_temp.id('
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_value_lineage (id, tenant_id, value_id, period_start, run_id, seq, variable_name, source_kind, used_value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('val2'), '2026-10-01', pg_temp.id('r1'), 5, 'thang', 'PERIOD_VALUE', 1, 'a', 'a')$$, '23514', 'dòng truy nguồn loại PERIOD_VALUE (gộp kỳ quý, năm từ tháng) phải trỏ tới giá trị kỳ con');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_value_lineage SET used_value = 0$$, '42501', 'ứng dụng không sửa dòng truy nguồn (chỉ thêm)');
 INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, delta, trend, created_by, updated_by)
-VALUES (pg_temp.id('gs1'), 'T90', pg_temp.id('p1'), pg_temp.id('r1'), 'KET_NOI', 83.00, 0.2, 5, 4, 'PARTIAL', 1.50, 'UP', 'sys', 'sys');
-SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), pg_temp.id('r2'), 'CHIA_SE', 80, 0.2, 5, 4, 'COMPLETE', 'a', 'a')$$, '23514', 'điểm nhóm COMPLETE phải đủ số chỉ tiêu có số');
-SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), pg_temp.id('r2'), 'CHIA_SE', 101, 0.2, 5, 5, 'COMPLETE', 'a', 'a')$$, '23514', 'điểm nhóm trong khoảng 0…100');
+VALUES (pg_temp.id('gs1'), 'T90', pg_temp.id('p1'), pg_temp.id('r1'), 'KET_NOI', 83.00, 20, 5, 4, 'PARTIAL', 1.50, 'UP', 'sys', 'sys');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), pg_temp.id('r2'), 'CHIA_SE', 80, 20, 5, 4, 'COMPLETE', 'a', 'a')$$, '23514', 'điểm nhóm COMPLETE phải đủ số chỉ tiêu có số');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), pg_temp.id('r2'), 'CHIA_SE', 101, 20, 5, 5, 'COMPLETE', 'a', 'a')$$, '23514', 'điểm nhóm trong khoảng 0…100');
 UPDATE ph16_kpi.kpi_reporting_period SET state = 'CLOSED', closed_by = 'binh', closed_at = now() WHERE id = pg_temp.id('p1');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_indicator_value (id, tenant_id, period_id, period_code, period_start, run_id, indicator_id, indicator_code, group_code, version_id, value, status, completeness, is_current, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), 'M-2026-10', '2026-10-01', pg_temp.id('r2'), pg_temp.id('i2'), 'diem-hai-long-sus', 'KIEN_TRUC', pg_temp.id('v3'), 70, 'ON_TRACK', 'COMPLETE', false, 'a', 'a')$$, '55000', 'kỳ CLOSED không nhận giá trị chỉ tiêu mới');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_indicator_value SET status = 'ON_TRACK' WHERE id = pg_temp.id('val2')$$, '55000', 'kỳ CLOSED không sửa giá trị chỉ tiêu');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_group_score (id, tenant_id, period_id, run_id, group_code, score, weight, indicator_total, indicator_with_value, completeness, is_current, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('p1'), pg_temp.id('r2'), 'DU_LIEU', 80, 0.2, 5, 5, 'COMPLETE', false, 'a', 'a')$$, '55000', 'kỳ CLOSED không nhận điểm nhóm mới');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_reporting_period SET state = 'REOPENED', reopen_reason = 'ngắn', reopened_by = 'binh', reopened_at = now(), reopen_count = 1 WHERE id = pg_temp.id('p1')$$, '23514', 'mở lại kỳ phải có lý do từ 20 ký tự');
-UPDATE ph16_kpi.kpi_reporting_period SET state = 'REOPENED', reopen_reason = 'Phát hiện số liệu PH-01 sai, cần tính lại kỳ tháng 10', reopened_by = 'binh', reopened_at = now(), reopen_count = 1 WHERE id = pg_temp.id('p1');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_reporting_period SET state = 'REOPENED', reopen_reason = 'ngắn', reopened_by = 'binh', reopened_at = now(), reopen_count = 1 WHERE id = pg_temp.id('p1')$$, '23514', 'mở lại kỳ phải có lý do từ 50 ký tự');
+UPDATE ph16_kpi.kpi_reporting_period SET state = 'REOPENED', reopen_reason = 'Phát hiện số liệu PH-01 sai, cần tính lại kỳ tháng 10 theo công văn', reopened_by = 'binh', reopened_at = now(), reopen_count = 1 WHERE id = pg_temp.id('p1');
 INSERT INTO ph16_kpi.kpi_indicator_value (id, tenant_id, period_id, period_code, period_start, run_id, indicator_id, indicator_code, group_code, version_id, value, status, completeness, is_current, created_by, updated_by)
 VALUES (pg_temp.id('val4'), 'T90', pg_temp.id('p1'), 'M-2026-10', '2026-10-01', pg_temp.id('r2'), pg_temp.id('i2'), 'diem-hai-long-sus', 'KIEN_TRUC', pg_temp.id('v3'), 72.5, 'ON_TRACK', 'COMPLETE', false, 'sys', 'sys');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_indicator_value WHERE period_id = pg_temp.id('p1')), 4, 'kỳ REOPENED nhận lại giá trị sau khi mở lại có lý do');
@@ -309,7 +309,7 @@ SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET object_ref = 'kpi
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET retain_until = '2027-01-01' WHERE id = pg_temp.id('rv1')$$, '55000', 'báo cáo PUBLISHED bất biến: hạn lưu giữ');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'DRAFT' WHERE id = pg_temp.id('rv1')$$, '55000', 'báo cáo PUBLISHED không quay về DRAFT');
 SELECT pg_temp.expect($$DELETE FROM ph16_kpi.kpi_report_version WHERE id = pg_temp.id('rv1')$$, '42501', 'ứng dụng không xóa phiên bản báo cáo');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'WITHDRAWN', withdrawn_by = 'binh', withdrawn_at = now(), withdraw_reason = 'ngắn' WHERE id = pg_temp.id('rv1')$$, '23514', 'rút báo cáo cần lý do từ 20 ký tự');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'WITHDRAWN', withdrawn_by = 'binh', withdrawn_at = now(), withdraw_reason = 'ngắn' WHERE id = pg_temp.id('rv1')$$, '23514', 'rút báo cáo cần lý do từ 50 ký tự (FR-16-030)');
 -- Đính chính: phiên bản 2
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_report_version (id, tenant_id, report_id, version_no, template_id, prepared_by, correction_of_version_no, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('rep1'), 2, pg_temp.id('tpl'), 'an', 1, 'a', 'a')$$, '23514', 'đính chính phải có lý do đi cùng phiên bản được đính chính');
 INSERT INTO ph16_kpi.kpi_report_version (id, tenant_id, report_id, version_no, template_id, run_id, snapshot, narrative, prepared_by, correction_of_version_no, correction_reason, created_by, updated_by)
@@ -333,9 +333,17 @@ INSERT INTO ph16_kpi.kpi_report_version (id, tenant_id, report_id, version_no, t
 VALUES (pg_temp.id('rv3'), 'T90', pg_temp.id('rep2'), 1, pg_temp.id('tpl'), 'PARTIAL', true, 'an', 'an', 'an');
 UPDATE ph16_kpi.kpi_report_version SET state = 'IN_REVIEW', submitted_at = now() WHERE id = pg_temp.id('rv3');
 UPDATE ph16_kpi.kpi_report_version SET state = 'APPROVED', approved_by = 'binh', approved_at = now() WHERE id = pg_temp.id('rv3');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'DRAFT' WHERE id = pg_temp.id('rv3')$$, '55000', 'APPROVED không về thẳng DRAFT, phải qua CHANGES_REQUESTED');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'CHANGES_REQUESTED', decision_comment = 'ngắn' WHERE id = pg_temp.id('rv3')$$, '23514', 'trả báo cáo APPROVED về soạn cần ý kiến từ 20 ký tự');
+UPDATE ph16_kpi.kpi_report_version SET state = 'CHANGES_REQUESTED', decision_comment = 'Ký số lỗi kéo dài, trả về soạn để cập nhật số liệu' WHERE id = pg_temp.id('rv3');
+SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_report_version WHERE id = pg_temp.id('rv3') AND state = 'CHANGES_REQUESTED'), 1, 'báo cáo APPROVED chưa công bố trả về CHANGES_REQUESTED (FR-16-028)');
+UPDATE ph16_kpi.kpi_report_version SET state = 'DRAFT', document_number = '15/BC-STTTT', recipients_note = 'UBND tỉnh; Bộ KH và CN' WHERE id = pg_temp.id('rv3');
+UPDATE ph16_kpi.kpi_report_version SET state = 'IN_REVIEW', submitted_at = now() WHERE id = pg_temp.id('rv3');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET document_number = '16/BC-STTTT' WHERE id = pg_temp.id('rv3')$$, '55000', 'số ký hiệu không đổi khi báo cáo đang duyệt');
+UPDATE ph16_kpi.kpi_report_version SET state = 'APPROVED', approved_by = 'binh', approved_at = now() WHERE id = pg_temp.id('rv3');
 UPDATE ph16_kpi.kpi_tenant_setting SET value = 'false' WHERE param_code = '16.report.signing';
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'PUBLISHED', published_by = 'binh', published_at = now(), content_hash = pg_temp.h('bc3'), object_ref = 'kpi-reports/T90/bc3.pdf', retain_until = '2036-11-30' WHERE id = pg_temp.id('rv3')$$, '23514', 'chặn công bố khi còn chỉ tiêu bắt buộc thiếu nguồn');
-SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'CHANGES_REQUESTED', decision_comment = 'Bổ sung số liệu bắt buộc còn thiếu' WHERE id = pg_temp.id('rv3')$$, '55000', 'APPROVED chỉ về DRAFT (hủy duyệt) hoặc công bố, không sang CHANGES_REQUESTED');
+UPDATE ph16_kpi.kpi_report_version SET state = 'CHANGES_REQUESTED', decision_comment = 'Bổ sung số liệu bắt buộc còn thiếu' WHERE id = pg_temp.id('rv3');
 UPDATE ph16_kpi.kpi_report_version SET state = 'DRAFT' WHERE id = pg_temp.id('rv3');
 UPDATE ph16_kpi.kpi_report_version SET missing_mandatory = false, completeness = 'COMPLETE' WHERE id = pg_temp.id('rv3');
 UPDATE ph16_kpi.kpi_report_version SET state = 'IN_REVIEW' WHERE id = pg_temp.id('rv3');
@@ -343,7 +351,7 @@ UPDATE ph16_kpi.kpi_report_version SET state = 'APPROVED' WHERE id = pg_temp.id(
 UPDATE ph16_kpi.kpi_report_version SET state = 'PUBLISHED', published_by = 'binh', published_at = now(), content_hash = pg_temp.h('bc3'), object_ref = 'kpi-reports/T90/bc3.pdf', retain_until = '2036-11-30' WHERE id = pg_temp.id('rv3');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_report WHERE id = pg_temp.id('rep2') AND state = 'PUBLISHED'), 1, 'tắt 16.report.signing thì công bố không cần chữ ký');
 UPDATE ph16_kpi.kpi_tenant_setting SET value = 'true' WHERE param_code = '16.report.signing';
-UPDATE ph16_kpi.kpi_report_version SET state = 'WITHDRAWN', withdrawn_by = 'binh', withdrawn_at = now(), withdraw_reason = 'Rút do dùng sai kỳ so sánh, sẽ lập báo cáo mới' WHERE id = pg_temp.id('rv3');
+UPDATE ph16_kpi.kpi_report_version SET state = 'WITHDRAWN', withdrawn_by = 'binh', withdrawn_at = now(), withdraw_reason = 'Rút do dùng sai kỳ so sánh, sẽ lập báo cáo mới thay thế trong tuần' WHERE id = pg_temp.id('rv3');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_report WHERE id = pg_temp.id('rep2') AND state = 'WITHDRAWN' AND published_version_no IS NULL), 1, 'rút báo cáo: trạng thái WITHDRAWN, không còn bản công bố');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_report_version SET state = 'PUBLISHED' WHERE id = pg_temp.id('rv3')$$, '55000', 'báo cáo WITHDRAWN là trạng thái cuối');
 
@@ -356,9 +364,9 @@ SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_delivery (id, tenant_id, report
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_delivery SET state = 'SENT' WHERE id = pg_temp.id('dl1')$$, '23514', 'lần giao SENT phải có thời điểm gửi');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_delivery SET state = 'FAILED' WHERE id = pg_temp.id('dl1')$$, '23514', 'lần giao FAILED phải có mã lỗi');
 UPDATE ph16_kpi.kpi_delivery SET state = 'SENT', sent_at = now(), attempt = 1 WHERE id = pg_temp.id('dl1');
-INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, period_id, format, requested_by, created_by, updated_by) VALUES (pg_temp.id('ex1'), 'T90', 'INDICATOR_TABLE', pg_temp.id('p1'), 'XLSX', 'an', 'an', 'an');
-SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'INDICATOR_TABLE', 'CSV', 'an', 'a', 'a')$$, '23514', 'xuất bảng chỉ tiêu phải chỉ rõ kỳ');
-SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'REPORT_VERSION', 'PDF', 'an', 'a', 'a')$$, '23514', 'xuất báo cáo phải chỉ rõ phiên bản');
+INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, period_id, format, requested_by, created_by, updated_by) VALUES (pg_temp.id('ex1'), 'T90', 'INDICATOR_VALUES', pg_temp.id('p1'), 'XLSX', 'an', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'INDICATOR_VALUES', 'CSV', 'an', 'a', 'a')$$, '23514', 'xuất bảng chỉ tiêu phải chỉ rõ kỳ');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_export_job (id, tenant_id, subject_type, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'REPORT', 'PDF', 'an', 'a', 'a')$$, '23514', 'xuất báo cáo phải chỉ rõ phiên bản');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_export_job SET state = 'SUCCEEDED', finished_at = now() WHERE id = pg_temp.id('ex1')$$, '55000', 'lệnh xuất QUEUED phải qua RUNNING');
 UPDATE ph16_kpi.kpi_export_job SET state = 'RUNNING', started_at = now() WHERE id = pg_temp.id('ex1');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_export_job SET state = 'SUCCEEDED', finished_at = now() WHERE id = pg_temp.id('ex1')$$, '23514', 'xuất xong phải có tệp, mã băm và hạn tải');
@@ -391,7 +399,7 @@ INSERT INTO ph16_kpi.kpi_compliance_assessment (id, tenant_id, component_id, com
 INSERT INTO ph16_kpi.kpi_compliance_item (id, tenant_id, assessment_id, criterion_id, result, created_by, updated_by) VALUES (pg_temp.id('it1'), 'T90', pg_temp.id('as1'), pg_temp.id('cr1'), 'PASS', 'an', 'an');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_compliance_item (id, tenant_id, assessment_id, criterion_id, result, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('as1'), pg_temp.id('cr1'), 'PASS', 'a', 'a')$$, '23505', 'mỗi đánh giá một mục cho mỗi tiêu chí');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_compliance_item (id, tenant_id, assessment_id, criterion_id, result, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('as1'), pg_temp.id('cr2'), 'FAIL', 'a', 'a')$$, '23514', 'mục không đạt phải có ghi chú từ 20 ký tự');
-INSERT INTO ph16_kpi.kpi_compliance_item (id, tenant_id, assessment_id, criterion_id, result, note, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('as1'), pg_temp.id('cr2'), 'PARTIAL', 'Đã phân loại, chưa có hồ sơ cấp độ', 'an', 'an');
+INSERT INTO ph16_kpi.kpi_compliance_item (id, tenant_id, assessment_id, criterion_id, result, note, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('as1'), pg_temp.id('cr2'), 'FAIL', 'Đã phân loại, chưa có hồ sơ cấp độ', 'an', 'an');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_assessment SET state = 'SUBMITTED' WHERE id = pg_temp.id('as1')$$, '23514', 'gửi xác nhận đánh giá phải có kết quả mức tuân thủ');
 UPDATE ph16_kpi.kpi_compliance_assessment SET state = 'SUBMITTED', submitted_at = now(), level_result = 'PARTIAL', score = 75 WHERE id = pg_temp.id('as1');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_item SET result = 'PASS' WHERE id = pg_temp.id('it1')$$, '55000', 'đánh giá đã gửi không sửa mục đánh giá');
@@ -400,7 +408,7 @@ SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_assessment SET state = 'R
 UPDATE ph16_kpi.kpi_compliance_assessment SET state = 'CONFIRMED', confirmed_by = 'binh', confirmed_at = now() WHERE id = pg_temp.id('as1');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_assessment SET level_result = 'COMPLIANT' WHERE id = pg_temp.id('as1')$$, '55000', 'đánh giá CONFIRMED bất biến');
 UPDATE ph16_kpi.kpi_arch_component SET compliance_level = 'PARTIAL' WHERE id = pg_temp.id('c1');
-SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_compliance_waiver (id, tenant_id, component_id, criterion_id, reason, valid_from, valid_to, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('c1'), pg_temp.id('cr2'), 'ngắn', '2026-11-26', '2027-03-26', 'an', 'a', 'a')$$, '23514', 'miễn trừ cần lý do từ 20 ký tự');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_compliance_waiver (id, tenant_id, component_id, criterion_id, reason, valid_from, valid_to, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('c1'), pg_temp.id('cr2'), 'ngắn', '2026-11-26', '2027-03-26', 'an', 'a', 'a')$$, '23514', 'miễn trừ cần lý do từ 50 ký tự (FR-16-047)');
 SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_compliance_waiver (id, tenant_id, component_id, criterion_id, reason, valid_from, valid_to, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('c1'), pg_temp.id('cr2'), 'Chờ hồ sơ cấp độ được cơ quan có thẩm quyền phê duyệt', '2026-11-26', '2028-01-01', 'an', 'a', 'a')$$, '23514', 'miễn trừ có hạn không quá 366 ngày');
 INSERT INTO ph16_kpi.kpi_compliance_waiver (id, tenant_id, component_id, criterion_id, reason, valid_from, valid_to, requested_by, created_by, updated_by)
 VALUES (pg_temp.id('wv1'), 'T90', pg_temp.id('c1'), pg_temp.id('cr2'), 'Chờ hồ sơ cấp độ được cơ quan có thẩm quyền phê duyệt', '2026-11-26', '2027-03-26', 'an', 'an', 'an');
@@ -408,6 +416,38 @@ SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_waiver SET state = 'ACTIV
 UPDATE ph16_kpi.kpi_compliance_waiver SET state = 'ACTIVE', approved_by = 'binh', approved_at = now() WHERE id = pg_temp.id('wv1');
 SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_compliance_waiver SET valid_to = '2027-11-01' WHERE id = pg_temp.id('wv1')$$, '55000', 'miễn trừ đã duyệt không đổi hạn');
 UPDATE ph16_kpi.kpi_compliance_waiver SET state = 'EXPIRED' WHERE id = pg_temp.id('wv1');
+
+-- ---------- 8b. Nhập tệp số liệu tay (EN-16-13), đối chiếu sổ kiến trúc (EN-16-33), yêu cầu tính lại ----------
+INSERT INTO ids SELECT k, gen_random_uuid() FROM unnest(ARRAY['im1','ir1','ir2','rc1','ri1','ri2']) k;
+INSERT INTO ph16_kpi.kpi_manual_import (id, tenant_id, file_name, object_ref, content_hash, row_total, valid_count, invalid_count, uploaded_by, expires_at, created_by, updated_by)
+VALUES (pg_temp.id('im1'), 'T90', 'nhap-so-lieu-q3.xlsx', 'kpi-evidence/T90/imports/im1.xlsx', pg_temp.h('im1'), 2, 1, 1, 'an', now() + interval '24 hours', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_manual_import (id, tenant_id, file_name, object_ref, content_hash, row_total, uploaded_by, expires_at, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x.xlsx', 'kpi-evidence/x', pg_temp.h('x'), 2001, 'an', now() + interval '1 hour', 'a', 'a')$$, '23514', 'tệp nhập tối đa 2.000 dòng (ERR-16-020)');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_manual_import (id, tenant_id, file_name, object_ref, content_hash, row_total, uploaded_by, expires_at, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'x.xlsx', 'kpi-evidence/x', pg_temp.h('x'), 1, 'an', now() + interval '3 days', 'a', 'a')$$, '23514', 'bản xem trước giữ tối đa 24 giờ');
+INSERT INTO ph16_kpi.kpi_manual_import_row (id, tenant_id, import_id, row_no, indicator_code, period_code, value, row_status, created_by, updated_by)
+VALUES (pg_temp.id('ir1'), 'T90', pg_temp.id('im1'), 1, 'diem-hai-long-sus', 'M-2026-10', 72.5, 'VALID', 'an', 'an');
+INSERT INTO ph16_kpi.kpi_manual_import_row (id, tenant_id, import_id, row_no, indicator_code, period_code, value, row_status, error_code, detail, created_by, updated_by)
+VALUES (pg_temp.id('ir2'), 'T90', pg_temp.id('im1'), 2, 'khong-co', 'M-2026-10', 1, 'INVALID', 'ERR-16-019', 'Chỉ tiêu không có trong bộ', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_manual_import_row (id, tenant_id, import_id, row_no, row_status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('im1'), 3, 'INVALID', 'a', 'a')$$, '23514', 'dòng INVALID phải có mã lỗi');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_manual_import_row SET row_status = 'IMPORTED' WHERE id = pg_temp.id('ir1')$$, '23514', 'dòng IMPORTED phải trỏ tới số liệu tay đã tạo');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_manual_import_row SET row_status = 'VALID', error_code = NULL WHERE id = pg_temp.id('ir2')$$, '55000', 'dòng INVALID không chuyển thành VALID (tải tệp mới)');
+UPDATE ph16_kpi.kpi_manual_import_row SET row_status = 'IMPORTED', manual_value_id = pg_temp.id('m1') WHERE id = pg_temp.id('ir1');
+UPDATE ph16_kpi.kpi_manual_import SET imported_count = 1, committed_by = 'an', committed_at = now() WHERE id = pg_temp.id('im1');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_manual_import SET row_total = 5 WHERE id = pg_temp.id('im1')$$, '55000', 'số dòng của tệp nhập bất biến');
+INSERT INTO ph16_kpi.kpi_arch_reconciliation (id, tenant_id, component_types, started_by, created_by, updated_by) VALUES (pg_temp.id('rc1'), 'T90', '{HTTT,API}', 'system:schedule', 'sys', 'sys');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_arch_reconciliation (id, tenant_id, started_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'an', 'a', 'a')$$, '23505', 'mỗi tenant một lần đối chiếu đang chạy (ERR-16-056)');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_arch_reconciliation (id, tenant_id, component_types, started_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '{KHAC}', 'an', 'a', 'a')$$, '23514', 'loại thành phần đối chiếu ngoài enum bị chặn');
+INSERT INTO ph16_kpi.kpi_arch_recon_item (id, tenant_id, recon_id, item_kind, component_code, component_id, source_phase, source_ref, diff, created_by, updated_by)
+VALUES (pg_temp.id('ri1'), 'T90', pg_temp.id('rc1'), 'ORPHAN', 'cong-api-trung-tam', pg_temp.id('c1'), 'PH-03', 'ph03:cong-api-trung-tam', '{}', 'sys', 'sys'),
+       (pg_temp.id('ri2'), 'T90', pg_temp.id('rc1'), 'MISSING', 'httt-ho-tich', NULL, 'PH-01', 'ph01:httt-ho-tich', '{"lifecycle":"ACTIVE"}', 'sys', 'sys');
+SELECT pg_temp.expect($$INSERT INTO ph16_kpi.kpi_arch_recon_item (id, tenant_id, recon_id, item_kind, component_code, source_phase, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('rc1'), 'ORPHAN', 'khong-co', 'PH-01', 'a', 'a')$$, '23514', 'mục ORPHAN phải trỏ tới thành phần trong sổ');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_arch_recon_item SET resolution = 'IGNORED', resolution_reason = 'ngắn', resolved_by = 'an', resolved_at = now() WHERE id = pg_temp.id('ri1')$$, '23514', 'bỏ qua mục lệch cần lý do từ 20 ký tự');
+UPDATE ph16_kpi.kpi_arch_recon_item SET resolution = 'REGISTERED', resolved_by = 'an', resolved_at = now() WHERE id = pg_temp.id('ri2');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_arch_recon_item SET resolution = 'OPEN', resolved_by = NULL, resolved_at = NULL WHERE id = pg_temp.id('ri2')$$, '55000', 'mục đã xử lý không mở lại');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_arch_reconciliation SET state = 'PARTIAL', finished_at = now() WHERE id = pg_temp.id('rc1')$$, '23514', 'đối chiếu PARTIAL phải ghi phân hệ bỏ qua');
+UPDATE ph16_kpi.kpi_arch_reconciliation SET state = 'PARTIAL', finished_at = now(), skipped_phases = '{PH-10}', item_count = 2 WHERE id = pg_temp.id('rc1');
+SELECT pg_temp.expect($$UPDATE ph16_kpi.kpi_arch_reconciliation SET state = 'RUNNING', finished_at = NULL WHERE id = pg_temp.id('rc1')$$, '55000', 'lần đối chiếu đã kết thúc không chạy lại');
+UPDATE ph16_kpi.kpi_reporting_period SET recompute_requested_at = now() WHERE id = pg_temp.id('p2');
+SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_reporting_period WHERE recompute_requested_at IS NOT NULL), 1, 'kỳ ghi mốc yêu cầu tính lại để bộ quét gom (FR-16-023)');
 
 -- ---------- 9. Gói gửi quốc gia, nhật ký nộp chỉ thêm ----------
 INSERT INTO ph16_kpi.kpi_national_template (id, tenant_id, template_code, name, submission_type, mapping, created_by, updated_by) VALUES (pg_temp.id('nt1'), 'T90', 'goi-bao-cao-chi-tieu', 'Gói báo cáo chỉ tiêu', 'KPI_REPORT', '{"fields":[]}', 'an', 'an');
@@ -462,7 +502,7 @@ SELECT pg_temp.expect($$INSERT INTO ph16_kpi.inbox_event (tenant_id, consumer, e
 
 -- ---------- 11. Cô lập tenant ----------
 SET app.tenant_id = 'T91';
-SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_tenant_setting), 18, 'T91 chỉ thấy 18 tham số của mình (đã seed)');
+SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_tenant_setting), 25, 'T91 chỉ thấy 25 tham số của mình (đã seed)');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_indicator WHERE tenant_id <> 'COMMON'), 0, 'T91 không thấy chỉ tiêu của T90');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_indicator_version) + (SELECT count(*) FROM ph16_kpi.kpi_indicator_threshold), 0, 'T91 không thấy phiên bản định nghĩa, ngưỡng của T90');
 SELECT pg_temp.eq((SELECT count(*) FROM ph16_kpi.kpi_data_source) + (SELECT count(*) FROM ph16_kpi.kpi_source_contract) + (SELECT count(*) FROM ph16_kpi.kpi_ingest_log), 0, 'T91 không thấy nguồn, hợp đồng, nhật ký tiếp nhận của T90');
@@ -583,7 +623,7 @@ BEGIN
      AND NOT EXISTS (SELECT 1 FROM pg_constraint k WHERE k.conrelid = c.oid AND k.conname = 'ck_' || c.relname || '_tenant') AND c.relname NOT IN ('outbox_event', 'inbox_event');
   IF n <> 0 THEN RAISE EXCEPTION 'FAIL: % bảng thiếu CHECK tenant_id', n; END IF;
   SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace WHERE s.nspname = 'ph16_kpi' AND c.relkind IN ('r', 'p') AND NOT c.relispartition;
-  IF n <> 36 THEN RAISE EXCEPTION 'FAIL: % bảng, mong 36', n; END IF;
+  IF n <> 40 THEN RAISE EXCEPTION 'FAIL: % bảng, mong 40', n; END IF;
   RAISE NOTICE 'PASS tổng kiểm: % bảng, mọi bảng FORCE RLS, có CHECK tenant và đủ cột ngữ cảnh', n;
 END $$;
 \o

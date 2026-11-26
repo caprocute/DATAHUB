@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-06-PH16
 ten: Thiết kế giao diện màn hình phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện dh-console, thiết kế UX/UI, cán bộ tổng hợp, quản trị tỉnh, lãnh đạo, kiểm thử viên, hội đồng thẩm định
@@ -325,17 +325,17 @@ Giá trị mã (`ON_TRACK`, `ACTIVE`…) chỉ hiện ở chế độ nhà phát
 
 ### 5.2. Thông báo theo mã lỗi ERR-16
 
-Bảng dưới là toàn bộ câu hiển thị của FRS §9.2, giữ nguyên chữ; `{…}` là biến điền lúc chạy. Mã 001 đến 057 thuộc control plane; mã 101 đến 125 xảy ra ở thu thập, tính toán, gửi (không có người nhìn trực tiếp) và hiện ở UI-16-05, 06, 09, 12, 13, 17 hoặc ở thông báo PH-13. Thân lỗi theo RFC 9457 có `code`, `traceId`; giao diện hiện câu tại ô lỗi, thanh hành động hoặc hộp thoại của màn (vị trí ghi ở FRS §9.2) và đặt mã lỗi cùng `traceId` ở dòng phụ có nút sao chép (`ST-12`). Lỗi `401`, `403` do thiếu quyền chức năng và `428` dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428 (`ST-14`, `ST-07`, xử lý `If-Match` tự động ở chương 6).
+Bảng dưới là toàn bộ câu hiển thị của FRS §9.2, giữ nguyên chữ; `{…}` là biến điền lúc chạy. Mã 001 đến 061 thuộc control plane; giá trị của từng biến theo chức năng ghi ở dòng ngoại lệ của FR và ở bảng ngưỡng `{n}` của FRS §9.2; mã 101 đến 125 xảy ra ở thu thập, tính toán, gửi (không có người nhìn trực tiếp) và hiện ở UI-16-05, 06, 09, 12, 13, 17 hoặc ở thông báo PH-13. Thân lỗi theo RFC 9457 có `code`, `traceId`; giao diện hiện câu tại ô lỗi, thanh hành động hoặc hộp thoại của màn (vị trí ghi ở FRS §9.2) và đặt mã lỗi cùng `traceId` ở dòng phụ có nút sao chép (`ST-12`). Lỗi `401`, `403` do thiếu quyền chức năng và `428` dùng mã nền ERR-00-401, ERR-00-403, ERR-00-428 (`ST-14`, `ST-07`, xử lý `If-Match` tự động ở chương 6).
 
 | Mã | Câu hiển thị |
 |---|---|
-| ERR-16-001 | "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc." |
-| ERR-16-002 | "Mã {mã} đã được dùng. Chọn mã khác." |
-| ERR-16-003 | "Mã chỉ tiêu chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự." |
+| ERR-16-001 | "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." |
+| ERR-16-002 | "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." |
+| ERR-16-003 | "{Trường} chưa hợp lệ: {yêu cầu}." |
 | ERR-16-004 | "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." |
-| ERR-16-005 | "Anh/chị là người lập hoặc gửi nên không được tự duyệt." |
-| ERR-16-006 | "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}." |
-| ERR-16-007 | "Nhập lý do (tối thiểu {n} ký tự)." |
+| ERR-16-005 | "Anh/chị là người {vai} nên không được {thao tác}." |
+| ERR-16-006 | "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." |
+| ERR-16-007 | "Nhập {nội dung} (tối thiểu {n} ký tự)." |
 | ERR-16-008 | "Công thức chưa đúng ở vị trí {dòng}:{cột}: {mô tả}." |
 | ERR-16-009 | "Biến {metricCode} chưa có nguồn số liệu nào. Đăng ký nguồn trước khi dùng." |
 | ERR-16-010 | "Ngưỡng chưa hợp lệ: với chiều {chiều}, mốc xanh phải {lớn hơn hoặc nhỏ hơn} mốc vàng." |
@@ -362,7 +362,7 @@ Bảng dưới là toàn bộ câu hiển thị của FRS §9.2, giữ nguyên c
 | ERR-16-031 | "Dịch vụ ký số đang gián đoạn. Báo cáo vẫn ở trạng thái Đã duyệt, thử công bố lại sau." |
 | ERR-16-032 | "Báo cáo đã công bố không sửa được. Dùng chức năng đính chính." |
 | ERR-16-033 | "Khoảng báo cáo từ {từ} đến {đến} không hợp lệ hoặc vượt 24 tháng." |
-| ERR-16-034 | "Dữ liệu xuất vượt {n} dòng. Thu hẹp bộ lọc." |
+| ERR-16-034 | "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." |
 | ERR-16-035 | "Liên kết tải đã hết hạn. Tạo lại yêu cầu xuất." |
 | ERR-16-036 | "Người nhận {địa chỉ} không hợp lệ hoặc không thuộc miền thư công vụ." |
 | ERR-16-037 | "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này." |
@@ -377,15 +377,19 @@ Bảng dưới là toàn bộ câu hiển thị của FRS §9.2, giữ nguyên c
 | ERR-16-046 | "Chức năng gửi quốc gia chưa được bật cho tỉnh." |
 | ERR-16-047 | "Mẫu gói {mã} phiên bản {n} chưa hợp lệ: {lý do}." |
 | ERR-16-048 | "Gói chưa đạt mẫu {mã}: {trường} {lý do}." |
-| ERR-16-049 | "Nội dung này đã được nộp ngày {ngày}, mã biên nhận {mã}." |
+| ERR-16-049 | "{Nội dung} đã được nộp ngày {ngày} (mã biên nhận {biên nhận}) và chưa thay đổi." |
 | ERR-16-050 | "Gói {mã} đang ở trạng thái {trạng thái} hoặc đã gửi lại tối đa {n} lần." |
 | ERR-16-051 | "Giá trị {giá trị} của {khóa} nằm ngoài miền cho phép ({miền})." |
 | ERR-16-052 | "Chỉ gửi được báo cáo đã công bố." |
 | ERR-16-053 | "Tệp {tên} không được nhận: chỉ PDF, ảnh, XLSX, DOCX tối đa {n} MB." |
 | ERR-16-054 | "Chỉ tiêu thay thế {mã} phải đang hiệu lực và cùng loại giá trị." |
 | ERR-16-055 | "Trường {trường} đã được tỉnh tùy biến và mẫu cũng thay đổi. Chọn giữ bản nào." |
-| ERR-16-056 | "Đã có lần đối chiếu đang chạy. Chờ lần này xong." |
-| ERR-16-057 | "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn." |
+| ERR-16-056 | "Đã có lần {việc} đang chạy. Chờ lần này xong." |
+| ERR-16-057 | "Tham số {trường} không hợp lệ: {lý do}." |
+| ERR-16-058 | "Khóa chống trùng {khóa} đã dùng cho yêu cầu khác nội dung trong 24 giờ. Tạo khóa mới rồi gửi lại." |
+| ERR-16-059 | "Anh/chị không thuộc vai trò được giao xác nhận {đối tượng} này." |
+| ERR-16-060 | "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." |
+| ERR-16-061 | "Báo cáo chính thức cần số ký hiệu và nơi nhận trước khi gửi duyệt." |
 | ERR-16-101 | "Quan sát thứ {i} sai lược đồ: {trường}." |
 | ERR-16-102 | "Chỉ số {metricCode} không thuộc hợp đồng của nguồn {mã}." |
 | ERR-16-103 | "Quan sát {idempotencyRef} đã có với giá trị khác. Cần kiểm tra ở phân hệ nguồn." |
@@ -467,7 +471,7 @@ Màn đầu tiên của lãnh đạo và quản trị tỉnh: một trang trả 
 
 **Đường dẫn, mẫu.** `/giam-sat/chi-tieu` (tham số `ky`, `che-do` = `chinh-thuc` hoặc `moi-nhat`, `nhom`, `so-sanh`); PTN-06 Dashboard.
 
-**API.** API-16-090 (`GET /dashboard`); API-16-089 (`GET /cards`, thẻ cho `/tong-quan`); API-16-091 (chuỗi 13 kỳ); API-16-046 (danh sách kỳ cho bộ chọn); API-16-093 (cờ nguồn quá hạn cho dải vàng).
+**API.** API-16-090 (`GET /dashboard`); API-16-089 (`GET /cards`, thẻ cho `/tong-quan` theo `16.overview.pinned-indicators`); API-16-091 (chuỗi 13 kỳ); API-16-046 (danh sách kỳ cho bộ chọn); API-16-093 (cờ nguồn quá hạn cho dải vàng).
 
 **Thông báo.** "Nguồn {mã} không có số mới từ {thời điểm}." (ERR-16-107); mã khác dùng trong màn: ERR-16-111, ERR-16-057, ERR-16-037 (câu ở mục 5.2).
 
@@ -585,7 +589,7 @@ Thứ tự focus: dải, thanh lọc, thẻ điểm, thẻ nhóm trái sang ph�
 
 **API.** API-16-003, API-16-091 (chuỗi), API-16-054 (dòng truy nguồn), API-16-043 (quan sát), API-16-006 (so sánh phiên bản).
 
-**Thông báo.** "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc." (ERR-16-001); mã khác dùng trong màn: ERR-16-111, ERR-16-112, ERR-16-037 (câu ở mục 5.2).
+**Thông báo.** "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." (ERR-16-001); mã khác dùng trong màn: ERR-16-111, ERR-16-112, ERR-16-037 (câu ở mục 5.2).
 
 :::
 
@@ -1500,7 +1504,7 @@ Bảng dưới đánh số thành phần theo bố cục trên, kèm điều ki�
 | 2 | Đầu trang soạn | `CMP-PageHeader`, `CMP-SaveIndicator` | Mã báo cáo, nhãn trạng thái, "Đã lưu hh:mm", nút Xem PDF thử, Lưu nháp, Gửi duyệt (API-16-067) | Tự lưu 30 giây |
 | 3 | Trang xem trước | `CMP-Card` nền trắng, `CMP-DataTable`, `CMP-Chart` | Bản dựng A4: quốc hiệu, tên cơ quan, số ký hiệu, bảng chỉ tiêu theo nhóm, biểu đồ; hàng chệch tô nền vàng nhạt (API-16-070) | Trang là vùng đặc nền trắng |
 | 4 | Ô giải trình | `CMP-TextArea`, `CMP-FormField`, `CMP-DatePicker` | Mở khi bấm chỉ tiêu chệch hoặc thiếu số: nguyên nhân, biện pháp, hạn (API-16-068) | Thiếu: ERR-16-030 |
-| 5 | Khung thông tin | `CMP-DescriptionList`, `CMP-Input` | Kỳ, lần tổng hợp dùng, độ đầy đủ, số ký hiệu (cán bộ nhập, Q16-17) (API-16-066, 067) | Số ký hiệu bắt buộc khi gửi duyệt |
+| 5 | Khung thông tin | `CMP-DescriptionList`, `CMP-Input` | Kỳ, lần tổng hợp dùng, độ đầy đủ, số ký hiệu, nơi nhận (cán bộ nhập) (API-16-066, 067) | Số ký hiệu, nơi nhận bắt buộc khi gửi duyệt (ERR-16-061) |
 
 : UI-16-11 Soạn báo cáo, thành phần
 
@@ -1511,7 +1515,8 @@ Bảng dưới ghi trường của màn soạn báo cáo.
 | Nhãn | Kiểu | Bắt buộc | Kiểm tra | API |
 |---|---|---|---|---|
 | Tên báo cáo | text ≤ 200 | Có | Không rỗng | API-16-067 |
-| Số ký hiệu | text ≤ 50 | Có khi gửi duyệt | Cán bộ nhập | API-16-067 |
+| Số ký hiệu | text ≤ 64 | Có khi gửi duyệt `PERIODIC`, `NATIONAL` | `documentNumber`; thiếu: ERR-16-061 | API-16-067 |
+| Nơi nhận | text ≤ 2.000 | Có khi gửi duyệt `PERIODIC`, `NATIONAL` | `recipientsNote`; thiếu: ERR-16-061 | API-16-067 |
 | Thuyết minh phần | markdown ≤ 20.000 | Không | Chỉ đoạn văn, danh sách, bảng; không HTML | API-16-067 |
 | Giải trình: nguyên nhân | text ≤ 2.000 | Có cho chỉ tiêu chệch hoặc thiếu số | ERR-16-030 nếu thiếu | API-16-068 |
 | Giải trình: biện pháp | text ≤ 2.000 | Có | như trên | API-16-068 |
@@ -1524,7 +1529,7 @@ Bảng dưới ghi trường của màn soạn báo cáo.
 
 Báo cáo kỳ (`PERIODIC`) lấy số của kỳ đã chốt; nếu kỳ chưa chốt, màn chỉ cho tạo bản thử và chặn gửi duyệt báo cáo chính thức với câu ERR-16-028. Báo cáo đột xuất (`AD_HOC`) nhận khoảng thời gian và tập chỉ tiêu tự chọn (tối đa 24 tháng), không gửi quốc gia (Q16-18) và áp bốn mắt theo `16.report.four-eyes`.
 
-Chỉ tiêu bắt buộc thiếu số làm ERR-16-029 hiện ở hộp thoại gửi duyệt kèm danh sách chỉ tiêu và nút "Mở nhập số liệu tay" khi chỉ tiêu `MANUAL`.
+Chỉ tiêu bắt buộc thiếu số làm ERR-16-029 hiện ở hộp thoại gửi duyệt kèm danh sách chỉ tiêu và nút "Mở nhập số liệu tay" khi chỉ tiêu `MANUAL`; thiếu số ký hiệu hoặc nơi nhận làm ERR-16-061 hiện ở khung thông tin, con trỏ chuyển tới ô thiếu.
 
 ### 17.5. Làm mới số khi kỳ được tính lại
 
@@ -1586,7 +1591,7 @@ Hộp việc của người duyệt PH-16: định nghĩa chỉ tiêu, số li�
 
 **API.** API-16-078 (hàng đợi), API-16-012, 013 (định nghĩa), API-16-040, 041 (số liệu tay), API-16-072, 073, 074 (báo cáo).
 
-**Thông báo.** "Anh/chị là người lập hoặc gửi nên không được tự duyệt." (ERR-16-005); mã khác dùng trong màn: ERR-16-007, ERR-16-031, ERR-16-113, ERR-16-114, ERR-16-029 (câu ở mục 5.2).
+**Thông báo.** "Anh/chị là người {vai} nên không được {thao tác}." (ERR-16-005; ở màn này {vai} = lập hoặc gửi báo cáo, {thao tác} = tự duyệt); mã khác dùng trong màn: ERR-16-007, ERR-16-031, ERR-16-113, ERR-16-114, ERR-16-029 (câu ở mục 5.2).
 
 :::
 
@@ -1646,9 +1651,10 @@ Bảng dưới liệt kê hành động của màn, điều kiện quyền và t
 |---|---|---|---|
 | Duyệt | `PERM-16-approve`; khác người lập | API-16-072 (hoặc API-16-012) | `APPROVED`; việc rời hàng đợi |
 | Yêu cầu sửa | `PERM-16-approve`; có ý kiến | API-16-073 (hoặc API-16-013) | `CHANGES_REQUESTED`; EVT-16-09; người lập nhận thông báo |
+| Trả về soạn | `PERM-16-approve`; báo cáo `APPROVED` chưa công bố; ý kiến ≥ 20 ký tự | API-16-073 | `CHANGES_REQUESTED`; EVT-16-09; người lập sửa tiếp ở `DRAFT` |
 | Công bố | `PERM-16-approve`; báo cáo `APPROVED` | API-16-074 | `PUBLISHED`; EVT-16-08; liên kết tải bằng chứng |
-| Xác nhận số liệu tay | `PERM-16-manual`; khác người nhập | API-16-040 | `ACCEPTED`; EVT-16-04 |
-| Từ chối số liệu tay | `PERM-16-manual`; có lý do | API-16-041 | `REJECTED` |
+| Xác nhận số liệu tay | `PERM-16-manual`; khác người nhập (ERR-16-005); thuộc `confirmerRoles` (ERR-16-059) | API-16-040 | `ACCEPTED`; EVT-16-04 |
+| Từ chối số liệu tay | `PERM-16-manual`; thuộc `confirmerRoles`; có lý do | API-16-041 | `REJECTED` |
 
 : UI-16-12 Duyệt và công bố, hành động
 
@@ -1676,7 +1682,7 @@ Danh sách việc là `role="listbox"`; mũi tên chọn, Enter mở. Nút khóa
 
 ![UI-16-12 Duyệt và công bố](ph16/hifi/ui-16-12.png)
 
-Ảnh cho thấy ba loại việc, báo cáo `bc-thang-2026-10` đang duyệt nhìn từ tài khoản người lập: thanh quyết định hiện câu "Anh/chị là người lập hoặc gửi nên không được tự duyệt." và hai nút Duyệt, Công bố bị khóa.
+Ảnh cho thấy ba loại việc, báo cáo `bc-thang-2026-10` đang duyệt nhìn từ tài khoản người lập: thanh quyết định hiện câu ERR-16-005 "Anh/chị là người lập hoặc gửi báo cáo nên không được tự duyệt." và hai nút Duyệt, Công bố bị khóa.
 
 
 ## 19. UI-16-13 Mẫu báo cáo và phân phối
@@ -2331,7 +2337,7 @@ Bảng dưới nêu bốn trạng thái bắt buộc (đang tải, rỗng, lỗi
 
 **API.** API-16-129 (`GET /audit-events`).
 
-**Thông báo.** "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn." (ERR-16-057); mã khác dùng trong màn: ERR-16-123, ERR-16-037 (câu ở mục 5.2).
+**Thông báo.** "Tham số {trường} không hợp lệ: {lý do}." (ERR-16-057); mã khác dùng trong màn: ERR-16-123, ERR-16-037 (câu ở mục 5.2).
 
 :::
 
@@ -2534,7 +2540,7 @@ PH-16 chỉ dùng `CMP-*` đã có; các mục dưới là đề nghị, chưa d
 
 ## Phụ lục B. Đề nghị bổ sung API và trường cho D03-04-PH16
 
-Các đề nghị dưới giúp màn dựng được mà không gọi thêm lần; chưa có ở FRS §9.4 nên cần xác nhận với chủ tập API.
+Các đề nghị dưới giúp màn dựng được mà không gọi thêm lần; chưa có ở FRS §9.4 nên cần xác nhận với chủ tập API. Đợt đồng bộ 26/11/2026 chưa hấp thụ B-01…B-07 (D03-04-PH16 0.2 giữ lược đồ phản hồi cũ); trường `documentNumber`, `recipientsNote` của báo cáo đã có ở API 0.2.
 
 | Mã | Đề nghị | Màn |
 |---|---|---|
@@ -2548,16 +2554,16 @@ Các đề nghị dưới giúp màn dựng được mà không gọi thêm lầ
 
 ## Phụ lục C. Đề nghị đồng bộ cho FRS và tài liệu khác
 
-Tập màn này không sửa tài liệu ngoài phạm vi; các điểm dưới cần chủ tài liệu tương ứng xác nhận và hấp thụ (FRS Phụ lục B nhận làm mục ĐN-MH).
+Tập màn này không sửa tài liệu ngoài phạm vi; các điểm dưới cần chủ tài liệu tương ứng xác nhận và hấp thụ (FRS Phụ lục B nhận làm mục ĐN-MH). C-01…C-06 đã được FRS 0.2 hấp thụ (Phụ lục C của FRS, HT-28…33); C-07, C-08 còn chờ D03-06-00, D02-08.
 
 | Mã | Nội dung | Tài liệu |
 |---|---|---|
-| C-01 | §10.2: thay câu "Chưa có ảnh hi-fi cho PH-16" bằng "Ảnh hi-fi nằm ở `03-thiet-ke/uiux/ph16/hifi/`"; hai ảnh `ui-16-01.png`, `ui-16-11.png` đã có (cùng 18 ảnh còn lại) | D02-03-PH16 |
-| C-02 | §9.2 thêm mục "Câu giao diện không gắn mã lỗi": "Kỳ {kỳ} chưa chốt. Số liệu còn có thể đổi đến ngày chốt {ngày}."; "Số liệu kỳ đã được tính lại."; "Đã lưu {đối tượng} {tên}."; "Đã công bố báo cáo {mã}."; câu rỗng của từng màn (mục "Trạng thái" mỗi chương) | D02-03-PH16 |
-| C-03 | §10.1: thêm vào UI-16-12 loại việc "phiên bản định nghĩa nhận từ mẫu COMMON" (FR-16-008 tạo `DRAFT` rồi đi duyệt FR-16-005); thêm FR-16-008 vào cột FR của UI-16-12 | D02-03-PH16 |
-| C-04 | §10.1: ghi route con và query theo mục 4.3 (đoạn `chi-so`, `sua`, `danh-gia`; tham số `ky`, `che-do`…) làm quy ước | D02-03-PH16 |
-| C-05 | §10.1 UI-16-17: ghi thêm tab "Mẫu gói" và "Đối soát"; UI-16-13: ghi tab "Lịch sử gửi" (API-16-085); UI-16-06: tab "Hợp đồng chỉ số" | D02-03-PH16 |
-| C-06 | FR-16-038: nêu công tắc "Chính thức, Mới nhất" và dải "kỳ chưa chốt" là yêu cầu hiển thị; FR-16-027: nêu số ký hiệu báo cáo là trường bắt buộc khi gửi duyệt (Q16-17) | D02-03-PH16 |
+| C-01 | §10.2: thay câu "Chưa có ảnh hi-fi cho PH-16" bằng "Ảnh hi-fi nằm ở `03-thiet-ke/uiux/ph16/hifi/`"; hai ảnh `ui-16-01.png`, `ui-16-11.png` đã có (cùng 18 ảnh còn lại). Đã hấp thụ (HT-28) | D02-03-PH16 |
+| C-02 | §9.2 thêm mục "Câu giao diện không gắn mã lỗi": "Kỳ {kỳ} chưa chốt. Số liệu còn có thể đổi đến ngày chốt {ngày}."; "Số liệu kỳ đã được tính lại."; "Đã lưu {đối tượng} {tên}."; "Đã công bố báo cáo {mã}."; câu rỗng của từng màn (mục "Trạng thái" mỗi chương). Đã hấp thụ (HT-29) | D02-03-PH16 |
+| C-03 | §10.1: thêm vào UI-16-12 loại việc "phiên bản định nghĩa nhận từ mẫu COMMON" (FR-16-008 tạo `DRAFT` rồi đi duyệt FR-16-005); thêm FR-16-008 vào cột FR của UI-16-12. Đã hấp thụ (HT-30) | D02-03-PH16 |
+| C-04 | §10.1: ghi route con và query theo mục 4.3 (đoạn `chi-so`, `sua`, `danh-gia`; tham số `ky`, `che-do`…) làm quy ước. Đã hấp thụ (HT-31) | D02-03-PH16 |
+| C-05 | §10.1 UI-16-17: ghi thêm tab "Mẫu gói" và "Đối soát"; UI-16-13: ghi tab "Lịch sử gửi" (API-16-085); UI-16-06: tab "Hợp đồng chỉ số". Đã hấp thụ (HT-32) | D02-03-PH16 |
+| C-06 | FR-16-038: nêu công tắc "Chính thức, Mới nhất" và dải "kỳ chưa chốt" là yêu cầu hiển thị; FR-16-027: nêu số ký hiệu báo cáo là trường bắt buộc khi gửi duyệt (Q16-17). Đã hấp thụ (HT-33; ERR-16-061) | D02-03-PH16 |
 | C-07 | Dòng menu #37 "Báo cáo chỉ tiêu" ở mục 2.3.2: thêm cây con 20 màn như mục 4.1 (hiện một dòng) | D03-06-00 |
 | C-08 | Xác nhận 14 quyền `PERM-16-*` ở mục 3.2 FRS với D02-08; hiện D02-08 chỉ có `read`, `admin` | D02-08 |
 
@@ -2587,3 +2593,4 @@ Các câu hỏi nối tiếp Q16-01…19 của FRS; chủ đề cần quyết đ
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 2026-11-26 | Nhóm phân hệ PH-16 | Bản đầu: 20 màn UI-16-01…20 theo FRS 0.2 gồm khối đặc tả, wireframe, thành phần, trường, hành động, trạng thái, thông báo ERR-16; 20 ảnh hi-fi (kèm `ui-16-01.png`, `ui-16-11.png` mà FRS §10.2 trỏ tới); phụ lục đề nghị đồng bộ D03-05, API, FRS; câu hỏi mở Q16-30…39 |
+| 0.2 | 2026-11-26 | Nhóm phân hệ PH-16 | Đồng bộ với FRS 0.2: mục 5.2 theo câu chuẩn có tham số, thêm ERR-16-058…061; UI-16-11 thêm số ký hiệu, nơi nhận (ERR-16-061); UI-16-12 thêm "Trả về soạn" báo cáo `APPROVED` và ERR-16-059; thẻ Tổng quan theo `16.overview.pinned-indicators`; ghi kết quả hấp thụ C-01…C-06 và tình trạng Phụ lục B |

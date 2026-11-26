@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH16
 ten: Đặc tả yêu cầu chức năng phân hệ PH-16 Báo cáo chỉ tiêu và sổ kiến trúc
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, lãnh đạo UBND và sở ngành, quản trị tỉnh, cán bộ tổng hợp, kỹ sư dh-platform, kiểm thử viên
@@ -37,11 +37,11 @@ tai_lieu_lien_quan: D02-01 BRD; D02-02 SRS; D02-04-PH16 Use case; D03-02-PH16 Th
 | Yêu cầu phi chức năng | 22 (NFR-16-001…022) |
 | Màn hình | 20 (UI-16-01…20) |
 | API | 130 operation dự kiến (API-16-001…130), tiền tố `/api/kpi/v1` |
-| Sự kiện | 13 phát (EVT-16-01…13); tiêu thụ sự kiện của PH-01, 02, 04, 05, 07, 08, 10, 13, 14, 19, 20 |
-| Mã lỗi | 57 control (ERR-16-001…057), 25 thu thập, tính toán, gửi (ERR-16-101…125); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
+| Sự kiện | 14 phát (EVT-16-01…14); tiêu thụ sự kiện của PH-01, 02, 04, 05, 07, 08, 10, 13, 14, 19, 20 |
+| Mã lỗi | 61 control (ERR-16-001…061), 25 thu thập, tính toán, gửi (ERR-16-101…125); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
 | Thực thể mức logic | 39 (EN-16-01…39) |
 | Bộ chỉ tiêu mặc định | 24 chỉ tiêu mẫu `COMMON` (18 ứng với KPI-01…18) |
-| Tham số theo tenant | 24 khóa `16.*` (mục 8.2) |
+| Tham số theo tenant | 25 khóa `16.*` (mục 8.2) |
 | Chức năng hệ cũ được phủ | Không có `LGC` do PH-16 làm chính; 9 mục liên quan gián tiếp, kết luận "Nâng cấp (gián tiếp)" |
 | FR của SRS cũ được phủ | 22/22 (bảng ánh xạ ở mục 11.3) |
 
@@ -354,7 +354,7 @@ D02-08 hiện có `PERM-16-read` và `PERM-16-admin`; mười hai quyền còn l
 
 : Ma trận quyền PH-16 theo vai trò
 
-Ghi chú: PA với `PERM-16-admin`, `PERM-16-arch` chỉ thao tác trên tenant `COMMON` (bộ chỉ tiêu mẫu, mẫu tiêu chí tuân thủ) và đặt trần tham số với `PERM-16-config`. TO với `PERM-16-run` chạy tổng hợp, tính lại nhưng không chốt, không mở lại kỳ (chỉ TA). PO với `PERM-16-run` chỉ hủy lần tổng hợp treo trên mọi tenant, không chạy mới. AU với `PERM-16-export` chỉ xuất báo cáo đã công bố và nhật ký. Người dùng giữ `PERM-16-manual` chỉ xác nhận số liệu trong phạm vi chỉ tiêu được giao (`confirmerRoles` của chỉ tiêu, ví dụ KPI-08 chỉ SO).
+Ghi chú: PA với `PERM-16-admin`, `PERM-16-arch` chỉ thao tác trên tenant `COMMON` (bộ chỉ tiêu mẫu, mẫu tiêu chí tuân thủ) và đặt trần tham số với `PERM-16-config`. TO với `PERM-16-run` chạy tổng hợp, tính lại nhưng không chốt, không mở lại kỳ (chỉ TA). PO với `PERM-16-run` chỉ hủy lần tổng hợp treo trên mọi tenant, không chạy mới. AU với `PERM-16-export` chỉ xuất báo cáo đã công bố và nhật ký. Xử lý lại bản tin bị loại cần `PERM-16-source`; riêng nhánh "Nhận giá trị mới" khi xung đột ERR-16-103 cần thêm `PERM-16-run` vì kéo theo tính lại kỳ (FR-16-016). Người dùng giữ `PERM-16-manual` chỉ xác nhận số liệu trong phạm vi chỉ tiêu được giao (`confirmerRoles` của chỉ tiêu, ví dụ KPI-08 chỉ SO).
 
 ### 3.3. Tách nhiệm vụ và tài khoản máy
 
@@ -364,7 +364,7 @@ Bốn cặp loại trừ áp dụng trên cùng một đối tượng, không ph
 |---|---|---|
 | Người soạn, gửi duyệt phiên bản định nghĩa ≠ người duyệt | FR-16-005 | ERR-16-005 |
 | Người lập, gửi duyệt báo cáo ≠ người duyệt, công bố | FR-16-028, 029, 030 | ERR-16-005 |
-| Người nhập số liệu tay ≠ người xác nhận | FR-16-015 | ERR-16-005 |
+| Người nhập số liệu tay ≠ người xác nhận; người xác nhận thuộc `confirmerRoles` | FR-16-015 | ERR-16-005; ERR-16-059 khi không thuộc vai trò được giao |
 | Người lập đánh giá tuân thủ ≠ người xác nhận | FR-16-047 | ERR-16-005 |
 
 : Cặp loại trừ tách nhiệm vụ của PH-16
@@ -376,6 +376,7 @@ Tài khoản máy dùng token Keycloak luồng client credentials, mTLS trong c�
 | `kpi.read` | PH-17, cổng thông tin tỉnh, HTTT được cấp | API-16-086, API-16-087, API-16-089 |
 | `kpi.ingest` | Phân hệ đẩy quan sát (PH-05, PH-19, PH-20 khi không phát sự kiện) | API-16-030 |
 | `arch.register` | PH-01, PH-02, PH-04, PH-10, CI/GitOps | API-16-101 |
+| `kpi.national-receipt` | PH-14 (`dh-integration`), chỉ qua `apisix-int` cộng mTLS | API-16-124 |
 | `dq.read` (PH-16 gọi đi) | PH-16 | API-08-122 của PH-08 |
 | `catalog:metrics-read` (PH-16 gọi đi) | PH-16 | API-02-079, API-02-097 của PH-02 |
 | Scope đọc chỉ số của PH-01, 05, 07, 13, 19, 20 (PH-16 gọi đi) | PH-16 | API chỉ số do phân hệ đó cung cấp (đề nghị đồng bộ) |
@@ -431,7 +432,7 @@ Trụ cột thứ hai là **sổ kiến trúc**. Mỗi **thành phần** có lo�
 
 ### 4.2. Thực thể
 
-Bảng dưới là thực thể mức logic; tên bảng vật lý, khóa, chỉ mục ở D03-03-PH16. Mọi thực thể có `tenant_id` và RLS, trừ khi ghi khác.
+Bảng dưới là thực thể mức logic; tên bảng vật lý, khóa, chỉ mục ở D03-03-PH16. Mọi thực thể có `tenant_id` và RLS, trừ khi ghi khác. EN-16-18 và EN-16-37 là kết quả tính khi hỏi, không có bảng riêng; EN-16-04, 07, 10, 12, 22, 30 có thể gộp vào bảng của thực thể cha ở mức vật lý.
 
 | Mã | Thực thể | Nội dung chính | Quan hệ |
 |---|---|---|---|
@@ -535,7 +536,7 @@ stateDiagram-v2
   REOPENED --> CLOSED: Chốt lại
 ```
 
-`OPEN`: kỳ đang diễn ra, quan sát được ghi nhận nhưng chưa tính chính thức (bảng điều khiển hiện số tạm "đến hôm nay"). `COLLECTING`: kỳ đã hết, chờ số trễ và số liệu tay. `COMPUTED`: đã có ít nhất một lần tổng hợp kết thúc. `CLOSED`: số chốt, báo cáo chính thức lập từ đây. `REOPENED`: TA mở lại để sửa số; báo cáo đã công bố của kỳ phải đính chính nếu số thay đổi.
+`OPEN`: kỳ đang diễn ra, quan sát được ghi nhận nhưng chưa tính chính thức (bảng điều khiển hiện số tạm "đến hôm nay"). `COLLECTING`: kỳ đã hết, chờ số trễ và số liệu tay. `COMPUTED`: đã có ít nhất một lần tổng hợp kết thúc. `CLOSED`: số chốt, báo cáo chính thức lập từ đây. `REOPENED`: TA mở lại để sửa số; báo cáo đã công bố của kỳ phải đính chính nếu số thay đổi. Mỗi lần kỳ chuyển `CLOSED` hoặc `REOPENED` hệ thống phát EVT-16-14 để PH-13, PH-17 biết số chính thức đã sẵn sàng hoặc có thể đổi.
 
 ### 4.6. Máy trạng thái lần tổng hợp
 
@@ -570,14 +571,14 @@ stateDiagram-v2
   CHANGES_REQUESTED --> DRAFT: Sửa tiếp
   IN_REVIEW --> APPROVED: Duyệt
   APPROVED --> PUBLISHED: Công bố, ký số, lưu WORM
-  APPROVED --> DRAFT: Hủy duyệt trước công bố
+  APPROVED --> CHANGES_REQUESTED: Trả về soạn trước công bố
   PUBLISHED --> SUPERSEDED: Phiên bản đính chính công bố
   PUBLISHED --> WITHDRAWN: Rút
   SUPERSEDED --> [*]
   WITHDRAWN --> [*]
 ```
 
-`DRAFT`: soạn thuyết minh, làm mới số. `IN_REVIEW`: khóa nội dung. `APPROVED`: đã duyệt, chờ công bố (cùng người duyệt hoặc người có `PERM-16-approve` khác, không phải người lập). `PUBLISHED`: bất biến. `SUPERSEDED`: đã có phiên bản đính chính, vẫn tải được kèm nhãn. `WITHDRAWN`: rút có lý do, vẫn lưu WORM, chỉ AU và TA thấy nội dung.
+`DRAFT`: soạn thuyết minh, làm mới số. `IN_REVIEW`: khóa nội dung. `APPROVED`: đã duyệt, chờ công bố (cùng người duyệt hoặc người có `PERM-16-approve` khác, không phải người lập). Báo cáo `APPROVED` chưa công bố (ký số lỗi kéo dài, cần sửa số) được người có `PERM-16-approve` trả về `CHANGES_REQUESTED` kèm ý kiến rồi người lập sửa tiếp ở `DRAFT` (FR-16-028). `PUBLISHED`: bất biến. `SUPERSEDED`: đã có phiên bản đính chính, vẫn tải được kèm nhãn. `WITHDRAWN`: rút có lý do, vẫn lưu WORM, chỉ AU và TA thấy nội dung.
 
 ### 4.8. Máy trạng thái đánh giá tuân thủ
 
@@ -755,7 +756,7 @@ Hình cho thấy mọi đường vào bộ chỉ tiêu (tự tạo hoặc kế t
 
 **Luồng ngoại lệ.**
 
-- Tham số sai miền: ERR-16-057 (400); "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn."
+- Tham số sai miền: ERR-16-057 (400); "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên trường lọc, {lý do} = giá trị ngoài miền ở Phụ lục A)
 
 **Đầu ra.** `200`; `items[]` (`indicatorCode`, `name`, `groupCode`, `kind`, `unit`, `measurement`, `mandatory`, `state`, `activeVersion`, `pendingVersion`, `scope`, `derivedFrom`), `page`, `size`, `totalElements`, `facets`.
 
@@ -801,9 +802,9 @@ Hình cho thấy mọi đường vào bộ chỉ tiêu (tự tạo hoặc kế t
 
 **Luồng ngoại lệ.**
 
-- Mã đã dùng: ERR-16-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
-- Mã hoặc tổ hợp thuộc tính sai: ERR-16-003 (400); "Mã chỉ tiêu chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự."
-- Đã có phiên bản đang soạn: ERR-16-006 (409); "Chỉ tiêu {mã} đang có phiên bản {n} ở trạng thái {trạng thái}. Hoàn tất hoặc rút phiên bản đó trước."
+- Mã đã dùng: ERR-16-002 (409); "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có."
+- Mã hoặc tổ hợp thuộc tính sai: ERR-16-003 (400); "{Trường} chưa hợp lệ: {yêu cầu}." ({Trường} = Mã chỉ tiêu, {yêu cầu} = chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự; tổ hợp thuộc tính sai thì {yêu cầu} nêu tổ hợp được phép)
+- Đã có phiên bản đang soạn: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = mở phiên bản mới, {đối tượng} = phiên bản {n} của chỉ tiêu {mã})
 - Sửa trực tiếp chỉ tiêu mẫu: ERR-16-014 (403); "Chỉ tiêu mẫu dùng chung không sửa trực tiếp được. Tạo phiên bản tùy biến của tỉnh."
 
 **Đầu ra.** `201`; `indicatorCode`, `version`, `state = DRAFT`, `ETag`; tiêu đề `Location`.
@@ -868,8 +869,8 @@ Hình cho thấy mọi đường vào bộ chỉ tiêu (tự tạo hoặc kế t
 
 - Biểu thức sai cú pháp hoặc sai kiểu: ERR-16-008 (422); "Công thức chưa đúng ở vị trí {dòng}:{cột}: {mô tả}."
 - Biến chưa có nguồn: ERR-16-009 (422); "Biến {metricCode} chưa có nguồn số liệu nào. Đăng ký nguồn trước khi dùng."
-- Sửa đồng thời: ERR-16-004 (409); "Phiên bản đã được người khác sửa. Tải lại để xem thay đổi."
-- Phiên bản không ở `DRAFT`: ERR-16-006 (409); "Không thể sửa khi phiên bản đang ở trạng thái {trạng thái}."
+- Sửa đồng thời: ERR-16-004 (409); "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." ({Đối tượng} = Phiên bản)
+- Phiên bản không ở `DRAFT`: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = sửa, {đối tượng} = phiên bản)
 
 **Đầu ra.** Lưu: `200`, phiên bản với `formula`, `variables`, `ETag`. Thử tính: `200`, `results[]` (`periodCode`, `value`, `completeness`, `missingMetrics[]`, `elapsedMs`), `dryRunHash`.
 
@@ -928,7 +929,7 @@ Ví dụ công thức và kết quả thử tính của KPI-01:
 **Luồng ngoại lệ.**
 
 - Ngưỡng không đơn điệu hoặc ngoài miền: ERR-16-010 (422); "Ngưỡng chưa hợp lệ: với chiều {chiều}, mốc xanh phải {lớn hơn hoặc nhỏ hơn} mốc vàng."
-- Sửa đồng thời: ERR-16-004 (409); "Phiên bản đã được người khác sửa. Tải lại để xem thay đổi."
+- Sửa đồng thời: ERR-16-004 (409); "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." ({Đối tượng} = Phiên bản)
 
 **Đầu ra.** `200`; khối `target` (`baseline`, `target`, `targetDate`, `targetMode`), `thresholds`, `decimals`, `ETag`.
 
@@ -989,9 +990,9 @@ Ví dụ công thức và kết quả thử tính của KPI-01:
 **Luồng ngoại lệ.**
 
 - Chưa thử tính nội dung hiện tại: ERR-16-011 (422); "Thử tính phiên bản sau lần sửa cuối trước khi gửi duyệt."
-- Tự duyệt: ERR-16-005 (403); "Anh/chị là người soạn hoặc gửi duyệt nên không được tự duyệt."
-- Thiếu ý kiến khi yêu cầu sửa: ERR-16-007 (422); "Nhập ý kiến (tối thiểu 20 ký tự)."
-- Trạng thái đã đổi: ERR-16-006 (409); "Không thể duyệt khi phiên bản đang ở trạng thái {trạng thái}."
+- Tự duyệt: ERR-16-005 (403); "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = soạn hoặc gửi duyệt, {thao tác} = tự duyệt)
+- Thiếu ý kiến khi yêu cầu sửa: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = ý kiến, {n} = 20)
+- Trạng thái đã đổi: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = duyệt, {đối tượng} = phiên bản)
 
 **Đầu ra.** `200`; `version`, `state`, `approvedBy`, `approvedAt`, `effectiveFrom`.
 
@@ -1057,7 +1058,7 @@ Hình cho thấy kiểm bốn mắt diễn ra ở máy chủ khi duyệt, không
 
 - Còn báo cáo đang duyệt dùng chỉ tiêu: ERR-16-013 (409); "Chỉ tiêu {mã} đang có trong {n} báo cáo chờ duyệt. Hoàn tất các báo cáo này trước khi ngừng."
 - Chỉ tiêu thay không hợp lệ: ERR-16-054 (422); "Chỉ tiêu thay thế {mã} phải đang hiệu lực và cùng loại giá trị."
-- Thiếu lý do: ERR-16-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
+- Thiếu lý do: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do, {n} = 20)
 
 **Đầu ra.** Ngừng: `200`, `state = RETIRED`, `replacedBy`. Lịch sử: `200`, `items[]`. So sánh: `200`, `diff[]` (`field`, `from`, `to`).
 
@@ -1102,7 +1103,7 @@ Hình cho thấy kiểm bốn mắt diễn ra ở máy chủ khi duyệt, không
 **Luồng ngoại lệ.**
 
 - Tổng trọng số khác 100: ERR-16-012 (422); "Tổng trọng số năm nhóm đang là {tổng}. Điều chỉnh cho bằng 100."
-- Mã nhóm lạ: ERR-16-003 (400); "Nhóm {mã} không thuộc năm nhóm chỉ tiêu."
+- Mã nhóm lạ: ERR-16-003 (400); "{Trường} chưa hợp lệ: {yêu cầu}." ({Trường} = Mã nhóm {mã}, {yêu cầu} = phải là một trong năm nhóm `KET_NOI`, `CHIA_SE`, `DU_LIEU`, `VAN_HANH`, `KIEN_TRUC`)
 
 **Đầu ra.** `200`; `groups[]`, `effectiveFrom`, `ETag`.
 
@@ -1148,7 +1149,7 @@ Hình cho thấy kiểm bốn mắt diễn ra ở máy chủ khi duyệt, không
 
 **Luồng ngoại lệ.**
 
-- Chỉ tiêu đã kế thừa: ERR-16-002 (409); "Chỉ tiêu {mã} đã có trong bộ chỉ tiêu của tỉnh."
+- Chỉ tiêu đã kế thừa: ERR-16-002 (409); "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." ({Đối tượng} = Chỉ tiêu)
 - Xung đột tùy biến chưa giải quyết: ERR-16-055 (409); "Trường {trường} đã được tỉnh tùy biến và mẫu cũng thay đổi. Chọn giữ bản nào."
 
 **Đầu ra.** Kế thừa: `201`, `adopted[]`, `skipped[]`. Cập nhật: `200`, `newDraftVersion` hoặc `dismissed = true`.
@@ -1218,7 +1219,7 @@ Hình cho thấy nhóm C chỉ đọc một chỗ là bảng quan sát; số li�
 - Cấu hình thiếu: ERR-16-015 (422); "Nguồn loại {loại} cần {trường}. Bổ sung trước khi lưu."
 - Thử thất bại: ERR-16-016 (422); "Không đọc được dữ liệu từ nguồn {mã}: {lý do}. Kiểm tra quyền và cấu hình."
 - Ngừng nguồn còn chỉ tiêu phụ thuộc: ERR-16-017 (409); "Nguồn {mã} là nguồn duy nhất của {n} chỉ tiêu đang hiệu lực."
-- Mã đã dùng: ERR-16-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Mã đã dùng: ERR-16-002 (409); "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có."
 
 **Đầu ra.** `201` hoặc `200`; `sourceCode`, `sourceType`, `state`, `contract.metricCodes[]`, `priority`, `ETag`.
 
@@ -1335,7 +1336,7 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 
 **Kích hoạt.** Tới lịch `cron` của nguồn; nút "Kéo ngay" hoặc "Đọc bù" ở UI-16-06; kỳ chuyển `COLLECTING` mà biến của nguồn chưa có quan sát.
 
-**Đầu vào.** Kéo ngay: không. Đọc bù: `from`, `to` (khoảng kỳ, ≤ 12 tháng), `reason`.
+**Đầu vào.** Kéo ngay: không. Đọc bù: `from`, `to` (khoảng kỳ, ≤ 12 tháng; vượt: ERR-16-060), `reason`.
 
 **Luồng xử lý chính.**
 
@@ -1350,8 +1351,8 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 **Luồng ngoại lệ.**
 
 - Gọi API lỗi: ERR-16-106; hiển thị ở UI-16-06 "Kéo số từ {mã} lỗi lần {n}: {mã HTTP hoặc lý do}."
-- Khoảng đọc bù quá 12 tháng: ERR-16-057 (400); "Khoảng đọc bù tối đa 12 tháng."
-- Nguồn đang tạm dừng: ERR-16-006 (409); "Nguồn {mã} đang tạm dừng. Tiếp tục nguồn trước khi kéo."
+- Khoảng đọc bù quá 12 tháng: ERR-16-060 (400); "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 12)
+- Nguồn đang tạm dừng: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = kéo số, {đối tượng} = nguồn {mã}, {trạng thái} = `PAUSED`)
 
 **Đầu ra.** Kéo ngay, đọc bù: `202`, `ingestLogId`; kết quả xem ở nhật ký tiếp nhận.
 
@@ -1398,8 +1399,9 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 
 - Lược đồ sai: ERR-16-101 (400); "Quan sát thứ {i} sai lược đồ: {trường}."
 - Ngoài hợp đồng: ERR-16-102 (403); "Chỉ số {metricCode} không thuộc hợp đồng của nguồn {mã}."
-- Xung đột tham chiếu: ERR-16-103 (409); "Quan sát {idempotencyRef} đã có với giá trị khác."
-- Kỳ đã chốt: ERR-16-104 (422); "Kỳ {kỳ} đã chốt; quan sát lưu làm số liệu trễ."
+- Xung đột tham chiếu: ERR-16-103 (409); "Quan sát {idempotencyRef} đã có với giá trị khác. Cần kiểm tra ở phân hệ nguồn."
+- Khóa chống trùng dùng lại với lô khác nội dung: ERR-16-058 (409); "Khóa chống trùng {khóa} đã dùng cho yêu cầu khác nội dung trong 24 giờ. Tạo khóa mới rồi gửi lại." Áp cho mọi lệnh `POST` có `Idempotency-Key` của PH-16.
+- Kỳ đã chốt: ERR-16-104 (422); "Quan sát thuộc kỳ {kỳ} đã chốt, được lưu làm số liệu trễ và không tính."
 
 **Đầu ra.** `202` khi mọi phần tử được nhận; `207` khi có phần tử lỗi; thân `results[]` (`index`, `status` `ACCEPTED`, `DUPLICATE`, `REJECTED`, `code`).
 
@@ -1447,7 +1449,7 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 
 - Nguồn quá hạn: ERR-16-107; hiển thị ở UI-16-05 "Nguồn {mã} không có số mới từ {thời điểm}."
 - Nguồn lỗi liên tiếp: ERR-16-108; hiển thị "Nguồn {mã} lỗi {n} lần liên tiếp, đã chuyển trạng thái Lỗi."
-- Tạm dừng thiếu lý do: ERR-16-007 (422); "Nhập lý do (tối thiểu 20 ký tự)."
+- Tạm dừng thiếu lý do: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do, {n} = 20)
 
 **Đầu ra.** Tạm dừng, tiếp tục: `200`, `state`. Danh sách nguồn: `freshness` (`lastObservedAt`, `ageHours`, `state`).
 
@@ -1496,9 +1498,9 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 - Giá trị ngoài miền: ERR-16-019 (422); "Giá trị {giá trị} nằm ngoài miền cho phép của chỉ tiêu ({miền})."
 - Thiếu bằng chứng: ERR-16-018 (422); "Số liệu tay cần ít nhất một bằng chứng (tệp hoặc số văn bản)."
 - Tệp nhập sai mẫu hoặc quá giới hạn: ERR-16-020 (422); "Tệp không đúng mẫu nhập số liệu hoặc vượt 2.000 dòng. Tải mẫu mới nhất."
-- Tệp bằng chứng sai loại, quá cỡ: ERR-16-053 (400); "Tệp {tên} không được nhận: chỉ PDF, ảnh, XLSX, DOCX tối đa 20 MB."
+- Tệp bằng chứng sai loại, quá cỡ: ERR-16-053 (400); "Tệp {tên} không được nhận: chỉ PDF, ảnh, XLSX, DOCX tối đa {n} MB." ({n} = `16.manual.max-file-mb`, mặc định 20)
 - Đã có số được xác nhận: ERR-16-021 (409); "Kỳ {kỳ} đã có số được xác nhận cho chỉ tiêu này. Tạo bản đính chính."
-- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Đề nghị quản trị tỉnh mở lại kỳ nếu cần sửa số."
+- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Mở lại kỳ nếu cần sửa hoặc tính lại."
 
 **Đầu ra.** `201` hoặc `200`; `manualId`, `state`, `evidence[]` (`fileName`, `sha256`, `docNumber`, `docDate`). Nhập tệp: `200`, `importId`, `rows[]` (`row`, `status`, `errors[]`).
 
@@ -1548,7 +1550,7 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 **Luồng xử lý chính.**
 
 1. Người xác nhận mở bản nhập; hệ thống hiện giá trị, phương pháp, bằng chứng (xem trực tiếp tệp), giá trị kỳ trước.
-2. Hệ thống kiểm người xác nhận khác người nhập và có vai trò được giao (ERR-16-005).
+2. Hệ thống kiểm người xác nhận khác người nhập và có vai trò được giao (tự xác nhận: ERR-16-005; không thuộc `confirmerRoles`: ERR-16-059).
 3. Chấp nhận: hệ thống chuyển `ACCEPTED`, ghi quan sát nguồn `MANUAL` với `sourceRef = manualId`; bản bị thay (`supersedes`) chuyển `REJECTED` lý do "đã đính chính".
 4. Từ chối: hệ thống chuyển `REJECTED` kèm ý kiến, báo người nhập.
 5. Hệ thống phát EVT-16-04; kỳ đã tính thì xếp tính lại (FR-16-023).
@@ -1557,9 +1559,10 @@ Hình cho thấy xác nhận offset chỉ xảy ra sau khi ghi xong; PH-16 dừn
 
 **Luồng ngoại lệ.**
 
-- Tự xác nhận hoặc không đúng vai trò: ERR-16-005 (403); "Anh/chị là người nhập hoặc không thuộc vai trò được xác nhận chỉ tiêu này."
-- Từ chối thiếu ý kiến: ERR-16-007 (422); "Nhập lý do từ chối (tối thiểu 20 ký tự)."
-- Trạng thái đã đổi: ERR-16-006 (409); "Bản nhập đang ở trạng thái {trạng thái}, không thể quyết định."
+- Tự xác nhận: ERR-16-005 (403); "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = nhập, {thao tác} = tự xác nhận)
+- Không thuộc vai trò xác nhận của chỉ tiêu: ERR-16-059 (403); "Anh/chị không thuộc vai trò được giao xác nhận {đối tượng} này." ({đối tượng} = số liệu của chỉ tiêu {mã})
+- Từ chối thiếu ý kiến: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do từ chối, {n} = 20)
+- Trạng thái đã đổi: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = quyết định, {đối tượng} = bản nhập)
 
 **Đầu ra.** `200`; `manualId`, `state`, `decidedBy`, `decidedAt`.
 
@@ -1600,7 +1603,7 @@ Hình cho thấy quan sát nguồn `MANUAL` chỉ được ghi ở bước chấ
 ::: dac-ta
 **Mục đích.** Cho cán bộ tổng hợp tìm được vì sao một số không lên bảng điều khiển và xử lý lại sau khi phân hệ nguồn sửa.
 
-**Tác nhân, quyền.** TA, TO (`PERM-16-source`) xử lý lại; mọi vai trò có `PERM-16-read` xem nhật ký; PO xem toàn nền tảng.
+**Tác nhân, quyền.** TA, TO (`PERM-16-source`) xử lý lại; nhánh "Nhận giá trị mới" cần thêm `PERM-16-run`; mọi vai trò có `PERM-16-read` xem nhật ký; PO xem toàn nền tảng.
 
 **Mức ưu tiên, đợt.** S · Đợt 3.
 
@@ -1614,7 +1617,7 @@ Hình cho thấy quan sát nguồn `MANUAL` chỉ được ghi ở bước chấ
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm bộ lọc (khoảng thời gian ≤ 36 tháng; sai: ERR-16-057) và trả nhật ký, quan sát, bản tin bị loại theo tenant.
+1. Hệ thống kiểm bộ lọc (tham số sai: ERR-16-057; khoảng thời gian quá 36 tháng: ERR-16-060) và trả nhật ký, quan sát, bản tin bị loại theo tenant.
 2. Người dùng chọn bản tin bị loại sau khi đã sửa hợp đồng hoặc lược đồ, bấm "Xử lý lại".
 3. Hệ thống chạy lại bước chuẩn hóa và kiểm (FR-16-010 bước 2–6) cho từng bản tin; đạt thì ghi quan sát và đánh dấu `REPROCESSED`, không đạt thì cập nhật lý do mới.
 4. Hệ thống trả số đạt, số còn lỗi.
@@ -1623,8 +1626,8 @@ Hình cho thấy quan sát nguồn `MANUAL` chỉ được ghi ở bước chấ
 
 **Luồng ngoại lệ.**
 
-- Bộ lọc sai: ERR-16-057 (400); "Khoảng thời gian tra cứu tối đa 36 tháng."
-- Bản tin đã xử lý: ERR-16-006 (409); "Bản tin {mã} đã được xử lý lại trước đó."
+- Khoảng tra quá dài: ERR-16-060 (400); "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 36)
+- Bản tin đã xử lý: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = xử lý lại, {đối tượng} = bản tin {mã}, {trạng thái} = `REPROCESSED`)
 
 **Đầu ra.** Tra: `200`, `items[]`, `page`, `totalElements`. Xử lý lại: `200`, `reprocessed`, `stillRejected[]`.
 
@@ -1719,7 +1722,7 @@ Hình cho thấy tính lại không phải đường riêng: nó tạo một l�
 
 **Kích hoạt.** Lịch `0 30 1 * * *` cho mọi kỳ chưa chốt; nút "Tổng hợp ngay" ở UI-16-08; FR-16-023.
 
-**Đầu vào.** `trigger` (`SCHEDULE`, `MANUAL`, `RECOMPUTE`, `LATE_DATA`), `indicatorCodes[]` (tùy chọn, rỗng là toàn bộ), `reason` khi `MANUAL`.
+**Đầu vào.** `trigger` (`SCHEDULE`, `MANUAL`, `RECOMPUTE`, `LATE_DATA`; API-16-050 chỉ nhận `MANUAL`, `SCHEDULE` và `LATE_DATA` do hệ thống tạo, `RECOMPUTE` đi qua API-16-055), `indicatorCodes[]` (tùy chọn, rỗng là toàn bộ), `reason` khi `MANUAL`.
 
 **Luồng xử lý chính.**
 
@@ -1733,7 +1736,7 @@ Hình cho thấy tính lại không phải đường riêng: nó tạo một l�
 
 **Luồng ngoại lệ.**
 
-- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Mở lại kỳ nếu cần tính lại."
+- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Mở lại kỳ nếu cần sửa hoặc tính lại."
 - Đang có lần chạy: ERR-16-023 (409); "Kỳ {kỳ} đang được tổng hợp (bắt đầu {thời điểm}). Chờ lần này xong."
 - Quá thời gian: ERR-16-110; hiển thị ở UI-16-09 "Lần tổng hợp vượt {n} phút và đã dừng. Kết quả lần trước được giữ."
 
@@ -1972,12 +1975,12 @@ Hình cho thấy danh sách phiên bản được chụp ở đầu lần tổng
 3. Hệ thống tạo lần tổng hợp `trigger = LATE_DATA` hoặc `RECOMPUTE` (FR-16-018).
 4. Sau khi xong, báo cáo `DRAFT` của kỳ hiện dải "Số liệu kỳ đã được tính lại" với nút làm mới (FR-16-026).
 
-**Luồng thay thế.** `16.late-data.recompute = false`: hệ thống chỉ ghi quan sát, hiện "Có {n} số liệu mới chưa tính" ở UI-16-08.
+**Luồng thay thế.** Yêu cầu tự động đến khi kỳ đang có lần chạy: hệ thống ghi mốc `recomputeRequestedAt` của kỳ và tạo lần `LATE_DATA` ngay sau khi lần đang chạy kết thúc, không trả lỗi. `16.late-data.recompute = false`: hệ thống chỉ ghi quan sát, hiện "Có {n} số liệu mới chưa tính" ở UI-16-08.
 
 **Luồng ngoại lệ.**
 
-- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Mở lại kỳ nếu cần tính lại."
-- Đang có lần chạy: ERR-16-023 (409); "Kỳ {kỳ} đang được tổng hợp. Yêu cầu tính lại sẽ chạy sau lần này."
+- Kỳ đã chốt: ERR-16-022 (409); "Kỳ {kỳ} đã chốt. Mở lại kỳ nếu cần sửa hoặc tính lại."
+- Tính lại tay khi đang có lần chạy: ERR-16-023 (409); "Kỳ {kỳ} đang được tổng hợp (bắt đầu {thời điểm}). Chờ lần này xong."
 
 **Đầu ra.** `202`, `runId`.
 
@@ -2023,9 +2026,9 @@ Hình cho thấy danh sách phiên bản được chụp ở đầu lần tổng
 
 **Luồng ngoại lệ.**
 
-- Chưa đủ điều kiện chốt: ERR-16-025 (422); "Chưa chốt được kỳ {kỳ}: {lý do, ví dụ còn 2 số liệu tay chờ xác nhận}."
+- Chưa đủ điều kiện chốt: ERR-16-025 (422); "Chưa chốt được kỳ {kỳ}: {lý do}." (ví dụ {lý do} = còn 2 số liệu tay chờ xác nhận)
 - Còn báo cáo đang duyệt: ERR-16-026 (409); "Kỳ {kỳ} có báo cáo đang duyệt. Trả báo cáo về nháp trước khi mở lại kỳ."
-- Thiếu lý do: ERR-16-007 (422); "Nhập lý do mở lại (tối thiểu 50 ký tự)."
+- Thiếu lý do: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do mở lại, {n} = 50)
 
 **Đầu ra.** `200`; `periodCode`, `state`, `closedAt`, `officialRunId`.
 
@@ -2033,7 +2036,7 @@ Hình cho thấy danh sách phiên bản được chụp ở đầu lần tổng
 
 **Hậu điều kiện.** Kỳ `CLOSED` hoặc `REOPENED`.
 
-**Sự kiện phát ra.** Không.
+**Sự kiện phát ra.** EVT-16-14 khi kỳ `CLOSED` hoặc `REOPENED` (kèm `fromState`, `officialRunId`, lý do mở lại).
 
 **Kiểm toán.** Có: người, kỳ, lý do, lần tổng hợp chính thức, danh sách báo cáo bị gắn cờ.
 
@@ -2089,7 +2092,7 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 **Luồng ngoại lệ.**
 
 - Mẫu không hợp lệ: ERR-16-027 (422); "Mẫu chưa hợp lệ: {phần} {lý do}."
-- Mã đã dùng: ERR-16-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Mã đã dùng: ERR-16-002 (409); "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có."
 
 **Đầu ra.** `201` hoặc `200`; `templateCode`, `version`, `sections[]`, `ETag`. Xem trước: `200`, liên kết PDF tạm (hết hạn 1 giờ).
 
@@ -2134,8 +2137,8 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 
 **Luồng ngoại lệ.**
 
-- Kỳ chưa tính: ERR-16-028 (422); "Kỳ {kỳ} chưa có kết quả tổng hợp. Chạy tổng hợp trước khi lập báo cáo."
-- Mã đã dùng: ERR-16-002 (409); "Mã {mã} đã được dùng. Chọn mã khác."
+- Kỳ chưa tính: ERR-16-028 (422); "Kỳ {kỳ} chưa có kết quả tổng hợp hoặc chưa chốt. Hoàn tất trước khi lập hoặc gửi báo cáo."
+- Mã đã dùng: ERR-16-002 (409); "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có."
 
 **Đầu ra.** `201`; `reportCode`, `state = DRAFT`, `runId`, `requiredExplanations[]`, `ETag`.
 
@@ -2167,7 +2170,7 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 
 **Kích hoạt.** Soạn ở UI-16-11, phần `NARRATIVE` hoặc ô "Giải trình" cạnh chỉ tiêu.
 
-**Đầu vào.** Phần: `sectionId`, `content` (văn bản định dạng hạn chế: đoạn, danh sách, in đậm; ≤ 20.000 ký tự). Giải trình: `indicatorCode`, `cause`, `action`, `dueDate` (tùy chọn); `If-Match`.
+**Đầu vào.** Phần: `sectionId`, `content` (văn bản định dạng hạn chế: đoạn, danh sách, in đậm; ≤ 20.000 ký tự). Giải trình: `indicatorCode`, `cause`, `action`, `dueDate` (tùy chọn). Thể thức: `documentNumber` (số ký hiệu, ≤ 64 ký tự), `recipientsNote` (nơi nhận, ≤ 2.000 ký tự), bắt buộc với `PERIODIC`, `NATIONAL` trước khi gửi duyệt (BR-16-027); `If-Match`.
 
 **Luồng xử lý chính.**
 
@@ -2179,8 +2182,8 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 
 **Luồng ngoại lệ.**
 
-- Sửa đồng thời: ERR-16-004 (409); "Báo cáo đã được người khác sửa. Tải lại để xem thay đổi."
-- Báo cáo không ở nháp: ERR-16-006 (409); "Báo cáo đang ở trạng thái {trạng thái}, không sửa được."
+- Sửa đồng thời: ERR-16-004 (409); "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." ({Đối tượng} = Báo cáo)
+- Báo cáo không ở nháp: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = sửa, {đối tượng} = báo cáo)
 
 **Đầu ra.** `200`; phần hoặc giải trình đã lưu, `missingExplanations[]`, `ETag`.
 
@@ -2208,7 +2211,7 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 
 **Truy vết.** REQ-16; FR cũ 019; FR-00-071, FR-00-072; ADR-046; Q16-04.
 
-**Tiền điều kiện.** Báo cáo `DRAFT`; với `PERIODIC`, `NATIONAL`: kỳ `CLOSED`.
+**Tiền điều kiện.** Gửi: báo cáo `DRAFT`; với `PERIODIC`, `NATIONAL`: kỳ `CLOSED`. Quyết định: báo cáo `IN_REVIEW`. Trả về soạn: báo cáo `APPROVED` chưa công bố.
 
 **Kích hoạt.** Nút "Gửi duyệt" ở UI-16-11; việc ở UI-16-12.
 
@@ -2216,27 +2219,28 @@ Hình cho thấy báo cáo đột xuất đi cùng đường duyệt như báo c
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm kỳ đã chốt (ERR-16-028), không còn giải trình thiếu (ERR-16-030), chỉ tiêu `mandatory` không `NO_DATA` (ERR-16-029).
+1. Hệ thống kiểm kỳ đã chốt (ERR-16-028), không còn giải trình thiếu (ERR-16-030), chỉ tiêu `mandatory` không `NO_DATA` (ERR-16-029), báo cáo `PERIODIC`, `NATIONAL` có số ký hiệu và nơi nhận (ERR-16-061).
 2. Hệ thống chuyển `IN_REVIEW`, khóa nội dung, phát EVT-16-07; PH-18 tạo việc cho người có `PERM-16-approve`.
 3. Người duyệt mở UI-16-12, xem PDF xem trước, bảng số, thuyết minh; hệ thống kiểm người duyệt khác người lập và người gửi (ERR-16-005).
 4. Duyệt: báo cáo `APPROVED`. Yêu cầu sửa: `CHANGES_REQUESTED` kèm ý kiến, phát EVT-16-09, người lập sửa tiếp ở `DRAFT`.
 
-**Luồng thay thế.** `16.report.four-eyes = false` (chỉ cho `AD_HOC` nội bộ): người lập có `PERM-16-approve` tự duyệt, kiểm toán ghi "không bốn mắt"; không áp dụng cho `PERIODIC`, `NATIONAL` (BR-16-004).
+**Luồng thay thế.** Báo cáo `APPROVED` chưa công bố cần sửa (ký số lỗi kéo dài ERR-16-031, phát hiện sai số trước công bố, cần mở lại kỳ theo ERR-16-026): người có `PERM-16-approve` chọn "Trả về soạn" (API-16-073) kèm ý kiến ≥ 20 ký tự; báo cáo chuyển `CHANGES_REQUESTED`, phát EVT-16-09, người lập sửa tiếp ở `DRAFT`. `16.report.four-eyes = false` (chỉ cho `AD_HOC` nội bộ): người lập có `PERM-16-approve` tự duyệt, kiểm toán ghi "không bốn mắt"; không áp dụng cho `PERIODIC`, `NATIONAL` (BR-16-004).
 
 **Luồng ngoại lệ.**
 
 - Thiếu chỉ tiêu bắt buộc: ERR-16-029 (422); "Chỉ tiêu bắt buộc {danh sách} chưa có số liệu. Báo cáo chính thức chưa gửi duyệt được."
+- Thiếu số ký hiệu hoặc nơi nhận: ERR-16-061 (422); "Báo cáo chính thức cần số ký hiệu và nơi nhận trước khi gửi duyệt."
 - Thiếu giải trình: ERR-16-030 (422); "Còn {n} chỉ tiêu chệch hoặc thiếu số chưa có giải trình."
-- Tự duyệt: ERR-16-005 (403); "Anh/chị là người lập hoặc gửi báo cáo nên không được tự duyệt."
-- Thiếu ý kiến: ERR-16-007 (422); "Nhập ý kiến (tối thiểu 20 ký tự)."
+- Tự duyệt: ERR-16-005 (403); "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập hoặc gửi báo cáo, {thao tác} = tự duyệt)
+- Thiếu ý kiến: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = ý kiến, {n} = 20)
 
 **Đầu ra.** `200`; `reportCode`, `state`, `submittedBy`, `reviewedBy`, `comment`.
 
 **Kết quả.** Báo cáo chỉ được công bố khi người thứ hai đồng ý; ý kiến yêu cầu sửa hiện ngay cạnh phần liên quan.
 
-**Hậu điều kiện.** Báo cáo `APPROVED` hoặc `CHANGES_REQUESTED`.
+**Hậu điều kiện.** Báo cáo `IN_REVIEW`, `APPROVED` hoặc `CHANGES_REQUESTED` (kể cả khi trả về từ `APPROVED`).
 
-**Sự kiện phát ra.** EVT-16-07 khi gửi; EVT-16-09 khi `CHANGES_REQUESTED`.
+**Sự kiện phát ra.** EVT-16-07 khi gửi; EVT-16-09 khi `CHANGES_REQUESTED` (từ `IN_REVIEW` hoặc `APPROVED`).
 
 **Kiểm toán.** Có: người gửi, người duyệt, quyết định, ý kiến, băm nội dung.
 
@@ -2299,7 +2303,7 @@ Hình cho thấy công bố là một chuỗi nguyên tử: chỉ khi ký số v
 - Ký số không sẵn sàng: ERR-16-031 (503); "Dịch vụ ký số đang gián đoạn. Báo cáo vẫn ở trạng thái Đã duyệt, thử công bố lại sau."
 - Dựng PDF lỗi: ERR-16-113; hiển thị ở UI-16-12 "Không dựng được tệp báo cáo: {lý do}."
 - Lưu WORM lỗi: ERR-16-114; hiển thị "Không lưu được bản công bố vào kho lưu trữ. Báo cáo chưa được công bố."
-- Tự công bố: ERR-16-005 (403); "Anh/chị là người lập báo cáo nên không được công bố."
+- Tự công bố: ERR-16-005 (403); "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập báo cáo, {thao tác} = công bố)
 
 **Đầu ra.** `200`; `reportCode`, `version`, `state = PUBLISHED`, `publishedAt`, `contentHash`, `signature` (người ký, thời điểm, chứng thư), `wormRef`.
 
@@ -2344,8 +2348,8 @@ Hình cho thấy công bố là một chuỗi nguyên tử: chỉ khi ký số v
 
 **Luồng ngoại lệ.**
 
-- Thiếu lý do: ERR-16-007 (422); "Nhập lý do (tối thiểu 50 ký tự)."
-- Báo cáo không ở `PUBLISHED`: ERR-16-006 (409); "Chỉ báo cáo đã công bố mới đính chính hoặc rút được."
+- Thiếu lý do: ERR-16-007 (422); "Nhập {nội dung} (tối thiểu {n} ký tự)." ({nội dung} = lý do, {n} = 50)
+- Báo cáo không ở `PUBLISHED`: ERR-16-006 (409); "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." ({thao tác} = đính chính hoặc rút, {đối tượng} = báo cáo {mã}; chỉ `PUBLISHED` mới đính chính, rút được)
 - Sửa trực tiếp bản công bố: ERR-16-032 (409); "Báo cáo đã công bố không sửa được. Dùng chức năng đính chính."
 
 **Đầu ra.** Đính chính: `201`, `version`, `state = DRAFT`. Rút: `200`, `state = WITHDRAWN`.
@@ -2390,7 +2394,7 @@ Hình cho thấy công bố là một chuỗi nguyên tử: chỉ khi ký số v
 
 **Luồng ngoại lệ.**
 
-- Không có quyền xem trạng thái: ERR-16-001 (404); "Không tìm thấy báo cáo {mã} trong tỉnh đang làm việc."
+- Không có quyền xem trạng thái: ERR-16-001 (404); "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = báo cáo)
 
 **Đầu ra.** `200`; `items[]` (`reportCode`, `title`, `reportType`, `periodCode`, `state`, `latestVersion`, `publishedAt`, `needsCorrection`), `versions[]`.
 
@@ -2494,8 +2498,8 @@ Hình cho thấy năm đường ra cùng đọc một nguồn đã tính, không
 
 **Luồng ngoại lệ.**
 
-- Vượt giới hạn dòng: ERR-16-034 (422); "Dữ liệu xuất vượt {n} dòng. Thu hẹp bộ lọc."
-- Không đủ quyền với đối tượng: ERR-16-037 (403); "Anh/chị không được xuất {đối tượng} này."
+- Vượt giới hạn dòng: ERR-16-034 (422); "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." ({n} = `16.export.max-rows`, {đơn vị} = dòng)
+- Không đủ quyền với đối tượng: ERR-16-037 (403); "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này." ({đối tượng} = báo cáo hoặc bảng chỉ tiêu được yêu cầu xuất)
 - Liên kết hết hạn: ERR-16-035 (410); "Liên kết tải đã hết hạn. Tạo lại yêu cầu xuất."
 - Xuất lỗi: ERR-16-115; hiển thị ở thông báo "Xuất {tên} không thành công: {lý do}."
 
@@ -2604,8 +2608,8 @@ Hình cho thấy PH-16 không tự gửi thư; mọi thông báo đi qua PH-13 �
 
 **Luồng ngoại lệ.**
 
-- Phạm vi không cho phép: ERR-16-037 (403); "Ứng dụng không được đọc chỉ tiêu của tỉnh {mã}."
-- Bộ lọc sai: ERR-16-057 (400); "Tham số {tên} không hợp lệ."
+- Phạm vi không cho phép: ERR-16-037 (403); "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này." ({đối tượng} = chỉ tiêu của tỉnh {mã})
+- Bộ lọc sai: ERR-16-057 (400); "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên tham số, {lý do} = giá trị ngoài miền)
 
 **Đầu ra.** `200`; `items[]` (`indicatorCode`, `periodCode`, `value`, `unit`, `status`, `completeness`, `version`, `reportCode`, `provisional`); tiêu đề `ETag`, `Cache-Control: max-age=300`.
 
@@ -2685,7 +2689,7 @@ Hình cho thấy PH-16 không tự gửi thư; mọi thông báo đi qua PH-13 �
 
 **Luồng xử lý chính.**
 
-1. Hệ thống chọn chỉ tiêu theo cấu hình "ghim lên Tổng quan" của tenant; không có thì lấy điểm tổng và chỉ tiêu `OFF_TRACK` có trọng số nhóm cao nhất.
+1. Hệ thống chọn chỉ tiêu theo tham số `16.overview.pinned-indicators` ("ghim lên Tổng quan", tối đa 8 mã chỉ tiêu, đặt ở UI-16-19 qua FR-16-055); không có thì lấy điểm tổng và chỉ tiêu `OFF_TRACK` có trọng số nhóm cao nhất.
 2. Hệ thống trả giá trị kỳ tháng gần nhất đã tính, trạng thái, xu hướng, liên kết tới UI-16-02.
 
 **Luồng thay thế.** Chưa có kỳ đã tính: trả thẻ rỗng với liên kết "Thiết lập chỉ tiêu".
@@ -2747,11 +2751,11 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 2. Hệ thống trả điểm tổng, năm điểm nhóm với tỷ lệ phủ, đếm chỉ tiêu theo trạng thái, danh sách chỉ tiêu `OFF_TRACK` và `AT_RISK` sắp theo trọng số, cờ thiếu nguồn.
 3. Hệ thống trả chuỗi 13 kỳ gần nhất của điểm tổng và điểm nhóm cho biểu đồ đường.
 
-**Luồng thay thế.** Kỳ chưa chốt: dải vàng "Số tạm tính đến {thời điểm}, chưa chốt".
+**Luồng thay thế.** Kỳ chưa chốt: dải vàng "Kỳ {kỳ} chưa chốt. Số liệu còn có thể đổi đến ngày chốt {ngày}." Công tắc "Chính thức, Mới nhất" trên thanh trên đổi `view` và là yêu cầu hiển thị bắt buộc.
 
 **Luồng ngoại lệ.**
 
-- Kỳ không tồn tại: ERR-16-001 (404); "Không tìm thấy kỳ {kỳ}."
+- Kỳ không tồn tại: ERR-16-001 (404); "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = kỳ)
 
 **Đầu ra.** `200`; `overallScore`, `groups[]`, `statusCounts`, `attention[]`, `series[]`, `flags[]`, `provisional`.
 
@@ -2783,7 +2787,7 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 **Kích hoạt.** Bấm một chỉ tiêu ở UI-16-01; mở `/giam-sat/chi-tieu/chi-so/{ma}`.
 
-**Đầu vào.** `indicatorCode`, `periodType`, `from`, `to` (≤ 36 tháng).
+**Đầu vào.** `indicatorCode`, `periodType`, `from`, `to` (≤ 36 tháng; vượt: ERR-16-060).
 
 **Luồng xử lý chính.**
 
@@ -2795,8 +2799,8 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 **Luồng ngoại lệ.**
 
-- Chỉ tiêu không có: ERR-16-001 (404); "Không tìm thấy chỉ tiêu {mã} trong tỉnh đang làm việc."
-- Khoảng quá dài: ERR-16-057 (400); "Khoảng thời gian tra cứu tối đa 36 tháng."
+- Chỉ tiêu không có: ERR-16-001 (404); "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = chỉ tiêu)
+- Khoảng quá dài: ERR-16-060 (400); "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 36)
 
 **Đầu ra.** `200`; `definition`, `series[]` (`periodCode`, `value`, `status`, `completeness`, `version`), `targetLine`, `lineage` khi yêu cầu.
 
@@ -2840,7 +2844,7 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 **Luồng ngoại lệ.**
 
-- Hai kỳ khác loại: ERR-16-057 (400); "Chỉ so sánh được hai kỳ cùng loại."
+- Hai kỳ khác loại: ERR-16-057 (400); "Tham số {trường} không hợp lệ: {lý do}." ({trường} = kỳ so sánh, {lý do} = hai kỳ phải cùng loại)
 
 **Đầu ra.** `200`; `items[]` (`indicatorCode`, `valueA`, `valueB`, `delta`, `deltaPct`, `statusA`, `statusB`, `definitionChanged`).
 
@@ -2928,7 +2932,7 @@ Hình cho thấy ba chức năng đầu phục vụ lãnh đạo trong một t�
 
 **Luồng ngoại lệ.**
 
-- PO chọn tenant không tồn tại: ERR-16-001 (404); "Không tìm thấy tỉnh {mã}."
+- PO chọn tenant không tồn tại: ERR-16-001 (404); "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." ({đối tượng} = tỉnh)
 
 **Đầu ra.** `200`; `sources`, `runs[]`, `exports`, `national`, `outboxLagSeconds`.
 
@@ -2989,7 +2993,7 @@ Hình cho thấy sổ có ba đường cập nhật; đối chiếu định kỳ
 
 **Luồng ngoại lệ.**
 
-- Bộ lọc sai: ERR-16-057 (400); "Bộ lọc không hợp lệ: {trường}."
+- Bộ lọc sai: ERR-16-057 (400); "Tham số {trường} không hợp lệ: {lý do}." ({trường} = tên trường lọc, {lý do} = giá trị ngoài miền ở Phụ lục A)
 
 **Đầu ra.** `200`; `items[]` (`componentCode`, `name`, `componentType`, `lifecycle`, `opsStatus`, `origin`, `complianceLevel`, `currentVersion`, `ownerOrgName`, `reconFlag`), `facets`.
 
@@ -3206,7 +3210,7 @@ Hình cho thấy sổ kiến trúc không gọi ngược phân hệ nguồn khi 
 
 - Thiếu kết quả hoặc bằng chứng: ERR-16-043 (422); "Còn {n} tiêu chí bắt buộc chưa có kết quả hoặc tiêu chí không đạt chưa có ghi chú."
 - Miễn trừ quá hạn tối đa: ERR-16-044 (422); "Miễn trừ tối đa {n} ngày."
-- Tự xác nhận: ERR-16-005 (403); "Anh/chị là người lập đánh giá nên không được tự xác nhận."
+- Tự xác nhận: ERR-16-005 (403); "Anh/chị là người {vai} nên không được {thao tác}." ({vai} = lập đánh giá, {thao tác} = tự xác nhận)
 - Bộ tiêu chí sai: ERR-16-045 (422); "Bộ tiêu chí chưa hợp lệ: {lý do}."
 
 **Đầu ra.** `201` hoặc `200`; `assessmentId`, `state`, `proposedLevel`, `confirmedLevel`, `confirmedBy`; miễn trừ: `waiverId`, `until`.
@@ -3270,7 +3274,7 @@ Hình cho thấy mức tuân thủ của thành phần chỉ đổi ở bước 
 
 **Luồng ngoại lệ.**
 
-- Đang có lần đối chiếu: ERR-16-056 (409); "Đã có lần đối chiếu đang chạy. Chờ lần này xong."
+- Đang có lần đối chiếu: ERR-16-056 (409); "Đã có lần {việc} đang chạy. Chờ lần này xong." ({việc} = đối chiếu)
 - Lệch phát hiện: ERR-16-120; hiển thị ở UI-16-14 tab "Lệch" "{n} thành phần lệch với {phân hệ}."
 
 **Đầu ra.** `202`, `reconId`; chi tiết: `items[]` (`kind`, `componentCode`, `sourceRef`, `diff`, `resolution`).
@@ -3315,7 +3319,7 @@ Hình cho thấy mức tuân thủ của thành phần chỉ đổi ở bước 
 
 **Luồng ngoại lệ.**
 
-- Sơ đồ quá lớn: ERR-16-034 (422); "Sơ đồ vượt 500 thành phần. Giảm độ sâu hoặc chọn thành phần gốc khác."
+- Sơ đồ quá lớn: ERR-16-034 (422); "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." ({n} = 500, {đơn vị} = thành phần; giảm độ sâu hoặc chọn thành phần gốc khác)
 
 **Đầu ra.** `202`, `exportId`.
 
@@ -3423,7 +3427,7 @@ Hình cho thấy hai loại gói dùng chung khung mẫu và khung nhật ký; �
 - Gửi quốc gia đang tắt: ERR-16-046 (409); "Chức năng gửi quốc gia chưa được bật cho tỉnh."
 - Báo cáo chưa công bố: ERR-16-052 (422); "Chỉ gửi được báo cáo đã công bố."
 - Gói sai lược đồ: ERR-16-048 (422); "Gói chưa đạt mẫu {mã}: {trường} {lý do}."
-- Đã nộp: ERR-16-049 (409); "Báo cáo {mã} phiên bản {n} đã được nộp ngày {ngày}, mã biên nhận {mã}."
+- Đã nộp: ERR-16-049 (409); "{Nội dung} đã được nộp ngày {ngày} (mã biên nhận {biên nhận}) và chưa thay đổi." ({Nội dung} = Báo cáo {mã} phiên bản {n})
 - Hệ quốc gia từ chối: ERR-16-117; hiển thị ở UI-16-17 "Hệ quốc gia từ chối gói: {mã lý do} {mô tả}."
 
 **Đầu ra.** `201`, `submissionId`, `state = PENDING`, `preview`; gửi: `202`, `state = SENDING`.
@@ -3489,7 +3493,7 @@ Hình cho thấy PH-16 chỉ nói chuyện với PH-14; thông tin xác thực, 
 
 **Luồng ngoại lệ.**
 
-- Gói trùng: ERR-16-049 (409); "Sổ kiến trúc không thay đổi từ lần nộp {ngày}."
+- Gói trùng: ERR-16-049 (409); "{Nội dung} đã được nộp ngày {ngày} (mã biên nhận {biên nhận}) và chưa thay đổi." ({Nội dung} = Sổ kiến trúc)
 - Gói sai lược đồ: ERR-16-048 (422); "Gói chưa đạt mẫu {mã}: {trường} {lý do}."
 - Lỗi kênh: ERR-16-118; hiển thị ở UI-16-17 "Gửi qua PH-14 không thành công, sẽ thử lại lần {n}."
 
@@ -3583,7 +3587,7 @@ Hình cho thấy PH-16 chỉ nói chuyện với PH-14; thông tin xác thực, 
 
 **Luồng ngoại lệ.**
 
-- Đang có lần đối soát: ERR-16-056 (409); "Đã có lần đối soát đang chạy. Chờ lần này xong."
+- Đang có lần đối soát: ERR-16-056 (409); "Đã có lần {việc} đang chạy. Chờ lần này xong." ({việc} = đối soát)
 
 **Đầu ra.** `202`, `reconId`; chi tiết: `items[]` (`kind`, `ref`, `expected`, `actual`, `suggestion`).
 
@@ -3632,7 +3636,7 @@ Nhóm I gồm tham số, kiểm toán, lưu giữ và chỉ số vận hành c�
 **Luồng ngoại lệ.**
 
 - Giá trị ngoài miền hoặc vượt trần: ERR-16-051 (422); "Giá trị {giá trị} của {khóa} nằm ngoài miền cho phép ({miền})."
-- Sửa đồng thời: ERR-16-004 (409); "Cài đặt đã được người khác sửa. Tải lại để xem thay đổi."
+- Sửa đồng thời: ERR-16-004 (409); "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." ({Đối tượng} = Cài đặt)
 
 **Đầu ra.** `200`; `settings[]` (`key`, `value`, `default`, `ceiling`, `updatedBy`, `updatedAt`), `ETag`.
 
@@ -3664,7 +3668,7 @@ Nhóm I gồm tham số, kiểm toán, lưu giữ và chỉ số vận hành c�
 
 **Kích hoạt.** Mỗi thao tác có ghi "Kiểm toán: Có" ở chương 6; mở UI-16-20.
 
-**Đầu vào.** Tra: `actor`, `action`, `objectType`, `objectRef`, `from`, `to` (≤ 12 tháng mỗi lần), `page`, `size`.
+**Đầu vào.** Tra: `actor`, `action`, `objectType`, `objectRef`, `from`, `to` (≤ 12 tháng mỗi lần; vượt: ERR-16-060), `page`, `size`.
 
 **Luồng xử lý chính.**
 
@@ -3676,7 +3680,7 @@ Nhóm I gồm tham số, kiểm toán, lưu giữ và chỉ số vận hành c�
 
 **Luồng ngoại lệ.**
 
-- Khoảng tra quá dài: ERR-16-057 (400); "Khoảng thời gian tra cứu tối đa 12 tháng mỗi lần."
+- Khoảng tra quá dài: ERR-16-060 (400); "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." ({n} = 12)
 - Tồn đọng chuyển kiểm toán: ERR-16-123; hiển thị ở PH-13 "Kiểm toán PH-16 tồn {n} bản ghi chưa chuyển."
 
 **Đầu ra.** `200`; `items[]` (`at`, `actor`, `role`, `action`, `objectType`, `objectRef`, `before`, `after`, `traceId`).
@@ -3849,9 +3853,9 @@ Yêu cầu dưới đo được, chặt hơn hoặc bằng NFR-00 của SRS và 
 | NFR-16-014 | Phát hiện nguồn quá hạn | Nguồn chuyển `STALE` và có thông báo ≤ 15 phút sau khi quá ngưỡng | Bộ quét 10 phút |
 | NFR-16-015 | Tự đăng ký kiến trúc | Thành phần xuất hiện ≤ 60 giây p95 sau sự kiện nguồn | Tải 10 sự kiện/giây |
 | NFR-16-016 | Gói sổ kiến trúc | Dựng và giao PH-14 gói 1.000 thành phần ≤ 5 phút (NFR cũ 001), không kể trễ hệ quốc gia | Một tenant |
-| NFR-16-017 | Sự kiện phát | Giao ít nhất một lần, trễ outbox p95 ≤ 5 giây | `kpi_outbox_lag_seconds` |
+| NFR-16-017 | Sự kiện phát | Giao ít nhất một lần, trễ outbox p95 ≤ 5 giây | `dh_kpi_outbox_lag_seconds` |
 | NFR-16-018 | Bảo mật kết nối | mTLS nội bộ (NFR-00-020); token máy đúng scope; 0 thông tin xác thực quốc gia trong `ph16_kpi`, log, cấu hình (NFR-00-022) | Quét gitleaks, kiểm cấu hình |
-| NFR-16-019 | Quan sát | Tối thiểu `kpi_observations_total{source,result}`, `kpi_source_state{source}`, `kpi_run_duration_seconds`, `kpi_run_completeness`, `kpi_indicator_status{group,status}`, `kpi_report_publish_total{result}`, `kpi_national_submission_total{type,state}`, `kpi_outbox_lag_seconds` | Prometheus, `traceId` xuyên suốt (NFR-00-051) |
+| NFR-16-019 | Quan sát | Tối thiểu `dh_kpi_observations_total{source,result}`, `dh_kpi_source_state{source,state}`, `dh_kpi_run_duration_seconds`, `dh_kpi_run_completeness`, `dh_kpi_indicator_status{group,status}`, `dh_kpi_publish_total{result}`, `dh_kpi_national_submission_total{type,state}`, `dh_kpi_outbox_lag_seconds`, `dh_arch_components{type,lifecycle}`, `dh_arch_register_lag_seconds`; tiền tố `dh_kpi_` cho mô-đun `kpi`, `dh_arch_` cho mô-đun `arch` | Prometheus, `traceId` xuyên suốt (NFR-00-051) |
 | NFR-16-020 | Cấu hình ngoài | Thêm chỉ tiêu, nguồn, mẫu gói không cần phát hành (NFR cũ 019); tham số áp dụng ≤ 60 giây (NFR-00-052) | Kiểm thử chức năng |
 | NFR-16-021 | Khả năng truy cập | WCAG 2.2 AA trên UI-16-01…20 (NFR-00-040); mọi biểu đồ có bảng số thay thế và không chỉ dùng màu để phân biệt trạng thái | axe-core, NVDA |
 | NFR-16-022 | Quy mô | 34 tenant × 50 chỉ tiêu × 120 kỳ tháng; 10 triệu quan sát mỗi tenant mỗi năm; 10.000 thành phần kiến trúc mỗi tenant | Ước lượng dung lượng ở D03-03 |
@@ -3860,7 +3864,7 @@ Yêu cầu dưới đo được, chặt hơn hoặc bằng NFR-00 của SRS và 
 
 ### 8.2. Tham số theo tenant
 
-Hai mươi bốn khóa dưới chỉnh được ở FR-16-055; cột "Miền, trần" ghi giới hạn PA đặt ở `PLATFORM`.
+Hai mươi lăm khóa dưới chỉnh được ở FR-16-055; cột "Miền, trần" ghi giới hạn PA đặt ở `PLATFORM`.
 
 | Khóa | Mặc định | Miền, trần | Ý nghĩa |
 |---|---|---|---|
@@ -3888,6 +3892,7 @@ Hai mươi bốn khóa dưới chỉnh được ở FR-16-055; cột "Miền, tr
 | `16.national.arch-schedule` | `0 0 3 1 * ?` | Quartz | Lịch gửi sổ kiến trúc định kỳ |
 | `16.compare.min-tenants` | 3 | 3…34 | Số tenant tối thiểu để so sánh |
 | `16.compliance.waiver-max-days` | 180 | 30…365 | Hạn miễn trừ tối đa |
+| `16.overview.pinned-indicators` | Rỗng | Tối đa 8 mã chỉ tiêu `ACTIVE`, phân tách bằng dấu phẩy | Chỉ tiêu ghim lên trang Tổng quan (FR-16-037); rỗng thì lấy điểm tổng và chỉ tiêu chệch |
 
 : Tham số theo tenant của PH-16
 
@@ -3903,7 +3908,7 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-16-002 | 409 | Mã đã tồn tại (chỉ tiêu, nguồn, báo cáo, mẫu, thành phần) |
 | ERR-16-003 | 400 | Dữ liệu sai lược đồ, sai mẫu mã, tổ hợp thuộc tính không hợp lệ |
 | ERR-16-004 | 409 | Xung đột phiên bản (`If-Match` không khớp `ETag`) |
-| ERR-16-005 | 403 | Vi phạm bốn mắt hoặc không thuộc vai trò được xác nhận |
+| ERR-16-005 | 403 | Vi phạm bốn mắt (người lập, nhập, soạn tự duyệt, xác nhận, công bố) |
 | ERR-16-006 | 409 | Trạng thái hiện tại không cho thao tác |
 | ERR-16-007 | 422 | Thiếu lý do, ý kiến hoặc ngắn hơn mức tối thiểu |
 | ERR-16-008 | 422 | Công thức CEL sai cú pháp hoặc sai kiểu |
@@ -3955,7 +3960,11 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-16-054 | 422 | Chỉ tiêu thay thế không hợp lệ |
 | ERR-16-055 | 409 | Cập nhật mẫu xung đột với tùy biến của tenant |
 | ERR-16-056 | 409 | Đã có lần đối chiếu, đối soát đang chạy |
-| ERR-16-057 | 400 | Tham số lọc, phân trang, khoảng thời gian ngoài miền |
+| ERR-16-057 | 400 | Tham số lọc, phân trang ngoài miền hoặc tổ hợp tham số không hợp lệ |
+| ERR-16-058 | 409 | `Idempotency-Key` dùng lại với nội dung khác trong 24 giờ |
+| ERR-16-059 | 403 | Người xác nhận không thuộc vai trò được giao của chỉ tiêu (`confirmerRoles`) |
+| ERR-16-060 | 400 | Khoảng thời gian tra cứu, đọc bù vượt mức tối đa |
+| ERR-16-061 | 422 | Báo cáo chính thức thiếu số ký hiệu hoặc nơi nhận |
 | ERR-16-101 | 400 | Quan sát sai lược đồ hoặc lệch tenant |
 | ERR-16-102 | 403 | Chỉ số ngoài hợp đồng của nguồn |
 | ERR-16-103 | 409 | Cùng `idempotencyRef` khác giá trị |
@@ -3986,17 +3995,17 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 
 ### 9.2. Thông báo hiển thị cho người dùng
 
-Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập màn hình D03-06-PH16 dùng đúng câu này; câu ở từng FR là biến thể theo ngữ cảnh của câu chuẩn.
+Câu dưới là câu chuẩn, mỗi mã một câu; `{…}` là biến điền lúc chạy. Mỗi FR, use case, màn hình và ca kiểm thử dùng đúng câu này, giá trị của biến theo ngữ cảnh ghi trong ngoặc sau câu ở từng FR. Ngữ cảnh khác hẳn được cấp mã riêng (ERR-16-058…061) thay vì thêm biến thể.
 
 | Mã | Câu hiển thị | Vị trí |
 |---|---|---|
-| ERR-16-001 | "Không tìm thấy {đối tượng} {mã} trong tỉnh đang làm việc." | Trang lỗi, thông báo nổi |
-| ERR-16-002 | "Mã {mã} đã được dùng. Chọn mã khác." | Dưới trường mã |
-| ERR-16-003 | "Mã chỉ tiêu chỉ gồm chữ thường, số và gạch nối, 3 đến 63 ký tự." | Dưới trường lỗi |
+| ERR-16-001 | "Không tìm thấy {đối tượng} {mã} trong phạm vi được xem." | Trang lỗi, thông báo nổi |
+| ERR-16-002 | "{Đối tượng} {mã} đã có trong tỉnh đang làm việc. Chọn mã khác hoặc mở bản đã có." | Dưới trường mã |
+| ERR-16-003 | "{Trường} chưa hợp lệ: {yêu cầu}." | Dưới trường lỗi |
 | ERR-16-004 | "{Đối tượng} đã được người khác sửa. Tải lại để xem thay đổi." | Hộp thoại |
-| ERR-16-005 | "Anh/chị là người lập hoặc gửi nên không được tự duyệt." | Thanh hành động duyệt |
-| ERR-16-006 | "Không thể thực hiện khi {đối tượng} đang ở trạng thái {trạng thái}." | Thông báo nổi |
-| ERR-16-007 | "Nhập lý do (tối thiểu {n} ký tự)." | Dưới ô lý do |
+| ERR-16-005 | "Anh/chị là người {vai} nên không được {thao tác}." | Thanh hành động duyệt |
+| ERR-16-006 | "Không thể {thao tác} khi {đối tượng} đang ở trạng thái {trạng thái}." | Thông báo nổi |
+| ERR-16-007 | "Nhập {nội dung} (tối thiểu {n} ký tự)." | Dưới ô lý do |
 | ERR-16-008 | "Công thức chưa đúng ở vị trí {dòng}:{cột}: {mô tả}." | Trình soạn công thức |
 | ERR-16-009 | "Biến {metricCode} chưa có nguồn số liệu nào. Đăng ký nguồn trước khi dùng." | Trình soạn công thức |
 | ERR-16-010 | "Ngưỡng chưa hợp lệ: với chiều {chiều}, mốc xanh phải {lớn hơn hoặc nhỏ hơn} mốc vàng." | Tab mục tiêu và ngưỡng |
@@ -4023,7 +4032,7 @@ Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập mà
 | ERR-16-031 | "Dịch vụ ký số đang gián đoạn. Báo cáo vẫn ở trạng thái Đã duyệt, thử công bố lại sau." | Thanh hành động công bố |
 | ERR-16-032 | "Báo cáo đã công bố không sửa được. Dùng chức năng đính chính." | Thông báo nổi |
 | ERR-16-033 | "Khoảng báo cáo từ {từ} đến {đến} không hợp lệ hoặc vượt 24 tháng." | Biểu mẫu báo cáo đột xuất |
-| ERR-16-034 | "Dữ liệu xuất vượt {n} dòng. Thu hẹp bộ lọc." | Hộp thoại xuất |
+| ERR-16-034 | "Dữ liệu vượt giới hạn {n} {đơn vị}. Thu hẹp bộ lọc hoặc phạm vi." | Hộp thoại xuất |
 | ERR-16-035 | "Liên kết tải đã hết hạn. Tạo lại yêu cầu xuất." | Trang tải |
 | ERR-16-036 | "Người nhận {địa chỉ} không hợp lệ hoặc không thuộc miền thư công vụ." | Biểu mẫu phân phối |
 | ERR-16-037 | "Anh/chị hoặc ứng dụng không được truy cập {đối tượng} này." | Thông báo nổi; trả cho bên gọi máy |
@@ -4038,15 +4047,19 @@ Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập mà
 | ERR-16-046 | "Chức năng gửi quốc gia chưa được bật cho tỉnh." | UI-16-17 |
 | ERR-16-047 | "Mẫu gói {mã} phiên bản {n} chưa hợp lệ: {lý do}." | UI-16-17 tab mẫu gói |
 | ERR-16-048 | "Gói chưa đạt mẫu {mã}: {trường} {lý do}." | Bản xem trước gói |
-| ERR-16-049 | "Nội dung này đã được nộp ngày {ngày}, mã biên nhận {mã}." | Bản xem trước gói |
+| ERR-16-049 | "{Nội dung} đã được nộp ngày {ngày} (mã biên nhận {biên nhận}) và chưa thay đổi." | Bản xem trước gói |
 | ERR-16-050 | "Gói {mã} đang ở trạng thái {trạng thái} hoặc đã gửi lại tối đa {n} lần." | UI-16-17 |
 | ERR-16-051 | "Giá trị {giá trị} của {khóa} nằm ngoài miền cho phép ({miền})." | UI-16-19 |
 | ERR-16-052 | "Chỉ gửi được báo cáo đã công bố." | Hộp thoại gửi quốc gia |
 | ERR-16-053 | "Tệp {tên} không được nhận: chỉ PDF, ảnh, XLSX, DOCX tối đa {n} MB." | Vùng tải tệp |
 | ERR-16-054 | "Chỉ tiêu thay thế {mã} phải đang hiệu lực và cùng loại giá trị." | Hộp thoại ngừng |
 | ERR-16-055 | "Trường {trường} đã được tỉnh tùy biến và mẫu cũng thay đổi. Chọn giữ bản nào." | Hộp thoại cập nhật mẫu |
-| ERR-16-056 | "Đã có lần đối chiếu đang chạy. Chờ lần này xong." | Thông báo nổi |
-| ERR-16-057 | "Bộ lọc không hợp lệ: {trường}. Kiểm tra lại giá trị đã chọn." | Thanh lọc |
+| ERR-16-056 | "Đã có lần {việc} đang chạy. Chờ lần này xong." | Thông báo nổi |
+| ERR-16-057 | "Tham số {trường} không hợp lệ: {lý do}." | Thanh lọc |
+| ERR-16-058 | "Khóa chống trùng {khóa} đã dùng cho yêu cầu khác nội dung trong 24 giờ. Tạo khóa mới rồi gửi lại." | Trả bên gọi; thông báo nổi |
+| ERR-16-059 | "Anh/chị không thuộc vai trò được giao xác nhận {đối tượng} này." | Thanh hành động xác nhận |
+| ERR-16-060 | "Khoảng thời gian tra cứu tối đa {n} tháng mỗi lần." | Thanh lọc, hộp thoại đọc bù |
+| ERR-16-061 | "Báo cáo chính thức cần số ký hiệu và nơi nhận trước khi gửi duyệt." | Hộp thoại gửi duyệt |
 | ERR-16-101 | "Quan sát thứ {i} sai lược đồ: {trường}." | Trả bên gọi máy; UI-16-06 |
 | ERR-16-102 | "Chỉ số {metricCode} không thuộc hợp đồng của nguồn {mã}." | Trả bên gọi máy; UI-16-06 |
 | ERR-16-103 | "Quan sát {idempotencyRef} đã có với giá trị khác. Cần kiểm tra ở phân hệ nguồn." | Trả bên gọi máy; UI-16-06 |
@@ -4075,6 +4088,30 @@ Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập mà
 
 : Câu thông báo theo mã lỗi của PH-16
 
+Ngưỡng `{n}` của ERR-16-007 theo chức năng (UC A-04):
+
+| Chức năng | `{nội dung}` | `{n}` |
+|---|---|---|
+| FR-16-005, FR-16-028 yêu cầu sửa, trả về soạn | ý kiến | 20 |
+| FR-16-006 ngừng chỉ tiêu; FR-16-013 tạm dừng nguồn | lý do | 20 |
+| FR-16-015 từ chối số liệu tay | lý do từ chối | 20 |
+| FR-16-024 mở lại kỳ (BR-16-011) | lý do mở lại | 50 |
+| FR-16-030 đính chính, rút báo cáo; FR-16-047 miễn trừ | lý do | 50 |
+
+: Ngưỡng độ dài lý do, ý kiến theo chức năng
+
+Câu giao diện không gắn mã lỗi (thông báo thành công, dải trạng thái; MH C-02). Câu rỗng của từng màn ghi ở mục "Trạng thái" của mỗi chương D03-06-PH16.
+
+| Ngữ cảnh | Câu hiển thị | Vị trí |
+|---|---|---|
+| Kỳ chưa chốt | "Kỳ {kỳ} chưa chốt. Số liệu còn có thể đổi đến ngày chốt {ngày}." | Dải vàng UI-16-01, UI-16-02 |
+| Kỳ được tính lại sau khi lập nháp | "Số liệu kỳ đã được tính lại." | Dải ở UI-16-11 kèm nút "Làm mới số" |
+| Lưu thành công | "Đã lưu {đối tượng} {tên}." | Thông báo nổi |
+| Công bố thành công | "Đã công bố báo cáo {mã}." | Thông báo nổi UI-16-12 |
+| Chưa tính lại khi tắt tự tính | "Có {n} số liệu mới chưa tính." | UI-16-08 |
+
+: Câu giao diện không gắn mã lỗi của PH-16
+
 ### 9.3. Sự kiện
 
 Topic theo quy ước `{tenant}.kpi.{thực-thể}.{sự-kiện}.v1`, đăng ký qua FR-10-067; ví dụ với tenant `T68`. Sự kiện chỉ mang mã, trạng thái, số tổng hợp, không mang nội dung báo cáo hay bằng chứng; phát qua outbox (ADR-042).
@@ -4094,6 +4131,7 @@ Topic theo quy ước `{tenant}.kpi.{thực-thể}.{sự-kiện}.v1`, đăng ký
 | EVT-16-11 | `t68.kpi.arch-compliance.assessed.v1` | Đánh giá `CONFIRMED`, miễn trừ, hết hạn miễn trừ | PH-13 |
 | EVT-16-12 | `t68.kpi.national-submission.state-changed.v1` | Gói quốc gia đổi trạng thái | PH-13, PH-14 |
 | EVT-16-13 | `t68.kpi.export.completed.v1` | Xuất xong hoặc lỗi | Người yêu cầu (qua PH-13) |
+| EVT-16-14 | `t68.kpi.period.state-changed.v1` | Kỳ `CLOSED` (số chính thức sẵn sàng) hoặc `REOPENED` (số có thể đổi) | PH-13, PH-17, PH-18 |
 
 : Sự kiện PH-16 phát
 
@@ -4101,7 +4139,7 @@ PH-16 tiêu thụ: EVT-01-03, EVT-02-05, EVT-02-06, EVT-02-13, EVT-04-01, EVT-04
 
 ### 9.4. Danh mục API
 
-Danh mục dưới là nguồn chuẩn mã API-16 cho tập D03-04-PH16 và `openapi-kpi.yaml`; đánh số liền theo nhóm chức năng, mỗi operation một mã. Tiền tố `/api/kpi/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn `/ingest/*` dành cho tài khoản máy (`kpi.ingest`, `arch.register`), `/feed/*` và `/cards` cho `kpi.read`, `/internal/*` chỉ mở trong mạng nội bộ cho PH-14. FR-16-010, 046, 058 không có operation riêng (tiêu thụ sự kiện, chỉ số Prometheus).
+Danh mục dưới là nguồn chuẩn mã API-16 cho tập D03-04-PH16 và `openapi-kpi.yaml`; đánh số liền theo nhóm chức năng, mỗi operation một mã. Tiền tố `/api/kpi/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn `/ingest/*` dành cho tài khoản máy (`kpi.ingest`, `arch.register`), `/feed/*` và `/cards` cho `kpi.read`, `/internal/*` chỉ mở trong mạng nội bộ cho PH-14. FR-16-010, 046, 058 không có operation riêng (tiêu thụ sự kiện, chỉ số Prometheus). Lệnh sửa và hành động trên tài nguyên cần `If-Match`, kể cả API-16-008, 009 để `dryRunHash` khớp nội dung vừa kiểm; mọi `POST` tạo hoặc chạy bất đồng bộ cần `Idempotency-Key` (dùng lại với thân khác: ERR-16-058). API-16-030 trả `202` khi mọi phần tử được nhận, `207` khi có phần tử lỗi; API-16-036 (tải mẫu nhập) và API-16-081 (tải tệp xuất) trả tệp trực tiếp; API-16-050 chỉ nhận `trigger = MANUAL`; API-16-073 dùng cho cả yêu cầu sửa báo cáo `IN_REVIEW` và trả về soạn báo cáo `APPROVED`; API-16-124 dùng scope `kpi.national-receipt`.
 
 | Mã | Phương thức | Đường dẫn | FR |
 |---|---|---|---|
@@ -4251,27 +4289,29 @@ Hai mươi màn dưới nằm dưới route gốc `/giam-sat/chi-tieu` (D03-06-0
 | UI-16-03 | Bộ chỉ tiêu (PTN-01) | `/giam-sat/chi-tieu/bo-chi-tieu` | TA, TO | Lọc theo nhóm, trạng thái, cách đo; nhóm và trọng số; cập nhật mẫu | 001, 006, 007, 008 |
 | UI-16-04 | Soạn định nghĩa chỉ tiêu (PTN-03) | `/giam-sat/chi-tieu/bo-chi-tieu/{ma}/sua` | TA | Tab thông tin, công thức và thử tính, mục tiêu và ngưỡng, lịch sử; gửi duyệt | 002, 003, 004, 005, 006 |
 | UI-16-05 | Nguồn số liệu (PTN-01) | `/giam-sat/chi-tieu/nguon` | TA, TO | Danh sách nguồn theo độ tươi, thêm, tạm dừng, tiếp tục | 009, 013 |
-| UI-16-06 | Chi tiết nguồn, nhật ký tiếp nhận (PTN-11) | `/giam-sat/chi-tieu/nguon/{ma}` | TO, PO | Cấu hình, hợp đồng, nhật ký, bị loại, xử lý lại, kéo ngay, đọc bù | 010, 011, 012, 013, 016 |
+| UI-16-06 | Chi tiết nguồn, nhật ký tiếp nhận (PTN-11) | `/giam-sat/chi-tieu/nguon/{ma}` | TO, PO | Cấu hình, tab "Hợp đồng chỉ số", nhật ký, bị loại, xử lý lại, kéo ngay, đọc bù | 010, 011, 012, 013, 016 |
 | UI-16-07 | Nhập số liệu tay (PTN-09) | `/giam-sat/chi-tieu/nhap` | TO, DS, SO | Biểu mẫu, nhập tệp có xem trước, bằng chứng, chờ xác nhận | 014, 015 |
 | UI-16-08 | Kỳ báo cáo và lần tổng hợp (PTN-01) | `/giam-sat/chi-tieu/ky` | TA, TO, PO | Lịch kỳ, tổng hợp ngay, chốt, mở lại, tab vận hành | 017, 018, 024, 042 |
 | UI-16-09 | Chi tiết lần tổng hợp (PTN-02) | `/giam-sat/chi-tieu/ky/{ma}` | TO | Tiến độ, độ đầy đủ, cờ, bảng giá trị, tính lại | 018, 019, 020, 023 |
 | UI-16-10 | Danh sách báo cáo (PTN-01) | `/giam-sat/chi-tieu/bao-cao` | VW, TA, TO, AU | Lọc, xem, phiên bản, xuất, bằng chứng, đính chính, rút, gửi quốc gia | 026, 030, 031, 033, 036 |
 | UI-16-11 | Soạn báo cáo (PTN-03) | `/giam-sat/chi-tieu/bao-cao/{ma}/sua` | TO, TA | Bản xem trước, thuyết minh, giải trình, làm mới số, gửi duyệt | 026, 027, 032 |
-| UI-16-12 | Duyệt và công bố (PTN-10) | `/giam-sat/chi-tieu/duyet` | TA, SO, DS | Hộp việc định nghĩa, số liệu tay, báo cáo; duyệt, yêu cầu sửa, công bố | 005, 015, 028, 029 |
-| UI-16-13 | Mẫu báo cáo và phân phối (PTN-12) | `/giam-sat/chi-tieu/mau-bao-cao` | TA | Mẫu, phần, xem trước; danh sách phân phối, lịch sử gửi | 025, 034 |
+| UI-16-12 | Duyệt và công bố (PTN-10) | `/giam-sat/chi-tieu/duyet` | TA, SO, DS | Hộp việc định nghĩa (gồm phiên bản nhận từ mẫu `COMMON`), số liệu tay, báo cáo; duyệt, yêu cầu sửa, trả về soạn, công bố | 005, 008, 015, 028, 029 |
+| UI-16-13 | Mẫu báo cáo và phân phối (PTN-12) | `/giam-sat/chi-tieu/mau-bao-cao` | TA | Mẫu, phần, xem trước; danh sách phân phối; tab "Lịch sử gửi" (API-16-085) | 025, 034 |
 | UI-16-14 | Sổ kiến trúc (PTN-01) | `/giam-sat/chi-tieu/kien-truc` | TA, TO, SO | Lọc theo loại, vòng đời, tuân thủ; tab lệch; đối chiếu; xuất | 043, 044, 048, 049 |
 | UI-16-15 | Chi tiết thành phần kiến trúc (PTN-02) | `/giam-sat/chi-tieu/kien-truc/{ma}` | TA, TO | Thông tin, phiên bản, phụ thuộc, vận hành, tuân thủ, sơ đồ | 045, 046, 047, 049 |
 | UI-16-16 | Đánh giá tuân thủ (PTN-04, ngăn kéo) | `/giam-sat/chi-tieu/kien-truc/{ma}/danh-gia` | SO, TA | Tiêu chí, kết quả, bằng chứng, mức đề xuất, xác nhận, miễn trừ | 047 |
-| UI-16-17 | Gửi quốc gia và nhật ký nộp (PTN-11) | `/giam-sat/chi-tieu/quoc-gia` | TA, AU, PA | Gói, trạng thái, nhật ký, biên nhận, gửi lại, mẫu gói, đối soát | 050, 051, 052, 053, 054 |
+| UI-16-17 | Gửi quốc gia và nhật ký nộp (PTN-11) | `/giam-sat/chi-tieu/quoc-gia` | TA, AU, PA | Gói, trạng thái, nhật ký, biên nhận, gửi lại; tab "Mẫu gói" và "Đối soát" | 050, 051, 052, 053, 054 |
 | UI-16-18 | So sánh liên tenant (PTN-06) | `/giam-sat/chi-tieu/so-sanh` | PA, PU | Phân bố, vị trí tỉnh ẩn danh | 041 |
 | UI-16-19 | Cài đặt (PTN-12) | `/giam-sat/chi-tieu/cai-dat` | TA, PA | Tham số `16.*`, lưu giữ | 055, 057 |
 | UI-16-20 | Nhật ký kiểm toán (PTN-11) | `/giam-sat/chi-tieu/kiem-toan` | AU, TA, PU | Tra cứu theo người, thao tác, đối tượng | 056 |
 
 : Danh sách màn hình của PH-16
 
+Route con dùng đoạn chữ thường không dấu (`chi-so`, `sua`, `danh-gia`) và tham số truy vấn tiếng Việt không dấu (`ky`, `che-do`, `nhom`, `trang-thai`) theo D03-06-PH16 mục 4.3.
+
 ### 10.2. Giao diện tiêu biểu
 
-Chưa có ảnh hi-fi cho PH-16; hai ảnh dưới sẽ được dựng ở tập màn hình D03-06-PH16 tại `03-thiet-ke/uiux/ph16/hifi/` theo bộ token Liquid Glass (ADR-020), biểu đồ ECharts (ADR-023). Đoạn thuyết minh là yêu cầu cho người dựng ảnh.
+Ảnh hi-fi của PH-16 nằm ở `03-thiet-ke/uiux/ph16/hifi/` (20 ảnh, dựng ở tập màn hình D03-06-PH16 theo bộ token Liquid Glass ADR-020, biểu đồ ECharts ADR-023); hai ảnh dưới là màn tiêu biểu, đoạn thuyết minh nêu yêu cầu hiển thị mà ảnh thể hiện.
 
 Màn tổng quan (UI-16-01, ảnh `ui-16-01.png`) là trang đầu của lãnh đạo. Thanh trên có bộ chọn kỳ (mặc định kỳ tháng gần nhất đã tính), công tắc "Chính thức, Mới nhất" và nút "So sánh". Hàng thứ nhất là thẻ điểm tổng (số lớn, mũi tên xu hướng, Δ so kỳ trước) cạnh năm vòng điểm nhóm Kết nối, Chia sẻ, Dữ liệu, Vận hành, Kiến trúc, mỗi vòng ghi tỷ lệ phủ. Hàng thứ hai là bảng "Chỉ tiêu cần chú ý" (đỏ trước, vàng sau) gồm tên, giá trị, mục tiêu, chip trạng thái có chữ và biểu tượng (không chỉ màu), nhãn "Thiếu một phần" khi `PARTIAL`. Dưới cùng là biểu đồ đường 13 kỳ của điểm tổng và năm nhóm, có nút "Xem dạng bảng". Dải vàng đầu trang hiện khi kỳ chưa chốt hoặc có nguồn `STALE`.
 
@@ -4476,7 +4516,8 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-16 (UC, SDD, CSDL, API,
 | `report.reportType` | `PERIODIC`, `AD_HOC`, `NATIONAL` | Báo cáo |
 | `report.state` | `DRAFT`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`, `PUBLISHED`, `SUPERSEDED`, `WITHDRAWN` | Mục 4.7 |
 | `report_template.section.type` | `SUMMARY`, `GROUP`, `INDICATOR_TABLE`, `CHART`, `NARRATIVE`, `ANNEX` | Mẫu báo cáo |
-| `report_template.state` (thêm) | `ACTIVE`, `RETIRED` | Mẫu báo cáo |
+| `report_template.state` (thêm) | `DRAFT` (phiên bản mẫu đang soạn), `ACTIVE`, `RETIRED` | Mẫu báo cáo |
+| `source_contract.state` (thêm) | `ACTIVE`, `RETIRED` | Hợp đồng chỉ số của nguồn |
 | `format` | `PDF`, `XLSX`, `CSV`, `JSON` | Mẫu, xuất |
 | `export_job.subject` (thêm) | `REPORT`, `INDICATOR_VALUES`, `OBSERVATIONS`, `ARCH_REGISTRY`, `ARCH_GRAPH` | FR-16-033, 049 |
 | `export_job.state` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `EXPIRED` | Xuất |
@@ -4499,6 +4540,24 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-16 (UC, SDD, CSDL, API,
 | `national_template.state` (thêm) | `DRAFT`, `ACTIVE`, `SUPERSEDED` | FR-16-050 |
 | `common_update.decision` (thêm) | `ACCEPTED`, `DISMISSED` | FR-16-008 |
 | `kpi_setting.scope` (thêm) | `PLATFORM`, `TENANT` | FR-16-055 |
+| `observation.channel` (thêm) | `EVENT`, `PULL_API`, `PUSH_API` (tập con của `sourceType`, kênh đã nhận quan sát) | FR-16-010, 011, 012 |
+| `manual_evidence.evidenceType` (thêm) | `FILE`, `DOCUMENT_NUMBER` | FR-16-014 |
+| `value_lineage.sourceKind` (thêm) | `OBSERVATION`, `MANUAL_VALUE`, `INDICATOR`, `PERIOD_VALUE` | FR-16-019 |
+| `report_approval.action` (thêm) | `SUBMIT`, `REQUEST_CHANGES`, `APPROVE`, `PUBLISH`, `WITHDRAW`, `CORRECT` | FR-16-028, 029, 030 |
+| `report_signature.format` (thêm) | `PDF_SIGNED` (chữ ký nhúng PDF), `DETACHED` (chữ ký tách rời) | FR-16-029, 036 |
+| `review_item.type` (thêm) | `INDICATOR_VERSION`, `MANUAL_VALUE`, `REPORT` | UI-16-12, API-16-078 |
+| `dashboard.view` (thêm) | `OFFICIAL`, `LATEST` | FR-16-038 |
+| `distribution.recipientType` (thêm) | `USER`, `GROUP`, `EMAIL` | FR-16-034 |
+| `arch_dependency.dependencyType` (thêm) | `CALLS`, `PUBLISHES`, `SUBSCRIBES`, `HOSTS`, `DEPENDS_ON` | FR-16-045, 049 |
+| `arch_ingest.status` (thêm) | `CREATED`, `UPDATED`, `UNCHANGED`, `REJECTED` | FR-16-044, API-16-101 |
+| `arch_component.change` (thêm) | `CREATED`, `LIFECYCLE_CHANGED`, `VERSION_ADDED`, `OPS_STATUS_CHANGED` | EVT-16-10 |
+| `arch_compliance.eventKind` (thêm) | `CONFIRMED`, `WAIVER_GRANTED`, `WAIVER_EXPIRED` | EVT-16-11 |
+| `compliance_waiver.state` (thêm) | `PENDING_APPROVAL`, `ACTIVE`, `EXPIRED`, `REVOKED`, `REJECTED` | FR-16-047 |
+| `arch_reconciliation.state` (thêm) | `RUNNING`, `SUCCEEDED`, `PARTIAL`, `FAILED` | FR-16-048 |
+| `arch_reconciliation.resolution` (thêm) | `OPEN`, `REGISTERED`, `RETIRED`, `UPDATED`, `IGNORED` | FR-16-048 bước 4 |
+| `national_submission_log.event` (thêm) | `CREATED`, `SENDING`, `SENT`, `ACKNOWLEDGED`, `REJECTED`, `FAILED`, `RETRY` | FR-16-053 |
+| `national_receipt.status` (thêm) | `ACKNOWLEDGED`, `REJECTED`, `FAILED` | API-16-124 |
+| `national_recon.scope` (thêm) | `ARCH`, `KPI`, `ALL` | FR-16-054 |
 
 : Nguồn chuẩn giá trị liệt kê của PH-16
 
@@ -4508,16 +4567,16 @@ PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 | Tài liệu | Đề nghị |
 |---|---|
-| D02-08 §3.2, §4 | Giữ `PERM-16-read`, `PERM-16-admin` và mở rộng vai trò theo ma trận 3.2 (read thêm PA, TO, SO, DS, PO, PU; admin thêm PA ở `COMMON`); thêm mười hai quyền `PERM-16-approve`, `PERM-16-source`, `PERM-16-manual`, `PERM-16-run`, `PERM-16-report`, `PERM-16-export`, `PERM-16-arch`, `PERM-16-arch-assess`, `PERM-16-national`, `PERM-16-compare`, `PERM-16-config`, `PERM-16-audit-read` (brief ghi "11 quyền"; đếm theo bảng là 12, gồm cả `PERM-16-audit-read`); cặp loại trừ ở 3.3; scope máy `kpi.read` (PH-17, cổng tỉnh, HTTT được cấp), `kpi.ingest` (phân hệ đẩy quan sát), `arch.register` (PH-01, 02, 04, 10, CI/GitOps); cân nhắc vai trò người duyệt lãnh đạo (Q16-04) |
+| D02-08 §3.2, §4 | Giữ `PERM-16-read`, `PERM-16-admin` và mở rộng vai trò theo ma trận 3.2 (read thêm PA, TO, SO, DS, PO, PU; admin thêm PA ở `COMMON`); thêm mười hai quyền `PERM-16-approve`, `PERM-16-source`, `PERM-16-manual`, `PERM-16-run`, `PERM-16-report`, `PERM-16-export`, `PERM-16-arch`, `PERM-16-arch-assess`, `PERM-16-national`, `PERM-16-compare`, `PERM-16-config`, `PERM-16-audit-read` (brief ghi "11 quyền"; đếm theo bảng là 12, gồm cả `PERM-16-audit-read`); cặp loại trừ ở 3.3; scope máy `kpi.read` (PH-17, cổng tỉnh, HTTT được cấp), `kpi.ingest` (phân hệ đẩy quan sát), `arch.register` (PH-01, 02, 04, 10, CI/GitOps), `kpi.national-receipt` (PH-14 trả biên nhận, API-16-124); cân nhắc vai trò người duyệt lãnh đạo (Q16-04) |
 | D00-04 §2, §3.1, §3.2, D00-02 | Dòng PH-16: tên "Báo cáo chỉ tiêu và sổ kiến trúc", tình trạng theo tập đã nộp; mở dải ADR 160–164 (đề xuất, chưa có tệp, nội dung ở 12.3); tiền tố tham số `16.`; topic `{tenant}.kpi.*`; chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận đủ bảy tập |
 | D00-03 | Ghi chú "PH-16 dùng gián tiếp, Nâng cấp (gián tiếp)" cho LGC-APIM-026, LGC-PAY-013, LGC-PAY-020, LGC-HUB-001…004, LGC-BUS-027, LGC-NGSP-004 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-16 làm chính |
 | D02-01, D02-02 §5 | D02-01: thêm BP-11 "Tổng hợp và báo cáo chỉ tiêu chuyển đổi số" (mục 2.5); ghi KPI-01…18 được tính ở PH-16. D02-02 §5: dòng PH-16 có 58 FR, tham chiếu D02-03-PH16 |
 | D02-03-PH14, D03-02-PH14, D03-04-PH14 | Thêm loại nền tảng quốc gia mới cho gửi báo cáo chỉ tiêu và gửi sổ kiến trúc (đích tạm thời là hệ giả lập khi chưa có đặc tả, Q16-02, Q16-03); nhận gói từ outbox PH-16 kèm `contentHash`, trả trạng thái gửi và biên nhận về API-16-124 hoặc sự kiện; giữ thông tin xác thực quốc gia ở OpenBao |
 | D02-03-PH01, PH05, PH07, PH19 | Cung cấp API chỉ số theo kỳ (scope đọc chỉ số cấp cho PH-16): PH-01 số HTTT theo trạng thái, thời gian kết nạp (KPI-01, 05); PH-05 xác nhận API-05-092 cho PH-16; PH-07 số danh mục quản lý tập trung, độ trễ đồng bộ (KPI-10, 11); PH-19 tỷ lệ đối soát khớp, thời gian phát hiện lệch (KPI-13, 14), lọc `isTest`; API liệt kê đối tượng phục vụ đối chiếu sổ kiến trúc (FR-16-048) |
-| PH-13 (khi viết) | Sự kiện hoặc API chỉ số sẵn sàng tháng, độ trễ gateway p95, MTTD, MTTR mức 1, tỷ lệ nhật ký khai thác đủ (KPI-03, 04, 07, 15, 16); sự kiện trạng thái sức khỏe đối tượng giám sát cho FR-16-046; tiêu thụ EVT-16-03, 05, 06, 08…12; nhận kiểm toán PH-16; kênh thư công vụ cho phân phối |
+| PH-13 (khi viết) | Sự kiện hoặc API chỉ số sẵn sàng tháng, độ trễ gateway p95, MTTD, MTTR mức 1, tỷ lệ nhật ký khai thác đủ (KPI-03, 04, 07, 15, 16); sự kiện trạng thái sức khỏe đối tượng giám sát cho FR-16-046; tiêu thụ EVT-16-03, 05, 06, 08…12, 14; nhận kiểm toán PH-16; kênh thư công vụ cho phân phối |
 | PH-20 (khi viết) | Gọi FR-16-008 khi khởi tạo tenant; đẩy thời gian khởi tạo tenant (KPI-12) qua `kpi.ingest` hoặc sự kiện (Q16-16); API tổ chức chủ quản |
 | D02-03-PH08 | Xác nhận lược đồ EVT-08-14 có trường `kpiSchemaVersion` và `snapshotId` dùng làm `idempotencyRef`; API-08-122 làm đường đọc bù với scope `dq.read`; ngưỡng KPI chất lượng do PH-16 quyết định (trả lời Q08-15: `diem-chat-luong-du-lieu` ≥ 80 điểm, giả định) |
-| D02-03-PH02, PH04, PH10 | Xác nhận EVT-02-05, 06, 13, EVT-04-01, 07, 09, EVT-10-01, 04, 06 mang đủ trường cho tự đăng ký kiến trúc (`componentCode`, phiên bản, `dependsOn`) và cho chỉ tiêu; cấp scope `catalog:metrics-read` cho PH-16 (API-02-079, API-02-097); PH-10 đăng ký 13 topic `{tenant}.kpi.*` theo FR-10-067 |
+| D02-03-PH02, PH04, PH10 | Xác nhận EVT-02-05, 06, 13, EVT-04-01, 07, 09, EVT-10-01, 04, 06 mang đủ trường cho tự đăng ký kiến trúc (`componentCode`, phiên bản, `dependsOn`) và cho chỉ tiêu; cấp scope `catalog:metrics-read` cho PH-16 (API-02-079, API-02-097); PH-10 đăng ký 14 topic `{tenant}.kpi.*` theo FR-10-067 |
 | D02-03-PH15 | Tiêu thụ EVT-16-10 để hiển thị trạng thái kiến trúc trên trang API; xác nhận bỏ Backstage (ADR 075) để sổ kiến trúc PH-16 là nguồn duy nhất |
 | Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-16 dẫn |
 | D03-06-00 | Dòng 37: cây menu dưới `/giam-sat/chi-tieu` theo 10.1 (20 route con); thẻ PH-16 trên trang `/tong-quan` (FR-16-037) |
@@ -4528,11 +4587,43 @@ PH-16 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 ## Phụ lục C. Nhật ký hấp thụ đề nghị
 
-Phụ lục ghi các đề nghị từ tập UC, SDD, CSDL, API, MH, TC của PH-16 được hấp thụ vào FRS ở các bản sau. Bản 0.1: chưa có.
+Phụ lục ghi các đề nghị dành cho FRS từ tập UC, SDD, CSDL, API, MH của PH-16 và quyết định ở bản 0.2: 33 đề nghị, nhận 27 (kể cả nhận một phần), không nhận 6. Đề nghị của tập test case D05-02-PH16 xét ở bản sau.
 
-| Mã | Nguồn | Đề nghị | Xử lý |
-|---|---|---|---|
-| — | — | Chưa có | — |
+| Mã | Nguồn | Đề nghị | Quyết định | Chỗ sửa |
+|---|---|---|---|---|
+| HT-01 | UC A-01 | ERR-16-057 mang nhiều câu (lọc, khoảng tra 36 tháng, đọc bù 12 tháng, kiểm toán 12 tháng, hai kỳ khác loại, tham số `kpi.read`) | Nhận: ERR-16-057 giữ câu chung có `{trường}`, `{lý do}`; khoảng thời gian vượt tối đa tách mã mới ERR-16-060 | §9.1, §9.2; FR-16-001, 011, 016, 035, 039, 040, 043, 056 |
+| HT-02 | UC A-02 | ERR-16-003 chỉ nói mã chỉ tiêu nhưng FR-007, 009, 045 cũng dùng | Nhận: câu chung "{Trường} chưa hợp lệ: {yêu cầu}.", FR ghi giá trị biến | §9.2; FR-16-002, 007 |
+| HT-03 | UC A-03 | ERR-16-005 có bốn câu theo vai | Nhận: tham số `{vai}`, `{thao tác}`; trường hợp không thuộc `confirmerRoles` tách mã ERR-16-059 | §3.3, §9.1, §9.2; FR-16-005, 015, 028, 029, 047 |
+| HT-04 | UC A-04 | ERR-16-006, 007 có câu, ngưỡng `n` khác nhau theo FR | Nhận: tham số `{thao tác}`, `{nội dung}`, `{n}`; thêm bảng ngưỡng `n` theo chức năng | §9.2; FR-16-002, 003, 005, 006, 011, 013, 015, 016, 024, 027, 028, 030 |
+| HT-05 | UC A-05 | ERR-16-034 dùng cho sơ đồ vượt 500 thành phần | Nhận: câu chung `{n}` `{đơn vị}` | §9.2; FR-16-033, 049 |
+| HT-06 | UC A-06 | ERR-16-049 ở FR-052 khác câu chuẩn | Nhận: câu chung `{Nội dung}`, `{biên nhận}` | §9.2; FR-16-051, 052 |
+| HT-07 | UC A-07 | ERR-16-056 chỉ nói đối chiếu | Nhận: tham số `{việc}` (đối chiếu, đối soát) | §9.2; FR-16-048, 054 |
+| HT-08 | UC A-08 | Báo cáo `APPROVED` chưa có cách quay về soạn (Q16-46) | Nhận: `APPROVED` → `CHANGES_REQUESTED` → `DRAFT` qua API-16-073, không thêm operation | §4.7; FR-16-028; §9.4 |
+| HT-09 | UC A-09 | Cấu hình "ghim lên Tổng quan" chưa có tham số (Q16-47) | Nhận: tham số `16.overview.pinned-indicators` | FR-16-037; §8.2; Tóm tắt |
+| HT-10 | UC A-10 | Số ký hiệu, nơi nhận theo BR-16-027 chưa có trường (Q16-48) | Nhận: `documentNumber`, `recipientsNote` bắt buộc với `PERIODIC`, `NATIONAL` khi gửi duyệt; mã mới ERR-16-061 | FR-16-027, 028; §9.1, §9.2 |
+| HT-11 | UC A-11 | Nhánh "Nhận giá trị mới" cần `PERM-16-run` | Nhận | §3.2 ghi chú; FR-16-016 |
+| HT-12 | UC A-12 | Chưa có sự kiện kỳ `CLOSED`, `REOPENED` | Nhận: EVT-16-14 `{tenant}.kpi.period.state-changed.v1` | §4.5; FR-16-024; §9.3; Phụ lục B; Tóm tắt |
+| HT-13 | SDD §13.6 | NFR-16-019 đổi tiền tố `kpi_` thành `dh_kpi_`, thêm `dh_arch_*` | Nhận | NFR-16-017, 019 |
+| HT-14 | SDD §13.6 | Enum CSDL 0.1 lệch FRS (kết quả tiêu chí, trạng thái bộ tiêu chí, mẫu gói, đối tượng xuất, trạng thái chỉ tiêu, `REPROCESSED`, loại phụ thuộc) | Nhận: CSDL 0.2 theo Phụ lục A; FRS thêm `arch_dependency.dependencyType` và các enum chỉ có ở CSDL | Phụ lục A |
+| HT-15 | SDD §13.6 | Ghi hạ tầng dùng chung `platform.shared` | Không nhận: chia gói Java là việc của SDD, FRS chỉ nêu hai mô-đun nghiệp vụ | — |
+| HT-16 | SDD §13.6 | Ghi `16.national.enabled` là cờ chính | Không nhận: §8.2 đã có, mặc định `false`, FR-16-051, 052 kiểm (ERR-16-046) | — |
+| HT-17 | SDD §13.6 | Thêm hạn `16.late-data` khớp bảng tham số | Không nhận: FRS đã có `16.late-data.recompute`, `16.late-data.debounce-minutes`; hạn nhận số trễ theo `16.period.close-day` | — |
+| HT-18 | SDD §13.6 | Nhận Q16-20…29 | Không nhận: câu hỏi của SDD giữ ở D03-02-PH16 §13.5 | — |
+| HT-19 | CSDL §9.2 số 1 | EN-16-13, 18, 33, 37 không có bảng | Nhận một phần: CSDL 0.2 thêm bảng cho EN-16-13, 33; EN-16-18, 37 tính khi hỏi | §4.2 |
+| HT-20 | CSDL §9.2 số 2 | Cột thêm so với FRS (`completeness`, `is_current`, `retain_until`…) | Không nhận: tên cột vật lý và ánh xạ trường API ↔ cột giữ ở D03-03-PH16 | — |
+| HT-21 | CSDL §9.2 số 7 | `PartitionMaintenanceJob`, kiểm `completeness` khi công bố, kiểm toán dùng kho chung | Không nhận ở FRS: thuộc SDD, API; FR-16-029, 056 đã nêu hành vi | — |
+| HT-22 | API Phụ lục A | Enum cục bộ của API (`ReviewItemType`, `DashboardView`, `ArchIngestStatus`, `NationalReconScope`, `RecipientType`, `ReceiptStatus`, `change` EVT-16-10, `kind` EVT-16-11) | Nhận | Phụ lục A |
+| HT-23 | API Phụ lục A | Scope máy `kpi.national-receipt` cho API-16-124 (Q16-57) | Nhận | §3.3; §9.4; Phụ lục B |
+| HT-24 | API Phụ lục A | API-16-008, 009 yêu cầu `If-Match` | Nhận (FR-16-003 đã có `If-Match`) | §9.4 |
+| HT-25 | API Phụ lục A | API-16-050 chỉ nhận `trigger = MANUAL` | Nhận | FR-16-018; §9.4 |
+| HT-26 | API Phụ lục A | API-16-036, 081 trả tệp trực tiếp; API-16-030 trả `207` | Nhận (FR-16-012 đã có `207`) | §9.4 |
+| HT-27 | API Phụ lục A | Mã riêng cho `Idempotency-Key` dùng lại với thân khác (Q16-56) | Nhận: ERR-16-058 (409) | §9.1, §9.2; FR-16-012; §9.4 |
+| HT-28 | MH C-01 | §10.2 còn câu "chưa có ảnh hi-fi" | Nhận | §10.2 |
+| HT-29 | MH C-02 | Câu giao diện không gắn mã lỗi | Nhận | §9.2 bảng câu không gắn mã |
+| HT-30 | MH C-03 | UI-16-12 có việc nhận từ mẫu `COMMON`, thêm FR-16-008 | Nhận | §10.1 |
+| HT-31 | MH C-04 | Quy ước route con, tham số truy vấn | Nhận | §10.1 |
+| HT-32 | MH C-05 | Tab "Mẫu gói", "Đối soát", "Lịch sử gửi", "Hợp đồng chỉ số" | Nhận | §10.1 |
+| HT-33 | MH C-06 | Công tắc "Chính thức, Mới nhất", dải kỳ chưa chốt; số ký hiệu bắt buộc khi gửi duyệt | Nhận | FR-16-038; FR-16-027, 028 |
 
 : Nhật ký hấp thụ đề nghị vào FRS PH-16
 
@@ -4541,5 +4632,6 @@ Phụ lục ghi các đề nghị từ tập UC, SDD, CSDL, API, MH, TC của PH
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 58 FR (M 37, S 17, C 4) đủ 17 mục chia chín nhóm, phủ 22 FR của SRS cũ; bộ 24 chỉ tiêu mẫu `COMMON` ứng với KPI-01…18; bảy máy trạng thái; 39 thực thể; 35 BR, 22 NFR, 24 tham số; 57 mã lỗi control và 25 mã thu thập, tính toán, gửi kèm câu thông báo; 13 sự kiện phát; 130 API dự kiến; 20 màn hình; 19 câu hỏi mở; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; đề xuất ADR 160–164; bỏ Backstage và NAS Connector riêng của SRS cũ |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ với UC, SDD, CSDL, API, MH 0.1 (Phụ lục C, 27 đề nghị nhận, 6 không nhận): mỗi mã lỗi một câu chuẩn có tham số, FR ghi giá trị biến; mã mới ERR-16-058 (`Idempotency-Key` dùng lại), ERR-16-059 (không thuộc vai trò xác nhận), ERR-16-060 (khoảng thời gian vượt tối đa), ERR-16-061 (thiếu số ký hiệu, nơi nhận); sự kiện EVT-16-14 kỳ `CLOSED`, `REOPENED`; báo cáo `APPROVED` trả về soạn; tham số `16.overview.pinned-indicators`; scope `kpi.national-receipt`; 19 enum bổ sung, thêm `DRAFT` vào `report_template.state` ở Phụ lục A; tiền tố chỉ số `dh_kpi_`, `dh_arch_`; §10.2 trỏ ảnh hi-fi đã có |
 
 : Lịch sử phiên bản
