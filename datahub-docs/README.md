@@ -71,7 +71,7 @@ Các tài liệu D02-03, D02-04, D03-02, D03-03, D03-04, D03-06, D05-02 được
 | 1 | PH-07 Danh mục dùng chung | Đợt 2 (mẫu) | Mẫu để duyệt độ sâu; nhiều nghiệp vụ Aita | Xong bản 0.2 đủ bảy tập (xem mục dưới), chờ duyệt tổng thể |
 | 2 | PH-04 Lõi tích hợp và trình thiết kế luồng | Đợt 2 | Thay Bus và Tooling (70 chức năng cũ); trình thiết kế là màn phức tạp nhất của console; mã repo đã có phần lớn nhưng lệch thiết kế ở 13 điểm (GAP-04-01…13) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-060…069, chờ duyệt tổng thể |
 | 3 | PH-19 Thanh toán | Đợt 2 | Nghiệp vụ mới hoàn toàn (Q3): đối soát, hoàn tiền, đa kênh | Xong bản 0.1 đủ bảy tập cộng BRD, khung truy vết, ADR-040…049 (26/11/2026), chờ duyệt tổng thể |
-| 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Chưa bắt đầu |
+| 4 | PH-05 Bộ điều hợp và kết nối | Đợt 3 | PH-04 phụ thuộc trực tiếp (kết nối, Kamelet, tài khoản CSDL chỉ đọc theo Q359) | Xong bản 0.1 đủ bảy tập (xem mục dưới) và ADR-059, chờ duyệt tổng thể |
 | 5 | PH-10 Sự kiện | Đợt 3 | Thay Hub Pulsar | Chưa bắt đầu |
 | 6 | PH-02, PH-03, PH-01 | Đợt 3 | Thay API Management | Chưa bắt đầu |
 | 7 | PH-14, PH-18, PH-13, PH-12, PH-20 | Đợt 3–4 | MVP còn lại | Chưa bắt đầu |
@@ -104,6 +104,20 @@ Viết theo khuôn và độ sâu của PH-07. Trình thiết kế (UI-04-04…1
 | D03-04-PH04 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH04-api-tich-hop.md) | `openapi-integration.yaml` (70 operation), `asyncapi-integration.yaml` (14 sự kiện), script sinh tại `03-thiet-ke/api/ph04/` |
 | D03-06-PH04 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md) | — |
 | D05-02-PH04 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH04-test-case.md) | 186 ca; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph04/` |
+
+## Phân hệ PH-05 Bộ điều hợp và kết nối
+
+Bộ đầu tiên viết theo cách tối ưu token (D00-04): khuôn ở `00-chung/khuon/`, một phiên mỗi tập, commit theo chương, soát mã bằng `kiem_tra_ma.py`, một lượt rà chéo cuối. Phạm vi: kết nối nguồn có bí mật ghi một chiều ở OpenBao, kiểm tra kết nối theo bước, tài khoản CSDL động theo luồng (Q359), bộ điều hợp tám giao thức, CDC Debezium trên Strimzi Kafka Connect (ADR-059), danh mục Kamelet có kiểm tra tĩnh KR-01…14. Trình cấu hình bộ điều hợp (UI-05-10) viết siêu chi tiết.
+
+| Mã | Tài liệu | Tệp đi kèm |
+|---|---|---|
+| D02-03-PH05 | [Đặc tả yêu cầu chức năng](02-yeu-cau/frs/D02-03-PH05-frs-bo-dieu-hop.md) | — |
+| D02-04-PH05 | [Đặc tả use case](02-yeu-cau/use-case/D02-04-PH05-use-case-bo-dieu-hop.md) | — |
+| D03-02-PH05 | [Thiết kế chi tiết phần mềm](03-thiet-ke/sdd/D03-02-PH05-sdd-bo-dieu-hop.md) | — |
+| D03-03-PH05 | [Thiết kế CSDL](03-thiet-ke/csdl/D03-03-PH05-csdl-bo-dieu-hop.md) | DDL `ph05_adapter.sql` (23 bảng), bài kiểm cô lập 23 khối, công cụ sinh bảng tại `03-thiet-ke/csdl/ph05/` |
+| D03-04-PH05 | [Đặc tả API và sự kiện](03-thiet-ke/api/D03-04-PH05-api-bo-dieu-hop.md) | `openapi-adapter.yaml` (92 operation), `asyncapi-adapter.yaml` (17 kênh), script sinh tại `03-thiet-ke/api/ph05/` |
+| D03-06-PH05 | [Thiết kế giao diện màn hình](03-thiet-ke/uiux/D03-06-PH05-man-hinh-bo-dieu-hop.md) | — |
+| D05-02-PH05 | [Kịch bản và test case](05-kiem-thu/test-case/D05-02-PH05-test-case.md) | 155 ca; bảng tính `.xlsx`, Gherkin, công cụ sinh ma trận tại `05-kiem-thu/test-case/ph05/` |
 
 ## Phân hệ PH-19 Thanh toán
 

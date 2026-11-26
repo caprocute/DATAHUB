@@ -11,3 +11,4 @@ Ghi tay trong lúc viết, dùng để điền bảng so sánh ở README §3.
 | CSDL xong | 03:04 | DDL 23 bảng + bài kiểm cô lập 23 khối chạy trên PostgreSQL 16; một lần sửa DDL (tên Kamelet SOAP); bảng cột sinh bằng script |
 | API xong | 03:13 | spec.py có sẵn từ phiên FRS; viết gen_openapi (114 lược đồ), gen_asyncapi, gen_md, check_contracts; đọc mẫu công cụ PH-04 (gen_openapi, gen_asyncapi, gen_md) và check_contracts PH-19 |
 | Màn hình xong | 03:22 | 17 màn, UI-05-10 siêu chi tiết (lưới R1–R6, 8 nhóm trường, xem trước, phím, trợ năng); viết 3 phần nối tệp, 2 commit; chỉ đối chiếu tên CMP bằng grep, không đọc lại D03-05 |
+| Test case xong | 03:35 | 36 kịch bản, 155 ca (83 P1), 10 UAT; công cụ chép từ ph04 bằng sed (lỗi thay -04- làm hỏng tên D03-04, đã sửa); thêm fill_doc.py ghi bảng kịch bản, số ca, ma trận vào tài liệu; vòng sửa phủ: 10 ca thêm để mọi FR mức M có ca dương và âm |
