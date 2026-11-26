@@ -22,6 +22,8 @@ Tài liệu gồm bốn phần, được hoàn thiện dần theo các đợt vi
 | C | Ánh xạ dọc `BO` → `REQ` → `FR` → `UC/US` → `API/EN/UI` → `TC` | Đợt 2–4 |
 | D | Ánh xạ pháp lý `CMP-LAW` → yêu cầu → bằng chứng kiểm chứng | Đợt 1 (khung), Đợt 5 (bằng chứng) |
 
+: Mục đích
+
 ## 2. Nguồn kiểm kê
 
 Phần A được lập từ các tài liệu trong thư mục `lgsp_document` của dự án. Khi một chức năng xuất hiện ở nhiều phiên bản tài liệu, bản kiểm kê dùng phiên bản mới nhất.
@@ -37,6 +39,8 @@ Phần A được lập từ các tài liệu trong thư mục `lgsp_document` c
 | NGSP — kết nối quốc gia | `phucluc_ketnoiNGSP` |
 | IAM — định danh | Mục Keycloak trong các PTYC, `huongdanlaytokenkeycloak` |
 | NFR — phi chức năng, vận hành | Mục 4 của các PTYC, các tài liệu HDVH và hướng dẫn cài đặt |
+
+: Nguồn kiểm kê
 
 ## 3. Cách đọc bảng kiểm kê
 
@@ -99,6 +103,8 @@ Khối Bus của hệ cũ quản trị các "chương trình tích hợp". Mỗi
 | LGC-BUS-040 | Connector: CSDL (Oracle, MySQL…), NoSQL (MongoDB, Cassandra), LDAP, Hadoop, message broker (AMQP, MQTT), HTTP, SOAP, FTP, File, cloud, SMPP, lập lịch | Nâng cấp | PH-05 | — | Danh mục adapter có phiên bản; mỗi loại có Kamelet được duyệt |
 | LGC-BUS-041 | Bảo mật route (Shiro, Spring), mã hóa bản tin, bảo mật endpoint (Basic, SSL, WS-Security) | Nâng cấp | PH-03, PH-04, PH-12 | — | OAuth 2.1, mTLS, mã hóa trường nhạy cảm |
 
+: Bus — quản trị trục tích hợp (LGC-BUS)
+
 ### 4.2. Tooling — công cụ thiết kế luồng (`LGC-TOOL`)
 
 Hệ cũ có studio kéo thả viết bằng Angular, sinh Camel XML và tự cập nhật file pom. Datahub thay bằng trình thiết kế luồng React dùng Camel YAML DSL. Repo DATAHUB đã có một bản hiện thực vượt về chức năng so với hệ cũ, nên phần lớn các dòng dưới đây có kết luận Nâng cấp.
@@ -135,6 +141,8 @@ Hệ cũ có studio kéo thả viết bằng Angular, sinh Camel XML và tự c�
 | LGC-TOOL-028 | Data mapping: nhập tài liệu mẫu, export mapping, reset mapping | Nâng cấp | PH-04 | Trình ánh xạ dữ liệu sinh JQ, lưu cùng phiên bản luồng |
 | LGC-TOOL-029 | Phiên nháp (`draft_session`) lưu XML đang soạn | Giữ nguyên | PH-04 | |
 
+: Tooling — công cụ thiết kế luồng (LGC-TOOL)
+
 ### 4.3. Hub — trung tâm tích hợp publish/subscribe (`LGC-HUB`)
 
 Khối Hub dùng Apache Pulsar. Dữ liệu cốt lõi gồm dự án tích hợp (`project`), topic (có thể phân vùng, có cấu trúc dữ liệu và chế độ định tuyến), publisher, subscriber, publication (publisher gắn với topic) và subscription (subscriber gắn với topic, kèm URI nhận, số worker, số lần thử lại, thời điểm bắt đầu). Datahub chuyển sang Kafka và giữ nguyên các khái niệm nghiệp vụ này.
@@ -155,6 +163,8 @@ Khối Hub dùng Apache Pulsar. Dữ liệu cốt lõi gồm dự án tích hợ
 | LGC-HUB-012 | Quản lý publication (publisher ↔ topic) | Giữ nguyên | PH-10 | — | Quyền phát trên topic |
 | LGC-HUB-013 | Quản lý subscription: URI nhận, số worker, số lần thử lại, thời điểm bắt đầu | Nâng cấp | PH-10 | — | Hai chế độ giao nhận: đẩy về URI (webhook có ký) hoặc HTTT tự kéo |
 | LGC-HUB-014 | Danh mục kiểu giao tiếp (`type_of_comm`) và chế độ định tuyến (`routing_mode`) | Giữ nguyên | PH-10 | — | Danh mục cấu hình |
+
+: Hub — trung tâm tích hợp publish/subscribe (LGC-HUB)
 
 ### 4.4. APIM — quản lý API (`LGC-APIM`)
 
@@ -190,6 +200,8 @@ Khối API Management của hệ cũ có mô hình tương tự Gravitee. Datahu
 | LGC-APIM-026 | Dashboard hoạt động chung của hệ thống API | Giữ nguyên | PH-13 | Có | |
 | LGC-APIM-027 | Audit: thông tin tác động hệ thống | Nâng cấp | PH-13 | Có | Nhật ký kiểm toán không sửa được (WORM) |
 
+: APIM — quản lý API (LGC-APIM)
+
 ### 4.5. DMDC — danh mục dùng chung Aita (`LGC-DMDC`)
 
 Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá trị: bảng `Category` (mã, tên, cờ cho phép cập nhật), `category_fields` (thuộc tính do người dùng khai báo, có thứ tự và trạng thái), `Category_details` (bản ghi) và `Category_details_value` (giá trị theo từng thuộc tính, tối đa 2.000 ký tự). Datahub giữ khả năng **khai báo thuộc tính động** nhưng thêm kiểu dữ liệu, ràng buộc, phân cấp, phiên bản và đồng bộ với danh mục quốc gia.
@@ -215,6 +227,8 @@ Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá 
 | LGC-DMDC-017 | Cờ cho phép cập nhật danh mục (`Is_update`) | Nâng cấp | PH-07 | — | Phân biệt danh mục nguồn quốc gia (chỉ đọc) và danh mục địa phương |
 | LGC-DMDC-018 | Thứ tự và trạng thái thuộc tính (`Order`, `status`) | Giữ nguyên | PH-07 | — | |
 | LGC-DMDC-019 | Kết nối danh mục dùng chung quốc gia qua NGSP: danh sách danh mục, lấy cấu trúc, bổ sung danh mục, lấy dữ liệu | Nâng cấp | PH-07, PH-14 | — | Đồng bộ định kỳ và theo yêu cầu, có đối chiếu khác biệt |
+
+: DMDC — danh mục dùng chung Aita (LGC-DMDC)
 
 ### 4.6. PAY — thanh toán (`LGC-PAY`)
 
@@ -249,6 +263,8 @@ Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh
 | LGC-PAY-025 | Ba trạng thái hoàn trả `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` chỉ có trong bộ trạng thái, không có chức năng (TKCT 3.4) | Nâng cấp | PH-19 | Có | Nghiệp vụ hoàn tiền đầy đủ: lập, duyệt một hoặc hai cấp, thực thi qua NCC hoặc thủ công có chứng từ (FR-19-038…041; ADR-043, ADR-046) |
 | LGC-PAY-026 | Số liệu tổng trên dashboard được đệm 10 phút (TKCT 3.1) | Nâng cấp | PH-19 | Có | Số liệu trễ tối đa 60 giây (FR-19-056, NFR-19-006) |
 
+: PAY — thanh toán (LGC-PAY)
+
 ### 4.7. NGSP — kết nối quốc gia (`LGC-NGSP`)
 
 Phụ lục kết nối NGSP liệt kê các dịch vụ quốc gia mà hệ cũ đã kết nối thông qua cổng AM của trục quốc gia. Mỗi dịch vụ dùng header `Service-code` để phân biệt nghiệp vụ trên cùng một đường dẫn, và xác thực bằng Bearer token lấy theo grant `password` hoặc `client_credentials`. Trong Datahub, mỗi nhóm dịch vụ trở thành một adapter của PH-14 có hợp đồng riêng. Danh sách dịch vụ phải được đối chiếu lại với danh mục dịch vụ hiện hành của NDXP trước khi xây dựng.
@@ -264,6 +280,8 @@ Phụ lục kết nối NGSP liệt kê các dịch vụ quốc gia mà hệ cũ
 | LGC-NGSP-007 | Văn bản quy phạm pháp luật: tìm kiếm toàn văn, lĩnh vực, cơ quan ban hành, chi tiết, loại văn bản, người ký, chức danh | Giữ nguyên | PH-14 |
 | LGC-NGSP-008 | Lấy token qua cổng AM bằng Consumer Key / Secret | Nâng cấp | PH-14, PH-12 | 
 
+: NGSP — kết nối quốc gia (LGC-NGSP)
+
 Ghi chú về LGC-NGSP-008: tài liệu hệ cũ chứa Consumer Key / Secret dạng văn bản và địa chỉ IP công khai của cổng token chạy HTTP. Datahub lưu mọi thông tin xác thực đối ngoại trong kho bí mật, gọi qua kênh mã hóa, và phải cấp lại khóa khi cắt chuyển (xem D06-01).
 
 ### 4.8. IAM — định danh và truy cập (`LGC-IAM`)
@@ -278,6 +296,8 @@ Ghi chú về LGC-NGSP-008: tài liệu hệ cũ chứa Consumer Key / Secret d�
 | LGC-IAM-006 | Lấy token bằng grant `password` (hướng dẫn lấy token) | Thay thế | PH-12, PH-15 | OAuth 2.1 bỏ grant `password`; người dùng dùng Authorization Code + PKCE, máy dùng `client_credentials` |
 | LGC-IAM-007 | Đăng nhập mạng xã hội (Google, Facebook…) | Loại bỏ | — | Lý do: không phù hợp hệ thống của CQNN; thay bằng VNeID khi có yêu cầu |
 | LGC-IAM-008 | SSO bằng SAML của midPoint cho màn quản trị Bus | Thay thế | PH-12 | Thống nhất về Keycloak OIDC |
+
+: IAM — định danh và truy cập (LGC-IAM)
 
 ### 4.9. NFR — yêu cầu phi chức năng và vận hành (`LGC-NFR`)
 
@@ -300,6 +320,8 @@ Các yêu cầu phi chức năng của hệ cũ được sao chép giống nhau 
 | LGC-NFR-013 | HDVH: profile hệ thống, khởi động / dừng, tham số cấu hình, giám sát, sự cố, tối ưu, bảo dưỡng, checklist định kỳ | Giữ nguyên | D06-03 |
 | LGC-NFR-014 | Công nghệ Java 8, PostgreSQL, Angular | Thay thế | Java 21, Spring Boot 4, Camel Quarkus, PostgreSQL 18, React 19, antd v6 |
 
+: NFR — yêu cầu phi chức năng và vận hành (LGC-NFR)
+
 ## 5. Tổng hợp độ phủ
 
 Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đợt 0, mọi mục đã có kết luận và có phân hệ đích. Cột FR sẽ được điền ở phần B khi viết FRS từng phân hệ.
@@ -317,6 +339,8 @@ Bảng dưới đây đếm số mục theo khối và theo kết luận. Ở đ
 | NFR | 14 | 3 | 8 | 2 | 0 | 1 |
 | **Tổng** | **183** | **85** | **69** | **25** | **3** | **1** |
 
+: Tổng hợp độ phủ
+
 Cột "Khác" là LGC-NFR-011 (hỗ trợ bảo trì), thuộc phạm vi hợp đồng chứ không phải yêu cầu kỹ thuật.
 
 Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 §9.1](../02-yeu-cau/frs/D02-03-PH04-frs-tich-hop.md), chiều LGC → FR → test case và nghiệm thu ở [D05-02-PH04 §7, §8.2](../05-kiem-thu/test-case/D05-02-PH04-test-case.md). Khối DMDC tương ứng ở D02-03-PH07 và D05-02-PH07.
@@ -330,6 +354,8 @@ Phần B đã có cho khối BUS và TOOL: chiều LGC → FR ở [D02-03-PH04 �
 | LGC-TOOL-022 | Người dùng tự cập nhật file pom của luồng | Phụ thuộc thư viện do nền tảng quản lý. Cho phép người dùng tự thêm thư viện tạo rủi ro chuỗi cung ứng phần mềm và không kiểm soát được bản quyền. |
 | LGC-TOOL-027 | Nhập component từ file JAR | Nạp mã tùy ý vào runtime vi phạm yêu cầu kiểm soát phần mềm của cấp độ 3. Thay bằng quy trình đăng ký Kamelet có duyệt. |
 | LGC-IAM-007 | Đăng nhập bằng tài khoản mạng xã hội | Không phù hợp với hệ thống của CQNN. Định danh công dân, nếu cần, dùng VNeID. |
+
+: Các mục loại bỏ (chủ đầu tư đã chấp thuận ngày 21/11/2026)
 
 ## 6. Câu hỏi mở
 

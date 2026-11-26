@@ -44,6 +44,8 @@ Mỗi quy tắc có một mã dạng `CC-{nhóm}-{nn}` để review code, cấu 
 | `CC-TEN` | Đa tenant | 8 |
 | `CC-SEC` | Lập trình an toàn theo OWASP ASVS 5.0 mức 2 | 9 |
 
+: Mức bắt buộc và mã quy tắc
+
 Mức bắt buộc được diễn đạt bằng hai động từ. **"Phải"** (tương đương MUST) nghĩa là vi phạm làm PR bị chặn, hoặc bởi công cụ trong CI, hoặc bởi người review. **"Nên"** (tương đương SHOULD) nghĩa là được phép làm khác nếu PR giải thích lý do; người review có quyền yêu cầu sửa. Quy tắc nào được đánh dấu **[tự động]** thì đã có hoặc phải có công cụ kiểm tra trong cổng CI tương ứng ở D04-02 §6; quy tắc đánh dấu **[review]** dựa vào người duyệt và danh mục kiểm tra review ở D04-02 §5.
 
 ### 1.4. Quan hệ với tài liệu khác
@@ -142,6 +144,8 @@ Cây trên cho thấy ba vùng của một module. Vùng `api` chứa những g�
 | Mọi phương thức public của `@RestController` có `@PreAuthorize` hoặc annotation quyền `@RequiresPermission` | Từ chối mặc định | CC-GEN-03, CC-SEC-08 |
 | Lớp `@Scheduled` hoặc `@KafkaListener` phải gọi qua `TenantContext.runAs` (kiểm tra bằng luật tùy biến trên bytecode) | Tác vụ nền có tenant | CC-TEN-05 |
 
+: Cấu trúc package và ranh giới module
+
 Đoạn mã sau minh họa cách DU dùng bộ luật chung. Kiểm thử này chạy trong pha `test` nên thất bại ở cổng build, trước mọi kiểm thử chậm hơn.
 
 ```java
@@ -191,6 +195,8 @@ Quy ước đặt tên Java dưới đây bổ sung cho D00-01 §6. Bảng nêu 
 | Khóa cấu hình | `datahub.{module}.{khóa-kebab}` | `datahub.rdm.import-max-rows` | `lgsp.rdm.importMaxRows` |
 | Lớp kiểm thử | `{LớpĐượcThử}Test` (đơn vị), `{TínhNăng}IT` (tích hợp) | `CatalogServiceTest`, `CatalogApiIT` | `TestCatalog` |
 | Phương thức kiểm thử | `should{KếtQuả}_when{ĐiềuKiện}` hoặc `@DisplayName` tiếng Việt | `shouldReturn404_whenOtherTenant` | `test1` |
+
+: Đặt tên
 
 Hậu tố `DTO`, tiền tố `I` cho interface và hậu tố `Impl` khi chỉ có một hiện thực đều không được dùng: chúng không mang thông tin. Khi một interface trong `api` có đúng một hiện thực trong `internal`, hiện thực đặt tên theo vai trò, ví dụ `CatalogQueries` (interface) và `CatalogService` (hiện thực).
 
@@ -275,6 +281,8 @@ Mọi lỗi trả về từ API REST của Datahub có kiểu nội dung `applic
 | `code` | Mở rộng Datahub | Mã `ERR-{PH}-{nnn}` | `ERR-07-004` |
 | `traceId` | Mở rộng Datahub | Trace ID W3C (`T-TRACE`) để đối chiếu nhật ký | `4bf92f3577b34da6a3ce929d0e0e4736` |
 | `errors` | Mở rộng Datahub | Danh sách lỗi theo trường khi kiểm tra hợp lệ thất bại: `field`, `code`, `message` | `[{"field":"code","code":"PATTERN","message":"Mã chỉ gồm chữ hoa, số, _ . -"}]` |
+
+: Xử lý lỗi theo RFC 9457 và mã ERR-{PH}-{nnn}
 
 **CC-ERR-01 · Một bộ xử lý lỗi toàn cục mỗi DU [tự động].** Mỗi DU có đúng một `@RestControllerAdvice` trong `shared.web`, kế thừa `ResponseEntityExceptionHandler` của Spring, chuyển mọi ngoại lệ thành `ProblemDetail` theo bảng trên. Controller không tự dựng phản hồi lỗi. Bật `spring.mvc.problemdetails.enabled=true` để lỗi khung (400, 405, 415) cũng theo RFC 9457.
 
@@ -711,6 +719,8 @@ Mỗi DU Spring Boot quản lý lược đồ CSDL của các phân hệ mình b
 | Changeset `id` | `{số-thứ-tự-tệp}-{mô-tả-kebab}` | `012-create-catalog-item` |
 | Tệp changelog | `changes/{nnn}-{mô-tả}.yaml` | `changes/012-catalog-item.yaml` |
 
+: Đặt tên và kiểu
+
 **CC-SQL-02 · Kiểu chuẩn và cột bắt buộc [tự động].** Cột dùng kiểu PostgreSQL theo D00-01 §5 (`uuid` cho `T-ID`, `varchar(64)` cho `T-CODE`, `timestamptz` cho `T-TS`, `numeric(19,0)` cho `T-MONEY`, `varchar(32)` + `CHECK` cho `T-ENUM`, `jsonb` cho `T-JSON`, `varchar(16)` cho `T-TENANT`, `varchar(255)` cho `T-SECRET-REF`). Mọi bảng nghiệp vụ có `id`, `tenant_id`, `created_at`, `created_by`, `updated_at`, `updated_by`, `version`; bảng xóa mềm có `deleted_at`. Cấm `timestamp without time zone`, `float`/`real`/`double precision` cho tiền, `serial`/`identity` cho khóa chính bảng nghiệp vụ, `text` không giới hạn cho trường có giới hạn ở API. Tính duy nhất của mã nghiệp vụ luôn tính trong tenant: `UNIQUE (tenant_id, code)`, không phải `UNIQUE (code)`.
 
 ### 6.2. RLS trong cùng changeset
@@ -781,6 +791,8 @@ Datahub nâng cấp cuốn chiếu không gián đoạn data plane (NFR-00-013),
 | Cập nhật hàng loạt | Một `UPDATE` cho cả bảng | Cập nhật theo lô ≤ 10.000 dòng mỗi giao dịch, bằng tác vụ của ứng dụng hoặc changeset lặp |
 | Mọi changeset | Không đặt thời gian chờ | Đặt `SET lock_timeout = '5s'` và `statement_timeout` hợp lý ở đầu changeset để thất bại sớm thay vì xếp hàng chặn lưu lượng |
 
+: Migration an toàn, không khóa bảng
+
 **CC-SQL-07 · Changeset bất biến, có rollback [tự động].** Changeset đã chạy ở môi trường dùng chung không được sửa (Liquibase kiểm tra checksum); sửa sai bằng changeset mới. Mỗi changeset có `rollback` hoặc ghi lý do không thể hoàn tác trong `comment`. Không dùng `runAlways`, trừ changeset tạo lại hàm hoặc view có `runOnChange` được duyệt.
 
 **CC-SQL-08 · Dữ liệu tham chiếu tách khỏi lược đồ [review].** Dữ liệu nền (danh mục bắt buộc) nạp bằng changeset có `context: seed` và chỉ chứa dữ liệu `COMMON` hoặc dữ liệu mẫu; dữ liệu theo tenant được nạp bởi saga khởi tạo tenant (D03-10 §5.2), không bằng migration.
@@ -819,6 +831,8 @@ Bảng dưới đây gồm cột quy tắc nguyên văn, cột công cụ kiểm
 | CC-TEN-04 | Mọi khóa bộ nhớ đệm, tên topic, khóa đối tượng phải dùng hàm tạo tên có tenant của thư viện dùng chung, không ghép chuỗi tay. | Semgrep cấm ghép chuỗi làm đối số của `KafkaTemplate.send`, `RedisTemplate`/`ValkeyTemplate` khóa, `S3Client.putObject` key, `@Cacheable(key=...)` không dùng `TenantKeys`; ArchUnit cấm phụ thuộc trực tiếp các client này ngoài `shared` | SAST, Build |
 | CC-TEN-05 | Mọi tác vụ nền phải được bọc trong `TenantContext.runAs(tenant, …)`. | Luật ArchUnit tùy biến trên phương thức `@Scheduled`, `@KafkaListener`, `@ApplicationModuleListener`, `@Async`; khi chạy, `TenantContext.require()` ném lỗi nếu chưa đặt tenant và kiểm thử tích hợp của tác vụ nền kiểm tra điều này | Build, Tích hợp |
 | CC-TEN-06 | Mỗi API mới phải có ít nhất một ca kiểm thử rò rỉ chéo tenant: tạo dữ liệu ở tenant A, truy cập bằng token tenant B, kỳ vọng `404` (không phải `403`, để không lộ sự tồn tại). | Kiểm thử meta đối chiếu mọi endpoint với danh sách kiểm thử rò rỉ đã đăng ký (CC-TEST-03); bộ kiểm thử rò rỉ chéo tenant chạy trong cổng tích hợp | Tích hợp |
+
+: Quy tắc đa tenant
 
 Ngoài sáu quy tắc trên, hai quy tắc bổ sung dưới đây cụ thể hóa D03-10 §3 cho mã nguồn.
 
@@ -859,6 +873,8 @@ Bảng dưới đây liệt kê mười bảy chương của ASVS 5.0, quy tắc
 | V15 Secure Coding and Architecture | Ranh giới module (CC-MOD-*); phụ thuộc được ghim và kiểm kê bằng SBOM (D04-02 §8, §10); chống giải tuần tự không an toàn (CC-SEC-12); chống gán hàng loạt (CC-SEC-21); xử lý đồng thời an toàn bằng khóa lạc quan (CC-TX-04) | ArchUnit, Modulith verify, Semgrep, FSB, Syft/CycloneDX |
 | V16 Security Logging and Error Handling | Log JSON có trace và tenant (CC-LOG-01, 02); nhật ký kiểm toán chỉ-thêm (CC-LOG-07); không lộ chi tiết lỗi (CC-ERR-03); chống chèn log (CC-LOG-05, CC-SEC-30); ghi sự kiện an ninh (đăng nhập thất bại, từ chối quyền, tenant không khớp) ở dạng có thể đưa lên SIEM | Semgrep, kiểm thử tích hợp kiểm trường log, bộ quét mẫu dữ liệu |
 | V17 WebRTC | Không áp dụng | — |
+
+: Bảng ánh xạ chương ASVS 5.0 → quy tắc → công cụ
 
 ### 9.3. Mẫu cấm và cách viết đúng
 
@@ -938,6 +954,8 @@ Bảng dưới đây chốt công cụ phân tích bảo mật, phạm vi và m�
 | gitleaks | Toàn bộ lịch sử Git và PR | Bất kỳ phát hiện (NFR-00-022) |
 | OWASP ZAP | Môi trường kiểm thử (DAST) | Cảnh báo mức High; chạy hằng đêm và trước phát hành |
 
+: Công cụ và mức chặn
+
 **CC-SEC-40 · Loại trừ phát hiện phải có lý do và hạn [review].** Một phát hiện được đánh dấu dương tính giả hoặc chấp nhận rủi ro bằng chú thích tại chỗ (`// nosemgrep: {rule-id} -- {lý do}, {mã việc}`, `@SuppressFBWarnings(value = "...", justification = "...")`) hoặc trong tệp loại trừ tập trung có ngày hết hạn ≤ 6 tháng. Mọi loại trừ cần người duyệt bảo mật; tệp loại trừ thuộc CODEOWNERS của nhóm ATTT (D04-02 §5.2).
 
 ## 10. Áp dụng cho mã hiện có và cơ chế miễn trừ
@@ -967,6 +985,8 @@ Khảo sát kho mã tại thời điểm viết (các DU `apps/control`, `apps/d
 | 13 | CI chỉ có biên dịch, kiểm thử đơn vị và gitleaks; thiếu SAST, SCA, quét ảnh, lint hợp đồng, kiểm thử giao diện; GitHub Actions ghim theo thẻ (`@v4`) chứ không theo SHA | D04-02 §6 | Cao | Triển khai đủ cổng theo D04-02 §6 |
 | 14 | Chưa có `CODEOWNERS`, mẫu PR, `.github/dependabot.yml` hay `renovate.json` | D04-02 §4, §5, §8 | Trung bình | Tạo theo D04-02 |
 
+: Hiện trạng mã nguồn so với quy chuẩn
+
 `AGENTS.md` và IP-02 hiện là luật cho tác tử AI và người phát triển; sau khi D04-01 được duyệt, `AGENTS.md` cần thêm một dòng trỏ tới D04-01 làm nguồn chuẩn và rút bớt các mục trùng (§4 Modulith, §5 bảo mật, §7 DoD) để tránh hai nguồn sự thật.
 
 ## 12. Mã và thuật ngữ mới đề xuất bổ sung D00-01
@@ -984,6 +1004,8 @@ Tài liệu đề xuất bổ sung vào D00-01 các mục trong bảng dưới �
 | Quy ước | Khóa cấu hình `datahub.{module}.{khóa-kebab}`; `routeId` Camel `{tenant}-{mã-luồng}-{chặng}`; tên ràng buộc CSDL `pk_`, `fk_`, `uq_`, `ck_`, `ix_` | §6 |
 | Quy ước | Package thư viện dùng chung `vn.datahub.common.{chủ-đề}` | §6 |
 | Chuẩn | STD-03 cập nhật từ "OWASP ASVS 4.x" thành "OWASP ASVS 5.0" để khớp NFR-00-024 | §7 |
+
+: Mã và thuật ngữ mới đề xuất bổ sung D00-01
 
 ## 13. Truy vết
 
@@ -1023,6 +1045,8 @@ Bảng dưới đây ánh xạ yêu cầu, quyết định kiến trúc và chu�
 | D03-10 §6 | Mục 8 (nguyên văn) |
 | SEC-40–49 (D03-07) | Mục 9 |
 | TCVN 14423:2026 nhóm "phát triển ứng dụng an toàn" ở cấp độ 3 (cần đối chiếu số mục) | Mục 1.1, mục 9 |
+
+: Truy vết
 
 ## 14. Câu hỏi mở
 

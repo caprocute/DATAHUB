@@ -50,6 +50,8 @@ Bảng dưới đây liệt kê các tập của design system và tài liệu l
 | [ADR-023](../../00-chung/adr/ADR-023-bieu-do-echarts.md) | Biểu đồ | Vì sao Apache ECharts |
 | [D03-06-PH04](D03-06-PH04-man-hinh-tich-hop.md), [D03-06-PH07](D03-06-PH07-man-hinh-danh-muc.md) | Tập màn hình phân hệ đã đối chiếu với design system | Dùng design system thế nào trong một phân hệ cụ thể |
 
+: Cấu trúc bộ tài liệu
+
 ### 3.1. Quy mô và thứ tự ưu tiên giữa các tập (bản 0.2)
 
 | Tập | Nội dung | Số lượng |
@@ -59,6 +61,8 @@ Bảng dưới đây liệt kê các tập của design system và tài liệu l
 | D03-05-04 | Thành phần phức hợp và tổ chức, gồm canvas thiết kế (§11), khung ứng dụng (§12), dữ liệu chuyên dụng (§13) | 75 thành phần, 77 mã `CMP-` |
 | D03-06-00 | Kiến trúc thông tin, quy tắc URL, khung bố cục, mẫu màn hình, vi văn bản, checklist nghiệm thu màn hình, danh sách màn hệ cũ được giữ | 14 mẫu PTN-01…14 |
 
+: Quy mô và thứ tự ưu tiên giữa các tập (bản 0.2)
+
 Tổng cộng design system có 121 thành phần: 44 nguyên tử, 75 phức hợp và hai thành phần nền tảng ở D03-05-01 (`CMP-GlassSurface`, `CMP-ThemeProvider`). Hai tập màn hình phân hệ đã đối chiếu với bản 0.2: D03-06-PH04 (bản 0.2) và D03-06-PH07 (bản 0.3); tên cũ của các tập này được ghi trong bảng bí danh ở D03-05-03 §9 và D03-05-04 §14.2.
 
 Khi hai tập mâu thuẫn: **D03-05-02 thắng về giá trị thị giác** (màu, kích thước, độ mờ), **D03-05-01 thắng về chỗ đặt kính**, **D03-05-03/04 thắng về API và hành vi thành phần**, **D03-06-00 thắng về cách dùng trong màn hình** (mẫu bố cục, URL, vi văn bản). Tập màn hình phân hệ không được định nghĩa token hay thành phần dùng chung mới; nhu cầu mới ghi vào mục "Đề xuất bổ sung" của tập đó để Luồng giao diện đưa vào D03-05.
@@ -67,7 +71,7 @@ Thứ tự đọc khuyến nghị cho kỹ sư mới: D03-05 → D03-05-01 → D
 
 ## 4. Kiến trúc kỹ thuật của design system
 
-```mermaid
+```{.mermaid caption="Kiến trúc kỹ thuật của design system"}
 flowchart TB
   subgraph PKG[Gói dùng chung trong monorepo giao diện]
     TK["@datahub/tokens<br/>tokens.json (DTCG) → tokens.css, tokens.ts<br/>phông Inter, JetBrains Mono"]
@@ -94,11 +98,13 @@ Một số quy ước mã nguồn áp dụng cho mọi thành phần:
 | Chuỗi | Không chuỗi giao diện cứng trong `@datahub/ui`; nhận qua props hoặc từ tệp ngôn ngữ `vi` |
 | Chuyển động | Đọc `data-motion` thay vì tự đọc truy vấn phương tiện |
 
+: Kiến trúc kỹ thuật của design system
+
 ## 5. Quy trình đóng góp và quản trị
 
 Design system thay đổi theo một quy trình có kiểm soát, vì mỗi thay đổi ảnh hưởng tới mọi phân hệ.
 
-```mermaid
+```{.mermaid caption="Quy trình đóng góp và quản trị"}
 flowchart LR
   N[Nhu cầu từ phân hệ] --> C{Thành phần hiện có<br/>đáp ứng được?}
   C -->|Có| U[Dùng, không tạo mới]
@@ -129,6 +135,8 @@ Design system được coi là sẵn sàng cho cổng G2 (bắt đầu phát tri
 | Kiểm tra thủ công với NVDA trên Windows cho khung ứng dụng, bảng, biểu mẫu, Modal | Biên bản kiểm thử truy cập |
 | Hiệu năng cuộn đạt trên máy chuẩn 4 nhân, 8 GB | TS-00-UI-03, Lighthouse CI (NFR-00-005) |
 
+: Nghiệm thu design system
+
 ## 7. Quan hệ với tài liệu repo gốc
 
 Repo gốc có `docs/ui_ux_rule.md` (quy tắc màn CRUD), mockup HTML trong `mockup/` và ADR-016 (antd + shadcn). Bộ tài liệu này kế thừa có chọn lọc: các quy tắc CRUD-UI, CRUD-FLT, CRUD-TBL, CRUD-SEL, CRUD-PAG của `ui_ux_rule.md` được đưa vào đặc tả `CMP-DataTable`, `CMP-FilterBar` và PTN-01; danh sách trạng thái bắt buộc được đưa vào D03-06-00. ADR-016 bị thay bởi ADR-020. Mockup cũ dùng phong cách shadcn nên chỉ tham khảo về bố cục, không tham khảo về thị giác.
@@ -141,6 +149,8 @@ Repo gốc có `docs/ui_ux_rule.md` (quy tắc màn CRUD), mockup HTML trong `mo
 | NFR-00-040…045 | Mục 2, 4, 6; chi tiết ở các tập con |
 | FR-00-001…082 (yêu cầu dùng chung về giao diện) | D03-05-04 (thành phần), D03-06-00 (mẫu màn hình) |
 | RSK-A05 | D03-05-01 §7 |
+
+: Truy vết
 
 ## 9. Đề xuất bổ sung D00-01
 

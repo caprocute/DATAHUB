@@ -39,6 +39,8 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | Quản trị nền tảng | Platform operator | Đơn vị vận hành phần dùng chung của sản phẩm, quản lý nhiều tenant. |
 | Quản trị tenant | Tenant administrator | Cán bộ của tỉnh, quản trị Datahub trong phạm vi tỉnh mình. |
 
+: Thuật ngữ nghiệp vụ và pháp lý
+
 ### 2.2. Thuật ngữ kỹ thuật
 
 | Thuật ngữ | Tiếng Anh | Định nghĩa |
@@ -65,6 +67,8 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | Outbox | Transactional outbox | Kỹ thuật ghi sự kiện vào bảng cùng giao dịch CSDL rồi mới phát ra Kafka, để không mất hoặc phát thừa sự kiện. |
 | RLS | Row Level Security | Cơ chế của PostgreSQL lọc dòng dữ liệu theo ngữ cảnh phiên; dùng để cách ly tenant. |
 | Liquid Glass | Liquid Glass | Ngôn ngữ thiết kế vật liệu kính trong suốt của Apple. Datahub học theo phong cách này cho lớp điều hướng và lớp nổi, không dùng tài sản của Apple. Xem D03-05. |
+
+: Thuật ngữ kỹ thuật
 
 ### 2.3. Từ viết tắt
 
@@ -98,6 +102,8 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | UAT | User Acceptance Test |
 | VBQPPL | Văn bản quy phạm pháp luật |
 | WCAG | Web Content Accessibility Guidelines |
+
+: Từ viết tắt
 
 ## 3. Hệ mã truy vết
 
@@ -149,6 +155,8 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `S1`…`S4` / `P1`…`P4` | Mức nghiêm trọng / mức ưu tiên của lỗi | D05-01 | `S2/P1` |
 | `T90`…`T99` | Mã tenant dành cho kiểm thử | D05-01 | `T91` |
 
+: Bảng mã
+
 ### 3.2. Quy tắc truy vết
 
 1. Mỗi `FR` phải tham chiếu ít nhất một `REQ`. Nếu FR thay thế chức năng hệ cũ thì tham chiếu thêm `LGC`.
@@ -166,6 +174,8 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | Bắt buộc | **M** (Must) | Thiếu thì phân hệ không dùng được, hoặc vi phạm quy định, hoặc mất một chức năng hệ cũ đang dùng. |
 | Cần có | **S** (Should) | Ảnh hưởng đáng kể tới chất lượng; có thể lùi sang đợt sau nếu được chấp thuận. |
 | Nên có | **C** (Could) | Cải thiện trải nghiệm; không chặn nghiệm thu. |
+
+: Mức ưu tiên
 
 ### 4.2. Cách viết một yêu cầu đo được
 
@@ -225,6 +235,8 @@ Các kiểu dưới đây áp dụng cho mọi đặc tả dữ liệu, API và 
 | `T-URI` | Địa chỉ | `varchar(2048)` | `string`, `format: uri` | |
 | `T-SECRET-REF` | Tham chiếu bí mật | `varchar(255)` | `string` | Đường dẫn tới kho bí mật; **không bao giờ lưu giá trị bí mật**. |
 
+: Kiểu dữ liệu chuẩn
+
 ### 5.1. Trường ngữ cảnh bắt buộc
 
 Mọi bảng nghiệp vụ có các cột sau, trừ khi SDD ghi rõ ngoại lệ:
@@ -236,6 +248,8 @@ Mọi bảng nghiệp vụ có các cột sau, trừ khi SDD ghi rõ ngoại l�
 | `created_at`, `created_by` | `T-TS`, `T-ID` | Thời điểm và người tạo |
 | `updated_at`, `updated_by` | `T-TS`, `T-ID` | Thời điểm và người sửa cuối |
 | `version` | `integer` | Khóa lạc quan, tăng mỗi lần sửa |
+
+: Trường ngữ cảnh bắt buộc
 
 Bảng có xóa mềm thêm `deleted_at` (`T-TS`, có thể rỗng).
 
@@ -251,6 +265,8 @@ Bảng có xóa mềm thêm `deleted_at` (`T-TS`, có thể rỗng).
 | Component React | `PascalCase`; hook `useCamelCase` | `CatalogTree`, `useCatalogItems` |
 | Design token | `--dh-{nhóm}-{vai trò}-{biến thể}` | `--dh-color-surface-glass-regular` |
 | Nhánh Git | `{loại}/{mã-việc}-{mô-tả-ngắn}` | `feat/FR-07-021-import-excel` |
+
+: Quy ước đặt tên
 
 ## 7. Căn cứ pháp lý và tiêu chuẩn viện dẫn
 
@@ -297,6 +313,8 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | STD-04 | WCAG 2.2 | Khả năng truy cập giao diện, mức AA | — |
 | STD-05 | OpenAPI 3.1, AsyncAPI 3.0, RFC 9457 | Hợp đồng API, sự kiện, định dạng lỗi | — |
 
+: Căn cứ pháp lý và tiêu chuẩn viện dẫn
+
 Bối cảnh tổ chức từ năm 2025 cũng chi phối thiết kế: Bộ Thông tin và Truyền thông hợp nhất vào Bộ Khoa học và Công nghệ; chính quyền địa phương chuyển sang mô hình hai cấp (tỉnh, xã); số đơn vị hành chính cấp tỉnh còn 34. Hệ quả trực tiếp là danh mục đơn vị hành chính phải hỗ trợ lịch sử sáp nhập, và cơ quan chủ quản ở các văn bản hệ cũ phải được hiểu theo cơ cấu mới.
 
 ## 8. Quy ước trình bày tài liệu
@@ -327,6 +345,8 @@ Sổ D00-02 gồm một file chỉ mục `00-chung/D00-02-so-adr.md` và **mỗi
 | ADR-030 … 039 | ATTT, hạ tầng, DR, kiểm thử | — |
 | ADR-040 … 049 | Thanh toán (PH-19) | — |
 | ADR-050 … 059 | Danh mục dùng chung (PH-07) và các phân hệ khác | — |
+
+: Sổ quyết định kiến trúc
 
 ### 9.3. Nhánh và PR khi viết song song
 

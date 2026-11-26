@@ -31,6 +31,8 @@ Bảng sau cho biết khi cần một chi tiết thì mở tài liệu nào, m�
 | Khuôn tập phân hệ | [`khuon/`](khuon/README.md) | một tệp theo loại |
 | Ví dụ đầy đủ khi khuôn chưa đủ rõ | Tập PH-07 hoặc PH-04 tương ứng | chỉ mục cần xem |
 
+: Cách dùng
+
 ## 2. Phân hệ, DU và tài liệu đã có
 
 Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và tình trạng tài liệu ngày 26/11/2026. Package Java là `vn.datahub.{du}.{module}`.
@@ -58,6 +60,8 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 19 | Thanh toán | `dh-payment` | Đợt 2 | BRD, khung truy vết (luồng riêng) |
 | 20 | Quản trị tenant | `dh-platform` | MVP | chưa |
 
+: Phân hệ, DU và tài liệu đã có
+
 ## 3. Dải mã đã cấp và số kế tiếp
 
 ### 3.1. Dải cấp trước theo nhóm
@@ -76,6 +80,8 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 | Tenant | Ví dụ trong tài liệu: `T68` (topic chữ thường `t68.`), `T01` cho giả định; `T90…T99` dành cho kiểm thử; `COMMON` là tenant toàn quốc | Không dùng tên tỉnh làm mã |
 | Mẫu màn | `PTN-01…14` (D03-06-00 §4): 01 Danh sách · 02 Chi tiết · 03 Biểu mẫu trang · 04 Biểu mẫu nhanh · 05 Wizard · 06 Dashboard · 07 Designer · 08 Cây + bảng · 09 Nhập có xem trước · 10 Hộp việc, duyệt · 11 Giám sát, tra log · 12 Cài đặt · 13 Trang lỗi · 14 Tài liệu cổng | Tập màn phân hệ không tạo PTN mới |
 | Thành phần | `CMP-*`: 44 nguyên tử (D03-05-03), 75 phức hợp (D03-05-04), 2 nền = 121 | Tập màn phân hệ không tự đặt CMP hay token; cần thêm thì ghi vào phụ lục "Đề nghị bổ sung cho D03-05" |
+
+: Dải cấp trước theo nhóm
 
 ### 3.2. Dải đã dùng thực tế (sinh tự động)
 
@@ -153,6 +159,8 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | CMP-LAW | — | 27 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
 | PERM | 01…20 | 120 | — | — | động từ theo D02-08 |
 
+: Dải đã dùng thực tế (sinh tự động)
+
 <!-- dai-ma:ket-thuc -->
 
 ## 4. Quy ước đặt tên và trình bày
@@ -177,6 +185,8 @@ Bảng sau tóm tắt D00-01 §6, §8 và D03-06-00 §2.4 ở mức đủ để 
 | Câu hỏi mở | `> **Câu hỏi mở Q{PH}-nn:** …` và gom vào mục câu hỏi mở cuối tài liệu | `Q04-31` |
 | Sơ đồ | Mermaid; mỗi sơ đồ có một đoạn thuyết minh ngay sau; không dùng `;` trong thông điệp sequence | |
 
+: Quy ước đặt tên và trình bày
+
 ## 5. Quyết định đã chốt
 
 Các quyết định dưới đây đã được chủ đầu tư chọn và không bàn lại trong tập phân hệ (nhật ký đầy đủ ở D00-02 §5).
@@ -192,6 +202,8 @@ Các quyết định dưới đây đã được chủ đầu tư chọn và kh�
 | Pháp lý | Viện dẫn văn bản mới làm căn cứ chính, văn bản cũ ở cột kế thừa: Luật ANM 116/2025, NĐ 331/2026, Luật BVDLCN 91/2025 + NĐ 356/2025, NĐ 278/2025, TCVN 14423:2026, NĐ 224/2026. Còn mở: Q301, Q313, Q320, Q321, Q323a |
 | PH-04 | Trình thiết kế tự làm lại mô hình Kaoto (ADR-060), catalog sinh lại theo runtime; SQL trực tiếp có kiểm soát (Q359, ADR-067) |
 | Dự án | GitHub khi phát triển, GitLab on-prem khi bàn giao (Q353); chủ quản CNTT là tham số theo tỉnh, mặc định Sở KH&CN (Q05); nguồn chuẩn là Markdown, .docx chỉ là bản xuất |
+
+: Quyết định đã chốt
 
 ## 6. Kiểm tra tự động
 

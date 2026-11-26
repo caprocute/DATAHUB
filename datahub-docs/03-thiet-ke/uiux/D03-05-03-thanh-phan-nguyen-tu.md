@@ -47,6 +47,8 @@ Mỗi thành phần ở mục 3 đến mục 8 có cùng một khung để ngư�
 | API | Interface TypeScript và ví dụ TSX | Hợp đồng lập trình, AI agent sinh mã dựa vào đây |
 | Điều cấm | Những cách dùng sai đã biết | Danh sách để reviewer kiểm |
 
+: Khung đặc tả của một thành phần
+
 ### 1.4. Quy ước API chung của `@datahub/ui`
 
 Phần này quy định cách mọi thành phần nguyên tử phơi bày API. Quy ước được kiểm tra bằng lint (`eslint-plugin-datahub-ui`, đề xuất bổ sung ở cuối tài liệu) và bằng test kiểu (`tsd`).
@@ -111,6 +113,8 @@ Mọi thành phần tương tác (nút, liên kết, điều khiển nhập li�
 | 7 | `hover` | `:hover` trên thiết bị có con trỏ (`@media (hover: hover)`) | Báo phần tử tương tác được |
 | 8 | `default` | | Trạng thái nghỉ |
 
+: Tám trạng thái
+
 Vòng focus là ngoại lệ của thứ tự ưu tiên: nó luôn hiển thị khi phần tử có `:focus-visible`, kể cả khi phần tử đang `invalid` hoặc `pressed`, vì nó vẽ bằng `outline` bên ngoài và không tranh chấp thuộc tính với các trạng thái khác. Phần tử `disabled` không nhận focus (trừ ngoại lệ ở §2.4).
 
 ### 2.2. Bảng token theo trạng thái
@@ -127,6 +131,8 @@ Bảng dưới đây cho biết token mà mỗi trạng thái dùng, theo ba h�
 | `loading` | Như default, thêm `CMP-Spinner` cỡ `size-icon-sm` hoặc `size-icon-md`, `aria-busy="true"` | Như default, spinner màu `color-text-on-accent` | Không áp dụng |
 | `readonly` | Nền `color-surface-solid-2`, viền `color-border-subtle`, chữ `color-text-primary` (không làm mờ chữ vì người dùng vẫn cần đọc) | Không áp dụng | Không áp dụng |
 | `invalid` | Viền `color-error-text`, khi focus quầng dùng `color-error-bg`; biểu tượng lỗi `color-error-text` ở hậu tố | Không áp dụng | Không áp dụng |
+
+: Bảng token theo trạng thái
 
 Thời lượng chuyển trạng thái màu là `motion-duration-instant` với `motion-ease-standard`. Vòng focus xuất hiện tức thì, không chuyển động, để người dùng bàn phím không phải chờ.
 
@@ -194,6 +200,8 @@ Mọi phần tử tương tác có vùng chạm tối thiểu 24×24 px (WCAG 2.
 | `text` | `color="default" variant="text"` | Hành động phụ mật độ cao: trong ô bảng, thanh công cụ, chân thẻ | "Đặt lại", "Bỏ chọn" |
 | `danger` | `color="danger" variant="solid"` | Xác nhận hành động phá hủy trong `CMP-ConfirmDialog` (CRUD-D-03) | "Xóa", "Thu hồi khóa", "Hoàn tiền" |
 | `danger-outline` | `color="danger" variant="outlined"` | Mở luồng phá hủy từ trang chi tiết hoặc vùng "Nguy hiểm" ở trang cài đặt | "Xóa dịch vụ…", "Tạm dừng tenant…" |
+
+: CMP-Button
 
 Quy tắc chọn biến thể có bốn điểm. Thứ nhất, **mỗi vùng chỉ có tối đa một nút `primary`**; "vùng" là một trong các khối: thanh tiêu đề trang (`CMP-PageHeader`), chân Modal hoặc Drawer, chân biểu mẫu, một thẻ (`CMP-Card`), một trạng thái rỗng. Lint của Storybook và test hình ảnh kiểm tra quy tắc này bằng cách đếm phần tử `.dh-btn--primary` trong mỗi vùng có `data-dh-region`. Thứ hai, `danger` chỉ xuất hiện ở bước xác nhận cuối cùng, không ở bước mở luồng; bước mở luồng dùng `danger-outline` và nhãn kết thúc bằng dấu ba chấm "…" để báo sẽ có bước tiếp theo. Thứ ba, trên nền glass (topbar, chân Modal nằm ngoài giếng nội dung) dùng `primary`, `tinted` hoặc `text`; không dùng `default` vì viền `color-border-control` trên glass bị nhòe với phông nền. Thứ tư, thứ tự nút trong một nhóm theo chiều đọc: hành động phụ bên trái, hành động chính ngoài cùng bên phải (CRUD-UI-03).
 
@@ -478,6 +486,8 @@ export interface DhCopyButtonProps {
 | `minimap` | `Map` | Bản đồ thu nhỏ |
 | `panel` | `PanelLeft` | Thu gọn, mở ngăn bên |
 
+: CMP-Icon
+
 Ghi chú: `approve` và `success` cùng dùng `CircleCheck` vì cùng một ý "đạt"; đây là ngoại lệ được chấp nhận duy nhất của quy tắc một biểu tượng một nghĩa, vì hai nghĩa không xuất hiện cạnh nhau trong cùng một vị trí.
 
 **Token.** `TKN-size-icon-sm`, `TKN-size-icon-md`, `TKN-size-icon-lg`, `TKN-color-icon-primary`, `TKN-color-icon-secondary`, `TKN-color-success-text`, `TKN-color-warning-text`, `TKN-color-error-text`, `TKN-color-info-text`.
@@ -682,6 +692,8 @@ export interface DhDividerProps { orientation?: 'horizontal' | 'vertical'; spaci
 | `info` | Đang trong quy trình, đang chờ một bên xử lý, đang chạy | `color-info-bg` / `color-info-on-bg` | Chấm tròn nửa (hoặc spinner nhỏ với trạng thái "đang chạy") |
 | `neutral` | Chưa có hiệu lực, đã kết thúc tự nhiên, không còn hoạt động nhưng không phải lỗi | `color-neutral-bg` / `color-neutral-on-bg` | Chấm tròn viền đứt (vòng nét đứt) |
 
+: CMP-StatusTag: Sắc thái, Ý nghĩa
+
 **Bảng ánh xạ trạng thái dùng chung.** Bảng dưới đây ánh xạ mã trạng thái chuẩn (kiểu `T-ENUM`, D00-01 §5) sang nhãn tiếng Việt và sắc thái. Mỗi phân hệ khi định nghĩa máy trạng thái của đối tượng (D02-03, D03-03) phải dùng mã trong bảng này nếu nghĩa trùng; chỉ khi không có mã phù hợp mới đề xuất mã mới bằng PR vào `registry.ts` kèm cập nhật bảng này. Cột "Nhóm" cho biết loại đối tượng thường dùng, không giới hạn.
 
 | Mã | Nhãn hiển thị | Sắc thái | Nhóm | Ghi chú |
@@ -722,6 +734,8 @@ export interface DhDividerProps { orientation?: 'horizontal' | 'vertical'; spaci
 | `DEGRADED` | Suy giảm | `warning` | Sức khỏe dịch vụ | |
 | `DOWN` | Ngừng hoạt động | `error` | Sức khỏe dịch vụ | |
 | `UNKNOWN` | Không xác định | `neutral` | Mọi nhóm | Dự phòng khi nhận mã chưa có trong bảng |
+
+: CMP-StatusTag: Mã, Nhãn hiển thị
 
 Bốn quy tắc đi kèm bảng. Thứ nhất, sắc thái thể hiện **mức cần chú ý**, không thể hiện "tốt hay xấu" về đạo đức: "Hoàn tiền" là `neutral` vì giao dịch đã kết thúc đúng quy trình; "Ngừng cung cấp" là `warning` vì bên dùng phải hành động trước ngày gỡ. Thứ hai, nhãn hiển thị trong bảng là nhãn chuẩn; nếu một phân hệ cần nhãn khác cho cùng mã (ví dụ PH thanh toán muốn "Đã hoàn tiền"), phải sửa nhãn ở đây cho mọi phân hệ, không ghi đè cục bộ. Thứ ba, mã chưa có trong bảng hiển thị là `UNKNOWN` kèm mã gốc trong tooltip, và thành phần ghi cảnh báo `console.warn` ở môi trường phát triển để phát hiện sớm. Thứ tư, khi phân hệ có máy trạng thái riêng chưa chuẩn hóa, có thể truyền `customStatus={{ label, tone }}` nhưng lint báo cảnh báo và PR phải giải thích.
 
@@ -1135,6 +1149,8 @@ export interface DhTooltipProps {
 | `error` | `warning` | "Lưu lỗi" + nút "Thử lại" | `color-error-text` | "Thử lại"; tooltip nêu mã lỗi và mã truy vết |
 | `offline` | `offline` | "Chưa lưu lên máy chủ (mất kết nối)" | `color-warning-text` | Không; tự lưu lại khi có kết nối, bản nháp giữ cục bộ |
 | `readonly` | `lock` | "Chỉ đọc" | `color-text-secondary` | Tooltip nêu lý do (đang duyệt, không có quyền, phiên bản đã phát hành) |
+
+: CMP-SaveIndicator
 
 **Quy tắc chuyển trạng thái.** `saving` chỉ hiện sau 300ms để tránh nhấp nháy khi máy chủ trả nhanh; `saved` giữ nguyên tới lần thay đổi tiếp theo; `error` không tự biến mất. Khi chuyển sang `error` hoặc `offline`, thành phần phát một thông báo `aria-live="polite"` một lần ("Lưu không thành công"); các chuyển trạng thái khác không đọc để tránh ồn. Thời điểm trong `saved` lấy từ phản hồi máy chủ (`updatedAt`), không lấy đồng hồ máy trạm.
 
@@ -1812,6 +1828,8 @@ export interface DhRadioCardProps<V extends string = string> {
 | Hằng tháng | Ngày (1–28, "ngày cuối tháng") + giờ phút | "Ngày 1 hằng tháng lúc 02:00" | `0 0 2 1 * *` hoặc `0 0 2 L * *` |
 | Tùy chỉnh | Ô nhập cron 6 trường | Diễn giải tiếng Việt sinh tự động | Như người dùng nhập |
 
+: CMP-CronPicker · Năm kiểu lịch.
+
 Ngày trong tháng giới hạn 1–28 ở chế độ thân thiện để không có tháng bị bỏ lịch; cần ngày 29–31 thì dùng "ngày cuối tháng" hoặc chế độ tùy chỉnh.
 
 **Xem trước và giới hạn.** Dưới điều khiển luôn có dòng "Lần chạy kế tiếp: 26/11/2026 01:00 · 27/11/2026 01:00 · 28/11/2026 01:00" (ba lần, tính ở trình duyệt bằng thư viện phân tích cron và kiểm tra lại ở máy chủ khi lưu). Màn hình truyền `minIntervalMinutes` (ví dụ PH-07 là 60 theo tham số `07.rdm.sync-min-interval`); lịch dày hơn ngưỡng bị báo lỗi "Lịch không được chạy dày hơn 1 giờ một lần". Biểu thức tùy chỉnh sai cú pháp báo lỗi chỉ ra trường sai ("Trường giờ phải trong khoảng 0–23").
@@ -1943,6 +1961,8 @@ export interface DhSecretRefFieldProps {
 | `CMP-ApiSelect` | API PH-02 | Danh mục API người dùng được xem | `PUBLISHED` | Phiên bản API, trạng thái `DEPRECATED` có cảnh báo |
 | `CMP-TopicSelect` | Topic PH-10 | Topic của dự án sự kiện được cấp | Đúng chiều (phát hay nhận) | Quyền phát/nhận |
 
+: CMP-ResourceSelect và các biến thể theo phân hệ
+
 **Nền antd, token, nền đặt, bàn phím.** Như `CMP-Select` (mục 7.5). Popup `glass-overlay`. Ô nằm trên nền đặc.
 
 **API.**
@@ -1993,6 +2013,8 @@ Năm thành phần ở mục này hiển thị một **giá trị** có quy tắ
 | `datetime-ms` | `DD/MM/YYYY HH:mm:ss.SSS` | 20/11/2026 14:05:09.412 | Log, truy vết (PTN-11) |
 | `smart` | Trong ngày: `HH:mm`; hôm qua: "Hôm qua HH:mm"; trong năm: `DD/MM HH:mm`; khác năm: `DD/MM/YYYY HH:mm` | 14:05 · Hôm qua 09:12 | Dòng thời gian, hộp việc, thông báo |
 | `relative` | "vừa xong" (dưới 1 phút), "{n} phút trước", "{n} giờ trước", từ 24 giờ chuyển sang `datetime` | 5 phút trước | Thông báo, "cập nhật lần cuối" |
+
+: CMP-Timestamp · Biến thể.
 
 Biến thể `relative` tự cập nhật mỗi 60 giây bằng một bộ đếm chung cho cả trang (không tạo bộ đếm riêng cho mỗi phần tử). Mọi biến thể trừ `date` có `CMP-Tooltip` hiện thời điểm đầy đủ đến giây kèm dòng UTC ("20/11/2026 14:05:09 (giờ Việt Nam) · 2026-11-20T07:05:09Z") để kỹ sư đối chiếu log.
 
@@ -2135,6 +2157,8 @@ export interface DhIdentifierProps {
 | Địa chỉ | Giữ cấp tỉnh | `***, Tỉnh Mẫu A` |
 | Số tài khoản ngân hàng | Giữ 4 cuối | `********1234` |
 
+: CMP-MaskedValue
+
 **Luồng mở xem.** (1) Người dùng bấm nút "Hiện" (biểu tượng `view`). (2) `CMP-ReasonDialog` (D03-05-04 §7.4) mở với ô lý do bắt buộc tối thiểu 10 ký tự và danh sách lý do thường dùng do phân hệ cấu hình. (3) Sau khi máy chủ trả giá trị, giá trị thật hiển thị tại chỗ, kèm chữ phụ "Đang hiện · tự che sau 30 giây" và nút "Ẩn" (`hide`). (4) Sau 30 giây, khi rời trang, khi đổi tenant hoặc khi cửa sổ mất focus quá 30 giây, giá trị tự che lại và bị xóa khỏi bộ nhớ thành phần. (5) Mở xem lần nữa cần lý do lần nữa (mỗi lần là một bản ghi kiểm toán). Trong một bảng, chỉ mở được từng ô; không có "Hiện tất cả".
 
 **Biến thể.** `revealable` (có nút Hiện khi `canReveal`), `static` (không bao giờ có nút, dùng cho log vận hành và giá trị giao diện tự nhận diện, D03-06-00 PTN-11). Khi người dùng không có quyền, nút không hiện (không hiện vô hiệu), đúng quy ước ẩn khi thiếu quyền (D03-05-04 §2.3).
@@ -2222,6 +2246,8 @@ Bảng dưới đây là danh mục chính thức các thành phần nguyên t�
 | 8.4 | `CMP-Identifier` | `Typography.Text` | M | 3 | Có (trừ `link` trên glass dày) |
 | 8.5 | `CMP-MaskedValue` | tự dựng | M | 5 trạng thái | Không |
 
+: Bảng tổng hợp thành phần nguyên tử: Mục, Mã
+
 Tổng cộng 44 thành phần nguyên tử. Tính cả năm biến thể theo phân hệ của `CMP-ResourceSelect` (có mã riêng để truy vết nhưng dùng chung một hiện thực) thì có 49 mã `CMP-`.
 
 **Tên gọi khác đã gặp trong tài liệu phân hệ.** Một số tập D03-06 viết trước khi tập này hoàn thành dùng tên khác cho cùng thành phần. Bảng dưới là ánh xạ chính thức; tập phân hệ được sửa theo tên chuẩn ở lần cập nhật kế tiếp và lint tài liệu (`build/check-cmp.py`, đề xuất ở mục 12) cảnh báo tên không có trong danh mục.
@@ -2232,6 +2258,8 @@ Tổng cộng 44 thành phần nguyên tử. Tính cả năm biến thể theo p
 | `CMP-SearchInput` | `CMP-SearchField` (D03-05-04 §3.3) | Ô tìm có bỏ dấu và debounce |
 | `CMP-FileDrop`, `CMP-FileDropzone` | `CMP-Upload` biến thể `dropzone` | |
 | `CMP-CodeBlock` | `CMP-CodeEditor` chế độ chỉ đọc (D03-05-04 §9.1) hoặc `CMP-JsonViewer` | Khối mã nhiều dòng |
+
+: Bảng tổng hợp thành phần nguyên tử: Tên đã dùng, Tên chuẩn
 
 ## 10. Checklist nghiệm thu thành phần nguyên tử
 
@@ -2268,6 +2296,8 @@ Kiểm thử viên và người duyệt PR dùng checklist dưới đây cho m�
 | PH-04 D03-06-PH04 §27.3 (thành phần đề nghị bổ sung) | `CMP-AvatarGroup`, `CMP-SaveIndicator`, `CMP-RadioCard`, `CMP-ExpressionField`, `CMP-SecretRefField`, `CMP-ConnectionSelect`, `CMP-SchemaSelect`, `CMP-CodeListSelect`; phần còn lại ở D03-05-04 |
 | PH-07 D03-06-PH07 Phụ lục A-05 | `CMP-CronPicker`; `CMP-FileDrop` là `CMP-Upload`; phần còn lại ở D03-05-04 |
 | PH-19 BRD (hiển thị số tiền, giao dịch) | `CMP-Money` (8.3), `CMP-Timestamp` biến thể `datetime-second` (8.1) |
+
+: Truy vết
 
 ## 12. Đề xuất bổ sung
 

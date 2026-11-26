@@ -29,6 +29,8 @@ Repo DATAHUB đã có 22 ADR trong `docs/05-adr`. Bộ tài liệu này độc l
 | ADR-060 … 069 | Lõi tích hợp, trình thiết kế luồng, bộ điều hợp (PH-04, PH-05) | Luồng PH-04 |
 | ADR-070 … 074 | Sự kiện (PH-10) | Luồng PH-10 |
 
+: Dải số
+
 ## 4. Danh sách ADR
 
 Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` nghĩa là chờ duyệt ở cổng G1; `Chấp nhận` sau khi được duyệt; ADR bị thay thế giữ nguyên file và ghi `Thay thế bởi ADR-xxx`. Các ADR của luồng khác được bổ sung vào bảng khi PR của luồng đó được gộp.
@@ -96,6 +98,8 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-072](adr/ADR-072-cap-phat-topic-acl-qua-gitops.md) | Cấp phát topic, ACL, hạn mức Kafka bằng tài nguyên Strimzi trong kho GitOps của tenant | Đề xuất | PH-10 |
 | [ADR-073](adr/ADR-073-cau-noi-di-tru-pulsar.md) | Di trú Hub Pulsar bằng cầu nối hai chiều tạm thời trên dh-runtime | Đề xuất | PH-10 |
 
+: Danh sách ADR
+
 ## 5. Nhật ký quyết định của chủ đầu tư
 
 | Ngày | Nội dung | Ảnh hưởng |
@@ -105,3 +109,5 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | 25/11/2026 | Giữ APISIX ở biên, không thêm Envoy Gateway (ADR-033 bản 0.2) | D03-07, D03-08, D03-09, SAD §6 |
 | 25/11/2026 | Q300 hệ mới · Q306 Ceph RGW cho WORM · Q311/Q323(b) mỗi tỉnh chủ quản tenant · Q340 tách `pg-payment` · Q341, Q347 WORM và sao lưu chung hệ Ceph RGW, tách bucket · Q350 bản đồ DU theo SAD · Q353 GitHub khi phát triển, GitLab on-prem khi bàn giao · Q05 chủ quản CNTT là tham số theo tỉnh | Các tài liệu chứa câu hỏi tương ứng |
 | 25/11/2026 | Q359: luồng Camel được truy cập trực tiếp CSDL có kiểm soát (tài khoản chỉ đọc, khai báo ở PH-05, ghi kiểm toán) · Catalog trình thiết kế phải khớp đúng phiên bản Camel Quarkus của runtime (hiện 3.33.2) | D04-01, PH-04, PH-05 |
+
+: Nhật ký quyết định của chủ đầu tư

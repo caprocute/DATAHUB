@@ -48,6 +48,8 @@ Bảng dưới đây là quy tắc bắt buộc về việc mỗi vùng giao di�
 | Card, bảng, biểu mẫu, mô tả chi tiết, log, khối mã, biểu đồ, bề mặt và nút của canvas thiết kế, bảng thành phần, Inspector, thanh công cụ trình thiết kế | `color-surface-solid` hoặc `color-surface-solid-2` đặc | Lớp nội dung (D03-05-04 §11.0) |
 | Vùng nội dung trong Modal, Drawer | `color-surface-solid` đặc (giếng nội dung) | Biểu mẫu và bảng trong lớp nổi vẫn là nội dung |
 
+: Bản đồ vật liệu
+
 ### 3.2. Các điều cấm
 
 Có năm điều cấm. Thứ nhất, không đặt bảng, biểu mẫu, log hoặc khối văn bản dài trực tiếp lên kính, vì chữ dày đặc trên nền thay đổi gây mỏi mắt và khó đạt tương phản. Thứ hai, không xếp kính chồng lên kính, vì hai lớp nhòe chồng nhau tạo màu đục khó đoán và nhân đôi chi phí GPU; ngoại lệ duy nhất là một lớp `glass-overlay` (ví dụ danh sách chọn của Select) mở ra từ bên trong giếng nội dung của Modal, vì khi đó phông nền trực tiếp của overlay là nền đặc của giếng chứ không phải kính. Thứ ba, không dùng kính để trang trí cho Card hay ô KPI chỉ vì "đẹp", vì như vậy phá vỡ ý nghĩa phân lớp. Thứ tư, không đặt chữ liên kết cỡ thường hay chữ màu trạng thái trực tiếp trên `glass-chrome-scrolled` và `glass-modal`, vì hai vật liệu này không đạt 4,5:1 với chữ màu nhấn trong trường hợp xấu nhất (D03-05-02 §5). Thứ năm, không đặt hơn **bốn** phần tử có `backdrop-filter` cùng hiển thị trên màn hình (sidebar, topbar, một lớp nổi lớn, một lớp nổi nhỏ), vì đây là ngưỡng mà máy văn phòng bốn nhân vẫn giữ được 60 khung hình mỗi giây khi cuộn.
@@ -60,7 +62,7 @@ Yêu cầu nền đặc cho nội dung không chỉ là lựa chọn thẩm mỹ
 
 Mỗi vật liệu glass được dựng từ năm lớp chồng lên nhau trên cùng một phần tử, theo thứ tự từ dưới lên:
 
-```mermaid
+```{.mermaid caption="Cấu tạo vật liệu bằng CSS"}
 flowchart BT
   B[Phông nền phía sau<br/>canvas hoặc nội dung] --> F[backdrop-filter<br/>blur + saturate]
   F --> T[Tint<br/>background-color rgba]
@@ -147,7 +149,7 @@ Có ba chi tiết hiện thực cần lưu ý. Thuộc tính `isolation: isolate
 
 Topbar là nơi duy nhất mà nội dung tùy ý trượt bên dưới kính. Để giữ tương phản, topbar có hai trạng thái và chuyển giữa chúng theo vị trí cuộn của vùng nội dung chính.
 
-```mermaid
+```{.mermaid caption="Topbar thích ứng khi cuộn"}
 stateDiagram-v2
   [*] --> AtTop
   AtTop: Ở đầu trang<br/>glass-chrome, không bóng
@@ -171,13 +173,15 @@ Người dùng điều chỉnh giao diện bằng bốn tùy chọn độc lập
 | Chuyển động | Theo hệ thống / Đầy đủ / Giảm | Theo hệ thống | `prefers-reduced-motion` |
 | Mật độ | Chuẩn / Gọn | Chuẩn | Không có |
 
+: Bốn tùy chọn độc lập
+
 Lựa chọn được lưu ở hai nơi: `localStorage` để áp dụng ngay khi tải trang (chống nhấp nháy), và hồ sơ người dùng phía máy chủ để theo người dùng sang máy khác. Khi hai nơi khác nhau, giá trị máy chủ thắng sau khi đăng nhập xong.
 
 ### 6.2. Phân giải chế độ kính
 
 Tùy chọn "Hiệu ứng kính" có bốn giá trị nhưng thuộc tính `data-glass` trên thẻ `html` chỉ nhận ba giá trị đã phân giải `full`, `lite`, `off`. Thuật toán phân giải như sau:
 
-```mermaid
+```{.mermaid caption="Phân giải chế độ kính"}
 flowchart TD
   A[Tùy chọn người dùng] -->|Đầy đủ| FULL[full]
   A -->|Giảm| LITE[lite]
@@ -214,6 +218,8 @@ Phép đo chạy một lần sau khi ứng dụng tải xong và trình duyệt 
 | 2 | Tài nguyên phần cứng | `navigator.hardwareConcurrency` ≤ 2, hoặc `navigator.deviceMemory` ≤ 2 (chỉ có trên Chromium) | Có → hạng **Thấp**; ≤ 4 nhân hoặc ≤ 4 GB → ứng viên **Trung bình** |
 | 3 | Đo khung hình thực tế | Gắn tạm một lớp `dh-glass--overlay` kích thước 480×320 ngoài màn hình nhìn thấy, cho một phần tử phía sau chuyển động trong 1 giây, đo khoảng cách giữa các khung bằng `requestAnimationFrame` | p90 khoảng cách ≤ 20 ms → **Cao**; 20–34 ms → **Trung bình**; > 34 ms → **Thấp** |
 | 4 | Theo dõi khi dùng | `PerformanceObserver` loại `long-animation-frame` (hoặc `longtask` nếu không có) trong khi dùng thật | Từ 5 khung dài trên 100 ms trong 10 giây khi đang ở `full` → hạ xuống `lite` cho phiên hiện tại và ghi nhận |
+
+: Thuật toán xếp hạng
 
 Bước 4 là lưới an toàn: nếu phép đo ban đầu lạc quan (ví dụ máy đang rảnh lúc đo nhưng bận khi dùng), ứng dụng tự hạ cấp trong phiên. Mỗi lần tự hạ cấp, một thông báo nhỏ không chặn thao tác (`CMP-Toast`) cho người dùng biết "Đã giảm hiệu ứng kính để giao diện mượt hơn. Có thể đổi trong Cài đặt." Thông báo chỉ hiện một lần cho mỗi máy.
 
@@ -280,6 +286,8 @@ export interface GlassSurfaceProps extends React.HTMLAttributes<HTMLElement> {
 | `useDhPreferences()` | `{ colorScheme, glass, motion, density }` (giá trị người dùng chọn, có thể là `'system'`/`'auto'`) và hàm `setPreference` | Trang Cài đặt cá nhân |
 | `useDhAppearance()` | `{ mode: 'light' \| 'dark', glass: 'full' \| 'lite' \| 'off', reducedMotion: boolean, density, glassTier }` (giá trị đã phân giải) | Thành phần cần biết chế độ thực tế |
 
+: CMP-ThemeProvider · Hook công khai.
+
 **Thuộc tính dữ liệu trên thẻ `html`.** `data-theme` (`light`/`dark`), `data-glass` (`full`/`lite`/`off`), `data-motion` (`full`/`reduced`), `data-density` (`comfortable`/`compact`), `data-contrast` (`normal`/`more`). CSS của `@datahub/ui` chỉ được rẽ nhánh theo năm thuộc tính này, không tự đọc truy vấn phương tiện, để mọi lựa chọn thủ công của người dùng được tôn trọng nhất quán.
 
 **Chuyển chế độ.** Khi người dùng đổi chế độ màu, provider thêm lớp `dh-theme-transition` vào thẻ `html` trong 220ms để màu nền và chữ chuyển mượt; lớp này bị bỏ qua khi `data-motion="reduced"`. Đổi chế độ không dựng lại cây React; chỉ giá trị biến CSS thay đổi, nhờ chế độ CSS variables của antd v6.
@@ -297,6 +305,8 @@ Ngoài bốn kiểm tra chung ở D03-05-02 §15, vật liệu có bộ kiểm t
 | TS-00-UI-05 | Chế độ màu cưỡng bức | Playwright với `forcedColors: 'active'` | Mọi thành phần còn ranh giới nhìn thấy được, không mất chữ |
 | TS-00-UI-06 | Tôn trọng lựa chọn thủ công | Đặt "Đầy đủ" trên máy hạng Thấp | `data-glass="full"`, không bị tự hạ cấp ở bước 1–3 (bước 4 vẫn hạ trong phiên và báo) |
 
+: Kiểm thử vật liệu
+
 ## 11. Truy vết
 
 | Yêu cầu | Đáp ứng tại |
@@ -308,6 +318,8 @@ Ngoài bốn kiểm tra chung ở D03-05-02 §15, vật liệu có bộ kiểm t
 | NFR-00-005 LCP, INP trên máy văn phòng | Mục 3.2 (giới hạn bốn lớp), 6.3, 7 |
 | RSK-A05 Glass làm chậm máy yếu | Mục 7 |
 | NFR-00-045 Thống nhất giao diện | Mục 9.1 (một điểm sinh vật liệu duy nhất) |
+
+: Truy vết
 
 ## 12. Đề xuất bổ sung D00-01
 
