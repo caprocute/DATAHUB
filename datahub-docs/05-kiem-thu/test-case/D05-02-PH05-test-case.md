@@ -1020,3 +1020,380 @@ Không dùng số định danh, số điện thoại thật. Mẫu dữ liệu c
 - **Tiền điều kiện / dữ liệu** Thao tác có `responseSchemaRef`; SIM-HTTP trả `so` là số thay vì chuỗi; mẫu 1,5 MiB.
 - **Bước** Gọi thao tác; lưu mẫu 1,5 MiB.
 - **Mong đợi** ERR-05-108 kèm đường dẫn trường sai; mẫu `413` ERR-05-035.
+
+### TS-05-21 · Kiểm thử, gửi duyệt, duyệt phiên bản bộ điều hợp
+
+**Mục tiêu.** Xác nhận chỉ phiên bản đã kiểm thử đạt mới được gửi duyệt, người khác duyệt, và thao tác ghi không bao giờ chạy thử trên PROD.
+
+**Phủ.** FR-05-043, 044; UC-05-17; API-05-052, 053, 055…060; UI-05-09, 10, 17; BR-05-006, 009, 016, 030; ERR-05-009, 011; EVT-05-07, 08; LGC-BUS-013.
+
+#### TC-05-### · Kiểm thử tất cả thao tác trên TEST <!--k:adapter-test-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-043 · API-05-052, 053 · UI-05-10 · UC-05-17 · LGC-BUS-013
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-QLVB v4 nháp 6 thao tác (1 `WRITE`).
+- **Bước**
+  1. Ở UI-05-10 chọn "Kiểm thử ▾ Tất cả thao tác".
+  2. Ở hộp xác nhận ghi thử, tích "Tôi xác nhận môi trường TEST của HTTT cho phép ghi thử".
+- **Mong đợi** `202`; R5 tab Kết quả kiểm thử hiện từng thao tác với các bước kết nối, gọi, chuyển đổi, chuẩn hóa, so lược đồ; 6 mục R2 có ✓. `GET …/tests/{id}` `result = PASSED`.
+
+#### TC-05-### · Thao tác ghi không chạy trên STAGING, PROD; thiếu xác nhận <!--k:adapter-test-write-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-043 · BR-05-030 · API-05-052 · ERR-05-003
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-QLVB v4.
+- **Bước**
+  1. `POST …/versions/4/tests` với `env = PROD`.
+  2. Với `env = STAGING`, `operations = ["gui-van-ban"]` (`WRITE`).
+  3. Với `env = TEST`, thao tác `WRITE`, không `confirmWriteOnTest`.
+- **Mong đợi** Bước 1 `400` ERR-05-003 (`env` chỉ `TEST`, `STAGING`). Bước 2, 3 `400` ERR-05-003; SIM-SOAP không nhận yêu cầu ghi.
+
+#### TC-05-### · Gửi duyệt khi sửa sau kiểm thử bị chặn <!--k:adapter-submit-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-044, 032 · API-05-055 · ERR-05-009 · BR-05-006
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; sau [[tc:adapter-test]], sửa `timeoutMs` của một thao tác.
+- **Bước** `POST …/versions/4:submit`; mở UI-05-10.
+- **Mong đợi** `409` ERR-05-009; mục R2 của thao tác vừa sửa mất ✓; nút "Gửi duyệt" vô hiệu với lý do.
+
+#### TC-05-### · Gửi duyệt, người khác duyệt, Kamelet sinh và phiên bản cũ bị thay <!--k:adapter-approve-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-044, 047 · API-05-055, 056 · UI-05-17 · EVT-05-07 · BR-05-016
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; A-QLVB v4 kiểm thử đạt.
+- **Bước**
+  1. IE1 gửi duyệt với ghi chú phát hành.
+  2. IA1 duyệt ở UI-05-17.
+  3. `GET /adapters/qlvb-soap`; `PUT …/versions/4/operations/x`.
+- **Mong đợi** Bước 1 v4 `SUBMITTED`. Bước 2 v4 `APPROVED`, v3 `SUPERSEDED`. EVT: `adapter.version-approved`. Bước 3 `effectiveVersion = 4`, Kamelet sinh tên `qlvb-soap-{op}-v1-{loại}`; `PUT` trả `409` ERR-05-008.
+
+#### TC-05-### · Tự duyệt phiên bản; từ chối thiếu lý do <!--k:adapter-approve-4eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-044 · API-05-056, 057 · ERR-05-011, 038 · BR-05-009
+- **Tiền điều kiện / dữ liệu** U-T68-IA2 soạn và gửi phiên bản của `tc-qlvb`.
+- **Bước**
+  1. IA2 `POST …:approve`.
+  2. IA1 `POST …:reject` không lý do; rồi có lý do.
+- **Mong đợi** Bước 1 `403` ERR-05-011. Bước 2 lần đầu `400` ERR-05-038; lần hai `200`, phiên bản về `DRAFT`, kết quả kiểm thử giữ.
+
+#### TC-05-### · Tạm dừng bộ điều hợp chặn lượt mới; ngừng dùng khi còn nơi dùng <!--k:adapter-suspend-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, RT
+- **Truy vết** FR-05-044 · API-05-058, 059, 060 · EVT-05-08 · ERR-05-118, 010
+- **Tiền điều kiện / dữ liệu** U-T68-TO; A-DVC đang dùng ở 21 luồng.
+- **Bước**
+  1. TO `POST /adapters/dvc-rest:suspend` với lý do; luồng gọi.
+  2. TO `:resume`.
+  3. IE1 `:retire`.
+- **Mong đợi** Bước 1 `200`, EVT: `adapter.state-changed`, lượt mới nhận ERR-05-118 trong ≤ 30 giây. Bước 2 hoạt động lại. Bước 3 `409` ERR-05-010.
+
+### TS-05-22 · Phiên bản và so sánh trên lưu lượng thật
+
+**Mục tiêu.** Xác nhận nâng phiên bản an toàn: một bản nháp tại một thời điểm, nhận diện thay đổi không tương thích, so sánh phản hồi trên lưu lượng thật chỉ với thao tác đọc.
+
+**Phủ.** FR-05-045; UC-05-18; API-05-047, 048, 063, 064; UI-05-09; ERR-05-008.
+
+#### TC-05-### · Tạo bản nháp mới sao từ phiên bản hiệu lực; chỉ một bản nháp <!--k:version-draft-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-045 · API-05-047, 048 · ERR-05-008
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-DVC v7 hiệu lực, không có nháp.
+- **Bước** `POST /adapters/dvc-rest/versions` hai lần.
+- **Mong đợi** Lần 1 `201` v8 `DRAFT`, thao tác giống v7. Lần 2 `409` ERR-05-008.
+
+#### TC-05-### · Thay đổi không tương thích tăng số chính Kamelet <!--k:version-breaking-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, UT
+- **Truy vết** FR-05-045, 047 · UI-05-10
+- **Tiền điều kiện / dữ liệu** A-DVC v8 nháp.
+- **Bước** Bỏ tham số bắt buộc của thao tác `tra-cuu-ho-so`; xem R5 tab "Kamelet sẽ sinh".
+- **Mong đợi** Nhãn "Thay đổi không tương thích → v2"; sau duyệt có Kamelet `dvc-rest-tra-cuu-ho-so-v2-action` mới, `…-v1-action` giữ cho luồng cũ.
+
+#### TC-05-### · So sánh v7 và v8 trên lưu lượng thật <!--k:version-compare-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API, RT
+- **Truy vết** FR-05-045 · API-05-063, 064 · ERR-05-003 · UI-05-09 · UC-05-18
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; v8 kiểm thử đạt; luồng PROD gọi `tra-cuu-ho-so` 10 lượt/giây.
+- **Bước**
+  1. `POST …/versions/8:compare` với `operations = ["tra-cuu-ho-so"]`, 10 % lưu lượng, 15 phút.
+  2. `GET …/comparisons/{id}`.
+  3. `POST …/versions/8:compare` với thao tác `WRITE`.
+- **Mong đợi** Bước 2: số yêu cầu, tỷ lệ khác, mẫu khác đã che dữ liệu cá nhân; luồng vẫn nhận phản hồi v7. Bước 3 `400` ERR-05-003.
+
+### TS-05-23 · Sinh bộ điều hợp từ OpenAPI, WSDL
+
+**Mục tiêu.** Xác nhận sinh bản nháp thao tác từ đặc tả để rút ngắn khai báo.
+
+**Phủ.** FR-05-046; UC-05-13; API-05-065; UI-05-11; ERR-05-023, 035.
+
+#### TC-05-### · Sinh từ OpenAPI 3.1 <!--k:spec-oas-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-05-046 · API-05-065 · UI-05-11 · UC-05-13
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; F-OAS.
+- **Bước** Tải F-OAS ở UI-05-11, chọn 10 đường dẫn, tạo bản nháp.
+- **Mong đợi** 10 thao tác: GET → `sideEffect = NONE`, POST → `WRITE`; phân trang phát hiện ở 2 thao tác; cảnh báo `oneOf` cho 2 lược đồ; chuyển UI-05-10, mục R2 chưa có ✓.
+
+#### TC-05-### · Sinh từ WSDL ZIP; đặc tả hỏng hoặc quá lớn <!--k:spec-neg-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-046 · API-05-065 · ERR-05-023, 035
+- **Tiền điều kiện / dữ liệu** F-WSDL; YAML OpenAPI hỏng ở dòng 40; OpenAPI 6 MiB.
+- **Bước** Gửi ba tệp.
+- **Mong đợi** F-WSDL `200` với thao tác SOAP và XSD nhập kèm. YAML hỏng `422` ERR-05-023 có dòng 40. Tệp 6 MiB `413` ERR-05-035.
+
+### TS-05-24 · Kamelet sinh và đồng bộ catalog
+
+**Mục tiêu.** Xác nhận Kamelet sinh từ bộ điều hợp vào được bảng thành phần PH-04 và runtime, catalog đồng bộ theo hồ sơ runtime.
+
+**Phủ.** FR-05-047, 059; API-05-089; UI-05-14; BR-05-027; EVT-05-07, 09.
+
+#### TC-05-### · Kamelet sinh có trong catalog PH-04 <!--k:catalog-generated-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-047, 059 · API-05-089 · BR-05-027 · UI-05-14
+- **Tiền điều kiện / dữ liệu** S-INT; sau [[tc:adapter-approve]].
+- **Bước** S-INT `GET /internal/catalog/kamelets?tenant=T68&profile=soap-jvm`.
+- **Mong đợi** Có Kamelet nền theo `runtime-manifest.json`, `COMMON` và `TENANT` `APPROVED`, Kamelet sinh của A-QLVB; mỗi mục có YAML, băm, mức native; Kamelet `DEPRECATED` có cờ ẩn. Không có mục của T01.
+
+#### TC-05-### · Tên Kamelet sinh dài được rút gọn có băm <!--k:catalog-name-->
+- **Loại** Biên · **Ưu tiên** P3 · **Tự động** UT
+- **Truy vết** FR-05-047
+- **Tiền điều kiện / dữ liệu** Mã bộ điều hợp 50 ký tự, mã thao tác 40 ký tự.
+- **Bước** Duyệt phiên bản.
+- **Mong đợi** Tên Kamelet ≤ 63 ký tự, có băm 6 ký tự, vẫn khớp mẫu `-(source|sink|action)$`; hai thao tác khác nhau không trùng tên.
+
+#### TC-05-### · Nâng runtime chạy lại kiểm tra tĩnh, đánh dấu NEEDS_REVIEW <!--k:catalog-upgrade-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-05-059 · ERR-05-021
+- **Tiền điều kiện / dữ liệu** K-MST dùng thành phần bị bỏ khỏi `runtime-manifest.json` bản mới.
+- **Bước** Nạp manifest mới; chạy việc kiểm tra lại.
+- **Mong đợi** K-MST mang thuộc tính `NEEDS_REVIEW` (trạng thái giữ `APPROVED`), UI-05-14 có huy hiệu; chủ sở hữu nhận thông báo nêu ERR-05-021.
+
+### TS-05-25 · Thiết lập và chạy CDC
+
+**Mục tiêu.** Xác nhận CDC cho HTTT di sản: kiểm tra điều kiện ở nguồn, chạy qua GitOps, theo dõi độ trễ, không mất dữ liệu khi khởi động lại.
+
+**Phủ.** FR-05-048, 049, 050, 052; UC-05-19; API-05-067…072; UI-05-12; ERR-05-025, 027, 029; EVT-05-12, 13; NFR-05-009, 010.
+
+#### TC-05-### · Khai báo CDC, đăng ký topic và lược đồ <!--k:cdc-config-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-048 · API-05-067, 068 · UI-05-12 · UC-05-19
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; A-CDC; C-CDC TEST; PH-10 SIT.
+- **Bước** `PUT /adapters/dkkd-cdc/cdc` với `engine = postgresql`, 2 bảng, cột `so_dien_thoai` băm, `snapshotMode = INITIAL`.
+- **Mong đợi** `200`, trạng thái `STOPPED`; topic `t68.cdc.dkkd-cdc.dkkd.doanh_nghiep.v1` và lược đồ Avro có ở PH-10, Apicurio; đặc tả `KafkaConnector` ở nhánh môi trường của kho GitOps, chưa áp.
+
+#### TC-05-### · Bảng ngoài phạm vi, PH-10 không khả dụng, vượt trần bảng <!--k:cdc-config-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-048 · API-05-068 · ERR-05-027, 029, 030
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; `05.cdc.max-tables = 50`.
+- **Bước**
+  1. Khai bảng `ke_toan.so_cai`.
+  2. Dừng PH-10, khai hợp lệ.
+  3. Khai 51 bảng.
+- **Mong đợi** Bước 1 `422` ERR-05-027. Bước 2 `503` ERR-05-029. Bước 3 `422` ERR-05-030.
+
+#### TC-05-### · Kiểm tra điều kiện CDC đạt và không đạt <!--k:cdc-prereq-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-049 · API-05-069, 070 · ERR-05-025 · UI-05-12
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; SIM-PG; SIM-PG-BAD.
+- **Bước**
+  1. Kiểm tra với SIM-PG.
+  2. Đổi kết nối sang SIM-PG-BAD, kiểm tra; rồi `POST …/cdc:start`.
+- **Mong đợi** Bước 1 mọi mục đạt (`wal_level`, quyền `REPLICATION`, publication đúng bảng, slot còn chỗ). Bước 2 mục `wal_level` không đạt kèm hướng dẫn gửi đơn vị chủ quản; `start` `422` ERR-05-025.
+
+#### TC-05-### · Chạy CDC: chụp ảnh ban đầu rồi đọc thay đổi <!--k:cdc-run-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-05-050, 052 · API-05-070, 067 · EVT-05-12, 13 · NFR-05-009
+- **Tiền điều kiện / dữ liệu** U-T68-TO; sau [[tc:cdc-prereq]] bước 1; bảng `doanh_nghiep` 10.000 dòng.
+- **Bước**
+  1. `POST …/cdc:start`.
+  2. Sau khi `STREAMING`, `INSERT`, `UPDATE`, `DELETE` ở SIM-PG.
+  3. `GET …/cdc`.
+- **Mong đợi** `SNAPSHOTTING` → `STREAMING`; EVT: `cdc.state-changed` mỗi lần đổi. Topic bảng có 10.000 bản ghi `op = r` rồi đúng ba bản ghi `c`, `u`, `d`; `so_dien_thoai` đã băm. Bước 3 có vị trí LSN, độ trễ, số sự kiện theo loại.
+
+#### TC-05-### · Tạm dừng, tiếp tục; khởi động lại không mất thay đổi <!--k:cdc-pause-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, Chaos
+- **Truy vết** FR-05-050 · API-05-071, 072 · NFR-05-010
+- **Tiền điều kiện / dữ liệu** CDC `STREAMING` từ [[tc:cdc-run]].
+- **Bước**
+  1. `:pause`; ghi 500 thay đổi ở nguồn; `:resume`.
+  2. Xóa pod Kafka Connect giữa lúc ghi 5.000 thay đổi.
+- **Mong đợi** Bước 1 cả 500 thay đổi tới topic sau khi tiếp tục. Bước 2 không mất thay đổi nào (đối chiếu khóa và `source.lsn`); trùng chỉ trong cửa sổ từ offset cuối.
+
+#### TC-05-### · Dừng hẳn giải phóng slot <!--k:cdc-stop-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-05-050 · BR-05-022
+- **Tiền điều kiện / dữ liệu** U-T68-TO; CDC `STREAMING`.
+- **Bước** Dừng hẳn với lý do; đồng hồ giả +7 ngày.
+- **Mong đợi** Connector bị xóa khỏi GitOps; slot còn tới 7 ngày rồi bị xóa ở SIM-PG; `pg_replication_slots` không còn slot `dh_t68_dkkd_cdc`.
+
+### TS-05-26 · Thay đổi lược đồ và chụp ảnh lại
+
+**Mục tiêu.** Xác nhận thay đổi lược đồ phá vỡ làm CDC dừng trước khi phát bản ghi sai, có hộp việc xử lý và chụp ảnh lại.
+
+**Phủ.** FR-05-051, 053; UC-05-20; API-05-073, 074, 075; UI-05-13; BR-05-022; ERR-05-026, 116, 117; EVT-05-11.
+
+#### TC-05-### · Thêm cột có thể null: tiếp tục, ghi nhận mức thông tin <!--k:schema-compatible-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-05-051 · EVT-05-11 · API-05-074
+- **Tiền điều kiện / dữ liệu** CDC `STREAMING`.
+- **Bước** `ALTER TABLE dkkd.doanh_nghiep ADD COLUMN ghi_chu text`; ghi một dòng.
+- **Mong đợi** `cdc_schema_change` mức `INFO`; lược đồ Avro mới tương thích BACKWARD; CDC giữ `STREAMING`; bản ghi mới có trường `ghi_chu`.
+
+#### TC-05-### · Đổi tên cột: CDC dừng trước khi phát <!--k:schema-breaking-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
+- **Truy vết** FR-05-051 · BR-05-022 · ERR-05-116 · EVT-05-11, 12 · UI-05-12
+- **Tiền điều kiện / dữ liệu** CDC `STREAMING`; người tiêu thụ đọc topic.
+- **Bước** `ALTER TABLE … RENAME COLUMN ten_dn TO ten_doanh_nghiep`; ghi 3 dòng.
+- **Mong đợi** CDC `PAUSED_SCHEMA`; 0 bản ghi theo lược đồ mới trên topic (SMT `DhSchemaGate` chặn); EVT: `cdc.schema-changed` mức `BREAKING`; TO, IE nhận cảnh báo; UI-05-12 có banner và nút "Xử lý".
+
+#### TC-05-### · Tiếp tục khi còn thay đổi chờ; ánh xạ cột rồi tiếp tục <!--k:schema-resolve-->
+- **Loại** Âm, Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-051, 050 · API-05-072, 074, 075 · ERR-05-026 · UI-05-13 · UC-05-20
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-TO; sau [[tc:schema-breaking]].
+- **Bước**
+  1. TO `POST …/cdc:resume`.
+  2. IE1 ở UI-05-13 chọn "Ánh xạ cột" `ten_dn → ten_doanh_nghiep`, lý do, xác nhận.
+  3. TO bấm "Tiếp tục CDC" trong toast.
+- **Mong đợi** Bước 1 `409` ERR-05-026. Bước 2 `200`, toast "Còn 0 thay đổi chờ". Bước 3 `STREAMING`; 3 dòng đã ghi tới topic với tên trường cũ `ten_dn` theo ánh xạ. KT: có (quyết định, người, lý do).
+
+#### TC-05-### · Mất nhật ký nguồn, chụp ảnh lại có lịch ngoài giờ <!--k:resnapshot-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** IT, API
+- **Truy vết** FR-05-053 · API-05-073 · ERR-05-117, 038 · EVT-05-12
+- **Tiền điều kiện / dữ liệu** U-T68-TO; CDC dừng lâu, slot bị xóa ở nguồn; bảng 12 triệu dòng (thống kê giả).
+- **Bước**
+  1. Bật lại, quan sát trạng thái.
+  2. `POST …/cdc:resnapshot` không lý do; có lý do nhưng không khung giờ; có khung giờ 22:00.
+- **Mong đợi** Bước 1 `FAILED` với ERR-05-117. Bước 2 lần một `400` ERR-05-038; lần hai `400` ERR-05-003 (bảng > 10 triệu dòng cần khung giờ ngoài hành chính); lần ba `202`, chụp ảnh tăng dần chạy lúc 22:00, bản ghi `op = r`.
+
+### TS-05-27 · Kamelet của tỉnh: soạn, kiểm tra tĩnh, duyệt
+
+**Mục tiêu.** Xác nhận thay "Nhập component từ JAR" (LGC-TOOL-027) bằng Kamelet YAML qua kiểm tra tĩnh KR-01…14 và duyệt.
+
+**Phủ.** FR-05-054, 055, 056, 057; UC-05-21; API-05-076…084; UI-05-14, 15, 16, 17; ERR-05-002, 011, 020, 021, 022, 040; EVT-05-09; LGC-TOOL-027.
+
+#### TC-05-### · Danh mục và chi tiết Kamelet <!--k:kamelet-list-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-05-054, 055 · API-05-076, 077, 078 · UI-05-14, 15
+- **Tiền điều kiện / dữ liệu** U-T68-VW.
+- **Bước** `GET /kamelets?scope=TENANT`; `GET /kamelets/dh-t68-tra-cuu-mst-action`.
+- **Mong đợi** Danh sách có K-MST với phạm vi, phiên bản, nơi dùng = 3; mặc định không có `WITHDRAWN`. Chi tiết có tham số, YAML, kết quả kiểm tra tĩnh, phụ thuộc thành phần.
+
+#### TC-05-### · Soạn Kamelet hợp lệ, kiểm tra tĩnh đạt, gửi, IA duyệt <!--k:kamelet-submit-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-05-056, 057 · API-05-079, 081, 082, 083 · UI-05-16, 17 · EVT-05-09 · UC-05-21 · LGC-TOOL-027
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; F-KAM-OK.
+- **Bước**
+  1. Ở UI-05-16 dán F-KAM-OK, bấm "Kiểm tra tĩnh", "Gửi duyệt".
+  2. IA1 duyệt ở UI-05-17.
+- **Mong đợi** Bước 1 `violations` rỗng (có thể có cảnh báo KR-12, KR-13); `SUBMITTED`. Bước 2 `APPROVED`; EVT: `kamelet.published` trên `t68.adapter.kamelet.published.v1`; có trong catalog T68, không có ở T01.
+
+#### TC-05-### · Kiểm tra tĩnh chặn ngôn ngữ kịch bản, #class, URI trực tiếp, bí mật cứng <!--k:kamelet-static-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** UT, API
+- **Truy vết** FR-05-056 · API-05-081, 082 · ERR-05-020, 021 · UI-05-16
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; F-KAM-BAD và các biến thể.
+- **Bước** Kiểm tra lần lượt các bản: `groovy`; `#class:java.lang.Runtime`; `to: https://ngoai.example.org`; chuỗi `"Pa55w0rd-AbCdEf-1234567"` trong `template`; tham số `matKhau` không `x-descriptors`; `{{vault:kv/dh/t01/…}}`; thành phần `jt400`; YAML 300 KiB.
+- **Mong đợi** Mỗi bản có vi phạm đúng quy tắc: KR-04, KR-04, KR-05, KR-07, KR-06, KR-14 (ERR-05-020), KR-08 (ERR-05-021), KR-10 (ERR-05-020); mỗi vi phạm có dòng, cột, thông điệp tiếng Việt; gửi duyệt `422`.
+
+#### TC-05-### · Tên trùng Kamelet nền; phiên bản phụ không tương thích <!--k:kamelet-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-056 · API-05-079, 081 · ERR-05-002, 022
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; K-MST 1.0.0.
+- **Bước**
+  1. `POST /kamelets` tên `dh-http-sink`.
+  2. Tạo K-MST 1.1.0 bỏ một tham số.
+- **Mong đợi** Bước 1 `409` ERR-05-002. Bước 2 `422` ERR-05-022 (KR-09).
+
+#### TC-05-### · Tự duyệt Kamelet; tỉnh ghi lên Kamelet COMMON <!--k:kamelet-4eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-057 · API-05-080, 083 · ERR-05-011, 040 · BR-05-009
+- **Tiền điều kiện / dữ liệu** U-T68-IA2 gửi Kamelet; U-T68-IE1; Kamelet `COMMON` `dh-dm-tra-cuu-action`.
+- **Bước**
+  1. IA2 `POST …:approve` Kamelet của mình.
+  2. IE1 `PUT /kamelets/dh-dm-tra-cuu-action/versions/1.0.0`.
+- **Mong đợi** Bước 1 `403` ERR-05-011. Bước 2 `403` ERR-05-040.
+
+### TS-05-28 · Ngừng khuyến nghị, thu hồi, đề xuất dùng chung
+
+**Mục tiêu.** Xác nhận vòng đời sau duyệt của Kamelet, đặc biệt thu hồi khẩn khi có lỗi bảo mật.
+
+**Phủ.** FR-05-058, 060; UC-05-22, 23; API-05-085…088; UI-05-15; ERR-05-120; EVT-05-10.
+
+#### TC-05-### · Ngừng khuyến nghị ẩn khỏi bảng thành phần, luồng cũ vẫn chạy <!--k:kamelet-deprecate-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-058 · API-05-085, 089 · EVT-05-10 · UI-05-15
+- **Tiền điều kiện / dữ liệu** U-T68-IA1; K-MST 3 luồng dùng.
+- **Bước** Ngừng khuyến nghị 1.0.0 với Kamelet thay thế gợi ý.
+- **Mong đợi** `DEPRECATED`; catalog trả cờ ẩn; 3 luồng vẫn chạy; EVT: `kamelet.lifecycle-changed`.
+
+#### TC-05-### · Thu hồi chặn lần phát hành kế tiếp của luồng dùng <!--k:kamelet-withdraw-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-058 · API-05-086, 031 · ERR-05-120, 038 · EVT-05-10 · UC-05-22
+- **Tiền điều kiện / dữ liệu** U-T68-IA1; S-INT; K-MST.
+- **Bước**
+  1. `POST …:withdraw` không lý do; rồi có lý do.
+  2. S-INT `POST /internal/connection-references:verify` cho luồng dùng K-MST.
+- **Mong đợi** Bước 1 lần đầu `400` ERR-05-038; lần sau `WITHDRAWN`, EVT, chủ sở hữu 3 luồng và TO nhận cảnh báo mức cao. Bước 2 trả mục lỗi ERR-05-120 cho K-MST; luồng đang chạy không bị dừng tự động.
+
+#### TC-05-### · Đề xuất Kamelet tỉnh thành dùng chung, PA duyệt <!--k:kamelet-common-->
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-05-060, 057 · API-05-088, 083 · EVT-05-09 · UC-05-23
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; U-PA; Kamelet `APPROVED` mới của T68; ý kiến SO ghi trong đề xuất.
+- **Bước** IE1 đề xuất; U-PA duyệt.
+- **Mong đợi** Bản sao ở `COMMON` `SUBMITTED` rồi `APPROVED`; EVT trên `common.adapter.kamelet.published.v1`; catalog T01 có Kamelet mới.
+
+### TS-05-29 · Runtime phân giải kết nối và PH-04 xác minh tham chiếu
+
+**Mục tiêu.** Xác nhận runtime chỉ nhận cấu hình không bí mật từ control plane, lấy bí mật thẳng từ OpenBao, và PH-04 chặn phát hành luồng tham chiếu kết nối không hợp lệ.
+
+**Phủ.** FR-05-014, 015; UC-05-24, 25; API-05-031, 032; BR-05-003, 013; ERR-05-013, 101; NFR-05-002, 012.
+
+#### TC-05-### · Runtime nhận cấu hình kết nối không có bí mật <!--k:runtime-config-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-015 · API-05-032 · BR-05-003 · UC-05-24
+- **Tiền điều kiện / dữ liệu** S-RT-T68.
+- **Bước** `GET /internal/runtime/connections?env=PROD`.
+- **Mong đợi** `200`, mỗi kết nối `ENABLED` có tham số, `secretPath`, `secretVersion`, hạn mức đồng thời mỗi bản sao; không có giá trị bí mật; mồi sạch; có `ETag` để hỏi lại có điều kiện.
+
+#### TC-05-### · Runtime T01 không đọc được cấu hình T68 <!--k:runtime-config-tenant-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-015 · API-05-032 · BR-05-002 · ERR-05-012
+- **Tiền điều kiện / dữ liệu** S-RT-T01; U-T68-IE1.
+- **Bước** S-RT-T01 `GET /internal/runtime/connections?env=PROD&tenant=T68`; IE1 gọi cùng đường.
+- **Mong đợi** S-RT-T01 nhận cấu hình T01 (tham số `tenant` bị bỏ qua, tenant lấy từ token) với `baseUrl` của T01 cho mã `ndxp-ho-tich`; IE1 403-PQ.
+
+#### TC-05-### · PH-04 xác minh tham chiếu khi phát hành <!--k:verify-refs-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-05-014 · API-05-031 · ERR-05-013, 014, 118 · UC-05-25
+- **Tiền điều kiện / dữ liệu** S-INT; luồng ở không gian `ho-tich` tham chiếu `ndxp-ho-tich` (đã cấp), `tc-chua-cap` (chưa cấp), `tc-e1` (PROD chưa có giá trị), `tc-tam-ngung` (`SUSPENDED`).
+- **Bước** `POST /internal/connection-references:verify` với 4 tham chiếu, `env = PROD`.
+- **Mong đợi** Trả từng mục: `ndxp-ho-tich` OK; `tc-chua-cap` ERR-05-013; `tc-e1` ERR-05-014; `tc-tam-ngung` ERR-05-118. Chỉ mục `usage_ref` được ghi khi PH-04 phát hành thành công.
+
+#### TC-05-### · Phân giải kết nối nhanh khi có đệm; OpenBao mất <!--k:runtime-resolve-->
+- **Loại** Hiệu năng, Khả dụng · **Ưu tiên** P1 · **Tự động** RT, Chaos
+- **Truy vết** FR-05-015 · NFR-05-002, 012 · ERR-05-101
+- **Tiền điều kiện / dữ liệu** Luồng mẫu gọi C-NDXP liên tục.
+- **Bước**
+  1. Đo thời gian phân giải `{{conn:ndxp-ho-tich}}` 10.000 lần.
+  2. Dừng OpenBao 10 phút; rồi tới khi hết đệm 5 phút với kết nối chưa có trong đệm.
+  3. Dừng `dh-integration` 24 giờ (đồng hồ giả).
+- **Mong đợi** Bước 1 p99 ≤ 2 ms khi có đệm. Bước 2 kết nối đã đệm vẫn chạy; kết nối chưa đệm trả ERR-05-101. Bước 3 luồng đang chạy tiếp tục.
+
+### TS-05-30 · Tham số phân hệ và báo cáo sử dụng
+
+**Mục tiêu.** Xác nhận TA bật, tắt loại kết nối và đặt trần; báo cáo sử dụng có số liệu đúng.
+
+**Phủ.** FR-05-061, 062; UC-05-26; API-05-090, 091, 092; ERR-05-010, 030.
+
+#### TC-05-### · Bật, tắt loại kết nối; tắt khi còn dùng bị chặn <!--k:settings-type-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-061 · API-05-090, 091 · ERR-05-010, 004 · UC-05-26
+- **Tiền điều kiện / dữ liệu** U-T68-TA; loại `ldap` không dùng; `http-rest` đang dùng.
+- **Bước**
+  1. `PUT /settings/connection-types/ldap` `enabled = true`.
+  2. `PUT /settings/connection-types/http-rest` `enabled = false`.
+- **Mong đợi** Bước 1 `200`, tạo kết nối LDAP được. Bước 2 `409` ERR-05-010 với số kết nối đang dùng.
+
+#### TC-05-### · Trần tham số tenant được áp <!--k:settings-cap-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-05-061 · API-05-091, 011 · ERR-05-030
+- **Tiền điều kiện / dữ liệu** U-T68-TA đặt trần `timeoutMs = 30000` cho `http-rest`; U-T68-IE1.
+- **Bước** IE1 `PUT …/environments/TEST` với `timeoutMs = 45000`.
+- **Mong đợi** `422` ERR-05-030 nêu trần.
+
+#### TC-05-### · Báo cáo sử dụng kết nối và bộ điều hợp <!--k:report-usage-->
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-05-062 · API-05-092
+- **Tiền điều kiện / dữ liệu** U-T68-TA; dữ liệu 7 ngày của SIT.
+- **Bước** `GET /reports/usage?from=…&to=…&groupBy=system`.
+- **Mong đợi** Số lượt gọi, lỗi, p95 theo HTTT khớp chỉ số Prometheus cùng khoảng (sai lệch ≤ 1 %); không có dữ liệu tenant khác.
