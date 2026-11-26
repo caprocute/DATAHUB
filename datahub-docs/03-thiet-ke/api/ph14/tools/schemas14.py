@@ -1,0 +1,377 @@
+"""Lược đồ JSON dùng chung của OpenAPI PH-14 (control plane, data plane nội bộ, chiều vào)."""
+
+R = lambda n: {"$ref": f"#/components/schemas/{n}"}
+
+
+def s(t, **kw):
+    d = {"type": t}; d.update(kw); return d
+
+
+def obj(props, req=(), desc=None, **kw):
+    d = {"type": "object", "properties": props, "additionalProperties": False}
+    if req: d["required"] = list(req)
+    if desc: d["description"] = desc
+    d.update(kw); return d
+
+
+def arr(items, **kw):
+    d = {"type": "array", "items": items}; d.update(kw); return d
+
+
+def enum(*v, desc=None):
+    d = {"type": "string", "enum": list(v)}
+    if desc: d["description"] = desc
+    return d
+
+
+def allow(*schemas):
+    return {"allOf": list(schemas) + [R("AllowedActions")]}
+
+
+STR = lambda mx=None, **kw: s("string", **({"maxLength": mx} if mx else {}), **kw)
+INT = lambda **kw: s("integer", **kw)
+NUM = s("number")
+BOOL = s("boolean")
+TS = s("string", format="date-time")
+DATE = s("string", format="date")
+UUID = s("string", format="uuid")
+ANYOBJ = {"type": "object", "additionalProperties": True}
+CNT = {"type": "object", "additionalProperties": INT()}
+NULLTS = {"type": ["string", "null"], "format": "date-time"}
+
+
+def lst(item, **extra):
+    return obj({"items": arr(R(item)), "page": R("PageMeta"), **extra}, req=["items", "page"])
+
+
+SCHEMAS = {
+  # ---- mã và kiểu dùng chung
+  "PlatformCode": STR(63, pattern="^[a-z][a-z0-9-]{2,62}$", description="Mã nền tảng, bất biến, không dùng lại (BR-14-004)."),
+  "ServiceCode": STR(63, pattern="^[a-z][a-z0-9-]{2,62}$", description="Mã dịch vụ trong Datahub; khác `nationalServiceCode` gửi trung ương."),
+  "CertCode": STR(63, pattern="^[a-z][a-z0-9-]{2,62}$"),
+  "EndpointCode": STR(63, pattern="^[a-z][a-z0-9-]{2,62}$"),
+  "SystemCode": STR(64, description="Mã HTTT ở PH-01 (claim `azp` của token)."),
+  "ConnectionCode": STR(63, pattern="^[a-z][a-z0-9-]{2,62}$", description="Mã kết nối ở PH-05 (loại `oauth2-client` hoặc `mtls-client`)."),
+  "PlatformType": enum("NDXP", "NDOP", "REGISTRY"),
+  "PlatformScope": enum("TENANT", "COMMON"),
+  "PlatformState": enum("DRAFT", "TESTED", "PENDING_ACTIVATION", "ACTIVE", "SUSPENDED", "RETIRED"),
+  "SpecStatus": enum("OFFICIAL", "PROVISIONAL", desc="`PROVISIONAL`: nền tảng đang dùng đặc tả tạm (BR-14-025)."),
+  "AuthMode": enum("PRIVATE_KEY_JWT", "CLIENT_SECRET", "MTLS"),
+  "ServiceGroup": enum("LLTP", "HO_TICH", "BHXH", "DVQHNS", "DKDN", "VBQPPL", "DMDC"),
+  "Direction": enum("OUTBOUND", "INBOUND"),
+  "NatProtocol": enum("REST", "SOAP"),
+  "OperationType": enum("READ", "WRITE"),
+  "Sensitivity": enum("PUBLIC", "INTERNAL", "RESTRICTED", "SENSITIVE"),
+  "Priority": enum("ESSENTIAL", "NORMAL", "BACKGROUND"),
+  "SigningMode": enum("NONE", "XMLDSIG", "WSS", "JWS"),
+  "ServiceState": enum("DRAFT", "ACTIVE", "DEPRECATED", "RETIRED"),
+  "ReconcileLabel": enum("STILL", "SPEC_CHANGED", "DISCONTINUED", "UNKNOWN"),
+  "CertPurpose": enum("SIGNING", "TLS_CLIENT", "BOTH"),
+  "CertState": enum("UPLOADED", "PENDING_ACTIVATION", "ACTIVE", "EXPIRING", "EXPIRED", "SUPERSEDED", "REVOKED"),
+  "HealthLevel": enum("HEALTHY", "DEGRADED", "UNHEALTHY", "UNKNOWN"),
+  "TxnState": enum("RECEIVED", "REJECTED", "COMPLETED_CACHE", "QUOTA_EXCEEDED", "SENT", "SUCCEEDED", "FAILED", "TIMEOUT", "UNKNOWN_RESULT", "SIGNATURE_FAILED"),
+  "Reason": STR(500, minLength=10, description="Lý do 10…500 ký tự (ERR-14-003 khi thiếu)."),
+  "AllowedActions": obj({
+      "allowedActions": arr(STR(), description="Hành động người gọi được làm ngay bây giờ."),
+      "disabledReasons": {"type": "object", "additionalProperties": STR(), "description": "Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt."}}),
+  "PageMeta": obj({"number": INT(minimum=1), "size": INT(minimum=1, maximum=100), "totalItems": INT(minimum=0), "totalPages": INT(minimum=0)}, req=["number", "size", "totalItems"]),
+  "ProblemDetails": {
+      "type": "object", "description": "RFC 9457, mở rộng theo D03-04-PH14 §1. `code` là ERR-14-nnn; lỗi 401, 403 do APISIX, OPA sinh có thể không có `code`.",
+      "required": ["type", "title", "status", "traceId"],
+      "properties": {
+          "type": STR(format="uri"), "title": STR(), "status": INT(), "detail": STR(), "instance": STR(),
+          "code": STR(pattern="^ERR-(00|14)-[0-9]{3}$"), "traceId": STR(pattern="^[0-9a-f]{32}$"),
+          "transactionCode": STR(description="Có ở lỗi của mặt phẳng dữ liệu (ERR-14-101…133)."),
+          "errors": arr(obj({"path": STR(), "rule": STR(), "message": STR()})),
+          "currentEtag": STR(description="Kèm ERR-14-004 khi `If-Match` lệch."),
+          "scope": STR(), "reason": STR(), "resetAt": TS, "cache": obj({"available": BOOL}, desc="Kèm ERR-14-104."),
+          "retryAfterSeconds": INT()},
+      "additionalProperties": True},
+  # ---- nền tảng
+  "PlatformSummary": allow(obj({
+      "platformCode": R("PlatformCode"), "name": STR(255), "platformType": R("PlatformType"), "scope": R("PlatformScope"),
+      "state": R("PlatformState"), "securityHold": BOOL, "specStatus": R("SpecStatus"), "health": R("HealthLevel"),
+      "serviceCount": INT(), "updatedAt": TS}, req=["platformCode", "name", "platformType", "state"])),
+  "PlatformDetail": {"allOf": [R("PlatformSummary"), obj({
+      "description": STR(2000), "connections": obj({"TEST": R("ConnectionCode"), "STAGING": R("ConnectionCode"), "PROD": R("ConnectionCode")},
+          desc="Kết nối PH-05 theo môi trường."),
+      "authMode": R("AuthMode"), "baseUrlHost": STR(255, description="Chỉ tên miền, không có đường dẫn hay thông tin xác thực."),
+      "lastPassedTestAt": NULLTS, "pendingRequestId": {"type": ["string", "null"], "format": "uuid"},
+      "credentialAgeDays": INT(), "createdAt": TS, "createdBy": STR(64), "version": INT()})]},
+  "PlatformCreate": obj({"platformCode": R("PlatformCode"), "name": STR(255, minLength=3), "platformType": R("PlatformType"),
+      "scope": R("PlatformScope"), "connections": obj({"TEST": R("ConnectionCode"), "STAGING": R("ConnectionCode"), "PROD": R("ConnectionCode")}, req=[]),
+      "authMode": R("AuthMode"), "specStatus": R("SpecStatus"), "description": STR(2000)},
+      req=["platformCode", "name", "platformType", "connections", "authMode"]),
+  "PlatformUpdate": obj({"name": STR(255, minLength=3), "description": STR(2000), "authMode": R("AuthMode"),
+      "connections": obj({"TEST": R("ConnectionCode"), "STAGING": R("ConnectionCode"), "PROD": R("ConnectionCode")}, req=[])}),
+  "StateChangeRequest": obj({"reason": R("Reason")}, req=["reason"]),
+  "ActivationRequest": obj({"note": STR(1000)}),
+  "ApprovalDecision": obj({"decision": enum("APPROVE", "REJECT"), "comment": STR(2000)}, req=["decision"],
+      desc="Người duyệt khác người đề nghị và người sửa gần nhất (BR-14-022, ERR-14-007). `REJECT` bắt buộc `comment`."),
+  "PlatformList": lst("PlatformSummary"),
+  # ---- dịch vụ
+  "ServiceSummary": allow(obj({
+      "serviceCode": R("ServiceCode"), "name": STR(255), "platformCode": R("PlatformCode"), "nationalServiceCode": STR(64),
+      "group": R("ServiceGroup"), "direction": R("Direction"), "operationType": R("OperationType"), "sensitivity": R("Sensitivity"),
+      "priority": R("Priority"), "state": R("ServiceState"), "reconcileLabel": R("ReconcileLabel"), "contractVersion": STR(16),
+      "exposed": BOOL, "updatedAt": TS}, req=["serviceCode", "name", "platformCode", "group", "state"])),
+  "ServiceContract": obj({"version": STR(16, pattern="^[0-9]+\\.[0-9]+$"), "inputSchema": ANYOBJ, "outputSchema": ANYOBJ,
+      "errorCodes": arr(STR(64)), "subjectKeyPaths": arr(STR(255), description="Đường dẫn JSON của khóa đối tượng, dùng làm khóa đệm và phát hiện tra hàng loạt."),
+      "exposedFields": arr(STR(255), description="Trường được phép trả cho HTTT (BR-14-015).")}, req=["version", "inputSchema", "outputSchema"]),
+  "ServiceDetail": {"allOf": [R("ServiceSummary"), obj({
+      "description": STR(2000), "protocol": R("NatProtocol"), "cacheable": BOOL, "cacheTtlSeconds": INT(minimum=0), "staleAllowed": BOOL,
+      "signingMode": R("SigningMode"), "verifyMode": R("SigningMode"), "purposeRequired": BOOL, "procedureCodeRequired": BOOL,
+      "timeoutMs": INT(minimum=1000, maximum=60000), "contract": R("ServiceContract"), "activeSpecVersion": {"type": ["string", "null"]},
+      "basis": STR(500, description="Căn cứ văn bản."), "createdAt": TS, "createdBy": STR(64), "version": INT()})]},
+  "ServiceCreate": obj({"serviceCode": R("ServiceCode"), "name": STR(255, minLength=3), "platformCode": R("PlatformCode"),
+      "nationalServiceCode": STR(64), "group": R("ServiceGroup"), "direction": R("Direction"), "protocol": R("NatProtocol"),
+      "operationType": R("OperationType"), "sensitivity": R("Sensitivity"), "priority": R("Priority"), "cacheable": BOOL,
+      "cacheTtlSeconds": INT(minimum=0), "staleAllowed": BOOL, "signingMode": R("SigningMode"), "verifyMode": R("SigningMode"),
+      "purposeRequired": BOOL, "procedureCodeRequired": BOOL, "timeoutMs": INT(minimum=1000, maximum=60000),
+      "contract": R("ServiceContract"), "description": STR(2000)},
+      req=["serviceCode", "name", "platformCode", "nationalServiceCode", "group", "direction", "protocol", "operationType", "sensitivity", "priority"]),
+  "ServiceUpdate": obj({"name": STR(255), "description": STR(2000), "sensitivity": R("Sensitivity"), "priority": R("Priority"),
+      "cacheable": BOOL, "cacheTtlSeconds": INT(minimum=0), "staleAllowed": BOOL, "signingMode": R("SigningMode"), "verifyMode": R("SigningMode"),
+      "purposeRequired": BOOL, "procedureCodeRequired": BOOL, "timeoutMs": INT(minimum=1000, maximum=60000), "contract": R("ServiceContract"),
+      "basis": STR(500, description="Căn cứ văn bản; bắt buộc khi giảm kiểm soát (ERR-14-016), kèm duyệt bốn mắt.")},
+      desc="Không đổi được mã, nền tảng, hướng. Mức `SENSITIVE` hoặc thao tác `WRITE` mà bật đệm trả ERR-14-038."),
+  "ServiceList": lst("ServiceSummary", facets=obj({"group": CNT, "state": CNT, "reconcileLabel": CNT})),
+  "ReconcileRequest": obj({"platformCode": R("PlatformCode"), "mode": enum("DRY_RUN", "FETCH_ONLY")}, req=["platformCode"]),
+  "ReconcileItem": obj({"serviceCode": {"type": ["string", "null"]}, "nationalServiceCode": STR(64),
+      "label": R("ReconcileLabel"), "changes": arr(STR(500)), "breaking": BOOL}, req=["nationalServiceCode", "label"]),
+  "ReconcileRun": obj({"runId": UUID, "platformCode": R("PlatformCode"), "state": enum("RUNNING", "READY", "APPLIED", "FAILED"),
+      "items": arr(R("ReconcileItem")), "summary": CNT, "startedAt": TS, "finishedAt": NULLTS}, req=["runId", "state"]),
+  "ReconcileApply": obj({"itemFilter": arr(STR(64), description="Rỗng là áp mọi mục."), "acknowledgeBreaking": BOOL}),
+  "SetLabelRequest": obj({"label": R("ReconcileLabel"), "reason": R("Reason")}, req=["label", "reason"]),
+  "ServiceSpec": obj({"serviceCode": R("ServiceCode"), "specVersion": STR(16), "kind": enum("OPENAPI", "WSDL", "XSD", "JSON_SCHEMA"),
+      "checksum": STR(71), "breaking": BOOL, "state": enum("DRAFT", "ACTIVE", "SUPERSEDED"), "diffSummary": arr(STR(500)),
+      "createdAt": TS, "createdBy": STR(64), "activatedAt": NULLTS}, req=["serviceCode", "specVersion", "kind", "state"]),
+  "ServiceSpecList": obj({"items": arr(R("ServiceSpec"))}, req=["items"]),
+  "SpecCreate": obj({"specVersion": STR(16, pattern="^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"), "kind": enum("OPENAPI", "WSDL", "XSD", "JSON_SCHEMA"),
+      "content": STR(5242880, description="Nội dung đặc tả dạng văn bản (≤ 5 MiB)."),
+      "sourceUrl": STR(2048, format="uri", description="Hoặc tải qua egress của tenant (ERR-14-131 khi không tải được).")},
+      req=["specVersion", "kind"], desc="Một trong `content` hoặc `sourceUrl`."),
+  "SpecActivate": obj({"acknowledgeBreaking": BOOL, "comment": STR(1000)}),
+  "Exposure": allow(obj({"serviceCode": R("ServiceCode"), "apiCode": {"type": ["string", "null"], "description": "Mã API ở PH-02."},
+      "path": STR(255), "contractVersion": STR(16), "state": enum("NONE", "PENDING_PUBLISH", "PUBLISHED", "FAILED_CREATE", "WITHDRAWN"),
+      "requestId": {"type": ["string", "null"], "format": "uuid"}, "publishedAt": NULLTS}, req=["serviceCode", "state"])),
+  "ExposureUpdate": obj({"path": STR(255, pattern="^/[a-z0-9/_{}-]{2,254}$"), "contractVersion": STR(16),
+      "responseFields": arr(STR(255)), "displayName": STR(255)}, req=["path", "contractVersion"]),
+  # ---- định tuyến
+  "RoutingRule": allow(obj({"ruleId": UUID, "matchServiceCode": {"type": ["string", "null"]}, "matchGroup": {"anyOf": [R("ServiceGroup"), {"type": "null"}]},
+      "operationType": {"anyOf": [R("OperationType"), {"type": "null"}]}, "primaryServiceCode": R("ServiceCode"),
+      "fallbackServiceCode": {"type": ["string", "null"]}, "allowFallback": BOOL, "priority": INT(minimum=0, maximum=1000, description="Số lớn là ưu tiên cao."),
+      "basis": STR(500), "state": enum("DRAFT", "PENDING_APPROVAL", "ACTIVE", "DISABLED"), "updatedAt": TS},
+      req=["ruleId", "primaryServiceCode", "priority", "state"])),
+  "RoutingRuleList": lst("RoutingRule"),
+  "RoutingRuleCreate": obj({"matchServiceCode": STR(63), "matchGroup": R("ServiceGroup"), "operationType": R("OperationType"),
+      "primaryServiceCode": R("ServiceCode"), "fallbackServiceCode": R("ServiceCode"), "allowFallback": BOOL,
+      "priority": INT(minimum=0, maximum=1000), "basis": STR(500, minLength=5)}, req=["primaryServiceCode", "priority", "basis"]),
+  "RoutingRuleUpdate": obj({"fallbackServiceCode": STR(63), "allowFallback": BOOL, "priority": INT(minimum=0, maximum=1000),
+      "basis": STR(500), "state": enum("DRAFT", "DISABLED")}),
+  "SimulateRequest": obj({"serviceCode": R("ServiceCode"), "group": R("ServiceGroup"), "operationType": R("OperationType"),
+      "draftRule": R("RoutingRuleCreate")}, desc="Mô phỏng không gọi ra quốc gia; `draftRule` thử luật chưa lưu."),
+  "SimulateResult": obj({"matchedRuleId": {"type": ["string", "null"], "format": "uuid"}, "primaryServiceCode": {"type": ["string", "null"]},
+      "fallbackUsedWhenPrimaryFails": BOOL, "candidates": arr(obj({"ruleId": UUID, "priority": INT(), "matched": BOOL, "reason": STR(500)})),
+      "conflict": BOOL}, req=["candidates"]),
+  # ---- chứng thư, chuỗi tin cậy, sự cố chữ ký
+  "CertificateSummary": allow(obj({"certCode": R("CertCode"), "subject": STR(512), "issuer": STR(512), "serialNumber": STR(128),
+      "notBefore": TS, "notAfter": TS, "daysLeft": INT(), "purpose": R("CertPurpose"), "state": R("CertState"),
+      "platformCode": R("PlatformCode"), "scope": R("PlatformScope"), "fingerprintSha256": STR(64)},
+      req=["certCode", "subject", "notAfter", "purpose", "state"])),
+  "CertificateDetail": {"allOf": [R("CertificateSummary"), obj({"keyRef": STR(255, description="Tham chiếu khóa ở OpenBao `transit`, không bao giờ là khóa."),
+      "keyMatchVerifiedAt": NULLTS, "chainOk": BOOL, "supersededBy": {"type": ["string", "null"]},
+      "uploadedBy": STR(64), "requestedBy": STR(64), "approvedBy": STR(64), "approvedAt": NULLTS, "version": INT()})]},
+  "CertificateList": lst("CertificateSummary"),
+  "CertificateUpload": obj({"certCode": R("CertCode"), "platformCode": R("PlatformCode"), "purpose": R("CertPurpose"),
+      "certificatePem": STR(65536, description="Chứng thư và chuỗi trung gian dạng PEM (chỉ phần công khai)."),
+      "keyRef": STR(255)}, req=["certCode", "platformCode", "purpose", "certificatePem", "keyRef"],
+      desc="Yêu cầu có claim `acr` đủ mạnh (nhiều yếu tố, SEC-23). Không bao giờ nhận khóa riêng."),
+  "CertActivationRequest": obj({"note": STR(1000), "overlapHours": INT(minimum=1, maximum=720)}),
+  "RevokeRequest": obj({"reason": R("Reason"), "revokedAt": TS}, req=["reason"]),
+  "TrustAnchor": obj({"anchorId": UUID, "subject": STR(512), "fingerprintSha256": STR(64), "notAfter": TS, "state": enum("ACTIVE", "PENDING", "REMOVED")}, req=["anchorId", "subject", "state"]),
+  "TrustStore": obj({"anchors": arr(R("TrustAnchor")), "crl": arr(obj({"issuer": STR(512), "thisUpdate": TS, "nextUpdate": TS, "ageDays": INT(), "state": enum("OK", "STALE")})),
+      "lastRefreshedAt": NULLTS, "pendingChangeRequestId": {"type": ["string", "null"], "format": "uuid"}}, req=["anchors"]),
+  "SignatureIncident": obj({"incidentId": UUID, "kind": enum("SIGNATURE_INVALID", "CHAIN_UNTRUSTED", "SIGNED_AT_SKEW", "REPLAY", "KEY_MISMATCH"),
+      "transactionCode": STR(), "platformCode": R("PlatformCode"), "state": enum("OPEN", "ACKNOWLEDGED", "RESOLVED"), "assignee": {"type": ["string", "null"]},
+      "openedAt": TS, "resolvedAt": NULLTS, "resolution": STR(2000)}, req=["incidentId", "kind", "state", "openedAt"]),
+  "SignatureIncidentList": lst("SignatureIncident"),
+  "IncidentTransition": obj({"to": enum("ACKNOWLEDGED", "RESOLVED", "RELEASE_HOLD"), "note": STR(2000)}, req=["to"],
+      desc="`RELEASE_HOLD` giải trừ `SECURITY_HOLD`; chỉ khi không còn sự cố `OPEN` của nền tảng."),
+  "RotateCredentialRequest": obj({"mode": enum("ROTATE", "REISSUE"), "overlapHours": INT(minimum=1, maximum=168), "reason": STR(500),
+      "environment": enum("TEST", "STAGING", "PROD")}, req=["environment"],
+      desc="Giá trị bí mật mới ghi ở PH-05 (API-05-012, API-05-020); API này chỉ điều phối chuyển tiếp ở cổng quốc gia."),
+  "RotationStatus": obj({"rotationId": UUID, "platformCode": R("PlatformCode"), "state": enum("TESTING", "TRANSITION", "COMPLETED", "FAILED"),
+      "transitionUntil": NULLTS, "startedAt": TS}, req=["rotationId", "state"]),
+  "TokenTestResult": obj({"ok": BOOL, "authMode": R("AuthMode"), "latencyMs": INT(), "expiresInSeconds": INT(), "causeCode": STR(32),
+      "hint": STR(1000, description="Hướng dẫn tiếng Việt, không chứa bí mật.")}, req=["ok"]),
+  # ---- hạn mức, đệm
+  "Quota": obj({"quotaId": UUID, "platformCode": R("PlatformCode"), "serviceCode": {"type": ["string", "null"], "description": "Rỗng là cả nền tảng."},
+      "period": enum("HOUR", "DAY", "MONTH"), "limit": INT(minimum=1), "basisDocument": STR(500), "effectiveFrom": DATE,
+      "state": enum("PENDING_APPROVAL", "ACTIVE", "SUPERSEDED"), "updatedAt": TS}, req=["quotaId", "platformCode", "period", "limit", "basisDocument", "effectiveFrom"]),
+  "QuotaList": obj({"items": arr(R("Quota"))}, req=["items"]),
+  "QuotaCreate": obj({"platformCode": R("PlatformCode"), "serviceCode": R("ServiceCode"), "period": enum("HOUR", "DAY", "MONTH"),
+      "limit": INT(minimum=1), "basisDocument": STR(500, minLength=5), "effectiveFrom": DATE,
+      "environment": enum("TEST", "STAGING", "PROD")}, req=["platformCode", "period", "limit", "basisDocument", "effectiveFrom"],
+      desc="Môi trường thật cần duyệt bốn mắt qua hộp \"Việc của tôi\" (FR-00-070)."),
+  "QuotaUsageItem": obj({"quotaId": UUID, "platformCode": R("PlatformCode"), "serviceCode": {"type": ["string", "null"]}, "period": enum("HOUR", "DAY", "MONTH"),
+      "limit": INT(), "used": INT(), "ratio": NUM, "resetAt": TS, "level": enum("NORMAL", "WARN70", "WARN85", "WARN95", "EXHAUSTED"),
+      "deferringBackground": BOOL, "essentialOnly": BOOL}, req=["quotaId", "limit", "used", "ratio"]),
+  "QuotaUsage": obj({"items": arr(R("QuotaUsageItem")), "evaluatedAt": TS, "windowMode": enum("CALENDAR", "SLIDING")}, req=["items"]),
+  "Allocation": obj({"systemCode": R("SystemCode"), "serviceCode": {"type": ["string", "null"]}, "period": enum("HOUR", "DAY", "MONTH"),
+      "limit": INT(minimum=0), "shareOfReserve": NUM, "usedInPeriod": INT()}, req=["systemCode", "period", "limit"]),
+  "AllocationList": obj({"items": arr(R("Allocation")), "totalAllocated": INT(), "quotaLimit": INT()}, req=["items"]),
+  "AllocationPut": obj({"serviceCode": R("ServiceCode"), "period": enum("HOUR", "DAY", "MONTH"), "limit": INT(minimum=0),
+      "shareOfReserve": {"type": "number", "minimum": 0, "maximum": 1}}, req=["period", "limit"],
+      desc="Tổng phân bổ vượt hạn mức trả ERR-14-018."),
+  "CacheStats": obj({"items": arr(obj({"serviceCode": R("ServiceCode"), "hits": INT(), "misses": INT(), "stale": INT(), "coalesced": INT(),
+      "hitRatio": NUM, "savedCalls": INT()})), "window": enum("1h", "24h", "7d")}, req=["items"]),
+  "CacheInvalidateRequest": obj({"serviceCode": R("ServiceCode"), "subjectKeyHash": STR(64, description="Băm khóa đối tượng; rỗng là cả dịch vụ."),
+      "reason": R("Reason")}, req=["serviceCode", "reason"]),
+  "CacheInvalidateResult": obj({"invalidated": INT(), "scope": enum("SERVICE", "SUBJECT")}, req=["invalidated"]),
+  # ---- chiều vào
+  "InboundEndpoint": allow(obj({"endpointCode": R("EndpointCode"), "path": STR(255), "platformCode": R("PlatformCode"),
+      "state": enum("DRAFT", "PENDING_CONFIRM", "ACTIVE", "DISABLED"), "inboundFlowCode": {"type": ["string", "null"]},
+      "clientCertFingerprints": arr(STR(64)), "signatureRequired": BOOL, "senderCount": INT(), "updatedAt": TS}, req=["endpointCode", "path", "platformCode", "state"])),
+  "InboundEndpointList": lst("InboundEndpoint"),
+  "InboundEndpointCreate": obj({"endpointCode": R("EndpointCode"), "path": STR(255, pattern="^[a-z0-9-]{3,63}$"), "platformCode": R("PlatformCode"),
+      "signatureRequired": BOOL, "flowMapping": arr(obj({"serviceCode": R("ServiceCode"), "flowCode": STR(63)}, req=["serviceCode", "flowCode"]))},
+      req=["endpointCode", "path", "platformCode"]),
+  "InboundEndpointUpdate": obj({"signatureRequired": BOOL, "state": enum("DISABLED"), "flowMapping": arr(obj({"serviceCode": R("ServiceCode"), "flowCode": STR(63)}, req=["serviceCode", "flowCode"]))}),
+  "AllowedSender": obj({"senderCode": STR(63), "serviceCodes": arr(R("ServiceCode"), minItems=1), "clientCertFingerprint": STR(64),
+      "state": enum("PENDING_CONFIRM", "ACTIVE", "DISABLED")}, req=["senderCode", "serviceCodes", "clientCertFingerprint"]),
+  "AllowedSenderList": obj({"items": arr(R("AllowedSender"))}, req=["items"]),
+  "AllowedSenderPut": obj({"items": arr(R("AllowedSender"), minItems=1, maxItems=50)}, req=["items"], desc="Danh sách rỗng trả ERR-14-024."),
+  "ConfirmRequest": obj({"fingerprintsConfirmed": arr(STR(64), minItems=1), "note": STR(1000)}, req=["fingerprintsConfirmed"]),
+  # ---- đồng bộ
+  "SyncRun": obj({"runId": UUID, "kind": enum("SERVICE_CATALOG", "MASTER_DATA", "OPEN_DATA", "SERVICE_RECONCILE"), "trigger": enum("SCHEDULE", "MANUAL", "PH02", "PH06", "RETRY"),
+      "state": enum("QUEUED", "RUNNING", "SUCCEEDED", "PARTIAL", "FAILED", "TIMED_OUT"), "sent": INT(), "accepted": INT(), "rejected": INT(), "error": INT(),
+      "receiptRef": {"type": ["string", "null"]}, "startedAt": TS, "finishedAt": NULLTS, "startedBy": STR(64)}, req=["runId", "kind", "state"]),
+  "SyncRunDetail": {"allOf": [R("SyncRun"), obj({"records": arr(obj({"recordKey": STR(128), "state": enum("SENT", "ACCEPTED", "REJECTED", "ERROR", "SKIPPED"),
+      "attempts": INT(), "errorCode": STR(32), "message": STR(500)})), "recordsPage": R("PageMeta")})]},
+  "SyncRunList": lst("SyncRun"),
+  "SyncCatalogRequest": obj({"platformCode": R("PlatformCode"), "serviceCodes": arr(R("ServiceCode")), "full": BOOL}, req=["platformCode"]),
+  "SyncMasterDataRequest": obj({"datasetCode": STR(63), "direction": enum("PUSH", "PULL", "BOTH"), "since": TS}, req=["datasetCode", "direction"],
+      desc="Đợt 3; thiếu ánh xạ ở PH-07 trả ERR-14-125, PH-09 chặn trả ERR-14-126."),
+  "SyncRetryRequest": obj({"recordKeys": arr(STR(128)), "onlyState": enum("ERROR", "REJECTED")}),
+  "OpenDatasetPublish": obj({"datasetCode": STR(63), "platformCode": R("PlatformCode"), "snapshotVersion": STR(32), "firstPublish": BOOL}, req=["datasetCode", "platformCode"]),
+  "OpenDatasetWithdraw": obj({"reason": R("Reason")}, req=["reason"]),
+  # ---- giám sát, giao dịch
+  "HealthItem": obj({"platformCode": R("PlatformCode"), "level": R("HealthLevel"), "since": TS, "reasonCode": STR(32), "reasonDetail": STR(1000),
+      "securityHold": BOOL, "breaker": enum("CLOSED", "OPEN", "HALF_OPEN", "FORCED_OPEN", "FORCED_CLOSED"),
+      "metrics": obj({"calls5m": INT(), "errorRate5m": NUM, "p95Ms": INT(), "tokenOk": BOOL, "crlAgeDays": INT(), "certDaysLeft": INT()})},
+      req=["platformCode", "level"]),
+  "HealthList": obj({"items": arr(R("HealthItem")), "evaluatedAt": TS}, req=["items"]),
+  "ProbeResult": obj({"ok": BOOL, "steps": arr(obj({"name": enum("DNS", "TLS", "TOKEN", "CALL", "SIGNATURE"), "status": enum("PASSED", "FAILED", "SKIPPED", "TIMEOUT"),
+      "durationMs": INT(), "causeCode": STR(32), "hint": STR(1000)}, req=["name", "status"])), "startedAt": TS, "finishedAt": TS}, req=["ok", "steps"]),
+  "Dashboard": obj({"platforms": CNT, "calls24h": INT(), "errorRate24h": NUM, "cacheHitRatio24h": NUM, "quotaAtRisk": INT(),
+      "certsExpiring": INT(), "openSignatureIncidents": INT(), "openAnomalies": INT(), "staleSyncDays": INT(), "queueDepth": INT(),
+      "attention": arr(obj({"kind": STR(32), "ref": STR(100), "message": STR(500)}), maxItems=50), "evaluatedAt": TS}, req=["platforms"]),
+  "TransactionSummary": obj({"transactionCode": STR(), "direction": R("Direction"), "serviceCode": R("ServiceCode"), "systemCode": R("SystemCode"),
+      "purposeCode": {"type": ["string", "null"]}, "procedureCode": {"type": ["string", "null"]}, "caseCode": {"type": ["string", "null"]},
+      "state": R("TxnState"), "fromCache": BOOL, "stale": BOOL, "durationMs": INT(), "startedAt": TS, "traceId": STR()},
+      req=["transactionCode", "direction", "serviceCode", "state", "startedAt"]),
+  "TransactionDetail": {"allOf": [R("TransactionSummary"), obj({"platformCode": R("PlatformCode"), "certCode": {"type": ["string", "null"]},
+      "signatureVerified": {"type": ["boolean", "null"]}, "errorCode": {"type": ["string", "null"]}, "payloadStored": BOOL,
+      "payloadHash": STR(71), "payloadExpiresAt": NULLTS, "attempts": INT(), "quotaCharged": BOOL, "remoteReference": {"type": ["string", "null"]},
+      "timeline": arr(obj({"at": TS, "stage": STR(32), "outcome": STR(32)}))})]},
+  "TransactionPage": lst("TransactionSummary"),
+  "RevealRequest": obj({"reason": R("Reason"), "part": enum("REQUEST", "RESPONSE", "BOTH")}, req=["reason", "part"],
+      desc="Cần claim `acr` nhiều yếu tố trong 15 phút (ERR-14-030); mỗi lần xem bị ghi vết (BR-14-021)."),
+  "RevealResult": obj({"transactionCode": STR(), "request": ANYOBJ, "response": ANYOBJ, "expiresAt": TS, "viewId": UUID}, req=["transactionCode"]),
+  "ExportEvidenceRequest": obj({"transactionCodes": arr(STR(), minItems=1, maxItems=500), "reason": R("Reason"), "format": enum("PDF", "ZIP")},
+      req=["transactionCodes", "reason"]),
+  "JobAccepted": obj({"jobId": UUID, "state": enum("QUEUED", "RUNNING"), "statusUrl": STR(format="uri-reference")}, req=["jobId", "state"]),
+  "UsageRecord": obj({"systemCode": R("SystemCode"), "serviceCode": R("ServiceCode"), "hour": TS, "calls": INT(), "cacheHits": INT(),
+      "errors": INT(), "rejected": INT(), "quotaConsumed": INT(), "distinctSubjects": INT()}, req=["systemCode", "serviceCode", "hour", "calls"]),
+  "UsagePage": lst("UsageRecord"),
+  "UsageExportRequest": obj({"from": TS, "to": TS, "systemCode": R("SystemCode"), "format": enum("CSV", "XLSX")}, req=["from", "to", "format"]),
+  "AnomalyAlert": obj({"alertId": UUID, "systemCode": R("SystemCode"), "serviceCode": R("ServiceCode"),
+      "rule": enum("LOOKUPS_PER_HOUR", "OFF_HOURS_CALLS", "SUBJECTS_PER_CASE", "SPIKE", "REVEAL_OVER_LIMIT"), "evidence": ANYOBJ,
+      "state": enum("OPEN", "RESOLVED"), "decision": {"anyOf": [enum("CONFIRMED_ABUSE", "FALSE_POSITIVE", "WAIVED"), {"type": "null"}]}, "detectedAt": TS},
+      req=["alertId", "rule", "state", "detectedAt"]),
+  "AnomalyAlertList": lst("AnomalyAlert"),
+  "AnomalyResolve": obj({"decision": enum("CONFIRMED_ABUSE", "FALSE_POSITIVE", "WAIVED"), "note": STR(2000), "waiverDays": INT(minimum=1, maximum=90)},
+      req=["decision", "note"]),
+  "QuotaEfficiencyRequest": obj({"from": DATE, "to": DATE, "platformCode": R("PlatformCode"), "format": enum("PDF", "XLSX", "JSON")}, req=["from", "to"]),
+  "BreakerSetRequest": obj({"mode": enum("FORCE_OPEN", "FORCE_CLOSED", "AUTO"), "ttlMinutes": INT(minimum=1, maximum=1440), "reason": R("Reason")}, req=["mode", "reason"],
+      desc="`FORCE_*` tự hết hạn sau `ttlMinutes` (mặc định 60) rồi về `AUTO`."),
+  "BreakerState": obj({"platformCode": R("PlatformCode"), "breaker": enum("CLOSED", "OPEN", "HALF_OPEN", "FORCED_OPEN", "FORCED_CLOSED"), "overrideUntil": NULLTS}, req=["platformCode", "breaker"]),
+  # ---- tham số, chuyển đổi
+  "Settings": obj({"items": arr(obj({"key": STR(64, pattern="^14\\.[a-z0-9.-]+$"), "value": {}, "default": {}, "securityParam": BOOL, "pending": BOOL,
+      "domain": STR(255)}, req=["key", "value"])), "configVersion": INT()}, req=["items"]),
+  "SettingsUpdate": obj({"values": {"type": "object", "additionalProperties": True, "maxProperties": 60,
+      "description": "Khóa `14.*` → giá trị. Ngoài miền trả ERR-14-036; tham số bảo mật (★) tạo yêu cầu duyệt."}}, req=["values"]),
+  "ParallelRunCreate": obj({"serviceCode": R("ServiceCode"), "legacyRef": STR(255), "sampleRatio": {"type": "number", "minimum": 0.01, "maximum": 1}},
+      req=["serviceCode", "sampleRatio"], desc="Chỉ dịch vụ `READ`; dịch vụ `WRITE` trả ERR-14-033."),
+  "ParallelRun": obj({"runId": UUID, "serviceCode": R("ServiceCode"), "sampleRatio": NUM, "samples": INT(), "matchRatio": NUM,
+      "state": enum("RUNNING", "STOPPED", "READY"), "readyForCutover": BOOL, "daysAtTarget": INT(), "mismatches": arr(obj({"field": STR(255), "count": INT()})),
+      "startedAt": TS}, req=["runId", "serviceCode", "state"]),
+  "ParallelObservation": obj({"observationId": UUID, "newResultHash": STR(71), "legacyResultHash": STR(71), "fieldHashes": {"type": "object", "additionalProperties": STR(71)},
+      "newDurationMs": INT(), "legacyDurationMs": INT(), "observedAt": TS}, req=["observationId", "newResultHash", "legacyResultHash"],
+      desc="Chỉ băm, không chứa dữ liệu (BR-14-021)."),
+  "LegacyImportRequest": obj({"sourceKind": enum("NGSP_XML", "NGSP_PROPERTIES", "CSV"), "content": STR(10485760, description="Văn bản (≤ 10 MiB)."), "dryRun": BOOL}, req=["sourceKind", "content"]),
+  "LegacyImportResult": obj({"jobId": UUID, "state": enum("SCANNING", "REVIEW", "APPLIED", "FAILED"), "findings": arr(obj({"line": INT(), "column": INT(),
+      "kind": enum("SECRET_REMOVED", "UNKNOWN_SERVICE", "DUPLICATE", "INVALID_ROW"), "message": STR(500)})), "created": arr(R("ServiceCode"))}, req=["jobId", "state"]),
+  # ---- gọi dịch vụ (nội bộ)
+  "InvocationRequest": obj({"serviceCode": R("ServiceCode"), "operation": STR(41, pattern="^[a-z][a-zA-Z0-9]{1,40}$"), "params": ANYOBJ,
+      "purposeCode": STR(41, pattern="^[A-Z][A-Z0-9_]{2,40}$"), "procedureCode": STR(32), "caseCode": STR(64, minLength=1), "freshData": BOOL},
+      req=["serviceCode", "params"]),
+  "ResultMeta": obj({"fromCache": BOOL, "cacheAgeSeconds": {"type": ["integer", "null"]}, "stale": BOOL, "signatureVerified": BOOL,
+      "dataTime": NULLTS, "durationMs": INT()}, req=["fromCache", "stale", "durationMs"]),
+  "InvocationResult": obj({"transactionCode": STR(), "platformCode": R("PlatformCode"), "data": {}, "meta": R("ResultMeta")}, req=["transactionCode", "platformCode", "meta"]),
+  "AsyncAccepted": obj({"requestId": UUID, "transactionCode": STR(), "state": enum("QUEUED"), "statusUrl": STR(format="uri-reference"), "queuePosition": INT()},
+      req=["requestId", "state", "statusUrl"]),
+  "AsyncStatus": obj({"requestId": UUID, "serviceCode": R("ServiceCode"), "state": enum("QUEUED", "SENDING", "SUCCEEDED", "FAILED", "UNKNOWN_RESULT", "CANCELLED", "EXPIRED"),
+      "attempts": INT(), "transactionCode": STR(), "result": R("InvocationResult"), "errorCode": {"type": ["string", "null"]}, "createdAt": TS, "finishedAt": NULLTS},
+      req=["requestId", "state"]),
+  "AsyncCancel": obj({"reason": STR(500)}),
+  # ---- cổng danh mục dùng chung (PH-07)
+  "NationalCatalog": obj({"remoteCode": STR(64), "name": STR(255), "remoteVersion": STR(32), "updatedAt": NULLTS, "recordCountHint": {"type": ["integer", "null"]}}, req=["remoteCode", "name"]),
+  "NationalCatalogList": obj({"items": arr(R("NationalCatalog")), "platformCode": R("PlatformCode")}, req=["items"]),
+  "NationalCatalogStructure": obj({"remoteCode": STR(64), "remoteVersion": STR(32), "fields": arr(obj({"name": STR(64), "type": STR(32), "required": BOOL, "key": BOOL, "description": STR(500)}, req=["name", "type"]))},
+      req=["remoteCode", "fields"]),
+  "NationalCatalogData": obj({"items": arr(ANYOBJ), "remoteVersion": STR(32), "nextPage": {"type": ["string", "null"]}}, req=["items", "remoteVersion"]),
+  "ProposalRequest": obj({"entries": arr(ANYOBJ, minItems=1, maxItems=1000), "reason": STR(1000)}, req=["entries"]),
+  "ProposalStatus": obj({"proposalId": UUID, "state": enum("SUBMITTED", "ACCEPTED", "REJECTED", "UNKNOWN"), "remoteReference": {"type": ["string", "null"]}, "message": STR(500), "updatedAt": TS},
+      req=["proposalId", "state"]),
+  "RuntimeConfig": obj({"tenant": STR(16), "configVersion": INT(), "generatedAt": TS, "signature": STR(512, description="Chữ ký của ảnh chụp, cổng xác minh trước khi nạp (SDD §4.3)."),
+      "platforms": arr(ANYOBJ), "services": arr(ANYOBJ), "routingRules": arr(ANYOBJ), "certificates": arr(ANYOBJ, description="Chỉ phần công khai và `keyRef`."),
+      "trustAnchors": arr(ANYOBJ), "quotas": arr(ANYOBJ), "allocations": arr(ANYOBJ), "inboundEndpoints": arr(ANYOBJ), "settings": ANYOBJ},
+      req=["tenant", "configVersion", "platforms", "services"]),
+  # ---- chiều vào (vùng biên)
+  "InboundEnvelope": obj({"messageId": STR(128, minLength=8), "signedAt": TS, "signature": STR(8192), "certificate": STR(16384), "payload": ANYOBJ},
+      req=["messageId", "payload"], desc="Định dạng thật theo đặc tả trung ương (Q14-06); đây là khung chuẩn hóa sau chấm dứt mTLS."),
+  "InboundResponse": obj({"messageId": STR(128), "transactionCode": STR(), "result": ANYOBJ, "signature": STR(8192)}, req=["messageId", "transactionCode"]),
+  "NotificationRequest": obj({"messageId": STR(128, minLength=8), "notificationType": enum("CATALOG_CHANGED", "SERVICE_SPEC_CHANGED", "SERVICE_DISCONTINUED", "OTHER"),
+      "subjectRef": STR(128), "signedAt": TS, "signature": STR(8192), "detail": ANYOBJ}, req=["messageId", "notificationType"]),
+  "NotificationAccepted": obj({"notificationId": UUID, "transactionCode": STR()}, req=["notificationId"]),
+}
+
+# ví dụ cho lược đồ (kiểm khớp bằng check_contracts.py)
+EXAMPLES = {
+  "PlatformCreate": {"platformCode": "ndxp-t68", "name": "Nền tảng chia sẻ dữ liệu quốc gia (NDXP) của tỉnh T68", "platformType": "NDXP",
+      "connections": {"TEST": "ndxp-t68-oauth-test", "PROD": "ndxp-t68-oauth"}, "authMode": "PRIVATE_KEY_JWT", "specStatus": "OFFICIAL"},
+  "ServiceCreate": {"serviceCode": "lltp-tra-trang-thai", "name": "Tra trạng thái hồ sơ lý lịch tư pháp", "platformCode": "ndxp-t68", "nationalServiceCode": "TP.LLTP.001",
+      "group": "LLTP", "direction": "OUTBOUND", "protocol": "SOAP", "operationType": "READ", "sensitivity": "SENSITIVE", "priority": "ESSENTIAL",
+      "cacheable": False, "staleAllowed": False, "signingMode": "XMLDSIG", "verifyMode": "XMLDSIG", "purposeRequired": True, "procedureCodeRequired": True, "timeoutMs": 15000},
+  "RoutingRuleCreate": {"matchGroup": "LLTP", "operationType": "READ", "primaryServiceCode": "lltp-tra-trang-thai", "allowFallback": False, "priority": 100,
+      "basis": "Công văn hướng dẫn kết nối NDXP (giả định)"},
+  "CertificateUpload": {"certCode": "ky-so-t68-2026", "platformCode": "ndxp-t68", "purpose": "SIGNING",
+      "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIC...giả lập...\n-----END CERTIFICATE-----", "keyRef": "dh-T68-nat-sign-2026"},
+  "QuotaCreate": {"platformCode": "ndxp-t68", "serviceCode": "bhxh-tra-cuu-ho", "period": "DAY", "limit": 5000, "basisDocument": "Văn bản thông báo hạn mức của đơn vị quản lý NDXP (giả định)",
+      "effectiveFrom": "2026-12-01", "environment": "PROD"},
+  "InvocationRequest": {"serviceCode": "lltp-tra-trang-thai", "params": {"dossierCode": "LLTP-2026-000123"}, "purposeCode": "GIAI_QUYET_TTHC",
+      "procedureCode": "1.001234", "caseCode": "HS-2026-08-001234", "freshData": False},
+  "InvocationResult": {"transactionCode": "T68-20261126-0000184320", "platformCode": "ndxp-t68", "data": {"status": "DA_CO_KET_QUA"},
+      "meta": {"fromCache": False, "cacheAgeSeconds": None, "stale": False, "signatureVerified": True, "dataTime": "2026-11-26T08:15:02Z", "durationMs": 842}},
+  "AsyncAccepted": {"requestId": "6f0f6b1a-6a8e-4c52-8a3e-1f0d2b0a4c11", "transactionCode": "T68-20261126-0000184321", "state": "QUEUED",
+      "statusUrl": "/internal/national/v1/async-invocations/6f0f6b1a-6a8e-4c52-8a3e-1f0d2b0a4c11", "queuePosition": 3},
+  "RevealRequest": {"reason": "Đối soát khiếu nại của công dân theo hồ sơ HS-2026-08-001234", "part": "RESPONSE"},
+  "AllowedSenderPut": {"items": [{"senderCode": "ndxp-trung-uong", "serviceCodes": ["lltp-nhan-ho-so"], "clientCertFingerprint": "9f2c4d6a1b0e3f5a7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4"}]},
+  "ApprovalDecision": {"decision": "APPROVE", "comment": "Đã đối chiếu kết quả kiểm tra kết nối ngày 26/11/2026"},
+  "ParallelRunCreate": {"serviceCode": "lltp-tra-trang-thai", "legacyRef": "ngsp-lltp-tra-cuu", "sampleRatio": 0.1},
+  "InboundEnvelope": {"messageId": "msg-20261126-000771", "signedAt": "2026-11-26T08:15:00Z", "signature": "MEUCIQ...giả lập", "payload": {"dossierCode": "HT-2026-0001"}},
+}
+for _k, _v in EXAMPLES.items():
+    SCHEMAS[_k]["examples"] = [_v]
