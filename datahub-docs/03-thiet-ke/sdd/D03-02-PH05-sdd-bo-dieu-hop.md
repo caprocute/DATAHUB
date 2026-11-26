@@ -6,7 +6,7 @@ ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư dh-integration và dh-runtime, kiến trúc sư, ATTT, hội đồng thẩm định
 phan_he: PH-05
-mo_ta: Thiết kế chi tiết phần mềm của phân hệ Bộ điều hợp và kết nối: thành phần, cấu trúc mã, trình tự xử lý, máy trạng thái, bảo mật, quan sát, đủ để lập trình và kiểm thử.
+mo_ta: Thiết kế chi tiết phần mềm của phân hệ Bộ điều hợp và kết nối gồm thành phần, cấu trúc mã, trình tự xử lý, máy trạng thái, bảo mật, quan sát, đủ để lập trình và kiểm thử.
 tai_lieu_lien_quan: D03-01 SAD; D02-03-PH05 FRS; D03-03-PH05 CSDL; D03-04-PH05 API; D03-07 ATTT; D04-01 Quy ước mã
 ---
 
