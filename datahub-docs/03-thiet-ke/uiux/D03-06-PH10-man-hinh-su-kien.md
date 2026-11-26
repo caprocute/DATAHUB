@@ -1385,3 +1385,547 @@ Thẻ số `CMP-StatCard` nền `color-surface-solid`, số `font-title-1` `font
 ### 19.4. Trạng thái, bàn phím
 
 Rỗng: "Không có yêu cầu sự kiện nào chờ bạn duyệt." `J`, `K` chuyển mục; `A` mở xác nhận duyệt; `X` từ chối; `Ctrl+Enter` gửi quyết định khi focus trong ô ý kiến. Dưới `bp-lg` danh sách và chi tiết chuyển thành hai trang nối nhau.
+
+## 20. UI-10-14 Sơ đồ kết nối (siêu chi tiết)
+
+**Mục đích.** Thay màn "Integration Project Connections" của Hub (LGC-HUB-007): cho thấy ai phát lên topic nào, ai nhận từ topic nào, bằng chế độ gì, quan hệ nào đang trễ, lỗi hay tạm ngừng, để kỹ sư tích hợp rà soát thiết kế liên thông và người vận hành khoanh vùng sự cố. **Đường dẫn.** `/tich-hop/so-do?du-an={ma-du-an}` cùng `topic`, `httt`, `lop-phu`, `ca-ngung`, `chon`, `che-do`. **Mẫu.** PTN-07 chế độ chỉ xem. **Quyền.** `PERM-10-read`. **API.** API-10-007 (`projectCode`, `topicName`, `systemCode`, `includeRetired`, `overlay`), API-10-001 (chọn dự án), API-10-010, API-10-034, API-10-039, API-10-044, API-10-048 (Drawer chi tiết nút, cạnh).
+
+### 20.1. Người dùng và bối cảnh
+
+| Người dùng | Câu hỏi họ mang tới sơ đồ | Lớp phủ thường dùng |
+|---|---|---|
+| Kỹ sư tích hợp (IE) | "Topic này có những ai nhận? Ngừng topic thì ảnh hưởng ai?" | Không phủ, Lưu lượng |
+| Người vận hành (TO) | "Bên nhận nào đang trễ, có DLQ? Sự cố bắt đầu từ HTTT nào?" | Độ trễ, DLQ |
+| Quản trị tỉnh (TA) | "Bức tranh liên thông của dự án; HTTT nào phát cho nhiều bên nhất?" | Lưu lượng |
+| Người xem, kiểm toán (VW, AU) | Hồ sơ liên thông, xuất ảnh đính kèm báo cáo | Không phủ |
+
+Màn dùng trên máy văn phòng 1366 × 768 trở lên; dưới `bp-lg` chỉ có chế độ danh sách (20.13).
+
+### 20.2. Lưới bố cục
+
+| Vùng | Mã | Vị trí, kích thước | Vật liệu |
+|---|---|---|---|
+| Thanh công cụ | R1 | Trên cùng vùng nội dung, cao 48 px, toàn chiều rộng | Đặc `color-surface-solid`, viền dưới `color-border-subtle` |
+| Thanh lọc | R2 | Dưới R1, cao 44 px; thu gọn được thành một dòng tóm tắt | Đặc `color-surface-solid` |
+| Canvas | R3 | Phần còn lại, cao bằng viewport trừ `size-topbar`, R1, R2; không cuộn trang | Đặc `color-surface-solid-2`, lưới chấm 1 px `color-border-subtle` cách 16 px |
+| Thanh lớp phủ | R4 | Nổi góc trên phải canvas, cách mép `space-4` | `glass-overlay`, bo `radius-lg`, bóng `shadow-2` |
+| Điều khiển canvas | R5 | Nổi góc dưới trái, cách mép `space-4` | `CMP-CanvasControls`, `glass-overlay` |
+| Bản đồ thu nhỏ | R6 | Nổi góc dưới phải, 200 × 140 px, tự hiện khi trên 20 nút | `CMP-Minimap`, khung `glass-overlay` |
+| Chú giải | R7 | `CMP-Popover` mở từ nút Chú giải của R5, rộng 320 px | `glass-overlay`, nội dung đặc |
+| Drawer chi tiết | R8 | Bên phải, `size-drawer-md`, không phủ lớp che (canvas vẫn thao tác được), canvas co lại bằng chiều rộng Drawer | Khung `glass-modal`, giếng nội dung đặc |
+| Thanh trạng thái | R9 | Đáy canvas, cao 28 px | Đặc `color-surface-solid`, chữ `font-caption` |
+
+### 20.3. Wireframe tổng thể
+
+```text
+┌ R1 Sơ đồ kết nối · Liên thông đăng ký kinh doanh   [⟳ 14:02] [Danh sách|Đồ thị] [Xuất ▾] [⛶] ┐
+├ R2 Dự án [Liên thông ĐKKD ▾]  Tìm nút [maDN, HT-THUE…]  Trạng thái [Mọi ▾]  ☐ Gồm đã ngừng   ┤
+├ R3 ───────────────────────────────────────────────────────────────────────── R4 ┌───────────┐┤
+│  BÊN PHÁT                 TOPIC                                  BÊN NHẬN        │Phủ: (Không)││
+│                                                                                  │(Độ trễ)    ││
+│  ┌──────────────┐  API   ┌───────────────────────────────┐  Đẩy ⚠ 12ph  ┌──────┐│(Lưu lượng) ││
+│  │▣ HT-DKKD     │═══════▶│◆ t68.dkkd.doanh-nghiep        │━━━━━━━━━━━━▶ │▣ HT- ││(DLQ)       ││
+│  │ HTTT ĐKKD  ● │        │  .da-cap-phep.v1   ● DLQ 37   │              │ THUE ││            ││
+│  └──────────────┘        └───────────────────────────────┘  Kéo API ●   └──────┘└───────────┘│
+│                                   │ └────────────────────────────────▶ ┌────────┐            │
+│  ┌──────────────┐  Kafka nội bộ  ┌┴──────────────────────────────┐     │▣ HT-BHXH│           │
+│  │⟲ dkkd-dong-bo│═══════════════▶│◆ t68.dkkd.doanh-nghiep        │     └────────┘           │
+│  │ Luồng PH-04 ●│                │  .da-giai-the.v1   ◐ Ngừng k.n│  Nội bộ ●  ┌───────────┐ │
+│  └──────────────┘                └───────────────────────────────┘ ┄┄┄┄┄┄┄┄▶ │⟲ dkkd-thue│ │
+│                                                                            └───────────┘ │
+│ R5 [−][85%][+][⤢][⌖][🔒][▦][?]                                         R6 ┌ minimap ┐     │
+├ R9 9 nút · 8 cạnh · 1 cảnh báo · Độ trễ cập nhật 14:02:01 · Bố cục tự động                   ┤
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Nét đôi `═` là quyền phát (publication), nét đậm `━` là đăng ký nhận đang có cảnh báo khi phủ Độ trễ, nét chấm `┄` là quan hệ tạm dừng hoặc tạm ngừng. Ba cột là ba lớp của bố cục, không phải vùng cố định: cột dịch theo bố cục tự động.
+
+### 20.4. Vùng R1 thanh công cụ
+
+| # | Phần tử | `CMP-*` | Hành vi |
+|---|---|---|---|
+| 1 | Tiêu đề | `CMP-Heading` cấp 1 | "Sơ đồ kết nối · {tên dự án}" hoặc "Sơ đồ kết nối · Toàn tenant"; dùng `CMP-DesignerToolbar` làm khung thanh |
+| 2 | Làm mới | `CMP-IconButton` + `CMP-Timestamp` | Tự làm mới 30 giây khi có lớp phủ khác `NONE`; bấm làm mới ngay; vị trí nút người dùng đã kéo được giữ |
+| 3 | Chế độ xem | `CMP-SegmentedControl` Đồ thị, Danh sách | Ghi `che-do`; danh sách là bảng thay thế đầy đủ (20.13) |
+| 4 | Xuất | `CMP-DropdownMenu` | PNG (độ phân giải 2x), SVG, CSV danh sách cạnh; ảnh có chú giải và tiêu đề, dấu thời gian, tên tenant ở góc |
+| 5 | Toàn màn hình | `CMP-IconButton` | `F`; dùng `CMP-FullscreenBar` khi ở toàn màn |
+
+### 20.5. Vùng R2 thanh lọc
+
+| Bộ lọc | Tham số URL | Ánh xạ API-10-007 | Thành phần | Ghi chú |
+|---|---|---|---|---|
+| Dự án | `du-an` | `projectCode` | `CMP-ResourceSelect` dự án, có mục "Toàn tenant" | Mặc định dự án đầu tiên người dùng có (FR-10-058); "Toàn tenant" chỉ bật khi tenant ≤ `10.graph.max-nodes` nút, ngược lại vô hiệu kèm lý do |
+| Topic | `topic` | `topicName` | `CMP-TopicSelect` | Chọn topic thì chỉ hiện topic đó với bên phát, bên nhận của nó |
+| HTTT | `httt` | `systemCode` | `CMP-ResourceSelect` HTTT | Lân cận một bước quanh một HTTT (mọi topic HTTT phát hoặc nhận, và các bên ở đầu kia) |
+| Gồm đã ngừng | `ca-ngung` | `includeRetired` | `CMP-Checkbox` | Mặc định không |
+| Trạng thái | `trang-thai` | Lọc phía giao diện | `CMP-Select` nhiều giá trị: Hoạt động, Tạm dừng, Tạm ngừng, Chờ duyệt, Có cảnh báo, Có DLQ | Nút không khớp mờ đi chứ không biến mất, để giữ ngữ cảnh |
+| Tìm nút | (không ghi URL) | Phía giao diện | `CMP-SearchInput` | Tìm trên mã, tên; `Enter` chuyển giữa kết quả, canvas cuộn tới và chọn nút |
+
+Dự án, topic, HTTT loại trừ nhau theo thứ tự ưu tiên topic, HTTT, dự án; chọn một bộ lọc làm hai bộ còn lại về trống và hiện `CMP-FilterChips` bộ lọc đang áp.
+
+### 20.6. Vùng R3 canvas: nút
+
+Canvas là `CMP-FlowCanvas` biến thể `readonly` (D03-05-04 §11.1): không chèn, không xóa, không nối cạnh, vẫn chọn, tìm, thu phóng, kéo để đặt lại vị trí trong phiên. Nút là `CMP-FlowNode`; nhóm theo dự án (khi chọn "Toàn tenant") là `CMP-GroupNode`.
+
+| Loại nút (`nodes[].kind`) | Biểu tượng Lucide | Hình | Nội dung | Kích thước |
+|---|---|---|---|---|
+| Bên phát, bên nhận HTTT (`partyType = SYSTEM`) | `Server` | Chữ nhật bo `radius-md` | Mã `font-mono-sm`, tên một dòng cắt, `CMP-StatusDot` trạng thái | 200 × 56 px |
+| Luồng tích hợp (`FLOW`) | `Workflow` | Như trên, viền trái 3 px `color-accent` | Mã luồng, "Luồng PH-04" | 200 × 56 px |
+| Dịch vụ nội bộ (`INTERNAL_SERVICE`) | `Box` | Như trên, nền `color-surface-solid-2` | Mã DU | 200 × 56 px |
+| Cầu nối hệ cũ (`LEGACY_BRIDGE`) | `Cable` | Như trên, viền nét đứt | `bridgeCode`, "Cầu nối Pulsar" | 200 × 56 px |
+| Topic | `Radio` | Chữ nhật bo `radius-xl` (khác hình bên tham gia) | `topicName` cắt giữa giữ tiền tố và hậu tố, `topicKind`, `CMP-StatusDot`, huy hiệu `CMP-Badge` số mục DLQ `NEW` khi phủ DLQ | 260 × 64 px |
+
+Một HTTT vừa phát vừa nhận hiện hai nút, một ở lớp bên phát và một ở lớp bên nhận, nối với nhau bằng đường mảnh nét chấm `color-border-control` không mũi tên và có biểu tượng `Link` nhỏ (FR-10-058 bước 2); chọn một nút làm nổi cả nút anh em.
+
+Trạng thái nút hiển thị bằng ba kênh: `CMP-StatusDot` có hình (chấm đặc, nửa, rỗng, chéo theo sắc thái), chữ trạng thái trong tooltip và trong `aria-label`, và viền: nút `SUSPENDED` viền 2 px `color-warning-solid`, nút `RETIRED` (khi gồm đã ngừng) chữ `color-text-tertiary` và biểu tượng `Archive`. Đối tượng người dùng không có quyền xem (OR ngoài tổ chức) hiện nút "Đối tượng hạn chế" không có tên, theo điều cấm của `CMP-DependencyGraph`.
+
+### 20.7. Vùng R3 canvas: cạnh
+
+| Cạnh (`edges[].kind`) | Từ, tới | Nét mặc định | Nhãn |
+|---|---|---|---|
+| Quyền phát (publication) | Bên phát tới topic | 1,5 px `color-border-control`, mũi tên đặc | Nhãn `commType` rút gọn ("API", "Kafka", "Kafka nội bộ", "CDC") |
+| Đăng ký nhận (subscription) | Topic tới bên nhận | 1,5 px `color-border-control`, mũi tên đặc | Nhãn `deliveryMode` ("Đẩy", "Kéo API", "Kéo Kafka", "Nội bộ") |
+
+Kiểu nét theo trạng thái quan hệ (mọi lớp phủ):
+
+| Trạng thái quan hệ | Nét | Kèm |
+|---|---|---|
+| `ACTIVE` | Liền | |
+| `PENDING_APPROVAL`, `PROVISIONING` | Liền mảnh 1 px, `color-text-tertiary` | Biểu tượng `Clock` giữa cạnh |
+| `PAUSED`, `SUSPENDED` | Nét chấm | Biểu tượng `Pause` giữa cạnh, nhãn thêm "Tạm dừng" hoặc "Tạm ngừng" |
+| `FAILED` | Liền, `color-error-solid` | Biểu tượng `XCircle` |
+| `REVOKED`, `REJECTED` (khi gồm đã ngừng) | Nét đứt mảnh `color-text-disabled` | |
+
+Nhãn cạnh nằm trên nền `color-surface-solid` bo `radius-sm`, chữ `font-caption`, để đọc được khi cạnh đi qua lưới; nhãn tự ẩn dưới 60% thu phóng và hiện lại khi rê hoặc chọn cạnh.
+
+### 20.8. Lớp phủ (R4)
+
+Thanh lớp phủ là `CMP-SegmentedControl` bốn giá trị đúng enum `overlay` của FRS A.2.15; giá trị ghi `lop-phu` (`none`, `lag`, `traffic`, `dlq`) và gửi API-10-007 `overlay`.
+
+| `overlay` | Nhãn | Thay đổi trên cạnh | Thay đổi trên nút | Nguồn dữ liệu |
+|---|---|---|---|---|
+| `NONE` | Không phủ | Theo 20.7 | Theo 20.6 | `edges[].status` |
+| `LAG` | Độ trễ | Cạnh subscription tô theo `alertState`: `OK` `color-success-solid`, `WARNING` `color-warning-solid`, `CRITICAL` `color-error-solid`, `STALLED` `color-error-solid` nét đứt; cạnh khác `OK` dày 3 px; nhãn thêm `CMP-Duration` của `lagSeconds` | Bên nhận có subscription khác `OK` thêm biểu tượng `AlertTriangle` (cảnh báo) hoặc `OctagonAlert` (nghiêm trọng, ngừng tiến) | `edges[].lagSeconds`, trạng thái `alertState` của subscription |
+| `TRAFFIC` | Lưu lượng | Độ dày theo `ratePerMinute` chia bốn mức theo tứ phân vị của đồ thị đang xem: 1, 2, 3,5, 5 px; màu `color-chart-1`; nhãn thêm "{n}/phút" | Topic thêm dòng "vào {n}/phút" | `edges[].ratePerMinute` (từ PH-13) |
+| `DLQ` | DLQ | Cạnh subscription có mục DLQ `NEW` tô `color-error-solid`, nhãn "{n} DLQ" | Topic thêm `CMP-Badge` tổng mục `NEW`; bấm huy hiệu mở UI-10-15 lọc subscription | Chỉ số DLQ trong `nodes[]`, `edges[]` |
+
+Ba quy tắc chung cho lớp phủ. Thứ nhất, màu không bao giờ là kênh duy nhất: mức `alertState` luôn có biểu tượng và chữ trên nhãn cạnh, độ dày lưu lượng luôn có số. Thứ hai, chú giải R7 đổi theo lớp phủ đang bật và nêu cách tính (ví dụ "Độ dày theo tứ phân vị lưu lượng của sơ đồ đang xem"). Thứ ba, khi PH-13 không khả dụng, thẻ "Lưu lượng" vẫn chọn được nhưng canvas hiện dải `CMP-Alert` "Chưa lấy được số liệu lưu lượng từ PH-13." và cạnh giữ nét mặc định; khi bộ thu lag ngừng, lớp Độ trễ hiện `CMP-Banner` mục 5.4.
+
+### 20.9. Bố cục
+
+Bố cục tự động trái sang phải bằng ELK thuật toán phân lớp (FR-10-058 bước 4): lớp 1 bên phát, lớp 2 topic, lớp 3 bên nhận; khoảng cách lớp 160 px, khoảng cách nút trong lớp `space-6`; sắp nút trong lớp để giảm cạnh cắt nhau, ưu tiên giữ các topic của cùng dự án cạnh nhau. Bố cục chạy trong Web Worker để không chặn giao diện. Người dùng kéo nút để đặt lại; vị trí giữ trong phiên (bộ nhớ trang, theo khóa dự án) và mất khi tải lại, có nút "Bố cục lại" ở R5 (biểu tượng khóa bố cục của `CMP-CanvasControls` đổi chức năng thành "Khóa vị trí"). Hướng trên xuống dưới chọn được ở menu Xem, lưu theo người dùng (`CMP-FlowCanvas` mục Hướng).
+
+### 20.10. Tương tác chuột
+
+| Thao tác | Kết quả |
+|---|---|
+| Bấm nút | Chọn nút, làm nổi đường đi qua nút (20.11), mở Drawer R8 với tóm tắt; ghi `chon={kind}:{code}` |
+| Bấm cạnh | Chọn cạnh, mở Drawer tóm tắt publication hoặc subscription |
+| Bấm đúp nút | Mở trang chi tiết (UI-10-06, 09, 10) cùng tab |
+| Rê nút, cạnh | `CMP-Tooltip` sau 300 ms: tên đầy đủ, trạng thái, số liệu lớp phủ |
+| Kéo nút | Đặt lại vị trí (không đổi quan hệ) |
+| Kéo nền | Cuộn khung nhìn |
+| Con lăn | Cuộn; `Ctrl` + con lăn thu phóng 10…400% |
+| Bấm nền | Bỏ chọn, đóng Drawer |
+| Chuột phải nút | `CMP-DropdownMenu`: Mở chi tiết, Chỉ hiện lân cận nút này (đặt `topic` hoặc `httt`), Sao chép mã, Mở DLQ (topic) |
+
+Kéo nút có phương án không kéo (WCAG 2.5.7): chọn nút rồi dùng phím mũi tên dịch 8 px, `Shift` dịch 32 px.
+
+### 20.11. Làm nổi đường đi
+
+Chọn một nút làm nổi mọi nút, cạnh nằm trên đường đi qua nút đó: với bên phát là các topic nó phát và các bên nhận của những topic đó; với topic là bên phát và bên nhận của nó; với bên nhận là các topic nó nhận và bên phát của chúng. Nút, cạnh còn lại mờ đi (đề nghị token độ mờ ở Phụ lục A; tạm dùng `opacity-disabled` cho nút và `color-text-disabled` cho nhãn). Nút đang chọn có vòng focus kép `color-focus-ring`, `color-focus-ring-inner`. `Esc` bỏ làm nổi.
+
+### 20.12. Drawer chi tiết (R8)
+
+| Đối tượng chọn | Nội dung | Thành phần | API |
+|---|---|---|---|
+| Topic | Tên, trạng thái, `topicKind`, `dataClass`, phân vùng, lưu giữ, lược đồ mới nhất, số bên phát, bên nhận, vào 24 giờ, DLQ mới; nút "Mở chi tiết topic", "Mở DLQ", "Chỉ hiện topic này" | `CMP-DescriptionList`, `CMP-StatusTag`, `CMP-Button` | API-10-010 |
+| Bên phát | Mã, tên, `partyType`, gắn với, `commType`, trạng thái, danh sách quyền phát | `CMP-DescriptionList`, `CMP-DataTable` gọn | API-10-034 |
+| Bên nhận | Như trên với danh sách đăng ký nhận, độ trễ từng cái | | API-10-039 |
+| Cạnh quyền phát | Bên phát, topic, trạng thái, mục đích, hạn mức, người duyệt | `CMP-DescriptionList` | API-10-044 |
+| Cạnh đăng ký nhận | Chế độ, trạng thái, `alertState`, `lagSeconds`, thời gian còn lại, DLQ mới; nút "Mở chi tiết đăng ký nhận" | `CMP-DescriptionList`, `CMP-StatCard` | API-10-048 |
+
+Drawer không có nút ghi (chế độ chỉ xem PTN-07); mọi thay đổi đi qua màn chi tiết. Drawer giữ focus trong nó khi mở bằng bàn phím, `Esc` đóng và trả focus về nút đã chọn.
+
+### 20.13. Chế độ danh sách
+
+`che-do=danh-sach` thay canvas bằng `CMP-DataTable` một dòng mỗi cạnh: Bên phát, Kiểu giao tiếp, Topic, Chế độ giao nhận, Bên nhận, Trạng thái quan hệ, Độ trễ, Lưu lượng, DLQ mới; nhóm theo topic bằng hàng nhóm thu gọn được. Bộ lọc R2 và lớp phủ áp như đồ thị (lớp phủ thành cột được tô theo cùng sắc thái và có chữ). Đây là phương án tương đương cho trình đọc màn hình, cho máy nhỏ dưới `bp-lg`, và cho xuất CSV. Khi đồ thị có trên 300 nút hiển thị (sau lọc phía giao diện) thì giao diện gợi ý chuyển danh sách bằng `CMP-Alert` thông tin, không tự chuyển.
+
+### 20.14. Trạng thái màn
+
+| Trạng thái | Điều kiện | Hiển thị |
+|---|---|---|
+| Đang tải lần đầu | Chưa có đồ thị | Skeleton ba nút nối nhau ở giữa canvas (theo `CMP-FlowCanvas`), R1, R2 hiện ngay |
+| Đang tải lại | Đổi bộ lọc, lớp phủ, làm mới | Giữ đồ thị cũ, `CMP-ProgressBar` mảnh ở mép trên canvas, `aria-busy="true"` |
+| Đang bố cục | Đồ thị lớn đang tính bố cục | Chữ "Đang sắp xếp sơ đồ…" ở R9, canvas hiện bố cục cũ |
+| Rỗng, dự án chưa có quan hệ | `nodes[]` rỗng | `CMP-EmptyState` giữa canvas "Dự án chưa có topic hoặc chưa có bên phát, bên nhận nào." kèm "Tạo topic" (`PERM-10-create`) và "Mở dự án" |
+| Rỗng do lọc | Có dữ liệu nhưng bộ lọc trạng thái loại hết | ST-04 "Không có nút khớp bộ lọc" kèm "Xóa bộ lọc" |
+| Quá nhiều nút | ERR-10-049 | Thông điệp giữa canvas "Sơ đồ có hơn {10.graph.max-nodes} nút. Chọn một dự án, một topic hoặc một HTTT để thu hẹp." kèm ba nút mở bộ lọc tương ứng |
+| Lỗi tải | 5xx, hết thời gian | `CMP-Alert` giữa canvas có "Thử lại", mã truy vết |
+| Không có quyền | 403 | ST-07 |
+| Dự án không tồn tại | `du-an` sai | ST-08 trong canvas, R2 vẫn dùng được để chọn dự án khác |
+| Số liệu cũ | Bộ thu lag ngừng | `CMP-Banner` mục 5.4 |
+| Màn hình nhỏ | Dưới `bp-lg` | Chỉ chế độ danh sách, `CMP-Alert` "Sơ đồ cần màn hình rộng tối thiểu 992 px; đang hiện dạng danh sách." |
+
+### 20.15. Bàn phím
+
+| Phím | Tác dụng |
+|---|---|
+| `Tab`, `Shift+Tab` | Đi qua R1, R2, R4, canvas, R5 theo thứ tự; trong canvas đi qua nút theo lớp rồi theo thứ tự trên xuống dưới |
+| Mũi tên trái, phải (nút đang chọn) | Chuyển sang nút nối với nó ở lớp bên trái hoặc bên phải (đi theo cạnh); khi có nhiều nút nối, mở danh sách chọn nhỏ |
+| Mũi tên lên, xuống | Nút kế trong cùng lớp |
+| `Alt` + mũi tên | Dịch nút 8 px (`Shift` thêm: 32 px) |
+| `Enter` | Mở Drawer chi tiết của nút đang chọn |
+| `Shift+Enter` | Mở trang chi tiết |
+| `Esc` | Đóng Drawer; lần nữa bỏ chọn, bỏ làm nổi |
+| `/` | Vào ô tìm nút |
+| `1`, `2`, `3`, `4` | Lớp phủ Không phủ, Độ trễ, Lưu lượng, DLQ |
+| `L` | Chuyển chế độ Đồ thị, Danh sách |
+| `0` | Vừa khung; `Ctrl+=`, `Ctrl+-` thu phóng |
+| `F` | Toàn màn hình |
+| `R` | Làm mới |
+| `?` | `CMP-ShortcutSheet` |
+
+### 20.16. Trợ năng
+
+1. Canvas có `role="application"` với `aria-label` "Sơ đồ kết nối, {n} bên phát, {m} topic, {k} bên nhận" và `aria-describedby` trỏ tới câu hướng dẫn ẩn "Dùng mũi tên để đi theo quan hệ, Enter để xem chi tiết, L để chuyển dạng danh sách."
+2. Mỗi nút `role="button"` (trong `role="group"` của lớp) có `aria-label` đầy đủ, ví dụ "Topic t68.dkkd.doanh-nghiep.da-cap-phep.v1, Đang hoạt động, 1 bên phát, 4 bên nhận, 37 mục DLQ mới". Cạnh không focus riêng nhưng được đọc khi đi theo mũi tên: "Đăng ký nhận ht-thue-dn-cap-phep, Đẩy webhook, Cảnh báo, độ trễ 12 phút 30 giây".
+3. Vùng `aria-live="polite"` (`CMP-FlowCanvas` giải phẫu 7) đọc kết quả tìm ("3 nút khớp, đang ở 1 trên 3") và đổi lớp phủ ("Đã bật lớp phủ Độ trễ: 1 nghiêm trọng, 4 cảnh báo"); làm mới định kỳ không đọc.
+4. Tương phản: nút, chữ nhãn đạt 4,5:1 trên `color-surface-solid-2`; nét cạnh và biểu tượng trạng thái đạt 3:1 (WCAG 1.4.11). Chế độ tương phản cao của hệ điều hành (`forced-colors`) giữ được nét liền, chấm, đứt và biểu tượng.
+5. `CMP-Minimap` `aria-hidden="true"` vì thông tin đã có trong chế độ danh sách.
+6. Giảm chuyển động (`prefers-reduced-motion`): bỏ hiệu ứng trượt khi bố cục lại và khi cuộn tới nút, đổi ngay.
+
+### 20.17. Hiệu năng
+
+| Chỉ tiêu | Mục tiêu | Cách đạt |
+|---|---|---|
+| Tải lần đầu, 300 nút | ≤ 2 giây tới khi thấy đồ thị (máy văn phòng chuẩn, mạng nội bộ) | Một lần gọi API-10-007; bố cục ELK trong Web Worker; vẽ trước khung xương |
+| Thu phóng, kéo, 300 nút | ≥ 50 khung hình mỗi giây (theo tiêu chí PTN-07) | Ẩn nhãn cạnh dưới 60% thu phóng; `onlyRenderVisibleElements` của XYFlow |
+| Đổi lớp phủ | ≤ 300 ms | Lớp phủ áp lên dữ liệu đã có khi API trả kèm đủ chỉ số; chỉ gọi lại khi cần số mới |
+| Làm mới 30 giây | Không giật, không mất vị trí, không đổi focus | So khớp nút theo `id`, chỉ cập nhật thuộc tính |
+
+Trần `10.graph.max-nodes` (mặc định 300) do máy chủ áp; giao diện không tự cắt bớt nút.
+
+### 20.18. Bản hi-fi
+
+Canvas `color-surface-solid-2`; nút nền `color-surface-solid`, viền 1 px `color-border-control`, bóng `shadow-1`, bo `radius-md` (bên tham gia) hoặc `radius-xl` (topic); nút chọn bóng `shadow-2` và vòng focus kép. Tiêu đề lớp "BÊN PHÁT", "TOPIC", "BÊN NHẬN" là chữ `font-caption` chữ hoa `color-text-tertiary` dính mép trên canvas, cuộn ngang theo lớp. R4 và R5 dùng `glass-overlay` trên canvas đặc (đúng quy tắc chỉ lớp nổi mới là kính). Chuyển lớp phủ đổi màu cạnh trong `motion-duration-fast` với `motion-ease-standard`. Ở chủ đề tối, nút giữ nền `color-surface-solid` tối và sắc thái trạng thái lấy giá trị tối của D03-05-02 §4.4.
+
+### 20.19. Tiêu chí nghiệm thu UI-10-14
+
+- [ ] Đọc được toàn bộ quan hệ của một dự án 300 nút chỉ bằng bàn phím, kể cả mở chi tiết và đổi lớp phủ.
+- [ ] Bốn lớp phủ đúng enum `NONE`, `LAG`, `TRAFFIC`, `DLQ`; mỗi lớp có chú giải và không thông tin nào chỉ dựa vào màu.
+- [ ] Chọn dự án, topic, HTTT ghi lên URL; mở lại URL cho đúng sơ đồ và lớp phủ.
+- [ ] Vượt `10.graph.max-nodes` hiện thông điệp ERR-10-049 có lối thu hẹp, không treo trình duyệt.
+- [ ] Không có thao tác nào trên sơ đồ làm thay đổi quan hệ.
+- [ ] Xuất PNG, SVG có tiêu đề, chú giải, thời điểm; xuất CSV khớp chế độ danh sách.
+- [ ] Người dùng OR chỉ thấy tên đối tượng trong phạm vi tổ chức; còn lại là "Đối tượng hạn chế".
+
+## 21. UI-10-15 DLQ tầng sự kiện
+
+**Mục đích.** Tra cứu mục DLQ của một topic theo subscription, xem nội dung có lý do, loại bỏ, đề nghị phát lại. Màn xử lý gom mọi DLQ ở PH-18 dùng cùng API. **Đường dẫn.** `/tich-hop/topic/{ten-topic}/dlq`. **Mẫu.** PTN-11. **Quyền.** Xem siêu dữ liệu `PERM-10-read`; xem nội dung, loại bỏ, phát lại `PERM-10-operate` (TA, TO; SO không dùng cho việc này). **API.** API-10-060, 061, 062, 064.
+
+### 21.1. Wireframe
+
+```text
+┌ … › t68.dkkd.doanh-nghiep.da-cap-phep.v1 › DLQ ────────────────────────────────────────────┐
+│ Đăng ký nhận [Tất cả ▾] Trạng thái [Mới ▾] Mã lỗi [▾] Từ [20/11] đến [26/11] Mã sự kiện [ ] │
+├──┬───────────────┬─────────────────────┬──────────┬─────────────┬────┬──────────┬───────────┤
+│☐ │ Lỗi đầu       │ Đăng ký nhận        │ Nguồn    │ Mã lỗi      │Lần │ Subject  │ Trạng thái│
+│☐ │ 25/11 21:04   │ ht-thue-dn-cap-phep │ Giao đẩy │ Đầu nhận lỗi│ 9  │ 0312…    │ ● Mới     │
+└──┴───────────────┴─────────────────────┴──────────┴─────────────┴────┴──────────┴───────────┘
+  Đã chọn 37 [Phát lại] [Loại bỏ]                              Xuất danh sách (không nội dung)
+```
+
+### 21.2. Thành phần
+
+| Thành phần | `CMP-*` | Nội dung |
+|---|---|---|
+| Thanh lọc | `CMP-FilterBar`, `CMP-Select`, `CMP-DateRangePicker`, `CMP-SearchInput` | `subscriptionCode`, `status` (mặc định `NEW`), `errorCode`, khoảng `firstFailedAt`, `eventId`, `eventSubject` |
+| Bảng | `CMP-DataTable` chọn nhiều | `firstFailedAt`, `subscriptionCode`, `origin`, `errorCode`, `attempts`, `eventType`, `eventSubject`, `status`, `sourcePartition`, `sourceOffset` (ẩn mặc định) |
+| Thanh chọn | `CMP-SelectionBar` | Phát lại (mở UI-10-16 kiểu `DLQ_ENTRIES`), Loại bỏ (≤ 1.000 mỗi lệnh; theo bộ lọc thì chạy nền) |
+| Drawer mục | `CMP-Drawer`, `CMP-DescriptionList`, `CMP-JsonViewer` | Siêu dữ liệu đủ A.3 `DlqEntry`; nút "Xem nội dung" |
+
+Xem nội dung: topic `RESTRICTED`, `SENSITIVE` mở `CMP-ReasonDialog` bắt buộc lý do trước (kiểm toán xem dữ liệu Nhạy cảm, FR-00-040); nội dung hiện trong `CMP-JsonViewer` đã che theo chính sách PH-09 khi có, có dải "Đã ghi nhận lượt xem nội dung lúc {giờ}". Nội dung đã xóa (`PURGED`, `payloadPurgedAt`) hiện "Nội dung đã xóa theo thời hạn lưu giữ." Loại bỏ dùng `CMP-ReasonDialog`; mục đã xử lý trả ERR-10-036. Subscription `REVOKED`: nút Phát lại vô hiệu với lý do "Đăng ký nhận đã thu hồi; chỉ loại bỏ được." (FR-10-047).
+
+### 21.3. Trạng thái, bàn phím
+
+Rỗng: "Không có mục DLQ nào. Mục DLQ xuất hiện khi một sự kiện giao thất bại sau mọi lần thử." Đang tải: skeleton 10 dòng. `Space` chọn dòng, `Enter` mở Drawer, `V` xem nội dung (mở hộp lý do khi cần), `Delete` mở hộp loại bỏ. Bảng tự làm mới 30 giây khi lọc `NEW` và người dùng không đang chọn dòng.
+
+## 22. UI-10-16 Phát lại sự kiện
+
+**Mục đích.** Liệt kê lượt phát lại, đề nghị lượt mới theo khoảng offset, thời gian hoặc mục DLQ, theo dõi tiến độ, hủy. **Đường dẫn.** `/tich-hop/topic/phat-lai`, `/tich-hop/topic/phat-lai/moi`. **Mẫu.** PTN-01, PTN-05. **Quyền.** Xem `PERM-10-read`; đề nghị, hủy `PERM-10-operate`. **API.** API-10-063, 064, 065, API-10-048 (thông tin subscription), API-10-050 `:pause` (nút tạm dừng trong luồng `RESET_OFFSET`).
+
+### 22.1. Danh sách
+
+`CMP-DataTable` cột: `replayCode`, subscription, `replayMode`, `rangeType`, phạm vi (thời gian hoặc offset tóm tắt), `estimatedRecords`, tiến độ (`deliveredRecords`, `failedRecords` trên `CMP-ProgressBar` xác định), `status`, người đề nghị, `startedAt`, `finishedAt`. Lượt `RUNNING` làm mới 5 giây; nút "Hủy" trên dòng (`CMP-ConfirmDialog` "Dừng sau bản tin đang giao.").
+
+### 22.2. Trình hướng dẫn đề nghị phát lại
+
+| Bước | Trường | Thành phần | Kiểm tra | Lỗi |
+|---|---|---|---|---|
+| 1 Đăng ký nhận | `subscriptionCode` | `CMP-ResourceSelect` subscription `ACTIVE`, `PAUSED`, `SUSPENDED`, chế độ `PUSH`, `PULL_API` | Có lượt khác `APPROVED`, `RUNNING` thì mục vô hiệu kèm liên kết | ERR-10-035 |
+| 2 Kiểu | `replayMode` | `CMP-RadioCard`: Giao lại một khoảng, Đặt lại vị trí đọc, Phát lại mục DLQ (chỉ khi mở từ UI-10-15) | `RESET_OFFSET` khi subscription chưa `PAUSED`: thẻ hiện "Cần tạm dừng trước" kèm nút "Tạm dừng" | ERR-10-032 |
+| 3 Phạm vi | `rangeType`; `fromTime`, `toTime` hoặc `partitions[]` (`partition`, `fromOffset`, `toOffset`); `dlqEntryIds` | `CMP-SegmentedControl` Thời gian, Offset; `CMP-DateRangePicker`; `CMP-EditableTable` một dòng mỗi phân vùng | Trong lưu giữ; `toTime` > `fromTime`; `RESET_OFFSET` chỉ `fromTime`; offset trong khoảng còn trên cụm | ERR-10-033, ERR-10-034 |
+| 4 Tốc độ và lý do | `ratePerSecond`, `reason`, `acknowledgeDuplicates`, `acknowledgeSkip` (khi đặt offset tiến), `targetEndpointUrl` (chỉ `DLQ_ENTRIES`, endpoint đã xác minh của cùng bên nhận) | `CMP-NumberInput`, `CMP-TextArea`, `CMP-Checkbox`, `CMP-Select` | `ratePerSecond` ≤ `10.replay.rate-limit-per-second`; `reason` 10…500 ký tự; `acknowledgeDuplicates` phải đánh dấu | ERR-10-009, ERR-10-012 |
+| 5 Rà soát | Ước lượng số bản tin, thời gian chạy theo tốc độ, tác động bằng chữ | `CMP-DescriptionList`, `CMP-Alert` | | |
+
+Ước lượng ở bước 5 do máy chủ trả trong phản hồi tạo (FR-10-051 bước 3, 4); trước khi gửi, bước 3 hiện "Ước lượng sẽ có sau khi gửi" trừ khi tập API cung cấp chạy thử (Phụ lục B). Gửi thành công: lượt `PENDING_APPROVAL`, Toast kèm mã yêu cầu; số mục DLQ ≤ `10.replay.dlq-auto-approve-max` thì được tự duyệt và bỏ qua chờ.
+
+### 22.3. Trạng thái
+
+Rỗng: "Chưa có lượt phát lại. Phát lại giao lại sự kiện cho bên nhận khi bên nhận đã xử lý sai hoặc mất dữ liệu." Lượt `COMPLETED` với `failedRecords` > 0 hiện liên kết "Xem {n} mục vào DLQ".
+
+## 23. UI-10-17 Theo dõi độ trễ tiêu thụ
+
+**Mục đích.** Cho người vận hành một bảng tất cả subscription theo `alertState`, xu hướng, xác nhận cảnh báo. **Đường dẫn.** `/tich-hop/topic/do-tre`. **Mẫu.** PTN-11. **Quyền.** Xem `PERM-10-read`; xác nhận `PERM-10-operate`. **API.** API-10-046 (lọc theo `alertState`, Phụ lục B), API-10-055, API-10-056.
+
+```text
+┌ Topic sự kiện › Độ trễ ──────────────────────────────── Cập nhật 14:02:01 [⟳] [Tự làm mới ●] ┐
+│ (Ngừng tiến 1)(Nghiêm trọng 1)(Cảnh báo 4)(Bình thường 58)   Dự án [▾] Chế độ [▾]            │
+├────────────────────────┬──────────────────┬─────────┬────────┬────────┬──────────┬────────────┤
+│ Đăng ký nhận           │ Topic            │ Mức     │ Độ trễ │ Tồn    │ Còn lại  │ Xác nhận   │
+│ ht-bhxh-dn-cap-phep    │ t68.dkkd…v1      │⏸ Ngừng t│ 41 ph  │ 9.802  │ 6 ng 23 g│ [Xác nhận] │
+│ ht-thue-dn-cap-phep    │ t68.dkkd…v1      │⚠ Cảnh b.│12 ph 30│ 4.210  │ 6 ng 23 g│ Bình 13:55 │
+└────────────────────────┴──────────────────┴─────────┴────────┴────────┴──────────┴────────────┘
+```
+
+| Thành phần | `CMP-*` | Ghi chú |
+|---|---|---|
+| Lọc nhanh theo mức | `CMP-FilterChips` | Ghi `muc`; mặc định bật mọi mức khác `OK` |
+| Bảng | `CMP-DataTable` mật độ gọn | Cột: subscription, topic, bên nhận, `deliveryMode`, `alertState`, `lagSeconds`, `lagRecords`, thời gian còn lại, sparkline 1 giờ (`CMP-Chart` nhỏ), người và thời điểm xác nhận; sắp xếp mặc định mức nặng trước rồi `lagSeconds` giảm |
+| Xác nhận | `CMP-ReasonDialog` ghi chú tùy chọn | API-10-056; ghi `alertAcknowledgedBy`, `alertAcknowledgedAt`, `alertAckNote`; dòng hiện "Đã xác nhận, tắt nhắc 4 giờ"; xác nhận không tắt việc đánh giá |
+| Hàng mở rộng | `CMP-DataTable` lồng | Lag theo phân vùng (API-10-055) |
+
+Trạng thái: rỗng khi mọi subscription `OK`: "Mọi đăng ký nhận đang bình thường." Bộ thu lag ngừng: `CMP-Banner` mục 5.4. Tự làm mới 30 giây, tắt được bằng `CMP-Switch`; khi một dòng đổi mức, dòng nhấp nền `color-warning-bg` một lần trong `motion-duration-slow` (tắt khi giảm chuyển động) và vùng `aria-live` đọc "ht-bhxh-dn-cap-phep chuyển mức Ngừng tiến". Phím: `A` xác nhận dòng đang chọn, `Enter` mở UI-10-12.
+
+## 24. UI-10-18 Cài đặt sự kiện
+
+**Mục đích.** Quản trị danh mục kiểu giao tiếp, chế độ định tuyến, hạn mức tenant và tham số `10.*`. Thay LGC-HUB-014. **Đường dẫn.** `/tich-hop/topic/cai-dat` và tab con. **Mẫu.** PTN-12. **Quyền.** Xem `PERM-10-read`; sửa `PERM-10-admin` (trần hạn mức, tham số phạm vi N và `10.external-kafka.enabled`: chỉ PA). **API.** API-10-067, 068, 069, 070.
+
+| Tab | Nội dung | Thành phần | Ghi chú |
+|---|---|---|---|
+| Kiểu giao tiếp `/kieu-giao-tiep` | Bảng `commTypeCode`, `name`, `direction`, `allowedPartyTypes`, `deliveryMode`, `legacyCode` (cột "Mã hệ cũ"), công tắc `enabled` | `CMP-DataTable`, `CMP-Switch` | Tắt mục đang dùng: ERR-10-043, công tắc trả về và Toast nêu số bên đang dùng; không thêm mã ở tenant |
+| Chế độ định tuyến `/dinh-tuyen` | `routingModeCode`, `name`, `ordering`, `legacyCode`, `enabled` | Như trên | `KEY_HASH` công tắc khóa bật kèm tooltip "Không tắt được chế độ mặc định" |
+| Hạn mức `/han-muc` | Mỗi trường `TenantEventQuota`: trần (PA sửa), đã dùng, `CMP-ProgressBar`; `ceilingSetBy`; phân bổ cho principal | `CMP-DescriptionList`, `CMP-ProgressBar`, `CMP-NumberInput` | ≥ 80% sắc thái cảnh báo kèm chữ; TA chỉ xem trần |
+| Tham số `/tham-so` | Bảng tham số A.5: khóa, giá trị, mặc định, miền, phạm vi (N, T, T*), ý nghĩa | `CMP-DataTable` có ô sửa `CMP-NumberInput`, `CMP-Switch`, `CMP-Select` theo kiểu | Sửa mở `CMP-ReasonDialog` lý do; ngoài miền ERR-10-012 tại ô; tham số N chỉ PA; nhóm theo tiền tố (`topic`, `schema`, `push`, `pull`, `lag`, `dlq`, `replay`, `quota`, `migration`) |
+
+Mỗi tab là biểu mẫu riêng có thanh lưu dính đáy theo PTN-12; đổi tab khi có thay đổi chưa lưu thì hỏi. Câu chú dưới bảng tham số: "Thay đổi áp dụng cho đối tượng tạo mới; ngưỡng lag mặc định áp dụng ngay." (FR-10-063).
+
+## 25. UI-10-19 Nhập khai báo
+
+**Mục đích.** Nhập tệp `EventManifest` có xem trước khác biệt (Đợt sau, FR-10-071). **Đường dẫn.** `/tich-hop/du-an/nhap`. **Mẫu.** PTN-09. **Quyền.** `PERM-10-create`. **API.** API-10-075 (`POST /imports`, `GET /imports/{jobCode}`, `POST /imports/{jobCode}:apply`).
+
+Ba bước theo PTN-09: (1) tải tệp bằng `CMP-FileDropzone` (YAML, tùy chọn `rewriteTenantPrefix` bằng `CMP-Switch` "Viết lại tiền tố tenant theo tenant đích"), tác vụ `sourceKind = EVENT_MANIFEST` ở `VALIDATING` với `CMP-JobProgress`; (2) xem trước: `CMP-DataTable` mỗi dòng một đối tượng với `changeKind` (`CREATE`, `UPDATE`, `UNCHANGED`, `CONFLICT`, `SKIP`) tô theo token khác biệt kèm chữ, bộ lọc theo `changeKind`, `CMP-DiffViewer` cho dòng `UPDATE`, lỗi tham chiếu ERR-10-050 và lỗi cấu trúc ERR-10-040 ở `validationErrors`; (3) xác nhận áp dụng (`APPLYING` sang `APPLIED`) với câu "Mọi topic, quyền phát, đăng ký nhận được tạo ở trạng thái đầu và vẫn qua duyệt." (BR-10-032). Hủy được ở `VALIDATING`, `PREVIEW`. Màn hiện `CMP-Banner` thông tin "Chức năng Đợt sau" cho tới khi bật.
+
+## 26. UI-10-20 Di trú từ Pulsar
+
+**Mục đích.** Nhập kiểm kê Hub Pulsar, rà ánh xạ sang đối tượng Datahub, chạy cầu nối song song, đối chiếu, chuyển hẳn, quay lui và theo dõi tiến độ (FR-10-072…076, ADR-073). **Đường dẫn.** `/tich-hop/du-an/di-tru` và tab con. **Mẫu.** PTN-01. **Quyền.** `PERM-10-admin` (TA, PA); tiến độ `PERM-10-read` cho TA, PA. **API.** API-10-075 (`sourceKind = PULSAR_HUB`), API-10-076, 077, 078.
+
+### 26.1. Tab
+
+| Tab | Đoạn route | Nội dung | Thành phần |
+|---|---|---|---|
+| Tiến độ | `/tien-do` (mặc định) | Số ánh xạ theo `status` và `legacyType`, HTTT còn qua Pulsar, cầu nối đang chạy và lag, đối chiếu gần nhất, ngày dự kiến tắt Hub; xuất Excel | `CMP-KpiCard`, `CMP-ProgressBar`, `CMP-DataTable` |
+| Ánh xạ | `/anh-xa` | Bảng `LegacyMapping`: `legacyType`, `legacyName`, `targetType`, `targetCode`, `confidence`, `issues`, `status`, `cutOverAt`, `rollbackUntil`; nút "Nhập kiểm kê" | `CMP-DataTable`, `CMP-EditableTable` cho cột đích, `CMP-FileDropzone` |
+| Cầu nối | `/cau-noi` | `MigrationBridge`: `direction`, `pulsarTopic`, `kafkaTopic`, `status`, `bridgedCount`, `lagSeconds`, `expiresAt`; tạo, dừng, tiếp tục | `CMP-DataTable`, `CMP-Drawer` |
+| Đối chiếu | `/doi-chieu` | Kết quả đối chiếu theo giờ: số bản tin Pulsar, Kafka, chênh lệch sau trừ lag, mẫu `id` thiếu | `CMP-DataTable`, `CMP-Chart` |
+
+### 26.2. Hành vi chính
+
+1. **Nhập kiểm kê.** Tệp nén theo mẫu tải về; tác vụ chạy nền, kết quả đổ vào tab Ánh xạ với `PROPOSED`; dòng `confidence = LOW` tô nhãn "Cần rà" và đứng đầu; ERR-10-040, 041, 050 hiện ở dòng.
+2. **Rà ánh xạ.** Sửa đích trên dòng (mã dự án, tên topic theo quy ước, HTTT gắn), lưu bằng API-10-076; dòng đủ điều kiện chuyển `PLANNED`. Loại subscription Pulsar cũ hiện ở cột phụ cùng cấu hình đề xuất theo bảng 3.3.
+3. **Tạo cầu nối.** Drawer: `pulsarTopic`, `kafkaTopic` (`CMP-TopicSelect` topic `ACTIVE`), `startFrom` (`LATEST` mặc định, `EARLIEST`), `pulsarSubscriptionName` (mặc định `dh-bridge`), `expiresAt` (≤ `10.migration.bridge-max-days`), `direction`; gửi tạo yêu cầu `BRIDGE`. ERR-10-042 khi đã có cầu nối hoặc ngược chiều.
+4. **Chuyển hẳn.** Nút trên dòng ánh xạ `BRIDGING` mở `CMP-Modal` liệt kê ba điều kiện FR-10-075 (song song đủ `10.migration.min-parallel-days` ngày, subscriber cũ đã có subscription `ACTIVE` không cảnh báo, đối chiếu 72 giờ không chênh), mỗi điều kiện một `CMP-StatusTag`; đủ thì gửi yêu cầu `CUTOVER`.
+5. **Quay lui.** Trong `10.migration.rollback-window-days`, nút màu cảnh báo mở `CMP-ReasonDialog` lý do bắt buộc, không qua duyệt, ghi rõ "IA sẽ được thông báo".
+
+Cầu nối `ERROR` hoặc lag vượt `10.migration.bridge-max-lag-seconds` hiện `CMP-Alert` đầu tab Cầu nối. Rỗng: "Chưa nhập kiểm kê Hub cũ. Tải mẫu tệp, xuất cấu hình Hub theo hướng dẫn rồi nhập." kèm "Tải mẫu".
+
+## 27. Luồng người dùng chính
+
+### 27.1. Từ topic mới tới bên nhận đầu tiên nhận sự kiện
+
+```mermaid
+sequenceDiagram
+  actor IE as Kỹ sư tích hợp
+  actor IA as Người duyệt
+  participant UI as dh-console
+  participant API as dh-integration
+  IE->>UI: UI-10-07 tạo topic, kiểm tra lược đồ
+  UI->>API: API-10-009 rồi API-10-026, API-10-012
+  IA->>UI: UI-10-13 duyệt TOPIC_CREATE
+  UI->>API: API-10-059 approve
+  API-->>UI: topic PROVISIONING rồi ACTIVE
+  IE->>UI: UI-10-06 đề nghị quyền phát cho HT-DKKD
+  IE->>UI: UI-10-11 đăng ký nhận PUSH cho HT-THUE, xác minh endpoint
+  UI->>API: API-10-051 rồi API-10-047
+  IA->>UI: UI-10-13 duyệt PUBLICATION, SUBSCRIPTION
+  IE->>UI: UI-10-12 xem khóa ký một lần, gửi đơn vị chủ quản HT-THUE
+```
+
+Thuyết minh: một topic đi qua hai lần duyệt (topic, rồi từng quan hệ), mỗi lần do người khác người gửi; khóa ký chỉ hiện cho người đề nghị ngay khi subscription `ACTIVE`, nên UI-10-12 đặt dải "Khóa ký đã sẵn sàng" lên đầu trang.
+
+### 27.2. Sự cố bên nhận và phát lại
+
+```mermaid
+flowchart LR
+  A["UI-10-01 thẻ Độ trễ: 1 Nghiêm trọng"] --> B["UI-10-17 lọc mức Nghiêm trọng"]
+  B --> C["UI-10-12 tab Lượt lỗi: ERR-10-112"]
+  C --> D["Tạm dừng, liên hệ HTTT nhận"]
+  D --> E["Tiếp tục sau khắc phục"]
+  E --> F["UI-10-15 chọn mục DLQ mới"]
+  F --> G["UI-10-16 phát lại DLQ_ENTRIES, chờ duyệt"]
+```
+
+Thuyết minh: người vận hành đi từ tổng quan tới đúng subscription bằng liên kết đã lọc sẵn, không phải tìm tay; sơ đồ UI-10-14 lớp phủ Độ trễ là lối vào thứ hai khi cần thấy sự cố lan sang những bên nào.
+
+### 27.3. Di trú một topic Pulsar
+
+Theo UC của PH-10: nhập kiểm kê ở UI-10-20, rà ánh xạ, tạo topic đích qua UI-10-07 (hoặc từ ánh xạ), tạo cầu nối `PULSAR_TO_KAFKA` và chờ duyệt `BRIDGE`, đăng ký nhận cho bên nhận mới ở UI-10-11, theo dõi tab Đối chiếu, chuyển hẳn khi ba điều kiện đạt, quay lui nếu cần trong cửa sổ cho phép.
+
+## 28. Mẫu truy cập và kiến trúc mã giao diện
+
+| Mục | Quy ước |
+|---|---|
+| Thư mục | `apps/dh-console/src/features/event/` gồm `pages/` (một tệp mỗi UI), `components/` (khối dùng lại trong phân hệ: khối xác minh endpoint, lịch thử lại, bảng lượt lỗi), `api/` (hook TanStack Query sinh từ OpenAPI của D03-04-PH10), `url.ts`, `status.ts` (đăng ký nhãn mục 5.1) |
+| Khóa truy vấn | `['event', tài nguyên, tham số]`, ví dụ `['event','subscription', code]`, `['event','graph', {projectCode, overlay}]` |
+| Làm mới | `refetchInterval` 30 giây cho dashboard, sơ đồ, độ trễ; 5 giây cho đối tượng `PROVISIONING` và lượt phát lại `RUNNING`; dừng khi tab ẩn |
+| Ghi | Mọi lệnh ghi gửi `Idempotency-Key` (UUID sinh khi mở hộp thao tác, giữ khi thử lại) và `If-Match` khi API có `ETag` |
+| Bí mật | Mutation xoay khóa đặt `gcTime: 0`, đọc bí mật trong `onSuccess` vào `CMP-SecretField` rồi `reset()` (D03-05-03 §7.2) |
+| Đồ thị | XYFlow qua `CMP-FlowCanvas`; bố cục ELK trong Web Worker `graphLayout.worker.ts`; vị trí người dùng kéo giữ trong `sessionStorage` theo khóa dự án |
+| Quyền | `useAllowedActions(object)` đọc `allowedActions`; `usePermission('PERM-10-…')` chỉ để ẩn mục menu, tab |
+| Chia gói | Mỗi trang tải lười; UI-10-14 và trình soạn lược đồ (Monaco) là gói riêng |
+
+## 29. Ma trận màn hình theo vai trò
+
+Ký hiệu: ● dùng đầy đủ theo quyền, ◐ chỉ xem hoặc một phần thao tác, ○ trong phạm vi tổ chức, trống là không vào.
+
+| Màn | PA | PO | TA | TO | SO | IE | IA | SV | OR | VW | AU |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| UI-10-01 Tổng quan | ◐ | ◐ | ● | ● | ◐ | ● | ● | ◐ | ○ | ◐ | ◐ |
+| UI-10-02 Danh sách dự án | ◐ | ◐ | ● | ◐ | ◐ | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-03 Chi tiết dự án | ◐ | ◐ | ● | ◐ | ◐ | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-04 Tạo, sửa dự án | | | ● | | | ● | | ○ | | | |
+| UI-10-05 Danh sách topic | ◐ | ◐ | ● | ◐ | ◐ | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-06 Chi tiết topic | ◐ | ◐ | ● | ◐ | ◐ | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-07 Tạo topic | | | ● | | | ● | | ○ | | | |
+| UI-10-08 Lược đồ | ◐ | ◐ | ● | ◐ | ◐ | ● | ◐ | ○ | ◐ | ◐ | ◐ |
+| UI-10-09 Bên phát | ◐ | ◐ | ● | ● | ● | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-10 Bên nhận | ◐ | ◐ | ● | ● | ● | ● | ◐ | ○ | ○ | ◐ | ◐ |
+| UI-10-11 Đăng ký nhận | | | ● | | | ● | | | ○ | | |
+| UI-10-12 Chi tiết subscription | ◐ | ◐ | ● | ● | ◐ | ● | ◐ | ◐ | ○ | ◐ | ◐ |
+| UI-10-13 Duyệt | | | ● | | | ◐ | ● | | | | |
+| UI-10-14 Sơ đồ | ◐ | ◐ | ● | ● | ◐ | ● | ◐ | ◐ | ○ | ◐ | ◐ |
+| UI-10-15 DLQ | ◐ | ◐ | ● | ● | ◐ | ◐ | ◐ | ◐ | ○ | ◐ | ◐ |
+| UI-10-16 Phát lại | ◐ | ◐ | ● | ● | ◐ | ◐ | ● | ◐ | ○ | ◐ | ◐ |
+| UI-10-17 Độ trễ | ◐ | ◐ | ● | ● | ◐ | ◐ | ◐ | ◐ | ○ | ◐ | ◐ |
+| UI-10-18 Cài đặt | ● | ◐ | ● | ◐ | ◐ | ◐ | ◐ | ◐ | | ◐ | ◐ |
+| UI-10-19 Nhập khai báo | | | ● | | | ● | | ○ | | | |
+| UI-10-20 Di trú | ● | | ● | | | | | | | | |
+
+Ma trận suy từ FRS §3.2: IE có `PERM-10-subscribe` nên dùng UI-10-11 (đề nghị đồng bộ D02-08 ở FRS §3.3); IA duyệt phát lại ở UI-10-13 và xem UI-10-16; SO dùng UI-10-09, 10, 12 cho tạm ngừng khi sự cố. IE vào UI-10-13 chỉ để xem, rút yêu cầu của mình.
+
+## 30. Truy vết FR sang màn
+
+| FR | Màn | FR | Màn |
+|---|---|---|---|
+| FR-10-001, 003, 005 | UI-10-02, 04 | FR-10-035, 036, 040 | UI-10-11 |
+| FR-10-002, 004 | UI-10-03, 04 | FR-10-037 | UI-10-13, 12 |
+| FR-10-006 | UI-10-05 | FR-10-038, 039 | UI-10-11 (cấu hình), UI-10-12 (thống kê, lượt lỗi) |
+| FR-10-007, 010, 024 | UI-10-06 | FR-10-041, 042, 046, 047 | UI-10-12 |
+| FR-10-008 | UI-10-07, 03 (Drawer) | FR-10-043, 044, 045 | UI-10-11 bước 3, UI-10-06 tab Cách kết nối |
+| FR-10-009, 019, 031, 051, 073 | UI-10-13 | FR-10-048 | Đợt sau, chưa có màn |
+| FR-10-011, 012, 013, 021 | UI-10-06 Drawer 12.5, UI-10-13 | FR-10-049, 050, 053 | UI-10-15 |
+| FR-10-014, 015, 016 | UI-10-06, 07 | FR-10-052 | UI-10-16 |
+| FR-10-017, 018, 020, 022 | UI-10-08 | FR-10-054, 055 | UI-10-17, 12 |
+| FR-10-023 | UI-10-09 (tuân thủ) | FR-10-056 | UI-10-12 |
+| FR-10-025, 026, 028, 029 | UI-10-09, 10 | FR-10-057, 062 | UI-10-01, 18 |
+| FR-10-027 | UI-10-10 | FR-10-058 | UI-10-14, 03 |
+| FR-10-030, 032 | UI-10-06, 09 | FR-10-060, 061, 063 | UI-10-18 |
+| FR-10-033, 034 | UI-10-06 tab Cách kết nối | FR-10-064…069 | Không có màn (máy với máy, đa tenant); kết quả hiện ở UI-10-05 (topic `CDC`, `SYSTEM`) |
+| FR-10-070 | UI-10-02, 03 | FR-10-071 | UI-10-19 |
+| FR-10-072…076 | UI-10-20 | FR-10-059 | PH-13 |
+
+## 31. Kiểm thử giao diện và bản hi-fi
+
+### 31.1. Ca kiểm thử giao diện gợi ý cho D05-02-PH10
+
+| Nhóm | Nội dung kiểm |
+|---|---|
+| Quyền | Mỗi vai trò ở ma trận mục 29 thấy đúng nút; nút vô hiệu có lý do; route trực tiếp thiếu quyền ra ST-07 |
+| Bốn mắt | Người gửi mở UI-10-13 thấy nút duyệt vô hiệu kèm câu ERR-10-008; người khác duyệt được |
+| Trường | Mọi ràng buộc ở bảng trường (mẫu mã, độ dài, miền tham số, từ dành riêng, điều kiện bắt buộc theo chế độ) kiểm cả biên dưới, biên trên, ngay ngoài biên |
+| Đăng ký nhận | Bốn chế độ với bốn loại bên nhận; `PULL_KAFKA` khi tenant chưa bật; xác minh đạt, không đạt, hết hiệu lực, đổi URL; lịch thử lại đúng công thức |
+| Khóa ký | Hiện một lần; đóng hộp rồi không xem lại được; không có trong bộ đệm, URL, nhật ký trình duyệt |
+| Sơ đồ | 20.19; 300 nút; vượt trần; bốn lớp phủ; bàn phím; chế độ danh sách khớp đồ thị |
+| Trạng thái | ST-01…ST-15 trên mỗi màn, gồm PH-13 không khả dụng, Apicurio không khả dụng, bộ thu lag ngừng |
+| Truy cập | axe-core không lỗi nghiêm trọng; trình đọc màn hình NVDA đọc đúng nút sơ đồ, thẻ số; phóng 200% không mất chức năng; `forced-colors` |
+| Responsive | 1366 × 768 và 1280 × 720 (sidebar thu gọn) không cuộn ngang toàn trang; dưới `bp-lg` sơ đồ chuyển danh sách |
+
+### 31.2. Bản hi-fi cần dựng
+
+Bản hi-fi trên Figma theo thư viện D03-05, sáng và tối, ở 1366 × 768: UI-10-01, UI-10-06 (tab Tổng quan, Đăng ký nhận), UI-10-11 (bước 2, bước 3 chế độ Đẩy với khối xác minh đạt và không đạt, bước 3 Kéo API), UI-10-12 (Tổng quan với cảnh báo, `SUSPENDED` do ngắt mạch, hộp khóa ký), UI-10-14 (bốn lớp phủ, Drawer nút, chế độ danh sách, trạng thái quá nhiều nút), UI-10-13 (yêu cầu `SUBSCRIPTION`). Mỗi khung ghi tên token, không ghi mã màu.
+
+## Phụ lục A. Đề nghị bổ sung cho D03-05
+
+| # | Đề nghị | Lý do | Tạm dùng |
+|---|---|---|---|
+| A1 | Token độ mờ cho nội dung không được làm nổi trên canvas (ví dụ một token ngữ nghĩa nhóm `opacity`) khác `opacity-disabled` | Làm nổi đường đi ở UI-10-14 và DependencyGraph cần mờ nút không liên quan mà không mang nghĩa "vô hiệu" cho trình đọc và người dùng | `opacity-disabled` cho nút, `color-text-disabled` cho nhãn |
+| A2 | Biến thể `readonly` của `CMP-FlowCanvas` có chế độ "lớp" (cột tiêu đề lớp dính mép, bố cục ELK phân lớp) | Sơ đồ ba lớp bên phát, topic, bên nhận; PH-02 (hệ thống đăng ký API) cũng có thể dùng | Ghép tiêu đề lớp bằng `CMP-Text` trong `CMP-FlowCanvas` |
+| A3 | Kiểu cạnh theo trạng thái (liền, chấm, đứt) và độ dày theo mức lưu lượng là thuộc tính chuẩn của cạnh trong `CMP-FlowCanvas` | Cùng quy ước cho lớp phủ số liệu chạy thật của PH-04 và lớp phủ PH-10 | Định nghĩa cục bộ trong `features/event` |
+| A4 | Thành phần "khối kết quả kiểm tra theo bước" (danh sách bước có trạng thái, chi tiết, hướng dẫn khắc phục, nút sao chép) | Dùng ở xác minh endpoint PH-10, kiểm tra kết nối PH-05 (UI-05-04), xác minh lược đồ | `CMP-Card` chứa danh sách `CMP-StatusTag` |
+| A5 | Thành phần "xem trước lịch thử lại" (chuỗi thời lượng và biểu đồ cột nhỏ từ ba tham số giãn cách) | Dùng ở PH-10 (webhook), PH-04 (Retry trong luồng), PH-05 | `CMP-Chart` cột nhỏ cộng `CMP-Duration` |
+| A6 | Biến thể `CMP-ResourceSelect` cho bên phát, bên nhận PH-10 (hiện loại, kiểu giao tiếp, trạng thái) | Hiện chỉ có `CMP-TopicSelect` cho PH-10 | `CMP-ResourceSelect` chung |
+
+## Phụ lục B. Đề nghị bổ sung API (cho D03-04-PH10)
+
+| # | API | Đề nghị | Màn |
+|---|---|---|---|
+| B1 | Mọi `GET` chi tiết | Trả `allowedActions` theo quyền, trạng thái, bốn mắt | Mọi màn chi tiết |
+| B2 | API-10-066 | Chia phản hồi thành khối `counts`, `traffic`, `lag`, `dlq`, `pendingApprovals`, `attention`, `quota` theo bảy ý (a)…(g) FR-10-057; mỗi khối có `available` để giao diện ẩn khối khi nguồn ngoài lỗi | UI-10-01 |
+| B3 | API-10-007 | Trả `nodes[].dlqNewCount`, `nodes[].partyType`, `edges[].alertState`, `edges[].dlqNewCount`, `edges[].commType`; thêm `stats.collectedAt` để hiện số liệu cũ | UI-10-14 |
+| B4 | API-10-015 | Chế độ kiểm tra trước (`dryRun`) trả danh sách subscription bị ảnh hưởng khi giảm lưu giữ và cảnh báo thứ tự trước khi gửi | UI-10-06 Drawer 12.5 |
+| B5 | API-10-046 | Tham số lọc `alertState`, `deliveryMode`, `subscriberCode`, `topicName`, `projectCode`; sắp xếp theo `lagSeconds` | UI-10-17, UI-10-06, 10 |
+| B6 | API-10-048 | Trả trạng thái worker (phân vùng đang giữ, offset, lần giao cuối) và cờ `signingSecretPending` cho người đề nghị | UI-10-12 tab Worker, dải khóa ký |
+| B7 | API-10-054 hoặc hành động mới | Cách lấy khóa ký đầu tiên một lần sau khi duyệt (FR-10-037 bước 6 chưa có đường dẫn) | UI-10-12 |
+| B8 | API-10-064 | Chế độ chạy thử trả `estimatedRecords`, thời gian chạy và khoảng còn dữ liệu trước khi tạo | UI-10-16 |
+| B9 | API-10-047, 091 | Cách đề nghị miễn xác minh trong lúc tạo subscription, hoặc xác nhận rằng miễn chỉ làm sau khi tạo | UI-10-11, 12 |
+| B10 | API-10-051 | `steps[]` có mã bước cố định, `detail` hướng dẫn tiếng Việt và `validUntil` | UI-10-11 |
+
+## Phụ lục C. Đề nghị bổ sung cho FRS
+
+| # | Mục FRS | Đề nghị |
+|---|---|---|
+| C1 | A.6 | Ghi đoạn tab con của trang chi tiết (`/cau-hinh`, `/quyen-phat`, `/dang-ky-nhan-ds`, `/ket-noi`, `/chuyen-doi`, `/lich-su` cho topic; `/giao-nhan`, `/do-tre`, `/luot-loi`, `/worker`, `/khoa-ky`, `/cau-hinh`, `/phat-lai`, `/lich-su` cho subscription; `/topic`, `/ben-tham-gia`, `/so-do`, `/lich-su` cho dự án; `/anh-xa`, `/cau-noi`, `/doi-chieu`, `/tien-do` cho di trú) và tham số query của sơ đồ (`du-an`, `topic`, `httt`, `lop-phu`, `ca-ngung`, `che-do`) |
+| C2 | FR-10-035 | Ràng buộc từng trường `push.retryBackoff.initialMs`, `multiplier`, `maxMs` (đề nghị lấy miền `10.push.backoff-*`, `maxMs` ≥ `initialMs`) và `lagWarnSeconds` < `lagCriticalSeconds` |
+| C3 | FR-10-035 | Độ dài và định dạng `legalBasis` (đề nghị 10…1.000 ký tự, có thể kèm số hiệu văn bản) |
+| C4 | Chung | Độ dài `reason` cho lưu trữ dự án, tạm ngừng, thu hồi, ngừng topic, loại bỏ DLQ (giao diện đang dùng 10…500 như FR-10-051) |
+| C5 | FR-10-035, A.3 | Ghi `quotaBytesPerSecond` vào bảng tham số đề nghị subscription (A.3 có trường, FR-10-035 chưa liệt kê) |
+| C6 | FR-10-039, Q10-15 | Chốt việc chọn sẵn `failurePolicy = BLOCK` khi topic `orderingRequired` |
+
+## Câu hỏi mở
+
+> **Câu hỏi mở Q10-30:** Sơ đồ "Toàn tenant" khi tenant vượt `10.graph.max-nodes` có nên gợi ý gom nút theo dự án (`CMP-GroupNode` thu gọn) thay vì báo lỗi? Đề xuất: Đợt sau, MVP giữ ERR-10-049 kèm lối thu hẹp.
+
+> **Câu hỏi mở Q10-31:** Miễn xác minh endpoint (API-10-091) cho HTTT cũ làm ở bước nào: trong trình hướng dẫn đăng ký nhận hay chỉ sau khi đã tạo subscription? Tài liệu này chọn sau khi tạo; chờ tập API (Phụ lục B9).
+
+> **Câu hỏi mở Q10-32:** Vị trí nút do người dùng kéo trên sơ đồ có cần lưu bền theo người dùng hoặc theo dự án (chia sẻ cho cả nhóm) không? MVP chỉ giữ trong phiên.
+
+> **Câu hỏi mở Q10-33:** Lớp phủ Lưu lượng dùng tứ phân vị của sơ đồ đang xem, nên cùng một cạnh có độ dày khác nhau khi đổi bộ lọc. Có cần thang tuyệt đối cố định cho tenant (ví dụ theo `expectedRatePerMinute`) không?
+
+> **Câu hỏi mở Q10-34:** Người đề nghị subscription không còn ở đơn vị (nghỉ, chuyển công tác) trước khi xem khóa ký đầu: ai được xem? Đề xuất: người có `PERM-10-subscribe` trên bên nhận đó xoay khóa để lấy khóa mới.
+
+> **Câu hỏi mở Q10-35:** Màn DLQ của PH-10 (UI-10-15) và màn xử lý lỗi chung của PH-18 có trùng chức năng; khi PH-18 sẵn sàng, UI-10-15 có giữ thao tác loại bỏ, phát lại hay chỉ còn xem và liên kết sang PH-18?
+
+> **Câu hỏi mở Q10-36:** Ước lượng "Từ dữ liệu cũ nhất" ở UI-10-11 bước 4 tính phía giao diện từ số liệu 24 giờ; có cần API trả ước lượng chính xác theo offset đầu, cuối từng phân vùng?
+
+> **Câu hỏi mở Q10-37:** Mẫu mã kết nối (Java, .NET, Python, Node.js, PHP) ở tab Cách kết nối và UI-10-11 do PH-10 giữ hay do cổng nhà phát triển PH-15 giữ và PH-10 nhúng?
+
+> **Câu hỏi mở Q10-38:** OR có được thấy sơ đồ đầy đủ của dự án với nút ngoài tổ chức là "Đối tượng hạn chế", hay chỉ thấy lân cận các HTTT của tổ chức mình (lọc `systemCode` bắt buộc)?
+
+> **Câu hỏi mở Q10-39:** Xuất PNG, SVG sơ đồ có cần dấu nước "Tài liệu nội bộ" và tên người xuất theo quy chế ATTT của tỉnh không?
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung |
+|---|---|---|
+| 0.1 | 2026-11-26 | Bản đầu: 20 màn UI-10-01…20, sơ đồ kết nối siêu chi tiết, đăng ký nhận và chi tiết subscription rất chi tiết, ánh xạ màn Hub cũ, đề nghị bổ sung D03-05, API, FRS, câu hỏi mở Q10-30…39 |
