@@ -1,7 +1,8 @@
 name: datahub-docs-dac-ta
 
 # Cổng "đặc tả máy đọc chạy được" cho bộ tài liệu SDLC (bước 2 của quy trình phát triển bằng AI):
-#   1. OpenAPI 3.1 / AsyncAPI 3.0 trong 03-thiet-ke/api/ hợp lệ (Spectral, chỉ đỏ với mức error).
+#   1. OpenAPI 3.1 / AsyncAPI 3.0 trong 03-thiet-ke/api/ hợp lệ (Spectral, chỉ đỏ với mức error;
+#      kiem_tra_yaml.py bắt khóa trùng và mô tả có dấu phẩy chưa đặt nháy).
 #   2. DDL, kiểm thử cô lập, bản Liquibase trong 03-thiet-ke/csdl/ chạy thật trên PostgreSQL 16,
 #      từng phân hệ trên CSDL rỗng rồi mọi phân hệ chung một CSDL.
 #   3. Tệp Gherkin trong 05-kiem-thu/test-case/*/gherkin/ đúng cú pháp, mỗi kịch bản một thẻ @TC/@UAT.
@@ -32,6 +33,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Khóa trùng, mô tả có dấu phẩy chưa đặt nháy (Spectral bỏ lọt)
+        run: pip install -q pyyaml && python3 datahub-docs/build/tools/kiem_tra_yaml.py
       - name: Spectral
         working-directory: datahub-docs
         run: |
