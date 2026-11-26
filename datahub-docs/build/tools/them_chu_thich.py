@@ -54,7 +54,13 @@ def xu_ly(p):
         if cur is None or ten_muc(L[cur]).startswith('Lịch sử phiên bản'):
             continue
         cap = ten_muc(L[cur])
-        if dem.get(cur, 0) > 1:
+        k = j - 1
+        while k > 0 and not L[k].strip():
+            k -= 1
+        nhan = re.fullmatch(r'\*\*(.+?)\*\*:?', L[k].strip())
+        if nhan:
+            cap += ' · ' + nhan.group(1)
+        elif dem.get(cur, 0) > 1:
             cot = [c.strip().replace('`', '') for c in L[j].strip('|').split('|')][:2]
             cap += ': ' + ', '.join(cot)
         out += ['', ': ' + cap]
