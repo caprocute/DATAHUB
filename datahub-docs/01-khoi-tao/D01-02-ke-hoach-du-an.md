@@ -1,10 +1,12 @@
 ---
 ma_tai_lieu: D01-02
 ten: Kế hoạch dự án Datahub
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo hoàn chỉnh, chờ chủ đầu tư rà soát
 nguoi_doc: Chủ đầu tư, Ban quản lý dự án, Nhà thầu, Tư vấn giám sát
+mo_ta: Kế hoạch điều hành dự án Datahub gồm phạm vi, WBS, tiến độ theo wave và cổng nghiệm thu, tổ chức, nhân sự, ngân sách, rủi ro, chất lượng, cấu hình, thay đổi, truyền thông và tiêu chí hoàn thành, làm đường cơ sở cho nghiệm thu và thanh toán theo mốc.
+tai_lieu_lien_quan: D01-00 Giả định nền; D01-01 Báo cáo nghiên cứu khả thi; D02-01 BRD; D02-02 SRS; D03-01 SAD; D05-01 Kế hoạch kiểm thử tổng thể
 ---
 
 # D01-02 · Kế hoạch dự án
@@ -13,9 +15,33 @@ Kế hoạch này biến phương án được chọn ở D01-01 thành chương
 
 Sổ rủi ro đầy đủ RSK-01 đến RSK-43 ở dạng bảng tính nằm ở [phụ lục](phu-luc/D01-02-so-rui-ro.csv); câu hỏi mở của kế hoạch mang mã `Q-D0102-nn` ở cuối từng chương.
 
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Kế hoạch này biến phương án được chọn ở Báo cáo nghiên cứu khả thi (D01-01) thành chương trình thực hiện có thể kiểm soát: làm những việc gì, theo mô hình nào, xong lúc nào, ai nghiệm thu, tốn bao nhiêu và rủi ro ở đâu. Kế hoạch là đường cơ sở để nghiệm thu từng phần và thanh toán theo cổng, nên mọi con số ở đây khớp với tổng mức đầu tư của D01-01.
+
+**Phạm vi.** Xây mới 20 phân hệ Datahub theo ba đợt (12 phân hệ MVP, 4 phân hệ đợt 2, 4 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần, rồi nhân rộng sang tỉnh thứ hai. Kho dữ liệu phân tích, hệ thống thông tin nguồn của sở ngành và mua sắm hạ tầng vật lý hoặc thuê cloud nằm ngoài phạm vi phần mềm của dự án.
+
+**Căn cứ pháp lý.** CMP-LAW-14 (Nghị định 224/2026/NĐ-CP về quản lý dự án đầu tư hệ thống chuyển đổi số, gồm nghiệm thu và bàn giao); CMP-LAW-21 (Luật Chuyển đổi số 148/2025/QH15); CMP-LAW-25 (Luật Đầu tư công 58/2024/QH15, sửa đổi bởi Luật 90/2025/QH15: nhóm dự án, chủ trương đầu tư); CMP-LAW-26 (Luật Đấu thầu 22/2023/QH15: lựa chọn nhà thầu); Thông tư 39/2026/TT-BKHCN (cơ cấu chi phí, dự phòng); CMP-LAW-06 và CMP-LAW-08 (Nghị định 331/2026/NĐ-CP, TCVN 14423:2026: hồ sơ cấp độ 3, một điều kiện của cổng G3).
+
+**Những điểm hội đồng cần lưu ý.** (1) Mọi mốc ghi tương đối theo T0 là ngày khởi động hợp đồng thực hiện, nên một lần T0 trượt không làm lập lại kế hoạch. (2) Thanh toán gắn với cổng nghiệm thu G0 đến G5, không gắn với thời gian trôi qua; chủ đầu tư chỉ trả cho phần tăng trưởng đã được chấp nhận. (3) Đường găng đi qua hai phụ thuộc ngoài nhà thầu: bàn giao hạ tầng PROD trước T0+8 và phê duyệt hồ sơ cấp độ 3 trước T0+12. (4) Bảy trong mười rủi ro hàng đầu có chủ sở hữu phía chủ đầu tư hoặc phụ thuộc bên thứ ba, nổi bật là nhà cung cấp hệ cũ không hợp tác trích xuất dữ liệu (RSK-17), nên thành công phụ thuộc nhiều vào việc chủ đầu tư làm đúng hạn các việc chuẩn bị. (5) Khoản dự phòng rủi ro đề xuất khoảng 28 người-tháng và 75 triệu đồng, nằm trong trần dự phòng của Thông tư 39/2026/TT-BKHCN, và chi phí vận hành sau G3 (RSK-33) thuộc chi thường xuyên, không thuộc vốn đầu tư.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Thời gian | Chuẩn bị đầu tư 7 tháng (T0 − 7 đến T0), thực hiện 18 tháng, bảo hành 12 tháng (T0+18 đến T0+30) |
+| Mô hình thực hiện | 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5), 24 mốc kiểm soát (M-01 đến M-24) |
+| Mốc then chốt | G2 nghiệm thu MVP tại T0+10; G3 vận hành chính thức tại T0+13; tắt hệ cũ tại T0+17; G5 tại T0+18 |
+| Phạm vi sản phẩm | 20 phân hệ (12 MVP, 4 đợt 2, 4 đợt 3); 9 mục tiêu nghiệp vụ BO-01 đến BO-09, 18 chỉ số KPI-01 đến KPI-18 |
+| Nỗ lực nhà thầu | Khoảng 455 người-tháng giai đoạn thực hiện, thêm 60 người-tháng bảo hành; đỉnh khoảng 38 người toàn thời gian khi W3 và W4 chồng lấn |
+| Ngân sách | Tổng mức đầu tư H1 khoảng 40.702 triệu đồng (H2 khoảng 33.460 triệu đồng), trước thuế GTGT, đơn giá tham khảo 40 triệu đồng/người-tháng |
+| Rủi ro | 43 rủi ro (RSK-01 đến RSK-43); tám rủi ro hàng đầu trong hợp đồng giảm từ khoảng 42 xuống 17 người-tháng kỳ vọng sau giảm thiểu |
+
+: Con số chính của kế hoạch dự án
+
 ## 1. Giới thiệu, mục tiêu và phạm vi dự án
 
-**Tóm tắt cho hội đồng thẩm định.** Kế hoạch dự án này biến phương án được chọn trong Báo cáo nghiên cứu khả thi (D01-01) thành một chương trình thực hiện có thể kiểm soát được: 18 tháng thực hiện chia thành 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5) và 12 tháng bảo hành. Dự án xây mới 20 phân hệ của Datahub theo ba đợt (12 phân hệ MVP, 5 phân hệ đợt 2, 3 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần (strangler), sau đó nhân rộng sang tỉnh thứ hai trước khi kết thúc giai đoạn thực hiện. Tổng nỗ lực tham chiếu của nhà thầu là khoảng 459 người-tháng; đỉnh tải thực tế khoảng 38 người toàn thời gian trong ba tháng W3 và W4 chồng lấn. Kho dữ liệu phân tích (lakehouse), các hệ thống thông tin nguồn của sở ngành và phần mua sắm hạ tầng vật lý hoặc thuê dịch vụ cloud nằm ngoài phạm vi phần mềm của dự án này. Mục tiêu dự án được đo bằng chín mục tiêu nghiệp vụ BO-01 đến BO-09 và 18 chỉ số KPI-01 đến KPI-18 định nghĩa tại D02-01; kế hoạch gắn mỗi chỉ số với cổng nghiệm thu đầu tiên có thể chứng minh nó.
+**Tóm tắt cho hội đồng thẩm định.** Kế hoạch dự án này biến phương án được chọn trong Báo cáo nghiên cứu khả thi (D01-01) thành một chương trình thực hiện có thể kiểm soát được: 18 tháng thực hiện chia thành 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5) và 12 tháng bảo hành. Dự án xây mới 20 phân hệ của Datahub theo ba đợt (12 phân hệ MVP, 4 phân hệ đợt 2, 4 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần (strangler), sau đó nhân rộng sang tỉnh thứ hai trước khi kết thúc giai đoạn thực hiện. Tổng nỗ lực tham chiếu của nhà thầu là khoảng 459 người-tháng; đỉnh tải thực tế khoảng 38 người toàn thời gian trong ba tháng W3 và W4 chồng lấn. Kho dữ liệu phân tích (lakehouse), các hệ thống thông tin nguồn của sở ngành và phần mua sắm hạ tầng vật lý hoặc thuê dịch vụ cloud nằm ngoài phạm vi phần mềm của dự án này. Mục tiêu dự án được đo bằng chín mục tiêu nghiệp vụ BO-01 đến BO-09 và 18 chỉ số KPI-01 đến KPI-18 định nghĩa tại D02-01; kế hoạch gắn mỗi chỉ số với cổng nghiệm thu đầu tiên có thể chứng minh nó.
 
 ### 1.1. Mục đích của kế hoạch
 
@@ -53,6 +79,8 @@ Mục tiêu của dự án là chín mục tiêu nghiệp vụ BO-01 đến BO-0
 | BO-08 Vận hành chủ động | KPI-15 MTTD ≤ 5 phút; KPI-16 MTTR sự cố mức 1 ≤ 1 giờ | G3 | Biên bản diễn tập sự cố; báo cáo cảnh báo PH-13 |
 | BO-09 Một giao diện quản trị thống nhất | KPI-17 = 1 giao diện; KPI-18 điểm SUS ≥ 75 | G2 (KPI-17), UAT các đợt (KPI-18) | Biên bản UAT có khảo sát SUS |
 
+: Chín mục tiêu nghiệp vụ gắn với chỉ số, giá trị đích và cổng có bằng chứng đầu tiên
+
 Bảng cho thấy hai đặc điểm. Thứ nhất, phần lớn chỉ số có bằng chứng đầu tiên tại G2 hoặc G3, tức là trước khi kết thúc 13 tháng đầu, nên hội đồng có căn cứ định lượng ngay ở nghiệm thu MVP chứ không phải chờ đến G5. Thứ hai, những chỉ số có thời điểm đo "12 tháng" trong D02-01 (KPI-01, KPI-02, KPI-10) không thể đo xong trong giai đoạn thực hiện; kế hoạch đo chúng lần đầu tại G3 và đo lại ở cuối thời gian bảo hành (chương 13). Các chỉ số có dấu "chưa đo" trong D02-01 cần giá trị nền được đo trước G1 theo câu hỏi mở Q04 của D02-01.
 
 ### 1.4. Phạm vi dự án
@@ -81,6 +109,8 @@ Ranh giới phạm vi được vẽ rõ để tránh tranh chấp khi nghiệm t
 | Số hóa, làm sạch dữ liệu nghiệp vụ chuyên ngành của sở ngành | Không thuộc chức năng nền tảng | Dự án cung cấp công cụ chất lượng dữ liệu (PH-08) để sở ngành tự làm |
 | Mô hình AI nền tảng và hạ tầng GPU | PH-17 là cổng quản trị truy cập AI, không phải nơi huấn luyện hay vận hành mô hình | Dịch vụ AI do tỉnh hoặc cấp trên cung cấp, kết nối qua PH-17 |
 
+: Hạng mục ngoài phạm vi dự án, lý do và nơi xử lý
+
 Hai hạng mục cần chủ đầu tư xác nhận sớm vì ảnh hưởng trực tiếp đến tiến độ. Hạng mục hạ tầng nằm ngoài WBS của gói EP có nghĩa là W2 và W3 phụ thuộc vào gói thầu thiết bị giao và nghiệm thu lắp đặt đúng hạn (trước T0+6); chương 4 coi đây là phụ thuộc bên ngoài trên đường găng. Hạng mục HTTT nguồn ngoài phạm vi có nghĩa là mỗi nhóm dịch vụ chỉ cắt chuyển được khi chủ quản HTTT liên quan phối hợp đổi điểm kết nối, nên kế hoạch cắt chuyển ở chương 4 xếp các nhóm dịch vụ cần ít thay đổi phía HTTT lên trước.
 
 ### 1.5. Giả định
@@ -102,11 +132,97 @@ Khác với giả định, ràng buộc là những điều kiện kế hoạch 
 
 ### 1.7. Câu hỏi mở
 
+Mục này ghi các điểm về phạm vi, thủ tục đầu tư và hạ tầng còn chờ chủ đầu tư xác nhận, vì chúng quyết định điểm khởi đầu và biên của kế hoạch.
+
 - **Q-D0102-01:** Nghị định 224/2026/NĐ-CP (Điều 57 về nghiệm thu, bàn giao) và Thông tư 41/2026/TT-BKHCN quy định các bước nghiệm thu và thành phần hồ sơ cụ thể ra sao, và có cho phép nghiệm thu từng phần theo hạng mục hoặc theo đợt phát hành không? Kế hoạch đang giả định cho phép nghiệm thu từng phần theo wave; cần đối chiếu nguyên văn trước khi phát hành bản 1.0.
 - **Q-D0102-02:** Dự án có thuộc diện phải lập, trình chủ trương đầu tư theo quy định hiện hành không? Điều này quyết định bước đầu tiên trong lịch chuẩn bị đầu tư (T0 − 7 đến T0 − 6 tháng).
 - **Q-D0102-03:** Hạ tầng phần cứng (H1) hoặc dịch vụ cloud (H2) được mua sắm trong cùng dự án dưới dạng một gói thầu riêng, hay là một dự án khác? Câu trả lời quyết định ai chịu trách nhiệm khi hạ tầng giao chậm.
 - **Q-D0102-04:** Tỉnh thứ hai là tỉnh nào, đã có LGSP đang chạy chưa, và việc triển khai cho tỉnh 2 được cấp vốn từ dự án này hay từ một thỏa thuận riêng giữa hai tỉnh?
 
+
+### 1.8. Người đọc và cách đọc
+
+Kế hoạch dài và nhiều chương, nên mỗi nhóm người đọc chỉ cần đọc phần liên quan tới việc của mình. Bảng dưới chỉ ra phần nên đọc và mục đích đọc của từng nhóm.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định, người quyết định đầu tư | Tóm tắt, chương 1, chương 4, chương 7, chương 8 | Kiểm tra tiến độ, nỗ lực, ngân sách và rủi ro có cơ sở phân rã, khớp với D01-01 |
+| Chủ đầu tư, Ban quản lý dự án | Chương 4, chương 5, chương 7, chương 11, chương 13 | Nghiệm thu theo cổng, thanh toán theo mốc, quyết định thay đổi, nhận bàn giao |
+| Giám đốc dự án và trưởng nhóm nhà thầu | Chương 2, chương 3, chương 6, chương 9, chương 10 | Lập kế hoạch sprint, bố trí nhân sự, giữ chất lượng và kiểm soát cấu hình |
+| Tư vấn giám sát, đơn vị kiểm thử độc lập | Chương 4 (mục 4.3), chương 9, chương 12 | Đối chiếu tiêu chí vào, tiêu chí ra của cổng và chỉ số chất lượng, tiến độ |
+| Đơn vị vận hành tỉnh | Chương 4 (mục 4.5), chương 6 (mục 6.8), chương 13 | Chuẩn bị tiếp nhận, cắt chuyển và vận hành sau G5 |
+
+: Người đọc và phần cần đọc của kế hoạch
+
+Mã định danh (FR, REQ, KPI, BO, LGC, RSK, Q-D0102) theo quy ước ở D00-01 §3 và sổ tra cứu gọn D00-04.
+
+### 1.9. Thuật ngữ và chữ viết tắt
+
+Các thuật ngữ chung của bộ tài liệu nằm ở D00-01; bảng dưới chỉ giải thích những thuật ngữ và chữ viết tắt riêng của kế hoạch này.
+
+| Thuật ngữ, viết tắt | Giải thích |
+|---|---|
+| T0 | Ngày khởi động hợp đồng thực hiện; mọi mốc ghi dạng T0+n tháng |
+| Wave (W0 đến W5) | Giai đoạn thực hiện lớn, mỗi wave gồm nhiều sprint và kết thúc tại một cổng |
+| Sprint | Chu kỳ phát triển 2 tuần của Scrum |
+| Cổng (G0 đến G5) | Điểm nghiệm thu chính thức có tiêu chí vào, tiêu chí ra và hồ sơ |
+| Mốc (M-01 đến M-24) | Điểm kiểm soát có sản phẩm và người xác nhận, không nhất thiết kèm nghiệm thu |
+| Đường găng | Chuỗi việc dài nhất không có thời gian dự trữ, trễ một việc là trễ G5 |
+| Strangler | Chiến lược thay hệ cũ dần dần, hệ mới nhận từng nhóm dịch vụ qua lớp định tuyến |
+| PM, PO, BA, SM | Giám đốc dự án, Product Owner, phân tích nghiệp vụ, Scrum Master |
+| CCB | Hội đồng kiểm soát thay đổi |
+| RACI | Ma trận người chịu trách nhiệm, người phê duyệt, người được tham vấn, người được thông báo |
+| WBS | Cấu trúc phân rã công việc |
+| EVM, PV, SPI, CPI | Quản trị giá trị thu được; giá trị kế hoạch; chỉ số tiến độ; chỉ số chi phí |
+| FTE, người-tháng | Đơn vị nỗ lực: một người toàn thời gian; một người làm việc một tháng |
+| H1, H2 | Hai kịch bản hạ tầng: H1 mua thiết bị đặt tại trung tâm dữ liệu tỉnh, H2 thuê dịch vụ cloud |
+| RSK | Mã rủi ro trong sổ rủi ro |
+| DoR, DoD | Định nghĩa sẵn sàng, định nghĩa hoàn thành của một story |
+| NDXP, NDOP | Nền tảng chia sẻ, điều phối dữ liệu quốc gia; nền tảng dữ liệu mở quốc gia (theo D00-01) |
+
+: Thuật ngữ và chữ viết tắt riêng của kế hoạch
+
+### 1.10. Tài liệu tham chiếu
+
+Kế hoạch dựa trên các tài liệu của bộ datahub-docs và văn bản pháp lý nêu dưới đây; bảng cho biết mỗi tài liệu giữ vai trò gì với kế hoạch.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| D01-00 | Bộ giả định nền | Nguồn số liệu chung: quy mô, nỗ lực, đơn giá, GĐ-01 đến GĐ-07 |
+| D01-01 | Báo cáo nghiên cứu khả thi | Phương án được chọn, tổng mức đầu tư và chương chi phí mà kế hoạch phải khớp |
+| D02-01 | Tài liệu yêu cầu nghiệp vụ (BRD) | Mục tiêu BO-01 đến BO-09, chỉ số KPI-01 đến KPI-18, phân đợt 20 phân hệ (§8.3) |
+| D02-02 | Đặc tả yêu cầu phần mềm (SRS) | Phạm vi chức năng làm cơ sở phân rã WBS |
+| D03-01 | Kiến trúc tổng thể (SAD) | Phân hệ, đơn vị triển khai, môi trường |
+| D05-01 | Kế hoạch kiểm thử tổng thể | Cổng phát hành kiểm thử, ca kiểm thử mà cổng nghiệm thu dùng |
+| D00-01 | Thuật ngữ, quy ước | Quy ước mã định danh, danh mục văn bản pháp lý CMP-LAW |
+| D00-04 | Sổ tra cứu gọn | Mã, quyết định đã chốt, quan hệ giữa các loại cổng |
+| CMP-LAW-14 | Nghị định 224/2026/NĐ-CP | Quản lý dự án, nghiệm thu, bàn giao |
+| CMP-LAW-25, CMP-LAW-26 | Luật Đầu tư công; Luật Đấu thầu | Nhóm dự án, chủ trương đầu tư, lựa chọn nhà thầu |
+| CMP-LAW-06, CMP-LAW-08 | Nghị định 331/2026/NĐ-CP; TCVN 14423:2026 | Hồ sơ cấp độ 3, điều kiện của cổng G3 |
+
+: Tài liệu tham chiếu của kế hoạch
+
+### 1.11. Cấu trúc tài liệu
+
+Tài liệu gồm 13 chương theo thứ tự từ cái gì cần làm, làm thế nào, đến kiểm soát và bàn giao. Bảng dưới tóm tắt nội dung và người đọc chính của từng chương.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 1 | Giới thiệu, mục tiêu, căn cứ, phạm vi, giả định, ràng buộc | Mọi người đọc |
+| 2 | Cấu trúc phân rã công việc (WBS) và đối chiếu nỗ lực | Giám đốc dự án, hội đồng thẩm định |
+| 3 | Mô hình Scrum lai trong khung wave và cổng nghiệm thu | Giám đốc dự án, trưởng nhóm |
+| 4 | Tiến độ, mốc, cổng nghiệm thu, đường găng, cắt chuyển, nhân rộng | Chủ đầu tư, tư vấn giám sát |
+| 5 | Tổ chức thực hiện, ma trận RACI, AI agent viết mã | Chủ đầu tư, Ban quản lý dự án |
+| 6 | Kế hoạch nhân sự, năng lực, chuyển giao tri thức | Nhà thầu, đơn vị vận hành |
+| 7 | Ngân sách, giải ngân theo cổng, dòng tiền, dự phòng | Hội đồng thẩm định, chủ đầu tư |
+| 8 | Quản lý rủi ro và sổ rủi ro | Hội đồng thẩm định, Ban quản lý dự án |
+| 9 | Quản lý chất lượng | Nhà thầu, tư vấn giám sát |
+| 10 | Quản lý cấu hình và phát hành | Nhà thầu, đơn vị vận hành |
+| 11 | Quản lý thay đổi phạm vi | Chủ đầu tư, nhà thầu |
+| 12 | Truyền thông, báo cáo, leo thang vấn đề | Ban quản lý dự án, nhà thầu |
+| 13 | Tiêu chí hoàn thành và bàn giao, bảo hành | Chủ đầu tư, đơn vị vận hành |
+
+: Cấu trúc tài liệu theo chương, nội dung và người đọc chính
 
 ## 2. Cấu trúc phân rã công việc (WBS)
 
@@ -126,14 +242,14 @@ Mã WBS có dạng `1.x.y`, trong đó số 1 là toàn dự án. Hai mươi ph�
 
 Sơ đồ dưới đây trình bày cây WBS ở cấp 1 và cấp 2. Để sơ đồ đọc được, 20 phân hệ được gom theo đợt và bảy gói công việc chuẩn của một phân hệ chỉ vẽ một lần ở nhánh mẫu; mọi phân hệ đều có đúng bảy gói đó.
 
-```mermaid
+```{.mermaid caption="Sơ đồ cây WBS cấp 1 và cấp 2"}
 flowchart LR
     ROOT["1 Dự án Datahub<br/>458,5 người-tháng"]
 
     subgraph PHG["1.1 đến 1.20 Hai mươi phân hệ, 275,5"]
         D1["Đợt 1 MVP, 12 phân hệ<br/>1.1 1.2 1.3 1.4 1.5 1.7<br/>1.10 1.12 1.13 1.14 1.18 1.20<br/>175"]
-        D2["Đợt 2, 5 phân hệ<br/>1.6 1.8 1.9 1.11 1.19<br/>70"]
-        D3["Đợt 3, 3 phân hệ<br/>1.15 1.16 1.17<br/>30,5"]
+        D2["Đợt 2, 4 phân hệ<br/>1.9 1.11 1.15 1.19<br/>55"]
+        D3["Đợt 3, 4 phân hệ<br/>1.6 1.8 1.16 1.17<br/>45,5"]
         TPL["Bảy gói chuẩn của mỗi phân hệ<br/>.1 Phân tích FRS<br/>.2 Thiết kế SDD<br/>.3 CSDL và API<br/>.4 Giao diện<br/>.5 Lập trình<br/>.6 Kiểm thử<br/>.7 Tài liệu HDSD"]
     end
 
@@ -187,6 +303,8 @@ Mỗi phân hệ có bảy gói giống nhau. Việc chuẩn hóa gói giúp ba 
 | 1.xx.6 | Kiểm thử | Tập test case D05-02 của phân hệ, kết quả chạy, báo cáo lỗi | Mỗi `FR` mức M có ít nhất hai `TC` (một dương tính, một âm tính) đã chạy đạt; không còn lỗi mức nghiêm trọng hoặc cao đang mở |
 | 1.xx.7 | Tài liệu hướng dẫn sử dụng | Phần của phân hệ trong D06-04 (HDSD) và ghi chú cho D06-03 (HDVH) | HDSD bao phủ 100% màn hình mức M; người dùng đại diện thử theo HDSD trong UAT không cần hỗ trợ ở ít nhất 80% tác vụ |
 
+: Bảy gói công việc chuẩn của mỗi phân hệ, đầu ra và tiêu chí hoàn thành
+
 Phân bổ nỗ lực giữa bảy gói không giống nhau giữa các phân hệ. Phân hệ có giao diện nghiệp vụ dày (ví dụ PH-04 có trình thiết kế luồng, PH-19 có đối soát và dashboard) dùng hồ sơ phân bổ "nghiệp vụ": khoảng 10% phân tích, 9% thiết kế, 9% CSDL và API, 21% giao diện, 31% lập trình, 15% kiểm thử và 5% HDSD. Phân hệ chủ yếu là cấu hình và mở rộng sản phẩm nguồn mở (PH-03 APISIX, PH-10 Kafka, PH-12 Keycloak và OPA, PH-13 bộ giám sát, PH-14 kết nối quốc gia) dùng hồ sơ "nền tảng": thiết kế nặng hơn (13%), giao diện nhẹ hơn (10%), kiểm thử nặng hơn (17%) vì phải kiểm thử tích hợp với sản phẩm bên ngoài. Hai hồ sơ này được rút ra từ cơ cấu vai trò của đội ngũ tham chiếu, trong đó kỹ sư frontend và thiết kế giao diện chiếm khoảng 22% nỗ lực phát triển phân hệ.
 
 ### 2.4. Từ điển WBS: các phân hệ
@@ -217,9 +335,11 @@ Bảng sau là từ điển WBS cho 20 phân hệ, mỗi dòng là một phần 
 | 1.20 | PH-20 Quản trị tenant và phát hành sản phẩm | W2 | 1,5 | 1 | 1 | 2,5 | 4,5 | 2 | 0,5 | **13** |
 | | **Cộng 20 phân hệ** | | **27** | **27,5** | **25,5** | **50,5** | **90** | **42** | **13** | **275,5** |
 
+: Từ điển WBS của 20 phân hệ theo wave và bảy gói công việc
+
 Ba phân hệ lớn nhất chiếm gần 27% nỗ lực phân hệ và đều có lý do cụ thể. PH-04 (34 người-tháng) là trung tâm thay thế khối Bus và công cụ thiết kế luồng của hệ cũ, gồm trình thiết kế luồng trực quan, khung route chín chặng, chạy thử và GitOps cho định nghĩa luồng; riêng 70 mục `LGC-BUS` và `LGC-TOOL` trong D00-03 đã đổ vào phân hệ này. PH-19 (22 người-tháng) phải tái hiện 23 mục `LGC-PAY` với yêu cầu đối soát chính xác tới từng đồng và dữ liệu lịch sử giao dịch. PH-07 (18 người-tháng) là phân hệ dữ liệu đầu tiên, phải hỗ trợ lịch sử sáp nhập đơn vị hành chính sau năm 2025 và tải danh mục cỡ M tới 5 triệu bản ghi. PH-16 nhỏ nhất (9 người-tháng) vì ở bản v1.0 chỉ cần sổ kiến trúc tối thiểu và một nhóm KPI, đúng phạm vi đợt 3.
 
-Nỗ lực phân hệ theo đợt là 175 người-tháng cho 12 phân hệ MVP, 70 người-tháng cho 5 phân hệ đợt 2 và 30,5 người-tháng cho 3 phân hệ đợt 3. Tỷ lệ 64%, 25% và 11% này phản ánh đúng chủ trương đưa phần thay thế hệ cũ lên trước và để các phân hệ hoàn toàn mới (cổng nhà phát triển, quản trị KPI, AI) về cuối, nơi chúng có thể bị thu hẹp nếu dự án gặp rủi ro tiến độ mà không làm hỏng mục tiêu thay thế hệ cũ.
+Nỗ lực phân hệ theo đợt là 175 người-tháng cho 12 phân hệ MVP, 55 người-tháng cho 4 phân hệ đợt 2 và 45,5 người-tháng cho 4 phân hệ đợt 3. Tỷ lệ khoảng 64%, 20% và 17% này phản ánh đúng chủ trương đưa phần thay thế hệ cũ lên trước và để các phân hệ hoàn toàn mới (dữ liệu chủ, chất lượng dữ liệu, quản trị KPI, AI) về cuối, nơi chúng có thể bị thu hẹp nếu dự án gặp rủi ro tiến độ mà không làm hỏng mục tiêu thay thế hệ cũ.
 
 ### 2.5. Từ điển WBS: các phần tử xuyên suốt
 
@@ -278,6 +398,8 @@ Bảng dưới đây là từ điển WBS cho tám phần tử xuyên suốt và
 | | **Cộng tám phần tử xuyên suốt** | | | | **183** |
 | **1.29** | **Bảo hành 12 tháng** (ngoài tổng thực hiện) | Sửa lỗi, bản vá bảo mật, hỗ trợ vận hành, báo cáo bảo hành hằng tháng | Sau G5 | Điều kiện kết thúc bảo hành ở chương 13 | 60 |
 
+: Từ điển WBS các gói xuyên suốt: đầu ra, wave và tiêu chí hoàn thành
+
 Phần tử quản lý dự án chiếm 57 người-tháng, tức 12,4% tổng thực hiện; trong đó có 4 người-tháng PM và PO cho đội đợt 2 ở giai đoạn T0+13 đến T0+15, khi W3 đã kết thúc nhưng W4 còn chạy. 29 người-tháng là thời gian của Scrum Master, được xếp vào quản lý dự án vì vai trò này phục vụ điều phối giữa các nhóm và với chủ đầu tư chứ không viết mã. Nếu tính Scrum Master vào phát triển, quản lý dự án thuần chỉ còn 28 người-tháng (6,1%), một tỷ lệ thấp so với dự án nhà nước cùng quy mô; điều này có thể chấp nhận được vì Product Owner phía nhà thầu đã gánh phần lớn việc quản lý phạm vi qua backlog.
 
 ### 2.6. Đối chiếu tổng nỗ lực với giả định nền
@@ -296,9 +418,13 @@ Bảng dưới đây đối chiếu nỗ lực theo wave. Cột "sức chứa" l
 | W5 | 3 tháng | 17,5 | 52,5 | Phần xây dựng, kiểm thử của 1.6, 1.8 (17,5 người-tháng), 1.16, 1.17, 1.24.6, 1.26.6, 1.27.4, 1.28.3–1.28.4 |
 | **Cộng** | **18 tháng** | | **458,5** | |
 
+: Đối chiếu nỗ lực từng wave với sức chứa theo giả định nền
+
 Đối chiếu theo wave chỉ ra một điểm căng. Ở W1 và W2 cộng lại, sức chứa là 218 người-tháng trong khi 12 phân hệ MVP đã cần 175 người-tháng, cộng phần lớn của tài liệu hệ thống, nền tảng chung, thiết kế ATTT và hạ tầng; nếu không có phần dư thì nhu cầu vượt sức chứa khoảng 15 đến 20 người-tháng. Kế hoạch xử lý bằng hai cách: gói HDSD (1.xx.7) và phần sửa lỗi cuối của các phân hệ MVP được dời sang ba sprint đầu W3, nơi đội thí điểm có kỹ sư backend, tích hợp và QA; đồng thời các gói tài liệu hệ thống (1.22) được làm ở W0, khi đội phát triển chưa đủ người. Nếu hai cách này không đủ, phần tử đầu tiên bị co lại là phạm vi mức S của PH-13 và PH-18, theo quy trình thay đổi ở chương 11.
 
 ### 2.7. Câu hỏi mở
+
+Mục này ghi các điểm về cách phân rã và đo nỗ lực còn chờ xác nhận, vì chúng ảnh hưởng tới tổng người-tháng của WBS.
 
 - **Q-D0102-05:** Đơn vị kiểm thử xâm nhập độc lập (nếu quy định hoặc chủ đầu tư yêu cầu) có được thuê ngoài bằng gói dịch vụ riêng không? Nếu có, 1.25.3 chỉ giữ phần phối hợp và khắc phục, nỗ lực có thể giảm khoảng 3 người-tháng.
 - **Q-D0102-06:** Thời hạn lưu trữ dữ liệu và nhật ký của hệ cũ sau khi tắt là bao lâu? Câu trả lời quyết định quy mô của gói 1.24.6.
@@ -331,12 +457,14 @@ Bảng dưới đây cho thấy số sprint trong từng wave theo giả định
 | W4 | T0+10 → T0+15 | 10 | 20 | khoảng 1,7 | G4 |
 | W5 | T0+15 → T0+18 | 6 | 12 | khoảng 1 | G5 |
 
+: Độ dài wave, số sprint và tuần dự trữ trước mỗi cổng
+
 Thời gian dự trữ không tính đến kỳ nghỉ Tết Nguyên đán và các ngày lễ dài. Vì tài liệu không gắn ngày lịch, chưa biết wave nào sẽ chứa Tết; wave đó sẽ mất khoảng 1 tuần và gần như hết dự trữ. Quy tắc xử lý là giữ nguyên độ dài sprint, bỏ một sprint nếu Tết rơi giữa sprint, và giảm phạm vi mức C của wave đó tương ứng ngay tại buổi lập kế hoạch wave, thay vì kéo dài wave.
 
 Sơ đồ sau minh họa vòng sprint bên trong một wave và cách wave kết thúc tại cổng.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Vòng sprint trong một wave và ba lối ra của cổng nghiệm thu"}
+flowchart TB
     WP["Lập kế hoạch wave<br/>chốt phạm vi, baseline"] --> SP
 
     subgraph SPRINT["Vòng sprint 2 tuần, lặp N lần"]
@@ -374,6 +502,8 @@ Các nghi thức (ceremony) được giữ đúng theo Scrum, với điều ch�
 | Cải tiến sprint (retrospective) | Sáng thứ Sáu tuần thứ hai, 1,5 giờ | Nhóm Scrum, Scrum Master | Tối đa 3 hành động cải tiến có chủ, được theo dõi ở sprint sau |
 | Làm rõ backlog (refinement) | Giữa sprint, khoảng 10% sức chứa của nhóm | PO nhà thầu, BA, kiến trúc sư, đại diện nhóm | Story của 2 sprint kế tiếp đạt DoR |
 
+: Nghi thức Scrum: thời điểm, người tham gia và đầu ra bắt buộc
+
 Sprint review là nghi thức quan trọng nhất của mô hình lai, vì nó thay cho nhiều cuộc họp duyệt tài liệu trong mô hình thác nước. Biên bản sprint review có chữ ký của PO phía chủ đầu tư là bằng chứng rằng chủ đầu tư đã nhìn thấy và chấp nhận từng phần sản phẩm, nên đến cổng nghiệm thu, hội đồng không phải đánh giá lại từ đầu mà chỉ kiểm tra tiêu chí ra mức wave và những story bị trả. Nếu PO chủ đầu tư vắng hai sprint review liên tiếp, Giám đốc dự án phải báo cáo ban chỉ đạo, vì khi đó giả định số 7 ở chương 1 bị vi phạm.
 
 Đội được tổ chức thành các nhóm Scrum từ 5 đến 9 người, mỗi nhóm sở hữu một hoặc vài lane mã nguồn. Ở W2 với 28 người, dự án có ba nhóm phát triển (nhóm trục tích hợp, nhóm dữ liệu và vận hành, nhóm giao diện và nền tảng) cộng nhóm hạ tầng, ATTT làm theo nhịp sprint nhưng dùng bảng Kanban cho việc vận hành. Trong ba tháng W3 và W4 chồng lấn, tổng số người lên khoảng 38 và chia thành hai dòng: đội thí điểm (cài đặt, di trú, cắt chuyển, vận hành) và đội đợt 2 (hai nhóm phát triển), mỗi dòng có Scrum Master riêng nhưng dùng chung PM, PO và lịch sprint review. Tất cả các nhóm dùng chung lịch sprint để sprint review và cổng rơi vào cùng ngày.
@@ -389,6 +519,8 @@ Trong dự án nhà nước, người quyết định ưu tiên nghiệp vụ kh
 | Không được quyết định | Thêm phạm vi ngoài wave đã chốt mà không qua quy trình thay đổi | Bỏ hoặc hạ mức ưu tiên một `FR` mức M; chấp nhận thay cho chủ đầu tư |
 | Đầu ra | Chữ ký trên biên bản sprint review, biên bản UAT | Backlog D02-05 cập nhật, story đạt DoR, ghi chú phát hành sprint |
 | Leo thang | Ban quản lý dự án, ban chỉ đạo | Giám đốc dự án nhà thầu |
+
+: So sánh vai trò Product Owner phía chủ đầu tư và phía nhà thầu
 
 Ma trận RACI đầy đủ cho các vai trò khác nằm ở chương tổ chức và RACI của tài liệu này; bảng trên chỉ định nghĩa ranh giới quyền hạn giữa hai PO vì ranh giới đó là điểm hay gây tranh chấp nhất khi nghiệm thu.
 
@@ -412,6 +544,8 @@ Quy tắc thứ ba là phát hiện kỹ thuật không phải là thay đổi p
 | Sprint | Mục tiêu sprint rõ; tổng điểm không vượt 110% vận tốc; mọi story đạt DoR; môi trường TEST hoạt động | Mọi story đạt DoD hoặc được trả về backlog công khai; bộ hồi quy tự động xanh trên TEST; biên bản sprint review có chữ ký PO chủ đầu tư; RTM cập nhật cho story đã xong; chỉ số chất lượng sprint (chương 9) đã ghi |
 | Wave | Phạm vi wave đã chốt và ghi đường cơ sở; FRS và SDD của các phân hệ trong wave đã duyệt ít nhất phần cho 2 sprint đầu; nhân sự theo bảng đội ngũ đã có mặt; tiêu chí ra của cổng đã được hội đồng chấp nhận | Mọi `FR` mức M của wave đạt DoD story; tiêu chí ra của cổng (chương 4) đạt; tài liệu SDLC của wave ở bản 1.0; hồ sơ nghiệm thu cổng đủ thành phần; biên bản cổng được ký |
 
+: Định nghĩa sẵn sàng (DoR) và định nghĩa hoàn thành (DoD) theo mức
+
 DoD mức story kế thừa trực tiếp danh mục kiểm tra mọi PR trong `AGENTS.md` và gói việc của repo, cộng thêm hai điều kiện riêng của dự án là truy vết `US` tới `FR` và chấp nhận của PO nhà thầu. Như vậy không có hai định nghĩa hoàn thành song song cho người viết mã và cho người quản lý dự án.
 
 ### 3.7. Quan hệ với lane, gói việc và wave kỹ thuật của repo
@@ -428,6 +562,8 @@ Quan hệ giữa các khái niệm như sau. Một nhóm Scrum sở hữu một 
 | W4 Vận hành, quan sát, cổng, BPM | PH-18, 13, 15, 11 | PH-13, 18 ở W2; PH-11, 15 ở W4 | |
 | W5 Quốc gia, KPI, AI | PH-14, 16, 17 | PH-14 ở W2; PH-16, 17 ở W5 | Dự án đưa kết nối quốc gia lên MVP |
 | W6 Cứng hóa và đưa vào vận hành | STAGING, PROD, bảo mật, tải, go-live | Cuối W2 và W3 | |
+
+: Đối chiếu wave kỹ thuật của repo với wave của dự án
 
 Lệch lớn nhất là PH-14: repo xếp kết nối quốc gia gần cuối, còn dự án xếp nó vào MVP vì hệ cũ đang có kết nối NGSP và không thể cắt chuyển tỉnh thí điểm nếu thiếu nó. Gói việc của repo vẫn được dùng, chỉ thứ tự kéo lên sớm hơn; trưởng lane L-ADAPT và L-CAMEL phải lập lại thứ tự phụ thuộc trong lần lập kế hoạch W2.
 
@@ -454,6 +590,8 @@ Thanh toán theo mốc gắn với cổng là đề xuất của kế hoạch, t
 
 ### 3.10. Câu hỏi mở
 
+Mục này ghi các điểm về mô hình Scrum lai và cách nghiệm thu còn chờ chủ đầu tư thống nhất.
+
 - **Q-D0102-07:** Thiết kế chi tiết được phê duyệt trước T0 có được phép ở mức danh mục chức năng và tiêu chí chấp nhận, với FRS, SDD chi tiết được duyệt dần theo wave, mà không bị coi là điều chỉnh thiết kế không? Tóm tắt pháp lý chưa xác minh được Nghị định 224/2026/NĐ-CP có quy định riêng về phát triển linh hoạt hay không; cần đối chiếu Điều 47, Điều 53 của nghị định và Thông tư 41/2026/TT-BKHCN.
 - **Q-D0102-08:** Chủ đầu tư có chấp nhận dùng dịch vụ AI agent mà mã nguồn được xử lý ngoài lãnh thổ Việt Nam không, hay yêu cầu dịch vụ triển khai trong nước?
 - **Q-D0102-09:** Chủ đầu tư cử ai làm PO phía chủ đầu tư, với thời lượng tham gia bao nhiêu, và người đó có thẩm quyền ký biên bản sprint review không?
@@ -467,7 +605,7 @@ Thanh toán theo mốc gắn với cổng là đề xuất của kế hoạch, t
 
 Biểu đồ dưới đây trình bày toàn bộ vòng đời từ chuẩn bị đầu tư đến hết bảo hành. Vì tài liệu không gắn ngày lịch, biểu đồ dùng một ngày giả định cho T0 chỉ để vẽ; nhãn ngày trên trục đã được ẩn, mỗi vạch trên trục là một tháng tương đối, và vị trí thời gian được đọc qua tên các mốc ghi dạng "T0+n".
 
-```mermaid
+```{.mermaid caption="Tiến độ tổng thể sáu wave, sáu cổng nghiệm thu và bảo hành theo tháng tương đối từ T0"}
 gantt
     title Tiến độ tổng thể Datahub theo tháng tương đối từ T0
     dateFormat YYYY-MM-DD
@@ -541,6 +679,8 @@ Mốc (milestone) là điểm kiểm soát có sản phẩm cụ thể và có n
 | M-23 | Đo các chỉ số 12 tháng của D02-01 | T0+25 | Báo cáo KPI-01, KPI-02, KPI-10 sau 12 tháng kể từ G3 | Chủ đầu tư |
 | M-24 | Kết thúc bảo hành | T0+30 | Biên bản kết thúc bảo hành (chương 13) | Chủ đầu tư |
 
+: Hai mươi bốn mốc kiểm soát M-01 đến M-24 theo thời điểm tương đối T0
+
 Các mốc lẻ nửa tháng (T0+3,5, T0+10,5 …) rơi vào cuối một sprint, vì một tháng tương đối chứa khoảng 2,2 sprint. Khi T0 được xác định, Giám đốc dự án quy đổi mỗi mốc sang ngày kết thúc sprint gần nhất và ghi vào lịch sprint của M-05.
 
 ### 4.3. Cổng nghiệm thu G0 đến G5
@@ -562,6 +702,8 @@ Bốn cổng G1, G2, G4, G5 nghiệm thu phần mềm mới phát triển và d�
 | TCC-9 | Lỗ hổng phụ thuộc và bí mật (NFR-00-022, NFR-00-023) | 0 bí mật; 0 lỗ hổng CRITICAL; 0 HIGH chưa có ngoại lệ được duyệt |
 | TCC-10 | Khả năng truy cập (NFR-00-040) cho màn hình mới của wave | 0 lỗi mức A, AA theo axe-core |
 
+: Bộ tiêu chí kiểm thử chung và ngưỡng đạt áp dụng cho các cổng
+
 #### 4.3.2. Tiêu chí vào, tiêu chí ra và hồ sơ từng cổng
 
 Bảng dưới đây ghi tiêu chí vào (điều kiện để được tổ chức nghiệm thu), tiêu chí ra (điều kiện để cổng được kết luận "đạt") và hồ sơ nghiệm thu cần có. Tiêu chí ra bổ sung cho bộ tiêu chí chung ở mục 4.3.1, không thay thế nó.
@@ -575,6 +717,8 @@ Bảng dưới đây ghi tiêu chí vào (điều kiện để được tổ ch�
 | **G4** Nghiệm thu đợt 2, T0+15 | 10 sprint W4 đã review; M-17 đạt; UAT đợt 2 đã chạy | Bộ tiêu chí chung cho PH-19, 15, 09, 11; PH-19 chạy ổn định 30 ngày liên tục trên PROD với tỷ lệ giao dịch khớp tự động ≥ 99,5% (KPI-13), giao dịch lệch được phát hiện ≤ 1 ngày làm việc (KPI-14), 0 sai lệch tiền chưa giải thích; dịch vụ thanh toán cũ đã tắt; hồ sơ đánh giá tác động xử lý dữ liệu cá nhân của các luồng có PH-09 được phê duyệt; 0 giá trị trường Nhạy cảm trong log (NFR-00-029); kiểm thử bảo mật bổ sung cho 5 phân hệ đạt như G2 | Báo cáo kiểm thử đợt 2; báo cáo 30 ngày PH-19; biên bản tắt Payment cũ; hồ sơ đánh giá tác động DLCN; biên bản UAT; biên bản cổng |
 | **G5** Nghiệm thu hoàn thành, T0+18 | 6 sprint W5 đã review; M-20 và M-21 đạt; UAT đợt 3 đã chạy | Bộ tiêu chí chung cho PH-06, 08, 16, 17 và hồi quy toàn bộ 20 phân hệ trên v1.0; RTM: 100% trong 183 mục `LGC` có kết luận, 100% mục Giữ nguyên, Nâng cấp, Thay thế có `TC` đạt, 3 mục Loại bỏ có chấp thuận; hệ cũ tỉnh 1 đã tắt, dữ liệu lưu trữ đọc lại được; tỉnh 2 đang vận hành, tenant khởi tạo đạt KPI-12; toàn bộ tài liệu D00 đến D06 bản 1.0; bên nhận tự build và triển khai lại v1.0 từ mã nguồn bàn giao; kiểm thử hiệu năng hồi quy trên v1.0 không suy giảm quá 10% so với G2 | Toàn bộ hồ sơ bàn giao ở chương 13; báo cáo hoàn thành dự án; biên bản nghiệm thu hoàn thành |
 
+: Tiêu chí vào, tiêu chí ra định lượng và hồ sơ nghiệm thu của cổng G0 đến G5
+
 Hai cổng G0 và G3 có tính chất khác bốn cổng còn lại. G0 không nghiệm thu chức năng nghiệp vụ mà nghiệm thu "khả năng làm việc": tài liệu nền đã duyệt, công cụ và môi trường đã sẵn sàng, để từ W1 đội phát triển không phải dừng lại chờ quyết định. G3 không nghiệm thu thêm chức năng so với G2 mà nghiệm thu việc đưa vào vận hành: sản phẩm đã chạy thật với dữ liệu thật, đã được phê duyệt cấp độ ATTT và đơn vị vận hành tự chủ được. Tách hai loại nghiệm thu này ra giúp G2 có thể được tổ chức đúng hạn ngay cả khi quyết định phê duyệt cấp độ 3 còn đang chờ.
 
 Thành phần hội đồng nghiệm thu, thời hạn tổ chức sau khi nhà thầu đề nghị và hình thức biên bản tuân theo Nghị định 224/2026/NĐ-CP. Kế hoạch đề xuất hồ sơ mỗi cổng được nộp ít nhất 5 ngày làm việc trước buổi nghiệm thu, và hội đồng ra kết luận một trong ba loại "đạt", "đạt có điều kiện" (kèm danh sách việc tồn và hạn đóng) hoặc "không đạt", như mô tả ở chương 3.
@@ -583,8 +727,8 @@ Thành phần hội đồng nghiệm thu, thời hạn tổ chức sau khi nhà 
 
 Đường găng (critical path) là chuỗi việc dài nhất không có thời gian dự trữ; trễ ở bất kỳ việc nào trên chuỗi này làm trễ G5. Sơ đồ sau trình bày các phụ thuộc chính giữa wave, cổng và các phụ thuộc bên ngoài, với đường găng được tô đậm.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Đường găng và phụ thuộc giữa các wave"}
+flowchart TB
     subgraph EXT["Phụ thuộc bên ngoài"]
         X1["Gói hạ tầng tỉnh 1<br/>bàn giao T0+8"]
         X2["Phê duyệt cấp độ 3<br/>muộn nhất T0+12"]
@@ -629,6 +773,22 @@ Chiến lược bóp nghẹt dần (strangler) nghĩa là hệ mới mọc lên 
 
 Mỗi nhóm dịch vụ đi qua năm bước giống nhau. Bước chuẩn bị di trú cấu hình và dữ liệu liên quan, đối soát tĩnh. Bước chạy bóng (shadow) gửi bản sao lưu lượng đọc sang Datahub và so kết quả với hệ cũ trong ít nhất 5 ngày làm việc, kết quả của Datahub chưa được trả cho người gọi. Bước chuyển lưu lượng tăng dần 10%, 50% rồi 100%, mỗi nấc giữ ít nhất 2 ngày làm việc; với dịch vụ có ghi dữ liệu thì chuyển theo từng HTTT thay vì theo tỷ lệ. Bước quan sát giữ 100% trên Datahub trong 14 ngày, hệ cũ vẫn chạy để hoàn tác. Bước khóa chuyển cấu hình của dịch vụ trên hệ cũ sang chỉ đọc và ghi biên bản cắt chuyển.
 
+Sơ đồ sau trình bày năm bước của một nhóm dịch vụ và các điều kiện chuyển nấc, hoàn tác.
+
+```{.mermaid caption="Năm bước cắt chuyển một nhóm dịch vụ và lối hoàn tác"}
+flowchart TB
+    S1["1 Chuẩn bị<br/>di trú cấu hình, dữ liệu, đối soát tĩnh"] --> S2["2 Chạy bóng<br/>ít nhất 5 ngày làm việc"]
+    S2 --> S3["3 Chuyển lưu lượng<br/>10%, 50%, 100%, mỗi nấc 2 ngày"]
+    S3 --> CHK{"Đủ bốn điều kiện<br/>chuyển nấc?"}
+    CHK -- "Đạt" --> S4["4 Quan sát<br/>100% trên Datahub, 14 ngày"]
+    CHK -- "Chưa đạt" --> S3
+    S4 --> S5["5 Khóa hệ cũ<br/>chỉ đọc, ghi biên bản"]
+    S3 -. "lỗi vượt 1%, sai lệch dữ liệu, sự cố mức 1" .-> RB["Hoàn tác về hệ cũ<br/>không quá 5 phút"]
+    S4 -. "dấu hiệu bất thường" .-> RB
+```
+
+Sơ đồ cho thấy hệ cũ luôn chạy song song cho tới bước khóa, nên mọi nấc lưu lượng và cả giai đoạn quan sát đều có lối quay về. Hai nhánh đứt chỉ ra rằng hoàn tác là quyết định tức thời theo dấu hiệu đo được, còn việc chuyển nấc chỉ xảy ra khi đủ điều kiện.
+
 Một nhóm chỉ được chuyển sang nấc lưu lượng tiếp theo khi đạt đồng thời bốn điều kiện: sai lệch đối soát bằng 0; tỷ lệ lỗi trên Datahub không cao hơn hệ cũ; độ trễ p95 không cao hơn hệ cũ quá 50 ms; không có sự cố mức 1 đang mở. Hoàn tác ngay lập tức khi có một trong ba dấu hiệu: tỷ lệ lỗi do nền tảng vượt 1% trong 10 phút liên tục; bất kỳ sai lệch dữ liệu nào ở dịch vụ có ghi; sự cố mức 1. Quy trình chi tiết, danh sách dịch vụ của từng nhóm và kịch bản đối soát nằm ở D06-01.
 
 #### 4.5.2. Các nhóm dịch vụ và thứ tự cắt chuyển
@@ -644,6 +804,8 @@ Thứ tự cắt chuyển đi từ rủi ro thấp đến rủi ro cao, và từ
 | N5 | Kết nối quốc gia qua NGSP, NDXP | PH-14 | T0+12 → T0+12,5 | Phụ thuộc cơ quan quản lý NDXP cấp thông tin kết nối | Thông tin xác thực quốc gia đã cấp cho Datahub; kiểm thử với môi trường quốc gia đạt |
 | N6 | Thanh toán qua PayGov và các kênh | PH-19 | T0+13,5 → T0+14,5 | Rủi ro tài chính cao nhất, cần phân hệ đợt 2 | Chạy theo từng dịch vụ công có thu phí; đối soát tiền khớp 100% từng ngày; 30 ngày ổn định trước khi tắt Payment cũ |
 
+: Các nhóm dịch vụ cắt chuyển ở tỉnh thí điểm, phân hệ tiếp nhận và thời gian
+
 Sau N5, hệ cũ không còn phục vụ dịch vụ MVP nào nhưng vẫn được giữ ở trạng thái chạy để hoàn tác cho đến G3 cộng 30 ngày, và Payment cũ chạy đến M-17. Việc tắt hoàn toàn hệ cũ (M-20, T0+17) gồm sao lưu và lưu trữ dữ liệu, nhật ký theo thời hạn quy định, thu hồi thông tin xác thực của hệ cũ ở mọi HTTT và với NDXP, và biên bản tắt có chữ ký đơn vị vận hành.
 
 ### 4.6. Kế hoạch nhân rộng sang tỉnh thứ hai
@@ -658,9 +820,13 @@ Nhân rộng sang tỉnh 2 là phép thử của mục tiêu BO-06: nếu một 
 | Kết nạp HTTT đầu tiên và đào tạo | T0+16,5 → T0+17,5 | Kết nạp 3 đến 5 HTTT theo quy trình PH-01; đào tạo quản trị viên tỉnh 2 | Biên bản kết nạp; biên bản đào tạo |
 | Đưa vào vận hành | T0+17,5 | Chuyển sang v1.0 chính thức; bắt đầu giám sát chung | M-21 |
 
+: Các bước nhân rộng sang tỉnh thứ hai theo thời điểm và đầu ra
+
 Phạm vi ở tỉnh 2 giới hạn ở việc chứng minh khả năng nhân rộng. Nếu tỉnh 2 cũng đang có một LGSP cũ, việc di trú hệ đó là hợp đồng riêng theo câu hỏi Q-D0102-04 ở chương 1. Mốc chọn tỉnh 2 trước T0+12 là phụ thuộc bên ngoài X5 trên sơ đồ ở mục 4.4; nếu trễ, bước khảo sát bị nén lại và rủi ro không kịp M-21 tăng lên.
 
 ### 4.7. Câu hỏi mở
+
+Mục này ghi các điểm về mốc, cổng và phụ thuộc bên ngoài còn chờ xác nhận, vì chúng quyết định ngày cổng và đường găng.
 
 - **Q-D0102-10:** Trong thời gian chờ quyết định phê duyệt cấp độ 3, Datahub có được nhận lưu lượng thật của tỉnh ở chế độ vận hành thử (hệ cũ vẫn chạy làm dự phòng) không? Nếu không, mọi bước chuyển lưu lượng của N1 đến N5 phải chờ M-12, và G3 trễ tương ứng với thời gian thẩm định.
 - **Q-D0102-11:** Thời gian thẩm định hồ sơ đề xuất cấp độ 3 thực tế tại tỉnh thí điểm là bao lâu? Kế hoạch đang giả định 2 tháng (T0+8 đến T0+10), muộn nhất 4 tháng.
@@ -681,7 +847,7 @@ Từ đó dự án áp dụng năm nguyên tắc. Nguyên tắc tách quyết đ
 
 Sơ đồ dưới đây thể hiện quan hệ chỉ đạo (mũi tên liền) và quan hệ phối hợp, tư vấn hoặc cung cấp dịch vụ (mũi tên đứt). Các đội của nhà thầu được vẽ theo cấu hình đông nhất ở W1 và W2; cấu hình đội theo từng wave được trình bày ở chương 6.
 
-```mermaid
+```{.mermaid caption="Sơ đồ tổ chức dự án"}
 flowchart TB
   UB["UBND tỉnh<br/>Người quyết định đầu tư"]
   BCD["Ban chỉ đạo dự án"]
@@ -867,6 +1033,8 @@ Bảng dưới đây phân vai cho 40 hoạt động, nhóm theo giai đoạn: c
 | 39 | Bảo hành 12 tháng |  |  | I | C |  |  | A | R | R |  | C | I |  |  |  |  | Theo hợp đồng |
 | 40 | Kết nạp tenant tỉnh 2 (mục tiêu KPI-12) | I |  | A | C |  | C | R | R | R |  | R |  |  |  |  | R |  |
 
+: Ma trận RACI của các hoạt động giữa các bên tham gia dự án
+
 Có bốn điểm của bảng cần giải thích thêm. Thứ nhất, ở các cổng G0 và G1, Ban quản lý dự án là A vì đây là mốc kỹ thuật nội bộ không gắn với thanh toán, còn từ G2 trở đi chủ đầu tư là A vì kết quả nghiệm thu là căn cứ thanh toán; nếu hợp đồng quy định thanh toán cả ở G1 thì A của dòng 13 chuyển lên chủ đầu tư. Thứ hai, đơn vị vận hành là A của việc lập hồ sơ cấp độ (dòng 18), phê duyệt phát hành lên PROD (dòng 35) và chuyển giao tri thức (dòng 38), vì đây là các việc mà người chịu hậu quả lâu dài là người vận hành chứ không phải nhà thầu; đặt A ở nhà thầu sẽ tạo động lực "bàn giao cho xong". Thứ ba, quyết định cắt chuyển từng nhóm dịch vụ (dòng 26) được giao cho Ban quản lý dự án theo ủy quyền để không phải chờ văn bản của chủ đầu tư cho mỗi nhóm, trong khi quyết định tắt hệ cũ (dòng 28) giữ ở chủ đầu tư. Thứ tư, nhà thầu không có vai A ở bất kỳ hoạt động nghiệm thu nào, nhất quán với nguyên tắc tách quyết định với thực hiện ở mục 5.1. Các bên bên ngoài (QG, PG, VT, T2) chỉ có R hoặc C ở những việc họ phải làm, không có A, vì dự án không có thẩm quyền đối với họ; phần việc của họ được bảo đảm bằng văn bản hành chính hoặc hợp đồng dịch vụ.
 
 ### 5.5. AI agent viết mã
@@ -894,6 +1062,8 @@ Mã do agent sinh ra được đối xử như mã do kỹ sư viết, với m�
 | Lưu và cung cấp nhật ký prompt, PR cho kiểm tra |  | R |  | R | A | I |
 | Xử lý sự cố lộ dữ liệu hoặc bí mật qua công cụ AI |  | R | C | R | A | I |
 
+: Trách nhiệm của kỹ sư, trưởng nhóm và kiến trúc sư đối với mã do AI agent viết
+
 Theo bảng này, kỹ sư phụ trách lane là R cho mọi dòng mã do agent sinh trong lane của mình; kỹ sư không được mở PR chứa mã mà mình không giải thích được. Trưởng nhóm kỹ thuật là A: người này duyệt cuối trước khi merge và chịu trách nhiệm nếu mã lỗi lọt qua. PM nhà thầu là A cho chính sách công cụ và nhật ký, vì đây là nghĩa vụ hợp đồng của nhà thầu đối với chủ đầu tư. Ban quản lý dự án được tham vấn khi thay đổi danh sách công cụ và được quyền yêu cầu xem nhật ký bất kỳ lúc nào.
 
 #### 5.5.4. Quy tắc kiểm soát
@@ -911,6 +1081,8 @@ Bảy quy tắc sau được ghi vào hợp đồng hoặc phụ lục hợp đ�
 Các quy tắc trên làm cho việc dùng agent không làm thay đổi cấu trúc trách nhiệm của dự án: chủ đầu tư vẫn nghiệm thu sản phẩm theo tiêu chí của cổng, không phân biệt mã do ai viết, và mọi sai sót đều truy được về một người cụ thể.
 
 ### Câu hỏi mở
+
+Mục này ghi các điểm về vai trò, thẩm quyền và quan hệ giữa các bên còn chờ chủ đầu tư quyết định.
 
 - **Q-D0102-50.** Sau khi Bộ Thông tin và Truyền thông hợp nhất vào Bộ Khoa học và Công nghệ, cơ quan nào là chủ quản và đơn vị nào vận hành NDXP, NDOP; thủ tục đăng ký kết nối hiện hành gồm những bước nào và mất bao lâu?
 - **Q-D0102-51.** Chủ đầu tư có cho phép gửi mã nguồn của dự án (không kèm dữ liệu thật) tới dịch vụ AI đặt ngoài lãnh thổ Việt Nam không, hay yêu cầu chỉ dùng mô hình triển khai trong nước?
@@ -956,7 +1128,9 @@ Bảng dưới đây là định biên tham chiếu của nhà thầu, giữ ngu
 | Số tháng của wave | 2 | 4 | 4 | 3 | 5 | 3 | 12 |
 | **Người-tháng** | **31** | **106** | **112** | **55,5** | **97,5** | **52,5** | **60** |
 
-Cộng sáu wave, tổng nỗ lực giai đoạn thực hiện là 454,5 người-tháng, làm tròn 455 người-tháng như giả định nền; bảo hành thêm 60 người-tháng. Cơ cấu này cho thấy dự án nặng về kỹ sư phát triển (backend, tích hợp, frontend chiếm khoảng 45% nỗ lực) và kiểm thử (khoảng 13%), phù hợp với một sản phẩm phần mềm đóng gói hơn là một dự án tích hợp hệ thống thuần túy.
+: Định biên nhà thầu theo vai trò và wave, kèm người-tháng
+
+Cộng sáu wave, tổng nỗ lực giai đoạn thực hiện là 454,5 người-tháng theo sáu wave, cộng 4 người-tháng PM/PO của đợt 2 thành 458,5 người-tháng như bảng WBS (khoảng 455 người-tháng theo giả định nền); bảo hành thêm 60 người-tháng. Cơ cấu này cho thấy dự án nặng về kỹ sư phát triển (backend, tích hợp, frontend chiếm khoảng 45% nỗ lực) và kiểm thử (khoảng 13%), phù hợp với một sản phẩm phần mềm đóng gói hơn là một dự án tích hợp hệ thống thuần túy.
 
 #### 6.2.2. Biểu đồ tải nhân sự theo tháng
 
@@ -971,6 +1145,8 @@ Vì W3 và W4 chồng lấn, tải nhân sự theo tháng khác với tải theo
 | T0+14 đến T0+15 | W4 | 19,5 | ██████████ |
 | T0+16 đến T0+18 | W5 | 17,5 | █████████ |
 | T0+19 đến T0+30 | Bảo hành | 5 | ██▌ |
+
+: Tải nhân sự theo tháng và wave đang chạy
 
 Bảng tải có hai hệ quả cho việc lập kế hoạch. Một là đỉnh tải 38 FTE kéo dài ba tháng, nên nhà thầu phải có sẵn khoảng 10 người bổ sung so với W2 ngay từ T0+10, và chủ đầu tư phải bố trí đủ chỗ làm việc, tài khoản và quyền truy cập môi trường cho số người này (đội W3 làm việc chủ yếu tại tỉnh, đội W4 có thể làm tại văn phòng nhà thầu). Hai là sau T0+13, W4 không còn tính PM và PO vì cột W3 đã kết thúc; trên thực tế PM và PO vẫn làm việc toàn thời gian ở T0+14 và T0+15 để điều hành đợt 2 và chuẩn bị W5. Khoản hụt khoảng 4 người-tháng này được nêu trong ghi chú cuối chương để chương chi phí xử lý.
 
@@ -1002,6 +1178,8 @@ Bảng tải có hai hệ quả cho việc lập kế hoạch. Một là đỉnh
 | W5 | Đội G Phát hành và Nhân rộng | L-PLAT, L-SEC, L-CAMEL, L-DATA | Phát hành v1.0, tenant tỉnh 2, tắt hệ cũ | Backend 1, Camel 1, SRE 2, ATTT 0,5, dữ liệu 1, QA 1 (6,5) |
 | W5 | Dùng chung | | | PM 1, PO 1, BA 1, kiến trúc sư 0,5, Scrum Master 1, tài liệu 1 (5,5) |
 
+: Phân bổ nhân sự vào các đội Scrum theo wave và lane
+
 Cách phân đội trên tuân theo ba quy tắc. Quy tắc thứ nhất là không đặt L-CAMEL và L-CTRL trong cùng một PR (theo IP-04), nên đội Tích hợp và đội Điều khiển luôn tách riêng ở W1, W2. Quy tắc thứ hai là ở W4, phân hệ thanh toán PH-19 có đội riêng vì đây là phân hệ có yêu cầu nghiệp vụ, đối soát và an toàn khác hẳn phần còn lại, và có phụ thuộc bên ngoài (PayGov) cần một đầu mối cố định; lane chứa mã PH-19 sẽ được kiến trúc sư chốt bằng ADR trong dải ADR-040 đến 049 trước khi W4 bắt đầu. Quy tắc thứ ba là kỹ sư kiểm thử được gắn vào từng đội thay vì gom thành một đội kiểm thử riêng, để kiểm thử diễn ra trong cùng sprint với phát triển; riêng kiểm thử hiệu năng ở W2 được gom vào nhóm Nền tảng vì cần môi trường STAGING và công cụ tạo tải chung. Mỗi đội có một trưởng nhóm kỹ thuật kiêm nhiệm theo mục 5.3.6.
 
 ### 6.4. Yêu cầu năng lực và chứng chỉ
@@ -1025,6 +1203,8 @@ Bảng dưới đây nêu yêu cầu tối thiểu cho từng vai trò của nh�
 | QA / kiểm thử | 3 năm; QA trưởng 6 năm | Kiểm thử API, E2E, hiệu năng (k6 hoặc Gatling), kiểm thử hợp đồng | ISTQB Foundation; ISTQB Advanced cho QA trưởng |
 | Biên soạn tài liệu và đào tạo | 3 năm viết tài liệu kỹ thuật tiếng Việt | Viết HDSD, HDVH, giáo trình; Markdown và quy trình xuất .docx | Không bắt buộc |
 
+: Yêu cầu năng lực và chứng chỉ
+
 Ngoài yêu cầu riêng từng vai trò, mọi kỹ sư phải hoàn thành ba khóa nội bộ trong W0 hoặc trong hai tuần đầu khi vào dự án (mục 6.7): quy tắc dùng AI agent và review mã (mục 5.5), lập trình an toàn theo OWASP ASVS, và bảo vệ dữ liệu cá nhân theo CMP-LAW-04, CMP-LAW-05. Ít nhất 30% số kỹ sư phát triển nên có kinh nghiệm dự án cơ quan nhà nước, vì đây là nhóm hiểu nhanh nhất thủ tục kết nối, văn bản và cách làm việc với sở ngành.
 
 ### 6.5. Nhân sự phía chủ đầu tư và phía vận hành tỉnh
@@ -1043,6 +1223,8 @@ Mô hình Scrum chỉ chạy được khi phía chủ đầu tư có người ra
 | Đầu mối nghiệp vụ của mỗi sở ngành trong nhóm cắt chuyển | 1 mỗi sở | 10% ở W1, W2; 20% ở tháng cắt chuyển của sở | W1 đến G3 hoặc G4 | Xác nhận đặc tả, ánh xạ dữ liệu, UAT, xác nhận cắt chuyển |
 | Đầu mối kỹ thuật của mỗi sở ngành | 1 mỗi sở | 10% đến 30% tùy tháng | W2 đến cắt chuyển | Điều chỉnh HTTT của sở, kiểm thử kết nối |
 
+: Nhân sự phía chủ đầu tư: vị trí, thời gian dành cho dự án và nhiệm vụ
+
 Cộng lại, Ban quản lý dự án cần khoảng 3,5 FTE ở các wave cao điểm. Vị trí quan trọng nhất là Chủ sản phẩm phía chủ đầu tư: nếu người này kiêm nhiệm quá nhiều việc khác, sprint review sẽ không có người chấp nhận, backlog không được sắp xếp và đội nhà thầu sẽ tự quyết thay, dẫn đến rủi ro sản phẩm lệch nhu cầu và tranh chấp ở cổng nghiệm thu.
 
 #### 6.5.2. Đội vận hành tỉnh
@@ -1057,6 +1239,8 @@ Cộng lại, Ban quản lý dự án cần khoảng 3,5 FTE ở các wave cao �
 | Kỹ sư ATTT (có thể dùng chung với hệ khác của Trung tâm) | 1 | 10% | 30% | 50% | 50% | 50% |
 | Cán bộ hỗ trợ người dùng (service desk tầng 1) | 1 | 0% | 20% | 100% | 100% | 100% |
 | **Tổng FTE** | **6** | **0,8** | **2,5** | **5,5** | **5,5** | **5,5** |
+
+: Biên chế đội vận hành tỉnh theo từng giai đoạn
 
 Nếu đơn vị vận hành chưa có kỹ sư Kubernetes, cần tuyển hoặc điều động trước T0+2 để kịp tham gia từ W1; thời gian đào tạo một kỹ sư vận hành truyền thống lên mức tự vận hành cụm Kubernetes theo GitOps ước khoảng sáu tháng, đúng bằng khoảng cách từ W1 đến cài đặt PROD ở W3. Nếu tỉnh chọn phương án hạ tầng H2 (cloud chính phủ), số kỹ sư hạ tầng có thể giảm xuống 1 vì lớp hạ tầng do nhà cung cấp cloud vận hành; nếu chọn H3 (thuê dịch vụ trọn gói), đội vận hành tỉnh chỉ cần trưởng nhóm, kỹ sư vận hành ứng dụng và cán bộ hỗ trợ.
 
@@ -1089,6 +1273,8 @@ Lộ trình chuyển giao gồm bốn bậc, mỗi bậc có điều kiện vào
 | 3. Làm chính có hỗ trợ | W3 đến G3 | Cài đặt PROD theo runbook; phê duyệt phát hành lên PROD; trực sự cố tầng 1, tầng 2 theo lịch xoay vòng chung | Hỗ trợ tầng 3, xử lý lỗi mã nguồn, có mặt tại chỗ ở tháng cắt chuyển | Đội vận hành tự thực hiện năm bài diễn tập (mục 6.8.3) không cần nhà thầu can thiệp |
 | 4. Độc lập | Sau G3 đến hết bảo hành | Tự vận hành tầng 1, tầng 2; tự kết nạp HTTT mới; quản trị tenant | Bảo hành tầng 3 theo SLA hợp đồng | Biên bản xác nhận đủ năng lực tiếp nhận ký trước G5 |
 
+: Bốn bậc chuyển giao tri thức cho đội vận hành tỉnh
+
 #### 6.8.3. Năm bài diễn tập bắt buộc
 
 Điều kiện hoàn thành bậc 3 được đo bằng năm bài diễn tập trên STAGING hoặc PROD trong cửa sổ bảo trì, mỗi bài có kịch bản, thời gian chuẩn và biên bản: (1) phát hành một phiên bản mới qua GitOps và quay lui phiên bản; (2) khôi phục CSDL PostgreSQL về một thời điểm trước đó, đạt mục tiêu RPO và RTO do D02-02 và D03-09 quy định (giả định nền ghi 15 phút và 4 giờ cho cỡ M); (3) chuyển sang site DR và quay về; (4) xử lý một luồng tích hợp lỗi đầy DLQ, tìm nguyên nhân qua trace và phát lại bản tin trong thời gian không vượt mục tiêu MTTR của KPI-16 (1 giờ với sự cố mức 1); (5) thay chứng thư và xoay vòng bí mật của một HTTT thành viên. Đội vận hành phải tự hoàn thành cả năm bài trong thời gian chuẩn; nhà thầu chỉ quan sát và ghi nhận.
@@ -1115,9 +1301,13 @@ Bảng dưới đây tổng hợp nhân sự cho cửa sổ TCO 5 năm tính t�
 | Bảo hành | T0+18 đến T0+30 | 5 | 5,5 | Nhà thầu hỗ trợ tầng 3 |
 | Vận hành, hỗ trợ kỹ thuật theo hợp đồng năm | T0+30 đến T0+60 | 2 đến 3 (đề xuất) | 5,5 | Nhà thầu: nâng cấp phiên bản thành phần nguồn mở, vá ATTT, hỗ trợ tầng 3 |
 
+: Quy mô nhà thầu và đội vận hành tỉnh sau G5, trong bảo hành và vận hành 5 năm
+
 Mức 2 đến 3 FTE hỗ trợ kỹ thuật sau bảo hành được đề xuất dựa trên nhu cầu tối thiểu để theo kịp vòng đời phiên bản của khoảng hai mươi thành phần nguồn mở trong stack (mỗi năm cần nâng ít nhất một phiên bản chính của Spring Boot, Camel Quarkus, Kubernetes, Keycloak, PostgreSQL) và để vá lỗ hổng trong thời hạn mà cấp độ 3 yêu cầu. CMP-LAW-14 (Nghị định 224/2026/NĐ-CP) có cơ chế cho phép chỉ định doanh nghiệp đã phát triển phần mềm làm đơn vị quản trị, vận hành (theo bản tóm tắt pháp lý, cần đối chiếu điều khoản), nên hợp đồng hỗ trợ kỹ thuật sau bảo hành có thể giao tiếp cho nhà thầu phát triển mà không phải đấu thầu lại; điều này giúp giữ được người đã hiểu mã nguồn. Nếu Datahub được nhiều tỉnh dùng chung theo mô hình sản phẩm, chi phí hỗ trợ này có thể chia cho các tỉnh; đây là lý do chương chi phí nên tách khoản hỗ trợ sản phẩm (dùng chung) khỏi khoản vận hành tại tỉnh (riêng từng tỉnh).
 
 ### Câu hỏi mở
+
+Mục này ghi các điểm về nguồn nhân lực, tuyển dụng và chuyển giao còn chờ xác nhận, vì chúng ảnh hưởng tới định biên từng wave.
 
 - **Q-D0102-56.** Đơn vị vận hành tỉnh thí điểm hiện có bao nhiêu kỹ sư có kinh nghiệm Kubernetes, và có thể điều động đủ 6 người theo mục 6.5.2 từ W1 không, hay cần tuyển mới?
 - **Q-D0102-57.** Chủ đầu tư có bố trí được một cán bộ làm Chủ sản phẩm phía chủ đầu tư toàn thời gian ở W1 đến W4 không? Nếu không, chủ đầu tư có chấp nhận thuê chuyên gia tư vấn đóng vai trò này dưới sự ủy quyền của Ban quản lý dự án không?
@@ -1154,6 +1344,8 @@ Bảng dưới đây phân bổ tổng mức đầu tư H1 theo sáu wave và gi
 | **Cộng H1** | **2.735** | **5.772** | **16.658** | **3.180** | **6.058** | **3.898** | **2.400** | **40.702** |
 | Cộng H2 (tham khảo) | 2.633 | 5.471 | 6.698 | 3.703 | 7.443 | 5.113 | 2.400 | 33.460 |
 
+: Ngân sách H1 theo hạng mục chi phí và wave (triệu đồng, trước thuế GTGT), kèm tổng H2
+
 Cột W0 có khoản tư vấn lớn bất thường (945 triệu đồng) vì gồm chi phí khảo sát, lập báo cáo nghiên cứu khả thi và lựa chọn nhà thầu phát sinh trước T0; theo giả định nền §3.3 các khoản này được tính vào Năm 1 và được ghi vào W0 để thuận tiện theo dõi. W2 là wave nặng nhất vì thiết bị H1 phải được giao và lắp đặt ngay đầu W2 (T0+6) để kịp dựng STAGING; nếu thiết bị thuộc dự án hạ tầng riêng (Q-D0101-52 tại D01-01), ngân sách W2 giảm còn khoảng 5,5 tỷ đồng và W2 trở thành wave có chi phí tương đương W1. Với H2, thiết bị biến mất nhưng tiền thuê cloud cho STAGING, PROD và DR làm W4 và W5 trở thành hai wave tốn kém nhất.
 
 Chi phí khác tập trung ở W2, W4 và W5 vì đó là các đợt kiểm thử xâm nhập độc lập (trước G2 và trước G4), khoản hỗ trợ của nhà cung cấp hệ cũ cho trích xuất và cắt chuyển (W3, W4), kiểm thử phần mềm độc lập trước nghiệm thu hoàn thành, kiểm toán và thẩm tra quyết toán (W5). Bảng sau tóm tắt ngân sách theo cơ cấu của Thông tư 39/2026/TT-BKHCN để Ban quản lý dự án đối chiếu với quyết định phê duyệt dự án.
@@ -1167,6 +1359,8 @@ Chi phí khác tập trung ở W2, W4 và W5 vì đó là các đợt kiểm th�
 | G(DP) | 3.344 | 8,2% | 2.342 |
 | G(DV) | 1.524 | 3,7% | 6.020 |
 | **Cộng** | **40.702** | **100%** | **33.460** |
+
+: Ngân sách theo nhóm chi phí của Thông tư 39/2026, phương án H1 và H2
 
 ### 7.3. Cấu trúc gói thầu và hình thức hợp đồng
 
@@ -1191,6 +1385,8 @@ Tỷ lệ thanh toán gói EP ở mỗi cổng xấp xỉ tỷ lệ nỗ lực W
 | G5 Nghiệm thu hoàn thành | T0+18 | W5 | 11,5% | 12% | 2.240 | 0 | 2.240 |
 | **Cộng giai đoạn thực hiện** | | | **100%** | **100%** | | **2.801** | **18.670** |
 | Bảo hành, bốn kỳ quý | T0+21, 24, 27, 30 | | | | | | 4 × 600 = 2.400 |
+
+: Tỷ lệ thanh toán cho nhà thầu tại từng cổng nghiệm thu
 
 Cổng G5 được làm tròn lên 12% (nỗ lực W5 chỉ 11,5%) để giữ một khoản đủ lớn ở cuối, khuyến khích nhà thầu hoàn tất đóng gói phát hành v1.0, chuyển giao mã nguồn và tắt hệ cũ, là những việc dễ bị kéo dài. Đổi lại G0 làm tròn từ 6,8% lên 7%, G1 và G2 làm tròn xuống. Trong mỗi tỷ lệ cổng, 10% giá trị của wave chỉ được ghi nhận khi cổng được nghiệm thu, khớp với quy tắc tính giá trị thu được ở chương 12 mục 12.4.3; nói cách khác, nếu cổng chưa đạt thì phần giá trị gắn cổng chưa được thanh toán dù các story đã được chấp nhận.
 
@@ -1217,9 +1413,11 @@ Bảng dưới đây là kế hoạch giải ngân của tổng mức đầu tư
 | **Cộng tối đa H1** | **5.985** | **4.743** | **11.585** | **5.570** | **6.546** | **3.873** | **2.400** | **40.702** |
 | Cộng tối đa H2 (tham khảo) | 5.808 | 4.517 | 1.235 | 6.689 | 7.723 | 5.087 | 2.400 | 33.460 |
 
+: Dòng tiền kế hoạch H1 theo sáu quý tương đối và phần bảo hành
+
 Q3 là quý cần nhiều vốn nhất với H1 vì thanh toán thiết bị, trong khi không có cổng nào kết thúc trong quý này. Q4 và Q5 có hai đỉnh nhỏ do G2, G3 và G4 dồn vào khoảng T0+10 đến T0+15. Với H2, Q3 lại là quý nhẹ nhất và nhu cầu vốn dịch sang Q4 đến Q6 do tiền thuê cloud cho PROD và DR. Biểu đồ sau so sánh nhu cầu vốn tối đa theo quý của hai phương án.
 
-```mermaid
+```{.mermaid caption="Nhu cầu vốn tối đa theo quý, phương án H1 so với H2"}
 xychart-beta
     title "Nhu cầu vốn tối đa theo quý, H1 và H2 (triệu đồng)"
     x-axis ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Sau Q6"]
@@ -1252,6 +1450,8 @@ Dự phòng 3.344 triệu đồng gồm hai phần theo D01-01 Chương 8 mục 
 | Dự phòng trượt giá đến khi ký hợp đồng | RSK-40 | | 836 | Trước T0 |
 | **Cộng G(DP)** | | | **3.344** | |
 
+: Dự phòng gắn với rủi ro: rủi ro kèm theo, giá trị kỳ vọng còn lại và số tiền
+
 Hai rủi ro mức cao không có trong bảng vì tác động của chúng nằm ngoài vốn đầu tư: RSK-01 (thẩm định chậm) làm lùi T0, chi phí phát sinh là gia hạn duy trì hệ cũ từ chi thường xuyên; RSK-33 (năng lực vận hành Kubernetes của tỉnh) phát sinh khoảng 6 người-tháng thuê vận hành sau G3, cũng từ chi thường xuyên. Phần 1.313 triệu đồng chưa phân bổ là đệm cho những rủi ro ngoài nhân công, ví dụ thuê cloud tạm kéo dài khi thiết bị đến chậm, giá thiết bị tăng khi lựa chọn nhà thầu, hay một phân hệ như trình thiết kế luồng vượt ước tính (RSK-16). Phần trượt giá 836 triệu đồng được giải phóng hoặc dùng ngay tại thời điểm ký hợp đồng: nếu giá trúng thầu thấp hơn dự toán, phần dư được chuyển vào dự phòng chưa phân bổ chứ không tự động trả lại.
 
 Quy tắc sử dụng dự phòng gồm bốn điểm. Thứ nhất, mọi lần dùng dự phòng phải gắn với một mã RSK đã xảy ra hoặc một yêu cầu thay đổi được CCB duyệt (chương 11). Thứ hai, Giám đốc Ban quản lý dự án được quyết định dùng dự phòng trong phạm vi 100 triệu đồng mỗi lần và 10% tổng dự phòng mỗi wave; vượt mức này phải trình chủ đầu tư. Thứ ba, tại mỗi cổng, phần dự phòng gắn với rủi ro đã đóng được chuyển vào dự phòng chưa phân bổ, không được dùng cho phạm vi mới ngoài quy trình thay đổi. Thứ tư, nếu dự phòng còn lại thấp hơn giá trị kỳ vọng còn lại của các rủi ro đang mở, CCB phải xem xét thu hẹp phạm vi các phân hệ đợt 3 (PH-06, PH-08, PH-16, PH-17 theo phân đợt của D02-01) trước khi đề nghị điều chỉnh tổng mức đầu tư, vì điều chỉnh tổng mức phải trình cấp quyết định đầu tư theo Nghị định 224/2026.
@@ -1277,6 +1477,8 @@ Bảng sau là các chỉ số ngân sách bổ sung vào bảng chỉ số tổ
 | Dự báo chi phí hoàn thành (EAC) | Chi phí thực tế + phần còn lại theo kế hoạch + rủi ro đang mở, so với tổng mức đầu tư | ≤ 95% | 95% đến 100% | > 100% |
 | Thời gian xử lý hồ sơ thanh toán | Từ khi cổng được nghiệm thu đến khi thanh toán | ≤ 20 ngày làm việc | 21 đến 30 | > 30 |
 
+: Ngưỡng cảnh báo xanh, vàng, đỏ của các chỉ số kiểm soát ngân sách
+
 Chỉ số EAC vượt 100% là tín hiệu duy nhất cho thấy dự án có thể phải điều chỉnh tổng mức đầu tư; khi đó trình tự bắt buộc là dùng hết đòn bẩy phạm vi (mục 7.6) trước, sau đó mới lập hồ sơ điều chỉnh. Chỉ số thời gian xử lý hồ sơ thanh toán được đưa vào vì thanh toán chậm theo cổng là nguyên nhân thường gặp làm nhà thầu giảm nhân sự giữa dự án; ngưỡng 20 ngày làm việc gồm 10 ngày nhà thầu lập hồ sơ (WBS 1.21.5) và 10 ngày chủ đầu tư, kho bạc xử lý.
 
 #### 7.7.3. Báo cáo ngân sách
@@ -1284,6 +1486,8 @@ Chỉ số EAC vượt 100% là tín hiệu duy nhất cho thấy dự án có t
 Báo cáo tháng (chương 12) có một phần ngân sách gồm bảng giải ngân lũy kế so với kế hoạch, bảng sử dụng dự phòng theo mã RSK, các chỉ số ở mục 7.7.2 và dự báo EAC. Tại mỗi cổng, Ban quản lý dự án lập báo cáo chốt ngân sách wave, gồm chênh lệch giữa ngân sách wave và giá trị thanh toán, phần dự phòng được giải phóng hoặc chuyển, và kế hoạch vốn cập nhật cho các quý còn lại. Báo cáo tình hình giải ngân vốn đầu tư công gửi cơ quan tài chính, kế hoạch của tỉnh lấy số liệu từ cùng bảng này, để không có hai bộ số liệu giải ngân song song.
 
 ### 7.8. Câu hỏi mở
+
+Mục này ghi các điểm về đơn giá, gói thầu và phân bổ vốn còn chờ chủ đầu tư xác nhận, vì chúng làm đổi các con số ở chương này.
 
 - **Q-D0102-71.** Chủ đầu tư chấp nhận tỷ lệ tạm ứng 15% và lịch thanh toán gói EP theo sáu cổng ở mục 7.4.1 không, hay quy định của tỉnh về tạm ứng vốn đầu tư công yêu cầu mức khác?
 - **Q-D0102-72.** Thời điểm T0 dự kiến rơi vào nửa nào của năm ngân sách? Câu trả lời quyết định kế hoạch vốn năm đầu là khoảng 10,7 tỷ đồng (Q1, Q2) hay khoảng 21,7 tỷ đồng (Q1 đến Q3 gồm thiết bị).
@@ -1321,6 +1525,8 @@ Xác suất (P) và tác động (I) được chấm theo thang 1 đến 5. Bả
 | 4 | Cao | 70% | Một cổng trễ 1 đến 2 tháng, hoặc mốc tắt hệ cũ bị đe dọa | 8 đến 20 người-tháng | Yêu cầu mức M bị lùi; KPI cam kết không đạt tại cổng |
 | 5 | Rất cao | 90% | G5 trễ trên 2 tháng, phải điều chỉnh dự án | Trên 20 người-tháng hoặc vượt dự phòng | Sự cố lộ dữ liệu cá nhân, rò rỉ chéo tenant, gián đoạn dịch vụ công diện rộng |
 
+: Thang đánh giá định tính xác suất và tác động của rủi ro
+
 Điểm rủi ro bằng P nhân I. Điểm từ 15 trở lên là mức **Cao**, từ 8 đến 14 là **Trung bình**, từ 6 trở xuống là **Thấp**. Có một ngoại lệ: rủi ro có I bằng 5 luôn được Ban quản lý dự án theo dõi trực tiếp bất kể điểm, vì một sự kiện như lộ dữ liệu cá nhân hay rò rỉ chéo tenant không thể bù lại bằng tiến độ hay kinh phí.
 
 #### 8.2.3. Định lượng các rủi ro hàng đầu
@@ -1345,6 +1551,8 @@ Rủi ro được xử lý ở cấp thấp nhất có đủ thẩm quyền. Ng�
 | Dự phòng rủi ro còn lại dưới 30%; một cổng có nguy cơ trễ trên 1 tháng; sự cố ATTT hoặc lộ dữ liệu cá nhân | Chủ đầu tư, Ban chỉ đạo | Ngay trong ngày với sự cố ATTT; 5 ngày làm việc với trường hợp khác |
 | Ứng phó đòi hỏi thay đổi tổng mức đầu tư, mục tiêu hoặc thời gian thực hiện dự án | Người quyết định đầu tư, theo quy trình điều chỉnh dự án ở chương 11 | Theo Nghị định 224/2026/NĐ-CP và Luật Đầu tư công |
 
+: Ngưỡng leo thang rủi ro theo điều kiện, cấp xử lý và thời hạn báo cáo
+
 ### 8.3. Vai trò và trách nhiệm
 
 Quản lý rủi ro không phải việc riêng của Giám đốc dự án. Bảng dưới đây phân công theo các vai trò đã định nghĩa ở chương 5; mỗi rủi ro trong sổ có đúng một chủ sở hữu chịu trách nhiệm theo dõi dấu hiệu sớm và kích hoạt dự phòng.
@@ -1359,6 +1567,8 @@ Quản lý rủi ro không phải việc riêng của Giám đốc dự án. B�
 | Trưởng nhóm tích hợp, nền tảng, dữ liệu, kiểm thử; kỹ sư ATTT | Sở hữu rủi ro kỹ thuật trong lane; theo dõi chỉ số dấu hiệu sớm tự động |
 | Đơn vị vận hành | Sở hữu rủi ro năng lực vận hành và hệ cũ; tham gia diễn tập |
 | Tư vấn giám sát | Đánh giá độc lập tính đầy đủ của sổ rủi ro tại mỗi cổng |
+
+: Trách nhiệm quản lý rủi ro của từng vai trò
 
 ### 8.4. Chu kỳ rà soát
 
@@ -1389,6 +1599,8 @@ Bảng dưới đây định lượng mười rủi ro có điểm cao nhất. C
 | **Cộng tám rủi ro trong hợp đồng** | | | **42,3 người-tháng và 210 triệu đồng** | | | **17,3 người-tháng và 75 triệu đồng** | |
 | RSK-01 | 70% | T0 lùi 3 tháng | 2,1 tháng trễ T0 | 50% | 2 tháng | 1,0 tháng trễ T0 | Thêm một vòng giải trình thẩm định; tác động tiền là chi phí gia hạn bảo trì hệ cũ do chủ đầu tư điền |
 | RSK-33 | 70% | 24 người-tháng dịch vụ vận hành thuê ngoài | 16,8 người-tháng | 50% | 12 người-tháng | 6,0 người-tháng | Thuê 2 kỹ sư vận hành trong 12 tháng sau G3; thuộc chi thường xuyên, không thuộc vốn đầu tư |
+
+: Mười rủi ro hàng đầu: giá trị kỳ vọng trước và sau giảm thiểu
 
 Kết quả cho thấy biện pháp giảm thiểu đưa giá trị kỳ vọng của tám rủi ro trong hợp đồng từ khoảng 42 người-tháng về khoảng 17 người-tháng. Quy đổi theo đơn giá tham khảo, đó là từ khoảng 1.902 triệu đồng về khoảng 767 triệu đồng. Phần lớn chênh lệch đến từ các việc rẻ làm sớm: kiểm kê hệ cũ ở W0, ký phụ lục bàn giao trước T0, tuyển và đào tạo kỹ sư Camel trước W1. Điều này cũng có nghĩa là nếu các biện pháp giảm thiểu không được làm đúng hạn, giá trị kỳ vọng gần như bằng toàn bộ khoản dự phòng 10% nỗ lực, và dự án sẽ không còn dư địa cho những rủi ro khác.
 
@@ -1453,6 +1665,8 @@ Bảng tổng hợp dưới đây liệt kê toàn bộ 43 rủi ro theo mã đ�
 | RSK-41 | Tài chính | Không bố trí được kinh phí vận hành sau khi kết thúc dự án | 3 | 4 | 12 | Trung bình | Giảm | Đại diện chủ đầu tư | W5, bảo hành, vận hành | 8 |
 | RSK-42 | Tài chính | Kế hoạch vốn năm lệch tiến độ và thanh toán theo cổng bị chậm | 3 | 3 | 9 | Trung bình | Giảm | Đại diện chủ đầu tư | W1 đến W5 | 6 |
 | RSK-43 | Kỹ thuật | Giao diện phong cách Liquid Glass chậm trên máy trạm cấu hình thấp của cơ quan nhà nước | 3 | 2 | 6 | Thấp | Giảm | Trưởng nhóm frontend | W1, W2 | 4 |
+
+: Sổ rủi ro rút gọn RSK-01 đến RSK-43
 
 #### 8.6.1. Nhóm pháp lý, thủ tục đầu tư
 
@@ -1744,9 +1958,11 @@ Ma trận nhiệt 5 × 5 dưới đây đặt mỗi rủi ro vào ô theo xác s
 | 2 Nhỏ | · (thấp, 2) | · (thấp, 4) | RSK-43 (thấp, 6) | · (trung bình, 8) | · (trung bình, 10) |
 | 1 Không đáng kể | · (thấp, 1) | · (thấp, 2) | · (thấp, 3) | · (thấp, 4) | · (thấp, 5) |
 
+: Ma trận nhiệt 5 × 5 đặt các rủi ro theo xác suất và tác động ban đầu
+
 Biểu đồ phần tư dưới đây biểu diễn mười rủi ro hàng đầu, mỗi điểm mang mã rút gọn (R17 là RSK-17). Trục hoành là xác suất, trục tung là tác động; các điểm trùng ô được tách nhẹ để đọc được, nên khoảng cách nhỏ giữa chúng không mang ý nghĩa.
 
-```mermaid
+```{.mermaid caption="Biểu đồ phần tư mười rủi ro hàng đầu theo xác suất và tác động"}
 quadrantChart
     title "Mười rủi ro hàng đầu theo xác suất và tác động"
     x-axis "Xác suất thấp" --> "Xác suất cao"
@@ -1774,6 +1990,8 @@ Mười rủi ro hàng đầu là: RSK-17 nhà cung cấp hệ cũ không hợp 
 Sổ rủi ro được giữ trong công cụ quản lý công việc của dự án dưới dạng một loại hạng mục riêng, có các trường tương ứng với các cột của tệp `so-rui-ro.csv`. Tệp CSV là bản xuất tại mỗi cổng và được lưu cùng đường cơ sở theo chương 10, để hội đồng nghiệm thu đối chiếu được sổ rủi ro ở thời điểm cổng mà không cần truy cập công cụ. Trang rủi ro của báo cáo tháng gồm ma trận nhiệt hiện tại, mười rủi ro hàng đầu với xu hướng điểm so với tháng trước, các rủi ro đã xảy ra trong tháng cùng chi phí dự phòng đã dùng, và số dư dự phòng. Mọi lần dùng dự phòng được ghi đồng thời vào nhật ký thay đổi (chương 11) để kiểm toán viên lần được từ một khoản chi tới rủi ro gây ra nó.
 
 ### 8.9. Câu hỏi mở
+
+Mục này ghi các điểm về sổ rủi ro còn chờ trả lời, vì chúng quyết định chiến lược ứng phó của một số rủi ro hàng đầu.
 
 - **Q-D0102-80:** Hợp đồng hiện hành giữa tỉnh và nhà cung cấp hệ cũ có điều khoản về quyền sở hữu mã nguồn route, cấu hình và dữ liệu, cũng như nghĩa vụ bàn giao khi chấm dứt hay không? Câu trả lời quyết định chiến lược "chuyển" của RSK-17 có khả thi hay không.
 - **Q-D0102-81:** Đơn giá bình quân người-tháng chính thức là bao nhiêu? Các con số triệu đồng của mục 8.5 đang dùng đơn giá tham khảo 40 triệu đồng/người-tháng.
@@ -1808,6 +2026,8 @@ Bảng dưới đây liệt kê các tiêu chuẩn mà sản phẩm và quy trì
 | TCVN 14423:2026 (CMP-LAW-08) và Nghị định 331/2026/NĐ-CP (CMP-LAW-06) về bảo vệ an ninh mạng hệ thống thông tin theo cấp độ | Yêu cầu ATTT cấp độ 3 | D03-07, D03-08 |
 | Thông tư 41/2026/TT-BKHCN | Yêu cầu kiểm thử phần mềm nội bộ, nhật ký triển khai, giám sát | D05-01, hồ sơ cổng |
 
+: Tiêu chuẩn chất lượng áp dụng, phạm vi và nơi cụ thể hóa
+
 Ngoài tiêu chuẩn bên ngoài, dự án có bộ quy tắc nội bộ được máy kiểm tra: quy tắc sở hữu lane, quy tắc ranh giới module (chỉ dùng `api/` và `events/` của module khác), quy tắc mặc định từ chối truy cập cho mọi endpoint mới, quy tắc không có bí mật trong mã, quy tắc dùng design token cho giao diện. Các quy tắc này được ghi trong `AGENTS.md` và D04-01; điều quan trọng về mặt quản lý là mỗi quy tắc kiểm được bằng máy đều phải có một kiểm tra tự động trong CI, để việc tuân thủ không phụ thuộc vào trí nhớ của người review.
 
 ### 9.3. Cổng CI
@@ -1821,6 +2041,8 @@ Cổng CI (quality gate) là bộ kiểm tra tự động chạy trên mọi yê
 | **C** | Kiểm tra cú pháp và kiểu TypeScript; kiểm thử đơn vị thành phần giao diện; lint design token | PR chạm `apps/console/`, `packages/` | Chặn merge |
 | **D** | Kiểm tra khả năng truy cập tự động bằng axe-core cho màn hình mới hoặc đã đổi | PR có màn hình mới hoặc sửa màn hình | Cảnh báo trên DEV và TEST; chặn từ khi đưa lên STAGING |
 | **S** | Quét bí mật (gitleaks); phân tích tĩnh bảo mật (Semgrep); quét lỗ hổng image và phụ thuộc (Trivy); sinh SBOM | Mọi PR và mọi bản build image | Chặn merge khi có bí mật hoặc lỗ hổng CRITICAL; HIGH cần ngoại lệ được duyệt |
+
+: Các cổng CI: nội dung kiểm tra, điều kiện kích hoạt và tác dụng
 
 Ba quy tắc quản lý đi kèm năm cổng. Thứ nhất, không ai, kể cả trưởng nhóm, được tắt hoặc bỏ qua một cổng để merge gấp; nếu một cổng cho kết quả sai (ví dụ cảnh báo giả của Semgrep), cách xử lý là sửa cấu hình cổng qua một PR riêng có review của kỹ sư ATTT. Thứ hai, ngoại lệ lỗ hổng mức HIGH chỉ được cấp bởi kỹ sư ATTT, có thời hạn tối đa 30 ngày và được liệt kê trong báo cáo cổng nghiệm thu. Thứ ba, thời gian chạy của cổng A, B, C, S trên một PR thông thường được giữ dưới 15 phút; nếu vượt, nhóm nền tảng phải tối ưu trong sprint kế tiếp, vì cổng quá chậm sẽ khiến người ta tìm cách đi vòng.
 
@@ -1851,6 +2073,8 @@ Kiểm thử được tổ chức theo tầng, mỗi tầng có mục đích, m�
 | Kiểm thử chuyển đổi và đối soát | Kết quả của Datahub trùng với hệ cũ khi chạy song song | D06-01 | STAGING, PROD | Mỗi nhóm cắt chuyển ở W3, W4 |
 | Kiểm thử phục hồi | Sao lưu, phục hồi, chuyển sang DR, hỗn loạn có kiểm soát | D03-09, D05-01 | STAGING, PROD, DR | Trước G3; lặp lại trước G5 |
 
+: Các tầng kiểm thử: mục đích, tài liệu chi phối, môi trường và thời điểm
+
 Hai tầng có đặc thù riêng của sản phẩm multi-tenant cần nhấn mạnh. Kiểm thử bảo mật phải gồm kịch bản cách ly tenant: người dùng và HTTT của tenant A không đọc, ghi hay thấy được dữ liệu, sự kiện, nhật ký của tenant B qua bất kỳ API, màn hình hay topic nào; kịch bản này chạy tự động mỗi đêm từ khi PH-20 có mã, vì rò rỉ chéo tenant (RSK-36) là rủi ro có tác động lớn nhất với mô hình sản phẩm. Kiểm thử hiệu năng phải đo cả tình huống "hàng xóm ồn ào", trong đó một tenant tạo tải đỉnh mà các tenant khác không bị suy giảm vượt ngưỡng.
 
 ### 9.6. Chỉ số chất lượng theo sprint
@@ -1867,6 +2091,8 @@ Tám chỉ số dưới đây được đo tự động hoặc bán tự động
 | QM-06 | Tỷ lệ kiểm thử chập chờn | Tỷ lệ kiểm thử tự động cho kết quả khác nhau khi chạy lại trên cùng mã | ≤ 2%; kiểm thử chập chờn bị cách ly và sửa trong 1 sprint | Lịch sử chạy CI |
 | QM-07 | Tỷ lệ PR bị trả lại | Tỷ lệ PR phải sửa lại sau review lần đầu, tách theo PR do người và do AI agent tạo | Theo dõi xu hướng; báo động khi tỷ lệ của PR do agent cao hơn PR do người quá 1,5 lần trong 2 sprint | Hệ thống quản lý mã nguồn |
 | QM-08 | Độ phủ truy vết | Tỷ lệ `FR` mức M đã hoàn thành có đủ `TC` dương tính và âm tính đã chạy đạt trong RTM | 100% cho `FR` đã đánh dấu hoàn thành | D00-03, báo cáo kiểm thử |
+
+: Chỉ số chất lượng theo sprint: định nghĩa, ngưỡng và nguồn đo
 
 Ngưỡng được dùng như tín hiệu điều khiển chứ không phải để chấm điểm cá nhân. Khi một chỉ số vượt ngưỡng một sprint, retro của nhóm phải có hành động khắc phục. Khi cùng một chỉ số vượt ngưỡng ba sprint liên tiếp, nhóm đó dừng nhận story mới trong sprint kế tiếp và dành toàn bộ sức chứa để khắc phục nguyên nhân gốc, Giám đốc dự án báo cáo việc này trong báo cáo tháng. Quy tắc dừng này có chi phí ngắn hạn, nhưng nó ngăn nợ kỹ thuật dồn tới tuần ổn định cuối wave, nơi không còn thời gian để xử lý.
 
@@ -1887,6 +2113,8 @@ Dự án có hai bên kiểm soát độc lập với nhà thầu, với vai tr�
 Để giám sát độc lập có thực chất, kế hoạch đặt ba điều kiện. Thứ nhất, bên giám sát lấy dữ liệu trực tiếp từ hệ thống (kho mã, CI, hệ thống quản lý công việc) chứ không chỉ từ báo cáo do nhà thầu soạn. Thứ hai, bên giám sát có quyền tự chọn mẫu khi kiểm toán, không chỉ xem mẫu do nhà thầu chọn. Thứ ba, các phát hiện của bên giám sát được ghi vào sổ theo dõi riêng, nhà thầu phải phản hồi trong 5 ngày làm việc, và phát hiện chưa đóng được nêu trong báo cáo cổng. Chi phí cho hai bên này nằm ở chương ngân sách dưới khoản chi phí tư vấn và chi phí khác, không nằm trong 459 người-tháng của nhà thầu.
 
 ### 9.9. Câu hỏi mở
+
+Mục này ghi các điểm về tiêu chuẩn, công cụ và giám sát độc lập còn chờ xác nhận.
 
 - **Q-D0102-13:** Thông tư 41/2026/TT-BKHCN (Điều 10 về kiểm thử phần mềm nội bộ) có yêu cầu kiểm thử phải do đơn vị độc lập với nhà thầu phát triển thực hiện, hay nhà thầu tự kiểm thử dưới sự giám sát là đủ? Câu trả lời quyết định phạm vi gói kiểm thử độc lập và có thể làm giảm hoặc tăng nỗ lực QA của nhà thầu.
 - **Q-D0102-14:** Tư vấn giám sát có được cấp quyền truy cập chỉ đọc vào kho mã và hệ thống CI của nhà thầu ngay từ W0 không, hay chỉ nhận báo cáo? Kế hoạch đang giả định có quyền truy cập trực tiếp.
@@ -1922,6 +2150,8 @@ Hạng mục cấu hình (configuration item, CI) là đơn vị nhỏ nhất đ
 | Bí mật | Chỉ có **tham chiếu** (đường dẫn trong OpenBao); giá trị bí mật không bao giờ vào Git | OpenBao (ADR-012) | Kỹ sư ATTT |
 | Kế hoạch và sổ quản lý | D01-02, sổ rủi ro, nhật ký thay đổi | Kho Git tài liệu, xuất CSV tại cổng | Giám đốc dự án |
 
+: Hạng mục cấu hình theo loại, nội dung, nơi lưu và chủ sở hữu
+
 Có hai điểm cần giải thích. Hợp đồng máy đọc được tách thành loại riêng vì chúng là ranh giới giữa các lane và giữa Datahub với hệ thống bên ngoài: theo IP-04, một lane chỉ được phụ thuộc vào hợp đồng đã gắn thẻ phiên bản, không phụ thuộc vào mã của lane khác. Bí mật được liệt kê dù không lưu trong Git, để làm rõ rằng hạng mục cấu hình là tham chiếu; quét bí mật (gitleaks) trong cổng CI S chặn mọi yêu cầu gộp mã vi phạm.
 
 ### 10.3. Định danh và phiên bản
@@ -1947,6 +2177,8 @@ Có hai điểm cần giải thích. Hợp đồng máy đọc được tách th
 | G4 | Đường cơ sở đợt 2 | Bản có PH-19, 15, 09, 11; hợp đồng đợt 2; biên bản đối soát thanh toán |
 | G5 | Đường cơ sở hoàn thành | Bản `1.0.0`, toàn bộ tài liệu bản 1.0, cấu hình tenant thứ hai, sổ rủi ro và nhật ký thay đổi chốt |
 
+: Đường cơ sở được chốt tại từng cổng nghiệm thu
+
 Đường cơ sở tại cổng là căn cứ để lập hồ sơ nghiệm thu và để thanh toán theo cổng, nên nó gắn trực tiếp với RSK-42. Đường cơ sở G0 cũng là đường cơ sở phạm vi mà quy trình thay đổi của chương 11 dùng để so sánh.
 
 ### 10.5. Chiến lược nhánh và phát hành
@@ -1957,8 +2189,8 @@ Khi chuẩn bị một bản phụ, dự án cắt nhánh phát hành `release/x
 
 Cấu hình triển khai được thăng cấp qua các môi trường bằng yêu cầu gộp mã trên kho GitOps: DEV và TEST nhận tự động từ `main`; STAGING nhận bản trên nhánh phát hành sau khi Trưởng nhóm kiểm thử duyệt; PROD và DR chỉ nhận bản đã qua STAGING, với phê duyệt của đơn vị vận hành. Argo CD tự phát hiện và đưa về đúng trạng thái khai báo mọi sai lệch do thao tác tay trên cụm, nên Git luôn là nguồn sự thật.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Luồng phát hành từ yêu cầu gộp mã tới ba vòng nâng cấp tenant"}
+flowchart TB
     DEV["Yêu cầu gộp mã nhỏ"] --> CI{"Cổng CI A, B, C, S"}
     CI -- "Không đạt" --> DEV
     CI -- "Đạt, kỹ sư duyệt" --> MAIN["Nhánh main"]
@@ -2017,7 +2249,11 @@ Bảng dưới đây liệt kê công cụ phục vụ quản lý cấu hình. T
 | Quản lý công việc, sổ rủi ro, phiếu thay đổi | Công cụ quản lý công việc của kho Git | Liên kết phiếu với yêu cầu gộp mã |
 | Tài liệu | Markdown, Mermaid, Pandoc xuất .docx | Theo quy ước xuất bản của D00-01 |
 
+: Công cụ quản lý cấu hình theo chức năng
+
 ### 10.10. Câu hỏi mở
+
+Mục này ghi các điểm về công cụ, kho mã và cách phát hành cho nhiều tenant còn chờ xác nhận.
 
 - **Q-D0102-84:** Kho Git và kho artifact đặt tại hạ tầng của tỉnh thí điểm hay của nhà thầu trong giai đoạn thực hiện? Nếu đặt tại nhà thầu, cần quy định thời điểm và cách chuyển giao kho về tỉnh trước G5.
 - **Q-D0102-85:** Khi có tỉnh thứ hai trở đi, ai là chủ sở hữu kho mã sản phẩm và ai có quyền quyết định phát hành: tỉnh thí điểm, một đơn vị dùng chung, hay nhà thầu theo hợp đồng vận hành?
@@ -2043,6 +2279,8 @@ Bảng dưới đây định nghĩa ba loại thay đổi. Phân loại dựa tr
 | 2. Giữa các wave hoặc dùng dự phòng | Chuyển yêu cầu giữa các wave; lùi yêu cầu mức M; thay đổi làm khối lượng một wave tăng trên 10%; dùng dự phòng rủi ro; thay đổi ADR hoặc hợp đồng công bố; đổi thứ tự cắt chuyển nhóm dịch vụ; thay đổi trong phạm vi tổng mức đầu tư và thời gian đã duyệt | Lùi tính năng nâng cao của trình thiết kế luồng sang W4 (RSK-16); thêm adapter do kiểm kê hệ cũ phát hiện (RSK-08); đổi thiết kế chi tiết mà không đổi tổng mức đầu tư | CCB; chủ đầu tư phê duyệt điều chỉnh thiết kế, dự toán khi cần |
 | 3. Điều chỉnh dự án | Thay đổi mục tiêu, địa điểm, vượt tổng mức đầu tư hoặc kéo dài thời gian thực hiện | Bổ sung phân hệ kho phân tích (đang ngoài phạm vi); kéo G5 quá T0+18 tháng; tăng chi phí vượt cả dự phòng | Người quyết định đầu tư, theo Nghị định 224/2026/NĐ-CP |
 
+: Ba loại thay đổi phạm vi: định nghĩa, ví dụ và người quyết định
+
 Ranh giới giữa loại 2 và loại 3 dựa trên quy định điều chỉnh dự án của Nghị định 224/2026/NĐ-CP: dự án phải trình cấp có thẩm quyền khi thay đổi mục tiêu, địa điểm, vượt vốn hoặc tổng mức đầu tư, kéo dài thời gian, còn các trường hợp thay đổi khác chủ đầu tư được tự tổ chức lập, thẩm định, phê duyệt điều chỉnh (theo tóm tắt pháp lý của dự án; số điều khoản cần đối chiếu Công báo, xem Q-D0102-86). Như vậy phần lớn thay đổi về thiết kế chi tiết, phân bổ khối lượng giữa các hạng mục hoặc dùng dự phòng trong tổng mức đầu tư nằm trong thẩm quyền chủ đầu tư, điều tạo dư địa đáng kể cho phương pháp linh hoạt.
 
 Một thay đổi loại 1 lặp lại nhiều lần có thể cộng dồn thành loại 2. Vì vậy Product Owner theo dõi tổng điểm thay đổi của wave so với đường cơ sở tại cổng trước; khi tổng vượt 10% (đúng dấu hiệu sớm của RSK-07), các thay đổi tiếp theo trong wave phải qua CCB.
@@ -2057,7 +2295,7 @@ CCB họp định kỳ mỗi sprint, ngay sau buổi trình diễn sprint (sprin
 
 Quy trình dưới đây áp dụng cho thay đổi loại 2 và loại 3; thay đổi loại 1 đi theo nhánh rút gọn trong backlog nhưng vẫn được ghi nhận.
 
-```mermaid
+```{.mermaid caption="Quy trình xử lý yêu cầu thay đổi loại 2 và loại 3"}
 flowchart TD
     A["Phát sinh yêu cầu thay đổi"] --> B["Lập phiếu yêu cầu thay đổi"]
     B --> C{"Phân loại sơ bộ do PO thực hiện"}
@@ -2096,6 +2334,8 @@ Phiếu yêu cầu thay đổi được lập trong công cụ quản lý công 
 | Quyết định | Duyệt, từ chối, hoãn; người quyết định; ngày; số biên bản |
 | Thực hiện | Sprint, yêu cầu gộp mã, phiên bản phát hành, tài liệu được cập nhật |
 
+: Các trường của phiếu yêu cầu thay đổi
+
 ### 11.6. Tiêu chí đánh giá tác động
 
 Mọi phiếu loại 2 và loại 3 được đánh giá trên tám tiêu chí sau. Mỗi tiêu chí ghi số liệu cụ thể chứ không chỉ "có" hoặc "không", để CCB so sánh được các phiếu với nhau.
@@ -2120,6 +2360,8 @@ Bảng dưới đây quy định ai được duyệt thay đổi theo độ lớ
 | Dùng dự phòng từ 2 người-tháng trở lên, hoặc dời một cổng trong khoảng T0+18 tháng, hoặc cần điều chỉnh thiết kế chi tiết, dự toán, hợp đồng | Chủ đầu tư, trên cơ sở đề xuất của CCB |
 | Đổi mục tiêu, địa điểm, vượt tổng mức đầu tư, kéo dài thời gian thực hiện | Người quyết định đầu tư, sau khi chủ đầu tư lập hồ sơ điều chỉnh dự án |
 
+: Ngưỡng thẩm quyền phê duyệt thay đổi theo mức tác động
+
 Thay đổi hợp đồng với nhà thầu luôn cần chữ ký của chủ đầu tư và phải tuân thủ điều kiện điều chỉnh hợp đồng của Luật Đấu thầu và hợp đồng đã ký; CCB không thay chủ đầu tư ký phụ lục hợp đồng.
 
 ### 11.8. Quan hệ với Scrum
@@ -2133,6 +2375,8 @@ Product backlog là nơi duy nhất chứa công việc của đội. Thay đổ
 Nhật ký thay đổi là danh sách tuần tự mọi phiếu CR với trạng thái, quyết định, người quyết định, tác động thực tế sau khi thực hiện và liên kết tới phiên bản phát hành. Nhật ký được xuất tại mỗi cổng cùng đường cơ sở, và mọi lần dùng dự phòng rủi ro ở chương 8 đều có một dòng tương ứng ghi mã RSK. Tại G5, nhật ký là căn cứ để giải trình chênh lệch giữa hồ sơ thiết kế được duyệt và sản phẩm được nghiệm thu, cũng như để quyết toán. Nhật ký cũng phục vụ các tỉnh nhân rộng: yêu cầu bị từ chối hoặc hoãn ở tỉnh thí điểm là danh sách ứng viên tự nhiên cho các bản phát hành sau.
 
 ### 11.10. Câu hỏi mở
+
+Mục này ghi các điểm về thẩm quyền, ngưỡng và quy trình thay đổi còn chờ chủ đầu tư quyết định.
 
 - **Q-D0102-86:** Số điều, khoản chính xác của Nghị định 224/2026/NĐ-CP về điều chỉnh dự án (tóm tắt pháp lý ghi Điều 66 khoản 18, chưa đối chiếu Công báo) và việc điều khoản này áp dụng cho dự án đầu tư hệ thống chuyển đổi số dùng vốn đầu tư công hay chỉ cho nhiệm vụ chi thường xuyên.
 - **Q-D0102-87:** "Kéo dài thời gian" có tính cả việc dời một cổng trung gian trong khoảng T0+18 tháng không, hay chỉ tính thời gian thực hiện dự án? Chương này đang hiểu là chỉ tính thời gian thực hiện dự án.
@@ -2169,6 +2413,8 @@ Ma trận dưới đây xác định ai nhận thông tin gì, bao lâu một l�
 | Đội nhà thầu | Mục tiêu sprint, trở ngại, quyết định kỹ thuật, ADR mới | Ngày; hai tuần | Họp đứng hằng ngày, kênh trò chuyện của dự án, wiki | Scrum Master, kiến trúc sư |
 | Đơn vị kiểm định độc lập | Phạm vi kiểm thử, môi trường, tài khoản thử, kết quả khắc phục | Theo đợt kiểm thử | Văn bản; kênh bảo mật riêng cho báo cáo lỗ hổng | Ban quản lý dự án; kỹ sư ATTT nhà thầu |
 
+: Ma trận truyền thông: bên nhận, nội dung, tần suất, kênh và người gửi
+
 Hai dòng cần lưu ý. Báo cáo lỗ hổng của đơn vị kiểm định độc lập không được đăng trên issue tracker chung trước khi được khắc phục; báo cáo này đi qua một kênh có kiểm soát truy cập chỉ gồm kỹ sư ATTT, kiến trúc sư, PM nhà thầu và cán bộ kỹ thuật của Ban, để tránh lộ lỗ hổng chưa vá. Thông báo cho sở ngành về cắt chuyển phải đi bằng văn bản của chủ đầu tư chứ không chỉ bằng thư điện tử, vì cắt chuyển có thể làm gián đoạn dịch vụ của sở và cần có căn cứ hành chính.
 
 ### 12.3. Chế độ báo cáo
@@ -2186,6 +2432,8 @@ Bảng sau liệt kê các báo cáo định kỳ nội bộ dự án theo năm 
 | Báo cáo cổng | PM nhà thầu, tư vấn giám sát xác nhận | Hội đồng nghiệm thu cổng | Ít nhất 5 ngày làm việc trước phiên nghiệm thu | Đối chiếu với tiêu chí DoD của cổng; bằng chứng kiểm thử; danh sách lỗi tồn đọng và kế hoạch xử lý; tài liệu bàn giao |
 | Báo cáo cắt chuyển | Đơn vị vận hành | Ban quản lý dự án, sở ngành liên quan | Trong 2 ngày làm việc sau mỗi lần cắt chuyển | Nhóm dịch vụ đã chuyển; số giao dịch qua hệ mới và hệ cũ; lỗi phát sinh; quyết định giữ hay quay lui |
 
+: Báo cáo định kỳ trong dự án: người lập, người nhận và thời hạn
+
 #### 12.3.2. Báo cáo theo quy định cho cơ quan quản lý
 
 Ngoài báo cáo nội bộ, chủ đầu tư phải thực hiện các báo cáo theo quy định của nhà nước. Danh sách dưới đây nêu loại báo cáo và bên lập; tên văn bản, biểu mẫu và hạn nộp phải được Ban quản lý dự án đối chiếu với văn bản hiện hành trước khi lập báo cáo đầu tiên, vì nhiều quy định đã thay đổi sau sắp xếp bộ máy năm 2025.
@@ -2199,6 +2447,8 @@ Ngoài báo cáo nội bộ, chủ đầu tư phải thực hiện các báo cá
 | Báo cáo kết quả kết nối, chia sẻ dữ liệu qua nền tảng LGSP | Đơn vị vận hành | Cơ quan quản lý NDXP và cơ quan quản lý chuyển đổi số | CMP-LAW-03, CMP-LAW-01 |
 | Báo cáo đánh giá tác động xử lý dữ liệu cá nhân (khi có thay đổi phạm vi xử lý) | Chủ đầu tư, đơn vị vận hành | Cơ quan chuyên trách bảo vệ dữ liệu cá nhân | CMP-LAW-04, CMP-LAW-05 |
 | Báo cáo quyết toán dự án hoàn thành | Chủ đầu tư | Cơ quan thẩm tra quyết toán, người quyết định đầu tư | Quy định về quyết toán dự án hoàn thành (chưa xác minh văn bản) |
+
+: Báo cáo gửi cơ quan quản lý theo quy định và căn cứ
 
 Ban quản lý dự án lập một lịch báo cáo theo quy định ngay tại G0, gán người lập và nhắc hạn trong issue tracker như mọi việc khác, để báo cáo hành chính không bị bỏ sót khi đội tập trung vào kỹ thuật.
 
@@ -2241,6 +2491,8 @@ Bảng chỉ số trong báo cáo tháng gồm các chỉ số sau, mỗi chỉ 
 | Rủi ro mức cao đang mở | Số rủi ro trong sổ RSK ở mức cao không có biện pháp đang thực hiện | 0 | 1 | ≥ 2 |
 | Hệ số xe buýt của lane | Số lane có dưới hai người từng merge mã | 0 | 1 | ≥ 2 |
 
+: Ngưỡng xanh, vàng, đỏ của bảng chỉ số tiến độ tổng hợp
+
 Chỉ số "câu hỏi nghiệp vụ quá hạn" đo trách nhiệm của phía chủ đầu tư chứ không phải của nhà thầu. Việc đưa chỉ số này vào bảng chung giúp Ban chỉ đạo thấy được khi trễ tiến độ có nguyên nhân từ việc chậm ra quyết định, thay vì quy toàn bộ cho nhà thầu.
 
 #### 12.4.5. Chỉ số mục tiêu nghiệp vụ trong báo cáo
@@ -2261,10 +2513,12 @@ Một vấn đề là bất kỳ trở ngại nào mà người phát hiện kh�
 | 4 | Chủ đầu tư | Thay đổi vượt thẩm quyền Ban, tranh chấp hợp đồng, nguy cơ trễ cổng quá một sprint, sở ngành không phối hợp | 15 ngày làm việc |
 | 5 | Ban chỉ đạo, UBND tỉnh | Điều chỉnh tổng mức đầu tư hoặc mục tiêu, phối hợp liên ngành không giải quyết được ở cấp sở, trễ G3 hoặc G5 | Phiên họp gần nhất, tối đa 30 ngày |
 
+: Năm mức leo thang vấn đề, cấp xử lý và thời hạn
+
 Sơ đồ sau thể hiện đường leo thang và lối tắt dành cho sự cố khẩn cấp.
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Đường leo thang vấn đề theo mức và lối tắt sự cố khẩn cấp"}
+flowchart TB
   P["Phát hiện vấn đề<br/>ghi issue"] --> L1["Mức 1<br/>Đội Scrum<br/>2 ngày làm việc"]
   L1 -->|"chưa xong"| L2["Mức 2<br/>PM và Chủ sản phẩm<br/>5 ngày làm việc"]
   L2 -->|"chưa xong"| L3["Mức 3<br/>Ban QLDA và lãnh đạo nhà thầu<br/>10 ngày làm việc"]
@@ -2306,6 +2560,8 @@ Bảng sau liệt kê các cuộc họp định kỳ của dự án. Mục tiêu
 | Họp Ban chỉ đạo | Trưởng Ban chỉ đạo | Thành viên Ban chỉ đạo, chủ đầu tư | Hằng quý, 2 giờ | Kết luận chỉ đạo |
 | Phiên nghiệm thu cổng | Bên A của cổng theo ma trận RACI | Hội đồng nghiệm thu cổng | Tại mỗi cổng G0 đến G5 | Biên bản nghiệm thu |
 
+: Lịch họp: chủ trì, thành phần, tần suất và đầu ra
+
 #### 12.6.2. Quy tắc biên bản
 
 Mọi cuộc họp có từ hai bên trở lên (không tính họp nội bộ đội Scrum) đều có biên bản. Biên bản được lập theo mẫu thống nhất, gồm thành phần, nội dung đã thảo luận, các quyết định (mỗi quyết định có người quyết và căn cứ), các việc cần làm (mỗi việc có người sở hữu và hạn) và các vấn đề chưa thống nhất. Thư ký gửi dự thảo biên bản trong 1 ngày làm việc; các bên có 2 ngày làm việc để góp ý; quá hạn không có góp ý thì biên bản được coi là đã thống nhất. Biên bản nghiệm thu cổng, biên bản CCB và biên bản họp Ban chỉ đạo là văn bản có chữ ký và được lưu theo chế độ lưu trữ hồ sơ dự án; các biên bản khác được lưu trong wiki.
@@ -2324,9 +2580,13 @@ Dự án dùng năm kênh làm việc, mỗi kênh có mục đích riêng. Bả
 | Kênh trò chuyện của dự án | Phần mềm trò chuyện tự cài (ví dụ Mattermost) | Hạ tầng trong nước | Trao đổi nhanh trong đội và giữa các bên | Không có giá trị quyết định; kết luận phải chuyển thành issue hoặc biên bản |
 | Văn bản hành chính và thư điện tử công vụ | Hệ thống quản lý văn bản điều hành của tỉnh; thư điện tử công vụ | Hạ tầng của tỉnh | Văn bản chính thức, tờ trình, thông báo cho sở ngành và bên ngoài | Mọi quyết định có hệ quả pháp lý đều đi qua kênh này |
 
+: Kênh làm việc chung, công cụ và quy tắc sử dụng
+
 Có ba lưu ý về kênh. Thứ nhất, kho mã nguồn là tài sản của chủ đầu tư; nếu kho đặt tại hạ tầng của nhà thầu trong giai đoạn phát triển thì hợp đồng phải quy định bản sao đầy đủ (gồm lịch sử commit, issue và wiki) được đồng bộ về hạ tầng chủ đầu tư ít nhất hằng tuần và bàn giao toàn bộ tại G5. Thứ hai, dự án tránh dùng các ứng dụng trò chuyện đại chúng và dịch vụ lưu trữ đám mây cá nhân để trao đổi tài liệu thiết kế, sơ đồ hạ tầng hay báo cáo lỗ hổng, vì không kiểm soát được nơi lưu và quyền truy cập. Thứ ba, quyền truy cập vào mọi kênh được cấp qua Keycloak của môi trường DEV hoặc hệ thống định danh của tỉnh khi có thể, và được thu hồi trong ngày khi một người rời dự án, theo quy trình bàn giao ở mục 6.6.
 
 ### Câu hỏi mở
+
+Mục này ghi các điểm về kênh, nhịp báo cáo và quy định báo cáo còn chờ xác nhận.
 
 - **Q-D0102-60.** Tỉnh thí điểm có hạ tầng sẵn để đặt kho mã Git, issue tracker và wiki cho dự án từ T0 không, hay nhà thầu đặt trên hạ tầng của mình và đồng bộ bản sao về tỉnh?
 - **Q-D0102-61.** Văn bản hiện hành quy định chế độ báo cáo giám sát, đánh giá đầu tư và báo cáo về dự án ứng dụng CNTT dùng ngân sách (biểu mẫu, hạn nộp, nơi nhận) sau khi CMP-LAW-14 (Nghị định 224/2026/NĐ-CP, hiệu lực 01/7/2026) là văn bản nào?
@@ -2369,6 +2629,8 @@ Bảng dưới đây liệt kê bảy nhóm sản phẩm bàn giao tại G5, hì
 | Bằng chứng kiểm thử | Test case D05-02 của 20 phân hệ và kết quả chạy trên v1.0; báo cáo hiệu năng D05-03; biên bản UAT các đợt; báo cáo đối soát di trú và cắt chuyển; biên bản diễn tập DR và sự cố; RTM xuất .xlsx | Bản điện tử, kết quả CI lưu trữ | RTM 100% như điều kiện 2 ở mục 13.1; mọi kết quả truy được về lần chạy CI cụ thể |
 | Hồ sơ quản lý dự án | Biên bản 39 sprint review; biên bản các cổng G0 đến G5; sổ rủi ro, sổ thay đổi, báo cáo tháng; nhật ký sử dụng AI agent; biên bản đào tạo và chuyển giao | Bản điện tử có chữ ký | Đủ theo danh mục hồ sơ cổng ở chương 4 |
 
+: Danh mục sản phẩm bàn giao theo nhóm, hình thức và tiêu chí chấp nhận
+
 Quyền sở hữu là một phần không tách rời của bàn giao. Mã nguồn tùy biến do dự án phát triển, tài liệu và dữ liệu hình thành trong dự án thuộc về chủ đầu tư; các thành phần nguồn mở giữ giấy phép gốc của chúng. Hợp đồng thực hiện phải ghi rõ chủ đầu tư có quyền dùng, sửa và cấp phép lại sản phẩm cho các tỉnh khác, vì đó là điều kiện để mô hình nhân rộng sang tỉnh thứ ba trở đi có thể diễn ra mà không phải mua lại quyền từ nhà thầu. Điểm này được ghi thành câu hỏi mở vì cần đối chiếu với quy định hiện hành về quyền tài sản đối với phần mềm hình thành từ ngân sách.
 
 ### 13.3. Bảo hành và điều kiện kết thúc bảo hành
@@ -2384,11 +2646,23 @@ Cam kết thời gian xử lý trong bảo hành được đặt theo mức sự
 | 3 Trung bình | Chức năng lỗi có cách làm thay thế | ≤ 1 ngày làm việc | Không áp dụng | Trong bản vá kế tiếp, tối đa 30 ngày |
 | 4 Thấp | Lỗi hiển thị, tài liệu | ≤ 2 ngày làm việc | Không áp dụng | Trong bản vá kế tiếp |
 
+: Mức lỗi trong bảo hành, phản hồi và thời hạn khắc phục
+
 Bảo hành chỉ được kết thúc và bảo lãnh bảo hành chỉ được giải tỏa khi đạt đồng thời năm điều kiện sau. Thứ nhất, không còn lỗi mức 1 hoặc mức 2 đang mở, và lỗi mức 3 còn mở không quá 5 lỗi, mỗi lỗi có phương án được chủ đầu tư chấp nhận. Thứ hai, độ sẵn sàng data plane đạt ≥ 99,9% trong ít nhất 10 trên 12 tháng bảo hành, và không tháng nào dưới 99,5%; nếu không đạt, thời gian bảo hành được kéo dài thêm số tháng không đạt. Thứ ba, các chỉ số có thời điểm đo "12 tháng" của D02-01 (KPI-01, KPI-02, KPI-10) đã được đo và báo cáo tại M-23, dù đạt hay không đạt, để chủ đầu tư có số liệu đánh giá hiệu quả đầu tư. Thứ tư, nhà thầu đã bàn giao bản vá cuối cùng kèm mã nguồn, tài liệu cập nhật và SBOM, và đội vận hành đã tự áp dụng bản vá đó. Thứ năm, ít nhất một lần diễn tập DR trong thời gian bảo hành do đội vận hành tự thực hiện đạt RPO 15 phút, RTO 1 giờ data plane và 4 giờ control plane (NFR-00-014).
 
 Khi bảo hành kết thúc, việc hỗ trợ kỹ thuật chuyển sang hợp đồng vận hành, hỗ trợ hằng năm theo chi thường xuyên, với nhân sự tham chiếu 2 đến 3 FTE từ T0+30 như giả định nền. Nghị định 224/2026/NĐ-CP cho phép chỉ định chính doanh nghiệp đã phát triển phần mềm làm quản trị, vận hành (theo tóm tắt pháp lý, chưa đối chiếu Công báo); kế hoạch không giả định chủ đầu tư sẽ dùng cơ chế này, nhưng điều kiện 9 ở mục 13.1 bảo đảm chủ đầu tư có lựa chọn khác.
 
 ### 13.4. Câu hỏi mở
 
+Mục này ghi các điểm về điều kiện bàn giao, bảo hành và kết thúc dự án còn chờ chủ đầu tư xác nhận.
+
 - **Q-D0102-15:** Quy định hiện hành về quyền tài sản đối với phần mềm hình thành từ ngân sách nhà nước có cho phép chủ đầu tư cấp phép lại mã nguồn Datahub cho tỉnh khác (hoặc công bố như phần mềm dùng chung) không, và hợp đồng thực hiện cần điều khoản nào để bảo đảm điều đó?
 - **Q-D0102-16:** Thời hạn bảo hành 12 tháng và tỷ lệ bảo lãnh bảo hành có phù hợp với quy định áp dụng cho gói thầu EP có hạng mục phần mềm nội bộ theo Nghị định 224/2026/NĐ-CP và Luật Đấu thầu không?
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: 13 chương từ phạm vi, WBS, mô hình thực hiện, tiến độ, tổ chức, nhân sự, ngân sách, rủi ro đến chất lượng, cấu hình, thay đổi, truyền thông và tiêu chí hoàn thành |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản cập nhật bám bộ giả định nền D01-00 và D01-01 |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm mục Tóm tắt cho hội đồng thẩm định và bảng Con số chính; thêm mục 1.8 đến 1.11 (người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc tài liệu); thêm đoạn mở cho 13 mục Câu hỏi mở; viết lại chú thích cụ thể cho 57 bảng và 10 hình; thêm sơ đồ năm bước cắt chuyển ở mục 4.5; chuyển bốn sơ đồ nhiều nút từ ngang sang dọc |

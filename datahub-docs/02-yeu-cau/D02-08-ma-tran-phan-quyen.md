@@ -1,13 +1,37 @@
 ---
 ma_tai_lieu: D02-08
 ten: Ma trận phân quyền
-phien_ban: 0.2
+phien_ban: 0.4
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Phân tích nghiệp vụ, Kiến trúc sư, Đội phát triển, Kiểm thử, ATTT
+mo_ta: Định nghĩa 22 vai trò, các quyền PERM theo phân hệ, ma trận gán quyền, cặp vai trò phải tách nhiệm vụ, scope của HTTT thành viên và ánh xạ từ quyền hệ cũ, làm căn cứ phân quyền và sinh ca kiểm thử.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D02-01 BRD; D02-02 SRS; D02-03-PH12 FRS Định danh và phân quyền; D03-07 Thiết kế ATTT; D03-10 Đa tenant; D05-01 Kiểm thử phân quyền
 ---
 
 # D02-08 · Ma trận phân quyền
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Xác định ai được làm gì trên Datahub bằng một tập vai trò, quyền và ma trận gán quyền duy nhất, để mọi FRS dẫn chiếu cùng một nguồn và kiểm thử sinh được ca phân quyền dương và âm một cách tự động.
+
+**Phạm vi.** 22 vai trò chuẩn, các quyền `PERM-{PH}-{động từ}` của 20 phân hệ, các cặp vai trò phải tách nhiệm vụ, quyền của HTTT thành viên (máy) dạng scope OAuth và ánh xạ từ quyền hệ cũ. Việc đăng nhập, cấp token và quản trị người dùng thuộc PH-12, không thuộc tài liệu này.
+
+**Căn cứ pháp lý.** CMP-LAW-06 và CMP-LAW-08 (NĐ 331/2026, TCVN 14423:2026 cấp độ 3) về kiểm soát truy cập, xác thực nhiều yếu tố, nhật ký; CMP-LAW-05 (Luật BVDLCN 91/2025) về hạn chế truy cập dữ liệu cá nhân; CMP-LAW-01 (Luật Dữ liệu số) về khai thác dữ liệu theo mục đích; CMP-LAW-03 (NĐ 278/2025) về kết nối, chia sẻ dữ liệu.
+
+**Những điểm hội đồng cần lưu ý.** (1) Phân quyền ba lớp được OPA đánh giá cùng lúc: vai trò, phạm vi tổ chức và thuộc tính dữ liệu (ADR-006). (2) Từ chối mặc định: quyền không có trong ma trận là không được phép. (3) Quyền duyệt không áp dụng cho đối tượng do chính người dùng tạo hoặc gửi (bốn mắt, FR-00-071), và các cặp vai trò xung đột bị PH-12 chặn khi gán. (4) HTTT thành viên không có vai trò người dùng, quyền của máy là scope sinh tự động từ dữ liệu đã duyệt. (5) Vai trò quản trị, duyệt, an ninh, kiểm toán bắt buộc xác thực hai yếu tố.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Vai trò chuẩn | 22 (ROLE-*) |
+| Họ quyền theo phân hệ | 20 phân hệ PH-01…PH-20 |
+| Quyền thanh toán PH-19 | 48 quyền theo khung PH-19 §13 |
+| Cặp vai trò tách nhiệm vụ | 7 cặp ở mục 4 |
+| Loại scope của máy | 6 nhóm scope ở mục 5 |
+
+: Con số chính của ma trận phân quyền
 
 ## 1. Mục đích và mô hình
 
@@ -25,6 +49,93 @@ Các nguyên tắc chung:
 - **Bốn mắt.** Các quyền duyệt (`approve`) không áp dụng cho đối tượng do chính người dùng tạo hoặc gửi (FR-00-071).
 - **Tách nhiệm vụ.** Một người dùng không được đồng thời giữ cặp vai trò xung đột ở mục 4. PH-12 chặn khi gán.
 - **Quyền tối thiểu cho máy.** HTTT thành viên không có vai trò người dùng; quyền của máy là phạm vi (scope) OAuth gắn với đăng ký sử dụng đã duyệt ở PH-02 và mục đích ở PH-09.
+
+### 1.1. Sơ đồ mô hình phân quyền
+
+Sơ đồ dưới đây gom ba lớp phân quyền thành một dòng đánh giá: người dùng mang vai trò, vai trò mở ra quyền, và OPA quyết định cuối cùng sau khi kiểm tra phạm vi tenant, tổ chức và thuộc tính dữ liệu.
+
+```{.mermaid caption="Mô hình phân quyền: người dùng, vai trò, quyền, phạm vi tenant và OPA"}
+flowchart TB
+  U[Người dùng trong realm của tenant] -->|được gán| R[Vai trò ROLE]
+  R -->|ma trận ở mục 3| P[Quyền PERM-PH-động từ]
+  U -->|thuộc| O[Tổ chức và tổ chức cấp dưới]
+  M[HTTT thành viên] -->|token client_credentials| S[Scope OAuth sinh từ dữ liệu đã duyệt]
+  P --> OPA{OPA đánh giá}
+  O -->|phạm vi tổ chức| OPA
+  A[Thuộc tính dữ liệu: mức phân loại, mục đích, trạng thái] -->|ABAC| OPA
+  T[Tenant của yêu cầu] -->|tách biệt tenant| OPA
+  S --> OPA
+  OPA -->|cho phép| OK[Thực hiện thao tác và ghi kiểm toán]
+  OPA -->|từ chối mặc định| NO[403 hoặc 404 và ghi kiểm toán]
+```
+
+Người đọc cần thấy rằng vai trò chỉ là điều kiện cần. Dù có quyền trong ma trận, yêu cầu vẫn bị từ chối nếu sai tenant, ngoài phạm vi tổ chức hoặc vi phạm thuộc tính dữ liệu; quyền của máy đi theo nhánh scope riêng nhưng cũng qua OPA.
+
+### 1.2. Phạm vi
+
+Tài liệu bao phủ vai trò, quyền, ma trận, tách nhiệm vụ, scope của máy và ánh xạ hệ cũ. Tài liệu không mô tả cách đăng nhập, cấp token, quản trị người dùng (PH-12) và không lặp lại luồng phê duyệt chi tiết của từng phân hệ (FRS phân hệ).
+
+### 1.3. Người đọc và cách đọc
+
+Bảng dưới gợi ý phần nên đọc theo từng nhóm người đọc.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, mục 1, mục 4 | Đánh giá mô hình, tách nhiệm vụ và tuân thủ kiểm soát truy cập |
+| Phân tích nghiệp vụ | Mục 2, mục 3 | Gán quyền đúng cho vai trò nghiệp vụ |
+| Kiến trúc sư, cán bộ ATTT | Mục 1, mục 4, mục 5 | Xác nhận mô hình OPA, scope máy, tách nhiệm vụ |
+| Đội phát triển | Mục 3, mục 5 | Cài chính sách OPA và kiểm tra quyền trong API |
+| Kiểm thử viên | Mục 3, mục 7 | Sinh ca phân quyền dương và âm |
+
+: Người đọc và phần cần đọc của ma trận phân quyền
+
+### 1.4. Thuật ngữ và chữ viết tắt
+
+Thuật ngữ chung theo D00-01. Bảng dưới giải thích ký hiệu riêng của tài liệu.
+
+| Thuật ngữ, viết tắt | Giải thích |
+|---|---|
+| RBAC, ABAC | Phân quyền theo vai trò, theo thuộc tính |
+| OPA | Open Policy Agent, bộ máy đánh giá chính sách phân quyền |
+| ROLE-*, PERM-{PH}-{động từ} | Mã vai trò, mã quyền |
+| ●, ○, — | Được phép, chỉ với đối tượng của tổ chức mình, không được phép |
+| MFA | Xác thực nhiều yếu tố |
+| Bốn mắt | Người tạo và người duyệt phải là hai người khác nhau |
+| Scope | Phạm vi OAuth của HTTT thành viên (máy) |
+| DU | Đơn vị triển khai (xem D03-01); tài khoản dịch vụ của DU là tài khoản máy nội bộ |
+
+: Thuật ngữ và chữ viết tắt của ma trận phân quyền
+
+### 1.5. Tài liệu tham chiếu
+
+Bảng dưới liệt kê tài liệu cung cấp quy ước, nguồn quyền và nơi hiện thực ma trận.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| D00-01 | Thuật ngữ và quy ước | Quy ước mã ROLE, PERM |
+| D02-02 | SRS | Nhóm FR-00 (MFA, bốn mắt) |
+| D02-03-PH12 | FRS Định danh và phân quyền | Hiện thực gán vai trò, chặn cặp xung đột |
+| D02-03-PH19-00 | Khung truy vết PH-19 | Nguồn 48 quyền thanh toán |
+| D03-07 | Thiết kế an toàn thông tin | Chính sách OPA, kiểm soát truy cập |
+| D03-10 | Thiết kế đa tenant | Vai trò chuẩn theo tenant (§5.2) |
+| D05-01 | Kiểm thử phân quyền | Sinh ca dương, âm từ ma trận |
+
+: Tài liệu tham chiếu của ma trận phân quyền
+
+### 1.6. Cấu trúc tài liệu
+
+Bảng dưới nêu nội dung từng chương và người đọc chính.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 1 | Mục đích, mô hình ba lớp, giới thiệu | Mọi người đọc |
+| 2 | Danh mục 22 vai trò | Phân tích nghiệp vụ |
+| 3 | Danh mục quyền và ma trận theo phân hệ | Phân tích nghiệp vụ, đội phát triển, kiểm thử |
+| 4 | Tách nhiệm vụ và duyệt bốn mắt | Hội đồng thẩm định, ATTT |
+| 5 | Quyền của HTTT thành viên | Kiến trúc sư, đội phát triển |
+| 6 đến 7 | Ánh xạ hệ cũ, kiểm thử | Đội phát triển, kiểm thử |
+
+: Cấu trúc tài liệu của ma trận phân quyền
 
 ## 2. Danh mục vai trò
 
@@ -55,6 +166,8 @@ Bảng dưới đây liệt kê vai trò chuẩn được tạo tự động cho
 | ROLE-VIEWER | Người xem | Tenant | Không | Xem bảng điều khiển và báo cáo, không xem dữ liệu HC/NC |
 | ROLE-AUDITOR | Kiểm toán, thanh tra tỉnh | Tenant, chỉ-đọc | Có | Xem nhật ký kiểm toán, xuất bằng chứng |
 
+: Danh mục 22 vai trò chuẩn, phạm vi và yêu cầu MFA
+
 ## 3. Danh mục quyền và ma trận
 
 Quyền viết theo dạng `PERM-{PH}-{động từ}`. Các động từ chuẩn: `read` (xem), `create`, `update`, `delete`, `submit` (gửi duyệt), `approve` (duyệt hoặc từ chối), `publish` (phát hành, công bố), `operate` (kích hoạt, tạm dừng, xử lý lại), `export` (xuất dữ liệu), `admin` (cấu hình phân hệ). Quyền đặc thù được liệt kê riêng.
@@ -62,6 +175,8 @@ Quyền viết theo dạng `PERM-{PH}-{động từ}`. Các động từ chuẩn
 Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi của vai trò; **○** chỉ với đối tượng thuộc tổ chức của mình; **—** không được phép. Cột vai trò viết tắt: PA = PLATFORM_ADMIN, PO = PLATFORM_OPERATOR, TA = TENANT_ADMIN, TO = TENANT_OPERATOR, SO = SECURITY_OFFICER, IE = INTEGRATION_ENGINEER, IA = INTEGRATION_APPROVER, SV = SERVICE_OWNER, CA = CATALOG_APPROVER, OR = ORG_REQUESTER, DS = DATA_STEWARD, DA = DATA_APPROVER, DO = DATA_OWNER, VW = VIEWER, AU = AUDITOR. Vai trò thanh toán và nhà phát triển có bảng riêng ở mục 3.3.
 
 ### 3.1. Phân hệ MVP
+
+Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ MVP (PH-01 đến PH-05, 07, 10, 12, 13, 14, 18, 20).
 
 | Quyền | Mô tả | PA | PO | TA | TO | SO | IE | IA | SV | CA | OR | DS | DA | DO | VW | AU |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -124,9 +239,13 @@ Ma trận dưới đây dùng ký hiệu: **●** được phép trong phạm vi
 | PERM-20-admin | Khởi tạo, cấu hình, tạm ngừng, sáp nhập tenant | ● | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-20-read | Xem thông tin, hạn mức tenant | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — | ● |
 
+: Ma trận vai trò theo quyền của các phân hệ MVP PH-01…PH-05, 07, 10, 12, 13, 14, 18, 20
+
 Khi khai thác dữ liệu Nhạy cảm, mọi vai trò cần thêm `PERM-09-unmask` (mục 3.2) để xem giá trị đầy đủ; nếu không, giá trị luôn bị che kể cả với vai trò có quyền `read`.
 
 ### 3.2. Phân hệ đợt 2 và đợt 3
+
+Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, theo dạng liệt kê vai trò được phép.
 
 | Quyền | Mô tả | Vai trò được phép |
 |---|---|---|
@@ -142,6 +261,8 @@ Khi khai thác dữ liệu Nhạy cảm, mọi vai trò cần thêm `PERM-09-unm
 | PERM-16-admin | Định nghĩa chỉ tiêu | TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
 | PERM-17-admin | Bật tắt, cấu hình trợ lý theo tenant | TA |
+
+: Quyền và vai trò được phép của các phân hệ PH-06, 08, 09, 11, 15, 16, 17
 
 ### 3.3. Thanh toán (PH-19)
 
@@ -198,12 +319,18 @@ Bốn mươi tám quyền và ma trận dưới đây lấy nguyên từ khung t
 | PERM-19-migration-run | Chạy di trú, đối chiếu: lô nhập, đối chiếu sau di trú, xem kết quả | 065, 068 | — | — | ● | — | ● | — | — | — | — |
 | PERM-19-migration-switch | Đổi chế độ định tuyến: lập và quyết định đề nghị `ROUTING_MODE_CHANGE` (người lập ≠ người duyệt) | 066 | — | — | ● | ● | — | — | — | — | — |
 
+: Ma trận 48 quyền thanh toán PH-19 theo vai trò
+
 ### 3.4. Nhà phát triển
+
+Vai trò nhà phát triển chỉ có hai quyền của cổng nhà phát triển PH-15, giới hạn trong ứng dụng được giao.
 
 | Quyền | Mô tả | DEVELOPER |
 |---|---|---|
 | PERM-15-app | Quản lý ứng dụng sandbox, xem thông tin xác thực của ứng dụng được giao | ● |
 | PERM-15-try | Thử API trên sandbox | ● |
+
+: Quyền của vai trò nhà phát triển ở cổng PH-15
 
 ## 4. Tách nhiệm vụ
 
@@ -219,7 +346,45 @@ Bảng dưới đây liệt kê các cặp vai trò không được gán cùng l
 | PAYMENT_ADMIN | PAYMENT_APPROVER | Người cấu hình kênh không duyệt kích hoạt kênh (như dòng trên) |
 | AUDITOR | mọi vai trò có quyền ghi của PH-19 | Độc lập kiểm toán (khung PH-19 §13.4 quy tắc 7) |
 
+: Các cặp vai trò không được gán cùng một người
+
 Ngoài tách vai trò, nguyên tắc bốn mắt (FR-00-071) vẫn áp dụng cho từng đối tượng.
+
+Sơ đồ dưới vẽ bảy cặp xung đột thành các đường nối, để thấy vai trò nào không được cộng dồn với vai trò nào.
+
+```{.mermaid caption="Các cặp vai trò xung đột phải tách nhiệm vụ"}
+flowchart TB
+  IE[INTEGRATION_ENGINEER] --- IA[INTEGRATION_APPROVER]
+  SO[SERVICE_OWNER] --- CA[CATALOG_APPROVER]
+  DS[DATA_STEWARD] --- DA[DATA_APPROVER]
+  PAC[PAYMENT_ACCOUNTANT] --- PAP[PAYMENT_APPROVER]
+  PAD[PAYMENT_ADMIN] --- PAP
+  TA[TENANT_ADMIN] --- AU[AUDITOR]
+  AU --- PW["Mọi vai trò có quyền ghi của PH-19"]
+```
+
+Hình cho thấy vai trò thiết kế, soạn, đề xuất luôn đứng đối diện vai trò duyệt, và AUDITOR đối lập với cả quản trị lẫn mọi vai trò ghi của thanh toán; `PAYMENT_APPROVER` đối lập với hai vai trò lập đề nghị.
+
+Duyệt bốn mắt hoạt động ở mức từng đối tượng nên bổ sung cho tách vai trò. Sơ đồ dưới cho thấy một đề nghị đi từ người lập sang người duyệt và điểm chặn khi hai người trùng nhau.
+
+```{.mermaid caption="Duyệt bốn mắt trên một đối tượng (FR-00-071)"}
+sequenceDiagram
+  actor L as Người lập đề nghị
+  participant H as Datahub và OPA
+  actor D as Người duyệt
+  L->>H: Gửi đối tượng để duyệt (submit)
+  H->>H: Ghi người gửi, kiểm tra vai trò gửi
+  H->>D: Đưa vào hộp Việc của tôi
+  D->>H: Duyệt hoặc từ chối (approve)
+  H->>H: So người duyệt với người tạo hoặc gửi
+  alt Người duyệt trùng người tạo hoặc gửi
+    H-->>D: Từ chối 403 và ghi kiểm toán
+  else Hai người khác nhau và có quyền approve
+    H-->>L: Kết quả duyệt, ghi kiểm toán
+  end
+```
+
+Hình cho thấy kiểm tra bốn mắt diễn ra ở lúc duyệt chứ không chỉ lúc gán vai trò: người có đủ quyền `approve` vẫn bị từ chối nếu chính họ là người tạo hoặc gửi đối tượng.
 
 ## 5. Quyền của HTTT thành viên (máy)
 
@@ -234,7 +399,11 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | `rdm:read` | Tra cứu danh mục dùng chung | Mặc định cho mọi HTTT `ACTIVE` |
 | `payment:create` | Tạo yêu cầu thanh toán | HTTT được khai báo là đối tác ở PH-19 |
 
+: Scope OAuth của HTTT thành viên (máy) và điều kiện cấp
+
 ## 6. Ánh xạ từ quyền của hệ cũ
+
+Bảng dưới nêu cách quyền ở từng khối hệ cũ được chuyển thành vai trò và quyền của Datahub, làm đầu vào khi di trú người dùng.
 
 | Hệ cũ | Datahub |
 |---|---|
@@ -242,14 +411,17 @@ HTTT gọi Datahub bằng token `client_credentials` hoặc mTLS. Token mang ph�
 | Plan "Define: nhóm được phép truy cập" (APIM) | Điều kiện đăng ký sử dụng của gói (PH-02) |
 | Vai trò Keycloak tự đặt ở từng khối | Vai trò chuẩn ở mục 2, gán lại khi di trú người dùng |
 
+: Ánh xạ quyền hệ cũ sang vai trò Datahub
+
 ## 7. Kiểm thử
 
 D05-01 sinh tự động từ ma trận mục 3 hai nhóm ca kiểm thử cho mỗi API: một ca dương với vai trò có ● hoặc ○, một ca âm với một vai trò có —. Ca ○ có thêm một ca âm với đối tượng của tổ chức khác. Kỳ vọng ca âm là `403` khi người dùng biết đối tượng tồn tại trong phạm vi của mình, và `404` khi đối tượng thuộc tổ chức hoặc tenant khác.
 
 ## Lịch sử phiên bản
 
-| Phiên bản | Ngày | Nội dung |
-|---|---|---|
-| 0.1 | 2026-11-21 | Bản đầu |
-| 0.2 | 2026-11-26 | Mục 3.3 thay bằng 48 quyền và ma trận của khung PH-19 §13; vai trò thanh toán đổi `PAYMENT_OFFICER` thành `PAYMENT_ACCOUNTANT`, thêm `PAYMENT_OPERATOR`, `PARTNER_SYSTEM`; tách mục 3.4 cho nhà phát triển |
-| 0.3 | 2026-11-26 | Mục 3.1: thêm tám quyền PH-05 (`adapter`, `test`, `operate`, `approve`, `db-write-consent`, `kamelet-submit`, `audit-read`, `admin`), mở rộng mô tả `PERM-05-connection`, `PERM-05-kamelet-approve` thêm IA cho Kamelet của tỉnh (D02-03-PH05 §3.2) |
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 2026-11-21 | Nhóm viết tài liệu (Claude) | Bản đầu |
+| 0.2 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.3 thay bằng 48 quyền và ma trận của khung PH-19 §13; vai trò thanh toán đổi `PAYMENT_OFFICER` thành `PAYMENT_ACCOUNTANT`, thêm `PAYMENT_OPERATOR`, `PARTNER_SYSTEM`; tách mục 3.4 cho nhà phát triển |
+| 0.3 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Mục 3.1: thêm tám quyền PH-05 (`adapter`, `test`, `operate`, `approve`, `db-write-consent`, `kamelet-submit`, `audit-read`, `admin`), mở rộng mô tả `PERM-05-connection`, `PERM-05-kamelet-approve` thêm IA cho Kamelet của tỉnh (D02-03-PH05 §3.2) |
+| 0.4 | 2026-11-26 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp: thêm tóm tắt cho hội đồng thẩm định, sáu mục giới thiệu (mục 1.1 đến 1.6), sơ đồ mô hình phân quyền, sơ đồ cặp vai trò xung đột và sơ đồ duyệt bốn mắt kèm thuyết minh, đoạn mở cho các mục còn thiếu, viết lại chú thích bảng. Giữ nguyên toàn bộ vai trò, quyền, ma trận |
