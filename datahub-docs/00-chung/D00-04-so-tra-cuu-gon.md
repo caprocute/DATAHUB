@@ -156,10 +156,10 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | LGC-PAY | — | 26 | `LGC-PAY-001` | `LGC-PAY-026` | `LGC-PAY-027` |
 | LGC-TOOL | — | 29 | `LGC-TOOL-001` | `LGC-TOOL-029` | `LGC-TOOL-030` |
 | REQ | — | 31 | `REQ-01` | `REQ-99` | `REQ-100` |
-| CMP-LAW | — | 27 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
+| CMP-LAW | — | 33 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
 | PERM | 01…20 | 120 | — | — | động từ theo D02-08 |
 
-: Dải đã dùng thực tế (sinh tự động)
+: Dải mã đã dùng thực tế trong bộ tài liệu (sinh tự động)
 
 <!-- dai-ma:ket-thuc -->
 
