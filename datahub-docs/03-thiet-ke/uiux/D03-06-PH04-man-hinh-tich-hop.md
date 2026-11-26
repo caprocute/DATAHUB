@@ -378,7 +378,9 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-025 | Vui lòng nhập lý do (ít nhất {min} ký tự). | Focus ô lý do |
 | ERR-04-027 | Không tìm thấy không gian làm việc "{workspace}". | "Chọn không gian khác" |
 | ERR-04-028 | Mã không gian làm việc đã được dùng. | Focus ô mã |
+| ERR-04-026 | Mỗi trang tối đa 100 dòng. | Bộ chọn số dòng |
 | ERR-04-029 | Không hồ sơ runtime nào có đủ thành phần: {components}. | "Đề xuất thành phần" |
+| ERR-04-030 | Không tìm thấy đối tượng được yêu cầu (lần chạy thử, ca kiểm thử, triển khai hoặc lệnh). | Trang lỗi của tài nguyên con |
 | ERR-04-031 | Câu lệnh SQL ở chặng "{node}" không được phép: {reason}. Luồng chỉ được đọc dữ liệu. | Liên kết quy định Q359 |
 | ERR-04-032 | Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt {limit}. | "Chọn tệp khác" (UI-04-18) |
 | ERR-04-033 | Định nghĩa luồng vượt {limit}. Tách thành nhiều luồng hoặc luồng con. | — |
@@ -391,12 +393,14 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-040 | Không quay lui được về v{n} vì phiên bản đó dùng thành phần "{component}" nay không còn được phép. | "Xem chính sách thành phần" |
 | ERR-04-041 | Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn. | — |
 | ERR-04-042 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | "Mở trình thiết kế" (mục 10.17) |
-| ERR-04-043 | HTTT "{system}" chưa được kết nạp ở PH-01 nên chưa dùng được làm nguồn hoặc đích của luồng đối ngoại. | "Xem HTTT ở PH-01" |
+| ERR-04-043 | HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT. | Bảng Vấn đề; "Xem HTTT ở PH-01" |
 | ERR-04-045 | Bạn không có quyền thực hiện thao tác này. | — |
+| ERR-04-047 | Chưa lấy được dữ liệu từ {phân hệ}. Thử lại sau. | Khối dữ liệu phụ thuộc (kết nối, số liệu, lịch sử); "Thử lại" |
+| ERR-04-049 | Giá trị của {tham số} không hợp lệ. | Dưới trường, bộ lọc |
 
-: Câu hiển thị theo mã lỗi ERR-04 (12 câu bản 0.2 lấy từ D02-04-PH04 §8.4, riêng ERR-04-043 viết mới)
+: Câu hiển thị theo mã lỗi ERR-04 (bản 0.2 đồng bộ với D02-03-PH04 §9.2 và D02-04-PH04 §8.4)
 
-Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi. Bản 0.2 bổ sung câu cho ERR-04-004, 007, 018, 027, 028, 032, 034, 035, 039, 042, 043, 045 để không màn nào phải hiện `title` thô; câu của ERR-04-043 là câu mới, ghi ở mục Đề nghị đồng bộ.
+Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi. Bản 0.2 bổ sung câu cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049, lấy nguyên văn từ D02-04-PH04 §8.4 và D02-03-PH04 §9.2, để không màn nào phải hiện `title` thô.
 
 ## 6. Trạng thái màn hình dùng chung
 
