@@ -29,7 +29,7 @@ Mỗi dòng dưới đây có vì thiếu nó thì tác nhân sẽ làm sai.
 
 | Tầng | Chốt |
 |---|---|
-| Java | 21, Spring Boot 4.0.2, Spring Modulith 2.0.1, Spring Security resource server (JWT RS256) |
+| Java | 21, Spring Boot 4.0.10, Spring Modulith 2.0.10 (nâng bản vá khi Trivy báo, không hạ), Spring Security resource server (JWT RS256) |
 | CSDL | PostgreSQL 18, JPA/Hibernate, schema theo phân hệ, RLS; DDL lấy NGUYÊN từ `datahub-docs/.../ddl` (không viết DDL riêng) |
 | Test Java | JUnit 5, AssertJ, Testcontainers (`postgres:18`), Cucumber-JVM 7 (Gherkin `# language: vi`), ArchUnit, JaCoCo |
 | Web | Node 22, npm workspaces, React 19, TypeScript 5 strict, Vite, antd 6, TanStack Query 5, React Router 7, openapi-typescript + openapi-fetch |

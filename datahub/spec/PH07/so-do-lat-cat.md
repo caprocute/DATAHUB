@@ -35,7 +35,8 @@
 | Kiểm sẵn sàng (đọc chéo) | 6 mâu thuẫn FRS ↔ OpenAPI ↔ DDL ↔ D02-08 (quyền, mã lỗi vòng, xóa mềm, mã lỗi kiểm tra, tiền điều kiện TC, `createdBy`) | Tác nhân viết tự chọn, mỗi lần một kiểu |
 | G2–G4 tự động | Phiên viết tự chạy và tự sửa trước khi báo xong (số lần đỏ trong phiên không đếm) | — |
 | Phiên đánh giá độc lập | **1 lỗi Cao mà mọi test tự động đều xanh**: khung cây nhóm tràn, nút "Thêm nhóm" không bấm được khi ~30 nhóm (luật bố cục CC-FE-14); 3 lỗi Thấp (POST ép số thành chuỗi, `px` viết cứng, PATCH rỗng); 1 test E2E chập chờn; phát hiện cổng G5 báo sai "có phát hiện" khi Semgrep không tải được luật | Lỗi Cao lọt vào mã mẫu và bị nhân bản sang mọi màn hình sau |
-| G5 | Semgrep không chạy được trong container (proxy chặn tải luật); chạy ở CI | — |
+| G5 trên CI (PR #39) | Semgrep 0 phát hiện; **Trivy: 39 lỗ hổng (11 CRITICAL, 28 HIGH)** vì tác nhân viết chọn Spring Boot 4.0.2 cũ (Tomcat, Spring Security, Jackson, pgjdbc). Nâng 4.0.10, 87 test vẫn xanh. Gitleaks báo nhầm 5 chuỗi `Idempotency-Key` giả trong test | Mã mẫu mang lỗ hổng biết trước vào mọi phân hệ sau |
+| CI lần đầu | Test E2E chập chờn T5 lặp lại: chờ `getAnimations()` rỗng treo khi có hiệu ứng lặp vô hạn; sửa chỉ chờ hiệu ứng hữu hạn. Hai lỗi hạ tầng CI: tag `trivy-action` không còn, Maven Central trả 429 cho Trivy | — |
 | G6 người | Chưa làm | — |
 
 Hơn 40 ca phá ngoài Gherkin (JWT giả, `alg: none`, header tenant giả, `Idempotency-Key` chéo tenant, 8 PATCH song song cùng ETag, cha khác tenant…) đều đạt ngay vòng 1.
@@ -48,7 +49,9 @@ Hơn 40 ca phá ngoài Gherkin (JWT giả, `alg: none`, header tenant giả, `Id
 4. **Gói đặc tả nhỏ đủ dùng.** Tác nhân viết chỉ cần 146 dòng tóm tắt + 13 quyết định + lát cắt 616 dòng + Gherkin; không phải đọc FRS 470 KB. Không có câu hỏi nào vào `hang-cho.md`.
 5. **Rào chắn hoạt động cả với chính quy trình.** Bộ phân loại quyền chặn tác nhân đánh giá tự lật cờ `passes` (lý do "làm suy yếu giám sát"). Nghĩa là trong cấu hình hiện tại, cờ `passes` chỉ nên được lật bởi người (G6) hoặc bởi workflow CI sau khi mọi cổng xanh, không bởi tác nhân trong phiên. Khuôn đã ghi theo hướng này.
 6. **Cổng phải phân biệt "không chạy được" với "đạt"/"trượt"** (G5 Semgrep). Cổng im lặng khi hỏng còn tệ hơn không có cổng.
-7. **Phạm vi chưa phủ** của lát cắt này: APISIX, máy chủ định danh và OPA thật, Kafka và Debezium (mới tới outbox), Helm, bảng danh mục F-07-001. Lát cắt tiếp theo nên là F-07-001/003 (danh sách, tạo danh mục) để phủ bảng ProTable và luồng nhiều bước.
+7. **Khuôn phải ghim phiên bản mới nhất đã vá cho tác nhân.** Tác nhân chọn phiên bản theo trí nhớ huấn luyện, nên ra bản cũ có CVE. Hiến chương `datahub/AGENTS.md` nên ghi phiên bản chốt, và Trivy phải chạy được ngay trong phiên viết.
+8. **Đặt tên biến không chứa `key`, `token`, `secret` cho giá trị test giả**, nếu không gitleaks quét lịch sử PR sẽ chặn.
+9. **Phạm vi chưa phủ** của lát cắt này: APISIX, máy chủ định danh và OPA thật, Kafka và Debezium (mới tới outbox), Helm, bảng danh mục F-07-001. Lát cắt tiếp theo nên là F-07-001/003 (danh sách, tạo danh mục) để phủ bảng ProTable và luồng nhiều bước.
 
 ## 5. Ước tính khi nhân rộng (giả định, hiệu chỉnh sau 3–5 tính năng)
 
