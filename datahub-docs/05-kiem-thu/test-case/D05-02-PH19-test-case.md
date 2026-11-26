@@ -951,7 +951,7 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
   1. Sửa `responseCode` trong tham số rồi gọi.
   2. Thêm `&returnUrl=https://evil.test` và `&next=//evil.test`.
   3. Gọi với `connectionKey` không tồn tại.
-- **Mong đợi** Bước 1 trả `400`, trang "Không xác nhận được kết quả", không chuyển tới đối tác; ghi sự kiện an ninh. Bước 2: tham số bị bỏ qua, địa chỉ chuyển về chỉ là `returnUrl` đã lưu. Bước 3 trả `404` trang lỗi chung, không lộ lý do.
+- **Mong đợi** Bước 1 trả `400`, trang "Không xác nhận được kết quả", không chuyển tới đối tác; ghi sự kiện an ninh. Bước 2: tham số bị bỏ qua, địa chỉ chuyển về chỉ là `returnUrl` đã lưu. Bước 3: trang lỗi chung, cùng nội dung với khóa sai khác, không lộ lý do.
 
 ### TS-19-13 · Nhận và xử lý IPN
 
@@ -1644,7 +1644,7 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
 - **Bước**
   1. Hoàn tất TX-OK qua IPN.
   2. Ở `WHSINK` kiểm chữ ký.
-- **Mong đợi** Bước 1: lượt gửi `PENDING` → `DELIVERED` trong p95 ≤ 5 s. Bước 2: header `Datahub-Webhook-Id`, `Datahub-Webhook-Timestamp`, `Datahub-Webhook-Signature`; HMAC-SHA256 trên `{id}.{timestamp}.{body}` khớp; thân có `transactionCode`, `status`, `amount`, `sequence`, không có dữ liệu cá nhân.
+- **Mong đợi** Bước 1: lượt gửi `PENDING` → `DELIVERED` trong p95 ≤ 5 s. Bước 2: header `Webhook-Id`, `Webhook-Timestamp`, `X-Datahub-Signature: t={unix},v1={hex}`, `traceparent`; HMAC-SHA256 trên `{id}.{t}.{body}` khớp; thân CloudEvents JSON thân có `transactionCode`, `status`, `amount`, `sequence`, không có dữ liệu cá nhân.
 
 #### TC-19-652 · Thử lại theo lịch rồi hết lần thử <!--k:wh-retry-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
@@ -1669,12 +1669,12 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
 - **Tiền điều kiện / dữ liệu** Lượt `EXHAUSTED` từ TC-19-652; `WHSINK` đã phục hồi; U-OPR1.
 - **Bước**
   1. UI-19-24 lọc `EXHAUSTED`, mở chi tiết, bấm "Gửi lại", nhập lý do.
-- **Mong đợi** `202`; lượt gửi `PENDING` → `DELIVERED`; giữ nguyên `Datahub-Webhook-Id` (đối tác khử trùng được); các lần thử cũ vẫn xem được. KT: có.
+- **Mong đợi** `202`; lượt gửi `PENDING` → `DELIVERED`; giữ nguyên `Webhook-Id` (đối tác khử trùng được); các lần thử cũ vẫn xem được. KT: có.
 
 #### TC-19-655 · Hủy lượt gửi khi đối tác hoặc đầu nhận bị gỡ <!--k:wh-cancel-->
 - **Loại** Dương · **Ưu tiên** P3 · **Tự động** IT
 - **Truy vết** FR-19-062 · BR-19-020
-- **Tiền điều kiện / dữ liệu** Lượt `RETRYING` tới đầu nhận của P-DVC.
+- **Tiền điều kiện / dữ liệu** Lượt `RETRY_SCHEDULED` tới đầu nhận của P-DVC.
 - **Bước**
   1. Vô hiệu đầu nhận đó.
 - **Mong đợi** Lượt gửi `CANCELLED`, không thử tiếp; thông báo vẫn kéo được qua API-19-109.
@@ -1682,9 +1682,9 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
 #### TC-19-656 · Gửi lại lượt đang gửi, đã giao, sai phiên bản <!--k:wh-resend-neg-->
 - **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
 - **Truy vết** FR-19-062 · API-19-078 · ERR-19-021, 045, 046
-- **Tiền điều kiện / dữ liệu** Lượt `RETRYING`; lượt `DELIVERED`; U-ACC1 (không có `webhook-resend`).
+- **Tiền điều kiện / dữ liệu** Lượt `RETRY_SCHEDULED`; lượt `DELIVERED`; U-ACC1 (không có `webhook-resend`).
 - **Bước**
-  1. Gửi lại lượt `RETRYING`.
+  1. Gửi lại lượt `RETRY_SCHEDULED`.
   2. Gửi lại lượt `DELIVERED`.
   3. Gửi lại với `If-Match` cũ.
   4. U-ACC1 gửi lại.
@@ -1756,7 +1756,7 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
 - **Bước**
   1. Chạy lô `IMPORT` từ UI-19-27.
   2. Mở kết quả.
-- **Mong đợi** Bước 1 trả `202`; lần chạy `SUCCEEDED`. Bước 2: số bản ghi nhập bằng số dòng nguồn trừ dòng lỗi; giao dịch nhập có `origin = LEGACY`, mã hệ cũ trong `legacyRef`, không phát webhook, không sinh sự kiện kết quả; trạng thái hệ cũ được ánh xạ theo bảng của FR-19-065.
+- **Mong đợi** Bước 1 trả `202`; lần chạy `SUCCEEDED`. Bước 2: số bản ghi nhập bằng số dòng nguồn trừ dòng lỗi; giao dịch nhập có `is_migrated = true`, chuyển trạng thái nguồn `MIGRATION`, khóa hệ cũ ghi ở `legacy_mapping`, không phát webhook, không sinh sự kiện kết quả; trạng thái hệ cũ được ánh xạ theo bảng của FR-19-065.
 
 #### TC-19-702 · Chạy lại lô không trùng <!--k:mig-rerun-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
@@ -1765,7 +1765,7 @@ Mỗi chuyển trạng thái của khung §7 có ít nhất một ca; mỗi tr�
 - **Bước**
   1. Chạy lại cùng lô (cùng `Idempotency-Key`).
   2. Chạy lô mới cùng tệp, khóa khác.
-- **Mong đợi** Bước 1 trả lại kết quả lần trước. Bước 2: 0 bản ghi mới, 10.000 "đã có" (khóa tự nhiên `legacyRef`).
+- **Mong đợi** Bước 1 trả lại kết quả lần trước. Bước 2: 0 bản ghi mới, 10.000 "đã có" (ràng buộc duy nhất của `legacy_mapping`; dòng có `source_hash` đổi thì được cập nhật, không chèn trùng).
 
 #### TC-19-703 · Dữ liệu hệ cũ bất thường <!--k:mig-dirty-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** IT
@@ -1877,7 +1877,7 @@ Năm kịch bản TS-19-30…34 kiểm các yêu cầu phi chức năng NFR-19-0
   1. Gửi IPN hợp lệ từ IP lạ.
   2. Gửi IPN tới `connectionKey` của PV-SUS bằng chữ ký của PV-PG.
   3. Gửi tới `connectionKey` ngẫu nhiên.
-- **Mong đợi** Bước 1 trả `403` ERR-19-027 tại biên, không tới `dh-payment`. Bước 2 trả `401` ERR-19-024. Bước 3 trả `404`, thân chung, không lộ tenant.
+- **Mong đợi** Bước 1 trả `403` ERR-19-027 tại biên, không tới `dh-payment`. Bước 2 trả `401` ERR-19-024. Bước 3 trả `403` ERR-19-027 với thân giống hệt bước 1, không lộ khóa có tồn tại hay không, không lộ tenant.
 
 #### TC-19-730 · Xoay bí mật webhook, hai bí mật cùng hiệu lực 7 ngày <!--k:sec-wh-rotate-->
 - **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** IT
@@ -1887,7 +1887,7 @@ Năm kịch bản TS-19-30…34 kiểm các yêu cầu phi chức năng NFR-19-0
   1. Xoay bí mật.
   2. Hoàn tất giao dịch; kiểm header chữ ký.
   3. Tiến 7 ngày 1 phút; hoàn tất giao dịch.
-- **Mong đợi** Bước 2: header có hai chữ ký `v1=` (mới, cũ); đối tác chỉ có bí mật cũ vẫn xác minh được. Bước 3: chỉ còn chữ ký mới. Bí mật mới ≥ 256 bit, chỉ nằm trong OpenBao.
+- **Mong đợi** Bước 2: `X-Datahub-Signature` có hai giá trị `v1` phân tách bằng dấu phẩy (mới, cũ); đối tác chỉ có bí mật cũ vẫn xác minh được. Bước 3: chỉ còn chữ ký mới. Bí mật mới ≥ 256 bit, chỉ nằm trong OpenBao.
 
 #### TC-19-731 · Token đối tác hết hạn, client bị thu hồi <!--k:sec-token-->
 - **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API
@@ -1967,7 +1967,7 @@ Năm kịch bản TS-19-30…34 kiểm các yêu cầu phi chức năng NFR-19-0
 - **Tiền điều kiện / dữ liệu** Hai tenant T68, T99 cùng dùng PayGov với `connectionKey` khác nhau; giao dịch `PENDING` ở T68.
 - **Bước**
   1. Gửi IPN của giao dịch T68 tới `connectionKey` của T99, ký bằng khóa của T99.
-- **Mong đợi** IPN `QUARANTINED` lý do `NOT_FOUND` ở T99; giao dịch của T68 không đổi.
+- **Mong đợi** IPN bị từ chối, hộp nhận ghi `REJECTED` với kết quả xác minh `TENANT_MISMATCH` (mã đơn vị trong nội dung đã ký không thuộc T99); giao dịch của T68 không đổi; sự kiện an ninh.
 
 #### TC-19-756 · Hạn mức tốc độ riêng mỗi tenant <!--k:iso-ratelimit-->
 - **Loại** Bảo mật · **Ưu tiên** P2 · **Tự động** API (k6)
