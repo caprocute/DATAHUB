@@ -36,7 +36,13 @@ export async function openAs(page: Page, persona: Persona, path = '/du-lieu/danh
 /** axe-core: không được có vi phạm WCAG 2.x A/AA nào trên màn hình hiện tại. */
 export async function expectNoAxeViolations(page: Page): Promise<void> {
   // Chờ hiệu ứng chuyển động của antd kết thúc để axe đo tương phản trên trạng thái cuối, không phải khung hình mờ dần.
-  await page.waitForFunction(() => document.getAnimations().length === 0);
+  // Chỉ chờ hiệu ứng hữu hạn đang chạy: hiệu ứng lặp vô hạn (con trỏ nhấp nháy, sóng nút, biểu tượng đang tải) không bao giờ kết thúc
+  // và từng làm test chập chờn khi trùng thời điểm (đánh giá vòng 2, T5).
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every((a) => a.playState !== 'running' || (a.effect?.getComputedTiming().endTime ?? 0) === Infinity),
+  );
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   const summary = results.violations.map((v) => `${v.id} (${v.impact ?? '?'}): ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
   expect(summary, 'vi phạm axe A/AA').toEqual([]);
