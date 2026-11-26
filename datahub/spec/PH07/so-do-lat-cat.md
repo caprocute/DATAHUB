@@ -37,7 +37,7 @@
 | Phiên đánh giá độc lập | **1 lỗi Cao mà mọi test tự động đều xanh**: khung cây nhóm tràn, nút "Thêm nhóm" không bấm được khi ~30 nhóm (luật bố cục CC-FE-14); 3 lỗi Thấp (POST ép số thành chuỗi, `px` viết cứng, PATCH rỗng); 1 test E2E chập chờn; phát hiện cổng G5 báo sai "có phát hiện" khi Semgrep không tải được luật | Lỗi Cao lọt vào mã mẫu và bị nhân bản sang mọi màn hình sau |
 | G5 trên CI (PR #39) | Semgrep 0 phát hiện; **Trivy: 39 lỗ hổng (11 CRITICAL, 28 HIGH)** vì tác nhân viết chọn Spring Boot 4.0.2 cũ (Tomcat, Spring Security, Jackson, pgjdbc). Nâng 4.0.10, 87 test vẫn xanh. Gitleaks báo nhầm 5 chuỗi `Idempotency-Key` giả trong test | Mã mẫu mang lỗ hổng biết trước vào mọi phân hệ sau |
 | CI lần đầu | Test E2E chập chờn T5 lặp lại: chờ `getAnimations()` rỗng treo khi có hiệu ứng lặp vô hạn; sửa chỉ chờ hiệu ứng hữu hạn. Hai lỗi hạ tầng CI: tag `trivy-action` không còn, Maven Central trả 429 cho Trivy | — |
-| G6 người | Chưa làm | — |
+| G6 người | henry duyệt 26/11 18:35 UTC sau khi PR #39 merge; cờ `passes` của F-07-010 lật trong PR riêng | — |
 
 Hơn 40 ca phá ngoài Gherkin (JWT giả, `alg: none`, header tenant giả, `Idempotency-Key` chéo tenant, 8 PATCH song song cùng ETag, cha khác tenant…) đều đạt ngay vòng 1.
 

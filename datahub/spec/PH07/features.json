@@ -414,10 +414,11 @@
     "TC-07-023"
    ],
    "co_tac_vu": "M",
-   "passes": false,
+   "passes": true,
    "lat_cat": "datahub/spec/PH07/lat-cat/F-07-010.openapi.yaml",
    "gherkin": "datahub/spec/PH07/gherkin/F-07-010.feature",
-   "ghi_chu": "Lát cắt mẫu 26/11/2026. Quyết định sẵn sàng: san-sang.md SS-07-03…08."
+   "ghi_chu": "Lát cắt mẫu 26/11/2026. Quyết định sẵn sàng: san-sang.md SS-07-03…08.",
+   "danh_gia": {"ngay": "2026-11-26", "g6_nguoi_duyet": "henry", "g6_luc": "2026-11-26T18:35Z", "pr": "#39", "cong": "G1–G5 xanh trên CI (merge 0dfd01c)", "phien_danh_gia": "datahub/spec/PH07/danh-gia-F-07-010.md (2 vòng, không còn lỗi Cao)"}
   },
   {
    "id": "F-07-011",
