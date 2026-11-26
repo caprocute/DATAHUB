@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D03-06-PH19
 ten: Thiết kế giao diện màn hình phân hệ PH-19 Thanh toán
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Đội phát triển giao diện dh-console, thiết kế UX/UI, phân tích nghiệp vụ, kiểm thử, kế toán và cán bộ vận hành thanh toán của tỉnh
 phan_he: PH-19
 nguoi_lap: Nhóm phân hệ PH-19
+mo_ta: Thiết kế giao diện 28 màn hình của phân hệ Thanh toán điện tử PH-19, gồm khối đặc tả từng màn, wireframe, thành phần, hành động, trạng thái, bảng thông báo theo mã lỗi ERR-19 và ảnh hi-fi theo design system Liquid Glass.
+tai_lieu_lien_quan: D02-03-PH19 FRS; D02-03-PH19-00 Khung truy vết; D02-04-PH19 Use case; D03-02-PH19 SDD; D03-04-PH19 API; D03-05 Design system; D03-06-00 IA và mẫu màn; D05-02-PH19 Test case
 ---
 
 # D03-06-PH19 · Thiết kế giao diện màn hình phân hệ PH-19 Thanh toán
@@ -16,6 +18,8 @@ nguoi_lap: Nhóm phân hệ PH-19
 Tài liệu đặc tả 28 màn hình của PH-19: 27 màn quản trị trong ứng dụng điều hành `dh-console` (gói `features/payment`) và một trang công khai cho người nộp tiền (UI-19-28). Các màn của hệ Payment cũ có giá trị vận hành được giữ bố cục và cột quen thuộc: hai dashboard (tổng quan, kênh thanh toán), danh sách và biểu mẫu nhà cung cấp, nhóm dịch vụ, dịch vụ, đối tác, bảng tra cứu giao dịch với tìm kiếm nâng cao theo trạng thái, lĩnh vực, thời gian. Phần mới là hoàn tiền có phê duyệt, đối soát hằng ngày và chênh lệch, theo dõi IPN và webhook, hộp phê duyệt bốn mắt, cấu hình theo tenant và màn di trú chạy song song với hệ cũ. Giao diện theo design system Liquid Glass trên antd v6: kính mờ chỉ ở lớp điều hướng và lớp nổi, bảng số tiền, biểu mẫu và biên bản dùng nền đặc để đạt WCAG 2.2 AA. Màn nào thuộc MVP, màn nào thuộc bản tăng cường Đ2b được ghi ở mục 1.2.
 
 ## 1. Mục đích, phạm vi và tài liệu liên quan
+
+Chương này nêu tài liệu đặc tả gì, cho ai, trong phạm vi nào và dựa trên tài liệu nào, rồi liệt kê 28 màn của PH-19 trước khi vào chi tiết.
 
 ### 1.1. Mục đích
 
@@ -58,9 +62,13 @@ Mẫu bố cục dùng ký hiệu của khung §11. Vì D03-06-00 chưa phát h�
 | UI-19-27 | Di trú và chạy song song | (CT) | PTN-02 | MVP | Rất chi tiết |
 | UI-19-28 | Trang kết quả thanh toán cho người nộp | Trang đơn | PTN-11 Trang công khai | MVP | Rất chi tiết |
 
+: Phạm vi 28 màn, mẫu bố cục, đợt phát hành và mức chi tiết
+
 Ngoài phạm vi: màn kiểm toán dùng chung của PH-13 (FR-19-053, mở từ tab "Lịch sử"), màn gán vai trò của PH-12, màn tham số chung PH-18 (PH-19 có màn cấu hình riêng UI-19-26 vì tham số có phiên bản và ngày hiệu lực), cổng thanh toán của PayGov (người nộp rời Datahub khi được chuyển hướng).
 
 ### 1.3. Tài liệu liên quan
+
+Các tài liệu dưới đây là nguồn của những mã được dẫn trong tài liệu này; khi có mâu thuẫn, thứ tự ưu tiên theo mục 1.1.
 
 | Mã | Tài liệu | Dùng để |
 |---|---|---|
@@ -73,7 +81,90 @@ Ngoài phạm vi: màn kiểm toán dùng chung của PH-13 (FR-19-053, mở t�
 | [D02-08](../../02-yeu-cau/D02-08-ma-tran-phan-quyen.md) | Ma trận phân quyền | Vai trò, quyền |
 | D03-05-01…04, D03-06-00 | Design system, kiến trúc thông tin | Vật liệu, token, `CMP-*`, mẫu màn (chưa phát hành; dẫn theo mã) |
 
+: Tài liệu liên quan và mục đích dùng
+
+### 1.4. Người đọc
+
+Tài liệu phục vụ năm nhóm người đọc với nhu cầu khác nhau. Bảng dưới chỉ phần mỗi nhóm nên đọc trước, để người đọc không phải đi hết 28 màn khi chỉ cần một khía cạnh.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định, lãnh đạo đơn vị vận hành | Tóm tắt, mục 1, chương 3, khối đặc tả và ảnh hi-fi đầu mỗi màn, chương 36 | Đánh giá phạm vi, mức kế thừa hệ cũ, tính khả thi và tiêu chí nghiệm thu |
+| Đội phát triển giao diện `dh-console` | Chương 2 đến 6, chương 7 đến 34, chương 37 | Lập trình route, thành phần, hành động theo quyền, trạng thái màn |
+| Thiết kế UX/UI | Chương 2, 5, 6, ảnh hi-fi và wireframe từng màn, chương 35 | Hoàn thiện bản hi-fi, kiểm tính nhất quán với design system |
+| Phân tích nghiệp vụ, kế toán và cán bộ vận hành thanh toán của tỉnh | Tóm tắt, chương 3, 4, khối đặc tả đầu mỗi màn, mục 5.2 | Đối chiếu màn với quy trình nghiệp vụ, kiểm câu thông báo |
+| Kiểm thử viên | Chương 5, 6, chương từng màn, chương 35, 36 | Viết ca kiểm thử giao diện, kiểm câu thông báo theo mã lỗi |
+
+: Người đọc, phần cần đọc và mục đích đọc
+
+### 1.5. Thuật ngữ và viết tắt
+
+Thuật ngữ nghiệp vụ dùng thống nhất trên màn được liệt kê ở mục 2.3; bảng dưới chỉ giải thích các viết tắt và mã xuất hiện trong tài liệu này. Định nghĩa đầy đủ ở D00-01 và khung truy vết PH-19.
+
+| Viết tắt, mã | Nghĩa |
+|---|---|
+| NCC | Nhà cung cấp dịch vụ thanh toán (kênh thanh toán), ví dụ PayGov |
+| IPN | Instant Payment Notification, thông báo kết quả thanh toán do NCC gửi về Datahub |
+| HTTT | Hệ thống thông tin; đối tác là HTTT gọi API của PH-19 |
+| UI-19-nn | Mã màn hình của PH-19 (khung truy vết §11) |
+| PTN-nn | Mẫu bố cục màn hình chung của D03-06-00 |
+| `CMP-*` | Thành phần giao diện của design system D03-05 |
+| `PERM-19-*` | Quyền của PH-19; trong bảng của tài liệu thường chỉ ghi phần sau `PERM-19-` |
+| ADM, APR, ACC, OPR, AUD, SEC, TEN, PLA | Vai trò quản trị thanh toán, người duyệt, kế toán, vận hành, kiểm toán, an toàn thông tin, quản trị tỉnh, quản trị nền tảng (khung §13.1) |
+| `allowedActions` | Danh sách hành động máy chủ cho phép trên một đối tượng, quyết định nút nào hiện (mục 2.4) |
+| Liquid Glass | Phong cách vật liệu kính mờ của design system Datahub, chỉ dùng ở lớp điều hướng và lớp nổi |
+| Hi-fi | Bản thiết kế độ trung thực cao, ở đây là ảnh chụp trang HTML tĩnh minh họa |
+| MVP, Đ2b | Đợt phát hành đầu và đợt 2b theo FRS §9.3 |
+| T68 | Mã tenant (tỉnh) ví dụ dùng trong dữ liệu giả định |
+
+: Thuật ngữ và viết tắt
+
+### 1.6. Cấu trúc tài liệu
+
+Chương 1 nêu mục đích, phạm vi, người đọc và danh sách màn. Chương 2 đến 6 là quy ước chung cho mọi màn: nguyên tắc thiết kế, màn hệ cũ được giữ thành gì, điều hướng, nhãn trạng thái và bảng thông báo theo mã lỗi ERR-19 (mục 5.2), trạng thái màn dùng chung. Chương 7 đến 34 đặc tả 28 màn theo thứ tự mã; mỗi màn mở bằng khối đặc tả (mục đích, người dùng và quyền, FR và UC, truy vết hệ cũ, đường dẫn, mẫu bố cục, API, phát hành), tiếp theo là ảnh hi-fi kèm thuyết minh, rồi wireframe, bảng thành phần, cột, trường, hành động và trạng thái. Chương 35 đến 38 là khả năng truy cập và kiểm thử, tiêu chí nghiệm thu, ánh xạ mã nguồn và câu hỏi mở.
+
+### 1.7. Danh sách màn hình
+
+Bảng dưới là danh mục 28 màn của PH-19 theo khung truy vết §11, kèm vai trò của màn trong luồng làm việc, FR được hiện thực và API chính. Mẫu bố cục và đợt phát hành ở bảng mục 1.2; chi tiết từng màn ở chương 7 đến 34.
+
+| Mã | Tên | Vai trò | FR | API |
+|---|---|---|---|---|
+| UI-19-01 | Dashboard tổng quan thanh toán | Giám sát tổng quan | FR-19-056, 059, 011 | API-19-080 |
+| UI-19-02 | Dashboard kênh thanh toán | Giám sát kênh | FR-19-057, 003 (hiển thị), 023 | API-19-081, 003 |
+| UI-19-03 | Danh sách nhà cung cấp | Danh sách | FR-19-007, 010 | API-19-001, 005 |
+| UI-19-04 | Chi tiết nhà cung cấp | Chi tiết, vòng đời | FR-19-008, 002, 006, 010, 011, 012, 069 | API-19-003, 006, 007, 008, 011, 012, 013, 014, 091, 092 |
+| UI-19-05 | Biểu mẫu thêm, sửa nhà cung cấp | Biểu mẫu | FR-19-001, 009 | API-19-002, 004 |
+| UI-19-06 | Trình hướng dẫn kích hoạt nhà cung cấp | Trình hướng dẫn | FR-19-003, 004, 005 | API-19-009, 010, 011, 012 |
+| UI-19-07 | Danh sách nhóm dịch vụ | Danh sách | FR-19-013 | API-19-015, 019 |
+| UI-19-08 | Biểu mẫu nhóm dịch vụ | Biểu mẫu | FR-19-013, 016 | API-19-016, 017, 018, 028 |
+| UI-19-09 | Danh sách dịch vụ thanh toán | Danh sách | FR-19-014, 015, 016 | API-19-020, 024, 025, 026, 027 |
+| UI-19-10 | Chi tiết, biểu mẫu dịch vụ thanh toán | Chi tiết, biểu mẫu | FR-19-014, 015, 016 | API-19-021, 022, 023, 028 |
+| UI-19-11 | Danh sách đối tác | Danh sách | FR-19-017, 018 | API-19-029, 034, 035 |
+| UI-19-12 | Chi tiết đối tác | Chi tiết, vòng đời | FR-19-017, 018, 019, 020, 021, 066 | API-19-030…047 |
+| UI-19-13 | Hộp phê duyệt | Hộp việc, phê duyệt | FR-19-005, 010, 018, 039, 046, 047, 066, 069 | API-19-048, 049, 050 |
+| UI-19-14 | Tra cứu giao dịch | Tra cứu | FR-19-049, 050, 052 | API-19-051, 083, 084 |
+| UI-19-15 | Chi tiết giao dịch | Chi tiết giao dịch | FR-19-051, 028, 026, 037, 055 | API-19-052, 053, 054, 055 |
+| UI-19-16 | Danh sách và chi tiết IPN | Giám sát tích hợp | FR-19-032, 029, 031 | API-19-056, 057, 058 |
+| UI-19-17 | Danh sách yêu cầu hoàn tiền | Danh sách | FR-19-041 | API-19-060 |
+| UI-19-18 | Lập, xem chi tiết yêu cầu hoàn tiền | Biểu mẫu, chi tiết | FR-19-038, 039, 040, 041 | API-19-059, 061, 062, 087 |
+| UI-19-19 | Danh sách phiên đối soát | Danh sách | FR-19-042 | API-19-063, 064 |
+| UI-19-20 | Chi tiết phiên đối soát | Chi tiết, đối soát | FR-19-043, 044, 047, 048 | API-19-065…070, 083 |
+| UI-19-21 | Danh sách chênh lệch | Danh sách, hộp việc | FR-19-045 | API-19-071 |
+| UI-19-22 | Chi tiết chênh lệch và đề xuất xử lý | Chi tiết, xử lý | FR-19-045, 046 | API-19-072, 073, 074, 087 |
+| UI-19-23 | Nhật ký tích hợp | Giám sát tích hợp | FR-19-054, 055 | API-19-075, 076 |
+| UI-19-24 | Theo dõi webhook | Giám sát tích hợp | FR-19-062 | API-19-077, 078, 079 |
+| UI-19-25 | Báo cáo định kỳ | Báo cáo | FR-19-058 | API-19-082, 083, 084 |
+| UI-19-26 | Cấu hình thanh toán của tenant | Cấu hình | FR-19-063 | API-19-085, 086 |
+| UI-19-27 | Di trú và chạy song song | Di trú | FR-19-065, 066, 068 | API-19-089, 090, 047, 088 |
+| UI-19-28 | Trang kết quả thanh toán cho người nộp | Trang công khai | FR-19-025 | API-19-202, 205 |
+
+: Danh sách 28 màn hình PH-19 với FR và API chính
+
+Ảnh hi-fi của mọi màn được sinh từ trang HTML tĩnh bằng công cụ ở `ph19/hifi/` (`gen_hifi.py` sinh HTML theo phong cách Liquid Glass, `shot.js` chụp bằng Playwright ở khung 1440 × 900, riêng UI-19-28 ở khổ điện thoại 360 × 740). Dữ liệu trên ảnh là giả định của tỉnh thí điểm T68; mã giao dịch theo định dạng của FRS. Ảnh minh họa bố cục và vật liệu, không thay đặc tả chữ của từng màn.
+
 ## 2. Nguyên tắc thiết kế áp dụng cho PH-19
+
+Chương này nêu các nguyên tắc chung mà mọi màn PH-19 tuân theo, mỗi nguyên tắc có lý do, để khi gặp trường hợp chưa được đặc tả đội phát triển tự suy ra cách làm nhất quán.
 
 ### 2.1. Bản đồ vật liệu
 
@@ -91,6 +182,8 @@ PH-19 là phân hệ tiền. Người dùng chính là kế toán và cán bộ 
 | Khay tác vụ nền (xuất, sinh biên bản, di trú) | `CMP-BackgroundTaskTray` | `glass-overlay` | Lớp nổi |
 | Trang công khai UI-19-28 | Bố cục riêng | **Đặc** toàn bộ, không kính | Điện thoại cấu hình thấp, ánh sáng ngoài trời |
 
+: Bản đồ vật liệu Liquid Glass và nền đặc theo lớp giao diện
+
 Khi bật "Giảm trong suốt", `prefers-reduced-transparency` hoặc cơ chế tự hạ cấp trên máy yếu (D03-05-01 §7), mọi lớp glass chuyển sang `glass-lite-tint` hoặc `glass-off-tint`. Không màn nào của PH-19 dùng hiệu ứng trong suốt để truyền thông tin.
 
 ### 2.2. Mật độ, số tiền, ngày giờ
@@ -98,7 +191,7 @@ Khi bật "Giảm trong suốt", `prefers-reduced-transparency` hoặc cơ chế
 - Mật độ thường: điều khiển 32 px, dòng bảng 40 px. Bảng giao dịch, dòng đối soát, IPN, nhật ký cho chọn mật độ gọn (dòng 32 px) qua "Mật độ hiển thị"; lựa chọn lưu `localStorage` khóa `dh.pay.density.{tableId}`.
 - Số tiền: kiểu `T-MONEY` (số nguyên đồng). Hiển thị `1.250.000 ₫` theo `vi-VN`, căn phải, `font-variant-numeric: tabular-nums`. Cột tổng có viền trên 1 px. Số âm (chênh lệch, hoàn) có dấu "−" và chữ "(hoàn)" hoặc "(lệch)", không chỉ đổi màu.
 - Ô nhập số tiền (`CMP-NumberInput` biến thể `money`): chỉ nhận chữ số, tự chèn dấu chấm ngăn nghìn khi gõ, gửi API số nguyên; dán "1.250.000" hay "1250000" đều hiểu; hiện dòng đọc bằng chữ bên dưới khi số ≥ 1.000.000 ("Một triệu hai trăm năm mươi nghìn đồng") để chống gõ thừa chữ số 0.
-- Mã giao dịch, mã tham chiếu NCC, mã đơn hàng: phông đơn cách `CMP-CodeText`, có nút sao chép; mã dài rút gọn giữa (`PAY-T68-…-8F3A`) với tooltip mã đầy đủ.
+- Mã giao dịch, mã tham chiếu NCC, mã đơn hàng: phông đơn cách `CMP-CodeText`, có nút sao chép; mã dài rút gọn giữa (`T682611…W4Y9ZK`) với tooltip mã đầy đủ.
 - Ngày giờ `dd/MM/yyyy HH:mm:ss` theo giờ Việt Nam (máy chủ lưu UTC). "Ngày giao dịch" trong bộ lọc và báo cáo là ngày theo giờ Việt Nam. Thời lượng: `ms` dưới 1 giây, `1,2 s`, `2 phút 05 giây`.
 
 ### 2.3. Thuật ngữ
@@ -116,6 +209,8 @@ Mọi đối tượng có vòng đời (NCC, dịch vụ, đối tác, giao dị
 | Có quyền nhưng vi phạm tách nhiệm (người duyệt là người lập) | **Hiện vô hiệu** kèm "Bạn là người lập đề nghị này. Cần một người duyệt khác (tách nhiệm)." |
 | Thao tác ghi đang chạy | Nút ở trạng thái `loading`, khóa nút cùng nhóm, không cho bấm lại |
 
+: Cách hiển thị nút theo quyền, trạng thái và tách nhiệm
+
 Mã hành động dùng trong `allowedActions` và khóa của `disabledReasons` là chuỗi chữ hoa cố định dưới đây. Tài liệu này là nguồn chính thức của danh sách (D03-04-PH19 §1 dẫn về đây); máy chủ tính mỗi mã từ quyền `PERM-19-*` ở cột 3, máy trạng thái khung §7 và quy tắc tách nhiệm khung §13.4.
 
 | Đối tượng | Mã hành động | Quyền | API |
@@ -132,6 +227,8 @@ Mã hành động dùng trong `allowedActions` và khóa của `disabledReasons`
 | Chênh lệch | `ASSIGN`, `CLAIM`, `ESCALATE`, `PROVIDER_RESPONDED`, `NOTE`, `PROPOSE` | `discrepancy-handle` | API-19-072, 073 |
 | Lượt gửi webhook | `RESEND` | `webhook-resend` | API-19-078 |
 | Cấu hình | `CREATE_VERSION` | `config-write` | API-19-086 |
+
+: Mã hành động allowedActions theo đối tượng, quyền và API
 
 Vì thao tác ghi đi kèm `If-Match` (ERR-19-045) và `Idempotency-Key` phía giao diện (mục 2.7), bấm hai lần không sinh hai đề nghị.
 
@@ -188,12 +285,18 @@ Bảng phủ đủ 26 mục `LGC-PAY` (23 mục của D00-03 §4.6 và 3 mục �
 | Ba trạng thái hoàn trả | 025 | Nâng cấp | UI-19-17, UI-19-18 | Quy trình hoàn có phê duyệt hai cấp |
 | Số liệu dashboard đệm 10 phút | 026 | Nâng cấp | UI-19-01, 02 | Trễ tối đa 60 giây; hiện "Cập nhật lúc HH:mm:ss" |
 
+: Màn hệ Payment cũ (LGC-PAY) và màn PH-19 thay thế
+
 ## 4. Điều hướng
+
+Chương này chốt cách người dùng đi tới và đi giữa các màn: sơ đồ điều hướng, đường dẫn và tham số URL, menu theo quyền, breadcrumb và tiêu đề tab.
 
 ### 4.1. Sơ đồ điều hướng
 
-```mermaid
-flowchart LR
+Sơ đồ dưới đây cho thấy các màn của PH-19 trong `dh-console` và đường đi chính giữa chúng; mỗi nút ghi mã màn và tên ngắn, mỗi cạnh có nhãn là thao tác dẫn sang màn kia.
+
+```{.mermaid caption="Sơ đồ điều hướng giữa 27 màn quản trị PH-19"}
+flowchart TB
     M["Menu Thanh toán"] --> D1["UI-19-01 Tổng quan"]
     M --> D2["UI-19-02 Kênh thanh toán"]
     M --> TX["UI-19-14 Tra cứu giao dịch"]
@@ -223,6 +326,8 @@ flowchart LR
     M --> MG["UI-19-27 Di trú"]
     AP -->|"Mở đối tượng"| PD & PTD & RF & DD & RSD
 ```
+
+Sơ đồ có ba trung tâm. UI-19-15 Chi tiết giao dịch là nơi hội tụ của công việc hỗ trợ: từ đây người dùng sang IPN, hoàn tiền và chênh lệch của cùng giao dịch. UI-19-13 Hộp phê duyệt là nơi mọi đề nghị bốn mắt đổ về và từ đó mở ngược lại đối tượng (NCC, đối tác, yêu cầu hoàn, chênh lệch, phiên đối soát). Nhóm danh mục (NCC, dịch vụ, đối tác) đi theo chuỗi danh sách, chi tiết, biểu mẫu; riêng NCC có thêm trình hướng dẫn kích hoạt dẫn tới hộp phê duyệt. Trang người nộp UI-19-28 không nằm trong sơ đồ vì không thuộc `dh-console`.
 
 ### 4.2. Bảng đường dẫn React Router
 
@@ -258,6 +363,8 @@ flowchart LR
 | `/thanh-toan/di-tru` | UI-19-27 | `tab` (`lo-nhap`, `doi-chieu`, `dinh-tuyen`) |
 | `/api/payment-callback/v1/paygov/{connectionKey}/return` (miền công khai qua `apisix-ext`, không nằm trong `dh-console`) | UI-19-28 | Trang là phản hồi HTML của API-19-202; tham số do PayGov gắn. Trang thăm dò API-19-205 với `t` (mã phiên trang) và `s` (chữ ký phiên, hạn 2 phút) |
 
+: Đường dẫn React Router và tham số truy vấn của 28 màn
+
 Ngăn kéo biểu mẫu (UI-19-05, 08, phần sửa của 10) không có đường dẫn riêng; mở lại khi tải trang nhờ tham số `lop` (`them`, `sua`) trên URL của màn nền.
 
 ### 4.3. Menu và phân quyền hiển thị
@@ -286,9 +393,13 @@ Nhóm menu "Thanh toán" (biểu tượng `Wallet`) chỉ hiện khi tenant đã
 | Cấu hình | UI-19-26 | `config-read` | Dấu chấm khi có phiên bản chờ hiệu lực |
 | Di trú, chạy song song | UI-19-27 | `migration-run` hoặc `migration-switch` | — |
 
+: Mục menu Thanh toán, quyền để hiện và huy hiệu số
+
 Huy hiệu lấy từ khối `badges` của API-19-080 gọi với `fields=badges` (một lượt gọi nhẹ, đếm theo quyền người gọi), làm mới 60 giây và khi nhận thông báo đẩy.
 
 ### 4.4. Breadcrumb và tiêu đề tab trình duyệt
+
+Breadcrumb luôn bắt đầu bằng "Thanh toán"; tiêu đề tab trình duyệt giúp người dùng mở nhiều giao dịch cùng lúc phân biệt được các tab.
 
 | Màn | Breadcrumb | Tiêu đề tab |
 |---|---|---|
@@ -301,9 +412,13 @@ Huy hiệu lấy từ khối `badges` của API-19-080 gọi với `fields=badge
 | UI-19-20 | Thanh toán › Đối soát › {NCC} {dd/MM/yyyy} | Đối soát {NCC} {dd/MM} · Datahub |
 | UI-19-22 | Thanh toán › Chênh lệch › {mã chênh lệch} | {mã chênh lệch} · Chênh lệch · Datahub |
 
+: Breadcrumb và tiêu đề tab trình duyệt theo màn
+
 Tiêu đề tab không bao giờ chứa dữ liệu cá nhân người nộp.
 
 ## 5. Quy ước hiển thị dùng chung trong PH-19
+
+Chương này gom hai quy ước mà mọi màn dùng chung: nhãn trạng thái của tám thực thể có vòng đời và câu thông báo người dùng nhìn thấy theo từng mã lỗi ERR-19. Hai bảng này là nguồn duy nhất; màn không tự đặt nhãn hay câu riêng.
 
 ### 5.1. Nhãn trạng thái
 
@@ -390,51 +505,77 @@ Mọi nhãn dùng `CMP-StatusTag` với sắc thái của D03-05-02 §4.4, luôn
 | | `REJECTED` | Từ chối | error | `ShieldX` |
 | Tác vụ nền | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED` | Trong hàng đợi, Đang chạy (có %), Xong, Lỗi, Đã hủy | neutral, info, success, error, neutral | `Clock`, `Loader`, `CircleCheck`, `CircleX`, `Ban` |
 
+: Nhãn, sắc thái và biểu tượng trạng thái theo đối tượng
+
 Loại đề nghị phê duyệt (`ApprovalType`) hiện bằng chữ: Kích hoạt NCC, Ngừng hẳn NCC, Duyệt đối tác, Chấm dứt đối tác, Hoàn tiền, Xử lý chênh lệch, Mở lại phiên đối soát, Đổi chế độ định tuyến, Đổi bảng ánh xạ mã kết quả. Loại chênh lệch: Thiếu ở NCC, Thiếu ở Datahub, Lệch trạng thái, Lệch số tiền, Trùng, Thanh toán muộn, Lệch hoàn tiền, IPN không khớp giao dịch.
 
 ### 5.2. Thông điệp lỗi ERR-19 sang câu hiển thị
 
-Giao diện không hiện `detail` thô khi đã có câu dưới đây; tham số trong `{}` lấy từ trường mở rộng của lỗi RFC 9457. Mọi thông điệp kèm "Mã lỗi {code} · Mã truy vết {traceId}" và nút "Sao chép" (FR-00-080). Lỗi của API đối tác (ERR-19-002…016) và callback (024…028) không xuất hiện trên console trừ khi hiển thị lại trong nhật ký; câu cho các mã đó dùng ở UI-19-16, UI-19-23.
+Bảng này là nguồn duy nhất cho câu thông báo người dùng nhìn thấy theo từng mã `ERR-19-nnn` của khung truy vết §12; FRS, use case và ca kiểm thử dẫn câu từ đây. Giao diện không hiện `detail` thô khi đã có câu dưới đây; tham số trong `{}` lấy từ trường mở rộng của lỗi RFC 9457. Mọi thông điệp kèm "Mã lỗi {code} · Mã truy vết {traceId}" và nút "Sao chép" (FR-00-080). Khóa i18n của mỗi câu là `payment.err.{nnn}` (ví dụ `payment.err.017`).
 
-| Mã | Câu hiển thị | Gợi ý hành động |
-|---|---|---|
-| ERR-19-001 | Thông tin nhập chưa hợp lệ. Kiểm tra các ô được đánh dấu. | Cuộn tới ô lỗi đầu tiên; lỗi từng trường hiện dưới ô |
-| ERR-19-002…016 | Theo tiêu đề khung §12 (hiện trong nhật ký, IPN, chi tiết giao dịch) | — |
-| ERR-19-017 | Kênh thanh toán "{provider}" tạm thời không khả dụng. | "Xem sức khỏe kênh" |
-| ERR-19-018 | Nhà cung cấp từ chối: {mappedReason} | — |
-| ERR-19-019 | Chưa xác định được kết quả tại nhà cung cấp. Hệ thống sẽ tự truy vấn lại. | "Xem dòng thời gian" |
-| ERR-19-020 | Không tìm thấy dữ liệu, hoặc bạn không có quyền xem. | "Về danh sách" |
-| ERR-19-021 | {object} đang ở trạng thái "{statusLabel}" nên không thể {actionLabel}. | Tải lại để thấy trạng thái mới |
-| ERR-19-022 | Thông tin xác thực môi trường {environment} còn thiếu hoặc đã hết hạn: {items}. | "Mở tab Thông tin xác thực" |
-| ERR-19-023 | Giao dịch này vừa được đồng bộ. Thử lại sau {retryAfter} giây (tối đa 10 lần mỗi ngày). | Nút tự bật lại khi hết đếm ngược |
-| ERR-19-024…028 | Sai chữ ký, quá hạn, phát lại, nguồn không được phép, đã cách ly (nhãn mục 5.1) | — |
-| ERR-19-029 | Giao dịch không đủ điều kiện hoàn tiền: {reasonLabel}. | — |
-| ERR-19-030 | Số tiền hoàn vượt số còn được hoàn ({remaining}). | Điền sẵn số còn được hoàn |
-| ERR-19-031 | Đã quá hạn hoàn tiền {windowDays} ngày kể từ ngày thanh toán {paidAt}. | — |
-| ERR-19-032 | Hoàn tiền chưa được bật cho tỉnh, hoặc chế độ thực hiện không phù hợp. | "Xem cấu hình" (người có `config-read`) |
-| ERR-19-033 | Bạn đã {role} đề nghị này nên không thể quyết định. Cần một người khác (tách nhiệm). | — |
-| ERR-19-034 | Đề nghị này đã được {decisionLabel} bởi {actor} lúc {time}. | Tải lại |
-| ERR-19-035 | Checklist kích hoạt chưa đạt: {items}. | "Mở trình hướng dẫn kích hoạt" |
-| ERR-19-036 | Còn {pendingTransactions} giao dịch đang dở và {openSessions} phiên đối soát chưa chốt. | Liên kết tới danh sách đã lọc |
-| ERR-19-037 | Không thể xóa vì đã có dữ liệu phụ thuộc ({dependents}). Dùng "Đề nghị ngừng hẳn". | Mở hộp ngừng hẳn |
-| ERR-19-038 | Mã "{code}" đã được dùng trong tỉnh. | Gợi ý "{code}-2" |
-| ERR-19-039 | Mã danh mục "{code}" không còn hiệu lực trong danh mục {catalog}, hoặc chưa kiểm tra được với danh mục dùng chung. | "Chọn lại", "Thử lại" |
-| ERR-19-040 | Đã có phiên đối soát cho {provider} ngày {date}. | "Mở phiên" |
-| ERR-19-041 | File đối soát không hợp lệ: {reasonLabel}. | Tải file khác |
-| ERR-19-042 | Còn {count} chênh lệch chưa xử lý. | "Xem chênh lệch còn mở" |
-| ERR-19-043 | Phiên đối soát đã chốt, không thể thay đổi. | "Đề nghị mở lại" |
-| ERR-19-044 | Địa chỉ webhook phải dùng https và không trỏ tới mạng nội bộ. | — |
-| ERR-19-045 | {actor} đã thay đổi dữ liệu này lúc {time}. Thay đổi của bạn chưa được lưu. | Mở hộp xung đột (mục 6) |
-| ERR-19-046 | Bạn không có quyền thực hiện thao tác này. | "Liên hệ quản trị tỉnh" |
-| ERR-19-047 | Kết quả có {count} dòng, vượt giới hạn xuất {max}. Thu hẹp bộ lọc. | — |
-| ERR-19-048 | Bạn thao tác quá nhanh. Thử lại sau {retryAfter} giây. | — |
-| ERR-19-049 | Phân hệ thanh toán đang tạm ngừng cho tỉnh. | — |
-| ERR-19-050 | Không ghi được nhật ký kiểm toán nên thao tác đã bị hủy. Thử lại sau ít phút. | "Thử lại" (giữ khóa chống trùng) |
-| ERR-19-099 | Có lỗi hệ thống. Thao tác có thể chưa được thực hiện. | "Thử lại", "Sao chép mã truy vết" |
+Bản 0.2 tách từng mã thành một dòng, kể cả hai nhóm mà bản 0.1 gộp. Lỗi của API đối tác (ERR-19-002…016) trả cho hệ thống đối tác, không hiện như thông báo trên console; cán bộ tỉnh thấy câu tương ứng khi mở dòng nhật ký ở UI-19-23 lọc theo đối tác. Lỗi callback (ERR-19-024…028) chỉ ghi nội bộ và hiện ở UI-19-16, tab "IPN" của UI-19-15, kèm nhãn xác minh của mục 5.1. Cột "Nơi hiển thị" giúp kiểm thử viên biết chỗ cần kiểm câu.
+
+| Mã | Câu hiển thị | Gợi ý hành động | Nơi hiển thị |
+|---|---|---|---|
+| ERR-19-001 | Thông tin nhập chưa hợp lệ. Kiểm tra các ô được đánh dấu. | Cuộn tới ô lỗi đầu tiên; lỗi từng trường hiện dưới ô | Dưới từng ô; tóm tắt đầu biểu mẫu |
+| ERR-19-002 | Yêu cầu của đối tác thiếu khóa chống trùng (`Idempotency-Key`) hoặc khóa sai định dạng. | Đối tác bổ sung khóa 16–64 ký tự rồi gửi lại | UI-19-23 (lọc theo đối tác) |
+| ERR-19-003 | Khóa chống trùng "{idempotencyKey}" đã được dùng cho một yêu cầu có nội dung khác. | Đối tác dùng khóa mới cho yêu cầu mới | UI-19-23 (lọc theo đối tác) |
+| ERR-19-004 | Yêu cầu cùng khóa chống trùng đang được xử lý. Chờ kết quả rồi mới gửi lại. | Đối tác gửi lại sau `Retry-After` | UI-19-23 (lọc theo đối tác) |
+| ERR-19-005 | Đối tác "{partner}" đang ở trạng thái "{statusLabel}" nên không được tạo giao dịch hoặc hoàn tiền. | "Mở chi tiết đối tác" (UI-19-12) | UI-19-23 (lọc theo đối tác) |
+| ERR-19-006 | Đối tác "{partner}" còn ở chế độ hệ cũ nên chưa được gọi trực tiếp API thanh toán của Datahub. | "Xem chế độ định tuyến" (UI-19-27) | UI-19-23 (lọc theo đối tác) |
+| ERR-19-007 | Không tìm thấy dịch vụ thanh toán mã "{serviceCode}" trong tỉnh. | Đối tác kiểm tra mã dịch vụ đã được cấp | UI-19-23 (lọc theo đối tác) |
+| ERR-19-008 | Dịch vụ "{service}" đang ở trạng thái "{statusLabel}" nên không nhận giao dịch mới. | "Mở dịch vụ" (UI-19-10) | UI-19-23 (lọc theo đối tác) |
+| ERR-19-009 | Dịch vụ "{service}" chưa được gán cho đối tác "{partner}", hoặc quyền dùng đã hết hiệu lực. | "Gán dịch vụ" ở UI-19-12 tab "Dịch vụ và hạn mức" | UI-19-23 (lọc theo đối tác) |
+| ERR-19-010 | Số tiền {amount} không hợp lệ. Số tiền phải là số nguyên dương, tính bằng đồng, không vượt trần cho phép. | Đối tác sửa số tiền | UI-19-23 (lọc theo đối tác) |
+| ERR-19-011 | Số tiền {amount} nằm ngoài khoảng cho phép của dịch vụ, từ {minAmount} đến {maxAmount}. | Đối tác sửa số tiền hoặc tỉnh sửa khoảng ở UI-19-10 | UI-19-23 (lọc theo đối tác) |
+| ERR-19-012 | Số tiền {amount} vượt hạn mức mỗi giao dịch của đối tác ({maxAmountPerTxn}). | "Xem hạn mức" ở UI-19-12 tab "Dịch vụ và hạn mức" | UI-19-23 (lọc theo đối tác) |
+| ERR-19-013 | Đối tác đã dùng hết hạn mức trong ngày ({limitLabel}). Có thể giao dịch lại từ 00:00 ngày hôm sau. | "Xem hạn mức" ở UI-19-12 tab "Dịch vụ và hạn mức" | UI-19-23 (lọc theo đối tác) |
+| ERR-19-014 | Loại tiền "{currency}" không được hỗ trợ. Hệ thống chỉ nhận VND. | Đối tác sửa `currency` | UI-19-23 (lọc theo đối tác) |
+| ERR-19-015 | Mã đơn hàng "{partnerOrderId}" đã có giao dịch {transactionCode}. | Liên kết "Mở giao dịch {transactionCode}" (UI-19-15) | UI-19-23 (lọc theo đối tác) |
+| ERR-19-016 | Địa chỉ quay về không thuộc danh sách địa chỉ đã đăng ký của đối tác. | "Sửa địa chỉ quay về" ở UI-19-12 tab "Hồ sơ" | UI-19-23 (lọc theo đối tác) |
+| ERR-19-017 | Kênh thanh toán "{provider}" tạm thời không khả dụng. | "Xem sức khỏe kênh" | Console, `notification` |
+| ERR-19-018 | Nhà cung cấp từ chối khởi tạo thanh toán, lý do "{mappedReason}". | — | UI-19-15, `Alert` |
+| ERR-19-019 | Chưa xác định được kết quả tại nhà cung cấp. Hệ thống sẽ tự truy vấn lại. | "Xem dòng thời gian" | UI-19-15, `Alert` |
+| ERR-19-020 | Không tìm thấy dữ liệu, hoặc bạn không có quyền xem. | "Về danh sách" | Trang lỗi 404 trong `CMP-AppShell` |
+| ERR-19-021 | {object} đang ở trạng thái "{statusLabel}" nên không thể {actionLabel}. | Tải lại để thấy trạng thái mới | `notification` |
+| ERR-19-022 | Thông tin xác thực môi trường {environment} còn thiếu hoặc đã hết hạn: {items}. | "Mở tab Thông tin xác thực" | UI-19-04, UI-19-06, `Alert` |
+| ERR-19-023 | Giao dịch này vừa được đồng bộ. Thử lại sau {retryAfter} giây (tối đa 10 lần mỗi ngày). | Nút tự bật lại khi hết đếm ngược | Nút "Đồng bộ" ở UI-19-15, `message` |
+| ERR-19-024 | Chữ ký của thông báo kết quả (IPN) không xác minh được bằng chứng thư đang dùng hoặc chứng thư kế tiếp. | "Xem chứng thư" ở UI-19-04 tab "Thông tin xác thực" | UI-19-16, UI-19-15 tab "IPN" |
+| ERR-19-025 | Thông báo kết quả (IPN) quá hạn vì dấu thời gian lệch quá 5 phút so với giờ hệ thống. | Kiểm tra đồng hồ máy chủ NCC | UI-19-16, UI-19-15 tab "IPN" |
+| ERR-19-026 | Thông báo kết quả (IPN) bị phát lại với nội dung khác bản đã nhận trước đó. | Báo NCC; không xử lý lại | UI-19-16, UI-19-15 tab "IPN" |
+| ERR-19-027 | Nguồn gửi thông báo kết quả (IPN) không được phép, địa chỉ IP hoặc chứng thư không có trong danh sách cho phép. | "Xem danh sách IP" ở UI-19-04 tab "Thông tin" | UI-19-16, UI-19-15 tab "IPN" |
+| ERR-19-028 | Thông báo kết quả (IPN) đã được tiếp nhận nhưng bị cách ly để xem xét, lý do "{quarantineReasonLabel}". | "Xử lý lại" hoặc "Bỏ qua có lý do" (UI-19-16, Đ2b) | UI-19-16, UI-19-15 tab "IPN" |
+| ERR-19-029 | Giao dịch không đủ điều kiện hoàn tiền: {reasonLabel}. | — | UI-19-18, `Alert` đầu biểu mẫu |
+| ERR-19-030 | Số tiền hoàn vượt số còn được hoàn ({remaining}). | Điền sẵn số còn được hoàn | UI-19-18, dưới ô "Số tiền hoàn" |
+| ERR-19-031 | Đã quá hạn hoàn tiền {windowDays} ngày kể từ ngày thanh toán {paidAt}. | — | UI-19-18, `Alert` |
+| ERR-19-032 | Hoàn tiền chưa được bật cho tỉnh, hoặc chế độ thực hiện không phù hợp. | "Xem cấu hình" (người có `config-read`) | UI-19-18, `Alert` |
+| ERR-19-033 | Bạn đã {role} đề nghị này nên không thể quyết định. Cần một người khác (tách nhiệm). | — | UI-19-13, `Alert` trong ngăn kéo |
+| ERR-19-034 | Đề nghị này đã được {decisionLabel} bởi {actor} lúc {time}. | Tải lại | UI-19-13, `notification` |
+| ERR-19-035 | Checklist kích hoạt chưa đạt: {items}. | "Mở trình hướng dẫn kích hoạt" | UI-19-06, `Alert` liệt kê mục |
+| ERR-19-036 | Còn {pendingTransactions} giao dịch đang dở và {openSessions} phiên đối soát chưa chốt. | Liên kết tới danh sách đã lọc | Hộp ngừng hẳn, `modal` |
+| ERR-19-037 | Không thể xóa vì đã có dữ liệu phụ thuộc ({dependents}). Dùng "Đề nghị ngừng hẳn". | Mở hộp ngừng hẳn | `modal` |
+| ERR-19-038 | Mã "{code}" đã được dùng trong tỉnh. | Gợi ý "{code}-2" | Dưới ô "Mã" |
+| ERR-19-039 | Mã danh mục "{code}" không còn hiệu lực trong danh mục {catalog}, hoặc chưa kiểm tra được với danh mục dùng chung. | "Chọn lại", "Thử lại" | Dưới ô mã danh mục |
+| ERR-19-040 | Đã có phiên đối soát cho {provider} ngày {date}. | "Mở phiên" | `notification` |
+| ERR-19-041 | File đối soát không hợp lệ: {reasonLabel}. | Tải file khác | UI-19-20, dưới vùng tải file |
+| ERR-19-042 | Còn {count} chênh lệch chưa xử lý. | "Xem chênh lệch còn mở" | UI-19-20, `Alert` |
+| ERR-19-043 | Phiên đối soát đã chốt, không thể thay đổi. | "Đề nghị mở lại" | UI-19-20, UI-19-22, `Alert` |
+| ERR-19-044 | Địa chỉ webhook phải dùng https và không trỏ tới mạng nội bộ. | — | Dưới ô "Địa chỉ webhook" |
+| ERR-19-045 | {actor} đã thay đổi dữ liệu này lúc {time}. Thay đổi của bạn chưa được lưu. | Mở hộp xung đột (mục 6) | Hộp xung đột (mục 6) |
+| ERR-19-046 | Bạn không có quyền thực hiện thao tác này. | "Liên hệ quản trị tỉnh" | `notification`; trang 403 nếu là trang |
+| ERR-19-047 | Kết quả có {count} dòng, vượt giới hạn xuất {max}. Thu hẹp bộ lọc. | — | Hộp xuất, `Alert` |
+| ERR-19-048 | Bạn thao tác quá nhanh. Thử lại sau {retryAfter} giây. | — | `message` |
+| ERR-19-049 | Phân hệ thanh toán đang tạm ngừng cho tỉnh. | — | Trang thông báo toàn phân hệ |
+| ERR-19-050 | Không ghi được nhật ký kiểm toán nên thao tác đã bị hủy. Thử lại sau ít phút. | "Thử lại" (giữ khóa chống trùng) | `notification` |
+| ERR-19-099 | Có lỗi hệ thống. Thao tác có thể chưa được thực hiện. | "Thử lại", "Sao chép mã truy vết" | `notification` kèm mã truy vết |
+
+: Thông điệp người dùng nhìn thấy theo mã lỗi ERR-19-001…050, 099
 
 Lỗi thử lại được (cột "Thử lại" của khung §12 là "Có") hiện nút "Thử lại" dùng lại `Idempotency-Key` cũ; khi có `Retry-After`, nút hiện đếm ngược.
 
 ## 6. Trạng thái màn hình dùng chung
+
+Mọi màn có bốn trạng thái bắt buộc (đang tải, rỗng, lỗi, không có quyền) và trạng thái xung đột khi lưu. Bảng dưới quy định cách hiển thị cho ba loại màn chính; màn nào có điểm riêng thì nêu ở chương của màn đó.
 
 | Trạng thái | Danh sách | Chi tiết | Dashboard |
 |---|---|---|---|
@@ -448,13 +589,37 @@ Lỗi thử lại được (cột "Thử lại" của khung §12 là "Có") hi�
 | Mất kết nối | Dải "Mất kết nối, đang thử lại" trên đầu trang; nút ghi vô hiệu | Như danh sách | Số liệu giữ nguyên, ghi "Có thể đã cũ" |
 | Phân hệ tạm ngừng (ERR-19-049) | Dải cảnh báo, ẩn nút ghi | Như danh sách | Như danh sách |
 
+: Trạng thái màn hình dùng chung của PH-19
+
 ## 7. UI-19-01 Dashboard tổng quan thanh toán
 
-Đường dẫn `/thanh-toan` · Quyền `dashboard-read` · FR-19-056, 059, 011 · API-19-080 · LGC-PAY-009, 013, 026 · MVP.
+::: dac-ta
+**Mục đích.** Cho lãnh đạo, kế toán và cán bộ vận hành thấy ngay tình hình thu qua cổng thanh toán của tỉnh trong khoảng thời gian đã chọn: số giao dịch, số tiền, tỷ lệ thành công, phân bổ theo dịch vụ, sức khỏe kênh và việc đang chờ xử lý. Là trang đầu của nhóm "Thanh toán"; bốn thẻ và biểu đồ theo dịch vụ giữ đúng dashboard hệ cũ.
+
+**Người dùng, quyền.** ADM, APR, ACC, OPR, AUD, SEC có `PERM-19-dashboard-read`; thẻ "Chờ tôi duyệt" chỉ hiện với người có quyền duyệt.
+
+**FR, UC hiện thực.** FR-19-056, 059, 011; UC-19-25.
+
+**Truy vết hệ cũ.** LGC-PAY-009, 013, 026.
+
+**Đường dẫn.** `/thanh-toan`.
+
+**Mẫu bố cục.** (DB), PTN-06 Dashboard.
+
+**API.** API-19-080; API-19-051 cho bảng giao dịch mới nhất.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-01 · Dashboard tổng quan thanh toán](ph19/hifi/ui-19-01.png)
+
+Ảnh cho thấy thứ tự đọc của trang: dải cảnh báo kênh ở trên cùng, hàng bốn thẻ viền nét đứt là các chỉ số giữ của hệ cũ, hàng năm thẻ mới có so sánh kỳ trước bằng mũi tên và chữ, rồi hai biểu đồ (theo dịch vụ, theo giờ chia trạng thái có mẫu nền để không phụ thuộc màu) và hai bảng nhỏ. Nền trang là kính của vỏ ứng dụng; mọi thẻ, biểu đồ, bảng dùng nền đặc theo bản đồ vật liệu mục 2.1. Dữ liệu là giả định của tỉnh T68.
 
 Trang đầu của nhóm Thanh toán. Hàng đầu giữ nguyên bốn thẻ và biểu đồ "giao dịch theo dịch vụ" của dashboard hệ cũ để người dùng cũ nhận ra ngay; các khối mới nằm bên dưới.
 
 ### 7.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 ┌ glass-chrome ─────────────────────────────────────────────────────────────────────────────┐
@@ -483,6 +648,8 @@ Trang đầu của nhóm Thanh toán. Hàng đầu giữ nguyên bốn thẻ và
 
 ### 7.2. Thành phần và nguồn dữ liệu
 
+Mỗi khối của dashboard lấy dữ liệu từ một trường của API-19-080 và dẫn sang một màn đã lọc sẵn khi người dùng bấm vào, như bảng dưới.
+
 | Khối | Thành phần | Trường API-19-080 | Nhấp vào |
 |---|---|---|---|
 | Bộ lọc khoảng | `CMP-DateRangePicker` mẫu nhanh Hôm nay, 7 ngày, 30 ngày, Tùy chọn (tối đa 92 ngày) | `range`, `from`, `to` | — |
@@ -495,6 +662,8 @@ Trang đầu của nhóm Thanh toán. Hàng đầu giữ nguyên bốn thẻ và
 | Sức khỏe kênh | Danh sách nhỏ | `providers[]` | UI-19-04 tab Sức khỏe |
 | Giao dịch mới nhất | `CMP-DataTable` 20 dòng, không phân trang | Gọi API-19-051 `size=20&sort=createdAt,desc` với cùng khoảng | UI-19-15 |
 
+: UI-19-01 Dashboard tổng quan thanh toán, thành phần và nguồn dữ liệu
+
 Thẻ số tiền hiện đầy đủ đến đồng; khi chiều rộng thẻ không đủ thì rút "1,73 tỷ ₫" và tooltip số đầy đủ. Thẻ "Chờ tôi duyệt" chỉ hiện với người có quyền duyệt. Giao dịch thử và giao dịch chạy bóng không tính vào số liệu (ghi chú nhỏ dưới tiêu đề).
 
 ### 7.3. Làm mới và trạng thái
@@ -505,9 +674,31 @@ Thẻ số tiền hiện đầy đủ đến đồng; khi chiều rộng thẻ k
 
 ## 8. UI-19-02 Dashboard kênh thanh toán
 
-Đường dẫn `/thanh-toan/kenh` · Quyền `dashboard-read` · FR-19-057, 003 (hiển thị), 023 · API-19-081, 003 · LGC-PAY-003, 020, 023 · MVP.
+::: dac-ta
+**Mục đích.** Theo dõi từng kênh thanh toán (nhà cung cấp) trên một thẻ: trạng thái vòng đời, sức khỏe, mạch ngắt, độ trễ p95, tỷ lệ lỗi, hạn khóa và chứng thư, xu hướng giao dịch 30 ngày, để phát hiện sớm kênh suy giảm. Giữ các trường của màn kênh thanh toán hệ cũ.
+
+**Người dùng, quyền.** ADM, APR, ACC, OPR, AUD, SEC có `PERM-19-dashboard-read`. Màn chỉ đọc.
+
+**FR, UC hiện thực.** FR-19-057, 003 (hiển thị), 023; UC-19-25, UC-19-06.
+
+**Truy vết hệ cũ.** LGC-PAY-003, 020, 023.
+
+**Đường dẫn.** `/thanh-toan/kenh`.
+
+**Mẫu bố cục.** (DB), PTN-06 Dashboard.
+
+**API.** API-19-081, 003.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-02 · Dashboard kênh thanh toán](ph19/hifi/ui-19-02.png)
+
+Mỗi nhà cung cấp là một thẻ nền đặc; nhãn sức khỏe và mạch ngắt nằm cạnh tên, cảnh báo hạn chứng thư hiện bằng chữ đỏ "hết hạn sau N ngày" chứ không chỉ bằng màu. Biểu đồ cột nhỏ 30 ngày có liên kết "Xem dạng bảng" cho trình đọc màn hình. Nhóm "Kênh đã ngừng" thu gọn ở cuối trang.
 
 ### 8.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Kênh thanh toán                                         Cập nhật lúc 09:41:07  ⟳
@@ -536,13 +727,37 @@ Một thẻ mỗi NCC không ở `RETIRED` (NCC `RETIRED` hiện ở nhóm thu g
 | Hạn khóa, chứng thư gần nhất | `nearestCredentialExpiry` | ≤ 7 ngày đỏ, ≤ 30 ngày vàng, có chữ "hết hạn sau N ngày" |
 | Biểu đồ 30 ngày | API-19-081 `channels[].daily` | `CMP-Chart` biến thể `spark` có trục ngày; "Xem dạng bảng" mở bảng 30 dòng |
 
+: UI-19-02 Dashboard kênh thanh toán, nội dung thẻ
+
 Thẻ là liên kết tới UI-19-04 (cả thẻ nhận focus, `Enter` mở). Màn chỉ đọc, không có thao tác ghi.
 
 ## 9. UI-19-03 Danh sách nhà cung cấp
 
-Đường dẫn `/thanh-toan/nha-cung-cap` · Quyền `provider-read` · FR-19-007, 010 · API-19-001, 005 · LGC-PAY-002, 005, 006, 023 · MVP.
+::: dac-ta
+**Mục đích.** Tìm, lọc nhà cung cấp theo trạng thái và sức khỏe; là điểm bắt đầu thêm nhà cung cấp, tạm dừng, mở lại và mở chi tiết. Giữ cột quen thuộc của danh sách nhà cung cấp hệ cũ.
+
+**Người dùng, quyền.** ADM, APR, ACC, OPR, AUD, SEC có `PERM-19-provider-read`; nút thêm cần `PERM-19-provider-write`, tạm dừng và mở lại cần `PERM-19-provider-suspend`.
+
+**FR, UC hiện thực.** FR-19-007, 010; UC-19-05, UC-19-04.
+
+**Truy vết hệ cũ.** LGC-PAY-002, 005, 006, 023.
+
+**Đường dẫn.** `/thanh-toan/nha-cung-cap`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-001, 005.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-03 · Danh sách nhà cung cấp](ph19/hifi/ui-19-03.png)
+
+Ảnh thể hiện mẫu danh sách chuẩn của PH-19: hàng facet đếm theo trạng thái ở trên, thanh công cụ có ô tìm và bộ lọc sức khỏe, bảng nền đặc với nhãn trạng thái có biểu tượng và chữ, cột số canh phải. Biểu tượng ⏳ cạnh nhãn "Đang hoạt động" báo có đề nghị phê duyệt đang chờ cho nhà cung cấp đó.
 
 ### 9.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Nhà cung cấp                                                     [+ Thêm nhà cung cấp]
@@ -559,6 +774,8 @@ Thanh toán › Nhà cung cấp                                                 
 
 ### 9.2. Cột bảng
 
+Bảng dưới liệt kê cột của danh sách, trường API nguồn và quy tắc hiển thị.
+
 | Cột | Trường | Sắp xếp | Ghi chú |
 |---|---|---|---|
 | Mã | `code` | Có | Liên kết tới UI-19-04 |
@@ -572,7 +789,11 @@ Thanh toán › Nhà cung cấp                                                 
 | Hạn thông tin xác thực gần nhất | `nearestCredentialExpiry` | Có | Ẩn mặc định; đỏ, vàng như UI-19-02 |
 | Thao tác | menu `⋯` | — | Theo `allowedActions` |
 
+: UI-19-03 Danh sách nhà cung cấp, cột bảng
+
 ### 9.3. Thao tác
+
+Thao tác hiện theo `allowedActions` của từng dòng (mục 2.4); bảng nêu vị trí, mã hành động và hành vi.
 
 | Thao tác | Vị trí | `allowedActions` | Hành vi |
 |---|---|---|---|
@@ -583,13 +804,37 @@ Thanh toán › Nhà cung cấp                                                 
 | Xóa | Menu, sắc thái `danger` | `DELETE` (chỉ `DRAFT` chưa có giao dịch) | Hộp gõ lại mã, API-19-005; nếu ERR-19-037 thì đề xuất "Đề nghị ngừng hẳn" |
 | Đề nghị ngừng hẳn | Menu | `REQUEST_RETIRE` | Mở UI-19-04 hộp ngừng hẳn |
 
+: UI-19-03 Danh sách nhà cung cấp, thao tác
+
 Không có chọn nhiều và thao tác hàng loạt trên NCC (số lượng ít, mỗi thao tác cần lý do riêng).
 
 ## 10. UI-19-04 Chi tiết nhà cung cấp
 
-Đường dẫn `/thanh-toan/nha-cung-cap/:id` · Quyền `provider-read` · FR-19-008, 002, 006, 010, 011, 012, 069 · API-19-003, 006, 007, 008, 011, 012, 013, 014, 091, 092 · LGC-PAY-003, 005, 008, 009 · MVP (tab xoay khóa: Đ2b).
+::: dac-ta
+**Mục đích.** Xem đầy đủ một nhà cung cấp qua bảy tab (thông tin, thông tin xác thực, kiểm tra, dịch vụ, sức khỏe, ánh xạ mã kết quả, lịch sử) và thực hiện các thao tác vòng đời theo `allowedActions`: kiểm tra kết nối, sửa, tạm dừng, mở lại, đề nghị ngừng hẳn, gắn tham chiếu bí mật.
+
+**Người dùng, quyền.** Xem: `PERM-19-provider-read`. Tab thông tin xác thực: `PERM-19-credential-manage` (ADM, SEC) để gắn hoặc xoay khóa. Tạm dừng: `PERM-19-provider-suspend`. Đề nghị ngừng hẳn: `PERM-19-provider-delete`.
+
+**FR, UC hiện thực.** FR-19-008, 002, 006, 010, 011, 012, 069; UC-19-01, 04, 05, 06.
+
+**Truy vết hệ cũ.** LGC-PAY-003, 005, 008, 009.
+
+**Đường dẫn.** `/thanh-toan/nha-cung-cap/:id`, tham số `tab`, `moi-truong`.
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-003, 006, 007, 008, 011, 012, 013, 014, 091, 092.
+
+**Phát hành, mức chi tiết.** MVP, tab xoay khóa thuộc Đ2b; mức rất chi tiết.
+:::
+
+![UI-19-04 · Chi tiết nhà cung cấp](ph19/hifi/ui-19-04.png)
+
+Ảnh chụp tab "Thông tin xác thực" vì đây là tab có rủi ro an ninh cao nhất. Đầu trang dính dùng kính dày (lớp điều hướng), nội dung tab nền đặc. Bảng chỉ hiện tham chiếu kho bí mật và vân tay, không bao giờ hiện giá trị bí mật; khóa sắp hết hạn có nhãn đỏ bằng chữ. Cột phải là dòng thời gian vòng đời.
 
 ### 10.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Nhà cung cấp › Cổng thanh toán quốc gia
@@ -611,6 +856,8 @@ Khi NCC đang có đề nghị chờ duyệt, dưới đầu trang có dải xan
 
 ### 10.2. Thanh hành động đầu trang
 
+Nút đầu trang hiện theo `allowedActions` của đối tượng; bảng nêu trạng thái cho phép và hành vi của từng nút.
+
 | Nút | `allowedActions` | Trạng thái cho phép (khung §7.1) | Hành vi |
 |---|---|---|---|
 | Kích hoạt | `SUBMIT_ACTIVATION` | `DRAFT` | Mở UI-19-06 |
@@ -621,7 +868,11 @@ Khi NCC đang có đề nghị chờ duyệt, dưới đầu trang có dải xan
 | Đề nghị ngừng hẳn | `REQUEST_RETIRE` | `ACTIVE`, `SUSPENDED` | Hộp lý do và gõ lại mã; nếu ERR-19-036 hiện số việc dở và liên kết |
 | Xóa | `DELETE` | `DRAFT` chưa có giao dịch | Như UI-19-03 |
 
+: UI-19-04 Chi tiết nhà cung cấp, thanh hành động đầu trang
+
 ### 10.3. Các tab
+
+Bảng dưới đặc tả nội dung, nguồn API và thao tác của từng tab.
 
 | Tab | Nội dung | API | Ghi chú |
 |---|---|---|---|
@@ -633,11 +884,33 @@ Khi NCC đang có đề nghị chờ duyệt, dưới đầu trang có dải xan
 | Ánh xạ mã kết quả | Bảng ánh xạ hiện hành (`ACTIVE`): thao tác (`INIT`, `IPN`, `QUERY`, `CANCEL`, `REFUND`, `REFUND_IPN`, `RECON`), mã NCC, mô tả NCC, kết quả nội bộ (`SUCCEEDED`, `FAILED`, `PENDING`, `UNKNOWN`), lý do hiển thị; lọc theo thao tác; dải đầu tab "Phiên bản {n}, hiệu lực từ {lúc}, duyệt bởi {người}". Nút "Đề nghị thay đổi" mở trình soạn: bảng sửa trực tiếp các dòng (thêm, sửa, ngừng), cột "Thay đổi" tô theo loại (thêm, sửa, ngừng) có chữ; lưu tạo đề nghị `RESULT_MAPPING_CHANGE` (API-19-092). Mã chưa ánh xạ gặp gần đây (từ IPN cách ly `UNMAPPED_CODE`) hiện trong khối "Mã lạ gặp 30 ngày qua" kèm nút "Thêm vào đề nghị" | API-19-091, 092 | Kết quả `SUCCEEDED` mới cần cảnh báo "Dòng này làm giao dịch được coi là thành công. Đối chiếu với tài liệu của NCC trước khi gửi." (AC-19-05) |
 | Lịch sử | Bảng kiểm toán đã lọc đối tượng NCC, nhúng từ PH-13 | PH-13 | Nút "Mở trong màn kiểm toán" |
 
+: UI-19-04 Chi tiết nhà cung cấp, các tab
+
 Cột phải "Dòng thời gian vòng đời" (240 px, thu gọn được dưới 1280 px) liệt kê các lần đổi trạng thái kèm người, đề nghị phê duyệt liên quan.
 
 ## 11. UI-19-05 Biểu mẫu thêm, sửa nhà cung cấp
 
-Ngăn kéo phải rộng 640 px trên nền UI-19-03 hoặc UI-19-04 · Quyền `provider-write` · FR-19-001, 009 · API-19-002, 004 · LGC-PAY-001, 004 · MVP.
+::: dac-ta
+**Mục đích.** Khai báo nhà cung cấp mới ở trạng thái `DRAFT` hoặc sửa thông tin nhà cung cấp; kiểm tra hợp lệ tại chỗ trước khi gửi.
+
+**Người dùng, quyền.** ADM có `PERM-19-provider-write`.
+
+**FR, UC hiện thực.** FR-19-001, 009; UC-19-01, UC-19-05.
+
+**Truy vết hệ cũ.** LGC-PAY-001, 004.
+
+**Đường dẫn.** Không có đường dẫn riêng; ngăn kéo phải rộng 640 px trên nền UI-19-03 hoặc UI-19-04, mở lại khi tải trang nhờ `lop=them` hoặc `lop=sua`.
+
+**Mẫu bố cục.** (BM), PTN-04 Biểu mẫu ngăn kéo.
+
+**API.** API-19-002, 004.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-05 · Biểu mẫu thêm, sửa nhà cung cấp](ph19/hifi/ui-19-05.png)
+
+Ngăn kéo là lớp nổi nên dùng kính dày, các ô nhập bên trong nền đặc. Mỗi ô có nhãn rõ, dấu sao cho trường bắt buộc và câu gợi ý định dạng ngay dưới ô. Nút "Lưu bản nháp" cố định ở chân ngăn kéo; danh sách phía sau vẫn thấy được để người dùng giữ ngữ cảnh.
 
 ### 11.1. Trường
 
@@ -656,6 +929,8 @@ Trường khớp `ProviderCreate`, `ProviderUpdate` của D03-04-PH19.
 | | Đầu mối nghiệp vụ | `bizContact` | Nhóm ô | Không | Như trên | |
 | | Ngày hiệu lực | `effectiveFrom` | Ngày | Không | Không trước hôm nay khi tạo | Cột "Ngày bắt đầu" của hệ cũ; tự điền khi kích hoạt nếu trống |
 
+: UI-19-05 Biểu mẫu thêm, sửa nhà cung cấp, trường và kiểm tra hợp lệ
+
 Danh sách IP nguồn được phép gửi callback không nhập ở biểu mẫu này: nó là cấu hình biên APISIX và chính sách mạng do kỹ sư nền tảng quản lý (D03-09), tab Thông tin của UI-19-04 chỉ hiển thị để đối chiếu. Đường callback cần đăng ký với PayGov (`callbackUrls`) do hệ thống sinh, hiện ở tab Thông tin sau khi tạo.
 
 Chế độ sửa: không mở được khi NCC `PENDING_ACTIVATION`, `RETIRED` (nút "Sửa" vô hiệu kèm lý do). Khi NCC đang `ACTIVE` hoặc `SUSPENDED`, đổi trường kết nối (`sandboxBaseUrl`, `productionBaseUrl`, `merchantRef`) hiện dải vàng "Thay đổi kết nối của nhà cung cấp đang thu tiền chỉ được áp dụng sau khi kiểm tra kết nối môi trường thật với giá trị mới đạt. Trong lúc chờ, hệ thống vẫn dùng giá trị cũ." (BR-19-026). Sau khi lưu, UI-19-04 hiện dải "Có thay đổi kết nối chờ áp dụng" với bảng giá trị cũ, mới và nút "Kiểm tra kết nối để áp dụng". Biểu mẫu chỉ gửi trường thay đổi (JSON Merge Patch) kèm `If-Match`; xung đột theo mục 6.
@@ -666,11 +941,33 @@ Tạo mới thành công: đóng ngăn kéo, chuyển tới UI-19-04, thông bá
 
 ## 12. UI-19-06 Trình hướng dẫn kích hoạt nhà cung cấp
 
-Đường dẫn `/thanh-toan/nha-cung-cap/:id/kich-hoat` · Quyền `provider-write`, `provider-test` · FR-19-003, 004, 005 · API-19-009, 010, 011, 012 · LGC-PAY-001, 007 · MVP.
+::: dac-ta
+**Mục đích.** Dẫn cán bộ qua bốn bước kích hoạt nhà cung cấp theo đúng thứ tự hệ cũ (kiểm tra kết nối, giao dịch thử, checklist, gửi duyệt), mỗi bước có kết quả và bằng chứng; chỉ gửi được đề nghị kích hoạt khi checklist đạt.
+
+**Người dùng, quyền.** ADM có `PERM-19-provider-write` và `PERM-19-provider-test`; quyết định kích hoạt do APR (`PERM-19-provider-activate`) làm ở UI-19-13.
+
+**FR, UC hiện thực.** FR-19-003, 004, 005; UC-19-02, UC-19-03.
+
+**Truy vết hệ cũ.** LGC-PAY-001, 007.
+
+**Đường dẫn.** `/thanh-toan/nha-cung-cap/:id/kich-hoat`, tham số `buoc` (1…4).
+
+**Mẫu bố cục.** (HD), PTN-05 Wizard.
+
+**API.** API-19-009, 010, 011, 012.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-06 · Trình hướng dẫn kích hoạt nhà cung cấp](ph19/hifi/ui-19-06.png)
+
+Ảnh ở bước ① với một mục không đạt: dòng lỗi ghi mã HTTP, mã ERR-19-022 và liên kết sửa; dải thông báo đỏ dùng đúng câu của ERR-19-022 ở mục 5.2. Nút "Tiếp tục" bị vô hiệu cho tới khi mọi mục đạt; dưới bảng ghi số lần chạy, giờ, người chạy để làm bằng chứng.
 
 Thứ tự bốn bước giữ đúng hệ cũ (kết nối → giao dịch mẫu → nhận phản hồi → đưa vào danh sách), bổ sung bằng chứng và phê duyệt.
 
 ### 12.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Nhà cung cấp › Cổng thanh toán quốc gia › Kích hoạt
@@ -689,6 +986,8 @@ Thanh toán › Nhà cung cấp › Cổng thanh toán quốc gia › Kích ho�
 
 ### 12.2. Các bước
 
+Mỗi bước của trình hướng dẫn có nội dung, API và điều kiện để sang bước kế tiếp như bảng dưới.
+
 | Bước | Nội dung | API | Điều kiện "Tiếp tục" |
 |---|---|---|---|
 | ① Kiểm tra kết nối | Chọn môi trường; chạy; hiện từng bước con (DNS, TLS, xác thực, gọi API kiểm tra) với kết quả, thời lượng, thông điệp; lịch sử 5 lần gần nhất | API-19-009, 011 | Có lần `PASSED` cho môi trường thử trong 24 giờ (môi trường thật kiểm ở bước ③) |
@@ -696,17 +995,59 @@ Thanh toán › Nhà cung cấp › Cổng thanh toán quốc gia › Kích ho�
 | ③ Checklist | Bốn điều kiện của BR-19-010 lấy từ `check-runs.checklist`: (1) kiểm tra kết nối môi trường thật đạt trong 24 giờ gần nhất (nút "Chạy kiểm tra môi trường thật" ngay tại dòng); (2) giao dịch thử đạt kèm IPN hợp lệ trong 7 ngày; (3) thông tin xác thực môi trường thật còn hạn ≥ 30 ngày; (4) có đầu mối kỹ thuật và nghiệp vụ. Mỗi mục ✓/✗ có chữ, thời điểm đạt, liên kết tới chỗ sửa. Khối thông tin thêm (không chặn): bảng ánh xạ mã kết quả đang dùng phiên bản nào | API-19-011 | Mọi mục đạt (ERR-19-035 nếu không) |
 | ④ Gửi duyệt | Tóm tắt bằng chứng (đường dẫn tới các lần kiểm tra), ô "Ghi chú cho người duyệt" (bắt buộc 10…1000 ký tự), ngày hiệu lực đề xuất; nút "Gửi đề nghị kích hoạt" | API-19-012 (`ACTIVATE`) | — |
 
+: UI-19-06 Trình hướng dẫn kích hoạt nhà cung cấp, các bước
+
 Sau khi gửi: màn chuyển về UI-19-04 với dải "Đang chờ duyệt kích hoạt". Trình hướng dẫn nhớ bước qua tham số `buoc`; mở lại khi đã có lần đạt thì tự nhảy tới bước đầu tiên chưa đạt. Nếu checklist đổi sau khi gửi (ví dụ khóa hết hạn), người duyệt thấy ở UI-19-13 vì checklist được kiểm tra lại khi duyệt.
 
 ## 13. UI-19-07 Danh sách nhóm dịch vụ
 
-Đường dẫn `/thanh-toan/nhom-dich-vu` · Quyền `service-read` · FR-19-013 · API-19-015, 019 · LGC-PAY-022 · MVP.
+::: dac-ta
+**Mục đích.** Quản lý nhóm dịch vụ (hệ cũ gọi là lĩnh vực giao dịch): xem, thêm, sửa, xóa nhóm rỗng và sắp thứ tự hiển thị dùng cho bộ lọc lĩnh vực và báo cáo.
+
+**Người dùng, quyền.** Xem: ADM, APR, ACC, OPR, AUD có `PERM-19-service-read`; thêm, sửa, xóa, sắp xếp: `PERM-19-service-write`.
+
+**FR, UC hiện thực.** FR-19-013; UC-19-07.
+
+**Truy vết hệ cũ.** LGC-PAY-022.
+
+**Đường dẫn.** `/thanh-toan/nhom-dich-vu`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-015, 019.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-07 · Danh sách nhóm dịch vụ](ph19/hifi/ui-19-07.png)
+
+Bảng gọn sáu nhóm; cột mã lĩnh vực ghi cả mã và tên tra từ danh mục dùng chung PH-07. Tiêu đề cột đầu có tay kéo ⋮⋮ và dòng chú thích phím tắt Alt+↑/↓ để đổi thứ tự không cần chuột.
 
 Bảng đơn giản: mã, tên nhóm (tooltip "hệ cũ gọi là lĩnh vực giao dịch"), mã lĩnh vực trong danh mục dùng chung PH-07 (kèm tên tra từ API-19-028), số dịch vụ, thứ tự hiển thị, người sửa cuối, lúc. Thao tác: "Thêm nhóm" (UI-19-08), "Sửa", "Xóa" (`DELETE`, vô hiệu với tooltip "Nhóm còn {n} dịch vụ" khi còn dịch vụ, ERR-19-037). Kéo thả hoặc `Alt+↑/↓` đổi thứ tự hiển thị (thứ tự dùng cho bộ lọc lĩnh vực ở UI-19-14 và báo cáo).
 
 ## 14. UI-19-08 Biểu mẫu nhóm dịch vụ
 
-Ngăn kéo 480 px · Quyền `service-write` · FR-19-013, 016 · API-19-016, 017, 018, 028 · MVP.
+::: dac-ta
+**Mục đích.** Thêm hoặc sửa một nhóm dịch vụ, kiểm tra mã lĩnh vực với danh mục dùng chung PH-07 khi lưu.
+
+**Người dùng, quyền.** ADM có `PERM-19-service-write`.
+
+**FR, UC hiện thực.** FR-19-013, 016; UC-19-07.
+
+**Truy vết hệ cũ.** Không có mã hệ cũ riêng (thuộc màn lĩnh vực của LGC-PAY-022).
+
+**Đường dẫn.** Không có đường dẫn riêng; ngăn kéo 480 px trên nền UI-19-07 (`lop=them`, `lop=sua`).
+
+**Mẫu bố cục.** (BM), PTN-04 Biểu mẫu ngăn kéo.
+
+**API.** API-19-016, 017, 018, 028.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-08 · Biểu mẫu nhóm dịch vụ](ph19/hifi/ui-19-08.png)
+
+Ngăn kéo hẹp 480 px vì biểu mẫu chỉ có năm trường. Ô mã lĩnh vực là ô chọn có tìm kiếm, kèm câu nhắc rằng mã hết hiệu lực sẽ bị từ chối với ERR-19-039.
 
 | Nhãn | Kiểu | Bắt buộc | Kiểm tra |
 |---|---|---|---|
@@ -716,11 +1057,35 @@ Ngăn kéo 480 px · Quyền `service-write` · FR-19-013, 016 · API-19-016, 01
 | Thứ tự hiển thị | Số | Không | 1…999 |
 | Mô tả | Nhiều dòng | Không | ≤ 1000 |
 
+: UI-19-08 Biểu mẫu nhóm dịch vụ, trường và kiểm tra hợp lệ
+
 ## 15. UI-19-09 Danh sách dịch vụ thanh toán
 
-Đường dẫn `/thanh-toan/dich-vu` · Quyền `service-read` · FR-19-014, 015, 016 · API-19-020, 024, 025, 026, 027 · LGC-PAY-022 · MVP.
+::: dac-ta
+**Mục đích.** Tìm, lọc dịch vụ thanh toán theo trạng thái, nhóm và nhà cung cấp; thực hiện thao tác vòng đời dịch vụ (kích hoạt, tạm dừng, mở lại, ngừng hẳn) ngay trên dòng.
+
+**Người dùng, quyền.** Xem: `PERM-19-service-read`; thêm, sửa: `PERM-19-service-write`; kích hoạt, tạm dừng: `PERM-19-service-activate` (ADM).
+
+**FR, UC hiện thực.** FR-19-014, 015, 016; UC-19-08.
+
+**Truy vết hệ cũ.** LGC-PAY-022.
+
+**Đường dẫn.** `/thanh-toan/dich-vu`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-020, 024, 025, 026, 027.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-09 · Danh sách dịch vụ thanh toán](ph19/hifi/ui-19-09.png)
+
+Ảnh có đủ các trạng thái dịch vụ trên cùng một trang để kiểm thử viên đối chiếu nhãn: Đang hoạt động, Tạm dừng, Nháp. Cột "Khoảng số tiền" và "Mã phí (PH-07)" giúp kế toán kiểm cấu hình mà không phải mở chi tiết.
 
 ### 15.1. Cột bảng
+
+Bảng dưới liệt kê cột của danh sách, trường API nguồn và quy tắc hiển thị.
 
 | Cột | Trường | Ghi chú |
 |---|---|---|
@@ -734,13 +1099,35 @@ Ngăn kéo 480 px · Quyền `service-write` · FR-19-013, 016 · API-19-016, 01
 | Trạng thái | `status` | Facet trên đầu bảng |
 | Cảnh báo danh mục | `catalogInvalid` | Biểu tượng ⚠ khi mã danh mục vừa hết hiệu lực (FR-19-016); tooltip mã và ngày |
 
+: UI-19-09 Danh sách dịch vụ thanh toán, cột bảng
+
 ### 15.2. Thao tác
 
 Theo `allowedActions`: "Thêm dịch vụ" (UI-19-10 chế độ tạo), "Kích hoạt" / "Mở lại" (`ACTIVATE`, API-19-025; vô hiệu khi NCC chưa `ACTIVE` hoặc mã danh mục hết hiệu lực, tooltip nêu lý do cụ thể), "Tạm dừng" (`SUSPEND`, API-19-026, hộp lý do; hộp hiện số đối tác bị ảnh hưởng), "Ngừng hẳn" (`RETIRE`, API-19-027, gõ lại mã; ERR-19-036 hiện việc dở), "Xóa" (`DELETE`, API-19-024). Chọn nhiều dòng cho phép "Tạm dừng" hàng loạt với một lý do chung (cho tình huống dừng cả nhóm khi có sự cố); mỗi dòng gọi API riêng, kết quả hiện bảng "thành công/thất bại kèm lý do".
 
 ## 16. UI-19-10 Chi tiết, biểu mẫu dịch vụ thanh toán
 
-Đường dẫn `/thanh-toan/dich-vu/:id` (tạo mới: `/thanh-toan/dich-vu?lop=them`) · Quyền `service-read`, sửa `service-write` · FR-19-014, 015, 016 · API-19-021, 022, 023, 028 · MVP.
+::: dac-ta
+**Mục đích.** Xem chi tiết một dịch vụ thanh toán (thông tin, đối tác được gán, giao dịch gần nhất, lịch sử) và tạo mới hoặc sửa dịch vụ trong ngăn kéo biểu mẫu.
+
+**Người dùng, quyền.** Xem: `PERM-19-service-read`; tạo, sửa: `PERM-19-service-write`.
+
+**FR, UC hiện thực.** FR-19-014, 015, 016; UC-19-08.
+
+**Truy vết hệ cũ.** Không có mã hệ cũ riêng (thuộc LGC-PAY-022).
+
+**Đường dẫn.** `/thanh-toan/dich-vu/:id`; tạo mới `/thanh-toan/dich-vu?lop=them`; tham số `tab`, `sua`.
+
+**Mẫu bố cục.** (CT) + (BM), PTN-02 Chi tiết và PTN-04 Biểu mẫu ngăn kéo.
+
+**API.** API-19-021, 022, 023, 028.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-10 · Chi tiết, biểu mẫu dịch vụ thanh toán](ph19/hifi/ui-19-10.png)
+
+Ảnh chụp tab "Thông tin" dạng mô tả hai cột; mã phí và mã thủ tục tra từ danh mục dùng chung PH-07 hiện cả mã và tên. Nhóm "người tạo, người sửa cuối" ở cuối bảng đáp ứng yêu cầu thông tin hệ thống của CRUD-R.
 
 Đầu trang: mã, tên, nhãn trạng thái, nút vòng đời như UI-19-09. Tab: "Thông tin" (mô tả hai cột), "Đối tác được gán" (bảng đối tác, hạn mức, liên kết UI-19-12 tab Dịch vụ), "Giao dịch" (bảng 20 giao dịch mới nhất, nút "Tra cứu đầy đủ" mở UI-19-14 lọc dịch vụ), "Lịch sử" (PH-13).
 
@@ -760,19 +1147,63 @@ Biểu mẫu (ngăn kéo 640 px), khớp `ServiceCreate`, `ServiceUpdate`:
 | Thời hạn thanh toán | `expiryMinutes` | Số phút | Không | 5…1.440; trống thì dùng `19.txn.default-expiry-minutes` |
 | Mô tả | `description` | Nhiều dòng | Không | ≤ 4.000 |
 
+: UI-19-10 Chi tiết, biểu mẫu dịch vụ thanh toán, trường biểu mẫu khớp ServiceCreate, ServiceUpdate
+
 Dịch vụ có `catalogInvalid = true` (mã danh mục vừa hết hiệu lực, FR-19-016) hiện dải đỏ trên đầu trang và đầu biểu mẫu: "Mã {loại} {mã} đã hết hiệu lực trong danh mục dùng chung từ {ngày}. Dịch vụ không tạo được giao dịch mới cho tới khi chọn mã thay thế." Ô tương ứng được tô viền lỗi và có nút "Chọn mã thay thế".
 
 ## 17. UI-19-11 Danh sách đối tác
 
-Đường dẫn `/thanh-toan/doi-tac` · Quyền `partner-read` · FR-19-017, 018 · API-19-029, 034, 035 · LGC-PAY-022 · MVP.
+::: dac-ta
+**Mục đích.** Tìm, lọc đối tác (hệ thống thông tin gọi PH-19) theo trạng thái và chế độ định tuyến; đăng ký đối tác mới, tạm dừng, mở lại.
+
+**Người dùng, quyền.** Xem: ADM, APR, ACC, OPR, AUD, SEC có `PERM-19-partner-read`; đăng ký: `PERM-19-partner-write`; tạm dừng, mở lại: `PERM-19-partner-suspend`.
+
+**FR, UC hiện thực.** FR-19-017, 018; UC-19-09.
+
+**Truy vết hệ cũ.** LGC-PAY-022.
+
+**Đường dẫn.** `/thanh-toan/doi-tac`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-029, 034, 035.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-11 · Danh sách đối tác](ph19/hifi/ui-19-11.png)
+
+Bảng có cột "Chế độ" (Hệ cũ, Chạy bóng, Datahub) để thấy tiến độ di trú theo đối tác, và cột tỷ lệ webhook 24 giờ tô đỏ kèm chữ "thấp" khi dưới 95%.
 
 Cột: mã đối tác, tên, cơ quan chủ quản, HTTT thành viên (mã PH-01, liên kết), trạng thái (facet), chế độ định tuyến (nhãn mục 5.1; lọc), số dịch vụ được gán, số client đang hiệu lực, giao dịch hôm nay, tỷ lệ webhook thành công 24 giờ (đỏ khi < 95%, có chữ), người sửa cuối. Thao tác: "Đăng ký đối tác" (ngăn kéo hồ sơ, cùng trường tab Hồ sơ của UI-19-12), "Tạm dừng" (`SUSPEND`, hộp lý do, hiện "Đối tác sẽ không tạo được giao dịch mới nhưng vẫn truy vấn và nhận webhook"), "Mở lại" (`RESUME`). Không có xóa: đối tác chỉ chấm dứt qua phê duyệt.
 
 ## 18. UI-19-12 Chi tiết đối tác
 
-Đường dẫn `/thanh-toan/doi-tac/:id` · Quyền `partner-read` · FR-19-017, 018, 019, 020, 021, 066 · API-19-030…047 · LGC-PAY-022 · MVP.
+::: dac-ta
+**Mục đích.** Xem và quản lý một đối tác qua sáu tab: hồ sơ, client máy-máy, dịch vụ và hạn mức, webhook, chế độ định tuyến, lịch sử; gửi duyệt, tạm dừng, đề nghị chấm dứt.
+
+**Người dùng, quyền.** Xem: `PERM-19-partner-read`; sửa hồ sơ: `PERM-19-partner-write`; client: `PERM-19-partner-client-manage` (ADM, SEC); webhook: `PERM-19-partner-webhook-manage`; đổi chế độ: `PERM-19-migration-switch`.
+
+**FR, UC hiện thực.** FR-19-017, 018, 019, 020, 021, 066; UC-19-09, 10, 29.
+
+**Truy vết hệ cũ.** LGC-PAY-022.
+
+**Đường dẫn.** `/thanh-toan/doi-tac/:id`, tham số `tab` (`ho-so`, `client`, `dich-vu`, `webhook`, `dinh-tuyen`, `lich-su`).
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-030…047.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-12 · Chi tiết đối tác](ph19/hifi/ui-19-12.png)
+
+Ảnh chụp tab "Dịch vụ và hạn mức": mỗi dòng có thanh tiến độ "đã dùng hôm nay" kèm phần trăm bằng chữ; dòng gần chạm hạn mức chuyển vàng và ghi "gần hạn mức" để cán bộ chủ động nâng hạn mức trước khi đối tác gặp ERR-19-013.
 
 ### 18.1. Đầu trang
+
+Đầu trang dính tóm tắt đối tượng và chứa nút thao tác theo `allowedActions`.
 
 ```
 Thanh toán › Đối tác › Cổng dịch vụ công tỉnh
@@ -787,6 +1218,8 @@ Nút theo `allowedActions`: "Gửi duyệt" (`SUBMIT_ONBOARD`, `DRAFT`; vô hi�
 
 ### 18.2. Các tab
 
+Bảng dưới đặc tả nội dung, nguồn API và thao tác của từng tab.
+
 | Tab | Nội dung | API | Thao tác |
 |---|---|---|---|
 | Hồ sơ | Mã (`code`), tên (`name`), cơ quan chủ quản (`agencyCode`, danh mục cơ quan PH-07, bắt buộc), HTTT thành viên (`memberSystemId`, chọn từ PH-01, bắt buộc trước khi gửi duyệt), mã ứng dụng ở hệ cũ (`legacyAppCode`, dùng để nối dữ liệu di trú), đầu mối kỹ thuật (bắt buộc) và nghiệp vụ, danh sách địa chỉ quay về được phép (`allowedReturnUrls`, 1…20 tiền tố URL bắt đầu `https://`, `CMP-Select` chế độ nhập tự do nhiều giá trị (`multiple`, mỗi giá trị kiểm tra `https://` khi nhập); ERR-19-016 đối chiếu theo tiền tố) | API-19-031, 032 | "Sửa" (`EDIT`, `If-Match`) |
@@ -796,13 +1229,37 @@ Nút theo `allowedActions`: "Gửi duyệt" (`SUBMIT_ONBOARD`, `DRAFT`; vô hi�
 | Chế độ định tuyến | Chế độ hiện tại (Hệ cũ, Chạy bóng, Datahub) dạng thanh ba nấc có chữ; lịch sử đổi chế độ; kết quả đối chiếu gần nhất của đối tác (liên kết UI-19-27); nút "Đề nghị đổi chế độ" mở hộp: chế độ đích, thời điểm hiệu lực, lý do, lần đối chiếu làm bằng chứng (bắt buộc khi chọn "Datahub"; chỉ chọn được lần đối chiếu `PASSED`) | API-19-047 | Quyền `migration-switch`; người lập ≠ người duyệt |
 | Lịch sử | Kiểm toán đối tác (PH-13) | PH-13 | — |
 
+: UI-19-12 Chi tiết đối tác, các tab
+
 ## 19. UI-19-13 Hộp phê duyệt
 
-Đường dẫn `/thanh-toan/phe-duyet` · Quyền: xem đề nghị mình lập hoặc mình có quyền quyết định · FR-19-005, 010, 018, 039, 046, 047, 066, 069 · API-19-048, 049, 050 · LGC-PAY-007 · MVP.
+::: dac-ta
+**Mục đích.** Gom chín loại đề nghị bốn mắt (kích hoạt và ngừng hẳn NCC, duyệt và chấm dứt đối tác, hoàn tiền, xử lý chênh lệch, mở lại phiên đối soát, đổi chế độ định tuyến, đổi bảng ánh xạ mã kết quả) vào một hộp để người duyệt xem bằng chứng và quyết định ở một nơi.
+
+**Người dùng, quyền.** Người có quyền quyết định theo loại (`PERM-19-provider-activate`, `partner-approve`, `refund-approve`, `discrepancy-approve`, `recon-reopen-approve`, `migration-switch`; chủ yếu APR) và người lập xem đề nghị của mình. Không ai quyết định đề nghị mình đã lập hoặc đã duyệt ở cấp trước (ERR-19-033).
+
+**FR, UC hiện thực.** FR-19-005, 010, 018, 039, 046, 047, 066, 069; UC-19-03, 04, 09, 18, 20, 21, 29.
+
+**Truy vết hệ cũ.** LGC-PAY-007.
+
+**Đường dẫn.** `/thanh-toan/phe-duyet`, tham số `hop`, `loai`, `trang-thai`, `chon`.
+
+**Mẫu bố cục.** (DS) + ngăn kéo bằng chứng, PTN-10 Hộp việc và duyệt.
+
+**API.** API-19-048, 049, 050.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-13 · Hộp phê duyệt](ph19/hifi/ui-19-13.png)
+
+Ảnh thể hiện ngăn kéo bằng chứng 720 px mở trên hộp "Chờ tôi quyết định". Ngăn kéo là lớp nổi kính dày; các khối tóm tắt, lý do, bằng chứng, kiểm tra lúc duyệt nền đặc. Khối "Kiểm tra lúc duyệt" liệt kê điều kiện máy chủ đã kiểm lại (còn được hoàn, trong hạn, tách nhiệm) để người duyệt không phải tự tra.
 
 Hộp phê duyệt gom chín loại đề nghị bốn mắt (ADR-046) vào một nơi để người duyệt không phải đi qua từng màn.
 
 ### 19.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Hộp phê duyệt
@@ -826,6 +1283,8 @@ Thanh toán › Hộp phê duyệt
 
 ### 19.2. Nội dung bằng chứng theo loại đề nghị
 
+Mỗi loại đề nghị có khối tóm tắt, bằng chứng và kiểm tra lúc duyệt riêng, để người duyệt có đủ thông tin mà không rời ngăn kéo.
+
 | Loại | Khối "Tóm tắt" | Khối "Bằng chứng" | Kiểm tra lại lúc duyệt (máy chủ tính, giao diện chỉ hiện) |
 |---|---|---|---|
 | Kích hoạt NCC | NCC, môi trường, ngày hiệu lực đề xuất | Các lần kiểm tra kết nối, giao dịch thử (liên kết) | Checklist BR-19-010 |
@@ -838,6 +1297,8 @@ Thanh toán › Hộp phê duyệt
 | Đổi chế độ định tuyến | Đối tác, từ → đến, thời điểm | Lần đối chiếu (`PASSED`) | Lần đối chiếu còn trong 7 ngày |
 | Đổi bảng ánh xạ mã | NCC, số dòng thêm, sửa, ngừng | Bảng khác biệt (`CMP-DiffTable`) | Không có dòng mâu thuẫn |
 
+: UI-19-13 Hộp phê duyệt, nội dung bằng chứng theo loại đề nghị
+
 ### 19.3. Quyết định
 
 - "Duyệt", "Từ chối" gọi API-19-050 với `If-Match`; "Từ chối" bắt buộc ý kiến 10…1000 ký tự. Người lập thấy "Rút đề nghị" thay cho hai nút trên.
@@ -847,9 +1308,31 @@ Thanh toán › Hộp phê duyệt
 
 ## 20. UI-19-14 Tra cứu giao dịch
 
-Đường dẫn `/thanh-toan/giao-dich` · Quyền `transaction-read`, xuất `transaction-export` · FR-19-049, 050, 052 · API-19-051, 083, 084 · LGC-PAY-014…018 · MVP (xuất: Đ2b).
+::: dac-ta
+**Mục đích.** Tra cứu giao dịch thanh toán theo mã, trạng thái nhiều lựa chọn, lĩnh vực, thời gian và bộ lọc nâng cao; xem tổng số và tổng tiền theo bộ lọc; xuất danh sách (Đ2b). Giữ đủ chín cột và cách tìm của màn tra cứu hệ cũ.
+
+**Người dùng, quyền.** ADM, APR, ACC, OPR, AUD có `PERM-19-transaction-read`; lọc theo thông tin người nộp cần `PERM-19-transaction-read-pii`; xuất cần `PERM-19-transaction-export`.
+
+**FR, UC hiện thực.** FR-19-049, 050, 052; UC-19-22.
+
+**Truy vết hệ cũ.** LGC-PAY-014…018.
+
+**Đường dẫn.** `/thanh-toan/giao-dich`, tham số lọc và con trỏ trang ở mục 4.2.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-051, 083, 084.
+
+**Phát hành, mức chi tiết.** MVP, xuất danh sách thuộc Đ2b; mức rất chi tiết.
+:::
+
+![UI-19-14 · Tra cứu giao dịch](ph19/hifi/ui-19-14.png)
+
+Ảnh có các khoảng thời gian nhanh dạng nút, bộ lọc trạng thái nhiều lựa chọn dạng thẻ có nút ×, dòng tổng "Tìm thấy 3.412 giao dịch · Tổng tiền …" ngay trên bảng, và đủ chín cột hệ cũ. Mã giao dịch theo định dạng FRS (T68 + ngày + 10 ký tự); tên người thanh toán đã che.
 
 ### 20.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Tra cứu giao dịch                                                    [⤓ Xuất ▾] (Đ2b)
@@ -890,6 +1373,8 @@ Chín cột mặc định giữ đúng thứ tự bảng tra cứu hệ cũ (LGC
 | Đối soát | `reconStatus` | Ẩn | — |
 | Đã hoàn | `refundedAmount` | Ẩn | — |
 
+: UI-19-14 Tra cứu giao dịch, cột bảng kết quả
+
 ### 20.3. Tìm và lọc
 
 - Ô tìm (`q`, 2…100 ký tự) tìm theo mã giao dịch, mã đơn hàng, mã tham chiếu NCC, khớp chính xác hoặc theo tiền tố; nếu chuỗi khớp mẫu mã giao dịch và có đúng một kết quả thì `Enter` mở thẳng UI-19-15. Tìm theo người nộp nằm ở bộ lọc nâng cao với ba ô "Họ tên", "Số điện thoại", "Số định danh" (`payerName`, `payerPhone`, `payerIdNumber`): so khớp trên giá trị băm chuẩn hóa (ADR-048) nên chỉ khớp nguyên giá trị, có ghi chú dưới ô.
@@ -904,14 +1389,36 @@ Nút "Xuất" (`transaction-export`) mở hộp: định dạng CSV/XLSX, cột 
 
 ## 21. UI-19-15 Chi tiết giao dịch
 
-Đường dẫn `/thanh-toan/giao-dich/:ma` · Quyền `transaction-read` · FR-19-051, 028, 026, 037, 055 · API-19-052, 053, 054, 055 · LGC-PAY-011, 019 · MVP (hủy, đồng bộ thủ công: Đ2b).
+::: dac-ta
+**Mục đích.** Xem toàn bộ một giao dịch qua tám tab (thông tin, dòng thời gian, IPN, truy vấn NCC, webhook, hoàn tiền, chênh lệch, nhật ký) và thực hiện thao tác hỗ trợ: đồng bộ với NCC, lập yêu cầu hoàn, hủy giao dịch, mở vết đầu-cuối, hiện thông tin người nộp có lý do.
+
+**Người dùng, quyền.** Xem: `PERM-19-transaction-read`; hiện thông tin người nộp: `PERM-19-transaction-read-pii`; đồng bộ: `PERM-19-transaction-sync`; hủy: `PERM-19-transaction-cancel`; lập hoàn: `PERM-19-refund-create`.
+
+**FR, UC hiện thực.** FR-19-051, 028, 026, 037, 055; UC-19-23, 14, 16.
+
+**Truy vết hệ cũ.** LGC-PAY-011, 019.
+
+**Đường dẫn.** `/thanh-toan/giao-dich/:ma`, tham số `tab`.
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-052, 053, 054, 055.
+
+**Phát hành, mức chi tiết.** MVP, hủy và đồng bộ thủ công thuộc Đ2b; mức rất chi tiết.
+:::
+
+![UI-19-15 · Chi tiết giao dịch](ph19/hifi/ui-19-15.png)
+
+Đây là màn FRS dẫn tới làm giao diện tiêu biểu. Đầu trang kính dày gom mọi mã cần sao chép (mã giao dịch, mã đơn hàng, mã tham chiếu NCC, mã truy vết) và các nút thao tác. Nhãn "Thành công" đi cùng cờ "Thanh toán muộn" và nhãn đối soát "Khớp", nên người hỗ trợ trả lời được ba câu hỏi chính mà không mở tab khác. Thông tin người nộp mặc định bị che; nút "Hiện thông tin người nộp" yêu cầu lý do và ghi kiểm toán. Cột phải là dòng thời gian trạng thái theo nguồn sự kiện.
 
 ### 21.1. Wireframe
 
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
+
 ```
-Thanh toán › Tra cứu giao dịch › PAY-T68-20261126-0000-8F3A
+Thanh toán › Tra cứu giao dịch › T68261126R6T1W4Y9ZK
 ┌ glass-chrome-scrolled ───────────────────────────────────────────────────────────────────────────────┐
-│ PAY-T68-20261126-0000-8F3A ⧉   ✓ Thành công  ⏱ Thanh toán muộn   Đối soát: ✓ Khớp                   │
+│ T68261126R6T1W4Y9ZK ⧉          ✓ Thành công  ⏱ Thanh toán muộn   Đối soát: ✓ Khớp                   │
 │ 50.000 ₫ · Lệ phí đăng ký hộ tịch · Cổng DVC tỉnh · PayGov                                            │
 │ Mã đơn hàng HS-2026-001234 ⧉ · Mã tham chiếu NCC PG-99812233 ⧉ · Mã truy vết 4bf92f…a3 ⧉            │
 │                    [⟳ Đồng bộ với NCC] [Lập yêu cầu hoàn] [⋯ Hủy giao dịch] [Mở vết đầu-cuối]       │
@@ -929,6 +1436,8 @@ Thanh toán › Tra cứu giao dịch › PAY-T68-20261126-0000-8F3A
 
 ### 21.2. Thanh hành động
 
+Nút đầu trang hiện theo `allowedActions`; bảng nêu hành vi và đợt phát hành của từng nút.
+
 | Nút | `allowedActions` | Hành vi | Phát hành |
 |---|---|---|---|
 | Đồng bộ với NCC | `SYNC` | Hộp lý do; API-19-053; hiện kết quả "Trạng thái trước → sau", "Không thay đổi" hoặc "NCC chưa có kết quả"; ERR-19-023 hiện đếm ngược tới `nextAllowedAt` | Đ2b |
@@ -937,9 +1446,13 @@ Thanh toán › Tra cứu giao dịch › PAY-T68-20261126-0000-8F3A
 | Hiện thông tin người nộp | `REVEAL_PII` | Mục 2.6 | MVP |
 | Mở vết đầu-cuối | — | Mở PH-13 với `traceId` (FR-19-055) | MVP |
 
+: UI-19-15 Chi tiết giao dịch, thanh hành động
+
 Giao dịch thử có dải xám "Giao dịch thử, không tính vào số liệu và đối soát". Giao dịch di trú từ hệ cũ có dải "Dữ liệu nhập từ hệ cũ, mã cũ {legacyCode}"; tab IPN, Truy vấn NCC có thể rỗng với chú thích "Hệ cũ không lưu dữ liệu này".
 
 ### 21.3. Các tab
+
+Bảng dưới đặc tả nội dung, nguồn API và thao tác của từng tab.
 
 | Tab | Nội dung | API |
 |---|---|---|
@@ -952,9 +1465,31 @@ Giao dịch thử có dải xám "Giao dịch thử, không tính vào số li�
 | Chênh lệch | Bảng chênh lệch: mã, loại, trạng thái, phiên đối soát | `discrepancies[]` |
 | Nhật ký | Mọi lượt trao đổi với NCC và đối tác của giao dịch (UI-19-23 đã lọc) | API-19-075 |
 
+: UI-19-15 Chi tiết giao dịch, các tab
+
 ## 22. UI-19-16 Danh sách và chi tiết IPN
 
-Đường dẫn `/thanh-toan/ipn` · Quyền `callback-read` · FR-19-032, 029, 031 · API-19-056, 057, 058 · LGC-PAY-010 · MVP (xử lý lại: Đ2b).
+::: dac-ta
+**Mục đích.** Theo dõi mọi thông báo kết quả (IPN) nhà cung cấp gửi về: kết quả xác minh chữ ký, kết quả xử lý, lý do cách ly; xem nội dung đã che và xử lý lại IPN bị cách ly (Đ2b).
+
+**Người dùng, quyền.** ACC, OPR, AUD, SEC có `PERM-19-callback-read`; xử lý lại, bỏ qua có lý do: `PERM-19-callback-replay` (OPR).
+
+**FR, UC hiện thực.** FR-19-032, 029, 031; UC-19-13, UC-19-16.
+
+**Truy vết hệ cũ.** LGC-PAY-010.
+
+**Đường dẫn.** `/thanh-toan/ipn`, tham số `xac-minh`, `xu-ly`, `ly-do`, `ncc`, `tu`, `den`, `chon`.
+
+**Mẫu bố cục.** (DS) + ngăn kéo, PTN-01 Danh sách.
+
+**API.** API-19-056, 057, 058.
+
+**Phát hành, mức chi tiết.** MVP, xử lý lại thuộc Đ2b; mức chi tiết đầy đủ.
+:::
+
+![UI-19-16 · Danh sách và chi tiết IPN](ph19/hifi/ui-19-16.png)
+
+Ảnh lọc facet "Đã cách ly" và mở ngăn kéo một IPN sai số tiền. Ngăn kéo dùng câu của ERR-19-028 ở mục 5.2, khối JSON đã rút gọn chữ ký, và hai nút "Bỏ qua có lý do", "Xử lý lại" ở chân.
 
 ### 22.1. Danh sách
 
@@ -972,6 +1507,8 @@ Mặc định lọc "Cần chú ý" = xử lý `QUARANTINED` hoặc `FAILED`, ho
 | Xử lý | `processingStatus` + `quarantineReason` | Lý do cách ly: Lệch số tiền, Lệch tham chiếu, Không tìm thấy giao dịch, Mã kết quả chưa ánh xạ, Mâu thuẫn trạng thái cuối |
 | IP nguồn | `sourceIp` | Ẩn mặc định |
 
+: UI-19-16 Danh sách và chi tiết IPN, cột danh sách
+
 ### 22.2. Ngăn kéo chi tiết (720 px)
 
 Khối tóm tắt (như cột), khối "Kiểm tra" liệt kê từng bước xác minh (nguồn, chữ ký, thời gian ±5 phút, chống phát lại, tenant) với ✓/✗; khối "Nguyên văn đã che" dùng `CMP-JsonViewer` cho `rawHeaders`, `rawBodyMasked`, kèm mã băm `rawHash` và nút sao chép; khối "Lỗi xử lý" (`processingError`); liên kết "Mở vết" (`traceId`).
@@ -980,15 +1517,57 @@ Nút "Xử lý lại" (`REPLAY`, Đ2b) chỉ hiện cho IPN `QUARANTINED` hoặc
 
 ## 23. UI-19-17 Danh sách yêu cầu hoàn tiền
 
-Đường dẫn `/thanh-toan/hoan-tien` · Quyền `refund-read` · FR-19-041 · API-19-060 · LGC-PAY-025 · MVP.
+::: dac-ta
+**Mục đích.** Theo dõi các yêu cầu hoàn tiền theo trạng thái, chế độ, đối tác; lập yêu cầu mới; người thực hiện hoàn thấy ngay các yêu cầu chờ hoàn thủ công hoặc hoàn lỗi.
+
+**Người dùng, quyền.** APR, ACC, OPR, AUD có `PERM-19-refund-read`; lập: `PERM-19-refund-create` (ACC); hộp "Việc của tôi": `PERM-19-refund-execute`.
+
+**FR, UC hiện thực.** FR-19-041; UC-19-17, UC-19-18.
+
+**Truy vết hệ cũ.** LGC-PAY-025.
+
+**Đường dẫn.** `/thanh-toan/hoan-tien`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-060.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-17 · Danh sách yêu cầu hoàn tiền](ph19/hifi/ui-19-17.png)
+
+Dải "Việc của tôi" màu vàng nằm trên facet để kế toán thấy ngay số yêu cầu cần chuyển khoản thủ công. Facet gộp trạng thái như mô tả dưới đây (Chờ duyệt, Đang thực hiện, …) thay vì liệt kê chín trạng thái.
 
 Facet theo trạng thái (gộp: Chờ duyệt = `PENDING_APPROVAL` + `PENDING_SECOND_APPROVAL`; Đang thực hiện = `APPROVED` + `PROCESSING`; Chờ hoàn thủ công; Hoàn lỗi; Đã hoàn; Đã kết thúc khác = `REJECTED` + `CANCELLED`). Cột: mã yêu cầu, mã giao dịch, số tiền hoàn, số tiền giao dịch, trạng thái, chế độ (Thủ công, Qua NCC), nguồn lập (Cán bộ, Đối tác), lý do (danh mục), người lập, lập lúc, hoàn xong lúc. Nút "Lập yêu cầu hoàn" (`refund-create`) mở hộp nhập mã giao dịch rồi chuyển tới UI-19-18. Người có `refund-execute` thấy hộp "Việc của tôi" ở đầu: số yêu cầu `AWAITING_MANUAL` và `FAILED`.
 
 ## 24. UI-19-18 Lập, xem chi tiết yêu cầu hoàn tiền
 
-Đường dẫn `/thanh-toan/hoan-tien/tao-moi?giao-dich=…` và `/thanh-toan/hoan-tien/:ma` · Quyền `refund-create` (lập), `refund-read` (xem), `refund-execute` (thực hiện) · FR-19-038, 039, 040, 041 · API-19-059, 061, 062, 087 · MVP (chế độ `API`: Đ2b).
+::: dac-ta
+**Mục đích.** Lập yêu cầu hoàn tiền cho một giao dịch (toàn phần hoặc một phần, lý do, tài khoản nhận, tài liệu) và xem chi tiết, tiến trình duyệt, thực hiện của yêu cầu đã lập.
+
+**Người dùng, quyền.** Lập: `PERM-19-refund-create` (ACC); xem: `PERM-19-refund-read`; xác nhận đã hoàn thủ công: `PERM-19-refund-execute`, khác người duyệt (ERR-19-033).
+
+**FR, UC hiện thực.** FR-19-038, 039, 040, 041; UC-19-17, UC-19-18.
+
+**Truy vết hệ cũ.** Không có mã hệ cũ riêng (hệ cũ hoàn tiền ngoài hệ thống, LGC-PAY-025).
+
+**Đường dẫn.** `/thanh-toan/hoan-tien/tao-moi?giao-dich=…` (lập) và `/thanh-toan/hoan-tien/:ma` (xem).
+
+**Mẫu bố cục.** (CT) + (BM), PTN-02 Chi tiết và PTN-04 Biểu mẫu.
+
+**API.** API-19-059, 061, 062, 087.
+
+**Phát hành, mức chi tiết.** MVP, chế độ hoàn qua API thuộc Đ2b; mức rất chi tiết.
+:::
+
+![UI-19-18 · Lập, xem chi tiết yêu cầu hoàn tiền](ph19/hifi/ui-19-18.png)
+
+Ảnh chụp chế độ lập. Khối "Giao dịch gốc" nền nâng ở trên cho biết số đã hoàn, còn được hoàn và hạn hoàn trước khi người dùng nhập. Số tiền hoàn có dòng đọc bằng chữ; số tài khoản nhận bị che và mã hóa ngay khi gửi; dải thông tin nêu ngưỡng hai cấp duyệt.
 
 ### 24.1. Lập yêu cầu
+
+Chế độ lập dùng biểu mẫu một trang, mở từ chi tiết giao dịch hoặc từ nút "Lập yêu cầu hoàn" của UI-19-17.
 
 ```
 Thanh toán › Hoàn tiền › Lập yêu cầu
@@ -1015,6 +1594,8 @@ Thanh toán › Hoàn tiền › Lập yêu cầu
 | Ngân hàng, số tài khoản nhận | `bankCode`, `accountNo` | Chỉ khi `MANUAL`; số tài khoản 6…32 chữ số, ô kiểu mật khẩu có nút hiện; sau khi gửi chỉ còn bản che |
 | Tài liệu | `attachmentFileIds` qua API-19-087 | ≤ 10 tệp, PDF, ảnh, ≤ 20 MB mỗi tệp; tệp phải quét sạch (`scanStatus = CLEAN`) mới gửi được |
 
+: UI-19-18 Lập, xem chi tiết yêu cầu hoàn tiền, lập yêu cầu
+
 Dòng "cần hai cấp duyệt" hiện khi số tiền ≥ `19.refund.two-level-threshold`. Gửi thành công tạo yêu cầu `PENDING_APPROVAL` và đề nghị phê duyệt; màn chuyển sang chế độ xem.
 
 ### 24.2. Xem chi tiết
@@ -1028,11 +1609,35 @@ Dòng "cần hai cấp duyệt" hiện khi số tiền ≥ `19.refund.two-level-
 | Chuyển hoàn thủ công | `SWITCH_MANUAL` (`FAILED`) | Hộp lý do và nhập ngân hàng, số tài khoản nếu chưa có; API-19-062 |
 | Ghi nhận đã hoàn | `RECORD_MANUAL` (`AWAITING_MANUAL`) | Hộp: số chứng từ (bắt buộc, ≤ 64), ngày chứng từ (không sau hôm nay, không trước ngày duyệt), tệp chứng từ (bắt buộc), ghi chú; gõ lại mã yêu cầu; vô hiệu kèm "Bạn đã duyệt yêu cầu này nên không thể ghi nhận (tách nhiệm)" khi vi phạm BR-19-024 |
 
+: UI-19-18 Lập, xem chi tiết yêu cầu hoàn tiền, xem chi tiết
+
 ## 25. UI-19-19 Danh sách phiên đối soát
 
-Đường dẫn `/thanh-toan/doi-soat` · Quyền `discrepancy-read` · FR-19-042 · API-19-063, 064 · MVP.
+::: dac-ta
+**Mục đích.** Xem các phiên đối soát hằng ngày theo nhà cung cấp và ngày nghiệp vụ, ở dạng bảng hoặc lịch; tạo phiên thủ công khi cần.
+
+**Người dùng, quyền.** APR, ACC, OPR, AUD có `PERM-19-discrepancy-read`; tạo phiên thủ công: `PERM-19-recon-run` (ACC).
+
+**FR, UC hiện thực.** FR-19-042; UC-19-19.
+
+**Truy vết hệ cũ.** Không có (đối soát là chức năng mới).
+
+**Đường dẫn.** `/thanh-toan/doi-soat`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-063, 064.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-19 · Danh sách phiên đối soát](ph19/hifi/ui-19-19.png)
+
+Bảng đặt số liệu hai phía cạnh nhau (Datahub, NCC) để thấy ngay ngày nào lệch; cột "Chênh mở" in đậm khi khác 0. Nút chuyển "Lịch", "Bảng" ở đầu trang.
 
 ### 25.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Đối soát                                                         [+ Tạo phiên thủ công]
@@ -1050,9 +1655,31 @@ Chế độ "Lịch" hiện lưới tháng, mỗi ô một nhãn trạng thái t
 
 ## 26. UI-19-20 Chi tiết phiên đối soát
 
-Đường dẫn `/thanh-toan/doi-soat/:id` · Quyền `discrepancy-read` · FR-19-043, 044, 047, 048 · API-19-065…070, 083 · MVP.
+::: dac-ta
+**Mục đích.** Xem và điều khiển một phiên đối soát: tổng hợp hai phía, dòng đối soát, chênh lệch, tệp, biên bản, lịch sử; tải file đối soát, thu thập lại, chạy lại so khớp, chốt phiên, đề nghị mở lại.
+
+**Người dùng, quyền.** Xem: `PERM-19-discrepancy-read`; chạy lại: `PERM-19-recon-run`; tải file: `PERM-19-recon-upload`; chốt: `PERM-19-recon-close` (ACC); mở lại do APR duyệt (`PERM-19-recon-reopen-approve`).
+
+**FR, UC hiện thực.** FR-19-043, 044, 047, 048; UC-19-19, UC-19-21.
+
+**Truy vết hệ cũ.** Không có (chức năng mới).
+
+**Đường dẫn.** `/thanh-toan/doi-soat/:id`, tham số `tab`, `ket-qua`, `lan-chay`.
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-065…070, 083.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-20 · Chi tiết phiên đối soát](ph19/hifi/ui-19-20.png)
+
+Ảnh ở trạng thái "Đang xử lý chênh lệch": nút "Chốt phiên" bị vô hiệu và dải vàng dùng đúng câu ERR-19-042 kèm liên kết tới chênh lệch còn mở. Bảng tổng hợp tô đỏ ô chênh khác 0 và có chữ, không chỉ màu.
 
 ### 26.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Đối soát › PAYGOV 25/11/2026
@@ -1074,6 +1701,8 @@ Thanh toán › Đối soát › PAYGOV 25/11/2026
 
 ### 26.2. Thao tác theo trạng thái
 
+Thao tác trên phiên đối soát phụ thuộc trạng thái phiên theo khung §7.6; bảng nêu nút, mã hành động và hành vi.
+
 | Nút | `allowedActions` | Trạng thái (khung §7.6) | Hành vi |
 |---|---|---|---|
 | Tải file đối soát | `UPLOAD_FILE` | `WAITING_DATA`, `FAILED`, `IN_REVIEW` | Hộp tải: tệp ≤ 100 MB; giao diện tính SHA-256 trên trình duyệt (Web Crypto) và gửi kèm; ERR-19-041 hiện lý do (sai định dạng, sai mã băm, sai NCC, sai ngày) |
@@ -1083,9 +1712,13 @@ Thanh toán › Đối soát › PAYGOV 25/11/2026
 | Đề nghị mở lại | `REQUEST_REOPEN` | `CLOSED` | Hộp lý do; tạo đề nghị `RECON_REOPEN` |
 | Sinh, tải biên bản | `GENERATE_MINUTES` | `CLOSED` | Tab Biên bản |
 
+: UI-19-20 Chi tiết phiên đối soát, thao tác theo trạng thái
+
 Khi phiên đang `COLLECTING` hoặc `MATCHING`, đầu trang có thanh tiến độ không xác định và chữ "Đang so khớp, có thể rời màn"; màn tự làm mới mỗi 10 giây tới khi đổi trạng thái.
 
 ### 26.3. Các tab
+
+Bảng dưới đặc tả nội dung, nguồn API và thao tác của từng tab.
 
 | Tab | Nội dung | API |
 |---|---|---|
@@ -1096,17 +1729,61 @@ Khi phiên đang `COLLECTING` hoặc `MATCHING`, đầu trang có thanh tiến �
 | Biên bản | Khi `CLOSED`: thông tin biên bản (mã băm `minutesSha256`, người chốt, lúc), nút "Tải PDF", "Tải XLSX"; nếu chưa sinh, nút "Sinh biên bản" chạy API-19-083 `RECON_MINUTES`. Ghi chú "Biên bản ký ngoài hệ thống; ký số trên hệ thống là mở rộng sau (OQ-19-24)" | API-19-083, 084, 088 |
 | Lịch sử | Đổi trạng thái phiên và lần chạy | API-19-067 |
 
+: UI-19-20 Chi tiết phiên đối soát, các tab
+
 ## 27. UI-19-21 Danh sách chênh lệch
 
-Đường dẫn `/thanh-toan/chenh-lech` · Quyền `discrepancy-read` · FR-19-045 · API-19-071 · MVP.
+::: dac-ta
+**Mục đích.** Theo dõi các chênh lệch đối soát theo người phụ trách, tuổi và hạn xử lý; giao việc hàng loạt.
+
+**Người dùng, quyền.** `PERM-19-discrepancy-read`; giao việc: `PERM-19-discrepancy-handle` (ACC).
+
+**FR, UC hiện thực.** FR-19-045; UC-19-20.
+
+**Truy vết hệ cũ.** Không có (chức năng mới).
+
+**Đường dẫn.** `/thanh-toan/chenh-lech`.
+
+**Mẫu bố cục.** (DS), PTN-01 Danh sách.
+
+**API.** API-19-071.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-21 · Danh sách chênh lệch](ph19/hifi/ui-19-21.png)
+
+Facet đầu trang là các hộp việc ("Giao cho tôi", "Chưa ai nhận", "Quá hạn"); cột tuổi chuyển đỏ và ghi "quá hạn N ngày" khi vượt hạn chuyển cấp. Ô chọn đầu dòng chỉ phục vụ "Giao cho…", không có xử lý hàng loạt.
 
 Hộp đầu trang: "Giao cho tôi", "Chưa ai nhận", "Quá hạn" (theo `19.recon.discrepancy-due-workdays`), "Tất cả". Cột: mã chênh lệch, loại (nhãn mục 5.1), trạng thái, giao dịch, NCC, ngày nghiệp vụ (liên kết phiên), số tiền Datahub, số tiền NCC, chênh, tuổi (ngày làm việc; vàng khi quá hạn xử lý, đỏ khi quá hạn chuyển cấp `19.recon.escalate-workdays`, có chữ "quá hạn N ngày"), người phụ trách. Chọn nhiều cho phép "Giao cho…" hàng loạt (`ASSIGN`). Không có thao tác xử lý hàng loạt: mỗi chênh lệch cần đề xuất riêng.
 
 ## 28. UI-19-22 Chi tiết chênh lệch và đề xuất xử lý
 
-Đường dẫn `/thanh-toan/chenh-lech/:ma` · Quyền `discrepancy-read`, xử lý `discrepancy-handle` · FR-19-045, 046 · API-19-072, 073, 074, 087 · MVP.
+::: dac-ta
+**Mục đích.** Xác minh một chênh lệch bằng so sánh hai phía, ghi chú và bằng chứng, rồi lập đề xuất xử lý gửi duyệt.
+
+**Người dùng, quyền.** Xem: `PERM-19-discrepancy-read`; nhận việc, ghi chú, đề xuất: `PERM-19-discrepancy-handle` (ACC); duyệt đề xuất ở UI-19-13 (`PERM-19-discrepancy-approve`).
+
+**FR, UC hiện thực.** FR-19-045, 046; UC-19-20.
+
+**Truy vết hệ cũ.** Không có (chức năng mới).
+
+**Đường dẫn.** `/thanh-toan/chenh-lech/:ma`, tham số `tab`.
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-072, 073, 074, 087.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-22 · Chi tiết chênh lệch và đề xuất xử lý](ph19/hifi/ui-19-22.png)
+
+Bảng "So sánh hai phía" đánh dấu ≠ ở trường lệch; ba nút mở nhanh giao dịch, IPN, dòng đối soát nằm ngay dưới. Phần "Đề xuất xử lý" mở ngay trên trang; cột phải là dòng thời gian ghi chú có tệp đính kèm.
 
 ### 28.1. Wireframe
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 Thanh toán › Chênh lệch › DC-20261125-0007
@@ -1136,23 +1813,85 @@ Nút "Đề xuất xử lý" (`PROPOSE`) mở ngăn kéo chọn một trong bố
 | Chấp nhận số liệu NCC | Lệch số tiền đã xác minh NCC đúng | Ghi chú | Ghi điều chỉnh `PAYMENT_AMOUNT` hoặc `REFUND_AMOUNT` |
 | Không xử lý | Chênh lệch kỹ thuật không ảnh hưởng tiền | Ghi chú bắt buộc | Chỉ đóng chênh lệch |
 
+: UI-19-22 Chi tiết chênh lệch và đề xuất xử lý, đề xuất xử lý
+
 Gửi kèm `targetTransactionVersion` lấy từ giao dịch lúc mở ngăn kéo; nếu giao dịch đã đổi, máy chủ trả ERR-19-045 và giao diện yêu cầu xem lại. Sau khi gửi, chênh lệch chuyển "Chờ duyệt xử lý" và có liên kết tới đề nghị ở UI-19-13. Người đề xuất không thấy nút duyệt của chính đề nghị đó.
 
 ## 29. UI-19-23 Nhật ký tích hợp
 
-Đường dẫn `/thanh-toan/nhat-ky` · Quyền `log-read` · FR-19-054, 055 · API-19-075, 076 · LGC-PAY-021 · MVP.
+::: dac-ta
+**Mục đích.** Tra cứu mọi lượt trao đổi giữa Datahub với nhà cung cấp và đối tác (hướng, thao tác, mã HTTP, mã kết quả, độ trễ, mã truy vết) để hỗ trợ và điều tra sự cố; xem yêu cầu, phản hồi đã che.
+
+**Người dùng, quyền.** OPR, AUD, SEC có `PERM-19-log-read`. Màn chỉ đọc.
+
+**FR, UC hiện thực.** FR-19-054, 055; UC-19-24.
+
+**Truy vết hệ cũ.** LGC-PAY-021.
+
+**Đường dẫn.** `/thanh-toan/nhat-ky`, tham số `huong`, `thao-tac`, `ket-qua`, `ncc`, `doi-tac`, `giao-dich`, `vet`, `tu`, `den`, `chon`.
+
+**Mẫu bố cục.** (DS) + ngăn kéo, PTN-01 Danh sách.
+
+**API.** API-19-075, 076.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-23 · Nhật ký tích hợp](ph19/hifi/ui-19-23.png)
+
+Ảnh mở một lượt gọi bị ERR-19-015 của đối tác: dải đỏ trong ngăn kéo dùng câu ở mục 5.2, đúng cách cán bộ tỉnh thấy lỗi của API đối tác. Khối yêu cầu, phản hồi đã che dữ liệu cá nhân; độ trễ trên 5 giây ghi chữ "chậm" cạnh số.
 
 Cột: lúc, hướng (Datahub → NCC, NCC → Datahub, Đối tác → Datahub, Datahub → Đối tác; có mũi tên và chữ), thao tác, NCC hoặc đối tác, mã giao dịch, lần thử, mã HTTP, mã kết quả, độ trễ (ms; vàng > 1 s, đỏ > 5 s, có chữ), mã truy vết. Lọc theo mọi cột trừ độ trễ, khoảng thời gian tối đa 31 ngày (dữ liệu trực tuyến 12 tháng; cũ hơn hiện "Dữ liệu đã lưu trữ, yêu cầu trích xuất qua quản trị"). Ngăn kéo chi tiết: khối yêu cầu và phản hồi đã che (`CMP-JsonViewer`, nút "Sao chép"), kích thước, nút "Mở vết trong PH-13" (`traceUrl`). Không có thao tác ghi.
 
 ## 30. UI-19-24 Theo dõi webhook
 
-Đường dẫn `/thanh-toan/webhook` · Quyền `webhook-read`, gửi lại `webhook-resend` · FR-19-062 · API-19-077, 078, 079 · LGC-PAY-012 · MVP.
+::: dac-ta
+**Mục đích.** Theo dõi lượt gửi webhook tới đối tác, ưu tiên lượt hết lượt thử và đang chờ thử lại; xem nội dung sự kiện, các lần thử và gửi lại có lý do.
+
+**Người dùng, quyền.** ADM, OPR, AUD có `PERM-19-webhook-read`; gửi lại: `PERM-19-webhook-resend` (OPR).
+
+**FR, UC hiện thực.** FR-19-062; UC-19-27.
+
+**Truy vết hệ cũ.** LGC-PAY-012.
+
+**Đường dẫn.** `/thanh-toan/webhook`, tham số `trang-thai`, `doi-tac`, `su-kien`, `tu`, `den`, `chon`.
+
+**Mẫu bố cục.** (DS) + ngăn kéo, PTN-01 Danh sách.
+
+**API.** API-19-077, 078, 079.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-24 · Theo dõi webhook](ph19/hifi/ui-19-24.png)
+
+Mặc định lọc "Hết lượt thử" và "Chờ thử lại" 24 giờ qua; nhãn chờ thử lại có đồng hồ đếm ngược. Ngăn kéo hiện sự kiện dạng CloudEvents, bảng các lần thử và ô lý do bắt buộc trước nút "Gửi lại".
 
 Mặc định lọc `EXHAUSTED` và `RETRY_SCHEDULED` 24 giờ qua. Cột: tạo lúc, đối tác, loại sự kiện, mã giao dịch, số thứ tự sự kiện (`sequence`), trạng thái, số lần thử, lần thử kế (đếm ngược), mã HTTP cuối, nhận lúc, số lần gửi lại thủ công. Ngăn kéo chi tiết: nội dung sự kiện (CloudEvents, `CMP-JsonViewer`), bảng các lần thử (lúc, mã HTTP, độ trễ, trích đoạn phản hồi), địa chỉ đầu nhận. Nút "Gửi lại" (`RESEND`) cho lượt `EXHAUSTED` hoặc `DELIVERED` (đối tác báo mất dữ liệu); hộp lý do ghi "Sự kiện được gửi lại nguyên nội dung và mã sự kiện; đối tác phải tự chống trùng theo `Webhook-Id`". Chọn nhiều cho phép gửi lại tối đa 100 lượt cùng một lý do.
 
 ## 31. UI-19-25 Báo cáo định kỳ
 
-Đường dẫn `/thanh-toan/bao-cao` · Quyền `report-read`, xuất `report-export` · FR-19-058 · API-19-082, 083, 084 · Đ2b (MVP chỉ có biên bản đối soát ở UI-19-20).
+::: dac-ta
+**Mục đích.** Lập và xuất năm báo cáo định kỳ RPT-19-01…05 theo kỳ ngày, tháng, quý, năm, lọc theo đối tác, nhà cung cấp, dịch vụ; mỗi báo cáo có biểu đồ đi kèm.
+
+**Người dùng, quyền.** ADM, APR, ACC, AUD có `PERM-19-report-read`; xuất: `PERM-19-report-export` (ACC, AUD).
+
+**FR, UC hiện thực.** FR-19-058; UC-19-26.
+
+**Truy vết hệ cũ.** Không có mã hệ cũ riêng.
+
+**Đường dẫn.** `/thanh-toan/bao-cao`, tham số `bao-cao`, `ky`, `gia-tri-ky`, `doi-tac`, `ncc`, `dich-vu`.
+
+**Mẫu bố cục.** (DS) + biểu đồ, PTN-06 Dashboard.
+
+**API.** API-19-082, 083, 084.
+
+**Phát hành, mức chi tiết.** Đ2b (MVP chỉ có biên bản đối soát ở UI-19-20); mức chi tiết đầy đủ.
+:::
+
+![UI-19-25 · Báo cáo định kỳ](ph19/hifi/ui-19-25.png)
+
+Cột trái liệt kê năm báo cáo; vùng phải có bộ chọn kỳ, biểu đồ tổng thu sáu tháng và bảng tổng hợp có dòng cộng in đậm. Số tiền canh phải, đơn vị đồng.
 
 Cột trái 240 px liệt kê năm báo cáo; vùng phải có bộ chọn kỳ (Ngày, Tháng, Quý, Năm và giá trị kỳ), bộ lọc đối tác, NCC, dịch vụ, nút "Xem" và "Xuất ▾" (XLSX, CSV, PDF).
 
@@ -1164,11 +1903,33 @@ Cột trái 240 px liệt kê năm báo cáo; vùng phải có bộ chọn kỳ 
 | RPT-19-04 | Đối soát | Đường tỷ lệ khớp tự động theo ngày; cột chênh lệch theo loại |
 | RPT-19-05 | Chất lượng dịch vụ | Đường tỷ lệ thành công, độ trễ NCC, tỷ lệ webhook thành công lần đầu |
 
+: UI-19-25 Báo cáo định kỳ, năm báo cáo RPT-19-01…05 và biểu đồ đi kèm
+
 Bảng sinh động từ `columns[]` của API (kiểu `VND` căn phải, `PERCENT` một chữ số thập phân, `DURATION` theo mục 2.2), hàng tổng in đậm. Khi `provisional = true`, dải vàng "Số liệu tạm tính: kỳ còn phiên đối soát chưa chốt" và tệp xuất có chữ "TẠM TÍNH" ở tiêu đề.
 
 ## 32. UI-19-26 Cấu hình thanh toán của tenant
 
-Đường dẫn `/thanh-toan/cau-hinh` · Quyền `config-read`, sửa `config-write` · FR-19-063 · API-19-085, 086 · MVP.
+::: dac-ta
+**Mục đích.** Xem và quản lý cấu hình thanh toán của tỉnh theo phiên bản có ngày hiệu lực: tham số giao dịch, hoàn tiền, đối soát, webhook, dữ liệu cá nhân, di trú; so sánh phiên bản và tạo phiên bản mới.
+
+**Người dùng, quyền.** PLA, TEN, ADM, AUD có `PERM-19-config-read`; tạo phiên bản: `PERM-19-config-write` (ADM).
+
+**FR, UC hiện thực.** FR-19-063; UC-19-28.
+
+**Truy vết hệ cũ.** Không có mã hệ cũ riêng.
+
+**Đường dẫn.** `/thanh-toan/cau-hinh`, tham số `phien-ban`.
+
+**Mẫu bố cục.** (CT) + (BM), PTN-02 Chi tiết và PTN-04 Biểu mẫu.
+
+**API.** API-19-085, 086.
+
+**Phát hành, mức chi tiết.** MVP; mức chi tiết đầy đủ.
+:::
+
+![UI-19-26 · Cấu hình thanh toán của tenant](ph19/hifi/ui-19-26.png)
+
+Bảng tham số đặt cạnh nhau giá trị phiên bản đang hiệu lực, phiên bản chờ hiệu lực và mặc định nền tảng; giá trị thay đổi ở phiên bản mới in đậm màu vàng. Dòng chú thích cuối ghi người tạo và căn cứ.
 
 ### 32.1. Bố cục
 
@@ -1180,11 +1941,33 @@ Ngăn kéo 720 px hiện cùng danh sách tham số ở dạng sửa; tham số 
 
 ## 33. UI-19-27 Di trú và chạy song song
 
-Đường dẫn `/thanh-toan/di-tru` · Quyền `migration-run`, đổi chế độ `migration-switch` · FR-19-065, 066, 068 · API-19-089, 090, 047, 088 · MVP.
+::: dac-ta
+**Mục đích.** Điều khiển giai đoạn chuyển từ hệ cũ: chạy lô nhập dữ liệu, xem kết quả đối chiếu chạy bóng, đề nghị đổi chế độ định tuyến từng đối tác (Hệ cũ, Chạy bóng, Datahub).
+
+**Người dùng, quyền.** Chạy lô nhập, xem đối chiếu: `PERM-19-migration-run` (ADM, ACC); đề nghị và duyệt đổi chế độ: `PERM-19-migration-switch` (ADM lập, APR duyệt).
+
+**FR, UC hiện thực.** FR-19-065, 066, 068; UC-19-29.
+
+**Truy vết hệ cũ.** Không có (màn phục vụ di trú).
+
+**Đường dẫn.** `/thanh-toan/di-tru`, tham số `tab` (`lo-nhap`, `doi-chieu`, `dinh-tuyen`).
+
+**Mẫu bố cục.** (CT), PTN-02 Chi tiết.
+
+**API.** API-19-089, 090, 047, 088.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-27 · Di trú và chạy song song](ph19/hifi/ui-19-27.png)
+
+Ảnh chụp tab "Chế độ định tuyến": mỗi đối tác một dòng với chế độ hiện tại, kết quả đối chiếu bảy ngày và điều kiện chuyển; nút đề nghị chỉ bật khi đủ điều kiện. Dải thông tin nhắc mỗi lần đổi chế độ cần đề nghị bốn mắt.
 
 Màn dùng trong giai đoạn chuyển từ hệ cũ (ADR-049, chiến lược strangler theo đối tác). Ba tab.
 
 ### 33.1. Tab "Lô nhập"
+
+Tab "Lô nhập" chạy nhập dữ liệu từ hệ cũ, mặc định ở chế độ chạy thử không ghi dữ liệu.
 
 ```
 ┌ Chạy lô nhập mới ────────────────────────────────────────────────────────────────────────┐
@@ -1209,11 +1992,33 @@ Bảng mọi đối tác: chế độ hiện tại, đối chiếu gần nhất 
 
 ## 34. UI-19-28 Trang kết quả thanh toán cho người nộp
 
-Phản hồi HTML của API-19-202 · Không đăng nhập · FR-19-025 · API-19-202, 205 · LGC-PAY-012, 024 · MVP.
+::: dac-ta
+**Mục đích.** Cho người nộp tiền quay về từ PayGov thấy kết quả thanh toán mà Datahub đang biết (không bao giờ tự đổi trạng thái giao dịch) rồi đưa họ về hệ thống của đối tác.
+
+**Người dùng, quyền.** Người nộp, không đăng nhập; trang được bảo vệ bằng chữ ký tham số và mã phiên trang hạn 2 phút.
+
+**FR, UC hiện thực.** FR-19-025; UC-19-12.
+
+**Truy vết hệ cũ.** LGC-PAY-012, 024.
+
+**Đường dẫn.** Phản hồi HTML của API-19-202 tại `/api/payment-callback/v1/paygov/{connectionKey}/return` (miền công khai qua `apisix-ext`, không thuộc `dh-console`).
+
+**Mẫu bố cục.** Trang đơn tối ưu điện thoại, PTN-11 Trang công khai.
+
+**API.** API-19-202, 205.
+
+**Phát hành, mức chi tiết.** MVP; mức rất chi tiết.
+:::
+
+![UI-19-28 · Trang kết quả thanh toán cho người nộp](ph19/hifi/ui-19-28.png){width=6cm}
+
+Ảnh chụp ở khổ điện thoại 360 × 740 (mật độ điểm ảnh 2). Chữ từ 16 px, nút quay về cao 48 px có đếm ngược 5 giây, không có họ tên hay số điện thoại người nộp; logo và tên tỉnh lấy từ cấu hình tenant. Trang không dùng kính vì là trang công khai nhẹ.
 
 Người nộp quay về từ PayGov thấy trang này trước khi được đưa về HTTT đối tác. Trang **không bao giờ** đổi trạng thái giao dịch (BR-19-014, AC-19-03): nó chỉ hiện trạng thái Datahub đang biết, và nếu IPN chưa tới thì hiện "Đang xác nhận".
 
 ### 34.1. Wireframe (điện thoại 360 × 740)
+
+Wireframe dạng chữ dưới đây chốt vị trí và thứ tự các vùng của màn; ảnh hi-fi ở đầu chương minh họa vật liệu, màu và mật độ.
 
 ```
 ┌──────────────────────────────┐
@@ -1240,6 +2045,8 @@ Người nộp quay về từ PayGov thấy trang này trước khi được đ�
 
 ### 34.2. Các trạng thái hiển thị
 
+Trang hiển thị theo trạng thái Datahub đang biết khi mở trang, không theo tham số PayGov gắn vào địa chỉ.
+
 | Trạng thái Datahub khi mở trang | Tiêu đề | Biểu tượng | Hành vi |
 |---|---|---|---|
 | `SUCCEEDED` | Thanh toán thành công | `CircleCheck` xanh | Đếm ngược 5 giây rồi chuyển về `returnUrl` của đối tác |
@@ -1248,6 +2055,8 @@ Người nộp quay về từ PayGov thấy trang này trước khi được đ�
 | `CANCELLED`, `EXPIRED` | Giao dịch đã hết hạn hoặc đã hủy | `TimerOff` | Câu "Nếu tài khoản đã bị trừ tiền, khoản tiền sẽ được đối soát và xử lý"; nút quay về |
 | Chữ ký tham số sai hoặc giao dịch không tồn tại | Không xác nhận được kết quả | `CircleHelp` | "Không xác nhận được kết quả. Vui lòng quay lại cổng dịch vụ để kiểm tra." Không hiện thông tin giao dịch, **không** chuyển tới đối tác; chỉ có nút về trang chủ cấu hình của tỉnh và số hỗ trợ |
 | Giao dịch thử | Như trạng thái tương ứng, thêm nhãn "Giao dịch thử" | `FlaskConical` | Nút quay về là bước ② của UI-19-06 |
+
+: UI-19-28 Trang kết quả thanh toán cho người nộp, các trạng thái hiển thị
 
 ### 34.3. Yêu cầu riêng
 
@@ -1258,6 +2067,8 @@ Người nộp quay về từ PayGov thấy trang này trước khi được đ�
 
 ## 35. Khả năng truy cập và kiểm thử giao diện
 
+Các yêu cầu dưới đây áp dụng cho cả 28 màn và được kiểm tự động trong CI, để giao diện đạt WCAG 2.2 AA và không phụ thuộc màu.
+
 | Mã | Yêu cầu | Cách kiểm |
 |---|---|---|
 | A11Y-19-01 | Mọi màn đạt WCAG 2.2 AA; axe-core không có lỗi mức "serious" trở lên | Kiểm thử tự động trong CI (Playwright + axe) cho 28 màn |
@@ -1267,9 +2078,13 @@ Người nộp quay về từ PayGov thấy trang này trước khi được đ�
 | A11Y-19-05 | Trạng thái không chỉ dùng màu | Kiểm ảnh chụp ở chế độ xám |
 | A11Y-19-06 | Chế độ giảm trong suốt và giảm chuyển động hiển thị đúng | Chụp ảnh so sánh với `prefers-reduced-transparency`, `prefers-reduced-motion` |
 
+: Yêu cầu khả năng truy cập A11Y-19 và cách kiểm
+
 Kiểm thử giao diện dùng kịch bản TS-19-nn của [D05-02-PH19](../../05-kiem-thu/test-case/D05-02-PH19-test-case.md); mỗi màn có ít nhất một ca Playwright cho đường chính và một ca cho trạng thái lỗi hoặc không có quyền.
 
 ## 36. Tiêu chí nghiệm thu giao diện
+
+Tiêu chí nghiệm thu là điều hội đồng và người dùng nghiệp vụ kiểm khi nhận bàn giao giao diện; mỗi tiêu chí gắn với màn cụ thể.
 
 | Mã | Tiêu chí | Màn |
 |---|---|---|
@@ -1281,6 +2096,8 @@ Kiểm thử giao diện dùng kịch bản TS-19-nn của [D05-02-PH19](../../0
 | UAC-19-06 | Chốt phiên đối soát chỉ được khi hết chênh lệch, biên bản tải về có mã băm trùng mã hiện trên màn | UI-19-20 |
 | UAC-19-07 | Trang người nộp không bao giờ hiện "thành công" khi Datahub chưa nhận IPN hợp lệ | UI-19-28 |
 | UAC-19-08 | Mọi nút ẩn, hiện, vô hiệu đúng theo `allowedActions` và `disabledReasons` của API cho chín vai trò ở khung §13.3 | Mọi màn |
+
+: Tiêu chí nghiệm thu giao diện UAC-19
 
 ## 37. Ánh xạ sang mã nguồn `dh-console`
 
@@ -1300,15 +2117,21 @@ Theo SDD §3.5, mã giao diện nằm ở `apps/console/src/features/payment/`. 
 | `reports/`, `config/`, `migration/` | UI-19-25, 26, 27 |
 | `apps/pay-result/` (gói tĩnh nhỏ, không thuộc `dh-console`; `dh-payment` vai trò callback nhúng gói này vào trang HTML trả cho API-19-202) | UI-19-28 |
 
+: Thư mục mã nguồn dh-console theo màn
+
 Thành phần dùng chung lấy từ D03-05-03 và D03-05-04, không tự làm riêng trong phân hệ: `CMP-NumberInput` biến thể `money`, `CMP-Money`, `CMP-DiffTable`, `CMP-ReasonDialog` (có ô lý do và gõ lại mã), `CMP-MaskedValue` (che, bỏ che có hẹn giờ). Dòng đọc số tiền bằng chữ dưới ô nhập (mục 2.2) chưa có trong đặc tả `CMP-NumberInput` của D03-05-03, đề nghị bổ sung ở đó. Kiểu TypeScript sinh từ `openapi-payment-admin.yaml` bằng `openapi-typescript`; không viết tay kiểu của API.
 
 ## 38. Câu hỏi mở
+
+Các câu hỏi dưới đây chưa có trả lời; tài liệu đang dùng giả định ở cột cuối và sẽ cập nhật khi có quyết định.
 
 | Mã | Câu hỏi | Người trả lời | Giả định đang dùng |
 |---|---|---|---|
 | OQ-19-37 | Trang kết quả cho người nộp (UI-19-28) đặt ở miền nào: miền chung của Datahub tỉnh hay miền con riêng cho thanh toán | Chủ đầu tư, đơn vị vận hành | Miền con `pay.{tỉnh}.gov.vn` qua `apisix-ext`, tách khỏi miền console |
 | OQ-19-38 | Thời gian hiện dữ liệu cá nhân sau khi bỏ che (5 phút) có phù hợp quy chế bảo vệ dữ liệu của tỉnh | Cán bộ ATTT, pháp chế | 5 phút, ghi kiểm toán mỗi lần |
 | OQ-19-39 | Có cần bản in (khổ A4) cho chi tiết giao dịch để đính kèm hồ sơ giải quyết khiếu nại | Kế toán tỉnh thí điểm | Chưa làm; dùng xuất PDF của báo cáo hoặc biên bản |
+
+: Câu hỏi mở về giao diện PH-19
 
 Giả định GĐ-UI-01 (mục 1.2): D03-06-00 giữ cách đánh số mẫu màn PTN-01…11 như D03-06-PH04 đang dùng.
 
@@ -1317,3 +2140,4 @@ Giả định GĐ-UI-01 (mục 1.2): D03-06-00 giữ cách đánh số mẫu mà
 | Phiên bản | Ngày | Nội dung | Người lập |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu: 28 màn, bản đồ vật liệu, mã hành động `allowedActions`, nhãn trạng thái, câu hiển thị ERR-19, ánh xạ 26 mục LGC-PAY | Nhóm phân hệ PH-19 |
+| 0.2 | 26/11/2026 | Nâng theo chuẩn kết hợp K-MH và K-TRINH-BAY, giữ toàn bộ lớp kỹ thuật của bản 0.1: thêm metadata `mo_ta`, `tai_lieu_lien_quan`; thêm mục 1.4 người đọc, 1.5 thuật ngữ và viết tắt, 1.6 cấu trúc tài liệu, 1.7 danh sách màn; khối đặc tả tám mục ở đầu 28 màn (thay dòng tóm tắt một dòng, giữ nguyên mọi thông tin); ảnh hi-fi cho 28 màn kèm thuyết minh và công cụ sinh ảnh `ph19/hifi/`; mục 5.2 tách đủ 51 mã ERR-19-001…050, 099 thành từng dòng có cột nơi hiển thị; chú thích cho mọi bảng và hình | Nhóm phân hệ PH-19 |
