@@ -7,3 +7,6 @@ Ghi tay trong lúc viết, dùng để điền bảng so sánh ở README §3.
 | Bắt đầu luồng | 02:29 | Đọc D00-04 (16 KB), bảy khuôn (22 KB), các hàng LGC liên quan ở D00-03, mục PH-05 của D02-08, ADR-067, một đoạn SDD PH-04 về `{{conn:}}` và Kamelet nền, SRS-PH-05 của repo (69 KB, nguồn yêu cầu gốc của phân hệ) |
 | FRS xong, bắt đầu UC | 02:47 | FRS 149 KB; một phiên viết, ghi theo chương (4 commit) |
 | UC xong | 02:51 | 26 UC; chỉ đọc bảng tổng hợp FRS trong ngữ cảnh |
+| SDD xong | 02:59 | Đọc mục lục và §3.5 SDD PH-04; một phiên, 1 commit (tệp viết một lần) |
+| CSDL xong | 03:04 | DDL 23 bảng + bài kiểm cô lập 23 khối chạy trên PostgreSQL 16; một lần sửa DDL (tên Kamelet SOAP); bảng cột sinh bằng script |
+| API xong | 03:13 | spec.py có sẵn từ phiên FRS; viết gen_openapi (114 lược đồ), gen_asyncapi, gen_md, check_contracts; đọc mẫu công cụ PH-04 (gen_openapi, gen_asyncapi, gen_md) và check_contracts PH-19 |

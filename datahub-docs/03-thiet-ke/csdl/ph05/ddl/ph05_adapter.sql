@@ -890,9 +890,9 @@ CREATE TABLE ph05_adapter.outbox (
   trace_id         char(32)      NOT NULL,
   occurred_at      timestamptz   NOT NULL DEFAULT now(),
   CONSTRAINT pk_outbox PRIMARY KEY (event_id),
-  CONSTRAINT ck_outbox_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT ck_outbox_tenant CHECK (tenant_id ~ '^(T[0-9]{2}|COMMON)$'),
   CONSTRAINT ck_outbox_type CHECK (event_type ~ '^vn\.datahub\.adapter\.[a-z-]+\.[a-z-]+\.v[0-9]+$'),
-  CONSTRAINT ck_outbox_topic CHECK (topic ~ '^t[0-9]{2}\.(adapter|audit)\.[a-z-]+(\.[a-z-]+)?\.v[0-9]+$'),
+  CONSTRAINT ck_outbox_topic CHECK (topic ~ '^(t[0-9]{2}|common)\.(adapter|audit)\.[a-z-]+(\.[a-z-]+)?\.v[0-9]+$'),
   CONSTRAINT ck_outbox_topic_tenant CHECK (split_part(topic, '.', 1) = lower(tenant_id)),
   CONSTRAINT ck_outbox_trace CHECK (trace_id ~ '^[0-9a-f]{32}$'),
   CONSTRAINT ck_outbox_no_secret CHECK (NOT (payload ?| ARRAY['password', 'secret', 'clientSecret', 'apiKey', 'token', 'privateKey']))
@@ -900,7 +900,7 @@ CREATE TABLE ph05_adapter.outbox (
 CREATE INDEX ix_outbox_occurred ON ph05_adapter.outbox (occurred_at);
 ALTER TABLE ph05_adapter.outbox SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000);
 CALL ph05_adapter.p_enable_rls('ph05_adapter.outbox', 'P');
-COMMENT ON TABLE ph05_adapter.outbox IS 'Outbox (DD-11) cho EVT-05-01…13, 15 và kiểm toán gửi PH-13. Dọn sau 3 ngày. EVT-05-14 do runtime phát trực tiếp.';
+COMMENT ON TABLE ph05_adapter.outbox IS 'Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09, 10 của Kamelet dùng chung, topic common.adapter.*. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.';
 -- @rollback DROP TABLE IF EXISTS ph05_adapter.outbox CASCADE;
 
 -- @changeset ph05-0730-shedlock

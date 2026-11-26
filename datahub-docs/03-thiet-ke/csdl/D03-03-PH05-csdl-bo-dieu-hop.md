@@ -618,7 +618,7 @@ EN-05-18 Nhập kết nối hệ cũ (FR-05-016). Tệp gốc không lưu; findi
 
 ### 3.22. `outbox`
 
-Outbox (DD-11) cho EVT-05-01…13, 15 và kiểm toán gửi PH-13. Dọn sau 3 ngày. EVT-05-14 do runtime phát trực tiếp.
+Outbox (DD-11) cho EVT-05-01…12, 15 và kiểm toán gửi PH-13. Dòng tenant COMMON (phiên PLATFORM) cho EVT-05-09, 10 của Kamelet dùng chung, topic common.adapter.*. Dọn sau 3 ngày. EVT-05-13 do Kafka Connect, EVT-05-14 do runtime phát trực tiếp.
 
 | Cột | Kiểu | Bắt buộc | Mặc định | Ghi chú |
 |---|---|---|---|---|
@@ -716,11 +716,11 @@ Seed chạy dưới `app.tenant_id = 'PLATFORM'`, lũy đẳng (`ON CONFLICT DO 
 
 | Topic | Chủ | Phân vùng, giữ | Khóa | Nội dung |
 |---|---|---|---|---|
-| `{tenant}.adapter.*.v1` (EVT-05-01…13, 15) | `dh-integration` qua outbox | 3, giữ 7 ngày | `connectionCode`, `adapterCode` | Sự kiện miền, không bí mật |
-| `{tenant}.adapter.db-access.v1` (EVT-05-14) | `dh-runtime` | 6, giữ 3 ngày | `flowCode` | Bản ghi truy cập CSDL |
+| `{tenant}.adapter.*.v1` (EVT-05-01…12, 15); `common.adapter.kamelet.*.v1` cho Kamelet dùng chung | `dh-integration` qua outbox | 3, giữ 7 ngày | `connectionCode`, `adapterCode` | Sự kiện miền, không bí mật |
+| `{tenant}.adapter.db.access-recorded.v1` (EVT-05-14) | `dh-runtime` | 6, giữ 3 ngày | `flowCode` | Bản ghi truy cập CSDL |
 | `{tenant}.adapter.probe.command.v1`, `….probe.result.v1` | `dh-integration`, `probe-jvm` | 3, giữ 1 ngày | `connectionCode` | Lệnh, kết quả kiểm tra; không bí mật |
 | `{tenant}.adapter.cdc.gate.v1` | `SchemaWatcher` | 1, nén (`compact`) | `tableName` | Danh sách bảng bị chặn cho `DhSchemaGate` |
-| `{tenant}.cdc.{adapter}.{schema}.{table}.v1` | PH-10 đăng ký, Kafka Connect ghi | Theo PH-10 (mặc định 7 ngày) | Khóa chính | Bản ghi thay đổi Avro |
+| `{tenant}.cdc.{adapter}.{schema}.{table}.v1` (EVT-05-13) | PH-10 đăng ký, Kafka Connect ghi | Theo PH-10 (mặc định 7 ngày) | Khóa chính | Bản ghi thay đổi Avro |
 | `{tenant}.cdc.{adapter}._schema-history` | Debezium | 1, giữ vĩnh viễn | — | Lịch sử DDL nguồn |
 
 ### 6.3. Kho đối tượng
