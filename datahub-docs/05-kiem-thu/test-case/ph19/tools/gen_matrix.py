@@ -36,6 +36,7 @@ for f, v in frs.items():
         if not b['all']: problems.append(f'{f} chưa có ca')
     lg = ', '.join(v['lgc'][:3]) + ('…' if len(v['lgc']) > 3 else '') if v['lgc'] else 'mới'
     O.append(f"| {f} | {v['name'][:60]} | {v['prio']} · {v['rel']} | {lg} | {short(b['pos'])} | {short(b['neg'])} | {short(other, 6)} | {ok} |")
+O.append('\n: Ma trận truy vết yêu cầu chức năng FR-19 tới ca dương, ca âm và ca khác')
 
 O += ['\n### 8.2. Chức năng hệ cũ → yêu cầu → test case\n',
       'Mỗi chức năng của khối Payment hệ cũ (`LGC-PAY`, D00-03 §4.6) được truy tới FR mới, tới ca tự động và ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n',
@@ -50,12 +51,19 @@ for l in lgcs:
     if not ids: problems.append(f'{l} chưa có ca')
     if not uat[l]: problems.append(f'{l} chưa có UAT')
     O.append(f"| {l} | {', '.join(x[-3:] for x in fr) or '—'} | {short(ids, 8)} | {', '.join(uat[l]) or '—'} |")
+O.append('\n: Ma trận truy vết chức năng hệ cũ LGC-PAY tới FR, ca tự động và kịch bản nghiệm thu')
 
+NGUON = {'BR': 'danh sách quy tắc nghiệp vụ ở khung truy vết D02-03-PH19-00',
+         'ERR': 'bảng mã lỗi của D03-04-PH19', 'NFR': 'danh sách yêu cầu phi chức năng ở khung truy vết D02-03-PH19-00'}
 for i, (pre, title) in enumerate((('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NFR', 'Yêu cầu phi chức năng'))):
-    O += [f'\n### 8.{3 + i}. {title} → test case\n', '| Mã | Test case |', '|---|---|']
+    O += [f'\n### 8.{3 + i}. {title} → test case\n',
+          f'Bảng liệt kê mọi mã {pre}-19 có trong {NGUON[pre]} và các ca kiểm thử truy vết tới mã đó (ba chữ số cuối của mã TC-19). '
+          'Mỗi mã phải có ít nhất một ca; mã chưa có ca được công cụ báo lỗi.\n',
+          '| Mã | Test case |', '|---|---|']
     for k in P.known(pre):
         O.append(f'| {k} | {short(by[k]["all"], 10)} |')
         if not by[k]['all'] and k not in ('ERR-19-099',): problems.append(f'{k} chưa có ca')
+    O.append(f'\n: Ma trận truy vết {title.lower()} {pre}-19 tới test case')
 O.append('<!-- gen:matrix:end -->')
 doc = re.sub(r'<!-- gen:matrix:start -->.*?<!-- gen:matrix:end -->', lambda m: '\n'.join(O), doc, flags=re.S)
 
@@ -71,6 +79,7 @@ for ts, name in tsn.items():
     n = int(ts[-2:]); c = cnt[ts]
     T.append(f'| {ts} | {name} | {25*(n-1)+1:03d}…{25*n:03d} | {c["n"]} | {c["st"]} | {c["pos"]} | {c["neg"]} | {"4" if n <= 29 else "5"} |')
 T.append(f'| **Tổng** | | | **{len(tcs)}** | {sum(c["st"] for c in cnt.values())} | {sum(c["pos"] for c in cnt.values())} | {sum(c["neg"] for c in cnt.values())} | |')
+T.append(f'\n: Danh sách {len(tsn)} kịch bản kiểm thử PH-19 kèm dải mã TC, số ca và số bước kiểm')
 T.append('<!-- gen:ts:end -->')
 tbl = '\n'.join(T)
 if '<!--gen:ts-table-->' in doc: doc = doc.replace('<!--gen:ts-table-->', tbl)
