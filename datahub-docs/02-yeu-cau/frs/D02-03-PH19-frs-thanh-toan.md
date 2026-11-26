@@ -719,3 +719,501 @@ Xử lý gồm các bước sau.
 | Đã có bản `NEXT` của cùng mục đích | ERR-19-021 | 409 |
 | Bí mật mới không hợp lệ | ERR-19-022 | 422 |
 
+#### FR-19-069 · Quản lý bảng ánh xạ mã kết quả nhà cung cấp (đề xuất)
+
+FR đề xuất bổ sung để hiện thực giả định GĐ-03: mã kết quả của nhà cung cấp chỉ đi vào máy trạng thái qua bảng cấu hình, và việc đổi bảng phải có phê duyệt vì một dòng ánh xạ sai có thể biến giao dịch thất bại thành thành công. FR được xếp vào nhóm A vì bảng gắn với từng bản ghi nhà cung cấp.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-91, REQ-94; GĐ-03; BR-19-011, 012, 015; UC-19-05; API-19-091, 092 (đề xuất), 048…050; UI-19-04 (tab Ánh xạ mã); EN-19-26 (đề xuất), EN-19-16; TS-19-05 |
+| Tác nhân, quyền | Quản trị thanh toán · `provider-write` (lập đề nghị); người phê duyệt · `provider-activate` (quyết định); mọi vai trò có `provider-read` (xem) |
+| Tiền điều kiện | NCC không ở `RETIRED` |
+| Đầu vào | Đề nghị đổi: danh sách dòng thêm, sửa, ngừng (`operation`, `providerCode`, `outcome`, `isFinal`, `reasonCode`, `messageVi`), `note` |
+| Đầu ra | Bảng ánh xạ phiên bản hiện hành; lịch sử phiên bản; đề nghị `RESULT_MAPPING_CHANGE` kèm bảng so sánh trước – sau |
+| Hậu điều kiện | Khi duyệt: tạo `mapping_version` mới có hiệu lực ngay; mọi kết quả nhận sau thời điểm đó dùng phiên bản mới; bản ghi IPN và giao dịch lưu phiên bản ánh xạ đã dùng để truy vết |
+| Sự kiện, kiểm toán | Kiểm toán `RESULT_MAPPING_CHANGE_REQUEST`, `APPROVAL_DECISION`, `RESULT_MAPPING_APPLIED` |
+
+Mỗi dòng ánh xạ gồm: thao tác (`INIT`, `IPN`, `QUERY`, `CANCEL`, `REFUND`, `REFUND_IPN`, `RECON`), mã kết quả nhà cung cấp (chuỗi ≤ 64 ký tự, so sánh chính xác), kết cục nội bộ (`SUCCEEDED`, `FAILED`, `PENDING`, `UNKNOWN`), cờ "kết quả cuối", mã lý do nội bộ (`T-CODE`, dùng cho `transaction_event.reason` và trường `reasonCode` của webhook) và thông điệp tiếng Việt hiển thị cho cán bộ và đối tác.
+
+Xử lý gồm các bước sau.
+
+1. Khi tạo NCC (FR-19-001), hệ thống nạp bảng mặc định do adapter khai báo (với PayGov, bảng giả định ở D03-02-PH19 §7; cần đối chiếu OQ-19-05).
+2. Người lập soạn thay đổi trên UI-19-04; hệ thống kiểm tra: không có hai dòng trùng (thao tác, mã); dòng có `outcome = SUCCEEDED` phải `isFinal = true`; không được xóa dòng, chỉ được ngừng (giữ lịch sử).
+3. Hệ thống tạo `approval_request` loại `RESULT_MAPPING_CHANGE` với `payload` gồm bảng so sánh; mọi dòng đổi kết cục từ `FAILED`, `PENDING`, `UNKNOWN` sang `SUCCEEDED` được tô cảnh báo ở UI-19-13.
+4. Người phê duyệt khác người lập duyệt (BR-19-011); hệ thống ghi phiên bản mới.
+5. Lõi tra bảng theo (NCC, thao tác, mã); không thấy thì kết cục là `UNKNOWN` (mục 4.3). Bảng được đệm trong bộ nhớ mỗi bản sao, làm mới khi có sự kiện nội bộ "mapping-changed" và tối đa mỗi 60 giây.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Dòng trùng, dòng `SUCCEEDED` không phải kết quả cuối | ERR-19-001 | 400 |
+| Đã có đề nghị đổi ánh xạ `PENDING` cho NCC | ERR-19-021 | 409 |
+| Người duyệt trùng người lập | ERR-19-033 | 403 |
+
+### 5.2. Nhóm B — Nhóm dịch vụ và dịch vụ thanh toán
+
+#### FR-19-013 · Quản lý nhóm dịch vụ
+
+Giữ nguyên phần "nhóm dịch vụ" (hệ cũ gọi "lĩnh vực giao dịch") của chức năng quản lý danh mục hệ cũ (LGC-PAY-022). Nhóm là cách tenant gom dịch vụ để báo cáo; mỗi nhóm trỏ tới tối đa một lĩnh vực TTHC của PH-07.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; UC-19-07; API-19-015…019; UI-19-07, UI-19-08; EN-19-04; TS-19-07 |
+| Tác nhân, quyền | Quản trị thanh toán · `service-write`; mọi vai trò thanh toán · `service-read` |
+| Đầu vào | `code` (T-CODE, duy nhất trong tenant trong các nhóm chưa xóa), `name` (T-NAME), `sectorCode` (T-CODE, `DM_LINH_VUC_TTHC`, tùy chọn), `description` (T-TEXT), `displayOrder` (số nguyên 0…9.999, mặc định 100) |
+| Đầu ra | Nhóm kèm số dịch vụ theo trạng thái; danh sách có `q`, `sectorCode`, sắp xếp `displayOrder`, `name` |
+| Hậu điều kiện | Xóa là xóa mềm (`deleted_at`); mã của nhóm đã xóa được dùng lại |
+| Sự kiện, kiểm toán | Kiểm toán `SERVICE_GROUP_CREATE`, `UPDATE`, `DELETE` |
+
+Xử lý gồm các bước sau.
+
+1. Tạo, sửa: kiểm tra định dạng (ERR-19-001), trùng mã (ERR-19-038), mã lĩnh vực với PH-07 theo FR-19-016 (ERR-19-039).
+2. Sửa không được đổi `code`.
+3. Xóa: kiểm tra không còn dịch vụ nào chưa xóa trong nhóm (kể cả `RETIRED`); còn thì trả ERR-19-037 kèm số dịch vụ.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Mã trùng | ERR-19-038 | 409 |
+| Mã lĩnh vực không hợp lệ | ERR-19-039 | 422 |
+| Xóa nhóm còn dịch vụ | ERR-19-037 | 409 |
+| ETag không khớp | ERR-19-045 | 412 |
+
+#### FR-19-014 · Quản lý dịch vụ thanh toán
+
+Giữ nguyên phần "dịch vụ" của LGC-PAY-022, bổ sung các thuộc tính cần cho kiểm soát thu: khoảng số tiền, thời hạn thanh toán, đơn vị thu, tài khoản thụ hưởng.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; BR-19-001, 003, 008; UC-19-08; API-19-020…023, 028; UI-19-09, UI-19-10; EN-19-05; TS-19-08 |
+| Tác nhân, quyền | Quản trị thanh toán · `service-write`; mọi vai trò thanh toán · `service-read` |
+| Tiền điều kiện | Nhóm dịch vụ và NCC tồn tại; NCC không `RETIRED` |
+| Đầu ra | Dịch vụ `DRAFT` (tạo), dịch vụ sau sửa; danh sách có lọc `q`, `groupId`, `providerId`, `status`, `feeTypeCode`, `collectingAgencyCode`, `catalogInvalid` |
+| Sự kiện, kiểm toán | Kiểm toán `SERVICE_CREATE`, `SERVICE_UPDATE`; đổi `providerId` ghi kiểm toán riêng `SERVICE_PROVIDER_CHANGE` (BR-19-008) |
+
+| Trường đầu vào | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `code` | T-CODE | Có | Duy nhất trong tenant, bất biến | `LPTB-OTO` |
+| `name` | T-NAME | Có | | `Lệ phí trước bạ ô tô` |
+| `groupId` | T-ID | Có | Nhóm chưa xóa | |
+| `providerId` | T-ID | Có | NCC không `RETIRED` | |
+| `feeTypeCode` | T-CODE | Có | `DM_LOAI_PHI_LE_PHI` còn hiệu lực | `LE_PHI` |
+| `collectingAgencyCode` | T-CODE | Có | `DM_CO_QUAN` còn hiệu lực | `000.00.20.H68` |
+| `procedureCode` | T-CODE | Không | `DM_THU_TUC_HANH_CHINH` | |
+| `beneficiaryRef` | T-CODE | Không, bắt buộc trước kích hoạt | Mã tham chiếu tài khoản thụ hưởng đã đăng ký với NCC; không lưu số tài khoản đầy đủ (OQ-19-11) | `TH-68-0012` |
+| `minAmount`, `maxAmount` | T-MONEY | Có | `0 < minAmount ≤ maxAmount ≤ 999.999.999.999` | `1000`, `500000000` |
+| `expiryMinutes` | số nguyên | Không | 5…1.440; không khai thì lấy `19.txn.default-expiry-minutes` | `30` |
+| `description` | T-TEXT | Không | | |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra định dạng, khoảng số tiền (ERR-19-001), mã trùng (ERR-19-038).
+2. Kiểm tra mọi mã danh mục với PH-07 (FR-19-016); khi tạo mới mà PH-07 không trả lời thì từ chối với ERR-19-039 (không cho tạo bằng bản đệm, khung §1.5); khi sửa trường không phải mã danh mục thì không cần gọi PH-07.
+3. Sửa dịch vụ `ACTIVE`: được sửa tên, mô tả, khoảng số tiền, thời hạn; thay đổi có hiệu lực với giao dịch tạo sau thời điểm sửa. Đổi `providerId` của dịch vụ `ACTIVE` chỉ khi NCC mới `ACTIVE`, ghi kiểm toán riêng; giao dịch dở giữ NCC cũ.
+4. Sửa xong, xóa bộ đệm dịch vụ trong Valkey.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Khoảng số tiền sai | ERR-19-001 | 400 |
+| Mã trùng | ERR-19-038 | 409 |
+| Mã danh mục không hợp lệ hoặc PH-07 không kiểm tra được khi tạo | ERR-19-039 | 422 |
+| Đổi sang NCC không `ACTIVE` khi dịch vụ `ACTIVE` | ERR-19-021 | 409 |
+
+#### FR-19-015 · Điều khiển vòng đời dịch vụ
+
+Năng lực bổ sung cho LGC-PAY-022: dịch vụ có vòng đời `DRAFT` → `ACTIVE` ⇄ `SUSPENDED` → `RETIRED` (khung §7.2), không cần phê duyệt vì rủi ro đã kiểm soát ở NCC và ở việc gán dịch vụ cho đối tác.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; BR-19-009, 027; UC-19-08; API-19-024…027; UI-19-09, UI-19-10; EN-19-05; TS-19-08 |
+| Tác nhân, quyền | Quản trị thanh toán · `service-activate` |
+| Đầu vào | Kích hoạt, mở lại: không có thân. Tạm dừng, ngừng hẳn: `reason` (10…1.000 ký tự). Xóa: `If-Match` |
+| Hậu điều kiện | `ACTIVE`: đối tác được gán tạo được giao dịch. `SUSPENDED`: yêu cầu tạo mới bị từ chối ERR-19-008; giao dịch dở không ảnh hưởng. `RETIRED`: bất biến; gán dịch vụ của mọi đối tác hết hiệu lực |
+| Sự kiện, kiểm toán | EVT-19-03; kiểm toán theo hành động |
+
+Xử lý gồm các bước sau.
+
+1. Kích hoạt, mở lại: kiểm tra NCC của dịch vụ `ACTIVE`, mọi mã danh mục còn hiệu lực (`catalog_invalid = false`), đã có `beneficiaryRef`; thiếu điều kiện nào trả ERR-19-035 với `errors` liệt kê điều kiện.
+2. Ngừng hẳn: kiểm tra BR-19-027 cho dịch vụ (không còn giao dịch `CREATED`/`PENDING`, yêu cầu hoàn chưa kết thúc); vi phạm trả ERR-19-036.
+3. Xóa: chỉ `DRAFT` (ERR-19-021) và chưa từng có giao dịch (ERR-19-037).
+4. Xóa bộ đệm dịch vụ; phát EVT-19-03.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Kích hoạt khi NCC không `ACTIVE`, mã danh mục hết hiệu lực, thiếu tài khoản thụ hưởng | ERR-19-035 | 422 |
+| Ngừng hẳn khi còn việc dở | ERR-19-036 | 409 |
+| Chuyển trạng thái không hợp lệ | ERR-19-021 | 409 |
+| Xóa dịch vụ đã có giao dịch | ERR-19-037 | 409 |
+
+#### FR-19-016 · Kiểm tra và đồng bộ mã danh mục PH-07
+
+Năng lực mới. PH-19 không tạo bảng danh mục trùng với PH-07; mọi cột `*_code` lưu mã mục và được kiểm tra với PH-07 khi ghi.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | S · MVP (kiểm tra khi ghi và tra cứu cho biểu mẫu); phần lắng nghe sự kiện danh mục thay đổi cũng thuộc MVP vì là điều kiện của BR-19-009 |
+| Truy vết | REQ-92; BR-19-009; UC-19-07, UC-19-08; API-19-028; UI-19-08, UI-19-10; EN-19-04, 05; TS-19-07, 08 |
+| Tác nhân, quyền | Hệ thống; người dùng biểu mẫu · `service-read` (tra cứu) |
+| Đầu ra | API-19-028 trả mục của 11 danh mục ở khung §1.5 (mã, tên, hiệu lực), có tìm kiếm; cờ `catalog_invalid` trên dịch vụ và nhóm |
+| Sự kiện, kiểm toán | Khi bật cờ: cảnh báo PH-13 cho quản trị thanh toán; EVT-19-03 với `catalogInvalid = true` |
+
+Xử lý gồm các bước sau.
+
+1. Tra cứu cho biểu mẫu: API-19-028 chỉ chấp nhận mã danh mục thuộc danh sách khung §1.5; kết quả đệm Valkey 10 phút theo (tenant, danh mục, phiên bản danh mục).
+2. Kiểm tra khi ghi: hệ thống gọi API kiểm tra mã của PH-07 qua `api/` của module danh mục (ADR-001) hoặc qua API nội bộ khi chạy khác tiến trình; mã không tồn tại hoặc hết hiệu lực trả ERR-19-039.
+3. Lắng nghe sự kiện danh mục thay đổi (`{tenant}.rdm.catalog.published.v1`, PH-07): với mỗi mã bị ngừng hiệu lực hoặc thay thế, bật `catalog_invalid = true` cho nhóm, dịch vụ đang dùng mã đó; không đổi trạng thái dịch vụ để không gián đoạn việc thu.
+4. Khi quản trị sửa dịch vụ có `catalog_invalid = true`, biểu mẫu buộc chọn mã mới trước khi lưu; lưu xong cờ tự tắt.
+5. Khi PH-07 không sẵn sàng lúc chạy, giao dịch vẫn được tạo (mã đã kiểm tra khi cấu hình); chỉ thao tác tạo mới cấu hình bị chặn.
+
+### 5.3. Nhóm C — Đối tác và thông tin xác thực
+
+#### FR-19-017 · Quản lý hồ sơ đối tác
+
+Giữ nguyên phần "đối tác" của LGC-PAY-022, bổ sung liên kết với HTTT thành viên của PH-01, đầu mối, danh sách địa chỉ quay về được phép và mã ứng dụng hệ cũ để di trú.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; BR-19-004 (bước 15); UC-19-09; API-19-029…032; UI-19-11, UI-19-12; EN-19-06; TS-19-09 |
+| Tác nhân, quyền | Quản trị thanh toán · `partner-write`; mọi vai trò thanh toán, cán bộ ATTT · `partner-read` |
+| Đầu ra | Đối tác `DRAFT` (tạo) với `routingMode = LEGACY` nếu có `legacyAppCode`, ngược lại `DATAHUB`; chi tiết gồm hồ sơ, số client còn hiệu lực, dịch vụ được gán, đầu nhận webhook, chế độ định tuyến, số giao dịch 30 ngày |
+| Sự kiện, kiểm toán | Kiểm toán `PARTNER_CREATE`, `PARTNER_UPDATE` |
+
+| Trường đầu vào | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| `code` | T-CODE | Có | Duy nhất trong tenant, bất biến | `DVC-T68` |
+| `name` | T-NAME | Có | | `Cổng dịch vụ công tỉnh` |
+| `agencyCode` | T-CODE | Có | `DM_CO_QUAN` – cơ quan chủ quản | `000.00.20.H68` |
+| `memberSystemId` | T-ID | Không, bắt buộc trước gửi duyệt | HTTT thành viên `ACTIVE` của PH-01 (DD-01) | |
+| `legacyAppCode` | chuỗi ≤ 255 | Không | `app_code` của hệ cũ; duy nhất trong tenant | `dvc_dnong` |
+| `allowedReturnUrls` | T-URI[] | Có | 1…20 tiền tố `https://`; không chứa ký tự đại diện; không trỏ địa chỉ nội bộ | `["https://dichvucong.t68.gov.vn/thanh-toan/"]` |
+| `techContact`, `bizContact` | `{name, phone, email}` | Có ít nhất một | | |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra định dạng; kiểm tra từng tiền tố quay về là `https`, có đường dẫn kết thúc bằng `/`, tên miền không phải địa chỉ IP nội bộ (ERR-19-001).
+2. Kiểm tra trùng `code` (ERR-19-038), trùng `legacyAppCode` (ERR-19-038).
+3. Kiểm tra `agencyCode` với PH-07 (ERR-19-039), `memberSystemId` với PH-01 nếu có; PH-01 không sẵn sàng thì cho lưu `DRAFT` kèm cảnh báo, không cho gửi duyệt (khung §1.5).
+4. Sửa đối tác `ACTIVE`: đổi `allowedReturnUrls` có hiệu lực ngay với giao dịch tạo sau; mọi thay đổi khác áp ngay.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Địa chỉ quay về sai | ERR-19-001 | 400 |
+| Mã hoặc `legacyAppCode` trùng | ERR-19-038 | 409 |
+| Mã cơ quan không hợp lệ | ERR-19-039 | 422 |
+
+#### FR-19-018 · Điều khiển vòng đời đối tác
+
+Năng lực bổ sung cho LGC-PAY-022: đưa đối tác vào sử dụng và chấm dứt đều qua phê duyệt (khung §7.3).
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; BR-19-011; UC-19-09; API-19-033…035, 048…050; UI-19-11, UI-19-12, UI-19-13; EN-19-06, 16; TS-19-09 |
+| Tác nhân, quyền | Quản trị thanh toán · `partner-write` (gửi duyệt, đề nghị chấm dứt); người phê duyệt · `partner-approve`; quản trị, người phê duyệt · `partner-suspend` |
+| Đầu vào | Đề nghị: `action` ∈ {`ONBOARD`, `TERMINATE`}, `note`. Tạm dừng: `reason`, `reasonCode`. Mở lại: không thân |
+| Hậu điều kiện | `ACTIVE`: tạo được giao dịch. `SUSPENDED`: tạo giao dịch, hoàn tiền trả ERR-19-005; truy vấn, nhận webhook, kéo thông báo vẫn chạy. `TERMINATED`: mọi client bị thu hồi tại PH-12; webhook của giao dịch dở tiếp tục tối đa 30 ngày |
+| Sự kiện, kiểm toán | EVT-19-04; kiểm toán theo hành động |
+
+Xử lý gồm các bước sau.
+
+1. `ONBOARD`: kiểm tra đối tác `DRAFT`, đã có `memberSystemId`, có ít nhất một đầu mối, có ít nhất một dịch vụ được gán (FR-19-020); thiếu trả ERR-19-035. Tạo đề nghị `PARTNER_ONBOARD`, chuyển `PENDING_APPROVAL`.
+2. Duyệt: người duyệt ≠ người lập; kiểm tra lại điều kiện bước 1; chuyển `ACTIVE`. Từ chối, rút, hết hạn: về `DRAFT`.
+3. Tạm dừng: chuyển `SUSPENDED` ngay, xóa bộ đệm đối tác; mở lại chuyển `ACTIVE`.
+4. `TERMINATE`: tạo đề nghị `PARTNER_TERMINATE`; khi duyệt, chuyển `TERMINATED`, gọi PH-12 thu hồi mọi client trong cùng thao tác (lỗi gọi PH-12 làm thao tác thất bại, không chấm dứt dở dang), đặt lịch hủy đầu nhận webhook sau 30 ngày.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Thiếu điều kiện gửi duyệt | ERR-19-035 | 422 |
+| Chuyển trạng thái không hợp lệ | ERR-19-021 | 409 |
+| Người duyệt trùng người lập | ERR-19-033 | 403 |
+| PH-12 không thu hồi được client | ERR-19-099 | 500 (thao tác không áp dụng) |
+
+#### FR-19-019 · Cấp và thu hồi client của đối tác
+
+Năng lực mới. Đối tác xác thực bằng client máy-máy tại PH-12 (OAuth 2.1 `client_credentials` kèm mTLS RFC 8705 hoặc `private_key_jwt`). PH-19 chỉ lưu liên kết client – đối tác, không giữ bí mật.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92, REQ-98; NFR-19-019; UC-19-10; API-19-036…038; UI-19-12 (tab Client); EN-19-07; TS-19-10 |
+| Tác nhân, quyền | Quản trị thanh toán, cán bộ ATTT · `partner-client-manage` |
+| Tiền điều kiện | Đối tác `DRAFT`, `PENDING_APPROVAL`, `ACTIVE` hoặc `SUSPENDED` |
+| Đầu vào | `authMethod` ∈ {`MTLS`, `PRIVATE_KEY_JWT`}; với `MTLS`: chứng thư công khai PEM của đối tác (không bao giờ khóa riêng); với `PRIVATE_KEY_JWT`: JWKS URL hoặc khóa công khai JWK; `expiresAt` (≤ 2 năm, mặc định 1 năm) |
+| Đầu ra | `idpClientId`, `authMethod`, dấu vân tay chứng thư, `expiresAt`; hướng dẫn lấy token (URL token của realm `dh-{tenant}`) |
+| Hậu điều kiện | Client tại PH-12 có vai trò `ROLE-PARTNER_SYSTEM` và claim `partner_id`; thu hồi có hiệu lực ≤ 60 giây (NFR-19-019) |
+| Sự kiện, kiểm toán | Kiểm toán `PARTNER_CLIENT_ISSUE`, `PARTNER_CLIENT_REVOKE`; nhắc hạn 30, 7 ngày |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra chứng thư hoặc khóa công khai (định dạng, độ dài khóa RSA ≥ 3.072 bit hoặc EC P-256 trở lên, còn hạn); sai trả ERR-19-001.
+2. Gọi API quản trị của PH-12 tạo client trong realm của tenant (A-19-11) với `token lifetime ≤ 5 phút`, ràng buộc chứng thư (`cnf.x5t#S256`) khi `MTLS`.
+3. Ghi `partner_client`; trả thông tin client. PH-19 không có bí mật nào để hiển thị lại.
+4. Thu hồi: gọi PH-12 vô hiệu client và thu hồi phiên; ghi `revoked_at`; đưa `idpClientId` vào danh sách chặn của PH-19 trong Valkey (kiểm tra ở mỗi yêu cầu, TTL bằng thời gian sống token) để chặn ngay cả token còn hạn.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Khóa, chứng thư không hợp lệ | ERR-19-001 | 400 |
+| Đối tác `TERMINATED` | ERR-19-021 | 409 |
+| PH-12 không phản hồi | ERR-19-099 | 500 |
+
+#### FR-19-020 · Gán dịch vụ và hạn mức cho đối tác
+
+Giữ quan hệ đối tác – dịch vụ của hệ cũ (LGC-PAY-022), bổ sung hạn mức để hạn chế rủi ro thu sai, thu vượt.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-92; LGC-PAY-022; BR-19-004, 005; UC-19-10; API-19-039…041, 108; UI-19-12 (tab Dịch vụ và hạn mức); EN-19-08; TS-19-10 |
+| Tác nhân, quyền | Quản trị thanh toán · `partner-write` |
+| Đầu vào | `{serviceId}` (đường dẫn); `maxAmountPerTxn` (T-MONEY, ≤ `maxAmount` của dịch vụ), `dailyTxnLimit` (1…1.000.000), `dailyAmountLimit` (T-MONEY), `validFrom`, `validTo` (tùy chọn) |
+| Đầu ra | Danh sách gán kèm hạn mức đã dùng trong ngày (từ bộ đếm Valkey) |
+| Hậu điều kiện | Gán có hiệu lực ngay; bỏ gán không ảnh hưởng giao dịch đã tạo |
+| Sự kiện, kiểm toán | Kiểm toán `PARTNER_GRANT_SET`, `PARTNER_GRANT_REMOVE` |
+
+Xử lý: hệ thống kiểm tra dịch vụ tồn tại và không `RETIRED` (ERR-19-007, ERR-19-021), hạn mức hợp lệ (ERR-19-001), ghi gán (PUT là ghi đè toàn bộ hạn mức của cặp), xóa bộ đệm gán của đối tác. Bộ đếm hạn mức ngày theo BR-19-005 được đối chiếu lại với CSDL mỗi 5 phút; khi lệch, giá trị CSDL thắng.
+
+#### FR-19-021 · Cấu hình webhook của đối tác
+
+Năng lực mới, thay chức năng "thông báo kết quả cho HTTT gọi" không mô tả cơ chế của hệ cũ (LGC-PAY-012) ở phần cấu hình.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; NFR-19-021; UC-19-10; API-19-042…046; UI-19-12 (tab Webhook); EN-19-09; TS-19-10, 27, 30 |
+| Tác nhân, quyền | Quản trị thanh toán · `partner-webhook-manage` |
+| Đầu vào | `url` (T-URI `https`), `eventTypes` (tập con của `transaction.succeeded`, `transaction.failed`, `transaction.cancelled`, `transaction.expired`, `refund.decided`, `refund.succeeded`, `refund.failed`, `reconciliation.closed`), `description` |
+| Đầu ra | Đầu nhận với `endpointStatus`; **bí mật ký hiển thị đúng một lần** khi tạo và khi xoay (≥ 256 bit, tiền tố `whsec_`), sau đó chỉ còn 4 ký tự cuối |
+| Hậu điều kiện | Bí mật nằm ở OpenBao `kv/dh/{tenant}/payment/partners/{partnerCode}/webhooks/{endpointId}`; CSDL lưu tham chiếu |
+| Sự kiện, kiểm toán | Kiểm toán `WEBHOOK_ENDPOINT_*`, `WEBHOOK_SECRET_ROTATE` (không ghi bí mật) |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra địa chỉ: bắt buộc `https`; phân giải DNS tại thời điểm lưu và tại mỗi lần gửi, từ chối địa chỉ loopback, riêng (RFC 1918), liên kết cục bộ, siêu dữ liệu đám mây, và địa chỉ thuộc dải của cụm Datahub (chống SSRF); sai trả ERR-19-044.
+2. Sinh bí mật ngẫu nhiên 32 byte, ghi vào OpenBao, trả một lần.
+3. Gửi thử (API-19-045): gửi sự kiện `ping` có ký theo FR-19-060, trả mã HTTP, độ trễ, và 1 KB đầu của phản hồi đã che.
+4. Xoay bí mật (API-19-046): sinh bí mật mới vào `next_secret_ref`; trong 7 ngày mỗi webhook mang hai chữ ký (ADR-044); hết hạn thì bí mật mới thay bí mật cũ.
+5. Vô hiệu đầu nhận (`endpointStatus = DISABLED`): lượt gửi `PENDING`, `RETRY_SCHEDULED` chuyển `CANCELLED` (khung §7.8).
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Địa chỉ không hợp lệ hoặc nội bộ | ERR-19-044 | 422 |
+| Loại sự kiện không hỗ trợ | ERR-19-001 | 400 |
+| Đã có xoay bí mật đang chuyển tiếp | ERR-19-021 | 409 |
+
+### 5.4. Nhóm D — Giao dịch thanh toán và kết nối PayGov
+
+#### FR-19-022 · Tạo giao dịch thanh toán
+
+Nâng cấp chức năng "Nhận yêu cầu thanh toán của người dùng" và "Lưu dữ liệu quá trình thanh toán" của hệ cũ (LGC-PAY-024 đề xuất, LGC-PAY-011). Đây là API được gọi nhiều nhất của PH-19 và là điểm vào của quy trình BP-93.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-93; LGC-PAY-011, 024; BR-19-001…007, 033, 034; NFR-19-001, 002; UC-19-11; API-19-101; EN-19-10, 11, 12; EVT-19-05; TS-19-11, 32 |
+| Tác nhân, quyền | HTTT đối tác · `partner-pay-create` |
+| Tiền điều kiện | Client hợp lệ, chưa bị thu hồi; đối tác `ACTIVE` ở chế độ `DATAHUB` hoặc `SHADOW` |
+| Đầu ra | 201 với `transactionCode`, `status` (`PENDING`, hoặc `CREATED` khi khởi tạo chưa xác định), `paymentUrl`, `expiresAt`, `amount`, `serviceCode`, `partnerOrderId`, `createdAt`; header `Location`, `Idempotent-Replayed` khi trả lại |
+| Hậu điều kiện | Giao dịch ghi trong `pg-payment` với `transaction_event` đầu tiên (`→ CREATED`, nguồn `PARTNER_API`); bộ đếm hạn mức ngày tăng |
+| Sự kiện, kiểm toán | EVT-19-05; nhật ký tích hợp `IN_PARTNER`/`CREATE` (FR-19-054); không ghi kiểm toán người dùng (máy-máy) |
+
+| Trường đầu vào | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
+|---|---|---|---|---|
+| Header `Idempotency-Key` | T-IDEM-KEY | Có | BR-19-006 | `7c1f9a0e-2b7d-4c3a-9f1e-0b6f5c2d8a11` |
+| `serviceCode` | T-CODE | Có | Dịch vụ của tenant | `LPTB-OTO` |
+| `partnerOrderId` | T-ORDER-ID | Có | Mã đơn hàng hoặc mã hồ sơ của đối tác (hệ cũ `order_id`) | `H68.12-261121-0042` |
+| `amount` | T-MONEY | Có | Số nguyên dương ≤ 999.999.999.999 (BR-19-001) | `2350000000` |
+| `currency` | chuỗi 3 | Không | Chỉ `VND`; mặc định `VND` | `VND` |
+| `description` | T-TEXT | Có | 1…255 ký tự (hệ cũ `order_info`); không chứa dữ liệu cá nhân nhạy cảm | `Lệ phí trước bạ hồ sơ H68.12-261121-0042` |
+| `returnUrl` | T-URI | Có | Khớp một tiền tố trong `allowedReturnUrls` của đối tác (BR-19-004 bước 15) | `https://dichvucong.t68.gov.vn/thanh-toan/ket-qua` |
+| `payer.name` | T-NAME | Không | Họ tên người nộp | `Nguyễn Văn An` |
+| `payer.idNumber` | chuỗi ≤ 20 | Không | Số định danh cá nhân hoặc mã số thuế | |
+| `payer.phone` | T-PHONE | Không | | `+84912345678` |
+| `payer.email` | T-EMAIL | Không | | |
+| `procedureCode` | T-CODE | Không | `DM_THU_TUC_HANH_CHINH` | |
+| `expiryMinutes` | số nguyên | Không | 5…`expiryMinutes` của dịch vụ; ngắn hơn được, dài hơn không | `15` |
+| `clientIp` | chuỗi | Không | Địa chỉ IP của người nộp nếu đối tác biết (hệ cũ `ip_address`) | |
+| `metadata` | đối tượng | Không | ≤ 10 cặp khóa – giá trị chuỗi ≤ 255 ký tự; trả lại nguyên trong truy vấn và webhook; không được chứa dữ liệu cá nhân | `{"hoSoId":"42"}` |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra hợp lệ theo FR-19-023 (15 bước của BR-19-004); dừng ở lỗi đầu tiên.
+2. Kiểm tra lũy đẳng theo FR-19-033 trước mọi ghi: khóa đã có và `COMPLETED` → trả lại nguyên phản hồi cũ; đang `IN_PROGRESS` → ERR-19-004; khác nội dung → ERR-19-003. Chưa có → ghi `idempotency_record` ở `IN_PROGRESS`.
+3. Với đối tác chế độ `SHADOW`: ghi giao dịch với `is_shadow = true`, **không** gọi NCC, trả `201` với `status = CREATED`, `paymentUrl = null` (PH-03 đã chuyển yêu cầu gốc tới hệ cũ, bản sao chỉ để so sánh; BR-19-034).
+4. Sinh `transaction_code` theo BR-19-002; mã hóa dữ liệu người nộp mức trường (NFR-19-024) và tính `payer_search_hash`; tính `expires_at` theo BR-19-003.
+5. Trong một giao dịch CSDL: ghi `payment_transaction` ở `CREATED` (ràng buộc duy nhất có điều kiện của BR-19-007 là chốt chặn cuối của bước 14), ghi `transaction_event`, ghi EVT-19-05 vào outbox, tăng bộ đếm hạn mức.
+6. Gọi FR-19-024 để khởi tạo tại NCC **sau khi** giao dịch CSDL đã ghi (không giữ giao dịch CSDL mở trong lúc gọi ra ngoài).
+7. Ghi kết quả vào `idempotency_record` (`COMPLETED`, mã HTTP, thân phản hồi); trả phản hồi.
+
+| Điều kiện | Mã lỗi | HTTP |
+|---|---|---|
+| Theo bảng của FR-19-023 | ERR-19-001…016, 049 | 400…503 |
+| Mạch ngắt mở, NCC tạm dừng | ERR-19-017 | 503, `Retry-After` |
+| NCC từ chối khởi tạo | ERR-19-018 | 502 (giao dịch `FAILED`) |
+| Khởi tạo không xác định | ERR-19-019 | 504 (giao dịch `CREATED`, `init_uncertain`) |
+
+Ví dụ phản hồi thành công:
+
+```json
+{
+  "transactionCode": "T68261126K7M2Q9XW4P",
+  "status": "PENDING",
+  "serviceCode": "LPTB-OTO",
+  "partnerOrderId": "H68.12-261121-0042",
+  "amount": 2350000000,
+  "currency": "VND",
+  "paymentUrl": "https://paygov.example.vn/pay?ref=PG-7781234",
+  "expiresAt": "2026-11-26T03:15:00Z",
+  "createdAt": "2026-11-26T03:00:00Z"
+}
+```
+
+#### FR-19-023 · Kiểm tra hợp lệ yêu cầu thanh toán
+
+Năng lực mới (hệ cũ không mô tả kiểm tra). Thứ tự kiểm tra cố định để đối tác luôn nhận cùng một mã lỗi cho cùng một yêu cầu, và để các kiểm tra rẻ chạy trước kiểm tra cần đọc CSDL.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-93; LGC-PAY-024; BR-19-001, 004, 005, 006, 007; UC-19-11; API-19-101 (bên trong); TS-19-11 |
+| Tác nhân, quyền | Hệ thống |
+| Đầu ra | Chấp nhận, hoặc đúng một lỗi RFC 9457 (lỗi định dạng ở bước 5 có thể kèm nhiều phần tử `errors`) |
+
+| Bước | Kiểm tra | Mã lỗi khi vi phạm | Nguồn dữ liệu |
+|---|---|---|---|
+| 1 | Phân hệ bật cho tenant | ERR-19-049 | Bộ đệm cấu hình tenant |
+| 2 | Đối tác của client ở `ACTIVE` | ERR-19-005 | Bộ đệm đối tác (Valkey, TTL 30 giây) |
+| 3 | Chế độ định tuyến `DATAHUB` hoặc `SHADOW` | ERR-19-006 | Bộ đệm đối tác |
+| 4 | `Idempotency-Key` có và đúng định dạng | ERR-19-002 | Header |
+| 5 | Định dạng mọi trường (kiểu, độ dài, mẫu) | ERR-19-001 | Thân yêu cầu |
+| 6 | Dịch vụ `serviceCode` tồn tại trong tenant | ERR-19-007 | Bộ đệm dịch vụ |
+| 7 | Dịch vụ `ACTIVE` và NCC của nó `ACTIVE`, mạch ngắt không mở | ERR-19-008 (dịch vụ); ERR-19-017 (NCC, mạch ngắt) | Bộ đệm dịch vụ, NCC; trạng thái mạch |
+| 8 | Dịch vụ được gán cho đối tác, gán còn hiệu lực | ERR-19-009 | Bộ đệm gán |
+| 9 | `currency = VND` | ERR-19-014 | |
+| 10 | `amount` nguyên dương, ≤ trần | ERR-19-010 | |
+| 11 | `amount` trong `[minAmount, maxAmount]` của dịch vụ | ERR-19-011 | |
+| 12 | `amount` ≤ `maxAmountPerTxn` của gán | ERR-19-012 | |
+| 13 | Số giao dịch và tổng tiền trong ngày sau khi cộng không vượt hạn mức | ERR-19-013 | Bộ đếm Valkey `{tenant}:payment:quota:{partnerId}:{serviceId}:{yyyyMMdd}` |
+| 14 | Không có giao dịch khác của cùng `partnerOrderId` ở nhóm trạng thái của BR-19-007 | ERR-19-015 (kèm mã giao dịch hiện có trong `existingTransactionCode`) | CSDL (chỉ mục duy nhất có điều kiện) |
+| 15 | `returnUrl` khớp tiền tố trong `allowedReturnUrls` | ERR-19-016 | Bộ đệm đối tác |
+
+Bước 4 nằm sau bước 1–3 để đối tác không hoạt động nhận ERR-19-005 thay vì lỗi thiếu khóa; việc ghi bản ghi lũy đẳng (FR-19-033) xảy ra sau bước 15 nên một yêu cầu bị từ chối ở bước 1–15 không chiếm khóa, đối tác sửa rồi gửi lại cùng khóa được. Bước 13 dùng thao tác cộng có điều kiện nguyên tử trong Valkey (kịch bản Lua) để hai yêu cầu đồng thời không cùng vượt hạn mức; giao dịch `FAILED` do NCC từ chối khởi tạo được trừ lại khỏi bộ đếm (BR-19-005).
+
+#### FR-19-024 · Khởi tạo thanh toán tại nhà cung cấp qua adapter
+
+Nâng cấp chức năng "gửi yêu cầu thanh toán, xử lý quá trình thanh toán theo NCC" (LGC-PAY-024 đề xuất) và yêu cầu đa kênh (LGC-PAY-023). Lõi gọi cổng `PaymentProviderPort`; adapter của loại NCC dịch sang đặc tả của NCC (ADR-040).
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-93; LGC-PAY-023, 024; BR-19-008, 012, 013, 032; NFR-19-012, 018, 027; UC-19-11; EN-19-10, 14, 26; EVT-19-06, 08; TS-19-11, 34 |
+| Tác nhân, quyền | Hệ thống |
+| Đầu vào | Giao dịch `CREATED`; NCC của dịch vụ; tham chiếu bí mật `ACTIVE` của môi trường `PRODUCTION` (hoặc `SANDBOX` với giao dịch thử) |
+| Đầu ra | Một trong ba kết cục: `ACCEPTED` (có `providerReference`, `paymentUrl`), `REJECTED` (mã kết quả NCC), `UNCERTAIN` (timeout, 5xx, mất kết nối) |
+| Hậu điều kiện | `ACCEPTED` → `PENDING`, đặt `next_poll_at` theo BR-19-016. `REJECTED` → `FAILED`, trừ lại hạn mức. `UNCERTAIN` → giữ `CREATED`, `init_uncertain = true`, `next_poll_at` sau 2 phút |
+| Sự kiện, kiểm toán | EVT-19-06 (`ACCEPTED`), EVT-19-08 (`REJECTED`); nhật ký tích hợp `OUT_PROVIDER`/`INIT` có độ trễ, mã kết quả, thân đã che |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra lại trạng thái mạch ngắt (có thể đã đổi từ bước 7 của FR-19-023); mạch mở thì coi như `UNCERTAIN` không gọi ra và để truy vấn chủ động xác định (giao dịch đã ghi, không thể từ chối trước ghi nữa).
+2. Gọi `PaymentProviderPort.initiate()` trong bulkhead của NCC (tối đa 50 lời gọi đồng thời mỗi tenant) với timeout 10 giây, qua egress gateway của DU (NFR-19-018). Adapter dựng yêu cầu theo đặc tả NCC (PayGov: giả định, OQ-19-01), ký bằng `SIGNING_KEY`, gửi `transaction_code` làm mã giao dịch bên gọi, gửi địa chỉ quay về là `…/paygov/{connectionKey}/return` (không phải `returnUrl` của đối tác, để PH-19 xác minh trước khi chuyển tiếp).
+3. Adapter dịch phản hồi: mã kết quả tra bảng ánh xạ (FR-19-069) với thao tác `INIT`; `SUCCEEDED`/`PENDING` → `ACCEPTED`; `FAILED` → `REJECTED`; `UNKNOWN` → `UNCERTAIN` kèm cảnh báo mã chưa biết.
+4. Adapter lọc các trường cấm lưu (BR-19-032) trước khi trả về lõi và trước khi ghi nhật ký.
+5. Lõi áp kết cục trong một giao dịch CSDL có khóa hàng (`SELECT … FOR UPDATE`) để không xung đột với IPN có thể đến rất sớm: nếu giao dịch đã rời `CREATED` (IPN đến trước phản hồi khởi tạo) thì chỉ lưu `provider_reference`, `payment_url` mà không đổi trạng thái.
+6. **Không bao giờ** gọi khởi tạo lần hai cho cùng giao dịch (BR-19-012). Đối tác gửi lại cùng `Idempotency-Key` khi nhận ERR-19-019 sẽ nhận lại phản hồi của giao dịch hiện có với trạng thái mới nhất (FR-19-033 bước 4).
+
+| Điều kiện | Xử lý | Mã lỗi trả đối tác |
+|---|---|---|
+| NCC từ chối rõ ràng | `FAILED`, `reason` = mã lý do đã ánh xạ | ERR-19-018 (502) |
+| Timeout, 5xx, lỗi mạng, mã chưa biết | `CREATED` + `init_uncertain` | ERR-19-019 (504) |
+| Thiếu thông tin xác thực lúc chạy (bị xóa khỏi OpenBao) | Như `UNCERTAIN`; cảnh báo nghiêm trọng tới cán bộ ATTT | ERR-19-019 |
+
+#### FR-19-025 · Xử lý người nộp quay về
+
+Nâng cấp phần hiển thị kết quả của LGC-PAY-012 cho người nộp và LGC-PAY-024. Lượt quay về **chỉ để hiển thị**, không bao giờ đổi trạng thái (BR-19-014), vì trình duyệt của người nộp là kênh không tin cậy.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-93, REQ-94; LGC-PAY-012, 024; BR-19-014; NFR-19-021, 029; UC-19-12; API-19-202; UI-19-28; EN-19-10, 13, 14; TS-19-12, 30 |
+| Tác nhân, quyền | Người nộp tiền (trình duyệt); công khai, xác minh chữ ký tham số |
+| Đầu vào | Tham số quay về do NCC gắn (giả định, OQ-19-01): mã giao dịch, mã tham chiếu NCC, mã kết quả, chữ ký |
+| Đầu ra | Trang UI-19-28 hiển thị kết quả **theo trạng thái trong CSDL** (không theo tham số), sau 5 giây tự chuyển về `returnUrl` của đối tác kèm `transactionCode`, `status`, `ts`, `sig` |
+| Hậu điều kiện | Không đổi trạng thái giao dịch; nếu giao dịch còn `PENDING` thì kích hoạt một lần truy vấn NCC sớm (đặt `next_poll_at = now`) |
+| Sự kiện, kiểm toán | Nhật ký tích hợp `IN_PROVIDER`/`RETURN`; tham số sai chữ ký ghi sự kiện an ninh |
+
+Xử lý gồm các bước sau.
+
+1. Xác định NCC và tenant từ `connectionKey` (ADR-045); không thấy trả trang lỗi chung, không lộ lý do (HTTP 404).
+2. Adapter xác minh chữ ký tham số bằng `VERIFY_CERT`; sai chữ ký thì trang hiển thị "Không xác nhận được kết quả. Vui lòng quay lại cổng dịch vụ để kiểm tra" và **không** chuyển hướng tới bất kỳ địa chỉ nào ngoài trang chủ cấu hình của tenant.
+3. Tìm giao dịch theo `transaction_code`; đọc trạng thái hiện tại.
+4. Nếu trạng thái là `PENDING` hoặc `CREATED`: hiển thị "Đang xác nhận kết quả với ngân hàng" và thăm dò trạng thái trong tối đa 20 giây (trang gọi API trạng thái công khai rút gọn chỉ trả `status`, có chữ ký phiên ngắn hạn), đồng thời yêu cầu truy vấn NCC sớm.
+5. Dựng địa chỉ chuyển về: `returnUrl` đã lưu của giao dịch (đã kiểm tra thuộc danh sách cho phép khi tạo) cộng tham số `transactionCode`, `status`, `ts` (Unix giây) và `sig` = HMAC-SHA256 bằng bí mật ký webhook hiện hành của đối tác trên chuỗi `{transactionCode}.{status}.{ts}` (NFR-19-021). Đối tác phải xác minh `sig` và vẫn coi webhook hoặc truy vấn là nguồn chính.
+6. Không bao giờ chuyển hướng tới địa chỉ lấy từ tham số của yêu cầu (chống chuyển hướng mở).
+
+| Điều kiện | Hiển thị | HTTP |
+|---|---|---|
+| `connectionKey` không tồn tại | Trang lỗi chung | 404 |
+| Sai chữ ký tham số | Thông báo không xác nhận được, không chuyển hướng tới đối tác | 400 |
+| Không tìm thấy giao dịch | Như trên | 404 |
+| Giao dịch thử | Trang kết quả có nhãn "Giao dịch thử", chuyển về trang kiểm tra của UI-19-06 | 200 |
+
+#### FR-19-026 · Hủy giao dịch chưa thanh toán
+
+Năng lực mới. Đối tác hủy khi hồ sơ bị rút hoặc tạo lại; cán bộ hủy thay đối tác khi được yêu cầu.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | S · Đ2b (MVP: giao dịch không thanh toán tự hết hạn theo FR-19-027; đối tác cần thu lại thì tạo giao dịch mới sau khi giao dịch cũ hết hạn) |
+| Truy vết | REQ-93; BR-19-018, 019; UC-19-14; API-19-104, 055; UI-19-15; EN-19-10, 11; EVT-19-09; TS-19-14 |
+| Tác nhân, quyền | HTTT đối tác · `partner-pay-create`; cán bộ tra cứu · `transaction-cancel` |
+| Đầu vào | `reason` (1…255 ký tự); cán bộ: thêm `If-Match` |
+| Đầu ra | Giao dịch `CANCELLED`, hoặc 202 `CANCELLATION_REQUESTED` khi đang chờ NCC xác nhận |
+| Sự kiện, kiểm toán | EVT-19-09 kèm `cancelledBy` (`PARTNER`, `USER`); kiểm toán `TRANSACTION_CANCEL` khi cán bộ hủy |
+
+Xử lý gồm các bước sau.
+
+1. Kiểm tra trạng thái `CREATED` hoặc `PENDING` (ERR-19-021).
+2. Nếu NCC có năng lực hủy (`capabilities.cancel`, OQ-19-10): gọi hủy; NCC xác nhận thì chuyển `CANCELLED`; NCC báo đã thanh toán thì áp kết quả thành công như IPN và trả ERR-19-021 kèm trạng thái mới; không xác định thì trả 202 và để truy vấn chủ động quyết định.
+3. Nếu NCC không có năng lực hủy: chuyển `CANCELLED` cục bộ; kết quả thành công đến sau được áp theo BR-19-018 (thanh toán muộn).
+4. Ghi `transaction_event` (nguồn `PARTNER_API` hoặc `USER`), outbox, kiểm toán.
+
+#### FR-19-027 · Tự động hết hạn giao dịch
+
+Năng lực mới, giải quyết tình trạng "hồ sơ treo" của hệ cũ.
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94; BR-19-003, 017; UC-19-14; EN-19-10, 11; EVT-19-10; TS-19-14 |
+| Tác nhân, quyền | Hệ thống (tác vụ mỗi phút) |
+| Hậu điều kiện | Giao dịch quá hạn không có kết quả thành công chuyển `EXPIRED`; quá 72 giờ không xác định được thì `EXPIRED` kèm `needs_reconciliation = true` |
+| Sự kiện, kiểm toán | EVT-19-10; `transaction_event` nguồn `EXPIRY_JOB` |
+
+Xử lý gồm các bước sau.
+
+1. Tác vụ chọn tối đa 500 giao dịch mỗi lượt có `status IN (CREATED, PENDING)` và `expires_at + 30 phút ≤ now`, khóa `FOR UPDATE SKIP LOCKED`.
+2. Với mỗi giao dịch, truy vấn NCC lần cuối (FR-19-036). Kết cục `SUCCEEDED` → áp thành công. `FAILED` hoặc "không tồn tại" hoặc "chưa thanh toán" → `EXPIRED`. Không trả lời hoặc `UNKNOWN` → giữ nguyên, để lịch BR-19-016 thử lại.
+3. Giao dịch quá `created_at + 72 giờ` vẫn chưa xác định → `EXPIRED`, `needs_reconciliation = true`; phiên đối soát của ngày đó sẽ xác nhận.
+4. Giao dịch `is_shadow` hết hạn không truy vấn NCC.
+
+#### FR-19-028 · Ghi lịch sử trạng thái bất biến
+
+Nâng cấp LGC-PAY-011 và LGC-PAY-019 (hệ cũ ghi đè trạng thái, không có bảng lịch sử; điểm yếu 8).
+
+| Trường | Nội dung |
+|---|---|
+| Mức ưu tiên, phát hành | M · MVP |
+| Truy vết | REQ-94, REQ-98; LGC-PAY-011, 019; BR-19-030; NFR-19-016; UC-19-11, UC-19-13; API-19-054 (đọc); UI-19-15 (tab Dòng thời gian); EN-19-11; TS-19-13, 34 |
+| Tác nhân, quyền | Hệ thống |
+| Hậu điều kiện | Mỗi lần `payment_transaction.status` đổi có đúng một dòng `transaction_event` ghi trong cùng giao dịch CSDL; tăng `sequence` của giao dịch |
+
+Xử lý gồm các bước sau.
+
+1. Mọi thay đổi trạng thái đi qua một hàm miền duy nhất `TransactionStateMachine.transition(from, to, source, ref, reason, actor)`; hàm từ chối cặp (from, to) không có trong khung §7.4 (ERR-19-021).
+2. Hàm ghi `transaction_event` với `from_status`, `to_status`, `source`, `source_ref_id`, `reason`, `actor_id`, `occurred_at`, `trace_id`, và số phiên bản ánh xạ mã đã dùng (khi nguồn là IPN, truy vấn).
+3. Vai trò CSDL của ứng dụng chỉ có quyền `INSERT`, `SELECT` trên `transaction_event`; trigger từ chối `UPDATE`, `DELETE` kể cả với chủ sở hữu bảng (NFR-19-016).
+4. Chuỗi băm hằng ngày của các dòng phát sinh được tính và lưu kho WORM theo ADR-031 (mục 1.5 điểm 4).
+
