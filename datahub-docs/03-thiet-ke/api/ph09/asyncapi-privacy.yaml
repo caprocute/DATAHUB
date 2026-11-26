@@ -1,0 +1,3149 @@
+# D03-04-PH09 · AsyncAPI PH-09. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay.
+asyncapi: 3.0.0
+info:
+  title: Datahub · PH-09 Sự kiện quyền riêng tư
+  version: 1.0.0-draft
+  description: Sự kiện của PH-09 (EVT-09-01…32 cộng `audit.recorded.v1`) phát từ bảng `outbox_event` qua Debezium Outbox Event Router; phong bì CloudEvents 1.0, khóa
+    phân vùng `tenantId`, bên tiêu thụ khử trùng theo `eventId`. Dữ liệu sự kiện chỉ mang mã, trạng thái, số lượng và băm chủ thể, không có giá trị DLCN (BR-09-025).
+    Tệp sinh bởi `tools/gen_asyncapi.py`; không sửa tay.
+  x-datahub-document: D03-04-PH09
+servers:
+  kafka:
+    host: kafka.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: Cụm Kafka KRaft của nền tảng (mTLS, ACL theo tenant).
+defaultContentType: application/cloudevents+json
+channels:
+  classificationChanged:
+    address: '{tenant}.privacy.classification.changed.v1'
+    title: Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới)
+    description: 'Bên tiêu thụ: PH-02, PH-04, PH-06, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ClassificationChanged:
+        $ref: '#/components/messages/ClassificationChanged'
+    x-datahub-id: EVT-09-01
+    x-datahub-consumers: PH-02, PH-04, PH-06, PH-13
+  classificationScanFinished:
+    address: '{tenant}.privacy.classification.scan-finished.v1'
+    title: Lượt quét phát hiện kết thúc
+    description: 'Bên tiêu thụ: PH-13, UI-09-04.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ClassificationScanFinished:
+        $ref: '#/components/messages/ClassificationScanFinished'
+    x-datahub-id: EVT-09-02
+    x-datahub-consumers: PH-13, UI-09-04
+  contractLevelChanged:
+    address: '{tenant}.privacy.contract-level.changed.v1'
+    title: Mức phân loại của hợp đồng API, topic, luồng đổi
+    description: 'Bên tiêu thụ: PH-02, PH-03, PH-04, PH-10.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ContractLevelChanged:
+        $ref: '#/components/messages/ContractLevelChanged'
+    x-datahub-id: EVT-09-03
+    x-datahub-consumers: PH-02, PH-03, PH-04, PH-10
+  activityActivated:
+    address: '{tenant}.privacy.activity.activated.v1'
+    title: Hoạt động xử lý được kích hoạt hoặc ngừng
+    description: 'Bên tiêu thụ: PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ActivityActivated:
+        $ref: '#/components/messages/ActivityActivated'
+    x-datahub-id: EVT-09-04
+    x-datahub-consumers: PH-13
+  purposeRequestSubmitted:
+    address: '{tenant}.privacy.purpose-request.submitted.v1'
+    title: Yêu cầu khai thác được gửi thẩm định
+    description: 'Bên tiêu thụ: PH-11 hoặc Việc của tôi, chủ quản dữ liệu.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeRequestSubmitted:
+        $ref: '#/components/messages/PurposeRequestSubmitted'
+    x-datahub-id: EVT-09-05
+    x-datahub-consumers: PH-11 hoặc Việc của tôi, chủ quản dữ liệu
+  purposeGrantApproved:
+    address: '{tenant}.privacy.purpose-grant.approved.v1'
+    title: Chấp thuận được cấp hoặc sửa, gia hạn
+    description: 'Bên tiêu thụ: PH-02, PH-03, PH-12, HTTT yêu cầu.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeGrantApproved:
+        $ref: '#/components/messages/PurposeGrantApproved'
+    x-datahub-id: EVT-09-06
+    x-datahub-consumers: PH-02, PH-03, PH-12, HTTT yêu cầu
+  purposeGrantSuspended:
+    address: '{tenant}.privacy.purpose-grant.suspended.v1'
+    title: Chấp thuận bị tạm dừng hoặc khôi phục
+    description: 'Bên tiêu thụ: PH-02, PH-03, PH-12.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeGrantSuspended:
+        $ref: '#/components/messages/PurposeGrantSuspended'
+    x-datahub-id: EVT-09-07
+    x-datahub-consumers: PH-02, PH-03, PH-12
+  purposeGrantRevoked:
+    address: '{tenant}.privacy.purpose-grant.revoked.v1'
+    title: Chấp thuận bị thu hồi
+    description: 'Bên tiêu thụ: PH-02, PH-03, PH-04, PH-12, PH-14.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeGrantRevoked:
+        $ref: '#/components/messages/PurposeGrantRevoked'
+    x-datahub-id: EVT-09-08
+    x-datahub-consumers: PH-02, PH-03, PH-04, PH-12, PH-14
+  purposeGrantExpired:
+    address: '{tenant}.privacy.purpose-grant.expired.v1'
+    title: Chấp thuận tự hết hạn
+    description: 'Bên tiêu thụ: PH-02, PH-03, PH-12.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeGrantExpired:
+        $ref: '#/components/messages/PurposeGrantExpired'
+    x-datahub-id: EVT-09-09
+    x-datahub-consumers: PH-02, PH-03, PH-12
+  purposeGrantExpiring:
+    address: '{tenant}.privacy.purpose-grant.expiring.v1'
+    title: Chấp thuận còn 30 ngày đến hạn
+    description: 'Bên tiêu thụ: Thông báo cho HTTT và chủ quản.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PurposeGrantExpiring:
+        $ref: '#/components/messages/PurposeGrantExpiring'
+    x-datahub-id: EVT-09-10
+    x-datahub-consumers: Thông báo cho HTTT và chủ quản
+  bundlePublished:
+    address: '{tenant}.privacy.bundle.published.v1'
+    title: Bundle chính sách quyền riêng tư được ký và phát hành
+    description: 'Bên tiêu thụ: PH-12 (OPA), PH-03, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      BundlePublished:
+        $ref: '#/components/messages/BundlePublished'
+    x-datahub-id: EVT-09-11
+    x-datahub-consumers: PH-12 (OPA), PH-03, PH-13
+  maskPolicyActivated:
+    address: '{tenant}.privacy.mask-policy.activated.v1'
+    title: Chính sách che được kích hoạt hoặc thay phiên bản
+    description: 'Bên tiêu thụ: PH-03, PH-04, PH-06, PH-14, PH-19.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      MaskPolicyActivated:
+        $ref: '#/components/messages/MaskPolicyActivated'
+    x-datahub-id: EVT-09-12
+    x-datahub-consumers: PH-03, PH-04, PH-06, PH-14, PH-19
+  usageAnomalyDetected:
+    address: '{tenant}.privacy.usage.anomaly-detected.v1'
+    title: Phát hiện khai thác vượt mục đích hoặc vượt hạn ngạch
+    description: 'Bên tiêu thụ: PH-13, PH-18, SO.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      UsageAnomalyDetected:
+        $ref: '#/components/messages/UsageAnomalyDetected'
+    x-datahub-id: EVT-09-13
+    x-datahub-consumers: PH-13, PH-18, SO
+  secretLabelBlocked:
+    address: '{tenant}.privacy.secret-label.blocked.v1'
+    title: Phát hiện dữ liệu mang nhãn STATE_SECRET (cảnh báo an ninh nghiêm trọng)
+    description: 'Bên tiêu thụ: PH-13, PH-18, SO.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      SecretLabelBlocked:
+        $ref: '#/components/messages/SecretLabelBlocked'
+    x-datahub-id: EVT-09-14
+    x-datahub-consumers: PH-13, PH-18, SO
+  revealGranted:
+    address: '{tenant}.privacy.reveal.granted.v1'
+    title: Cấp phiếu xem giá trị đầy đủ (chỉ phát khi vượt ngưỡng bất thường)
+    description: 'Bên tiêu thụ: PH-13, SO.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      RevealGranted:
+        $ref: '#/components/messages/RevealGranted'
+    x-datahub-id: EVT-09-15
+    x-datahub-consumers: PH-13, SO
+  pseudonymKeyStateChanged:
+    address: '{tenant}.privacy.pseudonym-key.state-changed.v1'
+    title: Khóa giả danh hóa tạo, xoay, ngừng hoặc hủy
+    description: 'Bên tiêu thụ: PH-13, PH-18.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      PseudonymKeyStateChanged:
+        $ref: '#/components/messages/PseudonymKeyStateChanged'
+    x-datahub-id: EVT-09-16
+    x-datahub-consumers: PH-13, PH-18
+  reidentificationExecuted:
+    address: '{tenant}.privacy.reidentification.executed.v1'
+    title: Khôi phục giá trị gốc đã thực hiện
+    description: 'Bên tiêu thụ: PH-13, SO.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ReidentificationExecuted:
+        $ref: '#/components/messages/ReidentificationExecuted'
+    x-datahub-id: EVT-09-17
+    x-datahub-consumers: PH-13, SO
+  datasetStatusChanged:
+    address: '{tenant}.privacy.dataset.status-changed.v1'
+    title: Tập đã ẩn danh phát hành, rút lại hoặc hết hạn
+    description: 'Bên tiêu thụ: PH-17, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DatasetStatusChanged:
+        $ref: '#/components/messages/DatasetStatusChanged'
+    x-datahub-id: EVT-09-18
+    x-datahub-consumers: PH-17, PH-13
+  retentionTaskFinished:
+    address: '{tenant}.privacy.retention.task-finished.v1'
+    title: Tác vụ xóa hoặc giả danh hóa kết thúc
+    description: 'Bên tiêu thụ: PH-13, PH-18.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      RetentionTaskFinished:
+        $ref: '#/components/messages/RetentionTaskFinished'
+    x-datahub-id: EVT-09-19
+    x-datahub-consumers: PH-13, PH-18
+  legalHoldChanged:
+    address: '{tenant}.privacy.legal-hold.changed.v1'
+    title: Giữ pháp lý đặt hoặc gỡ
+    description: 'Bên tiêu thụ: PH-06, PH-13, PH-19.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      LegalHoldChanged:
+        $ref: '#/components/messages/LegalHoldChanged'
+    x-datahub-id: EVT-09-20
+    x-datahub-consumers: PH-06, PH-13, PH-19
+  cryptoShredCompleted:
+    address: '{tenant}.privacy.crypto-shred.completed.v1'
+    title: Xóa mật mã tenant hoàn tất
+    description: 'Bên tiêu thụ: PH-20, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      CryptoShredCompleted:
+        $ref: '#/components/messages/CryptoShredCompleted'
+    x-datahub-id: EVT-09-21
+    x-datahub-consumers: PH-20, PH-13
+  dsrReceived:
+    address: '{tenant}.privacy.dsr.received.v1'
+    title: Yêu cầu của chủ thể được tiếp nhận
+    description: 'Bên tiêu thụ: PH-06, PH-19 (tác vụ), PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DsrReceived:
+        $ref: '#/components/messages/DsrReceived'
+    x-datahub-id: EVT-09-22
+    x-datahub-consumers: PH-06, PH-19 (tác vụ), PH-13
+  dsrDueSoon:
+    address: '{tenant}.privacy.dsr.due-soon.v1'
+    title: Yêu cầu còn 3 ngày làm việc đến hạn
+    description: 'Bên tiêu thụ: SO, Việc của tôi.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DsrDueSoon:
+        $ref: '#/components/messages/DsrDueSoon'
+    x-datahub-id: EVT-09-23
+    x-datahub-consumers: SO, Việc của tôi
+  dsrOverdue:
+    address: '{tenant}.privacy.dsr.overdue.v1'
+    title: Yêu cầu quá hạn xử lý
+    description: 'Bên tiêu thụ: SO, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DsrOverdue:
+        $ref: '#/components/messages/DsrOverdue'
+    x-datahub-id: EVT-09-24
+    x-datahub-consumers: SO, PH-13
+  dsrClosed:
+    address: '{tenant}.privacy.dsr.closed.v1'
+    title: Yêu cầu được đóng kèm kết quả
+    description: 'Bên tiêu thụ: PH-06, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DsrClosed:
+        $ref: '#/components/messages/DsrClosed'
+    x-datahub-id: EVT-09-25
+    x-datahub-consumers: PH-06, PH-13
+  dsrRestrictionChanged:
+    address: '{tenant}.privacy.dsr.restriction-changed.v1'
+    title: Hạn chế xử lý của chủ thể được đặt hoặc gỡ
+    description: 'Bên tiêu thụ: PH-06, PH-19, PH-14.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DsrRestrictionChanged:
+        $ref: '#/components/messages/DsrRestrictionChanged'
+    x-datahub-id: EVT-09-26
+    x-datahub-consumers: PH-06, PH-19, PH-14
+  consentGiven:
+    address: '{tenant}.privacy.consent.given.v1'
+    title: Sự đồng ý được ghi nhận
+    description: 'Bên tiêu thụ: HTTT có tiện ích liên quan.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ConsentGiven:
+        $ref: '#/components/messages/ConsentGiven'
+    x-datahub-id: EVT-09-27
+    x-datahub-consumers: HTTT có tiện ích liên quan
+  consentWithdrawn:
+    address: '{tenant}.privacy.consent.withdrawn.v1'
+    title: Sự đồng ý bị rút
+    description: 'Bên tiêu thụ: HTTT có tiện ích liên quan, PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      ConsentWithdrawn:
+        $ref: '#/components/messages/ConsentWithdrawn'
+    x-datahub-id: EVT-09-28
+    x-datahub-consumers: HTTT có tiện ích liên quan, PH-13
+  dpiaReviewDue:
+    address: '{tenant}.privacy.dpia.review-due.v1'
+    title: Hồ sơ đánh giá tác động đến hạn rà soát
+    description: 'Bên tiêu thụ: SO, Việc của tôi.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      DpiaReviewDue:
+        $ref: '#/components/messages/DpiaReviewDue'
+    x-datahub-id: EVT-09-29
+    x-datahub-consumers: SO, Việc của tôi
+  breachRecorded:
+    address: '{tenant}.privacy.breach.recorded.v1'
+    title: Vi phạm dữ liệu cá nhân được ghi nhận (đồng hồ 72 giờ bắt đầu)
+    description: 'Bên tiêu thụ: SO, PH-13, PH-18.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      BreachRecorded:
+        $ref: '#/components/messages/BreachRecorded'
+    x-datahub-id: EVT-09-30
+    x-datahub-consumers: SO, PH-13, PH-18
+  breachDeadlineNear:
+    address: '{tenant}.privacy.breach.deadline-near.v1'
+    title: Đồng hồ vi phạm còn dưới mốc cảnh báo (24, 48, 60 giờ)
+    description: 'Bên tiêu thụ: SO, TA, PH-18.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      BreachDeadlineNear:
+        $ref: '#/components/messages/BreachDeadlineNear'
+    x-datahub-id: EVT-09-31
+    x-datahub-consumers: SO, TA, PH-18
+  breachNotified:
+    address: '{tenant}.privacy.breach.notified.v1'
+    title: Đã thông báo Cục A05 hoặc chủ thể
+    description: 'Bên tiêu thụ: PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      BreachNotified:
+        $ref: '#/components/messages/BreachNotified'
+    x-datahub-id: EVT-09-32
+    x-datahub-consumers: PH-13
+  auditRecorded:
+    address: '{tenant}.privacy.audit.recorded.v1'
+    title: Bản ghi kiểm toán bảo vệ dữ liệu được ghi (chuyển PH-13)
+    description: 'Bên tiêu thụ: PH-13.'
+    parameters:
+      tenant:
+        description: Mã tenant dạng chữ thường, ví dụ `t68`.
+    messages:
+      AuditRecorded:
+        $ref: '#/components/messages/AuditRecorded'
+    x-datahub-id: audit.recorded
+    x-datahub-consumers: PH-13
+operations:
+  sendClassificationChanged:
+    action: send
+    channel:
+      $ref: '#/channels/classificationChanged'
+    summary: Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới)
+    messages:
+    - $ref: '#/channels/classificationChanged/messages/ClassificationChanged'
+    x-datahub-id: EVT-09-01
+  sendClassificationScanFinished:
+    action: send
+    channel:
+      $ref: '#/channels/classificationScanFinished'
+    summary: Lượt quét phát hiện kết thúc
+    messages:
+    - $ref: '#/channels/classificationScanFinished/messages/ClassificationScanFinished'
+    x-datahub-id: EVT-09-02
+  sendContractLevelChanged:
+    action: send
+    channel:
+      $ref: '#/channels/contractLevelChanged'
+    summary: Mức phân loại của hợp đồng API, topic, luồng đổi
+    messages:
+    - $ref: '#/channels/contractLevelChanged/messages/ContractLevelChanged'
+    x-datahub-id: EVT-09-03
+  sendActivityActivated:
+    action: send
+    channel:
+      $ref: '#/channels/activityActivated'
+    summary: Hoạt động xử lý được kích hoạt hoặc ngừng
+    messages:
+    - $ref: '#/channels/activityActivated/messages/ActivityActivated'
+    x-datahub-id: EVT-09-04
+  sendPurposeRequestSubmitted:
+    action: send
+    channel:
+      $ref: '#/channels/purposeRequestSubmitted'
+    summary: Yêu cầu khai thác được gửi thẩm định
+    messages:
+    - $ref: '#/channels/purposeRequestSubmitted/messages/PurposeRequestSubmitted'
+    x-datahub-id: EVT-09-05
+  sendPurposeGrantApproved:
+    action: send
+    channel:
+      $ref: '#/channels/purposeGrantApproved'
+    summary: Chấp thuận được cấp hoặc sửa, gia hạn
+    messages:
+    - $ref: '#/channels/purposeGrantApproved/messages/PurposeGrantApproved'
+    x-datahub-id: EVT-09-06
+  sendPurposeGrantSuspended:
+    action: send
+    channel:
+      $ref: '#/channels/purposeGrantSuspended'
+    summary: Chấp thuận bị tạm dừng hoặc khôi phục
+    messages:
+    - $ref: '#/channels/purposeGrantSuspended/messages/PurposeGrantSuspended'
+    x-datahub-id: EVT-09-07
+  sendPurposeGrantRevoked:
+    action: send
+    channel:
+      $ref: '#/channels/purposeGrantRevoked'
+    summary: Chấp thuận bị thu hồi
+    messages:
+    - $ref: '#/channels/purposeGrantRevoked/messages/PurposeGrantRevoked'
+    x-datahub-id: EVT-09-08
+  sendPurposeGrantExpired:
+    action: send
+    channel:
+      $ref: '#/channels/purposeGrantExpired'
+    summary: Chấp thuận tự hết hạn
+    messages:
+    - $ref: '#/channels/purposeGrantExpired/messages/PurposeGrantExpired'
+    x-datahub-id: EVT-09-09
+  sendPurposeGrantExpiring:
+    action: send
+    channel:
+      $ref: '#/channels/purposeGrantExpiring'
+    summary: Chấp thuận còn 30 ngày đến hạn
+    messages:
+    - $ref: '#/channels/purposeGrantExpiring/messages/PurposeGrantExpiring'
+    x-datahub-id: EVT-09-10
+  sendBundlePublished:
+    action: send
+    channel:
+      $ref: '#/channels/bundlePublished'
+    summary: Bundle chính sách quyền riêng tư được ký và phát hành
+    messages:
+    - $ref: '#/channels/bundlePublished/messages/BundlePublished'
+    x-datahub-id: EVT-09-11
+  sendMaskPolicyActivated:
+    action: send
+    channel:
+      $ref: '#/channels/maskPolicyActivated'
+    summary: Chính sách che được kích hoạt hoặc thay phiên bản
+    messages:
+    - $ref: '#/channels/maskPolicyActivated/messages/MaskPolicyActivated'
+    x-datahub-id: EVT-09-12
+  sendUsageAnomalyDetected:
+    action: send
+    channel:
+      $ref: '#/channels/usageAnomalyDetected'
+    summary: Phát hiện khai thác vượt mục đích hoặc vượt hạn ngạch
+    messages:
+    - $ref: '#/channels/usageAnomalyDetected/messages/UsageAnomalyDetected'
+    x-datahub-id: EVT-09-13
+  sendSecretLabelBlocked:
+    action: send
+    channel:
+      $ref: '#/channels/secretLabelBlocked'
+    summary: Phát hiện dữ liệu mang nhãn STATE_SECRET (cảnh báo an ninh nghiêm trọng)
+    messages:
+    - $ref: '#/channels/secretLabelBlocked/messages/SecretLabelBlocked'
+    x-datahub-id: EVT-09-14
+  sendRevealGranted:
+    action: send
+    channel:
+      $ref: '#/channels/revealGranted'
+    summary: Cấp phiếu xem giá trị đầy đủ (chỉ phát khi vượt ngưỡng bất thường)
+    messages:
+    - $ref: '#/channels/revealGranted/messages/RevealGranted'
+    x-datahub-id: EVT-09-15
+  sendPseudonymKeyStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/pseudonymKeyStateChanged'
+    summary: Khóa giả danh hóa tạo, xoay, ngừng hoặc hủy
+    messages:
+    - $ref: '#/channels/pseudonymKeyStateChanged/messages/PseudonymKeyStateChanged'
+    x-datahub-id: EVT-09-16
+  sendReidentificationExecuted:
+    action: send
+    channel:
+      $ref: '#/channels/reidentificationExecuted'
+    summary: Khôi phục giá trị gốc đã thực hiện
+    messages:
+    - $ref: '#/channels/reidentificationExecuted/messages/ReidentificationExecuted'
+    x-datahub-id: EVT-09-17
+  sendDatasetStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/datasetStatusChanged'
+    summary: Tập đã ẩn danh phát hành, rút lại hoặc hết hạn
+    messages:
+    - $ref: '#/channels/datasetStatusChanged/messages/DatasetStatusChanged'
+    x-datahub-id: EVT-09-18
+  sendRetentionTaskFinished:
+    action: send
+    channel:
+      $ref: '#/channels/retentionTaskFinished'
+    summary: Tác vụ xóa hoặc giả danh hóa kết thúc
+    messages:
+    - $ref: '#/channels/retentionTaskFinished/messages/RetentionTaskFinished'
+    x-datahub-id: EVT-09-19
+  sendLegalHoldChanged:
+    action: send
+    channel:
+      $ref: '#/channels/legalHoldChanged'
+    summary: Giữ pháp lý đặt hoặc gỡ
+    messages:
+    - $ref: '#/channels/legalHoldChanged/messages/LegalHoldChanged'
+    x-datahub-id: EVT-09-20
+  sendCryptoShredCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/cryptoShredCompleted'
+    summary: Xóa mật mã tenant hoàn tất
+    messages:
+    - $ref: '#/channels/cryptoShredCompleted/messages/CryptoShredCompleted'
+    x-datahub-id: EVT-09-21
+  sendDsrReceived:
+    action: send
+    channel:
+      $ref: '#/channels/dsrReceived'
+    summary: Yêu cầu của chủ thể được tiếp nhận
+    messages:
+    - $ref: '#/channels/dsrReceived/messages/DsrReceived'
+    x-datahub-id: EVT-09-22
+  sendDsrDueSoon:
+    action: send
+    channel:
+      $ref: '#/channels/dsrDueSoon'
+    summary: Yêu cầu còn 3 ngày làm việc đến hạn
+    messages:
+    - $ref: '#/channels/dsrDueSoon/messages/DsrDueSoon'
+    x-datahub-id: EVT-09-23
+  sendDsrOverdue:
+    action: send
+    channel:
+      $ref: '#/channels/dsrOverdue'
+    summary: Yêu cầu quá hạn xử lý
+    messages:
+    - $ref: '#/channels/dsrOverdue/messages/DsrOverdue'
+    x-datahub-id: EVT-09-24
+  sendDsrClosed:
+    action: send
+    channel:
+      $ref: '#/channels/dsrClosed'
+    summary: Yêu cầu được đóng kèm kết quả
+    messages:
+    - $ref: '#/channels/dsrClosed/messages/DsrClosed'
+    x-datahub-id: EVT-09-25
+  sendDsrRestrictionChanged:
+    action: send
+    channel:
+      $ref: '#/channels/dsrRestrictionChanged'
+    summary: Hạn chế xử lý của chủ thể được đặt hoặc gỡ
+    messages:
+    - $ref: '#/channels/dsrRestrictionChanged/messages/DsrRestrictionChanged'
+    x-datahub-id: EVT-09-26
+  sendConsentGiven:
+    action: send
+    channel:
+      $ref: '#/channels/consentGiven'
+    summary: Sự đồng ý được ghi nhận
+    messages:
+    - $ref: '#/channels/consentGiven/messages/ConsentGiven'
+    x-datahub-id: EVT-09-27
+  sendConsentWithdrawn:
+    action: send
+    channel:
+      $ref: '#/channels/consentWithdrawn'
+    summary: Sự đồng ý bị rút
+    messages:
+    - $ref: '#/channels/consentWithdrawn/messages/ConsentWithdrawn'
+    x-datahub-id: EVT-09-28
+  sendDpiaReviewDue:
+    action: send
+    channel:
+      $ref: '#/channels/dpiaReviewDue'
+    summary: Hồ sơ đánh giá tác động đến hạn rà soát
+    messages:
+    - $ref: '#/channels/dpiaReviewDue/messages/DpiaReviewDue'
+    x-datahub-id: EVT-09-29
+  sendBreachRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/breachRecorded'
+    summary: Vi phạm dữ liệu cá nhân được ghi nhận (đồng hồ 72 giờ bắt đầu)
+    messages:
+    - $ref: '#/channels/breachRecorded/messages/BreachRecorded'
+    x-datahub-id: EVT-09-30
+  sendBreachDeadlineNear:
+    action: send
+    channel:
+      $ref: '#/channels/breachDeadlineNear'
+    summary: Đồng hồ vi phạm còn dưới mốc cảnh báo (24, 48, 60 giờ)
+    messages:
+    - $ref: '#/channels/breachDeadlineNear/messages/BreachDeadlineNear'
+    x-datahub-id: EVT-09-31
+  sendBreachNotified:
+    action: send
+    channel:
+      $ref: '#/channels/breachNotified'
+    summary: Đã thông báo Cục A05 hoặc chủ thể
+    messages:
+    - $ref: '#/channels/breachNotified/messages/BreachNotified'
+    x-datahub-id: EVT-09-32
+  sendAuditRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/auditRecorded'
+    summary: Bản ghi kiểm toán bảo vệ dữ liệu được ghi (chuyển PH-13)
+    messages:
+    - $ref: '#/channels/auditRecorded/messages/AuditRecorded'
+    x-datahub-id: audit.recorded
+components:
+  messages:
+    ClassificationChanged:
+      name: ClassificationChanged
+      title: Phân loại trường được xác nhận, đổi hoặc hạ mức (kèm mức cũ, mới)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ClassificationChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-data/privacy
+          type: t68.privacy.classification.changed.v1
+          time: '2026-11-26T09:15:02+07:00'
+          tenantid: T68
+          data:
+            elementId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            target: ho-so.so-cccd
+            fromClass: RESTRICTED
+            toClass: SENSITIVE
+            personalDataType: SENSITIVE
+            downgrade: false
+            contractIds:
+            - api-tra-cuu-ho-so-v1
+    ClassificationScanFinished:
+      name: ClassificationScanFinished
+      title: Lượt quét phát hiện kết thúc
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ClassificationScanFinished'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    ContractLevelChanged:
+      name: ContractLevelChanged
+      title: Mức phân loại của hợp đồng API, topic, luồng đổi
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ContractLevelChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    ActivityActivated:
+      name: ActivityActivated
+      title: Hoạt động xử lý được kích hoạt hoặc ngừng
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ActivityActivated'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PurposeRequestSubmitted:
+      name: PurposeRequestSubmitted
+      title: Yêu cầu khai thác được gửi thẩm định
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeRequestSubmitted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PurposeGrantApproved:
+      name: PurposeGrantApproved
+      title: Chấp thuận được cấp hoặc sửa, gia hạn
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeGrantApproved'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PurposeGrantSuspended:
+      name: PurposeGrantSuspended
+      title: Chấp thuận bị tạm dừng hoặc khôi phục
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeGrantSuspended'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PurposeGrantRevoked:
+      name: PurposeGrantRevoked
+      title: Chấp thuận bị thu hồi
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeGrantRevoked'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-data/privacy
+          type: t68.privacy.purpose-grant.revoked.v1
+          time: '2026-11-26T09:15:02+07:00'
+          tenantid: T68
+          data:
+            grantId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            htttId: httt-so-yte
+            purposeCode: TRA-CUU-BHYT
+            contractId: api-tra-cuu-bhyt-v1
+            revokedAt: '2026-11-26T09:15:02+07:00'
+    PurposeGrantExpired:
+      name: PurposeGrantExpired
+      title: Chấp thuận tự hết hạn
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeGrantExpired'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PurposeGrantExpiring:
+      name: PurposeGrantExpiring
+      title: Chấp thuận còn 30 ngày đến hạn
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PurposeGrantExpiring'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    BundlePublished:
+      name: BundlePublished
+      title: Bundle chính sách quyền riêng tư được ký và phát hành
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/BundlePublished'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-data/privacy
+          type: t68.privacy.bundle.published.v1
+          time: '2026-11-26T09:15:02+07:00'
+          tenantid: T68
+          data:
+            bundleNo: 412
+            objectRef: garage://dh-t68-privacy/bundles/412.tar.gz
+            sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+            validUntil: '2026-11-26T10:15:02+07:00'
+            trigger: AUTO
+    MaskPolicyActivated:
+      name: MaskPolicyActivated
+      title: Chính sách che được kích hoạt hoặc thay phiên bản
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/MaskPolicyActivated'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    UsageAnomalyDetected:
+      name: UsageAnomalyDetected
+      title: Phát hiện khai thác vượt mục đích hoặc vượt hạn ngạch
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/UsageAnomalyDetected'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    SecretLabelBlocked:
+      name: SecretLabelBlocked
+      title: Phát hiện dữ liệu mang nhãn STATE_SECRET (cảnh báo an ninh nghiêm trọng)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/SecretLabelBlocked'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    RevealGranted:
+      name: RevealGranted
+      title: Cấp phiếu xem giá trị đầy đủ (chỉ phát khi vượt ngưỡng bất thường)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/RevealGranted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    PseudonymKeyStateChanged:
+      name: PseudonymKeyStateChanged
+      title: Khóa giả danh hóa tạo, xoay, ngừng hoặc hủy
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/PseudonymKeyStateChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    ReidentificationExecuted:
+      name: ReidentificationExecuted
+      title: Khôi phục giá trị gốc đã thực hiện
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ReidentificationExecuted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DatasetStatusChanged:
+      name: DatasetStatusChanged
+      title: Tập đã ẩn danh phát hành, rút lại hoặc hết hạn
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DatasetStatusChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    RetentionTaskFinished:
+      name: RetentionTaskFinished
+      title: Tác vụ xóa hoặc giả danh hóa kết thúc
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/RetentionTaskFinished'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    LegalHoldChanged:
+      name: LegalHoldChanged
+      title: Giữ pháp lý đặt hoặc gỡ
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/LegalHoldChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    CryptoShredCompleted:
+      name: CryptoShredCompleted
+      title: Xóa mật mã tenant hoàn tất
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/CryptoShredCompleted'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DsrReceived:
+      name: DsrReceived
+      title: Yêu cầu của chủ thể được tiếp nhận
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DsrReceived'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-data/privacy
+          type: t68.privacy.dsr.received.v1
+          time: '2026-11-26T09:15:02+07:00'
+          tenantid: T68
+          data:
+            requestId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            requestType: ACCESS
+            channel: COUNTER
+            subjectHash: q3Hk7mXw2RtY9bLz0Pv5nCj8sUeAd1GfOiMhT4yVxKo
+            dueAt: '2026-12-10T17:00:00+07:00'
+    DsrDueSoon:
+      name: DsrDueSoon
+      title: Yêu cầu còn 3 ngày làm việc đến hạn
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DsrDueSoon'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DsrOverdue:
+      name: DsrOverdue
+      title: Yêu cầu quá hạn xử lý
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DsrOverdue'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DsrClosed:
+      name: DsrClosed
+      title: Yêu cầu được đóng kèm kết quả
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DsrClosed'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DsrRestrictionChanged:
+      name: DsrRestrictionChanged
+      title: Hạn chế xử lý của chủ thể được đặt hoặc gỡ
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DsrRestrictionChanged'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    ConsentGiven:
+      name: ConsentGiven
+      title: Sự đồng ý được ghi nhận
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ConsentGiven'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    ConsentWithdrawn:
+      name: ConsentWithdrawn
+      title: Sự đồng ý bị rút
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/ConsentWithdrawn'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    DpiaReviewDue:
+      name: DpiaReviewDue
+      title: Hồ sơ đánh giá tác động đến hạn rà soát
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/DpiaReviewDue'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    BreachRecorded:
+      name: BreachRecorded
+      title: Vi phạm dữ liệu cá nhân được ghi nhận (đồng hồ 72 giờ bắt đầu)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/BreachRecorded'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - payload:
+          specversion: '1.0'
+          id: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1b01
+          source: /dh-data/privacy
+          type: t68.privacy.breach.recorded.v1
+          time: '2026-11-26T09:15:02+07:00'
+          tenantid: T68
+          data:
+            breachId: 0190a1b2-c3d4-7e5f-8a6b-7c8d9e0f1a2b
+            detectedAt: '2026-11-26T08:40:00+07:00'
+            deadlineAt: '2026-11-29T08:40:00+07:00'
+            source: INCIDENT_PH18
+            estimatedSubjects: 120
+    BreachDeadlineNear:
+      name: BreachDeadlineNear
+      title: Đồng hồ vi phạm còn dưới mốc cảnh báo (24, 48, 60 giờ)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/BreachDeadlineNear'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    BreachNotified:
+      name: BreachNotified
+      title: Đã thông báo Cục A05 hoặc chủ thể
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/BreachNotified'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+    AuditRecorded:
+      name: AuditRecorded
+      title: Bản ghi kiểm toán bảo vệ dữ liệu được ghi (chuyển PH-13)
+      contentType: application/cloudevents+json
+      payload:
+        $ref: '#/components/schemas/AuditRecorded'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+  schemas:
+    ClassificationChangedData:
+      type: object
+      properties:
+        elementId:
+          type: string
+          format: uuid
+        target:
+          type: string
+        fromClass:
+          $ref: '#/components/schemas/DataClass'
+        toClass:
+          $ref: '#/components/schemas/DataClass'
+        personalDataType:
+          $ref: '#/components/schemas/PersonalDataType'
+        downgrade:
+          type: boolean
+        contractIds:
+          type: array
+          items:
+            type: string
+      required:
+      - elementId
+      - target
+      - toClass
+      - downgrade
+    ClassificationChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.classification.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ClassificationChangedData'
+    ClassificationScanFinishedData:
+      type: object
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/ScanStatus'
+        suspectCount:
+          type: integer
+      required:
+      - scanId
+      - status
+      - suspectCount
+    ClassificationScanFinished:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.classification.scan-finished.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ClassificationScanFinishedData'
+    ContractLevelChangedData:
+      type: object
+      properties:
+        contractKind:
+          $ref: '#/components/schemas/ContractKind'
+        contractId:
+          type: string
+        fromClass:
+          $ref: '#/components/schemas/DataClass'
+        toClass:
+          $ref: '#/components/schemas/DataClass'
+        blocked:
+          type: boolean
+      required:
+      - contractKind
+      - contractId
+      - toClass
+      - blocked
+    ContractLevelChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.contract-level.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ContractLevelChangedData'
+    ActivityActivatedData:
+      type: object
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/Code'
+        versionNo:
+          type: integer
+        status:
+          $ref: '#/components/schemas/VersionStatus'
+      required:
+      - activityId
+      - code
+      - versionNo
+      - status
+    ActivityActivated:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.activity.activated.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ActivityActivatedData'
+    PurposeRequestSubmittedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        contractId:
+          type: string
+        ownerOrgId:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - requestId
+      - htttId
+      - purposeCode
+      - contractId
+      - ownerOrgId
+      - dueAt
+    PurposeRequestSubmitted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-request.submitted.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeRequestSubmittedData'
+    PurposeGrantApprovedData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        contractKind:
+          $ref: '#/components/schemas/ContractKind'
+        contractId:
+          type: string
+        validUntil:
+          type: string
+          format: date-time
+        change:
+          type: string
+          enum:
+          - APPROVED
+          - AMENDED
+          - RENEWED
+      required:
+      - grantId
+      - htttId
+      - purposeCode
+      - contractKind
+      - contractId
+      - validUntil
+      - change
+    PurposeGrantApproved:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-grant.approved.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeGrantApprovedData'
+    PurposeGrantSuspendedData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        status:
+          $ref: '#/components/schemas/GrantStatus'
+      required:
+      - grantId
+      - htttId
+      - purposeCode
+      - status
+    PurposeGrantSuspended:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-grant.suspended.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeGrantSuspendedData'
+    PurposeGrantRevokedData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        contractId:
+          type: string
+        revokedAt:
+          type: string
+          format: date-time
+      required:
+      - grantId
+      - htttId
+      - purposeCode
+      - contractId
+      - revokedAt
+    PurposeGrantRevoked:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-grant.revoked.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeGrantRevokedData'
+    PurposeGrantExpiredData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        expiredAt:
+          type: string
+          format: date-time
+      required:
+      - grantId
+      - htttId
+      - purposeCode
+      - expiredAt
+    PurposeGrantExpired:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-grant.expired.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeGrantExpiredData'
+    PurposeGrantExpiringData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        validUntil:
+          type: string
+          format: date-time
+        daysLeft:
+          type: integer
+      required:
+      - grantId
+      - htttId
+      - purposeCode
+      - validUntil
+      - daysLeft
+    PurposeGrantExpiring:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.purpose-grant.expiring.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PurposeGrantExpiringData'
+    BundlePublishedData:
+      type: object
+      properties:
+        bundleNo:
+          type: integer
+        objectRef:
+          type: string
+        sha256:
+          type: string
+        validUntil:
+          type: string
+          format: date-time
+        trigger:
+          type: string
+          enum:
+          - AUTO
+          - MANUAL
+          - ROLLBACK
+      required:
+      - bundleNo
+      - objectRef
+      - sha256
+      - validUntil
+      - trigger
+    BundlePublished:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.bundle.published.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/BundlePublishedData'
+    MaskPolicyActivatedData:
+      type: object
+      properties:
+        policyId:
+          type: string
+          format: uuid
+        code:
+          $ref: '#/components/schemas/Code'
+        versionNo:
+          type: integer
+        scope:
+          $ref: '#/components/schemas/MaskPolicyScope'
+        contractId:
+          type: string
+      required:
+      - policyId
+      - code
+      - versionNo
+      - scope
+    MaskPolicyActivated:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.mask-policy.activated.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/MaskPolicyActivatedData'
+    UsageAnomalyDetectedData:
+      type: object
+      properties:
+        anomalyId:
+          type: string
+          format: uuid
+        anomalyType:
+          $ref: '#/components/schemas/AnomalyType'
+        htttId:
+          type: string
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+      required:
+      - anomalyId
+      - anomalyType
+      - htttId
+    UsageAnomalyDetected:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.usage.anomaly-detected.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/UsageAnomalyDetectedData'
+    SecretLabelBlockedData:
+      type: object
+      properties:
+        targetKind:
+          $ref: '#/components/schemas/TargetKind'
+        targetId:
+          type: string
+        label:
+          $ref: '#/components/schemas/BlockLabel'
+        detectedBy:
+          type: string
+          enum:
+          - SCAN
+          - PEP
+          - ASSIGN
+      required:
+      - targetKind
+      - targetId
+      - label
+      - detectedBy
+    SecretLabelBlocked:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.secret-label.blocked.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/SecretLabelBlockedData'
+    RevealGrantedData:
+      type: object
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        requestedBy:
+          type: string
+        elementId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+      - grantId
+      - requestedBy
+      - elementId
+      - expiresAt
+    RevealGranted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.reveal.granted.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/RevealGrantedData'
+    PseudonymKeyStateChangedData:
+      type: object
+      properties:
+        domainCode:
+          $ref: '#/components/schemas/Code'
+        keyVersion:
+          type: integer
+        from:
+          $ref: '#/components/schemas/KeyVersionStatus'
+        to:
+          $ref: '#/components/schemas/KeyVersionStatus'
+      required:
+      - domainCode
+      - keyVersion
+      - to
+    PseudonymKeyStateChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.pseudonym-key.state-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/PseudonymKeyStateChangedData'
+    ReidentificationExecutedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        domainCode:
+          $ref: '#/components/schemas/Code'
+        tokenCount:
+          type: integer
+        executedBy:
+          type: string
+      required:
+      - requestId
+      - domainCode
+      - tokenCount
+      - executedBy
+    ReidentificationExecuted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.reidentification.executed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ReidentificationExecutedData'
+    DatasetStatusChangedData:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/DatasetStatus'
+      required:
+      - datasetId
+      - status
+    DatasetStatusChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dataset.status-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DatasetStatusChangedData'
+    RetentionTaskFinishedData:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        tableName:
+          type: string
+        action:
+          $ref: '#/components/schemas/RetentionAction'
+        status:
+          $ref: '#/components/schemas/RetentionTaskStatus'
+        rowsProcessed:
+          type: integer
+        rowsSkippedHold:
+          type: integer
+      required:
+      - taskId
+      - tableName
+      - action
+      - status
+      - rowsProcessed
+      - rowsSkippedHold
+    RetentionTaskFinished:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.retention.task-finished.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/RetentionTaskFinishedData'
+    LegalHoldChangedData:
+      type: object
+      properties:
+        holdId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/LegalHoldStatus'
+      required:
+      - holdId
+      - status
+    LegalHoldChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.legal-hold.changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/LegalHoldChangedData'
+    CryptoShredCompletedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        executedAt:
+          type: string
+          format: date-time
+      required:
+      - requestId
+      - executedAt
+    CryptoShredCompleted:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.crypto-shred.completed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/CryptoShredCompletedData'
+    DsrReceivedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        requestType:
+          $ref: '#/components/schemas/DsrType'
+        channel:
+          $ref: '#/components/schemas/DsrChannel'
+        subjectHash:
+          $ref: '#/components/schemas/SubjectHash'
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - requestId
+      - requestType
+      - channel
+      - subjectHash
+      - dueAt
+    DsrReceived:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dsr.received.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DsrReceivedData'
+    DsrDueSoonData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        requestType:
+          $ref: '#/components/schemas/DsrType'
+        dueAt:
+          type: string
+          format: date-time
+        daysLeft:
+          type: integer
+      required:
+      - requestId
+      - requestType
+      - dueAt
+      - daysLeft
+    DsrDueSoon:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dsr.due-soon.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DsrDueSoonData'
+    DsrOverdueData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        requestType:
+          $ref: '#/components/schemas/DsrType'
+        dueAt:
+          type: string
+          format: date-time
+        overdueDays:
+          type: integer
+      required:
+      - requestId
+      - requestType
+      - dueAt
+      - overdueDays
+    DsrOverdue:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dsr.overdue.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DsrOverdueData'
+    DsrClosedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        outcome:
+          $ref: '#/components/schemas/DsrOutcome'
+        closedAt:
+          type: string
+          format: date-time
+      required:
+      - requestId
+      - outcome
+      - closedAt
+    DsrClosed:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dsr.closed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DsrClosedData'
+    DsrRestrictionChangedData:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        subjectHash:
+          $ref: '#/components/schemas/SubjectHash'
+        restrictionActive:
+          type: boolean
+      required:
+      - requestId
+      - subjectHash
+      - restrictionActive
+    DsrRestrictionChanged:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dsr.restriction-changed.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DsrRestrictionChangedData'
+    ConsentGivenData:
+      type: object
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        templateCode:
+          $ref: '#/components/schemas/Code'
+        templateVersion:
+          type: integer
+        subjectHash:
+          $ref: '#/components/schemas/SubjectHash'
+        channel:
+          $ref: '#/components/schemas/ConsentChannel'
+      required:
+      - consentId
+      - templateCode
+      - templateVersion
+      - subjectHash
+      - channel
+    ConsentGiven:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.consent.given.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ConsentGivenData'
+    ConsentWithdrawnData:
+      type: object
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        templateCode:
+          $ref: '#/components/schemas/Code'
+        subjectHash:
+          $ref: '#/components/schemas/SubjectHash'
+        withdrawnAt:
+          type: string
+          format: date-time
+      required:
+      - consentId
+      - templateCode
+      - subjectHash
+      - withdrawnAt
+    ConsentWithdrawn:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.consent.withdrawn.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/ConsentWithdrawnData'
+    DpiaReviewDueData:
+      type: object
+      properties:
+        dpiaId:
+          type: string
+          format: uuid
+        dpiaCode:
+          $ref: '#/components/schemas/Code'
+        reviewOn:
+          type: string
+          format: date
+      required:
+      - dpiaId
+      - dpiaCode
+      - reviewOn
+    DpiaReviewDue:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.dpia.review-due.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/DpiaReviewDueData'
+    BreachRecordedData:
+      type: object
+      properties:
+        breachId:
+          type: string
+          format: uuid
+        detectedAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+        source:
+          $ref: '#/components/schemas/BreachSource'
+        estimatedSubjects:
+          type: integer
+      required:
+      - breachId
+      - detectedAt
+      - deadlineAt
+      - source
+    BreachRecorded:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.breach.recorded.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/BreachRecordedData'
+    BreachDeadlineNearData:
+      type: object
+      properties:
+        breachId:
+          type: string
+          format: uuid
+        deadlineAt:
+          type: string
+          format: date-time
+        remainingHours:
+          type: integer
+        level:
+          type: string
+          enum:
+          - WARN_24
+          - WARN_48
+          - WARN_60
+      required:
+      - breachId
+      - deadlineAt
+      - remainingHours
+      - level
+    BreachDeadlineNear:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.breach.deadline-near.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/BreachDeadlineNearData'
+    BreachNotifiedData:
+      type: object
+      properties:
+        breachId:
+          type: string
+          format: uuid
+        recipient:
+          $ref: '#/components/schemas/NotificationRecipient'
+        sentAt:
+          type: string
+          format: date-time
+      required:
+      - breachId
+      - recipient
+      - sentAt
+    BreachNotified:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.breach.notified.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/BreachNotifiedData'
+    AuditRecordedData:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: string
+        outcome:
+          type: string
+          enum:
+          - SUCCESS
+          - DENIED
+          - FAILED
+        purposeCode:
+          $ref: '#/components/schemas/Code'
+        traceId:
+          type: string
+      required:
+      - eventId
+      - occurredAt
+      - actor
+      - action
+      - targetType
+      - outcome
+    AuditRecorded:
+      type: object
+      required:
+      - specversion
+      - id
+      - source
+      - type
+      - time
+      - tenantid
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: '`eventId`; bên tiêu thụ khử trùng theo giá trị này (inbox).'
+        source:
+          type: string
+          const: /dh-data/privacy
+        type:
+          type: string
+          const: TENANT.privacy.audit.recorded.v1
+        time:
+          type: string
+          format: date-time
+        subject:
+          type: string
+        datacontenttype:
+          const: application/json
+        tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+          description: Khóa phân vùng Kafka.
+        traceparent:
+          type: string
+        data:
+          $ref: '#/components/schemas/AuditRecordedData'
+    Code:
+      type: string
+      pattern: ^[A-Z][A-Z0-9_-]{1,47}$
+      description: Mã nghiệp vụ chữ hoa, số, `_`, `-`.
+    BreachSource:
+      type: string
+      enum:
+      - PERSON
+      - INCIDENT_PH18
+      - AUDIT_PH13
+      - ANOMALY
+    AnomalyType:
+      type: string
+      enum:
+      - QUOTA_EXCEEDED
+      - BULK_ACCESS
+      - OFF_PURPOSE
+      - OFF_HOURS
+      - DORMANT_REUSE
+    DsrType:
+      type: string
+      enum:
+      - ACCESS
+      - RECTIFY
+      - ERASE
+      - RESTRICT
+      - OBJECT
+      - WITHDRAW_CONSENT
+      - INFO
+    BlockLabel:
+      type: string
+      enum:
+      - STATE_SECRET
+    NotificationRecipient:
+      type: string
+      enum:
+      - A05
+      - SUBJECT
+      - CONTROLLER
+    SubjectHash:
+      type: string
+      contentEncoding: base64
+      minLength: 43
+      maxLength: 44
+      description: HMAC-SHA256 32 byte (base64) của định danh đã chuẩn hóa, khóa riêng tenant; không đảo ngược được (BR-09-045).
+    RetentionTaskStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - COMPLETED
+      - FAILED
+      - CANCELLED
+    TargetKind:
+      type: string
+      enum:
+      - ELEMENT
+      - API
+      - TOPIC
+      - FLOW
+    PersonalDataType:
+      type: string
+      enum:
+      - NONE
+      - BASIC
+      - SENSITIVE
+    GrantStatus:
+      type: string
+      enum:
+      - SCHEDULED
+      - ACTIVE
+      - SUSPENDED
+      - REVOKED
+      - EXPIRED
+    DatasetStatus:
+      type: string
+      enum:
+      - READY
+      - PUBLISHED
+      - WITHDRAWN
+      - EXPIRED
+    ConsentChannel:
+      type: string
+      enum:
+      - WEB
+      - APP
+      - COUNTER
+      - DOCUMENT
+    KeyVersionStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DECRYPT_ONLY
+      - DISABLED
+      - DESTROYED
+    ScanStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - COMPLETED
+      - FAILED
+      - CANCELLED
+    MaskPolicyScope:
+      type: string
+      enum:
+      - TENANT
+      - CONTRACT
+    ContractKind:
+      type: string
+      enum:
+      - API
+      - TOPIC
+      - FLOW
+    DsrOutcome:
+      type: string
+      enum:
+      - FULFILLED
+      - PARTIAL
+      - REFUSED
+    VersionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - ACTIVE
+      - SUPERSEDED
+      - REJECTED
+      - RETIRED
+    RetentionAction:
+      type: string
+      enum:
+      - DELETE
+      - PSEUDONYMIZE
+      - ANONYMIZE
+      - ARCHIVE
+    DataClass:
+      type: string
+      enum:
+      - PUBLIC
+      - INTERNAL
+      - RESTRICTED
+      - SENSITIVE
+    DsrChannel:
+      type: string
+      enum:
+      - PUBLIC_SERVICE
+      - COUNTER
+      - DOCUMENT
+      - EMAIL
+    LegalHoldStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - RELEASED
