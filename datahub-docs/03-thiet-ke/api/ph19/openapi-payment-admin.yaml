@@ -2487,6 +2487,14 @@ paths:
           type: boolean
           default: false
         description: Hiện dữ liệu người nộp đầy đủ; cần `transaction-read-pii`, mỗi lần ghi kiểm toán (BR-19-031).
+      - name: X-Datahub-Reveal-Reason
+        in: header
+        schema:
+          type: string
+          maxLength: 500
+          minLength: 10
+        description: Lý do tra cứu, bắt buộc khi `reveal=true` (khung §13.4 quy tắc 6); thiếu trả ERR-19-001. Đặt ở tiêu đề để không lọt vào nhật
+          ký URL.
       - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':

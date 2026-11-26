@@ -181,7 +181,9 @@ T = "Giao dịch"
 d("API-19-051", "listTransactions", T, (200, "TransactionPage"), TXN_FILTERS,
   desc="Đọc bản sao `pg-payment-ro`. Tìm theo người nộp cần `transaction-read-pii`. Trang ≤ 1,5 giây p95 với 10 triệu giao dịch (NFR-19-007).")
 d("API-19-052", "getTransaction", T, (200, "TransactionDetail"), ["transactionId", q("reveal", {"type": "boolean", "default": False},
-  "Hiện dữ liệu người nộp đầy đủ; cần `transaction-read-pii`, mỗi lần ghi kiểm toán (BR-19-031).")], etag=True)
+  "Hiện dữ liệu người nộp đầy đủ; cần `transaction-read-pii`, mỗi lần ghi kiểm toán (BR-19-031)."),
+  {"name": "X-Datahub-Reveal-Reason", "in": "header", "schema": STR(500, minLength=10),
+   "description": "Lý do tra cứu, bắt buộc khi `reveal=true` (khung §13.4 quy tắc 6); thiếu trả ERR-19-001. Đặt ở tiêu đề để không lọt vào nhật ký URL."}], etag=True)
 d("API-19-053", "syncTransactionStatus", T, (200, "StatusSyncResult"), ["transactionId"], errs=["ERR-19-021", "ERR-19-023", "ERR-19-017"],
   desc="Gọi truy vấn NCC; tối đa 1 lần/60 giây, 10 lần/ngày mỗi giao dịch.")
 d("API-19-054", "listTransactionEvents", T, (200, "TransactionEventList"), ["transactionId"])
