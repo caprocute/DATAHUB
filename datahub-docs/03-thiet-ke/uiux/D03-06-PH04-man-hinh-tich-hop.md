@@ -1702,9 +1702,31 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 
 ## 17. UI-04-11 Chạy thử
 
-**Mục đích.** Chạy phiên bản đang soạn trên Camel thật trong `dh-runtime-sandbox` (ADR-064) với bản tin mẫu, đích mô phỏng hoặc hệ thống TEST thật, xem từng chặng đã đi qua, dữ liệu vào ra tại mỗi chặng, log. Lần chạy `PASSED` không mô phỏng gắn với băm định nghĩa để mở khóa gửi duyệt (BR-04-004). Thay chạy thử giả của repo (GAP-04-04: `RoutesService.testRun` tính từ `hashCode`) và "kiểm tra kết nối khi thêm chương trình" của Bus (LGC-BUS-013). FR-04-030, 033.
-**Dạng.** `CMP-Drawer` dưới cao 50 % (mặc định, để thấy canvas phủ kết quả cùng lúc) hoặc trang `/tich-hop/luong/:ma/chay-thu`. URL `lop=chay-thu`.
-**Quyền.** IE (`PERM-04-update`); dùng dữ liệu thật cần `PERM-04-sample-data`. **API.** API-04-040 (bắt đầu, trả `202` với `runId`), 042 (kết quả, SSE), 043 (hủy), 044 (ca kiểm thử).
+Chạy thử là cổng bắt buộc trước khi gửi duyệt; màn được viết siêu chi tiết vì kết quả phải đọc được tới từng chặng.
+
+::: dac-ta
+**Mục đích.** Chạy phiên bản đang soạn trên Camel thật trong `dh-runtime-sandbox` (ADR-064) với bản tin mẫu, đích mô phỏng hoặc hệ thống TEST thật, xem từng chặng đã đi qua, dữ liệu vào ra tại mỗi chặng, log. Lần chạy `PASSED` không mô phỏng gắn với băm định nghĩa để mở khóa gửi duyệt (BR-04-004).
+
+**Người dùng chính.** IE.
+
+**FR hiện thực.** FR-04-030, 033.
+
+**Thay hệ cũ.** Thay chạy thử giả của repo (GAP-04-04: `RoutesService.testRun` tính từ `hashCode`) và "kiểm tra kết nối khi thêm chương trình" của Bus (LGC-BUS-013).
+
+**Đường dẫn.** Drawer: URL của UI-04-04 thêm `lop=chay-thu`; trang riêng `/tich-hop/luong/:ma/chay-thu`.
+
+**Mẫu, vật liệu.** `CMP-Drawer` dưới cao 50 % (mặc định, để thấy canvas phủ kết quả cùng lúc) hoặc trang `/tich-hop/luong/:ma/chay-thu`. Khung `glass-modal`, vùng nội dung đặc.
+
+**Quyền.** IE (`PERM-04-update`); dùng dữ liệu thật cần `PERM-04-sample-data`.
+
+**API.** API-04-040 (bắt đầu, trả `202` với `runId`), 042 (kết quả, SSE), 043 (hủy), 044 (ca kiểm thử).
+
+**Trạng thái đối tượng.** Lần chạy `QUEUED`, `RUNNING`, `PASSED`, `FAILED`, `TIMED_OUT`, `CANCELLED`; chặng `SKIPPED`, `SIMULATED` (mục 5.1).
+
+**Trạng thái màn.** Mục 17.4; đang tải theo ST-01, lỗi tải ST-05, không có quyền thì nút "Chạy thử" ẩn.
+
+**Thông báo.** ERR-04-009, 013, 019 (429, 503), 020, 021; thành công "Chạy thử đạt".
+:::
 
 ### 17.1. Wireframe
 
@@ -1786,11 +1808,57 @@ Bảng bean: tên, kiểu, thuộc tính (biểu mẫu theo kiểu), nơi dùng.
 
 ## 18. UI-04-12 Nhật ký chạy thử và UI-04-13 Ca kiểm thử
 
+Hai màn của chương này cùng phục vụ bằng chứng chạy thử: UI-04-12 xem lại các lần đã chạy, UI-04-13 soạn bộ ca kiểm thử chạy lặp lại được.
+
 ### 18.1. UI-04-12 Nhật ký chạy thử
+
+::: dac-ta
+**Mục đích.** Xem lại, lọc, so sánh các lần chạy thử của một luồng và mở chi tiết từng lần làm bằng chứng duyệt.
+
+**Người dùng chính.** IE, IA.
+
+**FR hiện thực.** FR-04-032.
+
+**Thay hệ cũ.** Không có; thay `RunLogPage` của repo.
+
+**Đường dẫn.** `/tich-hop/luong/:ma/nhat-ky-chay-thu` với `ket-qua`, `nguoi-chay`, `phien-ban`, `tu`, `den`, `so-sanh`.
+
+**Mẫu.** PTN-01 + trang chi tiết kết quả (mục 17.3).
+
+**Quyền.** `PERM-04-read`; xem thân bản tin `SANDBOX_LIVE` cần `PERM-04-sample-data` (ghi kiểm toán).
+
+**API.** API-04-041 (danh sách), 042 (chi tiết, thân chặng).
+
+**Trạng thái màn.** Đang tải skeleton 8 dòng; rỗng "Luồng chưa có lần chạy thử nào." kèm "Chạy thử"; lọc rỗng ST-04; lỗi ST-05; không có quyền ST-06.
+
+**Thông báo.** ERR-04-030 (lần chạy không tồn tại); "Thân bản tin đã xóa theo thời hạn lưu".
+:::
 
 FR-04-032. PTN-01: bảng các lần chạy của luồng: số, thời điểm, người chạy, phiên bản, băm rút gọn, chế độ (`MOCK`, `SANDBOX_LIVE`, `SIMULATED`), nguồn bản tin (mẫu, nhập tay, ca kiểm thử), kết quả, thời lượng, chặng lỗi, cờ "Dữ liệu thật". Lọc theo phiên bản, kết quả, người chạy, chế độ, khoảng thời gian. Chi tiết một lần chạy là trang kết quả của mục 17.3 với sơ đồ thời gian từng chặng (waterfall) và `traceId` liên kết sang PH-13. Chọn hai dòng → "So sánh" hiện hai dòng chảy cạnh nhau, so thời lượng từng chặng, tô chặng khác kết quả. Xem thân bản tin của lần chạy `SANDBOX_LIVE` cần `PERM-04-sample-data` và được ghi kiểm toán. Metadata giữ `04.test.retention-days` (mặc định 90 ngày), thân giữ `04.test.body-retention-days` (mặc định 7 ngày); quá hạn thì dòng vẫn còn nhưng chi tiết hiện "Thân bản tin đã xóa theo thời hạn lưu". Lần chạy đã được viện dẫn trong một lần duyệt có nhãn "Bằng chứng duyệt v{n}" và được giữ lâu hơn. Thay `RunLogPage` của repo.
 
 ### 18.2. UI-04-13 Ca kiểm thử
+
+::: dac-ta
+**Mục đích.** Soạn, lưu, chạy bộ ca kiểm thử có khẳng định để mọi phiên bản sau được kiểm lại cùng một cách.
+
+**Người dùng chính.** IE; IA chạy lại ca khi duyệt (cần `PERM-04-update`).
+
+**FR hiện thực.** FR-04-031.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** Không có; URL của UI-04-04 thêm `lop=ca-kiem-thu`.
+
+**Mẫu.** `CMP-Drawer` phải 720 px.
+
+**Quyền.** Xem `PERM-04-read`; soạn, chạy `PERM-04-update` + mức `EDIT`.
+
+**API.** API-04-044 (danh sách, tạo, sửa, xóa), 040 (chạy ca).
+
+**Trạng thái màn.** Rỗng "Chưa có ca kiểm thử. Lưu một lần chạy đạt thành ca để bắt đầu."; đang tải skeleton 4 dòng; lỗi ST-05; chỉ đọc khi không có quyền.
+
+**Thông báo.** VR-20 (ca chưa có khẳng định), ERR-04-014 (còn ca chưa đạt khi gửi duyệt), 021.
+:::
 
 FR-04-031. Drawer phải 720 px từ "Chạy thử ▾ › Ca kiểm thử…" hoặc tab Chạy thử của UI-04-02.
 
@@ -1804,7 +1872,31 @@ FR-04-031. Drawer phải 720 px từ "Chạy thử ▾ › Ca kiểm thử…" h
 
 ## 19. UI-04-14 Hàng đợi duyệt và màn duyệt
 
-**Mục đích.** Người duyệt xem đủ bằng chứng để quyết định, theo bốn mắt (BR-04-005, ADR-069). Thay `ReviewPage` của repo, nơi bốn mắt chỉ so `created_by` (GAP-04-07). FR-04-041, 043. **Quyền.** IA (`PERM-04-publish`, mức `MAINTAIN` khi giới hạn không gian). **API.** API-04-053 (hàng đợi), 052 (quyết định), 025 (ghi nhận đã xem so sánh), 030 (kiểm tra mức `PUBLISH`), 043, 041 (bằng chứng chạy thử).
+Màn duyệt là nơi áp nguyên tắc bốn mắt; giao diện chỉ bật nút duyệt khi người duyệt đã xem khác biệt và đủ checklist.
+
+::: dac-ta
+**Mục đích.** Người duyệt xem đủ bằng chứng để quyết định, theo bốn mắt (BR-04-005, ADR-069).
+
+**Người dùng chính.** IA.
+
+**FR hiện thực.** FR-04-041, 043.
+
+**Thay hệ cũ.** Không có ở Bus; thay `ReviewPage` của repo, nơi bốn mắt chỉ so `created_by` (GAP-04-07).
+
+**Đường dẫn.** Hàng đợi `/tich-hop/duyet-luong?trang-thai=&khong-gian=&cua-toi=`; màn duyệt `/tich-hop/duyet-luong/:ma/:phienBan?tab=`.
+
+**Mẫu.** PTN-10 Hộp việc và duyệt.
+
+**Quyền.** IA (`PERM-04-publish`, mức `MAINTAIN` khi giới hạn không gian); lên PROD thêm `PERM-04-promote` khi `04.env.prod-requires-promote` bật.
+
+**API.** API-04-053 (hàng đợi), 052 (quyết định), 025 (ghi nhận đã xem so sánh), 030 (kiểm tra mức `PUBLISH`), 043, 041 (bằng chứng chạy thử).
+
+**Trạng thái đối tượng.** Phiên bản `PENDING_REVIEW` → `APPROVED` hoặc `CHANGES_REQUESTED`.
+
+**Trạng thái màn.** Hàng đợi rỗng "Không có phiên bản nào chờ bạn duyệt."; đang tải skeleton; lỗi ST-05; không có quyền ST-06; đã có người duyệt, đã rút lại, ETag đổi (cuối mục 19.2).
+
+**Thông báo.** ERR-04-005, 015, 025, 041, 042; thành công "Đã duyệt v{n}. Đang phát hành lên {env}."
+:::
 
 ### 19.1. Hàng đợi `/tich-hop/duyet-luong`
 
@@ -1843,7 +1935,31 @@ Trạng thái: người khác đã duyệt khi đang xem → banner "Phiên bả
 
 ## 20. UI-04-15 Phát hành, triển khai, quay lui
 
-**Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy bằng lệnh có ký (ADR-065), thăng cấp, quay lui. Thay publish của repo vốn cho phép từ `DRAFT` và không nạp vào runtime (GAP-04-02, 03), lưu context XML của Bus (LGC-BUS-033) và Start/Stop qua JMX (LGC-BUS-009, 012, 026). FR-04-042, 044, 045, 050, 051. **API.** API-04-054 (triển khai, SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển).
+Nhóm hộp và drawer của màn này đưa phiên bản vào vận hành thật, nên mọi hành động đều có kiểm tra trước, lý do và theo dõi tới khi runtime xác nhận.
+
+::: dac-ta
+**Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy bằng lệnh có ký (ADR-065), thăng cấp, quay lui.
+
+**Người dùng chính.** IA, TA; TO, SO cho tạm dừng, dừng khẩn.
+
+**FR hiện thực.** FR-04-042, 044, 045, 050, 051.
+
+**Thay hệ cũ.** Thay publish của repo vốn cho phép từ `DRAFT` và không nạp vào runtime (GAP-04-02, 03), lưu context XML của Bus (LGC-BUS-033) và Start/Stop qua JMX (LGC-BUS-009, 012, 026).
+
+**Đường dẫn.** Không có; mở từ UI-04-02 (`tab=trien-khai`) và UI-04-14.
+
+**Mẫu.** `CMP-Modal` 720 px cho hộp phát hành, `CMP-Drawer` phải cho theo dõi, tab Triển khai của UI-04-02.
+
+**Quyền.** Theo mục 20.3 và chương 28 (`publish`, `promote`, `operate`, `emergency-stop`, `delete`).
+
+**API.** API-04-054 (triển khai, SSE tiến trình), 055 (quay lui), 056 (thăng cấp), 060 (tình trạng runtime), 061 (lệnh điều khiển).
+
+**Trạng thái đối tượng.** Triển khai `PENDING`, `SYNCING`, `SYNCED`, `OUT_OF_SYNC`, `FAILED`; lệnh `ISSUED`…`RECONCILED`, `PARTIAL`, `REJECTED` (mục 5.1).
+
+**Trạng thái màn.** Đang kiểm tra trước (skeleton danh sách kiểm), một dòng ✕ thì nút chính vô hiệu, mất SSE thì tự nối lại và hiện "Đang nối lại…"; không có quyền thì nút ẩn.
+
+**Thông báo.** ERR-04-017, 022, 023, 024, 025, 029, 040, 041, 042.
+:::
 
 ### 20.1. Hộp phát hành, thăng cấp
 
@@ -1905,6 +2021,28 @@ FR-04-082. PTN-09, bốn bước: ① Tải tệp (XML Camel Spring, Blueprint x
 FR-04-025. Lưới thẻ: mã, tên, sơ đồ thu nhỏ (ảnh minh họa của khuôn), mô tả, loại tài nguyên, nhóm, số lần dùng, phạm vi (Nền tảng, Tỉnh). Bộ lọc theo nhóm và loại. Chi tiết khuôn: sơ đồ, lược đồ tham số `${tpl.*}`, YAML, "Dùng khuôn này" (mở UI-04-03 bước 2). Khuôn nền do PA quản lý (`PERM-04-catalog-admin`); khuôn của tenant do TA quản lý, tạo từ một luồng đã duyệt bằng "Lưu làm khuôn mẫu" ở UI-04-02. Tám khuôn nền tối thiểu ở MVP theo FR-04-025: `tpl-standard-9`, `tpl-sync-lookup`, `tpl-soap-to-rest`, `tpl-db-poll-to-kafka`, `tpl-kafka-to-rest`, `tpl-sftp-to-kafka`, `tpl-ndxp-proxy`, `tpl-cdm-normalize`. Khuôn cho các dịch vụ NGSP (Tư pháp, BHXH, ĐKKD, mã ĐVQHNS, DMDC quốc gia, VBQPPL) và PayGov (PH-19) bổ sung ở đợt sau, dùng `tpl-ndxp-proxy` làm gốc.
 
 ## 25. UI-04-20 Tham số PH-04
+
+::: dac-ta
+**Mục đích.** Đặt tham số `04.*`, biến môi trường và khoảng đóng băng của PH-04 cho tỉnh.
+
+**Người dùng chính.** TA; SO đặt khoảng đóng băng.
+
+**FR hiện thực.** FR-04-084.
+
+**Thay hệ cũ.** Màn cấu hình hệ thống của Bus (LGC-BUS-031).
+
+**Đường dẫn.** `/quan-tri/tham-so?nhom=04`.
+
+**Mẫu.** Màn tham số chung của PH-18.
+
+**Quyền.** Xem `PERM-04-read`; sửa `PERM-04-admin`.
+
+**API.** API-04-090.
+
+**Trạng thái màn.** Theo màn tham số PH-18; giá trị ngoài miền báo tại ô.
+
+**Thông báo.** ERR-04-049 (giá trị sai lược đồ), 025 (thiếu lý do khi đổi khoảng đóng băng).
+:::
 
 FR-04-084. Không có màn riêng: nhóm "04 · Tích hợp" trong màn tham số chung của PH-18 (`/quan-tri/tham-so?nhom=04`), hiện các tham số `04.*` của FRS §7.1 với miền giá trị, mặc định, giá trị tỉnh, người sửa cuối; khai báo biến môi trường `{{dh.env.<tên>}}` với giá trị theo TEST, STAGING, PROD; đặt khoảng đóng băng `04.freeze.windows` (TA, SO). Thay màn cấu hình hệ thống của Bus (LGC-BUS-031).
 
