@@ -33,7 +33,7 @@ VALUES (pg_temp.id('a68'), 'T68', 'ndxp-rest', 'NDXP REST', 'NDXP', 1, 'REST', p
 INSERT INTO ph05_adapter.adapter_version (id, tenant_id, adapter_id, major, created_by, updated_by)
 VALUES (pg_temp.id('v68'), 'T68', pg_temp.id('a68'), 1, 'an', 'an');
 INSERT INTO ph05_adapter.adapter_operation (id, tenant_id, adapter_version_id, code, title, direction, protocol_spec, request_format, response_format, side_effect, created_by, updated_by)
-VALUES (pg_temp.id('o68'), 'T68', pg_temp.id('v68'), 'tra-cuu', 'Tra cứu', 'OUTBOUND', '{"method":"GET","path":"/ho-tich"}', 'NONE', 'JSON', 'READ', 'an', 'an');
+VALUES (pg_temp.id('o68'), 'T68', pg_temp.id('v68'), 'tra-cuu', 'Tra cứu', 'OUTBOUND', '{"method":"GET","pathTemplate":"/ho-tich"}', 'JSON', 'JSON', 'NONE', 'an', 'an');
 INSERT INTO ph05_adapter.db_access_record (event_id, tenant_id, connection_code, flow_code, flow_version, env, db_username, statement_hash, statement_kind, row_count, duration_ms, outcome, trace_id, occurred_at)
 VALUES (gen_random_uuid(), 'T68', 'dkkd-db', 'dkkd-dong-bo', 1, 'PROD', 'v-dh-T68-x', repeat('b', 64), 'SELECT', 842, 37, 'OK', repeat('0', 32), now());
 

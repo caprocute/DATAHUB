@@ -459,7 +459,7 @@ Sự kiện từ outbox mang CloudEvents 1.0 nhị phân (`ce_type = vn.datahub.
 | ERR-05-014 | 422 | Môi trường chưa có giá trị hoặc thiếu bí mật bắt buộc | 013 |
 | ERR-05-015 | 422 | Tài khoản khai báo chỉ đọc nhưng có quyền ghi | 040 |
 | ERR-05-016 | 422 | Phạm vi trỏ tới CSDL control plane hoặc `pg-payment` | 036 |
-| ERR-05-017 | 409 | Mục đích ghi chưa được phép (kết nối chỉ đọc hoặc chưa có SO đồng ý) | 036 |
+| ERR-05-017 | 409 | Mục đích ghi chưa được phép (kết nối chỉ đọc hoặc chưa có SO đồng ý) | 036, 050 |
 | ERR-05-018 | 409 | Đang có lần kiểm tra chạy cho cùng giá trị | 017 |
 | ERR-05-019 | 429 | Vượt số lần kiểm tra cho phép | 017 |
 | ERR-05-020 | 422 | Kamelet vi phạm chính sách tĩnh | 082 |

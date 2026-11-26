@@ -2056,7 +2056,8 @@ paths:
       - FR-05-041
       x-datahub-permission:
         permission: PERM-05-adapter
-      description: Chỉ ở DRAFT. Câu lệnh SQL ghép chuỗi, phương thức không hợp lệ, mã hóa VNI trả ERR-05-032; mẫu có mã độc ERR-05-034.
+      description: Chỉ ở DRAFT. `sideEffect = WRITE` với kết nối READ ERR-05-017. Câu lệnh SQL ghép chuỗi, phương thức không hợp lệ, mã hóa VNI
+        trả ERR-05-032; mẫu có mã độc ERR-05-034.
       parameters:
       - $ref: '#/components/parameters/AdapterCodePath'
       - $ref: '#/components/parameters/VersionPath'
@@ -2583,8 +2584,8 @@ paths:
       - FR-05-045
       x-datahub-permission:
         permission: PERM-05-operate
-      description: 'Chế độ bóng: sao chép lượt gọi thật của phiên bản hiệu lực sang phiên bản ứng viên với thao tác `sideEffect` NONE hoặc READ;
-        thao tác ghi bị loại (cờ `adapter.compare.enabled`).'
+      description: 'Chế độ bóng: sao chép lượt gọi thật của phiên bản hiệu lực sang phiên bản ứng viên với thao tác `sideEffect = NONE`; thao
+        tác ghi bị loại (cờ `adapter.compare.enabled`).'
       x-datahub-idempotent: true
       parameters:
       - $ref: '#/components/parameters/AdapterCodePath'
@@ -4285,8 +4286,8 @@ components:
       - SOAP
       - CSV
       - FIXED_WIDTH
+      - TEXT
       - BINARY
-      - NONE
     Reason:
       type: string
       maxLength: 1000
@@ -5932,14 +5933,22 @@ components:
           type: integer
           minimum: 1
           maximum: 500
+          default: 20
+          description: Tổng trên mọi bản sao (BR-05-029); trần tenant 05.adapter.max-concurrency.
+        poolMinIdle:
+          type: integer
+          minimum: 0
+          default: 1
         acquireTimeoutMs:
           type: integer
           minimum: 100
           maximum: 30000
+          default: 3000
         idleTimeoutSeconds:
           type: integer
           minimum: 10
           maximum: 3600
+          default: 300
         rateLimit:
           type: object
           properties:
@@ -6056,8 +6065,8 @@ components:
           type: string
           enum:
           - NONE
-          - PAGE
-          - OFFSET
+          - PAGE_NUMBER
+          - OFFSET_LIMIT
           - CURSOR
           - LINK_HEADER
         pageParam:
@@ -6066,20 +6075,30 @@ components:
         sizeParam:
           type: string
           maxLength: 64
+        startAt:
+          type: integer
+          minimum: 0
         pageSize:
           type: integer
           minimum: 1
           maximum: 1000
+        cursorParam:
+          type: string
+          maxLength: 64
         cursorPath:
           type: string
           maxLength: 255
         itemsPath:
           type: string
           maxLength: 255
+        hasMorePath:
+          type: string
+          maxLength: 255
         maxPages:
           type: integer
           minimum: 1
-          maximum: 1000
+          maximum: 500
+          default: 50
       additionalProperties: false
       required:
       - mode
@@ -6107,19 +6126,32 @@ components:
                 type: string
                 maxLength: 64
               required: *id002
-              missing:
+              missingValues:
+                type: array
+                items:
+                  type: string
+                  maxLength: 64
+                maxItems: 20
+                description: Giá trị coi là thiếu thêm cho trường (ngoài mặc định chung).
+              onMissing:
                 type: string
                 enum:
-                - 'NULL'
-                - OMIT
                 - DEFAULT
-                - ERROR
+                - REJECT
+                - PASS_NULL
               default: {}
             additionalProperties: false
             required:
             - path
             - type
           maxItems: 500
+        missingValues:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 20
+          description: 'Mặc định chung: "", "null", "NULL", "N/A", "-".'
         namespaces:
           type: object
           additionalProperties:
@@ -6174,9 +6206,8 @@ components:
           type: string
           enum:
           - NONE
-          - READ
           - WRITE
-          - EXTERNAL
+          description: WRITE chỉ khi kết nối READ_WRITE (ERR-05-017).
         sampleRequest:
           type: string
           maxLength: 1048576
@@ -6201,10 +6232,10 @@ components:
         direction: OUTBOUND
         protocolSpec:
           method: GET
-          path: /ho-tich/khai-sinh
+          pathTemplate: /ho-tich/khai-sinh
           query:
-            soDinhDanh: ${header.soDinhDanh}
-        requestFormat: NONE
+            soDinhDanh: ${param.soDinhDanh}
+        requestFormat: JSON
         responseFormat: JSON
         responseSchemaRef: apicurio:t68/ho-tich-khai-sinh/1
         normalization:
@@ -6213,15 +6244,17 @@ components:
             type: DATE
             sourceFormat: dd/MM/yyyy
             required: true
-            missing: ERROR
+            onMissing: REJECT
+            missingValues:
+            - 01/01/1900
           - path: $.noiSinh
             type: STRING
-            missing: 'NULL'
+            onMissing: PASS_NULL
         pagination:
           mode: NONE
         timeoutMs: 8000
         idempotent: true
-        sideEffect: READ
+        sideEffect: NONE
     AdapterTestRequest:
       type: object
       properties:

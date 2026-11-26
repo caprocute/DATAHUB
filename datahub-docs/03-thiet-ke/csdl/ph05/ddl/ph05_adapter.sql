@@ -532,8 +532,9 @@ CREATE TABLE ph05_adapter.adapter_version (
   major            integer       NOT NULL,
   minor            integer       NOT NULL DEFAULT 0,
   status           varchar(12)   NOT NULL DEFAULT 'DRAFT',
-  max_concurrency  integer       NOT NULL DEFAULT 10,
-  acquire_timeout_ms integer     NOT NULL DEFAULT 2000,
+  max_concurrency  integer       NOT NULL DEFAULT 20,
+  pool_min_idle    integer       NOT NULL DEFAULT 1,
+  acquire_timeout_ms integer     NOT NULL DEFAULT 3000,
   idle_timeout_seconds integer   NOT NULL DEFAULT 300,
   rate_limit       jsonb,
   spec_kind        varchar(8),
@@ -629,17 +630,17 @@ CREATE TABLE ph05_adapter.adapter_operation (
   CONSTRAINT fk_adapter_operation_version FOREIGN KEY (adapter_version_id, tenant_id) REFERENCES ph05_adapter.adapter_version (id, tenant_id) ON DELETE CASCADE,
   CONSTRAINT ck_adapter_operation_code CHECK (code ~ '^[a-z][a-z0-9-]{1,40}$'),
   CONSTRAINT ck_adapter_operation_dir CHECK (direction IN ('OUTBOUND', 'INBOUND')),
-  CONSTRAINT ck_adapter_operation_fmt CHECK (request_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'BINARY', 'NONE')
-                                     AND response_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'BINARY', 'NONE')),
+  CONSTRAINT ck_adapter_operation_fmt CHECK (request_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'TEXT', 'BINARY')
+                                     AND response_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'TEXT', 'BINARY')),
   CONSTRAINT ck_adapter_operation_timeout CHECK (timeout_ms BETWEEN 100 AND 120000),
-  CONSTRAINT ck_adapter_operation_side CHECK (side_effect IN ('NONE', 'READ', 'WRITE', 'EXTERNAL')),
+  CONSTRAINT ck_adapter_operation_side CHECK (side_effect IN ('NONE', 'WRITE')),
   CONSTRAINT ck_adapter_operation_spec CHECK (jsonb_typeof(protocol_spec) = 'object'),
   CONSTRAINT ck_adapter_operation_samples CHECK (coalesce(octet_length(sample_request), 0) <= 1048576 AND coalesce(octet_length(sample_response), 0) <= 1048576)
 );
 CREATE TRIGGER tg_adapter_operation_touch BEFORE UPDATE ON ph05_adapter.adapter_operation FOR EACH ROW EXECUTE FUNCTION ph05_adapter.tg_touch();
 CALL ph05_adapter.p_enable_rls('ph05_adapter.adapter_operation', 'P');
 COMMENT ON TABLE ph05_adapter.adapter_operation IS 'EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-036…041). Bất biến theo phiên bản cha: dịch vụ từ chối sửa khi phiên bản không ở DRAFT (ERR-05-017).';
-COMMENT ON COLUMN ph05_adapter.adapter_operation.protocol_spec IS 'Tham số theo giao thức: REST {method, path, query, headers}; SOAP {wsdlOperation, soapAction}; SQL {statement, maxRows}; FILE {directory, includePattern, readyStrategy, recordMode}…';
+COMMENT ON COLUMN ph05_adapter.adapter_operation.protocol_spec IS 'Tham số theo giao thức: REST {method, pathTemplate, query, headers, bodyTemplate, rateLimit, successStatuses}; SOAP {wsdlOperation, soapAction}; SQL {statement, maxRows}; FILE {directory, includePattern, readyStrategy, recordMode}…';
 COMMENT ON COLUMN ph05_adapter.adapter_operation.sample_response IS 'Bản tin mẫu đã che dữ liệu cá nhân (DH-MASK) trước khi lưu; dùng cho trình cấu hình và kiểm thử.';
 COMMENT ON COLUMN ph05_adapter.adapter_operation.kamelet_name IS 'Tên Kamelet sinh {adapter}-{operation}-v{major}-{sink|source|action}, điền khi phiên bản được duyệt (FR-05-047).';
 -- @rollback DROP TABLE IF EXISTS ph05_adapter.adapter_operation CASCADE;

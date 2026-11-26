@@ -396,8 +396,9 @@ EN-05-11 Phiên bản bộ điều hợp (FR-05-043, 044). Một bản nháp (DR
 | `major` | `integer` | x |  |  |
 | `minor` | `integer` | x | `0` |  |
 | `status` | `varchar(12)` | x | `'DRAFT'` |  |
-| `max_concurrency` | `integer` | x | `10` |  |
-| `acquire_timeout_ms` | `integer` | x | `2000` |  |
+| `max_concurrency` | `integer` | x | `20` |  |
+| `pool_min_idle` | `integer` | x | `1` |  |
+| `acquire_timeout_ms` | `integer` | x | `3000` |  |
 | `idle_timeout_seconds` | `integer` | x | `300` |  |
 | `rate_limit` | `jsonb` |  |  |  |
 | `spec_kind` | `varchar(8)` |  |  |  |
@@ -431,7 +432,7 @@ EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-036…041). Bấ
 | `code` | `varchar(41)` | x |  |  |
 | `title` | `varchar(255)` | x |  |  |
 | `direction` | `varchar(8)` | x |  |  |
-| `protocol_spec` | `jsonb` | x |  | Tham số theo giao thức: REST {method, path, query, headers}; SOAP {wsdlOperation, soapAction}; SQL {statement, maxRows}; FILE {directory, includePattern, readyStrategy, recordMode}… |
+| `protocol_spec` | `jsonb` | x |  | Tham số theo giao thức: REST {method, pathTemplate, query, headers, bodyTemplate, rateLimit, successStatuses}; SOAP {wsdlOperation, soapAction}; SQL {statement, maxRows}; FILE {directory, includePattern, readyStrategy, recordMode}… |
 | `request_format` | `varchar(12)` | x |  |  |
 | `response_format` | `varchar(12)` | x |  |  |
 | `request_schema_ref` | `varchar(255)` |  |  |  |
@@ -450,7 +451,7 @@ EN-05-12 Thao tác của phiên bản bộ điều hợp (FR-05-036…041). Bấ
 | `updated_at` | `timestamptz` | x | `now()` | Thời điểm sửa cuối (trigger `tg_touch`). |
 | `updated_by` | `varchar(64)` | x |  | Người sửa cuối. |
 | `version` | `integer` | x | `0` | Khóa lạc quan; thành phần của ETag (`If-Match`). |
-| `AND` | `response_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'BINARY', 'NONE'))` |  |  |  |
+| `AND` | `response_format IN ('JSON', 'XML', 'SOAP', 'CSV', 'FIXED_WIDTH', 'TEXT', 'BINARY'))` |  |  |  |
 
 ### 3.15. `adapter_test`
 
