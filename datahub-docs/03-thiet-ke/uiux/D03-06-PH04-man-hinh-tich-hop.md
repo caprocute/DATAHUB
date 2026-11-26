@@ -2006,20 +2006,279 @@ Sau mỗi lệnh, hàng lệnh trong tab Triển khai hiện trạng thái lện
 
 ## 21. UI-04-16 So sánh phiên bản
 
+Màn so sánh trả lời câu hỏi "phiên bản này khác phiên bản kia ở đâu" cho người soạn, người duyệt và người vận hành, theo ba cách nhìn.
+
+::: dac-ta
+**Mục đích.** So sánh hai phiên bản bất kỳ của một luồng trên sơ đồ, YAML và bảng tóm tắt; liên kết sâu tới từng thay đổi.
+
+**Người dùng chính.** Mọi vai trò có `PERM-04-read`; IA dùng nhiều nhất trước khi duyệt.
+
+**FR hiện thực.** FR-04-043.
+
+**Thay hệ cũ.** Tab Source của Bus (LGC-BUS-023).
+
+**Đường dẫn.** `/tich-hop/luong/:ma/so-sanh?tu=&den=&che-do=` (`so-do`, `yaml`, `tom-tat`).
+
+**Mẫu.** Trang riêng dùng `CMP-DiffViewer` và hai `CMP-FlowCanvas` chỉ đọc.
+
+**Quyền.** `PERM-04-read` + quyền xem không gian.
+
+**API.** API-04-025 (so sánh), 024 (danh sách phiên bản), 020 (định nghĩa hai phía).
+
+**Trạng thái màn.** Mục 21.4.
+
+**Thông báo.** ERR-04-001, 004; "Hai phiên bản giống hệt nhau."
+:::
+
 FR-04-043. Trang riêng, chọn "Từ" và "Đến" (phiên bản bất kỳ, hoặc "đang chạy ở {env}"). Ba chế độ: Sơ đồ (phủ khác biệt thêm, xóa, đổi, di chuyển; ghép chặng theo `id`, chặng không có `id` ổn định ghép theo vị trí và loại), YAML (`CMP-DiffViewer` unified hoặc hai cột), Tóm tắt (số chặng đổi, thành phần mới, kết nối mới, topic mới, điểm vào mới, bảng tham số đổi theo chặng). Liên kết sâu tới từng thay đổi; nút "Mở trên sơ đồ" từ YAML. Thay tab Source của Bus (LGC-BUS-023) khi cần đối chiếu.
+
+### 21.1. Wireframe
+
+```
+  Tích hợp › Luồng tích hợp › Đồng bộ khai sinh sang NDXP › So sánh
+  Từ [v7 · đang chạy ở PROD ▾]  ⇄  Đến [v8 · Chờ duyệt ▾]      [Sơ đồ | YAML | Tóm tắt]  [⧉ Sao chép liên kết]
+  +2 chặng · ~3 chặng · −0 · ↕1 · 1 kết nối mới · 0 topic mới                   ‹ Thay đổi trước  Thay đổi sau ›
+  ┌ v7 (chỉ đọc) ───────────────────────────┐ ┌ v8 (chỉ đọc) ──────────────────────────────┐
+  │ Nhận yêu cầu → Kiểm lược đồ → Rẽ nhánh   │ │ Nhận yêu cầu → Kiểm lược đồ → Rẽ nhánh      │
+  │                                         │ │   ~ Gọi hộ tịch (timeout)  + Ghi nhật ký    │
+  └─────────────────────────────────────────┘ └────────────────────────────────────────────┘
+  Tham số đổi của chặng chọn: Gọi hộ tịch · connectTimeout 5000 → 10000
+```
+
+### 21.2. Thành phần và trường
+
+| # | Thành phần | `CMP-*` | Nội dung, kiểm tra | Nguồn |
+|---|---|---|---|---|
+| 1 | Chọn "Từ", "Đến" | `CMP-Select` | Phiên bản bất kỳ hoặc "đang chạy ở {env}"; "Đến" mặc định phiên bản mới nhất; hai phía trùng thì báo "Hai phiên bản giống hệt nhau." | API-04-024 |
+| 2 | Nút ⇄ | `CMP-Button` icon | Đổi chiều so sánh | |
+| 3 | Chế độ | `CMP-SegmentedControl` | Sơ đồ, YAML, Tóm tắt; lưu vào `che-do` | |
+| 4 | Dải tổng | `CMP-StatusTag` | Đếm thêm, sửa, xóa, di chuyển, thành phần, kết nối, topic, điểm vào mới | API-04-025 `summary` |
+| 5 | Hai canvas | `CMP-FlowCanvas` readOnly | Đồng bộ thu phóng, cuộn; trạng thái khác biệt mục 10.7.3 | API-04-020 |
+| 6 | Bảng tham số đổi | `CMP-DataTable` | Chặng, tham số, cũ, mới | API-04-025 `params[]` |
+| 7 | Khung YAML | `CMP-DiffViewer` | Unified hoặc hai cột, gộp đoạn không đổi, nút "Mở trên sơ đồ" ở mỗi khối | API-04-025 `yamlDiff` |
+
+: UI-04-16 · Thành phần và trường
+
+### 21.3. Hành động
+
+| Hành động | Kết quả |
+|---|---|
+| "Thay đổi trước", "Thay đổi sau" | Cuộn và chọn thay đổi kế tiếp ở chế độ đang mở |
+| "Mở trên sơ đồ" | Chuyển chế độ Sơ đồ, chọn chặng của khối YAML |
+| "Sao chép liên kết" | Liên kết sâu gồm `tu`, `den`, `che-do` và mã thay đổi |
+| "Mở trình thiết kế" | Mở UI-04-04 ở phiên bản "Đến" với lớp phủ khác biệt |
+
+: UI-04-16 · Hành động
+
+### 21.4. Trạng thái màn
+
+| Trạng thái | Hiển thị |
+|---|---|
+| Đang tải | Skeleton hai canvas và dải tổng "—" |
+| Không có khác biệt | `CMP-EmptyState` "Hai phiên bản giống hệt nhau." |
+| Phiên bản không tồn tại | ST-05 với ERR-04-004 |
+| Không có quyền | ST-05 với ERR-04-001 (không phân biệt) |
+| Khác biệt lớn (> 500 dòng YAML) | Mặc định chế độ Tóm tắt, cảnh báo hiệu năng |
+
+: UI-04-16 · Trạng thái màn
+
+### 21.5. Bàn phím
+
+`N`, `P` sang thay đổi sau, trước; `Ctrl+1`, `Ctrl+2`, `Ctrl+3` đổi chế độ; `S` đổi chiều; `Enter` trên khối YAML mở trên sơ đồ. Mỗi thay đổi có `aria-label` "Sửa, chặng Gọi hộ tịch, tham số connectTimeout".
 
 ## 22. UI-04-17 Danh mục thành phần
 
+Danh mục thành phần cho mọi người thấy tỉnh được dùng thành phần Camel nào, và là nơi PA quản lý chính sách cho phép.
+
+::: dac-ta
+**Mục đích.** Duyệt, tìm, xem chi tiết thành phần của catalog đúng phiên bản runtime; quản lý chính sách được phép, bản dịch, nhóm nghiệp vụ, hồ sơ runtime.
+
+**Người dùng chính.** Mọi vai trò; PA quản lý chính sách, SO duyệt.
+
+**FR hiện thực.** FR-04-080, 081.
+
+**Thay hệ cũ.** Quản lý dependency, builder của Bus (LGC-BUS-034); danh mục connector (LGC-BUS-040).
+
+**Đường dẫn.** `/tich-hop/thanh-phan?loai=&nhan=&q=&chinh-sach=&chon=`.
+
+**Mẫu.** PTN-08 Cây + bảng, chi tiết dạng drawer.
+
+**Quyền.** Xem `PERM-04-read`; đổi chính sách, bản dịch, nhóm, hồ sơ `PERM-04-catalog-admin`.
+
+**API.** API-04-070, 071, 072, 073, 074.
+
+**Trạng thái màn.** Mục 22.5.
+
+**Thông báo.** ERR-04-035, 025 (thiếu lý do), 045.
+:::
+
 FR-04-080, 081. PTN-08: cây trái là nhóm nghiệp vụ hoặc loại (component, EIP, Kamelet, dataformat, language, entity, load balancer); bảng phải: tên, tiêu đề, loại, mức hỗ trợ (`stable`, `preview`, `deprecated`), mức native, giấy phép, **được phép ở tỉnh** (Có, Không), số luồng dùng. Chi tiết (drawer): mô tả, tham số (bảng đầy đủ), ví dụ YAML, luồng đang dùng. PA (`PERM-04-catalog-admin`) đổi cờ được phép (lý do bắt buộc; SO duyệt), sửa bản dịch tiếng Việt, sửa ánh xạ nhóm nghiệp vụ, quản lý hồ sơ runtime, xem lịch sử. Người khác có nút "Đề xuất thành phần mới", "Đề xuất cho phép" tạo yêu cầu tới PA. Chân trang: "Catalog Camel {ver} · khớp runtime {ver} ✓" hoặc cảnh báo lệch (ADR-061). Thay `ComponentCatalogPage` của repo và việc quản lý dependency, builder của Bus (LGC-BUS-034).
+
+### 22.1. Wireframe
+
+```
+  Tích hợp › Danh mục thành phần                       [Đề xuất thành phần mới]  [Hồ sơ runtime] (PA)
+  [🔍 Tìm tên, tiêu đề, mô tả…]  [Loại ▾] [Mức hỗ trợ ▾] [Native ▾] [Được phép ở tỉnh ▾]
+  ┌ Nhóm ──────────────┐ ┌───────────────────────────────────────────────────────────────────────┐
+  │ Tất cả        751  │ │ Tên        │ Tiêu đề       │ Loại      │ Hỗ trợ │ Native │ Được phép │ Dùng │
+  │ ▸ Điểm vào      42 │ │ http       │ Gọi HTTP      │ component │ stable │ ✓      │ Có        │ 61   │
+  │ ▾ Mạng          88 │ │ sftp       │ SFTP          │ component │ stable │ ✓      │ Có        │ 9    │
+  │   Kamelet của tỉnh │ │ exec       │ Chạy lệnh     │ component │ stable │ ✕ JVM  │ Không     │ 0    │
+  └────────────────────┘ └───────────────────────────────────────────────────────────────────────┘
+  Catalog Camel 4.18.2 · @kaoto/camel-catalog 3.33.1 · khớp runtime ✓
+```
+
+### 22.2. Thành phần và cột
+
+| Cột, thành phần | `CMP-*` | Nội dung | Ghi chú |
+|---|---|---|---|
+| Cây nhóm | `CMP-Tree` | Nhóm nghiệp vụ (mục 5.2) hoặc loại; số lượng | Chuyển bằng "Xem theo" |
+| Tên | `CMP-CodeText` | `name` catalog, liên kết mở drawer | Ghim trái |
+| Tiêu đề | Chữ | Tiếng Việt, hoặc tiếng Anh kèm nhãn "EN" | |
+| Loại | `CMP-StatusTag` neutral | component, EIP, Kamelet, dataformat, language | |
+| Mức hỗ trợ | `CMP-StatusTag` | Ổn định, Thử nghiệm (warning), Lỗi thời (error) | |
+| Native | Biểu tượng + chữ | ✓ hoặc "JVM" | |
+| Được phép ở tỉnh | `CMP-Switch` (PA) hoặc chữ | Có, Không | Đổi cần lý do, SO duyệt |
+| Số luồng dùng | Số | Liên kết lọc UI-04-01 | |
+| Drawer chi tiết | `CMP-Drawer` 640 px | Mô tả, bảng tham số đầy đủ, ví dụ YAML, luồng đang dùng, lịch sử chính sách | API-04-071 |
+
+: UI-04-17 · Thành phần và cột
+
+### 22.3. Hành động
+
+| Hành động | Ai | Kết quả |
+|---|---|---|
+| Đổi "Được phép" | PA | Hộp lý do ≥ 10 ký tự; tạo yêu cầu SO duyệt; luồng đang dùng thành phần bị cấm nhận ERR-04-011 ở lần kiểm tra sau |
+| Sửa bản dịch, nhóm nghiệp vụ | PA | Ghi `palette-groups.json`, bản dịch; áp ở lần tải catalog sau |
+| "Đề xuất thành phần mới", "Đề xuất cho phép" | Mọi người | Hộp tên, lý do, luồng cần dùng; tạo đề xuất (API-04-074) |
+| Quyết định đề xuất | PA | Chấp nhận hoặc từ chối kèm ý kiến |
+
+: UI-04-17 · Hành động
+
+### 22.4. Thông điệp
+
+- Lệch phiên bản: "Catalog trình thiết kế {ver} khác runtime {ver}. Liên hệ quản trị nền tảng." (dải cảnh báo chân trang, ADR-061).
+- Gửi đề xuất: "Đã gửi đề xuất {tên}. Quản trị nền tảng sẽ phản hồi trong hộp việc của bạn."
+
+### 22.5. Trạng thái màn và bàn phím
+
+Đang tải: skeleton cây 10 dòng, bảng 8 dòng. Lọc rỗng: ST-04. Lỗi tải: ST-05. Không có quyền quản lý: cột "Được phép" là chữ, nút quản lý ẩn. Phím: `/` tìm; `↑`, `↓` chọn dòng; `Enter` mở drawer; `Esc` đóng; `F6` chuyển giữa cây và bảng.
 
 ## 23. UI-04-18 Nhập luồng hệ cũ
 
+Màn nhập phục vụ di trú từ LGSP cũ: chuyển XML Camel của Bus, Tooling thành bản nháp luồng mà không mang theo bí mật.
+
+::: dac-ta
+**Mục đích.** Chuyển route Camel XML của hệ cũ thành luồng nháp v1 trên Datahub, có báo cáo điểm cần chỉnh.
+
+**Người dùng chính.** IE, đội di trú.
+
+**FR hiện thực.** FR-04-082.
+
+**Thay hệ cũ.** Lưu context XML của Bus (LGC-BUS-033); tải XML của Tooling (LGC-TOOL-015).
+
+**Đường dẫn.** `/tich-hop/luong/nhap-he-cu?buoc=&tac-vu=`.
+
+**Mẫu.** PTN-09 Nhập dữ liệu có xem trước, bốn bước.
+
+**Quyền.** `PERM-04-create` + mức `EDIT` ở không gian đích.
+
+**API.** API-04-028 (tạo tác vụ, đọc kết quả), 011 (tạo luồng), PH-05 (chọn kết nối).
+
+**Trạng thái màn.** Mục 23.4.
+
+**Thông báo.** ERR-04-032, 002, 011, 027; kết quả "Đã tạo {n} luồng nháp. {m} route cần chỉnh."
+:::
+
 FR-04-082. PTN-09, bốn bước: ① Tải tệp (XML Camel Spring, Blueprint xuất từ Tooling cũ, hoặc gói `.zip` nhiều tệp); ② Phân tích: mỗi route một dòng với trạng thái chuyển đổi (Tự động hoàn toàn, Cần chỉnh {n} điểm, Không chuyển được) và danh sách điểm cần chỉnh (thành phần không được phép, bí mật nhúng trong URI được tách ra thành chỗ cần chọn kết nối, bean lớp tùy biến, phụ thuộc `pom`); ③ Ánh xạ: chọn không gian, mã luồng, kết nối PH-05 cho mỗi bí mật được tách, bọc khung chín chặng cho luồng đối ngoại (tùy chọn); ④ Xem trước và tạo: mỗi luồng thành một bản nháp v1, có liên kết mở trình thiết kế. Bí mật tìm thấy trong tệp hệ cũ không bao giờ được lưu; báo cáo nhập liệt kê vị trí để đổi mật khẩu ở hệ nguồn. Tác vụ nền (ST-11). Phục vụ di trú và chạy song song strangler (Q12).
 
+### 23.1. Wireframe bước ②
+
+```
+  Nhập luồng hệ cũ   ① Tải tệp ── ② Phân tích ── ③ Ánh xạ ── ④ Xem trước và tạo            ✕ Hủy
+  Tệp: bus-export-2026-11.zip · 14 route · phân tích xong 09:12
+  [Tất cả 14] [Tự động 9] [Cần chỉnh 4] [Không chuyển được 1]
+  │ Route              │ Tệp                │ Trạng thái            │ Điểm cần chỉnh                     │
+  │ hotich-ks-sync     │ hotich.xml         │ ✓ Tự động hoàn toàn   │ —                                  │
+  │ dkkd-tra-cuu       │ dkkd.xml           │ ⚠ Cần chỉnh 2 điểm    │ Bí mật trong URI · bean tùy biến   │
+  │ thue-ftp-legacy    │ thue.xml           │ ✕ Không chuyển được   │ Thành phần ftp không được phép     │
+                                                             [‹ Quay lại]  [Tiếp tục →]
+```
+
+### 23.2. Trường từng bước
+
+| Bước | Trường | Kiểm tra |
+|---|---|---|
+| ① Tải tệp | `CMP-Upload` dropzone: `.xml`, `.zip` | ≤ 2 MiB; XML Camel Spring hoặc Blueprint hợp lệ (ERR-04-032) |
+| ② Phân tích | Bảng route: tên, tệp, trạng thái, điểm cần chỉnh; lọc theo trạng thái | Chỉ đọc; bỏ chọn route không muốn nhập |
+| ③ Ánh xạ | Không gian, mã luồng (mặc định từ `routeId`), kết nối PH-05 cho mỗi bí mật được tách, ô "Bọc khung chín chặng" | Mã theo mẫu của mục 9.2, không trùng (ERR-04-002); mọi bí mật phải có kết nối |
+| ④ Xem trước | Mỗi luồng: sơ đồ thu nhỏ, YAML, kết quả kiểm tra `DESIGN` | Nút "Tạo {n} luồng nháp" |
+
+: UI-04-18 · Trường từng bước
+
+### 23.3. Hành động và thông điệp
+
+"Tạo" chạy tác vụ nền (ST-11), xong thì báo cáo nhập liệt kê luồng tạo được (liên kết mở UI-04-04), route bỏ qua và **vị trí bí mật đã thấy** kèm câu "Bí mật tìm thấy trong tệp không được lưu. Đổi mật khẩu ở hệ nguồn tại các vị trí sau." Nút "Tải báo cáo" xuất CSV. Route "Không chuyển được" có nút "Xem lý do".
+
+### 23.4. Trạng thái màn và bàn phím
+
+Đang phân tích: `CMP-JobProgress` "Đang phân tích {k}/{n} route". Rỗng: dropzone "Kéo tệp XML hoặc ZIP vào đây". Lỗi: ST-05. Không có quyền: ST-06. Rời giữa chừng: ST-10, tác vụ đã chạy vẫn giữ trong khay nền. Phím: `Enter` tiếp tục, `Alt+←` quay lại, `↑`, `↓` duyệt route, `Space` chọn hoặc bỏ route.
 ## 24. UI-04-19 Thư viện khuôn mẫu
+
+Thư viện khuôn mẫu giúp mọi luồng mới bắt đầu từ một khung đã chuẩn hóa thay vì từ trang trắng.
+
+::: dac-ta
+**Mục đích.** Duyệt, xem trước và dùng khuôn mẫu luồng; TA, PA quản lý khuôn của tỉnh và khuôn nền.
+
+**Người dùng chính.** IE; PA, TA quản lý.
+
+**FR hiện thực.** FR-04-025.
+
+**Thay hệ cũ.** Không có (màn mới).
+
+**Đường dẫn.** `/tich-hop/khuon-mau?nhom=&loai=&q=`.
+
+**Mẫu.** PTN-01 dạng lưới thẻ, chi tiết dạng drawer.
+
+**Quyền.** Xem `PERM-04-create` hoặc `PERM-04-catalog-admin` (mục 4.3); khuôn nền `PERM-04-catalog-admin`; khuôn tỉnh `PERM-04-admin`.
+
+**API.** API-04-080, 081, 082.
+
+**Trạng thái màn.** Mục 24.3.
+
+**Thông báo.** ERR-04-039, 045; "Đã lưu khuôn {mã}."
+:::
 
 FR-04-025. Lưới thẻ: mã, tên, sơ đồ thu nhỏ (ảnh minh họa của khuôn), mô tả, loại tài nguyên, nhóm, số lần dùng, phạm vi (Nền tảng, Tỉnh). Bộ lọc theo nhóm và loại. Chi tiết khuôn: sơ đồ, lược đồ tham số `${tpl.*}`, YAML, "Dùng khuôn này" (mở UI-04-03 bước 2). Khuôn nền do PA quản lý (`PERM-04-catalog-admin`); khuôn của tenant do TA quản lý, tạo từ một luồng đã duyệt bằng "Lưu làm khuôn mẫu" ở UI-04-02. Tám khuôn nền tối thiểu ở MVP theo FR-04-025: `tpl-standard-9`, `tpl-sync-lookup`, `tpl-soap-to-rest`, `tpl-db-poll-to-kafka`, `tpl-kafka-to-rest`, `tpl-sftp-to-kafka`, `tpl-ndxp-proxy`, `tpl-cdm-normalize`. Khuôn cho các dịch vụ NGSP (Tư pháp, BHXH, ĐKKD, mã ĐVQHNS, DMDC quốc gia, VBQPPL) và PayGov (PH-19) bổ sung ở đợt sau, dùng `tpl-ndxp-proxy` làm gốc.
 
+### 24.1. Wireframe
+
+```
+  Tích hợp › Khuôn mẫu luồng                                              [＋ Khuôn của tỉnh] (TA)
+  [🔍 Tìm khuôn…]  [Tất cả] [Tra cứu đồng bộ] [Đồng bộ định kỳ] [Nhận sự kiện] [Tệp] [Quốc gia]
+  ┌ tpl-standard-9 ──────────┐ ┌ tpl-sync-lookup ─────────┐ ┌ tpl-ndxp-proxy ──────────┐
+  │ Khung chín chặng chuẩn   │ │ Tra cứu đồng bộ REST     │ │ Ủy quyền NDXP            │
+  │ [sơ đồ thu nhỏ]          │ │ [sơ đồ thu nhỏ]          │ │ [sơ đồ thu nhỏ]          │
+  │ Nền tảng · Dùng 58 lần   │ │ Nền tảng · Dùng 34 lần   │ │ Nền tảng · Dùng 21 lần   │
+  └──────────────────────────┘ └──────────────────────────┘ └──────────────────────────┘
+```
+
+### 24.2. Thẻ, chi tiết và hành động
+
+| Phần | Nội dung | Ghi chú |
+|---|---|---|
+| Thẻ khuôn (`CMP-Card`) | Mã `CMP-CodeText`, tên, sơ đồ thu nhỏ, mô tả 2 dòng, loại tài nguyên, nhóm, phạm vi (Nền tảng, Tỉnh), số lần dùng | Thẻ có `role="link"`; khuôn ngừng dùng mờ kèm nhãn |
+| Bộ lọc | Nhóm (`CMP-SegmentedControl`), loại (`ROUTE`, `KAMELET`, `PIPE`), phạm vi, ô tìm | Ghi URL |
+| Drawer chi tiết | Sơ đồ chỉ đọc, bảng tham số `${tpl.*}` (tên, kiểu, bắt buộc, mô tả), YAML, lịch sử phiên bản khuôn | API-04-081 |
+| "Dùng khuôn này" | Mở UI-04-03 bước 2 với `khuon={mã}` | Nút chính |
+| "Ngừng dùng" | TA với khuôn tỉnh; PA với khuôn nền; lý do bắt buộc | API-04-082 `:deprecate` |
+| "Khuôn của tỉnh" | Chọn một phiên bản `APPROVED`, đặt mã `tpl-…`, khai tham số | Hoặc "Lưu làm khuôn mẫu" ở UI-04-02 |
+
+: UI-04-19 · Thẻ, chi tiết và hành động
+
+### 24.3. Trạng thái màn và bàn phím
+
+Đang tải: lưới 6 thẻ skeleton. Không có khuôn của tỉnh: vẫn hiện tám khuôn nền. Lọc rỗng: ST-04. Lỗi: ST-05. Không có quyền: mục menu ẩn, vào bằng URL nhận ST-06. Phím: `/` tìm; mũi tên chuyển thẻ theo lưới; `Enter` mở chi tiết; `U` dùng khuôn đang chọn.
 ## 25. UI-04-20 Tham số PH-04
 
 ::: dac-ta
@@ -2058,8 +2317,69 @@ Thiết kế giao diện cần thêm năm tham số; đề nghị bổ sung vào
 
 ## 26. UI-04-21 Không gian làm việc
 
+Không gian làm việc khoanh vùng ai được sửa, duyệt luồng nào trong cùng một tỉnh, như project và group của Bus cũ.
+
+::: dac-ta
+**Mục đích.** Tạo, sửa, lưu trữ không gian làm việc; quản lý thành viên và mức truy cập; xem kết nối được cấp và luồng.
+
+**Người dùng chính.** TA, PA.
+
+**FR hiện thực.** FR-04-007.
+
+**Thay hệ cũ.** Quản lý project, group của Bus (LGC-BUS-032).
+
+**Đường dẫn.** `/tich-hop/khong-gian`; chi tiết `/tich-hop/khong-gian/:ma?tab=`.
+
+**Mẫu.** PTN-01 + PTN-04.
+
+**Quyền.** `PERM-04-admin`; thành viên mức `MAINTAIN` sửa thành viên của không gian mình.
+
+**API.** API-04-001, 002, 003, 004; PH-05 (kết nối được cấp), PH-12 (người dùng, nhóm).
+
+**Trạng thái màn.** Mục 26.4.
+
+**Thông báo.** ERR-04-027, 028, 017 (lưu trữ khi còn luồng), 025, 045.
+:::
+
 FR-04-007. PTN-01 + PTN-04. Quyền: TA, PA (`PERM-04-admin`). Danh sách không gian: tên, mã, đơn vị chủ quản, số thành viên, số luồng. Chi tiết: thông tin; tab **Thành viên** (người dùng hoặc nhóm PH-12, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực); tab **Kết nối được cấp** (đọc từ PH-05, cấp ở PH-05); tab **Luồng**. Dải thông tin đầu trang nói rõ hiệu lực: "Giới hạn theo không gian làm việc đang {bật, tắt} (`04.workspace.enforce`). Khi bật, chỉ thành viên mức EDIT sửa được luồng, mức MAINTAIN duyệt được luồng của không gian; TA, PA không bị giới hạn." Xóa không gian chỉ khi không còn luồng. Thay quản lý project, group của Bus (LGC-BUS-032).
 
+### 26.1. Wireframe
+
+```
+  Tích hợp › Không gian làm việc                                         [＋ Tạo không gian]
+  ⓘ Giới hạn theo không gian làm việc đang bật (04.workspace.enforce).
+  │ Tên            │ Mã          │ Đơn vị chủ quản      │ Thành viên │ Luồng │ Cập nhật    │ ⋯ │
+  │ Tư pháp        │ tu-phap     │ Sở Tư pháp T68       │ 12         │ 31    │ hôm qua     │ ⋯ │
+  │ Kế hoạch ĐT    │ ke-hoach-dt │ Sở KH-ĐT T68         │ 7          │ 18    │ 3 ngày trước│ ⋯ │
+  Chi tiết › [Thông tin | Thành viên 12 | Kết nối được cấp 6 | Luồng 31]
+```
+
+### 26.2. Trường
+
+| Trường | Kiểu | Bắt buộc | Kiểm tra |
+|---|---|---|---|
+| Tên | `Input` | Có | 3–200 ký tự |
+| Mã | `Input` | Có | `^[a-z][a-z0-9-]{2,62}$`, duy nhất trong tenant (ERR-04-028), không đổi sau khi tạo |
+| Đơn vị chủ quản | `Select` từ PH-12 | Có | |
+| Mô tả | `TextArea` | Không | ≤ 2.000 ký tự |
+| Thành viên | `CMP-EditableTable`: người dùng hoặc nhóm PH-12, mức `VIEW`, `EDIT`, `MAINTAIN`, hạn hiệu lực | Không | Không trùng; hạn ≥ hôm nay; ít nhất một `MAINTAIN` |
+
+: UI-04-21 · Trường không gian làm việc
+
+### 26.3. Hành động và thông điệp
+
+| Hành động | Điều kiện | Kết quả, thông điệp |
+|---|---|---|
+| Tạo, sửa | `PERM-04-admin` | "Đã lưu không gian {tên}." |
+| Lưu thành viên | `PERM-04-admin` hoặc `MAINTAIN` | Thay cả danh sách (API-04-004 `PUT`), ghi kiểm toán |
+| Lưu trữ | Không còn luồng | Hộp xác nhận gõ lại mã; còn luồng thì ERR-04-017 kèm danh sách |
+| Cấp kết nối | Ở PH-05 | Tab chỉ đọc, nút "Mở PH-05" |
+
+: UI-04-21 · Hành động và thông điệp
+
+### 26.4. Trạng thái màn và bàn phím
+
+Đang tải: skeleton 6 dòng. Rỗng: "Tỉnh chưa có không gian làm việc nào. Tạo không gian để giới hạn ai sửa luồng nào." kèm "Tạo không gian". Lỗi: ST-05. Không có quyền: mục menu ẩn, URL nhận ST-06. Phím: `N` tạo; `↑`, `↓`, `Enter` mở chi tiết; trong bảng thành viên `Ctrl+Enter` lưu.
 ## 27. Kiến trúc mã giao diện
 
 ### 27.1. Cấu trúc thư mục `apps/console/src/features/integration/`
