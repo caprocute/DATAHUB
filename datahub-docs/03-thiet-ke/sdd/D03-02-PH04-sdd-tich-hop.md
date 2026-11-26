@@ -1,12 +1,14 @@
 ---
 ma_tai_lieu: D03-02-PH04
 ten: Thiết kế chi tiết phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.1
-ngay: 2026-11-25
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kiến trúc sư, trưởng nhóm PH-04, lập trình viên L-INT và L-RT, lập trình viên giao diện, kiểm thử viên, nhóm vận hành
 phan_he: PH-04
 nguoi_lap: Nhóm phân hệ PH-04
+mo_ta: Thiết kế chi tiết phần mềm phân hệ Lõi tích hợp và trình thiết kế luồng gồm kiến trúc, cấu trúc mã, đặc tả 28 thành phần, trình tự, máy trạng thái, bảo mật, quan sát, đủ để lập trình và kiểm thử.
+tai_lieu_lien_quan: D03-01 SAD; D02-03-PH04 FRS; D02-04-PH04 Use case; D03-03-PH04 CSDL; D03-04-PH04 API; D03-06-PH04 Màn hình; D03-07 ATTT; D03-10 Đa tenant; ADR-060…069
 ---
 
 # D03-02-PH04 · Thiết kế chi tiết phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
@@ -26,15 +28,21 @@ Về an toàn thông tin: định nghĩa luồng không chứa bí mật (VR-03,
 
 Phạm vi: module `flow` trong đơn vị triển khai `dh-integration` (control plane), thư viện nền và bộ nạp luồng của `dh-runtime` (data plane), DU mới `dh-runtime-sandbox`, phần trình thiết kế của `dh-console`. Ngoài phạm vi: DDL chi tiết (D03-03-PH04), hợp đồng API (D03-04-PH04), màn hình (D03-06-PH04). Câu hỏi mở ở §16.
 
-## 1. Phạm vi và cách đọc
+## 1. Giới thiệu
 
-### 1.1. Mục đích
+Chương này nói mục đích, phạm vi, người đọc, tài liệu căn cứ, thuật ngữ và cấu trúc của tài liệu.
+
+### 1.1. Mục đích và phạm vi
 
 Tài liệu là thiết kế chi tiết phần mềm (SDD) của PH-04. Tài liệu chuyển các yêu cầu đã chốt ở FRS D02-03-PH04, use case D02-04-PH04 và ADR-060…069 thành cấu trúc mã nguồn, giao diện Java và TypeScript, thuật toán, máy trạng thái, biểu đồ tuần tự, cấu hình, quan sát và kiểm thử, ở mức đủ để đội L-INT (control plane), L-RT (runtime) và L-FE (giao diện) bắt đầu viết mã mà không phải tự quyết điểm kiến trúc.
 
 Tài liệu không lặp lại đặc tả từng FR, không viết DDL đầy đủ và không viết OpenAPI. Khi nhắc tới bảng, cột, API, sự kiện, mã lỗi, tài liệu dùng đúng tên trong FRS và D03-03-PH04, D03-04-PH04.
 
+Phạm vi như phần tóm tắt; PH-05, PH-10, PH-02, PH-13 chỉ được mô tả ở mức giao diện PH-04 gọi tới. Mục 2.6 liệt kê 28 thành phần; mỗi thành phần có bảng đặc tả 10 mục (Mục đích, Lớp chính, Đơn vị chạy, FR hiện thực, Giao diện vào, Phụ thuộc ra, Dữ liệu, Sự kiện, Lỗi và xử lý, Quan sát) ở đầu mục thiết kế của nó.
+
 ### 1.2. Đối tượng đọc
+
+Bảng dưới chỉ phần cần đọc cho từng nhóm; danh sách thành phần ở mục 2.6 là điểm vào nhanh cho lập trình viên.
 
 | Người đọc | Mục nên đọc |
 |---|---|
@@ -45,7 +53,11 @@ Tài liệu không lặp lại đặc tả từng FR, không viết DDL đầy �
 | Vận hành | §5, §10, §12, §13 |
 | Kiến trúc sư thẩm định | Tóm tắt, §2, §4, §5, §11, §15, §16 |
 
+: Người đọc và mục nên đọc
+
 ### 1.3. Tài liệu liên quan
+
+Yêu cầu đến từ FRS và use case; dữ liệu, API, màn hình, ca kiểm thử ở tập riêng, tài liệu này chỉ dẫn chiếu tên và mã.
 
 | Mã | Tên | Đường dẫn | Quan hệ |
 |---|---|---|---|
@@ -63,8 +75,14 @@ Tài liệu không lặp lại đặc tả từng FR, không viết DDL đầy �
 | D03-06-PH04 | Màn hình PH-04 | `../uiux/D03-06-PH04-man-hinh-tich-hop.md` | UI-04, kiến trúc giao diện §27 |
 | D05-02-PH04 | Ca kiểm thử PH-04 | `../../05-kiem-thu/test-case/D05-02-PH04-test-case.md` | TS-04 |
 | D03-02-PH07 | SDD PH-07 | `./D03-02-PH07-sdd-danh-muc.md` | Mẫu `TenantSession`, outbox, bảng ánh xạ cho `dh_map` |
+| D03-02-PH05 | SDD PH-05 | `./D03-02-PH05-sdd-bo-dieu-hop.md` | `ConnectionDirectory`, Kamelet giao thức, tài khoản CSDL theo luồng |
+| D00-04-KTB | Quy chuẩn trình bày | `../../00-chung/khuon/K-TRINH-BAY.md` | Bảng, hình, khối đặc tả |
+
+: Tài liệu tham chiếu
 
 ### 1.4. Quyết định kiến trúc áp dụng
+
+Mọi lựa chọn lớn dựa trên ADR đã có; bảng dưới nối ADR với mục chịu tác động.
 
 | ADR | Quyết định | Tác động trong SDD |
 |---|---|---|
@@ -88,11 +106,39 @@ Tài liệu không lặp lại đặc tả từng FR, không viết DDL đầy �
 | [ADR-068](../../00-chung/adr/ADR-068-kho-cau-hinh-git-theo-tenant.md) | Kho cấu hình Git theo tenant | §5.1, §5.2 |
 | [ADR-069](../../00-chung/adr/ADR-069-may-trang-thai-phien-ban-va-bon-mat.md) | Máy trạng thái phiên bản, bốn mắt | §9 |
 
+: ADR áp dụng và mục chịu tác động
+
 ### 1.5. Quy ước trong tài liệu
 
 Mã Java là Java 21 (`record`, `sealed interface`, `switch` theo mẫu). Mã TypeScript là TS 5.x, React 19. Mã SQL là PostgreSQL 18. Ví dụ dùng tenant `T68`, không gian `so-tu-phap`, luồng `ho-tich-khai-sinh`, kết nối `ndxp-ho-tich`, `pg-ho-tich-ro`, người dùng giả `u.ie01` (IE), `u.ia01` (IA), `u.to01` (TO). Các đoạn mã là mẫu thiết kế: chữ ký công khai, tên lớp, tên bảng, thứ tự thao tác là ràng buộc; chi tiết bên trong có thể đổi miễn giữ đúng hành vi. Phiên bản thành phần: Spring Boot 4.0.x, Camel Quarkus 3.33.2 (Camel 4.18 LTS) cho runtime, catalog trình thiết kế 3.33.1 (Camel 4.18.2) theo PR #5.
 
+### 1.6. Thuật ngữ và viết tắt
+
+Thuật ngữ chung (DU, EIP, outbox, RLS, ETag, SSE, VR, bốn mắt) dùng theo D00-01 và FRS D02-03-PH04 §1. Bảng dưới chỉ giải thích thuật ngữ riêng của thiết kế này.
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| Control plane, data plane | Mặt điều khiển (`dh-integration`) và mặt dữ liệu (`dh-runtime`) |
+| Luồng, route | Luồng là đơn vị quản lý của PH-04 (có mã, phiên bản, triển khai); một luồng gồm một hoặc nhiều route Camel |
+| Kamelet, Kamelet nền | Khối Camel đóng gói có tham số; Kamelet nền `dh-*` là Kamelet do nền tảng viết, ký cùng ảnh runtime |
+| Chặng chuẩn | Một trong chín chặng `receive`…`respond`, nhận diện bằng `id` `dh-stage-*` |
+| Catalog | Mô tả máy đọc được của thành phần, EIP, Kamelet cho một phiên bản Camel Quarkus |
+| Hồ sơ runtime | Biến thể ảnh `dh-runtime` với tập extension cố định (`core-native`…) |
+| Sandbox | `dh-runtime-sandbox`, chạy thử bằng Camel thật, cô lập mạng |
+| Băm nội dung | `contentHash`, SHA-256 của YAML chuẩn hóa và `*.jq` |
+| Nhịp tim | EVT-04-12, runtime gửi mỗi 30 giây |
+| Lệnh có ký | Lệnh điều khiển ký Ed25519 trên dạng chuẩn JCS (RFC 8785) |
+| DLQ | Hàng đợi bản tin lỗi, topic `{tenant}.ops.dlq.v1` |
+
+: Thuật ngữ riêng của SDD PH-04
+
+### 1.7. Cấu trúc tài liệu
+
+Chương 2, 3 đặt phân hệ vào kiến trúc và cấu trúc mã (mục 2.6 là danh sách thành phần); chương 4 tới 10 là thiết kế chi tiết theo khối chức năng (khung chín chặng, GitOps, trình thiết kế, kiểm tra hợp lệ, chạy thử, máy trạng thái, điều khiển runtime), mỗi khối mở bằng bảng đặc tả thành phần; chương 11 tới 14 là bảo mật, xử lý lỗi, cấu hình, quan sát, kiểm thử; chương 15, 16 là lộ trình, câu hỏi mở và đề nghị đồng bộ.
+
 ## 2. Vị trí trong kiến trúc
+
+Chương này đặt PH-04 vào kiến trúc của SAD: đơn vị triển khai, quan hệ thành phần, phụ thuộc, đường chuyển mã hiện có, và danh sách thành phần (mục 2.6).
 
 ### 2.1. Ba đơn vị triển khai
 
@@ -105,12 +151,14 @@ PH-04 được hiện thực ở ba DU và một phần giao diện:
 | `dh-runtime-sandbox` | Chạy thử định nghĩa chưa phát hành bằng Camel thật | Camel Quarkus JVM cùng phiên bản | `dh-sandbox` (đề xuất, Q04-20), Z4 | 2 (KEDA theo hàng đợi) |
 | `dh-console` (phần `features/integration`) | Trình thiết kế, các màn UI-04 | React 19, antd v6, `@xyflow/react` | `dh-control`, Z3 (tệp tĩnh qua BFF) | theo console |
 
+: Đơn vị triển khai của PH-04
+
 Module `flow` chung DU `dh-integration` với `adapter` (PH-05 phần control), `event` (PH-10) và `national` (PH-14 phần control) theo SAD §4. Lý do gom: cùng miền tích hợp, cùng hồ sơ tải (ghi ít, đọc vừa), dùng chung danh sách kết nối và topic. Module có package gốc `vn.datahub.integration.flow` và sở hữu schema PostgreSQL `ph04` trên `pg-core`.
 
 ### 2.2. Sơ đồ thành phần
 
-```mermaid
-flowchart LR
+```{.mermaid caption="Sơ đồ thành phần PH-04 và các hệ phụ trợ"}
+flowchart TB
     subgraph Console["dh-console (trình duyệt)"]
       DES[Trình thiết kế<br/>model, canvas, YAML]
       VW[Web Worker<br/>VR phía trình duyệt]
@@ -157,7 +205,11 @@ flowchart LR
     CAT --> PG
 ```
 
+Hình cho thấy `dh-integration` không đẩy định nghĩa thẳng vào runtime mà ghi Git để Argo CD đưa xuống; runtime và control plane chỉ trao đổi qua Kafka (lệnh có ký, nhịp tim, xác nhận); sandbox ghi thân bản tin chạy thử vào Ceph RGW, không vào CSDL.
+
 ### 2.3. Phụ thuộc với module và phân hệ khác
+
+Module `flow` gọi hai module cùng DU bằng Java API, gọi các phân hệ khác bằng REST hoặc sự kiện. Cột cuối nói hành vi khi bên kia chưa sẵn sàng, để thiết kế không có điểm hỏng âm thầm.
 
 | Phụ thuộc | Hướng | Cơ chế | Khi không sẵn sàng |
 |---|---|---|---|
@@ -172,7 +224,9 @@ flowchart LR
 | PH-13 | `flow` ghi, đọc | Kiểm toán qua outbox; đọc lịch sử (API-04-091); bảng điều khiển nhúng | Kiểm toán giữ ở outbox |
 | PH-15 | `flow` phát | Sự kiện EVT-04 để PH-15 gửi thông báo | Không có thông báo, luồng nghiệp vụ không ảnh hưởng |
 | PH-18 | `flow` đọc, runtime ghi | Tham số `04.*`, DLQ `{tenant}.ops.dlq.v1` | Dùng tham số đệm |
-| PH-20 | Sự kiện vào | Tenant mới: tạo không gian `DEFAULT`, kho `dh-flows-{tenant}`, ApplicationSet | — |
+| PH-20 | Sự kiện vào | Tenant mới: tạo không gian `DEFAULT`, kho `dh-flows-{tenant}`, ApplicationSet | Không áp dụng |
+
+: Phụ thuộc của module `flow` với module và phân hệ khác
 
 ### 2.4. Luật Spring Modulith
 
@@ -198,9 +252,50 @@ Mã hiện có ở `apps/control/src/main/java/vn/lgsp/control/routes` (module `
 | Java DSL `TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute` ở `camel/dancu`, `camel/datdai` | YAML dùng Kamelet nền (§4) | GAP-04-02, 12 |
 | Datasource chung tài khoản `lgsp` ở `camel/dancu` | Kamelet `dh-sql-ro-source`, tài khoản theo luồng | GAP-04-10 |
 
+: Lớp hiện có và đích trong thiết kế mới
+
 Đường chuyển theo thứ tự ở §15.
 
+### 2.6. Danh sách thành phần
+
+Bảng dưới liệt kê 28 thành phần theo khối chức năng. Bảng đặc tả 10 mục của mỗi thành phần đứng đầu mục ghi ở cột cuối, sau nó là thiết kế chi tiết.
+
+| TT | Thành phần | Lớp, khối chính | Mục |
+|---|---|---|---|
+| 1 | Không gian làm việc và luồng | `FlowService`, `WorkspaceAccess` | 3.7.1 |
+| 2 | Phiên bản và lưu nháp phía máy chủ | `VersionService` | 3.7.2 |
+| 3 | Duyệt bốn mắt | `ReviewService`, `FourEyesGuard` | 3.7.3 |
+| 4 | Khuôn mẫu và chuyển XML hệ cũ | `TemplateService`, `LegacyXmlImporter` | 3.7.4 |
+| 5 | Ngữ cảnh tenant trên bản tin | `TenantGuard`, `TenantHeaders` | 4.1 |
+| 6 | Kamelet nền chín chặng và chỉ số chặng | `dh-*-action`, `StageMarker`, `StageMetrics` | 4.2 |
+| 7 | Xử lý lỗi chuẩn và DLQ | `dh-default-config`, `ErrorClassifier`, `dhDlqEnvelope` | 4.3 |
+| 8 | Phân giải tham chiếu bí mật | `ConnPropertiesFunction`, `VaultPropertiesFunction` | 4.3 |
+| 9 | Truy cập CSDL chỉ đọc | `dh-sql-ro-*`, `TenantScopedSqlProcessor` | 4.6 |
+| 10 | Ghi kho cấu hình Git | `GitConfigRepository`, `FlowManifestWriter` | 5.1 |
+| 11 | Nạp luồng ở runtime | `FlowLoader` | 5.4 |
+| 12 | Phát hành, nâng môi trường, quay lui | `ReleaseService`, `ProfileResolver` | 5.5 |
+| 13 | Kiểm toán và outbox | `AuditWriter`, `OutboxWriter` | 5.6 |
+| 14 | Mô hình tài nguyên và lệnh soạn | `ResourceTree`, `Command` | 6.1 |
+| 15 | Quay vòng YAML và băm | bộ ghi `yaml`, `YamlCanonicalizer` | 6.2 |
+| 16 | Bảng thành phần và bố cục sơ đồ | `palette-groups.json`, dagre worker | 6.3 |
+| 17 | Lưu nháp, gộp ba bên, phiên soạn | `ThreeWayMerge`, `EditSession` | 6.5 |
+| 18 | Catalog khớp runtime | `catalog-gen`, `CatalogService`, `CatalogUpgradeJob` | 6.6 |
+| 19 | Trình ánh xạ dữ liệu | bộ sinh `dhmap → jq` | 6.7 |
+| 20 | Bộ kiểm tra hợp lệ | `ValidationEngine`, `ValidationRule` | 7.1 |
+| 21 | Phát hiện bí mật | `SecretDetector` | 7.3 |
+| 22 | Chính sách SQL | `SqlPolicy` | 7.4 |
+| 23 | Sandbox chạy thử | `dh-runtime-sandbox`, `StepTracer` | 8.1 |
+| 24 | Điều phối chạy thử và khẳng định | `TestRunService`, `SandboxClient` | 8.2 |
+| 25 | Phát lệnh có ký | `CommandService`, `CommandSigner` | 10.1 |
+| 26 | Nhận lệnh và nhịp tim ở runtime | `CommandListener`, `CommandVerifier`, `HeartbeatPublisher` | 10.2 |
+| 27 | Đối soát trạng thái | `Reconciler`, `HeartbeatProjector` | 10.3 |
+| 28 | Tham số và đóng băng | `FlowParams`, `FreezeWindowGuard` | 13.1 |
+
+: Danh sách thành phần thiết kế PH-04
+
 ## 3. Cấu trúc mã nguồn
+
+Chương này cố định cách tổ chức mã để các nhóm viết song song: cây gói, lớp chính, giao diện công bố, DTO, thư viện runtime, truy cập dữ liệu. Mục 3.7 đặc tả bốn thành phần quản lý luồng.
 
 ### 3.1. Cây package của module `flow`
 
@@ -247,6 +342,8 @@ vn.datahub.integration.flow
 | `Reconciler` | Nghe nhịp tim, xác nhận lệnh; tính `syncStatus`, `healthStatus`; đối soát Git | FR-04-051, BR-04-018 |
 | `CatalogService` | Phục vụ chỉ mục, lược đồ thành phần theo `catalogVersion`; chính sách | FR-04-080, 081 |
 | `LegacyXmlImporter` | Chuyển Camel XML của Bus cũ | FR-04-082 |
+
+: Trách nhiệm các lớp chính của module `flow`
 
 ### 3.3. Giao diện công bố `FlowQueryApi`
 
@@ -353,11 +450,141 @@ Mỗi hồ sơ sinh `runtime-manifest.json` lúc build (FR-04-081): `profile`, `
 | Valkey | Phiên soạn, khóa lũy đẳng API (24 giờ), hàng đợi chạy thử theo tenant, bộ đệm catalog đã lọc | Dữ liệu ngắn hạn |
 | Ceph RGW bucket `dh-int-testrun` | Thân bản tin chạy thử khi `captureBodies` | Không làm phình CSDL; xóa theo vòng đời 7 ngày |
 
+: Cơ chế truy cập dữ liệu theo bảng
+
 Mọi đường ghi CSDL đi qua `TenantAwareTransactionManager` của thư viện chung (mẫu ở D03-02-PH07 §6.2), đặt `app.tenant_id` đầu mỗi giao dịch, nên RLS luôn có hiệu lực. Cột `definition_yaml` (≤ 512 KiB), `canvas_layout`, `samples` (`jsonb`) nằm ở bảng `flow_version`; truy vấn danh sách không chọn các cột này.
+
+### 3.7. Đặc tả thành phần quản lý luồng
+
+Bốn thành phần lõi nghiệp vụ của control plane; thuật toán chi tiết ở chương 6, 9, 12 nên mục này chỉ có bảng đặc tả. Gỡ luồng dựng đồ thị phụ thuộc từ `flow_reference` và chỉ cho gỡ khi không còn phụ thuộc cứng.
+
+#### 3.7.1. Không gian làm việc và luồng
+
+::: dac-ta
+**Mục đích.** Quản lý không gian làm việc, thành viên và vòng đời luồng: tạo từ sáu nguồn, sửa, nhân bản, gỡ có kiểm tra phụ thuộc.
+
+**Lớp chính.** `FlowService`, `WorkspaceService`, `WorkspaceAccess`, `DependencyGraph`, `ExternalSystemProjection`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.flow`, `internal.workspace`.
+
+**FR hiện thực.** FR-04-001…007.
+
+**Giao diện vào.** API-04-001…004, 010…016; sự kiện HTTT của PH-01, tenant mới của PH-20.
+
+**Phụ thuộc ra.** `TemplateService`, `VersionService`, `ConnectionDirectory`, `TopicDirectory`, REST PH-02.
+
+**Dữ liệu.** `workspace`, `workspace_member`, `flow`, `flow_reference`, `external_system`.
+
+**Sự kiện.** EVT-04-01, 02, 09.
+
+**Lỗi và xử lý.** ERR-04-002 (mã trùng), 003 (thiếu `EDIT`), 017 (còn phụ thuộc), 018 (khóa lũy đẳng), 027, 028 (không gian), 034 (luồng đã gỡ), 043 (HTTT chưa kết nạp).
+
+**Quan sát.** Kiểm toán qua `AuditWriter`; `http_server_requests_seconds{uri}`.
+:::
+
+
+#### 3.7.2. Phiên bản và lưu nháp phía máy chủ
+
+::: dac-ta
+**Mục đích.** Giữ định nghĩa theo phiên bản: mở, lưu nháp có khóa lạc quan, hủy, tải, nhập YAML, ghi người đóng góp, tính băm.
+
+**Lớp chính.** `VersionService`, `YamlCanonicalizer`, `ContributorRecorder`, `EtagCodec`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.version`.
+
+**FR hiện thực.** FR-04-010, 011, 017, 022, 024, 027.
+
+**Giao diện vào.** API-04-020…027.
+
+**Phụ thuộc ra.** `ValidationEngine` mức `DESIGN`; `MappingService`; Valkey.
+
+**Dữ liệu.** `flow_version`, `flow_version_contributor`, `flow_mapping`, `flow_route_index`, `flow_endpoint_index`.
+
+**Sự kiện.** Không phát khi lưu nháp.
+
+**Lỗi và xử lý.** ERR-04-005, 006 (412, kèm `currentEtag`, `savedBy`, `savedAt`), 007, 008, 016, 021, 033.
+
+**Quan sát.** `dh_int_validation_seconds{level="DESIGN"}`.
+:::
+
+
+#### 3.7.3. Duyệt bốn mắt
+
+::: dac-ta
+**Mục đích.** Không phiên bản nào lên môi trường khi chưa qua người duyệt độc lập, trên đúng băm đã chạy thử đạt (§8.4, §9.1).
+
+**Lớp chính.** `ReviewService`, `FourEyesGuard`, `ReviewChecklist`, `SubmitGate`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.review`.
+
+**FR hiện thực.** FR-04-040, 041, 043.
+
+**Giao diện vào.** API-04-025, 050…053.
+
+**Phụ thuộc ra.** `ValidationEngine` mức `SUBMIT`; `TestRunService`; Keycloak (xác thực lại).
+
+**Dữ liệu.** `review`, `flow_version`, `flow_version_contributor`, `test_run`, `test_case`.
+
+**Sự kiện.** EVT-04-03, 04, 05.
+
+**Lỗi và xử lý.** ERR-04-005, 009 (còn lỗi), 014 (chưa chạy đạt), 015 (vi phạm bốn mắt), 025 (thiếu ý kiến, checklist), 042 (catalog cũ).
+
+**Quan sát.** Kiểm toán người duyệt, băm, checklist; thời gian chờ duyệt ở PH-13.
+:::
+
+
+#### 3.7.4. Khuôn mẫu và chuyển XML hệ cũ
+
+::: dac-ta
+**Mục đích.** Tạo luồng từ khuôn chuẩn (mặc định `tpl-standard-9`) và chuyển Camel XML của Bus cũ sang YAML không mang theo bí mật.
+
+**Lớp chính.** `TemplateService`, `TemplateRenderer`, `LegacyXmlImporter`, `LegacySecretStripper`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.template`, `internal.legacy`; chuyển XML chạy nền.
+
+**FR hiện thực.** FR-04-025, 082.
+
+**Giao diện vào.** API-04-028, 080…082.
+
+**Phụ thuộc ra.** `VersionService`, `ValidationEngine`.
+
+**Dữ liệu.** `template`, `legacy_import_job`.
+
+**Sự kiện.** EVT-04-01 khi tạo luồng.
+
+**Lỗi và xử lý.** ERR-04-032 (XML không hợp lệ), 039 (khuôn không có); XML tắt DTD, thực thể ngoài; mật khẩu bị gỡ trước khi lưu, không vào log.
+
+**Quan sát.** Số tệp đạt, lỗi theo lô trong `legacy_import_job`.
+:::
+
 
 ## 4. Khung chín chặng chuẩn trong runtime
 
+Chương này mô tả thư viện mọi luồng ở `dh-runtime` dựa vào, để an toàn tenant, che dữ liệu, thử lại, DLQ không phụ thuộc việc người thiết kế nhớ quy ước.
+
 ### 4.1. Hợp đồng tiêu đề nội bộ
+
+::: dac-ta
+**Mục đích.** Khóa tenant của bản tin ở chặng tiếp nhận và chặn mọi thay đổi về sau.
+
+**Lớp chính.** `TenantGuard` (`InterceptStrategy`), `TenantHeaders`, `TenantMismatchException`.
+
+**Đơn vị chạy.** `dh-runtime`, `dh-runtime-sandbox`; gói `vn.datahub.runtime.tenant`.
+
+**FR hiện thực.** FR-04-073.
+
+**Giao diện vào.** Mọi processor sau `receive`.
+
+**Phụ thuộc ra.** Nhãn `dh.gov.vn/tenant` của ConfigMap; cảnh báo ATTT PH-13.
+
+**Dữ liệu.** Thuộc tính exchange `dh.tenant.locked`.
+
+**Sự kiện.** Cảnh báo ATTT mức cao.
+
+**Lỗi và xử lý.** ERR-04-112 (500), không thử lại, không đưa thân vào DLQ.
+
+**Quan sát.** `dh_flow_failures_total{error_code="ERR-04-112"}`.
+:::
 
 Mọi exchange trong `dh-runtime` mang bộ tiêu đề dưới đây. Tiêu đề bắt đầu bằng `dh-` do runtime đặt; tiêu đề cùng tên do bên gọi gửi vào bị `dh-receive-action` xóa trước khi đặt lại (chống giả mạo).
 
@@ -372,6 +599,8 @@ Mọi exchange trong `dh-runtime` mang bộ tiêu đề dưới đây. Tiêu đ�
 | `dh-obligations` | `authz` | Kết quả OPA | Không |
 | `dh-enrich-partial` | `enrich` | Khi làm giàu lỗi với `CONTINUE` | Không |
 | `traceparent` | `receive` | W3C; tạo mới nếu thiếu | Không |
+
+: Hợp đồng tiêu đề nội bộ của exchange
 
 `TenantGuard` là `InterceptStrategy` gắn vào mọi route của luồng đã nạp: trước mỗi processor sau `receive`, nó so `dh-tenant` với giá trị chụp lúc `receive` (lưu trong thuộc tính exchange `dh.tenant.locked`, không phải tiêu đề) và so với tenant sở hữu luồng (nhãn `dh.gov.vn/tenant` của ConfigMap). Lệch thì ném `TenantMismatchException`, exchange dừng với lỗi nội bộ, phát cảnh báo ATTT (FR-04-073, E6 của UC-04-17).
 
@@ -395,6 +624,28 @@ public final class TenantGuard implements InterceptStrategy {
 
 ### 4.2. Kamelet nền
 
+::: dac-ta
+**Mục đích.** Hiện thực chín chặng chuẩn và chỉ số chặng thành khối dùng lại có kiểm thử; luồng chỉ khai tham số.
+
+**Lớp chính.** Kamelet `dh-receive-action`…`dh-respond-action`; `OpaClient`, `MaskingProcessor`, `dh_map`, `ConnectionLogWriter`, `StageMarker`, `StageMetrics`.
+
+**Đơn vị chạy.** `dh-runtime` mọi hồ sơ, sandbox; mô-đun `dh-runtime-kamelets`, `dh-runtime-lib`.
+
+**FR hiện thực.** FR-04-060…069, 071, 074.
+
+**Giao diện vào.** Bước `kamelet` trong khối `dh-stage-*`.
+
+**Phụ thuộc ra.** APISIX, Apicurio hoặc PH-06, OPA (200 ms), PH-07, PH-09, hệ đích qua PH-05, Prometheus, OTel.
+
+**Dữ liệu.** Bộ đệm lược đồ, ảnh chụp bảng mã; khóa chống trùng ở Valkey.
+
+**Sự kiện.** EVT-04-14.
+
+**Lỗi và xử lý.** ERR-04-101…108 theo chặng (§4.2).
+
+**Quan sát.** Tám tín hiệu ở §4.5; log không có thân bản tin.
+:::
+
 Mỗi chặng chuẩn có một Kamelet nền loại `action` trong `dh-runtime-kamelets`. Kamelet nền có tham số tối thiểu; phần biến thiên của luồng nằm ở bước con mà người thiết kế thêm bên trong khối chặng.
 
 | Chặng | Kamelet nền | Tham số | Hành vi |
@@ -409,9 +660,33 @@ Mỗi chặng chuẩn có một Kamelet nền loại `action` trong `dh-runtime-
 | audit | `dh-audit-action` | `serviceCode`, `providerSystem` | Ghi nhật ký kết nối lên EVT-04-14 |
 | respond | `dh-respond-action` | `contentType` | Áp nghĩa vụ che của OPA và chính sách PH-09; đặt mã HTTP |
 
+: Kamelet nền theo chặng
+
 Kamelet nền tham chiếu processor Java bằng `#class:` không được phép trong luồng của người dùng; Kamelet nền nằm ngoài kiểm tra VR-04 vì được ký cùng ảnh runtime. Danh sách Kamelet nền và phiên bản ghi trong `runtime-manifest.json` (`kamelets[]`).
 
 ### 4.3. `routeConfiguration` nền và xử lý lỗi
+
+::: dac-ta
+**Mục đích.** Một chính sách lỗi cho mọi luồng: phân loại, thử lại lũy thừa, trả lỗi bên gọi, DLQ đã mã hóa trường nhạy cảm.
+
+**Lớp chính.** `dh-default-config`, `ErrorClassifier`, `dhDlqEnvelope`, `dhSyncErrorResponse`, `dhRouteBusinessError`.
+
+**Đơn vị chạy.** `dh-runtime`; gói `vn.datahub.runtime.error`.
+
+**FR hiện thực.** FR-04-070.
+
+**Giao diện vào.** `routeConfigurationId: dh-default-config` (VR-11).
+
+**Phụ thuộc ra.** Kafka `{tenant}.ops.dlq.v1`; OpenBao transit (DEK tenant).
+
+**Dữ liệu.** Tiêu đề `dh-dlq-*` trên bản tin DLQ.
+
+**Sự kiện.** Bản tin DLQ cho PH-18.
+
+**Lỗi và xử lý.** Tạm thời: 3 lần, 1 s, hệ số 4, rồi DLQ (ERR-04-103, 104); nghiệp vụ, dữ liệu: trả bên gọi hoặc DLQ; OPA từ chối: không DLQ; chưa phân loại: thử 1 lần, DLQ, ERR-04-109.
+
+**Quan sát.** `dh_flow_failures_total`, `dh_flow_dlq_total`.
+:::
 
 `dh-default-config` được nạp sẵn ở mọi hồ sơ; luồng tham chiếu bằng `routeConfigurationId: dh-default-config` (khuôn mẫu đặt sẵn, VR-11 kiểm tra).
 
@@ -450,6 +725,29 @@ Kamelet nền tham chiếu processor Java bằng `#class:` không được phép
 ```
 
 `ErrorClassifier` ánh xạ ngoại lệ Camel và mã HTTP của đích sang bốn lớp ở FR-04-070: `TransientException` (502, 503, 504, quá thời gian, mất kết nối; 429 theo `Retry-After`), `BusinessException` (400, 404, 409, 422 từ đích), `DataException` (lược đồ, chuyển đổi), `AuthzDeniedException`. Ngoại lệ không phân loại thử lại một lần rồi DLQ và cảnh báo. `dhDlqEnvelope` mã hóa trường phân loại Cá nhân, Nhạy cảm bằng khóa DEK của tenant (OpenBao transit) trước khi đưa DLQ, thêm tiêu đề `dh-dlq-reason`, `dh-dlq-attempts`, `dh-dlq-stage`, `dh-dlq-error-code`.
+
+
+::: dac-ta
+**Mục đích.** Cho luồng tham chiếu tham số, bí mật của kết nối PH-05 bằng tên; định nghĩa và Git không chứa bí mật.
+
+**Lớp chính.** `ConnPropertiesFunction`, `VaultPropertiesFunction`.
+
+**Đơn vị chạy.** `dh-runtime`, sandbox; gói `vn.datahub.runtime.secret`.
+
+**FR hiện thực.** FR-04-016; VR-03, VR-15.
+
+**Giao diện vào.** `{{conn:…}}`, `{{vault:…}}`; sự kiện xoay kết nối PH-05.
+
+**Phụ thuộc ra.** OpenBao KV `kv/dh/{tenant}/conn/`, `kv/dh/{tenant}/flow/`.
+
+**Dữ liệu.** Chỉ trong bộ nhớ, không ghi đĩa, không log.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** Đường dẫn ngoài phạm vi hoặc OpenBao lỗi lúc khởi động: route không khởi động, giữ bản cũ, báo `loadError`.
+
+**Quan sát.** `loadError` trong EVT-04-12.
+:::
 
 Phân giải bí mật: `ConnPropertiesFunction` đăng ký tiền tố `conn` cho properties placeholder; `{{conn:ndxp-ho-tich.host}}` đọc giá trị của kết nối PH-05 ở môi trường hiện tại từ OpenBao đường dẫn `kv/dh/{tenant}/conn/{mã}/{env}` lúc khởi động route, giữ trong bộ nhớ, làm mới khi nhận sự kiện xoay kết nối. `{{vault:<path>#<key>}}` chỉ nhận đường dẫn dưới `kv/dh/{tenant}/flow/`.
 
@@ -513,6 +811,8 @@ Quy tắc nhận diện chặng (thay GAP-04-08): một phần tử EIP có `id`
 
 ### 4.5. Chỉ số, vết, log
 
+Tín hiệu dưới đây do `StageMarker`, `StageMetrics` và route policy phát (thành phần 6, bảng đặc tả ở §4.2), cùng bộ tên cho mọi luồng để PH-13 dựng bảng điều khiển chung.
+
 | Tín hiệu | Tên | Nhãn | Nguồn |
 |---|---|---|---|
 | Đếm | `dh_flow_exchanges_total` | `tenant`, `flow`, `version`, `route`, `outcome` | `onCompletion` |
@@ -524,9 +824,33 @@ Quy tắc nhận diện chặng (thay GAP-04-08): một phần tử EIP có `id`
 | Đếm | `dh_flow_duplicates_total` | `tenant`, `flow` | `dh-receive-action` |
 | Span | `dh.stage.{mã}` | thuộc tính `dh.tenant`, `dh.flow`, `dh.flow.version` | OTel |
 
+: Chỉ số, vết của runtime
+
 Nhãn `tenant`, `flow` có lực lượng giới hạn (≤ 1.000 luồng hoạt động toàn nền tảng theo D03-10) nên chấp nhận được trong Prometheus. Log JSON có `traceId`, `spanId`, `tenant`, `flow`, `version`, `stage`, không có thân bản tin, không có giá trị tiêu đề ngoài danh sách cho phép (`Content-Type`, `Content-Length`, `dh-*`).
 
 ### 4.6. Truy cập CSDL trực tiếp
+
+::: dac-ta
+**Mục đích.** Đọc CSDL nghiệp vụ trực tiếp theo Q359: chỉ đọc, đúng tenant, có giới hạn và kiểm toán.
+
+**Lớp chính.** Kamelet `dh-sql-ro-source`, `dh-sql-ro-action`; `TenantScopedSqlProcessor`.
+
+**Đơn vị chạy.** `dh-runtime` (PostgreSQL ở native, CSDL khác ở `legacy-jvm`); gói `vn.datahub.runtime.sql`.
+
+**FR hiện thực.** FR-04-072.
+
+**Giao diện vào.** Bước Kamelet có câu lệnh đã qua VR-13.
+
+**Phụ thuộc ra.** OpenBao database engine (TTL 1 giờ); CSDL nguồn qua kết nối PH-05.
+
+**Dữ liệu.** Kiểm toán runtime: `sha256` câu lệnh, `rows`, `durationMs`.
+
+**Sự kiện.** EVT-04-14.
+
+**Lỗi và xử lý.** Vượt `04.sql.max-rows` hoặc quá thời gian: ERR-04-108; không gia hạn được tài khoản: lỗi tạm thời.
+
+**Quan sát.** `dh_flow_stage_duration_seconds` của chặng chứa SQL.
+:::
 
 Kamelet `dh-sql-ro-source` (nguồn định kỳ) và `dh-sql-ro-action` (tra cứu trong luồng) bọc `camel-sql` với `TenantScopedSqlProcessor`:
 
@@ -540,7 +864,31 @@ Hồ sơ native chỉ đóng gói driver PostgreSQL; CSDL khác (Oracle, SQL Ser
 
 ## 5. Kho cấu hình và phát hành GitOps
 
+Chương này mô tả con đường duy nhất để phiên bản đã duyệt tới pod runtime; mục 5.5 có sơ đồ trình tự từ nút "Phát hành" tới `SYNCED`.
+
 ### 5.1. Bố cục kho `dh-flows-{tenant}`
+
+::: dac-ta
+**Mục đích.** Ghi phiên bản đã duyệt vào kho tenant thành commit nguyên tử có chữ ký; Git là nguồn sự thật duy nhất.
+
+**Lớp chính.** `GitConfigRepository` (JGit), `FlowManifestWriter`, `FileSigner`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.release`; tác vụ nền sau commit CSDL.
+
+**FR hiện thực.** FR-04-042, 044, 045, 050.
+
+**Giao diện vào.** `ReleaseService`, `CommandService`.
+
+**Phụ thuộc ra.** Máy chủ Git; OpenBao `transit/dh-integration-git`.
+
+**Dữ liệu.** Thư mục đệm clone; `deployment` sau khi push.
+
+**Sự kiện.** Gián tiếp EVT-04-07.
+
+**Lỗi và xử lý.** Thử lại 3 lần (2 s, 8 s, 30 s), rồi `FAILED`, ERR-04-022 (502).
+
+**Quan sát.** `dh_int_git_write_failures_total`.
+:::
 
 PH-20 tạo kho khi khởi tạo tenant (ADR-068). Mỗi nhánh môi trường có cùng bố cục:
 
@@ -608,6 +956,28 @@ Argo CD không khởi động lại pod khi ConfigMap luồng đổi; việc n�
 
 ### 5.4. `FlowLoader` trong `dh-runtime`
 
+::: dac-ta
+**Mục đích.** Nạp, thay, tạm dừng, gỡ luồng theo ConfigMap mà không khởi động lại pod, cô lập lỗi theo luồng.
+
+**Lớp chính.** `FlowLoader` (informer Fabric8), `SignatureVerifier`, `YamlRoutesBuilderLoader`, `RouteController`.
+
+**Đơn vị chạy.** `dh-runtime`, mô-đun `dh-runtime-loader`.
+
+**FR hiện thực.** FR-04-042, 050, 075.
+
+**Giao diện vào.** ConfigMap có nhãn `dh.gov.vn/profile` của pod.
+
+**Phụ thuộc ra.** Kubernetes API; ConfigMap `dh-runtime-trust`.
+
+**Dữ liệu.** Nhóm route trong `CamelContext`; trạng thái ghi đè của lệnh khẩn.
+
+**Sự kiện.** Kích hoạt EVT-04-12 sau mỗi lần nạp.
+
+**Lỗi và xử lý.** Sai chữ ký, YAML lỗi: giữ nhóm cũ, báo `loadError`, triển khai `FAILED`.
+
+**Quan sát.** Số lần nạp, lỗi nạp; gián đoạn HTTP ≤ 200 ms.
+:::
+
 `FlowLoader` là bộ điều khiển nhỏ dùng Kubernetes informer (Fabric8) theo dõi ConfigMap có nhãn `dh.gov.vn/profile = {hồ sơ của pod}` trong namespace của pod.
 
 | Sự kiện ConfigMap | Hành động |
@@ -616,6 +986,8 @@ Argo CD không khởi động lại pod khi ConfigMap luồng đổi; việc n�
 | Sửa, đổi `flow-version` | Nạp phiên bản mới song song dưới `routeGroup` tạm; khởi động thành công thì dừng, gỡ nhóm cũ (graceful 30 giây); lỗi thì giữ nhóm cũ, báo `loadError` trong nhịp tim |
 | Sửa, chỉ đổi `desiredState`, `pausedRoutes` | Gọi `RouteController.suspendRoute`, `resumeRoute` |
 | Xóa | Dừng, gỡ nhóm route |
+
+: Hành động của `FlowLoader` theo sự kiện ConfigMap
 
 Cô lập lỗi: mỗi luồng nạp riêng; lỗi nạp một luồng không chạm luồng khác (ADR-063). Điểm vào `platform-http` của hai phiên bản không cùng lúc nhận lưu lượng: phiên bản mới chỉ đăng ký đường dẫn sau khi phiên bản cũ ngừng nhận (khoảng gián đoạn ≤ 200 ms, lượt đang xử lý của bản cũ chạy hết). Luồng Kafka dùng cùng nhóm tiêu thụ nên chuyển giao qua tái cân bằng.
 
@@ -640,6 +1012,28 @@ Cô lập lỗi: mỗi luồng nạp riêng; lỗi nạp một luồng không ch
 
 ### 5.5. Phát hành và nâng môi trường
 
+::: dac-ta
+**Mục đích.** Đưa phiên bản `APPROVED` lên môi trường đúng thứ tự, ngoài đóng băng, trên hồ sơ phù hợp; nâng và quay lui cùng cơ chế.
+
+**Lớp chính.** `ReleaseService`, `ProfileResolver`, `EnvironmentOrderGuard`, `DeploymentTracker`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.release`.
+
+**FR hiện thực.** FR-04-042, 044, 045, 075.
+
+**Giao diện vào.** API-04-054, 055, 056; Argo CD; nhịp tim.
+
+**Phụ thuộc ra.** `ValidationEngine` mức `PUBLISH`, `FreezeWindowGuard`, `GitConfigRepository`, ConfigMap `dh-runtime-manifests`.
+
+**Dữ liệu.** `deployment`, `flow_version`, `outbox`.
+
+**Sự kiện.** EVT-04-06, 07.
+
+**Lỗi và xử lý.** ERR-04-005, 009, 022, 023 (thứ tự), 029 (hồ sơ), 040 (quay lui có thành phần cấm), 041 (423, đóng băng).
+
+**Quan sát.** `dh_int_release_seconds{env}` (p95 PROD ≤ 3 phút, NFR-04-009).
+:::
+
 ```java
 @Transactional
 public DeploymentView release(FlowVersionKey key, ReleaseRequest req, Actor actor, String idemKey) {
@@ -659,9 +1053,61 @@ public DeploymentView release(FlowVersionKey key, ReleaseRequest req, Actor acto
 
 `GitConfigRepository.write(dep)` chạy ở tác vụ nền có thử lại (3 lần, 2 s, 8 s, 30 s): clone nông nhánh đích vào thư mục tạm (bộ đệm cục bộ theo tenant), ghi tệp, ký từng tệp (Ed25519, khóa `transit/dh-integration-git`), commit có chữ ký với tác giả `dh-integration[bot]` và trailer `Dh-Published-By: u.ia01`, `Dh-Deployment: {id}`, push. Với `env/test`: push thẳng. Với `env/prod` (nhánh bảo vệ): push nhánh `release/{flow}-v{n}`, mở yêu cầu gộp, CI kho cấu hình chạy lại VR mức `PUBLISH` và ca kiểm thử, tự gộp khi đạt (ADR-068). Lỗi sau 3 lần: triển khai `FAILED` với ERR-04-022, thông báo người phát hành.
 
+```{.mermaid caption="Trình tự phát hành một phiên bản lên PROD tới trạng thái SYNCED"}
+sequenceDiagram
+    autonumber
+    actor IA as Người phát hành (IA)
+    participant API as dh-integration REST
+    participant REL as ReleaseService
+    participant PG as pg-core ph04
+    participant GIT as GitConfigRepository
+    participant REPO as Kho dh-flows-t68
+    participant ARGO as Argo CD
+    participant RT as dh-runtime FlowLoader
+    participant REC as Reconciler
+    IA->>API: POST deployments, target PROD, Idempotency-Key
+    API->>REL: release(key, req)
+    REL->>PG: Khóa phiên bản, kiểm trạng thái, đóng băng, thứ tự, VR PUBLISH
+    REL->>PG: Ghi deployment PENDING và outbox EVT-04-06
+    REL-->>IA: 202 với deploymentId
+    REL->>GIT: Sau commit, ghi tệp và ký
+    GIT->>REPO: Push nhánh release, mở yêu cầu gộp vào env/prod
+    REPO-->>REPO: CI kho chạy VR PUBLISH và ca kiểm thử, tự gộp
+    ARGO->>REPO: Phát hiện commit mới
+    ARGO->>RT: Áp ConfigMap flow-ho-tich-khai-sinh
+    ARGO-->>REC: Application Progressing, deployment SYNCING
+    RT->>RT: Kiểm chữ ký, nạp song song, thay nhóm route cũ
+    RT-->>REC: Nhịp tim EVT-04-12 có version 8 và contentHash
+    REC->>PG: Đủ bản sao, deployment SYNCED, outbox EVT-04-07
+```
+
+Hình cho thấy ghi Git chạy sau commit CSDL nên lỗi Git chỉ chuyển triển khai sang `FAILED`, và triển khai chỉ `SYNCED` khi chính runtime báo đúng phiên bản, băm qua nhịp tim chứ không phải khi Argo CD báo đồng bộ.
+
 Từ `PENDING` sang `SYNCING` khi Argo CD báo Application `Progressing` (webhook Argo CD hoặc hỏi API mỗi 10 giây); `SYNCED` khi đủ số bản sao báo `version`, `contentHash` mới qua nhịp tim; `OUT_OF_SYNC` khi quá `04.runtime.sync-timeout-seconds` mà chưa đủ; `FAILED` khi quá `04.deploy.timeout-minutes` hoặc có `loadError`.
 
 ### 5.6. Outbox và sự kiện
+
+::: dac-ta
+**Mục đích.** Phát sự kiện miền và kiểm toán ra ngoài DU tin cậy, cùng giao dịch với thay đổi dữ liệu.
+
+**Lớp chính.** `OutboxWriter`, `AuditWriter`.
+
+**Đơn vị chạy.** `dh-integration`, gói `internal.outbox`, `internal.audit`; Debezium.
+
+**FR hiện thực.** FR-04-083 và mọi FR có sự kiện.
+
+**Giao diện vào.** Sự kiện miền ở §3.3.
+
+**Phụ thuộc ra.** Kafka qua Debezium; PH-13.
+
+**Dữ liệu.** `outbox`.
+
+**Sự kiện.** EVT-04-01…10, kiểm toán.
+
+**Lỗi và xử lý.** Kafka, PH-13 không nhận: giữ ở outbox, gửi lại; không mất khi khởi động lại.
+
+**Quan sát.** Số dòng outbox chưa chuyển.
+:::
 
 Bảng `ph04.outbox` (DD-11) ghi cùng giao dịch với thay đổi miền; Debezium đọc WAL, định tuyến theo cột `topic` (EVT-04-01…10). Topic hệ thống EVT-04-11 (lệnh) không qua outbox vì lệnh khẩn phải đi trước mọi ghi khác (§10.2); `CommandService` gửi trực tiếp bằng nhà sản xuất Kafka lũy đẳng `acks=all` và ghi bảng `runtime_command` trong cùng luồng xử lý (gửi trước, ghi sau với lệnh khẩn; ghi trước, gửi sau với lệnh thường).
 
@@ -670,6 +1116,28 @@ Bảng `ph04.outbox` (DD-11) ghi cùng giao dịch với thay đổi miền; Deb
 Phần này bổ sung D03-06-PH04 §27 ở mức thuật toán. Mã nằm ở `apps/console/src/features/integration/designer/`.
 
 ### 6.1. Mô hình tài nguyên
+
+::: dac-ta
+**Mục đích.** Một nguồn sự thật trong trình duyệt cho định nghĩa đang soạn; sơ đồ, Inspector, YAML luôn khớp, mọi thao tác hoàn tác được.
+
+**Lớp chính.** `ResourceTree`, `StepNode`, `Command`, `UndoStack`.
+
+**Đơn vị chạy.** `dh-console`, `features/integration/designer/model/`.
+
+**FR hiện thực.** FR-04-013, 014, 017, 018, 019, 021, 026.
+
+**Giao diện vào.** Thao tác trên sơ đồ, Inspector, YAML.
+
+**Phụ thuộc ra.** Catalog (§6.6), bộ ghi YAML (§6.2), worker kiểm tra (§7.1).
+
+**Dữ liệu.** Bộ nhớ trình duyệt; IndexedDB.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** Phần tử lạ giữ ở `raw`; YAML sửa tay lỗi: giữ cây cũ, báo dòng, cột.
+
+**Quan sát.** Thời gian vẽ lại, sinh YAML (≤ 100 ms, NFR-04-005).
+:::
 
 Trình thiết kế không thao tác trực tiếp trên YAML hay trên nút XYFlow. Nguồn sự thật trong trình duyệt là **cây tài nguyên** (`ResourceTree`) theo mô hình của Kaoto (ADR-060):
 
@@ -692,6 +1160,28 @@ Mọi thay đổi là một `Command` (`InsertStep`, `MoveStep`, `RemoveStep`, `
 
 ### 6.2. Quay vòng YAML và băm nội dung
 
+::: dac-ta
+**Mục đích.** Đọc rồi ghi YAML không đổi nội dung (BR-04-006); mọi bên cùng một băm.
+
+**Lớp chính.** Bộ ghi `yaml` (eemeli) chế độ `Document`; `YamlCanonicalizer` (SnakeYAML Engine).
+
+**Đơn vị chạy.** `dh-console`; `dh-integration` gói `internal.version`.
+
+**FR hiện thực.** FR-04-017, 027.
+
+**Giao diện vào.** Cây tài nguyên; văn bản YAML; API-04-022, 027.
+
+**Phụ thuộc ra.** `yaml-key-order.json` của catalog.
+
+**Dữ liệu.** `flow_version.definition_yaml`, `content_hash`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** Khác biệt quay vòng chặn CI; băm chỉ lấy từ máy chủ.
+
+**Quan sát.** Bộ ngữ liệu quay vòng ở CI-2, CI-6.
+:::
+
 Bộ đọc, ghi dùng `yaml` (eemeli) chế độ `Document` để giữ chú thích và thứ tự khóa của phần không bị sửa. Quy trình ghi:
 
 1. Duyệt cây, phát `Document` theo thứ tự khóa của lược đồ Camel YAML DSL cho phiên bản catalog (bảng thứ tự sinh cùng catalog).
@@ -704,6 +1194,28 @@ Bộ đọc, ghi dùng `yaml` (eemeli) chế độ `Document` để giữ chú t
 Kiểm thử quay vòng (BR-04-006, ADR-060): bộ ngữ liệu gồm 9 luồng mẫu, 41 tệp XML Bus cũ đã chuyển, toàn bộ ví dụ YAML trong tài liệu Camel 4.18; với mỗi tệp: đọc → ghi không sửa → so byte (phía trình duyệt) và so băm chuẩn hóa (phía máy chủ). Một khác biệt là lỗi chặn CI.
 
 ### 6.3. Ánh xạ nhóm nghiệp vụ của bảng thành phần
+
+::: dac-ta
+**Mục đích.** Bảng thành phần theo nhóm nghiệp vụ tiếng Việt, tìm không dấu và theo từ đồng nghĩa; tự bố cục giữ nút đã ghim.
+
+**Lớp chính.** `palette-groups.json`, `PaletteIndex` (`minisearch`), `LayoutWorker` (dagre).
+
+**Đơn vị chạy.** `dh-console` (Web Worker); luật nhóm phục vụ từ `dh-integration`.
+
+**FR hiện thực.** FR-04-012, 013, 026.
+
+**Giao diện vào.** API-04-070; UI-04-17.
+
+**Phụ thuộc ra.** `CatalogService`, chính sách thành phần.
+
+**Dữ liệu.** `palette_group_rule`; `flow_version.canvas_layout`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** Không khớp luật: nhóm `other`; luật hỏng: dùng bản `active` trước.
+
+**Quan sát.** Thời gian bố cục (lấy mẫu).
+:::
 
 Tệp `palette-groups.json` (vendor cùng catalog, PA sửa được qua UI-04-17, lưu ở `ph04.palette_group_rule`, phục vụ qua API-04-070) gồm danh sách luật xét theo thứ tự; một thành phần thuộc mọi nhóm có luật khớp:
 
@@ -745,6 +1257,28 @@ Bố cục tự động: dagre trong Web Worker, hướng trái sang phải, `ra
 
 ### 6.5. Lưu nháp, phiên soạn và gộp ba bên
 
+::: dac-ta
+**Mục đích.** Không mất công soạn khi mất mạng, đóng tab hay hai người cùng sửa; báo người khác đang sửa.
+
+**Lớp chính.** `DraftStore` (IndexedDB), `AutoSaver`, `ThreeWayMerge`, `EditSession`.
+
+**Đơn vị chạy.** `dh-console`; `dh-integration` gói `internal.session`.
+
+**FR hiện thực.** FR-04-010, 024.
+
+**Giao diện vào.** API-04-022 (`If-Match`), API-04-034.
+
+**Phụ thuộc ra.** Valkey `HEXPIRE` 120 giây.
+
+**Dữ liệu.** IndexedDB; `flow_version` (`version`, `content_hash`).
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-006 (412) mở gộp ba bên; xung đột cùng trường do người dùng chọn; không có `HEXPIRE` xem Q04-23.
+
+**Quan sát.** Số lần xung đột, khôi phục bản nháp.
+:::
+
 Trình tự lưu: (1) ghi bản nháp vào IndexedDB khóa `dh.int.draft.{tenant}.{flow}.{version}` sau mỗi lệnh (gộp 1 giây); (2) 30 giây sau thay đổi cuối hoặc `Ctrl+S`, gửi API-04-022 với `If-Match: "{etag}"`, thân `VersionDraftUpdate`; (3) máy chủ trả ETag mới và kết quả mức `DESIGN`; (4) xóa bản IndexedDB tương ứng ETag đã xác nhận.
 
 ETag = `W/"{version}-{contentHash[0..8]}"` của `flow_version`. Máy chủ cập nhật bằng `UPDATE … WHERE id = ? AND version = ?`; 0 dòng thì trả ERR-04-006 kèm `currentEtag`, `savedBy`, `savedAt`.
@@ -761,9 +1295,33 @@ Gộp ba bên (`ThreeWayMerge` trong worker): đầu vào là cây gốc (lần 
 | `canvasLayout` | Lấy của mình |
 | `samples` theo `id` chặng | Như trường |
 
+: Quy tắc gộp ba bên theo nút
+
 Phiên soạn (API-04-034): khóa Valkey `dh:int:edit:{tenant}:{flowId}:{versionNo}` là hash `userId → {lastSeen, displayName}`, mỗi trường hết hạn sau 120 giây (Valkey 8 hỗ trợ TTL theo trường `HEXPIRE`). Phản hồi nhịp trả danh sách người khác và `catalogVersion` hiện hành của tenant.
 
 ### 6.6. Đường sinh catalog
+
+::: dac-ta
+**Mục đích.** Trình thiết kế, kiểm tra hợp lệ và runtime dùng một catalog cho đúng phiên bản Camel Quarkus.
+
+**Lớp chính.** `catalog-gen`, `catalog:check`, `catalog-diff`, `CatalogService`, `ComponentPolicy`, `CatalogUpgradeJob`.
+
+**Đơn vị chạy.** CI; `dh-integration` gói `internal.catalog`.
+
+**FR hiện thực.** FR-04-080, 081; UC-04-22.
+
+**Giao diện vào.** API-04-070…074; `runtime-manifest.json`.
+
+**Phụ thuộc ra.** `@kaoto/camel-catalog`; ConfigMap `dh-runtime-manifests`; Valkey.
+
+**Dữ liệu.** `component_policy`, `component_proposal`, `catalog_change`.
+
+**Sự kiện.** Thông báo người đóng góp qua PH-15 khi nâng.
+
+**Lỗi và xử lý.** Lệch bản phụ: CI đỏ; ERR-04-011 (bị cấm), 035 (không có), 042 (catalog cũ).
+
+**Quan sát.** Phiên bản catalog theo tenant (API-04-073).
+:::
 
 ```text
 camel/*/pom.xml  ──đọc phiên bản──►  tools/catalog-gen (Node)
@@ -783,6 +1341,28 @@ apps/console/src/features/integration/designer/catalog/generated/
 Nâng runtime (UC-04-22): `CatalogUpgradeJob` so catalog cũ, mới, ghi `ph04.catalog_change` (thành phần, thuộc tính bị bỏ, đổi tên), đánh dấu `flow_version.needs_revalidation = true` cho phiên bản mở và phiên bản đang chạy của tenant được nâng, phát thông báo cho người đóng góp.
 
 ### 6.7. Trình ánh xạ dữ liệu
+
+::: dac-ta
+**Mục đích.** Ánh xạ trường bằng kéo nối, sinh JQ như nhau ở trình duyệt và máy chủ, xem trước trên bản tin mẫu.
+
+**Lớp chính.** `DhmapToJq` (TypeScript và Java), `MappingService`, `MappingPreview`.
+
+**Đơn vị chạy.** `dh-console`; `dh-integration` gói `internal.mapping`; sandbox.
+
+**FR hiện thực.** FR-04-020, 065.
+
+**Giao diện vào.** API-04-022, 033.
+
+**Phụ thuộc ra.** PH-06 (lược đồ), PH-07 (`dh_map`), sandbox; `jq-web` khi sandbox vắng.
+
+**Dữ liệu.** `flow_mapping`; Git chỉ nhận `*.jq`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-021, 038; JQ hai bên khác: dùng bản máy chủ, ghi cảnh báo.
+
+**Quan sát.** Số lần JQ lệch (bằng 0 ở CI).
+:::
 
 `*.dhmap.json` (ADR-066):
 
@@ -807,7 +1387,31 @@ Bộ sinh JQ (`dhmap → jq`) có hai bản cùng hành vi: TypeScript ở trìn
 
 ## 7. Kiểm tra hợp lệ
 
+Chương này mô tả cách hiện thực 20 quy tắc VR và 6 quy tắc LINT: chạy ở trình duyệt để phản hồi tức thì và ở máy chủ làm nguồn chuẩn.
+
 ### 7.1. Kiến trúc
+
+::: dac-ta
+**Mục đích.** Kiểm định nghĩa ở ba mức `DESIGN`, `SUBMIT`, `PUBLISH`, trả phát hiện có vị trí nút.
+
+**Lớp chính.** `ValidationEngine`, `ValidationRule` (`Vr01Parse`…`Vr20TestAssertions`), `ValidationContext`; worker `validation/`.
+
+**Đơn vị chạy.** `dh-integration` gói `internal.validation`; worker trình duyệt.
+
+**FR hiện thực.** FR-04-023; VR-01…20, LINT-04-01…06.
+
+**Giao diện vào.** API-04-030, 031, 032; `VersionService`, `ReviewService`, `ReleaseService`.
+
+**Phụ thuộc ra.** Catalog, chính sách, `ConnectionDirectory`, `TopicDirectory`, `PublishedRouteIndex`.
+
+**Dữ liệu.** `flow_version.last_validation`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-009 kèm `findings[]`; mã riêng 010, 011, 012, 013, 031, 037, 042.
+
+**Quan sát.** `dh_int_validation_seconds{level}` (p95 ≤ 2 s, NFR-04-007).
+:::
 
 Quy tắc VR là các lớp độc lập, cài ở hai nơi:
 
@@ -815,6 +1419,8 @@ Quy tắc VR là các lớp độc lập, cài ở hai nơi:
 |---|---|---|
 | Trình duyệt (worker `validation/`) | VR-01…09, 15, 18, 20 và LINT-04-01…06 | Phản hồi tức thì khi soạn |
 | Máy chủ (`ValidationEngine`) | VR-01…20 | Nguồn chuẩn ở mọi mức; mức `SUBMIT`, `PUBLISH` chỉ tính kết quả máy chủ |
+
+: Nơi cài quy tắc kiểm tra
 
 ```java
 public sealed interface ValidationRule permits Vr01Parse, Vr02Schema, Vr03Secret, /* … */ Vr20TestAssertions {
@@ -831,6 +1437,8 @@ public record ValidationContext(TenantId tenant, ResourceTree tree, Exposure exp
 `ValidationEngine.run` chạy song song các quy tắc độc lập trên cây đã phân tích một lần, thời hạn tổng 2 giây ở p95 cho luồng 200 chặng (NFR-04-007). Kết quả lưu vào `flow_version.last_validation` (`jsonb`: mức, thời điểm, `catalogVersion`, danh sách `Finding`). Mức `DESIGN` không chặn lưu; `SUBMIT`, `PUBLISH` chặn khi có `ERROR`.
 
 ### 7.2. Ghi chú hiện thực từng quy tắc
+
+Bảng dưới nói thư viện hoặc nguồn dữ liệu mà mỗi quy tắc dùng; định nghĩa và mức nghiêm trọng của quy tắc ở FRS FR-04-023.
 
 | VR | Hiện thực |
 |---|---|
@@ -851,7 +1459,31 @@ public record ValidationContext(TenantId tenant, ResourceTree tree, Exposure exp
 | VR-17 | So `definition.catalogVersion` với catalog hiện hành của tenant |
 | VR-20 | Mỗi ca trong tài nguyên `TEST` có ≥ 1 khẳng định |
 
+: Ghi chú hiện thực từng quy tắc VR
+
 ### 7.3. Phát hiện bí mật
+
+::: dac-ta
+**Mục đích.** Phát hiện giá trị giống bí mật, dữ liệu cá nhân giống thật trong định nghĩa, bản tin mẫu, ca kiểm thử.
+
+**Lớp chính.** `SecretDetector`, `EntropyScorer`, `PiiLikePatterns`.
+
+**Đơn vị chạy.** `dh-integration`; worker trình duyệt; bước che của sandbox.
+
+**FR hiện thực.** FR-04-016, 022, 023 (VR-03, LINT-04-06).
+
+**Giao diện vào.** `Vr03Secret`, `TestRunService`, `StepTracer`.
+
+**Phụ thuộc ra.** Không.
+
+**Dữ liệu.** Không lưu giá trị; `Finding.args` chỉ có `node`, `field`, `pattern`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-010 (422), chỉ đường dẫn.
+
+**Quan sát.** Số phát hiện theo mẫu.
+:::
 
 `SecretDetector` kiểm mọi giá trị vô hướng trong cây (kể cả tham số URI, tiêu đề đặt bằng `setHeader`, giá trị bean):
 
@@ -862,6 +1494,28 @@ public record ValidationContext(TenantId tenant, ResourceTree tree, Exposure exp
 Kết quả không bao giờ lặp lại giá trị; `Finding.args` chỉ có `node`, `field`, `pattern`. Cùng bộ phát hiện chạy trên bản tin mẫu và ca kiểm thử (LINT-04-06 cho dữ liệu giống thật: 12 chữ số dạng số định danh, số điện thoại di động Việt Nam).
 
 ### 7.4. Chính sách SQL
+
+::: dac-ta
+**Mục đích.** Chặn tĩnh SQL không phải một câu đọc, đụng schema cấm hoặc ghép chuỗi; lớp phụ trước quyền CSDL.
+
+**Lớp chính.** `SqlPolicy` (JSqlParser 5.x), `TablesNamesFinder`.
+
+**Đơn vị chạy.** `dh-integration` gói `internal.validation`.
+
+**FR hiện thực.** FR-04-072 (VR-13).
+
+**Giao diện vào.** `Vr13SqlPolicy`.
+
+**Phụ thuộc ra.** Schema được phép của kết nối (`ConnectionDirectory`).
+
+**Dữ liệu.** Không.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-031 (422) với `reason`, không trích câu lệnh.
+
+**Quan sát.** Số vi phạm theo `reason`.
+:::
 
 `SqlPolicy` dùng JSqlParser 5.x:
 
@@ -875,7 +1529,31 @@ Lỗi trả ERR-04-031 với `reason` mô tả (không trích câu lệnh đầy
 
 ## 8. Chạy thử
 
+Chương này mô tả chạy thử bằng Camel thật trong sandbox cô lập, khẳng định và điều kiện "đã chạy thử đạt" khi gửi duyệt.
+
 ### 8.1. Kiến trúc sandbox
+
+::: dac-ta
+**Mục đích.** Chạy thử đúng định nghĩa theo băm bằng cùng phiên bản Camel, đích mô phỏng, không chạm hệ thật.
+
+**Lớp chính.** `SandboxWorker`, `DefinitionRewriter`, `StepTracer`, `AssertionEvaluator`.
+
+**Đơn vị chạy.** `dh-runtime-sandbox`, một Deployment mỗi hồ sơ, namespace `dh-sandbox` (Q04-20).
+
+**FR hiện thực.** FR-04-030, 031, 033; ADR-064.
+
+**Giao diện vào.** Valkey Stream `dh:int:testrun:queue`; `GET /internal/v1/testruns/{id}/bundle`.
+
+**Phụ thuộc ra.** `POST /internal/v1/testruns/{id}/steps`; WireMock, OPA, Kafka sandbox; kết nối TEST; Ceph RGW.
+
+**Dữ liệu.** `CamelContext` riêng mỗi lần; thân đầy đủ ở `dh-int-testrun`.
+
+**Sự kiện.** Không phát trực tiếp.
+
+**Lỗi và xử lý.** Việc chưa `XACK` nhận lại sau 60 giây; quá thời hạn: `TIMED_OUT`, ERR-04-020.
+
+**Quan sát.** `dh_int_testrun_queue_depth`, `dh_int_testrun_duration_seconds`.
+:::
 
 `dh-runtime-sandbox` là Quarkus JVM cùng phiên bản Camel Quarkus với hồ sơ đích (một Deployment cho mỗi hồ sơ: `sandbox-core`, `sandbox-files`, `sandbox-soap`, `sandbox-legacy`). Mỗi lần chạy tạo một `CamelContext` riêng trong tiến trình (khởi tạo ≈ 300–800 ms), không dùng chung trạng thái giữa các lần, đóng ngay khi xong. Một pod chạy tối đa 4 lần đồng thời; KEDA mở rộng theo độ dài hàng đợi `dh:int:testrun:queue`.
 
@@ -889,7 +1567,31 @@ Cô lập:
 | Bí mật | Chỉ giá trị TEST của kết nối, cấp qua OpenBao với chính sách `sandbox-{tenant}` |
 | Dữ liệu | Không có quyền đọc CSDL nghiệp vụ; chặng SQL ở `MOCK` trả dữ liệu mẫu ghim của chặng |
 
+: Các lớp cô lập của sandbox
+
 ### 8.2. Giao thức chạy
+
+::: dac-ta
+**Mục đích.** Xếp hàng chạy thử theo hạn mức tenant, nhận vết, đẩy SSE, lưu lịch sử cho điều kiện gửi duyệt.
+
+**Lớp chính.** `TestRunService`, `SandboxClient`, `TestCaseService`, `TestRunRetentionJob`.
+
+**Đơn vị chạy.** `dh-integration` gói `internal.testrun`.
+
+**FR hiện thực.** FR-04-030, 031, 032; BR-04-004.
+
+**Giao diện vào.** API-04-040…044; API nội bộ `bundle`, `steps`.
+
+**Phụ thuộc ra.** Valkey; `ValidationEngine`; Ceph RGW.
+
+**Dữ liệu.** `test_run`, `test_run_step`, `test_case`.
+
+**Sự kiện.** EVT-04-10.
+
+**Lỗi và xử lý.** ERR-04-009, 019 (429 hoặc 503), 021, 030; sandbox không nhận sau 60 giây: `FAILED`.
+
+**Quan sát.** p95 `MOCK` ≤ 5 s.
+:::
 
 1. `TestRunService.start` kiểm mức `DESIGN` (ERR-04-009), hạn mức tenant (`04.test.max-concurrent`, đếm bằng `ZCARD dh:int:testrun:active:{tenant}`), ghi `test_run` `QUEUED` với `definition_hash`, đưa việc vào hàng đợi Valkey Stream `dh:int:testrun:queue` (nhóm tiêu thụ theo hồ sơ).
 2. Pod sandbox nhận việc, gọi `GET /internal/v1/testruns/{id}/bundle` của `dh-integration` (mTLS, tài khoản dịch vụ) lấy YAML chuẩn hóa, `*.jq`, bản tin, ca, cấu hình mô phỏng, giá trị kết nối TEST (chỉ với `SANDBOX_LIVE`).
@@ -901,9 +1603,40 @@ Cô lập:
 5. Hết luồng hoặc hết thời hạn: chạy khẳng định (§8.3), gửi kết quả cuối; thân đầy đủ (khi `captureBodies`) ghi `s3://dh-int-testrun/{tenant}/{runId}/{nodeId}-{in|out}.json` có khóa mã hóa phía máy chủ, vòng đời xóa sau `04.test.body-retention-days`.
 6. `dh-integration` ghi `test_run_step`, cập nhật trạng thái, đẩy SSE (API-04-042: sự kiện `step`, `status`, `completed`), phát EVT-04-10.
 
+```{.mermaid caption="Trình tự một lần chạy thử ở chế độ MOCK"}
+sequenceDiagram
+    autonumber
+    actor IE as Kỹ sư tích hợp
+    participant UI as Trình thiết kế
+    participant TRS as TestRunService
+    participant VK as Valkey Stream
+    participant SB as dh-runtime-sandbox
+    participant S3 as Ceph RGW
+    IE->>UI: Bấm Chạy thử với bản tin mẫu
+    UI->>TRS: POST test-runs, mode MOCK
+    TRS->>TRS: Kiểm DESIGN, hạn mức tenant
+    TRS->>VK: Ghi test_run QUEUED, đưa việc vào hàng đợi
+    TRS-->>UI: 202 với runId, mở SSE
+    SB->>VK: Nhận việc theo hồ sơ
+    SB->>TRS: GET bundle qua mTLS
+    SB->>SB: Thay from, endpoint ra bằng mock, nạp CamelContext riêng
+    loop Mỗi chặng
+        SB->>TRS: POST steps theo lô 200 ms, thân đã che
+        TRS-->>UI: SSE step
+    end
+    SB->>SB: Chạy khẳng định
+    SB->>S3: Ghi thân đầy đủ khi captureBodies
+    SB->>TRS: Kết quả cuối PASSED hoặc FAILED
+    TRS-->>UI: SSE completed, phát EVT-04-10
+```
+
+Hình cho thấy sandbox tự kéo việc và gói chạy nên chỉ cần quyền gọi hai API nội bộ; vết về theo lô, đã che trước khi rời sandbox.
+
 Che dữ liệu ở bước 4 dùng phân loại trường của lược đồ (PH-09) và bộ phát hiện §7.3; khi không có lược đồ, mọi giá trị chuỗi khớp mẫu số định danh, điện thoại, email bị che.
 
 ### 8.3. Khẳng định
+
+Khẳng định là điều kiện kiểm chứng được trên kết quả lần chạy. `AssertionEvaluator` của sandbox đánh giá chúng sau khi luồng kết thúc; kết quả từng khẳng định đi kèm kết quả cuối.
 
 | Loại | Đánh giá |
 |---|---|
@@ -915,6 +1648,8 @@ Che dữ liệu ở bước 4 dùng phân loại trường của lược đồ (
 | `DURATION_LT` | Tổng thời lượng < ms |
 | `ERROR_CODE` | `dh-dlq-error-code` hoặc mã ERR trong phản hồi |
 | `DLQ_SENT` | Có bản tin vào `mock:` thay cho DLQ |
+
+: Loại khẳng định của ca kiểm thử
 
 Một lần chạy `PASSED` khi mọi khẳng định đạt và không có ngoại lệ không xử lý. Lần chạy mô phỏng phía trình duyệt (`04.test.allow-simulation`) ghi `SIMULATED` và không bao giờ thỏa BR-04-004 (ADR-064).
 
@@ -942,6 +1677,8 @@ Mọi chuyển trạng thái hiện thực bằng một lớp `Transitions` có 
 
 ### 9.1. Phiên bản
 
+Bảng dưới là máy trạng thái phiên bản, hiện thực trong `VersionService` và `ReviewService`. Sơ đồ trình tự sau bảng cho thấy luồng gửi duyệt và duyệt bốn mắt.
+
 | Từ | Sự kiện | Tới | Điều kiện chốt ở máy chủ | Quyền |
 |---|---|---|---|---|
 | — | Tạo luồng, tạo phiên bản mới | `DRAFT` | Không có phiên bản mở khác (BR-04-016, ERR-04-016) | create, update |
@@ -954,6 +1691,30 @@ Mọi chuyển trạng thái hiện thực bằng một lớp `Transitions` có 
 | `APPROVED` | Phiên bản khác lên PROD `SYNCED` | `SUPERSEDED` | Tự động | — |
 | `APPROVED` | Bị quay lui khỏi PROD | `ROLLED_BACK` | Tự động | — |
 | `SUPERSEDED` | Quay lui về phiên bản này | `APPROVED` | Tự động khi đích quay lui | — |
+
+: Bảng chuyển trạng thái phiên bản
+
+```{.mermaid caption="Trình tự gửi duyệt và duyệt bốn mắt một phiên bản"}
+sequenceDiagram
+    autonumber
+    actor IE as Người soạn u.ie01
+    actor IA as Người duyệt u.ia01
+    participant RS as ReviewService
+    participant VE as ValidationEngine
+    participant DB as pg-core ph04
+    IE->>RS: POST submit với ghi chú
+    RS->>VE: Kiểm mức SUBMIT
+    RS->>DB: Có lần chạy đạt trên contentHash, mọi ca đạt
+    RS->>DB: PENDING_REVIEW, submitted_hash, outbox EVT-04-03
+    RS-->>IE: 200
+    IA->>RS: Mở so sánh, POST review APPROVE với checklist
+    RS->>RS: FourEyesGuard loại người tạo, người đóng góp, người gửi
+    RS->>DB: So băm hiện tại với submitted_hash
+    RS->>DB: UPDATE where status = PENDING_REVIEW, ghi review, outbox EVT-04-04
+    RS-->>IA: 200, phiên bản APPROVED
+```
+
+Hình cho thấy ba chốt ở máy chủ: lần chạy đạt gắn đúng băm, người duyệt ngoài tập người đã chạm phiên bản, băm lúc duyệt bằng băm lúc gửi.
 
 `FourEyesGuard`: người quyết định ∉ {`created_by`} ∪ `flow_version_contributor` ∪ {`submitted_by`} (GAP-04-06). Người đóng góp được thêm khi lưu nháp thành công, khi nhập YAML, khi gộp xung đột. Hiện thực ở máy chủ, không dựa vào giao diện ẩn nút.
 
@@ -971,9 +1732,11 @@ Trạng thái luồng là trạng thái tổng hợp, tính lại sau mỗi sự
 | `PAUSED` | `desiredState = PAUSED` ở PROD (cờ `emergency` nếu do dừng khẩn) |
 | `RETIRED` | Đã gỡ; trạng thái cuối |
 
+: Trạng thái tổng hợp của luồng
+
 ### 9.3. Triển khai
 
-```mermaid
+```{.mermaid caption="Máy trạng thái triển khai"}
 stateDiagram-v2
     [*] --> PENDING: release, promote, rollback
     PENDING --> SYNCING: Argo CD Progressing
@@ -986,6 +1749,8 @@ stateDiagram-v2
     SYNCED --> [*]: Bị thay bởi triển khai mới
 ```
 
+Hình cho thấy `SYNCED` có thể quay về `OUT_OF_SYNC` khi nhịp tim lệch Git; `FAILED` chỉ đến từ `PENDING` hoặc `SYNCING`.
+
 Sức khỏe tính mỗi nhịp tim, độc lập trạng thái đồng bộ: `HEALTHY` khi mọi bản sao có route `Started` và tỷ lệ lỗi 5 phút < 5%; `DEGRADED` khi một phần bản sao lỗi, route `Suspended` ngoài chủ đích, hoặc tỷ lệ lỗi 5–50%; `DOWN` khi không bản sao nào chạy hoặc tỷ lệ lỗi > 50%; `UNKNOWN` khi quá 90 giây không có nhịp tim.
 
 ### 9.4. Lần chạy thử và lệnh điều khiển
@@ -996,15 +1761,43 @@ Sức khỏe tính mỗi nhịp tim, độc lập trạng thái đồng bộ: `H
 | `RUNNING` | `PASSED`, `FAILED`, `TIMED_OUT`, `CANCELLED` |
 | (trình duyệt) | `SIMULATED` ghi trực tiếp, trạng thái cuối |
 
+: Chuyển trạng thái lần chạy thử
+
 | Lệnh | Tới |
 |---|---|
 | `ISSUED` | `DELIVERED` (có xác nhận đầu tiên), `REJECTED` (mọi bản sao từ chối) |
 | `DELIVERED` | `ACKNOWLEDGED` (đủ bản sao), `PARTIAL` (sau 30 giây chưa đủ), `REJECTED` |
 | `ACKNOWLEDGED`, `PARTIAL` | `RECONCILED` (Git và nhịp tim khớp trạng thái mong muốn) |
 
+: Chuyển trạng thái lệnh điều khiển
+
 ## 10. Điều khiển runtime
 
+Chương này mô tả tạm dừng, tiếp tục, dừng khẩn mà vẫn giữ Git là nguồn sự thật: lệnh có ký đi nhanh qua Kafka, trạng thái mong muốn ghi Git, bộ đối soát bảo đảm hai bên hội tụ.
+
 ### 10.1. Định dạng lệnh
+
+::: dac-ta
+**Mục đích.** Ký và gửi lệnh `PAUSE`, `RESUME`, `EMERGENCY_STOP` trong vài giây, không giả được, hạn ngắn.
+
+**Lớp chính.** `CommandService`, `CommandSigner` (JCS, `transit/sign`).
+
+**Đơn vị chạy.** `dh-integration` gói `internal.runtime`.
+
+**FR hiện thực.** FR-04-050; BR-04-018.
+
+**Giao diện vào.** API-04-061.
+
+**Phụ thuộc ra.** OpenBao `transit/keys/dh-integration-cmd`; Kafka; `GitConfigRepository`.
+
+**Dữ liệu.** `runtime_command`, `deployment.desired_state`.
+
+**Sự kiện.** EVT-04-11 (không qua outbox).
+
+**Lỗi và xử lý.** ERR-04-005, 025, 024 (`REJECTED`, `PARTIAL`); Kafka lỗi: thử lại 5 giây, lệnh khẩn báo SO ngay.
+
+**Quan sát.** `dh_int_command_ack_seconds{action}` (NFR-04-010).
+:::
 
 ```json
 {
@@ -1028,6 +1821,28 @@ Chữ ký tính trên dạng chuẩn JSON Canonicalization Scheme (RFC 8785) c�
 
 ### 10.2. Gửi, xác nhận, đối soát
 
+::: dac-ta
+**Mục đích.** Thi hành lệnh có ký ở mọi bản sao, xác nhận về, giữ dừng khẩn trước commit cũ.
+
+**Lớp chính.** `CommandListener`, `CommandVerifier`, `HeartbeatPublisher`.
+
+**Đơn vị chạy.** `dh-runtime`; gói `vn.datahub.runtime.control`.
+
+**FR hiện thực.** FR-04-050, 051.
+
+**Giao diện vào.** Kafka EVT-04-11; ConfigMap `dh-runtime-trust`.
+
+**Phụ thuộc ra.** Kafka; `RouteController`; DLQ khi dừng khẩn.
+
+**Dữ liệu.** Tập `commandId` 10 phút; trạng thái ghi đè cục bộ.
+
+**Sự kiện.** EVT-04-12, 13.
+
+**Lỗi và xử lý.** `REJECTED` với `EXPIRED`, `BAD_SIGNATURE` (cảnh báo ATTT), `TENANT_MISMATCH`, `UNKNOWN_FLOW`; lệnh trùng bị bỏ.
+
+**Quan sát.** Nội dung nhịp tim (§5.4).
+:::
+
 | Bước | Lệnh thường (`PAUSE`, `RESUME`) | Lệnh khẩn (`EMERGENCY_STOP`) |
 |---|---|---|
 | 1 | Ghi `runtime_command` `ISSUED` + cập nhật `deployment.desired_state` trong một giao dịch | Ký, gửi Kafka ngay |
@@ -1037,15 +1852,68 @@ Chữ ký tính trên dạng chuẩn JSON Canonicalization Scheme (RFC 8785) c�
 | 5 | `Reconciler` gom xác nhận theo `commandId`; đủ bản sao (theo nhịp tim gần nhất) → `ACKNOWLEDGED`; 30 giây chưa đủ → `PARTIAL` | Như trái |
 | 6 | Khi commit Git đã đồng bộ và nhịp tim khớp → `RECONCILED`, phát EVT-04-08 | Như trái; quá 5 phút chưa khớp → cảnh báo TA, SO (BR-04-018) |
 
+: Các bước gửi, xác nhận, đối soát lệnh
+
 Runtime giữ tập `commandId` đã thi hành 10 phút để bỏ lệnh trùng. Lệnh hết hạn hoặc sai chữ ký trả xác nhận `REJECTED` với `reason` (`EXPIRED`, `BAD_SIGNATURE`, `TENANT_MISMATCH`, `UNKNOWN_FLOW`); `BAD_SIGNATURE` sinh cảnh báo ATTT.
+
+```{.mermaid caption="Trình tự dừng khẩn một luồng ở PROD"}
+sequenceDiagram
+    autonumber
+    actor TO as Vận hành u.to01
+    participant CS as CommandService
+    participant BAO as OpenBao transit
+    participant K as Kafka
+    participant RT as dh-runtime các bản sao
+    participant REC as Reconciler
+    participant GIT as Kho dh-flows-t68
+    TO->>CS: POST runtime/commands EMERGENCY_STOP với lý do
+    CS->>BAO: transit/sign trên JCS của lệnh
+    CS->>K: Gửi EVT-04-11 ngay, acks=all
+    CS->>CS: Ghi runtime_command ISSUED
+    CS-->>TO: 202 với commandId
+    K->>RT: Lệnh tới mọi bản sao
+    RT->>RT: Kiểm chữ ký, hạn, tenant, dừng route, bản tin dở vào DLQ
+    RT->>K: EVT-04-13 xác nhận từng bản sao
+    K->>REC: Gom xác nhận, ACKNOWLEDGED
+    CS->>GIT: Tác vụ nền ghi desiredState PAUSED
+    GIT-->>RT: Argo CD áp ConfigMap mới
+    RT->>K: Nhịp tim khớp trạng thái mong muốn
+    K->>REC: RECONCILED, phát EVT-04-08
+```
+
+Hình cho thấy lệnh khẩn gửi Kafka trước, ghi CSDL và Git sau, nên thời gian dừng không phụ thuộc Git; runtime giữ trạng thái ghi đè tới khi Git bắt kịp.
 
 Khi Argo CD đồng bộ một commit cũ hơn lệnh khẩn chưa được ghi Git (ví dụ Git lỗi), `FlowLoader` không bật lại route: nó giữ "trạng thái ghi đè cục bộ" theo lệnh khẩn đã thi hành cho tới khi thấy `flow.dh.yaml` có `desiredState` tương ứng hoặc nhận lệnh `RESUME` có ký mới hơn. Đây là điểm bảo đảm dừng khẩn không bị GitOps vô hiệu.
 
 ### 10.3. Đối soát định kỳ
 
+::: dac-ta
+**Mục đích.** Tính đồng bộ, sức khỏe từ nhịp tim, gom xác nhận lệnh, phát hiện lệch Git và băm lạ.
+
+**Lớp chính.** `Reconciler` (ShedLock, 60 giây), `HeartbeatProjector`, `HealthCalculator`, `CommandAckAggregator`.
+
+**Đơn vị chạy.** `dh-integration` gói `internal.runtime`.
+
+**FR hiện thực.** FR-04-051, 052; BR-04-012, 018.
+
+**Giao diện vào.** Kafka EVT-04-12, 13; Argo CD; API-04-060, 062.
+
+**Phụ thuộc ra.** PH-13 (cảnh báo); `FlowService`.
+
+**Dữ liệu.** `heartbeat_latest`, `command_ack`, `runtime_command`, `deployment`, `shedlock`.
+
+**Sự kiện.** EVT-04-07, 08.
+
+**Lỗi và xử lý.** Lệch quá 5 phút: `OUT_OF_SYNC`, cảnh báo; băm lạ: cảnh báo ATTT cao; 90 giây không nhịp tim: `UNKNOWN`.
+
+**Quan sát.** `dh_int_reconcile_drift`, `dh_int_unknown_hash_total`.
+:::
+
 `Reconciler` chạy mỗi 60 giây theo tenant (ShedLock): so `deployment` (mong muốn theo Git đã ghi) với `heartbeat_latest` (thực tế). Lệch quá 5 phút: phát `DeploymentStatusChanged(OUT_OF_SYNC)`, cảnh báo PH-13 `dh_int_reconcile_drift`. Lệch do bản sao chạy phiên bản lạ (băm không có trong CSDL): cảnh báo ATTT mức cao, vì có thể có kênh nạp ngoài GitOps (vi phạm BR-04-012).
 
 ## 11. Bảo mật
+
+Chương này gom biện pháp an toàn của chương 4 tới 10 cho ATTT thẩm định; dẫn `SEC-*` của D03-07, không tạo mã mới.
 
 ### 11.1. Phân quyền
 
@@ -1072,11 +1940,15 @@ OPA chỉ dùng ở data plane (`dh-authz-action`) và cho quyết định có c
 | Gói XML hệ cũ chứa mật khẩu | `LegacyXmlImporter` gỡ trước khi lưu, không ghi log giá trị; tệp tải lên xóa sau khi chuyển |
 | Tấn công phân tích YAML, XML | Giới hạn độ sâu, bí danh, kích thước; XML tắt DTD, thực thể ngoài |
 
+: Mối đe dọa chính và biện pháp
+
 ### 11.3. Cách ly tenant ở control plane
 
 Mọi bảng `ph04.*` có `tenant_id` và RLS (D03-03-PH04). Tác vụ nền liên tenant (`Reconciler`, `TestRunRetentionJob`, `CatalogUpgradeJob`) lặp từng tenant theo danh sách PH-20 và `runAs(tenant)`, theo mẫu D03-02-PH07 §6.3. Bảng `heartbeat_latest` được `HeartbeatProjector` ghi theo tenant trong từng nhịp tim (một nhịp tim có nhiều tenant được tách thành nhiều giao dịch).
 
 ## 12. Xử lý lỗi, thử lại và nhất quán
+
+Bảng dưới tập hợp xử lý lỗi xuyên thành phần ở control plane (lỗi trong luồng theo §4.3): ghi có khóa lũy đẳng, qua ranh giới hệ thống thì thử lại giới hạn rồi chuyển trạng thái rõ ràng.
 
 | Tình huống | Cách xử lý |
 |---|---|
@@ -1090,13 +1962,41 @@ Mọi bảng `ph04.*` có `tenant_id` và RLS (D03-03-PH04). Tác vụ nền li�
 | PH-05, PH-10 chưa có dữ liệu | VR-07, VR-10 lỗi ở `SUBMIT` (FRS §10.1) |
 | Ánh xạ lỗi | `ProblemDetail` RFC 9457: `type` = `https://datahub.gov.vn/errors/ERR-04-xxx`, `title`, `status`, `detail`, `code`, `traceId`, trường mở rộng theo mã (D03-04-PH04 §6) |
 
+: Xử lý lỗi và nhất quán ở control plane
+
 ## 13. Cấu hình, quan sát, dung lượng
+
+Chương này liệt kê khóa cấu hình, chỉ số control plane và ước tính dung lượng cho D03-09; chỉ số runtime ở §4.5.
 
 ### 13.1. Cấu hình ứng dụng
 
+::: dac-ta
+**Mục đích.** Đọc tham số `04.*` của tenant nhất quán và chặn thay đổi trong khoảng đóng băng.
+
+**Lớp chính.** `FlowParams`, `FreezeWindowGuard`.
+
+**Đơn vị chạy.** `dh-integration` gói `internal.params`.
+
+**FR hiện thực.** FR-04-084; BR-04-022.
+
+**Giao diện vào.** API-04-090; `ReleaseService`, `CommandService`, `TestRunService`.
+
+**Phụ thuộc ra.** PH-18.
+
+**Dữ liệu.** Đệm 60 giây; biến `{{dh.env.*}}`.
+
+**Sự kiện.** Không phát.
+
+**Lỗi và xử lý.** ERR-04-041 (423), trừ quay lui, tạm dừng; PH-18 vắng: dùng giá trị đệm.
+
+**Quan sát.** Số lần chặn do đóng băng.
+:::
+
+Bảng dưới là khóa cấu hình kỹ thuật của `dh-integration`; tham số nghiệp vụ theo tenant do `FlowParams` đọc được nói ở đoạn sau bảng.
+
 | Khóa (`dh-integration`) | Mặc định | Ý nghĩa |
 |---|---|---|
-| `dh.flow.git.base-url` | — | Gốc kho cấu hình (GitHub khi phát triển, GitLab on-prem khi bàn giao, Q353) |
+| `dh.flow.git.base-url` | (theo môi trường) | Gốc kho cấu hình (GitHub khi phát triển, GitLab on-prem khi bàn giao, Q353) |
 | `dh.flow.git.repo-pattern` | `dh-flows-{tenant}` | Tên kho |
 | `dh.flow.git.cache-dir` | `/var/cache/dh-flows` | Bộ đệm clone nông |
 | `dh.flow.git.signing-key` | `transit/dh-integration-git` | Khóa ký commit, tệp |
@@ -1107,6 +2007,8 @@ Mọi bảng `ph04.*` có `tenant_id` và RLS (D03-03-PH04). Tác vụ nền li�
 | `dh.flow.heartbeat.unknown-after-seconds` | 90 | Sức khỏe `UNKNOWN` |
 | `dh.flow.sandbox.queue` | `dh:int:testrun:queue` | Hàng đợi chạy thử |
 | `dh.flow.catalog.dir` | `classpath:catalog/` | Catalog sinh cùng ảnh |
+
+: Khóa cấu hình của `dh-integration`
 
 Tham số nghiệp vụ theo tenant đọc từ PH-18 (`04.*`, FRS §7.1) qua `FlowParams`, đệm 60 giây, làm mới theo sự kiện thay đổi tham số của PH-18 (đề xuất mã ở D02-04-PH04 §8.2; SDD chọn dùng sự kiện tham số chung của PH-18 thay vì EVT-04 riêng).
 
@@ -1123,11 +2025,15 @@ Tham số nghiệp vụ theo tenant đọc từ PH-18 (`04.*`, FRS §7.1) qua `F
 | `dh_int_git_write_failures_total` | Ghi Git lỗi | > 0 |
 | `dh_int_unknown_hash_total` | Bản sao chạy băm lạ | > 0 (ATTT) |
 
+: Chỉ số control plane và ngưỡng cảnh báo
+
 ### 13.3. Dung lượng ước tính
 
 Giả định GĐ: tỉnh QM-VUA 120 luồng năm đầu, 300 năm thứ ba; 35 tenant. Mỗi phiên bản trung bình 40 KiB YAML + 20 KiB bố cục + 50 KiB bản tin mẫu; 12 phiên bản mỗi luồng mỗi năm → khoảng 0,5 GiB mỗi năm toàn nền tảng cho `flow_version`. Lần chạy thử 30 mỗi phiên bản, vết 20 bước × 2 KiB → khoảng 15 GiB mỗi năm `test_run_step`, giữ 90 ngày (`04.test.retention-days`) nên ổn định quanh 4 GiB. Nhịp tim: 35 tenant × 300 luồng × 3 bản sao mỗi 30 giây, chỉ giữ bản mới nhất (`heartbeat_latest`); lịch sử nằm ở Prometheus.
 
 ## 14. Kiểm thử
+
+Kiểm thử đi từ đơn vị tới đầu cuối; cổng ghi "chặn" là điều kiện bắt buộc để gộp mã.
 
 | Mức | Phạm vi | Công cụ | Cổng |
 |---|---|---|---|
@@ -1144,6 +2050,8 @@ Giả định GĐ: tỉnh QM-VUA 120 luồng năm đầu, 300 năm thứ ba; 35 
 | Hiệu năng | NFR-04-001…013 | k6, Lighthouse, Gatling | Trước RG-2 |
 | Hợp đồng API | OpenAPI, AsyncAPI của D03-04-PH04 | Spectral, oasdiff, schemathesis | CI-5 |
 
+: Mức kiểm thử, công cụ và cổng CI
+
 Ca kiểm thử chi tiết ở D05-02-PH04.
 
 ## 15. Lộ trình hiện thực và MVP
@@ -1155,17 +2063,21 @@ Thứ tự đóng khoảng lệch, mỗi bước là một hoặc vài PR nhỏ 
 | 1 | Đổi gói `vn.datahub`, tách module `flow`, DDL mới có `tenant_id`, RLS, di trú dữ liệu bảng cũ | 07, 13 | D03-03-PH04 |
 | 2 | Máy trạng thái phiên bản mới, bốn mắt đầy đủ, băm, người đóng góp; chặn phát hành `DRAFT` | 05, 06 | Bước 1 |
 | 3 | `ValidationEngine` theo cây, nhận diện chặng bằng `dh-stage-*` | 08 | Catalog PR #5 |
-| 4 | Thư viện nền và Kamelet nền; viết lại `TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute` bằng YAML; `dh-default-config` | 02, 12 | — |
+| 4 | Thư viện nền và Kamelet nền; viết lại `TraCuuRoute`, `StandardPipelineRoute`, `CdmMapRoute` bằng YAML; `dh-default-config` | 02, 12 | Không |
 | 5 | Kho `dh-flows-{tenant}`, `GitConfigRepository`, ApplicationSet, `FlowLoader`, nhịp tim | 03 | Argo CD (ADR-009) |
 | 6 | Sandbox chạy thử thật, bỏ `testRun` mô phỏng | 04, 09 | Bước 4 |
 | 7 | Kênh lệnh có ký, `Reconciler` | 11 | Bước 5 |
 | 8 | `dh-sql-ro-*`, tài khoản theo luồng | 10 | PH-05 loại kết nối mới |
-| 9 | Trình thiết kế theo D03-06-PH04 (mô hình cây, gộp ba bên, bảng thành phần nhóm nghiệp vụ, Inspector) | — | Bước 2, 3 |
-| 10 | Chuyển XML Bus cũ | — | Bước 4 |
+| 9 | Trình thiết kế theo D03-06-PH04 (mô hình cây, gộp ba bên, bảng thành phần nhóm nghiệp vụ, Inspector) | Không | Bước 2, 3 |
+| 10 | Chuyển XML Bus cũ | Không | Bước 4 |
+
+: Thứ tự hiện thực và khoảng lệch được đóng
 
 MVP (FRS §9.3) gồm bước 1–7 và 9 với hồ sơ `core-native`, `files-native`; `soap-jvm`, `legacy-jvm`, Kamelet tự viết, Pipe và bước 8 cho hệ ngoài PostgreSQL đi đợt sau.
 
 ## 16. Câu hỏi mở
+
+Các câu hỏi dưới đây đã có đề xuất tạm nên không chặn việc viết mã.
 
 | Mã | Câu hỏi | Đề xuất tạm |
 |---|---|---|
@@ -1180,8 +2092,23 @@ MVP (FRS §9.3) gồm bước 1–7 và 9 với hồ sơ `core-native`, `files-n
 | Q04-28 | Lưu `heartbeat_latest` ở PostgreSQL hay Valkey? | PostgreSQL (cần cho đối soát có RLS); Valkey nếu tải ghi vượt 200 dòng/giây |
 | Q04-29 | Chọn Spring Data JDBC thay JPA cho PH-04 có lệch quy ước PH-07? | Chấp nhận: PH-04 không có aggregate cần lazy loading; giữ chung `TenantAwareTransactionManager` |
 
+: Câu hỏi mở của SDD PH-04
+
+### 16.1. Đề nghị đồng bộ
+
+Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
+
+| Tập | Đề nghị |
+|---|---|
+| D03-09 Hạ tầng | Bổ sung namespace `dh-sandbox` vùng Z4 và chính sách mạng riêng (Q04-20) |
+| D03-04-PH04 API | Đối chiếu tên API nội bộ `GET /internal/v1/testruns/{id}/bundle`, `POST …/steps` (chưa có mã API vì không công bố) |
+| D05-02-PH04 Ca kiểm thử | Mỗi sơ đồ trình tự mới (phát hành, chạy thử, duyệt bốn mắt, dừng khẩn) nên có ít nhất một ca đầu cuối tương ứng |
+
+: Đề nghị đồng bộ với tập khác
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu | Nhóm phân hệ PH-04 |
+| 0.2 | 26/11/2026 | Áp K-TRINH-BAY, K-SDD: chương Giới thiệu, danh sách và bảng đặc tả 10 mục cho 28 thành phần, bốn sơ đồ trình tự, chú thích bảng và hình, đề nghị đồng bộ; giữ nguyên nội dung kỹ thuật bản 0.1 | Nhóm viết tài liệu (Claude) |
