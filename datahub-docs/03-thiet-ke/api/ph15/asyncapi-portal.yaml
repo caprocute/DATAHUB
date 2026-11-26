@@ -1,0 +1,2341 @@
+# D03-04-PH15 · AsyncAPI PH-15. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: 'Datahub PH-15 Cổng nhà phát triển: sự kiện'
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-15-01…14 do PH-15 phát (outbox `ph15_portal.outbox_event`, Debezium, Kafka) và các sự kiện EVT-02-* do PH-02 phát mà cổng tiêu
+    thụ (D03-04-PH15 §4, FRS §9.2). CloudEvents 1.0 nhị phân, `ce_type = vn.datahub.portal.{thực-thể}.{sự-kiện}`; lược đồ Avro tương ứng ở Apicurio, chế độ BACKWARD
+    (ở đây mô tả bằng JSON Schema). Sự kiện không mang bí mật hay thân yêu cầu. Lưu giữ 7 ngày, 3 phân vùng (giả định theo mức của PH-10, Q15-58). Người nhận xử lý
+    lũy đẳng theo `ce_id` (inbox). Tương thích: chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU `dh-connect` (vai trò `worker`), Kafka Connect; mTLS, ACL theo CN và tiền tố tenant (D03-09).'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  appCreated:
+    address: '{tenant}.portal.app.created.v1'
+    title: EVT-15-01
+    description: 'Ứng dụng sandbox được tạo. Truy vết FR-15-025. Bên nhận: PH-13. Khóa phân vùng: `appCode`.'
+    messages:
+      appCreated:
+        $ref: '#/components/messages/appCreated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.app.created.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  appStateChanged:
+    address: '{tenant}.portal.app.state-changed.v1'
+    title: EVT-15-02
+    description: 'Ứng dụng đổi trạng thái; PH-03 và `forward-auth` xóa bộ đệm. Truy vết FR-15-026, FR-15-059. Bên nhận: PH-13, PH-03. Khóa phân vùng: `appCode`.'
+    messages:
+      appStateChanged:
+        $ref: '#/components/messages/appStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.app.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  credentialIssued:
+    address: '{tenant}.portal.credential.issued.v1'
+    title: EVT-15-03
+    description: 'Cấp thông tin xác thực sandbox; không mang bí mật. Truy vết FR-15-027, FR-15-028. Bên nhận: PH-13. Khóa phân vùng: `appCode`.'
+    messages:
+      credentialIssued:
+        $ref: '#/components/messages/credentialIssued'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.credential.issued.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  credentialRotated:
+    address: '{tenant}.portal.credential.rotated.v1'
+    title: EVT-15-04
+    description: 'Xoay vòng thông tin xác thực; bản cũ còn hiệu lực đến `graceUntil`. Truy vết FR-15-030. Bên nhận: PH-13. Khóa phân vùng: `appCode`.'
+    messages:
+      credentialRotated:
+        $ref: '#/components/messages/credentialRotated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.credential.rotated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  credentialRevoked:
+    address: '{tenant}.portal.credential.revoked.v1'
+    title: EVT-15-05
+    description: 'Thu hồi hoặc hết hạn thông tin xác thực; `forward-auth` chặn trong ≤ 5 giây. Truy vết FR-15-031. Bên nhận: PH-03, PH-13. Khóa phân vùng: `appCode`.'
+    messages:
+      credentialRevoked:
+        $ref: '#/components/messages/credentialRevoked'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.credential.revoked.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  devAccountRegistered:
+    address: '{tenant}.portal.devaccount.registered.v1'
+    title: EVT-15-06
+    description: 'Tài khoản dh-dev tự đăng ký; đã xác minh thư, chờ duyệt. Truy vết FR-15-020. Bên nhận: PH-13. Khóa phân vùng: `userId`.'
+    messages:
+      devAccountRegistered:
+        $ref: '#/components/messages/devAccountRegistered'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.devaccount.registered.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  devAccountStateChanged:
+    address: '{tenant}.portal.devaccount.state-changed.v1'
+    title: EVT-15-07
+    description: 'Tài khoản dh-dev đổi trạng thái. Truy vết FR-15-024, FR-15-058, FR-15-059. Bên nhận: PH-13. Khóa phân vùng: `userId`.'
+    messages:
+      devAccountStateChanged:
+        $ref: '#/components/messages/devAccountStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.devaccount.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  contentPublished:
+    address: '{tenant}.portal.content.published.v1'
+    title: EVT-15-08
+    description: 'Trang nội dung được đăng sau duyệt bốn mắt. Truy vết FR-15-015. Bên nhận: PH-13. Khóa phân vùng: `pageCode`.'
+    messages:
+      contentPublished:
+        $ref: '#/components/messages/contentPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.content.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  contentUnpublished:
+    address: '{tenant}.portal.content.unpublished.v1'
+    title: EVT-15-09
+    description: 'Trang nội dung bị gỡ đăng. Truy vết FR-15-016. Bên nhận: PH-13. Khóa phân vùng: `pageCode`.'
+    messages:
+      contentUnpublished:
+        $ref: '#/components/messages/contentUnpublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.content.unpublished.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tryProductionStateChanged:
+    address: '{tenant}.portal.try.production-state-changed.v1'
+    title: EVT-15-10
+    description: 'Trạng thái thử production của một dịch vụ đổi. Truy vết FR-15-042. Bên nhận: PH-13. Khóa phân vùng: `apiCode`.'
+    messages:
+      tryProductionStateChanged:
+        $ref: '#/components/messages/tryProductionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.try.production-state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  tryExecuted:
+    address: '{tenant}.portal.try.executed.v1'
+    title: EVT-15-11
+    description: 'Một lượt thử đã chạy; không mang thân yêu cầu hay phản hồi (BR-15-024). Truy vết FR-15-035, FR-15-043. Bên nhận: PH-13. Khóa phân vùng: `appCode`.'
+    messages:
+      tryExecuted:
+        $ref: '#/components/messages/tryExecuted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.try.executed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  supportTicketOpened:
+    address: '{tenant}.portal.support.ticket-opened.v1'
+    title: EVT-15-12
+    description: 'Phiếu hỗ trợ hoặc hỏi đáp mới; PH-10 dùng cho dịch vụ sự kiện. Truy vết FR-15-053, FR-15-054, FR-15-055. Bên nhận: PH-13, PH-10. Khóa phân vùng:
+      `ticketCode`.'
+    messages:
+      supportTicketOpened:
+        $ref: '#/components/messages/supportTicketOpened'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.support.ticket-opened.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  teamMemberChanged:
+    address: '{tenant}.portal.team.member-changed.v1'
+    title: EVT-15-13
+    description: 'Thành viên nhóm hoặc ứng dụng đổi; đúng một trong `teamCode`, `appCode`. Truy vết FR-15-022, FR-15-033. Bên nhận: PH-13. Khóa phân vùng: `userId`.'
+    messages:
+      teamMemberChanged:
+        $ref: '#/components/messages/teamMemberChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.team.member-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  syncStateChanged:
+    address: '{tenant}.portal.sync.state-changed.v1'
+    title: EVT-15-14
+    description: 'Trạng thái đồng bộ danh mục với PH-02 đổi (kể cả `STALE` khi trễ > 900 giây). Truy vết FR-15-001, FR-15-061. Bên nhận: PH-13. Khóa phân vùng: `tenantId`.'
+    messages:
+      syncStateChanged:
+        $ref: '#/components/messages/syncStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.portal.sync.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  catalogApiRegistered:
+    address: '{tenant}.catalog.api.registered.v1'
+    title: EVT-02-01
+    description: API được đăng ký; kích hoạt kéo gia tăng. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`). Truy vết FR-15-001.
+    messages:
+      catalogApiRegistered:
+        $ref: '#/components/messages/catalogApiRegistered'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.registered.v1'
+  catalogApiUpdated:
+    address: '{tenant}.catalog.api.updated.v1'
+    title: EVT-02-02
+    description: Đổi thông tin, phân loại, mức hiển thị, chủ quản, SLA; `visibility` hoặc `portalPublished` đổi thì cổng cập nhật chỉ mục ngay. PH-15 là bên nhận
+      (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`). Truy vết FR-15-001, FR-15-002.
+    messages:
+      catalogApiUpdated:
+        $ref: '#/components/messages/catalogApiUpdated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.updated.v1'
+  catalogApiDeleted:
+    address: '{tenant}.catalog.api.deleted.v1'
+    title: EVT-02-03
+    description: API bị xóa mềm; cổng gỡ khỏi bản sao và chỉ mục. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`). Truy vết FR-15-001.
+    messages:
+      catalogApiDeleted:
+        $ref: '#/components/messages/catalogApiDeleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.deleted.v1'
+  catalogVersionPublished:
+    address: '{tenant}.catalog.version.published.v1'
+    title: EVT-02-05
+    description: Phiên bản sang `PUBLISHED`; cổng nạp đặc tả. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`). Truy vết FR-15-001,
+      FR-15-013.
+    messages:
+      catalogVersionPublished:
+        $ref: '#/components/messages/catalogVersionPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.published.v1'
+  catalogVersionStateChanged:
+    address: '{tenant}.catalog.version.state-changed.v1'
+    title: EVT-02-06
+    description: Tạm ngừng, tiếp tục, ngừng khuyến nghị, ngừng hẳn; cổng hiện banner `DEPRECATED`. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng
+      theo `ce_id`). Truy vết FR-15-001, FR-15-013.
+    messages:
+      catalogVersionStateChanged:
+        $ref: '#/components/messages/catalogVersionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.state-changed.v1'
+  catalogPlanStateChanged:
+    address: '{tenant}.catalog.plan.state-changed.v1'
+    title: EVT-02-08
+    description: Gói đổi trạng thái hoặc khai báo; cổng cập nhật danh sách gói. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`). Truy
+      vết FR-15-001, FR-15-006.
+    messages:
+      catalogPlanStateChanged:
+        $ref: '#/components/messages/catalogPlanStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.plan.state-changed.v1'
+  catalogSubscriptionRequested:
+    address: '{tenant}.catalog.subscription.requested.v1'
+    title: EVT-02-09
+    description: Đăng ký chờ duyệt; cổng chỉ làm mới bộ đệm đăng ký của người dùng, không phát lại (BR-15-014). PH-15 là bên nhận (nhóm consumer `portal-catalog`,
+      inbox lũy đẳng theo `ce_id`). Truy vết FR-15-045.
+    messages:
+      catalogSubscriptionRequested:
+        $ref: '#/components/messages/catalogSubscriptionRequested'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.requested.v1'
+  catalogSubscriptionActivated:
+    address: '{tenant}.catalog.subscription.activated.v1'
+    title: EVT-02-10
+    description: Đăng ký được cấp phạm vi; cổng làm mới điều kiện thử production. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo `ce_id`).
+      Truy vết FR-15-043, FR-15-045.
+    messages:
+      catalogSubscriptionActivated:
+        $ref: '#/components/messages/catalogSubscriptionActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.activated.v1'
+  catalogSubscriptionStateChanged:
+    address: '{tenant}.catalog.subscription.state-changed.v1'
+    title: EVT-02-11
+    description: Từ chối, tạm ngừng, thu hồi, hủy, hết hạn; cổng thu hồi quyền thử production nếu cần. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy
+      đẳng theo `ce_id`). Truy vết FR-15-043, FR-15-045.
+    messages:
+      catalogSubscriptionStateChanged:
+        $ref: '#/components/messages/catalogSubscriptionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.state-changed.v1'
+  catalogChangeNoticeIssued:
+    address: '{tenant}.catalog.change.notice-issued.v1'
+    title: EVT-02-12
+    description: Thông báo thay đổi đã phát; cổng tra người theo dõi rồi ghi hộp thông báo. PH-15 là bên nhận (nhóm consumer `portal-catalog`, inbox lũy đẳng theo
+      `ce_id`). Truy vết FR-15-013, FR-15-051, FR-15-052.
+    messages:
+      catalogChangeNoticeIssued:
+        $ref: '#/components/messages/catalogChangeNoticeIssued'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.change.notice-issued.v1'
+operations:
+  sendAppCreated:
+    action: send
+    channel:
+      $ref: '#/channels/appCreated'
+    messages:
+    - $ref: '#/channels/appCreated/messages/appCreated'
+    title: 'EVT-15-01: PH-15 phát qua outbox'
+  sendAppStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/appStateChanged'
+    messages:
+    - $ref: '#/channels/appStateChanged/messages/appStateChanged'
+    title: 'EVT-15-02: PH-15 phát qua outbox'
+  sendCredentialIssued:
+    action: send
+    channel:
+      $ref: '#/channels/credentialIssued'
+    messages:
+    - $ref: '#/channels/credentialIssued/messages/credentialIssued'
+    title: 'EVT-15-03: PH-15 phát qua outbox'
+  sendCredentialRotated:
+    action: send
+    channel:
+      $ref: '#/channels/credentialRotated'
+    messages:
+    - $ref: '#/channels/credentialRotated/messages/credentialRotated'
+    title: 'EVT-15-04: PH-15 phát qua outbox'
+  sendCredentialRevoked:
+    action: send
+    channel:
+      $ref: '#/channels/credentialRevoked'
+    messages:
+    - $ref: '#/channels/credentialRevoked/messages/credentialRevoked'
+    title: 'EVT-15-05: PH-15 phát qua outbox'
+  sendDevAccountRegistered:
+    action: send
+    channel:
+      $ref: '#/channels/devAccountRegistered'
+    messages:
+    - $ref: '#/channels/devAccountRegistered/messages/devAccountRegistered'
+    title: 'EVT-15-06: PH-15 phát qua outbox'
+  sendDevAccountStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/devAccountStateChanged'
+    messages:
+    - $ref: '#/channels/devAccountStateChanged/messages/devAccountStateChanged'
+    title: 'EVT-15-07: PH-15 phát qua outbox'
+  sendContentPublished:
+    action: send
+    channel:
+      $ref: '#/channels/contentPublished'
+    messages:
+    - $ref: '#/channels/contentPublished/messages/contentPublished'
+    title: 'EVT-15-08: PH-15 phát qua outbox'
+  sendContentUnpublished:
+    action: send
+    channel:
+      $ref: '#/channels/contentUnpublished'
+    messages:
+    - $ref: '#/channels/contentUnpublished/messages/contentUnpublished'
+    title: 'EVT-15-09: PH-15 phát qua outbox'
+  sendTryProductionStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/tryProductionStateChanged'
+    messages:
+    - $ref: '#/channels/tryProductionStateChanged/messages/tryProductionStateChanged'
+    title: 'EVT-15-10: PH-15 phát qua outbox'
+  sendTryExecuted:
+    action: send
+    channel:
+      $ref: '#/channels/tryExecuted'
+    messages:
+    - $ref: '#/channels/tryExecuted/messages/tryExecuted'
+    title: 'EVT-15-11: PH-15 phát qua outbox'
+  sendSupportTicketOpened:
+    action: send
+    channel:
+      $ref: '#/channels/supportTicketOpened'
+    messages:
+    - $ref: '#/channels/supportTicketOpened/messages/supportTicketOpened'
+    title: 'EVT-15-12: PH-15 phát qua outbox'
+  sendTeamMemberChanged:
+    action: send
+    channel:
+      $ref: '#/channels/teamMemberChanged'
+    messages:
+    - $ref: '#/channels/teamMemberChanged/messages/teamMemberChanged'
+    title: 'EVT-15-13: PH-15 phát qua outbox'
+  sendSyncStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/syncStateChanged'
+    messages:
+    - $ref: '#/channels/syncStateChanged/messages/syncStateChanged'
+    title: 'EVT-15-14: PH-15 phát qua outbox'
+  receiveCatalogApiRegistered:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogApiRegistered'
+    messages:
+    - $ref: '#/channels/catalogApiRegistered/messages/catalogApiRegistered'
+    title: 'EVT-02-01: PH-15 tiêu thụ'
+  receiveCatalogApiUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogApiUpdated'
+    messages:
+    - $ref: '#/channels/catalogApiUpdated/messages/catalogApiUpdated'
+    title: 'EVT-02-02: PH-15 tiêu thụ'
+  receiveCatalogApiDeleted:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogApiDeleted'
+    messages:
+    - $ref: '#/channels/catalogApiDeleted/messages/catalogApiDeleted'
+    title: 'EVT-02-03: PH-15 tiêu thụ'
+  receiveCatalogVersionPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogVersionPublished'
+    messages:
+    - $ref: '#/channels/catalogVersionPublished/messages/catalogVersionPublished'
+    title: 'EVT-02-05: PH-15 tiêu thụ'
+  receiveCatalogVersionStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogVersionStateChanged'
+    messages:
+    - $ref: '#/channels/catalogVersionStateChanged/messages/catalogVersionStateChanged'
+    title: 'EVT-02-06: PH-15 tiêu thụ'
+  receiveCatalogPlanStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogPlanStateChanged'
+    messages:
+    - $ref: '#/channels/catalogPlanStateChanged/messages/catalogPlanStateChanged'
+    title: 'EVT-02-08: PH-15 tiêu thụ'
+  receiveCatalogSubscriptionRequested:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogSubscriptionRequested'
+    messages:
+    - $ref: '#/channels/catalogSubscriptionRequested/messages/catalogSubscriptionRequested'
+    title: 'EVT-02-09: PH-15 tiêu thụ'
+  receiveCatalogSubscriptionActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogSubscriptionActivated'
+    messages:
+    - $ref: '#/channels/catalogSubscriptionActivated/messages/catalogSubscriptionActivated'
+    title: 'EVT-02-10: PH-15 tiêu thụ'
+  receiveCatalogSubscriptionStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogSubscriptionStateChanged'
+    messages:
+    - $ref: '#/channels/catalogSubscriptionStateChanged/messages/catalogSubscriptionStateChanged'
+    title: 'EVT-02-11: PH-15 tiêu thụ'
+  receiveCatalogChangeNoticeIssued:
+    action: receive
+    channel:
+      $ref: '#/channels/catalogChangeNoticeIssued'
+    messages:
+    - $ref: '#/channels/catalogChangeNoticeIssued/messages/catalogChangeNoticeIssued'
+    title: 'EVT-02-12: PH-15 tiêu thụ'
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`).
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do CA nội bộ cấp (cert-manager, PH-12); ACL Kafka theo CN.
+  messages:
+    appCreated:
+      name: appCreated
+      title: EVT-15-01
+      summary: Ứng dụng sandbox được tạo.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AppCreated'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: &id001
+            type: string
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: &id002
+            type: string
+            format: date-time
+          ce_subject: *id001
+          dhtenant: &id003
+            type: string
+            pattern: ^T[0-9]{2}$
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-01
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z10
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.app.created
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          ownerType: USER
+          ownerId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+    appStateChanged:
+      name: appStateChanged
+      title: EVT-15-02
+      summary: Ứng dụng đổi trạng thái; PH-03 và `forward-auth` xóa bộ đệm.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AppStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-02
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z11
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.app.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          from: ACTIVE
+          to: SUSPENDED
+          reason: Nghi lạm dụng hạn mức
+    credentialIssued:
+      name: credentialIssued
+      title: EVT-15-03
+      summary: Cấp thông tin xác thực sandbox; không mang bí mật.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CredentialIssued'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-03
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z12
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.credential.issued
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          credentialId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          kind: CLIENT_CREDENTIALS
+          expiresAt: '2027-02-24T09:00:00+07:00'
+    credentialRotated:
+      name: credentialRotated
+      title: EVT-15-04
+      summary: Xoay vòng thông tin xác thực; bản cũ còn hiệu lực đến `graceUntil`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CredentialRotated'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-04
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z13
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.credential.rotated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          credentialId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          newCredentialId: 7c1d9a42-5b3e-4f60-8d17-2a9c0e5f6b31
+          graceUntil: '2026-11-27T09:00:00+07:00'
+    credentialRevoked:
+      name: credentialRevoked
+      title: EVT-15-05
+      summary: Thu hồi hoặc hết hạn thông tin xác thực; `forward-auth` chặn trong ≤ 5 giây.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CredentialRevoked'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-05
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z14
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.credential.revoked
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          credentialId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          reason: REVOKED_BY_OWNER
+    devAccountRegistered:
+      name: devAccountRegistered
+      title: EVT-15-06
+      summary: Tài khoản dh-dev tự đăng ký; đã xác minh thư, chờ duyệt.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DevAccountRegistered'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+      examples:
+      - name: EVT-15-06
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z15
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.devaccount.registered
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          userId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          organization: Công ty Giải pháp Số Việt
+    devAccountStateChanged:
+      name: devAccountStateChanged
+      title: EVT-15-07
+      summary: Tài khoản dh-dev đổi trạng thái.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DevAccountStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+      examples:
+      - name: EVT-15-07
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z16
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.devaccount.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          userId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          from: PENDING_APPROVAL
+          to: ACTIVE
+    contentPublished:
+      name: contentPublished
+      title: EVT-15-08
+      summary: Trang nội dung được đăng sau duyệt bốn mắt.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContentPublished'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`pageCode`'
+      examples:
+      - name: EVT-15-08
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z17
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.content.published
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: bat-dau-nhanh
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          pageCode: bat-dau-nhanh
+          versionNo: 4
+          audience: PUBLIC
+    contentUnpublished:
+      name: contentUnpublished
+      title: EVT-15-09
+      summary: Trang nội dung bị gỡ đăng.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ContentUnpublished'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`pageCode`'
+      examples:
+      - name: EVT-15-09
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z18
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.content.unpublished
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: bat-dau-nhanh
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          pageCode: bat-dau-nhanh
+          versionNo: 4
+    tryProductionStateChanged:
+      name: tryProductionStateChanged
+      title: EVT-15-10
+      summary: Trạng thái thử production của một dịch vụ đổi.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TryProductionStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-15-10
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z19
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.try.production-state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          from: PENDING
+          to: ENABLED
+          expiresAt: '2027-02-24T09:00:00+07:00'
+    tryExecuted:
+      name: tryExecuted
+      title: EVT-15-11
+      summary: Một lượt thử đã chạy; không mang thân yêu cầu hay phản hồi (BR-15-024).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TryExecuted'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`appCode`'
+      examples:
+      - name: EVT-15-11
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z20
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.try.executed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: app-tra-cuu-ho-tich
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          tryId: TRY-20261126-000123
+          appCode: app-tra-cuu-ho-tich
+          env: SANDBOX
+          apiCode: tra-cuu-ho-tich
+          result: OK
+          latencyMs: 131
+          traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    supportTicketOpened:
+      name: supportTicketOpened
+      title: EVT-15-12
+      summary: Phiếu hỗ trợ hoặc hỏi đáp mới; PH-10 dùng cho dịch vụ sự kiện.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SupportTicketOpened'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`ticketCode`'
+      examples:
+      - name: EVT-15-12
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z21
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.support.ticket-opened
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: HT-2026-0042
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          ticketCode: HT-2026-0042
+          kind: SUPPORT_REQUEST
+          status: OPEN
+          apiCode: tra-cuu-ho-tich
+    teamMemberChanged:
+      name: teamMemberChanged
+      title: EVT-15-13
+      summary: Thành viên nhóm hoặc ứng dụng đổi; đúng một trong `teamCode`, `appCode`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TeamMemberChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+      examples:
+      - name: EVT-15-13
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z22
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.team.member-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: 7c1d9a42-5b3e-4f60-8d17-2a9c0e5f6b31
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          appCode: app-tra-cuu-ho-tich
+          userId: 7c1d9a42-5b3e-4f60-8d17-2a9c0e5f6b31
+          role: DEVELOPER
+          change: ADDED
+    syncStateChanged:
+      name: syncStateChanged
+      title: EVT-15-14
+      summary: Trạng thái đồng bộ danh mục với PH-02 đổi (kể cả `STALE` khi trễ > 900 giây).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SyncStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantId`'
+      examples:
+      - name: EVT-15-14
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Z5Q8R2S4T6V8W0X2Y4Z23
+          ce_source: /t68/services/dh-connect-portal
+          ce_type: vn.datahub.portal.sync.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          ce_subject: T68
+          dhtenant: T68
+          traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          from: IDLE
+          to: STALE
+          lagSeconds: 1260
+    catalogApiRegistered:
+      name: catalogApiRegistered
+      title: EVT-02-01
+      summary: API được đăng ký; kích hoạt kéo gia tăng.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogApiRegistered'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-01
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J14
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.api.registered
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+    catalogApiUpdated:
+      name: catalogApiUpdated
+      title: EVT-02-02
+      summary: Đổi thông tin, phân loại, mức hiển thị, chủ quản, SLA; `visibility` hoặc `portalPublished` đổi thì cổng cập nhật chỉ mục ngay.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogApiUpdated'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-02
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J15
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.api.updated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          changedFields:
+          - visibility
+          - sla
+    catalogApiDeleted:
+      name: catalogApiDeleted
+      title: EVT-02-03
+      summary: API bị xóa mềm; cổng gỡ khỏi bản sao và chỉ mục.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogApiDeleted'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-03
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J16
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.api.deleted
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+    catalogVersionPublished:
+      name: catalogVersionPublished
+      title: EVT-02-05
+      summary: Phiên bản sang `PUBLISHED`; cổng nạp đặc tả.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogVersionPublished'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-05
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J17
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.version.published
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          versionNo: 1.0.0
+    catalogVersionStateChanged:
+      name: catalogVersionStateChanged
+      title: EVT-02-06
+      summary: Tạm ngừng, tiếp tục, ngừng khuyến nghị, ngừng hẳn; cổng hiện banner `DEPRECATED`.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogVersionStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-06
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J18
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.version.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          versionNo: 1.0.0
+          from: PUBLISHED
+          to: DEPRECATED
+          sunsetAt: '2027-06-30T00:00:00Z'
+    catalogPlanStateChanged:
+      name: catalogPlanStateChanged
+      title: EVT-02-08
+      summary: Gói đổi trạng thái hoặc khai báo; cổng cập nhật danh sách gói.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogPlanStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-08
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J19
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.plan.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          planCode: co-ban
+    catalogSubscriptionRequested:
+      name: catalogSubscriptionRequested
+      title: EVT-02-09
+      summary: Đăng ký chờ duyệt; cổng chỉ làm mới bộ đệm đăng ký của người dùng, không phát lại (BR-15-014).
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogSubscriptionRequested'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionId`'
+      examples:
+      - name: EVT-02-09
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J20
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.subscription.requested
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          subscriptionId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          systemCode: HT-DATDAI
+    catalogSubscriptionActivated:
+      name: catalogSubscriptionActivated
+      title: EVT-02-10
+      summary: Đăng ký được cấp phạm vi; cổng làm mới điều kiện thử production.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogSubscriptionActivated'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionId`'
+      examples:
+      - name: EVT-02-10
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J21
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.subscription.activated
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          subscriptionId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          systemCode: HT-DATDAI
+    catalogSubscriptionStateChanged:
+      name: catalogSubscriptionStateChanged
+      title: EVT-02-11
+      summary: Từ chối, tạm ngừng, thu hồi, hủy, hết hạn; cổng thu hồi quyền thử production nếu cần.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogSubscriptionStateChanged'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`subscriptionId`'
+      examples:
+      - name: EVT-02-11
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J22
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.subscription.state-changed
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          subscriptionId: 0b5f3c1e-7d2a-4c8e-9a10-3f6e1d2b4a55
+          systemCode: HT-DATDAI
+          to: REVOKED
+    catalogChangeNoticeIssued:
+      name: catalogChangeNoticeIssued
+      title: EVT-02-12
+      summary: Thông báo thay đổi đã phát; cổng tra người theo dõi rồi ghi hộp thông báo.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CatalogChangeNoticeIssued'
+      headers:
+        type: object
+        additionalProperties: true
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id: *id001
+          ce_source: *id001
+          ce_type:
+            type: string
+            pattern: ^vn\.datahub\.[a-z0-9-]+(\.[a-z0-9-]+)+$
+          ce_time: *id002
+          ce_subject: *id001
+          dhtenant: *id003
+          traceparent: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+      examples:
+      - name: EVT-02-12
+        headers:
+          ce_specversion: '1.0'
+          ce_id: 01JD3Y0A1B2C3D4E5F6G7H8J23
+          ce_source: /t68/services/dh-catalog
+          ce_type: vn.datahub.catalog.change.notice-issued
+          ce_time: '2026-11-26T09:15:02+07:00'
+          dhtenant: T68
+        payload:
+          tenantId: T68
+          occurredAt: '2026-11-26T09:15:02+07:00'
+          apiCode: tra-cuu-ho-tich
+          noticeId: tb-2026-0007
+          kind: DEPRECATED
+          mandatory: true
+          title: tra-cuu-ho-tich 1.0.0 ngừng khuyến nghị
+          versionNo: 1.0.0
+  schemas:
+    AppCode:
+      type: string
+      pattern: ^[a-z][a-z0-9-]{2,40}$
+    ApiCode:
+      type: string
+      pattern: ^[a-z][a-z0-9-]{2,63}$
+    PageCode:
+      type: string
+      pattern: ^[a-z0-9][a-z0-9-]{1,62}$
+    TeamCode:
+      type: string
+      pattern: ^[a-z][a-z0-9-]{2,40}$
+    TicketCode:
+      type: string
+      pattern: ^HT-[0-9]{4}-[0-9]{4,}$
+    SemVer:
+      type: string
+      pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+    AppCreated:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - appCode
+      - ownerType
+      - ownerId
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        appCode: &id004
+          $ref: '#/components/schemas/AppCode'
+        ownerType:
+          type: string
+          enum:
+          - USER
+          - TEAM
+        ownerId: *id001
+    AppStateChanged:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - appCode
+      - from
+      - to
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        appCode: *id004
+        from: &id005
+          type: string
+          enum:
+          - ACTIVE
+          - SUSPENDED
+          - ARCHIVED
+        to: *id005
+        reason: *id001
+    CredentialIssued:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - appCode
+      - credentialId
+      - kind
+      - expiresAt
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        appCode: *id004
+        credentialId: *id001
+        kind:
+          type: string
+          enum:
+          - CLIENT_CREDENTIALS
+          - API_KEY
+        expiresAt: *id002
+    CredentialRotated:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - appCode
+      - credentialId
+      - newCredentialId
+      - graceUntil
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        appCode: *id004
+        credentialId: *id001
+        newCredentialId: *id001
+        graceUntil: *id002
+    CredentialRevoked:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - appCode
+      - credentialId
+      - reason
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        appCode: *id004
+        credentialId: *id001
+        reason:
+          type: string
+          enum:
+          - REVOKED_BY_OWNER
+          - EXPIRED
+          - APP_ARCHIVED
+          - ADMIN_LOCK
+    DevAccountRegistered:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - userId
+      - organization
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        userId: *id001
+        organization: *id001
+    DevAccountStateChanged:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - userId
+      - from
+      - to
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        userId: *id001
+        from: &id006
+          type: string
+          enum:
+          - PENDING_EMAIL
+          - PENDING_APPROVAL
+          - ACTIVE
+          - REJECTED
+          - LOCKED
+          - DISABLED
+          - EXPIRED
+          - ERASED
+        to: *id006
+    ContentPublished:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - pageCode
+      - versionNo
+      - audience
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        pageCode:
+          $ref: '#/components/schemas/PageCode'
+        versionNo:
+          type: integer
+        audience:
+          type: string
+          enum:
+          - PUBLIC
+          - LOGGED_IN
+          - TENANT
+    ContentUnpublished:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - pageCode
+      - versionNo
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        pageCode:
+          $ref: '#/components/schemas/PageCode'
+        versionNo:
+          type: integer
+    TryProductionStateChanged:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - from
+      - to
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: &id008
+          $ref: '#/components/schemas/ApiCode'
+        from: &id007
+          type: string
+          enum:
+          - 'OFF'
+          - PENDING
+          - ENABLED
+          - EXPIRED
+        to: *id007
+        expiresAt: *id002
+    TryExecuted:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - tryId
+      - env
+      - apiCode
+      - result
+      - latencyMs
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        tryId: *id001
+        appCode: *id004
+        env:
+          type: string
+          enum:
+          - SANDBOX
+          - PRODUCTION
+        apiCode: *id008
+        result:
+          type: string
+          enum:
+          - OK
+          - UPSTREAM_ERROR
+          - DENIED
+          - THROTTLED
+          - TIMEOUT
+        latencyMs:
+          type: integer
+        traceId: *id001
+    SupportTicketOpened:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - ticketCode
+      - kind
+      - status
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        ticketCode:
+          $ref: '#/components/schemas/TicketCode'
+        kind:
+          type: string
+          enum:
+          - QUESTION
+          - DOC_ERROR
+          - SUPPORT_REQUEST
+          - ACCESS_REQUEST
+          - FEEDBACK
+        status:
+          type: string
+          enum:
+          - OPEN
+          - ANSWERED
+          - RESOLVED
+          - CLOSED
+        apiCode: *id008
+    TeamMemberChanged:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - userId
+      - role
+      - change
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        teamCode:
+          $ref: '#/components/schemas/TeamCode'
+        appCode: *id004
+        userId: *id001
+        role:
+          type: string
+          enum:
+          - OWNER
+          - DEVELOPER
+          - VIEWER
+        change:
+          type: string
+          enum:
+          - ADDED
+          - ROLE_CHANGED
+          - REMOVED
+    SyncStateChanged:
+      type: object
+      additionalProperties: false
+      required:
+      - tenantId
+      - occurredAt
+      - from
+      - to
+      - lagSeconds
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        from: &id009
+          type: string
+          enum:
+          - IDLE
+          - RUNNING
+          - FAILED
+          - STALE
+        to: *id009
+        lagSeconds:
+          type: integer
+    CatalogApiRegistered:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogApiUpdated:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - changedFields
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+        changedFields:
+          type: array
+          items: *id001
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogApiDeleted:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogVersionPublished:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - versionNo
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+        versionNo: &id010
+          $ref: '#/components/schemas/SemVer'
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogVersionStateChanged:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - to
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+        versionNo: *id010
+        from:
+          type: string
+        to:
+          type: string
+        sunsetAt: *id002
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogPlanStateChanged:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - planCode
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+        planCode: *id001
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogSubscriptionRequested:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - subscriptionId
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        subscriptionId: *id001
+        systemCode: *id001
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogSubscriptionActivated:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - subscriptionId
+      - systemCode
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        subscriptionId: *id001
+        systemCode: *id001
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogSubscriptionStateChanged:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - subscriptionId
+      - to
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        subscriptionId: *id001
+        systemCode: *id001
+        to: *id001
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).
+    CatalogChangeNoticeIssued:
+      type: object
+      additionalProperties: true
+      required:
+      - tenantId
+      - occurredAt
+      - apiCode
+      - noticeId
+      - kind
+      - title
+      properties:
+        tenantId: *id003
+        occurredAt: *id002
+        apiCode: *id008
+        noticeId: *id001
+        kind:
+          type: string
+        mandatory:
+          type: boolean
+        title: *id001
+        versionNo: *id010
+      description: Tập con trường PH-15 dùng; bên đọc bỏ qua trường lạ (tolerant reader). Hợp đồng đầy đủ do PH-02 giữ (D03-04-PH02).

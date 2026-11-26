@@ -1,0 +1,18 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI-15-06 · Thử API</title><link rel="stylesheet" href="hifi.css"></head><body>
+<header class="pt"><span class="burger" aria-label="Mở menu">☰</span><div class="logo"><b>Cổng API</b> Tỉnh T68</div><nav aria-label="Điều hướng chính"><a class="on" href="#">Dịch vụ</a><a class="" href="#">Sự kiện</a><a class="" href="#">Hướng dẫn</a><a class="" href="#">Hỏi đáp</a><a class="" href="#">Ứng dụng của tôi</a><a class="" href="#">Hỗ trợ</a></nav><div class="sp"></div>
+<div class="search input">Tìm dịch vụ, hướng dẫn…  Ctrl K</div><span class="tray hide-m">🔔 3</span><span class="tray hide-m">T68</span><div class="avatar" aria-label="Menu tài khoản">AN</div></header>
+<main class="page">
+<div class="muted">Dịch vụ › Tra cứu hộ tịch › Thử API</div>
+<div class="banner i">ℹ Đang thử trên <b>Sandbox</b> (chế độ MOCK): phản hồi sinh từ ví dụ trong đặc tả, chỉ dùng dữ liệu giả.</div>
+<div class="lay3" style="grid-template-columns:240px minmax(0,1fr) minmax(0,1fr)"><nav class="toc"><div class="input" style="margin-bottom:8px">v1.0.0 ▾</div><div class="on">POST /ho-tich/tra-cuu</div><div>GET /ho-tich/{ma}</div><div class="muted" style="margin-top:10px">Hạn mức phút này</div><div class="prog"><i style="width:90%"></i></div><div class="muted">27/30 lượt · ứng dụng 412/3.000 hôm nay</div></nav>
+<div class="card"><h3 style="margin:0 0 8px">Yêu cầu</h3><div class="fg"><div class="field"><label>Môi trường</label><div class="input">Sandbox ▾</div></div><div class="field"><label>Ứng dụng</label><div class="input">datdai-thu-nghiem ▾</div></div></div>
+<div class="field"><label>Thân yêu cầu (JSON)</label><div class="ed" style="min-height:90px">{ "soGiayKhaiSinh": "000-KS-2026-0001" }</div></div>
+<div class="banner w">⚠ Nội dung có vẻ chứa dữ liệu cá nhân thật. Chỉ dùng dữ liệu giả (dải 000…).</div>
+<div class="foot"><span class="btn">Kiểm tra</span><span class="btn">Lưu vào bộ sưu tập</span><span class="btn pri">Gửi thử  Ctrl+Enter</span></div></div>
+<div class="card"><h3 style="margin:0 0 8px">Phản hồi <span class='tag t-ok'>200 OK</span> <span class="muted" style="font-weight:400">184 ms · MOCK · tryId TR-8F2K</span></h3><div class="code">HTTP/1.1 200 OK
+{ "<i>soGiayKhaiSinh</i>": "000-KS-2026-0001",
+  "<i>hoTen</i>": "Nguyen Van Mau", "<i>trangThai</i>": "DA_CAP" }</div>
+<div class="muted" style="margin-top:8px">Tiêu đề: X-DH-Sandbox: mock · X-DH-Try-Id: TR-8F2K</div><div class="foot"><span class="btn">Mẫu mã tương ứng</span><span class="btn">⧉ Sao chép</span></div></div></div></main>
+<footer class="pf"><span>Điều khoản sử dụng</span><span>Chính sách bảo vệ dữ liệu cá nhân</span><span>Hỗ trợ: hotro@t68.datahub.gov.vn</span><span>Cổng v1.0</span></footer>
+<div class="hint">Bản hi-fi minh họa · D03-06-PH15 · UI-15-06 · dữ liệu giả định</div></body></html>

@@ -1,0 +1,37 @@
+# TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
+# Chạy bởi tài khoản dh_data_migrator (thành viên ph06_owner), defaultSchemaName=ph06_mdm.
+# Context: bootstrap (vai trò, extension, schema). Khởi tạo tenant bằng thủ tục p_seed_tenant (06-0001-functions.sql), không có seed chung.
+databaseChangeLog:
+  - include:
+      file: changes/06-0000-bootstrap.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0001-functions.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0010-model.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0020-ingest.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0030-match.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0040-steward.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0050-golden.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0060-serve.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0070-ops.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0080-messaging.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/06-0900-grants.sql
+      relativeToChangelogFile: true

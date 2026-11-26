@@ -1,0 +1,20 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI-15-05 · Tài liệu API</title><link rel="stylesheet" href="hifi.css"></head><body>
+<header class="pt"><span class="burger" aria-label="Mở menu">☰</span><div class="logo"><b>Cổng API</b> Tỉnh T68</div><nav aria-label="Điều hướng chính"><a class="on" href="#">Dịch vụ</a><a class="" href="#">Sự kiện</a><a class="" href="#">Hướng dẫn</a><a class="" href="#">Hỏi đáp</a><a class="" href="#">Ứng dụng của tôi</a><a class="" href="#">Hỗ trợ</a></nav><div class="sp"></div>
+<div class="search input">Tìm dịch vụ, hướng dẫn…  Ctrl K</div><span class="tray hide-m">🔔 3</span><span class="tray hide-m">T68</span><div class="avatar" aria-label="Menu tài khoản">AN</div></header>
+<main class="page">
+<div class="muted">Dịch vụ › Tra cứu hộ tịch › Tài liệu</div>
+<div class="lay3"><nav class="toc" aria-label="Mục lục"><div class="input" style="margin-bottom:8px">v1.0.0 ▾</div><div>Giới thiệu</div><div>Xác thực</div><div>Thao tác</div>
+<div class="sub on">POST /ho-tich/tra-cuu</div><div class="sub">GET /ho-tich/{ma}</div><div>Mã lỗi</div><div>Giới hạn sử dụng</div><div>Nhật ký thay đổi</div><div style="margin-top:8px"><span class="btn">⬇ OpenAPI (yaml)</span></div></nav>
+<div class="doc"><h2>Tra cứu hộ tịch <span class="muted" style="font-size:13px">v1.0.0</span></h2>
+<h3><span class="m">POST</span> /ho-tich/tra-cuu</h3><p>Tra cứu giấy khai sinh theo số giấy khai sinh. Cần phạm vi <span class="mono">hotich:read</span>.</p>
+<div class="tw"><table class="rt" aria-label="Tham số"><thead><tr><th scope='col'>Tham số</th><th scope='col'>Vị trí</th><th scope='col'>Kiểu</th><th scope='col'>Bắt buộc</th><th scope='col'>Mô tả</th></tr></thead><tbody><tr><td data-l='Tham số'>soGiayKhaiSinh</td><td data-l='Vị trí'>body</td><td data-l='Kiểu'>chuỗi</td><td data-l='Bắt buộc'>Có</td><td data-l='Mô tả'>Số giấy khai sinh, 6–30 ký tự</td></tr><tr><td data-l='Tham số'>Idempotency-Key</td><td data-l='Vị trí'>header</td><td data-l='Kiểu'>chuỗi</td><td data-l='Bắt buộc'>Không</td><td data-l='Mô tả'>Khóa chống trùng</td></tr></tbody></table></div>
+<h3>Mã trạng thái</h3><div class="row"><span class='tag t-ok'>200</span> <span class='tag t-warn'>404</span> <span class='tag t-err'>422</span> <span class='tag t-err'>429</span></div><h3>Đặc tả liên quan</h3><div class="muted">Xem phiên bản trước · So sánh v0.9.0 ↔ v1.0.0</div></div>
+<div><div class="card" style="margin-bottom:10px"><div class="tabs"><span class="on">curl</span><span>Java</span><span>Python</span><span>JavaScript</span><span>C#</span><span>Go</span></div><div class="code"><b>curl</b> -X POST https://api.t68.datahub.gov.vn/tu-phap/v1/ho-tich/tra-cuu \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"<i>soGiayKhaiSinh</i>": "<i>000-KS-2026-0001</i>"}'</div><div class="foot"><span class="btn">⧉ Sao chép</span></div></div>
+<div class="card"><b>Phản hồi mẫu 200</b><div class="code" style="margin-top:8px">HTTP/1.1 200 OK
+{ "<i>soGiayKhaiSinh</i>": "000-KS-2026-0001",
+  "<i>hoTen</i>": "Nguyen Van Mau", "<i>trangThai</i>": "DA_CAP" }</div></div></div></div></main>
+<footer class="pf"><span>Điều khoản sử dụng</span><span>Chính sách bảo vệ dữ liệu cá nhân</span><span>Hỗ trợ: hotro@t68.datahub.gov.vn</span><span>Cổng v1.0</span></footer>
+<div class="hint">Bản hi-fi minh họa · D03-06-PH15 · UI-15-05 · dữ liệu giả định</div></body></html>
