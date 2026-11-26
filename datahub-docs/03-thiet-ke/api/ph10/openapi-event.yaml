@@ -1221,7 +1221,7 @@ paths:
       - FR-10-068
       x-datahub-permission:
         anyOf:
-        - PERM-10-update
+        - PERM-10-create
         - scope:event:topic-register
       security:
       - oauth2User: []
@@ -9490,8 +9490,7 @@ components:
           lagSeconds: 18
     LagAckRequest:
       summary: Yêu cầu LagAckRequest
-      value:
-        alertAckNote: Giá trị mẫu
+      value: {}
     ApprovalRequestPage:
       summary: ApprovalRequestPage
       value:
@@ -11764,7 +11763,7 @@ components:
           format: uri
         apicurioGroupId:
           type: string
-          maxLength: 63
+          maxLength: 16
         apicurioArtifactId:
           $ref: '#/components/schemas/TopicName'
         consumerGroupTemplate:
@@ -11831,7 +11830,7 @@ components:
           $ref: '#/components/schemas/Compatibility'
         apicurioGroupId:
           type: string
-          maxLength: 63
+          maxLength: 16
         apicurioArtifactId:
           $ref: '#/components/schemas/TopicName'
         latestVersionNo:
@@ -13060,10 +13059,7 @@ components:
         alertAckNote:
           type: string
           maxLength: 1000
-          minLength: 5
       additionalProperties: false
-      required:
-      - alertAckNote
     ApprovalRequest:
       type: object
       properties:
@@ -13967,7 +13963,7 @@ components:
           minimum: 1024
         apicurioGroupId:
           type: string
-          maxLength: 63
+          maxLength: 16
         apicurioArtifactId:
           $ref: '#/components/schemas/TopicName'
         enabledVersions:

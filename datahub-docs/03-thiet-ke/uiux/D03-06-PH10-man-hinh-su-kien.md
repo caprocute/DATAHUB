@@ -817,7 +817,7 @@ Chân Drawer hiện tóm tắt khác biệt cũ và mới bằng `CMP-DiffTable`
 | Bước | Nhãn | Trường | Thành phần | Bắt buộc | Kiểm tra | Lỗi máy chủ |
 |---|---|---|---|---|---|---|
 | 1 | Dự án | `projectCode` | `CMP-ResourceSelect` dự án `ACTIVE` | Có | | ERR-10-001, ERR-10-006 |
-| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
+| 1 | Miền | `domain` | `CMP-Input` `font-mono` | Có | `^[a-z][a-z0-9-]{1,30}$`; không thuộc `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform` (thông điệp nêu "miền dành riêng cho hệ thống") | ERR-10-004 |
 | 1 | Thực thể | `entity` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$` | ERR-10-004 |
 | 1 | Sự kiện | `eventName` | `CMP-Input` | Có | `^[a-z][a-z0-9-]{1,40}$`; gợi ý mềm khi không bắt đầu bằng `da-` ("Nên dùng động từ quá khứ") | ERR-10-004 |
 | 1 | Tên topic | (ghép) | `CMP-Identifier` chỉ đọc | | `{tenant}.{domain}.{entity}.{eventName}.v1` chữ thường, ≤ 200 ký tự; kiểm tra còn trống bằng API-10-010 sau 400 ms ngừng gõ | ERR-10-002, ERR-10-005 |
@@ -989,7 +989,7 @@ Khác biệt với UI-10-09:
 | Kiểu giao tiếp | Chỉ chiều nhận: `WEBHOOK_PUSH`, `HTTP_PULL`, `KAFKA_NATIVE`, `INTERNAL_KAFKA` (A.2.8) |
 | Cột "Loại" | `FLOW` hiện "Luồng tích hợp" kèm biểu tượng luồng; cột ẩn `isFlow` không cần vì đã có loại |
 | Tab con | `/dang-ky-nhan-ds`: bảng subscription của bên (topic, chế độ, trạng thái, `alertState`, lag, DLQ mới) có nút "Đăng ký nhận topic khác" mở `CMP-TopicSelect` rồi UI-10-11 |
-| Drawer đăng ký | Có thêm câu ở thẻ Luồng tích hợp: "Chỉ nhận bằng chế độ Nội bộ, nhóm tiêu thụ `dh-flow-{tenant}-{luồng}`." |
+| Drawer đăng ký | Có thêm câu ở thẻ Luồng tích hợp: "Chỉ nhận bằng chế độ Nội bộ, nhóm tiêu thụ `dh-flow-{tenant}-{flow}`." |
 | Tạm ngừng | Câu xác nhận "Mọi đăng ký nhận đang hiệu lực của bên này sẽ tạm ngừng; bộ giao nhận dừng gửi." |
 
 Trạng thái rỗng: "Chưa có bên nhận. Bên nhận là HTTT, luồng hoặc dịch vụ đăng ký nhận sự kiện từ topic."
@@ -1642,7 +1642,7 @@ Canvas `color-surface-solid-2`; nút nền `color-surface-solid`, viền 1 px `c
 |---|---|---|
 | Thanh lọc | `CMP-FilterBar`, `CMP-Select`, `CMP-DateRangePicker`, `CMP-SearchInput` | `subscriptionCode`, `status` (mặc định `NEW`), `errorCode`, khoảng `firstFailedAt`, `eventId`, `eventSubject` |
 | Bảng | `CMP-DataTable` chọn nhiều | `firstFailedAt`, `subscriptionCode`, `origin`, `errorCode`, `attempts`, `eventType`, `eventSubject`, `status`, `sourcePartition`, `sourceOffset` (ẩn mặc định) |
-| Thanh chọn | `CMP-SelectionBar` | Phát lại (mở UI-10-16 kiểu `DLQ_ENTRIES`), Loại bỏ (≤ 1.000 mỗi lệnh; theo bộ lọc thì chạy nền) |
+| Thanh chọn | `CMP-SelectionBar` | Phát lại (mở UI-10-16 kiểu `DLQ_ENTRIES`), Loại bỏ (≤ 1.000 mỗi lệnh; "chọn tất cả theo bộ lọc" gửi tối đa 1.000 mã, chạy nền theo bộ lọc để Đợt sau) |
 | Drawer mục | `CMP-Drawer`, `CMP-DescriptionList`, `CMP-JsonViewer` | Siêu dữ liệu đủ A.3 `DlqEntry`; nút "Xem nội dung" |
 
 Xem nội dung: topic `RESTRICTED`, `SENSITIVE` mở `CMP-ReasonDialog` bắt buộc lý do trước (kiểm toán xem dữ liệu Nhạy cảm, FR-00-040); nội dung hiện trong `CMP-JsonViewer` đã che theo chính sách PH-09 khi có, có dải "Đã ghi nhận lượt xem nội dung lúc {giờ}". Nội dung đã xóa (`PURGED`, `payloadPurgedAt`) hiện "Nội dung đã xóa theo thời hạn lưu giữ." Loại bỏ dùng `CMP-ReasonDialog`; mục đã xử lý trả ERR-10-036. Subscription `REVOKED`: nút Phát lại vô hiệu với lý do "Đăng ký nhận đã thu hồi; chỉ loại bỏ được." (FR-10-047).

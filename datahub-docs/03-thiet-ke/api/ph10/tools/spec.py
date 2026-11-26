@@ -37,7 +37,7 @@ OPS = [
      "006 011 012 013 014 019 045 046 047 048"),
     ("016", "POST", "/topics/{topicName}:deprecate", "Ngừng khuyến nghị topic", "014", "update", "", "200", "topic", "006 009 045"),
     ("017", "POST", "/topics/{topicName}:retire", "Đề nghị ngừng dùng topic", "014", "update", "", "200", "topic", "006 009 010 045"),
-    ("018", "POST", "/topics/{topicName}:new-major-version", "Tạo phiên bản chính mới của topic", "015, 068", "update", "x", "201", "topic",
+    ("018", "POST", "/topics/{topicName}:new-major-version", "Tạo phiên bản chính mới của topic", "015, 068", "create", "x", "201", "topic",
      "006 011 015 017 018 029 045 047"),
     ("019", "GET", "/topics/{topicName}/migration-status", "Tiến độ chuyển bên nhận sang topic kế nhiệm", "016", "read", "", "200", "topic", ""),
     ("020", "GET", "/topics/{topicName}/connection-info", "Thông tin kết nối và cấu hình mẫu cho bên phát, bên nhận", "007, 024, 034", "read", "", "200", "topic", ""),

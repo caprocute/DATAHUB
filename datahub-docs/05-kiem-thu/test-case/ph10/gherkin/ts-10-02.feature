@@ -16,7 +16,7 @@ Tính năng: TS-10-02 · Tạo topic và gửi duyệt
     # Truy vết: FR-10-008 · API-10-009 · ERR-10-002, 003, 004 · BR-10-002, 003, 030
     Biết U-T68-IE1; topic `t68.tc.cu.da-xoa.v1` đã `RETIRED`.
     Khi `POST /topics` với `domain = "DKKD"`, rồi `entity = "doanh_nghiep"`.
-    Và lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`.
+    Và lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`.
     Và ghép tên dài 201 ký tự.
     Và tạo lại `t68.tc.cu.da-xoa.v1`.
     Và `POST /topics` có `topicKind = CDC` bằng U-T68-IE1.

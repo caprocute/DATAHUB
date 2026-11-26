@@ -130,7 +130,7 @@ CREATE TABLE ph10_event.subscription (
         jsonb_typeof(pull) = 'object'
     AND (pull ->> 'maxBatch')::int BETWEEN 1 AND 1000
     AND (pull ->> 'leaseSeconds')::int BETWEEN 10 AND 300)),
-  CONSTRAINT ck_subscription_legal_basis CHECK (legal_basis IS NULL OR char_length(legal_basis) >= 5)
+  CONSTRAINT ck_subscription_legal_basis CHECK (legal_basis IS NULL OR char_length(legal_basis) BETWEEN 10 AND 1000)
 );
 CREATE UNIQUE INDEX uq_subscription_open ON ph10_event.subscription (tenant_id, subscriber_code, topic_name) WHERE status NOT IN ('REJECTED', 'REVOKED');
 CREATE INDEX ix_subscription_topic ON ph10_event.subscription (tenant_id, topic_name, status);

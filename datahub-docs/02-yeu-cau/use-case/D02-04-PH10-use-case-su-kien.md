@@ -1012,7 +1012,7 @@ Sơ đồ minh họa nhánh 4b với `failurePolicy` `DEAD_LETTER`: bộ giao nh
 **Luồng thay thế**
 
 - **2a. Topic `RESTRICTED`, `SENSITIVE`.** Xem nội dung cần lý do; hiển thị đã che theo chính sách PH-09 khi có (Q10-06).
-- **3a. Loại bỏ.** Mục là sự kiện thử nghiệm phát nhầm: Chi chọn mục và "Loại bỏ" với lý do (≤ 1.000 mục mỗi lệnh, hoặc theo bộ lọc chạy nền theo FR-00-054). Hệ thống gọi API-10-062; mục sang `DISCARDED`.
+- **3a. Loại bỏ.** Mục là sự kiện thử nghiệm phát nhầm: Chi chọn mục và "Loại bỏ" với lý do (≤ 1.000 mục mỗi lệnh; chọn tất cả theo bộ lọc gửi tối đa 1.000 mã, loại bỏ chạy nền theo bộ lọc để Đợt sau). Hệ thống gọi API-10-062; mục sang `DISCARDED`.
 - **3b. Gửi tới endpoint dự phòng.** Chi chọn `targetEndpointUrl` là endpoint khác đã xác minh của cùng bên nhận.
 - **3c. PH-18 khởi tạo.** Màn xử lý lỗi chung của PH-18 đọc DLQ bằng `event:dlq-read` và đề nghị phát lại bằng `event:replay`; tiếp bước 4.
 - **6a. Dọn nội dung.** Sau `10.dlq.payload-retention-days-after-resolve` (30) ngày từ khi xử lý, nội dung mục `REPLAYED`, `DISCARDED` bị xóa, mục sang `PURGED`, siêu dữ liệu giữ.

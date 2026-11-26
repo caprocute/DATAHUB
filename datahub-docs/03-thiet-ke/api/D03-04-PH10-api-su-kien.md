@@ -139,7 +139,7 @@ Bảng sinh từ [`ph10/tools/spec.py`](ph10/tools/spec.py) bằng `gen_md.py`, 
 | API-10-015 | `POST /topics/{topicName}/change-requests` | Đề nghị đổi phân vùng, lưu giữ, dọn, định tuyến, mức tương thích | 011, 012, 013, 021 | `PERM-10-update` | bắt buộc | 201 | 006, 011, 012, 013, 014, 019, 045, 046, 047, 048 |
 | API-10-016 | `POST /topics/{topicName}:deprecate` | Ngừng khuyến nghị topic | 014 | `PERM-10-update` |  | 200 | 006, 009, 045 |
 | API-10-017 | `POST /topics/{topicName}:retire` | Đề nghị ngừng dùng topic | 014 | `PERM-10-update` |  | 200 | 006, 009, 010, 045 |
-| API-10-018 | `POST /topics/{topicName}:new-major-version` | Tạo phiên bản chính mới của topic | 015, 068 | `PERM-10-update` hoặc `event:topic-register` (dịch vụ) | bắt buộc | 201 | 006, 011, 015, 017, 018, 029, 045, 047 |
+| API-10-018 | `POST /topics/{topicName}:new-major-version` | Tạo phiên bản chính mới của topic | 015, 068 | `PERM-10-create` hoặc `event:topic-register` (dịch vụ) | bắt buộc | 201 | 006, 011, 015, 017, 018, 029, 045, 047 |
 | API-10-019 | `GET /topics/{topicName}/migration-status` | Tiến độ chuyển bên nhận sang topic kế nhiệm | 016 | `PERM-10-read` |  | 200 |  |
 | API-10-020 | `GET /topics/{topicName}/connection-info` | Thông tin kết nối và cấu hình mẫu cho bên phát, bên nhận | 007, 024, 034 | `PERM-10-read` |  | 200 |  |
 
@@ -936,7 +936,7 @@ Các đề nghị dưới đây và ở §10.1, §10.3 đã xử lý ở FRS b�
 | 4 | Loại bỏ mục DLQ theo bộ lọc chạy nền (FR-10-050, FR-00-054) | API-10-062 hiện chỉ nhận danh sách ≤ 1.000 mục | FRS §8.3 |
 | 5 | Đầu vào duyệt dùng `comment` (FR-10-009) và lưu `decisionComment` (A.3); đề nghị A.3 ghi rõ ánh xạ | Tránh hai tên cho một trường | FRS A.3 |
 | 6 | Bỏ `decision` (A.2.10) khỏi đầu vào vì API tách `:approve`, `:reject` | Không còn trường nào nhận `APPROVE`, `REJECT` | FRS A.2.10 |
-| 7 | Lưu giữ, số phân vùng của topic `{tenant}.event.*` (tạm 7 ngày, 3 phân vùng) | FRS §7.2 chưa nêu | FRS §7.2 (Q10-58) |
+| 7 | Lưu giữ, số phân vùng của topic `{tenant}.event.*` (tạm 7 ngày, 3 phân vùng) | Đã xử lý: FRS §7.2 nêu 7 ngày, 3 phân vùng (GĐ-01) | FRS §7.2 (Q10-58) |
 | 8 | FR-10-048 (lọc, gộp lô, Đợt sau) cần tên trường `filters`, `batchSize`, `batchWaitMs` ở A.3 trước khi thêm vào API | FR đã nêu `batchSize`, `batchWaitMs` nhưng phụ lục chưa có | FRS A.3 |
 | 9 | Kiểu node, cạnh của sơ đồ (`PUBLISHER`, `TOPIC`, `SUBSCRIBER`; `PUBLICATION`, `SUBSCRIPTION`) và bước xác minh (`DNS`, `TLS`, `HANDSHAKE`, `TEST_EVENT`) vào A.2.15 | Enum chỉ ở API | FRS A.2.15 |
 | 10 | CSDL D03-03-PH10 kiểm `push.endpointVerification` trong `ck_subscription_push`, còn FRS A.3 và API dùng `push.lastVerification` | Lệch tên khóa JSON giữa CSDL và FRS | D03-03-PH10 DDL (luồng CSDL sửa) |
@@ -969,7 +969,7 @@ Tham số `dryRun` và các trường mới (`allowedActions`, `signingKeyPendin
 
 > **Câu hỏi mở Q10-57:** API-10-084 dùng một tham số đường dẫn nhiều đoạn (`registryPath`) mà OpenAPI không biểu diễn chuẩn. Có nên liệt kê tường minh các đường Apicurio v3 và `ccompat/v7` mà HTTT được dùng (khoảng 6 đường đọc) với mã API riêng không. Đề xuất tạm: giữ một mã, mô tả danh sách đường cho phép trong plugin APISIX và tài liệu PH-15.
 
-> **Câu hỏi mở Q10-58:** Lưu giữ và số phân vùng của topic sự kiện `{tenant}.event.*` chưa có ở FRS. Tập này giả định 7 ngày, 3 phân vùng theo mức của PH-05 (EVT-05), đủ cho `dh-runtime` dựng lại cấu hình sau sự cố dài nhất dự kiến (giả định GĐ-07). Cần FRS chốt ở §7.2.
+> **Câu hỏi mở Q10-58:** Lưu giữ và số phân vùng của topic sự kiện `{tenant}.event.*` đã chốt ở FRS §7.2 (GĐ-01). Tập này theo 7 ngày, 3 phân vùng theo mức của PH-05 (EVT-05), đủ cho `dh-runtime` dựng lại cấu hình sau sự cố dài nhất dự kiến (GĐ-01). Không còn mở; giữ để truy vết.
 
 > **Câu hỏi mở Q10-59:** Có cần một webhook "ping" chủ động định kỳ (không phải bắt tay xác minh) để phát hiện endpoint hỏng trước khi có sự kiện thật với subscription lưu lượng thấp không. Đề xuất tạm: không ở MVP; ngắt mạch và cảnh báo lag `STALLED` đủ, xem lại sau thí điểm.
 

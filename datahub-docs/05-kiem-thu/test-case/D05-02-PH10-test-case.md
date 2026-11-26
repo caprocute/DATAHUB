@@ -373,7 +373,7 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 - **Tiền điều kiện / dữ liệu** U-T68-IE1; topic `t68.tc.cu.da-xoa.v1` đã `RETIRED`.
 - **Bước**
   1. `POST /topics` với `domain = "DKKD"`, rồi `entity = "doanh_nghiep"`.
-  2. Lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`.
+  2. Lặp với `domain` lần lượt `event`, `cdc`, `audit`, `obs`, `integration`, `adapter`, `rdm`, `connect`, `payment`, `platform`.
   3. Ghép tên dài 201 ký tự.
   4. Tạo lại `t68.tc.cu.da-xoa.v1`.
   5. `POST /topics` có `topicKind = CDC` bằng U-T68-IE1.
@@ -2216,6 +2216,8 @@ Mỗi chức năng của Hub Pulsar (`LGC-HUB`), nhóm Message Broker của Tool
 | ERR-10-050 | 115 |
 | ERR-10-051 | 045, 058 |
 | ERR-10-052 | 073 |
+| ERR-10-053 | 130 |
+| ERR-10-054 | 073, 089, 100, 107, 113, 130, 131 |
 | ERR-10-101 | 049, 079 |
 | ERR-10-102 | 034, 046, 049, 052, 079 |
 | ERR-10-103 | 049, 052, 079, 126 |

@@ -301,7 +301,7 @@ EN-10-08 Subscription (FR-10-035…048, LGC-HUB-013). Duy nhất theo cặp bên
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | `delivery_mode` | `varchar(16)` | Giá trị: `PUSH`, `PULL_API`, `PULL_KAFKA`, `INTERNAL`. |
-| `legal_basis` | `varchar(2000), NULL` | Căn cứ pháp lý, bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo). |
+| `legal_basis` | `varchar(2000), NULL` | Căn cứ pháp lý 10…1.000 ký tự (CHECK `ck_subscription_legal_basis`), bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo). |
 | `start_position` | `varchar(16), mặc định 'LATEST'` | Giá trị: `LATEST`, `EARLIEST`, `TIMESTAMP`. |
 | `status` | `varchar(20), mặc định 'PENDING_APPROVAL'` | Giá trị: `PENDING_APPROVAL`, `REJECTED`, `PROVISIONING`, `FAILED`, `ACTIVE`, `PAUSED`, `SUSPENDED`, `REVOKED`. |
 | `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
@@ -579,7 +579,7 @@ Không có giá trị nào ở trên đi vào PostgreSQL, log, kiểm toán hay 
 | `{tenant}.{miền}.{thực-thể}.{sự-kiện}.v{n}` (BUSINESS) | Bên phát được duyệt | Theo `topic.partitions`, `retention_hours` (mặc định 6, 168 giờ) | `partition_key_field` khi `KEY_HASH` | Sự kiện nghiệp vụ CloudEvents, giá trị theo lược đồ Apicurio |
 | `{tenant}.cdc.{adapterCode}.{schema}.{table}.v{n}` (CDC) | PH-05 đăng ký, Kafka Connect `dh-cdc-{tenant}` ghi | Theo PH-05 (mặc định 168 giờ) | Khóa chính | Bản ghi thay đổi Avro |
 | `{topicName}.dlq` (DLQ, mỗi topic một) | Bộ giao nhận, cổng kéo ghi; `DlqWriter` đọc | Bằng số phân vùng topic gốc; `10.dlq.topic-retention-hours` (168) | Khóa gốc | Bản tin gốc nguyên vẹn kèm tiêu đề `dh_dlq_*` (A.8); kênh chuyển tiếp, nguồn sự thật là `dlq_entry` |
-| `{tenant}.event.topic.activated.v1` … `{tenant}.event.bridge.state-changed.v1` (EVT-10-01…16) | `dh-integration` qua `outbox_event` | 3, giữ 7 ngày; EVT-10-11, 14 giữ 30 ngày | `topicName` (01…05), `publicationCode` (06, 07), `subscriptionCode` (08…11, 13), `replayCode` (12), `topicName` (14), `bridgeCode` (15) | Sự kiện miền PH-10, không nội dung sự kiện nghiệp vụ, không bí mật |
+| `{tenant}.event.topic.activated.v1` … `{tenant}.event.bridge.state-changed.v1` (EVT-10-01…16) | `dh-integration` qua `outbox_event` | 3, giữ 7 ngày (FRS §7.2) | `topicName` (01…05), `publicationCode` (06, 07), `subscriptionCode` (08…11, 13), `replayCode` (12), `topicName` (14), `bridgeCode` (15) | Sự kiện miền PH-10, không nội dung sự kiện nghiệp vụ, không bí mật |
 | `{tenant}.audit.recorded.v1` | `dh-integration` qua `outbox_event` | Theo PH-13 | `traceId` | Bản ghi kiểm toán FR-10-065 |
 | `dh.*` (topic nền tảng, tenant `COMMON`) | DU nền tảng | Theo khai báo FR-10-067 | Theo khai báo | Lệnh, sự kiện nội bộ nền tảng |
 

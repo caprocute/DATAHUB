@@ -609,7 +609,7 @@ Khóa ký đọc trực tiếp OpenBao bằng xác thực Kubernetes của Servi
 | Kamelet `dh-pulsar-bridge-sink` | Tiêu thụ topic Kafka với nhóm `dh-bridge-{tenant}-{bridgeCode}`, bỏ phong bì, ghi Pulsar theo định dạng cũ |
 | `BridgeMonitor` | Đọc chỉ số của luồng cầu nối (`bridgedCount`, `lagSeconds`, `lastPulsarMessageId`) mỗi 30 giây, cập nhật `migration_bridge`; vượt `10.migration.bridge-max-lag-seconds` thì cảnh báo; `expiresAt` tới thì dừng (`EXPIRED`) |
 | `MigrationReconciler` | Mỗi giờ so số bản tin theo khoảng giờ giữa Pulsar (`stats` qua Admin REST của Pulsar) và Kafka (đếm bản tin có `source` cầu nối, dựa trên `DeliveryStat` của luồng cầu nối), so mẫu 100 `id`; lưu báo cáo ở kho đối tượng `dh-event-import/{tenant}/reconcile/{bridgeCode}/{yyyyMMddHH}.json` (FRS A.8), cảnh báo khi chênh khác 0 sau khi trừ lag |
-| `CutOverService` | Kiểm điều kiện FR-10-075, dừng cầu nối, chuyển ánh xạ `CUT_OVER`, phát EVT-10-15; quay lui bật lại cầu nối chiều cũ, `ROLLED_BACK`; hết `10.migration.rollback-window-days` thì `CLOSED` |
+| `CutOverService` | Kiểm điều kiện FR-10-075, dừng cầu nối, chuyển ánh xạ `CUT_OVER`, phát EVT-10-15; quay lui bật lại cầu nối chiều cũ, ánh xạ sang `ROLLED_BACK`; hết `10.migration.rollback-window-days` thì `CLOSED` |
 
 Ràng buộc không hai chiều cùng lúc (BR-10-033) kiểm bằng chỉ mục duy nhất một phần trên `migration_bridge (tenant_id, pulsar_topic, kafka_topic) WHERE status = 'RUNNING'` cộng kiểm ở dịch vụ khi tạo chiều ngược (ERR-10-042).
 
@@ -1011,7 +1011,7 @@ Sự kiện EVT-10-01…16 ghi vào `outbox_event` cùng giao dịch với thay 
 
 ### 8.5. Ánh xạ lỗi
 
-Control plane ánh xạ ngoại lệ miền sang ProblemDetail RFC 9457 bằng `EventProblemMapper`; `type` là URI của mã lỗi, `code` là ERR-10-0xx.
+Control plane ánh xạ ngoại lệ miền sang ProblemDetail RFC 9457 bằng `EventProblemMapper`; `type` là URI của mã lỗi, `code` là ERR-10-0xx. Xác thực, quyền chung ở control plane trả ERR-10-053 (401, token thiếu hoặc hết hạn) và ERR-10-054 (403, thiếu `PERM-10-*` hoặc scope dịch vụ); ERR-10-101, 102 chỉ dành cho data plane (cổng sự kiện, API-10-079…084).
 
 | Ngoại lệ hoặc tình huống | Mã |
 |---|---|
