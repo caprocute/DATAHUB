@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH08
 ten: Đặc tả yêu cầu chức năng phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, cán bộ quản lý dữ liệu, chủ quản dữ liệu, kỹ sư dh-data, kiểm thử viên
@@ -36,11 +36,11 @@ tai_lieu_lien_quan: D02-02 SRS; D02-04-PH08 Use case; D03-02-PH08 Thiết kế c
 | Quy tắc nghiệp vụ | 35 (BR-08-001…035) |
 | Yêu cầu phi chức năng | 20 (NFR-08-001…020) |
 | Màn hình | 20 (UI-08-01…20) |
-| API | 128 operation dự kiến (API-08-001…128), tiền tố `/api/dq/v1` |
+| API | 131 operation dự kiến (API-08-001…131), tiền tố `/api/dq/v1` |
 | Sự kiện | 14 phát (EVT-08-01…14), 8 loại tiêu thụ từ PH-06, PH-07 |
-| Mã lỗi | 54 control (ERR-08-001…054), 19 runtime (ERR-08-101…119); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
-| Thực thể mức logic | 29 (EN-08-01…29) |
-| Tham số theo tenant | 40 khóa (mục 8.2) |
+| Mã lỗi | 55 control (ERR-08-001…055), 19 runtime (ERR-08-101…119); `401`, `403`, `428` dùng ERR-00-401, ERR-00-403, ERR-00-428 |
+| Thực thể mức logic | 33 (EN-08-01…33) |
+| Tham số theo tenant | 43 khóa (mục 8.2) |
 | Chức năng hệ cũ được phủ | Hệ cũ không có chức năng chất lượng dữ liệu; 6 mục `LGC` liên quan gián tiếp |
 | FR của SRS cũ được phủ | 16/16 (bảng ánh xạ ở mục 11.3) |
 
@@ -160,7 +160,7 @@ Tài liệu dựa trên các văn bản pháp lý và tài liệu dự án dư�
 
 ### 1.6. Cấu trúc tài liệu
 
-Chương 2 nêu bối cảnh, mục tiêu, vị trí kiến trúc và quy trình. Chương 3 nêu tác nhân và quyền. Chương 4 mô tả khái niệm, thực thể và máy trạng thái. Chương 5 liệt kê 61 chức năng; chương 6 đặc tả từng chức năng theo khối 17 mục. Chương 7 gom quy tắc nghiệp vụ, chương 8 yêu cầu phi chức năng và tham số, chương 9 mã lỗi, thông báo, sự kiện và danh mục API. Chương 10 liệt kê màn hình và thuyết minh hai giao diện tiêu biểu. Chương 11 truy vết hệ cũ, REQ và FR repo. Chương 12 đến 14 nêu phụ thuộc, câu hỏi mở và tiêu chí chấp nhận. Phụ lục A là nguồn chuẩn enum, Phụ lục B là đề nghị đồng bộ.
+Chương 2 nêu bối cảnh, mục tiêu, vị trí kiến trúc và quy trình. Chương 3 nêu tác nhân và quyền. Chương 4 mô tả khái niệm, thực thể và máy trạng thái. Chương 5 liệt kê 61 chức năng; chương 6 đặc tả từng chức năng theo khối 17 mục. Chương 7 gom quy tắc nghiệp vụ, chương 8 yêu cầu phi chức năng và tham số, chương 9 mã lỗi, thông báo, sự kiện và danh mục API. Chương 10 liệt kê màn hình và thuyết minh hai giao diện tiêu biểu. Chương 11 truy vết hệ cũ, REQ và FR repo. Chương 12 đến 14 nêu phụ thuộc, câu hỏi mở và tiêu chí chấp nhận. Chương 15 là nhật ký hấp thụ đề nghị của bản 0.2. Phụ lục A là nguồn chuẩn enum, Phụ lục B là đề nghị đồng bộ.
 
 ## 2. Tổng quan phân hệ
 
@@ -211,7 +211,7 @@ flowchart TB
   K["Kafka"]
   OBS["PH-13 thông báo, giám sát"]
   KPI["PH-16 Báo cáo chỉ tiêu"]
-  JOB["PH-18 lịch job"]
+  JOB["Bộ lập lịch nội bộ ScheduleDispatcher"]
   DQ --> PG
   DQ -->|"đọc"| REP
   DQ -->|"đọc"| SRC
@@ -226,17 +226,17 @@ flowchart TB
   MDM -->|"EVT-06"| K
 ```
 
-Hình cho thấy PH-08 chỉ ghi vào schema của mình và Kafka; mọi mũi tên tới dữ liệu được đo là đọc. PH-04 và PH-06 là bên gọi PH-08 (trực tuyến), PH-13 và PH-16 là bên nhận kết quả qua sự kiện. Lịch đo do PH-18 kích hoạt.
+Hình cho thấy PH-08 chỉ ghi vào schema của mình và Kafka; mọi mũi tên tới dữ liệu được đo là đọc. PH-04 và PH-06 là bên gọi PH-08 (trực tuyến), PH-13 và PH-16 là bên nhận kết quả qua sự kiện. Lịch đo do bộ lập lịch nội bộ của PH-08 kích hoạt; PH-18 chỉ là phụ thuộc mềm.
 
 ### 2.4. Kiến trúc thành phần và công nghệ
 
-PH-08 là một mô-đun Modulith trong `dh-data` gồm chín thành phần nội bộ. **Danh mục đo** (`dq-catalog`) quản lý miền, đối tượng đo, trường và CDE. **Hồ sơ** (`dq-profile`) chạy thống kê cột bằng Apache DataSketches (HLL cho số giá trị khác nhau, KLL cho phân vị). **Quy tắc** (`dq-rule`) lưu bộ quy tắc có phiên bản, biên dịch biểu thức CEL bằng `cel-java` và dịch quy tắc tập hợp sang SQL có danh sách cho phép (ADR đề xuất 085). **Điều phối đo** (`dq-scan`) nhận lịch từ PH-18 (Quartz, ShedLock để chỉ một bản sao kích hoạt), chia lần đo thành tác vụ theo dải khóa và giao cho **bộ thực thi** (`dq-worker`, cùng ảnh `dh-data` chạy hồ sơ `worker`, mở rộng ngang). **Trực tuyến** (`dq-inline`) phục vụ `POST /api/dq/v1/checks:evaluate` với bộ đệm quy tắc trong bộ nhớ. **Bản ghi lỗi** (`dq-finding`) ghi lỗi có dấu vân tay vào bảng phân vùng theo tháng (ADR đề xuất 086). **Khắc phục, cảnh báo** (`dq-remediation`, `dq-alert`) và **báo cáo** (`dq-report`, dựng PDF bằng OpenHTMLtoPDF, XLSX bằng Apache POI) hoàn thiện vòng.
+PH-08 là một mô-đun Modulith trong `dh-data` gồm chín thành phần nội bộ. **Danh mục đo** (`dq-catalog`) quản lý miền, đối tượng đo, trường và CDE. **Hồ sơ** (`dq-profile`) chạy thống kê cột bằng Apache DataSketches (HLL cho số giá trị khác nhau, KLL cho phân vị). **Quy tắc** (`dq-rule`) lưu bộ quy tắc có phiên bản, biên dịch biểu thức CEL bằng `cel-java` và dịch quy tắc tập hợp sang SQL có danh sách cho phép (ADR đề xuất 085). **Điều phối đo** (`dq-scan`) tự lập lịch bằng `ScheduleDispatcher` nội bộ (quét mỗi phút dưới khóa ShedLock; PH-18 là phụ thuộc mềm, chỉ kích hoạt thêm qua API-08-059), chia lần đo thành tác vụ theo dải khóa và giao cho **bộ thực thi** (`dq-worker`, cùng ảnh `dh-data` chạy hồ sơ `worker`, mở rộng ngang). **Trực tuyến** (`dq-inline`) phục vụ `POST /api/dq/v1/checks:evaluate` với bộ đệm quy tắc trong bộ nhớ. **Bản ghi lỗi** (`dq-finding`) ghi lỗi có dấu vân tay vào bảng phân vùng theo tháng (ADR đề xuất 086). **Khắc phục, cảnh báo** (`dq-remediation`, `dq-alert`) và **báo cáo** (`dq-report`, dựng PDF bằng OpenHTMLtoPDF, XLSX bằng Apache POI) hoàn thiện vòng.
 
 Truy cập dữ liệu đo theo ADR đề xuất 087: bản ghi vàng đọc qua khung nhìn hợp đồng `ph06_mdm.v_dq_{domain}` trên bản sao chỉ đọc với vai trò CSDL `dq_reader`; danh mục đọc qua API PH-07 (FR-07-028, FR-07-027) và ảnh chụp danh mục (ADR-053); bảng của HTTT đọc qua kết nối PH-05 có cờ chỉ đọc, tài khoản theo Q359 và ADR-067, câu SQL chỉ `SELECT` có `statement_timeout`. Không dùng Great Expectations hay Soda (Python) để giữ một stack Java.
 
 ```{.mermaid caption="Trình tự luồng chính một lần đo theo lịch"}
 sequenceDiagram
-  participant J as PH-18 lịch
+  participant J as ScheduleDispatcher nội bộ
   participant S as dq-scan
   participant W as dq-worker
   participant D as Nguồn đo (khung nhìn, kết nối)
@@ -322,7 +322,7 @@ Bảng dưới liệt kê người và hệ thống tương tác với PH-08, k�
 | PH-07 | Hệ thống | Danh mục | Tra mã theo phiên bản, ảnh chụp danh mục, phát sự kiện phát hành |
 | PH-05 | Hệ thống | Bộ điều hợp | Cấp kết nối chỉ đọc, đẩy chỉ số hồ sơ nguồn |
 | PH-09 | Hệ thống | Quyền riêng tư | Cung cấp phân loại trường, chính sách che |
-| PH-13, PH-16, PH-18 | Hệ thống | Giám sát, KPI, job | Nhận cảnh báo và chỉ số; nhận KPI; kích hoạt lịch |
+| PH-13, PH-16, PH-18 | Hệ thống | Giám sát, KPI, job | Nhận cảnh báo và chỉ số; nhận KPI; PH-18 tùy chọn kích hoạt thêm lần đo theo yêu cầu và xử lý lại DLQ |
 | HTTT thành viên | Hệ thống | Hệ của sở, ngành | Đọc thẻ điểm của dữ liệu mình (scope `dq.read`) |
 
 : Tác nhân của PH-08
@@ -353,7 +353,7 @@ VW chỉ thấy số liệu tổng hợp (điểm, xu hướng, số lỗi), kh�
 
 Bốn mắt (FR-00-071, ADR-046) áp dụng cho: kích hoạt phiên bản bộ quy tắc (FR-08-017), cấu hình trọng số và ngưỡng (FR-08-021), ngoại lệ chấp nhận (FR-08-040), công bố báo cáo kỳ và năm (FR-08-053), xuất bản ghi lỗi có trường Nhạy cảm (FR-08-039, DO chấp thuận). Người soạn hoặc người gửi duyệt không được duyệt (ERR-08-005). Thêm hai tách vai trò riêng của PH-08: người đo (DS) không phải người sửa (DO), và DO không tự xác nhận phiếu đã sửa (BR-08-014).
 
-Phân hệ và HTTT gọi PH-08 bằng token dịch vụ. Scope `dq.check` cấp cho PH-04 (`dh-runtime`) và PH-06 để gọi kiểm tra trực tuyến; scope `dq.read` cấp cho PH-16 và HTTT đọc thẻ điểm dữ liệu của mình. PH-05 đẩy chỉ số hồ sơ qua API nội bộ bằng tài khoản dịch vụ `dh-integration`. Bộ thực thi đo dùng vai trò CSDL `dq_reader` chỉ có quyền `SELECT` trên khung nhìn hợp đồng do PH-06 cấp; với nguồn HTTT dùng tài khoản của kết nối PH-05 được cấp cho PH-08.
+Phân hệ và HTTT gọi PH-08 bằng token dịch vụ. Scope `dq.check` cấp cho PH-04 (`dh-runtime`) và PH-06 để gọi kiểm tra trực tuyến; scope `dq.read` cấp cho PH-16 và HTTT đọc thẻ điểm dữ liệu của mình. PH-05 đẩy chỉ số hồ sơ qua API nội bộ bằng tài khoản dịch vụ `dh-integration` với scope `dq.ingest` (chỉ gọi được API-08-024). Bộ thực thi đo dùng vai trò CSDL `dq_reader` chỉ có quyền `SELECT` trên khung nhìn hợp đồng do PH-06 cấp; với nguồn HTTT dùng tài khoản của kết nối PH-05 được cấp cho PH-08.
 
 ## 4. Khái niệm và mô hình nghiệp vụ
 
@@ -381,29 +381,29 @@ Sáu chiều là khung bắt buộc; mỗi quy tắc thuộc đúng một chiề
 
 ### 4.2. Thực thể
 
-Bảng dưới mô tả 29 thực thể mức logic; tên bảng vật lý trong schema `ph08_dq`, cột chi tiết ở D03-03-PH08. Mọi bảng có `id`, `tenant_id` (RLS, ADR-003), `created_*`, `updated_*`, `version`.
+Bảng dưới mô tả 33 thực thể mức logic; tên bảng vật lý trong schema `ph08_dq`, cột chi tiết ở D03-03-PH08. Mọi bảng có `id`, `tenant_id` (RLS, ADR-003), `created_*`, `updated_*`, `version`.
 
 | Mã | Thực thể (bảng) | Thuộc tính chính |
 |---|---|---|
 | EN-08-01 | Miền chất lượng (`dq_domain`) | `domainCode`, `name`, `ownerOrgId` (DO), `stewardUserId` (DS), `status` |
-| EN-08-02 | Đối tượng đo (`dq_asset`) | `assetCode`, `domainCode`, `assetType`, `sourceRef` (domain PH-06, mã danh mục, kết nối và bảng, loại bản tin), `recordKey[]`, `status`, `inlineEnabled` |
-| EN-08-03 | Trường, CDE (`dq_asset_field`) | `fieldPath`, `dataType`, `isCde`, `dataClass` (PH-09), `maskingMode`, `sourceFieldRef` |
+| EN-08-02 | Đối tượng đo (`dq_asset`) | `assetCode`, `domainCode`, `assetType`, `sourceRef` (domain PH-06, mã danh mục, kết nối và bảng, loại bản tin), `recordKey[]`, `status`, `incrementalEnabled`, `updatedAtField` (nguồn HTTT), cấu hình trực tuyến (`inlineEnabled`, `inlineMode`, `onDependencyFailure`, `timeoutMs`, `gateEnabled`) |
+| EN-08-03 | Trường, CDE (`dq_asset_field`) | `fieldPath`, `dataType`, `isCde`, `dataClass` (PH-09), `valueMode`, `sourceFieldRef` |
 | EN-08-04 | Lần hồ sơ (`dq_profile_run`) | `runId`, `assetCode`, `mode`, `sampleSize`, `status`, `rowCount` |
 | EN-08-05 | Thống kê cột (`dq_profile_column`) | `fieldPath`, `nullRatio`, `distinctEstimate`, `min`, `max`, `quantiles`, `topPatterns`, `inferredType` |
 | EN-08-06 | Bộ quy tắc (`dq_rule_set`) | `ruleSetCode`, `assetCode`, `activeVersion` |
-| EN-08-07 | Phiên bản bộ quy tắc (`dq_rule_set_version`) | `version`, `status`, `effectiveFrom`, `submittedBy`, `approvedBy`, `lastDryRunId`, `changeNote` |
-| EN-08-08 | Quy tắc (`dq_rule`) | `ruleCode`, `dimension`, `operator`, `target` (trường hoặc tổ hợp), `params` (JSONB), `severity`, `execMode`, `weight`, `message`, `enabled`, `templateRef` |
+| EN-08-07 | Phiên bản bộ quy tắc (`dq_rule_set_version`) | `version`, `status`, `effectiveFrom`, `submittedBy`, `approvedBy`, `lastDryRunId`, `dryRunContentHash`, `dryRunAt`, `changeNote` |
+| EN-08-08 | Quy tắc (`dq_rule`) | `ruleCode`, `dimension`, `operator`, `target` (trường hoặc tổ hợp), `params` (JSONB), `severity`, `execMode`, `weight`, `message`, `enabled`, `templateRef`, `source` |
 | EN-08-09 | Quy tắc mẫu (`dq_rule_template`) | `templateCode`, `dimension`, `operator`, `paramsSchema`, `defaultParams`, `version`, chỉ ở `COMMON` hoặc tenant |
 | EN-08-10 | Cấu hình trọng số, ngưỡng (`dq_weight_config`) | `scope` (tenant, miền, đối tượng), sáu `w_*`, `passThreshold`, `warnThreshold`, `status`, `effectiveFrom` |
 | EN-08-11 | Lịch đo (`dq_schedule`) | `scheduleId`, `target` (đối tượng hoặc miền), `cron`, `scanMode`, `sampleSize`, `status` |
-| EN-08-12 | Lần đo (`dq_scan_job`) | `scanId`, `assetCode`, `ruleSetVersion`, `weightConfigId`, `scanMode`, `trigger`, `sampleSeed`, `status`, `progress`, `rowsTotal`, `rowsProcessed` |
-| EN-08-13 | Tác vụ phân mảnh (`dq_scan_task`) | `taskNo`, `keyRangeFrom`, `keyRangeTo`, `status`, `attempt`, `workerId` |
+| EN-08-12 | Lần đo (`dq_scan_job`) | `scanId`, `assetCode`, `ruleSetVersion`, `weightConfigId`, `scanMode`, `trigger`, `sampleSeed`, `status`, `progress`, `rowsTotal`, `rowsProcessed`, `idempotencyKey`, `flags[]` |
+| EN-08-13 | Tác vụ phân mảnh (`dq_scan_task`) | `taskNo`, `keyRangeFrom`, `keyRangeTo`, `status`, `attempt`, `workerId`, `heartbeatAt`, `notBefore` |
 | EN-08-14 | Kết quả quy tắc (`dq_rule_result`) | `ruleCode`, `status`, `passCount`, `failCount`, `skippedCount`, `errorDetail` |
 | EN-08-15 | Ảnh chụp điểm (`dq_score_snapshot`) | `snapshotId`, `scanId`, `score`, `verdict`, `trend`, `delta`, `flags[]`, `previousSnapshotId` |
 | EN-08-16 | Điểm chiều (`dq_score_dimension`) | `dimension`, `score`, `weight`, `passCount`, `failCount`, `skippedCount` |
 | EN-08-17 | Bản ghi lỗi (`dq_finding`) | `fingerprint`, `assetCode`, `ruleCode`, `recordKey`, `dimension`, `severity`, `maskedValue`, `firstSeenScanId`, `lastSeenScanId`, `status`, `issueCode`, phân vùng theo tháng |
-| EN-08-18 | Ngoại lệ (`dq_waiver`) | `waiverId`, phạm vi (quy tắc, tập dấu vân tay), `reason`, `validUntil`, `status` |
-| EN-08-19 | Phiếu khắc phục (`dq_issue`) | `issueCode` (`DQ-2026-000142`), `assetCode`, `ownerOrgId`, `severity`, `dueDate`, `status`, `findingCount`, `verifyScanId` |
+| EN-08-18 | Ngoại lệ (`dq_waiver`) | `waiverId`, `scope` (`FINDINGS`, `RULE_FILTER`), quy tắc, `filter`, `reason`, `validUntil`, `status` |
+| EN-08-19 | Phiếu khắc phục (`dq_issue`) | `issueCode` (`DQ-2026-000142`), `assetCode`, `ownerOrgId`, `severity`, `dueDate`, `status`, `rejectType`, `findingCount`, `verifyScanId` |
 | EN-08-20 | Hoạt động phiếu (`dq_issue_activity`) | `type`, `actor`, `comment`, `attachmentRef`, `fromStatus`, `toStatus` |
 | EN-08-21 | Quy tắc cảnh báo (`dq_alert_rule`) | `alertRuleCode`, `condition`, `scope`, `severity`, `recipients`, `enabled` |
 | EN-08-22 | Cảnh báo (`dq_alert`) | `alertId`, `alertRuleCode`, `status`, `firedAt`, `silencedUntil` |
@@ -413,7 +413,11 @@ Bảng dưới mô tả 29 thực thể mức logic; tên bảng vật lý trong
 | EN-08-26 | Tham số tenant (`dq_tenant_setting`) | `key`, `value`, `updatedBy` |
 | EN-08-27 | Hộp gửi sự kiện (`outbox_event`) | Theo SAD §7.3 |
 | EN-08-28 | Hộp nhận sự kiện (`inbox_event`) | Khử trùng EVT-06, EVT-07 theo `eventId` |
-| EN-08-29 | Yêu cầu xuất (`dq_export_request`) | `exportId`, `kind` (lỗi, báo cáo), `filter`, `containsSensitive`, `status`, `fileRef`, `expiresAt` |
+| EN-08-29 | Yêu cầu xuất (`dq_export_request`) | `exportId`, `kind` (`FINDINGS`, `REPORT`), `reportCode`, `filter`, `containsSensitive`, `status`, `fileRef`, `expiresAt` |
+| EN-08-30 | Chính sách lưu giữ (`dq_retention_policy`, `dq_retention_run`) | `objectType`, `retentionDays`, `action` (`DROP_PARTITION`, `DELETE`, `ARCHIVE_COLD`, `ANONYMIZE`); lịch sử dọn (API-08-125) |
+| EN-08-31 | Bộ đệm đo tăng dần (`dq_incremental_buffer`) | `assetCode`, `windowStart`, `windowEnd`, `keys[]` (tối đa 100.000 khóa mỗi cửa sổ), `eventCount`, `status` |
+| EN-08-32 | Điểm hiện hành (`dq_score_current`) | `assetCode`, `fullSnapshotId`, `currentScore`, `incrementalScanId`, `asOf`; ảnh chụp "điểm hiện hành" của FR-08-025 bước 5 |
+| EN-08-33 | Mục ngoại lệ (`dq_waiver_item`) | `waiverId`, `fingerprint`; danh sách dấu vân tay của ngoại lệ phạm vi `FINDINGS` |
 
 : Thực thể mức logic của PH-08
 
@@ -941,13 +945,13 @@ Hình cho thấy PH-08 không tự mở kết nối khám phá: mọi truy cập
 
 **Kích hoạt.** Bước 4 wizard UI-08-03; tab "Trường, CDE" ở UI-08-04.
 
-**Đầu vào.** `fieldPath`, `isCde` (T-BOOL), `businessName`, `maskingMode` (`HASH`, `PARTIAL`, `NONE`, gợi ý theo phân loại), `If-Match`.
+**Đầu vào.** `fieldPath`, `isCde` (T-BOOL), `businessName`, `valueMode` (`HASH_ONLY`, `MASKED`, `PLAIN`, gợi ý theo phân loại), `If-Match`.
 
 **Luồng xử lý chính.**
 
 1. Hệ thống hiển thị danh sách trường với phân loại PH-09 hiện hành (`PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE` theo DD-08), lấy qua API PH-09 hoặc từ PH-06 với `MDM_DOMAIN`.
 2. Người dùng đánh dấu CDE, đặt tên nghiệp vụ; hệ thống kiểm trường thuộc lược đồ (ERR-08-014).
-3. Hệ thống đặt `maskingMode` tối thiểu theo phân loại: `SENSITIVE` buộc `HASH`, `RESTRICTED` buộc ít nhất `PARTIAL`; người dùng chỉ được chặt hơn, không lỏng hơn.
+3. Hệ thống đặt `valueMode` tối thiểu theo phân loại: `SENSITIVE` buộc `HASH_ONLY`, `RESTRICTED` buộc ít nhất `MASKED`; người dùng chỉ được chặt hơn, không lỏng hơn.
 4. Với CDE có trường chưa được PH-09 phân loại, hệ thống gửi đề xuất phân loại sang PH-09 (trạng thái đề xuất) và tạm coi là `SENSITIVE` tới khi xác nhận (ERR-08-047 cảnh báo khi kích hoạt).
 5. Hệ thống lưu, tính độ phủ CDE (số CDE có ít nhất một quy tắc `COMPLETENESS` hoặc `VALIDITY` `ACTIVE`) để hiển thị ở thẻ điểm.
 
@@ -959,7 +963,7 @@ Hình cho thấy PH-08 không tự mở kết nối khám phá: mọi truy cập
 - Đặt che lỏng hơn phân loại: ERR-08-003 (400); "Trường {đường dẫn} mức {phân loại} phải che ít nhất ở chế độ {chế độ}."
 - Kích hoạt khi CDE chưa được PH-09 xác nhận phân loại: ERR-08-047 (422); "Trường {đường dẫn} chưa có phân loại xác nhận ở PH-09. Giá trị sẽ được che như dữ liệu Nhạy cảm."
 
-**Đầu ra.** `200`; `fields[]` gồm `fieldPath`, `isCde`, `dataClass`, `classificationStatus`, `maskingMode`; `cdeCoverage`.
+**Đầu ra.** `200`; `fields[]` gồm `fieldPath`, `isCde`, `dataClass`, `classificationStatus`, `valueMode`; `cdeCoverage`.
 
 **Kết quả.** CDE hiện biểu tượng ở mọi màn; thẻ điểm hiện "Độ phủ CDE {x}/{y}".
 
@@ -983,7 +987,7 @@ sequenceDiagram
   DS->>C: Đánh dấu CDE citizenId
   C->>P: Tra phân loại trường
   P-->>C: SENSITIVE, đã xác nhận
-  C->>C: Đặt maskingMode HASH
+  C->>C: Đặt valueMode HASH_ONLY
   P-->>C: Sự kiện đổi phân loại (về sau)
   C->>F: Che lại bản ghi lỗi của trường
 ```
@@ -1240,7 +1244,7 @@ Hình cho thấy gợi ý quy tắc chỉ tạo quy tắc nháp; người soạn
 ::: dac-ta
 **Mục đích.** Tận dụng tỷ lệ thiếu theo trường mà PH-05 đã đo khi chuẩn hóa bản tin (FR-05-041), để có hồ sơ nguồn mà không phải quét lại CSDL HTTT.
 
-**Tác nhân, quyền.** PH-05 (`dh-integration`, tài khoản dịch vụ, API nội bộ).
+**Tác nhân, quyền.** PH-05 (`dh-integration`, tài khoản dịch vụ, scope `dq.ingest`, API nội bộ).
 
 **Mức ưu tiên, đợt.** C · Đợt 3.
 
@@ -1580,7 +1584,7 @@ Ví dụ CEL cho quy tắc nhất quán ngày cấp CCCD: `!has(record.issueDate
 1. Hệ thống kiểm cỡ mẫu (ERR-08-031) và sinh `sampleSeed` nếu không có.
 2. Bộ thực thi lấy mẫu ngẫu nhiên tái lập (`TABLESAMPLE` hoặc băm khóa theo seed) và áp quy tắc như đo thật nhưng không ghi bản ghi lỗi, không chấm điểm chính thức.
 3. Hệ thống trả theo quy tắc: số đạt, vi phạm, lỗi kỹ thuật, tối đa 20 ví dụ khóa bản ghi vi phạm kèm giá trị đã che, thời gian chạy; ước tính điểm chiều trên mẫu.
-4. Hệ thống ghi `lastDryRunId` vào phiên bản cùng băm nội dung phiên bản; gửi duyệt cần dấu này khớp nội dung (FR-08-017).
+4. Hệ thống ghi `lastDryRunId`, `dryRunAt` vào phiên bản cùng băm `dryRunContentHash` của phần nội dung ảnh hưởng kết quả đo (chiều, toán tử, trường, tham số, biểu thức, mức, chế độ chạy, bật, tắt, trọng số quy tắc); gửi duyệt cần dấu này khớp (FR-08-017). Chỉ sửa `name`, `description`, `message` thì băm không đổi, không phải chạy thử lại.
 
 **Luồng thay thế.** Chạy thử trên danh sách khóa cụ thể để kiểm một trường hợp đã biết.
 
@@ -1642,7 +1646,8 @@ Hình cho thấy chạy thử dùng đúng bộ thực thi của lần đo thậ
 
 1. Người soạn gửi; hệ thống kiểm phiên bản không trống (ERR-08-021), có chạy thử khớp băm nội dung (ERR-08-053), CDE đều có ít nhất một quy tắc (thiếu chỉ cảnh báo).
 2. Hệ thống chuyển `PENDING_APPROVAL`, khóa nội dung, tạo việc cho DA của tenant kèm bản so sánh với phiên bản `ACTIVE` (FR-08-019) và kết quả chạy thử.
-3. DA mở việc; hệ thống kiểm DA khác người soạn và người gửi (ERR-08-005).
+3. DA mở việc; hệ thống kiểm DA khác người soạn và người gửi (ERR-08-005). Khi đối tượng không có DS riêng, TA (có `PERM-08-rule-admin`) là người soạn và người gửi; DA vẫn phải là người khác.
+3a. Tenant cần ít nhất hai người giữ `PERM-08-approve` (DA và DA dự phòng do TA chỉ định); chỉ một người thì UI-08-19 cảnh báo và hệ thống nhắc TA qua PH-13 khi việc duyệt chờ quá 5 ngày làm việc. Không duyệt ngoài hệ thống (Q08-18).
 4. Duyệt: hệ thống chuyển `ACTIVE` ngay hoặc `APPROVED` khi `effectiveFrom` ở tương lai (FR-08-018).
 5. Từ chối: hệ thống đưa về `DRAFT` kèm ý kiến, thông báo người gửi.
 
@@ -1852,7 +1857,7 @@ Hình cho thấy ngay khi kích hoạt, bộ đệm của kiểm tra trực tuy�
 2. Hệ thống kiểm mỗi trọng số 0…1 và `|Σ w − 1| ≤ 0,001` (ERR-08-023); `0 ≤ warn ≤ pass ≤ 100` (ERR-08-024).
 3. Hệ thống cảnh báo (không chặn) khi trọng số một chiều bằng 0 mà đối tượng có quy tắc thuộc chiều đó.
 4. Người soạn gửi duyệt; khi hạ ngưỡng đạt so với cấu hình hiện hành, lý do bắt buộc ≥ 20 ký tự (ERR-08-007).
-5. DA duyệt (kiểm bốn mắt, ERR-08-005); hệ thống chuyển `ACTIVE` từ `effectiveFrom`, cấu hình cũ `SUPERSEDED`.
+5. DA duyệt (kiểm bốn mắt, ERR-08-005); hệ thống chuyển `ACTIVE` từ `effectiveFrom`, cấu hình cũ `SUPERSEDED` (khi cấu hình thôi dùng hẳn thì `RETIRED`). Miền không có DS riêng thì TA soạn và gửi, DA vẫn là người khác (FR-08-017 bước 3, 3a).
 
 **Luồng thay thế.** Chưa có cấu hình nào: dùng trọng số mặc định 0,20/0,20/0,15/0,10/0,15/0,20, ngưỡng 80/70 (cấu hình hệ thống, phiên bản 0).
 
@@ -1991,7 +1996,7 @@ Hình cho thấy ba cách kích hoạt đều đi vào một bộ thực thi duy
 
 1. Hệ thống kiểm biểu thức cron hợp lệ và không dày hơn `08.scan.min-interval-hours` (mặc định 24 giờ với `FULL`, 1 giờ với `INCREMENTAL`), sai: ERR-08-029.
 2. Hệ thống kiểm không trùng lịch cùng đích, cùng chế độ (ERR-08-049) và cỡ mẫu (ERR-08-030).
-3. Hệ thống đăng ký lịch với PH-18 (Quartz có ShedLock, một bản sao kích hoạt); tới giờ, hệ thống tạo lần đo `trigger = SCHEDULE` cho từng đối tượng, dời giờ bắt đầu vào cửa sổ `scanWindow` nếu cần.
+3. Hệ thống lưu lịch ở `dq_schedule`; bộ lập lịch nội bộ `ScheduleDispatcher` (Quartz dưới khóa ShedLock, một bản sao kích hoạt) quét mỗi phút và, tới giờ, hệ thống tạo lần đo `trigger = SCHEDULE` cho từng đối tượng, dời giờ bắt đầu vào cửa sổ `scanWindow` nếu cần.
 4. Hệ thống ghi `nextFireAt`, hiển thị ở UI-08-11.
 
 **Luồng thay thế.** Tạm dừng, tiếp tục lịch (API-08-057, API-08-058) khi nguồn bảo trì.
@@ -2032,7 +2037,7 @@ Hình cho thấy ba cách kích hoạt đều đi vào một bộ thực thi duy
 
 **Kích hoạt.** Nút "Đo ngay" ở UI-08-04 hoặc UI-08-11.
 
-**Đầu vào.** `assetCode` hoặc `domainCode`, `scanMode`, `sampleSize`, `sampleSeed` (tùy chọn), `trigger` (`MANUAL` mặc định, `ANNUAL` khi đo cho báo cáo năm), `reason`, `Idempotency-Key`.
+**Đầu vào.** `assetCode` hoặc `domainCode`, `scanMode`, `sampleSize`, `sampleSeed` (tùy chọn), `trigger` (`MANUAL` mặc định, `ANNUAL` khi đo cho báo cáo năm; không nhận `EVENT`, `SCHEDULE`, `VERIFY` do hệ thống tạo), `reason`, `Idempotency-Key` (bắt buộc).
 
 **Luồng xử lý chính.**
 
@@ -2049,6 +2054,7 @@ Hình cho thấy ba cách kích hoạt đều đi vào một bộ thực thi duy
 - Đo năm bằng mẫu: ERR-08-030 (422); "Lần đo cho báo cáo năm phải đo toàn bộ (FULL)."
 - Trùng: ERR-08-028 (409); "Đối tượng đang có lần đo {mã} chạy. Hủy lần đo hoặc đợi xong."
 - Vượt hạn mức: ERR-08-052 (429); "Đã đạt {n} lần đo theo yêu cầu trong một giờ. Thử lại sau {phút} phút."
+- Khóa chống trùng dùng lại với thân khác: ERR-08-055 (409); "Khóa chống trùng này đã dùng cho một yêu cầu khác nội dung. Tạo khóa mới rồi gửi lại." Cùng khóa, cùng thân thì trả lại kết quả lần đầu, không tạo lần đo mới; áp cho mọi `POST` có `Idempotency-Key`.
 
 **Đầu ra.** `202`; `scanId`, `status = QUEUED`, `estimatedRows`, `position` (thứ tự hàng đợi); `Location`.
 
@@ -2083,11 +2089,11 @@ Ví dụ yêu cầu kích hoạt (kế thừa SRS cũ §5.3.1, đổi tên trư�
 
 **Truy vết.** REQ-08, REQ-06, REQ-07; LGC-DMDC-006, LGC-DMDC-007, LGC-DMDC-008 (gián tiếp).
 
-**Tiền điều kiện.** Đối tượng `ACTIVE`, `incrementalEnabled = true`; với `SOURCE_DATASET` cần `updatedAtField`.
+**Tiền điều kiện.** Đối tượng `ACTIVE`, `incrementalEnabled = true` (bật bằng API-08-130, tắt bằng API-08-131); với `SOURCE_DATASET` cần `updatedAtField`.
 
 **Kích hoạt.** Nhận EVT-06-01, EVT-06-02, EVT-06-03, EVT-06-04 (đổi bản ghi vàng), EVT-06-10 (mô hình domain kích hoạt), EVT-07-05 (danh mục phát hành), EVT-07-03 (danh mục ngừng), EVT-07-10 (sắp xếp ĐVHC); lịch `INCREMENTAL` với nguồn HTTT.
 
-**Đầu vào.** Sự kiện (`eventId`, `goldenId[]` hoặc `catalogCode`, `versionNo`); cửa sổ gom `08.incremental.batch-window-minutes` (mặc định 15).
+**Đầu vào.** Sự kiện (`eventId`, `goldenId[]` hoặc `catalogCode`, `versionNo`); cửa sổ gom `08.incremental.batch-window-minutes` (mặc định 15). Bật, tắt theo đối tượng: `assetCode`, `reason` (tùy chọn, ≥ 20 ký tự khi tắt), `If-Match`.
 
 **Luồng xử lý chính.**
 
@@ -2104,7 +2110,7 @@ Ví dụ yêu cầu kích hoạt (kế thừa SRS cũ §5.3.1, đổi tên trư�
 - Sự kiện sai lược đồ: ghi hộp nhận lỗi, cảnh báo vận hành ở PH-13 (ERR-08-118); "Sự kiện {loại} từ {nguồn} không xử lý được: {chi tiết}."
 - Nguồn không khả dụng khi đo: như FR-08-031.
 
-**Đầu ra.** Lần đo `INCREMENTAL`; không trả cho bên phát sự kiện.
+**Đầu ra.** Lần đo `INCREMENTAL`; không trả cho bên phát sự kiện. API-08-130, 131 trả `200` với `incrementalEnabled` mới; đối tượng chưa `ACTIVE` bị ERR-08-006, `FLOW_MESSAGE` bị ERR-08-050.
 
 **Kết quả.** Bản ghi lỗi mới xuất hiện trong vòng khoảng 20 phút sau khi bản ghi vàng đổi.
 
@@ -2112,11 +2118,11 @@ Ví dụ yêu cầu kích hoạt (kế thừa SRS cũ §5.3.1, đổi tên trư�
 
 **Sự kiện phát ra.** EVT-08-06 khi có lỗi mới.
 
-**Kiểm toán.** Không (thao tác hệ thống, ghi nhật ký vận hành).
+**Kiểm toán.** Có với bật, tắt (người, đối tượng, lý do); không với việc đo (thao tác hệ thống, ghi nhật ký vận hành).
 
 **Quy tắc nghiệp vụ.** BR-08-033, BR-08-034.
 
-**Màn hình, API.** UI-08-11 (lọc `trigger = EVENT`); không có API riêng.
+**Màn hình, API.** UI-08-11 (lọc `trigger = EVENT`), UI-08-04; API-08-130, API-08-131. Việc nhận sự kiện không có API.
 :::
 
 ```{.mermaid caption="Trình tự đo tăng dần khi bản ghi vàng thay đổi"}
@@ -2313,7 +2319,7 @@ Hình cho thấy PH-08 chỉ giữ bản sao tạm của danh mục trong thời
 **Màn hình, API.** UI-08-12, UI-08-04; API-08-065.
 :::
 
-Ví dụ ảnh chụp (kế thừa SRS cũ §5.3.2): điểm sáu chiều 91,2; 88,0; 79,5; 72,0; 96,0; 85,0 với trọng số mặc định cho điểm tổng `91,2×0,20 + 88,0×0,20 + 79,5×0,15 + 72,0×0,10 + 96,0×0,15 + 85,0×0,20 = 86,89`, kết luận `PASS` với ngưỡng 80.
+Ví dụ ảnh chụp (kế thừa SRS cũ §5.3.2): điểm sáu chiều 91,2; 88,0; 79,5; 72,0; 96,0; 85,0 với trọng số mặc định cho điểm tổng `91,2×0,20 + 88,0×0,20 + 79,5×0,15 + 72,0×0,10 + 96,0×0,15 + 85,0×0,20 = 18,240 + 17,600 + 11,925 + 7,200 + 14,400 + 17,000 = 86,365`, làm tròn nửa lên 86,37, kết luận `PASS` với ngưỡng 80.
 
 #### FR-08-029 · So kỳ trước, xu hướng
 
@@ -2482,7 +2488,7 @@ Hình cho thấy một API dùng chung cho hai bên gọi; thống kê theo phú
 
 **Kích hoạt.** `POST /api/dq/v1/checks:evaluate`.
 
-**Đầu vào.** `assetCode`, `record` (JSON ≤ 64 KB), `mode` (`STRICT`, `ADVISORY`, mặc định theo cấu hình đối tượng), `dimensions[]` (mặc định sáu chiều), `correlationId`, `caller` (`flowCode` hoặc `PH-06`).
+**Đầu vào.** `assetCode`, `record` (JSON ≤ 64 KB), `mode` (`STRICT`, `ADVISORY`, mặc định theo cấu hình đối tượng), `dimensions[]` (mặc định sáu chiều), `failFast` (T-BOOL, tùy chọn: dừng ở quy tắc `CRITICAL` đầu tiên vi phạm để giảm độ trễ, mặc định `false`), `correlationId`, `caller` (`flowCode` hoặc `PH-06`).
 
 **Luồng xử lý chính.**
 
@@ -2670,7 +2676,7 @@ Hình cho thấy bản tin bị chặn vẫn còn ở DLQ để xử lý lại, 
 1. PH-06 gọi API-08-068 sau bước kiểm lược đồ của mình.
 2. PH-08 đánh giá như FR-08-032, chỉ quy tắc có `gate = true`.
 3. PH-08 trả kết luận; PH-06 áp: `FAIL` → ứng viên `REJECTED` với lý do `DQ_GATE`; `WARN` → ứng viên đi tiếp kèm cờ chất lượng.
-4. PH-08 thống kê theo nguồn PH-06 để báo cáo chất lượng nguồn.
+4. PH-08 thống kê theo nguồn PH-06 để báo cáo chất lượng nguồn. Ứng viên bị từ chối vì `DQ_GATE` không tạo bản ghi lỗi ở PH-08 (chỉ vào thống kê theo phút) và đi vào hàng đợi người quản lý dữ liệu chủ của PH-06 theo quy ước của PH-06 (Phụ lục B).
 
 **Luồng thay thế.** `ADVISORY`: chỉ gắn cờ, không từ chối.
 
@@ -2710,7 +2716,7 @@ Hình cho thấy nguồn nhận lại mã quy tắc vi phạm để sửa tại 
 
 ### 6.7. Nhóm F · Bản ghi lỗi
 
-Bản ghi lỗi biến điểm số thành danh sách việc cụ thể: bản ghi nào, quy tắc nào, mức nào. Dấu vân tay `SHA-256(tenantId | assetCode | ruleCode | recordKey chuẩn hóa)` giữ danh tính lỗi qua các kỳ nên biết lỗi mới, còn, hết (ADR đề xuất 086). Bảng lỗi phân vùng theo tháng, lưu giữ 13 tháng; giá trị trường Nhạy cảm không bao giờ lưu dạng rõ. Máy trạng thái lỗi và ngoại lệ ở mục 4.5.
+Bản ghi lỗi biến điểm số thành danh sách việc cụ thể: bản ghi nào, quy tắc nào, mức nào. Dấu vân tay `HMAC-SHA256` với khóa riêng từng tenant (OpenBao) trên `tenantId | assetCode | ruleCode | recordKey chuẩn hóa` giữ danh tính lỗi qua các kỳ nên biết lỗi mới, còn, hết (ADR đề xuất 086). Bảng lỗi phân vùng theo tháng, lưu giữ 13 tháng; giá trị trường Nhạy cảm không bao giờ lưu dạng rõ. Máy trạng thái lỗi và ngoại lệ ở mục 4.5.
 
 ```{.mermaid caption="Quan hệ giữa các chức năng nhóm F"}
 flowchart LR
@@ -2743,7 +2749,7 @@ Hình cho thấy tra cứu là cửa vào chung của ba hướng xử lý: xem 
 **Luồng xử lý chính.**
 
 1. Hệ thống chuẩn hóa khóa (cắt khoảng trắng, nối nhiều cột bằng `\u001f`), tính dấu vân tay.
-2. Hệ thống che giá trị theo `maskingMode` của trường: `HASH` lưu HMAC-SHA-256 với khóa theo tenant (OpenBao) để so khớp mà không đảo được; `PARTIAL` giữ 2 ký tự đầu và 2 ký tự cuối (`00******34`); `NONE` lưu tối đa 255 ký tự.
+2. Hệ thống che giá trị theo `valueMode` của trường: `HASH_ONLY` chỉ lưu HMAC-SHA256 với khóa theo tenant (OpenBao) để so khớp mà không đảo được, không lưu giá trị che; `MASKED` lưu giá trị đã che, giữ 2 ký tự đầu và 2 ký tự cuối (`00******34`); `PLAIN` lưu tối đa 255 ký tự và chỉ cho trường `PUBLIC`, `INTERNAL`.
 3. Khóa bản ghi chứa trường Nhạy cảm (ví dụ khóa là CCCD) lưu `recordKeyHash`, hiển thị bản che; tra cứu theo khóa đầy đủ dùng HMAC.
 4. Dấu vân tay chưa có: tạo lỗi `OPEN`, `firstSeenScanId`; đã có và đang `OPEN`, `IN_REMEDIATION`, `WAIVED`: cập nhật `lastSeenScanId`, `occurrences`; đang `RESOLVED`: mở lại `OPEN`, tăng `reopenCount`.
 5. Sau khi lần đo xong, lỗi thuộc phạm vi lần đo (quy tắc và bản ghi đã được kiểm) mà không còn thấy: chuyển `RESOLVED` với `resolvedByScanId`; bản ghi đã xóa ở nguồn: `RESOLVED` lý do `RECORD_REMOVED`.
@@ -2812,7 +2818,7 @@ Hình cho thấy tra cứu là cửa vào chung của ba hướng xử lý: xem 
 
 **Quy tắc nghiệp vụ.** BR-08-012, BR-08-026.
 
-**Màn hình, API.** UI-08-13; API-08-073, API-08-078.
+**Màn hình, API.** UI-08-13; API-08-073 (`GET`), API-08-129 (`POST /findings:search`, khi tra theo `recordKey` là dữ liệu cá nhân), API-08-078.
 :::
 
 #### FR-08-038 · Xem chi tiết bản ghi lỗi, nguồn gốc
@@ -3161,12 +3167,12 @@ Hình cho thấy nhánh chuyển PH-06 tách ngay từ lúc mở phiếu: lỗi 
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm ghi chú (ERR-08-036), chuyển `FIXED`.
-2. Hệ thống tạo lần đo `trigger = VERIFY` trên tập khóa bản ghi của phiếu (≤ 100.000; lớn hơn thì `FULL_ASSET`), ưu tiên cao; với `MDM_DOMAIN` chờ tối đa `08.verify.wait-mdm-minutes` (60) để PH-06 nhận cập nhật từ nguồn.
+2. Hệ thống tạo lần đo `trigger = VERIFY` trên tập khóa bản ghi của phiếu (≤ 100.000; lớn hơn thì `FULL_ASSET`), ưu tiên cao; lần đo `VERIFY` luôn do hệ thống tạo khi báo đã sửa (API-08-090), không tạo qua API-08-059 (API này chỉ nhận `MANUAL`, `ANNUAL`); với `SOURCE_DATASET` chờ tối đa `08.verify.wait-source-minutes` (mặc định 0, đặt theo độ trễ bản sao chỉ đọc, Q08-19) để bản sao nhận bản sửa, tránh phiếu `REOPENED` oan; với `MDM_DOMAIN` chờ tối đa `08.verify.wait-mdm-minutes` (60) để PH-06 nhận cập nhật từ nguồn.
 3. Lần đo xong: mọi lỗi của phiếu `RESOLVED` thì phiếu `VERIFIED`, ghi Δ điểm (nếu có ảnh chụp mới), phát EVT-08-09.
 4. Còn lỗi: phiếu `REOPENED`, danh sách lỗi còn lại hiện trên phiếu, thông báo DO.
 5. Lần đo kiểm chứng `FAILED` (kỹ thuật): phiếu giữ `FIXED`, hiện "Đo kiểm chứng lỗi kỹ thuật, sẽ thử lại" (ERR-08-115), hệ thống thử lại sau 1 giờ, tối đa 3 lần rồi giao DS.
 
-**Luồng thay thế.** DS xác nhận thủ công khi lỗi không đo lại được (nguồn đã ngừng) kèm lý do ≥ 50 ký tự; DO không được làm việc này (ERR-08-035).
+**Luồng thay thế.** DS đo kiểm chứng lại theo yêu cầu (API-08-091 với `mode = SCAN`) hoặc xác nhận thủ công (`mode = MANUAL`) khi lỗi không đo lại được (nguồn đã ngừng) kèm lý do ≥ 50 ký tự; DO không được làm việc này (ERR-08-035).
 
 **Luồng ngoại lệ.**
 
@@ -3186,7 +3192,7 @@ Hình cho thấy nhánh chuyển PH-06 tách ngay từ lúc mở phiếu: lỗi 
 
 **Quy tắc nghiệp vụ.** BR-08-014, BR-08-034.
 
-**Màn hình, API.** UI-08-16; API-08-090, API-08-091.
+**Màn hình, API.** UI-08-16; API-08-090 (báo đã sửa, tự tạo lần đo `VERIFY`), API-08-091 (đo lại hoặc xác nhận thủ công của DS).
 :::
 
 ```{.mermaid caption="Trình tự xác nhận đã sửa và đo kiểm chứng"}
@@ -3272,10 +3278,10 @@ Hình cho thấy người duy nhất đưa phiếu tới `VERIFIED` là hệ th�
 **Luồng xử lý chính.**
 
 1. Hệ thống kiểm đối tượng `MDM_DOMAIN` (ERR-08-051).
-2. Hệ thống gọi PH-06 tạo mục hàng đợi (FR-06-027) cho từng `goldenId` với lý do `DQ_FINDING` và mã quy tắc; PH-06 trả mã mục.
+2. Hệ thống gọi PH-06 tạo mục hàng đợi (FR-06-027) cho từng `goldenId` với mã lý do `DQ_FINDING` (mã `DQ_GATE` chỉ dành cho ứng viên bị cổng chất lượng từ chối, FR-08-035), mã quy tắc và `suggestedAction`; mục đi vào hàng đợi người quản lý dữ liệu chủ của miền, SLA xử lý do PH-06 đặt theo hàng đợi của mình (PH-08 chỉ theo dõi bằng lần đo kế tiếp); PH-06 trả mã mục.
 3. Hệ thống ghi liên kết mục PH-06 vào lỗi; phiếu (nếu có) chuyển `ASSIGNED` cho DS dữ liệu chủ, theo dõi bằng lần đo kế tiếp như mọi phiếu.
 
-**Luồng thay thế.** PH-06 đã có mục mở cho `goldenId`: gắn thêm lý do, không tạo trùng.
+**Luồng thay thế.** PH-06 đã có mục mở cho `goldenId`: gắn thêm lý do, không tạo trùng. PH-06 từ chối nhận (lỗi do nguồn, không do hợp nhất): phiếu trả về DS kèm lý do để chuyển chủ quản (FR-08-045); sau khi PH-06 sửa, lần đo `VERIFY` chờ EVT-06-02 (FR-08-044).
 
 **Luồng ngoại lệ.**
 
@@ -3725,7 +3731,7 @@ Hình cho thấy băm nội dung được tính ngay lúc duyệt; mọi bản x
 
 **Luồng xử lý chính.**
 
-1. Hệ thống kiểm sẵn sàng (API-08-115): mỗi đối tượng có ít nhất một lần đo `FULL` `SUCCEEDED` trong năm; ảnh chụp đại diện không có cờ `INCOMPLETE_DIMENSIONS`; không có ảnh chụp từ `SAMPLE` hoặc `INCREMENTAL` (thiếu: ERR-08-038 kèm danh sách).
+1. Hệ thống kiểm sẵn sàng (API-08-115): mỗi đối tượng có ít nhất một lần đo `FULL` `SUCCEEDED` trong năm; ảnh chụp đại diện không có cờ `INCOMPLETE_DIMENSIONS`; không có ảnh chụp từ `SAMPLE` hoặc `INCREMENTAL` (thiếu: ERR-08-038 kèm danh sách). Đối tượng `FLOW_MESSAGE` không đo theo lô (Q08-13) nên được loại khỏi điều kiện này; báo cáo trình bày chúng bằng thống kê kiểm tra trực tuyến cả năm (`dq_inline_stat`).
 2. Hệ thống chọn ảnh chụp đại diện theo phương pháp; `WEIGHTED_AVERAGE` lấy trung bình điểm các tháng có lần đo `FULL` theo số bản ghi.
 3. Hệ thống dựng báo cáo: điểm theo đối tượng, miền, tổ chức; xu hướng 12 tháng; lỗi `CRITICAL` còn mở cuối năm; số phiếu và tỷ lệ đạt SLA trong năm; Δ điểm đạt được nhờ khắc phục; ngoại lệ đã dùng; khuyến nghị cho năm sau; phương pháp chọn ảnh chụp ghi rõ.
 4. Báo cáo `DRAFT` loại `ANNUAL`, rồi duyệt, công bố như FR-08-053 (kiểm sẵn sàng chạy lại lúc gửi duyệt).
@@ -4137,10 +4143,10 @@ Ba mươi lăm quy tắc dưới đây ràng buộc mọi chức năng; mỗi qu
 | BR-08-007 | Bốn mắt cho kích hoạt bộ quy tắc, trọng số ngưỡng, ngoại lệ, công bố báo cáo, xuất lỗi Nhạy cảm; người soạn, người gửi không duyệt | 017, 021, 039, 040, 053, 060 | FR-00-071 |
 | BR-08-008 | Đổi trọng số, ngưỡng không hồi tố điểm quá khứ; lần đo ghi `weightConfigId`; so kỳ khác cấu hình gắn `WEIGHTS_CHANGED` | 018, 021, 028, 029 | BR repo 009 |
 | BR-08-009 | Ảnh chụp điểm bất biến; báo cáo `PUBLISHED` bất biến, sửa bằng thu hồi và báo cáo thay thế | 028, 030, 040, 053, 055, 057 | BR repo 007 |
-| BR-08-010 | Báo cáo năm chỉ công bố khi mỗi đối tượng trong phạm vi có lần đo `FULL` `SUCCEEDED` trong năm, ảnh chụp đại diện không `INCOMPLETE_DIMENSIONS`, không từ `SAMPLE`, `INCREMENTAL` | 024, 031, 054 | BR repo 006, 014 |
+| BR-08-010 | Báo cáo năm chỉ công bố khi mỗi đối tượng theo lô (không gồm `FLOW_MESSAGE`, báo cáo bằng thống kê trực tuyến cả năm) trong phạm vi có lần đo `FULL` `SUCCEEDED` trong năm, ảnh chụp đại diện không `INCOMPLETE_DIMENSIONS`, không từ `SAMPLE`, `INCREMENTAL` | 024, 031, 054 | BR repo 006, 014 |
 | BR-08-011 | Báo cáo gửi duyệt phải có ít nhất một khuyến nghị | 052, 053, 054 | BR repo 013 |
 | BR-08-012 | Không lưu giá trị gốc trường `SENSITIVE` ở bản ghi lỗi, hồ sơ, chạy thử, sự kiện, nhật ký; `SENSITIVE` lưu HMAC, `RESTRICTED` lưu che một phần; che không được lỏng hơn phân loại PH-09 | 005, 008, 009, 016, 036, 037, 038 | RB-07 cũ |
-| BR-08-013 | Dấu vân tay lỗi là `SHA-256(tenantId, assetCode, ruleCode, recordKey chuẩn hóa)`; không chứa phiên bản quy tắc để lỗi nối tiếp qua phiên bản | 036 | Mới |
+| BR-08-013 | Dấu vân tay lỗi là `HMAC-SHA256(khóa của tenant, tenantId, assetCode, ruleCode, recordKey chuẩn hóa)` với khóa riêng từng tenant giữ ở OpenBao (`dh-{tenant}-dq-hmac`); SHA-256 trần không được dùng vì số CCCD hoặc mã số thuế dò ngược được; không chứa phiên bản quy tắc để lỗi nối tiếp qua phiên bản | 036 | Mới |
 | BR-08-014 | Chủ quản không tự xác nhận phiếu; `VERIFIED` chỉ do lần đo `VERIFY` sạch hoặc DS xác nhận có lý do; đo kiểm chứng lỗi kỹ thuật giữ `FIXED` | 043, 044 | BR repo 008 |
 | BR-08-015 | SLA phiếu theo mức (`CRITICAL` 5, `MAJOR` 15, `MINOR` 30 ngày làm việc, giả định); quá hạn 5 ngày leo thang cấp 1, 10 ngày cấp 2 | 041, 042, 045 | BR repo 011 (hạn mới) |
 | BR-08-016 | Trực tuyến `STRICT`: lỗi `CRITICAL`, `MAJOR` cho `FAIL`, chỉ `MINOR` cho `WARN`; `ADVISORY` không bao giờ `FAIL` | 032, 033, 035 | BR repo 012 |
@@ -4188,9 +4194,9 @@ Yêu cầu dưới đo được, kế thừa NFR của SRS cũ và nâng theo h�
 | NFR-08-012 | Báo cáo | Sinh báo cáo kỳ ≤ 5 phút; xuất PDF 100 trang ≤ 2 phút | 200 đối tượng |
 | NFR-08-013 | Hồ sơ dữ liệu | 1 triệu dòng, 50 cột ≤ 15 phút; sai số HLL ≤ 2% | Như NFR-08-003 |
 | NFR-08-014 | Đo kiểm chứng | ≤ 10.000 khóa ≤ 5 phút từ lúc báo đã sửa (không gồm thời gian chờ PH-06) | Như NFR-08-003 |
-| NFR-08-015 | Quan sát | Chỉ số `dq_scan_jobs_total{asset,status}`, `dq_scan_duration_seconds`, `dq_score_gauge{asset,dimension}`, `dq_findings_total{dimension,severity}`, `dq_check_total{result}`, `dq_check_duration_seconds`, `dq_issues_overdue`, `dq_outbox_lag_seconds`; bảng Grafana điểm theo thời gian, top quy tắc vi phạm | Xuất Prometheus |
+| NFR-08-015 | Quan sát | Chỉ số `dq_scan_jobs_total{asset,status}`, `dq_scan_duration_seconds`, `dq_score_gauge{asset,dimension}`, `dq_findings_total{dimension,severity}`, `dq_check_total{result}`, `dq_check_duration_seconds`, `dq_issues_overdue`, `dq_outbox_lag_seconds`; bảng Grafana điểm theo thời gian, top quy tắc vi phạm; đây là danh sách tối thiểu, danh sách đầy đủ theo SDD §10 | Xuất Prometheus |
 | NFR-08-016 | Không lộ dữ liệu cá nhân | 0 giá trị `SENSITIVE` dạng rõ trong `ph08_dq`, nhật ký, sự kiện | Quét tự động mẫu CCCD, MST, SĐT trên bảng và log mỗi bản phát hành |
-| NFR-08-017 | Kết nối nội bộ | mTLS trong cụm với PH-05, PH-06, PH-07, PH-16; token máy có scope `dq.check`, `dq.read` | Kiểm cấu hình, kiểm thử xâm nhập |
+| NFR-08-017 | Kết nối nội bộ | mTLS trong cụm với PH-05, PH-06, PH-07, PH-16; token máy có scope `dq.check`, `dq.read`, `dq.ingest` | Kiểm cấu hình, kiểm thử xâm nhập |
 | NFR-08-018 | Sự kiện | Giao ít nhất một lần, trễ p95 ≤ 5 giây từ lúc ghi giao dịch | `dq_outbox_lag_seconds` |
 | NFR-08-019 | Mở rộng | Thêm bộ thực thi tăng thông lượng gần tuyến tính tới 8 bộ (≥ 0,8 × số bộ) | Đo NFR-08-003 với 2, 4, 8 bộ |
 | NFR-08-020 | Truy vết | `traceId` xuyên lần đo, tác vụ, lời gọi PH-05, PH-06, PH-07 | Tempo, PH-13 |
@@ -4199,7 +4205,7 @@ Yêu cầu dưới đo được, kế thừa NFR của SRS cũ và nâng theo h�
 
 ### 8.2. Tham số theo tenant
 
-Bốn mươi khóa dưới đây chỉnh được ở FR-08-058; cột "Trần" do PA đặt ở `PLATFORM`. Ngưỡng đạt, cảnh báo và trọng số không nằm ở đây mà ở cấu hình trọng số có duyệt (FR-08-021).
+Bốn mươi ba khóa dưới đây chỉnh được ở FR-08-058; cột "Trần" do PA đặt ở `PLATFORM`. Ngưỡng đạt, cảnh báo và trọng số không nằm ở đây mà ở cấu hình trọng số có duyệt (FR-08-021).
 
 | Khóa | Mặc định | Miền, trần | Ý nghĩa |
 |---|---|---|---|
@@ -4212,6 +4218,8 @@ Bốn mươi khóa dưới đây chỉnh được ở FR-08-058; cột "Trần" 
 | `08.scan.duplicate-policy` | `QUEUE` | `QUEUE`, `REJECT` | Xử lý kích hoạt trùng |
 | `08.scan.manual-per-hour` | 10 | 1…60 | Hạn mức đo theo yêu cầu mỗi tenant |
 | `08.scan.max-concurrent-per-connection` | 2 | 1…4 | Truy vấn đồng thời lên một kết nối nguồn |
+| `08.scan.heartbeat-timeout-seconds` | 180 | 60…900 | Tác vụ không báo nhịp quá hạn này bị thu hồi và giao lại |
+| `08.scan.task-max-attempts` | 3 | 1…10 | Số lần thử tối đa một tác vụ phân mảnh trước khi `FAILED` |
 | `08.scan.min-coverage` | 95 | 80…100 (%) | Tỷ lệ bản ghi tối thiểu để có điểm khi tác vụ lỗi |
 | `08.scan.task-size` | 200.000 | 10.000…1.000.000 | Số bản ghi mỗi tác vụ |
 | `08.incremental.batch-window-minutes` | 15 | 5…120 | Cửa sổ gom khóa đổi |
@@ -4234,6 +4242,7 @@ Bốn mươi khóa dưới đây chỉnh được ở FR-08-058; cột "Trần" 
 | `08.issue.auto-open-critical` | 100 | 1…100.000; 0 tắt | Ngưỡng tự mở phiếu |
 | `08.issue.escalate-after-overdue-days` | 5 | 1…30 | Leo thang cấp 1; cấp 2 gấp đôi |
 | `08.verify.wait-mdm-minutes` | 60 | 0…1.440 | Chờ PH-06 nhận cập nhật trước khi đo kiểm chứng |
+| `08.verify.wait-source-minutes` | 0 | 0…1.440 | Chờ bản sao chỉ đọc của HTTT nguồn đồng bộ trước khi đo kiểm chứng `SOURCE_DATASET` (Q08-19) |
 | `08.waiver.max-days` | 180 | ≤ 365 | Hạn tối đa của ngoại lệ |
 | `08.inline.timeout-ms` | 40 | 10…50 | Ngân sách đánh giá trực tuyến |
 | `08.inline.default-mode` | `ADVISORY` | `STRICT`, `ADVISORY` | Chế độ khi đối tượng chưa đặt |
@@ -4307,7 +4316,8 @@ Thân lỗi theo RFC 9457 kèm `code`, `traceId`, `errors[]` theo trường; đ�
 | ERR-08-051 | 422 | Chuyển PH-06 cho lỗi không thuộc bản ghi vàng |
 | ERR-08-052 | 429 | Vượt hạn mức đo theo yêu cầu |
 | ERR-08-053 | 422 | Gửi duyệt khi chưa chạy thử nội dung hiện tại |
-| ERR-08-054 | 503 | Không ghi được kiểm toán, thao tác bị từ chối |
+| ERR-08-054 | 503 | Không ghi được kiểm toán, thao tác bị từ chối (mã chung cho mọi lệnh ghi) |
+| ERR-08-055 | 409 | `Idempotency-Key` đã dùng cho một yêu cầu có thân khác (cùng khóa, cùng đường dẫn, nội dung khác) |
 | ERR-08-101 | 422 | Bản ghi trực tuyến sai lược đồ hoặc quá 64 KB |
 | ERR-08-102 | 404 | Đối tượng chưa bật kiểm tra trực tuyến |
 | ERR-08-103 | 504 | Vượt ngân sách thời gian khi `FAIL_CLOSED` |
@@ -4390,6 +4400,7 @@ Câu dưới là câu chuẩn; `{…}` là biến điền lúc chạy. Tập mà
 | ERR-08-052 | "Đã đạt {n} lần đo theo yêu cầu trong một giờ. Thử lại sau {phút} phút." | Thông báo nổi |
 | ERR-08-053 | "Chạy thử phiên bản sau lần sửa cuối trước khi gửi duyệt." | UI-08-07 |
 | ERR-08-054 | "Hệ thống tạm thời không ghi được nhật ký. Thao tác chưa được thực hiện." | Thông báo nổi |
+| ERR-08-055 | "Khóa chống trùng này đã dùng cho một yêu cầu khác nội dung. Tạo khóa mới rồi gửi lại." | Thông báo nổi |
 | ERR-08-101 | "Bản ghi không đúng lược đồ của đối tượng {mã}: {chi tiết}." | Nhật ký luồng PH-04, UI-08-20 |
 | ERR-08-102 | "Đối tượng {mã} chưa bật kiểm tra trực tuyến." | Nhật ký luồng PH-04 |
 | ERR-08-103 | "Kiểm tra chất lượng vượt {n} ms." | Nhật ký luồng PH-04, UI-08-20 |
@@ -4452,7 +4463,7 @@ PH-08 tiêu thụ tám loại sự kiện dưới để đo tăng dần và gi�
 
 ### 9.4. Danh mục API
 
-Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `openapi-dq.yaml`; đánh số liền theo nhóm chức năng. Tiền tố `/api/dq/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn có `/internal` chỉ mở trong mạng nội bộ.
+Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `openapi-dq.yaml`; đánh số liền theo nhóm chức năng, mỗi operation một mã (API-08-129 đến 131 thêm ở bản 0.2 và đặt cuối bảng để không đổi số các mã cũ). Tiền tố `/api/dq/v1`; hành động dùng dạng `POST …/{ma}:{động-từ}`; đường dẫn có `/internal` chỉ mở trong mạng nội bộ.
 
 | Mã | Phương thức, đường dẫn | FR |
 |---|---|---|
@@ -4528,7 +4539,7 @@ Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `ope
 | API-08-070 | `GET /inline-stats` | 034 |
 | API-08-071 | `PUT /assets/{assetCode}/inline-config` | 032, 035 |
 | API-08-072 | `GET /assets/{assetCode}/inline-config` | 032 |
-| API-08-073 | `GET /findings` (tìm theo khóa cá nhân dùng `POST /findings:search`, cùng mã) | 037 |
+| API-08-073 | `GET /findings` | 037 |
 | API-08-074 | `GET /findings/{findingId}` | 038 |
 | API-08-075 | `POST /findings:export` | 039 |
 | API-08-076 | `POST /exports/{exportId}:approve` | 039 |
@@ -4584,6 +4595,9 @@ Danh mục dưới là nguồn chuẩn mã API-08 cho tập D03-04-PH08 và `ope
 | API-08-126 | `POST /retention-runs:preview` | 059 |
 | API-08-127 | `GET /audit-events` | 060 |
 | API-08-128 | `GET /platform/benchmarks` | 061 |
+| API-08-129 | `POST /findings:search` | 037 |
+| API-08-130 | `POST /assets/{assetCode}:enable-incremental` | 025 |
+| API-08-131 | `POST /assets/{assetCode}:disable-incremental` | 025 |
 
 : Danh mục API của PH-08
 
@@ -4704,7 +4718,7 @@ Bảng dưới phân biệt phụ thuộc cứng và mềm, và ghi PH-08 ứng 
 | PH-07 tra mã, ảnh chụp | Cứng với chiều hợp lệ | `IN_RDM`, `IN_RDM_VERSION` | Quy tắc `SKIPPED`, cờ thiếu chiều; trực tuyến theo `onDependencyFailure` |
 | PH-05 kết nối chỉ đọc | Cứng với `SOURCE_DATASET` | Đo bảng HTTT, hồ sơ | Lần đo `FAILED` |
 | PH-09 phân loại | Mềm | Chế độ che | Coi trường chưa phân loại là `SENSITIVE` |
-| PH-18 lịch | Mềm | Kích hoạt lịch | Đo theo yêu cầu vẫn chạy; lịch lỡ chạy bù khi PH-18 sống |
+| PH-18 lịch | Mềm | Kích hoạt thêm lần đo; xử lý lại DLQ | Lịch nội bộ của PH-08 vẫn chạy khi PH-18 vắng; PH-18 chỉ gọi API-08-059 khi cần kích hoạt ngoài lịch |
 | PH-13 thông báo, kiểm toán | Cứng với thao tác cần kiểm toán; mềm với cảnh báo | Kiểm toán, cảnh báo, phân phối | Từ chối thao tác cần kiểm toán (ERR-08-054); cảnh báo xếp hàng |
 | PH-16 | Mềm | KPI | Hộp gửi đệm, đọc lại qua API-08-122 |
 | PH-12 Keycloak, OPA | Cứng | Xác thực, quyền, scope | Từ chối |
@@ -4763,6 +4777,8 @@ Các câu hỏi dưới chưa có câu trả lời; FRS đang dùng phương án
 | Q08-15 | Ngưỡng KPI chất lượng dữ liệu ở PH-16 | PH-16 quyết định |
 | Q08-16 | Quy tắc chính xác cho CCCD khi không có chữ số kiểm tra công khai; xác minh cấu trúc mã tỉnh, giới tính, thế kỷ | `REGEX` cộng `CEL_EXPRESSION` (FR-08-015) |
 | Q08-17 | PH-08 có báo cáo riêng tiến độ chuẩn hóa dữ liệu trước hạn 31/12/2026 theo NĐ 278/2025 không | Dùng báo cáo kỳ, thêm khối tiến độ khi có yêu cầu |
+| Q08-18 | Tenant nhỏ chỉ có một người giữ `PERM-08-approve` thì bốn mắt bị chặn; có cho duyệt ngoài hệ thống hay buộc có DA dự phòng cấp tỉnh | Buộc có DA dự phòng do TA chỉ định, không duyệt ngoài hệ thống (FR-08-017 bước 3a) |
+| Q08-19 | Độ trễ thực tế của bản sao chỉ đọc ở HTTT nguồn (PH-05 xác nhận) để đặt `08.verify.wait-source-minutes` | Mặc định 0; chỉnh theo tenant sau khi PH-05 xác nhận |
 
 : Câu hỏi mở của FRS PH-08
 
@@ -4783,6 +4799,60 @@ PH-08 được nghiệm thu khi đạt đủ các tiêu chí dưới đây trên
 
 : Tiêu chí chấp nhận cấp phân hệ PH-08
 
+## 15. Nhật ký hấp thụ đề nghị
+
+Bản 0.2 hấp thụ đề nghị từ UC §8.2 và Q08-45…49, SDD §13.6, CSDL §9.2, API Phụ lục A. Mỗi dòng một đề nghị, xử lý là "Đã hấp thụ" (kèm chỗ sửa), "Dồn đợt đồng bộ cuối" (thuộc tài liệu khác, ghi ở Phụ lục B) hoặc "Từ chối" kèm lý do. MH và TC chưa có dòng.
+
+| Mã | Nguồn | Đề nghị | Xử lý |
+|---|---|---|---|
+| ĐN-UC-01 | UC §8.2 | Ghi rõ người đề nghị khi không có DS riêng và DA dự phòng cấp tỉnh | Đã hấp thụ: FR-08-017 bước 3, 3a; FR-08-021 bước 5; Q08-18 |
+| ĐN-UC-02 | UC §8.2 | Không mất dấu "đã chạy thử" khi chỉ đổi mô tả quy tắc | Đã hấp thụ: FR-08-016 bước 4 và luồng thay thế (băm chỉ tính trên phần ảnh hưởng kết quả đo) |
+| ĐN-UC-03 | UC §8.2 | Nêu API tạo lần đo `VERIFY` | Đã hấp thụ theo hướng khác: `VERIFY` do hệ thống tạo, API-08-059 không nhận, DS đo lại bằng API-08-091 (FR-08-044, 024) |
+| ĐN-UC-04 | UC §8.2 | Thống nhất mã lý do `DQ_FINDING`, `DQ_GATE`, SLA, người nhận ở PH-06 | Đã hấp thụ phần PH-08 (FR-08-046, FR-08-035); phần PH-06 dồn đợt đồng bộ cuối (Phụ lục B) |
+| ĐN-UC-05 | UC §8.2 | Câu thông báo theo ngữ cảnh cho ERR-08-005, 006, 007 ở UI-08-09, 16, 18 | Dồn đợt đồng bộ cuối: thuộc D03-06-PH08; FRS giữ câu chuẩn ở 9.2 |
+| ĐN-UC-06 | UC §8.2 | Dựng TS-08-01…27 theo UC, dữ liệu `T90…T99` | Dồn đợt đồng bộ cuối: thuộc D05-02-PH08 |
+| ĐN-UC-07 | UC §8.2 | D02-08 xác nhận 11 quyền, cặp loại trừ DS và DA, scope máy | Đã hấp thụ vào Phụ lục B (thêm `dq.ingest`); sửa D02-08 dồn đợt đồng bộ cuối |
+| ĐN-UC-08 | UC Q08-45 | DA dự phòng khi tenant chỉ một người duyệt | Đã hấp thụ: Q08-18, FR-08-017 bước 3a |
+| ĐN-UC-09 | UC Q08-46 | Tham số độ trễ bản sao nguồn cho đo kiểm chứng | Đã hấp thụ: `08.verify.wait-source-minutes`, FR-08-044 bước 2, Q08-19 |
+| ĐN-UC-10 | UC Q08-47 | Ứng viên bị `DQ_GATE` không tính vào bản ghi lỗi | Đã hấp thụ: FR-08-035 bước 4; phía PH-06 dồn đợt cuối |
+| ĐN-UC-11 | UC Q08-48 | PH-06 từ chối chuyển thì trả phiếu về DS | Đã hấp thụ: FR-08-046 luồng thay thế; chi tiết phía PH-06 dồn đợt đồng bộ cuối |
+| ĐN-UC-12 | UC Q08-49 | Loại `FLOW_MESSAGE` khỏi điều kiện báo cáo năm | Đã hấp thụ: FR-08-054 bước 1, BR-08-010 |
+| ĐN-SDD-01 | SDD §13.6 | BR-08-013 và FR-08-036 dùng HMAC-SHA256 khóa theo tenant | Đã hấp thụ: BR-08-013, mở đầu 6.7, FR-08-036 bước 2 |
+| ĐN-SDD-02 | SDD §13.6 | Ví dụ FR-08-028 sai số học | Đã hấp thụ: tính lại 86,365, làm tròn 86,37 (số cũ 86,89 sai) |
+| ĐN-SDD-03 | SDD §13.6 | PH-18 là phụ thuộc mềm, lịch do bộ lập lịch nội bộ | Đã hấp thụ: 2.3, 2.4, 3.1, FR-08-023 bước 3, 12.1 |
+| ĐN-SDD-04 | SDD §13.6 | NFR-08-015 là danh sách tối thiểu; thêm khóa heartbeat, số lần thử tác vụ | Đã hấp thụ: NFR-08-015, 8.2 thêm `08.scan.heartbeat-timeout-seconds`, `08.scan.task-max-attempts` |
+| ĐN-SDD-05 | SDD §13.6 | CSDL: `heartbeat_at`, `not_before`, `dry_run_*`, `dq_incremental_buffer`, `dq_score_current`, chỉ mục duy nhất | Đã hấp thụ: EN-08-07, 13, 31, 32 (4.2); DDL ở D03-03 0.2; vai CSDL không thuộc FRS |
+| ĐN-SDD-06 | SDD §13.6 | PH-06: `QualityGatePort`, `StewardIntakeApi`, khung nhìn `v_dq_{domain}`, lý do `DQ_FINDING` | Dồn đợt đồng bộ cuối: Phụ lục B (D02-03-PH06, D03-02-PH06, D03-04-PH06) |
+| ĐN-SDD-07 | SDD §13.6 | PH-05: API thuê kết nối chỉ đọc, khám phá lược đồ, Kamelet với tiêu đề `dh-dq-verdict`, `dh-dq-violations` | Dồn đợt đồng bộ cuối: Phụ lục B (PH-05) |
+| ĐN-SDD-08 | SDD §13.6 | PH-07: `RdmLookupApi` trả ảnh chụp theo phiên bản, EVT-07-05 mang phiên bản, quyền khai thác | Dồn đợt đồng bộ cuối: Phụ lục B (PH-07) |
+| ĐN-SDD-09 | SDD §13.6 | PH-09 `ClassificationApi`; PH-13 lịch ngày làm việc, tiêu thụ EVT-08 | Dồn đợt đồng bộ cuối: Phụ lục B (PH-09, PH-13) |
+| ĐN-SDD-10 | SDD §13.6 | D03-09 hàng `dh-data-dq-worker`, KEDA, bucket; D03-10 ngoại lệ RLS; D04-01 quy tắc ArchUnit | Dồn đợt đồng bộ cuối: Phụ lục B |
+| ĐN-SDD-11 | SDD §13.6 | `failFast` cho `checks:evaluate`; `Idempotency-Key` bắt buộc cho `POST /scans` | Đã hấp thụ: FR-08-032 đầu vào, FR-08-024 đầu vào |
+| ĐN-SDD-12 | SDD §13.6 | D00-04 dòng PH-08 và chạy lại `kiem_tra_ma.py` | Dồn đợt đồng bộ cuối: Phụ lục B |
+| ĐN-API-01 | API Phụ lục A | Mã riêng cho `POST /findings:search`; API bật, tắt đo tăng dần | Đã hấp thụ: API-08-129, 130, 131 (9.4), FR-08-037, FR-08-025 |
+| ĐN-API-02 | API Phụ lục A | ERR-08-055 cho `Idempotency-Key` dùng lại với thân khác; ERR-08-054 là mã 503 chung | Đã hấp thụ: 9.1, 9.2, FR-08-024 |
+| ĐN-API-03 | API Phụ lục A | Thêm enum chỉ có ở API vào Phụ lục A | Đã hấp thụ: Phụ lục A thêm 19 enum (`dimension_status`, `kpi.kind`, `object_type`, …), `export.status` thêm `RUNNING`, `FAILED` |
+| ĐN-API-04 | API Phụ lục A | `PERM-08-export` cho DO để chấp thuận xuất; xác nhận cảnh báo dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; scope `dq.ingest` | Đã hấp thụ `dq.ingest` (3.3, NFR-08-017, Phụ lục B); hai điểm quyền dồn đợt đồng bộ cuối vì thuộc D02-08 |
+| ĐN-API-05 | API Phụ lục A | Cột D03-03 và lệch enum `domain_status`, `weight_config.status`, `value_mode` | Đã hấp thụ: chọn `domain_status` = `ACTIVE`, `INACTIVE`; `weight_config.status` thêm `RETIRED`; tên `value_mode` (`MASKED`, `HASH_ONLY`, `PLAIN`); ghi ở Phụ lục A |
+| ĐN-API-06 | API Phụ lục A | D03-04-PH06: API nội bộ `DQ_FINDING`, khung nhìn hợp đồng, cổng đầu vào | Dồn đợt đồng bộ cuối: Phụ lục B (PH-06) |
+| ĐN-API-07 | API Phụ lục A | PH-05, PH-04, PH-10 | Dồn đợt đồng bộ cuối: Phụ lục B |
+| ĐN-API-08 | API Phụ lục A | Khung lỗi chung cấp ERR-00-401, 403, 428 | Dồn đợt đồng bộ cuối: Phụ lục B (đã có) |
+| ĐN-CSDL-01 | CSDL §9.2 | EN-08-30 `dq_retention_policy` | Đã hấp thụ: 4.2 (EN-08-30; EN-08-27, 28, 29 giữ nguyên) |
+| ĐN-CSDL-02 | CSDL §9.2 | Enum bổ sung (`field_type`, `value_mode`, `skip_reason`, `condition_type`, `activity_type`, …) | Đã hấp thụ: Phụ lục A; `condition_type` giải theo FRS, `activity_type` thêm ba giá trị |
+| ĐN-CSDL-03 | CSDL §9.2 | Cột `message`, `sample_size`, `sample_seed`, `default_scan_mode`, `sample_ratio`; quy ước mã `DQ-yyyy-nnnnnn`, `DQR-yyyy-nnnnn` | Đã hấp thụ phần cột và mã phiếu `DQ-yyyy-nnnnnn`; từ chối mã báo cáo `DQR-…`, giữ `BC-DQ-yyyy-kỳ-Ttt` vì UC và FRS đã dùng |
+| ĐN-CSDL-04 | CSDL §9.2 | Xác nhận 19 khóa tham số, sàn lưu giữ 3 năm | Từ chối: 8.2 là nguồn chuẩn 43 khóa, D03-03 0.2 bỏ 19 khóa tự đặt; sàn lưu giữ đã có ở `08.snapshot.retention-years`, `08.report.official-retention-years` |
+| ĐN-CSDL-05 | CSDL §9.2 | PERM-08 và hai scope máy theo brief | Đã hấp thụ vào Phụ lục B (D02-08); sửa D02-08 dồn đợt đồng bộ cuối |
+| ĐN-CSDL-06 | CSDL §9.2 | D03-10, D03-09: danh mục schema, vai trò, bucket | Dồn đợt đồng bộ cuối: Phụ lục B |
+| ĐN-CSDL-07 | CSDL §9.2 | D00-04: tiền tố khóa Valkey, khóa OpenBao | Dồn đợt đồng bộ cuối: Phụ lục B (D00-04) |
+| ĐN-CSDL-08 | CSDL §9.2 | SDD và ADR: HMAC, phân vùng `last_seen_at`, `PartitionMaintenanceJob` | Dồn đợt đồng bộ cuối: thuộc SDD và ADR đề xuất 086 (BR-08-013 đã nêu HMAC) |
+| ĐN-CSDL-09 | CSDL §9.2 | Tên logic khác cột (`maskingMode` và `value_mode`, `isCde` và `cde`, …) | Đã hấp thụ: `valueMode` thay `maskingMode` ở FRS; phần còn lại là ánh xạ tên ở D03-03 mục 8.1 (Phụ lục A) |
+| ĐN-CSDL-10 | CSDL §9.2 | Ngoại lệ nhắm một quy tắc hoặc một dấu vân tay | Từ chối theo hướng khác: FR-08-040 giữ phạm vi `FINDINGS` với danh sách tới 100.000 dấu vân tay, nên thêm EN-08-33 `dq_waiver_item` thay vì nhiều dòng ngoại lệ |
+| ĐN-CSDL-11 | CSDL §9.2 | Quyền đọc bản ghi lỗi chỉ trả `maskedValue` | Đã hấp thụ: đã nêu ở BR-08-012, FR-08-038; không đổi FRS |
+
+: Nhật ký hấp thụ đề nghị của bản 0.2
+
+Tổng kết: 43 dòng đề nghị, gồm 27 đã hấp thụ (kể cả hấp thụ theo hướng khác; ĐN-CSDL-03 từ chối riêng mã báo cáo `DQR-…`), 14 dồn đợt đồng bộ cuối, 2 từ chối (ĐN-CSDL-04, ĐN-CSDL-10).
+
 ## Phụ lục A. Nguồn chuẩn giá trị liệt kê
 
 Các enum dưới là nguồn chuẩn cho mọi tập PH-08 (UC, SDD, CSDL, API, MH, TC). Tập sau dùng đúng tên và giá trị; thêm giá trị phải sửa bảng này trước, không đổi tên giá trị đã có. Dòng ghi "thêm" là giá trị bổ sung so với brief chung.
@@ -4795,7 +4865,7 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-08 (UC, SDD, CSDL, API,
 | `asset_status` | `DRAFT`, `ACTIVE`, `SUSPENDED`, `RETIRED` | Đối tượng đo |
 | `domain_status` (thêm) | `ACTIVE`, `INACTIVE` | Miền chất lượng |
 | `rule_set_version.status` | `DRAFT`, `PENDING_APPROVAL`, `APPROVED` (thêm), `ACTIVE`, `SUPERSEDED`, `RETIRED` | Mục 4.3 |
-| `weight_config.status` (thêm) | `DRAFT`, `PENDING_APPROVAL`, `ACTIVE`, `SUPERSEDED` | FR-08-021 |
+| `weight_config.status` (thêm) | `DRAFT`, `PENDING_APPROVAL`, `ACTIVE`, `SUPERSEDED`, `RETIRED` | FR-08-021 |
 | `weight_config.scope` (thêm) | `TENANT`, `DOMAIN`, `ASSET` | FR-08-021 |
 | `rule.exec_mode` | `BATCH`, `INLINE`, `BOTH` | Quy tắc |
 | `rule.source` (thêm) | `MANUAL`, `TEMPLATE`, `SUGGESTED`, `IMPORTED`, `COPIED` | Quy tắc |
@@ -4813,13 +4883,13 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-08 (UC, SDD, CSDL, API,
 | `score.dimension_method` (thêm) | `POOLED`, `RULE_AVERAGE` | Tham số |
 | `finding.status` | `OPEN`, `IN_REMEDIATION`, `RESOLVED`, `WAIVED` | Mục 4.5 |
 | `finding.resolution_reason` (thêm) | `CLEARED`, `RECORD_REMOVED`, `RULE_RETIRED`, `MANUAL_CONFIRMED` | Lỗi `RESOLVED` |
-| `masking_mode` (thêm) | `HASH`, `PARTIAL`, `NONE` | Trường, CDE |
+| `value_mode` (thêm) | `MASKED`, `HASH_ONLY`, `PLAIN` | Trường, CDE, bản ghi lỗi; thay `masking_mode` bản 0.1 (`HASH`, `PARTIAL`, `NONE` nay là `HASH_ONLY`, `MASKED`, `PLAIN`) |
 | `data_class` (theo DD-08) | `PUBLIC`, `INTERNAL`, `RESTRICTED`, `SENSITIVE` | Trường |
 | `waiver.status` | `PENDING_APPROVAL`, `ACTIVE`, `EXPIRED`, `REVOKED`, `REJECTED` | Mục 4.5 |
 | `waiver.scope` (thêm) | `FINDINGS`, `RULE_FILTER` | FR-08-040 |
 | `issue.status` | `OPEN`, `ASSIGNED`, `IN_PROGRESS`, `FIXED`, `VERIFIED`, `REOPENED`, `REJECTED`, `CANCELLED` | Mục 4.6 |
 | `issue.reject_type` (thêm) | `WRONG_OWNER`, `NOT_A_DEFECT`, `CANNOT_FIX` | FR-08-045 |
-| `issue_activity.type` (thêm) | `COMMENT`, `ATTACHMENT`, `STATUS_CHANGE`, `ASSIGNMENT`, `ESCALATION`, `VERIFY_RESULT` | FR-08-043 |
+| `issue_activity.type` (thêm) | `COMMENT`, `ATTACHMENT`, `STATUS_CHANGE`, `ASSIGNMENT`, `ESCALATION`, `VERIFY_RESULT`, `CREATED`, `TRANSFER`, `STEWARD_FORWARD` | FR-08-043, 045, 046 |
 | `steward_action` (thêm) | `REVIEW_DUPLICATE`, `REVIEW_SURVIVORSHIP`, `REVIEW_VALUE` | FR-08-046 |
 | `inline_mode` | `STRICT`, `ADVISORY` | Trực tuyến |
 | `on_dependency_failure` | `FAIL_OPEN`, `FAIL_CLOSED` | Trực tuyến |
@@ -4831,23 +4901,46 @@ Các enum dưới là nguồn chuẩn cho mọi tập PH-08 (UC, SDD, CSDL, API,
 | `report.status` | `DRAFT`, `IN_REVIEW`, `PUBLISHED`, `WITHDRAWN` | Mục 4.7 |
 | `annual_snapshot_method` (thêm) | `FULL_DECEMBER`, `LATEST_FULL`, `WEIGHTED_AVERAGE` | FR-08-054 |
 | `scorecard_scope` (thêm) | `ASSET`, `DOMAIN`, `ORGANIZATION`, `TENANT` | FR-08-051 |
-| `export.kind`, `export.status` (thêm) | `FINDINGS`, `REPORT`; `PENDING_APPROVAL`, `APPROVED`, `READY`, `EXPIRED`, `REJECTED` | FR-08-039, FR-08-055 |
+| `export.kind` (thêm) | `FINDINGS`, `REPORT` | FR-08-039, FR-08-055 |
+| `export.status` (thêm) | `PENDING_APPROVAL`, `APPROVED`, `RUNNING`, `READY`, `FAILED`, `EXPIRED`, `REJECTED` | FR-08-039, FR-08-055 |
 | `export.format` (thêm) | `XLSX`, `CSV`, `PDF`, `JSON`, `YAML` | FR-08-020, 039, 055 |
 | `subscription.channel` (thêm) | `IN_APP`, `EMAIL` | FR-08-056 |
 | `profile_run.status` | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED` | Lần hồ sơ |
 | `profile_run.mode` (thêm) | `FULL`, `SAMPLE`, `EXTERNAL` | FR-08-008, 011 |
+| `field_type` (thêm) | `STRING`, `INTEGER`, `DECIMAL`, `DATE`, `TIMESTAMP`, `BOOLEAN`, `CODE`, `JSON` | Trường |
+| `classification_status` (thêm) | `PROPOSED`, `CONFIRMED` | Trường (theo PH-09) |
+| `skip_reason` (thêm) | `DEPENDENCY_UNAVAILABLE`, `RDM_UNAVAILABLE`, `SOURCE_UNREACHABLE`, `NO_DATA`, `TIMEOUT` | Kết quả quy tắc `SKIPPED` |
+| `dimension_status` (thêm) | `MEASURED`, `SKIPPED` | Điểm chiều |
+| `decision` (thêm) | `APPROVE`, `REJECT` | Duyệt phiên bản, cấu hình, ngoại lệ, yêu cầu xuất |
+| `template.status` (thêm) | `ACTIVE`, `RETIRED` | Quy tắc mẫu |
+| `recipient_type` (thêm) | `USER`, `ROLE`, `ORG` | Đăng ký nhận báo cáo |
+| `report_file.format` (thêm) | `PDF`, `XLSX` | Xuất báo cáo |
+| `rule_file.format` (thêm) | `YAML`, `JSON` | Xuất, nhập bộ quy tắc |
+| `granularity` (thêm) | `MINUTE`, `HOUR`, `DAY` | Thống kê trực tuyến |
+| `verify.mode` (thêm) | `SCAN`, `MANUAL` | Xác nhận phiếu |
+| `retention.action` (thêm) | `DROP_PARTITION`, `DELETE`, `ARCHIVE_COLD`, `ANONYMIZE` | Chính sách lưu giữ |
+| `retention_run.status` (thêm) | `RUNNING`, `SUCCEEDED`, `FAILED` | Lịch sử chạy dọn |
+| `kpi.kind` (thêm) | `SCAN_SNAPSHOT`, `REPORT`, `ISSUE_DAILY` | Đẩy KPI sang PH-16 |
+| `breach.kind` (thêm) | `VERDICT_FAIL`, `BELOW_WARN` | EVT-08-05 |
+| `status_change.kind` (thêm) | `STATUS_CHANGE`, `OVERDUE`, `ESCALATED` | EVT-08-08 |
+| `object_type` (thêm) | `TABLE`, `VIEW` | Khám phá bảng nguồn PH-05 |
+| `audit.outcome` (thêm) | `SUCCESS`, `DENIED`, `FAILED` | Nhật ký kiểm toán |
 
 : Nguồn chuẩn giá trị liệt kê của PH-08
 
+Bản 0.2 thống nhất các chỗ lệch giữa các tập, FRS là gốc và chỉ thêm giá trị: `domain_status` là `ACTIVE`, `INACTIVE` (D03-03 bản 0.1 dùng `asset_status` nên đã sửa); `weight_config.status` thêm `RETIRED` theo D03-03; trường che giá trị đặt tên `value_mode` ở mọi tập (bỏ `masking_mode`, vì D03-03, D03-04 và SDD đã dùng tên này); `alert.condition` giữ bảy giá trị của FRS, D03-03 đổi theo; `issue_activity.type` giữ sáu giá trị của FRS cộng ba giá trị mới.
+
+Quy ước mã nghiệp vụ: phiếu khắc phục `DQ-yyyy-nnnnnn` (tuần tự theo tenant và năm); báo cáo `BC-DQ-yyyy-kỳ-Ttt` với kỳ là tháng hai chữ số, `NAM` hoặc `AHnn` (báo cáo theo yêu cầu), hậu tố `-Rn` khi tạo lại sau thu hồi (ví dụ `BC-DQ-2026-11-T68`). Tên logic ở chương 4 và tên cột D03-03 khác nhau ở vài chỗ (`isCde` và `cde`); bảng ánh xạ ở D03-03 mục 8.1.
+
 ## Phụ lục B. Đề nghị đồng bộ
 
-PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ khác; tập này không sửa trực tiếp các tài liệu đó. Bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị.
+PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ khác; tập này không sửa trực tiếp các tài liệu đó. Bảng dưới ghi từng tài liệu cần sửa và nội dung đề nghị; mọi dòng dồn vào đợt đồng bộ cuối.
 
 | Tài liệu | Đề nghị |
 |---|---|
 | D02-08 §3.2 | Thêm mười quyền `PERM-08-read`, `PERM-08-asset`, `PERM-08-approve`, `PERM-08-run`, `PERM-08-finding-read`, `PERM-08-remediate`, `PERM-08-report`, `PERM-08-export`, `PERM-08-config`, `PERM-08-audit-read` theo ma trận 3.2; giữ PERM-08-rule-admin và thêm PA (mẫu `COMMON`) |
-| D02-08 §4 | Cặp loại trừ DS và DA trong cùng tenant cho PH-08; ghi tách vai trò DS đo, DO sửa; scope máy `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT) |
-| D00-04 §2 | Dòng PH-08: tình trạng "FRS 0.1" (cập nhật tiếp khi đủ bảy tập) |
+| D02-08 §4 | Cặp loại trừ DS và DA trong cùng tenant cho PH-08; ghi tách vai trò DS đo, DO sửa; scope máy `dq.check` (PH-04, PH-06), `dq.read` (PH-16, HTTT), `dq.ingest` (PH-05 đẩy chỉ số hồ sơ) |
+| D00-04 §2 | Dòng PH-08: tình trạng "FRS 0.2" (cập nhật tiếp khi đủ bảy tập); thêm tiền tố khóa Valkey `{tenant}:dq:*`, khóa OpenBao `dh-{tenant}-dq-hmac`, `dh-{tenant}-dq-sign` |
 | D00-04 §3.1, D00-02 | Mở dải ADR 085–089 cho PH-08 (đề xuất, chưa có tệp) với năm nội dung ở 12.3 |
 | D00-04 §3.2 | Chạy lại `kiem_tra_ma.py --cap-nhat-so-tra-cuu` sau khi nhận tập này |
 | D00-03 | Thêm ghi chú "PH-08 dùng gián tiếp" cho LGC-DMDC-006, 007, 008, LGC-BUS-027, LGC-NGSP-003, 005 (không đổi kết luận chính); xác nhận không có `LGC` nào do PH-08 làm chính |
@@ -4862,6 +4955,14 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 | PH-13, PH-16, PH-18 (khi viết) | Tiêu thụ EVT-08-02…14; lịch Quartz cho PH-08; lược đồ KPI chất lượng `kpiSchemaVersion` |
 | Khung lỗi chung D03-04 §6 | Cấp ERR-00-401, ERR-00-403, ERR-00-428 mà PH-08 dẫn |
 | D03-06-00 | Cây menu dưới `/du-lieu/chat-luong` theo 10.1 (20 màn) |
+| D02-08 §3.2 | `PERM-08-export` cấp thêm cho DO (○) chỉ để chấp thuận xuất có trường Nhạy cảm; xác nhận, tắt tiếng cảnh báo dùng `PERM-08-run` hoặc `PERM-08-rule-admin`; DA dự phòng cấp tỉnh (Q08-18) |
+| D02-08 §4 (scope máy) | Thêm scope `dq.ingest` cấp cho PH-05 (`dh-integration`) chỉ gọi API-08-024 |
+| D02-03-PH06, D03-02-PH06, D03-04-PH06 | `QualityGatePort`, `StewardIntakeApi` ở `mdm::api`; khung nhìn `v_dq_{domain}` ổn định; mã lý do `DQ_FINDING` (FR-08-046), `DQ_GATE` (FR-08-035); SLA, người nhận; PH-06 từ chối chuyển |
+| D02-03-PH05, D03-02-PH05, D03-04-PH05 | API thuê kết nối chỉ đọc có hạn cho `dq`, khám phá lược đồ (API-08-018), Kamelet `dh-dq-check` với tiêu đề `dh-dq-verdict`, `dh-dq-violations`; scope `dq.ingest`; xác nhận độ trễ bản sao chỉ đọc (Q08-19) |
+| D03-02-PH07 | `RdmLookupApi` trả ảnh chụp tập mã theo phiên bản dạng luồng; EVT-07-05 mang phiên bản mới; quyền khai thác danh mục hạn chế cho tài khoản dịch vụ PH-08 |
+| PH-09, PH-13 (khi viết) | PH-09: `ClassificationApi` p95 ≤ 100 ms, sự kiện đổi phân loại. PH-13: API lịch ngày làm việc và ngày lễ theo tenant cho tính SLA, tiêu thụ EVT-08-02…14 |
+| D03-09, D03-10, D04-01 | D03-09: hàng `dh-data-dq-worker` (4 bản sao, tối đa 8), KEDA, bucket `dq-reports`, `dq-exports`, `dq-archive`. D03-10: schema `ph08_dq`, ba vai CSDL, ngoại lệ RLS cho so sánh liên tenant. D04-01: quy tắc ArchUnit của `dq` |
+| D03-06-PH08, D05-02-PH08 (đang viết) | MH: câu ngữ cảnh cho ERR-08-005, 006, 007; dùng `valueMode` (không còn `maskingMode`); nút bật, tắt đo tăng dần gọi API-08-130, 131. TC: dựng TS-08 theo UC; thêm mã API-08-129…131, ERR-08-055, EN-08-30…33 |
 
 : Đề nghị đồng bộ với tài liệu khác
 
@@ -4869,4 +4970,5 @@ PH-08 kéo theo thay đổi ở tài liệu chung và tài liệu phân hệ kh�
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 43 đề nghị từ UC, SDD, CSDL, API (chương 15): sửa ví dụ FR-08-028 (86,37), BR-08-013 HMAC-SHA256 khóa theo tenant, PH-18 phụ thuộc mềm; thêm API-08-129…131, ERR-08-055, scope `dq.ingest`, EN-08-30…33, 3 khóa tham số; thống nhất `domain_status`, `weight_config.status`, `value_mode`; 19 enum mới ở Phụ lục A; làm rõ FR-08-016, 017, 021, 025, 035, 044, 046, 054; Q08-18, 19 |
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-FRS và K-TRINH-BAY: 61 FR đủ 17 mục chia mười nhóm, phủ 16 FR của SRS cũ; bảy máy trạng thái; 35 BR, 20 NFR, 40 tham số; 54 mã lỗi control và 19 runtime kèm câu thông báo; 14 sự kiện phát, 8 tiêu thụ; 128 API dự kiến; 20 màn hình; Phụ lục A nguồn chuẩn enum, Phụ lục B đề nghị đồng bộ; thay căn cứ NĐ 47/2020 bằng NĐ 278/2025 |

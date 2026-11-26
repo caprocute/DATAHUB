@@ -9,7 +9,7 @@ CREATE TABLE ph08_dq.dq_schedule (
   schedule_code varchar(63) NOT NULL,
   domain_code   varchar(32),
   asset_id      uuid,
-  cron          varchar(64) NOT NULL DEFAULT '0 0 2 1 * *',
+  cron          varchar(64) NOT NULL DEFAULT '0 0 2 1 * ?',
   timezone      varchar(40) NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
   scan_mode     varchar(16) NOT NULL DEFAULT 'FULL',
   enabled       boolean NOT NULL DEFAULT true,
@@ -68,6 +68,8 @@ CREATE TABLE ph08_dq.dq_scan_job (
   error_code          varchar(16),
   error_message       varchar(2000),
   cancel_reason       varchar(2000),
+  flags               varchar(32)[] NOT NULL DEFAULT '{}',
+  idempotency_hash    bytea,
   created_at          timestamptz NOT NULL DEFAULT now(),
   created_by          varchar(64) NOT NULL,
   updated_at          timestamptz NOT NULL DEFAULT now(),
@@ -92,7 +94,9 @@ CREATE TABLE ph08_dq.dq_scan_job (
   CONSTRAINT ck_dq_scan_job_cancel CHECK (status <> 'CANCELLED' OR COALESCE(char_length(cancel_reason) >= 20, false)),
   CONSTRAINT ck_dq_scan_job_progress CHECK (task_done >= 0 AND task_done <= task_total AND rows_scanned >= 0 AND rows_failed >= 0 AND rows_failed <= rows_scanned),
   CONSTRAINT ck_dq_scan_job_sample CHECK ((scan_mode = 'SAMPLE') = (sample_size IS NOT NULL) AND (sample_size IS NULL OR sample_size > 0)),
-  CONSTRAINT ck_dq_scan_job_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
+  CONSTRAINT ck_dq_scan_job_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$'),
+  CONSTRAINT ck_dq_scan_job_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[]),
+  CONSTRAINT ck_dq_scan_job_idem CHECK ((idempotency_key IS NULL) = (idempotency_hash IS NULL) AND (idempotency_hash IS NULL OR octet_length(idempotency_hash) = 32))
 );
 CREATE UNIQUE INDEX uq_dq_scan_job_running ON ph08_dq.dq_scan_job (tenant_id, asset_id) WHERE status = 'RUNNING';
 CREATE UNIQUE INDEX uq_dq_scan_job_idem ON ph08_dq.dq_scan_job (tenant_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
@@ -104,6 +108,8 @@ CREATE TRIGGER tg_dq_scan_job_immutable BEFORE UPDATE ON ph08_dq.dq_scan_job FOR
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_scan_job');
 COMMENT ON TABLE ph08_dq.dq_scan_job IS 'EN-08-12 Lần đo chất lượng của một đối tượng đo với một phiên bản bộ quy tắc (FR-08-023…026, 030, 031). Kích hoạt theo lịch, thủ công, sự kiện, hằng năm (bắt buộc đo đủ) hoặc đo lại kiểm chứng phiếu khắc phục. Mỗi đối tượng chỉ một lần đo đang chạy.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.sample_seed IS 'Hạt giống lấy mẫu để tái lập kết quả khi đo SAMPLE (SRS cũ EN-08-04).';
+COMMENT ON COLUMN ph08_dq.dq_scan_job.flags IS 'Cờ lần đo: TRUNCATED (vượt trần bản ghi lỗi), INCREMENTAL, INCOMPLETE_DIMENSIONS, WEIGHTS_CHANGED; sao sang ảnh chụp điểm (FR-08-026, 031).';
+COMMENT ON COLUMN ph08_dq.dq_scan_job.idempotency_hash IS 'SHA-256 thân yêu cầu; cùng Idempotency-Key mà băm khác thì trả ERR-08-055 (409), cùng băm thì trả lại lần đo cũ.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.verify_issue_id IS 'Phiếu khắc phục cần kiểm chứng (trigger VERIFY, FR-08-044); khóa ngoại nằm ở dq_issue.verify_scan_job_id.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.period_code IS 'Kỳ đo: YYYY-MM (tháng) hoặc YYYY (đo chính thức hằng năm, FR-08-054).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_scan_job CASCADE;
@@ -125,6 +131,8 @@ CREATE TABLE ph08_dq.dq_scan_task (
   started_at   timestamptz,
   finished_at  timestamptz,
   error_code   varchar(16),
+  heartbeat_at timestamptz,
+  not_before   timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now(),
   created_by   varchar(64) NOT NULL,
   updated_at   timestamptz NOT NULL DEFAULT now(),
@@ -138,12 +146,17 @@ CREATE TABLE ph08_dq.dq_scan_task (
   CONSTRAINT ck_dq_scan_task_shard CHECK (shard_no >= 0 AND shard_no < shard_count),
   CONSTRAINT ck_dq_scan_task_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_dq_scan_task_attempt CHECK (attempt >= 0 AND attempt <= 10),
-  CONSTRAINT ck_dq_scan_task_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
+  CONSTRAINT ck_dq_scan_task_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$'),
+  CONSTRAINT ck_dq_scan_task_running CHECK (status <> 'RUNNING' OR (worker_id IS NOT NULL AND heartbeat_at IS NOT NULL))
 );
 CREATE INDEX ix_dq_scan_task_job ON ph08_dq.dq_scan_task (tenant_id, scan_job_id, status);
+CREATE INDEX ix_dq_scan_task_heartbeat ON ph08_dq.dq_scan_task (heartbeat_at) WHERE status = 'RUNNING';
+CREATE INDEX ix_dq_scan_task_queue ON ph08_dq.dq_scan_task (tenant_id, not_before NULLS FIRST, created_at) WHERE status = 'QUEUED';
 CREATE TRIGGER tg_dq_scan_task_touch BEFORE UPDATE ON ph08_dq.dq_scan_task FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_scan_task');
 COMMENT ON TABLE ph08_dq.dq_scan_task IS 'EN-08-13 Tác vụ phân mảnh của lần đo: mỗi mảnh là một khoảng khóa của đối tượng, chạy độc lập, thử lại được (FR-08-026, 030). Dọn sau 90 ngày.';
+COMMENT ON COLUMN ph08_dq.dq_scan_task.heartbeat_at IS 'Nhịp cuối của bộ thực thi; quá 08.scan.heartbeat-timeout-seconds thì ScanWatchdog thu hồi tác vụ.';
+COMMENT ON COLUMN ph08_dq.dq_scan_task.not_before IS 'Không giao tác vụ trước thời điểm này (lùi thử lại, cửa sổ giờ đo).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_scan_task CASCADE;
 
 --changeset ph08:ph08-0230-dq-rule-result
@@ -231,7 +244,7 @@ CREATE TABLE ph08_dq.dq_score_snapshot (
   CONSTRAINT ck_dq_score_snapshot_verdict CHECK (verdict IN ('PASS', 'WARN', 'FAIL')),
   CONSTRAINT ck_dq_score_snapshot_trend CHECK (trend IN ('BASELINE', 'IMPROVED', 'STABLE', 'DEGRADED')),
   CONSTRAINT ck_dq_score_snapshot_mode CHECK (scan_mode IN ('FULL', 'SAMPLE', 'INCREMENTAL')),
-  CONSTRAINT ck_dq_score_snapshot_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED']::varchar[]),
+  CONSTRAINT ck_dq_score_snapshot_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[]),
   CONSTRAINT ck_dq_score_snapshot_period CHECK (period_code ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$'),
   CONSTRAINT ck_dq_score_snapshot_baseline CHECK ((trend = 'BASELINE') = (prev_snapshot_id IS NULL)),
   CONSTRAINT ck_dq_score_snapshot_official CHECK (NOT official OR (scan_mode = 'FULL' AND NOT (flags && ARRAY['INCOMPLETE_DIMENSIONS']::varchar[])))
@@ -284,7 +297,74 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_score_dimension');
 COMMENT ON TABLE ph08_dq.dq_score_dimension IS 'EN-08-16 Điểm theo từng chiều trong snapshot, kèm trọng số đã áp và số quy tắc đạt, lỗi, bỏ qua (FR-08-028, 029). Chiều bị bỏ qua có điểm rỗng.';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_score_dimension CASCADE;
 
---changeset ph08:ph08-0260-dq-inline-stat
+--changeset ph08:ph08-0260-dq-incremental-buffer
+CREATE TABLE ph08_dq.dq_incremental_buffer (
+  id           uuid NOT NULL,
+  tenant_id    varchar(16) NOT NULL,
+  asset_id     uuid NOT NULL,
+  window_start timestamptz NOT NULL,
+  window_end   timestamptz NOT NULL,
+  status       varchar(12) NOT NULL DEFAULT 'COLLECTING',
+  keys         text[] NOT NULL DEFAULT '{}',
+  event_count  integer NOT NULL DEFAULT 0,
+  scan_job_id  uuid,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  created_by   varchar(64) NOT NULL,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  updated_by   varchar(64) NOT NULL,
+  version      integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_incremental_buffer PRIMARY KEY (id),
+  CONSTRAINT uq_dq_incremental_buffer_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_dq_incremental_buffer_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT fk_dq_incremental_buffer_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
+  CONSTRAINT fk_dq_incremental_buffer_job FOREIGN KEY (tenant_id, scan_job_id) REFERENCES ph08_dq.dq_scan_job (tenant_id, id),
+  CONSTRAINT ck_dq_incremental_buffer_status CHECK (status IN ('COLLECTING', 'OVERFLOW', 'SCHEDULED', 'DONE')),
+  CONSTRAINT ck_dq_incremental_buffer_window CHECK (window_end > window_start),
+  CONSTRAINT ck_dq_incremental_buffer_keys CHECK (cardinality(keys) <= 100000 AND event_count >= 0),
+  CONSTRAINT ck_dq_incremental_buffer_scheduled CHECK (status NOT IN ('SCHEDULED', 'DONE') OR scan_job_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX uq_dq_incremental_buffer_open ON ph08_dq.dq_incremental_buffer (tenant_id, asset_id) WHERE status = 'COLLECTING';
+CREATE INDEX ix_dq_incremental_buffer_due ON ph08_dq.dq_incremental_buffer (window_end) WHERE status = 'COLLECTING';
+CREATE TRIGGER tg_dq_incremental_buffer_touch BEFORE UPDATE ON ph08_dq.dq_incremental_buffer FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_incremental_buffer');
+COMMENT ON TABLE ph08_dq.dq_incremental_buffer IS 'EN-08-31 Bộ đệm gom khóa bản ghi đổi theo cửa sổ để đo tăng dần theo sự kiện PH-06, PH-07 (FR-08-025). Mỗi đối tượng đúng một bộ đệm COLLECTING; vượt 100.000 khóa thì OVERFLOW và chờ lần đo FULL.';
+COMMENT ON COLUMN ph08_dq.dq_incremental_buffer.keys IS 'Khóa bản ghi đổi đã khử trùng (text, tối đa 100.000 mỗi cửa sổ, BR-08-033); đo xong thì xóa khóa, giữ dòng để kiểm toán.';
+--rollback DROP TABLE IF EXISTS ph08_dq.dq_incremental_buffer CASCADE;
+
+--changeset ph08:ph08-0270-dq-score-current
+CREATE TABLE ph08_dq.dq_score_current (
+  id                      uuid NOT NULL,
+  tenant_id               varchar(16) NOT NULL,
+  asset_id                uuid NOT NULL,
+  full_snapshot_id        uuid NOT NULL,
+  incremental_scan_job_id uuid,
+  current_score           numeric(5,2) NOT NULL,
+  verdict                 varchar(4) NOT NULL,
+  flags                   varchar(32)[] NOT NULL DEFAULT '{}',
+  as_of                   timestamptz NOT NULL DEFAULT now(),
+  created_at              timestamptz NOT NULL DEFAULT now(),
+  created_by              varchar(64) NOT NULL,
+  updated_at              timestamptz NOT NULL DEFAULT now(),
+  updated_by              varchar(64) NOT NULL,
+  version                 integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_score_current PRIMARY KEY (id),
+  CONSTRAINT uq_dq_score_current_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_dq_score_current_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT uq_dq_score_current_asset UNIQUE (tenant_id, asset_id),
+  CONSTRAINT fk_dq_score_current_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
+  CONSTRAINT fk_dq_score_current_full FOREIGN KEY (tenant_id, full_snapshot_id) REFERENCES ph08_dq.dq_score_snapshot (tenant_id, id),
+  CONSTRAINT fk_dq_score_current_job FOREIGN KEY (tenant_id, incremental_scan_job_id) REFERENCES ph08_dq.dq_scan_job (tenant_id, id),
+  CONSTRAINT ck_dq_score_current_score CHECK (current_score >= 0 AND current_score <= 100),
+  CONSTRAINT ck_dq_score_current_verdict CHECK (verdict IN ('PASS', 'WARN', 'FAIL')),
+  CONSTRAINT ck_dq_score_current_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[])
+);
+CREATE TRIGGER tg_dq_score_current_touch BEFORE UPDATE ON ph08_dq.dq_score_current FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_score_current');
+COMMENT ON TABLE ph08_dq.dq_score_current IS 'EN-08-32 Điểm hiện hành của một đối tượng: ảnh chụp đầy đủ gần nhất gộp với các lần đo tăng dần sau đó, nhãn INCREMENTAL, không dùng cho báo cáo năm (FR-08-025, 050, 051). Một dòng mỗi đối tượng.';
+COMMENT ON COLUMN ph08_dq.dq_score_current.current_score IS 'Điểm hiển thị ở bảng điều khiển; ảnh chụp đầy đủ vẫn là nguồn cho báo cáo (BR-08-033).';
+--rollback DROP TABLE IF EXISTS ph08_dq.dq_score_current CASCADE;
+
+--changeset ph08:ph08-0280-dq-inline-stat
 CREATE TABLE ph08_dq.dq_inline_stat (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,

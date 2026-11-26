@@ -27,6 +27,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph08_readonly') THEN
     CREATE ROLE ph08_readonly NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ph08_benchmark') THEN
+    CREATE ROLE ph08_benchmark NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dq_reader') THEN
+    CREATE ROLE dq_reader NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  END IF;
 END
 $roles$;
 -- @rollback -- Không xóa vai trò khi rollback.
@@ -34,7 +40,9 @@ $roles$;
 -- @changeset ph08-0001-schema context:bootstrap
 CREATE SCHEMA IF NOT EXISTS ph08_dq AUTHORIZATION ph08_owner;
 COMMENT ON SCHEMA ph08_dq IS 'PH-08 Chất lượng dữ liệu (dh-data, package vn.datahub.data.dq): miền, đối tượng đo, hồ sơ dữ liệu, bộ quy tắc có phiên bản, lần đo, kết quả, điểm, bản ghi lỗi có dấu vân tay, ngoại lệ, phiếu khắc phục, cảnh báo, báo cáo. Không lưu giá trị gốc trường Nhạy cảm.';
-GRANT USAGE ON SCHEMA ph08_dq TO ph08_app, ph08_readonly;
+GRANT USAGE ON SCHEMA ph08_dq TO ph08_app, ph08_readonly, ph08_benchmark;
+COMMENT ON ROLE dq_reader IS 'Vai chỉ đọc cho bộ thực thi đo (dq-worker): PH-06 cấp SELECT trên khung nhìn hợp đồng ph06_mdm.v_dq_{domain}; không có quyền gì trên ph08_dq và không đọc CSDL control (ADR đề xuất 087).';
+COMMENT ON ROLE ph08_benchmark IS 'Vai so sánh liên tenant ẩn danh (FR-08-061): đọc điểm chiều của ảnh chụp chính thức qua khung nhìn v_benchmark_dimension, là ngoại lệ RLS duy nhất của PH-08; không đọc bảng khác.';
 -- @rollback DROP SCHEMA IF EXISTS ph08_dq CASCADE;
 
 SET ROLE ph08_owner;
@@ -202,7 +210,7 @@ CREATE TABLE ph08_dq.dq_domain (
   description           varchar(2000),
   owner_org_code        varchar(63) NOT NULL,
   steward_user          varchar(64),
-  status                varchar(16) NOT NULL DEFAULT 'DRAFT',
+  status                varchar(16) NOT NULL DEFAULT 'ACTIVE',
   status_reason         varchar(2000),
   on_dependency_failure varchar(16) NOT NULL DEFAULT 'FAIL_OPEN',
   created_at            timestamptz NOT NULL DEFAULT now(),
@@ -216,44 +224,51 @@ CREATE TABLE ph08_dq.dq_domain (
   CONSTRAINT uq_dq_domain_code UNIQUE (tenant_id, domain_code),
   CONSTRAINT ck_dq_domain_code CHECK (domain_code ~ '^[A-Z][A-Z0-9_]{1,31}$'),
   CONSTRAINT ck_dq_domain_owner CHECK (owner_org_code ~ '^[A-Za-z0-9][A-Za-z0-9._-]{1,62}$'),
-  CONSTRAINT ck_dq_domain_status CHECK (status IN ('DRAFT', 'ACTIVE', 'SUSPENDED', 'RETIRED')),
+  CONSTRAINT ck_dq_domain_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
   CONSTRAINT ck_dq_domain_failure CHECK (on_dependency_failure IN ('FAIL_OPEN', 'FAIL_CLOSED')),
-  CONSTRAINT ck_dq_domain_reason CHECK (status NOT IN ('SUSPENDED', 'RETIRED') OR COALESCE(char_length(status_reason) >= 20, false))
+  CONSTRAINT ck_dq_domain_reason CHECK (status <> 'INACTIVE' OR COALESCE(char_length(status_reason) >= 20, false))
 );
 CREATE TRIGGER tg_dq_domain_touch BEFORE UPDATE ON ph08_dq.dq_domain FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CREATE TRIGGER tg_dq_domain_immutable BEFORE UPDATE ON ph08_dq.dq_domain FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'domain_code');
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_domain');
-COMMENT ON TABLE ph08_dq.dq_domain IS 'EN-08-01 Miền chất lượng dữ liệu: nhóm đối tượng đo theo lĩnh vực quản lý, gắn tổ chức chủ quản (DO) và cán bộ phụ trách (FR-08-001). Mang chế độ xử lý khi dịch vụ phụ thuộc lỗi lúc kiểm tra trực tuyến (FAIL_OPEN, FAIL_CLOSED). Không xóa, chỉ ngừng.';
+COMMENT ON TABLE ph08_dq.dq_domain IS 'EN-08-01 Miền chất lượng dữ liệu: nhóm đối tượng đo theo lĩnh vực quản lý, gắn tổ chức chủ quản (DO) và cán bộ phụ trách (FR-08-001). Mang chế độ xử lý khi dịch vụ phụ thuộc lỗi lúc kiểm tra trực tuyến (FAIL_OPEN, FAIL_CLOSED). Không xóa, chỉ chuyển INACTIVE.';
 COMMENT ON COLUMN ph08_dq.dq_domain.owner_org_code IS 'Mã tổ chức chủ quản (DO) ở PH-01; kiểm ở dịch vụ, không khóa ngoại liên schema.';
 COMMENT ON COLUMN ph08_dq.dq_domain.on_dependency_failure IS 'FAIL_OPEN cho phép bản ghi đi tiếp khi PH-07, PH-05 không khả dụng; FAIL_CLOSED chặn (FR-08-031, 032).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_domain CASCADE;
 
 -- @changeset ph08-0110-dq-asset
 CREATE TABLE ph08_dq.dq_asset (
-  id                 uuid NOT NULL,
-  tenant_id          varchar(16) NOT NULL,
-  domain_code        varchar(32) NOT NULL,
-  asset_code         varchar(63) NOT NULL,
-  name               varchar(255) NOT NULL,
-  asset_type         varchar(16) NOT NULL,
-  status             varchar(16) NOT NULL DEFAULT 'DRAFT',
-  status_reason      varchar(2000),
-  owner_org_code     varchar(63) NOT NULL,
-  mdm_domain_code    varchar(32),
-  rdm_catalog_code   varchar(64),
-  connection_id      uuid,
-  object_name        varchar(255),
-  flow_code          varchar(63),
-  key_columns        varchar(63)[] NOT NULL DEFAULT '{}',
-  default_scan_mode  varchar(16) NOT NULL DEFAULT 'FULL',
-  sample_ratio       numeric(5,4),
-  highest_data_class varchar(16) NOT NULL DEFAULT 'INTERNAL',
-  description        varchar(2000),
-  created_at         timestamptz NOT NULL DEFAULT now(),
-  created_by         varchar(64) NOT NULL,
-  updated_at         timestamptz NOT NULL DEFAULT now(),
-  updated_by         varchar(64) NOT NULL,
-  version            integer NOT NULL DEFAULT 0,
+  id                    uuid NOT NULL,
+  tenant_id             varchar(16) NOT NULL,
+  domain_code           varchar(32) NOT NULL,
+  asset_code            varchar(63) NOT NULL,
+  name                  varchar(255) NOT NULL,
+  asset_type            varchar(16) NOT NULL,
+  status                varchar(16) NOT NULL DEFAULT 'DRAFT',
+  status_reason         varchar(2000),
+  owner_org_code        varchar(63) NOT NULL,
+  mdm_domain_code       varchar(32),
+  rdm_catalog_code      varchar(64),
+  connection_id         uuid,
+  object_name           varchar(255),
+  flow_code             varchar(63),
+  key_columns           varchar(63)[] NOT NULL DEFAULT '{}',
+  default_scan_mode     varchar(16) NOT NULL DEFAULT 'FULL',
+  sample_ratio          numeric(5,4),
+  highest_data_class    varchar(16) NOT NULL DEFAULT 'INTERNAL',
+  description           varchar(2000),
+  incremental_enabled   boolean NOT NULL DEFAULT false,
+  updated_at_field      varchar(63),
+  inline_enabled        boolean NOT NULL DEFAULT false,
+  inline_mode           varchar(10),
+  on_dependency_failure varchar(16),
+  inline_timeout_ms     smallint NOT NULL DEFAULT 40,
+  gate_enabled          boolean NOT NULL DEFAULT false,
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  created_by            varchar(64) NOT NULL,
+  updated_at            timestamptz NOT NULL DEFAULT now(),
+  updated_by            varchar(64) NOT NULL,
+  version               integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_dq_asset PRIMARY KEY (id),
   CONSTRAINT uq_dq_asset_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_asset_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
@@ -265,6 +280,13 @@ CREATE TABLE ph08_dq.dq_asset (
   CONSTRAINT ck_dq_asset_scan_mode CHECK (default_scan_mode IN ('FULL', 'SAMPLE', 'INCREMENTAL')),
   CONSTRAINT ck_dq_asset_class CHECK (highest_data_class IN ('PUBLIC', 'INTERNAL', 'RESTRICTED', 'SENSITIVE')),
   CONSTRAINT ck_dq_asset_ref CHECK ((asset_type = 'MDM_DOMAIN') = (mdm_domain_code IS NOT NULL) AND (asset_type = 'RDM_CATALOG') = (rdm_catalog_code IS NOT NULL) AND (asset_type = 'SOURCE_DATASET') = (connection_id IS NOT NULL AND object_name IS NOT NULL) AND (asset_type = 'FLOW_MESSAGE') = (flow_code IS NOT NULL)),
+  CONSTRAINT ck_dq_asset_inline_mode CHECK (inline_mode IS NULL OR inline_mode IN ('STRICT', 'ADVISORY')),
+  CONSTRAINT ck_dq_asset_inline_on CHECK (NOT inline_enabled OR inline_mode IS NOT NULL),
+  CONSTRAINT ck_dq_asset_failure CHECK (on_dependency_failure IS NULL OR on_dependency_failure IN ('FAIL_OPEN', 'FAIL_CLOSED')),
+  CONSTRAINT ck_dq_asset_timeout CHECK (inline_timeout_ms BETWEEN 10 AND 50),
+  CONSTRAINT ck_dq_asset_gate CHECK (NOT gate_enabled OR (asset_type = 'MDM_DOMAIN' AND inline_enabled)),
+  CONSTRAINT ck_dq_asset_incremental CHECK (NOT incremental_enabled OR (asset_type <> 'FLOW_MESSAGE' AND (asset_type <> 'SOURCE_DATASET' OR updated_at_field IS NOT NULL))),
+  CONSTRAINT ck_dq_asset_updated_field CHECK (updated_at_field IS NULL OR updated_at_field ~ '^[A-Za-z_][A-Za-z0-9_]{0,62}$'),
   CONSTRAINT ck_dq_asset_sample CHECK ((default_scan_mode = 'SAMPLE') = (sample_ratio IS NOT NULL) AND (sample_ratio IS NULL OR (sample_ratio > 0 AND sample_ratio <= 1))),
   CONSTRAINT ck_dq_asset_reason CHECK (status NOT IN ('SUSPENDED', 'RETIRED') OR COALESCE(char_length(status_reason) >= 20, false))
 );
@@ -279,6 +301,9 @@ COMMENT ON TABLE ph08_dq.dq_asset IS 'EN-08-02 Đối tượng đo chất lượ
 COMMENT ON COLUMN ph08_dq.dq_asset.connection_id IS 'Mã kết nối PH-05 (tài khoản chỉ đọc, Q359, ADR-067); kiểm ở dịch vụ, không khóa ngoại.';
 COMMENT ON COLUMN ph08_dq.dq_asset.mdm_domain_code IS 'Domain PH-06; đọc qua view hợp đồng chỉ đọc do PH-06 cấp, không đọc bảng nghiệp vụ.';
 COMMENT ON COLUMN ph08_dq.dq_asset.highest_data_class IS 'Phân loại cao nhất trong các trường, lấy từ PH-09; điều khiển cách lưu giá trị lỗi.';
+COMMENT ON COLUMN ph08_dq.dq_asset.incremental_enabled IS 'Bật đo tăng dần theo sự kiện PH-06, PH-07 (FR-08-025, API-08-130, 131); không áp cho FLOW_MESSAGE, SOURCE_DATASET cần updated_at_field.';
+COMMENT ON COLUMN ph08_dq.dq_asset.inline_enabled IS 'Cấu hình kiểm tra trực tuyến của đối tượng (FR-08-032, 035): bật, chế độ STRICT hay ADVISORY, hành vi khi phụ thuộc lỗi (rỗng thì theo miền), ngân sách ms, cổng chất lượng cho PH-06.';
+COMMENT ON COLUMN ph08_dq.dq_asset.gate_enabled IS 'Cổng chất lượng đầu vào cho PH-06, chỉ MDM_DOMAIN đã bật trực tuyến (FR-08-035).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_asset CASCADE;
 
 -- @changeset ph08-0120-dq-asset-field
@@ -344,7 +369,7 @@ CREATE TABLE ph08_dq.dq_profile_run (
   CONSTRAINT ck_dq_profile_run_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_dq_profile_run_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
   CONSTRAINT ck_dq_profile_run_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED')),
-  CONSTRAINT ck_dq_profile_run_mode CHECK (scan_mode IN ('FULL', 'SAMPLE')),
+  CONSTRAINT ck_dq_profile_run_mode CHECK (scan_mode IN ('FULL', 'SAMPLE', 'EXTERNAL')),
   CONSTRAINT ck_dq_profile_run_done CHECK (status NOT IN ('SUCCEEDED', 'FAILED') OR finished_at IS NOT NULL),
   CONSTRAINT ck_dq_profile_run_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
 );
@@ -443,8 +468,9 @@ CREATE TABLE ph08_dq.dq_weight_config (
   w_timeliness     numeric(5,4) NOT NULL DEFAULT 0.10,
   w_uniqueness     numeric(5,4) NOT NULL DEFAULT 0.15,
   w_validity       numeric(5,4) NOT NULL DEFAULT 0.20,
-  pass_min         numeric(5,2) NOT NULL DEFAULT 90,
-  warn_min         numeric(5,2) NOT NULL DEFAULT 75,
+  pass_min         numeric(5,2) NOT NULL DEFAULT 80,
+  warn_min         numeric(5,2) NOT NULL DEFAULT 70,
+  effective_from   timestamptz,
   submitted_by     varchar(64),
   submitted_at     timestamptz,
   decided_by       varchar(64),
@@ -479,7 +505,8 @@ CREATE TRIGGER tg_dq_weight_config_frozen BEFORE UPDATE ON ph08_dq.dq_weight_con
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_weight_config');
 COMMENT ON TABLE ph08_dq.dq_weight_config IS 'EN-08-10 Cấu hình trọng số sáu chiều và ngưỡng điểm, có phiên bản và duyệt bốn mắt (FR-08-021, 028). Phạm vi tenant, miền hoặc đối tượng đo; mặc định 0,20/0,20/0,15/0,10/0,15/0,20. Tổng trọng số bằng 1,000 với dung sai 0,001.';
 COMMENT ON COLUMN ph08_dq.dq_weight_config.w_completeness IS 'Cột w_* theo thứ tự COMPLETENESS, ACCURACY, CONSISTENCY, TIMELINESS, UNIQUENESS, VALIDITY.';
-COMMENT ON COLUMN ph08_dq.dq_weight_config.pass_min IS 'Điểm từ ngưỡng này trở lên: PASS; từ warn_min: WARN; dưới: FAIL (giả định 90 và 75, FR-08-021).';
+COMMENT ON COLUMN ph08_dq.dq_weight_config.pass_min IS 'Điểm từ ngưỡng này trở lên: PASS; từ warn_min: WARN; dưới: FAIL (mặc định 80 và 70, FR-08-021).';
+COMMENT ON COLUMN ph08_dq.dq_weight_config.effective_from IS 'Thời điểm cấu hình có hiệu lực khi được duyệt; lần đo sau thời điểm này chấm theo cấu hình mới (FR-08-021).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_weight_config CASCADE;
 
 -- @changeset ph08-0170-dq-rule-set
@@ -513,28 +540,32 @@ COMMENT ON TABLE ph08_dq.dq_rule_set IS 'EN-08-06 Bộ quy tắc của một đ�
 
 -- @changeset ph08-0180-dq-rule-set-version
 CREATE TABLE ph08_dq.dq_rule_set_version (
-  id               uuid NOT NULL,
-  tenant_id        varchar(16) NOT NULL,
-  rule_set_id      uuid NOT NULL,
-  version_no       integer NOT NULL,
-  status           varchar(20) NOT NULL DEFAULT 'DRAFT',
-  weight_config_id uuid,
-  content_hash     bytea,
-  rule_count       integer NOT NULL DEFAULT 0,
-  change_note      varchar(2000),
-  submitted_by     varchar(64),
-  submitted_at     timestamptz,
-  decision         varchar(8),
-  decided_by       varchar(64),
-  decided_at       timestamptz,
-  decision_comment varchar(2000),
-  activated_at     timestamptz,
-  superseded_at    timestamptz,
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  created_by       varchar(64) NOT NULL,
-  updated_at       timestamptz NOT NULL DEFAULT now(),
-  updated_by       varchar(64) NOT NULL,
-  version          integer NOT NULL DEFAULT 0,
+  id                   uuid NOT NULL,
+  tenant_id            varchar(16) NOT NULL,
+  rule_set_id          uuid NOT NULL,
+  version_no           integer NOT NULL,
+  status               varchar(20) NOT NULL DEFAULT 'DRAFT',
+  weight_config_id     uuid,
+  content_hash         bytea,
+  rule_count           integer NOT NULL DEFAULT 0,
+  change_note          varchar(2000),
+  submitted_by         varchar(64),
+  submitted_at         timestamptz,
+  decision             varchar(8),
+  decided_by           varchar(64),
+  decided_at           timestamptz,
+  decision_comment     varchar(2000),
+  activated_at         timestamptz,
+  superseded_at        timestamptz,
+  effective_from       timestamptz,
+  last_dry_run_id      uuid,
+  dry_run_content_hash bytea,
+  dry_run_at           timestamptz,
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  created_by           varchar(64) NOT NULL,
+  updated_at           timestamptz NOT NULL DEFAULT now(),
+  updated_by           varchar(64) NOT NULL,
+  version              integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_dq_rule_set_version PRIMARY KEY (id),
   CONSTRAINT uq_dq_rule_set_version_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_rule_set_version_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
@@ -542,8 +573,11 @@ CREATE TABLE ph08_dq.dq_rule_set_version (
   CONSTRAINT fk_dq_rule_set_version_set FOREIGN KEY (tenant_id, rule_set_id) REFERENCES ph08_dq.dq_rule_set (tenant_id, id),
   CONSTRAINT fk_dq_rule_set_version_weight FOREIGN KEY (tenant_id, weight_config_id) REFERENCES ph08_dq.dq_weight_config (tenant_id, id),
   CONSTRAINT ck_dq_rule_set_version_no CHECK (version_no >= 1),
-  CONSTRAINT ck_dq_rule_set_version_status CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'ACTIVE', 'SUPERSEDED', 'RETIRED')),
+  CONSTRAINT ck_dq_rule_set_version_status CHECK (status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'ACTIVE', 'SUPERSEDED', 'RETIRED')),
   CONSTRAINT ck_dq_rule_set_version_hash CHECK (content_hash IS NULL OR octet_length(content_hash) = 32),
+  CONSTRAINT ck_dq_rule_set_version_dry_hash CHECK (dry_run_content_hash IS NULL OR octet_length(dry_run_content_hash) = 32),
+  CONSTRAINT ck_dq_rule_set_version_dry_run CHECK (status NOT IN ('PENDING_APPROVAL', 'APPROVED', 'ACTIVE') OR (dry_run_content_hash IS NOT NULL AND dry_run_at IS NOT NULL)),
+  CONSTRAINT ck_dq_rule_set_version_approved CHECK (status <> 'APPROVED' OR (decision = 'APPROVE' AND effective_from IS NOT NULL)),
   CONSTRAINT ck_dq_rule_set_version_decision CHECK (decision IS NULL OR decision IN ('APPROVE', 'REJECT')),
   CONSTRAINT ck_dq_rule_set_version_four_eyes CHECK (decided_by IS NULL OR submitted_by IS NULL OR decided_by <> submitted_by),
   CONSTRAINT ck_dq_rule_set_version_active CHECK (status <> 'ACTIVE' OR (activated_at IS NOT NULL AND decision = 'APPROVE' AND content_hash IS NOT NULL AND rule_count > 0)),
@@ -553,11 +587,13 @@ CREATE UNIQUE INDEX uq_dq_rule_set_version_active ON ph08_dq.dq_rule_set_version
 CREATE INDEX ix_dq_rule_set_version_status ON ph08_dq.dq_rule_set_version (tenant_id, status, submitted_at);
 CREATE TRIGGER tg_dq_rule_set_version_touch BEFORE UPDATE ON ph08_dq.dq_rule_set_version FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CREATE TRIGGER tg_dq_rule_set_version_immutable BEFORE UPDATE ON ph08_dq.dq_rule_set_version FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'rule_set_id', 'version_no');
-CREATE TRIGGER tg_dq_rule_set_version_frozen BEFORE UPDATE ON ph08_dq.dq_rule_set_version FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_frozen('ACTIVE,SUPERSEDED', 'weight_config_id', 'content_hash', 'rule_count');
+CREATE TRIGGER tg_dq_rule_set_version_frozen BEFORE UPDATE ON ph08_dq.dq_rule_set_version FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_frozen('APPROVED,ACTIVE,SUPERSEDED', 'weight_config_id', 'content_hash', 'rule_count', 'dry_run_content_hash');
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_rule_set_version');
 COMMENT ON TABLE ph08_dq.dq_rule_set_version IS 'EN-08-07 Phiên bản bộ quy tắc, vòng đời DRAFT, PENDING_APPROVAL, ACTIVE, SUPERSEDED, RETIRED, duyệt bốn mắt (FR-08-012, 017, 018, 019). Phiên bản ACTIVE hoặc SUPERSEDED bất biến; quy tắc con chỉ sửa khi phiên bản là DRAFT.';
 COMMENT ON COLUMN ph08_dq.dq_rule_set_version.content_hash IS 'SHA-256 nội dung quy tắc tại lúc gửi duyệt; ACTIVE bắt buộc có (bất biến, FR-08-018, 019).';
 COMMENT ON COLUMN ph08_dq.dq_rule_set_version.rule_count IS 'Số quy tắc; ACTIVE phải lớn hơn 0.';
+COMMENT ON COLUMN ph08_dq.dq_rule_set_version.dry_run_content_hash IS 'Băm phần nội dung ảnh hưởng kết quả đo tại lần chạy thử cuối (FR-08-016); gửi duyệt cần bằng content_hash. Sửa tên, mô tả, thông điệp quy tắc không đổi băm này.';
+COMMENT ON COLUMN ph08_dq.dq_rule_set_version.effective_from IS 'Giờ hiệu lực khi duyệt; tương lai thì APPROVED chờ kích hoạt, hiện tại thì ACTIVE ngay (FR-08-017, 018).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_rule_set_version CASCADE;
 
 -- @changeset ph08-0190-dq-rule
@@ -580,6 +616,7 @@ CREATE TABLE ph08_dq.dq_rule (
   weight              numeric(6,3) NOT NULL DEFAULT 1,
   template_code       varchar(64),
   enabled             boolean NOT NULL DEFAULT true,
+  source              varchar(12) NOT NULL DEFAULT 'MANUAL',
   created_at          timestamptz NOT NULL DEFAULT now(),
   created_by          varchar(64) NOT NULL,
   updated_at          timestamptz NOT NULL DEFAULT now(),
@@ -600,7 +637,8 @@ CREATE TABLE ph08_dq.dq_rule (
   CONSTRAINT ck_dq_rule_expression CHECK ((operator IN ('CEL_EXPRESSION', 'SQL_PREDICATE')) = (expression IS NOT NULL)),
   CONSTRAINT ck_dq_rule_sql_batch CHECK (operator <> 'SQL_PREDICATE' OR exec_mode = 'BATCH'),
   CONSTRAINT ck_dq_rule_rdm CHECK (operator NOT IN ('IN_RDM', 'IN_RDM_VERSION') OR params ? 'catalogCode'),
-  CONSTRAINT ck_dq_rule_weight CHECK (weight > 0)
+  CONSTRAINT ck_dq_rule_weight CHECK (weight > 0),
+  CONSTRAINT ck_dq_rule_source CHECK (source IN ('MANUAL', 'TEMPLATE', 'SUGGESTED', 'IMPORTED', 'COPIED') AND (source <> 'TEMPLATE' OR template_code IS NOT NULL))
 );
 CREATE INDEX ix_dq_rule_version ON ph08_dq.dq_rule (tenant_id, rule_set_version_id, dimension);
 CREATE INDEX ix_dq_rule_inline ON ph08_dq.dq_rule (tenant_id, rule_set_version_id) WHERE exec_mode <> 'BATCH' AND enabled;
@@ -609,6 +647,7 @@ CREATE TRIGGER tg_dq_rule_child_frozen BEFORE INSERT OR UPDATE OR DELETE ON ph08
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_rule');
 COMMENT ON TABLE ph08_dq.dq_rule IS 'EN-08-08 Quy tắc chất lượng: chiều, toán tử, mức nghiêm trọng, chế độ chạy (lô, trực tuyến, cả hai) và tham số (FR-08-013, 014, 016, 022). Biểu thức CEL hoặc vị từ SQL có kiểm soát nằm ở cột expression; vị từ SQL chỉ chạy theo lô.';
 COMMENT ON COLUMN ph08_dq.dq_rule.message IS 'Thông điệp hiển thị ở bản ghi lỗi khi quy tắc không đạt (thay cột thong_diep của SRS cũ).';
+COMMENT ON COLUMN ph08_dq.dq_rule.source IS 'Nguồn gốc quy tắc: nhập tay, từ quy tắc mẫu, gợi ý từ hồ sơ, nhập tệp, sao chép (FR-08-010, 015, 020).';
 COMMENT ON COLUMN ph08_dq.dq_rule.inline_mode IS 'STRICT chặn bản ghi lỗi, ADVISORY chỉ cảnh báo; rỗng khi exec_mode = BATCH (FR-08-032, 033).';
 COMMENT ON COLUMN ph08_dq.dq_rule.operator IS '19 toán tử theo FRS; ràng buộc operator_dimension khóa quan hệ toán tử với chiều (ví dụ IN_RDM chỉ thuộc VALIDITY).';
 COMMENT ON COLUMN ph08_dq.dq_rule.expression IS 'CEL (cel-java) hoặc vị từ SQL có kiểm soát; chỉ khi operator là CEL_EXPRESSION hoặc SQL_PREDICATE (FR-08-014).';
@@ -623,7 +662,7 @@ CREATE TABLE ph08_dq.dq_schedule (
   schedule_code varchar(63) NOT NULL,
   domain_code   varchar(32),
   asset_id      uuid,
-  cron          varchar(64) NOT NULL DEFAULT '0 0 2 1 * *',
+  cron          varchar(64) NOT NULL DEFAULT '0 0 2 1 * ?',
   timezone      varchar(40) NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
   scan_mode     varchar(16) NOT NULL DEFAULT 'FULL',
   enabled       boolean NOT NULL DEFAULT true,
@@ -682,6 +721,8 @@ CREATE TABLE ph08_dq.dq_scan_job (
   error_code          varchar(16),
   error_message       varchar(2000),
   cancel_reason       varchar(2000),
+  flags               varchar(32)[] NOT NULL DEFAULT '{}',
+  idempotency_hash    bytea,
   created_at          timestamptz NOT NULL DEFAULT now(),
   created_by          varchar(64) NOT NULL,
   updated_at          timestamptz NOT NULL DEFAULT now(),
@@ -706,7 +747,9 @@ CREATE TABLE ph08_dq.dq_scan_job (
   CONSTRAINT ck_dq_scan_job_cancel CHECK (status <> 'CANCELLED' OR COALESCE(char_length(cancel_reason) >= 20, false)),
   CONSTRAINT ck_dq_scan_job_progress CHECK (task_done >= 0 AND task_done <= task_total AND rows_scanned >= 0 AND rows_failed >= 0 AND rows_failed <= rows_scanned),
   CONSTRAINT ck_dq_scan_job_sample CHECK ((scan_mode = 'SAMPLE') = (sample_size IS NOT NULL) AND (sample_size IS NULL OR sample_size > 0)),
-  CONSTRAINT ck_dq_scan_job_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
+  CONSTRAINT ck_dq_scan_job_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$'),
+  CONSTRAINT ck_dq_scan_job_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[]),
+  CONSTRAINT ck_dq_scan_job_idem CHECK ((idempotency_key IS NULL) = (idempotency_hash IS NULL) AND (idempotency_hash IS NULL OR octet_length(idempotency_hash) = 32))
 );
 CREATE UNIQUE INDEX uq_dq_scan_job_running ON ph08_dq.dq_scan_job (tenant_id, asset_id) WHERE status = 'RUNNING';
 CREATE UNIQUE INDEX uq_dq_scan_job_idem ON ph08_dq.dq_scan_job (tenant_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
@@ -718,6 +761,8 @@ CREATE TRIGGER tg_dq_scan_job_immutable BEFORE UPDATE ON ph08_dq.dq_scan_job FOR
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_scan_job');
 COMMENT ON TABLE ph08_dq.dq_scan_job IS 'EN-08-12 Lần đo chất lượng của một đối tượng đo với một phiên bản bộ quy tắc (FR-08-023…026, 030, 031). Kích hoạt theo lịch, thủ công, sự kiện, hằng năm (bắt buộc đo đủ) hoặc đo lại kiểm chứng phiếu khắc phục. Mỗi đối tượng chỉ một lần đo đang chạy.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.sample_seed IS 'Hạt giống lấy mẫu để tái lập kết quả khi đo SAMPLE (SRS cũ EN-08-04).';
+COMMENT ON COLUMN ph08_dq.dq_scan_job.flags IS 'Cờ lần đo: TRUNCATED (vượt trần bản ghi lỗi), INCREMENTAL, INCOMPLETE_DIMENSIONS, WEIGHTS_CHANGED; sao sang ảnh chụp điểm (FR-08-026, 031).';
+COMMENT ON COLUMN ph08_dq.dq_scan_job.idempotency_hash IS 'SHA-256 thân yêu cầu; cùng Idempotency-Key mà băm khác thì trả ERR-08-055 (409), cùng băm thì trả lại lần đo cũ.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.verify_issue_id IS 'Phiếu khắc phục cần kiểm chứng (trigger VERIFY, FR-08-044); khóa ngoại nằm ở dq_issue.verify_scan_job_id.';
 COMMENT ON COLUMN ph08_dq.dq_scan_job.period_code IS 'Kỳ đo: YYYY-MM (tháng) hoặc YYYY (đo chính thức hằng năm, FR-08-054).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_scan_job CASCADE;
@@ -739,6 +784,8 @@ CREATE TABLE ph08_dq.dq_scan_task (
   started_at   timestamptz,
   finished_at  timestamptz,
   error_code   varchar(16),
+  heartbeat_at timestamptz,
+  not_before   timestamptz,
   created_at   timestamptz NOT NULL DEFAULT now(),
   created_by   varchar(64) NOT NULL,
   updated_at   timestamptz NOT NULL DEFAULT now(),
@@ -752,12 +799,17 @@ CREATE TABLE ph08_dq.dq_scan_task (
   CONSTRAINT ck_dq_scan_task_shard CHECK (shard_no >= 0 AND shard_no < shard_count),
   CONSTRAINT ck_dq_scan_task_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED')),
   CONSTRAINT ck_dq_scan_task_attempt CHECK (attempt >= 0 AND attempt <= 10),
-  CONSTRAINT ck_dq_scan_task_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
+  CONSTRAINT ck_dq_scan_task_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$'),
+  CONSTRAINT ck_dq_scan_task_running CHECK (status <> 'RUNNING' OR (worker_id IS NOT NULL AND heartbeat_at IS NOT NULL))
 );
 CREATE INDEX ix_dq_scan_task_job ON ph08_dq.dq_scan_task (tenant_id, scan_job_id, status);
+CREATE INDEX ix_dq_scan_task_heartbeat ON ph08_dq.dq_scan_task (heartbeat_at) WHERE status = 'RUNNING';
+CREATE INDEX ix_dq_scan_task_queue ON ph08_dq.dq_scan_task (tenant_id, not_before NULLS FIRST, created_at) WHERE status = 'QUEUED';
 CREATE TRIGGER tg_dq_scan_task_touch BEFORE UPDATE ON ph08_dq.dq_scan_task FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_scan_task');
 COMMENT ON TABLE ph08_dq.dq_scan_task IS 'EN-08-13 Tác vụ phân mảnh của lần đo: mỗi mảnh là một khoảng khóa của đối tượng, chạy độc lập, thử lại được (FR-08-026, 030). Dọn sau 90 ngày.';
+COMMENT ON COLUMN ph08_dq.dq_scan_task.heartbeat_at IS 'Nhịp cuối của bộ thực thi; quá 08.scan.heartbeat-timeout-seconds thì ScanWatchdog thu hồi tác vụ.';
+COMMENT ON COLUMN ph08_dq.dq_scan_task.not_before IS 'Không giao tác vụ trước thời điểm này (lùi thử lại, cửa sổ giờ đo).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_scan_task CASCADE;
 
 -- @changeset ph08-0230-dq-rule-result
@@ -845,7 +897,7 @@ CREATE TABLE ph08_dq.dq_score_snapshot (
   CONSTRAINT ck_dq_score_snapshot_verdict CHECK (verdict IN ('PASS', 'WARN', 'FAIL')),
   CONSTRAINT ck_dq_score_snapshot_trend CHECK (trend IN ('BASELINE', 'IMPROVED', 'STABLE', 'DEGRADED')),
   CONSTRAINT ck_dq_score_snapshot_mode CHECK (scan_mode IN ('FULL', 'SAMPLE', 'INCREMENTAL')),
-  CONSTRAINT ck_dq_score_snapshot_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED']::varchar[]),
+  CONSTRAINT ck_dq_score_snapshot_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[]),
   CONSTRAINT ck_dq_score_snapshot_period CHECK (period_code ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$'),
   CONSTRAINT ck_dq_score_snapshot_baseline CHECK ((trend = 'BASELINE') = (prev_snapshot_id IS NULL)),
   CONSTRAINT ck_dq_score_snapshot_official CHECK (NOT official OR (scan_mode = 'FULL' AND NOT (flags && ARRAY['INCOMPLETE_DIMENSIONS']::varchar[])))
@@ -898,7 +950,74 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_score_dimension');
 COMMENT ON TABLE ph08_dq.dq_score_dimension IS 'EN-08-16 Điểm theo từng chiều trong snapshot, kèm trọng số đã áp và số quy tắc đạt, lỗi, bỏ qua (FR-08-028, 029). Chiều bị bỏ qua có điểm rỗng.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_score_dimension CASCADE;
 
--- @changeset ph08-0260-dq-inline-stat
+-- @changeset ph08-0260-dq-incremental-buffer
+CREATE TABLE ph08_dq.dq_incremental_buffer (
+  id           uuid NOT NULL,
+  tenant_id    varchar(16) NOT NULL,
+  asset_id     uuid NOT NULL,
+  window_start timestamptz NOT NULL,
+  window_end   timestamptz NOT NULL,
+  status       varchar(12) NOT NULL DEFAULT 'COLLECTING',
+  keys         text[] NOT NULL DEFAULT '{}',
+  event_count  integer NOT NULL DEFAULT 0,
+  scan_job_id  uuid,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  created_by   varchar(64) NOT NULL,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  updated_by   varchar(64) NOT NULL,
+  version      integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_incremental_buffer PRIMARY KEY (id),
+  CONSTRAINT uq_dq_incremental_buffer_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_dq_incremental_buffer_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT fk_dq_incremental_buffer_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
+  CONSTRAINT fk_dq_incremental_buffer_job FOREIGN KEY (tenant_id, scan_job_id) REFERENCES ph08_dq.dq_scan_job (tenant_id, id),
+  CONSTRAINT ck_dq_incremental_buffer_status CHECK (status IN ('COLLECTING', 'OVERFLOW', 'SCHEDULED', 'DONE')),
+  CONSTRAINT ck_dq_incremental_buffer_window CHECK (window_end > window_start),
+  CONSTRAINT ck_dq_incremental_buffer_keys CHECK (cardinality(keys) <= 100000 AND event_count >= 0),
+  CONSTRAINT ck_dq_incremental_buffer_scheduled CHECK (status NOT IN ('SCHEDULED', 'DONE') OR scan_job_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX uq_dq_incremental_buffer_open ON ph08_dq.dq_incremental_buffer (tenant_id, asset_id) WHERE status = 'COLLECTING';
+CREATE INDEX ix_dq_incremental_buffer_due ON ph08_dq.dq_incremental_buffer (window_end) WHERE status = 'COLLECTING';
+CREATE TRIGGER tg_dq_incremental_buffer_touch BEFORE UPDATE ON ph08_dq.dq_incremental_buffer FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_incremental_buffer');
+COMMENT ON TABLE ph08_dq.dq_incremental_buffer IS 'EN-08-31 Bộ đệm gom khóa bản ghi đổi theo cửa sổ để đo tăng dần theo sự kiện PH-06, PH-07 (FR-08-025). Mỗi đối tượng đúng một bộ đệm COLLECTING; vượt 100.000 khóa thì OVERFLOW và chờ lần đo FULL.';
+COMMENT ON COLUMN ph08_dq.dq_incremental_buffer.keys IS 'Khóa bản ghi đổi đã khử trùng (text, tối đa 100.000 mỗi cửa sổ, BR-08-033); đo xong thì xóa khóa, giữ dòng để kiểm toán.';
+-- @rollback DROP TABLE IF EXISTS ph08_dq.dq_incremental_buffer CASCADE;
+
+-- @changeset ph08-0270-dq-score-current
+CREATE TABLE ph08_dq.dq_score_current (
+  id                      uuid NOT NULL,
+  tenant_id               varchar(16) NOT NULL,
+  asset_id                uuid NOT NULL,
+  full_snapshot_id        uuid NOT NULL,
+  incremental_scan_job_id uuid,
+  current_score           numeric(5,2) NOT NULL,
+  verdict                 varchar(4) NOT NULL,
+  flags                   varchar(32)[] NOT NULL DEFAULT '{}',
+  as_of                   timestamptz NOT NULL DEFAULT now(),
+  created_at              timestamptz NOT NULL DEFAULT now(),
+  created_by              varchar(64) NOT NULL,
+  updated_at              timestamptz NOT NULL DEFAULT now(),
+  updated_by              varchar(64) NOT NULL,
+  version                 integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_score_current PRIMARY KEY (id),
+  CONSTRAINT uq_dq_score_current_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_dq_score_current_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT uq_dq_score_current_asset UNIQUE (tenant_id, asset_id),
+  CONSTRAINT fk_dq_score_current_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
+  CONSTRAINT fk_dq_score_current_full FOREIGN KEY (tenant_id, full_snapshot_id) REFERENCES ph08_dq.dq_score_snapshot (tenant_id, id),
+  CONSTRAINT fk_dq_score_current_job FOREIGN KEY (tenant_id, incremental_scan_job_id) REFERENCES ph08_dq.dq_scan_job (tenant_id, id),
+  CONSTRAINT ck_dq_score_current_score CHECK (current_score >= 0 AND current_score <= 100),
+  CONSTRAINT ck_dq_score_current_verdict CHECK (verdict IN ('PASS', 'WARN', 'FAIL')),
+  CONSTRAINT ck_dq_score_current_flags CHECK (flags <@ ARRAY['INCOMPLETE_DIMENSIONS', 'WEIGHTS_CHANGED', 'TRUNCATED', 'INCREMENTAL']::varchar[])
+);
+CREATE TRIGGER tg_dq_score_current_touch BEFORE UPDATE ON ph08_dq.dq_score_current FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_score_current');
+COMMENT ON TABLE ph08_dq.dq_score_current IS 'EN-08-32 Điểm hiện hành của một đối tượng: ảnh chụp đầy đủ gần nhất gộp với các lần đo tăng dần sau đó, nhãn INCREMENTAL, không dùng cho báo cáo năm (FR-08-025, 050, 051). Một dòng mỗi đối tượng.';
+COMMENT ON COLUMN ph08_dq.dq_score_current.current_score IS 'Điểm hiển thị ở bảng điều khiển; ảnh chụp đầy đủ vẫn là nguồn cho báo cáo (BR-08-033).';
+-- @rollback DROP TABLE IF EXISTS ph08_dq.dq_score_current CASCADE;
+
+-- @changeset ph08-0280-dq-inline-stat
 CREATE TABLE ph08_dq.dq_inline_stat (
   id                uuid NOT NULL,
   tenant_id         varchar(16) NOT NULL,
@@ -945,7 +1064,7 @@ COMMENT ON COLUMN ph08_dq.dq_inline_stat.fail_open_count IS 'Số lượt phụ 
 
 
 -- @file 08-0040-finding.sql
--- @changeset ph08-0270-dq-finding
+-- @changeset ph08-0290-dq-finding
 CREATE TABLE ph08_dq.dq_finding (
   id                   uuid NOT NULL,
   tenant_id            varchar(16) NOT NULL,
@@ -973,6 +1092,7 @@ CREATE TABLE ph08_dq.dq_finding (
   resolved_scan_job_id uuid,
   issue_id             uuid,
   waiver_id            uuid,
+  resolution_reason    varchar(16),
   created_at           timestamptz NOT NULL DEFAULT now(),
   created_by           varchar(64) NOT NULL,
   updated_at           timestamptz NOT NULL DEFAULT now(),
@@ -992,7 +1112,8 @@ CREATE TABLE ph08_dq.dq_finding (
   CONSTRAINT ck_dq_finding_value_hash CHECK (value_hash IS NULL OR octet_length(value_hash) = 32),
   CONSTRAINT ck_dq_finding_no_raw CHECK ((data_class <> 'SENSITIVE' OR (value_mode = 'HASH_ONLY' AND masked_value IS NULL AND record_key_masked IS NULL AND expected_hint IS NULL)) AND (data_class <> 'RESTRICTED' OR value_mode <> 'PLAIN') AND (value_mode <> 'HASH_ONLY' OR masked_value IS NULL)),
   CONSTRAINT ck_dq_finding_seen CHECK (seen_count >= 1 AND last_seen_at >= first_seen_at),
-  CONSTRAINT ck_dq_finding_resolved CHECK ((status = 'RESOLVED') = (resolved_at IS NOT NULL)),
+  CONSTRAINT ck_dq_finding_resolved CHECK ((status = 'RESOLVED') = (resolved_at IS NOT NULL) AND (status = 'RESOLVED') = (resolution_reason IS NOT NULL)),
+  CONSTRAINT ck_dq_finding_reason CHECK (resolution_reason IS NULL OR resolution_reason IN ('CLEARED', 'RECORD_REMOVED', 'RULE_RETIRED', 'MANUAL_CONFIRMED')),
   CONSTRAINT ck_dq_finding_remediation CHECK (status <> 'IN_REMEDIATION' OR issue_id IS NOT NULL),
   CONSTRAINT ck_dq_finding_waived CHECK ((status = 'WAIVED') = (waiver_id IS NOT NULL))
 ) PARTITION BY RANGE (last_seen_at);
@@ -1016,7 +1137,7 @@ COMMENT ON COLUMN ph08_dq.dq_finding.value_hash IS 'Băm có khóa của giá tr
 COMMENT ON COLUMN ph08_dq.dq_finding.last_seen_at IS 'Khóa phân vùng; cập nhật mỗi lần lỗi được thấy lại nên dòng có thể chuyển phân vùng (row movement).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_finding CASCADE;
 
--- @changeset ph08-0280-dq-waiver
+-- @changeset ph08-0300-dq-waiver
 CREATE TABLE ph08_dq.dq_waiver (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -1035,6 +1156,8 @@ CREATE TABLE ph08_dq.dq_waiver (
   revoked_at       timestamptz,
   revoke_reason    varchar(2000),
   expired_at       timestamptz,
+  scope            varchar(12) NOT NULL DEFAULT 'FINDINGS',
+  filter           jsonb,
   created_at       timestamptz NOT NULL DEFAULT now(),
   created_by       varchar(64) NOT NULL,
   updated_at       timestamptz NOT NULL DEFAULT now(),
@@ -1048,7 +1171,7 @@ CREATE TABLE ph08_dq.dq_waiver (
   CONSTRAINT ck_dq_waiver_status CHECK (status IN ('PENDING_APPROVAL', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REJECTED')),
   CONSTRAINT ck_dq_waiver_reason CHECK (char_length(reason) >= 20),
   CONSTRAINT ck_dq_waiver_fingerprint CHECK (fingerprint IS NULL OR octet_length(fingerprint) = 32),
-  CONSTRAINT ck_dq_waiver_target CHECK (rule_id IS NOT NULL OR fingerprint IS NOT NULL),
+  CONSTRAINT ck_dq_waiver_scope CHECK (scope IN ('FINDINGS', 'RULE_FILTER') AND (scope <> 'RULE_FILTER' OR (rule_id IS NOT NULL AND filter IS NOT NULL))),
   CONSTRAINT ck_dq_waiver_four_eyes CHECK (decided_by IS NULL OR requested_by IS NULL OR decided_by <> requested_by),
   CONSTRAINT ck_dq_waiver_period CHECK (valid_to IS NULL OR valid_from IS NULL OR (valid_to > valid_from AND valid_to <= valid_from + 366)),
   CONSTRAINT ck_dq_waiver_active CHECK (status NOT IN ('ACTIVE', 'EXPIRED') OR (decided_by IS NOT NULL AND decided_at IS NOT NULL AND valid_from IS NOT NULL AND valid_to IS NOT NULL)),
@@ -1059,15 +1182,40 @@ CREATE INDEX ix_dq_waiver_asset ON ph08_dq.dq_waiver (tenant_id, asset_id, statu
 CREATE INDEX ix_dq_waiver_expiry ON ph08_dq.dq_waiver (valid_to) WHERE status = 'ACTIVE';
 CREATE INDEX ix_dq_waiver_fp ON ph08_dq.dq_waiver (tenant_id, fingerprint) WHERE fingerprint IS NOT NULL AND status = 'ACTIVE';
 CREATE TRIGGER tg_dq_waiver_touch BEFORE UPDATE ON ph08_dq.dq_waiver FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
-CREATE TRIGGER tg_dq_waiver_immutable BEFORE UPDATE ON ph08_dq.dq_waiver FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'asset_id', 'rule_id', 'fingerprint', 'reason', 'requested_by');
+CREATE TRIGGER tg_dq_waiver_immutable BEFORE UPDATE ON ph08_dq.dq_waiver FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'asset_id', 'rule_id', 'fingerprint', 'reason', 'requested_by', 'scope');
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_waiver');
 COMMENT ON TABLE ph08_dq.dq_waiver IS 'EN-08-18 Ngoại lệ chấp nhận (waiver): cho phép bỏ qua một lỗi hoặc một quy tắc có thời hạn, DA duyệt, lý do tối thiểu 20 ký tự (FR-08-040). Hết hạn thì lỗi mở lại.';
+COMMENT ON COLUMN ph08_dq.dq_waiver.scope IS 'FINDINGS: nhóm dấu vân tay (một dấu ở cột fingerprint, nhiều dấu ở dq_waiver_item); RULE_FILTER: một quy tắc kèm điều kiện lọc CEL ở filter (FR-08-040).';
 COMMENT ON COLUMN ph08_dq.dq_waiver.valid_to IS 'Tối đa 366 ngày sau valid_from; thời hạn tối đa theo tham số 08.waiver.max-days kiểm ở dịch vụ.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_waiver CASCADE;
 
+-- @changeset ph08-0310-dq-waiver-item
+CREATE TABLE ph08_dq.dq_waiver_item (
+  id          uuid NOT NULL,
+  tenant_id   varchar(16) NOT NULL,
+  waiver_id   uuid NOT NULL,
+  fingerprint bytea NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  created_by  varchar(64) NOT NULL,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  updated_by  varchar(64) NOT NULL,
+  version     integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_waiver_item PRIMARY KEY (id),
+  CONSTRAINT ck_dq_waiver_item_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT uq_dq_waiver_item UNIQUE (tenant_id, waiver_id, fingerprint),
+  CONSTRAINT fk_dq_waiver_item_waiver FOREIGN KEY (tenant_id, waiver_id) REFERENCES ph08_dq.dq_waiver (tenant_id, id),
+  CONSTRAINT ck_dq_waiver_item_fingerprint CHECK (octet_length(fingerprint) = 32)
+);
+CREATE INDEX ix_dq_waiver_item_fp ON ph08_dq.dq_waiver_item (tenant_id, fingerprint);
+CREATE TRIGGER tg_dq_waiver_item_touch BEFORE UPDATE ON ph08_dq.dq_waiver_item FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CREATE TRIGGER tg_dq_waiver_item_immutable BEFORE UPDATE ON ph08_dq.dq_waiver_item FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'waiver_id', 'fingerprint');
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_waiver_item');
+COMMENT ON TABLE ph08_dq.dq_waiver_item IS 'EN-08-33 Dấu vân tay thuộc một ngoại lệ phạm vi FINDINGS (tối đa 100.000 mỗi ngoại lệ, FR-08-040). Không sửa sau khi tạo.';
+-- @rollback DROP TABLE IF EXISTS ph08_dq.dq_waiver_item CASCADE;
+
 
 -- @file 08-0050-issue.sql
--- @changeset ph08-0290-dq-issue
+-- @changeset ph08-0320-dq-issue
 CREATE TABLE ph08_dq.dq_issue (
   id                      uuid NOT NULL,
   tenant_id               varchar(16) NOT NULL,
@@ -1093,6 +1241,7 @@ CREATE TABLE ph08_dq.dq_issue (
   verify_scan_job_id      uuid,
   reopen_count            smallint NOT NULL DEFAULT 0,
   reject_reason           varchar(2000),
+  reject_type             varchar(16),
   steward_item_ref        uuid,
   forwarded_to_steward_at timestamptz,
   cancel_reason           varchar(2000),
@@ -1115,7 +1264,8 @@ CREATE TABLE ph08_dq.dq_issue (
   CONSTRAINT ck_dq_issue_assigned CHECK (status NOT IN ('ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED') OR assigned_at IS NOT NULL),
   CONSTRAINT ck_dq_issue_fixed CHECK (status NOT IN ('FIXED', 'VERIFIED') OR fixed_at IS NOT NULL),
   CONSTRAINT ck_dq_issue_verified CHECK ((status = 'VERIFIED') = (verified_at IS NOT NULL AND verify_scan_job_id IS NOT NULL)),
-  CONSTRAINT ck_dq_issue_reject CHECK (status <> 'REJECTED' OR COALESCE(char_length(reject_reason) >= 20, false)),
+  CONSTRAINT ck_dq_issue_reject CHECK (status <> 'REJECTED' OR (COALESCE(char_length(reject_reason) >= 20, false) AND reject_type IS NOT NULL)),
+  CONSTRAINT ck_dq_issue_reject_type CHECK (reject_type IS NULL OR reject_type IN ('WRONG_OWNER', 'NOT_A_DEFECT', 'CANNOT_FIX')),
   CONSTRAINT ck_dq_issue_cancel CHECK (status <> 'CANCELLED' OR COALESCE(char_length(cancel_reason) >= 20, false)),
   CONSTRAINT ck_dq_issue_count CHECK (finding_count >= 0 AND reopen_count >= 0 AND escalation_level BETWEEN 0 AND 3)
 );
@@ -1130,10 +1280,11 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_issue');
 COMMENT ON TABLE ph08_dq.dq_issue IS 'EN-08-19 Phiếu khắc phục: nhóm lỗi của một đối tượng và quy tắc giao cho tổ chức chủ quản, hạn xử lý theo mức nghiêm trọng (CRITICAL 5 ngày làm việc, MAJOR 15, MINOR 30, giả định), vòng đời OPEN đến VERIFIED (FR-08-041…046). PH-08 không sửa dữ liệu nguồn; lỗi bản ghi vàng chuyển sang hàng đợi steward PH-06.';
 COMMENT ON COLUMN ph08_dq.dq_issue.group_key IS 'asset_code | rule_code | owner_org_code; mỗi nhóm một phiếu đang mở (chỉ mục duy nhất một phần).';
 COMMENT ON COLUMN ph08_dq.dq_issue.steward_item_ref IS 'Mã mục hàng đợi steward PH-06 khi lỗi ở bản ghi vàng (FR-08-046); kiểm ở dịch vụ, không khóa ngoại.';
+COMMENT ON COLUMN ph08_dq.dq_issue.reject_type IS 'Lý do từ chối của DO: sai chủ quản, không phải lỗi, không sửa được (FR-08-045).';
 COMMENT ON COLUMN ph08_dq.dq_issue.verify_scan_job_id IS 'Lần đo lại kiểm chứng (trigger VERIFY); phiếu VERIFIED bắt buộc có (FR-08-044).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_issue CASCADE;
 
--- @changeset ph08-0300-dq-issue-activity
+-- @changeset ph08-0330-dq-issue-activity
 CREATE TABLE ph08_dq.dq_issue_activity (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,
@@ -1153,9 +1304,9 @@ CREATE TABLE ph08_dq.dq_issue_activity (
   CONSTRAINT pk_dq_issue_activity PRIMARY KEY (id),
   CONSTRAINT ck_dq_issue_activity_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_dq_issue_activity_issue FOREIGN KEY (tenant_id, issue_id) REFERENCES ph08_dq.dq_issue (tenant_id, id),
-  CONSTRAINT ck_dq_issue_activity_type CHECK (activity_type IN ('CREATED', 'ASSIGNED', 'COMMENTED', 'STATUS_CHANGED', 'ESCALATED', 'TRANSFERRED', 'FORWARDED_STEWARD', 'REJECTED', 'VERIFIED', 'REOPENED', 'CANCELLED')),
+  CONSTRAINT ck_dq_issue_activity_type CHECK (activity_type IN ('COMMENT', 'ATTACHMENT', 'STATUS_CHANGE', 'ASSIGNMENT', 'ESCALATION', 'VERIFY_RESULT', 'CREATED', 'TRANSFER', 'STEWARD_FORWARD')),
   CONSTRAINT ck_dq_issue_activity_status CHECK ((from_status IS NULL OR from_status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED', 'REOPENED', 'REJECTED', 'CANCELLED')) AND (to_status IS NULL OR to_status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED', 'REOPENED', 'REJECTED', 'CANCELLED'))),
-  CONSTRAINT ck_dq_issue_activity_change CHECK (activity_type <> 'STATUS_CHANGED' OR (from_status IS NOT NULL AND to_status IS NOT NULL AND from_status <> to_status))
+  CONSTRAINT ck_dq_issue_activity_change CHECK (activity_type <> 'STATUS_CHANGE' OR (from_status IS NOT NULL AND to_status IS NOT NULL AND from_status <> to_status))
 );
 CREATE INDEX ix_dq_issue_activity_issue ON ph08_dq.dq_issue_activity (tenant_id, issue_id, occurred_at);
 CREATE TRIGGER tg_dq_issue_activity_touch BEFORE UPDATE ON ph08_dq.dq_issue_activity FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
@@ -1166,7 +1317,7 @@ COMMENT ON TABLE ph08_dq.dq_issue_activity IS 'EN-08-20 Hoạt động trên phi
 
 
 -- @file 08-0060-alert-report.sql
--- @changeset ph08-0310-dq-alert-rule
+-- @changeset ph08-0340-dq-alert-rule
 CREATE TABLE ph08_dq.dq_alert_rule (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -1195,7 +1346,7 @@ CREATE TABLE ph08_dq.dq_alert_rule (
   CONSTRAINT fk_dq_alert_rule_domain FOREIGN KEY (tenant_id, domain_code) REFERENCES ph08_dq.dq_domain (tenant_id, domain_code),
   CONSTRAINT ck_dq_alert_rule_code CHECK (alert_rule_code ~ '^[A-Za-z][A-Za-z0-9_.-]{1,62}$'),
   CONSTRAINT ck_dq_alert_rule_scope CHECK (asset_id IS NULL OR domain_code IS NULL),
-  CONSTRAINT ck_dq_alert_rule_condition CHECK (condition_type IN ('SCORE_BELOW', 'SCORE_DROP', 'NEW_CRITICAL_FINDING', 'SCAN_FAILED', 'INLINE_FAIL_RATE', 'SLA_BREACH')),
+  CONSTRAINT ck_dq_alert_rule_condition CHECK (condition_type IN ('SCORE_BELOW', 'SCORE_DROP', 'SCAN_FAILED', 'INCOMPLETE_DIMENSIONS', 'ISSUE_OVERDUE', 'INLINE_FAIL_RATE', 'NEW_CRITICAL_FINDINGS')),
   CONSTRAINT ck_dq_alert_rule_dimension CHECK (dimension IS NULL OR dimension IN ('COMPLETENESS', 'ACCURACY', 'CONSISTENCY', 'TIMELINESS', 'UNIQUENESS', 'VALIDITY')),
   CONSTRAINT ck_dq_alert_rule_severity CHECK (severity IN ('HIGH', 'MEDIUM', 'LOW')),
   CONSTRAINT ck_dq_alert_rule_threshold CHECK (condition_type NOT IN ('SCORE_BELOW', 'SCORE_DROP', 'INLINE_FAIL_RATE') OR threshold IS NOT NULL),
@@ -1204,10 +1355,10 @@ CREATE TABLE ph08_dq.dq_alert_rule (
 CREATE INDEX ix_dq_alert_rule_scope ON ph08_dq.dq_alert_rule (tenant_id, condition_type) WHERE enabled;
 CREATE TRIGGER tg_dq_alert_rule_touch BEFORE UPDATE ON ph08_dq.dq_alert_rule FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_alert_rule');
-COMMENT ON TABLE ph08_dq.dq_alert_rule IS 'EN-08-21 Quy tắc cảnh báo: điều kiện điểm thấp, điểm giảm, lỗi CRITICAL mới, lần đo thất bại, tỷ lệ lỗi trực tuyến, quá hạn SLA; kênh gửi qua PH-13 (FR-08-047, 048).';
+COMMENT ON TABLE ph08_dq.dq_alert_rule IS 'EN-08-21 Quy tắc cảnh báo: điều kiện điểm thấp, điểm giảm, lần đo thất bại, thiếu chiều, phiếu quá hạn, tỷ lệ lỗi trực tuyến, lỗi CRITICAL mới; kênh gửi qua PH-13 (FR-08-047, 048).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_alert_rule CASCADE;
 
--- @changeset ph08-0320-dq-alert
+-- @changeset ph08-0350-dq-alert
 CREATE TABLE ph08_dq.dq_alert (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -1244,6 +1395,7 @@ CREATE TABLE ph08_dq.dq_alert (
   CONSTRAINT ck_dq_alert_resolved CHECK ((status = 'RESOLVED') = (resolved_at IS NOT NULL))
 );
 CREATE UNIQUE INDEX uq_dq_alert_open ON ph08_dq.dq_alert (tenant_id, dedup_key) WHERE status IN ('FIRING', 'ACKNOWLEDGED', 'SILENCED');
+CREATE UNIQUE INDEX uq_dq_alert_unresolved ON ph08_dq.dq_alert (tenant_id, alert_rule_id, COALESCE(asset_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE status <> 'RESOLVED';
 CREATE INDEX ix_dq_alert_status ON ph08_dq.dq_alert (tenant_id, status, fired_at DESC);
 CREATE INDEX ix_dq_alert_asset ON ph08_dq.dq_alert (tenant_id, asset_id, fired_at DESC) WHERE asset_id IS NOT NULL;
 CREATE TRIGGER tg_dq_alert_touch BEFORE UPDATE ON ph08_dq.dq_alert FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
@@ -1251,7 +1403,7 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_alert');
 COMMENT ON TABLE ph08_dq.dq_alert IS 'EN-08-22 Cảnh báo đã phát: trạng thái FIRING, ACKNOWLEDGED, RESOLVED, SILENCED, khóa chống trùng, tham chiếu thông báo PH-13 (FR-08-048, 049).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_alert CASCADE;
 
--- @changeset ph08-0330-dq-report
+-- @changeset ph08-0360-dq-report
 CREATE TABLE ph08_dq.dq_report (
   id                        uuid NOT NULL,
   tenant_id                 varchar(16) NOT NULL,
@@ -1287,7 +1439,7 @@ CREATE TABLE ph08_dq.dq_report (
   CONSTRAINT uq_dq_report_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_report_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_dq_report_code UNIQUE (tenant_id, report_code),
-  CONSTRAINT ck_dq_report_code CHECK (report_code ~ '^DQR-[0-9]{4}-[0-9]{5}$'),
+  CONSTRAINT ck_dq_report_code CHECK (report_code ~ '^BC-DQ-[0-9]{4}-[A-Z0-9]{2,4}-T[0-9]{2}(-R[0-9]{1,2})?$'),
   CONSTRAINT ck_dq_report_type CHECK (report_type IN ('PERIODIC', 'ANNUAL', 'AD_HOC')),
   CONSTRAINT ck_dq_report_status CHECK (status IN ('DRAFT', 'IN_REVIEW', 'PUBLISHED', 'WITHDRAWN')),
   CONSTRAINT ck_dq_report_period CHECK (period_code ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$' AND (report_type <> 'ANNUAL' OR period_code ~ '^[0-9]{4}$')),
@@ -1311,7 +1463,7 @@ COMMENT ON COLUMN ph08_dq.dq_report.summary IS 'Số liệu tổng hợp (điể
 COMMENT ON COLUMN ph08_dq.dq_report.pdf_object_key IS 'Khóa đối tượng trên Ceph RGW, bucket dq-reports; không lưu tệp trong PostgreSQL.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_report CASCADE;
 
--- @changeset ph08-0340-dq-report-subscription
+-- @changeset ph08-0370-dq-report-subscription
 CREATE TABLE ph08_dq.dq_report_subscription (
   id             uuid NOT NULL,
   tenant_id      varchar(16) NOT NULL,
@@ -1341,10 +1493,12 @@ COMMENT ON TABLE ph08_dq.dq_report_subscription IS 'EN-08-24 Đăng ký nhận b
 
 
 -- @file 08-0070-ops.sql
--- @changeset ph08-0350-dq-export-request
+-- @changeset ph08-0380-dq-export-request
 CREATE TABLE ph08_dq.dq_export_request (
   id                  uuid NOT NULL,
   tenant_id           varchar(16) NOT NULL,
+  kind                varchar(10) NOT NULL DEFAULT 'FINDINGS',
+  report_code         varchar(24),
   asset_id            uuid,
   filter              jsonb NOT NULL DEFAULT '{}',
   format              varchar(4) NOT NULL DEFAULT 'CSV',
@@ -1370,7 +1524,9 @@ CREATE TABLE ph08_dq.dq_export_request (
   CONSTRAINT uq_dq_export_request_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_export_request_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_dq_export_request_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
-  CONSTRAINT ck_dq_export_request_format CHECK (format IN ('CSV', 'XLSX')),
+  CONSTRAINT fk_dq_export_request_report FOREIGN KEY (tenant_id, report_code) REFERENCES ph08_dq.dq_report (tenant_id, report_code),
+  CONSTRAINT ck_dq_export_request_format CHECK (format IN ('CSV', 'XLSX', 'PDF')),
+  CONSTRAINT ck_dq_export_request_kind CHECK (kind IN ('FINDINGS', 'REPORT') AND (kind = 'REPORT') = (report_code IS NOT NULL) AND (format <> 'PDF' OR kind = 'REPORT')),
   CONSTRAINT ck_dq_export_request_status CHECK (status IN ('PENDING_APPROVAL', 'APPROVED', 'RUNNING', 'READY', 'FAILED', 'EXPIRED', 'REJECTED')),
   CONSTRAINT ck_dq_export_request_four_eyes CHECK (decided_by IS NULL OR requested_by IS NULL OR decided_by <> requested_by),
   CONSTRAINT ck_dq_export_request_approval CHECK (NOT contains_restricted OR status IN ('PENDING_APPROVAL', 'REJECTED') OR decided_by IS NOT NULL),
@@ -1383,9 +1539,10 @@ CREATE INDEX ix_dq_export_request_expiry ON ph08_dq.dq_export_request (expires_a
 CREATE TRIGGER tg_dq_export_request_touch BEFORE UPDATE ON ph08_dq.dq_export_request FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_export_request');
 COMMENT ON TABLE ph08_dq.dq_export_request IS 'EN-08-29 Yêu cầu xuất bản ghi lỗi ra CSV hoặc XLSX trên Ceph RGW; khi có trường Nhạy cảm hoặc Hạn chế cần DO chấp thuận khác người yêu cầu (FR-08-039). Tệp có hạn tải và thủy vân.';
+COMMENT ON COLUMN ph08_dq.dq_export_request.kind IS 'FINDINGS: xuất bản ghi lỗi (FR-08-039, cần DO chấp thuận khi có trường Hạn chế, Nhạy cảm); REPORT: xuất báo cáo PDF, XLSX (FR-08-055, API-08-116).';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_export_request CASCADE;
 
--- @changeset ph08-0360-dq-tenant-setting
+-- @changeset ph08-0390-dq-tenant-setting
 CREATE TABLE ph08_dq.dq_tenant_setting (
   id          uuid NOT NULL,
   tenant_id   varchar(16) NOT NULL,
@@ -1400,14 +1557,14 @@ CREATE TABLE ph08_dq.dq_tenant_setting (
   CONSTRAINT pk_dq_tenant_setting PRIMARY KEY (id),
   CONSTRAINT ck_dq_tenant_setting_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_dq_tenant_setting_key UNIQUE (tenant_id, setting_key),
-  CONSTRAINT ck_dq_tenant_setting_key CHECK (setting_key IN ('08.scan.default-cron', '08.scan.sample-ratio', '08.scan.shard-rows', '08.scan.timeout-minutes', '08.finding.retention-months', '08.finding.max-per-rule', '08.inline.timeout-ms', '08.inline.cache-ttl-seconds', '08.inline.default-mode', '08.inline.on-failure', '08.sla.critical-days', '08.sla.major-days', '08.sla.minor-days', '08.waiver.max-days', '08.export.max-rows', '08.score.pass-min', '08.score.warn-min', '08.alert.cooldown-minutes', '08.score.history-months'))
+  CONSTRAINT ck_dq_tenant_setting_key CHECK (setting_key IN ('08.scan.default-cron', '08.scan.timezone', '08.scan.window', '08.scan.min-interval-hours', '08.scan.max-duration-hours', '08.scan.queue-timeout-hours', '08.scan.duplicate-policy', '08.scan.manual-per-hour', '08.scan.max-concurrent-per-connection', '08.scan.heartbeat-timeout-seconds', '08.scan.task-max-attempts', '08.scan.min-coverage', '08.scan.task-size', '08.incremental.batch-window-minutes', '08.profile.on-activate', '08.profile.max-columns', '08.dryrun.max-rows', '08.rule.sql-predicate-enabled', '08.rdm.snapshot-max-items', '08.score.dimension-method', '08.trend.stable-band', '08.trend.degraded-alert', '08.finding.max-per-scan', '08.finding.max-per-rule-task', '08.finding.retention-months', '08.snapshot.retention-years', '08.report.official-retention-years', '08.report.auto-draft', '08.annual.snapshot-method', '08.issue.sla-days', '08.issue.auto-open-critical', '08.issue.escalate-after-overdue-days', '08.verify.wait-mdm-minutes', '08.verify.wait-source-minutes', '08.waiver.max-days', '08.inline.timeout-ms', '08.inline.default-mode', '08.inline.on-dependency-failure', '08.inline.persist-findings', '08.alert.repeat-hours', '08.export.link-hours', '08.benchmark.opt-in', '08.benchmark.min-group'))
 );
 CREATE TRIGGER tg_dq_tenant_setting_touch BEFORE UPDATE ON ph08_dq.dq_tenant_setting FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_tenant_setting');
-COMMENT ON TABLE ph08_dq.dq_tenant_setting IS 'EN-08-26 Tham số chất lượng theo tenant: lịch đo mặc định, mẫu, kích thước mảnh, thời gian chờ, hạn SLA, hạn ngoại lệ, ngưỡng điểm, chế độ kiểm tra trực tuyến (FR-08-058). Chỉ nhận các khóa 08.* đã khai báo.';
+COMMENT ON TABLE ph08_dq.dq_tenant_setting IS 'EN-08-26 Tham số chất lượng theo tenant: 43 khóa 08.* của FRS mục 8.2 (lịch đo, cửa sổ, mẫu, kích thước tác vụ, thời gian chờ, hạn SLA, hạn ngoại lệ, chế độ kiểm tra trực tuyến) (FR-08-058). Chỉ nhận các khóa đã khai báo; ngưỡng điểm và trọng số nằm ở dq_weight_config.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_tenant_setting CASCADE;
 
--- @changeset ph08-0370-dq-retention-policy
+-- @changeset ph08-0400-dq-retention-policy
 CREATE TABLE ph08_dq.dq_retention_policy (
   id             uuid NOT NULL,
   tenant_id      varchar(16) NOT NULL,
@@ -1431,7 +1588,44 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_retention_policy');
 COMMENT ON TABLE ph08_dq.dq_retention_policy IS 'EN-08-30 Chính sách lưu giữ và dọn dữ liệu đo theo loại đối tượng: số ngày giữ và hành động (xóa phân vùng, xóa dòng, lưu lạnh) (FR-08-059). Bản ghi lỗi giữ mặc định 13 tháng (395 ngày), có thể đổi theo tenant.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.dq_retention_policy CASCADE;
 
--- @changeset ph08-0380-outbox-event
+-- @changeset ph08-0410-dq-retention-run
+CREATE TABLE ph08_dq.dq_retention_run (
+  id                 uuid NOT NULL,
+  tenant_id          varchar(16) NOT NULL,
+  object_type        varchar(40) NOT NULL,
+  action             varchar(16) NOT NULL,
+  status             varchar(10) NOT NULL DEFAULT 'RUNNING',
+  dry_run            boolean NOT NULL DEFAULT false,
+  requested_by       varchar(64) NOT NULL,
+  cutoff_at          timestamptz,
+  started_at         timestamptz NOT NULL DEFAULT now(),
+  finished_at        timestamptz,
+  rows_affected      bigint NOT NULL DEFAULT 0,
+  partitions_dropped integer NOT NULL DEFAULT 0,
+  error_code         varchar(16),
+  error_message      varchar(2000),
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  created_by         varchar(64) NOT NULL,
+  updated_at         timestamptz NOT NULL DEFAULT now(),
+  updated_by         varchar(64) NOT NULL,
+  version            integer NOT NULL DEFAULT 0,
+  CONSTRAINT pk_dq_retention_run PRIMARY KEY (id),
+  CONSTRAINT uq_dq_retention_run_tid UNIQUE (tenant_id, id),
+  CONSTRAINT ck_dq_retention_run_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
+  CONSTRAINT ck_dq_retention_run_object CHECK (object_type IN ('dq_finding', 'dq_rule_result', 'dq_inline_stat', 'dq_scan_task', 'dq_profile_column', 'dq_score_snapshot', 'dq_issue', 'dq_alert', 'dq_report', 'dq_export_request', 'outbox_event', 'inbox_event')),
+  CONSTRAINT ck_dq_retention_run_action CHECK (action IN ('DROP_PARTITION', 'DELETE', 'ARCHIVE_COLD', 'ANONYMIZE')),
+  CONSTRAINT ck_dq_retention_run_status CHECK (status IN ('RUNNING', 'SUCCEEDED', 'FAILED')),
+  CONSTRAINT ck_dq_retention_run_done CHECK (status = 'RUNNING' OR finished_at IS NOT NULL),
+  CONSTRAINT ck_dq_retention_run_counts CHECK (rows_affected >= 0 AND partitions_dropped >= 0),
+  CONSTRAINT ck_dq_retention_run_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
+);
+CREATE INDEX ix_dq_retention_run_started ON ph08_dq.dq_retention_run (tenant_id, started_at DESC);
+CREATE TRIGGER tg_dq_retention_run_touch BEFORE UPDATE ON ph08_dq.dq_retention_run FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
+CALL ph08_dq.p_enable_rls('ph08_dq.dq_retention_run');
+COMMENT ON TABLE ph08_dq.dq_retention_run IS 'EN-08-30 Lịch sử chạy dọn dữ liệu đo theo chính sách lưu giữ: loại dữ liệu, hành động, số dòng và phân vùng đã dọn, chạy xem trước hay chạy thật (FR-08-059, API-08-125, 126).';
+-- @rollback DROP TABLE IF EXISTS ph08_dq.dq_retention_run CASCADE;
+
+-- @changeset ph08-0420-outbox-event
 CREATE TABLE ph08_dq.outbox_event (
   tenant_id      varchar(16) NOT NULL,
   event_id       uuid NOT NULL,
@@ -1454,7 +1648,7 @@ CALL ph08_dq.p_enable_rls('ph08_dq.outbox_event');
 COMMENT ON TABLE ph08_dq.outbox_event IS 'EN-08-27 Outbox (SAD 7.3) cho EVT-08-01…14 và bản ghi kiểm toán gửi PH-13 (FR-08-057, 060). Ghi cùng giao dịch với thay đổi; Debezium Outbox Event Router đọc WAL và định tuyến theo topic. Sự kiện không chứa giá trị bản ghi lỗi: CHECK chặn các khóa value, maskedValue, record. Dọn sau 3 ngày.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.outbox_event CASCADE;
 
--- @changeset ph08-0390-inbox-event
+-- @changeset ph08-0430-inbox-event
 CREATE TABLE ph08_dq.inbox_event (
   tenant_id    varchar(16) NOT NULL,
   consumer     varchar(64) NOT NULL,
@@ -1472,7 +1666,7 @@ CALL ph08_dq.p_enable_rls('ph08_dq.inbox_event');
 COMMENT ON TABLE ph08_dq.inbox_event IS 'EN-08-28 Khử trùng sự kiện nhận: EVT-06-01, 02, 03, 04, 10 của PH-06 và sự kiện phát hành danh mục của PH-07, tiêu thụ lũy đẳng theo event_id (FR-08-025). Dọn sau 30 ngày.';
 -- @rollback DROP TABLE IF EXISTS ph08_dq.inbox_event CASCADE;
 
--- @changeset ph08-0400-shedlock
+-- @changeset ph08-0440-shedlock
 CREATE TABLE ph08_dq.shedlock (
   name       varchar(64) NOT NULL,
   lock_until timestamptz NOT NULL,
@@ -1492,7 +1686,7 @@ BEGIN
   PERFORM set_config('app.tenant_id', p_tenant, true);
   INSERT INTO ph08_dq.dq_tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by)
   SELECT md5('ph08-setting:' || p_tenant || ':' || s.k)::uuid, p_tenant, s.k, s.v::jsonb, 'system:seed', 'system:seed'
-  FROM (VALUES ('08.scan.default-cron', '"0 0 2 1 * *"'), ('08.scan.sample-ratio', '0.1'), ('08.scan.shard-rows', '1000000'), ('08.scan.timeout-minutes', '120'), ('08.finding.retention-months', '13'), ('08.finding.max-per-rule', '10000'), ('08.inline.timeout-ms', '50'), ('08.inline.cache-ttl-seconds', '60'), ('08.inline.default-mode', '"ADVISORY"'), ('08.inline.on-failure', '"FAIL_OPEN"'), ('08.sla.critical-days', '5'), ('08.sla.major-days', '15'), ('08.sla.minor-days', '30'), ('08.waiver.max-days', '180'), ('08.export.max-rows', '100000'), ('08.score.pass-min', '90'), ('08.score.warn-min', '75'), ('08.alert.cooldown-minutes', '60'), ('08.score.history-months', '24')) AS s(k, v)
+  FROM (VALUES ('08.scan.default-cron', '"0 0 2 1 * ?"'), ('08.scan.timezone', '"Asia/Ho_Chi_Minh"'), ('08.scan.window', '"22:00-05:00"'), ('08.scan.min-interval-hours', '{"FULL":24,"INCREMENTAL":1}'), ('08.scan.max-duration-hours', '6'), ('08.scan.queue-timeout-hours', '24'), ('08.scan.duplicate-policy', '"QUEUE"'), ('08.scan.manual-per-hour', '10'), ('08.scan.max-concurrent-per-connection', '2'), ('08.scan.heartbeat-timeout-seconds', '180'), ('08.scan.task-max-attempts', '3'), ('08.scan.min-coverage', '95'), ('08.scan.task-size', '200000'), ('08.incremental.batch-window-minutes', '15'), ('08.profile.on-activate', 'true'), ('08.profile.max-columns', '200'), ('08.dryrun.max-rows', '10000'), ('08.rule.sql-predicate-enabled', 'false'), ('08.rdm.snapshot-max-items', '200000'), ('08.score.dimension-method', '"POOLED"'), ('08.trend.stable-band', '1.0'), ('08.trend.degraded-alert', '5.0'), ('08.finding.max-per-scan', '1000000'), ('08.finding.max-per-rule-task', '50000'), ('08.finding.retention-months', '13'), ('08.snapshot.retention-years', '5'), ('08.report.official-retention-years', '10'), ('08.report.auto-draft', 'true'), ('08.annual.snapshot-method', '"FULL_DECEMBER"'), ('08.issue.sla-days', '{"CRITICAL":5,"MAJOR":15,"MINOR":30}'), ('08.issue.auto-open-critical', '100'), ('08.issue.escalate-after-overdue-days', '5'), ('08.verify.wait-mdm-minutes', '60'), ('08.verify.wait-source-minutes', '0'), ('08.waiver.max-days', '180'), ('08.inline.timeout-ms', '40'), ('08.inline.default-mode', '"ADVISORY"'), ('08.inline.on-dependency-failure', '"FAIL_OPEN"'), ('08.inline.persist-findings', 'false'), ('08.alert.repeat-hours', '4'), ('08.export.link-hours', '24'), ('08.benchmark.opt-in', 'false'), ('08.benchmark.min-group', '5')) AS s(k, v)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph08_dq.dq_retention_policy (id, tenant_id, object_type, retention_days, action, created_by, updated_by)
   SELECT md5('ph08-retention:' || p_tenant || ':' || r.t)::uuid, p_tenant, r.t, r.d, r.a, 'system:seed', 'system:seed'
@@ -1506,7 +1700,7 @@ BEGIN
   ON CONFLICT (tenant_id, schedule_code) DO NOTHING;
 END
 $p$;
-COMMENT ON PROCEDURE ph08_dq.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 19 tham số 08.*, 12 chính sách lưu giữ, trọng số mặc định, lịch đo tháng. Chạy lại không nhân bản.';
+COMMENT ON PROCEDURE ph08_dq.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 43 tham số 08.*, 12 chính sách lưu giữ, trọng số mặc định, lịch đo tháng. Chạy lại không nhân bản.';
 -- @rollback DROP PROCEDURE IF EXISTS ph08_dq.p_seed_tenant(text);
 
 -- @changeset ph08-0920-fn-seed-common splitStatements:false
@@ -1520,7 +1714,7 @@ BEGIN
   FROM (VALUES
     ('VN-CCCD-12', 'Số CCCD gồm 12 chữ số', 'VALIDITY', 'REGEX', 'MAJOR', '{"pattern":"^[0-9]{12}$"}', NULL),
     ('VN-MST-FORMAT', 'Mã số thuế 10 số hoặc 13 số có gạch', 'VALIDITY', 'REGEX', 'MAJOR', '{"pattern":"^[0-9]{10}(-[0-9]{3})?$"}', NULL),
-    ('VN-MST-CHECKSUM', 'Chữ số kiểm tra của mã số thuế', 'ACCURACY', 'CHECKSUM', 'MAJOR', '{"algorithm":"MST_VN"}', NULL),
+    ('VN-MST-CHECKSUM', 'Chữ số kiểm tra của mã số thuế', 'ACCURACY', 'CHECKSUM', 'MAJOR', '{"algorithm":"MST_10"}', NULL),
     ('VN-SDT', 'Số điện thoại di động Việt Nam', 'VALIDITY', 'REGEX', 'MINOR', '{"pattern":"^(0|\\+84)[0-9]{9}$"}', NULL),
     ('VN-EMAIL', 'Địa chỉ email đúng cú pháp', 'VALIDITY', 'REGEX', 'MINOR', '{"pattern":"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"}', NULL),
     ('VN-DVHC-IN-RDM', 'Mã đơn vị hành chính có trong danh mục PH-07', 'VALIDITY', 'IN_RDM', 'MAJOR', '{"catalogCode":"${catalog}"}', NULL),
@@ -1560,5 +1754,19 @@ GRANT SELECT (id, tenant_id, last_seen_at, asset_id, rule_id, dimension, severit
 GRANT EXECUTE ON PROCEDURE ph08_dq.p_ensure_partitions(regclass, date, integer) TO ph08_app;
 GRANT EXECUTE ON PROCEDURE ph08_dq.p_seed_tenant(text) TO ph08_app;
 -- @rollback -- Không thu hồi tự động.
+
+-- @changeset ph08-0995-benchmark
+-- Ngoại lệ RLS duy nhất: vai ph08_benchmark đọc điểm chiều của ảnh chụp chính thức mọi tenant qua khung nhìn security_invoker, chỉ cột cần để tổng hợp.
+-- Việc kiểm tenant đã bật 08.benchmark.opt-in và nhóm tối thiểu 5 tenant do dịch vụ làm trước khi trả (BR-08-030).
+CREATE POLICY rls_dq_score_snapshot_benchmark ON ph08_dq.dq_score_snapshot FOR SELECT TO ph08_benchmark USING (official);
+CREATE POLICY rls_dq_score_dimension_benchmark ON ph08_dq.dq_score_dimension FOR SELECT TO ph08_benchmark USING (status = 'MEASURED');
+CREATE VIEW ph08_dq.v_benchmark_dimension WITH (security_invoker = true) AS
+  SELECT s.tenant_id, s.period_code, d.dimension, d.score
+  FROM ph08_dq.dq_score_dimension d JOIN ph08_dq.dq_score_snapshot s ON s.tenant_id = d.tenant_id AND s.id = d.snapshot_id;
+COMMENT ON VIEW ph08_dq.v_benchmark_dimension IS 'Điểm chiều của ảnh chụp chính thức, dùng cho so sánh liên tenant ẩn danh (FR-08-061); chỉ vai ph08_benchmark đọc.';
+GRANT SELECT ON ph08_dq.v_benchmark_dimension TO ph08_benchmark;
+GRANT SELECT (tenant_id, id, period_code, official) ON ph08_dq.dq_score_snapshot TO ph08_benchmark;
+GRANT SELECT (tenant_id, snapshot_id, dimension, score, status) ON ph08_dq.dq_score_dimension TO ph08_benchmark;
+-- @rollback DROP VIEW IF EXISTS ph08_dq.v_benchmark_dimension; DROP POLICY IF EXISTS rls_dq_score_dimension_benchmark ON ph08_dq.dq_score_dimension; DROP POLICY IF EXISTS rls_dq_score_snapshot_benchmark ON ph08_dq.dq_score_snapshot;
 
 RESET ROLE;

@@ -2,7 +2,7 @@
 -- Nguồn: ddl/ph08_dq.sql · 08-0050-issue.sql
 -- TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
 
---changeset ph08:ph08-0290-dq-issue
+--changeset ph08:ph08-0320-dq-issue
 CREATE TABLE ph08_dq.dq_issue (
   id                      uuid NOT NULL,
   tenant_id               varchar(16) NOT NULL,
@@ -28,6 +28,7 @@ CREATE TABLE ph08_dq.dq_issue (
   verify_scan_job_id      uuid,
   reopen_count            smallint NOT NULL DEFAULT 0,
   reject_reason           varchar(2000),
+  reject_type             varchar(16),
   steward_item_ref        uuid,
   forwarded_to_steward_at timestamptz,
   cancel_reason           varchar(2000),
@@ -50,7 +51,8 @@ CREATE TABLE ph08_dq.dq_issue (
   CONSTRAINT ck_dq_issue_assigned CHECK (status NOT IN ('ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED') OR assigned_at IS NOT NULL),
   CONSTRAINT ck_dq_issue_fixed CHECK (status NOT IN ('FIXED', 'VERIFIED') OR fixed_at IS NOT NULL),
   CONSTRAINT ck_dq_issue_verified CHECK ((status = 'VERIFIED') = (verified_at IS NOT NULL AND verify_scan_job_id IS NOT NULL)),
-  CONSTRAINT ck_dq_issue_reject CHECK (status <> 'REJECTED' OR COALESCE(char_length(reject_reason) >= 20, false)),
+  CONSTRAINT ck_dq_issue_reject CHECK (status <> 'REJECTED' OR (COALESCE(char_length(reject_reason) >= 20, false) AND reject_type IS NOT NULL)),
+  CONSTRAINT ck_dq_issue_reject_type CHECK (reject_type IS NULL OR reject_type IN ('WRONG_OWNER', 'NOT_A_DEFECT', 'CANNOT_FIX')),
   CONSTRAINT ck_dq_issue_cancel CHECK (status <> 'CANCELLED' OR COALESCE(char_length(cancel_reason) >= 20, false)),
   CONSTRAINT ck_dq_issue_count CHECK (finding_count >= 0 AND reopen_count >= 0 AND escalation_level BETWEEN 0 AND 3)
 );
@@ -65,10 +67,11 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_issue');
 COMMENT ON TABLE ph08_dq.dq_issue IS 'EN-08-19 Phiếu khắc phục: nhóm lỗi của một đối tượng và quy tắc giao cho tổ chức chủ quản, hạn xử lý theo mức nghiêm trọng (CRITICAL 5 ngày làm việc, MAJOR 15, MINOR 30, giả định), vòng đời OPEN đến VERIFIED (FR-08-041…046). PH-08 không sửa dữ liệu nguồn; lỗi bản ghi vàng chuyển sang hàng đợi steward PH-06.';
 COMMENT ON COLUMN ph08_dq.dq_issue.group_key IS 'asset_code | rule_code | owner_org_code; mỗi nhóm một phiếu đang mở (chỉ mục duy nhất một phần).';
 COMMENT ON COLUMN ph08_dq.dq_issue.steward_item_ref IS 'Mã mục hàng đợi steward PH-06 khi lỗi ở bản ghi vàng (FR-08-046); kiểm ở dịch vụ, không khóa ngoại.';
+COMMENT ON COLUMN ph08_dq.dq_issue.reject_type IS 'Lý do từ chối của DO: sai chủ quản, không phải lỗi, không sửa được (FR-08-045).';
 COMMENT ON COLUMN ph08_dq.dq_issue.verify_scan_job_id IS 'Lần đo lại kiểm chứng (trigger VERIFY); phiếu VERIFIED bắt buộc có (FR-08-044).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_issue CASCADE;
 
---changeset ph08:ph08-0300-dq-issue-activity
+--changeset ph08:ph08-0330-dq-issue-activity
 CREATE TABLE ph08_dq.dq_issue_activity (
   id            uuid NOT NULL,
   tenant_id     varchar(16) NOT NULL,
@@ -88,9 +91,9 @@ CREATE TABLE ph08_dq.dq_issue_activity (
   CONSTRAINT pk_dq_issue_activity PRIMARY KEY (id),
   CONSTRAINT ck_dq_issue_activity_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_dq_issue_activity_issue FOREIGN KEY (tenant_id, issue_id) REFERENCES ph08_dq.dq_issue (tenant_id, id),
-  CONSTRAINT ck_dq_issue_activity_type CHECK (activity_type IN ('CREATED', 'ASSIGNED', 'COMMENTED', 'STATUS_CHANGED', 'ESCALATED', 'TRANSFERRED', 'FORWARDED_STEWARD', 'REJECTED', 'VERIFIED', 'REOPENED', 'CANCELLED')),
+  CONSTRAINT ck_dq_issue_activity_type CHECK (activity_type IN ('COMMENT', 'ATTACHMENT', 'STATUS_CHANGE', 'ASSIGNMENT', 'ESCALATION', 'VERIFY_RESULT', 'CREATED', 'TRANSFER', 'STEWARD_FORWARD')),
   CONSTRAINT ck_dq_issue_activity_status CHECK ((from_status IS NULL OR from_status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED', 'REOPENED', 'REJECTED', 'CANCELLED')) AND (to_status IS NULL OR to_status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'FIXED', 'VERIFIED', 'REOPENED', 'REJECTED', 'CANCELLED'))),
-  CONSTRAINT ck_dq_issue_activity_change CHECK (activity_type <> 'STATUS_CHANGED' OR (from_status IS NOT NULL AND to_status IS NOT NULL AND from_status <> to_status))
+  CONSTRAINT ck_dq_issue_activity_change CHECK (activity_type <> 'STATUS_CHANGE' OR (from_status IS NOT NULL AND to_status IS NOT NULL AND from_status <> to_status))
 );
 CREATE INDEX ix_dq_issue_activity_issue ON ph08_dq.dq_issue_activity (tenant_id, issue_id, occurred_at);
 CREATE TRIGGER tg_dq_issue_activity_touch BEFORE UPDATE ON ph08_dq.dq_issue_activity FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();

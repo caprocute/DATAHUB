@@ -123,6 +123,6 @@ if MD:
         if f"API-08-{c}" not in MD:
             bad += 1
             print("API thiếu ở tài liệu:", c)
-print(f"API: {len(frs_api)} mã FRS 9.4 đối chiếu (đường dẫn, phương thức, FR); {len(ops)} operation, {len([c for c in ops if int(c) > 128])} mã cấp mới")
+print(f"API: {len(frs_api)} mã FRS 9.4 đối chiếu (đường dẫn, phương thức, FR); {len(ops)} operation, {len([c for c in ops if int(c) > 131])} mã cấp mới")
 print("Kết quả:", "LỆCH" if bad else "khớp")
 sys.exit(1 if bad else 0)

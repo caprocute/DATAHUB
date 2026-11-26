@@ -4,7 +4,7 @@ Chạy từ thư mục api/ph08:  python3 tools/gen_md.py [--write]
 Với --write thay đoạn giữa <!-- gen:X:start --> và <!-- gen:X:end --> trong ../D03-04-PH08-api-chat-luong-du-lieu.md.
 
 Chương đặc tả từng endpoint dùng build/tools/sinh_dac_ta_api.py trên bản rút gọn của OpenAPI (ví dụ chỉ giữ trường bắt buộc và vài trường đầu).
-Ví dụ đầy đủ của mọi endpoint nằm ở openapi-dq.yaml; tập .md in ví dụ theo thứ tự ưu tiên cho tới hết ngân sách DAC_TA_BUDGET để giữ tập ≤ 150 KB."""
+Ví dụ đầy đủ của mọi endpoint nằm ở openapi-dq.yaml; tập .md in ví dụ theo thứ tự ưu tiên cho tới hết ngân sách DAC_TA_BUDGET để giữ tập ≤ 240 KB."""
 import copy, os, re, subprocess, sys, tempfile, yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -13,7 +13,7 @@ import spec
 ROOT = spec.ROOT
 DOC = os.path.join(ROOT, "..", "D03-04-PH08-api-chat-luong-du-lieu.md")
 TOOL = os.path.join(ROOT, "..", "..", "..", "build", "tools", "sinh_dac_ta_api.py")
-DAC_TA_BUDGET = int(os.environ.get("DAC_TA_BUDGET", "88500"))
+DAC_TA_BUDGET = int(os.environ.get("DAC_TA_BUDGET", "900000"))
 oa = yaml.safe_load(open(os.path.join(ROOT, "openapi-dq.yaml"), encoding="utf-8"))
 aa = yaml.safe_load(open(os.path.join(ROOT, "asyncapi-dq.yaml"), encoding="utf-8"))
 OPS = {}
@@ -21,8 +21,7 @@ for path, item in oa["paths"].items():
     for m, o in item.items():
         OPS[o["x-datahub-id"][-3:]] = (m.upper(), path, o)
 GENERIC = {"ERR-08-001", "ERR-08-003", "ERR-08-004", "ERR-08-006", "ERR-08-045"}  # mã chung, nêu ở mục 1 thay vì lặp ở từng endpoint
-NO_API = {25: "Hệ thống; nhận EVT-06-01…04, EVT-07-03, 05, 10 (mục 4.3); bật, tắt theo đối tượng chưa có API ở FRS 9.4 (đề nghị đồng bộ, phụ lục)",
-          36: "Hệ thống ghi; xem qua API-08-073, 074, 078"}
+NO_API = {36: "Hệ thống ghi; xem qua API-08-073, 074, 078"}
 
 
 def endpoints():

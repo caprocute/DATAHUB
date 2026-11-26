@@ -11,7 +11,7 @@ CREATE TABLE ph08_dq.dq_domain (
   description           varchar(2000),
   owner_org_code        varchar(63) NOT NULL,
   steward_user          varchar(64),
-  status                varchar(16) NOT NULL DEFAULT 'DRAFT',
+  status                varchar(16) NOT NULL DEFAULT 'ACTIVE',
   status_reason         varchar(2000),
   on_dependency_failure varchar(16) NOT NULL DEFAULT 'FAIL_OPEN',
   created_at            timestamptz NOT NULL DEFAULT now(),
@@ -25,44 +25,51 @@ CREATE TABLE ph08_dq.dq_domain (
   CONSTRAINT uq_dq_domain_code UNIQUE (tenant_id, domain_code),
   CONSTRAINT ck_dq_domain_code CHECK (domain_code ~ '^[A-Z][A-Z0-9_]{1,31}$'),
   CONSTRAINT ck_dq_domain_owner CHECK (owner_org_code ~ '^[A-Za-z0-9][A-Za-z0-9._-]{1,62}$'),
-  CONSTRAINT ck_dq_domain_status CHECK (status IN ('DRAFT', 'ACTIVE', 'SUSPENDED', 'RETIRED')),
+  CONSTRAINT ck_dq_domain_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
   CONSTRAINT ck_dq_domain_failure CHECK (on_dependency_failure IN ('FAIL_OPEN', 'FAIL_CLOSED')),
-  CONSTRAINT ck_dq_domain_reason CHECK (status NOT IN ('SUSPENDED', 'RETIRED') OR COALESCE(char_length(status_reason) >= 20, false))
+  CONSTRAINT ck_dq_domain_reason CHECK (status <> 'INACTIVE' OR COALESCE(char_length(status_reason) >= 20, false))
 );
 CREATE TRIGGER tg_dq_domain_touch BEFORE UPDATE ON ph08_dq.dq_domain FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CREATE TRIGGER tg_dq_domain_immutable BEFORE UPDATE ON ph08_dq.dq_domain FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_immutable('tenant_id', 'domain_code');
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_domain');
-COMMENT ON TABLE ph08_dq.dq_domain IS 'EN-08-01 Miền chất lượng dữ liệu: nhóm đối tượng đo theo lĩnh vực quản lý, gắn tổ chức chủ quản (DO) và cán bộ phụ trách (FR-08-001). Mang chế độ xử lý khi dịch vụ phụ thuộc lỗi lúc kiểm tra trực tuyến (FAIL_OPEN, FAIL_CLOSED). Không xóa, chỉ ngừng.';
+COMMENT ON TABLE ph08_dq.dq_domain IS 'EN-08-01 Miền chất lượng dữ liệu: nhóm đối tượng đo theo lĩnh vực quản lý, gắn tổ chức chủ quản (DO) và cán bộ phụ trách (FR-08-001). Mang chế độ xử lý khi dịch vụ phụ thuộc lỗi lúc kiểm tra trực tuyến (FAIL_OPEN, FAIL_CLOSED). Không xóa, chỉ chuyển INACTIVE.';
 COMMENT ON COLUMN ph08_dq.dq_domain.owner_org_code IS 'Mã tổ chức chủ quản (DO) ở PH-01; kiểm ở dịch vụ, không khóa ngoại liên schema.';
 COMMENT ON COLUMN ph08_dq.dq_domain.on_dependency_failure IS 'FAIL_OPEN cho phép bản ghi đi tiếp khi PH-07, PH-05 không khả dụng; FAIL_CLOSED chặn (FR-08-031, 032).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_domain CASCADE;
 
 --changeset ph08:ph08-0110-dq-asset
 CREATE TABLE ph08_dq.dq_asset (
-  id                 uuid NOT NULL,
-  tenant_id          varchar(16) NOT NULL,
-  domain_code        varchar(32) NOT NULL,
-  asset_code         varchar(63) NOT NULL,
-  name               varchar(255) NOT NULL,
-  asset_type         varchar(16) NOT NULL,
-  status             varchar(16) NOT NULL DEFAULT 'DRAFT',
-  status_reason      varchar(2000),
-  owner_org_code     varchar(63) NOT NULL,
-  mdm_domain_code    varchar(32),
-  rdm_catalog_code   varchar(64),
-  connection_id      uuid,
-  object_name        varchar(255),
-  flow_code          varchar(63),
-  key_columns        varchar(63)[] NOT NULL DEFAULT '{}',
-  default_scan_mode  varchar(16) NOT NULL DEFAULT 'FULL',
-  sample_ratio       numeric(5,4),
-  highest_data_class varchar(16) NOT NULL DEFAULT 'INTERNAL',
-  description        varchar(2000),
-  created_at         timestamptz NOT NULL DEFAULT now(),
-  created_by         varchar(64) NOT NULL,
-  updated_at         timestamptz NOT NULL DEFAULT now(),
-  updated_by         varchar(64) NOT NULL,
-  version            integer NOT NULL DEFAULT 0,
+  id                    uuid NOT NULL,
+  tenant_id             varchar(16) NOT NULL,
+  domain_code           varchar(32) NOT NULL,
+  asset_code            varchar(63) NOT NULL,
+  name                  varchar(255) NOT NULL,
+  asset_type            varchar(16) NOT NULL,
+  status                varchar(16) NOT NULL DEFAULT 'DRAFT',
+  status_reason         varchar(2000),
+  owner_org_code        varchar(63) NOT NULL,
+  mdm_domain_code       varchar(32),
+  rdm_catalog_code      varchar(64),
+  connection_id         uuid,
+  object_name           varchar(255),
+  flow_code             varchar(63),
+  key_columns           varchar(63)[] NOT NULL DEFAULT '{}',
+  default_scan_mode     varchar(16) NOT NULL DEFAULT 'FULL',
+  sample_ratio          numeric(5,4),
+  highest_data_class    varchar(16) NOT NULL DEFAULT 'INTERNAL',
+  description           varchar(2000),
+  incremental_enabled   boolean NOT NULL DEFAULT false,
+  updated_at_field      varchar(63),
+  inline_enabled        boolean NOT NULL DEFAULT false,
+  inline_mode           varchar(10),
+  on_dependency_failure varchar(16),
+  inline_timeout_ms     smallint NOT NULL DEFAULT 40,
+  gate_enabled          boolean NOT NULL DEFAULT false,
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  created_by            varchar(64) NOT NULL,
+  updated_at            timestamptz NOT NULL DEFAULT now(),
+  updated_by            varchar(64) NOT NULL,
+  version               integer NOT NULL DEFAULT 0,
   CONSTRAINT pk_dq_asset PRIMARY KEY (id),
   CONSTRAINT uq_dq_asset_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_asset_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
@@ -74,6 +81,13 @@ CREATE TABLE ph08_dq.dq_asset (
   CONSTRAINT ck_dq_asset_scan_mode CHECK (default_scan_mode IN ('FULL', 'SAMPLE', 'INCREMENTAL')),
   CONSTRAINT ck_dq_asset_class CHECK (highest_data_class IN ('PUBLIC', 'INTERNAL', 'RESTRICTED', 'SENSITIVE')),
   CONSTRAINT ck_dq_asset_ref CHECK ((asset_type = 'MDM_DOMAIN') = (mdm_domain_code IS NOT NULL) AND (asset_type = 'RDM_CATALOG') = (rdm_catalog_code IS NOT NULL) AND (asset_type = 'SOURCE_DATASET') = (connection_id IS NOT NULL AND object_name IS NOT NULL) AND (asset_type = 'FLOW_MESSAGE') = (flow_code IS NOT NULL)),
+  CONSTRAINT ck_dq_asset_inline_mode CHECK (inline_mode IS NULL OR inline_mode IN ('STRICT', 'ADVISORY')),
+  CONSTRAINT ck_dq_asset_inline_on CHECK (NOT inline_enabled OR inline_mode IS NOT NULL),
+  CONSTRAINT ck_dq_asset_failure CHECK (on_dependency_failure IS NULL OR on_dependency_failure IN ('FAIL_OPEN', 'FAIL_CLOSED')),
+  CONSTRAINT ck_dq_asset_timeout CHECK (inline_timeout_ms BETWEEN 10 AND 50),
+  CONSTRAINT ck_dq_asset_gate CHECK (NOT gate_enabled OR (asset_type = 'MDM_DOMAIN' AND inline_enabled)),
+  CONSTRAINT ck_dq_asset_incremental CHECK (NOT incremental_enabled OR (asset_type <> 'FLOW_MESSAGE' AND (asset_type <> 'SOURCE_DATASET' OR updated_at_field IS NOT NULL))),
+  CONSTRAINT ck_dq_asset_updated_field CHECK (updated_at_field IS NULL OR updated_at_field ~ '^[A-Za-z_][A-Za-z0-9_]{0,62}$'),
   CONSTRAINT ck_dq_asset_sample CHECK ((default_scan_mode = 'SAMPLE') = (sample_ratio IS NOT NULL) AND (sample_ratio IS NULL OR (sample_ratio > 0 AND sample_ratio <= 1))),
   CONSTRAINT ck_dq_asset_reason CHECK (status NOT IN ('SUSPENDED', 'RETIRED') OR COALESCE(char_length(status_reason) >= 20, false))
 );
@@ -88,6 +102,9 @@ COMMENT ON TABLE ph08_dq.dq_asset IS 'EN-08-02 Đối tượng đo chất lượ
 COMMENT ON COLUMN ph08_dq.dq_asset.connection_id IS 'Mã kết nối PH-05 (tài khoản chỉ đọc, Q359, ADR-067); kiểm ở dịch vụ, không khóa ngoại.';
 COMMENT ON COLUMN ph08_dq.dq_asset.mdm_domain_code IS 'Domain PH-06; đọc qua view hợp đồng chỉ đọc do PH-06 cấp, không đọc bảng nghiệp vụ.';
 COMMENT ON COLUMN ph08_dq.dq_asset.highest_data_class IS 'Phân loại cao nhất trong các trường, lấy từ PH-09; điều khiển cách lưu giá trị lỗi.';
+COMMENT ON COLUMN ph08_dq.dq_asset.incremental_enabled IS 'Bật đo tăng dần theo sự kiện PH-06, PH-07 (FR-08-025, API-08-130, 131); không áp cho FLOW_MESSAGE, SOURCE_DATASET cần updated_at_field.';
+COMMENT ON COLUMN ph08_dq.dq_asset.inline_enabled IS 'Cấu hình kiểm tra trực tuyến của đối tượng (FR-08-032, 035): bật, chế độ STRICT hay ADVISORY, hành vi khi phụ thuộc lỗi (rỗng thì theo miền), ngân sách ms, cổng chất lượng cho PH-06.';
+COMMENT ON COLUMN ph08_dq.dq_asset.gate_enabled IS 'Cổng chất lượng đầu vào cho PH-06, chỉ MDM_DOMAIN đã bật trực tuyến (FR-08-035).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_asset CASCADE;
 
 --changeset ph08:ph08-0120-dq-asset-field
@@ -153,7 +170,7 @@ CREATE TABLE ph08_dq.dq_profile_run (
   CONSTRAINT ck_dq_profile_run_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT fk_dq_profile_run_asset FOREIGN KEY (tenant_id, asset_id) REFERENCES ph08_dq.dq_asset (tenant_id, id),
   CONSTRAINT ck_dq_profile_run_status CHECK (status IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED')),
-  CONSTRAINT ck_dq_profile_run_mode CHECK (scan_mode IN ('FULL', 'SAMPLE')),
+  CONSTRAINT ck_dq_profile_run_mode CHECK (scan_mode IN ('FULL', 'SAMPLE', 'EXTERNAL')),
   CONSTRAINT ck_dq_profile_run_done CHECK (status NOT IN ('SUCCEEDED', 'FAILED') OR finished_at IS NOT NULL),
   CONSTRAINT ck_dq_profile_run_error CHECK (error_code IS NULL OR error_code ~ '^ERR-08-[0-9]{3}$')
 );

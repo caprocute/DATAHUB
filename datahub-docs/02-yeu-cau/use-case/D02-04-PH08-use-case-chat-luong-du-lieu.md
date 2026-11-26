@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-04-PH08
 ten: Đặc tả use case phân hệ PH-08 Chất lượng dữ liệu
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư, kiểm thử viên
@@ -101,7 +101,7 @@ PH-08 có chín nhóm tác nhân người và các tác nhân hệ thống. DS v
 | PH-04 | `dh-runtime` | Scope `dq.check` | 15 |
 | PH-06 | Dữ liệu chủ | `dq.check`; cấp khung nhìn hợp đồng, phát EVT-06 | 02, 11, 14, 16, 22 |
 | PH-05, PH-07, PH-09 | Bộ điều hợp, danh mục, quyền riêng tư | Kết nối chỉ đọc, chỉ số hồ sơ; tra mã, sự kiện phát hành; phân loại trường | 02, 04, 11, 14 |
-| PH-13, PH-16, PH-18 | Giám sát, KPI, job | Nhận cảnh báo, KPI; kích hoạt lịch | 10, 12, 23, 26 |
+| PH-13, PH-16, PH-18 | Giám sát, KPI, job | Nhận cảnh báo, KPI; PH-18 chỉ kích hoạt thêm lần đo theo yêu cầu (phụ thuộc mềm) | 10, 12, 23, 26 |
 | HTTT thành viên | ROLE-PARTNER_SYSTEM | Scope `dq.read` (thẻ điểm dữ liệu của mình) | 24 |
 
 : Tác nhân và use case tham gia
@@ -152,7 +152,7 @@ Hình cho thấy DS soạn và chạy thử, DA quyết định kích hoạt b�
 ```{.mermaid caption="Use case đo theo lô, theo sự kiện và trực tuyến"}
 flowchart TB
   DS([DS, TO])
-  SYS[[Hệ thống đo, PH-18]]
+  SYS[[Hệ thống đo, bộ lập lịch nội bộ]]
   EXT[[PH-04, PH-06, PH-07]]
   subgraph G3["Đo"]
     U10(UC-08-10 Lịch và đo theo yêu cầu)
@@ -518,7 +518,7 @@ Hình cho thấy PH-08 chỉ đọc lược đồ qua khung nhìn hợp đồng 
 
 **Tác nhân chính.** DS (Lan); DO (Phúc, chỉ xem).
 
-**Tác nhân phụ.** PH-18 (tạm dừng lịch), PH-13.
+**Tác nhân phụ.** bộ lập lịch nội bộ (tạm dừng lịch), PH-13.
 
 **Mức ưu tiên.** M · Đợt 3.
 
@@ -560,7 +560,7 @@ Hình cho thấy PH-08 chỉ đọc lược đồ qua khung nhìn hợp đồng 
 sequenceDiagram
   actor DS
   participant Q as dq-control
-  participant S as PH-18
+  participant S as Bộ lập lịch nội bộ
   DS->>Q: Tạm ngừng SRC-HOTICH kèm lý do (API-08-010)
   Q->>Q: Đặt SUSPENDED, hủy lần QUEUED
   Q->>S: Tạm dừng lịch đo
@@ -569,7 +569,7 @@ sequenceDiagram
   Q->>S: Bật lại lịch
 ```
 
-Hình cho thấy ngừng đối tượng đồng thời dừng lịch ở PH-18, nên không còn lần đo chạy ngầm trên nguồn đã ngừng.
+Hình cho thấy ngừng đối tượng đồng thời dừng lịch ở bộ lập lịch nội bộ, nên không còn lần đo chạy ngầm trên nguồn đã ngừng.
 
 ### 6.4. UC-08-04 · Chạy hồ sơ dữ liệu và gợi ý quy tắc
 
@@ -580,7 +580,7 @@ Hồ sơ dữ liệu giúp DS biết cột nào hay trống, trùng, lệch trư
 
 **Tác nhân chính.** DS (Lan).
 
-**Tác nhân phụ.** Nguồn đo qua kết nối PH-05, PH-05 (đẩy chỉ số), PH-18.
+**Tác nhân phụ.** Nguồn đo qua kết nối PH-05, PH-05 (đẩy chỉ số).
 
 **Mức ưu tiên.** S (FR-08-010, 011 là C) · Đợt 3.
 
@@ -968,7 +968,7 @@ Mặc định mỗi đối tượng `ACTIVE` được đo ngày 1 hằng tháng 
 
 **Tác nhân chính.** DS (Lan), TO (Chi).
 
-**Tác nhân phụ.** PH-18 (Quartz, ShedLock), `dq-worker`, PH-13.
+**Tác nhân phụ.** bộ lập lịch nội bộ (Quartz, ShedLock), `dq-worker`, PH-13.
 
 **Mức ưu tiên.** M · Đợt 3.
 
@@ -1015,7 +1015,7 @@ Mặc định mỗi đối tượng `ACTIVE` được đo ngày 1 hằng tháng 
 sequenceDiagram
   actor TO
   participant Q as dq-control
-  participant S as PH-18
+  participant S as Bộ lập lịch nội bộ
   participant W as dq-worker
   TO->>Q: Đo ngay FULL (API-08-059)
   Q->>Q: Kiểm hạn mức, tạo lần đo QUEUED
@@ -1026,7 +1026,7 @@ sequenceDiagram
   W-->>Q: Xong, SUCCEEDED
 ```
 
-Hình cho thấy lịch của PH-18 và yêu cầu thủ công cùng đi vào một hàng đợi lần đo, nên quy tắc "một lần chạy mỗi đối tượng" áp dụng chung.
+Hình cho thấy lịch nội bộ và yêu cầu thủ công cùng đi vào một hàng đợi lần đo, nên quy tắc "một lần chạy mỗi đối tượng" áp dụng chung.
 
 ### 6.11. UC-08-11 · Đo theo lô, đối chiếu danh mục và ghi bản ghi lỗi
 
@@ -1057,7 +1057,7 @@ Hình cho thấy lịch của PH-18 và yêu cầu thủ công cùng đi vào m�
 1. Hệ thống đặt lần đo `RUNNING`, lấy một tác vụ (200.000 bản ghi).
 2. Hệ thống dịch quy tắc tập hợp (`NOT_NULL`, `UNIQUE_IN_ASSET`) thành SQL đẩy xuống và chạy; quy tắc mức bản ghi chạy bằng CEL.
 3. Với quy tắc `IN_RDM`, hệ thống đối chiếu ảnh chụp danh mục `DVHC` của PH-07, không sao bảng mã (BR-08-003).
-4. Với mỗi vi phạm, hệ thống tính `fingerprint = SHA-256(tenantId, assetCode, ruleCode, recordKey)` (BR-08-013); lỗi mới ghi `OPEN`, lỗi đã có tăng số lần thấy.
+4. Với mỗi vi phạm, hệ thống tính `fingerprint = HMAC-SHA256(khóa tenant; tenantId, assetCode, ruleCode, recordKey)` (BR-08-013); lỗi mới ghi `OPEN`, lỗi đã có tăng số lần thấy.
 5. Hệ thống che giá trị theo phân loại: `SENSITIVE` lưu HMAC, `RESTRICTED` che một phần (BR-08-012).
 6. Hệ thống đặt `RESOLVED` cho lỗi có phủ quy tắc mà kỳ này không còn thấy (BR-08-034), lưu kết quả quy tắc, chuyển sang UC-08-12.
 
@@ -1906,7 +1906,7 @@ Báo cáo kỳ (tháng) tự sinh nháp. Báo cáo chính thức hằng năm ch�
 
 **Tác nhân chính.** DS (Lan, soạn), DA (Hùng, duyệt).
 
-**Tác nhân phụ.** PH-18 (tự sinh nháp), PH-13.
+**Tác nhân phụ.** bộ lập lịch nội bộ (tự sinh nháp), PH-13.
 
 **Mức ưu tiên.** M · Đợt 3.
 
@@ -2033,7 +2033,7 @@ TA chỉnh 40 tham số `08.*` trong trần của PA, chạy dọn dữ liệu t
 
 **Tác nhân chính.** TA (Mai); SO (Dũng), AU.
 
-**Tác nhân phụ.** PA (trần tham số), PH-18 (job dọn), nhật ký chung.
+**Tác nhân phụ.** PA (trần tham số), bộ lập lịch nội bộ (job dọn), nhật ký chung.
 
 **Mức ưu tiên.** M · Đợt 3.
 
@@ -2136,3 +2136,4 @@ Tập này không sửa tệp nào ngoài tập của mình. Bảng dưới ghi 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo K-UC và K-TRINH-BAY: 27 use case phủ 61 FR, năm sơ đồ use case, mỗi use case một sơ đồ trình tự, ma trận UC với FR, UI, API, REQ, LGC, ánh xạ FR repo, bảy đề nghị đồng bộ, câu hỏi mở Q08-45…49 |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Đồng bộ theo FRS 0.2: lịch đo do bộ lập lịch nội bộ (PH-18 là phụ thuộc mềm), dấu vân tay HMAC-SHA256; bảy đề nghị ĐN-UC-01…07 và Q08-45…49 đã được FRS xử lý (FRS chương 15) |

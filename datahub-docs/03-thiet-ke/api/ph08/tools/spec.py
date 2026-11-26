@@ -40,30 +40,15 @@ ALIAS = {
     "ExportFormat": "export.format", "SubscriptionChannel": "subscription.channel", "ProfileStatus": "profile_run.status",
     "ProfileMode": "profile_run.mode", "DimensionMethod": "score.dimension_method",
 }
-# enum không có dòng riêng ở Phụ lục A (lấy từ DDL ph08_dq.sql hoặc chỉ có ở API; ghi ở mục đề nghị bổ sung)
-LOCAL = {
-    "FieldType": ["STRING", "INTEGER", "DECIMAL", "DATE", "TIMESTAMP", "BOOLEAN", "CODE", "JSON"],
-    "ClassificationStatus": ["PROPOSED", "CONFIRMED"],
-    "ValueMode": ["MASKED", "HASH_ONLY", "PLAIN"],
-    "TemplateStatus": ["ACTIVE", "RETIRED"],
-    "VersionDecision": ["APPROVE", "REJECT"],
-    "DimensionStatus": ["MEASURED", "SKIPPED"],
-    "RecipientType": ["USER", "ROLE", "ORG"],
-    "ReportFileFormat": ["PDF", "XLSX"],
-    "RuleFileFormat": ["YAML", "JSON"],
-    "ExportKind": ["FINDINGS", "REPORT"],
-    "ExportStatus": ["PENDING_APPROVAL", "APPROVED", "RUNNING", "READY", "FAILED", "EXPIRED", "REJECTED"],
-    "Granularity": ["MINUTE", "HOUR", "DAY"],
-    "ObjectType": ["TABLE", "VIEW"],
-    "RetentionAction": ["DROP_PARTITION", "DELETE", "ARCHIVE_COLD", "ANONYMIZE"],
-    "RetentionRunStatus": ["RUNNING", "SUCCEEDED", "FAILED"],
-    "BreachKind": ["VERDICT_FAIL", "BELOW_WARN"],
-    "StatusChangeKind": ["STATUS_CHANGE", "OVERDUE", "ESCALATED"],
-    "KpiKind": ["SCAN_SNAPSHOT", "REPORT", "ISSUE_DAILY"],
-    "VerifyMode": ["SCAN", "MANUAL"],
-    "ExportDecisionValue": ["APPROVE", "REJECT"],
-    "AuditOutcome": ["SUCCESS", "DENIED", "FAILED"],
-}
+LOCAL = {}  # bản 0.2: mọi enum đều có dòng ở Phụ lục A FRS
+ALIAS.update({
+    "ValueMode": "value_mode", "FieldType": "field_type", "ClassificationStatus": "classification_status", "TemplateStatus": "template.status",
+    "VersionDecision": "decision", "ExportDecisionValue": "decision", "DimensionStatus": "dimension_status", "RecipientType": "recipient_type",
+    "ReportFileFormat": "report_file.format", "RuleFileFormat": "rule_file.format", "ExportKind": "export.kind", "ExportStatus": "export.status",
+    "Granularity": "granularity", "ObjectType": "object_type", "RetentionAction": "retention.action", "RetentionRunStatus": "retention_run.status",
+    "BreachKind": "breach.kind", "StatusChangeKind": "status_change.kind", "KpiKind": "kpi.kind", "VerifyMode": "verify.mode",
+    "AuditOutcome": "audit.outcome", "SkipReason": "skip_reason",
+})
 
 
 def E(name):
@@ -93,10 +78,8 @@ ROWS = []  # (mã 3 số, phương thức, đường dẫn, [FR])
 _sec = FRS[FRS.index("### 9.4."):FRS.index("## 10. Giao diện")]
 for m in re.finditer(r"^\| API-08-(\d{3}) \| `([A-Z]+) ([^`]+)`(?: \([^)]*\))? \| ([^|]+) \|", _sec, re.M):
     ROWS.append((m.group(1), m.group(2), m.group(3), [f"FR-08-{x}" for x in re.findall(r"\d{3}", m.group(4))]))
-# API-08-073 trong FRS dùng chung mã cho GET /findings và POST /findings:search; tập này cấp mã riêng 129 (đề nghị FRS cập nhật)
-ROWS.append(("129", "POST", "/findings:search", ["FR-08-037"]))
 ROWS.sort(key=lambda r: r[0])
-assert len(ROWS) == 129, len(ROWS)
+assert len(ROWS) == 131, len(ROWS)
 
 # ---------------------------------------------------------------- bảng operation
 # mã | tóm tắt | nhóm | quyền (a/b = hoặc) | thân yêu cầu | thân phản hồi | HTTP | truy vấn | cờ
@@ -231,6 +214,8 @@ OPS_TXT = """
 127|Nhật ký kiểm toán PH-08|Quản trị|audit-read|-|AuditEventPage|200|objectType:str,objectCode:str,actor:str,from:ts,to:ts,page,size|
 128|So sánh liên tenant ẩn danh|Quản trị|read|-|BenchmarkResult|200|periodCode:period,domainCode:dcode|
 129|Tìm bản ghi lỗi theo khóa bản ghi|Bản ghi lỗi|finding-read|FindingSearchRequest|FindingPage|200|page,size|
+130|Bật đo tăng dần cho đối tượng|Miền và đối tượng đo|run|EnableIncrementalRequest|Asset|200|-|
+131|Tắt đo tăng dần cho đối tượng|Miền và đối tượng đo|run|ReasonBody|Asset|200|-|
 """
 OPS = {}
 for ln in OPS_TXT.strip().splitlines():
@@ -250,8 +235,8 @@ TYPES = {
     "rscode": ({"type": "string", "pattern": "^[a-z][a-z0-9-]{2,62}$"}, "bq-cong-dan"),
     "ccode": ({"type": "string", "pattern": "^[a-z][a-z0-9-]{2,62}$"}, "kn-ho-tich"),
     "org": ({"type": "string", "pattern": "^[a-z][a-z0-9-]{1,62}$"}, "so-tu-phap"),
-    "icode": ({"type": "string", "pattern": "^DQI-[0-9]{4}-[0-9]{6}$"}, "DQI-2026-000123"),
-    "rpcode": ({"type": "string", "pattern": "^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$"}, "BC-2026-11"),
+    "icode": ({"type": "string", "pattern": "^DQ-[0-9]{4}-[0-9]{6}$"}, "DQ-2026-000142"),
+    "rpcode": ({"type": "string", "pattern": "^BC-DQ-[0-9]{4}-(0[1-9]|1[0-2]|NAM|AH[0-9]{2})-T[0-9]{2,3}(-R[0-9]+)?$"}, "BC-DQ-2026-11-T68"),
     "period": ({"type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"}, "2026-11"),
     "hex": ({"type": "string", "pattern": "^[0-9a-f]{16,64}$"}, "9f86d081884c7d659a2feaa0c55ad015"),
     "int": ({"type": "integer"}, 1), "num": ({"type": "number"}, 0.9), "bool": ({"type": "boolean"}, False),
@@ -349,13 +334,15 @@ obj("Asset", "Đối tượng đo (dq_asset).", ("assetCode!", "acode"), ("name!
     ("status!", "E:AssetStatus", "ACTIVE"), ("statusReason", "str", "Chờ nâng cấp nguồn"), ("ownerOrgCode!", "org"), ("mdmDomainCode", "str", "CITIZEN"), ("rdmCatalogCode", "str", "DM_DAN_TOC"),
     ("connectionId", "uuid"), ("objectName", "str", "public.ho_so_cong_dan"), ("flowCode", "str", "luong-dang-ky-khai-sinh"), ("keyColumns", "[fpath]", ["citizenId"]),
     ("defaultScanMode", "E:ScanMode", "FULL"), ("sampleRatio", "num", 0.1), ("highestDataClass", "E:DataClass", "SENSITIVE"), ("description", "str", "Đo chất lượng bản ghi vàng công dân"),
-    ("incrementalEnabled", "bool", False), ("lastScore", "score"), ("lastVerdict", "E:Verdict", "PASS"), *AUD)
+    ("incrementalEnabled", "bool", False), ("updatedAtField", "fpath", "updatedAt"), ("inlineEnabled", "bool", True), ("inlineMode", "E:InlineMode", "STRICT"),
+    ("onDependencyFailure", "E:OnDependencyFailure", "FAIL_OPEN"), ("timeoutMs", "int", 40), ("gateEnabled", "bool", False), ("lastScore", "score"), ("lastVerdict", "E:Verdict", "PASS"), *AUD)
 obj("AssetCreate", "Đăng ký đối tượng đo (FR-08-002, 003, 004).", ("assetCode!", "acode"), ("name!", "str", "Bản ghi vàng công dân", {"maxLength": 255}), ("domainCode!", "dcode"),
     ("assetType!", "E:AssetType", "MDM_DOMAIN"), ("ownerOrgCode", "org"), ("mdmDomainCode", "str", "CITIZEN"), ("rdmCatalogCode", "str", "DM_DAN_TOC"), ("connectionId", "uuid"),
     ("objectName", "str", "public.ho_so_cong_dan"), ("flowCode", "str", "luong-dang-ky-khai-sinh"), ("keyColumns", "[fpath]", ["citizenId"]), ("defaultScanMode", "E:ScanMode", "FULL"),
-    ("sampleRatio", "num", 0.1, {"minimum": 0.0001, "maximum": 1}), ("description", "str", "Đo chất lượng bản ghi vàng công dân", {"maxLength": 2000}))
+    ("sampleRatio", "num", 0.1, {"minimum": 0.0001, "maximum": 1}), ("updatedAtField", "fpath", "updatedAt"), ("description", "str", "Đo chất lượng bản ghi vàng công dân", {"maxLength": 2000}))
 obj("AssetUpdate", "Sửa đối tượng đo; gửi các trường cần đổi.", ("name", "str", "Bản ghi vàng công dân"), ("ownerOrgCode", "org"), ("keyColumns", "[fpath]", ["citizenId"]),
-    ("defaultScanMode", "E:ScanMode", "SAMPLE"), ("sampleRatio", "num", 0.1), ("incrementalEnabled", "bool", True), ("description", "str", "Cập nhật mô tả"))
+    ("defaultScanMode", "E:ScanMode", "SAMPLE"), ("sampleRatio", "num", 0.1), ("updatedAtField", "fpath", "updatedAt"), ("description", "str", "Cập nhật mô tả"))
+obj("EnableIncrementalRequest", "Bật đo tăng dần (FR-08-025); `updatedAtField` bắt buộc với `SOURCE_DATASET` (ERR-08-003), `FLOW_MESSAGE` bị ERR-08-050.", ("updatedAtField", "fpath", "updatedAt"), ("reason", "str", "Đo theo sự kiện bản ghi vàng đổi.", {"maxLength": 2000}))
 page("AssetPage", "Asset")
 obj("AssetField", "Trường của đối tượng đo, CDE (dq_asset_field).", ("fieldName!", "fpath"), ("label", "str", "Số định danh công dân"), ("fieldType!", "E:FieldType", "STRING"),
     ("cde!", "bool", True), ("dataClass!", "E:DataClass", "SENSITIVE"), ("classificationStatus!", "E:ClassificationStatus", "CONFIRMED"), ("valueMode!", "E:ValueMode", "HASH_ONLY"),
@@ -458,7 +445,7 @@ page("SchedulePage", "Schedule")
 obj("ScheduleCreate", "Tạo lịch (FR-08-023); ERR-08-029 khi cron sai hoặc quá dày, ERR-08-049 khi trùng.", ("scheduleCode!", "rscode", "lich-cong-dan-thang"), ("assetCode!", "acode"),
     ("cron!", "str", "0 0 2 1 * ?"), ("timezone", "str", "Asia/Ho_Chi_Minh"), ("scanMode!", "E:ScanMode", "FULL"))
 obj("ScheduleUpdate", "Sửa lịch.", ("cron", "str", "0 0 2 1 * ?"), ("timezone", "str", "Asia/Ho_Chi_Minh"), ("scanMode", "E:ScanMode", "FULL"))
-obj("ScanCreate", "Chạy đo theo yêu cầu hoặc năm (FR-08-024, 054).", ("assetCode!", "acode"), ("scanMode!", "E:ScanMode", "FULL"), ("scanTrigger", "E:ScanTrigger", "MANUAL"),
+obj("ScanCreate", "Chạy đo theo yêu cầu hoặc năm (FR-08-024, 054).", ("assetCode!", "acode"), ("scanMode!", "E:ScanMode", "FULL"), ("scanTrigger", "str", "MANUAL", {"enum": ["MANUAL", "ANNUAL"]}),
     ("sampleSize", "int", 10000, {"minimum": 100, "maximum": 1000000}), ("periodCode", "period"), ("note", "str", "Đo trước kỳ báo cáo", {"maxLength": 500}))
 obj("ScanJob", "Lần đo (dq_scan_job).", ("scanId!", "uuid"), ("assetCode!", "acode"), ("ruleSetVersionId", "uuid"), ("weightConfigId", "uuid"), ("scheduleId", "uuid"), ("scanTrigger!", "E:ScanTrigger", "MANUAL"),
     ("scanMode!", "E:ScanMode", "FULL"), ("status!", "E:ScanStatus", "RUNNING"), ("periodCode", "period"), ("requestedBy", "str", "nguyen.thi.lan"), ("verifyIssueCode", "icode"),
@@ -616,7 +603,7 @@ obj("SubscriptionCreate", "Đăng ký nhận báo cáo (FR-08-056).", ("reportTy
     ("recipientRef!", "str", "tran.van.nam"), ("format!", "E:ReportFileFormat", "PDF"))
 
 # --- quản trị
-obj("TenantSettings", "Tham số chất lượng của tenant (dq_tenant_setting, FR-08-058); 40 khóa ở FRS 8.2.", ("values!", "obj", {"08.scan.default-cron": "0 0 2 1 * ?", "08.inline.timeout-ms": 40}),
+obj("TenantSettings", "Tham số chất lượng của tenant (dq_tenant_setting, FR-08-058); 43 khóa ở FRS 8.2.", ("values!", "obj", {"08.scan.default-cron": "0 0 2 1 * ?", "08.inline.timeout-ms": 40}),
     ("ceilings", "obj", {"08.inline.timeout-ms": {"min": 10, "max": 50}}), ("version!", "int", 5), ("updatedAt", "ts"), ("updatedBy", "str", "le.van.tuan"))
 obj("TenantSettingsPut", "Đặt giá trị; chỉ gửi khóa cần đổi (ERR-08-042 khi ngoài miền).", ("values!", "obj", {"08.inline.timeout-ms": 45}))
 obj("RetentionRun", "Lần dọn dữ liệu lưu giữ (FR-08-059).", ("runId!", "uuid"), ("status!", "E:RetentionRunStatus", "SUCCEEDED"), ("startedAt!", "ts"), ("finishedAt", "ts"), ("droppedPartitions", "int", 1),
@@ -638,5 +625,5 @@ for n in sorted(ENUMS):
 # ---------------------------------------------------------------- tham số đường dẫn
 PATHP = {"domainCode": ("dcode", "HO_TICH"), "assetCode": ("acode", A), "fieldPath": ("fpath", "citizenId"), "connectionCode": ("ccode", "kn-ho-tich"), "runId": ("uuid", None),
          "ruleSetCode": ("rscode", "bq-cong-dan"), "version": ("int", 4), "ruleCode": ("rcode", "CD-ACC-001"), "configId": ("uuid", None), "scheduleId": ("uuid", None),
-         "scanId": ("uuid", None), "findingId": ("uuid", None), "exportId": ("uuid", None), "waiverId": ("uuid", None), "issueCode": ("icode", "DQI-2026-000123"),
-         "alertRuleCode": ("rscode", "cb-diem-duoi-ngung"), "alertId": ("uuid", None), "reportCode": ("rpcode", "BC-2026-11"), "subscriptionId": ("uuid", None)}
+         "scanId": ("uuid", None), "findingId": ("uuid", None), "exportId": ("uuid", None), "waiverId": ("uuid", None), "issueCode": ("icode", "DQ-2026-000142"),
+         "alertRuleCode": ("rscode", "cb-diem-duoi-ngung"), "alertId": ("uuid", None), "reportCode": ("rpcode", "BC-DQ-2026-11-T68"), "subscriptionId": ("uuid", None)}

@@ -51,7 +51,7 @@ CREATE FUNCTION pg_temp.h(text) RETURNS bytea LANGUAGE sql AS $$ SELECT sha256(c
 SET app.tenant_id = 'T90';
 CALL ph08_dq.p_seed_tenant('T90');
 CALL ph08_dq.p_seed_tenant('T90');
-SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_tenant_setting), 19, 'seed T90: 19 tham số, chạy lại không nhân bản');
+SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_tenant_setting), 43, 'seed T90: 43 tham số, chạy lại không nhân bản');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_retention_policy), 12, 'seed T90: 12 chính sách lưu giữ');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_weight_config WHERE status = 'ACTIVE'), 1, 'seed T90: trọng số mặc định ACTIVE');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_schedule), 1, 'seed T90: lịch đo tháng');
@@ -78,7 +78,7 @@ VALUES (pg_temp.id('v1'), 'T90', pg_temp.id('rs1'), 1, 'DRAFT', 'an', 'an');
 INSERT INTO ph08_dq.dq_rule (id, tenant_id, rule_set_version_id, rule_code, name, dimension, operator, severity, exec_mode, inline_mode, field_name, params, created_by, updated_by)
 VALUES (pg_temp.id('r1'), 'T90', pg_temp.id('v1'), 'cccd-not-null', 'CCCD không rỗng', 'COMPLETENESS', 'NOT_NULL', 'CRITICAL', 'BOTH', 'STRICT', 'nationalId', '{}', 'an', 'an'),
        (pg_temp.id('r2'), 'T90', pg_temp.id('v1'), 'gender-in-rdm', 'Giới tính theo danh mục', 'VALIDITY', 'IN_RDM', 'MAJOR', 'BOTH', 'ADVISORY', 'gender', '{"catalogCode":"GIOI-TINH"}', 'an', 'an');
-UPDATE ph08_dq.dq_rule_set_version SET status = 'PENDING_APPROVAL', submitted_by = 'an', submitted_at = now(), content_hash = pg_temp.h('v1'), rule_count = 2 WHERE id = pg_temp.id('v1');
+UPDATE ph08_dq.dq_rule_set_version SET status = 'PENDING_APPROVAL', submitted_by = 'an', submitted_at = now(), content_hash = pg_temp.h('v1'), rule_count = 2, last_dry_run_id = gen_random_uuid(), dry_run_content_hash = pg_temp.h('v1-effect'), dry_run_at = now() WHERE id = pg_temp.id('v1');
 UPDATE ph08_dq.dq_rule_set_version SET status = 'ACTIVE', decision = 'APPROVE', decided_by = 'binh', decided_at = now(), activated_at = now() WHERE id = pg_temp.id('v1');
 INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, status, period_code, requested_by, started_at, created_by, updated_by)
 VALUES (pg_temp.id('j1'), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'SCHEDULE', 'FULL', 'RUNNING', '2026-11', 'scheduler', now(), 'scheduler', 'scheduler');
@@ -107,7 +107,7 @@ VALUES (pg_temp.id('ar1'), 'T90', 'score-below-80', 'Điểm dưới 80', 'SCORE
 INSERT INTO ph08_dq.dq_alert (id, tenant_id, alert_rule_id, asset_id, severity, dedup_key, message, created_by, updated_by)
 VALUES (pg_temp.id('al1'), 'T90', pg_temp.id('ar1'), pg_temp.id('a1'), 'HIGH', 'score-below-80|mdm-citizen', 'Điểm mdm-citizen xuống 78', 'system', 'system');
 INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, created_by, updated_by)
-VALUES (pg_temp.id('rp1'), 'T90', 'DQR-2026-00001', 'PERIODIC', '2026-11', 'Báo cáo tháng 11/2026', 'an', 'an');
+VALUES (pg_temp.id('rp1'), 'T90', 'BC-DQ-2026-11-T90', 'PERIODIC', '2026-11', 'Báo cáo tháng 11/2026', 'an', 'an');
 INSERT INTO ph08_dq.dq_inline_stat (id, tenant_id, bucket_at, asset_id, caller_code, mode, check_count, pass_count, fail_count, error_count, p50_ms, p95_ms, max_ms, created_by, updated_by)
 VALUES (gen_random_uuid(), 'T90', date_trunc('minute', now()), pg_temp.id('a1'), 'flow-hotich', 'ADVISORY', 100, 95, 5, 0, 8, 31, 44, 'inline', 'inline');
 INSERT INTO ph08_dq.inbox_event (tenant_id, consumer, event_id, source_topic) VALUES ('T90', 'MdmGoldenChanged', gen_random_uuid(), 't90.mdm.golden.updated.v1');
@@ -122,7 +122,7 @@ SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_rule_result), 0, 'T91 không 
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_inline_stat), 0, 'T91 không thấy thống kê trực tuyến của T90');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_issue) + (SELECT count(*) FROM ph08_dq.dq_report) + (SELECT count(*) FROM ph08_dq.dq_alert) + (SELECT count(*) FROM ph08_dq.inbox_event), 0, 'T91 không thấy phiếu, báo cáo, cảnh báo, inbox của T90');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_rule_set_version) + (SELECT count(*) FROM ph08_dq.dq_rule) + (SELECT count(*) FROM ph08_dq.dq_score_snapshot), 0, 'T91 không thấy phiên bản quy tắc, quy tắc, snapshot của T90');
-SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_tenant_setting), 19, 'T91 chỉ thấy 19 tham số của mình');
+SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_tenant_setting), 43, 'T91 chỉ thấy 43 tham số của mình');
 UPDATE ph08_dq.dq_asset SET name = 'tấn công' WHERE id = pg_temp.id('a1');
 SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_asset), 0, 'T91 UPDATE đối tượng T90 không có tác dụng (0 dòng)');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_domain (id, tenant_id, domain_code, name, owner_org_code, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'LAND', 'x', 'SO-X', 'zz', 'zz')$$, '42501', 'T91 không ghi được dòng mang tenant T90');
@@ -186,7 +186,8 @@ SELECT pg_temp.expect($$UPDATE ph08_dq.dq_rule SET severity = 'MINOR' WHERE id =
 INSERT INTO ph08_dq.dq_rule (id, tenant_id, rule_set_version_id, rule_code, name, dimension, operator, exec_mode, inline_mode, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('x1'), 'r-ok', 'ok', 'UNIQUENESS', 'UNIQUE_IN_ASSET', 'BOTH', 'ADVISORY', 'an', 'an');
 
 -- Phiên bản: bốn mắt, ACTIVE, bất biến, một ACTIVE mỗi bộ
-UPDATE ph08_dq.dq_rule_set_version SET status = 'PENDING_APPROVAL', submitted_by = 'an', submitted_at = now(), content_hash = pg_temp.h('x1'), rule_count = 1 WHERE id = pg_temp.id('x1');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_rule_set_version SET status = 'PENDING_APPROVAL', submitted_by = 'an', submitted_at = now(), content_hash = pg_temp.h('x1'), rule_count = 1 WHERE id = pg_temp.id('x1')$$, '23514', 'gửi duyệt phải có dấu chạy thử (dry_run_content_hash, dry_run_at)');
+UPDATE ph08_dq.dq_rule_set_version SET status = 'PENDING_APPROVAL', submitted_by = 'an', submitted_at = now(), content_hash = pg_temp.h('x1'), rule_count = 1, dry_run_content_hash = pg_temp.h('x1-effect'), dry_run_at = now() WHERE id = pg_temp.id('x1');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_rule_set_version SET status = 'ACTIVE', decision = 'APPROVE', decided_by = 'an', activated_at = now() WHERE id = pg_temp.id('x1')$$, '23514', 'bốn mắt: người duyệt phải khác người gửi duyệt');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_rule_set_version SET status = 'ACTIVE', decision = 'APPROVE', decided_by = 'binh' WHERE id = pg_temp.id('x1')$$, '23514', 'ACTIVE phải có activated_at');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_rule_set_version SET status = 'ACTIVE', decision = 'APPROVE', decided_by = 'binh', activated_at = now() WHERE id = pg_temp.id('x1')$$, '23505', 'mỗi bộ quy tắc chỉ một phiên bản ACTIVE');
@@ -213,7 +214,7 @@ SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, status, period_code, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'MANUAL', 'FULL', 'CANCELLED', '2026-11', 'a', 'a', 'a')$$, '23514', 'hủy lần đo phải có lý do và thời điểm kết thúc');
 INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, status, period_code, requested_by, started_at, sample_size, created_by, updated_by) VALUES (pg_temp.id('j2'), 'T90', pg_temp.id('a2'), pg_temp.id('v1'), 'MANUAL', 'SAMPLE', 'RUNNING', '2026-11', 'an', now(), 1000, 'an', 'an');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, status, period_code, requested_by, started_at, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), pg_temp.id('v1'), 'MANUAL', 'FULL', 'RUNNING', '2026-11', 'an', now(), 'an', 'an')$$, '23505', 'mỗi đối tượng chỉ một lần đo RUNNING');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, period_code, requested_by, idempotency_key, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', 'k1', 'an', 'an'), (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', 'k1', 'an', 'an')$$, '23505', 'Idempotency-Key trùng không tạo hai lần đo');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, period_code, requested_by, idempotency_key, idempotency_hash, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', 'k1', pg_temp.h('b1'), 'an', 'an'), (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', 'k1', pg_temp.h('b1'), 'an', 'an')$$, '23505', 'Idempotency-Key trùng không tạo hai lần đo');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_scan_job SET period_code = '2026-10' WHERE id = pg_temp.id('j1')$$, '55000', 'kỳ đo bất biến');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_scan_task SET shard_no = 9 WHERE scan_job_id = pg_temp.id('j1')$$, '23514', 'shard_no phải nhỏ hơn shard_count');
 
@@ -264,7 +265,8 @@ SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_finding WHERE tenant_id = 'T9
 SELECT pg_temp.eq((SELECT version FROM ph08_dq.dq_finding WHERE id = pg_temp.id('fi1')), 1, 'version tăng khi cập nhật bản ghi lỗi');
 
 -- ---------- 6. Ngoại lệ, phiếu khắc phục ----------
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, reason, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), 'đủ dài nhưng thiếu mục tiêu quy tắc hoặc dấu vân tay', 'an', 'an', 'an')$$, '23514', 'ngoại lệ phải nhắm tới quy tắc hoặc dấu vân tay');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, rule_id, scope, reason, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('r2'), 'RULE_FILTER', 'đủ dài nhưng phạm vi RULE_FILTER thiếu điều kiện lọc', 'an', 'an', 'an')$$, '23514', 'ngoại lệ RULE_FILTER phải có quy tắc và filter');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, rule_id, scope, reason, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('r2'), 'ALL', 'đủ dài nhưng phạm vi không thuộc enum waiver.scope', 'an', 'an', 'an')$$, '23514', 'enum waiver.scope sai');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, rule_id, reason, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('r2'), 'ngắn', 'an', 'an', 'an')$$, '23514', 'lý do ngoại lệ ≥ 20 ký tự');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, rule_id, reason, requested_by, valid_from, valid_to, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('r2'), 'Nguồn đang chờ nâng cấp, chấp nhận tạm thời', 'an', current_date, current_date + 400, 'an', 'an')$$, '23514', 'ngoại lệ có hạn không quá 366 ngày');
 INSERT INTO ph08_dq.dq_waiver (id, tenant_id, asset_id, rule_id, reason, requested_by, created_by, updated_by) VALUES (pg_temp.id('w1'), 'T90', pg_temp.id('a1'), pg_temp.id('r2'), 'Nguồn đang chờ nâng cấp, chấp nhận tạm thời', 'an', 'an', 'an');
@@ -281,7 +283,7 @@ UPDATE ph08_dq.dq_issue SET status = 'ASSIGNED', assigned_at = now(), assignee =
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_issue SET owner_org_code = 'SO-KHAC' WHERE id = pg_temp.id('is1')$$, '55000', 'tổ chức chủ quản của phiếu bất biến (chuyển phiếu tạo phiếu mới)');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_issue_activity SET comment = 'sửa' WHERE tenant_id = 'T90'$$, '42501', 'ứng dụng không UPDATE hoạt động phiếu (quyền)');
 SELECT pg_temp.expect($$DELETE FROM ph08_dq.dq_issue_activity WHERE tenant_id = 'T90'$$, '42501', 'ứng dụng không DELETE hoạt động phiếu (quyền)');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_issue_activity (id, tenant_id, issue_id, activity_type, actor, from_status, to_status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('is1'), 'STATUS_CHANGED', 'an', 'OPEN', 'OPEN', 'an', 'an')$$, '23514', 'đổi trạng thái phải khác trạng thái cũ');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_issue_activity (id, tenant_id, issue_id, activity_type, actor, from_status, to_status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('is1'), 'STATUS_CHANGE', 'an', 'OPEN', 'OPEN', 'an', 'an')$$, '23514', 'đổi trạng thái phải khác trạng thái cũ');
 SELECT pg_temp.expect($$DELETE FROM ph08_dq.dq_issue WHERE tenant_id = 'T90'$$, '42501', 'phiếu khắc phục không bị xóa (quyền)');
 SELECT pg_temp.expect($$DELETE FROM ph08_dq.dq_asset WHERE tenant_id = 'T90'$$, '42501', 'đối tượng đo không bị xóa (quyền)');
 
@@ -291,9 +293,9 @@ SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_alert (id, tenant_id, alert_rule_
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_alert SET status = 'SILENCED', silenced_until = now() + interval '1 day', silence_reason = 'ngắn' WHERE id = pg_temp.id('al1')$$, '23514', 'tắt tiếng cảnh báo phải có lý do ≥ 20 ký tự');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_alert SET status = 'ACKNOWLEDGED' WHERE id = pg_temp.id('al1')$$, '23514', 'xác nhận cảnh báo phải có người và thời điểm');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_alert SET status = 'PAUSED' WHERE id = pg_temp.id('al1')$$, '23514', 'enum alert.status sai');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, incomplete_snapshot_count, snapshot_count, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'DQR-2026-00002', 'ANNUAL', '2026', 'Báo cáo năm', 2, 10, 'a', 'a')$$, '23514', 'báo cáo chính thức hằng năm không dùng snapshot thiếu chiều');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'DQR-2026-00003', 'ANNUAL', '2026-11', 'Báo cáo năm', 'a', 'a')$$, '23514', 'báo cáo ANNUAL có kỳ là năm');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'DQR-2026-00004', 'WEEKLY', '2026-11', 'x', 'a', 'a')$$, '23514', 'enum report_type sai');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, incomplete_snapshot_count, snapshot_count, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'BC-DQ-2026-NAM-T90', 'ANNUAL', '2026', 'Báo cáo năm', 2, 10, 'a', 'a')$$, '23514', 'báo cáo chính thức hằng năm không dùng snapshot thiếu chiều');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'BC-DQ-2026-AH03-T90', 'ANNUAL', '2026-11', 'Báo cáo năm', 'a', 'a')$$, '23514', 'báo cáo ANNUAL có kỳ là năm');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_report (id, tenant_id, report_code, report_type, period_code, title, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'BC-DQ-2026-AH04-T90', 'WEEKLY', '2026-11', 'x', 'a', 'a')$$, '23514', 'enum report_type sai');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_report SET status = 'PUBLISHED', published_by = 'an', published_at = now() WHERE id = pg_temp.id('rp1')$$, '23514', 'công bố phải có người duyệt, mã băm, tệp PDF');
 UPDATE ph08_dq.dq_report SET status = 'IN_REVIEW', submitted_by = 'an', submitted_at = now(), snapshot_count = 1 WHERE id = pg_temp.id('rp1');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_report SET status = 'PUBLISHED', reviewed_by = 'an', published_by = 'binh', published_at = now(), content_sha256 = pg_temp.h('rp'), pdf_object_key = 'dq-reports/T90/2026-11.pdf' WHERE id = pg_temp.id('rp1')$$, '23514', 'bốn mắt: người duyệt báo cáo khác người soạn');
@@ -309,7 +311,7 @@ SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_export_request (id, tenant_id, re
 
 -- ---------- 8. Tham số, lưu giữ, outbox, inbox ----------
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '08.khong.co', '1', 'a', 'a')$$, '23514', 'khóa tham số ngoài danh sách 08.*');
-SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '08.sla.major-days', '20', 'a', 'a')$$, '23505', 'mỗi khóa tham số một dòng trong tenant');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', '08.waiver.max-days', '20', 'a', 'a')$$, '23505', 'mỗi khóa tham số một dòng trong tenant');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_retention_policy SET retention_days = 365 WHERE object_type = 'dq_report'$$, '23514', 'báo cáo giữ tối thiểu 1095 ngày');
 SELECT pg_temp.expect($$UPDATE ph08_dq.dq_retention_policy SET action = 'WIPE' WHERE object_type = 'dq_alert'$$, '23514', 'hành động lưu giữ ngoài danh sách');
 INSERT INTO ph08_dq.outbox_event (tenant_id, event_id, topic, aggregate_type, aggregate_id, payload, trace_id) VALUES ('T90', gen_random_uuid(), 't90.dq.scan.completed.v1', 'scan', pg_temp.id('j1'), '{"scanId":"x","score":91.5}', md5('t')::char(32));
@@ -320,6 +322,67 @@ SELECT pg_temp.expect($$INSERT INTO ph08_dq.outbox_event (tenant_id, event_id, t
 SELECT pg_temp.expect($$UPDATE ph08_dq.outbox_event SET topic = 't90.dq.scan.failed.v1'$$, '42501', 'ứng dụng không UPDATE outbox (quyền)');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.inbox_event (tenant_id, consumer, event_id, source_topic) VALUES ('T90', 'MdmGoldenChanged', (SELECT event_id FROM ph08_dq.inbox_event LIMIT 1), 't90.mdm.golden.updated.v1')$$, '23505', 'inbox khử trùng theo (consumer, event_id)');
 SELECT pg_temp.expect($$INSERT INTO ph08_dq.inbox_event (tenant_id, consumer, event_id, source_topic) VALUES ('T90', 'MdmGoldenChanged', gen_random_uuid(), 't91.mdm.golden.updated.v1')$$, '23514', 'inbox: topic nguồn phải đúng tiền tố tenant');
+
+-- ---------- 8b. Bổ sung bản 0.2: cấu hình đối tượng, tác vụ, tăng dần, ngoại lệ, xuất, lưu giữ, so sánh liên tenant ----------
+INSERT INTO ids VALUES ('j3', gen_random_uuid());
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_domain (id, tenant_id, domain_code, name, owner_org_code, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'OFF1', 'x', 'x', 'DRAFT', 'a', 'a')$$, '23514', 'domain_status chỉ ACTIVE, INACTIVE');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_domain (id, tenant_id, domain_code, name, owner_org_code, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'OFF2', 'x', 'x', 'INACTIVE', 'a', 'a')$$, '23514', 'miền INACTIVE phải có lý do ≥ 20 ký tự');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_asset SET inline_enabled = true WHERE id = pg_temp.id('a1')$$, '23514', 'bật trực tuyến phải có inline_mode');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_asset SET inline_enabled = true, inline_mode = 'ADVISORY', gate_enabled = true WHERE id = pg_temp.id('a2')$$, '23514', 'cổng chất lượng chỉ cho MDM_DOMAIN');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_asset SET incremental_enabled = true WHERE id = pg_temp.id('a2')$$, '23514', 'đo tăng dần SOURCE_DATASET cần updated_at_field');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_asset SET inline_timeout_ms = 5 WHERE id = pg_temp.id('a1')$$, '23514', 'ngân sách trực tuyến 10 đến 50 ms');
+UPDATE ph08_dq.dq_asset SET inline_enabled = true, inline_mode = 'STRICT', on_dependency_failure = 'FAIL_CLOSED', gate_enabled = true, incremental_enabled = true WHERE id = pg_temp.id('a1');
+UPDATE ph08_dq.dq_asset SET incremental_enabled = true, updated_at_field = 'updated_at' WHERE id = pg_temp.id('a2');
+SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_asset WHERE incremental_enabled), 2, 'bật đo tăng dần cho MDM_DOMAIN và SOURCE_DATASET có updated_at_field');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_weight_config (id, tenant_id, config_code, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'W-APP', 'APPROVED', 'a', 'a')$$, '23514', 'cấu hình trọng số không có trạng thái APPROVED');
+INSERT INTO ph08_dq.dq_rule_set_version (id, tenant_id, rule_set_id, version_no, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('rs1'), 70, 'DRAFT', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_rule_set_version (id, tenant_id, rule_set_id, version_no, status, decision, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('rs1'), 71, 'APPROVED', 'APPROVE', 'an', 'an')$$, '23514', 'APPROVED phải có dấu chạy thử và effective_from');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_rule (id, tenant_id, rule_set_version_id, rule_code, name, dimension, operator, source, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', (SELECT id FROM ph08_dq.dq_rule_set_version WHERE version_no = 70), 'r-src1', 'x', 'COMPLETENESS', 'NOT_NULL', 'AUTO', 'a', 'a')$$, '23514', 'enum rule.source sai');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_rule (id, tenant_id, rule_set_version_id, rule_code, name, dimension, operator, source, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', (SELECT id FROM ph08_dq.dq_rule_set_version WHERE version_no = 70), 'r-src2', 'x', 'COMPLETENESS', 'NOT_NULL', 'TEMPLATE', 'a', 'a')$$, '23514', 'quy tắc nguồn TEMPLATE phải có template_code');
+INSERT INTO ph08_dq.dq_rule (id, tenant_id, rule_set_version_id, rule_code, name, dimension, operator, source, template_code, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', (SELECT id FROM ph08_dq.dq_rule_set_version WHERE version_no = 70), 'r-src3', 'từ mẫu', 'COMPLETENESS', 'NOT_NULL', 'TEMPLATE', 'NOT-NULL-CDE', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_task (id, tenant_id, scan_job_id, shard_no, shard_count, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('j1'), 1, 4, 'RUNNING', 's', 's')$$, '23514', 'tác vụ RUNNING phải có worker_id và heartbeat_at');
+INSERT INTO ph08_dq.dq_scan_task (id, tenant_id, scan_job_id, shard_no, shard_count, status, worker_id, heartbeat_at, not_before, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('j1'), 1, 4, 'RUNNING', 'worker-1', now(), now() + interval '5 minutes', 's', 's');
+SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.dq_scan_task WHERE status = 'RUNNING' AND heartbeat_at IS NOT NULL), 1, 'tác vụ RUNNING có nhịp heartbeat và not_before');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, period_code, requested_by, flags, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', '{BAD}', 'an', 'an')$$, '23514', 'cờ lần đo ngoài bốn giá trị');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, period_code, requested_by, idempotency_key, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), pg_temp.id('v1'), 'MANUAL', 'FULL', '2026-11', 'an', 'k9', 'an', 'an')$$, '23514', 'Idempotency-Key phải đi kèm idempotency_hash (ERR-08-055)');
+INSERT INTO ph08_dq.dq_scan_job (id, tenant_id, asset_id, rule_set_version_id, scan_trigger, scan_mode, status, period_code, requested_by, finished_at, flags, created_by, updated_by) VALUES (pg_temp.id('j3'), 'T90', pg_temp.id('a2'), pg_temp.id('v1'), 'SCHEDULE', 'FULL', 'SUCCEEDED', '2026-10', 'scheduler', now(), '{TRUNCATED,INCREMENTAL}', 'scheduler', 'scheduler');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_finding SET status = 'RESOLVED', resolved_at = now() WHERE id = pg_temp.id('fi1')$$, '23514', 'lỗi RESOLVED phải có resolution_reason');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_finding SET resolution_reason = 'GONE' WHERE id = pg_temp.id('fi1')$$, '23514', 'enum finding.resolution_reason sai');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_issue SET status = 'REJECTED', reject_reason = 'đủ dài để vượt kiểm tra hai mươi ký tự' WHERE id = pg_temp.id('is1')$$, '23514', 'từ chối phiếu phải có reject_type');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_issue SET status = 'REJECTED', reject_reason = 'đủ dài để vượt kiểm tra hai mươi ký tự', reject_type = 'OTHER' WHERE id = pg_temp.id('is1')$$, '23514', 'enum issue.reject_type sai');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_alert (id, tenant_id, alert_rule_id, asset_id, severity, dedup_key, message, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('ar1'), pg_temp.id('a1'), 'HIGH', 'khac-khoa-khu-trung', 'cùng quy tắc, cùng đối tượng, chưa RESOLVED', 'a', 'a')$$, '23505', 'mỗi (quy tắc cảnh báo, đối tượng) một cảnh báo chưa RESOLVED');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_export_request (id, tenant_id, kind, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'REPORT', 'an', 'an', 'an')$$, '23514', 'xuất kind REPORT phải có report_code');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_export_request (id, tenant_id, kind, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'FINDINGS', 'PDF', 'an', 'an', 'an')$$, '23514', 'PDF chỉ cho xuất báo cáo');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_export_request (id, tenant_id, kind, report_code, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'REPORT', 'BC-DQ-2026-99-T90', 'PDF', 'an', 'an', 'an')$$, '23503', 'mã báo cáo của yêu cầu xuất phải tồn tại');
+INSERT INTO ph08_dq.dq_export_request (id, tenant_id, kind, report_code, format, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'REPORT', 'BC-DQ-2026-11-T90', 'PDF', 'an', 'an', 'an');
+INSERT INTO ph08_dq.dq_waiver_item (id, tenant_id, waiver_id, fingerprint, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('w1'), pg_temp.h('fp1'), 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver_item (id, tenant_id, waiver_id, fingerprint, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('w1'), pg_temp.h('fp1'), 'an', 'an')$$, '23505', 'mỗi dấu vân tay một dòng trong một ngoại lệ');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_waiver_item (id, tenant_id, waiver_id, fingerprint, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('w1'), '\x00', 'an', 'an')$$, '23514', 'dấu vân tay mục ngoại lệ đủ 32 byte');
+SELECT pg_temp.expect($$UPDATE ph08_dq.dq_waiver_item SET fingerprint = pg_temp.h('khac')$$, '55000', 'mục ngoại lệ bất biến');
+INSERT INTO ph08_dq.dq_incremental_buffer (id, tenant_id, asset_id, window_start, window_end, keys, event_count, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), now(), now() + interval '15 minutes', '{g1,g2,g3}', 3, 'dq', 'dq');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_incremental_buffer (id, tenant_id, asset_id, window_start, window_end, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), now(), now() + interval '15 minutes', 'dq', 'dq')$$, '23505', 'mỗi đối tượng đúng một bộ đệm COLLECTING');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_incremental_buffer (id, tenant_id, asset_id, window_start, window_end, status, keys, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), now(), now() + interval '15 minutes', 'OVERFLOW', ARRAY(SELECT g::text FROM generate_series(1, 100001) g), 'dq', 'dq')$$, '23514', 'bộ đệm tối đa 100.000 khóa');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_incremental_buffer (id, tenant_id, asset_id, window_start, window_end, status, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), now(), now() + interval '15 minutes', 'SCHEDULED', 'dq', 'dq')$$, '23514', 'bộ đệm SCHEDULED phải gắn lần đo');
+INSERT INTO ph08_dq.dq_score_current (id, tenant_id, asset_id, full_snapshot_id, current_score, verdict, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('sn1'), 91.5, 'PASS', 'dq', 'dq');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_score_current (id, tenant_id, asset_id, full_snapshot_id, current_score, verdict, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a1'), pg_temp.id('sn1'), 90, 'PASS', 'dq', 'dq')$$, '23505', 'một dòng điểm hiện hành mỗi đối tượng');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_score_current (id, tenant_id, asset_id, full_snapshot_id, current_score, verdict, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', pg_temp.id('a2'), pg_temp.id('sn1'), 120, 'PASS', 'dq', 'dq')$$, '23514', 'điểm hiện hành trong 0 đến 100');
+INSERT INTO ph08_dq.dq_retention_run (id, tenant_id, object_type, action, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'dq_finding', 'DROP_PARTITION', 'an', 'an', 'an');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_retention_run (id, tenant_id, object_type, action, status, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'dq_finding', 'DROP_PARTITION', 'SUCCEEDED', 'an', 'an', 'an')$$, '23514', 'lần dọn đã xong phải có finished_at');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_retention_run (id, tenant_id, object_type, action, requested_by, created_by, updated_by) VALUES (gen_random_uuid(), 'T90', 'dq_unknown', 'DELETE', 'an', 'an', 'an')$$, '23514', 'loại dữ liệu dọn phải thuộc danh sách lưu giữ');
+INSERT INTO ph08_dq.dq_score_snapshot (id, tenant_id, scan_job_id, asset_id, domain_code, owner_org_code, period_code, scan_mode, score, verdict, rule_set_version_id, official, flags, created_by, updated_by)
+VALUES (gen_random_uuid(), 'T90', pg_temp.id('j3'), pg_temp.id('a2'), 'CITIZEN', 'SO-TU-PHAP', '2026-10', 'FULL', 88.00, 'PASS', pg_temp.id('v1'), true, '{TRUNCATED}', 'worker', 'worker');
+INSERT INTO ph08_dq.dq_score_dimension (id, tenant_id, snapshot_id, dimension, status, score, weight, created_by, updated_by)
+SELECT gen_random_uuid(), 'T90', id, 'VALIDITY', 'MEASURED', 88.0, 0.20, 'worker', 'worker' FROM ph08_dq.dq_score_snapshot WHERE scan_job_id = pg_temp.id('j3');
+RESET ROLE;
+SET ROLE ph08_benchmark;
+SET app.tenant_id = 'T91';
+SELECT pg_temp.eq((SELECT count(*) FROM ph08_dq.v_benchmark_dimension WHERE tenant_id = 'T90'), 1, 'vai so sánh liên tenant đọc điểm chiều chính thức của tenant khác (ngoại lệ RLS duy nhất)');
+SELECT pg_temp.expect($$SELECT count(*) FROM ph08_dq.dq_finding$$, '42501', 'vai so sánh không đọc bản ghi lỗi');
+SELECT pg_temp.expect($$SELECT count(*) FROM ph08_dq.dq_asset$$, '42501', 'vai so sánh không đọc đối tượng đo');
+SELECT pg_temp.expect($$INSERT INTO ph08_dq.dq_domain (id, tenant_id, domain_code, name, owner_org_code, created_by, updated_by) VALUES (gen_random_uuid(), 'T91', 'BM', 'x', 'x', 'a', 'a')$$, '42501', 'vai so sánh không ghi');
+RESET ROLE;
+SET ROLE dh_data_app;
+SET app.tenant_id = 'T90';
 
 -- ---------- 9. Quyền vai trò ----------
 SELECT pg_temp.expect($$CREATE TABLE ph08_dq.x (a int)$$, '42501', 'ứng dụng không tạo được bảng trong schema');

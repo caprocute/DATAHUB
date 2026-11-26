@@ -785,7 +785,7 @@ components:
           time: '2026-11-26T09:15:00+07:00'
           datacontenttype: application/json
           data:
-            issueCode: DQI-2026-000123
+            issueCode: DQ-2026-000142
             assetCode: mdm-cong-dan
             severity: CRITICAL
             ownerOrgCode: so-tu-phap
@@ -814,7 +814,7 @@ components:
           time: '2026-11-26T09:15:00+07:00'
           datacontenttype: application/json
           data:
-            issueCode: DQI-2026-000123
+            issueCode: DQ-2026-000142
             assetCode: mdm-cong-dan
             kind: STATUS_CHANGE
             fromStatus: ASSIGNED
@@ -843,7 +843,7 @@ components:
           time: '2026-11-26T09:15:00+07:00'
           datacontenttype: application/json
           data:
-            issueCode: DQI-2026-000123
+            issueCode: DQ-2026-000142
             assetCode: mdm-cong-dan
             verifyScanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
             scoreBefore: 71.2
@@ -897,7 +897,7 @@ components:
           time: '2026-11-26T09:15:00+07:00'
           datacontenttype: application/json
           data:
-            reportCode: BC-2026-11
+            reportCode: BC-DQ-2026-11-T68
             reportType: PERIODIC
             periodCode: '2026-11'
             status: PUBLISHED
@@ -1416,6 +1416,19 @@ components:
           type: string
         incrementalEnabled:
           type: boolean
+        updatedAtField:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        inlineEnabled:
+          type: boolean
+        inlineMode:
+          $ref: '#/components/schemas/InlineMode'
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+        timeoutMs:
+          type: integer
+        gateEnabled:
+          type: boolean
         lastScore:
           type: number
           minimum: 0
@@ -1482,6 +1495,9 @@ components:
           type: number
           minimum: 0.0001
           maximum: 1
+        updatedAtField:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
         description:
           type: string
           maxLength: 2000
@@ -1508,10 +1524,21 @@ components:
           $ref: '#/components/schemas/ScanMode'
         sampleRatio:
           type: number
-        incrementalEnabled:
-          type: boolean
+        updatedAtField:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
         description:
           type: string
+    EnableIncrementalRequest:
+      type: object
+      description: Bật đo tăng dần (FR-08-025); `updatedAtField` bắt buộc với `SOURCE_DATASET` (ERR-08-003), `FLOW_MESSAGE` bị ERR-08-050.
+      properties:
+        updatedAtField:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        reason:
+          type: string
+          maxLength: 2000
     AssetPage:
       type: object
       description: Trang kết quả.
@@ -2907,7 +2934,10 @@ components:
         scanMode:
           $ref: '#/components/schemas/ScanMode'
         scanTrigger:
-          $ref: '#/components/schemas/ScanTrigger'
+          type: string
+          enum:
+          - MANUAL
+          - ANNUAL
         sampleSize:
           type: integer
           minimum: 100
@@ -2953,7 +2983,7 @@ components:
           type: string
         verifyIssueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         sourceEventId:
           type: string
           format: uuid
@@ -3627,7 +3657,7 @@ components:
           $ref: '#/components/schemas/ResolutionReason'
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         waiverId:
           type: string
           format: uuid
@@ -3742,7 +3772,7 @@ components:
           type: integer
         openIssueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         firstSeenAt:
           type: string
           format: date-time
@@ -3806,7 +3836,7 @@ components:
           pattern: ^[a-z][a-z0-9-]{2,62}$
         reportCode:
           type: string
-          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+          pattern: ^BC-DQ-[0-9]{4}-(0[1-9]|1[0-2]|NAM|AH[0-9]{2})-T[0-9]{2,3}(-R[0-9]+)?$
         filter:
           type: object
         format:
@@ -3992,7 +4022,7 @@ components:
       properties:
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         assetCode:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
@@ -4286,7 +4316,7 @@ components:
       properties:
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         stewardItemRef:
           type: string
           format: uuid
@@ -4795,7 +4825,7 @@ components:
       properties:
         reportCode:
           type: string
-          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+          pattern: ^BC-DQ-[0-9]{4}-(0[1-9]|1[0-2]|NAM|AH[0-9]{2})-T[0-9]{2,3}(-R[0-9]+)?$
         reportType:
           $ref: '#/components/schemas/ReportType'
         periodCode:
@@ -5050,7 +5080,7 @@ components:
       - format
     TenantSettings:
       type: object
-      description: Tham số chất lượng của tenant (dq_tenant_setting, FR-08-058); 40 khóa ở FRS 8.2.
+      description: Tham số chất lượng của tenant (dq_tenant_setting, FR-08-058); 43 khóa ở FRS 8.2.
       properties:
         values:
           type: object
@@ -5260,6 +5290,9 @@ components:
       - ASSIGNMENT
       - ESCALATION
       - VERIFY_RESULT
+      - CREATED
+      - TRANSFER
+      - STEWARD_FORWARD
     AlertCondition:
       type: string
       enum:
@@ -5671,6 +5704,7 @@ components:
       - PENDING_APPROVAL
       - ACTIVE
       - SUPERSEDED
+      - RETIRED
     RuleSetActivatedData:
       type: object
       description: Phiên bản bộ quy tắc `ACTIVE` (FR-08-018); `dq-inline` làm mới bộ đệm.
@@ -5852,7 +5886,7 @@ components:
       properties:
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         assetCode:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
@@ -5879,7 +5913,7 @@ components:
       properties:
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         assetCode:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
@@ -5905,7 +5939,7 @@ components:
       properties:
         issueCode:
           type: string
-          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+          pattern: ^DQ-[0-9]{4}-[0-9]{6}$
         assetCode:
           type: string
           pattern: ^[a-z][a-z0-9-]{2,62}$
@@ -5953,7 +5987,7 @@ components:
       properties:
         reportCode:
           type: string
-          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+          pattern: ^BC-DQ-[0-9]{4}-(0[1-9]|1[0-2]|NAM|AH[0-9]{2})-T[0-9]{2,3}(-R[0-9]+)?$
         reportType:
           $ref: '#/components/schemas/ReportType'
         periodCode:

@@ -10,7 +10,7 @@ BEGIN
   PERFORM set_config('app.tenant_id', p_tenant, true);
   INSERT INTO ph08_dq.dq_tenant_setting (id, tenant_id, setting_key, value, created_by, updated_by)
   SELECT md5('ph08-setting:' || p_tenant || ':' || s.k)::uuid, p_tenant, s.k, s.v::jsonb, 'system:seed', 'system:seed'
-  FROM (VALUES ('08.scan.default-cron', '"0 0 2 1 * *"'), ('08.scan.sample-ratio', '0.1'), ('08.scan.shard-rows', '1000000'), ('08.scan.timeout-minutes', '120'), ('08.finding.retention-months', '13'), ('08.finding.max-per-rule', '10000'), ('08.inline.timeout-ms', '50'), ('08.inline.cache-ttl-seconds', '60'), ('08.inline.default-mode', '"ADVISORY"'), ('08.inline.on-failure', '"FAIL_OPEN"'), ('08.sla.critical-days', '5'), ('08.sla.major-days', '15'), ('08.sla.minor-days', '30'), ('08.waiver.max-days', '180'), ('08.export.max-rows', '100000'), ('08.score.pass-min', '90'), ('08.score.warn-min', '75'), ('08.alert.cooldown-minutes', '60'), ('08.score.history-months', '24')) AS s(k, v)
+  FROM (VALUES ('08.scan.default-cron', '"0 0 2 1 * ?"'), ('08.scan.timezone', '"Asia/Ho_Chi_Minh"'), ('08.scan.window', '"22:00-05:00"'), ('08.scan.min-interval-hours', '{"FULL":24,"INCREMENTAL":1}'), ('08.scan.max-duration-hours', '6'), ('08.scan.queue-timeout-hours', '24'), ('08.scan.duplicate-policy', '"QUEUE"'), ('08.scan.manual-per-hour', '10'), ('08.scan.max-concurrent-per-connection', '2'), ('08.scan.heartbeat-timeout-seconds', '180'), ('08.scan.task-max-attempts', '3'), ('08.scan.min-coverage', '95'), ('08.scan.task-size', '200000'), ('08.incremental.batch-window-minutes', '15'), ('08.profile.on-activate', 'true'), ('08.profile.max-columns', '200'), ('08.dryrun.max-rows', '10000'), ('08.rule.sql-predicate-enabled', 'false'), ('08.rdm.snapshot-max-items', '200000'), ('08.score.dimension-method', '"POOLED"'), ('08.trend.stable-band', '1.0'), ('08.trend.degraded-alert', '5.0'), ('08.finding.max-per-scan', '1000000'), ('08.finding.max-per-rule-task', '50000'), ('08.finding.retention-months', '13'), ('08.snapshot.retention-years', '5'), ('08.report.official-retention-years', '10'), ('08.report.auto-draft', 'true'), ('08.annual.snapshot-method', '"FULL_DECEMBER"'), ('08.issue.sla-days', '{"CRITICAL":5,"MAJOR":15,"MINOR":30}'), ('08.issue.auto-open-critical', '100'), ('08.issue.escalate-after-overdue-days', '5'), ('08.verify.wait-mdm-minutes', '60'), ('08.verify.wait-source-minutes', '0'), ('08.waiver.max-days', '180'), ('08.inline.timeout-ms', '40'), ('08.inline.default-mode', '"ADVISORY"'), ('08.inline.on-dependency-failure', '"FAIL_OPEN"'), ('08.inline.persist-findings', 'false'), ('08.alert.repeat-hours', '4'), ('08.export.link-hours', '24'), ('08.benchmark.opt-in', 'false'), ('08.benchmark.min-group', '5')) AS s(k, v)
   ON CONFLICT (tenant_id, setting_key) DO NOTHING;
   INSERT INTO ph08_dq.dq_retention_policy (id, tenant_id, object_type, retention_days, action, created_by, updated_by)
   SELECT md5('ph08-retention:' || p_tenant || ':' || r.t)::uuid, p_tenant, r.t, r.d, r.a, 'system:seed', 'system:seed'
@@ -24,7 +24,7 @@ BEGIN
   ON CONFLICT (tenant_id, schedule_code) DO NOTHING;
 END
 $p$;
-COMMENT ON PROCEDURE ph08_dq.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 19 tham số 08.*, 12 chính sách lưu giữ, trọng số mặc định, lịch đo tháng. Chạy lại không nhân bản.';
+COMMENT ON PROCEDURE ph08_dq.p_seed_tenant(text) IS 'Gọi khi khởi tạo tenant (PH-20): 43 tham số 08.*, 12 chính sách lưu giữ, trọng số mặc định, lịch đo tháng. Chạy lại không nhân bản.';
 --rollback DROP PROCEDURE IF EXISTS ph08_dq.p_seed_tenant(text);
 
 --changeset ph08:ph08-0920-fn-seed-common splitStatements:false
@@ -38,7 +38,7 @@ BEGIN
   FROM (VALUES
     ('VN-CCCD-12', 'Số CCCD gồm 12 chữ số', 'VALIDITY', 'REGEX', 'MAJOR', '{"pattern":"^[0-9]{12}$"}', NULL),
     ('VN-MST-FORMAT', 'Mã số thuế 10 số hoặc 13 số có gạch', 'VALIDITY', 'REGEX', 'MAJOR', '{"pattern":"^[0-9]{10}(-[0-9]{3})?$"}', NULL),
-    ('VN-MST-CHECKSUM', 'Chữ số kiểm tra của mã số thuế', 'ACCURACY', 'CHECKSUM', 'MAJOR', '{"algorithm":"MST_VN"}', NULL),
+    ('VN-MST-CHECKSUM', 'Chữ số kiểm tra của mã số thuế', 'ACCURACY', 'CHECKSUM', 'MAJOR', '{"algorithm":"MST_10"}', NULL),
     ('VN-SDT', 'Số điện thoại di động Việt Nam', 'VALIDITY', 'REGEX', 'MINOR', '{"pattern":"^(0|\\+84)[0-9]{9}$"}', NULL),
     ('VN-EMAIL', 'Địa chỉ email đúng cú pháp', 'VALIDITY', 'REGEX', 'MINOR', '{"pattern":"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"}', NULL),
     ('VN-DVHC-IN-RDM', 'Mã đơn vị hành chính có trong danh mục PH-07', 'VALIDITY', 'IN_RDM', 'MAJOR', '{"catalogCode":"${catalog}"}', NULL),

@@ -2,7 +2,7 @@
 -- Nguồn: ddl/ph08_dq.sql · 08-0060-alert-report.sql
 -- TỆP SINH TỰ ĐỘNG bởi tools/gen_liquibase.py. Không sửa tay.
 
---changeset ph08:ph08-0310-dq-alert-rule
+--changeset ph08:ph08-0340-dq-alert-rule
 CREATE TABLE ph08_dq.dq_alert_rule (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE ph08_dq.dq_alert_rule (
   CONSTRAINT fk_dq_alert_rule_domain FOREIGN KEY (tenant_id, domain_code) REFERENCES ph08_dq.dq_domain (tenant_id, domain_code),
   CONSTRAINT ck_dq_alert_rule_code CHECK (alert_rule_code ~ '^[A-Za-z][A-Za-z0-9_.-]{1,62}$'),
   CONSTRAINT ck_dq_alert_rule_scope CHECK (asset_id IS NULL OR domain_code IS NULL),
-  CONSTRAINT ck_dq_alert_rule_condition CHECK (condition_type IN ('SCORE_BELOW', 'SCORE_DROP', 'NEW_CRITICAL_FINDING', 'SCAN_FAILED', 'INLINE_FAIL_RATE', 'SLA_BREACH')),
+  CONSTRAINT ck_dq_alert_rule_condition CHECK (condition_type IN ('SCORE_BELOW', 'SCORE_DROP', 'SCAN_FAILED', 'INCOMPLETE_DIMENSIONS', 'ISSUE_OVERDUE', 'INLINE_FAIL_RATE', 'NEW_CRITICAL_FINDINGS')),
   CONSTRAINT ck_dq_alert_rule_dimension CHECK (dimension IS NULL OR dimension IN ('COMPLETENESS', 'ACCURACY', 'CONSISTENCY', 'TIMELINESS', 'UNIQUENESS', 'VALIDITY')),
   CONSTRAINT ck_dq_alert_rule_severity CHECK (severity IN ('HIGH', 'MEDIUM', 'LOW')),
   CONSTRAINT ck_dq_alert_rule_threshold CHECK (condition_type NOT IN ('SCORE_BELOW', 'SCORE_DROP', 'INLINE_FAIL_RATE') OR threshold IS NOT NULL),
@@ -40,10 +40,10 @@ CREATE TABLE ph08_dq.dq_alert_rule (
 CREATE INDEX ix_dq_alert_rule_scope ON ph08_dq.dq_alert_rule (tenant_id, condition_type) WHERE enabled;
 CREATE TRIGGER tg_dq_alert_rule_touch BEFORE UPDATE ON ph08_dq.dq_alert_rule FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
 CALL ph08_dq.p_enable_rls('ph08_dq.dq_alert_rule');
-COMMENT ON TABLE ph08_dq.dq_alert_rule IS 'EN-08-21 Quy tắc cảnh báo: điều kiện điểm thấp, điểm giảm, lỗi CRITICAL mới, lần đo thất bại, tỷ lệ lỗi trực tuyến, quá hạn SLA; kênh gửi qua PH-13 (FR-08-047, 048).';
+COMMENT ON TABLE ph08_dq.dq_alert_rule IS 'EN-08-21 Quy tắc cảnh báo: điều kiện điểm thấp, điểm giảm, lần đo thất bại, thiếu chiều, phiếu quá hạn, tỷ lệ lỗi trực tuyến, lỗi CRITICAL mới; kênh gửi qua PH-13 (FR-08-047, 048).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_alert_rule CASCADE;
 
---changeset ph08:ph08-0320-dq-alert
+--changeset ph08:ph08-0350-dq-alert
 CREATE TABLE ph08_dq.dq_alert (
   id               uuid NOT NULL,
   tenant_id        varchar(16) NOT NULL,
@@ -80,6 +80,7 @@ CREATE TABLE ph08_dq.dq_alert (
   CONSTRAINT ck_dq_alert_resolved CHECK ((status = 'RESOLVED') = (resolved_at IS NOT NULL))
 );
 CREATE UNIQUE INDEX uq_dq_alert_open ON ph08_dq.dq_alert (tenant_id, dedup_key) WHERE status IN ('FIRING', 'ACKNOWLEDGED', 'SILENCED');
+CREATE UNIQUE INDEX uq_dq_alert_unresolved ON ph08_dq.dq_alert (tenant_id, alert_rule_id, COALESCE(asset_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE status <> 'RESOLVED';
 CREATE INDEX ix_dq_alert_status ON ph08_dq.dq_alert (tenant_id, status, fired_at DESC);
 CREATE INDEX ix_dq_alert_asset ON ph08_dq.dq_alert (tenant_id, asset_id, fired_at DESC) WHERE asset_id IS NOT NULL;
 CREATE TRIGGER tg_dq_alert_touch BEFORE UPDATE ON ph08_dq.dq_alert FOR EACH ROW EXECUTE FUNCTION ph08_dq.tg_touch();
@@ -87,7 +88,7 @@ CALL ph08_dq.p_enable_rls('ph08_dq.dq_alert');
 COMMENT ON TABLE ph08_dq.dq_alert IS 'EN-08-22 Cảnh báo đã phát: trạng thái FIRING, ACKNOWLEDGED, RESOLVED, SILENCED, khóa chống trùng, tham chiếu thông báo PH-13 (FR-08-048, 049).';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_alert CASCADE;
 
---changeset ph08:ph08-0330-dq-report
+--changeset ph08:ph08-0360-dq-report
 CREATE TABLE ph08_dq.dq_report (
   id                        uuid NOT NULL,
   tenant_id                 varchar(16) NOT NULL,
@@ -123,7 +124,7 @@ CREATE TABLE ph08_dq.dq_report (
   CONSTRAINT uq_dq_report_tid UNIQUE (tenant_id, id),
   CONSTRAINT ck_dq_report_tenant CHECK (tenant_id ~ '^T[0-9]{2}$'),
   CONSTRAINT uq_dq_report_code UNIQUE (tenant_id, report_code),
-  CONSTRAINT ck_dq_report_code CHECK (report_code ~ '^DQR-[0-9]{4}-[0-9]{5}$'),
+  CONSTRAINT ck_dq_report_code CHECK (report_code ~ '^BC-DQ-[0-9]{4}-[A-Z0-9]{2,4}-T[0-9]{2}(-R[0-9]{1,2})?$'),
   CONSTRAINT ck_dq_report_type CHECK (report_type IN ('PERIODIC', 'ANNUAL', 'AD_HOC')),
   CONSTRAINT ck_dq_report_status CHECK (status IN ('DRAFT', 'IN_REVIEW', 'PUBLISHED', 'WITHDRAWN')),
   CONSTRAINT ck_dq_report_period CHECK (period_code ~ '^[0-9]{4}(-(0[1-9]|1[0-2]))?$' AND (report_type <> 'ANNUAL' OR period_code ~ '^[0-9]{4}$')),
@@ -147,7 +148,7 @@ COMMENT ON COLUMN ph08_dq.dq_report.summary IS 'Số liệu tổng hợp (điể
 COMMENT ON COLUMN ph08_dq.dq_report.pdf_object_key IS 'Khóa đối tượng trên Ceph RGW, bucket dq-reports; không lưu tệp trong PostgreSQL.';
 --rollback DROP TABLE IF EXISTS ph08_dq.dq_report CASCADE;
 
---changeset ph08:ph08-0340-dq-report-subscription
+--changeset ph08:ph08-0370-dq-report-subscription
 CREATE TABLE ph08_dq.dq_report_subscription (
   id             uuid NOT NULL,
   tenant_id      varchar(16) NOT NULL,

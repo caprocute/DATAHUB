@@ -20,3 +20,17 @@ GRANT SELECT (id, tenant_id, last_seen_at, asset_id, rule_id, dimension, severit
 GRANT EXECUTE ON PROCEDURE ph08_dq.p_ensure_partitions(regclass, date, integer) TO ph08_app;
 GRANT EXECUTE ON PROCEDURE ph08_dq.p_seed_tenant(text) TO ph08_app;
 --rollback empty
+
+--changeset ph08:ph08-0995-benchmark
+-- Ngoại lệ RLS duy nhất: vai ph08_benchmark đọc điểm chiều của ảnh chụp chính thức mọi tenant qua khung nhìn security_invoker, chỉ cột cần để tổng hợp.
+-- Việc kiểm tenant đã bật 08.benchmark.opt-in và nhóm tối thiểu 5 tenant do dịch vụ làm trước khi trả (BR-08-030).
+CREATE POLICY rls_dq_score_snapshot_benchmark ON ph08_dq.dq_score_snapshot FOR SELECT TO ph08_benchmark USING (official);
+CREATE POLICY rls_dq_score_dimension_benchmark ON ph08_dq.dq_score_dimension FOR SELECT TO ph08_benchmark USING (status = 'MEASURED');
+CREATE VIEW ph08_dq.v_benchmark_dimension WITH (security_invoker = true) AS
+  SELECT s.tenant_id, s.period_code, d.dimension, d.score
+  FROM ph08_dq.dq_score_dimension d JOIN ph08_dq.dq_score_snapshot s ON s.tenant_id = d.tenant_id AND s.id = d.snapshot_id;
+COMMENT ON VIEW ph08_dq.v_benchmark_dimension IS 'Điểm chiều của ảnh chụp chính thức, dùng cho so sánh liên tenant ẩn danh (FR-08-061); chỉ vai ph08_benchmark đọc.';
+GRANT SELECT ON ph08_dq.v_benchmark_dimension TO ph08_benchmark;
+GRANT SELECT (tenant_id, id, period_code, official) ON ph08_dq.dq_score_snapshot TO ph08_benchmark;
+GRANT SELECT (tenant_id, snapshot_id, dimension, score, status) ON ph08_dq.dq_score_dimension TO ph08_benchmark;
+--rollback DROP VIEW IF EXISTS ph08_dq.v_benchmark_dimension; DROP POLICY IF EXISTS rls_dq_score_dimension_benchmark ON ph08_dq.dq_score_dimension; DROP POLICY IF EXISTS rls_dq_score_snapshot_benchmark ON ph08_dq.dq_score_snapshot;

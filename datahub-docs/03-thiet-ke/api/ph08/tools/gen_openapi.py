@@ -41,6 +41,8 @@ EX_STATUS = {"009": "ACTIVE", "010": "SUSPENDED", "011": "ACTIVE", "012": "RETIR
              "102": "ACKNOWLEDGED", "103": "SILENCED", "111": "IN_REVIEW", "112": "PUBLISHED", "113": "DRAFT", "114": "WITHDRAWN", "116": "RUNNING"}
 NOTE = {
     "006": "Loại `MDM_DOMAIN` cần `mdmDomainCode` có khung nhìn hợp đồng (ERR-08-009); `RDM_CATALOG` cần `rdmCatalogCode` đã phát hành (ERR-08-010); `SOURCE_DATASET` cần `connectionId` chỉ đọc và `objectName` (ERR-08-011, 012); `FLOW_MESSAGE` cần `flowCode`.",
+    "130": "Đối tượng phải `ACTIVE` (ERR-08-006); `FLOW_MESSAGE` bị ERR-08-050; `SOURCE_DATASET` cần `updatedAtField`. Bật rồi bộ lập lịch nội bộ và sự kiện PH-06, PH-07 kích hoạt lần đo `INCREMENTAL`.",
+    "131": "Tắt đo tăng dần; lý do từ 20 ký tự; bộ đệm khóa đổi còn lại được đo bù ở lần `FULL` kế tiếp.",
     "009": "Cần miền có tổ chức chủ quản và cán bộ phụ trách (ERR-08-008); sinh lịch mặc định theo `08.scan.default-cron`.",
     "014": "Phân loại lấy từ PH-09; trường chưa có phân loại xác nhận bị che như Nhạy cảm (cảnh báo ERR-08-047, không chặn). Chưa có trường thì gửi `If-Match: *` để tạo.",
     "015": "Gọi API tra phân loại của PH-09, cập nhật `dataClass` và `classificationStatus`; không đổi `valueMode` lỏng hơn.",
@@ -106,7 +108,7 @@ def ref(n):
 def build():
     params = {
         "IdempotencyKey": {"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string", "format": "uuid"}, "example": "0193b1d4-0000-7000-8000-0000000000a1",
-                           "description": "UUID do bên gọi sinh; dùng lại với thân khác trả ERR-08-004 (xung đột). Lưu 24 giờ."},
+                           "description": "UUID do bên gọi sinh; dùng lại với thân khác trả ERR-08-055 (409). Lưu 24 giờ."},
         "IfMatch": {"name": "If-Match", "in": "header", "required": True, "schema": {"type": "string"}, "example": "W/\"3\"",
                     "description": "`ETag` của tài nguyên (`W/\"{version}\"`); không khớp trả ERR-08-004. Thiếu tiêu đề trả 428 (ERR-00-428)."},
         "Traceparent": {"name": "traceparent", "in": "header", "required": False, "schema": {"type": "string"}, "description": "W3C Trace Context."},
@@ -177,7 +179,7 @@ def build():
         if ifm:
             add("ERR-08-004")
         if idem:
-            add("ERR-08-004")
+            add("ERR-08-055")
         if pnames:
             add("ERR-08-001")
         if act and "noifm" not in fl:
