@@ -1,20 +1,136 @@
 ---
 ma_tai_lieu: D03-05-01
 ten: Vật liệu Liquid Glass, chế độ hiển thị và cơ chế hạ cấp
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư giao diện, Nhà thiết kế, Kiểm thử viên, Kiến trúc sư, AI agent sinh mã
+mo_ta: Đặc tả cách hiểu và hiện thực Liquid Glass trong Datahub, gồm quy tắc đặt vật liệu, cấu tạo CSS, chế độ hiển thị, cơ chế tự hạ cấp trên máy yếu và hai thành phần nền tảng CMP-GlassSurface, CMP-ThemeProvider.
+tai_lieu_lien_quan: ADR-020 Liquid Glass trên antd v6; D00-01 Thuật ngữ và quy ước; D02-02 SRS; D03-01 SAD; D03-05 Design system; D03-05-02 Design token; D03-05-03 Thành phần nguyên tử; D03-05-04 Thành phần phức hợp; D03-06-00 IA, layout, mẫu màn hình
 nguoi_lap: Luồng giao diện
 ---
 
 # D03-05-01 · Vật liệu Liquid Glass, chế độ hiển thị và cơ chế hạ cấp
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Giao diện Datahub dùng phong cách Liquid Glass một cách có chọn lọc để có chiều sâu thị giác, nhưng không đánh đổi khả năng đọc và hiệu năng trên máy văn phòng của cơ quan nhà nước. Tài liệu đặc tả kính được đặt ở đâu và không đặt ở đâu, dựng bằng CSS ra sao, người dùng tắt hoặc giảm kính thế nào, và giao diện tự chuyển về nền đặc ra sao khi máy yếu. Hai thành phần nền tảng `CMP-GlassSurface` và `CMP-ThemeProvider` được đặc tả trọn vẹn tại đây.
+
+**Phạm vi.** Tài liệu gồm cách hiểu Liquid Glass và phần Datahub lấy (chương 2), bản đồ vật liệu và các điều cấm (chương 3), cấu tạo CSS (chương 4), topbar thích ứng khi cuộn (chương 5), bốn tùy chọn người dùng và cách phân giải chế độ kính (chương 6), thuật toán tự hạ cấp (chương 7), chế độ sáng, tối, tương phản cao (chương 8), đặc tả hai thành phần nền tảng (chương 9) và sáu kịch bản kiểm thử (chương 10). Giá trị số của vật liệu nằm ở D03-05-02 §5 đến §8.
+
+**Căn cứ.** STD-04 (WCAG 2.2, mức AA) cho tương phản và vùng chạm; NFR-00-040, NFR-00-041, NFR-00-043, NFR-00-044, NFR-00-045 và NFR-00-005 của SRS; rủi ro RSK-A05 của SAD (glass làm chậm máy yếu); ADR-020 (Liquid Glass trên antd v6).
+
+**Những điểm hội đồng cần lưu ý.** (1) Kính chỉ thuộc lớp điều hướng và lớp nổi; bảng, biểu mẫu, log và biểu đồ luôn nằm trên nền đặc, vì chữ dày đặc trên nền thay đổi gây mỏi mắt và khó đạt tương phản. (2) Độ đục của kính được tính cho trường hợp xấu nhất (nền đen tuyệt đối ở chế độ sáng, trắng tuyệt đối ở chế độ tối), và có điều cấm đặt chữ liên kết hay chữ màu trạng thái trực tiếp lên hai vật liệu không đạt 4,5:1. (3) Lựa chọn tường minh của người dùng luôn thắng tín hiệu tự động; khi để "Tự động", tín hiệu truy cập (màu cưỡng bức, giảm trong suốt, tăng tương phản) được xét trước hiệu năng. (4) Máy yếu hoặc kết xuất phần mềm được tự động hạ về nền đặc, có lưới an toàn khi dùng thật, nên người dùng không phải tự phát hiện và tắt hiệu ứng. (5) Số phần tử có `backdrop-filter` hiển thị cùng lúc bị giới hạn tối đa bốn để giữ 60 khung hình mỗi giây khi cuộn trên máy bốn nhân.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Vật liệu glass | 4 (`glass-chrome`, `glass-chrome-scrolled`, `glass-modal`, `glass-overlay`) |
+| Tùy chọn người dùng độc lập | 4 (chế độ màu, hiệu ứng kính, chuyển động, mật độ) |
+| Chế độ kính đã phân giải | 3 (`full`, `lite`, `off`) |
+| Điều cấm khi đặt vật liệu | 5 (mục 3.2) |
+| Số phần tử `backdrop-filter` tối đa cùng lúc | 4 |
+| Bước xếp hạng hiệu năng máy | 4; p90 khoảng cách khung ≤ 20 ms là hạng Cao, trên 34 ms là hạng Thấp |
+| Ngưỡng chuyển topbar sang trạng thái cuộn | cuộn quá 4 px |
+| Chu kỳ đo lại hiệu năng | 30 ngày |
+| Kịch bản kiểm thử vật liệu | 6 (TS-00-UI-01…06) |
+| Thành phần nền tảng đặc tả | 2 (`CMP-GlassSurface`, `CMP-ThemeProvider`) |
+
+: Con số chính của đặc tả vật liệu Liquid Glass
+
+Các con số trên được lấy từ chương 3, 5, 6, 7 và 10 của tài liệu này; hạng hiệu năng được đo trên từng máy và báo về PH-13 dưới dạng chỉ số tổng hợp.
 
 ## 1. Mục đích
 
 Tài liệu này giải thích **Liquid Glass được hiểu và hiện thực như thế nào trong Datahub**: nó là gì, đặt ở đâu và không đặt ở đâu, được dựng bằng CSS ra sao trên nền Ant Design v6, làm thế nào để vẫn đạt WCAG 2.2 mức AA, và làm thế nào để giao diện tự chuyển về nền đặc khi người dùng yêu cầu hoặc khi máy không đủ mạnh. Hai thành phần nền tảng `CMP-GlassSurface` và `CMP-ThemeProvider` được đặc tả trọn vẹn tại đây, vì mọi thành phần khác của D03-05-03 và D03-05-04 dựa trên chúng.
 
 Giá trị cụ thể của từng vật liệu (độ đục, độ nhòe, viền, bóng) nằm ở D03-05-02 §5 đến §8. Lý do chọn Liquid Glass thay cho phong cách shadcn của repo cũ được ghi ở ADR-020.
+
+### 1.1. Mục đích của tài liệu
+
+Tài liệu là nguồn chuẩn duy nhất về vật liệu kính của design system. Hội đồng thẩm định dùng nó để đánh giá việc dùng kính có làm giảm khả năng đọc hay hiệu năng không. Kỹ sư dùng chương 3, 4 và 9 khi viết thành phần; kiểm thử viên dùng chương 10 để nghiệm thu NFR-00-041 và NFR-00-043.
+
+### 1.2. Phạm vi
+
+Bảng dưới phân định điều tài liệu này quy định và điều nằm ở tài liệu khác.
+
+| Thuộc tài liệu này | Nằm ở tài liệu khác |
+|---|---|
+| Cách hiểu Liquid Glass, bản đồ vật liệu, các điều cấm | Giá trị độ đục, độ nhòe, viền, bóng: D03-05-02 §5 đến §8 |
+| Cấu tạo CSS, topbar thích ứng, chế độ hiển thị, hạ cấp | Lý do chọn Liquid Glass thay shadcn: ADR-020 |
+| `CMP-GlassSurface`, `CMP-ThemeProvider` | Thành phần dùng kính (Modal, Drawer, Topbar…): D03-05-03, D03-05-04 |
+| Kịch bản kiểm thử vật liệu `TS-00-UI-01…06` | Kiểm tra token tự động chung: D03-05-02 §15 |
+
+: Phân định phạm vi giữa D03-05-01 và các tài liệu liên quan
+
+### 1.3. Người đọc và cách đọc
+
+Bảng dưới gợi ý phần cần đọc theo vai trò.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, chương 2, 3, 7 | Đánh giá cách đặt kính, mức truy cập và cơ chế hạ cấp |
+| Kỹ sư giao diện | Chương 3, 4, 6, 9 | Đặt vật liệu đúng, dùng `CMP-GlassSurface` và `CMP-ThemeProvider` |
+| Nhà thiết kế | Chương 2, 3, 8 | Chọn vùng được phép dùng kính, hình dung chế độ sáng, tối |
+| Kiểm thử viên | Chương 6, 7, 10 | Ca kiểm thử tương phản, hiệu năng, hạ cấp, màu cưỡng bức |
+| Kiến trúc sư | Chương 6, 7 | Cơ chế lưu tùy chọn và đo hiệu năng phía trình duyệt |
+| AI agent sinh mã | Chương 3, 4, 9 | Không tự chọn vật liệu, chỉ dùng thành phần đã đặc tả |
+
+: Người đọc D03-05-01 và phần cần đọc theo vai trò
+
+### 1.4. Thuật ngữ và chữ viết tắt
+
+Bảng dưới chỉ gồm thuật ngữ riêng của vật liệu kính. Thuật ngữ chung theo D00-01 §2.
+
+| Thuật ngữ | Giải thích |
+|---|---|
+| Liquid Glass | Ngôn ngữ vật liệu Apple giới thiệu năm 2025; Datahub chỉ lấy ba nguyên tắc: phân lớp, vật liệu thích ứng, hình khối mềm đồng tâm |
+| Tint | Lớp màu bán trong suốt phủ lên kính, quyết định độ đọc được của chữ |
+| `backdrop-filter` | Thuộc tính CSS làm nhòe và tăng bão hòa phần phông nền phía sau phần tử |
+| Giếng nội dung | Vùng nền đặc bên trong một lớp nổi bằng kính, chứa biểu mẫu hoặc bảng |
+| Chế độ kính | Ba giá trị đã phân giải `full`, `lite`, `off` của thuộc tính `data-glass` |
+| Hạng hiệu năng máy | Kết quả xếp hạng Thấp, Trung bình, Cao từ phép đo trên trình duyệt |
+| Scroll edge | Dải mờ dần dưới topbar khi nội dung cuộn bên dưới |
+| Trường hợp xấu nhất | Phông nền giả định đen tuyệt đối (sáng) hoặc trắng tuyệt đối (tối) khi tính tương phản |
+
+: Thuật ngữ riêng của vật liệu Liquid Glass
+
+### 1.5. Tài liệu tham chiếu
+
+Các tài liệu dưới đây được dẫn chiếu trong D03-05-01.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| STD-04 | WCAG 2.2 | Ngưỡng tương phản 4,5:1 và 3:1, vùng chạm |
+| ADR-020 | Liquid Glass trên antd v6 | Lý do chọn và cách áp |
+| D02-02 | Đặc tả yêu cầu phần mềm (SRS) | NFR-00-005, NFR-00-040…045 |
+| D03-01 | Thiết kế kiến trúc tổng thể (SAD) | Rủi ro RSK-A05 |
+| D03-05 | Design system (tài liệu tổng) | Nguyên tắc, thứ tự ưu tiên giữa các tập |
+| D03-05-02 | Design token | Giá trị vật liệu, bảng tương phản |
+| D03-05-03, D03-05-04 | Thành phần nguyên tử, phức hợp | Thành phần dùng vật liệu |
+| D03-06-00 | IA, layout, mẫu màn hình | PTN-12 (Cài đặt cá nhân) |
+
+: Tài liệu tham chiếu của D03-05-01
+
+### 1.6. Cấu trúc tài liệu
+
+Tài liệu đi từ khái niệm tới quy tắc, cấu tạo, hành vi và kiểm thử. Bảng dưới tóm tắt từng chương.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 2 | Liquid Glass là gì, Datahub lấy và không lấy gì | Hội đồng, nhà thiết kế |
+| 3 | Bản đồ vật liệu, điều cấm, vì sao nội dung dùng nền đặc | Mọi người đọc |
+| 4 | Cấu tạo vật liệu bằng CSS | Kỹ sư giao diện |
+| 5 | Topbar thích ứng khi cuộn | Kỹ sư, kiểm thử viên |
+| 6 | Bốn tùy chọn người dùng, phân giải chế độ kính, chống nhấp nháy | Kỹ sư, kiến trúc sư |
+| 7 | Tự động hạ cấp trên máy yếu | Kỹ sư, hội đồng |
+| 8 | Chế độ sáng, tối, tương phản cao | Nhà thiết kế, kiểm thử viên |
+| 9 | Đặc tả `CMP-GlassSurface`, `CMP-ThemeProvider` | Kỹ sư, AI agent |
+| 10 | Kiểm thử vật liệu | Kiểm thử viên |
+| 11, 12 | Truy vết, đề xuất bổ sung D00-01 | Quản lý chất lượng |
+
+: Cấu trúc chương của D03-05-01
 
 ## 2. Liquid Glass là gì và Datahub lấy gì từ nó
 
@@ -48,6 +164,8 @@ Bảng dưới đây là quy tắc bắt buộc về việc mỗi vùng giao di�
 | Card, bảng, biểu mẫu, mô tả chi tiết, log, khối mã, biểu đồ, bề mặt và nút của canvas thiết kế, bảng thành phần, Inspector, thanh công cụ trình thiết kế | `color-surface-solid` hoặc `color-surface-solid-2` đặc | Lớp nội dung (D03-05-04 §11.0) |
 | Vùng nội dung trong Modal, Drawer | `color-surface-solid` đặc (giếng nội dung) | Biểu mẫu và bảng trong lớp nổi vẫn là nội dung |
 
+: Bản đồ vật liệu theo vùng giao diện
+
 ### 3.2. Các điều cấm
 
 Có năm điều cấm. Thứ nhất, không đặt bảng, biểu mẫu, log hoặc khối văn bản dài trực tiếp lên kính, vì chữ dày đặc trên nền thay đổi gây mỏi mắt và khó đạt tương phản. Thứ hai, không xếp kính chồng lên kính, vì hai lớp nhòe chồng nhau tạo màu đục khó đoán và nhân đôi chi phí GPU; ngoại lệ duy nhất là một lớp `glass-overlay` (ví dụ danh sách chọn của Select) mở ra từ bên trong giếng nội dung của Modal, vì khi đó phông nền trực tiếp của overlay là nền đặc của giếng chứ không phải kính. Thứ ba, không dùng kính để trang trí cho Card hay ô KPI chỉ vì "đẹp", vì như vậy phá vỡ ý nghĩa phân lớp. Thứ tư, không đặt chữ liên kết cỡ thường hay chữ màu trạng thái trực tiếp trên `glass-chrome-scrolled` và `glass-modal`, vì hai vật liệu này không đạt 4,5:1 với chữ màu nhấn trong trường hợp xấu nhất (D03-05-02 §5). Thứ năm, không đặt hơn **bốn** phần tử có `backdrop-filter` cùng hiển thị trên màn hình (sidebar, topbar, một lớp nổi lớn, một lớp nổi nhỏ), vì đây là ngưỡng mà máy văn phòng bốn nhân vẫn giữ được 60 khung hình mỗi giây khi cuộn.
@@ -60,7 +178,7 @@ Yêu cầu nền đặc cho nội dung không chỉ là lựa chọn thẩm mỹ
 
 Mỗi vật liệu glass được dựng từ năm lớp chồng lên nhau trên cùng một phần tử, theo thứ tự từ dưới lên:
 
-```mermaid
+```{.mermaid caption="Cấu tạo vật liệu bằng CSS"}
 flowchart BT
   B[Phông nền phía sau<br/>canvas hoặc nội dung] --> F[backdrop-filter<br/>blur + saturate]
   F --> T[Tint<br/>background-color rgba]
@@ -147,7 +265,7 @@ Có ba chi tiết hiện thực cần lưu ý. Thuộc tính `isolation: isolate
 
 Topbar là nơi duy nhất mà nội dung tùy ý trượt bên dưới kính. Để giữ tương phản, topbar có hai trạng thái và chuyển giữa chúng theo vị trí cuộn của vùng nội dung chính.
 
-```mermaid
+```{.mermaid caption="Topbar thích ứng khi cuộn"}
 stateDiagram-v2
   [*] --> AtTop
   AtTop: Ở đầu trang<br/>glass-chrome, không bóng
@@ -171,13 +289,15 @@ Người dùng điều chỉnh giao diện bằng bốn tùy chọn độc lập
 | Chuyển động | Theo hệ thống / Đầy đủ / Giảm | Theo hệ thống | `prefers-reduced-motion` |
 | Mật độ | Chuẩn / Gọn | Chuẩn | Không có |
 
+: Bốn tùy chọn giao diện độc lập, giá trị và mặc định
+
 Lựa chọn được lưu ở hai nơi: `localStorage` để áp dụng ngay khi tải trang (chống nhấp nháy), và hồ sơ người dùng phía máy chủ để theo người dùng sang máy khác. Khi hai nơi khác nhau, giá trị máy chủ thắng sau khi đăng nhập xong.
 
 ### 6.2. Phân giải chế độ kính
 
 Tùy chọn "Hiệu ứng kính" có bốn giá trị nhưng thuộc tính `data-glass` trên thẻ `html` chỉ nhận ba giá trị đã phân giải `full`, `lite`, `off`. Thuật toán phân giải như sau:
 
-```mermaid
+```{.mermaid caption="Phân giải chế độ kính"}
 flowchart TD
   A[Tùy chọn người dùng] -->|Đầy đủ| FULL[full]
   A -->|Giảm| LITE[lite]
@@ -214,6 +334,8 @@ Phép đo chạy một lần sau khi ứng dụng tải xong và trình duyệt 
 | 2 | Tài nguyên phần cứng | `navigator.hardwareConcurrency` ≤ 2, hoặc `navigator.deviceMemory` ≤ 2 (chỉ có trên Chromium) | Có → hạng **Thấp**; ≤ 4 nhân hoặc ≤ 4 GB → ứng viên **Trung bình** |
 | 3 | Đo khung hình thực tế | Gắn tạm một lớp `dh-glass--overlay` kích thước 480×320 ngoài màn hình nhìn thấy, cho một phần tử phía sau chuyển động trong 1 giây, đo khoảng cách giữa các khung bằng `requestAnimationFrame` | p90 khoảng cách ≤ 20 ms → **Cao**; 20–34 ms → **Trung bình**; > 34 ms → **Thấp** |
 | 4 | Theo dõi khi dùng | `PerformanceObserver` loại `long-animation-frame` (hoặc `longtask` nếu không có) trong khi dùng thật | Từ 5 khung dài trên 100 ms trong 10 giây khi đang ở `full` → hạ xuống `lite` cho phiên hiện tại và ghi nhận |
+
+: Bốn bước xếp hạng hiệu năng máy
 
 Bước 4 là lưới an toàn: nếu phép đo ban đầu lạc quan (ví dụ máy đang rảnh lúc đo nhưng bận khi dùng), ứng dụng tự hạ cấp trong phiên. Mỗi lần tự hạ cấp, một thông báo nhỏ không chặn thao tác (`CMP-Toast`) cho người dùng biết "Đã giảm hiệu ứng kính để giao diện mượt hơn. Có thể đổi trong Cài đặt." Thông báo chỉ hiện một lần cho mỗi máy.
 
@@ -280,6 +402,8 @@ export interface GlassSurfaceProps extends React.HTMLAttributes<HTMLElement> {
 | `useDhPreferences()` | `{ colorScheme, glass, motion, density }` (giá trị người dùng chọn, có thể là `'system'`/`'auto'`) và hàm `setPreference` | Trang Cài đặt cá nhân |
 | `useDhAppearance()` | `{ mode: 'light' \| 'dark', glass: 'full' \| 'lite' \| 'off', reducedMotion: boolean, density, glassTier }` (giá trị đã phân giải) | Thành phần cần biết chế độ thực tế |
 
+: Hook công khai của CMP-ThemeProvider
+
 **Thuộc tính dữ liệu trên thẻ `html`.** `data-theme` (`light`/`dark`), `data-glass` (`full`/`lite`/`off`), `data-motion` (`full`/`reduced`), `data-density` (`comfortable`/`compact`), `data-contrast` (`normal`/`more`). CSS của `@datahub/ui` chỉ được rẽ nhánh theo năm thuộc tính này, không tự đọc truy vấn phương tiện, để mọi lựa chọn thủ công của người dùng được tôn trọng nhất quán.
 
 **Chuyển chế độ.** Khi người dùng đổi chế độ màu, provider thêm lớp `dh-theme-transition` vào thẻ `html` trong 220ms để màu nền và chữ chuyển mượt; lớp này bị bỏ qua khi `data-motion="reduced"`. Đổi chế độ không dựng lại cây React; chỉ giá trị biến CSS thay đổi, nhờ chế độ CSS variables của antd v6.
@@ -297,7 +421,11 @@ Ngoài bốn kiểm tra chung ở D03-05-02 §15, vật liệu có bộ kiểm t
 | TS-00-UI-05 | Chế độ màu cưỡng bức | Playwright với `forcedColors: 'active'` | Mọi thành phần còn ranh giới nhìn thấy được, không mất chữ |
 | TS-00-UI-06 | Tôn trọng lựa chọn thủ công | Đặt "Đầy đủ" trên máy hạng Thấp | `data-glass="full"`, không bị tự hạ cấp ở bước 1–3 (bước 4 vẫn hạ trong phiên và báo) |
 
+: Sáu kịch bản kiểm thử vật liệu TS-00-UI-01 đến 06
+
 ## 11. Truy vết
+
+Bảng dưới nối yêu cầu phi chức năng, rủi ro và quyết định kiến trúc với mục của tài liệu này.
 
 | Yêu cầu | Đáp ứng tại |
 |---|---|
@@ -309,6 +437,15 @@ Ngoài bốn kiểm tra chung ở D03-05-02 §15, vật liệu có bộ kiểm t
 | RSK-A05 Glass làm chậm máy yếu | Mục 7 |
 | NFR-00-045 Thống nhất giao diện | Mục 9.1 (một điểm sinh vật liệu duy nhất) |
 
+: Truy vết yêu cầu và rủi ro tới mục của D03-05-01
+
 ## 12. Đề xuất bổ sung D00-01
 
 Đề xuất bổ sung các thuật ngữ sau vào D00-01 §2.2: "Lớp nội dung", "Lớp chức năng", "Vật liệu glass", "Giếng nội dung" (vùng nền đặc bên trong một lớp nổi bằng kính), "Bo góc đồng tâm", "Chế độ kính" (`full`/`lite`/`off`), "Hạng hiệu năng máy". Đề xuất mã kiểm thử dạng `TS-00-UI-{nn}` cho kịch bản kiểm thử giao diện dùng chung, nằm trong dải `TS-{PH}-{nn}` hiện có với `PH = 00`.
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: cách hiểu Liquid Glass, bản đồ vật liệu, cấu tạo CSS, topbar thích ứng, chế độ hiển thị, tự hạ cấp, đặc tả CMP-GlassSurface và CMP-ThemeProvider, kiểm thử, truy vết |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; bổ sung chương 1 các mục 1.1–1.6 (mục đích, phạm vi, người đọc, thuật ngữ, tài liệu tham chiếu, cấu trúc); thêm đoạn mở cho chương 11; viết lại 6 chú thích bảng cho cụ thể; thêm metadata mo_ta và tai_lieu_lien_quan |

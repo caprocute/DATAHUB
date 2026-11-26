@@ -22,7 +22,7 @@ Tính năng: TS-07-21 · Kiểm toán và lịch sử
   @TC-07-258 @P2 @Âm
   Kịch bản: TC-07-258 Khoảng thời gian không hợp lệ và PH-13 không sẵn sàng
     # Truy vết: FR-07-050 · ERR-07-009, 047
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi gọi với `from = 2022-01-01`, `to = 2026-11-21` (vượt 3 năm).
     Và gọi với `from` sau `to`.
     Và dừng giả lập PH-13, gọi lại hợp lệ.

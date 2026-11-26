@@ -1202,50 +1202,7 @@ HTTP/1.1 200 OK
    "allowedActions": ["update", "archive"]}]}
 ```
 
-#### API-04-002 · Tạo không gian làm việc; Sửa không gian làm việc
-
-##### POST /workspaces · Tạo không gian làm việc
-
-::: dac-ta
-**Mục đích.** Tạo không gian làm việc.
-
-**Phương thức, đường dẫn.** `POST /workspaces`.
-
-**Quyền.** `PERM-04-admin`.
-
-**FR hiện thực.** FR-04-007.
-
-**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
-
-**Thân yêu cầu.** application/json: `WorkspaceCreate`; trường bắt buộc: `code`, `name`.
-
-**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
-
-**Phản hồi thành công.** `201` đã tạo, `Workspace`; trường bắt buộc: `id`, `code`, `name`, `status`.
-
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `409` Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005).
-
-**Ghi chú.** Mã trùng trả ERR-04-028.
-:::
-
-**Ví dụ yêu cầu và phản hồi.**
-
-```http
-POST /api/integration/v1/workspaces
-Idempotency-Key: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
-
-{"code": "dat-dai", "name": "Đất đai", "ownerOrgCode": "STNMT-T68"}
-```
-
-```http
-HTTP/1.1 201 Created
-
-{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a02", "code": "dat-dai", "name": "Đất đai",
- "ownerOrgCode": "STNMT-T68", "status": "ACTIVE", "flowCount": 0, "myAccess": "MAINTAIN",
- "allowedActions": ["update", "archive"]}
-```
-
-##### PATCH /workspaces/{workspaceCode} · Sửa không gian làm việc
+#### API-04-002 · Sửa không gian làm việc
 
 ::: dac-ta
 **Mục đích.** Sửa không gian làm việc.
@@ -1284,6 +1241,47 @@ HTTP/1.1 200 OK
 {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a01", "code": "ho-tich",
  "name": "Hộ tịch và chứng thực", "ownerOrgCode": "STP-T68", "status": "ACTIVE",
  "flowCount": 12, "myAccess": "MAINTAIN", "allowedActions": ["update", "archive"]}
+```
+
+#### Tạo không gian làm việc (API-04-002, POST)
+
+::: dac-ta
+**Mục đích.** Tạo không gian làm việc.
+
+**Phương thức, đường dẫn.** `POST /workspaces`.
+
+**Quyền.** `PERM-04-admin`.
+
+**FR hiện thực.** FR-04-007.
+
+**Tham số.** `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `WorkspaceCreate`; trường bắt buộc: `code`, `name`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `201` đã tạo, `Workspace`; trường bắt buộc: `id`, `code`, `name`, `status`.
+
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `409` Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005).
+
+**Ghi chú.** Mã trùng trả ERR-04-028.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/integration/v1/workspaces
+Idempotency-Key: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
+
+{"code": "dat-dai", "name": "Đất đai", "ownerOrgCode": "STNMT-T68"}
+```
+
+```http
+HTTP/1.1 201 Created
+
+{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a02", "code": "dat-dai", "name": "Đất đai",
+ "ownerOrgCode": "STNMT-T68", "status": "ACTIVE", "flowCount": 0, "myAccess": "MAINTAIN",
+ "allowedActions": ["update", "archive"]}
 ```
 
 #### API-04-003 · Lưu trữ không gian làm việc
@@ -1325,9 +1323,7 @@ HTTP/1.1 200 OK
  "allowedActions": []}
 ```
 
-#### API-04-004 · Danh sách thành viên; Thay danh sách thành viên
-
-##### GET /workspaces/{workspaceCode}/members · Danh sách thành viên
+#### API-04-004 · Danh sách thành viên
 
 ::: dac-ta
 **Mục đích.** Danh sách thành viên.
@@ -1365,7 +1361,7 @@ HTTP/1.1 200 OK
   {"principalType": "GROUP", "principalId": "tt-cntt-t68", "accessLevel": "EDIT"}]}
 ```
 
-##### PUT /workspaces/{workspaceCode}/members · Thay danh sách thành viên
+#### Thay danh sách thành viên (API-04-004, PUT)
 
 ::: dac-ta
 **Mục đích.** Thay danh sách thành viên.
@@ -2054,9 +2050,41 @@ ETag: W/"3-3f9a1c2e"
     "message": "Chặng gọi hệ đích chưa đặt thời gian chờ; mặc định 30 giây."}]}}
 ```
 
-#### API-04-034 · Nhịp phiên soạn; Kết thúc phiên soạn
+#### API-04-034 · Kết thúc phiên soạn
 
-##### PUT /flows/{flowCode}/versions/{versionNo}/session · Nhịp phiên soạn
+::: dac-ta
+**Mục đích.** Kết thúc phiên soạn.
+
+**Phương thức, đường dẫn.** `DELETE /flows/{flowCode}/versions/{versionNo}/session`.
+
+**Quyền.** `PERM-04-update`.
+
+**FR hiện thực.** FR-04-024.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `versionNo` (path, integer, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
+
+**Ghi chú.** Rời trình thiết kế: xóa người gọi khỏi danh sách phiên soạn để người khác không còn thấy cảnh báo.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+DELETE /api/integration/v1/flows/tra-cuu-ho-tich/versions/3/session
+```
+
+```http
+HTTP/1.1 204 No Content
+```
+
+#### Nhịp phiên soạn (API-04-034, PUT)
 
 ::: dac-ta
 **Mục đích.** Nhịp phiên soạn.
@@ -2094,45 +2122,48 @@ HTTP/1.1 200 OK
  "freeze": {"active": false}}
 ```
 
-##### DELETE /flows/{flowCode}/versions/{versionNo}/session · Kết thúc phiên soạn
+### Di trú
+
+#### API-04-028 · Kết quả chuyển đổi
 
 ::: dac-ta
-**Mục đích.** Kết thúc phiên soạn.
+**Mục đích.** Kết quả chuyển đổi.
 
-**Phương thức, đường dẫn.** `DELETE /flows/{flowCode}/versions/{versionNo}/session`.
+**Phương thức, đường dẫn.** `GET /legacy-imports/{jobId}`.
 
-**Quyền.** `PERM-04-update`.
+**Quyền.** `PERM-04-read`.
 
-**FR hiện thực.** FR-04-024.
+**FR hiện thực.** FR-04-082.
 
-**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `versionNo` (path, integer, bắt buộc).
+**Tham số.** `jobId` (path, string, bắt buộc).
 
 **Thân yêu cầu.** Không.
 
 **Chống trùng.** Không.
 
-**Phản hồi thành công.** `204` không có nội dung.
+**Phản hồi thành công.** `200` thành công, `LegacyImportJob`; trường bắt buộc: `id`, `status`.
 
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
 
-**Ghi chú.** Rời trình thiết kế: xóa người gọi khỏi danh sách phiên soạn để người khác không còn thấy cảnh báo.
+**Ghi chú.** Trả trạng thái tác vụ chuyển XML cũ và báo cáo: số route, số chặng chuyển được, chặng cần làm tay, thành phần bị cấm, kết nối cần khai ở PH-05, luồng đã tạo.
 :::
 
 **Ví dụ yêu cầu và phản hồi.**
 
 ```http
-DELETE /api/integration/v1/flows/tra-cuu-ho-tich/versions/3/session
+GET /api/integration/v1/legacy-imports/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
 ```
 
 ```http
-HTTP/1.1 204 No Content
+HTTP/1.1 200 OK
+
+{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28", "status": "COMPLETED",
+ "fileName": "context-hotich.xml",
+ "report": {"routes": 3, "stepsConverted": 41, "stepsManual": 2, "forbiddenComponents": ["exec"],
+  "connectionsToDeclare": ["pg-ho-tich"]}, "createdFlows": ["ht-dong-bo-khai-sinh"]}
 ```
 
-### Di trú
-
-#### API-04-028 · Chuyển Camel XML của Bus cũ; Kết quả chuyển đổi
-
-##### POST /legacy-imports · Chuyển Camel XML của Bus cũ
+#### Chuyển Camel XML của Bus cũ (API-04-028, POST)
 
 ::: dac-ta
 **Mục đích.** Chuyển Camel XML của Bus cũ.
@@ -2184,45 +2215,6 @@ Location: /api/integration/v1/legacy-imports/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a2
 
 {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28", "status": "RUNNING",
  "fileName": "context-hotich.xml"}
-```
-
-##### GET /legacy-imports/{jobId} · Kết quả chuyển đổi
-
-::: dac-ta
-**Mục đích.** Kết quả chuyển đổi.
-
-**Phương thức, đường dẫn.** `GET /legacy-imports/{jobId}`.
-
-**Quyền.** `PERM-04-read`.
-
-**FR hiện thực.** FR-04-082.
-
-**Tham số.** `jobId` (path, string, bắt buộc).
-
-**Thân yêu cầu.** Không.
-
-**Chống trùng.** Không.
-
-**Phản hồi thành công.** `200` thành công, `LegacyImportJob`; trường bắt buộc: `id`, `status`.
-
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
-
-**Ghi chú.** Trả trạng thái tác vụ chuyển XML cũ và báo cáo: số route, số chặng chuyển được, chặng cần làm tay, thành phần bị cấm, kết nối cần khai ở PH-05, luồng đã tạo.
-:::
-
-**Ví dụ yêu cầu và phản hồi.**
-
-```http
-GET /api/integration/v1/legacy-imports/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28
-```
-
-```http
-HTTP/1.1 200 OK
-
-{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a28", "status": "COMPLETED",
- "fileName": "context-hotich.xml",
- "report": {"routes": 3, "stepsConverted": 41, "stepsManual": 2, "forbiddenComponents": ["exec"],
-  "connectionsToDeclare": ["pg-ho-tich"]}, "createdFlows": ["ht-dong-bo-khai-sinh"]}
 ```
 
 ### Kiểm tra hợp lệ
@@ -2473,9 +2465,7 @@ HTTP/1.1 200 OK
    "allowedActions": ["rerun"]}], "page": {"next": null, "hasMore": false}}
 ```
 
-#### API-04-042 · Kết quả lần chạy thử; Luồng sự kiện lần chạy thử (SSE); Thân bản tin đầy đủ của một chặng
-
-##### GET /flows/{flowCode}/test-runs/{runId} · Kết quả lần chạy thử
+#### API-04-042 · Kết quả lần chạy thử
 
 ::: dac-ta
 **Mục đích.** Kết quả lần chạy thử.
@@ -2516,7 +2506,7 @@ HTTP/1.1 200 OK
    "offsetMs": 96, "durationMs": 12}]}
 ```
 
-##### GET /flows/{flowCode}/test-runs/{runId}/events · Luồng sự kiện lần chạy thử (SSE)
+#### Luồng sự kiện lần chạy thử (SSE) (API-04-042, GET)
 
 ::: dac-ta
 **Mục đích.** Luồng sự kiện lần chạy thử (SSE).
@@ -2561,7 +2551,7 @@ event: completed
 data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "status": "PASSED", "durationMs": 412}
 ```
 
-##### GET /flows/{flowCode}/test-runs/{runId}/steps/{seqNo}/body · Thân bản tin đầy đủ của một chặng
+#### Thân bản tin đầy đủ của một chặng (API-04-042, GET)
 
 ::: dac-ta
 **Mục đích.** Thân bản tin đầy đủ của một chặng.
@@ -2636,9 +2626,42 @@ HTTP/1.1 200 OK
  "allowedActions": ["rerun"]}
 ```
 
-#### API-04-044 · Danh sách ca kiểm thử; Tạo ca kiểm thử; Sửa ca kiểm thử; Xóa (ngừng dùng) ca kiểm thử
+#### API-04-044 · Xóa (ngừng dùng) ca kiểm thử
 
-##### GET /flows/{flowCode}/test-cases · Danh sách ca kiểm thử
+::: dac-ta
+**Mục đích.** Xóa (ngừng dùng) ca kiểm thử.
+
+**Phương thức, đường dẫn.** `DELETE /flows/{flowCode}/test-cases/{caseId}`.
+
+**Quyền.** `PERM-04-update`.
+
+**FR hiện thực.** FR-04-031.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `caseId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `204` không có nội dung.
+
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001); `412` ETag lệch (ERR-04-006).
+
+**Ghi chú.** Ngừng dùng ca kiểm thử (`active = false`); lịch sử lần chạy theo ca vẫn giữ.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+DELETE /api/integration/v1/flows/tra-cuu-ho-tich/test-cases/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
+If-Match: W/"3-3f9a1c2e"
+```
+
+```http
+HTTP/1.1 204 No Content
+```
+
+#### Danh sách ca kiểm thử (API-04-044, GET)
 
 ::: dac-ta
 **Mục đích.** Danh sách ca kiểm thử.
@@ -2678,7 +2701,7 @@ HTTP/1.1 200 OK
    "lastResult": {"status": "PASSED", "runId": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a41", "onCurrentHash": true}}]}
 ```
 
-##### POST /flows/{flowCode}/test-cases · Tạo ca kiểm thử
+#### Tạo ca kiểm thử (API-04-044, POST)
 
 ::: dac-ta
 **Mục đích.** Tạo ca kiểm thử.
@@ -2724,7 +2747,7 @@ ETag: W/"3-3f9a1c2e"
  "timeoutSeconds": 30, "active": true, "id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44"}
 ```
 
-##### PUT /flows/{flowCode}/test-cases/{caseId} · Sửa ca kiểm thử
+#### Sửa ca kiểm thử (API-04-044, PUT)
 
 ::: dac-ta
 **Mục đích.** Sửa ca kiểm thử.
@@ -2768,41 +2791,6 @@ ETag: W/"3-3f9a1c2e"
  "body": "{\"soDinhDanh\": \"068000000001\"}",
  "assertions": [{"kind": "STATUS", "expected": 200}, {"kind": "STEP_VISITED", "nodeId": "n7"}],
  "timeoutSeconds": 20, "active": true, "id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44"}
-```
-
-##### DELETE /flows/{flowCode}/test-cases/{caseId} · Xóa (ngừng dùng) ca kiểm thử
-
-::: dac-ta
-**Mục đích.** Xóa (ngừng dùng) ca kiểm thử.
-
-**Phương thức, đường dẫn.** `DELETE /flows/{flowCode}/test-cases/{caseId}`.
-
-**Quyền.** `PERM-04-update`.
-
-**FR hiện thực.** FR-04-031.
-
-**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `caseId` (path, string, bắt buộc); `If-Match` (header, string, bắt buộc).
-
-**Thân yêu cầu.** Không.
-
-**Chống trùng.** Không.
-
-**Phản hồi thành công.** `204` không có nội dung.
-
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001); `412` ETag lệch (ERR-04-006).
-
-**Ghi chú.** Ngừng dùng ca kiểm thử (`active = false`); lịch sử lần chạy theo ca vẫn giữ.
-:::
-
-**Ví dụ yêu cầu và phản hồi.**
-
-```http
-DELETE /api/integration/v1/flows/tra-cuu-ho-tich/test-cases/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a44
-If-Match: W/"3-3f9a1c2e"
-```
-
-```http
-HTTP/1.1 204 No Content
 ```
 
 ### Duyệt
@@ -2984,9 +2972,7 @@ HTTP/1.1 200 OK
 
 ### Triển khai
 
-#### API-04-054 · Lịch sử triển khai; Phát hành phiên bản lên môi trường; Chi tiết triển khai; Tiến trình triển khai (SSE)
-
-##### GET /flows/{flowCode}/deployments · Lịch sử triển khai
+#### API-04-054 · Lịch sử triển khai
 
 ::: dac-ta
 **Mục đích.** Lịch sử triển khai.
@@ -3025,49 +3011,7 @@ HTTP/1.1 200 OK
    "allowedActions": [], "healthStatus": "HEALTHY", "current": true}]}
 ```
 
-##### POST /flows/{flowCode}/deployments · Phát hành phiên bản lên môi trường
-
-::: dac-ta
-**Mục đích.** Phát hành phiên bản lên môi trường.
-
-**Phương thức, đường dẫn.** `POST /flows/{flowCode}/deployments`.
-
-**Quyền.** `PERM-04-publish`.
-
-**FR hiện thực.** FR-04-042, FR-04-075.
-
-**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
-
-**Thân yêu cầu.** application/json: `ReleaseRequest`; trường bắt buộc: `versionNo`, `environment`.
-
-**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
-
-**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `Deployment`; trường bắt buộc: `id`, `versionNo`, `environment`, `syncStatus`; tiêu đề `Location`.
-
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001); `409` Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005); `422` Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings` (ERR-04-009); `423` Đóng băng thay đổi (ERR-04-041); `502` Không ghi được kho cấu hình (ERR-04-022).
-
-**Ghi chú.** Chỉ APPROVED (BR-04-012). Kiểm tra mức PUBLISH (ERR-04-009), thứ tự môi trường (ERR-04-023), đóng băng với PROD (ERR-04-041), hồ sơ runtime (ERR-04-029). Ghi Git sau giao dịch; lỗi ghi Git thành triển khai FAILED ERR-04-022. Phát EVT-04-06.
-:::
-
-**Ví dụ yêu cầu và phản hồi.**
-
-```http
-POST /api/integration/v1/flows/tra-cuu-ho-tich/deployments
-Idempotency-Key: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
-
-{"versionNo": 3, "environment": "TEST", "note": "Phát hành thử nghiệm chặng che dữ liệu."}
-```
-
-```http
-HTTP/1.1 202 Accepted
-Location: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
-
-{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "versionNo": 3, "environment": "TEST",
- "kind": "RELEASE", "desiredState": "RUNNING", "syncStatus": "PENDING",
- "requestedBy": "binh.tt", "requestedAt": "2026-11-26T10:00:00+07:00", "allowedActions": []}
-```
-
-##### GET /flows/{flowCode}/deployments/{deploymentId} · Chi tiết triển khai
+#### Chi tiết triển khai (API-04-054, GET)
 
 ::: dac-ta
 **Mục đích.** Chi tiết triển khai.
@@ -3107,7 +3051,7 @@ HTTP/1.1 200 OK
  "syncedAt": "2026-11-26T10:03:00+07:00", "current": true}
 ```
 
-##### GET /flows/{flowCode}/deployments/{deploymentId}/events · Tiến trình triển khai (SSE)
+#### Tiến trình triển khai (SSE) (API-04-054, GET)
 
 ::: dac-ta
 **Mục đích.** Tiến trình triển khai (SSE).
@@ -3150,6 +3094,48 @@ data: {"replica": "dh-rt-t68-core-7c9d-x2k4p", "contentHash": "sha256:3f9a1c2e�
 
 event: completed
 data: {"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "syncStatus": "SYNCED"}
+```
+
+#### Phát hành phiên bản lên môi trường (API-04-054, POST)
+
+::: dac-ta
+**Mục đích.** Phát hành phiên bản lên môi trường.
+
+**Phương thức, đường dẫn.** `POST /flows/{flowCode}/deployments`.
+
+**Quyền.** `PERM-04-publish`.
+
+**FR hiện thực.** FR-04-042, FR-04-075.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `Idempotency-Key` (header, string, bắt buộc).
+
+**Thân yêu cầu.** application/json: `ReleaseRequest`; trường bắt buộc: `versionNo`, `environment`.
+
+**Chống trùng.** Có, tiêu đề `Idempotency-Key`.
+
+**Phản hồi thành công.** `202` đã nhận, xử lý bất đồng bộ, `Deployment`; trường bắt buộc: `id`, `versionNo`, `environment`, `syncStatus`; tiêu đề `Location`.
+
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `403` Thiếu quyền (ERR-04-045; mức không gian ERR-04-003; bốn mắt ERR-04-015); `404` Không tìm thấy hoặc không được xem (ERR-04-001); `409` Xung đột trạng thái hoặc nghiệp vụ, mã cụ thể trong `code` (ERR-04-005); `422` Định nghĩa hoặc dữ liệu không hợp lệ, kèm `findings` (ERR-04-009); `423` Đóng băng thay đổi (ERR-04-041); `502` Không ghi được kho cấu hình (ERR-04-022).
+
+**Ghi chú.** Chỉ APPROVED (BR-04-012). Kiểm tra mức PUBLISH (ERR-04-009), thứ tự môi trường (ERR-04-023), đóng băng với PROD (ERR-04-041), hồ sơ runtime (ERR-04-029). Ghi Git sau giao dịch; lỗi ghi Git thành triển khai FAILED ERR-04-022. Phát EVT-04-06.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+POST /api/integration/v1/flows/tra-cuu-ho-tich/deployments
+Idempotency-Key: 6f0b1d8c-2f7e-4b7a-9d0e-4c1f7a5e2b10
+
+{"versionNo": 3, "environment": "TEST", "note": "Phát hành thử nghiệm chặng che dữ liệu."}
+```
+
+```http
+HTTP/1.1 202 Accepted
+Location: /api/integration/v1/flows/tra-cuu-ho-tich/deployments/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54
+
+{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a54", "versionNo": 3, "environment": "TEST",
+ "kind": "RELEASE", "desiredState": "RUNNING", "syncStatus": "PENDING",
+ "requestedBy": "binh.tt", "requestedAt": "2026-11-26T10:00:00+07:00", "allowedActions": []}
 ```
 
 #### API-04-055 · Quay lui về phiên bản đã duyệt trước
@@ -3278,9 +3264,48 @@ HTTP/1.1 200 OK
    "routes": [{"routeId": "tra-cuu", "state": "Started", "exchanges1m": 42, "failures1m": 0, "p95ms": 180}]}]}
 ```
 
-#### API-04-061 · Tạm dừng, tiếp tục, dừng khẩn; Trạng thái lệnh; Gửi lại lệnh chưa đủ xác nhận
+#### API-04-061 · Trạng thái lệnh
 
-##### POST /flows/{flowCode}/runtime/commands · Tạm dừng, tiếp tục, dừng khẩn
+::: dac-ta
+**Mục đích.** Trạng thái lệnh.
+
+**Phương thức, đường dẫn.** `GET /flows/{flowCode}/runtime/commands/{commandId}`.
+
+**Quyền.** `PERM-04-read`.
+
+**FR hiện thực.** FR-04-050.
+
+**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `commandId` (path, string, bắt buộc).
+
+**Thân yêu cầu.** Không.
+
+**Chống trùng.** Không.
+
+**Phản hồi thành công.** `200` thành công, `Command`; trường bắt buộc: `id`, `status`, `action`.
+
+**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
+
+**Ghi chú.** Trả trạng thái lệnh và xác nhận theo từng bản sao (`acks`). `PARTIAL` sau 30 giây khi chưa đủ xác nhận; lý do từ chối nằm ở `acks[].reason`.
+:::
+
+**Ví dụ yêu cầu và phản hồi.**
+
+```http
+GET /api/integration/v1/flows/tra-cuu-ho-tich/runtime/commands/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
+```
+
+```http
+HTTP/1.1 200 OK
+
+{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61", "environment": "PROD", "action": "PAUSE",
+ "scope": "FLOW", "status": "ACKNOWLEDGED", "expectedReplicas": 3, "ackedReplicas": 3,
+ "issuedBy": "cuong.lv", "issuedAt": "2026-11-26T21:55:00+07:00",
+ "expiresAt": "2026-11-26T21:56:00+07:00",
+ "acks": [{"replica": "dh-rt-t68-core-7c9d-x2k4p", "result": "APPLIED",
+   "ackedAt": "2026-11-26T21:55:02+07:00"}]}
+```
+
+#### Tạm dừng, tiếp tục, dừng khẩn (API-04-061, POST)
 
 ::: dac-ta
 **Mục đích.** Tạm dừng, tiếp tục, dừng khẩn.
@@ -3324,48 +3349,7 @@ Location: /api/integration/v1/flows/tra-cuu-ho-tich/runtime/commands/0193a2b4-5c
  "expiresAt": "2026-11-26T21:56:00+07:00"}
 ```
 
-##### GET /flows/{flowCode}/runtime/commands/{commandId} · Trạng thái lệnh
-
-::: dac-ta
-**Mục đích.** Trạng thái lệnh.
-
-**Phương thức, đường dẫn.** `GET /flows/{flowCode}/runtime/commands/{commandId}`.
-
-**Quyền.** `PERM-04-read`.
-
-**FR hiện thực.** FR-04-050.
-
-**Tham số.** `flowCode` (path, FlowCode, bắt buộc); `commandId` (path, string, bắt buộc).
-
-**Thân yêu cầu.** Không.
-
-**Chống trùng.** Không.
-
-**Phản hồi thành công.** `200` thành công, `Command`; trường bắt buộc: `id`, `status`, `action`.
-
-**Lỗi.** `401` Thiếu hoặc hết hạn token (ERR-04-044); `404` Không tìm thấy hoặc không được xem (ERR-04-001).
-
-**Ghi chú.** Trả trạng thái lệnh và xác nhận theo từng bản sao (`acks`). `PARTIAL` sau 30 giây khi chưa đủ xác nhận; lý do từ chối nằm ở `acks[].reason`.
-:::
-
-**Ví dụ yêu cầu và phản hồi.**
-
-```http
-GET /api/integration/v1/flows/tra-cuu-ho-tich/runtime/commands/0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61
-```
-
-```http
-HTTP/1.1 200 OK
-
-{"id": "0193a2b4-5c6d-7e8f-9a0b-1c2d3e4f5a61", "environment": "PROD", "action": "PAUSE",
- "scope": "FLOW", "status": "ACKNOWLEDGED", "expectedReplicas": 3, "ackedReplicas": 3,
- "issuedBy": "cuong.lv", "issuedAt": "2026-11-26T21:55:00+07:00",
- "expiresAt": "2026-11-26T21:56:00+07:00",
- "acks": [{"replica": "dh-rt-t68-core-7c9d-x2k4p", "result": "APPLIED",
-   "ackedAt": "2026-11-26T21:55:02+07:00"}]}
-```
-
-##### POST /flows/{flowCode}/runtime/commands/{commandId}:resend · Gửi lại lệnh chưa đủ xác nhận
+#### Gửi lại lệnh chưa đủ xác nhận (API-04-061, POST)
 
 ::: dac-ta
 **Mục đích.** Gửi lại lệnh chưa đủ xác nhận.
@@ -3561,9 +3545,7 @@ HTTP/1.1 200 OK
    "default": "30s", "secret": false}], "flowsUsing": 14}
 ```
 
-#### API-04-072 · Chính sách thành phần (nền + tỉnh); Sửa chính sách thành phần
-
-##### GET /catalog/policies · Chính sách thành phần (nền + tỉnh)
+#### API-04-072 · Chính sách thành phần (nền + tỉnh)
 
 ::: dac-ta
 **Mục đích.** Chính sách thành phần (nền + tỉnh).
@@ -3600,7 +3582,7 @@ HTTP/1.1 200 OK
    "policyVersion": 7}], "policyVersion": 7}
 ```
 
-##### PATCH /catalog/policies · Sửa chính sách thành phần
+#### Sửa chính sách thành phần (API-04-072, PATCH)
 
 ::: dac-ta
 **Mục đích.** Sửa chính sách thành phần.
@@ -3681,9 +3663,7 @@ HTTP/1.1 200 OK
    "libVersion": "dh-lib 1.4.0"}]}
 ```
 
-#### API-04-074 · Đề xuất thành phần; Đề xuất cho phép hoặc bổ sung thành phần; Quyết định đề xuất
-
-##### GET /catalog/proposals · Đề xuất thành phần
+#### API-04-074 · Đề xuất thành phần
 
 ::: dac-ta
 **Mục đích.** Đề xuất thành phần.
@@ -3721,7 +3701,7 @@ HTTP/1.1 200 OK
    "createdAt": "2026-11-26T08:00:00+07:00"}]}
 ```
 
-##### POST /catalog/proposals · Đề xuất cho phép hoặc bổ sung thành phần
+#### Đề xuất cho phép hoặc bổ sung thành phần (API-04-074, POST)
 
 ::: dac-ta
 **Mục đích.** Đề xuất cho phép hoặc bổ sung thành phần.
@@ -3763,7 +3743,7 @@ HTTP/1.1 201 Created
  "createdAt": "2026-11-26T08:00:00+07:00"}
 ```
 
-##### POST /catalog/proposals/{proposalId}:decide · Quyết định đề xuất
+#### Quyết định đề xuất (API-04-074, POST)
 
 ::: dac-ta
 **Mục đích.** Quyết định đề xuất.
@@ -3885,9 +3865,7 @@ HTTP/1.1 200 OK
  "paramSchema": {"type": "object", "required": ["upstream"]}}
 ```
 
-#### API-04-082 · Tạo khuôn của tỉnh từ phiên bản đã duyệt; Ngừng dùng khuôn của tỉnh
-
-##### POST /templates · Tạo khuôn của tỉnh từ phiên bản đã duyệt
+#### API-04-082 · Tạo khuôn của tỉnh từ phiên bản đã duyệt
 
 ::: dac-ta
 **Mục đích.** Tạo khuôn của tỉnh từ phiên bản đã duyệt.
@@ -3931,7 +3909,7 @@ HTTP/1.1 201 Created
  "bodyYaml": "- route:\n    id: tra-cuu\n    from: {uri: 'platform-http:/ho-tich/tra-cuu', steps: [...]}\n"}
 ```
 
-##### POST /templates/{templateCode}:deprecate · Ngừng dùng khuôn của tỉnh
+#### Ngừng dùng khuôn của tỉnh (API-04-082, POST)
 
 ::: dac-ta
 **Mục đích.** Ngừng dùng khuôn của tỉnh.
@@ -3972,9 +3950,7 @@ HTTP/1.1 200 OK
 
 ### Tham số
 
-#### API-04-090 · Tham số 04.*, khoảng đóng băng, biến môi trường; Thay biến môi trường {{dh.env.*}}
-
-##### GET /settings · Tham số 04.*, khoảng đóng băng, biến môi trường
+#### API-04-090 · Tham số 04.*, khoảng đóng băng, biến môi trường
 
 ::: dac-ta
 **Mục đích.** Tham số 04.*, khoảng đóng băng, biến môi trường.
@@ -4012,7 +3988,7 @@ HTTP/1.1 200 OK
    "values": {"TEST": "/sandbox/v1", "STAGING": "/uat/v1", "PROD": "/v1"}, "usedBy": 4}]}
 ```
 
-##### PUT /settings/env-vars · Thay biến môi trường {{dh.env.*}}
+#### Thay biến môi trường {{dh.env.*}} (API-04-090, PUT)
 
 ::: dac-ta
 **Mục đích.** Thay biến môi trường {{dh.env.*}}.

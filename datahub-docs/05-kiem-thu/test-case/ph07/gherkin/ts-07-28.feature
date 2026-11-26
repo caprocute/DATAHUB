@@ -48,7 +48,7 @@ Tính năng: TS-07-28 · Bảo mật (ASVS)
   @TC-07-310 @P2 @Bảo @mật @Âm
   Kịch bản: TC-07-310 Thiếu If-Match và chống ghi đè mất dữ liệu
     # Truy vết: ERR-07-040 · ASVS V13
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi gọi các API sửa (API-07-004, 014, 028) không có `If-Match`.
     Thì `400` `ERR-07-040`.
 
@@ -63,7 +63,7 @@ Tính năng: TS-07-28 · Bảo mật (ASVS)
   @TC-07-312 @P3 @Bảo @mật @Âm
   Kịch bản: TC-07-312 Kiểu nội dung không hỗ trợ
     # Truy vết: ERR-07-043
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi gửi `POST /catalogs` với `Content-Type: application/xml`.
     Thì `415` `ERR-07-043`.
 
@@ -77,7 +77,7 @@ Tính năng: TS-07-28 · Bảo mật (ASVS)
   @TC-07-314 @P1 @Bảo @mật
   Kịch bản: TC-07-314 Dữ liệu cá nhân không vào danh mục
     # Truy vết: BR-07-025 · ERR-07-036 · Luật 91/2025/QH15
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi khai báo thuộc tính `so_cccd` không có `piiAcknowledged`.
     Và khai báo thuộc tính mức `SENSITIVE`.
     Thì bước 1 `422` `ERR-07-036` kèm từ khớp. Bước 2 `422` `ERR-07-036`.

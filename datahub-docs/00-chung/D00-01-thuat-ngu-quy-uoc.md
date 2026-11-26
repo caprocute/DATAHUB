@@ -1,13 +1,43 @@
 ---
 ma_tai_lieu: D00-01
 ten: Thuật ngữ và quy ước chung
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Tất cả
+mo_ta: Nguồn định nghĩa duy nhất về thuật ngữ, hệ mã truy vết, kiểu dữ liệu chuẩn, quy ước viết yêu cầu, đặt tên, trình bày và căn cứ pháp lý cho toàn bộ bộ tài liệu Datahub.
+tai_lieu_lien_quan: D00-02 Sổ ADR; D00-03 Ma trận truy vết; D00-04 Sổ tra cứu gọn; D02-01 BRD; D02-02 SRS; D03-01 SAD; khuon/K-TRINH-BAY
 ---
 
 # D00-01 · Thuật ngữ và quy ước chung
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Tài liệu là nguồn định nghĩa duy nhất của bộ tài liệu Datahub về thuật ngữ, hệ mã truy vết, kiểu dữ liệu chuẩn, cách viết yêu cầu đo được, quy ước đặt tên và trình bày. Mọi tài liệu khác chỉ dẫn chiếu tới đây, nhờ đó cùng một khái niệm không bị hiểu theo hai nghĩa và mọi đối tượng đều truy vết được.
+
+**Phạm vi.** Tài liệu gồm ba bảng thuật ngữ (nghiệp vụ và pháp lý, kỹ thuật, từ viết tắt), bảng mã truy vết và năm quy tắc truy vết, mức ưu tiên M, S, C, mẫu đặc tả một yêu cầu chức năng 17 mục, 16 kiểu dữ liệu chuẩn, quy ước đặt tên, danh mục căn cứ pháp lý và tiêu chuẩn, quy ước trình bày, cách đặt tên file và tổ chức ADR. Tài liệu không chứa nội dung nghiệp vụ hay thiết kế của phân hệ nào.
+
+**Căn cứ.** Mục 7 liệt kê 33 văn bản pháp lý mang mã CMP-LAW (từ CMP-LAW-01 Luật Dữ liệu số 60/2024/QH15 đến CMP-LAW-97) và 5 tiêu chuẩn mang mã STD (STD-01 ISO/IEC/IEEE 29148 đến STD-05 OpenAPI, AsyncAPI, RFC 9457). Các tài liệu khác dẫn lại những mã này thay cho việc viết lại tên văn bản.
+
+**Những điểm hội đồng cần lưu ý.** (1) Mỗi chức năng hệ cũ có đúng một kết luận trong bốn giá trị Giữ nguyên, Nâng cấp, Thay thế, Loại bỏ (mục 3.2), nên hội đồng kiểm tra được mức phủ nghiệp vụ. (2) Một mã không bao giờ được tái sử dụng, kể cả khi đối tượng bị hủy, nên dấu vết thay đổi không bị mất. (3) Văn bản ở trạng thái "Cần xác minh" trong mục 7 phải được đối chiếu nguồn chính thức trước khi phát hành bản 1.0. (4) Mỗi yêu cầu chức năng được đặc tả theo mẫu 17 mục cố định (mục 4.3), nên các phân hệ có cùng độ chi tiết và cùng cách kiểm thử.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Thuật ngữ nghiệp vụ và pháp lý | 17 |
+| Thuật ngữ kỹ thuật | 22 |
+| Từ viết tắt | 28 |
+| Dòng trong bảng mã truy vết | 41 |
+| Quy tắc truy vết | 5 |
+| Mục của mẫu đặc tả một FR | 17 |
+| Kiểu dữ liệu chuẩn | 16 |
+| Văn bản pháp lý CMP-LAW | 33 |
+| Tiêu chuẩn STD | 5 |
+
+: Con số chính của tài liệu thuật ngữ và quy ước chung
+
+Các con số trên được đếm từ bảng ở mục 2, 3.1, 4.3, 5 và 7 của tài liệu này.
 
 ## 1. Mục đích và phạm vi
 
@@ -15,9 +45,56 @@ Tài liệu này là nguồn định nghĩa duy nhất cho **thuật ngữ, hệ
 
 Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định dùng mục 2 và mục 7 để hiểu ngôn ngữ chung và căn cứ pháp lý. Đội kỹ thuật dùng mục 3 đến mục 6 làm luật khi viết tài liệu và mã nguồn.
 
+### 1.1. Người đọc và cách đọc
+
+Bảng dưới gợi ý phần cần đọc theo vai trò, để người đọc không phải đọc hết tài liệu.
+
+| Người đọc | Đọc phần | Mục đích |
+|---|---|---|
+| Hội đồng thẩm định | Tóm tắt, mục 2, 7 | Hiểu ngôn ngữ chung và căn cứ pháp lý của bộ tài liệu |
+| Người viết tài liệu, quản lý dự án | Mục 3, 4, 8, 9 | Dùng đúng mã truy vết, mẫu yêu cầu, quy ước trình bày và tổ chức file |
+| Kiến trúc sư, kỹ sư | Mục 5, 6 | Dùng đúng kiểu dữ liệu chuẩn và quy ước đặt tên khi thiết kế, viết mã |
+| Kiểm thử viên | Mục 3.2, 4.2, 4.3 | Truy vết yêu cầu tới ca kiểm thử, kiểm tra yêu cầu đo được |
+
+: Người đọc D00-01 và phần cần đọc theo vai trò
+
+### 1.2. Tài liệu tham chiếu
+
+Tài liệu này là gốc của bộ tài liệu nên chỉ dẫn chiếu ít tài liệu khác, như bảng dưới.
+
+| Mã | Tên | Vai trò với tài liệu này |
+|---|---|---|
+| D00-02 | Sổ quyết định kiến trúc (ADR) | Hiện thực mục 9.2: dải số và danh sách ADR |
+| D00-03 | Ma trận truy vết | Hiện thực mục 3.2: kết luận cho từng chức năng hệ cũ |
+| D00-04 | Sổ tra cứu gọn | Bản rút gọn của mục 3, 6 và 8 cho người viết phân hệ |
+| D02-02 | Đặc tả yêu cầu phần mềm (SRS) | Nơi định nghĩa FR-00 và NFR-00 dùng chung |
+| khuon/K-TRINH-BAY | Quy chuẩn trình bày | Cụ thể hóa mục 8 về văn phong và cách trình bày |
+| CMP-LAW, STD | Văn bản pháp lý, tiêu chuẩn | Căn cứ liệt kê ở mục 7 |
+
+: Tài liệu tham chiếu của D00-01
+
+### 1.3. Cấu trúc tài liệu
+
+Tài liệu đi từ từ vựng, qua mã và quy ước viết, tới căn cứ pháp lý và tổ chức file. Thuật ngữ và chữ viết tắt nằm ở chương 2 vì đó là nội dung chính của tài liệu.
+
+| Chương | Nội dung | Người đọc chính |
+|---|---|---|
+| 2 | Thuật ngữ nghiệp vụ, pháp lý, kỹ thuật và từ viết tắt | Mọi người đọc |
+| 3 | Bảng mã truy vết và quy tắc truy vết | Người viết, kiểm thử viên |
+| 4 | Mức ưu tiên, cách viết yêu cầu đo được, mẫu đặc tả FR | Người viết, kiểm thử viên |
+| 5 | Kiểu dữ liệu chuẩn và trường ngữ cảnh bắt buộc | Kiến trúc sư, kỹ sư |
+| 6 | Quy ước đặt tên | Kỹ sư |
+| 7 | Căn cứ pháp lý và tiêu chuẩn viện dẫn | Hội đồng thẩm định |
+| 8 | Quy ước trình bày tài liệu | Người viết |
+| 9 | Đặt tên file, ADR, làm việc song song | Người viết, quản lý dự án |
+
+: Cấu trúc chương của D00-01
+
 ## 2. Thuật ngữ
 
 ### 2.1. Thuật ngữ nghiệp vụ và pháp lý
+
+Bảng dưới giải thích các thuật ngữ nghiệp vụ và pháp lý mà hội đồng thẩm định và người viết gặp trong toàn bộ bộ tài liệu, kèm tiếng Anh và định nghĩa.
 
 | Thuật ngữ | Tiếng Anh | Định nghĩa trong Datahub |
 |---|---|---|
@@ -39,7 +116,11 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | Quản trị nền tảng | Platform operator | Đơn vị vận hành phần dùng chung của sản phẩm, quản lý nhiều tenant. |
 | Quản trị tenant | Tenant administrator | Cán bộ của tỉnh, quản trị Datahub trong phạm vi tỉnh mình. |
 
+: Thuật ngữ nghiệp vụ và pháp lý của Datahub, kèm tiếng Anh
+
 ### 2.2. Thuật ngữ kỹ thuật
+
+Bảng dưới giải thích các thuật ngữ kỹ thuật dùng ở tài liệu thiết kế và đặc tả, để người viết dùng thống nhất một tên cho một khái niệm.
 
 | Thuật ngữ | Tiếng Anh | Định nghĩa |
 |---|---|---|
@@ -66,7 +147,11 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | RLS | Row Level Security | Cơ chế của PostgreSQL lọc dòng dữ liệu theo ngữ cảnh phiên; dùng để cách ly tenant. |
 | Liquid Glass | Liquid Glass | Ngôn ngữ thiết kế vật liệu kính trong suốt của Apple. Datahub học theo phong cách này cho lớp điều hướng và lớp nổi, không dùng tài sản của Apple. Xem D03-05. |
 
+: Thuật ngữ kỹ thuật của Datahub, kèm tiếng Anh
+
 ### 2.3. Từ viết tắt
+
+Bảng dưới liệt kê các từ viết tắt dùng trong bộ tài liệu cùng dạng đầy đủ, để không phải giải thích lại ở từng tài liệu.
 
 | Viết tắt | Đầy đủ |
 |---|---|
@@ -98,6 +183,8 @@ Tài liệu phục vụ hai nhóm người đọc. Hội đồng thẩm định 
 | UAT | User Acceptance Test |
 | VBQPPL | Văn bản quy phạm pháp luật |
 | WCAG | Web Content Accessibility Guidelines |
+
+: Từ viết tắt dùng trong bộ tài liệu và dạng đầy đủ
 
 ## 3. Hệ mã truy vết
 
@@ -149,7 +236,11 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 | `S1`…`S4` / `P1`…`P4` | Mức nghiêm trọng / mức ưu tiên của lỗi | D05-01 | `S2/P1` |
 | `T90`…`T99` | Mã tenant dành cho kiểm thử | D05-01 | `T91` |
 
+: Họ mã truy vết, đối tượng, tài liệu định nghĩa và ví dụ
+
 ### 3.2. Quy tắc truy vết
+
+Năm quy tắc dưới đây bảo đảm mọi yêu cầu đi được từ mục tiêu nghiệp vụ tới kiểm thử và mọi chức năng hệ cũ đều có kết luận.
 
 1. Mỗi `FR` phải tham chiếu ít nhất một `REQ`. Nếu FR thay thế chức năng hệ cũ thì tham chiếu thêm `LGC`.
 2. Mỗi `UC` liệt kê các `FR` mà nó hiện thực.
@@ -161,11 +252,15 @@ Mỗi đối tượng trong bộ tài liệu có một mã duy nhất, không ba
 
 ### 4.1. Mức ưu tiên
 
+Ba mức ưu tiên dưới đây dùng cho mọi yêu cầu, để biết mức nào bắt buộc nghiệm thu và mức nào có thể lùi.
+
 | Mức | Ký hiệu | Ý nghĩa |
 |---|---|---|
 | Bắt buộc | **M** (Must) | Thiếu thì phân hệ không dùng được, hoặc vi phạm quy định, hoặc mất một chức năng hệ cũ đang dùng. |
 | Cần có | **S** (Should) | Ảnh hưởng đáng kể tới chất lượng; có thể lùi sang đợt sau nếu được chấp thuận. |
 | Nên có | **C** (Could) | Cải thiện trải nghiệm; không chặn nghiệm thu. |
+
+: Ba mức ưu tiên M, S, C và ý nghĩa
 
 ### 4.2. Cách viết một yêu cầu đo được
 
@@ -225,6 +320,8 @@ Các kiểu dưới đây áp dụng cho mọi đặc tả dữ liệu, API và 
 | `T-URI` | Địa chỉ | `varchar(2048)` | `string`, `format: uri` | |
 | `T-SECRET-REF` | Tham chiếu bí mật | `varchar(255)` | `string` | Đường dẫn tới kho bí mật; **không bao giờ lưu giá trị bí mật**. |
 
+: Kiểu dữ liệu chuẩn và ánh xạ sang PostgreSQL, JSON, OpenAPI
+
 ### 5.1. Trường ngữ cảnh bắt buộc
 
 Mọi bảng nghiệp vụ có các cột sau, trừ khi SDD ghi rõ ngoại lệ:
@@ -237,9 +334,13 @@ Mọi bảng nghiệp vụ có các cột sau, trừ khi SDD ghi rõ ngoại l�
 | `updated_at`, `updated_by` | `T-TS`, `T-ID` | Thời điểm và người sửa cuối |
 | `version` | `integer` | Khóa lạc quan, tăng mỗi lần sửa |
 
+: Trường ngữ cảnh bắt buộc
+
 Bảng có xóa mềm thêm `deleted_at` (`T-TS`, có thể rỗng).
 
 ## 6. Quy ước đặt tên
+
+Bảng dưới quy định cách đặt tên cho từng loại đối tượng kỹ thuật, kèm ví dụ, để mã nguồn và tài liệu của các phân hệ nhất quán.
 
 | Đối tượng | Quy ước | Ví dụ |
 |---|---|---|
@@ -251,6 +352,8 @@ Bảng có xóa mềm thêm `deleted_at` (`T-TS`, có thể rỗng).
 | Component React | `PascalCase`; hook `useCamelCase` | `CatalogTree`, `useCatalogItems` |
 | Design token | `--dh-{nhóm}-{vai trò}-{biến thể}` | `--dh-color-surface-glass-regular` |
 | Nhánh Git | `{loại}/{mã-việc}-{mô-tả-ngắn}` | `feat/FR-07-021-import-excel` |
+
+: Quy ước đặt tên theo loại đối tượng kỹ thuật
 
 ## 7. Căn cứ pháp lý và tiêu chuẩn viện dẫn
 
@@ -297,9 +400,13 @@ Cột "Trạng thái kiểm tra" cho biết số hiệu và hiệu lực đã đ
 | STD-04 | WCAG 2.2 | Khả năng truy cập giao diện, mức AA | — |
 | STD-05 | OpenAPI 3.1, AsyncAPI 3.0, RFC 9457 | Hợp đồng API, sự kiện, định dạng lỗi | — |
 
+: Mã, văn bản, nội dung chi phối và trạng thái kiểm tra của căn cứ pháp lý và tiêu chuẩn
+
 Bối cảnh tổ chức từ năm 2025 cũng chi phối thiết kế: Bộ Thông tin và Truyền thông hợp nhất vào Bộ Khoa học và Công nghệ; chính quyền địa phương chuyển sang mô hình hai cấp (tỉnh, xã); số đơn vị hành chính cấp tỉnh còn 34. Hệ quả trực tiếp là danh mục đơn vị hành chính phải hỗ trợ lịch sử sáp nhập, và cơ quan chủ quản ở các văn bản hệ cũ phải được hiểu theo cơ cấu mới.
 
 ## 8. Quy ước trình bày tài liệu
+
+Sáu quy ước dưới đây áp dụng cho mọi file Markdown của bộ tài liệu; quy chuẩn chi tiết về văn phong nằm ở khuon/K-TRINH-BAY.
 
 1. Mỗi file Markdown bắt đầu bằng khối metadata YAML gồm sáu trường bắt buộc `ma_tai_lieu`, `ten`, `phien_ban`, `ngay` (ISO `yyyy-MM-dd`), `trang_thai` (`Dự thảo` / `Chờ duyệt` / `Đã duyệt`), `nguoi_doc`. Được thêm trường tùy chọn `nguoi_lap`, `phan_he` (ví dụ `PH-07`), `thay_the` (mã tài liệu bị thay thế). Khối này sinh trang bìa và bảng ghi nhận thay đổi khi xuất .docx. Tiêu đề cấp 1 của file có dạng `# {mã} · {tên}`.
 2. Phiên bản tài liệu: `0.x` là dự thảo; `1.0` là bản được duyệt qua cổng; tăng số phụ khi sửa nội dung, tăng số chính khi đổi phạm vi.
@@ -328,7 +435,15 @@ Sổ D00-02 gồm một file chỉ mục `00-chung/D00-02-so-adr.md` và **mỗi
 | ADR-040 … 049 | Thanh toán (PH-19) | — |
 | ADR-050 … 059 | Danh mục dùng chung (PH-07) và các phân hệ khác | — |
 
+: Dải số ADR cấp trước theo chủ đề và các số đã cấp
+
 ### 9.3. Nhánh và PR khi viết song song
 
 Nhánh nền chứa khung thư mục và D00-01 là `claude/project-thread-ru93ej`. Mỗi nhóm tạo nhánh riêng từ nhánh nền và mở PR riêng. Mỗi nhóm chỉ sửa file thuộc phạm vi của mình. Việc bổ sung mã truy vết mới hoặc thuật ngữ mới vào D00-01 được ghi trong PR của nhóm và được gộp về D00-01 bởi luồng lõi, để tránh xung đột trên cùng một file. Dòng trạng thái trong `README.md` cũng do luồng lõi cập nhật.
 
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 21/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: thuật ngữ, hệ mã truy vết, quy ước viết yêu cầu, kiểu dữ liệu, đặt tên, căn cứ pháp lý, trình bày, tổ chức file |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định; thêm mục 1.1 Người đọc, 1.2 Tài liệu tham chiếu, 1.3 Cấu trúc tài liệu; thêm đoạn mở cho các mục 2.1, 2.2, 2.3, 3.2, 4.1, 6, 8; viết lại chú thích bảng cho cụ thể. Mẫu đặc tả 17 mục (mục 4.3) giữ nguyên |

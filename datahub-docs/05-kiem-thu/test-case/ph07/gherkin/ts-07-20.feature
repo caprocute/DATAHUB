@@ -91,7 +91,7 @@ Tính năng: TS-07-20 · Ma trận phân quyền, bốn mắt, phạm vi tổ ch
   @TC-07-245 @P2 @Dương @Âm
   Kịch bản: TC-07-245 Quyền ánh xạ
     # Truy vết: FR-07-041 · PERM-07-mapping (đề xuất)
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi U-T68-IE, TA, DS-NV ghi ánh xạ; U-T68-VW, DA1 ghi ánh xạ.
     Thì IE, TA, DS-NV `200`; VW, DA1 `403-PQ`.
 
@@ -106,7 +106,7 @@ Tính năng: TS-07-20 · Ma trận phân quyền, bốn mắt, phạm vi tổ ch
   @TC-07-247 @P2 @Dương @Âm
   Kịch bản: TC-07-247 Quyền cấu hình tham số
     # Truy vết: FR-07-053 · PERM-07-configure (đề xuất)
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi U-T68-TA đổi `07.rdm.import-preview-ttl-hours`.
     Và U-T68-DA1 đổi cùng tham số.
     Thì bước 1 `200`; bước 2 `403-PQ`.

@@ -185,6 +185,16 @@ def vi_du(m, path, op):
     return ['**Ví dụ yêu cầu và phản hồi.**', '', '```http', *yc, '```', '', '```http', *ph, '```', '']
 
 
+def loi_txt(op, loi):
+    # OpenAPI có x-datahub-errors (mã lỗi riêng của thao tác) thì chỉ liệt kê mã HTTP và các mã đó,
+    # tránh chép mọi mã của phản hồi lỗi dùng chung.
+    ma = op.get('x-datahub-errors')
+    if not ma:
+        return '; '.join(loi) or 'Không'
+    http = ', '.join(x.split(' ')[0] for x in loi)
+    return f"HTTP {http}; mã lỗi của thao tác: {', '.join(ma)} (ý nghĩa ở chương mã lỗi)"
+
+
 nhom = {}
 for path, item in d['paths'].items():
     for m, op in item.items():
@@ -192,14 +202,10 @@ for path, item in d['paths'].items():
             continue
         nhom.setdefault((op.get('tags') or ['Khác'])[0], []).append((op['x-datahub-id'], m.upper(), path, op))
 L = ['<!-- gen:dac-ta-api:start -->', '']
+da_gap = set()  # một mã dùng cho nhiều phương thức trên cùng tài nguyên (vd GET và PUT)
 for tag, ops in nhom.items():
     L += [f'### {tag}', '']
-    dem = {}
-    for aid, *_ in ops:
-        dem[aid] = dem.get(aid, 0) + 1
-    da_mo = set()
-    ops = sorted(ops, key=lambda x: x[0])
-    for aid, m, path, op in ops:
+    for aid, m, path, op in sorted(ops, key=lambda x: x[:3]):
         ps, idem = tham_so(op.get('parameters'))
         ok, loi = resp(op.get('responses', {}))
         quyen = (op.get('x-datahub-permission') or {}).get('permission', 'Token dịch vụ')
@@ -209,15 +215,10 @@ for tag, ops in nhom.items():
         rows = [('Mục đích', muc), ('Phương thức, đường dẫn', f'`{m} {path}`'), ('Quyền', f'`{quyen}`' if quyen.startswith('PERM') else quyen),
                 ('FR hiện thực', fr), ('Tham số', '; '.join(ps) or 'Không'), ('Thân yêu cầu', body(op.get('requestBody'))),
                 ('Chống trùng', 'Có, tiêu đề `Idempotency-Key`' if idem else 'Không'), ('Phản hồi thành công', '; '.join(ok) or 'Không'),
-                ('Lỗi', '; '.join(loi) or 'Không'), ('Ghi chú', mota or 'Không')]
-        if dem[aid] == 1:
-            L += [f'#### {aid} · {muc}', '']
-        else:
-            if aid not in da_mo:
-                da_mo.add(aid)
-                L += [f'#### {aid} · ' + '; '.join(o.get('summary', '') for a, _, _, o in ops if a == aid), '']
-            L += [f'##### {m} {path} · {muc}', '']
-        L += ['::: dac-ta']
+                ('Lỗi', loi_txt(op, loi)), ('Ghi chú', mota or 'Không')]
+        tieu_de = f'#### {aid} · {muc}' if aid not in da_gap else f'#### {muc} ({aid}, {m})'
+        da_gap.add(aid)
+        L += [tieu_de, '', '::: dac-ta']
         L += [f"**{a}.** {b.rstrip('.')}.\n" for a, b in rows]
         L[-1] = L[-1].rstrip('\n')
         L += [':::', '']

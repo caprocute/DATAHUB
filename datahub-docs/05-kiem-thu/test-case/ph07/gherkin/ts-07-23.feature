@@ -15,7 +15,7 @@ Tính năng: TS-07-23 · Khai thác danh mục RESTRICTED
   @TC-07-269 @P1 @Âm
   Kịch bản: TC-07-269 Danh sách cấp quyền sai
     # Truy vết: FR-07-052 · ERR-07-009, 018
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi PUT với HTTT không tồn tại; HTTT trùng; scope `rdm.write`; `expiresAt` trong quá khứ; thiếu `reason`.
     Và PUT với `If-Match` cũ.
     Thì bước 1 mỗi trường hợp `422` `ERR-07-009`, danh sách không đổi. Bước 2 `412` `ERR-07-018`.

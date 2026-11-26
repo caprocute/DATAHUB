@@ -1,13 +1,72 @@
 ---
 ma_tai_lieu: D00-04
 ten: Sổ tra cứu gọn cho người viết tài liệu phân hệ
-phien_ban: 0.1
+phien_ban: 0.2
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Người viết tài liệu phân hệ (người và Claude), kiểm thử viên, kỹ sư
+mo_ta: Sổ tra cứu gọn cho người viết tài liệu phân hệ về mã đã dùng, số kế tiếp, quy ước đặt tên và các quyết định đã chốt, để không phải đọc lại tài liệu gốc.
+tai_lieu_lien_quan: D00-01 Thuật ngữ và quy ước; D00-02 Sổ ADR; D00-03 Ma trận truy vết; D03-01 SAD; khuon/; build/tools/kiem_tra_ma.py
 ---
 
 # D00-04 · Sổ tra cứu gọn cho người viết tài liệu phân hệ
+
+## Tóm tắt cho hội đồng thẩm định
+
+**Mục tiêu.** Sổ gom vào vài trang những gì người viết tập phân hệ cần biết trước khi viết: mã đã dùng, số kế tiếp, quy ước đặt tên và quyết định đã chốt, để các luồng viết song song không trùng mã và không mở lại tài liệu gốc.
+
+**Phạm vi.** Sổ chỉ tóm tắt, không định nghĩa mới; định nghĩa gốc ở D00-01, D00-02 và D03-01. Bảng dải mã đã dùng ở mục 3.2 được sinh tự động từ bộ tài liệu.
+
+**Căn cứ.** D00-01 §3, §6, §7 (mã truy vết và văn bản CMP-LAW) và nhật ký quyết định D00-02 §5.
+
+**Những điểm hội đồng cần lưu ý.** (1) Sổ không thay thế tài liệu gốc; khi lệch thì tài liệu gốc đúng. (2) Dải mã đã dùng được sinh bằng script `kiem_tra_ma.py` và kiểm tra trong CI nên số kế tiếp đáng tin. (3) Mục 5 chỉ ghi quyết định đã chốt; câu hỏi còn mở nằm ở tài liệu của từng phân hệ.
+
+**Con số chính.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Phân hệ | 20 (12 MVP, 4 đợt 2, 4 đợt 3) |
+| Phân hệ đã đủ bảy tập | 4 (PH-04, 05, 07, 10) |
+| Chủ đề quyết định đã chốt | 9 |
+
+: Con số chính của sổ tra cứu gọn
+
+## Giới thiệu tài liệu
+
+### Mục đích
+
+Giúp người viết tra nhanh mã, quy ước và quyết định trước khi viết một tập phân hệ.
+
+### Phạm vi
+
+Tóm tắt từ D00-01, D00-02, SRS, SAD và bộ khuôn; không thêm quy ước mới.
+
+### Người đọc
+
+Người viết tập phân hệ (người và Claude), kiểm thử viên và kỹ sư đọc mục 1 đến 5; hội đồng thẩm định chỉ cần Tóm tắt và mục 5.
+
+### Thuật ngữ và chữ viết tắt
+
+Sổ không có thuật ngữ riêng; thuật ngữ chung theo D00-01 §2.
+
+### Tài liệu tham chiếu
+
+D00-01 (mã, kiểu, quy ước), D00-02 (ADR, nhật ký), D03-01 (phân hệ, DU), D03-07 (SEC), `khuon/` (khuôn tập phân hệ), `build/tools/kiem_tra_ma.py` (sinh dải mã).
+
+### Cấu trúc tài liệu
+
+Sổ gồm sáu chương theo thứ tự người viết cần tra.
+
+| Chương | Nội dung |
+|---|---|
+| 1 | Cách dùng: tài liệu gốc cần mở theo từng loại thông tin |
+| 2 | Phân hệ, DU và tình trạng tài liệu |
+| 3 | Dải mã cấp trước và dải đã dùng |
+| 4 | Quy ước đặt tên và trình bày |
+| 5 | Quyết định đã chốt |
+| 6 | Kiểm tra tự động |
+
+: Cấu trúc chương của D00-04
 
 ## 1. Cách dùng
 
@@ -30,6 +89,8 @@ Bảng sau cho biết khi cần một chi tiết thì mở tài liệu nào, m�
 | Cây menu, route, mẫu màn `PTN-*`, trạng thái chuẩn | D03-06-00 | §2.3, §2.4, §4 |
 | Khuôn tập phân hệ | [`khuon/`](khuon/README.md) | một tệp theo loại |
 | Ví dụ đầy đủ khi khuôn chưa đủ rõ | Tập PH-07 hoặc PH-04 tương ứng | chỉ mục cần xem |
+
+: Tài liệu gốc cần mở theo từng loại thông tin
 
 ## 2. Phân hệ, DU và tài liệu đã có
 
@@ -58,6 +119,8 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 19 | Thanh toán | `dh-payment` | Đợt 2 | BRD, khung truy vết (luồng riêng) |
 | 20 | Quản trị tenant | `dh-platform` | MVP | chưa |
 
+: Phân hệ, DU triển khai, đợt và tình trạng tài liệu
+
 ## 3. Dải mã đã cấp và số kế tiếp
 
 ### 3.1. Dải cấp trước theo nhóm
@@ -76,6 +139,8 @@ Các dải dưới đây được cấp trước để các luồng viết song 
 | Tenant | Ví dụ trong tài liệu: `T68` (topic chữ thường `t68.`), `T01` cho giả định; `T90…T99` dành cho kiểm thử; `COMMON` là tenant toàn quốc | Không dùng tên tỉnh làm mã |
 | Mẫu màn | `PTN-01…14` (D03-06-00 §4): 01 Danh sách · 02 Chi tiết · 03 Biểu mẫu trang · 04 Biểu mẫu nhanh · 05 Wizard · 06 Dashboard · 07 Designer · 08 Cây + bảng · 09 Nhập có xem trước · 10 Hộp việc, duyệt · 11 Giám sát, tra log · 12 Cài đặt · 13 Trang lỗi · 14 Tài liệu cổng | Tập màn phân hệ không tạo PTN mới |
 | Thành phần | `CMP-*`: 44 nguyên tử (D03-05-03), 75 phức hợp (D03-05-04), 2 nền = 121 | Tập màn phân hệ không tự đặt CMP hay token; cần thêm thì ghi vào phụ lục "Đề nghị bổ sung cho D03-05" |
+
+: Dải mã cấp trước cho từng họ mã
 
 ### 3.2. Dải đã dùng thực tế (sinh tự động)
 
@@ -150,8 +215,10 @@ Bảng sau được sinh từ chính bộ tài liệu, chỉ đếm mã đã đ�
 | LGC-PAY | — | 26 | `LGC-PAY-001` | `LGC-PAY-026` | `LGC-PAY-027` |
 | LGC-TOOL | — | 29 | `LGC-TOOL-001` | `LGC-TOOL-029` | `LGC-TOOL-030` |
 | REQ | — | 31 | `REQ-01` | `REQ-99` | `REQ-100` |
-| CMP-LAW | — | 27 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
+| CMP-LAW | — | 33 | `CMP-LAW-01` | `CMP-LAW-97` | `CMP-LAW-98` |
 | PERM | 01…20 | 120 | — | — | động từ theo D02-08 |
+
+: Dải mã đã dùng thực tế trong bộ tài liệu (sinh tự động)
 
 <!-- dai-ma:ket-thuc -->
 
@@ -177,6 +244,8 @@ Bảng sau tóm tắt D00-01 §6, §8 và D03-06-00 §2.4 ở mức đủ để 
 | Câu hỏi mở | `> **Câu hỏi mở Q{PH}-nn:** …` và gom vào mục câu hỏi mở cuối tài liệu | `Q04-31` |
 | Sơ đồ | Mermaid; mỗi sơ đồ có một đoạn thuyết minh ngay sau; không dùng `;` trong thông điệp sequence | |
 
+: Quy ước đặt tên và trình bày tóm tắt kèm ví dụ
+
 ## 5. Quyết định đã chốt
 
 Các quyết định dưới đây đã được chủ đầu tư chọn và không bàn lại trong tập phân hệ (nhật ký đầy đủ ở D00-02 §5).
@@ -193,6 +262,8 @@ Các quyết định dưới đây đã được chủ đầu tư chọn và kh�
 | PH-04 | Trình thiết kế tự làm lại mô hình Kaoto (ADR-060), catalog sinh lại theo runtime; SQL trực tiếp có kiểm soát (Q359, ADR-067) |
 | Dự án | GitHub khi phát triển, GitLab on-prem khi bàn giao (Q353); chủ quản CNTT là tham số theo tỉnh, mặc định Sở KH&CN (Q05); nguồn chuẩn là Markdown, .docx chỉ là bản xuất |
 
+: Quyết định đã chốt theo chủ đề
+
 ## 6. Kiểm tra tự động
 
 Script `build/tools/kiem_tra_ma.py` chạy trong CI (workflow `datahub-docs`) mỗi khi `datahub-docs/` thay đổi. Nó báo ba loại lỗi:
@@ -208,3 +279,10 @@ python3 datahub-docs/build/tools/kiem_tra_ma.py              # soát, chỉ in l
 python3 datahub-docs/build/tools/kiem_tra_ma.py --tat-ca     # in cả lỗi đã ghi nhận
 python3 datahub-docs/build/tools/kiem_tra_ma.py --dai-ma     # in dải mã đã dùng
 ```
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu: cách dùng, phân hệ và DU, dải mã, quy ước đặt tên, quyết định đã chốt, kiểm tra tự động |
+| 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Áp chuẩn trình bày kết hợp, giữ nguyên nội dung kỹ thuật bản trước: thêm Tóm tắt cho hội đồng thẩm định và phần Giới thiệu tài liệu ngắn gọn (sáu ý); viết lại chú thích bảng cho cụ thể; không sửa khối sinh tự động |

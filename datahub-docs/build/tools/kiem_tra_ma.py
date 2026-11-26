@@ -323,7 +323,7 @@ def main() -> int:
             if not pat.search(text):
                 print(f"Không thấy cặp đánh dấu dải mã trong {SO_TRA_CUU}", file=sys.stderr)
                 return 2
-            SO_TRA_CUU.write_text(pat.sub(lambda _: f"{MARK_BEGIN}\n\n{table}\n\n{MARK_END}", text), encoding="utf-8")
+            SO_TRA_CUU.write_text(pat.sub(lambda _: f"{MARK_BEGIN}\n\n{table}\n\n: Dải mã đã dùng thực tế trong bộ tài liệu (sinh tự động)\n\n{MARK_END}", text), encoding="utf-8")
             print(f"Đã cập nhật bảng dải mã trong {SO_TRA_CUU.relative_to(DOCS)}")
         return 0
 

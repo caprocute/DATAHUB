@@ -150,7 +150,7 @@ Tính năng: TS-07-12 · Tra cứu khai thác qua API
   @TC-07-155 @P2 @Âm
   Kịch bản: TC-07-155 Lược đồ của phiên bản hoặc danh mục không tồn tại
     # Truy vết: FR-07-033 · ERR-07-006, ERR-07-001
-    Biết bộ dữ liệu chuẩn mục 2 đã nạp
+    Biết —.
     Khi gọi `GET /catalogs/LOAI_HINH_TC/schema?version=9`.
     Và gọi `GET /catalogs/KHONG_CO/schema`.
     Và APP-T68-READ gọi `GET /catalogs/LOAI_HINH_TC/schema?version=draft`.
