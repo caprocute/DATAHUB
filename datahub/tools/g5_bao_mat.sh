@@ -7,12 +7,20 @@ cd "$GOC"
 loi=0
 echo "G5 · bảo mật"
 if command -v semgrep >/dev/null; then
+  set +e
   semgrep scan --quiet --error --metrics=off \
     --config p/java --config p/typescript --config p/react --config p/secrets \
     --exclude '**/generated/**' --exclude '**/node_modules/**' --exclude '**/target/**' \
-    datahub/services datahub/web && echo "  ✓ Semgrep 0 phát hiện" || { echo "  ✗ Semgrep có phát hiện"; loi=1; }
+    datahub/services datahub/web >/tmp/g5-semgrep.txt 2>&1
+  rc=$?
+  set -e
+  case $rc in
+    0) echo "  ✓ Semgrep 0 phát hiện" ;;
+    1) echo "  ✗ Semgrep có phát hiện:"; tail -40 /tmp/g5-semgrep.txt; loi=1 ;;
+    *) echo "  ✗ Semgrep KHÔNG CHẠY ĐƯỢC (mã $rc, thường do không tải được bộ luật):"; tail -5 /tmp/g5-semgrep.txt; loi=1 ;;
+  esac
 else
-  echo "  - bỏ qua Semgrep (chưa cài: pip install semgrep)"
+  echo "  ✗ Semgrep chưa cài (pip install semgrep)"; loi=1
 fi
 if [ -d datahub/web/node_modules ]; then
   npm --prefix datahub/web audit --omit=dev --audit-level=high >/tmp/g5-npm.txt 2>&1 \
