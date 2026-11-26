@@ -159,7 +159,8 @@ end
 local function la_bang_truong_noi_dung(tbl)
   if #tbl.colspecs ~= 2 or #tbl.head.rows ~= 1 then return false end
   local h = tbl.head.rows[1].cells
-  return stringify(h[1].contents) == "Trường" and stringify(h[2].contents) == "Nội dung"
+  local a = stringify(h[1].contents)
+  return (a == "Trường" or a == "Mục") and stringify(h[2].contents) == "Nội dung"
 end
 
 local function chuyen_bang_truong(tbl)

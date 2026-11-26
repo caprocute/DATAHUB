@@ -10,17 +10,18 @@ phan_he: PH-{nn}
 
 # D02-04-PH{nn} · Đặc tả use case {Tên}
 
-## 1. Mục đích và phạm vi  [BB]
+## 1. Giới thiệu  [BB]
+Mục đích và phạm vi, người đọc, thuật ngữ (dẫn FRS §1.4), tài liệu tham chiếu.
 ## 2. Quy ước đọc đặc tả
 Cách đánh số luồng chính (1, 2…), thay thế (A1…), ngoại lệ (E1…).
 ## 3. Tác nhân  [BB]
 Tác nhân chính (`ROLE-*`), tác nhân phụ (HTTT, PH khác, dịch vụ ngoài).
 ## 4. Sơ đồ use case tổng  [BB]
-Mermaid `flowchart LR` tác nhân → UC, kèm thuyết minh.
+Mermaid `flowchart LR` tác nhân → UC có `caption`, kèm thuyết minh; quá 15 UC thì chia nhiều hình theo nhóm để đọc được trên A4.
 ## 5. Bảng tổng hợp use case và truy vết  [BB]
 `UC-{nn}-nn | Tên | Tác nhân chính | Mức | FR` ; `UC | UI | API` ; `UC | REQ | BP | LGC`.
 ## 6. Đặc tả chi tiết use case  [BB]
-Mỗi UC một mục `### 6.x. UC-{nn}-nn · {Tên}`: bảng đặc tả, luồng chính, luồng thay thế, luồng ngoại lệ, quy tắc áp dụng.
+Mỗi UC một mục `### 6.x. UC-{nn}-nn · {Tên}` gồm một khối `::: dac-ta` 15 mục đúng thứ tự: Mục tiêu · Tác nhân chính · Tác nhân phụ · Mức ưu tiên · FR hiện thực · Truy vết (REQ, quy trình, LGC) · Tiền điều kiện · Kích hoạt · Đảm bảo tối thiểu · Đảm bảo thành công · Luồng chính · Luồng thay thế · Luồng ngoại lệ (mã ERR kèm câu thông báo lấy từ FRS §9.2) · Quy tắc áp dụng · Màn hình, API. Trình bày theo K-TRINH-BAY; mẫu: D02-04-PH05 bản 0.2.
 ## 7. Luồng phụ dùng chung
 ## 8. Tổng hợp mã mới và đối chiếu
 ## 9. Câu hỏi mở  [BB]
