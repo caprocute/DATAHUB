@@ -442,7 +442,7 @@ Thay bước "liên kết API, kiểm tra phản hồi" khi thêm và kích ho�
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-91; LGC-PAY-001, 007; BR-19-010, 026; UC-19-02; API-19-009, 011; UI-19-06, UI-19-04; EN-19-03; TS-19-02 |
+| Truy vết | REQ-91; LGC-PAY-001, 007; BR-19-010, 026; UC-19-02; API-19-009, 011; UI-19-06, UI-19-04; EN-19-03; TS-19-02; UI-19-02 |
 | Tác nhân, quyền | Quản trị thanh toán · `provider-test` |
 | Tiền điều kiện | NCC không ở `RETIRED`; có đủ tham chiếu bí mật bắt buộc của môi trường được chọn (FR-19-002) |
 | Đầu vào | `environment` (`SANDBOX` hoặc `PRODUCTION`); `useNextCredentials` (T-BOOL, mặc định `true` khi có `pending_change`) |
@@ -854,7 +854,7 @@ Năng lực mới. PH-19 không tạo bảng danh mục trùng với PH-07; mọ
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | S · MVP (kiểm tra khi ghi và tra cứu cho biểu mẫu); phần lắng nghe sự kiện danh mục thay đổi cũng thuộc MVP vì là điều kiện của BR-19-009 |
-| Truy vết | REQ-92; BR-19-009; UC-19-07, UC-19-08; API-19-028; UI-19-08, UI-19-10; EN-19-04, 05; TS-19-07, 08 |
+| Truy vết | REQ-92; BR-19-009; UC-19-07, UC-19-08; API-19-028; UI-19-08, UI-19-10; EN-19-04, 05; TS-19-07, 08; UI-19-09 |
 | Tác nhân, quyền | Hệ thống; người dùng biểu mẫu · `service-read` (tra cứu) |
 | Đầu ra | API-19-028 trả mục của 11 danh mục ở khung §1.5 (mã, tên, hiệu lực), có tìm kiếm; cờ `catalog_invalid` trên dịch vụ và nhóm |
 | Sự kiện, kiểm toán | Khi bật cờ: cảnh báo PH-13 cho quản trị thanh toán; EVT-19-03 với `catalogInvalid = true` |
@@ -1226,7 +1226,7 @@ Nâng cấp chức năng "Nhận kết quả thanh toán từ nhà cung cấp" c
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94, REQ-98; LGC-PAY-010; BR-19-030, 032; NFR-19-003, 020; UC-19-13; API-19-201, 203, 204; EN-19-13, 14; TS-19-13, 30 |
+| Truy vết | REQ-94, REQ-98; LGC-PAY-010; BR-19-030, 032; NFR-19-003, 020; UC-19-13; API-19-201, 203, 204; EN-19-13, 14; TS-19-13, 30; UI-19-16 |
 | Tác nhân, quyền | PayGov (máy chủ); công khai, xác minh bốn lớp |
 | Đầu vào | Yêu cầu HTTP của NCC: header, thân nguyên văn (giới hạn 256 KB), IP nguồn do PH-03 chuyển trong header tin cậy `X-Forwarded-For` đã ký nội bộ |
 | Đầu ra | Phản hồi cho NCC theo đặc tả NCC (giả định: HTTP 200 với thân xác nhận; OQ-19-03); bản ghi `callback_inbox` |
@@ -1297,7 +1297,7 @@ Nâng cấp LGC-PAY-010: không IPN hợp lệ nào bị bỏ qua lặng lẽ.
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94, REQ-95; LGC-PAY-010; BR-19-015, 018; UC-19-13; EN-19-13, 19; EVT-19-17; TS-19-13 |
+| Truy vết | REQ-94, REQ-95; LGC-PAY-010; BR-19-015, 018; UC-19-13; EN-19-13, 19; EVT-19-17; TS-19-13; UI-19-16 |
 | Tác nhân, quyền | Hệ thống |
 | Hậu điều kiện | Inbox `QUARANTINED` với `processing_error`; bản ghi chênh lệch `OPEN` gắn phiên đối soát của ngày giao dịch (tạo phiên `SCHEDULED` nếu chưa có); phiên đang `READY_TO_CLOSE` quay về `IN_REVIEW` |
 | Sự kiện, kiểm toán | EVT-19-17; cảnh báo PH-13 mức cao với `AMOUNT_MISMATCH`, `ORPHAN_CALLBACK` |
@@ -1796,7 +1796,7 @@ Mẫu trình bày XLSX và PDF theo thể thức hành chính (NĐ 30/2020): qu�
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-97; LGC-PAY-009; NFR-19-017; UC-19-25; TS-19-27 |
+| Truy vết | REQ-97; LGC-PAY-009; NFR-19-017; UC-19-25; TS-19-25; UI-19-01 |
 | Tác nhân, quyền | Hệ thống |
 
 | Chỉ số (Prometheus, OpenTelemetry) | Nhãn | Luật cảnh báo mặc định |
@@ -1821,7 +1821,7 @@ Nhãn không chứa mã giao dịch hay dữ liệu cá nhân (giới hạn số
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94; LGC-PAY-012; BR-19-020, 021; NFR-19-010; ADR-044; UC-19-27; EN-19-09, 20; TS-19-28 |
+| Truy vết | REQ-94; LGC-PAY-012; BR-19-020, 021; NFR-19-010; ADR-044; UC-19-27; EN-19-09, 20; TS-19-27 |
 | Tác nhân, quyền | Hệ thống |
 | Đầu ra | `webhook_delivery` cho mỗi (sự kiện, địa chỉ webhook đăng ký loại sự kiện đó) |
 
@@ -1834,7 +1834,7 @@ Xử lý: tác vụ gửi đọc `outbox_event` đã phát, tạo `webhook_deliv
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-94; LGC-PAY-012; BR-19-021; NFR-19-009; ADR-042; UC-19-27; EN-19-21; EVT-19-01…18; TS-19-28 |
+| Truy vết | REQ-94; LGC-PAY-012; BR-19-021; NFR-19-009; ADR-042; UC-19-27; EN-19-21; EVT-19-01…18; TS-19-27 |
 | Tác nhân, quyền | Hệ thống |
 
 Xử lý: mọi thay đổi trạng thái ghi `outbox_event` trong cùng giao dịch CSDL. Bộ phát (Debezium Outbox Event Router đọc WAL của `pg-payment`, hoặc bộ phát quét theo lô khi chưa có Debezium, SDD §6) đẩy lên topic `{tenant}.payment.{entity}.{event}.v1`, khóa phân vùng theo bảng §10.4 của khung, định dạng CloudEvents, lược đồ đăng ký ở Apicurio chế độ tương thích `BACKWARD`. Đảm bảo "ít nhất một lần"; người tiêu thụ chống trùng theo `id`. Mục tiêu độ trễ từ ghi tới phát p95 ≤ 2 giây (NFR-19-009). Bản ghi outbox đã phát được xóa sau 7 ngày. Giao dịch bóng không phát EVT-19-05…10 ra ngoài (chỉ topic nội bộ `{tenant}.payment.shadow.v1`).
@@ -1844,7 +1844,7 @@ Xử lý: mọi thay đổi trạng thái ghi `outbox_event` trong cùng giao d�
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | S · MVP |
-| Truy vết | REQ-94; LGC-PAY-012; BR-19-020; UC-19-27; API-19-077, 078, 079, 109; UI-19-24; EN-19-20; TS-19-28 |
+| Truy vết | REQ-94; LGC-PAY-012; BR-19-020; UC-19-27; API-19-077, 078, 079, 109; UI-19-24; EN-19-20; TS-19-27 |
 | Tác nhân, quyền | Cán bộ tra cứu · `webhook-read`, `webhook-resend`; đối tác kéo thông báo · `partner-pay-read` |
 | Đầu vào (lọc) | `status[]` (`PENDING`, `RETRYING`, `SUCCEEDED`, `EXHAUSTED`), `partnerId`, `eventType`, khoảng thời gian, `transactionCode` |
 | Đầu ra | Danh sách; chi tiết từng lần thử (thời điểm, mã HTTP, độ trễ, 2 KB đầu của phản hồi, lỗi mạng) |
@@ -1859,7 +1859,7 @@ Xử lý: gửi lại chỉ áp dụng cho lượt `EXHAUSTED` (ERR-19-021 nếu
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-98; UC-19-28; API-19-085, 086; UI-19-26; EN-19-22; TS-19-29 |
+| Truy vết | REQ-98; UC-19-28; API-19-085, 086; UI-19-26; EN-19-22; TS-19-28 |
 | Tác nhân, quyền | Quản trị thanh toán · `config-read`, `config-write` |
 | Đầu vào | Tập tham số `19.*` (bảng §7.1) với giá trị mới, `effectiveFrom` (T-TS, không trước hiện tại; mặc định ngay), `note` |
 | Đầu ra | Phiên bản cấu hình mới (số phiên bản tăng dần), phiên bản đang hiệu lực, lịch sử |
@@ -1872,7 +1872,7 @@ Xử lý: hệ thống kiểm tra từng giá trị theo miền ở §7.1 (ERR-1
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-98; D03-10; UC-19-28; EN-19-22; TS-19-29 |
+| Truy vết | REQ-98; D03-10; UC-19-28; EN-19-22; TS-19-28 |
 | Tác nhân, quyền | PH-20 (sự kiện `tenant.module-enabled.v1`, `tenant.module-disabled.v1`); quản trị tenant |
 
 Khi bật: tạo bản ghi `tenant_payment_config` với giá trị mặc định ở §7.1; tạo các topic `{tenant}.payment.*` qua Strimzi `KafkaTopic`; tạo bucket `dh-{tenant}-payment` và `dh-{tenant}-payment-worm` (Object Lock chế độ compliance); tạo đường bí mật OpenBao `kv/dh/{tenant}/payment/`; nạp luật cảnh báo vào PH-13; nạp bộ ánh xạ mã kết quả mặc định của PayGov (SDD §7) ở trạng thái `ACTIVE` cho mọi NCC kiểu `PAYGOV` sẽ tạo; đăng ký tuyến APISIX cho ba nhóm API. Thao tác lũy đẳng; lỗi giữa chừng được thử lại từ bước dở, trạng thái ghi trong `tenant_payment_config.provisioning_state`.
@@ -1888,7 +1888,7 @@ Nhóm O hiện thực chiến lược strangler theo từng đối tác (ADR-049
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-99; LGC-PAY-011, 022; UC-19-29; API-19-089, 090, 088; UI-19-27; EN-19-01, 04, 05, 06, 10, 23, 24, 25; TS-19-30 |
+| Truy vết | REQ-99; LGC-PAY-011, 022; UC-19-29; API-19-089, 090, 088; UI-19-27; EN-19-01, 04, 05, 06, 10, 23, 24, 25; TS-19-29 |
 | Tác nhân, quyền | Quản trị thanh toán · `migration-run` |
 | Đầu vào | `runType` (`IMPORT_CATALOG`, `IMPORT_TRANSACTIONS`), nguồn (`SOURCE_DB` qua kết nối chỉ đọc khai báo ở PH-05, hoặc `FILE` CSV theo mẫu ở D06-01), `fromDate`, `toDate`, `dryRun` (mặc định `true`) |
 | Đầu ra | Tác vụ nền `background_job` loại `MIGRATION` với số dòng đọc, nhập mới, cập nhật, bỏ qua, lỗi; tệp báo cáo dòng lỗi (CSV) |
@@ -1910,7 +1910,7 @@ Xử lý: chạy theo lô 10.000 dòng, mỗi lô một giao dịch CSDL; lỗi 
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-99; BR-19-011, 034; ADR-049; UC-19-29; API-19-047, 048…050; UI-19-12, UI-19-13, UI-19-27; EN-19-06, 16; EVT-19-04; TS-19-31 |
+| Truy vết | REQ-99; BR-19-011, 034; ADR-049; UC-19-29; API-19-047, 048…050; UI-19-12, UI-19-13, UI-19-27; EN-19-06, 16; EVT-19-04; TS-19-29, 33 |
 | Tác nhân, quyền | Quản trị thanh toán · `migration-switch` (đề xuất); người duyệt khác người lập · `migration-switch` (tách nhiệm theo khung §13.2) |
 | Đầu vào | `targetMode` (`LEGACY`, `SHADOW`, `DATAHUB`), `effectiveAt` (mặc định ngay sau duyệt), `reason`, `migrationRunId` của lần đối chiếu gần nhất (bắt buộc khi `targetMode = DATAHUB`) |
 | Hậu điều kiện | Sau duyệt: `payment_partner.routing_mode` đổi; EVT-19-04 phát để PH-03 cập nhật tuyến APISIX trong ≤ 60 giây |
@@ -1929,7 +1929,7 @@ Quy tắc chuyển:
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | C · Sau (chỉ làm khi OQ-19-17 xác nhận cần) |
-| Truy vết | REQ-99; LGC-PAY-024; UC-19-29; API-19-110; TS-19-31 |
+| Truy vết | REQ-99; LGC-PAY-024; UC-19-29; API-19-110; TS-19-29 |
 | Tác nhân, quyền | HTTT đối tác · `partner-pay-create` |
 
 Phạm vi khi được làm: mặt nạ nhận yêu cầu theo hợp đồng API hệ cũ (đường dẫn, tên trường, mã trạng thái), chuyển sang API-19-101…103, chuyển kết quả về định dạng cũ; mỗi phản hồi có tiêu đề `Deprecation` và `Sunset` (RFC 8594) với ngày ngừng hỗ trợ công bố trước tối thiểu 6 tháng; số lượt gọi mặt nạ theo đối tác được đo để theo dõi tiến độ chuyển.
@@ -1939,7 +1939,7 @@ Phạm vi khi được làm: mặt nạ nhận yêu cầu theo hợp đồng API
 | Trường | Nội dung |
 |---|---|
 | Mức ưu tiên, phát hành | M · MVP |
-| Truy vết | REQ-99; BR-19-034; UC-19-29; API-19-089, 090; UI-19-27; EN-19-10, 24, 25; TS-19-30, 31 |
+| Truy vết | REQ-99; BR-19-034; UC-19-29; API-19-089, 090; UI-19-27; EN-19-10, 24, 25; TS-19-29 |
 | Tác nhân, quyền | Kế toán, quản trị thanh toán · `migration-run` |
 | Đầu vào | `runType = COMPARE`, `scope` (`HISTORICAL` cho dữ liệu đã nhập, `SHADOW` cho giao dịch bóng), `partnerId[]`, khoảng tháng |
 | Đầu ra | Bảng so sánh theo tháng và theo đối tác: số lượng, tổng tiền, phân bố trạng thái hai bên; danh sách từng bản ghi lệch (CSV); kết luận `PASSED`/`FAILED` theo ngưỡng của BR-19-034 |
@@ -2047,7 +2047,7 @@ Các tham số dưới đây nằm trong `tenant_payment_config.settings` (EN-19
 
 ### 7.2. Yêu cầu phi chức năng
 
-Danh mục 32 NFR sinh từ khung truy vết §5. Mỗi NFR có cách kiểm chứng; kịch bản kiểm thử tương ứng nằm ở D05-02-PH19 (TS-19-32…34 cho hiệu năng, an toàn và phân quyền).
+Danh mục 32 NFR sinh từ khung truy vết §5. Mỗi NFR có cách kiểm chứng; kịch bản kiểm thử tương ứng nằm ở D05-02-PH19 (TS-19-30…34 cho an toàn callback, cách ly tenant, hiệu năng, phân quyền và chịu lỗi).
 
 #### 7.2.1. Hiệu năng và dung lượng
 
@@ -2462,16 +2462,16 @@ PH-19 được nghiệm thu khi đạt đồng thời các tiêu chí dưới đ
 | Mã | Tiêu chí | Cách đo | TS |
 |---|---|---|---|
 | AC-19-01 | Mọi FR mức M thuộc MVP có ít nhất một ca dương và một ca âm đạt | Báo cáo kết quả kiểm thử D05-02-PH19 | Mọi TS |
-| AC-19-02 | Một giao dịch đầu-cuối trên môi trường thử của PayGov: tạo, chuyển hướng, IPN có chữ ký, webhook tới đối tác, đối soát ngày hôm sau khớp, chốt phiên có biên bản | Kịch bản UAT, bằng chứng nhật ký và biên bản | TS-19-08, 11, 14, 19, 21, 28 |
-| AC-19-03 | Không giao dịch nào đổi trạng thái chỉ từ lượt quay về của người nộp; IPN giả mạo, quá hạn, phát lại đều bị từ chối và ghi nhận | Ca âm tính an toàn | TS-19-11, 12, 33 |
-| AC-19-04 | Gửi 1.000 yêu cầu tạo trùng `Idempotency-Key` và 1.000 IPN trùng song song không sinh bản ghi trùng hay chuyển trạng thái hai lần | Kiểm thử đồng thời | TS-19-09, 13 |
-| AC-19-05 | Mã kết quả chưa ánh xạ không bao giờ làm giao dịch thành công; được cách ly và cảnh báo | Ca âm tính với mã lạ | TS-19-05, 12 |
-| AC-19-06 | Hiệu năng: 200 giao dịch tạo mới/giây mỗi tenant trong 15 phút, p95 tạo giao dịch ≤ 800 ms không tính NCC, tỷ lệ lỗi < 0,1% (NFR-19-001, 002) | Kiểm thử tải với NCC giả lập | TS-19-34 |
-| AC-19-07 | Đối soát phiên 100.000 dòng hoàn tất ≤ 10 phút, tỷ lệ khớp tự động đo được, biên bản sinh đúng tổng | Kiểm thử với dữ liệu tổng hợp | TS-19-19, 21 |
+| AC-19-02 | Một giao dịch đầu-cuối trên môi trường thử của PayGov: tạo, chuyển hướng, IPN có chữ ký, webhook tới đối tác, đối soát ngày hôm sau khớp, chốt phiên có biên bản | Kịch bản UAT, bằng chứng nhật ký và biên bản | TS-19-11, 13, 19, 21, 27 |
+| AC-19-03 | Không giao dịch nào đổi trạng thái chỉ từ lượt quay về của người nộp; IPN giả mạo, quá hạn, phát lại đều bị từ chối và ghi nhận | Ca âm tính an toàn | TS-19-12, 13, 30 |
+| AC-19-04 | Gửi 1.000 yêu cầu tạo trùng `Idempotency-Key` và 1.000 IPN trùng song song không sinh bản ghi trùng hay chuyển trạng thái hai lần | Kiểm thử đồng thời | TS-19-11, 13, 32 |
+| AC-19-05 | Mã kết quả chưa ánh xạ không bao giờ làm giao dịch thành công; được cách ly và cảnh báo | Ca âm tính với mã lạ | TS-19-05, 13 |
+| AC-19-06 | Hiệu năng: 200 giao dịch tạo mới/giây mỗi tenant trong 15 phút, p95 tạo giao dịch ≤ 300 ms, p99 ≤ 800 ms không tính NCC, tỷ lệ lỗi < 0,1% (NFR-19-001, 002) | Kiểm thử tải với NCC giả lập | TS-19-32 |
+| AC-19-07 | Đối soát phiên 100.000 dòng hoàn tất ≤ 10 phút, tỷ lệ khớp tự động đo được, biên bản sinh đúng tổng | Kiểm thử với dữ liệu tổng hợp | TS-19-19, 21, 32 |
 | AC-19-08 | Tách nhiệm: mọi loại đề nghị phê duyệt từ chối người duyệt trùng người lập; hai cấp từ chối người duyệt trùng cấp 1 | Ca âm tính phân quyền | TS-19-33 |
-| AC-19-09 | Cô lập tenant: người dùng, client của tenant A không đọc, không ghi được dữ liệu tenant B qua mọi API; truy vấn CSDL trực tiếp bị RLS chặn | Kiểm thử chéo tenant | TS-19-33 |
-| AC-19-10 | Không có bí mật, số thẻ, số tài khoản đầy đủ, OTP trong CSDL, nhật ký, sự kiện; dữ liệu người nộp được mã hóa mức trường và che theo quyền | Quét dữ liệu và nhật ký sau kiểm thử | TS-19-23, 24, 33 |
-| AC-19-11 | Di trú: nhập dữ liệu hệ cũ chạy lại hai lần không trùng; đối chiếu `HISTORICAL` đạt; một đối tác chạy `SHADOW` ≥ 7 ngày rồi chuyển `DATAHUB` và quay lui được | Diễn tập di trú | TS-19-30, 31 |
+| AC-19-09 | Cô lập tenant: người dùng, client của tenant A không đọc, không ghi được dữ liệu tenant B qua mọi API; truy vấn CSDL trực tiếp bị RLS chặn | Kiểm thử chéo tenant | TS-19-31 |
+| AC-19-10 | Không có bí mật, số thẻ, số tài khoản đầy đủ, OTP trong CSDL, nhật ký, sự kiện; dữ liệu người nộp được mã hóa mức trường và che theo quyền | Quét dữ liệu và nhật ký sau kiểm thử | TS-19-23, 24, 30, 34 |
+| AC-19-11 | Di trú: nhập dữ liệu hệ cũ chạy lại hai lần không trùng; đối chiếu `HISTORICAL` đạt; một đối tác chạy `SHADOW` ≥ 7 ngày rồi chuyển `DATAHUB` và quay lui được | Diễn tập di trú | TS-19-29 |
 | AC-19-12 | Mọi chức năng hệ cũ LGC-PAY-001…026 có màn hoặc API tương ứng được cán bộ vận hành hệ cũ xác nhận | Biên bản UAT | TS-19-25 và các TS theo §9.1 |
 | AC-19-13 | Khi khối điều khiển của Datahub ngừng, `dh-payment` vẫn tạo giao dịch, nhận IPN, gửi webhook (NFR-19-003) | Diễn tập sự cố | TS-19-34 |
 
