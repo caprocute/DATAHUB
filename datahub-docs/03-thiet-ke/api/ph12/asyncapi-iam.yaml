@@ -1,0 +1,1326 @@
+# D03-04-PH12 · AsyncAPI PH-12. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-12 Định danh và phân quyền — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-12-01…16 (D03-04-PH12 §4, FRS §9.3).
+
+
+    EVT-12-01…15 ghi vào `ph12_iam.outbox` cùng giao dịch với thay đổi trạng thái (ADR-042), Debezium outbox router đưa lên Kafka, CloudEvents
+    1.0 chế độ nhị phân. EVT-12-16 do Keycloak phát trực tiếp (không có giao dịch control plane). Tenant `PLATFORM` dùng tiền tố `platform`. Không
+    sự kiện nào mang mật khẩu, bí mật client, khóa riêng hay mã bọc (ràng buộc `ck_outbox_no_secret`, kiểm thử canary). Người nhận xử lý lũy đẳng
+    theo `ce_id`, bỏ qua sự kiện có `version` thấp hơn. Nhật ký quyết định ủy quyền không đi qua các topic này mà theo đường log (FR-12-057).
+    Tương thích: BACKWARD ở Apicurio, chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố tenant.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  userCreated:
+    address: '{tenant}.iam.user.created.v1'
+    title: EVT-12-01
+    description: Tài khoản được tạo hoặc nhập (FR-12-003, 009, 026).
+    messages:
+      userCreated:
+        $ref: '#/components/messages/userCreated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.user.created.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  userStateChanged:
+    address: '{tenant}.iam.user.state-changed.v1'
+    title: EVT-12-02
+    description: Tài khoản đổi trạng thái hoặc đơn vị (FR-12-004, 005, 006, 008).
+    messages:
+      userStateChanged:
+        $ref: '#/components/messages/userStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.user.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  userRoleChanged:
+    address: '{tenant}.iam.user.role-changed.v1'
+    title: EVT-12-03
+    description: Gán, gỡ vai trò, đổi phạm vi hoặc hạn (FR-12-012, 013).
+    messages:
+      userRoleChanged:
+        $ref: '#/components/messages/userRoleChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.user.role-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  userCredentialChanged:
+    address: '{tenant}.iam.user.credential-changed.v1'
+    title: EVT-12-04
+    description: Đổi mật khẩu, đăng ký hoặc đặt lại yếu tố thứ hai, liên kết VNeID. Không có giá trị bí mật.
+    messages:
+      userCredentialChanged:
+        $ref: '#/components/messages/userCredentialChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.user.credential-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  accessRevoked:
+    address: '{tenant}.iam.access.revoked.v1'
+    title: EVT-12-05
+    description: Thu hồi truy cập tức thời (FR-12-040); DU nhận ngay, APISIX kéo qua API-12-079.
+    messages:
+      accessRevoked:
+        $ref: '#/components/messages/accessRevoked'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.access.revoked.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  clientProvisioned:
+    address: '{tenant}.iam.client.provisioned.v1'
+    title: EVT-12-06
+    description: Client được cấp (FR-12-030, 032).
+    messages:
+      clientProvisioned:
+        $ref: '#/components/messages/clientProvisioned'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.client.provisioned.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  clientStateChanged:
+    address: '{tenant}.iam.client.state-changed.v1'
+    title: EVT-12-07
+    description: Client tạm ngừng, tiếp tục, thu hồi (FR-12-008, 031).
+    messages:
+      clientStateChanged:
+        $ref: '#/components/messages/clientStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.client.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  clientCredentialChanged:
+    address: '{tenant}.iam.client.credential-changed.v1'
+    title: EVT-12-08
+    description: Chứng thư, khóa, bí mật, scope của client hoặc tài khoản dịch vụ đổi (FR-12-033, 034, 036, 037).
+    messages:
+      clientCredentialChanged:
+        $ref: '#/components/messages/clientCredentialChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.client.credential-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  policyPublished:
+    address: '{tenant}.iam.policy.published.v1'
+    title: EVT-12-09
+    description: Phiên bản chính sách hoặc gói dữ liệu mới có hiệu lực (FR-12-051, 054).
+    messages:
+      policyPublished:
+        $ref: '#/components/messages/policyPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.policy.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  policyRevoked:
+    address: '{tenant}.iam.policy.revoked.v1'
+    title: EVT-12-10
+    description: Chính sách bị thu hồi hoặc gói bị quay lui (FR-12-055).
+    messages:
+      policyRevoked:
+        $ref: '#/components/messages/policyRevoked'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.policy.revoked.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  grantStateChanged:
+    address: '{tenant}.iam.grant.state-changed.v1'
+    title: EVT-12-11
+    description: Quyền có thời hạn đổi trạng thái (FR-12-017). Phát ở tenant bị truy cập.
+    messages:
+      grantStateChanged:
+        $ref: '#/components/messages/grantStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.grant.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  sodExceptionChanged:
+    address: '{tenant}.iam.sod.exception-changed.v1'
+    title: EVT-12-12
+    description: Ngoại lệ tách nhiệm vụ đổi trạng thái (FR-12-013).
+    messages:
+      sodExceptionChanged:
+        $ref: '#/components/messages/sodExceptionChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.sod.exception-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  realmChanged:
+    address: '{tenant}.iam.realm.changed.v1'
+    title: EVT-12-13
+    description: Realm đổi trạng thái, xoay khóa ký, lệch cấu hình, đổi tham số bảo mật (FR-12-039, 041, 042, 043).
+    messages:
+      realmChanged:
+        $ref: '#/components/messages/realmChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.realm.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  alertRaised:
+    address: '{tenant}.iam.alert.raised.v1'
+    title: EVT-12-14
+    description: Cảnh báo an ninh mới (FR-12-059).
+    messages:
+      alertRaised:
+        $ref: '#/components/messages/alertRaised'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.alert.raised.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  recertCompleted:
+    address: '{tenant}.iam.recert.completed.v1'
+    title: EVT-12-15
+    description: Chiến dịch rà soát quyền đóng (FR-12-018).
+    messages:
+      recertCompleted:
+        $ref: '#/components/messages/recertCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.recert.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  authEventRecorded:
+    address: '{tenant}.iam.auth.event-recorded.v1'
+    title: EVT-12-16
+    description: Sự kiện xác thực (đăng nhập, lỗi, đăng xuất, cấp token, làm mới) do Keycloak phát trực tiếp, không qua outbox (FR-12-056).
+    messages:
+      authEventRecorded:
+        $ref: '#/components/messages/authEventRecorded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.iam.auth.event-recorded.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 259200000
+operations:
+  sendUserCreated:
+    action: send
+    channel:
+      $ref: '#/channels/userCreated'
+    title: EVT-12-01 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/userCreated/messages/userCreated'
+  receiveUserCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/userCreated'
+    title: PH-13, bản chiếu `ph12_iam` nhận
+  sendUserStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/userStateChanged'
+    title: EVT-12-02 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/userStateChanged/messages/userStateChanged'
+  receiveUserStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/userStateChanged'
+    title: PH-13, bản chiếu `ph12_iam` nhận
+  sendUserRoleChanged:
+    action: send
+    channel:
+      $ref: '#/channels/userRoleChanged'
+    title: EVT-12-03 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/userRoleChanged/messages/userRoleChanged'
+  receiveUserRoleChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/userRoleChanged'
+    title: Bộ ghi chính sách (FR-12-051), PH-13 nhận
+  sendUserCredentialChanged:
+    action: send
+    channel:
+      $ref: '#/channels/userCredentialChanged'
+    title: EVT-12-04 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/userCredentialChanged/messages/userCredentialChanged'
+  receiveUserCredentialChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/userCredentialChanged'
+    title: PH-13 nhận
+  sendAccessRevoked:
+    action: send
+    channel:
+      $ref: '#/channels/accessRevoked'
+    title: EVT-12-05 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/accessRevoked/messages/accessRevoked'
+  receiveAccessRevoked:
+    action: receive
+    channel:
+      $ref: '#/channels/accessRevoked'
+    title: DU qua thư viện PEP, PH-13 nhận
+  sendClientProvisioned:
+    action: send
+    channel:
+      $ref: '#/channels/clientProvisioned'
+    title: EVT-12-06 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/clientProvisioned/messages/clientProvisioned'
+  receiveClientProvisioned:
+    action: receive
+    channel:
+      $ref: '#/channels/clientProvisioned'
+    title: PH-01, PH-03, PH-13 nhận
+  sendClientStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/clientStateChanged'
+    title: EVT-12-07 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/clientStateChanged/messages/clientStateChanged'
+  receiveClientStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/clientStateChanged'
+    title: PH-01, PH-03, PH-13 nhận
+  sendClientCredentialChanged:
+    action: send
+    channel:
+      $ref: '#/channels/clientCredentialChanged'
+    title: EVT-12-08 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/clientCredentialChanged/messages/clientCredentialChanged'
+  receiveClientCredentialChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/clientCredentialChanged'
+    title: PH-03 (dấu vân tay), bộ ghi chính sách, PH-13 nhận
+  sendPolicyPublished:
+    action: send
+    channel:
+      $ref: '#/channels/policyPublished'
+    title: EVT-12-09 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/policyPublished/messages/policyPublished'
+  receivePolicyPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/policyPublished'
+    title: DU (xóa bộ đệm), PH-13 nhận
+  sendPolicyRevoked:
+    action: send
+    channel:
+      $ref: '#/channels/policyRevoked'
+    title: EVT-12-10 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/policyRevoked/messages/policyRevoked'
+  receivePolicyRevoked:
+    action: receive
+    channel:
+      $ref: '#/channels/policyRevoked'
+    title: DU, PH-13 nhận
+  sendGrantStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/grantStateChanged'
+    title: EVT-12-11 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/grantStateChanged/messages/grantStateChanged'
+  receiveGrantStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/grantStateChanged'
+    title: PH-13, thông báo quản trị tỉnh bị truy cập nhận
+  sendSodExceptionChanged:
+    action: send
+    channel:
+      $ref: '#/channels/sodExceptionChanged'
+    title: EVT-12-12 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/sodExceptionChanged/messages/sodExceptionChanged'
+  receiveSodExceptionChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/sodExceptionChanged'
+    title: PH-13 nhận
+  sendRealmChanged:
+    action: send
+    channel:
+      $ref: '#/channels/realmChanged'
+    title: EVT-12-13 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/realmChanged/messages/realmChanged'
+  receiveRealmChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/realmChanged'
+    title: PH-20, PH-13 nhận
+  sendAlertRaised:
+    action: send
+    channel:
+      $ref: '#/channels/alertRaised'
+    title: EVT-12-14 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/alertRaised/messages/alertRaised'
+  receiveAlertRaised:
+    action: receive
+    channel:
+      $ref: '#/channels/alertRaised'
+    title: PH-13, kênh thông báo của SO nhận
+  sendRecertCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/recertCompleted'
+    title: EVT-12-15 — dh-platform (module iam, outbox) phát
+    messages:
+    - $ref: '#/channels/recertCompleted/messages/recertCompleted'
+  receiveRecertCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/recertCompleted'
+    title: PH-13 nhận
+  sendAuthEventRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/authEventRecorded'
+    title: EVT-12-16 — Keycloak (bộ lắng nghe `dh-keycloak-spi`, producer idempotent) phát
+    messages:
+    - $ref: '#/channels/authEventRecorded/messages/authEventRecorded'
+  receiveAuthEventRecorded:
+    action: receive
+    channel:
+      $ref: '#/channels/authEventRecorded'
+    title: PH-13, bộ phát hiện bất thường nhận
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`) hoặc `platform`.
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    userCreated:
+      name: userCreated
+      title: EVT-12-01
+      summary: Tài khoản được tạo hoặc nhập (FR-12-003, 009, 026).
+      payload:
+        $ref: '#/components/schemas/UserCreated'
+      headers: &id001
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+          ce_source:
+            type: string
+            description: '`/tenants/{tenant}/iam`'
+          ce_type:
+            type: string
+            description: '`vn.datahub.iam.{đối tượng}.{sự kiện}.v1`'
+          ce_time: &id002
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Mã đối tượng chính.
+          ce_datacontenttype:
+            type: string
+            const: application/json
+          dhtenant:
+            type: string
+            description: Phải khớp tiền tố topic; không khớp chuyển DLQ (D03-10 §3).
+          traceparent:
+            type: string
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+        - dhtenant
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+    userStateChanged:
+      name: userStateChanged
+      title: EVT-12-02
+      summary: Tài khoản đổi trạng thái hoặc đơn vị (FR-12-004, 005, 006, 008).
+      payload:
+        $ref: '#/components/schemas/UserStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+    userRoleChanged:
+      name: userRoleChanged
+      title: EVT-12-03
+      summary: Gán, gỡ vai trò, đổi phạm vi hoặc hạn (FR-12-012, 013).
+      payload:
+        $ref: '#/components/schemas/UserRoleChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+    userCredentialChanged:
+      name: userCredentialChanged
+      title: EVT-12-04
+      summary: Đổi mật khẩu, đăng ký hoặc đặt lại yếu tố thứ hai, liên kết VNeID. Không có giá trị bí mật.
+      payload:
+        $ref: '#/components/schemas/UserCredentialChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId`'
+    accessRevoked:
+      name: accessRevoked
+      title: EVT-12-05
+      summary: Thu hồi truy cập tức thời (FR-12-040); DU nhận ngay, APISIX kéo qua API-12-079.
+      payload:
+        $ref: '#/components/schemas/AccessRevoked'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantCode`'
+    clientProvisioned:
+      name: clientProvisioned
+      title: EVT-12-06
+      summary: Client được cấp (FR-12-030, 032).
+      payload:
+        $ref: '#/components/schemas/ClientProvisioned'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`clientId`'
+    clientStateChanged:
+      name: clientStateChanged
+      title: EVT-12-07
+      summary: Client tạm ngừng, tiếp tục, thu hồi (FR-12-008, 031).
+      payload:
+        $ref: '#/components/schemas/ClientStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`clientId`'
+    clientCredentialChanged:
+      name: clientCredentialChanged
+      title: EVT-12-08
+      summary: Chứng thư, khóa, bí mật, scope của client hoặc tài khoản dịch vụ đổi (FR-12-033, 034, 036, 037).
+      payload:
+        $ref: '#/components/schemas/ClientCredentialChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`clientId` hoặc `accountCode`'
+    policyPublished:
+      name: policyPublished
+      title: EVT-12-09
+      summary: Phiên bản chính sách hoặc gói dữ liệu mới có hiệu lực (FR-12-051, 054).
+      payload:
+        $ref: '#/components/schemas/PolicyPublished'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`policyCode`'
+    policyRevoked:
+      name: policyRevoked
+      title: EVT-12-10
+      summary: Chính sách bị thu hồi hoặc gói bị quay lui (FR-12-055).
+      payload:
+        $ref: '#/components/schemas/PolicyRevoked'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`policyCode`'
+    grantStateChanged:
+      name: grantStateChanged
+      title: EVT-12-11
+      summary: Quyền có thời hạn đổi trạng thái (FR-12-017). Phát ở tenant bị truy cập.
+      payload:
+        $ref: '#/components/schemas/GrantStateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`grantId`'
+    sodExceptionChanged:
+      name: sodExceptionChanged
+      title: EVT-12-12
+      summary: Ngoại lệ tách nhiệm vụ đổi trạng thái (FR-12-013).
+      payload:
+        $ref: '#/components/schemas/SodExceptionChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`exceptionId`'
+    realmChanged:
+      name: realmChanged
+      title: EVT-12-13
+      summary: Realm đổi trạng thái, xoay khóa ký, lệch cấu hình, đổi tham số bảo mật (FR-12-039, 041, 042, 043).
+      payload:
+        $ref: '#/components/schemas/RealmChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantCode`'
+    alertRaised:
+      name: alertRaised
+      title: EVT-12-14
+      summary: Cảnh báo an ninh mới (FR-12-059).
+      payload:
+        $ref: '#/components/schemas/AlertRaised'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`alertId`'
+    recertCompleted:
+      name: recertCompleted
+      title: EVT-12-15
+      summary: Chiến dịch rà soát quyền đóng (FR-12-018).
+      payload:
+        $ref: '#/components/schemas/RecertCompleted'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`tenantCode`'
+    authEventRecorded:
+      name: authEventRecorded
+      title: EVT-12-16
+      summary: Sự kiện xác thực (đăng nhập, lỗi, đăng xuất, cấp token, làm mới) do Keycloak phát trực tiếp, không qua outbox (FR-12-056).
+      payload:
+        $ref: '#/components/schemas/AuthEventRecorded'
+      headers:
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+          dhtenant:
+            type: string
+        required:
+        - dhtenant
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`userId` hoặc `clientId`'
+  schemas:
+    Actor:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+          - USER
+          - SERVICE
+          - SYSTEM
+      required:
+      - id
+      - type
+    UserCreated:
+      type: object
+      properties:
+        tenantId: &id003
+          type: string
+          pattern: ^(T[0-9]{2}|PLATFORM)$
+        userId: &id004
+          type: string
+          format: uuid
+        username:
+          type: string
+        orgCode:
+          type: string
+        authSource:
+          type: string
+          enum:
+          - LOCAL
+          - LDAP
+          - VNEID
+        state: &id005
+          type: string
+          enum:
+          - PENDING_ACTIVATION
+          - ACTIVE
+          - LOCKED
+          - BLOCKED
+          - DISABLED
+        origin:
+          type: string
+          enum:
+          - CONSOLE
+          - IMPORT
+          - LDAP_SYNC
+          - SAGA
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: &id006
+          type: integer
+          description: Số phiên bản đối tượng; người nhận bỏ qua sự kiện có số thấp hơn trạng thái đang giữ.
+        occurredAt: *id002
+      required:
+      - tenantId
+      - userId
+      - username
+      - orgCode
+      - state
+      - version
+    UserStateChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        userId: *id004
+        from: *id005
+        to: *id005
+        orgCode:
+          type: string
+        previousOrgCode:
+          type:
+          - string
+          - 'null'
+        reason:
+          type: string
+          maxLength: 500
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - userId
+      - to
+      - version
+    UserRoleChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        userId: *id004
+        change:
+          type: string
+          enum:
+          - ASSIGNED
+          - REMOVED
+          - SCOPE_CHANGED
+          - EXPIRED
+        assignmentId: *id004
+        roleCode:
+          type: string
+        scopeType:
+          type: string
+          enum:
+          - TENANT
+          - ORG
+          - WORKSPACE
+        scopeRef:
+          type:
+          - string
+          - 'null'
+        validTo: &id009
+          type:
+          - string
+          - 'null'
+          format: date-time
+        sodExceptionId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - userId
+      - change
+      - roleCode
+      - scopeType
+      - version
+    UserCredentialChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        userId: *id004
+        kind:
+          type: string
+          enum:
+          - PASSWORD
+          - TOTP
+          - WEBAUTHN
+          - VNEID
+        change:
+          type: string
+          enum:
+          - SET
+          - REGISTERED
+          - REMOVED
+          - RESET
+          - LINKED
+          - UNLINKED
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - userId
+      - kind
+      - change
+      - version
+    AccessRevoked:
+      type: object
+      properties:
+        tenantId: *id003
+        revocationId: *id004
+        kind:
+          type: string
+          enum:
+          - SUB
+          - CLIENT
+          - JTI
+          - SESSION
+        subject:
+          type: string
+        notBefore: *id002
+        expiresAt: *id002
+        blockAll:
+          type: boolean
+          description: '`true` tới khi Keycloak xác nhận đã vô hiệu (SEC-25).'
+        reason:
+          type: string
+          maxLength: 500
+        actor:
+          $ref: '#/components/schemas/Actor'
+        feedVersion: &id007
+          type: integer
+      required:
+      - tenantId
+      - revocationId
+      - kind
+      - subject
+      - notBefore
+      - expiresAt
+    ClientProvisioned:
+      type: object
+      properties:
+        tenantId: *id003
+        clientId:
+          type: string
+        systemCode:
+          type: string
+        orgCode:
+          type: string
+        authMethod:
+          type: string
+          enum:
+          - TLS_CLIENT_AUTH
+          - PRIVATE_KEY_JWT
+          - CLIENT_SECRET
+        contractLevel:
+          type: string
+          enum:
+          - PUBLIC
+          - INTERNAL
+          - RESTRICTED
+          - SENSITIVE
+        scopeCount: *id007
+        certThumbprint:
+          type: string
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - clientId
+      - systemCode
+      - authMethod
+      - contractLevel
+      - version
+    ClientStateChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        clientId:
+          type: string
+        from: &id008
+          type: string
+          enum:
+          - ENABLED
+          - SUSPENDED
+          - REVOKED
+        to: *id008
+        reason:
+          type: string
+          maxLength: 500
+        automatic:
+          type: boolean
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - clientId
+      - to
+      - version
+    ClientCredentialChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        ownerKind:
+          type: string
+          enum:
+          - CLIENT
+          - SERVICE_ACCOUNT
+        ownerId:
+          type: string
+        change:
+          type: string
+          enum:
+          - CERTIFICATE
+          - JWKS
+          - SECRET
+          - SCOPES
+        thumbprint:
+          type: string
+          description: Dấu vân tay chứng thư hoặc `kid`; không có giá trị bí mật.
+        scopesRevision: *id007
+        overlapUntil: *id009
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - ownerKind
+      - ownerId
+      - change
+      - version
+    PolicyPublished:
+      type: object
+      properties:
+        tenantId: *id003
+        policyCode:
+          type: string
+        versionNo: *id007
+        scope:
+          type: string
+          enum:
+          - PLATFORM
+          - TENANT
+        contentHash:
+          type: string
+        bundleRevision:
+          type: string
+        dataRevision:
+          type: string
+        approvedBy:
+          type: string
+        submittedBy:
+          type: string
+        actor:
+          $ref: '#/components/schemas/Actor'
+        occurredAt: *id002
+      required:
+      - tenantId
+      - bundleRevision
+    PolicyRevoked:
+      type: object
+      properties:
+        tenantId: *id003
+        policyCode:
+          type: string
+        versionNo: *id007
+        kind:
+          type: string
+          enum:
+          - REVOKED
+          - ROLLED_BACK
+        bundleRevision:
+          type: string
+        previousBundleRevision:
+          type: string
+        reason:
+          type: string
+          maxLength: 1000
+        actor:
+          $ref: '#/components/schemas/Actor'
+        occurredAt: *id002
+      required:
+      - tenantId
+      - kind
+      - bundleRevision
+    GrantStateChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        grantId: *id004
+        type:
+          type: string
+          enum:
+          - TENANT_ACCESS
+          - PRIVILEGE
+        requesterId: *id004
+        homeTenant: *id003
+        targetTenant: *id003
+        roleCode:
+          type: string
+        from: &id010
+          type: string
+          enum:
+          - REQUESTED
+          - ACTIVE
+          - REJECTED
+          - EXPIRED
+          - REVOKED
+        to: *id010
+        ticketRef:
+          type: string
+        expiresAt: *id009
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - grantId
+      - type
+      - targetTenant
+      - to
+      - version
+    SodExceptionChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        exceptionId: *id004
+        userId: *id004
+        roleA:
+          type: string
+        roleB:
+          type: string
+        from: &id011
+          type: string
+          enum:
+          - REQUESTED
+          - ACTIVE
+          - REJECTED
+          - EXPIRED
+          - REVOKED
+        to: *id011
+        expiresAt: *id002
+        actor:
+          $ref: '#/components/schemas/Actor'
+        version: *id006
+        occurredAt: *id002
+      required:
+      - tenantId
+      - exceptionId
+      - userId
+      - to
+      - version
+    RealmChanged:
+      type: object
+      properties:
+        tenantId: *id003
+        tenantCode: *id003
+        change:
+          type: string
+          enum:
+          - STATE
+          - KEY_ROTATED
+          - DRIFT
+          - SECURITY_PARAMS
+        from: &id012
+          type: string
+          enum:
+          - PROVISIONING
+          - ACTIVE
+          - SUSPENDED
+          - READ_ONLY
+          - DELETED
+        to: *id012
+        signingKeyId:
+          type: string
+        driftStatus:
+          type: string
+          enum:
+          - IN_SYNC
+          - DRIFTED
+          - HELD
+        changedParams:
+          type: array
+          items:
+            type: string
+        actor:
+          $ref: '#/components/schemas/Actor'
+        occurredAt: *id002
+      required:
+      - tenantId
+      - tenantCode
+      - change
+    AlertRaised:
+      type: object
+      properties:
+        tenantId: *id003
+        alertId: *id004
+        ruleCode:
+          type: string
+          pattern: ^AN-[0-9]{2}$
+        severity:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+        subject:
+          type: string
+        summary:
+          type: string
+          maxLength: 500
+        raisedAt: *id002
+      required:
+      - tenantId
+      - alertId
+      - ruleCode
+      - severity
+      - raisedAt
+    RecertCompleted:
+      type: object
+      properties:
+        tenantId: *id003
+        campaignId: *id004
+        scopeType:
+          type: string
+        scopeRef:
+          type:
+          - string
+          - 'null'
+        total: *id007
+        kept: *id007
+        removed: *id007
+        escalated: *id007
+        closedAt: *id002
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - campaignId
+      - total
+      - closedAt
+    AuthEventRecorded:
+      type: object
+      properties:
+        tenantId: *id003
+        eventId: *id004
+        type:
+          type: string
+          enum:
+          - LOGIN_SUCCESS
+          - LOGIN_FAILURE
+          - LOGOUT
+          - TOKEN_ISSUED
+          - TOKEN_REFRESHED
+          - TOKEN_REFRESH_REUSE
+          - STEPUP
+          - MFA_REGISTERED
+          - ACCOUNT_LOCKED
+        userId:
+          type:
+          - string
+          - 'null'
+        clientId:
+          type:
+          - string
+          - 'null'
+        result:
+          type: string
+          enum:
+          - SUCCESS
+          - FAILURE
+        errorCode:
+          type:
+          - string
+          - 'null'
+          pattern: ^ERR-12-[0-9]{3}$
+        ip:
+          type: string
+        acr:
+          type: integer
+          enum:
+          - 1
+          - 2
+          - 3
+        time: *id002
+      required:
+      - tenantId
+      - eventId
+      - type
+      - result
+      - time
