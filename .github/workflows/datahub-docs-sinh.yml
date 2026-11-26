@@ -1,0 +1,102 @@
+name: datahub-docs-sinh
+
+# Sinh bộ bảy tập tài liệu cho phân hệ chưa có, bằng Claude Agent SDK (khóa ANTHROPIC_API_KEY trong secret).
+# Mỗi phân hệ một job, đẩy lên nhánh claude/project-thread-2na1ls-ph{nn}; chạy lại cùng phân hệ thì tiếp tục
+# từ tập chưa xong (ghi ở datahub-docs/build/so-lieu-token/agent/PH{nn}.json).
+on:
+  workflow_dispatch:
+    inputs:
+      phan_he:
+        description: 'Mã phân hệ, cách nhau dấu phẩy (vd 02 hoặc 02,03,01)'
+        required: true
+      tap:
+        description: 'Tập cần chạy'
+        default: 'frs,uc,sdd,csdl,api,mh,tc,ra-soat'
+      model:
+        description: 'Model viết'
+        default: 'claude-sonnet-5-5'
+      model_ra_soat:
+        description: 'Model rà chéo'
+        default: 'claude-sonnet-5-5'
+      effort:
+        description: 'Mức effort'
+        default: 'high'
+      ngan_sach_usd:
+        description: 'Trần chi phí mỗi phân hệ (US$)'
+        default: '25'
+
+permissions:
+  contents: write
+
+jobs:
+  chuan-bi:
+    runs-on: ubuntu-latest
+    outputs:
+      ds: ${{ steps.ds.outputs.ds }}
+    steps:
+      - id: ds
+        env:
+          PH: ${{ inputs.phan_he }}
+        run: |
+          echo "ds=$(python3 -c "import json,os;print(json.dumps([p.strip().zfill(2) for p in os.environ['PH'].split(',') if p.strip()]))")" >> "$GITHUB_OUTPUT"
+
+  sinh:
+    needs: chuan-bi
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        ph: ${{ fromJson(needs.chuan-bi.outputs.ds) }}
+    concurrency:
+      group: datahub-docs-sinh-ph${{ matrix.ph }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: dh
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NHANH: claude/project-thread-2na1ls-ph${{ matrix.ph }}
+      DH_PG_URL: postgresql://postgres:dh@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lấy nhánh phân hệ (tiếp tục nếu đã có)
+        run: |
+          git config user.name "datahub-docs-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin "$NHANH" >/dev/null; then
+            git fetch -q origin "$NHANH" && git checkout -q -B "$NHANH" FETCH_HEAD
+            git merge -q --no-edit origin/main || { echo "::error::Xung đột khi gộp main"; exit 1; }
+          else
+            git checkout -q -B "$NHANH"
+          fi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cài công cụ
+        run: |
+          pip install -q claude-agent-sdk pyyaml openpyxl jsonschema
+          sudo apt-get install -y -q postgresql-client >/dev/null
+          npm i -g playwright@1.49.1 >/dev/null
+          npx -y playwright@1.49.1 install --with-deps chromium >/dev/null
+          echo "NODE_PATH=$(npm root -g)" >> "$GITHUB_ENV"
+      - name: Sinh tài liệu PH-${{ matrix.ph }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 datahub-docs/build/agent/sinh_phan_he.py --ph "${{ matrix.ph }}" \
+            --tap "${{ inputs.tap }}" --model "${{ inputs.model }}" \
+            --model-ra-soat "${{ inputs.model_ra_soat }}" --effort "${{ inputs.effort }}" \
+            --ngan-sach-usd "${{ inputs.ngan_sach_usd }}" --nhanh "$NHANH"
+      - name: Soát mã lần cuối
+        if: always()
+        run: python3 datahub-docs/build/tools/kiem_tra_ma.py || true
