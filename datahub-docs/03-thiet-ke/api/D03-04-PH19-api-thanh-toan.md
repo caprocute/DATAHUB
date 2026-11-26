@@ -17,7 +17,7 @@ PH-19 có bốn loại giao diện lập trình, cho bốn đối tượng gọi
 
 1. **API quản trị** `/api/payment/v1` (API-19-001…092): cán bộ quản trị, kế toán, người duyệt, kiểm toán dùng qua giao diện Datahub. Gồm nhà cung cấp (NCC), dịch vụ, đối tác, phê duyệt bốn mắt, giao dịch, thông báo kết quả (IPN), hoàn tiền, đối soát, chênh lệch, nhật ký, webhook, dashboard, báo cáo, cấu hình, di trú.
 2. **API đối tác** `/api/payment-partner/v1` (API-19-101…110): HTTT dịch vụ công, một cửa, hộ tịch… gọi để thu phí, lệ phí và tra kết quả. Đây là hợp đồng mà các đơn vị phát triển HTTT của tỉnh cần đọc đầu tiên. Kết quả được đẩy về bằng **webhook** ký HMAC, dự phòng kéo bằng API-19-109.
-3. **API callback** `/api/payment-callback/v1` (API-19-201…204): PayGov gọi về. Tên trường, thuật toán ký, mã phản hồi là **giả định** chờ Tài liệu kỹ thuật kết nối do VPCP cấp (OQ-19-01…07); phần phụ thuộc PayGov nằm gọn trong adapter (ADR-040).
+3. **API callback** `/api/payment-callback/v1` (API-19-201…204): PayGov gọi về; thêm API-19-205 cho trang kết quả người nộp (UI-19-28) thăm dò trạng thái. Tên trường, thuật toán ký, mã phản hồi là **giả định** chờ Tài liệu kỹ thuật kết nối do VPCP cấp (OQ-19-01…07); phần phụ thuộc PayGov nằm gọn trong adapter (ADR-040).
 4. **Sự kiện Kafka** EVT-19-01…18 cho PH-13, PH-16, PH-18 và lớp dữ liệu dùng chung.
 
 So với Payment cũ, hợp đồng mới thêm những bảo đảm mà hệ cũ không có: chống trùng bắt buộc bằng `Idempotency-Key` và chống trùng mã hồ sơ; số tiền là số nguyên đồng (không còn `int(10)`); kết quả về đối tác có chữ ký, có số thứ tự, có gửi lại và có kéo dự phòng; hoàn tiền, xử lý chênh lệch đều qua phê duyệt bốn mắt; mọi lỗi có mã `ERR-19-nnn` và câu tiếng Việt.
@@ -28,7 +28,7 @@ Tài liệu này là văn xuôi giải thích các tệp hợp đồng. Khi văn
 |---|---|---|
 | [`ph19/openapi-payment-admin.yaml`](ph19/openapi-payment-admin.yaml) | API quản trị (OpenAPI 3.1) | 92 operation API-19-001…092 |
 | [`ph19/openapi-payment-partner.yaml`](ph19/openapi-payment-partner.yaml) | API đối tác và 8 webhook (OpenAPI 3.1, mục `webhooks`) | 10 operation API-19-101…110 |
-| [`ph19/openapi-payment-callback.yaml`](ph19/openapi-payment-callback.yaml) | API callback PayGov (OpenAPI 3.1, giả định) | 4 operation API-19-201…204 |
+| [`ph19/openapi-payment-callback.yaml`](ph19/openapi-payment-callback.yaml) | API callback PayGov (OpenAPI 3.1, giả định) | 5 operation API-19-201…205 |
 | [`ph19/asyncapi-payment.yaml`](ph19/asyncapi-payment.yaml) | Sự kiện Kafka (AsyncAPI 3.0) | 18 kênh EVT-19-01…18 |
 | [`ph19/tools/`](ph19/tools/) | `schemas.py` (lược đồ chung), `gen_openapi.py`, `gen_asyncapi.py`, `gen_md.py` (bảng §3, §4, §6), `check_contracts.py` | — |
 
@@ -300,9 +300,10 @@ Bảng sinh từ `ph19/tools/gen_openapi.py` bằng `gen_md.py`. Cột "FR" ghi 
 | Mã | Phương thức, đường dẫn | Nội dung | FR | Quyền `PERM-19-` | Khóa | Thành công |
 |---|---|---|---|---|---|---|
 | API-19-201 | `POST /paygov/{connectionKey}/ipn` | Nhận IPN kết quả thanh toán | 029, 030, 031 | — |  | 200 |
-| API-19-202 | `GET /paygov/{connectionKey}/return` | Người nộp quay về: xác minh tham số, hiển thị UI-19-28, chuyển về đối tác | 025 | — |  | 302 |
+| API-19-202 | `GET /paygov/{connectionKey}/return` | Người nộp quay về: xác minh tham số, hiển thị UI-19-28, chuyển về đối tác | 025 | — |  | 200 |
 | API-19-203 | `POST /paygov/{connectionKey}/refund-ipn` | Nhận kết quả hoàn tiền (nếu PayGov hỗ trợ, OQ-19-06) | 041 | — |  | 200 |
 | API-19-204 | `POST /paygov/{connectionKey}/reconciliation-notices` | Nhận thông báo dữ liệu đối soát sẵn sàng (nếu PayGov hỗ trợ, OQ-19-07) | 043 | — |  | 200 |
+| API-19-205 | `GET /result-status` | Trạng thái rút gọn cho trang UI-19-28 thăm dò (bổ sung 0.2) | 025 | — |  | 200 |
 <!-- gen:endpoints:end -->
 
 ### 3.1. Luồng đối tác thu tiền
@@ -533,4 +534,4 @@ Hợp đồng API của Payment cũ chưa có trong bộ tài liệu được cu
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
-| 0.1 | 26/11/2026 | Bản đầu: 106 operation ở ba tệp OpenAPI, 8 webhook, 18 kênh AsyncAPI, bảng ERR-19 chính thức; đã qua kiểm tra hợp đồng | Nhóm phân hệ PH-19 |
+| 0.1 | 26/11/2026 | Bản đầu: 107 operation (gồm API-19-205 bổ sung khi thiết kế UI-19-28; API-19-202 trả trang HTML thay cho chuyển hướng 302; khối `badges` của API-19-080) ở ba tệp OpenAPI, 8 webhook, 18 kênh AsyncAPI, bảng ERR-19 chính thức; đã qua kiểm tra hợp đồng | Nhóm phân hệ PH-19 |

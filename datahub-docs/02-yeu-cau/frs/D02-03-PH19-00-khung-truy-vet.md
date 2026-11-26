@@ -1412,7 +1412,7 @@ Sơ đồ cho thấy ba cụm dữ liệu. Cụm **cấu hình** (NCC, dịch v�
 
 ### 10.1. Quy ước chung
 
-PH-19 có ba nhóm API REST, mỗi nhóm một tệp OpenAPI 3.1 riêng (mục 16), đều đi qua PH-03 (APISIX). Nhóm **quản trị** `/api/payment/v1` (API-19-001…090) phục vụ giao diện quản trị, xác thực bằng token OIDC của người dùng và kiểm tra quyền `PERM-19-*` qua OPA (ADR-006). Nhóm **đối tác** `/api/payment-partner/v1` (API-19-101…110) cho HTTT đối tác gọi bằng token máy-máy (NFR-19-019); quyền của đối tác là các `PERM-19-partner-*` gán cho vai trò `ROLE-PARTNER_SYSTEM`, đồng thời mọi truy vấn bị giới hạn trong dữ liệu của chính đối tác. Nhóm **callback** `/api/payment-callback/v1` (API-19-201…204) cho nhà cung cấp gọi về; không có token, thay vào đó xác minh theo NFR-19-020. Đường dẫn callback chứa `connectionKey`, khóa ngẫu nhiên riêng của từng bản ghi NCC (EN-19-01), để xác định tenant và NCC trước khi xác minh chữ ký, vì IPN không mang token và một tenant có thể có nhiều kết nối PayGov (ADR-045).
+PH-19 có ba nhóm API REST, mỗi nhóm một tệp OpenAPI 3.1 riêng (mục 16), đều đi qua PH-03 (APISIX). Nhóm **quản trị** `/api/payment/v1` (API-19-001…090) phục vụ giao diện quản trị, xác thực bằng token OIDC của người dùng và kiểm tra quyền `PERM-19-*` qua OPA (ADR-006). Nhóm **đối tác** `/api/payment-partner/v1` (API-19-101…110) cho HTTT đối tác gọi bằng token máy-máy (NFR-19-019); quyền của đối tác là các `PERM-19-partner-*` gán cho vai trò `ROLE-PARTNER_SYSTEM`, đồng thời mọi truy vấn bị giới hạn trong dữ liệu của chính đối tác. Nhóm **callback** `/api/payment-callback/v1` (API-19-201…204 cho nhà cung cấp gọi về; API-19-205 cho trang kết quả UI-19-28 thăm dò trạng thái); không có token, thay vào đó xác minh theo NFR-19-020. Đường dẫn callback chứa `connectionKey`, khóa ngẫu nhiên riêng của từng bản ghi NCC (EN-19-01), để xác định tenant và NCC trước khi xác minh chữ ký, vì IPN không mang token và một tenant có thể có nhiều kết nối PayGov (ADR-045).
 
 Mọi API tuân theo: lỗi dạng `application/problem+json` (RFC 9457) với trường mở rộng `code` = `ERR-19-nnn` và `traceId`; phân trang con trỏ (`cursor`, `limit` mặc định 20, tối đa 200); header `traceparent`; khóa lạc quan bằng `ETag`/`If-Match` cho mọi `PATCH`, `PUT` và thao tác đổi trạng thái; mọi `POST` của nhóm đối tác bắt buộc `Idempotency-Key` (BR-19-006); thao tác đổi trạng thái được mô hình hóa thành tài nguyên con danh từ số nhiều (`/suspensions`, `/lifecycle-requests`) theo D00-01 §6. Cột "PERM" ghi phần sau `PERM-19-`.
 
@@ -1527,6 +1527,7 @@ Mọi API tuân theo: lỗi dạng `application/problem+json` (RFC 9457) với t
 | API-19-110 | POST | `/api/payment-partner/v1/legacy-compat/{operation}` | Mặt nạ tương thích hợp đồng API hệ cũ, ánh xạ sang API-19-101…103 (đường dẫn thật theo hợp đồng cũ, OQ-19-17) | partner-pay-create | FR-19-067 |
 | API-19-201 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/ipn` | Nhận IPN kết quả thanh toán | công khai, xác minh chữ ký | FR-19-029, 030, 031 |
 | API-19-202 | GET | `/api/payment-callback/v1/paygov/{connectionKey}/return` | Người nộp quay về: xác minh tham số, hiển thị UI-19-28, chuyển về đối tác | công khai, xác minh chữ ký | FR-19-025 |
+| API-19-205 | GET | `/api/payment-callback/v1/result-status` | Trạng thái rút gọn cho trang UI-19-28 thăm dò (bổ sung 0.2) | công khai, chữ ký phiên trang | FR-19-025 |
 | API-19-203 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/refund-ipn` | Nhận kết quả hoàn tiền (nếu PayGov hỗ trợ, OQ-19-06) | công khai, xác minh chữ ký | FR-19-041 |
 | API-19-204 | POST | `/api/payment-callback/v1/paygov/{connectionKey}/reconciliation-notices` | Nhận thông báo dữ liệu đối soát sẵn sàng (nếu PayGov hỗ trợ, OQ-19-07) | công khai, xác minh chữ ký | FR-19-043 |
 
@@ -1602,7 +1603,7 @@ PH-19 có 28 màn hình: 27 màn hình quản trị trong giao diện điều h�
 | UI-19-25 | Báo cáo định kỳ | (DS) + biểu đồ | FR-19-058 | API-19-082, 083, 084 |
 | UI-19-26 | Cấu hình thanh toán của tenant | (CT) + (BM) | FR-19-063 | API-19-085, 086 |
 | UI-19-27 | Di trú và chạy song song (lô nhập, đối chiếu, chế độ từng đối tác) | (CT) | FR-19-065, 066, 068 | API-19-089, 090, 047, 088 |
-| UI-19-28 | Trang kết quả thanh toán cho người nộp (công khai) | Trang đơn, tối ưu điện thoại | FR-19-025 | API-19-202 |
+| UI-19-28 | Trang kết quả thanh toán cho người nộp (công khai) | Trang đơn, tối ưu điện thoại | FR-19-025 | API-19-202, 205 |
 
 Nhật ký kiểm toán (FR-19-053) được xem tại màn kiểm toán dùng chung của PH-13, mở từ tab "Lịch sử" của UI-19-04, UI-19-12 và từ UI-19-15; PH-19 không làm màn riêng. FR không có màn hình vì không có tương tác người dùng: FR-19-022, 023, 024, 027, 029 (phần tiếp nhận), 030, 033, 034, 035, 036, 060, 061, 064, 067.
 

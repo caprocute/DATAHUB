@@ -81,13 +81,13 @@ def q(name, schema, desc=None, explode=None):
 def qa(name, item, desc=None): return q(name, arr(item), desc, explode=False)
 
 FROM_TO = [q("from", TS, "Từ thời điểm (bao gồm)."), q("to", TS, "Tới thời điểm (không bao gồm).")]
-TXN_FILTERS = [q("q", STR(100, minLength=3), "Tìm theo mã giao dịch, mã đơn hàng, tham chiếu NCC (khớp chính xác hoặc tiền tố)."),
-               qa("status", R("TransactionStatus")), qa("reconStatus", R("ReconStatus")), qa("serviceCode", R("Code")),
+TXN_FILTERS = [q("q", STR(100, minLength=2), "Tìm theo mã giao dịch, mã đơn hàng, tham chiếu NCC (khớp chính xác hoặc tiền tố)."),
+               qa("status", R("TransactionStatus")), qa("reconStatus", R("ReconStatus")), qa("serviceCode", R("Code")), qa("groupCode", R("Code"), "Nhóm dịch vụ (lĩnh vực), chọn nhiều (LGC-PAY-016)."),
                qa("partnerCode", R("Code")), qa("providerCode", R("Code")), *FROM_TO,
                q("paidFrom", TS), q("paidTo", TS), q("amountMin", R("Money")), q("amountMax", R("Money")),
                q("payerName", STR(255), "Khớp chính xác sau chuẩn hóa (băm HMAC, ADR-048)."), q("payerPhone", STR(20)), q("payerIdNumber", STR(20)),
                q("includeTest", {"type": "boolean", "default": False}), q("includeShadow", {"type": "boolean", "default": False}),
-               q("needsReconciliation", BOOL), q("sort", STR(pattern="^-?(createdAt|paidAt|amount)$", default="-createdAt")), "Cursor", "Limit"]
+               q("needsReconciliation", BOOL), q("latePaid", BOOL), q("initUncertain", BOOL), q("sort", STR(pattern="^-?(createdAt|paidAt|amount)$", default="-createdAt")), "Cursor", "Limit"]
 
 # ------------------------------------------------------------------ chi tiết từng API
 # op, tag, params, body, ok(code, schema), errs (mã ERR riêng), idem ('req'|'opt'|None), ifm (If-Match), desc, mp (multipart), etag
@@ -237,7 +237,8 @@ d("API-19-079", "getWebhookDelivery", T, (200, "WebhookDeliveryDetail"), ["deliv
 
 T = "Dashboard và báo cáo"
 d("API-19-080", "getDashboardOverview", T, (200, "DashboardOverview"), [q("range", enum("TODAY", "7D", "30D", "CUSTOM"), default=None) if False else q("range", enum("TODAY", "7D", "30D", "CUSTOM")),
-  *FROM_TO, q("providerId", UUID), q("serviceCode", R("Code"))])
+  *FROM_TO, q("providerId", UUID), q("serviceCode", R("Code")),
+  q("fields", enum("ALL", "badges"), "`badges`: chỉ trả khối đếm cho huy hiệu menu, nhẹ, gọi mỗi 60 giây.")])
 d("API-19-081", "getDashboardChannels", T, (200, "DashboardChannels"), [q("days", INT(minimum=1, maximum=30, default=30))])
 d("API-19-082", "getReport", T, (200, "Report"), ["reportCode", q("periodType", enum("DAY", "MONTH", "QUARTER", "YEAR")), q("from", DATE), q("to", DATE),
   q("groupBy", STR(64))])
@@ -285,9 +286,12 @@ T = "Callback PayGov"
 CB_DESC = ("**Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối của VPCP (OQ-19-01…07).** Thứ tự: tra `callback_route` theo `sha256(connectionKey)` → "
            "allowlist IP, mTLS → ghi nguyên văn `callback_inbox` → xác minh chữ ký (`ACTIVE`/`NEXT`), dấu thời gian ±5 phút, nonce → trả xác nhận → xử lý bất đồng bộ.")
 d("API-19-201", "receivePaygovIpn", T, (200, "CallbackAck"), ["connectionKey"], "PaygovIpn", ["ERR-19-024", "ERR-19-025", "ERR-19-026", "ERR-19-027", "ERR-19-028"], desc=CB_DESC)
-d("API-19-202", "paygovReturn", T, (302, None), ["connectionKey", q("orderId", STR(32)), q("responseCode", STR(8)), q("signature", STR(1024))],
-  errs=["ERR-19-027"], desc="Người nộp quay về: xác minh chữ ký nếu có, cập nhật hiển thị, chuyển hướng 302 tới `returnUrl` của đối tác kèm `transactionCode`, `status`. "
-  "Không coi tham số trình duyệt là kết quả cuối (FR-19-025).")
+d("API-19-202", "paygovReturn", T, (200, "HTML"), ["connectionKey", q("orderId", STR(32)), q("responseCode", STR(8)), q("signature", STR(1024))],
+  errs=["ERR-19-027"], desc="Người nộp quay về: xác minh chữ ký tham số, trả trang UI-19-28 hiển thị trạng thái **theo CSDL** (không theo tham số); "
+  "trang tự chuyển về `returnUrl` đã lưu của giao dịch kèm `transactionCode`, `status`, `ts`, `sig` sau 5 giây. "
+  "Không đổi trạng thái giao dịch (BR-19-014, FR-19-025). Sai chữ ký: 400, trang không chuyển tới đối tác.")
+d("API-19-205", "getPublicResultStatus", T, (200, "PublicResultStatus"), [q("t", STR(64), "Mã phiên trang kết quả do API-19-202 cấp."), q("s", STR(128), "Chữ ký phiên trang, hạn 2 phút.")],
+  errs=["ERR-19-020"], desc="Trang UI-19-28 thăm dò trạng thái khi giao dịch còn `CREATED`, `PENDING` (mỗi 3 giây, tối đa 20 giây). Chỉ trả trạng thái rút gọn, không có dữ liệu cá nhân; giới hạn tốc độ theo IP ở APISIX.")
 d("API-19-203", "receivePaygovRefundIpn", T, (200, "CallbackAck"), ["connectionKey"], "PaygovIpn", ["ERR-19-024", "ERR-19-025", "ERR-19-026", "ERR-19-027", "ERR-19-028"], desc=CB_DESC)
 d("API-19-204", "receivePaygovReconNotice", T, (200, "CallbackAck"), ["connectionKey"], "PaygovIpn", ["ERR-19-024", "ERR-19-025", "ERR-19-027"], desc=CB_DESC)
 
@@ -327,7 +331,8 @@ def build_op(e, det):
         op["requestBody"] = {"required": True, "content": {"multipart/form-data": {"schema": R(det["mp"])}}}
     code, sch = det["ok"]
     okr = {"description": {200: "Thành công.", 201: "Đã tạo.", 202: "Đã tiếp nhận, xử lý bất đồng bộ.", 204: "Đã xóa.", 302: "Chuyển hướng tới `returnUrl`."}[code]}
-    if sch: okr["content"] = {"application/json": {"schema": R(sch)}}
+    if sch == "HTML": okr["content"] = {"text/html": {"schema": STR(description="Trang UI-19-28 (D03-06-PH19 §34) do dh-payment vai trò callback dựng sẵn.")}}
+    elif sch: okr["content"] = {"application/json": {"schema": R(sch)}}
     hdr = {}
     if det["etag"]: hdr["ETag"] = {"schema": STR(), "description": "`W/\"{version}\"`"}
     if code in (201, 202) and g != "callback": hdr["Location"] = {"schema": STR()}

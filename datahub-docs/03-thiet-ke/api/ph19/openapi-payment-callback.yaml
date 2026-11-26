@@ -74,8 +74,9 @@ paths:
       x-datahub-id: API-19-202
       x-datahub-fr:
       - FR-19-025
-      description: 'Người nộp quay về: xác minh chữ ký nếu có, cập nhật hiển thị, chuyển hướng 302 tới `returnUrl` của đối tác kèm `transactionCode`,
-        `status`. Không coi tham số trình duyệt là kết quả cuối (FR-19-025).'
+      description: 'Người nộp quay về: xác minh chữ ký tham số, trả trang UI-19-28 hiển thị trạng thái **theo CSDL** (không theo tham số); trang
+        tự chuyển về `returnUrl` đã lưu của giao dịch kèm `transactionCode`, `status`, `ts`, `sig` sau 5 giây. Không đổi trạng thái giao dịch
+        (BR-19-014, FR-19-025). Sai chữ ký: 400, trang không chuyển tới đối tác.'
       parameters:
       - $ref: '#/components/parameters/connectionKey'
       - name: orderId
@@ -95,15 +96,49 @@ paths:
           maxLength: 1024
       - $ref: '#/components/parameters/Traceparent'
       responses:
-        '302':
-          description: Chuyển hướng tới `returnUrl`.
-          headers:
-            Location:
+        '200':
+          description: Thành công.
+          content:
+            text/html:
               schema:
                 type: string
-              description: '`returnUrl` của đối tác kèm `transactionCode`, `status`.'
+                description: Trang UI-19-28 (D03-06-PH19 §34) do dh-payment vai trò callback dựng sẵn.
         '403':
           $ref: '#/components/responses/Err027'
+  /result-status:
+    get:
+      tags:
+      - Callback PayGov
+      operationId: getPublicResultStatus
+      summary: Trạng thái rút gọn cho trang UI-19-28 thăm dò (bổ sung 0.2)
+      x-datahub-id: API-19-205
+      x-datahub-fr:
+      - FR-19-025
+      description: Trang UI-19-28 thăm dò trạng thái khi giao dịch còn `CREATED`, `PENDING` (mỗi 3 giây, tối đa 20 giây). Chỉ trả trạng thái rút
+        gọn, không có dữ liệu cá nhân; giới hạn tốc độ theo IP ở APISIX.
+      parameters:
+      - name: t
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+        description: Mã phiên trang kết quả do API-19-202 cấp.
+      - name: s
+        in: query
+        schema:
+          type: string
+          maxLength: 128
+        description: Chữ ký phiên trang, hạn 2 phút.
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicResultStatus'
+        '404':
+          $ref: '#/components/responses/Err020'
   /paygov/{connectionKey}/refund-ipn:
     post:
       tags:
@@ -189,6 +224,22 @@ components:
         pattern: ^[0-9A-HJKMNP-TV-Z]{32}$
       description: Khóa kết nối 160 bit, Base32 Crockford (ADR-045).
   responses:
+    Err020:
+      description: '`ERR-19-020` Không tìm thấy tài nguyên'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-020:
+              summary: Không tìm thấy tài nguyên
+              value:
+                type: /problems/ERR-19-020
+                title: Không tìm thấy tài nguyên
+                status: 404
+                code: ERR-19-020
+                detail: Tài nguyên không tồn tại hoặc nằm ngoài phạm vi truy cập của bên gọi (khác tenant, khác đối tác)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
     Err024_025:
       description: '`ERR-19-024` Chữ ký callback không hợp lệ; `ERR-19-025` Callback quá hạn'
       content:
@@ -353,6 +404,29 @@ components:
         retryAfterSeconds:
           type: integer
       additionalProperties: true
+    PublicResultStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - PROCESSING
+          - SUCCEEDED
+          - FAILED
+          - CLOSED
+        final:
+          type: boolean
+        redirectAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+      additionalProperties: false
+      required:
+      - status
+      - final
+      description: 'Trạng thái rút gọn cho UI-19-28: PROCESSING = `CREATED`/`PENDING`; CLOSED = `CANCELLED`/`EXPIRED`; hoàn tiền hiển thị như
+        SUCCEEDED.'
     TransactionCode:
       type: string
       maxLength: 19

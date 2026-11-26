@@ -2353,7 +2353,7 @@ paths:
         schema:
           type: string
           maxLength: 100
-          minLength: 3
+          minLength: 2
         description: Tìm theo mã giao dịch, mã đơn hàng, tham chiếu NCC (khớp chính xác hoặc tiền tố).
       - name: status
         in: query
@@ -2377,6 +2377,15 @@ paths:
           type: array
           items:
             $ref: '#/components/schemas/Code'
+        style: form
+        explode: false
+      - name: groupCode
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Code'
+        description: Nhóm dịch vụ (lĩnh vực), chọn nhiều (LGC-PAY-016).
         style: form
         explode: false
       - name: partnerCode
@@ -2438,6 +2447,12 @@ paths:
           type: boolean
           default: false
       - name: needsReconciliation
+        in: query
+        schema: *id001
+      - name: latePaid
+        in: query
+        schema: *id001
+      - name: initUncertain
         in: query
         schema: *id001
       - name: sort
@@ -3871,6 +3886,14 @@ paths:
         in: query
         schema:
           $ref: '#/components/schemas/Code'
+      - name: fields
+        in: query
+        schema:
+          type: string
+          enum:
+          - ALL
+          - badges
+        description: '`badges`: chỉ trả khối đếm cho huy hiệu menu, nhẹ, gọi mỗi 60 giây.'
       - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
@@ -5976,6 +5999,14 @@ components:
               $ref: '#/components/schemas/Kpi'
             providerP95:
               $ref: '#/components/schemas/Kpi'
+            activeServices:
+              $ref: '#/components/schemas/Kpi'
+            activePartners:
+              $ref: '#/components/schemas/Kpi'
+            txnAllTime:
+              $ref: '#/components/schemas/Kpi'
+            pendingApprovalsForMe:
+              $ref: '#/components/schemas/Kpi'
           additionalProperties: false
         series:
           type: array
@@ -6040,6 +6071,25 @@ components:
                 maxLength: 500
               since: *id011
             additionalProperties: false
+        badges:
+          type: object
+          properties:
+            providersDown:
+              type: integer
+            approvalsToDecide:
+              type: integer
+            refundsToExecute:
+              type: integer
+            reconSessionsAttention:
+              type: integer
+            discrepanciesOverdueMine:
+              type: integer
+            callbacksQuarantined:
+              type: integer
+            webhooksExhausted24h:
+              type: integer
+          additionalProperties: false
+          description: Đếm cho huy hiệu menu (D03-06-PH19 §4.3), tính theo quyền của người gọi; chỉ trả khi `fields=badges`.
       additionalProperties: false
       required:
       - asOf
@@ -7225,7 +7275,8 @@ components:
         bizContact:
           $ref: '#/components/schemas/Contact'
       additionalProperties: false
-      description: Sửa trường kỹ thuật của NCC `ACTIVE` tạo `pendingChange` và đề nghị phê duyệt (BR-19-026).
+      description: Sửa trường kết nối (`sandboxBaseUrl`, `productionBaseUrl`, `merchantRef`) của NCC `ACTIVE`, `SUSPENDED` ghi vào `pendingChange`,
+        chỉ áp dụng khi kiểm tra kết nối với giá trị mới đạt (BR-19-026, FR-19-009).
     QuarantineReason:
       type: string
       enum:
