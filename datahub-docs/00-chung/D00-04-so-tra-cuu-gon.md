@@ -114,7 +114,7 @@ Bảng dưới nối phân hệ với DU triển khai (D03-01 §4.1), đợt và
 | 14 | Kết nối quốc gia | `dh-runtime`, `dh-integration` | MVP | chưa |
 | 15 | Cổng nhà phát triển | `dh-portal`, `dh-connect` | Đợt 2 | chưa |
 | 16 | Báo cáo chỉ tiêu | `dh-platform` | Đợt 3 | chưa |
-| 17 | Trợ lý AI | `dh-assist` | Đợt 3 | chưa |
+| 17 | Trợ lý AI | `dh-assist` | Đợt 3 | đủ bảy tập (FRS 0.2) |
 | 18 | Vận hành và xử lý lỗi | `dh-platform` | MVP | chưa |
 | 19 | Thanh toán | `dh-payment` | Đợt 2 | BRD, khung truy vết (luồng riêng) |
 | 20 | Quản trị tenant | `dh-platform` | MVP | chưa |
