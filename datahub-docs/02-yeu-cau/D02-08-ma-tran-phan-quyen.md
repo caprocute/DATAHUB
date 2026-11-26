@@ -262,9 +262,22 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-06-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể dữ liệu đối với dữ liệu chủ | TA, SO, DS |
 | PERM-06-audit-read | Xem nhật ký truy cập dữ liệu chủ | SO, AU |
 | PERM-08-rule-admin | Quản lý quy tắc chất lượng | DS, TA |
-| PERM-09-classify | Gán phân loại dữ liệu cho trường | TA, SO, DO (○) |
-| PERM-09-purpose-approve | Chấp thuận khai thác dữ liệu theo mục đích | DO (○) |
-| PERM-09-unmask | Xem giá trị đầy đủ của trường Nhạy cảm, bắt buộc nêu lý do | SO, DO (○), cấp riêng cho từng người theo quyết định |
+| PERM-09-read | Xem danh mục, sổ, chính sách, bundle, báo cáo (đã che) | PA, TA, TO, SO, DS, DA, DO (○), VW, AU |
+| PERM-09-classify | Đề xuất, xác nhận phân loại; nhãn chặn; quét | TA, SO, DS (○), DO (○), SV (○) |
+| PERM-09-ropa | Soạn, duyệt sổ hoạt động xử lý và DPIA | TA, SO, DS (○), DA, DO (○) |
+| PERM-09-purpose-request | Lập yêu cầu khai thác theo mục đích | TA, OR (○), SV (○) |
+| PERM-09-purpose-approve | Chấp thuận, tạm dừng, thu hồi; duyệt khôi phục cấp một | DO (○) |
+| PERM-09-policy | Soạn chính sách che, miền giả danh, mẫu che, cấu hình che log | TA, SO, DS (○) |
+| PERM-09-policy-approve | Duyệt chính sách, lịch lưu giữ, cấu hình ẩn danh, xoay hoặc hủy khóa, mẫu đồng ý, xóa mật mã | TA, SO, DA |
+| PERM-09-unmask | Xem giá trị đầy đủ có lý do, 60 giây | SO, DO (○), cấp riêng cho từng người theo quyết định |
+| PERM-09-reidentify | Đề nghị và thực hiện khôi phục giá trị gốc từ token | SO |
+| PERM-09-anonymize | Cấu hình, chạy ẩn danh hóa, chuẩn bị dữ liệu, phát hành tập | TA, SO, DS (○) |
+| PERM-09-retention | Lịch lưu giữ, tác vụ xóa, giữ pháp lý, đề nghị xóa mật mã | TA, SO, DS (○) |
+| PERM-09-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể | TA, SO, DS |
+| PERM-09-consent | Quản lý mẫu, bản ghi đồng ý | TA, SO, DS (○) |
+| PERM-09-breach | Ghi nhận, xử lý vi phạm DLCN | TA, TO, SO |
+| PERM-09-audit-read | Xem nhật ký bảo vệ dữ liệu, lịch sử xem đầy đủ | PA, SO, AU |
+| PERM-09-config | Tham số `09.*`, ngưỡng cảnh báo, lịch báo cáo | PA (trần), TA |
 | PERM-11-model | Thiết kế, phát hành mô hình quy trình | TA, IA |
 | PERM-11-task | Xử lý việc được giao trong quy trình | Mọi người dùng được giao việc |
 | PERM-15-portal-admin | Quản trị nội dung cổng nhà phát triển | TA, CA |
