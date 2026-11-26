@@ -5,7 +5,7 @@ Tính năng: TS-04-07 · Quay vòng YAML, tải xuống, nhập YAML
 
   @TC-04-043 @P1 @Dương
   Kịch bản: TC-04-043 Quay vòng không sửa giữ nguyên băm
-    # Truy vết: FR-04-017 · BR-04-006 · UI-04-04
+    # Truy vết: FR-04-017 · BR-04-006 · UI-04-04.
     Biết 40 tệp YAML mẫu trong `src/test/resources/roundtrip/` (gồm mọi EIP trong catalog, chú thích YAML, khóa không theo thứ tự, chuỗi nhiều dòng, ký tự tiếng Việt).
     Khi với mỗi tệp: nạp thành cây tài nguyên, sinh lại YAML, tính băm chuẩn hóa.
     Và kiểm thử theo thuộc tính (fast-check): sinh cây ngẫu nhiên hợp lệ 1.000 lần, YAML → cây → YAML.
@@ -14,7 +14,7 @@ Tính năng: TS-04-07 · Quay vòng YAML, tải xuống, nhập YAML
 
   @TC-04-044 @P1 @Dương @Âm
   Kịch bản: TC-04-044 Sửa trong YAML phản ánh lên sơ đồ
-    # Truy vết: FR-04-017 · UI-04-04
+    # Truy vết: FR-04-017 · UI-04-04.
     Biết IE1 mở F-HT v4, tab YAML (Monaco).
     Khi thêm một bước `log` bằng tay trong YAML.
     Và gõ sai thụt lề.
@@ -23,7 +23,7 @@ Tính năng: TS-04-07 · Quay vòng YAML, tải xuống, nhập YAML
 
   @TC-04-045 @P1 @Dương @Bảo @mật
   Kịch bản: TC-04-045 YAML triển khai không chứa bố cục, bản tin mẫu, ghi chú
-    # Truy vết: FR-04-017, 022, 026 · BR-04-007 · API-04-026
+    # Truy vết: FR-04-017, 022, 026 · BR-04-007 · API-04-026.
     Biết F-HT v4 có bố cục, bản tin mẫu MSG-OK ở ba chặng, hai ghi chú dán.
     Khi gọi `GET .../versions/4/download?format=yaml`.
     Và gọi `GET .../versions/4/download?format=yaml+layout`.
@@ -32,14 +32,14 @@ Tính năng: TS-04-07 · Quay vòng YAML, tải xuống, nhập YAML
 
   @TC-04-046 @P2 @Dương
   Kịch bản: TC-04-046 Nhập YAML thay định nghĩa
-    # Truy vết: FR-04-027 · API-04-027
+    # Truy vết: FR-04-027 · API-04-027.
     Biết F-HT v4; tệp YAML đã sửa ngoài.
     Khi gọi `POST .../versions/4:import-yaml` với `keepLayout = true`.
     Thì `200`; định nghĩa thay mới; chặng có cùng `id` giữ vị trí cũ trên sơ đồ, chặng mới được tự sắp xếp. `validation` trả kèm.
 
   @TC-04-047 @P1 @Âm @Bảo @mật
   Kịch bản: TC-04-047 Nhập YAML không hợp lệ
-    # Truy vết: FR-04-027 · API-04-027 · ERR-04-008, 009, 033
+    # Truy vết: FR-04-027 · API-04-027 · ERR-04-008, 009, 033.
     Biết YAML-BOMB, YAML-BIG, YAML có thẻ `!!java.lang.Runtime`.
     Khi nhập YAML-BOMB.
     Và nhập YAML-BIG.

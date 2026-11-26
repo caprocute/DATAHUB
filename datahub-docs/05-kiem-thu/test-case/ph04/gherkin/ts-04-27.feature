@@ -5,7 +5,7 @@ Tính năng: TS-04-27 · Tham số PH-04 và đóng băng thay đổi
 
   @TC-04-153 @P2 @Dương
   Kịch bản: TC-04-153 Đọc tham số và đặt khoảng đóng băng
-    # Truy vết: FR-04-084 · API-04-090 · UI-04-20 · LGC-BUS-031
+    # Truy vết: FR-04-084 · API-04-090 · UI-04-20 · LGC-BUS-031.
     Biết U-T68-TA.
     Khi gọi `GET /settings`.
     Và trên UI-04-20 (nhúng màn tham số PH-18), đặt `04.test.max-concurrent = 8`.
@@ -14,7 +14,7 @@ Tính năng: TS-04-27 · Tham số PH-04 và đóng băng thay đổi
 
   @TC-04-154 @P2 @Âm
   Kịch bản: TC-04-154 Tham số ngoài miền và ràng buộc không tắt được
-    # Truy vết: FR-04-084
+    # Truy vết: FR-04-084.
     Biết U-T68-TA.
     Khi đặt `04.test.max-concurrent = 21`.
     Và đặt `04.review.require-test = false` khi tenant có luồng đối ngoại.
@@ -23,7 +23,7 @@ Tính năng: TS-04-27 · Tham số PH-04 và đóng băng thay đổi
 
   @TC-04-155 @P2 @Dương @Âm
   Kịch bản: TC-04-155 Biến môi trường không chứa bí mật
-    # Truy vết: FR-04-084 · API-04-090 · ERR-04-010
+    # Truy vết: FR-04-084 · API-04-090 · ERR-04-010.
     Biết U-T68-TA.
     Khi `PUT /settings/env-vars` với `ma-co-quan` có giá trị khác nhau cho TEST, STAGING, PROD.
     Và `PUT` với `api-token` có giá trị dạng JWT.

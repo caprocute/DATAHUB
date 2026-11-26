@@ -21,6 +21,9 @@ on:
       effort:
         description: 'Mức effort'
         default: 'high'
+      lam_lai:
+        description: 'Tập chạy lại để bổ sung dù đã xong (vd tc)'
+        default: ''
       ngan_sach_usd:
         description: 'Trần chi phí mỗi phân hệ (US$)'
         default: '25'
@@ -96,7 +99,7 @@ jobs:
           python3 datahub-docs/build/agent/sinh_phan_he.py --ph "${{ matrix.ph }}" \
             --tap "${{ inputs.tap }}" --model "${{ inputs.model }}" \
             --model-ra-soat "${{ inputs.model_ra_soat }}" --effort "${{ inputs.effort }}" \
-            --ngan-sach-usd "${{ inputs.ngan_sach_usd }}" --nhanh "$NHANH"
+            --ngan-sach-usd "${{ inputs.ngan_sach_usd }}" --lam-lai "${{ inputs.lam_lai }}" --nhanh "$NHANH"
       - name: Soát mã lần cuối
         if: always()
         run: python3 datahub-docs/build/tools/kiem_tra_ma.py || true
