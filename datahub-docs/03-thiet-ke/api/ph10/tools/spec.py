@@ -6,9 +6,9 @@ Mỗi dòng: (mã, phương thức, đường dẫn, mục đích, FR, quyền, 
 - Quyền: tên động từ PERM-10-{x}; `svc:{scope}` cho tài khoản dịch vụ; `topic:publish`, `topic:subscribe`
   cho scope HTTT `topic:{topicName}:publish|subscribe`. Tổ hợp nhiều quyền ghi ở gen_openapi.ANY_PERM.
 - idem: "x" bắt buộc Idempotency-Key; "o" tùy chọn (API phát dùng `id` CloudEvents khi thiếu).
-- Mã lỗi riêng: số ERR-10 (ba chữ số) cách nhau bởi dấu cách, ngoài các mã chung 101, 102 (xác thực, quyền),
+- Mã lỗi riêng: số ERR-10 (ba chữ số) cách nhau bởi dấu cách, ngoài các mã chung 053, 054 (xác thực, quyền ở control plane; data plane dùng 101, 102),
   001 (đường dẫn có tham số), 003 (có thân), 007 (có If-Match).
-Mã API-10-001…091 giữ đúng FRS §8.3; API-10-092…119 tách từ dòng gộp của FRS (bảng SPLIT).
+Mã API-10-001…091 giữ đúng FRS §8.3; API-10-092…119 tách từ dòng gộp của FRS (bảng SPLIT); API-10-120, 121 cấp mới. FRS 0.3 §8.3 liệt kê đủ 001…121.
 Sinh OpenAPI (gen_openapi.py) và bảng Markdown (gen_md.py) từ đây; không sửa tay bảng sinh ra.
 """
 
@@ -133,6 +133,7 @@ OPS = [
     ("075", "POST", "/imports", "Tải tệp khai báo hoặc kiểm kê Pulsar để kiểm tra", "071, 072", "create", "x", "202", "migration", "040 050"),
     ("110", "GET", "/imports/{jobCode}", "Trạng thái, xem trước tác vụ nhập", "071, 072", "read", "", "200", "migration", ""),
     ("111", "POST", "/imports/{jobCode}:apply", "Áp dụng tác vụ nhập (tạo đối tượng ở trạng thái đầu)", "071, 072", "create", "x", "202", "migration", "006 040 041 050"),
+    ("121", "POST", "/imports/{jobCode}:cancel", "Hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` (người tạo)", "071", "create", "", "200", "migration", "006 008"),
     ("076", "GET", "/migrations/mappings", "Danh sách ánh xạ di trú Pulsar", "072", "read", "", "200", "migration", "049"),
     ("112", "PATCH", "/migrations/mappings/{mappingId}", "Sửa đích hoặc bỏ qua một ánh xạ", "072", "admin", "", "200", "migration", "006 041"),
     ("077", "GET", "/migrations/bridges", "Danh sách cầu nối di trú", "073, 074", "read", "", "200", "migration", "049"),

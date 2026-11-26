@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D02-03-PH10
 ten: Đặc tả yêu cầu chức năng phân hệ PH-10 Sự kiện
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định, kỹ sư tích hợp, kỹ sư dh-integration và dh-runtime, đội vận hành nền tảng, kiểm thử viên
@@ -26,9 +26,9 @@ phan_he: PH-10
 | Quy tắc nghiệp vụ | 36 (BR-10-001…036) |
 | Yêu cầu phi chức năng | 20 (NFR-10-001…020) |
 | Màn hình | 20 (UI-10-01…20) |
-| Mã lỗi | 52 control plane (ERR-10-001…052), 21 data plane (ERR-10-101…121) |
+| Mã lỗi | 54 control plane (ERR-10-001…054), 21 data plane (ERR-10-101…121) |
 | Sự kiện do PH-10 phát | 16 (EVT-10-01…16) |
-| API dự kiến | 91 operation gợi ý (API-10-001…091, trong đó 085…090 nội bộ cho `dh-runtime`), định nghĩa đầy đủ ở D03-04-PH10 |
+| API | 121 operation (API-10-001…121, trong đó 085…090 và 119 nội bộ cho `dh-runtime`), định nghĩa đầy đủ ở D03-04-PH10 |
 | Chức năng hệ cũ được phủ | 14 mục `LGC-HUB` (12 phủ ở PH-10, 2 thay thế bởi PH-13) cùng LGC-TOOL-010 và LGC-BUS-039 |
 | ADR mới | ADR-070 (tương thích lược đồ, phiên bản topic), ADR-071 (giao nhận đẩy và kéo), ADR-072 (cấp phát topic, ACL qua GitOps), ADR-073 (cầu nối di trú Pulsar) |
 
@@ -392,7 +392,7 @@ Sự kiện chỉ mang định danh và loại thay đổi khi đối tượng c
 
 ## 5. Đặc tả chi tiết yêu cầu chức năng
 
-Quy ước chung cho mọi FR, không nhắc lại trong từng mục: lệnh ghi qua `/api/event/v1` nhận `Idempotency-Key` (16…128 ký tự, giữ 24 giờ; trùng khóa khác thân trả ERR-10-037) và `If-Match` khi sửa (sai phiên bản trả ERR-10-007, FR-00-052); đối tượng của tenant khác trả như không tồn tại (ERR-10-001, BR-10-001); danh sách theo FR-00-020…023 (`size` > 200 trả ERR-10-049); mọi thao tác đổi trạng thái có xác nhận, thao tác ảnh hưởng vận hành bắt buộc lý do 10…500 ký tự (FR-00-050, ERR-10-009); mọi yêu cầu duyệt vào "Việc của tôi" (FR-00-070), có ý kiến khi duyệt và lý do khi từ chối (FR-00-072), chịu bốn mắt (BR-10-010); phụ thuộc không khả dụng trả ERR-10-029 và không để lại trạng thái dở dang. Cột "Đợt" theo cách PH-05: MVP hoặc Đợt sau.
+Quy ước chung cho mọi FR, không nhắc lại trong từng mục: lệnh ghi qua `/api/event/v1` nhận `Idempotency-Key` (16…128 ký tự, giữ 24 giờ; trùng khóa khác thân trả ERR-10-037) và `If-Match` khi sửa (sai phiên bản trả ERR-10-007, FR-00-052); đối tượng của tenant khác trả như không tồn tại (ERR-10-001, BR-10-001); danh sách theo FR-00-020…023 (`size` > 200 trả ERR-10-049); mọi thao tác đổi trạng thái có xác nhận, thao tác ảnh hưởng vận hành bắt buộc lý do `reason` 10…500 ký tự (FR-00-050, ERR-10-009), áp dụng cho lưu trữ dự án, tạm ngừng, tiếp tục, thu hồi, ngừng dùng, ngừng topic, loại bỏ mục DLQ, đề nghị phát lại, miễn xác minh endpoint và quay lui di trú; mọi yêu cầu duyệt vào "Việc của tôi" (FR-00-070), có ý kiến khi duyệt và lý do khi từ chối (FR-00-072), chịu bốn mắt (BR-10-010); phụ thuộc không khả dụng trả ERR-10-029 và không để lại trạng thái dở dang. Cột "Đợt" theo cách PH-05: MVP hoặc Đợt sau.
 
 ### 5.1. Nhóm A · Dự án tích hợp
 
@@ -517,7 +517,7 @@ Hệ số nhân bản (3) và `min.insync.replicas` (2) là tham số nền tả
 | Truy vết | REQ-10; LGC-HUB-009; FR repo FR-10-001, 005 |
 | Tác nhân, quyền | IA, TA với `PERM-10-approve`; người duyệt khác người tạo topic và người gửi duyệt |
 | Tiền điều kiện | Yêu cầu `TOPIC_CREATE` ở `PENDING` |
-| Đầu vào | `decision` (`APPROVE`, `REJECT`), `comment` (bắt buộc; ≥ 10 ký tự khi từ chối), `acknowledgePii` (bắt buộc `true` khi kết quả kiểm tra có phát hiện dữ liệu cá nhân ở mức cảnh báo) |
+| Đầu vào | hành động duyệt (API-10-059) hoặc từ chối (API-10-101), `comment` (bắt buộc; ≥ 10 ký tự khi từ chối), `acknowledgePii` (bắt buộc `true` khi kết quả kiểm tra có phát hiện dữ liệu cá nhân ở mức cảnh báo) |
 
 | Trường | Nội dung |
 |---|---|
@@ -761,7 +761,7 @@ FR-10-030 (M · MVP; LGC-HUB-012). IE, TA, SV (○) với `PERM-10-create` đề
 | Truy vết | REQ-10, REQ-12; LGC-HUB-012; D02-08 §5 (scope `topic:{tên}:publish`) |
 | Tác nhân, quyền | IA, TA với `PERM-10-approve`, khác người đề nghị |
 | Tiền điều kiện | Publication `PENDING_APPROVAL`; topic `ACTIVE`; bên phát `ACTIVE` |
-| Đầu vào | `decision`, `comment`, `quotaBytesPerSecond` (người duyệt có thể giảm) |
+| Đầu vào | hành động duyệt hoặc từ chối, `comment`, `quotaBytesPerSecond` (người duyệt có thể giảm) |
 
 | Trường | Nội dung |
 |---|---|
@@ -817,18 +817,20 @@ FR-10-034 (M · MVP; LGC-TOOL-010; FR repo FR-10-008). Bên phát `KAFKA_NATIVE`
 | `topicName` | chuỗi | Có | Topic `ACTIVE` | `t68.dkkd.doanh-nghiep.da-cap-phep.v1` |
 | `deliveryMode` | enum | Có | `PUSH`, `PULL_API`, `PULL_KAFKA`, `INTERNAL`; phải hợp với `commType` của bên nhận (BR-10-017) | `PUSH` |
 | `purpose` | T-TEXT | Có | 10…500 ký tự, căn cứ nhận dữ liệu | |
+| `legalBasis` | T-TEXT | Khi topic `RESTRICTED`, `SENSITIVE` (thiếu trả ERR-10-009) | 10…1.000 ký tự; căn cứ pháp lý hoặc văn bản đồng ý, nên kèm số hiệu văn bản (quyết định, thỏa thuận chia sẻ dữ liệu); người duyệt xem trường này trước khi duyệt | `Quyết định 1234/QĐ-UBND ngày 01/10/2026 về chia sẻ dữ liệu doanh nghiệp` (giả định) |
 | `startPosition` | enum | Không | `LATEST` (mặc định), `EARLIEST`, `TIMESTAMP` | `TIMESTAMP` |
 | `startAt` | T-TS | Khi `TIMESTAMP` | Trong khoảng lưu giữ của topic (ERR-10-031) | `2026-11-20T00:00:00+07:00` |
 | `push.endpointUrl` | URL | Khi `PUSH` | HTTPS, FQDN trong danh sách egress, không trỏ địa chỉ riêng của nền tảng (BR-10-026) | `https://thue.t68.gov.vn/hooks/dh` |
 | `push.workerCount` | số nguyên | Không | 1…min(`partitions`, `10.push.max-workers`); mặc định `10.push.default-workers` | 3 |
 | `push.maxRetries` | số nguyên | Không | 0…`10.push.max-retries-ceiling`; mặc định `10.push.max-retries` | 8 |
-| `push.retryBackoff` | đối tượng | Không | `initialMs`, `multiplier`, `maxMs`; mặc định theo `10.push.backoff-*` | `{1000, 2, 300000}` |
+| `push.retryBackoff` | đối tượng | Không | `initialMs` 100…60.000, `multiplier` 1…5 (số thực), `maxMs` 1.000…3.600.000 (cùng miền tham số `10.push.backoff-*`) và `maxMs` ≥ `initialMs`; sai trả ERR-10-012; mặc định theo `10.push.backoff-*` | `{1000, 2, 300000}` |
 | `push.timeoutMs` | số nguyên | Không | 1.000…30.000; mặc định `10.push.timeout-ms` | 10000 |
-| `push.failurePolicy` | enum | Không | `DEAD_LETTER` (mặc định), `BLOCK` | `DEAD_LETTER` |
+| `push.failurePolicy` | enum | Không | `DEAD_LETTER`, `BLOCK`; không gửi thì mặc định `BLOCK` với topic `orderingRequired = true` và `DEAD_LETTER` với topic còn lại (FR-10-039); giao diện chọn sẵn theo cùng luật | `BLOCK` |
 | `push.payloadFormat` | enum | Không | `CLOUDEVENTS_STRUCTURED` (mặc định), `CLOUDEVENTS_BINARY` | |
 | `pull.maxBatch` | số nguyên | Không | 1…`10.pull.max-batch` | 100 |
 | `pull.leaseSeconds` | số nguyên | Không | 10…300; mặc định `10.pull.lease-seconds` | 60 |
-| `lagWarnSeconds`, `lagCriticalSeconds` | số nguyên | Không | Mặc định theo `10.lag.*` | 300, 1800 |
+| `lagWarnSeconds`, `lagCriticalSeconds` | số nguyên | Không | `lagWarnSeconds` 30…86.400, `lagCriticalSeconds` 60…604.800 (miền `10.lag.warn-seconds`, `10.lag.critical-seconds`) và `lagWarnSeconds` < `lagCriticalSeconds`; sai trả ERR-10-012; mặc định theo `10.lag.*` | 300, 1800 |
+| `quotaBytesPerSecond` | số nguyên | Không | ≥ 262.144 (256 KiB/s) và ≤ phần còn lại của `consumeBytesPerSecond` của tenant (ERR-10-011); không gửi thì dùng hạn mức chung theo principal (BR-10-029); người duyệt có thể giảm | 1048576 |
 
 | Trường | Nội dung |
 |---|---|
@@ -851,7 +853,7 @@ FR-10-036 (M · MVP; LGC-HUB-013; ADR-071). Trước khi duyệt và mỗi khi �
 | Truy vết | REQ-10, REQ-12; LGC-HUB-013; D02-08 §5 (scope `topic:{tên}:subscribe`) |
 | Tác nhân, quyền | IA, TA với `PERM-10-approve`, khác người đề nghị |
 | Tiền điều kiện | Subscription `PENDING_APPROVAL`; endpoint xác minh trong 24 giờ nếu `PUSH` |
-| Đầu vào | `decision`, `comment`; người duyệt có thể giảm `workerCount`, hạn mức |
+| Đầu vào | hành động duyệt hoặc từ chối, `comment`; người duyệt có thể giảm `workerCount`, hạn mức |
 
 | Trường | Nội dung |
 |---|---|
@@ -884,7 +886,7 @@ Bên nhận phải xác minh chữ ký, từ chối dấu thời gian lệch qu�
 
 #### FR-10-039 · Thử lại giãn dần và chính sách khi thất bại
 
-FR-10-039 (M · MVP; LGC-HUB-013 "số lần thử lại"). Với lỗi tạm thời, bộ giao nhận thử lại tại chỗ theo giãn cách lũy thừa có nhiễu: lần thứ k chờ `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2; tôn trọng `Retry-After` của đầu nhận nếu nhỏ hơn `maxMs`. Trong lúc thử lại, phân vùng đó không giao bản tin kế tiếp (giữ thứ tự), các phân vùng khác vẫn chạy. Hết `maxRetries`: (a) `failurePolicy = DEAD_LETTER`: ghi DLQ (FR-10-049), commit, giao bản tin kế tiếp; thứ tự của khóa đó có thể bị phá nếu bản tin sau cùng khóa thành công, nên topic `orderingRequired` mặc định khuyến nghị `BLOCK` (Q10-15); (b) `BLOCK`: không bỏ qua, subscription sang `SUSPENDED` với `suspendSource = DELIVERY_BLOCKED` và lý do "đầu nhận lỗi" (bộ giao nhận báo qua API-10-086; không tự tiếp tục như ngắt mạch), phát EVT-10-09, cảnh báo TO; TO khắc phục rồi tiếp tục (FR-10-041), bản tin được giao lại từ vị trí cũ. Ngoài ra, khi tỷ lệ lỗi của toàn subscription ≥ 50% liên tục `10.push.suspend-after-failures-minutes` phút, bộ giao nhận ngắt mạch: subscription `SUSPENDED` tự động (`suspendSource = CIRCUIT_BREAKER`, API-10-086) để không dồn tải lên HTTT đang hỏng; thử lại thăm dò mỗi 5 phút bằng một bản tin, thành công thì tự về `ACTIVE` (chỉ với tạm ngừng do ngắt mạch). Kiểm toán: có với đổi trạng thái. Sự kiện: EVT-10-09.
+FR-10-039 (M · MVP; LGC-HUB-013 "số lần thử lại"). Với lỗi tạm thời, bộ giao nhận thử lại tại chỗ theo giãn cách lũy thừa có nhiễu: lần thứ k chờ `min(maxMs, initialMs × multiplier^(k-1))` nhân hệ số ngẫu nhiên 0,8…1,2; tôn trọng `Retry-After` của đầu nhận nếu nhỏ hơn `maxMs`. Trong lúc thử lại, phân vùng đó không giao bản tin kế tiếp (giữ thứ tự), các phân vùng khác vẫn chạy. Hết `maxRetries`: (a) `failurePolicy = DEAD_LETTER`: ghi DLQ (FR-10-049), commit, giao bản tin kế tiếp; thứ tự của khóa đó có thể bị phá nếu bản tin sau cùng khóa thành công, nên topic `orderingRequired` mặc định `BLOCK` (FR-10-035; Q10-15 đã chốt ở bản 0.3); (b) `BLOCK`: không bỏ qua, subscription sang `SUSPENDED` với `suspendSource = DELIVERY_BLOCKED` và lý do "đầu nhận lỗi" (bộ giao nhận báo qua API-10-086; không tự tiếp tục như ngắt mạch), phát EVT-10-09, cảnh báo TO; TO khắc phục rồi tiếp tục (FR-10-041), bản tin được giao lại từ vị trí cũ. Ngoài ra, khi tỷ lệ lỗi của toàn subscription ≥ 50% liên tục `10.push.suspend-after-failures-minutes` phút, bộ giao nhận ngắt mạch: subscription `SUSPENDED` tự động (`suspendSource = CIRCUIT_BREAKER`, API-10-086) để không dồn tải lên HTTT đang hỏng; thử lại thăm dò mỗi 5 phút bằng một bản tin, thành công thì tự về `ACTIVE` (chỉ với tạm ngừng do ngắt mạch). Kiểm toán: có với đổi trạng thái. Sự kiện: EVT-10-09.
 
 #### FR-10-040 · Điểm bắt đầu và offset bắt đầu
 
@@ -1211,7 +1213,7 @@ FR-10-076 (S · MVP; REQ-22). TA, PA (`PERM-10-read`) xem bảng tiến độ di
 | BR-10-024 | Chỉ commit offset sau khi giao thành công hoặc đã ghi chắc chắn vào DLQ; mục DLQ `NEW` giữ vô thời hạn tới khi xử lý; topic còn mục DLQ `NEW` chưa được xóa khỏi cụm | 038, 049, 014 |
 | BR-10-025 | Bộ giao nhận xử lý tuần tự trong một phân vùng; `workerCount` không vượt số phân vùng | 035, 038, 046 |
 | BR-10-026 | Endpoint webhook chỉ HTTPS (TLS ≥ 1.2), FQDN trong danh sách egress, không trỏ địa chỉ riêng của nền tảng, không theo chuyển hướng, kiểm lại IP trước mỗi lượt | 035, 036, 038 |
-| BR-10-027 | Bí mật ký chỉ ở OpenBao, hiển thị một lần, không qua thư, không trong log, kiểm toán, tệp xuất | 042, 070 |
+| BR-10-027 | Bí mật ký chỉ ở OpenBao, hiển thị một lần, không qua thư, không trong log, kiểm toán, tệp xuất; phản hồi chứa bí mật (API-10-054, 100, 120) bắt buộc tiêu đề `Cache-Control: no-store` | 037, 042, 070 |
 | BR-10-028 | Phát lại luôn có lý do và duyệt (trừ ngưỡng tự duyệt DLQ đặt bằng tham số, mặc định 0); `RESET_OFFSET` đòi subscription `PAUSED` | 051, 052, 053 |
 | BR-10-029 | Tổng hạn mức phân bổ cho principal của tenant không vượt trần tenant | 031, 037, 062 |
 | BR-10-030 | Miền dành riêng và tiền tố `dh.` chỉ nhận đăng ký máy; người dùng không sửa cấu hình topic `CDC`, `SYSTEM` | 008, 066, 067 |
@@ -1259,6 +1261,7 @@ Danh sách tham số `10.*` đầy đủ kèm mặc định, miền và phạm v
 |---|---|---|
 | Sự kiện nghiệp vụ trên Kafka | Theo `retentionHours` của topic, mặc định 7 ngày, trần 30 ngày | Topic `COMPACT` giữ bản mới nhất theo khóa |
 | Topic DLQ `{topicName}.dlq` | `10.dlq.topic-retention-hours` (7 ngày) | Kênh chuyển tiếp |
+| Topic sự kiện của PH-10 `{tenant}.event.*` | 7 ngày, 3 phân vùng, khóa theo §8.2 | Giả định theo lưu lượng thấp của control plane (GĐ-01); bên nhận cần giữ lâu hơn thì tự lưu |
 | Mục DLQ `NEW` | Vô thời hạn tới khi xử lý | Nội dung xóa sau `10.dlq.payload-retention-days-after-resolve` (30 ngày) kể từ khi xử lý; siêu dữ liệu giữ 1 năm |
 | Khai báo (dự án, topic, lược đồ, quan hệ) | Vĩnh viễn (xóa mềm) | |
 | Phiên bản lược đồ ở Apicurio | Vĩnh viễn | Giải mã được sự kiện cũ |
@@ -1327,8 +1330,10 @@ Thân lỗi theo RFC 9457, định nghĩa đầy đủ ở D03-04-PH10. Dải 00
 | ERR-10-050 | 422 | Đối tượng tham chiếu trong tệp nhập không tồn tại ở tenant đích |
 | ERR-10-051 | 422 | Bên phát, bên nhận chưa đạt cấp độ ATTT yêu cầu cho topic `RESTRICTED`, `SENSITIVE` (BR-10-019) |
 | ERR-10-052 | 422 | Thao tác không áp dụng cho chế độ giao nhận của subscription (tạm dừng, tiếp tục subscription `INTERNAL`) |
-| ERR-10-101 | 401 | Token không hợp lệ hoặc hết hạn |
-| ERR-10-102 | 403 | Thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` |
+| ERR-10-053 | 401 | Control plane: token thiếu, không hợp lệ hoặc hết hạn |
+| ERR-10-054 | 403 | Control plane: thiếu quyền `PERM-10-*` hoặc scope dịch vụ cho thao tác (khác ERR-10-008 bốn mắt, ERR-10-044 ngoài phạm vi tổ chức) |
+| ERR-10-101 | 401 | Data plane: token không hợp lệ hoặc hết hạn |
+| ERR-10-102 | 403 | Data plane: thiếu scope hoặc quan hệ phát, nhận không `ACTIVE` |
 | ERR-10-103 | 404 | Topic không tồn tại, không `ACTIVE`, `DEPRECATED` hoặc khác tenant |
 | ERR-10-104 | 400 | Sự kiện không phải CloudEvents 1.0 hợp lệ hoặc `source` không thuộc bên phát |
 | ERR-10-105 | 422 | Dữ liệu không khớp lược đồ, thiếu khóa khi bắt buộc |
@@ -1471,8 +1476,38 @@ Control plane `/api/event/v1` (qua BFF và `apisix-int`); data plane `/event/v1`
 | API-10-089 | `POST /runtime/dlq-entries:fetch-payloads` (scope `event:replay`; lô ≤ 100 mục) | 053 |
 | API-10-090 | `POST /runtime/bridges/{bridgeCode}/status` (scope `event:runtime-config`; trạng thái, số bản tin, lag) | 073, 074 |
 | API-10-091 | `POST /subscriptions/{subscriptionCode}/endpoint-verification:waive` | 036 |
+| API-10-092 | `POST /publishers/{publisherCode}:resume` | 028 |
+| API-10-093 | `POST /publishers/{publisherCode}:retire` | 028 |
+| API-10-094 | `POST /subscribers/{subscriberCode}:resume` | 028 |
+| API-10-095 | `POST /subscribers/{subscriberCode}:retire` | 028 |
+| API-10-096 | `POST /publications/{publicationCode}:resume` | 032 |
+| API-10-097 | `POST /publications/{publicationCode}:revoke` | 032 |
+| API-10-098 | `POST /subscriptions/{subscriptionCode}:resume` | 041 |
+| API-10-099 | `POST /subscriptions/{subscriptionCode}:revoke` | 047 |
+| API-10-100 | `POST /subscriptions/{subscriptionCode}/signing-keys:revoke` | 042 |
+| API-10-101 | `POST /approval-requests/{requestCode}:reject` | 009, 019, 031, 037, 051 |
+| API-10-102 | `POST /approval-requests/{requestCode}:withdraw` | 009, 019, 031, 037, 051 |
+| API-10-103 | `GET /dlq-entries/{dlqEntryId}/payload` | 050 |
+| API-10-104 | `GET /replays/{replayCode}` | 052 |
+| API-10-105 | `PATCH /comm-types/{commTypeCode}` | 060 |
+| API-10-106 | `PATCH /routing-modes/{routingModeCode}` | 061 |
+| API-10-107 | `PUT /quota` | 062 |
+| API-10-108 | `PATCH /settings` | 063 |
+| API-10-109 | `GET /flows/{flowCode}/dependencies` | 069 |
+| API-10-110 | `GET /imports/{jobCode}` | 071, 072 |
+| API-10-111 | `POST /imports/{jobCode}:apply` | 071, 072 |
+| API-10-112 | `PATCH /migrations/mappings/{mappingId}` | 072 |
+| API-10-113 | `POST /migrations/bridges` | 073, 074 |
+| API-10-114 | `POST /migrations/bridges/{bridgeCode}:stop` | 073, 074 |
+| API-10-115 | `POST /migrations/bridges/{bridgeCode}:resume` | 073, 074 |
+| API-10-116 | `POST /migrations/mappings/{mappingId}:rollback` | 075 |
+| API-10-117 | `GET /migrations/reconciliations` | 075 |
+| API-10-118 | `GET /migrations/progress` | 076 |
+| API-10-119 | `POST /runtime/subscriptions/{subscriptionCode}:resume` | 039 |
+| API-10-120 | `POST /subscriptions/{subscriptionCode}/signing-keys:claim` | 037, 042 |
+| API-10-121 | `POST /imports/{jobCode}:cancel` | 071 |
 
-API-10-085…090 là API nội bộ cho `dh-runtime` (qua `apisix-int`, mTLS và token máy), không hiện ở BFF. Dòng gộp nhiều hành động (ví dụ API-10-036) giữ mã cho hành động đầu tiên; tập API tách các hành động còn lại thành operation riêng và cấp mã kế tiếp từ API-10-092.
+API-10-085…090 là API nội bộ cho `dh-runtime` (qua `apisix-int`, mTLS và token máy), không hiện ở BFF. Dòng gộp nhiều hành động (ví dụ API-10-036) giữ mã cho hành động đầu tiên; các hành động còn lại là API-10-092…119 do tập API tách, bản 0.3 chép lại thành dòng riêng ở trên. API-10-119 cũng là API nội bộ. API-10-120 (nhận khóa ký đầu tiên, FR-10-037 bước 6) và API-10-121 (hủy tác vụ nhập, FR-10-071) cấp ở bản 0.3. Mã mới cấp tiếp theo số sau mã lớn nhất ở bảng trên.
 
 ## 9. Truy vết
 
@@ -1583,6 +1618,7 @@ Thực thể repo: EN-10-01 CHU_DE thành EN-10-02; EN-10-02 LUOC_DO và PHIEN_B
 | PH-01 | Chốt tên topic sự kiện đổi trạng thái HTTT (Q10-17); cung cấp `clientId`, cấp độ ATTT trong bản sao đọc |
 | PH-05 | Thêm loại kết nối Pulsar (chỉ dùng cho cầu nối di trú) và Kamelet `dh-kafka-source`, `dh-kafka-sink` đọc cấu hình topic từ PH-10 |
 | PH-18 | Màn DLQ chung gọi API-10-060…065 |
+| D03-05 | Chép từ D03-06-PH10 Phụ lục A (bộ này không sửa D03-05): (A1) token độ mờ ngữ nghĩa cho nội dung không được làm nổi trên canvas, khác `opacity-disabled`; (A2) biến thể `readonly` của `CMP-FlowCanvas` có chế độ "lớp" (cột tiêu đề lớp dính mép, bố cục ELK phân lớp); (A3) kiểu cạnh theo trạng thái (liền, chấm, đứt) và độ dày theo lưu lượng là thuộc tính chuẩn của cạnh `CMP-FlowCanvas`; (A4) thành phần khối kết quả kiểm tra theo bước; (A5) thành phần xem trước lịch thử lại từ ba tham số giãn cách; (A6) biến thể `CMP-ResourceSelect` cho bên phát, bên nhận PH-10 |
 
 ## 11. Câu hỏi mở
 
@@ -1614,7 +1650,7 @@ Thực thể repo: EN-10-01 CHU_DE thành EN-10-02; EN-10-02 LUOC_DO và PHIEN_B
 
 > **Câu hỏi mở Q10-14:** HTTT cũ không trả lời được bắt tay xác minh webhook: thời hạn ngoại lệ 180 ngày có phù hợp không.
 
-> **Câu hỏi mở Q10-15:** Chính sách mặc định khi giao thất bại với topic `orderingRequired`: `BLOCK` (giữ thứ tự, có thể dừng cả subscription) hay `DEAD_LETTER` (không dừng, có thể phá thứ tự theo khóa). Đề xuất `BLOCK` cho topic có thứ tự, `DEAD_LETTER` cho phần còn lại.
+> **Câu hỏi mở Q10-15:** Chính sách mặc định khi giao thất bại với topic `orderingRequired`: `BLOCK` (giữ thứ tự, có thể dừng cả subscription) hay `DEAD_LETTER` (không dừng, có thể phá thứ tự theo khóa). Đề xuất `BLOCK` cho topic có thứ tự, `DEAD_LETTER` cho phần còn lại. **Đã chốt ở bản 0.3:** theo đề xuất; máy chủ đặt mặc định khi đầu vào không có `failurePolicy`, giao diện chọn sẵn theo cùng luật (FR-10-035).
 
 > **Câu hỏi mở Q10-16:** Kéo song song nhiều lease theo phân vùng (FR-10-043) có cần ở MVP không với HTTT lưu lượng lớn chỉ dùng HTTP.
 
@@ -1696,12 +1732,38 @@ Bản 0.2 xử lý mọi mục "Đề nghị bổ sung cho FRS" của ba tập �
 | CSDL §9.2 mục 8 | Độ dài tên topic DLQ; lược đồ cho topic DLQ | Chấp nhận: topic DLQ ≤ 204 ký tự (BR-10-002), BR-10-011 loại trừ topic DLQ |
 | CSDL §9.2 mục 9 | `projectCode` rỗng; `startFrom`; nhóm tiêu thụ `DlqIngestor`, inbox | Chấp nhận `projectCode` rỗng với SYSTEM, DLQ và `MigrationBridge.startFrom` (A.2.14). Điều chỉnh nhóm: `DlqIngestor` giữ `dh-svc-dh-integration-{tenant}`, mỗi bộ tiêu thụ inbox thêm hậu tố `-{consumer}` (A.8) |
 
+Bản 0.3 xử lý mục "Đề nghị bổ sung cho FRS" của tập API (D03-04-PH10 §10.1, §10.2, §10.3) và tập màn hình (D03-06-PH10 Phụ lục B, C); Phụ lục A của tập màn hình (đề nghị cho D03-05) chép sang §10.4. Kết quả: 21 đề nghị, 17 chấp nhận, 3 điều chỉnh, 1 từ chối (B6 phần trạng thái worker, đã do tập API từ chối và FRS giữ). Mã mới: ERR-10-053, 054; API-10-121; chép API-10-092…120 vào §8.3. Tên chốt cho kết quả xác minh endpoint: `push.lastVerification` (CSDL đổi `ck_subscription_push`).
+
+| Nguồn | Đề nghị | Quyết định |
+|---|---|---|
+| API §10.1 | 91 trường và 6 giá trị enum chỉ có ở API | Chấp nhận nguyên tên: bảng "Trường chỉ ở API" ở A.3; enum `GraphNode.kind`, `GraphEdge.kind`, `VerificationStep.name`, `.result`, `SchemaDiffChange.change`, `ConnectionInfo.saslMechanism`, `.kafkaListener`, `window` ở A.2.15 |
+| API §10.2 mục 1 | Mỗi operation một dòng ở §8.3 | Chấp nhận: chép API-10-092…120 từ tập API vào §8.3 |
+| API §10.2 mục 2 | Mã 401, 403 chung cho control plane (tạm ERR-10-101, 102) | Điều chỉnh: SRS không có mã chung 401, 403 (chỉ ERR-00-003, 412, 500), nên cấp ERR-10-053 (401) và ERR-10-054 (403 thiếu `PERM-10-*`) cho control plane; ERR-10-101, 102 chỉ còn ở data plane. Tập API sinh lại; tập UC chỉ dùng 101, 102 ở data plane nên không đổi |
+| API §10.2 mục 3 | API hủy tác vụ nhập ở `VALIDATING`, `PREVIEW` | Chấp nhận: API-10-121 `POST /imports/{jobCode}:cancel` (FR-10-071, Đợt sau như FR) |
+| API §10.2 mục 4 | Loại bỏ mục DLQ theo bộ lọc chạy nền | Điều chỉnh: MVP giữ API-10-062 với danh sách ≤ 1.000 mục (giao diện "chọn tất cả theo bộ lọc" gửi tối đa 1.000 mã); chạy nền theo bộ lọc để Đợt sau cùng thao tác hàng loạt của PH-18 |
+| API §10.2 mục 5 | `comment` đầu vào ánh xạ `decisionComment` | Chấp nhận: ghi ở A.3 `ApprovalRequest` và A.2.10 |
+| API §10.2 mục 6 | Bỏ `decision` khỏi đầu vào | Chấp nhận: xóa dòng A.2.10; FR-10-009, 031, 037 ghi hành động duyệt hoặc từ chối |
+| API §10.2 mục 7 | Lưu giữ, phân vùng topic `{tenant}.event.*` | Chấp nhận: 7 ngày, 3 phân vùng (§7.2) |
+| API §10.2 mục 8 | Tên trường `filters`, `batchSize`, `batchWaitMs` cho FR-10-048 | Chấp nhận: ghi ở A.3 là trường Đợt sau (`filters` ở `Subscription`, hai trường gộp lô trong `push`) |
+| API §10.2 mục 9 | Enum kiểu node, cạnh, bước xác minh | Chấp nhận (gộp với §10.1, A.2.15) |
+| API §10.2 mục 10 | Lệch `push.endpointVerification` (CSDL) và `push.lastVerification` (FRS, API) | Chấp nhận, chốt `lastVerification`: A.2.7 đổi tên dòng; CSDL sửa DDL, changelog, `check_frs.py`; API và màn hình đã dùng đúng |
+| API §10.2 mục 11 | `Cache-Control: no-store` cho phản hồi chứa khóa ký | Chấp nhận: BR-10-027 (API-10-054, 100, 120) |
+| API §10.3, màn hình B1…B10 | `allowedActions`, khối dashboard, trường sơ đồ, `dryRun`, lọc lag, `signingKeyPending`, API nhận khóa ký, chạy thử phát lại, miễn xác minh, `validUntil` | Chấp nhận theo cách tập API đã xử lý (trường vào A.3, `dryRun` vào A.3). B2 điều chỉnh: không có cờ `available`, chỉ `traffic` rỗng khi PH-13 lỗi. B6 từ chối phần trạng thái worker (dữ liệu chạy của `dh-runtime`, tab Worker dùng API-10-055, 052). B9 điều chỉnh: miễn xác minh chỉ sau khi tạo (API-10-091), trả lời Q10-31 |
+| Màn hình C1 | Tab con route và tham số query sơ đồ | Chấp nhận nguyên tên (A.6) |
+| Màn hình C2 | Ràng buộc `retryBackoff`, ngưỡng lag | Chấp nhận: miền theo `10.push.backoff-*`, `10.lag.*`, `maxMs` ≥ `initialMs`, `lagWarnSeconds` < `lagCriticalSeconds`, sai trả ERR-10-012 (FR-10-035); tập API thêm miền `multiplier` 1…5 |
+| Màn hình C3 | Độ dài `legalBasis` | Chấp nhận: 10…1.000 ký tự, bắt buộc khi topic `RESTRICTED`, `SENSITIVE` như giao diện đang làm (FR-10-035); tập API đổi từ 5…2.000 sang 10…1.000 |
+| Màn hình C4 | Độ dài `reason` | Chấp nhận: 10…500 ký tự cho mọi thao tác vận hành, liệt kê ở quy ước đầu §5 |
+| Màn hình C5 | `quotaBytesPerSecond` trong FR-10-035 | Chấp nhận: thêm dòng tham số |
+| Màn hình C6 | Chọn sẵn `failurePolicy = BLOCK` khi `orderingRequired` | Chấp nhận: mặc định ở máy chủ và giao diện (FR-10-035, 039); đóng Q10-15 |
+| Màn hình Phụ lục A | Sáu đề nghị cho D03-05 | Không thuộc FRS; chép nguyên vào §10.4 để luồng chính chuyển D03-05 |
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Người | Nội dung |
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Bản đầu theo khuôn K-FRS, sổ tra cứu D00-04, kiểm kê LGC-HUB ở D00-03, SRS-PH-10 của repo, hợp đồng với PH-04, PH-05, PH-07, PH-18; ADR-070…073 |
 | 0.2 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 25 đề nghị của tập UC, SDD, CSDL (§14): ERR-10-051, 052, 121; EVT-10-16; API-10-085…091; enum mới ở A.2.5, A.2.9, A.2.13, A.2.14, A.2.15; trường mới ở A.3; định danh mới ở A.8 |
+| 0.3 | 26/11/2026 | Nhóm viết tài liệu (Claude) | Hấp thụ 21 đề nghị của tập API và màn hình (§14): ERR-10-053, 054 (401, 403 control plane); API-10-121 và chép API-10-092…120 vào §8.3; trường chỉ ở API vào A.3, enum vào A.2.15; chốt `push.lastVerification`; ràng buộc `retryBackoff`, ngưỡng lag, `legalBasis`, `quotaBytesPerSecond` ở FR-10-035; mặc định `BLOCK` cho topic có thứ tự (đóng Q10-15); bỏ `decision`; tab con route ở A.6; đề nghị cho D03-05 ở §10.4 |
 
 ## Phụ lục A. Bảng mã và enum chuẩn
 
@@ -1776,7 +1838,7 @@ Phụ lục này là nguồn chuẩn duy nhất của PH-10 cho UC, SDD, CSDL, A
 | `push.payloadFormat` | `CLOUDEVENTS_STRUCTURED`, `CLOUDEVENTS_BINARY` |
 | `alertState` (lag) | `OK`, `WARNING`, `CRITICAL`, `STALLED` |
 | `SigningKey.status` | `ACTIVE`, `PREVIOUS`, `REVOKED` |
-| `endpointVerification.result` | `PASSED`, `FAILED`, `WAIVED` (ngoại lệ có thời hạn, FR-10-036) |
+| `push.lastVerification.result` | `PASSED`, `FAILED`, `WAIVED` (ngoại lệ có thời hạn, FR-10-036) |
 
 #### A.2.8. Kiểu giao tiếp (`CommType.commTypeCode`) và tổ hợp hợp lệ
 
@@ -1809,10 +1871,9 @@ Phụ lục này là nguồn chuẩn duy nhất của PH-10 cho UC, SDD, CSDL, A
 |---|---|
 | `requestType` | `TOPIC_CREATE`, `TOPIC_CHANGE`, `TOPIC_RETIRE`, `SCHEMA_VERSION`, `PUBLICATION`, `SUBSCRIPTION`, `REPLAY`, `BRIDGE`, `CUTOVER` |
 | `status` | `PENDING`, `APPROVED`, `REJECTED`, `WITHDRAWN`, `EXPIRED` |
-| `decision` (đầu vào) | `APPROVE`, `REJECT` |
 | `targetType` | `TOPIC`, `SCHEMA_VERSION`, `PUBLICATION`, `SUBSCRIPTION`, `REPLAY`, `BRIDGE`, `MAPPING` |
 
-Yêu cầu `PENDING` quá `10.approval.expire-days` ngày chuyển `EXPIRED`, đối tượng về trạng thái trước khi gửi duyệt.
+Yêu cầu `PENDING` quá `10.approval.expire-days` ngày chuyển `EXPIRED`, đối tượng về trạng thái trước khi gửi duyệt. Từ bản 0.3 không có trường đầu vào chọn kết quả duyệt: duyệt và từ chối là hai hành động riêng (`:approve`, `:reject`); ý kiến gửi ở trường `comment` và lưu thành `decisionComment`.
 
 #### A.2.11. DLQ, phát lại, lỗi giao
 
@@ -1863,6 +1924,14 @@ Chuyển trạng thái bổ sung: `LegacyMapping` từ `ROLLED_BACK` sang `BRIDG
 | `PermissionCheck.result` | `ALLOWED`, `PENDING` (có đề nghị chờ duyệt), `DENIED` |
 | `PermissionCheck.reason` (khi bị từ chối) | `TOPIC_NOT_FOUND`, `TOPIC_NOT_ACTIVE`, `NO_GRANT`, `GRANT_SUSPENDED` |
 | `overlay` của sơ đồ (FR-10-058, API-10-007) | `NONE` (mặc định), `LAG`, `TRAFFIC`, `DLQ` |
+| `GraphNode.kind` (API-10-007) | `PUBLISHER`, `TOPIC`, `SUBSCRIBER` |
+| `GraphEdge.kind` (API-10-007) | `PUBLICATION`, `SUBSCRIPTION` |
+| `VerificationStep.name` (FR-10-036, API-10-051) | `DNS`, `TLS`, `HANDSHAKE`, `TEST_EVENT` |
+| `VerificationStep.result` | `PASSED`, `FAILED`, `SKIPPED` (bước sau không chạy vì bước trước lỗi) |
+| `SchemaDiffChange.change` (FR-10-020, API-10-030) | `ADDED`, `REMOVED`, `CHANGED` |
+| `ConnectionInfo.saslMechanism` (API-10-020) | `OAUTHBEARER`, `MTLS` |
+| `ConnectionInfo.kafkaListener` (API-10-020) | `internal`, `external` (tên listener Kafka chữ thường theo D03-09) |
+| `window` của thống kê giao nhận, lag (API-10-052, 055) | `1h`, `24h` (mặc định), `7d` (khoảng thời gian chữ thường, không phải enum nghiệp vụ) |
 
 ### A.3. Thực thể, bảng và trường nghiệp vụ chính
 
@@ -1875,9 +1944,9 @@ Chuyển trạng thái bổ sung: `LegacyMapping` từ `ROLLED_BACK` sang `BRIDG
 | `Publisher` | `publisher` | `publisherCode`, `name`, `description`, `partyType`, `systemCode`, `flowCode`, `serviceCode`, `commType`, `referenceKey`, `clientId`, `kafkaPrincipal`, `status`, `suspendSource`, `suspendReason`, `lastActiveAt` |
 | `Subscriber` | `subscriber` | như `Publisher` với `subscriberCode`; `isFlow` (boolean, suy ra, chỉ ở API) |
 | `Publication` | `publication` | `publicationCode`, `publisherCode`, `topicName`, `purpose`, `expectedRatePerMinute`, `quotaBytesPerSecond`, `status`, `grantedScope`, `aclRef`, `suspendSource`, `approvedBy`, `approvedAt`, `revokedAt` |
-| `Subscription` | `subscription` | `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `purpose`, `legalBasis`, `consumerGroup`, `startPosition`, `startAt`, `status`, `suspendSource`, `suspendReason`, `lagWarnSeconds`, `lagCriticalSeconds`, `alertState`, `alertAcknowledgedBy`, `alertAcknowledgedAt`, `alertAckNote`, `approvedBy`, `approvedAt`, `push` (JSON: `endpointUrl`, `workerCount`, `maxRetries`, `retryBackoff{initialMs, multiplier, maxMs}`, `timeoutMs`, `failurePolicy`, `payloadFormat`, `endpointVerifiedAt`, `verificationWaiverUntil`, `verificationWaiverReason`, `lastVerification{result, checkedAt, steps}`), `pull` (JSON: `maxBatch`, `leaseSeconds`), `quotaBytesPerSecond` |
+| `Subscription` | `subscription` | `subscriptionCode`, `subscriberCode`, `topicName`, `deliveryMode`, `purpose`, `legalBasis`, `consumerGroup`, `startPosition`, `startAt`, `status`, `suspendSource`, `suspendReason`, `lagWarnSeconds`, `lagCriticalSeconds`, `alertState`, `alertAcknowledgedBy`, `alertAcknowledgedAt`, `alertAckNote`, `approvedBy`, `approvedAt`, `push` (JSON: `endpointUrl`, `workerCount`, `maxRetries`, `retryBackoff{initialMs, multiplier, maxMs}`, `timeoutMs`, `failurePolicy`, `payloadFormat`, `endpointVerifiedAt`, `verificationWaiverUntil`, `verificationWaiverReason`, `lastVerification{result, checkedAt, validUntil, steps[]{name, result, detail}}`), `pull` (JSON: `maxBatch`, `leaseSeconds`), `quotaBytesPerSecond` |
 | `SigningKey` | `signing_key` | `subscriptionCode`, `keyId`, `secretRef` (đường dẫn OpenBao), `status`, `activatedAt`, `previousUntil`, `revokedAt` |
-| `ApprovalRequest` | `approval_request` | `requestCode`, `requestType`, `targetType`, `targetCode`, `payloadDiff` (JSON), `checks` (JSON), `status`, `requestedBy`, `requestedAt`, `decidedBy`, `decidedAt`, `decisionComment`, `autoApproved` (boolean) |
+| `ApprovalRequest` | `approval_request` | `requestCode`, `requestType`, `targetType`, `targetCode`, `payloadDiff` (JSON), `checks` (JSON), `status`, `requestedBy`, `requestedAt`, `decidedBy`, `decidedAt`, `decisionComment` (nhận từ trường đầu vào `comment` của API-10-059, 101), `autoApproved` (boolean) |
 | `DeliveryStat` | `delivery_stat` | `subscriptionCode`, `windowStart` (T-TS, phút), `successCount`, `transientErrorCount`, `retryCount`, `deadLetterCount`, `latencyP50Ms`, `latencyP95Ms` |
 | `DeliveryFailure` | `delivery_failure` | `subscriptionCode`, `occurredAt`, `partition`, `offset`, `eventId`, `httpStatus`, `errorCode`, `failureClass`, `attempt`, `responseSnippet` |
 | `DlqEntry` | `dlq_entry`, `dlq_payload` | `dlqEntryId`, `subscriptionCode`, `sourceTopic`, `sourcePartition`, `sourceOffset`, `eventId`, `eventType`, `eventSubject`, `origin`, `bridgeCode` (khi nguồn là cầu nối; khi đó không có subscription), `errorCode`, `errorDetail`, `attempts`, `firstFailedAt`, `lastFailedAt`, `status`, `resolvedBy`, `resolvedAt`, `resolveReason`, `replayCode`, `payloadRef`, `payloadPurgedAt` |
@@ -1905,6 +1974,31 @@ Trường đầu vào của thao tác (không lưu thành cột, chỉ ở API v
 | `acknowledgeDuplicates`, `acknowledgeSkip` (boolean) | FR-10-051 | Xác nhận nhận lại sự kiện đã nhận (phát lại, đặt offset lùi); xác nhận bỏ qua bản tin (đặt offset tiến) |
 | `onBehalfOf` (T-CODE) | FR-10-066 | Người chịu trách nhiệm khi máy đăng ký topic |
 | `rewriteTenantPrefix` (boolean) | FR-10-071 | Viết lại tiền tố tenant của tên topic theo tenant đích |
+
+Tham số truy vấn chỉ ở API: `dryRun` (boolean, mặc định `false`) ở API-10-015 (trả `TopicChangeResult` mà không ghi, để xem subscription bị ảnh hưởng trước khi gửi) và API-10-064 (trả `ReplayEstimate`, không tạo lượt phát lại); `window` ở API-10-052, 055 (A.2.15).
+
+Trường chỉ ở API (cấu trúc phản hồi, sự kiện; không lưu thành cột). Tên đúng như `openapi-event.yaml`, `asyncapi-event.yaml` của D03-04-PH10 bản 0.1; bản 0.3 hấp thụ nguyên tên.
+
+| Lược đồ | Nơi dùng | Trường |
+|---|---|---|
+| Mọi đối tượng chi tiết (`Project`, `Topic`, `PartyBase`, `Publication`, `Subscription`, `ApprovalRequest`, `ReplayRequest`) | API-10-003, 010, 034, 039, 044, 048, 058, 104 và danh sách tương ứng | `allowedActions` (mảng chuỗi, không phải enum: hậu tố hành động như `archive`, `suspend`, `approve` hoặc `update`, `delete`; tính ở máy chủ theo quyền, trạng thái, bốn mắt; chỉ để giao diện ẩn, vô hiệu nút, máy chủ vẫn kiểm lại) |
+| `ProblemDetails` (RFC 9457 mở rộng) | Mọi API lỗi | `title`, `detail`, `instance`, `errors[]{field, rule}`, `currentEtag` (ERR-10-007), `dependents` (ERR-10-010), `failedIndex` (lô), `availableRange` (ERR-10-033), `retryAfterSeconds` (ERR-10-107, 121) |
+| `Dashboard` | API-10-066 (FR-10-057) | `generatedAt`, `counts`, `traffic{inPerMinute, outPerMinute, trend7d[]{day}}` (rỗng khi nguồn PH-13 lỗi), `byAlertState`, `pendingApprovals`, `deprecatedSoon`, `failedTopics`, `quotaUsage`, `newByTopic`, `top`, `topTopics` |
+| `Graph`, `GraphNode`, `GraphEdge` | API-10-007 (FR-10-058) | `generatedAt`, `metricsCollectedAt` (thời điểm số liệu lớp phủ, để hiện số liệu cũ), `nodes[].dlqNewCount`, `edges[].dlqNewCount`, `edges[].commType` |
+| `ConnectionInfo` | API-10-020 (FR-10-007, 034) | `kafkaBootstrap`, `kafkaListener`, `saslMechanism`, `tokenUrl`, `registryUrl`, `httpPublishUrl`, `httpPullUrlTemplate`, `consumerGroupTemplate`, `sampleConfigs` |
+| `CompatibilityReport`, `SchemaDiff`, `SchemaDiffChange`, `PiiFinding` | API-10-026, 030 (FR-10-017, 018, 020) | `compatible`, `comparedVersions`, `messages`, `changes[]{path, change, before, breaking}`, `field`, `rule` |
+| `TopicChangeResult` | API-10-015 (FR-10-011, 012, 013) | `approvalRequest`, `impactedSubscriptions` |
+| `Publisher`, `Subscriber`, `CommType`, `RoutingMode`, `EnsurePartyResponse` | API-10-033, 034, 037, 039, 067, 068, 072 | `publicationCounts`, `subscriptionCounts`, `inUseCount`, `approvalRequestCodes` |
+| `Subscription`, `EndpointVerification`, `VerificationStep` | API-10-048, 051, 120 (FR-10-036, 037) | `signingKeyPending` (khóa ký đầu tiên chưa được nhận qua API-10-120), `signingKeys`, `validUntil` (hết hiệu lực xác minh 24 giờ), `steps[].detail` |
+| `Lag`, `DeliveryStats.workers[]` (`WorkerState`) | API-10-052, 055 (FR-10-054, 056) | `series`, `retentionRemainingSeconds`, `committedOffsets`, `lastDeliveredAt` |
+| `DlqPayload`, `ReplayEstimate`, `ReplayStartRequest`, `RuntimeResumeRequest` | API-10-103, 064, 087, 119 | `dataBase64`, `masked`, `estimatedDurationSeconds`, `availableRange`, `runner`, `probeEventId` |
+| `RuntimeConfig`, `RuntimeTopic`, `RuntimeSubscription` | API-10-073, 119 (nội bộ `dh-runtime`; FR-10-038, 043) | `full`, `generatedAt`, `configVersion`, `sources`, `enabledVersions`, `signingKeys` |
+| `Compliance`, `ComplianceItem` | API-10-031 (FR-10-023) | `sampleRatio`, `windowEnd`, `sampledCount`, `violationCount`, `lastViolationAt`, `lastErrorCode` |
+| `Settings`, `TenantEventQuota`, `ExportRequest`, `ManifestImportJob` | API-10-069, 070, 074, 075, 110 | `params`, `usage`, `projectCodes`, `topicNames`, `path` |
+| `MigrationProgress`, `MigrationStatusItem`, `Reconciliation` | API-10-078, 117, 118 (FR-10-075, 076) | `legacySystems`, `mappingsByStatus`, `publishesViaPulsar`, `subscribesViaPulsar`, `plannedShutdownAt`, `lastReconciliation`, `successorStatus`, `successorSubscriptionCode`, `kafkaCount`, `pulsarCount`, `difference`, `sampleMismatches`, `reportRef`, `windowEnd` |
+| Payload sự kiện (A.7) | EVT-10-02, 05, 06, 07, 09, 10, 12, 13, 16 | `previousStatus`, `changedFields`, `configVersion`, `enabledVersions`, `previousAlertState`, `previousKeyId`, `errorCodes`, `newEntryCount`, `violationCount`, `windowEnd`, `lastErrorCode`; thuộc tính CloudEvents `datacontenttype` |
+
+Trường để dành cho Đợt sau (FR-10-048, chưa có cột, chưa ở API): `filters` (JSON theo cú pháp lọc CloudEvents Subscriptions API) ở `Subscription`; `push.batchSize`, `push.batchWaitMs` trong `push`. Tập CSDL, API thêm khi FR-10-048 vào kế hoạch.
 
 ### A.4. Mã quyền và scope
 
@@ -2009,6 +2103,8 @@ Phạm vi: N là tham số nền tảng (PA đặt), T là tham số tenant (TA 
 | UI-10-18 | Cài đặt sự kiện | `/tich-hop/topic/cai-dat` | PTN-12 |
 | UI-10-19 | Nhập khai báo | `/tich-hop/du-an/nhap` | PTN-09 |
 | UI-10-20 | Di trú từ Pulsar | `/tich-hop/du-an/di-tru` | PTN-01 |
+
+Tab con của trang chi tiết là đoạn cuối route (deep link được, giữ khi tải lại): topic (UI-10-06) `/cau-hinh`, `/quyen-phat`, `/dang-ky-nhan-ds`, `/ket-noi`, `/chuyen-doi`, `/lich-su`; subscription (UI-10-12) `/giao-nhan`, `/do-tre`, `/luot-loi`, `/worker`, `/khoa-ky`, `/cau-hinh`, `/phat-lai`, `/lich-su`; dự án (UI-10-03) `/topic`, `/ben-tham-gia`, `/so-do`, `/lich-su`; di trú (UI-10-20) `/anh-xa`, `/cau-noi`, `/doi-chieu`, `/tien-do`. Tham số truy vấn của sơ đồ (UI-10-14): `du-an`, `topic`, `httt` (lọc), `lop-phu` (giá trị chữ thường của `overlay`), `ca-ngung` (hiện cả đối tượng đã ngừng), `che-do` (bố cục). Tên tab không trùng tên topic vì tên topic luôn có dấu chấm.
 
 Từ dành riêng trong route không được dùng làm mã dự án: `moi`, `tong-quan`, `nhap`, `di-tru`, `ben-phat`, `ben-nhan` (FR-10-003); dưới `/tich-hop/topic` các từ `moi`, `ben-phat`, `ben-nhan`, `dang-ky`, `phat-lai`, `do-tre`, `cai-dat` không trùng tên topic vì tên topic luôn có dấu chấm.
 

@@ -762,7 +762,7 @@ CREATE TABLE ph10_event.subscription (
     AND push ->> 'payloadFormat' IN ('CLOUDEVENTS_STRUCTURED', 'CLOUDEVENTS_BINARY')
     AND jsonb_typeof(push -> 'retryBackoff') = 'object'
     AND NOT (push ?| ARRAY['secret', 'signingSecret', 'password', 'token', 'apiKey'])
-    AND (NOT push ? 'endpointVerification' OR push #>> '{endpointVerification,result}' IN ('PASSED', 'FAILED', 'WAIVED')))),
+    AND (NOT push ? 'lastVerification' OR push #>> '{lastVerification,result}' IN ('PASSED', 'FAILED', 'WAIVED')))),
   CONSTRAINT ck_subscription_pull CHECK (pull IS NULL OR (
         jsonb_typeof(pull) = 'object'
     AND (pull ->> 'maxBatch')::int BETWEEN 1 AND 1000
@@ -781,7 +781,7 @@ COMMENT ON TABLE ph10_event.subscription IS 'EN-10-08 Subscription (FR-10-035…
 COMMENT ON COLUMN ph10_event.subscription.legal_basis IS 'Căn cứ pháp lý, bắt buộc với topic RESTRICTED, SENSITIVE (BR-10-019, trigger tg_subscription_combo).';
 COMMENT ON COLUMN ph10_event.subscription.alert_acknowledged_by IS 'Người xác nhận cảnh báo lag (FR-10-055); tắt thông báo lặp 4 giờ, xóa cùng alert_acknowledged_at, alert_ack_note khi alert_state đổi mức.';
 COMMENT ON COLUMN ph10_event.subscription.alert_state IS 'Trạng thái lag gần nhất do bộ thu lag cập nhật (FR-10-054, 055); đổi trạng thái phát EVT-10-10.';
-COMMENT ON COLUMN ph10_event.subscription.push IS 'JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, endpointVerification{result}. Không chứa bí mật.';
+COMMENT ON COLUMN ph10_event.subscription.push IS 'JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, lastVerification{result}. Không chứa bí mật.';
 COMMENT ON COLUMN ph10_event.subscription.pull IS 'JSON A.3: maxBatch (≤ 10.pull.max-batch), leaseSeconds.';
 -- @rollback DROP TABLE IF EXISTS ph10_event.subscription CASCADE;
 

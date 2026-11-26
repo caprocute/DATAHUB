@@ -1,7 +1,7 @@
 ---
 ma_tai_lieu: D03-03-PH10
 ten: Thiết kế cơ sở dữ liệu phân hệ PH-10 Sự kiện
-phien_ban: 0.2
+phien_ban: 0.3
 ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Kỹ sư, DBA, ATTT, hội đồng thẩm định
@@ -307,7 +307,7 @@ EN-10-08 Subscription (FR-10-035…048, LGC-HUB-013). Duy nhất theo cặp bên
 | `suspend_source` | `varchar(20), NULL` | Giá trị: `MANUAL`, `SECURITY`, `PH01`, `CIRCUIT_BREAKER`, `DELIVERY_BLOCKED`. |
 | `alert_state` | `varchar(16), mặc định 'OK'` | Trạng thái lag gần nhất do bộ thu lag cập nhật (FR-10-054, 055); đổi trạng thái phát EVT-10-10. Giá trị: `OK`, `WARNING`, `CRITICAL`, `STALLED`. |
 | `alert_acknowledged_by` | `varchar(64), NULL` | Người xác nhận cảnh báo lag (FR-10-055); tắt thông báo lặp 4 giờ, xóa cùng alert_acknowledged_at, alert_ack_note khi alert_state đổi mức. |
-| `push` | `jsonb, NULL` | JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, endpointVerification{result}. Không chứa bí mật. |
+| `push` | `jsonb, NULL` | JSON A.3: endpointUrl (HTTPS), workerCount (≤ số phân vùng, BR-10-025), maxRetries, retryBackoff{initialMs,multiplier,maxMs}, timeoutMs, failurePolicy, payloadFormat, endpointVerifiedAt, verificationWaiverUntil, lastVerification{result}. Không chứa bí mật. |
 | `pull` | `jsonb, NULL` | JSON A.3: maxBatch (≤ 10.pull.max-batch), leaseSeconds. |
 
 Cột khác: `subscription_code` (varchar(63)); `subscriber_code` (varchar(63)); `topic_name` (varchar(204)); `purpose` (varchar(2000)); `consumer_group` (varchar(255)); `start_at` (timestamptz, NULL); `suspend_reason` (varchar(1000), NULL); `lag_warn_seconds` (integer, mặc định 300); `lag_critical_seconds` (integer, mặc định 1800); `alert_acknowledged_at` (timestamptz, NULL); `alert_ack_note` (varchar(1000), NULL); `approved_by` (varchar(64), NULL); `approved_at` (timestamptz, NULL); `quota_bytes_per_second` (bigint, NULL), cột ngữ cảnh chuẩn (§1.3). 5 chỉ mục phụ (§3.29, ddl).
@@ -546,7 +546,7 @@ Bài kiểm `TenantIsolationIT` (D03-02-PH10) tự động hóa các khối này
 
 ### 4.3. Đối chiếu với FRS phụ lục A
 
-[`ph10/tools/check_frs.py`](ph10/tools/check_frs.py) đọc phụ lục A của FRS và DDL, kiểm: (1) 44 cặp (bảng, cột) enum có tập giá trị `CHECK` bằng đúng tập A.2; (2) 5 enum nằm trong JSON (`push.failurePolicy`, `push.payloadFormat`, `endpointVerification.result`, `piiFindings[].severity`, `changeKind`) có mặt trong DDL; (3) mọi trường A.3 (bỏ phần JSON lồng) có cột `snake_case` trong bảng gợi ý, trừ ngoại lệ §1.3; (4) không có giá trị `UPPER_SNAKE` nào trong `CHECK` mà phụ lục A không có. Kết quả lần chạy cuối: sạch. Đã thử gây lệch có chủ đích (thêm `ARCHIVED` vào `dlq_entry.status`, đổi tên `sunset_at`) và công cụ báo đúng hai lệch. Công cụ chạy trong CI cùng `kiem_tra_ma.py`.
+[`ph10/tools/check_frs.py`](ph10/tools/check_frs.py) đọc phụ lục A của FRS và DDL, kiểm: (1) 44 cặp (bảng, cột) enum có tập giá trị `CHECK` bằng đúng tập A.2; (2) 5 enum nằm trong JSON (`push.failurePolicy`, `push.payloadFormat`, `push.lastVerification.result`, `piiFindings[].severity`, `changeKind`) có mặt trong DDL; (3) mọi trường A.3 (bỏ phần JSON lồng) có cột `snake_case` trong bảng gợi ý, trừ ngoại lệ §1.3; (4) không có giá trị `UPPER_SNAKE` nào trong `CHECK` mà phụ lục A không có. Kết quả lần chạy cuối: sạch. Đã thử gây lệch có chủ đích (thêm `ARCHIVED` vào `dlq_entry.status`, đổi tên `sunset_at`) và công cụ báo đúng hai lệch. Công cụ chạy trong CI cùng `kiem_tra_ma.py`.
 
 ## 5. Dữ liệu khởi tạo
 
@@ -755,3 +755,4 @@ Trạng thái: chín điểm dưới đây đã xử lý ở FRS bản 0.2 (D02-
 |---|---|---|---|
 | 0.1 | 26/11/2026 | Bản đầu theo khuôn K-CSDL; 28 bảng; DDL và changelog chạy thử trên PostgreSQL 16.15, kiểm cô lập 47/47; đối chiếu phụ lục A sạch | Nhóm viết tài liệu (Claude) |
 | 0.2 | 26/11/2026 | Theo FRS 0.2: `CHECK` mới cho `routing_mode.ordering`, `legacy_mapping.target_type`; thêm `DELIVERY_BLOCKED` (`suspend_source`, chỉ subscription), `REJECTED` (`migration_bridge`), cột `dlq_entry.bridge_code`, `subscription.alert_acknowledged_by`, `alert_acknowledged_at`, `alert_ack_note`; outbox nhận EVT-10-16; sửa tại chỗ changeset vì chưa triển khai; chạy lại DDL và kiểm cô lập trên PostgreSQL 16 | Nhóm viết tài liệu (Claude) |
+| 0.3 | 26/11/2026 | Theo FRS 0.3: khóa JSON kết quả xác minh endpoint trong `subscription.push` chốt tên `lastVerification` (trước ghi `endpointVerification`), sửa `ck_subscription_push`, ghi chú cột và changelog sinh lại; không đổi bảng, cột | Nhóm viết tài liệu (Claude) |

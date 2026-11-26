@@ -74,7 +74,7 @@ for c, (http, m) in sorted(g.ERRS.items()):
         where = fmt(uses.get(c, [])) or CLS.get(n, "")
         if n in CLS: where = f"Lượt giao, DLQ (`errorCode`): {CLS[n]}"
         r2.append(f"| {c} | {http} | {m} | {where} |")
-blocks["errors"] = ("### 6.1. Control plane (ERR-10-001…052)\n\n" + "\n".join(r1) +
+blocks["errors"] = ("### 6.1. Control plane (ERR-10-001…054)\n\n" + "\n".join(r1) +
     "\n\n### 6.2. Data plane và runtime (ERR-10-101…121)\n\nMã có HTTP trả qua cổng sự kiện hoặc API nội bộ; mã không có HTTP (111…120) không trả cho bên gọi mà ghi ở `DeliveryFailure.errorCode`, `DlqEntry.errorCode`, tiêu đề `dh_dlq_error_code` và chỉ số.\n\n" + "\n".join(r2))
 # ---- §9 FR → API
 frs = re.findall(r"^#### (FR-10-\d{3}) · (.+)$", FRS_TXT, re.M)
@@ -114,7 +114,7 @@ def collect(schemas, src):
                     if "-" in k or k.startswith("ce_") or k.startswith("dh_dlq") or k[0].isupper(): continue
                     if k not in TOKENS: where.setdefault(("trường", k), set()).add(name)
                 for v in x.get("enum", []) if isinstance(x.get("enum"), list) else []:
-                    if isinstance(v, str) and v not in TOKENS: where.setdefault(("enum", v), set()).add(name)
+                    if isinstance(v, str) and v not in TOKENS and f"`{v}`" not in FRS_TXT: where.setdefault(("enum", v), set()).add(name)
                 for v in x.values(): w(v)
             elif isinstance(x, list):
                 for v in x: w(v)
@@ -124,7 +124,7 @@ collect(aa["components"]["schemas"], "aa")
 r = ["| Loại | Tên | Lược đồ dùng | Đề nghị |", "|---|---|---|---|"]
 for (kind, nm), sch in sorted(where.items(), key=lambda x: (x[0][0], x[0][1].lower())):
     r.append(f"| {kind} | `{nm}` | {', '.join(sorted(sch)[:4])}{' …' if len(sch) > 4 else ''} | Thêm vào A.3 (trường chỉ ở API) hoặc A.2.15 (enum chỉ ở API) |" )
-blocks["proposals"] = "\n".join(r)
+blocks["proposals"] = "\n".join(r) if len(r) > 2 else "Không còn trường, enum nào chỉ có ở API: FRS bản 0.3 đã hấp thụ đủ vào A.2.15, A.3."
 
 s = open(DOC, encoding="utf-8").read()
 for k, v in blocks.items():

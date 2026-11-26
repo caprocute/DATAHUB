@@ -265,8 +265,8 @@ SCHEMAS = {
   "PublicationCreate": obj({"publisherCode": R("PublisherCode"), "topicName": R("TopicName"), "purpose": STR(500, minLength=10),
       "expectedRatePerMinute": INT(minimum=0), "quotaBytesPerSecond": INT(minimum=262144)}, req=["publisherCode", "topicName", "purpose"]),
   # ---------------- F. subscription
-  "RetryBackoff": obj({"initialMs": INT(minimum=100, maximum=60000), "multiplier": NUM, "maxMs": INT(minimum=1000, maximum=3600000)},
-      req=["initialMs", "multiplier", "maxMs"]),
+  "RetryBackoff": obj({"initialMs": INT(minimum=100, maximum=60000), "multiplier": {"type": "number", "minimum": 1, "maximum": 5}, "maxMs": INT(minimum=1000, maximum=3600000)},
+      req=["initialMs", "multiplier", "maxMs"], desc="Giãn cách thử lại (FR-10-035, 039); `maxMs` ≥ `initialMs`, sai trả ERR-10-012."),
   "VerificationStep": obj({"name": enum("DNS", "TLS", "HANDSHAKE", "TEST_EVENT"), "result": enum("PASSED", "FAILED", "SKIPPED"),
       "detail": STR(1000)}, req=["name", "result"]),
   "EndpointVerification": obj({"result": R("VerificationResult"), "checkedAt": TS, "steps": arr(R("VerificationStep"))}, req=["result", "checkedAt"],
@@ -293,7 +293,7 @@ SCHEMAS = {
       "maxRetries": INT(minimum=0, maximum=50), "retryBackoff": R("RetryBackoff"), "timeoutMs": INT(minimum=1000, maximum=30000),
       "failurePolicy": R("FailurePolicy"), "payloadFormat": R("PayloadFormat")}, req=["endpointUrl"]),
   "SubscriptionCreate": obj({"subscriptionCode": R("SubscriptionCode"), "subscriberCode": R("SubscriberCode"), "topicName": R("TopicName"),
-      "deliveryMode": R("DeliveryMode"), "purpose": STR(500, minLength=10), "legalBasis": STR(2000, minLength=5),
+      "deliveryMode": R("DeliveryMode"), "purpose": STR(500, minLength=10), "legalBasis": STR(1000, minLength=10),
       "startPosition": R("StartPosition"), "startAt": TS, "push": R("PushInput"), "pull": R("PullConfig"),
       "lagWarnSeconds": INT(minimum=30, maximum=86400), "lagCriticalSeconds": INT(minimum=60, maximum=604800), "quotaBytesPerSecond": INT(minimum=262144)},
       req=["subscriberCode", "topicName", "deliveryMode", "purpose"]),
@@ -656,7 +656,7 @@ X = {
   "046": ("listSubscriptions", None, "SubscriptionPage", None,
           ["Q", Q("subscriberCode", R("SubscriberCode")), Q("topicName", R("TopicName")), QA("status", R("SubscriptionStatus")),
            QA("deliveryMode", R("DeliveryMode")), QA("alertState", R("AlertState")), Q("projectCode", R("ProjectCode"))] + PG),
-  "047": ("createSubscription", "SubscriptionCreate", "Subscription", "`PUSH` cần endpoint đã xác minh trong 24 giờ (chưa có thì chạy xác minh, lỗi ERR-10-027); `PULL_KAFKA` khi tenant chưa bật ERR-10-028; `workerCount` vượt phân vùng ERR-10-030; `startAt` ngoài lưu giữ ERR-10-031; topic `RESTRICTED`, `SENSITIVE` bắt buộc `legalBasis`. Gán `consumerGroup` theo A.8.", []),
+  "047": ("createSubscription", "SubscriptionCreate", "Subscription", "`PUSH` cần endpoint đã xác minh trong 24 giờ (chưa có thì chạy xác minh, lỗi ERR-10-027); `PULL_KAFKA` khi tenant chưa bật ERR-10-028; `workerCount` vượt phân vùng ERR-10-030; `startAt` ngoài lưu giữ ERR-10-031; topic `RESTRICTED`, `SENSITIVE` bắt buộc `legalBasis`. Gán `consumerGroup` theo A.8. Không gửi `failurePolicy` thì mặc định `BLOCK` với topic `orderingRequired`, `DEAD_LETTER` với topic còn lại; `lagWarnSeconds` phải nhỏ hơn `lagCriticalSeconds` (ERR-10-012).", []),
   "048": ("getSubscription", None, "Subscription", None, []),
   "049": ("updateSubscription", "SubscriptionUpdate", "Subscription", "Không cần duyệt lại: `workerCount`, `maxRetries`, `retryBackoff`, `timeoutMs`, `payloadFormat`, `pull`, ngưỡng lag (áp dụng ≤ 60 giây). Đổi `endpointUrl` (phải xác minh trước), `failurePolicy` tạo yêu cầu `SUBSCRIPTION`, trả `approvalRequestCode`, subscription chạy tham số cũ tới khi duyệt. Thay đổi có hiệu lực phát EVT-10-09.", []),
   "050": ("pauseSubscription", "StateChangeRequest", "Subscription", "`ACTIVE` sang `PAUSED`; bộ giao nhận dừng ≤ 10 giây. Subscription `INTERNAL` trả ERR-10-052.", []),
@@ -707,6 +707,7 @@ X = {
   "074": ("exportManifest", "ExportRequest", None, "Trả `application/yaml` (`kind: EventManifest`, `apiVersion: event.datahub.vn/v1`); không có bí mật ký, không có `clientId` nội bộ.", []),
   "075": ("startImport", None, "ManifestImportJob", "`multipart/form-data`: `file` và `meta` (ImportMeta). `PULSAR_HUB` cần `PERM-10-admin`. Sai cấu trúc ERR-10-040; tham chiếu không có ở tenant đích ERR-10-050.", []),
   "110": ("getImport", None, "ManifestImportJob", None, []),
+  "121": ("cancelImport", None, "ManifestImportJob", "Chỉ người tạo tác vụ, khi `VALIDATING` hoặc `PREVIEW` (A.2.13); trạng thái khác ERR-10-006. Không tạo đối tượng nào.", []),
   "111": ("applyImport", None, "ManifestImportJob", "Chỉ ở `PREVIEW`; tạo đối tượng ở trạng thái đầu (`DRAFT`, `PENDING_APPROVAL`), không bao giờ `ACTIVE` (BR-10-032). `PULSAR_HUB`: ánh xạ sang `PLANNED`.", []),
   "076": ("listLegacyMappings", None, "LegacyMappingPage", None,
           [Q("jobCode", R("JobCode")), QA("legacyType", R("LegacyType")), QA("status", R("MappingStatus")), QA("confidence", R("Confidence"))] + PG),
@@ -778,7 +779,7 @@ def frs_list(fr):
     return out
 
 def errs_of(code, method, path, body, own, idem, ifmatch):
-    lst = ["101", "102"]
+    lst = ["101", "102"] if spec_group(code) in DATA_GROUPS else ["053", "054"]
     if "{" in path: lst.append("001")
     if body: lst.append("003")
     if ifmatch: lst.append("007")
