@@ -17,7 +17,7 @@ tai_lieu_lien_quan: D02-03-PH04 FRS; D03-02-PH04 SDD; D03-04-PH04 API; D03-06-PH
 
 Tài liệu đặc tả 22 use case của PH-04, phủ toàn bộ FR-04-001…084 của [D02-03-PH04](../frs/D02-03-PH04-frs-tich-hop.md). Use case đi theo vòng đời thật của một luồng tích hợp ở tỉnh: kỹ sư tích hợp tạo và thiết kế luồng trên sơ đồ hoặc YAML, chạy thử trong sandbox, gửi duyệt; người duyệt thứ hai xác nhận theo nguyên tắc bốn mắt; luồng được phát hành qua GitOps lên TEST rồi PROD; vận hành tạm dừng, quay lui, dừng khẩn khi có sự cố; trên runtime, luồng xử lý bản tin đồng bộ qua chín chặng chuẩn, sự kiện bất đồng bộ qua Kafka và đọc CSDL có kiểm soát theo Q359. Hai use case cuối giữ cho danh mục thành phần Camel và phiên bản runtime luôn khớp nhau.
 
-Ba điểm hội đồng cần chú ý. Thứ nhất, không ai tự duyệt được thay đổi của mình (UC-04-11), kiểm ở máy chủ chứ không chỉ ẩn nút. Thứ hai, mọi thay đổi lên môi trường đi qua kho cấu hình Git, nên luôn biết ai đưa gì lên lúc nào và quay lui được trong vài phút (UC-04-12, 13). Thứ ba, bí mật không bao giờ nằm trong định nghĩa luồng: kết nối lấy từ PH-05, giá trị giống bí mật bị chặn ngay khi soạn (UC-04-04, 05). Căn cứ pháp lý như FRS: NĐ 278/2025 về nhật ký kết nối, TCVN 14423:2026 cấp độ 3 về quản lý thay đổi.
+Hội đồng cần chú ý ba điểm: không ai tự duyệt được thay đổi của mình, kiểm ở máy chủ (UC-04-11); mọi thay đổi lên môi trường đi qua Git nên truy được và quay lui được trong vài phút (UC-04-12, 13); bí mật không nằm trong định nghĩa luồng (UC-04-04, 05). Căn cứ pháp lý như FRS: NĐ 278/2025, TCVN 14423:2026 cấp độ 3.
 
 ## 1. Giới thiệu
 
@@ -93,7 +93,7 @@ Mã lỗi và câu thông báo trong luồng ngoại lệ lấy từ D03-04-PH04
 
 ### 1.6. Cấu trúc tài liệu
 
-Chương 2 nêu cách đọc một khối đặc tả. Chương 3 liệt kê tác nhân. Chương 4 vẽ sơ đồ use case tổng. Chương 5 là các bảng tổng hợp và truy vết (use case với FR, màn hình, API, REQ, quy trình, hệ cũ). Chương 6 đặc tả chi tiết 22 use case, mỗi use case một khối 15 mục kèm sơ đồ trình tự. Chương 7 gom luồng phụ dùng chung. Chương 8 tổng hợp ma trận quy tắc nghiệp vụ, mã mới và đề nghị đồng bộ với tập khác. Chương 9 là câu hỏi mở.
+Chương 2 nêu cách đọc khối đặc tả; chương 3 liệt kê tác nhân; chương 4 là sơ đồ use case tổng; chương 5 là bảng tổng hợp và truy vết; chương 6 đặc tả 22 use case, mỗi use case một khối 15 mục kèm sơ đồ trình tự; chương 7 là luồng phụ dùng chung; chương 8 tổng hợp ma trận BR, mã mới, đề nghị đồng bộ; chương 9 là câu hỏi mở.
 
 ## 2. Quy ước đọc đặc tả
 
@@ -106,19 +106,15 @@ Mỗi use case có tiêu đề `UC-04-nn · Tên` (tên bắt đầu bằng đ�
 | Mục | Ý nghĩa |
 |---|---|
 | Mục tiêu | Kết quả nghiệp vụ tác nhân chính muốn đạt |
-| Tác nhân chính | Người hoặc hệ thống khởi xướng, kèm quyền `PERM-04-*` |
-| Tác nhân phụ | Người hoặc hệ thống tham gia, nhận kết quả |
-| Mức ưu tiên | M, S, C, lấy mức cao nhất của các FR hiện thực |
-| FR hiện thực | FR mà use case hiện thực |
-| Truy vết | REQ của BRD, quy trình nghiệp vụ, LGC của hệ cũ |
-| Tiền điều kiện | Điều phải đúng trước khi bắt đầu |
-| Kích hoạt | Sự kiện làm use case bắt đầu |
-| Đảm bảo tối thiểu | Điều hệ thống luôn giữ kể cả khi thất bại giữa chừng |
-| Đảm bảo thành công | Trạng thái hệ thống sau khi kết thúc thành công |
-| Luồng chính | Kịch bản thành công điển hình, đánh số bước, ghi màn `UI-04-nn` và API `API-04-nnn` |
+| Tác nhân chính, phụ | Người hoặc hệ thống khởi xướng (kèm `PERM-04-*`); bên tham gia, nhận kết quả |
+| Mức ưu tiên | M, S, C, mức cao nhất của các FR hiện thực |
+| FR hiện thực, Truy vết | FR được hiện thực; REQ, quy trình nghiệp vụ, LGC hệ cũ |
+| Tiền điều kiện, Kích hoạt | Điều phải đúng trước khi bắt đầu; sự kiện làm use case bắt đầu |
+| Đảm bảo tối thiểu, thành công | Điều luôn giữ kể cả khi thất bại giữa chừng; trạng thái sau khi thành công |
+| Luồng chính | Kịch bản thành công, đánh số bước, ghi `UI-04-nn`, `API-04-nnn` |
 | Luồng thay thế | Nhánh hợp lệ khác, đánh số theo bước rẽ (`3a`) |
-| Luồng ngoại lệ | `E1`, `E2`…, mã lỗi `ERR-04-nnn`, mã HTTP, câu thông báo người dùng thấy (trong ngoặc kép), cách khắc phục |
-| Quy tắc áp dụng | `BR-04-nnn`, kèm phi chức năng `NFR-04-nnn` và tần suất, khối lượng ước lượng (GĐ) để thiết kế hiệu năng |
+| Luồng ngoại lệ | `E1`, `E2`…: `ERR-04-nnn`, mã HTTP, câu thông báo trong ngoặc kép, cách khắc phục |
+| Quy tắc áp dụng | `BR-04-nnn`, kèm `NFR-04-nnn` và tần suất ước lượng (GĐ) |
 | Màn hình, API | `UI-04-nn`, `API-04-nnn`, topic hoặc điểm vào runtime |
 
 : Mười lăm mục của khối đặc tả use case
@@ -312,7 +308,7 @@ Luồng phụ dùng chung ở mục 7: tham số PH-04 và đóng băng thay đ�
 
 ### 5.3. Use case và quy trình, yêu cầu nghiệp vụ
 
-Mọi use case truy vết về REQ-04 của BRD. UC-04-05, 19, 21 truy vết thêm REQ-05 (kết nối, bộ điều hợp). UC-04-18 truy vết REQ-10 (bản tin). UC-04-17 truy vết REQ-03 (điểm vào qua APISIX) và yêu cầu ghi nhật ký kết nối của NĐ 278/2025. UC-04-20 truy vết REQ-22 (di trú). UC-04-11, 12 hiện thực nguyên tắc bốn mắt và quản lý thay đổi của TCVN 14423:2026 cấp độ 3 (nhóm quản lý vận hành, SEC-40…49 của D03-07).
+Mọi use case truy vết về REQ-04 của BRD; bảng dưới nêu REQ bổ sung: REQ-05 (kết nối, bộ điều hợp), REQ-10 (bản tin), REQ-03 (điểm vào qua APISIX, kèm nhật ký kết nối của NĐ 278/2025), REQ-22 (di trú). UC-04-11, 12 hiện thực bốn mắt và quản lý thay đổi của TCVN 14423:2026 cấp độ 3 (nhóm quản lý vận hành, SEC-40…49 của D03-07). Cột LGC ở bảng 5.1.
 
 | UC | REQ, căn cứ | Quy trình nghiệp vụ |
 |---|---|---|
@@ -408,7 +404,6 @@ Hình cho thấy nhóm PH-12 được mở rộng thành người dùng lúc ki�
 
 ### 6.2. UC-04-02 · Tra cứu, xem chi tiết và tình trạng luồng
 
-Use case thay các màn tra cứu chương trình, agent và endpoint của Bus cũ bằng một danh sách luồng có bộ lọc và một trang chi tiết gom tình trạng theo môi trường.
 
 ::: dac-ta
 **Mục tiêu.** Người dùng tìm được luồng và biết luồng đang chạy phiên bản nào, ở đâu, có khỏe không.
@@ -485,7 +480,6 @@ Tình trạng môi trường không do giao diện hỏi trực tiếp runtime m
 
 ### 6.3. UC-04-03 · Tạo luồng mới
 
-Use case thay bước tạo chương trình của Productivity Tooling. Luồng mới luôn xuất phát từ khuôn mẫu hoặc nguồn có cấu trúc, để luồng đối ngoại có đủ chín chặng chuẩn ngay từ đầu.
 
 ::: dac-ta
 **Mục tiêu.** IE có một luồng mới với phiên bản v1 sẵn sàng thiết kế, xuất phát từ khuôn mẫu có đủ chín chặng chuẩn.
@@ -665,7 +659,6 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 
 ### 6.5. UC-04-05 · Cấu hình chặng, biểu thức, kết nối và bản tin mẫu
 
-Use case thay hộp thuộc tính của Productivity Tooling, nơi kỹ sư phải nhớ tên tham số Camel và gõ thẳng máy chủ, mật khẩu vào URI.
 
 ::: dac-ta
 **Mục tiêu.** IE đặt đúng tham số của một chặng mà không phải nhớ tên tham số Camel, không phải nhập máy chủ, mật khẩu, và kiểm được biểu thức trên dữ liệu mẫu.
@@ -747,7 +740,6 @@ Hình cho thấy giao diện chỉ điền tham chiếu `{{conn:…}}` chứ kh�
 
 ### 6.6. UC-04-06 · Ánh xạ dữ liệu và chuyển mã
 
-Use case thay màn ánh xạ của Bus cũ (LGC-BUS-036), nơi kỹ sư viết biểu thức chuyển đổi bằng tay.
 
 ::: dac-ta
 **Mục tiêu.** IE chuyển cấu trúc bản tin nguồn sang cấu trúc đích (thường là CDM hoặc lược đồ NDXP) bằng kéo nối, kèm chuyển mã theo bảng của PH-07, không phải viết JQ.
@@ -796,7 +788,7 @@ Use case thay màn ánh xạ của Bus cũ (LGC-BUS-036), nơi kỹ sư viết b
 - **E3. Bảng ánh xạ PH-07 không đọc được (bước 7).** Nút hàm hiện ⚠; vẫn lưu được nhưng không xem trước.
 - **E4. Sandbox không sẵn sàng.** API-04-033 trả ERR-04-019 (503); xem trước cục bộ có nhãn mô phỏng (theo FR-04-015 mục 3) "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime".
 
-**Quy tắc áp dụng.** BR-04-013 (dữ liệu xem trước được che). Tham số `04.mapping.require-all-required`. Tần suất: 1–5 ánh xạ mỗi luồng đối ngoại.
+**Quy tắc áp dụng.** BR-04-013 (dữ liệu xem trước được che). Tần suất: 1–5 ánh xạ mỗi luồng đối ngoại.
 
 **Màn hình, API.** UI-04-07; API-04-033; API lược đồ của PH-06, bảng ánh xạ mã của PH-07.
 :::
@@ -827,7 +819,6 @@ Hình cho thấy tệp ánh xạ là nguồn chuẩn ở trình duyệt, còn JQ
 
 ### 6.7. UC-04-07 · Soạn Kamelet, Pipe và bean khai báo
 
-Use case thay việc viết lớp Java tùy biến của Bus cũ bằng Kamelet có tham số và bean khai báo trong danh sách lớp cho phép (LGC-TOOL-027 được thay thế).
 
 ::: dac-ta
 **Mục tiêu.** IE đóng gói một đoạn tích hợp hay dùng thành Kamelet của tỉnh, nối nguồn và đích bằng Pipe, và khai báo bean cấu hình mà không viết Java.
@@ -952,7 +943,7 @@ Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại
 - **E6. Quá thời gian.** `TIMED_OUT`, ERR-04-020 (không phải mã HTTP, là `errorCode` của lần chạy) kèm chặng treo; "Lần chạy thử quá 30 giây và đã dừng ở chặng "{node}"." kèm "Mở kết quả".
 - **E7. Mất SSE.** Trình duyệt chuyển sang hỏi API-04-042 mỗi 2 giây cho tới khi kết thúc.
 
-**Quy tắc áp dụng.** BR-04-004, 013. Phi chức năng: NFR-04-008 (chạy thử `MOCK` luồng chín chặng p95 < 5 giây). Tham số `04.test.max-concurrent`, `04.test.allow-simulation`, `04.test.retention-days`, `04.test.body-retention-days`. Tần suất: 5–40 lần mỗi phiên bản (GĐ).
+**Quy tắc áp dụng.** BR-04-004, 013. Phi chức năng: NFR-04-008 (chạy thử `MOCK` luồng chín chặng p95 < 5 giây).test.allow-simulation`, `04.test.retention-days`, `04.test.body-retention-days`. Tần suất: 5–40 lần mỗi phiên bản (GĐ).
 
 **Màn hình, API.** UI-04-11, 12; API-04-040…043.
 :::
@@ -1053,7 +1044,6 @@ Mỗi ca là một lần chạy thử riêng gắn với băm định nghĩa; v�
 
 ### 6.10. UC-04-10 · Gửi duyệt phiên bản
 
-Use case mở bước bốn mắt: nội dung được khóa lại để người duyệt xem đúng thứ sẽ lên môi trường.
 
 ::: dac-ta
 **Mục tiêu.** IE khóa nội dung phiên bản và đưa vào hàng đợi duyệt kèm bằng chứng kiểm thử.
@@ -1097,7 +1087,7 @@ Use case mở bước bốn mắt: nội dung được khóa lại để ngườ
 - **E4. Trạng thái không cho gửi.** ERR-04-005 (409); "Phiên bản đang ở trạng thái "{status}" nên không thể gửi duyệt."
 - **E5. ETag lệch.** ERR-04-006 (412); "{user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu."
 
-**Quy tắc áp dụng.** BR-04-002, 004, 016. Phi chức năng: NFR-04-007. Tham số `04.review.require-test`, `04.flow.require-legal-basis`. Tần suất: 10–60 lượt mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-002, 004, 016. Phi chức năng: NFR-04-007. Tần suất: 10–60 lượt mỗi tháng mỗi tenant (GĐ).
 
 **Màn hình, API.** UI-04-04 (hộp gửi duyệt); API-04-030, 050, 051.
 :::
@@ -1168,7 +1158,7 @@ Máy chủ ghi băm gửi duyệt ở bước 4; bước duyệt (UC-04-11) so l
 - **E3. Phiên bản đã rút lại, đã có quyết định, hoặc chưa xem khác biệt.** ERR-04-005 (409); "Phiên bản đang ở trạng thái "{status}" nên không thể duyệt."
 - **E4. Xác thực lại thất bại.** Không ghi quyết định; ERR-04-044 (401) với thông điệp của PH-12.
 
-**Quy tắc áp dụng.** BR-04-005, 017, 020. Tham số `04.review.checklist`, `04.review.sla-hours`, `04.review.require-reauth`. Tần suất: như UC-04-10.
+**Quy tắc áp dụng.** BR-04-005, 017, 020. Tần suất: như UC-04-10.
 
 **Màn hình, API.** UI-04-14, 16; API-04-025, 030, 052, 053.
 :::
@@ -1262,7 +1252,7 @@ Sơ đồ trạng thái cho thấy chỉ có một đường vào `APPROVED` là
 - **E5. Không hồ sơ runtime đủ thành phần.** ERR-04-029 (422); "Không hồ sơ runtime nào có đủ thành phần: {components}."
 - **E6. Quá `04.deploy.timeout-minutes`.** Triển khai `FAILED` (nhãn "Triển khai lỗi"), sức khỏe giữ theo nhịp tim; thông báo TO.
 
-**Quy tắc áp dụng.** BR-04-012, 014, 018, 019, 022. Phi chức năng: NFR-04-009. Tham số `04.env.stages`, `04.env.soak-minutes.STAGING`, `04.env.prod-requires-promote`, `04.deploy.timeout-minutes`, `04.deploy.rollback-suggest-error-ratio`, `04.runtime.sync-timeout-seconds`. Tần suất: 10–60 lần mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-012, 014, 018, 019, 022. Phi chức năng: NFR-04-009. Tần suất: 10–60 lần mỗi tháng mỗi tenant (GĐ).
 
 **Màn hình, API.** UI-04-14, 15; API-04-054, 056.
 :::
@@ -1569,50 +1559,62 @@ Hình cho thấy gỡ luồng không xóa dữ liệu: luồng được rút kh�
 
 Use case hệ thống: mô tả hành vi của `dh-runtime` với một lượt gọi đồng bộ của HTTT thành viên. Tác nhân con người không thao tác; giá trị là đặc tả kiểm thử tích hợp và kiểm thử tải.
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-17 |
-| Mục tiêu | HTTT thành viên gọi một dịch vụ qua Datahub và nhận kết quả đã kiểm tra, ủy quyền, chuẩn hóa, che dữ liệu, có nhật ký kết nối |
-| Tác nhân chính | HTTT thành viên (Cổng DVC tỉnh) |
-| Tác nhân phụ | APISIX (`apisix-int`), OPA, PH-07 (`dh_map`), PH-09 (chính sách che), hệ đích (NDXP), PH-13, PH-18 |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-060, 061, 063, 064, 065, 066, 067, 068, 070, 073, 074 |
-| Tiền điều kiện | Luồng `ACTIVE` ở PROD; bên gọi có đăng ký hợp lệ ở PH-02 |
-| Điều kiện kích hoạt | `POST /ho-tich/khai-sinh` tới APISIX ngoài, định tuyến vào `apisix-int` |
-| Đảm bảo tối thiểu | Tenant đặt một lần, bất biến (BR-04-010); log, vết không chứa dữ liệu Cá nhân, Nhạy cảm; lỗi phân loại đúng và không lộ chi tiết nội bộ |
-| Đảm bảo thành công | Bên gọi nhận `200` với thân đã che theo nghĩa vụ; nhật ký kết nối lên `{tenant}.audit.connection-log.v1` |
+::: dac-ta
+**Mục tiêu.** HTTT thành viên gọi một dịch vụ qua Datahub và nhận kết quả đã kiểm tra, ủy quyền, chuẩn hóa, che dữ liệu, có nhật ký kết nối.
 
-**Luồng chính**
+**Tác nhân chính.** HTTT thành viên (Cổng DVC tỉnh).
+
+**Tác nhân phụ.** APISIX (`apisix-int`), OPA, PH-07 (`dh_map`), PH-09 (chính sách che), hệ đích (NDXP), PH-13, PH-18.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-060, 061, 063, 064, 065, 066, 067, 068, 070, 073, 074.
+
+**Truy vết.** REQ-04, REQ-03; NĐ 278/2025 (nhật ký kết nối); quy trình Chạy luồng đồng bộ; LGC-BUS-035…039, 041.
+
+**Tiền điều kiện.** Luồng `ACTIVE` ở PROD; bên gọi có đăng ký hợp lệ ở PH-02.
+
+**Kích hoạt.** `POST /ho-tich/khai-sinh` tới APISIX ngoài, định tuyến vào `apisix-int`.
+
+**Đảm bảo tối thiểu.** Tenant đặt một lần, bất biến (BR-04-010); log, vết không chứa dữ liệu Cá nhân, Nhạy cảm; lỗi phân loại đúng và không lộ chi tiết nội bộ.
+
+**Đảm bảo thành công.** Bên gọi nhận `200` với thân đã che theo nghĩa vụ; nhật ký kết nối lên `{tenant}.audit.connection-log.v1`.
+
+**Luồng chính.**
 
 1. Cổng DVC gửi yêu cầu; APISIX xác thực, áp hạn mức, đặt `X-Dh-Consumer`, `X-Dh-Tenant` = `T68`, `X-Dh-Subscription`, `traceparent`, chuyển tới `dh-runtime`.
-2. **receive**: đặt `dh-tenant`, `dh-caller`, `dh-flow`, `dh-flow-version`; đo kích thước ≤ `04.runtime.max-body-kb`; `TenantGuard` khóa tiêu đề tenant.
-3. **schema**: kiểm tra JSON Schema `ho-tich-ks` v4; hợp lệ.
-4. **authz**: gọi OPA với `{tenant, caller, subscription, flow, operation, purpose, dataClasses}`; `allow` kèm nghĩa vụ che `cha.soDinhDanh`.
+2. **receive**: đặt `dh-tenant`, `dh-caller`, `dh-flow`, `dh-flow-version`; đo kích thước ≤ `04.runtime.max-body-kb` (vượt: ERR-04-107); `TenantGuard` khóa tiêu đề tenant.
+3. **schema**: kiểm tra JSON Schema `ho-tich-ks` v4; hợp lệ (sai: ERR-04-101).
+4. **authz**: gọi OPA với `{tenant, caller, subscription, flow, operation, purpose, dataClasses}`; `allow` kèm nghĩa vụ che `cha.soDinhDanh` (từ chối: ERR-04-102).
 5. **transform**: JQ từ trình ánh xạ; `dh_map("gioi-tinh-ht-ndxp")` tra ảnh chụp PH-07 trong bộ nhớ.
 6. **enrich**: gọi luồng con `direct:lay-ma-dvhc` (thời gian chờ 5 giây).
 7. **route** và **deliver**: chọn đích theo nội dung, gọi NDXP qua kết nối `ndxp-ho-tich` trong `circuitBreaker`; nhận `200`.
 8. **audit**: ghi nhật ký kết nối NĐ 278/2025 (bên gọi, bên cung cấp, dịch vụ, thời điểm, kết quả, mã vết, loại dữ liệu) lên EVT-04-14; `onCompletion` của `dh-default-config` bổ sung kết quả cuối khi luồng rẽ lỗi. Chỉ số `dh_flow_*` theo `stage`, span OTel theo chặng.
 9. **respond**: áp nghĩa vụ che của OPA và chính sách PH-09; trả `200`.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **6a. Làm giàu lỗi với `CONTINUE`.** Đánh dấu `dh-enrich-partial`, đi tiếp.
 - **7a. Lỗi tạm thời từ hệ đích (502/503/504).** Thử lại 1 s, 4 s, 16 s có nhiễu ±20%; thành công ở lần 2, ghi số lần thử vào vết.
 - **7b. Mạch mở (≥ 50% lỗi trên 20 lượt).** Đi nhánh `onFallback` nếu luồng khai báo; nếu không, `503` ERR-04-105.
 - **7c. Khóa chống trùng.** Có `Idempotency-Key` đã thấy: trả kết quả đã lưu (≤ 64 KiB) hoặc `409` ERR-04-106 (FR-04-071).
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Thân vượt kích thước (bước 2).** `413` ERR-04-107.
-- **E2. Sai lược đồ (bước 3).** `400` ERR-04-101 kèm ≤ 20 lỗi theo đường dẫn trường, không lặp giá trị.
-- **E3. OPA từ chối hoặc không phản hồi trong 200 ms (bước 4).** `403` ERR-04-102; không đưa DLQ.
-- **E4. Lỗi chuyển đổi, mã không có trong bảng với cấu hình `FAIL` (bước 5).** ERR-04-108.
-- **E5. Vẫn lỗi sau thử lại (bước 7).** `502` cho bên gọi; bản tin (đã mã hóa trường nhạy cảm) vào DLQ PH-18 với lý do, số lần thử, chặng lỗi.
-- **E6. Tiêu đề tenant bị thay đổi sau receive.** `TenantGuard` chặn, `500` nội bộ, cảnh báo ATTT.
+- **E1. Thân vượt kích thước (bước 2).** ERR-04-107 (413) "Thân vượt giới hạn của luồng"; ghi nhật ký kết nối.
+- **E2. Sai lược đồ (bước 3).** ERR-04-101 (400) "Bản tin sai lược đồ" kèm ≤ 20 lỗi theo đường dẫn trường, không lặp giá trị.
+- **E3. OPA từ chối hoặc không phản hồi trong 200 ms (bước 4).** ERR-04-102 (403) "OPA từ chối, hoặc không trả lời trong 200 ms"; không đưa DLQ.
+- **E4. Lỗi chuyển đổi, mã không có trong bảng với cấu hình `FAIL` (bước 5).** ERR-04-108 (422) "Lỗi chuyển đổi, mã không có trong bảng".
+- **E5. Vẫn lỗi sau thử lại (bước 7).** ERR-04-104 (502) cho bên gọi, hoặc ERR-04-103 (504) khi hệ đích quá thời gian chờ; bản tin (đã mã hóa trường nhạy cảm) vào DLQ PH-18 với lý do, số lần thử, chặng lỗi; TO thấy ở màn DLQ của PH-18.
+- **E6. Tiêu đề tenant bị thay đổi sau receive.** `TenantGuard` chặn, ERR-04-112 (500 nội bộ), cảnh báo ATTT mức cao ở PH-13.
+- **E7. Luồng, route đang tạm dừng.** ERR-04-110 (503) "Luồng hoặc route đang tạm dừng" (UC-04-14).
 
-**Quy tắc:** BR-04-008, 010, 013. **Phi chức năng:** NFR-04-011, 012, 014. **Tần suất:** theo GĐ-03 (quy mô QM-VUA: 50–200 lượt/giây giờ cao điểm mỗi tỉnh).
+**Quy tắc áp dụng.** BR-04-008, 010, 013. Phi chức năng: NFR-04-011, 012, 014. Tần suất: theo GĐ-03 (quy mô QM-VUA: 50–200 lượt/giây giờ cao điểm mỗi tỉnh).
 
-```mermaid
+**Màn hình, API.** Không có màn (runtime). Điểm vào `POST /ho-tich/khai-sinh` qua APISIX; topic `{tenant}.audit.connection-log.v1`; DLQ PH-18.
+:::
+
+```{.mermaid caption="Trình tự xử lý một lượt gọi đồng bộ qua chín chặng"}
 sequenceDiagram
     autonumber
     participant DVC as Cổng DVC tỉnh
@@ -1635,175 +1637,331 @@ sequenceDiagram
     GW-->>DVC: 200
 ```
 
+Hình cho thấy tenant được đặt một lần ở `receive` từ tiêu đề APISIX và không đổi về sau; nhật ký kết nối gửi bất đồng bộ lên Kafka nên không cộng vào độ trễ trả lời bên gọi.
+
 ### 6.18. UC-04-18 · Xử lý sự kiện bất đồng bộ qua Kafka
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-18 |
-| Mục tiêu | Sự kiện từ một HTTT được chuẩn hóa và phát tới các bên đăng ký đúng một lần về mặt nghiệp vụ |
-| Tác nhân chính | HTTT nguồn (phát lên topic PH-10) |
-| Tác nhân phụ | PH-10 (topic, quyền), Apicurio, Valkey (chống trùng), PH-18 (DLQ) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-062, 069, 070, 071, 073 |
-| Tiền điều kiện | Luồng `ACTIVE`, được cấp subscribe topic nguồn và publish topic đích ở PH-10 (BR-04-009) |
-| Điều kiện kích hoạt | Bản tin mới trên `t68.ho-tich.khai-sinh.v1` |
-| Đảm bảo tối thiểu | Offset chỉ ghi nhận sau xử lý xong (at-least-once); tenant lấy từ tiền tố topic, không từ nội dung |
-| Đảm bảo thành công | Bản tin chuẩn hóa lên `t68.cdm.su-kien-ho-tich.v1` với `acks=all`, tiêu đề `dh-tenant`, `traceparent`, `dh-flow`, `dh-source-system` |
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** Sự kiện từ một HTTT được chuẩn hóa và phát tới các bên đăng ký đúng một lần về mặt nghiệp vụ.
 
-1. `dh-runtime` tiêu thụ với nhóm `dh-flow-t68-dong-bo-khai-sinh`; giải tuần tự theo lược đồ Apicurio.
+**Tác nhân chính.** HTTT nguồn (phát lên topic PH-10).
+
+**Tác nhân phụ.** PH-10 (topic, quyền), Apicurio, Valkey (chống trùng), PH-18 (DLQ), PH-13.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-062, 069, 070, 071, 073.
+
+**Truy vết.** REQ-04, REQ-10; quy trình Chạy luồng bất đồng bộ; LGC-BUS-039.
+
+**Tiền điều kiện.** Luồng `ACTIVE`, được cấp subscribe topic nguồn và publish topic đích ở PH-10 (BR-04-009).
+
+**Kích hoạt.** Bản tin mới trên `t68.ho-tich.khai-sinh.v1`.
+
+**Đảm bảo tối thiểu.** Offset chỉ ghi nhận sau xử lý xong (at-least-once); tenant lấy từ tiền tố topic, không từ nội dung.
+
+**Đảm bảo thành công.** Bản tin chuẩn hóa lên `t68.cdm.su-kien-ho-tich.v1` với `acks=all`, tiêu đề `dh-tenant`, `traceparent`, `dh-flow`, `dh-source-system`.
+
+**Luồng chính.**
+
+1. `dh-runtime` tiêu thụ với nhóm `dh-flow-t68-dong-bo-khai-sinh`; giải tuần tự theo lược đồ Apicurio (không được: ERR-04-101).
 2. Đặt `dh-tenant` = `T68` từ tiền tố topic.
 3. `idempotentConsumer` kiểm khóa `dh:int:idem:T68:dong-bo-khai-sinh:{maHoSo}` (TTL `04.runtime.idempotency-ttl-hours`, mặc định 24 giờ); chưa thấy.
 4. Chuẩn hóa về CDM (như UC-04-17 bước 5).
 5. Phát lên topic đích, khóa phân vùng `maHoSo`, nhà sản xuất lũy đẳng.
 6. Ghi nhận offset; chỉ số, vết, nhật ký kết nối.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **3a. Bản tin trùng.** Bỏ qua, ghi nhận offset, tăng chỉ số trùng.
 - **5a. Topic đích tạm lỗi.** Thử lại theo `dh-default-config`; không ghi nhận offset cho tới khi xong hoặc vào DLQ.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101.
-- **E2. Lỗi nghiệp vụ, dữ liệu.** DLQ, không thử lại.
-- **E3. Luồng bị tạm dừng.** Ngừng tiêu thụ; độ trễ nhóm tăng, PH-13 cảnh báo theo ngưỡng.
+- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101 (tiêu đề `dh-error-code`, "Bản tin sai lược đồ").
+- **E2. Lỗi nghiệp vụ, dữ liệu.** DLQ, không thử lại; mã ERR-04-108 hoặc ERR-04-109 theo loại lỗi.
+- **E3. Luồng bị tạm dừng.** Ngừng tiêu thụ (ERR-04-110, consumer dừng); độ trễ nhóm tăng, PH-13 cảnh báo theo ngưỡng.
 
-**Quy tắc:** BR-04-008, 009, 010. **Phi chức năng:** NFR-04-012. **Tần suất:** GĐ-03.
+**Quy tắc áp dụng.** BR-04-008, 009, 010. Phi chức năng: NFR-04-012. Tần suất: GĐ-03.
+
+**Màn hình, API.** Không có màn (runtime). Topic `t68.ho-tich.khai-sinh.v1`, `t68.cdm.su-kien-ho-tich.v1`; DLQ PH-18.
+:::
+
+```{.mermaid caption="Trình tự xử lý sự kiện bất đồng bộ có chống trùng"}
+sequenceDiagram
+    autonumber
+    participant SRC as t68.ho-tich.khai-sinh.v1
+    participant RT as dh-runtime
+    participant REG as Apicurio
+    participant VK as Valkey
+    participant DST as t68.cdm.su-kien-ho-tich.v1
+    SRC->>RT: Bản tin (nhóm dh-flow-t68-dong-bo-khai-sinh)
+    RT->>REG: Lược đồ giải tuần tự
+    RT->>RT: dh-tenant = T68 từ tiền tố topic
+    RT->>VK: Kiểm khóa chống trùng maHoSo
+    VK-->>RT: Chưa thấy
+    RT->>RT: Chuẩn hóa CDM
+    RT->>DST: Phát acks=all, khóa maHoSo
+    RT->>SRC: Ghi nhận offset sau khi phát xong
+```
+
+Offset chỉ ghi nhận ở bước cuối, sau khi phát xong; nếu runtime dừng giữa chừng, bản tin được xử lý lại và khóa chống trùng ở Valkey giữ cho kết quả nghiệp vụ chỉ một lần.
 
 ### 6.19. UC-04-19 · Đọc trực tiếp CSDL có kiểm soát (Q359)
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-19 |
-| Mục tiêu | Luồng lấy dữ liệu từ CSDL của HTTT chưa có API, trong giới hạn chỉ đọc, có kiểm toán hai phía, không thể đọc lệch tenant |
-| Tác nhân chính | IE (thiết kế), `dh-runtime` (thực thi) |
-| Tác nhân phụ | PH-05 (kết nối "CSDL cho luồng"), OpenBao (tài khoản động), SO (duyệt khi ghi) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-072 |
-| Tiền điều kiện | Kết nối `pg-ho-tich-ro` loại "CSDL cho luồng", tài khoản chỉ đọc riêng cho luồng, schema được phép `ho_tich` |
-| Điều kiện kích hoạt | IE thêm chặng `sql` hoặc Kamelet `dh-sql-ro-source` |
-| Đảm bảo tối thiểu | Không câu lệnh ghi, DDL, nhiều câu lệnh; không chạm schema control plane hay `pg-payment` (chặn ở mức quyền CSDL); tham số ràng buộc; không ghi giá trị tham số vào log |
-| Đảm bảo thành công | Truy vấn chạy với `statement_timeout`, giới hạn dòng; có bản ghi pgaudit và bản ghi runtime |
+::: dac-ta
+**Mục tiêu.** Luồng lấy dữ liệu từ CSDL của HTTT chưa có API, trong giới hạn chỉ đọc, có kiểm toán hai phía, không thể đọc lệch tenant.
 
-**Luồng chính**
+**Tác nhân chính.** IE (thiết kế), Nguyễn Văn An; `dh-runtime` (thực thi).
+
+**Tác nhân phụ.** PH-05 (kết nối "CSDL cho luồng"), OpenBao (tài khoản động), SO (duyệt khi ghi), CSDL nguồn.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-072.
+
+**Truy vết.** REQ-04, REQ-05; quy trình Chạy luồng, đọc CSDL Q359; LGC-BUS-040; LGC-TOOL-008.
+
+**Tiền điều kiện.** Kết nối `pg-ho-tich-ro` loại "CSDL cho luồng", tài khoản chỉ đọc riêng cho luồng, schema được phép `ho_tich`.
+
+**Kích hoạt.** IE thêm chặng `sql` hoặc Kamelet `dh-sql-ro-source`.
+
+**Đảm bảo tối thiểu.** Không câu lệnh ghi, DDL, nhiều câu lệnh; không chạm schema control plane hay `pg-payment` (chặn ở mức quyền CSDL); tham số ràng buộc; không ghi giá trị tham số vào log.
+
+**Đảm bảo thành công.** Truy vấn chạy với `statement_timeout`, giới hạn dòng; có bản ghi pgaudit và bản ghi runtime.
+
+**Luồng chính.**
 
 1. An thêm chặng "Đọc CSDL" vào luồng `dong-bo-ho-tich-dinh-ky`, chọn kết nối `pg-ho-tich-ro` (chỉ kết nối loại "CSDL cho luồng" hiện trong ô chọn).
 2. An nhập `SELECT ma_ho_so, ngay_dang_ky FROM ho_tich.khai_sinh WHERE cap_nhat_luc > :#tuLuc ORDER BY cap_nhat_luc LIMIT 500`.
-3. Trình kiểm tra (VR-13) phân tích câu lệnh: một câu `SELECT`, tham số ràng buộc, schema được phép; hợp lệ.
+3. Trình kiểm tra (VR-13) phân tích câu lệnh: một câu `SELECT`, tham số ràng buộc, schema được phép; hợp lệ (vi phạm: ERR-04-031).
 4. Sau phát hành, runtime lấy tài khoản động từ OpenBao (TTL 1 giờ), mở giao dịch; nếu CSDL có RLS theo tenant thì `SET LOCAL app.tenant_id = 'T68'` từ tiêu đề `dh-tenant`.
 5. Chạy với `statement_timeout` (`04.sql.statement-timeout-seconds`, mặc định 10) và giới hạn `04.sql.max-rows` (10.000); trả 312 dòng.
 6. Runtime ghi kiểm toán (mã luồng, phiên bản, tenant, băm câu lệnh, số dòng, thời lượng, `traceId`); phía CSDL pgaudit ghi lớp `READ`.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Ghi vào CSDL nghiệp vụ của HTTT thành viên.** Chỉ khi kết nối PH-05 được duyệt riêng cho mục đích ghi, có SO đồng ý và luồng nằm trong phạm vi kết nối; ngoài ra cấm.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Câu lệnh vi phạm (ghép chuỗi, `UPDATE`, hai câu lệnh, schema `ph04`).** VR-13 lỗi; ERR-04-031 khi gửi duyệt.
-- **E2. Kết nối không phải loại chỉ đọc cho luồng.** ERR-04-013.
-- **E3. Quá thời gian hoặc vượt số dòng (runtime).** ERR-04-108; bất đồng bộ vào DLQ.
-- **E4. Không cấp được tài khoản động.** Lỗi tạm thời, thử lại theo `dh-default-config`; cảnh báo TO.
+- **E1. Câu lệnh vi phạm (ghép chuỗi, `UPDATE`, hai câu lệnh, schema `ph04`).** VR-13 lỗi; ERR-04-031 (422) khi gửi duyệt; "Câu lệnh SQL ở chặng "Đọc CSDL" không được phép: {reason}. Luồng chỉ được đọc dữ liệu." kèm liên kết quy định Q359.
+- **E2. Kết nối không phải loại chỉ đọc cho luồng.** ERR-04-013 (422); "Kết nối "{connection}" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
+- **E3. Quá thời gian hoặc vượt số dòng (runtime).** ERR-04-108 (422); bất đồng bộ vào DLQ với tiêu đề `dh-error-code`; TO thấy ở PH-18.
+- **E4. Không cấp được tài khoản động.** Lỗi tạm thời, thử lại theo `dh-default-config`; cảnh báo TO ở PH-13.
 
-**Quy tắc:** BR-04-015, 010. **Tần suất:** ước 10–30% luồng của tỉnh trong giai đoạn đầu (GĐ), giảm khi HTTT có API.
+**Quy tắc áp dụng.** BR-04-015, 010. Tần suất: ước 10–30% luồng của tỉnh trong giai đoạn đầu (GĐ), giảm khi HTTT có API.
+
+**Màn hình, API.** UI-04-04, 05 (chặng `sql`); kết nối PH-05 loại "CSDL cho luồng"; không có API PH-04 riêng lúc chạy.
+:::
+
+```{.mermaid caption="Trình tự runtime đọc CSDL bằng tài khoản động"}
+sequenceDiagram
+    autonumber
+    participant RT as dh-runtime
+    participant BAO as OpenBao
+    participant DB as CSDL ho_tich
+    participant K as Kiểm toán runtime
+    RT->>BAO: Xin tài khoản động pg-ho-tich-ro (TTL 1 giờ)
+    BAO-->>RT: Tài khoản chỉ đọc
+    RT->>DB: BEGIN, SET LOCAL app.tenant_id = 'T68'
+    RT->>DB: SELECT có tham số, statement_timeout 10 s
+    DB-->>RT: 312 dòng (≤ 10.000)
+    DB->>DB: pgaudit ghi lớp READ
+    RT->>K: Băm câu lệnh, số dòng, thời lượng, traceId
+```
+
+Hình cho thấy kiểm toán hai phía: pgaudit ở CSDL nguồn và bản ghi của runtime cùng có `traceId`, nên đối chiếu được từng lần đọc; giá trị tham số không xuất hiện ở phía nào.
 
 ### 6.20. UC-04-20 · Chuyển luồng Camel XML của Bus cũ
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-20 |
-| Mục tiêu | Đội di trú đưa chương trình tích hợp của Bus cũ sang luồng nháp YAML, biết rõ phần nào cần làm tay, không mang mật khẩu cũ sang |
-| Tác nhân chính | IE, đội di trú |
-| Tác nhân phụ | PH-05 (khai báo kết nối thay thế), D06-01 kế hoạch di trú |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-082 |
-| Tiền điều kiện | Có tệp Camel XML hoặc gói xuất `Context`, `Context_file` của hệ cũ |
-| Điều kiện kích hoạt | UI-04-18 hoặc UI-04-03 điểm xuất phát "Nhập từ Bus cũ" |
-| Đảm bảo tối thiểu | Máy chủ, tài khoản, mật khẩu cũ bị gỡ khỏi định nghĩa và không lưu ở đâu trong Datahub |
-| Đảm bảo thành công | Luồng nháp `origin = LEGACY_XML` và báo cáo chuyển đổi |
+::: dac-ta
+**Mục tiêu.** Đội di trú đưa chương trình tích hợp của Bus cũ sang luồng nháp YAML, biết rõ phần nào cần làm tay, không mang mật khẩu cũ sang.
 
-**Luồng chính**
+**Tác nhân chính.** IE, đội di trú.
+
+**Tác nhân phụ.** PH-05 (khai báo kết nối thay thế), D06-01 kế hoạch di trú.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-082.
+
+**Truy vết.** REQ-04, REQ-22; quy trình Di trú từ Bus cũ; LGC-BUS-033; LGC-TOOL-015.
+
+**Tiền điều kiện.** Có tệp Camel XML hoặc gói xuất `Context`, `Context_file` của hệ cũ.
+
+**Kích hoạt.** UI-04-18 hoặc UI-04-03 điểm xuất phát "Nhập từ Bus cũ".
+
+**Đảm bảo tối thiểu.** Máy chủ, tài khoản, mật khẩu cũ bị gỡ khỏi định nghĩa và không lưu ở đâu trong Datahub.
+
+**Đảm bảo thành công.** Luồng nháp `origin = LEGACY_XML` và báo cáo chuyển đổi.
+
+**Luồng chính.**
 
 1. Đội di trú tải gói `context-dongbo-hotich.zip` (≤ 2 MiB) lên UI-04-18.
-2. Hệ thống (API-04-028) đọc bằng `camel-xml-io` cùng phiên bản runtime; tách bean Spring, route, `routeContext`, `restContext`.
+2. Hệ thống (API-04-028) đọc bằng `camel-xml-io` cùng phiên bản runtime; tách bean Spring, route, `routeContext`, `restContext` (không phải Camel XML: ERR-04-032).
 3. Thay tham số kết nối bằng `{{conn:CHUA_GAN.<khóa>}}`; phần không chuyển được giữ dạng chú thích, chặng "Cần xử lý tay".
 4. Báo cáo: 4 route, 37/41 chặng chuyển được, 4 chặng cần xử lý tay (2 bean tùy biến, 1 lớp Java hệ cũ, 1 `exec` bị cấm), 3 kết nối cần khai báo, khuyến nghị thêm chín chặng chuẩn.
 5. Đội di trú gán kết nối thay thế (`CHUA_GAN` → `ndxp-ho-tich`), xử lý chặng tay trên trình thiết kế, chạy thử, rồi đưa vào kiểm thử đối chiếu chạy song song (D06-01).
 
-**Luồng ngoại lệ**
+**Luồng thay thế.** Không có nhánh hợp lệ khác; tệp Camel XML đơn lẻ đi cùng luồng chính như gói `Context`.
 
-- **E1. Không phải Camel XML hoặc vượt kích thước.** ERR-04-032.
-- **E2. Còn chỗ trống `CHUA_GAN` khi gửi duyệt.** VR-07, ERR-04-013.
+**Luồng ngoại lệ.**
 
-**Quy tắc:** BR-04-003, 014. **Tần suất:** theo đợt di trú; ước 30–120 chương trình mỗi tỉnh (GĐ).
+- **E1. Không phải Camel XML hoặc vượt kích thước.** ERR-04-032 (422); "Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt 2 MiB."
+- **E2. Còn chỗ trống `CHUA_GAN` khi gửi duyệt.** VR-07, ERR-04-013 (422); "Kết nối "CHUA_GAN" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
+
+**Quy tắc áp dụng.** BR-04-003, 014. Tần suất: theo đợt di trú; ước 30–120 chương trình mỗi tỉnh (GĐ).
+
+**Màn hình, API.** UI-04-18, 03; API-04-028.
+:::
+
+```{.mermaid caption="Trình tự chuyển gói Camel XML của Bus cũ"}
+sequenceDiagram
+    autonumber
+    actor DT as Đội di trú
+    participant UI as UI-04-18
+    participant INT as dh-integration
+    participant P5 as PH-05
+    DT->>UI: Tải context-dongbo-hotich.zip
+    UI->>INT: API-04-028
+    INT->>INT: camel-xml-io, gỡ máy chủ và mật khẩu, CHUA_GAN
+    INT-->>UI: Báo cáo 37/41 chặng, 3 kết nối cần khai báo
+    DT->>P5: Khai báo kết nối thay thế
+    DT->>UI: Gán CHUA_GAN → ndxp-ho-tich, xử lý chặng tay
+```
+
+Hình cho thấy mật khẩu cũ bị gỡ ngay ở bước chuyển đổi trên máy chủ; kết nối thật chỉ đến từ PH-05 do đội di trú khai báo lại.
 
 ### 6.21. UC-04-21 · Duyệt danh mục và chính sách thành phần
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-21 |
-| Mục tiêu | Mọi người tra được thành phần Camel nào dùng được; PA và TA kiểm soát thành phần được phép |
-| Tác nhân chính | IE (xem, đề xuất), PA (`PERM-04-catalog-admin`), TA (thu hẹp cho tenant) |
-| Tác nhân phụ | SO (duyệt đề xuất rủi ro) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-080 |
-| Tiền điều kiện | Catalog của phiên bản runtime đã nạp |
-| Điều kiện kích hoạt | UI-04-17 |
-| Đảm bảo tối thiểu | TA chỉ thu hẹp, không mở rộng chính sách nền; thay đổi chính sách ghi kiểm toán |
-| Đảm bảo thành công | Chính sách mới có hiệu lực ở bảng thành phần và trình kiểm tra; luồng dùng thành phần vừa cấm được đánh dấu |
+::: dac-ta
+**Mục tiêu.** Mọi người tra được thành phần Camel nào dùng được; PA và TA kiểm soát thành phần được phép.
 
-**Luồng chính**
+**Tác nhân chính.** IE (xem, đề xuất), PA (`PERM-04-catalog-admin`), TA (thu hẹp cho tenant).
+
+**Tác nhân phụ.** SO (duyệt đề xuất rủi ro).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-080.
+
+**Truy vết.** REQ-04, REQ-05; quy trình Quản trị danh mục; LGC-BUS-034, 040.
+
+**Tiền điều kiện.** Catalog của phiên bản runtime đã nạp.
+
+**Kích hoạt.** UI-04-17.
+
+**Đảm bảo tối thiểu.** TA chỉ thu hẹp, không mở rộng chính sách nền; thay đổi chính sách ghi kiểm toán.
+
+**Đảm bảo thành công.** Chính sách mới có hiệu lực ở bảng thành phần và trình kiểm tra; luồng dùng thành phần vừa cấm được đánh dấu.
+
+**Luồng chính.**
 
 1. An mở UI-04-17, lọc nhóm "Tệp", xem chi tiết `sftp`: mô tả, cú pháp URI, thuộc tính theo nhóm, mức native `SUPPORTED`, hồ sơ `files-native`, trạng thái "Được phép".
 2. An tìm `smb`, thấy "Cấm, lý do: chưa có trong chính sách nền"; bấm "Đề xuất cho phép" kèm lý do nghiệp vụ (API-04-074).
 3. Đỗ Quang Khải (PA) xem đề xuất, tham khảo SO, chọn "Cần duyệt từng luồng" (API-04-072); lần lưu tăng `policyVersion`, phiên bản catalog và chính sách hiện hành xem ở API-04-073.
 4. Hệ thống ghi kiểm toán, cập nhật chỉ mục catalog theo tenant.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **3a. TA thu hẹp.** Vũ Thị Hà cấm `mail` cho tenant `T68`; luồng đang dùng hiện huy hiệu "Không còn được phép", không gửi duyệt được, phiên bản đang chạy không bị dừng.
 - **1a. Kamelet không có lược đồ.** Chi tiết hiện "Không có tham số cấu hình" thay vì lỗi.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. TA cố mở rộng chính sách nền.** Bị chặn (403 chung).
-- **E2. Thành phần chỉ chạy JVM mà tenant không được phép hồ sơ JVM.** Trạng thái "Cấm" với lý do; ERR-04-029 khi phát hành.
+- **E1. TA cố mở rộng chính sách nền.** Bị chặn, 403 chung ERR-04-045; "Bạn không có quyền thực hiện thao tác này."
+- **E2. Thành phần chỉ chạy JVM mà tenant không được phép hồ sơ JVM.** Trạng thái "Cấm" với lý do; ERR-04-029 (422) khi phát hành; "Không hồ sơ runtime nào có đủ thành phần: {components}."
+- **E3. Thành phần không có trong catalog của phiên bản yêu cầu.** ERR-04-035 (404); "Thành phần "{component}" không có trong danh mục của phiên bản runtime này."
 
-**Quy tắc:** BR-04-014, 017. **Tần suất:** vài thay đổi mỗi quý.
+**Quy tắc áp dụng.** BR-04-014, 017. Tần suất: vài thay đổi mỗi quý.
+
+**Màn hình, API.** UI-04-17; API-04-070…074.
+:::
+
+```{.mermaid caption="Trình tự đề xuất và quyết định cho phép thành phần"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant INT as dh-integration
+    actor PA as Đỗ Quang Khải
+    actor SO as Hoàng Minh Đức
+    IE->>INT: Đề xuất cho phép smb (API-04-074)
+    INT-)PA: Đề xuất mới
+    PA->>SO: Tham khảo rủi ro
+    SO-->>PA: Ý kiến
+    PA->>INT: Cần duyệt từng luồng (API-04-072)
+    INT->>INT: Tăng policyVersion, cập nhật chỉ mục catalog
+    INT-->>IE: Trạng thái mới ở bảng thành phần (API-04-070)
+```
+
+Hình cho thấy quyết định mở thành phần mới thuộc PA có ý kiến SO, còn TA chỉ được thu hẹp cho tỉnh mình; mỗi lần lưu tăng `policyVersion` để trình kiểm tra biết chính sách nào đang áp dụng.
 
 ### 6.22. UC-04-22 · Nâng phiên bản catalog và runtime
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-22 |
-| Mục tiêu | Nền tảng nâng Camel Quarkus mà trình thiết kế và runtime luôn khớp phiên bản, các luồng bị ảnh hưởng được phát hiện trước |
-| Tác nhân chính | PA; CI |
-| Tác nhân phụ | IE chủ luồng, TA |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-081 |
-| Tiền điều kiện | Phiên bản runtime mới có `runtime-manifest.json` |
-| Điều kiện kích hoạt | PA phát hành hồ sơ runtime mới |
-| Đảm bảo tối thiểu | CI chặn lệch bản phụ trở lên giữa catalog và runtime; một tenant chỉ dùng một phiên bản catalog tại một thời điểm |
-| Đảm bảo thành công | Catalog mới phát hành cùng runtime; danh sách luồng cần kiểm tra lại được lập và thông báo |
+::: dac-ta
+**Mục tiêu.** Nền tảng nâng Camel Quarkus mà trình thiết kế và runtime luôn khớp phiên bản, các luồng bị ảnh hưởng được phát hiện trước.
 
-**Luồng chính**
+**Tác nhân chính.** PA (Đỗ Quang Khải); CI.
+
+**Tác nhân phụ.** IE chủ luồng, TA.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-081.
+
+**Truy vết.** REQ-04; quy trình Nâng cấp nền tảng; không có LGC tương ứng.
+
+**Tiền điều kiện.** Phiên bản runtime mới có `runtime-manifest.json`.
+
+**Kích hoạt.** PA phát hành hồ sơ runtime mới.
+
+**Đảm bảo tối thiểu.** CI chặn lệch bản phụ trở lên giữa catalog và runtime; một tenant chỉ dùng một phiên bản catalog tại một thời điểm.
+
+**Đảm bảo thành công.** Catalog mới phát hành cùng runtime; danh sách luồng cần kiểm tra lại được lập và thông báo.
+
+**Luồng chính.**
 
 1. Khải chuẩn bị nâng từ Camel Quarkus 3.33.2 lên bản phụ kế tiếp; CI sinh catalog từ `@kaoto/camel-catalog` (hoặc `camel-catalog`) đúng phiên bản trong tệp kê khai.
-2. Cổng CI so `runtimeVersion` của catalog với tệp kê khai; khớp.
+2. Cổng CI so `runtimeVersion` của catalog với tệp kê khai; khớp (lệch bản phụ: CI chặn).
 3. Công cụ so khớp lập danh sách thành phần, thuộc tính bị bỏ hoặc đổi tên giữa hai phiên bản.
-4. Khải phát hành catalog cùng runtime cho tenant thử nghiệm; `dh-integration` đánh dấu mọi luồng cần kiểm tra lại (VR-17), thông báo IE chủ luồng có thuộc tính bị ảnh hưởng.
+4. Khải phát hành catalog cùng runtime cho tenant thử nghiệm; `dh-integration` (tài khoản `system:int-catalog`) đánh dấu mọi luồng cần kiểm tra lại (VR-17), thông báo IE chủ luồng có thuộc tính bị ảnh hưởng.
 5. IE mở luồng: dải "Danh mục thành phần đã cập nhật" (UC-04-04 luồng 1b); kiểm tra chạy lại, sửa, tạo phiên bản mới nếu cần.
 
-**Luồng ngoại lệ**
+**Luồng thay thế.** Không có nhánh hợp lệ khác; mỗi tenant được nâng lần lượt theo luồng chính, bắt đầu từ tenant thử nghiệm.
 
-- **E1. Lệch bản phụ.** CI chặn; không phát hành.
+**Luồng ngoại lệ.**
+
+- **E1. Lệch bản phụ.** CI chặn; không phát hành. Người vận hành thấy lỗi ở kết quả cổng CI, không có câu trên giao diện người dùng.
 - **E2. Lệch bản vá có thay đổi lược đồ.** Công cụ so khớp phát hiện; xử lý như lệch bản phụ.
+- **E3. IE gửi duyệt phiên bản soạn trên catalog cũ (bước 5).** ERR-04-042 (409); "Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành."
 
-**Quy tắc:** BR-04-020. **Tần suất:** 1–2 lần mỗi năm theo nhịp LTS của Camel Quarkus.
+**Quy tắc áp dụng.** BR-04-020. Tần suất: 1–2 lần mỗi năm theo nhịp LTS của Camel Quarkus.
+
+**Màn hình, API.** UI-04-17; API-04-073.
+:::
+
+```{.mermaid caption="Trình tự nâng catalog cùng runtime và đánh dấu luồng"}
+sequenceDiagram
+    autonumber
+    actor PA as Đỗ Quang Khải
+    participant CI as CI
+    participant INT as dh-integration
+    actor IE as IE chủ luồng
+    PA->>CI: Bản phụ Camel Quarkus mới
+    CI->>CI: Sinh catalog, so runtimeVersion với runtime-manifest.json
+    CI->>CI: So khớp thành phần, thuộc tính bỏ hoặc đổi tên
+    PA->>INT: Phát hành catalog cùng runtime cho tenant thử nghiệm
+    INT->>INT: Đánh dấu luồng cần kiểm tra lại (VR-17)
+    INT-)IE: Thông báo luồng có thuộc tính bị ảnh hưởng
+```
+
+Cổng CI là chốt duy nhất bảo đảm catalog của trình thiết kế khớp runtime; luồng bị ảnh hưởng được báo trước cho IE thay vì lỗi lúc chạy.
 
 ## 7. Luồng phụ dùng chung
+
+Chương này gom ba luồng phụ được nhiều use case gọi tới, để chương 6 không nhắc lại. Mục 7.1 là việc của quản trị tenant, mục 7.2 và 7.3 là hành vi giao diện dùng chung.
 
 ### 7.1. Đặt tham số PH-04 và khoảng đóng băng (FR-04-084)
 
@@ -1824,6 +1982,8 @@ Trong khoảng đóng băng, UC-04-12 trả ERR-04-041; UC-04-13 và UC-04-15 v�
 | `04.mapping.require-all-required` | UC-04-06 |
 | `04.freeze.windows` | UC-04-12, 13, 15 |
 
+: Tham số PH-04 dùng trong tài liệu và use case liên quan
+
 ### 7.2. Xem lịch sử và kiểm toán của luồng (FR-04-083)
 
 Người có `PERM-04-read` mở tab Lịch sử của UI-04-02. Hệ thống gọi API-04-091, đọc từ PH-13 bản ghi kiểm toán của luồng, phiên bản, triển khai, lệnh điều khiển, lần chạy thử, xếp theo thời gian giảm dần, lọc theo loại hành động và người thực hiện. Giá trị trước và sau chỉ hiện cho AU, SO, TA; người khác thấy loại hành động, người, thời điểm, lý do. PH-13 không phản hồi thì tab hiện ST-05, các tab khác không ảnh hưởng.
@@ -1833,6 +1993,8 @@ Người có `PERM-04-read` mở tab Lịch sử của UI-04-02. Hệ thống g�
 Dùng ở UC-04-04, 05, 06, 07. Phiên soạn là nhịp mềm (API-04-034, 30 giây, hết hạn sau 120 giây), chỉ để thông tin "ai đang mở"; không có khóa cứng. Chốt chống ghi đè là `If-Match` với ETag ở máy chủ. Khi lưu nhận ERR-04-006, trình duyệt tải bản hiện tại, tính gộp ba bên trên cây tài nguyên theo `id` chặng (gốc chung là bản đã tải, hai bên là của mình và của người lưu sau). Xung đột cùng trường của cùng chặng hiện từng cặp để chọn; phần không xung đột gộp tự động. Bố cục sơ đồ xung đột lấy bản của người đang gộp.
 
 ## 8. Tổng hợp mã mới và đối chiếu
+
+Chương này giúp kiểm độ phủ: quy tắc nghiệp vụ theo use case (8.1), mã và hành vi thêm ngoài FRS (8.2, 8.3), đề nghị sửa tập khác (8.4). Tập không tạo mã FR, API, ERR, EVT mới; mã mới là UC-04-01…22.
 
 ### 8.1. Ma trận use case và quy tắc nghiệp vụ
 
@@ -1863,6 +2025,8 @@ Mỗi BR có ít nhất một ca dương và một ca âm trong D05-02-PH04 theo
 | BR-04-021 | UC-04-01, 02 |
 | BR-04-022 | UC-04-12, 13, 15, 7.1 |
 
+: Ma trận quy tắc nghiệp vụ BR-04 và use case
+
 ### 8.2. Mã mới đề xuất ngoài FRS
 
 | Mã | Nội dung | Lý do |
@@ -1872,9 +2036,33 @@ Mỗi BR có ít nhất một ca dương và một ca âm trong D05-02-PH04 theo
 | Hành vi | Đổi tiền tố mã cũ trong mã route, đường dẫn HTTP khi nhân bản | UC-04-16 bước 2; FR-04-005 chỉ yêu cầu không trùng |
 | Hành vi | Liên kết sự cố PH-14 trong hộp dừng khẩn (không bắt buộc) | UC-04-15 bước 2 |
 
+: Mã và hành vi đề xuất ngoài FRS
+
 ### 8.3. Điểm cần luồng khác lưu ý
 
-Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (sổ giả định ở phụ lục D02-01) vì chưa có số liệu thật của tỉnh thí điểm. Thứ hai, ERR-04-043 (HTTT đích chưa kết nạp) mới xuất hiện trong FR-04-068; D03-04-PH04 §6 cần có dòng tương ứng. Thứ ba, kịch bản chặn ở mạng khi dừng khẩn không đủ xác nhận (UC-04-15 E3) cần có trong sổ tay sự cố D03-07.
+Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (sổ giả định ở phụ lục D02-01) vì chưa có số liệu thật của tỉnh thí điểm. Thứ hai, ERR-04-043 (HTTT đích chưa kết nạp) mới xuất hiện trong FR-04-068; D03-04-PH04 §6 đã có dòng tương ứng (422, kiểm tra `SUBMIT`) nhưng D03-06-PH04 §5.3 chưa có câu hiển thị. Thứ ba, kịch bản chặn ở mạng khi dừng khẩn không đủ xác nhận (UC-04-15 E3) cần có trong sổ tay sự cố D03-07.
+
+### 8.4. Đề nghị đồng bộ
+
+Câu đã có ở D03-06-PH04 §5.3 được dùng nguyên văn. Các câu dưới đây chưa có ở đó (giao diện đang hiện `title`); đề nghị bổ sung trong đợt gom cuối.
+
+| Mã | HTTP | Câu đề nghị | Dùng ở |
+|---|---|---|---|
+| ERR-04-004 | 404 | Không tìm thấy phiên bản v{n} của luồng. | UC-04-02 E2 |
+| ERR-04-007 | 428 | Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại. | UC-04-02 E4 |
+| ERR-04-018 | 409 | Yêu cầu này đã được gửi với nội dung khác. Tải lại trang rồi thử lại. | UC-04-03 E8 |
+| ERR-04-027 | 404 | Không tìm thấy không gian làm việc "{workspace}". | UC-04-01 E3, UC-04-03 E3 |
+| ERR-04-028 | 409 | Mã không gian làm việc đã được dùng. | UC-04-01 E1 (câu đã có ở bản 0.1 của tập này) |
+| ERR-04-032 | 422 | Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt {limit}. | UC-04-20 E1 |
+| ERR-04-034 | 409 | Luồng đã gỡ nên chỉ xem được, không sửa được. | UC-04-02 E3, UC-04-16 E4 |
+| ERR-04-035 | 404 | Thành phần "{component}" không có trong danh mục của phiên bản runtime này. | UC-04-21 E3 |
+| ERR-04-039 | 404 | Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh. | UC-04-03 E4 |
+| ERR-04-042 | 409 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | UC-04-12 E1, UC-04-22 E3 |
+| ERR-04-045 | 403 | Bạn không có quyền thực hiện thao tác này. | UC-04-15 E1, UC-04-21 E1 |
+
+: Câu thông báo đề nghị bổ sung vào D03-06-PH04 §5.3
+
+Đề nghị thêm: D03-06-PH04 §5.3 thêm câu cho ERR-04-043 (mục 8.3); D05-02-PH04 thêm ca cho ngoại lệ bản 0.2 mới nêu mã (UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2).
 
 ## 9. Câu hỏi mở
 
@@ -1888,8 +2076,11 @@ Theo chỉ đạo ngày 25/11/2026, câu hỏi thiếu dữ liệu thật đư�
 | Q04-48 | Có cho chạy thử `SANDBOX_LIVE` gọi NDXP môi trường thử nghiệm không, khi NDXP chưa cấp môi trường thử cho tỉnh? | UC-04-08 | Cho khi kết nối có giá trị TEST; ngược lại chỉ `MOCK` |
 | Q04-49 | Gói xuất `Context` của Bus cũ có kèm mật khẩu đã mã hóa không; nếu có, ai giữ khóa khi trích? | UC-04-20 | Đội di trú trích trên máy hệ cũ, gỡ mật khẩu trước khi tải lên |
 
+: Câu hỏi mở về lựa chọn thiết kế
+
 ## Lịch sử phiên bản
 
 | Phiên bản | Ngày | Nội dung | Người thực hiện |
 |---|---|---|---|
 | 0.1 | 25/11/2026 | Bản đầu: 22 use case, luồng phụ, ma trận BR, câu hỏi mở | Nhóm phân tích |
+| 0.2 | 26/11/2026 | Chuẩn kết hợp K-TRINH-BAY, K-UC: tóm tắt, chương Giới thiệu đủ mục; sơ đồ tổng hai hình; bảng UC, REQ, quy trình; 22 use case thành khối đặc tả 15 mục, giữ mọi bước, nhánh, mã lỗi của bản 0.1; ngoại lệ có HTTP và câu thông báo (D03-06-PH04 §5.3, D03-04-PH04 §6); mọi use case có sơ đồ trình tự; mục 8.4 Đề nghị đồng bộ | Nhóm viết tài liệu (Claude) |
