@@ -1,0 +1,362 @@
+# D03-04-PH19 · Datahub · PH-19 Thanh toán · API callback nhà cung cấp. SINH TỰ ĐỘNG bởi tools/gen_openapi.py — không sửa tay.
+openapi: 3.1.0
+info:
+  title: Datahub · PH-19 Thanh toán · API callback nhà cung cấp
+  version: 1.0.0-draft
+  summary: Đầu nhận cho PayGov gọi về.
+  description: 'Đầu nhận cho PayGov gọi về. Không token; xác minh bằng allowlist IP tại APISIX, mTLS nếu PayGov dùng, chữ ký nội dung, dấu thời
+    gian, nonce (NFR-19-020, ADR-045). **Tên trường, thuật toán ký, mã phản hồi là giả định – cần đối chiếu Tài liệu kỹ thuật kết nối Nền tảng
+    thanh toán của Cổng DVCQG do VPCP cấp (OQ-19-01…07).**
+
+
+    Quy ước chung, bảng mã lỗi: D03-04-PH19 §1, §6. Mọi tên miền, dữ liệu là giả lập. Tệp sinh bởi `tools/gen_openapi.py`; không sửa tay.'
+  contact:
+    name: Nhóm phân hệ PH-19
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH19
+  x-datahub-phase: PH-19
+servers:
+- url: https://{host}/api/payment-callback/v1
+  description: Qua APISIX — giả lập
+  variables:
+    host:
+      default: pay-cb.datahub.example.vn
+- url: http://localhost:8089/api/payment-callback/v1
+  description: Phát triển cục bộ
+security: []
+tags:
+- name: Callback PayGov
+paths:
+  /paygov/{connectionKey}/ipn:
+    post:
+      tags:
+      - Callback PayGov
+      operationId: receivePaygovIpn
+      summary: Nhận IPN kết quả thanh toán
+      x-datahub-id: API-19-201
+      x-datahub-fr:
+      - FR-19-029
+      - FR-19-030
+      - FR-19-031
+      description: '**Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối của VPCP (OQ-19-01…07).** Thứ tự: tra `callback_route` theo `sha256(connectionKey)`
+        → allowlist IP, mTLS → ghi nguyên văn `callback_inbox` → xác minh chữ ký (`ACTIVE`/`NEXT`), dấu thời gian ±5 phút, nonce → trả xác nhận
+        → xử lý bất đồng bộ.'
+      parameters:
+      - $ref: '#/components/parameters/connectionKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaygovIpn'
+      responses:
+        '200':
+          description: Thành công. Kể cả khi cách ly (`ERR-19-028`, chỉ ghi nội bộ).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallbackAck'
+        '401':
+          $ref: '#/components/responses/Err024_025'
+        '403':
+          $ref: '#/components/responses/Err027'
+        '409':
+          $ref: '#/components/responses/Err026'
+  /paygov/{connectionKey}/return:
+    get:
+      tags:
+      - Callback PayGov
+      operationId: paygovReturn
+      summary: 'Người nộp quay về: xác minh tham số, hiển thị UI-19-28, chuyển về đối tác'
+      x-datahub-id: API-19-202
+      x-datahub-fr:
+      - FR-19-025
+      description: 'Người nộp quay về: xác minh chữ ký nếu có, cập nhật hiển thị, chuyển hướng 302 tới `returnUrl` của đối tác kèm `transactionCode`,
+        `status`. Không coi tham số trình duyệt là kết quả cuối (FR-19-025).'
+      parameters:
+      - $ref: '#/components/parameters/connectionKey'
+      - name: orderId
+        in: query
+        schema:
+          type: string
+          maxLength: 32
+      - name: responseCode
+        in: query
+        schema:
+          type: string
+          maxLength: 8
+      - name: signature
+        in: query
+        schema:
+          type: string
+          maxLength: 1024
+      - $ref: '#/components/parameters/Traceparent'
+      responses:
+        '302':
+          description: Chuyển hướng tới `returnUrl`.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: '`returnUrl` của đối tác kèm `transactionCode`, `status`.'
+        '403':
+          $ref: '#/components/responses/Err027'
+  /paygov/{connectionKey}/refund-ipn:
+    post:
+      tags:
+      - Callback PayGov
+      operationId: receivePaygovRefundIpn
+      summary: Nhận kết quả hoàn tiền (nếu PayGov hỗ trợ, OQ-19-06)
+      x-datahub-id: API-19-203
+      x-datahub-fr:
+      - FR-19-041
+      description: '**Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối của VPCP (OQ-19-01…07).** Thứ tự: tra `callback_route` theo `sha256(connectionKey)`
+        → allowlist IP, mTLS → ghi nguyên văn `callback_inbox` → xác minh chữ ký (`ACTIVE`/`NEXT`), dấu thời gian ±5 phút, nonce → trả xác nhận
+        → xử lý bất đồng bộ.'
+      parameters:
+      - $ref: '#/components/parameters/connectionKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaygovIpn'
+      responses:
+        '200':
+          description: Thành công. Kể cả khi cách ly (`ERR-19-028`, chỉ ghi nội bộ).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallbackAck'
+        '401':
+          $ref: '#/components/responses/Err024_025'
+        '403':
+          $ref: '#/components/responses/Err027'
+        '409':
+          $ref: '#/components/responses/Err026'
+  /paygov/{connectionKey}/reconciliation-notices:
+    post:
+      tags:
+      - Callback PayGov
+      operationId: receivePaygovReconNotice
+      summary: Nhận thông báo dữ liệu đối soát sẵn sàng (nếu PayGov hỗ trợ, OQ-19-07)
+      x-datahub-id: API-19-204
+      x-datahub-fr:
+      - FR-19-043
+      description: '**Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối của VPCP (OQ-19-01…07).** Thứ tự: tra `callback_route` theo `sha256(connectionKey)`
+        → allowlist IP, mTLS → ghi nguyên văn `callback_inbox` → xác minh chữ ký (`ACTIVE`/`NEXT`), dấu thời gian ±5 phút, nonce → trả xác nhận
+        → xử lý bất đồng bộ.'
+      parameters:
+      - $ref: '#/components/parameters/connectionKey'
+      - $ref: '#/components/parameters/Traceparent'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaygovIpn'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallbackAck'
+        '401':
+          $ref: '#/components/responses/Err024_025'
+        '403':
+          $ref: '#/components/responses/Err027'
+components:
+  parameters:
+    Traceparent:
+      name: traceparent
+      in: header
+      schema:
+        type: string
+        maxLength: 55
+      description: W3C Trace Context.
+    connectionKey:
+      name: connectionKey
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 32
+        pattern: ^[0-9A-HJKMNP-TV-Z]{32}$
+      description: Khóa kết nối 160 bit, Base32 Crockford (ADR-045).
+  responses:
+    Err024_025:
+      description: '`ERR-19-024` Chữ ký callback không hợp lệ; `ERR-19-025` Callback quá hạn'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-024:
+              summary: Chữ ký callback không hợp lệ
+              value:
+                type: /problems/ERR-19-024
+                title: Chữ ký callback không hợp lệ
+                status: 401
+                code: ERR-19-024
+                detail: Chữ ký IPN không xác minh được bằng chứng thư `ACTIVE` hoặc `NEXT`
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+            ERR-19-025:
+              summary: Callback quá hạn
+              value:
+                type: /problems/ERR-19-025
+                title: Callback quá hạn
+                status: 401
+                code: ERR-19-025
+                detail: Dấu thời gian lệch quá ±5 phút (NFR-19-020)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err026:
+      description: '`ERR-19-026` Callback bị phát lại'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-026:
+              summary: Callback bị phát lại
+              value:
+                type: /problems/ERR-19-026
+                title: Callback bị phát lại
+                status: 409
+                code: ERR-19-026
+                detail: Nonce đã gặp nhưng nội dung khác (IPN lặp đúng nội dung được trả thành công, không dùng mã này)
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Err027:
+      description: '`ERR-19-027` Nguồn callback không được phép'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            ERR-19-027:
+              summary: Nguồn callback không được phép
+              value:
+                type: /problems/ERR-19-027
+                title: Nguồn callback không được phép
+                status: 403
+                code: ERR-19-027
+                detail: IP nguồn hoặc chứng thư mTLS không thuộc danh sách cho phép
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+  schemas:
+    CallbackAck:
+      type: object
+      properties:
+        responseCode:
+          type: string
+          maxLength: 8
+        message:
+          type: string
+          maxLength: 255
+      additionalProperties: false
+      required:
+      - responseCode
+      description: Phản hồi xác nhận cho PayGov (giả định `00` = đã tiếp nhận, kể cả khi cách ly ERR-19-028; OQ-19-03).
+    PaygovIpn:
+      type: object
+      additionalProperties: true
+      description: '**Giả định – cần đối chiếu Tài liệu kỹ thuật kết nối Nền tảng thanh toán của Cổng DVCQG do VPCP cấp (OQ-19-01…07).** PH-19
+        lưu nguyên văn, không ràng buộc lược đồ ở biên; adapter `adapter.paygov` đọc các trường dưới đây.'
+      properties:
+        merchantCode:
+          type: string
+          maxLength: 64
+        orderId:
+          type: string
+          maxLength: 32
+          description: = transactionCode
+        transactionNo:
+          type: string
+          maxLength: 128
+          description: Tham chiếu PayGov
+        amount:
+          type: integer
+        responseCode:
+          type: string
+          maxLength: 8
+        payDate:
+          type: string
+          maxLength: 14
+          description: yyyyMMddHHmmss giờ Việt Nam
+        bankCode:
+          type: string
+          maxLength: 64
+        channel:
+          type: string
+          maxLength: 64
+        nonce:
+          type: string
+          maxLength: 128
+        timestamp:
+          type: integer
+          description: Unix giây
+        signature:
+          type: string
+          maxLength: 1024
+    ProblemDetails:
+      type: object
+      description: RFC 9457, mở rộng theo khung §12 và D03-04-PH19 §6.
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          description: '`/problems/ERR-19-nnn`'
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          pattern: ^ERR-19-[0-9]{3}$
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              rule:
+                type: string
+              message:
+                type: string
+            additionalProperties: false
+          description: Lỗi trường (ERR-19-001).
+        missing:
+          type: array
+          items:
+            type: string
+          description: Mục checklist chưa đạt (ERR-19-035).
+        existingTransactionCode:
+          $ref: '#/components/schemas/TransactionCode'
+        currentEtag:
+          type: string
+        retryAfterSeconds:
+          type: integer
+      additionalProperties: true
+    TransactionCode:
+      type: string
+      maxLength: 19
+      pattern: ^T[0-9]{2}[0-9]{6}[0-9A-HJKMNP-TV-Z]{10}$
+      description: T{nn} + yyMMdd + 10 ký tự Base32 Crockford, duy nhất toàn cục (BR-19-002).
+      examples:
+      - T68261126K7M2Q9XW4P

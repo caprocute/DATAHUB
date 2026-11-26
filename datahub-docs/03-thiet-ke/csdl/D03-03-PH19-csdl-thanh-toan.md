@@ -1238,16 +1238,18 @@ Mọi seed chạy dưới `app.tenant_id` của tenant đích, lũy đẳng (b�
 
 Topic do PH-10 cấp theo quy tắc đặt tên có tenant (D03-10), viết thường. `dh-payment` chỉ ghi qua outbox; Debezium đọc publication `ph19_outbox` (bảng `outbox_event`) hoặc `OutboxRelay` khi không có Debezium (OQ-19-29).
 
-| Topic | Sự kiện | Phân vùng, giữ | Khóa | Bên đọc |
+Mỗi sự kiện một topic theo mẫu `{tenant}.payment.{thực-thể}.{sự-kiện}.v1` (khung §10.4), ví dụ `t68.payment.transaction.succeeded.v1`.
+
+| Nhóm topic | Sự kiện | Phân vùng, giữ | Khóa | Bên đọc |
 |---|---|---|---|---|
-| `t68.payment.provider.v1` | EVT-19-01, 02 | 3, 7 ngày | `providerId` | PH-13, PH-16, PH-18 |
-| `t68.payment.catalog.v1` | EVT-19-03, 04 | 3, 7 ngày | `serviceId`/`partnerId` | PH-03, PH-16 |
-| `t68.payment.transaction.v1` | EVT-19-05…10 | 12, 30 ngày | `transactionId` | PH-16, lớp dữ liệu dùng chung |
-| `t68.payment.refund.v1` | EVT-19-11…14 | 6, 30 ngày | `transactionId` | PH-13, PH-16 |
-| `t68.payment.reconciliation.v1` | EVT-19-15…18 | 3, 30 ngày | `sessionId`/`discrepancyId` | PH-13, PH-16, PH-18 |
+| `t68.payment.provider.status-changed.v1`, `…provider.health-changed.v1` | EVT-19-01, 02 | 3, 7 ngày | `providerId` | PH-13, PH-16, PH-18 |
+| `t68.payment.service.status-changed.v1`, `…partner.status-changed.v1` | EVT-19-03, 04 | 3, 7 ngày | `serviceId`, `partnerId` | PH-03, PH-16 |
+| `t68.payment.transaction.{created,pending,succeeded,failed,cancelled,expired}.v1` | EVT-19-05…10 | 12, 30 ngày | `transactionId` | PH-16, lớp dữ liệu dùng chung |
+| `t68.payment.refund.{requested,decided,succeeded,failed}.v1` | EVT-19-11…14 | 6, 30 ngày | `transactionId` | PH-13, PH-16 |
+| `t68.payment.reconciliation.{matched,closed}.v1`, `…discrepancy.{detected,resolved}.v1` | EVT-19-15…18 | 3, 30 ngày | `sessionId`, `discrepancyId` | PH-13, PH-16, PH-18 |
 | `t68.audit.recorded.v1` | Kiểm toán (FR-19-053) | Theo PH-13 | `traceId` | PH-13 |
 
-Khóa phân vùng của sự kiện giao dịch và hoàn tiền là `transactionId` để mọi sự kiện của một giao dịch giữ thứ tự. Sự kiện không chứa dữ liệu cá nhân người nộp; AsyncAPI ở D03-04-PH19. Webhook tới đối tác **không** đi qua Kafka (NFR-19-013): `WebhookDispatcher` đọc `outbox_event` và ghi `webhook_delivery` trong cùng `pg-payment`.
+Khóa phân vùng của sự kiện giao dịch và hoàn tiền là `transactionId`; vì mỗi sự kiện một topic, bên đọc cần thứ tự dùng `sequence` (BR-19-021) để sắp lại. Sự kiện không chứa dữ liệu cá nhân người nộp; AsyncAPI ở D03-04-PH19. Webhook tới đối tác **không** đi qua Kafka (NFR-19-013): `WebhookDispatcher` đọc `outbox_event` và ghi `webhook_delivery` trong cùng `pg-payment`.
 
 ### 7.2. Valkey
 

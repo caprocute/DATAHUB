@@ -1,0 +1,1521 @@
+# D03-04-PH19 · AsyncAPI PH-19. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-19 Thanh toán — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-19-01…18 (khung D02-03-PH19-00 §10.4, D03-04-PH19 §4).
+
+
+    Sự kiện ghi vào `ph19_payment.outbox_event` cùng giao dịch CSDL với thay đổi trạng thái, Debezium (hoặc `OutboxRelay`) đưa lên Kafka; CloudEvents
+    1.0 chế độ nhị phân (tiêu đề `ce_*`, `dhtenant`), thân là `data`. Mỗi sự kiện một topic `{tenant}.payment.{thực-thể}.{sự-kiện}.v1`, `{tenant}`
+    viết thường. Mọi payload có `eventId`, `occurredAt`, `tenantId`, `traceId`, `sequence` (BR-19-021), không chứa dữ liệu cá nhân người nộp.
+    Webhook tới đối tác dùng cùng `eventId`, cùng `data` nhưng ở dạng cấu trúc (OpenAPI đối tác, mục `webhooks`) và không đi qua Kafka (NFR-19-013).
+    Tương thích: chỉ thêm trường tùy chọn trong `v1`; thay đổi phá vỡ sang `v2`, phát song song ≥ 6 tháng (Apicurio BACKWARD). Dữ liệu ví dụ là
+    giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố topic của tenant (PH-10).
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  providerStatusChanged:
+    address: '{tenant}.payment.provider.status-changed.v1'
+    title: EVT-19-01
+    description: 'Khóa phân vùng `providerId`. Bên tiêu thụ: PH-13, PH-16.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      providerStatusChanged:
+        $ref: '#/components/messages/providerStatusChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.provider.status-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  providerHealthChanged:
+    address: '{tenant}.payment.provider.health-changed.v1'
+    title: EVT-19-02
+    description: 'Khóa phân vùng `providerId`. Bên tiêu thụ: PH-13, PH-18.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      providerHealthChanged:
+        $ref: '#/components/messages/providerHealthChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.provider.health-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  serviceStatusChanged:
+    address: '{tenant}.payment.service.status-changed.v1'
+    title: EVT-19-03
+    description: 'Khóa phân vùng `serviceId`. Bên tiêu thụ: HTTT đối tác, PH-16.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      serviceStatusChanged:
+        $ref: '#/components/messages/serviceStatusChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.service.status-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  partnerStatusChanged:
+    address: '{tenant}.payment.partner.status-changed.v1'
+    title: EVT-19-04
+    description: 'Khóa phân vùng `partnerId`. Bên tiêu thụ: PH-13, PH-03 (định tuyến strangler).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      partnerStatusChanged:
+        $ref: '#/components/messages/partnerStatusChanged'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.partner.status-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  transactionCreated:
+    address: '{tenant}.payment.transaction.created.v1'
+    title: EVT-19-05
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: PH-16, lớp dữ liệu dùng chung.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionCreated:
+        $ref: '#/components/messages/transactionCreated'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.created.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  transactionPending:
+    address: '{tenant}.payment.transaction.pending.v1'
+    title: EVT-19-06
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: PH-16.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionPending:
+        $ref: '#/components/messages/transactionPending'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.pending.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  transactionSucceeded:
+    address: '{tenant}.payment.transaction.succeeded.v1'
+    title: EVT-19-07
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-16, lớp dữ liệu dùng chung. Cũng gửi qua webhook tới
+      đối tác (cùng `id`, cùng `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionSucceeded:
+        $ref: '#/components/messages/transactionSucceeded'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.succeeded.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  transactionFailed:
+    address: '{tenant}.payment.transaction.failed.v1'
+    title: EVT-19-08
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-16. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionFailed:
+        $ref: '#/components/messages/transactionFailed'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.failed.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  transactionCancelled:
+    address: '{tenant}.payment.transaction.cancelled.v1'
+    title: EVT-19-09
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-16. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionCancelled:
+        $ref: '#/components/messages/transactionCancelled'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.cancelled.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  transactionExpired:
+    address: '{tenant}.payment.transaction.expired.v1'
+    title: EVT-19-10
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-16. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      transactionExpired:
+        $ref: '#/components/messages/transactionExpired'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.transaction.expired.v1'
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  refundRequested:
+    address: '{tenant}.payment.refund.requested.v1'
+    title: EVT-19-11
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: PH-13, PH-16.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      refundRequested:
+        $ref: '#/components/messages/refundRequested'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.refund.requested.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  refundDecided:
+    address: '{tenant}.payment.refund.decided.v1'
+    title: EVT-19-12
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-13. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      refundDecided:
+        $ref: '#/components/messages/refundDecided'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.refund.decided.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  refundSucceeded:
+    address: '{tenant}.payment.refund.succeeded.v1'
+    title: EVT-19-13
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-16. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      refundSucceeded:
+        $ref: '#/components/messages/refundSucceeded'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.refund.succeeded.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  refundFailed:
+    address: '{tenant}.payment.refund.failed.v1'
+    title: EVT-19-14
+    description: 'Khóa phân vùng `transactionId`. Bên tiêu thụ: HTTT đối tác (webhook), PH-13. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng
+      `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      refundFailed:
+        $ref: '#/components/messages/refundFailed'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.refund.failed.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  reconciliationMatched:
+    address: '{tenant}.payment.reconciliation.matched.v1'
+    title: EVT-19-15
+    description: 'Khóa phân vùng `sessionId`. Bên tiêu thụ: PH-16, PH-13.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      reconciliationMatched:
+        $ref: '#/components/messages/reconciliationMatched'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.reconciliation.matched.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  reconciliationClosed:
+    address: '{tenant}.payment.reconciliation.closed.v1'
+    title: EVT-19-16
+    description: 'Khóa phân vùng `sessionId`. Bên tiêu thụ: HTTT đối tác, PH-16. Cũng gửi qua webhook tới đối tác (cùng `id`, cùng `data`).'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      reconciliationClosed:
+        $ref: '#/components/messages/reconciliationClosed'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.reconciliation.closed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  discrepancyDetected:
+    address: '{tenant}.payment.discrepancy.detected.v1'
+    title: EVT-19-17
+    description: 'Khóa phân vùng `discrepancyId`. Bên tiêu thụ: PH-13 (cảnh báo), PH-18.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      discrepancyDetected:
+        $ref: '#/components/messages/discrepancyDetected'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.discrepancy.detected.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  discrepancyResolved:
+    address: '{tenant}.payment.discrepancy.resolved.v1'
+    title: EVT-19-18
+    description: 'Khóa phân vùng `discrepancyId`. Bên tiêu thụ: PH-13, PH-16.'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    messages:
+      discrepancyResolved:
+        $ref: '#/components/messages/discrepancyResolved'
+    bindings:
+      kafka:
+        topic: '{tenant}.payment.discrepancy.resolved.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+operations:
+  publishProviderStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/providerStatusChanged'
+    title: EVT-19-01 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/providerStatusChanged/messages/providerStatusChanged'
+  publishProviderHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/providerHealthChanged'
+    title: EVT-19-02 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/providerHealthChanged/messages/providerHealthChanged'
+  publishServiceStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/serviceStatusChanged'
+    title: EVT-19-03 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/serviceStatusChanged/messages/serviceStatusChanged'
+  publishPartnerStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/partnerStatusChanged'
+    title: EVT-19-04 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/partnerStatusChanged/messages/partnerStatusChanged'
+  publishTransactionCreated:
+    action: send
+    channel:
+      $ref: '#/channels/transactionCreated'
+    title: EVT-19-05 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionCreated/messages/transactionCreated'
+  publishTransactionPending:
+    action: send
+    channel:
+      $ref: '#/channels/transactionPending'
+    title: EVT-19-06 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionPending/messages/transactionPending'
+  publishTransactionSucceeded:
+    action: send
+    channel:
+      $ref: '#/channels/transactionSucceeded'
+    title: EVT-19-07 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionSucceeded/messages/transactionSucceeded'
+  publishTransactionFailed:
+    action: send
+    channel:
+      $ref: '#/channels/transactionFailed'
+    title: EVT-19-08 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionFailed/messages/transactionFailed'
+  publishTransactionCancelled:
+    action: send
+    channel:
+      $ref: '#/channels/transactionCancelled'
+    title: EVT-19-09 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionCancelled/messages/transactionCancelled'
+  publishTransactionExpired:
+    action: send
+    channel:
+      $ref: '#/channels/transactionExpired'
+    title: EVT-19-10 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/transactionExpired/messages/transactionExpired'
+  publishRefundRequested:
+    action: send
+    channel:
+      $ref: '#/channels/refundRequested'
+    title: EVT-19-11 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/refundRequested/messages/refundRequested'
+  publishRefundDecided:
+    action: send
+    channel:
+      $ref: '#/channels/refundDecided'
+    title: EVT-19-12 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/refundDecided/messages/refundDecided'
+  publishRefundSucceeded:
+    action: send
+    channel:
+      $ref: '#/channels/refundSucceeded'
+    title: EVT-19-13 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/refundSucceeded/messages/refundSucceeded'
+  publishRefundFailed:
+    action: send
+    channel:
+      $ref: '#/channels/refundFailed'
+    title: EVT-19-14 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/refundFailed/messages/refundFailed'
+  publishReconciliationMatched:
+    action: send
+    channel:
+      $ref: '#/channels/reconciliationMatched'
+    title: EVT-19-15 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/reconciliationMatched/messages/reconciliationMatched'
+  publishReconciliationClosed:
+    action: send
+    channel:
+      $ref: '#/channels/reconciliationClosed'
+    title: EVT-19-16 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/reconciliationClosed/messages/reconciliationClosed'
+  publishDiscrepancyDetected:
+    action: send
+    channel:
+      $ref: '#/channels/discrepancyDetected'
+    title: EVT-19-17 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/discrepancyDetected/messages/discrepancyDetected'
+  publishDiscrepancyResolved:
+    action: send
+    channel:
+      $ref: '#/channels/discrepancyResolved'
+    title: EVT-19-18 — dh-payment phát qua outbox
+    messages:
+    - $ref: '#/channels/discrepancyResolved/messages/discrepancyResolved'
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    providerStatusChanged:
+      name: providerStatusChanged
+      title: EVT-19-01
+      summary: PH-13, PH-16. FR-19-005, 006, 010.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/ProviderStatusChanged'
+      x-datahub-cloudevents-type: vn.datahub.payment.provider.status-changed.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`providerId` (UUID)'
+    providerHealthChanged:
+      name: providerHealthChanged
+      title: EVT-19-02
+      summary: PH-13, PH-18. FR-19-011.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/ProviderHealthChanged'
+      x-datahub-cloudevents-type: vn.datahub.payment.provider.health-changed.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`providerId` (UUID)'
+    serviceStatusChanged:
+      name: serviceStatusChanged
+      title: EVT-19-03
+      summary: HTTT đối tác, PH-16. FR-19-015, 016.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/ServiceStatusChanged'
+      x-datahub-cloudevents-type: vn.datahub.payment.service.status-changed.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`serviceId` (UUID)'
+    partnerStatusChanged:
+      name: partnerStatusChanged
+      title: EVT-19-04
+      summary: PH-13, PH-03 (định tuyến strangler). FR-19-018, 066.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/PartnerStatusChanged'
+      x-datahub-cloudevents-type: vn.datahub.payment.partner.status-changed.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`partnerId` (UUID)'
+    transactionCreated:
+      name: transactionCreated
+      title: EVT-19-05
+      summary: PH-16, lớp dữ liệu dùng chung. FR-19-022.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionCreated'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.created.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    transactionPending:
+      name: transactionPending
+      title: EVT-19-06
+      summary: PH-16. FR-19-024.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionPending'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.pending.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    transactionSucceeded:
+      name: transactionSucceeded
+      title: EVT-19-07
+      summary: HTTT đối tác (webhook), PH-16, lớp dữ liệu dùng chung. FR-19-030, 031, 060.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionSucceeded'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.succeeded.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    transactionFailed:
+      name: transactionFailed
+      title: EVT-19-08
+      summary: HTTT đối tác (webhook), PH-16. FR-19-024, 030.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionFailed'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.failed.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    transactionCancelled:
+      name: transactionCancelled
+      title: EVT-19-09
+      summary: HTTT đối tác (webhook), PH-16. FR-19-026.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionCancelled'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.cancelled.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    transactionExpired:
+      name: transactionExpired
+      title: EVT-19-10
+      summary: HTTT đối tác (webhook), PH-16. FR-19-027.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/TransactionExpired'
+      x-datahub-cloudevents-type: vn.datahub.payment.transaction.expired.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    refundRequested:
+      name: refundRequested
+      title: EVT-19-11
+      summary: PH-13, PH-16. FR-19-038.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/RefundRequested'
+      x-datahub-cloudevents-type: vn.datahub.payment.refund.requested.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    refundDecided:
+      name: refundDecided
+      title: EVT-19-12
+      summary: HTTT đối tác (webhook), PH-13. FR-19-039.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/RefundDecided'
+      x-datahub-cloudevents-type: vn.datahub.payment.refund.decided.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    refundSucceeded:
+      name: refundSucceeded
+      title: EVT-19-13
+      summary: HTTT đối tác (webhook), PH-16. FR-19-041, 060.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/RefundSucceeded'
+      x-datahub-cloudevents-type: vn.datahub.payment.refund.succeeded.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    refundFailed:
+      name: refundFailed
+      title: EVT-19-14
+      summary: HTTT đối tác (webhook), PH-13. FR-19-041.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/RefundFailed'
+      x-datahub-cloudevents-type: vn.datahub.payment.refund.failed.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionId` (UUID)'
+    reconciliationMatched:
+      name: reconciliationMatched
+      title: EVT-19-15
+      summary: PH-16, PH-13. FR-19-044.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/ReconciliationMatched'
+      x-datahub-cloudevents-type: vn.datahub.payment.reconciliation.matched.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`sessionId` (UUID)'
+    reconciliationClosed:
+      name: reconciliationClosed
+      title: EVT-19-16
+      summary: HTTT đối tác, PH-16. FR-19-047, 048.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/ReconciliationClosed'
+      x-datahub-cloudevents-type: vn.datahub.payment.reconciliation.closed.v1
+      x-datahub-webhook: true
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`sessionId` (UUID)'
+    discrepancyDetected:
+      name: discrepancyDetected
+      title: EVT-19-17
+      summary: PH-13 (cảnh báo), PH-18. FR-19-031, 044.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/DiscrepancyDetected'
+      x-datahub-cloudevents-type: vn.datahub.payment.discrepancy.detected.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`discrepancyId` (UUID)'
+    discrepancyResolved:
+      name: discrepancyResolved
+      title: EVT-19-18
+      summary: PH-13, PH-16. FR-19-046.
+      contentType: application/json
+      headers:
+        $ref: '#/components/schemas/CloudEventHeaders'
+      payload:
+        $ref: '#/components/schemas/DiscrepancyResolved'
+      x-datahub-cloudevents-type: vn.datahub.payment.discrepancy.resolved.v1
+      x-datahub-webhook: false
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`discrepancyId` (UUID)'
+  schemas:
+    ProviderStatusChanged:
+      type: object
+      properties:
+        eventId: &id001
+          type: string
+          format: uuid
+        occurredAt: &id003
+          type: string
+          format: date-time
+        tenantId: &id004
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceId: &id005
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        sequence: &id006
+          type: integer
+          minimum: 1
+        providerId: *id001
+        providerCode:
+          type: string
+        fromStatus:
+          type:
+          - string
+          - 'null'
+          enum: &id002
+          - DRAFT
+          - PENDING_ACTIVATION
+          - ACTIVE
+          - SUSPENDED
+          - RETIRED
+        toStatus:
+          type: string
+          enum: *id002
+        reason:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - providerId
+      - providerCode
+      - toStatus
+    ProviderHealthChanged:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        providerId: *id001
+        providerCode:
+          type: string
+        healthStatus:
+          type: string
+          enum:
+          - UNKNOWN
+          - HEALTHY
+          - DEGRADED
+          - DOWN
+        circuitState:
+          type: string
+          enum:
+          - CLOSED
+          - OPEN
+          - HALF_OPEN
+        errorRate:
+          type: number
+          minimum: 0
+          maximum: 100
+        p95LatencyMs: &id015
+          type: integer
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - providerId
+      - providerCode
+      - healthStatus
+      - circuitState
+    ServiceStatusChanged:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        serviceId: *id001
+        serviceCode:
+          type: string
+        fromStatus:
+          type:
+          - string
+          - 'null'
+          enum: &id007
+          - DRAFT
+          - ACTIVE
+          - SUSPENDED
+          - RETIRED
+        toStatus:
+          type: string
+          enum: *id007
+        catalogInvalid: &id009
+          type: boolean
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - serviceId
+      - serviceCode
+      - toStatus
+    PartnerStatusChanged:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        partnerId: *id001
+        partnerCode:
+          type: string
+        fromStatus:
+          type:
+          - string
+          - 'null'
+          enum: &id008
+          - DRAFT
+          - PENDING_APPROVAL
+          - ACTIVE
+          - SUSPENDED
+          - TERMINATED
+        toStatus:
+          type: string
+          enum: *id008
+        routingMode:
+          type: string
+          enum:
+          - LEGACY
+          - SHADOW
+          - DATAHUB
+        legacyAppCode:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - partnerId
+      - partnerCode
+      - toStatus
+      - routingMode
+    TransactionCreated:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: &id010
+          type: string
+          pattern: ^T[0-9]{2}[0-9]{6}[0-9A-HJKMNP-TV-Z]{10}$
+        partnerCode: &id011
+          type: string
+          maxLength: 64
+        partnerOrderId: &id012
+          type: string
+          maxLength: 64
+        serviceCode: &id013
+          type: string
+          maxLength: 64
+        amount: &id014
+          type: integer
+          minimum: 1
+          maximum: 999999999999
+        expiresAt: *id003
+        isShadow: *id009
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - amount
+      - expiresAt
+    TransactionPending:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: *id010
+        partnerCode: *id011
+        partnerOrderId: *id012
+        serviceCode: *id013
+        providerCode:
+          type: string
+        providerReference:
+          type:
+          - string
+          - 'null'
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - providerCode
+    TransactionSucceeded:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: *id010
+        partnerCode: *id011
+        partnerOrderId: *id012
+        serviceCode: *id013
+        amount: *id014
+        paidAt: *id003
+        providerReference:
+          type: string
+          maxLength: 128
+        channelCode:
+          type:
+          - string
+          - 'null'
+        bankCode:
+          type:
+          - string
+          - 'null'
+        latePaid: *id009
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 255
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - amount
+      - paidAt
+      - latePaid
+    TransactionFailed:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: *id010
+        partnerCode: *id011
+        partnerOrderId: *id012
+        serviceCode: *id013
+        reasonCode:
+          type: string
+        reasonMessage:
+          type: string
+          maxLength: 500
+        providerResultCode:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - reasonCode
+    TransactionCancelled:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: *id010
+        partnerCode: *id011
+        partnerOrderId: *id012
+        serviceCode: *id013
+        cancelledBy:
+          type: string
+          enum:
+          - PARTNER
+          - USER
+          - PAYER
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - cancelledBy
+    TransactionExpired:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        transactionCode: *id010
+        partnerCode: *id011
+        partnerOrderId: *id012
+        serviceCode: *id013
+        needsReconciliation: *id009
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - transactionCode
+      - partnerOrderId
+      - needsReconciliation
+    RefundRequested:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        refundCode:
+          type: string
+          pattern: ^R[0-9A-HJKMNP-TV-Z]{14}$
+        transactionCode:
+          type: string
+        amount: *id014
+        reasonCode:
+          type: string
+        requestedByType:
+          type: string
+          enum:
+          - USER
+          - PARTNER
+        partnerRefundId:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - refundCode
+      - transactionCode
+      - amount
+      - reasonCode
+      - requestedByType
+    RefundDecided:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        refundCode:
+          type: string
+        transactionCode:
+          type: string
+        decision:
+          type: string
+          enum:
+          - APPROVED
+          - REJECTED
+        approvalLevel:
+          type: integer
+          enum:
+          - 1
+          - 2
+        partnerRefundId:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - refundCode
+      - decision
+      - approvalLevel
+    RefundSucceeded:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        refundCode:
+          type: string
+        transactionCode:
+          type: string
+        amount: *id014
+        completedAt: *id003
+        transactionStatus:
+          type: string
+          enum:
+          - PARTIALLY_REFUNDED
+          - REFUNDED
+        refundedAmount: *id014
+        partnerRefundId:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - refundCode
+      - transactionCode
+      - amount
+      - completedAt
+      - transactionStatus
+    RefundFailed:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        transactionId: *id001
+        refundCode:
+          type: string
+        transactionCode:
+          type: string
+        reasonCode:
+          type: string
+        executionCount:
+          type: integer
+          minimum: 1
+          maximum: 3
+        partnerRefundId:
+          type:
+          - string
+          - 'null'
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - transactionId
+      - refundCode
+      - reasonCode
+      - executionCount
+    ReconciliationMatched:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        sessionId: *id001
+        providerCode:
+          type: string
+        businessDate:
+          type: string
+          format: date
+        runNo: *id015
+        dhCount: *id015
+        providerCount: *id015
+        dhAmount: &id016
+          type: integer
+          minimum: 0
+          maximum: 999999999999
+        providerAmount: *id016
+        matchedCount: *id015
+        discrepancyCount: *id015
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - sessionId
+      - providerCode
+      - businessDate
+      - runNo
+      - discrepancyCount
+    ReconciliationClosed:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        sessionId: *id001
+        providerCode:
+          type: string
+        businessDate:
+          type: string
+          format: date
+        runNo: *id015
+        minutesFileSha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        supersedes:
+          type:
+          - string
+          - 'null'
+          format: uuid
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - sessionId
+      - providerCode
+      - businessDate
+      - runNo
+      - minutesFileSha256
+    DiscrepancyDetected:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        discrepancyId: *id001
+        type:
+          type: string
+          enum: &id017
+          - MISSING_AT_PROVIDER
+          - MISSING_AT_DATAHUB
+          - STATUS_MISMATCH
+          - AMOUNT_MISMATCH
+          - DUPLICATE
+          - LATE_PAYMENT
+          - REFUND_MISMATCH
+          - ORPHAN_CALLBACK
+        transactionCode:
+          type:
+          - string
+          - 'null'
+        businessDate:
+          type: string
+          format: date
+        dhAmount:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 999999999999
+        providerAmount:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          maximum: 999999999999
+        dueAt: *id003
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - discrepancyId
+      - type
+      - businessDate
+      - dueAt
+    DiscrepancyResolved:
+      type: object
+      properties:
+        eventId: *id001
+        occurredAt: *id003
+        tenantId: *id004
+        traceId: *id005
+        sequence: *id006
+        discrepancyId: *id001
+        type:
+          type: string
+          enum: *id017
+        resolutionType:
+          type: string
+          enum:
+          - UPDATE_STATUS_FROM_PROVIDER
+          - CREATE_REFUND
+          - ACCEPT_PROVIDER_FIGURE
+          - NO_ACTION
+          - AUTO_MATCHED
+        transactionCode:
+          type:
+          - string
+          - 'null'
+      additionalProperties: false
+      required:
+      - eventId
+      - occurredAt
+      - tenantId
+      - traceId
+      - sequence
+      - discrepancyId
+      - type
+      - resolutionType
+    CloudEventHeaders:
+      type: object
+      properties:
+        ce_specversion:
+          type: string
+          const: '1.0'
+        ce_id: *id001
+        ce_type:
+          type: string
+          pattern: ^vn\.datahub\.payment\.[a-z-]+\.[a-z-]+\.v1$
+        ce_source:
+          type: string
+          pattern: ^/t[0-9]{2}/payment$
+        ce_subject:
+          type: string
+          description: 'Mã nghiệp vụ: transactionCode, refundCode, providerCode…'
+        ce_time: *id003
+        ce_tenantid:
+          type: string
+          pattern: ^T[0-9]{2}$
+        ce_sequence:
+          type: string
+          pattern: ^[0-9]+$
+        dhtenant:
+          type: string
+          pattern: ^T[0-9]{2}$
+        traceparent:
+          type: string
+        content-type:
+          type: string
+          const: application/json
+      additionalProperties: false
+      required:
+      - ce_specversion
+      - ce_id
+      - ce_type
+      - ce_source
+      - ce_time
+      - ce_tenantid
+      - dhtenant
