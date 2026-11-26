@@ -1,29 +1,80 @@
 ---
 ma_tai_lieu: D02-04-PH04
 ten: Đặc tả use case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
-phien_ban: 0.1
-ngay: 2026-11-25
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhóm phân tích nghiệp vụ, đội phát triển PH-04, đội kiểm thử, hội đồng thẩm định
 phan_he: PH-04
 nguoi_lap: Nhóm phân hệ PH-04
+mo_ta: Đặc tả 22 use case của phân hệ Lõi tích hợp và trình thiết kế luồng theo vòng đời một luồng tích hợp, từ thiết kế, chạy thử, duyệt bốn mắt, phát hành GitOps tới vận hành và xử lý bản tin trên runtime, làm căn cứ thiết kế màn hình, API và ca kiểm thử.
+tai_lieu_lien_quan: D02-03-PH04 FRS; D03-02-PH04 SDD; D03-04-PH04 API; D03-06-PH04 Màn hình; D05-02-PH04 Test case; D02-08 Ma trận phân quyền
 ---
 
 # D02-04-PH04 · Đặc tả use case phân hệ PH-04 Lõi tích hợp và trình thiết kế luồng
 
-## 1. Mục đích và phạm vi
+## Tóm tắt cho hội đồng thẩm định
+
+Tài liệu đặc tả 22 use case của PH-04, phủ toàn bộ FR-04-001…084 của [D02-03-PH04](../frs/D02-03-PH04-frs-tich-hop.md). Use case đi theo vòng đời thật của một luồng tích hợp ở tỉnh: kỹ sư tích hợp tạo và thiết kế luồng trên sơ đồ hoặc YAML, chạy thử trong sandbox, gửi duyệt; người duyệt thứ hai xác nhận theo nguyên tắc bốn mắt; luồng được phát hành qua GitOps lên TEST rồi PROD; vận hành tạm dừng, quay lui, dừng khẩn khi có sự cố; trên runtime, luồng xử lý bản tin đồng bộ qua chín chặng chuẩn, sự kiện bất đồng bộ qua Kafka và đọc CSDL có kiểm soát theo Q359. Hai use case cuối giữ cho danh mục thành phần Camel và phiên bản runtime luôn khớp nhau.
+
+Ba điểm hội đồng cần chú ý. Thứ nhất, không ai tự duyệt được thay đổi của mình (UC-04-11), kiểm ở máy chủ chứ không chỉ ẩn nút. Thứ hai, mọi thay đổi lên môi trường đi qua kho cấu hình Git, nên luôn biết ai đưa gì lên lúc nào và quay lui được trong vài phút (UC-04-12, 13). Thứ ba, bí mật không bao giờ nằm trong định nghĩa luồng: kết nối lấy từ PH-05, giá trị giống bí mật bị chặn ngay khi soạn (UC-04-04, 05). Căn cứ pháp lý như FRS: NĐ 278/2025 về nhật ký kết nối, TCVN 14423:2026 cấp độ 3 về quản lý thay đổi.
+
+## 1. Giới thiệu
+
+Chương này nói tài liệu dùng làm gì, phủ đến đâu, ai đọc phần nào và dựa vào tài liệu nào. Người đọc lần đầu nên đọc hết chương này rồi đến chương 4 (sơ đồ tổng) trước khi vào đặc tả chi tiết.
 
 ### 1.1. Mục đích
 
-Tài liệu đặc tả 22 use case của PH-04. Mỗi use case mô tả trọn một mục tiêu nghiệp vụ của một tác nhân: thiết kế luồng, chạy thử, gửi duyệt, duyệt bốn mắt, phát hành qua GitOps, vận hành luồng, xử lý bản tin trên runtime, truy cập CSDL có kiểm soát, di trú luồng hệ cũ, quản lý danh mục thành phần. Mỗi use case có trình tự bước giữa tác nhân và hệ thống, luồng thay thế, luồng ngoại lệ kèm mã lỗi, và các đảm bảo hệ thống phải giữ.
+Tài liệu đặc tả 22 use case của PH-04. Mỗi use case mô tả trọn một mục tiêu nghiệp vụ của một tác nhân: thiết kế luồng, chạy thử, gửi duyệt, duyệt bốn mắt, phát hành qua GitOps, vận hành luồng, xử lý bản tin trên runtime, truy cập CSDL có kiểm soát, di trú luồng hệ cũ, quản lý danh mục thành phần. Mỗi use case có trình tự bước giữa tác nhân và hệ thống, luồng thay thế, luồng ngoại lệ kèm mã lỗi và câu thông báo, và các đảm bảo hệ thống phải giữ.
 
 Tài liệu nối [D02-03-PH04 FRS](../frs/D02-03-PH04-frs-tich-hop.md) (hệ thống phải làm gì) với [D03-06-PH04 Màn hình](../../03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md), D03-02-PH04 SDD, D03-04-PH04 API (hệ thống làm thế nào). Đội phát triển dùng luồng chính, luồng ngoại lệ để biết thứ tự gọi màn, gọi API, mã lỗi phải trả; đội kiểm thử dùng từng luồng làm khung ca kiểm thử TS-04-xx ở D05-02-PH04.
 
 ### 1.2. Phạm vi
 
-Toàn bộ FR-04-001…084 của FRS. Chức năng dùng chung FR-00 (đăng nhập, phân quyền, kiểm toán, hộp "Việc của tôi", thông báo) không đặc tả lại; bước dựa vào chúng ghi "Tuân thủ FR-00-nnn". Hành vi của kết nối (PH-05), lược đồ (PH-06), bảng mã (PH-07), topic (PH-10), giám sát (PH-13), DLQ (PH-18) chỉ mô tả ở mức tương tác.
+Toàn bộ FR-04-001…084 của FRS. Chức năng dùng chung FR-00 (đăng nhập, phân quyền, kiểm toán, hộp "Việc của tôi", thông báo) không đặc tả lại; bước dựa vào chúng ghi "Tuân thủ FR-00-nnn". Hành vi của kết nối (PH-05), lược đồ (PH-06), bảng mã (PH-07), topic (PH-10), giám sát (PH-13), DLQ (PH-18) chỉ mô tả ở mức tương tác. Hành vi chi tiết của từng bước (kiểm tra, ngưỡng, mã lỗi) ở FR tương ứng; use case mô tả trình tự và vai trò.
 
-### 1.3. Tài liệu liên quan
+### 1.3. Người đọc
+
+Tài liệu viết cho bốn nhóm người đọc, mỗi nhóm dùng một phần khác nhau. Bảng dưới chỉ phần cần đọc để không phải đọc hết 22 use case.
+
+| Người đọc | Phần cần đọc |
+|---|---|
+| Hội đồng thẩm định | Tóm tắt, chương 4 (sơ đồ tổng), chương 5 (truy vết), các UC có duyệt bốn mắt (UC-04-10, 11, 12) |
+| Nhóm phân tích nghiệp vụ | Chương 3, chương 6 (mục Mục tiêu, Luồng chính, Quy tắc áp dụng), chương 9 |
+| Kỹ sư giao diện, BFF, `dh-integration`, `dh-runtime` | Chương 6, đối chiếu mục Màn hình, API và sơ đồ trình tự; chương 7 |
+| Kiểm thử viên | Chương 6: mỗi luồng chính, thay thế, ngoại lệ là một ca kiểm thử ở D05-02-PH04; chương 8.1 (ma trận BR) |
+
+: Người đọc và phần cần đọc
+
+### 1.4. Thuật ngữ và viết tắt
+
+Thuật ngữ, chữ viết tắt và vai trò dùng chung với [D02-03-PH04](../frs/D02-03-PH04-frs-tich-hop.md) và D00-01. Bảng dưới chỉ nhắc những từ xuất hiện dày trong tài liệu này.
+
+| Thuật ngữ, viết tắt | Giải thích |
+|---|---|
+| IE, IA, TO, TA, SO, PA, VW, AU | Kỹ sư tích hợp, người duyệt tích hợp, vận hành tenant, quản trị tenant, cán bộ ATTT, quản trị nền tảng, người xem, kiểm toán viên (`ROLE-*` ở D02-08) |
+| Luồng (flow) | Một chương trình tích hợp Camel gồm một hoặc nhiều route, có phiên bản và vòng đời duyệt |
+| Chặng (node, step) | Một bước xử lý trên sơ đồ luồng, ứng với một EIP hoặc thành phần Camel |
+| Khung chín chặng | `receive`, `schema`, `authz`, `transform`, `enrich`, `route`, `deliver`, `audit`, `respond`, bắt buộc với luồng đối ngoại (BR-04-002) |
+| Kamelet, Pipe | Đoạn tích hợp đóng gói có tham số (Kamelet); cách nối nguồn, bước, đích bằng Kamelet (Pipe) |
+| Catalog | Danh mục thành phần Camel và thuộc tính của một phiên bản runtime |
+| Sandbox | `dh-runtime-sandbox`, môi trường chạy thử cách ly (ADR-064) |
+| GitOps | Đưa cấu hình lên môi trường bằng commit vào kho `dh-flows-{tenant}`, Argo CD đồng bộ (ADR-068) |
+| ETag, `If-Match` | Dấu phiên bản của tài nguyên, dùng chống ghi đè khi hai người cùng sửa |
+| SSE | Server-Sent Events, kênh máy chủ đẩy tiến trình về trình duyệt |
+| VR, LINT | Quy tắc kiểm tra định nghĩa luồng (lỗi chặn) và gợi ý chất lượng (không chặn) của FRS |
+| CDM | Mô hình dữ liệu chuẩn dùng chung của Datahub |
+| NDXP | Nền tảng chia sẻ, tích hợp dữ liệu quốc gia, hệ đích của nhiều luồng đối ngoại |
+| DLQ | Hàng đợi bản tin lỗi do PH-18 quản lý |
+| OPA | Open Policy Agent, bộ quyết định ủy quyền ở chặng `authz` |
+| Q359 | Quy định đọc trực tiếp CSDL có kiểm soát (UC-04-19) |
+| GĐ | Giả định, số liệu chưa có dữ liệu thật, ghi trong sổ giả định của D02-01 |
+
+: Thuật ngữ và viết tắt dùng trong tài liệu
+
+### 1.5. Tài liệu tham chiếu
+
+Mã lỗi và câu thông báo trong luồng ngoại lệ lấy từ D03-04-PH04 §6 và D03-06-PH04 §5.3; câu chưa có trong hai bảng đó được đề nghị bổ sung ở mục 8.4.
 
 | Tài liệu | Lý do tham chiếu |
 |---|---|
@@ -31,31 +82,48 @@ Toàn bộ FR-04-001…084 của FRS. Chức năng dùng chung FR-00 (đăng nh�
 | [D02-02 SRS](../D02-02-srs.md) | FR-00, NFR-00 |
 | [D02-03-PH04 FRS](../frs/D02-03-PH04-frs-tich-hop.md) | FR-04, BR-04, NFR-04, VR, tham số `04.*`, trạng thái |
 | [D02-08 Ma trận phân quyền](../D02-08-ma-tran-phan-quyen.md) | Vai trò, `PERM-04-*` |
-| [D03-06-PH04 Màn hình](../../03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md) | UI-04-01…21, thông điệp lỗi |
+| D03-02-PH04 SDD | Thành phần `dh-integration`, `dh-runtime`, outbox, lệnh điều khiển |
+| D03-04-PH04 API | API-04-nnn, bảng mã lỗi chính thức ERR-04 (§6) |
+| [D03-06-PH04 Màn hình](../../03-thiet-ke/uiux/D03-06-PH04-man-hinh-tich-hop.md) | UI-04-01…21, câu hiển thị theo mã lỗi (§5.3), trạng thái màn ST-01…11 |
+| D05-02-PH04 Test case | Ca kiểm thử TS-04-xx dựng từ luồng của tài liệu này |
 | ADR-060…069 | Quyết định kiến trúc PH-04 |
 | [D03-10 Thiết kế đa tenant](../../03-thiet-ke/D03-10-thiet-ke-da-tenant.md) | RLS, tiêu đề tenant |
 
+: Tài liệu tham chiếu
+
+### 1.6. Cấu trúc tài liệu
+
+Chương 2 nêu cách đọc một khối đặc tả. Chương 3 liệt kê tác nhân. Chương 4 vẽ sơ đồ use case tổng. Chương 5 là các bảng tổng hợp và truy vết (use case với FR, màn hình, API, REQ, quy trình, hệ cũ). Chương 6 đặc tả chi tiết 22 use case, mỗi use case một khối 15 mục kèm sơ đồ trình tự. Chương 7 gom luồng phụ dùng chung. Chương 8 tổng hợp ma trận quy tắc nghiệp vụ, mã mới và đề nghị đồng bộ với tập khác. Chương 9 là câu hỏi mở.
+
 ## 2. Quy ước đọc đặc tả
+
+Chương này giúp người đọc hiểu một khối đặc tả use case và các quy ước dùng chung trong luồng, để chương 6 không phải nhắc lại.
 
 ### 2.1. Mẫu đặc tả một use case
 
+Mỗi use case có tiêu đề `UC-04-nn · Tên` (tên bắt đầu bằng động từ), một đoạn dẫn nếu cần, rồi một khối đặc tả hai cột 15 mục theo đúng thứ tự dưới đây (khuôn K-UC). Sau khối là sơ đồ trình tự hoặc trạng thái Mermaid và một đoạn thuyết minh.
+
 | Mục | Ý nghĩa |
 |---|---|
-| Mã, tên | `UC-04-nn`, tên bắt đầu bằng động từ |
 | Mục tiêu | Kết quả nghiệp vụ tác nhân chính muốn đạt |
-| Tác nhân chính, phụ | Người hoặc hệ thống khởi xướng; người hoặc hệ thống tham gia, nhận kết quả |
+| Tác nhân chính | Người hoặc hệ thống khởi xướng, kèm quyền `PERM-04-*` |
+| Tác nhân phụ | Người hoặc hệ thống tham gia, nhận kết quả |
 | Mức ưu tiên | M, S, C, lấy mức cao nhất của các FR hiện thực |
 | FR hiện thực | FR mà use case hiện thực |
+| Truy vết | REQ của BRD, quy trình nghiệp vụ, LGC của hệ cũ |
 | Tiền điều kiện | Điều phải đúng trước khi bắt đầu |
-| Điều kiện kích hoạt | Sự kiện làm use case bắt đầu |
+| Kích hoạt | Sự kiện làm use case bắt đầu |
 | Đảm bảo tối thiểu | Điều hệ thống luôn giữ kể cả khi thất bại giữa chừng |
 | Đảm bảo thành công | Trạng thái hệ thống sau khi kết thúc thành công |
 | Luồng chính | Kịch bản thành công điển hình, đánh số bước, ghi màn `UI-04-nn` và API `API-04-nnn` |
 | Luồng thay thế | Nhánh hợp lệ khác, đánh số theo bước rẽ (`3a`) |
-| Luồng ngoại lệ | `E1`, `E2`…, mã lỗi `ERR-04-nnn`, thông điệp, cách khắc phục |
-| Quy tắc, phi chức năng | `BR-04-nnn`, `NFR-04-nnn` |
-| Tần suất, khối lượng | Ước lượng để thiết kế hiệu năng (giả định, chưa có số liệu thật, ghi rõ GĐ) |
-| Sơ đồ | Sơ đồ tuần tự hoặc hoạt động Mermaid cho use case phức tạp |
+| Luồng ngoại lệ | `E1`, `E2`…, mã lỗi `ERR-04-nnn`, mã HTTP, câu thông báo người dùng thấy (trong ngoặc kép), cách khắc phục |
+| Quy tắc áp dụng | `BR-04-nnn`, kèm phi chức năng `NFR-04-nnn` và tần suất, khối lượng ước lượng (GĐ) để thiết kế hiệu năng |
+| Màn hình, API | `UI-04-nn`, `API-04-nnn`, topic hoặc điểm vào runtime |
+
+: Mười lăm mục của khối đặc tả use case
+
+Câu thông báo có tham số trong `{}` lấy từ trường mở rộng của lỗi RFC 9457. Mọi thông điệp lỗi trên giao diện kèm "Mã lỗi {code} · Mã truy vết {traceId}" (FR-00-080), nên luồng ngoại lệ không nhắc lại. Lỗi runtime ERR-04-101…112 trả cho máy bên gọi, không có người nhìn trực tiếp; luồng ngoại lệ ghi nơi người vận hành thấy lỗi (nhật ký kết nối EVT-04-14, bảng điều khiển PH-13, DLQ ở PH-18).
 
 ### 2.2. Quy ước trong luồng
 
@@ -66,6 +134,8 @@ Mọi thao tác ghi sinh bản ghi kiểm toán theo FR-00-040 với mã sự ki
 Dữ liệu ví dụ là giả lập theo chỉ đạo ngày 25/11/2026 (không có dữ liệu thật): tenant `T68` (tỉnh Lâm Đồng); không gian làm việc `so-tu-phap`; luồng `ho-tich-khai-sinh` "Đồng bộ khai sinh sang NDXP" (đối ngoại, HTTT Hộ tịch tỉnh → Nền tảng NDXP); kết nối `ndxp-ho-tich` (HTTP), `pg-ho-tich-ro` (CSDL chỉ đọc cho luồng). Người dùng giả lập: Nguyễn Văn An (IE, Sở Tư pháp), Trần Thị Bình (IE, người đóng góp), Lê Văn Cường (IA), Phạm Thu Dung (TO), Hoàng Minh Đức (SO), Vũ Thị Hà (TA), Đỗ Quang Khải (PA nền tảng).
 
 ## 3. Tác nhân
+
+PH-04 có bảy nhóm tác nhân người và nhiều hệ thống tham gia. Người dùng làm việc ở control plane (thiết kế, duyệt, phát hành, vận hành); hệ thống là tác nhân chính của ba use case data plane (UC-04-17…19), nơi không có người thao tác nhưng hành vi quyết định chất lượng dịch vụ cho HTTT.
 
 ### 3.1. Danh sách tác nhân
 
@@ -78,12 +148,14 @@ Dữ liệu ví dụ là giả lập theo chỉ đạo ngày 25/11/2026 (không 
 | Cán bộ ATTT | SO | Người | UC-04-15, 21 |
 | Quản trị nền tảng | PA | Người | UC-04-21, 22 |
 | Người xem, kiểm toán | VW, AU | Người | UC-04-02 |
-| HTTT thành viên (bên gọi) | — | Hệ thống | UC-04-17, 18 |
-| HTTT đích, CSDL nguồn | — | Hệ thống | UC-04-17, 18, 19 |
-| APISIX nội bộ | — | Hệ thống | UC-04-17 |
-| Argo CD | — | Hệ thống | UC-04-12, 13 |
-| `dh-runtime`, `dh-runtime-sandbox` | — | Hệ thống | UC-04-08, 12, 14, 15, 17…19 |
-| OPA, PH-05, PH-06, PH-07, PH-09, PH-10, PH-13, PH-18 | — | Hệ thống | Tham gia nhiều use case |
+| HTTT thành viên (bên gọi) | Không có | Hệ thống | UC-04-17, 18 |
+| HTTT đích, CSDL nguồn | Không có | Hệ thống | UC-04-17, 18, 19 |
+| APISIX nội bộ | Không có | Hệ thống | UC-04-17 |
+| Argo CD | Không có | Hệ thống | UC-04-12, 13 |
+| `dh-runtime`, `dh-runtime-sandbox` | Không có | Hệ thống | UC-04-08, 12, 14, 15, 17…19 |
+| OPA, PH-05, PH-06, PH-07, PH-09, PH-10, PH-13, PH-18 | Không có | Hệ thống | Tham gia nhiều use case |
+
+: Tác nhân của PH-04 và use case chính
 
 ### 3.2. Quan hệ vai trò và mức truy cập không gian làm việc
 
@@ -91,16 +163,16 @@ Khi `04.workspace.enforce` bật: sửa luồng cần `PERM-04-update` và mức
 
 ## 4. Sơ đồ use case tổng
 
-```mermaid
-flowchart LR
+Sơ đồ tổng có 22 use case nên chia làm hai hình để đọc được trên trang A4: thiết kế và quản trị danh mục (Hình 1), phát hành, vận hành và data plane (Hình 2). Đường liền nối tác nhân với use case; đường đứt ghi quan hệ `include` (luôn gọi) hoặc `extend` (gọi khi cần).
+
+```{.mermaid caption="Use case thiết kế luồng và quản trị danh mục"}
+flowchart TB
     IE([Kỹ sư tích hợp])
-    IA([Người duyệt tích hợp])
-    TO([Vận hành tenant])
     TA([Quản trị tenant])
     SO([Cán bộ ATTT])
     PA([Quản trị nền tảng])
-    HT([HTTT thành viên])
-    subgraph PH04["PH-04 Lõi tích hợp"]
+    TO([Vận hành tenant])
+    subgraph TK["Thiết kế luồng"]
         U01["UC-04-01 Quản lý không gian làm việc"]
         U02["UC-04-02 Tra cứu, xem chi tiết luồng"]
         U03["UC-04-03 Tạo luồng"]
@@ -111,20 +183,15 @@ flowchart LR
         U08["UC-04-08 Chạy thử luồng"]
         U09["UC-04-09 Quản lý ca kiểm thử"]
         U10["UC-04-10 Gửi duyệt phiên bản"]
-        U11["UC-04-11 Duyệt bốn mắt"]
-        U12["UC-04-12 Phát hành, thăng cấp"]
-        U13["UC-04-13 Quay lui"]
-        U14["UC-04-14 Tạm dừng, tiếp tục"]
-        U15["UC-04-15 Dừng khẩn"]
         U16["UC-04-16 Nhân bản, gỡ luồng"]
-        U17["UC-04-17 Xử lý bản tin đồng bộ"]
-        U18["UC-04-18 Xử lý bản tin bất đồng bộ"]
-        U19["UC-04-19 Đọc CSDL trực tiếp có kiểm soát"]
         U20["UC-04-20 Nhập luồng hệ cũ"]
+    end
+    subgraph DM["Danh mục thành phần"]
         U21["UC-04-21 Quản lý danh mục thành phần"]
         U22["UC-04-22 Nâng phiên bản catalog, runtime"]
     end
     TA --- U01
+    TO --- U02
     IE --- U02
     IE --- U03
     IE --- U04
@@ -135,29 +202,56 @@ flowchart LR
     IE --- U09
     IE --- U10
     IE --- U16
+    TA --- U16
     IE --- U20
-    IA --- U11
-    IA --- U12
-    IA --- U13
-    TO --- U14
-    TA --- U14
-    SO --- U15
-    TA --- U15
-    HT --- U17
-    HT --- U18
-    U17 -.->|include| U19
     PA --- U21
     SO --- U21
     PA --- U22
     U04 -.->|include| U05
     U05 -.->|extend| U06
     U10 -.->|include| U08
-    U11 -.->|extend| U12
 ```
 
-Sơ đồ chia ba vùng việc. Vùng thiết kế (UC-04-03…10) là việc hằng ngày của kỹ sư tích hợp, thay Productivity Tooling. Vùng phát hành, vận hành (UC-04-11…16) thay Start/Stop và lưu context của Bus, thêm bốn mắt và GitOps. Vùng data plane (UC-04-17…19) là hành vi của luồng khi chạy, tác nhân là hệ thống. UC-04-10 bao gồm UC-04-08 vì gửi duyệt cần một lần chạy thử đạt trên đúng băm (BR-04-004).
+Hình 1 cho thấy kỹ sư tích hợp là tác nhân của gần hết việc thiết kế, thay cho Productivity Tooling của hệ cũ. UC-04-04 luôn gồm UC-04-05 vì thiết kế nào cũng phải cấu hình chặng; UC-04-06 chỉ mở khi chặng cần ánh xạ. UC-04-10 bao gồm UC-04-08 vì gửi duyệt cần một lần chạy thử đạt trên đúng băm (BR-04-004). Danh mục thành phần là việc của quản trị nền tảng và cán bộ ATTT, quyết định kỹ sư được dùng thành phần nào.
+
+```{.mermaid caption="Use case phát hành, vận hành và data plane"}
+flowchart TB
+    IA([Người duyệt tích hợp])
+    TO([Vận hành tenant])
+    TA([Quản trị tenant])
+    SO([Cán bộ ATTT])
+    HT([HTTT thành viên])
+    subgraph PH["Phát hành, vận hành"]
+        U11["UC-04-11 Duyệt bốn mắt"]
+        U12["UC-04-12 Phát hành, thăng cấp"]
+        U13["UC-04-13 Quay lui"]
+        U14["UC-04-14 Tạm dừng, tiếp tục"]
+        U15["UC-04-15 Dừng khẩn"]
+    end
+    subgraph DP["Data plane"]
+        U17["UC-04-17 Xử lý bản tin đồng bộ"]
+        U18["UC-04-18 Xử lý bản tin bất đồng bộ"]
+        U19["UC-04-19 Đọc CSDL trực tiếp có kiểm soát"]
+    end
+    IA --- U11
+    IA --- U12
+    IA --- U13
+    TO --- U13
+    TO --- U14
+    TA --- U14
+    SO --- U15
+    TA --- U15
+    HT --- U17
+    HT --- U18
+    U11 -.->|extend| U12
+    U17 -.->|include| U19
+```
+
+Hình 2 có hai vùng việc. Vùng phát hành, vận hành (UC-04-11…15) thay Start/Stop và lưu context của Bus, thêm bốn mắt và GitOps: duyệt có thể nối tiếp ngay bằng phát hành (`extend`). Vùng data plane (UC-04-17…19) là hành vi của luồng khi chạy, tác nhân là hệ thống; luồng đồng bộ có thể gồm bước đọc CSDL có kiểm soát.
 
 ## 5. Bảng tổng hợp use case và truy vết
+
+Chương này cho phép tra ngược từ use case sang FR, màn hình, API, yêu cầu nghiệp vụ và chức năng hệ cũ. Hội đồng dùng mục 5.1 để kiểm mọi FR đều được hiện thực; kỹ sư dùng mục 5.2 để biết màn và API nào phục vụ use case nào.
 
 ### 5.1. Use case và yêu cầu chức năng
 
@@ -171,11 +265,11 @@ Sơ đồ chia ba vùng việc. Vùng thiết kế (UC-04-03…10) là việc h�
 | UC-04-06 | Ánh xạ dữ liệu và chuyển mã | M | FR-04-020 | BUS-036; TOOL-007, 028 |
 | UC-04-07 | Soạn Kamelet, Pipe, bean và cấu hình cấp tệp | S | FR-04-018, 019, 021 | TOOL-027 (thay thế) |
 | UC-04-08 | Chạy thử luồng | M | FR-04-030, 032, 033 | BUS-013, 022 |
-| UC-04-09 | Quản lý ca kiểm thử | S | FR-04-031 | — |
-| UC-04-10 | Gửi duyệt phiên bản | M | FR-04-040, 023 | — |
+| UC-04-09 | Quản lý ca kiểm thử | S | FR-04-031 | Không có |
+| UC-04-10 | Gửi duyệt phiên bản | M | FR-04-040, 023 | Không có |
 | UC-04-11 | Duyệt phiên bản bốn mắt | M | FR-04-041, 043 | BUS-023 |
 | UC-04-12 | Phát hành và thăng cấp qua GitOps | M | FR-04-042, 045, 075 | BUS-033, 034 |
-| UC-04-13 | Quay lui về phiên bản trước | M | FR-04-044 | — |
+| UC-04-13 | Quay lui về phiên bản trước | M | FR-04-044 | Không có |
 | UC-04-14 | Tạm dừng, tiếp tục luồng hoặc route | M | FR-04-050 | BUS-009, 012, 026 |
 | UC-04-15 | Dừng khẩn luồng | M | FR-04-050 | BUS-009 |
 | UC-04-16 | Nhân bản, hủy nháp, gỡ luồng | M | FR-04-005, 006 | BUS-010; TOOL-016 |
@@ -184,7 +278,9 @@ Sơ đồ chia ba vùng việc. Vùng thiết kế (UC-04-03…10) là việc h�
 | UC-04-19 | Đọc CSDL trực tiếp có kiểm soát (Q359) | M | FR-04-072 | BUS-040; TOOL-008 |
 | UC-04-20 | Nhập luồng Camel XML hệ cũ | M | FR-04-082 | BUS-033; TOOL-015 |
 | UC-04-21 | Quản lý danh mục thành phần và chính sách | M | FR-04-080 | BUS-034, 040 |
-| UC-04-22 | Nâng phiên bản catalog và runtime | M | FR-04-081 | — |
+| UC-04-22 | Nâng phiên bản catalog và runtime | M | FR-04-081 | Không có |
+
+: Use case, mức ưu tiên, FR hiện thực và chức năng hệ cũ
 
 Luồng phụ dùng chung ở mục 7: tham số PH-04 và đóng băng thay đổi (FR-04-084), lịch sử và kiểm toán (FR-04-083). Mọi FR-04 có ít nhất một use case; FR-04-075 hiện thực trong UC-04-12 (gán hồ sơ runtime khi phát hành).
 
@@ -207,70 +303,135 @@ Luồng phụ dùng chung ở mục 7: tham số PH-04 và đóng băng thay đ�
 | UC-04-13 | UI-04-15 | API-04-055 |
 | UC-04-14, 15 | UI-04-02, 15 | API-04-060, 061 |
 | UC-04-16 | UI-04-01, 02 | API-04-014, 015, 016, 023 |
-| UC-04-17…19 | — (runtime) | Điểm vào của luồng qua APISIX; topic Kafka |
+| UC-04-17…19 | Không có (runtime) | Điểm vào của luồng qua APISIX; topic Kafka |
 | UC-04-20 | UI-04-18 | API-04-028 |
 | UC-04-21 | UI-04-17 | API-04-070…074 |
 | UC-04-22 | UI-04-17 | API-04-073 |
+
+: Use case, màn hình và API chính
 
 ### 5.3. Use case và quy trình, yêu cầu nghiệp vụ
 
 Mọi use case truy vết về REQ-04 của BRD. UC-04-05, 19, 21 truy vết thêm REQ-05 (kết nối, bộ điều hợp). UC-04-18 truy vết REQ-10 (bản tin). UC-04-17 truy vết REQ-03 (điểm vào qua APISIX) và yêu cầu ghi nhật ký kết nối của NĐ 278/2025. UC-04-20 truy vết REQ-22 (di trú). UC-04-11, 12 hiện thực nguyên tắc bốn mắt và quản lý thay đổi của TCVN 14423:2026 cấp độ 3 (nhóm quản lý vận hành, SEC-40…49 của D03-07).
 
+| UC | REQ, căn cứ | Quy trình nghiệp vụ |
+|---|---|---|
+| UC-04-01 | REQ-04 | Quản trị tenant |
+| UC-04-02 | REQ-04 | Vận hành, giám sát |
+| UC-04-03, 04, 06, 07 | REQ-04 | Thiết kế luồng |
+| UC-04-05 | REQ-04, REQ-05 | Thiết kế luồng |
+| UC-04-08, 09, 10 | REQ-04 | Thiết kế luồng → kiểm thử → gửi duyệt |
+| UC-04-11, 12 | REQ-04; TCVN 14423:2026 cấp độ 3 | Duyệt, phát hành |
+| UC-04-13, 14, 15 | REQ-04 | Vận hành, xử lý sự cố |
+| UC-04-16 | REQ-04 | Thiết kế luồng, quản trị tenant |
+| UC-04-17 | REQ-04, REQ-03; NĐ 278/2025 | Chạy luồng đồng bộ |
+| UC-04-18 | REQ-04, REQ-10 | Chạy luồng bất đồng bộ |
+| UC-04-19 | REQ-04, REQ-05 | Chạy luồng, đọc CSDL Q359 |
+| UC-04-20 | REQ-04, REQ-22 | Di trú từ Bus cũ |
+| UC-04-21 | REQ-04, REQ-05 | Quản trị danh mục |
+| UC-04-22 | REQ-04 | Nâng cấp nền tảng |
+
+: Use case, REQ và quy trình nghiệp vụ
+
 ## 6. Đặc tả chi tiết use case
+
+Chương này đặc tả 22 use case theo thứ tự vòng đời luồng: tổ chức và tra cứu (6.1, 6.2), thiết kế (6.3…6.9), duyệt và phát hành (6.10…6.13), vận hành (6.14…6.16), data plane (6.17…6.19), di trú và danh mục (6.20…6.22). Mỗi use case có khối đặc tả 15 mục và sơ đồ trình tự.
 
 ### 6.1. UC-04-01 · Quản lý không gian làm việc và thành viên
 
 Bus cũ phân quyền theo `Project`, `Group`, `Project_group.access_level` (LGC-BUS-032) để sở này không sửa nhầm chương trình của sở khác. Use case giữ ý tưởng đó dưới tên không gian làm việc.
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-01 |
-| Mục tiêu | TA tổ chức luồng của tỉnh theo đơn vị chủ quản và cấp mức truy cập cho từng người, nhóm |
-| Tác nhân chính | TA (`PERM-04-admin`) |
-| Tác nhân phụ | Thành viên mức `MAINTAIN` (thêm, bớt thành viên); PH-12 (nhóm Keycloak) |
-| Mức ưu tiên | S |
-| FR hiện thực | FR-04-007 |
-| Tiền điều kiện | Tenant hoạt động |
-| Điều kiện kích hoạt | TA mở UI-04-21 |
-| Đảm bảo tối thiểu | Không gian còn luồng không bị xóa; mọi thay đổi thành viên được kiểm toán với danh sách thêm, bớt |
-| Đảm bảo thành công | Không gian và danh sách thành viên mới có hiệu lực ngay ở lượt gọi kế tiếp |
+::: dac-ta
+**Mục tiêu.** TA tổ chức luồng của tỉnh theo đơn vị chủ quản và cấp mức truy cập cho từng người, nhóm.
 
-**Luồng chính**
+**Tác nhân chính.** TA (`PERM-04-admin`), Vũ Thị Hà.
+
+**Tác nhân phụ.** Thành viên mức `MAINTAIN` (thêm, bớt thành viên); PH-12 (nhóm Keycloak).
+
+**Mức ưu tiên.** S.
+
+**FR hiện thực.** FR-04-007.
+
+**Truy vết.** REQ-04; quy trình Quản trị tenant; LGC-BUS-032.
+
+**Tiền điều kiện.** Tenant hoạt động.
+
+**Kích hoạt.** TA mở UI-04-21.
+
+**Đảm bảo tối thiểu.** Không gian còn luồng không bị xóa; mọi thay đổi thành viên được kiểm toán với danh sách thêm, bớt.
+
+**Đảm bảo thành công.** Không gian và danh sách thành viên mới có hiệu lực ngay ở lượt gọi kế tiếp.
+
+**Luồng chính.**
 
 1. TA (Vũ Thị Hà) mở UI-04-21; hệ thống liệt kê không gian (API-04-001).
 2. TA chọn "Tạo không gian", nhập mã `so-tu-phap`, tên "Sở Tư pháp", đơn vị chủ quản, mô tả.
-3. Hệ thống kiểm tra mã duy nhất trong tenant, ghi không gian (API-04-002).
+3. Hệ thống kiểm tra mã duy nhất trong tenant, ghi không gian (API-04-002). Mã trùng: ERR-04-028.
 4. TA mở tab Thành viên, thêm Nguyễn Văn An mức `EDIT`, Trần Thị Bình mức `EDIT`, Lê Văn Cường mức `MAINTAIN`, nhóm PH-12 "Phòng HCTP" mức `VIEW` (API-04-004).
 5. Hệ thống lưu, mở rộng nhóm thành người dùng lúc kiểm tra quyền, trả danh sách hiệu lực.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **4a. Thành viên `MAINTAIN` tự quản lý thành viên.** Lê Văn Cường thêm một kỹ sư mới mức `EDIT`; hệ thống cho phép vì người thao tác có `MAINTAIN` trên chính không gian.
 - **5a. Lưu trữ không gian.** TA chọn "Lưu trữ" (API-04-003); không gian ẩn khỏi ô chọn khi tạo luồng, luồng hiện có không đổi.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Mã trùng (bước 3).** ERR-04-028 "Mã không gian làm việc đã được dùng."
-- **E2. Xóa không gian còn luồng.** ERR-04-017 kèm số luồng; gợi ý "Lưu trữ" thay vì xóa.
+- **E1. Mã trùng (bước 3).** ERR-04-028 (409); "Mã không gian làm việc đã được dùng." Quay lại bước 2.
+- **E2. Xóa không gian còn luồng.** ERR-04-017 (409) kèm số luồng; "Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước." Giao diện gợi ý "Lưu trữ" thay vì xóa.
+- **E3. Không gian không tồn tại khi sửa, thêm thành viên.** ERR-04-027 (404); "Không tìm thấy không gian làm việc "{workspace}"."
 
-**Quy tắc:** BR-04-021. **Tần suất:** vài lần mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-021. Tần suất: vài lần mỗi tháng mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-21; API-04-001…004.
+:::
+
+```{.mermaid caption="Trình tự tạo không gian làm việc và cấp thành viên"}
+sequenceDiagram
+    autonumber
+    actor TA as Vũ Thị Hà (TA)
+    participant UI as UI-04-21
+    participant INT as dh-integration
+    participant KC as PH-12 (Keycloak)
+    TA->>UI: Tạo không gian so-tu-phap
+    UI->>INT: API-04-002
+    INT->>INT: Kiểm tra mã duy nhất trong T68
+    INT-->>UI: 201 (trùng thì 409 ERR-04-028)
+    TA->>UI: Thêm An, Bình (EDIT), Cường (MAINTAIN), nhóm Phòng HCTP (VIEW)
+    UI->>INT: API-04-004
+    INT->>KC: Mở rộng nhóm thành người dùng
+    KC-->>INT: Danh sách thành viên nhóm
+    INT-->>UI: Danh sách hiệu lực, ghi kiểm toán thêm, bớt
+```
+
+Hình cho thấy nhóm PH-12 được mở rộng thành người dùng lúc kiểm tra quyền, nên thêm người vào nhóm ở Keycloak có hiệu lực mà không phải sửa không gian làm việc.
 
 ### 6.2. UC-04-02 · Tra cứu, xem chi tiết và tình trạng luồng
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-02 |
-| Mục tiêu | Người dùng tìm được luồng và biết luồng đang chạy phiên bản nào, ở đâu, có khỏe không |
-| Tác nhân chính | Mọi vai trò có `PERM-04-read` (thường TO, IE) |
-| Tác nhân phụ | PH-13 (số liệu, log), `dh-runtime` (nhịp tim) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-001, 002, 004, 051, 052, 053, 083 |
-| Tiền điều kiện | Đăng nhập, chọn tenant (FR-00-004) |
-| Điều kiện kích hoạt | Mở UI-04-01 hoặc liên kết sâu tới UI-04-02 |
-| Đảm bảo tối thiểu | Không lộ luồng ngoài phạm vi không gian làm việc; URI điểm kết nối luôn che tham số nhạy cảm |
-| Đảm bảo thành công | Người dùng thấy danh sách, chi tiết và tình trạng theo môi trường |
+Use case thay các màn tra cứu chương trình, agent và endpoint của Bus cũ bằng một danh sách luồng có bộ lọc và một trang chi tiết gom tình trạng theo môi trường.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** Người dùng tìm được luồng và biết luồng đang chạy phiên bản nào, ở đâu, có khỏe không.
+
+**Tác nhân chính.** Mọi vai trò có `PERM-04-read` (thường TO, IE; VW, AU chỉ xem).
+
+**Tác nhân phụ.** PH-13 (số liệu, log), `dh-runtime` (nhịp tim).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-001, 002, 004, 051, 052, 053, 083.
+
+**Truy vết.** REQ-04; quy trình Vận hành, giám sát; LGC-BUS-001…008, 014…025, 027…030; LGC-TOOL-001.
+
+**Tiền điều kiện.** Đăng nhập, chọn tenant (FR-00-004).
+
+**Kích hoạt.** Mở UI-04-01 hoặc liên kết sâu tới UI-04-02.
+
+**Đảm bảo tối thiểu.** Không lộ luồng ngoài phạm vi không gian làm việc; URI điểm kết nối luôn che tham số nhạy cảm.
+
+**Đảm bảo thành công.** Người dùng thấy danh sách, chi tiết và tình trạng theo môi trường.
+
+**Luồng chính.**
 
 1. Phạm Thu Dung (TO) mở UI-04-01; hệ thống trả trang đầu kèm `facets` theo trạng thái (API-04-010).
 2. TO gõ "khai sinh" vào ô tìm và chọn lọc môi trường `PROD`; hệ thống lọc trên mã, tên, mô tả, URI đã chỉ mục (EN-04-04).
@@ -280,47 +441,84 @@ Bus cũ phân quyền theo `Project`, `Group`, `Project_group.access_level` (LGC
 6. TO mở tab Route; thấy route `goi-ndxp` có bản sao `Suspended` theo nhịp tim lúc 14:20.
 7. TO mở tab Lịch sử (API-04-091); thấy lệnh tạm dừng route lúc 14:18 của Hoàng Minh Đức kèm lý do.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **2a. Lọc theo endpoint.** TO nhập `/ho-tich/khai-sinh` vào ô "Endpoint" của bộ lọc khác; hệ thống khớp chuỗi con trên URI đã chuẩn hóa (thay tìm theo endpoint của Bus).
 - **3a. Sửa thông tin luồng.** IE có `PERM-04-update` chọn "Sửa thông tin" (FR-04-004), đổi mô tả, nhãn, HTTT đích (API-04-013, `If-Match`). Nếu đổi HTTT làm luồng thành đối ngoại, phiên bản mở được kiểm tra lại ở mức đối ngoại và bảng Vấn đề có thêm VR-05.
 - **4a. Nhịp tim quá 90 giây không về.** Sức khỏe hiện "Không rõ"; thẻ môi trường có chữ "Không nhận được nhịp tim từ {giờ}".
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Luồng không tồn tại hoặc ngoài phạm vi.** ERR-04-001, không phân biệt hai trường hợp.
-- **E2. Phiên bản không tồn tại (`?phien-ban=`).** ERR-04-004.
-- **E3. Sửa thông tin khi luồng đã gỡ.** ERR-04-034. **E4.** ETag lệch ERR-04-006; thiếu `If-Match` ERR-04-007.
-- **E5. PH-13 không phản hồi (bước 5).** Tab Giám sát hiện ST-05, các tab khác vẫn dùng được.
+- **E1. Luồng không tồn tại hoặc ngoài phạm vi.** ERR-04-001 (404), không phân biệt hai trường hợp; "Không tìm thấy luồng, hoặc bạn không có quyền xem luồng này." Nút "Về danh sách luồng".
+- **E2. Phiên bản không tồn tại (`?phien-ban=`).** ERR-04-004 (404); "Không tìm thấy phiên bản v{n} của luồng."
+- **E3. Sửa thông tin khi luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ nên chỉ xem được, không sửa được."
+- **E4. ETag lệch, thiếu `If-Match` (bước 3a).** ETag lệch: ERR-04-006 (412); "{user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu." Thiếu `If-Match`: ERR-04-007 (428); "Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại."
+- **E5. PH-13 không phản hồi (bước 5).** Tab Giám sát hiện ST-05 với nút "Thử lại", các tab khác vẫn dùng được.
 
-**Quy tắc:** BR-04-021. **Phi chức năng:** thời gian phản hồi danh sách theo NFR chung của SRS (D02-02). **Tần suất:** hàng trăm lượt xem mỗi ngày mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-021. Phi chức năng: thời gian phản hồi danh sách theo NFR chung của SRS (D02-02). Tần suất: hàng trăm lượt xem mỗi ngày mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-01, 02; API-04-010, 012, 013, 016, 060, 062, 063, 091.
+:::
+
+```{.mermaid caption="Trình tự tra cứu luồng và xem tình trạng theo môi trường"}
+sequenceDiagram
+    autonumber
+    actor TO as Phạm Thu Dung (TO)
+    participant UI as UI-04-01, 02
+    participant INT as dh-integration
+    participant RT as dh-runtime (PROD)
+    participant MON as PH-13
+    RT-->>INT: Nhịp tim (phiên bản, route, sức khỏe)
+    TO->>UI: Tìm "khai sinh", lọc PROD
+    UI->>INT: API-04-010
+    INT-->>UI: Danh sách, facets
+    TO->>UI: Mở ho-tich-khai-sinh
+    UI->>INT: API-04-012, API-04-060
+    INT-->>UI: Chi tiết, thẻ PROD v7 suy giảm 2/3
+    UI->>MON: Bảng điều khiển lọc tenant, flow (API-04-063)
+    MON-->>UI: Số liệu, log
+    UI->>INT: Lịch sử (API-04-091)
+    INT-->>UI: Lệnh tạm dừng route 14:18
+```
+
+Tình trạng môi trường không do giao diện hỏi trực tiếp runtime mà lấy từ nhịp tim runtime gửi về `dh-integration`; vì vậy khi nhịp tim ngừng quá 90 giây, giao diện hiện "Không rõ" thay vì giữ trạng thái cũ.
 
 ### 6.3. UC-04-03 · Tạo luồng mới
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-03 |
-| Mục tiêu | IE có một luồng mới với phiên bản v1 sẵn sàng thiết kế, xuất phát từ khuôn mẫu có đủ chín chặng chuẩn |
-| Tác nhân chính | IE (`PERM-04-create`, mức `EDIT`) |
-| Tác nhân phụ | PH-01 (HTTT), PH-02 (API), PH-07 (văn bản căn cứ) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-003, 025 |
-| Tiền điều kiện | Có ít nhất một không gian mức `EDIT` (hoặc `DEFAULT` khi không giới hạn) |
-| Điều kiện kích hoạt | Bấm "Tạo luồng" trên UI-04-01 |
-| Đảm bảo tối thiểu | Không có luồng nửa vời: luồng, phiên bản 1, chỉ mục route và endpoint, outbox EVT-04-01 ghi trong một giao dịch |
-| Đảm bảo thành công | Luồng `DRAFT`, phiên bản 1 `DRAFT`, `origin` đúng nguồn; kết quả kiểm tra mức `DESIGN` lưu kèm |
+Use case thay bước tạo chương trình của Productivity Tooling. Luồng mới luôn xuất phát từ khuôn mẫu hoặc nguồn có cấu trúc, để luồng đối ngoại có đủ chín chặng chuẩn ngay từ đầu.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** IE có một luồng mới với phiên bản v1 sẵn sàng thiết kế, xuất phát từ khuôn mẫu có đủ chín chặng chuẩn.
+
+**Tác nhân chính.** IE (`PERM-04-create`, mức `EDIT`), Nguyễn Văn An.
+
+**Tác nhân phụ.** PH-01 (HTTT), PH-02 (API), PH-07 (văn bản căn cứ).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-003, 025.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng; LGC-BUS-013; LGC-TOOL-002.
+
+**Tiền điều kiện.** Có ít nhất một không gian mức `EDIT` (hoặc `DEFAULT` khi không giới hạn).
+
+**Kích hoạt.** Bấm "Tạo luồng" trên UI-04-01.
+
+**Đảm bảo tối thiểu.** Không có luồng nửa vời: luồng, phiên bản 1, chỉ mục route và endpoint, outbox EVT-04-01 ghi trong một giao dịch.
+
+**Đảm bảo thành công.** Luồng `DRAFT`, phiên bản 1 `DRAFT`, `origin` đúng nguồn; kết quả kiểm tra mức `DESIGN` lưu kèm.
+
+**Luồng chính.**
 
 1. Nguyễn Văn An mở UI-04-03 bước 1, chọn "Từ khuôn mẫu"; hệ thống hiện tám khuôn nền và khuôn của tỉnh (API-04-080).
 2. An chọn `tpl-sync-lookup`; hệ thống tải chi tiết khuôn và lược đồ tham số (API-04-081).
-3. Bước 2: An nhập tên "Tra cứu hộ tịch cho cổng DVC"; hệ thống gợi ý mã `tra-cuu-ho-tich` và kiểm tra trực tuyến tính duy nhất.
+3. Bước 2: An nhập tên "Tra cứu hộ tịch cho cổng DVC"; hệ thống gợi ý mã `tra-cuu-ho-tich` và kiểm tra trực tuyến tính duy nhất (trùng: ERR-04-002).
 4. An chọn không gian `so-tu-phap`, HTTT nguồn "Cổng DVC tỉnh", đích "HTTT Hộ tịch tỉnh", điền tham số khuôn "Đường dẫn nhận" `/ho-tich/tra-cuu` và "Kết nối đích" `ho-tich-api`.
 5. Bước 3: hệ thống hiện sơ đồ xem trước và kết quả kiểm tra sơ bộ (API-04-030 `level=DESIGN`): 1 cảnh báo VR-07 vì kết nối chưa có giá trị PROD.
 6. An bấm "Tạo và mở trình thiết kế"; hệ thống gọi API-04-011 với `Idempotency-Key`, sinh định nghĩa bằng cách điền tham số vào khuôn, chạy kiểm tra, ghi dữ liệu và outbox, trả `201`.
 7. Hệ thống chuyển tới UI-04-04 với phiên bản 1 (tiếp UC-04-04).
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Luồng trống.** Với `ROUTE` đối ngoại, định nghĩa có chặng đầu trống, chín khối chặng chuẩn rỗng và `routeConfiguration` nền; với luồng nội bộ chỉ có chặng đầu.
 - **1b. Từ API trong danh mục PH-02.** Hệ thống đọc OpenAPI, sinh `rest` DSL, mỗi thao tác một route `direct:{operationId}` có khung chín chặng, lược đồ gắn vào chặng `schema`.
@@ -328,34 +526,71 @@ Bus cũ phân quyền theo `Project`, `Group`, `Project_group.access_level` (LGC
 - **1d. Nhân bản luồng có sẵn.** Chuyển sang UC-04-16 luồng 1a.
 - **1e. Kamelet, Pipe.** Chọn loại tài nguyên khác ở bước 1; tiếp UC-04-07.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Mã trùng (bước 3, 6).** ERR-04-002 "Mã luồng "tra-cuu-ho-tich" đã được dùng trong tỉnh." kèm gợi ý mã khác.
-- **E2. Không có mức `EDIT` (bước 6).** ERR-04-003.
-- **E3. Không gian không tồn tại.** ERR-04-027. **E4. Khuôn không tồn tại hoặc không được phép.** ERR-04-039.
-- **E5. YAML không phân tích được.** ERR-04-008 kèm dòng, cột. **E6. Loại tài nguyên không khớp nội dung.** ERR-04-009. **E7. Vượt kích thước.** ERR-04-033.
-- **E8. Gửi lại cùng `Idempotency-Key` nhưng nội dung khác.** ERR-04-018. Cùng nội dung thì trả kết quả lần trước, không tạo trùng.
+- **E1. Mã trùng (bước 3, 6).** ERR-04-002 (409); "Mã luồng "tra-cuu-ho-tich" đã được dùng trong tỉnh." kèm gợi ý mã khác "tra-cuu-ho-tich-2".
+- **E2. Không có mức `EDIT` (bước 6).** ERR-04-003 (403); "Bạn chưa có quyền sửa trong không gian làm việc "so-tu-phap"." kèm "Liên hệ quản trị không gian làm việc: {owner}".
+- **E3. Không gian không tồn tại.** ERR-04-027 (404); "Không tìm thấy không gian làm việc "{workspace}"."
+- **E4. Khuôn không tồn tại hoặc không được phép.** ERR-04-039 (404); "Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh."
+- **E5. YAML không phân tích được (1c).** ERR-04-008 (422) kèm dòng, cột; "YAML có lỗi cú pháp ở dòng {line}, cột {column}: {message}"
+- **E6. Loại tài nguyên không khớp nội dung (1c).** ERR-04-009 (422); "Luồng còn {n} lỗi cần sửa trước khi tạo." Mở bảng Vấn đề.
+- **E7. Vượt kích thước (1c).** ERR-04-033 (413); "Định nghĩa luồng vượt 512 KiB. Tách thành nhiều luồng hoặc luồng con."
+- **E8. Gửi lại cùng `Idempotency-Key` nhưng nội dung khác.** ERR-04-018 (409); "Yêu cầu này đã được gửi với nội dung khác. Tải lại trang rồi thử lại." Cùng nội dung thì trả kết quả lần trước, không tạo trùng.
 
-**Quy tắc:** BR-04-001, 002, 003. **Tần suất:** 5–30 luồng mới mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-001, 002, 003. Tần suất: 5–30 luồng mới mỗi tháng mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-03, 19; API-04-011, 030, 080, 081.
+:::
+
+```{.mermaid caption="Trình tự tạo luồng từ khuôn mẫu"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-03
+    participant INT as dh-integration
+    participant CAT as PH-01, PH-02
+    participant DB as CSDL điều khiển
+    IE->>UI: Chọn khuôn tpl-sync-lookup
+    UI->>INT: API-04-080, API-04-081
+    INT-->>UI: Khuôn, lược đồ tham số
+    IE->>UI: Tên, mã, không gian, HTTT, tham số khuôn
+    UI->>CAT: Danh sách HTTT nguồn, đích
+    UI->>INT: Xem trước (API-04-030 DESIGN)
+    INT-->>UI: 1 cảnh báo VR-07
+    IE->>UI: Tạo và mở trình thiết kế
+    UI->>INT: API-04-011 (Idempotency-Key)
+    INT->>DB: Một giao dịch gồm luồng, v1, chỉ mục, outbox EVT-04-01
+    INT-->>UI: 201, chuyển UI-04-04
+```
+
+Điểm cần thấy ở hình là bước 10: luồng, phiên bản 1, chỉ mục và sự kiện outbox ghi trong cùng một giao dịch, nên không thể có luồng đã tạo mà chưa phát sự kiện hoặc ngược lại.
 
 ### 6.4. UC-04-04 · Thiết kế luồng trên sơ đồ và YAML
 
 Use case trung tâm của PH-04, thay Productivity Tooling. Đặc tả giao diện đầy đủ ở D03-06-PH04 §10.
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-04 |
-| Mục tiêu | IE dựng logic của luồng bằng sơ đồ, Inspector hoặc YAML, luôn thấy lỗi ngay, không mất công khi mất mạng hay sửa trùng |
-| Tác nhân chính | IE (`PERM-04-update`, mức `EDIT`) |
-| Tác nhân phụ | IE khác cùng mở luồng; PH-05, PH-10 (tham chiếu được kiểm tra) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-010, 011, 012, 013, 017, 023, 024, 026, 027 |
-| Tiền điều kiện | Luồng tồn tại, không `RETIRED` |
-| Điều kiện kích hoạt | Mở UI-04-04 từ UI-04-01, 02 hoặc sau UC-04-03 |
-| Đảm bảo tối thiểu | Không ghi đè âm thầm (ETag); phần chưa lưu được giữ trong IndexedDB cho tới khi máy chủ xác nhận; bố cục và bản tin mẫu không vào YAML (BR-04-007); không lưu được bí mật viết thẳng (VR-03) |
-| Đảm bảo thành công | Phiên bản mở có định nghĩa, bố cục, bản tin mẫu mới; người dùng có tên trong danh sách người đóng góp; chỉ mục route, endpoint tính lại |
+::: dac-ta
+**Mục tiêu.** IE dựng logic của luồng bằng sơ đồ, Inspector hoặc YAML, luôn thấy lỗi ngay, không mất công khi mất mạng hay sửa trùng.
 
-**Luồng chính**
+**Tác nhân chính.** IE (`PERM-04-update`, mức `EDIT`), Nguyễn Văn An.
+
+**Tác nhân phụ.** IE khác cùng mở luồng (Trần Thị Bình); PH-05, PH-10 (tham chiếu được kiểm tra).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-010, 011, 012, 013, 017, 023, 024, 026, 027.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng; LGC-TOOL-003…018, 021, 023…026, 029.
+
+**Tiền điều kiện.** Luồng tồn tại, không `RETIRED`.
+
+**Kích hoạt.** Mở UI-04-04 từ UI-04-01, 02 hoặc sau UC-04-03.
+
+**Đảm bảo tối thiểu.** Không ghi đè âm thầm (ETag); phần chưa lưu được giữ trong IndexedDB cho tới khi máy chủ xác nhận; bố cục và bản tin mẫu không vào YAML (BR-04-007); không lưu được bí mật viết thẳng (VR-03).
+
+**Đảm bảo thành công.** Phiên bản mở có định nghĩa, bố cục, bản tin mẫu mới; người dùng có tên trong danh sách người đóng góp; chỉ mục route, endpoint tính lại.
+
+**Luồng chính.**
 
 1. An mở UI-04-04 cho `ho-tich-khai-sinh`. Hệ thống trả phiên bản mở v8 `DRAFT` với định nghĩa, bố cục, bản tin mẫu, `catalogVersion`, ETag (API-04-020) và tải chỉ mục catalog đã lọc theo chính sách tenant (API-04-070, cache theo `catalogVersion`).
 2. Trình duyệt tạo phiên soạn, gửi nhịp mỗi 30 giây (API-04-034); phản hồi cho biết Trần Thị Bình cũng đang mở. Giao diện hiện "Đang có 1 người khác mở luồng này".
@@ -363,10 +598,10 @@ Use case trung tâm của PH-04, thay Productivity Tooling. Đặc tả giao di�
 4. Trình duyệt chạy VR-01…09, 15, 18, 20 sau 400 ms; bảng Vấn đề hiện gợi ý LINT-04-01 "Nhánh otherwise chỉ ghi nhật ký".
 5. An kéo bảng thành phần mục "Gọi REST" thả lên cạnh sau "Ghi nhật ký"; vì thành phần có cờ cần kết nối PH-05, ô chọn kết nối mở ngay; An chọn `ndxp-ho-tich` (tiếp UC-04-05).
 6. An chuyển chế độ Chia đôi (`Ctrl+3`), sửa `timeout` trong YAML; sau 500 ms không gõ, hệ thống phân tích YAML, cập nhật sơ đồ, giữ chặng chọn theo `id`.
-7. 30 giây sau thay đổi cuối, trình duyệt tự lưu (API-04-022 với `If-Match`); máy chủ kiểm tra trạng thái `DRAFT`, so ETag, chạy kiểm tra mức `DESIGN`, lưu, thêm An vào danh sách người đóng góp, trả ETag mới; chỉ báo "Đã lưu 14:02".
+7. 30 giây sau thay đổi cuối, trình duyệt tự lưu (API-04-022 với `If-Match`); máy chủ kiểm tra trạng thái `DRAFT`, so ETag (lệch: ERR-04-006), chạy kiểm tra mức `DESIGN`, lưu, thêm An vào danh sách người đóng góp, trả ETag mới; chỉ báo "Đã lưu 14:02".
 8. An tiếp tục chạy thử (UC-04-08) hoặc gửi duyệt (UC-04-10).
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Không có phiên bản mở.** Hệ thống mở phiên bản đang chạy ở PROD (hoặc mới nhất) chỉ đọc; An chọn "Tạo phiên bản mới từ v7" (API-04-021); hệ thống sao chép định nghĩa, bố cục, ca kiểm thử sang v8 `DRAFT` (FR-04-011).
 - **1b. Catalog của tenant đã nâng.** `catalogVersion` khác bản định nghĩa đã kiểm tra: dải "Danh mục thành phần đã cập nhật lên {phiên bản}. Kiểm tra lại luồng trước khi gửi duyệt" và kiểm tra chạy lại (FR-04-010 mục 3, UC-04-22).
@@ -381,19 +616,23 @@ Use case trung tâm của PH-04, thay Productivity Tooling. Đặc tả giao di�
 - **7a. Lưu tay.** `Ctrl+S` lưu ngay.
 - **7b. Tải xuống, nhập YAML (FR-04-027).** Tải `yaml`, `yaml+layout`, `bundle` (API-04-026); nhập YAML thay toàn bộ định nghĩa sau xác nhận (API-04-027), hoàn tác được.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Xung đột ETag (bước 7).** Bình đã lưu sau lần tải của An: ERR-04-006 (412) kèm ETag hiện tại và người lưu. Hộp gộp ba bên (gốc chung, của tôi, của Bình); An chọn từng xung đột hoặc tải bản của mình về máy. Không ghi đè âm thầm.
-- **E2. Phiên bản không còn sửa được.** Người khác đã gửi duyệt: ERR-04-005; trình thiết kế chuyển chỉ đọc.
-- **E3. Mất kết nối.** Chỉ báo "Chưa lưu lên máy chủ"; tiếp tục sửa, dữ liệu giữ trong IndexedDB; có mạng lại thì lưu, ETag lệch thì vào E1.
-- **E4. Vượt kích thước định nghĩa.** ERR-04-033 "Định nghĩa luồng vượt 512 KB."
-- **E5. Giá trị giống bí mật.** VR-03 lỗi ngay tại trường, ERR-04-010 khi lưu: "Phát hiện giá trị giống bí mật ở chặng "Gọi hộ tịch", trường "authorization"…".
-- **E6. Đang đóng băng thay đổi.** Lưu nháp vẫn được; FR-04-024 cho phép máy chủ trả ERR-04-041 (423) khi tỉnh cấu hình đóng băng cả việc soạn (GĐ: mặc định chỉ đóng băng phát hành).
-- **E7. Phiên bản đã có bản mở (bước 1a).** ERR-04-016 kèm "Mở phiên bản đang soạn".
+- **E1. Xung đột ETag (bước 7).** Bình đã lưu sau lần tải của An: ERR-04-006 (412) kèm ETag hiện tại và người lưu; "Trần Thị Bình đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu." Hộp gộp ba bên (gốc chung, của tôi, của Bình, mục 7.3); An chọn từng xung đột hoặc tải bản của mình về máy. Không ghi đè âm thầm.
+- **E2. Phiên bản không còn sửa được.** Người khác đã gửi duyệt: ERR-04-005 (409); "Phiên bản đang ở trạng thái "Chờ duyệt" nên không thể lưu." Trình thiết kế chuyển chỉ đọc (ST-07).
+- **E3. Mất kết nối.** Chỉ báo "Chưa lưu lên máy chủ" và dải ST-09 "Mất kết nối máy chủ. Thay đổi đang được giữ trên máy này và sẽ tự lưu khi có kết nối"; tiếp tục sửa, dữ liệu giữ trong IndexedDB; có mạng lại thì lưu, ETag lệch thì vào E1.
+- **E4. Vượt kích thước định nghĩa.** ERR-04-033 (413); "Định nghĩa luồng vượt 512 KiB. Tách thành nhiều luồng hoặc luồng con."
+- **E5. Giá trị giống bí mật.** VR-03 lỗi ngay tại trường, ERR-04-010 (422) khi lưu; "Phát hiện giá trị giống bí mật ở chặng "Gọi hộ tịch", trường "authorization". Không được ghi bí mật vào luồng." kèm nút "Chọn kết nối".
+- **E6. Đang đóng băng thay đổi.** Lưu nháp vẫn được; FR-04-024 cho phép máy chủ trả ERR-04-041 (423) khi tỉnh cấu hình đóng băng cả việc soạn (GĐ: mặc định chỉ đóng băng phát hành); "Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn."
+- **E7. Phiên bản đã có bản mở (bước 1a).** ERR-04-016 (409); "Luồng đã có bản nháp v8 do {user} tạo." kèm "Mở bản nháp".
+- **E8. YAML nhập không phân tích được (7b).** ERR-04-008 (422); "YAML có lỗi cú pháp ở dòng {line}, cột {column}: {message}"
 
-**Quy tắc:** BR-04-002, 003, 006, 007, 011, 016, 020. **Phi chức năng:** NFR-04-001…005, 015, 016, 017. **Tần suất:** mỗi IE vài giờ mỗi ngày; luồng điển hình 20–80 chặng, lớn nhất 200 chặng (GĐ).
+**Quy tắc áp dụng.** BR-04-002, 003, 006, 007, 011, 016, 020. Phi chức năng: NFR-04-001…005, 015, 016, 017. Tần suất: mỗi IE vài giờ mỗi ngày; luồng điển hình 20–80 chặng, lớn nhất 200 chặng (GĐ).
 
-```mermaid
+**Màn hình, API.** UI-04-04; API-04-020…024, 026, 027, 030, 034, 070, 071.
+:::
+
+```{.mermaid caption="Trình tự thiết kế, tự lưu và gộp ba bên khi xung đột ETag"}
 sequenceDiagram
     autonumber
     actor IE as Nguyễn Văn An
@@ -426,31 +665,41 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 
 ### 6.5. UC-04-05 · Cấu hình chặng, biểu thức, kết nối và bản tin mẫu
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-05 |
-| Mục tiêu | IE đặt đúng tham số của một chặng mà không phải nhớ tên tham số Camel, không phải nhập máy chủ, mật khẩu, và kiểm được biểu thức trên dữ liệu mẫu |
-| Tác nhân chính | IE |
-| Tác nhân phụ | PH-05 (kết nối), Sandbox (biểu thức) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-014, 015, 016, 022 |
-| Tiền điều kiện | Đang ở UC-04-04, phiên bản mở |
-| Điều kiện kích hoạt | Chọn chặng (Inspector) hoặc nhấp đúp chặng (UI-04-05) |
-| Đảm bảo tối thiểu | Trường bí mật không có ô nhập tự do; giá trị bằng mặc định không ghi vào YAML trừ khi ghim "luôn ghi" |
-| Đảm bảo thành công | Tham số của chặng được cập nhật trên cây tài nguyên, có thể hoàn tác |
+Use case thay hộp thuộc tính của Productivity Tooling, nơi kỹ sư phải nhớ tên tham số Camel và gõ thẳng máy chủ, mật khẩu vào URI.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** IE đặt đúng tham số của một chặng mà không phải nhớ tên tham số Camel, không phải nhập máy chủ, mật khẩu, và kiểm được biểu thức trên dữ liệu mẫu.
+
+**Tác nhân chính.** IE (`PERM-04-update`), Nguyễn Văn An.
+
+**Tác nhân phụ.** PH-05 (kết nối), Sandbox (biểu thức).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-014, 015, 016, 022.
+
+**Truy vết.** REQ-04, REQ-05; quy trình Thiết kế luồng; LGC-BUS-011, 040, 041; LGC-TOOL-008, 019, 020.
+
+**Tiền điều kiện.** Đang ở UC-04-04, phiên bản mở.
+
+**Kích hoạt.** Chọn chặng (Inspector) hoặc nhấp đúp chặng (UI-04-05).
+
+**Đảm bảo tối thiểu.** Trường bí mật không có ô nhập tự do; giá trị bằng mặc định không ghi vào YAML trừ khi ghim "luôn ghi".
+
+**Đảm bảo thành công.** Tham số của chặng được cập nhật trên cây tài nguyên, có thể hoàn tác.
+
+**Luồng chính.**
 
 1. An nhấp đúp chặng "Gọi hộ tịch"; UI-04-05 mở ba cột VÀO · THAM SỐ · RA. Hệ thống tải lược đồ thuộc tính của thành phần `http` cho đúng `catalogVersion` (API-04-071).
 2. Cột THAM SỐ mặc định hiện trường bắt buộc và trường đã đặt của nhóm có trường bắt buộc; nút "Hiện tất cả (64)".
 3. An mở ô Kết nối; hệ thống liệt kê kết nối PH-05 loại `http-*` được cấp cho `so-tu-phap`, kèm môi trường có giá trị; An chọn `ndxp-ho-tich`. Hệ thống điền máy chủ, cổng dạng `{{conn:ndxp-ho-tich.host}}`, không chép giá trị.
 4. An nhập "Đường dẫn" `/api/v1/khai-sinh/${header.soDinhDanh}` và bấm ƒx; UI-04-06 mở.
-5. Sau 400 ms, hệ thống biên dịch biểu thức bằng engine Camel đúng phiên bản (API-04-032): hợp lệ.
+5. Sau 400 ms, hệ thống biên dịch biểu thức bằng engine Camel đúng phiên bản (API-04-032): hợp lệ (không hợp lệ: ERR-04-037).
 6. An chọn "Bản tin mẫu của chặng"; hệ thống đánh giá trên sandbox, hiện kết quả chuỗi đường dẫn đã thay giá trị.
 7. An bấm "Áp dụng"; giá trị ghi vào trường, tạo một bước hoàn tác; huy hiệu lỗi của chặng giảm từ 2 xuống 0.
 8. An đóng UI-04-05 (`Esc`), focus trở lại chặng.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Ghim bản tin mẫu (FR-04-022).** Cột VÀO trống; An chọn "Ghim bản tin mẫu…", dán JSON ≤ 256 KiB, đặt tiêu đề `soDinhDanh`. Bản tin lưu cùng phiên bản ở cột riêng. Chặng sau chưa ghim thừa hưởng bản tin của chặng này.
 - **1b. Bản tin có dấu hiệu dữ liệu thật.** Hệ thống phát hiện chuỗi 12 chữ số dạng số định danh: cảnh báo LINT-04-06, gợi ý "Thay bằng dữ liệu giả"; chỉ người có `PERM-04-sample-data` bỏ qua được.
@@ -459,31 +708,69 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 - **6a. Sandbox không sẵn sàng.** Đánh giá cục bộ cho `simple`, `jsonpath`, `jq` với nhãn "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime".
 - **7a. Khôi phục.** Menu trường "Khôi phục giá trị khi mở", "Đặt về mặc định"; menu chặng "Khôi phục chặng về bản đã lưu" (LGC-TOOL-020).
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Biểu thức không biên dịch được (bước 5).** ERR-04-037 kèm dòng, cột; gạch sóng tại vị trí.
-- **E2. Bản tin mẫu vượt kích thước.** ERR-04-021.
-- **E3. Kết nối không tồn tại, sai loại, chưa cấp.** VR-07 khi thiết kế, ERR-04-013 ở mức gửi duyệt.
-- **E4. Ngôn ngữ kịch bản chưa được phép.** `groovy`, `js`, `python` không có trong danh sách ngôn ngữ (ADR-062); dán YAML chứa chúng thì VR-04.
+- **E1. Biểu thức không biên dịch được (bước 5).** ERR-04-037 (422 ở chế độ chặt; chế độ thường trả 200 `valid = false`) kèm dòng, cột; gạch sóng tại vị trí; "Biểu thức simple có lỗi ở vị trí {pos}: {message}"
+- **E2. Bản tin mẫu vượt kích thước (1a).** ERR-04-021 (413); "Bản tin mẫu vượt 256 KiB."
+- **E3. Kết nối không tồn tại, sai loại, chưa cấp.** VR-07 khi thiết kế, ERR-04-013 (422) ở mức gửi duyệt; "Kết nối "{connection}" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc." kèm "Chọn kết nối khác", "Mở PH-05".
+- **E4. Ngôn ngữ kịch bản chưa được phép.** `groovy`, `js`, `python` không có trong danh sách ngôn ngữ (ADR-062); dán YAML chứa chúng thì VR-04, ERR-04-011 (422) ở mức gửi duyệt; "Thành phần "groovy" không được phép dùng trong tỉnh."
+- **E5. Sandbox không sẵn sàng khi đánh giá (bước 6).** API-04-032 trả ERR-04-019 (503); giao diện không báo lỗi mà chuyển sang nhánh 6a.
 
-**Quy tắc:** BR-04-003, 007, 013, 014. **Phi chức năng:** NFR-04-006 (mở cửa sổ 154 thuộc tính < 400 ms). **Tần suất:** hàng chục lần mỗi luồng.
+**Quy tắc áp dụng.** BR-04-003, 007, 013, 014. Phi chức năng: NFR-04-006 (mở cửa sổ 154 thuộc tính < 400 ms). Tần suất: hàng chục lần mỗi luồng.
+
+**Màn hình, API.** UI-04-04, 05, 06; API-04-022, 032, 071; API danh sách kết nối của PH-05.
+:::
+
+```{.mermaid caption="Trình tự cấu hình chặng có kết nối PH-05 và thử biểu thức"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-05, 06
+    participant INT as dh-integration
+    participant P5 as PH-05
+    participant SB as dh-runtime-sandbox
+    IE->>UI: Nhấp đúp chặng "Gọi hộ tịch"
+    UI->>INT: Lược đồ thuộc tính http (API-04-071)
+    INT-->>UI: 64 thuộc tính theo catalogVersion
+    IE->>UI: Mở ô Kết nối
+    UI->>P5: Kết nối http-* cấp cho so-tu-phap
+    P5-->>UI: ndxp-ho-tich (TEST, PROD)
+    UI->>UI: Điền {{conn:ndxp-ho-tich.host}}
+    IE->>UI: Nhập biểu thức đường dẫn
+    UI->>INT: Biên dịch (API-04-032)
+    INT->>SB: Đánh giá trên bản tin mẫu
+    SB-->>INT: Chuỗi đường dẫn đã thay giá trị
+    INT-->>UI: Hợp lệ, kết quả xem trước
+```
+
+Hình cho thấy giao diện chỉ điền tham chiếu `{{conn:…}}` chứ không chép máy chủ hay bí mật từ PH-05 vào định nghĩa luồng; giá trị thật chỉ được phân giải ở runtime.
 
 ### 6.6. UC-04-06 · Ánh xạ dữ liệu và chuyển mã
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-06 |
-| Mục tiêu | IE chuyển cấu trúc bản tin nguồn sang cấu trúc đích (thường là CDM hoặc lược đồ NDXP) bằng kéo nối, kèm chuyển mã theo bảng của PH-07, không phải viết JQ |
-| Tác nhân chính | IE |
-| Tác nhân phụ | PH-06 (lược đồ), PH-07 (bảng ánh xạ mã), Sandbox |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-020 |
-| Tiền điều kiện | Chặng `transform` (hoặc `setBody`) trong phiên bản mở |
-| Điều kiện kích hoạt | `Ctrl+M` hoặc "Mở trình ánh xạ" |
-| Đảm bảo tối thiểu | `*.dhmap.json` là nguồn chuẩn; JQ luôn sinh lại được từ nó; không lưu ánh xạ có JQ không biên dịch được |
-| Đảm bảo thành công | Chặng có biểu thức `jq` sinh ra; tệp `*.dhmap.json` lưu cùng phiên bản |
+Use case thay màn ánh xạ của Bus cũ (LGC-BUS-036), nơi kỹ sư viết biểu thức chuyển đổi bằng tay.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** IE chuyển cấu trúc bản tin nguồn sang cấu trúc đích (thường là CDM hoặc lược đồ NDXP) bằng kéo nối, kèm chuyển mã theo bảng của PH-07, không phải viết JQ.
+
+**Tác nhân chính.** IE (`PERM-04-update`), Nguyễn Văn An.
+
+**Tác nhân phụ.** PH-06 (lược đồ), PH-07 (bảng ánh xạ mã), Sandbox.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-020.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng; LGC-BUS-036; LGC-TOOL-007, 028.
+
+**Tiền điều kiện.** Chặng `transform` (hoặc `setBody`) trong phiên bản mở.
+
+**Kích hoạt.** `Ctrl+M` hoặc "Mở trình ánh xạ".
+
+**Đảm bảo tối thiểu.** `*.dhmap.json` là nguồn chuẩn; JQ luôn sinh lại được từ nó; không lưu ánh xạ có JQ không biên dịch được.
+
+**Đảm bảo thành công.** Chặng có biểu thức `jq` sinh ra; tệp `*.dhmap.json` lưu cùng phiên bản.
+
+**Luồng chính.**
 
 1. An mở UI-04-07 trên chặng "Chuẩn hóa hồ sơ". Nguồn: JSON Schema `ho-tich-ks` v4; đích: CDM `ndxp-khai-sinh-req` v3.
 2. An bấm "Gợi ý ánh xạ"; hệ thống đề xuất 7 cặp theo tên, không dấu, đồng nghĩa; An chọn 6, bỏ 1.
@@ -494,7 +781,7 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 7. An chọn bản tin mẫu của chặng ở thanh Thử; hệ thống chạy JQ trên sandbox (API-04-033) có hàm `dh_map`, kiểm kết quả theo lược đồ đích: hợp lệ, 1 gợi ý LINT-04-05 (trường `father.name` rỗng).
 8. An bấm "Lưu ánh xạ"; chặng nhận JQ mới, tệp `*.dhmap.json` cập nhật, tạo một bước hoàn tác.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Nguồn từ tài liệu mẫu.** Dán JSON hoặc XML ≤ 1 MiB; hệ thống suy cây trường. Nguồn XML: chặng tự thêm `unmarshal` trước và `marshal` sau nếu đích XML.
 - **1b. Lược đồ có phiên bản mới.** Dải "Lược đồ có v5. Xem khác biệt, Nâng lên"; ánh xạ tới trường đã bỏ thành "mồ côi".
@@ -502,82 +789,151 @@ Sơ đồ cho thấy cảnh báo người khác đang mở chỉ là thông tin;
 - **8a. Soạn JQ tay.** Sau cảnh báo, phần không nhận dạng hiện là khối "JQ tùy biến".
 - **8b. Xuất, đặt lại.** "Xuất ánh xạ" tải `*.dhmap.json` và `*.jq`; "Đặt lại ánh xạ" xóa hết, hoàn tác được.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Trường đích không tồn tại hoặc vòng tham chiếu.** ERR-04-038.
-- **E2. Tài liệu mẫu vượt 1 MiB.** ERR-04-021.
+- **E1. Trường đích không tồn tại hoặc vòng tham chiếu.** ERR-04-038 (422); "Ánh xạ tới trường "{target}" không hợp lệ: {reason}"
+- **E2. Tài liệu mẫu vượt 1 MiB (1a).** ERR-04-021 (413); "Bản tin mẫu vượt 1 MiB."
 - **E3. Bảng ánh xạ PH-07 không đọc được (bước 7).** Nút hàm hiện ⚠; vẫn lưu được nhưng không xem trước.
-- **E4. Sandbox không sẵn sàng.** Xem trước cục bộ có nhãn mô phỏng (theo FR-04-015 mục 3).
+- **E4. Sandbox không sẵn sàng.** API-04-033 trả ERR-04-019 (503); xem trước cục bộ có nhãn mô phỏng (theo FR-04-015 mục 3) "Xem trước mô phỏng trên trình duyệt, kết quả có thể khác runtime".
 
-**Quy tắc:** BR-04-013 (dữ liệu xem trước được che). **Tần suất:** 1–5 ánh xạ mỗi luồng đối ngoại.
+**Quy tắc áp dụng.** BR-04-013 (dữ liệu xem trước được che). Tham số `04.mapping.require-all-required`. Tần suất: 1–5 ánh xạ mỗi luồng đối ngoại.
+
+**Màn hình, API.** UI-04-07; API-04-033; API lược đồ của PH-06, bảng ánh xạ mã của PH-07.
+:::
+
+```{.mermaid caption="Trình tự ánh xạ dữ liệu có chuyển mã PH-07"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-07
+    participant P6 as PH-06
+    participant P7 as PH-07
+    participant INT as dh-integration
+    participant SB as dh-runtime-sandbox
+    IE->>UI: Mở trình ánh xạ chặng "Chuẩn hóa hồ sơ"
+    UI->>P6: Lược đồ ho-tich-ks v4, ndxp-khai-sinh-req v3
+    P6-->>UI: Cây trường nguồn, đích
+    IE->>UI: Gợi ý ánh xạ, kéo nối, chọn bảng gioi-tinh-ht-ndxp
+    UI->>P7: Danh sách bảng ánh xạ mã
+    IE->>UI: Thử trên bản tin mẫu
+    UI->>INT: API-04-033 (JQ sinh từ dhmap)
+    INT->>SB: Chạy JQ có dh_map
+    SB->>P7: Tra bảng mã
+    SB-->>INT: Kết quả, kiểm theo lược đồ đích
+    INT-->>UI: Hợp lệ, 1 gợi ý LINT-04-05
+```
+
+Hình cho thấy tệp ánh xạ là nguồn chuẩn ở trình duyệt, còn JQ chỉ là sản phẩm sinh ra để sandbox và runtime chạy; vì thế ánh xạ luôn sinh lại được khi lược đồ đổi phiên bản.
 
 ### 6.7. UC-04-07 · Soạn Kamelet, Pipe và bean khai báo
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-07 |
-| Mục tiêu | IE đóng gói một đoạn tích hợp hay dùng thành Kamelet của tỉnh, nối nguồn và đích bằng Pipe, và khai báo bean cấu hình mà không viết Java |
-| Tác nhân chính | IE |
-| Tác nhân phụ | PA (danh mục Kamelet nền) |
-| Mức ưu tiên | S |
-| FR hiện thực | FR-04-018, 019, 021 |
-| Tiền điều kiện | Quyền `PERM-04-create` (Kamelet, Pipe mới) hoặc `PERM-04-update` |
-| Điều kiện kích hoạt | UI-04-03 chọn loại `KAMELET` hoặc `PIPE`; hoặc tab Bean của trình thiết kế |
-| Đảm bảo tối thiểu | Kamelet tự viết đi cùng vòng đời duyệt như luồng; tên Kamelet duy nhất trong tenant và không trùng Kamelet nền |
-| Đảm bảo thành công | Kamelet đã phát hành xuất hiện ở nhóm "Kamelet của tỉnh" trong bảng thành phần của mọi luồng trong tenant |
+Use case thay việc viết lớp Java tùy biến của Bus cũ bằng Kamelet có tham số và bean khai báo trong danh sách lớp cho phép (LGC-TOOL-027 được thay thế).
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** IE đóng gói một đoạn tích hợp hay dùng thành Kamelet của tỉnh, nối nguồn và đích bằng Pipe, và khai báo bean cấu hình mà không viết Java.
 
-1. An mở UI-04-03, chọn loại `KAMELET` kiểu `action`, tên `ho-tich-chuan-hoa-action`.
+**Tác nhân chính.** IE (`PERM-04-create` cho Kamelet, Pipe mới hoặc `PERM-04-update`), Nguyễn Văn An.
+
+**Tác nhân phụ.** PA (danh mục Kamelet nền); IA (duyệt Kamelet như luồng).
+
+**Mức ưu tiên.** S.
+
+**FR hiện thực.** FR-04-018, 019, 021.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng; LGC-TOOL-027 (thay thế).
+
+**Tiền điều kiện.** Quyền `PERM-04-create` (Kamelet, Pipe mới) hoặc `PERM-04-update`.
+
+**Kích hoạt.** UI-04-03 chọn loại `KAMELET` hoặc `PIPE`; hoặc tab Bean của trình thiết kế.
+
+**Đảm bảo tối thiểu.** Kamelet tự viết đi cùng vòng đời duyệt như luồng; tên Kamelet duy nhất trong tenant và không trùng Kamelet nền.
+
+**Đảm bảo thành công.** Kamelet đã phát hành xuất hiện ở nhóm "Kamelet của tỉnh" trong bảng thành phần của mọi luồng trong tenant.
+
+**Luồng chính.**
+
+1. An mở UI-04-03, chọn loại `KAMELET` kiểu `action`, tên `ho-tich-chuan-hoa-action`. Hệ thống kiểm tra tên không trùng (trùng: ERR-04-036).
 2. UI-04-08 mở với ba vùng: định nghĩa thuộc tính (tiêu đề, kiểu, bắt buộc, mặc định, `x-descriptors` bí mật), mẫu (template) dạng sơ đồ, xem trước cách Kamelet hiện trong bảng thành phần.
 3. An khai báo thuộc tính `bangMa` (chuỗi, bắt buộc), `connection` (kết nối PH-05, bí mật).
 4. An dựng mẫu: `transform` dùng `{{bangMa}}`, `log`; hệ thống kiểm tra mẫu như một route.
 5. An chạy thử Kamelet trên bản tin mẫu (UC-04-08 với Pipe tạm), gửi duyệt (UC-04-10), Lê Văn Cường duyệt, phát hành (UC-04-12).
 6. Hệ thống đưa Kamelet vào chỉ mục catalog của tenant (API-04-070 trả nhóm "Kamelet của tỉnh"), tính lại hồ sơ runtime tương thích.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Pipe.** An chọn `PIPE`, chọn nguồn `kafka-source`, các bước `ho-tich-chuan-hoa-action`, đích `http-sink`; UI-04-09 hiện dạng ba ô nối nhau, YAML `Pipe` sinh tương ứng.
 - **1b. Bean khai báo (FR-04-021).** Trong luồng, An mở cấu hình cấp tệp và bean (UI-04-10), thêm bean `ndxpRetryPolicy` kiểu được phép trong danh sách lớp tenant cho phép (`org.apache.camel.processor.errorhandler.RedeliveryPolicy`), đặt thuộc tính; chặng khác tham chiếu `#bean:ndxpRetryPolicy`.
 - **6a. Nâng phiên bản Kamelet.** Luồng dùng Kamelet giữ phiên bản Kamelet đã ghim; dải "Kamelet có phiên bản mới" trong trình thiết kế luồng dùng nó.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Tên trùng (bước 1).** ERR-04-036.
-- **E2. Lớp bean không nằm trong danh sách cho phép.** VR-04 lỗi "Lớp không được phép"; ERR-04-011 ở mức gửi duyệt.
-- **E3. Không hồ sơ runtime nào có đủ thành phần của mẫu.** ERR-04-029, nút "Đề xuất thành phần" (UC-04-21).
-- **E4. Gỡ Kamelet còn luồng dùng.** ERR-04-017 kèm danh sách luồng.
+- **E1. Tên trùng (bước 1).** ERR-04-036 (409); "Đã có Kamelet tên "ho-tich-chuan-hoa-action"."
+- **E2. Lớp bean không nằm trong danh sách cho phép (1b).** VR-04 lỗi "Lớp không được phép"; ERR-04-011 (422) ở mức gửi duyệt; "Thành phần "{component}" không được phép dùng trong tỉnh." kèm "Xem chính sách thành phần".
+- **E3. Không hồ sơ runtime nào có đủ thành phần của mẫu.** ERR-04-029 (422); "Không hồ sơ runtime nào có đủ thành phần: {components}." kèm nút "Đề xuất thành phần" (UC-04-21).
+- **E4. Gỡ Kamelet còn luồng dùng.** ERR-04-017 (409) kèm danh sách luồng; "Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước."
 
-**Quy tắc:** BR-04-003, 020. **Tần suất:** vài Kamelet mỗi quý mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-003, 020. Tần suất: vài Kamelet mỗi quý mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-03, 08, 09, 10; API-04-011, 022, 030, 070.
+:::
+
+```{.mermaid caption="Trình tự soạn và đưa Kamelet của tỉnh vào catalog"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-03, 08
+    participant INT as dh-integration
+    actor IA as Lê Văn Cường
+    participant CAT as Chỉ mục catalog tenant
+    IE->>UI: Tạo KAMELET ho-tich-chuan-hoa-action
+    UI->>INT: API-04-011 (resourceKind KAMELET)
+    INT-->>UI: 201 (trùng tên thì ERR-04-036)
+    IE->>UI: Khai thuộc tính, dựng mẫu
+    UI->>INT: Lưu, kiểm tra mẫu như route (API-04-022, 030)
+    IE->>INT: Chạy thử, gửi duyệt (UC-04-08, 10)
+    IA->>INT: Duyệt, phát hành (UC-04-11, 12)
+    INT->>CAT: Thêm nhóm "Kamelet của tỉnh", tính lại hồ sơ runtime
+    CAT-->>UI: API-04-070 trả Kamelet mới cho mọi luồng
+```
+
+Hình cho thấy Kamelet của tỉnh không có lối tắt: nó đi qua đúng vòng chạy thử, duyệt bốn mắt và phát hành như một luồng trước khi xuất hiện trong bảng thành phần của người khác.
 
 ### 6.8. UC-04-08 · Chạy thử luồng
 
 Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại lần chạy thử là giả (D03-06-PH04 §30); use case này mô tả hành vi đích.
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-08 |
-| Mục tiêu | IE biết luồng xử lý một bản tin cụ thể ra sao qua từng chặng, trước khi gửi duyệt, mà không chạm hệ thống thật |
-| Tác nhân chính | IE (`PERM-04-update`) |
-| Tác nhân phụ | `dh-runtime-sandbox`; hệ thống đích ở môi trường TEST (chỉ với `SANDBOX_LIVE`) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-030, 032, 033 |
-| Tiền điều kiện | Phiên bản không còn lỗi `ERROR` ở mức `DESIGN` |
-| Điều kiện kích hoạt | Nút "Chạy thử" (`F5`) trên UI-04-04, hoặc UI-04-11 |
-| Đảm bảo tối thiểu | Chạy thử không gọi môi trường PROD; bản tin theo dõi được che theo BR-04-013; thân bản tin chỉ lưu khi bật `captureBodies` và xóa sau `04.test.body-retention-days` |
-| Đảm bảo thành công | Lần chạy thử có kết quả `PASSED` hoặc `FAILED` gắn với băm định nghĩa, kèm vết từng chặng |
+::: dac-ta
+**Mục tiêu.** IE biết luồng xử lý một bản tin cụ thể ra sao qua từng chặng, trước khi gửi duyệt, mà không chạm hệ thống thật.
 
-**Luồng chính**
+**Tác nhân chính.** IE (`PERM-04-update`), Nguyễn Văn An.
+
+**Tác nhân phụ.** `dh-runtime-sandbox`; hệ thống đích ở môi trường TEST (chỉ với `SANDBOX_LIVE`); kho đối tượng `dh-int-testrun`.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-030, 032, 033.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng → kiểm thử; LGC-BUS-013, 022.
+
+**Tiền điều kiện.** Phiên bản không còn lỗi `ERROR` ở mức `DESIGN`.
+
+**Kích hoạt.** Nút "Chạy thử" (`F5`) trên UI-04-04, hoặc UI-04-11.
+
+**Đảm bảo tối thiểu.** Chạy thử không gọi môi trường PROD; bản tin theo dõi được che theo BR-04-013; thân bản tin chỉ lưu khi bật `captureBodies` và xóa sau `04.test.body-retention-days`.
+
+**Đảm bảo thành công.** Lần chạy thử có kết quả `PASSED` hoặc `FAILED` gắn với băm định nghĩa, kèm vết từng chặng.
+
+**Luồng chính.**
 
 1. An mở UI-04-11, chọn chế độ `MOCK`, chọn bản tin mẫu "Khai sinh hợp lệ", thời gian chờ 30 giây, bật `captureBodies`.
-2. Hệ thống gửi API-04-040 (`Idempotency-Key`); máy chủ kiểm tra mức `DESIGN`, kiểm tra hạn mức đồng thời của tenant (`04.test.max-concurrent` = 5), ghi lần chạy `QUEUED`, trả `202` và đường dẫn SSE.
+2. Hệ thống gửi API-04-040 (`Idempotency-Key`); máy chủ kiểm tra mức `DESIGN` (lỗi: ERR-04-009), kiểm tra hạn mức đồng thời của tenant (`04.test.max-concurrent` = 5, vượt: ERR-04-019), ghi lần chạy `QUEUED`, trả `202` và đường dẫn SSE.
 3. Sandbox nhận định nghĩa đúng băm, thay mọi điểm gọi ra ngoài bằng mô phỏng (theo trả lời mẫu của chặng hoặc mặc định 200 rỗng), chạy bản tin; trạng thái `RUNNING`.
 4. Trình thiết kế nhận sự kiện SSE (API-04-042): chặng sáng lần lượt theo vết, mỗi chặng có thời gian, trạng thái, trước và sau (đã che).
 5. Sandbox chạy các khẳng định của lần chạy (mặc định `STATUS` = 200), kết thúc `PASSED` trong 1,8 giây.
 6. Hệ thống ghi kết quả gắn `definitionHash`, phát EVT-04-10; nút "Gửi duyệt" bật nếu đủ điều kiện BR-04-004 (tiếp UC-04-10).
 7. An bấm một chặng trên sơ đồ để xem trước, sau ở bảng dưới; bấm "So sánh với lần chạy trước" để thấy khác biệt.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. `SANDBOX_LIVE`.** Chặng gọi ra ngoài dùng giá trị kết nối môi trường TEST thật (ví dụ NDXP môi trường thử nghiệm). Hộp xác nhận nói rõ hệ thống đích nào sẽ được gọi.
 - **1b. Chạy từ một chặng.** An chọn chặng, "Chạy từ đây" với bản tin ghim tại chặng đó; các chặng trước có trạng thái `SKIPPED`.
@@ -586,19 +942,22 @@ Thay "chạy thử" giả lập của Productivity Tooling. Ở mã hiện tại
 - **5a. Khẳng định không đạt.** `FAILED`, chặng sai hiện viền lỗi, bảng dưới chỉ khẳng định hỏng kèm giá trị mong đợi và thực tế.
 - **7a. Hủy.** An bấm "Dừng" (API-04-043); trạng thái `CANCELLED`.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Định nghĩa còn lỗi (bước 2).** ERR-04-009, không chạy, mở bảng Vấn đề.
-- **E2. Vượt hạn mức đồng thời.** ERR-04-019 (429) kèm số lần đang chạy.
-- **E3. Sandbox không sẵn sàng, không cho mô phỏng.** ERR-04-019 (503).
-- **E4. Bản tin vượt kích thước.** ERR-04-021.
-- **E5. `SANDBOX_LIVE` dùng kết nối thiếu giá trị TEST.** ERR-04-013.
-- **E6. Quá thời gian.** `TIMED_OUT`, ERR-04-020 kèm chặng treo.
+- **E1. Định nghĩa còn lỗi (bước 2).** ERR-04-009 (422), không chạy, mở bảng Vấn đề; "Luồng còn {n} lỗi cần sửa trước khi chạy thử."
+- **E2. Vượt hạn mức đồng thời.** ERR-04-019 (429) kèm số lần đang chạy và `retryAfterSeconds`; "Môi trường chạy thử đang bận hoặc chưa sẵn sàng (tỉnh đang có 5/5 lần chạy thử đồng thời). Thử lại sau ít phút."
+- **E3. Sandbox không sẵn sàng, không cho mô phỏng.** ERR-04-019 (503); cùng câu như E2, nút "Thử lại".
+- **E4. Bản tin vượt kích thước.** ERR-04-021 (413); "Bản tin mẫu vượt 256 KiB."
+- **E5. `SANDBOX_LIVE` dùng kết nối thiếu giá trị TEST.** ERR-04-013 (422); "Kết nối "{connection}" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
+- **E6. Quá thời gian.** `TIMED_OUT`, ERR-04-020 (không phải mã HTTP, là `errorCode` của lần chạy) kèm chặng treo; "Lần chạy thử quá 30 giây và đã dừng ở chặng "{node}"." kèm "Mở kết quả".
 - **E7. Mất SSE.** Trình duyệt chuyển sang hỏi API-04-042 mỗi 2 giây cho tới khi kết thúc.
 
-**Quy tắc:** BR-04-004, 013. **Phi chức năng:** NFR-04-008 (chạy thử `MOCK` luồng chín chặng p95 < 5 giây). **Tần suất:** 5–40 lần mỗi phiên bản (GĐ).
+**Quy tắc áp dụng.** BR-04-004, 013. Phi chức năng: NFR-04-008 (chạy thử `MOCK` luồng chín chặng p95 < 5 giây). Tham số `04.test.max-concurrent`, `04.test.allow-simulation`, `04.test.retention-days`, `04.test.body-retention-days`. Tần suất: 5–40 lần mỗi phiên bản (GĐ).
 
-```mermaid
+**Màn hình, API.** UI-04-11, 12; API-04-040…043.
+:::
+
+```{.mermaid caption="Trình tự chạy thử MOCK trên sandbox"}
 sequenceDiagram
     autonumber
     actor IE as Nguyễn Văn An
@@ -622,6 +981,8 @@ sequenceDiagram
     INT-->>UI: SSE completed PASSED
     UI->>IE: Bật "Gửi duyệt"
 ```
+
+Hình cho thấy kết quả chạy thử gắn với `definitionHash`: chỉ lần chạy đạt trên đúng băm hiện tại mới mở khóa "Gửi duyệt"; sửa định nghĩa sau đó làm mất hiệu lực lần chạy. Thân bản tin chỉ ghi vào kho đối tượng khi người dùng bật `captureBodies`.
 
 ### 6.9. UC-04-09 · Quản lý ca kiểm thử của luồng
 
