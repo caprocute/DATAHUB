@@ -333,8 +333,10 @@ Mọi nhãn dùng `CMP-StatusTag` với sắc thái của D03-05-02 §4.4, luôn
 | | `FAILED` | Không đạt | error | `CircleX` |
 | | `TIMED_OUT` | Quá thời gian | error | `TimerOff` |
 | | `CANCELLED` | Đã hủy | neutral | `Ban` |
-| Chặng trong lần chạy | `SKIPPED` | Bỏ qua | neutral | `CircleSlash` |
 | | `SIMULATED` | Mô phỏng | warning | `FlaskConical` (luôn kèm tooltip "Không chạy Camel thật, không tính là chạy thử đạt") |
+| Chặng trong lần chạy | `OK` | Xong | success | `CircleCheck` |
+| | `SKIPPED` | Bỏ qua | neutral | `CircleSlash` |
+| | `HUNG` | Treo, quá thời gian | error | `TimerOff` |
 | Lệnh điều khiển | `ISSUED`, `DELIVERED` | Đang gửi | info | `Send` |
 | | `ACKNOWLEDGED`, `RECONCILED` | Đã xác nhận | success | `CircleCheck` |
 | | `PARTIAL` | Xác nhận một phần ({k}/{n}) | warning | `CircleDashed` |
@@ -370,10 +372,10 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-001 | Không tìm thấy luồng, hoặc bạn không có quyền xem luồng này. | Nút "Về danh sách luồng" |
 | ERR-04-002 | Mã luồng "{code}" đã được dùng trong tỉnh. | Gợi ý mã khác: "{code}-2" |
 | ERR-04-003 | Bạn chưa có quyền sửa trong không gian làm việc "{workspace}". | "Liên hệ quản trị không gian làm việc: {owner}" |
-| ERR-04-004 | Không tìm thấy phiên bản v{n} của luồng. | "Mở phiên bản mới nhất" |
+| ERR-04-004 | Không tìm thấy phiên bản v{n} của luồng này. | "Mở phiên bản mới nhất" |
 | ERR-04-005 | Phiên bản đang ở trạng thái "{status}" nên không thể {action}. | Theo trạng thái |
 | ERR-04-006 | {user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu. | Mở hộp xung đột (mục 10.16.3) |
-| ERR-04-007 | Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại. | "Tải lại"; bản nháp cục bộ giữ nguyên (mục 10.16.2) |
+| ERR-04-007 | Thiếu thông tin phiên bản dữ liệu. Tải lại trang rồi thử lại. | "Tải lại"; bản nháp cục bộ giữ nguyên (mục 10.16.2) |
 | ERR-04-008 | YAML có lỗi cú pháp ở dòng {line}, cột {column}: {message} | Nhảy tới dòng |
 | ERR-04-009 | Luồng còn {n} lỗi cần sửa trước khi {action}. | Mở bảng Vấn đề |
 | ERR-04-010 | Phát hiện giá trị giống bí mật ở chặng "{node}", trường "{field}". Không được ghi bí mật vào luồng. | "Chọn kết nối" |
@@ -393,22 +395,22 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 | ERR-04-023 | Phiên bản phải đồng bộ, khỏe ở {previousEnv} (và chạy ổn định đủ {minutes} phút) trước khi lên {env}, hoặc luồng chưa triển khai ở {env}. | — |
 | ERR-04-025 | Vui lòng nhập lý do (ít nhất {min} ký tự). | Focus ô lý do |
 | ERR-04-027 | Không tìm thấy không gian làm việc "{workspace}". | "Chọn không gian khác" |
-| ERR-04-028 | Mã không gian làm việc đã được dùng. | Focus ô mã |
+| ERR-04-028 | Mã không gian làm việc "{code}" đã được dùng. | Focus ô mã |
 | ERR-04-026 | Mỗi trang tối đa 100 dòng. | Bộ chọn số dòng |
 | ERR-04-029 | Không hồ sơ runtime nào có đủ thành phần: {components}. | "Đề xuất thành phần" |
 | ERR-04-030 | Không tìm thấy đối tượng được yêu cầu (lần chạy thử, ca kiểm thử, triển khai hoặc lệnh). | Trang lỗi của tài nguyên con |
 | ERR-04-031 | Câu lệnh SQL ở chặng "{node}" không được phép: {reason}. Luồng chỉ được đọc dữ liệu. | Liên kết quy định Q359 |
-| ERR-04-032 | Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt {limit}. | "Chọn tệp khác" (UI-04-18) |
+| ERR-04-032 | Tệp không phải Camel XML hợp lệ của hệ cũ hoặc vượt 2 MiB. | "Chọn tệp khác" (UI-04-18) |
 | ERR-04-033 | Định nghĩa luồng vượt {limit}. Tách thành nhiều luồng hoặc luồng con. | — |
-| ERR-04-034 | Luồng đã gỡ nên chỉ xem được, không sửa được. | "Nhân bản" |
-| ERR-04-035 | Thành phần "{component}" không có trong danh mục của phiên bản runtime này. | "Xem danh mục thành phần" (UI-04-17) |
+| ERR-04-034 | Luồng đã gỡ và chỉ còn để xem. | "Nhân bản" |
+| ERR-04-035 | Thành phần "{component}" không có trong danh mục của phiên bản {version}. | "Xem danh mục thành phần" (UI-04-17) |
 | ERR-04-036 | Đã có Kamelet tên "{name}". | — |
 | ERR-04-037 | Biểu thức {language} có lỗi ở vị trí {pos}: {message} | Tô vị trí |
 | ERR-04-038 | Ánh xạ tới trường "{target}" không hợp lệ: {reason} | — |
 | ERR-04-039 | Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh. | "Chọn khuôn khác" (UI-04-19) |
 | ERR-04-040 | Không quay lui được về v{n} vì phiên bản đó dùng thành phần "{component}" nay không còn được phép. | "Xem chính sách thành phần" |
 | ERR-04-041 | Đang trong khoảng đóng băng thay đổi tới {until}. Chỉ được quay lui hoặc tạm dừng khẩn. | — |
-| ERR-04-042 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | "Mở trình thiết kế" (mục 10.17) |
+| ERR-04-042 | Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại. | "Mở trình thiết kế" (mục 10.17) |
 | ERR-04-043 | HTTT "{system}" chưa được kết nạp hoặc chưa hoạt động ở danh mục HTTT. | Bảng Vấn đề; "Xem HTTT ở PH-01" |
 | ERR-04-044 | Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục. | Hộp thoại đăng nhập lại |
 | ERR-04-045 | Bạn chưa có quyền thực hiện thao tác này. | — |
@@ -419,7 +421,26 @@ Giao diện không hiện `detail` thô của máy chủ khi đã có câu dư�
 
 : Câu hiển thị theo mã lỗi ERR-04 (bản 0.2 đồng bộ với D02-03-PH04 §9.2 và D02-04-PH04 §8.4)
 
-Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi. Bản 0.2 bổ sung câu cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049, lấy nguyên văn từ D02-04-PH04 §8.4 và D02-03-PH04 §9.2, để không màn nào phải hiện `title` thô.
+Mã ERR-04-101…112 do `dh-runtime` trả cho bên gọi luồng hoặc ghi vào DLQ; không có màn nào hiện chúng cho người thiết kế. Người vận hành thấy các câu dưới đây ở nhật ký kết nối và màn DLQ (PH-13, PH-18); câu lấy nguyên văn từ D02-03-PH04 §9.2.
+
+| Mã | Câu hiển thị | Gợi ý hành động |
+|---|---|---|
+| ERR-04-101 | Bản tin không đúng lược đồ {schemaRef}: {n} lỗi. | Xem lỗi theo đường dẫn trường; DLQ ở PH-18 |
+| ERR-04-102 | Bên gọi không được phép dùng dịch vụ này cho mục đích đã khai. | Nhật ký kết nối |
+| ERR-04-103 | Hệ thống cung cấp dữ liệu không phản hồi kịp. Thử lại sau. | Chỉ số ở PH-13 |
+| ERR-04-104 | Hệ thống cung cấp dữ liệu trả lỗi. Thử lại sau. | DLQ |
+| ERR-04-105 | Hệ thống cung cấp dữ liệu đang tạm gián đoạn. Thử lại sau. | Chỉ số mạch ngắt ở PH-13 |
+| ERR-04-106 | Yêu cầu này đã được xử lý trước đó. | — |
+| ERR-04-107 | Bản tin vượt kích thước tối đa {limit} của dịch vụ. | DLQ |
+| ERR-04-108 | Không chuyển đổi được dữ liệu: {lý do ngắn}. | DLQ |
+| ERR-04-109 | Lỗi nội bộ khi xử lý yêu cầu. Mã truy vết {traceId}. | DLQ; cảnh báo PH-13 |
+| ERR-04-110 | Dịch vụ đang tạm dừng. Thử lại sau. | Chỉ thân lỗi; trạng thái tạm dừng xem ở UI-04-15 |
+| ERR-04-111 | Không có dịch vụ tại đường dẫn này. | — |
+| ERR-04-112 | Lỗi nội bộ khi xử lý yêu cầu. Mã truy vết {traceId}. | Cảnh báo an ninh mức cao ở PH-13 |
+
+: Câu hiển thị theo mã lỗi runtime ERR-04-101…112
+
+Danh sách đầy đủ ở D03-04-PH04 §6; mã không có trong bảng hiển thị `title` của lỗi. Bản 0.2 bổ sung câu cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 và ERR-04-101…112, lấy nguyên văn từ D02-03-PH04 §9.2 (nguồn chuẩn), để không màn nào phải hiện `title` thô; câu cùng mã giống nhau ở D02-04-PH04 §8.4 và D03-04-PH04 §6.
 
 ## 6. Trạng thái màn hình dùng chung
 
@@ -2127,7 +2148,7 @@ Nhóm hộp và drawer của màn này đưa phiên bản vào vận hành thậ
 ::: dac-ta
 **Mục đích.** Đưa phiên bản đã duyệt lên môi trường qua GitOps (ADR-063, 068), theo dõi đồng bộ tới khi runtime xác nhận băm, điều khiển chạy bằng lệnh có ký (ADR-065), thăng cấp, quay lui.
 
-**Người dùng chính.** IA, TA; TO, SO cho tạm dừng, dừng khẩn.
+**Người dùng chính.** IA, TA; TO, SO cho tạm dừng, tiếp tục; TA, SO cho dừng khẩn.
 
 **FR hiện thực.** FR-04-042, 044, 045, 050, 051.
 
@@ -2730,12 +2751,12 @@ Theo chỉ đạo của người dùng (25/11/2026), các điểm dưới đây 
 
 Bản 0.2 không đổi mã đã có và không tạo mã mới ngoài các mục con của từng màn. Các điểm dưới đây cần tập khác cập nhật trong đợt gom cuối.
 
-| Tập | Đề nghị |
-|---|---|
-| D02-03-PH04 §12 | Cột FR của UI-04-03 thêm 005 (nhân bản), UI-04-10 thêm 084 (biến môi trường), UI-04-15 thêm 050, 051, như bảng mục 1.2 |
-| D02-04-PH04 §8.4 | Mười hai câu đề nghị đã đưa vào §5.3 nguyên văn; riêng ERR-04-043 dùng câu của D02-03-PH04 §9.2 để hai tập thống nhất |
-| D03-05-04 | Biến thể `slot` của `CMP-FlowNode` cho ô Pipe (mục 15.2) |
-| D05-02-PH04 | Ca giao diện cho trạng thái của UI-04-09, 16, 17, 18, 19, 21 (mục trạng thái màn của từng chương) và so khớp ảnh hi-fi `ph04/hifi/ui-04-nn.png` |
+| Tập | Đề nghị | Trạng thái |
+|---|---|---|
+| D02-03-PH04 §12 | Cột FR của UI-04-03 thêm 005 (nhân bản), UI-04-10 thêm 084 (biến môi trường), UI-04-15 thêm 050, 051, như bảng mục 1.2 | Đã hấp thụ (0.2): FRS §10 có các FR này |
+| D02-04-PH04 §8.4 | Mười hai câu đề nghị đã đưa vào §5.3 nguyên văn; riêng ERR-04-043 dùng câu của D02-03-PH04 §9.2 để hai tập thống nhất | Đã hấp thụ (0.2): UC §8.4 đánh dấu đã hấp thụ; câu đã đồng bộ theo FRS §9.2 (nguồn chuẩn) |
+| D03-05-04 | Biến thể `slot` của `CMP-FlowNode` cho ô Pipe (mục 15.2) | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
+| D05-02-PH04 | Ca giao diện cho trạng thái của UI-04-09, 16, 17, 18, 19, 21 (mục trạng thái màn của từng chương) và so khớp ảnh hi-fi `ph04/hifi/ui-04-nn.png` | Đã hấp thụ (0.2) phần ca trạng thái: TC-04-187, 188, 191, 194, 200, 201; so khớp ảnh hi-fi còn mở |
 
 : Đề nghị đồng bộ cho tập khác
 

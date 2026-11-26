@@ -2367,7 +2367,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 2. Mở SSE `GET .../test-runs/{runId}/events`.
 3. Trên UI-04-11, quan sát sơ đồ.
 
-**Kết quả mong đợi.** Bước 1 trả `202`, `Location`, `status = QUEUED`, `definitionHash = contentHash` của v4. Bước 2 nhận `status` → `RUNNING`, chín sự kiện `step` (một cho mỗi chặng chuẩn) có `stage`, `durationMs`, rồi `completed` với `status = PASSED`. Vết OpenTelemetry của lần chạy có span `camel` trong pod sandbox (chứng minh chạy thật). Bước 3: các chặng đã đi tô xanh, nhãn thời gian trên cạnh. EVT-04-10 phát. Từ gửi tới kết quả p95 < 5 giây (NFR-04-008). KT: có (`INT_TESTRUN`).
+**Kết quả mong đợi.** Bước 1 trả `202`, `Location`, `status = QUEUED`, `definitionHash = contentHash` của v4. Bước 2 nhận `status` → `RUNNING`, chín sự kiện `step` (một cho mỗi chặng chuẩn) có `stage`, `durationMs`, rồi `completed` với `status = PASSED`. Vết OpenTelemetry của lần chạy có span `camel` trong pod sandbox (chứng minh chạy thật). Bước 3: các chặng đã đi tô xanh, nhãn thời gian trên cạnh. EVT-04-10 phát. Từ gửi tới kết quả p95 < 5 giây (NFR-04-008). KT: có (`INT_TESTRUN_START`).
 :::
 
 #### TC-04-072 · Chạy thử không đạt và chặng lỗi <!--k:run-fail-->
@@ -2966,7 +2966,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 3. Chọn Từ v3, Đến v6.
 4. U-T01-IE mở URL so sánh của F-HT ở T68.
 
-**Kết quả mong đợi.** Bước 1: trạng thái rỗng "Hai phiên bản giống hệt nhau." Bước 2: ST-05 với câu "Không tìm thấy phiên bản v99 của luồng." (ERR-04-004). Bước 3: khác biệt hơn 500 dòng YAML nên mặc định chế độ Tóm tắt kèm cảnh báo hiệu năng; skeleton hai canvas và dải tổng "—" trong lúc tải. Bước 4: ST-05 với ERR-04-001, giống hệt trường hợp không tồn tại.
+**Kết quả mong đợi.** Bước 1: trạng thái rỗng "Hai phiên bản giống hệt nhau." Bước 2: ST-05 với câu "Không tìm thấy phiên bản v99 của luồng này." (ERR-04-004). Bước 3: khác biệt hơn 500 dòng YAML nên mặc định chế độ Tóm tắt kèm cảnh báo hiệu năng; skeleton hai canvas và dải tổng "—" trong lúc tải. Bước 4: ST-05 với ERR-04-001, giống hệt trường hợp không tồn tại.
 :::
 
 ### TS-04-16 · Phát hành GitOps và nâng môi trường
@@ -2995,7 +2995,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 3. Đọc `env/test` trên Gitea.
 4. Gọi luồng qua `apisix-int` môi trường TEST.
 
-**Kết quả mong đợi.** Bước 1 trả `202`, `syncStatus = PENDING`. Bước 2: `PENDING` → `SYNCING` (có `gitCommit`) → `SYNCED` khi mọi bản sao gửi nhịp tim EVT-04-12 có `contentHash` của v4; `healthStatus = HEALTHY`. Bước 3: commit có thông điệp chứa `flow=tra-cuu-ho-tich version=4 by=U-T68-IA1 trace=…`, `flow.dh.yaml` có `version: 4`, có chữ ký trong `.dh/signatures`. Bước 4: phản hồi do v4 sinh. EVT-04-06, 07 phát. KT: có (`INT_DEPLOY`).
+**Kết quả mong đợi.** Bước 1 trả `202`, `syncStatus = PENDING`. Bước 2: `PENDING` → `SYNCING` (có `gitCommit`) → `SYNCED` khi mọi bản sao gửi nhịp tim EVT-04-12 có `contentHash` của v4; `healthStatus = HEALTHY`. Bước 3: commit có thông điệp chứa `flow=tra-cuu-ho-tich version=4 by=U-T68-IA1 trace=…`, `flow.dh.yaml` có `version: 4`, có chữ ký trong `.dh/signatures`. Bước 4: phản hồi do v4 sinh. EVT-04-06, 07 phát. KT: có (`INT_DEPLOY_REQUEST`).
 :::
 
 #### TC-04-097 · Nâng TEST → STAGING → PROD theo thứ tự <!--k:promote-->
@@ -3191,7 +3191,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 4. Khi Argo CD báo Application đồng bộ, giữ nhịp tim 60 giây rồi thả.
 5. Đọc lại `deployment`.
 
-**Kết quả mong đợi.** Bước 1 trả `202` có `deploymentId`. Bước 2: `deployment` ở `PENDING`, một dòng outbox EVT-04-06 trong cùng giao dịch. Bước 3: commit có chữ ký, tác giả `dh-integration[bot]`, trailer `Dh-Published-By` và `Dh-Deployment: {id}`; yêu cầu gộp vào `env/prod` tự gộp sau khi CI chạy lại VR mức `PUBLISH` và ca kiểm thử. Bước 4: trong lúc giữ nhịp tim, triển khai chỉ ở `SYNCING` dù Argo CD đã báo đồng bộ. Bước 5: sau khi đủ bản sao báo `version = 4` và đúng `contentHash`, triển khai `SYNCED`, phát EVT-04-07. Từ gửi tới `SYNCED` (trừ 60 giây giữ) p95 < 3 phút. KT: có (`INT_DEPLOY`).
+**Kết quả mong đợi.** Bước 1 trả `202` có `deploymentId`. Bước 2: `deployment` ở `PENDING`, một dòng outbox EVT-04-06 trong cùng giao dịch. Bước 3: commit có chữ ký, tác giả `dh-integration[bot]`, trailer `Dh-Published-By` và `Dh-Deployment: {id}`; yêu cầu gộp vào `env/prod` tự gộp sau khi CI chạy lại VR mức `PUBLISH` và ca kiểm thử. Bước 4: trong lúc giữ nhịp tim, triển khai chỉ ở `SYNCING` dù Argo CD đã báo đồng bộ. Bước 5: sau khi đủ bản sao báo `version = 4` và đúng `contentHash`, triển khai `SYNCED`, phát EVT-04-07. Từ gửi tới `SYNCED` (trừ 60 giây giữ) p95 < 3 phút. KT: có (`INT_DEPLOY_REQUEST`).
 :::
 
 ### TS-04-17 · Quay lui
@@ -3305,7 +3305,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 2. Theo dõi `GET .../commands/{id}`.
 3. Gọi luồng qua APISIX.
 
-**Kết quả mong đợi.** Bước 1 trả `202`, `status = ISSUED`, `expiresAt = issuedAt + 60 giây`. EVT-04-11 có `signature`, `keyId`. Bước 2: hai `acks` `APPLIED`, `status = ACKNOWLEDGED` trong p95 < 10 giây. Bước 3 trả `503` ERR-04-110. EVT-04-08 phát. Trong vòng 5 phút `desiredState` của route được ghi vào Git (`flow.dh.yaml`), lệnh `RECONCILED`. KT: có (`INT_RUNTIME_PAUSE` có lý do).
+**Kết quả mong đợi.** Bước 1 trả `202`, `status = ISSUED`, `expiresAt = issuedAt + 60 giây`. EVT-04-11 có `signature`, `keyId`. Bước 2: hai `acks` `APPLIED`, `status = ACKNOWLEDGED` trong p95 < 10 giây. Bước 3 trả `503` ERR-04-110. EVT-04-08 phát. Trong vòng 5 phút `desiredState` của route được ghi vào Git (`flow.dh.yaml`), lệnh `RECONCILED`. KT: có (`INT_FLOW_PAUSE` có lý do).
 :::
 
 #### TC-04-109 · Tiếp tục route <!--k:resume-->
@@ -3348,7 +3348,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 2. Đo thời gian tới khi cả hai bản sao xác nhận.
 3. Chờ đối soát.
 
-**Kết quả mong đợi.** Bước 2: < 5 giây, không phụ thuộc độ chậm của Git. Bản sao đặt `localOverride = true` trong nhịp tim. Bước 3: tiến trình `system:int-reconciler` ghi trạng thái `PAUSED` vào Git trong ≤ 5 phút; khi Git khớp, bản sao bỏ `localOverride`. Argo CD đồng bộ trong lúc đó **không** bật lại luồng. KT: có (`INT_RUNTIME_ESTOP`, người thực hiện SO và `system:int-reconciler` cho lần ghi Git).
+**Kết quả mong đợi.** Bước 2: < 5 giây, không phụ thuộc độ chậm của Git. Bản sao đặt `localOverride = true` trong nhịp tim. Bước 3: tiến trình `system:int-reconciler` ghi trạng thái `PAUSED` vào Git trong ≤ 5 phút; khi Git khớp, bản sao bỏ `localOverride`. Argo CD đồng bộ trong lúc đó **không** bật lại luồng. KT: có (`INT_FLOW_EMERGENCY_STOP`, người thực hiện SO và `system:int-reconciler` cho lần ghi Git).
 :::
 
 #### TC-04-111 · Đối soát hoàn tất <!--k:reconcile-->
@@ -3521,7 +3521,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 4. Đọc DLQ.
 5. Chờ đối soát, đọc `flow.dh.yaml` ở `env/prod`.
 
-**Kết quả mong đợi.** Bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_RUNTIME_ESTOP`).
+**Kết quả mong đợi.** Bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_FLOW_EMERGENCY_STOP`).
 :::
 
 ### TS-04-19 · Tình trạng runtime, điểm kết nối, giám sát, lịch sử
@@ -3606,7 +3606,7 @@ Chương này đặc tả các ca chức năng theo 28 kịch bản, theo thứ 
 **Các bước.**
 
 1. AU gọi `GET .../metrics?environment=PROD&step=1m`.
-2. AU gọi `GET .../history?action=INT_DEPLOY`.
+2. AU gọi `GET .../history?action=INT_DEPLOY_REQUEST`.
 3. VW gọi `GET .../history`.
 4. Dừng PH-13, AU gọi lại bước 2.
 
@@ -5610,13 +5610,13 @@ Các script dùng chung `tc_parse.py`, đọc được cả khối đặc tả `
 
 Các điểm dưới đây phát hiện khi viết ca bản 0.2, cần sửa ở tập khác trong đợt gom cuối. Tập này đã viết ca theo phương án ở cột "Đề nghị".
 
-| Tập | Chỗ | Vấn đề | Đề nghị |
-|---|---|---|---|
-| D03-02-PH04 SDD | §10.2, hình "Trình tự dừng khẩn một luồng ở PROD" | Tác nhân là "Vận hành u.to01", trong khi D02-08 và TC-04-143 chỉ cho TA, SO dừng khẩn (`PERM-04-emergency-stop`) | Đổi tác nhân thành SO hoặc TA; ca đầu cuối TC-04-197 dùng U-T68-SO |
-| D02-04-PH04 UC | §8.4, ERR-04-042 | Câu đề nghị "Phiên bản được soạn trên danh mục thành phần cũ…" khác câu ở bảng thông báo D02-03-PH04 "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại." | Chọn một câu, ghi vào D03-06-PH04 §5.3; ca TC-04-195 chỉ kiểm mã |
-| D03-06-PH04 Màn hình | §5.3 | Chưa có câu cho ERR-04-110 (thân lỗi runtime), FRS dùng "Dịch vụ đang tạm dừng. Thử lại sau." | Thêm câu này vào bảng thông báo runtime; ca TC-04-198 kiểm câu đó |
-| D02-04-PH04 UC | §8.4, câu cuối | Đề nghị thêm ca cho UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2 | Đã thêm: TC-04-189, TC-04-190, TC-04-195, TC-04-198, TC-04-199; có thể ghi số ca vào UC khi gom |
-| D03-03-PH04 CSDL | §4.2 | Kết quả chạy thử di trú W2 chưa có ca tự động dẫn chiếu | Dẫn chiếu TC-04-202 |
+| Tập | Chỗ | Vấn đề | Đề nghị | Trạng thái |
+|---|---|---|---|---|
+| D03-02-PH04 SDD | §10.2, hình "Trình tự dừng khẩn một luồng ở PROD" | Tác nhân là "Vận hành u.to01", trong khi D02-08 và TC-04-143 chỉ cho TA, SO dừng khẩn (`PERM-04-emergency-stop`) | Đổi tác nhân thành SO hoặc TA; ca đầu cuối TC-04-197 dùng U-T68-SO | Đã hấp thụ (0.2): SDD §10.2 đổi tác nhân thành SO (u.so01) |
+| D02-04-PH04 UC | §8.4, ERR-04-042 | Câu đề nghị "Phiên bản được soạn trên danh mục thành phần cũ…" khác câu ở bảng thông báo D02-03-PH04 "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại." | Chọn một câu, ghi vào D03-06-PH04 §5.3; ca TC-04-195 chỉ kiểm mã | Đã hấp thụ (0.2): UC §8.4 và MH §5.3 dùng câu của FRS §9.2; TC-04-195 chỉ kiểm mã |
+| D03-06-PH04 Màn hình | §5.3 | Chưa có câu cho ERR-04-110 (thân lỗi runtime), FRS dùng "Dịch vụ đang tạm dừng. Thử lại sau." | Thêm câu này vào bảng thông báo runtime; ca TC-04-198 kiểm câu đó | Đã hấp thụ (0.2): MH §5.3 có câu ERR-04-110 (và ERR-04-101…112) |
+| D02-04-PH04 UC | §8.4, câu cuối | Đề nghị thêm ca cho UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2 | Đã thêm: TC-04-189, TC-04-190, TC-04-195, TC-04-198, TC-04-199; có thể ghi số ca vào UC khi gom | Đã hấp thụ (0.2): UC §8.4 ghi số ca TC-04-187…202 |
+| D03-03-PH04 CSDL | §4.2 | Kết quả chạy thử di trú W2 chưa có ca tự động dẫn chiếu | Dẫn chiếu TC-04-202 | Đã hấp thụ (0.2): CSDL §4.2 dẫn chiếu TC-04-202 |
 
 : Đề nghị đồng bộ cho tập khác
 

@@ -19,7 +19,7 @@ PH-04 lưu dữ liệu quản trị của luồng tích hợp: không gian làm 
 
 Ba điểm thiết kế chính:
 
-1. **Cách ly tỉnh bằng CSDL.** 25 bảng nghiệp vụ trong schema `ph04` có `tenant_id` và `FORCE ROW LEVEL SECURITY`; khóa ngoại mang cả `tenant_id` nên một bản ghi của tỉnh không trỏ được sang tỉnh khác. Đã chạy thử: tỉnh T01 không thấy, không ghi được dữ liệu của T68; tỉnh không tự mở rộng được chính sách thành phần nền (§3.27, §4.2).
+1. **Cách ly tỉnh bằng CSDL.** 25 trong 26 bảng của schema `ph04` (mọi bảng trừ `shedlock`) có `tenant_id` và `FORCE ROW LEVEL SECURITY`; khóa ngoại mang cả `tenant_id` nên một bản ghi của tỉnh không trỏ được sang tỉnh khác. Đã chạy thử: tỉnh T01 không thấy, không ghi được dữ liệu của T68; tỉnh không tự mở rộng được chính sách thành phần nền (§3.27, §4.2).
 2. **Quy tắc nghiệp vụ quan trọng chốt ở CSDL, không chỉ ở ứng dụng.** Một luồng chỉ có một phiên bản mở (BR-04-016, chỉ mục duy nhất có điều kiện); nội dung phiên bản đã gửi duyệt là bất biến (trigger); phiên bản đã duyệt phải có người duyệt và băm khớp băm gửi duyệt; mỗi môi trường chỉ có một triển khai hiện hành; nhật ký duyệt chỉ thêm (§3.27).
 3. **Thay thế bảng của mã hiện tại có kịch bản di trú.** Bốn bảng `ph04.route*` của `apps/control` (không có `tenant_id`) được chuyển sang thiết kế mới bằng changeset `ph04-9000`; lần chạy thử cũ (mô phỏng) được đánh dấu `SIMULATED` để không bao giờ thỏa điều kiện gửi duyệt (§8).
 
@@ -1392,6 +1392,8 @@ Sau khi sửa:
 - Trên CSDL giả lập W2 (schema `ph04` do `postgres` sở hữu, một `route` `PUBLISHED`, hai `route_version` `PUBLISHED` và `TESTING`, một `route_test_run`): luồng `APPROVED`, phiên bản 1 `APPROVED` (`system:migrate`), phiên bản 2 `DRAFT`, cả hai `needs_revalidation = true`, lần chạy thử `SIMULATED`, bốn bảng cũ đổi tên `*_legacy_w2`.
 - [`ph04/test/ph04_isolation_test.sql`](ph04/test/ph04_isolation_test.sql) dưới tài khoản `dh_integration_app` (thành viên `ph04_app`) đạt 23 khối: T01 không đọc, không chèn, không sửa được dòng T68; khóa ngoại không trỏ chéo tenant; tỉnh không đặt `ALLOWED`, không ghi dòng `COMMON` nhưng đọc được; phiên bản mở thứ hai bị chặn; duyệt sai băm hoặc thiếu người duyệt bị chặn; sửa nội dung phiên bản `PENDING_REVIEW` bị chặn; triển khai hiện hành thứ hai, quay lui thiếu lý do bị chặn; lần chạy `SIMULATED` không thể `PASSED`; ca không có khẳng định bị chặn; lệnh hạn quá 5 phút, phạm vi `ROUTES` thiếu route bị chặn; sửa `review` bị chặn; yêu cầu sửa thiếu ý kiến bị chặn; outbox sai tenant bị chặn; mã luồng trùng bị chặn; `ph04_readonly` không đọc được `definition_yaml` nhưng đọc được cột siêu dữ liệu.
 
+Lỗi thứ hai (schema do tài khoản khác sở hữu) có ca tự động dẫn chiếu là TC-04-202 ở D05-02-PH04 (Testcontainers PostgreSQL, schema `ph04` tạo sẵn do `postgres` sở hữu, bốn bảng W2); ca kiểm lại kết quả sau khi chạy `ph04-9000` như liệt kê ở trên.
+
 ## 5. Dữ liệu khởi tạo
 
 Dữ liệu khởi tạo chỉ gồm danh mục nền dùng chung và không gian mặc định; không có dữ liệu nghiệp vụ mẫu ở môi trường thật.
@@ -1525,12 +1527,12 @@ Các câu hỏi dưới đây có đề xuất tạm nên không chặn việc v
 
 Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
 
-| Tập | Đề nghị |
-|---|---|
-| D03-02-PH04 SDD §14 | `TenantIsolationIT` lấy 23 khối của `ph04/test/ph04_isolation_test.sql` làm ca tối thiểu |
-| D05-02-PH04 Ca kiểm thử | Thêm ca di trú W2 khi schema `ph04` do tài khoản khác sở hữu (lỗi thứ hai ở §4.2) |
-| D03-09 Hạ tầng | Ghi `pg_trgm` vào danh sách extension bắt buộc của cụm `pg-core` |
-| D03-04-PH04 API | Khóa Valkey `dh:int:testrun:queue` không có TTL; giữ thống nhất khi mô tả hàng đợi chạy thử |
+| Tập | Đề nghị | Trạng thái |
+|---|---|---|
+| D03-02-PH04 SDD §14 | `TenantIsolationIT` lấy 23 khối của `ph04/test/ph04_isolation_test.sql` làm ca tối thiểu | Đã hấp thụ (0.2): SDD §14, dòng Cách ly tenant |
+| D05-02-PH04 Ca kiểm thử | Thêm ca di trú W2 khi schema `ph04` do tài khoản khác sở hữu (lỗi thứ hai ở §4.2) | Đã hấp thụ (0.2): TC-04-202 |
+| D03-09 Hạ tầng | Ghi `pg_trgm` vào danh sách extension bắt buộc của cụm `pg-core` | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
+| D03-04-PH04 API | Khóa Valkey `dh:int:testrun:queue` không có TTL; giữ thống nhất khi mô tả hàng đợi chạy thử | Đã hấp thụ (0.2): API §5 và hình kiến trúc dùng đúng khóa này, không nêu TTL nên không mâu thuẫn |
 
 : Đề nghị đồng bộ với tập khác
 

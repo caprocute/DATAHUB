@@ -88,4 +88,4 @@ Tính năng: TS-04-15 · Duyệt bốn mắt và so sánh phiên bản
     Và chọn Đến v99.
     Và chọn Từ v3, Đến v6.
     Và U-T01-IE mở URL so sánh của F-HT ở T68.
-    Thì bước 1: trạng thái rỗng "Hai phiên bản giống hệt nhau." Bước 2: ST-05 với câu "Không tìm thấy phiên bản v99 của luồng." (ERR-04-004). Bước 3: khác biệt hơn 500 dòng YAML nên mặc định chế độ Tóm tắt kèm cảnh báo hiệu năng; skeleton hai canvas và dải tổng "—" trong lúc tải. Bước 4: ST-05 với ERR-04-001, giống hệt trường hợp không tồn tại.
+    Thì bước 1: trạng thái rỗng "Hai phiên bản giống hệt nhau." Bước 2: ST-05 với câu "Không tìm thấy phiên bản v99 của luồng này." (ERR-04-004). Bước 3: khác biệt hơn 500 dòng YAML nên mặc định chế độ Tóm tắt kèm cảnh báo hiệu năng; skeleton hai canvas và dải tổng "—" trong lúc tải. Bước 4: ST-05 với ERR-04-001, giống hệt trường hợp không tồn tại.

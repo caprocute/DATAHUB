@@ -11,7 +11,7 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
     Và mở SSE `.../deployments/{id}/events`.
     Và đọc `env/test` trên Gitea.
     Và gọi luồng qua `apisix-int` môi trường TEST.
-    Thì bước 1 trả `202`, `syncStatus = PENDING`. Bước 2: `PENDING` → `SYNCING` (có `gitCommit`) → `SYNCED` khi mọi bản sao gửi nhịp tim EVT-04-12 có `contentHash` của v4; `healthStatus = HEALTHY`. Bước 3: commit có thông điệp chứa `flow=tra-cuu-ho-tich version=4 by=U-T68-IA1 trace=…`, `flow.dh.yaml` có `version: 4`, có chữ ký trong `.dh/signatures`. Bước 4: phản hồi do v4 sinh. EVT-04-06, 07 phát. KT: có (`INT_DEPLOY`).
+    Thì bước 1 trả `202`, `syncStatus = PENDING`. Bước 2: `PENDING` → `SYNCING` (có `gitCommit`) → `SYNCED` khi mọi bản sao gửi nhịp tim EVT-04-12 có `contentHash` của v4; `healthStatus = HEALTHY`. Bước 3: commit có thông điệp chứa `flow=tra-cuu-ho-tich version=4 by=U-T68-IA1 trace=…`, `flow.dh.yaml` có `version: 4`, có chữ ký trong `.dh/signatures`. Bước 4: phản hồi do v4 sinh. EVT-04-06, 07 phát. KT: có (`INT_DEPLOY_REQUEST`).
 
   @TC-04-097 @P1 @Dương
   Kịch bản: TC-04-097 Nâng TEST → STAGING → PROD theo thứ tự
@@ -90,4 +90,4 @@ Tính năng: TS-04-16 · Phát hành GitOps và nâng môi trường
     Và theo dõi Gitea: nhánh `release/tra-cuu-ho-tich-v4`, yêu cầu gộp, CI của kho.
     Và khi Argo CD báo Application đồng bộ, giữ nhịp tim 60 giây rồi thả.
     Và đọc lại `deployment`.
-    Thì bước 1 trả `202` có `deploymentId`. Bước 2: `deployment` ở `PENDING`, một dòng outbox EVT-04-06 trong cùng giao dịch. Bước 3: commit có chữ ký, tác giả `dh-integration[bot]`, trailer `Dh-Published-By` và `Dh-Deployment: {id}`; yêu cầu gộp vào `env/prod` tự gộp sau khi CI chạy lại VR mức `PUBLISH` và ca kiểm thử. Bước 4: trong lúc giữ nhịp tim, triển khai chỉ ở `SYNCING` dù Argo CD đã báo đồng bộ. Bước 5: sau khi đủ bản sao báo `version = 4` và đúng `contentHash`, triển khai `SYNCED`, phát EVT-04-07. Từ gửi tới `SYNCED` (trừ 60 giây giữ) p95 < 3 phút. KT: có (`INT_DEPLOY`).
+    Thì bước 1 trả `202` có `deploymentId`. Bước 2: `deployment` ở `PENDING`, một dòng outbox EVT-04-06 trong cùng giao dịch. Bước 3: commit có chữ ký, tác giả `dh-integration[bot]`, trailer `Dh-Published-By` và `Dh-Deployment: {id}`; yêu cầu gộp vào `env/prod` tự gộp sau khi CI chạy lại VR mức `PUBLISH` và ca kiểm thử. Bước 4: trong lúc giữ nhịp tim, triển khai chỉ ở `SYNCING` dù Argo CD đã báo đồng bộ. Bước 5: sau khi đủ bản sao báo `version = 4` và đúng `contentHash`, triển khai `SYNCED`, phát EVT-04-07. Từ gửi tới `SYNCED` (trừ 60 giây giữ) p95 < 3 phút. KT: có (`INT_DEPLOY_REQUEST`).

@@ -110,7 +110,7 @@ Mọi lựa chọn lớn dựa trên ADR đã có; bảng dưới nối ADR vớ
 
 ### 1.5. Quy ước trong tài liệu
 
-Mã Java là Java 21 (`record`, `sealed interface`, `switch` theo mẫu). Mã TypeScript là TS 5.x, React 19. Mã SQL là PostgreSQL 18. Ví dụ dùng tenant `T68`, không gian `so-tu-phap`, luồng `ho-tich-khai-sinh`, kết nối `ndxp-ho-tich`, `pg-ho-tich-ro`, người dùng giả `u.ie01` (IE), `u.ia01` (IA), `u.to01` (TO). Các đoạn mã là mẫu thiết kế: chữ ký công khai, tên lớp, tên bảng, thứ tự thao tác là ràng buộc; chi tiết bên trong có thể đổi miễn giữ đúng hành vi. Phiên bản thành phần: Spring Boot 4.0.x, Camel Quarkus 3.33.2 (Camel 4.18 LTS) cho runtime, catalog trình thiết kế 3.33.1 (Camel 4.18.2) theo PR #5.
+Mã Java là Java 21 (`record`, `sealed interface`, `switch` theo mẫu). Mã TypeScript là TS 5.x, React 19. Mã SQL là PostgreSQL 18. Ví dụ dùng tenant `T68`, không gian `so-tu-phap`, luồng `ho-tich-khai-sinh`, kết nối `ndxp-ho-tich`, `pg-ho-tich-ro`, người dùng giả `u.ie01` (IE), `u.ia01` (IA), `u.to01` (TO), `u.so01` (SO). Các đoạn mã là mẫu thiết kế: chữ ký công khai, tên lớp, tên bảng, thứ tự thao tác là ràng buộc; chi tiết bên trong có thể đổi miễn giữ đúng hành vi. Phiên bản thành phần: Spring Boot 4.0.x, Camel Quarkus 3.33.2 (Camel 4.18 LTS) cho runtime, catalog trình thiết kế 3.33.1 (Camel 4.18.2) theo PR #5.
 
 ### 1.6. Thuật ngữ và viết tắt
 
@@ -1859,18 +1859,18 @@ Runtime giữ tập `commandId` đã thi hành 10 phút để bỏ lệnh trùng
 ```{.mermaid caption="Trình tự dừng khẩn một luồng ở PROD"}
 sequenceDiagram
     autonumber
-    actor TO as Vận hành u.to01
+    actor SO as Cán bộ ATTT u.so01
     participant CS as CommandService
     participant BAO as OpenBao transit
     participant K as Kafka
     participant RT as dh-runtime các bản sao
     participant REC as Reconciler
     participant GIT as Kho dh-flows-t68
-    TO->>CS: POST runtime/commands EMERGENCY_STOP với lý do
+    SO->>CS: POST runtime/commands EMERGENCY_STOP với lý do
     CS->>BAO: transit/sign trên JCS của lệnh
     CS->>K: Gửi EVT-04-11 ngay, acks=all
     CS->>CS: Ghi runtime_command ISSUED
-    CS-->>TO: 202 với commandId
+    CS-->>SO: 202 với commandId
     K->>RT: Lệnh tới mọi bản sao
     RT->>RT: Kiểm chữ ký, hạn, tenant, dừng route, bản tin dở vào DLQ
     RT->>K: EVT-04-13 xác nhận từng bản sao
@@ -2043,7 +2043,7 @@ Kiểm thử đi từ đơn vị tới đầu cuối; cổng ghi "chặn" là đ
 | Catalog khớp runtime | `catalog:check`, `catalog-diff` | Node | CI-6 (job console) |
 | Modulith | `ApplicationModules.verify()` | JUnit | CI-2 |
 | Tích hợp control plane | API với PostgreSQL, Valkey, Kafka, Gitea (giả kho) | Testcontainers | CI-3 |
-| Cách ly tenant | `TenantIsolationIT` cho mọi bảng `ph04` | Testcontainers | CI-3, chặn |
+| Cách ly tenant | `TenantIsolationIT` cho mọi bảng `ph04`, lấy 23 khối của `ph04/test/ph04_isolation_test.sql` (D03-03-PH04 §4.2) làm ca tối thiểu | Testcontainers | CI-3, chặn |
 | Runtime | Kamelet nền, `TenantGuard`, `dh-default-config`, `dh_map` | `@QuarkusTest`, Camel test | CI-3 |
 | Native | Ảnh `core-native` chạy bộ luồng mẫu | Quarkus native IT | CI-8 |
 | Đầu cuối | Thiết kế → chạy thử → duyệt → phát hành TEST → gọi qua APISIX | Playwright + kind cluster + Argo CD | CI-9 |
@@ -2098,11 +2098,11 @@ Các câu hỏi dưới đây đã có đề xuất tạm nên không chặn vi�
 
 Các điểm dưới cần tập khác đối chiếu; tài liệu này không sửa chéo.
 
-| Tập | Đề nghị |
-|---|---|
-| D03-09 Hạ tầng | Bổ sung namespace `dh-sandbox` vùng Z4 và chính sách mạng riêng (Q04-20) |
-| D03-04-PH04 API | Đối chiếu tên API nội bộ `GET /internal/v1/testruns/{id}/bundle`, `POST …/steps` (chưa có mã API vì không công bố) |
-| D05-02-PH04 Ca kiểm thử | Mỗi sơ đồ trình tự mới (phát hành, chạy thử, duyệt bốn mắt, dừng khẩn) nên có ít nhất một ca đầu cuối tương ứng |
+| Tập | Đề nghị | Trạng thái |
+|---|---|---|
+| D03-09 Hạ tầng | Bổ sung namespace `dh-sandbox` vùng Z4 và chính sách mạng riêng (Q04-20) | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
+| D03-04-PH04 API | Đối chiếu tên API nội bộ `GET /internal/v1/testruns/{id}/bundle`, `POST …/steps` (chưa có mã API vì không công bố) | Đã hấp thụ (0.2): API §5 nêu đúng hai đường dẫn nội bộ; mã API và tệp OpenAPI nội bộ còn là đề nghị 4 của API §11 |
+| D05-02-PH04 Ca kiểm thử | Mỗi sơ đồ trình tự mới (phát hành, chạy thử, duyệt bốn mắt, dừng khẩn) nên có ít nhất một ca đầu cuối tương ứng | Đã hấp thụ (0.2): TC-04-192 (chạy thử), 193 (duyệt bốn mắt), 196 (phát hành), 197 (dừng khẩn) |
 
 : Đề nghị đồng bộ với tập khác
 

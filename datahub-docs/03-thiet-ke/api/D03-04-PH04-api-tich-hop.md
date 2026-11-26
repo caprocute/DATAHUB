@@ -1419,7 +1419,7 @@ HTTP/1.1 200 OK
 
 **FR hiện thực.** FR-04-001.
 
-**Tham số.** `q` (query, string, tùy chọn); `workspace` (query, array, tùy chọn); `status` (query, array, tùy chọn); `environment` (query, Environment, tùy chọn); `health` (query, array, tùy chọn); `resourceKind` (query, array, tùy chọn); `exposure` (query, Exposure, tùy chọn); `endpoint` (query, string, tùy chọn); `label` (query, array, tùy chọn); `sort` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
+**Tham số.** `q` (query, string, tùy chọn); `workspace` (query, array, tùy chọn); `status` (query, array, tùy chọn); `environment` (query, Environment, tùy chọn); `health` (query, array, tùy chọn); `resourceKind` (query, array, tùy chọn); `exposure` (query, Exposure, tùy chọn); `endpoint` (query, string, tùy chọn); `label` (query, array, tùy chọn); `sourceSystem` (query, array, tùy chọn); `targetSystem` (query, array, tùy chọn); `transport` (query, array, tùy chọn); `namespace` (query, string, tùy chọn); `hasOpenVersion` (query, boolean, tùy chọn); `pendingMyReview` (query, boolean, tùy chọn); `updatedFrom` (query, string, tùy chọn); `updatedTo` (query, string, tùy chọn); `sort` (query, string, tùy chọn); `cursor` (query, string, tùy chọn); `limit` (query, integer, tùy chọn).
 
 **Thân yêu cầu.** Không.
 
@@ -4097,15 +4097,15 @@ HTTP/1.1 200 OK
 
 Các mục dưới đây là thay đổi tài liệu này đề nghị cho tập khác hoặc cho bản hợp đồng sau. Tài liệu này không tự sửa tập khác; các đề nghị được gom một đợt cuối.
 
-| Số | Tập nhận | Đề nghị | Lý do |
-|---|---|---|---|
-| 1 | D03-06-PH04 §5.3 | Thêm câu hiển thị cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 đúng như FRS D02-03-PH04 §9.2 (bản 0.2) và §6.1 ở đây | Bảng màn hình chưa có các mã này; câu đã thống nhất ở FRS |
-| 2 | D03-06-PH04 §5.3; D02-03-PH04 §9.2 | Thêm ba câu mới: ERR-04-044 "Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục."; ERR-04-046 "Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ."; ERR-04-048 "Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây." | Ba mã chưa có câu ở cả FRS và màn hình |
-| 3 | D03-06-PH04 §5.3 (mục lỗi runtime cho người vận hành) | Dẫn câu `title` của ERR-04-101…112 (§6.2) cho màn vận hành và DLQ | Người vận hành thấy cùng câu với bên gọi |
-| 4 | D03-02-PH04 §8.2; bản hợp đồng sau | Cấp mã cho hai API nội bộ của sandbox, đánh số tiếp sau mã lớn nhất API-04-091 (dự kiến số 092 cho `GET /internal/v1/testruns/{id}/bundle`, số 093 cho `POST /internal/v1/testruns/{id}/steps`), đặc tả trong một tệp OpenAPI nội bộ riêng `ph04/openapi-integration-internal.yaml` | Hai DU khác nhau trao đổi qua hai API này nên cần hợp đồng có kiểm CI; bản 0.2 chưa thêm mã vì chưa có quyết định ở SDD |
-| 5 | D04-01; bản hợp đồng `v1` sau | Tách mã cho operation đang dùng chung (API-04-002, 004, 028, 034, 042, 044, 054, 061, 072, 074, 082, 090) theo K-API §3 "mỗi operation một mã", đánh số mới tiếp sau mã lớn nhất; giữ mã cũ cho operation đầu của nhóm | Bản 0.1 trái K-API; đổi mã cần đồng bộ FRS §9.4, màn hình, ca kiểm thử nên để một đợt riêng |
-| 6 | D05-02-PH04 | Dùng ví dụ yêu cầu và phản hồi ở chương 10 (đã kiểm khớp lược đồ) làm dữ liệu cho ca kiểm thử hợp đồng; chạy `check_contracts.py` ở CI-5 | Tránh mỗi tập tự viết ví dụ khác nhau |
-| 7 | D04-02 (CI-5) | Thêm `ph04/tools/check_contracts.py` vào cổng CI-5 bên cạnh công cụ của PH-05 | Hiện CI chỉ ghi kiểm tra bằng lời |
+| Số | Tập nhận | Đề nghị | Lý do | Trạng thái |
+|---|---|---|---|---|
+| 1 | D03-06-PH04 §5.3 | Thêm câu hiển thị cho ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 đúng như FRS D02-03-PH04 §9.2 (bản 0.2) và §6.1 ở đây | Bảng màn hình chưa có các mã này; câu đã thống nhất ở FRS | Đã hấp thụ (0.2): MH §5.3 có đủ các câu này |
+| 2 | D03-06-PH04 §5.3; D02-03-PH04 §9.2 | Thêm ba câu mới: ERR-04-044 "Phiên làm việc đã hết hạn hoặc cần đăng nhập lại để tiếp tục."; ERR-04-046 "Định dạng tệp hoặc nội dung gửi lên không được hỗ trợ."; ERR-04-048 "Bạn thao tác quá nhanh. Vui lòng thử lại sau {retryAfterSeconds} giây." | Ba mã chưa có câu ở cả FRS và màn hình | Đã hấp thụ (0.2): ERR-04-044, 046, 048 có câu ở FRS §9.2 và MH §5.3 |
+| 3 | D03-06-PH04 §5.3 (mục lỗi runtime cho người vận hành) | Dẫn câu `title` của ERR-04-101…112 (§6.2) cho màn vận hành và DLQ | Người vận hành thấy cùng câu với bên gọi | Đã hấp thụ (0.2): MH §5.3 có bảng câu ERR-04-101…112 cho người vận hành |
+| 4 | D03-02-PH04 §8.2; bản hợp đồng sau | Cấp mã cho hai API nội bộ của sandbox, đánh số tiếp sau mã lớn nhất API-04-091 (dự kiến số 092 cho `GET /internal/v1/testruns/{id}/bundle`, số 093 cho `POST /internal/v1/testruns/{id}/steps`), đặc tả trong một tệp OpenAPI nội bộ riêng `ph04/openapi-integration-internal.yaml` | Hai DU khác nhau trao đổi qua hai API này nên cần hợp đồng có kiểm CI; bản 0.2 chưa thêm mã vì chưa có quyết định ở SDD | Chờ bản hợp đồng sau (cần mã API mới và tệp OpenAPI nội bộ) |
+| 5 | D04-01; bản hợp đồng `v1` sau | Tách mã cho operation đang dùng chung (API-04-002, 004, 028, 034, 042, 044, 054, 061, 072, 074, 082, 090) theo K-API §3 "mỗi operation một mã", đánh số mới tiếp sau mã lớn nhất; giữ mã cũ cho operation đầu của nhóm | Bản 0.1 trái K-API; đổi mã cần đồng bộ FRS §9.4, màn hình, ca kiểm thử nên để một đợt riêng | Chờ đợt đồng bộ cuối (D04-01 ngoài PH-04, đổi mã kéo theo FRS, MH, TC) |
+| 6 | D05-02-PH04 | Dùng ví dụ yêu cầu và phản hồi ở chương 10 (đã kiểm khớp lược đồ) làm dữ liệu cho ca kiểm thử hợp đồng; chạy `check_contracts.py` ở CI-5 | Tránh mỗi tập tự viết ví dụ khác nhau | Còn mở: D05-02-PH04 (Schemathesis trên `openapi-integration.yaml`, TS-04-28) chưa dẫn ví dụ chương 10 làm dữ liệu ca; xử lý ở bản sau |
+| 7 | D04-02 (CI-5) | Thêm `ph04/tools/check_contracts.py` vào cổng CI-5 bên cạnh công cụ của PH-05 | Hiện CI chỉ ghi kiểm tra bằng lời | Chờ đợt đồng bộ cuối (D04-02 ngoài PH-04) |
 
 : Đề nghị đồng bộ với tập khác
 

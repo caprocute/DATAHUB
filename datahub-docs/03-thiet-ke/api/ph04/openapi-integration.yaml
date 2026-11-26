@@ -397,6 +397,62 @@ paths:
         style: form
         explode: true
         description: '`khóa:giá-trị`.'
+      - name: sourceSystem
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        style: form
+        explode: false
+        description: Mã HTTT nguồn.
+      - name: targetSystem
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        style: form
+        explode: false
+        description: Mã HTTT đích.
+      - name: transport
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transport'
+        style: form
+        explode: false
+      - name: namespace
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+        description: '`dh-runtime` hoặc `dh-rt-{tenant}`; thay cho tìm theo host của hệ cũ.'
+      - name: hasOpenVersion
+        in: query
+        schema:
+          type: boolean
+        description: Chỉ luồng có phiên bản mở.
+      - name: pendingMyReview
+        in: query
+        schema:
+          type: boolean
+        description: Chỉ luồng có phiên bản chờ người dùng hiện tại duyệt.
+      - name: updatedFrom
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Ngày sửa cuối từ (gồm).
+      - name: updatedTo
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Ngày sửa cuối đến (gồm).
       - name: sort
         in: query
         schema:

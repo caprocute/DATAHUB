@@ -866,7 +866,7 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 **Luồng xử lý chính.**
 
 1. Người dùng mở danh sách, nhập từ khóa hoặc chọn bộ lọc.
-2. Hệ thống kiểm tra tham số; sai miền trả `400` với `errors` (ERR-04-049); `size` > 100 trả ERR-04-026.
+2. Hệ thống kiểm tra tham số; sai miền trả `400` với `errors` (ERR-04-049); `limit` > 100 trả ERR-04-026.
 3. Hệ thống lọc luồng của tenant, loại luồng đã xóa mềm, và với người dùng bị giới hạn theo không gian làm việc (mục 3.4) chỉ giữ luồng của không gian làm việc mà người dùng là thành viên.
 4. Hệ thống áp bộ lọc. Lọc `endpoint` dùng bảng chỉ mục endpoint được tính khi lưu định nghĩa (EN-04-04), không phân tích YAML lúc truy vấn.
 5. Hệ thống tính `facets` trên tập kết quả trước phân trang.
@@ -881,9 +881,9 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 **Luồng ngoại lệ.**
 
 - Tham số sai kiểu, ngoài miền: ERR-04-049 (400), `errors` theo tham số; bộ lọc sai hiện viền đỏ kèm "Giá trị lọc không hợp lệ: {tham số}."
-- `size` > 100: ERR-04-026 (400); "Mỗi trang tối đa 100 dòng."
+- `limit` > 100: ERR-04-026 (400); "Mỗi trang tối đa 100 dòng."
 
-**Đầu ra.** `200`; trang kết quả `items[]` (mã, tên, loại tài nguyên, vận chuyển, đối ngoại/nội bộ, không gian làm việc, trạng thái tổng hợp, phiên bản đang chạy ở PROD, phiên bản mở và trạng thái của nó, HTTT nguồn, HTTT đích, endpoint chính, tình trạng triển khai theo từng môi trường, người sửa cuối, thời điểm sửa cuối, `allowedActions`), `page`, `size`, `totalElements`, khối `facets` đếm theo trạng thái, loại tài nguyên, vận chuyển, không gian làm việc, môi trường có triển khai.
+**Đầu ra.** `200`; trang kết quả `items[]` (mã, tên, loại tài nguyên, vận chuyển, đối ngoại/nội bộ, không gian làm việc, trạng thái tổng hợp, phiên bản đang chạy ở PROD, phiên bản mở và trạng thái của nó, HTTT nguồn, HTTT đích, endpoint chính, tình trạng triển khai theo từng môi trường, người sửa cuối, thời điểm sửa cuối, `allowedActions`), `page` (`next`, `hasMore`), khối `facets` đếm theo trạng thái, loại tài nguyên, vận chuyển, không gian làm việc, môi trường có triển khai.
 
 **Kết quả.** Người dùng thấy danh sách luồng đúng phạm vi được xem, số luồng theo từng trạng thái và các nút thao tác được phép trên từng dòng.
 
@@ -900,8 +900,8 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 
 | Tham số | Kiểu | Bắt buộc | Ràng buộc | Ví dụ |
 |---|---|---|---|---|
-| `q` | T-NAME | Không | Tìm không dấu trên mã, tên, mô tả; 1…100 ký tự | `ho tich` |
-| `endpoint` | chuỗi | Không | Khớp chuỗi con trên URI của chặng đầu và các chặng `to` (đã chuẩn hóa, bỏ tham số truy vấn); 2…200 ký tự | `/ho-tich/tra-cuu` |
+| `q` | T-NAME | Không | Tìm không dấu trên mã, tên, mô tả; 2…100 ký tự | `ho tich` |
+| `endpoint` | chuỗi | Không | Khớp chuỗi con trên URI của chặng đầu và các chặng `to` (đã chuẩn hóa, bỏ tham số truy vấn); tối đa 255 ký tự | `/ho-tich/tra-cuu` |
 | `sourceSystem` | T-CODE[] | Không | Mã HTTT nguồn | `hotich-tinh` |
 | `targetSystem` | T-CODE[] | Không | Mã HTTT đích | `ndxp` |
 | `workspace` | T-CODE[] | Không | Mã không gian làm việc | `so-tu-phap` |
@@ -913,7 +913,10 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 | `hasOpenVersion` | T-BOOL | Không | Có phiên bản mở | `true` |
 | `pendingMyReview` | T-BOOL | Không | Có phiên bản chờ người dùng hiện tại duyệt | `true` |
 | `updatedFrom`, `updatedTo` | T-DATE | Không | Khoảng ngày sửa cuối | |
-| `page`, `size` | T-INT | Không | `size` ∈ {10, 20, 50, 100}, mặc định 20 | |
+| `health` | T-ENUM[] | Không | `HEALTHY`, `DEGRADED`, `DOWN`, `UNKNOWN` của triển khai | `DEGRADED` |
+| `exposure` | T-ENUM | Không | `EXTERNAL`, `INTERNAL` | `EXTERNAL` |
+| `label` | chuỗi[] | Không | Nhãn dạng `khóa:giá-trị` | `nhom:ho-tich` |
+| `cursor`, `limit` | chuỗi, T-INT | Không | Phân trang theo con trỏ; `limit` ∈ {10, 20, 50, 100}, mặc định 20 (D03-04-PH04 §1) | |
 | `sort` | chuỗi | Không | `code`, `name`, `updatedAt`, `status`, kèm `,asc` hoặc `,desc`; mặc định `updatedAt,desc` | |
 
 : Dữ liệu vào của FR-04-001
@@ -1113,13 +1116,13 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 
 **Kích hoạt.** Người dùng bấm "Nhân bản" trên UI-04-02 hoặc trong menu dòng của UI-04-01.
 
-**Đầu vào.** `newCode` (T-FLOW-CODE), `newName`, `sourceVersion` (số phiên bản, mặc định phiên bản mới nhất), `workspaceCode`, `copyTests` (T-BOOL); `Idempotency-Key`.
+**Đầu vào.** `code` (T-FLOW-CODE), `name`, `sourceVersionNo` (số phiên bản, mặc định phiên bản mới nhất), `workspaceCode`, `includeTestCases` (T-BOOL); `Idempotency-Key`.
 
 **Luồng xử lý chính.**
 
 1. Người dùng nhập mã, tên mới, chọn phiên bản nguồn và không gian làm việc rồi bấm "Nhân bản".
 2. Hệ thống kiểm tra mã mới chưa dùng (ERR-04-002) và quyền trên không gian làm việc đích (ERR-04-003).
-3. Hệ thống sao chép định nghĩa và bố cục của phiên bản nguồn thành phiên bản 1 của luồng mới; ca kiểm thử chỉ sao chép khi `copyTests = true`.
+3. Hệ thống sao chép định nghĩa và bố cục của phiên bản nguồn thành phiên bản 1 của luồng mới; ca kiểm thử chỉ sao chép khi `includeTestCases = true`.
 4. Hệ thống giữ nguyên mã route bên trong; vì mã route chỉ cần duy nhất trong một runtime, hệ thống thêm hậu tố khi phát hiện trùng với route của luồng khác đang chạy trong cùng namespace (BR-04-011) và báo lại số mã route đã đổi.
 5. Hệ thống ghi luồng mới, outbox EVT-04-01, kiểm toán và mở trình thiết kế.
 
@@ -1214,7 +1217,7 @@ Không gian làm việc quyết định ai được sửa, duyệt luồng nào 
 
 **Kích hoạt.** TA mở UI-04-21 và bấm "+ Tạo không gian làm việc", "Sửa", "Lưu trữ" hoặc tab Thành viên.
 
-**Đầu vào.** `code` (T-CODE, duy nhất trong tenant), `name`, `ownerOrgId`, `description`; danh sách thành viên `{userId hoặc groupId, accessLevel ∈ VIEW, EDIT, MAINTAIN}`.
+**Đầu vào.** `code` (T-CODE, duy nhất trong tenant), `name`, `ownerOrgCode`, `description`; danh sách thành viên `{userId hoặc groupId, accessLevel ∈ VIEW, EDIT, MAINTAIN}`.
 
 **Luồng xử lý chính.**
 
@@ -1915,7 +1918,7 @@ Quy tắc chức năng của trình ánh xạ:
 
 **Sự kiện phát ra.** Không.
 
-**Kiểm toán.** Không (ghi qua lưu nháp).
+**Kiểm toán.** Không (ghi qua lưu nháp); riêng khi người dùng chọn "Vẫn dùng" với bản tin mẫu có dấu hiệu dữ liệu cá nhân thì ghi `INT_SAMPLE_PII_OVERRIDE`.
 
 **Quy tắc nghiệp vụ.** BR-04-007; BR-04-013.
 
@@ -2236,7 +2239,7 @@ Sơ đồ cho thấy chạy thử (FR-04-030) là trung tâm của nhóm: ca ki�
 2. Máy chủ kiểm tra hợp lệ ở mức `DESIGN`; có lỗi `ERROR` trả ERR-04-009 kèm phát hiện, không chạy. Kiểm tra hạn mức (ERR-04-019, 429) và kích thước (ERR-04-021).
 3. Máy chủ tạo `test_run` trạng thái `QUEUED`, gửi việc tới sandbox (`dh-runtime-sandbox`, ADR-064): YAML đã thay các điểm đích theo `mocks` (thành phần `mock:` hoặc WireMock nội bộ), tham chiếu kết nối được phân giải bằng giá trị môi trường TEST (thiếu giá trị với `SANDBOX_LIVE`: ERR-04-013), mọi thành phần đọc tệp, gọi lệnh bị vô hiệu.
 4. Sandbox nạp YAML vào một `CamelContext` riêng của lần chạy với runtime đúng phiên bản (Camel Quarkus 3.33.2, Camel 4.18), bơm bản tin vào route chọn, ghi sự kiện từng chặng (`ExchangeCreated`, `StepStarted`, `StepCompleted`, `ExchangeFailed`) kèm thời điểm, thời lượng, ngoại lệ, và nếu `captureBodies` thì thân, tiêu đề sau chặng (đã che theo BR-04-013).
-5. Lần chạy kết thúc khi bản tin hoàn tất, lỗi không bắt, hoặc quá `timeoutSeconds`; trạng thái `PASSED`, `FAILED`, `TIMED_OUT`. Với `testCaseIds`, `PASSED` khi mọi khẳng định đạt.
+5. Lần chạy kết thúc khi bản tin hoàn tất, lỗi không bắt, hoặc quá `timeoutSeconds`; trạng thái `PASSED`, `FAILED`, `TIMED_OUT`. Với `testCaseId`, `PASSED` khi mọi khẳng định đạt.
 6. Máy chủ lưu kết quả từng chặng (EN-04-08) theo thứ tự đi qua, kể cả chặng bị bỏ qua (nhánh `choice` không chọn) với trạng thái `SKIPPED`, và đẩy tiến trình về giao diện qua SSE.
 7. Thân bản tin lưu ở kho đối tượng, bucket `dh-int-testrun`, mã hóa phía máy chủ, xóa sau `04.test.body-retention-days` (mặc định 7 ngày); metadata lưu 90 ngày (FR-04-032). Theo nguyên tắc của repo (changeset 006), nếu không bật `captureBodies` thì không lưu thân, tiêu đề, tham số kết nối.
 
@@ -2275,7 +2278,7 @@ Sơ đồ cho thấy chạy thử (FR-04-030) là trung tâm của nhóm: ca ki�
 | `routeId` | chuỗi | Không | Route để bơm bản tin vào; mặc định route đầu tiên | `tra-cuu` |
 | `input` | đối tượng | Có | `body` (≤ 256 KiB), `headers` (≤ 50), `contentType` | |
 | `mocks` | mảng | Không | Mỗi phần tử `{endpointPattern, response: {status, headers, body}, delayMs, failWith}`; mặc định mọi đích trả `200` với thân rỗng | |
-| `testCaseIds` | T-ID[] | Không | Chạy theo ca kiểm thử (FR-04-031) thay `input` | |
+| `testCaseId` | T-ID | Không | Chạy theo một ca kiểm thử (FR-04-031) thay `input` | |
 | `timeoutSeconds` | T-INT | Không | 1…120, mặc định 30 | `30` |
 | `captureBodies` | T-BOOL | Không | Lưu thân bản tin từng chặng để xem lại; mặc định `true` với `MOCK`, `false` với `SANDBOX_LIVE` | |
 
@@ -2327,7 +2330,7 @@ Hình cho thấy `dh-integration` chỉ điều phối: Camel chạy trong `Came
 1. IE nhập tên, bản tin vào, mô phỏng đích và các khẳng định.
 2. Hệ thống kiểm tra mỗi ca có ít nhất một khẳng định (VR-20), vì ca không khẳng định gì luôn đạt và tạo cảm giác an toàn giả.
 3. Hệ thống lưu bộ ca thành luồng loại `TEST` gắn với luồng đích, hoặc lưu kèm phiên bản.
-4. IE bấm "Chạy tất cả"; hệ thống chạy từng ca qua FR-04-030 với `testCaseIds`.
+4. IE bấm "Chạy tất cả"; hệ thống chạy lần lượt từng ca qua FR-04-030 với `testCaseId`.
 
 **Luồng thay thế.** Khi gửi duyệt, mọi ca gắn với luồng được chạy tự động (FR-04-040). Bộ ca được xuất cùng gói luồng (FR-04-027) để chạy trong CI của kho cấu hình (cổng CI-5 ở D04-02).
 
@@ -2500,7 +2503,7 @@ Sơ đồ cho thấy mọi phiên bản đi qua duyệt bốn mắt trước khi
 
 **Sự kiện phát ra.** EVT-04-03 `version.submitted`.
 
-**Kiểm toán.** Có: `INT_VERSION_SUBMIT`, băm định nghĩa, ghi chú thay đổi.
+**Kiểm toán.** Có: `INT_VERSION_SUBMIT`, băm định nghĩa, ghi chú thay đổi; rút lại ghi `INT_VERSION_WITHDRAW` kèm lý do.
 
 **Quy tắc nghiệp vụ.** BR-04-002; BR-04-004; BR-04-016; BR-04-020.
 
@@ -2555,7 +2558,7 @@ Sơ đồ cho thấy mọi phiên bản đi qua duyệt bốn mắt trước khi
 
 **Sự kiện phát ra.** EVT-04-04 `version.approved` hoặc EVT-04-05 `version.changes-requested`.
 
-**Kiểm toán.** Có: `INT_VERSION_APPROVE` hoặc `INT_VERSION_REJECT`, ý kiến, checklist, băm định nghĩa được duyệt.
+**Kiểm toán.** Có: `INT_VERSION_APPROVE` hoặc `INT_VERSION_REJECT`, ý kiến, checklist, băm định nghĩa được duyệt; lần duyệt bị chặn vì tự duyệt (BR-04-005) ghi `INT_REVIEW_DENIED` vào nhật ký an ninh.
 
 **Quy tắc nghiệp vụ.** BR-04-005; BR-04-017; BR-04-021.
 
@@ -3950,7 +3953,7 @@ Sơ đồ cho thấy danh mục thành phần khớp với runtime là nguồn c
 
 **Sự kiện phát ra.** Không.
 
-**Kiểm toán.** Có: thay đổi chính sách, quyết định đề xuất.
+**Kiểm toán.** Có: `INT_POLICY_CHANGE` cho thay đổi chính sách và quyết định đề xuất.
 
 **Quy tắc nghiệp vụ.** BR-04-014.
 
@@ -4362,17 +4365,20 @@ Mỗi mã lỗi mà người dùng có thể gặp được chuyển thành mộ
 | FR | API |
 |---|---|
 | FR-04-001, 002 | API-04-010, 012, 016 |
-| FR-04-003…006 | API-04-011, 013, 014, 015, 016 |
+| FR-04-003…006 | API-04-011, 013, 014, 015, 016, 023, 031 |
 | FR-04-007 | API-04-001…004 |
-| FR-04-010, 011, 024 | API-04-020, 021, 022, 023, 024, 034 |
+| FR-04-010, 011, 024 | API-04-020, 021, 022, 024, 034 |
 | FR-04-012, 080, 081 | API-04-070…074 |
+| FR-04-014 | API-04-071 |
+| FR-04-022 | API-04-022 |
+| FR-04-075 | API-04-054, 073 |
 | FR-04-015, 020 | API-04-032, 033 |
 | FR-04-023 | API-04-030, 031 |
-| FR-04-025 | API-04-080…082 |
+| FR-04-025 | API-04-011, 080…082 |
 | FR-04-027, 082 | API-04-026, 027, 028 |
 | FR-04-030…032 | API-04-040…044 |
 | FR-04-040, 041 | API-04-050…053 |
-| FR-04-042…045 | API-04-025, 054, 055, 056 |
+| FR-04-042…045 | API-04-025, 052, 054, 055, 056 |
 | FR-04-050…053 | API-04-060…063 |
 | FR-04-083, 084 | API-04-090, 091 |
 : API của PH-04 theo FR
@@ -4661,7 +4667,7 @@ Bảng giúp đội phát triển đối chiếu chú thích trong mã nguồn h
 | FR-D-060…064 | Loại tài nguyên, Kamelet, Pipe, Test | FR-04-003, 018, 019, 031 |
 | FR-D-070…073 | Danh mục thành phần | FR-04-080, 081 |
 | FR-D-080…085 | Bean, metadata, DataMapper | FR-04-020, 021 |
-| BR-D-01…06 | Ràng buộc của repo | BR-04-002, 003, 007, 006, 004/023, 017 |
+| BR-D-01…06 | Ràng buộc của repo | BR-04-002, 003, 007, 006, 004, 017 |
 | D-01…D-08, UI-04-01…10 (repo) | Màn hình của repo | UI-04-01…21 (D03-06-PH04 §3) |
 : Ánh xạ mã repo gốc sang mã mới
 
@@ -4686,13 +4692,13 @@ Dải FR-04-031…040 của repo được tách từng mã dưới đây vì m�
 
 Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cần sửa ở tài liệu khác trong đợt đồng bộ chung. Tài liệu này không sửa trực tiếp tài liệu khác.
 
-| # | Tài liệu | Đề nghị |
-|---|---|---|
-| 1 | D03-06-PH04 §5.3 | Bổ sung câu hiển thị cho các mã đánh dấu (mới) ở mục 9.2: ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 |
-| 2 | D03-04-PH04 §6.2 | Bổ sung cột "Câu `title` trả bên gọi" cho ERR-04-101…112 theo mục 9.2 (câu không chứa dữ liệu nghiệp vụ, chi tiết hệ đích) |
-| 3 | D02-08 §3.1 | Bổ sung sáu quyền đề xuất ở mục 3.3 (`PERM-04-delete`, `emergency-stop`, `promote`, `admin`, `catalog-admin`, `sample-data`); câu hỏi Q04-02 |
-| 4 | D03-06-PH04 | Sinh ảnh hi-fi `03-thiet-ke/uiux/ph04/hifi/ui-04-01.png` và `ui-04-04.png` dùng ở mục 10.2 |
-| 5 | Phụ lục A | Dòng "BR-D-01…06" dẫn tới "004/023" của nhóm BR-04; quy tắc số 023 không tồn tại (chương 7 dừng ở 022), cần xác định lại mã đích của BR-D-05 (đề xuất BR-04-004) |
+| # | Tài liệu | Đề nghị | Trạng thái |
+|---|---|---|---|
+| 1 | D03-06-PH04 §5.3 | Bổ sung câu hiển thị cho các mã đánh dấu (mới) ở mục 9.2: ERR-04-004, 007, 018, 026, 027, 028, 030, 032, 034, 035, 039, 042, 043, 045, 047, 049 | Đã hấp thụ (0.2): MH §5.3 dùng đúng câu của mục 9.2, gồm cả ERR-04-101…112 |
+| 2 | D03-04-PH04 §6.2 | Bổ sung cột "Câu `title` trả bên gọi" cho ERR-04-101…112 theo mục 9.2 (câu không chứa dữ liệu nghiệp vụ, chi tiết hệ đích) | Đã hấp thụ (0.2) |
+| 3 | D02-08 §3.1 | Bổ sung sáu quyền đề xuất ở mục 3.3 (`PERM-04-delete`, `emergency-stop`, `promote`, `admin`, `catalog-admin`, `sample-data`); câu hỏi Q04-02 | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
+| 4 | D03-06-PH04 | Sinh ảnh hi-fi `03-thiet-ke/uiux/ph04/hifi/ui-04-01.png` và `ui-04-04.png` dùng ở mục 10.2 | Đã hấp thụ (0.2): đủ 21 ảnh `ui-04-nn.png` |
+| 5 | Phụ lục A | Dòng "BR-D-01…06" dẫn tới "004/023" của nhóm BR-04; quy tắc số 023 không tồn tại (chương 7 dừng ở 022), cần xác định lại mã đích của BR-D-05 (đề xuất BR-04-004) | Đã hấp thụ (0.2): sửa thành BR-04-004 |
 
 : Đề nghị đồng bộ với tài liệu khác
 

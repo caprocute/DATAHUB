@@ -31,7 +31,7 @@ Tính năng: TS-04-19 · Tình trạng runtime, điểm kết nối, giám sát,
     # Truy vết: FR-04-053, 083 · API-04-063, 091 · ERR-04-047 · LGC-BUS-007, 033.
     Biết U-T68-AU, U-T68-VW.
     Khi AU gọi `GET .../metrics?environment=PROD&step=1m`.
-    Và AU gọi `GET .../history?action=INT_DEPLOY`.
+    Và AU gọi `GET .../history?action=INT_DEPLOY_REQUEST`.
     Và VW gọi `GET .../history`.
     Và dừng PH-13, AU gọi lại bước 2.
     Thì bước 1: chuỗi `exchanges`, `failures`, `p95ms`, `dlq`, `dashboardUrl`. Bước 2: các lần triển khai có `before`, `after`. Bước 3: không có `before`, `after`. Bước 4 trả `503` ERR-04-047; các API khác của PH-04 vẫn trả bình thường.

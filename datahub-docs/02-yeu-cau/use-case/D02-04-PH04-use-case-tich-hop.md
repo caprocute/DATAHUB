@@ -373,7 +373,7 @@ Bus cũ phân quyền theo `Project`, `Group`, `Project_group.access_level` (LGC
 
 **Luồng ngoại lệ.**
 
-- **E1. Mã trùng (bước 3).** ERR-04-028 (409); "Mã không gian làm việc đã được dùng." Quay lại bước 2.
+- **E1. Mã trùng (bước 3).** ERR-04-028 (409); "Mã không gian làm việc "{code}" đã được dùng." Quay lại bước 2.
 - **E2. Xóa không gian còn luồng.** ERR-04-017 (409) kèm số luồng; "Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước." Giao diện gợi ý "Lưu trữ" thay vì xóa.
 - **E3. Không gian không tồn tại khi sửa, thêm thành viên.** ERR-04-027 (404); "Không tìm thấy không gian làm việc "{workspace}"."
 
@@ -445,9 +445,9 @@ Hình cho thấy nhóm PH-12 được mở rộng thành người dùng lúc ki�
 **Luồng ngoại lệ.**
 
 - **E1. Luồng không tồn tại hoặc ngoài phạm vi.** ERR-04-001 (404), không phân biệt hai trường hợp; "Không tìm thấy luồng, hoặc bạn không có quyền xem luồng này." Nút "Về danh sách luồng".
-- **E2. Phiên bản không tồn tại (`?phien-ban=`).** ERR-04-004 (404); "Không tìm thấy phiên bản v{n} của luồng."
-- **E3. Sửa thông tin khi luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ nên chỉ xem được, không sửa được."
-- **E4. ETag lệch, thiếu `If-Match` (bước 3a).** ETag lệch: ERR-04-006 (412); "{user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu." Thiếu `If-Match`: ERR-04-007 (428); "Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại."
+- **E2. Phiên bản không tồn tại (`?phien-ban=`).** ERR-04-004 (404); "Không tìm thấy phiên bản v{n} của luồng này."
+- **E3. Sửa thông tin khi luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ và chỉ còn để xem."
+- **E4. ETag lệch, thiếu `If-Match` (bước 3a).** ETag lệch: ERR-04-006 (412); "{user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu." Thiếu `If-Match`: ERR-04-007 (428); "Thiếu thông tin phiên bản dữ liệu. Tải lại trang rồi thử lại."
 - **E5. PH-13 không phản hồi (bước 5).** Tab Giám sát hiện ST-05 với nút "Thử lại", các tab khác vẫn dùng được.
 
 **Quy tắc áp dụng.** BR-04-021. Phi chức năng: thời gian phản hồi danh sách theo NFR chung của SRS (D02-02). Tần suất: hàng trăm lượt xem mỗi ngày mỗi tenant (GĐ).
@@ -1245,7 +1245,7 @@ Sơ đồ trạng thái cho thấy chỉ có một đường vào `APPROVED` là
 
 **Luồng ngoại lệ.**
 
-- **E1. Kiểm tra mức `PUBLISH` lỗi.** ERR-04-009 (422); "Luồng còn {n} lỗi cần sửa trước khi phát hành." Catalog cũ hơn catalog hiện hành trả ERR-04-042 (409); "Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành."
+- **E1. Kiểm tra mức `PUBLISH` lỗi.** ERR-04-009 (422); "Luồng còn {n} lỗi cần sửa trước khi phát hành." Catalog cũ hơn catalog hiện hành trả ERR-04-042 (409); "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại."
 - **E2. Chưa qua môi trường trước.** ERR-04-023 (409); "Phiên bản phải đồng bộ, khỏe ở TEST (và chạy ổn định đủ {minutes} phút) trước khi lên PROD, hoặc luồng chưa triển khai ở PROD."
 - **E3. Đóng băng.** ERR-04-041 (423); "Đang trong khoảng đóng băng thay đổi tới 05/01/2027. Chỉ được quay lui hoặc tạm dừng khẩn."
 - **E4. Ghi kho cấu hình lỗi.** ERR-04-022 (502); "Không ghi được vào kho cấu hình. Luồng chưa được phát hành." Triển khai không được tạo, nút "Thử lại".
@@ -1378,7 +1378,7 @@ Thay Start/Stop agent và route qua JMX-Jolokia của Bus cũ (LGC-BUS-009, 012,
 4. Hệ thống gọi API-04-061 `PAUSE`; máy chủ ghi `flow.dh.yaml` trạng thái mong muốn, ký lệnh Ed25519, gửi topic `dh.integration.runtime.command.v1`, trả `202` với `commandId`; lệnh `ISSUED`.
 5. Ba bản sao nhận, kiểm chữ ký, hạn, tenant; xả bản tin đang xử lý; dừng route; phát xác nhận EVT-04-13. Lệnh `DELIVERED` rồi `ACKNOWLEDGED` khi đủ 3/3.
 6. Argo CD đồng bộ commit trạng thái mong muốn; đối soát thấy khớp, lệnh `RECONCILED`.
-7. Bảng route hiện "Tạm dừng bởi Phạm Thu Dung 22:00, lý do…"; bên gọi nhận `503` với ERR-04-105 hoặc nhánh dự phòng của luồng.
+7. Bảng route hiện "Tạm dừng bởi Phạm Thu Dung 22:00, lý do…"; bên gọi nhận `503` với ERR-04-110 ("Dịch vụ đang tạm dừng. Thử lại sau.").
 8. 23:05 Dung chọn "Tiếp tục" có lý do; hệ thống thực hiện như bước 4–6 với `RESUME`.
 
 **Luồng thay thế.**
@@ -1456,7 +1456,7 @@ Hình cho thấy hai kênh song song: lệnh qua Kafka để có hiệu lực tr
 
 **Luồng ngoại lệ.**
 
-- **E1. Người không có quyền khẩn.** Ẩn nút; API trả 403 chung của nền tảng ERR-04-045; "Bạn không có quyền thực hiện thao tác này."
+- **E1. Người không có quyền khẩn.** Ẩn nút; API trả 403 chung của nền tảng ERR-04-045; "Bạn chưa có quyền thực hiện thao tác này."
 - **E2. Thiếu lý do.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)."
 - **E3. Không đủ xác nhận.** `PARTIAL`, ERR-04-024; "Runtime chưa xác nhận lệnh ({k}/{n} bản sao) hoặc đã từ chối lệnh." SO dùng biện pháp mạng (chặn ở APISIX hoặc chính sách mạng) theo kịch bản sự cố D03-07.
 
@@ -1527,7 +1527,7 @@ Khác với tạm dừng thường, dừng khẩn gửi lệnh trước rồi m�
 - **E1. Mã trùng khi nhân bản.** ERR-04-002 (409); "Mã luồng "ho-tich-khai-tu" đã được dùng trong tỉnh." kèm gợi ý "ho-tich-khai-tu-2".
 - **E2. Còn phụ thuộc cứng.** ERR-04-017 (409) kèm danh sách; "Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước."
 - **E3. Thiếu lý do gỡ.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)."
-- **E4. Luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ nên chỉ xem được, không sửa được."
+- **E4. Luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ và chỉ còn để xem."
 - **E5. Ghi kho cấu hình lỗi khi rút luồng.** ERR-04-022 (502); "Không ghi được vào kho cấu hình. Luồng chưa được phát hành." Luồng giữ trạng thái cũ, thử lại được.
 
 **Quy tắc áp dụng.** BR-04-001, 011, 017. Tần suất: nhân bản hằng tuần; gỡ vài lần mỗi quý.
@@ -1601,13 +1601,13 @@ Use case hệ thống: mô tả hành vi của `dh-runtime` với một lượt 
 
 **Luồng ngoại lệ.**
 
-- **E1. Thân vượt kích thước (bước 2).** ERR-04-107 (413) "Thân vượt giới hạn của luồng"; ghi nhật ký kết nối.
-- **E2. Sai lược đồ (bước 3).** ERR-04-101 (400) "Bản tin sai lược đồ" kèm ≤ 20 lỗi theo đường dẫn trường, không lặp giá trị.
-- **E3. OPA từ chối hoặc không phản hồi trong 200 ms (bước 4).** ERR-04-102 (403) "OPA từ chối, hoặc không trả lời trong 200 ms"; không đưa DLQ.
-- **E4. Lỗi chuyển đổi, mã không có trong bảng với cấu hình `FAIL` (bước 5).** ERR-04-108 (422) "Lỗi chuyển đổi, mã không có trong bảng".
+- **E1. Thân vượt kích thước (bước 2).** ERR-04-107 (413); "Bản tin vượt kích thước tối đa {limit} của dịch vụ."; ghi nhật ký kết nối.
+- **E2. Sai lược đồ (bước 3).** ERR-04-101 (400); "Bản tin không đúng lược đồ {schemaRef}: {n} lỗi." kèm ≤ 20 lỗi theo đường dẫn trường, không lặp giá trị.
+- **E3. OPA từ chối hoặc không phản hồi trong 200 ms (bước 4).** ERR-04-102 (403); "Bên gọi không được phép dùng dịch vụ này cho mục đích đã khai."; không đưa DLQ.
+- **E4. Lỗi chuyển đổi, mã không có trong bảng với cấu hình `FAIL` (bước 5).** ERR-04-108 (422); "Không chuyển đổi được dữ liệu: {lý do ngắn}."
 - **E5. Vẫn lỗi sau thử lại (bước 7).** ERR-04-104 (502) cho bên gọi, hoặc ERR-04-103 (504) khi hệ đích quá thời gian chờ; bản tin (đã mã hóa trường nhạy cảm) vào DLQ PH-18 với lý do, số lần thử, chặng lỗi; TO thấy ở màn DLQ của PH-18.
 - **E6. Tiêu đề tenant bị thay đổi sau receive.** `TenantGuard` chặn, ERR-04-112 (500 nội bộ), cảnh báo ATTT mức cao ở PH-13.
-- **E7. Luồng, route đang tạm dừng.** ERR-04-110 (503) "Luồng hoặc route đang tạm dừng" (UC-04-14).
+- **E7. Luồng, route đang tạm dừng.** ERR-04-110 (503); "Dịch vụ đang tạm dừng. Thử lại sau." (UC-04-14).
 
 **Quy tắc áp dụng.** BR-04-008, 010, 013. Phi chức năng: NFR-04-011, 012, 014. Tần suất: theo GĐ-03 (quy mô QM-VUA: 50–200 lượt/giây giờ cao điểm mỗi tỉnh).
 
@@ -1679,7 +1679,7 @@ Hình cho thấy tenant được đặt một lần ở `receive` từ tiêu đ�
 
 **Luồng ngoại lệ.**
 
-- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101 (tiêu đề `dh-error-code`, "Bản tin sai lược đồ").
+- **E1. Không giải tuần tự được.** DLQ ngay với ERR-04-101 (tiêu đề `dh-error-code`; câu "Bản tin không đúng lược đồ {schemaRef}: {n} lỗi.").
 - **E2. Lỗi nghiệp vụ, dữ liệu.** DLQ, không thử lại; mã ERR-04-108 hoặc ERR-04-109 theo loại lỗi.
 - **E3. Luồng bị tạm dừng.** Ngừng tiêu thụ (ERR-04-110, consumer dừng); độ trễ nhóm tăng, PH-13 cảnh báo theo ngưỡng.
 
@@ -1809,7 +1809,7 @@ Hình cho thấy kiểm toán hai phía: pgaudit ở CSDL nguồn và bản ghi 
 
 **Luồng ngoại lệ.**
 
-- **E1. Không phải Camel XML hoặc vượt kích thước.** ERR-04-032 (422); "Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt 2 MiB."
+- **E1. Không phải Camel XML hoặc vượt kích thước.** ERR-04-032 (422); "Tệp không phải Camel XML hợp lệ của hệ cũ hoặc vượt 2 MiB."
 - **E2. Còn chỗ trống `CHUA_GAN` khi gửi duyệt.** VR-07, ERR-04-013 (422); "Kết nối "CHUA_GAN" không tồn tại, sai loại hoặc chưa được cấp cho không gian làm việc."
 
 **Quy tắc áp dụng.** BR-04-003, 014. Tần suất: theo đợt di trú; ước 30–120 chương trình mỗi tỉnh (GĐ).
@@ -1871,9 +1871,9 @@ Hình cho thấy mật khẩu cũ bị gỡ ngay ở bước chuyển đổi tr�
 
 **Luồng ngoại lệ.**
 
-- **E1. TA cố mở rộng chính sách nền.** Bị chặn, 403 chung ERR-04-045; "Bạn không có quyền thực hiện thao tác này."
+- **E1. TA cố mở rộng chính sách nền.** Bị chặn, 403 chung ERR-04-045; "Bạn chưa có quyền thực hiện thao tác này."
 - **E2. Thành phần chỉ chạy JVM mà tenant không được phép hồ sơ JVM.** Trạng thái "Cấm" với lý do; ERR-04-029 (422) khi phát hành; "Không hồ sơ runtime nào có đủ thành phần: {components}."
-- **E3. Thành phần không có trong catalog của phiên bản yêu cầu.** ERR-04-035 (404); "Thành phần "{component}" không có trong danh mục của phiên bản runtime này."
+- **E3. Thành phần không có trong catalog của phiên bản yêu cầu.** ERR-04-035 (404); "Thành phần "{component}" không có trong danh mục của phiên bản {version}."
 
 **Quy tắc áp dụng.** BR-04-014, 017. Tần suất: vài thay đổi mỗi quý.
 
@@ -1935,7 +1935,7 @@ Hình cho thấy quyết định mở thành phần mới thuộc PA có ý ki�
 
 - **E1. Lệch bản phụ.** CI chặn; không phát hành. Người vận hành thấy lỗi ở kết quả cổng CI, không có câu trên giao diện người dùng.
 - **E2. Lệch bản vá có thay đổi lược đồ.** Công cụ so khớp phát hiện; xử lý như lệch bản phụ.
-- **E3. IE gửi duyệt phiên bản soạn trên catalog cũ (bước 5).** ERR-04-042 (409); "Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành."
+- **E3. IE gửi duyệt phiên bản soạn trên catalog cũ (bước 5).** ERR-04-042 (409); "Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại."
 
 **Quy tắc áp dụng.** BR-04-020. Tần suất: 1–2 lần mỗi năm theo nhịp LTS của Camel Quarkus.
 
@@ -2044,25 +2044,25 @@ Thứ nhất, tần suất và quy mô trong tài liệu là giả định GĐ (
 
 ### 8.4. Đề nghị đồng bộ
 
-Câu đã có ở D03-06-PH04 §5.3 được dùng nguyên văn. Các câu dưới đây chưa có ở đó (giao diện đang hiện `title`); đề nghị bổ sung trong đợt gom cuối.
+Câu thông báo của mọi ngoại lệ lấy từ D02-03-PH04 §9.2 (nguồn chuẩn) và giống nguyên văn ở D03-06-PH04 §5.3 và D03-04-PH04 §6. Các câu dưới đây từng là đề nghị bổ sung vào D03-06-PH04 §5.3 vì giao diện khi đó hiện `title`; bản 0.2 của D03-06-PH04 đã có đủ, nên đề nghị đã hấp thụ. Riêng ERR-04-042, câu đề nghị cũ ("Phiên bản được soạn trên danh mục thành phần cũ…") được thay bằng câu của FRS §9.2.
 
-| Mã | HTTP | Câu đề nghị | Dùng ở |
-|---|---|---|---|
-| ERR-04-004 | 404 | Không tìm thấy phiên bản v{n} của luồng. | UC-04-02 E2 |
-| ERR-04-007 | 428 | Thiếu thông tin phiên bản khi lưu. Tải lại trang rồi thử lại. | UC-04-02 E4 |
-| ERR-04-018 | 409 | Yêu cầu này đã được gửi với nội dung khác. Tải lại trang rồi thử lại. | UC-04-03 E8 |
-| ERR-04-027 | 404 | Không tìm thấy không gian làm việc "{workspace}". | UC-04-01 E3, UC-04-03 E3 |
-| ERR-04-028 | 409 | Mã không gian làm việc đã được dùng. | UC-04-01 E1 (câu đã có ở bản 0.1 của tập này) |
-| ERR-04-032 | 422 | Tệp không phải Camel XML hợp lệ của Bus cũ hoặc vượt {limit}. | UC-04-20 E1 |
-| ERR-04-034 | 409 | Luồng đã gỡ nên chỉ xem được, không sửa được. | UC-04-02 E3, UC-04-16 E4 |
-| ERR-04-035 | 404 | Thành phần "{component}" không có trong danh mục của phiên bản runtime này. | UC-04-21 E3 |
-| ERR-04-039 | 404 | Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh. | UC-04-03 E4 |
-| ERR-04-042 | 409 | Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành. | UC-04-12 E1, UC-04-22 E3 |
-| ERR-04-045 | 403 | Bạn không có quyền thực hiện thao tác này. | UC-04-15 E1, UC-04-21 E1 |
+| Mã | HTTP | Câu thông báo (theo FRS §9.2) | Dùng ở | Trạng thái |
+|---|---|---|---|---|
+| ERR-04-004 | 404 | Không tìm thấy phiên bản v{n} của luồng này. | UC-04-02 E2 | Đã hấp thụ (0.2) |
+| ERR-04-007 | 428 | Thiếu thông tin phiên bản dữ liệu. Tải lại trang rồi thử lại. | UC-04-02 E4 | Đã hấp thụ (0.2) |
+| ERR-04-018 | 409 | Yêu cầu này đã được gửi với nội dung khác. Tải lại trang rồi thử lại. | UC-04-03 E8 | Đã hấp thụ (0.2) |
+| ERR-04-027 | 404 | Không tìm thấy không gian làm việc "{workspace}". | UC-04-01 E3, UC-04-03 E3 | Đã hấp thụ (0.2) |
+| ERR-04-028 | 409 | Mã không gian làm việc "{code}" đã được dùng. | UC-04-01 E1 (câu đã có ở bản 0.1 của tập này) | Đã hấp thụ (0.2) |
+| ERR-04-032 | 422 | Tệp không phải Camel XML hợp lệ của hệ cũ hoặc vượt 2 MiB. | UC-04-20 E1 | Đã hấp thụ (0.2) |
+| ERR-04-034 | 409 | Luồng đã gỡ và chỉ còn để xem. | UC-04-02 E3, UC-04-16 E4 | Đã hấp thụ (0.2) |
+| ERR-04-035 | 404 | Thành phần "{component}" không có trong danh mục của phiên bản {version}. | UC-04-21 E3 | Đã hấp thụ (0.2) |
+| ERR-04-039 | 404 | Khuôn mẫu "{template}" không tồn tại hoặc không được phép dùng trong tỉnh. | UC-04-03 E4 | Đã hấp thụ (0.2) |
+| ERR-04-042 | 409 | Luồng được soạn trên danh mục thành phần {old}, cũ hơn danh mục hiện hành {new}. Mở lại luồng để kiểm tra lại. | UC-04-12 E1, UC-04-22 E3 | Đã hấp thụ (0.2) |
+| ERR-04-045 | 403 | Bạn chưa có quyền thực hiện thao tác này. | UC-04-15 E1, UC-04-21 E1 | Đã hấp thụ (0.2) |
 
-: Câu thông báo đề nghị bổ sung vào D03-06-PH04 §5.3
+: Câu thông báo và trạng thái đồng bộ với D03-06-PH04 §5.3
 
-Đề nghị thêm: D03-06-PH04 §5.3 thêm câu cho ERR-04-043 (mục 8.3); D05-02-PH04 thêm ca cho ngoại lệ bản 0.2 mới nêu mã (UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2).
+Đề nghị thêm: D03-06-PH04 §5.3 thêm câu cho ERR-04-043 (mục 8.3), đã hấp thụ (0.2); D05-02-PH04 thêm ca cho ngoại lệ bản 0.2 mới nêu mã (UC-04-05 E5, UC-04-06 E4, UC-04-12 E1, UC-04-17 E7, UC-04-18 E2), đã hấp thụ (0.2) bằng các ca TC-04-189, 190, 195, 198, 199 trong dải TC-04-187…202 (16 ca mới của D05-02-PH04 bản 0.2; năm ca này ứng với năm ngoại lệ theo thứ tự trên, các ca còn lại là ca đầu cuối, di trú W2 và trạng thái màn).
 
 ## 9. Câu hỏi mở
 

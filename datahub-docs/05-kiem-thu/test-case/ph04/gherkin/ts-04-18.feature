@@ -10,7 +10,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
     Khi gọi `POST /flows/tra-cuu-ho-tich/runtime/commands` với `{"environment":"PROD","action":"PAUSE","scope":"ROUTES","routeIds":["tra-cuu-ho-tich-main"],"reason":"Bảo trì HTTT hộ tịch 22:00–23:00","drain":true}`.
     Và theo dõi `GET .../commands/{id}`.
     Và gọi luồng qua APISIX.
-    Thì bước 1 trả `202`, `status = ISSUED`, `expiresAt = issuedAt + 60 giây`. EVT-04-11 có `signature`, `keyId`. Bước 2: hai `acks` `APPLIED`, `status = ACKNOWLEDGED` trong p95 < 10 giây. Bước 3 trả `503` ERR-04-110. EVT-04-08 phát. Trong vòng 5 phút `desiredState` của route được ghi vào Git (`flow.dh.yaml`), lệnh `RECONCILED`. KT: có (`INT_RUNTIME_PAUSE` có lý do).
+    Thì bước 1 trả `202`, `status = ISSUED`, `expiresAt = issuedAt + 60 giây`. EVT-04-11 có `signature`, `keyId`. Bước 2: hai `acks` `APPLIED`, `status = ACKNOWLEDGED` trong p95 < 10 giây. Bước 3 trả `503` ERR-04-110. EVT-04-08 phát. Trong vòng 5 phút `desiredState` của route được ghi vào Git (`flow.dh.yaml`), lệnh `RECONCILED`. KT: có (`INT_FLOW_PAUSE` có lý do).
 
   @TC-04-109 @P1 @Dương
   Kịch bản: TC-04-109 Tiếp tục route
@@ -27,7 +27,7 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
     Khi SO gửi `EMERGENCY_STOP`, `scope = FLOW`, `drain = false`, `incidentRef = "SC-2026-001"`.
     Và đo thời gian tới khi cả hai bản sao xác nhận.
     Và chờ đối soát.
-    Thì bước 2: < 5 giây, không phụ thuộc độ chậm của Git. Bản sao đặt `localOverride = true` trong nhịp tim. Bước 3: tiến trình `system:int-reconciler` ghi trạng thái `PAUSED` vào Git trong ≤ 5 phút; khi Git khớp, bản sao bỏ `localOverride`. Argo CD đồng bộ trong lúc đó không bật lại luồng. KT: có (`INT_RUNTIME_ESTOP`, người thực hiện SO và `system:int-reconciler` cho lần ghi Git).
+    Thì bước 2: < 5 giây, không phụ thuộc độ chậm của Git. Bản sao đặt `localOverride = true` trong nhịp tim. Bước 3: tiến trình `system:int-reconciler` ghi trạng thái `PAUSED` vào Git trong ≤ 5 phút; khi Git khớp, bản sao bỏ `localOverride`. Argo CD đồng bộ trong lúc đó không bật lại luồng. KT: có (`INT_FLOW_EMERGENCY_STOP`, người thực hiện SO và `system:int-reconciler` cho lần ghi Git).
 
   @TC-04-111 @P1 @Dương
   Kịch bản: TC-04-111 Đối soát hoàn tất
@@ -96,4 +96,4 @@ Tính năng: TS-04-18 · Lệnh runtime có ký: tạm dừng, tiếp tục, d�
     Và đọc EVT-04-13 của từng bản sao và trạng thái lệnh.
     Và đọc DLQ.
     Và chờ đối soát, đọc `flow.dh.yaml` ở `env/prod`.
-    Thì bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_RUNTIME_ESTOP`).
+    Thì bước 1 trả `202` có `commandId`. Bước 2: chữ ký tính trên dạng JCS của lệnh; EVT-04-11 gửi với `acks=all` trước khi ghi `runtime_command` `ISSUED` và trước mọi lần ghi Git. Bước 3: mỗi bản sao kiểm chữ ký, hạn, tenant rồi xác nhận `APPLIED`; lệnh `ACKNOWLEDGED` trong < 5 giây. Bước 4: bản tin dở vào DLQ với lý do "dừng khẩn". Bước 5: tác vụ nền ghi `desiredState: PAUSED`, Argo CD áp, nhịp tim khớp; lệnh `RECONCILED`, phát EVT-04-08. KT: có (`INT_FLOW_EMERGENCY_STOP`).
