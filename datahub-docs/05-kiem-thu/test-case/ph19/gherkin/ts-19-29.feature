@@ -9,7 +9,7 @@ Tính năng: TS-19-29 · Di trú và chạy song song
     Biết U-PLA1; F-LEG-CSV (năm bảng: NCC, dịch vụ, đối tác, giao dịch, nhật ký; 10.000 giao dịch).
     Khi chạy lô `IMPORT` từ UI-19-27.
     Và mở kết quả.
-    Thì bước 1 trả `202`; lần chạy `SUCCEEDED`. Bước 2: số bản ghi nhập bằng số dòng nguồn trừ dòng lỗi; giao dịch nhập có `origin = LEGACY`, mã hệ cũ trong `legacyRef`, không phát webhook, không sinh sự kiện kết quả; trạng thái hệ cũ được ánh xạ theo bảng của FR-19-065.
+    Thì bước 1 trả `202`; lần chạy `SUCCEEDED`. Bước 2: số bản ghi nhập bằng số dòng nguồn trừ dòng lỗi; giao dịch nhập có `is_migrated = true`, chuyển trạng thái nguồn `MIGRATION`, khóa hệ cũ ghi ở `legacy_mapping`, không phát webhook, không sinh sự kiện kết quả; trạng thái hệ cũ được ánh xạ theo bảng của FR-19-065.
 
   @TC-19-702 @P1 @Âm
   Kịch bản: TC-19-702 Chạy lại lô không trùng
@@ -17,7 +17,7 @@ Tính năng: TS-19-29 · Di trú và chạy song song
     Biết lô của TC-19-701 đã chạy.
     Khi chạy lại cùng lô (cùng `Idempotency-Key`).
     Và chạy lô mới cùng tệp, khóa khác.
-    Thì bước 1 trả lại kết quả lần trước. Bước 2: 0 bản ghi mới, 10.000 "đã có" (khóa tự nhiên `legacyRef`).
+    Thì bước 1 trả lại kết quả lần trước. Bước 2: 0 bản ghi mới, 10.000 "đã có" (ràng buộc duy nhất của `legacy_mapping`; dòng có `source_hash` đổi thì được cập nhật, không chèn trùng).
 
   @TC-19-703 @P1 @Âm
   Kịch bản: TC-19-703 Dữ liệu hệ cũ bất thường

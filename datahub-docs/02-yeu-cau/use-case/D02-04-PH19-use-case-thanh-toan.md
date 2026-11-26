@@ -569,7 +569,7 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 | Tiền điều kiện | Đối tác không `TERMINATED` |
 | Điều kiện kích hoạt | ADM mở các tab của UI-19-12 |
 | Đảm bảo tối thiểu | Bí mật client, bí mật ký webhook chỉ hiển thị một lần; địa chỉ webhook không trỏ dải nội bộ (chống SSRF) |
-| Đảm bảo thành công | Client `ACTIVE` ở PH-12 với quyền `PERM-19-partner-pay-*`; dịch vụ được gán kèm hạn mức; đầu nhận webhook đã gửi thử thành công |
+| Đảm bảo thành công | Client `ACTIVE` ở PH-12 với quyền `PERM-19-partner-pay-create` và `PERM-19-partner-pay-read`; dịch vụ được gán kèm hạn mức; đầu nhận webhook đã gửi thử thành công |
 
 **Luồng chính**
 

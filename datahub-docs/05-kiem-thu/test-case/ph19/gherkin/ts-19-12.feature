@@ -27,4 +27,4 @@ Tính năng: TS-19-12 · Người nộp quay về
     Khi sửa `responseCode` trong tham số rồi gọi.
     Và thêm `&returnUrl=https://evil.test` và `&next=//evil.test`.
     Và gọi với `connectionKey` không tồn tại.
-    Thì bước 1 trả `400`, trang "Không xác nhận được kết quả", không chuyển tới đối tác; ghi sự kiện an ninh. Bước 2: tham số bị bỏ qua, địa chỉ chuyển về chỉ là `returnUrl` đã lưu. Bước 3 trả `404` trang lỗi chung, không lộ lý do.
+    Thì bước 1 trả `400`, trang "Không xác nhận được kết quả", không chuyển tới đối tác; ghi sự kiện an ninh. Bước 2: tham số bị bỏ qua, địa chỉ chuyển về chỉ là `returnUrl` đã lưu. Bước 3: trang lỗi chung, cùng nội dung với khóa sai khác, không lộ lý do.

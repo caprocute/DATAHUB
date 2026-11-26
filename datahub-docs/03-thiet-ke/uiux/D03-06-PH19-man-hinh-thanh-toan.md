@@ -83,10 +83,10 @@ PH-19 là phân hệ tiền. Người dùng chính là kế toán và cán bộ 
 |---|---|---|---|
 | Thanh trên, sidebar của khung ứng dụng | `CMP-AppShell` | `glass-chrome` (→ `glass-chrome-scrolled` khi cuộn) | Lớp điều hướng |
 | Đầu trang chi tiết dính khi cuộn (mã, trạng thái, nút) | `CMP-PageHeader` sticky | `glass-chrome-scrolled` | Lớp điều hướng; chữ ≥ 14 px đậm |
-| Thẻ chỉ số dashboard, biểu đồ, bảng, biểu mẫu, dòng thời gian | `CMP-StatCard`, `CMP-Chart`, `CMP-ProTable`, `CMP-Form`, `CMP-Timeline` | **Đặc** `color-surface-solid` | Số tiền, mã phải đọc chắc chắn |
+| Thẻ chỉ số dashboard, biểu đồ, bảng, biểu mẫu, dòng thời gian | `CMP-StatCard`, `CMP-Chart`, `CMP-DataTable`, `CMP-Form`, `CMP-Timeline` | **Đặc** `color-surface-solid` | Số tiền, mã phải đọc chắc chắn |
 | Khung JSON nguyên văn IPN, nhật ký | `CMP-JsonViewer` | **Đặc** `color-surface-solid-2` | Mã cần tương phản cao |
 | Ngăn kéo biểu mẫu, ngăn kéo chi tiết IPN, webhook, nhật ký, bằng chứng phê duyệt | `CMP-Drawer` | Khung `glass-modal`; **vùng nội dung đặc** | Lớp nổi; nội dung dày |
-| Hộp xác nhận (tạm dừng, chấm dứt, duyệt, từ chối, chốt phiên, xem dữ liệu cá nhân) | `CMP-ConfirmModal` | Khung `glass-modal`; vùng nội dung đặc | Lớp nổi |
+| Hộp xác nhận (tạm dừng, chấm dứt, duyệt, từ chối, chốt phiên, xem dữ liệu cá nhân) | `CMP-ConfirmDialog` | Khung `glass-modal`; vùng nội dung đặc | Lớp nổi |
 | Thanh chọn nhiều nổi đáy bảng, tooltip, menu thao tác dòng | `CMP-SelectionBar`, `CMP-Popover`, `CMP-DropdownMenu` | `glass-overlay` | Lớp nổi; không chứa số tiền |
 | Khay tác vụ nền (xuất, sinh biên bản, di trú) | `CMP-BackgroundTaskTray` | `glass-overlay` | Lớp nổi |
 | Trang công khai UI-19-28 | Bố cục riêng | **Đặc** toàn bộ, không kính | Điện thoại cấu hình thấp, ánh sáng ngoài trời |
@@ -97,7 +97,7 @@ Khi bật "Giảm trong suốt", `prefers-reduced-transparency` hoặc cơ chế
 
 - Mật độ thường: điều khiển 32 px, dòng bảng 40 px. Bảng giao dịch, dòng đối soát, IPN, nhật ký cho chọn mật độ gọn (dòng 32 px) qua "Mật độ hiển thị"; lựa chọn lưu `localStorage` khóa `dh.pay.density.{tableId}`.
 - Số tiền: kiểu `T-MONEY` (số nguyên đồng). Hiển thị `1.250.000 ₫` theo `vi-VN`, căn phải, `font-variant-numeric: tabular-nums`. Cột tổng có viền trên 1 px. Số âm (chênh lệch, hoàn) có dấu "−" và chữ "(hoàn)" hoặc "(lệch)", không chỉ đổi màu.
-- Ô nhập số tiền (`CMP-MoneyInput`): chỉ nhận chữ số, tự chèn dấu chấm ngăn nghìn khi gõ, gửi API số nguyên; dán "1.250.000" hay "1250000" đều hiểu; hiện dòng đọc bằng chữ bên dưới khi số ≥ 1.000.000 ("Một triệu hai trăm năm mươi nghìn đồng") để chống gõ thừa chữ số 0.
+- Ô nhập số tiền (`CMP-NumberInput` biến thể `money`): chỉ nhận chữ số, tự chèn dấu chấm ngăn nghìn khi gõ, gửi API số nguyên; dán "1.250.000" hay "1250000" đều hiểu; hiện dòng đọc bằng chữ bên dưới khi số ≥ 1.000.000 ("Một triệu hai trăm năm mươi nghìn đồng") để chống gõ thừa chữ số 0.
 - Mã giao dịch, mã tham chiếu NCC, mã đơn hàng: phông đơn cách `CMP-CodeText`, có nút sao chép; mã dài rút gọn giữa (`PAY-T68-…-8F3A`) với tooltip mã đầy đủ.
 - Ngày giờ `dd/MM/yyyy HH:mm:ss` theo giờ Việt Nam (máy chủ lưu UTC). "Ngày giao dịch" trong bộ lọc và báo cáo là ngày theo giờ Việt Nam. Thời lượng: `ms` dưới 1 giây, `1,2 s`, `2 phút 05 giây`.
 
@@ -137,7 +137,7 @@ Vì thao tác ghi đi kèm `If-Match` (ERR-19-045) và `Idempotency-Key` phía g
 
 ### 2.5. Lý do bắt buộc và xác nhận
 
-Mọi thao tác làm đổi trạng thái có ảnh hưởng tiền hoặc kết nối (tạm dừng, mở lại, ngừng hẳn, chấm dứt, hủy giao dịch, đồng bộ, xử lý lại IPN, gửi lại webhook, duyệt, từ chối, rút, chốt, mở lại phiên, đổi chế độ định tuyến, xem dữ liệu cá nhân) mở `CMP-ConfirmModal` có ô "Lý do" bắt buộc 10…1.000 ký tự (kiểu `Reason` của API). Thao tác không hoàn tác được (ngừng hẳn NCC, chấm dứt đối tác, chốt phiên, ghi nhận chứng từ hoàn) yêu cầu gõ lại mã đối tượng vào ô xác nhận. Nút chính của hộp dùng sắc thái `danger` cho thao tác dừng, chấm dứt, từ chối.
+Mọi thao tác làm đổi trạng thái có ảnh hưởng tiền hoặc kết nối (tạm dừng, mở lại, ngừng hẳn, chấm dứt, hủy giao dịch, đồng bộ, xử lý lại IPN, gửi lại webhook, duyệt, từ chối, rút, chốt, mở lại phiên, đổi chế độ định tuyến, xem dữ liệu cá nhân) mở `CMP-ConfirmDialog` có ô "Lý do" bắt buộc 10…1.000 ký tự (kiểu `Reason` của API). Thao tác không hoàn tác được (ngừng hẳn NCC, chấm dứt đối tác, chốt phiên, ghi nhận chứng từ hoàn) yêu cầu gõ lại mã đối tượng vào ô xác nhận. Nút chính của hộp dùng sắc thái `danger` cho thao tác dừng, chấm dứt, từ chối.
 
 ### 2.6. Dữ liệu cá nhân người nộp
 
@@ -442,7 +442,7 @@ Lỗi thử lại được (cột "Thử lại" của khung §12 là "Có") hi�
 | Đang tải lại (đổi bộ lọc) | Giữ dữ liệu cũ mờ 60%, thanh tiến độ mảnh trên bảng | — | Giữ số cũ, biểu tượng xoay nhỏ cạnh "Cập nhật lúc" |
 | Rỗng do chưa có dữ liệu | Minh họa nhẹ, câu hướng dẫn và nút chính (ví dụ "Chưa có nhà cung cấp. Thêm nhà cung cấp đầu tiên") | — | Thẻ hiện "0", biểu đồ có chữ "Chưa có giao dịch trong ngày" |
 | Rỗng do bộ lọc | "Không có kết quả phù hợp" kèm nút "Xóa bộ lọc" | — | — |
-| Lỗi tải | `CMP-ErrorState` có câu mục 5.2, nút "Thử lại" | Như danh sách | Từng thẻ lỗi riêng, các thẻ khác vẫn hiện |
+| Lỗi tải | `CMP-Alert` mức lỗi (khối nhỏ dùng `CMP-EmptyState` biến thể `error-lite`) có câu mục 5.2, nút "Thử lại" | Như danh sách | Từng thẻ lỗi riêng, các thẻ khác vẫn hiện |
 | Không có quyền | Trang 403 dùng chung, không lộ tên đối tượng | Như danh sách (ERR-19-020 trả 404 cho tài nguyên ngoài phạm vi) | — |
 | Xung đột (ERR-19-045) | — | Hộp "Dữ liệu đã thay đổi": bảng hai cột "Giá trị của bạn" và "Giá trị hiện tại" theo từng trường khác nhau; nút "Tải lại và nhập lại" (mặc định), "Giữ bản của tôi và lưu đè" (chỉ khi các trường khác nhau không trùng trường người khác vừa sửa) | — |
 | Mất kết nối | Dải "Mất kết nối, đang thử lại" trên đầu trang; nút ghi vô hiệu | Như danh sách | Số liệu giữ nguyên, ghi "Có thể đã cũ" |
@@ -485,7 +485,7 @@ Trang đầu của nhóm Thanh toán. Hàng đầu giữ nguyên bốn thẻ và
 
 | Khối | Thành phần | Trường API-19-080 | Nhấp vào |
 |---|---|---|---|
-| Bộ lọc khoảng | `CMP-RangePicker` mẫu nhanh Hôm nay, 7 ngày, 30 ngày, Tùy chọn (tối đa 92 ngày) | `range`, `from`, `to` | — |
+| Bộ lọc khoảng | `CMP-DateRangePicker` mẫu nhanh Hôm nay, 7 ngày, 30 ngày, Tùy chọn (tối đa 92 ngày) | `range`, `from`, `to` | — |
 | Bộ lọc kênh, dịch vụ | `CMP-Select` một giá trị | `providerId`, `serviceCode` | — |
 | Dải cảnh báo | `CMP-Alert` theo `severity` (`CRITICAL` đỏ, `WARN` vàng, `INFO` xanh) | `alerts[]` | Mở UI-19-02 hoặc UI-19-04 tab Sức khỏe |
 | Bốn thẻ hệ cũ | `CMP-StatCard` | `kpis.activeServices`, `activePartners`, `txnAllTime`, `txnCount` | UI-19-09, UI-19-11, UI-19-14 (lọc khoảng) |
@@ -493,7 +493,7 @@ Trang đầu của nhóm Thanh toán. Hàng đầu giữ nguyên bốn thẻ và
 | Biểu đồ theo dịch vụ | `CMP-Chart` thanh ngang, sắp giảm | `topServices[]` | UI-19-14 lọc dịch vụ |
 | Biểu đồ theo giờ | `CMP-Chart` cột xếp chồng theo trạng thái, mỗi trạng thái có mẫu nền khác nhau ngoài màu | `series[].byStatus` | UI-19-14 lọc giờ đó |
 | Sức khỏe kênh | Danh sách nhỏ | `providers[]` | UI-19-04 tab Sức khỏe |
-| Giao dịch mới nhất | `CMP-ProTable` 20 dòng, không phân trang | Gọi API-19-051 `size=20&sort=createdAt,desc` với cùng khoảng | UI-19-15 |
+| Giao dịch mới nhất | `CMP-DataTable` 20 dòng, không phân trang | Gọi API-19-051 `size=20&sort=createdAt,desc` với cùng khoảng | UI-19-15 |
 
 Thẻ số tiền hiện đầy đủ đến đồng; khi chiều rộng thẻ không đủ thì rút "1,73 tỷ ₫" và tooltip số đầy đủ. Thẻ "Chờ tôi duyệt" chỉ hiện với người có quyền duyệt. Giao dịch thử và giao dịch chạy bóng không tính vào số liệu (ghi chú nhỏ dưới tiêu đề).
 
@@ -534,7 +534,7 @@ Một thẻ mỗi NCC không ở `RETIRED` (NCC `RETIRED` hiện ở nhóm thu g
 | Sức khỏe, mạch ngắt | `healthStatus`, `circuitState` | Mạch ngắt chỉ hiện khi khác `CLOSED` |
 | p95, tỷ lệ lỗi 24 giờ | API-19-081 | Tỷ lệ lỗi ≥ `19.provider.circuit-error-rate`/2 tô vàng, kèm chữ |
 | Hạn khóa, chứng thư gần nhất | `nearestCredentialExpiry` | ≤ 7 ngày đỏ, ≤ 30 ngày vàng, có chữ "hết hạn sau N ngày" |
-| Biểu đồ 30 ngày | API-19-081 `channels[].daily` | `CMP-Sparkline` có trục ngày; "Xem dạng bảng" mở bảng 30 dòng |
+| Biểu đồ 30 ngày | API-19-081 `channels[].daily` | `CMP-Chart` biến thể `spark` có trục ngày; "Xem dạng bảng" mở bảng 30 dòng |
 
 Thẻ là liên kết tới UI-19-04 (cả thẻ nhận focus, `Enter` mở). Màn chỉ đọc, không có thao tác ghi.
 
@@ -712,7 +712,7 @@ Ngăn kéo 480 px · Quyền `service-write` · FR-19-013, 016 · API-19-016, 01
 |---|---|---|---|
 | Mã nhóm | Ô chữ | Có | Mẫu mã như NCC, duy nhất (ERR-19-038); không sửa sau khi tạo |
 | Tên nhóm | Ô chữ | Có | 3…255 |
-| Lĩnh vực (danh mục dùng chung, `sectorCode`) | `CMP-CatalogSelect` tra API-19-028 danh mục lĩnh vực của PH-07 | Không (khuyến nghị; cần cho báo cáo theo lĩnh vực) | Mã còn hiệu lực (ERR-19-039); hiện "Danh mục dùng chung đang không truy cập được, thử lại sau" khi PH-07 không trả lời và chặn lưu khi tạo mới |
+| Lĩnh vực (danh mục dùng chung, `sectorCode`) | `CMP-CodeListSelect` tra API-19-028 danh mục lĩnh vực của PH-07 | Không (khuyến nghị; cần cho báo cáo theo lĩnh vực) | Mã còn hiệu lực (ERR-19-039); hiện "Danh mục dùng chung đang không truy cập được, thử lại sau" khi PH-07 không trả lời và chặn lưu khi tạo mới |
 | Thứ tự hiển thị | Số | Không | 1…999 |
 | Mô tả | Nhiều dòng | Không | ≤ 1000 |
 
@@ -752,11 +752,11 @@ Biểu mẫu (ngăn kéo 640 px), khớp `ServiceCreate`, `ServiceUpdate`:
 | Tên dịch vụ | `name` | Ô chữ | Có | 1…255 |
 | Nhóm dịch vụ | `groupId` | Chọn từ API-19-015 | Có | |
 | Nhà cung cấp | `providerId` | Chọn NCC không `RETIRED` | Có | Hiện trạng thái NCC cạnh tên |
-| Loại khoản thu | `feeTypeCode` | `CMP-CatalogSelect` (PH-07) | Có | ERR-19-039 |
-| Cơ quan thu (mã ĐVQHNS) | `collectingAgencyCode` | `CMP-CatalogSelect` (PH-07) | Có | ERR-19-039 |
-| Thủ tục hành chính | `procedureCode` | `CMP-CatalogSelect` (PH-07) | Không | ERR-19-039 |
+| Loại khoản thu | `feeTypeCode` | `CMP-CodeListSelect` (PH-07) | Có | ERR-19-039 |
+| Cơ quan thu (mã ĐVQHNS) | `collectingAgencyCode` | `CMP-CodeListSelect` (PH-07) | Có | ERR-19-039 |
+| Thủ tục hành chính | `procedureCode` | `CMP-CodeListSelect` (PH-07) | Không | ERR-19-039 |
 | Tham chiếu tài khoản thụ hưởng | `beneficiaryRef` | Ô chữ (mã tham chiếu NCC cấp, không phải số tài khoản) | Có trước khi kích hoạt | ≤ 64 |
-| Số tiền tối thiểu, tối đa | `minAmount`, `maxAmount` | `CMP-MoneyInput` | Có | Tối thiểu ≥ 1; tối đa ≥ tối thiểu và ≤ trần BR-19-001. Công tắc "Số tiền cố định" đặt tối thiểu = tối đa |
+| Số tiền tối thiểu, tối đa | `minAmount`, `maxAmount` | `CMP-NumberInput` biến thể `money` | Có | Tối thiểu ≥ 1; tối đa ≥ tối thiểu và ≤ trần BR-19-001. Công tắc "Số tiền cố định" đặt tối thiểu = tối đa |
 | Thời hạn thanh toán | `expiryMinutes` | Số phút | Không | 5…1.440; trống thì dùng `19.txn.default-expiry-minutes` |
 | Mô tả | `description` | Nhiều dòng | Không | ≤ 4.000 |
 
@@ -789,10 +789,10 @@ Nút theo `allowedActions`: "Gửi duyệt" (`SUBMIT_ONBOARD`, `DRAFT`; vô hi�
 
 | Tab | Nội dung | API | Thao tác |
 |---|---|---|---|
-| Hồ sơ | Mã (`code`), tên (`name`), cơ quan chủ quản (`agencyCode`, danh mục cơ quan PH-07, bắt buộc), HTTT thành viên (`memberSystemId`, chọn từ PH-01, bắt buộc trước khi gửi duyệt), mã ứng dụng ở hệ cũ (`legacyAppCode`, dùng để nối dữ liệu di trú), đầu mối kỹ thuật (bắt buộc) và nghiệp vụ, danh sách địa chỉ quay về được phép (`allowedReturnUrls`, 1…20 tiền tố URL bắt đầu `https://`, `CMP-TagInput`; ERR-19-016 đối chiếu theo tiền tố) | API-19-031, 032 | "Sửa" (`EDIT`, `If-Match`) |
+| Hồ sơ | Mã (`code`), tên (`name`), cơ quan chủ quản (`agencyCode`, danh mục cơ quan PH-07, bắt buộc), HTTT thành viên (`memberSystemId`, chọn từ PH-01, bắt buộc trước khi gửi duyệt), mã ứng dụng ở hệ cũ (`legacyAppCode`, dùng để nối dữ liệu di trú), đầu mối kỹ thuật (bắt buộc) và nghiệp vụ, danh sách địa chỉ quay về được phép (`allowedReturnUrls`, 1…20 tiền tố URL bắt đầu `https://`, `CMP-Select` chế độ nhập tự do nhiều giá trị (`multiple`, mỗi giá trị kiểm tra `https://` khi nhập); ERR-19-016 đối chiếu theo tiền tố) | API-19-031, 032 | "Sửa" (`EDIT`, `If-Match`) |
 | Client | Bảng client máy-máy: mã client PH-12, phương thức (`MTLS`, `PRIVATE_KEY_JWT`), vân tay chứng thư hoặc `kid` khóa công khai, hiệu lực đến, trạng thái, người cấp, lúc; nút "Cấp client" mở ngăn kéo (phương thức; với mTLS dán CSR hoặc chứng thư PEM; với `private_key_jwt` dán JWKS URL hoặc khóa công khai PEM), "Thu hồi" (hộp lý do, gõ lại mã client) | API-19-036, 037, 038 | Quyền `partner-client-manage`. Sau khi cấp hiện hộp "Thông tin kết nối" một lần (mã client, đường dẫn token, đường dẫn API, môi trường) với nút sao chép và tải tệp `.json`; hệ thống không giữ khóa riêng của đối tác |
-| Dịch vụ và hạn mức | Bảng: dịch vụ, trạng thái dịch vụ, hạn mức mỗi giao dịch, số giao dịch tối đa mỗi ngày, tổng tiền tối đa mỗi ngày, đã dùng hôm nay (thanh tiến độ có chữ "%"), hiệu lực từ, đến | API-19-039, 040, 041 | "Gán dịch vụ" (ngăn kéo: chọn dịch vụ `ACTIVE`/`DRAFT`, ba hạn mức bằng `CMP-MoneyInput`/số, hiệu lực), "Sửa hạn mức", "Bỏ gán" (hộp lý do) |
-| Webhook | Bảng đầu nhận: địa chỉ (che phần truy vấn), loại sự kiện nhận (8 loại, `CMP-CheckboxGroup`), trạng thái bật/tắt, tỷ lệ thành công 24 giờ, bí mật ký (chỉ hiện "đã đặt lúc …", vân tay 8 ký tự), lần gửi cuối | API-19-042…046 | "Thêm đầu nhận" (ERR-19-044 kiểm tra khi rời ô và khi lưu), "Gửi thử" (gửi sự kiện mẫu, hiện mã HTTP, thời lượng, 500 ký tự đầu phản hồi), "Xoay bí mật" (hộp: thời gian chuyển tiếp 24 giờ, bí mật mới hiện **một lần** với nút sao chép và cảnh báo "Hệ thống không hiển thị lại bí mật này"), "Vô hiệu" (hộp lý do; lượt gửi đang chờ chuyển `CANCELLED`) |
+| Dịch vụ và hạn mức | Bảng: dịch vụ, trạng thái dịch vụ, hạn mức mỗi giao dịch, số giao dịch tối đa mỗi ngày, tổng tiền tối đa mỗi ngày, đã dùng hôm nay (thanh tiến độ có chữ "%"), hiệu lực từ, đến | API-19-039, 040, 041 | "Gán dịch vụ" (ngăn kéo: chọn dịch vụ `ACTIVE`/`DRAFT`, ba hạn mức bằng `CMP-NumberInput` biến thể `money`/số, hiệu lực), "Sửa hạn mức", "Bỏ gán" (hộp lý do) |
+| Webhook | Bảng đầu nhận: địa chỉ (che phần truy vấn), loại sự kiện nhận (8 loại, nhóm `CMP-Checkbox`), trạng thái bật/tắt, tỷ lệ thành công 24 giờ, bí mật ký (chỉ hiện "đã đặt lúc …", vân tay 8 ký tự), lần gửi cuối | API-19-042…046 | "Thêm đầu nhận" (ERR-19-044 kiểm tra khi rời ô và khi lưu), "Gửi thử" (gửi sự kiện mẫu, hiện mã HTTP, thời lượng, 500 ký tự đầu phản hồi), "Xoay bí mật" (hộp: thời gian chuyển tiếp 24 giờ, bí mật mới hiện **một lần** với nút sao chép và cảnh báo "Hệ thống không hiển thị lại bí mật này"), "Vô hiệu" (hộp lý do; lượt gửi đang chờ chuyển `CANCELLED`) |
 | Chế độ định tuyến | Chế độ hiện tại (Hệ cũ, Chạy bóng, Datahub) dạng thanh ba nấc có chữ; lịch sử đổi chế độ; kết quả đối chiếu gần nhất của đối tác (liên kết UI-19-27); nút "Đề nghị đổi chế độ" mở hộp: chế độ đích, thời điểm hiệu lực, lý do, lần đối chiếu làm bằng chứng (bắt buộc khi chọn "Datahub"; chỉ chọn được lần đối chiếu `PASSED`) | API-19-047 | Quyền `migration-switch`; người lập ≠ người duyệt |
 | Lịch sử | Kiểm toán đối tác (PH-13) | PH-13 | — |
 
@@ -1090,7 +1090,7 @@ Khi phiên đang `COLLECTING` hoặc `MATCHING`, đầu trang có thanh tiến �
 | Tab | Nội dung | API |
 |---|---|---|
 | Tổng hợp | Bảng hai phía như wireframe (lấy `dhCount`, `providerCount`, `dhAmount`, `providerAmount`, `matchedCount`, `byStatus`); khối "Thu thập" (nguồn, số lần thử, lần thử kế, lỗi cuối) | API-19-067 |
-| Dòng đối soát | `CMP-ProTable` ảo hóa (100.000 dòng): loại (thanh toán, hoàn), mã giao dịch, mã tham chiếu NCC, số tiền hai phía, trạng thái hai phía, kết quả (Khớp, Lệch, Thiếu ở Datahub, Thiếu ở NCC), chênh lệch (liên kết). Lọc theo kết quả; mặc định ẩn dòng khớp. Chọn lần chạy để xem (`lan-chay`) | API-19-070 |
+| Dòng đối soát | `CMP-DataTable` ảo hóa (100.000 dòng): loại (thanh toán, hoàn), mã giao dịch, mã tham chiếu NCC, số tiền hai phía, trạng thái hai phía, kết quả (Khớp, Lệch, Thiếu ở Datahub, Thiếu ở NCC), chênh lệch (liên kết). Lọc theo kết quả; mặc định ẩn dòng khớp. Chọn lần chạy để xem (`lan-chay`) | API-19-070 |
 | Chênh lệch | Bảng chênh lệch của phiên như UI-19-21 | API-19-071 lọc phiên |
 | Tệp | Tệp nguồn đã nhận (tên, kích thước, mã băm, người tải hoặc "Tải tự động", lúc, trạng thái quét) và tải xuống | API-19-088 |
 | Biên bản | Khi `CLOSED`: thông tin biên bản (mã băm `minutesSha256`, người chốt, lúc), nút "Tải PDF", "Tải XLSX"; nếu chưa sinh, nút "Sinh biên bản" chạy API-19-083 `RECON_MINUTES`. Ghi chú "Biên bản ký ngoài hệ thống; ký số trên hệ thống là mở rộng sau (OQ-19-24)" | API-19-083, 084, 088 |
@@ -1176,7 +1176,7 @@ Bảng sinh động từ `columns[]` của API (kiểu `VND` căn phải, `PERCE
 
 ### 32.2. Tạo phiên bản mới
 
-Ngăn kéo 720 px hiện cùng danh sách tham số ở dạng sửa; tham số đổi được đánh dấu "Đã sửa" và giá trị cũ gạch ngang bên cạnh. Kiểu điều khiển theo kiểu tham số: số nguyên (`InputNumber` có miền), phần trăm, `T-MONEY` (`CMP-MoneyInput`), giờ `HH:mm` (`TimePicker`), boolean (`Switch` có chữ Bật, Tắt), danh sách thời lượng ISO 8601 (trình soạn danh sách có xem trước "10 giây, 30 giây, 1 phút…", kiểm tra tăng dần, tổng ≤ 48 giờ), danh sách tên miền. Ràng buộc chéo được kiểm tại chỗ (giờ hạn thu thập sau giờ chốt; ngày chuyển cấp > ngày hạn xử lý). Trường chung: thời điểm hiệu lực (mặc định ngay; không trước hiện tại), ghi chú thay đổi (bắt buộc ≥ 10 ký tự). Tham số có dấu † ở FRS §7.1 (bật hoàn tiền, hạn hoàn, ngưỡng hai cấp, giờ chốt) hiện cảnh báo "Thay đổi này ảnh hưởng quy trình tài chính; người phê duyệt thanh toán sẽ được thông báo" (OQ-19-22). Gửi chỉ các khóa thay đổi. `moduleEnabled` chỉ hiển thị, không sửa (PH-20 quản lý).
+Ngăn kéo 720 px hiện cùng danh sách tham số ở dạng sửa; tham số đổi được đánh dấu "Đã sửa" và giá trị cũ gạch ngang bên cạnh. Kiểu điều khiển theo kiểu tham số: số nguyên (`InputNumber` có miền), phần trăm, `T-MONEY` (`CMP-NumberInput` biến thể `money`), giờ `HH:mm` (`TimePicker`), boolean (`Switch` có chữ Bật, Tắt), danh sách thời lượng ISO 8601 (trình soạn danh sách có xem trước "10 giây, 30 giây, 1 phút…", kiểm tra tăng dần, tổng ≤ 48 giờ), danh sách tên miền. Ràng buộc chéo được kiểm tại chỗ (giờ hạn thu thập sau giờ chốt; ngày chuyển cấp > ngày hạn xử lý). Trường chung: thời điểm hiệu lực (mặc định ngay; không trước hiện tại), ghi chú thay đổi (bắt buộc ≥ 10 ký tự). Tham số có dấu † ở FRS §7.1 (bật hoàn tiền, hạn hoàn, ngưỡng hai cấp, giờ chốt) hiện cảnh báo "Thay đổi này ảnh hưởng quy trình tài chính; người phê duyệt thanh toán sẽ được thông báo" (OQ-19-22). Gửi chỉ các khóa thay đổi. `moduleEnabled` chỉ hiển thị, không sửa (PH-20 quản lý).
 
 ## 33. UI-19-27 Di trú và chạy song song
 
@@ -1263,7 +1263,7 @@ Người nộp quay về từ PayGov thấy trang này trước khi được đ�
 | A11Y-19-01 | Mọi màn đạt WCAG 2.2 AA; axe-core không có lỗi mức "serious" trở lên | Kiểm thử tự động trong CI (Playwright + axe) cho 28 màn |
 | A11Y-19-02 | Bảng số tiền đọc được bằng trình đọc màn hình: tiêu đề cột liên kết `scope`, số tiền có `aria-label` dạng chữ ("năm mươi nghìn đồng") | Kiểm thủ công NVDA, VoiceOver trên UI-19-14, 20 |
 | A11Y-19-03 | Biểu đồ có bảng thay thế và mô tả tóm tắt | UI-19-01, 02, 25 |
-| A11Y-19-04 | Hộp xác nhận bẫy focus, `Esc` đóng, focus trả về nút đã mở | Mọi `CMP-ConfirmModal` |
+| A11Y-19-04 | Hộp xác nhận bẫy focus, `Esc` đóng, focus trả về nút đã mở | Mọi `CMP-ConfirmDialog` |
 | A11Y-19-05 | Trạng thái không chỉ dùng màu | Kiểm ảnh chụp ở chế độ xám |
 | A11Y-19-06 | Chế độ giảm trong suốt và giảm chuyển động hiển thị đúng | Chụp ảnh so sánh với `prefers-reduced-transparency`, `prefers-reduced-motion` |
 
@@ -1300,7 +1300,7 @@ Theo SDD §3.5, mã giao diện nằm ở `apps/console/src/features/payment/`. 
 | `reports/`, `config/`, `migration/` | UI-19-25, 26, 27 |
 | `apps/pay-result/` (gói tĩnh nhỏ, không thuộc `dh-console`; `dh-payment` vai trò callback nhúng gói này vào trang HTML trả cho API-19-202) | UI-19-28 |
 
-Thành phần dùng chung mới đề xuất cho D03-05-04: `CMP-MoneyInput`, `CMP-MoneyText` (định dạng và đọc bằng chữ), `CMP-DiffTable`, `CMP-ReasonDialog` (biến thể của `CMP-ConfirmModal` có ô lý do và gõ lại mã), `CMP-PiiField` (che, bỏ che có hẹn giờ). Kiểu TypeScript sinh từ `openapi-payment-admin.yaml` bằng `openapi-typescript`; không viết tay kiểu của API.
+Thành phần dùng chung lấy từ D03-05-03 và D03-05-04, không tự làm riêng trong phân hệ: `CMP-NumberInput` biến thể `money`, `CMP-Money`, `CMP-DiffTable`, `CMP-ReasonDialog` (có ô lý do và gõ lại mã), `CMP-MaskedValue` (che, bỏ che có hẹn giờ). Dòng đọc số tiền bằng chữ dưới ô nhập (mục 2.2) chưa có trong đặc tả `CMP-NumberInput` của D03-05-03, đề nghị bổ sung ở đó. Kiểu TypeScript sinh từ `openapi-payment-admin.yaml` bằng `openapi-typescript`; không viết tay kiểu của API.
 
 ## 38. Câu hỏi mở
 

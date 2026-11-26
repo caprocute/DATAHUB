@@ -60,6 +60,25 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-036](adr/ADR-036-hai-ho-so-trien-khai-air-gapped.md) | Hai hồ sơ triển khai HT-A/HT-B và gói phân phối air-gapped | Đề xuất | ATTT và hạ tầng |
 | [ADR-037](adr/ADR-037-quy-trinh-git-trunk-based-cong-chat-luong.md) | Trunk-based, Conventional Commits, review bắt buộc, cổng CI-1…9; GitHub khi phát triển, GitLab on-prem khi bàn giao | Đề xuất | ATTT và hạ tầng |
 | [ADR-038](adr/ADR-038-chien-luoc-kiem-thu.md) | Chiến lược kiểm thử, gồm kiểm thử rò rỉ chéo tenant | Đề xuất | ATTT và hạ tầng |
+| [ADR-040](adr/ADR-040-adapter-chong-nhiem-nha-cung-cap.md) | Cổng nhà cung cấp và adapter chống nhiễm cho PayGov | Đề xuất | PH-19 |
+| [ADR-041](adr/ADR-041-idempotency-va-chong-trung.md) | Idempotency hai tầng và bảng chống trùng mã đơn hàng | Đề xuất | PH-19 |
+| [ADR-042](adr/ADR-042-inbox-outbox-trong-du.md) | Hộp nhận, hộp gửi trong DU thanh toán; webhook không phụ thuộc Kafka | Đề xuất | PH-19 |
+| [ADR-043](adr/ADR-043-mo-hinh-trang-thai-giao-dich.md) | Máy trạng thái giao dịch nội bộ, ánh xạ trạng thái NCC qua bảng | Đề xuất | PH-19 |
+| [ADR-044](adr/ADR-044-ky-webhook-hmac.md) | Ký webhook HMAC-SHA256 kiểu t=,v1= và xoay bí mật có chuyển tiếp | Đề xuất | PH-19 |
+| [ADR-045](adr/ADR-045-xac-dinh-tenant-callback.md) | Xác định tenant của callback bằng connectionKey trong đường dẫn | Đề xuất | PH-19 |
+| [ADR-046](adr/ADR-046-phe-duyet-bon-mat.md) | Đề nghị phê duyệt bốn mắt dùng chung cho mọi thao tác ảnh hưởng tới tiền | Đề xuất | PH-19 |
+| [ADR-047](adr/ADR-047-luu-tru-phan-vung.md) | Phân vùng theo tháng và lưu trữ dài hạn dữ liệu thanh toán | Đề xuất | PH-19 |
+| [ADR-048](adr/ADR-048-ma-hoa-dlcn-nguoi-nop.md) | Mã hóa dữ liệu cá nhân người nộp và tìm kiếm bằng băm HMAC | Đề xuất | PH-19 |
+| [ADR-049](adr/ADR-049-strangler-theo-doi-tac.md) | Chuyển đổi strangler theo từng đối tác | Đề xuất | PH-19 |
+| [ADR-050](adr/ADR-050-jsonb-thuoc-tinh-dong.md) | Thuộc tính động của danh mục lưu bằng jsonb và kiểm tra bằng JSON Schema thay cho EAV | Đề xuất | PH-07 |
+| [ADR-051](adr/ADR-051-phien-ban-anh-chup.md) | Phiên bản danh mục là ảnh chụp copy-on-write bất biến, hiệu lực theo khoảng ngày | Đề xuất | PH-07 |
+| [ADR-052](adr/ADR-052-danh-muc-common-va-hybrid.md) | Danh mục toàn quốc lưu ở tenant COMMON, tenant tỉnh mở rộng bằng danh mục HYBRID dạng phủ lớp | Đề xuất | PH-07 |
+| [ADR-053](adr/ADR-053-phan-phoi-bo-dem-hai-tang-anh-chup.md) | Phân phối danh mục bằng bộ đệm hai tầng Caffeine và Valkey, kèm ảnh chụp trên Garage cho data plane | Đề xuất | PH-07 |
+| [ADR-054](adr/ADR-054-dsl-truy-van-co-cau-truc.md) | Truy vấn có cấu trúc trên danh mục bằng DSL lọc dạng JSON dịch sang SQL tham số hóa | Đề xuất | PH-07 |
+| [ADR-055](adr/ADR-055-mo-hinh-dvhc-lich-su-ke-thua.md) | Mô hình đơn vị hành chính theo phiên bản, quan hệ kế thừa nhiều-nhiều và bảng chiếu admin_unit | Đề xuất | PH-07 |
+| [ADR-056](adr/ADR-056-nhap-tep-hai-pha.md) | Nhập tệp danh mục bằng tác vụ nền hai pha, đọc luồng và quét mã độc trước khi phân tích | Đề xuất | PH-07 |
+| [ADR-057](adr/ADR-057-dong-bo-quoc-gia-qua-ph14.md) | Đồng bộ danh mục quốc gia qua adapter PH-14, đối chiếu khác biệt và tự áp dụng có điều kiện | Đề xuất | PH-07 |
+| [ADR-058](adr/ADR-058-may-trang-thai-duyet-noi-bo.md) | Luồng duyệt phiên bản danh mục dùng máy trạng thái nội bộ thay cho Flowable | Đề xuất | PH-07 |
 | [ADR-060](adr/ADR-060-trinh-thiet-ke-tu-lam-mo-hinh-kaoto.md) | Trình thiết kế tự làm lại mô hình Kaoto bằng React 19 và XYFlow, dùng catalog Kaoto vendor | Đề xuất | PH-04 |
 | [ADR-061](adr/ADR-061-catalog-khop-phien-ban-runtime.md) | Catalog trình thiết kế khớp đúng phiên bản runtime, CI chặn khi lệch | Chấp nhận (25/11/2026) | PH-04 |
 | [ADR-062](adr/ADR-062-luong-nghiep-vu-yaml-dsl-java-cho-thu-vien-nen.md) | Luồng nghiệp vụ bằng YAML DSL; Java chỉ cho thư viện nền | Đề xuất | PH-04 |
@@ -70,7 +89,6 @@ Bảng dưới đây liệt kê các ADR đã ghi. Trạng thái `Đề xuất` 
 | [ADR-067](adr/ADR-067-truy-cap-csdl-truc-tiep-co-kiem-soat.md) | Truy cập CSDL trực tiếp có kiểm soát (Q359) | Chấp nhận (25/11/2026) | PH-04, PH-05 |
 | [ADR-068](adr/ADR-068-kho-cau-hinh-git-theo-tenant.md) | Kho cấu hình luồng theo tenant, nhánh theo môi trường | Đề xuất | PH-04 |
 | [ADR-069](adr/ADR-069-may-trang-thai-phien-ban-va-bon-mat.md) | Máy trạng thái phiên bản luồng, bốn mắt chốt ở máy chủ | Đề xuất | PH-04 |
-
 
 ## 5. Nhật ký quyết định của chủ đầu tư
 

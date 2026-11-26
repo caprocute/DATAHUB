@@ -614,7 +614,7 @@ Danh sách dùng phân trang theo khóa (`createdAt`, `id`) khi người dùng c
 | Nhóm API | Xác thực | Phân quyền |
 |---|---|---|
 | Quản trị `/api/payment/v1` | JWT người dùng do Keycloak phát (PKCE qua BFF của console), `aud = dh-payment-admin` | OPA: `PERM-19-*` theo vai trò của tenant; thuộc tính đối tượng (tenant, người lập) cho tách nhiệm |
-| Đối tác `/api/payment-partner/v1` | OAuth 2.1 `client_credentials`, `private_key_jwt` hoặc mTLS, token ràng buộc chứng thư (RFC 8705) khi dùng mTLS, hạn 5 phút (NFR-19-019) | Claim `partner_id`, `tenant_id`; OPA kiểm tra `PERM-19-partner-*`; mọi truy vấn lọc thêm `partner_id` |
+| Đối tác `/api/payment-partner/v1` | OAuth 2.1 `client_credentials`, `private_key_jwt` hoặc mTLS, token ràng buộc chứng thư (RFC 8705) khi dùng mTLS, hạn 5 phút (NFR-19-019) | Claim `partner_id`, `tenant_id`; OPA kiểm tra bốn quyền đối tác của D02-08 §3.3 (`partner-pay-create`, `partner-pay-read`, `partner-refund-create`, `partner-recon-read`); mọi truy vấn lọc thêm `partner_id` |
 | Callback `/api/payment-callback/v1` | Không token; allowlist IP tại APISIX, mTLS nếu PayGov dùng, chữ ký nội dung | `connectionKey` → NCC → tenant (ADR-045) |
 
 `@PreAuthorize("@perm.has('PERM-19-refund-approve')")` ở controller là lớp thứ nhất; `FourEyesGuard` ở dịch vụ là lớp thứ hai; ràng buộc `CHECK` trên `approval_request` là lớp thứ ba (§12).

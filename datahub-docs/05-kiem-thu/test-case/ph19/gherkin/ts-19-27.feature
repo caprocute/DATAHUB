@@ -9,7 +9,7 @@ Tính năng: TS-19-27 · Thông báo kết quả cho đối tác
     Biết `WHSINK` cho P-DVC trả `200`.
     Khi hoàn tất TX-OK qua IPN.
     Và Ở `WHSINK` kiểm chữ ký.
-    Thì bước 1: lượt gửi `PENDING` → `DELIVERED` trong p95 ≤ 5 s. Bước 2: header `Datahub-Webhook-Id`, `Datahub-Webhook-Timestamp`, `Datahub-Webhook-Signature`; HMAC-SHA256 trên `{id}.{timestamp}.{body}` khớp; thân có `transactionCode`, `status`, `amount`, `sequence`, không có dữ liệu cá nhân.
+    Thì bước 1: lượt gửi `PENDING` → `DELIVERED` trong p95 ≤ 5 s. Bước 2: header `Webhook-Id`, `Webhook-Timestamp`, `X-Datahub-Signature: t={unix},v1={hex}`, `traceparent`; HMAC-SHA256 trên `{id}.{t}.{body}` khớp; thân CloudEvents JSON thân có `transactionCode`, `status`, `amount`, `sequence`, không có dữ liệu cá nhân.
 
   @TC-19-652 @P1 @Âm
   Kịch bản: TC-19-652 Thử lại theo lịch rồi hết lần thử
@@ -31,20 +31,20 @@ Tính năng: TS-19-27 · Thông báo kết quả cho đối tác
     # Truy vết: FR-19-062 · API-19-077, 078, 079 · UI-19-24
     Biết lượt `EXHAUSTED` từ TC-19-652; `WHSINK` đã phục hồi; U-OPR1.
     Khi UI-19-24 lọc `EXHAUSTED`, mở chi tiết, bấm "Gửi lại", nhập lý do.
-    Thì `202`; lượt gửi `PENDING` → `DELIVERED`; giữ nguyên `Datahub-Webhook-Id` (đối tác khử trùng được); các lần thử cũ vẫn xem được. KT: có.
+    Thì `202`; lượt gửi `PENDING` → `DELIVERED`; giữ nguyên `Webhook-Id` (đối tác khử trùng được); các lần thử cũ vẫn xem được. KT: có.
 
   @TC-19-655 @P3 @Dương
   Kịch bản: TC-19-655 Hủy lượt gửi khi đối tác hoặc đầu nhận bị gỡ
     # Truy vết: FR-19-062 · BR-19-020
-    Biết lượt `RETRYING` tới đầu nhận của P-DVC.
+    Biết lượt `RETRY_SCHEDULED` tới đầu nhận của P-DVC.
     Khi vô hiệu đầu nhận đó.
     Thì lượt gửi `CANCELLED`, không thử tiếp; thông báo vẫn kéo được qua API-19-109.
 
   @TC-19-656 @P2 @Âm
   Kịch bản: TC-19-656 Gửi lại lượt đang gửi, đã giao, sai phiên bản
     # Truy vết: FR-19-062 · API-19-078 · ERR-19-021, 045, 046
-    Biết lượt `RETRYING`; lượt `DELIVERED`; U-ACC1 (không có `webhook-resend`).
-    Khi gửi lại lượt `RETRYING`.
+    Biết lượt `RETRY_SCHEDULED`; lượt `DELIVERED`; U-ACC1 (không có `webhook-resend`).
+    Khi gửi lại lượt `RETRY_SCHEDULED`.
     Và gửi lại lượt `DELIVERED`.
     Và gửi lại với `If-Match` cũ.
     Và U-ACC1 gửi lại.

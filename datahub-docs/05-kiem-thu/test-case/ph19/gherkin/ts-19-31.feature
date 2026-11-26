@@ -42,7 +42,7 @@ Tính năng: TS-19-31 · Cách ly tenant và RLS
     # Truy vết: NFR-19-025 · ADR-045 · API-19-201
     Biết hai tenant T68, T99 cùng dùng PayGov với `connectionKey` khác nhau; giao dịch `PENDING` ở T68.
     Khi gửi IPN của giao dịch T68 tới `connectionKey` của T99, ký bằng khóa của T99.
-    Thì IPN `QUARANTINED` lý do `NOT_FOUND` ở T99; giao dịch của T68 không đổi.
+    Thì IPN bị từ chối, hộp nhận ghi `REJECTED` với kết quả xác minh `TENANT_MISMATCH` (mã đơn vị trong nội dung đã ký không thuộc T99); giao dịch của T68 không đổi; sự kiện an ninh.
 
   @TC-19-756 @P2 @Bảo @mật
   Kịch bản: TC-19-756 Hạn mức tốc độ riêng mỗi tenant

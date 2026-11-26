@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D02-01-PH19
 ten: Yêu cầu nghiệp vụ phân hệ PH-19 Thanh toán điện tử
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Hội đồng thẩm định; chủ đầu tư; Sở Tài chính và kế toán cơ quan thu; nhóm phân tích, thiết kế, kiểm thử PH-19; luồng lõi (D02-01, D00-03)
 nguoi_lap: Nhóm phân tích thiết kế
@@ -66,18 +66,18 @@ Phân hệ thanh toán chịu sự chi phối của ba nhóm văn bản: nhóm q
 
 | Mã | Văn bản | Nội dung chi phối PH-19 | REQ chịu tác động | Trạng thái kiểm tra |
 |---|---|---|---|---|
-| CMP-LAW-91 (đề xuất) | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Tổ chức, cá nhân được thực hiện nghĩa vụ tài chính trong TTHC bằng phương thức thanh toán trực tuyến; kết quả thanh toán là một phần hồ sơ điện tử | REQ-93, REQ-94 | Cần đối chiếu điều khoản cụ thể |
-| CMP-LAW-92 (đề xuất) | Nghị định 42/2022/NĐ-CP quy định về việc cung cấp thông tin và dịch vụ công trực tuyến của CQNN trên môi trường mạng | Phân loại dịch vụ công trực tuyến toàn trình và một phần; dịch vụ toàn trình có phí, lệ phí đòi hỏi việc thanh toán cũng được thực hiện trực tuyến | REQ-93 | Cần đối chiếu điều khoản cụ thể |
-| CMP-LAW-93 (đề xuất) | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, một cửa liên thông, được sửa đổi, bổ sung bởi Nghị định 107/2021/NĐ-CP | Vai trò của Cổng DVC quốc gia và HTTT giải quyết TTHC cấp tỉnh; thanh toán trực tuyến phí, lệ phí qua Cổng DVC quốc gia | REQ-93, REQ-97 | Cần đối chiếu điều khoản cụ thể |
-| CMP-LAW-94 (đề xuất) | Nghị định 52/2024/NĐ-CP về thanh toán không dùng tiền mặt | Định nghĩa dịch vụ trung gian thanh toán và điều kiện cung ứng; cơ sở để khẳng định PH-19 không làm trung gian thanh toán và không giữ tiền | REQ-93, REQ-96 | Cần đối chiếu điều khoản cụ thể |
-| CMP-LAW-95 (đề xuất) | Luật Giao dịch điện tử số 20/2023/QH15 | Giá trị pháp lý của thông điệp dữ liệu, chữ ký điện tử, chứng cứ; yêu cầu về lưu trữ thông điệp dữ liệu bảo đảm tính toàn vẹn | REQ-94, REQ-98 | Cần đối chiếu điều khoản cụ thể |
-| CMP-LAW-96 (đề xuất) | Văn bản của Bộ Tài chính về hình thức, thời hạn thu, nộp phí, lệ phí (Thông tư 74/2022/TT-BTC hoặc văn bản thay thế) và quy định về biên lai thu phí, lệ phí điện tử (Nghị định 123/2020/NĐ-CP và văn bản sửa đổi) | Thu phí, lệ phí qua phương thức điện tử; trách nhiệm lập biên lai của tổ chức thu; liên quan tới câu hỏi ai phát hành biên lai (OQ-19-14) | REQ-93, REQ-95, REQ-96 | Cần đối chiếu số hiệu và hiệu lực |
-| CMP-LAW-97 (đề xuất) | Luật Kế toán số 88/2015/QH13 và Luật Lưu trữ năm 2024 | Thời hạn lưu trữ chứng từ, tài liệu liên quan tới thu ngân sách; căn cứ để chốt thời gian lưu giao dịch, biên bản đối soát | REQ-98 | Cần đối chiếu số hiệu và thời hạn áp dụng cho chứng cứ của PH-19 |
-| CMP-LAW-03 | Nghị định 47/2020/NĐ-CP về quản lý, kết nối, chia sẻ dữ liệu số của CQNN | Datahub đóng vai trò LGSP; kết nối giữa HTTT của tỉnh với nền tảng quốc gia đi qua nền tảng tích hợp cấp tỉnh | REQ-93 | Theo D00-01 |
-| CMP-LAW-04, CMP-LAW-05 | Nghị định 13/2023/NĐ-CP và Luật Bảo vệ dữ liệu cá nhân năm 2025 | Họ tên, số định danh, số điện thoại của người nộp là dữ liệu cá nhân; phải tối thiểu hóa, che khi hiển thị, ghi nhận mục đích xử lý | REQ-97, REQ-98 | Theo D00-01 |
-| CMP-LAW-06, CMP-LAW-07, CMP-LAW-08 | Nghị định 85/2016/NĐ-CP, Thông tư 12/2022/TT-BTTTT, TCVN 11930:2017 | Phân hệ xử lý giao dịch tài chính của nhiều cơ quan, đề xuất cấp độ 3 và sẵn sàng cấp độ 4 | REQ-98 | Theo D00-01 |
+| CMP-LAW-91 | Nghị định 45/2020/NĐ-CP về thực hiện TTHC trên môi trường điện tử | Tổ chức, cá nhân được thực hiện nghĩa vụ tài chính trong TTHC bằng phương thức thanh toán trực tuyến; kết quả thanh toán là một phần hồ sơ điện tử | REQ-93, REQ-94 | Cần đối chiếu điều khoản cụ thể |
+| CMP-LAW-92 | Nghị định 42/2022/NĐ-CP quy định về việc cung cấp thông tin và dịch vụ công trực tuyến của CQNN trên môi trường mạng | Phân loại dịch vụ công trực tuyến toàn trình và một phần; dịch vụ toàn trình có phí, lệ phí đòi hỏi việc thanh toán cũng được thực hiện trực tuyến | REQ-93 | Cần đối chiếu điều khoản cụ thể |
+| CMP-LAW-93 | Nghị định 61/2018/NĐ-CP về cơ chế một cửa, một cửa liên thông, được sửa đổi, bổ sung bởi Nghị định 107/2021/NĐ-CP | Vai trò của Cổng DVC quốc gia và HTTT giải quyết TTHC cấp tỉnh; thanh toán trực tuyến phí, lệ phí qua Cổng DVC quốc gia | REQ-93, REQ-97 | Cần đối chiếu điều khoản cụ thể |
+| CMP-LAW-94 | Nghị định 52/2024/NĐ-CP về thanh toán không dùng tiền mặt | Định nghĩa dịch vụ trung gian thanh toán và điều kiện cung ứng; cơ sở để khẳng định PH-19 không làm trung gian thanh toán và không giữ tiền | REQ-93, REQ-96 | Cần đối chiếu điều khoản cụ thể |
+| CMP-LAW-95 | Luật Giao dịch điện tử số 20/2023/QH15 | Giá trị pháp lý của thông điệp dữ liệu, chữ ký điện tử, chứng cứ; yêu cầu về lưu trữ thông điệp dữ liệu bảo đảm tính toàn vẹn | REQ-94, REQ-98 | Cần đối chiếu điều khoản cụ thể |
+| CMP-LAW-96 | Văn bản của Bộ Tài chính về hình thức, thời hạn thu, nộp phí, lệ phí (Thông tư 74/2022/TT-BTC hoặc văn bản thay thế) và quy định về biên lai thu phí, lệ phí điện tử (Nghị định 123/2020/NĐ-CP và văn bản sửa đổi) | Thu phí, lệ phí qua phương thức điện tử; trách nhiệm lập biên lai của tổ chức thu; liên quan tới câu hỏi ai phát hành biên lai (OQ-19-14) | REQ-93, REQ-95, REQ-96 | Cần đối chiếu số hiệu và hiệu lực |
+| CMP-LAW-97 | Luật Kế toán số 88/2015/QH13 và Luật Lưu trữ năm 2024 | Thời hạn lưu trữ chứng từ, tài liệu liên quan tới thu ngân sách; căn cứ để chốt thời gian lưu giao dịch, biên bản đối soát | REQ-98 | Cần đối chiếu số hiệu và thời hạn áp dụng cho chứng cứ của PH-19 |
+| CMP-LAW-03 | Nghị định 278/2025/NĐ-CP về kết nối, chia sẻ dữ liệu (thay toàn bộ Nghị định 47/2020/NĐ-CP) | Datahub đóng vai trò LGSP; kết nối giữa HTTT của tỉnh với nền tảng quốc gia đi qua nền tảng tích hợp cấp tỉnh | REQ-93 | Theo D00-01 |
+| CMP-LAW-04, CMP-LAW-05 | Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 và Nghị định 356/2025/NĐ-CP (thay Nghị định 13/2023/NĐ-CP) | Họ tên, số định danh, số điện thoại của người nộp là dữ liệu cá nhân; phải tối thiểu hóa, che khi hiển thị, ghi nhận mục đích xử lý | REQ-97, REQ-98 | Theo D00-01 |
+| CMP-LAW-06, CMP-LAW-07, CMP-LAW-08 | Nghị định 331/2026/NĐ-CP (kế nhiệm Nghị định 85/2016/NĐ-CP), Thông tư 12/2022/TT-BTTTT (đối chiếu trong thời gian chuyển tiếp), TCVN 14423:2026 (thay TCVN 11930:2017) | Phân hệ xử lý giao dịch tài chính của nhiều cơ quan, đề xuất cấp độ 3 và sẵn sàng cấp độ 4 | REQ-98 | Theo D00-01 |
 | CMP-LAW-15 | Nghị định 30/2020/NĐ-CP về công tác văn thư | Thể thức biên bản đối soát, báo cáo xuất bản ở dạng văn bản | REQ-95 | Theo D00-01 |
-| CMP-LAW-16 | Luật An ninh mạng và văn bản hướng dẫn | Lưu trữ dữ liệu giao dịch trong nước, nhật ký | REQ-98 | Theo D00-01 |
+| CMP-LAW-16 | Luật An ninh mạng số 116/2025/QH15 và văn bản hướng dẫn | Lưu trữ dữ liệu giao dịch trong nước, nhật ký | REQ-98 | Theo D00-01 |
 
 Hai điểm pháp lý dưới đây chưa có câu trả lời chắc chắn và có thể làm thay đổi thiết kế, nên được nêu thành câu hỏi mở ở mục 10. Thứ nhất, chưa xác định được văn bản nào quy định cụ thể thủ tục kết nối của một tỉnh với PayGov, và liệu tỉnh có được kết nối qua một nền tảng trung gian như Datahub thay vì từng HTTT kết nối trực tiếp hay không. Thứ hai, thời hạn lưu trữ bắt buộc đối với chứng cứ điện tử về thanh toán phí, lệ phí (khác với thời hạn lưu chứng từ kế toán của cơ quan thu) chưa được xác định.
 
@@ -864,25 +864,25 @@ Các câu hỏi đã có mã trong khung truy vết được tham chiếu theo m
 
 Ma trận dưới đây nối mỗi REQ con với quy trình TO-BE nơi nó được thực hiện, các FR hiện thực nó (theo cột REQ và UC của khung truy vết mục 4) và các chức năng hệ cũ mà các FR đó phủ. Dòng có cột BP là "Nền" chứa các FR là năng lực xuyên quy trình (tra cứu, giám sát, kiểm toán, cấu hình) không gắn với riêng một BP. Một FR có thể xuất hiện ở nhiều dòng vì nó phục vụ nhiều REQ. Chiều ngược lại (LGC → FR) xem khung truy vết mục 2; chiều xuống (FR → UC → API → bảng → màn hình → TC) xem khung truy vết mục 17.
 
-| REQ con (cha REQ-19) | BP (cha BP-05) | FR | LGC phủ |
-|---|---|---|---|
-| REQ-91 | BP-91 | FR-19-001, 002, 003, 004, 005, 006, 010 | LGC-PAY-001, 004, 005, 007, 008 |
-| REQ-91 | Nền | FR-19-007, 008, 009, 011 | LGC-PAY-002, 003, 004, 006, 009, 023 |
-| REQ-92 | BP-92 | FR-19-014, 015, 016, 017, 018, 019, 020 | LGC-PAY-022 |
-| REQ-92 | Nền | FR-19-013 | LGC-PAY-022 |
-| REQ-93 | BP-93 | FR-19-022, 023, 024, 025, 026, 035 | LGC-PAY-011, 012, 023, 024 (đề xuất) |
-| REQ-94 | BP-92 | FR-19-021 | — |
-| REQ-94 | BP-93 | FR-19-025, 027, 028, 029, 030, 031, 032, 033, 034, 035, 036, 037, 060, 061, 062 | LGC-PAY-010, 011, 012, 019, 024 (đề xuất) |
-| REQ-95 | BP-93 | FR-19-031 | LGC-PAY-010 |
-| REQ-95 | BP-95 | FR-19-042, 043, 044, 045, 046, 047, 048 | — (năng lực mới) |
-| REQ-96 | BP-94 | FR-19-038, 039, 040, 041 | LGC-PAY-025 (đề xuất) |
-| REQ-97 | BP-93 | FR-19-037 | — |
-| REQ-97 | Nền | FR-19-011, 049, 050, 051, 052, 053, 054, 055, 056, 057, 058, 059 | LGC-PAY-003, 009, 011, 013, 014, 015, 016, 017, 018, 019, 020, 021, 023, 026 (đề xuất) |
-| REQ-98 (cha thêm REQ-20) | BP-91 | FR-19-002 | LGC-PAY-001, 004 |
-| REQ-98 | BP-92 | FR-19-019 | — |
-| REQ-98 | BP-93 | FR-19-028, 029 | LGC-PAY-010, 011, 019 |
-| REQ-98 | Nền | FR-19-012, 053, 063, 064 | LGC-PAY-021 |
-| REQ-99 (cha thêm REQ-22) | BP-96 (cha thêm BP-09) | FR-19-065, 066, 067, 068; FR-00-090…093 | LGC-PAY-011, 022, 024 (đề xuất) |
+| # | REQ con (cha REQ-19) | BP (cha BP-05) | FR | LGC phủ |
+|---|---|---|---|---|
+| 1 | REQ-91 | BP-91 | FR-19-001, 002, 003, 004, 005, 006, 010 | LGC-PAY-001, 004, 005, 007, 008 |
+| 2 | REQ-91 | Nền | FR-19-007, 008, 009, 011 | LGC-PAY-002, 003, 004, 006, 009, 023 |
+| 3 | REQ-92 | BP-92 | FR-19-014, 015, 016, 017, 018, 019, 020 | LGC-PAY-022 |
+| 4 | REQ-92 | Nền | FR-19-013 | LGC-PAY-022 |
+| 5 | REQ-93 | BP-93 | FR-19-022, 023, 024, 025, 026, 035 | LGC-PAY-011, 012, 023, 024 (đề xuất) |
+| 6 | REQ-94 | BP-92 | FR-19-021 | — |
+| 7 | REQ-94 | BP-93 | FR-19-025, 027, 028, 029, 030, 031, 032, 033, 034, 035, 036, 037, 060, 061, 062 | LGC-PAY-010, 011, 012, 019, 024 (đề xuất) |
+| 8 | REQ-95 | BP-93 | FR-19-031 | LGC-PAY-010 |
+| 9 | REQ-95 | BP-95 | FR-19-042, 043, 044, 045, 046, 047, 048 | — (năng lực mới) |
+| 10 | REQ-96 | BP-94 | FR-19-038, 039, 040, 041 | LGC-PAY-025 (đề xuất) |
+| 11 | REQ-97 | BP-93 | FR-19-037 | — |
+| 12 | REQ-97 | Nền | FR-19-011, 049, 050, 051, 052, 053, 054, 055, 056, 057, 058, 059 | LGC-PAY-003, 009, 011, 013, 014, 015, 016, 017, 018, 019, 020, 021, 023, 026 (đề xuất) |
+| 13 | REQ-98 (cha thêm REQ-20) | BP-91 | FR-19-002 | LGC-PAY-001, 004 |
+| 14 | REQ-98 | BP-92 | FR-19-019 | — |
+| 15 | REQ-98 | BP-93 | FR-19-028, 029 | LGC-PAY-010, 011, 019 |
+| 16 | REQ-98 | Nền | FR-19-012, 053, 063, 064 | LGC-PAY-021 |
+| 17 | REQ-99 (cha thêm REQ-22) | BP-96 (cha thêm BP-09) | FR-19-065, 066, 067, 068; FR-00-090…093 | LGC-PAY-011, 022, 024 (đề xuất) |
 
 Kiểm tra độ phủ cho thấy: cả 68 FR của khung truy vết đều xuất hiện ít nhất một lần; cả 23 LGC chính thức và 3 LGC đề xuất đều được phủ; mỗi REQ con có ít nhất một BP, trừ phần "Nền" của REQ-91, REQ-92, REQ-97, REQ-98; mỗi BP con có ít nhất một REQ. Ba REQ con có FR không phủ chức năng hệ cũ nào (REQ-95 đối soát, REQ-96 phần lớn hoàn tiền, các FR an toàn của REQ-98) đúng là ba vùng mà hệ cũ thiếu theo mục 3.3.
 
@@ -903,8 +903,15 @@ Theo quy tắc của khung truy vết mục 0, tài liệu này không tự đ�
 
 | Đề xuất | Nội dung | Ghi chú cho luồng lõi |
 |---|---|---|
-| CMP-LAW-91…97 | Bảy văn bản pháp lý riêng cho thanh toán ở mục 2.1 | Dùng dải 91–97 để tránh trùng với số mà các luồng khác có thể đề xuất sau CMP-LAW-16; đổi số cơ học khi gộp D00-01 §7 và D00-03 phần D |
+| CMP-LAW-91…97 | Bảy văn bản pháp lý riêng cho thanh toán ở mục 2.1 | Đã gộp vào D00-01 §7 ngày 26/11/2026, giữ nguyên dải 91–97 |
 | Thay SH-91, SH-94, SH-95, SH-96, SH-98 | Thay bằng SH-02/SH-03, SH-04/SH-05, SH-09, SH-10, SH-11 của BRD tổng | Khung truy vết mục 1.6 cần cập nhật tương ứng; giữ SH-92, SH-93, SH-97 là mã con đề xuất |
 | Thêm SH-12 vào phạm vi PH-19 | Đơn vị vận hành LGSP cũ tham gia BP-96 | Khung chưa có bên này |
 | Mã RSK cho 13 rủi ro ở mục 9 | Gộp vào sổ rủi ro D01-02 | Rủi ro số 1 trùng ý với RSK-A04, số 7 trùng ý với RSK-A03 |
 | OQ-19 cho Q01…Q09 ở mục 10.3 | Bổ sung vào khung truy vết mục 15 | Q08 có thể gộp vào nhóm OQ-19-01…08 |
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Nội dung |
+|---|---|---|
+| 0.1 | 2026-11-21 | Bản đầu |
+| 0.2 | 2026-11-26 | Cập nhật căn cứ pháp lý mục 2.1 theo văn bản hiện hành (NĐ 278/2025, Luật 91/2025, NĐ 356/2025, NĐ 331/2026, TCVN 14423:2026, Luật ANM 116/2025); CMP-LAW-91…97 đã vào D00-01; REQ-91…99 đã vào BRD tổng |

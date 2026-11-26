@@ -35,7 +35,7 @@ Tính năng: TS-19-30 · Bảo mật callback và webhook
     Khi gửi IPN hợp lệ từ IP lạ.
     Và gửi IPN tới `connectionKey` của PV-SUS bằng chữ ký của PV-PG.
     Và gửi tới `connectionKey` ngẫu nhiên.
-    Thì bước 1 trả `403` ERR-19-027 tại biên, không tới `dh-payment`. Bước 2 trả `401` ERR-19-024. Bước 3 trả `404`, thân chung, không lộ tenant.
+    Thì bước 1 trả `403` ERR-19-027 tại biên, không tới `dh-payment`. Bước 2 trả `401` ERR-19-024. Bước 3 trả `403` ERR-19-027 với thân giống hệt bước 1, không lộ khóa có tồn tại hay không, không lộ tenant.
 
   @TC-19-730 @P2 @Bảo @mật
   Kịch bản: TC-19-730 Xoay bí mật webhook, hai bí mật cùng hiệu lực 7 ngày
@@ -44,7 +44,7 @@ Tính năng: TS-19-30 · Bảo mật callback và webhook
     Khi xoay bí mật.
     Và hoàn tất giao dịch; kiểm header chữ ký.
     Và tiến 7 ngày 1 phút; hoàn tất giao dịch.
-    Thì bước 2: header có hai chữ ký `v1=` (mới, cũ); đối tác chỉ có bí mật cũ vẫn xác minh được. Bước 3: chỉ còn chữ ký mới. Bí mật mới ≥ 256 bit, chỉ nằm trong OpenBao.
+    Thì bước 2: `X-Datahub-Signature` có hai giá trị `v1` phân tách bằng dấu phẩy (mới, cũ); đối tác chỉ có bí mật cũ vẫn xác minh được. Bước 3: chỉ còn chữ ký mới. Bí mật mới ≥ 256 bit, chỉ nằm trong OpenBao.
 
   @TC-19-731 @P1 @Bảo @mật
   Kịch bản: TC-19-731 Token đối tác hết hạn, client bị thu hồi

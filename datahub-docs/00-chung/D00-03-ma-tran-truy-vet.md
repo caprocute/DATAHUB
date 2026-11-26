@@ -218,7 +218,7 @@ Hệ cũ lưu danh mục theo mô hình thực thể – thuộc tính – giá 
 
 ### 4.6. PAY — thanh toán (`LGC-PAY`)
 
-Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh thanh toán, trong đó kênh mặc định là PayGov. Dữ liệu gồm đối tác (`payment_partner`), nhà cung cấp (`payment_provider`), nhóm dịch vụ, dịch vụ và giao dịch. Tài liệu hệ cũ không mô tả nghiệp vụ đối soát, hoàn tiền hay bảo mật callback. Theo quyết định Q3, Datahub bổ sung đầy đủ các nghiệp vụ này ở PH-19.
+Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh thanh toán, trong đó kênh mặc định là PayGov. Dữ liệu gồm đối tác (`payment_partner`), nhà cung cấp (`payment_provider`), nhóm dịch vụ, dịch vụ và giao dịch. Tài liệu hệ cũ không mô tả nghiệp vụ đối soát, hoàn tiền hay bảo mật callback. Theo quyết định Q3, Datahub bổ sung đầy đủ các nghiệp vụ này ở PH-19. Ba mục LGC-PAY-024…026 do luồng PH-19 rà lại tài liệu hệ cũ đề xuất và được thêm ngày 26/11/2026 (khung D02-03-PH19-00 §2).
 
 | Mã | Chức năng hệ cũ | Kết luận | PH đích | Màn hình vận hành | Ghi chú chuyển hóa |
 |---|---|---|---|---|---|
@@ -245,6 +245,9 @@ Khối Payment là lớp trung gian giữa các HTTT của tỉnh và các kênh
 | LGC-PAY-021 | Danh sách, lọc, sắp xếp, xem chi tiết nhật ký giao dịch | Giữ nguyên | PH-19, PH-13 | — | |
 | LGC-PAY-022 | Quản lý đối tác, nhóm dịch vụ và dịch vụ thanh toán | Giữ nguyên | PH-19 | — | |
 | LGC-PAY-023 | Giám sát nhiều nhà cung cấp; tài liệu cũ chỉ hiện thực một nhà cung cấp mặc định (PayGov) | Nâng cấp | PH-19 | — | Kiến trúc đa kênh, PayGov là kênh đầu tiên |
+| LGC-PAY-024 | Nhận yêu cầu thanh toán của HTTT, gửi yêu cầu sang NCC, xử lý quá trình thanh toán (HDSD mục 3, dòng 9–11) | Nâng cấp | PH-19 | — | API thu thống nhất có idempotency, kiểm tra hợp lệ 15 bước, trang kết quả không đổi trạng thái (FR-19-022…025, 033, 034; ADR-041) |
+| LGC-PAY-025 | Ba trạng thái hoàn trả `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` chỉ có trong bộ trạng thái, không có chức năng (TKCT 3.4) | Nâng cấp | PH-19 | Có | Nghiệp vụ hoàn tiền đầy đủ: lập, duyệt một hoặc hai cấp, thực thi qua NCC hoặc thủ công có chứng từ (FR-19-038…041; ADR-043, ADR-046) |
+| LGC-PAY-026 | Số liệu tổng trên dashboard được đệm 10 phút (TKCT 3.1) | Nâng cấp | PH-19 | Có | Số liệu trễ tối đa 60 giây (FR-19-056, NFR-19-006) |
 
 ### 4.7. NGSP — kết nối quốc gia (`LGC-NGSP`)
 

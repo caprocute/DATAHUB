@@ -215,7 +215,7 @@ D00-03 §4.6 đã kiểm kê 23 chức năng hệ cũ `LGC-PAY-001…023` từ b
 
 Khi đối chiếu lại tài liệu gốc, có ba hành vi của hệ cũ chưa có dòng riêng trong D00-03. Tài liệu này **đề xuất** luồng lõi bổ sung vào D00-03 §4.6; trong lúc chờ, các luồng PH-19 được phép tham chiếu ba mã này kèm chữ "(đề xuất)".
 
-| Mã (đề xuất) | Chức năng hệ cũ | Nguồn | Kết luận đề xuất | FR phủ |
+| Mã (đã vào D00-03 §4.6 ngày 26/11/2026) | Chức năng hệ cũ | Nguồn | Kết luận | FR phủ |
 |---|---|---|---|---|
 | LGC-PAY-024 | Nhận yêu cầu thanh toán của người dùng, gửi yêu cầu thanh toán, xử lý quá trình thanh toán theo NCC | HDSD mục 3, dòng 9–11 | Nâng cấp | FR-19-022, 023, 024, 025, 033, 034 |
 | LGC-PAY-025 | Bộ trạng thái giao dịch có ba trạng thái hoàn trả `REFUND_PENDING`, `REFUND_SUCCESS`, `REFUND_FAILED` (chỉ có trạng thái, không mô tả chức năng) | TKCT 3.4 | Nâng cấp | FR-19-038, 039, 040, 041 |
@@ -1412,7 +1412,7 @@ Sơ đồ cho thấy ba cụm dữ liệu. Cụm **cấu hình** (NCC, dịch v�
 
 ### 10.1. Quy ước chung
 
-PH-19 có ba nhóm API REST, mỗi nhóm một tệp OpenAPI 3.1 riêng (mục 16), đều đi qua PH-03 (APISIX). Nhóm **quản trị** `/api/payment/v1` (API-19-001…090) phục vụ giao diện quản trị, xác thực bằng token OIDC của người dùng và kiểm tra quyền `PERM-19-*` qua OPA (ADR-006). Nhóm **đối tác** `/api/payment-partner/v1` (API-19-101…110) cho HTTT đối tác gọi bằng token máy-máy (NFR-19-019); quyền của đối tác là các `PERM-19-partner-*` gán cho vai trò `ROLE-PARTNER_SYSTEM`, đồng thời mọi truy vấn bị giới hạn trong dữ liệu của chính đối tác. Nhóm **callback** `/api/payment-callback/v1` (API-19-201…204 cho nhà cung cấp gọi về; API-19-205 cho trang kết quả UI-19-28 thăm dò trạng thái); không có token, thay vào đó xác minh theo NFR-19-020. Đường dẫn callback chứa `connectionKey`, khóa ngẫu nhiên riêng của từng bản ghi NCC (EN-19-01), để xác định tenant và NCC trước khi xác minh chữ ký, vì IPN không mang token và một tenant có thể có nhiều kết nối PayGov (ADR-045).
+PH-19 có ba nhóm API REST, mỗi nhóm một tệp OpenAPI 3.1 riêng (mục 16), đều đi qua PH-03 (APISIX). Nhóm **quản trị** `/api/payment/v1` (API-19-001…090) phục vụ giao diện quản trị, xác thực bằng token OIDC của người dùng và kiểm tra quyền `PERM-19-*` qua OPA (ADR-006). Nhóm **đối tác** `/api/payment-partner/v1` (API-19-101…110) cho HTTT đối tác gọi bằng token máy-máy (NFR-19-019); quyền của đối tác là bốn quyền `PERM-19-partner-pay-create`, `PERM-19-partner-pay-read`, `PERM-19-partner-refund-create`, `PERM-19-partner-recon-read` gán cho vai trò `ROLE-PARTNER_SYSTEM`, đồng thời mọi truy vấn bị giới hạn trong dữ liệu của chính đối tác. Nhóm **callback** `/api/payment-callback/v1` (API-19-201…204 cho nhà cung cấp gọi về; API-19-205 cho trang kết quả UI-19-28 thăm dò trạng thái); không có token, thay vào đó xác minh theo NFR-19-020. Đường dẫn callback chứa `connectionKey`, khóa ngẫu nhiên riêng của từng bản ghi NCC (EN-19-01), để xác định tenant và NCC trước khi xác minh chữ ký, vì IPN không mang token và một tenant có thể có nhiều kết nối PayGov (ADR-045).
 
 Mọi API tuân theo: lỗi dạng `application/problem+json` (RFC 9457) với trường mở rộng `code` = `ERR-19-nnn` và `traceId`; phân trang con trỏ (`cursor`, `limit` mặc định 20, tối đa 200); header `traceparent`; khóa lạc quan bằng `ETag`/`If-Match` cho mọi `PATCH`, `PUT` và thao tác đổi trạng thái; mọi `POST` của nhóm đối tác bắt buộc `Idempotency-Key` (BR-19-006); thao tác đổi trạng thái được mô hình hóa thành tài nguyên con danh từ số nhiều (`/suspensions`, `/lifecycle-requests`) theo D00-01 §6. Cột "PERM" ghi phần sau `PERM-19-`.
 
