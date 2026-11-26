@@ -58,7 +58,7 @@ jobs:
           POSTGRES_PASSWORD: dh
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       NHANH: claude/project-thread-2na1ls-ph${{ matrix.ph }}
       DH_PG_URL: postgresql://postgres:dh@localhost:5432/postgres
