@@ -31,6 +31,6 @@ if command -v trivy >/dev/null; then
   trivy fs --quiet --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed datahub/ \
     && echo "  ✓ Trivy không có lỗ hổng HIGH/CRITICAL" || { echo "  ✗ Trivy"; loi=1; }
 else
-  echo "  - Trivy chạy ở CI (aquasecurity/trivy-action)"
+  echo "  - Trivy chạy ở CI (bước riêng trong datahub-code.yml)"
 fi
 [ $loi -eq 0 ] && echo "G5 XANH" || { echo "G5 ĐỎ"; exit 1; }

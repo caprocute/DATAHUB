@@ -109,11 +109,10 @@ jobs:
       - run: pip install semgrep
       - run: npm --prefix datahub/web ci --no-audit --no-fund
       - run: bash datahub/tools/g5_bao_mat.sh
+      - name: Cài Trivy từ kho apt chính thức (có ký)
+        run: |
+          curl -fsSL https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -q && sudo apt-get install -y -q trivy
       - name: Trivy (phụ thuộc Maven, npm, cấu hình)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          scan-ref: datahub
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
+        run: trivy fs --scanners vuln,misconfig --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-dirs datahub/web/node_modules datahub
