@@ -98,3 +98,27 @@ literal tiếng Việt trong tsx), không màu hex/`rgb` viết cứng, không `
 (Semgrep không chạy được) và có một lỗi Cao về bố cục (C1). Cần: sửa CSS để khung cây cuộn nội bộ cùng test
 chặn hồi quy (e2e với >= 30 nhóm, kiểm nút Thêm nhóm trong viewport), chạy lại G5 ở môi trường có truy cập luật Semgrep.
 Không đổi `features.json`.
+
+## 8. Vòng 2 (commit đánh giá a08d27b, sửa ở cfedfca)
+
+| Cổng | Kết quả |
+|---|---|
+| G1 | XANH 11/11 (sau khi gỡ vá SS-07-01/02, `goi.yaml` `sua_trung_khoa: false`) |
+| `mvn verify` | XANH: 47 đơn vị + 40 IT (Cucumber 14/14), JaCoCo đạt |
+| `npm run check` | XANH: Vitest 54/54, phủ dòng 91,25%, nhánh 89,14% |
+| `npm run e2e` | Lần 1 ĐỎ 1/10 (ca "mã trùng", `expectNoAxeViolations` hết 60 s ở `waitForFunction(getAnimations)`); chạy lại 2 lần liền: 10/10 XANH. Ghi nhận ca chập chờn (T5, Thấp), chưa tái hiện được nguyên nhân |
+| G5 | Không xét ở đây (CI: Semgrep, Trivy). Tập lệnh đã tách "không chạy được" khỏi "có phát hiện" |
+
+Toàn vẹn: `tools/g5_bao_mat.sh` chỉ đổi cách báo (chặt hơn: thiếu Semgrep nay là lỗi); không hạ ngưỡng, không `@Disabled`/`.skip`.
+
+**C1 đã sửa.** Tái hiện tự làm (35 nhóm thêm vào T01, build console từ HEAD): 1440x900 nút Thêm nhóm bottom=860, tài liệu 900,
+cây cuộn nội bộ (scrollHeight 1399 > clientHeight 639); 1280x720 bottom=680, cây 1399 > 459; nhóm "035" và nút bấm được, hộp thoại mở.
+Đối chứng CSS cũ (chèn lại quy tắc cũ bằng `addStyleTag`, xấp xỉ): nút bottom=1620 > viewport, cây không cuộn (1399=1399); khẳng định
+đầu của E2E mới (nút trong màn hình) sẽ đỏ với CSS cũ. Không build lại nhánh cũ nguyên bản. Ảnh: `/tmp/danh-gia/v2-1280.png`.
+
+**T2 đã sửa**: `name` là 5 / true / 1.5 / mảng, `description: 7` ở POST: 422 TYPE; PATCH số: 422; chuỗi hợp lệ 201.
+**T3 đã sửa** (CSS dùng token). 3 ca phá chọn lại: cha khác tenant 422; cha COMMON 403; JWT khóa khác / thiếu tenant 401;
+8 PATCH song song 1x200 + 7x412; xóa nhóm còn con 409. Đều đạt.
+
+Kết luận vòng 2: không còn lỗi Cao; G1-G4 xanh (e2e sau một lần chập chờn). Đề xuất `passes: true` kèm `danh_gia`
+(vong 2, "G5: chờ CI (Semgrep, Trivy)"). Việc ghi cờ này chưa thực hiện được trong phiên này (xem phản hồi gửi người điều phối).
