@@ -1701,7 +1701,7 @@ Xử lý: mặc định trả dữ liệu người nộp đã che theo chính s�
 | Truy vết | REQ-97; NFR-19-009; UC-19-22; API-19-083, 084; UI-19-14; EN-19-24; TS-19-22 |
 | Tác nhân, quyền | Kế toán, kiểm toán viên · `transaction-export`; kèm dữ liệu đầy đủ · `transaction-read-pii` |
 | Đầu vào | Bộ lọc như FR-19-050, `format` (`CSV`, `XLSX`), `columns[]`, `includePii` (chỉ khi có quyền, kèm lý do) |
-| Đầu ra | Tác vụ nền `background_job` loại `EXPORT`, trạng thái `QUEUED` → `RUNNING` → `SUCCEEDED`/`FAILED`; tệp lưu bucket `dh-{tenant}-payment` với đường tải có hạn 24 giờ, chỉ người tạo tải được |
+| Đầu ra | Tác vụ nền `background_job` loại `TRANSACTION_EXPORT`, trạng thái `QUEUED` → `RUNNING` → `SUCCEEDED`/`FAILED`; tệp lưu bucket `dh-{tenant}-payment` với đường tải có hạn 24 giờ, chỉ người tạo tải được |
 | Sự kiện, kiểm toán | Kiểm toán `EXPORT_CREATE`, `EXPORT_DOWNLOAD` |
 
 Giới hạn: tối đa `19.export.max-rows` (mặc định 1.000.000, NFR-19-009) dòng; vượt thì trả ERR-19-047 và đề nghị thu hẹp bộ lọc. Mỗi người tối đa 3 tác vụ chạy đồng thời. Tệp tự xóa sau 7 ngày. Tệp XLSX có dòng chú thích bộ lọc, người xuất, thời điểm, và dòng "Dữ liệu đã che theo quyền" hoặc "Có dữ liệu cá nhân".
@@ -1891,7 +1891,7 @@ Nhóm O hiện thực chiến lược strangler theo từng đối tác (ADR-049
 | Truy vết | REQ-99; LGC-PAY-011, 022; UC-19-29; API-19-089, 090, 088; UI-19-27; EN-19-01, 04, 05, 06, 10, 23, 24, 25; TS-19-29 |
 | Tác nhân, quyền | Quản trị thanh toán · `migration-run` |
 | Đầu vào | `runType` (`IMPORT_CATALOG`, `IMPORT_TRANSACTIONS`), nguồn (`SOURCE_DB` qua kết nối chỉ đọc khai báo ở PH-05, hoặc `FILE` CSV theo mẫu ở D06-01), `fromDate`, `toDate`, `dryRun` (mặc định `true`) |
-| Đầu ra | Tác vụ nền `background_job` loại `MIGRATION` với số dòng đọc, nhập mới, cập nhật, bỏ qua, lỗi; tệp báo cáo dòng lỗi (CSV) |
+| Đầu ra | Tác vụ nền `background_job` loại `MIGRATION_IMPORT` (hoặc `MIGRATION_COMPARE` ở FR-19-068) với số dòng đọc, nhập mới, cập nhật, bỏ qua, lỗi; tệp báo cáo dòng lỗi (CSV) |
 
 Ánh xạ chính:
 
@@ -1901,7 +1901,7 @@ Nhóm O hiện thực chiến lược strangler theo từng đối tác (ADR-049
 | `payment_service_group`, `payment_service` | `payment_service_group`, `payment_service` | Lĩnh vực, loại phí ánh xạ sang mã PH-07; thiếu ánh xạ thì ghi lỗi dòng |
 | `payment_partner` | `payment_partner` | `routing_mode = LEGACY`; client tạo mới ở PH-09, không chuyển bí mật |
 | `payment_transaction` | `payment_transaction` | Số tiền chuỗi → T-MONEY (bỏ dấu phân cách, lỗi nếu có phần lẻ); ngày thanh toán chuỗi `dd/MM/yyyy HH:mm:ss` giờ Việt Nam → T-TS UTC; trạng thái theo khung §7.4 (`NEW` → `CREATED`, `PENDING` → `PENDING`, `SUCCESS` → `SUCCEEDED`, `FAILED` → `FAILED`, `REFUND_PENDING` → `SUCCEEDED` kèm yêu cầu hoàn `PROCESSING`, `REFUND_SUCCESS` → `REFUNDED`, `REFUND_FAILED` → `SUCCEEDED` kèm yêu cầu hoàn `FAILED`); giao dịch `CREATED`, `PENDING` nhập vào đi tiếp lịch truy vấn bù của BR-19-016, 017; `is_migrated = true`; `transaction_code` mới, mã cũ lưu `legacy_code` |
-| (mọi bảng) | `legacy_mapping` | (`legacy_table`, `legacy_id`) → (`entity_type`, `entity_id`), khóa duy nhất bảo đảm chạy lại không trùng |
+| (mọi bảng) | `legacy_mapping` | (`legacy_table`, `legacy_key`) → (`target_type`, `target_id`) kèm `source_hash`, khóa duy nhất bảo đảm chạy lại không trùng |
 
 Xử lý: chạy theo lô 10.000 dòng, mỗi lô một giao dịch CSDL; lỗi một dòng không dừng lô (ghi báo cáo). `dryRun = true` chỉ kiểm tra và báo cáo. Giao dịch nhập không phát sự kiện, không gửi webhook, không tính hạn mức. Dữ liệu người nộp được mã hóa khi nhập (ADR-048).
 

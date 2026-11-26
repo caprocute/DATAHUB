@@ -248,8 +248,8 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 1. ADM (Nguyễn Văn An) mở UI-19-05 từ UI-19-03, chọn loại adapter `PAYGOV`, nhập mã `PAYGOV-T68`, tên, đơn vị cung cấp, đầu mối, ngày hiệu lực hợp đồng, địa chỉ API môi trường thử và chính thức, mã đơn vị kết nối do PayGov cấp.
 2. Hệ thống kiểm tra định dạng, mã duy nhất trong tenant, địa chỉ là `https` và không trỏ dải nội bộ; ghi NCC `DRAFT` (API-19-002), sinh `connectionKey` 32 ký tự Base32 Crockford, hiển thị địa chỉ callback đầy đủ để tỉnh đăng ký với PayGov.
-3. ADM mở tab "Thông tin xác thực" ở UI-19-04; SEC (Hoàng Minh Đức) đã nạp khóa ký, chứng thư mTLS của tỉnh và khóa công khai PayGov vào `kv/dh/T68/payment/providers/PAYGOV-T68/test/...`.
-4. ADM chọn môi trường `TEST`, nhập đường dẫn tham chiếu cho từng mục đích (`SIGNING_KEY`, `MTLS_CERT`, `PROVIDER_PUBLIC_KEY`, `API_CREDENTIAL`) (API-19-007).
+3. ADM mở tab "Thông tin xác thực" ở UI-19-04; SEC (Hoàng Minh Đức) đã nạp khóa ký, chứng thư mTLS của tỉnh và khóa công khai PayGov vào `kv/dh/T68/payment/providers/PAYGOV-T68/sandbox/...`.
+4. ADM chọn môi trường `SANDBOX`, nhập đường dẫn tham chiếu cho từng mục đích (`SIGNING_KEY`, `MTLS_CLIENT_CERT`, `VERIFY_CERT`, `API_CREDENTIAL`) (API-19-007).
 5. Hệ thống đọc siêu dữ liệu tại OpenBao bằng tài khoản dịch vụ của `dh-payment` (không đọc giá trị ra giao diện), kiểm tra tồn tại, thuật toán, hạn chứng thư ≥ 30 ngày; lưu tham chiếu `ACTIVE` kèm vân tay và ngày hết hạn.
 6. ADM lặp bước 4–5 cho môi trường `PRODUCTION`.
 
@@ -286,7 +286,7 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 1. ADM chọn môi trường `PRODUCTION`, bấm "Kiểm tra kết nối" (API-19-009).
 2. Hệ thống chạy tuần tự: phân giải DNS, bắt tay TLS (kiểm tra chuỗi chứng thư, phiên bản ≥ 1.2), mTLS nếu có, gọi `PING` hoặc thao tác truy vấn với mã giả của adapter, xác minh chữ ký phản hồi; ghi kết quả từng bước, độ trễ.
-3. UI-19-06 hiển thị bốn bước xanh; ADM sang bước 2 "Giao dịch thử", chọn môi trường `TEST`, số tiền 10.000 đ (API-19-010).
+3. UI-19-06 hiển thị bốn bước xanh; ADM sang bước 2 "Giao dịch thử", chọn môi trường `SANDBOX`, số tiền 10.000 đ (API-19-010).
 4. Hệ thống tạo giao dịch thử dưới đối tác `__TEST__`, gọi PayGov khởi tạo, trả `paymentUrl`.
 5. ADM mở `paymentUrl` trong cửa sổ mới, thanh toán bằng tài khoản thử của PayGov.
 6. PayGov gửi IPN tới `/api/payment-callback/v1/paygov/{connectionKey}/ipn`; hệ thống xác minh và áp kết quả như UC-19-13.
@@ -582,7 +582,6 @@ Hệ cũ cho khai báo NCC kèm "liên kết API" ngay trên một biểu mẫu 
 
 **Luồng thay thế**
 
-- **1a. Xác thực bằng `client_secret`.** PH-12 sinh bí mật, hệ thống hiển thị một lần, không lưu.
 - **1b. Thu hồi client** (API-19-038): PH-12 vô hiệu ngay; token đang dùng hết hiệu lực trong ≤ 5 phút.
 - **5a. Xoay bí mật ký webhook** (API-19-046): bí mật mới hiển thị một lần; trong 7 ngày webhook mang hai chữ ký `v1`.
 
@@ -848,7 +847,7 @@ sequenceDiagram
 
 1. Lúc 2, 5, 10, 15 phút, rồi 30 phút, 1, 2, 4 giờ, rồi mỗi 6 giờ tới 72 giờ sau khi tạo, bộ lập lịch chọn giao dịch chưa có kết quả.
 2. Hệ thống gọi `PaymentProviderPort.query()`; ánh xạ kết quả (thao tác `QUERY`).
-3. Kết cục `SUCCEEDED`: áp như IPN (nguồn `QUERY`), EVT-19-07, webhook.
+3. Kết cục `SUCCEEDED`: áp như IPN (nguồn `POLL`; đồng bộ thủ công ghi `MANUAL_SYNC`), EVT-19-07, webhook.
 
 **Luồng thay thế**
 
@@ -1401,7 +1400,7 @@ Mọi loại đề nghị (`PROVIDER_ACTIVATE`, `PROVIDER_RETIRE`, `PARTNER_ONBO
 
 ### 7.2. Tải tệp đính kèm
 
-Tệp chứng từ, bằng chứng được tải trước qua API-19-087 với `purpose` (`ATTACHMENT`, `REFUND_VOUCHER`, `RECON_SOURCE`, `EVIDENCE`), giới hạn 20 MB mỗi tệp (100 MB với `RECON_SOURCE`), kiểu cho phép PDF, PNG, JPEG, XLSX, CSV; hệ thống quét mã độc (ClamAV ở D03-07), tính SHA-256, trả `fileId`; tệp không được gắn vào đối tượng nào trong 24 giờ bị xóa.
+Tệp chứng từ, bằng chứng được tải trước qua API-19-087 với `purpose` (`ATTACHMENT`, `REFUND_VOUCHER`, `RECON_SOURCE`), giới hạn 20 MB mỗi tệp (100 MB với `RECON_SOURCE`), kiểu cho phép PDF, PNG, JPEG, XLSX, CSV; hệ thống quét mã độc (ClamAV ở D03-07), tính SHA-256, trả `fileId`; tệp không được gắn vào đối tượng nào trong 24 giờ bị xóa.
 
 ## 8. Tổng hợp mã mới và đối chiếu
 
@@ -1431,7 +1430,6 @@ Tệp chứng từ, bằng chứng được tải trước qua API-19-087 với 
 
 | Mã | Nội dung | Use case |
 |---|---|---|
-| `purpose = EVIDENCE` | Mục đích tệp bằng chứng xử lý chênh lệch | UC-19-20, §7.2 |
 | `PASSED_WITHOUT_IPN` | Kết quả `check_run` khi giao dịch thử thành công qua truy vấn nhưng không nhận IPN | UC-19-02 |
 
 ## 9. Câu hỏi mở
