@@ -1,8 +1,8 @@
 ---
 ma_tai_lieu: D03-06-00
 ten: Kiến trúc thông tin, khung bố cục và mẫu màn hình chuẩn
-phien_ban: 0.1
-ngay: 2026-11-21
+phien_ban: 0.2
+ngay: 2026-11-26
 trang_thai: Dự thảo
 nguoi_doc: Nhà thiết kế giao diện, Kỹ sư giao diện, Kiểm thử viên, Chuyên viên phân tích nghiệp vụ, AI agent sinh mã
 nguoi_lap: Luồng giao diện
@@ -1174,3 +1174,358 @@ Bố cục hai khung (danh sách và chi tiết) cho phép duyệt liên tục: 
 
 **Sai lầm thường gặp.** Phân trang số cho log; không giới hạn khoảng thời gian; dùng `aria-live` cho luồng trực tiếp; hiển thị giờ UTC không ghi rõ; chỉ dùng màu cho mức log.
 
+### 4.15. PTN-12 · Cài đặt
+
+**Mục đích.** Cho người dùng xem và đổi các tham số ít thay đổi, gom theo nhóm, với tác động của mỗi tham số được nói rõ trước khi lưu.
+
+**Khi dùng.** Cài đặt cá nhân (`/ca-nhan/cai-dat`: giao diện, kính, mật độ, giảm chuyển động, kênh thông báo FR-00-061, phím tắt); tham số hệ thống PH-18 (`/van-hanh/tham-so`, mỗi phân hệ một không gian tên như `07.rdm.*`, `04.flow.*`); cài đặt tỉnh PH-20 (`/quan-tri/cai-dat-tinh`: tên hiển thị, logo, chủ quản CNTT, ngưỡng mật khẩu và phiên trong giới hạn nền tảng); quản trị cổng nhà phát triển PH-15; tài khoản trên `dh-portal`. **Khi không dùng.** Cấu hình có vòng đời và phiên bản (chính sách gateway, khuôn luồng): dùng PTN-02 + PTN-03 vì cần duyệt và lịch sử như đối tượng nghiệp vụ.
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (giới hạn size-page-max) ────────────────────────────────────────────────┐
+│ ① PageHeader: "Tham số hệ thống"                       [Xuất cấu hình] [⋯]   │
+│ ┌ ② Mục lục nhóm (đặc, 3/12) ─┐ ┌ ③ Nhóm đang xem (đặc, 9/12) ─────────────────┐│
+│ │ 🔍 Tìm tham số…             │ │ Danh mục dùng chung (07.rdm)                  ││
+│ │ ● Chung                     │ │ ┌ Hàng tham số ──────────────────────────────┐││
+│ │ ● Danh mục dùng chung    2  │ │ │ Lịch đồng bộ mặc định        [CronPicker]   │││
+│ │ ● Luồng tích hợp            │ │ │ 07.rdm.sync-default-cron · Mặc định 01:00   │││
+│ │ ● Thanh toán                │ │ │ Áp dụng cho nguồn mới tạo, không đổi lịch   │││
+│ │ ● Bảo mật                   │ │ │ của nguồn hiện có.        ● Đã đổi · ⟲     │││
+│ │                             │ │ └─────────────────────────────────────────────┘││
+│ │                             │ │ ┌ Hàng tham số ──────────────────────────────┐││
+│ │                             │ │ │ Số dòng tối đa mỗi tệp nhập  [ 200000 ] dòng│││
+│ │                             │ │ └─────────────────────────────────────────────┘││
+│ └─────────────────────────────┘ └──────────────────────────────────────────────┘│
+│ ④ Thanh lưu dính đáy (đặc): "2 thay đổi chưa lưu"   [Bỏ thay đổi] [Lưu]       │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+Bố cục hai cột: mục lục nhóm bên trái (số bên cạnh nhóm là số tham số đã đổi chưa lưu), nhóm đang xem bên phải. Dưới `bp-lg`, mục lục chuyển thành `CMP-Select` "Nhóm" ở đầu trang. Cài đặt cá nhân ít tham số dùng một cột, không có mục lục.
+
+**Thành phần và vật liệu.** ① `CMP-PageHeader` trên canvas; ② `CMP-SearchField`, danh sách nhóm dạng `CMP-Tabs` dọc, nền đặc; ③ `CMP-Card` đặc, mỗi tham số là một **hàng tham số** gồm nhãn, mã tham số `CMP-Identifier` nhỏ, mô tả tác động, điều khiển theo kiểu (`CMP-Switch` khi có hiệu lực ngay, còn lại `CMP-Input`, `CMP-NumberInput`, `CMP-Select`, `CMP-CronPicker`, `CMP-SecretRefField`), giá trị mặc định, nhãn "Đã đổi" và nút ⟲ khôi phục mặc định; ④ thanh đặc `color-surface-solid` dính đáy, `shadow-2` khi nội dung cuộn dưới.
+
+**Hành vi.**
+
+1. *Hai kiểu hiệu lực.* Tham số có hiệu lực ngay (bật tắt thông báo, chế độ tối, mật độ) dùng `CMP-Switch` hoặc `CMP-SegmentedControl` và lưu ngay, phản hồi bằng `CMP-Toast`. Tham số có tác động vận hành dùng biểu mẫu và thanh lưu ④; một thay đổi một lần lưu, gửi kèm `If-Match`.
+2. *Nói rõ tác động.* Mỗi tham số có mô tả "áp dụng cho ai, từ khi nào"; tham số cần khởi động lại hoặc chỉ áp dụng cho đối tượng mới ghi rõ. Tham số ảnh hưởng an toàn (ngưỡng mật khẩu, thời gian phiên) mở `CMP-ReasonDialog` khi lưu và ghi kiểm toán.
+3. *Giới hạn theo cấp.* Tham số tỉnh chỉ cho phép giá trị trong khoảng nền tảng cho phép (ví dụ mật khẩu tối thiểu 14 ký tự theo TCVN 14423:2026, tỉnh chỉ được tăng); điều khiển hiển thị khoảng hợp lệ và giá trị nền tảng ("Nền tảng: tối thiểu 14").
+4. *Giá trị kế thừa.* Tham số chưa đặt ở cấp tỉnh hiển thị giá trị kế thừa từ nền tảng với nhãn "Kế thừa"; ghi đè thì nhãn đổi thành "Đã đổi" kèm ⟲.
+5. *Tìm.* Ô tìm lọc theo nhãn và mã tham số, bỏ dấu; kết quả nhảy tới nhóm và tô tham số khớp.
+6. *Xuất, nhập cấu hình.* Quản trị viên tải cấu hình dạng YAML (không gồm bí mật, chỉ tham chiếu) để đối chiếu giữa các tỉnh; nhập cấu hình đi qua PTN-09.
+7. *Rời trang khi chưa lưu.* Theo mục 4.3.
+
+**Trạng thái cụ thể.** ST-03 không áp dụng (luôn có tham số). Không có quyền sửa: toàn trang ở dạng chỉ đọc (ST-15), thanh ④ ẩn. Lưu lỗi một tham số: lỗi tại hàng, các tham số khác trong lần lưu không được áp dụng (một lần lưu là một giao dịch).
+
+**Phím tắt.** `Ctrl+S` lưu; `/` focus ô tìm.
+
+**Tiêu chí nghiệm thu PTN-12.**
+
+- [ ] Mỗi tham số hiển thị nhãn, mã, mô tả tác động, giá trị mặc định hoặc kế thừa.
+- [ ] Tham số có hiệu lực ngay không đi qua nút Lưu; tham số vận hành không lưu khi chưa bấm Lưu.
+- [ ] Không lưu được giá trị ngoài khoảng nền tảng cho phép, cả ở giao diện và API.
+- [ ] Tham số ảnh hưởng an toàn yêu cầu lý do và có bản ghi kiểm toán.
+- [ ] Không có giá trị bí mật hiển thị hoặc xuất ra tệp cấu hình.
+
+**Sai lầm thường gặp.** Một trang dài hàng trăm tham số không có nhóm và tìm; dùng Switch cho tham số chỉ có hiệu lực khi bấm Lưu; không nói tham số áp dụng cho đối tượng cũ hay mới; lưu từng tham số một khi người dùng đổi nhiều tham số liên quan.
+
+### 4.16. PTN-13 · Trang lỗi và trạng thái hệ thống
+
+**Mục đích.** Thay nội dung bình thường khi hệ thống không thể hiển thị nó, nói rõ vì sao và người dùng làm gì tiếp, không để màn trắng.
+
+**Khi dùng.** Không có quyền (403), không tìm thấy hoặc đã xóa (404/410), lỗi máy chủ (500, 502, 503), bảo trì có lịch, chọn tenant sau đăng nhập, tenant bị tạm ngưng, trình duyệt không hỗ trợ. **Khi không dùng.** Lỗi trong một khối của trang (dùng `CMP-Alert` tại khối, ST-05) hoặc lỗi kiểm tra biểu mẫu (ST-11).
+
+**Hai cách hiển thị.** *Trong khung* (`in-shell`): giữ `CMP-AppShell`, sidebar và thanh trên, thay `main` bằng `CMP-ResultPage`; dùng cho 403, 404, 410, lỗi tải trang chính, để người dùng vẫn điều hướng được. *Toàn trang* (`standalone`): không có khung, nền `color-canvas`; dùng khi khung không dựng được (500 lúc khởi động, bảo trì toàn hệ thống, trình duyệt không hỗ trợ, chọn tenant).
+
+**Sơ đồ vùng.**
+
+```text
+┌ main (in-shell) hoặc viewport (standalone) ──────────────────────────────────┐
+│                                                                               │
+│                         ┌ ① Khối kết quả (đặc, rộng 560) ┐                    │
+│                         │        [minh họa đơn sắc]       │                    │
+│                         │  ② Bạn không có quyền xem trang │                    │
+│                         │     này                         │                    │
+│                         │  ③ Trang "Đối soát" cần quyền   │                    │
+│                         │     PERM-19-reconcile. Liên hệ  │                    │
+│                         │     Quản trị tỉnh để được cấp.  │                    │
+│                         │  ④ [Về Tổng quan] [Yêu cầu cấp] │                    │
+│                         │  ⑤ HTTP 403 ·                   │                    │
+│                         │     Mã truy vết 4bf92f35…a3ce [⧉]│                    │
+│                         └─────────────────────────────────┘                    │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Thành phần và vật liệu.** `CMP-ResultPage` trong một khối đặc `color-surface-solid` bo `radius-xl` (không đặt chữ trực tiếp lên canvas có `color-canvas-wash`); minh họa đơn sắc theo `color-icon-secondary`; ② `CMP-Heading` cấp 1; ③ `CMP-Text`; ④ `CMP-Button`; ⑤ `CMP-Identifier` có sao chép.
+
+**Các biến thể.**
+
+| Biến thể | Cách hiển thị | Tiêu đề | Nội dung và hành động |
+|---|---|---|---|
+| 403 | `in-shell` | "Bạn không có quyền xem trang này" | Tên trang và quyền cần (nếu không phải thông tin nhạy cảm), người cấp quyền; "Về Tổng quan", "Yêu cầu cấp quyền" (mở biểu mẫu yêu cầu tới PH-12 khi tenant bật) |
+| 404 | `in-shell` | "Không tìm thấy {loại đối tượng}" hoặc "Không tìm thấy trang" | Mã đã tìm; "Về danh sách {đối tượng}" giữ bộ lọc gần nhất; "Xem trong thùng rác" khi đối tượng bị xóa mềm và có quyền khôi phục (FR-00-051) |
+| 410 | `in-shell` | "{Đối tượng} đã bị xóa" | Ai xóa, khi nào (nếu có quyền xem kiểm toán) |
+| 500, 502, 503 | `in-shell` nếu khung đã dựng, nếu không `standalone` | "Hệ thống đang gặp sự cố" | "Thử lại" (tự thử lại sau 10 giây với 503 có `Retry-After`), mã lỗi, mã truy vết, đầu mối hỗ trợ của tỉnh |
+| Bảo trì | `standalone` (toàn hệ thống) hoặc `in-shell` (một phân hệ) | "Hệ thống đang bảo trì" | Khoảng thời gian bảo trì bằng `CMP-Timestamp`, phân hệ bị ảnh hưởng, kênh theo dõi; tự tải lại khi hết bảo trì |
+| Chọn tenant | `standalone` | "Chọn tỉnh để làm việc" | Danh sách tenant của người dùng (thẻ `CMP-RadioCard` nếu dưới 7, danh sách có tìm nếu nhiều hơn), ô "Ghi nhớ lựa chọn" |
+| Tenant tạm ngưng | `standalone` | "Tỉnh {tên} đang tạm ngưng sử dụng Datahub" | Lý do do nền tảng ghi, đầu mối; với người thuộc nhiều tenant: "Chọn tỉnh khác" |
+| Trình duyệt không hỗ trợ | `standalone`, HTML tĩnh không cần JavaScript | "Trình duyệt chưa được hỗ trợ" | Danh sách trình duyệt hỗ trợ (hai phiên bản chính gần nhất của Chrome, Edge, Firefox, Cốc Cốc; Safari từ 17) |
+
+**Hành vi.**
+
+1. Trang lỗi không đổi URL người dùng đã mở (trừ chọn tenant và bảo trì toàn hệ thống), để tải lại sau khi được cấp quyền hoặc hết sự cố là vào đúng trang.
+2. Mã truy vết luôn hiển thị với lỗi 5xx và có nút sao chép; người dùng dán vào phiếu hỗ trợ.
+3. Trang 403 không tiết lộ sự tồn tại của đối tượng mà người dùng không có quyền biết: với URL chi tiết đối tượng của tenant khác hoặc đối tượng hạn chế, trả 404 thay vì 403 (máy chủ quyết định, giao diện hiển thị theo mã máy chủ trả).
+4. Focus đặt vào tiêu đề ②; tiêu đề tab trình duyệt đổi thành "{tiêu đề lỗi} · Datahub".
+
+**Tiêu chí nghiệm thu PTN-13.**
+
+- [ ] Không có tình huống nào để màn trắng: tắt máy chủ API, chặn tệp JavaScript chính, mở URL sai đều hiện trang phù hợp.
+- [ ] 403, 404 hiện trong khung, sidebar vẫn dùng được.
+- [ ] Lỗi 5xx có mã lỗi, mã truy vết sao chép được, không lộ stack trace hay tên máy chủ nội bộ.
+- [ ] Trang bảo trì tự tải lại khi hết khoảng bảo trì.
+- [ ] Trang trình duyệt không hỗ trợ đọc được khi tắt JavaScript.
+
+**Sai lầm thường gặp.** Chuyển về trang chủ khi thiếu quyền (người dùng không biết vì sao); thông điệp chung "Đã có lỗi xảy ra" không có mã; hiển thị stack trace; trang 403 tiết lộ tên đối tượng của tenant khác.
+
+### 4.17. PTN-14 · Tài liệu cổng nhà phát triển
+
+**Mục đích.** Cho nhà phát triển của các hệ thống thành viên đọc tài liệu dài có cấu trúc của một API hoặc bài hướng dẫn, và thử gọi API ngay trên trang, trên `dh-portal` (PH-15).
+
+**Khi dùng.** Tài liệu một API theo phiên bản (`/api/{ma-api}/{phien-ban}`), bài hướng dẫn (`/huong-dan/{bai}`: xác thực, mã lỗi, giới hạn, sự kiện), trang chủ cổng (biến thể trang chào). **Khi không dùng.** Quản trị API trong `dh-console` (PTN-02 của PH-02).
+
+**Sơ đồ vùng.**
+
+```text
+┌ Thanh trên dh-portal (glass-chrome → glass-chrome-scrolled) ─────────────────────┐
+│ [Logo] Cổng API Tỉnh Mẫu A   API  Hướng dẫn  Ứng dụng của tôi   [Tìm… Ctrl K] [Đăng nhập]│
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ ┌ ① Mục lục (đặc, 240, dính) ┐ ┌ ② Nội dung (đặc, tối đa 760) ┐ ┌ ③ Khung thử (đặc, 440) ┐│
+│ │ Tra cứu hộ tịch  v2.1 ▾     │ │ Breadcrumb: API › Tư pháp ›   │ │ POST /ho-tich/tra-cuu   ││
+│ │ Giới thiệu                  │ │ Tra cứu hộ tịch               │ │ Môi trường [Sandbox ▾]  ││
+│ │ Xác thực                    │ │ [Đã công bố] v2.1 · Sở Tư pháp│ │ Thông tin xác thực      ││
+│ │ ▾ Thao tác                  │ │ ## Giới thiệu                 │ │ [Ứng dụng của tôi ▾]    ││
+│ │   POST /tra-cuu   ◀ đang đọc│ │ …                             │ │ Thân yêu cầu (JSON)     ││
+│ │   GET /ho-so/{ma}           │ │ ## POST /tra-cuu              │ │ ┌ CodeEditor ────────┐  ││
+│ │ Mã lỗi                      │ │ Bảng tham số                  │ │ └────────────────────┘  ││
+│ │ Giới hạn sử dụng            │ │ Ví dụ yêu cầu  [curl|Java|JS] │ │ [Gửi thử]               ││
+│ │ Nhật ký thay đổi            │ │ Ví dụ phản hồi                │ │ Phản hồi 200 · 184 ms   ││
+│ └─────────────────────────────┘ └───────────────────────────────┘ └─────────────────────────┘│
+│ ④ Chân trang trên canvas: Điều khoản · Chính sách BVDLCN · Hỗ trợ · Phiên bản cổng            │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Ba cột từ `bp-xxl`; 1200–1599px: khung thử ③ thu thành nút "Thử API" mở `CMP-Drawer` `lg`; dưới `bp-lg`: mục lục thành nút "Mục lục" mở Drawer trái, một cột nội dung.
+
+**Thành phần và vật liệu.** Thanh trên của cổng theo D03-06-00 §3.10 (`glass-chrome`); ① mục lục dính, nền đặc, mục đang đọc tô `color-fill-selected` và có `aria-current="location"`; ② nội dung Markdown dựng từ OpenAPI 3.1 và AsyncAPI 3 của D03-04 trên nền đặc, chữ thân `font-callout`, độ dài dòng tối đa 80 ký tự, bảng tham số `CMP-DataTable` biến thể gọn không phân trang, ví dụ mã `CMP-CodeEditor` chỉ đọc có `CMP-SegmentedControl` chọn ngôn ngữ và `CMP-CopyButton`, mã trạng thái `CMP-StatusTag`; ③ khung thử nền đặc gồm `CMP-Select` môi trường, `CMP-Select` ứng dụng, `CMP-CodeEditor` thân yêu cầu, `CMP-Button`, `CMP-JsonViewer` phản hồi, `CMP-Duration`; ④ chân trang trên canvas.
+
+**Hành vi.**
+
+1. *Theo dõi vị trí đọc.* Mục lục tô mục đang đọc theo `IntersectionObserver`; mỗi tiêu đề có liên kết neo sao chép được (`#post-tra-cuu`); URL đổi neo bằng `replace`, không thêm lịch sử.
+2. *Phiên bản.* Bộ chọn phiên bản ở đầu mục lục; phiên bản `DEPRECATED` có `CMP-Banner` cảnh báo kèm ngày gỡ và liên kết hướng dẫn chuyển đổi; phiên bản không phải mới nhất có liên kết "Xem phiên bản mới nhất".
+3. *Thử API.* Chỉ gọi môi trường Sandbox với dữ liệu giả lập, trừ khi tỉnh bật thử trên môi trường thật cho ứng dụng đã được duyệt; cần đăng nhập và chọn ứng dụng của người dùng; thông tin xác thực lấy qua phiên, không bao giờ hiện bí mật (chỉ Client ID). Mọi lượt thử ghi vào lịch sử sandbox (PTN-11 biến thể). Ví dụ mã sinh tự động từ yêu cầu đang thử.
+4. *Tìm.* `Ctrl+K` mở bảng lệnh của cổng với hai nhóm "API" và "Bài hướng dẫn".
+5. *Khách chưa đăng nhập.* Đọc được tài liệu API công khai (theo cấu hình tenant); khung thử hiện lời mời "Đăng nhập để thử API".
+6. *In và xuất.* Trang in gọn (ẩn mục lục và khung thử); nút "Tải OpenAPI" tải đặc tả của phiên bản.
+
+**Trạng thái cụ thể.** API không tồn tại hoặc không công khai: PTN-13 404 của cổng. Thử API lỗi mạng: `CMP-Alert` trong khung thử, không xóa thân yêu cầu. Đặc tả lỗi định dạng: hiện phần đọc được và dải cảnh báo "Một phần tài liệu không hiển thị được".
+
+**Phím tắt.** `Ctrl+K` tìm; `Ctrl+Enter` trong khung thử gửi yêu cầu; `[`/`]` mục trước, mục sau.
+
+**Tiêu chí nghiệm thu PTN-14.**
+
+- [ ] Mọi thao tác trong OpenAPI có tham số, ví dụ yêu cầu và phản hồi, mã lỗi (đối chiếu DoD của D03-04).
+- [ ] Mục lục tô đúng mục đang đọc; liên kết neo mở đúng vị trí.
+- [ ] Khung thử không bao giờ hiển thị hoặc ghi bí mật vào lịch sử, URL, `localStorage`.
+- [ ] Trang đọc được và điều hướng được hoàn toàn bằng bàn phím; Lighthouse Accessibility ≥ 95.
+- [ ] Đạt tốc độ tải lần đầu LCP dưới 2,5 giây ở mạng 4G mô phỏng (trang tài liệu là trang công khai).
+
+**Sai lầm thường gặp.** Nhúng Swagger UI nguyên bản (giao diện khác hệ thống, khó đạt WCAG); khung thử dùng bí mật dán tay; dòng chữ rộng toàn màn hình; mục lục không cho biết đang ở đâu.
+
+## 5. Vi văn bản tiếng Việt
+
+Vi văn bản (microcopy) là chữ ngắn trên giao diện: nhãn nút, tiêu đề, chữ giữ chỗ, thông báo, lời xác nhận, trạng thái rỗng. Với hệ thống cho cán bộ nhà nước ở nhiều cấp, chữ rõ ràng giảm số cuộc gọi hỗ trợ nhiều hơn bất kỳ hiệu ứng thị giác nào. Mục này là quy tắc chung; tập UI phân hệ chỉ ghi chữ riêng của màn.
+
+### 5.1. Giọng văn
+
+Giọng văn của Datahub là **lịch sự, trực tiếp, trung tính**: nói với người dùng như một đồng nghiệp có chuyên môn. Gọi người dùng là "bạn" trong thông báo và trợ giúp; không dùng "quý khách", "anh/chị", "đồng chí". Câu chủ động, nói việc người dùng cần làm. Không dùng dấu chấm than trừ cảnh báo an toàn. Không đùa, không dùng biểu tượng cảm xúc. Không đổ lỗi cho người dùng ("Bạn đã nhập sai") mà nói điều cần sửa ("Mã danh mục chỉ gồm chữ in hoa, số và dấu gạch dưới").
+
+### 5.2. Quy tắc chính tả và trình bày
+
+| Quy tắc | Đúng | Sai |
+|---|---|---|
+| Viết hoa chữ đầu câu, không viết hoa mỗi từ | "Thêm dịch vụ thu" | "Thêm Dịch Vụ Thu" |
+| Tên riêng, tên cơ quan viết hoa theo quy định (NĐ 30/2020/NĐ-CP, Phụ lục II) | "Sở Tư pháp", "Ủy ban nhân dân tỉnh" | "Sở tư pháp", "UBND Tỉnh" |
+| Dấu thanh đặt theo kiểu mới thống nhất | "hòa", "thủy", "ủy" | lẫn "hoà", "thuỷ" |
+| Số theo `vi-VN` | "1.234.567", "12,5%" | "1,234,567", "12.5 %" |
+| Ngày giờ | "20/11/2026 14:05" | "2026-11-20 2:05 PM" |
+| Tiền | "1.250.000 ₫" | "1250000 VND", "1.250.000đ" |
+| Đơn vị cách số bằng khoảng trắng không ngắt | "200 MB", "15 phút" | "200MB" |
+| Không viết tắt khi có chỗ; viết tắt phổ biến được phép | "HTTT", "API", "CCCD", "ĐVHC" | "Q.lý", "TT dữ liệu" |
+| Thuật ngữ kỹ thuật giữ nguyên tiếng Anh khi là khái niệm người dùng tra cứu | "route", "Kamelet", "topic", "webhook" | dịch gượng "tuyến", "chủ đề sự kiện" |
+| Mã, tên tham số, mã lỗi trong phông đơn cách | `ERR-07-018`, `07.rdm.sync-default-cron` | in đậm hoặc trong ngoặc kép |
+| Ô không có giá trị | "—" | "null", "N/A", để trống |
+
+### 5.3. Nhãn hành động
+
+Nhãn nút là động từ hoặc cụm động từ, nêu đối tượng khi chưa rõ từ ngữ cảnh. Một hành động có **một nhãn** ở mọi phân hệ; bảng dưới là từ điển bắt buộc, mã khóa tương ứng trong `dhMessages` (`ui.action.*`).
+
+| Hành động | Nhãn chuẩn | Không dùng | Ghi chú |
+|---|---|---|---|
+| Tạo đối tượng mới | "Thêm {đối tượng}" | "Tạo mới", "New", "+ Thêm mới" | "Tạo" chỉ dùng khi sinh ra từ cái khác: "Tạo phiên bản mới", "Tạo khóa" |
+| Ghi thay đổi | "Lưu" | "Cập nhật", "Ghi", "OK" | "Lưu và đóng", "Lưu và tiếp tục" khi cần |
+| Bỏ thay đổi đang soạn | "Hủy" | "Thoát", "Đóng" (khi có thay đổi) | "Đóng" chỉ cho hộp không có thay đổi |
+| Xóa | "Xóa" | "Loại bỏ", "Remove" | Xóa mềm vẫn gọi "Xóa"; xóa vĩnh viễn: "Xóa vĩnh viễn" |
+| Đưa vào quy trình duyệt | "Gửi duyệt" | "Trình", "Submit" | |
+| Rút khỏi quy trình | "Rút lại" | "Thu hồi" (dành cho khóa, quyền) | |
+| Chấp thuận | "Duyệt" | "Phê duyệt", "Đồng ý", "Approve" | |
+| Không chấp thuận | "Từ chối…" | "Không duyệt", "Reject" | Dấu "…" báo sẽ hỏi lý do |
+| Trả về để sửa | "Yêu cầu sửa…" | "Trả lại", "Yêu cầu bổ sung" (chỉ khi thiếu hồ sơ) | |
+| Đưa vào hiệu lực | "Phát hành" (luồng, danh mục, phiên bản), "Công bố" (API, dịch vụ trên cổng) | "Publish", "Ban hành" | Hai động từ, dùng theo loại đối tượng ở FRS |
+| Tạm ngừng | "Tạm dừng" / "Tiếp tục" | "Stop/Start", "Ngưng" | "Dừng khẩn" là hành động riêng của PH-04 |
+| Chấm dứt quyền, khóa | "Thu hồi" | "Hủy kích hoạt" | |
+| Tải dữ liệu ra tệp | "Xuất Excel", "Xuất CSV" | "Export", "Tải xuống dữ liệu" | "Tải xuống" dành cho tệp đã có |
+| Nạp dữ liệu từ tệp | "Nhập từ tệp" | "Import", "Upload dữ liệu" | |
+| Làm mới dữ liệu đang xem | "Làm mới" | "Tải lại", "Refresh" | "Tải lại" dành cho ST-13 "Tải bản mới nhất" |
+| Mở xem dữ liệu đã che | "Hiện" / "Ẩn" | "Xem", "Bỏ che" | |
+| Chạy thử | "Chạy thử" | "Test", "Kiểm thử" | |
+
+Nút có dấu "…" ở cuối khi bấm sẽ mở hộp thoại cần thêm thông tin trước khi thực hiện ("Từ chối…", "Xuất…" khi có tùy chọn); nút thực hiện ngay không có dấu "…".
+
+### 5.4. Tiêu đề, chữ giữ chỗ, trợ giúp
+
+Tiêu đề trang là danh từ nghiệp vụ số nhiều ngầm, không có động từ: "Danh mục dùng chung", "Giao dịch". Tiêu đề trang tạo, sửa: "Thêm dịch vụ thu", "Sửa dịch vụ thu {tên}". Chữ giữ chỗ chỉ là ví dụ định dạng, không thay nhãn và không chứa hướng dẫn bắt buộc ("Ví dụ: DM_GIOI_TINH"); hướng dẫn đặt ở chữ trợ giúp dưới trường. Chữ trợ giúp tối đa hai dòng; dài hơn thì đặt liên kết "Tìm hiểu thêm" tới HDSD (FR-00-082).
+
+### 5.5. Thông báo theo loại
+
+| Loại | Khuôn | Ví dụ |
+|---|---|---|
+| Thành công (Toast) | "Đã {động từ} {đối tượng} {tên}." | "Đã lưu dịch vụ thu Lệ phí hộ tịch." |
+| Tác vụ nền bắt đầu | "Đang {động từ} … Bạn sẽ nhận thông báo khi xong." | "Đang xuất 120.000 giao dịch. Bạn sẽ nhận thông báo khi xong." |
+| Lỗi kiểm tra trường | "{Nhãn} {điều kiện}." | "Mã danh mục tối đa 64 ký tự." |
+| Lỗi nghiệp vụ | "Không thể {hành động} vì {lý do}. {Cách khắc phục}." | "Không thể xóa danh mục vì đang có 3 API sử dụng. Ngừng hiệu lực thay vì xóa." |
+| Lỗi hệ thống | "Không {hành động} được do lỗi hệ thống. Thử lại sau ít phút; nếu vẫn lỗi, gửi mã truy vết cho bộ phận hỗ trợ." | kèm mã lỗi và mã truy vết |
+| Cảnh báo trước khi làm | "{Hệ quả}. {Câu hỏi}?" | "Luồng sẽ ngừng nhận bản tin ở PROD. Tạm dừng luồng Đồng bộ khai sinh?" |
+| Không có quyền | "Bạn không có quyền {hành động}. Liên hệ {vai trò} để được cấp." | |
+
+### 5.6. Hộp xác nhận
+
+Tiêu đề hộp xác nhận là câu hỏi nêu đúng hành động và đối tượng ("Xóa danh mục Giới tính?"); thân nêu hệ quả và điều không hoàn tác được; nút xác nhận lặp lại động từ ("Xóa"), không dùng "Có/Không" hay "Đồng ý". Với thao tác phá hủy diện rộng (xóa tenant, dừng khẩn, thu hồi hàng loạt), người dùng gõ lại mã đối tượng để xác nhận (`CMP-ConfirmDialog` biến thể `dangerous`).
+
+### 5.7. Trạng thái rỗng
+
+Ba phần: tiêu đề nói chưa có gì ("Chưa có luồng tích hợp nào"), một câu nói đối tượng dùng để làm gì ("Luồng tích hợp nhận dữ liệu từ hệ thống nguồn, chuyển đổi và gửi tới hệ thống đích."), một hành động chính nếu có quyền ("Thêm luồng") cùng liên kết HDSD. Rỗng do lọc: "Không tìm thấy {đối tượng} phù hợp" kèm "Xóa bộ lọc" (ST-04).
+
+### 5.8. Từ điển thuật ngữ giao diện
+
+Thuật ngữ giao diện dùng chung lấy từ D00-01 §3. Thuật ngữ riêng của phân hệ ghi ở mục "Ngôn ngữ và thuật ngữ" của tập UI phân hệ (ví dụ D03-06-PH04 §2.3). Khi một từ đã có nghĩa trong D00-01, tập phân hệ không được dùng nó với nghĩa khác.
+
+## 6. Nghiệm thu chung cho mọi màn hình
+
+Checklist dưới đây áp dụng cho **mọi** màn `UI-{PH}-{nn}`, cộng với tiêu chí nghiệm thu riêng của mẫu PTN đã chọn ở mục 4 và tiêu chí của màn trong tập phân hệ. Kiểm thử viên dùng checklist này làm phần chung của ca kiểm thử giao diện ở D05-02.
+
+**Khung và điều hướng**
+
+- [ ] Màn nằm trong `CMP-AppShell`; route theo mục 2.4, nằm dưới nhánh của mục menu; tiêu đề tab theo mục 2.5.
+- [ ] Breadcrumb đúng cây menu; mục menu hiện tại có `aria-current="page"`.
+- [ ] Mở trực tiếp URL (kể cả có query) cho đúng trạng thái; quay lại bằng trình duyệt giữ bộ lọc.
+
+**Vật liệu và tương phản**
+
+- [ ] Glass chỉ ở lớp điều hướng và lớp nổi; nội dung dày (bảng, biểu mẫu, log, mã, canvas) ở nền đặc (D03-05-01 §3.1).
+- [ ] Không quá bốn phần tử `backdrop-filter` cùng hiển thị.
+- [ ] Ảnh chụp kiểm thử ở ba nền xấu nhất (trắng, đen, ảnh nhiều màu) cho mọi chữ trên kính đạt 4,5:1 (TS-00-UI-01).
+- [ ] Màn dùng được đầy đủ ở chế độ kính "Tắt" và "Giảm"; không thông tin nào chỉ nhờ hiệu ứng trong suốt.
+
+**Trạng thái**
+
+- [ ] Xử lý đủ ST-01…ST-15 áp dụng được (mục 4.2); không có màn trắng, không có nút không phản hồi.
+- [ ] Hành động theo `allowedActions`: thiếu quyền thì ẩn, chưa đủ điều kiện thì vô hiệu kèm lý do.
+
+**Truy cập (WCAG 2.2 AA)**
+
+- [ ] axe-core 0 vi phạm; thao tác chính làm được chỉ bằng bàn phím, thứ tự focus hợp lý, focus không bị che bởi thanh dính (WCAG 2.4.11).
+- [ ] Mọi thao tác kéo có phương án không kéo (2.5.7); vùng chạm ≥ 24×24 (2.5.8).
+- [ ] Không có thông tin chỉ truyền bằng màu (1.4.1); văn bản phóng 200% không mất nội dung (1.4.4); dùng được ở 1280×720.
+- [ ] Thông báo động đọc qua vùng `aria-live` của khung, mỗi sự kiện một lần.
+
+**Nội dung và dữ liệu**
+
+- [ ] Chữ theo mục 5; định dạng ngày, số, tiền qua `@datahub/ui/format`.
+- [ ] Dữ liệu Nhạy cảm hiển thị bằng `CMP-MaskedValue`; không có dữ liệu cá nhân trên URL, tiêu đề tab, thông báo.
+- [ ] Lỗi theo FR-00-080: tiếng Việt, cách khắc phục, mã lỗi, mã truy vết sao chép được.
+
+**Chất lượng mã**
+
+- [ ] Chỉ dùng thành phần `@datahub/ui` (không nhập `antd` trực tiếp), không giá trị thị giác thô, không `style` nội tuyến (NFR-00-045).
+- [ ] Khóa truy vấn bắt đầu bằng tenant; đổi tenant không để lại dữ liệu cũ.
+- [ ] Mã `CMP-*` dùng trong tài liệu màn có trong danh mục D03-05-03 §9 và D03-05-04 §14.1.
+
+## 7. Màn hệ cũ được giữ và mẫu tương ứng
+
+Theo quyết định Q4 (phủ đủ nghiệp vụ hệ cũ và giữ màn có giá trị vận hành), bảng dưới tổng hợp mọi chức năng hệ cũ được D00-03 §4 đánh dấu "Màn hình vận hành: Có", cùng mẫu màn hình và nơi thiết kế lại. Cột "Màn Datahub" ghi mã `UI-{PH}-{nn}` khi tập phân hệ đã viết (PH-04, PH-07); các phân hệ chưa có tập UI ghi route theo bảng menu mục 2.3.2 và mã màn được cấp khi viết tập đó. Chi tiết "điều người dùng cũ cần biết" ở tập phân hệ (D03-06-PH04 §3, D03-06-PH07 §23.2).
+
+| LGC | Chức năng hệ cũ | Kết luận (D00-03) | Mẫu | Màn Datahub |
+|---|---|---|---|---|
+| LGC-BUS-001 | Danh sách chương trình tích hợp (agent), phân trang | Nâng cấp | PTN-01 | UI-04-01 |
+| LGC-BUS-006 | Metadata chương trình tích hợp | Nâng cấp | PTN-02 | UI-04-02 tab Tổng quan |
+| LGC-BUS-007 | Histogram lượng bản tin đi qua, thất bại theo giây | Thay thế | PTN-06 | UI-04-02 tab Giám sát (nhúng PH-13, `CMP-EmbeddedDashboard`) |
+| LGC-BUS-008, 018 | Danh sách route, dữ liệu các route của agent | Giữ nguyên | PTN-02 (tab) | UI-04-02 tab Route |
+| LGC-BUS-009, 026 | Start/Stop agent, Start/Stop từng route | Nâng cấp | PTN-02 (hành động) | UI-04-02, UI-04-15 |
+| LGC-BUS-014 | Tổng quan số agent hoạt động / tổng | Thay thế | PTN-06 | `/tong-quan` thẻ "Luồng"; bảng giám sát PH-13 |
+| LGC-BUS-015, 016, 019 | Số liệu từng agent, CPU, bộ nhớ, biểu đồ theo route | Thay thế | PTN-06 | UI-04-02 tab Giám sát; `/giam-sat/bang-dieu-khien` |
+| LGC-BUS-017 | Chi tiết agent | Thay thế | PTN-02 | UI-04-02 |
+| LGC-BUS-020, 027 | Tab điểm kết nối, thống kê theo endpoint | Giữ nguyên, Thay thế | PTN-02 (tab) | UI-04-02 tab Điểm kết nối |
+| LGC-BUS-021 | Tab thuộc tính của route | Giữ nguyên | PTN-02 (tab) | UI-04-02 tab Thuộc tính |
+| LGC-BUS-022 | Tab sơ đồ của route | Nâng cấp | PTN-07 (chỉ đọc) | UI-04-02 tab Sơ đồ, UI-04-04 |
+| LGC-BUS-023 | Tab mã nguồn của route | Nâng cấp | PTN-02 (tab) | UI-04-02 tab Mã nguồn, UI-04-16 |
+| LGC-BUS-025 | Trạng thái hoạt động / dừng của agent | Giữ nguyên | PTN-01 (cột) | UI-04-01 cột môi trường, UI-04-02 `CMP-EnvCard` |
+| LGC-BUS-029 | Log agent và chi tiết log | Thay thế | PTN-11 | `/giam-sat/log` lọc sẵn theo luồng |
+| LGC-BUS-037 | Xử lý lỗi: thực hiện lại hoặc bỏ qua | Nâng cấp | PTN-01 | `/van-hanh/dlq` (PH-18) |
+| LGC-HUB-001…004 | Dashboard số publisher, subscriber, project, topic | Giữ nguyên | PTN-06 | Trang tổng quan nhóm "Tích hợp" PH-10 (`CMP-KpiCard`) |
+| LGC-HUB-005, 006 | Biểu đồ % bộ nhớ, % CPU theo giây | Thay thế | PTN-06 | `/giam-sat/bang-dieu-khien` (PH-13) |
+| LGC-HUB-007 | Sơ đồ kết nối publisher → topic → subscriber | Nâng cấp | PTN-07 (chế độ xem) | `/tich-hop/so-do` (`CMP-FlowCanvas` `readonly`) |
+| LGC-APIM-001 | Danh sách API | Giữ nguyên | PTN-01 | `/ket-noi/api` |
+| LGC-APIM-005 | Start / Stop API | Giữ nguyên | PTN-02 (hành động) | Chi tiết API, hành động "Tạm dừng"/"Tiếp tục" |
+| LGC-APIM-016, 021 | Quản lý đăng ký theo API, theo ứng dụng | Giữ nguyên | PTN-02 (tab), PTN-01 | Chi tiết API tab Đăng ký; `/ket-noi/dang-ky` |
+| LGC-APIM-019 | Danh sách ứng dụng | Nâng cấp | PTN-01 | `/ket-noi/he-thong` (PH-01, ứng dụng thuộc HTTT) |
+| LGC-APIM-022 | Log request của ứng dụng, chi tiết một log | Nâng cấp | PTN-11 | `/giam-sat/log` lọc theo ứng dụng |
+| LGC-APIM-023, 024, 025 | Danh sách, chi tiết, giám sát gateway | Thay thế | PTN-11 (nút gateway), PTN-06 | `/ket-noi/chinh-sach` (PH-03), `/giam-sat/bang-dieu-khien` |
+| LGC-APIM-026 | Dashboard hoạt động chung của hệ thống API | Giữ nguyên | PTN-06 | `/tong-quan`, `/giam-sat/bang-dieu-khien` |
+| LGC-APIM-027 | Audit thông tin tác động hệ thống | Nâng cấp | PTN-11 | `/giam-sat/kiem-toan` |
+| LGC-DMDC-001 | Danh sách danh mục, số lượng | Giữ nguyên | PTN-08 | UI-07-01 |
+| LGC-DMDC-002 | Dữ liệu danh mục dạng cây | Giữ nguyên | PTN-02 (tab), PTN-08 | UI-07-02 tab Bản ghi chế độ Cây |
+| LGC-DMDC-003 | Chi tiết danh mục: tên, thuộc tính, bản ghi | Giữ nguyên | PTN-02 | UI-07-02 |
+| LGC-PAY-002, 003 | Danh sách, chi tiết nhà cung cấp | Giữ nguyên | PTN-01, PTN-02 | `/thanh-toan/doi-tac` |
+| LGC-PAY-013 | Dashboard tổng quan giao dịch | Giữ nguyên | PTN-06 | Trang tổng quan nhóm "Thanh toán" |
+| LGC-PAY-014 | Bảng tra cứu giao dịch | Giữ nguyên | PTN-01 | `/thanh-toan/giao-dich` |
+| LGC-PAY-019 | Chi tiết giao dịch và lịch sử trạng thái | Giữ nguyên | PTN-02 | Chi tiết giao dịch, `CMP-Timeline` biến thể `status` |
+| LGC-PAY-020 | Dashboard kênh thanh toán | Giữ nguyên | PTN-06 | `/thanh-toan/kenh` |
+
+Bảng phủ 46 mục LGC có màn hình vận hành. Mọi mục đều có mẫu và đích; không mục nào bị bỏ. Các mục "Thay thế" chuyển sang màn giám sát dùng chung của PH-13 vì hệ mới thu số liệu theo luồng, theo pod chứ không theo agent JMX; người dùng cũ tìm thấy chúng qua liên kết "Giám sát" ngay trên trang chi tiết đối tượng (`CMP-EmbeddedDashboard`), nên đường đi không dài hơn hệ cũ.
+
+## 8. Truy vết
+
+| Yêu cầu | Đáp ứng tại |
+|---|---|
+| FR-00-001…005 đăng nhập, phiên | §1.4, §2.3.3, ST-14 (§4.2) |
+| FR-00-004, FR-00-011, FR-00-012 tenant và liên tenant | §2.11, §3.8 |
+| FR-00-020…024 tìm kiếm, lọc, bộ lọc đã lưu | §2.4, §2.7, PTN-01 |
+| FR-00-030, FR-00-031 xuất dữ liệu | PTN-01 |
+| FR-00-034, FR-00-040…042 dữ liệu nhạy cảm, kiểm toán | §2.4, PTN-02, PTN-11, §6 |
+| FR-00-050…054 xác nhận, xóa mềm, xung đột, trạng thái, tác vụ dài | §4.2, §4.3, §5.6 |
+| FR-00-060…062 thông báo | §2.9 |
+| FR-00-070…072 duyệt | §2.8, PTN-10 |
+| FR-00-080…082 lỗi, trợ giúp | §4.2, §5.4, §5.5, PTN-13 |
+| NFR-00-003, NFR-00-005 hiệu năng | §3.4, PTN-07, PTN-11, PTN-14 |
+| NFR-00-040…045 WCAG 2.2 AA, chỉ dùng `@datahub/ui` | §3.6, §3.7, §6 |
+| Q4 giữ màn hệ cũ có giá trị vận hành | §7 |
+| Dàn ý D03-06 mục 1 (kiến trúc thông tin theo vai trò và tenant) | §2 |
+| Dàn ý D03-06 mục 3 (mỗi màn có bố cục, trạng thái, thông điệp) | §1.3, §4, §5 |
+| Dàn ý D03-06 mục 5 (danh sách màn hệ cũ được giữ) | §7 |
+
+## 9. Đề xuất bổ sung
+
+1. **D00-01 §9 (quy ước tên file).** Như D03-05 §9: tài liệu chia phần dùng `{mã-tài-liệu}-{nn}-{tên}.md`; tập UI phân hệ dùng `D03-06-PH{nn}-{tên}.md`.
+2. **D05-02.** Mục 6 của tài liệu này là phần chung của mọi ca kiểm thử giao diện; mỗi tập D05-02 phân hệ tham chiếu thay vì chép lại.
+3. **Route của tập PH-07.** Bản 0.2 của D03-06-PH07 đã chuyển route `/rdm/...` và tham số truy vấn tiếng Anh sang quy tắc URL ở §2.4 (đường dẫn `/du-lieu/danh-muc`, tham số `trang`, `co`, `sap-xep`); đường dẫn cũ được chuyển hướng phía client trong một đợt phát hành để liên kết đã chia sẻ không hỏng.
