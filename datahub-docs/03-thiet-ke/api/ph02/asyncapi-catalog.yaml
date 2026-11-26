@@ -1,0 +1,1689 @@
+# D03-04-PH02 · AsyncAPI PH-02. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-02 Danh mục dịch vụ — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-02-01…16 (D03-04-PH02 §4, FRS §9.3) và sáu sự kiện PH-02 nhận từ PH-04, PH-10. Sự kiện phát ghi vào `ph02_catalog.outbox_event`
+    cùng giao dịch, Debezium đưa lên Kafka, CloudEvents 1.0 chế độ nhị phân. Không sự kiện nào mang đặc tả, khóa, bí mật hay giá trị dữ liệu cá nhân. Người nhận xử
+    lý lũy đẳng theo `eventId` và `configEpoch`. Tương thích BACKWARD ở Apicurio: chỉ thêm trường tùy chọn trong `v1`. Dữ liệu ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố tenant.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  apiRegistered:
+    address: '{tenant}.catalog.api.registered.v1'
+    title: EVT-02-01
+    description: 'API được đăng ký. (FR-02-10, FR-02-13, FR-02-61). Khóa phân vùng: `apiCode`. Người nhận: PH-13, PH-15.'
+    messages:
+      apiRegistered:
+        $ref: '#/components/messages/apiRegistered'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.registered.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  apiUpdated:
+    address: '{tenant}.catalog.api.updated.v1'
+    title: EVT-02-02
+    description: 'Đổi thông tin, phân loại, mức hiển thị, chủ quản, backend, SLA (kèm `changedFields`). (FR-02-07, FR-02-08, FR-02-14, FR-02-22, FR-02-23, FR-02-26,
+      FR-02-41, FR-02-42, FR-02-45, FR-02-55, FR-02-61). Khóa phân vùng: `apiCode`. Người nhận: PH-03, PH-15, PH-13.'
+    messages:
+      apiUpdated:
+        $ref: '#/components/messages/apiUpdated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.updated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  apiDeleted:
+    address: '{tenant}.catalog.api.deleted.v1'
+    title: EVT-02-03
+    description: 'API bị xóa mềm. (FR-02-40). Khóa phân vùng: `apiCode`. Người nhận: PH-15, PH-13, PH-14.'
+    messages:
+      apiDeleted:
+        $ref: '#/components/messages/apiDeleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.api.deleted.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  versionSubmitted:
+    address: '{tenant}.catalog.version.submitted.v1'
+    title: EVT-02-04
+    description: 'Phiên bản gửi duyệt công bố. (FR-02-34). Khóa phân vùng: `apiCode`. Người nhận: PH-18, PH-13.'
+    messages:
+      versionSubmitted:
+        $ref: '#/components/messages/versionSubmitted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.submitted.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  versionPublished:
+    address: '{tenant}.catalog.version.published.v1'
+    title: EVT-02-05
+    description: 'Phiên bản sang `PUBLISHED` (gateway đã xác nhận nạp). (FR-02-36). Khóa phân vùng: `apiCode`. Người nhận: PH-03, PH-15, PH-13, PH-16.'
+    messages:
+      versionPublished:
+        $ref: '#/components/messages/versionPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  versionStateChanged:
+    address: '{tenant}.catalog.version.state-changed.v1'
+    title: EVT-02-06
+    description: 'Tạm ngừng, tiếp tục, ngừng khuyến nghị, ngừng hẳn (kể cả phiên bản cũ bị thay thế). (FR-02-36, FR-02-37, FR-02-38, FR-02-39). Khóa phân vùng: `apiCode`.
+      Người nhận: PH-03, PH-15, PH-13, PH-18.'
+    messages:
+      versionStateChanged:
+        $ref: '#/components/messages/versionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  versionSpecSourceChanged:
+    address: '{tenant}.catalog.version.spec-source-changed.v1'
+    title: EVT-02-07
+    description: 'Đặc tả nguồn URL thay đổi (PH-18 nhắc chủ dịch vụ). (FR-02-12). Khóa phân vùng: `apiCode`. Người nhận: PH-18.'
+    messages:
+      versionSpecSourceChanged:
+        $ref: '#/components/messages/versionSpecSourceChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.version.spec-source-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  planStateChanged:
+    address: '{tenant}.catalog.plan.state-changed.v1'
+    title: EVT-02-08
+    description: 'Gói đổi trạng thái hoặc khai báo. (FR-02-27, FR-02-29, FR-02-30, FR-02-31, FR-02-32, FR-02-33). Khóa phân vùng: `apiCode`. Người nhận: PH-03, PH-15.'
+    messages:
+      planStateChanged:
+        $ref: '#/components/messages/planStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.plan.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  subscriptionRequested:
+    address: '{tenant}.catalog.subscription.requested.v1'
+    title: EVT-02-09
+    description: 'Đăng ký sử dụng chờ duyệt. (FR-02-46). Khóa phân vùng: `apiCode`. Người nhận: PH-18.'
+    messages:
+      subscriptionRequested:
+        $ref: '#/components/messages/subscriptionRequested'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.requested.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  subscriptionActivated:
+    address: '{tenant}.catalog.subscription.activated.v1'
+    title: EVT-02-10
+    description: 'Đăng ký được cấp phạm vi (consumer hợp lệ ở gateway). (FR-02-47, FR-02-48). Khóa phân vùng: `apiCode`. Người nhận: PH-03, PH-13, PH-15.'
+    messages:
+      subscriptionActivated:
+        $ref: '#/components/messages/subscriptionActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  subscriptionStateChanged:
+    address: '{tenant}.catalog.subscription.state-changed.v1'
+    title: EVT-02-11
+    description: 'Từ chối, tạm ngừng, thu hồi, hủy, hết hạn. (FR-02-47, FR-02-51, FR-02-52). Khóa phân vùng: `apiCode`. Người nhận: PH-03, PH-12, PH-13.'
+    messages:
+      subscriptionStateChanged:
+        $ref: '#/components/messages/subscriptionStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.subscription.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  changeNoticeIssued:
+    address: '{tenant}.catalog.change.notice-issued.v1'
+    title: EVT-02-12
+    description: 'Thông báo thay đổi đã phát cho bên khai thác. (FR-02-31, FR-02-36, FR-02-37, FR-02-38, FR-02-39, FR-02-55, FR-02-57). Khóa phân vùng: `apiCode`.
+      Người nhận: PH-15, PH-18.'
+    messages:
+      changeNoticeIssued:
+        $ref: '#/components/messages/changeNoticeIssued'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.change.notice-issued.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  slaPeriodClosed:
+    address: '{tenant}.catalog.sla.period-closed.v1'
+    title: EVT-02-13
+    description: 'Chốt kỳ tuân thủ SLA (hằng tháng). (FR-02-56). Khóa phân vùng: `apiCode`. Người nhận: PH-13, PH-16.'
+    messages:
+      slaPeriodClosed:
+        $ref: '#/components/messages/slaPeriodClosed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.sla.period-closed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  nationalSyncStateChanged:
+    address: '{tenant}.catalog.national-sync.state-changed.v1'
+    title: EVT-02-14
+    description: 'Trạng thái đồng bộ danh mục quốc gia đổi. (FR-02-53, FR-02-54). Khóa phân vùng: `apiCode`. Người nhận: PH-13.'
+    messages:
+      nationalSyncStateChanged:
+        $ref: '#/components/messages/nationalSyncStateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.national-sync.state-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  gatewayDriftDetected:
+    address: '{tenant}.catalog.gateway.drift-detected.v1'
+    title: EVT-02-15
+    description: 'Phát hiện cấu hình gateway lệch với dữ liệu công bố. (FR-02-60). Khóa phân vùng: `environment`. Người nhận: PH-13, PH-18.'
+    messages:
+      gatewayDriftDetected:
+        $ref: '#/components/messages/gatewayDriftDetected'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.gateway.drift-detected.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  reviewOverdue:
+    address: '{tenant}.catalog.review.overdue.v1'
+    title: EVT-02-16
+    description: 'Yêu cầu duyệt quá hạn (PH-18 nhắc và leo thang). (FR-02-35, FR-02-47). Khóa phân vùng: `reviewRequestId`. Người nhận: PH-18.'
+    messages:
+      reviewOverdue:
+        $ref: '#/components/messages/reviewOverdue'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.catalog.review.overdue.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  inFlowUpdated:
+    address: '{tenant}.integration.flow.updated.v1'
+    title: EVT-04-02 (PH-04) — PH-02 nhận
+    description: Đồng bộ nhãn, chủ quản của luồng REST. (FR-02-013). Chỉ liệt kê trường PH-02 đọc; hợp đồng đầy đủ ở D03-04-PH04.
+    messages:
+      inFlowUpdated:
+        $ref: '#/components/messages/inFlowUpdated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  inFlowVersionApproved:
+    address: '{tenant}.integration.version.approved.v1'
+    title: EVT-04-04 (PH-04) — PH-02 nhận
+    description: Phiên bản luồng đã duyệt; cập nhật khung route và đặc tả sinh từ luồng. (FR-02-013). Chỉ liệt kê trường PH-02 đọc; hợp đồng đầy đủ ở D03-04-PH04.
+    messages:
+      inFlowVersionApproved:
+        $ref: '#/components/messages/inFlowVersionApproved'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  inDeploymentStatusChanged:
+    address: '{tenant}.integration.deployment.status-changed.v1'
+    title: EVT-04-07 (PH-04) — PH-02 nhận
+    description: Bật, tắt luồng; PH-02 cập nhật `flowSyncStatus` và cảnh báo API công bố sinh từ luồng đã tắt. (FR-02-013). Chỉ liệt kê trường PH-02 đọc; hợp đồng
+      đầy đủ ở D03-04-PH04.
+    messages:
+      inDeploymentStatusChanged:
+        $ref: '#/components/messages/inDeploymentStatusChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  inTopicActivated:
+    address: '{tenant}.event.topic.activated.v1'
+    title: EVT-10-01 (PH-10) — PH-02 nhận
+    description: Topic `ACTIVE`; PH-02 cập nhật bản sao `topic_replica` cho dịch vụ sự kiện. (FR-02-009). Chỉ liệt kê trường PH-02 đọc; hợp đồng đầy đủ ở D03-04-PH10.
+    messages:
+      inTopicActivated:
+        $ref: '#/components/messages/inTopicActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  inTopicDeprecated:
+    address: '{tenant}.event.topic.deprecated.v1'
+    title: EVT-10-03 (PH-10) — PH-02 nhận
+    description: Topic `DEPRECATED` kèm kế nhiệm, `sunsetAt`. (FR-02-009). Chỉ liệt kê trường PH-02 đọc; hợp đồng đầy đủ ở D03-04-PH10.
+    messages:
+      inTopicDeprecated:
+        $ref: '#/components/messages/inTopicDeprecated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  inTopicRetired:
+    address: '{tenant}.event.topic.retired.v1'
+    title: EVT-10-04 (PH-10) — PH-02 nhận
+    description: Topic `RETIRED`; dịch vụ sự kiện hiện nhãn đã ngừng ở PH-10. (FR-02-009). Chỉ liệt kê trường PH-02 đọc; hợp đồng đầy đủ ở D03-04-PH10.
+    messages:
+      inTopicRetired:
+        $ref: '#/components/messages/inTopicRetired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+operations:
+  sendApiRegistered:
+    action: send
+    channel:
+      $ref: '#/channels/apiRegistered'
+    title: EVT-02-01 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/apiRegistered/messages/apiRegistered'
+  sendApiUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/apiUpdated'
+    title: EVT-02-02 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/apiUpdated/messages/apiUpdated'
+  sendApiDeleted:
+    action: send
+    channel:
+      $ref: '#/channels/apiDeleted'
+    title: EVT-02-03 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/apiDeleted/messages/apiDeleted'
+  sendVersionSubmitted:
+    action: send
+    channel:
+      $ref: '#/channels/versionSubmitted'
+    title: EVT-02-04 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/versionSubmitted/messages/versionSubmitted'
+  sendVersionPublished:
+    action: send
+    channel:
+      $ref: '#/channels/versionPublished'
+    title: EVT-02-05 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/versionPublished/messages/versionPublished'
+  sendVersionStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/versionStateChanged'
+    title: EVT-02-06 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/versionStateChanged/messages/versionStateChanged'
+  sendVersionSpecSourceChanged:
+    action: send
+    channel:
+      $ref: '#/channels/versionSpecSourceChanged'
+    title: EVT-02-07 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/versionSpecSourceChanged/messages/versionSpecSourceChanged'
+  sendPlanStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/planStateChanged'
+    title: EVT-02-08 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/planStateChanged/messages/planStateChanged'
+  sendSubscriptionRequested:
+    action: send
+    channel:
+      $ref: '#/channels/subscriptionRequested'
+    title: EVT-02-09 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/subscriptionRequested/messages/subscriptionRequested'
+  sendSubscriptionActivated:
+    action: send
+    channel:
+      $ref: '#/channels/subscriptionActivated'
+    title: EVT-02-10 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/subscriptionActivated/messages/subscriptionActivated'
+  sendSubscriptionStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/subscriptionStateChanged'
+    title: EVT-02-11 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/subscriptionStateChanged/messages/subscriptionStateChanged'
+  sendChangeNoticeIssued:
+    action: send
+    channel:
+      $ref: '#/channels/changeNoticeIssued'
+    title: EVT-02-12 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/changeNoticeIssued/messages/changeNoticeIssued'
+  sendSlaPeriodClosed:
+    action: send
+    channel:
+      $ref: '#/channels/slaPeriodClosed'
+    title: EVT-02-13 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/slaPeriodClosed/messages/slaPeriodClosed'
+  sendNationalSyncStateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/nationalSyncStateChanged'
+    title: EVT-02-14 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/nationalSyncStateChanged/messages/nationalSyncStateChanged'
+  sendGatewayDriftDetected:
+    action: send
+    channel:
+      $ref: '#/channels/gatewayDriftDetected'
+    title: EVT-02-15 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/gatewayDriftDetected/messages/gatewayDriftDetected'
+  sendReviewOverdue:
+    action: send
+    channel:
+      $ref: '#/channels/reviewOverdue'
+    title: EVT-02-16 — dh-connect phát (outbox)
+    messages:
+    - $ref: '#/channels/reviewOverdue/messages/reviewOverdue'
+  receiveFlowUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/inFlowUpdated'
+    title: EVT-04-02 — dh-connect nhận (PH-04)
+    messages:
+    - $ref: '#/channels/inFlowUpdated/messages/inFlowUpdated'
+  receiveFlowVersionApproved:
+    action: receive
+    channel:
+      $ref: '#/channels/inFlowVersionApproved'
+    title: EVT-04-04 — dh-connect nhận (PH-04)
+    messages:
+    - $ref: '#/channels/inFlowVersionApproved/messages/inFlowVersionApproved'
+  receiveDeploymentStatusChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inDeploymentStatusChanged'
+    title: EVT-04-07 — dh-connect nhận (PH-04)
+    messages:
+    - $ref: '#/channels/inDeploymentStatusChanged/messages/inDeploymentStatusChanged'
+  receiveTopicActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/inTopicActivated'
+    title: EVT-10-01 — dh-connect nhận (PH-10)
+    messages:
+    - $ref: '#/channels/inTopicActivated/messages/inTopicActivated'
+  receiveTopicDeprecated:
+    action: receive
+    channel:
+      $ref: '#/channels/inTopicDeprecated'
+    title: EVT-10-03 — dh-connect nhận (PH-10)
+    messages:
+    - $ref: '#/channels/inTopicDeprecated/messages/inTopicDeprecated'
+  receiveTopicRetired:
+    action: receive
+    channel:
+      $ref: '#/channels/inTopicRetired'
+    title: EVT-10-04 — dh-connect nhận (PH-10)
+    messages:
+    - $ref: '#/channels/inTopicRetired/messages/inTopicRetired'
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`).
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN.
+  messages:
+    apiRegistered:
+      name: apiRegistered
+      title: EVT-02-01
+      summary: API được đăng ký.
+      payload:
+        $ref: '#/components/schemas/ApiRegistered'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    apiUpdated:
+      name: apiUpdated
+      title: EVT-02-02
+      summary: Đổi thông tin, phân loại, mức hiển thị, chủ quản, backend, SLA (kèm `changedFields`).
+      payload:
+        $ref: '#/components/schemas/ApiUpdated'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    apiDeleted:
+      name: apiDeleted
+      title: EVT-02-03
+      summary: API bị xóa mềm.
+      payload:
+        $ref: '#/components/schemas/ApiDeleted'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    versionSubmitted:
+      name: versionSubmitted
+      title: EVT-02-04
+      summary: Phiên bản gửi duyệt công bố.
+      payload:
+        $ref: '#/components/schemas/VersionSubmitted'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    versionPublished:
+      name: versionPublished
+      title: EVT-02-05
+      summary: Phiên bản sang `PUBLISHED` (gateway đã xác nhận nạp).
+      payload:
+        $ref: '#/components/schemas/VersionPublished'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    versionStateChanged:
+      name: versionStateChanged
+      title: EVT-02-06
+      summary: Tạm ngừng, tiếp tục, ngừng khuyến nghị, ngừng hẳn (kể cả phiên bản cũ bị thay thế).
+      payload:
+        $ref: '#/components/schemas/VersionStateChanged'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    versionSpecSourceChanged:
+      name: versionSpecSourceChanged
+      title: EVT-02-07
+      summary: Đặc tả nguồn URL thay đổi (PH-18 nhắc chủ dịch vụ).
+      payload:
+        $ref: '#/components/schemas/VersionSpecSourceChanged'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    planStateChanged:
+      name: planStateChanged
+      title: EVT-02-08
+      summary: Gói đổi trạng thái hoặc khai báo.
+      payload:
+        $ref: '#/components/schemas/PlanStateChanged'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    subscriptionRequested:
+      name: subscriptionRequested
+      title: EVT-02-09
+      summary: Đăng ký sử dụng chờ duyệt.
+      payload:
+        $ref: '#/components/schemas/SubscriptionRequested'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    subscriptionActivated:
+      name: subscriptionActivated
+      title: EVT-02-10
+      summary: Đăng ký được cấp phạm vi (consumer hợp lệ ở gateway).
+      payload:
+        $ref: '#/components/schemas/SubscriptionActivated'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    subscriptionStateChanged:
+      name: subscriptionStateChanged
+      title: EVT-02-11
+      summary: Từ chối, tạm ngừng, thu hồi, hủy, hết hạn.
+      payload:
+        $ref: '#/components/schemas/SubscriptionStateChanged'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    changeNoticeIssued:
+      name: changeNoticeIssued
+      title: EVT-02-12
+      summary: Thông báo thay đổi đã phát cho bên khai thác.
+      payload:
+        $ref: '#/components/schemas/ChangeNoticeIssued'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    slaPeriodClosed:
+      name: slaPeriodClosed
+      title: EVT-02-13
+      summary: Chốt kỳ tuân thủ SLA (hằng tháng).
+      payload:
+        $ref: '#/components/schemas/SlaPeriodClosed'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    nationalSyncStateChanged:
+      name: nationalSyncStateChanged
+      title: EVT-02-14
+      summary: Trạng thái đồng bộ danh mục quốc gia đổi.
+      payload:
+        $ref: '#/components/schemas/NationalSyncStateChanged'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`apiCode`'
+    gatewayDriftDetected:
+      name: gatewayDriftDetected
+      title: EVT-02-15
+      summary: Phát hiện cấu hình gateway lệch với dữ liệu công bố.
+      payload:
+        $ref: '#/components/schemas/GatewayDriftDetected'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`environment`'
+    reviewOverdue:
+      name: reviewOverdue
+      title: EVT-02-16
+      summary: Yêu cầu duyệt quá hạn (PH-18 nhắc và leo thang).
+      payload:
+        $ref: '#/components/schemas/ReviewOverdue'
+      headers:
+        $ref: '#/components/schemas/CloudEventsHeaders'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`reviewRequestId`'
+    inFlowUpdated:
+      name: inFlowUpdated
+      title: EVT-04-02
+      summary: Đồng bộ nhãn, chủ quản của luồng REST.
+      payload:
+        $ref: '#/components/schemas/InFlowUpdated'
+    inFlowVersionApproved:
+      name: inFlowVersionApproved
+      title: EVT-04-04
+      summary: Phiên bản luồng đã duyệt; cập nhật khung route và đặc tả sinh từ luồng.
+      payload:
+        $ref: '#/components/schemas/InFlowVersionApproved'
+    inDeploymentStatusChanged:
+      name: inDeploymentStatusChanged
+      title: EVT-04-07
+      summary: Bật, tắt luồng; PH-02 cập nhật `flowSyncStatus` và cảnh báo API công bố sinh từ luồng đã tắt.
+      payload:
+        $ref: '#/components/schemas/InDeploymentStatusChanged'
+    inTopicActivated:
+      name: inTopicActivated
+      title: EVT-10-01
+      summary: Topic `ACTIVE`; PH-02 cập nhật bản sao `topic_replica` cho dịch vụ sự kiện.
+      payload:
+        $ref: '#/components/schemas/InTopicActivated'
+    inTopicDeprecated:
+      name: inTopicDeprecated
+      title: EVT-10-03
+      summary: Topic `DEPRECATED` kèm kế nhiệm, `sunsetAt`.
+      payload:
+        $ref: '#/components/schemas/InTopicDeprecated'
+    inTopicRetired:
+      name: inTopicRetired
+      title: EVT-10-04
+      summary: Topic `RETIRED`; dịch vụ sự kiện hiện nhãn đã ngừng ở PH-10.
+      payload:
+        $ref: '#/components/schemas/InTopicRetired'
+  schemas:
+    ApiCodeStr:
+      type: string
+      pattern: ^[a-z][a-z0-9-]{2,62}$
+    ApiRegistered:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: &id002
+          $ref: '#/components/schemas/ApiCodeStr'
+        name: &id001
+          type: string
+        providerSystemCode: *id001
+        ownerOrgCode: *id001
+        dataClass:
+          type: string
+          enum:
+          - PUBLIC
+          - INTERNAL
+          - RESTRICTED
+          - SENSITIVE
+        visibility:
+          type: string
+          enum:
+          - TENANT
+          - NATIONAL
+          - PUBLIC
+        origin:
+          type: string
+          enum:
+          - MANUAL
+          - OPENAPI
+          - FLOW
+          - LEGACY
+        versionNo: &id003
+          type: string
+          pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - name
+      - dataClass
+      - visibility
+      - origin
+      - versionNo
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        name: Tra cứu thông tin hộ tịch
+        providerSystemCode: HT-HOTICH
+        ownerOrgCode: SO-TUPHAP
+        dataClass: RESTRICTED
+        visibility: TENANT
+        origin: OPENAPI
+        versionNo: 1.0.0
+    ApiUpdated:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        changedFields:
+          type: array
+          items: *id001
+          minItems: 1
+        visibility:
+          type: string
+          enum:
+          - TENANT
+          - NATIONAL
+          - PUBLIC
+        portalPublished:
+          type: boolean
+        configEpoch: &id004
+          type: integer
+          minimum: 0
+          description: Số phiên bản nguồn cấu hình (`config_epoch`); người nhận lũy đẳng, bỏ qua số nhỏ hơn số đang giữ.
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - changedFields
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        changedFields:
+        - category
+        - tags
+        visibility: TENANT
+        portalPublished: false
+        configEpoch: 9317
+    ApiDeleted:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        deletedBy: *id001
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        deletedBy: u-0192d3a1
+    VersionSubmitted:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        reviewRequestId:
+          type: string
+          format: uuid
+        requestedBy: *id001
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - reviewRequestId
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        reviewRequestId: 0192d3a1-8a10-7b22-8c4d-2e3f4a5b6c7d
+        requestedBy: u-0192d3a1
+        dueAt: '2026-12-03T03:15:00Z'
+    VersionPublished:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        major:
+          type: integer
+        environment: &id006
+          type: string
+          enum:
+          - TEST
+          - STAGING
+          - PROD
+        contextPath: *id001
+        visibility:
+          type: string
+          enum:
+          - TENANT
+          - NATIONAL
+          - PUBLIC
+        dataClass:
+          type: string
+          enum:
+          - PUBLIC
+          - INTERNAL
+          - RESTRICTED
+          - SENSITIVE
+        gatewayConfigVersion:
+          type: integer
+        configEpoch: *id004
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - environment
+      - contextPath
+      - configEpoch
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        major: 1
+        environment: PROD
+        contextPath: /ho-tich/tra-cuu-ho-tich/v1
+        visibility: TENANT
+        dataClass: RESTRICTED
+        gatewayConfigVersion: 4182
+        configEpoch: 9317
+    VersionStateChanged:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        from: &id005
+          type: string
+          enum:
+          - DRAFT
+          - PENDING
+          - PUBLISHED
+          - SUSPENDED
+          - DEPRECATED
+          - RETIRED
+        to: *id005
+        reason:
+          type: string
+          enum:
+          - SUSPEND
+          - RESUME
+          - DEPRECATE
+          - RETIRE
+          - SUPERSEDED
+          - SUSPEND_EXPIRED
+        sunsetAt:
+          type: string
+          format: date-time
+        successorVersionNo: *id003
+        securityHold:
+          type: boolean
+        configEpoch: *id004
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - from
+      - to
+      - reason
+      - configEpoch
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: ho-so-dat-dai
+        versionNo: 1.2.0
+        from: PUBLISHED
+        to: DEPRECATED
+        reason: DEPRECATE
+        sunsetAt: '2027-06-30T00:00:00Z'
+        successorVersionNo: 2.0.0
+        securityHold: false
+        configEpoch: 9420
+    VersionSpecSourceChanged:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        sourceUrl:
+          type: string
+          format: uri
+        previousSha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        newSha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        breakingCount:
+          type: integer
+          minimum: 0
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - newSha256
+      - breakingCount
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        sourceUrl: https://ht-hotich.t68.example.vn/openapi.yaml
+        previousSha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        newSha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        breakingCount: 1
+    PlanStateChanged:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        planCode: *id001
+        from:
+          type: string
+          enum:
+          - STAGING
+          - PUBLISHED
+          - DEPRECATED
+          - CLOSED
+        to:
+          type: string
+          enum:
+          - STAGING
+          - PUBLISHED
+          - DEPRECATED
+          - CLOSED
+        changedFields:
+          type: array
+          items: *id001
+        configEpoch: *id004
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - planCode
+      - to
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        planCode: co-ban
+        from: STAGING
+        to: PUBLISHED
+        changedFields:
+        - status
+        configEpoch: 9318
+    SubscriptionRequested:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        subscriptionId:
+          type: string
+          format: uuid
+        apiCode: *id002
+        versionNo: *id003
+        planCode: *id001
+        systemCode: *id001
+        reviewRequestId:
+          type: string
+          format: uuid
+        dueAt:
+          type: string
+          format: date-time
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - subscriptionId
+      - apiCode
+      - versionNo
+      - planCode
+      - systemCode
+      - reviewRequestId
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        subscriptionId: 0192d3a1-a000-7d33-9e44-4f5a6b7c8d9e
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        planCode: co-ban
+        systemCode: HT-MOTCUA
+        reviewRequestId: 0192d3a1-a001-7d33-9e44-4f5a6b7c8d9f
+        dueAt: '2026-12-03T03:15:00Z'
+    SubscriptionActivated:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        subscriptionId:
+          type: string
+          format: uuid
+        apiCode: *id002
+        versionNo: *id003
+        planCode: *id001
+        systemCode: *id001
+        scopes:
+          type: array
+          items: *id001
+        expiresAt:
+          type: string
+          format: date-time
+        configEpoch: *id004
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - subscriptionId
+      - apiCode
+      - versionNo
+      - planCode
+      - systemCode
+      - scopes
+      - configEpoch
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        subscriptionId: 0192d3a1-a000-7d33-9e44-4f5a6b7c8d9e
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        planCode: co-ban
+        systemCode: HT-MOTCUA
+        scopes:
+        - api:tra-cuu-ho-tich:co-ban
+        expiresAt: '2027-11-26T00:00:00Z'
+        configEpoch: 9330
+    SubscriptionStateChanged:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        subscriptionId:
+          type: string
+          format: uuid
+        apiCode: *id002
+        versionNo: *id003
+        planCode: *id001
+        systemCode: *id001
+        from:
+          type: string
+          enum:
+          - PENDING
+          - ACTIVE
+          - SUSPENDED
+        to:
+          type: string
+          enum:
+          - REJECTED
+          - CANCELLED
+          - SUSPENDED
+          - ACTIVE
+          - REVOKED
+          - EXPIRED
+        reason:
+          type: string
+          enum:
+          - REJECT
+          - SUSPEND
+          - RESUME
+          - REVOKE
+          - CANCEL
+          - EXPIRE
+          - SYSTEM_SUSPENDED
+        configEpoch: *id004
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - subscriptionId
+      - apiCode
+      - versionNo
+      - planCode
+      - systemCode
+      - from
+      - to
+      - reason
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        subscriptionId: 0192d3a1-a000-7d33-9e44-4f5a6b7c8d9e
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        planCode: co-ban
+        systemCode: HT-MOTCUA
+        from: ACTIVE
+        to: SUSPENDED
+        reason: SUSPEND
+        configEpoch: 9341
+    ChangeNoticeIssued:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        noticeId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - ANNOUNCEMENT
+          - MAINTENANCE
+          - INCIDENT
+          - DEPRECATION
+          - SLA_WORSENED
+          - PUBLISHED
+          - SUSPENDED
+          - RETIRED
+        apiCode: *id002
+        versionNo: *id003
+        recipientCount:
+          type: integer
+          minimum: 0
+        mandatory:
+          type: boolean
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - noticeId
+      - kind
+      - apiCode
+      - recipientCount
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        noticeId: 0192d3a1-b000-7e55-8f66-5a6b7c8d9e0f
+        kind: MAINTENANCE
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        recipientCount: 6
+        mandatory: false
+    SlaPeriodClosed:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        apiCode: *id002
+        versionNo: *id003
+        period:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}$
+        status:
+          type: string
+          enum:
+          - MET
+          - BREACHED
+          - INSUFFICIENT_DATA
+        consecutiveBreaches:
+          type: integer
+          minimum: 0
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - apiCode
+      - versionNo
+      - period
+      - status
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        period: 2026-10
+        status: MET
+        consecutiveBreaches: 0
+    NationalSyncStateChanged:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        syncId:
+          type: string
+          format: uuid
+        apiCode: *id002
+        versionNo: *id003
+        action:
+          type: string
+          enum:
+          - UPSERT
+          - WITHDRAW
+        from:
+          type: string
+          enum:
+          - QUEUED
+          - SENT
+          - ACKED
+          - REJECTED
+          - FAILED
+          - NOT_CONFIGURED
+        to:
+          type: string
+          enum:
+          - QUEUED
+          - SENT
+          - ACKED
+          - REJECTED
+          - FAILED
+          - NOT_CONFIGURED
+        nationalRef: *id001
+        attempts:
+          type: integer
+          minimum: 0
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - syncId
+      - apiCode
+      - action
+      - to
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        syncId: 0192d3a1-c000-7f66-9077-6b7c8d9e0f1a
+        apiCode: tra-cuu-ho-tich
+        versionNo: 1.0.0
+        action: UPSERT
+        from: SENT
+        to: ACKED
+        nationalRef: NQG-2026-000412
+        attempts: 1
+    GatewayDriftDetected:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        environment: *id006
+        driftCount:
+          type: integer
+          minimum: 1
+        kinds:
+          type: object
+          additionalProperties:
+            type: integer
+        gatewayConfigVersion:
+          type: integer
+        expectedVersion:
+          type: integer
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - environment
+      - driftCount
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        environment: PROD
+        driftCount: 2
+        kinds:
+          MISSING: 1
+          STALE: 1
+        gatewayConfigVersion: 4181
+        expectedVersion: 4182
+    ReviewOverdue:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+          description: Mã tenant.
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        reviewRequestId:
+          type: string
+          format: uuid
+        kind: *id001
+        apiCode: *id002
+        dueAt:
+          type: string
+          format: date-time
+        ageDays:
+          type: integer
+          minimum: 0
+      required:
+      - tenantId
+      - eventId
+      - occurredAt
+      - reviewRequestId
+      - kind
+      - dueAt
+      - ageDays
+      examples:
+      - tenantId: T68
+        eventId: 0192d3a1-9b00-7c11-8d22-3e4f5a6b7c8d
+        occurredAt: '2026-11-26T03:15:00Z'
+        reviewRequestId: 0192d3a1-8a10-7b22-8c4d-2e3f4a5b6c7d
+        kind: VERSION_PUBLISH
+        apiCode: tra-cuu-ho-tich
+        dueAt: '2026-12-03T03:15:00Z'
+        ageDays: 6
+    InFlowUpdated:
+      type: object
+      properties:
+        flowCode: *id001
+        restOperations:
+          type: array
+          items:
+            type: object
+      additionalProperties: true
+    InFlowVersionApproved:
+      type: object
+      properties:
+        flowCode: *id001
+        versionNo: *id001
+        restOperations:
+          type: array
+          items:
+            type: object
+      additionalProperties: true
+    InDeploymentStatusChanged:
+      type: object
+      properties:
+        flowCode: *id001
+        status: *id001
+      additionalProperties: true
+    InTopicActivated:
+      type: object
+      properties:
+        topicName: *id001
+      additionalProperties: true
+    InTopicDeprecated:
+      type: object
+      properties:
+        topicName: *id001
+        sunsetAt:
+          type: string
+          format: date-time
+      additionalProperties: true
+    InTopicRetired:
+      type: object
+      properties:
+        topicName: *id001
+      additionalProperties: true
+    CloudEventsHeaders:
+      type: object
+      properties:
+        ce_specversion:
+          type: string
+          const: '1.0'
+        ce_id:
+          type: string
+          format: uuid
+        ce_source:
+          type: string
+          description: '`/tenants/{tenant}/catalog`'
+        ce_type:
+          type: string
+          description: '`vn.datahub.catalog.{thực-thể}.{sự-kiện}.v1`'
+        ce_time:
+          type: string
+          format: date-time
+        ce_subject:
+          type: string
+          description: Mã API hoặc mã yêu cầu.
+        ce_datacontenttype:
+          type: string
+          const: application/json
+        traceparent:
+          type: string
+      required:
+      - ce_specversion
+      - ce_id
+      - ce_source
+      - ce_type
+      - ce_time
