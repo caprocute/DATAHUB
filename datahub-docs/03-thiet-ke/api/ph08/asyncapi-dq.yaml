@@ -1,0 +1,6824 @@
+# D03-04-PH08 · AsyncAPI PH-08. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py, không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: '3.0.0'
+info:
+  title: 'Datahub PH-08 Chất lượng dữ liệu: sự kiện'
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-08-01…14 phát ra và 8 sự kiện tiêu thụ từ PH-06, PH-07 (D03-04-PH08 mục 4, FRS 9.3). Ghi vào `ph08_dq.outbox_event` cùng giao
+    dịch nghiệp vụ, Debezium Outbox Event Router đưa lên Kafka; CloudEvents 1.0 dạng cấu trúc. Không sự kiện nào mang giá trị dữ liệu hay khóa bản ghi cá nhân: chỉ
+    mã đối tượng, số đếm, điểm. Lưu giữ 7 ngày; ít nhất một lần, bên nhận khử trùng theo `id`. Tương thích BACKWARD: chỉ thêm trường tùy chọn trong `v1`. Dữ liệu
+    ví dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+defaultContentType: application/json
+servers:
+  kafka-internal:
+    host: dh-kafka-kafka-bootstrap.dh-kafka.svc:9093
+    protocol: kafka-secure
+    description: 'Listener `internal`: DU, `dh-runtime`, Kafka Connect; mTLS, ACL theo tiền tố tenant.'
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  rulesetActivated:
+    address: '{tenant}.dq.ruleset.activated.v1'
+    title: EVT-08-01
+    description: 'Phiên bản bộ quy tắc `ACTIVE`. Bên tiêu thụ: `dq-inline` (bộ đệm), PH-13.'
+    messages:
+      rulesetActivated:
+        $ref: '#/components/messages/rulesetActivated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.ruleset.activated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  scanCompleted:
+    address: '{tenant}.dq.scan.completed.v1'
+    title: EVT-08-02
+    description: 'Lần đo `SUCCEEDED` hoặc `PARTIAL` (kèm `flags`, `score`, `verdict`). Bên tiêu thụ: PH-13, PH-18.'
+    messages:
+      scanCompleted:
+        $ref: '#/components/messages/scanCompleted'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.scan.completed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  scanFailed:
+    address: '{tenant}.dq.scan.failed.v1'
+    title: EVT-08-03
+    description: 'Lần đo `FAILED`. Bên tiêu thụ: PH-13, PH-18.'
+    messages:
+      scanFailed:
+        $ref: '#/components/messages/scanFailed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.scan.failed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  scoreDegraded:
+    address: '{tenant}.dq.score.degraded.v1'
+    title: EVT-08-04
+    description: 'Điểm giảm ≥ `08.trend.degraded-alert`. Bên tiêu thụ: PH-13.'
+    messages:
+      scoreDegraded:
+        $ref: '#/components/messages/scoreDegraded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.score.degraded.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  scoreThresholdBreached:
+    address: '{tenant}.dq.score.threshold-breached.v1'
+    title: EVT-08-05
+    description: 'Kết luận chuyển sang `FAIL` hoặc xuống dưới ngưỡng cảnh báo. Bên tiêu thụ: PH-13, PH-16.'
+    messages:
+      scoreThresholdBreached:
+        $ref: '#/components/messages/scoreThresholdBreached'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.score.threshold-breached.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  findingOpened:
+    address: '{tenant}.dq.finding.opened.v1'
+    title: EVT-08-06
+    description: 'Lần đo có lỗi mới (gộp theo lần đo: số lỗi mới theo mức, quy tắc). Bên tiêu thụ: PH-13.'
+    messages:
+      findingOpened:
+        $ref: '#/components/messages/findingOpened'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.finding.opened.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  issueCreated:
+    address: '{tenant}.dq.issue.created.v1'
+    title: EVT-08-07
+    description: 'Mở phiếu. Bên tiêu thụ: PH-13 ("Việc của tôi").'
+    messages:
+      issueCreated:
+        $ref: '#/components/messages/issueCreated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.issue.created.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  issueStatusChanged:
+    address: '{tenant}.dq.issue.status-changed.v1'
+    title: EVT-08-08
+    description: 'Phiếu đổi trạng thái, quá hạn, leo thang. Bên tiêu thụ: PH-13.'
+    messages:
+      issueStatusChanged:
+        $ref: '#/components/messages/issueStatusChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.issue.status-changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  issueVerified:
+    address: '{tenant}.dq.issue.verified.v1'
+    title: EVT-08-09
+    description: 'Phiếu `VERIFIED`. Bên tiêu thụ: PH-13, PH-16.'
+    messages:
+      issueVerified:
+        $ref: '#/components/messages/issueVerified'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.issue.verified.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  waiverApproved:
+    address: '{tenant}.dq.waiver.approved.v1'
+    title: EVT-08-10
+    description: 'Ngoại lệ `ACTIVE`. Bên tiêu thụ: PH-13.'
+    messages:
+      waiverApproved:
+        $ref: '#/components/messages/waiverApproved'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.waiver.approved.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  reportPublished:
+    address: '{tenant}.dq.report.published.v1'
+    title: EVT-08-11
+    description: 'Báo cáo `PUBLISHED` hoặc `WITHDRAWN`. Bên tiêu thụ: PH-13, PH-16.'
+    messages:
+      reportPublished:
+        $ref: '#/components/messages/reportPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.report.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  alertFired:
+    address: '{tenant}.dq.alert.fired.v1'
+    title: EVT-08-12
+    description: 'Cảnh báo `FIRING` hoặc `RESOLVED`. Bên tiêu thụ: PH-13 (kênh thông báo).'
+    messages:
+      alertFired:
+        $ref: '#/components/messages/alertFired'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.alert.fired.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  checkFailed:
+    address: '{tenant}.dq.check.failed.v1'
+    title: EVT-08-13
+    description: 'Phút có kết luận `FAIL` trực tuyến (gộp theo phút, đối tượng, bên gọi). Bên tiêu thụ: PH-13, PH-04 (bảng luồng).'
+    messages:
+      checkFailed:
+        $ref: '#/components/messages/checkFailed'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.check.failed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  kpiPublished:
+    address: '{tenant}.dq.kpi.published.v1'
+    title: EVT-08-14
+    description: 'Ảnh chụp đầy đủ mới, báo cáo công bố, chỉ số phiếu hằng ngày. Bên tiêu thụ: PH-16.'
+    messages:
+      kpiPublished:
+        $ref: '#/components/messages/kpiPublished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.dq.kpi.published.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+          min.insync.replicas: 2
+  mdmGoldenCreated:
+    address: '{tenant}.mdm.golden.created.v1'
+    title: EVT-06-01
+    description: 'PH-08 tiêu thụ: Gom `goldenId` cho lần đo tăng dần.'
+    messages:
+      mdmGoldenCreated:
+        $ref: '#/components/messages/mdmGoldenCreated'
+    bindings:
+      kafka:
+        topic: '{tenant}.mdm.golden.created.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  mdmGoldenUpdated:
+    address: '{tenant}.mdm.golden.updated.v1'
+    title: EVT-06-02
+    description: 'PH-08 tiêu thụ: Như trên.'
+    messages:
+      mdmGoldenUpdated:
+        $ref: '#/components/messages/mdmGoldenUpdated'
+    bindings:
+      kafka:
+        topic: '{tenant}.mdm.golden.updated.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  mdmGoldenMerged:
+    address: '{tenant}.mdm.golden.merged.v1'
+    title: EVT-06-03
+    description: 'PH-08 tiêu thụ: Như trên; lỗi của bản bị hợp nhất chuyển `RESOLVED` lý do `RECORD_REMOVED`.'
+    messages:
+      mdmGoldenMerged:
+        $ref: '#/components/messages/mdmGoldenMerged'
+    bindings:
+      kafka:
+        topic: '{tenant}.mdm.golden.merged.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  mdmGoldenSplit:
+    address: '{tenant}.mdm.golden.split.v1'
+    title: EVT-06-04
+    description: 'PH-08 tiêu thụ: Gom cả hai `goldenId`.'
+    messages:
+      mdmGoldenSplit:
+        $ref: '#/components/messages/mdmGoldenSplit'
+    bindings:
+      kafka:
+        topic: '{tenant}.mdm.golden.split.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  mdmModelActivated:
+    address: '{tenant}.mdm.model.activated.v1'
+    title: EVT-06-10
+    description: 'PH-08 tiêu thụ: So lược đồ đối tượng `MDM_DOMAIN`.'
+    messages:
+      mdmModelActivated:
+        $ref: '#/components/messages/mdmModelActivated'
+    bindings:
+      kafka:
+        topic: '{tenant}.mdm.model.activated.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogRetired:
+    address: '{tenant}.rdm.catalog.retired.v1'
+    title: EVT-07-03
+    description: 'PH-08 tiêu thụ: Cảnh báo quy tắc `IN_RDM` trỏ danh mục ngừng.'
+    messages:
+      rdmCatalogRetired:
+        $ref: '#/components/messages/rdmCatalogRetired'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.retired.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmCatalogPublished:
+    address: '{tenant}.rdm.catalog.published.v1'
+    title: EVT-07-05
+    description: 'PH-08 tiêu thụ: Đo tăng dần đối tượng có quy tắc trỏ danh mục và đối tượng `RDM_CATALOG`.'
+    messages:
+      rdmCatalogPublished:
+        $ref: '#/components/messages/rdmCatalogPublished'
+    bindings:
+      kafka:
+        topic: '{tenant}.rdm.catalog.published.v1'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+  rdmAdminunitReorganized:
+    address: common.rdm.adminunit.reorganized.v1
+    title: EVT-07-10
+    description: 'PH-08 tiêu thụ: Đo tăng dần mọi đối tượng có quy tắc `IN_RDM` với `DVHC`.'
+    messages:
+      rdmAdminunitReorganized:
+        $ref: '#/components/messages/rdmAdminunitReorganized'
+    bindings:
+      kafka:
+        topic: common.rdm.adminunit.reorganized.v1
+operations:
+  sendRulesetActivated:
+    action: send
+    channel:
+      $ref: '#/channels/rulesetActivated'
+    title: EVT-08-01
+    summary: '`dh-data` (module `dq`) phát EVT-08-01'
+    messages:
+    - $ref: '#/channels/rulesetActivated/messages/rulesetActivated'
+  sendScanCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/scanCompleted'
+    title: EVT-08-02
+    summary: '`dh-data` (module `dq`) phát EVT-08-02'
+    messages:
+    - $ref: '#/channels/scanCompleted/messages/scanCompleted'
+  sendScanFailed:
+    action: send
+    channel:
+      $ref: '#/channels/scanFailed'
+    title: EVT-08-03
+    summary: '`dh-data` (module `dq`) phát EVT-08-03'
+    messages:
+    - $ref: '#/channels/scanFailed/messages/scanFailed'
+  sendScoreDegraded:
+    action: send
+    channel:
+      $ref: '#/channels/scoreDegraded'
+    title: EVT-08-04
+    summary: '`dh-data` (module `dq`) phát EVT-08-04'
+    messages:
+    - $ref: '#/channels/scoreDegraded/messages/scoreDegraded'
+  sendScoreThresholdBreached:
+    action: send
+    channel:
+      $ref: '#/channels/scoreThresholdBreached'
+    title: EVT-08-05
+    summary: '`dh-data` (module `dq`) phát EVT-08-05'
+    messages:
+    - $ref: '#/channels/scoreThresholdBreached/messages/scoreThresholdBreached'
+  sendFindingOpened:
+    action: send
+    channel:
+      $ref: '#/channels/findingOpened'
+    title: EVT-08-06
+    summary: '`dh-data` (module `dq`) phát EVT-08-06'
+    messages:
+    - $ref: '#/channels/findingOpened/messages/findingOpened'
+  sendIssueCreated:
+    action: send
+    channel:
+      $ref: '#/channels/issueCreated'
+    title: EVT-08-07
+    summary: '`dh-data` (module `dq`) phát EVT-08-07'
+    messages:
+    - $ref: '#/channels/issueCreated/messages/issueCreated'
+  sendIssueStatusChanged:
+    action: send
+    channel:
+      $ref: '#/channels/issueStatusChanged'
+    title: EVT-08-08
+    summary: '`dh-data` (module `dq`) phát EVT-08-08'
+    messages:
+    - $ref: '#/channels/issueStatusChanged/messages/issueStatusChanged'
+  sendIssueVerified:
+    action: send
+    channel:
+      $ref: '#/channels/issueVerified'
+    title: EVT-08-09
+    summary: '`dh-data` (module `dq`) phát EVT-08-09'
+    messages:
+    - $ref: '#/channels/issueVerified/messages/issueVerified'
+  sendWaiverApproved:
+    action: send
+    channel:
+      $ref: '#/channels/waiverApproved'
+    title: EVT-08-10
+    summary: '`dh-data` (module `dq`) phát EVT-08-10'
+    messages:
+    - $ref: '#/channels/waiverApproved/messages/waiverApproved'
+  sendReportPublished:
+    action: send
+    channel:
+      $ref: '#/channels/reportPublished'
+    title: EVT-08-11
+    summary: '`dh-data` (module `dq`) phát EVT-08-11'
+    messages:
+    - $ref: '#/channels/reportPublished/messages/reportPublished'
+  sendAlertFired:
+    action: send
+    channel:
+      $ref: '#/channels/alertFired'
+    title: EVT-08-12
+    summary: '`dh-data` (module `dq`) phát EVT-08-12'
+    messages:
+    - $ref: '#/channels/alertFired/messages/alertFired'
+  sendCheckFailed:
+    action: send
+    channel:
+      $ref: '#/channels/checkFailed'
+    title: EVT-08-13
+    summary: '`dh-data` (module `dq`) phát EVT-08-13'
+    messages:
+    - $ref: '#/channels/checkFailed/messages/checkFailed'
+  sendKpiPublished:
+    action: send
+    channel:
+      $ref: '#/channels/kpiPublished'
+    title: EVT-08-14
+    summary: '`dh-data` (module `dq`) phát EVT-08-14'
+    messages:
+    - $ref: '#/channels/kpiPublished/messages/kpiPublished'
+  receiveMdmGoldenCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/mdmGoldenCreated'
+    title: EVT-06-01
+    summary: '`dh-data` (module `dq`) nhận EVT-06-01, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/mdmGoldenCreated/messages/mdmGoldenCreated'
+  receiveMdmGoldenUpdated:
+    action: receive
+    channel:
+      $ref: '#/channels/mdmGoldenUpdated'
+    title: EVT-06-02
+    summary: '`dh-data` (module `dq`) nhận EVT-06-02, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/mdmGoldenUpdated/messages/mdmGoldenUpdated'
+  receiveMdmGoldenMerged:
+    action: receive
+    channel:
+      $ref: '#/channels/mdmGoldenMerged'
+    title: EVT-06-03
+    summary: '`dh-data` (module `dq`) nhận EVT-06-03, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/mdmGoldenMerged/messages/mdmGoldenMerged'
+  receiveMdmGoldenSplit:
+    action: receive
+    channel:
+      $ref: '#/channels/mdmGoldenSplit'
+    title: EVT-06-04
+    summary: '`dh-data` (module `dq`) nhận EVT-06-04, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/mdmGoldenSplit/messages/mdmGoldenSplit'
+  receiveMdmModelActivated:
+    action: receive
+    channel:
+      $ref: '#/channels/mdmModelActivated'
+    title: EVT-06-10
+    summary: '`dh-data` (module `dq`) nhận EVT-06-10, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/mdmModelActivated/messages/mdmModelActivated'
+  receiveRdmCatalogRetired:
+    action: receive
+    channel:
+      $ref: '#/channels/rdmCatalogRetired'
+    title: EVT-07-03
+    summary: '`dh-data` (module `dq`) nhận EVT-07-03, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/rdmCatalogRetired/messages/rdmCatalogRetired'
+  receiveRdmCatalogPublished:
+    action: receive
+    channel:
+      $ref: '#/channels/rdmCatalogPublished'
+    title: EVT-07-05
+    summary: '`dh-data` (module `dq`) nhận EVT-07-05, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/rdmCatalogPublished/messages/rdmCatalogPublished'
+  receiveRdmAdminunitReorganized:
+    action: receive
+    channel:
+      $ref: '#/channels/rdmAdminunitReorganized'
+    title: EVT-07-10
+    summary: '`dh-data` (module `dq`) nhận EVT-07-10, khử trùng theo `id` ở `ph08_dq.inbox_event`'
+    messages:
+    - $ref: '#/channels/rdmAdminunitReorganized/messages/rdmAdminunitReorganized'
+components:
+  securitySchemes:
+    mtls:
+      type: X509
+      description: mTLS, ACL theo CN và tiền tố tenant.
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường, ví dụ `t68`.
+      examples:
+      - t68
+  messages:
+    rulesetActivated:
+      name: rulesetActivated
+      title: EVT-08-01
+      summary: Phiên bản bộ quy tắc `ACTIVE`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/rulesetActivatedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000001
+          type: vn.datahub.dq.ruleset.activated.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            assetCode: mdm-cong-dan
+            ruleSetCode: bq-cong-dan
+            versionNo: 4
+            ruleCount: 18
+            activatedAt: '2026-11-20T08:00:00+07:00'
+    scanCompleted:
+      name: scanCompleted
+      title: EVT-08-02
+      summary: Lần đo `SUCCEEDED` hoặc `PARTIAL` (kèm `flags`, `score`, `verdict`)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/scanCompletedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000002
+          type: vn.datahub.dq.scan.completed.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            scanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            assetCode: mdm-cong-dan
+            scanMode: FULL
+            scanTrigger: SCHEDULE
+            status: SUCCEEDED
+            periodCode: '2026-11'
+            score: 92.5
+            verdict: PASS
+            trend: IMPROVED
+            flags: []
+            rowsScanned: 1200000
+            rowsFailed: 9400
+            official: false
+    scanFailed:
+      name: scanFailed
+      title: EVT-08-03
+      summary: Lần đo `FAILED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/scanFailedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000003
+          type: vn.datahub.dq.scan.failed.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            scanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            assetCode: mdm-cong-dan
+            scanTrigger: SCHEDULE
+            errorCode: ERR-08-105
+    scoreDegraded:
+      name: scoreDegraded
+      title: EVT-08-04
+      summary: Điểm giảm ≥ `08.trend.degraded-alert`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/scoreDegradedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000004
+          type: vn.datahub.dq.score.degraded.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            assetCode: mdm-cong-dan
+            scanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            previousScore: 91.0
+            score: 84.5
+            delta: -6.5
+            threshold: 5.0
+    scoreThresholdBreached:
+      name: scoreThresholdBreached
+      title: EVT-08-05
+      summary: Kết luận chuyển sang `FAIL` hoặc xuống dưới ngưỡng cảnh báo
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/scoreThresholdBreachedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000005
+          type: vn.datahub.dq.score.threshold-breached.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            assetCode: mdm-cong-dan
+            scanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            score: 71.2
+            verdict: FAIL
+            breach: VERDICT_FAIL
+            threshold: 75
+    findingOpened:
+      name: findingOpened
+      title: EVT-08-06
+      summary: 'Lần đo có lỗi mới (gộp theo lần đo: số lỗi mới theo mức, quy tắc)'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/findingOpenedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000006
+          type: vn.datahub.dq.finding.opened.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            scanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            assetCode: mdm-cong-dan
+            newFindings: 420
+            bySeverity:
+              CRITICAL: 12
+              MAJOR: 150
+              MINOR: 258
+            topRules:
+            - ruleCode: CD-ACC-001
+              count: 312
+    issueCreated:
+      name: issueCreated
+      title: EVT-08-07
+      summary: Mở phiếu
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/issueCreatedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `issueCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000007
+          type: vn.datahub.dq.issue.created.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            issueCode: DQI-2026-000123
+            assetCode: mdm-cong-dan
+            severity: CRITICAL
+            ownerOrgCode: so-tu-phap
+            assignee: le.thi.hoa
+            slaDueAt: '2026-11-20T08:00:00+07:00'
+            findingCount: 312
+    issueStatusChanged:
+      name: issueStatusChanged
+      title: EVT-08-08
+      summary: Phiếu đổi trạng thái, quá hạn, leo thang
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/issueStatusChangedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `issueCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000008
+          type: vn.datahub.dq.issue.status-changed.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            issueCode: DQI-2026-000123
+            assetCode: mdm-cong-dan
+            kind: STATUS_CHANGE
+            fromStatus: ASSIGNED
+            toStatus: IN_PROGRESS
+            escalationLevel: 0
+            ownerOrgCode: so-tu-phap
+    issueVerified:
+      name: issueVerified
+      title: EVT-08-09
+      summary: Phiếu `VERIFIED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/issueVerifiedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `issueCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000009
+          type: vn.datahub.dq.issue.verified.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            issueCode: DQI-2026-000123
+            assetCode: mdm-cong-dan
+            verifyScanId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            scoreBefore: 71.2
+            scoreAfter: 88.0
+    waiverApproved:
+      name: waiverApproved
+      title: EVT-08-10
+      summary: Ngoại lệ `ACTIVE`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/waiverApprovedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000010
+          type: vn.datahub.dq.waiver.approved.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            waiverId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            assetCode: mdm-cong-dan
+            ruleCode: CD-ACC-001
+            validFrom: '2026-11-26'
+            validTo: '2027-05-25'
+    reportPublished:
+      name: reportPublished
+      title: EVT-08-11
+      summary: Báo cáo `PUBLISHED` hoặc `WITHDRAWN`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/reportPublishedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `reportCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000011
+          type: vn.datahub.dq.report.published.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            reportCode: BC-2026-11
+            reportType: PERIODIC
+            periodCode: '2026-11'
+            status: PUBLISHED
+            signed: false
+    alertFired:
+      name: alertFired
+      title: EVT-08-12
+      summary: Cảnh báo `FIRING` hoặc `RESOLVED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/alertFiredEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000012
+          type: vn.datahub.dq.alert.fired.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            alertId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            alertRuleCode: cb-diem-duoi-ngung
+            assetCode: mdm-cong-dan
+            severity: HIGH
+            status: FIRING
+            message: Điểm chất lượng thấp hơn ngưỡng cảnh báo.
+    checkFailed:
+      name: checkFailed
+      title: EVT-08-13
+      summary: Phút có kết luận `FAIL` trực tuyến (gộp theo phút, đối tượng, bên gọi)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/checkFailedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `assetCode`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000013
+          type: vn.datahub.dq.check.failed.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            bucketAt: '2026-11-20T08:00:00+07:00'
+            assetCode: mdm-cong-dan
+            caller: luong-dang-ky-khai-sinh
+            failCount: 30
+            checkCount: 1200
+            topRules:
+            - ruleCode: CD-ACC-001
+              count: 312
+    kpiPublished:
+      name: kpiPublished
+      title: EVT-08-14
+      summary: Ảnh chụp đầy đủ mới, báo cáo công bố, chỉ số phiếu hằng ngày
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/kpiPublishedEvent'
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'Khóa phân vùng: `tenant`.'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-0000-7000-8000-000000000014
+          type: vn.datahub.dq.kpi.published.v1
+          source: dh-data/dq/T68
+          time: '2026-11-26T09:15:00+07:00'
+          datacontenttype: application/json
+          data:
+            kind: SCAN_SNAPSHOT
+            kpiSchemaVersion: 1
+            periodCode: '2026-11'
+            tenantScore: 92.5
+            domainScores:
+            - domainCode: HO_TICH
+              name: Hộ tịch
+              score: 92.5
+              verdict: PASS
+              trend: IMPROVED
+              assetCount: 6
+              openFindings: 4120
+            issues:
+              open: 18
+              overdue: 3
+              bySeverity:
+                CRITICAL: 2
+                MAJOR: 9
+                MINOR: 7
+            official: false
+    mdmGoldenCreated:
+      name: mdmGoldenCreated
+      title: EVT-06-01
+      summary: Gom `goldenId` cho lần đo tăng dần
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/mdmGoldenCreatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000001
+          type: vn.datahub.mdm.golden.created.v1
+          source: dh-data/mdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            domainCode: HO_TICH
+            goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            goldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            survivorId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            mergedIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            toGoldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            version: 7
+            changeType: UPDATE
+            changedAttributes:
+            - phone
+    mdmGoldenUpdated:
+      name: mdmGoldenUpdated
+      title: EVT-06-02
+      summary: Như trên
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/mdmGoldenUpdatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000002
+          type: vn.datahub.mdm.golden.updated.v1
+          source: dh-data/mdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            domainCode: HO_TICH
+            goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            goldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            survivorId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            mergedIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            toGoldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            version: 7
+            changeType: UPDATE
+            changedAttributes:
+            - phone
+    mdmGoldenMerged:
+      name: mdmGoldenMerged
+      title: EVT-06-03
+      summary: Như trên; lỗi của bản bị hợp nhất chuyển `RESOLVED` lý do `RECORD_REMOVED`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/mdmGoldenMergedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000003
+          type: vn.datahub.mdm.golden.merged.v1
+          source: dh-data/mdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            domainCode: HO_TICH
+            goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            goldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            survivorId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            mergedIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            toGoldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            version: 7
+            changeType: UPDATE
+            changedAttributes:
+            - phone
+    mdmGoldenSplit:
+      name: mdmGoldenSplit
+      title: EVT-06-04
+      summary: Gom cả hai `goldenId`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/mdmGoldenSplitEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000004
+          type: vn.datahub.mdm.golden.split.v1
+          source: dh-data/mdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            domainCode: HO_TICH
+            goldenId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            goldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            survivorId: 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            mergedIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            toGoldenIds:
+            - 0193b1d4-7c2a-7b10-9f3e-5a6c8d2e4f01
+            version: 7
+            changeType: UPDATE
+            changedAttributes:
+            - phone
+    mdmModelActivated:
+      name: mdmModelActivated
+      title: EVT-06-10
+      summary: So lược đồ đối tượng `MDM_DOMAIN`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/mdmModelActivatedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000005
+          type: vn.datahub.mdm.model.activated.v1
+          source: dh-data/mdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            domainCode: HO_TICH
+            version: 4
+    rdmCatalogRetired:
+      name: rdmCatalogRetired
+      title: EVT-07-03
+      summary: Cảnh báo quy tắc `IN_RDM` trỏ danh mục ngừng
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/rdmCatalogRetiredEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000006
+          type: vn.datahub.rdm.catalog.retired.v1
+          source: dh-data/rdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            catalogCode: DM_DAN_TOC
+            retireDate: '2026-12-31'
+            reason: Thay bằng danh mục mới
+            replacementCatalogCode: DM_DAN_TOC_2026
+    rdmCatalogPublished:
+      name: rdmCatalogPublished
+      title: EVT-07-05
+      summary: Đo tăng dần đối tượng có quy tắc trỏ danh mục và đối tượng `RDM_CATALOG`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/rdmCatalogPublishedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000007
+          type: vn.datahub.rdm.catalog.published.v1
+          source: dh-data/rdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            catalogCode: DM_DAN_TOC
+            versionNo: 3
+            effectiveFrom: '2026-12-01'
+            breaking: false
+    rdmAdminunitReorganized:
+      name: rdmAdminunitReorganized
+      title: EVT-07-10
+      summary: Đo tăng dần mọi đối tượng có quy tắc `IN_RDM` với `DVHC`
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/rdmAdminunitReorganizedEvent'
+      examples:
+      - name: vi-du
+        payload:
+          specversion: '1.0'
+          id: 0193a0c3-1000-7000-8000-000000000008
+          type: vn.datahub.rdm.adminunit.reorganized.v1
+          source: dh-data/rdm/T68
+          time: '2026-11-26T09:10:00+07:00'
+          datacontenttype: application/json
+          data:
+            versionNo: 5
+            effectiveFrom: '2026-12-01'
+  schemas:
+    FieldError:
+      type: object
+      description: Lỗi theo trường.
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+      - field
+      - message
+    Problem:
+      type: object
+      description: Lỗi theo RFC 9457.
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+    CommentBody:
+      type: object
+      description: Ý kiến kèm hành động.
+      properties:
+        comment:
+          type: string
+          maxLength: 2000
+    RejectBody:
+      type: object
+      description: 'Từ chối: bắt buộc nêu lý do từ 20 ký tự.'
+      properties:
+        comment:
+          type: string
+          minLength: 20
+          maxLength: 2000
+      required:
+      - comment
+    ReasonBody:
+      type: object
+      description: Hành động kèm lý do từ 20 ký tự (ERR-08-007).
+      properties:
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+      required:
+      - reason
+    Domain:
+      type: object
+      description: Miền chất lượng (dq_domain).
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        name:
+          type: string
+        description:
+          type: string
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        stewardUser:
+          type: string
+        status:
+          $ref: '#/components/schemas/DomainStatus'
+        statusReason:
+          type: string
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - domainCode
+      - name
+      - ownerOrgCode
+      - stewardUser
+      - status
+      - version
+    DomainCreate:
+      type: object
+      description: Khai báo miền (FR-08-001).
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        stewardUser:
+          type: string
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+      required:
+      - domainCode
+      - name
+      - ownerOrgCode
+      - stewardUser
+    DomainUpdate:
+      type: object
+      description: Sửa miền; gửi các trường cần đổi.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        stewardUser:
+          type: string
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+    DomainPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Domain'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    Asset:
+      type: object
+      description: Đối tượng đo (dq_asset).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+        status:
+          $ref: '#/components/schemas/AssetStatus'
+        statusReason:
+          type: string
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        mdmDomainCode:
+          type: string
+        rdmCatalogCode:
+          type: string
+        connectionId:
+          type: string
+          format: uuid
+        objectName:
+          type: string
+        flowCode:
+          type: string
+        keyColumns:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        defaultScanMode:
+          $ref: '#/components/schemas/ScanMode'
+        sampleRatio:
+          type: number
+        highestDataClass:
+          $ref: '#/components/schemas/DataClass'
+        description:
+          type: string
+        incrementalEnabled:
+          type: boolean
+        lastScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        lastVerdict:
+          $ref: '#/components/schemas/Verdict'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - assetCode
+      - name
+      - domainCode
+      - assetType
+      - status
+      - ownerOrgCode
+      - version
+    AssetCreate:
+      type: object
+      description: Đăng ký đối tượng đo (FR-08-002, 003, 004).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+          maxLength: 255
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetType:
+          $ref: '#/components/schemas/AssetType'
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        mdmDomainCode:
+          type: string
+        rdmCatalogCode:
+          type: string
+        connectionId:
+          type: string
+          format: uuid
+        objectName:
+          type: string
+        flowCode:
+          type: string
+        keyColumns:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        defaultScanMode:
+          $ref: '#/components/schemas/ScanMode'
+        sampleRatio:
+          type: number
+          minimum: 0.0001
+          maximum: 1
+        description:
+          type: string
+          maxLength: 2000
+      required:
+      - assetCode
+      - name
+      - domainCode
+      - assetType
+    AssetUpdate:
+      type: object
+      description: Sửa đối tượng đo; gửi các trường cần đổi.
+      properties:
+        name:
+          type: string
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        keyColumns:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        defaultScanMode:
+          $ref: '#/components/schemas/ScanMode'
+        sampleRatio:
+          type: number
+        incrementalEnabled:
+          type: boolean
+        description:
+          type: string
+    AssetPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    AssetField:
+      type: object
+      description: Trường của đối tượng đo, CDE (dq_asset_field).
+      properties:
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        label:
+          type: string
+        fieldType:
+          $ref: '#/components/schemas/FieldType'
+        cde:
+          type: boolean
+        dataClass:
+          $ref: '#/components/schemas/DataClass'
+        classificationStatus:
+          $ref: '#/components/schemas/ClassificationStatus'
+        valueMode:
+          $ref: '#/components/schemas/ValueMode'
+        rdmCatalogCode:
+          type: string
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - fieldName
+      - fieldType
+      - cde
+      - dataClass
+      - classificationStatus
+      - valueMode
+      - version
+    AssetFieldPut:
+      type: object
+      description: Khai báo trường, CDE (FR-08-005). Phân loại lấy từ PH-09, `valueMode` không lỏng hơn phân loại (ERR-08-003).
+      properties:
+        label:
+          type: string
+        fieldType:
+          $ref: '#/components/schemas/FieldType'
+        cde:
+          type: boolean
+        valueMode:
+          $ref: '#/components/schemas/ValueMode'
+        rdmCatalogCode:
+          type: string
+        sortOrder:
+          type: integer
+      required:
+      - fieldType
+      - cde
+    AssetFieldPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetField'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ClassificationSyncResult:
+      type: object
+      description: Kết quả đồng bộ phân loại (FR-08-005).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        updated:
+          type: integer
+        unconfirmed:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+      required:
+      - assetCode
+      - updated
+      - unconfirmed
+    MdmDomainSource:
+      type: object
+      description: Domain PH-06 có khung nhìn hợp đồng.
+      properties:
+        mdmDomainCode:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        hasContractView:
+          type: boolean
+        attributeCount:
+          type: integer
+      required:
+      - mdmDomainCode
+      - name
+      - status
+      - hasContractView
+    MdmDomainSourcePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MdmDomainSource'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RdmCatalogSource:
+      type: object
+      description: Danh mục PH-07 đã phát hành.
+      properties:
+        rdmCatalogCode:
+          type: string
+        name:
+          type: string
+        publishedVersion:
+          type: integer
+        itemCount:
+          type: integer
+      required:
+      - rdmCatalogCode
+      - name
+    RdmCatalogSourcePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RdmCatalogSource'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    DiscoverRequest:
+      type: object
+      description: Khám phá bảng của kết nối chỉ đọc (FR-08-004).
+      properties:
+        schemaName:
+          type: string
+        namePattern:
+          type: string
+    DiscoveredObject:
+      type: object
+      description: Bảng hoặc khung nhìn tìm thấy.
+      properties:
+        objectName:
+          type: string
+        objectType:
+          $ref: '#/components/schemas/ObjectType'
+        columnCount:
+          type: integer
+        estimatedRows:
+          type: integer
+      required:
+      - objectName
+      - objectType
+    DiscoverResult:
+      type: object
+      description: Kết quả khám phá.
+      properties:
+        connectionCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiscoveredObject'
+      required:
+      - connectionCode
+      - objects
+    ProfileRunCreate:
+      type: object
+      description: Chạy hồ sơ dữ liệu (FR-08-008).
+      properties:
+        scanMode:
+          $ref: '#/components/schemas/ProfileMode'
+        sampleRows:
+          type: integer
+          minimum: 100
+          maximum: 1000000
+    ProfileRun:
+      type: object
+      description: Lần hồ sơ (dq_profile_run).
+      properties:
+        runId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        status:
+          $ref: '#/components/schemas/ProfileStatus'
+        scanMode:
+          $ref: '#/components/schemas/ProfileMode'
+        sampleRows:
+          type: integer
+        rowCount:
+          type: integer
+        requestedBy:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        sourceSnapshotAt:
+          type: string
+          format: date-time
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - runId
+      - assetCode
+      - status
+      - version
+    ProfileRunPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileRun'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ProfileColumn:
+      type: object
+      description: Thống kê cột (dq_profile_column); giá trị phổ biến chỉ có khi trường không Nhạy cảm.
+      properties:
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        inferredType:
+          $ref: '#/components/schemas/FieldType'
+        sensitive:
+          type: boolean
+        rowCount:
+          type: integer
+        nullCount:
+          type: integer
+        emptyCount:
+          type: integer
+        distinctEstimate:
+          type: integer
+        minMasked:
+          type: string
+        maxMasked:
+          type: string
+        quantiles:
+          type: object
+        topValues:
+          type: array
+          items:
+            type: object
+        patternStats:
+          type: object
+      required:
+      - fieldName
+      - sensitive
+      - rowCount
+      - nullCount
+    ProfileColumnPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileColumn'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    SuggestRulesRequest:
+      type: object
+      description: Gợi ý quy tắc (FR-08-010).
+      properties:
+        fieldNames:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dimension'
+    RuleSuggestion:
+      type: object
+      description: Quy tắc gợi ý.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        params:
+          type: object
+        rationale:
+          type: string
+      required:
+      - ruleCode
+      - dimension
+      - operator
+      - severity
+      - fieldName
+    SuggestRulesResult:
+      type: object
+      description: Danh sách gợi ý.
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleSuggestion'
+      required:
+      - suggestions
+    ProfileColumnMetric:
+      type: object
+      description: Chỉ số cột do PH-05 gửi (FR-08-011).
+      properties:
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        nullCount:
+          type: integer
+        distinctEstimate:
+          type: integer
+        minMasked:
+          type: string
+        maxMasked:
+          type: string
+      required:
+      - fieldName
+    ProfileMetricsIn:
+      type: object
+      description: Lô chỉ số hồ sơ từ PH-05, API nội bộ.
+      properties:
+        connectionCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        objectName:
+          type: string
+        collectedAt:
+          type: string
+          format: date-time
+        rowCount:
+          type: integer
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfileColumnMetric'
+      required:
+      - connectionCode
+      - objectName
+      - collectedAt
+      - rowCount
+      - columns
+    ProfileMetricsResult:
+      type: object
+      description: Đã nhận lô chỉ số.
+      properties:
+        accepted:
+          type: integer
+        profileRunId:
+          type: string
+          format: uuid
+      required:
+      - accepted
+    Rule:
+      type: object
+      description: Quy tắc (dq_rule).
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        name:
+          type: string
+        description:
+          type: string
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        execMode:
+          $ref: '#/components/schemas/ExecMode'
+        inlineMode:
+          $ref: '#/components/schemas/InlineMode'
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        params:
+          type: object
+        expression:
+          type: string
+        message:
+          type: string
+          maxLength: 500
+        weight:
+          type: number
+        templateCode:
+          type: string
+        source:
+          $ref: '#/components/schemas/RuleSource'
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - ruleCode
+      - name
+      - dimension
+      - operator
+      - severity
+      - execMode
+      - enabled
+      - version
+    RuleUpsert:
+      type: object
+      description: Tạo hoặc sửa quy tắc (FR-08-013, 014). Toán tử phải thuộc chiều (ERR-08-015); tham số đúng kiểu (ERR-08-016).
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        execMode:
+          $ref: '#/components/schemas/ExecMode'
+        inlineMode:
+          $ref: '#/components/schemas/InlineMode'
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        params:
+          type: object
+        expression:
+          type: string
+        message:
+          type: string
+          maxLength: 500
+        weight:
+          type: number
+        templateCode:
+          type: string
+        source:
+          $ref: '#/components/schemas/RuleSource'
+        enabled:
+          type: boolean
+      required:
+      - ruleCode
+      - name
+      - dimension
+      - operator
+      - severity
+      - execMode
+    RuleSet:
+      type: object
+      description: Bộ quy tắc (dq_rule_set).
+      properties:
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        description:
+          type: string
+        currentVersionNo:
+          type: integer
+        activeVersionNo:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - ruleSetCode
+      - name
+      - assetCode
+      - version
+    RuleSetCreate:
+      type: object
+      description: Tạo bộ quy tắc kèm phiên bản nháp 1 (FR-08-012).
+      properties:
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+          maxLength: 255
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        description:
+          type: string
+          maxLength: 2000
+      required:
+      - ruleSetCode
+      - name
+      - assetCode
+    RuleSetPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleSet'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RuleSetVersion:
+      type: object
+      description: Phiên bản bộ quy tắc (dq_rule_set_version).
+      properties:
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        status:
+          $ref: '#/components/schemas/VersionStatus'
+        weightConfigId:
+          type: string
+          format: uuid
+        contentHash:
+          type: string
+          pattern: ^[0-9a-f]{16,64}$
+        ruleCount:
+          type: integer
+        changeNote:
+          type: string
+        submittedBy:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        decision:
+          $ref: '#/components/schemas/VersionDecision'
+        decidedBy:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        decisionComment:
+          type: string
+        activatedAt:
+          type: string
+          format: date-time
+        supersededAt:
+          type: string
+          format: date-time
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - ruleSetCode
+      - versionNo
+      - status
+      - version
+    RuleSetVersionPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleSetVersion'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    VersionCreate:
+      type: object
+      description: Tạo phiên bản nháp từ phiên bản trước (FR-08-012).
+      properties:
+        basedOnVersionNo:
+          type: integer
+        changeNote:
+          type: string
+          maxLength: 2000
+    ActivateRequest:
+      type: object
+      description: Kích hoạt sớm phiên bản `APPROVED` (FR-08-018).
+      properties:
+        comment:
+          type: string
+          maxLength: 2000
+    ExpressionValidateRequest:
+      type: object
+      description: Kiểm biểu thức (FR-08-014).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        operator:
+          $ref: '#/components/schemas/Operator'
+        expression:
+          type: string
+          maxLength: 4000
+      required:
+      - assetCode
+      - operator
+      - expression
+    ExpressionIssue:
+      type: object
+      description: Lỗi biểu thức theo vị trí.
+      properties:
+        line:
+          type: integer
+        column:
+          type: integer
+        message:
+          type: string
+      required:
+      - line
+      - column
+      - message
+    ExpressionValidateResult:
+      type: object
+      description: Kết quả kiểm biểu thức.
+      properties:
+        valid:
+          type: boolean
+        costEstimate:
+          type: integer
+        referencedFields:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpressionIssue'
+      required:
+      - valid
+    RuleTemplate:
+      type: object
+      description: Quy tắc mẫu (dq_rule_template); tenant `COMMON` dùng chung.
+      properties:
+        templateCode:
+          type: string
+        name:
+          type: string
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        defaultSeverity:
+          $ref: '#/components/schemas/Severity'
+        params:
+          type: object
+        expressionTemplate:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TemplateStatus'
+        common:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - templateCode
+      - name
+      - dimension
+      - operator
+      - defaultSeverity
+      - status
+      - version
+    RuleTemplateCreate:
+      type: object
+      description: Tạo quy tắc mẫu (FR-08-015).
+      properties:
+        templateCode:
+          type: string
+        name:
+          type: string
+          maxLength: 255
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        defaultSeverity:
+          $ref: '#/components/schemas/Severity'
+        params:
+          type: object
+        expressionTemplate:
+          type: string
+        description:
+          type: string
+      required:
+      - templateCode
+      - name
+      - dimension
+      - operator
+      - defaultSeverity
+    RuleTemplatePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleTemplate'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RuleListItem:
+      type: object
+      description: Dòng danh sách quy tắc toàn tenant (FR-08-022).
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        versionStatus:
+          $ref: '#/components/schemas/VersionStatus'
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        enabled:
+          type: boolean
+      required:
+      - ruleCode
+      - ruleSetCode
+      - versionNo
+      - versionStatus
+      - assetCode
+      - name
+      - dimension
+      - operator
+      - severity
+      - enabled
+    RuleListItemPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleListItem'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    DryRunRequest:
+      type: object
+      description: Chạy thử trên mẫu (FR-08-016).
+      properties:
+        sampleSize:
+          type: integer
+          minimum: 100
+          maximum: 50000
+        ruleCodes:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z][A-Z0-9-]{2,62}$
+    DryRunExample:
+      type: object
+      description: Ví dụ lỗi đã che.
+      properties:
+        recordKeyMasked:
+          type: string
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        maskedValue:
+          type: string
+    DryRunRuleResult:
+      type: object
+      description: Kết quả chạy thử của một quy tắc.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        status:
+          $ref: '#/components/schemas/RuleResultStatus'
+        rowsEvaluated:
+          type: integer
+        rowsFailed:
+          type: integer
+        passRate:
+          type: number
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/DryRunExample'
+      required:
+      - ruleCode
+      - status
+      - rowsEvaluated
+      - rowsFailed
+    DryRunResult:
+      type: object
+      description: Kết quả chạy thử.
+      properties:
+        sampleSize:
+          type: integer
+        durationMs:
+          type: integer
+        estimatedScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DryRunRuleResult'
+      required:
+      - sampleSize
+      - durationMs
+      - results
+    RuleChange:
+      type: object
+      description: Một thay đổi trường của quy tắc.
+      properties:
+        field:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+      required:
+      - field
+    RuleDiffItem:
+      type: object
+      description: Quy tắc đổi giữa hai phiên bản.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleChange'
+      required:
+      - ruleCode
+      - changes
+    VersionDiff:
+      type: object
+      description: So sánh hai phiên bản (FR-08-019).
+      properties:
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        fromVersionNo:
+          type: integer
+        toVersionNo:
+          type: integer
+        added:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        removed:
+          type: array
+          items:
+            type: string
+            pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        changed:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleDiffItem'
+      required:
+      - ruleSetCode
+      - fromVersionNo
+      - toVersionNo
+      - added
+      - removed
+      - changed
+    RuleSetCopyRequest:
+      type: object
+      description: Sao chép sang bộ mới (FR-08-020).
+      properties:
+        newRuleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        targetAssetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        fieldMapping:
+          type: object
+      required:
+      - newRuleSetCode
+      - name
+      - targetAssetCode
+    RuleSetExport:
+      type: object
+      description: Nội dung xuất.
+      properties:
+        format:
+          $ref: '#/components/schemas/RuleFileFormat'
+        content:
+          type: string
+        contentSha256:
+          type: string
+          pattern: ^[0-9a-f]{16,64}$
+      required:
+      - format
+      - content
+    RuleSetImportRequest:
+      type: object
+      description: Nhập bộ quy tắc từ nội dung tệp (FR-08-020); tối đa 2 MB.
+      properties:
+        format:
+          $ref: '#/components/schemas/RuleFileFormat'
+        content:
+          type: string
+          maxLength: 2097152
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        targetAssetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+      required:
+      - format
+      - content
+      - ruleSetCode
+      - targetAssetCode
+    WeightSet:
+      type: object
+      description: Sáu trọng số chiều, tổng bằng 1 (dung sai 0,001).
+      properties:
+        completeness:
+          type: number
+          minimum: 0
+          maximum: 1
+        accuracy:
+          type: number
+          minimum: 0
+          maximum: 1
+        consistency:
+          type: number
+          minimum: 0
+          maximum: 1
+        timeliness:
+          type: number
+          minimum: 0
+          maximum: 1
+        uniqueness:
+          type: number
+          minimum: 0
+          maximum: 1
+        validity:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+      - completeness
+      - accuracy
+      - consistency
+      - timeliness
+      - uniqueness
+      - validity
+    WeightConfig:
+      type: object
+      description: Cấu hình trọng số và ngưỡng (dq_weight_config).
+      properties:
+        configCode:
+          type: string
+        versionNo:
+          type: integer
+        scope:
+          $ref: '#/components/schemas/WeightScope'
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        status:
+          $ref: '#/components/schemas/WeightStatus'
+        weights:
+          $ref: '#/components/schemas/WeightSet'
+        passMin:
+          type: number
+        warnMin:
+          type: number
+        submittedBy:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        decidedBy:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        decisionComment:
+          type: string
+        activatedAt:
+          type: string
+          format: date-time
+        supersededAt:
+          type: string
+          format: date-time
+        changeNote:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - configCode
+      - versionNo
+      - scope
+      - status
+      - weights
+      - passMin
+      - warnMin
+      - version
+    WeightConfigPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeightConfig'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    WeightConfigCreate:
+      type: object
+      description: Tạo cấu hình nháp (FR-08-021); ERR-08-023 khi tổng khác 1, ERR-08-024 khi ngưỡng sai.
+      properties:
+        configCode:
+          type: string
+        scope:
+          $ref: '#/components/schemas/WeightScope'
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        weights:
+          $ref: '#/components/schemas/WeightSet'
+        passMin:
+          type: number
+          minimum: 0
+          maximum: 100
+        warnMin:
+          type: number
+          minimum: 0
+          maximum: 100
+        changeNote:
+          type: string
+          maxLength: 2000
+      required:
+      - configCode
+      - scope
+      - weights
+      - passMin
+      - warnMin
+    WeightConfigUpdate:
+      type: object
+      description: Sửa cấu hình nháp.
+      properties:
+        weights:
+          $ref: '#/components/schemas/WeightSet'
+        passMin:
+          type: number
+        warnMin:
+          type: number
+        changeNote:
+          type: string
+    Schedule:
+      type: object
+      description: Lịch đo (dq_schedule).
+      properties:
+        scheduleId:
+          type: string
+          format: uuid
+        scheduleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        cron:
+          type: string
+        timezone:
+          type: string
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+        enabled:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/ScheduleStatus'
+        nextRunAt:
+          type: string
+          format: date-time
+        lastRunAt:
+          type: string
+          format: date-time
+        lastJobId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - scheduleId
+      - scheduleCode
+      - assetCode
+      - cron
+      - timezone
+      - scanMode
+      - enabled
+      - status
+      - version
+    SchedulePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ScheduleCreate:
+      type: object
+      description: Tạo lịch (FR-08-023); ERR-08-029 khi cron sai hoặc quá dày, ERR-08-049 khi trùng.
+      properties:
+        scheduleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        cron:
+          type: string
+        timezone:
+          type: string
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+      required:
+      - scheduleCode
+      - assetCode
+      - cron
+      - scanMode
+    ScheduleUpdate:
+      type: object
+      description: Sửa lịch.
+      properties:
+        cron:
+          type: string
+        timezone:
+          type: string
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+    ScanCreate:
+      type: object
+      description: Chạy đo theo yêu cầu hoặc năm (FR-08-024, 054).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+        scanTrigger:
+          $ref: '#/components/schemas/ScanTrigger'
+        sampleSize:
+          type: integer
+          minimum: 100
+          maximum: 1000000
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        note:
+          type: string
+          maxLength: 500
+      required:
+      - assetCode
+      - scanMode
+    ScanJob:
+      type: object
+      description: Lần đo (dq_scan_job).
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleSetVersionId:
+          type: string
+          format: uuid
+        weightConfigId:
+          type: string
+          format: uuid
+        scheduleId:
+          type: string
+          format: uuid
+        scanTrigger:
+          $ref: '#/components/schemas/ScanTrigger'
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+        status:
+          $ref: '#/components/schemas/ScanStatus'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        requestedBy:
+          type: string
+        verifyIssueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        sourceEventId:
+          type: string
+          format: uuid
+        rerunOf:
+          type: string
+          format: uuid
+        sourceSnapshotAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        taskTotal:
+          type: integer
+        taskDone:
+          type: integer
+        rowsScanned:
+          type: integer
+        rowsFailed:
+          type: integer
+        skippedRules:
+          type: integer
+        sampleSize:
+          type: integer
+        sampleSeed:
+          type: integer
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        cancelReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - scanId
+      - assetCode
+      - scanTrigger
+      - scanMode
+      - status
+      - version
+    ScanJobPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanJob'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RerunRequest:
+      type: object
+      description: Chạy lại lần đo (FR-08-030).
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+    RuleResult:
+      type: object
+      description: Kết quả quy tắc của lần đo (dq_rule_result).
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        status:
+          $ref: '#/components/schemas/RuleResultStatus'
+        rowsEvaluated:
+          type: integer
+        rowsFailed:
+          type: integer
+        passRate:
+          type: number
+        skipReason:
+          type: string
+        errorCode:
+          type: string
+        durationMs:
+          type: integer
+        executedAt:
+          type: string
+          format: date-time
+      required:
+      - ruleCode
+      - dimension
+      - severity
+      - status
+    RuleResultPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleResult'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    DimensionScore:
+      type: object
+      description: Điểm một chiều (dq_score_dimension).
+      properties:
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        status:
+          $ref: '#/components/schemas/DimensionStatus'
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        weight:
+          type: number
+          minimum: 0
+          maximum: 1
+        rulesTotal:
+          type: integer
+        rulesPassed:
+          type: integer
+        rulesFailed:
+          type: integer
+        rulesSkipped:
+          type: integer
+        rowsFailed:
+          type: integer
+      required:
+      - dimension
+      - status
+      - weight
+      - rulesTotal
+      - rulesPassed
+      - rulesFailed
+      - rulesSkipped
+    ScoreSnapshot:
+      type: object
+      description: Ảnh chụp điểm (dq_score_snapshot).
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+        scanId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        prevScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        delta:
+          type: number
+        weightConfigId:
+          type: string
+          format: uuid
+        ruleSetVersionId:
+          type: string
+          format: uuid
+        rowCount:
+          type: integer
+        official:
+          type: boolean
+        measuredAt:
+          type: string
+          format: date-time
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionScore'
+      required:
+      - snapshotId
+      - scanId
+      - assetCode
+      - scanMode
+      - score
+      - verdict
+      - trend
+      - dimensions
+    ScorePoint:
+      type: object
+      description: Một điểm của chuỗi lịch sử.
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+        scanId:
+          type: string
+          format: uuid
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        measuredAt:
+          type: string
+          format: date-time
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        official:
+          type: boolean
+      required:
+      - snapshotId
+      - scanId
+      - measuredAt
+      - score
+      - verdict
+    ScorePointPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScorePoint'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ScanTask:
+      type: object
+      description: Tác vụ phân mảnh (dq_scan_task).
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        shardNo:
+          type: integer
+        shardCount:
+          type: integer
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        keyFrom:
+          type: string
+        keyTo:
+          type: string
+        attempt:
+          type: integer
+        workerId:
+          type: string
+        rowsScanned:
+          type: integer
+        rowsFailed:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        errorCode:
+          type: string
+      required:
+      - taskId
+      - shardNo
+      - shardCount
+      - status
+    ScanTaskPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScanTask'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    CheckRequest:
+      type: object
+      description: Kiểm tra trực tuyến một bản ghi (FR-08-032); bản ghi ≤ 64 KB.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        record:
+          type: object
+        mode:
+          $ref: '#/components/schemas/InlineMode'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dimension'
+        correlationId:
+          type: string
+          maxLength: 64
+        caller:
+          type: string
+      required:
+      - assetCode
+      - record
+      - caller
+    Violation:
+      type: object
+      description: Vi phạm; không chứa giá trị của bản ghi.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        fieldPath:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        message:
+          type: string
+      required:
+      - ruleCode
+      - dimension
+      - severity
+      - fieldPath
+      - message
+    CheckResult:
+      type: object
+      description: Kết luận kiểm tra.
+      properties:
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        degraded:
+          type: boolean
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+        evaluatedRules:
+          type: integer
+        durationMs:
+          type: integer
+        ruleSetVersion:
+          type: integer
+        correlationId:
+          type: string
+      required:
+      - verdict
+      - degraded
+      - violations
+      - evaluatedRules
+      - durationMs
+      - ruleSetVersion
+    CheckBatchItem:
+      type: object
+      description: Một bản ghi trong lô.
+      properties:
+        correlationId:
+          type: string
+        record:
+          type: object
+      required:
+      - correlationId
+      - record
+    CheckBatchRequest:
+      type: object
+      description: Kiểm tra lô tối đa 100 bản ghi (FR-08-032).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckBatchItem'
+          minItems: 1
+          maxItems: 100
+        mode:
+          $ref: '#/components/schemas/InlineMode'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dimension'
+        caller:
+          type: string
+      required:
+      - assetCode
+      - records
+      - caller
+    CheckBatchResultItem:
+      type: object
+      description: Kết luận của một bản ghi trong lô.
+      properties:
+        correlationId:
+          type: string
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+      required:
+      - correlationId
+      - verdict
+      - violations
+    CheckBatchResult:
+      type: object
+      description: Kết quả kiểm tra lô.
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckBatchResultItem'
+        degraded:
+          type: boolean
+        durationMs:
+          type: integer
+        ruleSetVersion:
+          type: integer
+      required:
+      - results
+      - degraded
+      - durationMs
+      - ruleSetVersion
+    InlineSeriesPoint:
+      type: object
+      description: Một điểm của chuỗi thống kê (dq_inline_stat).
+      properties:
+        bucketAt:
+          type: string
+          format: date-time
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        caller:
+          type: string
+        checkCount:
+          type: integer
+        passCount:
+          type: integer
+        warnCount:
+          type: integer
+        failCount:
+          type: integer
+        blockedCount:
+          type: integer
+        errorCount:
+          type: integer
+        failOpenCount:
+          type: integer
+        failClosedCount:
+          type: integer
+        p50Ms:
+          type: integer
+        p95Ms:
+          type: integer
+        maxMs:
+          type: integer
+      required:
+      - bucketAt
+      - assetCode
+      - checkCount
+      - passCount
+      - failCount
+    TopRule:
+      type: object
+      description: Quy tắc vi phạm nhiều nhất.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        failCount:
+          type: integer
+      required:
+      - ruleCode
+      - failCount
+    InlineStats:
+      type: object
+      description: Thống kê kiểm tra trực tuyến (FR-08-034).
+      properties:
+        granularity:
+          $ref: '#/components/schemas/Granularity'
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/InlineSeriesPoint'
+        topRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopRule'
+        p95Ms:
+          type: integer
+      required:
+      - granularity
+      - series
+      - topRules
+    InlineConfig:
+      type: object
+      description: Cấu hình kiểm tra trực tuyến của đối tượng (FR-08-032, 035).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        inlineEnabled:
+          type: boolean
+        inlineMode:
+          $ref: '#/components/schemas/InlineMode'
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+        timeoutMs:
+          type: integer
+          minimum: 10
+          maximum: 50
+        gateEnabled:
+          type: boolean
+        version:
+          type: integer
+      required:
+      - assetCode
+      - inlineEnabled
+      - inlineMode
+      - onDependencyFailure
+      - timeoutMs
+      - version
+    InlineConfigPut:
+      type: object
+      description: Đặt cấu hình trực tuyến.
+      properties:
+        inlineEnabled:
+          type: boolean
+        inlineMode:
+          $ref: '#/components/schemas/InlineMode'
+        onDependencyFailure:
+          $ref: '#/components/schemas/OnDependencyFailure'
+        timeoutMs:
+          type: integer
+          minimum: 10
+          maximum: 50
+        gateEnabled:
+          type: boolean
+      required:
+      - inlineEnabled
+      - inlineMode
+      - onDependencyFailure
+    Finding:
+      type: object
+      description: Bản ghi lỗi (dq_finding); giá trị trường Nhạy cảm chỉ có băm.
+      properties:
+        findingId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16,64}$
+        recordKeyMasked:
+          type: string
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        dataClass:
+          $ref: '#/components/schemas/DataClass'
+        valueMode:
+          $ref: '#/components/schemas/ValueMode'
+        maskedValue:
+          type: string
+        expectedHint:
+          type: string
+        status:
+          $ref: '#/components/schemas/FindingStatus'
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        firstSeenAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+        firstScanId:
+          type: string
+          format: uuid
+        lastScanId:
+          type: string
+          format: uuid
+        seenCount:
+          type: integer
+        resolvedAt:
+          type: string
+          format: date-time
+        resolutionReason:
+          $ref: '#/components/schemas/ResolutionReason'
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        waiverId:
+          type: string
+          format: uuid
+      required:
+      - findingId
+      - assetCode
+      - ruleCode
+      - dimension
+      - severity
+      - fingerprint
+      - dataClass
+      - valueMode
+      - status
+      - firstSeenAt
+      - lastSeenAt
+      - seenCount
+    FindingPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    FindingHistoryItem:
+      type: object
+      description: Một lần thấy lỗi.
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        seenAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/FindingStatus'
+      required:
+      - scanId
+      - seenAt
+      - status
+    GoldenRecordRef:
+      type: object
+      description: Tham chiếu bản ghi vàng ở PH-06, mở cần `PERM-06-read`.
+      properties:
+        domainCode:
+          type: string
+        goldenId:
+          type: string
+          format: uuid
+      required:
+      - domainCode
+      - goldenId
+    FindingDetail:
+      type: object
+      description: Chi tiết bản ghi lỗi (FR-08-038).
+      properties:
+        finding:
+          $ref: '#/components/schemas/Finding'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindingHistoryItem'
+        goldenRecord:
+          $ref: '#/components/schemas/GoldenRecordRef'
+      required:
+      - finding
+      - history
+    FindingSearchRequest:
+      type: object
+      description: Tìm lỗi theo khóa bản ghi; khóa định danh cá nhân gửi trong thân để không vào log đường dẫn (FR-08-037).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        recordKey:
+          type: string
+          maxLength: 255
+      required:
+      - assetCode
+      - recordKey
+    FindingGroup:
+      type: object
+      description: Nhóm lỗi theo đối tượng, quy tắc, chủ quản (FR-08-037, 041).
+      properties:
+        groupKey:
+          type: string
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        severity:
+          $ref: '#/components/schemas/Severity'
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        findingCount:
+          type: integer
+        openIssueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        firstSeenAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+      required:
+      - groupKey
+      - assetCode
+      - ruleCode
+      - dimension
+      - severity
+      - findingCount
+    FindingGroupPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindingGroup'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    FindingExportCreate:
+      type: object
+      description: Đề nghị xuất lỗi (FR-08-039).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        filter:
+          type: object
+        format:
+          $ref: '#/components/schemas/ExportFormat'
+        reason:
+          type: string
+          maxLength: 500
+      required:
+      - assetCode
+      - format
+    ExportRequest:
+      type: object
+      description: Yêu cầu xuất (dq_export_request).
+      properties:
+        exportId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/ExportKind'
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        reportCode:
+          type: string
+          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+        filter:
+          type: object
+        format:
+          $ref: '#/components/schemas/ExportFormat'
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        containsRestricted:
+          type: boolean
+        requestedBy:
+          type: string
+        decidedBy:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        decisionComment:
+          type: string
+        rowCount:
+          type: integer
+        downloadUrl:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        downloadCount:
+          type: integer
+        errorCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - exportId
+      - format
+      - status
+      - containsRestricted
+      - version
+    ExportDecision:
+      type: object
+      description: Quyết định chấp thuận xuất; DO chấp thuận khi có trường Nhạy cảm.
+      properties:
+        decision:
+          $ref: '#/components/schemas/ExportDecisionValue'
+        comment:
+          type: string
+          maxLength: 2000
+      required:
+      - decision
+    Waiver:
+      type: object
+      description: Ngoại lệ chấp nhận (dq_waiver).
+      properties:
+        waiverId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        scope:
+          $ref: '#/components/schemas/WaiverScope'
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16,64}$
+        status:
+          $ref: '#/components/schemas/WaiverStatus'
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+        requestedBy:
+          type: string
+        decidedBy:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        decisionComment:
+          type: string
+        validFrom:
+          type: string
+          format: date
+        validTo:
+          type: string
+          format: date
+        revokedBy:
+          type: string
+        revokedAt:
+          type: string
+          format: date-time
+        revokeReason:
+          type: string
+        expiredAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - waiverId
+      - assetCode
+      - scope
+      - status
+      - reason
+      - version
+    WaiverPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Waiver'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    WaiverCreate:
+      type: object
+      description: Đề nghị ngoại lệ (FR-08-040); hạn tối đa theo `08.waiver.max-days` (ERR-08-033).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        scope:
+          $ref: '#/components/schemas/WaiverScope'
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        filter:
+          type: object
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+        validFrom:
+          type: string
+          format: date
+        validTo:
+          type: string
+          format: date
+      required:
+      - assetCode
+      - scope
+      - reason
+      - validFrom
+      - validTo
+    Issue:
+      type: object
+      description: Phiếu khắc phục (dq_issue).
+      properties:
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        groupKey:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          $ref: '#/components/schemas/Severity'
+        findingCount:
+          type: integer
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        assignee:
+          type: string
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+        slaDays:
+          type: integer
+        slaDueAt:
+          type: string
+          format: date-time
+        overdue:
+          type: boolean
+        escalationLevel:
+          type: integer
+        escalatedAt:
+          type: string
+          format: date-time
+        assignedAt:
+          type: string
+          format: date-time
+        fixedAt:
+          type: string
+          format: date-time
+        fixNote:
+          type: string
+        verifiedAt:
+          type: string
+          format: date-time
+        verifyScanId:
+          type: string
+          format: uuid
+        reopenCount:
+          type: integer
+        rejectType:
+          $ref: '#/components/schemas/RejectType'
+        rejectReason:
+          type: string
+        stewardItemRef:
+          type: string
+          format: uuid
+        forwardedToStewardAt:
+          type: string
+          format: date-time
+        cancelReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - issueCode
+      - assetCode
+      - title
+      - severity
+      - findingCount
+      - ownerOrgCode
+      - status
+      - version
+    IssuePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issue'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    IssueCreate:
+      type: object
+      description: Mở phiếu từ nhóm lỗi (FR-08-041); ERR-08-034 khi lỗi đã thuộc phiếu mở khác.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        groupKey:
+          type: string
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 4000
+        severity:
+          $ref: '#/components/schemas/Severity'
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        slaDays:
+          type: integer
+          minimum: 1
+          maximum: 90
+      required:
+      - assetCode
+      - ruleCode
+      - title
+      - severity
+      - ownerOrgCode
+    IssueAssign:
+      type: object
+      description: Phân công (FR-08-042).
+      properties:
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        assignee:
+          type: string
+        slaDays:
+          type: integer
+        comment:
+          type: string
+          maxLength: 2000
+    IssueActivityCreate:
+      type: object
+      description: Trao đổi trên phiếu (FR-08-043).
+      properties:
+        activityType:
+          $ref: '#/components/schemas/ActivityType'
+        comment:
+          type: string
+          maxLength: 4000
+        attachmentRef:
+          type: string
+      required:
+      - activityType
+      - comment
+    IssueActivity:
+      type: object
+      description: Hoạt động của phiếu (dq_issue_activity).
+      properties:
+        activityId:
+          type: string
+          format: uuid
+        activityType:
+          $ref: '#/components/schemas/ActivityType'
+        actor:
+          type: string
+        fromStatus:
+          $ref: '#/components/schemas/IssueStatus'
+        toStatus:
+          $ref: '#/components/schemas/IssueStatus'
+        comment:
+          type: string
+        payload:
+          type: object
+        occurredAt:
+          type: string
+          format: date-time
+      required:
+      - activityId
+      - activityType
+      - actor
+      - occurredAt
+    IssueActivityPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueActivity'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    IssueMarkFixed:
+      type: object
+      description: Báo đã sửa; ≥ 20 ký tự (ERR-08-036).
+      properties:
+        fixNote:
+          type: string
+          minLength: 20
+          maxLength: 2000
+      required:
+      - fixNote
+    IssueVerify:
+      type: object
+      description: 'Xác nhận: đo kiểm chứng hoặc xác nhận thủ công của DS (ERR-08-035 khi DO tự xác nhận).'
+      properties:
+        mode:
+          $ref: '#/components/schemas/VerifyMode'
+        comment:
+          type: string
+          maxLength: 2000
+      required:
+      - mode
+    IssueReject:
+      type: object
+      description: Từ chối phiếu.
+      properties:
+        rejectType:
+          $ref: '#/components/schemas/RejectType'
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+      required:
+      - rejectType
+      - reason
+    IssueTransfer:
+      type: object
+      description: Chuyển phiếu.
+      properties:
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        assignee:
+          type: string
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+      required:
+      - ownerOrgCode
+      - reason
+    IssueEscalate:
+      type: object
+      description: Leo thang thủ công.
+      properties:
+        reason:
+          type: string
+          minLength: 20
+          maxLength: 2000
+        toLevel:
+          type: integer
+          minimum: 1
+          maximum: 2
+      required:
+      - reason
+    IssueSendToSteward:
+      type: object
+      description: Chuyển lỗi bản ghi vàng (FR-08-046); ERR-08-051 khi lỗi không thuộc bản ghi vàng.
+      properties:
+        action:
+          $ref: '#/components/schemas/StewardAction'
+        comment:
+          type: string
+    StewardTransfer:
+      type: object
+      description: Kết quả chuyển sang hàng đợi PH-06.
+      properties:
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        stewardItemRef:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/IssueStatus'
+        forwardedAt:
+          type: string
+          format: date-time
+      required:
+      - issueCode
+      - stewardItemRef
+      - status
+    Recipient:
+      type: object
+      description: Người nhận.
+      properties:
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        recipientRef:
+          type: string
+      required:
+      - recipientType
+      - recipientRef
+    AlertRule:
+      type: object
+      description: Quy tắc cảnh báo (dq_alert_rule).
+      properties:
+        alertRuleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        conditionType:
+          $ref: '#/components/schemas/AlertCondition'
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        threshold:
+          type: number
+        severity:
+          $ref: '#/components/schemas/AlertSeverity'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionChannel'
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipient'
+        cooldownMinutes:
+          type: integer
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - alertRuleCode
+      - name
+      - conditionType
+      - severity
+      - channels
+      - recipients
+      - enabled
+      - version
+    AlertRulePage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertRule'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    AlertRuleUpsert:
+      type: object
+      description: Tạo hoặc sửa quy tắc cảnh báo (FR-08-047).
+      properties:
+        alertRuleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        name:
+          type: string
+          maxLength: 255
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        conditionType:
+          $ref: '#/components/schemas/AlertCondition'
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        threshold:
+          type: number
+        severity:
+          $ref: '#/components/schemas/AlertSeverity'
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionChannel'
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipient'
+        cooldownMinutes:
+          type: integer
+        enabled:
+          type: boolean
+      required:
+      - alertRuleCode
+      - name
+      - conditionType
+      - severity
+      - channels
+      - recipients
+    Alert:
+      type: object
+      description: Cảnh báo (dq_alert).
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        alertRuleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanId:
+          type: string
+          format: uuid
+        snapshotId:
+          type: string
+          format: uuid
+        severity:
+          $ref: '#/components/schemas/AlertSeverity'
+        status:
+          $ref: '#/components/schemas/AlertStatus'
+        dedupKey:
+          type: string
+        message:
+          type: string
+        firedAt:
+          type: string
+          format: date-time
+        notifiedAt:
+          type: string
+          format: date-time
+        notificationRef:
+          type: string
+        acknowledgedBy:
+          type: string
+        acknowledgedAt:
+          type: string
+          format: date-time
+        silencedUntil:
+          type: string
+          format: date-time
+        silenceReason:
+          type: string
+        resolvedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - alertId
+      - alertRuleCode
+      - severity
+      - status
+      - message
+      - firedAt
+      - version
+    AlertPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    AlertSilence:
+      type: object
+      description: Tắt tiếng có thời hạn (FR-08-049).
+      properties:
+        silencedUntil:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+      required:
+      - silencedUntil
+      - reason
+    DomainCard:
+      type: object
+      description: Thẻ miền trên bảng điều khiển.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        name:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        assetCount:
+          type: integer
+        openFindings:
+          type: integer
+      required:
+      - domainCode
+      - name
+      - assetCount
+    DimensionAverage:
+      type: object
+      description: Điểm trung bình một chiều.
+      properties:
+        dimension:
+          $ref: '#/components/schemas/Dimension'
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+      - dimension
+    TrendPoint:
+      type: object
+      description: Điểm theo kỳ.
+      properties:
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+      - periodCode
+      - score
+    IssueSummary:
+      type: object
+      description: Tổng hợp phiếu.
+      properties:
+        open:
+          type: integer
+        overdue:
+          type: integer
+        bySeverity:
+          type: object
+      required:
+      - open
+      - overdue
+    Dashboard:
+      type: object
+      description: Bảng điều khiển tenant (FR-08-050).
+      properties:
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        tenantScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainCard'
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionAverage'
+        trendSeries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendPoint'
+        issues:
+          $ref: '#/components/schemas/IssueSummary'
+        firingAlerts:
+          type: integer
+        measuredAt:
+          type: string
+          format: date-time
+      required:
+      - domains
+      - dimensions
+      - trendSeries
+      - issues
+    Scorecard:
+      type: object
+      description: Thẻ điểm theo phạm vi (FR-08-051).
+      properties:
+        scope:
+          $ref: '#/components/schemas/ScorecardScope'
+        key:
+          type: string
+        name:
+          type: string
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        delta:
+          type: number
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        official:
+          type: boolean
+        measuredAt:
+          type: string
+          format: date-time
+        dimensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DimensionScore'
+      required:
+      - scope
+      - key
+    ScorecardPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scorecard'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    CdeScore:
+      type: object
+      description: Điểm của trường CDE.
+      properties:
+        fieldName:
+          type: string
+          pattern: ^[A-Za-z][A-Za-z0-9_.]{0,62}$
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        failedRules:
+          type: integer
+      required:
+      - fieldName
+    AssetScorecard:
+      type: object
+      description: Thẻ điểm một đối tượng đo.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        snapshot:
+          $ref: '#/components/schemas/ScoreSnapshot'
+        openFindings:
+          type: integer
+        openFindingsBySeverity:
+          type: object
+        openIssues:
+          type: integer
+        cde:
+          type: array
+          items:
+            $ref: '#/components/schemas/CdeScore'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScorePoint'
+      required:
+      - assetCode
+      - snapshot
+      - openFindings
+    KpiSnapshot:
+      type: object
+      description: Ảnh chụp KPI đã đẩy sang PH-16 (EVT-08-14).
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+        kind:
+          $ref: '#/components/schemas/KpiKind'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        kpiSchemaVersion:
+          type: integer
+        tenantScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        domainScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainCard'
+        issues:
+          $ref: '#/components/schemas/IssueSummary'
+        official:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+      required:
+      - snapshotId
+      - kind
+      - kpiSchemaVersion
+      - publishedAt
+    KpiSnapshotPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/KpiSnapshot'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    Report:
+      type: object
+      description: Báo cáo chất lượng (dq_report).
+      properties:
+        reportCode:
+          type: string
+          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        scope:
+          type: object
+        summary:
+          type: object
+        snapshotCount:
+          type: integer
+        incompleteSnapshotCount:
+          type: integer
+        generatedAt:
+          type: string
+          format: date-time
+        submittedBy:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        reviewedBy:
+          type: string
+        reviewedAt:
+          type: string
+          format: date-time
+        reviewComment:
+          type: string
+        publishedBy:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        withdrawnReason:
+          type: string
+        hasPdf:
+          type: boolean
+        hasXlsx:
+          type: boolean
+        contentSha256:
+          type: string
+          pattern: ^[0-9a-f]{16,64}$
+        signed:
+          type: boolean
+        signatureRef:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - reportCode
+      - reportType
+      - periodCode
+      - title
+      - status
+      - version
+    ReportPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    ReportCreate:
+      type: object
+      description: Tạo báo cáo (FR-08-052, 054); báo cáo năm cần đo `FULL` đủ chiều (ERR-08-038).
+      properties:
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        title:
+          type: string
+        scope:
+          type: object
+        annualMethod:
+          $ref: '#/components/schemas/AnnualMethod'
+      required:
+      - reportType
+      - periodCode
+    ReportUpdate:
+      type: object
+      description: Sửa báo cáo nháp; cần ít nhất một khuyến nghị trước khi gửi duyệt (ERR-08-039).
+      properties:
+        title:
+          type: string
+        summary:
+          type: object
+        scope:
+          type: object
+    AnnualReadinessRequest:
+      type: object
+      description: Kiểm điều kiện báo cáo năm (FR-08-054).
+      properties:
+        year:
+          type: integer
+          minimum: 2025
+          maximum: 2100
+        annualMethod:
+          $ref: '#/components/schemas/AnnualMethod'
+      required:
+      - year
+    ReadinessBlocker:
+      type: object
+      description: Đối tượng chưa đủ điều kiện.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        reason:
+          type: string
+      required:
+      - assetCode
+      - reason
+    AnnualReadinessResult:
+      type: object
+      description: Kết quả kiểm.
+      properties:
+        year:
+          type: integer
+        ready:
+          type: boolean
+        blockers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadinessBlocker'
+      required:
+      - year
+      - ready
+      - blockers
+    ReportExportCreate:
+      type: object
+      description: Xuất báo cáo (FR-08-055).
+      properties:
+        format:
+          $ref: '#/components/schemas/ReportFileFormat'
+      required:
+      - format
+    ReportSignRequest:
+      type: object
+      description: Ký số báo cáo đã công bố hoặc chờ công bố (FR-08-055, Q08-06).
+      properties:
+        certificateRef:
+          type: string
+          maxLength: 255
+        comment:
+          type: string
+    Subscription:
+      type: object
+      description: Đăng ký nhận báo cáo (dq_report_subscription).
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        recipientRef:
+          type: string
+        format:
+          $ref: '#/components/schemas/ReportFileFormat'
+        enabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+        version:
+          type: integer
+      required:
+      - subscriptionId
+      - reportType
+      - recipientType
+      - recipientRef
+      - format
+      - enabled
+      - version
+    SubscriptionPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subscription'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    SubscriptionCreate:
+      type: object
+      description: Đăng ký nhận báo cáo (FR-08-056).
+      properties:
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        recipientRef:
+          type: string
+        format:
+          $ref: '#/components/schemas/ReportFileFormat'
+      required:
+      - reportType
+      - recipientType
+      - recipientRef
+      - format
+    TenantSettings:
+      type: object
+      description: Tham số chất lượng của tenant (dq_tenant_setting, FR-08-058); 40 khóa ở FRS 8.2.
+      properties:
+        values:
+          type: object
+        ceilings:
+          type: object
+        version:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+      required:
+      - values
+      - version
+    TenantSettingsPut:
+      type: object
+      description: Đặt giá trị; chỉ gửi khóa cần đổi (ERR-08-042 khi ngoài miền).
+      properties:
+        values:
+          type: object
+      required:
+      - values
+    RetentionRun:
+      type: object
+      description: Lần dọn dữ liệu lưu giữ (FR-08-059).
+      properties:
+        runId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/RetentionRunStatus'
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        droppedPartitions:
+          type: integer
+        deletedRows:
+          type: integer
+        errorCode:
+          type: string
+      required:
+      - runId
+      - status
+      - startedAt
+    RetentionRunPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetentionRun'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    RetentionPreviewRequest:
+      type: object
+      description: Xem trước dọn dữ liệu.
+      properties:
+        objectTypes:
+          type: array
+          items:
+            type: string
+        asOf:
+          type: string
+          format: date-time
+    RetentionPreviewItem:
+      type: object
+      description: Tác động theo loại đối tượng.
+      properties:
+        objectType:
+          type: string
+        retentionDays:
+          type: integer
+        action:
+          $ref: '#/components/schemas/RetentionAction'
+        partitions:
+          type: integer
+        rowsAffected:
+          type: integer
+      required:
+      - objectType
+      - retentionDays
+      - action
+    RetentionPreview:
+      type: object
+      description: Kết quả xem trước, không xóa gì.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetentionPreviewItem'
+      required:
+      - items
+    AuditEvent:
+      type: object
+      description: Sự kiện kiểm toán PH-08 (FR-08-060).
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        action:
+          type: string
+        objectType:
+          type: string
+        objectCode:
+          type: string
+        outcome:
+          $ref: '#/components/schemas/AuditOutcome'
+        traceId:
+          type: string
+        detail:
+          type: object
+      required:
+      - eventId
+      - occurredAt
+      - actor
+      - action
+      - objectType
+      - outcome
+    AuditEventPage:
+      type: object
+      description: Trang kết quả.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+      required:
+      - items
+      - page
+      - size
+      - totalElements
+    BenchmarkPoint:
+      type: object
+      description: Một nhóm so sánh ẩn danh.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        groupSize:
+          type: integer
+        p25:
+          type: number
+          minimum: 0
+          maximum: 100
+        median:
+          type: number
+          minimum: 0
+          maximum: 100
+        p75:
+          type: number
+          minimum: 0
+          maximum: 100
+        ownScore:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+      - groupSize
+    BenchmarkResult:
+      type: object
+      description: So sánh liên tenant (FR-08-061); ERR-08-044 khi nhóm nhỏ hơn `08.benchmark.min-group`.
+      properties:
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        minGroup:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkPoint'
+      required:
+      - periodCode
+      - minGroup
+      - items
+    ActivityType:
+      type: string
+      enum:
+      - COMMENT
+      - ATTACHMENT
+      - STATUS_CHANGE
+      - ASSIGNMENT
+      - ESCALATION
+      - VERIFY_RESULT
+    AlertCondition:
+      type: string
+      enum:
+      - SCORE_BELOW
+      - SCORE_DROP
+      - SCAN_FAILED
+      - INCOMPLETE_DIMENSIONS
+      - ISSUE_OVERDUE
+      - INLINE_FAIL_RATE
+      - NEW_CRITICAL_FINDINGS
+    AlertSeverity:
+      type: string
+      enum:
+      - HIGH
+      - MEDIUM
+      - LOW
+    AlertStatus:
+      type: string
+      enum:
+      - FIRING
+      - ACKNOWLEDGED
+      - RESOLVED
+      - SILENCED
+    AnnualMethod:
+      type: string
+      enum:
+      - FULL_DECEMBER
+      - LATEST_FULL
+      - WEIGHTED_AVERAGE
+    AssetStatus:
+      type: string
+      enum:
+      - DRAFT
+      - ACTIVE
+      - SUSPENDED
+      - RETIRED
+    AssetType:
+      type: string
+      enum:
+      - MDM_DOMAIN
+      - RDM_CATALOG
+      - SOURCE_DATASET
+      - FLOW_MESSAGE
+    AuditOutcome:
+      type: string
+      enum:
+      - SUCCESS
+      - DENIED
+      - FAILED
+    ClassificationStatus:
+      type: string
+      enum:
+      - PROPOSED
+      - CONFIRMED
+    DataClass:
+      type: string
+      enum:
+      - PUBLIC
+      - INTERNAL
+      - RESTRICTED
+      - SENSITIVE
+    Dimension:
+      type: string
+      enum:
+      - COMPLETENESS
+      - ACCURACY
+      - CONSISTENCY
+      - TIMELINESS
+      - UNIQUENESS
+      - VALIDITY
+    DimensionStatus:
+      type: string
+      enum:
+      - MEASURED
+      - SKIPPED
+    DomainStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - INACTIVE
+    ExecMode:
+      type: string
+      enum:
+      - BATCH
+      - INLINE
+      - BOTH
+    ExportDecisionValue:
+      type: string
+      enum:
+      - APPROVE
+      - REJECT
+    ExportFormat:
+      type: string
+      enum:
+      - XLSX
+      - CSV
+      - PDF
+      - JSON
+      - YAML
+    ExportKind:
+      type: string
+      enum:
+      - FINDINGS
+      - REPORT
+    ExportStatus:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - APPROVED
+      - RUNNING
+      - READY
+      - FAILED
+      - EXPIRED
+      - REJECTED
+    FieldType:
+      type: string
+      enum:
+      - STRING
+      - INTEGER
+      - DECIMAL
+      - DATE
+      - TIMESTAMP
+      - BOOLEAN
+      - CODE
+      - JSON
+    FindingStatus:
+      type: string
+      enum:
+      - OPEN
+      - IN_REMEDIATION
+      - RESOLVED
+      - WAIVED
+    Granularity:
+      type: string
+      enum:
+      - MINUTE
+      - HOUR
+      - DAY
+    InlineMode:
+      type: string
+      enum:
+      - STRICT
+      - ADVISORY
+    IssueStatus:
+      type: string
+      enum:
+      - OPEN
+      - ASSIGNED
+      - IN_PROGRESS
+      - FIXED
+      - VERIFIED
+      - REOPENED
+      - REJECTED
+      - CANCELLED
+    KpiKind:
+      type: string
+      enum:
+      - SCAN_SNAPSHOT
+      - REPORT
+      - ISSUE_DAILY
+    ObjectType:
+      type: string
+      enum:
+      - TABLE
+      - VIEW
+    OnDependencyFailure:
+      type: string
+      enum:
+      - FAIL_OPEN
+      - FAIL_CLOSED
+    Operator:
+      type: string
+      enum:
+      - NOT_NULL
+      - NOT_EMPTY
+      - REQUIRED_IF
+      - REGEX
+      - LENGTH
+      - RANGE
+      - CHECKSUM
+      - TYPE
+      - EQ_SOURCE
+      - EQ_FIELDS
+      - CROSS_ENTITY
+      - MAX_AGE_DAYS
+      - UPDATED_AFTER
+      - UNIQUE_IN_ASSET
+      - UNIQUE_COMPOSITE
+      - IN_RDM
+      - IN_RDM_VERSION
+      - CEL_EXPRESSION
+      - SQL_PREDICATE
+    ProfileMode:
+      type: string
+      enum:
+      - FULL
+      - SAMPLE
+      - EXTERNAL
+    ProfileStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+    RecipientType:
+      type: string
+      enum:
+      - USER
+      - ROLE
+      - ORG
+    RejectType:
+      type: string
+      enum:
+      - WRONG_OWNER
+      - NOT_A_DEFECT
+      - CANNOT_FIX
+    ReportFileFormat:
+      type: string
+      enum:
+      - PDF
+      - XLSX
+    ReportStatus:
+      type: string
+      enum:
+      - DRAFT
+      - IN_REVIEW
+      - PUBLISHED
+      - WITHDRAWN
+    ReportType:
+      type: string
+      enum:
+      - PERIODIC
+      - ANNUAL
+      - AD_HOC
+    ResolutionReason:
+      type: string
+      enum:
+      - CLEARED
+      - RECORD_REMOVED
+      - RULE_RETIRED
+      - MANUAL_CONFIRMED
+    RetentionAction:
+      type: string
+      enum:
+      - DROP_PARTITION
+      - DELETE
+      - ARCHIVE_COLD
+      - ANONYMIZE
+    RetentionRunStatus:
+      type: string
+      enum:
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+    RuleFileFormat:
+      type: string
+      enum:
+      - YAML
+      - JSON
+    RuleResultStatus:
+      type: string
+      enum:
+      - PASSED
+      - FAILED
+      - SKIPPED
+      - ERROR
+    RuleSource:
+      type: string
+      enum:
+      - MANUAL
+      - TEMPLATE
+      - SUGGESTED
+      - IMPORTED
+      - COPIED
+    ScanMode:
+      type: string
+      enum:
+      - FULL
+      - SAMPLE
+      - INCREMENTAL
+    ScanStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - PARTIAL
+      - FAILED
+      - CANCELLED
+    ScanTrigger:
+      type: string
+      enum:
+      - SCHEDULE
+      - MANUAL
+      - EVENT
+      - ANNUAL
+      - VERIFY
+    ScheduleStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - PAUSED
+    ScorecardScope:
+      type: string
+      enum:
+      - ASSET
+      - DOMAIN
+      - ORGANIZATION
+      - TENANT
+    Severity:
+      type: string
+      enum:
+      - CRITICAL
+      - MAJOR
+      - MINOR
+    SnapshotFlag:
+      type: string
+      enum:
+      - INCOMPLETE_DIMENSIONS
+      - WEIGHTS_CHANGED
+      - TRUNCATED
+      - INCREMENTAL
+    StewardAction:
+      type: string
+      enum:
+      - REVIEW_DUPLICATE
+      - REVIEW_SURVIVORSHIP
+      - REVIEW_VALUE
+    SubscriptionChannel:
+      type: string
+      enum:
+      - IN_APP
+      - EMAIL
+    TaskStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - SUCCEEDED
+      - FAILED
+      - CANCELLED
+    TemplateStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - RETIRED
+    Trend:
+      type: string
+      enum:
+      - BASELINE
+      - IMPROVED
+      - STABLE
+      - DEGRADED
+    ValueMode:
+      type: string
+      enum:
+      - MASKED
+      - HASH_ONLY
+      - PLAIN
+    Verdict:
+      type: string
+      enum:
+      - PASS
+      - WARN
+      - FAIL
+    VerifyMode:
+      type: string
+      enum:
+      - SCAN
+      - MANUAL
+    VersionDecision:
+      type: string
+      enum:
+      - APPROVE
+      - REJECT
+    VersionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - APPROVED
+      - ACTIVE
+      - SUPERSEDED
+      - RETIRED
+    WaiverScope:
+      type: string
+      enum:
+      - FINDINGS
+      - RULE_FILTER
+    WaiverStatus:
+      type: string
+      enum:
+      - PENDING_APPROVAL
+      - ACTIVE
+      - EXPIRED
+      - REVOKED
+      - REJECTED
+    WeightScope:
+      type: string
+      enum:
+      - TENANT
+      - DOMAIN
+      - ASSET
+    WeightStatus:
+      type: string
+      enum:
+      - DRAFT
+      - PENDING_APPROVAL
+      - ACTIVE
+      - SUPERSEDED
+    RuleSetActivatedData:
+      type: object
+      description: Phiên bản bộ quy tắc `ACTIVE` (FR-08-018); `dq-inline` làm mới bộ đệm.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleSetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        versionNo:
+          type: integer
+        ruleCount:
+          type: integer
+        activatedAt:
+          type: string
+          format: date-time
+      required:
+      - assetCode
+      - ruleSetCode
+      - versionNo
+    ScanCompletedData:
+      type: object
+      description: Lần đo `SUCCEEDED` hoặc `PARTIAL` (FR-08-028).
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanMode:
+          $ref: '#/components/schemas/ScanMode'
+        scanTrigger:
+          $ref: '#/components/schemas/ScanTrigger'
+        status:
+          type: string
+          enum:
+          - SUCCEEDED
+          - PARTIAL
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        trend:
+          $ref: '#/components/schemas/Trend'
+        flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnapshotFlag'
+        rowsScanned:
+          type: integer
+        rowsFailed:
+          type: integer
+        official:
+          type: boolean
+      required:
+      - scanId
+      - assetCode
+      - scanMode
+      - scanTrigger
+      - status
+    ScanFailedData:
+      type: object
+      description: Lần đo `FAILED` (FR-08-031).
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanTrigger:
+          $ref: '#/components/schemas/ScanTrigger'
+        errorCode:
+          type: string
+          pattern: ^ERR-08-[0-9]{3}$
+      required:
+      - scanId
+      - assetCode
+      - scanTrigger
+      - errorCode
+    ScoreDegradedData:
+      type: object
+      description: Điểm giảm từ mức `08.trend.degraded-alert` (FR-08-029).
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanId:
+          type: string
+          format: uuid
+        previousScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        delta:
+          type: number
+        threshold:
+          type: number
+      required:
+      - assetCode
+      - scanId
+      - previousScore
+      - score
+      - delta
+    ThresholdBreachedData:
+      type: object
+      description: Kết luận chuyển `FAIL` hoặc xuống dưới ngưỡng cảnh báo.
+      properties:
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        scanId:
+          type: string
+          format: uuid
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        verdict:
+          $ref: '#/components/schemas/Verdict'
+        breach:
+          $ref: '#/components/schemas/BreachKind'
+        threshold:
+          type: number
+      required:
+      - assetCode
+      - scanId
+      - score
+      - verdict
+      - breach
+    TopRuleCount:
+      type: object
+      description: Quy tắc và số lỗi mới.
+      properties:
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        count:
+          type: integer
+      required:
+      - ruleCode
+      - count
+    FindingOpenedData:
+      type: object
+      description: Lần đo có lỗi mới, gộp theo lần đo (FR-08-036); không mang khóa bản ghi.
+      properties:
+        scanId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        newFindings:
+          type: integer
+        bySeverity:
+          type: object
+        topRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopRuleCount'
+      required:
+      - scanId
+      - assetCode
+      - newFindings
+    IssueCreatedData:
+      type: object
+      description: Mở phiếu (FR-08-041).
+      properties:
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        severity:
+          $ref: '#/components/schemas/Severity'
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        assignee:
+          type: string
+        slaDueAt:
+          type: string
+          format: date-time
+        findingCount:
+          type: integer
+      required:
+      - issueCode
+      - assetCode
+      - severity
+      - ownerOrgCode
+    IssueStatusChangedData:
+      type: object
+      description: Phiếu đổi trạng thái, quá hạn, leo thang (FR-08-043, 045).
+      properties:
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        kind:
+          $ref: '#/components/schemas/StatusChangeKind'
+        fromStatus:
+          $ref: '#/components/schemas/IssueStatus'
+        toStatus:
+          $ref: '#/components/schemas/IssueStatus'
+        escalationLevel:
+          type: integer
+        ownerOrgCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+      required:
+      - issueCode
+      - assetCode
+      - kind
+      - toStatus
+    IssueVerifiedData:
+      type: object
+      description: Phiếu `VERIFIED` (FR-08-044).
+      properties:
+        issueCode:
+          type: string
+          pattern: ^DQI-[0-9]{4}-[0-9]{6}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        verifyScanId:
+          type: string
+          format: uuid
+        scoreBefore:
+          type: number
+          minimum: 0
+          maximum: 100
+        scoreAfter:
+          type: number
+          minimum: 0
+          maximum: 100
+      required:
+      - issueCode
+      - assetCode
+    WaiverApprovedData:
+      type: object
+      description: Ngoại lệ `ACTIVE` (FR-08-040).
+      properties:
+        waiverId:
+          type: string
+          format: uuid
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        ruleCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9-]{2,62}$
+        validFrom:
+          type: string
+          format: date
+        validTo:
+          type: string
+          format: date
+      required:
+      - waiverId
+      - assetCode
+      - validFrom
+      - validTo
+    ReportPublishedData:
+      type: object
+      description: Báo cáo `PUBLISHED` hoặc `WITHDRAWN` (FR-08-053).
+      properties:
+        reportCode:
+          type: string
+          pattern: ^BC-[0-9]{4}(-[0-9]{2})?(-[A-Z0-9]+)?$
+        reportType:
+          $ref: '#/components/schemas/ReportType'
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        status:
+          type: string
+          enum:
+          - PUBLISHED
+          - WITHDRAWN
+        signed:
+          type: boolean
+      required:
+      - reportCode
+      - reportType
+      - periodCode
+      - status
+    AlertFiredData:
+      type: object
+      description: Cảnh báo `FIRING` hoặc `RESOLVED` (FR-08-048); không chứa giá trị dữ liệu.
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        alertRuleCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        severity:
+          $ref: '#/components/schemas/AlertSeverity'
+        status:
+          type: string
+          enum:
+          - FIRING
+          - RESOLVED
+        message:
+          type: string
+      required:
+      - alertId
+      - alertRuleCode
+      - severity
+      - status
+    CheckFailedData:
+      type: object
+      description: Phút có kết luận `FAIL` trực tuyến, gộp theo đối tượng và bên gọi (FR-08-034).
+      properties:
+        bucketAt:
+          type: string
+          format: date-time
+        assetCode:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{2,62}$
+        caller:
+          type: string
+        failCount:
+          type: integer
+        checkCount:
+          type: integer
+        topRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopRuleCount'
+      required:
+      - bucketAt
+      - assetCode
+      - caller
+      - failCount
+      - checkCount
+    KpiPublishedData:
+      type: object
+      description: Bản tin KPI cho PH-16 (FR-08-057).
+      properties:
+        kind:
+          $ref: '#/components/schemas/KpiKind'
+        kpiSchemaVersion:
+          type: integer
+        periodCode:
+          type: string
+          pattern: ^[0-9]{4}-(0[1-9]|1[0-2])$
+        tenantScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        domainScores:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainCard'
+        issues:
+          $ref: '#/components/schemas/IssueSummary'
+        official:
+          type: boolean
+      required:
+      - kind
+      - kpiSchemaVersion
+    MdmGoldenEventData:
+      type: object
+      description: Bản ghi vàng đổi (EVT-06-01…04); PH-08 chỉ dùng mã để gom khóa cho đo tăng dần.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        goldenId:
+          type: string
+          format: uuid
+        goldenIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        survivorId:
+          type: string
+          format: uuid
+        mergedIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        toGoldenIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        version:
+          type: integer
+        changeType:
+          type: string
+        changedAttributes:
+          type: array
+          items:
+            type: string
+      required:
+      - domainCode
+      additionalProperties: true
+    MdmModelActivatedData:
+      type: object
+      description: Mô hình domain `ACTIVE` (EVT-06-10); PH-08 so lược đồ đối tượng `MDM_DOMAIN`.
+      properties:
+        domainCode:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]{1,31}$
+        version:
+          type: integer
+      required:
+      - domainCode
+      - version
+      additionalProperties: true
+    RdmCatalogRetiredData:
+      type: object
+      description: Danh mục ngừng (EVT-07-03).
+      properties:
+        catalogCode:
+          type: string
+        retireDate:
+          type: string
+          format: date
+        reason:
+          type: string
+        replacementCatalogCode:
+          type: string
+      required:
+      - catalogCode
+      - retireDate
+      - reason
+      additionalProperties: true
+    RdmCatalogPublishedData:
+      type: object
+      description: Danh mục phát hành phiên bản (EVT-07-05).
+      properties:
+        catalogCode:
+          type: string
+        versionNo:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date
+        breaking:
+          type: boolean
+      required:
+      - catalogCode
+      - versionNo
+      - effectiveFrom
+      additionalProperties: true
+    RdmAdminUnitData:
+      type: object
+      description: Tổ chức lại đơn vị hành chính (EVT-07-10).
+      properties:
+        versionNo:
+          type: integer
+        effectiveFrom:
+          type: string
+          format: date
+      required:
+      - versionNo
+      - effectiveFrom
+      additionalProperties: true
+    BreachKind:
+      type: string
+      enum:
+      - VERDICT_FAIL
+      - BELOW_WARN
+    StatusChangeKind:
+      type: string
+      enum:
+      - STATUS_CHANGE
+      - OVERDUE
+      - ESCALATED
+    rulesetActivatedEvent:
+      type: object
+      description: EVT-08-01 · CloudEvents 1.0 dạng cấu trúc. Phiên bản bộ quy tắc `ACTIVE`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.ruleset.activated.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RuleSetActivatedData'
+    scanCompletedEvent:
+      type: object
+      description: EVT-08-02 · CloudEvents 1.0 dạng cấu trúc. Lần đo `SUCCEEDED` hoặc `PARTIAL` (kèm `flags`, `score`, `verdict`).
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.scan.completed.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ScanCompletedData'
+    scanFailedEvent:
+      type: object
+      description: EVT-08-03 · CloudEvents 1.0 dạng cấu trúc. Lần đo `FAILED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.scan.failed.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ScanFailedData'
+    scoreDegradedEvent:
+      type: object
+      description: EVT-08-04 · CloudEvents 1.0 dạng cấu trúc. Điểm giảm ≥ `08.trend.degraded-alert`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.score.degraded.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ScoreDegradedData'
+    scoreThresholdBreachedEvent:
+      type: object
+      description: EVT-08-05 · CloudEvents 1.0 dạng cấu trúc. Kết luận chuyển sang `FAIL` hoặc xuống dưới ngưỡng cảnh báo.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.score.threshold-breached.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ThresholdBreachedData'
+    findingOpenedEvent:
+      type: object
+      description: 'EVT-08-06 · CloudEvents 1.0 dạng cấu trúc. Lần đo có lỗi mới (gộp theo lần đo: số lỗi mới theo mức, quy tắc).'
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.finding.opened.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/FindingOpenedData'
+    issueCreatedEvent:
+      type: object
+      description: EVT-08-07 · CloudEvents 1.0 dạng cấu trúc. Mở phiếu.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.issue.created.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IssueCreatedData'
+    issueStatusChangedEvent:
+      type: object
+      description: EVT-08-08 · CloudEvents 1.0 dạng cấu trúc. Phiếu đổi trạng thái, quá hạn, leo thang.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.issue.status-changed.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IssueStatusChangedData'
+    issueVerifiedEvent:
+      type: object
+      description: EVT-08-09 · CloudEvents 1.0 dạng cấu trúc. Phiếu `VERIFIED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.issue.verified.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/IssueVerifiedData'
+    waiverApprovedEvent:
+      type: object
+      description: EVT-08-10 · CloudEvents 1.0 dạng cấu trúc. Ngoại lệ `ACTIVE`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.waiver.approved.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/WaiverApprovedData'
+    reportPublishedEvent:
+      type: object
+      description: EVT-08-11 · CloudEvents 1.0 dạng cấu trúc. Báo cáo `PUBLISHED` hoặc `WITHDRAWN`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.report.published.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/ReportPublishedData'
+    alertFiredEvent:
+      type: object
+      description: EVT-08-12 · CloudEvents 1.0 dạng cấu trúc. Cảnh báo `FIRING` hoặc `RESOLVED`.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.alert.fired.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/AlertFiredData'
+    checkFailedEvent:
+      type: object
+      description: EVT-08-13 · CloudEvents 1.0 dạng cấu trúc. Phút có kết luận `FAIL` trực tuyến (gộp theo phút, đối tượng, bên gọi).
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.check.failed.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/CheckFailedData'
+    kpiPublishedEvent:
+      type: object
+      description: EVT-08-14 · CloudEvents 1.0 dạng cấu trúc. Ảnh chụp đầy đủ mới, báo cáo công bố, chỉ số phiếu hằng ngày.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.dq.kpi.published.v1
+        source:
+          type: string
+          examples:
+          - dh-data/dq/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/KpiPublishedData'
+    mdmGoldenCreatedEvent:
+      type: object
+      description: EVT-06-01 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.mdm.golden.created.v1
+        source:
+          type: string
+          examples:
+          - dh-data/mdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/MdmGoldenEventData'
+    mdmGoldenUpdatedEvent:
+      type: object
+      description: EVT-06-02 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.mdm.golden.updated.v1
+        source:
+          type: string
+          examples:
+          - dh-data/mdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/MdmGoldenEventData'
+    mdmGoldenMergedEvent:
+      type: object
+      description: EVT-06-03 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.mdm.golden.merged.v1
+        source:
+          type: string
+          examples:
+          - dh-data/mdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/MdmGoldenEventData'
+    mdmGoldenSplitEvent:
+      type: object
+      description: EVT-06-04 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.mdm.golden.split.v1
+        source:
+          type: string
+          examples:
+          - dh-data/mdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/MdmGoldenEventData'
+    mdmModelActivatedEvent:
+      type: object
+      description: EVT-06-10 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.mdm.model.activated.v1
+        source:
+          type: string
+          examples:
+          - dh-data/mdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/MdmModelActivatedData'
+    rdmCatalogRetiredEvent:
+      type: object
+      description: EVT-07-03 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.rdm.catalog.retired.v1
+        source:
+          type: string
+          examples:
+          - dh-data/rdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RdmCatalogRetiredData'
+    rdmCatalogPublishedEvent:
+      type: object
+      description: EVT-07-05 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.rdm.catalog.published.v1
+        source:
+          type: string
+          examples:
+          - dh-data/rdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RdmCatalogPublishedData'
+    rdmAdminunitReorganizedEvent:
+      type: object
+      description: EVT-07-10 · CloudEvents 1.0 dạng cấu trúc. Sự kiện tiêu thụ; hợp đồng gốc ở tập API của bên phát.
+      required:
+      - specversion
+      - id
+      - type
+      - source
+      - time
+      - data
+      properties:
+        specversion:
+          const: '1.0'
+        id:
+          type: string
+          format: uuid
+          description: Bên nhận khử trùng theo `id` (inbox).
+        type:
+          const: vn.datahub.rdm.adminunit.reorganized.v1
+        source:
+          type: string
+          examples:
+          - dh-data/rdm/T68
+        time:
+          type: string
+          format: date-time
+        datacontenttype:
+          const: application/json
+        data:
+          $ref: '#/components/schemas/RdmAdminUnitData'
