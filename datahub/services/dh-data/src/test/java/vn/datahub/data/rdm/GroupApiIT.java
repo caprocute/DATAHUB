@@ -114,6 +114,13 @@ class GroupApiIT extends GroupApiTestSupport {
     assertThat(subCodes(api.postJson("/catalog-groups", ta(), "{\"code\":\"OK\",\"name\":\"A\",\"sortOrder\":\"abc\"}"))).isEqualTo("sortOrder:TYPE");
     assertThat(subCodes(api.postJson("/catalog-groups", ta(), "{\"code\":\"OK\",\"name\":\"A\",\"tenantId\":\"T01\"}"))).isEqualTo("tenantId:UNKNOWN_FIELD");
 
+    // Không ép kiểu số/logic thành chuỗi: thân phải đúng kiểu OpenAPI (nhất quán với PATCH).
+    Reply numeric = api.postJson("/catalog-groups", ta(), "{\"code\":\"OK\",\"name\":5}");
+    assertThat(numeric.status()).isEqualTo(422);
+    assertThat(errorCode(numeric)).isEqualTo("ERR-07-009");
+    assertThat(subCodes(numeric)).isEqualTo("name:TYPE");
+    assertThat(subCodes(api.postJson("/catalog-groups", ta(), "{\"code\":\"OK\",\"name\":\"A\",\"description\":true}"))).isEqualTo("description:TYPE");
+
     Reply broken = api.postJson("/catalog-groups", ta(), "{khong-phai-json");
     assertThat(broken.status()).isEqualTo(422);
     assertThat(errorCode(broken)).isEqualTo("ERR-07-009");

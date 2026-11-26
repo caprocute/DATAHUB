@@ -1,4 +1,4 @@
-import { groupExists, seedCatalog, seedGroup } from './support/db';
+import { groupExists, seedCatalog, seedGroup, seedManyGroups } from './support/db';
 import { expect, expectNoAxeViolations, openAs, test } from './support/fixtures';
 
 test.describe('F-07-010 · Nhóm danh mục (UI-07-01, khung cây nhóm)', () => {
@@ -121,4 +121,44 @@ test.describe('F-07-010 · Nhóm danh mục (UI-07-01, khung cây nhóm)', () =>
     await expect(common).toBeVisible();
     await expect(common.getByRole('button', { name: /Thao tác nhóm/ })).toHaveCount(0);
   });
+
+  // Chặn hồi quy bố cục (CC-FE-14): nhiều nhóm thì cây cuộn TRONG khung, nút ở chân cây luôn thấy.
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1280, height: 720 },
+  ]) {
+    test(`cây nhiều nhóm cuộn trong khung, nút Thêm nhóm luôn trong màn hình ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      const prefix = `E2E_DAI${viewport.width}`;
+      seedManyGroups('T01', prefix, 35);
+      await page.setViewportSize(viewport);
+      await openAs(page, 'TA');
+
+      const tree = page.getByRole('tree', { name: 'Nhóm danh mục' });
+      const add = page.getByRole('button', { name: 'Thêm nhóm' });
+      await expect(tree.getByRole('treeitem', { name: new RegExp(`^Nhóm ${prefix} 001`) })).toBeVisible();
+
+      // Nút ở chân khung nằm gọn trong màn hình ngay khi mở, không cần cuộn trang.
+      const addBox = await add.boundingBox();
+      expect(addBox).not.toBeNull();
+      expect((addBox?.y ?? Infinity) + (addBox?.height ?? 0)).toBeLessThanOrEqual(viewport.height);
+
+      // Khung cây tự cuộn (nội dung dài hơn khung) và không làm trang giãn ra.
+      const metrics = await tree.evaluate((el) => {
+        const scroller = el.parentElement as HTMLElement;
+        return { scrollHeight: scroller.scrollHeight, clientHeight: scroller.clientHeight, docHeight: document.documentElement.scrollHeight };
+      });
+      expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+      expect(metrics.docHeight).toBeLessThanOrEqual(viewport.height);
+
+      // Nhóm cuối cuộn tới được và nằm trong khung cây, trong màn hình.
+      const last = tree.getByRole('treeitem', { name: new RegExp(`^Nhóm ${prefix} 035`) });
+      await last.scrollIntoViewIfNeeded();
+      await expect(last).toBeInViewport({ ratio: 0.9 });
+      const lastBox = await last.boundingBox();
+      const treeBox = await tree.locator('xpath=..').boundingBox();
+      expect((lastBox?.y ?? Infinity) + (lastBox?.height ?? 0)).toBeLessThanOrEqual((treeBox?.y ?? 0) + (treeBox?.height ?? 0) + 1);
+      await expect(add).toBeInViewport({ ratio: 1 });
+      await expectNoAxeViolations(page);
+    });
+  }
 });

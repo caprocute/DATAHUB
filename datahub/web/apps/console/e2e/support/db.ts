@@ -35,3 +35,12 @@ export function seedCatalog(tenant: string, code: string, groupCode: string): vo
 export function groupExists(tenant: string, code: string): boolean {
   return psql(`select count(*) from ph07_rdm.catalog_group where tenant_id = ${quote(tenant)} and code = ${quote(code)}`) === '1';
 }
+
+/** Dựng nhiều nhóm gốc cùng lúc (mã `${prefix}_001`...), xếp cuối cây (sort_order lớn) để biết nhóm cuối là nhóm nào. */
+export function seedManyGroups(tenant: string, prefix: string, count: number): void {
+  psql(
+    `insert into ph07_rdm.catalog_group (id, tenant_id, code, name, parent_id, sort_order, created_by, updated_by) ` +
+      `select uuidv7(), ${quote(tenant)}, ${quote(prefix)} || '_' || lpad(n::text, 3, '0'), ${quote('Nhóm ' + prefix + ' ')} || lpad(n::text, 3, '0'), null, 9000 + n, '${SEED_ACTOR}', '${SEED_ACTOR}' ` +
+      `from generate_series(1, ${count}) as n`,
+  );
+}

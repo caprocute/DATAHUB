@@ -9,7 +9,7 @@
 ## Lệnh đã chạy và kết quả thật
 - `mvn -B -f datahub/services/dh-data/pom.xml verify`: BUILD SUCCESS; 47 test đơn vị + 40 tích hợp (Cucumber 14 kịch bản, 162 bước, đều xanh); JaCoCo dòng rdm 97,6%, shared 92,5% (ngưỡng 80%).
 - `npm --prefix datahub/web run check`: tsc strict + ESLint (0 cảnh báo) + Vitest 54 test; coverage dòng 91,25%, nhánh 89,14% (ngưỡng 70%).
-- `npm --prefix datahub/web run e2e`: 8 test xanh (xem cây, thêm con, mã trùng, sửa, xóa rỗng, xóa có danh mục ERR-07-037, chỉ xem, PA/TA trên nhóm COMMON); axe A/AA 0 vi phạm trên từng màn hình kiểm.
+- `npm --prefix datahub/web run e2e`: 10 test xanh (8 test chức năng + 2 chặn hồi quy bố cục 1440x900 và 1280x720) (xem cây, thêm con, mã trùng, sửa, xóa rỗng, xóa có danh mục ERR-07-037, chỉ xem, PA/TA trên nhóm COMMON); axe A/AA 0 vi phạm trên từng màn hình kiểm.
 - `g1_dac_ta.py datahub/spec/PH07/goi.yaml`: G1 XANH.
 
 ## Lệch so với yêu cầu / ghi chú
@@ -22,3 +22,10 @@
 ## Còn thiếu
 - Khung phải (bảng danh mục F-07-001) chỉ là chỗ giữ; đăng nhập OIDC thật chưa thử với IdP (chỉ có cấu hình và kiểm thử đơn vị).
 - Chưa chạy trên CI GitHub (cấu hình dùng `PW_CHROMIUM_PATH` nếu có, không thì Chromium mặc định của Playwright).
+
+## Vòng 2 (sửa theo danh-gia-F-07-010.md)
+- C1: `catalog-groups-page.css` thêm `flex:1; min-height:0` cho `.rdm-page`, một hàng `minmax(0,1fr)`, `min-height:0` cho panel; cây cuộn trong khung, nút Thêm nhóm ở chân luôn thấy. Thêm 2 test E2E (35 nhóm, 1440x900 và 1280x720; nút trong màn hình, khung cây cuộn, trang không giãn, nhóm cuối cuộn tới được, axe). Đã kiểm: với CSS cũ hai test này đỏ, với CSS mới xanh.
+- T2: POST `name: 5` (và `description: true`) nay 422 ERR-07-009 TYPE như PATCH (`WebConfig.strictTextCoercion`, Jackson CoercionConfig); thêm vào `GroupApiIT.validationErrors`.
+- T3: bỏ px viết cứng trong CSS của apps/ (dùng `--dh-size-tree-panel`, `--dh-size-icon-md`, `--dh-space-0-5`; media query dùng em).
+- Kết quả: `mvn verify` BUILD SUCCESS (47 đơn vị + 40 IT, Cucumber 14/14); `npm run check` xanh (Vitest 54, dòng 91,25%); `npm run e2e` 10/10; G1 XANH.
+- Không làm: T1 (G5/Semgrep là hạ tầng), T4 (ghi nhận).
