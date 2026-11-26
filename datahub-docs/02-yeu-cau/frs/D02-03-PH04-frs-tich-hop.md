@@ -2601,9 +2601,9 @@ Hai chốt quan trọng nằm ở máy chủ: điều kiện chạy thử đạt
 
 **Tiền điều kiện.** Phiên bản `APPROVED`; kiểm tra mức `PUBLISH` cho môi trường đích không có `ERROR`; không trong thời gian đóng băng thay đổi.
 
-**Kích hoạt.** Duyệt ở FR-04-041 (mặc định), hoặc IA bấm "Phát hành" trên UI-04-15, hoặc lịch `scheduledAt` tới hạn.
+**Kích hoạt.** Duyệt ở FR-04-041 (mặc định), hoặc IA bấm "Phát hành" trên UI-04-15. Phát hành theo lịch (`scheduledAt`) thuộc đợt 2.
 
-**Đầu vào.** `environment` (T-ENV), `strategy` ∈ {`REPLACE` mặc định, `CANARY` (đợt 2)}, `scheduledAt` (tùy chọn, trong 30 ngày), `If-Match`.
+**Đầu vào.** Đợt MVP theo `ReleaseRequest` của API-04 (D03-04-PH04): `versionNo`, `environment` (T-ENV), `note`, `replicas`, `If-Match`. Đợt 2 bổ sung `strategy` ∈ {`REPLACE` mặc định, `CANARY`} và `scheduledAt` (tùy chọn, trong 30 ngày), ghi vào đề nghị đồng bộ cho D03-04.
 
 **Luồng xử lý chính.**
 
@@ -2616,7 +2616,7 @@ Hai chốt quan trọng nằm ở máy chủ: điều kiện chạy thử đạt
 
 **Luồng thay thế.**
 
-- `scheduledAt` có giá trị: bước 2–6 chạy khi tới hạn; trước đó triển khai ở `PENDING` có lịch, hủy được.
+- (Đợt 2) `scheduledAt` có giá trị: bước 2–6 chạy khi tới hạn; trước đó triển khai ở `PENDING` có lịch, hủy được.
 - Trong 5 phút đầu sau `SYNCED`, tỷ lệ lỗi gấp `04.deploy.rollback-suggest-error-ratio` lần phiên bản trước: giao diện gợi ý quay lui (FR-04-044), không tự quay lui.
 
 **Luồng ngoại lệ.**
@@ -4699,6 +4699,7 @@ Các điểm dưới đây phát sinh khi nâng tài liệu lên bản 0.2, cầ
 | 3 | D02-08 §3.1 | Bổ sung sáu quyền đề xuất ở mục 3.3 (`PERM-04-delete`, `emergency-stop`, `promote`, `admin`, `catalog-admin`, `sample-data`); câu hỏi Q04-02 | Chờ đợt đồng bộ cuối (tập ngoài PH-04) |
 | 4 | D03-06-PH04 | Sinh ảnh hi-fi `03-thiet-ke/uiux/ph04/hifi/ui-04-01.png` và `ui-04-04.png` dùng ở mục 10.2 | Đã hấp thụ (0.2): đủ 21 ảnh `ui-04-nn.png` |
 | 5 | Phụ lục A | Dòng "BR-D-01…06" dẫn tới "004/023" của nhóm BR-04; quy tắc số 023 không tồn tại (chương 7 dừng ở 022), cần xác định lại mã đích của BR-D-05 (đề xuất BR-04-004) | Đã hấp thụ (0.2): sửa thành BR-04-004 |
+| 6 | D03-04-PH04 | Đợt 2: thêm `strategy` (`REPLACE`, `CANARY`) và `scheduledAt` vào `ReleaseRequest` (FR-04-042); MVP dùng `versionNo`, `environment`, `note`, `replicas` | Chờ đợt 2 |
 
 : Đề nghị đồng bộ với tài liệu khác
 

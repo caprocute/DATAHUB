@@ -508,7 +508,7 @@ Màn đầu tiên người dùng thấy khi vào nhóm menu Tích hợp. Khối 
   │ │                   │ ⓘ 2 route · không gian Tư pháp                                         │
   │☐│ dkkd-tra-cuu      │ Tra cứu ĐKKD             │ Đối ngoại │ Cổng DVC → ĐKKD│  ●   │ ○  │ —  │ v2 · Nháp │ hôm qua      │ ⋯ │
   └───────────────────────────────────────────────────────────────────────────────────────────┘
-  Hiển thị 1–20 trong 103                                         ‹ 1 2 3 4 5 6 › [20 / trang ▾]
+  Đang xem 20 luồng (khoảng 103)                    ‹ Trước   Tiếp › [20 / trang ▾]
 ```
 
 Thanh hành động hàng loạt (`CMP-BulkActionBar`, `glass-overlay`) trượt lên từ đáy khi chọn ít nhất một dòng: "Đã chọn {n}" · [Xuất danh sách] · [Gắn nhãn] · [Bỏ chọn]. Không có tạm dừng hàng loạt: mỗi lệnh tạm dừng cần lý do và phạm vi riêng (FR-04-050).
