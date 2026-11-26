@@ -1,0 +1,27 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=1440">
+<title>UI-10-08 · Soạn và so sánh lược đồ</title><link rel="stylesheet" href="hifi.css"></head><body>
+<div class="shell"><header class="top"><div class="logo"><b>Datahub</b> · Điều hành</div><div class="search">Tìm topic, đăng ký nhận, bên phát, bên nhận…  ⌘K</div><div class="sp"></div>
+<span class="tray">⟳ 1 tác vụ nền</span><span class="tray">T68 · Tỉnh thí điểm</span><div class="avatar">NA</div></header>
+<nav class="side" aria-label="Điều hướng chính"><div class="grp">Tích hợp</div><a class="" href="#">Luồng tích hợp </a><a class="" href="#">Bộ điều hợp </a><a class="" href="#">Dự án sự kiện </a><a class="on" href="#">Topic sự kiện <span class='tag t-warn'>2</span></a><a class="" href="#">Sơ đồ kết nối </a><div class="grp">Cá nhân</div><a class="" href="#">Việc của tôi <span class='tag t-info'>7</span></a></nav>
+<main><div class="crumb">Tích hợp › Topic sự kiện › t68.dkkd…da-cap-phep.v1 › Lược đồ</div>
+<div class="chrome"><h1><span class='mono'>t68.dkkd.doanh-nghiep.da-cap-phep.v1</span> <span class='tag t-ok'>● Đang hoạt động</span></h1><div style="display:flex;gap:8px;align-items:center"><span class="muted">Avro · Tương thích lùi</span><span class="btn">Đổi</span><span style="flex:1"></span><span class="seg"><span class="on">Soạn</span><span>So sánh</span></span><span class="btn">+ Phiên bản mới</span></div></div>
+<div class="tabs" role="tablist"><span class="">Tổng quan</span><span class="">Cấu hình</span><span class="on">Lược đồ</span><span class="">Quyền phát 1</span><span class="">Đăng ký nhận 4</span><span class="">DLQ 37</span><span class="">Cách kết nối</span><span class="">Lịch sử</span></div>
+<div style="display:grid;grid-template-columns:250px minmax(0,1fr) 300px;gap:12px">
+<div class="card"><h3 style="margin:0 0 8px;font-size:15px">Phiên bản</h3><div class="vtl"><div><b>v4</b> <span class='tag t-mute'>○ Nháp</span><br><span class="muted">Nguyễn An · hôm nay</span></div><div><b>v3</b> <span class='tag t-ok'>● Đang dùng</span><br><span class="muted">duyệt 12/11 · Lê Bình</span></div><div><b>v2</b> <span class='tag t-warn'>◐ Ngừng khuyến nghị</span><br><span class="muted">02/10</span></div><div><b>v1</b> <span class='tag t-mute'>Đã vô hiệu</span><br><span class="muted">01/09</span></div></div>
+<div class="grp-t">Bên nhận đang đọc</div><div class="muted">v3: 3 bên · v2: 1 bên</div></div>
+<div class="card" style="padding:10px"><div class="muted" style="margin-bottom:6px">Nội dung v4 (Nháp) · Avro</div><div class="ed"><div class="ln">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</div><div class="tx"><div class="">{</div><div class="">  "type": "record",</div><div class="">  "name": "DoanhNghiepDaCapPhep",</div><div class="">  "namespace": "vn.datahub.t68.dkkd",</div><div class="">  "fields": [</div><div class="">    {"name": "maDoanhNghiep", "type": "string"},</div><div class="">    {"name": "tenDoanhNghiep", "type": "string"},</div><div class="">    {"name": "ngayCap", "type": {"type": "int", "logicalType": "date"}},</div><div class="add">    {"name": "vonDieuLe", "type": ["null", "long"], "default": null},</div><div class="add">    {"name": "soDienThoai", "type": ["null", "string"], "default": null}</div><div class="">  ]</div><div class="">}</div></div></div>
+<div class="foot" style="justify-content:flex-start"><span class="muted">Ghi chú thay đổi *</span><span class="input" style="flex:1;min-width:0;overflow:hidden">Thêm trường vonDieuLe, soDienThoai (tùy chọn)</span><span class="btn">Lưu nháp</span><span class="btn pri">Gửi duyệt</span></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0;font-size:15px">Kiểm tra</h3><span class="btn">Chạy kiểm tra</span></div>
+<div class="verify"><div><span class='tag t-ok'>✓</span> Cú pháp</div><div><span class='tag t-warn'>⚠ 1</span> Quy ước: trường <span class="mono">vonDieuLe</span> thiếu <span class="mono">doc</span></div><div><span class='tag t-ok'>✓</span> Trường khóa <span class="mono">maDoanhNghiep</span></div><div><span class='tag t-ok'>✓</span> Tương thích lùi với v3</div><div><span class='tag t-warn'>⚠ 1</span> Dữ liệu cá nhân: <span class="mono">soDienThoai</span> (Cảnh báo)</div></div>
+<div class="muted" style="margin-top:8px">Kiểm tra lúc 14:10 trên băm nội dung hiện tại; hiệu lực 24 giờ. Người duyệt phải xác nhận cảnh báo dữ liệu cá nhân.</div></div></div></main></div><div class="hint">Bản hi-fi minh họa · D03-06-PH10 · UI-10-08 · dữ liệu giả định T68</div></body></html>
