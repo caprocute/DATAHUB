@@ -986,20 +986,28 @@ Hình cho thấy kết quả chạy thử gắn với `definitionHash`: chỉ l�
 
 ### 6.9. UC-04-09 · Quản lý ca kiểm thử của luồng
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-09 |
-| Mục tiêu | IE lưu các tình huống kiểm thử lặp lại được, đi cùng luồng qua các phiên bản, làm điều kiện gửi duyệt |
-| Tác nhân chính | IE |
-| Tác nhân phụ | IA (xem kết quả ca khi duyệt) |
-| Mức ưu tiên | S |
-| FR hiện thực | FR-04-031 |
-| Tiền điều kiện | Phiên bản mở |
-| Điều kiện kích hoạt | "Lưu thành ca kiểm thử" từ một lần chạy, hoặc tab Ca kiểm thử của UI-04-11 |
-| Đảm bảo tối thiểu | Ca kiểm thử không chứa bí mật; bản tin của ca qua VR-03 và LINT-04-06 |
-| Đảm bảo thành công | Ca lưu với tên, bản tin, chế độ, danh sách khẳng định; phiên bản mới sao chép ca |
+::: dac-ta
+**Mục tiêu.** IE lưu các tình huống kiểm thử lặp lại được, đi cùng luồng qua các phiên bản, làm điều kiện gửi duyệt.
 
-**Luồng chính**
+**Tác nhân chính.** IE (`PERM-04-update`), Nguyễn Văn An.
+
+**Tác nhân phụ.** IA (xem kết quả ca khi duyệt); Sandbox.
+
+**Mức ưu tiên.** S.
+
+**FR hiện thực.** FR-04-031.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng → kiểm thử; không có LGC tương ứng.
+
+**Tiền điều kiện.** Phiên bản mở.
+
+**Kích hoạt.** "Lưu thành ca kiểm thử" từ một lần chạy, hoặc tab Ca kiểm thử của UI-04-11.
+
+**Đảm bảo tối thiểu.** Ca kiểm thử không chứa bí mật; bản tin của ca qua VR-03 và LINT-04-06.
+
+**Đảm bảo thành công.** Ca lưu với tên, bản tin, chế độ, danh sách khẳng định; phiên bản mới sao chép ca.
+
+**Luồng chính.**
 
 1. Sau lần chạy `PASSED` ở UC-04-08, An bấm "Lưu thành ca kiểm thử", đặt tên "KS-01 hồ sơ hợp lệ".
 2. Hệ thống đề xuất khẳng định từ kết quả: `STATUS` = 200, `STEP_VISITED` "Gọi hộ tịch", `BODY_JQ` `.ketQua.maHoSo != null`, `DURATION_LT` 3000.
@@ -1008,34 +1016,67 @@ Hình cho thấy kết quả chạy thử gắn với `definitionHash`: chỉ l�
 5. An bấm "Chạy tất cả"; hệ thống tạo ba lần chạy (API-04-040 theo ca), bảng tổng hợp 3/3 đạt.
 6. Hệ thống lưu ca (API-04-044); điều kiện BR-04-004 giờ yêu cầu cả ba ca đạt trên băm hiện tại.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **2a. Viết khẳng định tay.** Chọn kiểu trong chín loại, biểu thức `BODY_JQ` kiểm tra bằng API-04-033.
 - **6a. Sửa định nghĩa sau khi ca đạt.** Băm đổi; mọi ca chuyển "Chưa chạy trên nội dung hiện tại".
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Biểu thức khẳng định không biên dịch được.** ERR-04-037.
-- **E2. Bản tin vượt kích thước.** ERR-04-021.
+- **E1. Biểu thức khẳng định không biên dịch được (2a).** ERR-04-037 (422); "Biểu thức jq có lỗi ở vị trí {pos}: {message}"
+- **E2. Bản tin vượt kích thước.** ERR-04-021 (413); "Bản tin mẫu vượt 256 KiB."
 
-**Quy tắc:** BR-04-004, 013. **Tần suất:** 2–10 ca mỗi luồng đối ngoại.
+**Quy tắc áp dụng.** BR-04-004, 013. Tần suất: 2–10 ca mỗi luồng đối ngoại.
+
+**Màn hình, API.** UI-04-11, 13; API-04-033, 040, 044.
+:::
+
+```{.mermaid caption="Trình tự lưu và chạy bộ ca kiểm thử"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant UI as UI-04-13
+    participant INT as dh-integration
+    participant SB as dh-runtime-sandbox
+    IE->>UI: Lưu ca KS-01, thêm KS-02, KS-03
+    UI->>INT: Lưu ca (API-04-044)
+    IE->>UI: Chạy tất cả
+    loop mỗi ca
+        UI->>INT: API-04-040 theo ca
+        INT->>SB: Định nghĩa, bản tin, trả lời mô phỏng
+        SB-->>INT: Kết quả khẳng định
+    end
+    INT-->>UI: 3/3 đạt trên băm hiện tại
+```
+
+Mỗi ca là một lần chạy thử riêng gắn với băm định nghĩa; vì vậy điều kiện gửi duyệt BR-04-004 kiểm được ở máy chủ mà không tin vào kết quả do trình duyệt báo.
 
 ### 6.10. UC-04-10 · Gửi duyệt phiên bản
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-10 |
-| Mục tiêu | IE khóa nội dung phiên bản và đưa vào hàng đợi duyệt kèm bằng chứng kiểm thử |
-| Tác nhân chính | IE (`PERM-04-submit`) |
-| Tác nhân phụ | IA (nhận thông báo), PH-15 (thông báo) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-040, 023 |
-| Tiền điều kiện | Phiên bản `DRAFT` hoặc `CHANGES_REQUESTED` |
-| Điều kiện kích hoạt | Nút "Gửi duyệt" |
-| Đảm bảo tối thiểu | Nội dung gửi duyệt là bất biến; mọi sửa sau đó cần rút lại (API-04-051) |
-| Đảm bảo thành công | Phiên bản `PENDING_REVIEW`, luồng `IN_REVIEW`, IA đủ điều kiện nhận thông báo |
+Use case mở bước bốn mắt: nội dung được khóa lại để người duyệt xem đúng thứ sẽ lên môi trường.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** IE khóa nội dung phiên bản và đưa vào hàng đợi duyệt kèm bằng chứng kiểm thử.
+
+**Tác nhân chính.** IE (`PERM-04-submit`), Nguyễn Văn An.
+
+**Tác nhân phụ.** IA (nhận thông báo), PH-15 (thông báo), PH-07 (văn bản căn cứ khi bắt buộc).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-040, 023.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng → gửi duyệt; không có LGC tương ứng.
+
+**Tiền điều kiện.** Phiên bản `DRAFT` hoặc `CHANGES_REQUESTED`.
+
+**Kích hoạt.** Nút "Gửi duyệt".
+
+**Đảm bảo tối thiểu.** Nội dung gửi duyệt là bất biến; mọi sửa sau đó cần rút lại (API-04-051).
+
+**Đảm bảo thành công.** Phiên bản `PENDING_REVIEW`, luồng `IN_REVIEW`, IA đủ điều kiện nhận thông báo.
+
+**Luồng chính.**
 
 1. An bấm "Gửi duyệt"; trình duyệt lưu nốt thay đổi (UC-04-04 bước 7) rồi mở hộp gửi duyệt.
 2. Hộp hiện: kết quả kiểm tra mức `SUBMIT` (API-04-030), lần chạy thử đạt gần nhất trên băm hiện tại, kết quả ca kiểm thử, khác biệt so với phiên bản đang chạy ở PROD (tóm tắt: 3 chặng thêm, 1 sửa).
@@ -1043,60 +1084,120 @@ Hình cho thấy kết quả chạy thử gắn với `definitionHash`: chỉ l�
 4. Hệ thống gọi API-04-050 với `If-Match`; máy chủ kiểm tra mức `SUBMIT` (đủ VR-01…20), BR-04-004, ghi chú; chuyển `PENDING_REVIEW`, ghi băm gửi duyệt, phát EVT-04-03.
 5. PH-15 thông báo người có `PERM-04-publish` trong không gian (trừ người đóng góp); trình thiết kế chuyển chỉ đọc với dải "Đang chờ duyệt".
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **2a. Tỉnh bắt buộc căn cứ pháp lý (`04.flow.require-legal-basis`).** Luồng đối ngoại phải gắn văn bản căn cứ từ PH-07; thiếu thì VR mức `SUBMIT` lỗi.
 - **5a. Rút lại.** Trước khi có quyết định, An bấm "Rút lại" (API-04-051) kèm lý do; phiên bản về `DRAFT`.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Còn lỗi kiểm tra.** ERR-04-009 kèm phát hiện.
-- **E2. Thiếu chạy thử đạt trên đúng băm, hoặc ca chưa đạt.** ERR-04-014, nút "Chạy thử ngay".
-- **E3. Thiếu ghi chú thay đổi.** ERR-04-025.
-- **E4. Trạng thái không cho gửi.** ERR-04-005. **E5.** ETag lệch ERR-04-006.
+- **E1. Còn lỗi kiểm tra (bước 4).** ERR-04-009 (422) kèm phát hiện; "Luồng còn {n} lỗi cần sửa trước khi gửi duyệt." Mở bảng Vấn đề. Luồng đối ngoại thiếu chặng chuẩn trả ERR-04-012 (422); "Luồng đối ngoại phải có đủ chín chặng chuẩn. Đang thiếu: {stages}."
+- **E2. Thiếu chạy thử đạt trên đúng băm, hoặc ca chưa đạt.** ERR-04-014 (409); "Chưa có lần chạy thử đạt (không mô phỏng) cho đúng nội dung đang gửi, hoặc còn ca kiểm thử chưa đạt." kèm nút "Chạy thử ngay".
+- **E3. Thiếu ghi chú thay đổi.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)." Focus ô ghi chú.
+- **E4. Trạng thái không cho gửi.** ERR-04-005 (409); "Phiên bản đang ở trạng thái "{status}" nên không thể gửi duyệt."
+- **E5. ETag lệch.** ERR-04-006 (412); "{user} đã lưu phiên bản này lúc {time}. Thay đổi của bạn chưa được lưu."
 
-**Quy tắc:** BR-04-002, 004, 016. **Phi chức năng:** NFR-04-007. **Tần suất:** 10–60 lượt mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-002, 004, 016. Phi chức năng: NFR-04-007. Tham số `04.review.require-test`, `04.flow.require-legal-basis`. Tần suất: 10–60 lượt mỗi tháng mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-04 (hộp gửi duyệt); API-04-030, 050, 051.
+:::
+
+```{.mermaid caption="Trình tự gửi duyệt phiên bản"}
+sequenceDiagram
+    autonumber
+    actor IE as Nguyễn Văn An
+    participant INT as dh-integration
+    participant P15 as PH-15
+    actor IA as Lê Văn Cường
+    IE->>INT: Kiểm tra SUBMIT (API-04-030)
+    INT-->>IE: Kết quả, lần chạy đạt, ca, khác biệt
+    IE->>INT: Gửi duyệt + ghi chú (API-04-050, If-Match)
+    INT->>INT: VR-01…20, BR-04-004, khóa băm
+    INT->>INT: PENDING_REVIEW, outbox EVT-04-03
+    INT-->>IE: 200, trình thiết kế chỉ đọc
+    INT-)P15: EVT-04-03
+    P15-)IA: Thông báo có việc duyệt
+```
+
+Máy chủ ghi băm gửi duyệt ở bước 4; bước duyệt (UC-04-11) so lại băm này, nên người duyệt chắc chắn đang xem đúng nội dung được gửi.
 
 ### 6.11. UC-04-11 · Duyệt phiên bản
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-11 |
-| Mục tiêu | Một người thứ hai, không tham gia soạn, xác nhận thay đổi an toàn và đúng nghiệp vụ trước khi lên môi trường |
-| Tác nhân chính | IA (`PERM-04-publish`) |
-| Tác nhân phụ | IE (nhận kết quả) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-041, 043 |
-| Tiền điều kiện | Phiên bản `PENDING_REVIEW`; IA không phải người tạo, người đóng góp, người gửi |
-| Điều kiện kích hoạt | Mở UI-04-14 hàng đợi duyệt, hoặc liên kết trong thông báo |
-| Đảm bảo tối thiểu | Không ai tự duyệt được (kiểm ở máy chủ); quyết định ghi kiểm toán cùng checklist và ý kiến |
-| Đảm bảo thành công | Phiên bản `APPROVED`, hoặc `CHANGES_REQUESTED` kèm ý kiến gắn chặng |
+Đây là điểm bốn mắt chính của PH-04, hiện thực nguyên tắc quản lý thay đổi của TCVN 14423:2026 cấp độ 3.
 
-**Luồng chính**
+::: dac-ta
+**Mục tiêu.** Một người thứ hai, không tham gia soạn, xác nhận thay đổi an toàn và đúng nghiệp vụ trước khi lên môi trường.
+
+**Tác nhân chính.** IA (`PERM-04-publish`, mức `MAINTAIN` khi giới hạn không gian), Lê Văn Cường.
+
+**Tác nhân phụ.** IE (nhận kết quả); PH-12 (xác thực lại); PH-15 (thông báo, nhắc quá hạn).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-041, 043.
+
+**Truy vết.** REQ-04; TCVN 14423:2026 cấp độ 3 (SEC-40…49 của D03-07); quy trình Duyệt, phát hành; LGC-BUS-023.
+
+**Tiền điều kiện.** Phiên bản `PENDING_REVIEW`; IA không phải người tạo, người đóng góp, người gửi.
+
+**Kích hoạt.** Mở UI-04-14 hàng đợi duyệt, hoặc liên kết trong thông báo.
+
+**Đảm bảo tối thiểu.** Không ai tự duyệt được (kiểm ở máy chủ); quyết định ghi kiểm toán cùng checklist và ý kiến.
+
+**Đảm bảo thành công.** Phiên bản `APPROVED`, hoặc `CHANGES_REQUESTED` kèm ý kiến gắn chặng.
+
+**Luồng chính.**
 
 1. Lê Văn Cường mở UI-04-14 (API-04-053); hàng đợi sắp theo thời gian chờ, dòng quá hạn `04.review.sla-hours` (24 giờ) có nhãn đỏ.
 2. Cường mở `ho-tich-khai-sinh` v8; màn duyệt UI-04-14 nhúng so sánh UI-04-16: khác biệt sơ đồ cạnh nhau, khác biệt YAML, kết quả kiểm tra, chạy thử, ca kiểm thử, ghi chú của An.
 3. Cường xem hết các thay đổi; hệ thống ghi đã xem khác biệt (API-04-025).
 4. Cường đánh dấu checklist của tỉnh (`04.review.checklist`): "Không có dữ liệu thật trong bản tin mẫu", "Kết nối đúng môi trường", "Có xử lý lỗi và DLQ", "Chín chặng chuẩn đủ".
 5. Cường chọn "Duyệt", nhập ý kiến; nếu `04.review.require-reauth` bật, hệ thống yêu cầu xác thực lại (PH-12, OTP).
-6. Hệ thống gọi API-04-052 `APPROVE`; máy chủ kiểm tra BR-04-005, băm không đổi kể từ gửi; chuyển `APPROVED`, phát EVT-04-04, thông báo An.
+6. Hệ thống gọi API-04-052 `APPROVE`; máy chủ kiểm tra BR-04-005 (tự duyệt: ERR-04-015), băm không đổi kể từ gửi; chuyển `APPROVED`, phát EVT-04-04, thông báo An.
 7. Cường chọn tiếp "Phát hành lên TEST" (UC-04-12), hoặc "Duyệt, phát hành sau".
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **5a. Yêu cầu sửa.** Cường gắn ý kiến lên chặng "Gọi hộ tịch" ("Cần circuit breaker"), chọn `REQUEST_CHANGES`; phiên bản `CHANGES_REQUESTED`, phát EVT-04-05, An nhận thông báo, ý kiến hiện như ghi chú trên sơ đồ khi An mở lại.
 - **1a. Quá hạn duyệt.** PH-15 nhắc người duyệt và TA khi vượt SLA.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Tự duyệt.** ERR-04-015 (403); giao diện ẩn nút nhưng máy chủ vẫn chặn.
-- **E2. Thiếu ý kiến hoặc checklist.** ERR-04-025.
-- **E3. Phiên bản đã rút lại hoặc đã có quyết định.** ERR-04-005.
-- **E4. Xác thực lại thất bại.** Không ghi quyết định; thông điệp của PH-12.
+- **E1. Tự duyệt.** ERR-04-015 (403); "Bạn đã tạo, đóng góp hoặc gửi duyệt phiên bản này nên không thể tự duyệt. Cần một người duyệt khác." Giao diện ẩn nút nhưng máy chủ vẫn chặn.
+- **E2. Thiếu ý kiến hoặc checklist.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)." Focus ô ý kiến hoặc mục checklist còn thiếu.
+- **E3. Phiên bản đã rút lại, đã có quyết định, hoặc chưa xem khác biệt.** ERR-04-005 (409); "Phiên bản đang ở trạng thái "{status}" nên không thể duyệt."
+- **E4. Xác thực lại thất bại.** Không ghi quyết định; ERR-04-044 (401) với thông điệp của PH-12.
 
-**Quy tắc:** BR-04-005, 017, 020. **Tần suất:** như UC-04-10.
+**Quy tắc áp dụng.** BR-04-005, 017, 020. Tham số `04.review.checklist`, `04.review.sla-hours`, `04.review.require-reauth`. Tần suất: như UC-04-10.
 
-```mermaid
+**Màn hình, API.** UI-04-14, 16; API-04-025, 030, 052, 053.
+:::
+
+```{.mermaid caption="Trình tự duyệt bốn mắt một phiên bản"}
+sequenceDiagram
+    autonumber
+    actor IA as Lê Văn Cường
+    participant UI as UI-04-14, 16
+    participant INT as dh-integration
+    participant KC as PH-12
+    participant P15 as PH-15
+    IA->>UI: Mở hàng đợi duyệt
+    UI->>INT: API-04-053
+    IA->>UI: Mở v8, xem so sánh
+    UI->>INT: Ghi đã xem khác biệt (API-04-025)
+    IA->>UI: Checklist, ý kiến, Duyệt
+    UI->>KC: Xác thực lại OTP (khi bật)
+    KC-->>UI: Đạt
+    UI->>INT: API-04-052 APPROVE
+    INT->>INT: BR-04-005 người duyệt khác người soạn, băm không đổi
+    INT->>INT: APPROVED, outbox EVT-04-04
+    INT-)P15: Thông báo An
+    INT-->>UI: 200, gợi ý phát hành TEST
+```
+
+Hình cho thấy chốt bốn mắt nằm ở `dh-integration` (bước 9), không ở giao diện: kể cả khi ai đó gọi thẳng API, người tạo, người đóng góp, người gửi vẫn bị từ chối ERR-04-015.
+
+```{.mermaid caption="Trạng thái phiên bản quanh bước gửi duyệt và duyệt"}
 stateDiagram-v2
     [*] --> DRAFT
     DRAFT --> PENDING_REVIEW: Gửi duyệt (UC-04-10)
@@ -1110,22 +1211,32 @@ stateDiagram-v2
     CHANGES_REQUESTED --> DISCARDED: Hủy bản nháp
 ```
 
+Sơ đồ trạng thái cho thấy chỉ có một đường vào `APPROVED` là qua người thứ hai; phiên bản đã duyệt không quay về nháp mà chỉ thành `SUPERSEDED` hoặc `ROLLED_BACK`.
+
 ### 6.12. UC-04-12 · Phát hành và nâng môi trường
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-12 |
-| Mục tiêu | Phiên bản đã duyệt chạy được ở TEST rồi PROD qua GitOps, có xác nhận đồng bộ và sức khỏe từ runtime |
-| Tác nhân chính | IA (phát hành TEST), IA hoặc TA (`PERM-04-promote`) nâng PROD |
-| Tác nhân phụ | Kho `dh-flows-{tenant}`, Argo CD, `dh-runtime`, PH-02 (đăng ký API khi luồng có `rest`) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-042, 045, 075 |
-| Tiền điều kiện | Phiên bản `APPROVED`; không trong khoảng đóng băng |
-| Điều kiện kích hoạt | "Phát hành" trên màn duyệt UI-04-14 (mở UI-04-15) hoặc tab Triển khai của UI-04-02 |
-| Đảm bảo tối thiểu | Không ghi kho cấu hình khi kiểm tra mức `PUBLISH` lỗi; ảnh runtime chọn đúng hồ sơ có đủ thành phần; thứ tự môi trường theo `04.env.stages` |
-| Đảm bảo thành công | Triển khai `SYNCED`, sức khỏe `HEALTHY` ở môi trường đích; phiên bản trước ở PROD thành `SUPERSEDED` |
+::: dac-ta
+**Mục tiêu.** Phiên bản đã duyệt chạy được ở TEST rồi PROD qua GitOps, có xác nhận đồng bộ và sức khỏe từ runtime.
 
-**Luồng chính**
+**Tác nhân chính.** IA (phát hành TEST); IA hoặc TA (`PERM-04-promote`) nâng PROD.
+
+**Tác nhân phụ.** Kho `dh-flows-{tenant}`, Argo CD, `dh-runtime`, PH-02 (đăng ký API khi luồng có `rest`), PH-13, PH-15.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-042, 045, 075.
+
+**Truy vết.** REQ-04; TCVN 14423:2026 cấp độ 3 (quản lý thay đổi); quy trình Duyệt, phát hành; LGC-BUS-033, 034.
+
+**Tiền điều kiện.** Phiên bản `APPROVED`; không trong khoảng đóng băng.
+
+**Kích hoạt.** "Phát hành" trên màn duyệt UI-04-14 (mở UI-04-15) hoặc tab Triển khai của UI-04-02.
+
+**Đảm bảo tối thiểu.** Không ghi kho cấu hình khi kiểm tra mức `PUBLISH` lỗi; ảnh runtime chọn đúng hồ sơ có đủ thành phần; thứ tự môi trường theo `04.env.stages`.
+
+**Đảm bảo thành công.** Triển khai `SYNCED`, sức khỏe `HEALTHY` ở môi trường đích; phiên bản trước ở PROD thành `SUPERSEDED`.
+
+**Luồng chính.**
 
 1. Cường chọn "Phát hành lên TEST"; hộp xác nhận hiện hồ sơ runtime suy ra (`core-native`), số bản sao, thay đổi so với bản đang chạy ở TEST.
 2. Hệ thống gọi API-04-054 (`Idempotency-Key`); máy chủ kiểm tra mức `PUBLISH`, kiểm tra đóng băng, sinh `flow.dh.yaml` và YAML chuẩn hóa, commit vào nhánh `env/test` của `dh-flows-t68` kèm chữ ký người phát hành; tạo triển khai `PENDING`, phát EVT-04-06.
@@ -1135,25 +1246,28 @@ stateDiagram-v2
 6. Sau khi kiểm thử ở TEST xong, Cường chọn "Nâng lên PROD" (API-04-056); máy chủ kiểm tra v8 đã `SYNCED`, `HEALTHY` ở TEST (và đủ `04.env.soak-minutes.STAGING` nếu tỉnh dùng STAGING), commit nhánh `env/prod`.
 7. PROD đồng bộ xong; v7 thành `SUPERSEDED`, luồng `ACTIVE`; EVT-04-07 phát cho PH-13, PH-15.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Duyệt, phát hành sau.** Phiên bản giữ `APPROVED`; ai có quyền phát hành bấm sau.
 - **6a. PROD yêu cầu bước nâng riêng (`04.env.prod-requires-promote` tắt).** Phát hành chọn thẳng PROD sau TEST trong cùng hộp, vẫn theo thứ tự.
 - **3a. Đồng bộ một phần.** 2/3 bản sao báo v8 sau `04.runtime.sync-timeout-seconds`: `OUT_OF_SYNC`, sức khỏe `DEGRADED`, nút "Xem bản sao", "Quay lui".
 - **7a. Tỷ lệ lỗi tăng sau phát hành.** Tỷ lệ lỗi vượt `04.deploy.rollback-suggest-error-ratio` trong 10 phút đầu: dải gợi ý "Quay lui về v7" (UC-04-13); không tự quay lui.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Kiểm tra mức `PUBLISH` lỗi.** ERR-04-009.
-- **E2. Chưa qua môi trường trước.** ERR-04-023.
-- **E3. Đóng băng.** ERR-04-041 (423).
-- **E4. Ghi kho cấu hình lỗi.** ERR-04-022 (502); triển khai không được tạo, thử lại được.
-- **E5. Không hồ sơ runtime đủ thành phần.** ERR-04-029.
-- **E6. Quá `04.deploy.timeout-minutes`.** Triển khai `FAILED`, sức khỏe giữ theo nhịp tim; thông báo TO.
+- **E1. Kiểm tra mức `PUBLISH` lỗi.** ERR-04-009 (422); "Luồng còn {n} lỗi cần sửa trước khi phát hành." Catalog cũ hơn catalog hiện hành trả ERR-04-042 (409); "Phiên bản được soạn trên danh mục thành phần cũ. Mở lại phiên bản để nâng trước khi phát hành."
+- **E2. Chưa qua môi trường trước.** ERR-04-023 (409); "Phiên bản phải đồng bộ, khỏe ở TEST (và chạy ổn định đủ {minutes} phút) trước khi lên PROD, hoặc luồng chưa triển khai ở PROD."
+- **E3. Đóng băng.** ERR-04-041 (423); "Đang trong khoảng đóng băng thay đổi tới 05/01/2027. Chỉ được quay lui hoặc tạm dừng khẩn."
+- **E4. Ghi kho cấu hình lỗi.** ERR-04-022 (502); "Không ghi được vào kho cấu hình. Luồng chưa được phát hành." Triển khai không được tạo, nút "Thử lại".
+- **E5. Không hồ sơ runtime đủ thành phần.** ERR-04-029 (422); "Không hồ sơ runtime nào có đủ thành phần: {components}."
+- **E6. Quá `04.deploy.timeout-minutes`.** Triển khai `FAILED` (nhãn "Triển khai lỗi"), sức khỏe giữ theo nhịp tim; thông báo TO.
 
-**Quy tắc:** BR-04-012, 014, 018, 019, 022. **Phi chức năng:** NFR-04-009. **Tần suất:** 10–60 lần mỗi tháng mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-012, 014, 018, 019, 022. Phi chức năng: NFR-04-009. Tham số `04.env.stages`, `04.env.soak-minutes.STAGING`, `04.env.prod-requires-promote`, `04.deploy.timeout-minutes`, `04.deploy.rollback-suggest-error-ratio`, `04.runtime.sync-timeout-seconds`. Tần suất: 10–60 lần mỗi tháng mỗi tenant (GĐ).
 
-```mermaid
+**Màn hình, API.** UI-04-14, 15; API-04-054, 056.
+:::
+
+```{.mermaid caption="Trình tự nâng phiên bản lên PROD qua GitOps"}
 sequenceDiagram
     autonumber
     actor IA as Lê Văn Cường
@@ -1176,55 +1290,97 @@ sequenceDiagram
     INT-->>IA: SSE SYNCED
 ```
 
+Hình cho thấy `dh-integration` không đẩy cấu hình thẳng vào runtime: nó chỉ commit vào Git, Argo CD áp cấu hình, và trạng thái `SYNCED` chỉ được công nhận khi nhịp tim của đủ bản sao báo đúng phiên bản.
+
 ### 6.13. UC-04-13 · Quay lui phiên bản
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-13 |
-| Mục tiêu | Đưa môi trường về phiên bản đã duyệt trước đó trong vài phút khi phiên bản mới có sự cố |
-| Tác nhân chính | IA hoặc TO có `PERM-04-publish` |
-| Tác nhân phụ | Kho cấu hình, Argo CD, `dh-runtime` |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-044 |
-| Tiền điều kiện | Môi trường có phiên bản trước đã `APPROVED` từng chạy |
-| Điều kiện kích hoạt | "Quay lui" ở tab Triển khai hoặc dải gợi ý của UC-04-12 luồng 7a |
-| Đảm bảo tối thiểu | Quay lui không cần duyệt lại nhưng vẫn qua kiểm tra mức `PUBLISH`; được phép cả khi đóng băng |
-| Đảm bảo thành công | Môi trường chạy phiên bản đích `SYNCED`; phiên bản bị thay thành `ROLLED_BACK` |
+::: dac-ta
+**Mục tiêu.** Đưa môi trường về phiên bản đã duyệt trước đó trong vài phút khi phiên bản mới có sự cố.
 
-**Luồng chính**
+**Tác nhân chính.** IA hoặc TO có `PERM-04-publish`; ví dụ Phạm Thu Dung.
+
+**Tác nhân phụ.** Kho cấu hình, Argo CD, `dh-runtime`, PH-15.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-044.
+
+**Truy vết.** REQ-04; quy trình Vận hành, xử lý sự cố; không có LGC tương ứng.
+
+**Tiền điều kiện.** Môi trường có phiên bản trước đã `APPROVED` từng chạy.
+
+**Kích hoạt.** "Quay lui" ở tab Triển khai hoặc dải gợi ý của UC-04-12 luồng 7a.
+
+**Đảm bảo tối thiểu.** Quay lui không cần duyệt lại nhưng vẫn qua kiểm tra mức `PUBLISH`; được phép cả khi đóng băng.
+
+**Đảm bảo thành công.** Môi trường chạy phiên bản đích `SYNCED`; phiên bản bị thay thành `ROLLED_BACK`.
+
+**Luồng chính.**
 
 1. Phạm Thu Dung thấy tỷ lệ lỗi PROD của v8 là 12%; mở tab Triển khai, chọn "Quay lui", chọn v7.
 2. Hộp hiện khác biệt v8 → v7, yêu cầu lý do ≥ 10 ký tự; Dung nhập "Lỗi 502 từ NDXP sau khi đổi timeout".
-3. Hệ thống gọi API-04-055; máy chủ kiểm tra mức `PUBLISH` cho v7 trên catalog hiện tại, commit `env/prod` trỏ v7.
+3. Hệ thống gọi API-04-055; máy chủ kiểm tra mức `PUBLISH` cho v7 trên catalog hiện tại (thành phần bị cấm: ERR-04-040), commit `env/prod` trỏ v7.
 4. Runtime đồng bộ; v7 `SYNCED`, v8 `ROLLED_BACK`; phát EVT-04-06 khi yêu cầu và EVT-04-07 khi đồng bộ, thông báo An và Cường.
 5. An tạo phiên bản v9 từ v8 để sửa (UC-04-04 luồng 1a).
 
-**Luồng ngoại lệ**
+**Luồng thay thế.** Không có nhánh hợp lệ khác; quay lui khi đang đóng băng đi đúng luồng chính (BR-04-022).
 
-- **E1. Thiếu lý do.** ERR-04-025.
-- **E2. v7 dùng thành phần nay bị cấm.** ERR-04-040; gợi ý tạm dừng khẩn (UC-04-15) thay vì quay lui.
-- **E3. Ghi kho lỗi.** ERR-04-022.
+**Luồng ngoại lệ.**
 
-**Quy tắc:** BR-04-017, 018, 022. **Phi chức năng:** NFR-04-009 (tới `SYNCED` p95 < 3 phút, áp cho cả quay lui). **Tần suất:** hiếm, vài lần mỗi quý.
+- **E1. Thiếu lý do.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất 10 ký tự)."
+- **E2. v7 dùng thành phần nay bị cấm.** ERR-04-040 (409); "Không quay lui được về v7 vì phiên bản đó dùng thành phần "{component}" nay không còn được phép." Gợi ý tạm dừng khẩn (UC-04-15) thay vì quay lui.
+- **E3. Ghi kho lỗi.** ERR-04-022 (502); "Không ghi được vào kho cấu hình. Luồng chưa được phát hành." Nút "Thử lại".
+
+**Quy tắc áp dụng.** BR-04-017, 018, 022. Phi chức năng: NFR-04-009 (tới `SYNCED` p95 < 3 phút, áp cho cả quay lui). Tần suất: hiếm, vài lần mỗi quý.
+
+**Màn hình, API.** UI-04-15; API-04-055.
+:::
+
+```{.mermaid caption="Trình tự quay lui PROD về phiên bản trước"}
+sequenceDiagram
+    autonumber
+    actor TO as Phạm Thu Dung
+    participant INT as dh-integration
+    participant GIT as dh-flows-t68
+    participant ARGO as Argo CD
+    participant RT as dh-runtime (PROD)
+    TO->>INT: Quay lui v7 + lý do (API-04-055)
+    INT->>INT: Kiểm tra PUBLISH v7 trên catalog hiện tại
+    INT->>GIT: Commit env/prod trỏ v7, outbox EVT-04-06
+    INT-->>TO: 202, SSE
+    ARGO->>RT: Áp cấu hình v7
+    RT-->>INT: Nhịp tim v7 đủ bản sao
+    INT->>INT: v7 SYNCED, v8 ROLLED_BACK, EVT-04-07
+```
+
+Quay lui đi cùng đường GitOps như phát hành nhưng bỏ bước duyệt; nó vẫn kiểm tra mức `PUBLISH` để không đưa lại một phiên bản dùng thành phần đã bị cấm.
 
 ### 6.14. UC-04-14 · Tạm dừng, tiếp tục luồng hoặc route
 
 Thay Start/Stop agent và route qua JMX-Jolokia của Bus cũ (LGC-BUS-009, 012, 026).
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-14 |
-| Mục tiêu | TO tạm ngưng một luồng hoặc một route có lý do (bảo trì hệ đích, sự cố) và bật lại, có hiệu lực trong vài giây trên mọi bản sao |
-| Tác nhân chính | TO, TA, IA (`PERM-04-operate`) |
-| Tác nhân phụ | `dh-runtime`, kho cấu hình |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-050 |
-| Tiền điều kiện | Luồng có triển khai `SYNCED` ở môi trường chọn |
-| Điều kiện kích hoạt | Nút "Tạm dừng" trên tab Route hoặc đầu trang UI-04-02 |
-| Đảm bảo tối thiểu | Lệnh có ký, hết hạn 60 giây; trạng thái mong muốn ghi vào Git để Argo CD không bật lại; mọi lệnh có lý do và kiểm toán |
-| Đảm bảo thành công | Mọi bản sao xác nhận; luồng `PAUSED` (hoặc route `Suspended`); EVT-04-08 phát |
+::: dac-ta
+**Mục tiêu.** TO tạm ngưng một luồng hoặc một route có lý do (bảo trì hệ đích, sự cố) và bật lại, có hiệu lực trong vài giây trên mọi bản sao.
 
-**Luồng chính**
+**Tác nhân chính.** TO, TA, IA (`PERM-04-operate`); ví dụ Phạm Thu Dung.
+
+**Tác nhân phụ.** `dh-runtime`, kho cấu hình, Argo CD, OpenBao (ký lệnh), Kafka (topic điều khiển).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-050.
+
+**Truy vết.** REQ-04; quy trình Vận hành, xử lý sự cố; LGC-BUS-009, 012, 026.
+
+**Tiền điều kiện.** Luồng có triển khai `SYNCED` ở môi trường chọn.
+
+**Kích hoạt.** Nút "Tạm dừng" trên tab Route hoặc đầu trang UI-04-02.
+
+**Đảm bảo tối thiểu.** Lệnh có ký, hết hạn 60 giây; trạng thái mong muốn ghi vào Git để Argo CD không bật lại; mọi lệnh có lý do và kiểm toán.
+
+**Đảm bảo thành công.** Mọi bản sao xác nhận; luồng `PAUSED` (hoặc route `Suspended`); EVT-04-08 phát.
+
+**Luồng chính.**
 
 1. Phạm Thu Dung nhận thông báo NDXP bảo trì 22:00–23:00. Dung mở tab Route của `ho-tich-khai-sinh` ở PROD, chọn route `goi-ndxp`, bấm "Tạm dừng".
 2. Hộp hiện: phạm vi (route `goi-ndxp`), luồng khác gọi tới qua `direct:` bị ảnh hưởng (1 luồng `tra-cuu-ho-tich`), tùy chọn "Chờ bản tin đang xử lý xong" (bật, tối đa 60 giây), ô lý do.
@@ -1235,36 +1391,69 @@ Thay Start/Stop agent và route qua JMX-Jolokia của Bus cũ (LGC-BUS-009, 012,
 7. Bảng route hiện "Tạm dừng bởi Phạm Thu Dung 22:00, lý do…"; bên gọi nhận `503` với ERR-04-105 hoặc nhánh dự phòng của luồng.
 8. 23:05 Dung chọn "Tiếp tục" có lý do; hệ thống thực hiện như bước 4–6 với `RESUME`.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Tạm dừng cả luồng.** Phạm vi `FLOW`; luồng `PAUSED`, thẻ môi trường đổi màu.
 - **5a. Chưa đủ xác nhận sau 30 giây.** Lệnh `PARTIAL`; giao diện liệt kê bản sao chưa xác nhận, nút "Gửi lại lệnh" (ERR-04-024).
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Thiếu lý do.** ERR-04-025.
-- **E2. Luồng chưa triển khai ở môi trường.** ERR-04-023.
-- **E3. Runtime từ chối (sai chữ ký, hết hạn, lệch tenant).** Lệnh `REJECTED`, ERR-04-024; cảnh báo ATTT khi lý do là chữ ký.
-- **E4. Ghi Git lỗi sau khi lệnh đã có hiệu lực.** Lệnh vẫn hiệu lực; tác vụ đối soát thử lại; quá 5 phút chưa đối soát thì cảnh báo TA (BR-04-018).
+- **E1. Thiếu lý do.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)."
+- **E2. Luồng chưa triển khai ở môi trường.** ERR-04-023 (409); "Phiên bản phải đồng bộ, khỏe ở {previousEnv} (và chạy ổn định đủ {minutes} phút) trước khi lên {env}, hoặc luồng chưa triển khai ở {env}."
+- **E3. Runtime từ chối (sai chữ ký, hết hạn, lệch tenant).** Lệnh `REJECTED`, ERR-04-024 (trạng thái lệnh, không phải mã HTTP); "Runtime chưa xác nhận lệnh (0/3 bản sao) hoặc đã từ chối lệnh." Cảnh báo ATTT khi lý do là chữ ký.
+- **E4. Ghi Git lỗi sau khi lệnh đã có hiệu lực.** Lệnh vẫn hiệu lực; tác vụ đối soát (`system:int-reconciler`) thử lại; quá 5 phút chưa đối soát thì cảnh báo TA (BR-04-018).
 
-**Quy tắc:** BR-04-017, 018. **Phi chức năng:** NFR-04-010. **Tần suất:** vài lần mỗi tuần mỗi tenant (GĐ).
+**Quy tắc áp dụng.** BR-04-017, 018. Phi chức năng: NFR-04-010. Tần suất: vài lần mỗi tuần mỗi tenant (GĐ).
+
+**Màn hình, API.** UI-04-02, 15; API-04-060, 061; topic `dh.integration.runtime.command.v1`.
+:::
+
+```{.mermaid caption="Trình tự tạm dừng route bằng lệnh ký và đối soát Git"}
+sequenceDiagram
+    autonumber
+    actor TO as Phạm Thu Dung
+    participant INT as dh-integration
+    participant GIT as dh-flows-t68
+    participant K as Kafka (command.v1)
+    participant RT as dh-runtime ×3
+    participant ARGO as Argo CD
+    TO->>INT: PAUSE route goi-ndxp + lý do (API-04-061)
+    INT->>GIT: Ghi trạng thái mong muốn vào flow.dh.yaml
+    INT->>K: Lệnh ký Ed25519 (hết hạn 60 s)
+    INT-->>TO: 202 commandId (ISSUED)
+    K->>RT: Lệnh
+    RT->>RT: Kiểm chữ ký, hạn, tenant, xả bản tin, dừng route
+    RT-->>INT: Xác nhận EVT-04-13 (3/3, ACKNOWLEDGED)
+    ARGO->>GIT: Đồng bộ trạng thái mong muốn
+    INT->>INT: Đối soát khớp, RECONCILED, EVT-04-08
+```
+
+Hình cho thấy hai kênh song song: lệnh qua Kafka để có hiệu lực trong vài giây, trạng thái mong muốn qua Git để Argo CD không tự bật lại route ở lần đồng bộ sau.
 
 ### 6.15. UC-04-15 · Dừng khẩn luồng
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-15 |
-| Mục tiêu | SO chặn ngay một luồng đang gây sự cố ATTT hoặc làm quá tải hệ đích, không chờ xả bản tin, không chờ Git |
-| Tác nhân chính | SO, TA (`PERM-04-emergency-stop`) |
-| Tác nhân phụ | `dh-runtime`, PH-18 (DLQ), PH-14 (sự cố ATTT) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-050 |
-| Tiền điều kiện | Luồng có triển khai ở môi trường chọn |
-| Điều kiện kích hoạt | "Dừng khẩn" trên UI-04-02 hoặc từ sự cố trên PH-14 |
-| Đảm bảo tối thiểu | Lệnh khẩn có hiệu lực kể cả khi đóng băng và khi Git không ghi được; được đối soát vào Git trong 5 phút |
-| Đảm bảo thành công | Mọi bản sao dừng route ngay; bản tin đang xử lý vào DLQ với lý do "dừng khẩn"; luồng `PAUSED` có cờ khẩn |
+::: dac-ta
+**Mục tiêu.** SO chặn ngay một luồng đang gây sự cố ATTT hoặc làm quá tải hệ đích, không chờ xả bản tin, không chờ Git.
 
-**Luồng chính**
+**Tác nhân chính.** SO, TA (`PERM-04-emergency-stop`); ví dụ Hoàng Minh Đức.
+
+**Tác nhân phụ.** `dh-runtime`, PH-18 (DLQ), PH-14 (sự cố ATTT), OpenBao (ký lệnh), PH-15.
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-050.
+
+**Truy vết.** REQ-04; quy trình Vận hành, xử lý sự cố ATTT; LGC-BUS-009.
+
+**Tiền điều kiện.** Luồng có triển khai ở môi trường chọn.
+
+**Kích hoạt.** "Dừng khẩn" trên UI-04-02 hoặc từ sự cố trên PH-14.
+
+**Đảm bảo tối thiểu.** Lệnh khẩn có hiệu lực kể cả khi đóng băng và khi Git không ghi được; được đối soát vào Git trong 5 phút.
+
+**Đảm bảo thành công.** Mọi bản sao dừng route ngay; bản tin đang xử lý vào DLQ với lý do "dừng khẩn"; luồng `PAUSED` có cờ khẩn.
+
+**Luồng chính.**
 
 1. Hoàng Minh Đức nhận cảnh báo lưu lượng bất thường ra `pg-ho-tich-ro` từ luồng `ho-tich-khai-sinh`. Đức mở UI-04-02, bấm "Dừng khẩn".
 2. Hộp đỏ yêu cầu lý do, liên kết sự cố PH-14 (không bắt buộc), xác thực lại.
@@ -1273,15 +1462,20 @@ Thay Start/Stop agent và route qua JMX-Jolokia của Bus cũ (LGC-BUS-009, 012,
 5. Tác vụ đối soát xác nhận commit Git; lệnh `RECONCILED`. PH-15 thông báo TA, IE chủ luồng.
 6. Sau điều tra, TA tiếp tục luồng (UC-04-14 bước 8) hoặc yêu cầu IE sửa, phát hành phiên bản mới.
 
-**Luồng ngoại lệ**
+**Luồng thay thế.** Không có nhánh hợp lệ khác; dừng khẩn khi đang đóng băng hoặc khi Git không ghi được vẫn đi đúng luồng chính (BR-04-022).
 
-- **E1. Người không có quyền khẩn.** Ẩn nút; API trả 403 chung của nền tảng.
-- **E2. Thiếu lý do.** ERR-04-025.
-- **E3. Không đủ xác nhận.** `PARTIAL`, ERR-04-024; SO dùng biện pháp mạng (chặn ở APISIX hoặc chính sách mạng) theo kịch bản sự cố D03-07.
+**Luồng ngoại lệ.**
 
-**Quy tắc:** BR-04-017, 018, 022. **Phi chức năng:** NFR-04-010 (khẩn < 5 giây). **Tần suất:** hiếm.
+- **E1. Người không có quyền khẩn.** Ẩn nút; API trả 403 chung của nền tảng ERR-04-045; "Bạn không có quyền thực hiện thao tác này."
+- **E2. Thiếu lý do.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)."
+- **E3. Không đủ xác nhận.** `PARTIAL`, ERR-04-024; "Runtime chưa xác nhận lệnh ({k}/{n} bản sao) hoặc đã từ chối lệnh." SO dùng biện pháp mạng (chặn ở APISIX hoặc chính sách mạng) theo kịch bản sự cố D03-07.
 
-```mermaid
+**Quy tắc áp dụng.** BR-04-017, 018, 022. Phi chức năng: NFR-04-010 (khẩn < 5 giây). Tần suất: hiếm.
+
+**Màn hình, API.** UI-04-02; API-04-061; topic `dh.integration.runtime.command.v1`, `{tenant}.ops.dlq.v1`.
+:::
+
+```{.mermaid caption="Trình tự dừng khẩn: lệnh trước, Git sau"}
 sequenceDiagram
     autonumber
     actor SO as Hoàng Minh Đức
@@ -1301,41 +1495,75 @@ sequenceDiagram
     INT->>INT: Đối soát khớp → RECONCILED (≤ 5 phút)
 ```
 
+Khác với tạm dừng thường, dừng khẩn gửi lệnh trước rồi mới ghi Git, nên sự cố Git không làm chậm việc chặn luồng; đối soát bù lại trong 5 phút.
+
 ### 6.16. UC-04-16 · Nhân bản, hủy bản nháp và gỡ bỏ luồng
 
-| Mục | Nội dung |
-|---|---|
-| Mã | UC-04-16 |
-| Mục tiêu | IE dùng lại luồng có sẵn làm điểm xuất phát; TA dọn luồng không còn dùng mà không làm gãy luồng, API khác |
-| Tác nhân chính | IE (nhân bản, hủy nháp), TA (`PERM-04-delete`, gỡ) |
-| Tác nhân phụ | PH-02 (API công bố dùng luồng) |
-| Mức ưu tiên | M |
-| FR hiện thực | FR-04-005, 006 |
-| Tiền điều kiện | Luồng tồn tại |
-| Điều kiện kích hoạt | Menu "…" của dòng luồng hoặc trang chi tiết |
-| Đảm bảo tối thiểu | Luồng còn phụ thuộc cứng không bị gỡ; luồng gỡ giữ lịch sử, phiên bản cho kiểm toán |
-| Đảm bảo thành công | Luồng mới `DRAFT` (nhân bản); bản nháp `DISCARDED`; hoặc luồng `RETIRED` và đã rút khỏi mọi môi trường |
+::: dac-ta
+**Mục tiêu.** IE dùng lại luồng có sẵn làm điểm xuất phát; TA dọn luồng không còn dùng mà không làm gãy luồng, API khác.
 
-**Luồng chính (nhân bản)**
+**Tác nhân chính.** IE (nhân bản, hủy nháp), Trần Thị Bình; TA (`PERM-04-delete`, gỡ), Vũ Thị Hà.
+
+**Tác nhân phụ.** PH-02 (API công bố dùng luồng); kho cấu hình, Argo CD (rút luồng khỏi môi trường).
+
+**Mức ưu tiên.** M.
+
+**FR hiện thực.** FR-04-005, 006.
+
+**Truy vết.** REQ-04; quy trình Thiết kế luồng, quản trị tenant; LGC-BUS-010; LGC-TOOL-016.
+
+**Tiền điều kiện.** Luồng tồn tại.
+
+**Kích hoạt.** Menu "…" của dòng luồng hoặc trang chi tiết.
+
+**Đảm bảo tối thiểu.** Luồng còn phụ thuộc cứng không bị gỡ; luồng gỡ giữ lịch sử, phiên bản cho kiểm toán.
+
+**Đảm bảo thành công.** Luồng mới `DRAFT` (nhân bản); bản nháp `DISCARDED`; hoặc luồng `RETIRED` và đã rút khỏi mọi môi trường.
+
+**Luồng chính.**
 
 1. Trần Thị Bình chọn "Nhân bản" trên `ho-tich-khai-sinh`; hộp hỏi mã mới `ho-tich-khai-tu`, tên, không gian, nguồn phiên bản (v7 đang chạy PROD hoặc bản nháp v8).
-2. Hệ thống gọi API-04-014; sao chép định nghĩa, bố cục, bản tin mẫu, ca kiểm thử; đổi mã route, đường dẫn HTTP có tiền tố mã cũ thành mã mới để tránh trùng (BR-04-011); `origin = CLONE`.
+2. Hệ thống gọi API-04-014; sao chép định nghĩa, bố cục, bản tin mẫu, ca kiểm thử; đổi mã route, đường dẫn HTTP có tiền tố mã cũ thành mã mới để tránh trùng (BR-04-011); `origin = CLONE`. Mã trùng: ERR-04-002.
 3. Bình mở luồng mới ở trình thiết kế.
 
-**Luồng thay thế**
+**Luồng thay thế.**
 
 - **1a. Hủy bản nháp.** IE chọn "Hủy bản nháp v8" (API-04-023) có xác nhận; phiên bản `DISCARDED`, không xóa vật lý.
 - **1b. Gỡ luồng.** Vũ Thị Hà chọn "Gỡ luồng" trên `tra-cuu-ho-tich-cu`; hệ thống liệt kê phụ thuộc (API-04-016): cứng (API công bố ở PH-02, luồng đang chạy gọi tới), mềm (ca kiểm thử, luồng nháp). Không có phụ thuộc cứng; Hà nhập lý do, xác nhận. Hệ thống gọi API-04-015: rút luồng khỏi các môi trường theo thứ tự PROD → TEST qua Git, chờ `SYNCED` không còn luồng, chuyển `RETIRED`. Mã được giải phóng sau 30 ngày (BR-04-001).
 - **1c. Gỡ bắt buộc với phụ thuộc mềm.** TA chọn `force = true`.
 
-**Luồng ngoại lệ**
+**Luồng ngoại lệ.**
 
-- **E1. Mã trùng khi nhân bản.** ERR-04-002.
-- **E2. Còn phụ thuộc cứng.** ERR-04-017 kèm danh sách.
-- **E3. Thiếu lý do gỡ.** ERR-04-025.
-- **E4. Luồng đã gỡ.** ERR-04-034.
+- **E1. Mã trùng khi nhân bản.** ERR-04-002 (409); "Mã luồng "ho-tich-khai-tu" đã được dùng trong tỉnh." kèm gợi ý "ho-tich-khai-tu-2".
+- **E2. Còn phụ thuộc cứng.** ERR-04-017 (409) kèm danh sách; "Luồng đang được dùng bởi {n} đối tượng. Gỡ các phụ thuộc trước."
+- **E3. Thiếu lý do gỡ.** ERR-04-025 (400); "Vui lòng nhập lý do (ít nhất {min} ký tự)."
+- **E4. Luồng đã gỡ.** ERR-04-034 (409); "Luồng đã gỡ nên chỉ xem được, không sửa được."
+- **E5. Ghi kho cấu hình lỗi khi rút luồng.** ERR-04-022 (502); "Không ghi được vào kho cấu hình. Luồng chưa được phát hành." Luồng giữ trạng thái cũ, thử lại được.
 
-**Quy tắc:** BR-04-001, 011, 017. **Tần suất:** nhân bản hằng tuần; gỡ vài lần mỗi quý.
+**Quy tắc áp dụng.** BR-04-001, 011, 017. Tần suất: nhân bản hằng tuần; gỡ vài lần mỗi quý.
+
+**Màn hình, API.** UI-04-01, 02; API-04-014, 015, 016, 023.
+:::
+
+```{.mermaid caption="Trình tự gỡ luồng có kiểm phụ thuộc"}
+sequenceDiagram
+    autonumber
+    actor TA as Vũ Thị Hà
+    participant INT as dh-integration
+    participant P2 as PH-02
+    participant GIT as dh-flows-t68
+    participant RT as dh-runtime
+    TA->>INT: Xem phụ thuộc (API-04-016)
+    INT->>P2: API công bố dùng luồng
+    P2-->>INT: Không có
+    INT-->>TA: Cứng 0, mềm 2
+    TA->>INT: Gỡ + lý do (API-04-015)
+    INT->>GIT: Rút khỏi env/prod rồi env/test
+    RT-->>INT: Nhịp tim không còn luồng (SYNCED)
+    INT->>INT: RETIRED, giữ mã 30 ngày
+```
+
+Hình cho thấy gỡ luồng không xóa dữ liệu: luồng được rút khỏi từng môi trường qua Git và chỉ chuyển `RETIRED` khi runtime xác nhận không còn chạy, lịch sử và phiên bản giữ lại cho kiểm toán.
 
 ### 6.17. UC-04-17 · Xử lý bản tin đồng bộ qua chín chặng
 
