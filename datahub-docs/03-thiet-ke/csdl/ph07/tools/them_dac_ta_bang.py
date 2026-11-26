@@ -70,7 +70,7 @@ def khoi(ten, sec):
     if rls:
         cl = cl.rstrip('.') + '. Chính sách: ' + rls.group(1).strip().rstrip('.') + '.'
     pv = 'Phân vùng RANGE theo ngày; giữ 7 ngày.' if 'Phân vùng' in mo_ta else ('Chỉ thêm (không sửa, không xóa).' if 'chỉ-thêm' in mo_ta or 'chỉ thêm' in mo_ta.lower() else 'Không.')
-    fr = ', '.join(dict.fromkeys(re.findall(r'FR-07-\d{3}(?:…\d{3})?', mo_ta))) or FR_MAC_DINH.get(ten, 'Xem mô tả bảng')
+    fr = ', '.join(dict.fromkeys(re.findall(r'FR-07-\d{3}(?:…\d{3})?(?:, \d{3}(?:…\d{3})?)*', mo_ta))) or FR_MAC_DINH.get(ten, 'Xem mô tả bảng')
     gc = GHI_CHU.get(ten, 'Cột ngữ cảnh theo D00-01 §5.1; `version` là khóa lạc quan, thành phần của ETag.')
     if ex:
         gc += ' Ràng buộc khác: ' + ', '.join(ex) + '.'

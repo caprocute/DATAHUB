@@ -207,7 +207,7 @@ Chính sách RLS: `rls_catalog_group_delete` (DELETE), `rls_catalog_group_insert
 ::: dac-ta
 **Mục đích.** EN-07-02 Danh mục: định nghĩa một danh mục (FR-07-001…009, 048). Mẫu RLS S.
 
-**FR phục vụ.** FR-07-001…009.
+**FR phục vụ.** FR-07-001…009, 048.
 
 **Khóa chính.** `(id)`.
 
