@@ -257,6 +257,11 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-11-model | Thiết kế, phát hành mô hình quy trình | TA, IA |
 | PERM-11-task | Xử lý việc được giao trong quy trình | Mọi người dùng được giao việc |
 | PERM-15-portal-admin | Quản trị nội dung cổng nhà phát triển | TA, CA |
+| PERM-15-content-write | Soạn, sửa, gửi duyệt trang nội dung cổng; nhập từ Git | TA, CA, SV (○) |
+| PERM-15-content-publish | Duyệt, đăng, gỡ trang nội dung cổng (người soạn không tự duyệt) | TA, CA |
+| PERM-15-support | Xử lý hỏi đáp, phiếu hỗ trợ của dịch vụ trên cổng | TA, CA, SV (○) |
+| PERM-15-dev-approve | Duyệt, từ chối, khóa, mở khóa tài khoản `dh-dev` và ứng dụng sandbox | TA, SO, PA |
+| PERM-15-audit-read | Xem nhật ký truy cập, thử API và báo cáo sử dụng cổng | TA, SO, AU, PA |
 | PERM-16-read | Xem báo cáo chỉ tiêu | TA, VW, AU |
 | PERM-16-admin | Định nghĩa chỉ tiêu | TA |
 | PERM-17-use | Dùng trợ lý AI | Mọi vai trò có `read` tương ứng; trợ lý chỉ trả lời trong phạm vi quyền của người hỏi |
