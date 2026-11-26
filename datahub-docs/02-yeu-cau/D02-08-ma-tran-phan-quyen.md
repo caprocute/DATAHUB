@@ -261,7 +261,17 @@ Bảng dưới gán quyền cho các phân hệ PH-06, 08, 09, 11, 15, 16, 17, t
 | PERM-06-operate | Lập lịch, chạy lại, hủy job dữ liệu chủ | TA, TO |
 | PERM-06-dsr | Tiếp nhận, xử lý yêu cầu của chủ thể dữ liệu đối với dữ liệu chủ | TA, SO, DS |
 | PERM-06-audit-read | Xem nhật ký truy cập dữ liệu chủ | SO, AU |
-| PERM-08-rule-admin | Quản lý quy tắc chất lượng | DS, TA |
+| PERM-08-read | Xem bảng điều khiển, thẻ điểm, đối tượng đo, quy tắc, lần đo, báo cáo chất lượng đã công bố | PA, TA, TO, SO, DS, DA, DO (○), VW (chỉ tổng hợp), AU |
+| PERM-08-asset | Khai báo miền chất lượng, đối tượng đo, phần tử dữ liệu trọng yếu, chạy hồ sơ dữ liệu | TA, DS |
+| PERM-08-rule-admin | Soạn quy tắc chất lượng, trọng số, ngưỡng, quy tắc cảnh báo, gửi duyệt | PA (mẫu `COMMON`), TA, DS |
+| PERM-08-approve | Duyệt bộ quy tắc, trọng số và ngưỡng, ngoại lệ chấp nhận, công bố báo cáo chất lượng | DA |
+| PERM-08-run | Lập lịch, chạy, hủy, chạy lại lần đo chất lượng | TA, TO, DS |
+| PERM-08-finding-read | Xem chi tiết bản ghi lỗi chất lượng (giá trị đã che) | SO, DS, DA, DO (○, tổ chức mình) |
+| PERM-08-remediate | Nhận, xử lý, cập nhật phiếu khắc phục chất lượng | TA, DS, DO (○) |
+| PERM-08-report | Soạn, sinh, xuất báo cáo chất lượng | TA, DS |
+| PERM-08-export | Xuất bản ghi lỗi; có trường Nhạy cảm cần DO chấp thuận | DS, DA |
+| PERM-08-config | Tham số chất lượng theo tenant, lưu giữ | PA (trần), TA |
+| PERM-08-audit-read | Xem nhật ký kiểm toán PH-08 | SO, AU |
 | PERM-09-classify | Gán phân loại dữ liệu cho trường | TA, SO, DO (○) |
 | PERM-09-purpose-approve | Chấp thuận khai thác dữ liệu theo mục đích | DO (○) |
 | PERM-09-unmask | Xem giá trị đầy đủ của trường Nhạy cảm, bắt buộc nêu lý do | SO, DO (○), cấp riêng cho từng người theo quyết định |
