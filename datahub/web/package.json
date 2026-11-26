@@ -1,0 +1,36 @@
+{
+  "name": "datahub-web",
+  "private": true,
+  "type": "module",
+  "description": "Datahub · giao diện web (npm workspaces): @datahub/ui, @datahub/api-client, @datahub/i18n, dh-console",
+  "engines": { "node": ">=22" },
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "generate": "npm run generate -w @datahub/api-client",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run --coverage",
+    "check": "npm run generate && npm run typecheck && npm run lint && npm run test",
+    "e2e": "npm run e2e -w @datahub/console"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.13",
+    "@types/node": "^22.20.7",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "@vitest/coverage-v8": "^3.2.7",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.5.0",
+    "jsdom": "^26.1.0",
+    "msw": "^2.15.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^3.2.7"
+  }
+}

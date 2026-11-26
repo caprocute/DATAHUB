@@ -11,5 +11,3 @@ coverage/
 # Báo cáo kiểm thử
 playwright-report/
 test-results/
-# Sinh tự động từ lát cắt OpenAPI (npm run generate)
-web/packages/api-client/src/generated/
