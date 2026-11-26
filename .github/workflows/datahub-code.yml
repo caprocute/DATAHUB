@@ -1,0 +1,119 @@
+# Cổng chất lượng mã nguồn Datahub thế hệ mới (datahub/**), K-GOI-DAC-TA §5.
+# G1 đặc tả · G2 build và đơn vị · G3 kiến trúc · G4 hợp đồng và E2E · G5 bảo mật. G6 là người duyệt PR.
+name: datahub-code
+
+on:
+  pull_request:
+    paths: ['datahub/**', '.github/workflows/datahub-code.yml']
+  push:
+    branches: [main]
+    paths: ['datahub/**', '.github/workflows/datahub-code.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: datahub-code-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  g1-dac-ta:
+    name: G1 · gói đặc tả (OpenAPI, DDL, features, Gherkin)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env: { POSTGRES_PASSWORD: g1 }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env: { PGHOST: localhost, PGUSER: postgres, PGPASSWORD: g1 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: pip install pyyaml jsonschema gherkin-official
+      - name: Cài psql 18
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-18
+      - run: |
+          for g in datahub/spec/PH*/goi.yaml; do python3 datahub/tools/g1_dac_ta.py "$g"; done
+
+  g2-backend:
+    name: G2+G3+G4(API) · dh-data (Maven, Testcontainers, Cucumber, ArchUnit, JaCoCo)
+    runs-on: ubuntu-latest
+    needs: g1-dac-ta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21', cache: maven }
+      - run: mvn -B -f datahub/services/dh-data/pom.xml verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dh-data-bao-cao
+          path: |
+            datahub/services/dh-data/target/site/jacoco/
+            datahub/services/dh-data/target/surefire-reports/
+            datahub/services/dh-data/target/failsafe-reports/
+            datahub/services/dh-data/target/cucumber*
+          if-no-files-found: ignore
+
+  g2-web:
+    name: G2+G3 · web (tsc, ESLint, Vitest)
+    runs-on: ubuntu-latest
+    needs: g1-dac-ta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: datahub/web/package-lock.json }
+      - run: npm --prefix datahub/web ci --no-audit --no-fund
+      - run: npm --prefix datahub/web run check
+
+  g4-e2e:
+    name: G4 · E2E Playwright + axe (PostgreSQL thật, backend thật)
+    runs-on: ubuntu-latest
+    needs: [g2-backend, g2-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21', cache: maven }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: datahub/web/package-lock.json }
+      - run: npm --prefix datahub/web ci --no-audit --no-fund
+      - run: npm --prefix datahub/web exec -w apps/console -- playwright install --with-deps chromium
+      - run: npm --prefix datahub/web run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-bao-cao
+          path: datahub/web/apps/console/playwright-report/
+          if-no-files-found: ignore
+
+  g5-bao-mat:
+    name: G5 · bảo mật (Semgrep, Trivy, npm audit)
+    runs-on: ubuntu-latest
+    needs: g1-dac-ta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: datahub/web/package-lock.json }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install semgrep
+      - run: npm --prefix datahub/web ci --no-audit --no-fund
+      - run: bash datahub/tools/g5_bao_mat.sh
+      - name: Trivy (phụ thuộc Maven, npm, cấu hình)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: datahub
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
