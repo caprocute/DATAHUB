@@ -20,7 +20,7 @@ nguon:
   hifi: datahub-docs/03-thiet-ke/uiux/ph07/hifi
   tc: datahub-docs/05-kiem-thu/test-case/D05-02-PH07-test-case.md
 openapi:
-  sua_trung_khoa: true          # SS-07-02: còn khóa trùng ở nguồn
+  sua_trung_khoa: false         # SS-07-02 đã sửa ở nguồn (PR #37)
   va: datahub/spec/PH07/va-openapi.yaml
 postgres_image: postgres:18
 ddl_kiem:

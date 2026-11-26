@@ -3,18 +3,7 @@
 # Mỗi mục là một quyết định của báo cáo sẵn sàng (san-sang.md, mã SS-07-nn).
 # Đợt đồng bộ cuối chép các vá này về tệp nguồn rồi xóa mục tương ứng.
 # op: set (đặt giá trị tại con trỏ JSON), remove (xóa khóa), add (thêm vào cuối mảng)
-- {ss: SS-07-01, op: remove, ptr: "/components/schemas/ExportJob/allOf/1/properties/downloadUrl/hạn 24 giờ."}
-- {ss: SS-07-01, op: set, ptr: "/components/schemas/ExportJob/allOf/1/properties/downloadUrl/description", value: "URL ký sẵn, hạn 24 giờ."}
-- {ss: SS-07-01, op: remove, ptr: "/components/schemas/SearchResponse/properties/items/items/allOf/1/properties/path/để hiển thị gợi ý."}
-- {ss: SS-07-01, op: set, ptr: "/components/schemas/SearchResponse/properties/items/items/allOf/1/properties/path/description", value: "Tên các cấp cha, để hiển thị gợi ý."}
-- {ss: SS-07-01, op: remove, ptr: "/components/schemas/QueryCondition/properties/value/mảng hoặc vắng mặt tùy toán tử."}
-- {ss: SS-07-01, op: set, ptr: "/components/schemas/QueryCondition/properties/value/description", value: "Vô hướng, mảng hoặc vắng mặt tùy toán tử."}
-- {ss: SS-07-01, op: remove, ptr: "/components/schemas/QueryRequest/properties/cursor/gắn với băm của filter và sort."}
-- {ss: SS-07-01, op: set, ptr: "/components/schemas/QueryRequest/properties/cursor/description", value: "Con trỏ ký HMAC, gắn với băm của filter và sort."}
-- {ss: SS-07-01, op: remove, ptr: "/components/schemas/SyncRunRequest/properties/force/ép tính lại khác biệt."}
-- {ss: SS-07-01, op: set, ptr: "/components/schemas/SyncRunRequest/properties/force/description", value: "Bỏ qua so sánh remoteVersion, ép tính lại khác biệt."}
-# SS-07-02: khóa trùng retroactiveReason (dòng 4086): giữ bản đầy đủ có minLength 10.
-- {ss: SS-07-02, op: set, ptr: "/components/schemas/PublishRequest/properties/retroactiveReason", value: {type: string, minLength: 10, maxLength: 1000, description: "Bắt buộc khi `effectiveFrom` trước hôm nay (chỉ phiên bản `origin` SYNC, MIGRATION; BR-07-027)."}}
+# SS-07-01, SS-07-02 đã sửa ở nguồn (PR #37, 26/11/2026), vá đã gỡ.
 # SS-07-03: quyền theo D02-08 (PERM-07-create / update), không dùng PERM-07-configure chưa có trong D02-08.
 - {ss: SS-07-03, op: set, ptr: "/paths/~1catalog-groups/post/x-datahub-permission", value: {permission: PERM-07-create, note: "TENANT_ADMIN với nhóm của tenant; PLATFORM_ADMIN (tenant PLATFORM) với nhóm COMMON."}}
 - {ss: SS-07-03, op: set, ptr: "/paths/~1catalog-groups~1{groupId}/patch/x-datahub-permission", value: {permission: PERM-07-update}}

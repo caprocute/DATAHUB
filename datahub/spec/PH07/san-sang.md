@@ -21,8 +21,8 @@
 
 | Mã | Mâu thuẫn | Nguồn A | Nguồn B | Quyết định | Áp ở |
 |---|---|---|---|---|---|
-| SS-07-01 | Mô tả flow có dấu phẩy làm hỏng cấu trúc (5 chỗ) | OpenAPI | Redocly | Đặt mô tả trong ngoặc kép | `va-openapi.yaml` |
-| SS-07-02 | Khóa trùng `PublishRequest.retroactiveReason` | OpenAPI dòng 4081 | dòng 4086 | Giữ bản đầy đủ (`minLength: 10`, có mô tả) | `va-openapi.yaml` |
+| SS-07-01 | (Đã sửa ở nguồn, PR #37) Mô tả flow có dấu phẩy làm hỏng cấu trúc (5 chỗ) | OpenAPI | Redocly | Đặt mô tả trong ngoặc kép | `va-openapi.yaml` |
+| SS-07-02 | (Đã sửa ở nguồn, PR #37) Khóa trùng `PublishRequest.retroactiveReason` | OpenAPI dòng 4081 | dòng 4086 | Giữ bản đầy đủ (`minLength: 10`, có mô tả) | `va-openapi.yaml` |
 | SS-07-03 | Quyền tạo/sửa/xóa nhóm | FRS, D02-08: `PERM-07-create` / `update` | OpenAPI: `PERM-07-configure` (đề xuất, chưa có ở D02-08) | Theo D02-08: POST cần `PERM-07-create`; PATCH, DELETE cần `PERM-07-update`; thêm điều kiện vai trò TA hoặc PA (DS bị từ chối dù có quyền) | `va-openapi.yaml`, mã |
 | SS-07-04 | Đổi nhóm cha tạo vòng | FRS, TC-07-020: 409 ERR-07-039 | OpenAPI PATCH: ERR-07-010 (422) | 409 ERR-07-039, `errors[].code = CYCLE`; vượt độ sâu: ERR-07-039 `DEPTH`; trùng mã: ERR-07-039 `UNIQUE` | `va-openapi.yaml`, Gherkin |
 | SS-07-05 | Xóa nhóm | FRS hậu điều kiện: "xóa mềm" | DDL: không có `deleted_at` | Xóa hẳn. Chặn xóa khi còn BẤT KỲ dòng `catalog` tham chiếu (kể cả `RETIRED` và đã xóa mềm, vì khóa ngoại); `detail` nêu số danh mục chưa xóa mềm | `va-openapi.yaml`, mã |
