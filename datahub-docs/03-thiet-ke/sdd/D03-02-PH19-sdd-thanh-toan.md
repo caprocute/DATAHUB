@@ -335,10 +335,10 @@ public enum ReconSource { API, FILE_FETCH, FILE_UPLOAD }
 
 /** Kết quả thô của NCC; lõi ánh xạ ra kết cục qua ResultMapper (§7). */
 public record ProviderResult(Operation operation, String providerCode, String providerMessage,
-    boolean transport ok, Map<String, String> extra) {}   // ok = false khi timeout, 5xx, mất kết nối
+    boolean transportOk, Map<String, String> extra) {}   // transportOk = false khi timeout, 5xx, mất kết nối
 ```
 
-Ghi chú: dòng `boolean transport ok` là tên trường minh họa; khi hiện thực đặt `transportOk`. Adapter **không** tự quyết kết cục nghiệp vụ; nó trả `providerCode` thô và cờ `transportOk`. `ResultMapper` (§7.2) là nơi duy nhất chuyển `providerCode` thành `Outcome`.
+Adapter **không** tự quyết kết cục nghiệp vụ; nó trả `providerCode` thô và cờ `transportOk`. `ResultMapper` (§7.2) là nơi duy nhất chuyển `providerCode` thành `Outcome`.
 
 ### 4.2. Đăng ký adapter
 
@@ -451,3 +451,213 @@ public final class TransactionStateMachine {
 ### 5.6. Truy vấn bù và hết hạn
 
 `PendingQueryScheduler` chạy mỗi 30 giây, chọn giao dịch có `next_query_at ≤ now()` theo chỉ mục một phần (`WHERE status IN ('CREATED','PENDING') AND next_query_at IS NOT NULL`), theo lô 200, tôn trọng `queryRatePerSecond` bằng bộ giới hạn token bucket theo NCC. Sau mỗi lần truy vấn, `next_query_at` lấy từ lịch BR-19-016 (2, 5, 10, 15 phút; 30 phút, 1, 2, 4 giờ; rồi mỗi 6 giờ tới 72 giờ). `ExpiryScheduler` xử lý giao dịch quá hạn theo BR-19-017. Hai tác vụ chạy ở vai trò `worker` dưới ShedLock.
+
+## 6. Inbox, outbox, sự kiện và webhook
+
+### 6.1. Tổng quan (ADR-042)
+
+`dh-payment` tự chứa mọi hàng đợi trên đường thu tiền trong `pg-payment`: `callback_inbox` cho IPN đến, `outbox_event` cho sự kiện và kiểm toán đi, `webhook_delivery` cho thông báo tới đối tác. Kafka chỉ dùng để phân phối sự kiện cho phân hệ khác (PH-13, PH-16); bộ gửi webhook đọc trực tiếp outbox nên đối tác vẫn nhận kết quả khi Kafka ngừng (NFR-19-013).
+
+### 6.2. Nhận IPN
+
+```java
+@RestController
+@RequestMapping("/api/payment-callback/v1/{adapter}/{connectionKey}")
+class CallbackController {
+  @PostMapping("/ipn")
+  ResponseEntity<byte[]> ipn(@PathVariable String adapter, @PathVariable String connectionKey, HttpServletRequest http) {
+    var raw = RawHttpRequest.capture(http, 256 * 1024);                    // giới hạn 256 KB
+    var provider = providerResolver.byConnectionKey(connectionKey)         // đệm Caffeine 60 s, khóa băm SHA-256
+        .orElseThrow(() -> problem(ERR_19_027));                            // không lộ tồn tại
+    return TenantSession.call(provider.tenantId(), () -> {                  // ADR-045: tenant trước mọi truy cập dữ liệu
+      var v = verifier.verify(provider, CallbackKind.PAYMENT, raw);         // 7 bước FR-19-029
+      inboxWriter.write(provider, raw, v);                                  // RECEIVED | REJECTED | DUPLICATE
+      return adapterOf(provider).callbackAck(provider.config(), v.ack());   // ≤ 200 ms
+    });
+  }
+}
+```
+
+- `connectionKey` là 32 ký tự Base32 Crockford sinh từ 160 bit ngẫu nhiên; CSDL lưu `sha256(connectionKey)` để tra, không lưu nguyên văn ngoài OpenBao; đổi `connectionKey` là thao tác xoay có chuyển tiếp 7 ngày (hai khóa cùng hợp lệ).
+- Sau khi xác định NCC, `CallbackVerifier` kiểm tra mã đơn vị kết nối trong nội dung đã ký khớp `merchant_ref` của NCC; không khớp thì `REJECTED` lý do `TENANT_MISMATCH` và cảnh báo khẩn (dấu hiệu cấu hình sai hoặc tấn công).
+- Nonce: `SET {tenant}:payment:nonce:{providerId}:{nonce} {sha256(body)} NX EX 86400`; trùng nonce cùng băm → `DUPLICATE` (trả xác nhận thành công); trùng nonce khác băm → `REJECTED` ERR-19-026. Ràng buộc duy nhất (`provider_id`, `nonce`) trên `callback_inbox` là lớp thứ hai.
+- `inboxWriter.write` ghi một dòng trong giao dịch CSDL ngắn (chỉ `INSERT`), không khóa hàng giao dịch, để giữ p95 ≤ 200 ms (NFR-19-003).
+
+### 6.3. Xử lý inbox
+
+`InboxProcessor` chạy ở vai trò `worker`, lấy việc bằng `SELECT … FROM callback_inbox WHERE status = 'RECEIVED' ORDER BY received_at LIMIT 100 FOR UPDATE SKIP LOCKED`, xử lý từng dòng trong giao dịch riêng:
+
+1. Tìm giao dịch theo `transaction_code` hoặc `provider_reference`; khóa hàng `FOR UPDATE`.
+2. `ResultMapper.map(provider, IPN, providerCode)` → `Outcome` và `mapping_version`.
+3. Áp quy tắc BR-19-015, 018: kiểm số tiền (dung sai 0), tham chiếu; gọi `TransactionStateMachine.apply` với nguồn `IPN`.
+4. Kết quả: `PROCESSED`; `QUARANTINED` (kèm `quarantine_reason`: `AMOUNT_MISMATCH`, `REF_MISMATCH`, `NOT_FOUND`, `UNMAPPED_CODE`, `CONFLICT_FINAL`) và chênh lệch tương ứng; `FAILED` khi lỗi kỹ thuật (thử lại tối đa 5 lần, giãn 1, 5, 15, 60, 240 giây, rồi cảnh báo).
+5. Mọi IPN của cùng một giao dịch được tuần tự hóa nhờ khóa hàng; thứ tự đến không quan trọng vì máy trạng thái chỉ cho chuyển hợp lệ.
+
+Độ trễ mục tiêu từ `received_at` tới `processed_at` p95 ≤ 2 giây; KEDA tăng bản sao `worker` khi tồn đọng `RECEIVED` > 500.
+
+### 6.4. Outbox và phát sự kiện
+
+`OutboxWriter.append(aggregateType, aggregateId, eventType, payload, partitionKey)` ghi `outbox_event` trong cùng giao dịch CSDL với thay đổi nghiệp vụ. Hai cách phát:
+
+| Cách | Khi dùng | Cơ chế |
+|---|---|---|
+| Debezium Outbox Event Router (mặc định khi cụm có Debezium, D03-09) | QM-VUA, QM-LON | Đọc WAL `pg-payment` qua slot logic `ph19_outbox`, định tuyến tới topic theo cột `topic`, khóa theo `partition_key`; xóa dòng đã phát sau 7 ngày |
+| `OutboxRelay` quét theo lô | QM-NHO, hoặc khi Debezium ngừng | `SELECT … WHERE published_at IS NULL ORDER BY id LIMIT 500 FOR UPDATE SKIP LOCKED`, gửi Kafka `acks=all` lũy đẳng, đặt `published_at` |
+
+Sự kiện theo CloudEvents 1.0, `type = vn.datahub.payment.{entity}.{event}.v1`, `source = /{tenant}/payment`, `subject` là mã nghiệp vụ, phần mở rộng `tenantid`, `sequence`, `traceparent`. Lược đồ đăng ký Apicurio, tương thích `BACKWARD` (AsyncAPI ở D03-04-PH19). Kiểm toán đi cùng outbox với `topic = {tenant}.audit.recorded.v1` (FR-19-053).
+
+### 6.5. Bộ gửi webhook (ADR-044)
+
+1. `WebhookFanout` nghe outbox (đọc trực tiếp bảng, không qua Kafka) cho các `event_type` webhook được (`transaction.*`, `refund.*`, `reconciliation.closed`), tạo `webhook_delivery` cho mỗi đầu nhận `ACTIVE` của đối tác sở hữu, đã đăng ký loại sự kiện.
+2. `WebhookDispatcher` lấy việc `PENDING`/`RETRY_SCHEDULED` đến hạn bằng `FOR UPDATE SKIP LOCKED`, nhưng chỉ lấy lượt có `sequence` nhỏ nhất chưa `DELIVERED` của mỗi (đầu nhận, giao dịch) để giữ thứ tự (BR-19-021).
+3. Thân là CloudEvents JSON; tiêu đề: `Content-Type: application/cloudevents+json`, `Webhook-Id: {id}`, `Webhook-Timestamp: {unix}`, `X-Datahub-Signature: t={unix},v1={hex(HMAC_SHA256(secret, id + "." + t + "." + body))}`, `traceparent`. Trong 7 ngày chuyển tiếp xoay bí mật có hai giá trị `v1` phân tách bằng dấu phẩy (NFR-19-021).
+4. Bí mật đọc từ OpenBao `kv/dh/{tenant}/payment/partners/{partnerCode}/webhooks/{endpointId}` và đệm trong bộ nhớ 5 phút (không ghi đĩa).
+5. HTTP client: timeout kết nối 3 giây, tổng 10 giây, không theo chuyển hướng, chỉ HTTPS, kiểm tra lại địa chỉ IP phân giải không thuộc dải riêng ngay trước khi gửi (chống DNS rebinding), đi qua `apisix-int` cửa ra.
+6. Kết quả: 2xx → `DELIVERED`; 408, 425, 429, 5xx, lỗi mạng → `RETRY_SCHEDULED` theo `19.webhook.retry-schedule` có độ ngẫu nhiên ±10%; 4xx khác → `EXHAUSTED`. Mỗi lần thử ghi `integration_log` hướng `OUT_PARTNER`.
+
+### 6.6. Kéo thông báo dự phòng
+
+API-19-109 đọc bảng `notification_feed` (đề xuất, D03-03-PH19): mỗi sự kiện webhook được cũng ghi một dòng (`id` UUIDv7 tăng theo thời gian, `partner_id`, `event_type`, `payload`) giữ 7 ngày; con trỏ `after` là `id` cuối đã đọc. Đối tác dùng khi webhook lỡ hoặc khi không mở được cổng nhận (A-19-10).
+
+## 7. Bảng ánh xạ mã kết quả nhà cung cấp
+
+### 7.1. Mô hình (FR-19-069, GĐ-03)
+
+`provider_result_mapping` (EN-19-26, đề xuất) có các cột: `provider_id`, `mapping_version`, `operation` (`INIT`, `IPN`, `QUERY`, `CANCEL`, `REFUND`, `REFUND_IPN`, `RECON`), `provider_code`, `outcome` (`SUCCEEDED`, `FAILED`, `PENDING`, `UNKNOWN`), `is_final`, `reason_code` (mã lý do nội bộ), `message_vi`, `status` (`ACTIVE`, `RETIRED`). Phiên bản tăng dần theo NCC; chỉ một phiên bản hiện hành. Ràng buộc: `outcome = SUCCEEDED` thì `is_final = true`; không có hai dòng cùng (`provider_id`, `mapping_version`, `operation`, `provider_code`).
+
+### 7.2. `ResultMapper`
+
+```java
+public Outcome map(ProviderRef p, Operation op, String providerCode, boolean transportOk) {
+  if (!transportOk) return Outcome.unknown("TRANSPORT_ERROR", null);
+  var v = versions.current(p.id());                          // đệm theo (provider, version), làm mới khi có sự kiện
+  return v.lookup(op, providerCode)
+      .map(row -> Outcome.of(row.outcome(), row.isFinal(), row.reasonCode(), v.number()))
+      .orElseGet(() -> {
+        metrics.unmappedCode(p, op, providerCode);           // payment_callback_quarantined_total, danh sách "mã đã gặp"
+        return Outcome.unknown("UNMAPPED_CODE", v.number()); // không bao giờ SUCCEEDED
+      });
+}
+```
+
+`UNKNOWN` được xử lý như "chờ xác minh": giữ trạng thái giao dịch, `needs_reconciliation = true`, IPN `QUARANTINED` (ERR-19-028), cảnh báo, tiếp tục truy vấn bù. Mã đã gặp nhưng chưa ánh xạ được lưu vào `provider_unmapped_code` (đếm, lần đầu, lần cuối, ví dụ đã che) để hiển thị ở UI-19-04.
+
+### 7.3. Bảng mặc định cho PayGov (giả định)
+
+Bảng dưới là **giả định** của nhóm thiết kế dựa trên thông lệ cổng thanh toán, nạp khi khởi tạo tenant (FR-19-064) ở phiên bản 1; phải thay bằng bảng mã chính thức khi VPCP trả lời OQ-19-05. Thông điệp tiếng Việt dùng ở giao diện và webhook (`reasonMessage`).
+
+| Thao tác | Mã PayGov (giả định) | Kết cục | Cuối | Mã lý do nội bộ | Thông điệp |
+|---|---|---|---|---|---|
+| `INIT` | `00` | `SUCCEEDED` (khởi tạo thành công) | Có | — | Đã tạo yêu cầu thanh toán |
+| `INIT` | `09` | `FAILED` | Có | `SERVICE_NOT_REGISTERED` | Dịch vụ chưa đăng ký với nền tảng thanh toán |
+| `INIT` | `11` | `FAILED` | Có | `INVALID_REQUEST` | Yêu cầu thanh toán không hợp lệ |
+| `INIT` | `13` | `FAILED` | Có | `DUPLICATE_ORDER` | Mã giao dịch đã tồn tại ở nền tảng thanh toán |
+| `INIT` | `97` | `UNKNOWN` | Không | `SIGNATURE_ERROR` | Lỗi chữ ký, chờ xác minh |
+| `INIT` | `99` | `UNKNOWN` | Không | `PROVIDER_ERROR` | Lỗi của nền tảng thanh toán, chờ xác minh |
+| `IPN`, `QUERY` | `00` | `SUCCEEDED` | Có | — | Thanh toán thành công |
+| `IPN`, `QUERY` | `01` | `PENDING` | Không | `PROCESSING` | Giao dịch đang được xử lý |
+| `IPN`, `QUERY` | `02` | `FAILED` | Có | `PAYMENT_FAILED` | Thanh toán không thành công |
+| `IPN`, `QUERY` | `04` | `FAILED` | Có | `PAYER_CANCELLED` | Người nộp hủy thanh toán |
+| `IPN`, `QUERY` | `05` | `FAILED` | Có | `PAYMENT_TIMEOUT` | Quá thời gian thanh toán |
+| `IPN`, `QUERY` | `06` | `FAILED` | Có | `INSUFFICIENT_FUNDS` | Tài khoản không đủ số dư |
+| `IPN`, `QUERY` | `07` | `UNKNOWN` | Không | `SUSPECTED_FRAUD` | Giao dịch nghi vấn, chờ xác minh |
+| `QUERY` | `91` | `PENDING` | Không | `NOT_FOUND_AT_PROVIDER` | Nền tảng chưa ghi nhận giao dịch (trước hạn); tác vụ hết hạn xử lý như "không tồn tại" theo BR-19-017 |
+| `QUERY` | `99` | `UNKNOWN` | Không | `PROVIDER_ERROR` | Lỗi của nền tảng thanh toán |
+| `CANCEL` | `00` | `SUCCEEDED` | Có | — | Đã hủy tại nền tảng |
+| `REFUND`, `REFUND_IPN` | `00` | `SUCCEEDED` | Có | — | Hoàn tiền thành công |
+| `REFUND`, `REFUND_IPN` | `01` | `PENDING` | Không | `REFUND_PROCESSING` | Đang xử lý hoàn tiền |
+| `REFUND`, `REFUND_IPN` | `02` | `FAILED` | Có | `REFUND_FAILED` | Hoàn tiền không thành công |
+| `RECON` | `00` | `SUCCEEDED` | Có | — | Dòng đối soát thành công |
+| `RECON` | `02` | `FAILED` | Có | `PAYMENT_FAILED` | Dòng đối soát thất bại |
+
+Quy tắc đặc biệt ở `ExpiryScheduler`: với thao tác `QUERY`, mã lý do `NOT_FOUND_AT_PROVIDER` sau `expires_at + grace` được coi là "không tồn tại" và cho `EXPIRED` (BR-19-017). Mọi mã khác không có trong bảng ra `UNKNOWN`.
+
+### 7.4. Đổi bảng ánh xạ
+
+API-19-092 nhận danh sách thay đổi; `ResultMappingService` tạo bản nháp phiên bản `n+1` = phiên bản hiện hành + thay đổi, kiểm tra ràng buộc, tạo `approval_request` loại `RESULT_MAPPING_CHANGE` với `snapshot` là bảng khác biệt. Khi duyệt (§12), phiên bản `n+1` thành hiện hành trong một giao dịch CSDL, sự kiện nội bộ `ResultMappingActivated` làm mới đệm ở mọi pod (≤ 10 giây qua kênh Valkey pub/sub `{tenant}:payment:mapping-changed`). Bản ghi IPN và `transaction_event` lưu `mapping_version` đã dùng.
+
+## 8. Phía đọc: tra cứu, dashboard, báo cáo
+
+### 8.1. Bản sao đọc
+
+Truy vấn danh sách, chi tiết, nhật ký, dashboard, báo cáo của API quản trị đi tới bản sao đọc của `pg-payment` (dịch vụ CNPG `pg-payment-ro`) qua `@ReadOnlyTx` định tuyến `AbstractRoutingDataSource`. Độ trễ sao chép mục tiêu < 1 giây; màn chi tiết giao dịch ngay sau một thao tác ghi đọc từ bản chính (cờ `read-your-writes` 5 giây theo người dùng trong Valkey). API đối tác truy vấn trạng thái (API-19-102, 103) đọc bản chính vì cần nhất quán ngay.
+
+### 8.2. Chỉ mục phục vụ tra cứu
+
+| Truy vấn | Chỉ mục (trên mỗi phân vùng tháng) |
+|---|---|
+| Tìm theo mã giao dịch | `UNIQUE (transaction_code)` toàn cục qua bảng `transaction_code_index` (không phân vùng) |
+| Tìm theo mã hồ sơ | `(tenant_id, partner_id, partner_order_id)` |
+| Tìm theo tham chiếu NCC | `(tenant_id, provider_id, provider_reference)` |
+| Tìm theo người nộp | `(tenant_id, payer_search_hash)` (băm HMAC, ADR-048) |
+| Danh sách mặc định | `(tenant_id, created_at DESC)` |
+| Lọc trạng thái, NCC, dịch vụ | `(tenant_id, status, created_at DESC)`, `(tenant_id, service_id, created_at DESC)` |
+| Truy vấn bù | Một phần `(next_query_at) WHERE status IN ('CREATED','PENDING')` |
+| Đối soát ngày | `(tenant_id, provider_id, paid_at)` |
+
+Danh sách dùng phân trang theo khóa (`createdAt`, `id`) khi người dùng cuộn sâu quá trang 50; tổng số chính xác tới 10.000 dòng bằng `count(*)` có giới hạn, trên đó trả `totalApprox` từ thống kê (FR-19-049).
+
+### 8.3. Số liệu tổng hợp
+
+`StatsAggregator` (worker, mỗi 60 giây) đọc outbox sự kiện giao dịch từ con trỏ cuối, cộng dồn vào `payment_stats_hourly` (`tenant_id`, `hour_vn`, `provider_id`, `service_id`, `partner_id`, `status`, `count`, `amount`) bằng `INSERT … ON CONFLICT DO UPDATE`. Dashboard đọc bảng này (NFR-19-006: trễ ≤ 60 giây), thay cơ chế đệm 10 phút của hệ cũ (LGC-PAY-026). Báo cáo tháng trở lên kết hợp `payment_stats_hourly` với kết quả phiên đối soát `CLOSED` để đánh dấu "tạm tính" (FR-19-058). Giao dịch thử, bóng không vào bảng.
+
+### 8.4. Tác vụ xuất
+
+`ExportJobRunner` chạy `background_job` loại `EXPORT` bằng con trỏ máy chủ (`fetchSize = 5000`) trên bản sao đọc, ghi luồng ra tệp tạm, tải lên Garage theo multipart, đặt `result_file_id`; đường tải là URL ký trước hạn 24 giờ, chỉ người tạo gọi API-19-084 mới lấy được. 1.000.000 dòng ≤ 10 phút (NFR-19-009).
+
+## 9. Bảo mật
+
+### 9.1. Xác thực và phân quyền
+
+| Nhóm API | Xác thực | Phân quyền |
+|---|---|---|
+| Quản trị `/api/payment/v1` | JWT người dùng do Keycloak phát (PKCE qua BFF của console), `aud = dh-payment-admin` | OPA: `PERM-19-*` theo vai trò của tenant; thuộc tính đối tượng (tenant, người lập) cho tách nhiệm |
+| Đối tác `/api/payment-partner/v1` | OAuth 2.1 `client_credentials`, `private_key_jwt` hoặc mTLS, token ràng buộc chứng thư (RFC 8705) khi dùng mTLS, hạn 5 phút (NFR-19-019) | Claim `partner_id`, `tenant_id`; OPA kiểm tra `PERM-19-partner-*`; mọi truy vấn lọc thêm `partner_id` |
+| Callback `/api/payment-callback/v1` | Không token; allowlist IP tại APISIX, mTLS nếu PayGov dùng, chữ ký nội dung | `connectionKey` → NCC → tenant (ADR-045) |
+
+`@PreAuthorize("@perm.has('PERM-19-refund-approve')")` ở controller là lớp thứ nhất; `FourEyesGuard` ở dịch vụ là lớp thứ hai; ràng buộc `CHECK` trên `approval_request` là lớp thứ ba (§12).
+
+### 9.2. Mối đe dọa chính
+
+| Mối đe dọa | Biện pháp | Kiểm thử |
+|---|---|---|
+| Giả mạo IPN để ghi nhận đã thu | Bốn lớp xác minh (NFR-19-020), chỉ ba nguồn có xác thực được chốt kết quả (BR-19-014), mã lạ ra `UNKNOWN` | TS-19-30 |
+| Phát lại IPN cũ | Dấu thời gian ±5 phút, nonce Valkey + ràng buộc duy nhất | TS-19-30 |
+| Sửa tham số trang quay về | Lượt quay về không đổi trạng thái; trang đọc trạng thái từ CSDL | TS-19-12 |
+| Đối tác A truy vấn giao dịch của B | Lọc `partner_id` từ token, RLS tenant | TS-19-31 |
+| Đoán `connectionKey` để gửi callback vào tenant khác | 160 bit ngẫu nhiên, kiểm tra chéo mã đơn vị đã ký, allowlist IP | TS-19-30 |
+| SSRF qua địa chỉ webhook | Chỉ HTTPS, chặn dải riêng khi đăng ký và ngay trước khi gửi, không theo chuyển hướng, cửa ra qua `apisix-int` | TS-19-30 |
+| Một người tự duyệt hoàn tiền | Tách nhiệm ba lớp | TS-19-33 |
+| Rò rỉ dữ liệu người nộp qua log | `Redactor`, mã hóa trường, không ghi thân yêu cầu ở log ứng dụng | TS-19-34 |
+| Lộ khóa ký | Khóa trong OpenBao transit, không rời OpenBao; xoay có chuyển tiếp | TS-19-06 |
+| Sửa lịch sử để che gian lận | Bảng chỉ-ghi-thêm (trigger chặn `UPDATE`, `DELETE`), kiểm toán chuỗi băm, biên bản WORM | TS-19-34 |
+
+### 9.3. Cách ly tenant
+
+Mọi bảng có `tenant_id` và chính sách RLS `USING (tenant_id = current_setting('app.tenant_id'))`, `FORCE ROW LEVEL SECURITY`; tài khoản ứng dụng không phải chủ sở hữu bảng. `TenantContext` lấy từ token (quản trị, đối tác) hoặc từ NCC (callback), không bao giờ từ tham số do bên gọi gửi. Tác vụ nền lặp qua danh sách tenant `module_enabled = true` và mở `TenantSession` cho từng tenant; bài kiểm thử `TenantIsolationIT` khẳng định mọi bảng có chính sách và người dùng tenant A thấy 0 dòng của B (NFR-19-025).
+
+### 9.4. Bí mật
+
+| Bí mật | Vị trí OpenBao | Cách dùng |
+|---|---|---|
+| Khóa riêng ký yêu cầu tới PayGov | `transit/dh/{tenant}/payment/{providerCode}-signing` | `transit/sign`, khóa không rời OpenBao (nếu PayGov chấp nhận định dạng chữ ký của transit; nếu không, `kv` và nạp vào bộ nhớ có giới hạn thời gian) |
+| Chứng thư, khóa mTLS của tỉnh | `kv/dh/{tenant}/payment/providers/{providerCode}/{env}/mtls` | Nạp vào `SSLContext` lúc khởi động và khi xoay |
+| Khóa công khai PayGov | `kv/dh/{tenant}/payment/providers/{providerCode}/{env}/provider-public-key` | Xác minh IPN |
+| Thông tin API PayGov | `kv/dh/{tenant}/payment/providers/{providerCode}/{env}/api-credential` | Tiêu đề xác thực |
+| Bí mật ký webhook | `kv/dh/{tenant}/payment/partners/{partnerCode}/webhooks/{endpointId}` | HMAC |
+| Bí mật ký tham số quay về | `kv/dh/{tenant}/payment/partners/{partnerCode}/return-secret` | HMAC `{transactionCode}.{status}.{ts}` |
+| `connectionKey` | `kv/dh/{tenant}/payment/providers/{providerCode}/connection-key` | Chỉ hiển thị cho ADM khi đăng ký với PayGov |
+| Khóa băm tìm kiếm người nộp | `transit/dh/{tenant}/payment/payer-search` (HMAC) | §9.5 |
+
+`dh-payment` xác thực với OpenBao bằng phương thức Kubernetes, vai trò `dh-payment-{env}`, chính sách chỉ đọc các đường trên và gọi `transit/sign`, `transit/hmac`, `transit/encrypt|decrypt` của tenant.
+
+### 9.5. Dữ liệu cá nhân người nộp (ADR-048)
+
+- Các trường `payer_name`, `payer_id_number`, `payer_phone`, `payer_email`, `payer_address` được mã hóa envelope: mỗi giao dịch một khóa dữ liệu (DEK) AES-256-GCM sinh tại chỗ, DEK được bọc bằng khóa của tenant trong OpenBao transit (`transit/dh/{tenant}/payment/payer-kek`) và lưu cùng dòng (`payer_dek_wrapped`); bản rõ chỉ tồn tại trong bộ nhớ khi người có `PERM-19-transaction-read-pii` hiện đầy đủ (FR-19-051).
+- `payer_search_hash` = HMAC-SHA256 (khóa transit `payer-search` của tenant) của từng giá trị chuẩn hóa (họ tên không dấu, chữ thường, bỏ khoảng trắng thừa; số điện thoại dạng E.164; số định danh) — lưu mảng băm, chỉ mục GIN.
+- Bản che (`payer_name_masked`, `payer_phone_masked`) tính lúc ghi theo BR-19-031 để danh sách không cần giải mã.
+- Xóa theo yêu cầu chủ thể (Luật 91/2025): sau thời hạn lưu chứng từ, hủy DEK đã bọc làm dữ liệu không giải mã được (crypto-shredding), giữ bản che và số liệu.
+
+### 9.6. Kiểm toán
+
+Danh mục hành động (`action`) gửi PH-13: `PROVIDER_CREATE`, `PROVIDER_UPDATE`, `PROVIDER_DELETE`, `CREDENTIAL_BIND`, `CREDENTIAL_ROTATE`, `CONNECTION_TEST`, `TEST_TRANSACTION`, `PROVIDER_SUSPEND`, `PROVIDER_RESUME`, `RESULT_MAPPING_CHANGE_REQUEST`, `RESULT_MAPPING_APPLIED`, `SERVICE_GROUP_*`, `SERVICE_*`, `PARTNER_*`, `PARTNER_CLIENT_ISSUE`, `PARTNER_CLIENT_REVOKE`, `SERVICE_GRANT_SET`, `WEBHOOK_ENDPOINT_*`, `WEBHOOK_SECRET_ROTATE`, `ROUTING_MODE_REQUEST`, `TRANSACTION_CANCEL`, `TRANSACTION_SYNC`, `CALLBACK_REPLAY`, `PII_VIEW`, `REFUND_CREATE`, `REFUND_EXECUTE`, `REFUND_CONFIRM_MANUAL`, `RECON_SESSION_CREATE`, `RECON_FILE_UPLOAD`, `RECON_RERUN`, `RECON_CLOSE`, `RECON_REOPEN_REQUEST`, `DISCREPANCY_ASSIGN`, `DISCREPANCY_ESCALATE`, `DISCREPANCY_NOTE`, `DISCREPANCY_PROPOSE`, `DISCREPANCY_RESOLVE`, `APPROVAL_DECISION`, `APPROVAL_WITHDRAW`, `EXPORT_CREATE`, `EXPORT_DOWNLOAD`, `CONFIG_VERSION_CREATE`, `MIGRATION_RUN`, `WEBHOOK_RESEND`, `ACCESS_DENIED`. `AuditWriter` loại giá trị bí mật và che dữ liệu cá nhân trong `before`, `after`. Không ghi được outbox thì thao tác bị hủy (ERR-19-050, BR-19-029).
