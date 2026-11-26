@@ -743,7 +743,7 @@ Chỉ đọc phần lớn: kiểu xác thực lấy từ kết nối (liên kế
 
 | Phần tử | Hành vi |
 |---|---|
-| Danh sách mẫu | Tối đa 5 mẫu mỗi thao tác, mỗi mẫu ≤ 256 KiB (ERR-05-035); tên mẫu |
+| Danh sách mẫu | Tối đa 5 mẫu mỗi thao tác, mỗi mẫu ≤ 1 MiB (ERR-05-035); tên mẫu |
 | Mẫu yêu cầu | `CMP-CodeEditor` theo `requestFormat`, hoặc biểu mẫu tham số Kamelet |
 | Mẫu phản hồi | `CMP-CodeEditor` theo `responseFormat`; nút "Lấy từ lần kiểm thử gần nhất" (dữ liệu đã che theo phân loại) |
 | Cảnh báo dữ liệu cá nhân | Khi máy chủ phát hiện mẫu chứa số định danh, số điện thoại: `CMP-Alert` "Mẫu có vẻ chứa dữ liệu cá nhân thật. Dùng dữ liệu giả." Mẫu vẫn lưu được nhưng ghi kiểm toán |
@@ -978,9 +978,9 @@ Kamelet nền: các nút vòng đời chỉ hiện với PA; có liên kết "T�
 ```text
 ┌ Soạn Kamelet ── tên [dh-t01-tra-cuu-mst-action] phiên bản [1.0.0] ── [Kiểm tra tĩnh] [Lưu nháp] [Gửi duyệt] ┐
 ├ YAML ─────────────────────────────────────────────────┬ Phát hiện (2) ──────────────────────────────────┤
-│ 1 apiVersion: camel.apache.org/v1                     │ ✕ KR-03 dòng 18 cột 12                           │
+│ 1 apiVersion: camel.apache.org/v1                     │ ✕ KR-04 dòng 18 cột 12                           │
 │ 2 kind: Kamelet                                       │   Ngôn ngữ kịch bản "groovy" không được phép.    │
-│ …                                                     │ ⚠ KR-09 dòng 7                                   │
+│ …                                                     │ ✕ KR-06 dòng 7                                   │
 │18     - setBody: { groovy: "…" }                      │   Tham số "matKhau" thiếu x-descriptors credentials│
 └───────────────────────────────────────────────────────┴──────────────────────────────────────────────────┘
 │ Ghi chú phát hành [……]                                                                                    │
