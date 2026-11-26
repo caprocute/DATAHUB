@@ -1,0 +1,153 @@
+{
+  "phan_he": "PH-12",
+  "phien": [
+    {
+      "tap": "frs",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 7.4929,
+      "so_luot": 83,
+      "phut": 38.3,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 140,
+        "output_tokens": 350242,
+        "cache_read_input_tokens": 25816408,
+        "cache_creation_input_tokens": 563255
+      },
+      "tom_tat": "|---|\n| FR | 62, mỗi FR đủ khối `::: dac-ta` 17 mục (M 52, S 9, C 1), tám nhóm A–H |\n| BR | 45 |\n| NFR | 33, kèm 38 tham số `12.*` |\n| UI | 19 |\n| API | 111 |\n| EVT | 16 |\n| ERR | 66 (47 điều khiển, 19 runtime) |\n| Quyền `PERM-12-*` | 16 (2 đã có ở D02-08, 14 đề nghị thêm) |\n\n- **Truy vết:** phủ hết 12 hàng LGC của PH-12 trong D00-03 (8 mục LGC-IAM và LGC-BUS-032, LGC-BUS-041, LGC-APIM-020; LGC-NGSP-008). Ánh xạ mã cũ sang mới cho 19 FR, 30 NFR, 17 BR, 10 quyền, 7 màn hình và 6 thực thể của `docs/07-srs`, kèm bảng vai trò repo sang 22 vai trò chuẩn.\n- **Sơ đồ:** 27 sơ đồ Mermaid (nhóm chức năng, trạng thái, trình tự), tất cả render được bằng mermaid-cli. Mỗi FR có sơ đồ trình tự khi từ ba thành phần trở lên hoặc có duyệt bốn mắt.\n- **Câu hỏi mở:** Q12-01 đến Q12-15. Các câu hỏi chính về đăng nhập liên tenant, VNeID, đáp ứng XACML của CV 631, chính sách chỉ-từ-chối của tỉnh, vai trò repo chưa có trong 22 vai trò chuẩn và lưu khóa ký.\n- **Đề nghị đồng bộ:** mục cuối tập ghi việc cần sửa ở D02-08, D02-02, D03-07, D03-01, D03-10, D00-03, D00-04, D05-01 và bốn ADR đề xuất (chưa tạo).\n\n**Lỗi còn lại của `kiem_tra_ma.py`:** 14 lỗi mới, đều là mã `PERM-12-*` mới (ví dụ `PERM-12-user-lock`, `PERM-12-policy-edit`). Chúng chưa có trong D02-08, mà tôi không được sửa tài liệu dùng chung. Hết khi D02-08 thêm 14 quyền này theo \"Đề nghị đồng bộ\". Ngoài ra không có mã trùng hay liên kết hỏng mới.\n\nMã `FR-12-001…019` của repo cũ trùng số với mã mới nhưng khác nghĩa; mục 11.2 là bảng đối chiếu.",
+      "kiem_tra_ma": [
+        "Tổng: 136 tệp, 4004 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 111, ERR 71, EVT 16, TC 1, UI 19, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "uc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 3.4233,
+      "so_luot": 59,
+      "phut": 13.8,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 98,
+        "output_tokens": 143717,
+        "cache_read_input_tokens": 11182802,
+        "cache_creation_input_tokens": 346912
+      },
+      "tom_tat": " đối chiếu tự động khớp với khối đặc tả), UC ↔ REQ, BP, LGC.\n- **Các chương còn lại:** tóm tắt cho hội đồng, giới thiệu, quy ước đọc, tác nhân, 7 luồng phụ dùng chung (LP-12-01…07), tổng hợp mã mới, mục \"Đề nghị đồng bộ\" ngay trong tệp, câu hỏi mở và lịch sử phiên bản.\n- **Kiểm tra:** `soat_trinh_bay.py` báo sạch cho tệp này, và `kiem_tra_ma.py` không báo lỗi nào ở tệp UC. Tôi không dựng được hình Mermaid vì runner không có mermaid-cli, nên chưa xem hình đã vẽ.\n\n`kiem_tra_ma.py` còn báo 14 lỗi mới, đều ở tập FRS PH-12 từ commit trước: 14 mã `PERM-12-*` chưa có trong D02-08. Đây không phải lỗi do tập UC. FRS đã ghi việc này ở \"Đề nghị đồng bộ\" và tôi không sửa tài liệu dùng chung.\n\n**Câu hỏi mở đã thêm:** 5 câu, Q12-45…49.\n- Q12-45: ai là người duyệt thứ hai khi nhân sự nền tảng vào tenant khác.\n- Q12-46: tác vụ nền do người dùng khởi chạy có tiếp tục sau khi người đó bị cắt truy cập không.\n- Q12-47: mã `503` có gây thử lại dồn dập khi OPA quá tải không.\n- Q12-48: khe hở khi xoay bí mật nếu đầu mối chưa kịp nhận bản bọc.\n- Q12-49: ai nhận cảnh báo mức Nghiêm trọng ngoài giờ.\n\n**Đề nghị đồng bộ:** 5 việc, gồm cập nhật D00-04 và dải mã (số UC kế tiếp là 43), thêm một câu thông báo mới ở D03-06-PH12 (mã nhóm trùng), thêm bảng FR → UC vào FRS, và đối chiếu D05-02, D03-04. Tôi không tạo ADR mới.\n\nLưu ý: tôi tự thêm tên người ví dụ (Mai, Dũng, Phương, Hà, Quân, Kiên, Lộc, Hùng) và vài số liệu minh họa như tệp 320 dòng hay mã phiếu. Tất cả là dữ liệu giả lập, không lấy từ nguồn thật.",
+      "kiem_tra_ma": [
+        "Tổng: 137 tệp, 4046 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 111, ERR 71, EVT 16, TC 1, UI 19, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "sdd",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 5.1499,
+      "so_luot": 85,
+      "phut": 26.5,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 140,
+        "output_tokens": 215081,
+        "cache_read_input_tokens": 19265366,
+        "cache_creation_input_tokens": 428727
+      },
+      "tom_tat": ".\n- **Sơ đồ:** 2 sơ đồ cấu trúc và 14 sơ đồ tuần tự. Cả 16 sơ đồ đã dựng được bằng mermaid-cli.\n- **Các chương còn lại:** có đủ đa tenant, bảo mật (32 mã SEC và 11 mã THR, đối chiếu với D03-07), bảng chuyển trạng thái 10 đối tượng, chịu lỗi và nhất quán, cấu hình và cờ theo tenant, quan sát, hiệu năng, kiểm thử, lộ trình và rủi ro.\n- **Mã mới:** GAP-12-01…05 cho hiện trạng mã của repo.\n- **Câu hỏi mở đã thêm:** 10 câu, Q12-20…Q12-29, ở mục 13.3.\n- **Đề nghị đồng bộ:** có bảng cuối tệp, gồm cả ba ADR đề xuất thêm (không tạo ADR).\n\n**Kiểm tra**\n- `kiem_tra_ma.py` không báo lỗi nào từ tệp này. 14 lỗi \"mới\" đang có đều là `PERM-12-*` của tập FRS, chưa có trong D02-08. FRS đã ghi các mã này vào mục \"Đề nghị đồng bộ\" của chính nó.\n- `soat_trinh_bay.py` còn 2 cảnh báo \"khối mã giống sơ đồ chữ\", là hai cây thư mục mà khuôn K-SDD tự dùng. Tôi để nguyên.\n- Chưa xuất được .docx vì máy không có pandoc.\n\n**Cần người quyết định**\n- **Thu hồi:** tôi thêm cờ `blockAll` cho mục thu hồi, vì chỉ dùng `notBefore` thì chủ thể vẫn xin được token mới khi Keycloak chưa kịp vô hiệu.\n- **Quyền `manage-clients`:** tôi thêm client `dh-client-provisioner` có quyền này, giới hạn theo thuộc tính `dh_managed`. FR-12-041 chỉ nêu `realm-user-admin`; chênh lệch này nằm trong \"Đề nghị đồng bộ\".\n- **Lệch giữa các tài liệu:** D03-01 và D03-09 ghi lấy mẫu quyết định cho phép 1%, còn FR-12-057 ghi 10%. Hạn mức người dùng mặc định ở D03-10 là 2.000, thấp hơn quy mô thiết kế 10.000. Cả hai đã ghi vào đề nghị đồng bộ.",
+      "kiem_tra_ma": [
+        "Tổng: 138 tệp, 4046 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 111, ERR 71, EVT 16, TC 1, UI 19, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "csdl",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 6.9879,
+      "so_luot": 90,
+      "phut": 30.4,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 138,
+        "output_tokens": 304275,
+        "cache_read_input_tokens": 24915073,
+        "cache_creation_input_tokens": 581245
+      },
+      "tom_tat": "g thái phiên bản chính sách, mức hợp đồng ↔ phương thức xác thực của client, scope theo nguồn, quyền có thời hạn ≤ 4 giờ, không bí mật trong cột JSON. Mục 3.44 liệt kê 25 quy tắc kèm ánh xạ `SQLSTATE` sang mã lỗi `ERR-12-*`.\n- Dữ liệu khởi tạo: 10 cặp vai trò xung đột và 17 dòng ánh xạ vai trò hệ cũ.\n- Mã mới theo dải CSDL: Q12-50…Q12-54. Tập CSDL không có FR, UC, API, UI hay TC mới.\n\n**Kiểm tra**\n- `kiem_tra_ma.py`: không có lỗi mới do tệp của tôi gây ra. Còn 14 lỗi \"mới\" đều thuộc tập FRS PH-12: các `PERM-12-*` chưa có trong D02-08, đã được FRS ghi ở \"Đề nghị đồng bộ\".\n- `soat_trinh_bay.py`: sạch.\n- Chưa vẽ thử Mermaid và chưa xuất `.docx`, vì runner không có `mmdc` và `pandoc`; cú pháp 4 ERD tôi chỉ soát bằng mắt.\n\n**Câu hỏi mở đã thêm**\n- Q12-50: cán bộ ATTT của tỉnh có được đọc chính sách phạm vi nền tảng không.\n- Q12-51: cách nhân sự nền tảng đọc dữ liệu tenant khác qua `/api/platform/`.\n- Q12-52: nguồn danh sách chặn đọc liên tenant.\n- Q12-53: cách đặt tên `clientId` khi cấp lại client sau thu hồi.\n- Q12-54: thời hạn ẩn danh hóa dữ liệu cá nhân của tài khoản bị vô hiệu lâu.\n\n**Lưu ý khi đọc**\n- Mọi số liệu dung lượng, thời hạn giữ của dữ liệu kỹ thuật và tên bucket `dh-iam-import` là giả định hoặc đề xuất, đã ghi rõ trong tài liệu.\n- Tập CSDL thêm 3 bảng so với danh sách bảng suy ra ở SDD: `sod_pair`, `legacy_role_map`, `shedlock`.\n\nCác sửa cần ở tài liệu dùng chung (SDD, API, D03-10, D02-08, D03-09, D00-04, ADR đề xuất) nằm ở mục \"Đề nghị đồng bộ\" cuối tài liệu chính.",
+      "kiem_tra_ma": [
+        "Tổng: 139 tệp, 4046 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): API 111, ERR 71, EVT 16, TC 1, UI 19, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "api",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.8288,
+      "so_luot": 60,
+      "phut": 13.4,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 108,
+        "output_tokens": 124798,
+        "cache_read_input_tokens": 9340607,
+        "cache_creation_input_tokens": 258442
+      },
+      "tom_tat": "\n- **Lỗi:** 66 mã `ERR-12`. Ba mã (015, 016, 124) không nằm trong OpenAPI vì phát sinh ở trang của Keycloak hoặc thư viện PEP; bảng §6 ghi rõ nơi phát sinh.\n- **Lược đồ OpenAPI:** 135.\n- **FR phủ:** 57 trong 62. Năm FR (007, 008, 010, 021, 050) chỉ có giao diện hoặc chạy nền, được ghi rõ ở §3.3.\n\n**Kiểm tra:**\n- OpenAPI qua `openapi-spec-validator`.\n- AsyncAPI qua `@asyncapi/parser` 3, không lỗi; chỉ có một khuyến nghị nâng lên 3.1.\n- 9 ví dụ trong lược đồ khớp schema; 17 khối JSON trong tài liệu đều parse được.\n- Chưa chạy Spectral (không có bộ luật trong repo), nên mục lint ở chương 7 mới là kế hoạch. `oasdiff` cũng chưa chạy.\n\n**Câu hỏi mở thêm:** 5, từ Q12-55 đến Q12-59.\n- Q12-55: giữ hay bỏ đường dẫn cũ `decide/batch` trong giai đoạn chạy song song.\n- Q12-56: có đưa điểm cuối nhận trạng thái OPA vào danh mục API hay không.\n- Q12-57: phân trang `/decisions` và `/security-events` khi khối lượng lớn.\n- Q12-58: có thêm API cho OPA kéo dữ liệu chính sách hay không.\n- Q12-59: bảng mức xác thực bước lên theo từng operation (39 mức 2, 13 mức 3) là đề xuất của tôi, cần ATTT duyệt.\n\n**Chỗ lệch cần lưu ý:**\n- Phần mục \"Đề nghị đồng bộ\" đã ghi việc cho D00-04, FRS §9.1/§9.4, SDD, D02-08 và các phân hệ PH-01, 03, 13, 15, 20; không đề xuất ADR mới.\n- Mức xác thực bước lên (`x-datahub-acr`) và ERR-12-120 ở API quản trị là suy luận của tôi từ FRS §4.8 và FR-12-023, chưa có bảng chính thức.\n- OpenAPI dùng đúng các trạng thái trong FRS, ví dụ `CANCELLED`, `CHANGES_REQUESTED`, `DISCARDED`.",
+      "kiem_tra_ma": [
+        "Tổng: 140 tệp, 4046 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, UI 19, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "mh",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 2.4619,
+      "so_luot": 48,
+      "phut": 13.2,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 74,
+        "output_tokens": 121886,
+        "cache_read_input_tokens": 6049054,
+        "cache_creation_input_tokens": 255090
+      },
+      "tom_tat": "2.2 AA. UI-12-12 (trình soạn chính sách) viết siêu chi tiết như UI-04-04.\n- **Phần cuối:** bốn sơ đồ Mermaid, ma trận màn theo vai trò, truy vết FR sang màn, kiểm thử giao diện, hai phụ lục đề nghị bổ sung, Đề nghị đồng bộ, câu hỏi mở và lịch sử phiên bản.\n\n**Số liệu chính**\n- Mã, thành phần và token: tập dùng 56 mã `ERR-12-*` kèm câu hiển thị, 14 lý do từ chối, 10 mẫu PTN có sẵn (không tạo mẫu mới), `CMP-*` và token đúng tên D03-05. `kiem_tra_ma.py` đã bắt một `CMP-TagInput` tôi tự đặt nhầm; tôi đã bỏ.\n- Đề nghị bổ sung: 7 cho D03-05 và D03-06-00 (Phụ lục A), 6 cho API (Phụ lục B). Các route con của PH-12 chưa có trong D03-06-00 nên cũng ghi ở Phụ lục A. Tôi không sửa tài liệu dùng chung nào.\n- **Chưa kiểm:** các tham số `12.*` trong chương UI-12-16 chỉ đối chiếu với bảng 8.2 của FRS. Các `CMP-*` đã qua `kiem_tra_ma.py`; token và `PERM-*` tôi chỉ đối chiếu bằng mắt, không có công cụ kiểm.\n\n**Câu hỏi mở thêm (Q12-30…36)**\n- **Q12-30:** API chưa có thao tác ghi đè nháp chính sách.\n- **Q12-31:** ngưỡng độ phủ luật 80% là giả định.\n- **Q12-32:** giới hạn tệp Rego 256 KB / 1 MB là giả định.\n- **Q12-33:** người dùng nhiều tenant chọn tenant ở đâu.\n- **Q12-34:** thời gian tự hết hạn yêu cầu quyền có thời hạn.\n- **Q12-35:** ghi vết lượt xem dữ liệu đã che với PH-13.\n- **Q12-36:** tùy chọn tắt phím tắt một ký tự (WCAG 2.1.4).\n\nHai ảnh hi-fi trong FRS (§10.2) trỏ tương đối từ thư mục `frs/` nên có thể không tìm thấy ảnh khi xuất; tôi đã ghi đề nghị sửa đường dẫn vào \"Đề nghị đồng bộ\".",
+      "kiem_tra_ma": [
+        "Tổng: 141 tệp, 4046 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    },
+    {
+      "tap": "tc",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "chi_phi_usd": 1.5669,
+      "so_luot": 34,
+      "phut": 8.8,
+      "ket_thuc": "success",
+      "token": {
+        "input_tokens": 60,
+        "output_tokens": 84789,
+        "cache_read_input_tokens": 3158139,
+        "cache_creation_input_tokens": 161141
+      },
+      "tom_tat": "nhất một ca dương và một ca âm (cột \"Đạt quy tắc\" của mục 8.1 không còn dòng \"Không\").\n- **Kịch bản:** `TS-12-01…37`. 31 kịch bản chức năng theo 62 FR và 42 UC, một kịch bản hành vi chung của API. Nhóm phi chức năng gồm: không lộ bí mật, cách ly tenant/RLS, chịu lỗi và độc lập control plane, hiệu năng (11 ca k6), bảo mật ứng dụng và truy cập.\n- **Mức phủ:** 111 API, 19 UI, 42 UC, 45 BR, 33 NFR và mọi mã lỗi `ERR-12-*` đều có ít nhất một ca (script không báo mã nào thiếu).\n- **UAT:** `UAT-01…10` tương đương hệ IAM cũ, phủ LGC-IAM-001…008, LGC-BUS-032, LGC-APIM-020; LGC-NGSP-008 và LGC-BUS-041. Chức năng bị loại có chủ đích (đăng nhập mạng xã hội, grant `password`) được kiểm là không còn hoạt động.\n- **Mục 8:** ma trận truy vết 8.1–8.8, sinh tự động.\n\n**Câu hỏi mở**\n- `Q12-40`: có cần thử nghiệm xâm nhập độc lập trước RG-3 không.\n- `Q12-41`: bộ giả lập LDAP và SAML có đại diện cho thiết bị thật của tỉnh thí điểm không.\n- `Q12-42`: có chạy ca VNeID ở RG-3 không, khi tính năng này là Đợt 2.\n\n**Đề nghị đồng bộ** (ghi ở mục 10 của tệp)\n- D05-01: thêm nhóm ca fail-closed và cách ly tenant vào cổng RG-3 như điều kiện chặn.\n- D03-04-PH12: bổ sung API đọc bộ đếm `iam_decisions_total` nếu chưa có.\n- D04: ghi đồng hồ điều khiển được ở SIT thành yêu cầu môi trường kiểm thử.\n- D02-08: định nghĩa các quyền `PERM-12-*` mà FRS đã dùng.\n\n**Lưu ý**\n- Ngân sách có hạn nên các ca viết ở dạng gọn (dạng cũ mà `tc_parse.py` đọc được), không dùng khối `::: dac-ta`.\n- Tôi chưa kiểm tra bản xuất .docx.",
+      "kiem_tra_ma": [
+        "Tổng: 142 tệp, 4210 mã khác nhau. Trùng 20, thiếu 38, liên kết hỏng 0 (mới 14, đã ghi nhận 44, đã sửa so với ngoại lệ 3).",
+        "Chờ tài liệu gốc (chưa viết, không tính lỗi): ERR 5, TC 1, US 57",
+        "Gợi ý: chạy --ghi-ngoai-le để thu hẹp danh sách ngoại lệ."
+      ]
+    }
+  ],
+  "tong_usd": 29.9116
+}

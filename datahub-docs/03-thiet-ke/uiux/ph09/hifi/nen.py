@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""Nén ảnh PNG hi-fi UI-09 về khoảng 150 KB bằng lượng tử hóa màu (không đổi kích thước). Chạy sau shot.js."""
+import pathlib
+from PIL import Image
+d = pathlib.Path(__file__).parent
+for f in sorted(d.glob("ui-09-*.png")):
+    im = Image.open(f).convert("RGB")
+    for n in (256, 128, 64, 48, 32):
+        q = im.quantize(colors=n, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        q.save(f, optimize=True)
+        if f.stat().st_size <= 150_000:
+            break
+    print(f.name, f.stat().st_size // 1024, "KB", im.size, n)
