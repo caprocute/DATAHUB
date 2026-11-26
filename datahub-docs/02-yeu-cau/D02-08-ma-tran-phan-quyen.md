@@ -102,7 +102,7 @@ Thuật ngữ chung theo D00-01. Bảng dưới giải thích ký hiệu riêng 
 | MFA | Xác thực nhiều yếu tố |
 | Bốn mắt | Người tạo và người duyệt phải là hai người khác nhau |
 | Scope | Phạm vi OAuth của HTTT thành viên (máy) |
-| DU | Tài khoản dịch vụ nội bộ |
+| DU | Đơn vị triển khai (xem D03-01); tài khoản dịch vụ của DU là tài khoản máy nội bộ |
 
 : Thuật ngữ và chữ viết tắt của ma trận phân quyền
 

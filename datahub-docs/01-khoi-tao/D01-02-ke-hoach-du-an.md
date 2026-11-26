@@ -19,7 +19,7 @@ Sổ rủi ro đầy đủ RSK-01 đến RSK-43 ở dạng bảng tính nằm �
 
 **Mục tiêu.** Kế hoạch này biến phương án được chọn ở Báo cáo nghiên cứu khả thi (D01-01) thành chương trình thực hiện có thể kiểm soát: làm những việc gì, theo mô hình nào, xong lúc nào, ai nghiệm thu, tốn bao nhiêu và rủi ro ở đâu. Kế hoạch là đường cơ sở để nghiệm thu từng phần và thanh toán theo cổng, nên mọi con số ở đây khớp với tổng mức đầu tư của D01-01.
 
-**Phạm vi.** Xây mới 20 phân hệ Datahub theo ba đợt (12 phân hệ MVP, 5 phân hệ đợt 2, 3 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần, rồi nhân rộng sang tỉnh thứ hai. Kho dữ liệu phân tích, hệ thống thông tin nguồn của sở ngành và mua sắm hạ tầng vật lý hoặc thuê cloud nằm ngoài phạm vi phần mềm của dự án.
+**Phạm vi.** Xây mới 20 phân hệ Datahub theo ba đợt (12 phân hệ MVP, 4 phân hệ đợt 2, 4 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần, rồi nhân rộng sang tỉnh thứ hai. Kho dữ liệu phân tích, hệ thống thông tin nguồn của sở ngành và mua sắm hạ tầng vật lý hoặc thuê cloud nằm ngoài phạm vi phần mềm của dự án.
 
 **Căn cứ pháp lý.** CMP-LAW-14 (Nghị định 224/2026/NĐ-CP về quản lý dự án đầu tư hệ thống chuyển đổi số, gồm nghiệm thu và bàn giao); CMP-LAW-21 (Luật Chuyển đổi số 148/2025/QH15); CMP-LAW-25 (Luật Đầu tư công 58/2024/QH15, sửa đổi bởi Luật 90/2025/QH15: nhóm dự án, chủ trương đầu tư); CMP-LAW-26 (Luật Đấu thầu 22/2023/QH15: lựa chọn nhà thầu); Thông tư 39/2026/TT-BKHCN (cơ cấu chi phí, dự phòng); CMP-LAW-06 và CMP-LAW-08 (Nghị định 331/2026/NĐ-CP, TCVN 14423:2026: hồ sơ cấp độ 3, một điều kiện của cổng G3).
 
@@ -32,7 +32,7 @@ Sổ rủi ro đầy đủ RSK-01 đến RSK-43 ở dạng bảng tính nằm �
 | Thời gian | Chuẩn bị đầu tư 7 tháng (T0 − 7 đến T0), thực hiện 18 tháng, bảo hành 12 tháng (T0+18 đến T0+30) |
 | Mô hình thực hiện | 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5), 24 mốc kiểm soát (M-01 đến M-24) |
 | Mốc then chốt | G2 nghiệm thu MVP tại T0+10; G3 vận hành chính thức tại T0+13; tắt hệ cũ tại T0+17; G5 tại T0+18 |
-| Phạm vi sản phẩm | 20 phân hệ (12 MVP, 5 đợt 2, 3 đợt 3); 9 mục tiêu nghiệp vụ BO-01 đến BO-09, 18 chỉ số KPI-01 đến KPI-18 |
+| Phạm vi sản phẩm | 20 phân hệ (12 MVP, 4 đợt 2, 4 đợt 3); 9 mục tiêu nghiệp vụ BO-01 đến BO-09, 18 chỉ số KPI-01 đến KPI-18 |
 | Nỗ lực nhà thầu | Khoảng 455 người-tháng giai đoạn thực hiện, thêm 60 người-tháng bảo hành; đỉnh khoảng 38 người toàn thời gian khi W3 và W4 chồng lấn |
 | Ngân sách | Tổng mức đầu tư H1 khoảng 40.702 triệu đồng (H2 khoảng 33.460 triệu đồng), trước thuế GTGT, đơn giá tham khảo 40 triệu đồng/người-tháng |
 | Rủi ro | 43 rủi ro (RSK-01 đến RSK-43); tám rủi ro hàng đầu trong hợp đồng giảm từ khoảng 42 xuống 17 người-tháng kỳ vọng sau giảm thiểu |
@@ -41,7 +41,7 @@ Sổ rủi ro đầy đủ RSK-01 đến RSK-43 ở dạng bảng tính nằm �
 
 ## 1. Giới thiệu, mục tiêu và phạm vi dự án
 
-**Tóm tắt cho hội đồng thẩm định.** Kế hoạch dự án này biến phương án được chọn trong Báo cáo nghiên cứu khả thi (D01-01) thành một chương trình thực hiện có thể kiểm soát được: 18 tháng thực hiện chia thành 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5) và 12 tháng bảo hành. Dự án xây mới 20 phân hệ của Datahub theo ba đợt (12 phân hệ MVP, 5 phân hệ đợt 2, 3 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần (strangler), sau đó nhân rộng sang tỉnh thứ hai trước khi kết thúc giai đoạn thực hiện. Tổng nỗ lực tham chiếu của nhà thầu là khoảng 459 người-tháng; đỉnh tải thực tế khoảng 38 người toàn thời gian trong ba tháng W3 và W4 chồng lấn. Kho dữ liệu phân tích (lakehouse), các hệ thống thông tin nguồn của sở ngành và phần mua sắm hạ tầng vật lý hoặc thuê dịch vụ cloud nằm ngoài phạm vi phần mềm của dự án này. Mục tiêu dự án được đo bằng chín mục tiêu nghiệp vụ BO-01 đến BO-09 và 18 chỉ số KPI-01 đến KPI-18 định nghĩa tại D02-01; kế hoạch gắn mỗi chỉ số với cổng nghiệm thu đầu tiên có thể chứng minh nó.
+**Tóm tắt cho hội đồng thẩm định.** Kế hoạch dự án này biến phương án được chọn trong Báo cáo nghiên cứu khả thi (D01-01) thành một chương trình thực hiện có thể kiểm soát được: 18 tháng thực hiện chia thành 6 wave (W0 đến W5), sprint 2 tuần, 6 cổng nghiệm thu (G0 đến G5) và 12 tháng bảo hành. Dự án xây mới 20 phân hệ của Datahub theo ba đợt (12 phân hệ MVP, 4 phân hệ đợt 2, 4 phân hệ đợt 3), di trú khỏi hệ LGSP cũ tại tỉnh thí điểm theo chiến lược chạy song song và thay thế dần (strangler), sau đó nhân rộng sang tỉnh thứ hai trước khi kết thúc giai đoạn thực hiện. Tổng nỗ lực tham chiếu của nhà thầu là khoảng 459 người-tháng; đỉnh tải thực tế khoảng 38 người toàn thời gian trong ba tháng W3 và W4 chồng lấn. Kho dữ liệu phân tích (lakehouse), các hệ thống thông tin nguồn của sở ngành và phần mua sắm hạ tầng vật lý hoặc thuê dịch vụ cloud nằm ngoài phạm vi phần mềm của dự án này. Mục tiêu dự án được đo bằng chín mục tiêu nghiệp vụ BO-01 đến BO-09 và 18 chỉ số KPI-01 đến KPI-18 định nghĩa tại D02-01; kế hoạch gắn mỗi chỉ số với cổng nghiệm thu đầu tiên có thể chứng minh nó.
 
 ### 1.1. Mục đích của kế hoạch
 
@@ -248,8 +248,8 @@ flowchart LR
 
     subgraph PHG["1.1 đến 1.20 Hai mươi phân hệ, 275,5"]
         D1["Đợt 1 MVP, 12 phân hệ<br/>1.1 1.2 1.3 1.4 1.5 1.7<br/>1.10 1.12 1.13 1.14 1.18 1.20<br/>175"]
-        D2["Đợt 2, 5 phân hệ<br/>1.6 1.8 1.9 1.11 1.19<br/>70"]
-        D3["Đợt 3, 3 phân hệ<br/>1.15 1.16 1.17<br/>30,5"]
+        D2["Đợt 2, 4 phân hệ<br/>1.9 1.11 1.15 1.19<br/>55"]
+        D3["Đợt 3, 4 phân hệ<br/>1.6 1.8 1.16 1.17<br/>45,5"]
         TPL["Bảy gói chuẩn của mỗi phân hệ<br/>.1 Phân tích FRS<br/>.2 Thiết kế SDD<br/>.3 CSDL và API<br/>.4 Giao diện<br/>.5 Lập trình<br/>.6 Kiểm thử<br/>.7 Tài liệu HDSD"]
     end
 
@@ -339,7 +339,7 @@ Bảng sau là từ điển WBS cho 20 phân hệ, mỗi dòng là một phần 
 
 Ba phân hệ lớn nhất chiếm gần 27% nỗ lực phân hệ và đều có lý do cụ thể. PH-04 (34 người-tháng) là trung tâm thay thế khối Bus và công cụ thiết kế luồng của hệ cũ, gồm trình thiết kế luồng trực quan, khung route chín chặng, chạy thử và GitOps cho định nghĩa luồng; riêng 70 mục `LGC-BUS` và `LGC-TOOL` trong D00-03 đã đổ vào phân hệ này. PH-19 (22 người-tháng) phải tái hiện 23 mục `LGC-PAY` với yêu cầu đối soát chính xác tới từng đồng và dữ liệu lịch sử giao dịch. PH-07 (18 người-tháng) là phân hệ dữ liệu đầu tiên, phải hỗ trợ lịch sử sáp nhập đơn vị hành chính sau năm 2025 và tải danh mục cỡ M tới 5 triệu bản ghi. PH-16 nhỏ nhất (9 người-tháng) vì ở bản v1.0 chỉ cần sổ kiến trúc tối thiểu và một nhóm KPI, đúng phạm vi đợt 3.
 
-Nỗ lực phân hệ theo đợt là 175 người-tháng cho 12 phân hệ MVP, 70 người-tháng cho 5 phân hệ đợt 2 và 30,5 người-tháng cho 3 phân hệ đợt 3. Tỷ lệ 64%, 25% và 11% này phản ánh đúng chủ trương đưa phần thay thế hệ cũ lên trước và để các phân hệ hoàn toàn mới (cổng nhà phát triển, quản trị KPI, AI) về cuối, nơi chúng có thể bị thu hẹp nếu dự án gặp rủi ro tiến độ mà không làm hỏng mục tiêu thay thế hệ cũ.
+Nỗ lực phân hệ theo đợt là 175 người-tháng cho 12 phân hệ MVP, 55 người-tháng cho 4 phân hệ đợt 2 và 45,5 người-tháng cho 4 phân hệ đợt 3. Tỷ lệ khoảng 64%, 20% và 17% này phản ánh đúng chủ trương đưa phần thay thế hệ cũ lên trước và để các phân hệ hoàn toàn mới (dữ liệu chủ, chất lượng dữ liệu, quản trị KPI, AI) về cuối, nơi chúng có thể bị thu hẹp nếu dự án gặp rủi ro tiến độ mà không làm hỏng mục tiêu thay thế hệ cũ.
 
 ### 2.5. Từ điển WBS: các phần tử xuyên suốt
 
@@ -1130,7 +1130,7 @@ Bảng dưới đây là định biên tham chiếu của nhà thầu, giữ ngu
 
 : Định biên nhà thầu theo vai trò và wave, kèm người-tháng
 
-Cộng sáu wave, tổng nỗ lực giai đoạn thực hiện là 454,5 người-tháng, làm tròn 455 người-tháng như giả định nền; bảo hành thêm 60 người-tháng. Cơ cấu này cho thấy dự án nặng về kỹ sư phát triển (backend, tích hợp, frontend chiếm khoảng 45% nỗ lực) và kiểm thử (khoảng 13%), phù hợp với một sản phẩm phần mềm đóng gói hơn là một dự án tích hợp hệ thống thuần túy.
+Cộng sáu wave, tổng nỗ lực giai đoạn thực hiện là 454,5 người-tháng theo sáu wave, cộng 4 người-tháng PM/PO của đợt 2 thành 458,5 người-tháng như bảng WBS (khoảng 455 người-tháng theo giả định nền); bảo hành thêm 60 người-tháng. Cơ cấu này cho thấy dự án nặng về kỹ sư phát triển (backend, tích hợp, frontend chiếm khoảng 45% nỗ lực) và kiểm thử (khoảng 13%), phù hợp với một sản phẩm phần mềm đóng gói hơn là một dự án tích hợp hệ thống thuần túy.
 
 #### 6.2.2. Biểu đồ tải nhân sự theo tháng
 

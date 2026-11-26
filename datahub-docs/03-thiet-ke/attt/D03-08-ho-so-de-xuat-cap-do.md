@@ -28,7 +28,7 @@ tai_lieu_lien_quan: D03-07 Thiết kế ATTT; D03-09 Hạ tầng, triển khai, 
 | Cấp độ đề xuất | 3 (`HT-A`); 3 có điều kiện (`HT-B`) |
 | Tiêu chí xác định cấp độ được áp dụng | 7 (TCD-01…TCD-07) |
 | Yếu tố có thể đẩy lên cấp độ 4 | 6 (CD4-01…06) |
-| Trường thông tin cần điền | 24 trường `TT-nn` ở Phụ lục C (TT-01…TT-52) |
+| Trường thông tin cần điền | 23 trường `TT-nn` ở Phụ lục C (TT-01…TT-52) |
 | Câu hỏi mở | 10 trong dải Q320…Q329, ba câu chặn trình hồ sơ |
 | Hồ sơ triển khai | 2 (`HT-A`, `HT-B`) |
 
@@ -124,7 +124,7 @@ Bảng dưới đây liệt kê các tài liệu mà hồ sơ dẫn chiếu ho�
 | D03-09 | Thiết kế hạ tầng, triển khai, DR | Sơ đồ vật lý, hồ sơ quy mô, sao lưu và khôi phục |
 | D03-01 | Kiến trúc tổng thể (SAD) | Thuyết minh kiến trúc nộp kèm |
 | D03-10 | Thiết kế đa tenant | Cách ly tenant của hồ sơ nền tảng |
-| D05-01, D05-04 | Kế hoạch kiểm thử tổng thể; kế hoạch kiểm thử bảo mật | Kế hoạch kiểm tra trước vận hành (mục 8) |
+| D05-01, D05-04 | Kế hoạch kiểm thử tổng thể (D05-01); kế hoạch kiểm thử bảo mật (D05-04, dự kiến Đợt 5) | Kế hoạch kiểm tra trước vận hành (mục 8) |
 | D00-01 | Quy ước mã và thuật ngữ | Mã mới đề xuất ở mục 11 |
 
 : Tài liệu tham chiếu của bản mẫu hồ sơ

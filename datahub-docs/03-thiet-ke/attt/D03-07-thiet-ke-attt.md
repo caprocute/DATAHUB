@@ -113,7 +113,7 @@ Bảng dưới đây liệt kê các văn bản và tài liệu nội bộ mà t
 | D03-01 | SAD | Thành phần, bảy lớp bảo vệ, phân loại dữ liệu |
 | D03-08, D03-09, D03-10 | Hồ sơ đề xuất cấp độ; Hạ tầng, triển khai, DR; Thiết kế đa tenant | Nơi dùng và hiện thực biện pháp (mục 1.4) |
 | D04-01, D04-02, D05-01 | Quy chuẩn lập trình; Kế hoạch kiểm thử tổng thể | Biến `SEC-nn` thành quy tắc và ca kiểm thử |
-| D06-03 | Tài liệu vận hành | Playbook đầy đủ (mục 8.5) |
+| D06-03 | Tài liệu vận hành (dự kiến, Đợt 5) | Playbook đầy đủ (mục 8.5) |
 
 : Tài liệu tham chiếu của thiết kế ATTT
 

@@ -88,7 +88,7 @@ Bảng dưới liệt kê tài liệu cung cấp kiểu dữ liệu, quy ước 
 | D03-01 | Kiến trúc tổng thể | Mức phân loại dữ liệu (§8.2), outbox (§7.3) |
 | D03-10 | Thiết kế đa tenant | Vòng đời tenant, hạn mức, chế độ cách ly |
 | D03-03 | CSDL các phân hệ | Nơi hiện thực bảng theo từ điển này |
-| D06-01 | Kế hoạch di trú | Dùng bảng ánh xạ chương 5 |
+| D06-01 | Kế hoạch di trú (dự kiến, Đợt 5) | Dùng bảng ánh xạ chương 5 |
 
 : Tài liệu tham chiếu của từ điển dữ liệu
 
