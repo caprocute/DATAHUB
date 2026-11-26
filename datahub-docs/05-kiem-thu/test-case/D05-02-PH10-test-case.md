@@ -99,7 +99,8 @@ Kịch bản có mã `TS-10-nn`, test case `TC-10-nnn`. Mã không tái sử d�
 
 | Ký hiệu | Nghĩa |
 |---|---|
-| 403-PQ | `403` với ERR-10-102 (thiếu quyền `PERM-10-*`, scope máy hoặc scope HTTT; API §2.2 dùng chung mã này cho control plane) |
+| 403-PQ | `403` với ERR-10-054 ở control plane (thiếu quyền `PERM-10-*` hoặc scope máy `event:*`), ERR-10-102 ở data plane (thiếu scope `topic:{topicName}:*` hoặc quan hệ không `ACTIVE`); theo FRS 0.3 |
+| 401-XT | `401` với ERR-10-053 ở control plane, ERR-10-101 ở data plane |
 | 403-TC | `403` với ERR-10-044 (đối tượng ngoài phạm vi tổ chức của OR, SV) |
 | 404-ẩn | `404` với ERR-10-001 ở control plane, ERR-10-103 ở data plane; thân giống hệt "không tồn tại" và "thuộc tenant khác" trừ `traceId` (BR-10-001) |
 | KT: có (hành động) | Có bản ghi kiểm toán tới PH-13 với hành động đó, đủ trường FR-00-041, không chứa bí mật ký, nội dung sự kiện |
@@ -186,7 +187,7 @@ Tài khoản dịch vụ (`client_credentials` + `private_key_jwt`):
 | SB-KB | Bên nhận `ht-kho-bac`: `SYSTEM`, `HT-KBNN`, `KAFKA_NATIVE` | `ACTIVE` | Kéo Kafka |
 | SB-FLOW | Bên nhận `luong-dong-bo-thue`: `FLOW`, luồng `dkkd-dong-bo-thue` | `ACTIVE` | Nội bộ |
 | SB-TC | Bên nhận `ht-tai-chinh`: `SYSTEM`, `HT-QLTC` thuộc `SO-TC` | `ACTIVE` | Phạm vi tổ chức OR |
-| SUB-PUSH | Subscription `ht-thue-dn-cap-phep`: SB-THUE, TP-CP, `PUSH`, `endpointUrl = https://thue.sim.test/hooks/dh`, `workerCount = 3`, `maxRetries = 3`, backoff 100 ms ×2 tối đa 2 s (giảm cho kiểm thử), `DEAD_LETTER` | `ACTIVE`, nhóm `dh-sub-t68-ht-thue-dn-cap-phep`, khóa ký `ACTIVE` | Giao đẩy, DLQ, phát lại |
+| SUB-PUSH | Subscription `ht-thue-dn-cap-phep`: SB-THUE, TP-CP, `PUSH`, `endpointUrl = https://thue.sim.test/hooks/dh`, `workerCount = 3`, `maxRetries = 3`, backoff 100 ms ×2 tối đa 2 s (giảm cho kiểm thử), `DEAD_LETTER` đặt rõ (mặc định FRS 0.3 cho topic có thứ tự là `BLOCK`) | `ACTIVE`, nhóm `dh-sub-t68-ht-thue-dn-cap-phep`, khóa ký `ACTIVE` | Giao đẩy, DLQ, phát lại |
 | SUB-PULL | Subscription `ht-bhxh-dn-cap-phep`: SB-BHXH, TP-CP, `PULL_API`, `maxBatch = 100`, `leaseSeconds = 30` | `ACTIVE` | Kéo API |
 | SUB-KAFKA | Subscription `ht-kho-bac-dn-cap-phep`: SB-KB, TP-CP, `PULL_KAFKA` | `ACTIVE`, nhóm `dh-ext-t68-ht-kho-bac-dn-cap-phep` | Kéo Kafka |
 | SUB-FLOW | Subscription `luong-dong-bo-thue-dn-cap-phep`: SB-FLOW, TP-CP, `INTERNAL` | `ACTIVE`, nhóm `dh-flow-t68-dkkd-dong-bo-thue` | Nội bộ, lag |
@@ -729,4 +730,930 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
   2. TO `:suspend` SB-THUE; SO gọi `:resume`.
   3. `:resume` bên nhận đang `ACTIVE`; `:suspend` không lý do.
 - **Mong đợi** Bước 1 `400` ERR-10-003 cho cả ba trường. Bước 2 SO nhận 403-PQ (SO chỉ tiếp tục đối tượng `suspendSource = SECURITY`). Bước 3 `409` ERR-10-006; `400` ERR-10-009.
+
+### TS-10-09 · Đồng bộ trạng thái với PH-01 và PH-04
+
+**Mục tiêu.** Xác nhận HTTT tạm ngừng ở PH-01 hay luồng ngừng ở PH-04 kéo theo bên tham gia và quan hệ của nó trong ≤ 60 giây, và chỉ tiếp tục những gì do PH-01 tạm ngừng.
+
+**Phủ.** FR-10-029; UC-10-08; EVT-10-07, 09; EVT-04-09; NFR-10-009; LGC-HUB-010, 011.
+
+#### TC-10-042 · HTTT tạm ngừng ở PH-01 rồi hoạt động lại <!--k:sync-ph01-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-10-029 · EVT-10-07, 09 · NFR-10-009 · LGC-HUB-010, 011
+- **Tiền điều kiện / dữ liệu** SIM-PH01; `HT-DKKD` có PB-DKKD, PB-DKKD-K; `HT-THUE` có SB-THUE (SB-THUE đã bị SO tạm ngừng trước đó với `suspendSource = SECURITY`).
+- **Bước**
+  1. SIM-PH01 phát sự kiện `HT-DKKD` sang `SUSPENDED`; đo thời gian tới khi lượt phát bị từ chối.
+  2. SIM-PH01 phát `HT-DKKD` và `HT-THUE` về `ACTIVE`.
+- **Mong đợi** Bước 1 PB-DKKD, PB-DKKD-K và publication của chúng `SUSPENDED` với `suspendSource = PH01`; API phát trả 403-PQ trong ≤ 60 giây; ACL `WRITE` bị gỡ trong ≤ 2 phút. Bước 2 chỉ đối tượng có `suspendSource = PH01` tiếp tục; SB-THUE vẫn `SUSPENDED`. EVT: `publication.state-changed`. KT: có, chủ thể `system:dh-integration`.
+
+#### TC-10-043 · Luồng ngừng ở PH-04; sự kiện lặp và sự kiện lỡ <!--k:sync-ph04-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-10-029 · EVT-04-09 · EVT-10-09
+- **Tiền điều kiện / dữ liệu** SIM-PH04; SB-FLOW có SUB-FLOW `ACTIVE`; PB-FLOW có publication `ACTIVE`.
+- **Bước**
+  1. SIM-PH04 phát EVT-04-09 cho `dkkd-dong-bo-thue` hai lần cùng `id`.
+  2. Đổi trực tiếp trạng thái luồng `dkkd-tong-hop` ở SIM-PH04 mà không phát sự kiện; chờ bộ đối soát mỗi giờ.
+- **Mong đợi** Bước 1 SUB-FLOW `REVOKED`, SB-FLOW `RETIRED`; lần nhận thứ hai bị inbox bỏ qua (một dòng `inbox_event`, một EVT `subscription.state-changed`). Bước 2 bộ đối soát phát hiện và thu hồi publication của PB-FLOW.
+
+### TS-10-10 · Publication: đề nghị, duyệt, cấp scope và ACL
+
+**Mục tiêu.** Xác nhận "Quản lý publication" của Hub cũ có thêm duyệt bốn mắt, cấp đúng scope `topic:{topicName}:publish` và ACL literal, có hiệu lực trong ≤ 2 phút, tạm ngừng và thu hồi có hiệu lực không đợi token hết hạn.
+
+**Phủ.** FR-10-030, 031, 032; UC-10-09; API-10-042…045, 096, 097, 059; UI-10-06, 09, 13; BR-10-016, 019, 020, 029; EVT-10-06, 07; LGC-HUB-012.
+
+#### TC-10-044 · Đề nghị và duyệt publication HTTP, phát được trong 2 phút <!--k:pub-approve-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-030, 031 · API-10-043, 059 · UI-10-06, 13 · EVT-10-06 · NFR-10-008 · UC-10-09 · LGC-HUB-012
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; bên phát `tc-ht-qldd` từ TC-10-037; TP-GT `ACTIVE`.
+- **Bước**
+  1. IE1 `POST /publications` với `publisherCode = tc-ht-qldd`, `topicName = TP-GT`, `purpose` 30 ký tự, `expectedRatePerMinute = 60`.
+  2. IA1 duyệt ở UI-10-13.
+  3. Client của `HT-QLDD` xin token mới, phát một sự kiện.
+- **Mong đợi** Bước 1 `201`, `publicationCode = pub-{ULID chữ thường}`, `PENDING_APPROVAL`. Bước 2 `ACTIVE`, `grantedScope = topic:t68.dkkd.doanh-nghiep.giai-the.v1:publish`; Keycloak có client scope tùy chọn; bundle OPA có cặp (client, topic). Bước 3 `202` trong ≤ 2 phút sau duyệt. EVT: `publication.activated`. KT: có (scope, hạn mức).
+
+#### TC-10-045 · Publication trên topic ngừng khuyến nghị, trùng cặp, topic nhạy cảm, vượt hạn mức, tự duyệt <!--k:pub-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-030, 031 · API-10-043, 059 · ERR-10-008, 011, 024, 025, 051 · BR-10-016, 019, 029
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-TA; TP-TD `DEPRECATED`; TP-KS `SENSITIVE`; `HT-QLDD` chưa đạt cấp độ ATTT tenant yêu cầu; T92 hạn mức sản xuất 1 MiB/s đã phân bổ hết.
+- **Bước**
+  1. Đề nghị publication `tc-ht-qldd` trên TP-TD.
+  2. Đề nghị lần hai cho cặp (`ht-dkkd`, TP-CP).
+  3. Đề nghị `tc-ht-qldd` trên TP-KS.
+  4. Ở T92 duyệt publication có `quotaBytesPerSecond = 524288`.
+  5. TA đề nghị rồi tự duyệt.
+- **Mong đợi** Bước 1 `422` ERR-10-025. Bước 2 `409` ERR-10-024. Bước 3 `422` ERR-10-051. Bước 4 `422` ERR-10-011. Bước 5 `403` ERR-10-008.
+
+#### TC-10-046 · Tạm ngừng có hiệu lực trước khi token hết hạn; tiếp tục; thu hồi <!--k:pub-suspend-revoke-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, KT
+- **Truy vết** FR-10-032 · API-10-045, 096, 097 · ERR-10-006, 102 · EVT-10-07 · BR-10-020 · NFR-10-009
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-IE1; publication của PB-DKKD trên TP-CP; token của C-DKKD còn hạn 5 phút; publication của PB-DKKD-K trên TP-GT.
+- **Bước**
+  1. TO `:suspend` publication HTTP; C-DKKD phát liên tục bằng token cũ.
+  2. TO `:suspend` publication Kafka; producer đang mở kết nối tiếp tục gửi.
+  3. TO `:resume` cả hai.
+  4. IE1 `:revoke` publication HTTP; TO gọi `:resume` publication đã thu hồi.
+- **Mong đợi** Bước 1 lượt phát bị từ chối 403-PQ trong ≤ 60 giây dù token còn hạn. Bước 2 producer nhận `TopicAuthorizationException` trong ≤ 2 phút. Bước 3 phát lại được, không cần duyệt. Bước 4 `REVOKED`, scope gỡ khỏi client; `:resume` trả `409` ERR-10-006. EVT: `publication.state-changed` cho mỗi lần đổi.
+
+### TS-10-11 · Phát sự kiện qua API phát
+
+**Mục tiêu.** Xác nhận event message của Bus cũ được thay bằng API phát CloudEvents có kiểm tra lược đồ, khóa phân vùng, `acks=all`, chống trùng và cô lập tenant theo tiền tố topic.
+
+**Phủ.** FR-10-033, 024; UC-10-10; API-10-079, 084; BR-10-001, 006, 007, 009, 011, 021; ERR-10-101…108, 121; LGC-BUS-039.
+
+#### TC-10-047 · Phát một sự kiện và một lô, đúng phân vùng theo khóa <!--k:publish-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, KT
+- **Truy vết** FR-10-033, 013 · API-10-079 · UC-10-10 · BR-10-006, 007 · LGC-BUS-039
+- **Tiền điều kiện / dữ liệu** C-DKKD có scope `topic:{TP-CP}:publish`; F-CE-OK.
+- **Bước**
+  1. `POST /event/v1/topics/t68.dkkd.doanh-nghiep.da-cap-phep.v1/events` với một sự kiện `application/cloudevents+json`, không có `time`.
+  2. Gửi lô 100 sự kiện `application/cloudevents-batch+json`, mỗi khóa xuất hiện 2 lần.
+  3. Đọc bản tin trên Kafka bằng `kcat`.
+- **Mong đợi** Bước 1 `202`, `results[0]` có `partition`, `offset`, `schemaVersion = 4`. Bước 2 `202`, 100 kết quả. Bước 3 tiêu đề `ce_*` đủ theo FRS §4.9, `time` được bổ sung, `dhtenant = T68`, khóa bản tin là `maDoanhNghiep`; hai sự kiện cùng khóa cùng phân vùng, đúng thứ tự; giá trị có tiền tố định danh lược đồ (byte 0 và `contentId`).
+
+#### TC-10-048 · Phong bì sai, nguồn giả, dữ liệu sai lược đồ, thiếu khóa, quá cỡ <!--k:publish-invalid-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-033 · API-10-079 · ERR-10-104, 105, 106 · BR-10-006, 011, 021
+- **Tiền điều kiện / dữ liệu** C-DKKD; F-CE-BAD.
+- **Bước**
+  1. Sự kiện thiếu `specversion`.
+  2. `source = /t68/systems/HT-THUE` (HTTT khác client).
+  3. `data` thiếu `maDoanhNghiep` (TP-CP `orderingRequired`).
+  4. Lô 100 sự kiện trong đó sự kiện thứ 3 sai lược đồ.
+  5. Lô 101 sự kiện; lô 1,2 MiB.
+  6. Gửi `dhtenant = T01` trong thân.
+- **Mong đợi** Bước 1, 2 `400` ERR-10-104. Bước 3 `422` ERR-10-105. Bước 4 `422` ERR-10-105 `failedIndex = 2`; không bản tin nào của lô được ghi (giao dịch Kafka). Bước 5 `413` ERR-10-106. Bước 6 `202` nhưng `dhtenant` trên Kafka bị ghi đè thành `T68`.
+
+#### TC-10-049 · Token sai, thiếu scope, topic khác tenant, topic không hoạt động <!--k:publish-authz-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-033, 064 · API-10-079 · ERR-10-101, 102, 103 · BR-10-001, 016
+- **Tiền điều kiện / dữ liệu** C-DKKD (T68), C-DKKD-T01 (T01, có scope trên topic T01 cùng tên trừ tiền tố); TP-GT `RETIRED` từ TC-10-023.
+- **Bước**
+  1. Không có token; token hết hạn.
+  2. C-THUE (không có publication) phát lên TP-CP.
+  3. C-DKKD phát lên `t01.dkkd.doanh-nghiep.da-cap-phep.v1`.
+  4. C-DKKD-T01 phát lên `t68.dkkd.doanh-nghiep.da-cap-phep.v1`.
+  5. Phát lên `t68.dkkd.khong-co.su-kien.v1` và lên TP-GT.
+- **Mong đợi** Bước 1 `401` ERR-10-101. Bước 2 403-PQ. Bước 3, 4, 5 404-ẩn ERR-10-103 với thân giống hệt nhau trừ `traceId`. Không có bản tin nào trên topic của T01 hay T68.
+
+#### TC-10-050 · Chống trùng phát theo id và Idempotency-Key <!--k:publish-dedup-->
+- **Loại** Dương, Biên · **Ưu tiên** P2 · **Tự động** API, RT
+- **Truy vết** FR-10-033 · API-10-079 · BR-10-009
+- **Tiền điều kiện / dữ liệu** C-DKKD; sự kiện `id = 01JDTC0000000000000000DUP1`.
+- **Bước**
+  1. Gửi cùng sự kiện ba lần liên tiếp.
+  2. Gửi hai lượt song song cùng `id`.
+  3. Dừng Valkey, gửi một sự kiện mới hai lần.
+- **Mong đợi** Bước 1, 2 mọi lượt `202` cùng `partition`, `offset`; trên Kafka chỉ một bản tin. Bước 3 cả hai lượt `202`, có hai bản tin (chống trùng bị bỏ qua), chỉ số `dh_event_dedup_bypass_total` tăng 2.
+
+#### TC-10-051 · Hạn mức phát và không đủ bản sao đồng bộ <!--k:publish-quota-isr-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** k6, Chaos
+- **Truy vết** FR-10-033, 062 · API-10-079 · ERR-10-107, 108 · BR-10-007
+- **Tiền điều kiện / dữ liệu** C-DKKD với hạn mức `limit-count` 100 lượt/phút ở SIT; TP-CP.
+- **Bước**
+  1. Phát 150 lượt trong một phút.
+  2. Dừng hai trong ba broker, phát một sự kiện.
+- **Mong đợi** Bước 1 lượt vượt trả `429` ERR-10-107 có `Retry-After`. Bước 2 `503` ERR-10-108, không hạ `acks`; sau khi broker trở lại lượt phát kế tiếp `202`. Không có sự kiện nào được trả `202` mà không có trên Kafka.
+
+#### TC-10-052 · Tra cứu lược đồ chỉ đọc theo scope <!--k:registry-lookup-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-024 · API-10-084 · ERR-10-102, 103
+- **Tiền điều kiện / dữ liệu** C-DKKD (publish TP-CP), C-THUE (không scope trên TP-GT).
+- **Bước**
+  1. C-DKKD `GET /event/v1/registry/apis/ccompat/v7/subjects/{TP-CP}-value/versions/latest`.
+  2. C-THUE đọc artifact của TP-GT.
+  3. C-DKKD đọc artifact nhóm `t01`.
+- **Mong đợi** Bước 1 `200` lược đồ v4. Bước 2 403-PQ. Bước 3 404-ẩn ERR-10-103.
+
+### TS-10-12 · Phát trực tiếp qua Kafka và giám sát tuân thủ
+
+**Mục tiêu.** Xác nhận nhóm Message Broker của Tooling được thay bằng phát Kafka trực tiếp có điều kiện bắt buộc (idempotent, serde Apicurio, tiêu đề CloudEvents) và giám sát tuân thủ phát hiện bên phát vi phạm.
+
+**Phủ.** FR-10-034, 023; UC-10-11; BR-10-007, 008; ERR-10-119, 120; EVT-10-14; LGC-TOOL-010.
+
+#### TC-10-053 · Bên phát Kafka ngoài ghi đúng chuẩn qua SASL OAUTHBEARER <!--k:kafka-produce-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** KT
+- **Truy vết** FR-10-034 · BR-10-008 · LGC-TOOL-010
+- **Tiền điều kiện / dữ liệu** PB-DKKD-K có publication trên TP-GT; client Java `acks=all`, `enable.idempotence=true`, serde Apicurio `auto.register=false`, token Keycloak `client_credentials`.
+- **Bước**
+  1. Kết nối listener `external` cổng 9093 với `sasl.mechanism=OAUTHBEARER`; gửi 1.000 bản tin có tiêu đề `ce_*`.
+  2. Đọc lại bằng consumer của SUB-KAFKA.
+- **Mong đợi** Ghi thành công; principal theo `azp`; bản tin có tiền tố lược đồ hợp lệ; giám sát tuân thủ không ghi vi phạm.
+
+#### TC-10-054 · Ghi ngoài ACL, ghi topic khác, bản tin không có định danh lược đồ <!--k:kafka-produce-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** KT, RT
+- **Truy vết** FR-10-034, 023 · ERR-10-119, 120 · EVT-10-14 · BR-10-008
+- **Tiền điều kiện / dữ liệu** PB-DKKD-K; `10.compliance.sample-ratio = 1` ở SIT, ngưỡng 10.
+- **Bước**
+  1. Ghi lên TP-CP (không có publication cho PB-DKKD-K).
+  2. Ghi lên `t01.dkkd.doanh-nghiep.da-cap-phep.v1`.
+  3. Ghi 20 bản tin JSON thô không tiền tố lược đồ lên TP-GT trong 15 phút.
+- **Mong đợi** Bước 1, 2 `TopicAuthorizationException`; chỉ số ERR-10-120 theo principal. Bước 3 ghi được (Kafka không kiểm lược đồ) nhưng giám sát ghi 20 vi phạm ERR-10-119, `GET /topics/{TP-GT}/compliance` liệt kê publication vi phạm; EVT: `compliance.violated` một lần khi vượt ngưỡng; PH-18 nhận việc.
+
+#### TC-10-055 · SO tạm ngừng publication vi phạm lược đồ <!--k:kafka-compliance-suspend-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-10-023, 032 · API-10-031, 045 · UI-10-06 · UC-10-11
+- **Tiền điều kiện / dữ liệu** U-T68-SO; vi phạm từ TC-10-054.
+- **Bước**
+  1. Mở tab "Tuân thủ" ở UI-10-06; bấm "Tạm ngừng publication" với lý do.
+- **Mong đợi** Publication `SUSPENDED` với `suspendSource = SECURITY`; ACL `WRITE` gỡ trong ≤ 2 phút; producer nhận lỗi quyền.
+
+### TS-10-13 · Subscription: đề nghị, xác minh endpoint, duyệt
+
+**Mục tiêu.** Xác nhận "Quản lý subscription: URI nhận, số worker, số lần thử lại, thời điểm bắt đầu" của Hub cũ có thêm xác minh endpoint chống lạm dụng, kiểm SSRF, duyệt bốn mắt và cấp phát đúng theo chế độ giao nhận.
+
+**Phủ.** FR-10-035, 036, 037, 040; UC-10-12, 13; API-10-046…048, 051, 091, 120, 059; UI-10-11, 12, 13; BR-10-017, 019, 022, 025, 026; EVT-10-08; LGC-HUB-013.
+
+#### TC-10-056 · Đề nghị subscription PUSH, xác minh endpoint, duyệt, giao trong 2 phút <!--k:sub-push-approve-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-035, 036, 037 · API-10-047, 051, 059, 120 · UI-10-11, 13 · EVT-10-08 · NFR-10-008 · UC-10-12, 13 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; bên nhận thử `tc-ht-thue2` (`WEBHOOK_PUSH`); SIM-WH `https://hooks.sim.test/tc` trả `WebHook-Allowed-Origin: event.t68.datahub`.
+- **Bước**
+  1. Ở UI-10-11 chọn TP-CP, chế độ ĐẨY, URI, `workerCount = 3`, `maxRetries = 5`, `startPosition = LATEST`; bấm "Xác minh endpoint" rồi "Gửi đề nghị".
+  2. IA1 duyệt.
+  3. IE1 gọi `POST /subscriptions/{subscriptionCode}/signing-keys:claim` hai lần.
+  4. Phát một sự kiện lên TP-CP.
+- **Mong đợi** Bước 1 `POST /endpoint-verifications` trả `result = PASSED` (SIM-WH nhận `OPTIONS` có `WebHook-Request-Origin`); `POST /subscriptions` trả `201`, mã mặc định `tc-ht-thue2-doanh-nghiep-da-cap-phep` khi không nhập. Bước 2 `PROVISIONING` rồi `ACTIVE`, `consumerGroup = dh-sub-t68-{subscriptionCode}`, nhóm khởi tạo ở cuối topic. Bước 3 lần đầu trả khóa `whsec_…` một lần, lần hai `409` ERR-10-006. Bước 4 SIM-WH nhận trong ≤ 2 phút sau duyệt. EVT: `subscription.activated`.
+
+#### TC-10-057 · Endpoint không hợp lệ: HTTP, tự ký, chuyển hướng, IP riêng, ngoài egress, bắt tay sai <!--k:sub-endpoint-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, ZAP
+- **Truy vết** FR-10-035, 036 · API-10-047, 051 · ERR-10-026, 027 · BR-10-026
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; SIM-WH-BAD; `https://hooks.sim.test/no-origin` không trả `WebHook-Allowed-Origin`.
+- **Bước**
+  1. Xác minh lần lượt `http://plain.sim.test`, `https://10.96.0.10/h`, `https://ngoai-egress.example/h`.
+  2. Xác minh `https://selfsigned.sim.test/h`, `https://redirect.sim.test/h`, `https://hooks.sim.test/no-origin`.
+  3. Đề nghị subscription với endpoint đã xác minh cách đây 25 giờ.
+- **Mong đợi** Bước 1 `422` ERR-10-026. Bước 2 `422` ERR-10-027 với lý do TLS, chuyển hướng (không theo), thiếu tiêu đề. Bước 3 hệ thống chạy lại xác minh; thất bại thì `422` ERR-10-027. Không có lượt kết nối nào tới `10.0.0.5` hay `10.96.0.10` ở nhật ký egress gateway.
+
+#### TC-10-058 · Tổ hợp chế độ, worker vượt phân vùng, thời điểm ngoài lưu giữ, trùng cặp, topic nhạy cảm <!--k:sub-create-neg-->
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-035, 040 · API-10-047 · ERR-10-011, 024, 025, 028, 030, 031, 051 · BR-10-017, 019, 025
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T01-IE; T92 đã có 2 subscription.
+- **Bước**
+  1. SB-THUE (`WEBHOOK_PUSH`) với `deliveryMode = PULL_API`; SB-THUE với `INTERNAL`.
+  2. `workerCount = 7` trên TP-CP 6 phân vùng; `workerCount = 6` (biên).
+  3. `startPosition = TIMESTAMP`, `startAt` 10 ngày trước (lưu giữ 7 ngày).
+  4. Đề nghị lần hai cặp (SB-THUE, TP-CP).
+  5. Bên nhận chưa đạt cấp độ ATTT trên TP-KS; subscription TP-KS thiếu `legalBasis`.
+  6. U-T01-IE đề nghị `PULL_KAFKA`; T92 đề nghị subscription thứ ba.
+- **Mong đợi** Bước 1 `400` ERR-10-003. Bước 2: 7 trả `422` ERR-10-030; 6 được nhận. Bước 3 `422` ERR-10-031 có `availableRange[]`. Bước 4 `409` ERR-10-024. Bước 5 `422` ERR-10-051; `400` ERR-10-003. Bước 6 `422` ERR-10-028; `422` ERR-10-011.
+
+#### TC-10-059 · Điểm bắt đầu EARLIEST và TIMESTAMP <!--k:sub-start-position-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-040 · API-10-047 · BR-10-022 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** TP-CP có 5.000 bản tin trong 3 ngày gần nhất; hai bên nhận thử.
+- **Bước**
+  1. Subscription A `EARLIEST`; subscription B `TIMESTAMP` tại đầu ngày hôm qua; duyệt cả hai.
+  2. Đọc offset đã commit ban đầu của hai nhóm.
+- **Mong đợi** Phản hồi đề nghị A có cảnh báo số bản tin ước lượng và thời gian giao hết. A bắt đầu từ offset sớm nhất còn trên cụm; B từ offset trả bởi `offsetsForTimes` theo từng phân vùng. Nhóm do PH-10 khởi tạo vị trí, bộ giao nhận chạy với `auto.offset.reset=none`.
+
+#### TC-10-060 · OR đề nghị cho HTTT của tổ chức mình; ngoài tổ chức; bốn mắt; ngoại lệ xác minh <!--k:sub-or-waive-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-035, 036, 037 · API-10-047, 059, 091 · ERR-10-008, 044, 012
+- **Tiền điều kiện / dữ liệu** U-T68-OR (`SO-TC`); SB-TC; SB-THUE (`SO-CT`); U-T68-TA; U-T68-IA1.
+- **Bước**
+  1. OR đề nghị subscription SB-TC trên TP-CP.
+  2. OR đề nghị subscription SB-THUE.
+  3. TA đề nghị rồi tự duyệt một subscription.
+  4. TA cấp ngoại lệ xác minh 7 ngày cho endpoint nội mạng của tỉnh; cấp 400 ngày.
+- **Mong đợi** Bước 1 `201`. Bước 2 403-TC. Bước 3 `403` ERR-10-008. Bước 4: 7 ngày `200`, `lastVerification.result = WAIVED` có hạn; 400 ngày `422` ERR-10-012. KT: có cho ngoại lệ.
+
+### TS-10-14 · Giao nhận ĐẨY: webhook ký HMAC và khóa ký
+
+**Mục tiêu.** Chứng minh mọi lượt giao đẩy có chữ ký HMAC đúng ADR-044, có thể xác minh ở đầu nhận, không bao giờ gửi không ký, và xoay, thu hồi khóa không làm gián đoạn.
+
+**Phủ.** FR-10-038, 042; UC-10-14, 17; API-10-054, 100, 120; BR-10-009, 025, 026, 027; ERR-10-115, 117; EVT-10-13; NFR-10-003, 016; ADR-071.
+
+#### TC-10-061 · Chữ ký HMAC và tiêu đề webhook đúng đặc tả <!--k:hmac-sign-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** RT, UT
+- **Truy vết** FR-10-038 · BR-10-009 · UC-10-14 · ADR-071 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** SUB-PUSH `CLOUDEVENTS_STRUCTURED`; SIM-WH nạp khóa ký hiện hành.
+- **Bước**
+  1. Phát một sự kiện lên TP-CP.
+  2. Ở SIM-WH tính lại `HMAC-SHA256(secret, "{Webhook-Id}.{Webhook-Timestamp}.{body}")`.
+  3. Lặp với subscription thử `CLOUDEVENTS_BINARY`.
+- **Mong đợi** Yêu cầu `POST` có `Webhook-Id` bằng `ce_id`, `Webhook-Timestamp` trong 5 giây so với giờ chuẩn, `X-Datahub-Signature: t={ts},v1={hex}`, `X-Datahub-Subscription`, `X-Datahub-Attempt: 1`, `X-Datahub-Key-Id`, `traceparent`; thân `application/cloudevents+json`. Chữ ký tính lại khớp. Bước 3 tiêu đề `ce-*`, thân là `data` JSON, chữ ký tính trên thân đó.
+
+#### TC-10-062 · Đầu nhận từ chối chữ ký sửa, dấu thời gian lệch, phát lại cùng Webhook-Id <!--k:hmac-verify-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** UT, RT
+- **Truy vết** FR-10-038 · BR-10-009 · NFR-10-007
+- **Tiền điều kiện / dữ liệu** Thư viện xác minh mẫu (Java, .NET, Python, Node.js, PHP) ở tài liệu hướng dẫn tích hợp; bản ghi yêu cầu thật từ TC-10-061.
+- **Bước**
+  1. Sửa một byte thân rồi xác minh.
+  2. Lùi `Webhook-Timestamp` 400 giây (dung sai 300 giây).
+  3. Gửi lại nguyên yêu cầu lần hai.
+- **Mong đợi** Bước 1, 2 cả năm thư viện mẫu từ chối. Bước 3 thư viện mẫu nhận diện trùng theo `Webhook-Id` và không xử lý lại. Ca chứng minh mã mẫu đúng hướng dẫn.
+
+#### TC-10-063 · Không đọc được khóa ký thì không gửi <!--k:hmac-no-key-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** Chaos, RT
+- **Truy vết** FR-10-038 · ERR-10-117 · BR-10-024, 027
+- **Tiền điều kiện / dữ liệu** SUB-PUSH; đệm khóa 10 phút.
+- **Bước**
+  1. Dừng OpenBao; phát 10 sự kiện ngay; chờ 11 phút; phát 10 sự kiện nữa.
+  2. Bật lại OpenBao.
+- **Mong đợi** 10 sự kiện đầu giao bình thường bằng khóa trong đệm. Sau khi đệm hết hạn, phân vùng tạm dừng với ERR-10-117, cảnh báo; SIM-WH không nhận yêu cầu nào thiếu chữ ký; offset không commit. Bước 2 giao tiếp 10 sự kiện còn lại, không mất.
+
+#### TC-10-064 · Xoay khóa có thời gian chồng lấn hai chữ ký <!--k:key-rotate-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-042 · API-10-054 · EVT-10-13 · UC-10-17 · BR-10-027
+- **Tiền điều kiện / dữ liệu** U-T68-TO; SUB-PUSH; `10.push.key-rotation-overlap-days = 7`.
+- **Bước**
+  1. `POST /subscriptions/ht-thue-dn-cap-phep/signing-keys:rotate` có `Idempotency-Key`.
+  2. Phát sự kiện; đặt đồng hồ +8 ngày, phát tiếp.
+- **Mong đợi** Bước 1 `200`, khóa mới `whsec_…` hiển thị một lần, khóa cũ `PREVIOUS` với `previousUntil`. Bước 2 trong 7 ngày tiêu đề có hai giá trị `v1=`, đầu nhận dùng khóa cũ hay mới đều xác minh được; sau 7 ngày chỉ còn chữ ký khóa mới. EVT: `signing-key.rotated`. Mồi sạch với cả hai khóa.
+
+#### TC-10-065 · Thu hồi khẩn khóa ký; quyền xoay; SO không thu hồi ngoài sự cố <!--k:key-revoke-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-042 · API-10-054, 100 · ERR-10-009 · EVT-10-13
+- **Tiền điều kiện / dữ liệu** U-T68-SO, U-T68-IE1, U-T68-VW; SUB-PUSH.
+- **Bước**
+  1. SO `:revoke` có lý do "Khóa bị lộ trong nhật ký đầu nhận".
+  2. Phát sự kiện.
+  3. IE1 `:rotate`; U-T68-VW `:rotate`; SO `:revoke` không có lý do.
+- **Mong đợi** Bước 1 `200`, khóa cũ `REVOKED` ngay, không có thời gian chồng lấn, khóa mới sinh và hiển thị một lần. Bước 2 chỉ có chữ ký khóa mới. Bước 3 IE1 `200` (có `PERM-10-subscribe`); VW 403-PQ; SO không lý do `400` ERR-10-009.
+
+#### TC-10-066 · Chặn DNS rebinding và đổi IP giữa các lượt <!--k:push-ssrf-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** RT, ZAP
+- **Truy vết** FR-10-038 · ERR-10-115 · BR-10-026
+- **Tiền điều kiện / dữ liệu** Subscription thử tới `https://rebind.sim.test/h` đã xác minh khi DNS trả IP công cộng.
+- **Bước**
+  1. Đổi DNS sang `10.96.0.10`; phát sự kiện.
+- **Mong đợi** Bộ giao nhận kiểm lại IP trước lượt, không gửi; lượt lỗi ERR-10-115 `failureClass = SECURITY`; sau hết lượt thử vào DLQ; không có kết nối tới `10.96.0.10`.
+
+### TS-10-15 · Thử lại giãn dần, ngắt mạch và DLQ
+
+**Mục tiêu.** Chứng minh giao ít nhất một lần: lỗi tạm thời thử lại giãn dần giữ thứ tự trong phân vùng; hết lượt thì vào DLQ hoặc chặn theo `failurePolicy`; offset chỉ commit sau khi giao xong hoặc đã ghi chắc DLQ.
+
+**Phủ.** FR-10-039, 049; UC-10-14; API-10-086, 119; BR-10-009, 023, 024, 025; ERR-10-111…113, 116; EVT-10-11.
+
+#### TC-10-067 · Thử lại giãn dần có nhiễu, tôn trọng Retry-After, giữ thứ tự <!--k:retry-backoff-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT, UT
+- **Truy vết** FR-10-039 · BR-10-025 · ERR-10-112 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** SUB-PUSH (`maxRetries = 3`, 100 ms ×2); SIM-WH trả `503` hai lần rồi `200` cho khóa `0999000001`; trả `429` `Retry-After: 1` cho khóa `0999000002`.
+- **Bước**
+  1. Phát 3 sự kiện khóa `0999000001` liên tiếp và 1 sự kiện khóa `0999000002`.
+- **Mong đợi** Khóa 1: khoảng chờ lần 1, 2 trong 80…120 ms và 160…240 ms; `X-Datahub-Attempt` tăng 1, 2, 3; sự kiện thứ hai cùng khóa chỉ gửi sau khi sự kiện đầu thành công. Khóa 2 chờ 1 giây theo `Retry-After`. Các phân vùng khác không bị chặn. Không có mục DLQ.
+
+#### TC-10-068 · Hết lượt thử với DEAD_LETTER: ghi DLQ rồi đi tiếp <!--k:retry-dead-letter-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-10-039, 049 · ERR-10-112, 113 · EVT-10-11 · BR-10-023, 024
+- **Tiền điều kiện / dữ liệu** SUB-PUSH; SIM-WH luôn `500` cho khóa `0999000010`, trả `410` cho khóa `0999000011`.
+- **Bước**
+  1. Phát một sự kiện mỗi khóa, rồi 5 sự kiện khóa khác.
+  2. Đọc topic `{TP-CP}.dlq` và `GET /dlq-entries?subscriptionCode=ht-thue-dn-cap-phep`.
+- **Mong đợi** Khóa `…10` thử 4 lần rồi vào DLQ ERR-10-112, `attempts = 4`; khóa `…11` vào DLQ ngay ERR-10-113 (lỗi vĩnh viễn, không thử lại). 5 sự kiện sau được giao. Bản tin DLQ giữ nguyên khóa, tiêu đề, giá trị và có đủ tiêu đề `dh_dlq_*`, `dh_dlq_origin = PUSH`. Hai mục `NEW` ở `dlq_entry`. EVT: `delivery.dead-lettered` gộp trong 1 phút.
+
+#### TC-10-069 · Hết lượt thử với BLOCK: tạm ngừng, không commit, TO tiếp tục <!--k:retry-block-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-10-039, 041 · API-10-086, 098 · ERR-10-006 · EVT-10-09
+- **Tiền điều kiện / dữ liệu** SUB-KS (`BLOCK`); SIM-WH luôn `500`; U-T68-TO.
+- **Bước**
+  1. Phát 3 sự kiện lên TP-KS.
+  2. Gọi API nội bộ `POST /runtime/subscriptions/ht-thue-khai-sinh:resume` bằng S-RT-T68.
+  3. Sửa SIM-WH về `200`; TO `:resume` với lý do.
+- **Mong đợi** Bước 1 sau hết lượt, subscription `SUSPENDED` với `suspendSource = DELIVERY_BLOCKED`, không có mục DLQ, offset không tiến, lag tăng. Bước 2 `409` ERR-10-006 (tự tiếp tục chỉ cho `CIRCUIT_BREAKER`). Bước 3 `ACTIVE`, 3 sự kiện được giao đúng thứ tự. EVT: `subscription.state-changed` hai lần.
+
+#### TC-10-070 · Ngắt mạch khi lỗi kéo dài và tự tiếp tục khi thăm dò thành công <!--k:circuit-breaker-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-10-039 · API-10-086, 119 · EVT-10-09
+- **Tiền điều kiện / dữ liệu** SUB-PUSH; `10.push.suspend-after-failures-minutes = 5` ở SIT; SIM-WH lỗi 60 %.
+- **Bước**
+  1. Phát 10 sự kiện/giây trong 6 phút.
+  2. Đưa SIM-WH về `200`; chờ 5 phút.
+- **Mong đợi** Bước 1 subscription `SUSPENDED`, `suspendSource = CIRCUIT_BREAKER`; một worker thăm dò gửi bản tin đầu chưa commit mỗi 5 phút. Bước 2 lượt thăm dò thành công, subscription tự về `ACTIVE`, giao tiếp không mất.
+
+#### TC-10-071 · Không giải tuần tự được vào DLQ ngay; ghi DLQ lỗi thì không commit <!--k:dlq-deser-write-fail-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P1 · **Tự động** RT, Chaos
+- **Truy vết** FR-10-049, 038 · ERR-10-116, 029 · BR-10-024
+- **Tiền điều kiện / dữ liệu** SUB-PUSH; bản tin rác ghi thẳng lên TP-CP bằng principal kiểm thử; ACL ghi `{TP-CP}.dlq` của `dh-runtime-t68` có thể gỡ.
+- **Bước**
+  1. Ghi một bản tin có tiền tố `contentId` không tồn tại.
+  2. Gỡ ACL ghi DLQ, cho SIM-WH trả `410` cho một sự kiện hợp lệ.
+  3. Khôi phục ACL.
+- **Mong đợi** Bước 1 vào DLQ ngay ERR-10-116, `failureClass = DESERIALIZATION`, không thử lại. Bước 2 phân vùng tạm dừng, thử ghi DLQ mỗi 5 giây, cảnh báo nghiêm trọng, offset không commit. Bước 3 mục DLQ được ghi, phân vùng chạy tiếp. Không sự kiện nào bị bỏ qua mà không có mục DLQ.
+
+### TS-10-16 · Vận hành subscription: tạm dừng, sửa, thu hồi, thống kê
+
+**Mục tiêu.** Xác nhận người vận hành tạm dừng, tiếp tục, sửa và thu hồi subscription có hiệu lực nhanh, không mất vị trí đọc, và xem được thống kê giao nhận thay phần theo dõi của Hub cũ.
+
+**Phủ.** FR-10-041, 046, 047, 056; UC-10-16; API-10-048…050, 052, 053, 098, 099; UI-10-12; BR-10-020, 025; EVT-10-09; NFR-10-011; LGC-HUB-013.
+
+#### TC-10-072 · Tạm dừng dừng giao trong 10 giây, tiếp tục từ vị trí cũ <!--k:sub-pause-resume-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT, E2E
+- **Truy vết** FR-10-041 · API-10-050, 098 · UI-10-12 · EVT-10-09 · NFR-10-011 · UC-10-16
+- **Tiền điều kiện / dữ liệu** U-T68-TO; SUB-PUSH, SUB-PULL, SUB-KAFKA; phát nền 20 sự kiện/giây.
+- **Bước**
+  1. TO tạm dừng SUB-PUSH ở UI-10-12 với lý do "HTTT thuế bảo trì".
+  2. Tạm dừng SUB-PULL; HTTT kéo. Tạm dừng SUB-KAFKA; consumer ngoài đọc.
+  3. Sau 5 phút tiếp tục cả ba.
+- **Mong đợi** Bước 1 `PAUSED`; SIM-WH không nhận lượt mới sau ≤ 10 giây. Bước 2 API kéo trả `409` ERR-10-110; consumer ngoài mất quyền đọc nhóm. Bước 3 giao tiếp từ offset đã commit, đủ 6.000 sự kiện, không trùng ngoài lượt đang bay lúc dừng. EVT: `subscription.state-changed`.
+
+#### TC-10-073 · Tạm dừng INTERNAL, thiếu lý do, sai trạng thái, sai quyền <!--k:sub-pause-neg-->
+- **Loại** Âm · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-041 · API-10-050, 098 · ERR-10-006, 009, 052, 054
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-IE1; SUB-FLOW, SUB-PUSH.
+- **Bước**
+  1. `:pause` SUB-FLOW.
+  2. `:pause` SUB-PUSH không lý do; `:resume` khi đang `ACTIVE`.
+  3. IE1 `:pause` SUB-PUSH.
+- **Mong đợi** Bước 1 `422` ERR-10-052. Bước 2 `400` ERR-10-009; `409` ERR-10-006. Bước 3 403-PQ (IE không có `PERM-10-operate`).
+
+#### TC-10-074 · Sửa tham số không cần duyệt và cần duyệt lại <!--k:sub-patch-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-046 · API-10-049 · ERR-10-012, 026, 030 · BR-10-025
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; SUB-PUSH `workerCount = 3`.
+- **Bước**
+  1. `PATCH` `workerCount = 6`, `timeoutMs = 5000`.
+  2. `PATCH` `endpointUrl = https://hooks.sim.test/moi` (đã xác minh).
+  3. `PATCH` `workerCount = 7`; `timeoutMs = 40000`; `endpointUrl = http://plain.sim.test`.
+- **Mong đợi** Bước 1 `200`, áp dụng ≤ 60 giây, tái cân bằng hợp tác không mất bản tin. Bước 2 tạo yêu cầu `SUBSCRIPTION` với khác biệt; giao tiếp tục về URI cũ tới khi IA1 duyệt. Bước 3 `422` ERR-10-030, `422` ERR-10-012, `422` ERR-10-026.
+
+#### TC-10-075 · Thu hồi subscription; DLQ còn xem được nhưng không phát lại <!--k:sub-revoke-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-047 · API-10-099, 064 · ERR-10-006, 009, 044 · EVT-10-09 · BR-10-020
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-OR; subscription thử có 3 mục DLQ `NEW` và khóa ký `ACTIVE`; SB-THUE (ngoài tổ chức OR).
+- **Bước**
+  1. OR `:revoke` subscription của SB-THUE.
+  2. IE1 `:revoke` không lý do, rồi có lý do.
+  3. Đề nghị phát lại 3 mục DLQ của subscription đã thu hồi.
+- **Mong đợi** Bước 1 403-TC. Bước 2 `400` ERR-10-009; rồi `200`, `REVOKED`, khóa ký xóa khỏi OpenBao, nhóm tiêu thụ còn tới hết `10.subscription.group-delete-delay-hours`. Bước 3 `409` ERR-10-006; mục DLQ vẫn xem và loại bỏ được.
+
+#### TC-10-076 · Thống kê giao nhận và lượt lỗi gần đây <!--k:sub-stats-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-10-056 · API-10-052, 053, 085 · UI-10-12 · ERR-10-049 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** U-T68-VW; SUB-PUSH sau TC-10-068; SIM-WH trả thân lỗi có chuỗi `Bearer abc.def`.
+- **Bước**
+  1. `GET /subscriptions/ht-thue-dn-cap-phep/stats?from=…&to=…` 1 giờ.
+  2. `GET …/failures`.
+  3. `GET …/stats` khoảng 8 ngày ở độ phân giải phút.
+- **Mong đợi** Bước 1 số thành công, lỗi tạm thời, thử lại, vào DLQ, p50, p95 theo phút khớp số sự kiện đã phát. Bước 2 mỗi dòng có `offset`, `eventId`, `httpStatus`, `errorCode`, `attempt`, `responseSnippet` ≤ 512 byte đã che (`Bearer ***`); không có thân sự kiện. Bước 3 `400` ERR-10-049.
+
+### TS-10-17 · Giao nhận KÉO qua API: lease và cursor
+
+**Mục tiêu.** Chứng minh API kéo an toàn khi bên nhận chết giữa chừng: một lease mỗi subscription, kéo lặp trả đúng lô cũ, cursor có HMAC không giả được, ack sai lease bị từ chối, nack đưa vào DLQ.
+
+**Phủ.** FR-10-043, 049; UC-10-15; API-10-080…082; BR-10-009, 022; ERR-10-101, 102, 107, 109, 110, 121; ADR-071.
+
+#### TC-10-077 · Kéo, xác nhận, kéo tiếp; chờ dài khi rỗng <!--k:pull-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-043 · API-10-080, 081 · UC-10-15 · LGC-HUB-013
+- **Tiền điều kiện / dữ liệu** C-BHXH có scope `topic:{TP-CP}:subscribe`; SUB-PULL; 250 sự kiện mới.
+- **Bước**
+  1. `GET /event/v1/subscriptions/ht-bhxh-dn-cap-phep/events?max=100&waitSeconds=0`.
+  2. `POST …/events:ack` với `cursor`.
+  3. Lặp tới hết; gọi `waitSeconds=10` khi rỗng, phát một sự kiện sau 3 giây.
+- **Mong đợi** Bước 1 `200`, 100 sự kiện CloudEvents JSON, `cursor`, `leaseExpiresAt` sau 30 giây. Bước 2 `204`, offset nhóm `dh-sub-t68-ht-bhxh-dn-cap-phep` tiến đúng 100. Bước 3 đủ 250 sự kiện không trùng; lượt chờ dài trả sự kiện mới sau khoảng 3 giây; hết giờ không có sự kiện trả `204`.
+
+#### TC-10-078 · Kéo lặp khi chưa ack trả đúng lô cũ; lease hết hạn <!--k:pull-lease-->
+- **Loại** Dương, Biên · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-043 · API-10-080, 081 · ERR-10-109 · BR-10-009
+- **Tiền điều kiện / dữ liệu** C-BHXH; SUB-PULL; ba bản sao cổng sự kiện.
+- **Bước**
+  1. Kéo lô A, không ack; kéo lại ngay qua bản sao cổng khác.
+  2. Chờ 31 giây; ack bằng cursor của lô A.
+  3. Kéo lại.
+- **Mong đợi** Bước 1 trả lại đúng lô A (cùng `id`, cùng `cursor` vị trí). Bước 2 `409` ERR-10-109. Bước 3 lô mới bắt đầu từ cùng vị trí lô A (ít nhất một lần), `leaseId` khác.
+
+#### TC-10-079 · Cursor giả, cursor của subscription khác, client không phải bên nhận <!--k:pull-cursor-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, ZAP
+- **Truy vết** FR-10-043, 064 · API-10-080, 081 · ERR-10-101, 102, 103, 109
+- **Tiền điều kiện / dữ liệu** C-BHXH, C-THUE; cursor hợp lệ của SUB-PULL; subscription kéo thử thứ hai của `HT-BHXH`.
+- **Bước**
+  1. Sửa phần `offsets` của cursor (base64url) rồi ack.
+  2. Dùng cursor SUB-PULL để ack subscription thứ hai.
+  3. C-THUE kéo SUB-PULL; token hết hạn kéo SUB-PULL.
+  4. C-BHXH kéo `ht-bhxh-dn-cap-phep` ở đường T01 (subscription trùng mã ở T01).
+- **Mong đợi** Bước 1, 2 `409` ERR-10-109 (HMAC sai), offset không đổi. Bước 3 403-PQ (ERR-10-102); `401` ERR-10-101. Bước 4 404-ẩn, không lộ sự kiện T01.
+
+#### TC-10-080 · Nack đưa sự kiện vào DLQ, phần còn lại được xác nhận <!--k:pull-nack-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-043, 049 · API-10-082 · ERR-10-113 · EVT-10-11
+- **Tiền điều kiện / dữ liệu** C-BHXH; lô 100 sự kiện chưa ack.
+- **Bước**
+  1. `POST …/events:nack` với `cursor`, `eventIds` gồm 2 sự kiện, `reason`.
+- **Mong đợi** `204`; 2 mục DLQ `NEW` với `origin = PULL_NACK`, `errorCode = ERR-10-113`; offset tiến 100; lượt kéo sau không trả lại 2 sự kiện đó. EVT: `delivery.dead-lettered`.
+
+#### TC-10-081 · Hạn mức kéo và Valkey ngừng <!--k:pull-quota-valkey-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P2 · **Tự động** API, Chaos
+- **Truy vết** FR-10-043 · API-10-080 · ERR-10-107, 121
+- **Tiền điều kiện / dữ liệu** C-BHXH với hạn mức 60 lượt/phút ở SIT.
+- **Bước**
+  1. Kéo 80 lượt/phút.
+  2. Dừng Valkey; kéo; phát qua API phát.
+- **Mong đợi** Bước 1 lượt vượt `429` ERR-10-107 có `Retry-After`. Bước 2 kéo trả `503` ERR-10-121 `Retry-After: 5`; API phát vẫn `202` (chống trùng bị bỏ qua).
+
+### TS-10-18 · Giao nhận KÉO qua Kafka ngoài: SASL OAUTHBEARER
+
+**Mục tiêu.** Xác nhận HTTT đọc thẳng Kafka qua listener `external` chỉ khi tenant được bật, chỉ với nhóm tiêu thụ đúng tên được cấp, chỉ trên topic có subscription, và tự báo bản tin lỗi vào DLQ.
+
+**Phủ.** FR-10-044, 037, 063; UC-10-15; API-10-083; BR-10-035; ERR-10-028, 120; LGC-TOOL-010.
+
+#### TC-10-082 · Consumer ngoài đọc bằng token Keycloak và nhóm được cấp <!--k:kafka-consume-ok-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** KT
+- **Truy vết** FR-10-044, 037 · BR-10-035 · LGC-TOOL-010
+- **Tiền điều kiện / dữ liệu** SUB-KAFKA `ACTIVE`; client C-KBNN; consumer Java `sasl.mechanism=OAUTHBEARER`, serde Apicurio đọc lược đồ qua API-10-084.
+- **Bước**
+  1. Kết nối cổng 9093, `group.id = dh-ext-t68-ht-kho-bac-dn-cap-phep`; đọc 500 sự kiện; tự commit.
+  2. Đọc `GET /subscriptions/ht-kho-bac-dn-cap-phep/lag`.
+- **Mong đợi** Đọc được, giải tuần tự được; lag về 0 sau commit; principal là `User:{clientId}` theo `azp`.
+
+#### TC-10-083 · Nhóm khác tên, topic không subscription, tenant chưa bật, token giả <!--k:kafka-consume-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** KT
+- **Truy vết** FR-10-044, 064 · ERR-10-028, 120 · BR-10-035
+- **Tiền điều kiện / dữ liệu** C-KBNN; C-KBNN-T01 ở T01 (Kafka ngoài tắt).
+- **Bước**
+  1. C-KBNN dùng `group.id = nhom-tu-dat`.
+  2. C-KBNN đọc TP-GT; đọc `t01.dkkd.doanh-nghiep.da-cap-phep.v1`.
+  3. C-KBNN-T01 kết nối listener `external`.
+  4. Dùng token ký bằng khóa tự sinh.
+- **Mong đợi** Bước 1 `GroupAuthorizationException`. Bước 2 `TopicAuthorizationException`; chỉ số ERR-10-120 theo principal. Bước 3 bị từ chối (không có `KafkaUser` ngoài cho T01; đề nghị subscription `PULL_KAFKA` ở T01 trả ERR-10-028). Bước 4 xác thực thất bại.
+
+#### TC-10-084 · Bên nhận Kafka ngoài báo bản tin lỗi vào DLQ <!--k:kafka-dead-letter-report-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API
+- **Truy vết** FR-10-044, 049 · API-10-083 · ERR-10-106, 110
+- **Tiền điều kiện / dữ liệu** C-KBNN; SUB-KAFKA.
+- **Bước**
+  1. `POST /event/v1/subscriptions/ht-kho-bac-dn-cap-phep/dead-letters` với phân vùng, offset, mã lỗi của 2 bản tin.
+  2. Gửi báo cáo 2 MiB; gửi khi SUB-KAFKA `PAUSED`.
+- **Mong đợi** Bước 1 `202`, 2 mục DLQ `origin = EXTERNAL_REPORT`. Bước 2 `413` ERR-10-106; `409` ERR-10-110.
+
+### TS-10-19 · Giao nhận nội bộ và hợp đồng PH-04
+
+**Mục tiêu.** Xác nhận hợp đồng với PH-04: luồng chỉ gửi, nhận trên topic đã đăng ký và có quyền (BR-04-009), nhóm tiêu thụ `dh-flow-{tenant}-{flow}`, kiểm tra quyền trả `ALLOWED`, `PENDING`, `DENIED` có lý do, phụ thuộc cho API-04-016.
+
+**Phủ.** FR-10-045, 069; UC-10-25; API-10-008, 071, 072, 109; BR-10-018, 022; BR-04-009; FR-04-062; API-04-016.
+
+#### TC-10-085 · Kiểm tra quyền phát, nhận của luồng: ALLOWED, PENDING, DENIED <!--k:ph04-check-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, CT
+- **Truy vết** FR-10-069 · API-10-071 · UC-10-25 · BR-04-009
+- **Tiền điều kiện / dữ liệu** S-PH04; PB-FLOW có publication `ACTIVE` trên TP-CP; luồng `dkkd-tong-hop` có đề nghị subscription TP-GT đang chờ; TP-TD `DEPRECATED`.
+- **Bước**
+  1. `POST /permissions:check` với bốn bộ: (`dkkd-tong-hop`, TP-CP, `PUBLISH`), (`dkkd-tong-hop`, TP-GT, `SUBSCRIBE`), (`dkkd-tong-hop`, TP-RDM, `SUBSCRIBE`), (`dkkd-tong-hop`, `t68.khong.co.gi.v1`, `PUBLISH`).
+  2. Thêm bộ (`dkkd-tong-hop`, TP-TD, `SUBSCRIBE`) khi luồng chưa có subscription trên TP-TD.
+  3. U-T68-IE1 gọi `POST /permissions:check`.
+- **Mong đợi** Bước 1 `200`: `ALLOWED`; `PENDING`; `DENIED` `NO_GRANT`; `DENIED` `TOPIC_NOT_FOUND`. Bước 2 `DENIED` `TOPIC_NOT_ACTIVE`. Bước 3 403-PQ (chỉ scope `event:permission-check`). Không ghi kiểm toán.
+
+#### TC-10-086 · ensure-party, tra cứu topic dùng được và phụ thuộc của luồng <!--k:ph04-ensure-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-069, 027 · API-10-072, 008, 109 · ERR-10-022, 025 · API-04-016
+- **Tiền điều kiện / dữ liệu** S-PH04; luồng mới `tc-luong-moi` ở SIM-PH04; luồng `luong-cu` `RETIRED`.
+- **Bước**
+  1. `POST /flows/tc-luong-moi:ensure-party` với topic đầu ra TP-CP, topic đầu vào TP-GT; gọi lại lần hai cùng thân.
+  2. `GET /topics?usableBy=flow:tc-luong-moi&action=SUBSCRIBE`.
+  3. `GET /flows/tc-luong-moi/dependencies`.
+  4. `ensure-party` cho `luong-cu`; cho topic `RETIRED`.
+- **Mong đợi** Bước 1 tạo bên phát, bên nhận `FLOW` và đề nghị publication, subscription `PENDING_APPROVAL`; lần hai không tạo trùng. Bước 2 danh sách kèm lược đồ hiện hành cho DataMapper. Bước 3 trả publication, subscription của luồng. Bước 4 `422` ERR-10-022; `422` ERR-10-025. KT: có cho `ensure-party`.
+
+#### TC-10-087 · Luồng tiêu thụ nội bộ đúng nhóm, lag được tính, không cấp scope OAuth <!--k:internal-consume-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT, KT
+- **Truy vết** FR-10-045 · BR-10-018, 022 · FR-04-062
+- **Tiền điều kiện / dữ liệu** SUB-FLOW `ACTIVE`; Kamelet `dh-kafka-source` của luồng `dkkd-dong-bo-thue` trên `dh-runtime-t68`.
+- **Bước**
+  1. Phát 100 sự kiện lên TP-CP; luồng tiêu thụ.
+  2. Luồng dùng `group.id = dh-flow-t68-luong-khac`; principal nội bộ T68 đọc topic `t01.*`.
+  3. Kiểm tra client OAuth của bên `FLOW`.
+- **Mong đợi** Bước 1 nhóm `dh-flow-t68-dkkd-dong-bo-thue` commit 100; lag ở UI-10-17 về 0. Bước 2 nhóm khác tên đọc được trong tiền tố tenant nhưng PH-10 không ghi nhận subscription nên VR-10 cảnh báo; đọc `t01.*` bị ACL từ chối. Bước 3 không có scope `topic:*` nào được cấp (BR-10-018).
+
+#### TC-10-088 · PH-10 ngừng khi PH-04 kiểm tra quyền <!--k:ph04-dep-down-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos, API
+- **Truy vết** FR-10-069 · API-10-071 · ERR-10-029
+- **Tiền điều kiện / dữ liệu** S-PH04; `pg-core` của `ph10_event` dừng.
+- **Bước**
+  1. `POST /permissions:check`.
+- **Mong đợi** `503` ERR-10-029 có `Retry-After`; PH-04 chặn gửi duyệt luồng theo D02-03-PH04 §10; luồng đang chạy không bị ảnh hưởng.
+
+### TS-10-20 · DLQ tầng sự kiện: tra cứu, loại bỏ, phát lại mục DLQ
+
+**Mục tiêu.** Xác nhận DLQ theo topic giữ mọi sự kiện không giao được tới khi xử lý, nội dung nhạy cảm mã hóa và chỉ xem được có lý do, loại bỏ và phát lại mục DLQ có kiểm soát, API cho PH-18.
+
+**Phủ.** FR-10-050, 053; UC-10-18; API-10-060…062, 103, 064, 087…089; UI-10-15; BR-10-024, 028; ERR-10-036; EVT-10-12.
+
+#### TC-10-089 · Tra cứu mục DLQ và xem nội dung có lý do <!--k:dlq-browse-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-050 · API-10-060, 061, 103 · UI-10-15 · ERR-10-009, 054 · UC-10-18
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-VW; DLQ-30; 2 mục DLQ của SUB-KS (`SENSITIVE`); S-PH18.
+- **Bước**
+  1. Mở UI-10-15 của TP-CP, lọc `errorCode = ERR-10-112`, `status = NEW`.
+  2. VW `GET /dlq-entries/{id}/payload`.
+  3. TO xem nội dung một mục SUB-KS không lý do, rồi có lý do.
+  4. S-PH18 `GET /dlq-entries?status=NEW`.
+- **Mong đợi** Bước 1 20 mục, đủ `sourcePartition`, `sourceOffset`, `eventId`, `attempts`. Bước 2 403-PQ. Bước 3 `400` ERR-10-009; rồi `200`, nội dung giải mã qua OpenBao transit, đã che theo chính sách khi có; KT: có (xem dữ liệu Nhạy cảm). Bước 4 `200` chỉ siêu dữ liệu, không có nội dung.
+
+#### TC-10-090 · Loại bỏ mục DLQ; mục đã xử lý; quá giới hạn <!--k:dlq-discard-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, DB
+- **Truy vết** FR-10-050 · API-10-062 · ERR-10-009, 036 · BR-10-024
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-SO; DLQ-30.
+- **Bước**
+  1. TO `POST /dlq-entries:discard` với 10 mục ERR-10-113 và lý do.
+  2. Loại bỏ lại một trong 10 mục.
+  3. Gửi 1.001 mã mục; SO loại bỏ một mục.
+  4. Đặt đồng hồ +31 ngày; chạy bộ dọn đêm.
+- **Mong đợi** Bước 1 `200`, 10 mục `DISCARDED`. Bước 2 `409` ERR-10-036. Bước 3 `400` ERR-10-003 (MVP tối đa 1.000 mục, loại bỏ theo bộ lọc thuộc Đợt sau theo FRS 0.3); SO 403-PQ. Bước 4 10 mục sang `PURGED`, `dlq_payload` bị xóa, siêu dữ liệu còn; 20 mục `NEW` giữ nguyên nội dung.
+
+#### TC-10-091 · Phát lại mục DLQ có duyệt từ nội dung đã lưu <!--k:dlq-replay-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-053, 052 · API-10-064, 059, 087, 088, 089 · EVT-10-12 · BR-10-028 · UC-10-18
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-IA1; 20 mục `NEW` ERR-10-112; SIM-WH đã sửa về `200`; topic gốc đã hết lưu giữ cho 5 mục.
+- **Bước**
+  1. TO đề nghị `replayMode = DLQ_ENTRIES` với 20 mục, lý do, `acknowledgeDuplicates = true`.
+  2. IA1 duyệt.
+- **Mong đợi** Bước 1 `201`, `PENDING_APPROVAL`. Bước 2 mục sang `REPLAY_PENDING` rồi `REPLAYED`; cả 5 mục hết lưu giữ vẫn giao được (từ `dlq_payload`); SIM-WH nhận `X-Datahub-Replay`, cùng `Webhook-Id` lần đầu. Lượt `COMPLETED`, `deliveredRecords = 20`. EVT: `replay.completed`.
+
+#### TC-10-092 · Tự duyệt phát lại DLQ dưới ngưỡng; giao lại vẫn lỗi <!--k:dlq-replay-auto-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, RT
+- **Truy vết** FR-10-053 · API-10-064 · BR-10-028
+- **Tiền điều kiện / dữ liệu** T95 (`10.replay.dlq-auto-approve-max = 10`); 15 mục `NEW`; SIM-WH vẫn `500`.
+- **Bước**
+  1. Đề nghị phát lại 8 mục; đề nghị phát lại 15 mục.
+- **Mong đợi** 8 mục được tự duyệt (yêu cầu `APPROVED`, `autoApproved = true`, `decidedBy = system:auto`); giao lại lỗi nên mục về `NEW`, `attempts` tăng. 15 mục cần người duyệt. Ở T68 (ngưỡng 0) mọi đề nghị đều cần duyệt.
+
+### TS-10-21 · Phát lại theo khoảng có duyệt bốn mắt
+
+**Mục tiêu.** Chứng minh phát lại theo khoảng offset, thời gian và đặt lại offset luôn có lý do, người duyệt khác người đề nghị, ước lượng trước, giới hạn tốc độ, hủy được, và không chạy song song hai lượt cho một subscription.
+
+**Phủ.** FR-10-051, 052; UC-10-19; API-10-063…065, 104, 087, 088, 059, 101; UI-10-16, 13; BR-10-010, 028; ERR-10-032…035; EVT-10-12; NFR-10-012.
+
+#### TC-10-093 · Phát lại theo khoảng thời gian không đổi vị trí subscription <!--k:replay-range-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, RT, E2E
+- **Truy vết** FR-10-051, 052 · API-10-064, 059, 104 · UI-10-16 · EVT-10-12 · UC-10-19
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-IA1; SUB-PUSH đã giao 20.000 sự kiện trong 2 ngày.
+- **Bước**
+  1. Ở UI-10-16 chọn SUB-PUSH, `REDELIVER_RANGE`, `rangeType = TIME`, khoảng 1 giờ, `ratePerSecond = 500`, lý do, đánh dấu xác nhận nhận trùng.
+  2. IA1 duyệt; theo dõi tiến độ.
+- **Mong đợi** Bước 1 `201` có `estimatedRecords` và thời gian chạy ước lượng. Bước 2 `APPROVED`, `RUNNING`, `COMPLETED`; tốc độ thực ≤ 500/giây; nhóm `dh-sub-t68-ht-thue-dn-cap-phep` không đổi offset; SIM-WH nhận lượt có `X-Datahub-Replay`. EVT: `replay.completed`. KT: có (phạm vi, ước lượng, người duyệt).
+
+#### TC-10-094 · Người đề nghị tự duyệt, TA tự duyệt, thiếu xác nhận <!--k:replay-4eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-051 · API-10-064, 059 · ERR-10-008, 009 · BR-10-010, 028
+- **Tiền điều kiện / dữ liệu** U-T68-TA (có `operate` và `approve`); U-T68-TO; U-T68-SO.
+- **Bước**
+  1. TA đề nghị rồi tự duyệt.
+  2. TO đề nghị không có `reason`; `acknowledgeDuplicates = false`.
+  3. SO đề nghị phát lại.
+- **Mong đợi** Bước 1 duyệt `403` ERR-10-008. Bước 2 `400` ERR-10-009. Bước 3 403-PQ (SO không phát lại). Không có lượt nào chạy.
+
+#### TC-10-095 · Khoảng ngoài lưu giữ, vượt trần, trùng lượt, đặt lại offset khi chưa tạm dừng <!--k:replay-neg-->
+- **Loại** Âm, Biên · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-051 · API-10-064 · ERR-10-032, 033, 034, 035
+- **Tiền điều kiện / dữ liệu** U-T68-TO; SUB-PUSH `ACTIVE` có một lượt `APPROVED` chờ chạy; `10.replay.max-records = 1000000`.
+- **Bước**
+  1. `rangeType = TIME` từ 10 ngày trước.
+  2. `rangeType = OFFSET` khoảng 1.500.000 bản tin.
+  3. Lượt thứ hai cho SUB-PUSH.
+  4. `RESET_OFFSET` khi SUB-PUSH `ACTIVE`.
+- **Mong đợi** Bước 1 `422` ERR-10-033 có `availableRange[]`. Bước 2 `422` ERR-10-034. Bước 3 `409` ERR-10-035. Bước 4 `409` ERR-10-032.
+
+#### TC-10-096 · Đặt lại offset có duyệt, lưu vị trí trước <!--k:replay-reset-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, KT
+- **Truy vết** FR-10-051, 052, 040 · API-10-050, 064, 059, 098
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-IA1; SUB-PULL.
+- **Bước**
+  1. TO tạm dừng SUB-PULL; đề nghị `RESET_OFFSET` về `fromTime` hôm qua, `acknowledgeDuplicates = true`.
+  2. IA1 duyệt; TO tiếp tục; HTTT kéo.
+- **Mong đợi** Lượt `COMPLETED` do control plane chạy; `previousOffsets` ghi vị trí cũ theo phân vùng; offset nhóm khớp `offsetsForTimes`; lượt kéo đầu trả sự kiện từ hôm qua.
+
+#### TC-10-097 · Hủy lượt đang chạy; lượt duyệt quá 24 giờ hết hạn <!--k:replay-cancel-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, RT
+- **Truy vết** FR-10-052 · API-10-065, 087 · ERR-10-006, 009 · EVT-10-12
+- **Tiền điều kiện / dữ liệu** U-T68-TO; lượt `RUNNING` 100.000 bản tin ở 100/giây; lượt `APPROVED` khác chưa chạy.
+- **Bước**
+  1. `:cancel` có lý do khi đã giao khoảng 3.000.
+  2. `:cancel` lượt `COMPLETED`.
+  3. Đặt đồng hồ +25 giờ cho lượt `APPROVED`.
+- **Mong đợi** Bước 1 dừng sau bản tin đang giao, `CANCELLED`, `deliveredRecords` khớp số SIM-WH nhận. Bước 2 `409` ERR-10-006. Bước 3 lượt tự chuyển `CANCELLED`. EVT: `replay.completed` với trạng thái cuối.
+
+### TS-10-22 · Độ trễ tiêu thụ và cảnh báo
+
+**Mục tiêu.** Xác nhận phủ consumer lag cho mọi nhóm tiêu thụ của tenant (đẩy, kéo, Kafka ngoài, luồng), cảnh báo đúng mức gồm cả nguy cơ hết lưu giữ và nhóm ngừng tiến, xác nhận cảnh báo và xuất chỉ số sang PH-13.
+
+**Phủ.** FR-10-054, 055, 059; UC-10-20; API-10-055, 056; UI-10-17, 12; EVT-10-10; NFR-10-010; LGC-HUB-007.
+
+#### TC-10-098 · Thu lag theo phân vùng cho mọi chế độ <!--k:lag-collect-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-10-054 · API-10-055 · UI-10-17 · LGC-HUB-007
+- **Tiền điều kiện / dữ liệu** SUB-PUSH, SUB-PULL, SUB-KAFKA, SUB-FLOW; dừng HTTT BHXH kéo; phát 600 sự kiện.
+- **Bước**
+  1. Chờ hai chu kỳ 30 giây; `GET /subscriptions/ht-bhxh-dn-cap-phep/lag`.
+  2. S-PH13 gọi cùng API; mở UI-10-17.
+- **Mong đợi** `lagRecords` theo phân vùng tổng bằng 600; `lagSeconds` bằng tuổi bản tin đầu chưa commit; phân vùng không lag có `lagSeconds = 0`. SUB-KAFKA và SUB-FLOW có mẫu lag. S-PH13 `200`. Bảng `lag_sample` có mẫu mỗi 30 giây.
+
+#### TC-10-099 · Cảnh báo WARNING, CRITICAL, STALLED và về OK <!--k:lag-alert-->
+- **Loại** Dương, Biên · **Ưu tiên** P1 · **Tự động** IT, RT
+- **Truy vết** FR-10-055 · EVT-10-10 · NFR-10-010 · UC-10-20
+- **Tiền điều kiện / dữ liệu** SUB-PULL `lagWarnSeconds = 60`, `lagCriticalSeconds = 300`; topic thử lưu giữ 25 giờ.
+- **Bước**
+  1. Ngừng kéo 70 giây (một chu kỳ vượt), rồi 2 chu kỳ.
+  2. Ngừng tới 310 giây.
+  3. Kéo lại hết.
+  4. Ở topic thử, để bản tin đầu chưa commit sắp quá 1 giờ tuổi trong lưu giữ 25 giờ.
+  5. Cho bộ giao nhận một subscription `ACTIVE` treo không commit 6 phút khi có lag.
+- **Mong đợi** Bước 1 một chu kỳ chưa đổi; hai chu kỳ `WARNING` trong ≤ 2 phút. Bước 2 `CRITICAL`. Bước 3 `OK`. Bước 4 `CRITICAL` do thời gian còn lại dưới 24 giờ. Bước 5 `STALLED`. Mỗi lần đổi mức một EVT `subscription.lag-alerted` (cả khi về `OK`), TO và đầu mối HTTT nhận thông báo.
+
+#### TC-10-100 · Xác nhận cảnh báo lag <!--k:lag-ack-->
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-10-055 · API-10-056 · UI-10-17 · ERR-10-006, 054
+- **Tiền điều kiện / dữ liệu** U-T68-TO, U-T68-VW; SUB-PULL `CRITICAL`.
+- **Bước**
+  1. TO xác nhận với ghi chú "Đã liên hệ BHXH".
+  2. VW xác nhận; TO xác nhận subscription `OK`.
+- **Mong đợi** Bước 1 `200`, `alertAcknowledgedBy`, `alertAckNote`; thông báo lặp dừng tới khi đổi mức. Bước 2 403-PQ; `409` ERR-10-006.
+
+#### TC-10-101 · Chỉ số xuất sang PH-13 có nhãn tenant, không có dữ liệu nghiệp vụ <!--k:metrics-export-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-10-059 · NFR-10-017
+- **Tiền điều kiện / dữ liệu** Mimir của PH-13 ở SIT; tải nền ở T68, T01.
+- **Bước**
+  1. Truy vấn `dh_event_consumer_lag_seconds`, `dh_event_published_total`, `dh_event_delivery_total`, `dh_event_dlq_entries`, `dh_event_quota_usage_ratio`.
+  2. Liệt kê mọi nhãn của chuỗi `dh_event_*`.
+- **Mong đợi** Mọi chuỗi có nhãn `tenant`; không có nhãn `ce_subject`, khóa nghiệp vụ hay mã doanh nghiệp; số `published_total` của T68 khớp số `202` của API phát.
+
+### TS-10-23 · Dashboard và sơ đồ kết nối
+
+**Mục tiêu.** Xác nhận bốn thẻ đếm dashboard và sơ đồ "Integration Project Connections" của Hub cũ được giữ, sơ đồ lọc theo dự án, có phủ lag, lưu lượng, DLQ; biểu đồ CPU, bộ nhớ chỉ còn liên kết sang PH-13.
+
+**Phủ.** FR-10-057, 058; UC-10-21; API-10-066, 007; UI-10-01, 14, 03; ERR-10-049; NFR-10-015; LGC-HUB-001…007.
+
+#### TC-10-102 · Bốn thẻ đếm và khối lag, DLQ trên dashboard <!--k:dashboard-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-057 · API-10-066 · UI-10-01 · UC-10-21 · LGC-HUB-001, 002, 003, 004, 005, 006
+- **Tiền điều kiện / dữ liệu** U-T68-VW; dữ liệu mục 2.3.
+- **Bước**
+  1. `GET /dashboard`; `GET /dashboard?projectCode=dang-ky-kinh-doanh`.
+  2. Mở UI-10-01, bấm thẻ "Bên phát"; bấm liên kết "Tài nguyên cụm Kafka (PH-13)".
+  3. Dừng PH-13.
+- **Mong đợi** Bước 1 số publisher, subscriber, project, topic khớp đếm trực tiếp ở CSDL, có phân rã theo trạng thái; khối lag theo `alertState`, DLQ `NEW`. Bước 2 mở UI-10-09 đã lọc; liên kết mở bảng chỉ số cụm của PH-13. Bước 3 khối lưu lượng ẩn kèm thông báo, các khối khác vẫn hiện.
+
+#### TC-10-103 · Sơ đồ kết nối lọc theo dự án và phủ trạng thái <!--k:graph-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-058 · API-10-007 · UI-10-14, 03 · UC-10-21 · LGC-HUB-007
+- **Tiền điều kiện / dữ liệu** U-T68-VW; P-DKKD.
+- **Bước**
+  1. `GET /graph?projectCode=dang-ky-kinh-doanh&overlay=LAG`.
+  2. Mở UI-10-14 `?du-an=dang-ky-kinh-doanh`, đổi `overlay` sang `DLQ`, `TRAFFIC`; bấm một cạnh.
+  3. `GET /graph?systemCode=HT-DKKD`.
+- **Mong đợi** Bước 1 `nodes[]` ba lớp (bên phát, topic, bên nhận), `edges[]` có `deliveryMode`, `lagSeconds`; `HT-DKKD` vừa phát vừa nhận hiện một nút có liên kết đánh dấu. Bước 2 cạnh SUB-PUSH có huy hiệu số mục DLQ `NEW`; bấm cạnh mở UI-10-12; không có thao tác sửa nào trên sơ đồ (PTN-07 chỉ xem). Bước 3 chỉ lân cận một bước quanh `HT-DKKD`.
+
+#### TC-10-104 · Sơ đồ quá số nút, tham số sai, không lộ tenant khác <!--k:graph-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-058, 064 · API-10-007 · ERR-10-049
+- **Tiền điều kiện / dữ liệu** T97 có 400 nút; U-T68-VW; T01 có bên nhận nhận từ topic trùng tên.
+- **Bước**
+  1. Ở T97 `GET /graph` không lọc.
+  2. `overlay=CPU`.
+  3. U-T68-VW `GET /graph?systemCode=HT-THUE`.
+- **Mong đợi** Bước 1, 2 `400` ERR-10-049, gợi ý lọc theo dự án. Bước 3 không có nút, cạnh nào của T01.
+
+### TS-10-24 · Danh mục, hạn mức và tham số
+
+**Mục tiêu.** Xác nhận danh mục `type_of_comm`, `routing_mode` của Hub cũ giữ `legacyCode` để di trú, tenant bật tắt trong giới hạn, hạn mức tenant do PA đặt trần và TA phân bổ, tham số `10.*` trong miền.
+
+**Phủ.** FR-10-060…063; UC-10-22; API-10-067…070, 105…108; UI-10-18; BR-10-029, 035; ERR-10-011, 012, 043; LGC-HUB-014.
+
+#### TC-10-105 · Danh mục kiểu giao tiếp và chế độ định tuyến có mã hệ cũ <!--k:catalog-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-060, 061 · API-10-067, 068, 105, 106 · UI-10-18 · ERR-10-043 · LGC-HUB-014
+- **Tiền điều kiện / dữ liệu** U-T68-TA; PB-DKKD-K dùng `KAFKA_NATIVE`.
+- **Bước**
+  1. `GET /comm-types`; `GET /routing-modes`.
+  2. TA tắt `PULSAR_BRIDGE` (không ai dùng); tắt `KAFKA_NATIVE`; tắt `KEY_HASH`.
+- **Mong đợi** Bước 1 đủ 8 mã A.2.8 với chiều, `partyType`, `deliveryMode`, `legacyCode` (`REST`, `PULSAR_CLIENT`, `ROUTE`, `HTTP_PUSH`); ba chế độ với `legacyCode` `CustomPartition`, `RoundRobinPartition`, `SinglePartition`. Bước 2 tắt `PULSAR_BRIDGE` `200`, KT: có; `KAFKA_NATIVE`, `KEY_HASH` `422` ERR-10-043.
+
+#### TC-10-106 · Hạn mức: PA đặt trần, TA phân bổ, vượt trần <!--k:quota-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, KT
+- **Truy vết** FR-10-062 · API-10-069, 107 · ERR-10-011, 012 · BR-10-029, 036
+- **Tiền điều kiện / dữ liệu** U-PA, U-T68-TA; T68 trần sản xuất 10 MiB/s.
+- **Bước**
+  1. `GET /quota` ở T68.
+  2. TA đặt `produceBytesPerSecond = 20971520` (vượt trần).
+  3. TA phân bổ `quotaBytesPerSecond` cho PB-DKKD-K 2 MiB/s.
+  4. PA nâng trần lên 20 MiB/s.
+- **Mong đợi** Bước 1 trả trần, mức dùng, phần dự trữ nội bộ 30 %. Bước 2 `422` ERR-10-012. Bước 3 `KafkaUser` của principal có `producerByteRate = 2097152` sau khi cụm áp dụng; tổng phân bổ không vượt trần. Bước 4 `200`, `ceilingSetBy` là PA. KT: có.
+
+#### TC-10-107 · Tham số 10.* trong miền; tham số nền tảng chỉ PA <!--k:settings-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-063 · API-10-070, 108 · UI-10-18 · ERR-10-009, 012, 054 · BR-10-035
+- **Tiền điều kiện / dữ liệu** U-T68-TA, U-PA, U-T68-IE1.
+- **Bước**
+  1. TA đặt `10.lag.warn-seconds = 120` có lý do.
+  2. TA đặt `10.push.max-retries = 21`; không lý do.
+  3. TA đặt `10.external-kafka.enabled = false`; `10.graph.max-nodes = 500`.
+  4. IE1 sửa tham số.
+- **Mong đợi** Bước 1 `200`, áp dụng ngay cho subscription dùng mặc định. Bước 2 `422` ERR-10-012; `400` ERR-10-009. Bước 3 403-PQ (tham số phạm vi N chỉ PA). Bước 4 403-PQ.
+
+### TS-10-25 · Hợp đồng PH-05: topic CDC tự duyệt và thay đổi lược đồ
+
+**Mục tiêu.** Xác nhận hợp đồng với PH-05: CDC đăng ký topic `{topicPrefix}.{schema}.{table}.v1` một topic mỗi bảng, lược đồ Avro ở Apicurio, tự duyệt và trả `202`; thông báo EVT-05-11 dẫn tới phiên bản lược đồ mới hoặc topic `.v{n+1}`; PH-10 ngừng thì PH-05 không khai báo CDC mới.
+
+**Phủ.** FR-10-066, 068; UC-10-23; API-10-009, 023, 018; BR-10-002, 030, 031; EVT-05-11; ERR-05-029; FR-05-048, 051.
+
+#### TC-10-108 · PH-05 đăng ký topic CDC, tự duyệt, trả 202 rồi ACTIVE <!--k:cdc-register-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, CT
+- **Truy vết** FR-10-066 · API-10-009 · EVT-10-01 · BR-10-031 · UC-10-23 · FR-05-048 · LGC-TOOL-010
+- **Tiền điều kiện / dữ liệu** S-PH05; bộ điều hợp `dkkd-cdc` mới thêm bảng `public.nganhnghe`; `onBehalfOf = an`.
+- **Bước**
+  1. `POST /topics` với `topicKind = CDC`, `topicName = t68.cdc.dkkd-cdc.public.nganhnghe.v1`, lược đồ Avro sinh từ bảng, `partitionKeyField` là khóa chính, `sourceRef`.
+  2. Gọi lại cùng thân.
+  3. Theo dõi tới `ACTIVE`.
+- **Mong đợi** Bước 1 `202`, `Location`; dự án hệ thống `cdc-dkkd-cdc` có sẵn; yêu cầu `TOPIC_CREATE` `APPROVED`, `autoApproved = true`, `decidedBy = system:auto`, `requestedBy` là tài khoản dịch vụ; publication `ACTIVE` cho bên phát `INTERNAL_SERVICE` của `dh-cdc`. Bước 2 `200`, trạng thái hiện tại. Bước 3 `ACTIVE` ≤ 3 phút. EVT: `topic.activated`. KT: có (`onBehalfOf`, `sourceRef`).
+
+#### TC-10-109 · CDC sai tên, sai tiền tố, cấu hình khác, người dùng sửa topic CDC, tự duyệt tắt <!--k:cdc-register-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-066 · API-10-009, 011 · ERR-10-002, 004, 005, 045 · BR-10-002, 030
+- **Tiền điều kiện / dữ liệu** S-PH05; U-T68-IE1; TP-CDC; T95 (tự duyệt tắt).
+- **Bước**
+  1. `topicName = t68.cdc.a.b.c.d.v1` (5 đoạn giữa).
+  2. `topicName = t01.cdc.dkkd-cdc.public.dangky.v1` bằng token T68.
+  3. Đăng ký lại TP-CDC với `partitions` khác.
+  4. IE1 `PATCH` cấu hình TP-CDC; IE1 sửa mô tả.
+  5. Ở T95 đăng ký topic CDC.
+- **Mong đợi** Bước 1 `422` ERR-10-004. Bước 2 `422` ERR-10-005. Bước 3 `409` ERR-10-002. Bước 4 cấu hình `422` ERR-10-045; mô tả `200`. Bước 5 `202` nhưng yêu cầu `PENDING`, chờ người duyệt.
+
+#### TC-10-110 · Thay đổi lược đồ tương thích và phá vỡ theo EVT-05-11 <!--k:cdc-schema-change-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-10-068, 015 · API-10-023, 018 · EVT-05-11 · EVT-10-03, 05 · ERR-10-016
+- **Tiền điều kiện / dữ liệu** SIM-PH05; TP-CDC v1; F-AV-ADD, F-AV-BRK dạng Avro CDC.
+- **Bước**
+  1. SIM-PH05 phát EVT-05-11 `COMPATIBLE` rồi gửi phiên bản thêm cột có mặc định.
+  2. Gửi phiên bản đổi kiểu cột theo nhánh `COMPATIBLE`.
+  3. Phát EVT-05-11 `BREAKING` đã `ACCEPT`; gọi `:new-major-version`.
+  4. Phát lại EVT-05-11 ở bước 3 cùng `id`.
+- **Mong đợi** Bước 1 phiên bản tự duyệt `ENABLED`, EVT: `schema.version-enabled`. Bước 2 `409` ERR-10-016. Bước 3 topic `.v2` tự duyệt, `.v1` `DEPRECATED` với `successorTopic`, EVT: `topic.deprecated`, đầu mối subscription nhận thông báo. Bước 4 inbox bỏ qua.
+
+#### TC-10-111 · PH-10 ngừng thì PH-05 không khai báo CDC mới, CDC đang chạy không ảnh hưởng <!--k:cdc-dep-down-->
+- **Loại** Âm, Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos
+- **Truy vết** FR-10-066 · ERR-10-029 · ERR-05-029 · NFR-10-013
+- **Tiền điều kiện / dữ liệu** S-PH05; `dh-integration` mô-đun `event` ngừng; CDC TP-CDC đang ghi.
+- **Bước**
+  1. PH-05 đăng ký topic CDC mới.
+  2. Đếm bản tin CDC trên TP-CDC trong 5 phút.
+- **Mong đợi** Bước 1 PH-05 nhận ERR-10-029 và trả ERR-05-029 cho người dùng. Bước 2 CDC tiếp tục ghi (chỉ phụ thuộc Kafka, Apicurio).
+
+### TS-10-26 · DU nội bộ đăng ký topic SYSTEM và topic nền tảng
+
+**Mục tiêu.** Xác nhận DU nội bộ đăng ký topic sự kiện miền của mình (ví dụ `{tenant}.rdm.catalog.published.v1` cho PH-07, `{tenant}.integration.{đối tượng}.{động từ}.v1` cho PH-04) bằng scope máy, tự duyệt, và HTTT đăng ký nhận `*.rdm.*` như bình thường.
+
+**Phủ.** FR-10-067; UC-10-24; API-10-009; BR-10-030, 031; LGC-BUS-039.
+
+#### TC-10-112 · DU đăng ký topic SYSTEM khi khởi tạo tenant; HTTT đăng ký nhận <!--k:du-register-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-067, 035 · API-10-009, 047 · UC-10-24 · BR-10-031 · LGC-BUS-039
+- **Tiền điều kiện / dữ liệu** S-DU-DATA; tenant T98 vừa khởi tạo; U-T68-IE1.
+- **Bước**
+  1. S-DU-DATA đăng ký `t98.rdm.catalog.published.v1` `SYSTEM`.
+  2. Ở T68, IE1 đề nghị subscription PUSH cho SB-THUE trên TP-RDM.
+- **Mong đợi** Bước 1 `202`, tự duyệt, publication `INTERNAL_SERVICE` của `dh-data` tự duyệt theo `10.approval.auto-approve-internal`. Bước 2 đi quy trình bình thường, cần IA duyệt, khi `ACTIVE` HTTT có scope phù hợp theo chế độ.
+
+#### TC-10-113 · Người dùng đăng ký miền dành riêng; DU đăng ký topic dh. hoặc tenant khác <!--k:du-register-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-067 · API-10-009 · ERR-10-004, 005, 054 · BR-10-030
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; S-DU-DATA; U-PA.
+- **Bước**
+  1. IE1 tạo topic `BUSINESS` miền `rdm`.
+  2. S-DU-DATA đăng ký `dh.platform.tenant.created.v1`.
+  3. S-DU-DATA với token T68 đăng ký `t01.rdm.catalog.published.v1`.
+  4. U-PA đăng ký `dh.platform.tenant.created.v1`.
+- **Mong đợi** Bước 1 `422` ERR-10-004. Bước 2 403-PQ (tiền tố `dh.` chỉ PA và tài khoản nền tảng). Bước 3 `422` ERR-10-005. Bước 4 thành công, artifact `groupId = dh`.
+
+### TS-10-27 · Xuất và nhập khai báo
+
+**Mục tiêu.** Xác nhận khai báo sự kiện xuất được ra `EventManifest` không có bí mật để rà soát và đưa sang môi trường khác; nhập (Đợt sau) có xem trước và không tạo đối tượng `ACTIVE` trực tiếp.
+
+**Phủ.** FR-10-070, 071; UC-10-28; API-10-074, 075, 110, 111; UI-10-02, 19; BR-10-027, 032; ERR-10-040, 050.
+
+#### TC-10-114 · Xuất khai báo dự án không chứa bí mật <!--k:export-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-070 · API-10-074 · BR-10-027 · NFR-10-016 · UC-10-28
+- **Tiền điều kiện / dữ liệu** U-T68-VW; P-DKKD; khóa ký thử có mồi.
+- **Bước**
+  1. `POST /exports` với `projectCode = dang-ky-kinh-doanh`.
+- **Mong đợi** `200` tệp YAML `kind: EventManifest`, `apiVersion: event.datahub.vn/v1` gồm dự án, 4 topic, lược đồ `ENABLED`, `DEPRECATED`, bên phát, bên nhận, publication, subscription; không có khóa ký, `clientId` nội bộ. Mồi sạch.
+
+#### TC-10-115 · Nhập khai báo có xem trước, viết lại tiền tố, không tạo ACTIVE <!--k:import-manifest-->
+- **Loại** Dương, Âm · **Ưu tiên** P3 · **Tự động** API, E2E
+- **Truy vết** FR-10-071 · API-10-075, 110, 111 · UI-10-19 · ERR-10-040, 050 · BR-10-032
+- **Tiền điều kiện / dữ liệu** U-T90-IE ở T90; F-MAN; tệp hỏng; T90 không có `HT-THUE`.
+- **Bước**
+  1. Tải F-MAN với `rewriteTenantPrefix = true`; xem `GET /imports/{jobCode}`.
+  2. `:apply`.
+  3. Tải tệp sai `apiVersion`; tải lại F-MAN khi T90 không có `HT-THUE`.
+  4. Tạo tác vụ mới rồi hủy bằng `POST /imports/{jobCode}:cancel` (API-10-121 theo FRS 0.3).
+- **Mong đợi** Bước 1 `202`, tác vụ `PREVIEW`, tên topic viết thành `t90.…`, mỗi dòng có `changeKind`. Bước 2 topic `DRAFT`, `PENDING_APPROVAL`; không đối tượng nào `ACTIVE`. Bước 3 `422` ERR-10-040; `422` ERR-10-050. Bước 4 tác vụ `CANCELLED`.
+
+### TS-10-28 · Di trú từ Pulsar: kiểm kê và ánh xạ
+
+**Mục tiêu.** Xác nhận đọc được kiểm kê Hub cũ (project, topic, publisher, subscriber, publication, subscription, `type_of_comm`, `routing_mode`) thành đề xuất ánh xạ sang khái niệm Datahub, không di trú thông tin xác thực cũ.
+
+**Phủ.** FR-10-072; UC-10-26; API-10-075, 076, 110, 111, 112; UI-10-20; BR-10-032, 034; ERR-10-040, 041; LGC-HUB-008…014; ADR-073.
+
+#### TC-10-116 · Nhập kiểm kê Hub cũ, đề xuất ánh xạ đủ loại <!--k:pulsar-inventory-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-072 · API-10-075, 076, 110 · UI-10-20 · UC-10-26 · LGC-HUB-008, 009, 010, 011, 012, 013, 014
+- **Tiền điều kiện / dữ liệu** U-T68-TA ở T96; F-PUL-INV.
+- **Bước**
+  1. Tải F-PUL-INV (`sourceKind = PULSAR_HUB`).
+  2. `GET /migrations/mappings`.
+- **Mong đợi** 3 dự án, 8 topic (tên đề xuất `t96.{miền}.{thực-thể}.{sự-kiện}.v1` chữ thường), 5 bên phát, 7 bên nhận (2 có `partyType = FLOW`), 6 publication, 9 subscription; mỗi ánh xạ `PROPOSED` có `confidence`; `routing_mode` `CustomPartition` ánh xạ `KEY_HASH` kèm cờ "cần khai báo trường khóa"; subscription `Shared` 2 consumer thành `workerCount = 2`, `DEAD_LETTER`; `type_of_comm` ánh xạ theo `legacyCode`.
+
+#### TC-10-117 · Không di trú mật khẩu cũ; sửa ánh xạ; tệp sai; đích không hợp lệ <!--k:pulsar-inventory-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-072 · API-10-075, 111, 112 · ERR-10-040, 041 · BR-10-032, 034
+- **Tiền điều kiện / dữ liệu** Tác vụ từ TC-10-116; F-PUL-BAD.
+- **Bước**
+  1. Xem ánh xạ subscription có mật khẩu Basic trong URI.
+  2. `PATCH /migrations/mappings/{id}` đặt `targetCode` là topic không theo quy ước; đặt `SKIPPED` cho một ánh xạ.
+  3. `:apply` tác vụ.
+  4. Tải F-PUL-BAD.
+- **Mong đợi** Bước 1 URI đích đã bỏ thông tin xác thực, có vấn đề "cấp lại thông tin xác thực"; mật khẩu không có trong CSDL, log, báo cáo (mồi sạch). Bước 2 `422` ERR-10-041; `SKIPPED` `200`. Bước 3 đối tượng đích tạo ở `DRAFT`, `PENDING_APPROVAL`; không `ACTIVE`. Bước 4 `422` ERR-10-040.
+
+### TS-10-29 · Cầu nối Pulsar, đối chiếu, chuyển hẳn và quay lui
+
+**Mục tiêu.** Chứng minh di trú song song theo ADR-073: cầu nối Pulsar sang Kafka có duyệt và hạn dùng, không ảnh hưởng subscriber cũ; cầu nối ngược cho bên nhận cũ; đối chiếu chênh lệch 0; chuyển hẳn có điều kiện và quay lui trong cửa sổ.
+
+**Phủ.** FR-10-073…076; UC-10-27; API-10-077, 078, 113…118, 090; UI-10-20, 13; BR-10-033; ERR-10-041, 042, 118; EVT-10-15, 16; NFR-10-018; ADR-073.
+
+#### TC-10-118 · Cầu nối Pulsar sang Kafka có duyệt, không ảnh hưởng subscriber cũ <!--k:bridge-p2k-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** RT, API
+- **Truy vết** FR-10-073 · API-10-113, 059, 077, 090 · EVT-10-16 · NFR-10-018 · UC-10-27
+- **Tiền điều kiện / dữ liệu** U-T68-TA, U-T68-IA1 ở T96; ánh xạ topic `PLANNED`; topic Kafka đích `ACTIVE`; SIM-PULSAR có producer 200 bản tin/giây và subscriber cũ.
+- **Bước**
+  1. TA `POST /migrations/bridges` `PULSAR_TO_KAFKA`, `startFrom = LATEST`, `expiresAt` sau 90 ngày; IA1 duyệt.
+  2. Chạy 30 phút.
+- **Mong đợi** Bước 1 bên phát `LEGACY_BRIDGE` và publication tự duyệt; cầu nối `RUNNING`, ánh xạ `BRIDGING`; EVT: `bridge.state-changed`. Bước 2 bản tin xuất hiện trên Kafka với `id` từ `messageId`, `source = /legacy-hub/{pulsarTopic}`; độ trễ p95 ≤ 60 giây; subscriber cũ vẫn nhận đủ (subscription `Failover` riêng `dh-bridge`).
+
+#### TC-10-119 · Cầu nối trùng, ngược chiều cùng cặp, quá hạn dùng, bản tin không chuyển được <!--k:bridge-neg-->
+- **Loại** Âm · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-073, 074 · API-10-113, 115 · ERR-10-012, 042, 118 · BR-10-033
+- **Tiền điều kiện / dữ liệu** U-T68-TA ở T96; cầu nối `brg-t96-cp` `RUNNING`.
+- **Bước**
+  1. Tạo cầu nối thứ hai cho cùng topic; tạo cầu nối `KAFKA_TO_PULSAR` cùng cặp.
+  2. `expiresAt` sau 200 ngày.
+  3. SIM-PULSAR phát bản tin không chuyển được theo lược đồ đích.
+  4. Đặt đồng hồ quá `expiresAt`.
+- **Mong đợi** Bước 1 `409` ERR-10-042 cả hai. Bước 2 `422` ERR-10-012. Bước 3 bản tin vào DLQ của cầu nối, `origin = BRIDGE`, `bridgeCode`, ERR-10-118; cầu nối vẫn chạy. Bước 4 cầu nối `EXPIRED`, EVT: `bridge.state-changed`.
+
+#### TC-10-120 · Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ <!--k:bridge-k2p-->
+- **Loại** Dương · **Ưu tiên** P2 · **Tự động** RT
+- **Truy vết** FR-10-074 · API-10-113 · EVT-10-16
+- **Tiền điều kiện / dữ liệu** Bên phát đã chuyển sang phát thẳng Datahub; cầu nối chiều cũ đã `STOPPED`; subscriber cũ còn trên Pulsar.
+- **Bước**
+  1. TA tạo cầu nối `KAFKA_TO_PULSAR`; IA1 duyệt; phát 100 sự kiện qua API.
+- **Mong đợi** Subscriber cũ nhận 100 bản tin định dạng cũ (không phong bì CloudEvents); nhóm `dh-bridge-t96-{bridgeCode}`.
+
+#### TC-10-121 · Đối chiếu, chuyển hẳn có điều kiện và quay lui trong cửa sổ <!--k:cutover-->
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, RT
+- **Truy vết** FR-10-075 · API-10-117, 078, 116, 059 · EVT-10-15 · ERR-10-006, 042 · UC-10-27
+- **Tiền điều kiện / dữ liệu** U-T68-TA, U-T68-IA1 ở T96; ánh xạ `BRIDGING` 3 ngày (dưới `10.migration.min-parallel-days`), ánh xạ khác 15 ngày đủ điều kiện.
+- **Bước**
+  1. `GET /migrations/reconciliations`.
+  2. Đề nghị chuyển hẳn ánh xạ 3 ngày.
+  3. Đề nghị chuyển hẳn ánh xạ 15 ngày; IA1 duyệt.
+  4. Trong cửa sổ 30 ngày gọi `:rollback`.
+- **Mong đợi** Bước 1 chênh lệch 0 sau khi trừ lag. Bước 2 `409` ERR-10-006 kèm điều kiện chưa đạt. Bước 3 ánh xạ `CUT_OVER`, cầu nối dừng; EVT: `migration.cut-over`. Bước 4 ánh xạ `ROLLED_BACK` rồi `BRIDGING` khi cầu nối chạy lại; EVT: `migration.cut-over` (quay lui).
+
+#### TC-10-122 · Báo cáo tiến độ di trú <!--k:migration-progress-->
+- **Loại** Dương · **Ưu tiên** P3 · **Tự động** API, E2E
+- **Truy vết** FR-10-076 · API-10-118 · UI-10-20
+- **Tiền điều kiện / dữ liệu** U-T68-TA ở T96.
+- **Bước**
+  1. `GET /migrations/progress`; xuất Excel ở UI-10-20.
+- **Mong đợi** Số ánh xạ theo trạng thái theo loại, HTTT còn dùng Pulsar, cầu nối đang chạy và lag, đối chiếu gần nhất; tệp Excel khớp.
 
