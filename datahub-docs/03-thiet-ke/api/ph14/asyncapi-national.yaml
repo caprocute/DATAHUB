@@ -1,0 +1,1655 @@
+# D03-04-PH14 · AsyncAPI PH-14. SINH TỰ ĐỘNG bởi tools/gen_asyncapi.py — không sửa tay. Dữ liệu ví dụ là giả lập.
+asyncapi: 3.0.0
+info:
+  title: Datahub PH-14 Kết nối quốc gia — sự kiện
+  version: 1.0.0-draft
+  description: 'Hợp đồng sự kiện EVT-14-01…17 (D03-04-PH14 §4, FRS §9.3) và ba topic nội bộ giữa `dh-integration` và hồ sơ `national-gateway`.
+
+
+    Sự kiện phát từ `dh-integration` ghi vào `ph14_national.outbox` cùng giao dịch, Debezium hoặc bộ quét 500 ms đưa lên Kafka, CloudEvents 1.0
+    chế độ nhị phân. Sự kiện phát từ cổng (`gateway`, `worker`) đi qua `LedgerSpool` (ghi đĩa rồi đẩy Kafka, ít nhất một lần). Không sự kiện nào
+    mang nội dung bản tin, thông tin xác thực, khóa hay dữ liệu cá nhân; chỉ siêu dữ liệu và mã tham chiếu. Bên nhận xử lý lũy đẳng theo `configVersion`,
+    `transactionCode` hoặc `commandId`. Lược đồ đăng ký ở Apicurio, chế độ BACKWARD: chỉ thêm trường tùy chọn trong `v1` (ADR-070). Dữ liệu ví
+    dụ là giả lập. Tệp sinh bởi `tools/gen_asyncapi.py`.'
+  license:
+    name: Tài liệu nội bộ dự án Datahub
+defaultContentType: application/json
+servers:
+  kafka-cum:
+    host: kafka-bootstrap.dh-platform.svc:9093
+    protocol: kafka-secure
+    description: Kafka (Strimzi) của cụm; mTLS, ACL theo principal và tiền tố tenant.
+    security:
+    - $ref: '#/components/securitySchemes/mtls'
+channels:
+  platformChanged:
+    address: '{tenant}.national.platform.changed.v1'
+    title: EVT-14-01
+    description: Nền tảng đổi trạng thái, đổi bước xoay thông tin xác thực, vào hoặc ra `SECURITY_HOLD`.
+    messages:
+      platformChanged:
+        $ref: '#/components/messages/platformChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.platform.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  serviceChanged:
+    address: '{tenant}.national.service.changed.v1'
+    title: EVT-14-02
+    description: Dịch vụ tạo, sửa, đổi nhãn đối chiếu, kích hoạt đặc tả, nhập từ hệ cũ.
+    messages:
+      serviceChanged:
+        $ref: '#/components/messages/serviceChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.service.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  routingChanged:
+    address: '{tenant}.national.routing.changed.v1'
+    title: EVT-14-03
+    description: Luật định tuyến đổi.
+    messages:
+      routingChanged:
+        $ref: '#/components/messages/routingChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.routing.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  certificateChanged:
+    address: '{tenant}.national.certificate.changed.v1'
+    title: EVT-14-04
+    description: Chứng thư hoặc neo tin cậy đổi trạng thái; chặn ký do chứng thư.
+    messages:
+      certificateChanged:
+        $ref: '#/components/messages/certificateChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.certificate.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  certificateExpiring:
+    address: '{tenant}.national.certificate.expiring.v1'
+    title: EVT-14-05
+    description: Chứng thư chạm mốc 60, 30, 7 ngày.
+    messages:
+      certificateExpiring:
+        $ref: '#/components/messages/certificateExpiring'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.certificate.expiring.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  signatureIncidentOpened:
+    address: '{tenant}.national.signature.incident-opened.v1'
+    title: EVT-14-06
+    description: Mở sự cố chữ ký.
+    messages:
+      signatureIncidentOpened:
+        $ref: '#/components/messages/signatureIncidentOpened'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.signature.incident-opened.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  quotaThresholdReached:
+    address: '{tenant}.national.quota.threshold-reached.v1'
+    title: EVT-14-07
+    description: Mức dùng hạn mức chạm 70%, 85%, 95%.
+    messages:
+      quotaThresholdReached:
+        $ref: '#/components/messages/quotaThresholdReached'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.quota.threshold-reached.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  quotaChanged:
+    address: '{tenant}.national.quota.changed.v1'
+    title: EVT-14-08
+    description: Hạn mức hoặc phân bổ đổi.
+    messages:
+      quotaChanged:
+        $ref: '#/components/messages/quotaChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.quota.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  cacheInvalidated:
+    address: '{tenant}.national.cache.invalidated.v1'
+    title: EVT-14-09
+    description: Đệm bị vô hiệu.
+    messages:
+      cacheInvalidated:
+        $ref: '#/components/messages/cacheInvalidated'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.cache.invalidated.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  breakerChanged:
+    address: '{tenant}.national.breaker.changed.v1'
+    title: EVT-14-10
+    description: Ngắt mạch đổi trạng thái hoặc hàng chờ tích lũy.
+    messages:
+      breakerChanged:
+        $ref: '#/components/messages/breakerChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.breaker.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  transactionRecorded:
+    address: '{tenant}.national.transaction.recorded.v1'
+    title: EVT-14-11
+    description: Một giao dịch quốc gia kết thúc (siêu dữ liệu, không nội dung).
+    messages:
+      transactionRecorded:
+        $ref: '#/components/messages/transactionRecorded'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.transaction.recorded.v1'
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 259200000
+  syncRunFinished:
+    address: '{tenant}.national.sync.run-finished.v1'
+    title: EVT-14-12
+    description: Một phiên đồng bộ hoặc đối chiếu kết thúc.
+    messages:
+      syncRunFinished:
+        $ref: '#/components/messages/syncRunFinished'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.sync.run-finished.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  inboundChanged:
+    address: '{tenant}.national.inbound.changed.v1'
+    title: EVT-14-13
+    description: Điểm cuối chiều vào hoặc nguồn được phép đổi.
+    messages:
+      inboundChanged:
+        $ref: '#/components/messages/inboundChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.inbound.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  exposureChanged:
+    address: '{tenant}.national.exposure.changed.v1'
+    title: EVT-14-14
+    description: Cung cấp lại tạo, sửa, gỡ.
+    messages:
+      exposureChanged:
+        $ref: '#/components/messages/exposureChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.exposure.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  healthChanged:
+    address: '{tenant}.national.health.changed.v1'
+    title: EVT-14-15
+    description: Mức sức khỏe nền tảng đổi.
+    messages:
+      healthChanged:
+        $ref: '#/components/messages/healthChanged'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.health.changed.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  anomalyDetected:
+    address: '{tenant}.national.anomaly.detected.v1'
+    title: EVT-14-16
+    description: Phát hiện khai thác bất thường hoặc xem nội dung vượt ngưỡng.
+    messages:
+      anomalyDetected:
+        $ref: '#/components/messages/anomalyDetected'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.anomaly.detected.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 2592000000
+  notificationReceived:
+    address: '{tenant}.national.notification.received.v1'
+    title: EVT-14-17
+    description: Nhận thông báo thay đổi từ quốc gia.
+    messages:
+      notificationReceived:
+        $ref: '#/components/messages/notificationReceived'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.notification.received.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 604800000
+  workerCommand:
+    address: '{tenant}.national.worker.command.v1'
+    title: nội bộ
+    description: Lệnh cho `worker` (`probe`, `cert.selftest`, `token.test`, `sync.run`, `spec.fetch`, `catalog.fetch`), đi qua outbox.
+    messages:
+      workerCommand:
+        $ref: '#/components/messages/workerCommand'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.worker.command.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 86400000
+  workerResult:
+    address: '{tenant}.national.worker.result.v1'
+    title: nội bộ
+    description: Kết quả lệnh của `worker`, xử lý lũy đẳng theo `commandId`.
+    messages:
+      workerResult:
+        $ref: '#/components/messages/workerResult'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.worker.result.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 86400000
+  quotaUsage:
+    address: '{tenant}.national.quota.usage.v1'
+    title: nội bộ
+    description: Mức dùng hạn mức tổng hợp từ cổng, để ghi `quota_usage`.
+    messages:
+      quotaUsage:
+        $ref: '#/components/messages/quotaUsage'
+    parameters:
+      tenant:
+        $ref: '#/components/parameters/tenant'
+    bindings:
+      kafka:
+        topic: '{tenant}.national.quota.usage.v1'
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy:
+          - delete
+          retention.ms: 259200000
+operations:
+  sendPlatformChanged:
+    action: send
+    channel:
+      $ref: '#/channels/platformChanged'
+    title: EVT-14-01 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/platformChanged/messages/platformChanged'
+  receivePlatformChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/platformChanged'
+    title: dh-runtime, PH-13 nhận
+  sendServiceChanged:
+    action: send
+    channel:
+      $ref: '#/channels/serviceChanged'
+    title: EVT-14-02 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/serviceChanged/messages/serviceChanged'
+  receiveServiceChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/serviceChanged'
+    title: dh-runtime, PH-02, PH-13 nhận
+  sendRoutingChanged:
+    action: send
+    channel:
+      $ref: '#/channels/routingChanged'
+    title: EVT-14-03 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/routingChanged/messages/routingChanged'
+  receiveRoutingChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/routingChanged'
+    title: dh-runtime nhận
+  sendCertificateChanged:
+    action: send
+    channel:
+      $ref: '#/channels/certificateChanged'
+    title: EVT-14-04 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/certificateChanged/messages/certificateChanged'
+  receiveCertificateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/certificateChanged'
+    title: dh-runtime, PH-13 nhận
+  sendCertificateExpiring:
+    action: send
+    channel:
+      $ref: '#/channels/certificateExpiring'
+    title: EVT-14-05 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/certificateExpiring/messages/certificateExpiring'
+  receiveCertificateExpiring:
+    action: receive
+    channel:
+      $ref: '#/channels/certificateExpiring'
+    title: PH-13, thông báo ở PH-12 nhận
+  sendSignatureIncidentOpened:
+    action: send
+    channel:
+      $ref: '#/channels/signatureIncidentOpened'
+    title: EVT-14-06 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/signatureIncidentOpened/messages/signatureIncidentOpened'
+  receiveSignatureIncidentOpened:
+    action: receive
+    channel:
+      $ref: '#/channels/signatureIncidentOpened'
+    title: PH-13 (SIEM), thông báo cho SO nhận
+  sendQuotaThresholdReached:
+    action: send
+    channel:
+      $ref: '#/channels/quotaThresholdReached'
+    title: EVT-14-07 — dh-runtime gateway phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/quotaThresholdReached/messages/quotaThresholdReached'
+  receiveQuotaThresholdReached:
+    action: receive
+    channel:
+      $ref: '#/channels/quotaThresholdReached'
+    title: PH-13, thông báo cho TA, TO nhận
+  sendQuotaChanged:
+    action: send
+    channel:
+      $ref: '#/channels/quotaChanged'
+    title: EVT-14-08 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/quotaChanged/messages/quotaChanged'
+  receiveQuotaChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/quotaChanged'
+    title: dh-runtime, PH-13 nhận
+  sendCacheInvalidated:
+    action: send
+    channel:
+      $ref: '#/channels/cacheInvalidated'
+    title: EVT-14-09 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/cacheInvalidated/messages/cacheInvalidated'
+  receiveCacheInvalidated:
+    action: receive
+    channel:
+      $ref: '#/channels/cacheInvalidated'
+    title: PH-13 nhận
+  sendBreakerChanged:
+    action: send
+    channel:
+      $ref: '#/channels/breakerChanged'
+    title: EVT-14-10 — dh-runtime gateway phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/breakerChanged/messages/breakerChanged'
+  receiveBreakerChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/breakerChanged'
+    title: PH-13, PH-04 nhận
+  sendTransactionRecorded:
+    action: send
+    channel:
+      $ref: '#/channels/transactionRecorded'
+    title: EVT-14-11 — dh-runtime gateway phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/transactionRecorded/messages/transactionRecorded'
+  receiveTransactionRecorded:
+    action: receive
+    channel:
+      $ref: '#/channels/transactionRecorded'
+    title: PH-13, dh-integration (tổng hợp `usage_hourly`) nhận
+  sendSyncRunFinished:
+    action: send
+    channel:
+      $ref: '#/channels/syncRunFinished'
+    title: EVT-14-12 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/syncRunFinished/messages/syncRunFinished'
+  receiveSyncRunFinished:
+    action: receive
+    channel:
+      $ref: '#/channels/syncRunFinished'
+    title: PH-02, PH-06, PH-07, PH-13 nhận
+  sendInboundChanged:
+    action: send
+    channel:
+      $ref: '#/channels/inboundChanged'
+    title: EVT-14-13 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/inboundChanged/messages/inboundChanged'
+  receiveInboundChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/inboundChanged'
+    title: PH-03 (nạp tuyến), PH-13 nhận
+  sendExposureChanged:
+    action: send
+    channel:
+      $ref: '#/channels/exposureChanged'
+    title: EVT-14-14 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/exposureChanged/messages/exposureChanged'
+  receiveExposureChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/exposureChanged'
+    title: PH-02, PH-03 nhận
+  sendHealthChanged:
+    action: send
+    channel:
+      $ref: '#/channels/healthChanged'
+    title: EVT-14-15 — dh-runtime worker phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/healthChanged/messages/healthChanged'
+  receiveHealthChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/healthChanged'
+    title: PH-04, PH-13 nhận
+  sendAnomalyDetected:
+    action: send
+    channel:
+      $ref: '#/channels/anomalyDetected'
+    title: EVT-14-16 — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/anomalyDetected/messages/anomalyDetected'
+  receiveAnomalyDetected:
+    action: receive
+    channel:
+      $ref: '#/channels/anomalyDetected'
+    title: PH-13 (SIEM), thông báo cho SO nhận
+  sendNotificationReceived:
+    action: send
+    channel:
+      $ref: '#/channels/notificationReceived'
+    title: EVT-14-17 — dh-runtime gateway phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/notificationReceived/messages/notificationReceived'
+  receiveNotificationReceived:
+    action: receive
+    channel:
+      $ref: '#/channels/notificationReceived'
+    title: PH-07, dh-runtime nhận
+  sendWorkerCommand:
+    action: send
+    channel:
+      $ref: '#/channels/workerCommand'
+    title: nội bộ — dh-integration phát (Outbox)
+    messages:
+    - $ref: '#/channels/workerCommand/messages/workerCommand'
+  receiveWorkerCommand:
+    action: receive
+    channel:
+      $ref: '#/channels/workerCommand'
+    title: dh-runtime worker nhận
+  sendWorkerResult:
+    action: send
+    channel:
+      $ref: '#/channels/workerResult'
+    title: nội bộ — dh-runtime worker phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/workerResult/messages/workerResult'
+  receiveWorkerResult:
+    action: receive
+    channel:
+      $ref: '#/channels/workerResult'
+    title: dh-integration nhận
+  sendQuotaUsage:
+    action: send
+    channel:
+      $ref: '#/channels/quotaUsage'
+    title: nội bộ — dh-runtime gateway phát (LedgerSpool)
+    messages:
+    - $ref: '#/channels/quotaUsage/messages/quotaUsage'
+  receiveQuotaUsage:
+    action: receive
+    channel:
+      $ref: '#/channels/quotaUsage'
+    title: dh-integration nhận
+components:
+  parameters:
+    tenant:
+      description: Mã tenant chữ thường (`t68`).
+      examples:
+      - t68
+  securitySchemes:
+    mtls:
+      type: X509
+      description: Chứng thư do cert-manager cấp; ACL Kafka theo CN và tiền tố `{tenant}.national.`.
+  messages:
+    platformChanged:
+      name: platformChanged
+      title: EVT-14-01
+      summary: Nền tảng đổi trạng thái, đổi bước xoay thông tin xác thực, vào hoặc ra `SECURITY_HOLD`.
+      payload:
+        $ref: '#/components/schemas/PlatformChanged'
+      headers: &id001
+        type: object
+        properties:
+          ce_specversion:
+            type: string
+            const: '1.0'
+          ce_id:
+            type: string
+            format: uuid
+          ce_source:
+            type: string
+            description: '`/tenants/{tenant}/national`'
+          ce_type:
+            type: string
+            description: '`vn.datahub.national.{đối tượng}.{sự kiện}.v1`'
+          ce_time: &id002
+            type: string
+            format: date-time
+          ce_subject:
+            type: string
+            description: Mã đối tượng.
+          ce_datacontenttype:
+            type: string
+            const: application/json
+          traceparent:
+            type: string
+        required:
+        - ce_specversion
+        - ce_id
+        - ce_source
+        - ce_type
+        - ce_time
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`platformCode`'
+    serviceChanged:
+      name: serviceChanged
+      title: EVT-14-02
+      summary: Dịch vụ tạo, sửa, đổi nhãn đối chiếu, kích hoạt đặc tả, nhập từ hệ cũ.
+      payload:
+        $ref: '#/components/schemas/ServiceChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`serviceCode`'
+    routingChanged:
+      name: routingChanged
+      title: EVT-14-03
+      summary: Luật định tuyến đổi.
+      payload:
+        $ref: '#/components/schemas/RoutingChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`ruleId`'
+    certificateChanged:
+      name: certificateChanged
+      title: EVT-14-04
+      summary: Chứng thư hoặc neo tin cậy đổi trạng thái; chặn ký do chứng thư.
+      payload:
+        $ref: '#/components/schemas/CertificateChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`certCode`'
+    certificateExpiring:
+      name: certificateExpiring
+      title: EVT-14-05
+      summary: Chứng thư chạm mốc 60, 30, 7 ngày.
+      payload:
+        $ref: '#/components/schemas/CertificateExpiring'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`certCode`'
+    signatureIncidentOpened:
+      name: signatureIncidentOpened
+      title: EVT-14-06
+      summary: Mở sự cố chữ ký.
+      payload:
+        $ref: '#/components/schemas/SignatureIncidentOpened'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`incidentId`'
+    quotaThresholdReached:
+      name: quotaThresholdReached
+      title: EVT-14-07
+      summary: Mức dùng hạn mức chạm 70%, 85%, 95%.
+      payload:
+        $ref: '#/components/schemas/QuotaThresholdReached'
+      headers: &id003
+        type: object
+        properties:
+          traceparent:
+            type: string
+          ce_id:
+            type: string
+            format: uuid
+          ce_type:
+            type: string
+          ce_time: *id002
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`quotaId`'
+    quotaChanged:
+      name: quotaChanged
+      title: EVT-14-08
+      summary: Hạn mức hoặc phân bổ đổi.
+      payload:
+        $ref: '#/components/schemas/QuotaChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`quotaId`'
+    cacheInvalidated:
+      name: cacheInvalidated
+      title: EVT-14-09
+      summary: Đệm bị vô hiệu.
+      payload:
+        $ref: '#/components/schemas/CacheInvalidated'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`serviceCode`'
+    breakerChanged:
+      name: breakerChanged
+      title: EVT-14-10
+      summary: Ngắt mạch đổi trạng thái hoặc hàng chờ tích lũy.
+      payload:
+        $ref: '#/components/schemas/BreakerChanged'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`platformCode`'
+    transactionRecorded:
+      name: transactionRecorded
+      title: EVT-14-11
+      summary: Một giao dịch quốc gia kết thúc (siêu dữ liệu, không nội dung).
+      payload:
+        $ref: '#/components/schemas/TransactionRecorded'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`transactionCode`'
+    syncRunFinished:
+      name: syncRunFinished
+      title: EVT-14-12
+      summary: Một phiên đồng bộ hoặc đối chiếu kết thúc.
+      payload:
+        $ref: '#/components/schemas/SyncRunFinished'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`runId`'
+    inboundChanged:
+      name: inboundChanged
+      title: EVT-14-13
+      summary: Điểm cuối chiều vào hoặc nguồn được phép đổi.
+      payload:
+        $ref: '#/components/schemas/InboundChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`endpointCode`'
+    exposureChanged:
+      name: exposureChanged
+      title: EVT-14-14
+      summary: Cung cấp lại tạo, sửa, gỡ.
+      payload:
+        $ref: '#/components/schemas/ExposureChanged'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`serviceCode`'
+    healthChanged:
+      name: healthChanged
+      title: EVT-14-15
+      summary: Mức sức khỏe nền tảng đổi.
+      payload:
+        $ref: '#/components/schemas/HealthChanged'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`platformCode`'
+    anomalyDetected:
+      name: anomalyDetected
+      title: EVT-14-16
+      summary: Phát hiện khai thác bất thường hoặc xem nội dung vượt ngưỡng.
+      payload:
+        $ref: '#/components/schemas/AnomalyDetected'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`alertId`'
+    notificationReceived:
+      name: notificationReceived
+      title: EVT-14-17
+      summary: Nhận thông báo thay đổi từ quốc gia.
+      payload:
+        $ref: '#/components/schemas/NotificationReceived'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`notificationId`'
+    workerCommand:
+      name: workerCommand
+      title: nội bộ
+      summary: Lệnh cho `worker` (`probe`, `cert.selftest`, `token.test`, `sync.run`, `spec.fetch`, `catalog.fetch`), đi qua outbox.
+      payload:
+        $ref: '#/components/schemas/WorkerCommand'
+      headers: *id001
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`commandId`'
+    workerResult:
+      name: workerResult
+      title: nội bộ
+      summary: Kết quả lệnh của `worker`, xử lý lũy đẳng theo `commandId`.
+      payload:
+        $ref: '#/components/schemas/WorkerResult'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`commandId`'
+    quotaUsage:
+      name: quotaUsage
+      title: nội bộ
+      summary: Mức dùng hạn mức tổng hợp từ cổng, để ghi `quota_usage`.
+      payload:
+        $ref: '#/components/schemas/QuotaUsage'
+      headers: *id003
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: '`quotaId`'
+  schemas:
+    Actor:
+      type: object
+      properties:
+        userId:
+          type: string
+        type:
+          type: string
+          enum:
+          - USER
+          - SYSTEM
+      required:
+      - userId
+      - type
+    Base:
+      type: object
+      properties:
+        tenantId: &id009
+          type: string
+          pattern: ^(T[0-9]{2}|COMMON)$
+        configVersion: &id005
+          type: integer
+        occurredAt: *id002
+        actor:
+          $ref: '#/components/schemas/Actor'
+      required:
+      - tenantId
+      - occurredAt
+    PlatformChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          platformCode:
+            type: string
+          platformType:
+            type: string
+            enum:
+            - NDXP
+            - NDOP
+            - REGISTRY
+          from: &id004
+            type: string
+            enum:
+            - DRAFT
+            - TESTED
+            - PENDING_ACTIVATION
+            - ACTIVE
+            - SUSPENDED
+            - RETIRED
+          to: *id004
+          securityHold: &id007
+            type: boolean
+          change:
+            type: string
+            enum:
+            - STATE
+            - CREDENTIAL_ROTATION
+            - SECURITY_HOLD
+            - CONNECTION
+            - SETTINGS
+          rotationPhase:
+            type: string
+            enum:
+            - AWAITING_PENDING_VALUE
+            - PENDING_VERIFY
+            - OVERLAP
+            - AWAITING_REVOCATION
+            - DONE
+            - CANCELLED
+          reason:
+            type: string
+            maxLength: 1000
+        required:
+        - platformCode
+        - change
+      examples:
+      - tenantId: T68
+        configVersion: 1842
+        occurredAt: '2026-11-26T08:15:00Z'
+        platformCode: ndxp-t68
+        change: STATE
+        from: TESTED
+        to: ACTIVE
+        actor:
+          userId: u-ia-0017
+          type: USER
+    ServiceChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          serviceCode:
+            type: string
+          platformCode:
+            type: string
+          change:
+            type: string
+            enum:
+            - CREATED
+            - UPDATED
+            - LABEL_CHANGED
+            - SPEC_ACTIVATED
+            - STATE_CHANGED
+            - IMPORTED
+          state:
+            type: string
+            enum:
+            - DRAFT
+            - ACTIVE
+            - DEPRECATED
+            - RETIRED
+          reconcileLabel:
+            type: string
+            enum:
+            - STILL
+            - SPEC_CHANGED
+            - DISCONTINUED
+            - UNKNOWN
+          contractVersion:
+            type: string
+          specVersion:
+            type: string
+          sensitivity:
+            type: string
+            enum:
+            - PUBLIC
+            - INTERNAL
+            - RESTRICTED
+            - SENSITIVE
+        required:
+        - serviceCode
+        - change
+    RoutingChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          ruleId:
+            type: string
+            format: uuid
+          change:
+            type: string
+            enum:
+            - ACTIVATED
+            - UPDATED
+            - DISABLED
+          primaryServiceCode:
+            type: string
+          fallbackServiceCode:
+            type:
+            - string
+            - 'null'
+          priority: *id005
+        required:
+        - ruleId
+        - change
+    CertificateChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          certCode:
+            type: string
+          purpose:
+            type: string
+            enum:
+            - SIGNING
+            - TLS_CLIENT
+            - BOTH
+          from: &id006
+            type: string
+            enum:
+            - UPLOADED
+            - PENDING_ACTIVATION
+            - ACTIVE
+            - EXPIRING
+            - EXPIRED
+            - SUPERSEDED
+            - REVOKED
+          to: *id006
+          notAfter: *id002
+          signingBlocked: *id007
+          trustAnchorChange: *id007
+          supersedes:
+            type:
+            - string
+            - 'null'
+        required:
+        - certCode
+    CertificateExpiring:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          certCode:
+            type: string
+          purpose:
+            type: string
+            enum:
+            - SIGNING
+            - TLS_CLIENT
+            - BOTH
+          daysLeft:
+            type: integer
+            enum:
+            - 60
+            - 30
+            - 7
+          notAfter: *id002
+          replacementReady: *id007
+        required:
+        - certCode
+        - daysLeft
+        - notAfter
+      examples:
+      - tenantId: T68
+        occurredAt: '2026-11-26T01:00:00Z'
+        certCode: ky-so-t68-2026
+        purpose: SIGNING
+        daysLeft: 30
+        notAfter: '2026-12-26T00:00:00Z'
+        replacementReady: false
+    SignatureIncidentOpened:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          incidentId:
+            type: string
+            format: uuid
+          kind:
+            type: string
+            enum:
+            - SIGNATURE_MISMATCH
+            - UNTRUSTED_CHAIN
+            - REVOKED_CERT
+            - STALE_TIMESTAMP
+            - REPLAY
+          transactionCode:
+            type: string
+          platformCode:
+            type: string
+          securityHold: *id007
+          recentCount10m: *id005
+        required:
+        - incidentId
+        - kind
+        - platformCode
+    QuotaThresholdReached:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          quotaId:
+            type: string
+            format: uuid
+          platformCode:
+            type: string
+          serviceCode:
+            type:
+            - string
+            - 'null'
+          period: &id008
+            type: string
+            enum:
+            - HOUR
+            - DAY
+            - MONTH
+          level:
+            type: integer
+            enum:
+            - 70
+            - 85
+            - 95
+          used: *id005
+          limit: *id005
+          resetAt: *id002
+        required:
+        - quotaId
+        - level
+        - used
+        - limit
+      examples:
+      - tenantId: T68
+        occurredAt: '2026-11-26T09:40:00Z'
+        quotaId: 0b1d2c3e-4f50-4a6b-8c7d-9e0f1a2b3c4d
+        platformCode: ndxp-t68
+        period: DAY
+        level: 85
+        used: 4250
+        limit: 5000
+        resetAt: '2026-11-27T00:00:00Z'
+    QuotaChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          quotaId:
+            type: string
+            format: uuid
+          platformCode:
+            type: string
+          serviceCode:
+            type:
+            - string
+            - 'null'
+          period: *id008
+          limit: *id005
+          systemCode:
+            type:
+            - string
+            - 'null'
+            description: Có khi là phân bổ cho HTTT.
+          basisDocument:
+            type: string
+          scope:
+            type: string
+            enum:
+            - POLICY
+            - ALLOCATION
+        required:
+        - quotaId
+        - scope
+    CacheInvalidated:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          serviceCode:
+            type: string
+          scope:
+            type: string
+            enum:
+            - SERVICE
+            - SUBJECT
+          invalidated: *id005
+          reason:
+            type: string
+            maxLength: 500
+        required:
+        - serviceCode
+        - scope
+    BreakerChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          platformCode:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+            enum:
+            - CLOSED
+            - OPEN
+            - HALF_OPEN
+            - FORCED_OPEN
+            - FORCED_CLOSED
+          failureRatio: &id011
+            type: number
+          calls: *id005
+          queueDepth: *id005
+          reason:
+            type: string
+            maxLength: 500
+        required:
+        - platformCode
+        - to
+    TransactionRecorded:
+      type: object
+      properties:
+        transactionCode:
+          type: string
+        tenantId: *id009
+        direction:
+          type: string
+          enum:
+          - OUTBOUND
+          - INBOUND
+        serviceCode:
+          type: string
+        platformCode:
+          type: string
+        systemCode:
+          type: string
+        purposeCode:
+          type:
+          - string
+          - 'null'
+        procedureCode:
+          type:
+          - string
+          - 'null'
+        state:
+          type: string
+          enum:
+          - REJECTED
+          - COMPLETED_CACHE
+          - QUOTA_EXCEEDED
+          - SUCCEEDED
+          - FAILED
+          - TIMEOUT
+          - UNKNOWN_RESULT
+          - SIGNATURE_FAILED
+        errorCode:
+          type:
+          - string
+          - 'null'
+          pattern: ^ERR-14-[0-9]{3}$
+        fromCache: *id007
+        stale: *id007
+        durationMs: *id005
+        certCode:
+          type:
+          - string
+          - 'null'
+        payloadRef:
+          type:
+          - string
+          - 'null'
+          description: Tham chiếu nội dung mã hóa; không mang nội dung.
+        payloadHash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        startedAt: *id002
+        finishedAt: *id002
+      required:
+      - transactionCode
+      - tenantId
+      - direction
+      - serviceCode
+      - state
+      - startedAt
+      examples:
+      - transactionCode: T68-20261126-0000184320
+        tenantId: T68
+        direction: OUTBOUND
+        serviceCode: lltp-tra-trang-thai
+        platformCode: ndxp-t68
+        systemCode: DVC
+        purposeCode: GIAI_QUYET_TTHC
+        procedureCode: '1.001234'
+        state: SUCCEEDED
+        errorCode: null
+        fromCache: false
+        stale: false
+        durationMs: 842
+        certCode: ky-so-t68-2026
+        payloadRef: dh-nat-payload/T68/20261126/0000184320
+        payloadHash: sha256:abababababababababababababababababababababababababababababababab
+        traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+        startedAt: '2026-11-26T08:15:01Z'
+        finishedAt: '2026-11-26T08:15:02Z'
+    SyncRunFinished:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          runId:
+            type: string
+            format: uuid
+          kind:
+            type: string
+            enum:
+            - SERVICE_CATALOG
+            - MASTER_DATA
+            - OPEN_DATA
+            - SERVICE_RECONCILE
+          state:
+            type: string
+            enum:
+            - COMPLETED
+            - COMPLETED_WITH_ERRORS
+            - FAILED
+          sent: *id005
+          accepted: *id005
+          rejected: *id005
+          error: *id005
+          receiptRef:
+            type:
+            - string
+            - 'null'
+        required:
+        - runId
+        - kind
+        - state
+    InboundChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          endpointCode:
+            type: string
+          path:
+            type: string
+          state:
+            type: string
+            enum:
+            - DRAFT
+            - PENDING_ACTIVATION
+            - ACTIVE
+            - SUSPENDED
+            - RETIRED
+          clientCertFingerprints:
+            type: array
+            items:
+              type: string
+              pattern: ^[0-9a-f]{64}$
+          senders:
+            type: array
+            items:
+              type: object
+              properties:
+                senderCode:
+                  type: string
+                serviceCodes:
+                  type: array
+                  items:
+                    type: string
+        required:
+        - endpointCode
+        - state
+    ExposureChanged:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          serviceCode:
+            type: string
+          apiCode:
+            type:
+            - string
+            - 'null'
+          change:
+            type: string
+            enum:
+            - CREATED
+            - UPDATED
+            - PUBLISHED
+            - WITHDRAWN
+          path:
+            type: string
+          contractVersion:
+            type: string
+          requestId:
+            type: string
+            format: uuid
+        required:
+        - serviceCode
+        - change
+    HealthChanged:
+      type: object
+      properties:
+        tenantId: *id009
+        platformCode:
+          type: string
+        from: &id010
+          type: string
+          enum:
+          - HEALTHY
+          - DEGRADED
+          - UNHEALTHY
+          - UNKNOWN
+        to: *id010
+        reasonCode:
+          type: string
+        reasonDetail:
+          type: string
+          maxLength: 1000
+        evaluatedAt: *id002
+        metrics:
+          type: object
+          properties:
+            calls5m: *id005
+            errorRate5m: *id011
+            p95Ms: *id005
+            tokenOk: *id007
+            crlAgeDays: *id005
+      required:
+      - tenantId
+      - platformCode
+      - to
+    AnomalyDetected:
+      allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        properties:
+          alertId:
+            type: string
+            format: uuid
+          rule:
+            type: string
+            enum:
+            - MASS_LOOKUP
+            - OFF_HOURS
+            - SPIKE
+            - CASE_FANOUT
+          systemCode:
+            type: string
+          serviceCode:
+            type: string
+          evidenceSummary:
+            type: string
+            maxLength: 1000
+            description: Số liệu tổng hợp, không có dữ liệu cá nhân.
+        required:
+        - alertId
+        - rule
+    NotificationReceived:
+      type: object
+      properties:
+        notificationId:
+          type: string
+          format: uuid
+        tenantId: *id009
+        endpointCode:
+          type: string
+        notificationType:
+          type: string
+          enum:
+          - CATALOG_CHANGED
+          - SERVICE_SPEC_CHANGED
+          - SERVICE_DISCONTINUED
+          - OTHER
+        subjectRef:
+          type: string
+        transactionCode:
+          type: string
+        receivedAt: *id002
+      required:
+      - notificationId
+      - tenantId
+      - notificationType
+      - receivedAt
+    WorkerCommand:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        tenantId: *id009
+        kind:
+          type: string
+          enum:
+          - probe
+          - cert.selftest
+          - token.test
+          - sync.run
+          - spec.fetch
+          - catalog.fetch
+        platformCode:
+          type: string
+        environment:
+          type: string
+          enum:
+          - TEST
+          - STAGING
+          - PROD
+        args:
+          type: object
+          additionalProperties: true
+          description: Tham số lệnh; không có bí mật, worker tự đọc OpenBao.
+        deadline: *id002
+      required:
+      - commandId
+      - tenantId
+      - kind
+      - deadline
+    WorkerResult:
+      type: object
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        tenantId: *id009
+        status:
+          type: string
+          enum:
+          - OK
+          - FAILED
+          - TIMEOUT
+        result:
+          type: object
+          additionalProperties: true
+        causeCode:
+          type: string
+        hint:
+          type: string
+          maxLength: 1000
+        finishedAt: *id002
+      required:
+      - commandId
+      - tenantId
+      - status
+    QuotaUsage:
+      type: object
+      properties:
+        tenantId: *id009
+        quotaId:
+          type: string
+          format: uuid
+        bucket:
+          type: string
+        used: *id005
+        windowStart: *id002
+        reportedAt: *id002
+        replica:
+          type: string
+      required:
+      - tenantId
+      - quotaId
+      - used
+      - reportedAt
