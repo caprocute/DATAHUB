@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: dh-data
+  datasource:
+    # Ứng dụng kết nối bằng vai trò đăng nhập thành viên ph07_app (không BYPASSRLS, không phải chủ bảng).
+    url: ${DH_DATA_DB_URL:jdbc:postgresql://localhost:5432/datahub}
+    username: ${DH_DATA_DB_USER:dh_data_app}
+    password: ${DH_DATA_DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    deserialization:
+      # Chống gán hàng loạt (CC-SEC-21, SS-07-13): trường lạ trong thân bị từ chối.
+      fail-on-unknown-properties: true
+  mvc:
+    problemdetails:
+      enabled: false   # lỗi khung đã được GlobalProblemHandler chuyển thành RFC 9457 theo mã ERR-07
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+
+logging:
+  structured:
+    format:
+      console: logstash   # nhật ký JSON (CC-LOG-01); traceId nằm trong MDC
+
+datahub:
+  security:
+    jwt:
+      # Khóa CÔNG KHAI PEM, cấu hình qua datahub.security.jwt.public-key hoặc .public-key-file
+      # (biến môi trường DATAHUB_SECURITY_JWT_PUBLICKEY / _PUBLICKEYFILE; tùy chọn .issuer).
+      # Không có giá trị mặc định: thiếu khóa thì ứng dụng không khởi động.
+      issuer:
