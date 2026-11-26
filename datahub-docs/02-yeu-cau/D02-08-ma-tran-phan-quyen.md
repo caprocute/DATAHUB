@@ -253,6 +253,9 @@ Ma trận dưới đây gán quyền cho các vai trò chung ở các phân hệ
 | PERM-13-audit-read | Xem nhật ký kiểm toán | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-audit-export | Xuất bằng chứng kiểm toán | — | — | — | — | ● | — | — | — | — | — | — | — | — | — | ● |
 | PERM-13-alert-admin | Cấu hình cảnh báo | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-alert-ack | Xác nhận, đánh dấu đã xử lý, tạm ẩn cảnh báo | ● | ● | ● | ● | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-security | Xem và xử lý cảnh báo an ninh; tinh chỉnh ngưỡng luật phát hiện; lập báo cáo sự cố | ● | — | ● | — | ● | — | — | — | — | — | — | — | — | — | — |
+| PERM-13-admin | Tham số `13.*`, mục tiêu SIEM, bộ dashboard, hạn mức quan sát | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-read | Xem danh mục dịch vụ quốc gia | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | — | — | — | ● | ● |
 | PERM-14-admin | Cấu hình kết nối NDXP | ● | — | ● | — | — | — | — | — | — | — | — | — | — | — | — |
 | PERM-14-service | Khai báo, sửa dịch vụ, hợp đồng, đặc tả, cung cấp lại, đối chiếu danh mục dịch vụ | ● | — | ● | — | — | ● | — | — | — | — | — | — | — | — | — |
