@@ -2401,7 +2401,7 @@ Giả định A-19-01…14 của khung truy vết §15.2 tiếp tục áp dụng
 
 ### 10.3. Ràng buộc
 
-- Công nghệ theo D03-01 và stack chốt: Java 25, Spring Boot 4 với Spring Modulith (ADR-001), PostgreSQL 16 cụm riêng `pg-payment` (Q340), Kafka (ADR-004), Valkey, Garage và Ceph RGW cho tệp và WORM (ADR-008), OpenBao (ADR-012), APISIX (ADR-005, ADR-033), giao diện React với antd v6 phong cách Liquid Glass (D03-05).
+- Công nghệ theo D03-01 và stack chốt: Java 21, Spring Boot 4 với Spring Modulith (ADR-001), PostgreSQL 18 trên CloudNativePG, cụm riêng `pg-payment` (Q340), Kafka (ADR-004), Valkey, Garage và Ceph RGW cho tệp và WORM (ADR-008), OpenBao (ADR-012), APISIX (ADR-005, ADR-033), giao diện React với antd v6 phong cách Liquid Glass (D03-05).
 - An toàn thông tin cấp độ 3 theo NĐ 331/2026 và TCVN 14423:2026, thiết kế sẵn sàng lên cấp độ 4 (ADR-030); bảo vệ dữ liệu cá nhân theo Luật 91/2025 và NĐ 356/2025.
 - Số tiền là số nguyên đồng, không dùng kiểu số thực ở bất kỳ tầng nào, kể cả JSON (số nguyên) và giao diện (định dạng khi hiển thị).
 - Thời gian lưu UTC, hiển thị và tính ngày nghiệp vụ theo giờ Việt Nam.
