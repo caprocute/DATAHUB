@@ -1,0 +1,5389 @@
+# D03-04-PH04 · OpenAPI PH-04 (dh-integration, module flow). SINH TỰ ĐỘNG bởi tools/gen_openapi.py — không sửa tay.
+openapi: 3.1.0
+info:
+  title: Datahub · PH-04 Lõi tích hợp và trình thiết kế luồng API
+  version: 1.0.0-draft
+  summary: 'Quản lý luồng Camel: không gian, luồng, phiên bản, kiểm tra hợp lệ, chạy thử, duyệt, triển khai GitOps, điều khiển runtime, catalog.'
+  description: 'API của module `flow` trong `dh-integration` (control plane PH-04). Chỉ người dùng giao diện Datahub gọi (token Authorization
+    Code + PKCE qua BFF của console); HTTT thành viên không gọi API này mà gọi **luồng** qua APISIX.
+
+
+    Quy ước (D03-04-PH04 §1): tenant lấy từ token; lệnh tạo nhận `Idempotency-Key`; lệnh sửa, đổi trạng thái bắt buộc `If-Match`; hậu tố `:{hành-động}`;
+    lỗi RFC 9457 mã `ERR-04-nnn`; phân trang con trỏ; `traceparent` xuyên suốt. Mọi tên miền, máy chủ, dữ liệu là giả lập.
+
+
+    Tệp sinh bởi `tools/gen_openapi.py`; không sửa tay.'
+  contact:
+    name: Nhóm phân hệ PH-04
+  license:
+    name: Tài liệu nội bộ dự án Datahub (dự thảo)
+    identifier: LicenseRef-Datahub-Internal
+  x-datahub-document: D03-04-PH04
+  x-datahub-phase: PH-04
+servers:
+- url: https://console.{tenantHost}.datahub.example.vn/api/integration/v1
+  description: Qua BFF console của tenant — giả lập
+  variables:
+    tenantHost:
+      default: lamdong
+      description: Ví dụ `lamdong` cho T68 (giả lập).
+- url: http://localhost:8081/api/integration/v1
+  description: Phát triển cục bộ
+security:
+- oauth2User: []
+tags:
+- name: Không gian làm việc
+- name: Luồng
+- name: Phiên bản
+- name: Di trú
+- name: Kiểm tra hợp lệ
+- name: Chạy thử
+- name: Duyệt
+- name: Triển khai
+- name: Vận hành
+- name: Danh mục thành phần
+- name: Khuôn mẫu
+- name: Tham số
+paths:
+  /workspaces:
+    get:
+      tags:
+      - Không gian làm việc
+      operationId: listWorkspaces
+      summary: Danh sách không gian làm việc
+      x-datahub-id: API-04-001
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Không gian làm việc
+      operationId: createWorkspace
+      summary: Tạo không gian làm việc
+      x-datahub-id: API-04-002
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-admin
+      description: Mã trùng trả ERR-04-028.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceCreate'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /workspaces/{workspaceCode}:
+    patch:
+      tags:
+      - Không gian làm việc
+      operationId: updateWorkspace
+      summary: Sửa không gian làm việc
+      x-datahub-id: API-04-002
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-admin
+        workspaceLevel: MAINTAIN
+      parameters:
+      - $ref: '#/components/parameters/WorkspacePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceUpdate'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /workspaces/{workspaceCode}:archive:
+    post:
+      tags:
+      - Không gian làm việc
+      operationId: archiveWorkspace
+      summary: Lưu trữ không gian làm việc
+      x-datahub-id: API-04-003
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-admin
+      description: Không gian còn luồng chưa gỡ vẫn lưu trữ được (ẩn khỏi ô chọn khi tạo luồng). Xóa hẳn không có API; xóa khi còn luồng trả ERR-04-017.
+      parameters:
+      - $ref: '#/components/parameters/WorkspacePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /workspaces/{workspaceCode}/members:
+    get:
+      tags:
+      - Không gian làm việc
+      operationId: listWorkspaceMembers
+      summary: Danh sách thành viên
+      x-datahub-id: API-04-004
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/WorkspacePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMembers'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+      - Không gian làm việc
+      operationId: replaceWorkspaceMembers
+      summary: Thay danh sách thành viên
+      x-datahub-id: API-04-004
+      x-datahub-fr:
+      - FR-04-007
+      x-datahub-permission:
+        permission: PERM-04-admin
+        workspaceLevel: MAINTAIN
+      description: TA hoặc thành viên mức MAINTAIN. Kiểm toán ghi danh sách thêm, bớt.
+      parameters:
+      - $ref: '#/components/parameters/WorkspacePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceMembers'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMembers'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /flows:
+    get:
+      tags:
+      - Luồng
+      operationId: listFlows
+      summary: Danh sách luồng
+      x-datahub-id: API-04-010
+      x-datahub-fr:
+      - FR-04-001
+      x-datahub-permission:
+        permission: PERM-04-read
+      description: Lọc theo phạm vi không gian làm việc ở SQL khi `04.workspace.enforce` bật. Kèm `facets` đếm theo trạng thái, môi trường.
+      parameters:
+      - name: q
+        in: query
+        schema:
+          type: string
+          maxLength: 100
+          minLength: 2
+        description: Tìm không dấu trên mã, tên, mô tả.
+      - name: workspace
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceCode'
+        style: form
+        explode: false
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlowStatus'
+        style: form
+        explode: false
+      - name: environment
+        in: query
+        schema:
+          $ref: '#/components/schemas/Environment'
+      - name: health
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/HealthStatus'
+        style: form
+        explode: false
+      - name: resourceKind
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceKind'
+        style: form
+        explode: false
+      - name: exposure
+        in: query
+        schema:
+          $ref: '#/components/schemas/Exposure'
+      - name: endpoint
+        in: query
+        schema:
+          type: string
+          maxLength: 255
+        description: Chuỗi con của URI điểm kết nối đã chuẩn hóa (EN-04-04b).
+      - name: label
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 127
+        style: form
+        explode: true
+        description: '`khóa:giá-trị`.'
+      - name: sort
+        in: query
+        schema:
+          type: string
+          pattern: ^-?(code|name|updatedAt|status)$
+          default: -updatedAt
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Luồng
+      operationId: createFlow
+      summary: Tạo luồng và phiên bản 1
+      x-datahub-id: API-04-011
+      x-datahub-fr:
+      - FR-04-003
+      - FR-04-025
+      x-datahub-permission:
+        permission: PERM-04-create
+        workspaceLevel: EDIT
+      description: Ghi luồng, phiên bản 1 `DRAFT`, chỉ mục, outbox EVT-04-01 trong một giao dịch. Mã trùng ERR-04-002; không gian không tồn tại
+        ERR-04-027; khuôn không tồn tại ERR-04-039; YAML lỗi ERR-04-008; loại tài nguyên không khớp ERR-04-009; vượt kích thước ERR-04-033.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowCreate'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /flows/{flowCode}:
+    get:
+      tags:
+      - Luồng
+      operationId: getFlow
+      summary: Chi tiết luồng
+      x-datahub-id: API-04-012
+      x-datahub-fr:
+      - FR-04-002
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - Luồng
+      operationId: updateFlow
+      summary: Sửa thông tin luồng
+      x-datahub-id: API-04-013
+      x-datahub-fr:
+      - FR-04-004
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Chuyển không gian cần mức EDIT ở cả hai nơi. Luồng đã gỡ ERR-04-034.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlowUpdate'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /flows/{flowCode}:clone:
+    post:
+      tags:
+      - Luồng
+      operationId: cloneFlow
+      summary: Nhân bản luồng
+      x-datahub-id: API-04-014
+      x-datahub-fr:
+      - FR-04-005
+      x-datahub-permission:
+        permission: PERM-04-create
+        workspaceLevel: EDIT
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneRequest'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /flows/{flowCode}:retire:
+    post:
+      tags:
+      - Luồng
+      operationId: retireFlow
+      summary: Gỡ luồng
+      x-datahub-id: API-04-015
+      x-datahub-fr:
+      - FR-04-006
+      x-datahub-permission:
+        permission: PERM-04-delete
+      description: Rút luồng khỏi các môi trường theo thứ tự PROD → TEST qua Git rồi chuyển RETIRED. Còn phụ thuộc cứng ERR-04-017 kèm `dependencies`;
+        thiếu lý do ERR-04-025.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetireRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowDetail'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /flows/{flowCode}/dependencies:
+    get:
+      tags:
+      - Luồng
+      operationId: getFlowDependencies
+      summary: Phụ thuộc của luồng
+      x-datahub-id: API-04-016
+      x-datahub-fr:
+      - FR-04-006
+      - FR-04-002
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dependencies'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions:
+    get:
+      tags:
+      - Phiên bản
+      operationId: listVersions
+      summary: Danh sách phiên bản
+      x-datahub-id: API-04-024
+      x-datahub-fr:
+      - FR-04-011
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - Phiên bản
+      operationId: createVersion
+      summary: Tạo phiên bản mới từ phiên bản có sẵn
+      x-datahub-id: API-04-021
+      x-datahub-fr:
+      - FR-04-011
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Sao chép định nghĩa, bố cục, bản tin mẫu, ánh xạ. Đã có phiên bản mở ERR-04-016.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewVersionRequest'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /flows/{flowCode}/versions/{versionNo}:
+    get:
+      tags:
+      - Phiên bản
+      operationId: getVersion
+      summary: Lấy phiên bản (định nghĩa, bố cục, bản tin mẫu)
+      x-datahub-id: API-04-020
+      x-datahub-fr:
+      - FR-04-010
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      description: Trả ETag để lưu nháp. ERR-04-004 khi phiên bản không tồn tại.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions/{versionNo}/draft:
+    put:
+      tags:
+      - Phiên bản
+      operationId: saveDraft
+      summary: Lưu nháp
+      x-datahub-id: API-04-022
+      x-datahub-fr:
+      - FR-04-024
+      - FR-04-010
+      - FR-04-022
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Chỉ ở DRAFT, CHANGES_REQUESTED (ERR-04-005). Chạy kiểm tra mức DESIGN (không chặn lưu) trừ VR-01 cú pháp (ERR-04-008) và VR-03
+        bí mật (ERR-04-010). Thêm người gọi vào danh sách người đóng góp. ERR-04-041 chỉ khi tỉnh đóng băng cả việc soạn.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftUpdate'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftSaved'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '423':
+          $ref: '#/components/responses/Locked'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /flows/{flowCode}/versions/{versionNo}:discard:
+    post:
+      tags:
+      - Phiên bản
+      operationId: discardVersion
+      summary: Hủy bản nháp
+      x-datahub-id: API-04-023
+      x-datahub-fr:
+      - FR-04-006
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /flows/{flowCode}/versions/{versionNo}/diff:
+    get:
+      tags:
+      - Phiên bản
+      operationId: diffVersion
+      summary: So sánh với phiên bản khác
+      x-datahub-id: API-04-025
+      x-datahub-fr:
+      - FR-04-043
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - name: base
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+        description: 'Mặc định: phiên bản đang chạy ở PROD.'
+      - name: markViewed
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Người duyệt ghi nhận đã xem khác biệt (review.action = DIFF_VIEWED).
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiffResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions/{versionNo}/download:
+    get:
+      tags:
+      - Phiên bản
+      operationId: downloadVersion
+      summary: Tải định nghĩa
+      x-datahub-id: API-04-026
+      x-datahub-fr:
+      - FR-04-027
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+          - yaml
+          - yaml+layout
+          - bundle
+        required: true
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/yaml:
+              schema:
+                type: string
+            application/zip:
+              schema:
+                type: string
+                contentEncoding: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions/{versionNo}:import-yaml:
+    post:
+      tags:
+      - Phiên bản
+      operationId: importYaml
+      summary: Nhập YAML thay định nghĩa
+      x-datahub-id: API-04-027
+      x-datahub-fr:
+      - FR-04-027
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportYamlRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DraftSaved'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /legacy-imports:
+    post:
+      tags:
+      - Di trú
+      operationId: startLegacyImport
+      summary: Chuyển Camel XML của Bus cũ
+      x-datahub-id: API-04-028
+      x-datahub-fr:
+      - FR-04-082
+      x-datahub-permission:
+        permission: PERM-04-create
+        workspaceLevel: EDIT
+      description: 'multipart/form-data: `file` (≤ 2 MiB, XML hoặc ZIP gói xuất Context), `workspaceCode`, `connectionMap` (JSON). Tệp không hợp
+        lệ ERR-04-032.'
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              - workspaceCode
+              properties:
+                file:
+                  type: string
+                  contentEncoding: binary
+                workspaceCode:
+                  $ref: '#/components/schemas/WorkspaceCode'
+                connectionMap:
+                  type: string
+                  maxLength: 20000
+                  description: 'JSON: mã kết nối cũ → mã kết nối PH-05.'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyImportJob'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /legacy-imports/{jobId}:
+    get:
+      tags:
+      - Di trú
+      operationId: getLegacyImport
+      summary: Kết quả chuyển đổi
+      x-datahub-id: API-04-028
+      x-datahub-fr:
+      - FR-04-082
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - name: jobId
+        in: path
+        required: true
+        schema: &id001
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyImportJob'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions/{versionNo}/session:
+    put:
+      tags:
+      - Phiên bản
+      operationId: heartbeatSession
+      summary: Nhịp phiên soạn
+      x-datahub-id: API-04-034
+      x-datahub-fr:
+      - FR-04-024
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Gọi mỗi 30 giây khi tab đang hiện; hết hạn sau 120 giây. Không khóa; chỉ thông tin người khác đang mở và catalogVersion hiện
+        hành.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+      - Phiên bản
+      operationId: endSession
+      summary: Kết thúc phiên soạn
+      x-datahub-id: API-04-034
+      x-datahub-fr:
+      - FR-04-024
+      x-datahub-permission:
+        permission: PERM-04-update
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '204':
+          description: Thành công.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/versions/{versionNo}:validate:
+    post:
+      tags:
+      - Kiểm tra hợp lệ
+      operationId: validateVersion
+      summary: Kiểm tra hợp lệ phiên bản
+      x-datahub-id: API-04-030
+      x-datahub-fr:
+      - FR-04-023
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /validation:check:
+    post:
+      tags:
+      - Kiểm tra hợp lệ
+      operationId: validateYaml
+      summary: Kiểm tra YAML chưa lưu
+      x-datahub-id: API-04-031
+      x-datahub-fr:
+      - FR-04-023
+      - FR-04-003
+      x-datahub-permission:
+        permission: PERM-04-create
+      description: Dùng ở UI-04-03 bước 3 và khi nhập YAML; không ghi gì.
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatelessValidateRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+  /expressions:check:
+    post:
+      tags:
+      - Kiểm tra hợp lệ
+      operationId: checkExpression
+      summary: Biên dịch, xem trước biểu thức
+      x-datahub-id: API-04-032
+      x-datahub-fr:
+      - FR-04-015
+      x-datahub-permission:
+        permission: PERM-04-update
+      description: Biên dịch bằng engine Camel đúng phiên bản; `evaluate = true` chạy trên sandbox. Lỗi biên dịch trả 200 với `valid = false`
+        (giao diện tô vị trí); ERR-04-037 chỉ khi gọi ở chế độ chặt. Sandbox không sẵn sàng ERR-04-019 (503).
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpressionCheckRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpressionCheckResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /mappings:preview:
+    post:
+      tags:
+      - Kiểm tra hợp lệ
+      operationId: previewMapping
+      summary: Xem trước ánh xạ (JQ) trên bản tin mẫu
+      x-datahub-id: API-04-033
+      x-datahub-fr:
+      - FR-04-020
+      x-datahub-permission:
+        permission: PERM-04-update
+      description: Sinh JQ từ dhmap ở máy chủ, chạy trên sandbox có hàm dh_map. ERR-04-038 khi ánh xạ không hợp lệ; tài liệu mẫu ≤ 1 MiB (ERR-04-021).
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MappingPreviewRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MappingPreviewResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /flows/{flowCode}/versions/{versionNo}/test-runs:
+    post:
+      tags:
+      - Chạy thử
+      operationId: startTestRun
+      summary: Bắt đầu chạy thử
+      x-datahub-id: API-04-040
+      x-datahub-fr:
+      - FR-04-030
+      - FR-04-032
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Kiểm tra mức DESIGN (ERR-04-009). Hạn mức `04.test.max-concurrent` (ERR-04-019, 429). SANDBOX_LIVE cần kết nối có giá trị TEST
+        (ERR-04-013). Trả `Location` tới API-04-042.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestRunRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRun'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /flows/{flowCode}/test-runs:
+    get:
+      tags:
+      - Chạy thử
+      operationId: listTestRuns
+      summary: Lịch sử chạy thử
+      x-datahub-id: API-04-041
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - name: versionNo
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: status
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestRunStatus'
+        style: form
+        explode: false
+      - name: testCaseId
+        in: query
+        schema: *id001
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/test-runs/{runId}:
+    get:
+      tags:
+      - Chạy thử
+      operationId: getTestRun
+      summary: Kết quả lần chạy thử
+      x-datahub-id: API-04-042
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/RunIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/test-runs/{runId}/events:
+    get:
+      tags:
+      - Chạy thử
+      operationId: streamTestRun
+      summary: Luồng sự kiện lần chạy thử (SSE)
+      x-datahub-id: API-04-042
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      description: Sự kiện `status` (TestRun rút gọn), `step` (TestRunStep), `completed` (TestRun đầy đủ), `heartbeat` mỗi 15 giây. Đóng sau `completed`.
+        Mất kết nối thì client hỏi API-04-042 mỗi 2 giây.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/RunIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content: &id003
+            text/event-stream:
+              schema:
+                type: string
+                description: 'Luồng sự kiện SSE; mỗi sự kiện `event: <tên>` và `data: <JSON>`.'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/test-runs/{runId}/steps/{seqNo}/body:
+    get:
+      tags:
+      - Chạy thử
+      operationId: getTestRunBody
+      summary: Thân bản tin đầy đủ của một chặng
+      x-datahub-id: API-04-042
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      description: Chỉ khi lần chạy bật captureBodies và chưa quá 04.test.body-retention-days; trả 404 khi đã xóa. Nội dung đã che theo BR-04-013.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/RunIdPath'
+      - name: seqNo
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+      - name: side
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - in
+          - out
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema: {}
+            text/plain:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/test-runs/{runId}:cancel:
+    post:
+      tags:
+      - Chạy thử
+      operationId: cancelTestRun
+      summary: Hủy lần chạy thử
+      x-datahub-id: API-04-043
+      x-datahub-fr:
+      - FR-04-030
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/RunIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRun'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /flows/{flowCode}/test-cases:
+    get:
+      tags:
+      - Chạy thử
+      operationId: listTestCases
+      summary: Danh sách ca kiểm thử
+      x-datahub-id: API-04-044
+      x-datahub-fr:
+      - FR-04-031
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCaseList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - Chạy thử
+      operationId: createTestCase
+      summary: Tạo ca kiểm thử
+      x-datahub-id: API-04-044
+      x-datahub-fr:
+      - FR-04-031
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestCase'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCase'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /flows/{flowCode}/test-cases/{caseId}:
+    put:
+      tags:
+      - Chạy thử
+      operationId: updateTestCase
+      summary: Sửa ca kiểm thử
+      x-datahub-id: API-04-044
+      x-datahub-fr:
+      - FR-04-031
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/CaseIdPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestCase'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestCase'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+    delete:
+      tags:
+      - Chạy thử
+      operationId: deleteTestCase
+      summary: Xóa (ngừng dùng) ca kiểm thử
+      x-datahub-id: API-04-044
+      x-datahub-fr:
+      - FR-04-031
+      x-datahub-permission:
+        permission: PERM-04-update
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/CaseIdPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '204':
+          description: Thành công.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /flows/{flowCode}/versions/{versionNo}:submit:
+    post:
+      tags:
+      - Duyệt
+      operationId: submitVersion
+      summary: Gửi duyệt
+      x-datahub-id: API-04-050
+      x-datahub-fr:
+      - FR-04-040
+      x-datahub-permission:
+        permission: PERM-04-submit
+        workspaceLevel: EDIT
+      description: Kiểm tra mức SUBMIT (ERR-04-009), lần chạy thử đạt trên đúng băm và mọi ca đạt (ERR-04-014), catalog hiện hành (ERR-04-042),
+        ghi chú (ERR-04-025). Phát EVT-04-03.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /flows/{flowCode}/versions/{versionNo}:withdraw:
+    post:
+      tags:
+      - Duyệt
+      operationId: withdrawVersion
+      summary: Rút lại yêu cầu duyệt
+      x-datahub-id: API-04-051
+      x-datahub-fr:
+      - FR-04-040
+      x-datahub-permission:
+        permission: PERM-04-submit
+        workspaceLevel: EDIT
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /flows/{flowCode}/versions/{versionNo}:review:
+    post:
+      tags:
+      - Duyệt
+      operationId: reviewVersion
+      summary: Quyết định duyệt
+      x-datahub-id: API-04-052
+      x-datahub-fr:
+      - FR-04-041
+      - FR-04-043
+      x-datahub-permission:
+        permission: PERM-04-publish
+        workspaceLevel: VIEW
+      description: 'Bốn mắt (ERR-04-015, 403); thiếu ý kiến hoặc checklist ERR-04-025. Khi `04.review.require-reauth` bật cần token có `auth_time`
+        ≤ 5 phút (acr theo PH-12), nếu không trả 401 kèm `WWW-Authenticate: ... max_age=300`. Phát EVT-04-04 hoặc EVT-04-05.'
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/VersionNoPath'
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDecision'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionDetail'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: W/"{version}-{contentHash[0..8]}"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+  /reviews:
+    get:
+      tags:
+      - Duyệt
+      operationId: listReviewQueue
+      summary: Hàng đợi duyệt
+      x-datahub-id: API-04-053
+      x-datahub-fr:
+      - FR-04-041
+      x-datahub-permission:
+        permission: PERM-04-publish
+      parameters:
+      - name: workspace
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceCode'
+        style: form
+        explode: false
+      - name: overdue
+        in: query
+        schema: &id002
+          type: boolean
+      - name: mine
+        in: query
+        schema: *id002
+        description: Chỉ yêu cầu gợi ý tôi duyệt.
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewQueue'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /flows/{flowCode}/deployments:
+    get:
+      tags:
+      - Triển khai
+      operationId: listDeployments
+      summary: Lịch sử triển khai
+      x-datahub-id: API-04-054
+      x-datahub-fr:
+      - FR-04-042
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - name: environment
+        in: query
+        schema:
+          $ref: '#/components/schemas/Environment'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+      - Triển khai
+      operationId: releaseVersion
+      summary: Phát hành phiên bản lên môi trường
+      x-datahub-id: API-04-054
+      x-datahub-fr:
+      - FR-04-042
+      - FR-04-075
+      x-datahub-permission:
+        permission: PERM-04-publish
+        workspaceLevel: VIEW
+      description: Chỉ APPROVED (BR-04-012). Kiểm tra mức PUBLISH (ERR-04-009), thứ tự môi trường (ERR-04-023), đóng băng với PROD (ERR-04-041),
+        hồ sơ runtime (ERR-04-029). Ghi Git sau giao dịch; lỗi ghi Git thành triển khai FAILED ERR-04-022. Phát EVT-04-06.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '423':
+          $ref: '#/components/responses/Locked'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /flows/{flowCode}/deployments/{deploymentId}:
+    get:
+      tags:
+      - Triển khai
+      operationId: getDeployment
+      summary: Chi tiết triển khai
+      x-datahub-id: API-04-054
+      x-datahub-fr:
+      - FR-04-042
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/DeploymentIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/deployments/{deploymentId}/events:
+    get:
+      tags:
+      - Triển khai
+      operationId: streamDeployment
+      summary: Tiến trình triển khai (SSE)
+      x-datahub-id: API-04-054
+      x-datahub-fr:
+      - FR-04-042
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      description: Sự kiện `status` (Deployment), `replica` (bản sao báo phiên bản), `completed`. Đóng khi SYNCED, FAILED hoặc sau 04.deploy.timeout-minutes.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/DeploymentIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content: *id003
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/deployments:rollback:
+    post:
+      tags:
+      - Triển khai
+      operationId: rollbackDeployment
+      summary: Quay lui về phiên bản đã duyệt trước
+      x-datahub-id: API-04-055
+      x-datahub-fr:
+      - FR-04-044
+      x-datahub-permission:
+        permission: PERM-04-publish
+      description: Không cần duyệt lại; vẫn kiểm tra mức PUBLISH. Được phép khi đóng băng. Thành phần nay bị cấm ERR-04-040.
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /flows/{flowCode}/deployments:promote:
+    post:
+      tags:
+      - Triển khai
+      operationId: promoteDeployment
+      summary: Nâng phiên bản lên môi trường kế tiếp
+      x-datahub-id: API-04-056
+      x-datahub-fr:
+      - FR-04-045
+      x-datahub-permission:
+        permission: PERM-04-promote
+      description: Môi trường trước phải SYNCED, HEALTHY và đủ thời gian ổn định (ERR-04-023).
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoteRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deployment'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '423':
+          $ref: '#/components/responses/Locked'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /flows/{flowCode}/runtime:
+    get:
+      tags:
+      - Vận hành
+      operationId: getRuntimeStatus
+      summary: Tình trạng runtime theo môi trường
+      x-datahub-id: API-04-060
+      x-datahub-fr:
+      - FR-04-051
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/runtime/commands:
+    post:
+      tags:
+      - Vận hành
+      operationId: issueCommand
+      summary: Tạm dừng, tiếp tục, dừng khẩn
+      x-datahub-id: API-04-061
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-permission:
+        permission: PERM-04-operate
+      description: EMERGENCY_STOP cần PERM-04-emergency-stop. Thiếu lý do ERR-04-025; chưa triển khai ở môi trường ERR-04-023. Lệnh khẩn đi trước
+        Git (ADR-065).
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandRequest'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Command'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /flows/{flowCode}/runtime/commands/{commandId}:
+    get:
+      tags:
+      - Vận hành
+      operationId: getCommand
+      summary: Trạng thái lệnh
+      x-datahub-id: API-04-061
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/CommandIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Command'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/runtime/commands/{commandId}:resend:
+    post:
+      tags:
+      - Vận hành
+      operationId: resendCommand
+      summary: Gửi lại lệnh chưa đủ xác nhận
+      x-datahub-id: API-04-061
+      x-datahub-fr:
+      - FR-04-050
+      x-datahub-permission:
+        permission: PERM-04-operate
+      description: Chỉ với PARTIAL; ký lại với hạn mới, cùng commandId gốc trong `resendOf`.
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - $ref: '#/components/parameters/CommandIdPath'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '202':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Command'
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Tài nguyên theo dõi tiến trình.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /flows/{flowCode}/endpoints:
+    get:
+      tags:
+      - Vận hành
+      operationId: listEndpoints
+      summary: Điểm kết nối và số liệu
+      x-datahub-id: API-04-062
+      x-datahub-fr:
+      - FR-04-052
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - name: environment
+        in: query
+        schema:
+          $ref: '#/components/schemas/Environment'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /flows/{flowCode}/metrics:
+    get:
+      tags:
+      - Vận hành
+      operationId: getFlowMetrics
+      summary: Số liệu theo luồng (từ PH-13)
+      x-datahub-id: API-04-063
+      x-datahub-fr:
+      - FR-04-053
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - name: environment
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/Environment'
+      - name: from
+        in: query
+        schema: &id004
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        schema: *id004
+      - name: step
+        in: query
+        schema:
+          type: string
+          pattern: ^[0-9]+[smh]$
+          default: 1m
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlowMetrics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /catalog:
+    get:
+      tags:
+      - Danh mục thành phần
+      operationId: getCatalogIndex
+      summary: Chỉ mục catalog đã lọc chính sách
+      x-datahub-id: API-04-070
+      x-datahub-fr:
+      - FR-04-012
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-read
+      description: ETag theo catalogVersion + policyVersion + paletteRulesVersion; hỗ trợ 304.
+      parameters:
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+          maxLength: 128
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogIndex'
+          headers:
+            ETag:
+              schema:
+                type: string
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /catalog/{kind}/{name}:
+    get:
+      tags:
+      - Danh mục thành phần
+      operationId: getComponentSchema
+      summary: Lược đồ thuộc tính của thành phần
+      x-datahub-id: API-04-071
+      x-datahub-fr:
+      - FR-04-014
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-read
+      description: ERR-04-035 khi không có trong catalog của phiên bản yêu cầu.
+      parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - components
+          - eips
+          - kamelets
+          - dataformats
+          - languages
+          - beans
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 128
+      - name: catalogVersion
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentSchema'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /catalog/policies:
+    get:
+      tags:
+      - Danh mục thành phần
+      operationId: listPolicies
+      summary: Chính sách thành phần (nền + tỉnh)
+      x-datahub-id: API-04-072
+      x-datahub-fr:
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags:
+      - Danh mục thành phần
+      operationId: updatePolicies
+      summary: Sửa chính sách thành phần
+      x-datahub-id: API-04-072
+      x-datahub-fr:
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-catalog-admin
+      description: 'PA sửa chính sách nền (phiên PLATFORM); TA (PERM-04-admin) chỉ thu hẹp cho tỉnh: ALLOWED từ tỉnh bị từ chối (403). Luồng dùng
+        thành phần vừa cấm được đánh dấu.'
+      parameters:
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyUpdate'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /catalog/versions:
+    get:
+      tags:
+      - Danh mục thành phần
+      operationId: getCatalogVersions
+      summary: Phiên bản catalog và hồ sơ runtime
+      x-datahub-id: API-04-073
+      x-datahub-fr:
+      - FR-04-081
+      - FR-04-075
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogVersions'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /catalog/proposals:
+    get:
+      tags:
+      - Danh mục thành phần
+      operationId: listProposals
+      summary: Đề xuất thành phần
+      x-datahub-id: API-04-074
+      x-datahub-fr:
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - OPEN
+          - ACCEPTED
+          - REJECTED
+          - WITHDRAWN
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProposalList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Danh mục thành phần
+      operationId: createProposal
+      summary: Đề xuất cho phép hoặc bổ sung thành phần
+      x-datahub-id: API-04-074
+      x-datahub-fr:
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-read
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalCreate'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /catalog/proposals/{proposalId}:decide:
+    post:
+      tags:
+      - Danh mục thành phần
+      operationId: decideProposal
+      summary: Quyết định đề xuất
+      x-datahub-id: API-04-074
+      x-datahub-fr:
+      - FR-04-080
+      x-datahub-permission:
+        permission: PERM-04-catalog-admin
+      parameters:
+      - name: proposalId
+        in: path
+        required: true
+        schema: *id001
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalDecision'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /templates:
+    get:
+      tags:
+      - Khuôn mẫu
+      operationId: listTemplates
+      summary: Danh sách khuôn mẫu
+      x-datahub-id: API-04-080
+      x-datahub-fr:
+      - FR-04-025
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - name: resourceKind
+        in: query
+        schema:
+          $ref: '#/components/schemas/ResourceKind'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Khuôn mẫu
+      operationId: createTemplate
+      summary: Tạo khuôn của tỉnh từ phiên bản đã duyệt
+      x-datahub-id: API-04-082
+      x-datahub-fr:
+      - FR-04-025
+      x-datahub-permission:
+        permission: PERM-04-admin
+      x-datahub-idempotent: true
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateCreate'
+      responses:
+        '201':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /templates/{templateCode}:
+    get:
+      tags:
+      - Khuôn mẫu
+      operationId: getTemplate
+      summary: Chi tiết khuôn và lược đồ tham số
+      x-datahub-id: API-04-081
+      x-datahub-fr:
+      - FR-04-025
+      x-datahub-permission:
+        permission: PERM-04-read
+      parameters:
+      - name: templateCode
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /templates/{templateCode}:deprecate:
+    post:
+      tags:
+      - Khuôn mẫu
+      operationId: deprecateTemplate
+      summary: Ngừng dùng khuôn của tỉnh
+      x-datahub-id: API-04-082
+      x-datahub-fr:
+      - FR-04-025
+      x-datahub-permission:
+        permission: PERM-04-admin
+      parameters:
+      - name: templateCode
+        in: path
+        required: true
+        schema:
+          type: string
+          maxLength: 64
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /settings:
+    get:
+      tags:
+      - Tham số
+      operationId: getSettings
+      summary: Tham số 04.*, khoảng đóng băng, biến môi trường
+      x-datahub-id: API-04-090
+      x-datahub-fr:
+      - FR-04-084
+      x-datahub-permission:
+        permission: PERM-04-read
+      description: Chỉ đọc; sửa tham số qua màn tham số chung của PH-18 (UI-04-20 nhúng).
+      parameters:
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /settings/env-vars:
+    put:
+      tags:
+      - Tham số
+      operationId: replaceEnvVars
+      summary: Thay biến môi trường {{dh.env.*}}
+      x-datahub-id: API-04-090
+      x-datahub-fr:
+      - FR-04-084
+      x-datahub-permission:
+        permission: PERM-04-admin
+      description: Giá trị giống bí mật bị từ chối (ERR-04-010); bí mật dùng {{vault:}}.
+      parameters:
+      - $ref: '#/components/parameters/IfMatch'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnvVarList'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvVarList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+  /flows/{flowCode}/history:
+    get:
+      tags:
+      - Tham số
+      operationId: getFlowHistory
+      summary: Lịch sử thao tác của luồng (từ PH-13)
+      x-datahub-id: API-04-091
+      x-datahub-fr:
+      - FR-04-083
+      x-datahub-permission:
+        permission: PERM-04-read
+        workspaceLevel: VIEW
+      description: '`before`, `after` chỉ trả cho AU, SO, TA.'
+      parameters:
+      - $ref: '#/components/parameters/FlowCodePath'
+      - name: action
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+        style: form
+        explode: false
+      - name: actor
+        in: query
+        schema:
+          type: string
+          maxLength: 64
+      - $ref: '#/components/parameters/Cursor'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Traceparent'
+      - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Thành công.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    oauth2User:
+      type: oauth2
+      description: Keycloak realm dh-{tenant}; vai trò ánh xạ PERM-04-* (D02-08).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/auth
+          tokenUrl: https://sso.datahub.example.vn/realms/dh-t68/protocol/openid-connect/token
+          scopes: {}
+  parameters:
+    FlowCodePath:
+      name: flowCode
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/FlowCode'
+    VersionNoPath:
+      name: versionNo
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    WorkspacePath:
+      name: workspaceCode
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/WorkspaceCode'
+    RunIdPath:
+      name: runId
+      in: path
+      required: true
+      schema: *id001
+    CaseIdPath:
+      name: caseId
+      in: path
+      required: true
+      schema: *id001
+    DeploymentIdPath:
+      name: deploymentId
+      in: path
+      required: true
+      schema: *id001
+    CommandIdPath:
+      name: commandId
+      in: path
+      required: true
+      schema: *id001
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        maxLength: 2048
+      description: Con trỏ mờ từ `page.next`.
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+      description: Vượt 100 trả ERR-04-026.
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+      description: ETag hiện tại; thiếu trả ERR-04-007 (428), lệch trả ERR-04-006 (412).
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        minLength: 16
+      description: 16…128 ký tự, lưu 24 giờ; cùng khóa khác nội dung trả ERR-04-018.
+    Traceparent:
+      name: traceparent
+      in: header
+      schema:
+        type: string
+        maxLength: 55
+      description: W3C Trace Context.
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      schema:
+        type: string
+        enum:
+        - vi
+        - en
+  responses:
+    BadRequest:
+      description: Tham số hoặc thân yêu cầu không hợp lệ (gồm ERR-04-025 thiếu lý do, ERR-04-026 vượt kích thước trang).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-049
+            title: Tham số hoặc thân yêu cầu không hợp lệ
+            status: 400
+            code: ERR-04-049
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Unauthorized:
+      description: Thiếu token hoặc token hết hạn.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-044
+            title: Thiếu token hoặc token hết hạn
+            status: 401
+            code: ERR-04-044
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Forbidden:
+      description: Không đủ quyền chức năng hoặc phạm vi không gian làm việc (gồm ERR-04-003, ERR-04-015).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-045
+            title: Không đủ quyền chức năng hoặc phạm vi không gian làm việc
+            status: 403
+            code: ERR-04-045
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    NotFound:
+      description: Không tìm thấy hoặc không có quyền xem (không phân biệt).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-001
+            title: Không tìm thấy hoặc không có quyền xem
+            status: 404
+            code: ERR-04-001
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Conflict:
+      description: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ (mã cụ thể trong `code`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-005
+            title: Trạng thái không cho phép thao tác, hoặc xung đột nghiệp vụ
+            status: 409
+            code: ERR-04-005
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    PreconditionFailed:
+      description: ETag không khớp; kèm `currentEtag`, `savedBy`, `savedAt`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-006
+            title: ETag không khớp
+            status: 412
+            code: ERR-04-006
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    PreconditionRequired:
+      description: Thiếu tiêu đề If-Match.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-007
+            title: Thiếu tiêu đề If-Match
+            status: 428
+            code: ERR-04-007
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    PayloadTooLarge:
+      description: Thân vượt giới hạn (định nghĩa 512 KiB ERR-04-033, bản tin 256 KiB ERR-04-021).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-033
+            title: Thân vượt giới hạn
+            status: 413
+            code: ERR-04-033
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    UnsupportedMediaType:
+      description: Kiểu nội dung không hỗ trợ.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-046
+            title: Kiểu nội dung không hỗ trợ
+            status: 415
+            code: ERR-04-046
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Unprocessable:
+      description: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu; kèm `findings`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-009
+            title: Định nghĩa còn lỗi kiểm tra hợp lệ hoặc lỗi nghiệp vụ dạng dữ liệu
+            status: 422
+            code: ERR-04-009
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    Locked:
+      description: Đang trong khoảng đóng băng thay đổi (BR-04-022).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-041
+            title: Đang trong khoảng đóng băng thay đổi
+            status: 423
+            code: ERR-04-041
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    TooManyRequests:
+      description: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời; kèm `retryAfterSeconds`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-048
+            title: Vượt giới hạn tần suất, hoặc ERR-04-019 hết hạn mức chạy thử đồng thời
+            status: 429
+            code: ERR-04-048
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    BadGateway:
+      description: Không ghi được kho cấu hình.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-022
+            title: Không ghi được kho cấu hình
+            status: 502
+            code: ERR-04-022
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    ServiceUnavailable:
+      description: Phân hệ phụ thuộc chưa sẵn sàng (gồm ERR-04-019 sandbox).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://datahub.gov.vn/problems/integration/err-04-047
+            title: Phân hệ phụ thuộc chưa sẵn sàng
+            status: 503
+            code: ERR-04-047
+            traceId: 4bf92f3577b34da6a3ce929d0e0e4736
+    NotModified:
+      description: Không đổi (If-None-Match khớp).
+  schemas:
+    TenantId:
+      type: string
+      maxLength: 16
+      pattern: ^T[0-9]{2}$
+      description: Mã tenant T-TENANT (D00-01).
+    FlowCode:
+      type: string
+      maxLength: 63
+      pattern: ^[a-z][a-z0-9-]{2,62}$
+      description: Mã luồng, duy nhất trong tenant, không đổi (BR-04-001).
+    WorkspaceCode:
+      type: string
+      maxLength: 63
+      pattern: ^([a-z][a-z0-9-]{1,62}|DEFAULT)$
+    Environment:
+      type: string
+      enum:
+      - TEST
+      - STAGING
+      - PROD
+    ResourceKind:
+      type: string
+      enum:
+      - ROUTE
+      - KAMELET
+      - PIPE
+      - TEST
+    Transport:
+      type: string
+      enum:
+      - SYNC
+      - ASYNC
+      - SCHEDULED
+      - MIXED
+    Exposure:
+      type: string
+      enum:
+      - EXTERNAL
+      - INTERNAL
+    FlowStatus:
+      type: string
+      enum:
+      - DRAFT
+      - IN_REVIEW
+      - APPROVED
+      - ACTIVE
+      - PAUSED
+      - DEGRADED
+      - RETIRED
+    VersionStatus:
+      type: string
+      enum:
+      - DRAFT
+      - CHANGES_REQUESTED
+      - PENDING_REVIEW
+      - APPROVED
+      - SUPERSEDED
+      - ROLLED_BACK
+      - DISCARDED
+    SyncStatus:
+      type: string
+      enum:
+      - PENDING
+      - SYNCING
+      - SYNCED
+      - OUT_OF_SYNC
+      - FAILED
+    HealthStatus:
+      type: string
+      enum:
+      - HEALTHY
+      - DEGRADED
+      - DOWN
+      - UNKNOWN
+    TestMode:
+      type: string
+      enum:
+      - MOCK
+      - SANDBOX_LIVE
+    TestRunStatus:
+      type: string
+      enum:
+      - QUEUED
+      - RUNNING
+      - PASSED
+      - FAILED
+      - TIMED_OUT
+      - CANCELLED
+      - SIMULATED
+    CommandAction:
+      type: string
+      enum:
+      - PAUSE
+      - RESUME
+      - EMERGENCY_STOP
+    CommandStatus:
+      type: string
+      enum:
+      - ISSUED
+      - DELIVERED
+      - ACKNOWLEDGED
+      - PARTIAL
+      - REJECTED
+      - RECONCILED
+    ValidationLevel:
+      type: string
+      enum:
+      - DESIGN
+      - SUBMIT
+      - PUBLISH
+    Severity:
+      type: string
+      enum:
+      - ERROR
+      - WARN
+      - INFO
+    AccessLevel:
+      type: string
+      enum:
+      - VIEW
+      - EDIT
+      - MAINTAIN
+    FlowOrigin:
+      type: string
+      enum:
+      - BLANK
+      - TEMPLATE
+      - OPENAPI
+      - YAML_FILE
+      - CLONE
+      - LEGACY_XML
+    Labels:
+      type: object
+      maxProperties: 20
+      propertyNames:
+        maxLength: 63
+      additionalProperties:
+        type: string
+        maxLength: 63
+    ContentHash:
+      type: string
+      maxLength: 71
+      pattern: ^sha256:[0-9a-f]{64}$
+    Reason:
+      type: string
+      maxLength: 1000
+      minLength: 10
+      description: Lý do 10…1.000 ký tự (BR-04-017).
+    AllowedActions:
+      type: object
+      properties:
+        allowedActions:
+          type: array
+          items:
+            type: string
+          description: Hành động người gọi được làm ngay bây giờ.
+        disabledReasons:
+          type: object
+          additionalProperties:
+            type: string
+          description: Hành động có quyền nhưng trạng thái chưa cho phép → lý do tiếng Việt (D03-06-PH04 §2.4).
+      additionalProperties: false
+    CursorMeta:
+      type: object
+      properties:
+        next:
+          type:
+          - string
+          - 'null'
+          maxLength: 2048
+        hasMore: *id002
+      additionalProperties: false
+      required:
+      - hasMore
+    ProblemDetails:
+      type: object
+      description: RFC 9457, mở rộng theo D03-04-PH04 §1.
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          pattern: ^ERR-04-[0-9]{3}$
+        traceId:
+          type: string
+          pattern: ^[0-9a-f]{32}$
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              nodeId:
+                type: string
+              rule:
+                type: string
+              message:
+                type: string
+            additionalProperties: false
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+        currentEtag:
+          type: string
+        savedBy:
+          type: string
+        savedAt: *id004
+        retryAfterSeconds:
+          type: integer
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/DependencyItem'
+      additionalProperties: true
+    Finding:
+      type: object
+      properties:
+        rule:
+          type: string
+          pattern: ^(VR-[0-9]{2}|LINT-04-[0-9]{2})$
+        severity:
+          $ref: '#/components/schemas/Severity'
+        path:
+          type: string
+          description: Đường dẫn JSON Pointer trong cây tài nguyên.
+        nodeId:
+          type: string
+        messageKey:
+          type: string
+        message:
+          type: string
+          description: Câu tiếng Việt đã điền tham số; không lặp giá trị bí mật.
+        args: &id005
+          type: object
+          additionalProperties: true
+      additionalProperties: false
+      required:
+      - rule
+      - severity
+      - message
+    ValidationResult:
+      type: object
+      properties:
+        level:
+          $ref: '#/components/schemas/ValidationLevel'
+        validatedAt: *id004
+        catalogVersion:
+          type: string
+          maxLength: 64
+        contentHash:
+          $ref: '#/components/schemas/ContentHash'
+        errorCount:
+          type: integer
+        warnCount:
+          type: integer
+        infoCount:
+          type: integer
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+      additionalProperties: false
+      required:
+      - level
+      - findings
+      - errorCount
+    Workspace:
+      allOf:
+      - type: object
+        properties:
+          id: *id001
+          code:
+            $ref: '#/components/schemas/WorkspaceCode'
+          name:
+            type: string
+            maxLength: 255
+          description:
+            type: string
+            maxLength: 4000
+          ownerOrgCode:
+            type: string
+            maxLength: 64
+          status:
+            type: string
+            enum:
+            - ACTIVE
+            - ARCHIVED
+          flowCount:
+            type: integer
+          myAccess:
+            $ref: '#/components/schemas/AccessLevel'
+          updatedAt: *id004
+        additionalProperties: false
+        required:
+        - id
+        - code
+        - name
+        - status
+      - $ref: '#/components/schemas/AllowedActions'
+    WorkspaceCreate:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/WorkspaceCode'
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+        description:
+          type: string
+          maxLength: 4000
+        ownerOrgCode:
+          type: string
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - code
+      - name
+    WorkspaceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+        description:
+          type: string
+          maxLength: 4000
+        ownerOrgCode:
+          type: string
+          maxLength: 64
+      additionalProperties: false
+    WorkspaceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workspace'
+      additionalProperties: false
+      required:
+      - items
+    WorkspaceMember:
+      type: object
+      properties:
+        principalType:
+          type: string
+          enum:
+          - USER
+          - GROUP
+        principalId:
+          type: string
+          maxLength: 128
+        displayName:
+          type: string
+          maxLength: 255
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
+      additionalProperties: false
+      required:
+      - principalType
+      - principalId
+      - accessLevel
+    WorkspaceMembers:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceMember'
+          maxItems: 500
+      additionalProperties: false
+      required:
+      - members
+    EnvState:
+      type: object
+      properties:
+        environment:
+          $ref: '#/components/schemas/Environment'
+        versionNo:
+          type: integer
+        syncStatus:
+          $ref: '#/components/schemas/SyncStatus'
+        healthStatus:
+          $ref: '#/components/schemas/HealthStatus'
+        desiredState:
+          type: string
+          enum:
+          - RUNNING
+          - PAUSED
+          - REMOVED
+        readyReplicas:
+          type: integer
+        replicas:
+          type: integer
+        lastHeartbeatAt: *id004
+        emergency: *id002
+      additionalProperties: false
+      required:
+      - environment
+    FlowSummary:
+      allOf:
+      - type: object
+        properties:
+          id: *id001
+          code:
+            $ref: '#/components/schemas/FlowCode'
+          name:
+            type: string
+            maxLength: 255
+          workspaceCode:
+            $ref: '#/components/schemas/WorkspaceCode'
+          resourceKind:
+            $ref: '#/components/schemas/ResourceKind'
+          transport:
+            $ref: '#/components/schemas/Transport'
+          exposure:
+            $ref: '#/components/schemas/Exposure'
+          status:
+            $ref: '#/components/schemas/FlowStatus'
+          sourceSystem:
+            type: string
+            maxLength: 64
+          targetSystems:
+            type: array
+            items:
+              type: string
+              maxLength: 64
+          labels:
+            $ref: '#/components/schemas/Labels'
+          openVersionNo:
+            type:
+            - integer
+            - 'null'
+          environments:
+            type: array
+            items:
+              $ref: '#/components/schemas/EnvState'
+          updatedAt: *id004
+          updatedBy:
+            type: string
+            maxLength: 64
+        additionalProperties: false
+        required:
+        - id
+        - code
+        - name
+        - status
+        - resourceKind
+      - $ref: '#/components/schemas/AllowedActions'
+    FlowPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlowSummary'
+        page:
+          $ref: '#/components/schemas/CursorMeta'
+        facets:
+          type: object
+          properties:
+            status:
+              type: object
+              additionalProperties:
+                type: integer
+            environment:
+              type: object
+              additionalProperties:
+                type: integer
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - items
+      - page
+    FlowDetail:
+      allOf:
+      - $ref: '#/components/schemas/FlowSummary'
+      - type: object
+        properties:
+          description:
+            type: string
+            maxLength: 4000
+          legalBasisRef:
+            type: string
+            maxLength: 128
+          origin:
+            $ref: '#/components/schemas/FlowOrigin'
+          templateCode:
+            type: string
+            maxLength: 64
+          clonedFrom:
+            type: string
+          routes:
+            type: array
+            items:
+              type: object
+              properties:
+                routeId:
+                  type: string
+                  maxLength: 128
+                fromUri:
+                  type: string
+                  maxLength: 2048
+                description:
+                  type: string
+                  maxLength: 1000
+                stepCount:
+                  type: integer
+              additionalProperties: false
+          createdAt: *id004
+          createdBy:
+            type: string
+            maxLength: 64
+          retiredAt: *id004
+          retireReason:
+            type: string
+            maxLength: 1000
+        additionalProperties: false
+    FlowCreate:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/FlowCode'
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+        description:
+          type: string
+          maxLength: 4000
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        origin:
+          $ref: '#/components/schemas/FlowOrigin'
+        templateCode:
+          type: string
+          maxLength: 64
+          pattern: ^tpl-[a-z0-9-]{2,60}$
+        templateParams: *id005
+        apiRef:
+          type: string
+          maxLength: 255
+          description: Mã API PH-02 khi origin = OPENAPI.
+        yaml:
+          type: string
+          maxLength: 524288
+          description: Nội dung khi origin = YAML_FILE (≤ 512 KiB).
+        sourceSystem:
+          type: string
+          maxLength: 64
+        targetSystems:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 20
+        labels:
+          $ref: '#/components/schemas/Labels'
+        legalBasisRef:
+          type: string
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - workspaceCode
+      - resourceKind
+      - origin
+    FlowUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+        description:
+          type: string
+          maxLength: 4000
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        sourceSystem:
+          type: string
+          maxLength: 64
+        targetSystems:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 20
+        labels:
+          $ref: '#/components/schemas/Labels'
+        legalBasisRef:
+          type: string
+          maxLength: 128
+      additionalProperties: false
+    CloneRequest:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/FlowCode'
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        sourceVersionNo:
+          type: integer
+          minimum: 1
+        includeTestCases:
+          type: boolean
+          default: true
+      additionalProperties: false
+      required:
+      - code
+      - name
+    RetireRequest:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/Reason'
+        force:
+          type: boolean
+          default: false
+          description: Bỏ qua phụ thuộc mềm (chỉ TA).
+      additionalProperties: false
+      required:
+      - reason
+    DependencyItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - API
+          - FLOW
+          - TEST_CASE
+          - DRAFT_FLOW
+          - TOPIC
+          - CONNECTION
+        hard: *id002
+        ref:
+          type: string
+          maxLength: 255
+        label:
+          type: string
+          maxLength: 255
+        environment:
+          $ref: '#/components/schemas/Environment'
+      additionalProperties: false
+      required:
+      - type
+      - hard
+      - ref
+    Dependencies:
+      type: object
+      properties:
+        hard:
+          type: array
+          items:
+            $ref: '#/components/schemas/DependencyItem'
+        soft:
+          type: array
+          items:
+            $ref: '#/components/schemas/DependencyItem'
+      additionalProperties: false
+      required:
+      - hard
+      - soft
+    Contributor:
+      type: object
+      properties:
+        userId:
+          type: string
+          maxLength: 64
+        displayName:
+          type: string
+          maxLength: 255
+        firstAt: *id004
+        lastAt: *id004
+      additionalProperties: false
+    VersionSummary:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/VersionStatus'
+        contentHash:
+          $ref: '#/components/schemas/ContentHash'
+        catalogVersion:
+          type: string
+          maxLength: 64
+        changeNote:
+          type: string
+          maxLength: 2000
+        createdBy:
+          type: string
+          maxLength: 64
+        createdAt: *id004
+        submittedBy:
+          type: string
+          maxLength: 64
+        submittedAt: *id004
+        approvedBy:
+          type: string
+          maxLength: 64
+        approvedAt: *id004
+        environments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Environment'
+      additionalProperties: false
+      required:
+      - versionNo
+      - status
+    VersionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionSummary'
+      additionalProperties: false
+      required:
+      - items
+    VersionDetail:
+      allOf:
+      - $ref: '#/components/schemas/VersionSummary'
+      - type: object
+        properties:
+          definitionYaml:
+            type: string
+            maxLength: 524288
+          canvasLayout: *id005
+          samples: *id005
+          mappings:
+            type: array
+            items:
+              $ref: '#/components/schemas/MappingDoc'
+          contributors:
+            type: array
+            items:
+              $ref: '#/components/schemas/Contributor'
+          lastValidation:
+            $ref: '#/components/schemas/ValidationResult'
+          needsRevalidation: *id002
+          lastPassedTestRunId:
+            type:
+            - string
+            - 'null'
+            format: uuid
+          runtimeProfile:
+            type: string
+            maxLength: 32
+        additionalProperties: false
+        required:
+        - definitionYaml
+        - canvasLayout
+        - samples
+      - $ref: '#/components/schemas/AllowedActions'
+    MappingDoc:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 128
+          pattern: ^[a-z0-9][a-z0-9-]{0,127}$
+        nodeId:
+          type: string
+          maxLength: 128
+        dhmap:
+          type: object
+          required:
+          - format
+          properties:
+            format:
+              const: dhmap/1
+          additionalProperties: true
+        jq:
+          type: string
+          maxLength: 200000
+      additionalProperties: false
+      required:
+      - name
+      - dhmap
+    NewVersionRequest:
+      type: object
+      properties:
+        baseVersionNo:
+          type: integer
+          minimum: 1
+          description: 'Mặc định: phiên bản đang chạy ở PROD, nếu không có thì mới nhất.'
+      additionalProperties: false
+    DraftUpdate:
+      type: object
+      properties:
+        definitionYaml:
+          type: string
+          maxLength: 524288
+        canvasLayout: *id005
+        samples: *id005
+        catalogVersion:
+          type: string
+          maxLength: 64
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappingDoc'
+          maxItems: 50
+      additionalProperties: false
+      required:
+      - definitionYaml
+      - canvasLayout
+      - samples
+      - catalogVersion
+    DraftSaved:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+        contentHash:
+          $ref: '#/components/schemas/ContentHash'
+        savedAt: *id004
+        validation:
+          $ref: '#/components/schemas/ValidationResult'
+      additionalProperties: false
+      required:
+      - versionNo
+      - contentHash
+      - validation
+    ImportYamlRequest:
+      type: object
+      properties:
+        yaml:
+          type: string
+          maxLength: 524288
+        keepLayout:
+          type: boolean
+          default: true
+      additionalProperties: false
+      required:
+      - yaml
+    DiffResult:
+      type: object
+      properties:
+        baseVersionNo:
+          type: integer
+        versionNo:
+          type: integer
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId:
+                type: string
+              change:
+                type: string
+                enum:
+                - ADDED
+                - REMOVED
+                - MODIFIED
+                - MOVED
+              fields:
+                type: array
+                items:
+                  type: string
+            additionalProperties: false
+        yamlUnifiedDiff:
+          type: string
+        summary:
+          type: object
+          properties:
+            added:
+              type: integer
+            removed:
+              type: integer
+            modified:
+              type: integer
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - nodes
+      - summary
+    LegacyImportJob:
+      type: object
+      properties:
+        id: *id001
+        status:
+          type: string
+          enum:
+          - RUNNING
+          - COMPLETED
+          - FAILED
+        fileName:
+          type: string
+          maxLength: 255
+        report:
+          type: object
+          properties:
+            routes:
+              type: integer
+            stepsConverted:
+              type: integer
+            stepsManual:
+              type: integer
+            forbiddenComponents:
+              type: array
+              items:
+                type: string
+            connectionsToDeclare:
+              type: array
+              items:
+                type: string
+            recommendations:
+              type: array
+              items:
+                type: string
+          additionalProperties: false
+        createdFlows:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlowCode'
+        errorCode:
+          type: string
+      additionalProperties: false
+      required:
+      - id
+      - status
+    ValidateRequest:
+      type: object
+      properties:
+        level:
+          $ref: '#/components/schemas/ValidationLevel'
+        targetEnvironment:
+          $ref: '#/components/schemas/Environment'
+      additionalProperties: false
+      required:
+      - level
+    StatelessValidateRequest:
+      type: object
+      properties:
+        yaml:
+          type: string
+          maxLength: 524288
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        exposure:
+          $ref: '#/components/schemas/Exposure'
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+      additionalProperties: false
+      required:
+      - yaml
+      - resourceKind
+    ExpressionCheckRequest:
+      type: object
+      properties:
+        language:
+          type: string
+          enum:
+          - simple
+          - jsonpath
+          - jq
+          - xpath
+          - header
+          - constant
+          - exchangeProperty
+        expression:
+          type: string
+          maxLength: 20000
+        predicate: *id002
+        evaluate: *id002
+        sample:
+          $ref: '#/components/schemas/SampleMessage'
+      additionalProperties: false
+      required:
+      - language
+      - expression
+    ExpressionCheckResult:
+      type: object
+      properties:
+        valid: *id002
+        error:
+          type: object
+          properties:
+            line:
+              type: integer
+            column:
+              type: integer
+            message:
+              type: string
+          additionalProperties: false
+        result: {}
+        resultType:
+          type: string
+        simulated: *id002
+      additionalProperties: false
+      required:
+      - valid
+    SampleMessage:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 262144
+        headers:
+          type: object
+          maxProperties: 50
+          additionalProperties:
+            type: string
+            maxLength: 8192
+        properties: *id005
+      additionalProperties: false
+    MappingPreviewRequest:
+      type: object
+      properties:
+        mapping:
+          $ref: '#/components/schemas/MappingDoc'
+        sample:
+          $ref: '#/components/schemas/SampleMessage'
+      additionalProperties: false
+      required:
+      - mapping
+      - sample
+    MappingPreviewResult:
+      type: object
+      properties:
+        jq:
+          type: string
+        output: {}
+        targetValid: *id002
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+        simulated: *id002
+      additionalProperties: false
+      required:
+      - jq
+    SessionState:
+      type: object
+      properties:
+        others:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                maxLength: 64
+              displayName:
+                type: string
+                maxLength: 255
+              since: *id004
+            additionalProperties: false
+        catalogVersion:
+          type: string
+          maxLength: 64
+        expiresInSeconds:
+          type: integer
+        freeze:
+          type: object
+          properties:
+            active: *id002
+            until: *id004
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - others
+      - catalogVersion
+    Assertion:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+          - STATUS
+          - BODY_JQ
+          - HEADER
+          - STEP_VISITED
+          - STEP_NOT_VISITED
+          - ENDPOINT_CALLED
+          - DURATION_LT
+          - ERROR_CODE
+          - DLQ_SENT
+        expected:
+          description: Giá trị mong đợi theo kiểu khẳng định.
+        expression:
+          type: string
+          maxLength: 4000
+        nodeId:
+          type: string
+          maxLength: 128
+        header:
+          type: string
+          maxLength: 255
+        times:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          maxLength: 500
+      additionalProperties: false
+      required:
+      - kind
+    TestRunRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TestMode'
+        testCaseId: *id001
+        body:
+          type: string
+          maxLength: 262144
+        headers:
+          type: object
+          maxProperties: 50
+          additionalProperties:
+            type: string
+            maxLength: 8192
+        fromNodeId:
+          type: string
+          maxLength: 128
+        timeoutSeconds:
+          type: integer
+          minimum: 1
+          maximum: 120
+          default: 30
+        captureBodies:
+          type: boolean
+          default: false
+        assertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assertion'
+          maxItems: 20
+      additionalProperties: false
+      required:
+      - mode
+    TestRunStep:
+      type: object
+      properties:
+        seqNo:
+          type: integer
+        nodeId:
+          type: string
+          maxLength: 128
+        routeId:
+          type: string
+          maxLength: 128
+        stage:
+          type: string
+          maxLength: 16
+        status:
+          type: string
+          enum:
+          - OK
+          - FAILED
+          - SKIPPED
+          - HUNG
+        offsetMs:
+          type: integer
+        durationMs:
+          type: integer
+        headers: *id005
+        bodyInPreview:
+          type: string
+          maxLength: 65536
+        bodyOutPreview:
+          type: string
+          maxLength: 65536
+        bodyAvailable: *id002
+        errorClass:
+          type: string
+          maxLength: 16
+        errorText:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - seqNo
+      - nodeId
+      - status
+    TestRun:
+      allOf:
+      - type: object
+        properties:
+          id: *id001
+          versionNo:
+            type: integer
+          testCaseId:
+            type:
+            - string
+            - 'null'
+            format: uuid
+          definitionHash:
+            $ref: '#/components/schemas/ContentHash'
+          mode:
+            type: string
+            enum:
+            - MOCK
+            - SANDBOX_LIVE
+            - SIMULATED
+          status:
+            $ref: '#/components/schemas/TestRunStatus'
+          durationMs:
+            type: integer
+          traceId:
+            type: string
+          errorCode:
+            type: string
+          errorSummary:
+            type: string
+            maxLength: 1000
+          hungNodeId:
+            type: string
+            maxLength: 128
+          assertionResults:
+            type: array
+            items:
+              type: object
+              properties:
+                index:
+                  type: integer
+                kind:
+                  type: string
+                passed: *id002
+                actual: {}
+                message:
+                  type: string
+              additionalProperties: false
+          steps:
+            type: array
+            items:
+              $ref: '#/components/schemas/TestRunStep'
+          runBy:
+            type: string
+            maxLength: 64
+          queuedAt: *id004
+          startedAt: *id004
+          finishedAt: *id004
+          matchesCurrentHash: *id002
+        additionalProperties: false
+        required:
+        - id
+        - status
+        - mode
+        - definitionHash
+      - $ref: '#/components/schemas/AllowedActions'
+    TestRunPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestRun'
+        page:
+          $ref: '#/components/schemas/CursorMeta'
+      additionalProperties: false
+      required:
+      - items
+      - page
+    TestCase:
+      type: object
+      properties:
+        id: *id001
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        mode:
+          $ref: '#/components/schemas/TestMode'
+        body:
+          type: string
+          maxLength: 262144
+        headers: *id005
+        fromNodeId:
+          type: string
+          maxLength: 128
+        mocks: *id005
+        assertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assertion'
+          minItems: 1
+          maxItems: 20
+        timeoutSeconds:
+          type: integer
+          minimum: 1
+          maximum: 120
+        active: *id002
+        lastResult:
+          type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/TestRunStatus'
+            runId: *id001
+            onCurrentHash: *id002
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - name
+      - mode
+      - assertions
+    TestCaseList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestCase'
+      additionalProperties: false
+      required:
+      - items
+    SubmitRequest:
+      type: object
+      properties:
+        changeNote:
+          type: string
+          maxLength: 2000
+          minLength: 10
+        suggestedReviewers:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 5
+      additionalProperties: false
+      required:
+      - changeNote
+    WithdrawRequest:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/Reason'
+      additionalProperties: false
+      required:
+      - reason
+    ReviewDecision:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+          - APPROVE
+          - REQUEST_CHANGES
+        comment:
+          type: string
+          maxLength: 4000
+        checklist:
+          type: object
+          additionalProperties: *id002
+          description: Khóa theo 04.review.checklist.
+        nodeComments:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId:
+                type: string
+                maxLength: 128
+              text:
+                type: string
+                maxLength: 2000
+            additionalProperties: false
+            required:
+            - nodeId
+            - text
+          maxItems: 100
+        publishTo:
+          allOf:
+          - $ref: '#/components/schemas/Environment'
+          description: Phát hành ngay sau khi duyệt (tùy chọn).
+      additionalProperties: false
+      required:
+      - decision
+    ReviewQueueItem:
+      type: object
+      properties:
+        flowCode:
+          $ref: '#/components/schemas/FlowCode'
+        flowName:
+          type: string
+          maxLength: 255
+        workspaceCode:
+          $ref: '#/components/schemas/WorkspaceCode'
+        versionNo:
+          type: integer
+        submittedBy:
+          type: string
+          maxLength: 64
+        submittedAt: *id004
+        waitingHours:
+          type: number
+        overdue: *id002
+        exposure:
+          $ref: '#/components/schemas/Exposure'
+        changeSummary:
+          type: object
+          properties:
+            added:
+              type: integer
+            removed:
+              type: integer
+            modified:
+              type: integer
+          additionalProperties: false
+        canDecide: *id002
+      additionalProperties: false
+      required:
+      - flowCode
+      - versionNo
+      - submittedAt
+    ReviewQueue:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewQueueItem'
+        page:
+          $ref: '#/components/schemas/CursorMeta'
+      additionalProperties: false
+      required:
+      - items
+      - page
+    ReleaseRequest:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+          minimum: 1
+        environment:
+          $ref: '#/components/schemas/Environment'
+        note:
+          type: string
+          maxLength: 1000
+        replicas:
+          type: integer
+          minimum: 1
+          maximum: 20
+      additionalProperties: false
+      required:
+      - versionNo
+      - environment
+    PromoteRequest:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+          minimum: 1
+        fromEnvironment:
+          $ref: '#/components/schemas/Environment'
+        toEnvironment:
+          $ref: '#/components/schemas/Environment'
+        note:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+      required:
+      - versionNo
+      - toEnvironment
+    RollbackRequest:
+      type: object
+      properties:
+        environment:
+          $ref: '#/components/schemas/Environment'
+        targetVersionNo:
+          type: integer
+          minimum: 1
+        reason:
+          $ref: '#/components/schemas/Reason'
+      additionalProperties: false
+      required:
+      - environment
+      - targetVersionNo
+      - reason
+    Deployment:
+      allOf:
+      - type: object
+        properties:
+          id: *id001
+          versionNo:
+            type: integer
+          environment:
+            $ref: '#/components/schemas/Environment'
+          kind:
+            type: string
+            enum:
+            - RELEASE
+            - PROMOTE
+            - ROLLBACK
+            - RETIRE
+          desiredState:
+            type: string
+            enum:
+            - RUNNING
+            - PAUSED
+            - REMOVED
+          syncStatus:
+            $ref: '#/components/schemas/SyncStatus'
+          healthStatus:
+            $ref: '#/components/schemas/HealthStatus'
+          runtimeProfile:
+            type: string
+            maxLength: 32
+          replicas:
+            type: integer
+          gitCommit:
+            type: string
+            maxLength: 40
+          requestedBy:
+            type: string
+            maxLength: 64
+          requestedAt: *id004
+          syncedAt: *id004
+          current: *id002
+          errorCode:
+            type: string
+          note:
+            type: string
+            maxLength: 1000
+        additionalProperties: false
+        required:
+        - id
+        - versionNo
+        - environment
+        - syncStatus
+      - $ref: '#/components/schemas/AllowedActions'
+    DeploymentList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deployment'
+      additionalProperties: false
+      required:
+      - items
+    RouteState:
+      type: object
+      properties:
+        routeId:
+          type: string
+          maxLength: 128
+        state:
+          type: string
+          enum:
+          - Started
+          - Suspended
+          - Stopped
+          - Mixed
+        replicas:
+          type: array
+          items:
+            type: object
+            properties:
+              replica:
+                type: string
+                maxLength: 128
+              state:
+                type: string
+              inflight:
+                type: integer
+            additionalProperties: false
+        exchanges1m:
+          type: integer
+        failures1m:
+          type: integer
+        p95ms:
+          type: integer
+        pausedBy:
+          type: string
+          maxLength: 64
+        pausedAt: *id004
+        pauseReason:
+          type: string
+          maxLength: 1000
+      additionalProperties: false
+    RuntimeStatus:
+      type: object
+      properties:
+        environments:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/EnvState'
+            - type: object
+              properties:
+                routes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RouteState'
+                loadError:
+                  type: string
+                  maxLength: 1000
+                runtimeProfile:
+                  type: string
+                  maxLength: 32
+                namespace:
+                  type: string
+                  maxLength: 63
+              additionalProperties: false
+      additionalProperties: false
+      required:
+      - environments
+    CommandRequest:
+      type: object
+      properties:
+        environment:
+          $ref: '#/components/schemas/Environment'
+        action:
+          $ref: '#/components/schemas/CommandAction'
+        scope:
+          type: string
+          enum:
+          - FLOW
+          - ROUTES
+        routeIds:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 100
+        reason:
+          $ref: '#/components/schemas/Reason'
+        drain:
+          type: boolean
+          default: true
+        incidentRef:
+          type: string
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - environment
+      - action
+      - scope
+      - reason
+    Command:
+      type: object
+      properties:
+        id: *id001
+        environment:
+          $ref: '#/components/schemas/Environment'
+        action:
+          $ref: '#/components/schemas/CommandAction'
+        scope:
+          type: string
+        routeIds:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/CommandStatus'
+        expectedReplicas:
+          type: integer
+        ackedReplicas:
+          type: integer
+        acks:
+          type: array
+          items:
+            type: object
+            properties:
+              replica:
+                type: string
+                maxLength: 128
+              result:
+                type: string
+                enum:
+                - APPLIED
+                - REJECTED
+              reason:
+                type: string
+                maxLength: 32
+              ackedAt: *id004
+            additionalProperties: false
+        issuedBy:
+          type: string
+          maxLength: 64
+        issuedAt: *id004
+        expiresAt: *id004
+        reconciledAt: *id004
+      additionalProperties: false
+      required:
+      - id
+      - status
+      - action
+    EndpointList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              nodeId:
+                type: string
+                maxLength: 128
+              direction:
+                type: string
+                enum:
+                - IN
+                - OUT
+              scheme:
+                type: string
+                maxLength: 64
+              uri:
+                type: string
+                maxLength: 2048
+                description: Đã che tham số nhạy cảm.
+              httpMethod:
+                type: string
+                maxLength: 8
+              httpPath:
+                type: string
+                maxLength: 1024
+              connectionCode:
+                type: string
+                maxLength: 64
+              topic:
+                type: string
+                maxLength: 249
+              metrics:
+                type: object
+                properties:
+                  exchanges1h:
+                    type: integer
+                  failures1h:
+                    type: integer
+                  p95ms:
+                    type: integer
+                additionalProperties: false
+            additionalProperties: false
+      additionalProperties: false
+      required:
+      - items
+    FlowMetrics:
+      type: object
+      properties:
+        environment:
+          $ref: '#/components/schemas/Environment'
+        from: *id004
+        to: *id004
+        step:
+          type: string
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                enum:
+                - exchanges
+                - failures
+                - p95ms
+                - dlq
+              points:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: number
+                  minItems: 2
+                  maxItems: 2
+            additionalProperties: false
+        dashboardUrl:
+          type: string
+          format: uri
+      additionalProperties: false
+      required:
+      - series
+    CatalogIndex:
+      type: object
+      properties:
+        catalogVersion:
+          type: string
+          maxLength: 64
+        runtime:
+          type: string
+        runtimeVersion:
+          type: string
+        camelVersion:
+          type: string
+        generatedAt: *id004
+        sha256:
+          type: string
+          maxLength: 64
+        paletteRulesVersion:
+          type: integer
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogEntry'
+        frequentlyUsed:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+      required:
+      - catalogVersion
+      - entries
+    CatalogEntry:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum:
+          - COMPONENT
+          - EIP
+          - KAMELET
+          - DATAFORMAT
+          - LANGUAGE
+          - BEAN_CLASS
+        name:
+          type: string
+          maxLength: 128
+        title:
+          type: string
+          maxLength: 255
+        titleVi:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        groups:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+        supportLevel:
+          type: string
+          enum:
+          - stable
+          - preview
+          - deprecated
+        native:
+          type: string
+          enum:
+          - SUPPORTED
+          - JVM_ONLY
+          - NOT_APPLICABLE
+        policy:
+          type: string
+          enum:
+          - ALLOWED
+          - PER_FLOW
+          - DENIED
+        needsConnection: *id002
+        consumerOnly: *id002
+        producerOnly: *id002
+        source:
+          type: string
+          enum:
+          - CAMEL
+          - DATAHUB_BASE
+          - TENANT
+      additionalProperties: false
+      required:
+      - kind
+      - name
+      - policy
+    ComponentSchema:
+      type: object
+      properties:
+        entry:
+          $ref: '#/components/schemas/CatalogEntry'
+        syntax:
+          type: string
+        license:
+          type: string
+        maven:
+          type: string
+        properties:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              kind:
+                type: string
+                enum:
+                - path
+                - parameter
+                - property
+                - header
+              group:
+                type: string
+              type:
+                type: string
+              required: *id002
+              default: {}
+              enum:
+                type: array
+                items: {}
+              secret: *id002
+              description:
+                type: string
+              descriptionVi:
+                type: string
+              deprecated: *id002
+            additionalProperties: false
+        flowsUsing:
+          type: integer
+      additionalProperties: false
+      required:
+      - entry
+      - properties
+    PolicyEntry:
+      type: object
+      properties:
+        kind:
+          type: string
+          maxLength: 12
+        name:
+          type: string
+          maxLength: 128
+        decision:
+          type: string
+          enum:
+          - ALLOWED
+          - PER_FLOW
+          - DENIED
+        reason:
+          type: string
+          maxLength: 1000
+        scope:
+          type: string
+          enum:
+          - PLATFORM
+          - TENANT
+        approvedBySo:
+          type: string
+          maxLength: 64
+        policyVersion:
+          type: integer
+        updatedAt: *id004
+      additionalProperties: false
+      required:
+      - kind
+      - name
+      - decision
+      - scope
+    PolicyList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyEntry'
+        policyVersion:
+          type: integer
+      additionalProperties: false
+      required:
+      - items
+    PolicyUpdate:
+      type: object
+      properties:
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              kind:
+                type: string
+                maxLength: 12
+              name:
+                type: string
+                maxLength: 128
+              decision:
+                type: string
+                enum:
+                - ALLOWED
+                - PER_FLOW
+                - DENIED
+                - INHERIT
+              reason:
+                $ref: '#/components/schemas/Reason'
+            additionalProperties: false
+            required:
+            - kind
+            - name
+            - decision
+            - reason
+          minItems: 1
+          maxItems: 200
+        soApprovalRef:
+          type: string
+          maxLength: 128
+      additionalProperties: false
+      required:
+      - changes
+    CatalogVersions:
+      type: object
+      properties:
+        tenantCatalogVersion:
+          type: string
+          maxLength: 64
+        profiles:
+          type: array
+          items:
+            type: object
+            properties:
+              profile:
+                type: string
+                maxLength: 32
+              quarkusVersion:
+                type: string
+              camelQuarkusVersion:
+                type: string
+              camelVersion:
+                type: string
+              libVersion:
+                type: string
+              imageDigest:
+                type: string
+              extensions:
+                type: integer
+            additionalProperties: false
+        match: *id002
+        pendingUpgrade:
+          type: object
+          properties:
+            toVersion:
+              type: string
+              maxLength: 64
+            affectedFlows:
+              type: integer
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - tenantCatalogVersion
+      - profiles
+      - match
+    Proposal:
+      type: object
+      properties:
+        id: *id001
+        kind:
+          type: string
+          maxLength: 12
+        name:
+          type: string
+          maxLength: 128
+        type:
+          type: string
+          enum:
+          - ALLOW
+          - NEW_COMPONENT
+        justification:
+          type: string
+          maxLength: 4000
+        status:
+          type: string
+          enum:
+          - OPEN
+          - ACCEPTED
+          - REJECTED
+          - WITHDRAWN
+        createdBy:
+          type: string
+          maxLength: 64
+        createdAt: *id004
+        decidedBy:
+          type: string
+          maxLength: 64
+        decisionNote:
+          type: string
+          maxLength: 2000
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - name
+      - type
+      - status
+    ProposalCreate:
+      type: object
+      properties:
+        kind:
+          type: string
+          maxLength: 12
+        name:
+          type: string
+          maxLength: 128
+        type:
+          type: string
+          enum:
+          - ALLOW
+          - NEW_COMPONENT
+        justification:
+          type: string
+          maxLength: 4000
+          minLength: 20
+      additionalProperties: false
+      required:
+      - kind
+      - name
+      - type
+      - justification
+    ProposalDecision:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+          - ACCEPTED
+          - REJECTED
+        note:
+          type: string
+          maxLength: 2000
+          minLength: 10
+        policyDecision:
+          type: string
+          enum:
+          - ALLOWED
+          - PER_FLOW
+      additionalProperties: false
+      required:
+      - decision
+      - note
+    ProposalList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Proposal'
+      additionalProperties: false
+      required:
+      - items
+    Template:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: ^tpl-[a-z0-9-]{2,60}$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 4000
+        category:
+          type: string
+          maxLength: 32
+        resourceKind:
+          $ref: '#/components/schemas/ResourceKind'
+        scope:
+          type: string
+          enum:
+          - PLATFORM
+          - TENANT
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - DEPRECATED
+        catalogVersion:
+          type: string
+          maxLength: 64
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - scope
+    TemplateDetail:
+      allOf:
+      - $ref: '#/components/schemas/Template'
+      - type: object
+        properties:
+          bodyYaml:
+            type: string
+            maxLength: 524288
+          paramSchema: *id005
+          previewLayout: *id005
+        additionalProperties: false
+    TemplateList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Template'
+      additionalProperties: false
+      required:
+      - items
+    TemplateCreate:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          pattern: ^tpl-[a-z0-9-]{2,60}$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 4000
+        category:
+          type: string
+          maxLength: 32
+        fromFlow:
+          $ref: '#/components/schemas/FlowCode'
+        fromVersionNo:
+          type: integer
+          minimum: 1
+        paramSchema: *id005
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - fromFlow
+      - fromVersionNo
+      - paramSchema
+    Settings:
+      type: object
+      properties:
+        params:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                pattern: ^04\.[a-z0-9.-]+(\.[A-Z]+)?$
+              value: {}
+              default: {}
+              domain:
+                type: string
+              updatedBy:
+                type: string
+                maxLength: 64
+              updatedAt: *id004
+            additionalProperties: false
+        freezeWindows:
+          type: array
+          items:
+            type: object
+            properties:
+              from: *id004
+              to: *id004
+              reason:
+                type: string
+                maxLength: 500
+              createdBy:
+                type: string
+                maxLength: 64
+            additionalProperties: false
+        envVars:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVar'
+      additionalProperties: false
+      required:
+      - params
+    EnvVar:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 63
+          pattern: ^[a-z][a-z0-9-]{1,62}$
+        description:
+          type: string
+          maxLength: 500
+        values:
+          type: object
+          properties:
+            TEST:
+              type: string
+              maxLength: 2000
+            STAGING:
+              type: string
+              maxLength: 2000
+            PROD:
+              type: string
+              maxLength: 2000
+          additionalProperties: false
+        usedBy:
+          type: integer
+      additionalProperties: false
+      required:
+      - name
+      - values
+    EnvVarList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVar'
+          maxItems: 500
+      additionalProperties: false
+      required:
+      - items
+    HistoryEntry:
+      type: object
+      properties:
+        at: *id004
+        action:
+          type: string
+          maxLength: 64
+        actor:
+          type: string
+          maxLength: 64
+        actorName:
+          type: string
+          maxLength: 255
+        target:
+          type: string
+          maxLength: 255
+        versionNo:
+          type: integer
+        environment:
+          $ref: '#/components/schemas/Environment'
+        reason:
+          type: string
+          maxLength: 1000
+        before: {}
+        after: {}
+        traceId:
+          type: string
+      additionalProperties: false
+      required:
+      - at
+      - action
+      - actor
+    HistoryPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryEntry'
+        page:
+          $ref: '#/components/schemas/CursorMeta'
+      additionalProperties: false
+      required:
+      - items
+      - page

@@ -1,9 +1,9 @@
 ---
 ma_tai_lieu: ADR-005
 ten: Apache APISIX làm cổng API
-phien_ban: 0.1
-ngay: 2026-11-21
-trang_thai: Đề xuất
+phien_ban: 0.2
+ngay: 2026-11-25
+trang_thai: Chấp nhận
 nguoi_doc: Kiến trúc sư, Trưởng nhóm kỹ thuật, Hội đồng thẩm định
 ---
 
@@ -23,7 +23,7 @@ Mọi lượt gọi API giữa HTTT phải qua một điểm kiểm soát (REQ-0
 
 ## Quyết định
 
-Chọn **phương án C**. Control plane (PH-02, PH-03) là nguồn sự thật về API, gói sử dụng và đăng ký; cấu hình được đồng bộ xuống APISIX qua Admin API theo cơ chế khai báo, có phát hiện lệch cấu hình. Các plugin dùng: `openid-connect`/`jwt-auth`, `limit-count`, `limit-req`, `consumer-restriction`, `ip-restriction`, `opa`, `opentelemetry`, `http-logger` (qua bộ che dữ liệu).
+Chọn **phương án C**. Control plane (PH-02, PH-03) là nguồn sự thật về API, gói sử dụng và đăng ký; cấu hình được đồng bộ xuống APISIX ở **chế độ standalone khai báo, không dùng etcd**: control plane sinh ảnh chụp cấu hình có số phiên bản và chữ ký, phát qua ConfigMap (Git, Argo CD) và bucket Garage; mỗi pod APISIX tự nạp lại tệp khi thay đổi (chi tiết D03-09 §6.1). Cách này khớp với `deploy/apisix/config.yaml` của repo và giữ data plane chạy khi control plane ngừng (NFR-00-012). APISIX cũng đảm nhận lớp biên, gồm TLS, mTLS khách và WAF Coraza (ADR-033). Các plugin dùng: `openid-connect`/`jwt-auth`, `limit-count`, `limit-req`, `consumer-restriction`, `ip-restriction`, `opa`, `opentelemetry`, `http-logger` (qua bộ che dữ liệu).
 
 ## Hệ quả
 
@@ -31,4 +31,4 @@ Tích cực: độ trễ thêm thấp, đạt KPI-04. Tiêu cực: màn giám s�
 
 ## Truy vết
 
-REQ-03; LGC-APIM-011…015, 022…025. Tương ứng ADR-003 của repo.
+REQ-03; LGC-APIM-011…015, 022…025. Tương ứng ADR-003 của repo. Bản 0.2 (25/11/2026): chủ đầu tư chấp nhận; chuyển sang chế độ standalone (đóng Q338 phần quyết định) và nhận thêm vai trò lớp biên (ADR-033).

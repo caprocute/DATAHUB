@@ -448,7 +448,7 @@ tham số" thay vì báo lỗi tải. Phân bố: (323 component ·
       > nếu không StrictMode gọi effect hai lần sẽ chèn hai chặng.
 
 - [x] **K4-5.** Hiện rõ nguồn + giấy phép catalog (Apache-2.0, `@kaoto/camel-catalog 0.7.0`,
-      `camel-quarkus/3.35.0`) ở chân màn — nghĩa vụ tuân thủ giấy phép, kèm nhắc bảng tham
+      nhánh `camel-quarkus` cùng dòng runtime `camel/*`, hiện 3.33.1) ở chân màn — nghĩa vụ tuân thủ giấy phép, kèm nhắc bảng tham
       số chỉ đúng với đúng phiên bản runtime này.
 - [x] **K4-6.** **24 ca test** (`k4.test.ts`), trọng tâm là *chất lượng dữ liệu chỉ mục* vì
       màn chỉ vẽ lại thứ chỉ mục mang sẵn: khóa lại 95 nút từng rỗng, số chip khớp số dòng

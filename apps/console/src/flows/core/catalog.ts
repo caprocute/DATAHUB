@@ -2,10 +2,12 @@
  * Danh mục thành phần Camel.
  *
  * Dữ liệu sinh bằng `scripts/build-catalog.mjs` từ `@kaoto/camel-catalog` (Apache-2.0),
- * nhánh `camel-quarkus/3.35.0` — đúng runtime của `camel/*` trong repo (ADR-002/020).
+ * nhánh `camel-quarkus/3.33.1` (Camel 4.18.2 LTS) — cùng dòng với runtime Camel Quarkus
+ * 3.33.2 của `camel/<du>` (ADR-002/020). Phiên bản runtime đọc từ pom lúc sinh; CI chạy
+ * `npm run catalog:check` để nâng runtime mà quên sinh lại catalog thì đỏ.
  *
  * Số liệu định hình thiết kế (đo trên chính dữ liệu này):
- *  - 751 nút → bảng thành phần phải có tab + lọc nhãn + ảo hóa;
+ *  - ~750 nút → bảng thành phần phải có tab + lọc nhãn + ảo hóa;
  *  - thuộc tính mỗi component: trung vị 19, p90 64, **tối đa 154** → cửa sổ cấu hình
  *    phải chia nhóm và cho tìm trong trường;
  *  - 876 trường `enum` → sinh `Select`, không dùng ô text.
@@ -65,7 +67,12 @@ interface IndexShape {
   source: string;
   license: string;
   runtime: string;
+  /** Nhánh catalog thực đọc (có thể là bản vá kề bên của runtime). */
   runtimeVersion: string;
+  /** Phiên bản Camel Quarkus của `camel/<du>/pom.xml` lúc sinh catalog. */
+  targetRuntimeVersion: string;
+  /** Phiên bản Camel lõi đi kèm nhánh catalog. */
+  camelVersion?: string;
   counts: Record<string, number>;
   labels: Record<string, number>;
   nodes: CatalogNode[];
@@ -76,6 +83,8 @@ const data = indexRaw as unknown as IndexShape;
 export const CATALOG_SOURCE = data.source;
 export const CATALOG_LICENSE = data.license;
 export const CATALOG_RUNTIME = `${data.runtime} ${data.runtimeVersion}`;
+export const CATALOG_TARGET_RUNTIME = data.targetRuntimeVersion;
+export const CATALOG_CAMEL_VERSION = data.camelVersion;
 export const CATALOG_COUNTS = data.counts;
 export const CATALOG_NODES = data.nodes;
 export const CATALOG_TOTAL = data.nodes.length;
