@@ -73,7 +73,7 @@ CI: `.github/workflows/datahub-code.yml`, chạy khi đổi `datahub/**`.
 
 1. **Phiên khởi tạo** (một lần mỗi phân hệ, hoặc khi tính năng chưa có lát cắt): bước 4–8 của §4 cho tính năng đó.
 2. **Phiên viết** (ngữ cảnh mới, một tính năng): đọc theo `datahub/AGENTS.md` §1; viết test trước, mã sau; chạy G1–G5 cục bộ; ghi `tien-do.md`; không lật `passes`, không sửa `spec/`.
-3. **Phiên đánh giá** (ngữ cảnh mới, prompt nghi ngờ, không đọc báo cáo của phiên viết trước khi tự chạy): chạy lại mọi cổng từ đầu, đối chiếu từng kịch bản và từng dòng `san-sang.md` với mã, thử ít nhất ba ca phá hoại ngoài Gherkin (tenant khác, quyền thiếu, đầu vào biên), kiểm test có thật sự khẳng định điều cần khẳng định. Đạt thì lật `passes = true` và ghi `danh_gia` (ngày, người/phiên, cổng, phát hiện); trượt thì ghi lỗi vào `tien-do.md` và trả về phiên viết. Ba lần trượt cùng tính năng thì dừng, chuyển vào `hang-cho.md`.
+3. **Phiên đánh giá** (ngữ cảnh mới, prompt nghi ngờ, không đọc báo cáo của phiên viết trước khi tự chạy): chạy lại mọi cổng từ đầu, đối chiếu từng kịch bản và từng dòng `san-sang.md` với mã, thử ít nhất ba ca phá hoại ngoài Gherkin (tenant khác, quyền thiếu, đầu vào biên), kiểm test có thật sự khẳng định điều cần khẳng định. Đạt thì ghi kết luận vào `danh-gia-F-nn-nnn.md` (ngày, phiên, cổng, phát hiện) và đề nghị lật cờ; **chỉ người duyệt G6 (hoặc workflow CI sau khi mọi cổng xanh) lật `passes = true`**, tác nhân trong phiên không tự lật; trượt thì ghi lỗi vào `tien-do.md` và trả về phiên viết. Ba lần trượt cùng tính năng thì dừng, chuyển vào `hang-cho.md`.
 4. **G6** người duyệt PR.
 
 ## 7. Tự soát trước khi giao gói
