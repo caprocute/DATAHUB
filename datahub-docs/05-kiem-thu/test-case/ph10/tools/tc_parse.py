@@ -43,9 +43,9 @@ def parse():
                 tid, name, load, thr, tv = [x.strip() for x in m.groups()]
                 name = re.sub(r'\s*<!--.*?-->', '', name)
                 n = int(tid[-3:])
-                pr = 'P1' if re.search(r'NFR-10-0(0[7-9]|1[0-3])', tv) else 'P2'
+                pr = 'P1' if re.search(r'NFR-10-0(0[2369]|1[03])', tv) else 'P2'
                 tcs.append(dict(id=tid, ts=ts, name=name, type='Hiệu năng', prio=pr, auto='k6', trace=tv, refs=refs(tv),
-                                data='Bộ dữ liệu quy mô theo GĐ ở PERF (mục 1.3)', steps=f'Chạy tải: {load}', expect=f'Đạt ngưỡng: {thr}'))
+                                data='Bộ dữ liệu quy mô theo GĐ ở PERF (mục 1.3), tenant T97…T99', steps=f'Chạy tải: {load}', expect=f'Đạt ngưỡng: {thr}'))
             continue
         tid, name = re.match(r'#### (TC-10-\d{3}) · (.*)', head).groups()
         name = re.sub(r'\s*<!--.*?-->', '', name)
@@ -67,7 +67,7 @@ def fr_catalog():
     t = FRS.read_text(encoding='utf-8')
     res = {}
     for m in re.finditer(r'^#### (FR-10-\d{3}) · ([^\n]*)\n(.*?)(?=^#{2,4} )', t, re.M | re.S):
-        pr = re.search(r'\| Mức ưu tiên \| (\w+)', m.group(3)) or re.search(m.group(1) + r' \((\w)', m.group(3))
+        pr = re.search(r'\| Mức ưu tiên, đợt \| (\w)', m.group(3)) or re.search(m.group(1) + r' \((\w)', m.group(3))
         tv = re.search(r'\| Truy vết \| ([^|]+)', m.group(3))
         res[m.group(1)] = dict(name=m.group(2).strip(), prio=pr.group(1) if pr else '',
                                lgc=sorted(r for r in refs(tv.group(1) if tv else m.group(3)[:600]) if r.startswith('LGC')))

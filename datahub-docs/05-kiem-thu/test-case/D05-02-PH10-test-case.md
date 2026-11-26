@@ -18,7 +18,7 @@ phan_he: PH-10
 - Không mất chức năng nào của Hub Apache Pulsar hệ cũ: dashboard đếm publisher, subscriber, project, topic; sơ đồ kết nối; quản lý project, topic, publisher, subscriber, publication, subscription; danh mục `type_of_comm`, `routing_mode` (LGC-HUB-001…004, 007…014), nhóm Message Broker của Tooling (LGC-TOOL-010) và event message của Bus (LGC-BUS-039). Hai mục LGC-HUB-005, 006 (biểu đồ CPU, bộ nhớ) chuyển sang PH-13 và chỉ được kiểm ở mức có liên kết dẫn chiếu.
 - Không có đường nào để một tỉnh đọc, phát hay nhận sự kiện của tỉnh khác, để một bên phát, bên nhận chưa được duyệt dùng được topic, hay để một sự kiện đã ghi bền bị mất mà không có dấu vết trong DLQ.
 
-**Phạm vi.** Gồm <!--gen:so-ts-->0<!--/gen--> kịch bản với <!--gen:so-tc-->0<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M (66 FR) có ít nhất một ca dương và một ca âm; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph10/tools/gen_matrix.py`, kèm bảng `.xlsx` theo mẫu nghiệm thu và tệp Gherkin.
+**Phạm vi.** Gồm <!--gen:so-ts-->35<!--/gen--> kịch bản với <!--gen:so-tc-->158 (TC-10-001…158; 110 ca P1)<!--/gen--> test case và 10 kịch bản nghiệm thu người dùng (UAT-01…10). Mỗi FR mức M (66 FR) có ít nhất một ca dương và một ca âm; ma trận mục 8 sinh tự động từ chính tài liệu này bằng `ph10/tools/gen_matrix.py`, kèm bảng `.xlsx` theo mẫu nghiệm thu và tệp Gherkin.
 
 **Căn cứ.** Tài liệu cùng bộ PH-10 bản 0.2 (FRS D02-03-PH10, use case D02-04-PH10, SDD D03-02-PH10, CSDL D03-03-PH10, API D03-04-PH10, màn hình D03-06-PH10); ma trận phân quyền D02-08 (dòng `PERM-10-*` đã tách theo FRS §3.3); kế hoạch kiểm thử D05-01; cổng CI D04-02; ADR-070…073; cấu trúc theo ISO/IEC/IEEE 29119-3; yêu cầu ATTT cấp độ 3 theo Nghị định 331/2026/NĐ-CP và TCVN 14423:2026.
 
@@ -235,6 +235,44 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 ### 3.1. Danh sách kịch bản
 
 <!--gen:ts-table-->
+| Kịch bản | Tên | UC | Số ca |
+|---|---|---|---|
+| TS-10-01 | Dự án tích hợp | UC-10-01 | 5 |
+| TS-10-02 | Tạo topic và gửi duyệt | UC-10-02 | 6 |
+| TS-10-03 | Duyệt topic và cấp phát qua GitOps | UC-10-03 | 5 |
+| TS-10-04 | Thay đổi cấu hình topic đang hoạt động | UC-10-04 | 5 |
+| TS-10-05 | Ngừng topic và phiên bản chính mới | UC-10-05 | 5 |
+| TS-10-06 | Lược đồ sự kiện: soạn, kiểm tra, duyệt | UC-10-06 | 6 |
+| TS-10-07 | Tương thích lược đồ Apicurio và topic .v{n+1} | — | 4 |
+| TS-10-08 | Bên phát và bên nhận | UC-10-07, 08 | 5 |
+| TS-10-09 | Đồng bộ trạng thái với PH-01 và PH-04 | UC-10-08 | 2 |
+| TS-10-10 | Publication: đề nghị, duyệt, cấp scope và ACL | UC-10-09 | 3 |
+| TS-10-11 | Phát sự kiện qua API phát | UC-10-10 | 6 |
+| TS-10-12 | Phát trực tiếp qua Kafka và giám sát tuân thủ | UC-10-11 | 3 |
+| TS-10-13 | Subscription: đề nghị, xác minh endpoint, duyệt | UC-10-12, 13 | 5 |
+| TS-10-14 | Giao nhận ĐẨY: webhook ký HMAC và khóa ký | UC-10-14, 17 | 6 |
+| TS-10-15 | Thử lại giãn dần, ngắt mạch và DLQ | UC-10-14 | 5 |
+| TS-10-16 | Vận hành subscription: tạm dừng, sửa, thu hồi, thống kê | UC-10-16 | 5 |
+| TS-10-17 | Giao nhận KÉO qua API: lease và cursor | UC-10-15 | 5 |
+| TS-10-18 | Giao nhận KÉO qua Kafka ngoài: SASL OAUTHBEARER | UC-10-15 | 3 |
+| TS-10-19 | Giao nhận nội bộ và hợp đồng PH-04 | UC-10-25 | 4 |
+| TS-10-20 | DLQ tầng sự kiện: tra cứu, loại bỏ, phát lại mục DLQ | UC-10-18 | 4 |
+| TS-10-21 | Phát lại theo khoảng có duyệt bốn mắt | UC-10-19 | 5 |
+| TS-10-22 | Độ trễ tiêu thụ và cảnh báo | UC-10-20 | 4 |
+| TS-10-23 | Dashboard và sơ đồ kết nối | UC-10-21 | 3 |
+| TS-10-24 | Danh mục, hạn mức và tham số | UC-10-22 | 3 |
+| TS-10-25 | Hợp đồng PH-05: topic CDC tự duyệt và thay đổi lược đồ | UC-10-23 | 4 |
+| TS-10-26 | DU nội bộ đăng ký topic SYSTEM và topic nền tảng | UC-10-24 | 2 |
+| TS-10-27 | Xuất và nhập khai báo | UC-10-28 | 2 |
+| TS-10-28 | Di trú từ Pulsar: kiểm kê và ánh xạ | UC-10-26 | 2 |
+| TS-10-29 | Cầu nối Pulsar, đối chiếu, chuyển hẳn và quay lui | UC-10-27 | 5 |
+| TS-10-30 | Cô lập tenant: RLS, ACL Kafka theo tiền tố, Apicurio, OPA | — | 6 |
+| TS-10-31 | Phân quyền theo ma trận PERM-10 và bốn mắt | — | 5 |
+| TS-10-32 | Kiểm toán và an toàn bí mật | — | 3 |
+| TS-10-33 | Hiệu năng, tải và quy mô | — | 13 |
+| TS-10-34 | Chịu lỗi, hỗn loạn và phục hồi | — | 5 |
+| TS-10-35 | Truy cập và giao diện | — | 4 |
+| **Tổng** | | | **158** (110 ca P1) |
 <!--/gen-->
 
 ### 3.2. Máy trạng thái được kiểm thử
@@ -266,11 +304,11 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 - **Bước**
   1. Mở UI-10-04 (`/tich-hop/du-an/moi`), nhập mã `tc-lien-thong-thue`, tên "Liên thông thuế thử", tổ chức `SO-KHDT`, nhãn `doanh-nghiep`; bấm "Tạo".
   2. `GET /projects/tc-lien-thong-thue`.
-- **Mong đợi** Bước 1 gọi `POST /projects` có `Idempotency-Key`, trả `201`, `Location`, `ETag`; màn chuyển sang UI-10-03. Bước 2: `status = ACTIVE`, `ownerUser` là người tạo, `topicCount = 0`, `publisherCount = 0`, `subscriberCount = 0`. KT: có (`PROJECT_CREATE`). EVT: không.
+- **Mong đợi** Bước 1 gọi `POST /projects` có `Idempotency-Key`, trả `201`, `Location`, `ETag`; màn chuyển sang UI-10-03. Bước 2: `status = ACTIVE`, `ownerUser` là người tạo, `topicCount = 0`, `publisherCount = 0`, `subscriberCount = 0`. KT: có (tạo dự án). EVT: không.
 
 #### TC-10-002 · Tạo dự án sai mẫu, từ dành riêng, trùng mã, ngoài tổ chức, vượt hạn mức <!--k:prj-create-neg-->
 - **Loại** Âm · **Ưu tiên** P1 · **Tự động** API
-- **Truy vết** FR-10-003 · API-10-002 · ERR-10-002, 003, 011, 044 · BR-10-003
+- **Truy vết** FR-10-003 · API-10-002 · ERR-10-002, 003, 011, 039, 044 · BR-10-003
 - **Tiền điều kiện / dữ liệu** U-T68-IE1; U-T68-SV (tổ chức `SO-KHDT`); P-CU đã lưu trữ ở bước chuẩn bị; T92 đã có 200 dự án giả (đặt `10.quota.max-projects = 200`).
 - **Bước**
   1. `POST /projects` với `projectCode = "Tc_Hoa"`.
@@ -278,7 +316,8 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
   3. Lặp với `dang-ky-kinh-doanh` và `thu-nghiem-cu` (đã `ARCHIVED`).
   4. U-T68-SV gửi `ownerOrgCode = SO-TC`.
   5. U-T90-IE trên T92 tạo dự án thứ 201.
-- **Mong đợi** Bước 1, 2 `400` ERR-10-003 với `errors[0].field = projectCode`. Bước 3 `409` ERR-10-002 (mã đã lưu trữ cũng không dùng lại). Bước 4 403-TC. Bước 5 `422` ERR-10-011. KT: không.
+  6. Người dùng IE của T94 (tenant tạm ngừng) tạo dự án.
+- **Mong đợi** Bước 1, 2 `400` ERR-10-003 với `errors[0].field = projectCode`. Bước 3 `409` ERR-10-002 (mã đã lưu trữ cũng không dùng lại). Bước 4 403-TC. Bước 5 `422` ERR-10-011. Bước 6 `423` ERR-10-039. KT: không.
 
 #### TC-10-003 · Danh sách dự án lọc, sắp xếp, đếm và facets <!--k:prj-list-->
 - **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, E2E
@@ -299,7 +338,7 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
   2. IE2 gửi `PATCH` với `ETag` cũ.
   3. IE1 gửi `PATCH` có `projectCode = "doi-ma"`.
   4. Lưu trữ dự án rồi `PATCH` tên.
-- **Mong đợi** Bước 1 `200`, `ETag` mới. Bước 2 `412` ERR-10-007 có `currentEtag`. Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006. KT: có (`PROJECT_UPDATE`, giá trị trước và sau) chỉ cho bước 1.
+- **Mong đợi** Bước 1 `200`, `ETag` mới. Bước 2 `412` ERR-10-007 có `currentEtag`. Bước 3 `400` ERR-10-003. Bước 4 `409` ERR-10-006. KT: có (sửa dự án, giá trị trước và sau) chỉ cho bước 1.
 
 #### TC-10-005 · Lưu trữ khi còn topic bị chặn; lưu trữ, khôi phục thành công <!--k:prj-archive-->
 - **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -366,15 +405,16 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 - **Mong đợi** Bước 1 `422` ERR-10-015 kèm dòng, cột lỗi. Bước 2 `422` ERR-10-017 "Trường khóa phân vùng `maDoanhNghiep` không có trong lược đồ". Bước 3 `422` ERR-10-018 liệt kê `soDinhDanh`, `soDienThoai`. Bước 4 `422` ERR-10-020. Không ghi gì vào Apicurio (đếm artifact nhóm `t68`, `t93` không đổi).
 
 #### TC-10-010 · Danh sách topic, chi tiết và thông tin kết nối <!--k:topic-list-detail-->
-- **Loại** Dương · **Ưu tiên** P2 · **Tự động** API, E2E
-- **Truy vết** FR-10-006, 007 · API-10-008, 010, 020 · UI-10-05, 06 · LGC-HUB-009
+- **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API, E2E
+- **Truy vết** FR-10-006, 007 · API-10-008, 010, 020 · UI-10-05, 06 · ERR-10-049 · LGC-HUB-009
 - **Tiền điều kiện / dữ liệu** U-T68-VW; TP-CP, TP-TD, TP-CDC; topic DLQ `t68.dkkd.doanh-nghiep.da-cap-phep.v1.dlq` có trên cụm.
 - **Bước**
   1. `GET /topics?projectCode=dang-ky-kinh-doanh&sort=topicName,asc`.
   2. `GET /topics?topicKind=DLQ`.
   3. `GET /topics/t68.dkkd.doanh-nghiep.da-cap-phep.v1` và `/connection-info`.
-  4. Mở UI-10-06 với route `/tich-hop/topic/t68.dkkd.doanh-nghiep.da-cap-phep.v1`.
-- **Mong đợi** Bước 1 không có topic `RETIRED`, không có topic `DLQ`; dòng TP-TD có `successorTopic`; `facets` theo `status`, `topicKind`, `dataClass`. Bước 2 trả topic DLQ khi lọc rõ. Bước 3 có `latestSchemaVersion = 3`, danh sách publication, subscription kèm `alertState`; `connection-info` có đường API phát, API kéo, địa chỉ listener `external` (T68 đã bật), URI artifact Apicurio `groups/t68/artifacts/{topicName}`. Bước 4 route có dấu chấm mở đúng màn, tab "Cách kết nối" có mã mẫu.
+  4. `GET /topics?status=XYZ&sort=khongco,asc`.
+  5. Mở UI-10-06 với route `/tich-hop/topic/t68.dkkd.doanh-nghiep.da-cap-phep.v1`.
+- **Mong đợi** Bước 1 không có topic `RETIRED`, không có topic `DLQ`; dòng TP-TD có `successorTopic`; `facets` theo `status`, `topicKind`, `dataClass`. Bước 2 trả topic DLQ khi lọc rõ. Bước 3 có `latestSchemaVersion = 3`, danh sách publication, subscription kèm `alertState`; `connection-info` có đường API phát, API kéo, địa chỉ listener `external` (T68 đã bật), URI artifact Apicurio `groups/t68/artifacts/{topicName}`. Bước 4 `400` ERR-10-049. Bước 5 route có dấu chấm mở đúng màn, tab "Cách kết nối" có mã mẫu.
 
 #### TC-10-011 · Rút yêu cầu tạo topic trước khi duyệt <!--k:topic-withdraw-->
 - **Loại** Dương, Âm · **Ưu tiên** P2 · **Tự động** API
@@ -400,7 +440,7 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
   1. Mở UI-10-13 (`/viec-cua-toi?phan-he=10`), mở yêu cầu `TOPIC_CREATE`, xem khác biệt và kết quả kiểm tra lược đồ; duyệt với ý kiến "Đồng ý cấp phát".
   2. Theo dõi `GET /topics/{topicName}` mỗi 10 giây.
   3. Đọc `dh-config-t68/kafka/topics/{topicName}.yaml` và artifact Apicurio.
-- **Mong đợi** Bước 1 `200`, yêu cầu `APPROVED`. Bước 2 `PROVISIONING` rồi `ACTIVE` trong ≤ 3 phút. Bước 3: `replicas: 3`, `min.insync.replicas: 2`, `retention.ms = 604800000`, nhãn `dh.gov.vn/tenant: t68`; có thêm tệp topic `{topicName}.dlq`; Apicurio có artifact `groupId = t68`, `artifactId = {topicName}`, quy tắc tương thích `BACKWARD`, phiên bản 1 `ENABLED`. EVT: `topic.activated`, `schema.version-enabled`. KT: có (`TOPIC_APPROVE`, mã commit).
+- **Mong đợi** Bước 1 `200`, yêu cầu `APPROVED`. Bước 2 `PROVISIONING` rồi `ACTIVE` trong ≤ 3 phút. Bước 3: `replicas: 3`, `min.insync.replicas: 2`, `retention.ms = 604800000`, nhãn `dh.gov.vn/tenant: t68`; có thêm tệp topic `{topicName}.dlq`; Apicurio có artifact `groupId = t68`, `artifactId = {topicName}`, quy tắc tương thích `BACKWARD`, phiên bản 1 `ENABLED`. EVT: `topic.activated`, `schema.version-enabled`. KT: có (duyệt topic, mã commit).
 
 #### TC-10-013 · Người tạo tự duyệt, thiếu ý kiến, thiếu xác nhận dữ liệu cá nhân, từ chối <!--k:topic-approve-neg-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
@@ -1013,11 +1053,12 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 
 #### TC-10-066 · Chặn DNS rebinding và đổi IP giữa các lượt <!--k:push-ssrf-->
 - **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** RT, ZAP
-- **Truy vết** FR-10-038 · ERR-10-115 · BR-10-026
+- **Truy vết** FR-10-038 · ERR-10-114, 115 · BR-10-026
 - **Tiền điều kiện / dữ liệu** Subscription thử tới `https://rebind.sim.test/h` đã xác minh khi DNS trả IP công cộng.
 - **Bước**
   1. Đổi DNS sang `10.96.0.10`; phát sự kiện.
-- **Mong đợi** Bộ giao nhận kiểm lại IP trước lượt, không gửi; lượt lỗi ERR-10-115 `failureClass = SECURITY`; sau hết lượt thử vào DLQ; không có kết nối tới `10.96.0.10`.
+  2. Đổi đầu nhận của subscription thử khác sang chứng thư hết hạn; phát sự kiện.
+- **Mong đợi** Bộ giao nhận kiểm lại IP trước lượt, không gửi; lượt lỗi ERR-10-115 `failureClass = SECURITY`; sau hết lượt thử vào DLQ; không có kết nối tới `10.96.0.10`. Bước 2 lượt lỗi ERR-10-114, không gửi thân qua kết nối TLS không tin cậy.
 
 ### TS-10-15 · Thử lại giãn dần, ngắt mạch và DLQ
 
@@ -1035,12 +1076,12 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 
 #### TC-10-068 · Hết lượt thử với DEAD_LETTER: ghi DLQ rồi đi tiếp <!--k:retry-dead-letter-->
 - **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT, API
-- **Truy vết** FR-10-039, 049 · ERR-10-112, 113 · EVT-10-11 · BR-10-023, 024
-- **Tiền điều kiện / dữ liệu** SUB-PUSH; SIM-WH luôn `500` cho khóa `0999000010`, trả `410` cho khóa `0999000011`.
+- **Truy vết** FR-10-039, 049 · ERR-10-111, 112, 113 · EVT-10-11 · BR-10-023, 024
+- **Tiền điều kiện / dữ liệu** SUB-PUSH; SIM-WH luôn `500` cho khóa `0999000010`, trả `410` cho khóa `0999000011`, chậm 15 giây (quá `timeoutMs`) cho khóa `0999000012`.
 - **Bước**
   1. Phát một sự kiện mỗi khóa, rồi 5 sự kiện khóa khác.
   2. Đọc topic `{TP-CP}.dlq` và `GET /dlq-entries?subscriptionCode=ht-thue-dn-cap-phep`.
-- **Mong đợi** Khóa `…10` thử 4 lần rồi vào DLQ ERR-10-112, `attempts = 4`; khóa `…11` vào DLQ ngay ERR-10-113 (lỗi vĩnh viễn, không thử lại). 5 sự kiện sau được giao. Bản tin DLQ giữ nguyên khóa, tiêu đề, giá trị và có đủ tiêu đề `dh_dlq_*`, `dh_dlq_origin = PUSH`. Hai mục `NEW` ở `dlq_entry`. EVT: `delivery.dead-lettered` gộp trong 1 phút.
+- **Mong đợi** Khóa `…10` thử 4 lần rồi vào DLQ ERR-10-112, `attempts = 4`; khóa `…11` vào DLQ ngay ERR-10-113 (lỗi vĩnh viễn, không thử lại); khóa `…12` mỗi lượt ghi ERR-10-111 rồi vào DLQ sau hết lượt. 5 sự kiện sau được giao. Bản tin DLQ giữ nguyên khóa, tiêu đề, giá trị và có đủ tiêu đề `dh_dlq_*`, `dh_dlq_origin = PUSH`. Hai mục `NEW` ở `dlq_entry`. EVT: `delivery.dead-lettered` gộp trong 1 phút.
 
 #### TC-10-069 · Hết lượt thử với BLOCK: tạm ngừng, không commit, TO tiếp tục <!--k:retry-block-->
 - **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** RT, API
@@ -1368,13 +1409,14 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 **Phủ.** FR-10-054, 055, 059; UC-10-20; API-10-055, 056; UI-10-17, 12; EVT-10-10; NFR-10-010; LGC-HUB-007.
 
 #### TC-10-098 · Thu lag theo phân vùng cho mọi chế độ <!--k:lag-collect-->
-- **Loại** Dương · **Ưu tiên** P1 · **Tự động** IT, API
-- **Truy vết** FR-10-054 · API-10-055 · UI-10-17 · LGC-HUB-007
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** IT, API
+- **Truy vết** FR-10-054 · API-10-055 · UI-10-17 · ERR-10-001, 049 · LGC-HUB-007
 - **Tiền điều kiện / dữ liệu** SUB-PUSH, SUB-PULL, SUB-KAFKA, SUB-FLOW; dừng HTTT BHXH kéo; phát 600 sự kiện.
 - **Bước**
   1. Chờ hai chu kỳ 30 giây; `GET /subscriptions/ht-bhxh-dn-cap-phep/lag`.
   2. S-PH13 gọi cùng API; mở UI-10-17.
-- **Mong đợi** `lagRecords` theo phân vùng tổng bằng 600; `lagSeconds` bằng tuổi bản tin đầu chưa commit; phân vùng không lag có `lagSeconds = 0`. SUB-KAFKA và SUB-FLOW có mẫu lag. S-PH13 `200`. Bảng `lag_sample` có mẫu mỗi 30 giây.
+  3. `GET /subscriptions/khong-co/lag`; `GET …/lag?from=…&to=…` khoảng 100 ngày.
+- **Mong đợi** `lagRecords` theo phân vùng tổng bằng 600; `lagSeconds` bằng tuổi bản tin đầu chưa commit; phân vùng không lag có `lagSeconds = 0`. SUB-KAFKA và SUB-FLOW có mẫu lag. S-PH13 `200`. Bảng `lag_sample` có mẫu mỗi 30 giây. Bước 3 404-ẩn; `400` ERR-10-049 (mẫu gộp chỉ giữ 90 ngày).
 
 #### TC-10-099 · Cảnh báo WARNING, CRITICAL, STALLED và về OK <!--k:lag-alert-->
 - **Loại** Dương, Biên · **Ưu tiên** P1 · **Tự động** IT, RT
@@ -1398,7 +1440,7 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 - **Mong đợi** Bước 1 `200`, `alertAcknowledgedBy`, `alertAckNote`; thông báo lặp dừng tới khi đổi mức. Bước 2 403-PQ; `409` ERR-10-006.
 
 #### TC-10-101 · Chỉ số xuất sang PH-13 có nhãn tenant, không có dữ liệu nghiệp vụ <!--k:metrics-export-->
-- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** IT
+- **Loại** Dương, Âm, Bảo mật · **Ưu tiên** P2 · **Tự động** IT
 - **Truy vết** FR-10-059 · NFR-10-017
 - **Tiền điều kiện / dữ liệu** Mimir của PH-13 ở SIT; tải nền ở T68, T01.
 - **Bước**
@@ -1413,14 +1455,15 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
 **Phủ.** FR-10-057, 058; UC-10-21; API-10-066, 007; UI-10-01, 14, 03; ERR-10-049; NFR-10-015; LGC-HUB-001…007.
 
 #### TC-10-102 · Bốn thẻ đếm và khối lag, DLQ trên dashboard <!--k:dashboard-->
-- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
-- **Truy vết** FR-10-057 · API-10-066 · UI-10-01 · UC-10-21 · LGC-HUB-001, 002, 003, 004, 005, 006
+- **Loại** Dương, Âm · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-057 · API-10-066 · UI-10-01 · ERR-10-001, 049 · UC-10-21 · LGC-HUB-001, 002, 003, 004, 005, 006
 - **Tiền điều kiện / dữ liệu** U-T68-VW; dữ liệu mục 2.3.
 - **Bước**
   1. `GET /dashboard`; `GET /dashboard?projectCode=dang-ky-kinh-doanh`.
   2. Mở UI-10-01, bấm thẻ "Bên phát"; bấm liên kết "Tài nguyên cụm Kafka (PH-13)".
   3. Dừng PH-13.
-- **Mong đợi** Bước 1 số publisher, subscriber, project, topic khớp đếm trực tiếp ở CSDL, có phân rã theo trạng thái; khối lag theo `alertState`, DLQ `NEW`. Bước 2 mở UI-10-09 đã lọc; liên kết mở bảng chỉ số cụm của PH-13. Bước 3 khối lưu lượng ẩn kèm thông báo, các khối khác vẫn hiện.
+  4. `GET /dashboard?projectCode=khong-co`; `GET /dashboard?projectCode=dang-ky-kinh-doanh` bằng U-T01-IE.
+- **Mong đợi** Bước 1 số publisher, subscriber, project, topic khớp đếm trực tiếp ở CSDL, có phân rã theo trạng thái; khối lag theo `alertState`, DLQ `NEW`. Bước 2 mở UI-10-09 đã lọc; liên kết mở bảng chỉ số cụm của PH-13. Bước 3 khối lưu lượng ẩn kèm thông báo, các khối khác vẫn hiện. Bước 4 404-ẩn cả hai (không lộ dự án T68).
 
 #### TC-10-103 · Sơ đồ kết nối lọc theo dự án và phủ trạng thái <!--k:graph-->
 - **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, E2E
@@ -1657,3 +1700,667 @@ Không dùng mã số doanh nghiệp, số định danh, số điện thoại th
   1. `GET /migrations/progress`; xuất Excel ở UI-10-20.
 - **Mong đợi** Số ánh xạ theo trạng thái theo loại, HTTT còn dùng Pulsar, cầu nối đang chạy và lag, đối chiếu gần nhất; tệp Excel khớp.
 
+## 5. Kịch bản kiểm thử phi chức năng và xuyên suốt
+
+Các kịch bản dưới đây chạy lại ở mỗi đợt phát hành; TS-10-30, 31, 32 là điều kiện bắt buộc đạt 100 %. Bộ rò rỉ TS-10-30 chạy mỗi đêm (NFR-10-017).
+
+### TS-10-30 · Cô lập tenant: RLS, ACL Kafka theo tiền tố, Apicurio, OPA
+
+**Mục tiêu.** Chứng minh không có đường đọc, ghi, phát, nhận chéo tenant ở API control plane, API data plane, CSDL, Kafka, Apicurio và dữ liệu OPA, dùng cặp T90, T91 và tenant đối chứng T01 có mã trùng.
+
+**Phủ.** FR-10-064; BR-10-001, 002, 022; NFR-10-017; ERR-10-001, 005, 103, 120; D03-10 §4; SEC-82, SEC-87.
+
+#### TC-10-123 · RLS của ph10_event chặn đọc, ghi chéo tenant <!--k:iso-rls-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** DB
+- **Truy vết** FR-10-064 · NFR-10-017 · BR-10-001
+- **Tiền điều kiện / dữ liệu** CSDL rỗng đã áp `ph10_event.sql`; vai trò `dh_integration_app`, `dh_report_ro` (`NOBYPASSRLS`).
+- **Bước**
+  1. Chạy `psql -v ON_ERROR_STOP=1 -f 03-thiet-ke/csdl/ph10/test/ph10_isolation_test.sql`.
+  2. Với `app.tenant_id = 'T90'`, `SELECT` và `UPDATE` mọi bảng có `tenant_id` nhắm dòng của T91; `INSERT` dòng `tenant_id = 'T91'`.
+  3. Đặt `app.tenant_id` rỗng, rồi `'COMMON'`, rồi `'PLATFORM'`.
+- **Mong đợi** Mọi khối kiểm in PASS. Bước 2 đọc 0 dòng, cập nhật 0 dòng, chèn bị chặn bởi `WITH CHECK`. Bước 3 không đọc được dòng tenant nào; `COMMON` chỉ ghi được khi `PLATFORM` (bảng chế độ S); 28 bảng đều `FORCE ROW LEVEL SECURITY`.
+
+#### TC-10-124 · API control plane không lộ đối tượng tenant khác <!--k:iso-api-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-064, 002, 006, 007, 025, 035, 050, 052 · API-10-003, 010, 034, 039, 044, 048, 061, 104, 058 · ERR-10-001, 005
+- **Tiền điều kiện / dữ liệu** U-T68-IE1; T01 có đối tượng trùng mã mục 2.3.
+- **Bước**
+  1. Với mỗi API đọc có tham số đường dẫn (API-10-003, 010, 021, 024, 034, 039, 044, 048, 052, 053, 055, 058, 061, 104, 110), gọi bằng mã của đối tượng chỉ có ở T01, rồi bằng mã không tồn tại.
+  2. Gọi `GET /topics/t01.dkkd.doanh-nghiep.da-cap-phep.v1` bằng token T68.
+  3. Thử đặt tiêu đề `X-Dh-Tenant: T01`, tham số `tenant=T01`, trường `tenantId` trong thân.
+- **Mong đợi** Bước 1 mọi cặp trả 404-ẩn giống hệt nhau trừ `traceId`. Bước 2 404-ẩn. Bước 3 bị bỏ qua, tenant luôn lấy từ token; ghi mới đều thuộc T68 hoặc bị `422` ERR-10-005 với tên topic tiền tố khác.
+
+#### TC-10-125 · ACL Kafka theo tiền tố tenant cho principal nội bộ, literal cho HTTT <!--k:iso-kafka-acl-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** KT
+- **Truy vết** FR-10-064, 031, 037 · ERR-10-120 · BR-10-018, 022 · ADR-072
+- **Tiền điều kiện / dữ liệu** Principal `User:CN=dh-runtime-t90`, `User:CN=dh-runtime-t91`; HTTT T90 có ACL literal trên một topic.
+- **Bước**
+  1. Liệt kê ACL của cụm (`kafka-acls --list`).
+  2. `dh-runtime-t90` đọc, ghi topic `t91.*`; tham gia nhóm `dh-sub-t91-*`.
+  3. HTTT T90 đọc topic khác của T90 không có subscription; mô tả danh sách topic của cụm.
+  4. Kyverno: commit `KafkaTopic` tên `t91.x.y.z.v1` vào kho `dh-config-t90`.
+- **Mong đợi** Bước 1 không principal nào của tenant A có ACL trên tiền tố hay nhóm của tenant B; ACL nội bộ là `PREFIXED` `t90.`, của HTTT là `LITERAL`. Bước 2, 3 bị từ chối, liệt kê topic chỉ trả topic được phép. Bước 4 Kyverno từ chối, không có topic nào được tạo.
+
+#### TC-10-126 · Apicurio, OPA và Valkey theo tenant <!--k:iso-registry-opa-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-10-064, 024 · API-10-084 · ERR-10-103
+- **Tiền điều kiện / dữ liệu** Client HTTT T90 có scope subscribe một topic T90; bundle OPA `event/grants/t90.json`, `t91.json`.
+- **Bước**
+  1. Tra artifact nhóm `t91` qua API-10-084; liệt kê nhóm.
+  2. Sửa thủ công token T90 thêm scope `topic:t91.….v1:subscribe` (ký bằng khóa Keycloak thử của T90) rồi kéo.
+  3. Đọc khóa Valkey `dh:t91:evt:*` bằng thông tin của cổng T90.
+- **Mong đợi** Bước 1 404-ẩn; liệt kê chỉ có `t90`. Bước 2 bị từ chối vì không có cặp cấp quyền trong dữ liệu OPA của T90 và tiền tố khác tenant (404-ẩn ERR-10-103). Bước 3 ACL Valkey từ chối.
+
+#### TC-10-127 · Bộ rò rỉ đầu cuối T90…T99 <!--k:iso-sweep-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** API, KT
+- **Truy vết** FR-10-064 · NFR-10-017
+- **Tiền điều kiện / dữ liệu** T90…T99 mỗi tenant một bộ dữ liệu mục 2.3 sinh bằng `ph10/seed/perf.py`, mã trùng nhau.
+- **Bước**
+  1. Với mỗi cặp (A, B) chạy kịch bản: đọc mọi API của B bằng người dùng A; phát lên topic B bằng client A; kéo subscription B bằng client A; đọc Kafka B bằng principal A; tra lược đồ B.
+  2. Tìm chuỗi mồi `DH-CANARY-T9n` của B trong mọi phản hồi, log, vết của A.
+- **Mong đợi** 0 lượt thành công trên 90 cặp; 0 lần thấy mồi khác tenant. Kết quả ghi vào báo cáo đêm.
+
+#### TC-10-128 · PO xem liên tenant có lý do và kiểm toán <!--k:iso-po-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-064, 065 · ERR-10-009
+- **Tiền điều kiện / dữ liệu** U-PO.
+- **Bước**
+  1. U-PO xem dashboard T68 không lý do; có lý do "Hỗ trợ sự cố lag cụm".
+- **Mong đợi** Không lý do bị chặn (`400` ERR-10-009); có lý do xem được chỉ đọc; KT: có (truy cập liên tenant, lý do).
+
+### TS-10-31 · Phân quyền theo ma trận PERM-10 và bốn mắt
+
+**Mục tiêu.** Chứng minh ma trận `PERM-10-*` ở D02-08 (dòng 105–111) và FRS §3.2 được áp ở mọi API control plane cho cả 11 vai trò, scope máy `event:*` chỉ mở đúng operation, và bốn mắt không có đường vòng.
+
+**Phủ.** FR-10-065, 009, 019, 031, 037, 051; BR-10-010; ERR-10-008, 044, 053, 054; NFR-10-020.
+
+Bảng ca phân quyền tham số hóa (một dòng một vai trò, chạy mọi operation đại diện của quyền; ● phải thành công, — phải trả 403-PQ, ○ thành công với đối tượng của tổ chức mình và 403-TC ngoài tổ chức):
+
+| Quyền | Operation đại diện | PA | PO | TA | TO | SO | IE | IA | SV | OR | VW | AU |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `PERM-10-read` | API-10-001, 010, 048, 066, 007, 074 | ● | ● | ● | ● | ● | ● | ● | ● | ○ | ● | ● |
+| `PERM-10-create` | API-10-002, 009, 023, 033, 043 | — | — | ● | — | — | ● | — | ○ | — | — | — |
+| `PERM-10-update` | API-10-004, 005, 011, 015, 016, 093, 097 | — | — | ● | — | — | ● | — | ○ | — | — | — |
+| `PERM-10-subscribe` | API-10-047, 049, 051, 099, 120 | — | — | ● | — | — | ● | — | — | ○ | — | — |
+| `PERM-10-approve` | API-10-059, 101 | — | — | ● | — | — | — | ● | — | — | — | — |
+| `PERM-10-operate` | API-10-036, 045, 050, 054, 062, 064, 103, 056 | — | — | ● | ● | ● (chỉ tạm ngừng) | — | — | — | — | — | — |
+| `PERM-10-admin` | API-10-105, 107, 108, 091, 113, 078 | ● | — | ● | — | — | — | — | — | — | — | — |
+
+#### TC-10-129 · Vai trò được phép thực hiện đúng operation của quyền <!--k:perm-pos-->
+- **Loại** Dương, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-065 · API-10-001, 002, 004, 047, 059, 050, 108 · NFR-10-020
+- **Tiền điều kiện / dữ liệu** Một người dùng mỗi vai trò ở T68 (mục 2.2); đối tượng `tc-` riêng cho mỗi dòng.
+- **Bước**
+  1. Với mỗi ô ● của bảng, gọi mọi operation đại diện với thân hợp lệ.
+  2. Với ô ○, gọi trên đối tượng của tổ chức mình.
+- **Mong đợi** Mọi lượt trả mã thành công của API §3; mọi lượt ghi có bản ghi kiểm toán (đối chiếu 100 %).
+
+#### TC-10-130 · Vai trò không được phép bị chặn ở máy chủ, không chỉ ẩn nút <!--k:perm-neg-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API, E2E
+- **Truy vết** FR-10-065 · ERR-10-044, 053, 054
+- **Tiền điều kiện / dữ liệu** Như TC-10-129.
+- **Bước**
+  1. Với mỗi ô — gọi mọi operation đại diện.
+  2. Với ô ○ gọi trên đối tượng ngoài tổ chức.
+  3. Gọi không token; với token hết hạn.
+  4. Mở màn tương ứng bằng vai trò không có quyền.
+- **Mong đợi** Bước 1 403-PQ (ERR-10-054), không có thay đổi dữ liệu. Bước 2 403-TC. Bước 3 `401` ERR-10-053. Bước 4 nút hành động không hiện hoặc bị vô hiệu kèm lý do (`allowedActions`, `disabledReasons`), và gọi trực tiếp vẫn bị chặn.
+
+#### TC-10-131 · Scope máy chỉ mở operation được cấp <!--k:perm-machine-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-066, 069, 038, 050, 053 · API-10-071, 073, 060, 064, 009 · ERR-10-054
+- **Tiền điều kiện / dữ liệu** S-PH05, S-PH04, S-RT-T68, S-PH18, S-PH13.
+- **Bước**
+  1. Mỗi tài khoản gọi operation của scope mình (API §2.2) và một operation của scope khác (S-PH05 gọi API-10-071; S-PH04 gọi API-10-009; S-PH13 gọi API-10-064; S-PH18 gọi API-10-059; S-RT-T68 gọi API-10-047).
+  2. S-RT-T68 gọi API-10-073 với tenant T01.
+- **Mong đợi** Bước 1 operation của mình thành công; operation khác 403-PQ. Bước 2 404-ẩn hoặc 403-PQ, không trả cấu hình T01.
+
+#### TC-10-132 · Bốn mắt cho mọi loại yêu cầu duyệt, kể cả TA và người có hai vai trò <!--k:perm-4eyes-->
+- **Loại** Âm, Bảo mật · **Ưu tiên** P1 · **Tự động** API
+- **Truy vết** FR-10-009, 019, 031, 037, 051, 075 · API-10-059 · ERR-10-008 · BR-10-010
+- **Tiền điều kiện / dữ liệu** U-T68-TA, U-T68-IA2 (IA + IE).
+- **Bước**
+  1. Với 9 `requestType` (`TOPIC_CREATE`, `TOPIC_CHANGE`, `TOPIC_RETIRE`, `SCHEMA_VERSION`, `PUBLICATION`, `SUBSCRIPTION`, `REPLAY`, `BRIDGE`, `CUTOVER`): TA tạo hoặc gửi rồi tự duyệt.
+  2. IA2 soạn phiên bản lược đồ, IE1 gửi duyệt, IA2 duyệt.
+  3. IE1 tạo topic, IA2 gửi duyệt hộ (rút rồi gửi lại), IA2 duyệt.
+- **Mong đợi** Bước 1 mọi lượt `403` ERR-10-008. Bước 2, 3 `403` ERR-10-008 (người soạn, người gửi đều không được duyệt). Không có yêu cầu nào đổi trạng thái.
+
+#### TC-10-133 · Yêu cầu duyệt hết hạn trả đối tượng về trạng thái trước <!--k:perm-expire-->
+- **Loại** Biên · **Ưu tiên** P2 · **Tự động** IT
+- **Truy vết** FR-10-009, 019 · API-10-057
+- **Tiền điều kiện / dữ liệu** Topic `PENDING_APPROVAL`, phiên bản lược đồ `PENDING_APPROVAL`; `10.approval.expire-days = 30`.
+- **Bước**
+  1. Đặt đồng hồ +31 ngày.
+- **Mong đợi** Hai yêu cầu `EXPIRED`; topic, phiên bản về `DRAFT`; người gửi nhận thông báo; "Việc của tôi" của IA không còn hai mục.
+
+### TS-10-32 · Kiểm toán và an toàn bí mật
+
+**Mục tiêu.** Chứng minh 100 % thao tác ghi có kiểm toán đủ trường, không chứa bí mật ký hay nội dung sự kiện, và bí mật ký chỉ ở OpenBao.
+
+**Phủ.** FR-10-065, 042; BR-10-027; NFR-10-016, 020; ERR-10-037.
+
+#### TC-10-134 · Đối chiếu kiểm toán với mọi lệnh ghi <!--k:audit-all-->
+- **Loại** Dương · **Ưu tiên** P1 · **Tự động** API, IT
+- **Truy vết** FR-10-065 · NFR-10-020
+- **Tiền điều kiện / dữ liệu** Toàn bộ ca API của TS-10-01…29 trong một lần chạy SIT.
+- **Bước**
+  1. Lấy danh sách lệnh ghi thành công từ nhật ký APISIX; lấy bản ghi kiểm toán PH-13 theo `traceId`.
+  2. Mở tab Lịch sử ở UI-10-03, 06, 12.
+- **Mong đợi** Mỗi lệnh ghi có đúng một bản ghi với chủ thể, hành động, đối tượng, giá trị trước và sau, lý do, mã yêu cầu duyệt, mã commit khi có; thao tác hệ thống có chủ thể `system:dh-…`. Tab Lịch sử hiển thị đúng.
+
+#### TC-10-135 · Mồi khóa ký qua toàn bộ vòng đời subscription <!--k:audit-canary-->
+- **Loại** Bảo mật · **Ưu tiên** P1 · **Tự động** E2E, API
+- **Truy vết** FR-10-042, 037, 047, 070 · NFR-10-016 · BR-10-027 · API-10-120, 054, 100, 074
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-TO; subscription PUSH thử.
+- **Bước**
+  1. Duyệt, nhận khóa, xoay, thu hồi khẩn, xuất khai báo, thu hồi subscription; ghi lại mọi giá trị `whsec_…` đã thấy.
+  2. Tìm các giá trị đó trong HAR của Playwright, `localStorage`, `sessionStorage`, log mọi pod 1 giờ, vết, bảng `ph10_event.*`, outbox, Kafka `t68.*`, DLQ, tệp xuất, kiểm toán, thư thông báo.
+- **Mong đợi** Mồi sạch; giá trị chỉ có ở OpenBao `kv/dh/t68/event/subscriptions/{subscriptionCode}/signing`; khóa ≥ 256 bit ngẫu nhiên; `signing_key` chỉ có `keyId`, `secretRef`.
+
+#### TC-10-136 · Idempotency-Key dùng lại với thân khác <!--k:idem-->
+- **Loại** Âm, Biên · **Ưu tiên** P2 · **Tự động** API
+- **Truy vết** FR-10-003, 008, 035 · API-10-002, 009, 047 · ERR-10-037
+- **Tiền điều kiện / dữ liệu** U-T68-IE1.
+- **Bước**
+  1. `POST /projects` hai lần cùng khóa cùng thân; lần ba cùng khóa khác tên.
+  2. Khóa 15 ký tự; sau 25 giờ dùng lại khóa.
+- **Mong đợi** Bước 1 lần hai trả lại phản hồi cũ (`201`, cùng `Location`), lần ba `422` ERR-10-037. Bước 2 khóa ngắn `400` ERR-10-003; sau 25 giờ xử lý như mới.
+
+### TS-10-33 · Hiệu năng, tải và quy mô
+
+**Mục tiêu.** Chứng minh NFR-10-001…005, 008…012, 014, 015, 018 ở cấu hình `QM-VUA` với dữ liệu GĐ.
+
+**Phủ.** NFR-10-001…005, 008…012, 014, 015, 018.
+
+| Mã | Tên | Tải | Ngưỡng | Truy vết |
+|---|---|---|---|---|
+| TC-10-137 | API control plane <!--k:perf-api--> | 500 topic, 2.000 subscription mỗi tenant; 50 người dùng đồng thời, 30 phút | Đọc p95 ≤ 300 ms, ghi p95 ≤ 600 ms | NFR-10-001 · FR-10-001, 006, 035 |
+| TC-10-138 | Độ trễ API phát <!--k:perf-publish--> | 500 sự kiện/giây, 2 KB, Avro, 30 phút | p99 ≤ 50 ms tới `202`, gồm kiểm lược đồ và `acks=all` | NFR-10-002 · FR-10-033 |
+| TC-10-139 | Độ trễ đầu cuối khi đẩy <!--k:perf-push-latency--> | 200 sự kiện/giây, endpoint 50 ms, không tồn đọng | p95 ≤ 1 giây từ ghi Kafka tới gửi | NFR-10-003 · FR-10-038 |
+| TC-10-140 | Thông lượng cổng sự kiện <!--k:perf-gateway--> | Tăng dần tới bão hòa, 1, 2, 3 bản sao 1 vCPU | ≥ 2.000 sự kiện/giây mỗi bản sao, tuyến tính tới 3 | NFR-10-004 · FR-10-033 |
+| TC-10-141 | Thông lượng bộ giao nhận <!--k:perf-delivery--> | 2.000 subscription đẩy, endpoint 50 ms, 3 bản sao | ≥ 200 lượt/giây mỗi bản sao | NFR-10-005 · FR-10-038 |
+| TC-10-142 | Thời gian cấp phát <!--k:perf-provision--> | 50 topic, 100 subscription duyệt liên tiếp, Argo CD 30 giây | Topic `ACTIVE` p95 ≤ 3 phút; quan hệ ≤ 2 phút | NFR-10-008 · FR-10-009, 031, 037 |
+| TC-10-143 | Hiệu lực tạm ngừng, thu hồi <!--k:perf-suspend--> | 100 lượt phát/giây, 3 bản sao cổng | API từ chối ≤ 60 giây; ACL ≤ 2 phút | NFR-10-009 · FR-10-032, 029 |
+| TC-10-144 | Phát hiện lag <!--k:perf-lag--> | 5.000 nhóm tiêu thụ, 200 vượt ngưỡng ngẫu nhiên | Cảnh báo ≤ 2 phút | NFR-10-010 · FR-10-054, 055 |
+| TC-10-145 | Hiệu lực tạm dừng subscription <!--k:perf-pause--> | 100 subscription đẩy đang giao | Không lượt mới sau ≤ 10 giây | NFR-10-011 · FR-10-041 |
+| TC-10-146 | Tốc độ phát lại <!--k:perf-replay--> | 1 triệu sự kiện, endpoint 20 ms | ≥ 2.000 sự kiện/giây; tôn trọng `ratePerSecond` ±5 % | NFR-10-012 · FR-10-052 |
+| TC-10-147 | Quy mô cụm <!--k:perf-scale--> | 1.000 topic, 10.000 phân vùng, 5.000 nhóm; 500 topic một tenant | Control plane, bộ thu lag, đối soát hết chu kỳ trong thời hạn | NFR-10-014 · FR-10-010, 054 |
+| TC-10-148 | Hiển thị sơ đồ <!--k:perf-graph--> | 300 nút, 600 cạnh, máy văn phòng chuẩn | ≤ 2 giây; kéo 60 khung hình/giây | NFR-10-015 · FR-10-058 |
+| TC-10-149 | Cầu nối di trú <!--k:perf-bridge--> | 200 sự kiện/giây mỗi cầu nối, 24 giờ | p95 ≤ 60 giây; đối chiếu chênh 0 | NFR-10-018 · FR-10-073, 075 |
+
+### TS-10-34 · Chịu lỗi, hỗn loạn và phục hồi
+
+**Mục tiêu.** Chứng minh NFR-10-006, 007, 013, 019: không mất sự kiện khi mất broker hay khởi động lại bộ giao nhận, tỷ lệ trùng thấp, data plane chạy khi control plane ngừng, cấu hình sao sang site DR.
+
+**Phủ.** NFR-10-006, 007, 013, 019; FR-10-038, 043, 049, 033.
+
+#### TC-10-150 · Không mất sự kiện khi mất một broker và khởi động lại bộ giao nhận <!--k:chaos-no-loss-->
+- **Loại** Khả dụng · **Ưu tiên** P1 · **Tự động** Chaos
+- **Truy vết** NFR-10-006 · FR-10-033, 038, 049 · BR-10-007, 024
+- **Tiền điều kiện / dữ liệu** PERF; 1 triệu sự kiện qua API phát vào TP-CP; SUB-PUSH tới SIM-WH đếm theo `Webhook-Id`.
+- **Bước**
+  1. Trong lúc phát và giao: giết một broker; xóa ngẫu nhiên pod cổng sự kiện và bộ giao nhận 10 lần; ngắt mạng SIM-WH 2 phút.
+  2. Đối chiếu số `202`, số bản tin Kafka, số `Webhook-Id` duy nhất SIM-WH nhận cộng mục DLQ.
+- **Mong đợi** 0 sự kiện mất: mọi `id` được `202` có trên Kafka và hoặc được SIM-WH nhận, hoặc có mục DLQ.
+
+#### TC-10-151 · Tỷ lệ giao trùng trong vận hành bình thường <!--k:chaos-dup-rate-->
+- **Loại** Khả dụng · **Ưu tiên** P2 · **Tự động** k6
+- **Truy vết** NFR-10-007 · BR-10-009
+- **Tiền điều kiện / dữ liệu** PERF; tải nền 24 giờ.
+- **Bước**
+  1. Đếm lượt SIM-WH nhận có `Webhook-Id` lặp.
+- **Mong đợi** ≤ 0,1 % lượt giao; mọi lượt trùng cùng `Webhook-Id`.
+
+#### TC-10-152 · Data plane chạy khi control plane và pg-core ngừng <!--k:chaos-cp-down-->
+- **Loại** Khả dụng · **Ưu tiên** P1 · **Tự động** Chaos
+- **Truy vết** NFR-10-013 · FR-10-033, 038, 043 · ERR-10-029
+- **Tiền điều kiện / dữ liệu** SIT; tải nền phát, đẩy, kéo.
+- **Bước**
+  1. Dừng `dh-integration` và `pg-core` 30 phút.
+  2. Gọi một lệnh control plane bất kỳ.
+  3. Khởi động lại.
+- **Mong đợi** Bước 1 API phát, API kéo, bộ giao nhận tiếp tục với ảnh chụp cấu hình ở Valkey; `dh_event_runtime_config_age_seconds` tăng, cảnh báo sau 10 phút; mục DLQ chờ trên topic `.dlq`. Bước 2 `503` ERR-10-029. Bước 3 bộ ghi DLQ tạo đủ mục từ topic `.dlq`; số liệu giao nhận đệm ≤ 15 phút được gửi bù.
+
+#### TC-10-153 · Outbox không mất sự kiện PH-10 khi Kafka ngừng <!--k:chaos-outbox-->
+- **Loại** Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos
+- **Truy vết** FR-10-009, 037 · EVT-10-01, 08
+- **Tiền điều kiện / dữ liệu** SIT; 20 lệnh duyệt trong lúc Kafka ngừng 5 phút.
+- **Bước**
+  1. Dừng Kafka, duyệt topic và subscription; bật lại.
+- **Mong đợi** Mọi EVT `topic.activated`, `subscription.activated` được phát sau khi Kafka trở lại, đúng thứ tự theo khóa, không trùng ngoài ngữ nghĩa ít nhất một lần.
+
+#### TC-10-154 · Sao cấu hình sang site DR <!--k:chaos-dr-->
+- **Loại** Khả dụng · **Ưu tiên** P2 · **Tự động** Chaos, Thủ công
+- **Truy vết** NFR-10-019
+- **Tiền điều kiện / dữ liệu** Hai site SIT với MirrorMaker 2 qua listener `replication`.
+- **Bước**
+  1. Tạo topic, ACL, nhóm tiêu thụ ở site chính; cắt site chính; chuyển sang site DR.
+- **Mong đợi** Cấu hình topic, ACL, offset nhóm có ở site DR với RPO < 30 giây; subscription tiếp tục từ offset đã dịch.
+
+### TS-10-35 · Truy cập và giao diện
+
+**Mục tiêu.** Chứng minh UI-10-* đạt WCAG 2.2 AA, các màn chính (danh sách topic, chi tiết topic, đăng ký nhận, chi tiết subscription, DLQ, duyệt, sơ đồ) dùng được bằng bàn phím và trình đọc màn hình.
+
+**Phủ.** UI-10-01…20; FR-10-058, 035, 050.
+
+#### TC-10-155 · Quét tự động truy cập mọi màn <!--k:a11y-axe-->
+- **Loại** Truy cập · **Ưu tiên** P1 · **Tự động** E2E
+- **Truy vết** UI-10-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+- **Tiền điều kiện / dữ liệu** U-T68-TA; dữ liệu mục 2.
+- **Bước**
+  1. Chạy axe-core trên mọi màn, mọi trạng thái chính (rỗng, có dữ liệu, lỗi, đang tải), chế độ sáng, tối, giảm trong suốt.
+- **Mong đợi** 0 vi phạm mức nghiêm trọng và nghiêm trọng vừa; tương phản chữ ≥ 4,5:1, tên topic, mã ≥ 7:1 trên nền đặc.
+
+#### TC-10-156 · Đăng ký nhận sự kiện và duyệt chỉ bằng bàn phím <!--k:a11y-keyboard-->
+- **Loại** Truy cập · **Ưu tiên** P1 · **Tự động** E2E, Thủ công
+- **Truy vết** UI-10-11, 13 · FR-10-035, 037
+- **Tiền điều kiện / dữ liệu** U-T68-IE1, U-T68-IA1; NVDA trên Windows (thủ công).
+- **Bước**
+  1. Đi hết trình hướng dẫn UI-10-11 (chọn topic, chế độ, URI, xác minh, tham số, gửi), rồi duyệt ở UI-10-13 không dùng chuột.
+- **Mong đợi** Hoàn thành được; tiêu điểm luôn thấy; kết quả xác minh endpoint, lỗi trường được đọc qua vùng `aria-live`; không bẫy tiêu điểm trong khung soạn lược đồ.
+
+#### TC-10-157 · Sơ đồ kết nối có phương án thay thế dạng bảng <!--k:a11y-graph-->
+- **Loại** Truy cập · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** UI-10-14 · FR-10-058
+- **Tiền điều kiện / dữ liệu** U-T68-VW; P-DKKD.
+- **Bước**
+  1. Dùng Tab và phím mũi tên đi qua các nút; bật chế độ "Xem dạng bảng".
+- **Mong đợi** Mỗi nút, cạnh có nhãn đọc được (loại, mã, trạng thái, lag); bảng thay thế liệt kê đủ cạnh với cùng thông tin; trạng thái lag không chỉ bằng màu.
+
+#### TC-10-158 · Thu phóng 200 % và trạng thái không chỉ bằng màu <!--k:a11y-zoom-->
+- **Loại** Truy cập · **Ưu tiên** P2 · **Tự động** E2E
+- **Truy vết** UI-10-05, 12, 15, 17
+- **Tiền điều kiện / dữ liệu** U-T68-TO.
+- **Bước**
+  1. Bật mô phỏng mù màu; thu phóng 200 % ở 1280 px và ở 390 px.
+- **Mong đợi** Mọi `alertState`, trạng thái topic, mục DLQ có chữ hoặc ký hiệu; bảng chuyển dạng thẻ ở 390 px, không cuộn ngang trang.
+
+## 6. Thủ tục kiểm thử thủ công
+
+### 6.1. Kiểm thử khám phá theo phiên
+
+Ba phiên 90 phút: (1) khai báo dự án, topic, lược đồ cho một nghiệp vụ thật của tỉnh thí điểm (đăng ký kinh doanh sang thuế); (2) tích hợp webhook với một HTTT thật ở TEST, xác minh chữ ký bằng mã mẫu của chính HTTT; (3) di trú một project Hub cũ qua cầu nối. Ghi theo mẫu SBTM, lỗi chuyển thành ca tự động.
+
+### 6.2. Diễn tập chuyển từ Hub Pulsar
+
+Dùng bản xuất CSDL cấu hình Hub cũ thật (đã làm sạch): nhập kiểm kê, rà ánh xạ, duyệt khai báo đích, chạy cầu nối 14 ngày ở UAT, đối chiếu mỗi giờ, chuyển hẳn một ánh xạ và quay lui một ánh xạ. Đạt khi chênh lệch đối chiếu 0, không subscriber cũ nào mất bản tin, và cán bộ vận hành làm hết không cần hỗ trợ ngoài tài liệu.
+
+### 6.3. Diễn tập sự cố
+
+Ba tình huống, có SO, TO tham gia: (1) khóa ký webhook bị lộ: thu hồi khẩn, HTTT cập nhật khóa, đối chiếu kiểm toán; (2) HTTT nhận ngừng 4 giờ: cảnh báo lag, tạm dừng, phát lại theo khoảng; (3) bên phát Kafka trực tiếp phát sai lược đồ: phát hiện tuân thủ, tạm ngừng publication.
+
+### 6.4. Kiểm thử truy cập thủ công
+
+Với NVDA + Firefox và VoiceOver + Safari trên UI-10-06, 11, 12, 14, 15: đi hết luồng chính, ghi lỗi theo WCAG 2.2.
+
+## 7. Nghiệm thu người dùng tương đương hệ cũ
+
+Cán bộ vận hành Hub cũ tự thực hiện trên UAT. Đạt khi làm được không cần hướng dẫn ngoài tài liệu người dùng, kết quả bằng hoặc tốt hơn hệ cũ.
+
+| Mã | Việc cần làm | Chức năng hệ cũ | Kết quả mong đợi | FR | TC tự động |
+|---|---|---|---|---|---|
+| UAT-01 | Xem tổng số publisher, subscriber, project, topic | LGC-HUB-001…004 | Bốn thẻ đếm ngay trên màn tổng quan, bấm vào ra danh sách đã lọc | FR-10-057 | TS-10-23 |
+| UAT-02 | Xem tài nguyên CPU, bộ nhớ của cụm | LGC-HUB-005, 006 | Một thao tác từ màn tổng quan sang bảng chỉ số cụm PH-13 | FR-10-057 | TS-10-23 |
+| UAT-03 | Xem sơ đồ kết nối của một dự án | LGC-HUB-007 | Sơ đồ ba lớp lọc theo dự án, thấy cạnh đang lag, có DLQ | FR-10-058 | TS-10-23 |
+| UAT-04 | Tạo, sửa, lưu trữ dự án tích hợp | LGC-HUB-008 | Làm được như hệ cũ; thay "xóa" bằng lưu trữ có lý do | FR-10-003, 004, 005 | TS-10-01 |
+| UAT-05 | Tạo topic với phân vùng, cấu trúc, chế độ định tuyến | LGC-HUB-009 | Tạo được trong 5 phút; cấu trúc thành lược đồ có kiểm tra | FR-10-008, 017 | TS-10-02, 06 |
+| UAT-06 | Thêm publisher, subscriber, đánh dấu subscriber là luồng | LGC-HUB-010, 011 | Chọn HTTT, luồng từ danh sách, giữ khóa tham chiếu cũ | FR-10-026, 027 | TS-10-08 |
+| UAT-07 | Cho một publisher phát lên topic | LGC-HUB-012 | Đề nghị, được duyệt và phát được trong ngày | FR-10-030, 031 | TS-10-10 |
+| UAT-08 | Khai báo subscription với URI, số worker, số lần thử lại, thời điểm bắt đầu | LGC-HUB-013 | Đủ bốn tham số cũ; thêm xác minh endpoint, khóa ký | FR-10-035, 036, 040 | TS-10-13 |
+| UAT-09 | Xem, sửa danh mục kiểu giao tiếp, chế độ định tuyến | LGC-HUB-014 | Thấy mã hệ cũ bên cạnh mã mới | FR-10-060, 061 | TS-10-24 |
+| UAT-10 | Chuyển một project từ Hub cũ sang Datahub | LGC-HUB-008…014, LGC-TOOL-010 | Có đề xuất ánh xạ từ kiểm kê, cầu nối chạy, subscriber cũ không gián đoạn | FR-10-072, 073, 075 | TS-10-28, 29 |
+
+## 8. Ma trận truy vết
+
+<!--gen:matrix-->
+### 8.1. Yêu cầu chức năng → test case
+
+Cột "Dương", "Âm" liệt kê ba chữ số cuối của mã TC-10. FR mức M phải có ít nhất một ca ở mỗi cột; bảng này được sinh tự động bằng `ph10/tools/gen_matrix.py` nên luôn khớp với mục 4 và 5.
+
+| FR | Tên | Mức | LGC | Dương | Âm | Ca khác | Đạt quy tắc |
+|---|---|---|---|---|---|---|---|
+| FR-10-001 | Liệt kê, tìm kiếm và lọc dự án tích hợp | M | LGC-HUB-008 | 003 | 003 | 137 | Có |
+| FR-10-002 | Xem chi tiết dự án | M | LGC-HUB-008 | 001 | 124 | — | Có |
+| FR-10-003 | Tạo dự án tích hợp | M | LGC-HUB-008 | 001 | 002, 136 | — | Có |
+| FR-10-004 | Sửa dự án | M | LGC-HUB-008 | 004 | 004 | — | Có |
+| FR-10-005 | Lưu trữ và khôi phục dự án | M | LGC-HUB-008 | 005 | 005 | — | Có |
+| FR-10-006 | Liệt kê, tìm kiếm và lọc topic | M | LGC-HUB-009 | 010 | 010, 124 | 137 | Có |
+| FR-10-007 | Xem chi tiết topic | M | LGC-HUB-009 | 010 | 010, 124 | — | Có |
+| FR-10-008 | Tạo topic và gửi duyệt | M | LGC-HUB-009, LGC-HUB-014 | 006, 011 | 007, 008, 009, 011, 136 | — | Có |
+| FR-10-009 | Duyệt tạo topic và cấp phát trên cụm | M | LGC-HUB-009 | 012 | 013, 014, 132 | 133, 142, 153 | Có |
+| FR-10-010 | Theo dõi cấp phát và xử lý cấp phát thất bại | M | LGC-HUB-009 | 015 | 015, 016 | 147 | Có |
+| FR-10-011 | Tăng số phân vùng của topic đang hoạt động | M | LGC-HUB-009 | 017 | 018 | — | Có |
+| FR-10-012 | Thay đổi lưu giữ và chính sách dọn (compaction) | M | LGC-HUB-009 | 019 | 019 | — | Có |
+| FR-10-013 | Chế độ định tuyến và khóa phân vùng | M | LGC-HUB-009, LGC-HUB-014 | 020, 047 | 008, 020 | — | Có |
+| FR-10-014 | Ngừng khuyến nghị và ngừng dùng topic | M | LGC-HUB-009 | 022, 023 | 023 | — | Có |
+| FR-10-015 | Tạo phiên bản chính mới của topic khi thay đổi phá vỡ | M | LGC-HUB-009 | 024, 110 | 025, 036, 110 | — | Có |
+| FR-10-016 | Theo dõi chuyển đổi bên nhận sang phiên bản topic mới | S | LGC-HUB-009 | 026 | — | — | Có |
+| FR-10-017 | Soạn và kiểm tra lược đồ | M | LGC-HUB-009 | 027 | 009, 028 | — | Có |
+| FR-10-018 | Kiểm tra tương thích với các phiên bản đã có | M | mới | 027, 033, 035 | 033 | — | Có |
+| FR-10-019 | Gửi duyệt và duyệt phiên bản lược đồ | M | mới | 029, 035 | 025, 030, 132 | 133 | Có |
+| FR-10-020 | Xem lịch sử phiên bản, so sánh và tải lược đồ | M | LGC-HUB-009 | 031 | 031 | — | Có |
+| FR-10-021 | Đặt mức tương thích của lược đồ | M | mới | 021 | 021, 036 | — | Có |
+| FR-10-022 | Ngừng khuyến nghị và vô hiệu phiên bản lược đồ | S | mới | 032 | 032 | — | Có |
+| FR-10-023 | Giám sát tuân thủ lược đồ của bên phát Kafka trực tiếp | S | mới | 055 | 054 | — | Có |
+| FR-10-024 | Cung cấp tra cứu lược đồ cho bên ngoài | S | mới | 052 | 034, 052 | 126 | Có |
+| FR-10-025 | Liệt kê bên phát và bên nhận | M | LGC-HUB-010, LGC-HUB-011 | 039 | 124 | — | Có |
+| FR-10-026 | Đăng ký bên phát | M | LGC-HUB-010 | 037 | 038 | — | Có |
+| FR-10-027 | Đăng ký bên nhận | M | LGC-HUB-011 | 037, 086 | 038, 086 | — | Có |
+| FR-10-028 | Sửa, tạm ngừng, tiếp tục và ngừng dùng bên phát, bên nhận | M | LGC-HUB-010, LGC-HUB-011 | 040 | 041 | — | Có |
+| FR-10-029 | Đồng bộ trạng thái với PH-01 và PH-04 | M | LGC-HUB-010, LGC-HUB-011 | 042, 043 | 043 | 143 | Có |
+| FR-10-030 | Đề nghị publication | M | LGC-HUB-012 | 044 | 045 | — | Có |
+| FR-10-031 | Duyệt publication, cấp scope OAuth và ACL Kafka | M | LGC-HUB-012 | 044 | 045, 132 | 125, 142 | Có |
+| FR-10-032 | Tạm ngừng, tiếp tục và thu hồi publication | M | LGC-HUB-012 | 046, 055 | 046 | 143 | Có |
+| FR-10-033 | Phát sự kiện qua API phát | M | LGC-BUS-039 | 047, 050 | 048, 049, 051 | 138, 140, 150, 152 | Có |
+| FR-10-034 | Phát sự kiện trực tiếp qua Kafka | M | LGC-TOOL-010 | 053 | 034, 054 | — | Có |
+| FR-10-035 | Đề nghị subscription | M | LGC-HUB-013 | 056, 060, 112 | 057, 058, 060, 124, 136 | 137, 156 | Có |
+| FR-10-036 | Xác minh endpoint webhook | M | LGC-HUB-013 | 056, 060 | 057, 060 | — | Có |
+| FR-10-037 | Duyệt subscription và cấp phát nhóm tiêu thụ | M | LGC-HUB-013 | 056, 060, 082 | 060, 132 | 125, 135, 142, 153, 156 | Có |
+| FR-10-038 | Giao nhận ĐẨY: webhook ký HMAC | M | LGC-HUB-013 | 035, 061 | 062, 063, 066, 071, 131 | 139, 141, 150, 152 | Có |
+| FR-10-039 | Thử lại giãn dần và chính sách khi thất bại | M | LGC-HUB-013 | 067, 068, 069, 070 | 068, 069 | — | Có |
+| FR-10-040 | Điểm bắt đầu và offset bắt đầu | M | LGC-HUB-013 | 059, 096 | 058 | — | Có |
+| FR-10-041 | Tạm dừng, tiếp tục subscription | M | LGC-HUB-013 | 069, 072 | 069, 073 | 145 | Có |
+| FR-10-042 | Xoay khóa ký webhook | M | mới | 064, 065 | 065 | 135 | Có |
+| FR-10-043 | Giao nhận KÉO qua API | M | LGC-HUB-013 | 077, 078, 080 | 079, 081 | 152 | Có |
+| FR-10-044 | Giao nhận KÉO qua Kafka listener ngoài | S | LGC-TOOL-010 | 082, 084 | 083, 084 | — | Có |
+| FR-10-045 | Giao nhận nội bộ cho luồng và DU | M | LGC-HUB-011 | 087 | 087 | — | Có |
+| FR-10-046 | Sửa tham số subscription | M | LGC-HUB-013 | 074 | 074 | — | Có |
+| FR-10-047 | Thu hồi subscription | M | LGC-HUB-013 | 075 | 075 | 135 | Có |
+| FR-10-048 | Lọc sự kiện và gộp lô khi đẩy | C | LGC-HUB-013 | — | — | — | Có |
+| FR-10-049 | Chuyển sự kiện giao thất bại vào DLQ tầng sự kiện | M | mới | 068, 080, 084 | 068, 071, 084 | 150 | Có |
+| FR-10-050 | Tra cứu, xem và loại bỏ mục DLQ | M | mới | 089, 090 | 089, 090, 124, 131 | — | Có |
+| FR-10-051 | Đề nghị và duyệt phát lại theo khoảng offset hoặc thời gian | M | mới | 093, 096 | 094, 095, 132 | — | Có |
+| FR-10-052 | Thực thi, theo dõi và hủy lượt phát lại | M | mới | 091, 093, 096, 097 | 097, 124 | 146 | Có |
+| FR-10-053 | Phát lại mục DLQ | M | mới | 091, 092 | 092, 131 | — | Có |
+| FR-10-054 | Thu thập consumer lag | M | LGC-HUB-007 | 098 | 098 | 144, 147 | Có |
+| FR-10-055 | Cảnh báo lag và nhóm tiêu thụ ngừng tiến | M | mới | 099, 100 | 100 | 144 | Có |
+| FR-10-056 | Thống kê giao nhận và lượt giao gần đây | M | LGC-HUB-013 | 076 | 076 | — | Có |
+| FR-10-057 | Dashboard sự kiện | M | LGC-HUB-001, LGC-HUB-002, LGC-HUB-003… | 102 | 102 | — | Có |
+| FR-10-058 | Sơ đồ kết nối tương tác | M | LGC-HUB-007 | 103 | 104 | 148, 157 | Có |
+| FR-10-059 | Xuất số liệu sang PH-13 | M | mới | 101 | 101 | — | Có |
+| FR-10-060 | Danh mục kiểu giao tiếp | M | LGC-HUB-014 | 105 | 105 | — | Có |
+| FR-10-061 | Danh mục chế độ định tuyến | M | LGC-HUB-014 | 105 | 105 | — | Có |
+| FR-10-062 | Hạn mức theo tenant và phân bổ cho bên tham gia | M | mới | 106 | 051, 106 | — | Có |
+| FR-10-063 | Tham số phân hệ theo tenant | M | mới | 107 | 107 | — | Có |
+| FR-10-064 | Cách ly đa tenant trên trục sự kiện | M | mới | 128 | 049, 079, 083, 104, 124 | 123, 125, 126, 127 | Có |
+| FR-10-065 | Kiểm toán và lịch sử thay đổi | M | mới | 128, 129, 134 | 130 | — | Có |
+| FR-10-066 | Đăng ký topic hộ PH-05 cho CDC | M | LGC-TOOL-010 | 108 | 109, 111, 131 | — | Có |
+| FR-10-067 | Đăng ký topic cho DU nội bộ và topic nền tảng | M | LGC-BUS-039 | 112 | 113 | — | Có |
+| FR-10-068 | Xử lý thông báo thay đổi lược đồ CDC | M | mới | 110 | 110 | — | Có |
+| FR-10-069 | Kiểm tra quyền phát, nhận cho PH-04 và tra cứu topic cho trì | M | mới | 085, 086 | 085, 086, 088, 131 | — | Có |
+| FR-10-070 | Xuất khai báo | S | mới | 114 | — | 135 | Có |
+| FR-10-071 | Nhập khai báo có xem trước | C | mới | 115 | 115 | — | Có |
+| FR-10-072 | Nhập kiểm kê Pulsar và lập ánh xạ | M | LGC-HUB-008, LGC-HUB-009, LGC-HUB-010… | 116 | 117 | — | Có |
+| FR-10-073 | Cầu nối Pulsar sang Kafka tạm thời | M | mới | 118 | 119 | 149 | Có |
+| FR-10-074 | Cầu nối ngược Kafka sang Pulsar cho bên nhận cũ chưa chuyển | S | mới | 120 | 119 | — | Có |
+| FR-10-075 | Đối chiếu, chuyển hẳn và quay lui | M | mới | 121 | 121, 132 | 149 | Có |
+| FR-10-076 | Báo cáo tiến độ di trú | S | mới | 122 | — | — | Có |
+
+### 8.2. Chức năng hệ cũ → yêu cầu → test case
+
+Mỗi chức năng của Hub Pulsar (`LGC-HUB`), nhóm Message Broker của Tooling (`LGC-TOOL-010`) và event message của Bus (`LGC-BUS-039`) được truy tới FR mới và tới ca tự động, ca nghiệm thu; LGC-HUB-005, 006 chuyển PH-13. Đây là bằng chứng "không mất chức năng" cho hội đồng.
+
+| LGC | FR | TC tự động | UAT |
+|---|---|---|---|
+| LGC-BUS-039 | 033, 067 | 047, 050, 112 | — |
+| LGC-HUB-001 | 057 | 102 | UAT-01 |
+| LGC-HUB-002 | 057 | 102 | UAT-01 |
+| LGC-HUB-003 | 057 | 102 | UAT-01 |
+| LGC-HUB-004 | 057 | 102 | UAT-01 |
+| LGC-HUB-005 | — | 102 | UAT-02 |
+| LGC-HUB-006 | — | 102 | UAT-02 |
+| LGC-HUB-007 | 054, 058 | 098, 103 | UAT-03 |
+| LGC-HUB-008 | 001, 002, 003, 004, 005, 072 | 001, 003, 004, 005, 116 | UAT-04, UAT-10 |
+| LGC-HUB-009 | 006, 007, 008, 009, 010, 011, 012, 013, 014, 015, 016, 017, 020, 072 | 006, 010, 011, 012, 015, 017, 019, 020 (+9) | UAT-05, UAT-10 |
+| LGC-HUB-010 | 025, 026, 028, 029, 072 | 037, 039, 040, 042, 043, 116 | UAT-06, UAT-10 |
+| LGC-HUB-011 | 025, 027, 028, 029, 045, 072 | 037, 039, 040, 042, 043, 086, 087, 116 | UAT-06, UAT-10 |
+| LGC-HUB-012 | 030, 031, 032, 072 | 044, 046, 055, 116 | UAT-07, UAT-10 |
+| LGC-HUB-013 | 035, 036, 037, 038, 039, 040, 041, 043, 046, 047, 048, 056, 072 | 035, 056, 059, 060, 061, 067, 068, 069 (+12) | UAT-08, UAT-10 |
+| LGC-HUB-014 | 008, 013, 060, 061, 072 | 006, 011, 020, 047, 105, 116 | UAT-09, UAT-10 |
+| LGC-TOOL-010 | 034, 044, 066 | 053, 082, 084, 108 | UAT-10 |
+
+### 8.3. Quy tắc nghiệp vụ → test case
+
+| Mã | Test case |
+|---|---|
+| BR-10-001 | 049, 123 |
+| BR-10-002 | 006, 007, 109 |
+| BR-10-003 | 002, 005, 007 |
+| BR-10-004 | 006, 012 |
+| BR-10-005 | 017, 018 |
+| BR-10-006 | 008, 020, 047, 048 |
+| BR-10-007 | 047, 051, 150 |
+| BR-10-008 | 034, 053, 054 |
+| BR-10-009 | 050, 061, 062, 078, 151 |
+| BR-10-010 | 013, 030, 094, 132 |
+| BR-10-011 | 009, 048 |
+| BR-10-012 | 021, 033, 035 |
+| BR-10-013 | 024, 025, 034, 036 |
+| BR-10-014 | 013 |
+| BR-10-015 | 032 |
+| BR-10-016 | 022, 023, 045, 049 |
+| BR-10-017 | 037, 038, 058 |
+| BR-10-018 | 087, 125 |
+| BR-10-019 | 045, 058 |
+| BR-10-020 | 046, 075 |
+| BR-10-021 | 048 |
+| BR-10-022 | 059, 087, 125 |
+| BR-10-023 | 012, 068 |
+| BR-10-024 | 023, 063, 068, 071, 090, 150 |
+| BR-10-025 | 058, 067, 074 |
+| BR-10-026 | 057, 066 |
+| BR-10-027 | 063, 064, 114, 135 |
+| BR-10-028 | 091, 092, 094 |
+| BR-10-029 | 045, 106 |
+| BR-10-030 | 007, 109, 113 |
+| BR-10-031 | 108, 112 |
+| BR-10-032 | 115, 117 |
+| BR-10-033 | 119 |
+| BR-10-034 | 117 |
+| BR-10-035 | 082, 083, 107 |
+| BR-10-036 | 014, 015, 016, 106 |
+
+### 8.4. Mã lỗi → test case
+
+| Mã | Test case |
+|---|---|
+| ERR-10-001 | 098, 102, 124 |
+| ERR-10-002 | 002, 007, 038, 109 |
+| ERR-10-003 | 002, 004, 007, 028, 038, 041 |
+| ERR-10-004 | 007, 109, 113 |
+| ERR-10-005 | 109, 113, 124 |
+| ERR-10-006 | 004, 011, 015, 025, 028, 032, 041, 046, 069, 073 (+4) |
+| ERR-10-007 | 004 |
+| ERR-10-008 | 013, 030, 045, 060, 094, 132 |
+| ERR-10-009 | 005, 013, 019, 023, 032, 041, 065, 073, 075, 089 (+5) |
+| ERR-10-010 | 005, 023 |
+| ERR-10-011 | 002, 008, 045, 058, 106 |
+| ERR-10-012 | 008, 018, 019, 060, 074, 106, 107, 119 |
+| ERR-10-013 | 018 |
+| ERR-10-014 | 018 |
+| ERR-10-015 | 009, 028 |
+| ERR-10-016 | 021, 030, 033, 036, 110 |
+| ERR-10-017 | 009 |
+| ERR-10-018 | 009 |
+| ERR-10-019 | 021, 036 |
+| ERR-10-020 | 009, 028 |
+| ERR-10-021 | 038 |
+| ERR-10-022 | 038, 086 |
+| ERR-10-023 | 038 |
+| ERR-10-024 | 038, 045, 058 |
+| ERR-10-025 | 045, 058, 086 |
+| ERR-10-026 | 057, 074 |
+| ERR-10-027 | 057 |
+| ERR-10-028 | 038, 058, 083 |
+| ERR-10-029 | 014, 071, 088, 111, 152 |
+| ERR-10-030 | 058, 074 |
+| ERR-10-031 | 058 |
+| ERR-10-032 | 095 |
+| ERR-10-033 | 095 |
+| ERR-10-034 | 095 |
+| ERR-10-035 | 095 |
+| ERR-10-036 | 090 |
+| ERR-10-037 | 136 |
+| ERR-10-038 | 015 |
+| ERR-10-039 | 002 |
+| ERR-10-040 | 115, 117 |
+| ERR-10-041 | 117 |
+| ERR-10-042 | 119, 121 |
+| ERR-10-043 | 020, 105 |
+| ERR-10-044 | 002, 038, 060, 075, 130 |
+| ERR-10-045 | 109 |
+| ERR-10-046 | 008, 020 |
+| ERR-10-047 | 020, 025, 036 |
+| ERR-10-048 | 008 |
+| ERR-10-049 | 003, 010, 031, 076, 098, 102, 104 |
+| ERR-10-050 | 115 |
+| ERR-10-051 | 045, 058 |
+| ERR-10-052 | 073 |
+| ERR-10-101 | 049, 079 |
+| ERR-10-102 | 034, 046, 049, 052, 079 |
+| ERR-10-103 | 049, 052, 079, 126 |
+| ERR-10-104 | 048 |
+| ERR-10-105 | 048 |
+| ERR-10-106 | 048, 084 |
+| ERR-10-107 | 051, 081 |
+| ERR-10-108 | 051 |
+| ERR-10-109 | 078, 079 |
+| ERR-10-110 | 084 |
+| ERR-10-111 | 068 |
+| ERR-10-112 | 067, 068 |
+| ERR-10-113 | 068, 080 |
+| ERR-10-114 | 066 |
+| ERR-10-115 | 066 |
+| ERR-10-116 | 071 |
+| ERR-10-117 | 063 |
+| ERR-10-118 | 119 |
+| ERR-10-119 | 054 |
+| ERR-10-120 | 054, 083, 125 |
+| ERR-10-121 | 081 |
+
+### 8.5. Yêu cầu phi chức năng → test case
+
+| Mã | Test case |
+|---|---|
+| NFR-10-001 | 137 |
+| NFR-10-002 | 138 |
+| NFR-10-003 | 139 |
+| NFR-10-004 | 140 |
+| NFR-10-005 | 141 |
+| NFR-10-006 | 150 |
+| NFR-10-007 | 062, 151 |
+| NFR-10-008 | 012, 044, 056, 142 |
+| NFR-10-009 | 040, 042, 046, 143 |
+| NFR-10-010 | 099, 144 |
+| NFR-10-011 | 072, 145 |
+| NFR-10-012 | 146 |
+| NFR-10-013 | 111, 152 |
+| NFR-10-014 | 147 |
+| NFR-10-015 | 148 |
+| NFR-10-016 | 114, 135 |
+| NFR-10-017 | 101, 123, 127 |
+| NFR-10-018 | 118, 149 |
+| NFR-10-019 | 016, 154 |
+| NFR-10-020 | 129, 134 |
+<!--/gen-->
+
+## 9. Tự động hóa và tệp đi kèm
+
+### 9.1. Tổ chức mã kiểm thử
+
+| Thư mục | Nội dung |
+|---|---|
+| `apps/integration/src/test/java/vn/datahub/integration/event/` | UT, IT; lớp cơ sở `EventTestBase` (Testcontainers PostgreSQL 16, Kafka, Apicurio, Keycloak, OpenBao, Valkey) |
+| `apps/runtime/src/test/java/vn/datahub/runtime/event/` | RT cho cổng sự kiện, bộ giao nhận, bộ phát lại, cầu nối |
+| `apps/console/src/features/event/**/*.test.ts` | UT frontend |
+| `e2e/event/ts-10-nn.spec.ts` | Playwright |
+| `perf/event/*.js` | k6 |
+| `datahub-docs/03-thiet-ke/csdl/ph10/test/` | Bài kiểm cô lập CSDL |
+| `datahub-docs/05-kiem-thu/test-case/ph10/gherkin/` | Gherkin sinh từ tài liệu này |
+
+Mỗi ca tự động mang thẻ mã ca (`@Tag("TC-10-nnn")`, `test('TC-10-nnn …')`).
+
+### 9.2. Mẫu ca xác minh chữ ký webhook (JUnit)
+
+```java
+@Tag("hmac")
+@Test void webhookSignatureMatchesSpec() {
+  var sub = fixtures.pushSubscription("tc-hmac", "https://hooks.sim.test/tc");
+  var secret = api.as(U_T68_IE1).post(sub.url() + "/signing-keys:claim").then()
+      .statusCode(200).extract().path("secret");
+  publisher.publish("t68.dkkd.doanh-nghiep.da-cap-phep.v1", Events.capPhep("0999000001"));
+  var req = simWh.awaitRequest(Duration.ofSeconds(5));
+  var id = req.header("Webhook-Id"); var ts = req.header("Webhook-Timestamp");
+  var expected = Hex.encode(Hmac.sha256(secret, id + "." + ts + "." + req.body()));
+  assertThat(req.header("X-Datahub-Signature")).contains("v1=" + expected);
+  assertThat(Math.abs(Instant.now().getEpochSecond() - Long.parseLong(ts))).isLessThan(5);
+}
+```
+
+### 9.3. Mẫu ca cô lập Kafka (tham số hóa)
+
+```java
+@ParameterizedTest @Tag("isolation")
+@CsvSource({"dh-runtime-t90,t91.dkkd.doanh-nghiep.da-cap-phep.v1,READ",
+            "dh-runtime-t90,t91.dkkd.doanh-nghiep.da-cap-phep.v1,WRITE",
+            "dh-runtime-t90,dh-sub-t91-ht-thue-dn-cap-phep,GROUP"})
+void crossTenantDenied(String principal, String resource, String op) {
+  var client = kafka.clientFor(principal);
+  assertThatThrownBy(() -> client.attempt(op, resource))
+      .isInstanceOfAny(TopicAuthorizationException.class, GroupAuthorizationException.class);
+}
+```
+
+### 9.4. Mẫu ca đăng ký nhận (Playwright)
+
+```ts
+test('đăng ký nhận đẩy có xác minh endpoint', async ({ page }) => {
+  await page.goto('/tich-hop/topic/t68.dkkd.doanh-nghiep.da-cap-phep.v1/dang-ky-nhan');
+  await page.getByLabel('Bên nhận').fill('tc-ht-thue2');
+  await page.getByRole('radio', { name: 'Đẩy (webhook)' }).check();
+  await page.getByLabel('Địa chỉ nhận').fill('https://hooks.sim.test/tc');
+  await page.getByRole('button', { name: 'Xác minh endpoint' }).click();
+  await expect(page.getByRole('status')).toContainText('Xác minh đạt');
+  await page.getByRole('button', { name: 'Gửi đề nghị' }).click();
+  await expect(page.getByText('Chờ duyệt')).toBeVisible();
+});
+```
+
+### 9.5. Sinh ma trận, Gherkin, bảng tính
+
+| Lệnh | Kết quả |
+|---|---|
+| `python3 ph10/tools/number_tcs.py` | Cấp số `TC-10-nnn` cho ca mới, thay `[[tc:khóa]]` |
+| `python3 ph10/tools/fill_doc.py` | Ghi bảng mục 3.1, số kịch bản, số ca và mục 8 (gọi `gen_matrix.py`); in ra stderr BR, ERR, NFR chưa có ca và FR mức M thiếu ca dương hoặc âm |
+| `python3 ph10/tools/gen_gherkin.py` | `ph10/gherkin/ts-10-nn.feature`, `uat-tuong-duong-hub.feature` |
+| `python3 ph10/tools/gen_xlsx.py` | `ph10/D05-02-PH10-test-case.xlsx` theo mẫu nghiệm thu |
+| `python3 ph10/tools/check_refs.py` | Đối chiếu mọi FR, UC, API, UI, ERR, EVT, quyền, enum trong tập với FRS, UC, API, màn hình |
+
+## 10. Đề nghị bổ sung cho FRS và câu hỏi mở
+
+### 10.1. Đề nghị bổ sung cho FRS
+
+| Đề nghị | Lý do |
+|---|---|
+| Ghi rõ giới hạn kích thước `content` lược đồ (256 KiB) trả ERR-10-015 hay ERR-10-003 | TC TC-10-028 chấp nhận cả hai theo API §3.3; nên chốt một mã |
+| Nêu mã lỗi khi người dùng gửi `topicKind = CDC`, `SYSTEM` qua API-10-009 | TC TC-10-007 bước 5 |
+| Nêu hành vi khi luồng PH-04 dùng nhóm tiêu thụ khác `dh-flow-{tenant}-{flow}` trong tiền tố tenant (ACL tiền tố cho phép) | TC TC-10-087 bước 2 chỉ kiểm được cảnh báo VR-10 |
+| Tham số thời gian thử lại tối thiểu cho môi trường kiểm thử (`10.push.backoff-initial-ms` = 100 đã trong miền) và đồng hồ giả lập cho ca theo ngày | Ca hết hạn yêu cầu, khóa ký, cầu nối cần đặt đồng hồ SIT |
+
+### 10.2. Câu hỏi mở
+
+> **Câu hỏi mở Q10-40:** Bộ rò rỉ đầu cuối T90…T99 chạy mỗi đêm trên SIT dùng chung cụm Kafka với tenant khác; có cần cụm Kafka riêng cho kiểm thử cô lập để tránh ảnh hưởng hạn mức của T68 không?
+
+> **Câu hỏi mở Q10-41:** Ca NFR-10-006 cần 1 triệu sự kiện qua API phát và chaos broker; môi trường PERF có được phép giết broker ở giờ hành chính không, hay chỉ chạy đêm?
+
+> **Câu hỏi mở Q10-42:** Mã mẫu xác minh chữ ký cho PHP và .NET (TC TC-10-062) do nhóm Datahub bảo trì hay chỉ là tài liệu tham khảo; nếu bảo trì thì ca thuộc CI của dự án nào?
+
+> **Câu hỏi mở Q10-43:** UAT di trú cần bản xuất CSDL cấu hình Hub cũ thật của tỉnh thí điểm; ai cung cấp và quy trình làm sạch mật khẩu nhúng trong URI subscription trước khi đưa vào UAT?
+
+> **Câu hỏi mở Q10-44:** Ngưỡng NFR-10-007 (≤ 0,1 % giao trùng) đo trong 24 giờ tải nền; có cần đo thêm khi tái cân bằng do KEDA đổi số bản sao bộ giao nhận không?
+
+## Lịch sử phiên bản
+
+| Phiên bản | Ngày | Người | Nội dung |
+|---|---|---|---|
+| 0.1 | 26/11/2026 | Nhóm tài liệu | Bản đầu theo FRS 0.2 (và mã control plane ERR-10-053, 054, API-10-121 của FRS 0.3): 35 kịch bản, 10 UAT, ma trận sinh tự động, Gherkin, bảng tính; câu hỏi mở Q10-40…44 |

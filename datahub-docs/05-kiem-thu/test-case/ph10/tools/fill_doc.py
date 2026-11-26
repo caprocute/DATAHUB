@@ -13,12 +13,12 @@ ucs = {}
 for m in re.finditer(r'^### (TS-10-\d{2}) · .*?\n\n\*\*Mục tiêu\.\*\* (.*?)\n\n\*\*Phủ\.\*\* (.*?)\n', doc, re.M | re.S):
     uc = re.findall(r'UC-10-\d{2}(?:\s*,\s*\d{2}(?!\d))*', m.group(3))
     ucs[m.group(1)] = (m.group(2), ', '.join(uc) or '—')
-rows = ['| Kịch bản | Tên | Mục tiêu | UC | Số ca |', '|---|---|---|---|---|']
+rows = ['| Kịch bản | Tên | UC | Số ca |', '|---|---|---|---|']  # mục tiêu đầy đủ ở đầu mỗi kịch bản
 for ts, name in tsn.items():
     goal, uc = ucs.get(ts, ('', '—'))
     goal = goal.split('. ')[0].rstrip('.')
-    rows.append(f'| {ts} | {name} | {goal} | {uc} | {cnt[ts]} |')
-rows.append(f'| **Tổng** | | | | **{len(tcs)}** ({p1} ca P1) |')
+    rows.append(f'| {ts} | {name} | {uc} | {cnt[ts]} |')
+rows.append(f'| **Tổng** | | | **{len(tcs)}** ({p1} ca P1) |')
 def put(tag, body, s):
     return re.sub(rf'(<!--gen:{tag}-->).*?(<!--/gen-->)', lambda m: m.group(1) + body + m.group(2), s, flags=re.S)
 doc = put('ts-table', '\n' + '\n'.join(rows) + '\n', doc)

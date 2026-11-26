@@ -38,7 +38,7 @@ for f, v in frs.items():
     O.append(f"| {f} | {v['name'][:60]} | {v['prio']} | {lg} | {short(b['pos'])} | {short(b['neg'])} | {short(other, 6)} | {ok} |")
 
 O.append('\n### 8.2. Chức năng hệ cũ → yêu cầu → test case\n')
-O.append('Mỗi chức năng kết nối của Bus tích hợp (`LGC-BUS`) và Productivity Tooling (`LGC-TOOL`) được truy tới FR mới và tới ca tự động, ca nghiệm thu. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
+O.append('Mỗi chức năng của Hub Pulsar (`LGC-HUB`), nhóm Message Broker của Tooling (`LGC-TOOL-010`) và event message của Bus (`LGC-BUS-039`) được truy tới FR mới và tới ca tự động, ca nghiệm thu; LGC-HUB-005, 006 chuyển PH-13. Đây là bằng chứng "không mất chức năng" cho hội đồng.\n')
 O.append('| LGC | FR | TC tự động | UAT |')
 O.append('|---|---|---|---|')
 uat = defaultdict(list)
@@ -62,5 +62,8 @@ for pre, title in (('BR', 'Quy tắc nghiệp vụ'), ('ERR', 'Mã lỗi'), ('NF
         if not by[k]['all']: missing.setdefault(pre, []).append(k)
     O += rows
 print('\n'.join(O))
+for f, v in frs.items():
+    if v['prio'] == 'M' and not (by[f]['pos'] and by[f]['neg']):
+        print('FR mức M thiếu', 'dương' if not by[f]['pos'] else '', 'âm' if not by[f]['neg'] else '', f, file=sys.stderr)
 for k, v in missing.items():
     print(k, 'chưa có ca:', ' '.join(v), file=sys.stderr)

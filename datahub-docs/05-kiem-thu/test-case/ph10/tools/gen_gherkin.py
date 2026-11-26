@@ -41,11 +41,11 @@ for ts, items in by_ts.items():
     (OUT / f'{slug}.feature').write_text('\n'.join(L), encoding='utf-8')
 
 U = ['# language: vi', '# Sinh tự động từ mục 7 của D05-02-PH10; không sửa tay.', '@PH-10 @UAT',
-     'Tính năng: Nghiệm thu người dùng tương đương Bus tích hợp và Productivity Tooling', '',
+     'Tính năng: Nghiệm thu người dùng tương đương Hub Pulsar', '',
      '  Bối cảnh:', '    Biết cán bộ nghiệp vụ của tỉnh thí điểm đã đăng nhập môi trường UAT',
-     '    Và các chương trình tích hợp của tỉnh đã được chuyển từ Bus cũ', '']
+     '    Và kiểm kê Hub cũ của tỉnh đã được nhập vào môi trường UAT', '']
 for u in P.uat_rows():
     U += [f"  @{u['id']}", f"  Kịch bản: {u['id']} {clean(u['task'])}", f"    # Chức năng hệ cũ: {u['lgc']}; FR: {u['fr']}; TC: {u['tc']}",
           f"    Khi cán bộ {clean(u['task'][0].lower() + u['task'][1:])}", f"    Thì {lc(clean(u['expect']))}", '']
-(OUT / 'uat-tuong-duong-bus.feature').write_text('\n'.join(U), encoding='utf-8')
+(OUT / 'uat-tuong-duong-hub.feature').write_text('\n'.join(U), encoding='utf-8')
 print('đã ghi', len(by_ts) + 1, 'tệp feature')
